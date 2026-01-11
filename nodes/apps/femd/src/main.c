@@ -72,6 +72,39 @@ static void usage() {
     usys_puts("-v, --version                 Software version");
 }
 
+static void validate_fem_band_env_or_exit(void) {
+    const char *env = getenv(ENV_FEM_BAND);
+    char band[16];
+    size_t i, j;
+
+    if (env == NULL || env[0] == '\0') {
+        usys_log_error("Band env not set: %s Supported values: B1, B41, B48",
+                       ENV_FEM_BAND);
+        usys_exit(1);
+    }
+
+    /* Trim whitespace */
+    i = 0;
+    j = 0;
+    while (env[i] != '\0' && j < sizeof(band) - 1) {
+        if (env[i] != ' ' && env[i] != '\t' &&
+            env[i] != '\n' && env[i] != '\r') {
+            band[j++] = env[i];
+        }
+        i++;
+    }
+    band[j] = '\0';
+
+    if (strcmp(band, "B1") != 0 &&
+        strcmp(band, "B41") != 0 &&
+        strcmp(band, "B48") != 0) {
+
+        usys_log_error("Invalid %s='%s'. Supported values: B1, B41, B48",
+                       ENV_FEM_BAND, env);
+        usys_exit(1);
+    }
+}
+
 int main(int argc, char **argv) {
     int opt, optIdx;
     int exitCode = USYS_FALSE;
@@ -86,6 +119,8 @@ int main(int argc, char **argv) {
 
     usys_log_set_service(SERVICE_NAME);
     usys_log_remote_init(SERVICE_NAME);
+
+    validate_fem_band_env_or_exit();
 
     while (true) {
         opt    = 0;

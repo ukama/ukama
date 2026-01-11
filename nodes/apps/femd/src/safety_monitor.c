@@ -12,9 +12,10 @@
 #include <time.h>
 #include <sys/time.h>
 
-#include "safety_monitor.h"
 #include "femd.h"
 #include "config.h"
+#include "web_client.h"
+#include "safety_monitor.h"
 
 /* Forward statics */
 static void* safety_monitor_thread(void *arg);
