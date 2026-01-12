@@ -231,12 +231,22 @@ int deserialize_system_info(SystemInfo **systemInfo, json_t *json) {
 						  &(*systemInfo)->systemId, NULL);
 	ret |= get_json_entry(json, JSON_CERTIFICATE, JSON_STRING,
 						  &(*systemInfo)->certificate, NULL);
-	ret |= get_json_entry(json, JSON_NODE_GW_IP, JSON_STRING,
-						  &(*systemInfo)->ip, NULL);
-	ret |= get_json_entry(json, JSON_NODE_GW_PORT, JSON_INTEGER,
-						  NULL, &(*systemInfo)->port);
-	ret |= get_json_entry(json, JSON_HEALTH, JSON_INTEGER,
-						  NULL, &(*systemInfo)->health);
+
+    if (strcasecmp((*systemInfo)->systemName, SERVICE_INVENTORY) == 0) {
+        ret |= get_json_entry(json, JSON_API_GW_IP, JSON_STRING,
+                              &(*systemInfo)->ip, NULL);
+        ret |= get_json_entry(json, JSON_API_GW_PORT, JSON_INTEGER,
+                              NULL, &(*systemInfo)->port);
+        ret |= get_json_entry(json, JSON_API_GW_HEALTH, JSON_INTEGER,
+                              NULL, &(*systemInfo)->health);
+    } else {
+        ret |= get_json_entry(json, JSON_NODE_GW_IP, JSON_STRING,
+                              &(*systemInfo)->ip, NULL);
+        ret |= get_json_entry(json, JSON_NODE_GW_PORT, JSON_INTEGER,
+                              NULL, &(*systemInfo)->port);
+        ret |= get_json_entry(json, JSON_NODE_GW_HEALTH, JSON_INTEGER,
+                              NULL, &(*systemInfo)->health);
+    }
 
 	if (ret == FALSE) {
 		log_error("Error deserializing node info");

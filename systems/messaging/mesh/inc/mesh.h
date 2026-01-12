@@ -72,6 +72,8 @@
 #define DEFAULT_MESH_CERT_FILE     "certs/test.cert"
 #define DEFAULT_MESH_KEY_FILE      "certs/server.key"
 
+#define SERVICE_INVENTORY "inventory"
+
 typedef struct _u_instance UInst;
 typedef struct _u_request  URequest;
 typedef struct _u_response UResponse;
