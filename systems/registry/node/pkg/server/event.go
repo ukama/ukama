@@ -12,6 +12,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -97,20 +98,46 @@ func (n *NodeEventServer) handleNotifyEvent(ctx context.Context, key string, msg
 		log.WithError(err).Error("Failed to unmarshal details")
 		return err
 	}
-	lat := details["latitude"]
-	lon := details["longitude"]
-	if lat == nil || lon == nil {
-		log.Errorf("Latitude or Longitude key not found in details")
-		return fmt.Errorf("latitude or longitude key not found in details")
+	coordinates := details["coordinates"]
+	if coordinates == nil {
+		log.Errorf("Coordinates key not found in details")
+		return fmt.Errorf("coordinates key not found in details")
 	}
+	lat, err := strconv.ParseFloat(strings.Split(coordinates.(string), ",")[0], 64)
+	if err != nil {
+		log.Errorf("Failed to parse latitude: %v", err)
+		return fmt.Errorf("failed to parse latitude: %w", err)
+	}
+	lon, err := strconv.ParseFloat(strings.Split(coordinates.(string), ",")[1], 64)
+	if err != nil {
+		log.Errorf("Failed to parse longitude: %v", err)
+		return fmt.Errorf("failed to parse longitude: %w", err)
+	}
+
+	node, err := n.s.GetNode(ctx, &pb.GetNodeRequest{NodeId: msg.NodeId})
+	if err != nil {
+		log.Errorf("Failed to get node: %v", err)
+		return fmt.Errorf("failed to get node: %w", err)
+	}
+	if node == nil || node.Node == nil {
+		log.Errorf("Node not found")
+		return fmt.Errorf("node not found")
+	}
+	if node.Node.Latitude == lat && node.Node.Longitude == lon {
+		log.Infof("Node %s already has latitude=%f, longitude=%f",
+			msg.NodeId, lat, lon)
+		return nil
+	}
+	log.Infof("Updating node %s: latitude=%f, longitude=%f",
+		msg.NodeId, lat, lon)
 
 	updateRequest := &pb.UpdateNodeRequest{
 		NodeId:    msg.NodeId,
-		Latitude:  lat.(float64),
-		Longitude: lon.(float64),
+		Latitude:  lat,
+		Longitude: lon,
 	}
 
-	_, err := n.s.UpdateNode(ctx, updateRequest)
+	_, err = n.s.UpdateNode(ctx, updateRequest)
 	if err != nil {
 		log.WithError(err).Error("Failed to update node")
 		return err
