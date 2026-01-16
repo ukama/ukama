@@ -84,21 +84,21 @@ static void setup_webservice_endpoints(Config *config, UInst *instance) {
                                API_RES_EP("lock"), 0,
                                &web_service_cb_lock, config);
     setup_unsupported_methods(instance, "GET",
-                              URL_PREFIX, API_RES_EP("version"));
+                              URL_PREFIX, API_RES_EP("lock"));
 
     /* coordinates */
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("coordinates"), 0,
                                &web_service_cb_coordinates, config);
     setup_unsupported_methods(instance, "GET",
-                              URL_PREFIX, API_RES_EP("version"));
+                              URL_PREFIX, API_RES_EP("coordinates"));
 
     /* time */
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("time"), 0,
                                &web_service_cb_time, config);
     setup_unsupported_methods(instance, "GET",
-                              URL_PREFIX, API_RES_EP("version"));
+                              URL_PREFIX, API_RES_EP("time"));
 
     /* default */
     ulfius_set_default_endpoint(instance, &web_service_cb_default, config);
