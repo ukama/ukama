@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
     pthread_t tid = 0;
 
     usys_log_set_service(SERVICE_NAME);
-    usys_log_remote_init(SERVICE_NAME);
+    //    usys_log_remote_init(SERVICE_NAME);
 
     init_gps_data();
 
