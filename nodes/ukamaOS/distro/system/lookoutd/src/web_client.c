@@ -22,6 +22,21 @@ extern int    get_memory_usage(int pid);
 extern int    get_disk_usage(int pid);
 extern double get_cpu_usage(int pid);
 
+static bool is_container_environment(void) {
+
+    /* podman / docker / k8s */
+    if (getenv("container") != NULL) {
+        return USYS_TRUE;
+    }
+
+    /* podman guarantee */
+    if (access("/run/.containerenv", F_OK) == 0) {
+        return USYS_TRUE;
+    }
+
+    return USYS_FALSE;
+}
+
 static int wc_send_http_request(URequest* httpReq, UResponse** httpResp) {
 
     int ret = STATUS_NOK;
@@ -240,6 +255,75 @@ int get_nodeid_from_noded(Config *config) {
     return ret;
 }
 
+static int get_capps_from_supervisord(Config *config, CappList **cappList) {
+
+    FILE *fp = NULL;
+    char line[512];
+    char procName[128];
+    char procState[32];
+    int  pid = 0;
+
+    const char *ukamaStatus = "Unknown";
+
+    fp = popen("supervisorctl status", "r");
+    if (fp == NULL) {
+        usys_log_error("Failed to run supervisorctl");
+        return STATUS_NOK;
+    }
+
+    while (fgets(line, sizeof(line), fp)) {
+
+        memset(procName, 0, sizeof(procName));
+        memset(procState, 0, sizeof(procState));
+        pid = 0;
+
+        /* Examples:
+         * meshd_latest RUNNING pid 456, uptime 0:10:12
+         * bootstrap_latest STOPPED Not started
+         */
+        if (sscanf(line, "%127s %31s pid %d",
+                   procName, procState, &pid) < 2) {
+            continue;
+        }
+
+        /* Only Ukama apps */
+        if (strstr(procName, "_latest") == NULL) {
+            continue;
+        }
+
+        if (strcmp(procState, "RUNNING") == 0) {
+            ukamaStatus = "Active";
+        } else if (strcmp(procState, "STARTING") == 0) {
+            ukamaStatus = "Pending";
+        } else if (strcmp(procState, "STOPPED") == 0) {
+            ukamaStatus = "Pending";
+            pid = 0;
+        } else if (strcmp(procState, "EXITED") == 0 ||
+                   strcmp(procState, "FATAL") == 0) {
+            ukamaStatus = "Failure";
+            pid = 0;
+        }
+
+        /*
+         * Naming convention:
+         * <app>_latest
+         * space = "system"
+         * tag   = "latest"
+         */
+        add_capp_to_list(cappList,
+                         "system",
+                         procName,
+                         "latest",
+                         ukamaStatus,
+                         pid);
+    }
+
+    pclose(fp);
+    usys_log_debug("Received capps from supervisord");
+
+    return STATUS_OK;
+}
+
 static int get_capps_from_starterd(Config *config, CappList **cappList) {
 
     int     ret     = STATUS_OK;
@@ -350,22 +434,37 @@ int send_health_report(Config *config) {
     char *buffer = NULL;
     char *report = NULL;
 
-    int ret = USYS_TRUE;
+    int ret    = USYS_TRUE;
+    int status = STATUS_NOK;
 
     GPSClientData gps;
     memset(&gps, 0, sizeof(GPSClientData));
 
-    /* Get capps from starterd; for each get its resource usage */
-    if (get_capps_from_starterd(config, &cappList) == STATUS_OK) {
+    /* Get capps */
+    if (is_container_environment()) {
+        status = get_capps_from_supervisord(config, &cappList);
+        if (status != STATUS_OK) {
+            usys_log_error("Unable to get capps from supervisord");
+        }
+    } else {
+        status = get_capps_from_starterd(config, &cappList);
+        if (status != STATUS_OK) {
+            usys_log_error("Unable to get capps from starterd");
+        }
+    }
+
+    /* Collect resource usage only if we got capps */
+    if (status == STATUS_OK) {
         for (ptr = cappList; ptr; ptr = ptr->next) {
-            runtime         = ptr->capp->runtime;
+            runtime = ptr->capp->runtime;
+            if (runtime == NULL || runtime->pid <= 0) {
+                continue;
+            }
 
             runtime->memory = get_memory_usage(runtime->pid);
             runtime->disk   = get_disk_usage(runtime->pid);
             runtime->cpu    = get_cpu_usage(runtime->pid);
         }
-    } else {
-        usys_log_error("Unable to get capp status");
     }
 
     /* GPS data (best-effort) */
@@ -403,4 +502,39 @@ int send_health_report(Config *config) {
     usys_free(report);
     usys_free(ukama);
     return ret;
+}
+
+void add_capp_to_list(CappList **list,
+                      const char *space,
+                      const char *name,
+                      const char *tag,
+                      const char *status,
+                      int pid) {
+
+    CappList *ptr=NULL;
+
+    if (space == NULL || name == NULL ||
+        tag == NULL || status == NULL) return;
+
+    if (*list == NULL) { /* First entry */
+        *list = (CappList *)calloc(1, sizeof(CappList));
+        if (*list == NULL) return;
+        ptr = *list;
+    } else {
+        (*list)->next = (CappList *)calloc(1, sizeof(CappList));
+        if ((*list)->next == NULL) return;
+        ptr = (*list)->next;
+    }
+
+    ptr->capp          = (Capp *)calloc(1, sizeof(Capp));
+    ptr->capp->runtime = (CappRuntime *)calloc(1, sizeof(CappRuntime));
+
+    ptr->capp->name            = strdup(name);
+    ptr->capp->tag             = strdup(tag);
+    ptr->capp->space           = strdup(space);
+    ptr->capp->runtime->status = strdup(status);
+    ptr->capp->runtime->pid    = pid;
+    ptr->capp->runtime->memory = -1;
+    ptr->capp->runtime->disk   = -1;
+    ptr->capp->runtime->memory = -1;
 }

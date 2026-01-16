@@ -10,7 +10,14 @@
 #define WEB_CLIENT_H_
 
 #include "config.h"
+#include "lookout.h"
 
+void add_capp_to_list(CappList **list,
+                      const char *space,
+                      const char *name,
+                      const char *tag,
+                      const char *status,
+                      int pid);
 int get_nodeid_from_noded(Config *config);
 int send_health_report(Config *config);
 

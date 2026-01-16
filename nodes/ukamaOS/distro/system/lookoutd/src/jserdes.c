@@ -13,6 +13,7 @@
 #include "lookout.h"
 #include "errorcode.h"
 #include "json_types.h"
+#include "web_client.h"
 
 #include "usys_error.h"
 #include "usys_log.h"
@@ -35,41 +36,6 @@ void json_log(json_t *json) {
         log_debug("json str: %s", str);
         free(str);
     }
-}
-
-static void add_capp_to_list(CappList **list,
-                             const char *space,
-                             const char *name,
-                             const char *tag,
-                             const char *status,
-                             int pid) {
-
-    CappList *ptr=NULL;
-
-    if (space == NULL || name == NULL ||
-        tag == NULL || status == NULL) return;
-
-    if (*list == NULL) { /* First entry */
-        *list = (CappList *)calloc(1, sizeof(CappList));
-        if (*list == NULL) return;
-        ptr = *list;
-    } else {
-        (*list)->next = (CappList *)calloc(1, sizeof(CappList));
-        if ((*list)->next == NULL) return;
-        ptr = (*list)->next;
-    }
-
-    ptr->capp          = (Capp *)calloc(1, sizeof(Capp));
-    ptr->capp->runtime = (CappRuntime *)calloc(1, sizeof(CappRuntime));
-
-    ptr->capp->name            = strdup(name);
-    ptr->capp->tag             = strdup(tag);
-    ptr->capp->space           = strdup(space);
-    ptr->capp->runtime->status = strdup(status);
-    ptr->capp->runtime->pid    = pid;
-    ptr->capp->runtime->memory = -1;
-    ptr->capp->runtime->disk   = -1;
-    ptr->capp->runtime->memory = -1;
 }
 
 static bool get_json_entry(json_t *json, char *key, json_type type,
