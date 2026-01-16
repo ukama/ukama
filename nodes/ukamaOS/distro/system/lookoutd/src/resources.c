@@ -67,7 +67,6 @@ int get_disk_usage(int pid) {
     return bytes;
 }
 
-
 double get_cpu_usage(int pid) {
 
     FILE *file = NULL;
