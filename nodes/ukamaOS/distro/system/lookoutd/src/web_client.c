@@ -504,12 +504,12 @@ int send_health_report(Config *config) {
     return ret;
 }
 
-static void add_capp_to_list(CappList **list,
-                             const char *space,
-                             const char *name,
-                             const char *tag,
-                             const char *status,
-                             int pid) {
+void add_capp_to_list(CappList **list,
+                      const char *space,
+                      const char *name,
+                      const char *tag,
+                      const char *status,
+                      int pid) {
 
     CappList *newEntry = NULL;
     CappList *tail = NULL;
