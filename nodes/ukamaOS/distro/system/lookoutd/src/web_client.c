@@ -504,37 +504,62 @@ int send_health_report(Config *config) {
     return ret;
 }
 
-void add_capp_to_list(CappList **list,
-                      const char *space,
-                      const char *name,
-                      const char *tag,
-                      const char *status,
-                      int pid) {
+static void add_capp_to_list(CappList **list,
+                             const char *space,
+                             const char *name,
+                             const char *tag,
+                             const char *status,
+                             int pid) {
 
-    CappList *ptr=NULL;
+    CappList *newEntry = NULL;
+    CappList *tail = NULL;
 
-    if (space == NULL || name == NULL ||
-        tag == NULL || status == NULL) return;
-
-    if (*list == NULL) { /* First entry */
-        *list = (CappList *)calloc(1, sizeof(CappList));
-        if (*list == NULL) return;
-        ptr = *list;
-    } else {
-        (*list)->next = (CappList *)calloc(1, sizeof(CappList));
-        if ((*list)->next == NULL) return;
-        ptr = (*list)->next;
+    if (list == NULL || space == NULL || name == NULL || tag == NULL || status == NULL) {
+        return;
     }
 
-    ptr->capp          = (Capp *)calloc(1, sizeof(Capp));
-    ptr->capp->runtime = (CappRuntime *)calloc(1, sizeof(CappRuntime));
+    newEntry = (CappList *)calloc(1, sizeof(CappList));
+    if (newEntry == NULL) {
+        return;
+    }
 
-    ptr->capp->name            = strdup(name);
-    ptr->capp->tag             = strdup(tag);
-    ptr->capp->space           = strdup(space);
-    ptr->capp->runtime->status = strdup(status);
-    ptr->capp->runtime->pid    = pid;
-    ptr->capp->runtime->memory = -1;
-    ptr->capp->runtime->disk   = -1;
-    ptr->capp->runtime->memory = -1;
+    newEntry->capp = (Capp *)calloc(1, sizeof(Capp));
+    if (newEntry->capp == NULL) {
+        free(newEntry);
+        return;
+    }
+
+    newEntry->capp->runtime = (CappRuntime *)calloc(1, sizeof(CappRuntime));
+    if (newEntry->capp->runtime == NULL) {
+        free(newEntry->capp);
+        free(newEntry);
+        return;
+    }
+
+    newEntry->capp->name  = strdup(name);
+    newEntry->capp->tag   = strdup(tag);
+    newEntry->capp->space = strdup(space);
+
+    newEntry->capp->runtime->status = strdup(status);
+    newEntry->capp->runtime->pid    = pid;
+
+    newEntry->capp->runtime->memory = -1;
+    newEntry->capp->runtime->disk   = -1;
+    newEntry->capp->runtime->cpu    = -1;
+
+    newEntry->next = NULL;
+
+    /* First entry */
+    if (*list == NULL) {
+        *list = newEntry;
+        return;
+    }
+
+    /* Append to tail */
+    tail = *list;
+    while (tail->next != NULL) {
+        tail = tail->next;
+    }
+
+    tail->next = newEntry;
 }
