@@ -22,8 +22,19 @@ import (
 	lpb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
 	lmocks "github.com/ukama/ukama/systems/init/lookup/pb/gen/mocks"
 )
- 
- func TestGetNodeCredentials(t *testing.T) {
+
+const (
+	testOrgName     = "test-org"
+	testNodeID123   = "test-node-123"
+	testNodeID456   = "test-node-456"
+	testNodeID789   = "test-node-789"
+	testNodeID101   = "test-node-101"
+	testNodeID202   = "test-node-202"
+	testNodeID303   = "test-node-303"
+	unknownOrgName  = "unknown-org"
+)
+
+func TestGetNodeCredentials(t *testing.T) {
 	 tests := []struct {
 		 name           string
 		 nodeID         string
@@ -31,17 +42,17 @@ import (
 		 expectedResult *pb.GetNodeCredentialsResponse
 		 expectedError  error
 	 }{
-		 {
-			 name:   "Success - Node with org name and messaging system",
-			 nodeID: "test-node-123",
-			 setupMocks: func(factoryMock *mbmocks.NodeFactoryClient, lookupMock *mocks.LookupClientProvider, msgBusMock *mbmocks.MsgBusServiceClient) {
-				 // Setup factory mock to return a node with org name
-				 factoryMock.On("Get", "test-node-123").Return(&factory.Node{
-					 Node: factory.NodeFactoryInfo{
-						 Id:      "test-node-123",
-						 OrgName: "test-org",
-					 },
-				 }, nil)
+		{
+			name:   "Success - Node with org name and messaging system",
+			nodeID: testNodeID123,
+			setupMocks: func(factoryMock *mbmocks.NodeFactoryClient, lookupMock *mocks.LookupClientProvider, msgBusMock *mbmocks.MsgBusServiceClient) {
+				// Setup factory mock to return a node with org name
+				factoryMock.On("Get", testNodeID123).Return(&factory.Node{
+					Node: factory.NodeFactoryInfo{
+						Id:      testNodeID123,
+						OrgName: testOrgName,
+					},
+				}, nil)
  
 				 // Setup lookup client provider mock
 				 lookupClientMock := &lmocks.LookupServiceClient{}
@@ -52,63 +63,54 @@ import (
 					 OrgName:    "test-org",
 					 SystemName: "messaging",
 				 }).Return(&lpb.GetSystemResponse{
-					 Ip:          "192.168.1.100",
+					 ApiGwIp:     "192.168.1.100",
 					 Certificate: "test-certificate-data",
 				 }, nil)
 			 },
 			 expectedResult: &pb.GetNodeCredentialsResponse{
 				 Id:          "test-node-123",
 				 OrgName:     "test-org",
-				 Ip:          "192.168.1.100",
+				 Ip:          "127.0.0.1",
 				 Certificate: "test-certificate-data",
 			 },
 			 expectedError: nil,
 		 },
-		 {
-			 name:   "Success - Node without org name",
-			 nodeID: "test-node-456",
-			 setupMocks: func(factoryMock *mbmocks.NodeFactoryClient, lookupMock *mocks.LookupClientProvider, msgBusMock *mbmocks.MsgBusServiceClient) {
-				 // Setup factory mock to return a node without org name
-				 factoryMock.On("Get", "test-node-456").Return(&factory.Node{
-					 Node: factory.NodeFactoryInfo{
-						 Id:      "test-node-456",
-						 OrgName: "",
-					 },
-				 }, nil)
- 
-				 // Setup lookup client provider mock (it's always called)
-				 lookupClientMock := &lmocks.LookupServiceClient{}
-				 lookupMock.On("GetClient").Return(lookupClientMock, nil)
-			 },
-			 expectedResult: &pb.GetNodeCredentialsResponse{
-				 Id:          "test-node-456",
-				 OrgName:     "",
-				 Ip:          "",
-				 Certificate: "",
-			 },
-			 expectedError: nil,
-		 },
-		 {
-			 name:   "Error - Factory client fails",
-			 nodeID: "test-node-789",
-			 setupMocks: func(factoryMock *mbmocks.NodeFactoryClient, lookupMock *mocks.LookupClientProvider, msgBusMock *mbmocks.MsgBusServiceClient) {
-				 // Setup factory mock to return an error
-				 factoryMock.On("Get", "test-node-789").Return(nil, errors.New("factory service unavailable"))
+		{
+			name:   "Error - Node without org name",
+			nodeID: testNodeID456,
+			setupMocks: func(factoryMock *mbmocks.NodeFactoryClient, lookupMock *mocks.LookupClientProvider, msgBusMock *mbmocks.MsgBusServiceClient) {
+				// Setup factory mock to return a node without org name
+				factoryMock.On("Get", testNodeID456).Return(&factory.Node{
+					Node: factory.NodeFactoryInfo{
+						Id:      testNodeID456,
+						OrgName: "",
+					},
+				}, nil)
+			},
+			expectedResult: nil,
+			expectedError:  errors.New("rpc error: code = FailedPrecondition desc = Node is not provisioned in any org"),
+		},
+		{
+			name:   "Error - Factory client fails",
+			nodeID: testNodeID789,
+			setupMocks: func(factoryMock *mbmocks.NodeFactoryClient, lookupMock *mocks.LookupClientProvider, msgBusMock *mbmocks.MsgBusServiceClient) {
+				// Setup factory mock to return an error
+				factoryMock.On("Get", testNodeID789).Return(nil, errors.New("factory service unavailable"))
 			 },
 			 expectedResult: nil,
 			 expectedError:  errors.New("factory service unavailable"),
 		 },
-		 {
-			 name:   "Error - Lookup client provider fails",
-			 nodeID: "test-node-101",
-			 setupMocks: func(factoryMock *mbmocks.NodeFactoryClient, lookupMock *mocks.LookupClientProvider, msgBusMock *mbmocks.MsgBusServiceClient) {
-				 // Setup factory mock to return a node with org name
-				 factoryMock.On("Get", "test-node-101").Return(&factory.Node{
-					 Node: factory.NodeFactoryInfo{
-						 Id:      "test-node-101",
-						 OrgName: "test-org",
-					 },
-				 }, nil)
+		{
+			name:   "Error - Lookup client provider fails",
+			nodeID: testNodeID101,
+			setupMocks: func(factoryMock *mbmocks.NodeFactoryClient, lookupMock *mocks.LookupClientProvider, msgBusMock *mbmocks.MsgBusServiceClient) {
+				// Setup factory mock to return a node with org name
+				factoryMock.On("Get", testNodeID101).Return(&factory.Node{
+					Node: factory.NodeFactoryInfo{
+						Id:      testNodeID101,
+						OrgName: testOrgName,
+					},
+				}, nil)
  
 				 // Setup lookup client provider mock to return an error
 				 lookupMock.On("GetClient").Return(nil, errors.New("lookup service connection failed"))
@@ -116,36 +118,46 @@ import (
 			 expectedResult: nil,
 			 expectedError:  errors.New("lookup service connection failed"),
 		 },
-		 {
-			 name:   "Success - Lookup service fails but response still returned",
-			 nodeID: "test-node-202",
-			 setupMocks: func(factoryMock *mbmocks.NodeFactoryClient, lookupMock *mocks.LookupClientProvider, msgBusMock *mbmocks.MsgBusServiceClient) {
-				 // Setup factory mock to return a node with org name
-				 factoryMock.On("Get", "test-node-202").Return(&factory.Node{
-					 Node: factory.NodeFactoryInfo{
-						 Id:      "test-node-202",
-						 OrgName: "test-org",
-					 },
-				 }, nil)
- 
-				 // Setup lookup client provider mock
-				 lookupClientMock := &lmocks.LookupServiceClient{}
-				 lookupMock.On("GetClient").Return(lookupClientMock, nil)
- 
-				 // Setup lookup service mock to return an error
-				 lookupClientMock.On("GetSystemForOrg", mock.Anything, &lpb.GetSystemRequest{
-					 OrgName:    "test-org",
-					 SystemName: "messaging",
-				 }).Return(nil, errors.New("messaging system not found"))
-			 },
-			 expectedResult: &pb.GetNodeCredentialsResponse{
-				 Id:          "test-node-202",
-				 OrgName:     "test-org",
-				 Ip:          "",
-				 Certificate: "",
-			 },
-			 expectedError: nil,
-		 },
+		{
+			name:   "Error - Lookup service fails",
+			nodeID: testNodeID202,
+			setupMocks: func(factoryMock *mbmocks.NodeFactoryClient, lookupMock *mocks.LookupClientProvider, msgBusMock *mbmocks.MsgBusServiceClient) {
+				// Setup factory mock to return a node with org name
+				factoryMock.On("Get", testNodeID202).Return(&factory.Node{
+					Node: factory.NodeFactoryInfo{
+						Id:      testNodeID202,
+						OrgName: testOrgName,
+					},
+				}, nil)
+
+				// Setup lookup client provider mock
+				lookupClientMock := &lmocks.LookupServiceClient{}
+				lookupMock.On("GetClient").Return(lookupClientMock, nil)
+
+				// Setup lookup service mock to return an error
+				lookupClientMock.On("GetSystemForOrg", mock.Anything, &lpb.GetSystemRequest{
+					OrgName:    testOrgName,
+					SystemName: "messaging",
+				}).Return(nil, errors.New("messaging system not found"))
+			},
+			expectedResult: nil,
+			expectedError:  errors.New("messaging system not found"),
+		},
+		{
+			name:   "Error - DNS not found in map",
+			nodeID: testNodeID303,
+			setupMocks: func(factoryMock *mbmocks.NodeFactoryClient, lookupMock *mocks.LookupClientProvider, msgBusMock *mbmocks.MsgBusServiceClient) {
+				// Setup factory mock to return a node with org name not in DNS map
+				factoryMock.On("Get", testNodeID303).Return(&factory.Node{
+					Node: factory.NodeFactoryInfo{
+						Id:      testNodeID303,
+						OrgName: unknownOrgName,
+					},
+				}, nil)
+			},
+			expectedResult: nil,
+			expectedError:  errors.New("rpc error: code = NotFound desc = DNS is not found for org " + unknownOrgName),
+		},
 	 }
  
 	 for _, tt := range tests {
@@ -155,38 +167,39 @@ import (
 			 lookupMock := mocks.NewLookupClientProvider(t)
 			 msgBusMock := mbmocks.NewMsgBusServiceClient(t)
  
-			 // Setup mocks
-			 tt.setupMocks(factoryMock, lookupMock, msgBusMock)
- 
-			 // Create server instance
-			 server := NewBootstrapServer("test-org", msgBusMock, false, lookupMock, factoryMock)
- 
-			 // Create request
-			 req := &pb.GetNodeCredentialsRequest{
-				 Id: tt.nodeID,
-			 }
- 
-			 // Call the method
-			 result, err := server.GetNodeCredentials(context.Background(), req)
- 
-			 // Assertions
-			 if tt.expectedError != nil {
-				 assert.Error(t, err)
-				 assert.Equal(t, tt.expectedError.Error(), err.Error())
-				 assert.Nil(t, result)
-			 } else {
-				 assert.NoError(t, err)
-				 assert.NotNil(t, result)
-				 assert.Equal(t, tt.expectedResult.Id, result.Id)
-				 assert.Equal(t, tt.expectedResult.OrgName, result.OrgName)
-				 assert.Equal(t, tt.expectedResult.Ip, result.Ip)
-				 assert.Equal(t, tt.expectedResult.Certificate, result.Certificate)
-			 }
- 
-			 // Verify all mocks were called as expected
-			 factoryMock.AssertExpectations(t)
-			 lookupMock.AssertExpectations(t)
-			 msgBusMock.AssertExpectations(t)
+			// Setup mocks
+			tt.setupMocks(factoryMock, lookupMock, msgBusMock)
+
+			// Create server instance with DNS map - use localhost which will always resolve
+			dnsMap := map[string]string{testOrgName: "localhost"}
+			server := NewBootstrapServer(testOrgName, msgBusMock, false, lookupMock, factoryMock, dnsMap)
+
+			// Create request
+			req := &pb.GetNodeCredentialsRequest{
+				Id: tt.nodeID,
+			}
+
+			// Call the method
+			result, err := server.GetNodeCredentials(context.Background(), req)
+
+			// Assertions
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+				assert.Equal(t, tt.expectedError.Error(), err.Error())
+				assert.Nil(t, result)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+				assert.Equal(t, tt.expectedResult.Id, result.Id)
+				assert.Equal(t, tt.expectedResult.OrgName, result.OrgName)
+				assert.Equal(t, tt.expectedResult.Ip, result.Ip)
+				assert.Equal(t, tt.expectedResult.Certificate, result.Certificate)
+			}
+
+			// Verify all mocks were called as expected
+			factoryMock.AssertExpectations(t)
+			lookupMock.AssertExpectations(t)
+			// msgBusMock is not used in GetNodeCredentials, so we don't assert expectations
 		 })
 	 }
  }

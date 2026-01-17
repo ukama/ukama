@@ -13,6 +13,7 @@
 #include "lookout.h"
 #include "errorcode.h"
 #include "json_types.h"
+#include "web_client.h"
 
 #include "usys_error.h"
 #include "usys_log.h"
@@ -35,41 +36,6 @@ void json_log(json_t *json) {
         log_debug("json str: %s", str);
         free(str);
     }
-}
-
-static void add_capp_to_list(CappList **list,
-                             const char *space,
-                             const char *name,
-                             const char *tag,
-                             const char *status,
-                             int pid) {
-
-    CappList *ptr=NULL;
-
-    if (space == NULL || name == NULL ||
-        tag == NULL || status == NULL) return;
-
-    if (*list == NULL) { /* First entry */
-        *list = (CappList *)calloc(1, sizeof(CappList));
-        if (*list == NULL) return;
-        ptr = *list;
-    } else {
-        (*list)->next = (CappList *)calloc(1, sizeof(CappList));
-        if ((*list)->next == NULL) return;
-        ptr = (*list)->next;
-    }
-
-    ptr->capp          = (Capp *)calloc(1, sizeof(Capp));
-    ptr->capp->runtime = (CappRuntime *)calloc(1, sizeof(CappRuntime));
-
-    ptr->capp->name            = strdup(name);
-    ptr->capp->tag             = strdup(tag);
-    ptr->capp->space           = strdup(space);
-    ptr->capp->runtime->status = strdup(status);
-    ptr->capp->runtime->pid    = pid;
-    ptr->capp->runtime->memory = -1;
-    ptr->capp->runtime->disk   = -1;
-    ptr->capp->runtime->memory = -1;
 }
 
 static bool get_json_entry(json_t *json, char *key, json_type type,
@@ -280,20 +246,75 @@ static void json_add_system_info_to_report(JsonObj **json) {
     json_array_append_new(jArray, jRadio);
 }
 
+static void json_add_gps_info_to_report(JsonObj **json, GPSClientData *gps) {
+
+    JsonObj *jArray = NULL;
+    JsonObj *jEntry = NULL;
+
+    const char *lockStr = "false";
+    const char *coord   = "";
+    const char *timeStr = "";
+
+    if (json == NULL || *json == NULL || gps == NULL) return;
+
+    jArray = json_object_get(*json, JTAG_SYSTEM);
+    if (jArray == NULL || !json_is_array(jArray)) return;
+
+    if (gps->gpsLock == USYS_TRUE) {
+        lockStr = "true";
+
+        if (gps->coordinates && gps->coordinates[0] != '\0') {
+            coord = gps->coordinates;
+        }
+
+        if (gps->gpsTime && gps->gpsTime[0] != '\0') {
+            timeStr = gps->gpsTime;
+        }
+    }
+
+    /* coordinates */
+    jEntry = json_object();
+    json_object_set_new(jEntry, JTAG_NAME,  json_string("coordinates"));
+    json_object_set_new(jEntry, JTAG_VALUE, json_string(coord));
+    json_array_append_new(jArray, jEntry);
+
+    /* gpsLock */
+    jEntry = json_object();
+    json_object_set_new(jEntry, JTAG_NAME,  json_string("gpsLock"));
+    json_object_set_new(jEntry, JTAG_VALUE, json_string(lockStr));
+    json_array_append_new(jArray, jEntry);
+
+    /* gpsTime */
+    jEntry = json_object();
+    json_object_set_new(jEntry, JTAG_NAME,  json_string("gpsTime"));
+    json_object_set_new(jEntry, JTAG_VALUE, json_string(timeStr));
+    json_array_append_new(jArray, jEntry);
+}
 /*
-http://localhost:8080/v1/health/{nodeID}
 {
-  "nodeID" : "ukma-xx-xxx-xxxx-xxx"
+  "nodeID": "ukma-xx-xxx-xxxx-xxx",
   "timestamp": "12345678",
   "system": [
     {
       "name": "radio",
       "value": "off"
+    },
+    {
+      "name": "coordinates",
+      "value": "90.0000, 0.00000"
+    },
+    {
+      "name": "gpsLock",
+      "value": "true"
+    },
+    {
+      "name": "gpsTime",
+      "value": "123456789"
     }
   ],
   "capps": [
     {
-      "space" : "boot",
+      "space": "boot",
       "name": "bootstrap",
       "tag": "0.0.1",
       "status": "run",
@@ -309,11 +330,12 @@ http://localhost:8080/v1/health/{nodeID}
       ]
     }
   ]
-}
+  }
 */
 bool json_serialize_health_report(JsonObj **json,
                                   char *nodeID,
-                                  CappList *list) {
+                                  CappList *list,
+                                  GPSClientData *gps) {
 
     JsonObj *jArray     = NULL;
     JsonObj *jCapp      = NULL;
@@ -346,12 +368,16 @@ bool json_serialize_health_report(JsonObj **json,
         return USYS_FALSE;
     }
 
-    for (ptr = list; ptr; ptr=ptr->next) {
+    for (ptr = list; ptr; ptr = ptr->next) {
         capp = ptr->capp;
 
         jCapp      = json_object();
         jResources = json_object();
-        if (jCapp == NULL || jResources == NULL) return USYS_FALSE;
+        if (jCapp == NULL || jResources == NULL) {
+            json_decref(*json);
+            *json = NULL;
+            return USYS_FALSE;
+        }
 
         json_object_set_new(jCapp,
                             JTAG_SPACE,
@@ -372,6 +398,11 @@ bool json_serialize_health_report(JsonObj **json,
 
     /* system */
     json_add_system_info_to_report(json);
+
+    /* gps */
+    if (gps != NULL) {
+        json_add_gps_info_to_report(json, gps);
+    }
 
     return USYS_TRUE;
 }

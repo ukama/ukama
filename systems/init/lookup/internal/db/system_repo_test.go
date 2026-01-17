@@ -137,11 +137,11 @@ func Test_systemRepo_Add(t *testing.T) {
 		system := int_db.System{
 			Name:        "sys",
 			Certificate: "sys_certs",
-			Ip:          dIp,
-			Port:        100,
+			ApiGwIp:     dIp,
+			ApiGwPort:   8080,
 			Uuid:        uuid.NewV4().String(),
 			OrgID:       orgId,
-			Health:      100,
+			ApiGwHealth: 100,
 		}
 
 		var db *extsql.DB
@@ -151,7 +151,7 @@ func Test_systemRepo_Add(t *testing.T) {
 
 		mock.ExpectBegin()
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).
-			WithArgs(sqlmock.AnyArg(), system.Name, system.Uuid, system.Certificate, system.Ip, system.Port, system.OrgID, system.Health, system.OrgID, system.Name).
+			WithArgs(sqlmock.AnyArg(), system.Name, system.Uuid, system.Certificate, system.ApiGwIp, system.ApiGwPort, system.OrgID, system.ApiGwHealth, system.OrgID, system.Name).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
 		mock.ExpectCommit()
@@ -197,11 +197,11 @@ func Test_systemRepo_Update(t *testing.T) {
 		system := int_db.System{
 			Name:        "sys",
 			Certificate: "sys_certs",
-			Ip:          dIp,
-			Port:        100,
+			ApiGwIp:     dIp,
+			ApiGwPort:   8080,
 			Uuid:        uuid.NewV4().String(),
 			OrgID:       orgId,
-			Health:      100,
+			ApiGwHealth: 100,
 		}
 
 		var db *extsql.DB
@@ -212,7 +212,7 @@ func Test_systemRepo_Update(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).
-			WithArgs(sqlmock.AnyArg(), system.Name, system.Uuid, system.Certificate, system.Ip, system.Port, system.OrgID, system.Health, system.Name, system.OrgID).
+			WithArgs(sqlmock.AnyArg(), system.Name, system.Uuid, system.Certificate, system.ApiGwIp, system.ApiGwPort, system.OrgID, system.ApiGwHealth, system.Name, system.OrgID).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()

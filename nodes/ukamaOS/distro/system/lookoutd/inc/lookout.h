@@ -71,4 +71,12 @@ typedef struct _cappList {
     struct _cappList *next;
 } CappList;
 
+
+typedef struct {
+
+    bool  gpsLock;
+    char *coordinates; /* "lon,lat" */
+    char *gpsTime;     /* string */
+} GPSClientData;
+
 #endif /* LOOKOUT_H_ */

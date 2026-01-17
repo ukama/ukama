@@ -316,8 +316,8 @@ func TestRouter_GetSystem(t *testing.T) {
 		SystemName:  sys,
 		SystemId:    sysId,
 		Certificate: "helloOrg",
-		Ip:          "0.0.0.0",
-		Port:        100,
+		ApiGwIp:     "0.0.0.0",
+		ApiGwPort:   100,
 	}, nil)
 
 	arc := &cmocks.AuthClient{}
@@ -341,7 +341,7 @@ func TestRouter_AddSystem(t *testing.T) {
 	sys := "sys"
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("PUT", "/v1/orgs/org-name/systems/"+sys,
-		strings.NewReader(`{ "org":"org-name", "system":"sys", "ip":"0.0.0.0", "certificate":"certs", "port":100, "url":"http://localhost:8080"}`))
+		strings.NewReader(`{ "org":"org-name", "system":"sys", "apiGwIp":"0.0.0.0", "certificate":"certs", "apiGwPort":100, "apiGwUrl":"http://localhost:8080"}`))
 
 	m := &lmocks.LookupServiceClient{}
 
@@ -349,9 +349,9 @@ func TestRouter_AddSystem(t *testing.T) {
 		SystemName:  sys,
 		OrgName:     "org-name",
 		Certificate: "certs",
-		Ip:          "0.0.0.0",
-		Port:        100,
-		Url:         "http://localhost:8080",
+		ApiGwIp:     "0.0.0.0",
+		ApiGwPort:   100,
+		ApiGwUrl:    "http://localhost:8080",
 	}
 
 	m.On("AddSystemForOrg", mock.Anything, sysReq).Return(&pb.AddSystemResponse{}, nil)
@@ -375,7 +375,7 @@ func TestRouter_UpdateSystem(t *testing.T) {
 	sys := "sys"
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("PATCH", "/v1/orgs/org-name/systems/"+sys,
-		strings.NewReader(`{ "ip":"127.0.0.1", "certificate":"updated_certs", "port":101}`))
+		strings.NewReader(`{ "apiGwIp":"127.0.0.1", "certificate":"updated_certs", "apiGwPort":101}`))
 
 	m := &lmocks.LookupServiceClient{}
 
@@ -383,8 +383,8 @@ func TestRouter_UpdateSystem(t *testing.T) {
 		SystemName:  sys,
 		OrgName:     "org-name",
 		Certificate: "updated_certs",
-		Ip:          "127.0.0.1",
-		Port:        101,
+		ApiGwIp:     "127.0.0.1",
+		ApiGwPort:   101,
 	}
 
 	m.On("UpdateSystemForOrg", mock.Anything, sysReq).Return(&pb.UpdateSystemResponse{}, nil)
