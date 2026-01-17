@@ -1,0 +1,51 @@
+/*
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at https://mozilla.org/MPL/2.0/.
+*
+* Copyright (c) 2026-present, Ukama Inc.
+*/
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
+
+package ukama.events.v1;
+ 
+message StoreRunningAppsInfoEvent {
+    string nodeId = 1;
+    string timestamp = 2;
+    repeated System system = 3;
+    repeated Capps  capps = 4;
+}
+ 
+message Capps {
+    string id = 1;
+    string space = 2;
+    string name = 3;
+    string tag = 4;
+    Status status = 5;
+    repeated Resource resources = 6;
+}
+ 
+message System {
+    string id = 1;
+    string healthId = 2;
+    string name = 3;
+    string value = 4;
+}
+ 
+message Resource {
+    string id = 1;
+    string cappId = 2;
+    string name = 3;
+    string value = 4;
+}
+ 
+enum Status {
+    PENDING =0;
+    ACTIVE=1;
+    DONE=2;
+    UNKNOWN=3;
+}
+ 
