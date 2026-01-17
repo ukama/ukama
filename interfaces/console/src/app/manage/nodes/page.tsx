@@ -64,15 +64,15 @@ const Page = () => {
   );
 
   const transformedData = useMemo(() => {
-    if (!nodes?.getNodes.nodes || !sites?.getSites.sites) {
+    if (!nodes?.getNodes.nodes) {
       return [];
     }
 
     return nodes.getNodes.nodes.map((node) => ({
       id: node.id,
       network: node.site.networkId
-        ? (sites.getSites.sites.find((site) => site.id === node.site.networkId)
-          ?.name ?? '-')
+        ? (sites?.getSites.sites.find((site) => site.id === node.site.networkId)
+            ?.name ?? '-')
         : '-',
       state: node.status.state,
       site: getSiteName(node.site.siteId),
