@@ -12,13 +12,13 @@ export const dtoToSystenResDto = (
 ): InitSystemAPIResDto => {
   return {
     certificate: res.certificate,
-    health: res.health,
-    ip: res.ip,
+    apiGwHealth: res.apiGwHealth,
+    apiGwIp: res.apiGwIp,
+    apiGwUrl: res.apiGwUrl,
+    apiGwPort: res.apiGwPort,
     orgName: res.orgName,
-    port: res.port,
     systemId: res.systemId,
     systemName: res.systemName,
-    url: res.url,
   };
 };
 
