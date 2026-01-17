@@ -10,7 +10,6 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -54,13 +53,13 @@ func (n *NodeEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 		if err != nil {
 			return nil, err
 		}
-	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.node.notify.notification.store"):
+	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.node.health.capps.store"):
 		c := evt.EventToEventConfig[evt.EventPaymentFailed]
-		msg, err := epb.UnmarshalNotification(e.Msg, c.Name)
+		msg, err := epb.UnmarshalStoreRunningAppsInfoEvent(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
-		err = n.handleNotifyEvent(ctx, e.RoutingKey, msg)
+		err = n.handleStoreRunningAppsInfoEvent(ctx, e.RoutingKey, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -91,28 +90,9 @@ func (n *NodeEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 	return &epb.EventResponse{}, nil
 }
 
-func (n *NodeEventServer) handleNotifyEvent(ctx context.Context, key string, msg *epb.Notification) error {
-	log.Infof("Keys %s and Proto is: %+v", key, msg)
-	var details map[string]interface{}
-	if err := json.Unmarshal(msg.Details, &details); err != nil {
-		log.WithError(err).Error("Failed to unmarshal details")
-		return err
-	}
-	coordinates := details["coordinates"]
-	if coordinates == nil {
-		log.Errorf("Coordinates key not found in details")
-		return fmt.Errorf("coordinates key not found in details")
-	}
-	lat, err := strconv.ParseFloat(strings.Split(coordinates.(string), ",")[0], 64)
-	if err != nil {
-		log.Errorf("Failed to parse latitude: %v", err)
-		return fmt.Errorf("failed to parse latitude: %w", err)
-	}
-	lon, err := strconv.ParseFloat(strings.Split(coordinates.(string), ",")[1], 64)
-	if err != nil {
-		log.Errorf("Failed to parse longitude: %v", err)
-		return fmt.Errorf("failed to parse longitude: %w", err)
-	}
+func (n *NodeEventServer) handleStoreRunningAppsInfoEvent(ctx context.Context, key string, msg *epb.StoreRunningAppsInfoEvent) error {
+	log.Infof("Processing store running apps info event: %s, nodeID: %s, timestamp: %s",
+		key, msg.NodeId, msg.Timestamp)
 
 	node, err := n.s.GetNode(ctx, &pb.GetNodeRequest{NodeId: msg.NodeId})
 	if err != nil {
@@ -123,6 +103,23 @@ func (n *NodeEventServer) handleNotifyEvent(ctx context.Context, key string, msg
 		log.Errorf("Node not found")
 		return fmt.Errorf("node not found")
 	}
+	
+	coordinates := ""
+	for _, system := range msg.System {
+		if system.Name == "coordinates" {
+			coordinates = system.Value
+			break
+		}
+	}
+	if coordinates == "" {
+		log.Errorf("Coordinates not found")
+		return fmt.Errorf("coordinates not found")
+	}
+	lat, lon, err := parseCoordinates(coordinates)
+	if err != nil {
+		log.Errorf("Failed to parse coordinates: %v", err)
+		return fmt.Errorf("failed to parse coordinates: %w", err)
+	}
 	if node.Node.Latitude == lat && node.Node.Longitude == lon {
 		log.Infof("Node %s already has latitude=%f, longitude=%f",
 			msg.NodeId, lat, lon)
@@ -130,17 +127,15 @@ func (n *NodeEventServer) handleNotifyEvent(ctx context.Context, key string, msg
 	}
 	log.Infof("Updating node %s: latitude=%f, longitude=%f",
 		msg.NodeId, lat, lon)
-
 	updateRequest := &pb.UpdateNodeRequest{
 		NodeId:    msg.NodeId,
 		Latitude:  lat,
 		Longitude: lon,
 	}
-
 	_, err = n.s.UpdateNode(ctx, updateRequest)
 	if err != nil {
 		log.WithError(err).Error("Failed to update node")
-		return err
+		return fmt.Errorf("failed to update node: %w", err)
 	}
 	return nil
 }
@@ -215,4 +210,34 @@ func (n *NodeEventServer) handleAddNode(ctx context.Context, key string, msg *ep
 		return fmt.Errorf("failed to add node: %w", err)
 	}
 	return nil
+}
+
+func parseCoordinates(coordinates string) (float64, float64, error) {
+	if coordinates == "" {
+		return 0, 0, fmt.Errorf("coordinates string is empty")
+	}
+
+	parts := strings.Split(coordinates, ",")
+	if len(parts) != 2 {
+		return 0, 0, fmt.Errorf("invalid coordinates format: expected 'lat,lon', got %d parts", len(parts))
+	}
+
+	latStr := strings.TrimSpace(parts[0])
+	lonStr := strings.TrimSpace(parts[1])
+
+	if latStr == "" || lonStr == "" {
+		return 0, 0, fmt.Errorf("invalid coordinates: latitude or longitude is empty")
+	}
+
+	lat, err := strconv.ParseFloat(latStr, 64)
+	if err != nil {
+		return 0, 0, fmt.Errorf("failed to parse latitude '%s': %w", latStr, err)
+	}
+
+	lon, err := strconv.ParseFloat(lonStr, 64)
+	if err != nil {
+		return 0, 0, fmt.Errorf("failed to parse longitude '%s': %w", lonStr, err)
+	}
+
+	return lat, lon, nil
 }
