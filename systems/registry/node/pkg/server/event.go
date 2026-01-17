@@ -54,7 +54,7 @@ func (n *NodeEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 			return nil, err
 		}
 	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.node.health.capps.store"):
-		c := evt.EventToEventConfig[evt.EventPaymentFailed]
+		c := evt.EventToEventConfig[evt.EventHealthCappStore]
 		msg, err := epb.UnmarshalStoreRunningAppsInfoEvent(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
