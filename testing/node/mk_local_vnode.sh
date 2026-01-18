@@ -228,6 +228,7 @@ ubuntu_setup() {
     install_candidates "unistring dev headers"  libunistring-dev
     install_candidates "microhttpd dev headers" libmicrohttpd-dev
 
+    install_candidates "zlib dev headers" zlib1g-dev
     install_candidates "curl dev headers" libcurl4-gnutls-dev libcurl4-openssl-dev
     install_candidates "ssl dev headers"  libssl-dev
 
