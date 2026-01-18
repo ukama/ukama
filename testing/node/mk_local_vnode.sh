@@ -33,58 +33,69 @@ BOOTSTRAP_SERVER="${BOOTSTRAP_SERVER:-dev.bootstrap.ukama.com}"
 DEFAULT_VNODE_ID="${DEFAULT_VNODE_ID:-uk-sa2601-tnode-v0-62f1}"
 
 DO_SETUP=0
+VNODE_ID=""
 
-# Always overwrite VNODE_METADATA with known-good JSON
 VNODE_METADATA=$(cat <<'JSON'
 {
-  "nodeInfo": {
-    "type": "hnode",
-    "partNumber": "",
-    "skew": "",
-    "mac": "",
-    "swVersion": "",
-    "mfgSwVersion": "",
-    "assemblyDate": "2022-05-09T14:08:02.985079028-07:00",
-    "oem": "",
-    "mfgTestStatus": "pending",
-    "status": "LabelGenerated"
-  },
-  "nodeConfig": [
-    {
-      "moduleID": "ukma-sa2219-trx-m0-e479",
-      "type": "trx",
-      "partNumber": "",
-      "hwVersion": "",
-      "mac": "",
-      "swVersion": "",
-      "mfgSwVersion": "",
-      "mfgDate": "2022-05-09T14:08:02.985112609-07:00",
-      "mfgName": "",
-      "status": "AssemblyCompleted"
-    }
-  ]
+    "nodeInfo": {
+        "type": "hnode",
+        "partNumber": "",
+        "skew": "",
+        "mac": "",
+        "swVersion": "",
+        "mfgSwVersion": "",
+        "assemblyDate": "2022-05-09T14:08:02.985079028-07:00",
+        "oem": "",
+        "mfgTestStatus": "pending",
+        "status": "LabelGenerated"
+    },
+    "nodeConfig": [
+        {
+            "moduleID": "ukma-sa2219-trx-m0-e479",
+            "type": "trx",
+            "partNumber": "",
+            "hwVersion": "",
+            "mac": "",
+            "swVersion": "",
+            "mfgSwVersion": "",
+            "mfgDate": "2022-05-09T14:08:02.985112609-07:00",
+            "mfgName": "",
+            "status": "AssemblyCompleted"
+        }
+    ]
 }
 JSON
 )
 export VNODE_METADATA
 
-VNODE_ID=""
-
 usage() {
-  cat <<EOF
+    cat <<EOF
 Usage:
-  $0 [--setup] [--node-id <id>|--node-id=<id>]
+    $0 [--setup] [--node-id <id>|--node-id=<id>]
 
 Options:
-  --setup              Install build tools + required runtime libs (Ubuntu apt).
-  --node-id <id>       Virtual node ID (default: $DEFAULT_VNODE_ID)
+    --setup              Install build tools + runtime libs (Ubuntu).
+    --node-id <id>       Virtual node ID (default: $DEFAULT_VNODE_ID)
 EOF
 }
 
-log()  { echo "[$(date +'%H:%M:%S')] $*"; }
-die()  { echo "ERROR: $*" >&2; exit 1; }
-have() { command -v "$1" >/dev/null 2>&1; }
-RUN()  { log "+ $*"; "$@"; }
+log() {
+    echo "[$(date +'%H:%M:%S')] $*"
+}
+
+die() {
+    echo "ERROR: $*" >&2
+    exit 1
+}
+
+have() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+RUN() {
+    log "+ $*"
+    "$@"
+}
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -114,10 +125,40 @@ done
 : "${VNODE_ID:=$DEFAULT_VNODE_ID}"
 export VNODE_ID BOOTSTRAP_SERVER
 
-ubuntu_setup() {
-    have sudo || die "sudo not found; can't run --setup"
+apt_has() {
+    apt-cache show "$1" >/dev/null 2>&1
+}
 
-    local BUILD_TOOLS=(
+install_candidates() {
+    local label="$1"
+    shift
+
+    local pkg
+    for pkg in "$@"; do
+        if apt_has "$pkg"; then
+            log "Using $label: $pkg"
+            APT_PKGS+=("$pkg")
+            return 0
+        fi
+    done
+
+    log "WARN: no candidate found for $label (tried: $*)"
+}
+
+ubuntu_setup() {
+    have sudo || die "sudo not found"
+
+    local codename="unknown"
+    if [[ -f /etc/os-release ]]; then
+        . /etc/os-release
+        codename="${VERSION_CODENAME:-unknown}"
+    fi
+
+    log "Detected Ubuntu codename: $codename"
+
+    RUN sudo apt-get update -y
+
+    local BASE_TOOLS=(
         git
         build-essential
         pkg-config
@@ -137,95 +178,95 @@ ubuntu_setup() {
         uidmap
         slirp4netns
         fuse-overlayfs
-  )
-
-    local RUNTIME_LIBS=(
-        libc6
-        libc-bin
-        zlib1g
-        libzstd1
-        libnghttp2-14
-        libpsl5
-        libcurl3-gnutls
-        libssh-4
-        librtmp1
-        libssl3
-        libgnutls30
-        libnettle8
-        libhogweed6
-        libp11-kit0
-        libtasn1-6
-        libidn2-0
-        libunistring2
-        libbrotli1
-        libkrb5-3
-        libgssapi-krb5-2
-        libk5crypto3
-        libkrb5support0
-        libkeyutils1
-        libldap-2.5-0
-        liblber-2.5-0
-        libsasl2-2
-        libffi8
-        libgmp10
-        libcom-err2
-        libsqlite3-0
-        libmicrohttpd12
     )
 
-    log "Running apt-get install for build tools, podman, and runtime libs..."
-    RUN sudo apt-get update -y
-    RUN sudo apt-get install -y "${BUILD_TOOLS[@]}" "${PODMAN_PKGS[@]}" "${RUNTIME_LIBS[@]}"
+    APT_PKGS=()
+    APT_PKGS+=("${BASE_TOOLS[@]}" "${PODMAN_PKGS[@]}")
+    APT_PKGS+=(libc6 libc-bin)
 
-    # Ensure submodules are available (safe no-op if already initialized)
+    install_candidates "zlib"    zlib1g
+    install_candidates "zstd"    libzstd1
+    install_candidates "nghttp2" libnghttp2-14
+    install_candidates "psl"     libpsl5t64 libpsl5
+    install_candidates "brotli"  libbrotli1
+
+    install_candidates "curl-gnutls" libcurl3t64-gnutls libcurl3-gnutls
+    install_candidates "libssh"      libssh-4
+    install_candidates "librtmp"     librtmp1
+
+    install_candidates "openssl"   libssl3t64 libssl3
+    install_candidates "gnutls"    libgnutls30t64 libgnutls30
+    install_candidates "nettle"    libnettle8t64 libnettle8
+    install_candidates "hogweed"   libhogweed6t64 libhogweed6
+    install_candidates "p11-kit"   libp11-kit0
+    install_candidates "tasn1"     libtasn1-6
+    install_candidates "idn2"      libidn2-0
+    install_candidates "unistring" libunistring5 libunistring2
+    install_candidates "ffi"       libffi8
+
+    install_candidates "krb5"        libkrb5-3
+    install_candidates "gssapi"      libgssapi-krb5-2
+    install_candidates "k5crypto"    libk5crypto3
+    install_candidates "krb5support" libkrb5support0
+    install_candidates "keyutils"    libkeyutils1
+    install_candidates "com-err"     libcom-err2
+
+    install_candidates "ldap" libldap2 libldap-2.5-0
+    install_candidates "lber" liblber2 liblber-2.5-0
+    install_candidates "sasl" libsasl2-2
+
+    install_candidates "sqlite"     libsqlite3-0
+    install_candidates "microhttpd" libmicrohttpd12t64 libmicrohttpd12
+    install_candidates "gmp"        libgmp10
+    
+    # ---- Build-time headers for Ulfius / GnuTLS stack ----
+    install_candidates "gnutls dev headers"     libgnutls28-dev
+    install_candidates "nettle dev headers"     nettle-dev
+    install_candidates "p11-kit dev headers"    libp11-kit-dev
+    install_candidates "tasn1 dev headers"      libtasn1-6-dev
+    install_candidates "idn2 dev headers"       libidn2-0-dev
+    install_candidates "unistring dev headers"  libunistring-dev
+    install_candidates "microhttpd dev headers" libmicrohttpd-dev
+
+    install_candidates "curl dev headers" libcurl4-gnutls-dev libcurl4-openssl-dev
+    install_candidates "ssl dev headers"  libssl-dev
+
+    RUN sudo apt-get install -y "${APT_PKGS[@]}"
+
     if [[ -d .git ]]; then
-        log "Initializing/updating git submodules..."
         RUN git submodule update --init --recursive
-    else
-        log "No .git directory here; skipping submodule init (run in repo root)."
     fi
 
-    log "Setup complete."
+    log "Setup complete"
 }
 
 if [[ "$DO_SETUP" -eq 1 ]]; then
-    if [[ -f /etc/os-release ]] && grep -qi ubuntu /etc/os-release; then
-        ubuntu_setup
-    else
-        die "--setup currently supports Ubuntu via apt-get only."
-    fi
+    ubuntu_setup
 fi
 
-### Main
+have podman || die "podman not installed"
 
 VERSION="$(make -s print-version)"
-[[ -n "$VERSION" ]] || die "make -s print-version returned empty VERSION"
-have podman         || die "podman not found. Run with --setup or install podman."
+[[ -n "$VERSION" ]] || die "VERSION empty"
 
 LOCAL_IMAGE="localhost/${REPO_SERVER_URL}/${REPO_NAME}:${VERSION}"
 REG_IMAGE="${REGISTRY}/${REPO_SERVER_URL}/${REPO_NAME}:${VERSION}"
-
 REGISTRY_NAME="ukama_local_registry"
 
 cleanup() {
-    set +e
     podman rm -f "$REGISTRY_NAME" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
-# Build the container image locally (podman build via Makefile)
 RUN make clean
 RUN make container
 
-# Start (or restart) local registry on port 5000 (podman-only)
 podman rm -f "$REGISTRY_NAME" >/dev/null 2>&1 || true
 RUN podman run -d --name "$REGISTRY_NAME" --network host registry:latest
 
-# Push the base image to the local registry
-RUN podman tag "${LOCAL_IMAGE}" "${REG_IMAGE}"
-RUN podman push --tls-verify=false "${REG_IMAGE}"
+RUN podman tag "$LOCAL_IMAGE" "$REG_IMAGE"
+RUN podman push --tls-verify=false "$REG_IMAGE"
 
-# Run incubator from the registry ref
 RUN podman run --network host --privileged -it \
     -v "${PWD}/ukama_${VERSION}.tgz:/ukama/ukama.tgz:ro" \
     --tls-verify=false \
@@ -235,17 +276,14 @@ RUN podman run --network host --privileged -it \
     -e REPO_SERVER_URL="$REPO_SERVER_URL" \
     -e REPO_NAME="$REPO_NAME" \
     -e BOOTSTRAP_SERVER="$BOOTSTRAP_SERVER" \
-    "${REG_IMAGE}"
+    "$REG_IMAGE"
 
-# Pull output image from registry
 OUT_REG_IMAGE="${REGISTRY}/${REPO_SERVER_URL}/${REPO_NAME}:${VNODE_ID}"
-RUN podman pull --tls-verify=false "${OUT_REG_IMAGE}"
+RUN podman pull --tls-verify=false "$OUT_REG_IMAGE"
 
-# Retag pulled image into local short name so inspect works
 OUT_LOCAL_IMAGE="${REPO_SERVER_URL}/${REPO_NAME}:${VNODE_ID}"
-RUN podman tag "${OUT_REG_IMAGE}" "${OUT_LOCAL_IMAGE}"
+RUN podman tag "$OUT_REG_IMAGE" "$OUT_LOCAL_IMAGE"
 
-# cleanup
 RUN make clean
 
 echo "Done. Image available: ${OUT_LOCAL_IMAGE}"
