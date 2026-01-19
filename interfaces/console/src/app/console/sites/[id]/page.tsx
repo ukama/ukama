@@ -305,9 +305,9 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       const nodeIds = data.getNodes.nodes
         .filter(
           (node) =>
-            node.latitude !== 0 &&
+            node.latitude !== null &&
             node.site.siteId === activeSite.id &&
-            node.longitude !== 0 &&
+            node.longitude !== null &&
             node.status.connectivity === NodeConnectivityEnum.Online &&
             node.status.state === NodeStateEnum.Configured,
         )
