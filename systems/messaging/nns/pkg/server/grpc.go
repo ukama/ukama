@@ -78,6 +78,7 @@ func (n *NnsServer) Set(c context.Context, req *pb.SetRequest) (*pb.SetResponse,
 		MeshHostName: req.GetMeshHostName(),
 		MeshIp:       req.GetMeshIp(),
 	}
+	log.Infof("Adding node %+v", obj)
 	err := n.nns.Add(c, obj)
 	if err != nil {
 		return nil, err
