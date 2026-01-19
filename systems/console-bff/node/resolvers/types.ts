@@ -43,10 +43,10 @@ export class AttachedNodes {
   name: string;
 
   @Field()
-  latitude: number;
+  latitude: string;
 
   @Field()
-  longitude: number;
+  longitude: string;
 
   @Field(() => NODE_TYPE)
   type: NODE_TYPE;
@@ -66,10 +66,10 @@ export class Node {
   name: string;
 
   @Field()
-  latitude: number;
+  latitude: string;
 
   @Field()
-  longitude: number;
+  longitude: string;
 
   @Field(() => NODE_TYPE)
   type: NODE_TYPE;
