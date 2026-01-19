@@ -251,7 +251,7 @@ func (c *ComponentServer) NodeSyncJob(ctx context.Context) {
 				Type:          node.Type,
 				UserId:        ownerId,
 				Description:   ukama.GetPlaceholderNameByType(node.Type),
-				Category:      c.config.NodeComponentDetails.Category,
+				Category:      ukama.ParseComponentCategory(c.config.NodeComponentDetails.Category),
 				Managed:       c.config.NodeComponentDetails.Managed,
 				Warranty:      c.config.NodeComponentDetails.Warranty,
 				ImagesURL:     c.config.NodeComponentDetails.ImagesURL,

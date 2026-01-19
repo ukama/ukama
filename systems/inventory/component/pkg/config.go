@@ -13,7 +13,6 @@ import (
 
 	uconf "github.com/ukama/ukama/systems/common/config"
 	metric "github.com/ukama/ukama/systems/common/metrics"
-	"github.com/ukama/ukama/systems/common/ukama"
 )
 
 type Config struct {
@@ -42,7 +41,7 @@ type NodeComponentDetails struct {
 	Specification string                  `default:""`
 	Warranty      uint32                  `default:"1"`
 	Managed       string                  `default:"true"`
-	Category      ukama.ComponentCategory `default:"access"`
+	Category      string                  `default:"access"`
 	Manufacturer  string                  `default:"Ukama Inc"`
 	Inventory     string                  `default:"ukma-access"`
 	DatasheetURL  string                  `default:"http://www.ukama.com/datasheet"`
