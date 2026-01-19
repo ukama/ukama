@@ -42,7 +42,7 @@ type NodeComponentDetails struct {
 	Specification string                  `default:""`
 	Warranty      uint32                  `default:"1"`
 	Managed       string                  `default:"true"`
-	Category      ukama.ComponentCategory `default:"ACCESS"`
+	Category      ukama.ComponentCategory `default:"access"`
 	Manufacturer  string                  `default:"Ukama Inc"`
 	Inventory     string                  `default:"ukma-access"`
 	DatasheetURL  string                  `default:"http://www.ukama.com/datasheet"`
