@@ -41,14 +41,14 @@ func TestNodeServer_Add(t *testing.T) {
 	siteService := &mocks.SiteClientProvider{}
 
 	const nodeName = "node-A"
-	const nodeType = "hnode"
+	const nodeType = ukama.NODE_TYPE_HOMENODE
 
 	s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", msgbusClient, siteService, orgId, nil)
 
 	node := &db.Node{
 		Id:   nodeId,
 		Name: nodeName,
-		Type: testNode.GetNodeType(),
+		Type: ukama.NodeType(testNode.GetNodeType()),
 		Status: db.NodeStatus{
 			NodeId:       nodeId,
 			State:        ukama.NodeStateUnknown,
@@ -80,7 +80,7 @@ func TestNodeServer_Add(t *testing.T) {
 func TestNodeServer_Get(t *testing.T) {
 	t.Run("NodeFound", func(t *testing.T) {
 		const nodeName = "node-A"
-		const nodeType = ukama.NODE_ID_TYPE_HOMENODE
+		const nodeType = ukama.NODE_TYPE_HOMENODE
 		var nodeId = ukama.NewVirtualNodeId(nodeType)
 
 		nodeRepo := &mocks.NodeRepo{}
@@ -89,7 +89,7 @@ func TestNodeServer_Get(t *testing.T) {
 		nodeRepo.On("Get", nodeId).Return(
 			&db.Node{Id: nodeId.StringLowercase(),
 				Name: nodeName,
-				Type: ukama.NODE_ID_TYPE_HOMENODE,
+				Type: ukama.NODE_TYPE_HOMENODE,
 			}, nil).Once()
 
 		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil)
@@ -99,7 +99,7 @@ func TestNodeServer_Get(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
-		assert.Equal(t, nodeId.String(), resp.GetNode().GetId())
+		assert.Equal(t, nodeId.StringLowercase(), resp.GetNode().GetId())
 		assert.Equal(t, nodeName, resp.GetNode().Name)
 		nodeRepo.AssertExpectations(t)
 	})
@@ -155,7 +155,7 @@ func TestNodeServer_List(t *testing.T) {
 			{
 				Id:   nodeId.StringLowercase(),
 				Name: "node-1",
-				Type: ntype,
+				Type: ukama.NodeType(ntype),
 				Status: db.NodeStatus{
 					NodeId:       nodeId.StringLowercase(),
 					Connectivity: connectivity,
@@ -216,7 +216,7 @@ func TestNodeServer_List(t *testing.T) {
 			{
 				Id:   nodeId.StringLowercase(),
 				Name: "node-1",
-				Type: ntype,
+				Type: ukama.NodeType(ntype),
 				Status: db.NodeStatus{
 					NodeId:       nodeId.StringLowercase(),
 					Connectivity: ukama.NodeConnectivityOnline,
