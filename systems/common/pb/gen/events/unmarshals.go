@@ -73,6 +73,16 @@ func UnmarshalCappCreatedEvent(msg *anypb.Any, emsg string) (*CappCreatedEvent, 
 	return p, nil
 }
 
+func UnmarshalCapps(msg *anypb.Any, emsg string) (*Capps, error) {
+	p := &Capps{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
+		return nil, err
+	}
+	return p, nil
+}
+
 func UnmarshalCreatePackageEvent(msg *anypb.Any, emsg string) (*CreatePackageEvent, error) {
 	p := &CreatePackageEvent{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
@@ -793,6 +803,16 @@ func UnmarshalReport(msg *anypb.Any, emsg string) (*Report, error) {
 	return p, nil
 }
 
+func UnmarshalResource(msg *anypb.Any, emsg string) (*Resource, error) {
+	p := &Resource{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
+		return nil, err
+	}
+	return p, nil
+}
+
 func UnmarshalSessionCreated(msg *anypb.Any, emsg string) (*SessionCreated, error) {
 	p := &SessionCreated{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
@@ -833,6 +853,16 @@ func UnmarshalSimUploaded(msg *anypb.Any, emsg string) (*SimUploaded, error) {
 	return p, nil
 }
 
+func UnmarshalStoreRunningAppsInfoEvent(msg *anypb.Any, emsg string) (*StoreRunningAppsInfoEvent, error) {
+	p := &StoreRunningAppsInfoEvent{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
+		return nil, err
+	}
+	return p, nil
+}
+
 func UnmarshalSubscriber(msg *anypb.Any, emsg string) (*Subscriber, error) {
 	p := &Subscriber{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
@@ -845,6 +875,16 @@ func UnmarshalSubscriber(msg *anypb.Any, emsg string) (*Subscriber, error) {
 
 func UnmarshalSubscription(msg *anypb.Any, emsg string) (*Subscription, error) {
 	p := &Subscription{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
+		return nil, err
+	}
+	return p, nil
+}
+
+func UnmarshalSystem(msg *anypb.Any, emsg string) (*System, error) {
+	p := &System{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())

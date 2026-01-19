@@ -1,9 +1,9 @@
 /*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at https://mozilla.org/MPL/2.0/.
+*
+* Copyright (c) 2023-present, Ukama Inc.
  */
 
 package server
@@ -15,6 +15,7 @@ import (
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/node/health/pb/gen"
@@ -96,13 +97,40 @@ func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRu
 		return nil, err
 	}
 
-	msg := &pb.StoreRunningAppsInfoRequest{
+	msg := &epb.StoreRunningAppsInfoEvent{
 		NodeId:    req.NodeId,
 		Timestamp: req.Timestamp,
-		System:    req.System,
-		Capps:     req.Capps,
+		System:    []*epb.System{},
+		Capps:     []*epb.Capps{},
 	}
-	// Publish the message to the message bus
+	for _, sys := range health.System {
+		msg.System = append(msg.System, &epb.System{
+			Id:       sys.Id.String(),
+			HealthId: health.Id.String(),
+			Name:     sys.Name,
+			Value:    sys.Value,
+		})
+	}
+
+	for _, capp := range health.Capps {
+		capps := &epb.Capps{
+			Id:        capp.Id.String(),
+			Space:     capp.Space,
+			Name:      capp.Name,
+			Tag:       capp.Tag,
+			Status:    epb.Status(capp.Status), 
+		}
+		for _, resource := range capp.Resources {
+			resource := &epb.Resource{
+				Id:     resource.Id.String(),
+				Name:   resource.Name,
+				Value:  resource.Value,
+			}
+			capps.Resources = append(capps.Resources, resource)
+		}
+		msg.Capps = append(msg.Capps, capps)
+	}	
+
 	route := h.healthRoutingKey.SetAction("store").SetObject("capps").MustBuild()
 	err = h.msgbus.PublishRequest(route, msg)
 	if err != nil {
@@ -177,3 +205,4 @@ func (h *HealthServer) GetRunningApps(ctx context.Context, req *pb.GetRunningApp
 		RunningApps: app,
 	}, nil
 }
+ 
