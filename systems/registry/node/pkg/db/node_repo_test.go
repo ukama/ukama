@@ -438,7 +438,7 @@ func TestNodeRepo_List(t *testing.T) {
 		assert.Len(t, nodes, 1)
 		assert.Equal(t, nodeId.String(), nodes[0].Id)
 		assert.Equal(t, "node-1", nodes[0].Name)
-		assert.Equal(t, ntype, nodes[0].Type)
+		assert.Equal(t, ukama.NodeType(ntype), nodes[0].Type)
 		assert.Equal(t, ukama.NodeConnectivity(connectivity), nodes[0].Status.Connectivity)
 		assert.Equal(t, ukama.NodeState(state), nodes[0].Status.State)
 

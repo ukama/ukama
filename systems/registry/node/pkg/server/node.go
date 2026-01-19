@@ -96,7 +96,7 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 			Connectivity: ukama.NodeConnectivityUndefined,
 			State:        ukama.NodeStateUnknown,
 		},
-		Type:      nId.GetNodeType(),
+		Type:      ukama.NodeType(nId.GetNodeType()),
 		Name:      req.Name,
 		Latitude:  req.Latitude,
 		Longitude: req.Longitude,
@@ -113,7 +113,7 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 		evt := &epb.EventRegistryNodeCreate{
 			NodeId:    nId.StringLowercase(),
 			Name:      node.Name,
-			Type:      node.Type,
+			Type:      node.Type.String(),
 			Latitude:  node.Latitude,
 			Longitude: node.Longitude,
 		}
@@ -692,7 +692,7 @@ func dbNodeToPbNode(dbn *db.Node) *pb.Node {
 			Connectivity: cpb.NodeConnectivity(dbn.Status.Connectivity),
 			State:        cpb.NodeState(dbn.Status.State),
 		},
-		Type:      dbn.Type,
+		Type:      dbn.Type.String(),
 		Name:      dbn.Name,
 		Latitude:  dbn.Latitude,
 		Longitude: dbn.Longitude,

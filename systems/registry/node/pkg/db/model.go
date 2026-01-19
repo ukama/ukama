@@ -21,7 +21,7 @@ type Node struct {
 	Id           string     `gorm:"primaryKey;type:string;uniqueIndex:idx_node_id_case_insensitive,expression:lower(id),where:deleted_at is null;size:23;not null"`
 	Name         string     `gorm:"type:string"`
 	Status       NodeStatus `gorm:"not null"`
-	Type         string     `gorm:"type:string;not null"`
+	Type         ukama.NodeType `gorm:"type:string;not null"`
 	ParentNodeId *string    `gorm:"type:string;expression:lower(id),where:deleted_at is null;size:23:default:null;"`
 	Attached     []*Node    `gorm:"foreignKey:ParentNodeId"`
 	Latitude     float64    `gorm:"type:decimal(10,8);default:null"`
