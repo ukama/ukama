@@ -105,8 +105,8 @@ type UpdateNodeStateRequest struct {
 type UpdateNodeRequest struct {
 	NodeId    string  `json:"node_id" path:"node_id" validate:"required"`
 	Name      string  `json:"name" validate:"required"`
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
+	Latitude  string  `json:"latitude"`
+	Longitude string  `json:"longitude"`
 }
 
 type GetNodeRequest struct {
@@ -134,8 +134,6 @@ type AddNodeRequest struct {
 	NodeId    string  `json:"node_id" validate:"required"`
 	Name      string  `json:"name"`
 	State     string  `json:"state" validate:"required"`
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
 }
 
 type DeleteNodeRequest struct {

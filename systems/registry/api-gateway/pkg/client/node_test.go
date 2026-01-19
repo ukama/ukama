@@ -79,19 +79,15 @@ func TestNode_AddNode(t *testing.T) {
 			Node: &pb.Node{
 				Id:        "test-node-id",
 				Name:      "Test Node",
-				Latitude:  40.7128,
-				Longitude: -74.0060,
 			},
 		}
 
 		mockClient.On("AddNode", mock.Anything, &pb.AddNodeRequest{
 			NodeId:    "test-node-id",
 			Name:      "Test Node",
-			Latitude:  40.7128,
-			Longitude: -74.0060,
 		}).Return(expectedResponse, nil)
 
-		response, err := node.AddNode("test-node-id", "Test Node", "active", 40.7128, -74.0060)
+		response, err := node.AddNode("test-node-id", "Test Node", "active")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -105,7 +101,7 @@ func TestNode_AddNode(t *testing.T) {
 		expectedError := status.Error(codes.AlreadyExists, "node already exists")
 		mockClient.On("AddNode", mock.Anything, mock.Anything).Return(nil, expectedError)
 
-		response, err := node.AddNode("existing-node-id", "Existing Node", "active", 40.7128, -74.0060)
+		response, err := node.AddNode("existing-node-id", "Existing Node", "active")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -123,8 +119,6 @@ func TestNode_GetNode(t *testing.T) {
 			Node: &pb.Node{
 				Id:        "test-node-id",
 				Name:      "Test Node",
-				Latitude:  40.7128,
-				Longitude: -74.0060,
 			},
 		}
 
@@ -425,19 +419,19 @@ func TestNode_UpdateNode(t *testing.T) {
 			Node: &pb.Node{
 				Id:        "test-node-id",
 				Name:      "Updated Node",
-				Latitude:  41.7128,
-				Longitude: -75.0060,
+				Latitude:  "41.7128",
+				Longitude: "-75.0060",
 			},
 		}
 
 		mockClient.On("UpdateNode", mock.Anything, &pb.UpdateNodeRequest{
 			NodeId:    "test-node-id",
 			Name:      "Updated Node",
-			Latitude:  41.7128,
-			Longitude: -75.0060,
+			Latitude:  "41.7128",
+			Longitude: "-75.0060",
 		}).Return(expectedResponse, nil)
 
-		response, err := node.UpdateNode("test-node-id", "Updated Node", 41.7128, -75.0060)
+		response, err := node.UpdateNode("test-node-id", "Updated Node", "41.7128", "-75.0060")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -451,7 +445,7 @@ func TestNode_UpdateNode(t *testing.T) {
 		expectedError := status.Error(codes.NotFound, "node not found")
 		mockClient.On("UpdateNode", mock.Anything, mock.Anything).Return(nil, expectedError)
 
-		response, err := node.UpdateNode("non-existent-id", "Updated Node", 41.7128, -75.0060)
+		response, err := node.UpdateNode("non-existent-id", "Updated Node", "41.7128", "-75.0060")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)

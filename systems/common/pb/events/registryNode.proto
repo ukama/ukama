@@ -18,16 +18,14 @@
      string name = 2;
      string type = 3;
      string org = 4;
-     double latitude = 5;   
-     double longitude = 6; 
  }
  
  /* updated a node */
  message EventRegistryNodeUpdate{
      string nodeId = 1;
      string name = 2;
-     double latitude = 3;   
-     double longitude = 4; 
+     string latitude = 3;   
+     string longitude = 4; 
  }
  
  /* updated a node state*/
