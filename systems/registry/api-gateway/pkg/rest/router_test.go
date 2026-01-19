@@ -1181,8 +1181,8 @@ func TestPutUpdateNode(t *testing.T) {
 	w := httptest.NewRecorder()
 	reqBody := `{
 		"name": "updated-node",
-		"latitude": 40.7128,
-		"longitude": -74.0060
+		"latitude": "40.7128",
+		"longitude": "-74.0060"
 	}`
 	req, _ := http.NewRequest("PUT", "/v1/nodes/"+nodeId.String(), strings.NewReader(reqBody))
 	req.Header.Set("Content-Type", "application/json")
