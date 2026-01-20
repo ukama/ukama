@@ -70,9 +70,9 @@ export type AddSiteInputDto = {
   access_id: Scalars['String']['input'];
   backhaul_id: Scalars['String']['input'];
   install_date: Scalars['String']['input'];
-  latitude: Scalars['Float']['input'];
+  latitude: Scalars['String']['input'];
   location: Scalars['String']['input'];
-  longitude: Scalars['Float']['input'];
+  longitude: Scalars['String']['input'];
   name: Scalars['String']['input'];
   network_id: Scalars['String']['input'];
   power_id: Scalars['String']['input'];
@@ -1496,9 +1496,9 @@ export type SiteDto = {
   id: Scalars['String']['output'];
   installDate: Scalars['String']['output'];
   isDeactivated: Scalars['Boolean']['output'];
-  latitude: Scalars['Float']['output'];
+  latitude: Scalars['String']['output'];
   location: Scalars['String']['output'];
-  longitude: Scalars['Float']['output'];
+  longitude: Scalars['String']['output'];
   name: Scalars['String']['output'];
   networkId: Scalars['String']['output'];
   powerId: Scalars['String']['output'];
@@ -2200,28 +2200,28 @@ export type SetDefaultNetworkMutationVariables = Exact<{
 
 export type SetDefaultNetworkMutation = { __typename?: 'Mutation', setDefaultNetwork: { __typename?: 'CBooleanResponse', success: boolean } };
 
-export type USiteFragment = { __typename?: 'SiteDto', id: string, name: string, networkId: string, backhaulId: string, powerId: string, accessId: string, spectrumId: string, switchId: string, isDeactivated: boolean, latitude: number, longitude: number, installDate: string, createdAt: string, location: string };
+export type USiteFragment = { __typename?: 'SiteDto', id: string, name: string, networkId: string, backhaulId: string, powerId: string, accessId: string, spectrumId: string, switchId: string, isDeactivated: boolean, latitude: string, longitude: string, installDate: string, createdAt: string, location: string };
 
 export type GetSiteQueryVariables = Exact<{
   siteId: Scalars['String']['input'];
 }>;
 
 
-export type GetSiteQuery = { __typename?: 'Query', getSite: { __typename?: 'SiteDto', id: string, name: string, networkId: string, backhaulId: string, powerId: string, accessId: string, spectrumId: string, switchId: string, isDeactivated: boolean, latitude: number, longitude: number, installDate: string, createdAt: string, location: string } };
+export type GetSiteQuery = { __typename?: 'Query', getSite: { __typename?: 'SiteDto', id: string, name: string, networkId: string, backhaulId: string, powerId: string, accessId: string, spectrumId: string, switchId: string, isDeactivated: boolean, latitude: string, longitude: string, installDate: string, createdAt: string, location: string } };
 
 export type AddSiteMutationVariables = Exact<{
   data: AddSiteInputDto;
 }>;
 
 
-export type AddSiteMutation = { __typename?: 'Mutation', addSite: { __typename?: 'SiteDto', id: string, name: string, networkId: string, backhaulId: string, powerId: string, accessId: string, spectrumId: string, switchId: string, isDeactivated: boolean, latitude: number, longitude: number, installDate: string, createdAt: string, location: string } };
+export type AddSiteMutation = { __typename?: 'Mutation', addSite: { __typename?: 'SiteDto', id: string, name: string, networkId: string, backhaulId: string, powerId: string, accessId: string, spectrumId: string, switchId: string, isDeactivated: boolean, latitude: string, longitude: string, installDate: string, createdAt: string, location: string } };
 
 export type GetSitesQueryVariables = Exact<{
   data: SitesInputDto;
 }>;
 
 
-export type GetSitesQuery = { __typename?: 'Query', getSites: { __typename?: 'SitesResDto', sites: Array<{ __typename?: 'SiteDto', id: string, name: string, networkId: string, backhaulId: string, powerId: string, accessId: string, spectrumId: string, switchId: string, isDeactivated: boolean, latitude: number, longitude: number, installDate: string, createdAt: string, location: string }> } };
+export type GetSitesQuery = { __typename?: 'Query', getSites: { __typename?: 'SitesResDto', sites: Array<{ __typename?: 'SiteDto', id: string, name: string, networkId: string, backhaulId: string, powerId: string, accessId: string, spectrumId: string, switchId: string, isDeactivated: boolean, latitude: string, longitude: string, installDate: string, createdAt: string, location: string }> } };
 
 export type UpdateSiteMutationVariables = Exact<{
   siteId: Scalars['String']['input'];

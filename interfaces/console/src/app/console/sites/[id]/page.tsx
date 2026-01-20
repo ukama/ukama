@@ -57,9 +57,9 @@ const defaultSite: SiteDto = {
   createdAt: '',
   installDate: '',
   isDeactivated: false,
-  latitude: 0,
+  latitude: '',
   location: '',
-  longitude: 0,
+  longitude: '',
   name: '',
   networkId: '',
   powerId: '',
@@ -494,7 +494,10 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         </Grid>
         <Grid item sx={{ height: '100%' }} xs={12} sm={6} md={3}>
           <SiteMapComponent
-            posix={[activeSite.latitude, activeSite.longitude]}
+            posix={[
+              Number.parseFloat(activeSite.latitude),
+              Number.parseFloat(activeSite.longitude),
+            ]}
             address={CurrentSiteaddress}
             height={'100%'}
             mapStyle="satellite"
