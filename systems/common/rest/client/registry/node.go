@@ -39,8 +39,8 @@ type NodeInfo struct {
 	Type      string         `json:"type,omitempty"`
 	Status    NodeStatusInfo `json:"status,omitempty"`
 	Site      NodeSiteInfo   `json:"site,omitempty"`
-	Latitude  float64        `json:"latitude,omitempty"`
-	Longitude float64        `json:"longitude,omitempty"`
+	Latitude  string        `json:"latitude,omitempty"`
+	Longitude string        `json:"longitude,omitempty"`
 	Attahced  []NodeInfo     `json:"attached_nodes,omitempty"`
 	CreatedAt time.Time      `json:"created_at,omitempty"`
 }
