@@ -40,7 +40,7 @@ var (
 	testLongitude          = "-74.0060"
 	testUpdatedLatitude    = "42.3601"
 	testUpdatedLongitude   = "-71.0589"
-	testUpdatedInstallDate = "-71.0589"
+	testUpdatedInstallDate = "15-06-2023"
 	testUpdatedLocation    = "Updated Location"
 )
 
