@@ -156,8 +156,8 @@ func BuildSiteRequest(networkId string) string {
 		"switch_id": "%s",
 		"spectrum_id": "%s",
 		"is_deactivated": false,
-		"latitude": %.4f,
-		"longitude": %.4f,
+		"latitude": "%.4f",
+		"longitude": "%.4f",
 		"install_date": "%s"
 	}`, networkId, TestSiteName, TestLocation, TestBackhaulId.String(),
 		TestPowerId.String(), TestAccessId.String(), TestSwitchId.String(),

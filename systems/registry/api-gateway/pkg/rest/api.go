@@ -74,8 +74,8 @@ type AddSiteRequest struct {
 	SwitchId      string  `example:"{{SwitchUUID}}" json:"switch_id" validate:"required"`
 	SpectrumId    string  `example:"{{SpectrumUUID}}" json:"spectrum_id" validate:"required"`
 	IsDeactivated bool    `json:"is_deactivated"`
-	Latitude      float64 `json:"latitude" validate:"required"`
-	Longitude     float64 `json:"longitude" validate:"required"`
+	Latitude      string  `json:"latitude" validate:"required"`
+	Longitude     string  `json:"longitude" validate:"required"`
 	InstallDate   string  `json:"install_date"`
 }
 
