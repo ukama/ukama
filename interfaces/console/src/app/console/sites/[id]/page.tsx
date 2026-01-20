@@ -375,7 +375,10 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
           show: true,
           message: 'Fetching address with coordinates',
         });
-        await fetchAddress(activeSite.latitude, activeSite.longitude);
+        await fetchAddress(
+          activeSite.latitude.toString(),
+          activeSite.longitude.toString(),
+        );
       }
     };
 
