@@ -41,10 +41,10 @@ const (
 	testValidInstallDate    = "2023-12-01T00:00:00Z"
 
 	// Coordinates
-	testLatitude         = 40.7128
-	testLongitude        = -74.0060
-	testExtremeLatitude  = 90.0  // North Pole
-	testExtremeLongitude = 180.0 // International Date Line
+	testLatitude         = "40.7128"
+	testLongitude        = "-74.0060"
+	testExtremeLatitude  = "90.0"  // North Pole
+	testExtremeLongitude = "180.0" // International Date Line
 
 	// Site names for list tests
 	testSite1Name               = "Site1"

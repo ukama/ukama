@@ -36,11 +36,11 @@ var (
 	testSwitchId           = uuid.NewV4()
 	testInstallDate        = "07-03-2023"
 	testLocation           = "Test Location"
-	testLatitude           = 40.7128
-	testLongitude          = -74.0060
-	testUpdatedLatitude    = 42.3601
-	testUpdatedLongitude   = -71.0589
-	testUpdatedInstallDate = "15-06-2023"
+	testLatitude           = "40.7128"
+	testLongitude          = "-74.0060"
+	testUpdatedLatitude    = "42.3601"
+	testUpdatedLongitude   = "-71.0589"
+	testUpdatedInstallDate = "-71.0589"
 	testUpdatedLocation    = "Updated Location"
 )
 
