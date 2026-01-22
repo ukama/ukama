@@ -87,7 +87,7 @@ func TestControllerServer_RestartNode(t *testing.T) {
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
 		Target:     "test-org" + "." + "." + "." + nodeId,
 		HTTPMethod: "POST",
-		Path:       "/v1/reboot/" + nodeId,
+		Path:       "/v1/reboot",
 		Msg:        data,
 	}).Return(nil).Once()
 	// Act
@@ -131,7 +131,7 @@ func TestControllerServer_RestartNodes(t *testing.T) {
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
 		Target:     "test-org" + "." + "." + "." + nodeId,
 		HTTPMethod: "POST",
-		Path:       "/v1/reboot/" + nodeId,
+		Path:       "/v1/reboot",
 		Msg:        data,
 	}).Return(nil).Once()
 	// Act
@@ -163,7 +163,7 @@ func TestControllerServer_ToggleRf(t *testing.T) {
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
 		Target:     "test-org" + "." + "." + "." + nodeId,
 		HTTPMethod: "POST",
-		Path:       "/v1/rf/" + nodeId,
+		Path:       "/v1/rf",
 		Msg:        data,
 	}).Return(nil).Once()
 

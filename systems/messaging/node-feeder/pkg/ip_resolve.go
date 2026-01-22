@@ -10,6 +10,7 @@ package pkg
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"google.golang.org/grpc"
@@ -48,5 +49,5 @@ func (r *nodeIpResolver) Resolve(nodeId ukama.NodeID) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return res.NodeIp, nil
+	return res.NodeIp + ":" + strconv.Itoa(int(res.NodePort)), nil
 }
