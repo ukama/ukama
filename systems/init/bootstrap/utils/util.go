@@ -39,7 +39,8 @@ func SpawnReplica(ctx context.Context, node *db.Node, config *pkg.Config, client
 	}
 
 	namespace := config.OrgName + "-" + config.MeshNamespace
-	podNamePrefix := GetPodNamePrefix(config.OrgName)
+	// Use full pod name prefix including nodeId to match only pods for THIS node
+	podNamePrefix := GetPodName(config.OrgName, node.NodeId)
 
 	// Check for existing healthy pod first
 	existingPod, err := findExistingMeshPod(ctx, namespace, node.MeshPodName, podNamePrefix, clientSet)
@@ -53,7 +54,7 @@ func SpawnReplica(ctx context.Context, node *db.Node, config *pkg.Config, client
 	}
 
 	// No healthy pod exists, create a new one
-	return createMeshPod(ctx, namespace, GetPodName(config.OrgName, node.NodeId), node, clientSet, nodeRepo)
+	return createMeshPod(ctx, namespace, podNamePrefix, node, clientSet, nodeRepo)
 }
 
 // findExistingMeshPod looks for an existing healthy mesh pod for the node.
@@ -162,10 +163,10 @@ func createMeshPod(ctx context.Context, namespace, podName string, node *db.Node
 		return err
 	}
 
-	// Create the pod
+	// Create the pod (add trailing - for cleaner random suffix separation)
 	newPod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: podName,
+			GenerateName: podName + "-",
 			Namespace:    namespace,
 			Labels: map[string]string{
 				"app.kubernetes.io/name":      "mesh",
