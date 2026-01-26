@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
@@ -18,7 +19,9 @@ import (
 )
 
 const (
-	PodNamePrefix = "mesh-node"
+	PodNamePrefix       = "mesh-node"
+	PodIPWaitTimeout    = 60 * time.Second
+	PodIPPollInterval   = 2 * time.Second
 )
 
 func GetPodNamePrefix(orgName string) string {
@@ -187,12 +190,53 @@ func createMeshPod(ctx context.Context, namespace, podName string, node *db.Node
 		return status.Errorf(codes.Internal, "failed to create mesh pod: %v", err)
 	}
 
-	// Note: PodIP may be empty for newly created pods (assigned after scheduling)
-	// It will be updated on subsequent calls when the pod is running
-	log.Infof("Created mesh pod %s for node %s (IP: %s)", createdPod.Name, node.NodeId, createdPod.Status.PodIP)
+	log.Infof("Created mesh pod %s for node %s, waiting for IP assignment...", createdPod.Name, node.NodeId)
+
+	// Wait for the pod to get an IP address
+	podIP, err := waitForPodIP(ctx, namespace, createdPod.Name, clientSet)
+	if err != nil {
+		log.Warnf("Failed to get pod IP for %s: %v (will be updated on next call)", createdPod.Name, err)
+		// Still save the pod name even if IP is not available yet
+		podIP = ""
+	}
+
+	log.Infof("Mesh pod %s for node %s has IP: %s", createdPod.Name, node.NodeId, podIP)
 
 	// Update database with pod info
-	return syncNodePodInfo(node, createdPod.Name, createdPod.Status.PodIP, nodeRepo)
+	return syncNodePodInfo(node, createdPod.Name, podIP, nodeRepo)
+}
+
+// waitForPodIP waits for a pod to be assigned an IP address.
+func waitForPodIP(ctx context.Context, namespace, podName string, clientSet *kubernetes.Clientset) (string, error) {
+	timeout := time.After(PodIPWaitTimeout)
+	ticker := time.NewTicker(PodIPPollInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return "", ctx.Err()
+		case <-timeout:
+			return "", status.Errorf(codes.DeadlineExceeded, "timeout waiting for pod %s to get IP", podName)
+		case <-ticker.C:
+			pod, err := clientSet.CoreV1().Pods(namespace).Get(ctx, podName, metav1.GetOptions{})
+			if err != nil {
+				log.Warnf("Error getting pod %s: %v", podName, err)
+				continue
+			}
+
+			if pod.Status.PodIP != "" {
+				return pod.Status.PodIP, nil
+			}
+
+			// Check if pod failed
+			if pod.Status.Phase == corev1.PodFailed {
+				return "", status.Errorf(codes.Internal, "pod %s failed: %s", podName, pod.Status.Reason)
+			}
+
+			log.Debugf("Pod %s phase: %s, waiting for IP...", podName, pod.Status.Phase)
+		}
+	}
 }
 
 // getTemplatePodSpec retrieves the pod spec from the mesh deployment template.
