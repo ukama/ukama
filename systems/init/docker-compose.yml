@@ -19,12 +19,12 @@ services:
    - DB_HOST=postgresd-init
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
-   - QUEUE_URI=amqp://guest:guest@192.168.0.138:5672
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - MSGCLIENT_HOST=msgclient-init:9095
    - LOOKUP_SERVICE_HOST=lookup
    - LOOKUP_SERVICE_PORT=9090
-   - ORGNAME=ukama
-   - ORGID=fbc2a80d-339e-4d3c-acaa-329dd3d1b221
+   - ORGNAME=${ORGNAME}
+   - ORGID=${ORGID}
   restart: always
   networks:
    - ukama-net
@@ -36,14 +36,11 @@ services:
   build: ./bootstrap
   environment:
    - DEBUGMODE=true
-   - DB_HOST=postgresd-init
-   - DB_PASSWORD=Pass2020!
-   - DB_USER=postgres
-   - QUEUE_URI=amqp://guest:guest@192.168.0.138:5672
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - MSGCLIENT_HOST=msgclient-init:9095
    - BOOTSTRAP_SERVICE_HOST=bootstrap
    - BOOTSTRAP_SERVICE_PORT=9090
-   - ORGNAME=ukama
+   - ORGNAME=${ORGNAME}
    - HTTP_INITCLIENT=http://api-gateway-init:8080
    - 'DNS_MAP=[{"org_name": "ukama", "dns": "localhost"}]'
   restart: always
@@ -88,15 +85,15 @@ services:
    - DB_HOST=postgresd-init
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
-   - QUEUE_URI=amqp://guest:guest@192.168.0.138:5672
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - SYSTEM=init
    - GRPC_PORT=9095
    - SHOVEL_SRCEXCHANGEKEY=event.cloud.*.*.*
-   - SHOVEL_SRCURI=amqp://guest:guest@192.168.0.138:5672
+   - SHOVEL_SRCURI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - SHOVEL_DESTURI=amqp://user:password@192.168.0.26:5672
-   - ORGNAME=ukama
+   - ORGNAME=${ORGNAME}
    - MASTERORGNAME=ukama
-   - MSGBUS_MANAGEMENTURI=http://192.168.0.138:15672
+   - MSGBUS_MANAGEMENTURI=http://${LOCAL_HOST_IP}:15672
    - MSGBUS_USER=guest
    - MSGBUS_PASSWORD=guest
   restart: always
