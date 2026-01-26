@@ -121,22 +121,13 @@ func (s *BootstrapServer) GetNodeCredentials(ctx context.Context, req *pb.GetNod
 		return nil, status.Errorf(codes.NotFound, "No IPv4 address found for DNS %s", dns)
 	}
 
-	pod, err := s.spawnReplica(ctx, node.Node.Id)
-	if err != nil {
-		log.Errorf("Failed to spawn replica: %v", err)
-		return nil, status.Errorf(codes.Internal, "Failed to spawn mesh pod replica: %v", err)
+	n, err := s.nodeRepo.GetNode(node.Node.Id)
+	if err != nil {	
+		log.Errorf("Failed to get node from database: %v", err)
+		return nil, status.Errorf(codes.Internal, "Failed to get node from database: %v", err)
 	}
 
-	meshPodName := pod.Name
-
-	err = s.nodeRepo.CreateNode(&db.Node{
-		NodeId: node.Node.Id,
-		MeshPodName: meshPodName,
-	})
-	if err != nil {
-		log.Errorf("Failed to create node: %v", err)
-		return nil, status.Errorf(codes.Internal, "Failed to create node: %v", err)
-	}
+	s.spawnReplica(ctx, n)
 
 	return &pb.GetNodeCredentialsResponse{
 		Id:          node.Node.Id,
@@ -146,7 +137,7 @@ func (s *BootstrapServer) GetNodeCredentials(ctx context.Context, req *pb.GetNod
 	}, nil
 }
 
-func (s *BootstrapServer) spawnReplica(ctx context.Context, nodeId string) (*corev1.Pod, error) {
+func (s *BootstrapServer) spawnReplica(ctx context.Context, node *db.Node)  {
 	namespace := s.config.OrgName + "-" + s.config.MeshNamespace
 	deployments, err := s.clientSet.AppsV1().Deployments(namespace).List(
 		context.TODO(),
@@ -155,19 +146,42 @@ func (s *BootstrapServer) spawnReplica(ctx context.Context, nodeId string) (*cor
 		},
 	)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Could not list deployments: %v", err)
+		log.Errorf("Could not list deployments: %v", err)
+		return 
 	}
 
 	if len(deployments.Items) == 0 {
-		return nil, status.Errorf(codes.NotFound, "No deployment found with label app=mesh in namespace %s", namespace)
+		log.Errorf("No deployment found with label app.kubernetes.io/name=mesh in namespace %s", namespace)
+		return 
 	}
 
-	for _, deployment := range deployments.Items {
-		log.Infof("INFO Deployment: %s", deployment.Name)
-		log.Infof("INFO Deployment Labels: %v", deployment.Labels)
-		if strings.Contains(deployment.Name, nodeId) {
-			log.Infof("INFO Mesh pod already exists for node %s", nodeId)
-			return nil, status.Errorf(codes.AlreadyExists, "Mesh pod already exists for node %s", nodeId)
+	podPrefix := s.config.OrgName + "-mesh-node-" + node.NodeId
+	existingPods, err := s.clientSet.CoreV1().Pods(namespace).List(
+		context.TODO(),
+		metav1.ListOptions{},
+	)
+	if err != nil {
+		log.Errorf("Could not list pods: %v", err)
+		return 
+	}
+
+	for _, pod := range existingPods.Items {
+		log.Debugf("Found pod: %s", pod.Name)
+		if pod.Name == node.MeshPodName {
+			log.Errorf("INFO Mesh pod already exists for node %s: %s", node.NodeId, pod.Name)
+			return 
+		}else if strings.HasPrefix(pod.Name, podPrefix) {
+			log.Errorf("Mesh pod already exists for node but name is different: %s: %s", node.NodeId, pod.Name)
+			err = s.nodeRepo.UpdateNode(&db.Node{
+				NodeId: node.NodeId,
+				MeshPodName: pod.Name,
+			})
+			if err != nil {
+				log.Errorf("Failed to update node: %v", err)
+				return 
+			}
+			log.Infof("INFO Mesh pod name updated in database: %s", node.NodeId)
+			return 
 		}
 	}
 
@@ -178,7 +192,7 @@ func (s *BootstrapServer) spawnReplica(ctx context.Context, nodeId string) (*cor
 
 	newPod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: "mesh-node-" + nodeId + "-",
+			GenerateName: s.config.OrgName + "-mesh-node-" + node.NodeId + "-",
 			Namespace:    namespace,
 		},
 		Spec: *podSpec,
@@ -191,8 +205,17 @@ func (s *BootstrapServer) spawnReplica(ctx context.Context, nodeId string) (*cor
 	)
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Failed to create pod: %v", err)
+		log.Errorf("Failed to create pod: %v", err)
+		return 
 	}
 
-	return createdPod, nil
+	err = s.nodeRepo.CreateNode(&db.Node{
+		NodeId: node.NodeId,
+		MeshPodName: createdPod.Name,
+	})
+	if err != nil {
+		log.Errorf("Failed to create node: %v", err)
+		return 
+	}
+	log.Infof("INFO Mesh pod created for node added to database: %s", node.NodeId)
 }
