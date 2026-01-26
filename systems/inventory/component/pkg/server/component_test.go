@@ -82,7 +82,7 @@ func getTestConfig(environment ...string) *pkg.Config {
 		ComponentEnvironment: env,
 		OwnerId:              uuid.NewV4().String(),
 		NodeComponentDetails: pkg.NodeComponentDetails{
-			Category: ukama.ACCESS,
+			Category: "access",
 		},
 	}
 }
