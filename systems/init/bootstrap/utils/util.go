@@ -50,7 +50,7 @@ func SpawnReplica(ctx context.Context, node *db.Node, config *pkg.Config, client
 
 	// If a healthy pod exists, sync database if needed and return
 	if existingPod != nil {
-		return syncNodePodName(node, existingPod.Name, nodeRepo)
+		return syncNodePodInfo(node, existingPod.Name, existingPod.Status.PodIP, nodeRepo)
 	}
 
 	// No healthy pod exists, create a new one
@@ -108,12 +108,12 @@ func isPodHealthy(pod *corev1.Pod) bool {
 	}
 }
 
-// syncNodePodName updates the database if the pod name differs from what's stored.
+// syncNodePodInfo updates the database with pod name and IP if they differ from what's stored.
 // Uses an upsert pattern: checks if node exists in DB first, then updates or creates accordingly.
-func syncNodePodName(node *db.Node, podName string, nodeRepo db.NodeRepo) error {
-	// Check if pod name is already synced
-	if node.MeshPodName == podName {
-		log.Debugf("Mesh pod already exists and synced for node %s: %s", node.NodeId, podName)
+func syncNodePodInfo(node *db.Node, podName, podIP string, nodeRepo db.NodeRepo) error {
+	// Check if pod info is already synced
+	if node.MeshPodName == podName && node.MeshPodIp == podIP {
+		log.Debugf("Mesh pod already exists and synced for node %s: %s (IP: %s)", node.NodeId, podName, podIP)
 		return nil
 	}
 
@@ -130,22 +130,27 @@ func syncNodePodName(node *db.Node, podName string, nodeRepo db.NodeRepo) error 
 
 	if existingNode == nil {
 		// Node doesn't exist in DB, create it
-		log.Infof("Creating new node record for node %s with pod %s", node.NodeId, podName)
+		log.Infof("Creating new node record for node %s with pod %s (IP: %s)", node.NodeId, podName, podIP)
 		if err := nodeRepo.CreateNode(&db.Node{
 			Id:          uuid.NewV4(),
 			NodeId:      node.NodeId,
 			MeshPodName: podName,
+			MeshPodIp:   podIP,
+			MeshPodPort: 8082,
 		}); err != nil {
 			return status.Errorf(codes.Internal, "failed to create node record: %v", err)
 		}
 		log.Infof("Successfully created node record for node %s", node.NodeId)
 	} else {
 		// Node exists in DB, update it
-		log.Infof("Updating mesh pod name in database for node %s: %s -> %s", node.NodeId, existingNode.MeshPodName, podName)
+		log.Infof("Updating mesh pod info in database for node %s: %s (IP: %s) -> %s (IP: %s)", 
+			node.NodeId, existingNode.MeshPodName, existingNode.MeshPodIp, podName, podIP)
 		if err := nodeRepo.UpdateNode(&db.Node{
 			Id:          existingNode.Id,
 			NodeId:      node.NodeId,
 			MeshPodName: podName,
+			MeshPodIp:   podIP,
+			MeshPodPort: node.MeshPodPort,
 		}); err != nil {
 			return status.Errorf(codes.Internal, "failed to update node record: %v", err)
 		}
@@ -182,10 +187,12 @@ func createMeshPod(ctx context.Context, namespace, podName string, node *db.Node
 		return status.Errorf(codes.Internal, "failed to create mesh pod: %v", err)
 	}
 
-	log.Infof("Created mesh pod %s for node %s", createdPod.Name, node.NodeId)
+	// Note: PodIP may be empty for newly created pods (assigned after scheduling)
+	// It will be updated on subsequent calls when the pod is running
+	log.Infof("Created mesh pod %s for node %s (IP: %s)", createdPod.Name, node.NodeId, createdPod.Status.PodIP)
 
-	// Update database
-	return syncNodePodName(node, createdPod.Name, nodeRepo)
+	// Update database with pod info
+	return syncNodePodInfo(node, createdPod.Name, createdPod.Status.PodIP, nodeRepo)
 }
 
 // getTemplatePodSpec retrieves the pod spec from the mesh deployment template.

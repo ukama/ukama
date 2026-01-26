@@ -18,5 +18,6 @@ type Node struct {
 	Id          uuid.UUID `gorm:"type:uuid;uniqueIndex:node_id_unique_index,where:deleted_at is null;not null;column_name:id;"`
 	NodeId      string `gorm:"type:string;uniqueIndex:node_id_idx_case_insensetive,expression:lower(node_id);size:23;not null"`
 	MeshPodName string `gorm:"type:string;size:255;not null"`
+	MeshPodIp   string `gorm:"type:string;size:255;not null"`
+	MeshPodPort int    `gorm:"type:int;not null"`
 }
-

@@ -129,9 +129,13 @@ func (s *BootstrapServer) GetNodeCredentials(ctx context.Context, req *pb.GetNod
 	if n == nil {
 		nd.NodeId = node.Node.Id
 		nd.MeshPodName = ""
+		nd.MeshPodIp = ""
+		nd.MeshPodPort = 8082
 	} else {
 		nd.NodeId = n.NodeId
 		nd.MeshPodName = n.MeshPodName
+		nd.MeshPodIp = n.MeshPodIp
+		nd.MeshPodPort = n.MeshPodPort
 	}
 
 	if err := utils.SpawnReplica(ctx, nd, s.config, s.clientSet, s.nodeRepo); err != nil {
