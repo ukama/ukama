@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -10,6 +11,7 @@ import (
 	"github.com/ukama/ukama/systems/init/bootstrap/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"gorm.io/gorm"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -106,16 +108,28 @@ func isPodHealthy(pod *corev1.Pod) bool {
 }
 
 // syncNodePodName updates the database if the pod name differs from what's stored.
+// Uses an upsert pattern: checks if node exists in DB first, then updates or creates accordingly.
 func syncNodePodName(node *db.Node, podName string, nodeRepo db.NodeRepo) error {
+	// Check if pod name is already synced
 	if node.MeshPodName == podName {
 		log.Debugf("Mesh pod already exists and synced for node %s: %s", node.NodeId, podName)
 		return nil
 	}
 
-	log.Infof("Syncing mesh pod name in database for node %s: %s -> %s", node.NodeId, node.MeshPodName, podName)
-	
-	if node.MeshPodName == "" {
-		// Node doesn't exist in DB yet
+	// Check if node exists in database
+	existingNode, err := nodeRepo.GetNode(node.NodeId)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// Node doesn't exist, will create it
+			existingNode = nil
+		} else {
+			return status.Errorf(codes.Internal, "failed to check if node exists: %v", err)
+		}
+	}
+
+	if existingNode == nil {
+		// Node doesn't exist in DB, create it
+		log.Infof("Creating new node record for node %s with pod %s", node.NodeId, podName)
 		if err := nodeRepo.CreateNode(&db.Node{
 			Id:          uuid.NewV4(),
 			NodeId:      node.NodeId,
@@ -123,15 +137,18 @@ func syncNodePodName(node *db.Node, podName string, nodeRepo db.NodeRepo) error 
 		}); err != nil {
 			return status.Errorf(codes.Internal, "failed to create node record: %v", err)
 		}
+		log.Infof("Successfully created node record for node %s", node.NodeId)
 	} else {
-		// Update existing node
+		// Node exists in DB, update it
+		log.Infof("Updating mesh pod name in database for node %s: %s -> %s", node.NodeId, existingNode.MeshPodName, podName)
 		if err := nodeRepo.UpdateNode(&db.Node{
-			Id: 		 node.Id,
+			Id:          existingNode.Id,
 			NodeId:      node.NodeId,
 			MeshPodName: podName,
 		}); err != nil {
 			return status.Errorf(codes.Internal, "failed to update node record: %v", err)
 		}
+		log.Infof("Successfully updated node record for node %s", node.NodeId)
 	}
 
 	return nil
