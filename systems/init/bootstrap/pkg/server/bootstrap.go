@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"net"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -150,7 +151,7 @@ func (s *BootstrapServer) spawnReplica(ctx context.Context, nodeId string) (*cor
 	deployments, err := s.clientSet.AppsV1().Deployments(namespace).List(
 		context.TODO(),
 		metav1.ListOptions{
-			LabelSelector: "app=mesh",
+			LabelSelector: "app.kubernetes.io/name=mesh",
 		},
 	)
 	if err != nil {
@@ -158,7 +159,16 @@ func (s *BootstrapServer) spawnReplica(ctx context.Context, nodeId string) (*cor
 	}
 
 	if len(deployments.Items) == 0 {
-		return nil, status.Errorf(codes.NotFound, "No deployment found with label app=mesh in namespace %s", s.config.MeshNamespace)
+		return nil, status.Errorf(codes.NotFound, "No deployment found with label app=mesh in namespace %s", namespace)
+	}
+
+	for _, deployment := range deployments.Items {
+		log.Infof("INFO Deployment: %s", deployment.Name)
+		log.Infof("INFO Deployment Labels: %v", deployment.Labels)
+		if strings.Contains(deployment.Name, nodeId) {
+			log.Infof("INFO Mesh pod already exists for node %s", nodeId)
+			return nil, status.Errorf(codes.AlreadyExists, "Mesh pod already exists for node %s", nodeId)
+		}
 	}
 
 	templateDeployment := &deployments.Items[0]
