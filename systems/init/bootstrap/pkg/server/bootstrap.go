@@ -147,7 +147,7 @@ func (s *BootstrapServer) GetNodeCredentials(ctx context.Context, req *pb.GetNod
 
 func (s *BootstrapServer) spawnReplica(ctx context.Context, nodeId string) (*corev1.Pod, error) {
 	namespace := s.config.OrgName + "-" + s.config.MeshNamespace
-	deployments, err := s.clientSet.AppsV1().Deployments(s.config.MeshNamespace).List(
+	deployments, err := s.clientSet.AppsV1().Deployments(namespace).List(
 		context.TODO(),
 		metav1.ListOptions{
 			LabelSelector: "app=mesh",
