@@ -33,7 +33,7 @@ import (
 	pb "github.com/ukama/ukama/systems/init/bootstrap/pb/gen"
 )
 
-var svcConf *pkg.Config
+var svcConf = pkg.NewConfig(pkg.ServiceName)
 var FactorySystem = "factory"
 
 func main() {

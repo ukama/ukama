@@ -42,6 +42,9 @@ type HttpServices struct {
 
 func NewConfig(name string) *Config {
 	return &Config{
+		DB: &uconf.Database{
+			DbName: name,
+		},
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
 			Timeout:        7 * time.Second,
