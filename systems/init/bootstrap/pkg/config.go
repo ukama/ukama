@@ -18,6 +18,7 @@ import (
 
 type Config struct {
 	uconf.BaseConfig `mapstructure:",squash"`
+	DB               *uconf.Database  `default:"{}"`
 	Grpc             *uconf.Grpc   `default:"{}"`
 	Queue            *uconf.Queue  `default:"{}"`
 	Timeout          time.Duration `default:"20s"`
@@ -27,6 +28,7 @@ type Config struct {
 	Lookup           string           `default:"lookup:9090"`
 	Http             HttpServices
 	DNSMap           []OrgDNS `mapstructure:"-"`
+	MeshNamespace    string   `default:"messaging"`
 }
 
 type OrgDNS struct {
