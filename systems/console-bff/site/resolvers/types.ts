@@ -30,10 +30,10 @@ export class SiteDto {
   isDeactivated: boolean;
 
   @Field()
-  latitude: number;
+  latitude: string;
 
   @Field()
-  longitude: number;
+  longitude: string;
 
   @Field()
   installDate: string;
@@ -87,10 +87,10 @@ export class SiteAPIDto {
   is_deactivated: boolean;
 
   @Field()
-  latitude: number;
+  latitude: string;
 
   @Field()
-  longitude: number;
+  longitude: string;
 
   @Field()
   install_date: string;
@@ -135,10 +135,10 @@ export class AddSiteInputDto {
   switch_id: string;
 
   @Field()
-  latitude: number;
+  latitude: string;
 
   @Field()
-  longitude: number;
+  longitude: string;
 
   @Field()
   install_date: string;

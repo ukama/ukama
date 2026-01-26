@@ -11,7 +11,7 @@ interface UseFetchAddressResult {
   address: string;
   isLoading: boolean;
   error: string | null;
-  fetchAddress: (lat: number, lng: number) => Promise<void>;
+  fetchAddress: (lat: string, lng: string) => Promise<void>;
 }
 
 export const useFetchAddress = (): UseFetchAddressResult => {
@@ -19,13 +19,13 @@ export const useFetchAddress = (): UseFetchAddressResult => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchAddress = useCallback(async (lat: number, lng: number) => {
+  const fetchAddress = useCallback(async (lat: string, lng: string) => {
     setIsLoading(true);
     setError(null);
 
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat || 37.7749}&lon=${lng || -122.4194}`,
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
         {
           cache: 'force-cache',
           headers: {

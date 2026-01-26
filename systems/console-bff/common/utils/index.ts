@@ -322,9 +322,9 @@ const getBaseURL = async (
   if (orgName && sysName) {
     try {
       const intRes = await initAPI.getSystem(orgName, sysName);
-      const url = intRes.url
-        ? intRes.url
-        : `http://${intRes.ip}:${intRes.port}`;
+      const url = intRes.apiGwUrl
+        ? intRes.apiGwUrl
+        : `http://${intRes.apiGwIp}:${intRes.apiGwPort}`;
       return {
         status: 200,
         message: url,

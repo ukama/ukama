@@ -24,16 +24,16 @@ export class InitSystemAPIResDto {
   certificate: string;
 
   @Field()
-  ip: string;
+  apiGwIp: string;
 
   @Field()
-  url: string;
+  apiGwUrl: string;
 
   @Field()
-  port: number;
+  apiGwPort: number;
 
   @Field()
-  health: number;
+  apiGwHealth: number;
 }
 
 @ObjectType()

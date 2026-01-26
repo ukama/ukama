@@ -75,15 +75,15 @@ const Check = () => {
     onCompleted: (data) => {
       const filterNodes = data.getNodes.nodes.filter(
         (node) =>
-          node.latitude !== 0 &&
-          node.longitude !== 0 &&
+          node.latitude !== null &&
+          node.longitude !== null &&
           node.status.connectivity === NodeConnectivityEnum.Online &&
           node.status.state === NodeStateEnum.Unknown,
       );
       if (
         filterNodes.length > 0 &&
-        filterNodes[0].latitude !== 0 &&
-        filterNodes[0].longitude !== 0 &&
+        filterNodes[0].latitude !== null &&
+        filterNodes[0].longitude !== null &&
         filterNodes[0].status.connectivity === NodeConnectivityEnum.Online &&
         filterNodes[0].status.state === NodeStateEnum.Unknown
       ) {
