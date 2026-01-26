@@ -11,13 +11,13 @@ package server
 import (
 	"context"
 	"net"
-	"strings"
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	factory "github.com/ukama/ukama/systems/common/rest/client/factory"
 	"github.com/ukama/ukama/systems/init/bootstrap/client"
+	"github.com/ukama/ukama/systems/init/bootstrap/utils"
 
 	pb "github.com/ukama/ukama/systems/init/bootstrap/pb/gen"
 	"github.com/ukama/ukama/systems/init/bootstrap/pkg"
@@ -25,8 +25,6 @@ import (
 	lpb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
@@ -136,7 +134,9 @@ func (s *BootstrapServer) GetNodeCredentials(ctx context.Context, req *pb.GetNod
 		nd.MeshPodName = n.MeshPodName
 	}
 
-	s.spawnReplica(ctx, nd)
+	if err := utils.SpawnReplica(ctx, nd, s.config, s.clientSet, s.nodeRepo); err != nil {
+		log.Warnf("Failed to spawn mesh replica for node %s: %v", nd.NodeId, err)
+	}
 
 	return &pb.GetNodeCredentialsResponse{
 		Id:          node.Node.Id,
@@ -146,87 +146,3 @@ func (s *BootstrapServer) GetNodeCredentials(ctx context.Context, req *pb.GetNod
 	}, nil
 }
 
-func (s *BootstrapServer) spawnReplica(ctx context.Context, node *db.Node)  {
-	namespace := s.config.OrgName + "-" + s.config.MeshNamespace
-	deployments, err := s.clientSet.AppsV1().Deployments(namespace).List(
-		context.TODO(),
-		metav1.ListOptions{
-			LabelSelector: "app.kubernetes.io/name=mesh",
-		},
-	)
-	if err != nil {
-		log.Errorf("Could not list deployments: %v", err)
-		return 
-	}
-
-	if len(deployments.Items) == 0 {
-		log.Errorf("No deployment found with label app.kubernetes.io/name=mesh in namespace %s", namespace)
-		return 
-	}
-
-	podPrefix := s.config.OrgName + "-mesh-node-" + node.NodeId
-	existingPods, err := s.clientSet.CoreV1().Pods(namespace).List(
-		context.TODO(),
-		metav1.ListOptions{},
-	)
-	if err != nil {
-		log.Errorf("Could not list pods: %v", err)
-		return 
-	}
-
-	if node.MeshPodName != "" {
-		for _, pod := range existingPods.Items {
-			log.Debugf("Found pod: %s", pod.Name)
-			if pod.Name == node.MeshPodName {
-				log.Errorf("INFO Mesh pod already exists for node %s: %s", node.NodeId, pod.Name)
-				return 
-			}else if strings.HasPrefix(pod.Name, podPrefix) {
-				log.Errorf("Mesh pod already exists for node but name is different: %s: %s", node.NodeId, pod.Name)
-				err = s.nodeRepo.UpdateNode(&db.Node{
-					NodeId: node.NodeId,
-					MeshPodName: pod.Name,
-				})
-				if err != nil {
-					log.Errorf("Failed to update node: %v", err)
-					return 
-				}
-				log.Infof("INFO Mesh pod name updated in database: %s", node.NodeId)
-				return 
-			}
-		}
-	}
-
-	templateDeployment := &deployments.Items[0]
-	podSpec := templateDeployment.Spec.Template.Spec.DeepCopy()
-
-	podSpec.RestartPolicy = corev1.RestartPolicyOnFailure
-
-	newPod := &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: s.config.OrgName + "-mesh-node-" + node.NodeId + "-",
-			Namespace:    namespace,
-		},
-		Spec: *podSpec,
-	}
-
-	createdPod, err := s.clientSet.CoreV1().Pods(namespace).Create(
-		context.TODO(),
-		newPod,
-		metav1.CreateOptions{},
-	)
-
-	if err != nil {
-		log.Errorf("Failed to create pod: %v", err)
-		return 
-	}
-
-	err = s.nodeRepo.CreateNode(&db.Node{
-		NodeId: node.NodeId,
-		MeshPodName: createdPod.Name,
-	})
-	if err != nil {
-		log.Errorf("Failed to create node: %v", err)
-		return 
-	}
-	log.Infof("INFO Mesh pod created for node added to database: %s", node.NodeId)
-}
