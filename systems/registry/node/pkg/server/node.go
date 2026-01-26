@@ -98,8 +98,6 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 		},
 		Type:      ukama.NodeType(nId.GetNodeType()),
 		Name:      req.Name,
-		Latitude:  req.Latitude,
-		Longitude: req.Longitude,
 	}
 
 	err = n.nodeRepo.Add(node, nil)
@@ -114,8 +112,6 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 			NodeId:    nId.StringLowercase(),
 			Name:      node.Name,
 			Type:      node.Type.String(),
-			Latitude:  node.Latitude,
-			Longitude: node.Longitude,
 		}
 
 		err = n.msgbus.PublishRequest(route, evt)

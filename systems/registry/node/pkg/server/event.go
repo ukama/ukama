@@ -11,7 +11,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -120,12 +119,13 @@ func (n *NodeEventServer) handleStoreRunningAppsInfoEvent(ctx context.Context, k
 		log.Errorf("Failed to parse coordinates: %v", err)
 		return fmt.Errorf("failed to parse coordinates: %w", err)
 	}
+
 	if node.Node.Latitude == lat && node.Node.Longitude == lon {
-		log.Infof("Node %s already has latitude=%f, longitude=%f",
+		log.Infof("Node %s already has latitude=%s, longitude=%s",
 			msg.NodeId, lat, lon)
 		return nil
 	}
-	log.Infof("Updating node %s: latitude=%f, longitude=%f",
+	log.Infof("Updating node %s: latitude=%s, longitude=%s",
 		msg.NodeId, lat, lon)
 	updateRequest := &pb.UpdateNodeRequest{
 		NodeId:    msg.NodeId,
@@ -203,8 +203,6 @@ func (n *NodeEventServer) handleAddNode(ctx context.Context, key string, msg *ep
 	_, err = n.s.AddNode(ctx, &pb.AddNodeRequest{
 		NodeId:    nodeID.StringLowercase(),
 		Name:      ukama.GetPlaceholderNameByType(nodeID.GetNodeType()),
-		Latitude:  0,
-		Longitude: 0,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to add node: %w", err)
@@ -212,32 +210,22 @@ func (n *NodeEventServer) handleAddNode(ctx context.Context, key string, msg *ep
 	return nil
 }
 
-func parseCoordinates(coordinates string) (float64, float64, error) {
+func parseCoordinates(coordinates string) (string, string, error) {
 	if coordinates == "" {
-		return 0, 0, fmt.Errorf("coordinates string is empty")
+		return "", "", fmt.Errorf("coordinates string is empty")
 	}
 
 	parts := strings.Split(coordinates, ",")
 	if len(parts) != 2 {
-		return 0, 0, fmt.Errorf("invalid coordinates format: expected 'lat,lon', got %d parts", len(parts))
+		return "", "", fmt.Errorf("invalid coordinates format: expected 'lat,lon', got %d parts", len(parts))
 	}
 
 	latStr := strings.TrimSpace(parts[0])
 	lonStr := strings.TrimSpace(parts[1])
 
 	if latStr == "" || lonStr == "" {
-		return 0, 0, fmt.Errorf("invalid coordinates: latitude or longitude is empty")
+		return "", "", fmt.Errorf("invalid coordinates: latitude or longitude is empty")
 	}
 
-	lat, err := strconv.ParseFloat(latStr, 64)
-	if err != nil {
-		return 0, 0, fmt.Errorf("failed to parse latitude '%s': %w", latStr, err)
-	}
-
-	lon, err := strconv.ParseFloat(lonStr, 64)
-	if err != nil {
-		return 0, 0, fmt.Errorf("failed to parse longitude '%s': %w", lonStr, err)
-	}
-
-	return lat, lon, nil
+	return latStr, lonStr, nil
 }

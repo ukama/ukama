@@ -86,8 +86,8 @@ func TestSiteRegistry_GetSite(t *testing.T) {
 				SwitchId:      "switch-1",
 				SpectrumId:    "spectrum-1",
 				IsDeactivated: false,
-				Latitude:      40.7128,
-				Longitude:     -74.0060,
+				Latitude:      "40.7128",
+				Longitude:     "-74.0060",
 				InstallDate:   "2023-01-01",
 			},
 		}
@@ -187,8 +187,8 @@ func TestSiteRegistry_AddSite(t *testing.T) {
 				SwitchId:      "switch-1",
 				SpectrumId:    "spectrum-1",
 				IsDeactivated: false,
-				Latitude:      40.7128,
-				Longitude:     -74.0060,
+				Latitude:      "40.7128",
+				Longitude:     "-74.0060",
 				InstallDate:   "2023-01-01",
 			},
 		}
@@ -203,8 +203,8 @@ func TestSiteRegistry_AddSite(t *testing.T) {
 				req.SwitchId == "switch-1" &&
 				req.SpectrumId == "spectrum-1" &&
 				req.IsDeactivated == false &&
-				req.Latitude == 40.7128 &&
-				req.Longitude == -74.0060 &&
+				req.Latitude == "40.7128" &&
+				req.Longitude == "-74.0060" &&
 				req.InstallDate == "2023-01-01"
 		})).Return(expectedResponse, nil)
 
@@ -218,8 +218,8 @@ func TestSiteRegistry_AddSite(t *testing.T) {
 			"New Location",
 			"spectrum-1",
 			false,
-			40.7128,
-			-74.0060,
+			"40.7128",
+			"-74.0060",
 			"2023-01-01",
 		)
 
@@ -245,8 +245,8 @@ func TestSiteRegistry_AddSite(t *testing.T) {
 			"Invalid Location",
 			"spectrum-1",
 			false,
-			40.7128,
-			-74.0060,
+			"40.7128",
+			"-74.0060",
 			"invalid-date",
 		)
 

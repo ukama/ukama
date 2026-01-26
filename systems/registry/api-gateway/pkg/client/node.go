@@ -62,15 +62,13 @@ func (n *Node) Close() {
 	}
 }
 
-func (n *Node) AddNode(nodeId, name, state string, latitude, longitude float64) (*pb.AddNodeResponse, error) {
+func (n *Node) AddNode(nodeId, name, state string) (*pb.AddNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
 	return n.client.AddNode(ctx, &pb.AddNodeRequest{
 		NodeId:    nodeId,
 		Name:      name,
-		Latitude:  latitude,
-		Longitude: longitude,
 	})
 }
 
@@ -137,7 +135,7 @@ func (n *Node) UpdateNodeState(nodeId string, state string) (*pb.UpdateNodeRespo
 	})
 }
 
-func (n *Node) UpdateNode(nodeId string, name string, latitude, longitude float64) (*pb.UpdateNodeResponse, error) {
+func (n *Node) UpdateNode(nodeId string, name string, latitude string, longitude string) (*pb.UpdateNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 

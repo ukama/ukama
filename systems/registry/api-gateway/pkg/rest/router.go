@@ -69,7 +69,7 @@ type network interface {
 }
 
 type site interface {
-	AddSite(networkId, name, backhaulId, powerId, accessId, switchId, location, spectrumId string, isDeactivated bool, latitude, longitude float64, installDate string) (*sitepb.AddResponse, error)
+	AddSite(networkId, name, backhaulId, powerId, accessId, switchId, location, spectrumId string, isDeactivated bool, latitude, longitude string, installDate string) (*sitepb.AddResponse, error)
 	GetSite(siteId string) (*sitepb.GetResponse, error)
 	List(networkId string, isDeactivate bool) (*sitepb.ListResponse, error)
 	UpdateSite(siteId, name string) (*sitepb.UpdateResponse, error)
@@ -94,7 +94,7 @@ type member interface {
 }
 
 type node interface {
-	AddNode(nodeId, name, state string, latitude, longitude float64) (*nodepb.AddNodeResponse, error)
+	AddNode(nodeId, name, state string) (*nodepb.AddNodeResponse, error)
 	GetNode(nodeId string) (*nodepb.GetNodeResponse, error)
 	GetNodes() (*nodepb.GetNodesResponse, error)
 	List(req *nodepb.ListRequest) (*nodepb.ListResponse, error)
@@ -102,7 +102,7 @@ type node interface {
 	GetSiteNodes(siteId string) (*nodepb.GetBySiteResponse, error)
 	GetNodesByState(connectivity, state string) (*nodepb.GetNodesResponse, error)
 	UpdateNodeState(nodeId string, state string) (*nodepb.UpdateNodeResponse, error)
-	UpdateNode(nodeId string, name string, latitude, longitude float64) (*nodepb.UpdateNodeResponse, error)
+	UpdateNode(nodeId string, name string, latitude string, longitude string) (*nodepb.UpdateNodeResponse, error)
 	DeleteNode(nodeId string) (*nodepb.DeleteNodeResponse, error)
 	AttachNodes(node, l, r string) (*nodepb.AttachNodesResponse, error)
 	DetachNode(nodeId string) (*nodepb.DetachNodeResponse, error)
@@ -274,7 +274,7 @@ func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeRequest) (*nodepb.Ge
 }
 
 func (r *Router) postAddNodeHandler(c *gin.Context, req *AddNodeRequest) (*nodepb.AddNodeResponse, error) {
-	return r.clients.Node.AddNode(req.NodeId, req.Name, req.State, req.Latitude, req.Longitude)
+	return r.clients.Node.AddNode(req.NodeId, req.Name, req.State)
 }
 
 func (r *Router) postAttachedNodesHandler(c *gin.Context, req *AttachNodesRequest) (*nodepb.AttachNodesResponse, error) {

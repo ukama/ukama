@@ -30,8 +30,8 @@ type SiteInfo struct {
 	SwitchId    string  `json:"switch_id,omitempty"`
 	SpectrumId  string  `json:"spectrum_id,omitempty"`
 	Deactivated bool    `json:"deactivated,omitempty"`
-	Latitude    float64 `json:"latitude,omitempty"`
-	Longitude   float64 `json:"longitude,omitempty"`
+	Latitude    string `json:"latitude,omitempty"`
+	Longitude   string `json:"longitude,omitempty"`
 	InstallDate string  `json:"install_date,omitempty"`
 	CreatedAt   string  `json:"created_at,omitempty"`
 	Location    string  `json:"location,omitempty"`

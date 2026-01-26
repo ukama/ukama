@@ -4,41 +4,41 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * Copyright (c) 2023-present, Ukama Inc.
- */
+*/
 
- syntax = "proto3";
+syntax = "proto3";
 
- option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
- 
- import "validator.proto";
- package ukama.events.v1;
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
 
- message EventAddSite{
-    string siteId = 1 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "site_id"];
-     string name = 2;
-     string networkId = 3 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "network_id"];
-     string backhaulId = 4 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "backhaul_id"];
-     string powerId = 5 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "power_id"];
-     string accessId = 6 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "access_id"];
-     string switchId = 7 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "switch_id"];
-     bool isDeactivated = 8 [json_name = "is_deactivated"];
-     double latitude = 9;
-     double longitude = 10;
-     string installDate = 11 [json_name = "install_date"];
- }
- 
+import "validator.proto";
+package ukama.events.v1;
+
+message EventAddSite{
+string siteId = 1 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "site_id"];
+    string name = 2;
+    string networkId = 3 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "network_id"];
+    string backhaulId = 4 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "backhaul_id"];
+    string powerId = 5 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "power_id"];
+    string accessId = 6 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "access_id"];
+    string switchId = 7 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "switch_id"];
+    bool isDeactivated = 8 [json_name = "is_deactivated"];
+    string latitude = 9;
+    string longitude = 10;
+    string installDate = 11 [json_name = "install_date"];
+}
 
 
- message EventUpdateSite {
-     string siteId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "site_id"];
-     string name = 3;
-     string backhaulId = 4 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "backhaul_id"];
-     string powerId = 5 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "power_id"];
-     string accessId = 6 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "access_id"];
-     string switchId = 7 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "switch_id"];
-     bool isDeactivated = 8 [json_name = "is_deactivated"];
-     double latitude = 9;
-     double longitude = 10;
-     string networkId = 11 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "network_id"];
-     string installDate = 12 [json_name = "install_date"];
- }
+
+message EventUpdateSite {
+    string siteId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "site_id"];
+    string name = 3;
+    string backhaulId = 4 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "backhaul_id"];
+    string powerId = 5 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "power_id"];
+    string accessId = 6 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "access_id"];
+    string switchId = 7 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "switch_id"];
+    bool isDeactivated = 8 [json_name = "is_deactivated"];
+    string latitude = 9;
+    string longitude = 10;
+    string networkId = 11 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "network_id"];
+    string installDate = 12 [json_name = "install_date"];
+}

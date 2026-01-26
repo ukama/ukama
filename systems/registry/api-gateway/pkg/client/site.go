@@ -73,7 +73,7 @@ func (i *SiteRegistry) List(networkId string, isDeactivate bool) (*pb.ListRespon
 }
 
 func (i *SiteRegistry) AddSite(networkId, name, backhaulId, powerId, accessId, switchId, location, spectrumId string,
-	isDeactivated bool, latitude, longitude float64, installDate string) (*pb.AddResponse, error) {
+	isDeactivated bool, latitude, longitude string, installDate string) (*pb.AddResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), i.timeout)
 	defer cancel()
 
