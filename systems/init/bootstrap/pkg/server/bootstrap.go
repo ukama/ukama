@@ -122,7 +122,7 @@ func (s *BootstrapServer) GetNodeCredentials(ctx context.Context, req *pb.GetNod
 	}
 
 	n, err := s.nodeRepo.GetNode(node.Node.Id)
-	if err != nil {	
+	if err != nil && err.Error() != "record not found" {	
 		log.Errorf("Failed to get node from database: %v", err)
 		return nil, status.Errorf(codes.Internal, "Failed to get node from database: %v", err)
 	}
