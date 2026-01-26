@@ -127,7 +127,16 @@ func (s *BootstrapServer) GetNodeCredentials(ctx context.Context, req *pb.GetNod
 		return nil, status.Errorf(codes.Internal, "Failed to get node from database: %v", err)
 	}
 
-	s.spawnReplica(ctx, n)
+	nd := &db.Node{}
+	if n == nil {
+		nd.NodeId = node.Node.Id
+		nd.MeshPodName = ""
+	} else {
+		nd.NodeId = n.NodeId
+		nd.MeshPodName = n.MeshPodName
+	}
+
+	s.spawnReplica(ctx, nd)
 
 	return &pb.GetNodeCredentialsResponse{
 		Id:          node.Node.Id,
@@ -165,23 +174,25 @@ func (s *BootstrapServer) spawnReplica(ctx context.Context, node *db.Node)  {
 		return 
 	}
 
-	for _, pod := range existingPods.Items {
-		log.Debugf("Found pod: %s", pod.Name)
-		if pod.Name == node.MeshPodName {
-			log.Errorf("INFO Mesh pod already exists for node %s: %s", node.NodeId, pod.Name)
-			return 
-		}else if strings.HasPrefix(pod.Name, podPrefix) {
-			log.Errorf("Mesh pod already exists for node but name is different: %s: %s", node.NodeId, pod.Name)
-			err = s.nodeRepo.UpdateNode(&db.Node{
-				NodeId: node.NodeId,
-				MeshPodName: pod.Name,
-			})
-			if err != nil {
-				log.Errorf("Failed to update node: %v", err)
+	if node.MeshPodName != "" {
+		for _, pod := range existingPods.Items {
+			log.Debugf("Found pod: %s", pod.Name)
+			if pod.Name == node.MeshPodName {
+				log.Errorf("INFO Mesh pod already exists for node %s: %s", node.NodeId, pod.Name)
+				return 
+			}else if strings.HasPrefix(pod.Name, podPrefix) {
+				log.Errorf("Mesh pod already exists for node but name is different: %s: %s", node.NodeId, pod.Name)
+				err = s.nodeRepo.UpdateNode(&db.Node{
+					NodeId: node.NodeId,
+					MeshPodName: pod.Name,
+				})
+				if err != nil {
+					log.Errorf("Failed to update node: %v", err)
+					return 
+				}
+				log.Infof("INFO Mesh pod name updated in database: %s", node.NodeId)
 				return 
 			}
-			log.Infof("INFO Mesh pod name updated in database: %s", node.NodeId)
-			return 
 		}
 	}
 
