@@ -10,6 +10,8 @@ package db
 
 import (
 	"github.com/ukama/ukama/systems/common/sql"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type NodeRepo interface {
@@ -47,5 +49,21 @@ func (n *nodeRepo) DeleteNode(nodeId string) error {
 }
 
 func (n *nodeRepo) UpdateNode(node *Node) error {
-	return n.Db.GetGormDb().Save(node).Error
+	tx := n.Db.GetGormDb().Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	result := tx.Clauses(clause.Returning{}).Where("id = ?", node.Id.String()).Updates(node)
+	if result.Error != nil {
+		tx.Rollback()
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		tx.Rollback()
+		return gorm.ErrRecordNotFound
+	}
+
+	return tx.Commit().Error
 }

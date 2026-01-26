@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/init/bootstrap/pkg"
 	"github.com/ukama/ukama/systems/init/bootstrap/pkg/db"
 	"google.golang.org/grpc/codes"
@@ -116,6 +117,7 @@ func syncNodePodName(node *db.Node, podName string, nodeRepo db.NodeRepo) error 
 	if node.MeshPodName == "" {
 		// Node doesn't exist in DB yet
 		if err := nodeRepo.CreateNode(&db.Node{
+			Id:          uuid.NewV4(),
 			NodeId:      node.NodeId,
 			MeshPodName: podName,
 		}); err != nil {
@@ -124,6 +126,7 @@ func syncNodePodName(node *db.Node, podName string, nodeRepo db.NodeRepo) error 
 	} else {
 		// Update existing node
 		if err := nodeRepo.UpdateNode(&db.Node{
+			Id: 		 node.Id,
 			NodeId:      node.NodeId,
 			MeshPodName: podName,
 		}); err != nil {
