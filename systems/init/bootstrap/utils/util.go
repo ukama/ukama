@@ -165,22 +165,29 @@ func syncNodePodInfo(node *db.Node, podName, podIP string, nodeRepo db.NodeRepo)
 
 // createMeshPod creates a new mesh pod for the node.
 func createMeshPod(ctx context.Context, namespace, podName string, node *db.Node, clientSet *kubernetes.Clientset, nodeRepo db.NodeRepo) error {
-	// Get template deployment
-	podSpec, err := getTemplatePodSpec(ctx, namespace, clientSet)
+	// Get template deployment and pod spec
+	podSpec, templateLabels, err := getTemplatePodSpec(ctx, namespace, clientSet)
 	if err != nil {
 		return err
 	}
 
 	// Create the pod (add trailing - for cleaner random suffix separation)
+	// Copy labels from template to ensure service selector matches
+	podLabels := make(map[string]string)
+	for k, v := range templateLabels {
+		podLabels[k] = v
+	}
+	// Override/add node-specific labels
+	podLabels["app.kubernetes.io/component"] = "mesh-node"
+	// Keep the template's instance label for service selector matching
+	// Store node ID in a separate label for identification
+	podLabels["app.kubernetes.io/node-id"] = node.NodeId
+
 	newPod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: podName + "-",
 			Namespace:    namespace,
-			Labels: map[string]string{
-				"app.kubernetes.io/name":      "mesh",
-				"app.kubernetes.io/component": "mesh-node",
-				"app.kubernetes.io/instance":  node.NodeId,
-			},
+			Labels:       podLabels,
 		},
 		Spec: *podSpec,
 	}
@@ -239,21 +246,28 @@ func waitForPodIP(ctx context.Context, namespace, podName string, clientSet *kub
 	}
 }
 
-// getTemplatePodSpec retrieves the pod spec from the mesh deployment template.
-func getTemplatePodSpec(ctx context.Context, namespace string, clientSet *kubernetes.Clientset) (*corev1.PodSpec, error) {
+// getTemplatePodSpec retrieves the pod spec and labels from the mesh deployment template.
+func getTemplatePodSpec(ctx context.Context, namespace string, clientSet *kubernetes.Clientset) (*corev1.PodSpec, map[string]string, error) {
 	deployments, err := clientSet.AppsV1().Deployments(namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: "app.kubernetes.io/name=mesh",
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to list deployments: %v", err)
+		return nil, nil, status.Errorf(codes.Internal, "failed to list deployments: %v", err)
 	}
 
 	if len(deployments.Items) == 0 {
-		return nil, status.Errorf(codes.NotFound, "no mesh deployment found in namespace %s", namespace)
+		return nil, nil, status.Errorf(codes.NotFound, "no mesh deployment found in namespace %s", namespace)
 	}
 
-	podSpec := deployments.Items[0].Spec.Template.Spec.DeepCopy()
+	deployment := deployments.Items[0]
+	podSpec := deployment.Spec.Template.Spec.DeepCopy()
 	podSpec.RestartPolicy = corev1.RestartPolicyOnFailure
 
-	return podSpec, nil
+	// Extract labels from deployment template
+	templateLabels := make(map[string]string)
+	for k, v := range deployment.Spec.Template.Labels {
+		templateLabels[k] = v
+	}
+
+	return podSpec, templateLabels, nil
 }
