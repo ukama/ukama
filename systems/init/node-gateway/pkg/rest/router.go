@@ -90,6 +90,7 @@ func (r *Router) init() {
 
 	nodes := v1.Group("nodes", "Nodes", "looking for Nodes credentials")
 	nodes.GET("/:nodeId", formatDoc("Get Nodes Credentials", ""), tonic.Handler(r.getNodeHandler, http.StatusOK))
+	nodes.GET("/:nodeId/mesh", formatDoc("Get Node Mesh Info", ""), tonic.Handler(r.getNodeMeshInfoHandler, http.StatusOK))
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -101,6 +102,12 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 
 func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeRequest) (*pb.GetNodeCredentialsResponse, error) {
 	return r.clients.Bootstrap.GetNodeCredentials(&pb.GetNodeCredentialsRequest{
+		Id: req.NodeId,
+	})
+}
+
+func (r *Router) getNodeMeshInfoHandler(c *gin.Context, req *GetNodeMeshInfoRequest) (*pb.GetNodeMeshInfoResponse, error) {
+	return r.clients.Bootstrap.GetNodeMeshInfo(&pb.GetNodeMeshInfoRequest{
 		Id: req.NodeId,
 	})
 }

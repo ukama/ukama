@@ -14,6 +14,12 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *GetNodeMeshInfoRequest) Validate() error {
+	return nil
+}
+func (this *GetNodeMeshInfoResponse) Validate() error {
+	return nil
+}
 func (this *GetNodeCredentialsRequest) Validate() error {
 	return nil
 }

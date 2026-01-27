@@ -27,6 +27,7 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	BootstrapService_GetNodeCredentials_FullMethodName = "/ukama.bootstrap.v1.BootstrapService/GetNodeCredentials"
+	BootstrapService_GetNodeMeshInfo_FullMethodName    = "/ukama.bootstrap.v1.BootstrapService/GetNodeMeshInfo"
 )
 
 // BootstrapServiceClient is the client API for BootstrapService service.
@@ -34,6 +35,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BootstrapServiceClient interface {
 	GetNodeCredentials(ctx context.Context, in *GetNodeCredentialsRequest, opts ...grpc.CallOption) (*GetNodeCredentialsResponse, error)
+	GetNodeMeshInfo(ctx context.Context, in *GetNodeMeshInfoRequest, opts ...grpc.CallOption) (*GetNodeMeshInfoResponse, error)
 }
 
 type bootstrapServiceClient struct {
@@ -54,11 +56,22 @@ func (c *bootstrapServiceClient) GetNodeCredentials(ctx context.Context, in *Get
 	return out, nil
 }
 
+func (c *bootstrapServiceClient) GetNodeMeshInfo(ctx context.Context, in *GetNodeMeshInfoRequest, opts ...grpc.CallOption) (*GetNodeMeshInfoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetNodeMeshInfoResponse)
+	err := c.cc.Invoke(ctx, BootstrapService_GetNodeMeshInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BootstrapServiceServer is the server API for BootstrapService service.
 // All implementations must embed UnimplementedBootstrapServiceServer
 // for forward compatibility.
 type BootstrapServiceServer interface {
 	GetNodeCredentials(context.Context, *GetNodeCredentialsRequest) (*GetNodeCredentialsResponse, error)
+	GetNodeMeshInfo(context.Context, *GetNodeMeshInfoRequest) (*GetNodeMeshInfoResponse, error)
 	mustEmbedUnimplementedBootstrapServiceServer()
 }
 
@@ -71,6 +84,9 @@ type UnimplementedBootstrapServiceServer struct{}
 
 func (UnimplementedBootstrapServiceServer) GetNodeCredentials(context.Context, *GetNodeCredentialsRequest) (*GetNodeCredentialsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNodeCredentials not implemented")
+}
+func (UnimplementedBootstrapServiceServer) GetNodeMeshInfo(context.Context, *GetNodeMeshInfoRequest) (*GetNodeMeshInfoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNodeMeshInfo not implemented")
 }
 func (UnimplementedBootstrapServiceServer) mustEmbedUnimplementedBootstrapServiceServer() {}
 func (UnimplementedBootstrapServiceServer) testEmbeddedByValue()                          {}
@@ -111,6 +127,24 @@ func _BootstrapService_GetNodeCredentials_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BootstrapService_GetNodeMeshInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNodeMeshInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BootstrapServiceServer).GetNodeMeshInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BootstrapService_GetNodeMeshInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BootstrapServiceServer).GetNodeMeshInfo(ctx, req.(*GetNodeMeshInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BootstrapService_ServiceDesc is the grpc.ServiceDesc for BootstrapService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -121,6 +155,10 @@ var BootstrapService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetNodeCredentials",
 			Handler:    _BootstrapService_GetNodeCredentials_Handler,
+		},
+		{
+			MethodName: "GetNodeMeshInfo",
+			Handler:    _BootstrapService_GetNodeMeshInfo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

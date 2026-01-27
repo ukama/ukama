@@ -12,6 +12,18 @@ package ukama.bootstrap.v1;
 
 service BootstrapService {
     rpc GetNodeCredentials(GetNodeCredentialsRequest) returns (GetNodeCredentialsResponse);
+    rpc GetNodeMeshInfo(GetNodeMeshInfoRequest) returns (GetNodeMeshInfoResponse);
+}
+
+message GetNodeMeshInfoRequest {
+    string id = 1;
+}
+
+message GetNodeMeshInfoResponse {
+    string nodeId = 1;
+    string meshPodName = 2;
+    string meshPodIp = 3;
+    int32 meshPodPort = 4;
 }
 
 message GetNodeCredentialsRequest {

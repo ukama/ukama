@@ -67,6 +67,21 @@ func NewBootstrapServer(nodeRepo db.NodeRepo, msgBus mb.MsgBusServiceClient, deb
 	}
 }
  
+func (s *BootstrapServer) GetNodeMeshInfo(ctx context.Context, req *pb.GetNodeMeshInfoRequest) (*pb.GetNodeMeshInfoResponse, error) {
+	node, err := s.nodeRepo.GetNode(req.Id)
+	if err != nil {
+		log.Errorf("failed to get node from database: %v", err)
+		return nil, err
+	}
+
+	return &pb.GetNodeMeshInfoResponse{
+		NodeId: node.NodeId,
+		MeshPodName: node.MeshPodName,
+		MeshPodIp: node.MeshPodIp,
+		MeshPodPort: node.MeshPodPort,
+	}, nil
+}
+
 func (s *BootstrapServer) GetNodeCredentials(ctx context.Context, req *pb.GetNodeCredentialsRequest) (*pb.GetNodeCredentialsResponse, error) {
 	node, err := s.factoryClient.Get(req.Id)
 	if err != nil {

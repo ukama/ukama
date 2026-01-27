@@ -19,5 +19,5 @@ type Node struct {
 	NodeId      string `gorm:"type:string;uniqueIndex:node_id_idx_case_insensetive,expression:lower(node_id);size:23;not null"`
 	MeshPodName string `gorm:"type:string;size:255;not null"`
 	MeshPodIp   string `gorm:"type:string;size:255;not null"`
-	MeshPodPort int    `gorm:"type:int;not null"`
+	MeshPodPort int32    `gorm:"type:int;not null"`
 }
