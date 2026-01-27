@@ -53,7 +53,18 @@ func SpawnReplica(ctx context.Context, node *db.Node, config *pkg.Config, client
 
 	// If a healthy pod exists, sync database if needed and return
 	if existingPod != nil {
-		return syncNodePodInfo(node, existingPod.Name, existingPod.Status.PodIP, nodeRepo)
+		// Save pod name immediately
+		if err := syncNodePodInfo(node, existingPod.Name, existingPod.Status.PodIP, nodeRepo); err != nil {
+			return err
+		}
+		
+		// If IP is not set yet, update it asynchronously
+		if existingPod.Status.PodIP == "" {
+			log.Debugf("Pod %s exists but has no IP yet, updating asynchronously", existingPod.Name)
+			go updatePodIPAsync(context.Background(), namespace, existingPod.Name, node.NodeId, clientSet, nodeRepo)
+		}
+		
+		return nil
 	}
 
 	// No healthy pod exists, create a new one
@@ -163,6 +174,68 @@ func syncNodePodInfo(node *db.Node, podName, podIP string, nodeRepo db.NodeRepo)
 	return nil
 }
 
+// updatePodIPOnly updates only the IP address for a node in the database.
+// This is used for asynchronous IP updates.
+func updatePodIPOnly(nodeId, podIP string, nodeRepo db.NodeRepo) error {
+	existingNode, err := nodeRepo.GetNode(nodeId)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Warnf("Node %s not found when updating IP, skipping", nodeId)
+			return nil
+		}
+		return status.Errorf(codes.Internal, "failed to get node for IP update: %v", err)
+	}
+
+	// Only update if IP has changed
+	if existingNode.MeshPodIp == podIP {
+		log.Debugf("Pod IP already set for node %s: %s", nodeId, podIP)
+		return nil
+	}
+
+	log.Infof("Updating pod IP for node %s: %s -> %s", nodeId, existingNode.MeshPodIp, podIP)
+	if err := nodeRepo.UpdateNode(&db.Node{
+		Id:          existingNode.Id,
+		NodeId:      existingNode.NodeId,
+		MeshPodName: existingNode.MeshPodName,
+		MeshPodIp:   podIP,
+		MeshPodPort: existingNode.MeshPodPort,
+	}); err != nil {
+		return status.Errorf(codes.Internal, "failed to update pod IP: %v", err)
+	}
+
+	log.Infof("Successfully updated pod IP for node %s to %s", nodeId, podIP)
+	return nil
+}
+
+// updatePodIPAsync waits for a pod to get an IP address and updates it in the database asynchronously.
+// This function runs in a goroutine and handles IP updates without blocking the main flow.
+func updatePodIPAsync(ctx context.Context, namespace, podName, nodeId string, clientSet *kubernetes.Clientset, nodeRepo db.NodeRepo) {
+	// Use a separate context with timeout for async operation
+	asyncCtx, cancel := context.WithTimeout(context.Background(), PodIPWaitTimeout)
+	defer cancel()
+
+	log.Debugf("Starting async IP update for pod %s (node %s)", podName, nodeId)
+
+	podIP, err := waitForPodIP(asyncCtx, namespace, podName, clientSet)
+	if err != nil {
+		log.Warnf("Failed to get pod IP for %s (node %s) asynchronously: %v", podName, nodeId, err)
+		// Don't update with empty IP - it will be retried on next sync or pod check
+		return
+	}
+
+	if podIP == "" {
+		log.Warnf("Pod %s (node %s) has empty IP, skipping update", podName, nodeId)
+		return
+	}
+
+	// Update IP in database asynchronously
+	if err := updatePodIPOnly(nodeId, podIP, nodeRepo); err != nil {
+		log.Errorf("Failed to update pod IP asynchronously for node %s: %v", nodeId, err)
+	} else {
+		log.Infof("Successfully updated pod IP asynchronously for node %s: %s", nodeId, podIP)
+	}
+}
+
 // createMeshPod creates a new mesh pod for the node.
 func createMeshPod(ctx context.Context, namespace, podName string, node *db.Node, clientSet *kubernetes.Clientset, nodeRepo db.NodeRepo) error {
 	// Get template deployment
@@ -190,20 +263,19 @@ func createMeshPod(ctx context.Context, namespace, podName string, node *db.Node
 		return status.Errorf(codes.Internal, "failed to create mesh pod: %v", err)
 	}
 
-	log.Infof("Created mesh pod %s for node %s, waiting for IP assignment...", createdPod.Name, node.NodeId)
+	log.Infof("Created mesh pod %s for node %s", createdPod.Name, node.NodeId)
 
-	// Wait for the pod to get an IP address
-	podIP, err := waitForPodIP(ctx, namespace, createdPod.Name, clientSet)
-	if err != nil {
-		log.Warnf("Failed to get pod IP for %s: %v (will be updated on next call)", createdPod.Name, err)
-		// Still save the pod name even if IP is not available yet
-		podIP = ""
+	// Save pod name immediately (without IP) to ensure consistency
+	// IP will be updated asynchronously when available
+	if err := syncNodePodInfo(node, createdPod.Name, "", nodeRepo); err != nil {
+		log.Errorf("Failed to save pod name for node %s: %v", node.NodeId, err)
+		return err
 	}
 
-	log.Infof("Mesh pod %s for node %s has IP: %s", createdPod.Name, node.NodeId, podIP)
+	// Update IP asynchronously in background
+	go updatePodIPAsync(context.Background(), namespace, createdPod.Name, node.NodeId, clientSet, nodeRepo)
 
-	// Update database with pod info
-	return syncNodePodInfo(node, createdPod.Name, podIP, nodeRepo)
+	return nil
 }
 
 // waitForPodIP waits for a pod to be assigned an IP address.
