@@ -165,70 +165,44 @@ func syncNodePodInfo(node *db.Node, podName, podIP string, nodeRepo db.NodeRepo)
 
 // createMeshPod creates a new mesh pod for the node.
 func createMeshPod(ctx context.Context, namespace, podName string, node *db.Node, clientSet *kubernetes.Clientset, nodeRepo db.NodeRepo) error {
-	// Get template deployment and pod spec
-	podSpec, templateLabels, err := getTemplatePodSpec(ctx, namespace, clientSet)
+	// Get template deployment
+	podSpec, err := getTemplatePodSpec(ctx, namespace, clientSet)
 	if err != nil {
 		return err
 	}
 
 	// Create the pod (add trailing - for cleaner random suffix separation)
-	// Copy labels from template to ensure service selector matches
-	podLabels := make(map[string]string)
-	for k, v := range templateLabels {
-		podLabels[k] = v
-	}
-	// Override/add node-specific labels
-	podLabels["app.kubernetes.io/component"] = "mesh-node"
-	// Keep the template's instance label for service selector matching
-	// Store node ID in a separate label for identification
-	podLabels["app.kubernetes.io/node-id"] = node.NodeId
-
 	newPod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: podName + "-",
 			Namespace:    namespace,
-			Labels:       podLabels,
+			Labels: map[string]string{
+				"app.kubernetes.io/name":      "mesh",
+				"app.kubernetes.io/component": "mesh-node",
+				"app.kubernetes.io/node-id":  node.NodeId,
+			},
 		},
 		Spec: *podSpec,
 	}
 
-	log.Debugf("Creating mesh pod in namespace %s with labels: %v", namespace, podLabels)
 	createdPod, err := clientSet.CoreV1().Pods(namespace).Create(ctx, newPod, metav1.CreateOptions{})
 	if err != nil {
-		log.Errorf("Failed to create mesh pod in namespace %s: %v", namespace, err)
 		return status.Errorf(codes.Internal, "failed to create mesh pod: %v", err)
 	}
-	log.Infof("Successfully created pod %s in namespace %s", createdPod.Name, namespace)
 
 	log.Infof("Created mesh pod %s for node %s, waiting for IP assignment...", createdPod.Name, node.NodeId)
 
-	// Check if pod already has an IP (sometimes it's assigned immediately)
-	podIP := createdPod.Status.PodIP
-	
-	// If no IP yet, wait for it using a background context
-	// This prevents the gRPC request timeout from cancelling the pod IP wait
-	if podIP == "" {
-		// Use a shorter timeout for initial wait to avoid blocking the RPC too long
-		// The IP will be updated on the next call if it's not ready yet
-		ipWaitCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-		defer cancel()
-		
-		ip, err := waitForPodIP(ipWaitCtx, namespace, createdPod.Name, clientSet)
-		if err != nil {
-			log.Warnf("Failed to get pod IP for %s within 15s: %v (will be updated on next call)", createdPod.Name, err)
-			podIP = ""
-		} else {
-			podIP = ip
-		}
+	// Wait for the pod to get an IP address
+	podIP, err := waitForPodIP(ctx, namespace, createdPod.Name, clientSet)
+	if err != nil {
+		log.Warnf("Failed to get pod IP for %s: %v (will be updated on next call)", createdPod.Name, err)
+		// Still save the pod name even if IP is not available yet
+		podIP = ""
 	}
 
-	if podIP != "" {
-		log.Infof("Mesh pod %s for node %s has IP: %s", createdPod.Name, node.NodeId, podIP)
-	} else {
-		log.Infof("Mesh pod %s for node %s created, IP will be updated on next call", createdPod.Name, node.NodeId)
-	}
+	log.Infof("Mesh pod %s for node %s has IP: %s", createdPod.Name, node.NodeId, podIP)
 
-	// Update database with pod info (IP may be empty, will be updated later)
+	// Update database with pod info
 	return syncNodePodInfo(node, createdPod.Name, podIP, nodeRepo)
 }
 
@@ -265,28 +239,21 @@ func waitForPodIP(ctx context.Context, namespace, podName string, clientSet *kub
 	}
 }
 
-// getTemplatePodSpec retrieves the pod spec and labels from the mesh deployment template.
-func getTemplatePodSpec(ctx context.Context, namespace string, clientSet *kubernetes.Clientset) (*corev1.PodSpec, map[string]string, error) {
+// getTemplatePodSpec retrieves the pod spec from the mesh deployment template.
+func getTemplatePodSpec(ctx context.Context, namespace string, clientSet *kubernetes.Clientset) (*corev1.PodSpec, error) {
 	deployments, err := clientSet.AppsV1().Deployments(namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: "app.kubernetes.io/name=mesh",
 	})
 	if err != nil {
-		return nil, nil, status.Errorf(codes.Internal, "failed to list deployments: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to list deployments: %v", err)
 	}
 
 	if len(deployments.Items) == 0 {
-		return nil, nil, status.Errorf(codes.NotFound, "no mesh deployment found in namespace %s", namespace)
+		return nil, status.Errorf(codes.NotFound, "no mesh deployment found in namespace %s", namespace)
 	}
 
-	deployment := deployments.Items[0]
-	podSpec := deployment.Spec.Template.Spec.DeepCopy()
+	podSpec := deployments.Items[0].Spec.Template.Spec.DeepCopy()
 	podSpec.RestartPolicy = corev1.RestartPolicyOnFailure
 
-	// Extract labels from deployment template
-	templateLabels := make(map[string]string)
-	for k, v := range deployment.Spec.Template.Labels {
-		templateLabels[k] = v
-	}
-
-	return podSpec, templateLabels, nil
+	return podSpec, nil
 }
