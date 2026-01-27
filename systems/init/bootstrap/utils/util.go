@@ -192,24 +192,43 @@ func createMeshPod(ctx context.Context, namespace, podName string, node *db.Node
 		Spec: *podSpec,
 	}
 
+	log.Debugf("Creating mesh pod in namespace %s with labels: %v", namespace, podLabels)
 	createdPod, err := clientSet.CoreV1().Pods(namespace).Create(ctx, newPod, metav1.CreateOptions{})
 	if err != nil {
+		log.Errorf("Failed to create mesh pod in namespace %s: %v", namespace, err)
 		return status.Errorf(codes.Internal, "failed to create mesh pod: %v", err)
 	}
+	log.Infof("Successfully created pod %s in namespace %s", createdPod.Name, namespace)
 
 	log.Infof("Created mesh pod %s for node %s, waiting for IP assignment...", createdPod.Name, node.NodeId)
 
-	// Wait for the pod to get an IP address
-	podIP, err := waitForPodIP(ctx, namespace, createdPod.Name, clientSet)
-	if err != nil {
-		log.Warnf("Failed to get pod IP for %s: %v (will be updated on next call)", createdPod.Name, err)
-		// Still save the pod name even if IP is not available yet
-		podIP = ""
+	// Check if pod already has an IP (sometimes it's assigned immediately)
+	podIP := createdPod.Status.PodIP
+	
+	// If no IP yet, wait for it using a background context
+	// This prevents the gRPC request timeout from cancelling the pod IP wait
+	if podIP == "" {
+		// Use a shorter timeout for initial wait to avoid blocking the RPC too long
+		// The IP will be updated on the next call if it's not ready yet
+		ipWaitCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+		
+		ip, err := waitForPodIP(ipWaitCtx, namespace, createdPod.Name, clientSet)
+		if err != nil {
+			log.Warnf("Failed to get pod IP for %s within 15s: %v (will be updated on next call)", createdPod.Name, err)
+			podIP = ""
+		} else {
+			podIP = ip
+		}
 	}
 
-	log.Infof("Mesh pod %s for node %s has IP: %s", createdPod.Name, node.NodeId, podIP)
+	if podIP != "" {
+		log.Infof("Mesh pod %s for node %s has IP: %s", createdPod.Name, node.NodeId, podIP)
+	} else {
+		log.Infof("Mesh pod %s for node %s created, IP will be updated on next call", createdPod.Name, node.NodeId)
+	}
 
-	// Update database with pod info
+	// Update database with pod info (IP may be empty, will be updated later)
 	return syncNodePodInfo(node, createdPod.Name, podIP, nodeRepo)
 }
 
