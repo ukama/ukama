@@ -27,7 +27,7 @@ type NodeIpResolver interface {
 }
 
 type nodeIpResolver struct {
-	netClient     pb.NnsClient
+	nnsClient     pb.NnsClient
 	timeoutSecond int
 }
 
@@ -39,13 +39,13 @@ func NewNodeIpResolver(netHost string, timeoutSecond int) (*nodeIpResolver, erro
 		return nil, err
 	}
 
-	return &nodeIpResolver{timeoutSecond: timeoutSecond, netClient: pb.NewNnsClient(conn)}, nil
+	return &nodeIpResolver{timeoutSecond: timeoutSecond, nnsClient: pb.NewNnsClient(conn)}, nil
 }
 
 func (r *nodeIpResolver) Resolve(nodeId ukama.NodeID) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeoutSecond)*time.Second)
 	defer cancel()
-	res, err := r.netClient.GetNode(ctx, &pb.GetNodeRequest{NodeId: nodeId.String()})
+	res, err := r.nnsClient.GetNode(ctx, &pb.GetNodeRequest{NodeId: nodeId.String()})
 	if err != nil {
 		return "", err
 	}

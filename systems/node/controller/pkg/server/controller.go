@@ -31,6 +31,13 @@ import (
 	"github.com/ukama/ukama/systems/node/controller/pkg/db"
 )
 
+var actions = map[string]string{
+	"REBOOT":     "/v1/reboot",
+	"PING":     "/v1/node/ping",
+	"SWITCH":     "/v1/switch",
+	"RF":         "/v1/rf",
+}
+
 type ControllerServer struct {
 	pb.UnimplementedControllerServiceServer
 	nRepo                db.NodeLogRepo
@@ -110,7 +117,7 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 			return nil, err
 		}
 
-		err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), "/v1/reboot", data)
+		err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), actions["REBOOT"], data)
 		if err != nil {
 			log.Errorf("Failed to publish message. Errors %s", err.Error())
 			return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
@@ -145,7 +152,7 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 		return nil, err
 	}
 
-	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), "/v1/reboot", data)
+	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), actions["REBOOT"], data)
 	if err != nil {
 		log.Errorf("Failed to publish message. Errors %s", err.Error())
 		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
@@ -176,7 +183,7 @@ func (c *ControllerServer) PingNode(ctx context.Context, req *pb.PingNodeRequest
 	}
 
 	timestamp := uint64(time.Now().Unix())
-	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), "/v1/node/ping", data)
+	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), actions["PING"], data)
 	if err != nil {
 		log.Errorf("Failed to publish message. Errors %s", err.Error())
 		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
@@ -252,7 +259,7 @@ func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.Tog
 	if err != nil {
 		return nil, err
 	}
-	err = c.publishMessage(c.orgName+"."+"."+"."+siteId.String(), "/v1/switch/"+fmt.Sprintf("%d/%t", req.Port, req.Status), data)
+	err = c.publishMessage(c.orgName+"."+"."+"."+siteId.String(), actions["SWITCH"]+"/"+fmt.Sprintf("%d/%t", req.Port, req.Status), data)
 
 	if err != nil {
 		log.Errorf("Failed to publish switch port reboot message. Errors: %s", err.Error())
@@ -280,7 +287,7 @@ func (c *ControllerServer) ToggleRfSwitch(ctx context.Context, req *pb.ToggleRfS
 		return nil, err
 	}
 
-	err = c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), "/v1/rf", data)
+	err = c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), actions["RF"], data)
 	if err != nil {
 		log.Errorf("Failed to publish RF switch message. Errors: %s", err.Error())
 		return nil, status.Errorf(codes.Internal, "Failed to publish RF switch message: %s", err.Error())
