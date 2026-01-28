@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"net"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -104,8 +105,8 @@ func (s *BootstrapServer) GetNodeCredentials(ctx context.Context, req *pb.GetNod
 	}
  
 	meshInfo, err := s.nnsClient.GetMesh(node.Node.Id)
-	if err != nil && err.Error() != "node not found" {
-		log.Errorf("Failed to get mesh info: %v", err)
+	if err != nil && !strings.Contains(err.Error(), "node not found") {
+		log.Errorf("Failed to get mesh info for node %s: %v", node.Node.Id, err)
 		return nil, status.Errorf(codes.Internal, "Failed to get mesh info: %v", err)
 	}
 
