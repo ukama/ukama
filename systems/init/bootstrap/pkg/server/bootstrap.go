@@ -19,6 +19,7 @@ import (
 	"github.com/ukama/ukama/systems/init/bootstrap/client"
 	"github.com/ukama/ukama/systems/init/bootstrap/utils"
 
+	messaging "github.com/ukama/ukama/systems/common/rest/client/messaging"
 	pb "github.com/ukama/ukama/systems/init/bootstrap/pb/gen"
 	"github.com/ukama/ukama/systems/init/bootstrap/pkg"
 	"github.com/ukama/ukama/systems/init/bootstrap/pkg/db"
@@ -42,9 +43,10 @@ type BootstrapServer struct {
 	dnsMap              map[string]string
 	clientSet 			*kubernetes.Clientset
 	config 				*pkg.Config
+	messagingClient     messaging.MessagingClient
 }
  
-func NewBootstrapServer(nodeRepo db.NodeRepo, msgBus mb.MsgBusServiceClient, debug bool, lookupClient client.LookupClientProvider, factoryClient factory.NodeFactoryClient, dnsMap map[string]string, config *pkg.Config) *BootstrapServer {
+func NewBootstrapServer(nodeRepo db.NodeRepo, msgBus mb.MsgBusServiceClient, debug bool, lookupClient client.LookupClientProvider, factoryClient factory.NodeFactoryClient, messagingClient messaging.MessagingClient, dnsMap map[string]string, config *pkg.Config) *BootstrapServer {
 	c, err := rest.InClusterConfig()
 	if err != nil {
 		panic(err.Error())
@@ -62,26 +64,12 @@ func NewBootstrapServer(nodeRepo db.NodeRepo, msgBus mb.MsgBusServiceClient, deb
 		debug:               debug,
 		lookupClient:        lookupClient,
 		factoryClient:       factoryClient,
+		messagingClient:     messagingClient,
 		dnsMap:              dnsMap,
 		config:              config,
 	}
 }
  
-func (s *BootstrapServer) GetNodeMeshInfo(ctx context.Context, req *pb.GetNodeMeshInfoRequest) (*pb.GetNodeMeshInfoResponse, error) {
-	node, err := s.nodeRepo.GetNode(req.Id)
-	if err != nil {
-		log.Errorf("failed to get node from database: %v", err)
-		return nil, err
-	}
-
-	return &pb.GetNodeMeshInfoResponse{
-		NodeId: node.NodeId,
-		MeshPodName: node.MeshPodName,
-		MeshPodIp: node.MeshPodIp,
-		MeshPodPort: node.MeshPodPort,
-	}, nil
-}
-
 func (s *BootstrapServer) GetNodeCredentials(ctx context.Context, req *pb.GetNodeCredentialsRequest) (*pb.GetNodeCredentialsResponse, error) {
 	node, err := s.factoryClient.Get(req.Id)
 	if err != nil {

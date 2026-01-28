@@ -29,12 +29,14 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	factory "github.com/ukama/ukama/systems/common/rest/client/factory"
 	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
+	messaging "github.com/ukama/ukama/systems/common/rest/client/messaging"
 	provider "github.com/ukama/ukama/systems/init/bootstrap/client"
 	pb "github.com/ukama/ukama/systems/init/bootstrap/pb/gen"
 )
 
 var svcConf = pkg.NewConfig(pkg.ServiceName)
 var FactorySystem = "factory"
+var MessagingSystem = "messaging"
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
@@ -90,7 +92,15 @@ func runGrpcServer(nodeDb sql.Db) {
 	if err != nil {
 		log.Fatalf("Failed to resolve factory system address from initClient: %v", err)
 	}
+
+	messagingUrl, err := ic.GetHostUrl(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode)),
+		ic.CreateHostString(svcConf.OrgName, MessagingSystem), &svcConf.OrgName)
+	if err != nil {
+		log.Fatalf("Failed to resolve messaging system address from initClient: %v", err)
+	}
+
 	factoryClient := factory.NewNodeFactoryClient(factoryUrl.String(), client.WithDebug(svcConf.DebugMode))
+	messagingClient := messaging.NewMessagingClient(messagingUrl.String(), client.WithDebug(svcConf.DebugMode))
 
 	mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName,
 		pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host,
@@ -100,7 +110,7 @@ func runGrpcServer(nodeDb sql.Db) {
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	bootstrapServer := server.NewBootstrapServer(db.NewNodeRepo(nodeDb), mbClient, svcConf.DebugMode,
-		provider.NewLookupClientProvider(svcConf.Lookup, svcConf.Timeout), factoryClient, svcConf.ToDNSMap(), svcConf)
+		provider.NewLookupClientProvider(svcConf.Lookup, svcConf.Timeout), factoryClient, messagingClient, svcConf.ToDNSMap(), svcConf)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterBootstrapServiceServer(s, bootstrapServer)

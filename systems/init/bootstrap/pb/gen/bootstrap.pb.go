@@ -28,118 +28,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type GetNodeMeshInfoRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetNodeMeshInfoRequest) Reset() {
-	*x = GetNodeMeshInfoRequest{}
-	mi := &file_bootstrap_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetNodeMeshInfoRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetNodeMeshInfoRequest) ProtoMessage() {}
-
-func (x *GetNodeMeshInfoRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_bootstrap_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetNodeMeshInfoRequest.ProtoReflect.Descriptor instead.
-func (*GetNodeMeshInfoRequest) Descriptor() ([]byte, []int) {
-	return file_bootstrap_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *GetNodeMeshInfoRequest) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-type GetNodeMeshInfoResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	NodeId        string                 `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
-	MeshPodName   string                 `protobuf:"bytes,2,opt,name=meshPodName,proto3" json:"meshPodName,omitempty"`
-	MeshPodIp     string                 `protobuf:"bytes,3,opt,name=meshPodIp,proto3" json:"meshPodIp,omitempty"`
-	MeshPodPort   int32                  `protobuf:"varint,4,opt,name=meshPodPort,proto3" json:"meshPodPort,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetNodeMeshInfoResponse) Reset() {
-	*x = GetNodeMeshInfoResponse{}
-	mi := &file_bootstrap_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetNodeMeshInfoResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetNodeMeshInfoResponse) ProtoMessage() {}
-
-func (x *GetNodeMeshInfoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_bootstrap_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetNodeMeshInfoResponse.ProtoReflect.Descriptor instead.
-func (*GetNodeMeshInfoResponse) Descriptor() ([]byte, []int) {
-	return file_bootstrap_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *GetNodeMeshInfoResponse) GetNodeId() string {
-	if x != nil {
-		return x.NodeId
-	}
-	return ""
-}
-
-func (x *GetNodeMeshInfoResponse) GetMeshPodName() string {
-	if x != nil {
-		return x.MeshPodName
-	}
-	return ""
-}
-
-func (x *GetNodeMeshInfoResponse) GetMeshPodIp() string {
-	if x != nil {
-		return x.MeshPodIp
-	}
-	return ""
-}
-
-func (x *GetNodeMeshInfoResponse) GetMeshPodPort() int32 {
-	if x != nil {
-		return x.MeshPodPort
-	}
-	return 0
-}
-
 type GetNodeCredentialsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -149,7 +37,7 @@ type GetNodeCredentialsRequest struct {
 
 func (x *GetNodeCredentialsRequest) Reset() {
 	*x = GetNodeCredentialsRequest{}
-	mi := &file_bootstrap_proto_msgTypes[2]
+	mi := &file_bootstrap_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -161,7 +49,7 @@ func (x *GetNodeCredentialsRequest) String() string {
 func (*GetNodeCredentialsRequest) ProtoMessage() {}
 
 func (x *GetNodeCredentialsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_bootstrap_proto_msgTypes[2]
+	mi := &file_bootstrap_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -174,7 +62,7 @@ func (x *GetNodeCredentialsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetNodeCredentialsRequest.ProtoReflect.Descriptor instead.
 func (*GetNodeCredentialsRequest) Descriptor() ([]byte, []int) {
-	return file_bootstrap_proto_rawDescGZIP(), []int{2}
+	return file_bootstrap_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *GetNodeCredentialsRequest) GetId() string {
@@ -196,7 +84,7 @@ type GetNodeCredentialsResponse struct {
 
 func (x *GetNodeCredentialsResponse) Reset() {
 	*x = GetNodeCredentialsResponse{}
-	mi := &file_bootstrap_proto_msgTypes[3]
+	mi := &file_bootstrap_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -208,7 +96,7 @@ func (x *GetNodeCredentialsResponse) String() string {
 func (*GetNodeCredentialsResponse) ProtoMessage() {}
 
 func (x *GetNodeCredentialsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_bootstrap_proto_msgTypes[3]
+	mi := &file_bootstrap_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -221,7 +109,7 @@ func (x *GetNodeCredentialsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetNodeCredentialsResponse.ProtoReflect.Descriptor instead.
 func (*GetNodeCredentialsResponse) Descriptor() ([]byte, []int) {
-	return file_bootstrap_proto_rawDescGZIP(), []int{3}
+	return file_bootstrap_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *GetNodeCredentialsResponse) GetId() string {
@@ -256,24 +144,16 @@ var File_bootstrap_proto protoreflect.FileDescriptor
 
 const file_bootstrap_proto_rawDesc = "" +
 	"\n" +
-	"\x0fbootstrap.proto\x12\x12ukama.bootstrap.v1\"(\n" +
-	"\x16GetNodeMeshInfoRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x93\x01\n" +
-	"\x17GetNodeMeshInfoResponse\x12\x16\n" +
-	"\x06nodeId\x18\x01 \x01(\tR\x06nodeId\x12 \n" +
-	"\vmeshPodName\x18\x02 \x01(\tR\vmeshPodName\x12\x1c\n" +
-	"\tmeshPodIp\x18\x03 \x01(\tR\tmeshPodIp\x12 \n" +
-	"\vmeshPodPort\x18\x04 \x01(\x05R\vmeshPodPort\"+\n" +
+	"\x0fbootstrap.proto\x12\x12ukama.bootstrap.v1\"+\n" +
 	"\x19GetNodeCredentialsRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"x\n" +
 	"\x1aGetNodeCredentialsResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
 	"\aorgName\x18\x02 \x01(\tR\aorgName\x12\x0e\n" +
 	"\x02ip\x18\x03 \x01(\tR\x02ip\x12 \n" +
-	"\vcertificate\x18\x04 \x01(\tR\vcertificate2\xf3\x01\n" +
+	"\vcertificate\x18\x04 \x01(\tR\vcertificate2\x87\x01\n" +
 	"\x10BootstrapService\x12s\n" +
-	"\x12GetNodeCredentials\x12-.ukama.bootstrap.v1.GetNodeCredentialsRequest\x1a..ukama.bootstrap.v1.GetNodeCredentialsResponse\x12j\n" +
-	"\x0fGetNodeMeshInfo\x12*.ukama.bootstrap.v1.GetNodeMeshInfoRequest\x1a+.ukama.bootstrap.v1.GetNodeMeshInfoResponseB6Z4github.com/ukama/ukama/systems/init/bootstrap/pb/genb\x06proto3"
+	"\x12GetNodeCredentials\x12-.ukama.bootstrap.v1.GetNodeCredentialsRequest\x1a..ukama.bootstrap.v1.GetNodeCredentialsResponseB6Z4github.com/ukama/ukama/systems/init/bootstrap/pb/genb\x06proto3"
 
 var (
 	file_bootstrap_proto_rawDescOnce sync.Once
@@ -287,20 +167,16 @@ func file_bootstrap_proto_rawDescGZIP() []byte {
 	return file_bootstrap_proto_rawDescData
 }
 
-var file_bootstrap_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_bootstrap_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_bootstrap_proto_goTypes = []any{
-	(*GetNodeMeshInfoRequest)(nil),     // 0: ukama.bootstrap.v1.GetNodeMeshInfoRequest
-	(*GetNodeMeshInfoResponse)(nil),    // 1: ukama.bootstrap.v1.GetNodeMeshInfoResponse
-	(*GetNodeCredentialsRequest)(nil),  // 2: ukama.bootstrap.v1.GetNodeCredentialsRequest
-	(*GetNodeCredentialsResponse)(nil), // 3: ukama.bootstrap.v1.GetNodeCredentialsResponse
+	(*GetNodeCredentialsRequest)(nil),  // 0: ukama.bootstrap.v1.GetNodeCredentialsRequest
+	(*GetNodeCredentialsResponse)(nil), // 1: ukama.bootstrap.v1.GetNodeCredentialsResponse
 }
 var file_bootstrap_proto_depIdxs = []int32{
-	2, // 0: ukama.bootstrap.v1.BootstrapService.GetNodeCredentials:input_type -> ukama.bootstrap.v1.GetNodeCredentialsRequest
-	0, // 1: ukama.bootstrap.v1.BootstrapService.GetNodeMeshInfo:input_type -> ukama.bootstrap.v1.GetNodeMeshInfoRequest
-	3, // 2: ukama.bootstrap.v1.BootstrapService.GetNodeCredentials:output_type -> ukama.bootstrap.v1.GetNodeCredentialsResponse
-	1, // 3: ukama.bootstrap.v1.BootstrapService.GetNodeMeshInfo:output_type -> ukama.bootstrap.v1.GetNodeMeshInfoResponse
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
+	0, // 0: ukama.bootstrap.v1.BootstrapService.GetNodeCredentials:input_type -> ukama.bootstrap.v1.GetNodeCredentialsRequest
+	1, // 1: ukama.bootstrap.v1.BootstrapService.GetNodeCredentials:output_type -> ukama.bootstrap.v1.GetNodeCredentialsResponse
+	1, // [1:2] is the sub-list for method output_type
+	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -317,7 +193,7 @@ func file_bootstrap_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_bootstrap_proto_rawDesc), len(file_bootstrap_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
