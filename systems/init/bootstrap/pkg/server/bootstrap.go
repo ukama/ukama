@@ -110,17 +110,15 @@ func (s *BootstrapServer) GetNodeCredentials(ctx context.Context, req *pb.GetNod
 		return nil, status.Errorf(codes.Internal, "Failed to get mesh info: %v", err)
 	}
 
-	if meshInfo != nil{
+	
+	nd :=utils.NodeMeshInfo{NodeId: node.Node.Id, MeshPodIp: "0.0.0.0", MeshPodPort: 8082}
+	if meshInfo != nil && meshInfo.MeshIp != "" {
 		log.Infof("Mesh info is found for node %s, mesh ip: %s", node.Node.Id, meshInfo.MeshIp)
-		return &pb.GetNodeCredentialsResponse{
-			Id:          node.Node.Id,
-			Ip:          meshInfo.MeshIp,
-			OrgName:     node.Node.OrgName,
-			Certificate: "",
-		}, nil
+		nd.MeshPodIp = meshInfo.MeshIp
+		nd.MeshPodPort = int32(meshInfo.MeshPort)
 	}
 
-	if err := utils.SpawnReplica(ctx, utils.NodeMeshInfo{NodeId: node.Node.Id, MeshPodIp: ip, MeshPodPort: int32(meshInfo.MeshPort)}, s.config, s.clientSet); err != nil {
+	if err := utils.SpawnReplica(ctx, nd, s.config, s.clientSet); err != nil {
 		log.Warnf("Failed to spawn mesh replica for node %s: %v", node.Node.Id, err)
 	}
 

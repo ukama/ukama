@@ -55,7 +55,7 @@ func SpawnReplica(ctx context.Context, node NodeMeshInfo, config *pkg.Config, cl
 
 		// Check if pod info is already synced
 		if  node.MeshPodIp == existingPod.Status.PodIP {
-			log.Debugf("Mesh pod already exists and synced for node %s: %s (IP: %s)", node.NodeId, existingPod.Name, existingPod.Status.PodIP)
+			log.Debugf("Mesh pod already exists and IP matched for node %s: %s (IP: %s)", node.NodeId, existingPod.Name, existingPod.Status.PodIP)
 			return nil
 		}
 		
