@@ -22,8 +22,6 @@ import (
 	messaging "github.com/ukama/ukama/systems/common/rest/client/messaging"
 	pb "github.com/ukama/ukama/systems/init/bootstrap/pb/gen"
 	"github.com/ukama/ukama/systems/init/bootstrap/pkg"
-	"github.com/ukama/ukama/systems/init/bootstrap/pkg/db"
-	lpb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/client-go/kubernetes"
@@ -35,7 +33,6 @@ const MessagingSystem = "messaging"
 type BootstrapServer struct {
 	pb.UnimplementedBootstrapServiceServer
 	bootstrapRoutingKey msgbus.RoutingKeyBuilder
-	nodeRepo            db.NodeRepo
 	msgbus              mb.MsgBusServiceClient
 	debug               bool
 	lookupClient        client.LookupClientProvider
@@ -43,10 +40,10 @@ type BootstrapServer struct {
 	dnsMap              map[string]string
 	clientSet 			*kubernetes.Clientset
 	config 				*pkg.Config
-	messagingClient     messaging.MessagingClient
+	nnsClient     		messaging.NnsClient
 }
  
-func NewBootstrapServer(nodeRepo db.NodeRepo, msgBus mb.MsgBusServiceClient, debug bool, lookupClient client.LookupClientProvider, factoryClient factory.NodeFactoryClient, messagingClient messaging.MessagingClient, dnsMap map[string]string, config *pkg.Config) *BootstrapServer {
+func NewBootstrapServer(msgBus mb.MsgBusServiceClient, debug bool, lookupClient client.LookupClientProvider, factoryClient factory.NodeFactoryClient, nnsClient messaging.NnsClient, dnsMap map[string]string, config *pkg.Config) *BootstrapServer {
 	c, err := rest.InClusterConfig()
 	if err != nil {
 		panic(err.Error())
@@ -58,13 +55,12 @@ func NewBootstrapServer(nodeRepo db.NodeRepo, msgBus mb.MsgBusServiceClient, deb
 	}
 	return &BootstrapServer{
 		clientSet:           cs,
-		nodeRepo:            nodeRepo,
 		bootstrapRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(config.OrgName).SetService(pkg.ServiceName),
 		msgbus:              msgBus,
 		debug:               debug,
 		lookupClient:        lookupClient,
 		factoryClient:       factoryClient,
-		messagingClient:     messagingClient,
+		nnsClient:           nnsClient,
 		dnsMap:              dnsMap,
 		config:              config,
 	}
@@ -86,21 +82,6 @@ func (s *BootstrapServer) GetNodeCredentials(ctx context.Context, req *pb.GetNod
 	if dns == "" {
 		log.Errorf("DNS is not found for org %s", node.Node.OrgName)
 		return nil, status.Errorf(codes.NotFound, "DNS is not found for org %s", node.Node.OrgName)
-	}	
- 
-	lookupSvc, err := s.lookupClient.GetClient()
-	if err != nil {
-		log.Errorf("Failed to get lookup client: %v", err)
-		return nil, err
-	}
-	
-	msgSystem, err := lookupSvc.GetSystemForOrg(ctx, &lpb.GetSystemRequest{
-		OrgName:    node.Node.OrgName,
-		SystemName: MessagingSystem,
-	})
-	if err != nil {
-		log.Errorf("Failed to get messaging system: %v", err)
-		return nil, err
 	}
 	
 	ips, err := net.LookupIP(dns)
@@ -121,35 +102,32 @@ func (s *BootstrapServer) GetNodeCredentials(ctx context.Context, req *pb.GetNod
 		log.Errorf("No IPv4 address found for DNS %s", dns)
 		return nil, status.Errorf(codes.NotFound, "No IPv4 address found for DNS %s", dns)
 	}
-
-	n, err := s.nodeRepo.GetNode(node.Node.Id)
-	if err != nil && err.Error() != "record not found" {	
-		log.Errorf("Failed to get node from database: %v", err)
-		return nil, status.Errorf(codes.Internal, "Failed to get node from database: %v", err)
+ 
+	meshInfo, err := s.nnsClient.GetMesh(node.Node.Id)
+	if err != nil && err.Error() != "node not found" {
+		log.Errorf("Failed to get mesh info: %v", err)
+		return nil, status.Errorf(codes.Internal, "Failed to get mesh info: %v", err)
 	}
 
-	nd := &db.Node{}
-	if n == nil {
-		nd.NodeId = node.Node.Id
-		nd.MeshPodName = ""
-		nd.MeshPodIp = ""
-		nd.MeshPodPort = 8082
-	} else {
-		nd.NodeId = n.NodeId
-		nd.MeshPodName = n.MeshPodName
-		nd.MeshPodIp = n.MeshPodIp
-		nd.MeshPodPort = n.MeshPodPort
+	if meshInfo != nil{
+		log.Infof("Mesh info is found for node %s, mesh ip: %s", node.Node.Id, meshInfo.MeshIp)
+		return &pb.GetNodeCredentialsResponse{
+			Id:          node.Node.Id,
+			Ip:          meshInfo.MeshIp,
+			OrgName:     node.Node.OrgName,
+			Certificate: "",
+		}, nil
 	}
 
-	if err := utils.SpawnReplica(ctx, nd, s.config, s.clientSet, s.nodeRepo); err != nil {
-		log.Warnf("Failed to spawn mesh replica for node %s: %v", nd.NodeId, err)
+	if err := utils.SpawnReplica(ctx, utils.NodeMeshInfo{NodeId: node.Node.Id, MeshPodIp: ip, MeshPodPort: int32(meshInfo.MeshPort)}, s.config, s.clientSet); err != nil {
+		log.Warnf("Failed to spawn mesh replica for node %s: %v", node.Node.Id, err)
 	}
 
 	return &pb.GetNodeCredentialsResponse{
 		Id:          node.Node.Id,
 		OrgName:     node.Node.OrgName,
 		Ip:          ip,
-		Certificate: msgSystem.Certificate,
+		Certificate: "",
 	}, nil
 }
 

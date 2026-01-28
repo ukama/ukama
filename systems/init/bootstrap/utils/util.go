@@ -2,17 +2,13 @@ package utils
 
 import (
 	"context"
-	"errors"
 	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/init/bootstrap/pkg"
-	"github.com/ukama/ukama/systems/init/bootstrap/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"gorm.io/gorm"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -24,56 +20,55 @@ const (
 	PodIPPollInterval   = 2 * time.Second
 )
 
-func GetPodNamePrefix(orgName string) string {
+type NodeMeshInfo struct {
+	NodeId      string
+	MeshPodIp   string
+	MeshPodPort int32
+}
+
+func getPodNamePrefix(orgName string) string {
 	return orgName + "-" + PodNamePrefix
 }
 
-func GetPodName(orgName, nodeId string) string {
-	return orgName + "-" + PodNamePrefix + "-" + nodeId
+func getPodName(orgName, nodeId string) string {
+	return getPodNamePrefix(orgName) + "-" + nodeId
 }
 
-func SpawnReplica(ctx context.Context, node *db.Node, config *pkg.Config, clientSet *kubernetes.Clientset, nodeRepo db.NodeRepo) error {
-	// Input validation
-	if node == nil {
-		return status.Error(codes.InvalidArgument, "node cannot be nil")
-	}
-	if node.NodeId == "" {
-		return status.Error(codes.InvalidArgument, "node ID cannot be empty")
-	}
-
+func SpawnReplica(ctx context.Context, node NodeMeshInfo, config *pkg.Config, clientSet *kubernetes.Clientset) error {
 	namespace := config.OrgName + "-" + config.MeshNamespace
 	// Use full pod name prefix including nodeId to match only pods for THIS node
-	podNamePrefix := GetPodName(config.OrgName, node.NodeId)
+	podNamePrefix := getPodName(config.OrgName, node.NodeId)
 
 	// Check for existing healthy pod first
-	existingPod, err := findExistingMeshPod(ctx, namespace, node.MeshPodName, podNamePrefix, clientSet)
+	existingPod, err := findExistingMeshPod(ctx, namespace, podNamePrefix, clientSet)
 	if err != nil {
 		return status.Errorf(codes.Internal, "failed to check existing pods: %v", err)
 	}
 
 	// If a healthy pod exists, sync database if needed and return
 	if existingPod != nil {
-		// Save pod name immediately
-		if err := syncNodePodInfo(node, existingPod.Name, existingPod.Status.PodIP, nodeRepo); err != nil {
-			return err
-		}
-		
 		// If IP is not set yet, update it asynchronously
 		if existingPod.Status.PodIP == "" {
 			log.Debugf("Pod %s exists but has no IP yet, updating asynchronously", existingPod.Name)
-			go updatePodIPAsync(context.Background(), namespace, existingPod.Name, node.NodeId, clientSet, nodeRepo)
+			go updatePodIPAsync(context.Background(), namespace, existingPod.Name, node.NodeId, clientSet)
+		}
+
+		// Check if pod info is already synced
+		if  node.MeshPodIp == existingPod.Status.PodIP {
+			log.Debugf("Mesh pod already exists and synced for node %s: %s (IP: %s)", node.NodeId, existingPod.Name, existingPod.Status.PodIP)
+			return nil
 		}
 		
 		return nil
 	}
 
 	// No healthy pod exists, create a new one
-	return createMeshPod(ctx, namespace, podNamePrefix, node, clientSet, nodeRepo)
+	return createMeshPod(ctx, namespace, podNamePrefix, node, clientSet)
 }
 
 // findExistingMeshPod looks for an existing healthy mesh pod for the node.
 // Returns nil if no healthy pod is found.
-func findExistingMeshPod(ctx context.Context, namespace, meshPodName, podNamePrefix string, clientSet *kubernetes.Clientset) (*corev1.Pod, error) {
+func findExistingMeshPod(ctx context.Context, namespace, podNamePrefix string, clientSet *kubernetes.Clientset) (*corev1.Pod, error) {
 	// Use label selector to filter pods more efficiently
 	pods, err := clientSet.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: "app.kubernetes.io/component=mesh-node",
@@ -86,7 +81,7 @@ func findExistingMeshPod(ctx context.Context, namespace, meshPodName, podNamePre
 		pod := &pods.Items[i]
 
 		// Skip pods that don't match our node
-		if !isPodForNode(pod, meshPodName, podNamePrefix) {
+		if !isPodForNode(pod, podNamePrefix) {
 			continue
 		}
 
@@ -104,10 +99,7 @@ func findExistingMeshPod(ctx context.Context, namespace, meshPodName, podNamePre
 }
 
 // isPodForNode checks if the pod belongs to our node.
-func isPodForNode(pod *corev1.Pod, meshPodName, podNamePrefix string) bool {
-	if meshPodName != "" && pod.Name == meshPodName {
-		return true
-	}
+func isPodForNode(pod *corev1.Pod, podNamePrefix string) bool {
 	return strings.HasPrefix(pod.Name, podNamePrefix)
 }
 
@@ -122,94 +114,16 @@ func isPodHealthy(pod *corev1.Pod) bool {
 	}
 }
 
-// syncNodePodInfo updates the database with pod name and IP if they differ from what's stored.
-// Uses an upsert pattern: checks if node exists in DB first, then updates or creates accordingly.
-func syncNodePodInfo(node *db.Node, podName, podIP string, nodeRepo db.NodeRepo) error {
-	// Check if pod info is already synced
-	if node.MeshPodName == podName && node.MeshPodIp == podIP {
-		log.Debugf("Mesh pod already exists and synced for node %s: %s (IP: %s)", node.NodeId, podName, podIP)
-		return nil
-	}
-
-	// Check if node exists in database
-	existingNode, err := nodeRepo.GetNode(node.NodeId)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			// Node doesn't exist, will create it
-			existingNode = nil
-		} else {
-			return status.Errorf(codes.Internal, "failed to check if node exists: %v", err)
-		}
-	}
-
-	if existingNode == nil {
-		// Node doesn't exist in DB, create it
-		log.Infof("Creating new node record for node %s with pod %s (IP: %s)", node.NodeId, podName, podIP)
-		if err := nodeRepo.CreateNode(&db.Node{
-			Id:          uuid.NewV4(),
-			NodeId:      node.NodeId,
-			MeshPodName: podName,
-			MeshPodIp:   podIP,
-			MeshPodPort: 8082,
-		}); err != nil {
-			return status.Errorf(codes.Internal, "failed to create node record: %v", err)
-		}
-		log.Infof("Successfully created node record for node %s", node.NodeId)
-	} else {
-		// Node exists in DB, update it
-		log.Infof("Updating mesh pod info in database for node %s: %s (IP: %s) -> %s (IP: %s)", 
-			node.NodeId, existingNode.MeshPodName, existingNode.MeshPodIp, podName, podIP)
-		if err := nodeRepo.UpdateNode(&db.Node{
-			Id:          existingNode.Id,
-			NodeId:      node.NodeId,
-			MeshPodName: podName,
-			MeshPodIp:   podIP,
-			MeshPodPort: node.MeshPodPort,
-		}); err != nil {
-			return status.Errorf(codes.Internal, "failed to update node record: %v", err)
-		}
-		log.Infof("Successfully updated node record for node %s", node.NodeId)
-	}
-
-	return nil
-}
-
 // updatePodIPOnly updates only the IP address for a node in the database.
 // This is used for asynchronous IP updates.
-func updatePodIPOnly(nodeId, podIP string, nodeRepo db.NodeRepo) error {
-	existingNode, err := nodeRepo.GetNode(nodeId)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Warnf("Node %s not found when updating IP, skipping", nodeId)
-			return nil
-		}
-		return status.Errorf(codes.Internal, "failed to get node for IP update: %v", err)
-	}
-
-	// Only update if IP has changed
-	if existingNode.MeshPodIp == podIP {
-		log.Debugf("Pod IP already set for node %s: %s", nodeId, podIP)
-		return nil
-	}
-
-	log.Infof("Updating pod IP for node %s: %s -> %s", nodeId, existingNode.MeshPodIp, podIP)
-	if err := nodeRepo.UpdateNode(&db.Node{
-		Id:          existingNode.Id,
-		NodeId:      existingNode.NodeId,
-		MeshPodName: existingNode.MeshPodName,
-		MeshPodIp:   podIP,
-		MeshPodPort: existingNode.MeshPodPort,
-	}); err != nil {
-		return status.Errorf(codes.Internal, "failed to update pod IP: %v", err)
-	}
-
-	log.Infof("Successfully updated pod IP for node %s to %s", nodeId, podIP)
+func updatePodIPOnly(nodeId, podIP string) error {
+	log.Infof("Generate mesh pod IP update event for node %s: %s", nodeId, podIP)
 	return nil
 }
 
 // updatePodIPAsync waits for a pod to get an IP address and updates it in the database asynchronously.
 // This function runs in a goroutine and handles IP updates without blocking the main flow.
-func updatePodIPAsync(ctx context.Context, namespace, podName, nodeId string, clientSet *kubernetes.Clientset, nodeRepo db.NodeRepo) {
+func updatePodIPAsync(ctx context.Context, namespace, podName, nodeId string, clientSet *kubernetes.Clientset) {
 	// Use a separate context with timeout for async operation
 	asyncCtx, cancel := context.WithTimeout(context.Background(), PodIPWaitTimeout)
 	defer cancel()
@@ -229,7 +143,7 @@ func updatePodIPAsync(ctx context.Context, namespace, podName, nodeId string, cl
 	}
 
 	// Update IP in database asynchronously
-	if err := updatePodIPOnly(nodeId, podIP, nodeRepo); err != nil {
+	if err := updatePodIPOnly(nodeId, podIP); err != nil {
 		log.Errorf("Failed to update pod IP asynchronously for node %s: %v", nodeId, err)
 	} else {
 		log.Infof("Successfully updated pod IP asynchronously for node %s: %s", nodeId, podIP)
@@ -237,7 +151,7 @@ func updatePodIPAsync(ctx context.Context, namespace, podName, nodeId string, cl
 }
 
 // createMeshPod creates a new mesh pod for the node.
-func createMeshPod(ctx context.Context, namespace, podName string, node *db.Node, clientSet *kubernetes.Clientset, nodeRepo db.NodeRepo) error {
+func createMeshPod(ctx context.Context, namespace, podName string, node NodeMeshInfo, clientSet *kubernetes.Clientset) error {
 	// Get template deployment
 	podSpec, err := getTemplatePodSpec(ctx, namespace, clientSet)
 	if err != nil {
@@ -265,15 +179,8 @@ func createMeshPod(ctx context.Context, namespace, podName string, node *db.Node
 
 	log.Infof("Created mesh pod %s for node %s", createdPod.Name, node.NodeId)
 
-	// Save pod name immediately (without IP) to ensure consistency
-	// IP will be updated asynchronously when available
-	if err := syncNodePodInfo(node, createdPod.Name, "", nodeRepo); err != nil {
-		log.Errorf("Failed to save pod name for node %s: %v", node.NodeId, err)
-		return err
-	}
-
 	// Update IP asynchronously in background
-	go updatePodIPAsync(context.Background(), namespace, createdPod.Name, node.NodeId, clientSet, nodeRepo)
+	go updatePodIPAsync(context.Background(), namespace, createdPod.Name, node.NodeId, clientSet)
 
 	return nil
 }

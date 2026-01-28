@@ -16,11 +16,9 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/ukama/ukama/systems/common/rest/client"
-	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/init/bootstrap/cmd/version"
 	"github.com/ukama/ukama/systems/init/bootstrap/pkg"
-	"github.com/ukama/ukama/systems/init/bootstrap/pkg/db"
 	"github.com/ukama/ukama/systems/init/bootstrap/pkg/server"
 
 	log "github.com/sirupsen/logrus"
@@ -42,21 +40,8 @@ func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	pkg.InstanceId = os.Getenv("POD_NAME")
 	initConfig()
-	nodeDb := initDb()
-	runGrpcServer(nodeDb)
+	runGrpcServer()
 	log.Infof("Starting %s", pkg.ServiceName)
-}
-
-
-func initDb() sql.Db {
-	log.Infof("Initializing Database")
-	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
-	err := d.Init(&db.Node{})
-
-	if err != nil {
-		log.Fatalf("Database initialization failed. Error: %v", err)
-	}
-	return d
 }
 
 func initConfig() {
@@ -79,7 +64,7 @@ func initConfig() {
 	pkg.IsDebugMode = svcConf.DebugMode
 }
 
-func runGrpcServer(nodeDb sql.Db) {
+func runGrpcServer() {
 	instanceId := os.Getenv("POD_NAME")
 	if instanceId == "" {
 		/* used on local machines */
@@ -100,7 +85,7 @@ func runGrpcServer(nodeDb sql.Db) {
 	}
 
 	factoryClient := factory.NewNodeFactoryClient(factoryUrl.String(), client.WithDebug(svcConf.DebugMode))
-	messagingClient := messaging.NewMessagingClient(messagingUrl.String(), client.WithDebug(svcConf.DebugMode))
+	nnsClient := messaging.NewNnsClient(messagingUrl.String(), client.WithDebug(svcConf.DebugMode))
 
 	mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName,
 		pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host,
@@ -109,8 +94,8 @@ func runGrpcServer(nodeDb sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	bootstrapServer := server.NewBootstrapServer(db.NewNodeRepo(nodeDb), mbClient, svcConf.DebugMode,
-		provider.NewLookupClientProvider(svcConf.Lookup, svcConf.Timeout), factoryClient, messagingClient, svcConf.ToDNSMap(), svcConf)
+	bootstrapServer := server.NewBootstrapServer(mbClient, svcConf.DebugMode,
+		provider.NewLookupClientProvider(svcConf.Lookup, svcConf.Timeout), factoryClient, nnsClient, svcConf.ToDNSMap(), svcConf)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterBootstrapServiceServer(s, bootstrapServer)
