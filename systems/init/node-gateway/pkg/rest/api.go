@@ -11,7 +11,3 @@ package rest
 type GetNodeRequest struct {
 	NodeId string `example:"{{NodeId}}" path:"nodeId" validate:"required"`
 }
-
-type GetNodeMeshInfoRequest struct {
-	NodeId string `example:"{{NodeId}}" path:"nodeId" validate:"required"`
-}

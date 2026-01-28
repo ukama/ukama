@@ -42,36 +42,6 @@ func (_m *BootstrapEP) GetNodeCredentials(req *gen.GetNodeCredentialsRequest) (*
 	return r0, r1
 }
 
-// GetNodeMeshInfo provides a mock function with given fields: req
-func (_m *BootstrapEP) GetNodeMeshInfo(req *gen.GetNodeMeshInfoRequest) (*gen.GetNodeMeshInfoResponse, error) {
-	ret := _m.Called(req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetNodeMeshInfo")
-	}
-
-	var r0 *gen.GetNodeMeshInfoResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(*gen.GetNodeMeshInfoRequest) (*gen.GetNodeMeshInfoResponse, error)); ok {
-		return rf(req)
-	}
-	if rf, ok := ret.Get(0).(func(*gen.GetNodeMeshInfoRequest) *gen.GetNodeMeshInfoResponse); ok {
-		r0 = rf(req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetNodeMeshInfoResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(*gen.GetNodeMeshInfoRequest) error); ok {
-		r1 = rf(req)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // NewBootstrapEP creates a new instance of BootstrapEP. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewBootstrapEP(t interface {

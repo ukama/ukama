@@ -21,7 +21,6 @@ import (
 
 type BootstrapEP interface {
 	GetNodeCredentials(req *pb.GetNodeCredentialsRequest) (*pb.GetNodeCredentialsResponse, error)
-	GetNodeMeshInfo(req *pb.GetNodeMeshInfoRequest) (*pb.GetNodeMeshInfoResponse, error)
 }
 
 type Bootstrap struct {
@@ -69,11 +68,4 @@ func (r *Bootstrap) GetNodeCredentials(req *pb.GetNodeCredentialsRequest) (*pb.G
 	defer cancel()
 
 	return r.client.GetNodeCredentials(ctx, req)
-}
-
-func (r *Bootstrap) GetNodeMeshInfo(req *pb.GetNodeMeshInfoRequest) (*pb.GetNodeMeshInfoResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
-	defer cancel()
-
-	return r.client.GetNodeMeshInfo(ctx, req)
 }
