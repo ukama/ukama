@@ -74,12 +74,12 @@ func runGrpcServer() {
 
 	icl := ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode))
 
-	facSys, err := icl.GetSystem(svcConf.OrgName, FactorySystem)
+	facSystem, err := icl.GetSystem(svcConf.OrgName, FactorySystem)
 	if err != nil {
 		log.Fatalf("Failed to get factory system from initClient: %v", err)
 	}
 
-	factoryUrl, err := ic.GetHostUrl(icl, facSys.ApiGwUrl, &svcConf.OrgName)
+	factoryUrl, err := ic.GetHostUrl(icl, ic.CreateHostString(svcConf.OrgName, facSystem.SystemName), &svcConf.OrgName)
 	if err != nil {
 		log.Fatalf("Failed to get factory url from initClient: %v", err)
 	}
@@ -87,7 +87,7 @@ func runGrpcServer() {
 	if err != nil {
 		log.Fatalf("Failed to get messaging system from initClient: %v", err)
 	}
-	messagingUrl, err := ic.GetHostUrl(icl, messagingSys.ApiGwUrl, &svcConf.OrgName)
+	messagingUrl, err := ic.GetHostUrl(icl, ic.CreateHostString(svcConf.OrgName, messagingSys.SystemName), &svcConf.OrgName)
 	if err != nil {
 		log.Fatalf("Failed to get messaging url from initClient: %v", err)
 	}
