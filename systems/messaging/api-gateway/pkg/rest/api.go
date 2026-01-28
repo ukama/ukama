@@ -12,7 +12,9 @@ type GetNodeRequest struct {
 	NodeId string `json:"node_id" path:"node_id" validate:"required"`
 }
 
-type GetMeshRequest struct{}
+type GetMeshRequest struct{
+	NodeId string `json:"node_id" path:"node_id" validate:"required"`
+}
 
 type SetNodeRequest struct {
 	NodeId       string `json:"node_id" validate:"required"`
@@ -26,6 +28,7 @@ type SetNodeRequest struct {
 }
 
 type UpdateMeshRequest struct {
+	NodeId   string `json:"node_id" validate:"required" path:"node_id"`
 	MeshIp   string `json:"mesh_ip" validate:"required"`
 	MeshPort int32  `json:"mesh_port" validate:"required"`
 }
@@ -37,7 +40,7 @@ type UpdateNodeRequest struct {
 }
 
 type DeleteRequest struct {
-	NodeId string `json:"node_id" path:"node_id" validate:"required"`
+	NodeId string `json:"node_id" validate:"required" path:"node_id"`
 }
 
 type ListRequest struct {

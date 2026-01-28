@@ -43,10 +43,10 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
   const [networkSelected, setNetworkSelected] = useState<string>(networkId);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { setSnackbarMessage, setNetwork } = useAppContext();
-  const [latlng] = useState<[number, number]>([
-    parseFloat(qpLat),
-    parseFloat(qpLng),
-  ]);
+  // const [latlng] = useState<[string, string]>([
+  //   parseFloat(qpLat),
+  //   parseFloat(qpLng),
+  // ]);
   const {
     address,
     isLoading: addressLoading,
@@ -54,13 +54,13 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
   } = useFetchAddress();
 
   useEffect(() => {
-    if (latlng[0] === 0 && latlng[1] === 0)
+    if (qpLat === '' && qpLng === '')
       router.push(`/configure/check?flow=${flow}`);
   }, []);
 
   useEffect(() => {
-    if (latlng[0] !== 0 && latlng[1] !== 0) handleFetchAddress();
-  }, [latlng]);
+    if (qpLat !== '' && qpLng !== '') handleFetchAddress();
+  }, [qpLat, qpLng]);
 
   useEffect(() => {
     if (address) {
@@ -81,7 +81,7 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
     }));
 
   const handleFetchAddress = async () => {
-    await fetchAddress(latlng[0], latlng[1]);
+    await fetchAddress(qpLat, qpLng);
   };
 
   const handleBack = () => {
@@ -146,7 +146,7 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
         </Typography>
 
         <SiteMapComponent
-          posix={[latlng[0], latlng[1]]}
+          posix={[Number.parseFloat(qpLat), Number.parseFloat(qpLng)]}
           address={address}
           height={'128px'}
         />
@@ -171,7 +171,7 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
         <LField label="Node Id" value={id} />
         <LField
           label="SITE LOCATION"
-          value={`${address} [${latlng[0]}, ${latlng[1]}]`}
+          value={`${address} [${qpLat}, ${qpLng}]`}
         />
       </Stack>
 
