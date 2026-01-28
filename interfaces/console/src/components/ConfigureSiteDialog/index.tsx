@@ -173,7 +173,7 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
       show: true,
       message: 'Fetching address with coordinates',
     });
-    await fetchAddress(lat, lng);
+    await fetchAddress(lat.toString(), lng.toString());
   };
   const handleClose = () => {
     resetForm();

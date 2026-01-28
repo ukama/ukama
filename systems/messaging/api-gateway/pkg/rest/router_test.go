@@ -122,13 +122,16 @@ func TestRouter_GetNode(t *testing.T) {
 }
 
 func TestRouter_GetMesh(t *testing.T) {
+	nodeId := testNodeId
 	w := httptest.NewRecorder()
-	hreq, _ := http.NewRequest("GET", "/v1/nns/mesh", nil)
+	hreq, _ := http.NewRequest("GET", "/v1/nns/mesh/"+nodeId, nil)
 
 	n := &nnmocks.NnsClient{}
 	arc := &cmocks.AuthClient{}
 
-	pReq := &pb.GetMeshRequest{}
+	pReq := &pb.GetMeshRequest{
+		NodeId: nodeId,
+	}
 
 	pResp := &pb.GetMeshResponse{
 		MeshIp:   testMeshIp,
@@ -244,7 +247,9 @@ func TestRouter_UpdateNode(t *testing.T) {
 }
 
 func TestRouter_UpdateMesh(t *testing.T) {
+	nodeId := testNodeId
 	ureq := UpdateMeshRequest{
+		NodeId:   nodeId,
 		MeshIp:   testMeshIp,
 		MeshPort: testMeshPort,
 	}
@@ -253,13 +258,14 @@ func TestRouter_UpdateMesh(t *testing.T) {
 	assert.NoError(t, err)
 
 	w := httptest.NewRecorder()
-	hreq, _ := http.NewRequest("PUT", "/v1/nns/mesh", bytes.NewReader(jreq))
+	hreq, _ := http.NewRequest("PUT", "/v1/nns/mesh/"+nodeId, bytes.NewReader(jreq))
 	hreq.Header.Set("Content-Type", "application/json")
 
 	n := &nnmocks.NnsClient{}
 	arc := &cmocks.AuthClient{}
 
 	pReq := &pb.UpdateMeshRequest{
+		NodeId:   ureq.NodeId,
 		MeshIp:   ureq.MeshIp,
 		MeshPort: ureq.MeshPort,
 	}
@@ -320,7 +326,7 @@ func TestRouter_ListNodes(t *testing.T) {
 	pReq := &pb.ListRequest{}
 
 	pResp := &pb.ListResponse{
-		List: []*pb.OrgMap{
+		List: []*pb.NodeMeshInfo{
 			{
 				NodeId:       testNodeId,
 				NodeIp:       testNodeIp,

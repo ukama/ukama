@@ -57,8 +57,8 @@ type AddLogsRequest struct {
 type StoreRunningAppsInfoRequest struct {
 	NodeId    string   `validate:"required" example:"{{NodeId}}" path:"node_id" `
 	Timestamp string   `json:"timestamp" validate:"required" example:"{{time}}"`
-	System    []System `json:"system" validate:"required" example:"{{system}}"`
-	Capps     []Capps  `json:"capps" validate:"required" example:"{{capps}}"`
+	System    []System `json:"system" example:"{{system}}"`
+	Capps     []Capps  `json:"capps" example:"{{capps}}"`
 }
 
 type System struct {
