@@ -52,7 +52,10 @@ func (n *NnsServer) GetNode(c context.Context, req *pb.GetNodeRequest) (*pb.GetN
 
 func (n *NnsServer) GetMesh(c context.Context, req *pb.GetMeshRequest) (*pb.GetMeshResponse, error) {
 	log.Infof("Getting mesh")
-	mesh, err := n.nns.GetMesh(c)
+	if _, err := ukama.ValidateNodeId(req.GetNodeId()); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	mesh, err := n.nns.Get(c, req.GetNodeId())
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +70,7 @@ func (n *NnsServer) Set(c context.Context, req *pb.SetRequest) (*pb.SetResponse,
 	if _, err := ukama.ValidateNodeId(req.GetNodeId()); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	obj := pkg.OrgMap{
+	obj := pkg.NodeMeshMap{
 		NodeId:       req.GetNodeId(),
 		NodeIp:       req.GetNodeIp(),
 		NodePort:     req.GetNodePort(),
@@ -88,11 +91,7 @@ func (n *NnsServer) Set(c context.Context, req *pb.SetRequest) (*pb.SetResponse,
 
 func (n *NnsServer) UpdateMesh(c context.Context, req *pb.UpdateMeshRequest) (*pb.UpdateMeshResponse, error) {
 	log.Infof("Updating mesh %s:%d", req.GetMeshIp(), req.GetMeshPort())
-	err := n.nns.SetMesh(c, req.GetMeshIp(), req.GetMeshPort())
-	if err != nil {
-		return nil, err
-	}
-	err = n.nns.UpdateNodeMesh(c, req.GetMeshIp(), req.GetMeshPort())
+	err := n.nns.UpdateNodeMesh(c, req.GetNodeId(), req.GetMeshIp(), req.GetMeshPort())
 	if err != nil {
 		return nil, err
 	}
@@ -130,28 +129,28 @@ func (n *NnsServer) List(c context.Context, req *pb.ListRequest) (*pb.ListRespon
 		return nil, err
 	}
 	resp := &pb.ListResponse{}
-	resp.List = parseOrgMapList(items)
+	resp.List = parseNodeMeshMapList(items)
 	return resp, nil
 }
 
-func parseOrgMap(item pkg.OrgMap) *pb.OrgMap {
-	return &pb.OrgMap{
+func parseNodeMeshMap(item pkg.NodeMeshMap) *pb.NodeMeshInfo {
+	return &pb.NodeMeshInfo{
 		NodeId:       item.NodeId,
 		NodeIp:       item.NodeIp,
 		NodePort:     item.NodePort,
 		MeshPort:     item.MeshPort,
 		Org:          item.Org,
-		Network:      item.Network,
+		Network:      item.Network,	
 		Site:         item.Site,
 		MeshIp:       item.MeshIp,
 		MeshHostName: item.MeshHostName,
 	}
 }
 
-func parseOrgMapList(items []pkg.OrgMap) []*pb.OrgMap {
-	resp := make([]*pb.OrgMap, 0)
+func parseNodeMeshMapList(items []pkg.NodeMeshMap) []*pb.NodeMeshInfo {
+	resp := make([]*pb.NodeMeshInfo, 0)
 	for _, item := range items {
-		resp = append(resp, parseOrgMap(item))
+		resp = append(resp, parseNodeMeshMap(item))
 	}
 	return resp
 }

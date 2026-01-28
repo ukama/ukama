@@ -201,7 +201,7 @@ func (l *NnsEventServer) handleNodeAssignedEvent(key string, msg *epb.NodeAssign
 		return err
 	}
 
-	obj := pkg.OrgMap{
+	obj := pkg.NodeMeshMap{
 		NodeId:       msg.GetNodeId(),
 		NodeIp:       orgNet.NodeIp,
 		NodePort:     orgNet.NodePort,
@@ -231,7 +231,7 @@ func (l *NnsEventServer) handleNodeReleaseEvent(key string, msg *epb.NodeRelease
 		return err
 	}
 
-	obj := pkg.OrgMap{
+	obj := pkg.NodeMeshMap{
 		NodeId:       msg.GetNodeId(),
 		NodeIp:       orgNet.NodeIp,
 		NodePort:     orgNet.NodePort,
@@ -255,19 +255,13 @@ func (l *NnsEventServer) handleNodeReleaseEvent(key string, msg *epb.NodeRelease
 func (l *NnsEventServer) handleMeshRegisterEvent(key string, msg *epb.MeshRegisterEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
-	err := l.Nns.nns.SetMesh(context.Background(), msg.GetIp(), msg.GetPort())
-	if err != nil {
-		log.Errorf("failed to set mesh IP and port for %s. Error %v", msg.GetIp(), err)
-		return err
-	}
+	// err := l.Nns.nns.UpdateNodeMesh(context.Background(), msg.GetIp(), msg.GetPort())
+	// if err != nil {
+	// 	log.Errorf("failed to set mesh IP and port for %s. Error %v", msg.GetIp(), err)
+	// 	return err
+	// }
 
-	err = l.Nns.nns.UpdateNodeMesh(context.Background(), msg.GetIp(), msg.GetPort())
-	if err != nil {
-		log.Errorf("failed to update mesh IP and port for %s. Error %v", msg.GetIp(), err)
-		return err
-	}
-
-	log.Infof("Updated mesh IP and port for %s", msg.GetIp())
+	log.Infof("Updated mesh IP and port for %s:%d", msg.GetIp(), msg.GetPort())
 
 	return nil
 }

@@ -116,10 +116,10 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	{
 		nns := auth.Group("/nns", "Nns", "Looking for node Ip address")
 		nns.GET("/node/:node_id", formatDoc("Get node Ip", ""), tonic.Handler(r.getNodeHandler, http.StatusOK))
-		nns.GET("/mesh", formatDoc("Get mesh ip", ""), tonic.Handler(r.getMeshHandler, http.StatusOK))
+		nns.GET("/mesh/:node_id", formatDoc("Get mesh ip", ""), tonic.Handler(r.getMeshHandler, http.StatusOK))
 		nns.PUT("/node", formatDoc("Add node", ""), tonic.Handler(r.putNodeHandler, http.StatusCreated))
 		nns.PUT("/node/:node_id", formatDoc("Update node", ""), tonic.Handler(r.updateNodeHandler, http.StatusCreated))
-		nns.PUT("/mesh", formatDoc("Update mesh", ""), tonic.Handler(r.updateMeshHandler, http.StatusOK))
+		nns.PUT("/mesh/:node_id", formatDoc("Update mesh", ""), tonic.Handler(r.updateMeshHandler, http.StatusOK))
 		nns.DELETE("/node/:node_id", formatDoc("Remove node from dns", ""), tonic.Handler(r.deleteHandler, http.StatusOK))
 		nns.GET("/list", formatDoc("Get all nodes", ""), tonic.Handler(r.listHandler, http.StatusOK))
 
@@ -233,7 +233,9 @@ func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeRequest) (*pb.GetNod
 }
 
 func (r *Router) getMeshHandler(c *gin.Context, req *GetMeshRequest) (*pb.GetMeshResponse, error) {
-	return r.clients.n.GetMeshRequest(&pb.GetMeshRequest{})
+	return r.clients.n.GetMeshRequest(&pb.GetMeshRequest{
+		NodeId: req.NodeId,
+	})
 }
 
 func (r *Router) putNodeHandler(c *gin.Context, req *SetNodeRequest) (*pb.SetResponse, error) {
@@ -260,6 +262,7 @@ func (r *Router) updateNodeHandler(c *gin.Context, req *UpdateNodeRequest) (*pb.
 
 func (r *Router) updateMeshHandler(c *gin.Context, req *UpdateMeshRequest) (*pb.UpdateMeshResponse, error) {
 	return r.clients.n.UpdateMeshRequest(&pb.UpdateMeshRequest{
+		NodeId:   req.NodeId,
 		MeshIp:   req.MeshIp,
 		MeshPort: req.MeshPort,
 	})

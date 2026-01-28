@@ -27,8 +27,8 @@ type Nns struct {
 }
 
 type NnsReader interface {
-	Get(ctx context.Context, nodeId string) (*OrgMap, error)
-	GetAll(ctx context.Context) ([]OrgMap, error)
+	Get(ctx context.Context, nodeId string) (*NodeMeshMap, error)
+	GetAll(ctx context.Context) ([]NodeMeshMap, error)
 }
 
 func NewNns(config *Config) *Nns {
@@ -46,70 +46,7 @@ func NewNns(config *Config) *Nns {
 	}
 }
 
-type OrgMesh struct {
-	OrgName  string
-	MeshIp   string
-	MeshPort int32
-}
-
-func (o *OrgMesh) string() string {
-	return fmt.Sprintf("%s%s%d", o.MeshIp, separator, o.MeshPort)
-}
-
-func (o *OrgMesh) parse(value string) error {
-	parts := strings.Split(value, separator)
-	if len(parts) != 2 {
-		return fmt.Errorf("invalid org mesh string: %s", value)
-	}
-	o.MeshIp = parts[0]
-	port, err := strconv.ParseInt(parts[1], 10, 32)
-	if err != nil {
-		return fmt.Errorf("failed to parse mesh port: %v", err)
-	}
-	o.MeshPort = int32(port)
-	return nil
-}
-
-func (o *OrgMesh) constructKeyAndValue(obj OrgMesh) (string, string) {
-	return obj.OrgName + separator + "mesh", obj.string()
-}
-
-func (n *Nns) SetMesh(ctx context.Context, ip string, port int32) error {
-	obj := OrgMesh{
-		MeshIp:   ip,
-		MeshPort: port,
-		OrgName:  n.orgName,
-	}
-	key, value := obj.constructKeyAndValue(obj)
-	_, err := n.etcd.Put(ctx, key, value)
-	if err != nil {
-		return fmt.Errorf("failed to set mesh IP and port. Error: %v", err)
-	}
-	metrics.RecordSetIpMetric()
-	return nil
-}
-
-func (n *Nns) GetMesh(ctx context.Context) (*OrgMesh, error) {
-	mesh, err := n.etcd.Get(ctx, n.orgName+separator+"mesh")
-	if err != nil {
-		metrics.RecordIpRequestFailureMetric()
-		return nil, fmt.Errorf("failed to get mesh. Error: %v", err)
-	}
-	if len(mesh.Kvs) == 0 {
-		metrics.RecordIpRequestFailureMetric()
-		return nil, fmt.Errorf("mesh not found for org: %s", n.orgName)
-	}
-	orgMesh := OrgMesh{}
-	err = orgMesh.parse(string(mesh.Kvs[0].Value))
-	if err != nil {
-		metrics.RecordIpRequestFailureMetric()
-		return nil, fmt.Errorf("failed to parse mesh. Error: %v", err)
-	}
-	metrics.RecordIpRequestSuccessMetric()
-	return &orgMesh, nil
-}
-
-type OrgMap struct {
+type NodeMeshMap struct {
 	Org          string
 	Network      string
 	Site         string
@@ -121,11 +58,11 @@ type OrgMap struct {
 	NodePort     int32
 }
 
-func (o *OrgMap) string() string {
+func (o *NodeMeshMap) string() string {
 	return fmt.Sprintf("%s%s%s%s%s%s%s%s%s%s%d%s%s%s%s%s%d", o.Org, separator, o.Network, separator, o.Site, separator, o.MeshIp, separator, o.MeshHostName, separator, o.MeshPort, separator, o.NodeId, separator, o.NodeIp, separator, o.NodePort)
 }
 
-func (o *OrgMap) parse(value string) error {
+func (o *NodeMeshMap) parse(value string) error {
 	parts := strings.Split(value, separator)
 	if len(parts) != 9 {
 		return fmt.Errorf("invalid org net string: %s", value)
@@ -152,20 +89,17 @@ func (o *OrgMap) parse(value string) error {
 	return nil
 }
 
-func (o *OrgMap) constructKeyAndValue(obj OrgMap) (string, string) {
-	return obj.NodeId, obj.string()
+func  constructKey(nodeId string) string {
+	return "mesh" + separator + nodeId
 }
 
-func (n *Nns) Add(ctx context.Context, obj OrgMap) error {
-	mesh, err := n.GetMesh(ctx)
-	if mesh == nil {
-		return fmt.Errorf("failed to get mesh. Error: %v", err)
-	}
-	obj.MeshIp = mesh.MeshIp
-	obj.MeshPort = mesh.MeshPort
+func constructKeyAndValue(obj NodeMeshMap) (string, string) {
+	return constructKey(obj.NodeId), obj.string()
+}
 
-	key, value := obj.constructKeyAndValue(obj)
-	_, err = n.etcd.Put(ctx, key, value)
+func (n *Nns) Add(ctx context.Context, obj NodeMeshMap) error {
+	key, value := constructKeyAndValue(obj)
+	_, err := n.etcd.Put(ctx, key, value)
 	if err != nil {
 		return fmt.Errorf("failed to add record %s with value %s. Error: %v", key, value, err)
 	}
@@ -173,7 +107,8 @@ func (n *Nns) Add(ctx context.Context, obj OrgMap) error {
 	return nil
 }
 
-func (n *Nns) Get(ctx context.Context, key string) (*OrgMap, error) {
+func (n *Nns) Get(ctx context.Context, nodeId string) (*NodeMeshMap, error) {
+	key := constructKey(nodeId)
 	val, err := n.etcd.Get(ctx, key)
 	if err != nil {
 		metrics.RecordIpRequestFailureMetric()
@@ -183,38 +118,38 @@ func (n *Nns) Get(ctx context.Context, key string) (*OrgMap, error) {
 		metrics.RecordIpRequestFailureMetric()
 		return nil, fmt.Errorf("node not found: %s", key)
 	}
-	orgNet := OrgMap{}
-	err = orgNet.parse(string(val.Kvs[0].Value))
+	nodeMesh := NodeMeshMap{}
+	err = nodeMesh.parse(string(val.Kvs[0].Value))
 	if err != nil {
 		metrics.RecordIpRequestFailureMetric()
-		return nil, fmt.Errorf("failed to parse stored node org map  for %s. Error: %v", val.Kvs[0].Key, err)
+		return nil, fmt.Errorf("failed to parse stored node mesh map  for %s. Error: %v", val.Kvs[0].Key, err)
 	}
 	log.Infof("Got node %s from etcd", key)
 	metrics.RecordIpRequestSuccessMetric()
-	return &orgNet, nil
+	return &nodeMesh, nil
 }
 
-func (n *Nns) GetAll(ctx context.Context) ([]OrgMap, error) {
+func (n *Nns) GetAll(ctx context.Context) ([]NodeMeshMap, error) {
 	vals, err := n.etcd.Get(ctx, "", clientv3.WithPrefix())
 	if err != nil {
 		metrics.RecordIpRequestFailureMetric()
 		return nil, fmt.Errorf("failed to get record from db. Error: %v", err)
 	}
 
-	obj := make([]OrgMap, 0)
+	obj := make([]NodeMeshMap, 0)
 	for _, val := range vals.Kvs {
 		key := string(val.Key)
 		if strings.HasSuffix(key, separator+"mesh") {
 			continue
 		}
 
-		orgMap := OrgMap{}
-		err = orgMap.parse(string(val.Value))
+		nodeMesh := NodeMeshMap{}
+		err = nodeMesh.parse(string(val.Value))
 		if err != nil {
 			metrics.RecordIpRequestFailureMetric()
-			return nil, fmt.Errorf("failed to parse stored node org map  for %s. Error: %v", val.Key, err)
+			return nil, fmt.Errorf("failed to parse stored node mesh map  for %s. Error: %v", val.Key, err)
 		}
-		obj = append(obj, orgMap)
+		obj = append(obj, nodeMesh)
 	}
 	log.Infof("Got %d nodes from etcd", len(obj))
 	metrics.RecordIpRequestSuccessMetric()
@@ -230,40 +165,39 @@ func (n *Nns) DeleteAll(ctx context.Context) error {
 	return nil
 }
 
-func (n *Nns) Delete(ctx context.Context, key string) error {
+func (n *Nns) Delete(ctx context.Context, nodeId string) error {
+	key := constructKey(nodeId)
 	_, err := n.etcd.Delete(ctx, key)
 	if err != nil {
-		return fmt.Errorf("failed to delete node %s from etcd. Error: %v", key, err)
+		return fmt.Errorf("failed to delete node %s from etcd. Error: %v", nodeId, err)
 	}
-	log.Infof("Deleted node %s from etcd", key)
+	log.Infof("Deleted node %s from etcd", nodeId)
 	return nil
 }
 
-func (n *Nns) UpdateNodeMesh(ctx context.Context, ip string, port int32) error {
-	items, err := n.GetAll(ctx)
+func (n *Nns) UpdateNodeMesh(ctx context.Context, nodeId string, ip string, port int32) error {
+	item, err := n.Get(ctx, nodeId)
 	if err != nil {
-		return fmt.Errorf("failed to get node org map records. Error: %v", err)
+		return fmt.Errorf("failed to get node mesh map records. Error: %v", err)
 	}
 
-	for _, item := range items {
-		obj := OrgMap{
-			MeshIp:       ip,
-			MeshPort:     port,
-			Org:          item.Org,
-			Site:         item.Site,
-			NodeId:       item.NodeId,
-			NodeIp:       item.NodeIp,
-			Network:      item.Network,
-			NodePort:     item.NodePort,
-			MeshHostName: item.MeshHostName,
-		}
-		_, err = n.etcd.Put(ctx, obj.NodeId, obj.string())
-		if err != nil {
-			return fmt.Errorf("failed to update mesh IP and port for %s. Error: %v", obj.NodeId, err)
-		}
+	obj := NodeMeshMap{
+		MeshIp:       ip,
+		MeshPort:     port,
+		Org:          item.Org,
+		Site:         item.Site,
+		NodeId:       item.NodeId,
+		NodeIp:       item.NodeIp,
+		Network:      item.Network,
+		NodePort:     item.NodePort,
+		MeshHostName: item.MeshHostName,
 	}
-
-	log.Infof("Updated mesh IP and port for %d nodes", len(items))
+	key, value := constructKeyAndValue(obj)
+	_, err = n.etcd.Put(ctx, key, value)
+	if err != nil {
+		return fmt.Errorf("failed to update mesh IP and port for %s. Error: %v", obj.NodeId, err)
+	}
+	log.Infof("Updated mesh IP and port for %s", obj.NodeId)
 
 	return nil
 }
@@ -274,7 +208,7 @@ func (n *Nns) UpdateNode(ctx context.Context, nodeId string, nodeIp string, node
 		return fmt.Errorf("failed to get node record. Error: %v", err)
 	}
 
-	obj := OrgMap{
+	obj := NodeMeshMap{
 		NodeId:       item.NodeId,
 		NodeIp:       nodeIp,
 		NodePort:     nodePort,
@@ -285,7 +219,8 @@ func (n *Nns) UpdateNode(ctx context.Context, nodeId string, nodeIp string, node
 		Network:      item.Network,
 		Site:         item.Site,
 	}
-	_, err = n.etcd.Put(ctx, obj.NodeId, obj.string())
+	key, value := constructKeyAndValue(obj)
+	_, err = n.etcd.Put(ctx, key, value)
 	if err != nil {
 		return fmt.Errorf("failed to update node IP and port for %s. Error: %v", obj.NodeId, err)
 	}

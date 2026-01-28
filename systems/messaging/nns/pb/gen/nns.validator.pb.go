@@ -27,6 +27,9 @@ func (this *GetNodeResponse) Validate() error {
 	return nil
 }
 func (this *GetMeshRequest) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
 	return nil
 }
 func (this *GetMeshResponse) Validate() error {
@@ -58,6 +61,9 @@ func (this *SetResponse) Validate() error {
 	return nil
 }
 func (this *UpdateMeshRequest) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
 	if this.MeshIp == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("MeshIp", fmt.Errorf(`value '%v' must not be an empty string`, this.MeshIp))
 	}
@@ -88,13 +94,13 @@ func (this *DeleteResponse) Validate() error {
 	return nil
 }
 
-var _regex_OrgMap_NodeIp = regexp.MustCompile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
+var _regex_NodeMeshInfo_NodeIp = regexp.MustCompile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
 
-func (this *OrgMap) Validate() error {
+func (this *NodeMeshInfo) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
 	}
-	if !_regex_OrgMap_NodeIp.MatchString(this.NodeIp) {
+	if !_regex_NodeMeshInfo_NodeIp.MatchString(this.NodeIp) {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeIp", fmt.Errorf(`value '%v' must be a string conforming to regex "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"`, this.NodeIp))
 	}
 	if this.NodeIp == "" {
