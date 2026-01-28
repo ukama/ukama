@@ -42,9 +42,10 @@ type BootstrapServer struct {
 	clientSet 			*kubernetes.Clientset
 	config 				*pkg.Config
 	nnsClient     		messaging.NnsClient
+	messagingCert 		string
 }
  
-func NewBootstrapServer(msgBus mb.MsgBusServiceClient, debug bool, lookupClient client.LookupClientProvider, factoryClient factory.NodeFactoryClient, nnsClient messaging.NnsClient, dnsMap map[string]string, config *pkg.Config) *BootstrapServer {
+func NewBootstrapServer(msgBus mb.MsgBusServiceClient, debug bool, lookupClient client.LookupClientProvider, factoryClient factory.NodeFactoryClient, nnsClient messaging.NnsClient, config *pkg.Config, messagingCert string) *BootstrapServer {
 	c, err := rest.InClusterConfig()
 	if err != nil {
 		panic(err.Error())
@@ -62,8 +63,9 @@ func NewBootstrapServer(msgBus mb.MsgBusServiceClient, debug bool, lookupClient 
 		lookupClient:        lookupClient,
 		factoryClient:       factoryClient,
 		nnsClient:           nnsClient,
-		dnsMap:              dnsMap,
+		dnsMap:              config.ToDNSMap(),
 		config:              config,
+		messagingCert:       messagingCert,
 	}
 }
  
@@ -126,7 +128,7 @@ func (s *BootstrapServer) GetNodeCredentials(ctx context.Context, req *pb.GetNod
 		Id:          node.Node.Id,
 		OrgName:     node.Node.OrgName,
 		Ip:          ip,
-		Certificate: "",
+		Certificate: s.messagingCert,
 	}, nil
 }
 

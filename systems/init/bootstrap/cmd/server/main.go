@@ -72,16 +72,24 @@ func runGrpcServer() {
 		instanceId = inst.String()
 	}
 
-	factoryUrl, err := ic.GetHostUrl(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode)),
-		ic.CreateHostString(svcConf.OrgName, FactorySystem), &svcConf.OrgName)
+	icl := ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode))
+
+	facSys, err := icl.GetSystem(svcConf.OrgName, FactorySystem)
 	if err != nil {
-		log.Fatalf("Failed to resolve factory system address from initClient: %v", err)
+		log.Fatalf("Failed to get factory system from initClient: %v", err)
 	}
 
-	messagingUrl, err := ic.GetHostUrl(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode)),
-		ic.CreateHostString(svcConf.OrgName, MessagingSystem), &svcConf.OrgName)
+	factoryUrl, err := ic.GetHostUrl(icl, facSys.ApiGwUrl, &svcConf.OrgName)
 	if err != nil {
-		log.Fatalf("Failed to resolve messaging system address from initClient: %v", err)
+		log.Fatalf("Failed to get factory url from initClient: %v", err)
+	}
+	messagingSys, err := icl.GetSystem(svcConf.OrgName, MessagingSystem)
+	if err != nil {
+		log.Fatalf("Failed to get messaging system from initClient: %v", err)
+	}
+	messagingUrl, err := ic.GetHostUrl(icl, messagingSys.ApiGwUrl, &svcConf.OrgName)
+	if err != nil {
+		log.Fatalf("Failed to get messaging url from initClient: %v", err)
 	}
 
 	factoryClient := factory.NewNodeFactoryClient(factoryUrl.String(), client.WithDebug(svcConf.DebugMode))
@@ -95,7 +103,7 @@ func runGrpcServer() {
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	bootstrapServer := server.NewBootstrapServer(mbClient, svcConf.DebugMode,
-		provider.NewLookupClientProvider(svcConf.Lookup, svcConf.Timeout), factoryClient, nnsClient, svcConf.ToDNSMap(), svcConf)
+		provider.NewLookupClientProvider(svcConf.Lookup, svcConf.Timeout), factoryClient, nnsClient, svcConf, messagingSys.Certificate)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterBootstrapServiceServer(s, bootstrapServer)
