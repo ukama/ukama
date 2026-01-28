@@ -76,6 +76,20 @@ func (s *BootstrapServer) GetNodeCredentials(ctx context.Context, req *pb.GetNod
 		return nil, err
 	}
 
+	/* TODO: Uncomment this validation when init-lookup is ready for node lookup */
+
+	// lookup, err := s.lookupClient.GetClient()
+	// if err != nil {
+	// 	log.Errorf("Failed to get node from lookup: %v", err)
+	// 	return nil, err
+	// }
+
+	// lookupNode, err := lookup.GetNode(ctx, &lpb.GetNodeRequest{NodeId: req.Id})
+	// if err != nil {
+	// 	log.Errorf("Failed to get node from lookup: %v", err)
+	// 	return nil, err
+	// }
+
 	if node.Node.OrgName == "" {
 		log.Errorf("Node org name is empty")
 		return nil, status.Errorf(codes.FailedPrecondition, "Node is not provisioned in any org")
@@ -111,7 +125,6 @@ func (s *BootstrapServer) GetNodeCredentials(ctx context.Context, req *pb.GetNod
 		log.Errorf("Failed to get mesh info for node %s: %v", node.Node.Id, err)
 		return nil, status.Errorf(codes.Internal, "Failed to get mesh info: %v", err)
 	}
-
 	
 	nd :=utils.NodeMeshInfo{NodeId: node.Node.Id, MeshPodIp: "0.0.0.0", MeshPodPort: 8082}
 	if meshInfo != nil && meshInfo.MeshIp != "" {

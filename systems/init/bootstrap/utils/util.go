@@ -36,7 +36,6 @@ func getPodName(orgName, nodeId string) string {
 
 func SpawnReplica(ctx context.Context, node NodeMeshInfo, config *pkg.Config, clientSet *kubernetes.Clientset) error {
 	namespace := config.OrgName + "-" + config.MeshNamespace
-	// Use full pod name prefix including nodeId to match only pods for THIS node
 	podNamePrefix := getPodName(config.OrgName, node.NodeId)
 
 	// Check for existing healthy pod first
@@ -45,15 +44,15 @@ func SpawnReplica(ctx context.Context, node NodeMeshInfo, config *pkg.Config, cl
 		return status.Errorf(codes.Internal, "failed to check existing pods: %v", err)
 	}
 
-	// If a healthy pod exists, sync database if needed and return
+	// If a healthy pod exists, validate IP and return
 	if existingPod != nil {
-		// If IP is not set yet, update it asynchronously
-		if existingPod.Status.PodIP == "" {
+		// If NNS return empty mesh IP, update it asynchronously
+		if node.MeshPodIp == "" {
 			log.Debugf("Pod %s exists but has no IP yet, updating asynchronously", existingPod.Name)
 			go updatePodIPAsync(context.Background(), namespace, existingPod.Name, node.NodeId, clientSet)
 		}
 
-		// Check if pod info is already synced
+		// Check if NNS returned mesh IP matches the pod IP
 		if  node.MeshPodIp == existingPod.Status.PodIP {
 			log.Debugf("Mesh pod already exists and IP matched for node %s: %s (IP: %s)", node.NodeId, existingPod.Name, existingPod.Status.PodIP)
 			return nil
@@ -69,7 +68,6 @@ func SpawnReplica(ctx context.Context, node NodeMeshInfo, config *pkg.Config, cl
 // findExistingMeshPod looks for an existing healthy mesh pod for the node.
 // Returns nil if no healthy pod is found.
 func findExistingMeshPod(ctx context.Context, namespace, podNamePrefix string, clientSet *kubernetes.Clientset) (*corev1.Pod, error) {
-	// Use label selector to filter pods more efficiently
 	pods, err := clientSet.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: "app.kubernetes.io/component=mesh-node",
 	})
@@ -80,7 +78,7 @@ func findExistingMeshPod(ctx context.Context, namespace, podNamePrefix string, c
 	for i := range pods.Items {
 		pod := &pods.Items[i]
 
-		// Skip pods that don't match our node
+		// Skip pods that don't match the pod name prefix
 		if !isPodForNode(pod, podNamePrefix) {
 			continue
 		}
