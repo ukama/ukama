@@ -6,9 +6,6 @@
  * Copyright (c) 2022-present, Ukama Inc.
  */
 
-/*
- * Network related stuff based on ulfius framework.
- */
 #include <ulfius.h>
 #include <stdlib.h>
 #include <string.h>
@@ -79,12 +76,27 @@ static int init_framework(UInst *inst,
 
 static void setup_webservice_endpoints(Config *config, UInst *instance) {
 
-	ulfius_add_endpoint_by_val(instance, "GET",
-                               EP_WEBSERVICE_PING, NULL, 0,
-							   &callback_get_ping, config);
-
 	ulfius_set_default_endpoint(instance,
                                 &callback_default_webservice,
+                                config);
+}
+
+static void setup_admin_endpoints(Config *config, UInst *instance) {
+
+	ulfius_add_endpoint_by_val(instance, "GET",
+                               EP_PING, NULL, 0,
+							   &callback_get_ping, config);
+
+	ulfius_add_endpoint_by_val(instance, "GET",
+                               EP_VERSION, NULL, 0,
+							   &callback_get_version, config);
+
+    ulfius_add_endpoint_by_val(instance, "GET",
+                               EP_STATUS, NULL, 0,
+							   &callback_get_status, config);
+
+	ulfius_set_default_endpoint(instance,
+                                &callback_default_admin,
                                 config);
 }
 
@@ -107,14 +119,13 @@ static void setup_websocket_endpoints(Config *config, UInst *instance) {
 static int start_framework(Config *config, UInst *instance, int flag) {
 
 	int ret;
-  
+
     ret = ulfius_start_framework(instance);
 
 	if (ret != U_OK) {
 		log_error("Error starting the webservice/websocket.");
-    
-		/* clean up. */
-		ulfius_stop_framework(instance); /* don't think need this. XXX */
+
+		ulfius_stop_framework(instance);
 		ulfius_clean_instance(instance);
 		return FALSE;
 	}
@@ -126,7 +137,7 @@ static int start_framework(Config *config, UInst *instance, int flag) {
 	} else if (flag == FORWARD) {
         log_debug("Forward service sucessfully started.");
     }
-  
+
 	return TRUE;
 }
 
@@ -160,7 +171,6 @@ int start_forward_service(Config *config, UInst **forwardInst) {
 		return FALSE;
 	}
 
-	/* setup endpoint */
     ulfius_add_endpoint_by_val(*forwardInst,
                                "GET",
                                "*", NULL, 0,
@@ -191,7 +201,6 @@ int start_websocket_server(Config *config, UInst *websocketInst) {
     bindAddr.sin_port   = htons(atoi(config->websocketPort));
     bindAddr.sin_addr.s_addr = inet_addr(config->bindingIP);
 
-	/* Initialize the admin and client webservices framework. */
 	if (init_framework(websocketInst,
                        &bindAddr,
                        atoi(config->websocketPort)) != TRUE) {
@@ -199,7 +208,6 @@ int start_websocket_server(Config *config, UInst *websocketInst) {
 		return FALSE;
 	}
 
-	/* setup endpoints and methods callback. */
 	setup_websocket_endpoints(config, websocketInst);
 
 	if (start_framework(config, websocketInst, WEBSOCKET)==FALSE) {
@@ -214,16 +222,13 @@ int start_websocket_server(Config *config, UInst *websocketInst) {
 
 int start_web_services(Config *config, UInst *clientInst) {
 
-	/* Initialize the admin and client webservices framework. */
 	if (init_framework(clientInst, NULL, atoi(config->servicesPort)) != TRUE){
 		log_error("Error initializing webservice framework");
 		return FALSE;
 	}
 
-	/* setup endpoints and methods callback. */
 	setup_webservice_endpoints(config, clientInst);
 
-	/* open connection for both admin and client webservices */
 	if (!start_framework(config, clientInst, SERVICE)) {
 		log_error("Failed to start webservices for client: %s",
                   config->servicesPort);
@@ -231,6 +236,26 @@ int start_web_services(Config *config, UInst *clientInst) {
 	}
 
 	log_debug("Service accepting on port: %s", config->servicesPort);
+
+	return TRUE;
+}
+
+int start_admin_services(Config *config, UInst *adminInst) {
+
+	if (init_framework(adminInst, NULL, atoi(config->adminPort)) != TRUE){
+		log_error("Error initializing admin service framework");
+		return FALSE;
+	}
+
+	setup_admin_endpoints(config, adminInst);
+
+	if (!start_framework(config, adminInst, ADMIN)) {
+		log_error("Failed to start webservices for admin: %s",
+                  config->adminPort);
+		return FALSE;
+	}
+
+	log_debug("Admin services accepting on port: %s", config->adminPort);
 
 	return TRUE;
 }

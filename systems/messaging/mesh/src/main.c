@@ -24,13 +24,15 @@
 
 typedef struct {
 
-	struct _u_instance *websocketInst;
-	struct _u_instance *servicesInst;
-	Config             *config;
+	UInst  *websocketInst;
+	UInst  *servicesInst;
+    UInst  *adminInst;
+	Config *config;
 } ProcessState;
 
 /* Defined in network.c */
-extern int start_web_services(Config *config, UInst *servicesInst);
+extern int start_web_services(Config *config,     UInst *servicesInst);
+extern int start_admin_service(Config *config,    UInst *webInst);
 extern int start_websocket_server(Config *config, UInst *websocketInst);
 
 /* Global variables. */
@@ -48,6 +50,7 @@ void usage(void) {
            "\t %s \n\t %s \n\t %s \n",
            ENV_WEBSOCKET_PORT,
            ENV_SERVICES_PORT,
+           ENV_ADMIN_PORT,
            ENV_AMQP_HOST,
            ENV_AMQP_PORT,
            ENV_INIT_SYSTEM_ADDR,
@@ -88,6 +91,11 @@ void signal_term_handler(void) {
 		ulfius_clean_instance(processState->servicesInst);
 	}
 
+	if (processState->adminInst) {
+		ulfius_stop_framework(processState->adminInst);
+		ulfius_clean_instance(processState->adminInst);
+	}
+
 	if (processState->config) {
 		clear_config(processState->config);
 		free(processState->config);
@@ -113,11 +121,12 @@ void catch_sigterm(void) {
 
 int main (int argc, char *argv[]) {
 
-	int exitStatus=0;
-	char *debug=DEFAULT_LOG_LEVEL;
+	int    exitStatus=0;
+	char   *debug=DEFAULT_LOG_LEVEL;
 	Config *config=NULL;
-	struct _u_instance websocketInst;
-	struct _u_instance servicesInst;
+	UInst  websocketInst;
+	UInst  servicesInst;
+    UInst  adminInst;
 
 	processState = (ProcessState *)calloc(1, sizeof(ProcessState));
 	if (processState == NULL) return 1;
@@ -129,7 +138,7 @@ int main (int argc, char *argv[]) {
     /* Parse command line args. */
     while (TRUE) {
 
-        int opt = 0;
+        int opt    = 0;
         int opdidx = 0;
 
         static struct option long_options[] = {
@@ -193,6 +202,12 @@ int main (int argc, char *argv[]) {
 		exit(1);
 	}
 
+    /* Step-2c: start admin service */
+    if (start_admin_services(config, &adminInst) != TRUE) {
+		log_error("Webservice failed to setup for admin. Exiting.");
+		exit(1);
+	}
+
     /* Step-3: publish register event with IP and binding port */
     if (publish_register_event(DEFAULT_MESH_AMQP_EXCHANGE, atoi(config->servicesPort))) {
         log_debug("Mesh(server) running for Ukama Org: %s", config->orgName);
@@ -203,9 +218,11 @@ int main (int argc, char *argv[]) {
 
     ulfius_stop_framework(&websocketInst);
 	ulfius_stop_framework(&servicesInst);
+	ulfius_stop_framework(&adminInst);
 
 	ulfius_clean_instance(&websocketInst);
 	ulfius_clean_instance(&servicesInst);
+	ulfius_clean_instance(&adminInst);
 
 	clear_config(config);
 	free(config);

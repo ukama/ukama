@@ -6,10 +6,6 @@
  * Copyright (c) 2022-present, Ukama Inc.
  */
 
-/*
- * Callback functions for various endpoints and REST methods.
- */
-
 #include <ulfius.h>
 #include <string.h>
 #include <jansson.h>
@@ -30,6 +26,8 @@
 #include "u_amqp.h"
 #include "httpStatus.h"
 #include "config.h"
+
+#include "version.h"
 
 extern MapTable *NodesTable;
 
@@ -174,6 +172,32 @@ int callback_get_ping(const URequest *request,
                       void *data) {
 
 	ulfius_set_string_body_response(response, 200, "");
+	return U_CALLBACK_CONTINUE;
+}
+
+int callback_get_status(const URequest *request,
+                        UResponse *response,
+                        void *data) {
+
+	ulfius_set_string_body_response(response, 200, "");
+	return U_CALLBACK_CONTINUE;
+}
+
+int callback_get_version(const URequest *request,
+                         UResponse *response,
+                         void *epConfig) {
+
+    ulfius_set_string_body_response(response, HttpStatus_OK, VERSION);
+    return U_CALLBACK_CONTINUE;
+}
+
+int callback_default_admin(const URequest *request,
+                           UResponse *response,
+                           void *data) {
+
+	ulfius_set_string_body_response(response,
+                                    HttpStatus_Forbidden,
+                                    HttpStatusStr(HttpStatus_Forbidden));
 	return U_CALLBACK_CONTINUE;
 }
 
