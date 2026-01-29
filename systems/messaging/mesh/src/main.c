@@ -32,7 +32,7 @@ typedef struct {
 
 /* Defined in network.c */
 extern int start_web_services(Config *config,     UInst *servicesInst);
-extern int start_admin_service(Config *config,    UInst *webInst);
+extern int start_admin_services(Config *config,   UInst *webInst);
 extern int start_websocket_server(Config *config, UInst *websocketInst);
 
 /* Global variables. */
@@ -128,10 +128,15 @@ int main (int argc, char *argv[]) {
 	UInst  servicesInst;
     UInst  adminInst;
 
+    memset(&websocketInst, 0, sizeof(websocketInst));
+    memset(&servicesInst,  0, sizeof(servicesInst));
+    memset(&adminInst,     0, sizeof(adminInst));
+
 	processState = (ProcessState *)calloc(1, sizeof(ProcessState));
 	if (processState == NULL) return 1;
 	processState->websocketInst = &websocketInst;
 	processState->servicesInst  = &servicesInst;
+    processState->adminInst     = &adminInst;
 
 	catch_sigterm();
 

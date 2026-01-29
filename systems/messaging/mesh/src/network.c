@@ -76,7 +76,10 @@ static int init_framework(UInst *inst,
 
 static void setup_webservice_endpoints(Config *config, UInst *instance) {
 
-	ulfius_set_default_endpoint(instance,
+    ulfius_add_endpoint_by_val(instance, "GET",
+                               EP_PING, NULL, 0,
+							   &callback_get_ping, config);
+    ulfius_set_default_endpoint(instance,
                                 &callback_default_webservice,
                                 config);
 }
@@ -121,9 +124,13 @@ static int start_framework(Config *config, UInst *instance, int flag) {
 	int ret;
 
     ret = ulfius_start_framework(instance);
-
-	if (ret != U_OK) {
-		log_error("Error starting the webservice/websocket.");
+    if (ret != U_OK) {
+        log_error("ulfius_start_framework failed ret=%d (U_ERROR_PARAMS=3)", ret);
+        log_error("instance: port=%u status=%d bind_address=%p mhd_daemon=%p",
+                  instance->port,
+                  instance->status,
+                  (void*)instance->bind_address,
+                  (void*)instance->mhd_daemon);
 
 		ulfius_stop_framework(instance);
 		ulfius_clean_instance(instance);
@@ -136,6 +143,8 @@ static int start_framework(Config *config, UInst *instance, int flag) {
 		log_debug("Webservice sucessfully started.");
 	} else if (flag == FORWARD) {
         log_debug("Forward service sucessfully started.");
+    } else if (flag == ADMIN) {
+        log_debug("Admin service sucessfully started.");
     }
 
 	return TRUE;
@@ -165,7 +174,7 @@ int start_forward_service(Config *config, UInst **forwardInst) {
     }
 
 	if (init_framework(*forwardInst,
-                       &bindAddr,
+                       NULL,
                        port) != TRUE) {
 		log_error("Error initializing forward framework");
 		return FALSE;
