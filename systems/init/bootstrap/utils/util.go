@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -10,14 +11,16 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 )
 
 const (
-	PodNamePrefix       = "mesh-node"
-	PodIPWaitTimeout    = 60 * time.Second
-	PodIPPollInterval   = 2 * time.Second
+	PodNamePrefix     = "mesh-node"
+	PodIPWaitTimeout  = 60 * time.Second
+	PodIPPollInterval = 2 * time.Second
 )
 
 type NodeMeshInfo struct {
@@ -44,32 +47,30 @@ func SpawnReplica(ctx context.Context, node NodeMeshInfo, config *pkg.Config, cl
 		return status.Errorf(codes.Internal, "failed to check existing pods: %v", err)
 	}
 
-	// If a healthy pod exists, validate IP and return
+	// If a healthy pod exists, validate IP
 	if existingPod != nil {
 		// If NNS return empty mesh IP, update it asynchronously
 		if node.MeshPodIp == "" {
 			log.Debugf("Pod %s exists but has no IP yet, updating asynchronously", existingPod.Name)
 			go updatePodIPAsync(context.Background(), namespace, existingPod.Name, node.NodeId, clientSet)
-		}
-
-		// Check if NNS returned mesh IP matches the pod IP
-		if  node.MeshPodIp == existingPod.Status.PodIP {
+		} else if node.MeshPodIp == existingPod.Status.PodIP {
 			log.Debugf("Mesh pod already exists and IP matched for node %s: %s (IP: %s)", node.NodeId, existingPod.Name, existingPod.Status.PodIP)
-			return nil
 		}
-		
-		return nil
+	} else {
+		// No healthy pod exists, create a new one
+		if err := createMeshPod(ctx, namespace, podNamePrefix, node, clientSet); err != nil {
+			return err
+		}
 	}
 
-	// No healthy pod exists, create a new one
-	return createMeshPod(ctx, namespace, podNamePrefix, node, clientSet)
+	return ensureMeshService(ctx, namespace, podNamePrefix, node, clientSet)
 }
 
 // findExistingMeshPod looks for an existing healthy mesh pod for the node.
 // Returns nil if no healthy pod is found.
 func findExistingMeshPod(ctx context.Context, namespace, podNamePrefix string, clientSet *kubernetes.Clientset) (*corev1.Pod, error) {
 	pods, err := clientSet.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
-		LabelSelector: "app.kubernetes.io/component=mesh-node",
+		LabelSelector: fmt.Sprintf("app.kubernetes.io/component=%s", PodNamePrefix),
 	})
 	if err != nil {
 		return nil, err
@@ -163,8 +164,8 @@ func createMeshPod(ctx context.Context, namespace, podName string, node NodeMesh
 			Namespace:    namespace,
 			Labels: map[string]string{
 				"app.kubernetes.io/name":      "mesh",
-				"app.kubernetes.io/component": "mesh-node",
-				"app.kubernetes.io/node-id":  node.NodeId,
+				"app.kubernetes.io/component": PodNamePrefix,
+				"app.kubernetes.io/instance-id":   node.NodeId,
 			},
 		},
 		Spec: *podSpec,
@@ -233,4 +234,53 @@ func getTemplatePodSpec(ctx context.Context, namespace string, clientSet *kubern
 	podSpec.RestartPolicy = corev1.RestartPolicyOnFailure
 
 	return podSpec, nil
+}
+
+// ensureMeshService ensures that a service exists for the mesh node pod.
+func ensureMeshService(ctx context.Context, namespace, serviceName string, node NodeMeshInfo, clientSet *kubernetes.Clientset) error {
+	// Check if service exists
+	_, err := clientSet.CoreV1().Services(namespace).Get(ctx, serviceName, metav1.GetOptions{})
+	if err == nil {
+		return nil
+	}
+
+	if !errors.IsNotFound(err) {
+		return status.Errorf(codes.Internal, "failed to check existing service: %v", err)
+	}
+
+	// Create Service
+	service := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      serviceName,
+			Namespace: namespace,
+			Labels: map[string]string{
+				"app.kubernetes.io/name":      "mesh",
+				"app.kubernetes.io/component": PodNamePrefix,
+				"app.kubernetes.io/instance-id":   node.NodeId,
+			},
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: map[string]string{
+				"app.kubernetes.io/component": PodNamePrefix,
+				"app.kubernetes.io/instance-id":   node.NodeId,
+			},
+			Ports: []corev1.ServicePort{
+				{
+					Name:       "mesh",
+					Protocol:   corev1.ProtocolTCP,
+					Port:       node.MeshPodPort,
+					TargetPort: intstr.FromInt(int(node.MeshPodPort)),
+				},
+			},
+			Type: corev1.ServiceTypeClusterIP,
+		},
+	}
+
+	_, err = clientSet.CoreV1().Services(namespace).Create(ctx, service, metav1.CreateOptions{})
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to create mesh service: %v", err)
+	}
+
+	log.Infof("Created mesh service %s for node %s", serviceName, node.NodeId)
+	return nil
 }
