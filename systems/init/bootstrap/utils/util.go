@@ -239,55 +239,76 @@ func getTemplatePodSpec(ctx context.Context, namespace string, clientSet *kubern
 // ensureMeshService ensures that a service exists for the mesh node pod.
 func ensureMeshService(ctx context.Context, namespace, serviceName string, node NodeMeshInfo, clientSet *kubernetes.Clientset) error {
 	log.Infof("Ensuring mesh service %s in namespace %s for node %s", serviceName, namespace, node.NodeId)
-	
+
+	desiredPorts := []corev1.ServicePort{
+		{
+			Name:       "http",
+			Protocol:   corev1.ProtocolTCP,
+			Port:       8082,
+			TargetPort: intstr.FromInt(8082),
+		},
+		{
+			Name:       "websocket",
+			Protocol:   corev1.ProtocolTCP,
+			Port:       18200,
+			TargetPort: intstr.FromInt(18200),
+		},
+	}
+
 	// Check if service exists
-	_, err := clientSet.CoreV1().Services(namespace).Get(ctx, serviceName, metav1.GetOptions{})
-	if err == nil {
-		log.Infof("Service %s already exists", serviceName)
+	existingService, err := clientSet.CoreV1().Services(namespace).Get(ctx, serviceName, metav1.GetOptions{})
+
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			log.Errorf("Failed to check existing service %s: %v", serviceName, err)
+			return status.Errorf(codes.Internal, "failed to check existing service: %v", err)
+		}
+
+		// Create new service
+		log.Infof("Creating new mesh service %s", serviceName)
+		service := &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      serviceName,
+				Namespace: namespace,
+				Labels: map[string]string{
+					"app.kubernetes.io/name":        "mesh",
+					"app.kubernetes.io/component":   PodNamePrefix,
+					"app.kubernetes.io/instance-id": node.NodeId,
+				},
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: map[string]string{
+					"app.kubernetes.io/component":   PodNamePrefix,
+					"app.kubernetes.io/instance-id": node.NodeId,
+				},
+				Ports: desiredPorts,
+				Type:  corev1.ServiceTypeClusterIP,
+			},
+		}
+
+		_, err = clientSet.CoreV1().Services(namespace).Create(ctx, service, metav1.CreateOptions{})
+		if err != nil {
+			log.Errorf("Failed to create mesh service %s: %v", serviceName, err)
+			return status.Errorf(codes.Internal, "failed to create mesh service: %v", err)
+		}
+		log.Infof("Created mesh service %s for node %s", serviceName, node.NodeId)
 		return nil
 	}
 
-	if !errors.IsNotFound(err) {
-		log.Errorf("Failed to check existing service %s: %v", serviceName, err)
-		return status.Errorf(codes.Internal, "failed to check existing service: %v", err)
+	// Update existing service
+	log.Infof("Service %s exists, updating ports if necessary", serviceName)
+	existingService.Spec.Ports = desiredPorts
+	existingService.Spec.Selector = map[string]string{
+		"app.kubernetes.io/component":   PodNamePrefix,
+		"app.kubernetes.io/instance-id": node.NodeId,
 	}
 
-	log.Infof("Creating new mesh service %s", serviceName)
-
-	// Create Service
-	service := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      serviceName,
-			Namespace: namespace,
-			Labels: map[string]string{
-				"app.kubernetes.io/name":        "mesh",
-				"app.kubernetes.io/component":   PodNamePrefix,
-				"app.kubernetes.io/instance-id": node.NodeId,
-			},
-		},
-		Spec: corev1.ServiceSpec{
-			Selector: map[string]string{
-				"app.kubernetes.io/component":   PodNamePrefix,
-				"app.kubernetes.io/instance-id": node.NodeId,
-			},
-			Ports: []corev1.ServicePort{
-				{
-					Name:       "mesh",
-					Protocol:   corev1.ProtocolTCP,
-					Port:       node.MeshPodPort,
-					TargetPort: intstr.FromInt(int(node.MeshPodPort)),
-				},
-			},
-			Type: corev1.ServiceTypeClusterIP,
-		},
-	}
-
-	_, err = clientSet.CoreV1().Services(namespace).Create(ctx, service, metav1.CreateOptions{})
+	_, err = clientSet.CoreV1().Services(namespace).Update(ctx, existingService, metav1.UpdateOptions{})
 	if err != nil {
-		log.Errorf("Failed to create mesh service %s: %v", serviceName, err)
-		return status.Errorf(codes.Internal, "failed to create mesh service: %v", err)
+		log.Errorf("Failed to update mesh service %s: %v", serviceName, err)
+		return status.Errorf(codes.Internal, "failed to update mesh service: %v", err)
 	}
 
-	log.Infof("Created mesh service %s for node %s", serviceName, node.NodeId)
+	log.Infof("Updated mesh service %s for node %s", serviceName, node.NodeId)
 	return nil
 }
