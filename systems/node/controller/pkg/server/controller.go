@@ -32,10 +32,10 @@ import (
 )
 
 var actions = map[string]string{
-	"REBOOT":     "/v1/reboot",
-	"PING":     "/v1/node/ping",
-	"SWITCH":     "/v1/switch",
-	"RF":         "/v1/rf",
+	"REBOOT":     "/device/v1/reboot",
+	"PING":     "/device/v1/node/ping",
+	"SWITCH":     "/device/v1/switch",
+	"RF":         "/device/v1/rf",
 }
 
 type ControllerServer struct {
@@ -259,7 +259,7 @@ func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.Tog
 	if err != nil {
 		return nil, err
 	}
-	err = c.publishMessage(c.orgName+"."+"."+"."+siteId.String(), actions["SWITCH"]+"/"+fmt.Sprintf("%d/%t", req.Port, req.Status), data)
+	err = c.publishMessage(c.orgName+"."+"."+"."+siteId.String(), actions["SWITCH"], data)
 
 	if err != nil {
 		log.Errorf("Failed to publish switch port reboot message. Errors: %s", err.Error())
