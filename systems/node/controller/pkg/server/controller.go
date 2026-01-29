@@ -221,7 +221,7 @@ func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNode
 			return nil, err
 		}
 
-		err = c.publishMessage(c.orgName+"."+"."+"."+nodeId, "/v1/reboot", data)
+		err = c.publishMessage(c.orgName+"."+"."+"."+nodeId, actions["REBOOT"], data)
 
 		if err != nil {
 			log.Errorf("Failed to publish message . Errors %s", err.Error())
