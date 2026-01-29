@@ -171,7 +171,9 @@ int callback_get_ping(const URequest *request,
                       UResponse *response,
                       void *data) {
 
-	ulfius_set_string_body_response(response, 200, "");
+	ulfius_set_string_body_response(response,
+                                    HttpStatus_OK,
+                                    HttpStatusStr(HttpStatus_OK));
 	return U_CALLBACK_CONTINUE;
 }
 
@@ -179,8 +181,15 @@ int callback_get_status(const URequest *request,
                         UResponse *response,
                         void *data) {
 
-	ulfius_set_string_body_response(response, 200, "");
-	return U_CALLBACK_CONTINUE;
+    int status = (NodesTable && NodesTable->first)
+                 ? HttpStatus_OK
+                 : HttpStatus_NotFound;
+
+    ulfius_set_string_body_response(response,
+                                    status,
+                                    HttpStatusStr(status));
+
+    return U_CALLBACK_CONTINUE;
 }
 
 int callback_get_version(const URequest *request,
