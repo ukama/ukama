@@ -159,6 +159,22 @@ static void setup_websocket_endpoints(Config *config, UInst *instance) {
                                 config);
 }
 
+static void setup_forward_endpoints(Config *config, UInst *instance) {
+
+    ulfius_add_endpoint_by_val(instance, "GET", EP_FORWARD, NULL, 0,
+							   &callback_forward, config);
+    ulfius_add_endpoint_by_val(instance, "GET", EP_FORWARD, NULL, 0,
+							   &callback_forward, config);
+    ulfius_add_endpoint_by_val(instance, "GET", EP_FORWARD, NULL, 0,
+							   &callback_forward, config);
+    ulfius_add_endpoint_by_val(instance, "GET", EP_FORWARD, NULL, 0,
+							   &callback_forward, config);
+
+    ulfius_set_default_endpoint(instance,
+                                &callback_default_forward,
+                                config);
+}
+
 static int start_framework(Config *config, UInst *instance, int flag) {
 
 	int ret;
@@ -190,55 +206,36 @@ static int start_framework(Config *config, UInst *instance, int flag) {
 	return TRUE;
 }
 
-int start_forward_service(Config *config, UInst **forwardInst) {
+int start_forward_service(Config *config, UInst *forwardInst) {
 
     struct sockaddr_in bindAddr;
-    int port;
-
-    port = find_first_available_port(START_PORT, END_PORT);
-    if (port <= 0) {
-        log_error("Unable to find empty port to bind");
-        return FALSE;
-    }
 
     memset(&bindAddr, 0, sizeof(bindAddr));
     bindAddr.sin_family      = AF_INET;
-    bindAddr.sin_port        = htons(port);
+    bindAddr.sin_port        = htons(config->servicesPort);
     bindAddr.sin_addr.s_addr = inet_addr(config->bindingIP);
 
-    *forwardInst = (UInst *)calloc(1, sizeof(UInst));
-    if (*forwardInst == NULL) {
-        log_error("Error allocating memory of size: %d",
-                  sizeof(UInst));
-        return FALSE;
-    }
-
-	if (init_framework(*forwardInst,
+	if (init_framework(forwardInst,
                        NULL,
-                       port) != TRUE) {
+                       atoi(config->servicesPort)) != TRUE) {
 		log_error("Error initializing forward framework");
 		return FALSE;
 	}
 
-    ulfius_add_endpoint_by_val(*forwardInst,
-                               "GET",
-                               "*", NULL, 0,
-							   &callback_default_forward, config);
-
-    ulfius_set_default_endpoint(*forwardInst,
-                                &callback_default_forward, config);
+    setup_forward_endpoints(config, forwardInst);
 
 	if (start_framework(config,
-                        *forwardInst,
+                        forwardInst,
                         FORWARD) == FALSE) {
 		log_error("Failed to start forward service at port %d",
-                  port);
+                  atoi(config->servicesPort));
 		return FALSE;
 	}
 
-	log_debug("Forward service accepting on port: %d", port);
+	log_debug("Forward service accepting on port: %d",
+              atoi(config->servicesPort));
 
-    return port;
+    return TRUE;
 }
 
 int start_websocket_server(Config *config, UInst *websocketInst) {
@@ -267,26 +264,6 @@ int start_websocket_server(Config *config, UInst *websocketInst) {
 	log_debug("Websocket accepting on port: %s", config->websocketPort);
 
  	return TRUE;
-}
-
-int start_web_services(Config *config, UInst *clientInst) {
-
-	if (init_framework(clientInst, NULL, atoi(config->servicesPort)) != TRUE){
-		log_error("Error initializing webservice framework");
-		return FALSE;
-	}
-
-	setup_webservice_endpoints(config, clientInst);
-
-	if (!start_framework(config, clientInst, SERVICE)) {
-		log_error("Failed to start webservices for client: %s",
-                  config->servicesPort);
-		return FALSE;
-	}
-
-	log_debug("Service accepting on port: %s", config->servicesPort);
-
-	return TRUE;
 }
 
 int start_admin_services(Config *config, UInst *adminInst) {

@@ -45,6 +45,10 @@ int callback_default_websocket(const URequest *request,
                                UResponse *response,
                                void *user_data);
 
+int callback_forward(const URequest *request,
+                     UResponse *response,
+                     void *user_data);
+
 int callback_default_forward(const URequest *request,
                              UResponse *response,
                              void *user_data);

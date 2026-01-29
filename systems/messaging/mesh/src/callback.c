@@ -220,9 +220,9 @@ int callback_default_admin(const URequest *request,
 	return U_CALLBACK_CONTINUE;
 }
 
-int callback_default_forward(const URequest *request,
-                             UResponse *response,
-                             void *user_data) {
+int callback_forward(const URequest *request,
+                     UResponse *response,
+                     void *user_data) {
 
     MapItem *map=NULL;
     char *host=NULL, *port=NULL, *url=NULL;
@@ -304,4 +304,14 @@ done:
     free(port);
 
     return U_CALLBACK_CONTINUE;
+}
+
+int callback_default_forward(const URequest *request,
+                             UResponse *response,
+                             void *data) {
+
+	ulfius_set_string_body_response(response,
+                                    HttpStatus_Forbidden,
+                                    HttpStatusStr(HttpStatus_Forbidden));
+	return U_CALLBACK_CONTINUE;
 }

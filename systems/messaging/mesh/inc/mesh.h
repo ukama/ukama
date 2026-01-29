@@ -17,11 +17,11 @@
 
 #include "log.h"
 
-#define EP_WEBSOCKET     "/websocket"
-#define EP_PING          "/v1/ping"
-#define EP_VERSION       "/v1/version"
-#define EP_STATUS        "/v1/status"
-#define EP_NODE_FORWARD  "*"
+#define EP_WEBSOCKET  "/websocket"
+#define EP_PING       "/v1/ping"
+#define EP_VERSION    "/v1/version"
+#define EP_STATUS     "/v1/status"
+#define EP_FORWARD    "*"
 
 #define MESH_CLIENT_AGENT "Mesh-client"
 #define MESH_CLIENT_VERSION "0.0.1"
