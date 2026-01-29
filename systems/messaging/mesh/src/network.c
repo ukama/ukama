@@ -56,6 +56,40 @@ static int find_first_available_port(int start, int end) {
     return 0;
 }
 
+static void setup_unsupported_methods(UInst *instance,
+                                      char *allowedMethod,
+                                      char *prefix,
+                                      char *resource) {
+
+    if (strcmp(allowedMethod, "GET") != 0) {
+        ulfius_add_endpoint_by_val(instance, "GET", prefix,
+                                   resource, 0,
+                                   &callback_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "POST") != 0) {
+        ulfius_add_endpoint_by_val(instance, "POST", prefix,
+                                   resource, 0,
+                                   &callback_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "PUT") != 0) {
+        ulfius_add_endpoint_by_val(instance, "PUT", prefix,
+                                   resource, 0,
+                                   &callback_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "DELETE") != 0) {
+        ulfius_add_endpoint_by_val(instance, "DELETE", prefix,
+                                   resource, 0,
+                                   &callback_not_allowed,
+                                   (void *)allowedMethod);
+    }
+}
+
 static int init_framework(UInst *inst,
                           struct sockaddr_in *bindAddr,
                           int bindPort) {
@@ -89,14 +123,20 @@ static void setup_admin_endpoints(Config *config, UInst *instance) {
 	ulfius_add_endpoint_by_val(instance, "GET",
                                EP_PING, NULL, 0,
 							   &callback_get_ping, config);
+    setup_unsupported_methods(instance, "GET",
+                              EP_PING, NULL);
 
 	ulfius_add_endpoint_by_val(instance, "GET",
                                EP_VERSION, NULL, 0,
 							   &callback_get_version, config);
+    setup_unsupported_methods(instance, "GET",
+                              EP_VERSION, NULL);
 
     ulfius_add_endpoint_by_val(instance, "GET",
                                EP_STATUS, NULL, 0,
 							   &callback_get_status, config);
+    setup_unsupported_methods(instance, "GET",
+                              EP_STATUS, NULL);
 
 	ulfius_set_default_endpoint(instance,
                                 &callback_default_admin,

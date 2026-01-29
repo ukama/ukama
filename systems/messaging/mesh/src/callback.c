@@ -157,6 +157,16 @@ int callback_default_websocket(const URequest *request,
 	return U_CALLBACK_CONTINUE;
 }
 
+int callback_not_allowed(const URequest *request,
+                         UResponse *response,
+                         void *user_data) {
+
+    ulfius_set_string_body_response(response,
+                                    HttpStatus_MethodNotAllowed,
+                                    HttpStatusStr(HttpStatus_MethodNotAllowed));
+    return U_CALLBACK_CONTINUE;
+}
+
 int callback_default_webservice(const URequest *request,
                                 UResponse *response,
 								void *data) {
