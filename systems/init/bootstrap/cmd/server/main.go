@@ -33,8 +33,8 @@ import (
 )
 
 var svcConf = pkg.NewConfig(pkg.ServiceName)
-var FactorySystem = "factory"
-var MessagingSystem = "messaging"
+const FactorySystem = "factory"
+const MessagingSystem = "messaging"
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
