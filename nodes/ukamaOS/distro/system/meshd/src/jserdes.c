@@ -418,12 +418,6 @@ int deserialize_websocket_message(Message **message, json_t *json) {
     (*message)->code     = json_integer_value(jCode);
     (*message)->dataSize = json_integer_value(jLength);
     (*message)->data     = strdup(json_string_value(jData));
-    
-    /* deserialize the data */
-    if (strcmp((*message)->reqType, MESH_SERVICE_REQUEST) == 0) {
-        deserialize_request_info((URequest **)&(*message)->data,
-                                 (*message)->data);
-    }
 
 	return TRUE;
 }
