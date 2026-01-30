@@ -32,6 +32,29 @@ extern int start_websocket_client(Config *config,
 static 	pthread_mutex_t websocketMutex;
 static	pthread_cond_t  websocketFail;
 
+#include <sys/time.h>
+
+static const char *ts_now(void) {
+    static char buf[32];
+    struct timeval tv;
+    struct tm tm;
+
+    gettimeofday(&tv, NULL);
+    gmtime_r(&tv.tv_sec, &tm);
+
+    snprintf(buf, sizeof(buf),
+             "%04d-%02d-%02d %02d:%02d:%02d.%03ldZ",
+             tm.tm_year + 1900,
+             tm.tm_mon + 1,
+             tm.tm_mday,
+             tm.tm_hour,
+             tm.tm_min,
+             tm.tm_sec,
+             tv.tv_usec / 1000);
+
+    return buf;
+}
+
 STATIC void clear_response(MResponse **resp) {
 
 	if (*resp==NULL) return;
@@ -115,6 +138,9 @@ void* monitor_websocket(void *args){
     return NULL;
 }
 
+#define WDBG(fmt, ...) usys_log_debug("[%s] " fmt, ts_now(), ##__VA_ARGS__)
+#define WERR(fmt, ...) usys_log_error("[%s] " fmt, ts_now(), ##__VA_ARGS__)
+
 void websocket_manager(const URequest *request, WSManager *manager,
 					   void *data) {
 
@@ -176,15 +202,41 @@ void websocket_manager(const URequest *request, WSManager *manager,
 			work->preFunc(work->data, work->preArgs);
 		}
 
-		/* 2. Send data over the wire. */
-		/* Currently, Packet is JSON string. Send it over. */
-		if (ulfius_websocket_wait_close(manager, 1) ==
-			U_WEBSOCKET_STATUS_OPEN) {
-            jData = json_loads(work->data, JSON_DECODE_ANY, NULL);
-			if (ulfius_websocket_send_json_message(manager, jData) != U_OK) {
-				usys_log_error("Error sending JSON message.");
-			}
-		}
+        /* 2. Send data over the wire. */
+        if (ulfius_websocket_wait_close(manager, 1) == U_WEBSOCKET_STATUS_OPEN) {
+
+            json_error_t jerr;
+            jData = json_loads(work->data, 0, &jerr);
+
+            if (jData == NULL) {
+                WERR("json_loads failed: line=%d col=%d pos=%d text=%s",
+                     jerr.line, jerr.column, jerr.position, jerr.text);
+                WERR("payload (first 256): %.256s", work->data ? work->data : "(null)");
+                destroy_work_item(work);
+                continue;
+            }
+
+            /* Optional: dump outbound JSON (bounded) */
+            char *dump = json_dumps(jData, JSON_COMPACT);
+            if (dump) {
+                WDBG("WS TX -> %zu bytes: %.512s%s",
+                     strlen(dump), dump, (strlen(dump) > 512) ? "..." : "");
+                free(dump);
+            }
+
+            int rc = ulfius_websocket_send_json_message(manager, jData);
+            if (rc != U_OK) {
+                WERR("ulfius_websocket_send_json_message failed rc=%d", rc);
+            } else {
+                WDBG("WS TX OK");
+            }
+
+            json_decref(jData);
+            jData = NULL;
+
+        } else {
+            WERR("websocket not open; dropping message");
+        }
 
 		/* 3. Any post-processing. */
 		if (work->postFunc) {
