@@ -60,7 +60,11 @@ const NetworkMap = ({ id, zoom, markersData, children }: IMap) => {
         data={{
           nodes:
             markersData?.nodes?.filter(
-              (node) => node.latitude !== null && node.longitude !== null,
+              (node) =>
+                node.latitude !== null &&
+                node.longitude !== null &&
+                node.latitude !== '' &&
+                node.longitude !== '',
             ) || [],
         }}
       />
