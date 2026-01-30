@@ -27,12 +27,14 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	factory "github.com/ukama/ukama/systems/common/rest/client/factory"
 	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
+	messaging "github.com/ukama/ukama/systems/common/rest/client/messaging"
 	provider "github.com/ukama/ukama/systems/init/bootstrap/client"
 	pb "github.com/ukama/ukama/systems/init/bootstrap/pb/gen"
 )
 
-var svcConf *pkg.Config
-var FactorySystem = "factory"
+var svcConf = pkg.NewConfig(pkg.ServiceName)
+const FactorySystem = "factory"
+const MessagingSystem = "messaging"
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
@@ -70,12 +72,28 @@ func runGrpcServer() {
 		instanceId = inst.String()
 	}
 
-	factoryUrl, err := ic.GetHostUrl(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode)),
-		ic.CreateHostString(svcConf.OrgName, FactorySystem), &svcConf.OrgName)
+	icl := ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode))
+
+	facSystem, err := icl.GetSystem(svcConf.OrgName, FactorySystem)
 	if err != nil {
-		log.Fatalf("Failed to resolve factory system address from initClient: %v", err)
+		log.Fatalf("Failed to get factory system from initClient: %v", err)
 	}
+
+	factoryUrl, err := ic.GetHostUrl(icl, ic.CreateHostString(svcConf.OrgName, facSystem.SystemName), &svcConf.OrgName)
+	if err != nil {
+		log.Fatalf("Failed to get factory url from initClient: %v", err)
+	}
+	messagingSys, err := icl.GetSystem(svcConf.OrgName, MessagingSystem)
+	if err != nil {
+		log.Fatalf("Failed to get messaging system from initClient: %v", err)
+	}
+	messagingUrl, err := ic.GetHostUrl(icl, ic.CreateHostString(svcConf.OrgName, messagingSys.SystemName), &svcConf.OrgName)
+	if err != nil {
+		log.Fatalf("Failed to get messaging url from initClient: %v", err)
+	}
+
 	factoryClient := factory.NewNodeFactoryClient(factoryUrl.String(), client.WithDebug(svcConf.DebugMode))
+	nnsClient := messaging.NewNnsClient(messagingUrl.String(), client.WithDebug(svcConf.DebugMode))
 
 	mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName,
 		pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host,
@@ -84,8 +102,8 @@ func runGrpcServer() {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	bootstrapServer := server.NewBootstrapServer(svcConf.OrgName, mbClient, svcConf.DebugMode,
-		provider.NewLookupClientProvider(svcConf.Lookup, svcConf.Timeout), factoryClient, svcConf.ToDNSMap())
+	bootstrapServer := server.NewBootstrapServer(mbClient, svcConf.DebugMode,
+		provider.NewLookupClientProvider(svcConf.Lookup, svcConf.Timeout), factoryClient, nnsClient, svcConf, messagingSys.Certificate)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterBootstrapServiceServer(s, bootstrapServer)

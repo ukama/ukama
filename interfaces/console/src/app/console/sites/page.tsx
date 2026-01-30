@@ -8,29 +8,29 @@
 'use client';
 
 import {
+  NodeConnectivityEnum,
+  NodeStateEnum,
   SiteDto,
+  useGetNodesLazyQuery,
   useGetSitesQuery,
   useUpdateSiteMutation,
-  NodeStateEnum,
-  useGetNodesLazyQuery,
-  NodeConnectivityEnum,
 } from '@/client/graphql/generated';
 import {
   Stats_Type,
   useGetSiteStatLazyQuery,
 } from '@/client/graphql/generated/subscriptions';
 import EditSiteDialog from '@/components/EditSiteDialog';
+import LoadingWrapper from '@/components/LoadingWrapper';
 import SitesWrapper from '@/components/SitesWrapper';
+import { STAT_STEP_29 } from '@/constants';
 import { useAppContext } from '@/context';
+import MetricStatBySiteSubscription from '@/lib/MetricStatBySiteSubscription';
+import colors from '@/theme/colors';
 import { getUnixTime } from '@/utils';
 import { AlertColor, Box, Paper, Stack, Typography } from '@mui/material';
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
-import PubSub from 'pubsub-js';
-import MetricStatBySiteSubscription from '@/lib/MetricStatBySiteSubscription';
 import { useRouter } from 'next/navigation';
-import { STAT_STEP_29 } from '@/constants';
-import LoadingWrapper from '@/components/LoadingWrapper';
-import colors from '@/theme/colors';
+import PubSub from 'pubsub-js';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export default function Page() {
   const router = useRouter();
@@ -86,7 +86,7 @@ export default function Page() {
     onCompleted: (res) => {
       const allNodes = res.getNodes.nodes;
       const unknownNodes = allNodes.filter((node) => {
-        const hasLocation = node.latitude !== 0 && node.longitude !== 0;
+        const hasLocation = node.latitude !== null && node.longitude !== null;
         return (
           (node.status.state === NodeStateEnum.Unknown &&
             node.status.connectivity == NodeConnectivityEnum.Online) ||

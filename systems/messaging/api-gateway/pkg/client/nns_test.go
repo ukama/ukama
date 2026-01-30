@@ -342,7 +342,7 @@ func TestNns_ListRequest(t *testing.T) {
 		req := &pb.ListRequest{}
 
 		expectedResponse := &pb.ListResponse{
-			List: []*pb.OrgMap{
+			List: []*pb.NodeMeshInfo{
 				{
 					NodeId:       testNodeId,
 					NodeIp:       testNodeIp,
@@ -375,7 +375,7 @@ func TestNns_ListRequest(t *testing.T) {
 		req := &pb.ListRequest{}
 
 		expectedResponse := &pb.ListResponse{
-			List: []*pb.OrgMap{},
+			List: []*pb.NodeMeshInfo{},
 		}
 
 		mockClient.On("List", mock.Anything, req, mock.Anything).

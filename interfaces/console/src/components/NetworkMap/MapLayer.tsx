@@ -42,8 +42,8 @@ const MapLayer = ({ data }: IMapLayer) => {
     if (data && data.nodes.length > 0) {
       map.fitBounds(
         data.nodes.map((item) => [
-          item?.latitude ?? undefined,
-          item?.longitude ?? undefined,
+          parseFloat(item?.latitude ?? '0'),
+          parseFloat(item?.longitude ?? '0'),
         ]),
         {
           maxZoom: 14,
@@ -71,8 +71,8 @@ const MapLayer = ({ data }: IMapLayer) => {
               icon={svgIcon}
               title={`Node: ${item.id}`}
               position={{
-                lat: item?.latitude ?? undefined,
-                lng: item?.longitude ?? undefined,
+                lat: parseFloat(item?.latitude ?? '0'),
+                lng: parseFloat(item?.longitude ?? '0'),
               }}
               attribution={item.id}
             />
