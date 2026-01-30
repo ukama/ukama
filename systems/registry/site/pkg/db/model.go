@@ -20,8 +20,8 @@ type Site struct {
 	AccessId      uuid.UUID `gorm:"type:uuid"`
 	SwitchId      uuid.UUID `gorm:"type:uuid"`
 	IsDeactivated bool
-	Latitude      float64
-	Longitude     float64
+	Latitude      string
+	Longitude     string
 	InstallDate   string
 	CreatedAt     time.Time
 	UpdatedAt     time.Time

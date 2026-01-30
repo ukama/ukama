@@ -156,8 +156,8 @@ func BuildSiteRequest(networkId string) string {
 		"switch_id": "%s",
 		"spectrum_id": "%s",
 		"is_deactivated": false,
-		"latitude": %.4f,
-		"longitude": %.4f,
+		"latitude": "%.4f",
+		"longitude": "%.4f",
 		"install_date": "%s"
 	}`, networkId, TestSiteName, TestLocation, TestBackhaulId.String(),
 		TestPowerId.String(), TestAccessId.String(), TestSwitchId.String(),
@@ -1181,8 +1181,8 @@ func TestPutUpdateNode(t *testing.T) {
 	w := httptest.NewRecorder()
 	reqBody := `{
 		"name": "updated-node",
-		"latitude": 40.7128,
-		"longitude": -74.0060
+		"latitude": "40.7128",
+		"longitude": "-74.0060"
 	}`
 	req, _ := http.NewRequest("PUT", "/v1/nodes/"+nodeId.String(), strings.NewReader(reqBody))
 	req.Header.Set("Content-Type", "application/json")

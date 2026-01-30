@@ -24,8 +24,8 @@ type Node struct {
 	Type         ukama.NodeType `gorm:"type:string;not null"`
 	ParentNodeId *string    `gorm:"type:string;expression:lower(id),where:deleted_at is null;size:23:default:null;"`
 	Attached     []*Node    `gorm:"foreignKey:ParentNodeId"`
-	Latitude     float64    `gorm:"type:decimal(10,8);default:null"`
-	Longitude    float64    `gorm:"type:decimal(11,8);default:null"`
+	Latitude     string    `gorm:"type:string;default:null"`
+	Longitude    string    `gorm:"type:string;default:null"`
 	Site         Site
 	CreatedAt    time.Time
 	UpdatedAt    time.Time

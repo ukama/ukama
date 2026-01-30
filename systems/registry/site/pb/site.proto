@@ -4,82 +4,82 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * Copyright (c) 2023-present, Ukama Inc.
- */
+*/
 
- syntax = "proto3";
+syntax = "proto3";
 
- option go_package = "github.com/ukama/ukama/systems/registry/site/pb/gen";
- 
- import "validator.proto";
- 
- package ukama.registry.site.v1;
- 
- service SiteService {
-     rpc Add(AddRequest) returns (AddResponse);
-     rpc Get(GetRequest) returns (GetResponse);
-     rpc Update(UpdateRequest) returns (UpdateResponse);
-     rpc List(ListRequest) returns (ListResponse);
- }
- 
- message AddRequest {
-     string name = 1;
-     string networkId = 2 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "network_id"];
-     string backhaulId = 3 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "backhaul_id"];
-     string powerId = 4 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "power_id"];
-     string accessId = 5 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "access_id"];
-     string switchId = 6 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "switch_id"];
-     string spectrumId = 7 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "spectrum_id"];
-     bool isDeactivated = 8 [json_name = "is_deactivated"];
-     double latitude = 9;
-     double longitude = 10;
-     string location = 11;
-     string installDate = 12 [json_name = "install_date"];
- }
- 
- message AddResponse {
-     Site site = 1;
- }
- 
- message GetRequest {
-     string siteId = 1 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "site_id"];
- }
- 
- message GetResponse {
-     Site site = 1;
- }
+option go_package = "github.com/ukama/ukama/systems/registry/site/pb/gen";
 
- message ListRequest {
-    string networkId = 1 [json_name = "network_id"];
-    bool isDeactivated = 2 [json_name = "is_deactivated"];
+import "validator.proto";
+
+package ukama.registry.site.v1;
+
+service SiteService {
+    rpc Add(AddRequest) returns (AddResponse);
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc Update(UpdateRequest) returns (UpdateResponse);
+    rpc List(ListRequest) returns (ListResponse);
+}
+
+message AddRequest {
+    string name = 1;
+    string networkId = 2 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "network_id"];
+    string backhaulId = 3 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "backhaul_id"];
+    string powerId = 4 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "power_id"];
+    string accessId = 5 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "access_id"];
+    string switchId = 6 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "switch_id"];
+    string spectrumId = 7 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "spectrum_id"];
+    bool isDeactivated = 8 [json_name = "is_deactivated"];
+    string latitude = 9;
+    string longitude = 10;
+    string location = 11;
+    string installDate = 12 [json_name = "install_date"];
+}
+
+message AddResponse {
+    Site site = 1;
+}
+
+message GetRequest {
+    string siteId = 1 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "site_id"];
+}
+
+message GetResponse {
+    Site site = 1;
+}
+
+message ListRequest {
+string networkId = 1 [json_name = "network_id"];
+bool isDeactivated = 2 [json_name = "is_deactivated"];
 }
 
 message ListResponse {
-    repeated Site sites = 1;
+repeated Site sites = 1;
 }
- 
- message Site {
-     string id = 1 [(validator.field) = { uuid_ver: 4, string_not_empty: true }];
-     string name = 2;
-     string networkId = 3 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "network_id"];
-     string backhaulId = 4 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "backhaul_id"];
-     string powerId = 5 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "power_id"];
-     string accessId = 6 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "access_id"];
-     string switchId = 7 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "switch_id"];
-     string spectrumId = 8 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "spectrum_id"];
-     bool isDeactivated = 9 [json_name = "is_deactivated"];
-     double latitude = 10;
-     double longitude = 11;
-     string installDate = 12 [json_name = "install_date"];
-     string createdAt = 13 [json_name = "created_at"];
-     string location = 14;
- }
- 
- message UpdateRequest {
-     string siteId = 1 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "site_id"];
-     string name = 2;
- }
- 
- message UpdateResponse {
-     Site site = 1;
- }
+
+message Site {
+    string id = 1 [(validator.field) = { uuid_ver: 4, string_not_empty: true }];
+    string name = 2;
+    string networkId = 3 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "network_id"];
+    string backhaulId = 4 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "backhaul_id"];
+    string powerId = 5 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "power_id"];
+    string accessId = 6 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "access_id"];
+    string switchId = 7 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "switch_id"];
+    string spectrumId = 8 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "spectrum_id"];
+    bool isDeactivated = 9 [json_name = "is_deactivated"];
+    string latitude = 10;
+    string longitude = 11;
+    string installDate = 12 [json_name = "install_date"];
+    string createdAt = 13 [json_name = "created_at"];
+    string location = 14;
+}
+
+message UpdateRequest {
+    string siteId = 1 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "site_id"];
+    string name = 2;
+}
+
+message UpdateResponse {
+    Site site = 1;
+}
  
