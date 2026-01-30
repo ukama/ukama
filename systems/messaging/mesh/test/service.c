@@ -1,5 +1,5 @@
 /*
- * Minimal HTTP service for proxy testing (standalone)
+ * Minimal HTTP service for proxy testing (standalone) + debug logging
  *
  * Build:
  *     gcc -O2 -Wall -Wextra -o service service.c
@@ -9,7 +9,7 @@
  *
  * Port lookup:
  *   - Tries /etc/services for tcp port of <service_name>
- *   - Falls back to <base_port> + (stable hash of service_name % range)
+ *   - Falls back to derived port range [20000..39999]
  *
  * Endpoints:
  *   GET /v1/ping     -> 200 OK
@@ -23,7 +23,6 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include <arpa/inet.h>
-#include <ctype.h>
 #include <errno.h>
 #include <netdb.h>
 #include <netinet/in.h>
@@ -33,6 +32,40 @@
 #include <sys/socket.h>
 #include <time.h>
 #include <unistd.h>
+
+#ifndef DEBUG
+#define DEBUG 1
+#endif
+
+#include <sys/time.h>
+
+static const char *ts_now(void) {
+    static char buf[32];
+    struct timeval tv;
+    struct tm tm;
+
+    gettimeofday(&tv, NULL);
+    gmtime_r(&tv.tv_sec, &tm);
+
+    snprintf(buf, sizeof(buf),
+             "%04d-%02d-%02d %02d:%02d:%02d.%03ld",
+             tm.tm_year + 1900,
+             tm.tm_mon + 1,
+             tm.tm_mday,
+             tm.tm_hour,
+             tm.tm_min,
+             tm.tm_sec,
+             tv.tv_usec / 1000);
+
+    return buf;
+}
+
+#if DEBUG
+#define DBG(fmt, ...) \
+    fprintf(stderr, "[%s] [service] " fmt "\n", ts_now(), ##__VA_ARGS__)
+#else
+#define DBG(fmt, ...) do { } while (0)
+#endif
 
 static int send_all(int fd, const char *buf, size_t len) {
     size_t off = 0;
@@ -68,6 +101,8 @@ static void http_reply(int fd,
     if (n <= 0)
         return;
 
+    DBG("-> reply %d %s (Content-Length=%zu)", code, status, body_len);
+
     (void)send_all(fd, hdr, (size_t)n);
 
     if (body && body_len)
@@ -79,38 +114,35 @@ static unsigned long djb2_hash(const char *s) {
     unsigned char c;
 
     while ((c = (unsigned char)*s++) != 0) {
-        h = ((h << 5) + h) + c; /* h * 33 + c */
+        h = ((h << 5) + h) + c;
     }
     return h;
 }
 
 static int lookup_port_etc_services_tcp(const char *service_name) {
-    struct servent *se;
-
-    /* getservbyname reads /etc/services (and NSS) */
-    se = getservbyname(service_name, "tcp");
+    struct servent *se = getservbyname(service_name, "tcp");
     if (se == NULL)
         return -1;
-
     return (int)ntohs((uint16_t)se->s_port);
 }
 
 static int service_port(const char *service_name) {
     int port = lookup_port_etc_services_tcp(service_name);
-    if (port > 0 && port <= 65535)
+    if (port > 0 && port <= 65535) {
+        DBG("port lookup: /etc/services -> %d", port);
         return port;
+    }
 
-    /* Fallback: stable derived port range */
     const int base_port = 20000;
     const int range = 20000; /* [20000..39999] */
     unsigned long h = djb2_hash(service_name);
 
     port = base_port + (int)(h % (unsigned long)range);
+    DBG("port lookup: fallback -> %d", port);
     return port;
 }
 
 static int is_http_method_token(const char *m) {
-    /* Keep it simple but strict */
     return (strcmp(m, "GET") == 0 ||
             strcmp(m, "POST") == 0 ||
             strcmp(m, "PUT") == 0 ||
@@ -120,13 +152,24 @@ static int is_http_method_token(const char *m) {
             strcmp(m, "PATCH") == 0);
 }
 
-static void handle_request(int cfd) {
+static void handle_request(int cfd, const char *peer) {
     char req[4096];
     ssize_t r = recv(cfd, req, sizeof(req) - 1, 0);
-    if (r <= 0)
+    if (r <= 0) {
+        DBG("<- recv from %s failed (r=%zd)", peer, r);
         return;
+    }
 
     req[r] = '\0';
+
+    /* Log request head (truncate safely) */
+    {
+        size_t show = (size_t)r;
+        if (show > 300)
+            show = 300;
+        DBG("<- from %s (%zd bytes): %.300s%s",
+            peer, r, req, (r > 300) ? "..." : "");
+    }
 
     char method[16] = {0};
     char target[256] = {0};
@@ -137,11 +180,12 @@ static void handle_request(int cfd) {
     }
 
     if (!is_http_method_token(method)) {
+        DBG("bad method token: '%s'", method);
         http_reply(cfd, 400, "Bad Request", "text/plain", "bad request\n");
         return;
     }
 
-    /* Strip query string if present */
+    /* Strip query string */
     char path[256] = {0};
     const char *q = strchr(target, '?');
     if (q) {
@@ -154,6 +198,8 @@ static void handle_request(int cfd) {
         strncpy(path, target, sizeof(path) - 1);
         path[sizeof(path) - 1] = '\0';
     }
+
+    DBG("parsed: method=%s path=%s", method, path);
 
     int is_get = (strcmp(method, "GET") == 0);
 
@@ -226,7 +272,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    printf("Service '%s' listening on port %d\n", service_name, port);
+    DBG("service '%s' listening on port %d", service_name, port);
 
     for (;;) {
         struct sockaddr_in caddr;
@@ -240,8 +286,17 @@ int main(int argc, char **argv) {
             break;
         }
 
-        handle_request(cfd);
+        char peer[128];
+        snprintf(peer, sizeof(peer), "%s:%u",
+                 inet_ntoa(caddr.sin_addr),
+                 (unsigned)ntohs(caddr.sin_port));
+
+        DBG("accepted connection from %s", peer);
+
+        handle_request(cfd, peer);
         close(cfd);
+
+        DBG("closed connection from %s", peer);
     }
 
     close(s);
