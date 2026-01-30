@@ -37,7 +37,7 @@ func getPodName(orgName, nodeId string) string {
 	return getPodNamePrefix(orgName) + "-" + nodeId
 }
 
-func SpawnReplica(ctx context.Context, node NodeMeshInfo, config *pkg.Config, clientSet *kubernetes.Clientset) error {
+func SpawnReplica(ctx context.Context, node NodeMeshInfo, config *pkg.Config, clientSet kubernetes.Interface) error {
 	namespace := config.OrgName + "-" + config.MeshNamespace
 	podNamePrefix := getPodName(config.OrgName, node.NodeId)
 
@@ -49,12 +49,13 @@ func SpawnReplica(ctx context.Context, node NodeMeshInfo, config *pkg.Config, cl
 
 	// If a healthy pod exists, validate IP
 	if existingPod != nil {
-		// If NNS return empty mesh IP, update it asynchronously
-		if node.MeshPodIp == "" {
-			log.Debugf("Pod %s exists but has no IP yet, updating asynchronously", existingPod.Name)
-			go updatePodIPAsync(context.Background(), namespace, existingPod.Name, node.NodeId, clientSet)
-		} else if node.MeshPodIp == existingPod.Status.PodIP {
-			log.Debugf("Mesh pod already exists and IP matched for node %s: %s (IP: %s)", node.NodeId, existingPod.Name, existingPod.Status.PodIP)
+		switch node.MeshPodIp {
+			case "":
+				// If NNS return empty mesh IP, update it asynchronously
+				log.Debugf("Pod %s exists but has no IP yet, updating asynchronously", existingPod.Name)
+				go updatePodIPAsync(context.Background(), namespace, existingPod.Name, node.NodeId, clientSet)
+			case existingPod.Status.PodIP:
+				log.Debugf("Mesh pod already exists and IP matched for node %s: %s (IP: %s)", node.NodeId, existingPod.Name, existingPod.Status.PodIP)
 		}
 	} else {
 		// No healthy pod exists, create a new one
@@ -68,7 +69,7 @@ func SpawnReplica(ctx context.Context, node NodeMeshInfo, config *pkg.Config, cl
 
 // findExistingMeshPod looks for an existing healthy mesh pod for the node.
 // Returns nil if no healthy pod is found.
-func findExistingMeshPod(ctx context.Context, namespace, podNamePrefix string, clientSet *kubernetes.Clientset) (*corev1.Pod, error) {
+func findExistingMeshPod(ctx context.Context, namespace, podNamePrefix string, clientSet kubernetes.Interface) (*corev1.Pod, error) {
 	pods, err := clientSet.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("app.kubernetes.io/component=%s", PodNamePrefix),
 	})
@@ -122,7 +123,7 @@ func updatePodIPOnly(nodeId, podIP string) error {
 
 // updatePodIPAsync waits for a pod to get an IP address and updates it in the database asynchronously.
 // This function runs in a goroutine and handles IP updates without blocking the main flow.
-func updatePodIPAsync(ctx context.Context, namespace, podName, nodeId string, clientSet *kubernetes.Clientset) {
+func updatePodIPAsync(ctx context.Context, namespace, podName, nodeId string, clientSet kubernetes.Interface) {
 	// Use a separate context with timeout for async operation
 	asyncCtx, cancel := context.WithTimeout(context.Background(), PodIPWaitTimeout)
 	defer cancel()
@@ -150,7 +151,7 @@ func updatePodIPAsync(ctx context.Context, namespace, podName, nodeId string, cl
 }
 
 // createMeshPod creates a new mesh pod for the node.
-func createMeshPod(ctx context.Context, namespace, podName string, node NodeMeshInfo, clientSet *kubernetes.Clientset) error {
+func createMeshPod(ctx context.Context, namespace, podName string, node NodeMeshInfo, clientSet kubernetes.Interface) error {
 	// Get template deployment
 	podSpec, err := getTemplatePodSpec(ctx, namespace, clientSet)
 	if err != nil {
@@ -185,7 +186,7 @@ func createMeshPod(ctx context.Context, namespace, podName string, node NodeMesh
 }
 
 // waitForPodIP waits for a pod to be assigned an IP address.
-func waitForPodIP(ctx context.Context, namespace, podName string, clientSet *kubernetes.Clientset) (string, error) {
+func waitForPodIP(ctx context.Context, namespace, podName string, clientSet kubernetes.Interface) (string, error) {
 	timeout := time.After(PodIPWaitTimeout)
 	ticker := time.NewTicker(PodIPPollInterval)
 	defer ticker.Stop()
@@ -218,7 +219,7 @@ func waitForPodIP(ctx context.Context, namespace, podName string, clientSet *kub
 }
 
 // getTemplatePodSpec retrieves the pod spec from the mesh deployment template.
-func getTemplatePodSpec(ctx context.Context, namespace string, clientSet *kubernetes.Clientset) (*corev1.PodSpec, error) {
+func getTemplatePodSpec(ctx context.Context, namespace string, clientSet kubernetes.Interface) (*corev1.PodSpec, error) {
 	deployments, err := clientSet.AppsV1().Deployments(namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: "app.kubernetes.io/name=mesh",
 	})
@@ -237,7 +238,7 @@ func getTemplatePodSpec(ctx context.Context, namespace string, clientSet *kubern
 }
 
 // ensureMeshService ensures that a service exists for the mesh node pod.
-func ensureMeshService(ctx context.Context, namespace, serviceName string, node NodeMeshInfo, clientSet *kubernetes.Clientset) error {
+func ensureMeshService(ctx context.Context, namespace, serviceName string, node NodeMeshInfo, clientSet kubernetes.Interface) error {
 	log.Infof("Ensuring mesh service %s in namespace %s for node %s", serviceName, namespace, node.NodeId)
 
 	desiredPorts := []corev1.ServicePort{

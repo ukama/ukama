@@ -30,7 +30,20 @@ import (
 )
  
 const MessagingSystem = "messaging"
- 
+
+// BootstrapServerConfig holds required config and messaging cert for the server.
+type BootstrapServerConfig struct {
+	Config        *pkg.Config
+	MessagingCert string
+}
+
+// BootstrapTestDeps holds optional deps for testing (nil in production).
+// When ClientSet is non-nil, in-cluster k8s config is skipped. When DNSMap is non-nil, it overrides config.ToDNSMap().
+type BootstrapTestDeps struct {
+	ClientSet kubernetes.Interface
+	DNSMap    map[string]string
+}
+
 type BootstrapServer struct {
 	pb.UnimplementedBootstrapServiceServer
 	bootstrapRoutingKey msgbus.RoutingKeyBuilder
@@ -39,34 +52,51 @@ type BootstrapServer struct {
 	lookupClient        client.LookupClientProvider
 	factoryClient       factory.NodeFactoryClient
 	dnsMap              map[string]string
-	clientSet 			*kubernetes.Clientset
+	clientSet 			kubernetes.Interface
 	config 				*pkg.Config
 	nnsClient     		messaging.NnsClient
 	messagingCert 		string
 }
  
-func NewBootstrapServer(msgBus mb.MsgBusServiceClient, debug bool, lookupClient client.LookupClientProvider, factoryClient factory.NodeFactoryClient, nnsClient messaging.NnsClient, config *pkg.Config, messagingCert string) *BootstrapServer {
-	c, err := rest.InClusterConfig()
-	if err != nil {
-		panic(err.Error())
+// NewBootstrapServerWithDeps creates a BootstrapServer; testDeps is nil in production.
+func NewBootstrapServerWithDeps(msgBus mb.MsgBusServiceClient, debug bool, lookupClient client.LookupClientProvider, factoryClient factory.NodeFactoryClient, nnsClient messaging.NnsClient, serverConfig *BootstrapServerConfig, testDeps *BootstrapTestDeps) *BootstrapServer {
+	var cs kubernetes.Interface
+	var dns map[string]string
+	if testDeps != nil && testDeps.ClientSet != nil {
+		cs = testDeps.ClientSet
+		if testDeps.DNSMap != nil {
+			dns = testDeps.DNSMap
+		} else {
+			dns = serverConfig.Config.ToDNSMap()
+		}
+	} else {
+		c, err := rest.InClusterConfig()
+		if err != nil {
+			panic(err.Error())
+		}
+		cs, err = kubernetes.NewForConfig(c)
+		if err != nil {
+			panic(err.Error())
+		}
+		dns = serverConfig.Config.ToDNSMap()
 	}
-
-	cs, err := kubernetes.NewForConfig(c)
-	if err != nil {
-		panic(err.Error())
-	}
+	cfg := serverConfig.Config
 	return &BootstrapServer{
 		clientSet:           cs,
-		bootstrapRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(config.OrgName).SetService(pkg.ServiceName),
+		bootstrapRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(cfg.OrgName).SetService(pkg.ServiceName),
 		msgbus:              msgBus,
 		debug:               debug,
 		lookupClient:        lookupClient,
 		factoryClient:       factoryClient,
 		nnsClient:           nnsClient,
-		dnsMap:              config.ToDNSMap(),
-		config:              config,
-		messagingCert:       messagingCert,
+		dnsMap:              dns,
+		config:              cfg,
+		messagingCert:       serverConfig.MessagingCert,
 	}
+}
+
+func NewBootstrapServer(msgBus mb.MsgBusServiceClient, debug bool, lookupClient client.LookupClientProvider, factoryClient factory.NodeFactoryClient, nnsClient messaging.NnsClient, config *pkg.Config, messagingCert string) *BootstrapServer {
+	return NewBootstrapServerWithDeps(msgBus, debug, lookupClient, factoryClient, nnsClient, &BootstrapServerConfig{Config: config, MessagingCert: messagingCert}, nil)
 }
  
 func (s *BootstrapServer) GetNodeCredentials(ctx context.Context, req *pb.GetNodeCredentialsRequest) (*pb.GetNodeCredentialsResponse, error) {
