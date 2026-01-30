@@ -122,13 +122,7 @@ MapItem *is_existing_item_by_port(MapTable *table, int port) {
 		return NULL;
 	}
 
-	for (item=table->first; item; item=item->next) {
-		if (item->forwardInst->port == port) {
-			return item;
-		}
-	}
-
-	return NULL;
+    return table->first;
 }
 
 MapItem *add_map_to_table(MapTable **table,

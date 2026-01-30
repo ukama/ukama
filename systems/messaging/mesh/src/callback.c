@@ -94,19 +94,12 @@ int callback_websocket(const URequest *request, UResponse *response,
         remove_map_item_from_table(NodesTable, map->nodeInfo->nodeID);
     }
 
-    /* Open up forwarding web instance for services */
-    forwardPort = start_forward_service(config, &forwardInst);
-    if (forwardPort <= 0 ) {
-        log_error("Unable to start forwarding serice");
-        return U_CALLBACK_ERROR;
-    }
-
     map = add_map_to_table(&NodesTable,
                            nodeID,
                            &forwardInst,
                            &ip[0], sin->sin_port,
                            config->bindingIP,
-                           forwardPort);
+                           config->servicesPort);
 	if (map == NULL) {
         ulfius_stop_framework(forwardInst);
         ulfius_clean_instance(forwardInst);
@@ -121,7 +114,7 @@ int callback_websocket(const URequest *request, UResponse *response,
                       nodeID,
                       &ip[0], sin->sin_port,
                       config->bindingIP,
-                      forwardPort) == FALSE) {
+                      config->servicesPort) == FALSE) {
 		log_error("Error publishing device connect msg on AMQP exchange");
         remove_map_item_from_table(NodesTable, nodeID);
         ulfius_stop_framework(forwardInst);
@@ -130,7 +123,7 @@ int callback_websocket(const URequest *request, UResponse *response,
 	}
 
     log_debug("Forward service started on port: %d for NodeID: %s",
-              forwardPort, nodeID);
+              config->servicesPort, nodeID);
     log_debug("AMQP device connect msg successfull for NodeID: %s", nodeID);
 
 	if ((ret = ulfius_set_websocket_response(response, NULL, NULL,
