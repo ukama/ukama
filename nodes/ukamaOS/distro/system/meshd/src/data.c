@@ -126,7 +126,14 @@ STATIC void find_service_name_and_ep(char *input,
         }
         *ep = strdup("");
     }
+
+    /* metrics is a special case - prom ep is hard coded */
+    if (strcasecmp(*name, SERVICE_METRICS) == 0) {
+        free(*ep);
+        *ep = strdup(*name);
+    }
 }
+
 STATIC int send_data_to_local_service(URequest *data,
                                       char *hostname,
                                       int *httpStatus,
