@@ -310,7 +310,8 @@ int deserialize_request_info(URequest **request, char *str) {
 	*request = (URequest *)calloc(1, sizeof(URequest));
 	if (*request == NULL) {
         log_error("Error allocating memory of size: %d", sizeof(URequest));
-		return FALSE;
+        json_decref(json);
+        return FALSE;
     }
 
 	obj = json_object_get(json, JSON_PROTOCOL);
@@ -363,14 +364,17 @@ int deserialize_request_info(URequest **request, char *str) {
 		if (obj) {
 
 			(*request)->binary_body = (void *)calloc(1, size);
-			if ((*request)->binary_body == NULL)
-				return FALSE;
+			if ((*request)->binary_body == NULL) {
+                json_decref(json);
+                return FALSE;
+            }
 
 			memcpy((*request)->binary_body, (void *)json_string_value(obj),
 				   size);
 		}
 	}
 
+    json_decref(json);
 	return TRUE;
 }
 

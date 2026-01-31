@@ -38,6 +38,21 @@ extern MapTable *ClientTable;
 
 static pthread_once_t curl_once = PTHREAD_ONCE_INIT;
 
+STATIC void free_umap(UMap *map) {
+    if (!map) return;
+
+    for (int i = 0; i < map->nb_values; i++) {
+        SAFE_FREE(map->keys[i]);
+        SAFE_FREE(map->values[i]);
+    }
+
+    SAFE_FREE(map->keys);
+    SAFE_FREE(map->values);
+    SAFE_FREE(map->lengths);
+
+    free(map);
+}
+
 STATIC void curl_init_once(void) {
     curl_global_init(CURL_GLOBAL_ALL);
 }
@@ -221,112 +236,6 @@ cleanup:
     return TRUE;
 }
 
-#if 0
-STATIC int send_data_to_local_service(URequest *data,
-                                      char *hostname,
-                                      int *httpStatus,
-                                      char **retStr) {
-  
-	CURL *curl=NULL;
-	CURLcode res;
-	struct curl_slist *headers=NULL;
-    char *serviceName = NULL;
-    char *serviceEP   = NULL;
-    int  servicePort = 0, i;
-
-	char url[MAX_BUFFER] = {0};
-	UMap *map = NULL;
-	Response response = {NULL, 0};
-
-	if (data == NULL && hostname == NULL) {
-		return FALSE;
-	}
-     
-	curl_global_init(CURL_GLOBAL_ALL);
-	curl = curl_easy_init();
-	if (curl == NULL) {
-        *httpStatus = HttpStatus_InternalServerError;
-		return FALSE;
-	}
-
-	/* Add to the header if exists. */
-	if (data->map_header) {
-		map = data->map_header;
-		for (i=0; i < map->nb_values; i++) {
-			headers = curl_slist_append(headers, map->keys[i]);
-			headers = curl_slist_append(headers,": ");
-            if (strcmp(map->keys[i], "Host") == 0) {
-                headers = curl_slist_append(headers, hostname);
-            } else {
-                headers = curl_slist_append(headers, map->values[i]);
-            }
-		}
-	}
-
-    find_service_name_and_ep(data->http_url, &serviceName, &serviceEP);
-    if (serviceName == NULL || serviceEP == NULL) {
-        usys_log_error("Unable to extract service namd and EP. input",
-                  data->http_url);
-        *httpStatus = HttpStatus_InternalServerError;
-        return FALSE;
-    }
-
-    servicePort = usys_find_service_port(serviceName);
-    if (servicePort <= 0) {
-        usys_log_error("Unable to find service name in /etc/services: %s",
-                  serviceName);
-        *httpStatus = HttpStatus_ServiceUnavailable;
-
-        if (serviceName == NULL) free(serviceName);
-        if (serviceEP   == NULL) free(serviceEP);
-
-        return FALSE;
-    }
-
-    sprintf(url,
-            "http://localhost:%d/%s",
-            servicePort,
-            serviceEP);
-
-	curl_easy_setopt(curl, CURLOPT_URL, url);
-	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, data->http_verb);
-	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-
-	if (data->binary_body_length > 0 && data->binary_body) {
-		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data->binary_body);
-	}
-
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, response_callback);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
-
-	res = curl_easy_perform(curl);
-
-	if (res != CURLE_OK) {
-		usys_log_error("Error sending request to server at %s Error: %s",
-				  url, curl_easy_strerror(res));
-        *httpStatus = HttpStatus_ServiceUnavailable;
-        *retStr     = strdup(HttpStatusStr(*httpStatus));
-	} else {
-		/* get status code. */
-		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, httpStatus);
-		if (response.size) {
-			usys_log_debug("Response recevied from server: %s", response.buffer);
-			*retStr = strdup(response.buffer);
-		}
-	}
-
-	if (response.buffer)     free(response.buffer);
-    if (serviceName == NULL) free(serviceName);
-    if (serviceEP   == NULL) free(serviceEP);
-
-	curl_slist_free_all(headers);
-	curl_easy_cleanup(curl);
-	curl_global_cleanup();
-    
-	return TRUE;
-}
-#endif
-
 void process_incoming_websocket_response(Message *message, void *data) {
 
     MapItem *item=NULL;
@@ -342,6 +251,7 @@ void process_incoming_websocket_response(Message *message, void *data) {
     }
 
     item->size = message->dataSize;
+    SAFE_FREE(item->data); /* free old one, if any*/
     item->data = strdup(message->data);
     item->code = message->code;
 
@@ -398,9 +308,18 @@ int process_incoming_websocket_message(Message *message, Config *config) {
     SAFE_FREE(responseLocal);
     SAFE_FREE(responseRemote);
 
-    /* ✅ FIX: free request + maps allocated in deserialize_request_info */
     if (request) {
-        ulfius_clean_request_full(request);
+        free_umap(request->map_url);
+        free_umap(request->map_header);
+        free_umap(request->map_post_body);
+        free_umap(request->map_cookie);
+
+        SAFE_FREE(request->http_protocol);
+        SAFE_FREE(request->http_verb);
+        SAFE_FREE(request->http_url);
+        SAFE_FREE(request->url_path);
+        SAFE_FREE(request->binary_body);
+
         free(request);
         request = NULL;
     }
