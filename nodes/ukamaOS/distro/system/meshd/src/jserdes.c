@@ -343,12 +343,10 @@ int deserialize_request_info(URequest **request, char *str) {
 	}
 
 	/* de-ser the various map. URL, Header, POST, Cookie */
-	for (i=0; i < 4; i++) {
-		obj = json_object_get(json, JSON_MAP);
-		if (obj) {
-			deserialize_map(request, obj);
-		}
-	}
+    obj = json_object_get(json, JSON_MAP);
+    if (obj) {
+        deserialize_map(request, obj);
+    }
 
 	/* Lastly, de-serialize raw binary data. */
 	jRaw = json_object_get(json, JSON_RAW_DATA);
