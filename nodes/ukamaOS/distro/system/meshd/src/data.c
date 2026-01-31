@@ -12,6 +12,7 @@
 #include <curl/curl.h>
 #include <curl/easy.h>
 #include <string.h>
+#include <pthread.h>
 
 #include "mesh.h"
 #include "map.h"
@@ -35,6 +36,11 @@ typedef struct _response {
 extern WorkList *Transmit; /* global */
 extern MapTable *ClientTable;
 
+static pthread_once_t curl_once = PTHREAD_ONCE_INIT;
+
+STATIC void curl_init_once(void) {
+    curl_global_init(CURL_GLOBAL_ALL);
+}
 
 STATIC size_t response_callback(void *contents, size_t size, size_t nmemb,
                                 void *userp) {
@@ -75,7 +81,7 @@ STATIC void find_service_name_and_ep(char *input,
 
     if (input[0] != '/') {
         *name = strdup("");
-        *ep = strdup("");
+        *ep   = strdup("");
         return;
     }
 
@@ -106,7 +112,116 @@ STATIC void find_service_name_and_ep(char *input,
         *ep = strdup("");
     }
 }
+STATIC int send_data_to_local_service(URequest *data,
+                                      char *hostname,
+                                      int *httpStatus,
+                                      char **retStr) {
 
+    CURL *curl = NULL;
+    CURLcode res;
+    struct curl_slist *headers = NULL;
+    char *serviceName = NULL;
+    char *serviceEP   = NULL;
+    int servicePort = 0;
+
+    char url[MAX_BUFFER] = {0};
+    Response response = {NULL, 0};
+
+    if (!httpStatus || !retStr) return FALSE;
+    *retStr = NULL;
+
+    if (!data || !hostname) {
+        *httpStatus = HttpStatus_InternalServerError;
+        return FALSE;
+    }
+
+    pthread_once(&curl_once, curl_init_once);
+
+    curl = curl_easy_init();
+    if (!curl) {
+        *httpStatus = HttpStatus_InternalServerError;
+        return FALSE;
+    }
+
+    /* Build headers properly: each entry must be "Key: Value" */
+    if (data->map_header && data->map_header->nb_values > 0) {
+        UMap *map = data->map_header;
+        for (int i = 0; i < map->nb_values; i++) {
+            const char *k = map->keys[i];
+            const char *v = map->values[i];
+            if (!k || !v) continue;
+
+            const char *use_v = v;
+            if (strcasecmp(k, "Host") == 0) {
+                use_v = hostname;
+            }
+
+            char line[512];
+            snprintf(line, sizeof(line), "%s: %s", k, use_v);
+            headers = curl_slist_append(headers, line);
+        }
+    }
+
+    find_service_name_and_ep(data->http_url, &serviceName, &serviceEP);
+    if (!serviceName || !serviceEP) {
+        usys_log_error("Unable to extract service name/EP. input=%s", data->http_url);
+        *httpStatus = HttpStatus_InternalServerError;
+        goto cleanup;
+    }
+
+    servicePort = usys_find_service_port(serviceName);
+    if (servicePort <= 0) {
+        usys_log_error("Unable to find service in /etc/services: %s", serviceName);
+        *httpStatus = HttpStatus_ServiceUnavailable;
+        *retStr     = strdup(HttpStatusStr(*httpStatus));
+        goto cleanup;
+    }
+
+    snprintf(url, sizeof(url), "http://localhost:%d/%s", servicePort, serviceEP);
+
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, data->http_verb ? data->http_verb : "GET");
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, response_callback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
+
+    if (data->binary_body_length > 0 && data->binary_body) {
+        /* binary-safe */
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data->binary_body);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)data->binary_body_length);
+    }
+
+    res = curl_easy_perform(curl);
+
+    if (res != CURLE_OK) {
+        usys_log_error("Error sending request to %s Error: %s", url, curl_easy_strerror(res));
+        *httpStatus = HttpStatus_ServiceUnavailable;
+        *retStr     = strdup(HttpStatusStr(*httpStatus));
+    } else {
+        long code = 0;
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+        *httpStatus = (int)code;
+
+        if (response.size && response.buffer) {
+            usys_log_debug("Response received from server: %s", response.buffer);
+            *retStr = strdup(response.buffer);
+        } else {
+            *retStr = strdup("");
+        }
+    }
+
+cleanup:
+    SAFE_FREE(response.buffer);
+    SAFE_FREE(serviceName);
+    SAFE_FREE(serviceEP);
+
+    if (headers) curl_slist_free_all(headers);
+    if (curl) curl_easy_cleanup(curl);
+
+    return TRUE;
+}
+
+#if 0
 STATIC int send_data_to_local_service(URequest *data,
                                       char *hostname,
                                       int *httpStatus,
@@ -161,6 +276,10 @@ STATIC int send_data_to_local_service(URequest *data,
         usys_log_error("Unable to find service name in /etc/services: %s",
                   serviceName);
         *httpStatus = HttpStatus_ServiceUnavailable;
+
+        if (serviceName == NULL) free(serviceName);
+        if (serviceEP   == NULL) free(serviceEP);
+
         return FALSE;
     }
 
@@ -196,15 +315,17 @@ STATIC int send_data_to_local_service(URequest *data,
 		}
 	}
 
-	if (response.buffer)
-		free(response.buffer);
-  
+	if (response.buffer)     free(response.buffer);
+    if (serviceName == NULL) free(serviceName);
+    if (serviceEP   == NULL) free(serviceEP);
+
 	curl_slist_free_all(headers);
 	curl_easy_cleanup(curl);
 	curl_global_cleanup();
-
+    
 	return TRUE;
 }
+#endif
 
 void process_incoming_websocket_response(Message *message, void *data) {
 
@@ -229,13 +350,19 @@ void process_incoming_websocket_response(Message *message, void *data) {
 
 int process_incoming_websocket_message(Message *message, Config *config) {
 
-	int httpStatus, ret;
-	char *responseLocal  = NULL;
+    int httpStatus = HttpStatus_InternalServerError;
+    int ret;
+    char *responseLocal  = NULL;
     char *responseRemote = NULL;
-    URequest *request=NULL;
+    URequest *request = NULL;
+
+    if (!message || !config || !message->data) {
+        usys_log_error("process_incoming_websocket_message: invalid args");
+        return FALSE;
+    }
 
     if (deserialize_request_info(&request, message->data) == FALSE) {
-        usys_log_error("Unable to deser the request on websocket");
+        usys_log_error("Unable to deserialize request on websocket");
         return FALSE;
     }
 
@@ -245,29 +372,38 @@ int process_incoming_websocket_message(Message *message, Config *config) {
                                      &responseLocal);
 
     if (ret) {
-        usys_log_debug("Recevied response from local servier Code: %d Response: %s",
-                  httpStatus, responseLocal);
+        usys_log_debug("Received response from local server Code: %d Response: %s",
+                       httpStatus, responseLocal ? responseLocal : "(null)");
 
-        /* Convert the response into proper format and return. */
         serialize_local_service_response(&responseRemote,
                                          message,
                                          httpStatus,
-                                         strlen(responseLocal),
-                                         responseLocal);
+                                         responseLocal ? (int)strlen(responseLocal) : 0,
+                                         responseLocal ? responseLocal : "");
     } else {
-        usys_log_error("Error sending message to local service. Error: %d",
-                  httpStatus);
+        usys_log_error("Error sending message to local service. Error: %d", httpStatus);
 
-        /* Convert the response into proper format and return. */
         serialize_local_service_response(&responseRemote,
                                          message,
                                          httpStatus,
-                                         strlen(HttpStatusStr(httpStatus)),
-                                         HttpStatusStr(httpStatus));
+                                         (int)strlen(HttpStatusStr(httpStatus)),
+                                         (char *)HttpStatusStr(httpStatus));
     }
 
-    usys_log_debug("Adding response to the websocket queue: %s", responseRemote);
-    add_work_to_queue(&Transmit, responseRemote, NULL, 0, NULL, 0);
+    if (responseRemote) {
+        usys_log_debug("Adding response to websocket queue: %s", responseRemote);
+        add_work_to_queue(&Transmit, responseRemote, NULL, 0, NULL, 0);
+    }
+
+    SAFE_FREE(responseLocal);
+    SAFE_FREE(responseRemote);
+
+    /* ✅ FIX: free request + maps allocated in deserialize_request_info */
+    if (request) {
+        ulfius_clean_request_full(request);
+        free(request);
+        request = NULL;
+    }
 
     return TRUE;
 }

@@ -11,6 +11,7 @@
 #include <string.h>
 #include <time.h>
 #include <errno.h>
+#include <sys/time.h>
 
 #include "usys_log.h"
 
@@ -32,9 +33,7 @@ extern int start_websocket_client(Config *config,
 static 	pthread_mutex_t websocketMutex;
 static	pthread_cond_t  websocketFail;
 
-#include <sys/time.h>
-
-static const char *ts_now(void) {
+STATIC const char *ts_now(void) {
     static char buf[32];
     struct timeval tv;
     struct tm tm;
@@ -55,17 +54,52 @@ static const char *ts_now(void) {
     return buf;
 }
 
+STATIC void free_node_info(NodeInfo *ni) {
+    if (!ni) return;
+    SAFE_FREE(ni->nodeID);
+    SAFE_FREE(ni->port);
+    free(ni);
+}
+
+STATIC void free_service_info(ServiceInfo *si) {
+    if (!si) return;
+    SAFE_FREE(si->name);
+    SAFE_FREE(si->port);
+    free(si);
+}
+
+STATIC void clear_message(Message **msg) {
+    if (!msg || !*msg) return;
+
+    Message *m = *msg;
+
+    SAFE_FREE(m->reqType);
+    SAFE_FREE(m->seqNo);
+
+    free_node_info(m->nodeInfo);
+    free_service_info(m->serviceInfo);
+
+    SAFE_FREE(m->data);
+
+    free(m);
+    *msg = NULL;
+}
+
 STATIC void clear_response(MResponse **resp) {
+    if (!resp || !*resp) return;
 
-	if (*resp==NULL) return;
+    MResponse *r = *resp;
 
-	free((*resp)->reqType);
-	free((*resp)->serviceInfo);
-	if ((*resp)->data) {
-		free((*resp)->data);
-	}
+    SAFE_FREE(r->reqType);
+    SAFE_FREE(r->seqNo);
 
-	free(*resp);
+    /* If ServiceInfo is heap-allocated with strings, free properly */
+    free_service_info(r->serviceInfo);
+
+    SAFE_FREE(r->data);
+
+    free(r);
+    *resp = NULL;
 }
 
 STATIC bool is_websocket_client_valid(struct _websocket_client_handler *handler,
@@ -255,48 +289,58 @@ void websocket_incoming_message(const URequest *request,
                                 const WSMessage *message,
                                 void *config) {
 
-	MResponse *rcvdResp=NULL;
-    Message *rcvdMessage=NULL;
+    Message *rcvdMessage = NULL;
     char *data = NULL;
-	json_t *json;
-	int ret;
+    json_t *json = NULL;
+    json_error_t jerr;
 
-    data = (char *)calloc(1, message->data_len+1);
-    if (data == NULL) {
-        usys_log_error("Unable to allocate memory of size: %d",
-                  message->data_len+1);
+    if (!message || !message->data || message->data_len <= 0) {
+        usys_log_error("websocket_incoming_message: invalid WSMessage");
         return;
     }
-    strncpy(data, message->data, message->data_len);
-    
-	usys_log_debug("Packet recevied. Data: %s", data);
 
-	json = json_loads(data, JSON_DECODE_ANY, NULL);
-	if (json == NULL) {
-		usys_log_error("Error loading recevied data into JSON format: %s",
-				  data);
-		goto done;
-	}
+    /* Make NUL-terminated copy for json_loads and logging */
+    data = (char *)calloc(1, (size_t)message->data_len + 1);
+    if (!data) {
+        usys_log_error("Unable to allocate memory of size: %zu",
+                       (size_t)message->data_len + 1);
+        return;
+    }
+    memcpy(data, message->data, (size_t)message->data_len);
 
-	ret = deserialize_websocket_message(&rcvdMessage, json);
-	if (ret==FALSE) {
-		if (rcvdResp != NULL) free(rcvdResp);
-		goto done;
-	}
+    usys_log_debug("Packet received. Data: %s", data);
 
-    if (strcmp(rcvdMessage->reqType, MESH_SERVICE_REQUEST) == 0 ) {
+    json = json_loads(data, JSON_DECODE_ANY, &jerr);
+    if (!json) {
+        usys_log_error("json_loads failed line=%d col=%d pos=%d text=%s payload=%.256s",
+                       jerr.line, jerr.column, jerr.position, jerr.text, data);
+        goto done;
+    }
+
+    /* IMPORTANT: this deserialize expects json_t*, not char* */
+    if (!deserialize_websocket_message(&rcvdMessage, json)) {
+        usys_log_error("deserialize_websocket_message failed");
+        goto done;
+    }
+
+    if (!rcvdMessage || !rcvdMessage->reqType) {
+        usys_log_error("Invalid decoded message (missing reqType)");
+        goto done;
+    }
+
+    if (strcmp(rcvdMessage->reqType, MESH_SERVICE_REQUEST) == 0) {
         process_incoming_websocket_message(rcvdMessage, (Config *)config);
     } else if (strcmp(rcvdMessage->reqType, MESH_NODE_RESPONSE) == 0) {
         process_incoming_websocket_response(rcvdMessage, config);
     } else {
-        usys_log_error("Invalid incoming message on the websocket. Ignored");
+        usys_log_error("Invalid incoming message on websocket. reqType=%s",
+                       rcvdMessage->reqType);
     }
 
 done:
-    if (data) free(data);
-	if (json) json_decref(json);
-	clear_response(&rcvdResp);
-	return;
+    SAFE_FREE(data);
+    if (json) json_decref(json);
+    clear_message(&rcvdMessage);
 }
 
 void  websocket_onclose(const URequest *request, WSManager *manager,

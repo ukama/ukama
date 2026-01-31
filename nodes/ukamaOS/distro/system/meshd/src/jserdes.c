@@ -374,50 +374,71 @@ int deserialize_request_info(URequest **request, char *str) {
 	return TRUE;
 }
 
-int deserialize_websocket_message(Message **message, json_t *json) {
-
+int deserialize_websocket_message(Message **out, json_t *json) {
     json_t *jType, *jSeq, *jMessage;
     json_t *jLength, *jData, *jCode;
-	char *jStr=NULL;
+    const char *type_s = NULL;
+    const char *seq_s  = NULL;
+    const char *data_s = NULL;
 
-	/* Sanity check */
-	if (json == NULL) {
-		return FALSE;
-	}
+    if (!out || !json) return FALSE;
+    *out = NULL;
 
-    jType        = json_object_get(json, JSON_TYPE);
-    jSeq         = json_object_get(json, JSON_UUID);
-    jMessage     = json_object_get(json, JSON_MESSAGE);
+    jType    = json_object_get(json, JSON_TYPE);
+    jSeq     = json_object_get(json, JSON_UUID);
+    jMessage = json_object_get(json, JSON_MESSAGE);
 
-    if (jType == NULL || jSeq == NULL || jMessage == NULL) {
-        jStr = json_dumps(json, JSON_ENCODE_ANY);
-        log_error("Error decoding JSON: %s", jStr);
-        free(jStr);
+    if (!json_is_string(jType) || !json_is_string(jSeq) || !json_is_object(jMessage)) {
+        log_error("Error decoding JSON. Missing/invalid envelope fields.");
         return FALSE;
     }
 
     jLength = json_object_get(jMessage, JSON_LENGTH);
     jData   = json_object_get(jMessage, JSON_DATA);
-    jCode   = json_object_get(jMessage, JSON_CODE);
+    jCode   = json_object_get(jMessage, JSON_CODE); /* OPTIONAL */
 
-    if (jLength == NULL || jData == NULL) {
-        jStr = json_dumps(json, 0);
-        log_error("Error decoding JSON: %s", jStr);
-        free(jStr);
+    if (!json_is_integer(jLength) || !json_is_string(jData)) {
+        log_error("Error decoding JSON. Missing/invalid message fields.");
         return FALSE;
     }
 
-    *message = (Message *)calloc(1, sizeof(Message));
-	if (*message == NULL) {
-        log_error("Unable to allocate memory of size: %d", sizeof(Message));
-		return FALSE;
-	}
+    type_s = json_string_value(jType);
+    seq_s  = json_string_value(jSeq);
+    data_s = json_string_value(jData);
 
-    (*message)->reqType  = strdup(json_string_value(jType));
-    (*message)->seqNo    = strdup(json_string_value(jSeq));
-    (*message)->code     = json_integer_value(jCode);
-    (*message)->dataSize = json_integer_value(jLength);
-    (*message)->data     = strdup(json_string_value(jData));
+    Message *m = (Message *)calloc(1, sizeof(*m));
+    if (!m) {
+        log_error("OOM allocating Message");
+        return FALSE;
+    }
 
-	return TRUE;
+    m->reqType  = strdup(type_s ? type_s : "");
+    m->seqNo    = strdup(seq_s ? seq_s : "");
+    m->dataSize = (int)json_integer_value(jLength);
+    m->data     = strdup(data_s ? data_s : "");
+
+    if (json_is_integer(jCode)) {
+        m->code = (int)json_integer_value(jCode);
+    } else {
+        m->code = 0;
+    }
+
+    if (!m->reqType || !m->seqNo || !m->data) {
+        log_error("OOM duplicating Message fields");
+        free(m->reqType);
+        free(m->seqNo);
+        free(m->data);
+        free(m);
+        return FALSE;
+    }
+
+    if ((int)strlen(m->data) != m->dataSize) {
+        log_error("Message length mismatch: declared=%d actual=%zu",
+                  m->dataSize, strlen(m->data));
+        //        clear_message(&m);
+        return FALSE;
+    }
+
+    *out = m;
+    return TRUE;
 }

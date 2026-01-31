@@ -63,6 +63,10 @@
 
 #define MESH_LOCK_TIMEOUT 1 /* seconds */
 
+#ifndef SAFE_FREE
+#define SAFE_FREE(p) do { if ((p) != NULL) { free(p); (p) = NULL; } } while (0)
+#endif
+
 typedef struct _u_instance UInst;
 typedef struct _u_request  URequest;
 typedef struct _u_response UResponse;
