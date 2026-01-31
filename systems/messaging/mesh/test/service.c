@@ -32,30 +32,38 @@
 #include <sys/socket.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 #ifndef DEBUG
 #define DEBUG 1
 #endif
 
-#include <sys/time.h>
-
 static const char *ts_now(void) {
-    static char buf[32];
+    static char buf[32]; /* 24 needed; 32 is plenty */
     struct timeval tv;
     struct tm tm;
 
     gettimeofday(&tv, NULL);
     gmtime_r(&tv.tv_sec, &tm);
 
-    snprintf(buf, sizeof(buf),
-             "%04d-%02d-%02d %02d:%02d:%02d.%03ld",
-             tm.tm_year + 1900,
-             tm.tm_mon + 1,
-             tm.tm_mday,
-             tm.tm_hour,
-             tm.tm_min,
-             tm.tm_sec,
-             tv.tv_usec / 1000);
+    /* force milliseconds into a known 0..999 range and type */
+    unsigned ms = (unsigned)(tv.tv_usec / 1000);
+
+    int n = snprintf(buf, sizeof(buf),
+                     "%04d-%02d-%02d %02d:%02d:%02d.%03u",
+                     tm.tm_year + 1900,
+                     tm.tm_mon + 1,
+                     tm.tm_mday,
+                     tm.tm_hour,
+                     tm.tm_min,
+                     tm.tm_sec,
+                     ms);
+
+    if (n < 0 || (size_t)n >= sizeof(buf)) {
+        /* super defensive fallback */
+        strncpy(buf, "0000-00-00 00:00:00.000", sizeof(buf) - 1);
+        buf[sizeof(buf) - 1] = '\0';
+    }
 
     return buf;
 }
@@ -152,7 +160,8 @@ static int is_http_method_token(const char *m) {
             strcmp(m, "PATCH") == 0);
 }
 
-static void handle_request(int cfd, const char *peer) {
+static void handle_request(int cfd, const char *peer, const char *service_name) {
+
     char req[4096];
     ssize_t r = recv(cfd, req, sizeof(req) - 1, 0);
     if (r <= 0) {
@@ -202,6 +211,23 @@ static void handle_request(int cfd, const char *peer) {
     DBG("parsed: method=%s path=%s", method, path);
 
     int is_get = (strcmp(method, "GET") == 0);
+
+    /* Special-case: metrics service only exposes GET /metrics */
+    if (strcmp(service_name, "metrics") == 0) {
+        if (strcmp(path, "/metrics") == 0) {
+            if (!is_get) {
+                http_reply(cfd, 405, "Method Not Allowed", "text/plain",
+                           "method not allowed\n");
+                return;
+            }
+            http_reply(cfd, 200, "OK", "text/plain", "OK\n");
+            return;
+        }
+
+        /* No other endpoints for metrics */
+        http_reply(cfd, 404, "Not Found", "text/plain", "not found\n");
+        return;
+    }
 
     if (strcmp(path, "/v1/ping") == 0) {
         if (!is_get) {
@@ -293,7 +319,7 @@ int main(int argc, char **argv) {
 
         DBG("accepted connection from %s", peer);
 
-        handle_request(cfd, peer);
+        handle_request(cfd, peer, service_name);
         close(cfd);
 
         DBG("closed connection from %s", peer);
