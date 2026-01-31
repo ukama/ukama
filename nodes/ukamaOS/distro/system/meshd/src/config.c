@@ -297,11 +297,17 @@ done:
 
 void clear_config(Config *config) {
 
-	if (!config) return;
+    if (!config) return;
 
-	usys_free(config->remoteConnect);
+    usys_free(config->remoteConnect);
     usys_free(config->localHostname);
-	usys_free(config->certFile);
-	usys_free(config->keyFile);
+    usys_free(config->certFile);
+    usys_free(config->keyFile);
     usys_free(config->orgName);
+
+    if (config->deviceInfo) {
+        usys_free(config->deviceInfo->nodeID);
+        usys_free(config->deviceInfo);
+        config->deviceInfo = NULL;
+    }
 }
