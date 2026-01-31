@@ -24,13 +24,15 @@
 
 typedef struct {
 
-	struct _u_instance *websocketInst;
-	struct _u_instance *servicesInst;
-	Config             *config;
+	UInst  *websocketInst;
+	UInst  *forwardInst;
+    UInst  *adminInst;
+	Config *config;
 } ProcessState;
 
 /* Defined in network.c */
-extern int start_web_services(Config *config, UInst *servicesInst);
+extern int start_forward_service(Config  *config, UInst *forwardInst);
+extern int start_admin_services(Config   *config, UInst *webInst);
 extern int start_websocket_server(Config *config, UInst *websocketInst);
 
 /* Global variables. */
@@ -48,6 +50,7 @@ void usage(void) {
            "\t %s \n\t %s \n\t %s \n",
            ENV_WEBSOCKET_PORT,
            ENV_SERVICES_PORT,
+           ENV_ADMIN_PORT,
            ENV_AMQP_HOST,
            ENV_AMQP_PORT,
            ENV_INIT_SYSTEM_ADDR,
@@ -83,9 +86,14 @@ void signal_term_handler(void) {
 		ulfius_clean_instance(processState->websocketInst);
 	}
 
-	if (processState->servicesInst) {
-		ulfius_stop_framework(processState->servicesInst);
-		ulfius_clean_instance(processState->servicesInst);
+	if (processState->forwardInst) {
+		ulfius_stop_framework(processState->forwardInst);
+		ulfius_clean_instance(processState->forwardInst);
+	}
+
+	if (processState->adminInst) {
+		ulfius_stop_framework(processState->adminInst);
+		ulfius_clean_instance(processState->adminInst);
 	}
 
 	if (processState->config) {
@@ -113,23 +121,29 @@ void catch_sigterm(void) {
 
 int main (int argc, char *argv[]) {
 
-	int exitStatus=0;
-	char *debug=DEFAULT_LOG_LEVEL;
+	int    exitStatus=0;
+	char   *debug=DEFAULT_LOG_LEVEL;
 	Config *config=NULL;
-	struct _u_instance websocketInst;
-	struct _u_instance servicesInst;
+	UInst  websocketInst;
+	UInst  forwardInst;
+    UInst  adminInst;
+
+    memset(&websocketInst, 0, sizeof(websocketInst));
+    memset(&forwardInst,   0, sizeof(forwardInst));
+    memset(&adminInst,     0, sizeof(adminInst));
 
 	processState = (ProcessState *)calloc(1, sizeof(ProcessState));
 	if (processState == NULL) return 1;
 	processState->websocketInst = &websocketInst;
-	processState->servicesInst  = &servicesInst;
+	processState->forwardInst   = &forwardInst;
+    processState->adminInst     = &adminInst;
 
 	catch_sigterm();
 
     /* Parse command line args. */
     while (TRUE) {
 
-        int opt = 0;
+        int opt    = 0;
         int opdidx = 0;
 
         static struct option long_options[] = {
@@ -183,13 +197,19 @@ int main (int argc, char *argv[]) {
 
 	/* Step-2a: setup all endpoints, cb and run websocket. Wait. */
 	if (start_websocket_server(config, &websocketInst) != TRUE) {
-		log_error("Websocket failed to setup for server. Exiting...");
+		log_error("Websocket failed to setup for server. Exiting");
 		exit(1);
 	}
 
-    /* Step-2b: start webservice for the services */
-	if (start_web_services(config, &servicesInst) != TRUE) {
-		log_error("Webservice failed to setup for clients. Exiting.");
+    /* Step-2b: start forwarding for the services */
+	if (start_forward_service(config, &forwardInst) != TRUE) {
+		log_error("Forward service failed to setup. Exiting");
+		exit(1);
+	}
+
+    /* Step-2c: start admin service */
+    if (start_admin_services(config, &adminInst) != TRUE) {
+		log_error("Webservice failed to setup for admin. Exiting");
 		exit(1);
 	}
 
@@ -202,10 +222,12 @@ int main (int argc, char *argv[]) {
     }
 
     ulfius_stop_framework(&websocketInst);
-	ulfius_stop_framework(&servicesInst);
+	ulfius_stop_framework(&forwardInst);
+	ulfius_stop_framework(&adminInst);
 
 	ulfius_clean_instance(&websocketInst);
-	ulfius_clean_instance(&servicesInst);
+	ulfius_clean_instance(&forwardInst);
+	ulfius_clean_instance(&adminInst);
 
 	clear_config(config);
 	free(config);

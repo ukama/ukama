@@ -6,10 +6,6 @@
  * Copyright (c) 2022-present, Ukama Inc.
  */
 
-/*
- * Callback functions for various endpoints and REST methods.
- */
-
 #include <ulfius.h>
 #include <string.h>
 #include <jansson.h>
@@ -30,6 +26,8 @@
 #include "u_amqp.h"
 #include "httpStatus.h"
 #include "config.h"
+
+#include "version.h"
 
 extern MapTable *NodesTable;
 
@@ -96,19 +94,12 @@ int callback_websocket(const URequest *request, UResponse *response,
         remove_map_item_from_table(NodesTable, map->nodeInfo->nodeID);
     }
 
-    /* Open up forwarding web instance for services */
-    forwardPort = start_forward_service(config, &forwardInst);
-    if (forwardPort <= 0 ) {
-        log_error("Unable to start forwarding serice");
-        return U_CALLBACK_ERROR;
-    }
-
     map = add_map_to_table(&NodesTable,
                            nodeID,
                            &forwardInst,
                            &ip[0], sin->sin_port,
                            config->bindingIP,
-                           forwardPort);
+                           config->servicesPort);
 	if (map == NULL) {
         ulfius_stop_framework(forwardInst);
         ulfius_clean_instance(forwardInst);
@@ -123,7 +114,7 @@ int callback_websocket(const URequest *request, UResponse *response,
                       nodeID,
                       &ip[0], sin->sin_port,
                       config->bindingIP,
-                      forwardPort) == FALSE) {
+                      config->servicesPort) == FALSE) {
 		log_error("Error publishing device connect msg on AMQP exchange");
         remove_map_item_from_table(NodesTable, nodeID);
         ulfius_stop_framework(forwardInst);
@@ -132,7 +123,7 @@ int callback_websocket(const URequest *request, UResponse *response,
 	}
 
     log_debug("Forward service started on port: %d for NodeID: %s",
-              forwardPort, nodeID);
+              config->servicesPort, nodeID);
     log_debug("AMQP device connect msg successfull for NodeID: %s", nodeID);
 
 	if ((ret = ulfius_set_websocket_response(response, NULL, NULL,
@@ -159,6 +150,16 @@ int callback_default_websocket(const URequest *request,
 	return U_CALLBACK_CONTINUE;
 }
 
+int callback_not_allowed(const URequest *request,
+                         UResponse *response,
+                         void *user_data) {
+
+    ulfius_set_string_body_response(response,
+                                    HttpStatus_MethodNotAllowed,
+                                    HttpStatusStr(HttpStatus_MethodNotAllowed));
+    return U_CALLBACK_CONTINUE;
+}
+
 int callback_default_webservice(const URequest *request,
                                 UResponse *response,
 								void *data) {
@@ -173,13 +174,48 @@ int callback_get_ping(const URequest *request,
                       UResponse *response,
                       void *data) {
 
-	ulfius_set_string_body_response(response, 200, "");
+	ulfius_set_string_body_response(response,
+                                    HttpStatus_OK,
+                                    HttpStatusStr(HttpStatus_OK));
 	return U_CALLBACK_CONTINUE;
 }
 
-int callback_default_forward(const URequest *request,
-                             UResponse *response,
-                             void *user_data) {
+int callback_get_status(const URequest *request,
+                        UResponse *response,
+                        void *data) {
+
+    int status = (NodesTable && NodesTable->first)
+                 ? HttpStatus_OK
+                 : HttpStatus_NotFound;
+
+    ulfius_set_string_body_response(response,
+                                    status,
+                                    HttpStatusStr(status));
+
+    return U_CALLBACK_CONTINUE;
+}
+
+int callback_get_version(const URequest *request,
+                         UResponse *response,
+                         void *epConfig) {
+
+    ulfius_set_string_body_response(response, HttpStatus_OK, VERSION);
+    return U_CALLBACK_CONTINUE;
+}
+
+int callback_default_admin(const URequest *request,
+                           UResponse *response,
+                           void *data) {
+
+	ulfius_set_string_body_response(response,
+                                    HttpStatus_Forbidden,
+                                    HttpStatusStr(HttpStatus_Forbidden));
+	return U_CALLBACK_CONTINUE;
+}
+
+int callback_forward(const URequest *request,
+                     UResponse *response,
+                     void *user_data) {
 
     MapItem *map=NULL;
     char *host=NULL, *port=NULL, *url=NULL;
@@ -252,13 +288,23 @@ int callback_default_forward(const URequest *request,
     responseStr = (char *)forward->data;
 
 done:
-    ulfius_set_string_body_response(response,
-                                    statusCode,
-                                    responseStr);
-
+    ulfius_set_binary_body_response(response,
+                                statusCode,
+                                forward->data,
+                                forward->size);
     remove_item_from_list(map->forwardList, uuidStr);
     free(host);
     free(port);
 
-    return U_CALLBACK_CONTINUE;
+    return U_CALLBACK_COMPLETE;
+}
+
+int callback_default_forward(const URequest *request,
+                             UResponse *response,
+                             void *data) {
+
+	ulfius_set_string_body_response(response,
+                                    HttpStatus_Forbidden,
+                                    HttpStatusStr(HttpStatus_Forbidden));
+	return U_CALLBACK_CONTINUE;
 }

@@ -17,9 +17,11 @@
 
 #include "log.h"
 
-#define EP_WEBSOCKET        "/websocket"
-#define EP_WEBSERVICE_PING  "/v1/ping"
-#define EP_NODE_FORWARD     "*"
+#define EP_WEBSOCKET  "/websocket"
+#define EP_PING       "/v1/ping"
+#define EP_VERSION    "/v1/version"
+#define EP_STATUS     "/v1/status"
+#define EP_FORWARD    "*"
 
 #define MESH_CLIENT_AGENT "Mesh-client"
 #define MESH_CLIENT_VERSION "0.0.1"
@@ -52,9 +54,11 @@
 #define FORWARD   1
 #define WEBSOCKET 2
 #define SERVICE   3
+#define ADMIN     4
 
 #define ENV_WEBSOCKET_PORT   "ENV_WEBSOCKET_PORT"
 #define ENV_SERVICES_PORT    "ENV_SERVICES_PORT"
+#define ENV_ADMIN_PORT       "ENV_ADMIN_PORT"
 #define ENV_AMQP_HOST        "ENV_AMQP_HOST"
 #define ENV_AMQP_PORT        "ENV_AMQP_PORT"
 #define ENV_AMQP_USER        "ENV_AMQP_USER"

@@ -15,9 +15,11 @@ XGXX = g++
 
 HOST = $(shell gcc -dumpmachine)
 
-TARGET_EXEC = mesh
+TARGET_EXEC  = mesh
+VERSION_FILE = version.h
 
 UKAMA_OS     = ../../../nodes/ukamaOS/
+NODES_DIR    = $(UKAMA_OS)/../
 VENDOR_DIR   = $(UKAMA_OS)/distro/vendor/
 VENDOR_BUILD = $(VENDOR_DIR)/build/
 VENDOR_INC   = $(VENDOR_BUILD)/include/
@@ -39,6 +41,7 @@ CFLAGS+=-Wall
 CFLAGS+=-O0
 CFLAGS+=-I$(VENDOR_INC)
 CFLAGS+=-I$(VENDOR_INC)/rabbitmq-c/
+CFLAGS+=-I.
 CFLAGS+=-I./inc
 CFLAGS+=-D_REENTRANT
 CFLAGS+=-DTEST_EMBED_CERT
@@ -64,7 +67,7 @@ OBJFILES = $(CFILES:.c=.o)
 
 .PHONY: libs
 
-all: $(TARGET_EXEC) libs
+all: version.h $(TARGET_EXEC) libs
 
 $(TARGET_EXEC): $(VENDOR_PKG) $(OBJFILES)
 	$(CC) -o $(TARGET_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
@@ -76,7 +79,9 @@ $(VENDOR_PKG):
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-#libs
+$(VERSION_FILE):
+	$(NODES_DIR)/utils/scripts/generate_version.sh
+
 libs: $(TARGET_EXEC)
 	@echo "Copying libs..."
 	$(eval RET = $(shell ./copyLibs.sh $(TARGET_EXEC)))
@@ -85,4 +90,4 @@ libs: $(TARGET_EXEC)
 all: $(TARGET_EXEC)
 
 clean:
-	rm -f $(TARGET_EXEC) $(OBJFILES);
+	rm -f $(TARGET_EXEC) $(OBJFILES) version.h

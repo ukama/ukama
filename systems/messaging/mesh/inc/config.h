@@ -16,6 +16,7 @@ typedef struct {
     char *bindingIP;      /* binding IP for websocket */
 	char *websocketPort;  /* to accept nodes via websocket */
 	char *servicesPort;   /* to accept services */
+    char *adminPort;      /* to accept admin services */
 
 	char *amqpHost;       /* Host where AMQP exchange is running (IP) */
 	char *amqpPort;       /* Port where AMQP exchange is listening */
