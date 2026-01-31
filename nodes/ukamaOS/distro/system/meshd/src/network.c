@@ -114,10 +114,7 @@ int start_websocket_client(Config *config,
 
         if (config->deviceInfo && config->deviceInfo->nodeID) {
             u_map_put(request.map_header, "User-Agent", config->deviceInfo->nodeID);
-        }
-
-        if (config->orgName && *config->orgName) {
-            u_map_put(request.map_header, "X-org-name", config->orgName);
+            u_map_put(request.map_header, "X-node-id",  config->deviceInfo->nodeID);
         }
 
         ulfius_add_websocket_client_deflate_extension(handler);
