@@ -177,8 +177,12 @@ func ApplyMetricsFromEnvOverride(c *Config) {
 			c.MetricsConfig.Metrics[k] = v
 		}
 	}
-	// 2) Overlay from MetricsKeyMapFile if set and loadable
-	path := c.MetricsKeyMapFile
+	// 2) Overlay from MetricsKeyMapFile if set and loadable.
+	// Prefer METRICS_KEY_MAP_FILE env (used by Helm) since viper may not bind METRICS_KEY_MAP_FILE to MetricsKeyMapFile.
+	path := os.Getenv("METRICS_KEY_MAP_FILE")
+	if path == "" {
+		path = c.MetricsKeyMapFile
+	}
 	if path == "" {
 		return
 	}
@@ -187,6 +191,7 @@ func ApplyMetricsFromEnvOverride(c *Config) {
 		logrus.Warnf("failed to load metrics from %s (using defaults): %v", path, err)
 		return
 	}
+	logrus.Infof("loaded metrics override from %s (%d keys)", path, len(override))
 	for k, v := range override {
 		c.MetricsConfig.Metrics[k] = v
 	}
