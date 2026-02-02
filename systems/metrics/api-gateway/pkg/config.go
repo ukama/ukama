@@ -9,12 +9,19 @@
 package pkg
 
 import (
+	_ "embed"
+	"os"
 	"time"
 
 	"github.com/gin-contrib/cors"
+	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
+	"gopkg.in/yaml.v3"
 )
+
+//go:embed default-metrics.yaml
+var defaultMetricsYaml []byte
 
 type NameUpdate struct {
 	Required bool   `json:"required" default:"false"`
@@ -32,6 +39,7 @@ type Config struct {
 	MetricsConfig     *MetricsConfig
 	OrgName           string
 	Period            time.Duration `default:"5s"`
+	MetricsKeyMapFile string        `default:"default-metrics.yaml"`
 	Http              HttpServices
 }
 
@@ -40,14 +48,12 @@ type HttpServices struct {
 }
 
 type Metric struct {
-	NeedRate bool   `json:"needRate"`
-	Metric   string `json:"metric"`
+	NeedRate bool   `json:"needRate" yaml:"needRate"`
+	Metric   string `json:"metric" yaml:"metric"`
 	// Range vector duration used in Rate func https://prometheus.io/docs/prometheus/latest/querying/basics/#time-durations
 	// if NeedRate is false then this field is ignored
 	// Example: 1d or 5h, or 30s
-	RateInterval string `json:"rateInterval"`
-
-	// consider adding aggregation function as a parameter
+	RateInterval string `json:"rateInterval" yaml:"rateInterval"`
 }
 
 type MetricsConfig struct {
@@ -57,155 +63,12 @@ type MetricsConfig struct {
 	DefaultRateInterval string
 }
 
-var defaultPrometheusMetric = map[string]Metric{
-	"cpu":                  {false, "trx_soc_cpu_usage", ""},
-	"memory":               {false, "trx_memory_ddr_used", ""},
-	"subscribers_active":   {false, "trx_lte_core_active_ue", ""},
-	"subscribers_attached": {false, "trx_lte_core_subscribers", ""},
-
-	// New Metrics
-	"active_org_users":        {false, "number_of_active_users", ""},
-	"inactive_org_users":      {false, "number_of_inactive_users", ""},
-	"active_orgs":             {false, "number_of_active_org", ""},
-	"inactive_orgs":           {false, "number_of_inactive_org", ""},
-	"platform_active_users":   {false, "platform_active_users", ""},
-	"platform_inactive_users": {false, "platform_inactive_users", ""},
-	"networks":                {false, "number_of_networks", ""},
-	"sites":                   {false, "number_of_sites", ""},
-	"online_node_count":       {false, "online_node_count", ""},
-	"offline_node_count":      {false, "offline_node_count", ""},
-	"active_members":          {false, "active_members", ""},
-	"inactive_members":        {false, "inactive_members", ""},
-	"node_active_subscribers": {false, "active_subscribers_per_node", ""},
-
-	"sims":              {false, "number_of_sims", ""},
-	"active_sims":       {false, "active_sim_count", ""},
-	"inactive_sims":     {false, "inactive_sim_count", ""},
-	"package_sales":     {false, "package_sales_sum", ""},
-	"data_usage":        {false, "data_usage", ""},
-	"unit_health":       {false, "unit_health", ""},
-	"unit_status":       {false, "unit_status", ""},
-	"node_load":         {false, "node_load", ""},
-	"cellular_uplink":   {false, "cellular_uplink", ""},
-	"cellular_downlink": {false, "cellular_downlink", ""},
-	"backhaul_uplink":   {false, "backhaul_uplink", ""},
-	"backhaul_downlink": {false, "backhaul_downlink", ""},
-	"backhaul_latency":  {false, "backhaul_latency", ""},
-	"hwd_load":          {false, "hwd_load", ""},
-	"memory_usage":      {false, "memory_usage", ""},
-	"cpu_usage":         {false, "cpu_usage", ""},
-	"disk_usage":        {false, "disk_usage", ""},
-	"txpower":           {false, "txpower", ""},
-
-	"unit_uptime":         {false, "unit_uptime", ""},
-	"network_sales":       {false, "network_sales", ""},
-	"network_data_volume": {false, "network_data_volume", ""},
-	"network_active_ue":   {false, "network_active_ue", ""},
-	"network_uptime":      {false, "network_uptime", ""},
-	//
-
-	//Health metrics
-	"temperature_trx": {false, "trx_sensors_tempsensor1_temperature", ""},
-	"temperature_com": {false, "com_sensors_tempsensor1_temperature_microprocessor", ""},
-
-	"temperature_ctl": {false, "ctl_sensors_tempsensor_microprocessor", ""},
-	"temperature_rfe": {false, "rfe_sensors_tempsensor_pa", ""},
-
-	"temperature_S1_trx_hn": {false, "trx_sensors_tempsensor1_temperature", ""},
-	"temperature_S2_trx_hn": {false, "trx_sensors_tempsensor2_temperature", ""},
-	"temperature_S1_rfe_hn": {false, "rfe_sensors_tempsensor1_pa1", ""},
-	"temperature_S2_rfe_hn": {false, "rfe_sensors_tempsensor2_pa2", ""},
-
-	//Uptime Metrics
-	"uptime_trx": {false, "trx_generic_system_uptime_seconds", ""},
-	"uptime_com": {false, "com_generic_system_uptime_seconds", ""},
-	"uptime_ctl": {false, "ctl_generic_system_uptime_seconds", ""},
-
-	//Radio Metrics
-	"tx_power": {false, "rfe_sensor_adc_tx_power", ""},
-	"rx_power": {false, "rfe_sensor_adc_rx_power", ""},
-	"pa_power": {false, "rfe_sensor_adc_pa_power", ""},
-
-	//Resources Metrics
-	"memory_trx_total": {false, "trx_memory_ddr_total", ""},
-	"memory_trx_used":  {false, "trx_memory_ddr_used", ""},
-	"memory_trx_free":  {false, "trx_memory_ddr_free", ""},
-
-	"memory_com_total": {false, "com_memory_ddr_total", ""},
-	"memory_com_used":  {false, "com_memory_ddr_used", ""},
-	"memory_com_free":  {false, "com_memory_ddr_free", ""},
-
-	"memory_ctl_total": {false, "ctl_memory_ddr_total", ""},
-	"memory_ctl_used":  {false, "ctl_memory_ddr_used", ""},
-	"memory_ctl_free":  {false, "ctl_memory_ddr_free", ""},
-
-	//CPU Metrics (TRX, COM, CTL)
-	"cpu_trx_usage":    {false, "trx_soc_cpu_usage", ""},
-	"cpu_trx_c0_usage": {false, "trx_soc_cpu_core0_usage", ""},
-	"cpu_trx_c1_usage": {false, "trx_soc_cpu_core1_usage", ""},
-	"cpu_trx_c2_usage": {false, "trx_soc_cpu_core2_usage", ""},
-	"cpu_trx_c3_usage": {false, "trx_soc_cpu_core3_usage", ""},
-
-	"cpu_com_usage":    {false, "com_soc_cpu_usage", ""},
-	"cpu_com_c0_usage": {false, "com_soc_cpu_core0_usage", ""},
-	"cpu_com_c1_usage": {false, "com_soc_cpu_core1_usage", ""},
-	"cpu_com_c2_usage": {false, "com_soc_cpu_core2_usage", ""},
-	"cpu_com_c3_usage": {false, "com_soc_cpu_core3_usage", ""},
-
-	"cpu_ctl_total": {false, "ctl_soc_cpu_usage", ""},
-	"cpu_ctl_used":  {false, "ctl_soc_cpu_core0_usage", ""},
-
-	//DISK Metrics (TRX, COM, CTL)
-	"disk_trx_total": {false, "trx_storage_emmc_total", ""},
-	"disk_trx_used":  {false, "trx_storage_emmc_used", ""},
-	"disk_trx_free":  {false, "trx_storage_emmc_free", ""},
-
-	"disk_com_total": {false, "com_storage_emmc_total", ""},
-	"disk_com_used":  {false, "com_storage_emmc_used", ""},
-	"disk_com_free":  {false, "com_storage_emmc_free", ""},
-
-	"disk_ctl_total": {false, "ctl_storage_emmc_total", ""},
-	"disk_ctl_used":  {false, "ctl_storage_emmc_used", ""},
-	"disk_ctl_free":  {false, "ctl_storage_emmc_free", ""},
-
-	//Power Level
-	"power_level": {false, "trx_sensors_powermanagement_power", ""},
-
-	// backhaul Metrics
-	"network_latency":         {false, "process_open_fds", ""},
-	"network_packet_loss":     {false, "process_open_fds", ""},
-	"network_overall_status":  {false, "process_open_fds", ""},
-	"network_throughput_up":   {false, "trx_lte_stack_throughput_uplink", ""},
-	"network_throughput_down": {false, "trx_lte_stack_throughput_downlink", ""},
-
-	// Solar Power Metrics
-	"solar_panel_power":         {false, "solar_panel_power", ""},
-	"solar_panel_voltage":       {false, "solar_panel_voltage", ""},
-	"solar_panel_current":       {false, "solar_panel_current", ""},
-	"battery_charge_percentage": {false, "battery_charge_percentage", ""},
-
-	// Internet Switch Metrics
-	"switch_port_status": {false, "switch_port_status", ""},
-	"switch_port_speed":  {false, "switch_port_speed", ""},
-	"switch_port_power":  {false, "switch_port_power", ""},
-
-	//main backhaul
-	"backhaul_speed":         {false, "backhaul_speed", ""},
-	"main_backhaul_latency":  {false, "main_backhaul_latency", ""},
-	"site_uptime_seconds":    {false, "site_uptime_seconds", ""},
-	"site_uptime_percentage": {false, "site_uptime_percentage", ""},
-
-	"backhaul_switch_port_status": {false, "backhaul_switch_port_status", ""},
-	"backhaul_switch_port_speed":  {false, "backhaul_switch_port_speed", ""},
-	"backhaul_switch_port_power":  {false, "backhaul_switch_port_power", ""},
-
-	"solar_switch_port_status": {false, "solar_switch_port_status", ""},
-	"solar_switch_port_speed":  {false, "solar_switch_port_speed", ""},
-	"solar_switch_port_power":  {false, "solar_switch_port_power", ""},
-
-	"node_switch_port_status": {false, "node_switch_port_status", ""},
-	"node_switch_port_speed":  {false, "node_switch_port_speed", ""},
-	"node_switch_port_power":  {false, "node_switch_port_power", ""},
+func loadMetricsFromFile(path string) (map[string]Metric, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return loadMetricsFromBytes(data)
 }
 
 type GrpcEndpoints struct {
@@ -246,7 +109,7 @@ func NewConfig() *Config {
 		MetricsServer: *config.DefaultMetrics(),
 
 		MetricsConfig: &MetricsConfig{
-			Metrics:             defaultPrometheusMetric,
+			Metrics:             make(map[string]Metric),
 			Timeout:             time.Second * 5,
 			DefaultRateInterval: "5m",
 		},
@@ -255,16 +118,76 @@ func NewConfig() *Config {
 	}
 }
 
-func MergeMetricsConfigDefaults(c *Config) {
-	if c == nil || c.MetricsConfig == nil {
+// loadDefaultMetrics loads the embedded default-metrics.yaml into a map. Used when no override file is set or loadable.
+func loadDefaultMetrics() (map[string]Metric, error) {
+	m, err := loadMetricsFromBytes(defaultMetricsYaml)
+	if err != nil {
+		return nil, err
+	}
+	if m == nil {
+		m = make(map[string]Metric)
+	}
+	return m, nil
+}
+
+// loadMetricsFromBytes parses YAML (flat map or nested metrics-gateway format) into map[string]Metric.
+func loadMetricsFromBytes(data []byte) (map[string]Metric, error) {
+	var m map[string]Metric
+	if err := yaml.Unmarshal(data, &m); err == nil && len(m) > 0 {
+		return m, nil
+	}
+	var nested struct {
+		MetricsGateway struct {
+			APIGatewayConfig struct {
+				MetricsConfig struct {
+					Metrics map[string]Metric `yaml:"metrics"`
+				} `yaml:"metricsConfig"`
+			} `yaml:"apiGatewayConfig"`
+		} `yaml:"metrics-gateway"`
+	}
+	if err := yaml.Unmarshal(data, &nested); err != nil {
+		return nil, err
+	}
+	m = nested.MetricsGateway.APIGatewayConfig.MetricsConfig.Metrics
+	if m == nil {
+		m = make(map[string]Metric)
+	}
+	return m, nil
+}
+
+// ApplyMetricsFromEnvOverride sets MetricsConfig.Metrics from embedded default-metrics.yaml, then overlays
+// the file at MetricsKeyMapFile (env METRICS_KEY_MAP_FILE) if set and loadable. Call after LoadConfig.
+// If the override file is missing or invalid, defaults are still used.
+func ApplyMetricsFromEnvOverride(c *Config) {
+	if c == nil {
 		return
+	}
+	if c.MetricsConfig == nil {
+		c.MetricsConfig = &MetricsConfig{}
 	}
 	if c.MetricsConfig.Metrics == nil {
 		c.MetricsConfig.Metrics = make(map[string]Metric)
 	}
-	for k, v := range defaultPrometheusMetric {
-		if _, ok := c.MetricsConfig.Metrics[k]; !ok {
+	// 1) Load defaults from embedded default-metrics.yaml
+	defaults, err := loadDefaultMetrics()
+	if err != nil {
+		logrus.Warnf("failed to load embedded default metrics: %v", err)
+	} else {
+		for k, v := range defaults {
 			c.MetricsConfig.Metrics[k] = v
 		}
+	}
+	// 2) Overlay from MetricsKeyMapFile if set and loadable
+	path := c.MetricsKeyMapFile
+	if path == "" {
+		return
+	}
+	override, err := loadMetricsFromFile(path)
+	if err != nil {
+		logrus.Warnf("failed to load metrics from %s (using defaults): %v", path, err)
+		return
+	}
+	for k, v := range override {
+		c.MetricsConfig.Metrics[k] = v
 	}
 }
