@@ -47,4 +47,5 @@ func main() {
 func initConfig() {
 	svcConf = pkg.NewConfig()
 	config.LoadConfig(pkg.ServiceName, svcConf)
+	pkg.MergeMetricsConfigDefaults(svcConf)
 }
