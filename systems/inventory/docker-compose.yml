@@ -30,6 +30,7 @@ services:
    - TOKEN=${TOKEN}
    - COMPONENTENVIRONMENT=${COMPONENT_ENVIRONMENT}
    - OWNERID=${OWNERID}
+   - SCHEDULERINTERVAL='1m'
   restart: always
   networks:
    - ukama-net

@@ -198,8 +198,8 @@ func (c *ComponentServer) StartScheduler(ctx context.Context, req *pb.StartSched
 
 	log.Infof("Running job immediately at initialization")
 	c.NodeSyncJob(context.Background())
-
-	err := c.componentScheduler.Start(jobTag, c.NodeSyncJob, "")
+	
+	err := c.componentScheduler.Start(jobTag, func() { c.NodeSyncJob(context.Background()) })
 	if err != nil {
 		log.Errorf("Failed to start scheduler. Error %s", err.Error())
 	}

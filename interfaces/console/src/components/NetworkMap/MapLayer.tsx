@@ -71,8 +71,8 @@ const MapLayer = ({ data }: IMapLayer) => {
               icon={svgIcon}
               title={`Node: ${item.id}`}
               position={{
-                lat: parseFloat(item?.latitude ?? '0'),
-                lng: parseFloat(item?.longitude ?? '0'),
+                lat: Number.parseFloat(item?.latitude ?? '0'),
+                lng: Number.parseFloat(item?.longitude ?? '0'),
               }}
               attribution={item.id}
             />

@@ -26,7 +26,7 @@ type Config struct {
 	RepoUrl              string               `default:""`
 	Token                string               `default:""`
 	OwnerId              string               `default:""`
-	SchedulerInterval    time.Duration        `default:"24h"`
+	SchedulerInterval    time.Duration        `default:"1m"`
 	OrgName              string               `default:"ukama"`
 	Username             string               `default:"ukama"`
 	ComponentEnvironment string               `default:"production"`
