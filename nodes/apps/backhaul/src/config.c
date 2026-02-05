@@ -11,9 +11,11 @@
 
 #include "config.h"
 #include "backhauld.h"
+
 #include "usys_log.h"
 #include "usys_string.h"
 #include "usys_mem.h"
+#include "usys_file.h"
 #include "usys_services.h"
 
 static int env_to_int(const char *name, int def) {
@@ -30,6 +32,151 @@ static char* env_to_strdup(const char *name, const char *def) {
 	if (!v || !*v) v = def;
 
 	return v ? strdup(v) : NULL;
+}
+
+static int is_strict_env_mode(void) {
+    const char *v = getenv("BACKHAULD_STRICT_ENV");
+    if (!v || !*v) return USYS_FALSE;
+    return atoi(v) ? USYS_TRUE : USYS_FALSE;
+}
+
+static void log_missing_env(const char *name, int strict, int *missingCount) {
+    if (strict) {
+        usys_log_error("Missing required ENV: %s", name);
+    } else {
+        usys_log_warn("Missing required ENV: %s (using default)", name);
+    }
+    (*missingCount)++;
+}
+
+static int env_is_missing(const char *name) {
+    const char *v = getenv(name);
+    return (!v || !*v);
+}
+
+int config_validate_env(Config *config) {
+
+    int missing = 0;
+    int strict = is_strict_env_mode();
+
+    if (!config) return USYS_FALSE;
+
+    /*
+     * Required for “real” deployments:
+     * - If you want to keep bootstrap defaults, remove these from required list.
+     * - If reflector endpoints are fetched from bootstrap, bootstrap host/scheme/ep matter.
+     */
+    if (env_is_missing("BACKHAULD_BOOTSTRAP_HOST")) {
+        log_missing_env("BACKHAULD_BOOTSTRAP_HOST", strict, &missing);
+    }
+    if (env_is_missing("BACKHAULD_BOOTSTRAP_SCHEME")) {
+        log_missing_env("BACKHAULD_BOOTSTRAP_SCHEME", strict, &missing);
+    }
+    if (env_is_missing("BACKHAULD_BOOTSTRAP_EP")) {
+        log_missing_env("BACKHAULD_BOOTSTRAP_EP", strict, &missing);
+    }
+
+    /*
+     * Hard correctness constraints (even if ENV exists).
+     * These prevent division-by-zero / nonsense scheduling.
+     */
+    if (config->microPeriodMs <= 0) {
+        usys_log_error("Invalid BACKHAULD_MICRO_PERIOD_MS=%d", config->microPeriodMs);
+        missing++;
+    }
+    if (config->multiPeriodMs <= 0) {
+        usys_log_error("Invalid BACKHAULD_MULTI_PERIOD_MS=%d", config->multiPeriodMs);
+        missing++;
+    }
+    if (config->connectTimeoutMs <= 0 || config->totalTimeoutMs <= 0) {
+        usys_log_error("Invalid timeouts connect=%d total=%d",
+                       config->connectTimeoutMs, config->totalTimeoutMs);
+        missing++;
+    }
+    if (config->totalTimeoutMs < config->connectTimeoutMs) {
+        usys_log_error("Invalid timeouts: totalTimeoutMs (%d) < connectTimeoutMs (%d)",
+                       config->totalTimeoutMs, config->connectTimeoutMs);
+        missing++;
+    }
+    if (config->pingBytes < 64) {
+        usys_log_warn("pingBytes=%d too small, forcing to 64", config->pingBytes);
+        config->pingBytes = 64;
+    }
+
+    /*
+     * Reflector URLs: if user explicitly sets near/far URLs, we accept them.
+     * If both are empty, that means “bootstrap discovery” must work.
+     */
+    if ((!config->reflectorNearUrl || !*config->reflectorNearUrl) &&
+        (!config->reflectorFarUrl  || !*config->reflectorFarUrl)) {
+
+        /* If no explicit reflectors, bootstrap becomes effectively required */
+        if (!config->bootstrapHost || !*config->bootstrapHost ||
+            !config->bootstrapScheme || !*config->bootstrapScheme ||
+            !config->bootstrapEp || !*config->bootstrapEp) {
+            usys_log_error("No reflector URLs set and bootstrap config missing/empty");
+            missing++;
+        }
+    }
+
+    if (missing && strict) {
+        usys_log_error("Configuration invalid: %d issue(s)", missing);
+        return USYS_FALSE;
+    }
+
+    if (missing) {
+        usys_log_warn("Configuration has %d issue(s), continuing due to non-strict mode", missing);
+    }
+
+    return USYS_TRUE;
+}
+
+void config_log(Config *config) {
+
+    if (!config) return;
+
+    usys_log_info("backhaul.d effective config:");
+    usys_log_info("  serviceName               = %s", config->serviceName ? config->serviceName : "");
+    usys_log_info("  servicePort               = %d", config->servicePort);
+
+    usys_log_info("  bootstrapScheme           = %s", config->bootstrapScheme ? config->bootstrapScheme : "");
+    usys_log_info("  bootstrapHost             = %s", config->bootstrapHost ? config->bootstrapHost : "");
+    usys_log_info("  bootstrapEp               = %s", config->bootstrapEp ? config->bootstrapEp : "");
+
+    usys_log_info("  reflectorNearUrl          = %s", config->reflectorNearUrl ? config->reflectorNearUrl : "");
+    usys_log_info("  reflectorFarUrl           = %s", config->reflectorFarUrl ? config->reflectorFarUrl : "");
+    usys_log_info("  reflectorRefreshSec       = %d", config->reflectorRefreshSec);
+
+    usys_log_info("  microPeriodMs             = %d", config->microPeriodMs);
+    usys_log_info("  multiPeriodMs             = %d", config->multiPeriodMs);
+    usys_log_info("  chgPeriodSec              = %d", config->chgPeriodSec);
+    usys_log_info("  classifyPeriodSec         = %d", config->classifyPeriodSec);
+
+    usys_log_info("  connectTimeoutMs          = %d", config->connectTimeoutMs);
+    usys_log_info("  totalTimeoutMs            = %d", config->totalTimeoutMs);
+    usys_log_info("  maxRetries                = %d", config->maxRetries);
+
+    usys_log_info("  pingBytes                 = %d", config->pingBytes);
+    usys_log_info("  stallThresholdMs          = %d", config->stallThresholdMs);
+
+    usys_log_info("  chgTargetSec              = %d", config->chgTargetSec);
+    usys_log_info("  chgWarmupBytes            = %d", config->chgWarmupBytes);
+    usys_log_info("  chgMinBytes               = %d", config->chgMinBytes);
+    usys_log_info("  chgMaxBytes               = %d", config->chgMaxBytes);
+    usys_log_info("  chgSamples                = %d", config->chgSamples);
+
+    usys_log_info("  parallelStreams           = %d", config->parallelStreams);
+    usys_log_info("  parallelMaxBytesTotal     = %d", config->parallelMaxBytesTotal);
+
+    usys_log_info("  downConsecFails           = %d", config->downConsecFails);
+    usys_log_info("  recoverConsecOk           = %d", config->recoverConsecOk);
+    usys_log_info("  capStabilityPct           = %d", config->capStabilityPct);
+
+    usys_log_info("  windowMicroSamples        = %d", config->windowMicroSamples);
+    usys_log_info("  windowMultiSamples        = %d", config->windowMultiSamples);
+    usys_log_info("  windowChgSamples          = %d", config->windowChgSamples);
+
+    usys_log_info("  strictEnv                 = %d", is_strict_env_mode());
 }
 
 int config_load_from_env(Config *config) {

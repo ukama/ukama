@@ -101,12 +101,20 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	if (!config_load_from_env(&config)) {
-		usys_log_error("Failed to load config");
-		usys_exit(1);
-	}
+    if (!config_load_from_env(&config)) {
+        usys_log_error("Failed to load config");
+        usys_exit(1);
+    }
 
-	if (!metrics_store_init(&store, config.windowMicroSamples, config.windowMultiSamples, config.windowChgSamples)) {
+    if (!config_validate_env(&config)) {
+        usys_log_error("Invalid config (strict mode). Exiting.");
+        usys_exit(1);
+    }
+
+    config_log(&config);
+
+	if (!metrics_store_init(&store, config.windowMicroSamples,
+                            config.windowMultiSamples, config.windowChgSamples)) {
 		usys_log_error("Failed to init metrics store");
 		usys_exit(1);
 	}
