@@ -6,7 +6,7 @@
 
 include ../../../../ukamaOS/config.mk
 
-TARGET_EXEC = ukama-test-reflector
+TARGET_EXEC = ukama_test_reflector
 
 ARTIFACTS = $(TARGET_EXEC)
 
