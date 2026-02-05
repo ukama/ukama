@@ -65,5 +65,6 @@ int  config_load_from_env(Config *config);
 void config_free(Config *config);
 int  config_validate_env(Config *config);
 void config_log(Config *config);
+void config_print_env_help(void);
 
 #endif /* CONFIG_H_ */

@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2023-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 
 #include <signal.h>
@@ -30,9 +30,9 @@ static void handle_sigint(int signum) {
 }
 
 static UsysOption longOptions[] = {
-	{ "logs",	required_argument, 0, 'l' },
-	{ "help",	no_argument,	   0, 'h' },
-	{ "version",	no_argument,	   0, 'v' },
+	{ "logs",	   required_argument, 0, 'l' },
+	{ "help",	   no_argument,	      0, 'h' },
+	{ "version",   no_argument,	      0, 'v' },
 	{ 0, 0, 0, 0 }
 };
 
@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
 	EpCtx epCtx = {0};
 
 	usys_log_set_service(SERVICE_NAME);
-	usys_log_remote_init(SERVICE_NAME);
+    //	usys_log_remote_init(SERVICE_NAME);
 
 	while (1) {
 
@@ -85,6 +85,7 @@ int main(int argc, char **argv) {
 		switch (opt) {
 		case 'h':
 			usage();
+            config_print_env_help();
 			usys_exit(0);
 			break;
 		case 'v':

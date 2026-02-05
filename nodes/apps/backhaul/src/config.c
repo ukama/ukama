@@ -17,6 +17,8 @@
 #include "usys_mem.h"
 #include "usys_file.h"
 #include "usys_services.h"
+#include "usys_string.h"
+#include "usys_api.h"
 
 static int env_to_int(const char *name, int def) {
 
@@ -230,6 +232,168 @@ int config_load_from_env(Config *config) {
 	config->windowChgSamples   = env_to_int("BACKHAULD_WINDOW_CHG_SAMPLES", 20);
 
 	return USYS_TRUE;
+}
+
+void config_print_env_help(void) {
+
+	usys_puts("");
+	usys_puts("Environment variables:");
+	usys_puts("  (Required rules)");
+	usys_puts("    - If BACKHAULD_REFLECTOR_NEAR_URL and BACKHAULD_REFLECTOR_FAR_URL are BOTH empty,");
+	usys_puts("      then BACKHAULD_BOOTSTRAP_HOST, BACKHAULD_BOOTSTRAP_SCHEME, BACKHAULD_BOOTSTRAP_EP become required.");
+	usys_puts("    - BACKHAULD_STRICT_ENV=1 makes missing required ENV a fatal error.");
+	usys_puts("");
+
+	usys_puts("  BACKHAULD_STRICT_ENV (optional)");
+	usys_puts("    default: 0");
+	usys_puts("    meaning: If set to 1, missing required ENV will cause the process to exit.");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_PORT (optional)");
+	usys_puts("    default: 9050 (only used if service registry lookup fails)");
+	usys_puts("    meaning: Port for backhaul.d web service.");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_BOOTSTRAP_HOST (conditionally required)");
+	usys_puts("    default: bootstrap.ukama.com");
+	usys_puts("    meaning: Bootstrap host used to discover reflector URLs.");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_BOOTSTRAP_SCHEME (conditionally required)");
+	usys_puts("    default: https");
+	usys_puts("    meaning: Bootstrap scheme used to discover reflector URLs (http or https).");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_BOOTSTRAP_EP (conditionally required)");
+	usys_puts("    default: /reflector");
+	usys_puts("    meaning: Bootstrap endpoint path returning reflectorNearUrl/reflectorFarUrl.");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_REFLECTOR_NEAR_URL (optional)");
+	usys_puts("    default: \"\" (empty)");
+	usys_puts("    meaning: If set, forces the 'near' reflector base URL (skips bootstrap for near).");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_REFLECTOR_FAR_URL (optional)");
+	usys_puts("    default: \"\" (empty)");
+	usys_puts("    meaning: If set, forces the 'far' reflector base URL (skips bootstrap for far).");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_REFLECTOR_REFRESH_SEC (optional)");
+	usys_puts("    default: 3600");
+	usys_puts("    meaning: How often to re-fetch reflector URLs from bootstrap (seconds).");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_MICRO_PERIOD_MS (optional)");
+	usys_puts("    default: 10000");
+	usys_puts("    meaning: Interval for the 'micro' probe loop (milliseconds).");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_MULTI_PERIOD_MS (optional)");
+	usys_puts("    default: 30000");
+	usys_puts("    meaning: Interval for the 'multi' probe loop (milliseconds).");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_CHG_PERIOD_SEC (optional)");
+	usys_puts("    default: 1800");
+	usys_puts("    meaning: Interval for the change-detection job (seconds).");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_CLASSIFY_PERIOD_SEC (optional)");
+	usys_puts("    default: 60");
+	usys_puts("    meaning: Interval for classification job (seconds).");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_CONNECT_TIMEOUT_MS (optional)");
+	usys_puts("    default: 2000");
+	usys_puts("    meaning: Connect timeout per request (milliseconds).");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_TOTAL_TIMEOUT_MS (optional)");
+	usys_puts("    default: 10000");
+	usys_puts("    meaning: Total request timeout (milliseconds). Must be >= connect timeout.");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_MAX_RETRIES (optional)");
+	usys_puts("    default: 1");
+	usys_puts("    meaning: Retries per request before marking a probe attempt as failed.");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_PING_BYTES (optional)");
+	usys_puts("    default: 2048");
+	usys_puts("    meaning: Payload size for ping-like probes (bytes). Minimum enforced is 64.");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_STALL_THRESHOLD_MS (optional)");
+	usys_puts("    default: 2500");
+	usys_puts("    meaning: Threshold to flag a request as 'stalled' (milliseconds).");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_CHG_TARGET_SEC (optional)");
+	usys_puts("    default: 3");
+	usys_puts("    meaning: Target measurement duration for change-detection (seconds).");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_CHG_WARMUP_BYTES (optional)");
+	usys_puts("    default: 131072");
+	usys_puts("    meaning: Warmup bytes before change-detection measurements (bytes).");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_CHG_MIN_BYTES (optional)");
+	usys_puts("    default: 524288");
+	usys_puts("    meaning: Minimum bytes per change-detection sample (bytes).");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_CHG_MAX_BYTES (optional)");
+	usys_puts("    default: 8388608");
+	usys_puts("    meaning: Maximum bytes per change-detection sample (bytes).");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_CHG_SAMPLES (optional)");
+	usys_puts("    default: 3");
+	usys_puts("    meaning: Number of samples for change-detection per run.");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_PARALLEL_STREAMS (optional)");
+	usys_puts("    default: 4");
+	usys_puts("    meaning: Number of parallel download streams for parallel diagnostics.");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_PARALLEL_MAX_BYTES_TOTAL (optional)");
+	usys_puts("    default: 8388608");
+	usys_puts("    meaning: Total bytes budget across all parallel streams (bytes).");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_DOWN_CONSEC_FAILS (optional)");
+	usys_puts("    default: 6");
+	usys_puts("    meaning: How many consecutive failures to declare backhaul DOWN.");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_RECOVER_CONSEC_OK (optional)");
+	usys_puts("    default: 6");
+	usys_puts("    meaning: How many consecutive OKs to recover from DOWN state.");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_CAP_STABILITY_PCT (optional)");
+	usys_puts("    default: 7");
+	usys_puts("    meaning: Percent change threshold to consider capacity stable vs shifting.");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_WINDOW_MICRO_SAMPLES (optional)");
+	usys_puts("    default: 60");
+	usys_puts("    meaning: Number of recent micro samples stored in memory.");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_WINDOW_MULTI_SAMPLES (optional)");
+	usys_puts("    default: 60");
+	usys_puts("    meaning: Number of recent multi samples stored in memory.");
+
+	usys_puts("");
+	usys_puts("  BACKHAULD_WINDOW_CHG_SAMPLES (optional)");
+	usys_puts("    default: 20");
+	usys_puts("    meaning: Number of recent change-detection samples stored in memory.");
+
+	usys_puts("");
 }
 
 void config_free(Config *config) {
