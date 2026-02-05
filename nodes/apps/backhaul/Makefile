@@ -8,12 +8,20 @@ include ../../ukamaOS/config.mk
 
 TARGET_EXEC = backhaul-monitor
 
+VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor/
+VENDOR_BUILD = $(VENDOR_DIR)/build/
+VENDOR_INC   = $(VENDOR_BUILD)/include/
+VENDOR_LIB   = $(VENDOR_BUILD)/lib/
+VENDOR_LIB64 = $(VENDOR_BUILD)/lib64/
+
+PLATFORM_DIR     = $(UKAMAOS_ROOT)/distro/platform/
+PLATFORM_BUILD   = $(PLATFORM_DIR)/build/
+PLATFORM_INC_SYS = $(PLATFORM_DIR)/sys/inc
+PLATFORM_INC_LOG = $(PLATFORM_DIR)/log/inc
+PLATFORM_LIB     = $(PLATFORM_DIR)/build/
+
 VERSION_FILE = version.h
 ARTIFACTS = $(TARGET_EXEC)
-
-APP_NAME = $(CUR_BUILD_DIRNAME)
-TARGET_CONFIG_DIR = $(INSTALL_DIR)$(NODE_APP_CONFIG_DIR)/$(APP_NAME)
-APP_CONFIG =
 
 ifeq ($(ALPINE_BUILD),1)
     $(info Excluding vendor library for Alpine build)
@@ -77,14 +85,6 @@ $(VERSION_FILE):
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
-
-install: $(ARTIFACTS) $(VERSION_FILE)
-	mkdir -p $(TARGET_CONFIG_DIR)
-	cp -vrf $(ARTIFACTS) $(INSTALL_DIR)$(NODE_APP_DIR)
-	cp -vrf $(VERSION_FILE) $(TARGET_CONFIG_DIR)
-	if [ "$(APP_CONFIG)" != "" ]; then \
-		cp -vrf $(APP_CONFIG) $(TARGET_CONFIG_DIR);\
-	fi
 
 clean:
 	rm -f $(TARGET_EXEC) $(OBJFILES) version.h
