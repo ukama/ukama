@@ -20,6 +20,7 @@
 #include "usys_log.h"
 #include "usys_getopt.h"
 #include "usys_string.h"
+#include "usys_api.h"
 
 #include "version.h"
 
