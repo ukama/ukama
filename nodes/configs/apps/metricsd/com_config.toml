@@ -364,10 +364,157 @@ metric_server_port = 7001
                 type = "METRICTYPE_GAUGE"
                 labels = []
 
+[[stats]]
+	[[stats.backhaul]]
+		source = "backhaul"
+		agent  = "backhaul_agent"
+		# url is treated as the PATH for the service endpoint
+		# (agent will resolve port via /etc/services using usys_find_service_port()).
+		url    = "/v1/status"
 
+		[[stats.backhaul.backhaul.kpi]]
+			name   = "state"
+			ext    = ""
+			desc   = "Backhaul state as numeric code (DOWN=0, LIMITED=1, GOOD=2, UNKNOWN=3)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
 
+		[[stats.backhaul.backhaul.kpi]]
+			name   = "link_guess"
+			ext    = ""
+			desc   = "Link classification numeric code (UNKNOWN=0, TERRESTRIAL_LIKE=1, SAT_LIKE=2, CELLULAR_LIKE=3)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
 
+		[[stats.backhaul.backhaul.kpi]]
+			name   = "confidence"
+			ext    = ""
+			desc   = "Classifier confidence (0..1)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
 
+		[[stats.backhaul.backhaul.kpi]]
+			name   = "dl_goodput_mbps"
+			ext    = ""
+			desc   = "Downlink goodput Mbps"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
 
+		[[stats.backhaul.backhaul.kpi]]
+			name   = "ul_goodput_mbps"
+			ext    = ""
+			desc   = "Uplink goodput Mbps"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
 
+		[[stats.backhaul.backhaul.kpi]]
+			name   = "bufferbloat_inflation_factor"
+			ext    = ""
+			desc   = "Bufferbloat inflation factor"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
 
+		[[stats.backhaul.backhaul.kpi]]
+			name   = "cap_detected_mbps"
+			ext    = ""
+			desc   = "Detected throughput cap Mbps"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.backhaul.backhaul.kpi]]
+			name   = "near_ttfb_median_ms"
+			ext    = ""
+			desc   = "Near reflector TTFB median (ms)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.backhaul.backhaul.kpi]]
+			name   = "near_ttfb_p95_ms"
+			ext    = ""
+			desc   = "Near reflector TTFB p95 (ms)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.backhaul.backhaul.kpi]]
+			name   = "near_ttfb_p99_ms"
+			ext    = ""
+			desc   = "Near reflector TTFB p99 (ms)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.backhaul.backhaul.kpi]]
+			name   = "far_ttfb_median_ms"
+			ext    = ""
+			desc   = "Far reflector TTFB median (ms)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.backhaul.backhaul.kpi]]
+			name   = "far_ttfb_p95_ms"
+			ext    = ""
+			desc   = "Far reflector TTFB p95 (ms)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.backhaul.backhaul.kpi]]
+			name   = "far_ttfb_p99_ms"
+			ext    = ""
+			desc   = "Far reflector TTFB p99 (ms)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.backhaul.backhaul.kpi]]
+			name   = "probe_success_rate_pct"
+			ext    = ""
+			desc   = "Probe success rate percent (0..100)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.backhaul.backhaul.kpi]]
+			name   = "stall_rate_pct"
+			ext    = ""
+			desc   = "Stall rate percent (0..100)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.backhaul.backhaul.kpi]]
+			name   = "last_micro_ts"
+			ext    = ""
+			desc   = "Last micro probe timestamp (unix seconds)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.backhaul.backhaul.kpi]]
+			name   = "last_multi_ts"
+			ext    = ""
+			desc   = "Last multi probe timestamp (unix seconds)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.backhaul.backhaul.kpi]]
+			name   = "last_change_ts"
+			ext    = ""
+			desc   = "Last state change timestamp (unix seconds)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.backhaul.backhaul.kpi]]
+			name   = "last_classify_ts"
+			ext    = ""
+			desc   = "Last classify timestamp (unix seconds)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.backhaul.backhaul.kpi]]
+			name   = "last_diag_ts"
+			ext    = ""
+			desc   = "Last diag timestamp (unix seconds)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.backhaul.backhaul.kpi]]
+			name   = "diag_present"
+			ext    = ""
+			desc   = "1 if lastDiagName is non-empty, else 0"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
