@@ -215,14 +215,14 @@ metric_server_port = 7001
                 labels = []
 
             [[stats.memory.swap.kpi]]
-                name = "Used memory"
+                name = "used_memory"
                 ext = ""
                 desc = "Used memory"
                 type = "METRICTYPE_GAUGE"
                 labels = []
 
             [[stats.memory.swap.kpi]]
-                name = "Free memory"
+                name = "free_memory"
                 ext = ""
                 desc = "Free memory"
                 type = "METRICTYPE_GAUGE"
