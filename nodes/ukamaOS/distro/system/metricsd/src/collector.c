@@ -21,19 +21,23 @@ static MetricsConfig *metricsCfg = NULL;
 bool collectionFlag = true;
 
 agent_map_t agent_map[MAX_AGENTS] = {
-    {.type = "sys_generic", .agentHandler = generic_stat_collector},
-    {.type = "lte_agent", .agentHandler = lte_stack_collector},
-    {.type = "rest_agent", .agentHandler = rest_collector},
-    {.type = "sysfs_agent", .agentHandler = sysfs_collector},
-    {.type = "cpu_agent", .agentHandler = cpu_collector},
-    {.type = "memory_agent", .agentHandler = memory_collector},
-    {.type = "network_agent", .agentHandler = network_collector},
-    {.type = "ssd_agent", .agentHandler = ssd_collector},
+    {.type = "sys_generic",    .agentHandler = generic_stat_collector},
+    {.type = "lte_agent",      .agentHandler = lte_stack_collector},
+    {.type = "rest_agent",     .agentHandler = rest_collector},
+    {.type = "sysfs_agent",    .agentHandler = sysfs_collector},
+    {.type = "cpu_agent",      .agentHandler = cpu_collector},
+    {.type = "memory_agent",   .agentHandler = memory_collector},
+    {.type = "network_agent",  .agentHandler = network_collector},
+    {.type = "ssd_agent",      .agentHandler = ssd_collector},
+    {.type = "backhaul_agent", .agentHandler = backhaul_collector},
 
 };
 
 CollectorFxn get_agent_handler_fxn(char *agent) {
   for (int idx = 0; idx < MAX_AGENTS; idx++) {
+    if (!agent_map[idx].type) {
+      continue;
+    }
     if (strcmp(agent, agent_map[idx].type) == 0) {
       return agent_map[idx].agentHandler;
     }
@@ -42,8 +46,8 @@ CollectorFxn get_agent_handler_fxn(char *agent) {
 }
 
 int rest_collector(MetricsCatConfig *stat) {
-  usys_log_trace("Rest Agent started for source %s.", stat->source);
-  return RETURN_OK;
+    usys_log_trace("Rest Agent started for source %s.", stat->source);
+    return RETURN_OK;
 }
 
 int lte_stack_collector(MetricsCatConfig *stat) {
@@ -81,6 +85,11 @@ int generic_stat_collector(MetricsCatConfig *stat) {
   usys_log_trace("Generic stat collection agent started for source %s.",
                  stat->source);
   return sys_gen_collect_stat(stat, metric_server_add_kpi_data);
+}
+
+int backhaul_collector(MetricsCatConfig *stat) {
+  usys_log_trace("Backhaul Agent started for source %s.", stat->source);
+  return backhaul_collect_stat(stat, metric_server_add_kpi_data);
 }
 
 int collector(char *cfg) {
