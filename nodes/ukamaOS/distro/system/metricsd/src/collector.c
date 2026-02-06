@@ -30,7 +30,6 @@ agent_map_t agent_map[MAX_AGENTS] = {
     {.type = "network_agent",  .agentHandler = network_collector},
     {.type = "ssd_agent",      .agentHandler = ssd_collector},
     {.type = "backhaul_agent", .agentHandler = backhaul_collector},
-
 };
 
 CollectorFxn get_agent_handler_fxn(char *agent) {
@@ -120,21 +119,30 @@ int collector(char *cfg) {
 
   /* Collect KPI metrics */
   while (collectionFlag) {
+      for (int idx = 0; idx < categoryCount; idx++) {
+          /* For each category */
+          for (int cid = 0; cid < metricsCfg[idx].eachCategoryCount; cid++) {
+              usys_log_debug("collector: src=%s agent='%s' url=%s",
+                             metricsCfg[idx].metricsCategory[cid].source,
+                             metricsCfg[idx].metricsCategory[cid].agent,
+                             metricsCfg[idx].metricsCategory[cid].url);
+              CollectorFxn fxn =
+                  get_agent_handler_fxn(metricsCfg[idx].metricsCategory[cid].agent);
 
-    for (int idx = 0; idx < categoryCount; idx++) {
-      /* For each category */
-      for (int cid = 0; cid < metricsCfg[idx].eachCategoryCount; cid++) {
-
-        /* Start scraping metrics */
-        CollectorFxn fxn =
-            get_agent_handler_fxn(metricsCfg[idx].metricsCategory[cid].agent);
-        if (fxn) {
-          fxn(&metricsCfg[idx].metricsCategory[cid]);
-        }
+              if (!fxn) {
+                  usys_log_error("collector: NO HANDLER for agent='%s' src=%s",
+                                 metricsCfg[idx].metricsCategory[cid].agent,
+                                 metricsCfg[idx].metricsCategory[cid].source);
+              } else {
+                  usys_log_debug("collector: calling handler for agent='%s' src=%s",
+                                 metricsCfg[idx].metricsCategory[cid].agent,
+                                 metricsCfg[idx].metricsCategory[cid].source);
+                  fxn(&metricsCfg[idx].metricsCategory[cid]);
+              }
+          }
       }
-    }
 
-    sleep(scraping_time_period);
+      sleep(scraping_time_period);
   }
 
   /* This means exit is called */

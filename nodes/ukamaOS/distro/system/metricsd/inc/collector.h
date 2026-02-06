@@ -12,7 +12,7 @@
 #include "config.h"
 #include "metrics.h"
 
-#define MAX_AGENTS              8
+#define MAX_AGENTS  9
 
 typedef int (*CollectorFxn)(MetricsCatConfig *stat);
 
