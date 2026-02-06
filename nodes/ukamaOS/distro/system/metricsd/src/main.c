@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
     UInst adminInst;
 
     usys_log_set_service(SERVICE_NAME);
-    usys_log_remote_init(SERVICE_NAME);
+    //    usys_log_remote_init(SERVICE_NAME);
 
     /* Parsing command line args. */
     while (true) {

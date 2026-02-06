@@ -21,19 +21,22 @@ static MetricsConfig *metricsCfg = NULL;
 bool collectionFlag = true;
 
 agent_map_t agent_map[MAX_AGENTS] = {
-    {.type = "sys_generic", .agentHandler = generic_stat_collector},
-    {.type = "lte_agent", .agentHandler = lte_stack_collector},
-    {.type = "rest_agent", .agentHandler = rest_collector},
-    {.type = "sysfs_agent", .agentHandler = sysfs_collector},
-    {.type = "cpu_agent", .agentHandler = cpu_collector},
-    {.type = "memory_agent", .agentHandler = memory_collector},
-    {.type = "network_agent", .agentHandler = network_collector},
-    {.type = "ssd_agent", .agentHandler = ssd_collector},
-
+    {.type = "sys_generic",    .agentHandler = generic_stat_collector},
+    {.type = "lte_agent",      .agentHandler = lte_stack_collector},
+    {.type = "rest_agent",     .agentHandler = rest_collector},
+    {.type = "sysfs_agent",    .agentHandler = sysfs_collector},
+    {.type = "cpu_agent",      .agentHandler = cpu_collector},
+    {.type = "memory_agent",   .agentHandler = memory_collector},
+    {.type = "network_agent",  .agentHandler = network_collector},
+    {.type = "ssd_agent",      .agentHandler = ssd_collector},
+    {.type = "backhaul_agent", .agentHandler = backhaul_collector},
 };
 
 CollectorFxn get_agent_handler_fxn(char *agent) {
   for (int idx = 0; idx < MAX_AGENTS; idx++) {
+    if (!agent_map[idx].type) {
+      continue;
+    }
     if (strcmp(agent, agent_map[idx].type) == 0) {
       return agent_map[idx].agentHandler;
     }
@@ -42,8 +45,8 @@ CollectorFxn get_agent_handler_fxn(char *agent) {
 }
 
 int rest_collector(MetricsCatConfig *stat) {
-  usys_log_trace("Rest Agent started for source %s.", stat->source);
-  return RETURN_OK;
+    usys_log_trace("Rest Agent started for source %s.", stat->source);
+    return RETURN_OK;
 }
 
 int lte_stack_collector(MetricsCatConfig *stat) {
@@ -83,6 +86,11 @@ int generic_stat_collector(MetricsCatConfig *stat) {
   return sys_gen_collect_stat(stat, metric_server_add_kpi_data);
 }
 
+int backhaul_collector(MetricsCatConfig *stat) {
+  usys_log_trace("Backhaul Agent started for source %s.", stat->source);
+  return backhaul_collect_stat(stat, metric_server_add_kpi_data);
+}
+
 int collector(char *cfg) {
 
   int ret = RETURN_OK;
@@ -111,21 +119,30 @@ int collector(char *cfg) {
 
   /* Collect KPI metrics */
   while (collectionFlag) {
+      for (int idx = 0; idx < categoryCount; idx++) {
+          /* For each category */
+          for (int cid = 0; cid < metricsCfg[idx].eachCategoryCount; cid++) {
+              usys_log_debug("collector: src=%s agent='%s' url=%s",
+                             metricsCfg[idx].metricsCategory[cid].source,
+                             metricsCfg[idx].metricsCategory[cid].agent,
+                             metricsCfg[idx].metricsCategory[cid].url);
+              CollectorFxn fxn =
+                  get_agent_handler_fxn(metricsCfg[idx].metricsCategory[cid].agent);
 
-    for (int idx = 0; idx < categoryCount; idx++) {
-      /* For each category */
-      for (int cid = 0; cid < metricsCfg[idx].eachCategoryCount; cid++) {
-
-        /* Start scraping metrics */
-        CollectorFxn fxn =
-            get_agent_handler_fxn(metricsCfg[idx].metricsCategory[cid].agent);
-        if (fxn) {
-          fxn(&metricsCfg[idx].metricsCategory[cid]);
-        }
+              if (!fxn) {
+                  usys_log_error("collector: NO HANDLER for agent='%s' src=%s",
+                                 metricsCfg[idx].metricsCategory[cid].agent,
+                                 metricsCfg[idx].metricsCategory[cid].source);
+              } else {
+                  usys_log_debug("collector: calling handler for agent='%s' src=%s",
+                                 metricsCfg[idx].metricsCategory[cid].agent,
+                                 metricsCfg[idx].metricsCategory[cid].source);
+                  fxn(&metricsCfg[idx].metricsCategory[cid]);
+              }
+          }
       }
-    }
 
-    sleep(scraping_time_period);
+      sleep(scraping_time_period);
   }
 
   /* This means exit is called */
