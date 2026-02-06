@@ -18,6 +18,8 @@
 #include "usys_log.h"
 #include "usys_mem.h"
 #include "usys_api.h"
+#include "usys_file.h"
+#include "usys_services.h"
 
 #ifndef RETURN_OK
 #define RETURN_OK 0
@@ -25,11 +27,6 @@
 
 #ifndef RETURN_NOTOK
 #define RETURN_NOTOK -1
-#endif
-
-/* Adjust this to whatever name you registered in /etc/services */
-#ifndef BACKHAUL_SERVICE_NAME
-#define BACKHAUL_SERVICE_NAME "backhaul"
 #endif
 
 typedef struct {
@@ -347,10 +344,10 @@ int backhaul_collect_stat(MetricsCatConfig *cfgStat, metricAddFunc addFunc) {
 	}
 
 	/* Resolve backhaul.d port from /etc/services */
-	port = usys_find_service_port(BACKHAUL_SERVICE_NAME);
+	port = usys_find_service_port(SERVICE_BACKHAUL);
 	if (port <= 0) {
 		usys_log_error("backhaul_agent: could not resolve service port for '%s'",
-		               BACKHAUL_SERVICE_NAME);
+		               SERVICE_BACKHAUL);
 		free(m);
 		return RETURN_NOTOK;
 	}
