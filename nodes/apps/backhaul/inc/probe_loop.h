@@ -1,4 +1,3 @@
-
 /*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,12 +5,18 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-#ifndef ALGO_CHG_H
-#define ALGO_CHG_H
+
+#ifndef PROBE_LOOP_H
+#define PROBE_LOOP_H
+
+#include <pthread.h>
 
 #include "config.h"
 #include "metrics_store.h"
 
-int algo_chg_run(Config *config, MetricsStore *store, void *unused);
+int probe_loop_start(pthread_t *thread,
+                     Config *config,
+                     MetricsStore *store,
+                     volatile int *stopFlag);
 
-#endif /* ALGO_CHG_H_ */
+#endif /* PROBE_LOOP_H */

@@ -6,13 +6,14 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
-#ifndef ALGO_MULTI_REFLECTOR_H_
-#define ALGO_MULTI_REFLECTOR_H_
+#ifndef ALGO_MULTI_REFLECTOR_H
+#define ALGO_MULTI_REFLECTOR_H
 
 #include "config.h"
 #include "metrics_store.h"
-#include "worker.h"
 
-int algo_multi_reflector_run(Config *config, MetricsStore *store, Worker *worker);
+int algo_multi_reflector_run(Config *config,
+                             MetricsStore *store,
+                             void *unused);
 
 #endif /* ALGO_MULTI_REFLECTOR_H_ */

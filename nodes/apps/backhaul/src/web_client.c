@@ -16,12 +16,21 @@
 #include "backhauld.h"
 #include "web_client.h"
 #include "json_types.h"
+#include "json_serdes.h"
 #include "usys_log.h"
 #include "usys_mem.h"
 
-#define REF_PING_EP		"/v1/ping"
-#define REF_BLOB_EP		"/v1/blob"
-#define REF_ECHO_EP		"/v1/echo"
+#define REF_PING_EP	 "/v1/ping"
+#define REF_BLOB_EP	 "/v1/blob"
+#define REF_ECHO_EP	 "/v1/echo"
+
+#ifndef JTAG_NEAR_URL
+#define JTAG_NEAR_URL "jtag_near_url"
+#endif
+
+#ifndef JTAG_FAR_URL
+#define JTAG_FAR_URL "jtag_far_url"
+#endif
 
 typedef struct {
 	size_t	bytes;
@@ -119,7 +128,11 @@ static int do_get(Config *config, const char *url, ProbeResult *out, char **resp
 	return STATUS_OK;
 }
 
-static int do_post(Config *config, const char *url, const void *body, size_t bodyLen, TransferResult *out) {
+static int do_post(Config *config,
+                   const char *url,
+                   const void *body,
+                   size_t bodyLen,
+                   TransferResult *out) {
 
 	CURL *curl = NULL;
 	CURLcode rc;
@@ -182,7 +195,7 @@ int wc_fetch_reflectors(Config *config, ReflectorSet *set) {
 	if (config->reflectorNearUrl && *config->reflectorNearUrl &&
 		config->reflectorFarUrl && *config->reflectorFarUrl) {
 		strncpy(set->nearUrl, config->reflectorNearUrl, sizeof(set->nearUrl)-1);
-		strncpy(set->farUrl, config->reflectorFarUrl, sizeof(set->farUrl)-1);
+		strncpy(set->farUrl,  config->reflectorFarUrl,  sizeof(set->farUrl)-1);
 		set->ts = time(NULL);
 		return STATUS_OK;
 	}
@@ -212,7 +225,7 @@ int wc_fetch_reflectors(Config *config, ReflectorSet *set) {
 	}
 
 	strncpy(set->nearUrl, json_string_value(jn), sizeof(set->nearUrl)-1);
-	strncpy(set->farUrl, json_string_value(jf), sizeof(set->farUrl)-1);
+	strncpy(set->farUrl,  json_string_value(jf), sizeof(set->farUrl)-1);
 	set->ts = time(NULL);
 
 	json_decref(root);

@@ -5,33 +5,125 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
+#ifndef BACKHAULD_H
+#define BACKHAULD_H
 
-#ifndef BACKHAULD_H_
-#define BACKHAULD_H_
+#include <stddef.h>
+#include <time.h>
 
-#include "ulfius.h"
-#include "jansson.h"
-#include "usys_types.h"
-#include "usys_services.h"
-#include "usys_log.h"
+#include "usys_api.h"
 
-#define SERVICE_NAME             "backhaul"
-#define STATUS_OK                (0)
-#define STATUS_NOK               (-1)
+#define SERVICE_NAME      "backhaul.d"
+#define DEF_LOG_LEVEL     "INFO"
 
-#define DEF_LOG_LEVEL            "TRACE"
+#define URL_PREFIX        "/v1"
+#define API_RES_EP(x)     "/" x
 
-#define EP_BS                    "/"
-#define REST_API_VERSION         "v1"
-#define URL_PREFIX               EP_BS REST_API_VERSION
-#define API_RES_EP(RES)          EP_BS RES
+/* Common OK/NOK */
+#ifndef STATUS_OK
+#define STATUS_OK   0
+#endif
+#ifndef STATUS_NOK
+#define STATUS_NOK  1
+#endif
 
-#define ENV_BACKHAULD_DEBUG_MODE "BACKHAULD_DEBUG_MODE"
+typedef enum {
+    BACKHAUL_STATE_UNKNOWN = 0,
+    BACKHAUL_STATE_GOOD,
+    BACKHAUL_STATE_DEGRADED,
+    BACKHAUL_STATE_DOWN,
+    BACKHAUL_STATE_CAPPED
+} BackhaulState;
 
-typedef struct _u_instance  UInst;
-typedef struct _u_request   URequest;
-typedef struct _u_response  UResponse;
-typedef json_t              JsonObj;
-typedef json_error_t        JsonErrObj;
+typedef enum {
+    BACKHAUL_LINK_UNKNOWN = 0,
+    BACKHAUL_LINK_TERRESTRIAL_LIKE,
+    BACKHAUL_LINK_SAT_LEO_LIKE,
+    BACKHAUL_LINK_SAT_GEO_LIKE,
+    BACKHAUL_LINK_CELLULAR_LIKE
+} BackhaulLinkGuess;
 
-#endif /* BACKHAULD_H_ */
+typedef struct {
+    int     ok;
+    long    httpCode;
+    double  ttfbMs;
+    double  totalMs;
+    int     stalled;
+} ProbeResult;
+
+typedef struct {
+    int     ok;
+    long    httpCode;
+    double  seconds;
+    double  mbps;
+} TransferResult;
+
+typedef struct {
+    long    ts;
+    int     ok;
+    double  ttfbMs;
+    int     stalled;
+} MicroSample;
+
+typedef struct {
+    long    ts;
+    int     ok;
+    double  dlMbps;
+    double  ulMbps;
+    double  dlSec;
+    double  ulSec;
+} ChgSample;
+
+typedef struct {
+
+    BackhaulState      backhaulState;
+    BackhaulLinkGuess  linkGuess;
+    double             confidence;
+
+    /* classifier hysteresis (internal state, useful for debugging) */
+    int                consecFails;
+    int                consecOk;
+
+    double             dlGoodputMbps;
+    double             ulGoodputMbps;
+
+    double             bufferbloatInflationFactor;
+    double             capDetectedMbps;
+
+    double             nearTtfbMedianMs;
+    double             nearTtfbP95Ms;
+    double             nearTtfbP99Ms;
+
+    double             farTtfbMedianMs;
+    double             farTtfbP95Ms;
+    double             farTtfbP99Ms;
+
+    double             probeSuccessRatePct;
+    double             stallRatePct;
+
+    time_t             lastMicroTs;
+    time_t             lastMultiTs;
+    time_t             lastChgTs;
+    time_t             lastClassifyTs;
+
+    time_t             lastDiagTs;
+    char               lastDiagName[32];
+
+} BackhaulMetrics;
+
+typedef struct {
+    char nearUrl[256];
+    char farUrl[256];
+    long ts;
+} ReflectorSet;
+
+/* Forward decls */
+typedef struct Config Config;
+typedef struct MetricsStore MetricsStore;
+
+typedef struct {
+    Config       *config;
+    MetricsStore *store;
+} EpCtx;
+
+#endif /* BACKHAULD_H */

@@ -11,9 +11,8 @@
 
 #include "config.h"
 #include "metrics_store.h"
-#include "worker.h"
 
-int algo_diag_parallel_run(Config *config, MetricsStore *store, Worker *worker);
-int algo_diag_bufferbloat_run(Config *config, MetricsStore *store, Worker *worker);
+int algo_diag_parallel_run(Config *config,    MetricsStore *store, void *unused);
+int algo_diag_bufferbloat_run(Config *config, MetricsStore *store, void *unused);
 
 #endif /* ALGO_DIAG_H_ */

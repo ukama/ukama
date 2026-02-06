@@ -2,134 +2,85 @@
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2026-present, Ukama Inc.
  */
 
-#ifndef METRICS_STORE_H_
-#define METRICS_STORE_H_
+#ifndef METRICS_STORE_H
+#define METRICS_STORE_H
 
 #include <pthread.h>
-#include <time.h>
+#include <stddef.h>
 
-#include "jansson.h"
-#include "usys_types.h"
-
-typedef enum {
-	BACKHAUL_STATE_UNKNOWN = 0,
-	BACKHAUL_STATE_GOOD,
-	BACKHAUL_STATE_DEGRADED,
-	BACKHAUL_STATE_DOWN,
-	BACKHAUL_STATE_CAPPED
-} BackhaulState;
+#include "backhauld.h"
+#include "usys_api.h"
 
 typedef enum {
-	BACKHAUL_LINK_UNKNOWN = 0,
-	BACKHAUL_LINK_TERRESTRIAL_LIKE,
-	BACKHAUL_LINK_SAT_LEO_LIKE,
-	BACKHAUL_LINK_SAT_GEO_LIKE,
-	BACKHAUL_LINK_CELLULAR_LIKE
-} BackhaulLinkGuess;
-
-/* one probe sample */
-typedef struct {
-	double	ttfbMs;
-	int		ok;			/* 1=success */
-	int		stalled;	/* 1=stall */
-	long	ts;			/* epoch seconds */
-} MicroSample;
-
-/* CHG sample (goodput) */
-typedef struct {
-	double	dlMbps;
-	double	ulMbps;
-	double	dlSec;
-	double	ulSec;
-	int		ok;
-	long	ts;
-} ChgSample;
-
-/* Aggregate snapshot (published) */
-typedef struct {
-
-	BackhaulState		backhaulState;
-	BackhaulLinkGuess	linkGuess;
-	double				confidence;
-
-	double	nearTtfbMedianMs;
-	double	nearTtfbP95Ms;
-	double	nearTtfbP99Ms;
-
-	double	farTtfbMedianMs;
-	double	farTtfbP95Ms;
-	double	farTtfbP99Ms;
-
-	double	probeSuccessRatePct;
-	double	stallRatePct;
-
-	double	dlGoodputMbps;
-	double	ulGoodputMbps;
-
-	double	bufferbloatInflationFactor;
-	double	capDetectedMbps;
-
-	long	lastMicroTs;
-	long	lastMultiTs;
-	long	lastChgTs;
-	long	lastClassifyTs;
-
-	long	lastDiagTs;
-	char	lastDiagName[64];
-
-	/* internal counters for state machine */
-	int		consecFails;
-	int		consecOk;
-
-} BackhaulMetrics;
+    BACKHAUL_DIAG_NONE = 0,
+    BACKHAUL_DIAG_CHG,
+    BACKHAUL_DIAG_PARALLEL,
+    BACKHAUL_DIAG_BUFFERBLOAT
+} BackhaulDiagRequest;
 
 typedef struct {
-	pthread_mutex_t	lock;
+    /* computed aggregates from ring buffers */
+    double microMed, microP95, microP99, microSuccPct, microStallPct;
+    double nearMed,  nearP95,  nearP99,  nearSuccPct,  nearStallPct;
+    double farMed,   farP95,   farP99,   farSuccPct,   farStallPct;
 
-	MicroSample		*microSamples;
-	int				microCap;
-	int				microHead;
-	int				microCount;
+    int microCount;
+    int nearCount;
+    int farCount;
+    int chgCount;
+} BackhaulAggregates;
 
-	MicroSample		*nearSamples;
-	int				nearCap;
-	int				nearHead;
-	int				nearCount;
+typedef struct MetricsStore {
+    pthread_mutex_t lock;
 
-	MicroSample		*farSamples;
-	int				farCap;
-	int				farHead;
-	int				farCount;
+    /* ring buffers */
+    MicroSample *microSamples;
+    MicroSample *nearSamples;
+    MicroSample *farSamples;
+    ChgSample   *chgSamples;
 
-	ChgSample		*chgSamples;
-	int				chgCap;
-	int				chgHead;
-	int				chgCount;
+    int microCap, nearCap, farCap, chgCap;
+    int microHead, nearHead, farHead, chgHead;
+    int microCount, nearCount, farCount, chgCount;
 
-	BackhaulMetrics	metrics;
+    /* published current metrics */
+    BackhaulMetrics metrics;
 
+    /* static reflectors */
+    char reflectorNearUrl[256];
+    char reflectorFarUrl[256];
+    long reflectorTs;
+
+    /* Option-A diagnostics request flag */
+    BackhaulDiagRequest diagRequest;
 } MetricsStore;
 
-int metrics_store_init(MetricsStore *store,
-					   int microCap,
-					   int multiCap,
-					   int chgCap);
-
+int  metrics_store_init(MetricsStore *store, int microCap, int multiCap, int chgCap);
 void metrics_store_free(MetricsStore *store);
 
 void metrics_store_add_micro(MetricsStore *store, MicroSample s);
-void metrics_store_add_near(MetricsStore  *store, MicroSample s);
-void metrics_store_add_far(MetricsStore   *store, MicroSample s);
-void metrics_store_add_chg(MetricsStore   *store, ChgSample   s);
+void metrics_store_add_near(MetricsStore *store, MicroSample s);
+void metrics_store_add_far(MetricsStore *store, MicroSample s);
+void metrics_store_add_chg(MetricsStore *store, ChgSample s);
 
 void metrics_store_set_diag(MetricsStore *store, const char *name);
 
 BackhaulMetrics metrics_store_get_snapshot(MetricsStore *store);
-json_t* metrics_store_snapshot_json(MetricsStore *store);
-json_t* metrics_store_status_json(MetricsStore *store);
+
+/* reflectors */
+void metrics_store_set_reflectors(MetricsStore *store, const char *nearUrl, const char *farUrl, long ts);
+int  metrics_store_get_reflectors(MetricsStore *store,
+                                 char *nearUrl, size_t nearLen,
+                                 char *farUrl,  size_t farLen,
+                                 long *ts);
+
+/* diagnostics Option-A */
+void metrics_store_request_diag(MetricsStore *store, BackhaulDiagRequest req);
+BackhaulDiagRequest metrics_store_take_diag_request(MetricsStore *store);
+
+/* aggregates helper (used by classifier + json_serdes) */
+int metrics_store_get_aggregates(MetricsStore *store, BackhaulAggregates *out);
 
 #endif /* METRICS_STORE_H_ */

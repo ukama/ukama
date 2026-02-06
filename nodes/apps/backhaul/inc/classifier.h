@@ -6,8 +6,8 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
-#ifndef CLASSIFIER_H_
-#define CLASSIFIER_H_
+#ifndef CLASSIFIER_H
+#define CLASSIFIER_H
 
 #include "config.h"
 #include "metrics_store.h"

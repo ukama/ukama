@@ -6,13 +6,14 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
-#ifndef ALGO_MICRO_PROBE_H_
-#define ALGO_MICRO_PROBE_H_
+#ifndef ALGO_MICRO_PROBE_H
+#define ALGO_MICRO_PROBE_H
 
 #include "config.h"
 #include "metrics_store.h"
-#include "worker.h"
 
-int algo_micro_probe_run(Config *config, MetricsStore *store, Worker *worker);
+int algo_micro_probe_run(Config *config,
+                         MetricsStore *store,
+                         void *unused);
 
 #endif /* ALGO_MICRO_PROBE_H_ */
