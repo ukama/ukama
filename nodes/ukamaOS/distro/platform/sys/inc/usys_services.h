@@ -34,6 +34,7 @@ extern "C" {
 #define SERVICE_WIMC_AGENT    "wimc-agent"
 #define SERVICE_GPS           "gps"
 #define SERVICE_FEM           "fem"
+#define SERVICE_BACKHAUL      "backhaul"
 
 #ifdef __cplusplus
 }
