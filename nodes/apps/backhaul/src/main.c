@@ -112,8 +112,10 @@ int main(int argc, char **argv) {
 
     config_log(&config);
 
-    if (!metrics_store_init(&store, config.windowMicroSamples,
-                            config.windowMultiSamples, config.windowChgSamples)) {
+    if (!metrics_store_init(&store,
+                            config.windowMicroSamples,
+                            config.windowMultiSamples,
+                            config.windowChgSamples)) {
         usys_log_error("Failed to init metrics store");
         usys_exit(1);
     }
@@ -144,7 +146,7 @@ int main(int argc, char **argv) {
     epCtx.config = &config;
     epCtx.store  = &store;
 
-    signal(SIGINT, handle_term);
+    signal(SIGINT,  handle_term);
     signal(SIGTERM, handle_term);
 
     if (!start_web_service(&config, &serviceInst, &epCtx)) {

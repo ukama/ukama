@@ -12,8 +12,8 @@
 #include "jansson.h"
 #include "backhauld.h"
 
-#define JTAG_NEAR_URL "nearUrl"
-#define JTAG_FAR_URL  "farUrl"
+#define REFLECTOR_NEAR_KEY "reflectorNearUrl"
+#define REFLECTOR_FAR_KEY  "reflectorFarUrl"
 
 /* Parse: {"nearUrl":"...", "farUrl":"..."} (keys may also match json_types.h tags if you standardize there) */
 int json_parse_reflector_set(const char *json_str, ReflectorSet *out);

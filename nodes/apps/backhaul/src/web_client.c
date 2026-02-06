@@ -20,16 +20,16 @@
 #include "usys_log.h"
 #include "usys_mem.h"
 
-#define REF_PING_EP	 "/v1/ping"
-#define REF_BLOB_EP	 "/v1/blob"
-#define REF_ECHO_EP	 "/v1/echo"
+#define REF_PING_EP   "/v1/ping"
+#define REF_DL_EP     "/v1/download"
+#define REF_UL_EP     "/v1/upload"
 
-#ifndef JTAG_NEAR_URL
-#define JTAG_NEAR_URL "jtag_near_url"
+#ifndef REFLECTOR_NEAR_KEY
+#define REFLECTOR_NEAR_KEY "reflectorNearUrl"
 #endif
 
-#ifndef JTAG_FAR_URL
-#define JTAG_FAR_URL "jtag_far_url"
+#ifndef REFLECTOR_FAR_KEY
+#define REFLECTOR_FAR_KEY  "reflectorFarUrl"
 #endif
 
 typedef struct {
@@ -73,33 +73,79 @@ static size_t str_write_cb(void *ptr, size_t size, size_t nmemb, void *userdata)
 	return n;
 }
 
-int wc_init(void) {
-	return (curl_global_init(CURL_GLOBAL_DEFAULT) == 0) ? USYS_TRUE : USYS_FALSE;
+static const char *curl_rc_str(CURLcode rc) {
+	return curl_easy_strerror(rc);
 }
 
-void wc_cleanup(void) {
-	curl_global_cleanup();
+static void log_curl_failure(const char *tag,
+                             const char *url,
+                             CURLcode rc,
+                             long httpCode,
+                             double ttfb,
+                             double total,
+                             size_t bytes,
+                             const char *respStr /* optional, may be NULL */) {
+
+	/* Keep snippet small to avoid log spam */
+	char snippet[161];
+	snippet[0] = '\0';
+
+	if (respStr && *respStr) {
+		size_t n = strlen(respStr);
+		if (n > 160) n = 160;
+		memcpy(snippet, respStr, n);
+		snippet[n] = '\0';
+	}
+
+	/* Loud + actionable */
+	usys_log_error("[web_client] %s FAILED: url=%s curl_rc=%d(%s) http=%ld ttfb=%.2fms total=%.2fms bytes=%zu%s%s",
+	               tag,
+	               (url && *url) ? url : "-",
+	               (int)rc,
+	               curl_rc_str(rc),
+	               httpCode,
+	               ttfb * 1000.0,
+	               total * 1000.0,
+	               bytes,
+	               (snippet[0] ? " resp_snip=\"" : ""),
+	               (snippet[0] ? snippet : ""));
+
+	if (snippet[0]) {
+		usys_log_error("[web_client] %s resp_snip_end", tag);
+	}
+}
+
+static int http_2xx(long code) {
+	return (code >= 200 && code < 300);
 }
 
 static int do_get(Config *config, const char *url, ProbeResult *out, char **respStr) {
 
 	CURL *curl = NULL;
-	CURLcode rc;
+	CURLcode rc = CURLE_OK;
 
 	Sink sink = {0};
-	double ttfb=0, total=0;
+	double ttfb = 0.0, total = 0.0;
 	long httpCode = 0;
+
+	if (!config || !url || !*url) return STATUS_NOK;
 
 	if (out) memset(out, 0, sizeof(*out));
 	if (respStr) *respStr = NULL;
 
 	curl = curl_easy_init();
-	if (!curl) return STATUS_NOK;
+	if (!curl) {
+		usys_log_error("[web_client] do_get: curl_easy_init failed url=%s", url);
+		return STATUS_NOK;
+	}
 
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 	curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT_MS, (long)config->connectTimeoutMs);
 	curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, (long)config->totalTimeoutMs);
 	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+
+	/* Optional: make DNS/proxy surprises visible quickly */
+	/* curl_easy_setopt(curl, CURLOPT_NOPROXY, "*"); */
 
 	if (respStr) {
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, str_write_cb);
@@ -111,20 +157,36 @@ static int do_get(Config *config, const char *url, ProbeResult *out, char **resp
 
 	rc = curl_easy_perform(curl);
 
+	/* Always try to read metadata, even on failure */
 	curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
 	curl_easy_getinfo(curl, CURLINFO_STARTTRANSFER_TIME, &ttfb);
 	curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &total);
 
+	int ok = (rc == CURLE_OK && http_2xx(httpCode)) ? 1 : 0;
+
 	if (out) {
 		out->httpCode = httpCode;
-		out->ttfbMs = ttfb * 1000.0;
-		out->totalMs = total * 1000.0;
-		out->ok = (rc == CURLE_OK && httpCode >= 200 && httpCode < 300) ? 1 : 0;
-		out->stalled = (out->ok && out->ttfbMs >= (double)config->stallThresholdMs) ? 1 : 0;
+		out->ttfbMs   = ttfb * 1000.0;
+		out->totalMs  = total * 1000.0;
+		out->ok       = ok;
+		out->stalled  = (ok && out->ttfbMs >= (double)config->stallThresholdMs) ? 1 : 0;
+	}
+
+	if (!ok) {
+		log_curl_failure("GET", url, rc, httpCode, ttfb, total,
+		                 respStr && *respStr ? strlen(*respStr) : sink.bytes,
+		                 (respStr ? (const char *)(*respStr) : NULL));
+		/* Clean up before returning */
+		curl_easy_cleanup(curl);
+		/* If we allocated respStr but call failed, free it to avoid leaks */
+		if (respStr && *respStr) {
+			free(*respStr);
+			*respStr = NULL;
+		}
+		return STATUS_NOK;
 	}
 
 	curl_easy_cleanup(curl);
-
 	return STATUS_OK;
 }
 
@@ -135,24 +197,32 @@ static int do_post(Config *config,
                    TransferResult *out) {
 
 	CURL *curl = NULL;
-	CURLcode rc;
+	CURLcode rc = CURLE_OK;
 
 	Sink sink = {0};
-	double total=0;
+	double total = 0.0;
 	long httpCode = 0;
+
+	if (!config || !url || !*url || !body) return STATUS_NOK;
+	if (bodyLen == 0) return STATUS_NOK;
 
 	if (out) memset(out, 0, sizeof(*out));
 
 	curl = curl_easy_init();
-	if (!curl) return STATUS_NOK;
+	if (!curl) {
+		usys_log_error("[web_client] do_post: curl_easy_init failed url=%s", url);
+		return STATUS_NOK;
+	}
 
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 	curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT_MS, (long)config->connectTimeoutMs);
 	curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, (long)config->totalTimeoutMs);
+
 	curl_easy_setopt(curl, CURLOPT_POST, 1L);
 	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body);
 	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)bodyLen);
 
+	/* Read response to complete transfer */
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, sink_write_cb);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &sink);
 
@@ -161,18 +231,38 @@ static int do_post(Config *config,
 	curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
 	curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &total);
 
+	int ok = (rc == CURLE_OK && http_2xx(httpCode)) ? 1 : 0;
+
 	if (out) {
 		out->httpCode = httpCode;
-		out->seconds = total;
-		out->ok = (rc == CURLE_OK && httpCode >= 200 && httpCode < 300) ? 1 : 0;
-		if (out->ok && total > 0.0) {
+		out->seconds  = total;
+		out->ok       = ok;
+
+		/* compute mbps only if ok and timing valid */
+		if (ok && total > 0.0) {
 			double mbits = ((double)bodyLen * 8.0) / 1000000.0;
 			out->mbps = mbits / total;
+		} else {
+			out->mbps = 0.0;
 		}
+	}
+
+	if (!ok) {
+		log_curl_failure("POST", url, rc, httpCode, 0.0, total, sink.bytes, NULL);
+		curl_easy_cleanup(curl);
+		return STATUS_NOK;
 	}
 
 	curl_easy_cleanup(curl);
 	return STATUS_OK;
+}
+
+int wc_init(void) {
+	return (curl_global_init(CURL_GLOBAL_DEFAULT) == 0) ? USYS_TRUE : USYS_FALSE;
+}
+
+void wc_cleanup(void) {
+	curl_global_cleanup();
 }
 
 static void join_url(char *dst, size_t dstLen, const char *baseUrl, const char *ep) {
@@ -216,8 +306,8 @@ int wc_fetch_reflectors(Config *config, ReflectorSet *set) {
 
 	if (!root) return STATUS_NOK;
 
-	json_t *jn = json_object_get(root, JTAG_NEAR_URL);
-	json_t *jf = json_object_get(root, JTAG_FAR_URL);
+    json_t *jn = json_object_get(root, REFLECTOR_NEAR_KEY);
+    json_t *jf = json_object_get(root, REFLECTOR_FAR_KEY);
 
 	if (!json_is_string(jn) || !json_is_string(jf)) {
 		json_decref(root);
@@ -256,7 +346,7 @@ int wc_download_blob(Config *config, const char *baseUrl, int bytes, TransferRes
 	if (!config || !baseUrl || !out) return STATUS_NOK;
 	memset(out, 0, sizeof(*out));
 
-	snprintf(url, sizeof(url), "%s%s?bytes=%d", baseUrl, REF_BLOB_EP, bytes);
+    snprintf(url, sizeof(url), "%s%s/%d", baseUrl, REF_DL_EP, bytes);
 
 	curl = curl_easy_init();
 	if (!curl) return STATUS_NOK;
@@ -297,7 +387,7 @@ int wc_upload_echo(Config *config, const char *baseUrl, int bytes, TransferResul
 
 	if (!config || !baseUrl || !out) return STATUS_NOK;
 
-	join_url(url, sizeof(url), baseUrl, REF_ECHO_EP);
+    join_url(url, sizeof(url), baseUrl, REF_UL_EP);
 
 	void *buf = usys_calloc(1, bytes);
 	if (!buf) return STATUS_NOK;
