@@ -13,7 +13,7 @@
 
 #include "usys_api.h"
 
-#define SERVICE_NAME      "backhaul.d"
+#define SERVICE_NAME      "backhaul"
 #define DEF_LOG_LEVEL     "INFO"
 
 #define URL_PREFIX        "/v1"
