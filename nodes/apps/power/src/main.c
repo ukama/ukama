@@ -67,8 +67,6 @@ int main(int argc, char **argv) {
     struct _u_instance inst;
     EpCtx ctx = {0};
 
-    pthread_t probeThread = 0;
-
     usys_log_set_service(SERVICE_NAME);
     usys_log_info("starting %s", SERVICE_NAME);
 
@@ -121,7 +119,7 @@ int main(int argc, char **argv) {
         usys_exit(1);
 	}
 
-	if (sample_loop_start(&sampler, &config, &store) != 0) {
+	if (!sample_loop_start(&sampler, &config, &store)) {
 		usys_log_error("failed to start the sampling loop");
         web_service_stop(&inst);
 		metrics_store_free(&store);
