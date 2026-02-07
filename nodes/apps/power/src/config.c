@@ -20,9 +20,9 @@ static char *dup_env(const char *name, const char *defVal) {
 	char *v = getenv(name);
 	if (!v || !*v) {
 		if (!defVal) return NULL;
-		return usys_strdup(defVal);
+		return strdup(defVal);
 	}
-	return usys_strdup(v);
+	return strdup(v);
 }
 
 static int parse_u16(const char *s, uint16_t *out) {
@@ -130,7 +130,7 @@ static void parse_ads_chmap(Config *cfg, const char *s) {
 	}
 }
 
-int config_load(Config *cfg) {
+int config_load_from_env(Config *cfg) {
 
 	char *s;
 
@@ -159,11 +159,11 @@ int config_load(Config *cfg) {
 
 	/* optional devices */
 	cfg->lm25066Dev = dup_env("POWER_LM25066_DEV", NULL);
-	cfg->lm75Dev = dup_env("POWER_LM75_DEV", NULL);
+	cfg->lm75Dev    = dup_env("POWER_LM75_DEV", NULL);
 	cfg->ads1015Dev = dup_env("POWER_ADS1015_DEV", NULL);
 
 	cfg->lm25066Addr = 0;
-	cfg->lm75Addr = 0;
+	cfg->lm75Addr    = 0;
 	cfg->ads1015Addr = 0;
 
 	cfg->lm25066ClHigh = 0;
@@ -181,7 +181,9 @@ int config_load(Config *cfg) {
 
 	s = getenv("POWER_LM25066_CL_HIGH");
 	if (cfg->lm25066Dev && s && *s) {
-		if (parse_i32(s, &cfg->lm25066ClHigh) != 0 || (cfg->lm25066ClHigh != 0 && cfg->lm25066ClHigh != 1)) {
+		if (parse_i32(s, &cfg->lm25066ClHigh) != 0 ||
+            (cfg->lm25066ClHigh != 0 &&
+             cfg->lm25066ClHigh != 1)) {
 			usys_log_error("Invalid POWER_LM25066_CL_HIGH: %s", s);
 			return -1;
 		}
@@ -189,7 +191,9 @@ int config_load(Config *cfg) {
 
 	s = getenv("POWER_LM25066_RS_MOHM");
 	if (cfg->lm25066Dev && s && *s) {
-		if (parse_i32(s, &cfg->lm25066RsMohm) != 0 || cfg->lm25066RsMohm < 1 || cfg->lm25066RsMohm > 100) {
+		if (parse_i32(s, &cfg->lm25066RsMohm) != 0 ||
+            cfg->lm25066RsMohm < 1 ||
+            cfg->lm25066RsMohm > 100) {
 			usys_log_error("Invalid POWER_LM25066_RS_MOHM: %s", s);
 			return -1;
 		}
@@ -231,4 +235,8 @@ void config_free(Config *cfg) {
 	usys_free(cfg->ads1015Dev);
 
 	memset(cfg, 0, sizeof(*cfg));
+}
+
+void config_print_env_help(void) {
+
 }

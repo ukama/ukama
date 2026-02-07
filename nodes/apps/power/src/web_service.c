@@ -5,9 +5,10 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-
 #include <string.h>
+#include <stdlib.h>
 
+#include "powerd.h"
 #include "web_service.h"
 #include "http_status.h"
 #include "json_serdes.h"
@@ -15,48 +16,97 @@
 #include "usys_log.h"
 #include "version.h"
 
-static int respond_json(UResponse *response, int code, json_t *o) {
+static void setup_unsupported_methods(UInst *instance,
+                                      char *allowedMethod,
+                                      char *prefix,
+                                      char *resource) {
 
-	char *s = json_dumps(o, JSON_COMPACT);
-	if (!s) {
-		ulfius_set_string_body_response(response, HttpStatus_InternalServerError, "json error");
-		return U_CALLBACK_CONTINUE;
-	}
+    if (strcmp(allowedMethod, "GET") != 0) {
+        ulfius_add_endpoint_by_val(instance, "GET", prefix, resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
 
-	ulfius_add_header_to_response(response, "Content-Type", "application/json");
-	ulfius_set_string_body_response(response, code, s);
+    if (strcmp(allowedMethod, "POST") != 0) {
+        ulfius_add_endpoint_by_val(instance, "POST", prefix, resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
 
-	free(s);
-	return U_CALLBACK_CONTINUE;
+    if (strcmp(allowedMethod, "PUT") != 0) {
+        ulfius_add_endpoint_by_val(instance, "PUT", prefix, resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "DELETE") != 0) {
+        ulfius_add_endpoint_by_val(instance, "DELETE", prefix, resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
 }
 
-int web_service_cb_ping(const URequest *request, UResponse *response, void *user_data) {
 
-	(void)request; (void)user_data;
+static void setup_webservice_endpoints(UInst *instance, EpCtx *epCtx) {
 
-	json_t *o = json_object();
-	json_object_set_new(o, "pong", json_true());
-	respond_json(response, HttpStatus_OK, o);
-	json_decref(o);
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX, API_RES_EP("ping"), 0,
+                               &web_service_cb_get_ping, epCtx);
+    setup_unsupported_methods(instance, "GET", URL_PREFIX, API_RES_EP("ping"));
 
-	return U_CALLBACK_CONTINUE;
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX, API_RES_EP("version"), 0,
+                               &web_service_cb_get_version, epCtx);
+    setup_unsupported_methods(instance, "GET", URL_PREFIX, API_RES_EP("version"));
+
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX, API_RES_EP("power"), 0,
+                               &web_service_cb_get_power, epCtx);
+    setup_unsupported_methods(instance, "GET", URL_PREFIX, API_RES_EP("power"));
+
+    ulfius_set_default_endpoint(instance, &web_service_cb_default, epCtx);
 }
 
-int web_service_cb_version(const URequest *request, UResponse *response, void *user_data) {
+static void respond_json(UResponse *response, int status, json_t *json) {
 
-	(void)request; (void)user_data;
+    char *s = json_dumps(json, 0);
+    if (!s) {
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_InternalServerError,
+                                        HttpStatusStr(HttpStatus_InternalServerError));
+        return;
+    }
 
-	json_t *o = json_object();
-	json_object_set_new(o, "name", json_string("powerd"));
-	json_object_set_new(o, "version", json_string(VERSION));
-	json_object_set_new(o, "git", json_string(GIT_COMMIT));
-	respond_json(response, HttpStatus_OK, o);
-	json_decref(o);
+    ulfius_set_string_body_response(response, status, s);
+    u_map_put(response->map_header, "Content-Type", "application/json");
 
-	return U_CALLBACK_CONTINUE;
+    free(s);
 }
 
-int web_service_cb_power(const URequest *request, UResponse *response, void *epConfig) {
+int web_service_cb_get_ping(const URequest *request,
+                            UResponse *response,
+                            void *epConfig) {
+
+    (void)request;
+    (void)epConfig;
+
+    ulfius_set_string_body_response(response,
+                                    HttpStatus_OK,
+                                    HttpStatusStr(HttpStatus_OK));
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_get_version(const URequest *request,
+                               UResponse *response,
+                               void *epConfig) {
+
+    (void)request;
+    (void)epConfig;
+
+    ulfius_set_string_body_response(response, HttpStatus_OK, VERSION);
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_get_power(const URequest *request,
+                             UResponse *response,
+                             void *epConfig) {
 
 	(void)request;
 	EpCtx *ctx = (EpCtx *)epConfig;
@@ -71,50 +121,53 @@ int web_service_cb_power(const URequest *request, UResponse *response, void *epC
 	return U_CALLBACK_CONTINUE;
 }
 
-int web_service_cb_default(const URequest *request, UResponse *response, void *epConfig) {
+int web_service_cb_default(const URequest *request,
+                           UResponse *response,
+                           void *epConfig) {
 
-	(void)request; (void)epConfig;
+	(void)request;
+    (void)epConfig;
+
 	ulfius_set_string_body_response(response,
 	                               HttpStatus_NotFound,
 	                               HttpStatusStr(HttpStatus_NotFound));
 	return U_CALLBACK_CONTINUE;
 }
 
-int web_service_cb_not_allowed(const URequest *request, UResponse *response, void *user_data) {
+int web_service_cb_not_allowed(const URequest *request,
+                               UResponse *response,
+                               void *user_data) {
 
-	(void)request; (void)user_data;
+	(void)request;
+    (void)user_data;
+
 	ulfius_set_string_body_response(response,
 	                               HttpStatus_MethodNotAllowed,
 	                               HttpStatusStr(HttpStatus_MethodNotAllowed));
 	return U_CALLBACK_CONTINUE;
 }
 
-int web_service_start(struct _u_instance *inst, EpCtx *ctx) {
+int start_web_service(Config *config, UInst *inst, EpCtx *ctx) {
 
-	if (ulfius_init_instance(inst, ctx->cfg->listenPort, ctx->cfg->listenAddr, NULL) != U_OK) {
-		usys_log_error("web_service: init instance failed");
-		return -1;
-	}
+    if (ulfius_init_instance(inst, config->listenPort, NULL, NULL) != U_OK) {
+        return USYS_FALSE;
+    }
 
-	/* GET /v1/ping */
-	ulfius_add_endpoint_by_val(inst, "GET", "/v1", "ping", 0, &web_service_cb_ping, ctx);
+    u_map_put(inst->default_headers, "Access-Control-Allow-Origin", "*");
 
-	/* GET /v1/version */
-	ulfius_add_endpoint_by_val(inst, "GET", "/v1", "version", 0, &web_service_cb_version, ctx);
+    setup_webservice_endpoints(inst, ctx);
 
-	/* GET /v1/power */
-	ulfius_add_endpoint_by_val(inst, "GET", "/v1", "power", 0, &web_service_cb_power, ctx);
+    if (ulfius_start_framework(inst) != U_OK) {
+        ulfius_stop_framework(inst);
+        ulfius_clean_instance(inst);
+        return USYS_FALSE;
+    }
 
-	/* default */
-	ulfius_set_default_endpoint(inst, &web_service_cb_default, ctx);
+	usys_log_info("web_service: listening on %s:%d",
+                  ctx->config->listenAddr,
+                  ctx->config->listenPort);
 
-	if (ulfius_start_framework(inst) != U_OK) {
-		usys_log_error("web_service: start framework failed");
-		return -1;
-	}
-
-	usys_log_info("web_service: listening on %s:%d", ctx->cfg->listenAddr, ctx->cfg->listenPort);
-	return 0;
+	return USYS_TRUE;
 }
 
 void web_service_stop(struct _u_instance *inst) {

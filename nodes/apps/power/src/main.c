@@ -16,69 +16,128 @@
 #include "web_service.h"
 
 #include "usys_log.h"
+#include "usys_getopt.h"
+#include "usys_api.h"
+
+#include "version.h"
 
 static volatile int gStop = 0;
 
-static void on_signal(int sig) {
-
-	(void)sig;
-	gStop = 1;
+static void handle_term(int signum) {
+    (void)signum;
+    usys_log_info("Terminate signal.");
+    gStop = 1;
 }
 
-int main(void) {
+static UsysOption longOptions[] = {
+    { "logs",    required_argument, 0, 'l' },
+    { "help",    no_argument,       0, 'h' },
+    { "version", no_argument,       0, 'v' },
+    { 0, 0, 0, 0 }
+};
 
-	Config cfg;
-	MetricsStore store;
-	SampleLoop sampler;
-	struct _u_instance inst;
-	EpCtx ctx;
+static void set_log_level(char *slevel) {
 
-	signal(SIGINT, on_signal);
-	signal(SIGTERM, on_signal);
+    int ilevel = USYS_LOG_TRACE;
 
-	usys_log_init(POWERD_NAME);
-	usys_log_info("starting %s", POWERD_NAME);
+    if (!strcmp(slevel, "TRACE"))      ilevel = USYS_LOG_TRACE;
+    else if (!strcmp(slevel, "DEBUG")) ilevel = USYS_LOG_DEBUG;
+    else if (!strcmp(slevel, "INFO"))  ilevel = USYS_LOG_INFO;
 
-	if (config_load(&cfg) != 0) {
-		usys_log_error("config_load failed");
-		return 1;
+    usys_log_set_level(ilevel);
+}
+
+static void usage(void) {
+
+    usys_puts("Usage: power-monitor [options]");
+    usys_puts("Options:");
+    usys_puts("-h, --help                    Help menu");
+    usys_puts("-l, --logs <TRACE|DEBUG|INFO> Log level for the process");
+    usys_puts("-v, --version                 Software version");
+}
+
+int main(int argc, char **argv) {
+
+    int opt, optIdx;
+    char *debug = DEF_LOG_LEVEL;
+
+    Config config = {0};
+    SampleLoop sampler;
+    MetricsStore store = {0};
+    struct _u_instance inst;
+    EpCtx ctx = {0};
+
+    pthread_t probeThread = 0;
+
+    usys_log_set_service(SERVICE_NAME);
+    usys_log_info("starting %s", SERVICE_NAME);
+
+    signal(SIGINT,  handle_term);
+    signal(SIGTERM, handle_term);
+
+    while (1) {
+        opt = 0; optIdx = 0;
+        opt = usys_getopt_long(argc, argv, "vh:l:", longOptions, &optIdx);
+        if (opt == -1) break;
+
+        switch (opt) {
+        case 'h':
+            usage();
+            config_print_env_help();
+            usys_exit(0);
+            break;
+        case 'v':
+            usys_puts(VERSION);
+            usys_exit(0);
+            break;
+        case 'l':
+            debug = optarg;
+            set_log_level(debug);
+            break;
+        default:
+            usage();
+            usys_exit(0);
+        }
+    }
+
+	if (config_load_from_env(&config) != 0) {
+		usys_log_error("Failed to load required config");
+        usys_exit(1);
 	}
 
-	if (metrics_store_init(&store, cfg.boardName) != 0) {
-		usys_log_error("metrics_store_init failed");
-		config_free(&cfg);
-		return 1;
+	if (metrics_store_init(&store, config.boardName) != 0) {
+		usys_log_error("Failed to initialize metrics store");
+		config_free(&config);
+        usys_exit(1);
 	}
 
-	if (sample_loop_start(&sampler, &cfg, &store) != 0) {
-		usys_log_error("sample_loop_start failed");
+    ctx.config = &config;
+	ctx.store  = &store;
+
+    if (!start_web_service(&config, &inst, &ctx)) {
+		usys_log_error("Failed to start the web services");
 		metrics_store_free(&store);
-		config_free(&cfg);
-		return 1;
+		config_free(&config);
+        usys_exit(1);
 	}
 
-	ctx.cfg = &cfg;
-	ctx.store = &store;
-
-	if (web_service_start(&inst, &ctx) != 0) {
-		usys_log_error("web_service_start failed");
-		sample_loop_stop(&sampler);
+	if (sample_loop_start(&sampler, &config, &store) != 0) {
+		usys_log_error("failed to start the sampling loop");
+        web_service_stop(&inst);
 		metrics_store_free(&store);
-		config_free(&cfg);
-		return 1;
+		config_free(&config);
+		usys_exit(1);
 	}
 
-	while (!gStop) {
-		usleep(200 * 1000);
-	}
+    pause();
 
-	usys_log_info("stopping %s", POWERD_NAME);
+	usys_log_info("stopping %s", SERVICE_NAME);
 
 	web_service_stop(&inst);
 	sample_loop_stop(&sampler);
 
 	metrics_store_free(&store);
-	config_free(&cfg);
+	config_free(&config);
 
 	return 0;
 }

@@ -16,13 +16,13 @@
 
 typedef struct {
 
-	const Config	*cfg;
+	const Config	*config;
 	MetricsStore	*store;
 	pthread_t		thread;
 	int			    stop;
 } SampleLoop;
 
-int sample_loop_start(SampleLoop *l, const Config *cfg, MetricsStore *store);
+int sample_loop_start(SampleLoop *l, const Config *config, MetricsStore *store);
 void sample_loop_stop(SampleLoop *l);
 
 #endif
