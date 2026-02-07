@@ -1203,5 +1203,6 @@ wimc-agent-chunk 18016/tcp  wimc-agent-chunk
 fem            18017/tcp   femd
 gps		18018/tcp   gpsd
 backhaul        18019/tcp   backhauld
+power           18020/tcp   powerd
 ukama		18100/tcp   ukama
 remote          18200/tcp   remote
