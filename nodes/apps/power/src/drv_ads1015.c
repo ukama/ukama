@@ -35,7 +35,7 @@ static uint16_t mux_single_ended(int ch) {
 	}
 }
 
-/* PGA: +/- 4.096V (LSB = 2mV for ADS1015 12-bit left-justified) */
+/* PGA: +/- 4.096V */
 #define ADS1015_PGA_4_096	0x0200
 
 /* MODE single-shot */
@@ -76,6 +76,7 @@ static int i2c_read_reg16(int fd, uint8_t reg, uint16_t *outVal) {
 	n = read(fd, b, 2);
 	if (n != 2) return -1;
 
+	/* ADS1015 returns MSB first for register reads */
 	*outVal = (uint16_t)((b[0] << 8) | b[1]);
 	return 0;
 }
@@ -84,7 +85,10 @@ int drv_ads1015_open(Ads1015 *d, const char *dev, int addr7) {
 
 	int fd;
 
+	if (!d) return -1;
+
 	memset(d, 0, sizeof(*d));
+	d->fd = -1;
 
 	if (!dev || !*dev) return -1;
 	if (addr7 < 0x03 || addr7 > 0x77) return -1;
@@ -96,13 +100,15 @@ int drv_ads1015_open(Ads1015 *d, const char *dev, int addr7) {
 	}
 
 	if (i2c_set_slave(fd, (uint8_t)addr7) != 0) {
-		usys_log_error("ads1015: ioctl(I2C_SLAVE,0x%02x) failed: %s", addr7, strerror(errno));
+		usys_log_error("ads1015: ioctl(I2C_SLAVE,0x%02x) failed: %s",
+		               addr7, strerror(errno));
 		close(fd);
 		return -1;
 	}
 
 	d->fd = fd;
 	strncpy(d->dev, dev, sizeof(d->dev)-1);
+	d->dev[sizeof(d->dev)-1] = '\0';
 	d->addr = (uint8_t)addr7;
 	return 0;
 }
@@ -110,20 +116,36 @@ int drv_ads1015_open(Ads1015 *d, const char *dev, int addr7) {
 void drv_ads1015_close(Ads1015 *d) {
 
 	if (!d) return;
-	if (d->fd > 0) close(d->fd);
+
+	if (d->fd >= 0) close(d->fd);
 	memset(d, 0, sizeof(*d));
+	d->fd = -1;
+}
+
+/* Convert ADS1015 conversion register to volts for PGA +/-4.096V */
+static double conv_to_volts_pga_4v096(uint16_t conv) {
+
+	/*
+	 * Conversion register holds a signed result left-justified.
+	 * For ADS1015, the meaningful bits are [15:4].
+	 */
+	int16_t raw = (int16_t)conv;
+	raw >>= 4; /* sign-extended 12-bit value in LSB */
+
+	/* LSB for +/-4.096V is 2.0mV (4.096/2048) */
+	return (double)raw * (4.096 / 2048.0);
 }
 
 int drv_ads1015_read_single_ended(Ads1015 *d, int ch, double *outVolts) {
 
 	uint16_t cfg;
 	uint16_t conv;
-	int raw12;
-	double lsb;
+	double v;
 
+	if (!d || !outVolts) return -1;
+	if (d->fd < 0) return -1;
 	if (ch < 0 || ch > 3) return -1;
 
-	/* Build config: start single-shot, mux, pga, single-shot mode, data rate, comp disabled */
 	cfg = ADS1015_OS_SINGLE |
 	      mux_single_ended(ch) |
 	      ADS1015_PGA_4_096 |
@@ -133,23 +155,17 @@ int drv_ads1015_read_single_ended(Ads1015 *d, int ch, double *outVolts) {
 
 	if (i2c_write_reg16(d->fd, ADS1015_REG_CONFIG, cfg) != 0) return -1;
 
-	/* Conversion time at 1600SPS ~0.625ms; sleep a bit more */
+	/* 1600SPS -> ~0.625ms, sleep a bit more */
 	usleep(2000);
 
 	if (i2c_read_reg16(d->fd, ADS1015_REG_CONVERSION, &conv) != 0) return -1;
 
-	/*
-	 * ADS1015 conversion register is 16-bit with data left-justified.
-	 * For single-ended, result is in bits [15:4] as a 12-bit value.
-	 */
-	raw12 = (int)((conv >> 4) & 0x0FFF);
+	v = conv_to_volts_pga_4v096(conv);
 
-	/* PGA +/-4.096V => FS=4.096, LSB=4.096/2048 for ADS1015? 
-     * (ADS1015 is 12-bit but uses 11-bit magnitude for single-ended)
-	 * Keep simple: treat as 12-bit unsigned over 4.096V.
-	 */
-	lsb = 4.096 / 2048.0; /* ~2mV typical for ADS1015 with this range */
-	*outVolts = (double)raw12 * lsb;
+	/* single-ended should not be negative; clamp */
+	if (v < 0) v = 0;
 
+	*outVolts = v;
 	return 0;
 }
+

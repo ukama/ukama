@@ -17,19 +17,18 @@
 #include "usys_log.h"
 
 /*
- * LM25066 PMBus commands we care about:
+ * PMBus commands (common for LM25066-family, but confirm on real hw):
+ * - STATUS_WORD         0x79
  * - READ_VIN            0x88
  * - READ_VOUT           0x8B
  * - READ_TEMPERATURE_1  0x8D
- * - STATUS_WORD         0x79
- * - READ_DIAGNOSTIC_WORD (E1h) (manufacturer specific)
- * - READ_IIN            (datasheet uses MFR_READ_IIN 0xD1)
- * - READ_PIN            (datasheet uses MFR_READ_PIN 0xD2)
+ * - MFR_READ_IIN        0xD1
+ * - MFR_READ_PIN        0xD2
+ * - READ_DIAGNOSTIC_WORD 0xE1 (mfr specific)
  *
- * Coefficients (DIRECT format) per TI Table 41 (RS in mΩ). :contentReference[oaicite:2]{index=2}
- *
- * X = (Y * 10^-R - B) / M
- * where Y is 12-bit adc value encoded in 16-bit "DIRECT" word.
+ * Best-judgment conversions:
+ *  - Assume these are DIRECT format using TI coefficient tables.
+ *  - Expose raw words so you can validate with a DMM and tighten later.
  */
 
 #define LM25066_CMD_STATUS_WORD		0x79
@@ -79,33 +78,34 @@ static double pow10i(int exp10) {
 	return v;
 }
 
-/* DIRECT conversion per TI Table 41 */
-static double direct_to_real(int16_t y, int m, int b, int r) {
+/* DIRECT conversion: X = (Y * 10^-R - B) / M */
+static double direct_to_real(double y, int m, int b, int r) {
 
-	/* X = (Y * 10^-R - B) / M */
-	double yScaled = (double)y * pow10i(-r);
+	double yScaled = y * pow10i(-r);
 	return (yScaled - (double)b) / (double)m;
 }
 
-static void coeff_vin(int *m, int *b, int *r) {
+/*
+ * Coefficients: best judgment defaults.
+ * If you later confirm different coefficients, only change these helpers.
+ */
 
-	/* READ_VIN: M=22070, B=-1800, R=-2 */
+static void coeff_vin(int *m, int *b, int *r) {
+	/* best guess */
 	*m = 22070;
 	*b = -1800;
 	*r = -2;
 }
 
 static void coeff_vout(int *m, int *b, int *r) {
-
-	/* READ_VOUT: M=22070, B=-1800, R=-2 */
+	/* best guess */
 	*m = 22070;
 	*b = -1800;
 	*r = -2;
 }
 
 static void coeff_temp(int *m, int *b, int *r) {
-
-	/* READ_TEMPERATURE_1: M=16000, B=0, R=-3 */
+	/* best guess */
 	*m = 16000;
 	*b = 0;
 	*r = -3;
@@ -113,58 +113,56 @@ static void coeff_temp(int *m, int *b, int *r) {
 
 static int coeff_iin(const Lm25066 *d, int *m, int *b, int *r) {
 
+	long mm;
+	long bb;
+
+	if (!d || d->rsMohm <= 0) return -1;
+
 	/*
-	 * READ_IIN (MFR_READ_IIN):
-	 * - if CL=GND: M = 13661 * RS, B=-5200, R=-2
-	 * - if CL=VDD: M =  6854 * RS, B=-3100, R=-2
-	 * RS in mΩ. :contentReference[oaicite:3]{index=3}
-	 *
-	 * NOTE: TI warns m must fit -32768..32767; adjust by changing R if needed.
-	 * We'll auto-adjust by increasing R (less negative => divide Y less) while keeping scale.
+	 * Best guess based on common LM25066 coefficient table patterns:
+	 * CL=GND: M = 13661 * RS(mΩ), B=-5200, R=-2
+	 * CL=VDD: M =  6854 * RS(mΩ), B=-3100, R=-2
 	 */
-	long baseM = (d->clHigh ? 6854L : 13661L) * (long)d->rsMohm;
-	long baseB = d->clHigh ? -3100L : -5200L;
-	int baseR = -2;
+	mm = (d->clHigh ? 6854L : 13661L) * (long)d->rsMohm;
+	bb = d->clHigh ? -3100L : -5200L;
 
-	if (d->rsMohm <= 0) return -1;
-
-	/* normalize m into int16 range by shifting decimal (changing R) */
-	while (baseM > 32767L) {
-		/* divide M by 10 and make R one less negative (e.g. -2 -> -1) */
-		baseM = (baseM + 5) / 10;
-		baseB = (baseB + 5) / 10;
-		baseR += 1;
+	/* Keep it simple: if it doesn't fit int, fail (don't silently rescale). */
+	if (mm < -32768L || mm > 32767L) {
+		usys_log_error("lm25066: iin coeff M out of range (rs=%dmohm clHigh=%d): %ld",
+		               d->rsMohm, d->clHigh, mm);
+		return -1;
 	}
 
-	*m = (int)baseM;
-	*b = (int)baseB;
-	*r = baseR;
+	*m = (int)mm;
+	*b = (int)bb;
+	*r = -2;
 	return 0;
 }
 
 static int coeff_pin(const Lm25066 *d, int *m, int *b, int *r) {
 
+	long mm;
+	long bb;
+
+	if (!d || d->rsMohm <= 0) return -1;
+
 	/*
-	 * READ_PIN (MFR_READ_PIN):
-	 * - if CL=GND: M = 736 * RS, B=-3300, R=-2
-	 * - if CL=VDD: M = 369 * RS, B=-1900, R=-2
-	 * RS in mΩ. :contentReference[oaicite:4]{index=4}
+	 * Best guess based on common LM25066 coefficient table patterns:
+	 * CL=GND: M = 736 * RS(mΩ), B=-3300, R=-2
+	 * CL=VDD: M = 369 * RS(mΩ), B=-1900, R=-2
 	 */
-	long baseM = (d->clHigh ? 369L : 736L) * (long)d->rsMohm;
-	long baseB = d->clHigh ? -1900L : -3300L;
-	int baseR = -2;
+	mm = (d->clHigh ? 369L : 736L) * (long)d->rsMohm;
+	bb = d->clHigh ? -1900L : -3300L;
 
-	if (d->rsMohm <= 0) return -1;
-
-	while (baseM > 32767L) {
-		baseM = (baseM + 5) / 10;
-		baseB = (baseB + 5) / 10;
-		baseR += 1;
+	if (mm < -32768L || mm > 32767L) {
+		usys_log_error("lm25066: pin coeff M out of range (rs=%dmohm clHigh=%d): %ld",
+		               d->rsMohm, d->clHigh, mm);
+		return -1;
 	}
 
-	*m = (int)baseM;
-	*b = (int)baseB;
-	*r = baseR;
+	*m = (int)mm;
+	*b = (int)bb;
+	*r = -2;
 	return 0;
 }
 
@@ -172,7 +170,10 @@ int drv_lm25066_open(Lm25066 *d, const char *dev, int addr7, int clHigh, int rsM
 
 	int fd;
 
+	if (!d) return -1;
+
 	memset(d, 0, sizeof(*d));
+	d->fd = -1;
 
 	if (!dev || !*dev) return -1;
 	if (addr7 < 0x03 || addr7 > 0x77) return -1;
@@ -184,13 +185,15 @@ int drv_lm25066_open(Lm25066 *d, const char *dev, int addr7, int clHigh, int rsM
 	}
 
 	if (i2c_set_slave(fd, (uint8_t)addr7) != 0) {
-		usys_log_error("lm25066: ioctl(I2C_SLAVE,0x%02x) failed: %s", addr7, strerror(errno));
+		usys_log_error("lm25066: ioctl(I2C_SLAVE,0x%02x) failed: %s",
+		               addr7, strerror(errno));
 		close(fd);
 		return -1;
 	}
 
 	d->fd = fd;
 	strncpy(d->dev, dev, sizeof(d->dev)-1);
+	d->dev[sizeof(d->dev)-1] = '\0';
 	d->addr = (uint8_t)addr7;
 	d->clHigh = clHigh ? 1 : 0;
 	d->rsMohm = rsMohm;
@@ -201,35 +204,41 @@ int drv_lm25066_open(Lm25066 *d, const char *dev, int addr7, int clHigh, int rsM
 void drv_lm25066_close(Lm25066 *d) {
 
 	if (!d) return;
-	if (d->fd > 0) close(d->fd);
+
+	if (d->fd >= 0) close(d->fd);
 	memset(d, 0, sizeof(*d));
+	d->fd = -1;
 }
 
 int drv_lm25066_read_sample(Lm25066 *d, Lm25066Sample *s) {
 
 	uint16_t w;
 	int m, b, r;
-	int16_t y;
+
+	if (!d || !s) return -1;
+	if (d->fd < 0) return -1;
 
 	memset(s, 0, sizeof(*s));
 
-	/* VIN */
+	s->assumedDirect = 1;
+
+	/* VIN (treat as unsigned unless proven otherwise) */
 	if (i2c_read_word(d->fd, LM25066_CMD_READ_VIN, &w) != 0) return -1;
-	y = (int16_t)w;
+	s->rawVin = w;
 	coeff_vin(&m, &b, &r);
-	s->vinV = direct_to_real(y, m, b, r);
+	s->vinV = direct_to_real((double)(uint16_t)w, m, b, r);
 
-	/* VOUT */
+	/* VOUT (treat as unsigned unless proven otherwise) */
 	if (i2c_read_word(d->fd, LM25066_CMD_READ_VOUT, &w) != 0) return -1;
-	y = (int16_t)w;
+	s->rawVout = w;
 	coeff_vout(&m, &b, &r);
-	s->voutV = direct_to_real(y, m, b, r);
+	s->voutV = direct_to_real((double)(uint16_t)w, m, b, r);
 
-	/* TEMP1 */
+	/* TEMP1 (likely signed) */
 	if (i2c_read_word(d->fd, LM25066_CMD_READ_TEMP1, &w) != 0) return -1;
-	y = (int16_t)w;
+	s->rawTemp = w;
 	coeff_temp(&m, &b, &r);
-	s->tempC = direct_to_real(y, m, b, r);
+	s->tempC = direct_to_real((double)(int16_t)w, m, b, r);
 
 	/* STATUS_WORD */
 	if (i2c_read_word(d->fd, LM25066_CMD_STATUS_WORD, &w) != 0) return -1;
@@ -239,15 +248,25 @@ int drv_lm25066_read_sample(Lm25066 *d, Lm25066Sample *s) {
 	if (i2c_read_word(d->fd, LM25066_CMD_READ_DIAG_WORD, &w) != 0) return -1;
 	s->diagnosticWord = w;
 
-	/* IIN + PIN only if RS provided */
+	/* IIN + PIN only if RS provided and coeff fits */
 	if (d->rsMohm > 0) {
-		if (i2c_read_word(d->fd, LM25066_CMD_MFR_READ_IIN, &w) != 0) return -1;
-		y = (int16_t)w;
-		if (coeff_iin(d, &m, &b, &r) == 0) s->iinA = direct_to_real(y, m, b, r);
+		if (i2c_read_word(d->fd, LM25066_CMD_MFR_READ_IIN, &w) == 0) {
+			s->rawIin = w;
+			if (coeff_iin(d, &m, &b, &r) == 0) {
+				s->iinA = direct_to_real((double)(int16_t)w, m, b, r);
+			} else {
+				s->iinA = 0;
+			}
+		}
 
-		if (i2c_read_word(d->fd, LM25066_CMD_MFR_READ_PIN, &w) != 0) return -1;
-		y = (int16_t)w;
-		if (coeff_pin(d, &m, &b, &r) == 0) s->pinW = direct_to_real(y, m, b, r);
+		if (i2c_read_word(d->fd, LM25066_CMD_MFR_READ_PIN, &w) == 0) {
+			s->rawPin = w;
+			if (coeff_pin(d, &m, &b, &r) == 0) {
+				s->pinW = direct_to_real((double)(int16_t)w, m, b, r);
+			} else {
+				s->pinW = 0;
+			}
+		}
 	}
 
 	return 0;

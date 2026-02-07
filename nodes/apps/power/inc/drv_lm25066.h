@@ -20,14 +20,26 @@ typedef struct {
 } Lm25066;
 
 typedef struct {
+	/* Engineering units (best-judgment conversions; validate on real hw) */
 	double	vinV;
 	double	voutV;
 	double	iinA;
 	double	pinW;
 	double	tempC;
 
+	/* Status */
 	uint16_t	statusWord;
 	uint16_t	diagnosticWord;
+
+	/* Raw words (for validation/debug) */
+	uint16_t	rawVin;
+	uint16_t	rawVout;
+	uint16_t	rawTemp;
+	uint16_t	rawIin;
+	uint16_t	rawPin;
+
+	/* Conversion assumptions */
+	uint8_t		assumedDirect; /* 1 if DIRECT-coefficient conversion was applied */
 } Lm25066Sample;
 
 int drv_lm25066_open(Lm25066 *d, const char *dev, int addr7, int clHigh, int rsMohm);

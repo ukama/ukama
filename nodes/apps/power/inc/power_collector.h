@@ -14,12 +14,19 @@
 #include "metrics_store.h"
 #include "power_kpi.h"
 #include "drv_lm75.h"
+#include "drv_ads1015.h"
+#include "drv_lm25066.h"
 
 typedef struct {
 	MetricsStore	*store;
-	PowerCal	*cal;        /* compatibility: may be NULL, unused for now */
+	PowerCal	*cal;        /* may be NULL */
 
 	Lm75		*lm75_board;
+
+	/* Optional devices depending on board */
+	Ads1015		*ads1015;
+	Lm25066		*lm25066;
+
 } PowerCollectorCtx;
 
 int power_collect_once(PowerCollectorCtx *c, uint64_t now_ms);
