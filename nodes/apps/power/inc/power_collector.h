@@ -12,10 +12,13 @@
 #include <stdint.h>
 
 #include "metrics_store.h"
+#include "power_kpi.h"
 #include "drv_lm75.h"
 
 typedef struct {
 	MetricsStore	*store;
+	PowerCal	*cal;        /* compatibility: may be NULL, unused for now */
+
 	Lm75		*lm75_board;
 } PowerCollectorCtx;
 

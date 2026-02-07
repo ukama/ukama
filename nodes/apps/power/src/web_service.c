@@ -10,6 +10,7 @@
 
 #include "web_service.h"
 #include "metrics_store.h"
+#include "http_status.h"
 
 #include "ulfius.h"
 #include "usys_log.h"
