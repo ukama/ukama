@@ -11,9 +11,11 @@
 #include <stdio.h>
 #include <ctype.h>
 
+#include "powerd.h"
 #include "config.h"
 #include "usys_log.h"
 #include "usys_mem.h"
+#include "usys_file.h"
 
 static char *dup_env(const char *name, const char *defVal) {
 
@@ -23,19 +25,6 @@ static char *dup_env(const char *name, const char *defVal) {
 		return strdup(defVal);
 	}
 	return strdup(v);
-}
-
-static int parse_u16(const char *s, uint16_t *out) {
-
-	char *end = NULL;
-	long v;
-
-	if (!s || !*s) return -1;
-	v = strtol(s, &end, 0);
-	if (!end || *end) return -1;
-	if (v < 0 || v > 65535) return -1;
-	*out = (uint16_t)v;
-	return 0;
 }
 
 static int parse_u32(const char *s, uint32_t *out) {
@@ -137,16 +126,13 @@ int config_load_from_env(Config *cfg) {
 	memset(cfg, 0, sizeof(*cfg));
 
 	cfg->listenAddr = dup_env("POWER_LISTEN_ADDR", "0.0.0.0");
-	cfg->boardName = dup_env("POWER_BOARD", "unknown");
+	cfg->boardName  = dup_env("POWER_BOARD", "unknown");
 
-	cfg->listenPort = 8089;
-	s = getenv("POWER_LISTEN_PORT");
-	if (s && *s) {
-		if (parse_u16(s, &cfg->listenPort) != 0) {
-			usys_log_error("Invalid POWER_LISTEN_PORT: %s", s);
-			return -1;
-		}
-	}
+    cfg->listenPort = usys_find_service_port(SERVICE_NAME);
+    if (!cfg->listenPort) {
+        usys_log_error("Listening port for %s not found", SERVICE_NAME);
+        return -1;
+    }
 
 	cfg->sampleMs = 1000;
 	s = getenv("POWER_SAMPLE_MS");
