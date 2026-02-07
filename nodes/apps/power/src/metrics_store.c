@@ -12,6 +12,7 @@
 #include <stdarg.h>
 
 #include "metrics_store.h"
+#include "json_types.h"
 #include "usys_mem.h"
 #include "usys_log.h"
 
@@ -128,4 +129,71 @@ json_t *metrics_store_to_json(const PowerSnapshot *s) {
 	json_object_set_new(o, "rails", rails);
 
 	return o;
+}
+
+static int is_reason_available(const char *r) {
+
+	if (!r || !*r) return 0;
+	if (strncmp(r, "not available", 13) == 0) return 0;
+	return 1;
+}
+
+void power_metrics_from_snapshot(const PowerSnapshot *s,
+                                 const char *boardName,
+                                 PowerMetrics *m) {
+
+	if (!s || !m) return;
+
+	memset(m, 0, sizeof(*m));
+
+	/* timestamp */
+	m->sampleUnixMs = s->last_sample_ts_ms;
+
+	/* board name (best effort) */
+	if (boardName && *boardName) {
+		snprintf(m->board, sizeof(m->board), "%s", boardName);
+	} else {
+		m->board[0] = '\0';
+	}
+
+	/* basic health */
+	m->ok = (s->overall_severity == POWER_SEV_CRIT) ? 0 : 1;
+
+	if (s->last_err != 0) {
+		snprintf(m->err, sizeof(m->err), "%s", s->last_err_str);
+	} else {
+		m->err[0] = '\0';
+	}
+
+	/* LM75 mapping */
+	m->haveLm75 = (s->temp_board_c != 0) ? 1 : 0;
+	m->boardTempC = s->temp_board_c;
+
+	/*
+	 * LM25066 mapping:
+	 * PowerSnapshot doesn't carry LM25066-specific VOUT/temp/status/diag.
+	 * But rail_in is the right place to expose input rail telemetry.
+	 *
+	 * We treat rail_in as "VIN/IIN/PIN best effort".
+	 */
+	m->haveLm25066 = is_reason_available(s->rail_in.reason) ? 1 : 0;
+	m->inVolts = s->rail_in.v;
+	m->inAmps  = s->rail_in.i;
+	m->inWatts = s->rail_in.w;
+
+	/* Not available in snapshot today */
+	m->outVolts = 0;
+	m->hsTempC  = 0;
+	m->statusWord = 0;
+	m->diagnosticWord = 0;
+
+	/*
+	 * ADS1015 raw channels:
+	 * Snapshot doesn't store raw adc inputs today, so we can't fill adcVin/adcVpa/adcAux.
+	 * If you later add raw fields to PowerSnapshot (or store them elsewhere), update here.
+	 */
+	m->haveAds1015 = is_reason_available(s->rail_aux.reason) ? 1 : 0;
+	m->adcVin = 0;
+	m->adcVpa = 0;
+	m->adcAux = 0;
 }

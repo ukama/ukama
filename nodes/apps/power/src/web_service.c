@@ -8,12 +8,47 @@
 
 #include <string.h>
 
+#include "powerd.h"
 #include "web_service.h"
 #include "metrics_store.h"
 #include "http_status.h"
+#include "json_types.h"
+#include "json_serdes.h"
 
 #include "ulfius.h"
 #include "usys_log.h"
+
+#include "version.h"
+
+static void setup_unsupported_methods(UInst *instance,
+                                      char *allowedMethod,
+                                      char *prefix,
+                                      char *resource) {
+
+    if (strcmp(allowedMethod, "GET") != 0) {
+        ulfius_add_endpoint_by_val(instance, "GET", prefix, resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "POST") != 0) {
+        ulfius_add_endpoint_by_val(instance, "POST", prefix, resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "PUT") != 0) {
+        ulfius_add_endpoint_by_val(instance, "PUT", prefix, resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "DELETE") != 0) {
+        ulfius_add_endpoint_by_val(instance, "DELETE", prefix, resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+}
 
 static int respond_json(UResponse *response, int status, json_t *obj) {
 
@@ -41,37 +76,77 @@ static int respond_json(UResponse *response, int status, json_t *obj) {
 	return U_CALLBACK_CONTINUE;
 }
 
-static int web_service_cb_status(const URequest *request,
-                                 UResponse *response,
-                                 void *epConfig) {
 
-	EpCtx *ctx = (EpCtx *)epConfig;
-	PowerSnapshot s;
+int web_service_cb_get_ping(const URequest *request,
+                            UResponse *response,
+                            void *epConfig) {
+
+    (void)request;
+    (void)epConfig;
+
+    ulfius_set_string_body_response(response,
+                                    HttpStatus_OK,
+                                    HttpStatusStr(HttpStatus_OK));
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_get_version(const URequest *request,
+                               UResponse *response,
+                               void *epConfig) {
+
+    (void)request;
+    (void)epConfig;
+
+    ulfius_set_string_body_response(response, HttpStatus_OK, VERSION);
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_get_status(const URequest *request,
+                              UResponse *response,
+                              void *epConfig) {
 
 	(void)request;
 
+	EpCtx *ctx = (EpCtx *)epConfig;
+	PowerSnapshot snap;
+	PowerMetrics m;
+
 	if (!ctx || !ctx->store) {
 		ulfius_set_string_body_response(response,
-		                               HttpStatus_InternalServerError,
-		                               "store not ready");
+		                                HttpStatus_InternalServerError,
+		                                HttpStatusStr(HttpStatus_InternalServerError));
 		return U_CALLBACK_CONTINUE;
 	}
 
-	metrics_store_get(ctx->store, &s);
-	return respond_json(response, HttpStatus_OK, metrics_store_to_json(&s));
+    /* 1. Get internal snapshot */
+	metrics_store_get(ctx->store, &snap);
+
+    /* 2. Convert snapshot → API metrics */
+	power_metrics_from_snapshot(&snap, ctx->config->boardName, &m);
+
+    /* 3. Serialize */
+	json_t *o = json_serdes_power_metrics_to_json(&m);
+	respond_json(response, HttpStatus_OK, o);
+	json_decref(o);
+
+	return U_CALLBACK_CONTINUE;
 }
 
-static void setup_webservice_endpoints(UInst *inst, EpCtx *ctx) {
+static void setup_webservice_endpoints(UInst *instance, EpCtx *epCtx) {
 
-	/* Single endpoint only */
-	ulfius_add_endpoint_by_val(inst, "GET",  "/v1/status", NULL, 0, &web_service_cb_status, ctx);
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX, API_RES_EP("ping"), 0,
+                               &web_service_cb_get_ping, epCtx);
+    setup_unsupported_methods(instance, "GET", URL_PREFIX, API_RES_EP("ping"));
 
-	/* Explicit not-allowed for common mistakes */
-	ulfius_add_endpoint_by_val(inst, "POST", "/v1/status", NULL, 0, &web_service_cb_not_allowed, ctx);
-	ulfius_add_endpoint_by_val(inst, "PUT",  "/v1/status", NULL, 0, &web_service_cb_not_allowed, ctx);
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX, API_RES_EP("version"), 0,
+                               &web_service_cb_get_version, epCtx);
+    setup_unsupported_methods(instance, "GET", URL_PREFIX, API_RES_EP("version"));
 
-	/* Default */
-	ulfius_set_default_endpoint(inst, &web_service_cb_default, ctx);
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX, API_RES_EP("status"), 0,
+                               &web_service_cb_get_status, epCtx);
+    setup_unsupported_methods(instance, "GET", URL_PREFIX, API_RES_EP("status"));
+
+    ulfius_set_default_endpoint(instance, &web_service_cb_default, epCtx);
 }
 
 int web_service_cb_default(const URequest *request,

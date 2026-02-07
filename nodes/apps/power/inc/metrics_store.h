@@ -14,6 +14,7 @@
 
 #include "jansson.h"
 #include "usys_types.h"
+#include "json_types.h"
 
 typedef enum {
 	POWER_SEV_OK = 0,
@@ -73,4 +74,7 @@ void metrics_store_get(MetricsStore *s, PowerSnapshot *out);
 
 json_t *metrics_store_to_json(const PowerSnapshot *s);
 
+void power_metrics_from_snapshot(const PowerSnapshot *s,
+                                 const char *boardName,
+                                 PowerMetrics *m);
 #endif /* __METRICS_STORE_H__ */
