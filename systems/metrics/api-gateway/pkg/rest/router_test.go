@@ -69,6 +69,7 @@ func Test_GetMetrics(t *testing.T) {
 		body = string(b)
 	}))
 	c := pkg.NewConfig()
+	pkg.ApplyMetricsFromEnvOverride(c) // load default metrics (e.g. "cpu") so handler can resolve metric keys
 	c.MetricsConfig.MetricsServer = testSrv.URL
 	m, err := pkg.NewMetrics(c.MetricsConfig)
 	if err != nil {

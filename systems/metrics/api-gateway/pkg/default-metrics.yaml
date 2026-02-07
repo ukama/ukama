@@ -1,0 +1,449 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026-present, Ukama Inc.
+
+# Default metrics map for api-gateway. Override via env METRICS_KEY_MAP_FILE (path to YAML with same structure).
+# Each key: needRate (bool), metric (Prometheus name), rateInterval (e.g. "5m" when needRate true).
+
+cpu:
+  needRate: false
+  metric: "trx_soc_cpu_usage"
+  rateInterval: ""
+memory:
+  needRate: false
+  metric: "trx_memory_ddr_used"
+  rateInterval: ""
+subscribers_active:
+  needRate: false
+  metric: "trx_lte_core_active_ue"
+  rateInterval: ""
+subscribers_attached:
+  needRate: false
+  metric: "trx_lte_core_subscribers"
+  rateInterval: ""
+active_org_users:
+  needRate: false
+  metric: "number_of_active_users"
+  rateInterval: ""
+inactive_org_users:
+  needRate: false
+  metric: "number_of_inactive_users"
+  rateInterval: ""
+active_orgs:
+  needRate: false
+  metric: "number_of_active_org"
+  rateInterval: ""
+inactive_orgs:
+  needRate: false
+  metric: "number_of_inactive_org"
+  rateInterval: ""
+platform_active_users:
+  needRate: false
+  metric: "platform_active_users"
+  rateInterval: ""
+platform_inactive_users:
+  needRate: false
+  metric: "platform_inactive_users"
+  rateInterval: ""
+networks:
+  needRate: false
+  metric: "number_of_networks"
+  rateInterval: ""
+sites:
+  needRate: false
+  metric: "number_of_sites"
+  rateInterval: ""
+online_node_count:
+  needRate: false
+  metric: "online_node_count"
+  rateInterval: ""
+offline_node_count:
+  needRate: false
+  metric: "offline_node_count"
+  rateInterval: ""
+active_members:
+  needRate: false
+  metric: "active_members"
+  rateInterval: ""
+inactive_members:
+  needRate: false
+  metric: "inactive_members"
+  rateInterval: ""
+node_active_subscribers:
+  needRate: false
+  metric: "active_subscribers_per_node"
+  rateInterval: ""
+sims:
+  needRate: false
+  metric: "number_of_sims"
+  rateInterval: ""
+active_sims:
+  needRate: false
+  metric: "active_sim_count"
+  rateInterval: ""
+inactive_sims:
+  needRate: false
+  metric: "inactive_sim_count"
+  rateInterval: ""
+package_sales:
+  needRate: false
+  metric: "package_sales_sum"
+  rateInterval: ""
+data_usage:
+  needRate: false
+  metric: "data_usage"
+  rateInterval: ""
+unit_health:
+  needRate: false
+  metric: "unit_health"
+  rateInterval: ""
+unit_status:
+  needRate: false
+  metric: "unit_status"
+  rateInterval: ""
+node_load:
+  needRate: false
+  metric: "node_load"
+  rateInterval: ""
+cellular_uplink:
+  needRate: false
+  metric: "cellular_uplink"
+  rateInterval: ""
+cellular_downlink:
+  needRate: false
+  metric: "cellular_downlink"
+  rateInterval: ""
+backhaul_uplink:
+  needRate: false
+  metric: "backhaul_uplink"
+  rateInterval: ""
+backhaul_downlink:
+  needRate: false
+  metric: "backhaul_downlink"
+  rateInterval: ""
+backhaul_latency:
+  needRate: false
+  metric: "backhaul_latency"
+  rateInterval: ""
+hwd_load:
+  needRate: false
+  metric: "hwd_load"
+  rateInterval: ""
+memory_usage:
+  needRate: false
+  metric: "memory_usage"
+  rateInterval: ""
+cpu_usage:
+  needRate: false
+  metric: "cpu_usage"
+  rateInterval: ""
+disk_usage:
+  needRate: false
+  metric: "disk_usage"
+  rateInterval: ""
+txpower:
+  needRate: false
+  metric: "txpower"
+  rateInterval: ""
+unit_uptime:
+  needRate: false
+  metric: "unit_uptime"
+  rateInterval: ""
+network_sales:
+  needRate: false
+  metric: "network_sales"
+  rateInterval: ""
+network_data_volume:
+  needRate: false
+  metric: "network_data_volume"
+  rateInterval: ""
+network_active_ue:
+  needRate: false
+  metric: "network_active_ue"
+  rateInterval: ""
+network_uptime:
+  needRate: false
+  metric: "network_uptime"
+  rateInterval: ""
+temperature_trx:
+  needRate: false
+  metric: "trx_sensors_tempsensor1_temperature"
+  rateInterval: ""
+temperature_com:
+  needRate: false
+  metric: "com_sensors_tempsensor1_temperature_microprocessor"
+  rateInterval: ""
+temperature_ctl:
+  needRate: false
+  metric: "ctl_sensors_tempsensor_microprocessor"
+  rateInterval: ""
+temperature_rfe:
+  needRate: false
+  metric: "rfe_sensors_tempsensor_pa"
+  rateInterval: ""
+temperature_S1_trx_hn:
+  needRate: false
+  metric: "trx_sensors_tempsensor1_temperature"
+  rateInterval: ""
+temperature_S2_trx_hn:
+  needRate: false
+  metric: "trx_sensors_tempsensor2_temperature"
+  rateInterval: ""
+temperature_S1_rfe_hn:
+  needRate: false
+  metric: "rfe_sensors_tempsensor1_pa1"
+  rateInterval: ""
+temperature_S2_rfe_hn:
+  needRate: false
+  metric: "rfe_sensors_tempsensor2_pa2"
+  rateInterval: ""
+uptime_trx:
+  needRate: false
+  metric: "trx_generic_system_uptime_seconds"
+  rateInterval: ""
+uptime_com:
+  needRate: false
+  metric: "com_generic_system_uptime_seconds"
+  rateInterval: ""
+uptime_ctl:
+  needRate: false
+  metric: "ctl_generic_system_uptime_seconds"
+  rateInterval: ""
+tx_power:
+  needRate: false
+  metric: "rfe_sensor_adc_tx_power"
+  rateInterval: ""
+rx_power:
+  needRate: false
+  metric: "rfe_sensor_adc_rx_power"
+  rateInterval: ""
+pa_power:
+  needRate: false
+  metric: "rfe_sensor_adc_pa_power"
+  rateInterval: ""
+memory_trx_total:
+  needRate: false
+  metric: "trx_memory_ddr_total"
+  rateInterval: ""
+memory_trx_used:
+  needRate: false
+  metric: "trx_memory_ddr_used"
+  rateInterval: ""
+memory_trx_free:
+  needRate: false
+  metric: "trx_memory_ddr_free"
+  rateInterval: ""
+memory_com_total:
+  needRate: false
+  metric: "com_memory_ddr_total"
+  rateInterval: ""
+memory_com_used:
+  needRate: false
+  metric: "com_memory_ddr_used"
+  rateInterval: ""
+memory_com_free:
+  needRate: false
+  metric: "com_memory_ddr_free"
+  rateInterval: ""
+memory_ctl_total:
+  needRate: false
+  metric: "ctl_memory_ddr_total"
+  rateInterval: ""
+memory_ctl_used:
+  needRate: false
+  metric: "ctl_memory_ddr_used"
+  rateInterval: ""
+memory_ctl_free:
+  needRate: false
+  metric: "ctl_memory_ddr_free"
+  rateInterval: ""
+cpu_trx_usage:
+  needRate: false
+  metric: "trx_soc_cpu_usage"
+  rateInterval: ""
+cpu_trx_c0_usage:
+  needRate: false
+  metric: "trx_soc_cpu_core0_usage"
+  rateInterval: ""
+cpu_trx_c1_usage:
+  needRate: false
+  metric: "trx_soc_cpu_core1_usage"
+  rateInterval: ""
+cpu_trx_c2_usage:
+  needRate: false
+  metric: "trx_soc_cpu_core2_usage"
+  rateInterval: ""
+cpu_trx_c3_usage:
+  needRate: false
+  metric: "trx_soc_cpu_core3_usage"
+  rateInterval: ""
+cpu_com_usage:
+  needRate: false
+  metric: "com_soc_cpu_usage"
+  rateInterval: ""
+cpu_com_c0_usage:
+  needRate: false
+  metric: "com_soc_cpu_core0_usage"
+  rateInterval: ""
+cpu_com_c1_usage:
+  needRate: false
+  metric: "com_soc_cpu_core1_usage"
+  rateInterval: ""
+cpu_com_c2_usage:
+  needRate: false
+  metric: "com_soc_cpu_core2_usage"
+  rateInterval: ""
+cpu_com_c3_usage:
+  needRate: false
+  metric: "com_soc_cpu_core3_usage"
+  rateInterval: ""
+cpu_ctl_total:
+  needRate: false
+  metric: "ctl_soc_cpu_usage"
+  rateInterval: ""
+cpu_ctl_used:
+  needRate: false
+  metric: "ctl_soc_cpu_core0_usage"
+  rateInterval: ""
+disk_trx_total:
+  needRate: false
+  metric: "trx_storage_emmc_total"
+  rateInterval: ""
+disk_trx_used:
+  needRate: false
+  metric: "trx_storage_emmc_used"
+  rateInterval: ""
+disk_trx_free:
+  needRate: false
+  metric: "trx_storage_emmc_free"
+  rateInterval: ""
+disk_com_total:
+  needRate: false
+  metric: "com_storage_emmc_total"
+  rateInterval: ""
+disk_com_used:
+  needRate: false
+  metric: "com_storage_emmc_used"
+  rateInterval: ""
+disk_com_free:
+  needRate: false
+  metric: "com_storage_emmc_free"
+  rateInterval: ""
+disk_ctl_total:
+  needRate: false
+  metric: "ctl_storage_emmc_total"
+  rateInterval: ""
+disk_ctl_used:
+  needRate: false
+  metric: "ctl_storage_emmc_used"
+  rateInterval: ""
+disk_ctl_free:
+  needRate: false
+  metric: "ctl_storage_emmc_free"
+  rateInterval: ""
+power_level:
+  needRate: false
+  metric: "trx_sensors_powermanagement_power"
+  rateInterval: ""
+network_latency:
+  needRate: false
+  metric: "process_open_fds"
+  rateInterval: ""
+network_packet_loss:
+  needRate: false
+  metric: "process_open_fds"
+  rateInterval: ""
+network_overall_status:
+  needRate: false
+  metric: "process_open_fds"
+  rateInterval: ""
+network_throughput_up:
+  needRate: false
+  metric: "trx_lte_stack_throughput_uplink"
+  rateInterval: ""
+network_throughput_down:
+  needRate: false
+  metric: "trx_lte_stack_throughput_downlink"
+  rateInterval: ""
+solar_panel_power:
+  needRate: false
+  metric: "solar_panel_power"
+  rateInterval: ""
+solar_panel_voltage:
+  needRate: false
+  metric: "solar_panel_voltage"
+  rateInterval: ""
+solar_panel_current:
+  needRate: false
+  metric: "solar_panel_current"
+  rateInterval: ""
+battery_charge_percentage:
+  needRate: false
+  metric: "battery_charge_percentage"
+  rateInterval: ""
+switch_port_status:
+  needRate: false
+  metric: "switch_port_status"
+  rateInterval: ""
+switch_port_speed:
+  needRate: false
+  metric: "switch_port_speed"
+  rateInterval: ""
+switch_port_power:
+  needRate: false
+  metric: "switch_port_power"
+  rateInterval: ""
+backhaul_speed:
+  needRate: false
+  metric: "backhaul_speed"
+  rateInterval: ""
+main_backhaul_latency:
+  needRate: false
+  metric: "main_backhaul_latency"
+  rateInterval: ""
+site_uptime_seconds:
+  needRate: false
+  metric: "site_uptime_seconds"
+  rateInterval: ""
+site_uptime_percentage:
+  needRate: false
+  metric: "site_uptime_percentage"
+  rateInterval: ""
+backhaul_switch_port_status:
+  needRate: false
+  metric: "backhaul_switch_port_status"
+  rateInterval: ""
+backhaul_switch_port_speed:
+  needRate: false
+  metric: "backhaul_switch_port_speed"
+  rateInterval: ""
+backhaul_switch_port_power:
+  needRate: false
+  metric: "backhaul_switch_port_power"
+  rateInterval: ""
+solar_switch_port_status:
+  needRate: false
+  metric: "solar_switch_port_status"
+  rateInterval: ""
+solar_switch_port_speed:
+  needRate: false
+  metric: "solar_switch_port_speed"
+  rateInterval: ""
+solar_switch_port_power:
+  needRate: false
+  metric: "solar_switch_port_power"
+  rateInterval: ""
+node_switch_port_status:
+  needRate: false
+  metric: "node_switch_port_status"
+  rateInterval: ""
+node_switch_port_speed:
+  needRate: false
+  metric: "node_switch_port_speed"
+  rateInterval: ""
+node_switch_port_power:
+  needRate: false
+  metric: "node_switch_port_power"
+  rateInterval: ""
