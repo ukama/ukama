@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
         usys_exit(1);
 	}
 
-	if (metrics_store_init(&store, config.boardName) != 0) {
+    if (metrics_store_init(&store) != USYS_TRUE) {
 		usys_log_error("Failed to initialize metrics store");
 		config_free(&config);
         usys_exit(1);
