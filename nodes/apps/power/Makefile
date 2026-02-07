@@ -49,13 +49,14 @@ LDFLAGS+=-L${VENDOR_LIB}
 LDFLAGS+=-L$(VENDOR_LIB64)
 LDFLAGS+=-L$(PLATFORM_LIB)
 
+CURL_LIB=-lcurl -lssl -lcrypto
 ULFIUS_LIB=-lulfius -lorcania -lmicrohttpd -lgnutls -lnettle
 ULFIUS_LIB+=-lhogweed -lp11-kit -lz
 ifneq ($(ALPINE_BUILD),1)
 ULFIUS_LIB+=-lyder
 endif
 
-LIBS = $(ULFIUS_LIB)
+LIBS = $(ULFIUS_LIB) $(CURL_LIB)
 LIBS+=-ljansson
 LIBS+=-lpthread
 LIBS+=-lusys
