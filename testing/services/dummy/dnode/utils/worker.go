@@ -81,7 +81,7 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 
 	cleanup := func() {
 		fmt.Printf("Shutting down coroutine %s with scenario: %s\n", id, scenario)
-		labels := prometheus.Labels{"nodeid": id}
+		labels := prometheus.Labels{"node_id": id}
 		for _, kpi := range kpis.KPIs {
 			kpi.KPI.Delete(labels)
 		}
@@ -89,7 +89,7 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 
 	for {
 		time.Sleep(1 * time.Second)
-		labels := prometheus.Labels{"nodeid": id}
+		labels := prometheus.Labels{"node_id": id}
 		select {
 		case msg, ok := <-updateChan:
 			if !ok {
