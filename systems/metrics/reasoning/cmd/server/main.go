@@ -15,17 +15,24 @@ import (
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v2"
 
+	"github.com/ukama/ukama/systems/common/rest/client"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/metrics/reasoning/cmd/version"
 	"github.com/ukama/ukama/systems/metrics/reasoning/pkg"
 	"github.com/ukama/ukama/systems/metrics/reasoning/pkg/server"
-	"github.com/ukama/ukama/systems/metrics/reasoning/scheduler"
+	"github.com/ukama/ukama/systems/metrics/reasoning/pkg/store"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	pb "github.com/ukama/ukama/systems/metrics/reasoning/pb/gen"
+)
+
+const (
+	registrySystemName     = "registry"
 )
 
 var serviceConfig *pkg.Config
@@ -67,8 +74,17 @@ func runGrpcServer() {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	reasoningScheduler := scheduler.NewReasoningScheduler(serviceConfig.SchedulerInterval)
-	reasoningServer := server.NewReasoningServer(mbClient, reasoningScheduler, serviceConfig)
+	regUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
+		ic.CreateHostString(serviceConfig.OrgName, registrySystemName), &serviceConfig.OrgName)
+	if err != nil {
+		log.Errorf("Failed to resolve registry address: %v", err)
+	}
+
+	nodeClient := creg.NewNodeClient(regUrl.String())
+
+	s := store.NewStore(serviceConfig)
+
+	reasoningServer := server.NewReasoningServer(mbClient, nodeClient, serviceConfig, s)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		pb.RegisterReasoningServiceServer(s, reasoningServer)

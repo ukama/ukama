@@ -16,6 +16,8 @@ import (
 
 type Config struct {
 	uconf.BaseConfig     `mapstructure:",squash"`
+	EtcdHost          	 string
+	DialTimeoutSecond 	 time.Duration
 	Grpc                 *uconf.Grpc      `default:"{}"`
 	Queue                *uconf.Queue     `default:"{}"`
 	Timeout              time.Duration    `default:"3s"`
@@ -32,6 +34,8 @@ type HttpServices struct {
 
 func NewConfig(name string) *Config {
 	return &Config{
+		EtcdHost:          "localhost:2379",
+		DialTimeoutSecond: 5 * time.Second,
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
 			Timeout: 5 * time.Second,

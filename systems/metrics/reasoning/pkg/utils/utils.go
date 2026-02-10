@@ -6,3 +6,61 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 package utils
+
+import (
+	"fmt"
+	"strings"
+
+	log "github.com/sirupsen/logrus"
+	ukama "github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/metrics/reasoning/pkg/store"
+)
+
+type Nodes struct {
+	TNode string
+	ANode string
+}
+
+func SortNodeIds(nodeId string) (Nodes, error) {
+	nodes := Nodes{}
+	nid, err := ukama.ValidateNodeId(nodeId)
+	if err != nil {
+		log.Errorf("Failed to validate node id: %v", err)
+		return nodes, fmt.Errorf("failed to validate node id: %v", err)
+	}
+
+	ntype := ukama.GetNodeType(nid.String()) 
+	if ntype == nil {
+		log.Errorf("Failed to get node type: %v", err)
+		return nodes, fmt.Errorf("failed to get node type: %v", err)
+	}
+
+	if *ntype != ukama.NODE_ID_TYPE_TOWERNODE {
+		log.Errorf("Node type is not a tower node: %v", nid.String())
+		return nodes, fmt.Errorf("node type is not a tower node: %v", nid.String())
+	}
+
+	nodes.TNode = nid.String()
+	nodes.ANode = strings.Replace(nid.String(), *ntype, ukama.NODE_ID_TYPE_AMPNODE, 1)
+	log.Infof("Sorted nodes: %v", nodes)
+
+	return nodes, nil
+}
+
+func GetToNFromStore(store *store.Store, nodeId string) (toN, fromN string, err error) {
+	value, err := store.Get(nodeId + "/to_n_from")
+	if err != nil {
+		return "", "", err
+	}
+
+	parts := strings.Split(value, ":")
+	if len(parts) != 2 {
+		return "", "", fmt.Errorf("invalid To and From value: %s", value)
+	}
+	toN = parts[0]
+	fromN = parts[1]
+
+	log.Infof("To and From value: %s, %s", toN, fromN)
+
+	return toN, fromN, nil
+}
