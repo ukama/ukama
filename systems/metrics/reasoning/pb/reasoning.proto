@@ -1,0 +1,41 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2026-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/metrics/reasoning/pb/gen";
+
+import "validator.proto";
+package ukama.metrics.reasoning.v1;
+
+service ReasoningService {
+    rpc StartScheduler(StartSchedulerRequest) returns (StartSchedulerResponse);
+    rpc StopScheduler(StopSchedulerRequest) returns (StopSchedulerResponse);
+    rpc GetStats(GetStatsRequest) returns (GetStatsResponse);
+    rpc GetDomains(GetDomainsRequest) returns (GetDomainsResponse);
+}
+
+message GetStatsRequest {
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+}
+
+message GetStatsResponse {}
+
+message GetDomainsRequest {
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+}
+
+message GetDomainsResponse {}
+
+message StartSchedulerRequest {}
+
+message StartSchedulerResponse {}
+
+message StopSchedulerRequest {}
+
+message StopSchedulerResponse {}
