@@ -81,15 +81,13 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 
 	cleanup := func() {
 		fmt.Printf("Shutting down coroutine %s with scenario: %s\n", id, scenario)
-		labels := prometheus.Labels{"nodeid": id}
 		for _, kpi := range kpis.KPIs {
-			kpi.KPI.Delete(labels)
+			kpi.KPI.Delete(prometheus.Labels{"node_id": id, "type": kpi.Type})
 		}
 	}
 
 	for {
 		time.Sleep(1 * time.Second)
-		labels := prometheus.Labels{"nodeid": id}
 		select {
 		case msg, ok := <-updateChan:
 			if !ok {
@@ -108,15 +106,16 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 		}
 
 		fmt.Printf("Coroutine %s working with: %d, %s\n", id, profile, scenario)
-		pushMetrics(kpis, labels, scenario, profile)
+		pushMetrics(kpis, id, scenario, profile)
 
 	}
 }
 
-func pushMetrics(kpis config.NodeKPIs, labels prometheus.Labels, scenario cenums.SCENARIOS, profile cenums.Profile) {
+func pushMetrics(kpis config.NodeKPIs, nodeID string, scenario cenums.SCENARIOS, profile cenums.Profile) {
 	values := make(map[string]float64)
 
 	for _, kpi := range kpis.KPIs {
+		labels := prometheus.Labels{"node_id": nodeID, "type": kpi.Type}
 		switch kpi.Key {
 		case "unit_uptime":
 			kpi.KPI.With(labels).Inc()

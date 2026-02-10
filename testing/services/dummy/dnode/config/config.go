@@ -36,6 +36,7 @@ type NodeKPI struct {
 	Min    float64
 	Normal float64
 	Max    float64
+	Type   string
 	KPI    *prometheus.GaugeVec
 }
 
@@ -80,8 +81,9 @@ func NewConfig() *Config {
 							Name: "unit_uptime",
 							Help: "Node uptime",
 						},
-						[]string{"nodeid"},
+							[]string{"node_id", "type"},
 					),
+					Type: "trx",
 				},
 				{
 					Key:    "unit_health",
@@ -93,8 +95,9 @@ func NewConfig() *Config {
 							Name: "unit_health",
 							Help: "Health status of the unit",
 						},
-						[]string{"nodeid"},
+						[]string{"node_id", "type"},
 					),
+					Type: "trx",
 				},
 				{
 					Key:    "trx_lte_core_active_ue",
@@ -106,8 +109,9 @@ func NewConfig() *Config {
 							Name: "trx_lte_core_active_ue",
 							Help: "Active subscriber within the network",
 						},
-						[]string{"nodeid"},
+						[]string{"node_id", "type"},
 					),
+					Type: "trx",
 				},
 				{
 					Key:    "node_load",
@@ -119,8 +123,9 @@ func NewConfig() *Config {
 							Name: "node_load",
 							Help: "Load on the node",
 						},
-						[]string{"nodeid"},
+						[]string{"node_id", "type"},
 					),
+					Type: "trx",
 				},
 				{
 					Key:    "cellular_uplink",
@@ -132,8 +137,9 @@ func NewConfig() *Config {
 							Name: "cellular_uplink",
 							Help: "Cellular uplink",
 						},
-						[]string{"nodeid"},
+						[]string{"node_id", "type"},
 					),
+					Type: "trx",
 				},
 				{
 					Key:    "cellular_downlink",
@@ -145,8 +151,9 @@ func NewConfig() *Config {
 							Name: "cellular_downlink",
 							Help: "Cellular downlink",
 						},
-						[]string{"nodeid"},
+						[]string{"node_id", "type"},
 					),
+					Type: "trx",
 				},
 				{
 					Key:    "backhaul_uplink",
@@ -158,8 +165,9 @@ func NewConfig() *Config {
 							Name: "backhaul_uplink",
 							Help: "Backhaul uplink",
 						},
-						[]string{"nodeid"},
+						[]string{"node_id", "type"},
 					),
+					Type: "trx",
 				},
 				{
 					Key:    "backhaul_downlink",
@@ -171,8 +179,9 @@ func NewConfig() *Config {
 							Name: "backhaul_downlink",
 							Help: "Backhaul downlink",
 						},
-						[]string{"nodeid"},
+						[]string{"node_id", "type"},
 					),
+					Type: "trx",
 				},
 				{
 					Key:    "backhaul_latency",
@@ -184,8 +193,9 @@ func NewConfig() *Config {
 							Name: "backhaul_latency",
 							Help: "Backhaul latency",
 						},
-						[]string{"nodeid"},
+						[]string{"node_id", "type"},
 					),
+					Type: "trx",
 				},
 				{
 					Key:    "hwd_load",
@@ -197,47 +207,93 @@ func NewConfig() *Config {
 							Name: "hwd_load",
 							Help: "Hardware load",
 						},
-						[]string{"nodeid"},
+						[]string{"node_id", "type"},
 					),
+					Type: "trx",
 				},
 				{
-					Key:    "memory_usage",
+					Key:    "trx_memory_usage",
 					Min:    getConfigValue("KPIRANGES_MEMORYUSAGE_MIN", 10),
 					Normal: getConfigValue("KPIRANGES_MEMORYUSAGE_NORMAL", 80),
 					Max:    getConfigValue("KPIRANGES_MEMORYUSAGE_MAX", 100),
 					KPI: prometheus.NewGaugeVec(
 						prometheus.GaugeOpts{
-							Name: "memory_usage",
-							Help: "Memory usage",
+							Name: "trx_memory_usage",
+							Help: "Trx memory usage",
 						},
-						[]string{"nodeid"},
+						[]string{"node_id", "type"},
 					),
+					Type: "trx",
 				},
 				{
-					Key:    "cpu_usage",
+					Key:    "trx_cpu_usage",
 					Min:    getConfigValue("KPIRANGES_CPUUSAGE_MIN", 10),
 					Normal: getConfigValue("KPIRANGES_CPUUSAGE_NORMAL", 80),
 					Max:    getConfigValue("KPIRANGES_CPUUSAGE_MAX", 100),
 					KPI: prometheus.NewGaugeVec(
 						prometheus.GaugeOpts{
-							Name: "cpu_usage",
-							Help: "CPU usage",
+							Name: "trx_cpu_usage",
+							Help: "Trx cpu usage",
 						},
-						[]string{"nodeid"},
+						[]string{"node_id", "type"},
 					),
+					Type: "trx",
 				},
 				{
-					Key:    "disk_usage",
+					Key:    "trx_disk_usage",
 					Min:    getConfigValue("KPIRANGES_DISKUSAGE_MIN", 10),
 					Normal: getConfigValue("KPIRANGES_DISKUSAGE_NORMAL", 80),
 					Max:    getConfigValue("KPIRANGES_DISKUSAGE_MAX", 100),
 					KPI: prometheus.NewGaugeVec(
 						prometheus.GaugeOpts{
-							Name: "disk_usage",
-							Help: "Disk usage",
+							Name: "trx_disk_usage",
+							Help: "Trx disk usage",
 						},
-						[]string{"nodeid"},
+						[]string{"node_id", "type"},
 					),
+					Type: "trx",
+				},
+				{
+					Key:    "com_memory_usage",
+					Min:    getConfigValue("KPIRANGES_MEMORYUSAGE_MIN", 10),
+					Normal: getConfigValue("KPIRANGES_MEMORYUSAGE_NORMAL", 80),
+					Max:    getConfigValue("KPIRANGES_MEMORYUSAGE_MAX", 100),
+					KPI: prometheus.NewGaugeVec(
+						prometheus.GaugeOpts{
+							Name: "com_memory_usage",
+							Help: "Com Memory usage",
+						},
+						[]string{"node_id", "type"},
+					),
+					Type: "com",
+				},
+				{
+					Key:    "com_cpu_usage",
+					Min:    getConfigValue("KPIRANGES_CPUUSAGE_MIN", 10),
+					Normal: getConfigValue("KPIRANGES_CPUUSAGE_NORMAL", 80),
+					Max:    getConfigValue("KPIRANGES_CPUUSAGE_MAX", 100),
+					KPI: prometheus.NewGaugeVec(
+						prometheus.GaugeOpts{
+							Name: "com_cpu_usage",
+							Help: "Com CPU usage",
+						},
+						[]string{"node_id", "type"},
+					),
+					Type: "com",
+				},
+				{
+					Key:    "com_disk_usage",
+					Min:    getConfigValue("KPIRANGES_DISKUSAGE_MIN", 10),
+					Normal: getConfigValue("KPIRANGES_DISKUSAGE_NORMAL", 80),
+					Max:    getConfigValue("KPIRANGES_DISKUSAGE_MAX", 100),
+					KPI: prometheus.NewGaugeVec(
+						prometheus.GaugeOpts{
+							Name: "com_disk_usage",
+							Help: "Com disk usage",
+						},
+						[]string{"node_id", "type"},
+					),
+					Type: "com",
 				},
 				{
 					Key:    "txpower",
@@ -249,8 +305,9 @@ func NewConfig() *Config {
 							Name: "txpower",
 							Help: "Transmit power",
 						},
-						[]string{"nodeid"},
+						[]string{"node_id", "type"},
 					),
+					Type: "trx",
 				},
 			},
 		},
