@@ -246,7 +246,7 @@ func NewConfig() *Config {
 					Max:    getConfigValue("KPIRANGES_MEMORYUSAGE_MAX", 100),
 					KPI: prometheus.NewGaugeVec(
 						prometheus.GaugeOpts{
-							Name: "trx_memory_usage",
+							Name: "com_memory_usage",
 							Help: "Com Memory usage",
 						},
 						[]string{"node_id"},
@@ -259,7 +259,7 @@ func NewConfig() *Config {
 					Max:    getConfigValue("KPIRANGES_CPUUSAGE_MAX", 100),
 					KPI: prometheus.NewGaugeVec(
 						prometheus.GaugeOpts{
-							Name: "trx_cpu_usage",
+							Name: "com_cpu_usage",
 							Help: "Com CPU usage",
 						},
 						[]string{"node_id"},
