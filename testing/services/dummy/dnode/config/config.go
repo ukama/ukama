@@ -36,7 +36,7 @@ type NodeKPI struct {
 	Min    float64
 	Normal float64
 	Max    float64
-	Type   string
+	Metric   string
 	KPI    *prometheus.GaugeVec
 }
 
@@ -81,9 +81,9 @@ func NewConfig() *Config {
 							Name: "unit_uptime",
 							Help: "Node uptime",
 						},
-							[]string{"node_id", "type"},
+							[]string{"node_id", "metric"},
 					),
-					Type: "trx",
+					Metric: "unit_uptime",
 				},
 				{
 					Key:    "unit_health",
@@ -95,9 +95,9 @@ func NewConfig() *Config {
 							Name: "unit_health",
 							Help: "Health status of the unit",
 						},
-						[]string{"node_id", "type"},
+						[]string{"node_id", "metric"},
 					),
-					Type: "trx",
+					Metric: "unit_health",
 				},
 				{
 					Key:    "trx_lte_core_active_ue",
@@ -109,9 +109,9 @@ func NewConfig() *Config {
 							Name: "trx_lte_core_active_ue",
 							Help: "Active subscriber within the network",
 						},
-						[]string{"node_id", "type"},
+						[]string{"node_id", "metric"},
 					),
-					Type: "trx",
+					Metric: "trx_lte_core_active_ue",
 				},
 				{
 					Key:    "node_load",
@@ -123,9 +123,9 @@ func NewConfig() *Config {
 							Name: "node_load",
 							Help: "Load on the node",
 						},
-						[]string{"node_id", "type"},
+						[]string{"node_id", "metric"},
 					),
-					Type: "trx",
+					Metric: "node_load",
 				},
 				{
 					Key:    "cellular_uplink",
@@ -137,9 +137,9 @@ func NewConfig() *Config {
 							Name: "cellular_uplink",
 							Help: "Cellular uplink",
 						},
-						[]string{"node_id", "type"},
+						[]string{"node_id", "metric"},
 					),
-					Type: "trx",
+					Metric: "cellular_uplink",
 				},
 				{
 					Key:    "cellular_downlink",
@@ -151,9 +151,9 @@ func NewConfig() *Config {
 							Name: "cellular_downlink",
 							Help: "Cellular downlink",
 						},
-						[]string{"node_id", "type"},
+						[]string{"node_id", "metric"},
 					),
-					Type: "trx",
+					Metric: "cellular_downlink",
 				},
 				{
 					Key:    "backhaul_uplink",
@@ -165,9 +165,9 @@ func NewConfig() *Config {
 							Name: "backhaul_uplink",
 							Help: "Backhaul uplink",
 						},
-						[]string{"node_id", "type"},
+						[]string{"node_id", "metric"},
 					),
-					Type: "trx",
+					Metric: "backhaul_uplink",
 				},
 				{
 					Key:    "backhaul_downlink",
@@ -179,9 +179,9 @@ func NewConfig() *Config {
 							Name: "backhaul_downlink",
 							Help: "Backhaul downlink",
 						},
-						[]string{"node_id", "type"},
+						[]string{"node_id", "metric"},
 					),
-					Type: "trx",
+					Metric: "backhaul_downlink",
 				},
 				{
 					Key:    "backhaul_latency",
@@ -193,9 +193,9 @@ func NewConfig() *Config {
 							Name: "backhaul_latency",
 							Help: "Backhaul latency",
 						},
-						[]string{"node_id", "type"},
+						[]string{"node_id", "metric"},
 					),
-					Type: "trx",
+					Metric: "backhaul_latency",
 				},
 				{
 					Key:    "hwd_load",
@@ -207,9 +207,9 @@ func NewConfig() *Config {
 							Name: "hwd_load",
 							Help: "Hardware load",
 						},
-						[]string{"node_id", "type"},
+						[]string{"node_id", "metric"},
 					),
-					Type: "trx",
+					Metric: "hwd_load",
 				},
 				{
 					Key:    "trx_memory_usage",
@@ -221,9 +221,9 @@ func NewConfig() *Config {
 							Name: "trx_memory_usage",
 							Help: "Trx memory usage",
 						},
-						[]string{"node_id", "type"},
+						[]string{"node_id", "metric"},
 					),
-					Type: "trx",
+					Metric: "trx_memory_usage",
 				},
 				{
 					Key:    "trx_cpu_usage",
@@ -235,9 +235,9 @@ func NewConfig() *Config {
 							Name: "trx_cpu_usage",
 							Help: "Trx cpu usage",
 						},
-						[]string{"node_id", "type"},
+						[]string{"node_id", "metric"},
 					),
-					Type: "trx",
+					Metric: "trx_cpu_usage",
 				},
 				{
 					Key:    "trx_disk_usage",
@@ -249,9 +249,9 @@ func NewConfig() *Config {
 							Name: "trx_disk_usage",
 							Help: "Trx disk usage",
 						},
-						[]string{"node_id", "type"},
+						[]string{"node_id", "metric"},
 					),
-					Type: "trx",
+					Metric: "trx_disk_usage",
 				},
 				{
 					Key:    "com_memory_usage",
@@ -263,9 +263,9 @@ func NewConfig() *Config {
 							Name: "com_memory_usage",
 							Help: "Com Memory usage",
 						},
-						[]string{"node_id", "type"},
+						[]string{"node_id", "metric"},
 					),
-					Type: "com",
+					Metric: "com_memory_usage",
 				},
 				{
 					Key:    "com_cpu_usage",
@@ -277,9 +277,9 @@ func NewConfig() *Config {
 							Name: "com_cpu_usage",
 							Help: "Com CPU usage",
 						},
-						[]string{"node_id", "type"},
+						[]string{"node_id", "metric"},
 					),
-					Type: "com",
+					Metric: "com_cpu_usage",
 				},
 				{
 					Key:    "com_disk_usage",
@@ -291,9 +291,9 @@ func NewConfig() *Config {
 							Name: "com_disk_usage",
 							Help: "Com disk usage",
 						},
-						[]string{"node_id", "type"},
+						[]string{"node_id", "metric"},
 					),
-					Type: "com",
+					Metric: "com_disk_usage",
 				},
 				{
 					Key:    "txpower",
@@ -305,9 +305,9 @@ func NewConfig() *Config {
 							Name: "txpower",
 							Help: "Transmit power",
 						},
-						[]string{"node_id", "type"},
+						[]string{"node_id", "metric"},
 					),
-					Type: "trx",
+					Metric: "txpower",
 				},
 			},
 		},
