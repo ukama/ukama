@@ -96,7 +96,7 @@ func (f *Filter) WithNetwork(network string) *Filter {
 func (f *Filter) GetFilter() string {
 	var filter []string
 	if f.nodeId != "" {
-		filter = append(filter, fmt.Sprintf("nodeid='%s'", f.nodeId))
+		filter = append(filter, fmt.Sprintf("node_id='%s'", f.nodeId))
 	}
 	if f.network != "" {
 		filter = append(filter, fmt.Sprintf("network='%s'", f.network))
@@ -301,10 +301,10 @@ func (m Metric) getQuery(metricFilter *Filter, defaultRateInterval string, aggre
 }
 
 func (m Metric) getAggregateQuery(filter *Filter, aggregateFunc string) string {
-	exludSt := getExcludeStatements("nodeid")
+	exludSt := getExcludeStatements("node_id")
 
 	if !filter.HasNetwork() {
-		exludSt = getExcludeStatements("nodeid", "network")
+		exludSt = getExcludeStatements("node_id", "network")
 	}
 	return fmt.Sprintf("%s(%s {%s}) %s", aggregateFunc, m.Metric, filter.GetFilter(), exludSt)
 }
