@@ -86,7 +86,11 @@ static bool get_json_entry(json_t *json, char *key, json_type type,
  *}
  *
  */
-bool json_deserialize_node_info(char **data, char *tag, json_t *json) {
+bool json_deserialize_node_info(char **data,
+                                int  *iData,
+                                char *tag,
+                                json_type type,
+                                json_t *json) {
 
     json_t *jNodeInfo=NULL;
 
@@ -98,8 +102,7 @@ bool json_deserialize_node_info(char **data, char *tag, json_t *json) {
         return USYS_FALSE;
     }
 
-    if (get_json_entry(jNodeInfo, tag, JSON_STRING,
-                       data, NULL, NULL) == USYS_FALSE) {
+    if (get_json_entry(jNodeInfo, tag, type, data, iData, NULL) == USYS_FALSE) {
         log_error("Error deserializing node info. tag: %s", tag);
         json_log(json);
         *data = NULL;

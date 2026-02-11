@@ -18,7 +18,9 @@
 
 /* jserdes.c */
 extern bool json_deserialize_node_info(char **data,
+                                       int  *iData,
                                        char *tag,
+                                       json_type type,
                                        json_t *json);
 extern bool json_serialize_pa_alarm_notification(JsonObj **json,
                                                  Config *config,
@@ -91,6 +93,7 @@ static int wc_send_node_info_request(char *url,
     JsonErrObj jErr;
     UResponse *httpResp = NULL;
     URequest *httpReq = NULL;
+    int type=0;
 
     httpReq = wc_create_http_request(url, method, NULL);
     if (!httpReq) {
@@ -103,14 +106,20 @@ static int wc_send_node_info_request(char *url,
         goto cleanup;
     }
 
-    if (httpResp->status == 200) {
+    if (httpResp->status == HttpStatus_OK) {
         json = ulfius_get_json_body_response(httpResp, &jErr);
         if (json) {
-            json_deserialize_node_info(nodeID,   JTAG_NODE_ID, json);
-            json_deserialize_node_info(nodeType, JTAG_TYPE,    json);
-            if (nodeID == NULL || nodeType == NULL) {
+            json_deserialize_node_info(nodeID, NULL,  JTAG_NODE_ID, JSON_STRING,  json);
+            json_deserialize_node_info(NULL,   &type, JTAG_TYPE,    JSON_INTEGER, json);
+            if (nodeID == NULL || type == 0) {
                 usys_log_error("Failed to parse NodeInfo response from noded.");
                 return STATUS_NOK;
+            }
+
+            if (type!=4 ){ /* type as is returned from node.d xxx */
+                *nodeType = strdup("Unknown");
+            } else {
+                *nodeType = strdup("Amplifier");
             }
             ret = STATUS_OK;
         }
