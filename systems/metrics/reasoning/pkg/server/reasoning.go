@@ -10,9 +10,12 @@ package server
 
 import (
 	"context"
+	"strconv"
+	"time"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/metrics/reasoning/pkg"
+	"github.com/ukama/ukama/systems/metrics/reasoning/pkg/metric"
 	"github.com/ukama/ukama/systems/metrics/reasoning/pkg/store"
 	"github.com/ukama/ukama/systems/metrics/reasoning/pkg/utils"
 	"github.com/ukama/ukama/systems/metrics/reasoning/scheduler"
@@ -92,6 +95,15 @@ func (c *ReasoningServer) ReasoningJob(ctx context.Context) {
 
 	log.Infof("Node registry nodes: %v", nodes.Nodes)
 
+	payload := metric.PrometheusPayload{
+		Metrics: []string{},
+		Start: time.Now().Add(-15 * time.Second).Format(time.RFC3339),
+		End: time.Now().Format(time.RFC3339),
+		Step: "15",
+		Filters: []metric.Filter{},
+		Operation: "",
+	}
+
 	for _, node := range nodes.Nodes {
 		n, err := utils.SortNodeIds(node.Id)
 		if err != nil {
@@ -101,12 +113,40 @@ func (c *ReasoningServer) ReasoningJob(ctx context.Context) {
 
 		log.Infof("Sorted nodes: %v", n)
 
-		toN, fromN, err := utils.GetToNFromStore(c.store, n.TNode)
+		toN, fromN, err := utils.GetToNFromStore(c.store, n.TNode, c.config.PrometheusInterval)
 		if err != nil {
 			log.Errorf("Failed to get To and From value: %v", err)
 			continue
 		}
-		log.Infof("To and From value: %s, %s", toN, fromN)
+		payload.Start = fromN
+		payload.End = toN
+	
+		for _, m := range c.config.MetricKeyMap.Metrics {
+			metrics := []string{}
+			filters := []metric.Filter{}
+			for _, metricItem := range m.Metric {
+				metrics = append(metrics, metricItem.Key)
+				switch metricItem.Type {
+				case ukama.NODE_ID_TYPE_TOWERNODE:
+					filters = append(filters, metric.Filter{
+						Key: "node_id",
+						Value: n.TNode,
+					})
+				case ukama.NODE_ID_TYPE_AMPNODE:
+					filters = append(filters, metric.Filter{
+						Key: "node_id",
+						Value: n.ANode,
+					})
+				}
+			}
+			payload.Metrics = metrics
+			payload.Step = strconv.Itoa(m.Step)
+			log.Infof("Payload: %+v", payload)
+
+		}
+
+		rp := metric.GetPrometheusRequestUrl(c.config.PrometheusHost, payload)
+		log.Infof("Prometheus request payload: %+v", rp)
 	}
 }
 

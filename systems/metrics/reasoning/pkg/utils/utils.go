@@ -9,7 +9,9 @@ package utils
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	ukama "github.com/ukama/ukama/systems/common/ukama"
@@ -47,10 +49,16 @@ func SortNodeIds(nodeId string) (Nodes, error) {
 	return nodes, nil
 }
 
-func GetToNFromStore(store *store.Store, nodeId string) (toN, fromN string, err error) {
+func GetToNFromStore(store *store.Store, nodeId string, interval int) (toN, fromN string, err error) {
 	value, err := store.Get(nodeId + "/to_n_from")
 	if err != nil {
 		return "", "", err
+	}
+
+	if value == "" {
+		now := time.Now()
+		log.Errorf("no To and From value found for node: %s", nodeId)
+		return strconv.FormatInt(now.Unix(), 10), strconv.FormatInt(now.Unix() - int64(interval), 10), nil
 	}
 
 	parts := strings.Split(value, ":")
