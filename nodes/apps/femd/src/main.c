@@ -118,7 +118,7 @@ int main(int argc, char **argv) {
     SafetyMonitor  safetyMonitor  = {0};
 
     usys_log_set_service(SERVICE_NAME);
-    usys_log_remote_init(SERVICE_NAME);
+    //    usys_log_remote_init(SERVICE_NAME);
 
     validate_fem_band_env_or_exit();
 
@@ -188,6 +188,11 @@ int main(int argc, char **argv) {
         if (get_nodeid_and_type_from_noded(&serviceConfig) == STATUS_NOK) {
             usys_log_error(
                 "%s: unable to connect with node.d", SERVICE_NAME);
+            goto done;
+        }
+
+        if (strcmp(serviceConfig.nodeType, "Amplifier") != 0){
+            usys_log_error("Fem.d only runs on amplifier node");
             goto done;
         }
     }
