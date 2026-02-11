@@ -1,3 +1,7 @@
+
+
+
+
 /*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -72,21 +76,35 @@ static void usage() {
     usys_puts("-v, --version                 Software version");
 }
 
-static void validate_fem_band_env_or_exit(void) {
+static void install_signal_handlers(void) {
+    struct sigaction sa;
+
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = handle_terminate;
+    sigemptyset(&sa.sa_mask);
+
+    sigaction(SIGINT,  &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
+
+#ifdef SIGPIPE
+    signal(SIGPIPE, SIG_IGN);
+#endif
+}
+
+static int validate_fem_band_env(void) {
+
     const char *env = getenv(ENV_FEM_BAND);
     char band[16];
-    size_t i, j;
+    size_t i = 0;
+    size_t j = 0;
 
-    if (env == NULL || env[0] == '\0') {
+    if (!env || !*env) {
         usys_log_error("Band env not set: %s Supported values: B1, B41, B48",
                        ENV_FEM_BAND);
-        usys_exit(1);
+        return STATUS_NOK;
     }
 
-    /* Trim whitespace */
-    i = 0;
-    j = 0;
-    while (env[i] != '\0' && j < sizeof(band) - 1) {
+    while (env[i] && j < sizeof(band) - 1) {
         if (env[i] != ' ' && env[i] != '\t' &&
             env[i] != '\n' && env[i] != '\r') {
             band[j++] = env[i];
@@ -95,166 +113,180 @@ static void validate_fem_band_env_or_exit(void) {
     }
     band[j] = '\0';
 
-    if (strcmp(band, "B1") != 0 &&
-        strcmp(band, "B41") != 0 &&
-        strcmp(band, "B48") != 0) {
+    if (strcasecmp(band, "B1") != 0 &&
+        strcasecmp(band, "B41") != 0 &&
+        strcasecmp(band, "B48") != 0) {
 
         usys_log_error("Invalid %s='%s'. Supported values: B1, B41, B48",
                        ENV_FEM_BAND, env);
-        usys_exit(1);
+        return STATUS_NOK;
     }
+
+    return STATUS_OK;
 }
 
 int main(int argc, char **argv) {
-    int opt, optIdx;
-    int exitCode = USYS_FALSE;
 
-    char *debug = DEF_LOG_LEVEL;
-    UInst serviceInst;
-    Config         serviceConfig  = {0};
+    int opt;
+    int optIdx;
+    int exitCode = 0;
+
+    char *debugLevel = DEF_LOG_LEVEL;
+
+    /* zero-init for safety */
+    UInst serviceInst = {0};
+    Config serviceConfig = {0};
     GpioController gpioController = {0};
-    I2CController  i2cController  = {0};
-    ServerConfig   serverConfig   = {0};
-    SafetyMonitor  safetyMonitor  = {0};
+    I2CController i2cController = {0};
+    ServerConfig serverConfig = {0};
+    SafetyMonitor safetyMonitor = {0};
+
+    /* state tracking flags */
+    bool serviceNameAllocated = false;
+    bool nodeIdAllocated = false;
+    bool nodeTypeAllocated = false;
+    bool gpioInitialized = false;
+    bool i2cInitialized = false;
+    bool safetyInitialized = false;
+    bool webServiceStarted = false;
 
     usys_log_set_service(SERVICE_NAME);
-    //    usys_log_remote_init(SERVICE_NAME);
 
-    validate_fem_band_env_or_exit();
+    if (validate_fem_band_env() != STATUS_OK) {
+        exitCode = 1;
+        goto done;
+    }
 
     while (true) {
-        opt    = 0;
-        optIdx = 0;
-
         opt = usys_getopt_long(argc, argv, "vh:l:", longOptions, &optIdx);
-        if (opt == -1) {
-            break;
-        }
+        if (opt == -1) break;
 
         switch (opt) {
         case 'h':
             usage();
-            usys_exit(0);
-            break;
+            return 0;
 
         case 'v':
             usys_puts(VERSION);
-            usys_exit(0);
-            break;
+            return 0;
 
         case 'l':
-            debug = optarg;
-            set_log_level(debug);
+            debugLevel = optarg;
+            set_log_level(debugLevel);
             break;
 
         default:
             usage();
-            usys_exit(0);
+            return 0;
         }
     }
 
-    /* Service config update */
+    /* Service configuration */
     serviceConfig.serviceName = usys_strdup(SERVICE_NAME);
+    serviceNameAllocated = (serviceConfig.serviceName != NULL);
+
     serviceConfig.servicePort = usys_find_service_port(SERVICE_NAME);
     serviceConfig.nodedPort   = usys_find_service_port(SERVICE_NODE);
     serviceConfig.notifydPort = usys_find_service_port(SERVICE_NOTIFY);
-    serviceConfig.nodeID      = NULL;
-    serviceConfig.nodeType    = NULL;
 
-    if (!serviceConfig.servicePort ||
-        !serviceConfig.nodedPort   ||
+    if (!serviceNameAllocated ||
+        !serviceConfig.servicePort ||
+        !serviceConfig.nodedPort ||
         !serviceConfig.notifydPort) {
-        usys_log_error("Unable to determine the port for service(s)");
-        usys_exit(1);
+
+        usys_log_error("Unable to determine service configuration");
+        exitCode = 1;
+        goto done;
     }
 
-    usys_log_debug("Starting %s ... ", SERVICE_NAME);
-
-    /* Signal handlers */
-    signal(SIGINT,  handle_terminate);
-    signal(SIGTERM, handle_terminate);
-#ifdef SIGPIPE
-    signal(SIGPIPE, SIG_IGN);
-#endif
+    install_signal_handlers();
 
     if (getenv(ENV_FEMD_DEBUG_MODE)) {
-        serviceConfig.nodeID   = strdup(DEF_NODE_ID);
-        serviceConfig.nodeType = strdup(DEF_NODE_TYPE);
-        usys_log_debug("%s: using default Node ID: %s Type: %s",
-                       SERVICE_NAME,
-                       DEF_NODE_ID,
-                       DEF_NODE_TYPE);
+        serviceConfig.nodeID   = usys_strdup(DEF_NODE_ID);
+        serviceConfig.nodeType = usys_strdup(DEF_NODE_TYPE);
+
+        nodeIdAllocated = (serviceConfig.nodeID != NULL);
+        nodeTypeAllocated = (serviceConfig.nodeType != NULL);
+
+        if (!nodeIdAllocated || !nodeTypeAllocated) {
+            exitCode = 1;
+            goto done;
+        }
     } else {
-        if (get_nodeid_and_type_from_noded(&serviceConfig) == STATUS_NOK) {
-            usys_log_error(
-                "%s: unable to connect with node.d", SERVICE_NAME);
+        if (get_nodeid_and_type_from_noded(&serviceConfig) != STATUS_OK) {
+            exitCode = 1;
             goto done;
         }
 
-        if (strcmp(serviceConfig.nodeType, "Amplifier") != 0){
+        nodeIdAllocated = (serviceConfig.nodeID != NULL);
+        nodeTypeAllocated = (serviceConfig.nodeType != NULL);
+
+        if (!serviceConfig.nodeType ||
+            strcmp(serviceConfig.nodeType, "Amplifier") != 0) {
+
             usys_log_error("Fem.d only runs on amplifier node");
+            exitCode = 1;
             goto done;
         }
     }
 
     if (gpio_controller_init(&gpioController, NULL) != STATUS_OK) {
-        usys_log_error("Failed to initialize GPIO controller");
-        exitCode = USYS_TRUE;
+        exitCode = 1;
         goto done;
     }
+    gpioInitialized = true;
 
     if (i2c_controller_init(&i2cController) != STATUS_OK) {
-        usys_log_error("Failed to initialize I2C controller");
-        exitCode = USYS_TRUE;
+        exitCode = 1;
         goto done;
     }
+    i2cInitialized = true;
 
     if (safety_monitor_init(&safetyMonitor,
                             &gpioController,
                             &i2cController,
                             &serviceConfig) != STATUS_OK) {
-        usys_log_error("Failed to initialize safety monitor");
+        exitCode = 1;
         goto done;
     }
+    safetyInitialized = true;
 
     if (safety_monitor_start(&safetyMonitor) != STATUS_OK) {
-        usys_log_error("Failed to start safety monitor");
+        exitCode = 1;
         goto done;
     }
 
-    serverConfig.config         = &serviceConfig;
+    serverConfig.config = &serviceConfig;
     serverConfig.gpioController = &gpioController;
-    serverConfig.i2cController  = &i2cController;
+    serverConfig.i2cController = &i2cController;
 
     if (start_web_service(&serverConfig, &serviceInst) != USYS_TRUE) {
-        usys_free(serviceConfig.serviceName);
-        usys_log_error("Webservice failed to setup for clients. Exiting.");
-        exitCode = USYS_TRUE;
-        usys_exit(1);
+        exitCode = 1;
+        goto done;
     }
+    webServiceStarted = true;
 
     usys_log_info("FEM.d started successfully");
-    usys_log_info("Service: %s, Port: %d",
-                  serverConfig.config->serviceName,
-                  serverConfig.config->servicePort);
 
-    /* Main wait loop: break on SIGINT/SIGTERM */
     while (g_running) {
-        /* small sleep to avoid busy loop; framework threads keep running */
-        usleep(200000); /* 200 ms */
+        usleep(200000);
     }
 
 done:
-    safety_monitor_stop(&safetyMonitor);
-    safety_monitor_cleanup(&safetyMonitor);
-    ulfius_stop_framework(&serviceInst);
-    ulfius_clean_instance(&serviceInst);
-    usys_free(serviceConfig.serviceName);
+    /* orderly shutdown */
+    if (webServiceStarted) {
+        ulfius_stop_framework(&serviceInst);
+        ulfius_clean_instance(&serviceInst);
+    }
 
-    i2c_controller_cleanup(&i2cController);
-    gpio_controller_cleanup(&gpioController);
+    if (safetyInitialized)     safety_monitor_cleanup(&safetyMonitor);
+    if (i2cInitialized)        i2c_controller_cleanup(&i2cController);
+    if (gpioInitialized)       gpio_controller_cleanup(&gpioController);
+    if (serviceNameAllocated)  usys_free(serviceConfig.serviceName);
+    if (nodeIdAllocated)       usys_free(serviceConfig.nodeID);
+    if (nodeTypeAllocated)     usys_free(serviceConfig.nodeType);
 
-    usys_log_debug("Exiting femd ...");
+    usys_log_debug("Exiting %s ...", SERVICE_NAME);
 
     return exitCode;
 }

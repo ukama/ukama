@@ -118,7 +118,6 @@ static int wc_send_node_info_request(char *url,
 
             if (type!=4 ){ /* type as is returned from node.d xxx */
                 *nodeType = strdup("Unknown");
-                usys_log_error("Fem.d only runs on amplifier node");
             } else {
                 *nodeType = strdup("Amplifier");
             }
