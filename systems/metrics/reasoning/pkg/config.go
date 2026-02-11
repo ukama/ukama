@@ -24,6 +24,7 @@ type Config struct {
 	MsgClient            *uconf.MsgClient `default:"{}"`
 	SchedulerInterval    time.Duration    `default:"1m"`
 	OrgName              string           `default:"ukama"`
+	PrometheusHost       string           `default:"http://localhost:9079"`
 	Service              *uconf.Service
 	Http            	 HttpServices
 }
