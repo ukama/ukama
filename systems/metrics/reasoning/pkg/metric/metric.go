@@ -87,39 +87,70 @@ func GetPrometheusRequestUrl(
 	}
 }
 
-func formatMetricsResponse(w io.Writer, b io.ReadCloser, prd PrometheusRequestData) error {
-	for _, metric := range prd.Payload.Metrics {
-		bytes, err := io.ReadAll(b)
-		if err != nil {
-			log.Errorf("Failed to read prometheus response for %s Error: %v", metric, err)
-			return err
-		}
+func filterMetricLabels(metric map[string]interface{}) map[string]interface{} {
+	filtered := make(map[string]interface{})
+	if v, ok := metric["node_id"]; ok {
+		filtered["node_id"] = v
+	}
+	if v, ok := metric["metric"]; ok {
+		filtered["metric"] = v
+	} else if v, ok := metric["__name__"]; ok {
+		filtered["metric"] = v
+	}
+	return filtered
+}
 
-		rmap := map[string]interface{}{}
-		err = json.Unmarshal([]byte(bytes), &rmap)
-		if err != nil {
-			log.Errorf("Failed to unmarshal prometheus response for %s Error: %v", metric, err)
-			return err
+func filterResultMetrics(response map[string]interface{}) {
+	data, ok := response["data"].(map[string]interface{})
+	if !ok {
+		return
+	}
+	result, ok := data["result"].([]interface{})
+	if !ok {
+		return
+	}
+	for i, item := range result {
+		resultItem, ok := item.(map[string]interface{})
+		if !ok {
+			continue
 		}
-		rmap["Name"] = metric
-
-		rb, err := json.Marshal(rmap)
-		if err != nil {
-			log.Errorf("Failed to marshal prometheus response for %s Error: %v", metric, err)
-			return err
+		metric, ok := resultItem["metric"].(map[string]interface{})
+		if !ok {
+			continue
 		}
+		resultItem["metric"] = filterMetricLabels(metric)
+		result[i] = resultItem
+	}
+}
 
-		n, err := w.Write(rb)
-		if err != nil {
-			log.Errorf("Failed to add prometheus response to ws response for %s Error: %v", metric, err)
-			return err
-		}
-
-		log.Infof("Updated %d bytes of response: %s", n, string(rb))
-		
+func formatMetricsResponse(w io.Writer, b io.ReadCloser) error {
+	bytes, err := io.ReadAll(b)
+	if err != nil {
+		log.Errorf("Failed to read prometheus response Error: %v", err)
+		return err
 	}
 
-	
+	var response map[string]interface{}
+	if err := json.Unmarshal(bytes, &response); err != nil {
+		log.Errorf("Failed to unmarshal prometheus response Error: %v", err)
+		return err
+	}
+
+	filterResultMetrics(response)
+
+	rb, err := json.Marshal(response)
+	if err != nil {
+		log.Errorf("Failed to marshal prometheus response Error: %v", err)
+		return err
+	}
+
+	n, err := w.Write(rb)
+	if err != nil {
+		log.Errorf("Failed to write prometheus response Error: %v", err)
+		return err
+	}
+
+	log.Infof("Wrote %d bytes of prometheus response", n)
 	return nil
 }
 
@@ -138,7 +169,7 @@ func ProcessPromRequest(ctx context.Context, prd PrometheusRequestData, w io.Wri
 	}
 	log.Infof("Response Body %+v", res.Body)
 	if formatting {
-		err = formatMetricsResponse(w, res.Body, prd)
+		err = formatMetricsResponse(w, res.Body)
 		if err != nil {
 			return http.StatusInternalServerError, errors.Wrap(err, "failed to format response")
 		}
