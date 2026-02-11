@@ -26,17 +26,17 @@ typedef enum {
     GPIO_RX_RF,
     GPIO_PA_VDS,
     GPIO_TX_RFPAL,
-    GPIO_PSU_PGOOD, /* read-only */
+    GPIO_PSU_PGOOD,
     GPIO_MAX
 } GpioPin;
 
 typedef struct {
-    bool pa_disable;    /* 28V_VDS Enable (inverted logic) */
-    bool tx_rf_enable;  /* TX_RF */
-    bool rx_rf_enable;  /* RX_RF */
-    bool pa_vds_enable; /* PA_VDS */
-    bool rf_pal_enable; /* TX_RFPAL */
-    bool pg_reg_5v;     /* PSU_PGOOD */
+    bool pa_disable;
+    bool tx_rf_enable;
+    bool rx_rf_enable;
+    bool pa_vds_enable;
+    bool rf_pal_enable;
+    bool pg_reg_5v;
 } GpioStatus;
 
 typedef struct {
@@ -44,17 +44,20 @@ typedef struct {
     bool initialized;
 } GpioController;
 
-int gpio_controller_init(GpioController     *ctl, const char *basePath);
+int  gpio_controller_init(GpioController *ctl, const char *basePath);
 void gpio_controller_cleanup(GpioController *ctl);
 
-/* Generic get/set for gpio */
-int gpio_set(GpioController *ctl, FemUnit unit, GpioPin pin, bool value);
-int gpio_get(GpioController *ctl, FemUnit unit, GpioPin pin, bool *out);
+int  gpio_set(GpioController *ctl, FemUnit unit, GpioPin pin, bool value);
+int  gpio_get(GpioController *ctl, FemUnit unit, GpioPin pin, bool *out);
 
-/* bulk helper */
-int gpio_read_all(GpioController *ctl, FemUnit unit, GpioStatus *out);
-int gpio_apply(GpioController    *ctl, FemUnit unit, const GpioStatus *desired);
+int  gpio_read_all(GpioController *ctl, FemUnit unit, GpioStatus *out);
+int  gpio_apply(GpioController *ctl, FemUnit unit, const GpioStatus *desired);
 
-/* convenience */
-int gpio_disable_pa(GpioController *ctl, FemUnit unit);
+int  gpio_disable_pa(GpioController *ctl, FemUnit unit);
+
+static inline bool gpio_vds_28v_enabled(const GpioStatus *s) {
+    if (!s) return false;
+    return !s->pa_disable;
+}
+
 #endif /* GPIO_CONTROLLER_H */
