@@ -82,7 +82,7 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 	cleanup := func() {
 		fmt.Printf("Shutting down coroutine %s with scenario: %s\n", id, scenario)
 		for _, kpi := range kpis.KPIs {
-			kpi.KPI.Delete(prometheus.Labels{"node_id": id, "type": kpi.Type})
+			kpi.KPI.Delete(prometheus.Labels{"node_id": id, "metric": kpi.Metric})
 		}
 	}
 
@@ -115,7 +115,7 @@ func pushMetrics(kpis config.NodeKPIs, nodeID string, scenario cenums.SCENARIOS,
 	values := make(map[string]float64)
 
 	for _, kpi := range kpis.KPIs {
-		labels := prometheus.Labels{"node_id": nodeID, "type": kpi.Type}
+		labels := prometheus.Labels{"node_id": nodeID, "metric": kpi.Metric}
 		switch kpi.Key {
 		case "unit_uptime":
 			kpi.KPI.With(labels).Inc()
