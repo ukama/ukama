@@ -98,6 +98,23 @@ func (c *ReasoningServer) ReasoningJob(ctx context.Context) {
 	}
 }
 
+func (c *ReasoningServer) buildMetricQueries(m pkg.Metric, n utils.Nodes) []metric.MetricWithFilters {
+	var out []metric.MetricWithFilters
+	for _, item := range m.Metric {
+		// Both trx (tnode) and com (anode) metrics are scraped from the same physical node,
+		// so they share the tower node_id in Prometheus.
+		nodeID := n.TNode
+		if item.Type != ukama.NODE_ID_TYPE_TOWERNODE && item.Type != ukama.NODE_ID_TYPE_AMPNODE {
+			continue
+		}
+		out = append(out, metric.MetricWithFilters{
+			Metric:  item.Key,
+			Filters: []metric.Filter{{Key: "node_id", Value: nodeID}},
+		})
+	}
+	return out
+}
+
 func (c *ReasoningServer) processNode(ctx context.Context, nodeID string) {
 	n, err := utils.SortNodeIds(nodeID)
 	if err != nil {
@@ -130,24 +147,15 @@ func (c *ReasoningServer) processNode(ctx context.Context, nodeID string) {
 			log.Errorf("Failed to process Prometheus request for node %s: %v", n.TNode, err)
 			continue
 		}
-		log.Infof("Prometheus response: status=%s, %d results for node %s: %+v", pr.Status, len(pr.Data.Result), n.TNode, pr.Data.Result)
+
+		utils.StoreMetricResults(c.store, n.TNode, m.Name, pr.Data.Result)
+		results, err := utils.GetMetricResults(c.store, n.TNode, m.Name)
+		if err != nil {
+			log.Errorf("Failed to get metric results: %v", err)
+			continue
+		}
+		log.Infof("Metric results: %+v", results)
 	}
 }
 
-func (c *ReasoningServer) buildMetricQueries(m pkg.Metric, n utils.Nodes) []metric.MetricWithFilters {
-	var out []metric.MetricWithFilters
-	for _, item := range m.Metric {
-		// Both trx (tnode) and com (anode) metrics are scraped from the same physical node,
-		// so they share the tower node_id in Prometheus.
-		nodeID := n.TNode
-		if item.Type != ukama.NODE_ID_TYPE_TOWERNODE && item.Type != ukama.NODE_ID_TYPE_AMPNODE {
-			continue
-		}
-		out = append(out, metric.MetricWithFilters{
-			Metric:  item.Key,
-			Filters: []metric.Filter{{Key: "node_id", Value: nodeID}},
-		})
-	}
-	return out
-}
 

@@ -8,6 +8,8 @@
 package utils
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -15,6 +17,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	ukama "github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/metrics/reasoning/pkg/metric"
 	"github.com/ukama/ukama/systems/metrics/reasoning/pkg/store"
 )
 
@@ -74,4 +77,29 @@ func GetStartEndFromStore(s *store.Store, nodeID string, interval int) (start, e
 	end = strconv.FormatInt(prevEnd+int64(interval), 10)
 	_ = s.Put(key, start+":"+end)
 	return start, end, nil
+}
+
+func StoreMetricResults(s *store.Store, nodeID string, metricName string, results []metric.FilteredPrometheusResult) {
+	jsonData, err := json.Marshal(results)
+	if err != nil {
+		log.Errorf("Failed to marshal metric results: %v", err)
+		return
+	}
+	s.Put(nodeID + "/" + metricName, string(jsonData))
+}
+
+func GetMetricResults(s *store.Store, nodeID string, metricName string) ([]metric.FilteredPrometheusResult, error) {
+	jsonData, err := s.Get(nodeID + "/" + metricName)
+	if err != nil {
+		log.Errorf("Failed to get metric results: %v", err)
+		return nil, err
+	}
+	var results []metric.FilteredPrometheusResult
+	dec := json.NewDecoder(bytes.NewReader([]byte(jsonData)))
+	dec.UseNumber() 
+	if err := dec.Decode(&results); err != nil {
+		log.Errorf("Failed to unmarshal metric results: %v", err)
+		return nil, err
+	}
+	return results, nil
 }
