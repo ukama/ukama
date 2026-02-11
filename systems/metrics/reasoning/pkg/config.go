@@ -9,6 +9,8 @@
 package pkg
 
 import (
+	"encoding/json"
+	"os"
 	"time"
 
 	uconf "github.com/ukama/ukama/systems/common/config"
@@ -25,8 +27,27 @@ type Config struct {
 	SchedulerInterval    time.Duration    `default:"1m"`
 	OrgName              string           `default:"ukama"`
 	PrometheusHost       string           `default:"http://localhost:9079"`
+	MetricsKeyMapFile    string           `default:"metric-key-map.json"`
+	MetricKeyMap         *MetricKeyMap
 	Service              *uconf.Service
 	Http            	 HttpServices
+}
+
+type Metric struct {
+	Name string `json:"name" yaml:"name"`
+	Interval int `json:"interval" yaml:"interval"`
+	Step int `json:"step" yaml:"step"`
+	Category string `json:"category" yaml:"category"`
+	Metric []MetricItem `json:"metric" yaml:"metric"`
+}
+
+type MetricItem struct {
+	Key string `json:"key" yaml:"key"`
+	Type string `json:"type" yaml:"type"`
+}
+
+type MetricKeyMap struct {
+	Metrics []Metric `json:"metrics" yaml:"metrics"`
 }
 
 type HttpServices struct {
@@ -42,4 +63,18 @@ func NewConfig(name string) *Config {
 			Timeout: 5 * time.Second,
 		},
 	}
+}
+
+func LoadMetricKeyMap(config *Config) (*MetricKeyMap, error) {
+	metricKeyMap := &MetricKeyMap{}
+	metricKeyMapFile := config.MetricsKeyMapFile
+	bytes, err := os.ReadFile(metricKeyMapFile)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(bytes, metricKeyMap)
+	if err != nil {
+		return nil, err
+	}
+	return metricKeyMap, nil
 }

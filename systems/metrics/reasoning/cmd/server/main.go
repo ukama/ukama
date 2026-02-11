@@ -74,6 +74,13 @@ func runGrpcServer() {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
+	metricKeyMap, err := pkg.LoadMetricKeyMap(serviceConfig)
+	if err != nil {
+		log.Errorf("Failed to load metric key map: %v", err)
+	}
+	serviceConfig.MetricKeyMap = metricKeyMap
+	log.Infof("Metric key map: %+v", serviceConfig.MetricKeyMap)
+
 	regUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
 		ic.CreateHostString(serviceConfig.OrgName, registrySystemName), &serviceConfig.OrgName)
 	if err != nil {
