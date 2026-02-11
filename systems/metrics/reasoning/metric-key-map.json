@@ -1,17 +1,18 @@
 {
     "metrics": [
-    {
-        "step": 1,
-        "name": "cpu",
-        "interval": 15,
-        "category": "health",
-        "metric":[{"key":"trx_cpu_usage", "type": "tnode"}, {"key":"com_cpu_usage", "type": "anode"}]
-    },
-    {
-        "step": 1,
-        "interval": 15,
-        "name": "memory",
-        "category": "health",
-        "metric":[{"key":"trx_memory_usage", "type": "tnode"}, {"key":"com_memory_usage", "type": "anode"}]
-    }]
+        {
+            "step": 1,
+            "name": "cpu",
+            "interval": 15,
+            "category": "health",
+            "metric":[{"key":"trx_cpu_usage", "type": "tnode"}, {"key":"com_cpu_usage", "type": "anode"}]
+        },
+        {
+            "step": 1,
+            "interval": 15,
+            "name": "memory",
+            "category": "health",
+            "metric":[{"key":"trx_memory_usage", "type": "tnode"}, {"key":"com_memory_usage", "type": "anode"}]
+        }
+    ]
 }

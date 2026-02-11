@@ -18,57 +18,60 @@ import (
 	"github.com/ukama/ukama/systems/metrics/reasoning/pkg/store"
 )
 
+const startEndKey = "start_end"
+
 type Nodes struct {
 	TNode string
 	ANode string
 }
 
-func SortNodeIds(nodeId string) (Nodes, error) {
-	nodes := Nodes{}
-	nid, err := ukama.ValidateNodeId(nodeId)
-	if err != nil {
-		log.Errorf("Failed to validate node id: %v", err)
-		return nodes, fmt.Errorf("failed to validate node id: %v", err)
-	}
-
-	ntype := ukama.GetNodeType(nid.String()) 
-	if ntype == nil {
-		log.Errorf("Failed to get node type: %v", err)
-		return nodes, fmt.Errorf("failed to get node type: %v", err)
-	}
-
-	if *ntype != ukama.NODE_ID_TYPE_TOWERNODE {
-		log.Errorf("Node type is not a tower node: %v", nid.String())
-		return nodes, fmt.Errorf("node type is not a tower node: %v", nid.String())
-	}
-
-	nodes.TNode = nid.String()
-	nodes.ANode = strings.Replace(nid.String(), *ntype, ukama.NODE_ID_TYPE_AMPNODE, 1)
-	log.Infof("Sorted nodes: %v", nodes)
-
-	return nodes, nil
+func startEndStoreKey(nodeID string) string {
+	return nodeID + "/" + startEndKey
 }
 
-func GetToNFromStore(store *store.Store, nodeId string, interval int) (toN, fromN string, err error) {
-	value, err := store.Get(nodeId + "/to_n_from")
+// SortNodeIds validates a tower node ID and returns the tower + amp node pair.
+func SortNodeIds(nodeID string) (Nodes, error) {
+	nid, err := ukama.ValidateNodeId(nodeID)
 	if err != nil {
-		return "", "", err
+		return Nodes{}, fmt.Errorf("validate node id: %w", err)
 	}
 
-	if value == "" {
-		now := time.Now()
-		log.Errorf("no To and From value found for node: %s", nodeId)
-		return strconv.FormatInt(now.Unix(), 10), strconv.FormatInt(now.Unix() - int64(interval), 10), nil
+	nodeType := nid.GetNodeType()
+	if nodeType != ukama.NODE_ID_TYPE_TOWERNODE {
+		return Nodes{}, fmt.Errorf("expected tower node, got %s", nid.String())
 	}
 
-	parts := strings.Split(value, ":")
+	tNode := nid.String()
+	aNode := strings.Replace(tNode, nodeType, ukama.NODE_ID_TYPE_AMPNODE, 1)
+	return Nodes{TNode: tNode, ANode: aNode}, nil
+}
+
+// GetStartEndFromStore returns the next rolling window (start, end) for a node.
+// Stores previous end as new start to avoid overlapping queries.
+func GetStartEndFromStore(s *store.Store, nodeID string, interval int) (start, end string, err error) {
+	key := startEndStoreKey(nodeID)
+	value, err := s.Get(key)
+	if err != nil {
+		now := time.Now().Unix()
+		start = strconv.FormatInt(now-int64(interval), 10)
+		end = strconv.FormatInt(now, 10)
+		_ = s.Put(key, start+":"+end)
+		log.Warnf("No start/end in store for node %s, using current window", nodeID)
+		return start, end, nil
+	}
+
+	parts := strings.SplitN(value, ":", 2)
 	if len(parts) != 2 {
-		return "", "", fmt.Errorf("invalid To and From value: %s", value)
+		return "", "", fmt.Errorf("invalid stored value %q, expected start:end", value)
 	}
-	toN = parts[0]
-	fromN = parts[1]
 
-	log.Infof("To and From value: %s, %s", toN, fromN)
+	prevEnd, err := strconv.ParseInt(parts[1], 10, 64)
+	if err != nil {
+		return "", "", fmt.Errorf("invalid end timestamp %q: %w", parts[1], err)
+	}
 
-	return toN, fromN, nil
+	start = parts[1]
+	end = strconv.FormatInt(prevEnd+int64(interval), 10)
+	_ = s.Put(key, start+":"+end)
+	return start, end, nil
 }

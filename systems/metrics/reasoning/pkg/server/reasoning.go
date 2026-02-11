@@ -11,7 +11,6 @@ package server
 import (
 	"context"
 	"strconv"
-	"time"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/metrics/reasoning/pkg"
@@ -82,71 +81,73 @@ func (c *ReasoningServer) StopScheduler(ctx context.Context, req *pb.StopSchedul
 
 
 func (c *ReasoningServer) ReasoningJob(ctx context.Context) {
-	log.Infof("Reasoning job started")
+	log.Info("Reasoning job started")
 	nodes, err := c.nodeClient.List(creg.ListNodesRequest{
 		Connectivity: ukama.NodeConnectivityOnline.String(),
-		State: ukama.NodeStateConfigured.String(),
-		Type: ukama.NodeType(ukama.NODE_ID_TYPE_TOWERNODE).String(),
+		State:        ukama.NodeStateConfigured.String(),
+		Type:         ukama.NodeType(ukama.NODE_ID_TYPE_TOWERNODE).String(),
 	})
 	if err != nil {
 		log.Errorf("Failed to get nodes: %v", err)
 		return
 	}
-
 	log.Infof("Node registry nodes: %v", nodes.Nodes)
 
-	payload := metric.PrometheusPayload{
-		Metrics: []string{},
-		Start: time.Now().Add(-15 * time.Second).Format(time.RFC3339),
-		End: time.Now().Format(time.RFC3339),
-		Step: "15",
-		Filters: []metric.Filter{},
-		Operation: "",
-	}
-
 	for _, node := range nodes.Nodes {
-		n, err := utils.SortNodeIds(node.Id)
-		if err != nil {
-			log.Errorf("Failed to sort nodes: %v", err)
-			continue
-		}
-
-		log.Infof("Sorted nodes: %v", n)
-
-		toN, fromN, err := utils.GetToNFromStore(c.store, n.TNode, c.config.PrometheusInterval)
-		if err != nil {
-			log.Errorf("Failed to get To and From value: %v", err)
-			continue
-		}
-		payload.Start = fromN
-		payload.End = toN
-	
-		for _, m := range c.config.MetricKeyMap.Metrics {
-			metrics := []string{}
-			filters := []metric.Filter{}
-			for _, metricItem := range m.Metric {
-				metrics = append(metrics, metricItem.Key)
-				switch metricItem.Type {
-				case ukama.NODE_ID_TYPE_TOWERNODE:
-					filters = append(filters, metric.Filter{
-						Key: "node_id",
-						Value: n.TNode,
-					})
-				case ukama.NODE_ID_TYPE_AMPNODE:
-					filters = append(filters, metric.Filter{
-						Key: "node_id",
-						Value: n.ANode,
-					})
-				}
-			}
-			payload.Metrics = metrics
-			payload.Step = strconv.Itoa(m.Step)
-			log.Infof("Payload: %+v", payload)
-
-		}
-
-		rp := metric.GetPrometheusRequestUrl(c.config.PrometheusHost, payload)
-		log.Infof("Prometheus request payload: %+v", rp)
+		c.processNode(ctx, node.Id)
 	}
+}
+
+func (c *ReasoningServer) processNode(ctx context.Context, nodeID string) {
+	n, err := utils.SortNodeIds(nodeID)
+	if err != nil {
+		log.Errorf("Failed to sort node IDs for %s: %v", nodeID, err)
+		return
+	}
+	log.Infof("Sorted nodes: %v", n)
+
+	start, end, err := utils.GetStartEndFromStore(c.store, n.TNode, c.config.PrometheusInterval)
+	if err != nil {
+		log.Errorf("Failed to get start/end for node %s: %v", n.TNode, err)
+		return
+	}
+
+	for _, m := range c.config.MetricKeyMap.Metrics {
+		metricQueries := c.buildMetricQueries(m, n)
+		if len(metricQueries) == 0 {
+			continue
+		}
+		rp := metric.BuildPrometheusRequest(
+			c.config.PrometheusHost,
+			start, end,
+			strconv.Itoa(m.Step),
+			"",
+			metricQueries,
+		)
+		log.Debugf("Prometheus request: %s - %d metrics", rp.Url, len(metricQueries))
+		pr, err := metric.ProcessPromRequest(ctx, rp)
+		if err != nil {
+			log.Errorf("Failed to process Prometheus request for node %s: %v", n.TNode, err)
+			continue
+		}
+		log.Infof("Prometheus response: status=%s, %d results for node %s: %+v", pr.Status, len(pr.Data.Result), n.TNode, pr.Data.Result)
+	}
+}
+
+func (c *ReasoningServer) buildMetricQueries(m pkg.Metric, n utils.Nodes) []metric.MetricWithFilters {
+	var out []metric.MetricWithFilters
+	for _, item := range m.Metric {
+		// Both trx (tnode) and com (anode) metrics are scraped from the same physical node,
+		// so they share the tower node_id in Prometheus.
+		nodeID := n.TNode
+		if item.Type != ukama.NODE_ID_TYPE_TOWERNODE && item.Type != ukama.NODE_ID_TYPE_AMPNODE {
+			continue
+		}
+		out = append(out, metric.MetricWithFilters{
+			Metric:  item.Key,
+			Filters: []metric.Filter{{Key: "node_id", Value: nodeID}},
+		})
+	}
+	return out
 }
 

@@ -9,6 +9,7 @@
 package metric
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -32,8 +33,15 @@ type PrometheusPayload struct {
 }
 
 type Filter struct {
-	Key string `json:"key"`
+	Key   string `json:"key"`
 	Value string `json:"value"`
+}
+
+// MetricWithFilters pairs a metric name with its label filters (e.g., node_id per metric).
+// Used when multiple metrics in one query need different filters (e.g., tnode vs anode).
+type MetricWithFilters struct {
+	Metric  string
+	Filters []Filter
 }
 
 type PrometheusRequestData struct {
@@ -81,109 +89,195 @@ func GetPrometheusRequestUrl(
 	}
 
 	return PrometheusRequestData{
-		Url: u,
-		Query: data,
+		Url:     u,
+		Query:   data,
 		Payload: pp,
 	}
 }
 
-func filterMetricLabels(metric map[string]interface{}) map[string]interface{} {
-	filtered := make(map[string]interface{})
-	if v, ok := metric["node_id"]; ok {
-		filtered["node_id"] = v
+// BuildPrometheusRequest builds a single Prometheus query_range request from metric+filter pairs.
+// Each metric gets its own filters in the query: (m1{f1} or m2{f2} or ...).
+func BuildPrometheusRequest(baseUrl, start, end, step, operation string, metricQueries []MetricWithFilters) PrometheusRequestData {
+	queries := make([]string, 0, len(metricQueries))
+	allMetrics := make([]string, 0, len(metricQueries))
+	for _, mq := range metricQueries {
+		filtersQuery := getFiltersQuery(mq.Filters)
+		queries = append(queries, fmt.Sprintf(`%s{%s}`, mq.Metric, filtersQuery))
+		allMetrics = append(allMetrics, mq.Metric)
 	}
-	if v, ok := metric["metric"]; ok {
-		filtered["metric"] = v
-	} else if v, ok := metric["__name__"]; ok {
-		filtered["metric"] = v
+	fullQuery := fmt.Sprintf("(%s)", strings.Join(queries, " or "))
+	if operation != "" {
+		fullQuery = fmt.Sprintf("%s(%s)", operation, fullQuery)
+	}
+
+	u := fmt.Sprintf("%s/api/v1/query_range", strings.TrimSuffix(baseUrl, "/"))
+	data := url.Values{}
+	data.Set("start", start)
+	data.Set("end", end)
+	data.Set("step", step)
+	data.Set("query", fullQuery)
+
+	return PrometheusRequestData{
+		Url:   u,
+		Query: data,
+		Payload: PrometheusPayload{
+			Metrics:   allMetrics,
+			Start:     start,
+			End:       end,
+			Step:      step,
+			Operation: operation,
+		},
+	}
+}
+
+// PrometheusResponse represents the raw response from Prometheus API
+type PrometheusResponse struct {
+	Status string          `json:"status"`
+	Data   PrometheusData  `json:"data"`
+}
+
+type PrometheusData struct {
+	ResultType string            `json:"resultType"`
+	Result     []PrometheusResult `json:"result"`
+}
+
+type PrometheusResult struct {
+	Metric map[string]interface{} `json:"metric"` // __name__, instance, job, metric, node_id, etc.
+	Values [][]interface{}       `json:"values"` // [[timestamp, value], ...]
+}
+
+// FilteredPrometheusResponse represents the filtered response with only node_id and metric labels
+type FilteredPrometheusResponse struct {
+	Status string                    `json:"status"`
+	Data   FilteredPrometheusData    `json:"data"`
+}
+
+type FilteredPrometheusData struct {
+	ResultType string                    `json:"resultType"`
+	Result     []FilteredPrometheusResult `json:"result"`
+}
+
+type FilteredPrometheusResult struct {
+	Metric FilteredMetric  `json:"metric"`
+	Values [][]interface{} `json:"values"`
+}
+
+type FilteredMetric struct {
+	NodeID string `json:"node_id"`
+	Metric string `json:"metric"`
+}
+
+func getStringFromMap(m map[string]interface{}, keys ...string) string {
+	for _, k := range keys {
+		if v, ok := m[k]; ok {
+			if s, ok := v.(string); ok {
+				return s
+			}
+		}
+	}
+	return ""
+}
+
+// ToFilteredResponse converts a raw Prometheus response to the filtered format (only node_id and metric labels)
+func (p *PrometheusResponse) ToFilteredResponse() *FilteredPrometheusResponse {
+	filtered := &FilteredPrometheusResponse{
+		Status: p.Status,
+		Data: FilteredPrometheusData{
+			ResultType: p.Data.ResultType,
+			Result:     make([]FilteredPrometheusResult, 0, len(p.Data.Result)),
+		},
+	}
+	for _, r := range p.Data.Result {
+		fm := FilteredMetric{
+			NodeID: getStringFromMap(r.Metric, "node_id"),
+			Metric: getStringFromMap(r.Metric, "metric", "__name__"),
+		}
+		filtered.Data.Result = append(filtered.Data.Result, FilteredPrometheusResult{
+			Metric: fm,
+			Values: r.Values,
+		})
 	}
 	return filtered
 }
 
-func filterResultMetrics(response map[string]interface{}) {
-	data, ok := response["data"].(map[string]interface{})
-	if !ok {
-		return
+// parsePrometheusResponse parses raw Prometheus API response body into PrometheusResponse.
+// Uses UseNumber to preserve epoch timestamps as integers.
+func parsePrometheusResponse(body []byte) (*PrometheusResponse, error) {
+	dec := json.NewDecoder(bytes.NewReader(body))
+	dec.UseNumber()
+	var pr PrometheusResponse
+	if err := dec.Decode(&pr); err != nil {
+		return nil, errors.Wrap(err, "invalid prometheus response format")
 	}
-	result, ok := data["result"].([]interface{})
-	if !ok {
-		return
-	}
-	for i, item := range result {
-		resultItem, ok := item.(map[string]interface{})
-		if !ok {
-			continue
-		}
-		metric, ok := resultItem["metric"].(map[string]interface{})
-		if !ok {
-			continue
-		}
-		resultItem["metric"] = filterMetricLabels(metric)
-		result[i] = resultItem
-	}
+	return &pr, nil
 }
 
-func formatMetricsResponse(w io.Writer, b io.ReadCloser) error {
-	bytes, err := io.ReadAll(b)
-	if err != nil {
-		log.Errorf("Failed to read prometheus response Error: %v", err)
-		return err
-	}
-
-	var response map[string]interface{}
-	if err := json.Unmarshal(bytes, &response); err != nil {
-		log.Errorf("Failed to unmarshal prometheus response Error: %v", err)
-		return err
-	}
-
-	filterResultMetrics(response)
-
-	rb, err := json.Marshal(response)
-	if err != nil {
-		log.Errorf("Failed to marshal prometheus response Error: %v", err)
-		return err
-	}
-
-	n, err := w.Write(rb)
-	if err != nil {
-		log.Errorf("Failed to write prometheus response Error: %v", err)
-		return err
-	}
-
-	log.Infof("Wrote %d bytes of prometheus response", n)
-	return nil
+// ErrPrometheusError is returned when Prometheus API returns an error status
+type ErrPrometheusError struct {
+	StatusCode int
+	Status     string
+	Body       string
 }
 
-func ProcessPromRequest(ctx context.Context, prd PrometheusRequestData, w io.Writer, formatting bool) (httpStatusCode int, err error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, prd.Url, strings.NewReader(prd.Query.Encode()))
-	if err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "failed to create request")
+func (e *ErrPrometheusError) Error() string {
+	if e.Body != "" {
+		return fmt.Sprintf("prometheus returned error: status=%s, http_status=%d, body=%s", e.Status, e.StatusCode, e.Body)
 	}
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("Content-Length", strconv.Itoa(len(prd.Query.Encode())))
+	return fmt.Sprintf("prometheus returned error: status=%s, http_status=%d", e.Status, e.StatusCode)
+}
 
-	log.Infof("Request is: %v Body %+v", req, prd.Query.Encode())
+// ProcessPromRequest makes an HTTP request to Prometheus, parses the response,
+// and returns it in FilteredPrometheusResponse format (only node_id and metric labels).
+func ProcessPromRequest(ctx context.Context, prd PrometheusRequestData) (*FilteredPrometheusResponse, error) {
+	body := strings.NewReader(prd.Query.Encode())
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, prd.Url, body)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create prometheus request")
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Content-Length", strconv.Itoa(len(prd.Query.Encode())))
+
+	log.Debugf("Prometheus request: %s %s", req.Method, prd.Url)
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "failed to execute request")
+		return nil, errors.Wrap(err, "failed to execute prometheus request")
 	}
-	log.Infof("Response Body %+v", res.Body)
-	if formatting {
-		err = formatMetricsResponse(w, res.Body)
-		if err != nil {
-			return http.StatusInternalServerError, errors.Wrap(err, "failed to format response")
-		}
-	} else {
-		_, err = io.Copy(w, res.Body)
-		if err != nil {
-			return http.StatusInternalServerError, errors.Wrap(err, "failed to copy response")
-		}
-	}
+	defer res.Body.Close()
 
-	err = res.Body.Close()
+	bodyBytes, err := io.ReadAll(res.Body)
 	if err != nil {
-		log.Warnf("failed to properly close response body. Error: %v", err)
+		return nil, errors.Wrap(err, "failed to read prometheus response body")
 	}
 
-	return res.StatusCode, nil
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		return nil, &ErrPrometheusError{
+			StatusCode: res.StatusCode,
+			Status:     res.Status,
+			Body:       truncateString(string(bodyBytes), 500),
+		}
+	}
+
+	pr, err := parsePrometheusResponse(bodyBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	if pr.Status != "success" {
+		return nil, &ErrPrometheusError{
+			StatusCode: res.StatusCode,
+			Status:     pr.Status,
+			Body:       truncateString(string(bodyBytes), 500),
+		}
+	}
+
+	filtered := pr.ToFilteredResponse()
+	log.Debugf("Prometheus response: %d results", len(filtered.Data.Result))
+	return filtered, nil
+}
+
+func truncateString(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	return s[:maxLen] + "..."
 }
