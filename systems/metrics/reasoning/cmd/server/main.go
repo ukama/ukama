@@ -81,13 +81,14 @@ func runGrpcServer() {
 	serviceConfig.MetricKeyMap = metricKeyMap
 	log.Infof("Metric key map: %+v", serviceConfig.MetricKeyMap)
 
-	regUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
-		ic.CreateHostString(serviceConfig.OrgName, registrySystemName), &serviceConfig.OrgName)
+	icl := ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode))
+
+	regSystem, err := icl.GetSystem(serviceConfig.OrgName, registrySystemName)
 	if err != nil {
-		log.Errorf("Failed to resolve registry address: %v", err)
+		log.Errorf("Failed to get registry system from initClient: %v", err)
 	}
 
-	nodeClient := creg.NewNodeClient(regUrl.String())
+	nodeClient := creg.NewNodeClient(regSystem.ApiGwUrl)
 
 	s := store.NewStore(serviceConfig)
 

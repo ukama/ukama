@@ -35,21 +35,16 @@ type Config struct {
 }
 
 type Metric struct {
-	Name string `json:"name" yaml:"name"`
-	Interval int `json:"interval" yaml:"interval"`
 	Step int `json:"step" yaml:"step"`
-	Category string `json:"category" yaml:"category"`
-	Metric []MetricItem `json:"metric" yaml:"metric"`
-}
-
-type MetricItem struct {
 	Key string `json:"key" yaml:"key"`
-	Type string `json:"type" yaml:"type"`
+	Category string `json:"category" yaml:"category"`
 }
 
-type MetricKeyMap struct {
+type Metrics struct {
 	Metrics []Metric `json:"metrics" yaml:"metrics"`
 }
+
+type MetricKeyMap map[string]Metrics
 
 type HttpServices struct {
 	InitClient string `default:"http://api-gateway-init:8080"`
@@ -62,12 +57,13 @@ func NewConfig(name string) *Config {
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
 			Timeout: 5 * time.Second,
+			Host: 	"api-gateway-msgbus:8080",
 		},
 	}
 }
 
 func LoadMetricKeyMap(config *Config) (*MetricKeyMap, error) {
-	metricKeyMap := &MetricKeyMap{}
+	metricKeyMap := new(MetricKeyMap)
 	metricKeyMapFile := config.MetricsKeyMapFile
 	bytes, err := os.ReadFile(metricKeyMapFile)
 	if err != nil {
