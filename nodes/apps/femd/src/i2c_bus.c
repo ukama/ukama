@@ -17,8 +17,26 @@
 
 #include "usys_log.h"
 
-#define I2C_DEV_PATH_MAX  32
 #define I2C_TX_MAX        256  /* reg + payload */
+
+static const char *femd_sysroot(void) {
+    const char *v = getenv(ENV_FEMD_SYSROOT);
+    return (v && v[0] != '\0') ? v : NULL;
+}
+
+static int build_i2c_dev_path(char *out, size_t outsz, int busNum) {
+    const char *root = femd_sysroot();
+    int n = 0;
+
+    if (root) {
+        n = snprintf(out, outsz, "%s/dev/i2c-%d", root, busNum);
+    } else {
+        n = snprintf(out, outsz, "/dev/i2c-%d", busNum);
+    }
+
+    if (n < 0 || n >= (int)outsz) return -1;
+    return 0;
+}
 
 int i2c_bus_init(I2cBus *bus, int busNum) {
 
@@ -41,7 +59,7 @@ int i2c_bus_init(I2cBus *bus, int busNum) {
     bus->dacCarrierV  = 0.0f;
     bus->dacPeakV     = 0.0f;
 
-    if (snprintf(devPath, sizeof(devPath), "/dev/i2c-%d", busNum) >= (int)sizeof(devPath)) {
+    if (build_i2c_dev_path(devPath, sizeof(devPath), busNum) != 0) {
         usys_log_error("i2c_bus_init: dev path truncated for bus %d", busNum);
         return STATUS_NOK;
     }
