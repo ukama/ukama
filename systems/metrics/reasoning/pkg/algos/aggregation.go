@@ -28,6 +28,7 @@ type AggregationStats struct {
 	Median          float64
 	SampleCount     float64
 	Aggregation     string
+	NoiseEstimate   float64
 }
 
 // jsonSafeFloat returns the value for JSON marshal; NaN/Inf become nil (marshals as null).
@@ -42,6 +43,15 @@ func GetAggStoreKey(nodeID string, metricKey string) string {
 	return fmt.Sprintf("%s/%s/%s", nodeID, metricKey, "agg")
 }
 
+func UnmarshalAggStats(data []byte) (AggregationStats, error) {
+	var aggStats AggregationStats
+	err := json.Unmarshal(data, &aggStats)
+	if err != nil {
+		return AggregationStats{}, err
+	}
+	return aggStats, nil
+}
+
 // MarshalJSON marshals AggregationStats, converting NaN and Inf to null.
 func (s AggregationStats) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
@@ -52,16 +62,18 @@ func (s AggregationStats) MarshalJSON() ([]byte, error) {
 		Mean            any `json:"Mean"`
 		Median          any `json:"Median"`
 		SampleCount     any `json:"SampleCount"`
-		Aggregation     string      `json:"Aggregation"`
+		Aggregation     string `json:"Aggregation"`
+		NoiseEstimate   any    `json:"NoiseEstimate"`
 	}{
 		AggregatedValue: jsonSafeFloat(s.AggregatedValue),
 		Min:             jsonSafeFloat(s.Min),
 		Max:             jsonSafeFloat(s.Max),
 		P95:             jsonSafeFloat(s.P95),
-		Mean:             jsonSafeFloat(s.Mean),
+		Mean:            jsonSafeFloat(s.Mean),
 		Median:          jsonSafeFloat(s.Median),
 		SampleCount:     jsonSafeFloat(s.SampleCount),
 		Aggregation:     s.Aggregation,
+		NoiseEstimate:   jsonSafeFloat(s.NoiseEstimate),
 	})
 }
 
@@ -76,6 +88,7 @@ func (s *AggregationStats) UnmarshalJSON(data []byte) error {
 		Median          *float64 `json:"Median"`
 		SampleCount     *float64 `json:"SampleCount"`
 		Aggregation     string   `json:"Aggregation"`
+		NoiseEstimate   *float64 `json:"NoiseEstimate"`
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
@@ -88,6 +101,7 @@ func (s *AggregationStats) UnmarshalJSON(data []byte) error {
 	s.Median = ptrToFloat(aux.Median)
 	s.SampleCount = ptrToFloat(aux.SampleCount)
 	s.Aggregation = aux.Aggregation
+	s.NoiseEstimate = ptrToFloat(aux.NoiseEstimate)
 	return nil
 }
 
@@ -122,6 +136,7 @@ func AggregateMetricAlgo(windowSamples []metric.FilteredPrometheusResult, method
 	stats.Median = median(values)
 	stats.Mean = mean(values)
 	stats.P95 = percentile(values, 95)
+	stats.NoiseEstimate = medianAbsoluteDeviation(values)
 
 	switch method {
 	case "last":
@@ -244,4 +259,17 @@ func percentile(values []float64, p float64) float64 {
 		return sorted[len(sorted)-1]
 	}
 	return sorted[lo] + (idx-float64(lo))*(sorted[hi]-sorted[lo])
+}
+
+// medianAbsoluteDeviation returns median of absolute deviations from median (MAD).
+func medianAbsoluteDeviation(values []float64) float64 {
+	if len(values) < 2 {
+		return math.NaN()
+	}
+	med := median(values)
+	absDev := make([]float64, len(values))
+	for i, v := range values {
+		absDev[i] = math.Abs(v - med)
+	}
+	return median(absDev)
 }

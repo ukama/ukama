@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
@@ -145,12 +146,33 @@ func (c *ReasoningServer) processMetric(ctx context.Context, nodeID string, m pk
 	if err != nil {
 		return err
 	}
-	stats, err := algos.AggregateMetricAlgo(pr.Data.Result, "mean")
+
+	return c.processAlgorithms(ctx, nodeID, m, pr)
+}
+
+func (c *ReasoningServer) processAlgorithms(ctx context.Context, nodeID string, m pkg.Metric, pr *metric.FilteredPrometheusResponse) error {
+	statAnalysis := algos.StatAnalysis{}
+	err := errors.New("error processing algorithms")
+	
+	statAnalysis.NewStats.AggregationStats, err = algos.AggregateMetricAlgo(pr.Data.Result, "mean")
 	if err != nil {
 		return err
 	}
-	stats.RoundOfDecimalPoints(c.config.FormatDecimalPoints)
-	c.store.PutJson(algos.GetAggStoreKey(nodeID, m.Key), stats)
-	log.Infof("Aggregation stats: %+v", stats)
+	statAnalysis.NewStats.AggregationStats.RoundOfDecimalPoints(c.config.FormatDecimalPoints)
+	prevAggStatsBytes, err := c.store.GetJson(algos.GetAggStoreKey(nodeID, m.Key))
+	if err != nil {
+		return err
+	}
+	statAnalysis.PrevStats.AggregationStats, err = algos.UnmarshalAggStats(prevAggStatsBytes)
+	if err != nil {
+		return err
+	}
+
+	statAnalysis.NewStats.Trend, err = algos.CalculateTrend(statAnalysis.NewStats.AggregationStats, statAnalysis.PrevStats.AggregationStats, c.config.TrendSensitivity)
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Stat analysis: %+v", statAnalysis)
 	return nil
 }

@@ -24,11 +24,13 @@ type Config struct {
 	Queue                *uconf.Queue     `default:"{}"`
 	Timeout              time.Duration    `default:"3s"`
 	MsgClient            *uconf.MsgClient `default:"{}"`
-	SchedulerInterval    time.Duration    `default:"15s"`
+	PrometheusInterval   int              `default:"60"`
+	SchedulerInterval    time.Duration    `default:"60s"`
 	OrgName              string           `default:"ukama"`
 	PrometheusHost       string           `default:"http://localhost:9079"`
-	PrometheusInterval   int              `default:"15"`
 	MetricsKeyMapFile    string           `default:"metric-key-map.json"`
+	FormatDecimalPoints  int              `default:"3"`
+	TrendSensitivity     float64          `default:"1.0"`
 	MetricKeyMap         *MetricKeyMap
 	Service              *uconf.Service
 	Http            	 HttpServices

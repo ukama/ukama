@@ -55,16 +55,12 @@ func (s *Store) PutJson(key string, value interface{}) error {
 	return nil
 }
 
-func (s *Store) GetJson(key string) (interface{}, error) {
+func (s *Store) GetJson(key string) ([]byte, error) {
 	jsonData, err := s.Get(key)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get json data: %v", err)
 	}
-	var value interface{}
-	if err := json.Unmarshal([]byte(jsonData), &value); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal json data: %v", err)
-	}
-	return value, nil
+	return []byte(jsonData), nil
 }
 
 func (s *Store) Get(key string) (string, error) {
