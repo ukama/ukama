@@ -16,6 +16,8 @@
 #include "jserdes.h"
 #include "usys_log.h"
 
+#include "http_status.h"
+
 int notifier_init(Notifier *n, Config *cfg) {
 
     if (!n || !cfg) return STATUS_NOK;
@@ -62,7 +64,7 @@ int notifier_send_pa_alarm(Notifier *n, int type, int *retCode) {
     req.http_verb = "POST";
     u_map_put(req.map_header, "Content-Type", "application/json");
 
-    ulfius_set_string_body_request(&req, "application/json", body);
+    ulfius_set_string_body_request(&req, body);
 
     rc = ulfius_send_http_request(&req, &resp);
 
@@ -72,7 +74,7 @@ int notifier_send_pa_alarm(Notifier *n, int type, int *retCode) {
     } else {
         if (retCode) *retCode = resp.status;
         status = (resp.status == HttpStatus_Accepted ||
-                  resp.status == HttpStatus_Ok) ? STATUS_OK : STATUS_NOK;
+                  resp.status == HttpStatus_OK) ? STATUS_OK : STATUS_NOK;
         if (status != STATUS_OK) {
             usys_log_error("notify bad status url=%s code=%d", url, resp.status);
         }

@@ -91,21 +91,22 @@ int json_get_string(json_t *o, const char *key, const char **out_str) {
 }
 
 json_t* json_gpio_status(const GpioStatus *st, int fem_unit_num) {
+
     json_t *o;
 
-    if (st == NULL) return NULL;
+    if (!st) return NULL;
 
     o = json_object();
-    if (o == NULL) return NULL;
+    if (!o) return NULL;
 
-    json_object_set_new(o, "tx_rf_enable",   st->tx_rf_enable ? json_true() : json_false());
-    json_object_set_new(o, "rx_rf_enable",   st->rx_rf_enable ? json_true() : json_false());
-    json_object_set_new(o, "pa_vds_enable",  st->pa_vds_enable ? json_true() : json_false());
-    json_object_set_new(o, "rf_pal_enable",  st->rf_pal_enable ? json_true() : json_false());
-    /* inverted: pa_disable = !28v_vds_enable */
-    json_object_set_new(o, "28v_vds_enable", st->pa_disable ? json_false() : json_true());
-    json_object_set_new(o, "psu_pgood",      st->psu_pgood ? json_true() : json_false());
-    json_object_set_new(o, "fem_unit",       json_integer(fem_unit_num));
+    json_object_set_new(o, "fem_unit", json_integer(fem_unit_num));
+
+    json_object_set_new(o, "28v_vds_enable",  st->pa_disable ? json_false() : json_true());
+    json_object_set_new(o, "tx_rf_enable",    st->tx_rf_enable ? json_true() : json_false());
+    json_object_set_new(o, "rx_rf_enable",    st->rx_rf_enable ? json_true() : json_false());
+    json_object_set_new(o, "pa_vds_enable",   st->pa_vds_enable ? json_true() : json_false());
+    json_object_set_new(o, "rf_pal_enable",   st->rf_pal_enable ? json_true() : json_false());
+    json_object_set_new(o, "psu_pgood",       st->psu_pgood ? json_true() : json_false());
 
     return o;
 }

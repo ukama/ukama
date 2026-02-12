@@ -9,30 +9,45 @@
 #ifndef SAFETY_H
 #define SAFETY_H
 
+#include <pthread.h>
 #include <stdbool.h>
 
-#include "femd.h"
-typedef struct {
-    float maxTemperatureC;
-    float maxReversePowerDbm;
-    float maxPaCurrentA;
-} SafetyConfig;
+#include "usys_types.h"
+#include "gpio_controller.h"
+#include "yaml_config.h"
+
+#include "jobs.h"
+#include "snapshot.h"
+#include "notifier.h"
+
+typedef YamlSafetyConfig SafetyConfig;
 
 typedef struct {
-    SafetyConfig cfg;
-    bool         paDisabled[3];
-    bool         initialized;
-} SafetyState;
+    pthread_t        thread;
+    pthread_mutex_t  mu;
 
-typedef struct {
-    struct Jobs         *jobs;
-    struct SnapshotStore *snap;
-    SafetyState          st;
+    Jobs            *jobs;
+    SnapshotStore   *snap;
+    Notifier        *notifier;
+
+    SafetyConfig     cfg;
+    bool             initialized;
+    bool             running;
+
+    bool             paDisabled[3];
 } Safety;
 
-int  safety_init(Safety *s, struct Jobs *jobs, struct SnapshotStore *snap, const SafetyConfig *cfg);
+int  safety_init(Safety *s, Jobs *jobs, SnapshotStore *snap, Notifier *notifier, const char *cfgPath);
 void safety_cleanup(Safety *s);
 
+int  safety_start(Safety *s);
+int  safety_stop(Safety *s);
+
 int  safety_tick(Safety *s, FemUnit unit);
+
+int  safety_get_config(Safety *s, SafetyConfig *out);
+int  safety_set_config(Safety *s, const SafetyConfig *in);
+
+int  safety_force_restore(Safety *s, FemUnit unit);
 
 #endif /* SAFETY_H */

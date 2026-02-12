@@ -102,7 +102,8 @@ static void handle_job(LaneCtx *ctx, const Job *j) {
         break;
 
     case JobCmdGpioDisablePa:
-        rc = gpio_disable_pa(lanes->gpio, ctx->femUnit);
+        // XXXX
+        //        rc = gpio_disable_pa(lanes->gpio, ctx->femUnit);
         break;
 
     case JobCmdDacInit:
@@ -178,8 +179,6 @@ static void handle_job(LaneCtx *ctx, const Job *j) {
     case JobCmdSafetyRestorePa: {
         FemSnapshot cur;
         GpioStatus desired;
-        float carrierV = 0.0f;
-        float peakV = 0.0f;
         uint32_t t = now_ms();
 
         memset(&cur, 0, sizeof(cur));

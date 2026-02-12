@@ -7,31 +7,56 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+#include <errno.h>
 
+#include "gpio_controller.h"
 #include "usys_log.h"
 #include "usys_types.h"
 
-#include "gpio_controller.h"
+typedef struct {
+    const char *name;
+    bool        isOutput;
+} gpio_meta_t;
 
-#define GPIO_DEFAULT_BASE "/sys/devices/platform"
+static const gpio_meta_t gpioMeta[GPIO_MAX] = {
+    [GPIO_28V_VDS]   = { "pa_disable",    true  },
+    [GPIO_TX_RF]     = { "tx_rf_enable",  true  },
+    [GPIO_RX_RF]     = { "rx_rf_enable",  true  },
+    [GPIO_PA_VDS]    = { "pa_vds_enable", true  },
+    [GPIO_TX_RFPAL]  = { "rf_pal_enable", true  },
+    [GPIO_PSU_PGOOD] = { "pg_reg_5v",     false }
+};
 
-static inline int valid_unit(FemUnit unit) {
-    return unit == FEM_UNIT_1 || unit == FEM_UNIT_2;
+static inline bool valid_pin(GpioPin p) {
+    return (p >= 0 && p < GPIO_MAX);
+}
+
+static int build_path(char *dst, size_t n, const char *base, FemUnit unit, GpioPin pin, const char *leaf) {
+
+    if (!dst || n == 0 || !base || !leaf) return STATUS_NOK;
+    if (!valid_pin(pin)) return STATUS_NOK;
+    if (unit != FEM_UNIT_1 && unit != FEM_UNIT_2) return STATUS_NOK;
+
+    if (snprintf(dst, n, "%s/fem%d/%s/%s", base, (unit == FEM_UNIT_1) ? 1 : 2, gpioMeta[pin].name, leaf) >= (int)n) {
+        return STATUS_NOK;
+    }
+
+    return STATUS_OK;
 }
 
 static int write_bool_file(const char *path, bool v) {
 
-    FILE *f = fopen(path, "w");
-    if (!f) {
-        usys_log_error("open(w) %s failed", path);
-        return STATUS_NOK;
-    }
+    FILE *f;
 
-    if (fprintf(f, "%d", v ? 1 : 0) < 0) {
+    if (!path) return STATUS_NOK;
+
+    f = fopen(path, "w");
+    if (!f) return STATUS_NOK;
+
+    if (fprintf(f, "%d\n", v ? 1 : 0) < 0) {
         fclose(f);
-        usys_log_error("write %s failed", path);
         return STATUS_NOK;
     }
 
@@ -41,162 +66,153 @@ static int write_bool_file(const char *path, bool v) {
 
 static int read_bool_file(const char *path, bool *out) {
 
-    char buf[16];
     FILE *f;
+    int v = 0;
 
-    if (!out) return STATUS_NOK;
-
-    memset(buf, 0, sizeof(buf));
+    if (!path || !out) return STATUS_NOK;
 
     f = fopen(path, "r");
-    if (!f) {
-        usys_log_error("open(r) %s failed", path);
-        return STATUS_NOK;
-    }
+    if (!f) return STATUS_NOK;
 
-    if (!fgets(buf, sizeof(buf), f)) {
+    if (fscanf(f, "%d", &v) != 1) {
         fclose(f);
-        usys_log_error("read %s failed", path);
         return STATUS_NOK;
     }
 
     fclose(f);
-    *out = (atoi(buf) != 0);
+    *out = (v != 0);
     return STATUS_OK;
 }
 
-static void build_paths_for_unit(GpioController *ctrl, FemUnit unit, const char *unitDir) {
+int gpio_controller_init(GpioController *ctl, const char *basePath) {
 
-    GpioPaths *p;
+    if (!ctl) return STATUS_NOK;
 
-    p = &ctrl->fem[unit];
+    memset(ctl, 0, sizeof(*ctl));
+    pthread_mutex_init(&ctl->mu, NULL);
 
-    (void)snprintf(p->txRfEnable, sizeof(p->txRfEnable), "%s/%s/tx_rf_enable", ctrl->basePath, unitDir);
-    (void)snprintf(p->rxRfEnable, sizeof(p->rxRfEnable), "%s/%s/rx_rf_enable", ctrl->basePath, unitDir);
-    (void)snprintf(p->paVdsEnable, sizeof(p->paVdsEnable), "%s/%s/pa_vds_enable", ctrl->basePath, unitDir);
-    (void)snprintf(p->rfPalEnable, sizeof(p->rfPalEnable), "%s/%s/rf_pal_enable", ctrl->basePath, unitDir);
+    if (!basePath) basePath = GPIO_BASE_PATH;
 
-    (void)snprintf(p->vds28Enable, sizeof(p->vds28Enable), "%s/%s/pa_disable", ctrl->basePath, unitDir);
-
-    (void)snprintf(p->psuPgood, sizeof(p->psuPgood), "%s/%s/pg_reg_5v", ctrl->basePath, unitDir);
-}
-
-int gpio_controller_init(GpioController *ctrl, const char *gpioBasePath) {
-
-    const char *base;
-
-    if (!ctrl) return STATUS_NOK;
-
-    memset(ctrl, 0, sizeof(*ctrl));
-
-    base = gpioBasePath ? gpioBasePath : GPIO_DEFAULT_BASE;
-    (void)snprintf(ctrl->basePath, sizeof(ctrl->basePath), "%s", base);
-
-    build_paths_for_unit(ctrl, FEM_UNIT_1, "fema1-gpios");
-    build_paths_for_unit(ctrl, FEM_UNIT_2, "fema2-gpios");
-
-    if (access(ctrl->fem[FEM_UNIT_1].txRfEnable, F_OK) != 0) {
-        usys_log_warn("GPIO path missing (FEM1): %s", ctrl->fem[FEM_UNIT_1].txRfEnable);
-    }
-    if (access(ctrl->fem[FEM_UNIT_2].txRfEnable, F_OK) != 0) {
-        usys_log_warn("GPIO path missing (FEM2): %s", ctrl->fem[FEM_UNIT_2].txRfEnable);
+    ctl->basePath = strdup(basePath);
+    if (!ctl->basePath) {
+        pthread_mutex_destroy(&ctl->mu);
+        return STATUS_NOK;
     }
 
-    ctrl->initialized = true;
-    usys_log_info("GPIO controller initialized (base=%s)", ctrl->basePath);
-
+    ctl->initialized = 1;
     return STATUS_OK;
 }
 
-void gpio_controller_cleanup(GpioController *ctrl) {
+void gpio_controller_cleanup(GpioController *ctl) {
 
-    if (!ctrl) return;
+    if (!ctl) return;
 
-    memset(ctrl, 0, sizeof(*ctrl));
+    pthread_mutex_lock(&ctl->mu);
+
+    if (ctl->basePath) free(ctl->basePath);
+    ctl->basePath = NULL;
+    ctl->initialized = 0;
+
+    pthread_mutex_unlock(&ctl->mu);
+    pthread_mutex_destroy(&ctl->mu);
+
+    memset(ctl, 0, sizeof(*ctl));
 }
 
-int gpio_read_all(GpioController *ctrl, FemUnit unit, GpioStatus *out) {
+int gpio_set(GpioController *ctl, FemUnit unit, GpioPin pin, bool value) {
 
-    bool fileVal;
+    char path[256];
 
-    if (!ctrl || !ctrl->initialized || !out) return STATUS_NOK;
-    if (!valid_unit(unit)) return STATUS_NOK;
+    if (!ctl || !ctl->initialized) return STATUS_NOK;
+    if (!valid_pin(pin)) return STATUS_NOK;
+    if (!gpioMeta[pin].isOutput) return STATUS_NOK;
+
+    pthread_mutex_lock(&ctl->mu);
+
+    if (build_path(path, sizeof(path), ctl->basePath, unit, pin, "value") != STATUS_OK) {
+        pthread_mutex_unlock(&ctl->mu);
+        return STATUS_NOK;
+    }
+
+    if (write_bool_file(path, value) != STATUS_OK) {
+        pthread_mutex_unlock(&ctl->mu);
+        return STATUS_NOK;
+    }
+
+    pthread_mutex_unlock(&ctl->mu);
+    return STATUS_OK;
+}
+
+int gpio_get(GpioController *ctl, FemUnit unit, GpioPin pin, bool *out) {
+
+    char path[256];
+
+    if (!ctl || !ctl->initialized || !out) return STATUS_NOK;
+    if (!valid_pin(pin)) return STATUS_NOK;
+
+    pthread_mutex_lock(&ctl->mu);
+
+    if (build_path(path, sizeof(path), ctl->basePath, unit, pin, "value") != STATUS_OK) {
+        pthread_mutex_unlock(&ctl->mu);
+        return STATUS_NOK;
+    }
+
+    if (read_bool_file(path, out) != STATUS_OK) {
+        pthread_mutex_unlock(&ctl->mu);
+        return STATUS_NOK;
+    }
+
+    pthread_mutex_unlock(&ctl->mu);
+    return STATUS_OK;
+}
+
+int gpio_read_all(GpioController *ctl, FemUnit unit, GpioStatus *out) {
+
+    bool v;
+
+    if (!ctl || !out) return STATUS_NOK;
 
     memset(out, 0, sizeof(*out));
 
-    if (read_bool_file(ctrl->fem[unit].vds28Enable, &fileVal) != STATUS_OK) return STATUS_NOK;
-    out->pa_disable = !fileVal;
+    if (gpio_get(ctl, unit, GPIO_28V_VDS, &v) != STATUS_OK) return STATUS_NOK;
+    out->pa_disable = v;
 
-    if (read_bool_file(ctrl->fem[unit].txRfEnable, &fileVal) != STATUS_OK) return STATUS_NOK;
-    out->tx_rf_enable = fileVal;
+    if (gpio_get(ctl, unit, GPIO_TX_RF, &v) != STATUS_OK) return STATUS_NOK;
+    out->tx_rf_enable = v;
 
-    if (read_bool_file(ctrl->fem[unit].rxRfEnable, &fileVal) != STATUS_OK) return STATUS_NOK;
-    out->rx_rf_enable = fileVal;
+    if (gpio_get(ctl, unit, GPIO_RX_RF, &v) != STATUS_OK) return STATUS_NOK;
+    out->rx_rf_enable = v;
 
-    if (read_bool_file(ctrl->fem[unit].paVdsEnable, &fileVal) != STATUS_OK) return STATUS_NOK;
-    out->pa_vds_enable = fileVal;
+    if (gpio_get(ctl, unit, GPIO_PA_VDS, &v) != STATUS_OK) return STATUS_NOK;
+    out->pa_vds_enable = v;
 
-    if (read_bool_file(ctrl->fem[unit].rfPalEnable, &fileVal) != STATUS_OK) return STATUS_NOK;
-    out->rf_pal_enable = fileVal;
+    if (gpio_get(ctl, unit, GPIO_TX_RFPAL, &v) != STATUS_OK) return STATUS_NOK;
+    out->rf_pal_enable = v;
 
-    if (read_bool_file(ctrl->fem[unit].psuPgood, &fileVal) != STATUS_OK) return STATUS_NOK;
-    out->psu_pgood = fileVal;
+    if (gpio_get(ctl, unit, GPIO_PSU_PGOOD, &v) != STATUS_OK) return STATUS_NOK;
+    out->pg_reg_5v = v;
 
-    usys_log_debug("FEM%d gpio: 28V_EN=%d TX=%d RX=%d PA_VDS=%d PAL=%d PGOOD=%d",
-                   unit,
+    usys_log_debug("GPIO FEM%d: pa_disable=%d tx=%d rx=%d pa_vds=%d rf_pal=%d pgood=%d",
+                   (unit == FEM_UNIT_1) ? 1 : 2,
                    (int)out->pa_disable,
                    (int)out->tx_rf_enable,
                    (int)out->rx_rf_enable,
                    (int)out->pa_vds_enable,
                    (int)out->rf_pal_enable,
-                   (int)out->psu_pgood);
+                   (int)out->pg_reg_5v);
 
     return STATUS_OK;
 }
 
-int gpio_apply(GpioController *ctrl, FemUnit unit, const GpioStatus *desired) {
+int gpio_apply(GpioController *ctl, FemUnit unit, const GpioStatus *desired) {
 
-    bool fileVal;
+    if (!ctl || !desired) return STATUS_NOK;
 
-    if (!ctrl || !ctrl->initialized || !desired) return STATUS_NOK;
-    if (!valid_unit(unit)) return STATUS_NOK;
-
-    fileVal = !desired->pa_disable;
-    if (write_bool_file(ctrl->fem[unit].vds28Enable, fileVal) != STATUS_OK) return STATUS_NOK;
-
-    if (write_bool_file(ctrl->fem[unit].txRfEnable, desired->tx_rf_enable) != STATUS_OK) return STATUS_NOK;
-    if (write_bool_file(ctrl->fem[unit].rxRfEnable, desired->rx_rf_enable) != STATUS_OK) return STATUS_NOK;
-    if (write_bool_file(ctrl->fem[unit].paVdsEnable, desired->pa_vds_enable) != STATUS_OK) return STATUS_NOK;
-    if (write_bool_file(ctrl->fem[unit].rfPalEnable, desired->rf_pal_enable) != STATUS_OK) return STATUS_NOK;
-
-    return STATUS_OK;
-}
-
-int gpio_disable_pa(GpioController *ctrl, FemUnit unit) {
-
-    GpioStatus s;
-
-    if (!ctrl || !ctrl->initialized) {
-        usys_log_error("GPIO controller not initialized");
-        return STATUS_NOK;
-    }
-    if (!valid_unit(unit)) return STATUS_NOK;
-
-    memset(&s, 0, sizeof(s));
-
-    s.pa_disable = false;
-    s.pa_vds_enable = false;
-    s.tx_rf_enable = false;
-    s.rx_rf_enable = false;
-    s.rf_pal_enable = false;
-
-    usys_log_warn("Emergency PA disable for FEM%d", unit);
-
-    if (gpio_apply(ctrl, unit, &s) != STATUS_OK) {
-        return STATUS_NOK;
-    }
-
-    usys_log_info("PA disabled for FEM%d", unit);
+    if (gpio_set(ctl, unit, GPIO_28V_VDS,  desired->pa_disable)    != STATUS_OK) return STATUS_NOK;
+    if (gpio_set(ctl, unit, GPIO_TX_RF,    desired->tx_rf_enable)  != STATUS_OK) return STATUS_NOK;
+    if (gpio_set(ctl, unit, GPIO_RX_RF,    desired->rx_rf_enable)  != STATUS_OK) return STATUS_NOK;
+    if (gpio_set(ctl, unit, GPIO_PA_VDS,   desired->pa_vds_enable) != STATUS_OK) return STATUS_NOK;
+    if (gpio_set(ctl, unit, GPIO_TX_RFPAL, desired->rf_pal_enable) != STATUS_OK) return STATUS_NOK;
 
     return STATUS_OK;
 }

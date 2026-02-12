@@ -23,8 +23,9 @@
 #define STATUS_NOK (-1)
 #endif
 
-#define MODULE_FEM "fem"
-#define ALARM_NODE "node"
+#define SERVICE_NAME "fem"
+#define MODULE_FEM   "fem"
+#define ALARM_NODE   "node"
 #define EMPTY_STRING ""
 
 #define ALARM_HIGH "HIGH"
@@ -38,6 +39,13 @@
 #define ALARM_TYPE_PA_OFF 1
 #define ALARM_TYPE_PA_ON  2
 
+#define DEF_NODED_HOST         "localhost"
+#define DEF_NOTIFY_HOST        "localhost"
+#define DEF_NODED_EP           "/v1/nodeinfo"
+#define DEF_NOTIFY_EP          "/notify/v1/event/"
+#define DEF_NODE_ID            "ukama-aaa-bbbb-ccc-dddd"
+#define DEF_NODE_TYPE          "amplifier"
+#define ENV_FEMDD_DEBUG_MODE   "FEMD_DEBUG_MODE"
 
 typedef enum {
     FEM_UNIT_NONE = 0,

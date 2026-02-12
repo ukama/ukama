@@ -136,7 +136,7 @@ static float lm75a_raw_to_celsius(uint8_t msb, uint8_t lsb) {
 }
 
 static uint16_t celsius_to_lm75a_raw(float temperature) {
-    int16_t temp9bit = (int16_t)lrintf(temperature / 0.5f);
+    int16_t temp9bit = (int16_t)lroundf(temperature / 0.5f);
     if (temp9bit < 0) temp9bit = (int16_t)(temp9bit + 512);
     return (uint16_t)((temp9bit << 7) & 0xFF80);
 }

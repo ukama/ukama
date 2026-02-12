@@ -11,17 +11,28 @@
 
 #include <ulfius.h>
 
-#include "femd.h"
 #include "config.h"
 #include "jobs.h"
 #include "snapshot.h"
+#include "gpio_controller.h"
+#include "safety.h"
+#include "notifier.h"
 
+#ifndef URL_PREFIX
 #define URL_PREFIX "/v1"
+#endif
+
+#ifndef API_RES_EP
+#define API_RES_EP(x) "/" x
+#endif
 
 typedef struct {
-    Config        *config;
     Jobs          *jobs;
     SnapshotStore *snap;
+    GpioController*gpio;
+    Safety        *safety;
+    Notifier      *notifier;
+    Config        *cfg;
 } WebCtx;
 
 int start_web_service(ServerConfig *serverConfig, UInst *serviceInst, WebCtx *ctx);

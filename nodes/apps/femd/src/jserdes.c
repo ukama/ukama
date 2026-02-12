@@ -173,7 +173,7 @@ static json_t *gpio_status_json(const GpioStatus *g) {
     json_object_set_new(j, JTAG_PA_VDS_ENABLE,  json_boolean(g->pa_vds_enable));
     json_object_set_new(j, JTAG_RF_PAL_ENABLE,  json_boolean(g->rf_pal_enable));
     json_object_set_new(j, JTAG_VDS_28V_ENABLE, json_boolean(!g->pa_disable));
-    json_object_set_new(j, JTAG_PSU_PGOOD,      json_boolean(g->psu_pgood));
+    json_object_set_new(j, JTAG_PSU_PGOOD,      json_boolean(g->pg_reg_5v));
 
     return j;
 }
