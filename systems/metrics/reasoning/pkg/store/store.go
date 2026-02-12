@@ -10,6 +10,7 @@ package store
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
@@ -41,6 +42,29 @@ func (s *Store) Put(key string, value string) error {
 	}
 	log.Infof("Added node %s with value %s to etcd", key, value)
 	return nil
+}
+
+func (s *Store) PutJson(key string, value interface{}) error {
+	jsonData, err := json.Marshal(value)
+	if err != nil {
+		return fmt.Errorf("failed to marshal value %v. Error: %v", value, err)
+	}
+	if err := s.Put(key, string(jsonData)); err != nil {
+		return fmt.Errorf("failed to store json data: %v", err)
+	}
+	return nil
+}
+
+func (s *Store) GetJson(key string) (interface{}, error) {
+	jsonData, err := s.Get(key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get json data: %v", err)
+	}
+	var value interface{}
+	if err := json.Unmarshal([]byte(jsonData), &value); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal json data: %v", err)
+	}
+	return value, nil
 }
 
 func (s *Store) Get(key string) (string, error) {

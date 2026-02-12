@@ -14,10 +14,11 @@ import (
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/metrics/reasoning/pkg"
+	"github.com/ukama/ukama/systems/metrics/reasoning/pkg/algos"
 	"github.com/ukama/ukama/systems/metrics/reasoning/pkg/metric"
 	"github.com/ukama/ukama/systems/metrics/reasoning/pkg/store"
-	"github.com/ukama/ukama/systems/metrics/reasoning/pkg/utils"
 	"github.com/ukama/ukama/systems/metrics/reasoning/scheduler"
+	"github.com/ukama/ukama/systems/metrics/reasoning/utils"
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -79,9 +80,13 @@ func (c *ReasoningServer) StopScheduler(ctx context.Context, req *pb.StopSchedul
 	return &pb.StopSchedulerResponse{}, nil
 }
 
-
 func (c *ReasoningServer) ReasoningJob(ctx context.Context) {
 	log.Info("Reasoning job started")
+	if c.config.MetricKeyMap == nil {
+		log.Error("MetricKeyMap not loaded")
+		return
+	}
+
 	nodes, err := c.nodeClient.List(creg.ListNodesRequest{
 		Connectivity: ukama.NodeConnectivityOnline.String(),
 		State:        ukama.NodeStateConfigured.String(),
@@ -93,65 +98,59 @@ func (c *ReasoningServer) ReasoningJob(ctx context.Context) {
 	}
 	log.Infof("Node registry nodes: %v", nodes.Nodes)
 
-	
 	for _, node := range nodes.Nodes {
 		nds, err := utils.SortNodeIds(node.Id)
 		if err != nil {
-			log.Errorf("Failed to sort node IDs: %v", err)
-			return
+			log.Errorf("Failed to sort node IDs for %s: %v", node.Id, err)
+			continue
 		}
 		start, end, err := utils.GetStartEndFromStore(c.store, node.Id, c.config.PrometheusInterval)
 		if err != nil {
 			log.Errorf("Failed to get start/end for node %s: %v", node.Id, err)
-			return
+			continue
 		}
-		
-		c.processNode(ctx, nds.TNode, start, end)
-		c.processNode(ctx, nds.ANode, start, end)
+		for _, nodeID := range []string{nds.TNode, nds.ANode} {
+			c.processNode(ctx, nodeID, start, end)
+		}
 	}
 }
 
 func (c *ReasoningServer) processNode(ctx context.Context, nodeID string, start, end string) {
 	nType := ukama.GetNodeType(nodeID)
-	if c.config.MetricKeyMap == nil {
-		log.Error("MetricKeyMap not loaded")
-		return
-	}
 	metrics, ok := (*c.config.MetricKeyMap)[*nType]
 	if !ok {
-		log.Errorf("No metrics found for node type: %v", nType)
+		log.Debugf("No metrics for node type %v, skipping %s", nType, nodeID)
 		return
 	}
 	log.Debugf("Processing %d metrics for node %s", len(metrics.Metrics), nodeID)
 
 	for _, m := range metrics.Metrics {
-		metricQueries := []metric.MetricWithFilters{{
-			Metric:  m.Key,
-			Filters: []metric.Filter{{Key: "node_id", Value: nodeID}},
-		}}
-
-		rp := metric.BuildPrometheusRequest(
-			c.config.PrometheusHost,
-			start, end,
-			strconv.Itoa(m.Step),
-			"",
-			metricQueries,
-		)
-		log.Debugf("Prometheus request: %s - %d metrics", rp.Url, len(metricQueries))
-		pr, err := metric.ProcessPromRequest(ctx, rp)
-		if err != nil {
-			log.Errorf("Failed to process Prometheus request for node %s: %v", nodeID, err)
-			continue
+		if err := c.processMetric(ctx, nodeID, m, start, end); err != nil {
+			log.Errorf("Metric %s for node %s: %v", m.Key, nodeID, err)
 		}
-
-		utils.StoreMetricResults(c.store, nodeID, m.Key, pr.Data.Result)
-		results, err := utils.GetMetricResults(c.store, nodeID, m.Key)
-		if err != nil {
-			log.Errorf("Failed to get metric results: %v", err)
-			continue
-		}
-		log.Infof("Metric results: %+v", results)
 	}
 }
 
+func (c *ReasoningServer) processMetric(ctx context.Context, nodeID string, m pkg.Metric, start, end string) error {
+	rp := metric.BuildPrometheusRequest(
+		c.config.PrometheusHost,
+		start, end,
+		strconv.Itoa(m.Step),
+		"",
+		[]metric.MetricWithFilters{{Metric: m.Key, Filters: []metric.Filter{{Key: "node_id", Value: nodeID}}}},
+	)
+	log.Debugf("Prometheus request: %s - %s{%s}", rp.Url, m.Key, nodeID)
 
+	pr, err := metric.ProcessPromRequest(ctx, rp)
+	if err != nil {
+		return err
+	}
+	stats, err := algos.AggregateMetricAlgo(pr.Data.Result, "mean")
+	if err != nil {
+		return err
+	}
+	stats.RoundOfDecimalPoints(c.config.FormatDecimalPoints)
+	c.store.PutJson(algos.GetAggStoreKey(nodeID, m.Key), stats)
+	log.Infof("Aggregation stats: %+v", stats)
+	return nil
+}
