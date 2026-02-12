@@ -225,6 +225,44 @@ int jobs_set_op_state(Jobs *jobs, uint64_t opId, OpState state, int result, uint
     return STATUS_OK;
 }
 
+int jobs_try_dequeue(Jobs *jobs, LaneId lane, Job *out, uint32_t nowMs) {
+    LaneQueue *q;
+
+    if (!jobs || !jobs->initialized || lane < 0 || lane >= LaneMax || !out) return STATUS_NOK;
+    q = &jobs->lane[lane];
+
+    pthread_mutex_lock(&q->mu);
+
+    if (q->stop) {
+        pthread_mutex_unlock(&q->mu);
+        return STATUS_NOK;
+    }
+
+    if (q->hiCount == 0 && q->loCount == 0) {
+        pthread_mutex_unlock(&q->mu);
+        return STATUS_NOK;
+    }
+
+    if (q->hiCount > 0) {
+        *out = q->hiQ[q->hiHead];
+        q->hiHead = (q->hiHead + 1U) % (uint32_t)(sizeof(q->hiQ) / sizeof(q->hiQ[0]));
+        q->hiCount--;
+    } else {
+        *out = q->loQ[q->loHead];
+        q->loHead = (q->loHead + 1U) % (uint32_t)(sizeof(q->loQ) / sizeof(q->loQ[0]));
+        q->loCount--;
+    }
+
+    pthread_mutex_unlock(&q->mu);
+
+    if (out->opId != 0) {
+        (void)jobs_set_op_state(jobs, out->opId, OpStateQueued, STATUS_OK, nowMs);
+    }
+
+    return STATUS_OK;
+}
+
+
 int jobs_get_op(Jobs *jobs, uint64_t opId, OpStatus *out) {
 
     OpStatus *s;

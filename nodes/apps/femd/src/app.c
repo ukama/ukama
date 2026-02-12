@@ -36,8 +36,7 @@ int app_init(App *app, const char *configPath) {
     if (gpio_controller_init(&app->gpio, app->cfg.gpioBasePath) != STATUS_OK) return STATUS_NOK;
     if (notifier_init(&app->notifier, &app->cfg) != STATUS_OK)                return STATUS_NOK;
 
-    if (safety_init(&app->safety, &app->jobs, &app->snap,
-                    &app->notifier, app->cfg.safetyConfigPath) != STATUS_OK) {
+    if (safety_init(&app->safety, &app->jobs, &app->snap, app->cfg.safetyConfigPath) != STATUS_OK) {
         return STATUS_NOK;
     }
 

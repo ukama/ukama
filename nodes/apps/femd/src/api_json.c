@@ -104,7 +104,7 @@ json_t* json_gpio_status(const GpioStatus *st, int fem_unit_num) {
     json_object_set_new(o, "rf_pal_enable",  st->rf_pal_enable ? json_true() : json_false());
     /* inverted: pa_disable = !28v_vds_enable */
     json_object_set_new(o, "28v_vds_enable", st->pa_disable ? json_false() : json_true());
-    json_object_set_new(o, "psu_pgood",      st->pg_reg_5v ? json_true() : json_false());
+    json_object_set_new(o, "psu_pgood",      st->psu_pgood ? json_true() : json_false());
     json_object_set_new(o, "fem_unit",       json_integer(fem_unit_num));
 
     return o;

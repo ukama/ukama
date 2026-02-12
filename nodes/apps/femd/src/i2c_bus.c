@@ -34,6 +34,12 @@ int i2c_bus_init(I2cBus *bus, int busNum) {
     bus->fd           = -1;
     bus->currentSlave = -1;
     bus->initialized  = false;
+    bus->dacKnown     = false;
+    bus->dacCarrierV  = 0.0f;
+    bus->dacPeakV     = 0.0f;
+    bus->dacKnown     = false;
+    bus->dacCarrierV  = 0.0f;
+    bus->dacPeakV     = 0.0f;
 
     if (snprintf(devPath, sizeof(devPath), "/dev/i2c-%d", busNum) >= (int)sizeof(devPath)) {
         usys_log_error("i2c_bus_init: dev path truncated for bus %d", busNum);
@@ -63,6 +69,9 @@ void i2c_bus_cleanup(I2cBus *bus) {
 
     bus->currentSlave = -1;
     bus->initialized  = false;
+    bus->dacKnown     = false;
+    bus->dacCarrierV  = 0.0f;
+    bus->dacPeakV     = 0.0f;
 
     usys_log_info("I2C bus cleaned up (bus=%d)", bus->busNum);
 }

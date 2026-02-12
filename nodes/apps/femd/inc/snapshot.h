@@ -69,4 +69,6 @@ int  snapshot_update_ctrl(SnapshotStore *store, const CtrlSnapshot *in);
 int  snapshot_get_fem(SnapshotStore *store, FemUnit unit, FemSnapshot *out);
 int  snapshot_get_ctrl(SnapshotStore *store, CtrlSnapshot *out);
 
+uint32_t snapshot_now_ms(void);
+
 #endif /* SNAPSHOT_H */

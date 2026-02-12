@@ -3,63 +3,49 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2025-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 
 #ifndef GPIO_CONTROLLER_H
 #define GPIO_CONTROLLER_H
 
-#include <stdint.h>
 #include <stdbool.h>
 
 #include "femd.h"
 
-#define GPIO_PATH_MAX_LEN 256
-#define GPIO_BASE_PATH    "/sys/devices/platform"
-
-typedef enum {
-    FEM_UNIT_1 = 1,
-    FEM_UNIT_2 = 2
-} FemUnit;
-
-typedef enum {
-    GPIO_28V_VDS,
-    GPIO_TX_RF,
-    GPIO_RX_RF,
-    GPIO_PA_VDS,
-    GPIO_TX_RFPAL,
-    GPIO_PSU_PGOOD,
-    GPIO_MAX
-} GpioPin;
+#define GPIO_PATH_MAX_LEN 128
 
 typedef struct {
-    bool pa_disable;
     bool tx_rf_enable;
     bool rx_rf_enable;
     bool pa_vds_enable;
     bool rf_pal_enable;
-    bool pg_reg_5v;
+    bool pa_disable;     /* inverted logic in sysfs */
+    bool psu_pgood;
+
 } GpioStatus;
 
 typedef struct {
-    char *basePath;
-    bool initialized;
+    char txRfEnable[GPIO_PATH_MAX_LEN];
+    char rxRfEnable[GPIO_PATH_MAX_LEN];
+    char paVdsEnable[GPIO_PATH_MAX_LEN];
+    char rfPalEnable[GPIO_PATH_MAX_LEN];
+    char vds28Enable[GPIO_PATH_MAX_LEN];
+    char psuPgood[GPIO_PATH_MAX_LEN];
+} GpioPaths;
+
+typedef struct {
+    char     basePath[GPIO_PATH_MAX_LEN];
+    GpioPaths fem[3];
+    bool     initialized;
 } GpioController;
 
-int  gpio_controller_init(GpioController *ctl, const char *basePath);
-void gpio_controller_cleanup(GpioController *ctl);
+int  gpio_controller_init(GpioController *ctrl, const char *gpioBasePath);
+void gpio_controller_cleanup(GpioController *ctrl);
 
-int  gpio_set(GpioController *ctl, FemUnit unit, GpioPin pin, bool value);
-int  gpio_get(GpioController *ctl, FemUnit unit, GpioPin pin, bool *out);
+int  gpio_read_all(GpioController *ctrl, FemUnit unit, GpioStatus *out);
+int  gpio_apply(GpioController *ctrl, FemUnit unit, const GpioStatus *desired);
 
-int  gpio_read_all(GpioController *ctl, FemUnit unit, GpioStatus *out);
-int  gpio_apply(GpioController *ctl, FemUnit unit, const GpioStatus *desired);
-
-int  gpio_disable_pa(GpioController *ctl, FemUnit unit);
-
-static inline bool gpio_vds_28v_enabled(const GpioStatus *s) {
-    if (!s) return false;
-    return !s->pa_disable;
-}
+int  gpio_disable_pa(GpioController *ctrl, FemUnit unit);
 
 #endif /* GPIO_CONTROLLER_H */

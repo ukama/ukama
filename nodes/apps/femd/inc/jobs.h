@@ -55,6 +55,9 @@ typedef enum {
     JobCmdEepromReadSerial,
     JobCmdEepromWriteSerial,
 
+    JobCmdSafetyDisablePa,
+    JobCmdSafetyRestorePa,
+
     JobCmdShutdownLane
 } JobCmd;
 
@@ -147,6 +150,7 @@ void jobs_cleanup(Jobs *jobs);
 uint64_t jobs_enqueue(Jobs *jobs, const Job *in, uint32_t nowMs);
 
 int  jobs_dequeue(Jobs *jobs, LaneId lane, Job *out, uint32_t nowMs);
+int  jobs_try_dequeue(Jobs *jobs, LaneId lane, Job *out, uint32_t nowMs);
 int  jobs_set_op_state(Jobs *jobs, uint64_t opId, OpState state, int result, uint32_t nowMs);
 
 int  jobs_get_op(Jobs *jobs, uint64_t opId, OpStatus *out);

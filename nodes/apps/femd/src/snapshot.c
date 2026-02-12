@@ -110,3 +110,12 @@ int snapshot_get_ctrl(SnapshotStore *store, CtrlSnapshot *out) {
     (void)pthread_rwlock_unlock(&store->lock);
     return STATUS_OK;
 }
+
+
+#include <time.h>
+
+uint32_t snapshot_now_ms(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (uint32_t)((uint64_t)ts.tv_sec * 1000ULL + (uint64_t)ts.tv_nsec / 1000000ULL);
+}

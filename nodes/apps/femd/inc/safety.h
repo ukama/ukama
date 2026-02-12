@@ -9,31 +9,30 @@
 #ifndef SAFETY_H
 #define SAFETY_H
 
-#include <stdint.h>
 #include <stdbool.h>
 
-#include "yaml_config.h"
-#include "snapshot.h"
-#include "jobs.h"
-#include "notifier.h"
+#include "femd.h"
+typedef struct {
+    float maxTemperatureC;
+    float maxReversePowerDbm;
+    float maxPaCurrentA;
+} SafetyConfig;
 
 typedef struct {
-    YamlSafetyConfig cfg;
-
-    bool     paShutdown[3];
-    uint32_t lastShutdownMs[3];
-    uint32_t okStreak[3];
-    uint32_t violationCount[3];
+    SafetyConfig cfg;
+    bool         paDisabled[3];
+    bool         initialized;
 } SafetyState;
 
 typedef struct {
-    SafetyState   st;
-    Jobs          *jobs;
-    SnapshotStore *snap;
-    Notifier      *notifier;
+    struct Jobs         *jobs;
+    struct SnapshotStore *snap;
+    SafetyState          st;
 } Safety;
 
-int  safety_init(Safety *s, Jobs *jobs, SnapshotStore *snap, Notifier *n, const char *yamlPath);
+int  safety_init(Safety *s, struct Jobs *jobs, struct SnapshotStore *snap, const SafetyConfig *cfg);
+void safety_cleanup(Safety *s);
+
 int  safety_tick(Safety *s, FemUnit unit);
 
 #endif /* SAFETY_H */

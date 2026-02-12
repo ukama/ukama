@@ -32,6 +32,7 @@
 
 #define JTAG_FEM_UNIT           "fem_unit"
 
+#define JTAG_TEMPERATURE        "temperature"
 #define JTAG_GPIO_STATUS        "gpio_status"
 #define JTAG_TX_RF_ENABLE       "tx_rf_enable"
 #define JTAG_RX_RF_ENABLE       "rx_rf_enable"

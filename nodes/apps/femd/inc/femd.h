@@ -39,6 +39,12 @@
 #define ALARM_TYPE_PA_ON  2
 
 
+typedef enum {
+    FEM_UNIT_NONE = 0,
+    FEM_UNIT_1    = 1,
+    FEM_UNIT_2    = 2
+} FemUnit;
+
 typedef struct _u_instance  UInst;
 typedef struct _u_instance  UInst;
 typedef struct _u_request   URequest;

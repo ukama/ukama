@@ -18,8 +18,12 @@
 typedef struct {
     int  busNum;
     int  fd;
-    int  currentSlave;   /* last selected slave addr, -1 if none */
+    int  currentSlave;
     bool initialized;
+
+    bool  dacKnown;
+    float dacCarrierV;
+    float dacPeakV;
 } I2cBus;
 
 /* lifecycle */
