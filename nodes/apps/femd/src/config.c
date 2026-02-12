@@ -184,16 +184,18 @@ void config_print(const Config *cfg) {
 
     if (!cfg) return;
 
-    usys_log_info("Config: servicePort=%d nodedPort=%d serviceName=%s",
+    usys_log_info("Config: \n\t servicePort=%d \n\t nodedPort=%d \n\t serviceName=%s",
                   cfg->servicePort, cfg->nodedPort, cfg->serviceName);
 
-    usys_log_info("Config: gpioBasePath=%s i2cFem1=%d i2cFem2=%d i2cCtrl=%d",
+    usys_log_info("Config: \n\t gpioBasePath=%s \n\t i2cFem1=%d \n\t i2cFem2=%d \n\ti2cCtrl=%d",
                   cfg->gpioBasePath, cfg->i2cBusFem1, cfg->i2cBusFem2, cfg->i2cBusCtrl);
 
-    usys_log_info("Config: safetyYaml=%s samplePeriodMs=%u safetyPeriodMs=%u",
-                  cfg->safetyConfigPath, (unsigned)cfg->samplePeriodMs, (unsigned)cfg->safetyPeriodMs);
+    usys_log_info("Config: \n\t safetyYaml=%s \n\t samplePeriodMs=%u \n\t safetyPeriodMs=%u",
+                  cfg->safetyConfigPath,
+                  (unsigned)cfg->samplePeriodMs,
+                  (unsigned)cfg->safetyPeriodMs);
 
-    usys_log_info("Config: notify=%s:%d%s web=%s safety=%s notify=%s",
+    usys_log_info("Config: \n\t notify=%s:%d%s \n\t web=%s \n\t safety=%s \n\t notify=%s",
                   cfg->notifyHost, cfg->notifyPort, cfg->notifyPath,
                   cfg->enableWeb ? "true" : "false",
                   cfg->enableSafety ? "true" : "false",
