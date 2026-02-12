@@ -14,6 +14,7 @@
 #include "ulfius.h"
 
 #include "usys_types.h"
+#include "usys_services.h"
 
 #ifndef STATUS_OK
 #define STATUS_OK  0
@@ -23,7 +24,7 @@
 #define STATUS_NOK (-1)
 #endif
 
-#define SERVICE_NAME "fem"
+#define SERVICE_NAME SERVICE_FEM
 #define MODULE_FEM   "fem"
 #define ALARM_NODE   "node"
 #define EMPTY_STRING ""

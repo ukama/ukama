@@ -11,7 +11,10 @@
 #include <stdlib.h>
 
 #include "config.h"
+
 #include "usys_log.h"
+#include "usys_file.h"
+#include "usys_services.h"
 
 static int trim_line(char *s) {
 
@@ -74,10 +77,19 @@ int config_set_defaults(Config *cfg) {
 
     memset(cfg, 0, sizeof(*cfg));
 
-    cfg->servicePort = 8080;
-    cfg->nodedPort   = 8081;
+    snprintf(cfg->serviceName, sizeof(cfg->serviceName), "%s", SERVICE_NAME);
 
-    snprintf(cfg->serviceName, sizeof(cfg->serviceName), "%s", "femd");
+    cfg->servicePort = usys_find_service_port(SERVICE_NAME);
+    if (!cfg->servicePort) {
+        usys_log_error("Unable to find service port for: %s", SERVICE_NAME);
+        return STATUS_NOK;
+    }
+
+    cfg->nodedPort = usys_find_service_port(SERVICE_NODE);
+    if (!cfg->nodedPort) {
+        usys_log_error("Unable to find service port for: %s", SERVICE_NODE);
+        return STATUS_NOK;
+    }
 
     snprintf(cfg->gpioBasePath, sizeof(cfg->gpioBasePath), "%s", "/sys/devices/platform");
 
