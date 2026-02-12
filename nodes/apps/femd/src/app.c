@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include "app.h"
+
 #include "usys_log.h"
 
 int app_init(App *app, const char *configPath) {
@@ -27,17 +28,13 @@ int app_init(App *app, const char *configPath) {
 
     config_print(&app->cfg);
 
-    if (snapshot_init(&app->snap) != STATUS_OK) return STATUS_NOK;
-
-    if (jobs_init(&app->jobs) != STATUS_OK) return STATUS_NOK;
-
-    if (i2c_bus_init(&app->busFem1, app->cfg.i2cBusFem1) != STATUS_OK) return STATUS_NOK;
-    if (i2c_bus_init(&app->busFem2, app->cfg.i2cBusFem2) != STATUS_OK) return STATUS_NOK;
-    if (i2c_bus_init(&app->busCtrl, app->cfg.i2cBusCtrl) != STATUS_OK) return STATUS_NOK;
-
+    if (snapshot_init(&app->snap) != STATUS_OK)                               return STATUS_NOK;
+    if (jobs_init(&app->jobs) != STATUS_OK)                                   return STATUS_NOK;
+    if (i2c_bus_init(&app->busFem1, app->cfg.i2cBusFem1) != STATUS_OK)        return STATUS_NOK;
+    if (i2c_bus_init(&app->busFem2, app->cfg.i2cBusFem2) != STATUS_OK)        return STATUS_NOK;
+    if (i2c_bus_init(&app->busCtrl, app->cfg.i2cBusCtrl) != STATUS_OK)        return STATUS_NOK;
     if (gpio_controller_init(&app->gpio, app->cfg.gpioBasePath) != STATUS_OK) return STATUS_NOK;
-
-    if (notifier_init(&app->notifier, &app->cfg) != STATUS_OK) return STATUS_NOK;
+    if (notifier_init(&app->notifier, &app->cfg) != STATUS_OK)                return STATUS_NOK;
 
     if (safety_init(&app->safety, &app->jobs, &app->snap,
                     &app->notifier, app->cfg.safetyConfigPath) != STATUS_OK) {

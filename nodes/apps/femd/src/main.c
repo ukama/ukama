@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
         cfgPath = argv[1];
     }
 
-    signal(SIGINT, on_signal);
+    signal(SIGINT,  on_signal);
     signal(SIGTERM, on_signal);
 
     if (app_init(&gApp, cfgPath) != STATUS_OK) {

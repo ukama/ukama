@@ -12,6 +12,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "femd.h"
+
 #define GPIO_PATH_MAX_LEN 256
 #define GPIO_BASE_PATH    "/sys/devices/platform"
 

@@ -6,6 +6,7 @@
  * Copyright (c) 2025-present, Ukama Inc.
  */
 #include <string.h>
+
 #include "api_json.h"
 
 int json_set_ok(UResponse *resp, json_t *body) {

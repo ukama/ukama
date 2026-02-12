@@ -15,30 +15,6 @@
 
 #include "usys_log.h"
 
-#ifndef JTAG_FORWARD_POWER
-#define JTAG_FORWARD_POWER "forward_power"
-#endif
-
-#ifndef JTAG_OP
-#define JTAG_OP "op"
-#endif
-
-#ifndef JTAG_OP_ID
-#define JTAG_OP_ID "op_id"
-#endif
-
-#ifndef JTAG_OP_STATE
-#define JTAG_OP_STATE "state"
-#endif
-
-#ifndef JTAG_RC
-#define JTAG_RC "rc"
-#endif
-
-#ifndef JTAG_UPDATED
-#define JTAG_UPDATED "updated_ts_ms"
-#endif
-
 static const char *op_state_str(OpState s) {
 
     switch (s) {
@@ -173,8 +149,11 @@ bool json_serialize_op_status(json_t **json, const OpStatus *st) {
 
     json_object_set_new(j, JTAG_OP_ID,    json_integer((json_int_t)st->opId));
     json_object_set_new(j, JTAG_OP_STATE, json_string(op_state_str(st->state)));
+#if 0
+    xxx
     json_object_set_new(j, JTAG_RC,       json_integer(st->rc));
     json_object_set_new(j, JTAG_UPDATED,  json_integer(st->updatedTsMs));
+#endif
 
     json_object_set_new(*json, JTAG_OP, j);
     return USYS_TRUE;

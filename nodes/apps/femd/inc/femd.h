@@ -11,20 +11,16 @@
 
 #include <stdint.h>
 
+#include "ulfius.h"
+
+#include "usys_types.h"
+
 #ifndef STATUS_OK
 #define STATUS_OK  0
 #endif
 
 #ifndef STATUS_NOK
 #define STATUS_NOK (-1)
-#endif
-
-#ifndef USYS_TRUE
-#define USYS_TRUE  1
-#endif
-
-#ifndef USYS_FALSE
-#define USYS_FALSE 0
 #endif
 
 #define MODULE_FEM "fem"
@@ -41,5 +37,13 @@
 
 #define ALARM_TYPE_PA_OFF 1
 #define ALARM_TYPE_PA_ON  2
+
+
+typedef struct _u_instance  UInst;
+typedef struct _u_instance  UInst;
+typedef struct _u_request   URequest;
+typedef struct _u_response  UResponse;
+typedef json_t              JsonObj;
+typedef json_error_t        JsonErrObj;
 
 #endif /* FEMD_H */

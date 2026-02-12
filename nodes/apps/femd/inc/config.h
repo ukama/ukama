@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "femd.h"
 #include "yaml_config.h"
 
 typedef struct {

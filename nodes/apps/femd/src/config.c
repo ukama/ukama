@@ -122,22 +122,27 @@ int config_load(Config *cfg, const char *path) {
 
         if (parse_kv(line, &k, &v) != STATUS_OK) continue;
 
-        if (!strcmp(k, "service_port")) cfg->servicePort = atoi(v);
-        else if (!strcmp(k, "noded_port")) cfg->nodedPort = atoi(v);
-        else if (!strcmp(k, "service_name")) snprintf(cfg->serviceName, sizeof(cfg->serviceName), "%s", v);
-        else if (!strcmp(k, "gpio_base_path")) snprintf(cfg->gpioBasePath, sizeof(cfg->gpioBasePath), "%s", v);
-        else if (!strcmp(k, "i2c_bus_fem1")) cfg->i2cBusFem1 = atoi(v);
-        else if (!strcmp(k, "i2c_bus_fem2")) cfg->i2cBusFem2 = atoi(v);
-        else if (!strcmp(k, "i2c_bus_ctrl")) cfg->i2cBusCtrl = atoi(v);
-        else if (!strcmp(k, "safety_yaml")) snprintf(cfg->safetyConfigPath, sizeof(cfg->safetyConfigPath), "%s", v);
-        else if (!strcmp(k, "notify_host")) snprintf(cfg->notifyHost, sizeof(cfg->notifyHost), "%s", v);
-        else if (!strcmp(k, "notify_port")) cfg->notifyPort = atoi(v);
-        else if (!strcmp(k, "notify_path")) snprintf(cfg->notifyPath, sizeof(cfg->notifyPath), "%s", v);
+        if (!strcmp(k, "service_port"))        cfg->servicePort = atoi(v);
+        else if (!strcmp(k, "noded_port"))     cfg->nodedPort = atoi(v);
+        else if (!strcmp(k, "service_name"))   snprintf(cfg->serviceName,
+                                                        sizeof(cfg->serviceName), "%s", v);
+        else if (!strcmp(k, "gpio_base_path")) snprintf(cfg->gpioBasePath,
+                                                        sizeof(cfg->gpioBasePath), "%s", v);
+        else if (!strcmp(k, "i2c_bus_fem1"))   cfg->i2cBusFem1 = atoi(v);
+        else if (!strcmp(k, "i2c_bus_fem2"))   cfg->i2cBusFem2 = atoi(v);
+        else if (!strcmp(k, "i2c_bus_ctrl"))   cfg->i2cBusCtrl = atoi(v);
+        else if (!strcmp(k, "safety_yaml"))    snprintf(cfg->safetyConfigPath,
+                                                        sizeof(cfg->safetyConfigPath), "%s", v);
+        else if (!strcmp(k, "notify_host"))    snprintf(cfg->notifyHost,
+                                                        sizeof(cfg->notifyHost), "%s", v);
+        else if (!strcmp(k, "notify_port"))    cfg->notifyPort = atoi(v);
+        else if (!strcmp(k, "notify_path"))    snprintf(cfg->notifyPath,
+                                                        sizeof(cfg->notifyPath), "%s", v);
         else if (!strcmp(k, "sample_period_ms")) cfg->samplePeriodMs = (uint32_t)atoi(v);
         else if (!strcmp(k, "safety_period_ms")) cfg->safetyPeriodMs = (uint32_t)atoi(v);
-        else if (!strcmp(k, "enable_web")) (void)parse_bool(v, &cfg->enableWeb);
-        else if (!strcmp(k, "enable_safety")) (void)parse_bool(v, &cfg->enableSafety);
-        else if (!strcmp(k, "enable_notify")) (void)parse_bool(v, &cfg->enableNotify);
+        else if (!strcmp(k, "enable_web"))       (void)parse_bool(v, &cfg->enableWeb);
+        else if (!strcmp(k, "enable_safety"))    (void)parse_bool(v, &cfg->enableSafety);
+        else if (!strcmp(k, "enable_notify"))    (void)parse_bool(v, &cfg->enableNotify);
     }
 
     fclose(f);
