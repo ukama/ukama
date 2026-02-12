@@ -10,7 +10,7 @@
 #include <unistd.h>
 
 #include "safety.h"
-#include "yaml_config.h"
+#include "safety_config.h"
 #include "usys_log.h"
 
 static uint32_t now_ms(void) {
@@ -36,17 +36,22 @@ static void* safety_thread_main(void *arg) {
 
     while (1) {
 
+        uint32_t interval_ms = 250; /* fallback */
         pthread_mutex_lock(&s->mu);
         if (!s->running) {
             pthread_mutex_unlock(&s->mu);
             break;
+        }
+        if (s->cfg.check_interval_ms > 0) {
+            interval_ms = s->cfg.check_interval_ms;
         }
         pthread_mutex_unlock(&s->mu);
 
         (void)safety_tick(s, FEM_UNIT_1);
         (void)safety_tick(s, FEM_UNIT_2);
 
-        usleep(250 * 1000);
+        /* use config-driven interval */
+        usleep((useconds_t)interval_ms * 1000);
     }
 
     return NULL;
@@ -54,8 +59,8 @@ static void* safety_thread_main(void *arg) {
 
 int safety_init(Safety *s, Jobs *jobs, SnapshotStore *snap, Notifier *notifier, const char *cfgPath) {
 
-    YamlSafetyConfig y;
-    int ok = 0;
+    SafetyConfig cfg;
+    int loaded = 0;
 
     if (!s || !jobs || !snap) return STATUS_NOK;
 
@@ -66,22 +71,29 @@ int safety_init(Safety *s, Jobs *jobs, SnapshotStore *snap, Notifier *notifier, 
     s->snap = snap;
     s->notifier = notifier;
 
-    memset(&s->cfg, 0, sizeof(s->cfg));
-    s->cfg.max_temperature_c     = 95.0f;
-    s->cfg.max_reverse_power_dbm = 10.0f;
-    s->cfg.max_pa_current_a      = 5.0f;
+    /* start with defaults */
+    safety_config_set_defaults(&s->cfg);
 
-    memset(&y, 0, sizeof(y));
+    memset(&cfg, 0, sizeof(cfg));
     if (cfgPath && cfgPath[0]) {
-        if (yaml_config_load(&y, cfgPath) == STATUS_OK && y.enabled) {
-            //            s->cfg = y.safety; XXXX
-            ok = 1;
+        if (safety_config_load_json(cfgPath, &cfg) == STATUS_OK) {
+            if (cfg.enabled) {
+                pthread_mutex_lock(&s->mu);
+                s->cfg = cfg;
+                pthread_mutex_unlock(&s->mu);
+                loaded = 1;
+            } else {
+                usys_log_warn("Safety: config loaded but disabled (safety.enabled=false)");
+            }
+        } else {
+            usys_log_warn("Safety: failed to load config: %s (using defaults)", cfgPath);
         }
-        // yaml_config_cleanup(&y); XXXX
+    } else {
+        usys_log_debug("Safety: no config path provided (using defaults)");
     }
 
-    if (!ok) {
-        usys_log_debug("Safety: using defaults (cfg not loaded or missing safety section)");
+    if (!loaded) {
+        usys_log_debug("Safety: using defaults (cfg not loaded or disabled)");
     }
 
     s->initialized = true;
@@ -181,9 +193,12 @@ int safety_tick(Safety *s, FemUnit unit) {
     bool violation = false;
     LaneId lane;
 
+    /* thresholds */
     float maxT;
     float maxR;
     float maxI;
+
+    bool auto_restore;
 
     if (!s || !s->initialized) return STATUS_NOK;
     if (unit != FEM_UNIT_1 && unit != FEM_UNIT_2) return STATUS_NOK;
@@ -191,9 +206,10 @@ int safety_tick(Safety *s, FemUnit unit) {
     lane = (unit == FEM_UNIT_1) ? LaneFem1 : LaneFem2;
 
     pthread_mutex_lock(&s->mu);
-    maxT = s->cfg.max_temperature_c;
-    maxR = s->cfg.max_reverse_power_dbm;
-    maxI = s->cfg.max_pa_current_a;
+    maxT = s->cfg.thresholds.max_temperature_c;
+    maxR = s->cfg.thresholds.max_reverse_power_dbm;
+    maxI = s->cfg.thresholds.max_pa_current_a;
+    auto_restore = s->cfg.auto_restore.enabled;
     pthread_mutex_unlock(&s->mu);
 
     memset(&sn, 0, sizeof(sn));
@@ -225,7 +241,8 @@ int safety_tick(Safety *s, FemUnit unit) {
         return STATUS_OK;
     }
 
-    if (!violation && s->paDisabled[unit]) {
+    /* only auto-restore if enabled */
+    if (!violation && s->paDisabled[unit] && auto_restore) {
         s->paDisabled[unit] = false;
         pthread_mutex_unlock(&s->mu);
         enqueue_simple(s, lane, unit, JobCmdSafetyRestorePa);

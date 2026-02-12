@@ -457,6 +457,7 @@ int cb_get_adc_chan(const URequest *request, UResponse *response, void *user_dat
     return U_CALLBACK_CONTINUE;
 }
 
+
 int cb_get_adc_thr(const URequest *request, UResponse *response, void *user_data) {
 
     WebCtx *ctx = (WebCtx *)user_data;
@@ -472,9 +473,9 @@ int cb_get_adc_thr(const URequest *request, UResponse *response, void *user_data
     if (safety_get_config(ctx->safety, &cfg) != STATUS_OK) return respond_text(response, HttpStatus_ServiceUnavailable, "safety");
 
     j = json_pack("{s:f, s:f, s:f}",
-                  "max_reverse_power", (double)cfg.max_reverse_power_dbm,
-                  "max_current",       (double)cfg.max_pa_current_a,
-                  "max_temperature",   (double)cfg.max_temperature_c);
+                  "max_reverse_power", (double)cfg.thresholds.max_reverse_power_dbm,
+                  "max_current",       (double)cfg.thresholds.max_pa_current_a,
+                  "max_temperature",   (double)cfg.thresholds.max_temperature_c);
     if (!j) return respond_text(response, HttpStatus_InternalServerError, "oom");
 
     respond_json_obj(response, HttpStatus_OK, j);
@@ -491,11 +492,18 @@ int cb_put_adc_thr(const URequest *request, UResponse *response, void *user_data
     double max_i  = 0.0;
     SafetyConfig cfg;
 
-    if (!ctx || !ctx->safety) return respond_text(response, HttpStatus_InternalServerError, "internal");
-    if (parse_fem_unit(request, &unit) != STATUS_OK) return respond_text(response, HttpStatus_BadRequest, "bad femId");
+    if (!ctx || !ctx->safety) {
+        return respond_text(response, HttpStatus_InternalServerError, "internal");
+    }
+
+    if (parse_fem_unit(request, &unit) != STATUS_OK) {
+        return respond_text(response, HttpStatus_BadRequest, "bad femId");
+    }
 
     body = parse_body_json(request);
-    if (!body) return respond_text(response, HttpStatus_BadRequest, "bad json");
+    if (!body) {
+        return respond_text(response, HttpStatus_BadRequest, "bad json");
+    }
 
     if (!json_extract_adc_thresholds(body, &max_rp, &max_i)) {
         json_decref(body);
@@ -503,10 +511,12 @@ int cb_put_adc_thr(const URequest *request, UResponse *response, void *user_data
     }
     json_decref(body);
 
-    if (safety_get_config(ctx->safety, &cfg) != STATUS_OK) return respond_text(response, HttpStatus_ServiceUnavailable, "safety");
+    if (safety_get_config(ctx->safety, &cfg) != STATUS_OK) {
+        return respond_text(response, HttpStatus_ServiceUnavailable, "safety");
+    }
 
-    cfg.max_reverse_power_dbm = (float)max_rp;
-    cfg.max_pa_current_a      = (float)max_i;
+    cfg.thresholds.max_reverse_power_dbm = (float)max_rp;
+    cfg.thresholds.max_pa_current_a      = (float)max_i;
 
     (void)unit;
 
@@ -524,8 +534,13 @@ int cb_post_safety_restore(const URequest *request, UResponse *response, void *u
 
     (void)request;
 
-    if (!ctx || !ctx->safety) return respond_text(response, HttpStatus_InternalServerError, "internal");
-    if (parse_fem_unit(request, &unit) != STATUS_OK) return respond_text(response, HttpStatus_BadRequest, "bad femId");
+    if (!ctx || !ctx->safety) {
+        return respond_text(response, HttpStatus_InternalServerError, "internal");
+    }
+
+    if (parse_fem_unit(request, &unit) != STATUS_OK) {
+        return respond_text(response, HttpStatus_BadRequest, "bad femId");
+    }
 
     if (safety_force_restore(ctx->safety, unit) != STATUS_OK) {
         return respond_text(response, HttpStatus_ServiceUnavailable, "safety");

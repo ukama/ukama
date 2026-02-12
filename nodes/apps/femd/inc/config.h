@@ -13,7 +13,6 @@
 #include <stdbool.h>
 
 #include "femd.h"
-#include "yaml_config.h"
 
 typedef struct {
     int  servicePort;

@@ -14,13 +14,11 @@
 
 #include "usys_types.h"
 #include "gpio_controller.h"
-#include "yaml_config.h"
+#include "safety_config.h"
 
 #include "jobs.h"
 #include "snapshot.h"
 #include "notifier.h"
-
-typedef YamlSafetyConfig SafetyConfig;
 
 typedef struct {
     pthread_t        thread;
