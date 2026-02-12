@@ -47,6 +47,8 @@
 #define DEF_NODE_ID            "ukama-aaa-bbbb-ccc-dddd"
 #define DEF_NODE_TYPE          "amplifier"
 #define ENV_FEMDD_DEBUG_MODE   "FEMD_DEBUG_MODE"
+#define DEF_GPIO_BASE_PATH     "/sys/devices/platform"
+#define DEF_SAFETY_CONFIG_PATH "/ukama/configs/femd/saftey_config.json"
 
 typedef enum {
     FEM_UNIT_NONE = 0,

@@ -99,13 +99,13 @@ int config_set_defaults(Config *cfg) {
     snprintf(cfg->notifyHost, sizeof(cfg->notifyHost), "%s", DEF_NOTIFY_HOST);
     snprintf(cfg->notifyPath, sizeof(cfg->notifyPath), "%s", DEF_NOTIFY_EP);
 
-    snprintf(cfg->gpioBasePath, sizeof(cfg->gpioBasePath), "%s", "/sys/devices/platform");
+    snprintf(cfg->gpioBasePath, sizeof(cfg->gpioBasePath), "%s",  DEF_GPIO_BASE_PATH);
 
     cfg->i2cBusFem1 = 1;
     cfg->i2cBusFem2 = 2;
     cfg->i2cBusCtrl = 0;
 
-    snprintf(cfg->safetyConfigPath, sizeof(cfg->safetyConfigPath), "%s", "/etc/femd/safety.yaml");
+    snprintf(cfg->safetyConfigPath, sizeof(cfg->safetyConfigPath), "%s",  DEF_SAFETY_CONFIG_PATH);
 
     cfg->samplePeriodMs = 1000;
     cfg->safetyPeriodMs = 500;
