@@ -91,6 +91,14 @@ int config_set_defaults(Config *cfg) {
         return STATUS_NOK;
     }
 
+    cfg->notifyPort = usys_find_service_port(SERVICE_NOTIFY);
+    if (!cfg->notifyPort) {
+        usys_log_error("Unable to find service port for: %s", SERVICE_NOTIFY);
+        return STATUS_NOK;
+    }
+    snprintf(cfg->notifyHost, sizeof(cfg->notifyHost), "%s", DEF_NOTIFY_HOST);
+    snprintf(cfg->notifyPath, sizeof(cfg->notifyPath), "%s", DEF_NOTIFY_EP);
+
     snprintf(cfg->gpioBasePath, sizeof(cfg->gpioBasePath), "%s", "/sys/devices/platform");
 
     cfg->i2cBusFem1 = 1;
@@ -98,10 +106,6 @@ int config_set_defaults(Config *cfg) {
     cfg->i2cBusCtrl = 0;
 
     snprintf(cfg->safetyConfigPath, sizeof(cfg->safetyConfigPath), "%s", "/etc/femd/safety.yaml");
-
-    snprintf(cfg->notifyHost, sizeof(cfg->notifyHost), "%s", "127.0.0.1");
-    cfg->notifyPort = 8082;
-    snprintf(cfg->notifyPath, sizeof(cfg->notifyPath), "%s", "/v1/notify");
 
     cfg->samplePeriodMs = 1000;
     cfg->safetyPeriodMs = 500;
