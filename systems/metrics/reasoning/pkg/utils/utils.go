@@ -79,17 +79,19 @@ func GetStartEndFromStore(s *store.Store, nodeID string, interval int) (start, e
 	return start, end, nil
 }
 
-func StoreMetricResults(s *store.Store, nodeID string, metricName string, results []metric.FilteredPrometheusResult) {
+func StoreMetricResults(s *store.Store, nodeID string, metricKey string, results []metric.FilteredPrometheusResult) {
 	jsonData, err := json.Marshal(results)
 	if err != nil {
 		log.Errorf("Failed to marshal metric results: %v", err)
 		return
 	}
-	s.Put(nodeID + "/" + metricName, string(jsonData))
+	if err := s.Put(nodeID+"/"+metricKey, string(jsonData)); err != nil {
+		log.Errorf("Failed to store metric results: %v", err)
+	}
 }
 
-func GetMetricResults(s *store.Store, nodeID string, metricName string) ([]metric.FilteredPrometheusResult, error) {
-	jsonData, err := s.Get(nodeID + "/" + metricName)
+func GetMetricResults(s *store.Store, nodeID string, metricKey string) ([]metric.FilteredPrometheusResult, error) {
+	jsonData, err := s.Get(nodeID + "/" + metricKey)
 	if err != nil {
 		log.Errorf("Failed to get metric results: %v", err)
 		return nil, err

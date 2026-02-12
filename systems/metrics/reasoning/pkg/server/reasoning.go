@@ -93,47 +93,43 @@ func (c *ReasoningServer) ReasoningJob(ctx context.Context) {
 	}
 	log.Infof("Node registry nodes: %v", nodes.Nodes)
 
+	
 	for _, node := range nodes.Nodes {
-		c.processNode(ctx, node.Id)
+		nds, err := utils.SortNodeIds(node.Id)
+		if err != nil {
+			log.Errorf("Failed to sort node IDs: %v", err)
+			return
+		}
+		start, end, err := utils.GetStartEndFromStore(c.store, node.Id, c.config.PrometheusInterval)
+		if err != nil {
+			log.Errorf("Failed to get start/end for node %s: %v", node.Id, err)
+			return
+		}
+		
+		c.processNode(ctx, nds.TNode, start, end)
+		c.processNode(ctx, nds.ANode, start, end)
 	}
 }
 
-func (c *ReasoningServer) buildMetricQueries(m pkg.Metric, n utils.Nodes) []metric.MetricWithFilters {
-	var out []metric.MetricWithFilters
-	for _, item := range m.Metric {
-		// Both trx (tnode) and com (anode) metrics are scraped from the same physical node,
-		// so they share the tower node_id in Prometheus.
-		nodeID := n.TNode
-		if item.Type != ukama.NODE_ID_TYPE_TOWERNODE && item.Type != ukama.NODE_ID_TYPE_AMPNODE {
-			continue
-		}
-		out = append(out, metric.MetricWithFilters{
-			Metric:  item.Key,
+func (c *ReasoningServer) processNode(ctx context.Context, nodeID string, start, end string) {
+	nType := ukama.GetNodeType(nodeID)
+	if c.config.MetricKeyMap == nil {
+		log.Error("MetricKeyMap not loaded")
+		return
+	}
+	metrics, ok := (*c.config.MetricKeyMap)[*nType]
+	if !ok {
+		log.Errorf("No metrics found for node type: %v", nType)
+		return
+	}
+	log.Debugf("Processing %d metrics for node %s", len(metrics.Metrics), nodeID)
+
+	for _, m := range metrics.Metrics {
+		metricQueries := []metric.MetricWithFilters{{
+			Metric:  m.Key,
 			Filters: []metric.Filter{{Key: "node_id", Value: nodeID}},
-		})
-	}
-	return out
-}
+		}}
 
-func (c *ReasoningServer) processNode(ctx context.Context, nodeID string) {
-	n, err := utils.SortNodeIds(nodeID)
-	if err != nil {
-		log.Errorf("Failed to sort node IDs for %s: %v", nodeID, err)
-		return
-	}
-	log.Infof("Sorted nodes: %v", n)
-
-	start, end, err := utils.GetStartEndFromStore(c.store, n.TNode, c.config.PrometheusInterval)
-	if err != nil {
-		log.Errorf("Failed to get start/end for node %s: %v", n.TNode, err)
-		return
-	}
-
-	for _, m := range c.config.MetricKeyMap.Metrics {
-		metricQueries := c.buildMetricQueries(m, n)
-		if len(metricQueries) == 0 {
-			continue
-		}
 		rp := metric.BuildPrometheusRequest(
 			c.config.PrometheusHost,
 			start, end,
@@ -144,12 +140,12 @@ func (c *ReasoningServer) processNode(ctx context.Context, nodeID string) {
 		log.Debugf("Prometheus request: %s - %d metrics", rp.Url, len(metricQueries))
 		pr, err := metric.ProcessPromRequest(ctx, rp)
 		if err != nil {
-			log.Errorf("Failed to process Prometheus request for node %s: %v", n.TNode, err)
+			log.Errorf("Failed to process Prometheus request for node %s: %v", nodeID, err)
 			continue
 		}
 
-		utils.StoreMetricResults(c.store, n.TNode, m.Name, pr.Data.Result)
-		results, err := utils.GetMetricResults(c.store, n.TNode, m.Name)
+		utils.StoreMetricResults(c.store, nodeID, m.Key, pr.Data.Result)
+		results, err := utils.GetMetricResults(c.store, nodeID, m.Key)
 		if err != nil {
 			log.Errorf("Failed to get metric results: %v", err)
 			continue

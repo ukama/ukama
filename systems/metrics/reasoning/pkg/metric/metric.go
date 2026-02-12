@@ -242,7 +242,7 @@ func ProcessPromRequest(ctx context.Context, prd PrometheusRequestData) (*Filter
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to execute prometheus request")
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	bodyBytes, err := io.ReadAll(res.Body)
 	if err != nil {
