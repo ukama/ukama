@@ -71,7 +71,7 @@ static int parse_bool(const char *s, bool *out) {
     return STATUS_NOK;
 }
 
-int config_set_defaults(Config *cfg) {
+int config_set_defaults(Config *cfg, const char *path) {
 
     if (!cfg) return STATUS_NOK;
 

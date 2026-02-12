@@ -43,7 +43,7 @@ typedef struct {
     Config *config;
 } ServerConfig;
 
-int  config_set_defaults(Config *cfg);
+int  config_set_defaults(Config *cfg, const char *path);
 int  config_load(Config *cfg, const char *path);
 int  config_validate(const Config *cfg);
 void config_print(const Config *cfg);

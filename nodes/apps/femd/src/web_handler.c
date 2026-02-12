@@ -20,6 +20,8 @@
 #include "usys_log.h"
 #include "usys_types.h"
 
+#include "version.h"
+
 static int respond_text(UResponse *response, int status, const char *msg) {
     ulfius_set_string_body_response(response, status, msg ? msg : "");
     return U_CALLBACK_CONTINUE;
@@ -133,24 +135,18 @@ int cb_get_version(const URequest *request, UResponse *response, void *user_data
     json_t *j = NULL;
 
     (void)request;
+    (void)user_data;
 
-    j = json_object();
-    if (!j) return respond_text(response, HttpStatus_InternalServerError, "oom");
-
-    json_object_set_new(j, "service", json_string("femd"));
-    if (ctx && ctx->cfg && ctx->cfg->serviceName) {
-        json_object_set_new(j, "service_name", json_string(ctx->cfg->serviceName));
-    }
-
-    respond_json_obj(response, HttpStatus_OK, j);
-    json_decref(j);
+    ulfius_set_string_body_response(response, HttpStatus_OK, VERSION);
     return U_CALLBACK_CONTINUE;
 }
 
 int cb_get_ping(const URequest *request, UResponse *response, void *user_data) {
     (void)request;
     (void)user_data;
-    return respond_text(response, HttpStatus_OK, "pong");
+    return respond_text(response,
+                        HttpStatus_OK,
+                        HttpStatusStr(HttpStatus_OK));
 }
 
 int cb_get_fems(const URequest *request, UResponse *response, void *user_data) {

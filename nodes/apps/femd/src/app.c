@@ -19,7 +19,7 @@ int app_init(App *app, const char *configPath) {
 
     memset(app, 0, sizeof(*app));
 
-    (void)config_set_defaults(&app->cfg);
+    (void)config_set_defaults(&app->cfg, configPath);
     if (configPath) (void)config_load(&app->cfg, configPath);
 
     if (config_validate(&app->cfg) != STATUS_OK) {
