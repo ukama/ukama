@@ -31,16 +31,6 @@
 #define ALARM_NODE "node"
 #define EMPTY_STRING ""
 
-#define HttpStatus_Ok                    200
-#define HttpStatus_Accepted              202
-#define HttpStatus_BadRequest            400
-#define HttpStatus_NotFound              404
-#define HttpStatus_MethodNotAllowed      405
-#define HttpStatus_InternalServerError   500
-#define HttpStatus_ServiceUnavailable    503
-
-const char *HttpStatusStr(int code);
-
 #define ALARM_HIGH "HIGH"
 #define ALARM_LOW  "LOW"
 
