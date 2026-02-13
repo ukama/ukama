@@ -9,11 +9,11 @@
 package algos
 
 type Stats struct {
-	Aggregation string
+	Aggregation      string
 	AggregationStats AggregationStats
-	Trend string
-	Confidence float64
-	State StateThresholds
+	Trend            string
+	Confidence       float64
+	State            string
 }
 
 type StatAnalysis struct {

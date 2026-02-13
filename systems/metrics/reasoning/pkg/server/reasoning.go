@@ -173,10 +173,10 @@ func (c *ReasoningServer) processAlgorithms(ctx context.Context, nodeID string, 
 		return err
 	}
 
-	statAnalysis.NewStats.State = algos.BuildStateThresholds(m)
-	statAnalysis.NewStats.State.StateClassification, err = algos.CalculateState(
+	stateThresholds := algos.BuildStateThresholds(m)
+	statAnalysis.NewStats.State, err = algos.CalculateState(
 		statAnalysis.NewStats.AggregationStats.AggregatedValue,
-		statAnalysis.NewStats.State,
+		stateThresholds,
 		m.StateDirection,
 	)
 	if err != nil {

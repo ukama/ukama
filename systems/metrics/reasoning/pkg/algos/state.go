@@ -25,7 +25,6 @@ const (
 // For higher_is_worse / lower_is_worse: use Warning and Critical.
 // For range: use LowWarning, HighWarning, LowCritical, HighCritical.
 type StateThresholds struct {
-	StateClassification string
 	Warning  float64
 	Critical float64
 	// Range direction
