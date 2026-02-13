@@ -80,12 +80,6 @@ static void setup_webservice_endpoints(ServerConfig *serverConfig, UInst *instan
     const char *allowed_post_opts[]    = {"POST","OPTIONS"};
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
-                               API_RES_EP("health"), 0,
-                               &cb_get_health, ctx);
-    setup_verbs(instance, URL_PREFIX, API_RES_EP("health"),
-                allowed_get_opts, 2, "GET, OPTIONS", ctx);
-
-    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("version"), 0,
                                &cb_get_version, ctx);
     setup_verbs(instance, URL_PREFIX, API_RES_EP("version"),

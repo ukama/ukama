@@ -116,7 +116,11 @@ int config_set_defaults(Config *cfg, const char *path) {
     cfg->i2cBusFem2 = 2;
     cfg->i2cBusCtrl = 0;
 
-    snprintf(cfg->safetyConfigPath, sizeof(cfg->safetyConfigPath), "%s",  DEF_SAFETY_CONFIG_PATH);
+    if (path) {
+        snprintf(cfg->safetyConfigPath, sizeof(cfg->safetyConfigPath), "%s", path);
+    } else {
+        snprintf(cfg->safetyConfigPath, sizeof(cfg->safetyConfigPath), "%s",  DEF_SAFETY_CONFIG_PATH);
+    }
 
     cfg->samplePeriodMs = 1000;
     cfg->safetyPeriodMs = 500;

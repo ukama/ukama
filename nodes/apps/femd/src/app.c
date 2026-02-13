@@ -57,10 +57,12 @@ int app_init(App *app, const char *configPath) {
         return STATUS_NOK;
     }
 
-    app->webCtx.cfg    = &app->cfg;
-    app->webCtx.jobs   = &app->jobs;
-    app->webCtx.snap   = &app->snap;
-    app->webCtx.safety = &app->safety;
+    app->webCtx.cfg      = &app->cfg;
+    app->webCtx.jobs     = &app->jobs;
+    app->webCtx.snap     = &app->snap;
+    app->webCtx.safety   = &app->safety;
+    app->webCtx.gpio     = &app->gpio;
+    app->webCtx.notifier = &app->notifier;
 
     app->serverCfg.config = &app->cfg;
 

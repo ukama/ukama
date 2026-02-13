@@ -54,6 +54,40 @@ static void usage(void) {
     usys_puts("-v, --version                 Software version");
 }
 
+static int validate_fem_band_env(void) {
+
+    const char *env = getenv(ENV_FEM_BAND);
+    char band[16];
+    size_t i = 0;
+    size_t j = 0;
+
+    if (!env || !*env) {
+        usys_log_error("Band env not set: %s Supported values: B1, B41, B48",
+                       ENV_FEM_BAND);
+        return STATUS_NOK;
+    }
+
+    while (env[i] && j < sizeof(band) - 1) {
+        if (env[i] != ' ' && env[i] != '\t' &&
+            env[i] != '\n' && env[i] != '\r') {
+            band[j++] = env[i];
+        }
+        i++;
+    }
+    band[j] = '\0';
+
+    if (strcasecmp(band, "B1") != 0 &&
+        strcasecmp(band, "B41") != 0 &&
+        strcasecmp(band, "B48") != 0) {
+
+        usys_log_error("Invalid %s='%s'. Supported values: B1, B41, B48",
+                       ENV_FEM_BAND, env);
+        return STATUS_NOK;
+    }
+
+    return STATUS_OK;
+}
+
 int main(int argc, char **argv) {
 
     int opt, optIdx;
@@ -64,6 +98,10 @@ int main(int argc, char **argv) {
     signal(SIGINT,  on_signal);
     signal(SIGTERM, on_signal);
 
+    if (validate_fem_band_env() != STATUS_OK) {
+        return 1;
+    }
+    
     while (1) {
         opt = 0; optIdx = 0;
         opt = usys_getopt_long(argc, argv, "vh:l:c:", longOptions, &optIdx);

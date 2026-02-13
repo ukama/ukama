@@ -125,12 +125,6 @@ int cb_not_allowed(const URequest *request, UResponse *response, void *user_data
                         HttpStatusStr(HttpStatus_MethodNotAllowed));
 }
 
-int cb_get_health(const URequest *request, UResponse *response, void *user_data) {
-    (void)request;
-    (void)user_data;
-    return respond_text(response, HttpStatus_OK, "ok");
-}
-
 int cb_get_version(const URequest *request, UResponse *response, void *user_data) {
 
     WebCtx *ctx = (WebCtx *)user_data;

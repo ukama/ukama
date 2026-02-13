@@ -19,6 +19,9 @@ typedef struct {
     int  nodedPort;
     char serviceName[64];
 
+    char nodeID[64];
+    char nodeType[32];
+    
     char gpioBasePath[256];
 
     int  i2cBusFem1;
