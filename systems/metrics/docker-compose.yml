@@ -63,6 +63,7 @@ services:
     - DEBUGMODE=true
     - REASONING_SERVICE_HOST=reasoning
     - REASONING_SERVICE_PORT=9090
+    - MSGCLIENT_HOST=msgclient-metrics:9095
     - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
     - PROMETHEUS_HOST=http://localhost:9079
     - PROMETHEUS_INTERVAL=60
