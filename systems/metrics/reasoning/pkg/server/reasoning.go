@@ -183,6 +183,22 @@ func (c *ReasoningServer) processAlgorithms(ctx context.Context, nodeID string, 
 		return err
 	}
 
+	expectedSamples := 0
+	if m.Step > 0 {
+		expectedSamples = c.config.PrometheusInterval / m.Step
+	}
+	statAnalysis.NewStats.Confidence, err = algos.CalculateConfidence(
+		pr.Data.Result,
+		statAnalysis.NewStats.AggregationStats,
+		statAnalysis.PrevStats.AggregationStats,
+		statAnalysis.NewStats.State,
+		expectedSamples,
+	)
+	if err != nil {
+		return err
+	}
+	statAnalysis.NewStats.Confidence = utils.RoundToDecimalPoints(statAnalysis.NewStats.Confidence, c.config.FormatDecimalPoints)
+
 	log.Infof("Stat analysis: %+v", statAnalysis)
 	return nil
 }
