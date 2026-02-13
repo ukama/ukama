@@ -13,7 +13,7 @@ type Stats struct {
 	AggregationStats AggregationStats
 	Trend string
 	Confidence float64
-	State string
+	State StateThresholds
 }
 
 type StatAnalysis struct {

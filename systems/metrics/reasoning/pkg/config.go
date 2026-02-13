@@ -30,16 +30,30 @@ type Config struct {
 	PrometheusHost       string           `default:"http://localhost:9079"`
 	MetricsKeyMapFile    string           `default:"metric-key-map.json"`
 	FormatDecimalPoints  int              `default:"3"`
-	TrendSensitivity     float64          `default:"1.0"`
 	MetricKeyMap         *MetricKeyMap
 	Service              *uconf.Service
 	Http            	 HttpServices
 }
 
 type Metric struct {
-	Step int `json:"step" yaml:"step"`
-	Key string `json:"key" yaml:"key"`
-	Category string `json:"category" yaml:"category"`
+	Step             int         `json:"step" yaml:"step"`
+	Key              string      `json:"key" yaml:"key"`
+	Category         string      `json:"category" yaml:"category"`
+	MetricType       string      `json:"metric_type" yaml:"metric_type"`
+	TrendSensitivity float64     `json:"trend_sensitivity" yaml:"trend_sensitivity"`
+	Thresholds       Thresholds  `json:"thresholds" yaml:"thresholds"`
+	StateDirection   string      `json:"state_direction" yaml:"state_direction"`
+}
+
+type Thresholds struct {
+	Min    float64 `json:"min" yaml:"min"`
+	Medium float64 `json:"medium" yaml:"medium"`
+	Max    float64 `json:"max" yaml:"max"`
+	// For range direction
+	LowWarning   float64 `json:"low_warning" yaml:"low_warning"`
+	HighWarning  float64 `json:"high_warning" yaml:"high_warning"`
+	LowCritical  float64 `json:"low_critical" yaml:"low_critical"`
+	HighCritical float64 `json:"high_critical" yaml:"high_critical"`
 }
 
 type Metrics struct {
@@ -59,7 +73,7 @@ func NewConfig(name string) *Config {
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
 			Timeout: 5 * time.Second,
-			Host: 	"api-gateway-msgbus:8080",
+			Host: "api-gateway-msgbus:8080",
 		},
 	}
 }

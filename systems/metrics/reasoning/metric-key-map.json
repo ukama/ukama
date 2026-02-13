@@ -4,12 +4,28 @@
             {
                 "step": 1,
                 "key": "trx_cpu_usage",
-                "category": "health"
+                "category": "health",
+                "metric_type": "gauge",
+                "trend_sensitivity": 1.0,
+                "state_direction": "higher_is_worse",
+                "thresholds": {
+                    "min": 0,
+                    "medium": 50,
+                    "max": 100
+                }
             },
             {
                 "step": 1,
                 "key": "trx_memory_usage",
-                "category": "health"
+                "category": "health",
+                "metric_type": "gauge",
+                "trend_sensitivity": 1.0,
+                "state_direction": "higher_is_worse",
+                "thresholds": {
+                    "min": 0,
+                    "medium": 50,
+                    "max": 100
+                }
             }
         ]
     },
@@ -18,12 +34,28 @@
             {
                 "step": 1,
                 "key": "com_cpu_usage",
-                "category": "health"
+                "category": "health",
+                "metric_type": "gauge",
+                "trend_sensitivity": 1.0,
+                "state_direction": "higher_is_worse",
+                "thresholds": {
+                    "min": 0,
+                    "medium": 50,
+                    "max": 100
+                }
             },
             {
                 "step": 1,
                 "key": "com_memory_usage",
-                "category": "health"
+                "category": "health",
+                "metric_type": "gauge",
+                "trend_sensitivity": 1.0,
+                "state_direction": "higher_is_worse",
+                "thresholds": {
+                    "min": 0,
+                    "medium": 50,
+                    "max": 100
+                }
             }
         ]
     }

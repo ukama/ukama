@@ -168,7 +168,17 @@ func (c *ReasoningServer) processAlgorithms(ctx context.Context, nodeID string, 
 		return err
 	}
 
-	statAnalysis.NewStats.Trend, err = algos.CalculateTrend(statAnalysis.NewStats.AggregationStats, statAnalysis.PrevStats.AggregationStats, c.config.TrendSensitivity)
+	statAnalysis.NewStats.Trend, err = algos.CalculateTrend(statAnalysis.NewStats.AggregationStats, statAnalysis.PrevStats.AggregationStats, m.TrendSensitivity)
+	if err != nil {
+		return err
+	}
+
+	statAnalysis.NewStats.State = algos.BuildStateThresholds(m)
+	statAnalysis.NewStats.State.StateClassification, err = algos.CalculateState(
+		statAnalysis.NewStats.AggregationStats.AggregatedValue,
+		statAnalysis.NewStats.State,
+		m.StateDirection,
+	)
 	if err != nil {
 		return err
 	}
@@ -176,3 +186,4 @@ func (c *ReasoningServer) processAlgorithms(ctx context.Context, nodeID string, 
 	log.Infof("Stat analysis: %+v", statAnalysis)
 	return nil
 }
+
