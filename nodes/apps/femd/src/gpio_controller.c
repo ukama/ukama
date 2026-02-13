@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "gpio_controller.h"
 #include "usys_log.h"
@@ -84,6 +86,53 @@ static int read_bool_file(const char *path, bool *out) {
     return STATUS_OK;
 }
 
+/* Dev-laptop helper: create /tmp/sys GPIO files on-demand so femd can run
++ * without any pre-created mock tree. No-op on real sysfs.
++ */
+static int ensure_dir(const char *path) {
+    if (!path || path[0] == '\0') return STATUS_NOK;
+    if (mkdir(path, 0755) == 0) return STATUS_OK;
+    if (errno == EEXIST) return STATUS_OK;
+    return STATUS_NOK;
+}
+
+static int ensure_file_with_default(const char *path, int def) {
+    FILE *f;
+    if (!path) return STATUS_NOK;
+    if (access(path, F_OK) == 0) return STATUS_OK;
+    f = fopen(path, "w");
+    if (!f) return STATUS_NOK;
+    fprintf(f, "%d\n", def);
+    fclose(f);
+    return STATUS_OK;
+}
+
+static void maybe_init_mock_tree(const char *basePath) {
+    char p[256];
+
+    if (!basePath) return;
+    /* Only ever create under /tmp/sys (avoid touching real sysfs). */
+    if (strncmp(basePath, "/tmp/sys", 8) != 0) return;
+
+    /* Ensure parent dirs exist (non-recursive, but good enough for /tmp/sys/... path). */
+    (void)ensure_dir("/tmp/sys");
+    (void)ensure_dir("/tmp/sys/devices");
+    (void)ensure_dir(basePath);
+
+    /* base/fem{1,2}/{pin}/value */
+    for (int u = 1; u <= 2; u++) {
+        snprintf(p, sizeof(p), "%s/fem%d", basePath, u);
+        (void)ensure_dir(p);
+        for (int pin = 0; pin < GPIO_MAX; pin++) {
+            snprintf(p, sizeof(p), "%s/fem%d/%s", basePath, u, gpioMeta[pin].name);
+            (void)ensure_dir(p);
+            snprintf(p, sizeof(p), "%s/fem%d/%s/value", basePath, u, gpioMeta[pin].name);
+            /* pgood defaults to 1, everything else defaults to 0 */
+            (void)ensure_file_with_default(p, (pin == GPIO_PSU_PGOOD) ? 1 : 0);
+        }
+    }
+}
+
 int gpio_controller_init(GpioController *ctl, const char *basePath) {
 
     if (!ctl) return STATUS_NOK;
@@ -100,6 +149,10 @@ int gpio_controller_init(GpioController *ctl, const char *basePath) {
     }
 
     ctl->initialized = 1;
+
+    /* If we're pointing at /tmp/sys..., create the minimal mock tree. */
+    maybe_init_mock_tree(ctl->basePath);
+
     return STATUS_OK;
 }
 

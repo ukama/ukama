@@ -99,7 +99,18 @@ int config_set_defaults(Config *cfg, const char *path) {
     snprintf(cfg->notifyHost, sizeof(cfg->notifyHost), "%s", DEF_NOTIFY_HOST);
     snprintf(cfg->notifyPath, sizeof(cfg->notifyPath), "%s", DEF_NOTIFY_EP);
 
-    snprintf(cfg->gpioBasePath, sizeof(cfg->gpioBasePath), "%s",  DEF_GPIO_BASE_PATH);
+    /* Dev-laptop convenience:
+     * If FEMD_SYSROOT is set, and caller did not override gpio_base_path,
+     * point GPIO base under the sysroot so the same binary can run without HW.
+     */
+    {
+        const char *root = getenv(ENV_FEMD_SYSROOT);
+        if (root && root[0] != '\0') {
+            snprintf(cfg->gpioBasePath, sizeof(cfg->gpioBasePath), "%s/devices/platform", root);
+        } else {
+            snprintf(cfg->gpioBasePath, sizeof(cfg->gpioBasePath), "%s", DEF_GPIO_BASE_PATH);
+        }
+    }
 
     cfg->i2cBusFem1 = 1;
     cfg->i2cBusFem2 = 2;

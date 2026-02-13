@@ -13,13 +13,22 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#include "femd.h" /* STATUS_OK/STATUS_NOK */
+#include "femd.h"
+
+#include "usys_types.h"
 
 typedef struct {
     int  busNum;
     int  fd;
     int  currentSlave;
     bool initialized;
+
+    /* Userspace simulation mode (dev laptop / CI).
+     * Enabled when FEMD_SIM=1/true/yes/on OR FEMD_SYSROOT==/tmp/sys.
+     */
+    bool     sim;
+    uint64_t simStartMs;
+    int      simAdcChannel; /* 0..3 (ADS1015 mux channel selection) */
 
     bool  dacKnown;
     float dacCarrierV;
