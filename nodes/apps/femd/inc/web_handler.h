@@ -43,4 +43,6 @@ int cb_post_safety_restore(const URequest *request, UResponse *response, void *u
 int cb_get_serial(const URequest *request, UResponse *response, void *user_data);
 int cb_put_serial(const URequest *request, UResponse *response, void *user_data);
 
+int cb_get_metrics(const URequest *request, UResponse *response, void *user_data);
+
 #endif /* WEB_HANDLER_H */

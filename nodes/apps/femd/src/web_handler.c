@@ -87,6 +87,206 @@ static json_t* parse_body_json(const URequest *request) {
     return json_loads(body, 0, &err);
 }
 
+static void add_err(json_t *errors, const char *scope, const char *msg) {
+    if (!errors || !scope || !msg) return;
+    json_object_set_new(errors, scope, json_string(msg));
+}
+
+/* Build controller metrics.
+ */
+static json_t *build_controller_metrics(WebCtx *ctx, json_t *errors) {
+
+    json_t *j = json_object();
+    if (!j) return NULL;
+
+    /* Minimal, but stable schema */
+    json_object_set_new(j, "ok", json_true());
+
+    (void)ctx;
+    (void)errors;
+    return j;
+}
+
+static json_t *build_fem_metrics(WebCtx *ctx, FemUnit unit, int unitNum, json_t *errors) {
+
+    FemSnapshot s;
+    GpioStatus st;
+    SafetyConfig cfg;
+
+    json_t *jfem = NULL;
+    json_t *jgpio = NULL;
+    json_t *jsnap = NULL;
+    json_t *jthr = NULL;
+
+    int ok = 1;
+
+    jfem = json_object();
+    if (!jfem) return NULL;
+
+    json_object_set_new(jfem, "fem_unit", json_integer(unitNum));
+
+    if (!ctx || !ctx->gpio) {
+        ok = 0;
+        add_err(errors, (unitNum == 1) ?
+                "fem1.gpio" : "fem2.gpio", "gpio ctx missing");
+    } else {
+        memset(&st, 0, sizeof(st));
+        if (gpio_read_all(ctx->gpio, unit, &st) != STATUS_OK) {
+            ok = 0;
+            add_err(errors, (unitNum == 1) ?
+                    "fem1.gpio" : "fem2.gpio", "gpio read failed");
+        } else {
+            jgpio = json_gpio_status(&st, unitNum);
+            if (!jgpio) {
+                ok = 0;
+                add_err(errors, (unitNum == 1) ?
+                        "fem1.gpio" : "fem2.gpio", "gpio serialize failed");
+            } else {
+                json_object_set_new(jfem, "gpio", jgpio); /* ownership transferred */
+            }
+        }
+    }
+
+    if (!ctx || !ctx->snap) {
+        ok = 0;
+        add_err(errors, (unitNum == 1) ?
+                "fem1.snapshot" : "fem2.snapshot", "snap ctx missing");
+    } else {
+        memset(&s, 0, sizeof(s));
+        if (snapshot_get_fem(ctx->snap, unit, &s) != STATUS_OK) {
+            ok = 0;
+            add_err(errors, (unitNum == 1) ?
+                    "fem1.snapshot" : "fem2.snapshot", "no data");
+        } else {
+            /* Keep your existing rich schema as-is */
+            if (json_serialize_fem_snapshot(&jsnap, unit, &s) != USYS_TRUE || !jsnap) {
+                ok = 0;
+                add_err(errors, (unitNum == 1) ?
+                        "fem1.snapshot" : "fem2.snapshot", "snapshot serialize failed");
+            } else {
+                json_object_set_new(jfem, "snapshot", jsnap); /* ownership transferred */
+            }
+
+            if (s.haveTemp) {
+                json_object_set_new(jfem, "temperature", json_pack("{s:f}",
+                                                                   "temperature", (double)s.tempC));
+            }
+            if (s.haveAdc) {
+                json_object_set_new(jfem, "adc", json_pack("{s:f, s:f, s:f, s:f}",
+                                                          "reverse_power", (double)s.reversePowerDbm,
+                                                          "forward_power", (double)s.forwardPowerDbm,
+                                                          "pa_current",    (double)s.paCurrentA,
+                                                          "adc_temp_volts",(double)s.adcTempVolts));
+            }
+            if (s.haveDac) {
+                json_object_set_new(jfem, "dac", json_pack("{s:f, s:f}",
+                                                          "carrier_voltage", (double)s.carrierVoltage,
+                                                          "peak_voltage",    (double)s.peakVoltage));
+            }
+        }
+    }
+
+    if (!ctx || !ctx->safety) {
+        ok = 0;
+        add_err(errors, (unitNum == 1) ?
+                "fem1.safety" : "fem2.safety", "safety ctx missing");
+    } else {
+        if (safety_get_config(ctx->safety, &cfg) != STATUS_OK) {
+            ok = 0;
+            add_err(errors, (unitNum == 1) ?
+                    "fem1.safety" : "fem2.safety", "safety get config failed");
+        } else {
+            jthr = json_pack("{s:f, s:f, s:f}",
+                             "max_reverse_power", (double)cfg.thresholds.max_reverse_power_dbm,
+                             "max_current",       (double)cfg.thresholds.max_pa_current_a,
+                             "max_temperature",   (double)cfg.thresholds.max_temperature_c);
+            if (!jthr) {
+                ok = 0;
+                add_err(errors, (unitNum == 1) ?
+                        "fem1.safety" : "fem2.safety", "thresholds serialize failed");
+            } else {
+                json_object_set_new(jfem, "safety_adc_thresholds", jthr); /* ownership transferred */
+            }
+        }
+    }
+
+    json_object_set_new(jfem, "serial", json_null());
+
+    json_object_set_new(jfem, "ok", json_boolean(ok ? 1 : 0));
+    return jfem;
+}
+
+int cb_get_metrics(const URequest *request, UResponse *response, void *user_data) {
+
+    WebCtx *ctx = (WebCtx *)user_data;
+
+    json_t *root = NULL;
+    json_t *errors = NULL;
+    json_t *fems = NULL;
+
+    (void)request;
+
+    root = json_object();
+    if (!root) return respond_text(response, HttpStatus_InternalServerError, "oom");
+
+    errors = json_object();
+    if (!errors) {
+        json_decref(root);
+        return respond_text(response, HttpStatus_InternalServerError, "oom");
+    }
+
+    json_object_set_new(root, "ts_unix_ms", json_null());
+
+    /* controller block */
+    json_t *controller = build_controller_metrics(ctx, errors);
+    if (!controller) {
+        add_err(errors, "controller", "controller metrics oom");
+        controller = json_object();
+        json_object_set_new(controller, "ok", json_false());
+    }
+    json_object_set_new(root, "controller", controller);
+
+    /* fems array */
+    fems = json_array();
+    if (!fems) {
+        json_decref(errors);
+        json_decref(root);
+        return respond_text(response, HttpStatus_InternalServerError, "oom");
+    }
+
+    json_t *fem1 = build_fem_metrics(ctx, FEM_UNIT_1, 1, errors);
+    if (!fem1) {
+        add_err(errors, "fem1", "fem1 metrics oom");
+        fem1 = json_pack("{s:i, s:b}", "fem_unit", 1, "ok", 0);
+    }
+
+    json_t *fem2 = build_fem_metrics(ctx, FEM_UNIT_2, 2, errors);
+    if (!fem2) {
+        add_err(errors, "fem2", "fem2 metrics oom");
+        fem2 = json_pack("{s:i, s:b}", "fem_unit", 2, "ok", 0);
+    }
+
+    json_array_append_new(fems, fem1);
+    json_array_append_new(fems, fem2);
+    json_object_set_new(root, "fems", fems);
+
+    /* overall ok if no errors */
+    int overall_ok = (json_object_size(errors) == 0) ? 1 : 0;
+    json_object_set_new(root, "ok", json_boolean(overall_ok));
+
+    if (overall_ok) {
+        json_decref(errors);
+    } else {
+        json_object_set_new(root, "errors", errors);
+    }
+
+    respond_json_obj(response, HttpStatus_OK, root);
+    json_decref(root);
+    return U_CALLBACK_CONTINUE;
+}
+
+
+
 int cb_default(const URequest *request, UResponse *response, void *user_data) {
     (void)request;
     (void)user_data;

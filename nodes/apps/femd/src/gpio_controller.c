@@ -138,16 +138,14 @@ static int femd_sim_default_gpio_value(const char *gpioName) {
     if (!gpioName) return 0;
 
     /* Keep board "healthy" in SIM */
-    if (!strcmp(gpioName, "psu_pgood")) return 1;
-    if (!strcmp(gpioName, "pgood")) return 1;
-
-    /* RF chain defaults in SIM so PA metrics make sense */
-    if (!strcmp(gpioName, "pa_enable")) return 1;
-    if (!strcmp(gpioName, "tx_enable")) return 1;
-
-    /* Optional: if you have these signals and want them ON by default */
-    if (!strcmp(gpioName, "rf_enable")) return 1;
-    if (!strcmp(gpioName, "trx_enable")) return 1;
+    if (!strcmp(gpioName, "psu_pgood"))     return 1;
+    if (!strcmp(gpioName, "pgood"))         return 1;
+    if (!strcmp(gpioName, "pa_disable"))    return 0;
+    if (!strcmp(gpioName, "tx_rf_enable"))  return 1;
+    if (!strcmp(gpioName, "rx_rf_enable"))  return 1;
+    if (!strcmp(gpioName, "rf_pal_enable")) return 1;
+    if (!strcmp(gpioName, "pa_vds_enable")) return 1;
+    if (!strcmp(gpioName, "pg_reg_5v"))     return 1;
 
     return 0;
 }

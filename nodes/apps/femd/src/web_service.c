@@ -92,6 +92,12 @@ static void setup_webservice_endpoints(ServerConfig *serverConfig, UInst *instan
                 allowed_get_opts, 2, "GET, OPTIONS", ctx);
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("metrics"), 0,
+                               &cb_get_metrics, ctx);
+    setup_verbs(instance, URL_PREFIX, API_RES_EP("metrics"),
+                allowed_get_opts, 2, "GET, OPTIONS", ctx);
+    
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("fems"),
                                0, &cb_get_fems, ctx);
     setup_verbs(instance, URL_PREFIX, API_RES_EP("fems"),
