@@ -31,6 +31,8 @@ static const gpio_meta_t gpioMeta[GPIO_MAX] = {
     [GPIO_PSU_PGOOD] = { "pg_reg_5v",     false }
 };
 
+static int femd_sim_write_default_gpio_file(const char *valuePath, const char *gpioName);
+
 static inline bool valid_pin(GpioPin p) {
     return (p >= 0 && p < GPIO_MAX);
 }
@@ -127,11 +129,34 @@ static void maybe_init_mock_tree(const char *basePath) {
             snprintf(p, sizeof(p), "%s/fem%d/%s", basePath, u, gpioMeta[pin].name);
             (void)ensure_dir(p);
             snprintf(p, sizeof(p), "%s/fem%d/%s/value", basePath, u, gpioMeta[pin].name);
-            /* pgood defaults to 1, everything else defaults to 0 */
-            (void)ensure_file_with_default(p, (pin == GPIO_PSU_PGOOD) ? 1 : 0);
+            (void)femd_sim_write_default_gpio_file(p, gpioMeta[pin].name);
         }
     }
 }
+
+static int femd_sim_default_gpio_value(const char *gpioName) {
+    if (!gpioName) return 0;
+
+    /* Keep board "healthy" in SIM */
+    if (!strcmp(gpioName, "psu_pgood")) return 1;
+    if (!strcmp(gpioName, "pgood")) return 1;
+
+    /* RF chain defaults in SIM so PA metrics make sense */
+    if (!strcmp(gpioName, "pa_enable")) return 1;
+    if (!strcmp(gpioName, "tx_enable")) return 1;
+
+    /* Optional: if you have these signals and want them ON by default */
+    if (!strcmp(gpioName, "rf_enable")) return 1;
+    if (!strcmp(gpioName, "trx_enable")) return 1;
+
+    return 0;
+}
+
+static int femd_sim_write_default_gpio_file(const char *valuePath, const char *gpioName) {
+    int def = femd_sim_default_gpio_value(gpioName);
+    return ensure_file_with_default(valuePath, def);
+}
+
 
 int gpio_controller_init(GpioController *ctl, const char *basePath) {
 

@@ -26,6 +26,8 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+static bool femd_sim_rf_chain_on_for_bus(int busNum);
+
 static const char *femd_sysroot(void) {
     const char *v = getenv(ENV_FEMD_SYSROOT);
     return (v && v[0] != '\0') ? v : NULL;
@@ -119,10 +121,30 @@ static int sim_tmp10x_read(uint64_t tMs, uint8_t reg, uint8_t *data, size_t len)
     return STATUS_OK;
 }
 
+static float femd_sim_gate_adc_voltage(int busNum, int channel, float vOn) {
+    bool on = femd_sim_rf_chain_on_for_bus(busNum);
+
+    if (on) return vOn;
+
+    /* TX/PA OFF => collapse RF signals to "no power" */
+    switch (channel) {
+        case 0: /* reverse power */ return 0.01f;
+        case 1: /* forward power */ return 0.01f;
+        case 2: /* PA current   */  return 0.05f;  /* idle current */
+        default: return 0.0f;
+    }
+}
+
 /* ADS1015 conversion register (0x00). We only care about which channel 
  * was selected by config writes.
  */
-static int sim_ads1015_read(uint64_t tMs, int channel, uint8_t reg, uint8_t *data, size_t len) {
+static int sim_ads1015_read(uint64_t tMs,
+                            int busNum,
+                            int channel,
+                            uint8_t reg,
+                            uint8_t *data,
+                            size_t len) {
+
     if (reg != 0x00 || len < 2) return STATUS_NOK;
 
     double t = (double)tMs / 1000.0;
@@ -144,6 +166,8 @@ static int sim_ads1015_read(uint64_t tMs, int channel, uint8_t reg, uint8_t *dat
             break;
     }
 
+    v = femd_sim_gate_adc_voltage(busNum, channel, v);
+
     /* adc_raw_to_voltage(): ((int16_t)raw >> 4) * 4.096 / 2048
      * => code = v * 2048 / 4.096, raw = code << 4
      */
@@ -155,6 +179,39 @@ static int sim_ads1015_read(uint64_t tMs, int channel, uint8_t reg, uint8_t *dat
     data[1] = (uint8_t)(raw & 0xFF);
 
     return STATUS_OK;
+}
+
+static int femd_sim_read_int_file(const char *path, int def) {
+    FILE *f = fopen(path, "r");
+    if (!f) return def;
+    int v = def;
+    (void)fscanf(f, "%d", &v);
+    fclose(f);
+    return v;
+}
+
+/* Reads a mock GPIO value from:
+ *   ${FEMD_SYSROOT}/devices/platform/fem{unit}/{gpioName}/value
+ */
+static bool femd_sim_gpio_is_on(int femUnit, const char *gpioName, int defOn) {
+    const char *root = getenv(ENV_FEMD_SYSROOT);
+    if (!root || root[0] == '\0') root = "/tmp/sys";
+
+    char p[256];
+    snprintf(p, sizeof(p), "%s/devices/platform/fem%d/%s/value", root, femUnit, gpioName);
+
+    return femd_sim_read_int_file(p, defOn) != 0;
+}
+
+/* bus1 => fem1, bus2 => fem2 */
+static bool femd_sim_rf_chain_on_for_bus(int busNum) {
+    int femUnit = (busNum == 2) ? 2 : 1;
+
+    /* IMPORTANT: adjust these names to your gpioMeta[].name strings */
+    bool pa = femd_sim_gpio_is_on(femUnit, "pa_enable", 1);
+    bool tx = femd_sim_gpio_is_on(femUnit, "tx_enable", 1);
+
+    return (pa && tx);
 }
 
 int i2c_bus_init(I2cBus *bus, int busNum) {
@@ -316,7 +373,7 @@ int i2c_bus_read_reg(I2cBus *bus, uint8_t devAddr, uint8_t reg,
 
         if (devAddr == 0x48) {
             if (bus->busNum == 0) return sim_tmp10x_read(t, reg, data, len);
-            return sim_ads1015_read(t, bus->simAdcChannel, reg, data, len);
+            return sim_ads1015_read(t, bus->busNum, bus->simAdcChannel, reg, data, len);
         }
 
         memset(data, 0, len);
