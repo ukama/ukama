@@ -120,7 +120,9 @@ int cb_not_allowed(const URequest *request, UResponse *response, void *user_data
         u_map_put(response->map_header, "Access-Control-Allow-Methods", allow);
     }
 
-    return respond_text(response, HttpStatus_MethodNotAllowed, HttpStatusStr(HttpStatus_MethodNotAllowed));
+    return respond_text(response,
+                        HttpStatus_MethodNotAllowed,
+                        HttpStatusStr(HttpStatus_MethodNotAllowed));
 }
 
 int cb_get_health(const URequest *request, UResponse *response, void *user_data) {
@@ -158,7 +160,11 @@ int cb_get_fems(const URequest *request, UResponse *response, void *user_data) {
 
     (void)request;
 
-    if (!ctx || !ctx->snap) return respond_text(response, HttpStatus_InternalServerError, "internal");
+    if (!ctx || !ctx->snap) {
+        return respond_text(response,
+                            HttpStatus_InternalServerError,
+                            HttpStatusStr(HttpStatus_InternalServerError));
+    }
 
     memset(&s1, 0, sizeof(s1));
     memset(&s2, 0, sizeof(s2));
