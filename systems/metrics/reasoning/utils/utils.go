@@ -19,6 +19,30 @@ import (
 	"github.com/ukama/ukama/systems/metrics/reasoning/pkg/store"
 )
 
+// MetricResultLogData holds the data needed to build metric result log output.
+type MetricResultLogData struct {
+	Value           float64
+	State           string
+	Trend           string
+	Confidence      float64
+	ProjectionType  string
+	ProjectionEtaSec float64
+}
+
+// MetricResultLogFields returns log.Fields for structured metric result logging.
+func MetricResultLogFields(d MetricResultLogData) log.Fields {
+	fields := log.Fields{
+		"value":      d.Value,
+		"state":      d.State,
+		"trend":      d.Trend,
+		"confidence": d.Confidence,
+	}
+	if d.ProjectionType != "" {
+		fields["projection"] = d.ProjectionType + " in " + FormatSec(d.ProjectionEtaSec)
+	}
+	return fields
+}
+
 const startEndKey = "start_end"
 
 // RoundToDecimalPoints rounds value to the specified number of decimal places.
@@ -62,6 +86,14 @@ func SortNodeIds(nodeID string) (Nodes, error) {
 	tNode := nid.String()
 	aNode := strings.Replace(tNode, nodeType, ukama.NODE_ID_TYPE_AMPNODE, 1)
 	return Nodes{TNode: tNode, ANode: aNode}, nil
+}
+
+// FormatSec formats seconds for display (e.g. "45s" or "3m").
+func FormatSec(sec float64) string {
+	if sec < 60 {
+		return strconv.FormatInt(int64(sec), 10) + "s"
+	}
+	return strconv.FormatInt(int64(sec/60), 10) + "m"
 }
 
 // GetStartEndFromStore returns the next rolling window (start, end) for a node.

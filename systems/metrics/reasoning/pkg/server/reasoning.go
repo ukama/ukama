@@ -10,9 +10,9 @@ package server
 
 import (
 	"context"
-	"errors"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/metrics/reasoning/pkg"
@@ -83,9 +83,11 @@ func (c *ReasoningServer) StopScheduler(ctx context.Context, req *pb.StopSchedul
 }
 
 func (c *ReasoningServer) ReasoningJob(ctx context.Context) {
-	log.Info("Reasoning job started")
+	jobLog := log.WithField("job", jobTag)
+	jobLog.Info("Reasoning job started")
+
 	if c.config.MetricKeyMap == nil {
-		log.Error("MetricKeyMap not loaded")
+		jobLog.Error("MetricKeyMap not loaded, skipping")
 		return
 	}
 
@@ -95,99 +97,105 @@ func (c *ReasoningServer) ReasoningJob(ctx context.Context) {
 		Type:         ukama.NodeType(ukama.NODE_ID_TYPE_TOWERNODE).String(),
 	})
 	if err != nil {
-		log.Errorf("Failed to get nodes: %v", err)
+		jobLog.WithError(err).Error("Failed to list nodes")
 		return
 	}
-	log.Infof("Node registry nodes: %v", nodes.Nodes)
+	jobLog.Infof("Processing %d node(s)", len(nodes.Nodes))
+
+	startTime := time.Now()
+	processed, failed := 0, 0
 
 	for _, node := range nodes.Nodes {
 		nds, err := utils.SortNodeIds(node.Id)
 		if err != nil {
-			log.Errorf("Failed to sort node IDs for %s: %v", node.Id, err)
+			jobLog.WithError(err).WithField("node_id", node.Id).Error("Invalid node ID, skipping")
+			failed++
 			continue
 		}
 		start, end, err := utils.GetStartEndFromStore(c.store, node.Id, c.config.PrometheusInterval)
 		if err != nil {
-			log.Errorf("Failed to get start/end for node %s: %v", node.Id, err)
+			jobLog.WithError(err).WithField("node_id", node.Id).Error("Failed to get time window, skipping")
+			failed++
 			continue
 		}
 		for _, nodeID := range []string{nds.TNode, nds.ANode} {
-			c.processNode(ctx, nodeID, start, end)
+			p, f := c.processNode(ctx, nodeID, start, end, jobLog)
+			processed += p
+			failed += f
 		}
 	}
+
+	jobLog.WithFields(log.Fields{
+		"processed": processed,
+		"failed":   failed,
+		"duration": time.Since(startTime).Round(time.Millisecond),
+	}).Info("Reasoning job summary")
 }
 
-func (c *ReasoningServer) processNode(ctx context.Context, nodeID string, start, end string) {
+func (c *ReasoningServer) processNode(ctx context.Context, nodeID, start, end string, jobLog *log.Entry) (processed, failed int) {
 	nType := ukama.GetNodeType(nodeID)
 	metrics, ok := (*c.config.MetricKeyMap)[*nType]
 	if !ok {
-		log.Debugf("No metrics for node type %v, skipping %s", nType, nodeID)
-		return
+		jobLog.WithFields(log.Fields{"node_id": nodeID, "type": nType}).Debug("No metrics for node type, skipping")
+		return 0, 0
 	}
-	log.Debugf("Processing %d metrics for node %s", len(metrics.Metrics), nodeID)
+
+	nodeLog := jobLog.WithFields(log.Fields{"node_id": nodeID, "window": start + ".." + end})
+	nodeLog.Debugf("Processing %d metric(s)", len(metrics.Metrics))
 
 	for _, m := range metrics.Metrics {
-		if err := c.processMetric(ctx, nodeID, m, start, end); err != nil {
-			log.Errorf("Metric %s for node %s: %v", m.Key, nodeID, err)
+		if err := c.processMetric(ctx, nodeID, m, start, end, nodeLog); err != nil {
+			nodeLog.WithError(err).WithField("metric", m.Key).Error("Metric processing failed")
+			failed++
+		} else {
+			processed++
 		}
 	}
+	return processed, failed
 }
 
-func (c *ReasoningServer) processMetric(ctx context.Context, nodeID string, m pkg.Metric, start, end string) error {
+func (c *ReasoningServer) processMetric(ctx context.Context, nodeID string, m pkg.Metric, start, end string, nodeLog *log.Entry) error {
 	rp := metric.BuildPrometheusRequest(
-		c.config.PrometheusHost,
-		start, end,
-		strconv.Itoa(m.Step),
-		"",
+		c.config.PrometheusHost, start, end,
+		strconv.Itoa(m.Step), "",
 		[]metric.MetricWithFilters{{Metric: m.Key, Filters: []metric.Filter{{Key: "node_id", Value: nodeID}}}},
 	)
-	log.Debugf("Prometheus request: %s - %s{%s}", rp.Url, m.Key, nodeID)
 
 	pr, err := metric.ProcessPromRequest(ctx, rp)
 	if err != nil {
 		return err
 	}
 
-	return c.processAlgorithms(nodeID, m, pr)
+	return c.processAlgorithms(nodeID, m, pr, nodeLog)
 }
 
-func (c *ReasoningServer) processAlgorithms(nodeID string, m pkg.Metric, pr *metric.FilteredPrometheusResponse) error {
-	statAnalysis := algos.StatAnalysis{}
-	err := errors.New("error processing algorithms")
-	
-	statAnalysis.NewStats.AggregationStats, err = algos.AggregateMetricAlgo(pr.Data.Result, "mean")
+func (c *ReasoningServer) processAlgorithms(nodeID string, m pkg.Metric, pr *metric.FilteredPrometheusResponse, nodeLog *log.Entry) error {
+	metricLog := nodeLog.WithField("metric", m.Key)
+
+	// Aggregate
+	aggStats, err := algos.AggregateMetricAlgo(pr.Data.Result, "mean")
 	if err != nil {
 		return err
 	}
-	statAnalysis.NewStats.AggregationStats.RoundOfDecimalPoints(c.config.FormatDecimalPoints)
+	aggStats.RoundOfDecimalPoints(c.config.FormatDecimalPoints)
 
+	// Load previous stats (or use empty for first run)
 	storeKey := utils.GetAlgoStatsStoreKey(nodeID, m.Key)
-	prevAggStatsBytes, err := c.store.GetJson(storeKey)
-	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			// First run or new metric: use empty prev stats so algorithms still run
-			statAnalysis.PrevStats = algos.EmptyPrevStats()
-		} else {
-			return err
-		}
-	} else {
-		statAnalysis.PrevStats, err = algos.UnmarshalStatsFromJSON(prevAggStatsBytes)
-		if err != nil {
-			return err
-		}
-	}
-
-	statAnalysis.NewStats.Trend, err = algos.CalculateTrend(statAnalysis.NewStats.AggregationStats, statAnalysis.PrevStats.AggregationStats, m.TrendSensitivity)
+	prevStats, err := c.loadPrevStats(storeKey, metricLog)
 	if err != nil {
 		return err
 	}
 
+	// Run algo pipeline
+	stats := &algos.Stats{Aggregation: "mean", AggregationStats: aggStats}
 	stateThresholds := algos.BuildStateThresholds(m)
-	statAnalysis.NewStats.State, err = algos.CalculateState(
-		statAnalysis.NewStats.AggregationStats.AggregatedValue,
-		stateThresholds,
-		m.StateDirection,
-	)
+
+	stats.Trend, err = algos.CalculateTrend(aggStats, prevStats.AggregationStats, m.TrendSensitivity)
+	if err != nil {
+		return err
+	}
+
+	stats.State, err = algos.CalculateState(aggStats.AggregatedValue, stateThresholds, m.StateDirection)
 	if err != nil {
 		return err
 	}
@@ -196,43 +204,55 @@ func (c *ReasoningServer) processAlgorithms(nodeID string, m pkg.Metric, pr *met
 	if m.Step > 0 {
 		expectedSamples = c.config.PrometheusInterval / m.Step
 	}
-	statAnalysis.NewStats.Confidence, err = algos.CalculateConfidence(
-		pr.Data.Result,
-		statAnalysis.NewStats.AggregationStats,
-		statAnalysis.PrevStats.AggregationStats,
-		statAnalysis.NewStats.State,
-		expectedSamples,
-	)
+	stats.Confidence, err = algos.CalculateConfidence(pr.Data.Result, aggStats, prevStats.AggregationStats, stats.State, expectedSamples)
 	if err != nil {
 		return err
 	}
-	statAnalysis.NewStats.Confidence = utils.RoundToDecimalPoints(statAnalysis.NewStats.Confidence, c.config.FormatDecimalPoints)
+	stats.Confidence = utils.RoundToDecimalPoints(stats.Confidence, c.config.FormatDecimalPoints)
 
-	statAnalysis.NewStats.Projection = algos.ProjectCrossingTime(
-		statAnalysis.NewStats.AggregationStats.AggregatedValue,
-		statAnalysis.PrevStats.AggregationStats.AggregatedValue,
-		float64(c.config.PrometheusInterval),
-		stateThresholds,
-		m.StateDirection,
+	stats.Projection = algos.ProjectCrossingTime(
+		aggStats.AggregatedValue, prevStats.AggregationStats.AggregatedValue,
+		float64(c.config.PrometheusInterval), stateThresholds, m.StateDirection,
 	)
-	if statAnalysis.NewStats.Projection.Type != "" {
-		statAnalysis.NewStats.Projection.EtaSec = utils.RoundToDecimalPoints(statAnalysis.NewStats.Projection.EtaSec, c.config.FormatDecimalPoints)
-	} else {
-		log.Debugf("No projection for %s/%s: valueNow=%.2f valuePrev=%.2f warning=%.2f direction=%s (needs two windows + slope toward threshold)",
-			nodeID, m.Key,
-			statAnalysis.NewStats.AggregationStats.AggregatedValue,
-			statAnalysis.PrevStats.AggregationStats.AggregatedValue,
-			stateThresholds.Warning,
-			m.StateDirection,
-		)
+	if stats.Projection.Type != "" {
+		stats.Projection.EtaSec = utils.RoundToDecimalPoints(stats.Projection.EtaSec, c.config.FormatDecimalPoints)
 	}
 
-	if err := c.store.PutJson(storeKey, statAnalysis.NewStats); err != nil {
-		log.Errorf("Failed to persist algo stats for %s/%s: %v", nodeID, m.Key, err)
+	// Persist
+	if err := c.store.PutJson(storeKey, stats); err != nil {
+		metricLog.WithError(err).Error("Failed to persist algo stats")
 		return err
 	}
 
-	log.Infof("Stat analysis: %+v", statAnalysis)
+	c.logMetricResult(nodeID, m.Key, stats, metricLog)
 	return nil
+}
+
+func (c *ReasoningServer) loadPrevStats(storeKey string, metricLog *log.Entry) (algos.Stats, error) {
+	bytes, err := c.store.GetJson(storeKey)
+	if err == nil {
+		stats, err := algos.UnmarshalStatsFromJSON(bytes)
+		if err != nil {
+			return algos.Stats{}, err
+		}
+		return stats, nil
+	}
+	if strings.Contains(err.Error(), "not found") {
+		metricLog.Info("No previous stats found, using empty (first run or new metric)")
+		return algos.EmptyPrevStats(), nil
+	}
+	return algos.Stats{}, err
+}
+
+func (c *ReasoningServer) logMetricResult(nodeID, metricKey string, stats *algos.Stats, metricLog *log.Entry) {
+	d := utils.MetricResultLogData{
+		Value:            stats.AggregationStats.AggregatedValue,
+		State:            stats.State,
+		Trend:            stats.Trend,
+		Confidence:       stats.Confidence,
+		ProjectionType:   stats.Projection.Type,
+		ProjectionEtaSec: stats.Projection.EtaSec,
+	}
+	metricLog.WithFields(utils.MetricResultLogFields(d)).Infof("%s/%s: %s (%s)", nodeID, metricKey, stats.State, stats.Trend)
 }
 

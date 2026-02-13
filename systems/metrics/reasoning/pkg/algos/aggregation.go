@@ -107,6 +107,8 @@ func (s *AggregationStats) RoundOfDecimalPoints(decimalPoints int) {
 	s.P95 = utils.RoundToDecimalPoints(s.P95, decimalPoints)
 	s.Mean = utils.RoundToDecimalPoints(s.Mean, decimalPoints)
 	s.Median = utils.RoundToDecimalPoints(s.Median, decimalPoints)
+	s.NoiseEstimate = utils.RoundToDecimalPoints(s.NoiseEstimate, decimalPoints)
+	s.SampleCount = utils.RoundToDecimalPoints(s.SampleCount, 0) // count is always whole number
 }
 
 func ptrToFloat(p *float64) float64 {
