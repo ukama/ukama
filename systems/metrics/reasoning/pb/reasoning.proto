@@ -16,15 +16,22 @@ package ukama.metrics.reasoning.v1;
 service ReasoningService {
     rpc StartScheduler(StartSchedulerRequest) returns (StartSchedulerResponse);
     rpc StopScheduler(StopSchedulerRequest) returns (StopSchedulerResponse);
-    rpc GetStats(GetStatsRequest) returns (GetStatsResponse);
+    rpc GetAlgoStatsForMetric(GetAlgoStatsForMetricRequest) returns (GetAlgoStatsForMetricResponse);
     rpc GetDomains(GetDomainsRequest) returns (GetDomainsResponse);
 }
 
-message GetStatsRequest {
+message GetAlgoStatsForMetricRequest {
     string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+    string metric = 2 [(validator.field) = {string_not_empty: true}, json_name = "metric"];
 }
 
-message GetStatsResponse {}
+message GetAlgoStatsForMetricResponse {
+    AggregatedStats aggregated = 1 [json_name = "aggregated"];
+    Trend trend = 2 [json_name = "trend"];
+    Confidence confidence = 3 [json_name = "confidence"];
+    Projection projection = 4 [json_name = "projection"];
+    string state = 5 [json_name = "state"];
+}
 
 message GetDomainsRequest {
     string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
@@ -39,3 +46,29 @@ message StartSchedulerResponse {}
 message StopSchedulerRequest {}
 
 message StopSchedulerResponse {}
+
+message AggregatedStats {
+    double value = 1 [json_name = "value"];
+    double min = 2 [json_name = "min"];
+    double max = 3 [json_name = "max"];
+    double p95 = 4 [json_name = "p95"];
+    double mean = 5 [json_name = "mean"];
+    double median = 6 [json_name = "median"];
+    double sample_count = 7 [json_name = "sample_count"];
+    string aggregation = 8 [json_name = "aggregation"];
+    double noise_estimate = 9 [json_name = "noise_estimate"];
+}
+
+message Trend {
+    string type = 1 [json_name = "type"];
+    double value = 2 [json_name = "value"];
+}
+
+message Confidence {
+    double value = 1 [json_name = "value"];
+}
+
+message Projection {
+    string type = 1 [json_name = "type"];
+    double eta_sec = 2 [json_name = "eta_sec"];
+}

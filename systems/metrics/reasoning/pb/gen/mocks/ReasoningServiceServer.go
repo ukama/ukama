@@ -14,6 +14,36 @@ type ReasoningServiceServer struct {
 	mock.Mock
 }
 
+// GetAlgoStatsForMetric provides a mock function with given fields: _a0, _a1
+func (_m *ReasoningServiceServer) GetAlgoStatsForMetric(_a0 context.Context, _a1 *gen.GetAlgoStatsForMetricRequest) (*gen.GetAlgoStatsForMetricResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAlgoStatsForMetric")
+	}
+
+	var r0 *gen.GetAlgoStatsForMetricResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetAlgoStatsForMetricRequest) (*gen.GetAlgoStatsForMetricResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetAlgoStatsForMetricRequest) *gen.GetAlgoStatsForMetricResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetAlgoStatsForMetricResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetAlgoStatsForMetricRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetDomains provides a mock function with given fields: _a0, _a1
 func (_m *ReasoningServiceServer) GetDomains(_a0 context.Context, _a1 *gen.GetDomainsRequest) (*gen.GetDomainsResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -36,36 +66,6 @@ func (_m *ReasoningServiceServer) GetDomains(_a0 context.Context, _a1 *gen.GetDo
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetDomainsRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetStats provides a mock function with given fields: _a0, _a1
-func (_m *ReasoningServiceServer) GetStats(_a0 context.Context, _a1 *gen.GetStatsRequest) (*gen.GetStatsResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetStats")
-	}
-
-	var r0 *gen.GetStatsResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetStatsRequest) (*gen.GetStatsResponse, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetStatsRequest) *gen.GetStatsResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetStatsResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetStatsRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

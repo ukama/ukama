@@ -16,13 +16,36 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *GetStatsRequest) Validate() error {
+func (this *GetAlgoStatsForMetricRequest) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
 	}
+	if this.Metric == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Metric", fmt.Errorf(`value '%v' must not be an empty string`, this.Metric))
+	}
 	return nil
 }
-func (this *GetStatsResponse) Validate() error {
+func (this *GetAlgoStatsForMetricResponse) Validate() error {
+	if this.Aggregated != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Aggregated); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Aggregated", err)
+		}
+	}
+	if this.Trend != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Trend); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Trend", err)
+		}
+	}
+	if this.Confidence != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Confidence); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Confidence", err)
+		}
+	}
+	if this.Projection != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Projection); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Projection", err)
+		}
+	}
 	return nil
 }
 func (this *GetDomainsRequest) Validate() error {
@@ -44,5 +67,17 @@ func (this *StopSchedulerRequest) Validate() error {
 	return nil
 }
 func (this *StopSchedulerResponse) Validate() error {
+	return nil
+}
+func (this *AggregatedStats) Validate() error {
+	return nil
+}
+func (this *Trend) Validate() error {
+	return nil
+}
+func (this *Confidence) Validate() error {
+	return nil
+}
+func (this *Projection) Validate() error {
 	return nil
 }

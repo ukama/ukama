@@ -187,6 +187,14 @@ func toFloat64(v any) (float64, bool) {
 	}
 }
 
+// extractTimestamp returns the timestamp from a [ts, value] pair for time-range filtering.
+func extractTimestamp(pair []interface{}) (float64, bool) {
+	if len(pair) < 1 {
+		return 0, false
+	}
+	return toFloat64(pair[0])
+}
+
 func min(values []float64) float64 {
 	if len(values) == 0 {
 		return math.NaN()

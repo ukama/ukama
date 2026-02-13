@@ -26,10 +26,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ReasoningService_StartScheduler_FullMethodName = "/ukama.metrics.reasoning.v1.ReasoningService/StartScheduler"
-	ReasoningService_StopScheduler_FullMethodName  = "/ukama.metrics.reasoning.v1.ReasoningService/StopScheduler"
-	ReasoningService_GetStats_FullMethodName       = "/ukama.metrics.reasoning.v1.ReasoningService/GetStats"
-	ReasoningService_GetDomains_FullMethodName     = "/ukama.metrics.reasoning.v1.ReasoningService/GetDomains"
+	ReasoningService_StartScheduler_FullMethodName        = "/ukama.metrics.reasoning.v1.ReasoningService/StartScheduler"
+	ReasoningService_StopScheduler_FullMethodName         = "/ukama.metrics.reasoning.v1.ReasoningService/StopScheduler"
+	ReasoningService_GetAlgoStatsForMetric_FullMethodName = "/ukama.metrics.reasoning.v1.ReasoningService/GetAlgoStatsForMetric"
+	ReasoningService_GetDomains_FullMethodName            = "/ukama.metrics.reasoning.v1.ReasoningService/GetDomains"
 )
 
 // ReasoningServiceClient is the client API for ReasoningService service.
@@ -38,7 +38,7 @@ const (
 type ReasoningServiceClient interface {
 	StartScheduler(ctx context.Context, in *StartSchedulerRequest, opts ...grpc.CallOption) (*StartSchedulerResponse, error)
 	StopScheduler(ctx context.Context, in *StopSchedulerRequest, opts ...grpc.CallOption) (*StopSchedulerResponse, error)
-	GetStats(ctx context.Context, in *GetStatsRequest, opts ...grpc.CallOption) (*GetStatsResponse, error)
+	GetAlgoStatsForMetric(ctx context.Context, in *GetAlgoStatsForMetricRequest, opts ...grpc.CallOption) (*GetAlgoStatsForMetricResponse, error)
 	GetDomains(ctx context.Context, in *GetDomainsRequest, opts ...grpc.CallOption) (*GetDomainsResponse, error)
 }
 
@@ -70,10 +70,10 @@ func (c *reasoningServiceClient) StopScheduler(ctx context.Context, in *StopSche
 	return out, nil
 }
 
-func (c *reasoningServiceClient) GetStats(ctx context.Context, in *GetStatsRequest, opts ...grpc.CallOption) (*GetStatsResponse, error) {
+func (c *reasoningServiceClient) GetAlgoStatsForMetric(ctx context.Context, in *GetAlgoStatsForMetricRequest, opts ...grpc.CallOption) (*GetAlgoStatsForMetricResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetStatsResponse)
-	err := c.cc.Invoke(ctx, ReasoningService_GetStats_FullMethodName, in, out, cOpts...)
+	out := new(GetAlgoStatsForMetricResponse)
+	err := c.cc.Invoke(ctx, ReasoningService_GetAlgoStatsForMetric_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (c *reasoningServiceClient) GetDomains(ctx context.Context, in *GetDomainsR
 type ReasoningServiceServer interface {
 	StartScheduler(context.Context, *StartSchedulerRequest) (*StartSchedulerResponse, error)
 	StopScheduler(context.Context, *StopSchedulerRequest) (*StopSchedulerResponse, error)
-	GetStats(context.Context, *GetStatsRequest) (*GetStatsResponse, error)
+	GetAlgoStatsForMetric(context.Context, *GetAlgoStatsForMetricRequest) (*GetAlgoStatsForMetricResponse, error)
 	GetDomains(context.Context, *GetDomainsRequest) (*GetDomainsResponse, error)
 	mustEmbedUnimplementedReasoningServiceServer()
 }
@@ -114,8 +114,8 @@ func (UnimplementedReasoningServiceServer) StartScheduler(context.Context, *Star
 func (UnimplementedReasoningServiceServer) StopScheduler(context.Context, *StopSchedulerRequest) (*StopSchedulerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StopScheduler not implemented")
 }
-func (UnimplementedReasoningServiceServer) GetStats(context.Context, *GetStatsRequest) (*GetStatsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetStats not implemented")
+func (UnimplementedReasoningServiceServer) GetAlgoStatsForMetric(context.Context, *GetAlgoStatsForMetricRequest) (*GetAlgoStatsForMetricResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAlgoStatsForMetric not implemented")
 }
 func (UnimplementedReasoningServiceServer) GetDomains(context.Context, *GetDomainsRequest) (*GetDomainsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDomains not implemented")
@@ -177,20 +177,20 @@ func _ReasoningService_StopScheduler_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ReasoningService_GetStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetStatsRequest)
+func _ReasoningService_GetAlgoStatsForMetric_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAlgoStatsForMetricRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ReasoningServiceServer).GetStats(ctx, in)
+		return srv.(ReasoningServiceServer).GetAlgoStatsForMetric(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ReasoningService_GetStats_FullMethodName,
+		FullMethod: ReasoningService_GetAlgoStatsForMetric_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ReasoningServiceServer).GetStats(ctx, req.(*GetStatsRequest))
+		return srv.(ReasoningServiceServer).GetAlgoStatsForMetric(ctx, req.(*GetAlgoStatsForMetricRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -229,8 +229,8 @@ var ReasoningService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ReasoningService_StopScheduler_Handler,
 		},
 		{
-			MethodName: "GetStats",
-			Handler:    _ReasoningService_GetStats_Handler,
+			MethodName: "GetAlgoStatsForMetric",
+			Handler:    _ReasoningService_GetAlgoStatsForMetric_Handler,
 		},
 		{
 			MethodName: "GetDomains",

@@ -21,6 +21,8 @@ import (
 	"github.com/ukama/ukama/systems/metrics/reasoning/pkg/store"
 	"github.com/ukama/ukama/systems/metrics/reasoning/scheduler"
 	"github.com/ukama/ukama/systems/metrics/reasoning/utils"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -62,8 +64,43 @@ func NewReasoningServer(msgBus mb.MsgBusServiceClient, nodeClient creg.NodeClien
 	return c
 }
 
-func (c *ReasoningServer) GetStats(ctx context.Context, req *pb.GetStatsRequest) (*pb.GetStatsResponse, error) {
-	return &pb.GetStatsResponse{}, nil
+func (c *ReasoningServer) GetAlgoStatsForMetric(ctx context.Context, req *pb.GetAlgoStatsForMetricRequest) (*pb.GetAlgoStatsForMetricResponse, error) {
+	nodeId, err := ukama.ValidateNodeId(req.NodeId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid node ID: %v", err)
+	}
+
+	// TODO: Check if the metric Key is valid by checking the MetricKeyMap
+
+	stats, err := c.loadPrevStats(utils.GetAlgoStatsStoreKey(nodeId.String(), req.Metric), log.WithField("node_id", nodeId.String()).WithField("metric", req.Metric))
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "Failed to load stats for metric %s on node %s: %v", req.Metric, nodeId.String(), err)
+	}
+	return &pb.GetAlgoStatsForMetricResponse{
+		Aggregated: &pb.AggregatedStats{
+			Value: stats.AggregationStats.AggregatedValue,
+			Min: stats.AggregationStats.Min,
+			Max: stats.AggregationStats.Max,
+			P95: stats.AggregationStats.P95,
+			Mean: stats.AggregationStats.Mean,
+			Median: stats.AggregationStats.Median,
+			SampleCount: stats.AggregationStats.SampleCount,
+			Aggregation: stats.Aggregation,
+			NoiseEstimate: stats.AggregationStats.NoiseEstimate,
+		},
+		Trend: &pb.Trend{
+			Type:  stats.Trend,
+			Value: stats.AggregationStats.AggregatedValue,
+		},
+		Confidence: &pb.Confidence{
+			Value: stats.Confidence,
+		},
+		Projection: &pb.Projection{
+			Type: stats.Projection.Type,
+			EtaSec: stats.Projection.EtaSec,
+		},
+		State: stats.State,
+	}, nil
 }
 
 func (c *ReasoningServer) GetDomains(ctx context.Context, req *pb.GetDomainsRequest) (*pb.GetDomainsResponse, error) {
@@ -224,6 +261,7 @@ func (c *ReasoningServer) processAlgorithms(nodeID string, m pkg.Metric, pr *met
 		return err
 	}
 
+	log.Infof("Metics Data: %+v", pr.Data.Result)
 	c.logMetricResult(nodeID, m.Key, stats, metricLog)
 	return nil
 }
