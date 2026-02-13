@@ -1,0 +1,89 @@
+{
+    "header": {
+        "version": { "major": 0, "minor": 1 },
+        "indexTableOffset": 64,
+        "indexTupleSize": 24,
+        "indexTupleMaxCount": 50,
+        "indexCurrentTuple": 2,
+        "moduleCapability": "AUTONOMOUS",
+        "moduleMode": "SLAVE",
+        "moduleDeviceOwner": "DEVICE_SLAVE"
+    },
+    "indexTable": [
+        { "fieldId": 3, "payloadOffset": 3776, "payloadSize": 167,  "payloadVersion": { "major": 4, "minor": 3 }, "payloadCRC": 3421000616, "state": "ENABLED", "valid": true },
+        { "fieldId": 4, "payloadOffset": 3968, "payloadSize": 1240, "payloadVersion": { "major": 4, "minor": 4 }, "payloadCRC": 1876718055, "state": "ENABLED", "valid": true }
+    ],
+    "moduleInfo": {
+        "UUID": "UK-9001-RFE-1103",
+        "name": "fe1",
+        "type": 3,
+        "partNumber": "GSM-RFFE-BAND3",
+        "hwVersion": "REV-A",
+        "mac": "10:20:30:20:50:65",
+        "swVersion": { "major": 5, "minor": 1 },
+        "prodSwVersion": { "major": 5, "minor": 1 },
+        "manufacturingDate": "31-07-2020",
+        "manufacturerName": "AVALON",
+        "deviceCount": 11
+    },
+    "moduleConfig": [
+        {
+            "name": "LM75A",
+            "description": "FEM1 temperature sensor (bus1 addr 0x49)",
+            "type": 1,
+            "class": 2,
+            "devSysFsFile": "/class/hwmon/hwmon0/temp2_input",
+            "devHwAttrs": { "bus": 1, "address": 73 }
+        },
+
+        {
+            "name": "GPIO",
+            "description": "FEM1 PA DISABLE",
+            "type": 3,
+            "class": 1,
+            "devSysFsFile": "/devices/platform/fema1-gpios/pa_disable"
+        },
+        {
+            "name": "GPIO",
+            "description": "FEM1 TX RF ENABLE",
+            "type": 3,
+            "class": 1,
+            "devSysFsFile": "/devices/platform/fema1-gpios/tx_rf_enable"
+        },
+        {
+            "name": "GPIO",
+            "description": "FEM1 RX RF ENABLE",
+            "type": 3,
+            "class": 1,
+            "devSysFsFile": "/devices/platform/fema1-gpios/rx_rf_enable"
+        },
+        {
+            "name": "GPIO",
+            "description": "FEM1 PA VDS ENABLE",
+            "type": 3,
+            "class": 1,
+            "devSysFsFile": "/devices/platform/fema1-gpios/pa_vds_enable"
+        },
+        {
+            "name": "GPIO",
+            "description": "FEM1 RF PAL ENABLE",
+            "type": 3,
+            "class": 1,
+            "devSysFsFile": "/devices/platform/fema1-gpios/rf_pal_enable"
+        },
+        {
+            "name": "GPIO",
+            "description": "FEM1 EEPROM WP ENABLE",
+            "type": 3,
+            "class": 1,
+            "devSysFsFile": "/devices/platform/fema1-gpios/eeprom_wp_enable"
+        },
+        {
+            "name": "GPIO",
+            "description": "FEM1 PG REG 5V",
+            "type": 3,
+            "class": 1,
+            "devSysFsFile": "/devices/platform/fema1-gpios/pg_reg_5v"
+        }
+    ]
+}
