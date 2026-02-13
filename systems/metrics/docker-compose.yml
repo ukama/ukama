@@ -57,6 +57,24 @@ services:
   networks:
    - ukama-net
 
+ reasoning:
+  build: ./reasoning
+  environment:
+    - DEBUGMODE=true
+    - REASONING_SERVICE_HOST=reasoning
+    - REASONING_SERVICE_PORT=9090
+    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+    - PROMETHEUS_HOST=http://localhost:9079
+    - PROMETHEUS_INTERVAL=60
+    - SCHEDULER_INTERVAL=60s
+    - ORGNAME=${ORGNAME}
+    - HTTP_INITCLIENT=http://api-gateway-init:8080
+  restart: always
+  depends_on:
+   - prometheus
+  networks:
+   - ukama-net
+
  api-gateway-metrics:
   build: ./api-gateway
   ports:
