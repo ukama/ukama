@@ -15,10 +15,10 @@
 #define NAME_MAX_LENGTH			NAME_LENGTH
 
 /* TYPE OF UNITS */
-#define MODULE_TYPE_MAX			5
+#define MODULE_TYPE_MAX			6
 
 /* Max board Count */
-#define MAX_BOARDS				5
+#define MAX_BOARDS				6
 
 /**
  * @fn      int verify_board_name(char*)
