@@ -10,7 +10,6 @@ package algos
 
 import (
 	"encoding/json"
-	"fmt"
 	"math"
 	"sort"
 	"strconv"
@@ -37,10 +36,6 @@ func jsonSafeFloat(f float64) any {
 		return nil
 	}
 	return f
-}
-
-func GetAggStoreKey(nodeID string, metricKey string) string {
-	return fmt.Sprintf("%s/%s/%s", nodeID, metricKey, "agg")
 }
 
 func UnmarshalAggStats(data []byte) (AggregationStats, error) {

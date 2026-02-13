@@ -94,8 +94,13 @@ func CalculateConfidence(results []metric.FilteredPrometheusResult, aggNow, aggP
 		noise = noiseEpsilon
 	}
 	noise += noiseEpsilon
-	signalStrength := math.Abs(delta) / noise
-	sig := clamp(signalStrength/(signalStrength+1), 0, 1)
+	var sig float64
+	if math.IsNaN(delta) || math.IsInf(delta, 0) {
+		sig = 0 // no previous data for signal
+	} else {
+		signalStrength := math.Abs(delta) / noise
+		sig = clamp(signalStrength/(signalStrength+1), 0, 1)
+	}
 
 	// consistency_score: [0,1] from trend consistency
 	con := trendConsistency(values)

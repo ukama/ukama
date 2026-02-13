@@ -43,6 +43,10 @@ func startEndStoreKey(nodeID string) string {
 	return nodeID + "/" + startEndKey
 }
 
+func GetAlgoStatsStoreKey(nodeID string, metricKey string) string {
+	return nodeID + "/" + metricKey + "/" + "algo_stats"
+}
+
 // SortNodeIds validates a tower node ID and returns the tower + amp node pair.
 func SortNodeIds(nodeID string) (Nodes, error) {
 	nid, err := ukama.ValidateNodeId(nodeID)

@@ -12,6 +12,7 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"strings"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/metrics/reasoning/pkg"
@@ -147,10 +148,10 @@ func (c *ReasoningServer) processMetric(ctx context.Context, nodeID string, m pk
 		return err
 	}
 
-	return c.processAlgorithms(ctx, nodeID, m, pr)
+	return c.processAlgorithms(nodeID, m, pr)
 }
 
-func (c *ReasoningServer) processAlgorithms(ctx context.Context, nodeID string, m pkg.Metric, pr *metric.FilteredPrometheusResponse) error {
+func (c *ReasoningServer) processAlgorithms(nodeID string, m pkg.Metric, pr *metric.FilteredPrometheusResponse) error {
 	statAnalysis := algos.StatAnalysis{}
 	err := errors.New("error processing algorithms")
 	
@@ -159,13 +160,21 @@ func (c *ReasoningServer) processAlgorithms(ctx context.Context, nodeID string, 
 		return err
 	}
 	statAnalysis.NewStats.AggregationStats.RoundOfDecimalPoints(c.config.FormatDecimalPoints)
-	prevAggStatsBytes, err := c.store.GetJson(algos.GetAggStoreKey(nodeID, m.Key))
+
+	storeKey := utils.GetAlgoStatsStoreKey(nodeID, m.Key)
+	prevAggStatsBytes, err := c.store.GetJson(storeKey)
 	if err != nil {
-		return err
-	}
-	statAnalysis.PrevStats.AggregationStats, err = algos.UnmarshalAggStats(prevAggStatsBytes)
-	if err != nil {
-		return err
+		if strings.Contains(err.Error(), "not found") {
+			// First run or new metric: use empty prev stats so algorithms still run
+			statAnalysis.PrevStats = algos.EmptyPrevStats()
+		} else {
+			return err
+		}
+	} else {
+		statAnalysis.PrevStats, err = algos.UnmarshalStatsFromJSON(prevAggStatsBytes)
+		if err != nil {
+			return err
+		}
 	}
 
 	statAnalysis.NewStats.Trend, err = algos.CalculateTrend(statAnalysis.NewStats.AggregationStats, statAnalysis.PrevStats.AggregationStats, m.TrendSensitivity)
@@ -198,6 +207,30 @@ func (c *ReasoningServer) processAlgorithms(ctx context.Context, nodeID string, 
 		return err
 	}
 	statAnalysis.NewStats.Confidence = utils.RoundToDecimalPoints(statAnalysis.NewStats.Confidence, c.config.FormatDecimalPoints)
+
+	statAnalysis.NewStats.Projection = algos.ProjectCrossingTime(
+		statAnalysis.NewStats.AggregationStats.AggregatedValue,
+		statAnalysis.PrevStats.AggregationStats.AggregatedValue,
+		float64(c.config.PrometheusInterval),
+		stateThresholds,
+		m.StateDirection,
+	)
+	if statAnalysis.NewStats.Projection.Type != "" {
+		statAnalysis.NewStats.Projection.EtaSec = utils.RoundToDecimalPoints(statAnalysis.NewStats.Projection.EtaSec, c.config.FormatDecimalPoints)
+	} else {
+		log.Debugf("No projection for %s/%s: valueNow=%.2f valuePrev=%.2f warning=%.2f direction=%s (needs two windows + slope toward threshold)",
+			nodeID, m.Key,
+			statAnalysis.NewStats.AggregationStats.AggregatedValue,
+			statAnalysis.PrevStats.AggregationStats.AggregatedValue,
+			stateThresholds.Warning,
+			m.StateDirection,
+		)
+	}
+
+	if err := c.store.PutJson(storeKey, statAnalysis.NewStats); err != nil {
+		log.Errorf("Failed to persist algo stats for %s/%s: %v", nodeID, m.Key, err)
+		return err
+	}
 
 	log.Infof("Stat analysis: %+v", statAnalysis)
 	return nil

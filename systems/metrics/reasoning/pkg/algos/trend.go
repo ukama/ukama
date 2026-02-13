@@ -39,6 +39,9 @@ func CalculateTrend(aggNow, aggPrev AggregationStats, sensitivity float64) (stri
 	if sensitivity <= 0 {
 		sensitivity = 1.0
 	}
+	if math.IsNaN(aggPrev.AggregatedValue) || math.IsInf(aggPrev.AggregatedValue, 0) {
+		return "stable", nil // no previous data
+	}
 
 	delta := aggNow.AggregatedValue - aggPrev.AggregatedValue
 	noise := aggNow.NoiseEstimate
