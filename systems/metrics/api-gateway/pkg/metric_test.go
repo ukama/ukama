@@ -20,28 +20,28 @@ func TestGetQuery(t *testing.T) {
 		m := Metric{Metric: "memory", NeedRate: false}
 		r := m.getQuery(NewFilter().WithNodeId("ND12"), "1h", "avg")
 
-		assert.Equal(t, "avg(memory {nodeid='ND12'}) without (job,instance,receive,tenant_id)", r)
+		assert.Equal(t, "avg(memory {node_id='ND12'}) without (job,instance,receive,tenant_id)", r)
 	})
 
 	t.Run("NeedRate", func(t *testing.T) {
 		m := Metric{Metric: "memory", NeedRate: true}
 		r := m.getQuery(NewFilter().WithNodeId("ND12"), "1h", "avg")
 
-		assert.Equal(t, "avg(rate(memory {nodeid='ND12'}[1h])) without (job,instance,receive,tenant_id)", r)
+		assert.Equal(t, "avg(rate(memory {node_id='ND12'}[1h])) without (job,instance,receive,tenant_id)", r)
 	})
 
 	t.Run("RateInterval", func(t *testing.T) {
 		m := Metric{Metric: "memory", NeedRate: true, RateInterval: "1m"}
 		r := m.getQuery(NewFilter().WithNodeId("ND12"), "1h", "avg")
 
-		assert.Equal(t, "avg(rate(memory {nodeid='ND12'}[1m])) without (job,instance,receive,tenant_id)", r)
+		assert.Equal(t, "avg(rate(memory {node_id='ND12'}[1m])) without (job,instance,receive,tenant_id)", r)
 	})
 
 	t.Run("AggregateFunc", func(t *testing.T) {
 		m := Metric{Metric: "memory", NeedRate: false}
 		r := m.getQuery(NewFilter().WithNodeId("ND12"), "1h", "sum")
 
-		assert.Equal(t, "sum(memory {nodeid='ND12'})", r)
+		assert.Equal(t, "sum(memory {node_id='ND12'})", r)
 	})
 
 }
@@ -51,6 +51,6 @@ func TestGetAggregateQuery(t *testing.T) {
 		m := Metric{Metric: "memory", NeedRate: true}
 		r := m.getAggregateQuery(NewFilter().WithNetwork("net1"), "sum")
 
-		assert.Equal(t, "sum(memory {network='net1'}) without (job,instance,receive,tenant_id,nodeid)", r)
+		assert.Equal(t, "sum(memory {network='net1'}) without (job,instance,receive,tenant_id,node_id)", r)
 	})
 }
