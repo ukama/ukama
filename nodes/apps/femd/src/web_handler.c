@@ -23,6 +23,7 @@
 #include "version.h"
 
 static int respond_text(UResponse *response, int status, const char *msg) {
+
     ulfius_set_string_body_response(response, status, msg ? msg : "");
     return U_CALLBACK_CONTINUE;
 }
@@ -31,12 +32,18 @@ static int respond_json_obj(UResponse *response, int status, json_t *json) {
 
     char *s;
 
-    if (!json) return respond_text(response, HttpStatus_InternalServerError, "serialize");
+    if (!json) {
+        return respond_text(response, HttpStatus_InternalServerError, "serialize");
+    }
+
     s = json_dumps(json, 0);
-    if (!s) return respond_text(response, HttpStatus_InternalServerError, "serialize");
+    if (!s) {
+        return respond_text(response, HttpStatus_InternalServerError, "serialize");
+    }
 
     ulfius_set_string_body_response(response, status, s);
     free(s);
+
     return U_CALLBACK_CONTINUE;
 }
 
@@ -47,10 +54,19 @@ static int parse_fem_unit(const URequest *request, FemUnit *unit) {
     if (!request || !unit) return STATUS_NOK;
 
     id = u_map_get(request->map_url, "femId");
-    if (!id) return STATUS_NOK;
+    if (!id) {
+        return STATUS_NOK;
+    }
 
-    if (!strcmp(id, "1")) { *unit = FEM_UNIT_1; return STATUS_OK; }
-    if (!strcmp(id, "2")) { *unit = FEM_UNIT_2; return STATUS_OK; }
+    if (!strcmp(id, "1")) {
+        *unit = FEM_UNIT_1;
+        return STATUS_OK;
+    }
+
+    if (!strcmp(id, "2")) {
+        *unit = FEM_UNIT_2;
+        return STATUS_OK;
+    }
 
     return STATUS_NOK;
 }
@@ -64,7 +80,9 @@ static int parse_adc_channel(const URequest *request, int *ch) {
     if (!request || !ch) return STATUS_NOK;
 
     s = u_map_get(request->map_url, "channel");
-    if (!s) return STATUS_NOK;
+    if (!s) {
+        return STATUS_NOK;
+    }
 
     end = NULL;
     v = strtol(s, &end, 10);
@@ -88,7 +106,9 @@ static json_t* parse_body_json(const URequest *request) {
 }
 
 static void add_err(json_t *errors, const char *scope, const char *msg) {
+
     if (!errors || !scope || !msg) return;
+
     json_object_set_new(errors, scope, json_string(msg));
 }
 
@@ -227,7 +247,9 @@ int cb_get_metrics(const URequest *request, UResponse *response, void *user_data
     (void)request;
 
     root = json_object();
-    if (!root) return respond_text(response, HttpStatus_InternalServerError, "oom");
+    if (!root) {
+        return respond_text(response, HttpStatus_InternalServerError, "oom");
+    }
 
     errors = json_object();
     if (!errors) {
@@ -285,8 +307,6 @@ int cb_get_metrics(const URequest *request, UResponse *response, void *user_data
     return U_CALLBACK_CONTINUE;
 }
 
-
-
 int cb_default(const URequest *request, UResponse *response, void *user_data) {
     (void)request;
     (void)user_data;
@@ -302,6 +322,7 @@ int cb_options_ok(const URequest *request, UResponse *response, void *user_data)
     if (allow) {
         u_map_put(response->map_header, "Access-Control-Allow-Methods", allow);
     }
+
     u_map_put(response->map_header, "Access-Control-Allow-Headers", "Content-Type");
     u_map_put(response->map_header, "Access-Control-Allow-Origin", "*");
 
@@ -327,9 +348,6 @@ int cb_not_allowed(const URequest *request, UResponse *response, void *user_data
 
 int cb_get_version(const URequest *request, UResponse *response, void *user_data) {
 
-    WebCtx *ctx = (WebCtx *)user_data;
-    json_t *j = NULL;
-
     (void)request;
     (void)user_data;
 
@@ -338,8 +356,10 @@ int cb_get_version(const URequest *request, UResponse *response, void *user_data
 }
 
 int cb_get_ping(const URequest *request, UResponse *response, void *user_data) {
+
     (void)request;
     (void)user_data;
+
     return respond_text(response,
                         HttpStatus_OK,
                         HttpStatusStr(HttpStatus_OK));
@@ -372,13 +392,18 @@ int cb_get_fems(const URequest *request, UResponse *response, void *user_data) {
     a = json_array();
     if (!a) { json_decref(j); return respond_text(response, HttpStatus_InternalServerError, "oom"); }
 
-    json_array_append_new(a, json_pack("{s:i, s:b}", "fem_unit", 1, "present", s1.present ? 1 : 0));
-    json_array_append_new(a, json_pack("{s:i, s:b}", "fem_unit", 2, "present", s2.present ? 1 : 0));
+    json_array_append_new(a, json_pack("{s:i, s:b}",
+                                       "fem_unit", 1,
+                                       "present", s1.present ? 1 : 0));
+    json_array_append_new(a, json_pack("{s:i, s:b}",
+                                       "fem_unit", 2,
+                                       "present", s2.present ? 1 : 0));
 
     json_object_set_new(j, "fems", a);
 
     respond_json_obj(response, HttpStatus_OK, j);
     json_decref(j);
+
     return U_CALLBACK_CONTINUE;
 }
 
@@ -389,8 +414,13 @@ int cb_get_fem(const URequest *request, UResponse *response, void *user_data) {
     FemSnapshot s;
     json_t *j = NULL;
 
-    if (!ctx || !ctx->snap) return respond_text(response, HttpStatus_InternalServerError, "internal");
-    if (parse_fem_unit(request, &unit) != STATUS_OK) return respond_text(response, HttpStatus_BadRequest, "bad femId");
+    if (!ctx || !ctx->snap) {
+        return respond_text(response, HttpStatus_InternalServerError, "internal");
+    }
+
+    if (parse_fem_unit(request, &unit) != STATUS_OK) {
+        return respond_text(response, HttpStatus_BadRequest, "bad femId");
+    }
 
     memset(&s, 0, sizeof(s));
     if (snapshot_get_fem(ctx->snap, unit, &s) != STATUS_OK) {
@@ -403,6 +433,7 @@ int cb_get_fem(const URequest *request, UResponse *response, void *user_data) {
 
     respond_json_obj(response, HttpStatus_OK, j);
     json_decref(j);
+
     return U_CALLBACK_CONTINUE;
 }
 
@@ -413,8 +444,13 @@ int cb_get_gpio(const URequest *request, UResponse *response, void *user_data) {
     GpioStatus st;
     json_t *j = NULL;
 
-    if (!ctx || !ctx->gpio) return respond_text(response, HttpStatus_InternalServerError, "internal");
-    if (parse_fem_unit(request, &unit) != STATUS_OK) return respond_text(response, HttpStatus_BadRequest, "bad femId");
+    if (!ctx || !ctx->gpio) {
+        return respond_text(response, HttpStatus_InternalServerError, "internal");
+    }
+
+    if (parse_fem_unit(request, &unit) != STATUS_OK) {
+        return respond_text(response, HttpStatus_BadRequest, "bad femId");
+    }
 
     memset(&st, 0, sizeof(st));
     if (gpio_read_all(ctx->gpio, unit, &st) != STATUS_OK) {
@@ -422,10 +458,13 @@ int cb_get_gpio(const URequest *request, UResponse *response, void *user_data) {
     }
 
     j = json_gpio_status(&st, (unit == FEM_UNIT_1) ? 1 : 2);
-    if (!j) return respond_text(response, HttpStatus_InternalServerError, "serialize");
+    if (!j) {
+        return respond_text(response, HttpStatus_InternalServerError, "serialize");
+    }
 
     respond_json_obj(response, HttpStatus_OK, j);
     json_decref(j);
+
     return U_CALLBACK_CONTINUE;
 }
 
@@ -453,19 +492,55 @@ int cb_put_gpio(const URequest *request, UResponse *response, void *user_data) {
     GpioStatus desired;
     int v;
 
-    if (!ctx || !ctx->jobs) return respond_text(response, HttpStatus_InternalServerError, "internal");
-    if (parse_fem_unit(request, &unit) != STATUS_OK) return respond_text(response, HttpStatus_BadRequest, "bad femId");
+    if (!ctx || !ctx->jobs) {
+        return respond_text(response, HttpStatus_InternalServerError, "internal");
+    }
+
+    if (parse_fem_unit(request, &unit) != STATUS_OK) {
+        return respond_text(response, HttpStatus_BadRequest, "bad femId");
+    }
 
     body = parse_body_json(request);
-    if (!body) return respond_text(response, HttpStatus_BadRequest, "bad json");
+    if (!body) {
+        return respond_text(response, HttpStatus_BadRequest, "bad json");
+    }
 
     memset(&desired, 0, sizeof(desired));
 
-    v = 0; if (!json_get_bool(body, "tx_rf_enable", &v)) { json_decref(body); return respond_text(response, HttpStatus_BadRequest, "tx_rf_enable"); } desired.tx_rf_enable = v ? true : false;
-    v = 0; if (!json_get_bool(body, "rx_rf_enable", &v)) { json_decref(body); return respond_text(response, HttpStatus_BadRequest, "rx_rf_enable"); } desired.rx_rf_enable = v ? true : false;
-    v = 0; if (!json_get_bool(body, "pa_vds_enable", &v)) { json_decref(body); return respond_text(response, HttpStatus_BadRequest, "pa_vds_enable"); } desired.pa_vds_enable = v ? true : false;
-    v = 0; if (!json_get_bool(body, "rf_pal_enable", &v)) { json_decref(body); return respond_text(response, HttpStatus_BadRequest, "rf_pal_enable"); } desired.rf_pal_enable = v ? true : false;
-    v = 0; if (!json_get_bool(body, "pa_disable", &v)) { json_decref(body); return respond_text(response, HttpStatus_BadRequest, "pa_disable"); } desired.pa_disable = v ? true : false;
+    v = 0;
+    if (!json_get_bool(body, "tx_rf_enable", &v)) {
+        json_decref(body);
+        return respond_text(response, HttpStatus_BadRequest, "tx_rf_enable");
+    }
+    desired.tx_rf_enable = v ? true : false;
+    
+    v = 0;
+    if (!json_get_bool(body, "rx_rf_enable", &v)) {
+        json_decref(body);
+        return respond_text(response, HttpStatus_BadRequest, "rx_rf_enable");
+    }
+    desired.rx_rf_enable = v ? true : false;
+
+    v = 0;
+    if (!json_get_bool(body, "pa_vds_enable", &v)) {
+        json_decref(body);
+        return respond_text(response, HttpStatus_BadRequest, "pa_vds_enable");
+    }
+    desired.pa_vds_enable = v ? true : false;
+
+    v = 0;
+    if (!json_get_bool(body, "rf_pal_enable", &v)) {
+        json_decref(body);
+        return respond_text(response, HttpStatus_BadRequest, "rf_pal_enable");
+    }
+    desired.rf_pal_enable = v ? true : false;
+    
+    v = 0;
+    if (!json_get_bool(body, "pa_disable", &v)) {
+        json_decref(body);
+        return respond_text(response, HttpStatus_BadRequest, "pa_disable");
+    }
+    desired.pa_disable = v ? true : false;
 
     json_decref(body);
 
@@ -484,20 +559,29 @@ int cb_patch_gpio(const URequest *request, UResponse *response, void *user_data)
     GpioStatus cur;
     int v;
 
-    if (!ctx || !ctx->jobs || !ctx->gpio) return respond_text(response, HttpStatus_InternalServerError, "internal");
-    if (parse_fem_unit(request, &unit) != STATUS_OK) return respond_text(response, HttpStatus_BadRequest, "bad femId");
+    if (!ctx || !ctx->jobs || !ctx->gpio) {
+        return respond_text(response, HttpStatus_InternalServerError, "internal");
+    }
+
+    if (parse_fem_unit(request, &unit) != STATUS_OK) {
+        return respond_text(response, HttpStatus_BadRequest, "bad femId");
+    }
 
     memset(&cur, 0, sizeof(cur));
-    if (gpio_read_all(ctx->gpio, unit, &cur) != STATUS_OK) return respond_text(response, HttpStatus_ServiceUnavailable, "gpio");
+    if (gpio_read_all(ctx->gpio, unit, &cur) != STATUS_OK) {
+        return respond_text(response, HttpStatus_ServiceUnavailable, "gpio");
+    }
 
     body = parse_body_json(request);
-    if (!body) return respond_text(response, HttpStatus_BadRequest, "bad json");
+    if (!body) {
+        return respond_text(response, HttpStatus_BadRequest, "bad json");
+    }
 
-    if (json_get_bool(body, "tx_rf_enable", &v)) cur.tx_rf_enable = v ? true : false;
-    if (json_get_bool(body, "rx_rf_enable", &v)) cur.rx_rf_enable = v ? true : false;
+    if (json_get_bool(body, "tx_rf_enable", &v))  cur.tx_rf_enable = v ?  true : false;
+    if (json_get_bool(body, "rx_rf_enable", &v))  cur.rx_rf_enable = v ?  true : false;
     if (json_get_bool(body, "pa_vds_enable", &v)) cur.pa_vds_enable = v ? true : false;
     if (json_get_bool(body, "rf_pal_enable", &v)) cur.rf_pal_enable = v ? true : false;
-    if (json_get_bool(body, "pa_disable", &v)) cur.pa_disable = v ? true : false;
+    if (json_get_bool(body, "pa_disable", &v))    cur.pa_disable = v ?    true : false;
 
     json_decref(body);
 
@@ -515,18 +599,32 @@ int cb_get_dac(const URequest *request, UResponse *response, void *user_data) {
     FemSnapshot s;
     json_t *j = NULL;
 
-    if (!ctx || !ctx->snap) return respond_text(response, HttpStatus_InternalServerError, "internal");
-    if (parse_fem_unit(request, &unit) != STATUS_OK) return respond_text(response, HttpStatus_BadRequest, "bad femId");
+    if (!ctx || !ctx->snap) {
+        return respond_text(response, HttpStatus_InternalServerError, "internal");
+    }
+
+    if (parse_fem_unit(request, &unit) != STATUS_OK) {
+        return respond_text(response, HttpStatus_BadRequest, "bad femId");
+    }
 
     memset(&s, 0, sizeof(s));
-    if (snapshot_get_fem(ctx->snap, unit, &s) != STATUS_OK) return respond_text(response, HttpStatus_NotFound, "no data");
-    if (!s.haveDac) return respond_text(response, HttpStatus_NotFound, "no dac");
+    if (snapshot_get_fem(ctx->snap, unit, &s) != STATUS_OK) {
+        return respond_text(response, HttpStatus_NotFound, "no data");
+    }
 
-    j = json_pack("{s:f, s:f}", "carrier_voltage", (double)s.carrierVoltage, "peak_voltage", (double)s.peakVoltage);
-    if (!j) return respond_text(response, HttpStatus_InternalServerError, "oom");
+    if (!s.haveDac) {
+        return respond_text(response, HttpStatus_NotFound, "no dac");
+    }
+
+    j = json_pack("{s:f, s:f}", "carrier_voltage", (double)s.carrierVoltage,
+                  "peak_voltage", (double)s.peakVoltage);
+    if (!j) {
+        return respond_text(response, HttpStatus_InternalServerError, "oom");
+    }
 
     respond_json_obj(response, HttpStatus_OK, j);
     json_decref(j);
+
     return U_CALLBACK_CONTINUE;
 }
 
@@ -540,11 +638,18 @@ int cb_put_dac(const URequest *request, UResponse *response, void *user_data) {
     Job job;
     uint32_t nowMs;
 
-    if (!ctx || !ctx->jobs) return respond_text(response, HttpStatus_InternalServerError, "internal");
-    if (parse_fem_unit(request, &unit) != STATUS_OK) return respond_text(response, HttpStatus_BadRequest, "bad femId");
+    if (!ctx || !ctx->jobs) {
+        return respond_text(response, HttpStatus_InternalServerError, "internal");
+    }
+
+    if (parse_fem_unit(request, &unit) != STATUS_OK) {
+        return respond_text(response, HttpStatus_BadRequest, "bad femId");
+    }
 
     body = parse_body_json(request);
-    if (!body) return respond_text(response, HttpStatus_BadRequest, "bad json");
+    if (!body) {
+        return respond_text(response, HttpStatus_BadRequest, "bad json");
+    }
 
     if (!json_extract_dac_request(body, &carrier, &peak)) {
         json_decref(body);
@@ -559,13 +664,17 @@ int cb_put_dac(const URequest *request, UResponse *response, void *user_data) {
 
     nowMs = snapshot_now_ms();
 
-    job.cmd = JobCmdDacSetCarrier;
+    job.cmd                 = JobCmdDacSetCarrier;
     job.arg.voltage.voltage = (float)carrier;
-    if (jobs_enqueue(ctx->jobs, &job, nowMs) == 0) return respond_text(response, HttpStatus_ServiceUnavailable, "queue");
+    if (jobs_enqueue(ctx->jobs, &job, nowMs) == 0) {
+        return respond_text(response, HttpStatus_ServiceUnavailable, "queue");
+    }
 
-    job.cmd = JobCmdDacSetPeak;
+    job.cmd                 = JobCmdDacSetPeak;
     job.arg.voltage.voltage = (float)peak;
-    if (jobs_enqueue(ctx->jobs, &job, nowMs) == 0) return respond_text(response, HttpStatus_ServiceUnavailable, "queue");
+    if (jobs_enqueue(ctx->jobs, &job, nowMs) == 0) {
+        return respond_text(response, HttpStatus_ServiceUnavailable, "queue");
+    }
 
     return respond_text(response, HttpStatus_Accepted, "accepted");
 }
@@ -577,18 +686,31 @@ int cb_get_temp(const URequest *request, UResponse *response, void *user_data) {
     FemSnapshot s;
     json_t *j = NULL;
 
-    if (!ctx || !ctx->snap) return respond_text(response, HttpStatus_InternalServerError, "internal");
-    if (parse_fem_unit(request, &unit) != STATUS_OK) return respond_text(response, HttpStatus_BadRequest, "bad femId");
+    if (!ctx || !ctx->snap) {
+        return respond_text(response, HttpStatus_InternalServerError, "internal");
+    }
+
+    if (parse_fem_unit(request, &unit) != STATUS_OK) {
+        return respond_text(response, HttpStatus_BadRequest, "bad femId");
+    }
 
     memset(&s, 0, sizeof(s));
-    if (snapshot_get_fem(ctx->snap, unit, &s) != STATUS_OK) return respond_text(response, HttpStatus_NotFound, "no data");
-    if (!s.haveTemp) return respond_text(response, HttpStatus_NotFound, "no temp");
+    if (snapshot_get_fem(ctx->snap, unit, &s) != STATUS_OK) {
+        return respond_text(response, HttpStatus_NotFound, "no data");
+    }
+
+    if (!s.haveTemp) {
+        return respond_text(response, HttpStatus_NotFound, "no temp");
+    }
 
     j = json_pack("{s:f}", "temperature", (double)s.tempC);
-    if (!j) return respond_text(response, HttpStatus_InternalServerError, "oom");
+    if (!j) {
+        return respond_text(response, HttpStatus_InternalServerError, "oom");
+    }
 
     respond_json_obj(response, HttpStatus_OK, j);
     json_decref(j);
+
     return U_CALLBACK_CONTINUE;
 }
 
@@ -599,22 +721,35 @@ int cb_get_adc_all(const URequest *request, UResponse *response, void *user_data
     FemSnapshot s;
     json_t *j = NULL;
 
-    if (!ctx || !ctx->snap) return respond_text(response, HttpStatus_InternalServerError, "internal");
-    if (parse_fem_unit(request, &unit) != STATUS_OK) return respond_text(response, HttpStatus_BadRequest, "bad femId");
+    if (!ctx || !ctx->snap) {
+        return respond_text(response, HttpStatus_InternalServerError, "internal");
+    }
+
+    if (parse_fem_unit(request, &unit) != STATUS_OK) {
+        return respond_text(response, HttpStatus_BadRequest, "bad femId");
+    }
 
     memset(&s, 0, sizeof(s));
-    if (snapshot_get_fem(ctx->snap, unit, &s) != STATUS_OK) return respond_text(response, HttpStatus_NotFound, "no data");
-    if (!s.haveAdc) return respond_text(response, HttpStatus_NotFound, "no adc");
+    if (snapshot_get_fem(ctx->snap, unit, &s) != STATUS_OK) {
+        return respond_text(response, HttpStatus_NotFound, "no data");
+    }
+
+    if (!s.haveAdc) {
+        return respond_text(response, HttpStatus_NotFound, "no adc");
+    }
 
     j = json_pack("{s:f, s:f, s:f, s:f}",
                   "reverse_power", (double)s.reversePowerDbm,
                   "forward_power", (double)s.forwardPowerDbm,
                   "pa_current", (double)s.paCurrentA,
                   "adc_temp_volts", (double)s.adcTempVolts);
-    if (!j) return respond_text(response, HttpStatus_InternalServerError, "oom");
+    if (!j) {
+        return respond_text(response, HttpStatus_InternalServerError, "oom");
+    }
 
     respond_json_obj(response, HttpStatus_OK, j);
     json_decref(j);
+
     return U_CALLBACK_CONTINUE;
 }
 
@@ -626,13 +761,26 @@ int cb_get_adc_chan(const URequest *request, UResponse *response, void *user_dat
     FemSnapshot s;
     json_t *j = NULL;
 
-    if (!ctx || !ctx->snap) return respond_text(response, HttpStatus_InternalServerError, "internal");
-    if (parse_fem_unit(request, &unit) != STATUS_OK) return respond_text(response, HttpStatus_BadRequest, "bad femId");
-    if (parse_adc_channel(request, &ch) != STATUS_OK) return respond_text(response, HttpStatus_BadRequest, "bad channel");
+    if (!ctx || !ctx->snap) {
+        return respond_text(response, HttpStatus_InternalServerError, "internal");
+    }
+
+    if (parse_fem_unit(request, &unit) != STATUS_OK) {
+        return respond_text(response, HttpStatus_BadRequest, "bad femId");
+    }
+
+    if (parse_adc_channel(request, &ch) != STATUS_OK) {
+        return respond_text(response, HttpStatus_BadRequest, "bad channel");
+    }
 
     memset(&s, 0, sizeof(s));
-    if (snapshot_get_fem(ctx->snap, unit, &s) != STATUS_OK) return respond_text(response, HttpStatus_NotFound, "no data");
-    if (!s.haveAdc) return respond_text(response, HttpStatus_NotFound, "no adc");
+    if (snapshot_get_fem(ctx->snap, unit, &s) != STATUS_OK) {
+        return respond_text(response, HttpStatus_NotFound, "no data");
+    }
+
+    if (!s.haveAdc) {
+        return respond_text(response, HttpStatus_NotFound, "no adc");
+    }
 
     if (ch == 0) {
         j = json_pack("{s:i, s:f}", "channel", ch, "value", (double)s.reversePowerDbm);
@@ -646,10 +794,13 @@ int cb_get_adc_chan(const URequest *request, UResponse *response, void *user_dat
         return respond_text(response, HttpStatus_NotFound, "unknown channel");
     }
 
-    if (!j) return respond_text(response, HttpStatus_InternalServerError, "oom");
+    if (!j) {
+        return respond_text(response, HttpStatus_InternalServerError, "oom");
+    }
 
     respond_json_obj(response, HttpStatus_OK, j);
     json_decref(j);
+
     return U_CALLBACK_CONTINUE;
 }
 
@@ -661,21 +812,31 @@ int cb_get_adc_thr(const URequest *request, UResponse *response, void *user_data
     SafetyConfig cfg;
     json_t *j = NULL;
 
-    if (!ctx || !ctx->safety) return respond_text(response, HttpStatus_InternalServerError, "internal");
-    if (parse_fem_unit(request, &unit) != STATUS_OK) return respond_text(response, HttpStatus_BadRequest, "bad femId");
+    if (!ctx || !ctx->safety) {
+        return respond_text(response, HttpStatus_InternalServerError, "internal");
+    }
+
+    if (parse_fem_unit(request, &unit) != STATUS_OK) {
+        return respond_text(response, HttpStatus_BadRequest, "bad femId");
+    }
 
     (void)unit;
 
-    if (safety_get_config(ctx->safety, &cfg) != STATUS_OK) return respond_text(response, HttpStatus_ServiceUnavailable, "safety");
+    if (safety_get_config(ctx->safety, &cfg) != STATUS_OK) {
+        return respond_text(response, HttpStatus_ServiceUnavailable, "safety");
+    }
 
     j = json_pack("{s:f, s:f, s:f}",
                   "max_reverse_power", (double)cfg.thresholds.max_reverse_power_dbm,
                   "max_current",       (double)cfg.thresholds.max_pa_current_a,
                   "max_temperature",   (double)cfg.thresholds.max_temperature_c);
-    if (!j) return respond_text(response, HttpStatus_InternalServerError, "oom");
+    if (!j) {
+        return respond_text(response, HttpStatus_InternalServerError, "oom");
+    }
 
     respond_json_obj(response, HttpStatus_OK, j);
     json_decref(j);
+
     return U_CALLBACK_CONTINUE;
 }
 
@@ -746,13 +907,17 @@ int cb_post_safety_restore(const URequest *request, UResponse *response, void *u
 }
 
 int cb_get_serial(const URequest *request, UResponse *response, void *user_data) {
+
     (void)request;
     (void)user_data;
+
     return respond_text(response, HttpStatus_NotImplemented, "not implemented");
 }
 
 int cb_put_serial(const URequest *request, UResponse *response, void *user_data) {
+
     (void)request;
     (void)user_data;
+
     return respond_text(response, HttpStatus_NotImplemented, "not implemented");
 }

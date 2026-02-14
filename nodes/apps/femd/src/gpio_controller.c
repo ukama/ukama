@@ -23,12 +23,12 @@ typedef struct {
 } gpio_meta_t;
 
 static const gpio_meta_t gpioMeta[GPIO_MAX] = {
-    [GPIO_28V_VDS]   = { "pa_disable",    true  },
+    [GPIO_28V_VDS]   = { "pa_disable",    false },
     [GPIO_TX_RF]     = { "tx_rf_enable",  true  },
     [GPIO_RX_RF]     = { "rx_rf_enable",  true  },
     [GPIO_PA_VDS]    = { "pa_vds_enable", true  },
     [GPIO_TX_RFPAL]  = { "rf_pal_enable", true  },
-    [GPIO_PSU_PGOOD] = { "pg_reg_5v",     false }
+    [GPIO_PSU_PGOOD] = { "pg_reg_5v",     true  }
 };
 
 static int femd_sim_write_default_gpio_file(const char *valuePath, const char *gpioName);
