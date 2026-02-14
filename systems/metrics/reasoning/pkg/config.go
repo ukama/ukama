@@ -10,6 +10,7 @@ package pkg
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"time"
 
@@ -27,8 +28,8 @@ type Config struct {
 	PrometheusInterval   int              `default:"60"`
 	SchedulerInterval    time.Duration    `default:"60s"`
 	OrgName              string           `default:"ukama"`
-	PrometheusHost       string           `default:"http://localhost:9079"`
-	MetricsKeyMapFile    string           `default:"metric-key-map.json"`
+	PrometheusHost       string           `default:"http://prometheus:9090"`
+	MetricsKeyMapFile    string           `default:"/etc/reasoning/metric-key-map.json"`
 	FormatDecimalPoints  int              `default:"3"`
 	MetricKeyMap         *MetricKeyMap
 	Service              *uconf.Service
@@ -77,13 +78,28 @@ func NewConfig(name string) *Config {
 	}
 }
 
+// Fallback paths when primary MetricsKeyMapFile path doesn't exist (e.g. local dev)
+var metricKeyMapFallbackPaths = []string{"metric-key-map.json", "./metric-key-map.json"}
+
 func LoadMetricKeyMap(config *Config) (*MetricKeyMap, error) {
 	metricKeyMap := new(MetricKeyMap)
-	metricKeyMapFile := config.MetricsKeyMapFile
-	bytes, err := os.ReadFile(metricKeyMapFile)
+	paths := append([]string{config.MetricsKeyMapFile}, metricKeyMapFallbackPaths...)
+
+	var bytes []byte
+	var err error
+	for _, p := range paths {
+		bytes, err = os.ReadFile(p)
+		if err == nil {
+			break
+		}
+		if !errors.Is(err, os.ErrNotExist) {
+			return nil, err
+		}
+	}
 	if err != nil {
 		return nil, err
 	}
+
 	err = json.Unmarshal(bytes, metricKeyMap)
 	if err != nil {
 		return nil, err

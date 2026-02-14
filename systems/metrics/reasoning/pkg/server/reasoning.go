@@ -123,9 +123,15 @@ func (c *ReasoningServer) ReasoningJob(ctx context.Context) {
 	jobLog := log.WithField("job", jobTag)
 	jobLog.Info("Reasoning job started")
 
+	// Retry loading MetricKeyMap if nil (e.g. file wasn't available at startup)
 	if c.config.MetricKeyMap == nil {
-		jobLog.Error("MetricKeyMap not loaded, skipping")
-		return
+		metricKeyMap, err := pkg.LoadMetricKeyMap(c.config)
+		if err != nil {
+			jobLog.WithError(err).Error("MetricKeyMap not loaded, skipping")
+			return
+		}
+		c.config.MetricKeyMap = metricKeyMap
+		jobLog.Info("MetricKeyMap loaded successfully")
 	}
 
 	nodes, err := c.nodeClient.List(creg.ListNodesRequest{
@@ -149,12 +155,17 @@ func (c *ReasoningServer) ReasoningJob(ctx context.Context) {
 			failed++
 			continue
 		}
+		jobLog.WithFields(log.Fields{"node_id": node.Id, "tnode": nds.TNode, "anode": nds.ANode}).Info("Processing tower+amp node pair")
+
+		jobLog.WithField("node_id", node.Id).Info("Getting time window from store")
 		start, end, err := utils.GetStartEndFromStore(c.store, node.Id, c.config.PrometheusInterval)
 		if err != nil {
 			jobLog.WithError(err).WithField("node_id", node.Id).Error("Failed to get time window, skipping")
 			failed++
 			continue
 		}
+		jobLog.WithFields(log.Fields{"node_id": node.Id, "start": start, "end": end}).Info("Got time window, processing metrics")
+
 		for _, nodeID := range []string{nds.TNode, nds.ANode} {
 			p, f := c.processNode(ctx, nodeID, start, end, jobLog)
 			processed += p
@@ -171,14 +182,18 @@ func (c *ReasoningServer) ReasoningJob(ctx context.Context) {
 
 func (c *ReasoningServer) processNode(ctx context.Context, nodeID, start, end string, jobLog *log.Entry) (processed, failed int) {
 	nType := ukama.GetNodeType(nodeID)
+	if nType == nil {
+		jobLog.WithField("node_id", nodeID).Warn("Could not determine node type from node ID, skipping")
+		return 0, 0
+	}
 	metrics, ok := (*c.config.MetricKeyMap)[*nType]
 	if !ok {
-		jobLog.WithFields(log.Fields{"node_id": nodeID, "type": nType}).Debug("No metrics for node type, skipping")
+		jobLog.WithFields(log.Fields{"node_id": nodeID, "type": *nType}).Info("No metrics for node type in MetricKeyMap, skipping")
 		return 0, 0
 	}
 
-	nodeLog := jobLog.WithFields(log.Fields{"node_id": nodeID, "window": start + ".." + end})
-	nodeLog.Debugf("Processing %d metric(s)", len(metrics.Metrics))
+	nodeLog := jobLog.WithFields(log.Fields{"node_id": nodeID, "type": *nType, "window": start + ".." + end})
+	nodeLog.Infof("Processing %d metric(s) for node", len(metrics.Metrics))
 
 	for _, m := range metrics.Metrics {
 		if err := c.processMetric(ctx, nodeID, m, start, end, nodeLog); err != nil {
@@ -198,8 +213,12 @@ func (c *ReasoningServer) processMetric(ctx context.Context, nodeID string, m pk
 		[]metric.MetricWithFilters{{Metric: m.Key, Filters: []metric.Filter{{Key: "node_id", Value: nodeID}}}},
 	)
 
-	pr, err := metric.ProcessPromRequest(ctx, rp)
+	nodeLog.WithFields(log.Fields{"metric": m.Key, "prometheus_host": c.config.PrometheusHost}).Debug("Fetching metric from Prometheus")
+	reqCtx, cancel := context.WithTimeout(ctx, c.config.Timeout)
+	defer cancel()
+	pr, err := metric.ProcessPromRequest(reqCtx, rp)
 	if err != nil {
+		nodeLog.WithError(err).WithField("metric", m.Key).Error("Prometheus request failed")
 		return err
 	}
 
@@ -261,25 +280,26 @@ func (c *ReasoningServer) processAlgorithms(nodeID string, m pkg.Metric, pr *met
 		return err
 	}
 
-	log.Infof("Metics Data: %+v", pr.Data.Result)
 	c.logMetricResult(nodeID, m.Key, stats, metricLog)
 	return nil
 }
 
 func (c *ReasoningServer) loadPrevStats(storeKey string, metricLog *log.Entry) (algos.Stats, error) {
 	bytes, err := c.store.GetJson(storeKey)
-	if err == nil {
-		stats, err := algos.UnmarshalStatsFromJSON(bytes)
-		if err != nil {
-			return algos.Stats{}, err
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			metricLog.Info("No previous stats found, using empty (first run or new metric)")
+			return algos.EmptyPrevStats(), nil
 		}
-		return stats, nil
+		return algos.Stats{}, err
 	}
-	if strings.Contains(err.Error(), "not found") {
-		metricLog.Info("No previous stats found, using empty (first run or new metric)")
+	stats, err := algos.UnmarshalStatsFromJSON(bytes)
+	if err != nil {
+		// Corrupted or empty stored data: treat as first run so algorithms still execute
+		metricLog.WithError(err).Info("Invalid previous stats, using empty (first run or corrupted data)")
 		return algos.EmptyPrevStats(), nil
 	}
-	return algos.Stats{}, err
+	return stats, nil
 }
 
 func (c *ReasoningServer) logMetricResult(nodeID, metricKey string, stats *algos.Stats, metricLog *log.Entry) {

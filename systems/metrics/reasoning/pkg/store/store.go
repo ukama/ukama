@@ -12,14 +12,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/metrics/reasoning/pkg"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
+const defaultRequestTimeout = 5 * time.Second
+
 type Store struct {
-	etcd *clientv3.Client
+	etcd            *clientv3.Client
+	requestTimeout  time.Duration
 }
 
 func NewStore(config *pkg.Config) *Store {
@@ -30,13 +34,24 @@ func NewStore(config *pkg.Config) *Store {
 	if err != nil {
 		log.Fatalf("Cannot connect to etcd: %v", err)
 	}
-	return &Store{
-		etcd: etcd,
+	timeout := config.Timeout
+	if timeout == 0 {
+		timeout = defaultRequestTimeout
 	}
+	return &Store{
+		etcd:           etcd,
+		requestTimeout: timeout,
+	}
+}
+
+func (s *Store) opCtx() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), s.requestTimeout)
 }	
 
 func (s *Store) Put(key string, value string) error {
-	_, err := s.etcd.Put(context.Background(), key, value)
+	ctx, cancel := s.opCtx()
+	defer cancel()
+	_, err := s.etcd.Put(ctx, key, value)
 	if err != nil {
 		return fmt.Errorf("failed to add record %s with value %s. Error: %v", key, value, err)
 	}
@@ -64,7 +79,9 @@ func (s *Store) GetJson(key string) ([]byte, error) {
 }
 
 func (s *Store) Get(key string) (string, error) {
-	response, err := s.etcd.Get(context.Background(), key)
+	ctx, cancel := s.opCtx()
+	defer cancel()
+	response, err := s.etcd.Get(ctx, key)
 	if err != nil {
 		return "", fmt.Errorf("failed to get record %s. Error: %v", key, err)
 	}
@@ -75,7 +92,9 @@ func (s *Store) Get(key string) (string, error) {
 }
 
 func (s *Store) GetAll() ([]string, error) {
-	response, err := s.etcd.Get(context.Background(), "", clientv3.WithPrefix())
+	ctx, cancel := s.opCtx()
+	defer cancel()
+	response, err := s.etcd.Get(ctx, "", clientv3.WithPrefix())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all records. Error: %v", err)
 	}
@@ -87,7 +106,9 @@ func (s *Store) GetAll() ([]string, error) {
 }
 
 func (s *Store) Delete(key string) error {
-	_, err := s.etcd.Delete(context.Background(), key)
+	ctx, cancel := s.opCtx()
+	defer cancel()
+	_, err := s.etcd.Delete(ctx, key)
 	if err != nil {
 		return fmt.Errorf("failed to delete record %s. Error: %v", key, err)
 	}

@@ -65,11 +65,12 @@ services:
     - REASONING_SERVICE_PORT=9090
     - MSGCLIENT_HOST=msgclient-metrics:9095
     - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-    - PROMETHEUS_HOST=http://localhost:9079
+    - PROMETHEUSHOST=http://prometheus:9090
     - PROMETHEUS_INTERVAL=60
     - SCHEDULER_INTERVAL=60s
     - ORGNAME=${ORGNAME}
     - HTTP_INITCLIENT=http://api-gateway-init:8080
+    - ETCDHOST=etcd:2379
   restart: always
   depends_on:
    - prometheus
