@@ -396,3 +396,191 @@ metric_server_port = 7001
                 desc = "PA power consumed"
                 type = "METRICTYPE_GAUGE"
                 labels = []
+
+        [[stats.sensors]]
+            source = "femd"
+            agent  = "femd_agent"
+            # femd_agent will resolve fem.d port from /etc/services and append this path
+            url    = "/v1/metrics"
+
+            # Controller health (no fem suffix)
+            [[stats.sensors.femd.kpi]]
+                name   = "controller_ok"
+                ext    = ""
+                desc   = "Controller OK (1=ok, 0=not ok)"
+                type   = "METRICTYPE_GAUGE"
+                labels = []
+
+            #
+            # FEM1 KPIs
+            #
+            [[stats.sensors.femd.kpi]]
+                name   = "ok"
+                ext    = "fem1"
+                desc   = "FEM1 OK (1=ok, 0=not ok)"
+                type   = "METRICTYPE_GAUGE"
+                labels = []
+
+            [[stats.sensors.femd.kpi]]
+                name   = "temperature_c"
+                ext    = "fem1"
+                desc   = "FEM1 temperature (C)"
+                type   = "METRICTYPE_GAUGE"
+                labels = []
+
+            [[stats.sensors.femd.kpi]]
+                name   = "forward_power"
+                ext    = "fem1"
+                desc   = "FEM1 forward power (units from fem.d)"
+                type   = "METRICTYPE_GAUGE"
+                labels = []
+
+            [[stats.sensors.femd.kpi]]
+                name   = "reverse_power"
+                ext    = "fem1"
+                desc   = "FEM1 reverse power (units from fem.d)"
+                type   = "METRICTYPE_GAUGE"
+                labels = []
+
+            [[stats.sensors.femd.kpi]]
+                name   = "pa_current"
+                ext    = "fem1"
+                desc   = "FEM1 PA current (A)"
+                type   = "METRICTYPE_GAUGE"
+                labels = []
+
+            [[stats.sensors.femd.kpi]]
+                name   = "gpio_28v_vds_enable"
+                ext    = "fem1"
+                desc   = "FEM1 GPIO: 28V VDS enable (1/0)"
+                type   = "METRICTYPE_GAUGE"
+                labels = []
+
+            [[stats.sensors.femd.kpi]]
+                name   = "gpio_tx_rf_enable"
+                ext    = "fem1"
+                desc   = "FEM1 GPIO: TX RF enable (1/0)"
+                type   = "METRICTYPE_GAUGE"
+                labels = []
+
+            [[stats.sensors.femd.kpi]]
+                name   = "gpio_rx_rf_enable"
+                ext    = "fem1"
+                desc   = "FEM1 GPIO: RX RF enable (1/0)"
+                type   = "METRICTYPE_GAUGE"
+                labels = []
+
+            [[stats.sensors.femd.kpi]]
+                name   = "gpio_pa_vds_enable"
+                ext    = "fem1"
+                desc   = "FEM1 GPIO: PA VDS enable (1/0)"
+                type   = "METRICTYPE_GAUGE"
+                labels = []
+
+            [[stats.sensors.femd.kpi]]
+                name   = "gpio_rf_pal_enable"
+                ext    = "fem1"
+                desc   = "FEM1 GPIO: RF PAL enable (1/0)"
+                type   = "METRICTYPE_GAUGE"
+                labels = []
+
+            [[stats.sensors.femd.kpi]]
+                name   = "gpio_psu_pgood"
+                ext    = "fem1"
+                desc   = "FEM1 GPIO: PSU PGOOD (1/0)"
+                type   = "METRICTYPE_GAUGE"
+                labels = []
+
+            [[stats.sensors.femd.kpi]]
+                name   = "snapshot_timestamp"
+                ext    = "fem1"
+                desc   = "FEM1 snapshot timestamp (units from fem.d)"
+                type   = "METRICTYPE_GAUGE"
+                labels = []
+
+            #
+            # FEM2 KPIs
+            #
+            [[stats.sensors.femd.kpi]]
+                name   = "ok"
+                ext    = "fem2"
+                desc   = "FEM2 OK (1=ok, 0=not ok)"
+                type   = "METRICTYPE_GAUGE"
+                labels = []
+
+            [[stats.sensors.femd.kpi]]
+                name   = "temperature_c"
+                ext    = "fem2"
+                desc   = "FEM2 temperature (C)"
+                type   = "METRICTYPE_GAUGE"
+                labels = []
+
+            [[stats.sensors.femd.kpi]]
+                name   = "forward_power"
+                ext    = "fem2"
+                desc   = "FEM2 forward power (units from fem.d)"
+                type   = "METRICTYPE_GAUGE"
+                labels = []
+
+            [[stats.sensors.femd.kpi]]
+                name   = "reverse_power"
+                ext    = "fem2"
+                desc   = "FEM2 reverse power (units from fem.d)"
+                type   = "METRICTYPE_GAUGE"
+                labels = []
+
+            [[stats.sensors.femd.kpi]]
+                name   = "pa_current"
+                ext    = "fem2"
+                desc   = "FEM2 PA current (A)"
+                type   = "METRICTYPE_GAUGE"
+                labels = []
+
+            [[stats.sensors.femd.kpi]]
+                name   = "gpio_28v_vds_enable"
+                ext    = "fem2"
+                desc   = "FEM2 GPIO: 28V VDS enable (1/0)"
+                type   = "METRICTYPE_GAUGE"
+                labels = []
+
+            [[stats.sensors.femd.kpi]]
+                name   = "gpio_tx_rf_enable"
+                ext    = "fem2"
+                desc   = "FEM2 GPIO: TX RF enable (1/0)"
+                type   = "METRICTYPE_GAUGE"
+                labels = []
+
+            [[stats.sensors.femd.kpi]]
+                name   = "gpio_rx_rf_enable"
+                ext    = "fem2"
+                desc   = "FEM2 GPIO: RX RF enable (1/0)"
+                type   = "METRICTYPE_GAUGE"
+                labels = []
+
+            [[stats.sensors.femd.kpi]]
+                name   = "gpio_pa_vds_enable"
+                ext    = "fem2"
+                desc   = "FEM2 GPIO: PA VDS enable (1/0)"
+                type   = "METRICTYPE_GAUGE"
+                labels = []
+
+            [[stats.sensors.femd.kpi]]
+                name   = "gpio_rf_pal_enable"
+                ext    = "fem2"
+                desc   = "FEM2 GPIO: RF PAL enable (1/0)"
+                type   = "METRICTYPE_GAUGE"
+                labels = []
+
+            [[stats.sensors.femd.kpi]]
+                name   = "gpio_psu_pgood"
+                ext    = "fem2"
+                desc   = "FEM2 GPIO: PSU PGOOD (1/0)"
+                type   = "METRICTYPE_GAUGE"
+                labels = []
+
+            [[stats.sensors.femd.kpi]]
+                name   = "snapshot_timestamp"
+                ext    = "fem2"
+                desc   = "FEM2 snapshot timestamp (units from fem.d)"
+                type   = "METRICTYPE_GAUGE"
+                labels = []

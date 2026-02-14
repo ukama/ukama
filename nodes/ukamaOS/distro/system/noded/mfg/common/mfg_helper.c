@@ -17,7 +17,8 @@ static char* boardname[MODULE_TYPE_MAX] = {
     "trx",
     "mask",
     "ctrl",
-    "fe"
+    "fe1",
+    "fe2"
 };
 
 /* Verify UUID */

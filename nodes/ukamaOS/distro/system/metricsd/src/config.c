@@ -206,97 +206,129 @@ void lower_string(char **string) {
   }
 }
 
-/* return fully qualified kpi name */
-char *set_fqkname(char *node, char *category, char *source, int range,
-                  char *kpi, char* unit) {
-  char *name = NULL;
-  char fqkn[MAX_KPI_KEY_NAME_LENGTH] = {'\0'};
+static char *set_fqkname(char *node,
+                         char *category,
+                         char *source,
+                         int range,
+                         char *kpi,
+                         char *unit,
+                         char *ext) {
+    char *name = NULL;
+    char fqkn[MAX_KPI_KEY_NAME_LENGTH] = {'\0'};
 
-  /* Make sure every thing is lower case */
-  lower_string(&node);
-  lower_string(&category);
-  lower_string(&source);
-  lower_string(&kpi);
-  lower_string(&unit);
-  int len = 0;
+    /* Make sure everything is lower case */
+    lower_string(&node);
+    lower_string(&category);
+    lower_string(&source);
+    lower_string(&kpi);
+    lower_string(&unit);
 
-  /* Extended KPI name with units */
-  char extKpiName[MAX_KPI_KEY_NAME_LENGTH] = {'\0'};
-  if (unit) {
-      snprintf(extKpiName, MAX_KPI_KEY_NAME_LENGTH, "%s%s%s", kpi, TAG_SEP, unit);
-  } else {
-      strcpy(extKpiName, kpi);
-  }
-
-  if (range < 0) {
-    len = snprintf(fqkn, MAX_KPI_KEY_NAME_LENGTH, "%s%s%s%s%s%s%s", g_node,
-                   TAG_SEP, category, TAG_SEP, source, TAG_SEP, extKpiName);
-  } else {
-    len = snprintf(fqkn, MAX_KPI_KEY_NAME_LENGTH, "%s%s%s%s%s%d%s%s", g_node,
-                   TAG_SEP, category, TAG_SEP, source, range, TAG_SEP, extKpiName);
-  }
-
-  name = alloc_str(len + 1);
-  if (name) {
-    memcpy(name, fqkn, strlen(fqkn));
-  }
-
-  return name;
-}
-
-/* Parsing Metric Type */
-int read_metric_type(toml_table_t *tab_kpi) {
-  int metrictype = METRICTYPE_GAUGE;
-  char *type = read_str_value(tab_kpi, TAG_METRIC_TYPE);
-  if (type) {
-    if (strcmp(type, "METRICTYPE_COUNTER") == 0) {
-      metrictype = METRICTYPE_COUNTER;
-    } else if (strcmp(type, "METRICTYPE_GAUGE") == 0) {
-      metrictype = METRICTYPE_GAUGE;
-    } else if (strcmp(type, "METRICTYPE_HISTOGRAM") == 0) {
-      metrictype = METRICTYPE_HISTOGRAM;
-    }
-  } else {
-    /* Set default GUAGE TYPE */
-    usys_log_error("Error reading metric type.");
-  }
-  return metrictype;
-}
-
-/* Parse range array */
-int *parse_range_array(int *inst, toml_table_t *tab, char *key) {
-
-  int *range = NULL;
-  /* Range array */
-  toml_array_t *arr_range = toml_array_in(tab, key);
-  if (!arr_range) {
-    usys_log_error("Error missing %s", key);
-  }
-
-  *inst = toml_array_nelem(arr_range);
-  log_trace("%d range values available.", *inst);
-
-  /* Allocate memory for kpi */
-  range = alloc_range(*inst);
-  if (!range) {
-    usys_log_error("Failed to allocate memory for %d range elements.", *inst);
-    return range;
-  }
-
-  /* Parse each value in range */
-  for (uint8_t idx = 0; idx < *inst; idx++) {
-    toml_datum_t data = toml_int_at(arr_range, idx);
-    if (!data.ok) {
-      free(range);
-      range = NULL;
-
+    /* ext can be NULL or empty */
+    if (ext && ext[0] != '\0') {
+        /* We must not modify caller-owned strings if ext comes from toml;
+         * but ext is already heap-copied by read_str_value(), so it is safe.
+         */
+        lower_string(&ext);
     } else {
-      range[idx] = data.u.i;
-      usys_log_trace("Range value at [%d] is %d", idx, range[idx]);
+        ext = NULL;
     }
-  }
 
-  return range;
+    /* Extended KPI name with units */
+    char extKpiName[MAX_KPI_KEY_NAME_LENGTH] = {'\0'};
+    if (unit && unit[0] != '\0') {
+        snprintf(extKpiName, sizeof(extKpiName), "%s%s%s", kpi, TAG_SEP, unit);
+    } else {
+        snprintf(extKpiName, sizeof(extKpiName), "%s", kpi);
+    }
+
+    int len = 0;
+
+    if (range < 0) {
+        if (ext) {
+            len = snprintf(fqkn, sizeof(fqkn), "%s%s%s%s%s%s%s%s%s",
+                           g_node, TAG_SEP, category, TAG_SEP, source,
+                           TAG_SEP, ext, TAG_SEP, extKpiName);
+        } else {
+            len = snprintf(fqkn, sizeof(fqkn), "%s%s%s%s%s%s%s",
+                           g_node, TAG_SEP, category, TAG_SEP, source,
+                           TAG_SEP, extKpiName);
+        }
+    } else {
+        if (ext) {
+            len = snprintf(fqkn, sizeof(fqkn), "%s%s%s%s%s%d%s%s%s%s%s",
+                           g_node, TAG_SEP, category, TAG_SEP, source, range,
+                           TAG_SEP, ext, TAG_SEP, extKpiName);
+        } else {
+            len = snprintf(fqkn, sizeof(fqkn), "%s%s%s%s%s%d%s%s",
+                           g_node, TAG_SEP, category, TAG_SEP, source, range,
+                           TAG_SEP, extKpiName);
+        }
+    }
+
+    if (len < 0) return NULL;
+
+    name = alloc_str(len + 1);
+    if (name) {
+        memcpy(name, fqkn, (size_t)len);
+        name[len] = '\0';
+    }
+
+    return name;
+}
+
+/* Parsing metric type */
+int read_metric_type(toml_table_t *tab_kpi) {
+    int metrictype = METRICTYPE_GAUGE;
+    char *type = read_str_value(tab_kpi, TAG_METRIC_TYPE);
+    if (type) {
+        if (strcmp(type, "METRICTYPE_COUNTER") == 0) {
+            metrictype = METRICTYPE_COUNTER;
+        } else if (strcmp(type, "METRICTYPE_GAUGE") == 0) {
+            metrictype = METRICTYPE_GAUGE;
+        } else if (strcmp(type, "METRICTYPE_HISTOGRAM") == 0) {
+            metrictype = METRICTYPE_HISTOGRAM;
+        }
+        free_str_value(type);
+    } else {
+        usys_log_error("Error reading metric type, defaulting to GAUGE.");
+    }
+    return metrictype;
+}
+
+int *parse_range_array(int *inst, toml_table_t *tab, char *key) {
+    int *range = NULL;
+
+    toml_array_t *arr_range = toml_array_in(tab, key);
+    if (!arr_range) {
+        usys_log_error("Error missing %s", key);
+        *inst = 0;
+        return NULL;
+    }
+
+    *inst = toml_array_nelem(arr_range);
+    usys_log_trace("%d range values available.", *inst);
+
+    if (*inst <= 0) {
+        return NULL;
+    }
+
+    range = alloc_range(*inst);
+    if (!range) {
+        usys_log_error("Failed to allocate memory for %d range elements.", *inst);
+        return NULL;
+    }
+
+    for (int idx = 0; idx < *inst; idx++) {
+        toml_datum_t data = toml_int_at(arr_range, idx);
+        if (!data.ok) {
+            free(range);
+            return NULL;
+        }
+        range[idx] = (int)data.u.i;
+        usys_log_trace("Range value at [%d] is %d", idx, range[idx]);
+    }
+
+    return range;
 }
 
 /* Parse int value in range */
@@ -412,7 +444,7 @@ static int toml_parse_kpi_table(char *category, char *source, int range,
   kpi->labels = read_labels(&kpi->numLabels, tab_kpi);
 
   /* Get FQKN */
-  kpi->fqname = set_fqkname(g_node, category, source, range, kpi->name, kpi->unit);
+  kpi->fqname = set_fqkname(g_node, category, source, range, kpi->name, kpi->unit, kpi->ext);
 
   /* register to prometheus metrics */
   ret = metric_server_register_kpi(kpi);

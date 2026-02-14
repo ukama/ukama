@@ -1,0 +1,195 @@
+{
+  "safety": {
+    "enabled": true,
+    "check_interval_ms": 1000,
+    "max_violations_before_shutdown": 3,
+
+    "auto_restore_enabled": true,
+    "restore_cooldown_ms": 30000,
+    "restore_ok_checks": 5,
+    "restore_reset_unit_stats": true,
+
+    "thresholds": {
+      "max_reverse_power_dbm": -10.0,
+      "max_pa_current_a": 5.0,
+      "max_temperature_c": 85.0,
+      "min_temperature_c": -40.0,
+      "max_forward_power_dbm": 30.0
+    },
+
+    "temperature_zones": {
+      "critical_high": 85.0,
+      "warning_high": 75.0,
+      "normal_high": 65.0,
+      "normal_low": 0.0,
+      "warning_low": -20.0,
+      "critical_low": -40.0
+    }
+  },
+
+  "dac": {
+    "voltage_range": {
+      "min_voltage": 0.0,
+      "max_voltage": 2.5,
+      "resolution_bits": 12
+    },
+
+    "default_voltages": {
+      "carrier_voltage": 1.2,
+      "peak_voltage": 2.0,
+      "shutdown_voltage": 0.0,
+      "standby_voltage": 0.5
+    }
+  },
+
+  "temperature_compensation": {
+    "bands": {
+
+      "B1": {
+        "fem1": {
+          "voltage_lookup": {
+            "-30": { "carrier": 2.10, "peak": 1.20 },
+            "-20": { "carrier": 2.10, "peak": 1.20 },
+            "-10": { "carrier": 2.15, "peak": 1.25 },
+            "0":   { "carrier": 2.15, "peak": 1.25 },
+            "10":  { "carrier": 2.20, "peak": 1.30 },
+            "20":  { "carrier": 2.20, "peak": 1.30 },
+            "30":  { "carrier": 2.22, "peak": 1.35 },
+            "40":  { "carrier": 2.22, "peak": 1.35 },
+            "50":  { "carrier": 2.25, "peak": 1.38 },
+            "60":  { "carrier": 2.26, "peak": 1.38 },
+            "70":  { "carrier": 2.28, "peak": 1.40 },
+            "80":  { "carrier": 2.28, "peak": 1.40 },
+            "85":  { "carrier": 0.0,  "peak": 0.0 }
+          }
+        },
+
+        "fem2": {
+          "voltage_lookup": {
+            "-30": { "carrier": 2.10, "peak": 1.20 },
+            "-20": { "carrier": 2.10, "peak": 1.20 },
+            "-10": { "carrier": 2.15, "peak": 1.25 },
+            "0":   { "carrier": 2.15, "peak": 1.25 },
+            "10":  { "carrier": 2.20, "peak": 1.30 },
+            "20":  { "carrier": 2.20, "peak": 1.30 },
+            "30":  { "carrier": 2.22, "peak": 1.35 },
+            "40":  { "carrier": 2.22, "peak": 1.35 },
+            "50":  { "carrier": 2.25, "peak": 1.38 },
+            "60":  { "carrier": 2.26, "peak": 1.38 },
+            "70":  { "carrier": 2.28, "peak": 1.40 },
+            "80":  { "carrier": 2.28, "peak": 1.40 },
+            "85":  { "carrier": 0.0,  "peak": 0.0 }
+          }
+        }
+      },
+
+      "B41": {
+        "fem1": {
+          "voltage_lookup": {
+            "-30": { "carrier": 2.10, "peak": 1.60 },
+            "-20": { "carrier": 2.10, "peak": 1.58 },
+            "-10": { "carrier": 2.13, "peak": 1.58 },
+            "0":   { "carrier": 2.15, "peak": 1.55 },
+            "10":  { "carrier": 2.20, "peak": 1.55 },
+            "20":  { "carrier": 2.25, "peak": 1.50 },
+            "30":  { "carrier": 2.28, "peak": 1.45 },
+            "40":  { "carrier": 2.30, "peak": 1.40 },
+            "50":  { "carrier": 2.33, "peak": 1.40 },
+            "60":  { "carrier": 2.35, "peak": 1.35 },
+            "70":  { "carrier": 2.38, "peak": 1.30 },
+            "80":  { "carrier": 2.38, "peak": 1.30 },
+            "85":  { "carrier": 0.0,  "peak": 0.0 }
+          }
+        },
+
+        "fem2": {
+          "voltage_lookup": {
+            "-30": { "carrier": 2.10, "peak": 1.60 },
+            "-20": { "carrier": 2.10, "peak": 1.58 },
+            "-10": { "carrier": 2.13, "peak": 1.58 },
+            "0":   { "carrier": 2.15, "peak": 1.55 },
+            "10":  { "carrier": 2.20, "peak": 1.55 },
+            "20":  { "carrier": 2.25, "peak": 1.50 },
+            "30":  { "carrier": 2.28, "peak": 1.45 },
+            "40":  { "carrier": 2.30, "peak": 1.40 },
+            "50":  { "carrier": 2.33, "peak": 1.40 },
+            "60":  { "carrier": 2.35, "peak": 1.35 },
+            "70":  { "carrier": 2.38, "peak": 1.30 },
+            "80":  { "carrier": 2.38, "peak": 1.30 },
+            "85":  { "carrier": 0.0,  "peak": 0.0 }
+          }
+        }
+      },
+
+      "B48": {
+        "fem1": {
+          "voltage_lookup": {
+            "-30": { "carrier": 2.10, "peak": 1.20 },
+            "-20": { "carrier": 2.10, "peak": 1.20 },
+            "-10": { "carrier": 2.15, "peak": 1.25 },
+            "0":   { "carrier": 2.15, "peak": 1.25 },
+            "10":  { "carrier": 2.20, "peak": 1.30 },
+            "20":  { "carrier": 2.20, "peak": 1.30 },
+            "30":  { "carrier": 2.22, "peak": 1.35 },
+            "40":  { "carrier": 2.22, "peak": 1.35 },
+            "50":  { "carrier": 2.25, "peak": 1.38 },
+            "60":  { "carrier": 2.26, "peak": 1.38 },
+            "70":  { "carrier": 2.28, "peak": 1.40 },
+            "80":  { "carrier": 2.28, "peak": 1.40 },
+            "85":  { "carrier": 0.0,  "peak": 0.0 }
+          }
+        },
+
+        "fem2": {
+          "voltage_lookup": {
+            "-30": { "carrier": 2.10, "peak": 1.20 },
+            "-20": { "carrier": 2.10, "peak": 1.20 },
+            "-10": { "carrier": 2.15, "peak": 1.25 },
+            "0":   { "carrier": 2.15, "peak": 1.25 },
+            "10":  { "carrier": 2.20, "peak": 1.30 },
+            "20":  { "carrier": 2.20, "peak": 1.30 },
+            "30":  { "carrier": 2.22, "peak": 1.35 },
+            "40":  { "carrier": 2.22, "peak": 1.35 },
+            "50":  { "carrier": 2.25, "peak": 1.38 },
+            "60":  { "carrier": 2.26, "peak": 1.38 },
+            "70":  { "carrier": 2.28, "peak": 1.40 },
+            "80":  { "carrier": 2.28, "peak": 1.40 },
+            "85":  { "carrier": 0.0,  "peak": 0.0 }
+          }
+        }
+      }
+    }
+  },
+
+  "monitoring": {
+    "adc": {
+      "sampling_rate_hz": 1000,
+      "averaging_samples": 10,
+      "calibration_offset_mv": 0
+    },
+
+    "temperature": {
+      "sensor_type": "LM75A",
+      "i2c_address_fem1": 72,
+      "i2c_address_fem2": 73,
+      "resolution_bits": 12,
+      "update_interval_ms": 2000
+    },
+
+    "current": {
+      "shunt_resistance_ohm": 0.01,
+      "max_current_rating_a": 10.0,
+      "alarm_threshold_percent": 80
+    }
+  },
+
+  "logging": {
+    "safety_events": true,
+    "temperature_logging": true,
+    "voltage_adjustments": true,
+    "current_measurements": true,
+    "log_level": "INFO",
+    "max_log_file_size_mb": 100,
+    "log_rotation_count": 5
+  }
+}

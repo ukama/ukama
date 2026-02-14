@@ -56,6 +56,7 @@ LIBS = $(ULFIUS_LIB) $(CURL_LIB)
 LIBS+=-ljansson
 LIBS+=-lpthread
 LIBS+=-lusys
+LIBS+=-lm
 
 TARGET_CFILES   = $(wildcard ./src/*.c)
 TARGET_OBJFILES = $(TARGET_CFILES:.c=.o)

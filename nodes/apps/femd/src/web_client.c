@@ -142,6 +142,7 @@ cleanup:
     return ret;
 }
 
+#if 0
 int get_nodeid_and_type_from_noded(Config *config) {
 
     char url[128] = {0};
@@ -161,6 +162,7 @@ int get_nodeid_and_type_from_noded(Config *config) {
 
     return STATUS_OK;
 }
+#endif
 
 int wc_send_alarm_to_notifyd(Config *config,
                              int *retCode,

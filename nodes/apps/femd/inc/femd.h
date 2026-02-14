@@ -9,82 +9,64 @@
 #ifndef FEMD_H
 #define FEMD_H
 
-#include <pthread.h>
-#include <signal.h>
-#include <getopt.h>
-#include <stdbool.h>
-
-#include "config.h"
-#include "version.h"
-#include "gpio_controller.h"
-#include "i2c_controller.h"
-#include "yaml_config.h"
-#include "safety_monitor.h"
+#include <stdint.h>
 
 #include "ulfius.h"
+
 #include "usys_types.h"
 #include "usys_services.h"
-#include "usys_log.h"
-#include "jansson.h"
 
-#define SERVICE_NAME              SERVICE_FEM
-#define FEM_VERSION               VERSION
+#ifndef STATUS_OK
+#define STATUS_OK  0
+#endif
 
-#define STATUS_OK                 (0)
-#define STATUS_NOK                (-1)
-#define STATUS_NOTOK              (-1)
+#ifndef STATUS_NOK
+#define STATUS_NOK (-1)
+#endif
 
-#define DEF_LOG_LEVEL             "INFO"
-#define DEF_SERVICE_CLIENT_HOST   "localhost"
-#define DEF_NODED_HOST            "localhost"
-#define DEF_NOTIFY_HOST           "localhost"
-#define DEF_NODED_EP              "/v1/nodeinfo"
-#define DEF_NOTIFY_EP             "/notify/v1/event/"
-#define DEF_NODE_ID               "ukama-aaa-bbbb-ccc-dddd"
-#define DEF_NODE_TYPE             "amplifier"
-#define ENV_FEMD_DEBUG_MODE       "FEMD_DEBUG_MODE"
+#define SERVICE_NAME SERVICE_FEM
+#define MODULE_FEM   "fem"
+#define ALARM_NODE   "node"
+#define EMPTY_STRING ""
 
-#define EP_BS                     "/"
-#define REST_API_VERSION          "v1"
-#define URL_PREFIX                EP_BS REST_API_VERSION
-#define API_RES_EP(RES)           EP_BS RES
+#define ALARM_HIGH "HIGH"
+#define ALARM_LOW  "LOW"
 
-/* for json de/ser - mainly for alarm/notify */
-#define ALARM_TYPE_PA_OFF 0
-#define ALARM_TYPE_PA_ON  1
+#define ALARM_PA_AUTO_OFF        "pa_auto_off"
+#define ALARM_PA_AUTO_ON         "pa_auto_on"
+#define ALARM_PA_AUTO_OFF_DESCRP "PA disabled automatically due to safety"
+#define ALARM_PA_AUTO_ON_DESCRP  "PA restored automatically after safety cleared"
 
-#define ALARM_LOW                "low"
-#define ALARM_HIGH               "high"
-#define ALARM_NODE               "node"
-#define ALARM_PA_AUTO_OFF        "pa-auto-off"
-#define ALARM_PA_AUTO_ON         "pa-auto-on"
-#define ALARM_PA_AUTO_OFF_DESCRP "PA turned off (voltage, temperature, reverse-power)"
-#define ALARM_PA_AUTO_ON_DESCRP  "PA turned on  (auto-reactivated after violation)"
-#define EMPTY_STRING             ""
-#define MODULE_FEM               "fem"
+#define ALARM_TYPE_PA_OFF 1
+#define ALARM_TYPE_PA_ON  2
 
-#define UKAMA_AMPLIFIER_NODE "amplifier-node"
-#define ENV_FEM_BAND         "ENV_FEM_BAND"
+#define DEF_NODED_HOST         "localhost"
+#define DEF_NOTIFY_HOST        "localhost"
+#define DEF_NODED_EP           "/v1/nodeinfo"
+#define DEF_NOTIFY_EP          "/notify/v1/event/"
+#define DEF_NODE_ID            "ukama-aaa-bbbb-ccc-dddd"
+#define DEF_NODE_TYPE          "amplifier"
+#define DEF_GPIO_BASE_PATH     "/sys/devices/platform"
+#define DEF_SAFETY_CONFIG_PATH "/ukama/configs/femd/saftey_config.json"
 
+/* for sysroot */
+#define ENV_FEMD_SYSROOT      "FEMD_SYSROOT"
+#define ENV_FEM_BAND          "ENV_FEM_BAND"
+
+#define I2C_DEV_PATH_MAX      128
+#define I2C_TX_MAX            256  /* reg + payload */
+
+typedef enum {
+    FEM_UNIT_NONE = 0,
+    FEM_UNIT_1    = 1,
+    FEM_UNIT_2    = 2
+} FemUnit;
+
+typedef struct _u_instance  UInst;
 typedef struct _u_instance  UInst;
 typedef struct _u_request   URequest;
 typedef struct _u_response  UResponse;
 typedef json_t              JsonObj;
 typedef json_error_t        JsonErrObj;
-
-typedef struct {
-
-    Config         *config;
-    GpioController *gpioController;
-    I2CController  *i2cController;
-    SafetyMonitor  *safetyMonitor;
-} ServerConfig;
-
-void handle_sigint(int signum);
-
-int config_init(Config *config);
-void config_free(Config *config);
-int config_load_from_file(Config *config, const char *filename);
-void config_print(const Config *config);
 
 #endif /* FEMD_H */
