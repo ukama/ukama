@@ -30,7 +30,7 @@ runs:
         ${{ runner.os }}-go-
 
   - name: Download code coverage results
-    uses: actions/download-artifact@v4
+    uses: actions/download-artifact@v6
     with:
       name: code-coverage-${{ inputs.project-Key }}-${{ github.run_number }}
       path: ${{ inputs.working-directory }}
