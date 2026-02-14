@@ -30,7 +30,7 @@ type Config struct {
 	OrgName              string           `default:"ukama"`
 	PrometheusHost       string           `default:"http://prometheus:9090"`
 	MetricsKeyMapFile    string           `default:"/etc/reasoning/metric-key-map.json"`
-	FormatDecimalPoints  int              `default:"3"`
+	FormatDecimalPoints  int              `default:"5"`
 	MetricKeyMap         *MetricKeyMap
 	Service              *uconf.Service
 	Http            	 HttpServices
