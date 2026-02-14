@@ -37,13 +37,19 @@ static inline bool valid_pin(GpioPin p) {
     return (p >= 0 && p < GPIO_MAX);
 }
 
-static int build_path(char *dst, size_t n, const char *base, FemUnit unit, GpioPin pin, const char *leaf) {
+static int build_path(char *dst,
+                      size_t n,
+                      const char *base,
+                      FemUnit unit,
+                      GpioPin pin,
+                      const char *leaf) {
 
     if (!dst || n == 0 || !base || !leaf) return STATUS_NOK;
     if (!valid_pin(pin)) return STATUS_NOK;
     if (unit != FEM_UNIT_1 && unit != FEM_UNIT_2) return STATUS_NOK;
 
-    if (snprintf(dst, n, "%s/fem%d/%s/%s", base, (unit == FEM_UNIT_1) ? 1 : 2, gpioMeta[pin].name, leaf) >= (int)n) {
+    if (snprintf(dst, n, "%s/fem%d/%s/%s", base, (unit == FEM_UNIT_1) ? 1 : 2,
+                 gpioMeta[pin].name, leaf) >= (int)n) {
         return STATUS_NOK;
     }
 
