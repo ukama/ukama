@@ -12,7 +12,7 @@
 #include "config.h"
 #include "metrics.h"
 
-#define MAX_AGENTS  9
+#define MAX_AGENTS  10
 
 typedef int (*CollectorFxn)(MetricsCatConfig *stat);
 
@@ -30,6 +30,7 @@ int network_collector(MetricsCatConfig *stat);
 int ssd_collector(MetricsCatConfig *stat);
 int generic_stat_collector(MetricsCatConfig *stat);
 int backhaul_collector(MetricsCatConfig *stat);
+int femd_collector(MetricsCatConfig *stat);
 
 int collector(char *cfg);
 void collector_exit();
