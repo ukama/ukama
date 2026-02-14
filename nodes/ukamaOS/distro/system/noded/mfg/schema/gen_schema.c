@@ -1,9 +1,16 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+/* 
+ * - If FEMD_SYSROOT is set, it rewrites any JSON path fields:
+ *      invtSysFsFile, devSysFsFile
+ *   so they point to the actual filesystem under FEMD_SYSROOT.
  *
- * Copyright (c) 2021-present, Ukama Inc.
+ * Example:
+ *   FEMD_SYSROOT=/tmp/sys
+ *   "/tmp/sys/class/hwmon/hwmon0/temp1_input" stays as-is
+ *   "/sys/class/hwmon/..." -> "/tmp/sys/class/hwmon/..."
+ *   "/class/hwmon/..."     -> "/tmp/sys/class/hwmon/..."
+ *   "/dev/i2c-1"           -> "/tmp/sys/dev/i2c-1"
+ *
+ * If FEMD_SYSROOT is not set, behavior is unchanged.
  */
 
 /*
@@ -45,9 +52,14 @@
 #include "usys_string.h"
 #include "usys_types.h"
 
-#define VERSION					"0.0.1"
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
 
-#define MAX_JSON_TAGS 			3
+#define VERSION                 "0.0.1"
+#define MAX_JSON_TAGS           3
+
+#define ENV_FEMD_SYSROOT        "FEMD_SYSROOT"
 
 /* Schema struct */
 typedef struct {
@@ -65,6 +77,104 @@ static char* jsonKeyTag[MAX_JSON_TAGS] = {
 };
 
 NodeSchema nodeSchema[MAX_BOARDS] = {'\0'};
+
+static const char *femd_sysroot(void) {
+    const char *v = getenv(ENV_FEMD_SYSROOT);
+    return (v && v[0] != '\0') ? v : NULL;
+}
+
+static bool starts_with(const char *s, const char *pfx) {
+    if (!s || !pfx) return false;
+    size_t n = strlen(pfx);
+    return strncmp(s, pfx, n) == 0;
+}
+
+static int resolve_with_sysroot(char *out, size_t outsz, const char *path) {
+    const char *root = femd_sysroot();
+    if (!out || outsz == 0 || !path || path[0] == '\0') return -1;
+
+    if (!root) {
+        int n = snprintf(out, outsz, "%s", path);
+        return (n < 0 || (size_t)n >= outsz) ? -1 : 0;
+    }
+
+    /* Already absolute under sysroot */
+    if (starts_with(path, root)) {
+        int n = snprintf(out, outsz, "%s", path);
+        return (n < 0 || (size_t)n >= outsz) ? -1 : 0;
+    }
+
+    /* /sys/... -> <root>/... */
+    if (starts_with(path, "/sys/")) {
+        int n = snprintf(out, outsz, "%s%s", root, path + 4);
+        return (n < 0 || (size_t)n >= outsz) ? -1 : 0;
+    }
+
+    /* /dev/... -> <root>/dev/... */
+    if (starts_with(path, "/dev/")) {
+        int n = snprintf(out, outsz, "%s%s", root, path);
+        return (n < 0 || (size_t)n >= outsz) ? -1 : 0;
+    }
+
+    /* "/class/...", "/bus/...", "/devices/..." etc -> <root> + path */
+    if (path[0] == '/') {
+        int n = snprintf(out, outsz, "%s%s", root, path);
+        return (n < 0 || (size_t)n >= outsz) ? -1 : 0;
+    }
+
+    /* Relative path: leave unchanged */
+    {
+        int n = snprintf(out, outsz, "%s", path);
+        return (n < 0 || (size_t)n >= outsz) ? -1 : 0;
+    }
+}
+
+static bool is_path_key(const char *k) {
+    return (k &&
+            (!strcmp(k, "devSysFsFile") ||
+             !strcmp(k, "invtSysFsFile")));
+}
+
+static void json_apply_sysroot_paths(JsonObj *j) {
+    if (!j || !femd_sysroot()) return;
+
+    if (json_is_object(j)) {
+        const char *k = NULL;
+        JsonObj *v = NULL;
+
+        json_object_foreach(j, k, v) {
+
+            if (is_path_key(k) && json_is_string(v)) {
+                const char *oldp = json_string_value(v);
+                if (oldp && oldp[0] != '\0') {
+                    char newp[512] = {0};
+                    if (resolve_with_sysroot(newp, sizeof(newp), oldp) == 0) {
+                        if (strcmp(oldp, newp) != 0) {
+                            json_object_set_new(j, k, json_string(newp));
+                        }
+                    }
+                }
+                continue;
+            }
+
+            if (json_is_object(v) || json_is_array(v)) {
+                json_apply_sysroot_paths(v);
+            }
+        }
+        return;
+    }
+
+    if (json_is_array(j)) {
+        size_t i = 0;
+        JsonObj *v = NULL;
+        json_array_foreach(j, i, v) {
+            if (json_is_object(v) || json_is_array(v)) {
+                json_apply_sysroot_paths(v);
+            }
+        }
+        return;
+    }
+}
 
 /* Set the verbosity level for logs. */
 void set_log_level(char *slevel) {
@@ -158,8 +268,6 @@ JsonObj* dofile(char *filename) {
     return jSchema;
 }
 
-
-
 /* Modify UUID field in JSON */
 int modify_uuid(JsonObj * jObj, char* value) {
     int ret = -1;
@@ -198,7 +306,7 @@ char* read_uuid_for_module_name(const char* name) {
 /* Update Node Config */
 int  update_node_config( const JsonObj **obj) {
     int ret = -1;
-   const JsonObj *nodeCfgObj = *obj;
+    const JsonObj *nodeCfgObj = *obj;
 
     /* node config is supposed to be an array of modules */
     if (json_is_array(nodeCfgObj)) {
@@ -239,6 +347,7 @@ int modify_json(unsigned short idx)
     JsonObj *obj = NULL;
     char *out;
     char* value = NULL;
+
     /* Parse the JSON file */
     root = dofile(nodeSchema[idx].fileName);
     if (!root) {
@@ -264,7 +373,9 @@ int modify_json(unsigned short idx)
                 /* Update  Node Config */
                 ret  = update_node_config((const JsonObj**)&obj);
                 if (ret) {
-                    usys_log_error("Schema:: Failed to update node config for %s file.", nodeSchema[idx].fileName);
+                    usys_log_error("Schema:: Failed to update node config for %s file.",
+                                   nodeSchema[idx].fileName);
+                    json_decref(root);
                     return ret;
                 }
 
@@ -282,12 +393,16 @@ int modify_json(unsigned short idx)
                 /* For Node Info and Module info  */
                 if (modify_uuid(obj, value )) {
                     usys_log_error("Schema copying uuid failed for Unit/Module Info.");
+                    json_decref(root);
                     return -1;
                 }
             }
 
         }
     }
+
+    /* Apply FEMD_SYSROOT path rewrite (devSysFsFile / invtSysFsFile) */
+    json_apply_sysroot_paths(root);
 
     /* Debug Info */
     out = json_dumps(root, (JSON_INDENT(4)|JSON_COMPACT|JSON_ENCODE_ANY) );
@@ -319,26 +434,18 @@ static struct option longOptions[] = {
                 { 0, 0, 0, 0 }
 };
 
-/* Usage options for the ukamaEDR */
+/* Usage options */
 void usage() {
     printf("Usage: schema [options] \n");
     printf("Options:\n");
-    printf(
-                    "--h, --help                                                          Help menu.\n");
-    printf(
-                    "--l, --logs <TRACE>|<DEBUG>|<INFO>                                   Log level for the process.\n");
-    printf(
-                    "--n, --name <ComV1>|<LTE>|<MASK>|<RF CTRL BOARD>,<RF BOARD>          Name of module.\n");
-    printf(
-                    "--u, --uuid <string 24 character long>                               UUIID for file.\n");
-    printf(
-                    "--m, --muuid <string 24 character long>                              Module UIID for file.\n");
-    printf(
-                    "--f, --file <Files>                                                  Schema files.\n");
-    printf(
-                    "--v, --version                                                       Software Version.\n");
+    printf("--h, --help                                                          Help menu.\n");
+    printf("--l, --logs <TRACE>|<DEBUG>|<INFO>                                   Log level for the process.\n");
+    printf("--n, --name <ComV1>|<LTE>|<MASK>|<RF CTRL BOARD>,<RF BOARD>          Name of module.\n");
+    printf("--u, --uuid <string 24 character long>                               UUIID for file.\n");
+    printf("--m, --muuid <string 24 character long>                              Module UIID for file.\n");
+    printf("--f, --file <Files>                                                  Schema files.\n");
+    printf("--v, --version                                                       Software Version.\n");
 }
-
 
 /* JSON Schema UUID Update utility */
 int main(int argc, char** argv) {
@@ -347,7 +454,7 @@ int main(int argc, char** argv) {
     char *mid[MAX_BOARDS] = {"\0"};
     char *file[MAX_BOARDS] = {"\0"};
     char *debug = "TRACE";
-    char *ip = "";
+
     set_log_level(debug);
 
     if (argc < 2 ) {
@@ -355,7 +462,6 @@ int main(int argc, char** argv) {
         usage();
         usys_exit(1);
     }
-
 
     int fidx = 0;
     int midx = 0;
@@ -415,18 +521,16 @@ int main(int argc, char** argv) {
 
     /* Check for arguments */
     if (uuidCount != 1) {
-
         usys_log_error("Schema:: Error:: Schema expects one uuid argument which is must and you provided %d.", uuidCount);
         usage();
         usys_exit(0);
 
     } else if ((fidx != nidx) || (fidx != midx) || (fidx < 1)) {
-
         usys_log_error("Schema:: Error:: Schema expects module uuid, name and file for each module "
-                        "and you provided %d module name %d modules uuid and %d module files.", nidx, midx, fidx);
+                        "and you provided %d module name %d modules uuid and %d module files.",
+                       nidx, midx, fidx);
         usage();
         usys_exit(0);
-
     }
 
     /* Verify UUID */
@@ -458,8 +562,6 @@ int main(int argc, char** argv) {
 
     /* Modify every file provided in input.*/
     for(int idx = 0; idx < fidx;idx++) {
-
-        /* Update JSON */
         int ret = modify_json(idx);
         if (ret) {
             usys_log_error("Schema:: Error:: Failed to update schema %s.", file[idx]);
@@ -467,7 +569,6 @@ int main(int argc, char** argv) {
         } else {
             usys_log_info("Schema:: Updated schema %s.", file[idx]);
         }
-
     }
 
     return 0;
