@@ -30,6 +30,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	pbe "github.com/ukama/ukama/systems/metrics/exporter/pb/gen"
 	pbs "github.com/ukama/ukama/systems/metrics/sanitizer/pb/gen"
+	pbr "github.com/ukama/ukama/systems/metrics/reasoning/pb/gen"
 )
 
 type Router struct {
@@ -51,6 +52,7 @@ type RouterConfig struct {
 type Clients struct {
 	e exporter
 	s client.Sanitizer
+	r client.Reasoning
 }
 
 type exporter interface {
@@ -82,7 +84,7 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints, metricHost string, debug bool) 
 	c := &Clients{}
 	c.e = client.NewExporter(endpoints.Exporter, endpoints.Timeout)
 	c.s = client.NewSanitizer(endpoints.Sanitizer, endpoints.Timeout)
-
+	c.r = client.NewReasoning(endpoints.Reasoning, endpoints.Timeout)
 	return c
 }
 
@@ -186,6 +188,12 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 		sanitizer := auth.Group("/sanitize", "Sanitizer", "Sanitizer")
 		sanitizer.POST("", formatDoc("Sanitize", "Stream metrics for Sanitizer service"), tonic.Handler(r.sanitizeMetrics, http.StatusOK))
+
+		reasoning := auth.Group("/reasoning", "Reasoning", "Reasoning")
+		reasoning.GET("/stats/nodes/:node/metrics/:metric", []fizz.OperationOption{
+			func(info *openapi.OperationInfo) {
+				info.Description = "Get algorithm stats for a metric"
+			}}, tonic.Handler(r.getAlgoStatsForMetricHandler, http.StatusOK))
 	}
 }
 
@@ -194,6 +202,10 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 		info.Summary = summary
 		info.Description = description
 	}}
+}
+
+func (r *Router) getAlgoStatsForMetricHandler(c *gin.Context, in *GetAlgoStatsForMetricInput) (*pbr.GetAlgoStatsForMetricResponse, error) {
+	return r.clients.r.GetAlgoStatsForMetric(in.NodeID, in.Metric)
 }
 
 func parse_metrics_request(mReq string) []string {

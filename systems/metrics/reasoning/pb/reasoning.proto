@@ -1,0 +1,74 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2026-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/metrics/reasoning/pb/gen";
+
+import "validator.proto";
+package ukama.metrics.reasoning.v1;
+
+service ReasoningService {
+    rpc StartScheduler(StartSchedulerRequest) returns (StartSchedulerResponse);
+    rpc StopScheduler(StopSchedulerRequest) returns (StopSchedulerResponse);
+    rpc GetAlgoStatsForMetric(GetAlgoStatsForMetricRequest) returns (GetAlgoStatsForMetricResponse);
+    rpc GetDomains(GetDomainsRequest) returns (GetDomainsResponse);
+}
+
+message GetAlgoStatsForMetricRequest {
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+    string metric = 2 [(validator.field) = {string_not_empty: true}, json_name = "metric"];
+}
+
+message GetAlgoStatsForMetricResponse {
+    AggregatedStats aggregated = 1 [json_name = "aggregated"];
+    Trend trend = 2 [json_name = "trend"];
+    Confidence confidence = 3 [json_name = "confidence"];
+    Projection projection = 4 [json_name = "projection"];
+    string state = 5 [json_name = "state"];
+}
+
+message GetDomainsRequest {
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+}
+
+message GetDomainsResponse {}
+
+message StartSchedulerRequest {}
+
+message StartSchedulerResponse {}
+
+message StopSchedulerRequest {}
+
+message StopSchedulerResponse {}
+
+message AggregatedStats {
+    double value = 1 [json_name = "value"];
+    double min = 2 [json_name = "min"];
+    double max = 3 [json_name = "max"];
+    double p95 = 4 [json_name = "p95"];
+    double mean = 5 [json_name = "mean"];
+    double median = 6 [json_name = "median"];
+    double sample_count = 7 [json_name = "sample_count"];
+    string aggregation = 8 [json_name = "aggregation"];
+    double noise_estimate = 9 [json_name = "noise_estimate"];
+}
+
+message Trend {
+    string type = 1 [json_name = "type"];
+    double value = 2 [json_name = "value"];
+}
+
+message Confidence {
+    double value = 1 [json_name = "value"];
+}
+
+message Projection {
+    string type = 1 [json_name = "type"];
+    double eta_sec = 2 [json_name = "eta_sec"];
+}

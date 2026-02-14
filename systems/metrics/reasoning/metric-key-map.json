@@ -1,0 +1,62 @@
+{
+    "tnode":{
+        "metrics": [
+            {
+             "step": 1,
+             "key": "com_soc_cpu_usage",
+             "category": "health",
+             "metric_type": "gauge",
+             "trend_sensitivity": 1.0,
+             "state_direction": "higher_is_worse",
+             "thresholds": {
+              "min": 0,
+              "medium": 50,
+              "max": 100
+             }
+            },
+            {
+             "step": 1,
+             "key": "com_memory_ddr_used",
+             "category": "health",
+             "metric_type": "gauge",
+             "trend_sensitivity": 1.0,
+             "state_direction": "higher_is_worse",
+             "thresholds": {
+              "min": 0,
+              "medium": 50,
+              "max": 100
+             }
+            }
+        ]
+    },
+    "anode":{
+        "metrics": [
+            {
+                "step": 1,
+                "key": "com_cpu_usage",
+                "category": "health",
+                "metric_type": "gauge",
+                "trend_sensitivity": 1.0,
+                "state_direction": "higher_is_worse",
+                "thresholds": {
+                    "min": 0,
+                    "medium": 50,
+                    "max": 100
+                }
+            },
+            {
+                "step": 1,
+                "key": "com_memory_usage",
+                "category": "health",
+                "metric_type": "gauge",
+                "trend_sensitivity": 1.0,
+                "state_direction": "higher_is_worse",
+                "thresholds": {
+                    "min": 0,
+                    "medium": 50,
+                    "max": 100
+                }
+            }
+        ]
+    }
+}
