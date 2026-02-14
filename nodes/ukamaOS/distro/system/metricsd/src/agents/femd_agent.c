@@ -248,11 +248,11 @@ static int femd_read_metrics(const char *url, FemMetrics *out) {
 			gpio = j_get_obj(fem, "gpio");
 			if (gpio) {
 				out->fem[idx].gpio28vVdsEnable = (double)j_get_bool(gpio, "28v_vds_enable", 0);
-				out->fem[idx].gpioTxRfEnable   = (double)j_get_bool(gpio, "tx_rf_enable", 0);
-				out->fem[idx].gpioRxRfEnable   = (double)j_get_bool(gpio, "rx_rf_enable", 0);
-				out->fem[idx].gpioPaVdsEnable  = (double)j_get_bool(gpio, "pa_vds_enable", 0);
-				out->fem[idx].gpioRfPalEnable  = (double)j_get_bool(gpio, "rf_pal_enable", 0);
-				out->fem[idx].gpioPsuPgood     = (double)j_get_bool(gpio, "psu_pgood", 0);
+				out->fem[idx].gpioTxRfEnable   = (double)j_get_bool(gpio, "tx_rf_enable",   0);
+				out->fem[idx].gpioRxRfEnable   = (double)j_get_bool(gpio, "rx_rf_enable",   0);
+				out->fem[idx].gpioPaVdsEnable  = (double)j_get_bool(gpio, "pa_vds_enable",  0);
+				out->fem[idx].gpioRfPalEnable  = (double)j_get_bool(gpio, "rf_pal_enable",  0);
+				out->fem[idx].gpioPsuPgood     = (double)j_get_bool(gpio, "psu_pgood",      0);
 			}
 
 			/* snapshot.timestamp (if present) */
@@ -373,8 +373,7 @@ int femd_collect_stat(MetricsCatConfig *cfgStat, metricAddFunc addFunc) {
 		return RETURN_NOTOK;
 	}
 
-	/* cfgStat->url is treated as endpoint path, default /v1/status */
-	path = (cfgStat && cfgStat->url && cfgStat->url[0]) ? cfgStat->url : "/v1/status";
+	path = (cfgStat && cfgStat->url && cfgStat->url[0]) ? cfgStat->url : "/v1/metrics";
 
 	/* Build full URL */
 	snprintf(urlBuf, sizeof(urlBuf), "http://127.0.0.1:%d%s", port, path);
