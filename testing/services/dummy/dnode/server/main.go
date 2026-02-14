@@ -119,7 +119,7 @@ func (s *Server) onlineHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	nodeId := r.URL.Query().Get("nodeid")
+	nodeId := r.URL.Query().Get("node_id")
 	nodeID, err := ukama.ValidateNodeId(nodeId)
 	if err != nil {
 		logger.Errorf("Invalid node ID: %v", err)
@@ -150,7 +150,7 @@ func (s *Server) updateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	nodeId := r.URL.Query().Get("nodeid")
+	nodeId := r.URL.Query().Get("node_id")
 	profile := r.URL.Query().Get("profile")
 	scenario := r.URL.Query().Get("scenario")
 
