@@ -7,7 +7,7 @@
 	static="false"
 	source="/nodes/apps/backhaul"
 	cmd="make"
-	bin_from="/nodes/apps/power/backhaul-monitor"
+	bin_from="/nodes/apps/backhaul/backhaul-monitor"
 	bin_to="/sbin"
 
 [capp-exec]
