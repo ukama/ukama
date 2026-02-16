@@ -10,7 +10,6 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"strconv"
 	"time"
 
@@ -32,13 +31,9 @@ import (
 )
 
 const (
-	jobTag = "reasoning-job"
+	jobTag           = "reasoning-job"
+	errInvalidNodeID = "Invalid node ID: %v"
 )
-
-type metricWithStats struct {
-	metric pkg.Metric
-	stats  *algos.Stats
-}
 
 type ReasoningServer struct {
 	pb.UnimplementedReasoningServiceServer
@@ -61,16 +56,64 @@ func NewReasoningServer(msgBus mb.MsgBusServiceClient, nodeClient creg.NodeClien
 		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(config.OrgName).SetService(pkg.ServiceName),
 	}
 
-	// Start the scheduler
-	if err := c.reasoningScheduler.Start(jobTag, func() { c.ReasoningJob(context.Background()) }); err != nil {
+	if err := c.reasoningScheduler.Start(jobTag, c.reasoningJobCallback); err != nil {
 		log.Errorf("Failed to start the initial scheduler: %v", err)
 	}
 
 	return c
 }
 
+// ensureMetricKeyMap loads MetricKeyMap if nil. Returns error for gRPC handlers, nil for job (logs and continues).
+func (c *ReasoningServer) ensureMetricKeyMap() error {
+	if c.config.MetricKeyMap != nil {
+		return nil
+	}
+	mkm, err := pkg.LoadMetricKeyMap(c.config)
+	if err != nil {
+		return err
+	}
+	c.config.MetricKeyMap = mkm
+	return nil
+}
+
+func buildMetricQueries(metrics []pkg.Metric, nodeID string) ([]metric.MetricWithFilters, string) {
+	queries := make([]metric.MetricWithFilters, 0, len(metrics))
+	step := "1"
+	for i, m := range metrics {
+		if i == 0 && m.Step > 0 {
+			step = strconv.Itoa(m.Step)
+		}
+		queries = append(queries, metric.MetricWithFilters{
+			Metric:  m.MetricKey,
+			Filters: []metric.Filter{{Key: "node_id", Value: nodeID}},
+		})
+	}
+	return queries, step
+}
+
+func statsToProto(s algos.Stats) *pb.GetAlgoStatsForMetricResponse {
+	return &pb.GetAlgoStatsForMetricResponse{
+		Aggregated: &pb.AggregatedStats{
+			ComputedAt:     s.ComputedAt,
+			Value:          s.AggregationStats.AggregatedValue,
+			Min:            s.AggregationStats.Min,
+			Max:            s.AggregationStats.Max,
+			P95:            s.AggregationStats.P95,
+			Mean:           s.AggregationStats.Mean,
+			Median:         s.AggregationStats.Median,
+			SampleCount:    s.AggregationStats.SampleCount,
+			Aggregation:    s.Aggregation,
+			NoiseEstimate:  s.AggregationStats.NoiseEstimate,
+		},
+		Trend:       &pb.Trend{Type: s.Trend, Value: s.AggregationStats.AggregatedValue},
+		Confidence: &pb.Confidence{Value: s.Confidence},
+		Projection:  &pb.Projection{Type: s.Projection.Type, EtaSec: s.Projection.EtaSec},
+		State:       s.State,
+	}
+}
+
 func (c *ReasoningServer) StartScheduler(ctx context.Context, req *pb.StartSchedulerRequest) (*pb.StartSchedulerResponse, error) {
-	if err := c.reasoningScheduler.Start(jobTag, func() { c.ReasoningJob(context.Background()) }); err != nil {
+	if err := c.reasoningScheduler.Start(jobTag, c.reasoningJobCallback); err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to start the scheduler: %v", err)
 	}
 	return &pb.StartSchedulerResponse{}, nil
@@ -83,11 +126,15 @@ func (c *ReasoningServer) StopScheduler(ctx context.Context, req *pb.StopSchedul
 	return &pb.StopSchedulerResponse{}, nil
 }
 
+func (c *ReasoningServer) reasoningJobCallback() {
+	c.ReasoningJob(context.Background())
+}
+
 func (c *ReasoningServer) GetAlgoStatsForMetric(ctx context.Context, req *pb.GetAlgoStatsForMetricRequest) (*pb.GetAlgoStatsForMetricResponse, error) {
 	log.Infof("Getting algo stats for metric %s on node %s", req.Metric, req.NodeId)
 	nodeId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Invalid node ID: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, errInvalidNodeID, err)
 	}
 
 	nType := ukama.GetNodeType(nodeId.String())
@@ -95,12 +142,8 @@ func (c *ReasoningServer) GetAlgoStatsForMetric(ctx context.Context, req *pb.Get
 		return nil, status.Errorf(codes.InvalidArgument, "Could not determine node type from node ID %s", nodeId.String())
 	}
 
-	if c.config.MetricKeyMap == nil {
-		metricKeyMap, err := pkg.LoadMetricKeyMap(c.config)
-		if err != nil {
-			return nil, status.Errorf(codes.Unavailable, "MetricKeyMap not loaded: %v", err)
-		}
-		c.config.MetricKeyMap = metricKeyMap
+	if err := c.ensureMetricKeyMap(); err != nil {
+		return nil, status.Errorf(codes.Unavailable, "MetricKeyMap not loaded: %v", err)
 	}
 
 	metricsCfg, ok := (*c.config.MetricKeyMap)[*nType]
@@ -117,50 +160,21 @@ func (c *ReasoningServer) GetAlgoStatsForMetric(ctx context.Context, req *pb.Get
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "Failed to load stats for metric %s on node %s: %v", req.Metric, nodeId.String(), err)
 	}
-	return &pb.GetAlgoStatsForMetricResponse{
-		Aggregated: &pb.AggregatedStats{
-			ComputedAt: stats.ComputedAt,
-			Value:      stats.AggregationStats.AggregatedValue,
-			Min: stats.AggregationStats.Min,
-			Max: stats.AggregationStats.Max,
-			P95: stats.AggregationStats.P95,
-			Mean: stats.AggregationStats.Mean,
-			Median: stats.AggregationStats.Median,
-			SampleCount: stats.AggregationStats.SampleCount,
-			Aggregation: stats.Aggregation,
-			NoiseEstimate: stats.AggregationStats.NoiseEstimate,
-		},
-		Trend: &pb.Trend{
-			Type:  stats.Trend,
-			Value: stats.AggregationStats.AggregatedValue,
-		},
-		Confidence: &pb.Confidence{
-			Value: stats.Confidence,
-		},
-		Projection: &pb.Projection{
-			Type: stats.Projection.Type,
-			EtaSec: stats.Projection.EtaSec,
-		},
-		State: stats.State,
-	}, nil
+	return statsToProto(stats), nil
 }
 
 func (c *ReasoningServer) GetDomains(ctx context.Context, req *pb.GetDomainsRequest) (*pb.GetDomainsResponse, error) {
 	log.Infof("Getting domains for node %s", req.NodeId)
 	nodeId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Invalid node ID: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, errInvalidNodeID, err)
 	}
 	if ukama.GetNodeType(nodeId.String()) == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Could not determine node type from node ID %s", nodeId.String())
 	}
 
-	if c.config.MetricKeyMap == nil {
-		metricKeyMap, err := pkg.LoadMetricKeyMap(c.config)
-		if err != nil {
-			return nil, status.Errorf(codes.Unavailable, "MetricKeyMap not loaded: %v", err)
-		}
-		c.config.MetricKeyMap = metricKeyMap
+	if err := c.ensureMetricKeyMap(); err != nil {
+		return nil, status.Errorf(codes.Unavailable, "MetricKeyMap not loaded: %v", err)
 	}
 
 	tNodeMetrics, ok := (*c.config.MetricKeyMap)[ukama.NODE_TYPE_TOWERNODE]
@@ -178,12 +192,10 @@ func (c *ReasoningServer) GetDomains(ctx context.Context, req *pb.GetDomainsRequ
 
 	nds, err := utils.SortNodeIds(req.NodeId)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Invalid node ID: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, errInvalidNodeID, err)
 	}
 
 	nodeLog := log.WithField("node_id", req.NodeId).WithField("metric", req.Metric)
-
-	// Load stats for ALL metric types for both TNode and ANode, then build MetricEvaluationsMap for domain evaluation
 	tNodeEvals := c.buildMetricEvaluationsForNode(nds.TNode, tNodeMetrics, nodeLog)
 	aNodeEvals := c.buildMetricEvaluationsForNode(nds.ANode, aNodeMetrics, nodeLog)
 
@@ -198,8 +210,18 @@ func (c *ReasoningServer) GetDomains(ctx context.Context, req *pb.GetDomainsRequ
 		domain = tNodeMetrics.Metrics[0].Category
 	}
 
-	tNodeDomain := c.evaluateDomainWithEvals(nds.TNode, domain, req.Metric, tNodeEvals, rulesForMetric, tNodeEvals[req.Metric].EvaluatedAt, nodeLog)
-	aNodeDomain := c.evaluateDomainWithEvals(nds.ANode, domain, req.Metric, aNodeEvals, rulesForMetric, aNodeEvals[req.Metric].EvaluatedAt, nodeLog)
+	now := time.Now().Unix()
+	tNodeNow := now
+	if e, ok := tNodeEvals[req.Metric]; ok {
+		tNodeNow = e.EvaluatedAt
+	}
+	aNodeNow := now
+	if e, ok := aNodeEvals[req.Metric]; ok {
+		aNodeNow = e.EvaluatedAt
+	}
+
+	tNodeDomain := c.evaluateDomainWithEvals(nds.TNode, domain, req.Metric, tNodeEvals, rulesForMetric, tNodeNow, nodeLog)
+	aNodeDomain := c.evaluateDomainWithEvals(nds.ANode, domain, req.Metric, aNodeEvals, rulesForMetric, aNodeNow, nodeLog)
 
 	if algos.SeverityRank(tNodeDomain.Severity) >= algos.SeverityRank(aNodeDomain.Severity) {
 		return &pb.GetDomainsResponse{Domain: domainSnapshotToProto(&tNodeDomain)}, nil
@@ -222,14 +244,9 @@ func (c *ReasoningServer) buildMetricEvaluationsForNode(nodeID string, metricsCf
 }
 
 // evaluateDomainWithEvals runs domain evaluation given MetricEvaluationsMap and filtered rules.
+// DomainSnapshot is not persisted, so previous is always nil (antiflap/holding only applies within a request).
 func (c *ReasoningServer) evaluateDomainWithEvals(nodeID, domain, metricPattern string, evals algos.MetricEvaluationsMap, rules []algos.Rule, now int64, nodeLog *log.Entry) algos.DomainSnapshot {
-	var previous *algos.DomainSnapshot
-	if domainKey := utils.GetDomainStoreKey(nodeID, metricPattern); domainKey != "" {
-		if prev, err := c.loadDomainSnapshot(domainKey, nodeLog); err == nil && prev.RuleID != "" {
-			previous = prev
-		}
-	}
-	snap := algos.EvaluateDomain(domain, evals, rules, previous, now)
+	snap := algos.EvaluateDomain(domain, evals, rules, nil, now)
 	nodeLog.WithFields(log.Fields{"node_id": nodeID, "domain": domain, "rule_id": snap.RuleID, "severity": snap.Severity}).Debug("Domain evaluation")
 	return snap
 }
@@ -254,15 +271,9 @@ func (c *ReasoningServer) ReasoningJob(ctx context.Context) {
 	jobLog := log.WithField("job", jobTag)
 	jobLog.Info("Reasoning job started")
 
-	// Retry loading MetricKeyMap if nil (e.g. file wasn't available at startup)
-	if c.config.MetricKeyMap == nil {
-		metricKeyMap, err := pkg.LoadMetricKeyMap(c.config)
-		if err != nil {
-			jobLog.WithError(err).Error("MetricKeyMap not loaded, skipping")
-			return
-		}
-		c.config.MetricKeyMap = metricKeyMap
-		jobLog.Info("MetricKeyMap loaded successfully")
+	if err := c.ensureMetricKeyMap(); err != nil {
+		jobLog.WithError(err).Error("MetricKeyMap not loaded, skipping")
+		return
 	}
 
 	nodes, err := c.nodeClient.List(creg.ListNodesRequest{
@@ -286,16 +297,14 @@ func (c *ReasoningServer) ReasoningJob(ctx context.Context) {
 			failed++
 			continue
 		}
-		jobLog.WithFields(log.Fields{"node_id": node.Id, "tnode": nds.TNode, "anode": nds.ANode}).Info("Processing tower+amp node pair")
-
-		jobLog.WithField("node_id", node.Id).Info("Getting time window from store")
 		start, end, err := utils.GetStartEndFromStore(c.store, node.Id, c.config.PrometheusInterval)
 		if err != nil {
 			jobLog.WithError(err).WithField("node_id", node.Id).Error("Failed to get time window, skipping")
 			failed++
 			continue
 		}
-		jobLog.WithFields(log.Fields{"node_id": node.Id, "start": start, "end": end}).Info("Got time window, processing metrics")
+
+		jobLog.WithFields(log.Fields{"node_id": node.Id, "tnode": nds.TNode, "anode": nds.ANode}).Info("Processing node pair")
 
 		for _, nodeID := range []string{nds.TNode, nds.ANode} {
 			p, f := c.processNode(ctx, nodeID, start, end, jobLog)
@@ -323,24 +332,9 @@ func (c *ReasoningServer) processNode(ctx context.Context, nodeID, start, end st
 		return 0, 0
 	}
 
-	nodeLog := jobLog.WithFields(log.Fields{"node_id": nodeID, "type": *nType, "window": start + ".." + end})
-	nodeLog.Infof("Processing %d metric(s) for node", len(metricsCfg.Metrics))
-
-	// Batch all metrics into a single Prometheus request (per node_types config)
-	metricQueries := make([]metric.MetricWithFilters, 0, len(metricsCfg.Metrics))
-	step := "1"
-	for i, m := range metricsCfg.Metrics {
-		if i == 0 && m.Step > 0 {
-			step = strconv.Itoa(m.Step)
-		}
-		metricQueries = append(metricQueries, metric.MetricWithFilters{
-			Metric:  m.MetricKey,
-			Filters: []metric.Filter{{Key: "node_id", Value: nodeID}},
-		})
-	}
-
+	nodeLog := jobLog.WithFields(log.Fields{"node_id": nodeID, "type": *nType})
+	metricQueries, step := buildMetricQueries(metricsCfg.Metrics, nodeID)
 	rp := metric.BuildPrometheusRequest(c.config.PrometheusHost, start, end, step, "", metricQueries)
-	nodeLog.WithFields(log.Fields{"metrics": len(metricQueries), "prometheus_host": c.config.PrometheusHost}).Debug("Fetching metrics from Prometheus")
 	reqCtx, cancel := context.WithTimeout(ctx, c.config.Timeout)
 	defer cancel()
 	pr, err := metric.ProcessPromRequest(reqCtx, rp)
@@ -349,32 +343,17 @@ func (c *ReasoningServer) processNode(ctx context.Context, nodeID, start, end st
 		return 0, len(metricsCfg.Metrics)
 	}
 
-	// Process each metric and collect stats (no persist yet)
-	// collected := make([]metricWithStats, 0, len(metricsCfg.Metrics))
 	for _, m := range metricsCfg.Metrics {
 		prForMetric := pr.FilterResultsByMetric(m.MetricKey)
-		s, err := c.processAlgorithms(nodeID, m, prForMetric, end, nodeLog)
+		stats, err := c.processAlgorithms(nodeID, m, prForMetric, end, nodeLog)
 		if err != nil {
 			nodeLog.WithError(err).WithField("metric", m.MetricKey).Error("Metric processing failed")
 			failed++
 		} else {
-			c.store.PutJson(utils.GetAlgoStatsStoreKey(nodeID, m.MetricKey), s)
+			c.store.PutJson(utils.GetAlgoStatsStoreKey(nodeID, m.MetricKey), stats)
 			processed++
 		}
-		// collected = append(collected, metricWithStats{metric: m, stats: s})
 	}
-
-	// Domain evaluation and persist: store algo stats and domain separately
-	// if len(collected) > 0 {
-	// 	domainSnapshot := c.evaluateDomainForNode(nodeID, collected, end, nodeLog)
-	// 	for _, ms := range collected {
-			
-	// 		domainKey := utils.GetDomainStoreKey(nodeID, ms.metric.Key)
-	// 		if err := c.store.PutJson(domainKey, domainSnapshot); err != nil {
-	// 			nodeLog.WithError(err).WithField("metric", ms.metric.Key).Error("Failed to persist domain")
-	// 		}
-	// 	}
-	// }
 	return processed, failed
 }
 
@@ -431,18 +410,6 @@ func (c *ReasoningServer) processAlgorithms(nodeID string, m pkg.Metric, pr *met
 	stats.ComputedAt = endUnix
 
 	return stats, nil
-}
-
-func (c *ReasoningServer) loadDomainSnapshot(storeKey string, nodeLog *log.Entry) (*algos.DomainSnapshot, error) {
-	bytes, err := c.store.GetJson(storeKey)
-	if err != nil {
-		return nil, err
-	}
-	var snap algos.DomainSnapshot
-	if err := json.Unmarshal(bytes, &snap); err != nil {
-		return nil, err
-	}
-	return &snap, nil
 }
 
 func (c *ReasoningServer) loadRules(nodeLog *log.Entry) []algos.Rule {
