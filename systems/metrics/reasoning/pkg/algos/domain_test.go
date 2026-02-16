@@ -86,3 +86,40 @@ func TestLoadRulesFromJSON(t *testing.T) {
 		t.Errorf("expected domain health, got %s", rules[0].Domain)
 	}
 }
+
+func TestLoadRulesFromJSONAnyOfParsing(t *testing.T) {
+	rules, err := LoadRulesFromJSON("../../metric-rules.json")
+	if err != nil {
+		t.Skipf("metric-rules.json not found: %v", err)
+	}
+	var resRule *Rule
+	for i := range rules {
+		if rules[i].ID == "health.resource.constraint" {
+			resRule = &rules[i]
+			break
+		}
+	}
+	if resRule == nil {
+		t.Fatal("health.resource.constraint rule not found")
+	}
+	if len(resRule.Conditions) < 2 {
+		t.Fatalf("expected 2 conditions, got %d", len(resRule.Conditions))
+	}
+	// First condition: any_of with cpu/warning and memory/warning, min_match 2
+	if len(resRule.Conditions[0].AnyOf) != 2 {
+		t.Errorf("expected 2 any_of items in condition 0, got %d", len(resRule.Conditions[0].AnyOf))
+	}
+	if resRule.Conditions[0].AnyOf[0].Metric != "cpu" || resRule.Conditions[0].AnyOf[0].State != "warning" {
+		t.Errorf("any_of[0] expected cpu/warning, got %q/%q", resRule.Conditions[0].AnyOf[0].Metric, resRule.Conditions[0].AnyOf[0].State)
+	}
+	if resRule.Conditions[0].AnyOf[1].Metric != "memory" || resRule.Conditions[0].AnyOf[1].State != "warning" {
+		t.Errorf("any_of[1] expected memory/warning, got %q/%q", resRule.Conditions[0].AnyOf[1].Metric, resRule.Conditions[0].AnyOf[1].State)
+	}
+	// Second condition: any_of with trend increasing
+	if len(resRule.Conditions[1].AnyOf) != 2 {
+		t.Errorf("expected 2 any_of items in condition 1, got %d", len(resRule.Conditions[1].AnyOf))
+	}
+	if resRule.Conditions[1].AnyOf[0].Trend != "increasing" || resRule.Conditions[1].AnyOf[1].Trend != "increasing" {
+		t.Errorf("any_of expected trend increasing, got %q and %q", resRule.Conditions[1].AnyOf[0].Trend, resRule.Conditions[1].AnyOf[1].Trend)
+	}
+}

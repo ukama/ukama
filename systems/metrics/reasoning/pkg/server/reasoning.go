@@ -167,7 +167,6 @@ func (c *ReasoningServer) GetDomains(ctx context.Context, req *pb.GetDomainsRequ
 		return nil, status.Errorf(codes.InvalidArgument, "Invalid node ID: %v", err)
 	}
 
-	now := time.Now().Unix()
 	nodeLog := log.WithField("node_id", req.NodeId).WithField("metric", req.Metric)
 
 	// Load stats for ALL metric types for both TNode and ANode, then build MetricEvaluationsMap for domain evaluation
@@ -185,8 +184,8 @@ func (c *ReasoningServer) GetDomains(ctx context.Context, req *pb.GetDomainsRequ
 		domain = tNodeMetrics.Metrics[0].Category
 	}
 
-	tNodeDomain := c.evaluateDomainWithEvals(nds.TNode, domain, req.Metric, tNodeEvals, rulesForMetric, now, nodeLog)
-	aNodeDomain := c.evaluateDomainWithEvals(nds.ANode, domain, req.Metric, aNodeEvals, rulesForMetric, now, nodeLog)
+	tNodeDomain := c.evaluateDomainWithEvals(nds.TNode, domain, req.Metric, tNodeEvals, rulesForMetric, tNodeEvals[req.Metric].EvaluatedAt, nodeLog)
+	aNodeDomain := c.evaluateDomainWithEvals(nds.ANode, domain, req.Metric, aNodeEvals, rulesForMetric, aNodeEvals[req.Metric].EvaluatedAt, nodeLog)
 
 	if algos.SeverityRank(tNodeDomain.Severity) >= algos.SeverityRank(aNodeDomain.Severity) {
 		return &pb.GetDomainsResponse{Domain: domainSnapshotToProto(&tNodeDomain)}, nil
@@ -485,28 +484,15 @@ func (c *ReasoningServer) loadDomainSnapshot(storeKey string, nodeLog *log.Entry
 }
 
 func (c *ReasoningServer) loadRules(nodeLog *log.Entry) []algos.Rule {
-	paths := []string{c.config.MetricsRulesFile, "metric-rules.json", "./metric-rules.json"}
+	paths := []string{c.config.MetricsRulesFile, "metric-rules.json", "./metric-rules.json", "../../metric-rules.json"}
 	for _, p := range paths {
 		rules, err := algos.LoadRulesFromJSON(p)
 		if err == nil {
+			nodeLog.WithField("path", p).Debug("Loaded metric rules")
 			return rules
 		}
+		nodeLog.WithError(err).WithField("path", p).Debug("Failed to load rules from path")
 	}
-	nodeLog.Debug("No metric rules loaded, domain evaluation skipped")
+	nodeLog.Warn("No metric rules loaded from any path, domain evaluation will return healthy")
 	return nil
 }
-
-
-
-func (c *ReasoningServer) logMetricResult(nodeID, metricKey string, stats *algos.Stats, metricLog *log.Entry) {
-	d := utils.MetricResultLogData{
-		Value:            stats.AggregationStats.AggregatedValue,
-		State:            stats.State,
-		Trend:            stats.Trend,
-		Confidence:       stats.Confidence,
-		ProjectionType:   stats.Projection.Type,
-		ProjectionEtaSec: stats.Projection.EtaSec,
-	}
-	metricLog.WithFields(utils.MetricResultLogFields(d)).Infof("%s/%s: %s (%s)", nodeID, metricKey, stats.State, stats.Trend)
-}
-
