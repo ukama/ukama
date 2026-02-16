@@ -30,11 +30,11 @@ services:
    - DB_HOST=postgresd
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
-   - QUEUE_URI=amqp://guest:guest@192.168.0.138:5672
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - MSGCLIENT_HOST=msgclient-metrics:9095
    - EXPORTER_SERVICE_HOST=exporter
    - EXPORTER_SERVICE_PORT=9090
-   - ORGNAME=ukama
+   - ORGNAME=${ORGNAME}
   restart: always
   networks:
    - ukama-net
@@ -46,13 +46,13 @@ services:
    - DB_HOST=postgresd
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
-   - PUSHGATEWAYHOST=http://192.168.0.138:9091
+   - PUSHGATEWAYHOST=http://${LOCAL_HOST_IP}:9091
    - HTTP_INITCLIENT=http://api-gateway-init:8080
-   - QUEUE_URI=amqp://guest:guest@192.168.0.138:5672
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - MSGCLIENT_HOST=msgclient-metrics:9095
    - SANITIZER_SERVICE_HOST=sanitizer
    - SANITIZER_SERVICE_PORT=9090
-   - ORGNAME=ukama
+   - ORGNAME=${ORGNAME}
   restart: always
   networks:
    - ukama-net
@@ -64,11 +64,11 @@ services:
     - REASONING_SERVICE_HOST=reasoning
     - REASONING_SERVICE_PORT=9090
     - MSGCLIENT_HOST=msgclient-metrics:9095
-    - QUEUE_URI=amqp://guest:guest@192.168.0.138:5672
+    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
     - PROMETHEUSHOST=http://prometheus:9090
     - PROMETHEUS_INTERVAL=60
     - SCHEDULER_INTERVAL=60s
-    - ORGNAME=ukama
+    - ORGNAME=${ORGNAME}
     - HTTP_INITCLIENT=http://api-gateway-init:8080
     - ETCDHOST=etcd:2379
   restart: always
@@ -84,7 +84,7 @@ services:
   environment:
    - METRICSCONFIG_METRICSSERVER=http://prometheus:9090
    - BYPASS_AUTH_MODE=true
-   - ORGNAME=ukama
+   - ORGNAME=${ORGNAME}
    - PERIOD=
   restart: always
   depends_on:
@@ -100,7 +100,7 @@ services:
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
    - GRPC_PORT=9095
-   - QUEUE_URI=amqp://guest:guest@192.168.0.138:5672
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - SYSTEM=metrics
   restart: always
   depends_on:
@@ -109,18 +109,17 @@ services:
    - ukama-net
 
  initclient-metrics:
-  # build: ../services/initClient
-  image: main-init
+  build: ../services/initClient
   environment:
-   - ENV_SYSTEM_ORG=ukama
+   - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_DNS_REFRESH_TIME_PERIOD=30
    - ENV_SYSTEM_NAME=metrics
    - ENV_SYSTEM_DNS=api-gateway-metrics
-   - ENV_SYSTEM_ADDR=192.168.0.138
+   - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
    - ENV_DNS_SERVER=false
    - ENV_SYSTEM_PORT=8080
    - ENV_SYSTEM_CERT=This-is-a-certificate
-   - ENV_INIT_SYSTEM_ADDR=192.168.0.138
+   - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
    - ENV_INIT_SYSTEM_PORT=8071
    - ENV_INIT_CLIENT_ADDR=initclient-metrics
    - ENV_INIT_CLIENT_PORT=8080

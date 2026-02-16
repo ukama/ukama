@@ -14,6 +14,30 @@ import (
 
 const noiseEpsilon = 1e-10 // avoid division by zero
 
+func CombineStateAndTrend(state, trend string) string {
+	switch state {
+	case "critical":
+		if trend == "decreasing" {
+			return "recovering"
+		}
+		return "degrading"
+	case "warning":
+		if trend == "increasing" {
+			return "risk_rising"
+		}
+		if trend == "decreasing" {
+			return "recovering"
+		}
+		return "persistent"
+	case "healthy":
+		if trend == "increasing" {
+			return "risk_rising"
+		}
+		return "ok"
+	}
+	return "unknown"
+}
+
 // classifyTrend returns "stable", "increasing", or "decreasing" based on delta vs threshold.
 func classifyTrend(delta, noise, sensitivity float64) string {
 	threshold := sensitivity * noise

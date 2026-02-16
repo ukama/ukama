@@ -21,13 +21,20 @@ import (
 
 const defaultRequestTimeout = 5 * time.Second
 
+// kvOps is a minimal interface for key-value operations. Used for testability.
+type kvOps interface {
+	Put(ctx context.Context, key, val string, opts ...clientv3.OpOption) (*clientv3.PutResponse, error)
+	Get(ctx context.Context, key string, opts ...clientv3.OpOption) (*clientv3.GetResponse, error)
+	Delete(ctx context.Context, key string, opts ...clientv3.OpOption) (*clientv3.DeleteResponse, error)
+}
+
 type Store struct {
-	etcd            *clientv3.Client
-	requestTimeout  time.Duration
+	kv             kvOps
+	requestTimeout time.Duration
 }
 
 func NewStore(config *pkg.Config) *Store {
-	etcd, err := clientv3.New(clientv3.Config{
+	client, err := clientv3.New(clientv3.Config{
 		DialTimeout: config.DialTimeoutSecond,
 		Endpoints:   []string{config.EtcdHost},
 	})
@@ -39,9 +46,17 @@ func NewStore(config *pkg.Config) *Store {
 		timeout = defaultRequestTimeout
 	}
 	return &Store{
-		etcd:           etcd,
+		kv:             client,
 		requestTimeout: timeout,
 	}
+}
+
+// NewStoreWithKV creates a Store with the given kvOps implementation. Used for testing.
+func NewStoreWithKV(kv kvOps, timeout time.Duration) *Store {
+	if timeout == 0 {
+		timeout = defaultRequestTimeout
+	}
+	return &Store{kv: kv, requestTimeout: timeout}
 }
 
 func (s *Store) opCtx() (context.Context, context.CancelFunc) {
@@ -51,7 +66,7 @@ func (s *Store) opCtx() (context.Context, context.CancelFunc) {
 func (s *Store) Put(key string, value string) error {
 	ctx, cancel := s.opCtx()
 	defer cancel()
-	_, err := s.etcd.Put(ctx, key, value)
+	_, err := s.kv.Put(ctx, key, value)
 	if err != nil {
 		return fmt.Errorf("failed to add record %s with value %s. Error: %v", key, value, err)
 	}
@@ -81,7 +96,7 @@ func (s *Store) GetJson(key string) ([]byte, error) {
 func (s *Store) Get(key string) (string, error) {
 	ctx, cancel := s.opCtx()
 	defer cancel()
-	response, err := s.etcd.Get(ctx, key)
+	response, err := s.kv.Get(ctx, key)
 	if err != nil {
 		return "", fmt.Errorf("failed to get record %s. Error: %v", key, err)
 	}
@@ -94,7 +109,7 @@ func (s *Store) Get(key string) (string, error) {
 func (s *Store) GetAll() ([]string, error) {
 	ctx, cancel := s.opCtx()
 	defer cancel()
-	response, err := s.etcd.Get(ctx, "", clientv3.WithPrefix())
+	response, err := s.kv.Get(ctx, "", clientv3.WithPrefix())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all records. Error: %v", err)
 	}
@@ -108,7 +123,7 @@ func (s *Store) GetAll() ([]string, error) {
 func (s *Store) Delete(key string) error {
 	ctx, cancel := s.opCtx()
 	defer cancel()
-	_, err := s.etcd.Delete(ctx, key)
+	_, err := s.kv.Delete(ctx, key)
 	if err != nil {
 		return fmt.Errorf("failed to delete record %s. Error: %v", key, err)
 	}

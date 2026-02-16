@@ -25,6 +25,18 @@ func EmptyPrevStats() Stats {
 	}
 }
 
+type MetricEvaluation struct {
+	MetricID    string          `json:"metric_id"`
+	EvaluatedAt int64           `json:"evaluated_at"`
+	AggNow      float64         `json:"agg_now"`
+	StatsNow    AggregationStats `json:"stats_now"`
+	State       string          `json:"state"`
+	Trend       string          `json:"trend"`
+	Conclusion  string          `json:"conclusion"`
+	Confidence  float64         `json:"confidence"`
+	Projection  ProjectionStats `json:"projection"`
+}
+
 type Stats struct {
 	Aggregation      string          `json:"aggregation"`
 	AggregationStats AggregationStats `json:"aggregation_stats"`
@@ -83,4 +95,15 @@ func LoadStats(store *store.Store, storeKey string, metricLog *log.Entry) (Stats
 		return EmptyPrevStats(), nil
 	}
 	return stats, nil
+}
+
+func MetricEvaluationFromStats(metricKey string, stats Stats) MetricEvaluation {
+	return MetricEvaluation{
+		MetricID:    metricKey,
+		State:       stats.State,
+		Trend:       stats.Trend,
+		Conclusion:  CombineStateAndTrend(stats.State, stats.Trend),
+		Confidence:  stats.Confidence,
+		EvaluatedAt: stats.ComputedAt,
+	}
 }

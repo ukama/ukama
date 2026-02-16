@@ -350,7 +350,11 @@ func (c *ReasoningServer) processNode(ctx context.Context, nodeID, start, end st
 			nodeLog.WithError(err).WithField("metric", m.MetricKey).Error("Metric processing failed")
 			failed++
 		} else {
-			c.store.PutJson(utils.GetAlgoStatsStoreKey(nodeID, m.MetricKey), stats)
+			err = c.store.PutJson(utils.GetAlgoStatsStoreKey(nodeID, m.MetricKey), stats)
+			if err != nil {
+				nodeLog.WithError(err).WithField("metric", m.MetricKey).Error("Failed to store stats")
+				failed++
+			}
 			processed++
 		}
 	}
