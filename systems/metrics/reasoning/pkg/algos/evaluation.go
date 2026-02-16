@@ -41,6 +41,18 @@ type MetricEvaluation struct {
 	Projection  ProjectionStats `json:"projection"`
 }
 
+// MetricEvaluationFromStats builds a MetricEvaluation from stored algo Stats (used for domain evaluation).
+func MetricEvaluationFromStats(metricKey string, stats Stats) MetricEvaluation {
+	return MetricEvaluation{
+		MetricID:    metricKey,
+		State:       stats.State,
+		Trend:       stats.Trend,
+		Conclusion:  CombineStateAndTrend(stats.State, stats.Trend),
+		Confidence:  stats.Confidence,
+		EvaluatedAt: stats.ComputedAt,
+	}
+}
+
 // CombineStateAndTrend defines the "meaning vocabulary" for conclusions.
 func CombineStateAndTrend(state, trend string) string {
 	switch state {

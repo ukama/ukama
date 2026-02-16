@@ -21,6 +21,7 @@ import (
  
  type Reasoning interface {
 	GetAlgoStatsForMetric(nodeID string, metric string) (*pbr.GetAlgoStatsForMetricResponse, error)
+	GetDomainsStats(nodeID string, metric string) (*pbr.GetDomainsResponse, error)
  }
  
  type reasoning struct {
@@ -71,4 +72,14 @@ import (
 		Metric: metric,
 	})
  }
- 
+
+
+ func (s *reasoning) GetDomainsStats(nodeID string, metric string) (*pbr.GetDomainsResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
+
+	return s.client.GetDomains(ctx, &pbr.GetDomainsRequest{
+		NodeId: nodeID,
+		Metric: metric,
+	})
+ }

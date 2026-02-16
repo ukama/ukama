@@ -83,3 +83,8 @@ type GetAlgoStatsForMetricInput struct {
 	NodeID     string `path:"node" validate:"required"`
 	Metric string `path:"metric" validate:"required"`
 }
+
+type GetDomainStats struct {
+	NodeID     string `path:"node" validate:"required"`
+	Metric string `path:"metric" validate:"required"`
+}

@@ -29,8 +29,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	pbe "github.com/ukama/ukama/systems/metrics/exporter/pb/gen"
-	pbs "github.com/ukama/ukama/systems/metrics/sanitizer/pb/gen"
 	pbr "github.com/ukama/ukama/systems/metrics/reasoning/pb/gen"
+	pbs "github.com/ukama/ukama/systems/metrics/sanitizer/pb/gen"
 )
 
 type Router struct {
@@ -194,6 +194,11 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 			func(info *openapi.OperationInfo) {
 				info.Description = "Get algorithm stats for a metric"
 			}}, tonic.Handler(r.getAlgoStatsForMetricHandler, http.StatusOK))
+
+		reasoning.GET("/domain/nodes/:node/metrics/:metric", []fizz.OperationOption{
+			func(info *openapi.OperationInfo) {
+				info.Description = "Get domain stats for a metric"
+			}}, tonic.Handler(r.getDomainStatsHandler, http.StatusOK))
 	}
 }
 
@@ -206,6 +211,10 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 
 func (r *Router) getAlgoStatsForMetricHandler(c *gin.Context, in *GetAlgoStatsForMetricInput) (*pbr.GetAlgoStatsForMetricResponse, error) {
 	return r.clients.r.GetAlgoStatsForMetric(in.NodeID, in.Metric)
+}
+
+func (r *Router) getDomainStatsHandler(c *gin.Context, in *GetDomainStats) (*pbr.GetDomainsResponse, error) {
+	return r.clients.r.GetDomainsStats(in.NodeID, in.Metric)
 }
 
 func parse_metrics_request(mReq string) []string {

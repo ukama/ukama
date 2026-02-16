@@ -35,9 +35,12 @@ message GetAlgoStatsForMetricResponse {
 
 message GetDomainsRequest {
     string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+    string metric = 2 [(validator.field) = {string_not_empty: true}, json_name = "metric"];
 }
 
-message GetDomainsResponse {}
+message GetDomainsResponse {
+    Domain domain = 1 [json_name = "domain"];
+}
 
 message StartSchedulerRequest {}
 
@@ -72,4 +75,15 @@ message Confidence {
 message Projection {
     string type = 1 [json_name = "type"];
     double eta_sec = 2 [json_name = "eta_sec"];
+}
+
+message Domain {
+    string rule_id = 1 [json_name = "rule_id"];
+    string severity = 2 [json_name = "severity"];
+    string headline = 3 [json_name = "headline"];
+    string root_cause = 4 [json_name = "root_cause"];
+    string service_impact = 5 [json_name = "service_impact"];
+    double rule_confidence = 6 [json_name = "rule_confidence"];
+    int64 evaluated_at = 7 [json_name = "evaluated_at"];
+    int64 computed_at = 8 [json_name = "computed_at"];
 }

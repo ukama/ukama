@@ -212,6 +212,49 @@ func severityRank(s string) int {
 	return 0
 }
 
+// SeverityRank returns the numeric rank for severity comparison (higher = worse).
+func SeverityRank(s string) int {
+	return severityRank(s)
+}
+
+// ruleReferencesMetric returns true if the rule references the given metric in conditions or evidence.
+func ruleReferencesMetric(rule Rule, metric string) bool {
+	for _, m := range rule.EvidenceMetrics {
+		if m == metric {
+			return true
+		}
+	}
+	for _, cond := range rule.Conditions {
+		if conditionReferencesMetric(cond, metric) {
+			return true
+		}
+	}
+	return false
+}
+
+func conditionReferencesMetric(cond Condition, metric string) bool {
+	if cond.Metric == metric {
+		return true
+	}
+	for _, sub := range cond.AnyOf {
+		if sub.Metric == metric {
+			return true
+		}
+	}
+	return false
+}
+
+// RulesForMetric returns rules that reference the given metric (valid for that metric type).
+func RulesForMetric(rules []Rule, metric string) []Rule {
+	out := make([]Rule, 0, len(rules))
+	for _, r := range rules {
+		if ruleReferencesMetric(r, metric) {
+			out = append(out, r)
+		}
+	}
+	return out
+}
+
 func selectBest(activeRules []ActiveRule) Rule {
 	sort.Slice(activeRules, func(i, j int) bool {
 		r1, r2 := activeRules[i], activeRules[j]

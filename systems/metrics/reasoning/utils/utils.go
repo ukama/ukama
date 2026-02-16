@@ -16,6 +16,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	ukama "github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/metrics/reasoning/pkg"
 	"github.com/ukama/ukama/systems/metrics/reasoning/pkg/store"
 )
 
@@ -129,4 +130,13 @@ func GetStartEndFromStore(s *store.Store, nodeID string, interval int) (start, e
 	end = strconv.FormatInt(prevEnd+int64(interval), 10)
 	_ = s.Put(key, start+":"+end)
 	return start, end, nil
+}
+
+func ValidateMetricKey(metricKey string, metricsCfg pkg.Metrics, nodeType string) (string, error) {
+	for _, m := range metricsCfg.Metrics {
+		if m.Key == metricKey {
+			return m.MetricKey, nil
+		}
+	}
+	return "", fmt.Errorf("metric key %q is not valid for node type %s", metricKey, nodeType)
 }

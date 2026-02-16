@@ -160,6 +160,7 @@ func (x *GetAlgoStatsForMetricResponse) GetState() string {
 type GetDomainsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	NodeId        string                 `protobuf:"bytes,1,opt,name=nodeId,json=node_id,proto3" json:"nodeId,omitempty"`
+	Metric        string                 `protobuf:"bytes,2,opt,name=metric,proto3" json:"metric,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -201,8 +202,16 @@ func (x *GetDomainsRequest) GetNodeId() string {
 	return ""
 }
 
+func (x *GetDomainsRequest) GetMetric() string {
+	if x != nil {
+		return x.Metric
+	}
+	return ""
+}
+
 type GetDomainsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Domain        *Domain                `protobuf:"bytes,1,opt,name=domain,proto3" json:"domain,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -235,6 +244,13 @@ func (x *GetDomainsResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetDomainsResponse.ProtoReflect.Descriptor instead.
 func (*GetDomainsResponse) Descriptor() ([]byte, []int) {
 	return file_reasoning_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GetDomainsResponse) GetDomain() *Domain {
+	if x != nil {
+		return x.Domain
+	}
+	return nil
 }
 
 type StartSchedulerRequest struct {
@@ -645,6 +661,106 @@ func (x *Projection) GetEtaSec() float64 {
 	return 0
 }
 
+type Domain struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	RuleId         string                 `protobuf:"bytes,1,opt,name=rule_id,proto3" json:"rule_id,omitempty"`
+	Severity       string                 `protobuf:"bytes,2,opt,name=severity,proto3" json:"severity,omitempty"`
+	Headline       string                 `protobuf:"bytes,3,opt,name=headline,proto3" json:"headline,omitempty"`
+	RootCause      string                 `protobuf:"bytes,4,opt,name=root_cause,proto3" json:"root_cause,omitempty"`
+	ServiceImpact  string                 `protobuf:"bytes,5,opt,name=service_impact,proto3" json:"service_impact,omitempty"`
+	RuleConfidence float64                `protobuf:"fixed64,6,opt,name=rule_confidence,proto3" json:"rule_confidence,omitempty"`
+	EvaluatedAt    int64                  `protobuf:"varint,7,opt,name=evaluated_at,proto3" json:"evaluated_at,omitempty"`
+	ComputedAt     int64                  `protobuf:"varint,8,opt,name=computed_at,proto3" json:"computed_at,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *Domain) Reset() {
+	*x = Domain{}
+	mi := &file_reasoning_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Domain) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Domain) ProtoMessage() {}
+
+func (x *Domain) ProtoReflect() protoreflect.Message {
+	mi := &file_reasoning_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Domain.ProtoReflect.Descriptor instead.
+func (*Domain) Descriptor() ([]byte, []int) {
+	return file_reasoning_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *Domain) GetRuleId() string {
+	if x != nil {
+		return x.RuleId
+	}
+	return ""
+}
+
+func (x *Domain) GetSeverity() string {
+	if x != nil {
+		return x.Severity
+	}
+	return ""
+}
+
+func (x *Domain) GetHeadline() string {
+	if x != nil {
+		return x.Headline
+	}
+	return ""
+}
+
+func (x *Domain) GetRootCause() string {
+	if x != nil {
+		return x.RootCause
+	}
+	return ""
+}
+
+func (x *Domain) GetServiceImpact() string {
+	if x != nil {
+		return x.ServiceImpact
+	}
+	return ""
+}
+
+func (x *Domain) GetRuleConfidence() float64 {
+	if x != nil {
+		return x.RuleConfidence
+	}
+	return 0
+}
+
+func (x *Domain) GetEvaluatedAt() int64 {
+	if x != nil {
+		return x.EvaluatedAt
+	}
+	return 0
+}
+
+func (x *Domain) GetComputedAt() int64 {
+	if x != nil {
+		return x.ComputedAt
+	}
+	return 0
+}
+
 var File_reasoning_proto protoreflect.FileDescriptor
 
 const file_reasoning_proto_rawDesc = "" +
@@ -664,10 +780,12 @@ const file_reasoning_proto_rawDesc = "" +
 	"\n" +
 	"projection\x18\x04 \x01(\v2&.ukama.metrics.reasoning.v1.ProjectionR\n" +
 	"projection\x12\x14\n" +
-	"\x05state\x18\x05 \x01(\tR\x05state\"4\n" +
+	"\x05state\x18\x05 \x01(\tR\x05state\"T\n" +
 	"\x11GetDomainsRequest\x12\x1f\n" +
-	"\x06nodeId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\anode_id\"\x14\n" +
-	"\x12GetDomainsResponse\"\x17\n" +
+	"\x06nodeId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\anode_id\x12\x1e\n" +
+	"\x06metric\x18\x02 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x06metric\"P\n" +
+	"\x12GetDomainsResponse\x12:\n" +
+	"\x06domain\x18\x01 \x01(\v2\".ukama.metrics.reasoning.v1.DomainR\x06domain\"\x17\n" +
 	"\x15StartSchedulerRequest\"\x18\n" +
 	"\x16StartSchedulerResponse\"\x16\n" +
 	"\x14StopSchedulerRequest\"\x17\n" +
@@ -693,7 +811,18 @@ const file_reasoning_proto_rawDesc = "" +
 	"\n" +
 	"Projection\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x18\n" +
-	"\aeta_sec\x18\x02 \x01(\x01R\aeta_sec2\xfd\x03\n" +
+	"\aeta_sec\x18\x02 \x01(\x01R\aeta_sec\"\x92\x02\n" +
+	"\x06Domain\x12\x18\n" +
+	"\arule_id\x18\x01 \x01(\tR\arule_id\x12\x1a\n" +
+	"\bseverity\x18\x02 \x01(\tR\bseverity\x12\x1a\n" +
+	"\bheadline\x18\x03 \x01(\tR\bheadline\x12\x1e\n" +
+	"\n" +
+	"root_cause\x18\x04 \x01(\tR\n" +
+	"root_cause\x12&\n" +
+	"\x0eservice_impact\x18\x05 \x01(\tR\x0eservice_impact\x12(\n" +
+	"\x0frule_confidence\x18\x06 \x01(\x01R\x0frule_confidence\x12\"\n" +
+	"\fevaluated_at\x18\a \x01(\x03R\fevaluated_at\x12 \n" +
+	"\vcomputed_at\x18\b \x01(\x03R\vcomputed_at2\xfd\x03\n" +
 	"\x10ReasoningService\x12w\n" +
 	"\x0eStartScheduler\x121.ukama.metrics.reasoning.v1.StartSchedulerRequest\x1a2.ukama.metrics.reasoning.v1.StartSchedulerResponse\x12t\n" +
 	"\rStopScheduler\x120.ukama.metrics.reasoning.v1.StopSchedulerRequest\x1a1.ukama.metrics.reasoning.v1.StopSchedulerResponse\x12\x8c\x01\n" +
@@ -713,7 +842,7 @@ func file_reasoning_proto_rawDescGZIP() []byte {
 	return file_reasoning_proto_rawDescData
 }
 
-var file_reasoning_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_reasoning_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_reasoning_proto_goTypes = []any{
 	(*GetAlgoStatsForMetricRequest)(nil),  // 0: ukama.metrics.reasoning.v1.GetAlgoStatsForMetricRequest
 	(*GetAlgoStatsForMetricResponse)(nil), // 1: ukama.metrics.reasoning.v1.GetAlgoStatsForMetricResponse
@@ -727,25 +856,27 @@ var file_reasoning_proto_goTypes = []any{
 	(*Trend)(nil),                         // 9: ukama.metrics.reasoning.v1.Trend
 	(*Confidence)(nil),                    // 10: ukama.metrics.reasoning.v1.Confidence
 	(*Projection)(nil),                    // 11: ukama.metrics.reasoning.v1.Projection
+	(*Domain)(nil),                        // 12: ukama.metrics.reasoning.v1.Domain
 }
 var file_reasoning_proto_depIdxs = []int32{
 	8,  // 0: ukama.metrics.reasoning.v1.GetAlgoStatsForMetricResponse.aggregated:type_name -> ukama.metrics.reasoning.v1.AggregatedStats
 	9,  // 1: ukama.metrics.reasoning.v1.GetAlgoStatsForMetricResponse.trend:type_name -> ukama.metrics.reasoning.v1.Trend
 	10, // 2: ukama.metrics.reasoning.v1.GetAlgoStatsForMetricResponse.confidence:type_name -> ukama.metrics.reasoning.v1.Confidence
 	11, // 3: ukama.metrics.reasoning.v1.GetAlgoStatsForMetricResponse.projection:type_name -> ukama.metrics.reasoning.v1.Projection
-	4,  // 4: ukama.metrics.reasoning.v1.ReasoningService.StartScheduler:input_type -> ukama.metrics.reasoning.v1.StartSchedulerRequest
-	6,  // 5: ukama.metrics.reasoning.v1.ReasoningService.StopScheduler:input_type -> ukama.metrics.reasoning.v1.StopSchedulerRequest
-	0,  // 6: ukama.metrics.reasoning.v1.ReasoningService.GetAlgoStatsForMetric:input_type -> ukama.metrics.reasoning.v1.GetAlgoStatsForMetricRequest
-	2,  // 7: ukama.metrics.reasoning.v1.ReasoningService.GetDomains:input_type -> ukama.metrics.reasoning.v1.GetDomainsRequest
-	5,  // 8: ukama.metrics.reasoning.v1.ReasoningService.StartScheduler:output_type -> ukama.metrics.reasoning.v1.StartSchedulerResponse
-	7,  // 9: ukama.metrics.reasoning.v1.ReasoningService.StopScheduler:output_type -> ukama.metrics.reasoning.v1.StopSchedulerResponse
-	1,  // 10: ukama.metrics.reasoning.v1.ReasoningService.GetAlgoStatsForMetric:output_type -> ukama.metrics.reasoning.v1.GetAlgoStatsForMetricResponse
-	3,  // 11: ukama.metrics.reasoning.v1.ReasoningService.GetDomains:output_type -> ukama.metrics.reasoning.v1.GetDomainsResponse
-	8,  // [8:12] is the sub-list for method output_type
-	4,  // [4:8] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	12, // 4: ukama.metrics.reasoning.v1.GetDomainsResponse.domain:type_name -> ukama.metrics.reasoning.v1.Domain
+	4,  // 5: ukama.metrics.reasoning.v1.ReasoningService.StartScheduler:input_type -> ukama.metrics.reasoning.v1.StartSchedulerRequest
+	6,  // 6: ukama.metrics.reasoning.v1.ReasoningService.StopScheduler:input_type -> ukama.metrics.reasoning.v1.StopSchedulerRequest
+	0,  // 7: ukama.metrics.reasoning.v1.ReasoningService.GetAlgoStatsForMetric:input_type -> ukama.metrics.reasoning.v1.GetAlgoStatsForMetricRequest
+	2,  // 8: ukama.metrics.reasoning.v1.ReasoningService.GetDomains:input_type -> ukama.metrics.reasoning.v1.GetDomainsRequest
+	5,  // 9: ukama.metrics.reasoning.v1.ReasoningService.StartScheduler:output_type -> ukama.metrics.reasoning.v1.StartSchedulerResponse
+	7,  // 10: ukama.metrics.reasoning.v1.ReasoningService.StopScheduler:output_type -> ukama.metrics.reasoning.v1.StopSchedulerResponse
+	1,  // 11: ukama.metrics.reasoning.v1.ReasoningService.GetAlgoStatsForMetric:output_type -> ukama.metrics.reasoning.v1.GetAlgoStatsForMetricResponse
+	3,  // 12: ukama.metrics.reasoning.v1.ReasoningService.GetDomains:output_type -> ukama.metrics.reasoning.v1.GetDomainsResponse
+	9,  // [9:13] is the sub-list for method output_type
+	5,  // [5:9] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_reasoning_proto_init() }
@@ -759,7 +890,7 @@ func file_reasoning_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_reasoning_proto_rawDesc), len(file_reasoning_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   12,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

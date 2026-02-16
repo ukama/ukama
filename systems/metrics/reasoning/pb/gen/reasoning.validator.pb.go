@@ -52,9 +52,17 @@ func (this *GetDomainsRequest) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
 	}
+	if this.Metric == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Metric", fmt.Errorf(`value '%v' must not be an empty string`, this.Metric))
+	}
 	return nil
 }
 func (this *GetDomainsResponse) Validate() error {
+	if this.Domain != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Domain); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Domain", err)
+		}
+	}
 	return nil
 }
 func (this *StartSchedulerRequest) Validate() error {
@@ -79,5 +87,8 @@ func (this *Confidence) Validate() error {
 	return nil
 }
 func (this *Projection) Validate() error {
+	return nil
+}
+func (this *Domain) Validate() error {
 	return nil
 }

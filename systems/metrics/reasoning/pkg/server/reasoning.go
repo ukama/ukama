@@ -94,15 +94,9 @@ func (c *ReasoningServer) GetAlgoStatsForMetric(ctx context.Context, req *pb.Get
 		return nil, status.Errorf(codes.InvalidArgument, "No metrics configured for node type %s", *nType)
 	}
 
-	var metricKey string
-	for _, m := range metricsCfg.Metrics {
-		if m.Key == req.Metric {
-			metricKey = m.MetricKey
-			break
-		}
-	}
-	if metricKey == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "Metric key %q is not valid for node type %s", req.Metric, *nType)
+	metricKey, err := utils.ValidateMetricKey(req.Metric, metricsCfg, *nType)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Metric key %q is not valid for node type %s: %v", req.Metric, *nType, err)
 	}
 
 	stats, err := algos.LoadStats(c.store, utils.GetAlgoStatsStoreKey(nodeId.String(), metricKey), log.WithField("node_id", nodeId.String()).WithField("metric", metricKey))
@@ -143,6 +137,9 @@ func (c *ReasoningServer) GetDomains(ctx context.Context, req *pb.GetDomainsRequ
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Invalid node ID: %v", err)
 	}
+	if ukama.GetNodeType(nodeId.String()) == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Could not determine node type from node ID %s", nodeId.String())
+	}
 
 	if c.config.MetricKeyMap == nil {
 		metricKeyMap, err := pkg.LoadMetricKeyMap(c.config)
@@ -152,24 +149,92 @@ func (c *ReasoningServer) GetDomains(ctx context.Context, req *pb.GetDomainsRequ
 		c.config.MetricKeyMap = metricKeyMap
 	}
 
-	nType := ukama.GetNodeType(nodeId.String())
-	if nType == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Could not determine node type from node ID %s", nodeId.String())
+	tNodeMetrics, ok := (*c.config.MetricKeyMap)[ukama.NODE_TYPE_TOWERNODE]
+	if !ok {
+		return nil, status.Errorf(codes.InvalidArgument, "No metrics configured for node type tnode")
+	}
+	aNodeMetrics, ok := (*c.config.MetricKeyMap)[ukama.NODE_TYPE_AMPNODE]
+	if !ok {
+		return nil, status.Errorf(codes.InvalidArgument, "No metrics configured for node type anode")
 	}
 
-	// Domain is stored at NodeID/Metric (e.g. nodeID/cpu, nodeID/memory); try first metric pattern
-	metricsCfg, ok := (*c.config.MetricKeyMap)[*nType]
-	if !ok || len(metricsCfg.Metrics) == 0 {
-		return nil, status.Errorf(codes.NotFound, "No metrics configured for node %s", nodeId.String())
+	if _, err := utils.ValidateMetricKey(req.Metric, tNodeMetrics, ukama.NODE_TYPE_TOWERNODE); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Metric key %q is not valid: %v", req.Metric, err)
 	}
-	domainKey := utils.GetDomainStoreKey(nodeId.String(), metricsCfg.Metrics[0].Key)
-	snap, err := c.loadDomainSnapshot(domainKey, log.WithField("node_id", nodeId.String()))
+
+	nds, err := utils.SortNodeIds(req.NodeId)
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "Failed to load domain for node %s: %v", nodeId.String(), err)
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid node ID: %v", err)
 	}
-	log.Infof("Domain for node %s: %s (%s)", nodeId.String(), snap.RuleID, snap.Severity)
 
-	return &pb.GetDomainsResponse{}, nil
+	now := time.Now().Unix()
+	nodeLog := log.WithField("node_id", req.NodeId).WithField("metric", req.Metric)
+
+	// Load stats for ALL metric types for both TNode and ANode, then build MetricEvaluationsMap for domain evaluation
+	tNodeEvals := c.buildMetricEvaluationsForNode(nds.TNode, tNodeMetrics, nodeLog)
+	aNodeEvals := c.buildMetricEvaluationsForNode(nds.ANode, aNodeMetrics, nodeLog)
+
+	rules := c.loadRules(nodeLog)
+	rulesForMetric := algos.RulesForMetric(rules, req.Metric)
+	if len(rulesForMetric) == 0 {
+		nodeLog.Debug("No rules for metric, returning healthy")
+	}
+
+	domain := "health"
+	if len(tNodeMetrics.Metrics) > 0 && tNodeMetrics.Metrics[0].Category != "" {
+		domain = tNodeMetrics.Metrics[0].Category
+	}
+
+	tNodeDomain := c.evaluateDomainWithEvals(nds.TNode, domain, req.Metric, tNodeEvals, rulesForMetric, now, nodeLog)
+	aNodeDomain := c.evaluateDomainWithEvals(nds.ANode, domain, req.Metric, aNodeEvals, rulesForMetric, now, nodeLog)
+
+	if algos.SeverityRank(tNodeDomain.Severity) >= algos.SeverityRank(aNodeDomain.Severity) {
+		return &pb.GetDomainsResponse{Domain: domainSnapshotToProto(&tNodeDomain)}, nil
+	}
+	return &pb.GetDomainsResponse{Domain: domainSnapshotToProto(&aNodeDomain)}, nil
+}
+
+// buildMetricEvaluationsForNode loads stats for all metrics and builds MetricEvaluationsMap (pattern key -> MetricEvaluation).
+func (c *ReasoningServer) buildMetricEvaluationsForNode(nodeID string, metricsCfg pkg.Metrics, nodeLog *log.Entry) algos.MetricEvaluationsMap {
+	evals := make(algos.MetricEvaluationsMap)
+	for _, m := range metricsCfg.Metrics {
+		stats, err := algos.LoadStats(c.store, utils.GetAlgoStatsStoreKey(nodeID, m.MetricKey), nodeLog.WithField("metric", m.MetricKey))
+		if err != nil {
+			nodeLog.WithError(err).WithField("metric", m.MetricKey).Debug("No stats for metric, skipping from evals")
+			continue
+		}
+		evals[m.Key] = algos.MetricEvaluationFromStats(m.Key, stats)
+	}
+	return evals
+}
+
+// evaluateDomainWithEvals runs domain evaluation given MetricEvaluationsMap and filtered rules.
+func (c *ReasoningServer) evaluateDomainWithEvals(nodeID, domain, metricPattern string, evals algos.MetricEvaluationsMap, rules []algos.Rule, now int64, nodeLog *log.Entry) algos.DomainSnapshot {
+	var previous *algos.DomainSnapshot
+	if domainKey := utils.GetDomainStoreKey(nodeID, metricPattern); domainKey != "" {
+		if prev, err := c.loadDomainSnapshot(domainKey, nodeLog); err == nil && prev.RuleID != "" {
+			previous = prev
+		}
+	}
+	snap := algos.EvaluateDomain(domain, evals, rules, previous, now)
+	nodeLog.WithFields(log.Fields{"node_id": nodeID, "domain": domain, "rule_id": snap.RuleID, "severity": snap.Severity}).Debug("Domain evaluation")
+	return snap
+}
+
+func domainSnapshotToProto(s *algos.DomainSnapshot) *pb.Domain {
+	if s == nil {
+		return nil
+	}
+	return &pb.Domain{
+		RuleId:         s.RuleID,
+		Severity:       s.Severity,
+		Headline:       s.Headline,
+		RootCause:      s.RootCause,
+		ServiceImpact:  s.ServiceImpact,
+		RuleConfidence: s.RuleConfidence,
+		EvaluatedAt:    s.EvaluatedAt,
+		ComputedAt:     s.EvaluatedAt,
+	}
 }
 
 func (c *ReasoningServer) StartScheduler(ctx context.Context, req *pb.StartSchedulerRequest) (*pb.StartSchedulerResponse, error) {
