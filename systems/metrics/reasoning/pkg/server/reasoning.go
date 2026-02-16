@@ -45,15 +45,20 @@ type ReasoningServer struct {
 	store    		   *store.Store
 }
 
-func NewReasoningServer(msgBus mb.MsgBusServiceClient, nodeClient creg.NodeClient, config *pkg.Config, store *store.Store) *ReasoningServer {
-	scheduler := scheduler.NewReasoningScheduler(config.SchedulerInterval)
+func NewReasoningServer(msgBus mb.MsgBusServiceClient, nodeClient creg.NodeClient, config *pkg.Config, store *store.Store, sched ...scheduler.ReasoningScheduler) *ReasoningServer {
+	var reasoningScheduler scheduler.ReasoningScheduler
+	if len(sched) > 0 && sched[0] != nil {
+		reasoningScheduler = sched[0]
+	} else {
+		reasoningScheduler = scheduler.NewReasoningScheduler(config.SchedulerInterval)
+	}
 	c := &ReasoningServer{
 		store:              store,
 		msgbus:             msgBus,
 		config:             config,
-		reasoningScheduler: scheduler,
+		reasoningScheduler: reasoningScheduler,
 		nodeClient:         nodeClient,
-		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(config.OrgName).SetService(pkg.ServiceName),
+		baseRoutingKey:     msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(config.OrgName).SetService(pkg.ServiceName),
 	}
 
 	if err := c.reasoningScheduler.Start(jobTag, c.reasoningJobCallback); err != nil {
