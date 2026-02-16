@@ -19,7 +19,7 @@ import (
 type ReasoningScheduler interface {
 	SetNewJob(string, any, ...any) (*gocron.Job, error)
 	Start(string, any, ...any) error
-	Stop() error
+	Stop(tag string) error
 }
 
 type reasoningScheduler struct {
@@ -46,10 +46,16 @@ func (h *reasoningScheduler) SetNewJob(tag string, taskFunc any, params ...any) 
 }
 
 func (h *reasoningScheduler) Start(tag string, taskFunc any, params ...any) error {
-	if h.s.IsRunning() {
-		log.Infof("Scheduler is already running...")
-
+	jobs, err := h.s.FindJobsByTag(tag)
+	if err == nil && len(jobs) > 0 {
+		log.Infof("Job %q already running in scheduler, skipping start", tag)
 		return nil
+	}
+
+	if h.s.IsRunning() {
+		log.Infof("Scheduler is already running, adding job: %q", tag)
+		_, addErr := h.SetNewJob(tag, taskFunc, params...)
+		return addErr
 	}
 
 	log.Infof("Starting scheduler for job: %q", tag)
@@ -58,7 +64,7 @@ func (h *reasoningScheduler) Start(tag string, taskFunc any, params ...any) erro
 
 	h.s = sched
 
-	_, err := h.SetNewJob(tag, taskFunc, params...)
+	_, err = h.SetNewJob(tag, taskFunc, params...)
 	if err != nil {
 		return err
 	}
@@ -68,12 +74,14 @@ func (h *reasoningScheduler) Start(tag string, taskFunc any, params ...any) erro
 	return nil
 }
 
-func (h *reasoningScheduler) Stop() error {
-	log.Infof("Stopping scheduler")
+func (h *reasoningScheduler) Stop(tag string) error {
+	log.Infof("Stopping scheduler job: %q", tag)
 
-	if h.s.IsRunning() {
+	if err := h.s.RemoveByTag(tag); err != nil {
+		return err
+	}
+	if h.s.Len() == 0 && h.s.IsRunning() {
 		h.s.Stop()
 	}
-
 	return nil
 }

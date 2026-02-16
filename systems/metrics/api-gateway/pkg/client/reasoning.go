@@ -22,6 +22,8 @@ import (
  type Reasoning interface {
 	GetAlgoStatsForMetric(nodeID string, metric string) (*pbr.GetAlgoStatsForMetricResponse, error)
 	GetDomainsStats(nodeID string, metric string) (*pbr.GetDomainsResponse, error)
+	StartScheduler() (*pbr.StartSchedulerResponse, error)
+	StopScheduler() (*pbr.StopSchedulerResponse, error)
  }
  
  type reasoning struct {
@@ -82,4 +84,18 @@ import (
 		NodeId: nodeID,
 		Metric: metric,
 	})
+ }
+
+ func (s *reasoning) StartScheduler() (*pbr.StartSchedulerResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
+
+	return s.client.StartScheduler(ctx, &pbr.StartSchedulerRequest{})
+ }
+
+ func (s *reasoning) StopScheduler() (*pbr.StopSchedulerResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
+
+	return s.client.StopScheduler(ctx, &pbr.StopSchedulerRequest{})
  }

@@ -88,3 +88,7 @@ type GetDomainStats struct {
 	NodeID     string `path:"node" validate:"required"`
 	Metric string `path:"metric" validate:"required"`
 }
+
+type StartSchedulerInput struct {}
+
+type StopSchedulerInput struct {}

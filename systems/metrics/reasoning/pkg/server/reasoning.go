@@ -69,6 +69,20 @@ func NewReasoningServer(msgBus mb.MsgBusServiceClient, nodeClient creg.NodeClien
 	return c
 }
 
+func (c *ReasoningServer) StartScheduler(ctx context.Context, req *pb.StartSchedulerRequest) (*pb.StartSchedulerResponse, error) {
+	if err := c.reasoningScheduler.Start(jobTag, func() { c.ReasoningJob(context.Background()) }); err != nil {
+		return nil, status.Errorf(codes.Internal, "Failed to start the scheduler: %v", err)
+	}
+	return &pb.StartSchedulerResponse{}, nil
+}
+
+func (c *ReasoningServer) StopScheduler(ctx context.Context, req *pb.StopSchedulerRequest) (*pb.StopSchedulerResponse, error) {
+	if err := c.reasoningScheduler.Stop(jobTag); err != nil {
+		return nil, status.Errorf(codes.Internal, "Failed to stop the scheduler: %v", err)
+	}
+	return &pb.StopSchedulerResponse{}, nil
+}
+
 func (c *ReasoningServer) GetAlgoStatsForMetric(ctx context.Context, req *pb.GetAlgoStatsForMetricRequest) (*pb.GetAlgoStatsForMetricResponse, error) {
 	log.Infof("Getting algo stats for metric %s on node %s", req.Metric, req.NodeId)
 	nodeId, err := ukama.ValidateNodeId(req.NodeId)
@@ -234,18 +248,6 @@ func domainSnapshotToProto(s *algos.DomainSnapshot) *pb.Domain {
 		EvaluatedAt:    s.EvaluatedAt,
 		ComputedAt:     s.EvaluatedAt,
 	}
-}
-
-func (c *ReasoningServer) StartScheduler(ctx context.Context, req *pb.StartSchedulerRequest) (*pb.StartSchedulerResponse, error) {
-	log.Info("Starting scheduler")
-
-	return &pb.StartSchedulerResponse{}, nil
-}
-
-func (c *ReasoningServer) StopScheduler(ctx context.Context, req *pb.StopSchedulerRequest) (*pb.StopSchedulerResponse, error) {
-	log.Info("Stopping scheduler")
-
-	return &pb.StopSchedulerResponse{}, nil
 }
 
 func (c *ReasoningServer) ReasoningJob(ctx context.Context) {
@@ -429,46 +431,6 @@ func (c *ReasoningServer) processAlgorithms(nodeID string, m pkg.Metric, pr *met
 	stats.ComputedAt = endUnix
 
 	return stats, nil
-}
-
-func (c *ReasoningServer) evaluateDomainForNode(nodeID string, collected []metricWithStats, end string, nodeLog *log.Entry) algos.DomainSnapshot {
-	rules := c.loadRules(nodeLog)
-	if len(rules) == 0 {
-		return algos.DomainSnapshot{}
-	}
-
-	evals := make(algos.MetricEvaluationsMap)
-	for _, ms := range collected {
-		evals[ms.metric.Key] = algos.MetricEvaluation{
-			MetricID:    ms.metric.Key,
-			State:       ms.stats.State,
-			Trend:       ms.stats.Trend,
-			Conclusion:  algos.CombineStateAndTrend(ms.stats.State, ms.stats.Trend),
-			Confidence:  ms.stats.Confidence,
-			EvaluatedAt: ms.stats.ComputedAt,
-		}
-	}
-
-	endUnix, _ := strconv.ParseInt(end, 10, 64)
-	if endUnix == 0 {
-		endUnix = time.Now().Unix()
-	}
-
-	var previous *algos.DomainSnapshot
-	if len(collected) > 0 {
-		domainKey := utils.GetDomainStoreKey(nodeID, collected[0].metric.Key)
-		if prev, err := c.loadDomainSnapshot(domainKey, nodeLog); err == nil && prev.RuleID != "" {
-			previous = prev
-		}
-	}
-
-	domain := "health"
-	if len(collected) > 0 && collected[0].metric.Category != "" {
-		domain = collected[0].metric.Category
-	}
-	snap := algos.EvaluateDomain(domain, evals, rules, previous, endUnix)
-	nodeLog.WithFields(log.Fields{"node_id": nodeID, "domain": domain, "rule_id": snap.RuleID, "severity": snap.Severity}).Debug("Domain evaluation")
-	return snap
 }
 
 func (c *ReasoningServer) loadDomainSnapshot(storeKey string, nodeLog *log.Entry) (*algos.DomainSnapshot, error) {

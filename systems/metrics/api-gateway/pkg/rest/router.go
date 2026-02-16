@@ -199,6 +199,16 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 			func(info *openapi.OperationInfo) {
 				info.Description = "Get domain stats for a metric"
 			}}, tonic.Handler(r.getDomainStatsHandler, http.StatusOK))
+
+		reasoning.POST("/scheduler/start", []fizz.OperationOption{
+			func(info *openapi.OperationInfo) {
+				info.Description = "Start scheduler"
+			}}, tonic.Handler(r.startSchedulerHandler, http.StatusOK))
+
+		reasoning.POST("/scheduler/stop", []fizz.OperationOption{
+			func(info *openapi.OperationInfo) {
+				info.Description = "Stop scheduler"
+			}}, tonic.Handler(r.stopSchedulerHandler, http.StatusOK))
 	}
 }
 
@@ -215,6 +225,14 @@ func (r *Router) getAlgoStatsForMetricHandler(c *gin.Context, in *GetAlgoStatsFo
 
 func (r *Router) getDomainStatsHandler(c *gin.Context, in *GetDomainStats) (*pbr.GetDomainsResponse, error) {
 	return r.clients.r.GetDomainsStats(in.NodeID, in.Metric)
+}
+
+func (r *Router) startSchedulerHandler(c *gin.Context, in *StartSchedulerInput) (*pbr.StartSchedulerResponse, error) {
+	return r.clients.r.StartScheduler()
+}
+
+func (r *Router) stopSchedulerHandler(c *gin.Context, in *StopSchedulerInput) (*pbr.StopSchedulerResponse, error) {
+	return r.clients.r.StopScheduler()
 }
 
 func parse_metrics_request(mReq string) []string {
