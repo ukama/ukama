@@ -7,7 +7,7 @@
 	static="false"
 	source="/nodes/apps/femd"
 	cmd="make"
-	bin_from="/nodes/apps/gps/fem.d"
+	bin_from="/nodes/apps/femd/fem.d"
 	bin_to="/sbin"
 
 [build-conf]
