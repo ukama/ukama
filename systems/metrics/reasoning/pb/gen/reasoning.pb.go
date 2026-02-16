@@ -383,15 +383,16 @@ func (*StopSchedulerResponse) Descriptor() ([]byte, []int) {
 
 type AggregatedStats struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         float64                `protobuf:"fixed64,1,opt,name=value,proto3" json:"value,omitempty"`
-	Min           float64                `protobuf:"fixed64,2,opt,name=min,proto3" json:"min,omitempty"`
-	Max           float64                `protobuf:"fixed64,3,opt,name=max,proto3" json:"max,omitempty"`
-	P95           float64                `protobuf:"fixed64,4,opt,name=p95,proto3" json:"p95,omitempty"`
-	Mean          float64                `protobuf:"fixed64,5,opt,name=mean,proto3" json:"mean,omitempty"`
-	Median        float64                `protobuf:"fixed64,6,opt,name=median,proto3" json:"median,omitempty"`
-	SampleCount   float64                `protobuf:"fixed64,7,opt,name=sample_count,proto3" json:"sample_count,omitempty"`
-	Aggregation   string                 `protobuf:"bytes,8,opt,name=aggregation,proto3" json:"aggregation,omitempty"`
-	NoiseEstimate float64                `protobuf:"fixed64,9,opt,name=noise_estimate,proto3" json:"noise_estimate,omitempty"`
+	ComputedAt    int64                  `protobuf:"varint,1,opt,name=computed_at,proto3" json:"computed_at,omitempty"`
+	Value         float64                `protobuf:"fixed64,2,opt,name=value,proto3" json:"value,omitempty"`
+	Min           float64                `protobuf:"fixed64,3,opt,name=min,proto3" json:"min,omitempty"`
+	Max           float64                `protobuf:"fixed64,4,opt,name=max,proto3" json:"max,omitempty"`
+	P95           float64                `protobuf:"fixed64,5,opt,name=p95,proto3" json:"p95,omitempty"`
+	Mean          float64                `protobuf:"fixed64,6,opt,name=mean,proto3" json:"mean,omitempty"`
+	Median        float64                `protobuf:"fixed64,7,opt,name=median,proto3" json:"median,omitempty"`
+	SampleCount   float64                `protobuf:"fixed64,8,opt,name=sample_count,proto3" json:"sample_count,omitempty"`
+	Aggregation   string                 `protobuf:"bytes,9,opt,name=aggregation,proto3" json:"aggregation,omitempty"`
+	NoiseEstimate float64                `protobuf:"fixed64,10,opt,name=noise_estimate,proto3" json:"noise_estimate,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -424,6 +425,13 @@ func (x *AggregatedStats) ProtoReflect() protoreflect.Message {
 // Deprecated: Use AggregatedStats.ProtoReflect.Descriptor instead.
 func (*AggregatedStats) Descriptor() ([]byte, []int) {
 	return file_reasoning_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *AggregatedStats) GetComputedAt() int64 {
+	if x != nil {
+		return x.ComputedAt
+	}
+	return 0
 }
 
 func (x *AggregatedStats) GetValue() float64 {
@@ -663,17 +671,19 @@ const file_reasoning_proto_rawDesc = "" +
 	"\x15StartSchedulerRequest\"\x18\n" +
 	"\x16StartSchedulerResponse\"\x16\n" +
 	"\x14StopSchedulerRequest\"\x17\n" +
-	"\x15StopSchedulerResponse\"\xf7\x01\n" +
-	"\x0fAggregatedStats\x12\x14\n" +
-	"\x05value\x18\x01 \x01(\x01R\x05value\x12\x10\n" +
-	"\x03min\x18\x02 \x01(\x01R\x03min\x12\x10\n" +
-	"\x03max\x18\x03 \x01(\x01R\x03max\x12\x10\n" +
-	"\x03p95\x18\x04 \x01(\x01R\x03p95\x12\x12\n" +
-	"\x04mean\x18\x05 \x01(\x01R\x04mean\x12\x16\n" +
-	"\x06median\x18\x06 \x01(\x01R\x06median\x12\"\n" +
-	"\fsample_count\x18\a \x01(\x01R\fsample_count\x12 \n" +
-	"\vaggregation\x18\b \x01(\tR\vaggregation\x12&\n" +
-	"\x0enoise_estimate\x18\t \x01(\x01R\x0enoise_estimate\"1\n" +
+	"\x15StopSchedulerResponse\"\x99\x02\n" +
+	"\x0fAggregatedStats\x12 \n" +
+	"\vcomputed_at\x18\x01 \x01(\x03R\vcomputed_at\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x01R\x05value\x12\x10\n" +
+	"\x03min\x18\x03 \x01(\x01R\x03min\x12\x10\n" +
+	"\x03max\x18\x04 \x01(\x01R\x03max\x12\x10\n" +
+	"\x03p95\x18\x05 \x01(\x01R\x03p95\x12\x12\n" +
+	"\x04mean\x18\x06 \x01(\x01R\x04mean\x12\x16\n" +
+	"\x06median\x18\a \x01(\x01R\x06median\x12\"\n" +
+	"\fsample_count\x18\b \x01(\x01R\fsample_count\x12 \n" +
+	"\vaggregation\x18\t \x01(\tR\vaggregation\x12&\n" +
+	"\x0enoise_estimate\x18\n" +
+	" \x01(\x01R\x0enoise_estimate\"1\n" +
 	"\x05Trend\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\x01R\x05value\"\"\n" +

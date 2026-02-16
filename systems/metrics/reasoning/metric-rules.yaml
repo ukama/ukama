@@ -1,0 +1,121 @@
+# Metric rules - generic pattern-based, derived from metric-key-map.json
+# metric_patterns maps generic keys to actual metric_keys per node type
+# Rule evaluator resolves metric key from patterns using node_type
+
+version: "1.0"
+
+metric_patterns:
+  cpu:
+    - com_soc_cpu_usage   # tnode
+    - com_cpu_usage       # anode
+  memory:
+    - com_memory_ddr_used # tnode
+    - com_memory_usage    # anode
+
+rules:
+  - id: health.cpu.pressure
+    domain: health
+    severity: degraded
+    priority: 60
+    headline: CPU PRESSURE
+    root_cause: Elevated CPU usage detected
+    service_impact: Risk of control instability if CPU usage remains high.
+    conditions:
+      - metric: cpu
+        state: warning
+        min_match: 1
+      - metric: cpu
+        trend: increasing
+        min_match: 1
+      - metric: cpu
+        confidence_gte: 0.7
+        min_match: 1
+    conditions_min_match: 3
+    evidence_metrics:
+      - cpu
+
+  - id: health.memory.pressure
+    domain: health
+    severity: degraded
+    priority: 60
+    headline: MEMORY PRESSURE
+    root_cause: Elevated memory usage detected
+    service_impact: Risk of control instability if memory usage remains high.
+    conditions:
+      - metric: memory
+        state: warning
+        min_match: 1
+      - metric: memory
+        trend: increasing
+        min_match: 1
+      - metric: memory
+        confidence_gte: 0.7
+        min_match: 1
+    conditions_min_match: 3
+    evidence_metrics:
+      - memory
+
+  - id: health.cpu.critical
+    domain: health
+    severity: critical
+    priority: 80
+    headline: CPU CRITICAL
+    root_cause: CPU usage at critical levels
+    service_impact: Immediate risk of system instability or failure.
+    conditions:
+      - metric: cpu
+        state: critical
+        min_match: 1
+      - metric: cpu
+        confidence_gte: 0.7
+        min_match: 1
+    conditions_min_match: 2
+    evidence_metrics:
+      - cpu
+
+  - id: health.memory.critical
+    domain: health
+    severity: critical
+    priority: 80
+    headline: MEMORY CRITICAL
+    root_cause: Memory usage at critical levels
+    service_impact: Immediate risk of system instability or failure.
+    conditions:
+      - metric: memory
+        state: critical
+        min_match: 1
+      - metric: memory
+        confidence_gte: 0.7
+        min_match: 1
+    conditions_min_match: 2
+    evidence_metrics:
+      - memory
+
+  - id: health.resource.constraint
+    domain: health
+    severity: degraded
+    priority: 50
+    headline: RESOURCE CONSTRAINT
+    root_cause: Multiple resources under pressure
+    service_impact: Risk of service degradation if load continues.
+    conditions:
+      - any_of:
+          - metric: cpu
+            state: warning
+            min_match: 1
+          - metric: memory
+            state: warning
+            min_match: 1
+        min_match: 2
+      - any_of:
+          - metric: cpu
+            trend: increasing
+            min_match: 1
+          - metric: memory
+            trend: increasing
+            min_match: 1
+        min_match: 1
+    conditions_min_match: 2
+    evidence_metrics:
+      - cpu
+      - memory

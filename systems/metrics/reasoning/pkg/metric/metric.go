@@ -281,3 +281,22 @@ func truncateString(s string, maxLen int) string {
 	}
 	return s[:maxLen] + "..."
 }
+
+// FilterResultsByMetric returns a new FilteredPrometheusResponse containing only results
+// for the given metric name (__name__ or metric label). Used when batching multiple metrics
+// in one Prometheus request and splitting the response per metric.
+func (r *FilteredPrometheusResponse) FilterResultsByMetric(metricKey string) *FilteredPrometheusResponse {
+	var filtered []FilteredPrometheusResult
+	for _, res := range r.Data.Result {
+		if res.Metric.Metric == metricKey {
+			filtered = append(filtered, res)
+		}
+	}
+	return &FilteredPrometheusResponse{
+		Status: r.Status,
+		Data: FilteredPrometheusData{
+			ResultType: r.Data.ResultType,
+			Result:     filtered,
+		},
+	}
+}

@@ -22,12 +22,13 @@ func EmptyPrevStats() Stats {
 }
 
 type Stats struct {
-	Aggregation      string `json:"aggregation"`
+	Aggregation      string          `json:"aggregation"`
 	AggregationStats AggregationStats `json:"aggregation_stats"`
-	Trend            string `json:"trend"`
-	Confidence       float64 `json:"confidence"`
-	State            string `json:"state"`
+	Trend            string          `json:"trend"`
+	Confidence       float64         `json:"confidence"`
+	State            string          `json:"state"`
 	Projection       ProjectionStats `json:"projection"`
+	ComputedAt       int64           `json:"computed_at"` // Unix timestamp when stats were computed
 }
 
 type StatAnalysis struct {

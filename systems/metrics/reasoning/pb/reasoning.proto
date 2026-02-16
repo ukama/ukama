@@ -48,15 +48,16 @@ message StopSchedulerRequest {}
 message StopSchedulerResponse {}
 
 message AggregatedStats {
-    double value = 1 [json_name = "value"];
-    double min = 2 [json_name = "min"];
-    double max = 3 [json_name = "max"];
-    double p95 = 4 [json_name = "p95"];
-    double mean = 5 [json_name = "mean"];
-    double median = 6 [json_name = "median"];
-    double sample_count = 7 [json_name = "sample_count"];
-    string aggregation = 8 [json_name = "aggregation"];
-    double noise_estimate = 9 [json_name = "noise_estimate"];
+    int64 computed_at = 1 [json_name = "computed_at"];
+    double value = 2 [json_name = "value"];
+    double min = 3 [json_name = "min"];
+    double max = 4 [json_name = "max"];
+    double p95 = 5 [json_name = "p95"];
+    double mean = 6 [json_name = "mean"];
+    double median = 7 [json_name = "median"];
+    double sample_count = 8 [json_name = "sample_count"];
+    string aggregation = 9 [json_name = "aggregation"];
+    double noise_estimate = 10 [json_name = "noise_estimate"];
 }
 
 message Trend {

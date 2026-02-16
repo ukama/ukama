@@ -65,20 +65,49 @@ func NewReasoningServer(msgBus mb.MsgBusServiceClient, nodeClient creg.NodeClien
 }
 
 func (c *ReasoningServer) GetAlgoStatsForMetric(ctx context.Context, req *pb.GetAlgoStatsForMetricRequest) (*pb.GetAlgoStatsForMetricResponse, error) {
+	log.Infof("Getting algo stats for metric %s on node %s", req.Metric, req.NodeId)
 	nodeId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Invalid node ID: %v", err)
 	}
 
-	// TODO: Check if the metric Key is valid by checking the MetricKeyMap
+	nType := ukama.GetNodeType(nodeId.String())
+	if nType == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Could not determine node type from node ID %s", nodeId.String())
+	}
 
-	stats, err := c.loadPrevStats(utils.GetAlgoStatsStoreKey(nodeId.String(), req.Metric), log.WithField("node_id", nodeId.String()).WithField("metric", req.Metric))
+	if c.config.MetricKeyMap == nil {
+		metricKeyMap, err := pkg.LoadMetricKeyMap(c.config)
+		if err != nil {
+			return nil, status.Errorf(codes.Unavailable, "MetricKeyMap not loaded: %v", err)
+		}
+		c.config.MetricKeyMap = metricKeyMap
+	}
+
+	metricsCfg, ok := (*c.config.MetricKeyMap)[*nType]
+	if !ok {
+		return nil, status.Errorf(codes.InvalidArgument, "No metrics configured for node type %s", *nType)
+	}
+
+	var metricKey string
+	for _, m := range metricsCfg.Metrics {
+		if m.Key == req.Metric {
+			metricKey = m.MetricKey
+			break
+		}
+	}
+	if metricKey == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Metric key %q is not valid for node type %s", req.Metric, *nType)
+	}
+
+	stats, err := c.loadPrevStats(utils.GetAlgoStatsStoreKey(nodeId.String(), metricKey), log.WithField("node_id", nodeId.String()).WithField("metric", metricKey))
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "Failed to load stats for metric %s on node %s: %v", req.Metric, nodeId.String(), err)
 	}
 	return &pb.GetAlgoStatsForMetricResponse{
 		Aggregated: &pb.AggregatedStats{
-			Value: stats.AggregationStats.AggregatedValue,
+			ComputedAt: stats.ComputedAt,
+			Value:      stats.AggregationStats.AggregatedValue,
 			Min: stats.AggregationStats.Min,
 			Max: stats.AggregationStats.Max,
 			P95: stats.AggregationStats.P95,
@@ -186,18 +215,43 @@ func (c *ReasoningServer) processNode(ctx context.Context, nodeID, start, end st
 		jobLog.WithField("node_id", nodeID).Warn("Could not determine node type from node ID, skipping")
 		return 0, 0
 	}
-	metrics, ok := (*c.config.MetricKeyMap)[*nType]
+	metricsCfg, ok := (*c.config.MetricKeyMap)[*nType]
 	if !ok {
 		jobLog.WithFields(log.Fields{"node_id": nodeID, "type": *nType}).Info("No metrics for node type in MetricKeyMap, skipping")
 		return 0, 0
 	}
 
 	nodeLog := jobLog.WithFields(log.Fields{"node_id": nodeID, "type": *nType, "window": start + ".." + end})
-	nodeLog.Infof("Processing %d metric(s) for node", len(metrics.Metrics))
+	nodeLog.Infof("Processing %d metric(s) for node", len(metricsCfg.Metrics))
 
-	for _, m := range metrics.Metrics {
-		if err := c.processMetric(ctx, nodeID, m, start, end, nodeLog); err != nil {
-			nodeLog.WithError(err).WithField("metric", m.Key).Error("Metric processing failed")
+	// Batch all metrics into a single Prometheus request (per node_types config)
+	metricQueries := make([]metric.MetricWithFilters, 0, len(metricsCfg.Metrics))
+	step := "1"
+	for i, m := range metricsCfg.Metrics {
+		if i == 0 && m.Step > 0 {
+			step = strconv.Itoa(m.Step)
+		}
+		metricQueries = append(metricQueries, metric.MetricWithFilters{
+			Metric:  m.MetricKey,
+			Filters: []metric.Filter{{Key: "node_id", Value: nodeID}},
+		})
+	}
+
+	rp := metric.BuildPrometheusRequest(c.config.PrometheusHost, start, end, step, "", metricQueries)
+	nodeLog.WithFields(log.Fields{"metrics": len(metricQueries), "prometheus_host": c.config.PrometheusHost}).Debug("Fetching metrics from Prometheus")
+	reqCtx, cancel := context.WithTimeout(ctx, c.config.Timeout)
+	defer cancel()
+	pr, err := metric.ProcessPromRequest(reqCtx, rp)
+	if err != nil {
+		nodeLog.WithError(err).Error("Prometheus request failed")
+		return 0, len(metricsCfg.Metrics)
+	}
+
+	// Split response by metric and process each
+	for _, m := range metricsCfg.Metrics {
+		prForMetric := pr.FilterResultsByMetric(m.MetricKey)
+		if err := c.processAlgorithms(nodeID, m, prForMetric, nodeLog); err != nil {
+			nodeLog.WithError(err).WithField("metric", m.MetricKey).Error("Metric processing failed")
 			failed++
 		} else {
 			processed++
@@ -206,27 +260,8 @@ func (c *ReasoningServer) processNode(ctx context.Context, nodeID, start, end st
 	return processed, failed
 }
 
-func (c *ReasoningServer) processMetric(ctx context.Context, nodeID string, m pkg.Metric, start, end string, nodeLog *log.Entry) error {
-	rp := metric.BuildPrometheusRequest(
-		c.config.PrometheusHost, start, end,
-		strconv.Itoa(m.Step), "",
-		[]metric.MetricWithFilters{{Metric: m.Key, Filters: []metric.Filter{{Key: "node_id", Value: nodeID}}}},
-	)
-
-	nodeLog.WithFields(log.Fields{"metric": m.Key, "prometheus_host": c.config.PrometheusHost}).Debug("Fetching metric from Prometheus")
-	reqCtx, cancel := context.WithTimeout(ctx, c.config.Timeout)
-	defer cancel()
-	pr, err := metric.ProcessPromRequest(reqCtx, rp)
-	if err != nil {
-		nodeLog.WithError(err).WithField("metric", m.Key).Error("Prometheus request failed")
-		return err
-	}
-
-	return c.processAlgorithms(nodeID, m, pr, nodeLog)
-}
-
 func (c *ReasoningServer) processAlgorithms(nodeID string, m pkg.Metric, pr *metric.FilteredPrometheusResponse, nodeLog *log.Entry) error {
-	metricLog := nodeLog.WithField("metric", m.Key)
+	metricLog := nodeLog.WithField("metric", m.MetricKey)
 
 	// Aggregate
 	aggStats, err := algos.AggregateMetricAlgo(pr.Data.Result, "mean")
@@ -236,7 +271,7 @@ func (c *ReasoningServer) processAlgorithms(nodeID string, m pkg.Metric, pr *met
 	aggStats.RoundOfDecimalPoints(c.config.FormatDecimalPoints)
 
 	// Load previous stats (or use empty for first run)
-	storeKey := utils.GetAlgoStatsStoreKey(nodeID, m.Key)
+	storeKey := utils.GetAlgoStatsStoreKey(nodeID, m.MetricKey)
 	prevStats, err := c.loadPrevStats(storeKey, metricLog)
 	if err != nil {
 		return err
@@ -274,13 +309,15 @@ func (c *ReasoningServer) processAlgorithms(nodeID string, m pkg.Metric, pr *met
 		stats.Projection.EtaSec = utils.RoundToDecimalPoints(stats.Projection.EtaSec, c.config.FormatDecimalPoints)
 	}
 
+	stats.ComputedAt = time.Now().Unix()
+
 	// Persist
 	if err := c.store.PutJson(storeKey, stats); err != nil {
 		metricLog.WithError(err).Error("Failed to persist algo stats")
 		return err
 	}
 
-	c.logMetricResult(nodeID, m.Key, stats, metricLog)
+	c.logMetricResult(nodeID, m.MetricKey, stats, metricLog)
 	return nil
 }
 

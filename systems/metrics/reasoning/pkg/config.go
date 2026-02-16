@@ -32,6 +32,7 @@ type Config struct {
 	MetricsKeyMapFile    string           `default:"/etc/reasoning/metric-key-map.json"`
 	FormatDecimalPoints  int              `default:"5"`
 	MetricKeyMap         *MetricKeyMap
+	MetricPatterns       MetricPatternsMap // pattern key -> node type -> metric_key
 	Service              *uconf.Service
 	Http            	 HttpServices
 }
@@ -39,6 +40,7 @@ type Config struct {
 type Metric struct {
 	Step             int         `json:"step" yaml:"step"`
 	Key              string      `json:"key" yaml:"key"`
+	MetricKey        string      `json:"metric_key" yaml:"metric_key"`
 	Category         string      `json:"category" yaml:"category"`
 	MetricType       string      `json:"metric_type" yaml:"metric_type"`
 	TrendSensitivity float64     `json:"trend_sensitivity" yaml:"trend_sensitivity"`
@@ -63,6 +65,9 @@ type Metrics struct {
 
 type MetricKeyMap map[string]Metrics
 
+// MetricPatternsMap maps pattern key -> node type -> metric_key (for rule evaluation)
+type MetricPatternsMap map[string]map[string]string
+
 type HttpServices struct {
 	InitClient string `default:"http://api-gateway-init:8080"`
 }
@@ -81,8 +86,13 @@ func NewConfig(name string) *Config {
 // Fallback paths when primary MetricsKeyMapFile path doesn't exist (e.g. local dev)
 var metricKeyMapFallbackPaths = []string{"metric-key-map.json", "./metric-key-map.json"}
 
+// metricKeyMapFile supports the new format with metric_patterns and node_types.
+type metricKeyMapFile struct {
+	MetricPatterns map[string]map[string]string `json:"metric_patterns"`
+	NodeTypes      map[string]Metrics          `json:"node_types"`
+}
+
 func LoadMetricKeyMap(config *Config) (*MetricKeyMap, error) {
-	metricKeyMap := new(MetricKeyMap)
 	paths := append([]string{config.MetricsKeyMapFile}, metricKeyMapFallbackPaths...)
 
 	var bytes []byte
@@ -100,9 +110,21 @@ func LoadMetricKeyMap(config *Config) (*MetricKeyMap, error) {
 		return nil, err
 	}
 
-	err = json.Unmarshal(bytes, metricKeyMap)
-	if err != nil {
+	// Try new format first (metric_patterns + node_types)
+	var file metricKeyMapFile
+	if err := json.Unmarshal(bytes, &file); err != nil {
 		return nil, err
 	}
-	return metricKeyMap, nil
+	if len(file.NodeTypes) > 0 {
+		config.MetricPatterns = file.MetricPatterns
+		mkm := MetricKeyMap(file.NodeTypes)
+		return &mkm, nil
+	}
+
+	// Fall back to legacy format (tnode/anode at top level)
+	var legacy MetricKeyMap
+	if err := json.Unmarshal(bytes, &legacy); err != nil {
+		return nil, err
+	}
+	return &legacy, nil
 }

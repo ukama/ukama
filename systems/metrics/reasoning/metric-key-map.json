@@ -1,62 +1,78 @@
 {
-    "tnode":{
-        "metrics": [
-            {
-             "step": 1,
-             "key": "com_soc_cpu_usage",
-             "category": "health",
-             "metric_type": "gauge",
-             "trend_sensitivity": 1.0,
-             "state_direction": "higher_is_worse",
-             "thresholds": {
-              "min": 0,
-              "medium": 50,
-              "max": 100
-             }
-            },
-            {
-             "step": 1,
-             "key": "com_memory_ddr_used",
-             "category": "health",
-             "metric_type": "gauge",
-             "trend_sensitivity": 1.0,
-             "state_direction": "higher_is_worse",
-             "thresholds": {
-              "min": 0,
-              "medium": 50,
-              "max": 100
-             }
-            }
-        ]
+  "metric_patterns": {
+    "cpu": {
+      "tnode": "com_soc_cpu_usage",
+      "anode": "ctl_soc_cpu_usage"
     },
-    "anode":{
-        "metrics": [
-            {
-                "step": 1,
-                "key": "com_cpu_usage",
-                "category": "health",
-                "metric_type": "gauge",
-                "trend_sensitivity": 1.0,
-                "state_direction": "higher_is_worse",
-                "thresholds": {
-                    "min": 0,
-                    "medium": 50,
-                    "max": 100
-                }
-            },
-            {
-                "step": 1,
-                "key": "com_memory_usage",
-                "category": "health",
-                "metric_type": "gauge",
-                "trend_sensitivity": 1.0,
-                "state_direction": "higher_is_worse",
-                "thresholds": {
-                    "min": 0,
-                    "medium": 50,
-                    "max": 100
-                }
-            }
-        ]
+    "memory": {
+      "tnode": "com_memory_ddr_used",
+      "anode": "ctl_memory_ddr_used"
     }
+  },
+  "node_types": {
+    "tnode": {
+      "metrics": [
+        {
+          "step": 1,
+          "key": "cpu",
+          "metric_key": "com_soc_cpu_usage",
+          "category": "health",
+          "metric_type": "gauge",
+          "trend_sensitivity": 1.0,
+          "state_direction": "higher_is_worse",
+          "thresholds": {
+            "min": 0,
+            "medium": 50,
+            "max": 100
+          }
+        },
+        {
+          "step": 1,
+          "key": "memory",
+          "metric_key": "com_memory_ddr_used",
+          "category": "health",
+          "metric_type": "gauge",
+          "trend_sensitivity": 1.0,
+          "state_direction": "higher_is_worse",
+          "thresholds": {
+            "min": 0,
+            "medium": 50,
+            "max": 100
+          }
+        }
+      ]
+    },
+    "anode": {
+      "metrics": [
+        {
+          "step": 1,
+          "key": "cpu",
+          "metric_key": "ctl_soc_cpu_usage",
+          "category": "health",
+          "metric_type": "gauge",
+          "trend_sensitivity": 1.0,
+          "state_direction": "higher_is_worse",
+          "thresholds": {
+            "min": 0,
+            "medium": 50,
+            "max": 100
+          }
+        },
+        {
+          "step": 1,
+          "key": "memory",
+          "metric_key": "ctl_memory_ddr_used",
+          "category": "health",
+          "metric_type": "gauge",
+          "trend_sensitivity": 1.0,
+          "state_direction": "higher_is_worse",
+          "thresholds": {
+            "min": 0,
+            "medium": 50,
+            "max": 100
+          }
+        }
+      ]
+    }
+  }
 }
