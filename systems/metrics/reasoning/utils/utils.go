@@ -71,6 +71,11 @@ func GetAlgoStatsStoreKey(nodeID string, metricKey string) string {
 	return nodeID + "/" + metricKey + "/" + "algo_stats"
 }
 
+// GetDomainStoreKey returns the store key for domain evaluation: NodeID/Metric (pattern key, e.g. cpu, memory)
+func GetDomainStoreKey(nodeID string, metricPattern string) string {
+	return nodeID + "/" + metricPattern
+}
+
 // SortNodeIds validates a tower node ID and returns the tower + amp node pair.
 func SortNodeIds(nodeID string) (Nodes, error) {
 	nid, err := ukama.ValidateNodeId(nodeID)

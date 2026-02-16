@@ -11,6 +11,10 @@ package algos
 import (
 	"encoding/json"
 	"math"
+	"strings"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/metrics/reasoning/pkg/store"
 )
 
 // EmptyPrevStats returns Stats for first run when no previous data exists.
@@ -28,7 +32,7 @@ type Stats struct {
 	Confidence       float64         `json:"confidence"`
 	State            string          `json:"state"`
 	Projection       ProjectionStats `json:"projection"`
-	ComputedAt       int64           `json:"computed_at"` // Unix timestamp when stats were computed
+	ComputedAt       int64           `json:"computed_at"`
 }
 
 type StatAnalysis struct {
@@ -59,6 +63,24 @@ func UnmarshalStatsFromJSON(data []byte) (Stats, error) {
 	err := json.Unmarshal(data, &stats)
 	if err != nil {
 		return Stats{}, err
+	}
+	return stats, nil
+}
+
+func LoadStats(store *store.Store, storeKey string, metricLog *log.Entry) (Stats, error) {
+	bytes, err := store.GetJson(storeKey)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			metricLog.Info("No previous stats found, using empty (first run or new metric)")
+			return EmptyPrevStats(), nil
+		}
+		return Stats{}, err
+	}
+	stats, err := UnmarshalStatsFromJSON(bytes)
+	if err != nil {
+		// Corrupted or empty stored data: treat as first run so algorithms still execute
+		metricLog.WithError(err).Info("Invalid previous stats, using empty (first run or corrupted data)")
+		return EmptyPrevStats(), nil
 	}
 	return stats, nil
 }

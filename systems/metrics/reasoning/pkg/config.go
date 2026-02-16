@@ -30,6 +30,7 @@ type Config struct {
 	OrgName              string           `default:"ukama"`
 	PrometheusHost       string           `default:"http://prometheus:9090"`
 	MetricsKeyMapFile    string           `default:"/etc/reasoning/metric-key-map.json"`
+	MetricsRulesFile     string           `default:"/etc/reasoning/metric-rules.json"`
 	FormatDecimalPoints  int              `default:"5"`
 	MetricKeyMap         *MetricKeyMap
 	MetricPatterns       MetricPatternsMap // pattern key -> node type -> metric_key
