@@ -1,6 +1,7 @@
 build
 src/.DS_Store
 yarn.lock
+coverage
 README.md
 .DS_Store
 .env

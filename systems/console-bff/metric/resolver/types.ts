@@ -5,74 +5,79 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Field, InputType, ObjectType } from "type-graphql";
+import { Field, ObjectType } from "type-graphql";
 
 @ObjectType()
-export class NetworkStats {
+export class MetricAggregated {
   @Field()
-  activeSubscriber: number;
+  computed_at: string;
 
   @Field()
-  averageSignalStrength: number;
+  value: number;
 
   @Field()
-  averageThroughput: number;
-}
-@InputType()
-export class GetNodeLatestMetricInput {
-  @Field()
-  nodeId: string;
+  min: number;
 
   @Field()
-  type: string;
-}
-@InputType()
-export class GetSiteLatestMetricInput {
-  @Field()
-  siteId: string;
+  max: number;
 
   @Field()
-  type: string;
-}
-
-@ObjectType()
-export class NodeLatestMetric {
-  @Field()
-  success: boolean;
+  p95: number;
 
   @Field()
-  msg: string;
+  mean: number;
 
   @Field()
-  orgId: string;
+  median: number;
 
   @Field()
-  nodeId: string;
+  sample_count: number;
 
   @Field()
-  type: string;
+  aggregation: string;
 
-  @Field(() => [Number, Number])
-  value: [number, number];
+  @Field()
+  noise_estimate: number;
 }
 
 @ObjectType()
-export class SiteLatestMetric {
-  @Field()
-  success: boolean;
-
-  @Field()
-  msg: string;
-
-  @Field()
-  orgId: string;
-
-  @Field()
-  siteId: string;
-
+export class MetricTrend {
   @Field()
   type: string;
 
-  @Field(() => [Number, Number])
-  value: [number, number];
+  @Field()
+  value: number;
+}
+
+@ObjectType()
+export class MetricConfidence {
+  @Field()
+  value: number;
+}
+
+@ObjectType()
+export class MetricProjection {
+  @Field()
+  type: string;
+
+  @Field()
+  eta_sec: number;
+}
+
+@ObjectType()
+export class MetricAnalysis {
+  @Field(() => MetricAggregated)
+  aggregated: MetricAggregated;
+
+  @Field(() => MetricTrend)
+  trend: MetricTrend;
+
+  @Field(() => MetricConfidence)
+  confidence: MetricConfidence;
+
+  @Field(() => MetricProjection)
+  projection: MetricProjection;
+
+  @Field()
+  state: string;
 }

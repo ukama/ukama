@@ -6,7 +6,6 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
-
 import {
   GetNodeLatestMetricInput,
   GetSiteLatestMetricInput,
