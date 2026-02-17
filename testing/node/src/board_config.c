@@ -115,28 +115,41 @@ static int load_board_file(BoardConfig *cfg, const char *filePath) {
     return 1;
 }
 
+
 int board_config_load(BoardConfig *cfg,
                       const char *boardsDir,
                       NodeType type) {
 
     char path[MAX_SIZE];
-    
-    if (!cfg || !boardsDir)
+    const char *filename = NULL;
+
+    if (!cfg || !boardsDir) {
         return 0;
+    }
 
     memset(cfg, 0, sizeof(*cfg));
     cfg->type = type;
 
-    if (type == NODE_TOWER) {
-        snprintf(path, sizeof(path), "%s/%s", NODE_TOWER_CONFIG);
-        load_board_file(cfg, path);
-    }
-    else if (type == NODE_AMPLIFIER) {
-        snprintf(path, sizeof(path), "%s/%s", NODE_AMPLIFIER_CONFIG);
-        load_board_file(cfg, path);
+    switch (type) {
+    case NODE_TOWER:
+        filename = NODE_TOWER_CONFIG;
+        break;
+
+    case NODE_AMPLIFIER:
+        filename = NODE_AMPLIFIER_CONFIG;
+        break;
+
+    default:
+        return 0;
     }
 
-    return 1;
+    /* Construct full path: boardsDir/filename */
+    if (snprintf(path, sizeof(path), "%s/%s", boardsDir, filename) >= sizeof(path)) {
+        /* truncated */
+        return 0;
+    }
+
+    return load_board_file(cfg, path);
 }
 
 int board_is_app_enabled(BoardConfig *cfg,

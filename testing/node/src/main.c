@@ -236,22 +236,35 @@ int main (int argc, char *argv[]) {
     } else if (nodeType == NODE_AMPLIFIER) {
         log_debug("==== Building for Ukama Amplifer Node (virtual) ====");
     } else {
-        log_error("==== Unknown node type ====");
+        log_error("==== Unknown node type ====\n Exiting");
+        json_decref(jNode);
+        free_node(node);
         exit(1);
     }
 
-    board_config_load(&boardConfig, boardDir, nodeType);
+    if (!board_config_load(&boardConfig, boardDir, nodeType)) {
+        log_error("Unable to load board config file \n. Exiting.",
+				  configDir);
+        json_decref(jNode);
+        free_node(node);
+		exit(1);
+	}
 
 	if (!read_config_files(&configs, configDir, &boardConfig)) {
-	    log_error("Parsing error reading configs from %s \n. Exiting.",
+	    log_error("Parsing error reading configs from %s \n Exiting.",
 				  configDir);
 		free_configs(configs);
+        json_decref(jNode);
+        free_node(node);
 		exit(1);
 	}
 
 	/* Prepare environment for virtual node build */
 	if (!prepare_env_for_creating_virtual_node()) {
 		log_error("Unable to prepare environment for building virtual node.");
+        free_configs(configs);
+        json_decref(jNode);
+        free_node(node);
 		exit(1);
 	}
 
