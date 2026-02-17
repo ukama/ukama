@@ -179,7 +179,7 @@ int main (int argc, char *argv[]) {
 			usage();
 			exit(0);
 		}
-	} /* while */
+	}
 
 	if (argc == 1 || cmd == VNODE_CMD_NONE) {
 		fprintf(stderr, "Must specify command\n");
@@ -231,6 +231,14 @@ int main (int argc, char *argv[]) {
 	/* assign nodeID from the environment variable */
 	node->nodeInfo->uuid = strdup(envNodeID);
     nodeType = detect_node_type(node->nodeInfo->uuid);
+    if (nodeType == NODE_TOWER) {
+        log_debug("==== Building for Ukama Tower Node (virtual) ====");
+    } else if (nodeType == NODE_AMPLIFIER) {
+        log_debug("==== Building for Ukama Amplifer Node (virtual) ====");
+    } else {
+        log_error("==== Unknown node type ====");
+        exit(1);
+    }
 
     board_config_load(&boardConfig, boardDir, nodeType);
 
