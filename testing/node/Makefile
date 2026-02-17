@@ -43,7 +43,22 @@ LDFLAGS+=-L../../nodes/ukamaOS/distro/vendor/build/lib64
 CFILES   = $(wildcard ./src/*.c)
 OBJFILES = $(CFILES:.c=.o)
 
-.PHONY: $(TARGET_EXEC)
+DOCKER_CONTEXT := $(CURDIR)
+BOARDS_SRC     := $(REPO_ROOT)/nodes/configs/boards
+BOARDS_STAGE   := $(DOCKER_CONTEXT)/boards
+
+.PHONY: stage-boards unstage-boards $(TARGET_EXEC)
+
+stage-boards:
+	@echo "Staging boards into build context..."
+	@test -d "$(BOARDS_SRC)" || (echo "ERROR: BOARDS_SRC not found: $(BOARDS_SRC)"; exit 1)
+	rm -rf "$(BOARDS_STAGE)"
+	mkdir -p "$(BOARDS_STAGE)"
+	rsync -a --delete "$(BOARDS_SRC)/" "$(BOARDS_STAGE)/"
+
+unstage-boards:
+	@echo "Removing staged boards from build context..."
+	rm -rf "$(BOARDS_STAGE)"
 
 srvc_router: $(TARGET_EXEC)
 
@@ -79,9 +94,10 @@ sourcetgz: $(TARGET_EXEC)
 	  mv $(PKG_NAME) $(CURDIR)/$(PKG_NAME); \
 	)
 
-container:  sourcetgz
+container: sourcetgz stage-boards
 	@echo Building container
 	podman build -t testing/virtualnode:${VERSION} .
+	@$(MAKE) unstage-boards
 
 print-version:
 	@echo $(VERSION)
@@ -96,3 +112,4 @@ clean:
 	rm -rf $(STAGE_DIR)
 	rm -f ${PKG_NAME}
 	rm -rf build/
+	rm -rf $(BOARDS_STAGE)
