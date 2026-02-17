@@ -5,15 +5,15 @@
 [build-compile]
 	version="0.1"
 	static="false"
-	source="/nodes/apps/gps"
+	source="/nodes/apps/backhaul"
 	cmd="make"
-	bin_from="/nodes/apps/gps/gps.d"
+	bin_from="/nodes/apps/backhaul/backhaul-monitor"
 	bin_to="/sbin"
 
 [capp-exec]
-	name="gpsd"
+	name="backhaul"
 	version="latest"
-	bin="gps.d"
+	bin="backhaul-monitor"
 	path="/sbin"
 	autostart="false"
 	autorestart="true"

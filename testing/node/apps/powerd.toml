@@ -5,17 +5,17 @@
 [build-compile]
 	version="0.1"
 	static="false"
-	source="/nodes/apps/gps"
+	source="/nodes/apps/power"
 	cmd="make"
-	bin_from="/nodes/apps/gps/gps.d"
+	bin_from="/nodes/apps/power/power-monitor"
 	bin_to="/sbin"
 
 [capp-exec]
-	name="gpsd"
+	name="power"
 	version="latest"
-	bin="gps.d"
+	bin="power-monitor"
 	path="/sbin"
 	autostart="false"
-	autorestart="true"
-	startretries=5
+        autorestart="true"
+        startretries=5
 	group="service"

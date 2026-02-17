@@ -66,7 +66,24 @@ supervisor.rpcinterface:make_main_rpcinterface\n\n"
 #define SVISOR_GROUP_NIL                NULL
 
 #define SVISOR_GLOBAL_ENV \
-    "environment=UKAMA_GPS_MODE=\"mock\",UKAMA_GPS_COORDS=\"-90.000000,0.000000\"\n"
+    "environment=" \
+    "UKAMA_GPS_MODE=\"mock\"," \
+    "UKAMA_GPS_COORDS=\"-90.000000,0.000000\"," \
+    "BACKHAULD_BOOTSTRAP_SCHEME=\"http\"," \
+    "BACKHAULD_BOOTSTRAP_HOST=\"127.0.0.1\"," \
+    "BACKHAULD_BOOTSTRAP_EP=\"/reflector\"," \
+    "BACKHAULD_REFLECTOR_NEAR_URL=\"http://127.0.0.1:8088/reflector\"," \
+    "BACKHAULD_REFLECTOR_FAR_URL=\"http://127.0.0.1:8088/reflector\"," \
+    "BACKHAULD_STRICT_ENV=\"1\"," \
+    "BACKHAULD_MICRO_PERIOD_MS=\"3000\"," \
+    "BACKHAULD_MULTI_PERIOD_MS=\"7000\"," \
+    "BACKHAULD_CLASSIFY_PERIOD_SEC=\"10\"," \
+    "BACKHAULD_CHG_PERIOD_SEC=\"30\"," \
+    "BACKHAULD_CONNECT_TIMEOUT_MS=\"2000\"," \
+    "BACKHAULD_TOTAL_TIMEOUT_MS=\"10000\"," \
+    "FEMD_SYSROOT=\"/tmp/sys\"," \
+    "ENV_FEM_BAND=\"B41\"" \
+    "\n"
 
 int create_supervisor_config(Configs *configs);
 void purge_supervisor_config(char *fileName);

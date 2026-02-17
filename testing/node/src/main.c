@@ -25,6 +25,7 @@
 #include "jserdes.h"
 #include "image.h"
 #include "setup_env.h"
+#include "board_config.h"
 
 #define VERSION       "0.0.1"
 #define DEF_LOG_LEVEL "TRACE"
@@ -57,6 +58,7 @@ void usage() {
 	printf("--x, --exec                      command to execute\n");
 	printf("                                 [create delete inspect verify]\n");
 	printf("--c, --apps                      apps config folder\n");
+    printf("--b, --board                     board-apps config folder\n");
 	printf("--r, --registry                  registry URL\n");
 	printf("--l, --level <ERROR | DEBUG | INFO> logging levels\n");
 	printf("--V, --version                   version.\n");
@@ -104,6 +106,7 @@ int main (int argc, char *argv[]) {
 
 	int cmd=VNODE_CMD_NONE;
 	char *configDir=NULL, *registryURL=NULL;
+    char *boardDir=NULL;
 	char *debug=DEF_LOG_LEVEL;
 	char *envVNodeMetaData=NULL;
 	char *envNodeID=NULL;
@@ -112,6 +115,8 @@ int main (int argc, char *argv[]) {
 	Configs *configs=NULL, *ptr=NULL;
 	Node *node=NULL;
 	json_t *jNode=NULL;
+    BoardConfig boardConfig;
+    NodeType nodeType;
 
 	while (TRUE) {
 
@@ -119,6 +124,7 @@ int main (int argc, char *argv[]) {
 		int opdidx = 0;
 
 		static struct option long_options[] = {
+            { "board",     required_argument, 0, 'b'},
 			{ "exec",      required_argument, 0, 'x'},
 			{ "target",    required_argument, 0, 't'},
 			{ "capp",      required_argument, 0, 'c'},
@@ -129,7 +135,7 @@ int main (int argc, char *argv[]) {
 			{ 0,           0,                 0,  0}
 		};
 
-		opt = getopt_long(argc, argv, "t:x:c:r:l:hV:", long_options, &opdidx);
+		opt = getopt_long(argc, argv, "b:t:x:c:r:l:hV:", long_options, &opdidx);
 		if (opt == -1) {
 			break;
 		}
@@ -152,6 +158,10 @@ int main (int argc, char *argv[]) {
 			configDir = optarg;
 			break;
 
+        case 'b':
+            boardDir = optarg;
+            break;
+
 		case 'r':
 			registryURL = optarg;
 			break;
@@ -169,7 +179,7 @@ int main (int argc, char *argv[]) {
 			usage();
 			exit(0);
 		}
-	} /* while */
+	}
 
 	if (argc == 1 || cmd == VNODE_CMD_NONE) {
 		fprintf(stderr, "Must specify command\n");
@@ -220,17 +230,41 @@ int main (int argc, char *argv[]) {
 
 	/* assign nodeID from the environment variable */
 	node->nodeInfo->uuid = strdup(envNodeID);
+    nodeType = detect_node_type(node->nodeInfo->uuid);
+    if (nodeType == NODE_TOWER) {
+        log_debug("==== Building for Ukama Tower Node (virtual) ====");
+    } else if (nodeType == NODE_AMPLIFIER) {
+        log_debug("==== Building for Ukama Amplifer Node (virtual) ====");
+    } else {
+        log_error("==== Unknown node type ====\n Exiting");
+        json_decref(jNode);
+        free_node(node);
+        exit(1);
+    }
 
-	if (!read_config_files(&configs, configDir)) {
-	    log_error("Parsing error reading configs from %s \n. Exiting.",
+    if (!board_config_load(&boardConfig, boardDir, nodeType)) {
+        log_error("Unable to load board config file \n. Exiting.",
+				  configDir);
+        json_decref(jNode);
+        free_node(node);
+		exit(1);
+	}
+
+	if (!read_config_files(&configs, configDir, &boardConfig)) {
+	    log_error("Parsing error reading configs from %s \n Exiting.",
 				  configDir);
 		free_configs(configs);
+        json_decref(jNode);
+        free_node(node);
 		exit(1);
 	}
 
 	/* Prepare environment for virtual node build */
 	if (!prepare_env_for_creating_virtual_node()) {
 		log_error("Unable to prepare environment for building virtual node.");
+        free_configs(configs);
+        json_decref(jNode);
+        free_node(node);
 		exit(1);
 	}
 

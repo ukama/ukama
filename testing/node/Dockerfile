@@ -77,7 +77,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         slirp4netns \
     && rm -rf /var/lib/apt/lists/*
 
-# Buildah/Podman storage placeholders (your original behavior)
+# Buildah/Podman storage placeholders
 RUN mkdir -p /var/lib/shared/overlay-images /var/lib/shared/overlay-layers \
     && touch /var/lib/shared/overlay-images/images.lock \
     && touch /var/lib/shared/overlay-layers/layers.lock
@@ -91,7 +91,12 @@ ENV _BUILDAH_STARTED_IN_USERNS="" \
 # Copy virtual node related bin and config
 COPY virtualNode /sbin/
 COPY apps /apps
+COPY boards /boards
 COPY ./scripts/*.sh /scripts/
 COPY supervisord.conf /
 
-CMD ["/sbin/virtualNode", "--target", "ubuntu:24.04", "--exec", "create", "--c", "/apps/"]
+CMD ["/sbin/virtualNode", \
+    "--target", "ubuntu:24.04", \
+    "--exec", "create", \
+    "--c", "/apps/", \
+    "--b", "/boards/"]
