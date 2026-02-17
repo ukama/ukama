@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -61,7 +62,7 @@ NodeType detect_node_type(const char *nodeID) {
 
 static int load_board_file(BoardConfig *cfg, const char *filePath) {
 
-    char line[256];
+    char line[MAX_SIZE];
 
     FILE *fp = fopen(filePath, "r");
     if (!fp) {
@@ -118,7 +119,7 @@ int board_config_load(BoardConfig *cfg,
                       const char *boardsDir,
                       NodeType type) {
 
-    char path[256];
+    char path[MAX_SIZE];
     
     if (!cfg || !boardsDir)
         return 0;
@@ -126,17 +127,12 @@ int board_config_load(BoardConfig *cfg,
     memset(cfg, 0, sizeof(*cfg));
     cfg->type = type;
 
-    /* Load common first */
-    snprintf(path, sizeof(path), "%s/%s", boardsDir, COMMON_CONFIG);
-    load_board_file(cfg, path);
-
-    /* Load board-specific override */
     if (type == NODE_TOWER) {
-        snprintf(path, sizeof(path), "%s/%s", boardsDir);
+        snprintf(path, sizeof(path), "%s/%s", NODE_TOWER_CONFIG);
         load_board_file(cfg, path);
     }
     else if (type == NODE_AMPLIFIER) {
-        snprintf(path, sizeof(path), "%s/%s", boardsDir);
+        snprintf(path, sizeof(path), "%s/%s", NODE_AMPLIFIER_CONFIG);
         load_board_file(cfg, path);
     }
 
@@ -146,7 +142,7 @@ int board_config_load(BoardConfig *cfg,
 int board_is_app_enabled(BoardConfig *cfg,
                          const char *appName) {
 
-    char key[256];
+    char key[MAX_SIZE];
     
     if (!cfg || !appName)
         return 0;

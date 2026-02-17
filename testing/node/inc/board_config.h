@@ -9,13 +9,12 @@
 #ifndef BOARD_CONFIG_H
 #define BOARD_CONFIG_H
 
+#define MAX_SIZE       256
 #define MAX_BOARD_APPS 128
 #define MAX_APP_KEY    64
 
-#define COMMON_CONFIG      "common.conf"
-#define TRX_CONFIG         "trx.conf"
-#define COM_CONFIG         "com.conf"
-#define CONTROLLER_CONFIG  "controller.conf"
+#define NODE_TOWER_CONFIG     "virtual-tower.conf"
+#define NODE_AMPLIFIER_CONFIG "virtual-amplifier.conf"
 
 typedef enum {
     NODE_UNKNOWN = 0,
