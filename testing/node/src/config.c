@@ -36,59 +36,72 @@ static int add_to_configs(Configs **configs, Config *config, char *fileName,
 static int read_config_file(Config *config, char *fileName, char **error);
 static int is_valid_file(char *fileName);
 
-static int read_entry(toml_table_t *table, char *key, char **destStr,
-					  int *destInt, int flag) {
 
-	toml_datum_t datum;
-	int ret=TRUE;
+static int read_entry(toml_table_t *table,
+                      char *key,
+                      char **destStr,
+                      int *destInt,
+                      int flag) {
 
-	/* sanity check */
-	if (table == NULL || key == NULL) return FALSE;
+    toml_datum_t datum;
+    int ret = TRUE;
 
-	/* String or bool */
-	if((flag & DATUM_BOOL) || (flag & DATUM_STRING)) {
-	    datum = toml_string_in(table, key);
+    if (table == NULL || key == NULL) return FALSE;
 
-	    if (datum.ok) {
-	        if (flag & DATUM_BOOL) {
-	            if (strcasecmp(datum.u.s, "TRUE")==0) {
-	                *destInt = TRUE;
-	            } else if (strcasecmp(datum.u.s, "FALSE")==0) {
-	                *destInt = FALSE;
-	            } else {
-	                log_error("[%s] is invalid, except 'true' or 'false'", key);
-	                *destInt = -1;
-	                ret = FALSE;
-	            }
-	        } else if (flag & DATUM_STRING) {
-	            *destStr = strdup(datum.u.s);
-	        } else {
-	            ret = FALSE;
-	        }
-	        free(datum.u.s);
+    /* Bool */
+    if (flag & DATUM_BOOL) {
+        if (destInt == NULL) return FALSE;
 
-	    } else {
-	        if (flag & DATUM_MANDATORY) {
-	            log_error("[%s] is missing but is required", key);
-	            return FALSE;
-	        }
-	    }
-	}
+        datum = toml_bool_in(table, key);
+        if (datum.ok) {
+            *destInt = datum.u.b ? TRUE : FALSE;
+        } else {
+            /* Backward compat: allow quoted "true"/"false" */
+            toml_datum_t s = toml_string_in(table, key);
+            if (s.ok) {
+                if (strcasecmp(s.u.s, "TRUE") == 0) *destInt = TRUE;
+                else if (strcasecmp(s.u.s, "FALSE") == 0) *destInt = FALSE;
+                else {
+                    log_error("[%s] is invalid, expect true/false", key);
+                    *destInt = -1;
+                    ret = FALSE;
+                }
+                free(s.u.s);
+            } else if (flag & DATUM_MANDATORY) {
+                log_error("[%s] is missing but is required", key);
+                return FALSE;
+            }
+        }
+    }
 
-	/* For integer */
-	if(flag & DATUM_INT) {
-	    datum = toml_int_in(table, key);
-	    if (datum.ok) {
-	        *destInt = (int)datum.u.i;
-	    } else {
-	        if (flag & DATUM_MANDATORY) {
-	            log_error("[%s] is missing but is required", key);
-	            return FALSE;
-	        }
-	    }
-	}
+    /* String */
+    if (flag & DATUM_STRING) {
+        if (destStr == NULL) return FALSE;
 
-	return ret;
+        datum = toml_string_in(table, key);
+        if (datum.ok) {
+            *destStr = strdup(datum.u.s);
+            free(datum.u.s);
+        } else if (flag & DATUM_MANDATORY) {
+            log_error("[%s] is missing but is required", key);
+            return FALSE;
+        }
+    }
+
+    /* Int */
+    if (flag & DATUM_INT) {
+        if (destInt == NULL) return FALSE;
+
+        datum = toml_int_in(table, key);
+        if (datum.ok) {
+            *destInt = (int)datum.u.i;
+        } else if (flag & DATUM_MANDATORY) {
+            log_error("[%s] is missing but is required", key);
+            return FALSE;
+        }
+    }
+
+    return ret;
 }
 
 static int read_capp_table(toml_table_t *table, Config *config,
@@ -159,18 +172,13 @@ static int read_capp_table(toml_table_t *table, Config *config,
 		}
 
 		if (!read_entry(table, KEY_GROUP, &capp->group, NULL,
-				DATUM_STRING)) {
-			return FALSE;
-		}
-
-		if (!read_entry(table, KEY_GROUP, &capp->group, NULL,
 						DATUM_STRING)) {
-					return FALSE;
+            return FALSE;
 		}
 
 		if (!read_entry(table, KEY_RETRY, NULL, &capp->startretries,
-								DATUM_INT | DATUM_MANDATORY)) {
-					return FALSE;
+                        DATUM_INT | DATUM_MANDATORY)) {
+            return FALSE;
 		}
 	} else {
 		return FALSE;
@@ -423,8 +431,6 @@ int read_config_files(Configs **configs, char *configDir, BoardConfig *boardCfg)
 
 		if (!read_config_file(config, configFile, &errorStr)) {
 			log_error("Parsing error for: %s", configFile);
-			free_config(config, BUILD_ONLY | CAPP_ONLY);
-			free(config);
 			ret = FALSE;
 			configStatus = FALSE;
 		} else {
@@ -440,11 +446,12 @@ int read_config_files(Configs **configs, char *configDir, BoardConfig *boardCfg)
                 log_debug("Skipping %s (disabled for this board)",
                           config->capp->name);
 
-                free_config(config, BUILD_ONLY | CAPP_ONLY);
-                free(config);
-
                 free(errorStr);
                 free(configFile);
+
+                free_config(config, BUILD_ONLY | CAPP_ONLY);
+                config = NULL;
+
                 continue;
             }
         }
