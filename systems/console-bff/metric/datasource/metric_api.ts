@@ -21,7 +21,7 @@ class MetricAPI extends RESTDataSource {
     this.logger.info(
       `GetMetricAnalysis [GET]: ${baseURL}/${VERSION}/reasoning/stats/nodes/${nodeId}/metrics/${metricId}`
     );
-    this.baseURL = baseURL;
+    this.baseURL = "http://api-gateway-metrics:8080";
     return this.get(
       `/${VERSION}/reasoning/stats/nodes/${nodeId}/metrics/${metricId}`
     ).then(res => parseMetricAnalysisRes(res));
@@ -35,7 +35,7 @@ class MetricAPI extends RESTDataSource {
     this.logger.info(
       `GetMetricDomain [GET]: ${baseURL}/${VERSION}/reasoning/domain/nodes/${nodeId}/metrics/${metricId}`
     );
-    this.baseURL = baseURL;
+    this.baseURL = "http://api-gateway-metrics:8080";
     return this.get(
       `/${VERSION}/reasoning/domain/nodes/${nodeId}/metrics/${metricId}`
     ).then(res => parseMetricDomainRes(res));
