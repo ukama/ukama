@@ -9,6 +9,8 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include "board_config.h"
+
 /* Various tables */
 #define TABLE_BUILD         "build"
 #define TABLE_CAPP          "capp"
@@ -115,7 +117,9 @@ typedef struct configs_t {
 } Configs;
 
 /* Function headers */
-int read_config_files(Configs **configs, char *configDir);
+int read_config_files(Configs **configs,
+                      char *configDir,
+                      BoardConfig *boardCfg);
 void free_configs(Configs *configs);
 void free_config(Config *config, int flag);
 void log_config(Config *config);

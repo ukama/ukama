@@ -375,7 +375,7 @@ static int is_valid_file(char *fileName) {
 	return TRUE;
 }
 
-int read_config_files(Configs **configs, char *configDir) {
+int read_config_files(Configs **configs, char *configDir, BoardConfig *boardCfg) {
 
     int ret=TRUE, configStatus=FALSE;
 	struct stat statBuf;
@@ -431,6 +431,23 @@ int read_config_files(Configs **configs, char *configDir) {
 			configStatus = TRUE;
 			log_config(config);
 		}
+
+        /* Filter by board config */
+        if (boardCfg && config->capp && config->capp->name) {
+            if (!board_is_app_enabled(boardCfg,
+                                      config->capp->name)) {
+
+                log_debug("Skipping %s (disabled for this board)",
+                          config->capp->name);
+
+                free_config(config, BUILD_ONLY | CAPP_ONLY);
+                free(config);
+
+                free(errorStr);
+                free(configFile);
+                continue;
+            }
+        }
 
 		add_to_configs(configs, config, configFile, configStatus, errorStr);
 
