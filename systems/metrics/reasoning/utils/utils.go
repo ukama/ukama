@@ -67,11 +67,12 @@ func SortNodeIds(nodeID string) (Nodes, error) {
 
 // GetStartEndFromStore returns the next rolling window (start, end) for a node.
 // Stores previous end as new start to avoid overlapping queries.
+// If the stored window is stale (prevEnd too far in the past), resets to the current window.
 func GetStartEndFromStore(s *store.Store, nodeID string, interval int) (start, end string, err error) {
+	now := time.Now().Unix()
 	key := startEndStoreKey(nodeID)
 	value, err := s.Get(key)
 	if err != nil {
-		now := time.Now().Unix()
 		start = strconv.FormatInt(now-int64(interval), 10)
 		end = strconv.FormatInt(now, 10)
 		_ = s.Put(key, start+":"+end)
@@ -87,6 +88,16 @@ func GetStartEndFromStore(s *store.Store, nodeID string, interval int) (start, e
 	prevEnd, err := strconv.ParseInt(parts[1], 10, 64)
 	if err != nil {
 		return "", "", fmt.Errorf("invalid end timestamp %q: %w", parts[1], err)
+	}
+
+	// If stored window is stale (more than one interval behind now), reset to current window.
+	// This handles gaps when the job didn't run for a long time (scheduler stopped, service down, etc.).
+	if prevEnd+int64(interval) < now-int64(interval) {
+		start = strconv.FormatInt(now-int64(interval), 10)
+		end = strconv.FormatInt(now, 10)
+		_ = s.Put(key, start+":"+end)
+		log.Warnf("Stored start/end for node %s was stale (behind by %d sec), reset to current window", nodeID, now-(prevEnd+int64(interval)))
+		return start, end, nil
 	}
 
 	start = parts[1]

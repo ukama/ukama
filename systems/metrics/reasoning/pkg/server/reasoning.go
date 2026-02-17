@@ -349,7 +349,7 @@ func (c *ReasoningServer) processNode(ctx context.Context, nodeID, start, end st
 	rp := metric.BuildPrometheusRequest(c.config.PrometheusHost, start, end, step, "", metricQueries)
 	reqCtx, cancel := context.WithTimeout(ctx, c.config.Timeout)
 	defer cancel()
-	
+	log.Infof("Processing Prometheus request: %v", rp.Query.Get("query"))
 	pr, err := metric.ProcessPromRequest(reqCtx, rp)
 	if err != nil {
 		nodeLog.WithError(err).Error("Prometheus request failed")

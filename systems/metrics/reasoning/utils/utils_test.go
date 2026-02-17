@@ -10,7 +10,9 @@ package utils
 
 import (
 	"math"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -80,11 +82,31 @@ func TestGetStartEndFromStore(t *testing.T) {
 	})
 
 	t.Run("SecondCall_AdvancesWindow", func(t *testing.T) {
-		_ = s.Put("node-2/start_end", "1000:1300")
+		// Use recent timestamps so we test the advance path, not staleness reset
+		now := time.Now().Unix()
+		prevEnd := now - 100
+		prevStart := prevEnd - 300
+		stored := strconv.FormatInt(prevStart, 10) + ":" + strconv.FormatInt(prevEnd, 10)
+		_ = s.Put("node-2/start_end", stored)
 		start, end, err := GetStartEndFromStore(s, "node-2", 300)
 		require.NoError(t, err)
-		assert.Equal(t, "1300", start)
-		assert.Equal(t, "1600", end)
+		assert.Equal(t, strconv.FormatInt(prevEnd, 10), start)
+		assert.Equal(t, strconv.FormatInt(prevEnd+300, 10), end)
+	})
+
+	t.Run("StaleStoredValue_ResetsToCurrentWindow", func(t *testing.T) {
+		// Simulate stored value from long ago - triggers staleness reset
+		_ = s.Put("node-stale/start_end", "700:1000")
+		start, end, err := GetStartEndFromStore(s, "node-stale", 300)
+		require.NoError(t, err)
+		// Should have reset to current window: (now-300, now)
+		startInt, _ := strconv.ParseInt(start, 10, 64)
+		endInt, _ := strconv.ParseInt(end, 10, 64)
+		assert.Equal(t, int64(300), endInt-startInt)
+		// End should be "now" (recent), not 1300
+		now := time.Now().Unix()
+		assert.InDelta(t, now, endInt, 2, "end should be roughly now")
+		assert.InDelta(t, now-300, startInt, 2, "start should be roughly now-300")
 	})
 
 	t.Run("InvalidStoredValue_ReturnsError", func(t *testing.T) {
