@@ -6,43 +6,40 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
-import {
-  GetNodeLatestMetricInput,
-  GetSiteLatestMetricInput,
-  NodeLatestMetric,
-  SiteLatestMetric,
-} from "../resolver/types";
-import { parseNodeLatestMetricRes, parseSiteLatestMetricRes } from "./mapper";
+
+import { MetricAnalysis, MetricDomain } from "../resolver/types";
+import { parseMetricAnalysisRes, parseMetricDomainRes } from "./mapper";
 
 const VERSION = "v1";
-const METRICS = "metrics";
 
 class MetricAPI extends RESTDataSource {
-  getNodeLatestMetric = async (
+  async getMetricAnalysis(
     baseURL: string,
-    args: GetNodeLatestMetricInput
-  ): Promise<NodeLatestMetric> => {
+    metricId: string,
+    nodeId: string
+  ): Promise<MetricAnalysis> {
     this.logger.info(
-      `GetNodeLatestMetric [GET]: ${baseURL}/${VERSION}/${METRICS}/${args.type}`
+      `GetMetricAnalysis [GET]: ${baseURL}/${VERSION}/reasoning/stats/nodes/${nodeId}/metrics/${metricId}`
     );
     this.baseURL = baseURL;
-    return this.get(`/${VERSION}/${METRICS}/${args.type}`).then(res =>
-      parseNodeLatestMetricRes(res, args)
-    );
-  };
+    return this.get(
+      `/${VERSION}/reasoning/stats/nodes/${nodeId}/metrics/${metricId}`
+    ).then(res => parseMetricAnalysisRes(res));
+  }
 
-  getSiteLatestMetric = async (
+  async getMetricDomain(
     baseURL: string,
-    args: GetSiteLatestMetricInput
-  ): Promise<SiteLatestMetric> => {
+    metricId: string,
+    nodeId: string
+  ): Promise<MetricDomain> {
     this.logger.info(
-      `GetSiteLatestMetric [GET]: ${baseURL}/${VERSION}/${METRICS}/${args.type}`
+      `GetMetricDomain [GET]: ${baseURL}/${VERSION}/reasoning/domain/nodes/${nodeId}/metrics/${metricId}`
     );
     this.baseURL = baseURL;
-    return this.get(`/${VERSION}/${METRICS}/${args.type}`).then(res =>
-      parseSiteLatestMetricRes(res, args)
-    );
-  };
+    return this.get(
+      `/${VERSION}/reasoning/domain/nodes/${nodeId}/metrics/${metricId}`
+    ).then(res => parseMetricDomainRes(res));
+  }
 }
 
 export default MetricAPI;

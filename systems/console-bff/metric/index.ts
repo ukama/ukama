@@ -7,6 +7,7 @@
  */
 import { startStandaloneServer } from "@apollo/server/standalone";
 import "reflect-metadata";
+
 import SubGraphServer from "../common/apollo";
 import { SUB_GRAPHS } from "../common/configs";
 import { logger } from "../common/logger";

@@ -9,25 +9,25 @@ import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import { logger } from "../../common/logger";
 import { Context } from "../context";
-import { MetricAnalysis } from "./types";
+import { MetricDomain } from "./types";
 
 @Resolver()
-export class GetMetricAnalysisResolver {
-  @Query(() => MetricAnalysis)
-  async getMetricAnalysis(
+export class GetMetricDomainResolver {
+  @Query(() => MetricDomain)
+  async getMetricDomain(
     @Ctx() ctx: Context,
     @Arg("metricId") metricId: string,
     @Arg("nodeId") nodeId: string
-  ): Promise<MetricAnalysis> {
+  ): Promise<MetricDomain> {
     logger.info(
-      `Getting metric analysis for metric ${metricId} and node ${nodeId}`
+      `Getting metric domain for metric ${metricId} and node ${nodeId}`
     );
     const { dataSources, baseURL } = ctx;
-    const metricAnalysis = await dataSources.dataSource.getMetricAnalysis(
+    const metricDomain = await dataSources.dataSource.getMetricDomain(
       baseURL,
       metricId,
       nodeId
     );
-    return metricAnalysis;
+    return metricDomain;
   }
 }

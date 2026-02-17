@@ -6,12 +6,12 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { THeaders } from "../../common/types";
-import SubscriberAPI from "../datasource/metric_api";
+import MetricAPI from "../datasource/metric_api";
 
 export interface Context {
   baseURL: string;
   dataSources: {
-    dataSource: SubscriberAPI;
+    dataSource: MetricAPI;
   };
   headers: THeaders;
 }

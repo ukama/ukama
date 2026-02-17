@@ -81,3 +81,30 @@ export class MetricAnalysis {
   @Field()
   state: string;
 }
+
+@ObjectType()
+export class MetricDomain {
+  @Field()
+  rule_id: string;
+
+  @Field()
+  severity: string;
+
+  @Field()
+  headline: string;
+
+  @Field()
+  root_cause: string;
+
+  @Field()
+  service_impact: string;
+
+  @Field()
+  rule_confidence: number;
+
+  @Field()
+  evaluated_at: string;
+
+  @Field()
+  computed_at: string;
+}

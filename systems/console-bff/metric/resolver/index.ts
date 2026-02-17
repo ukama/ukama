@@ -6,8 +6,13 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { NonEmptyArray } from "type-graphql";
-import { GetMetricAnalysisResolver } from "./getMetricAnalysis";
 
-const resolvers: NonEmptyArray<any> = [GetMetricAnalysisResolver];
+import { GetMetricAnalysisResolver } from "./getMetricAnalysis";
+import { GetMetricDomainResolver } from "./getMetricDomain";
+
+const resolvers: NonEmptyArray<any> = [
+  GetMetricAnalysisResolver,
+  GetMetricDomainResolver,
+];
 
 export default resolvers;
