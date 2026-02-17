@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"math"
 	"strconv"
 	"time"
 
@@ -94,6 +95,12 @@ func buildMetricQueries(metrics []pkg.Metric, nodeID string) ([]metric.MetricWit
 		})
 	}
 	return queries, step
+}
+
+// hasNoSamples returns true when stats were computed from empty Prometheus data (NaN/zero samples).
+func hasNoSamples(stats *algos.Stats) bool {
+	return stats == nil || math.IsNaN(stats.AggregationStats.AggregatedValue) ||
+		stats.AggregationStats.SampleCount == 0
 }
 
 func statsToProto(s algos.Stats) *pb.GetAlgoStatsForMetricResponse {
@@ -342,17 +349,35 @@ func (c *ReasoningServer) processNode(ctx context.Context, nodeID, start, end st
 	rp := metric.BuildPrometheusRequest(c.config.PrometheusHost, start, end, step, "", metricQueries)
 	reqCtx, cancel := context.WithTimeout(ctx, c.config.Timeout)
 	defer cancel()
+	
 	pr, err := metric.ProcessPromRequest(reqCtx, rp)
 	if err != nil {
 		nodeLog.WithError(err).Error("Prometheus request failed")
 		return 0, len(metricsCfg.Metrics)
 	}
 
+	promQuery := ""
+	if rp.Query != nil {
+		promQuery = rp.Query.Get("query")
+	}
 	for _, m := range metricsCfg.Metrics {
 		prForMetric := pr.FilterResultsByMetric(m.MetricKey)
+		if len(prForMetric.Data.Result) == 0 {
+			nodeLog.WithFields(log.Fields{
+				"metric": m.MetricKey,
+				"query":  promQuery,
+				"start":  start,
+				"end":    end,
+			}).Warn("No Prometheus data for metric, skipping (check label node_id and time window)")
+			failed++
+			continue
+		}
 		stats, err := c.processAlgorithms(nodeID, m, prForMetric, end, nodeLog)
 		if err != nil {
 			nodeLog.WithError(err).WithField("metric", m.MetricKey).Error("Metric processing failed")
+			failed++
+		} else if hasNoSamples(stats) {
+			nodeLog.WithField("metric", m.MetricKey).Warn("Prometheus returned empty samples for metric, skipping store (preserving previous stats)")
 			failed++
 		} else {
 			err = c.store.PutJson(utils.GetAlgoStatsStoreKey(nodeID, m.MetricKey), stats)
@@ -404,19 +429,34 @@ func (c *ReasoningServer) processAlgorithms(nodeID string, m pkg.Metric, pr *met
 	}
 	stats.Confidence = utils.RoundToDecimalPoints(stats.Confidence, c.config.FormatDecimalPoints)
 
-	stats.Projection = algos.ProjectCrossingTime(
-		aggStats.AggregatedValue, prevStats.AggregationStats.AggregatedValue,
-		float64(c.config.PrometheusInterval), stateThresholds, m.StateDirection,
-	)
-	if stats.Projection.Type != "" {
-		stats.Projection.EtaSec = utils.RoundToDecimalPoints(stats.Projection.EtaSec, c.config.FormatDecimalPoints)
-	}
-
 	endUnix, err := strconv.ParseInt(end, 10, 64)
 	if err != nil {
 		endUnix = time.Now().Unix()
 	}
 	stats.ComputedAt = endUnix
+
+	// Use actual elapsed time between aggregations for slope calculation.
+	// PrometheusInterval is fallback when prevStats is from first run (ComputedAt 0 or stale).
+	windowSec := float64(c.config.PrometheusInterval)
+	if prevStats.ComputedAt > 0 {
+		windowSec = math.Max(1, float64(endUnix-prevStats.ComputedAt))
+	}
+	stats.Projection = algos.ProjectCrossingTime(
+		aggStats.AggregatedValue, prevStats.AggregationStats.AggregatedValue,
+		windowSec, stateThresholds, m.StateDirection,
+	)
+	if stats.Projection.Type != "" {
+		stats.Projection.EtaSec = utils.RoundToDecimalPoints(stats.Projection.EtaSec, c.config.FormatDecimalPoints)
+	} else {
+		slope := 0.0
+		if windowSec > 0 && !math.IsNaN(prevStats.AggregationStats.AggregatedValue) && !math.IsNaN(aggStats.AggregatedValue) {
+			slope = (aggStats.AggregatedValue - prevStats.AggregationStats.AggregatedValue) / windowSec
+		}
+		metricLog.WithFields(log.Fields{
+			"value_now": aggStats.AggregatedValue, "value_prev": prevStats.AggregationStats.AggregatedValue,
+			"window_sec": windowSec, "slope_per_sec": slope, "warning": stateThresholds.Warning,
+		}).Debug("Projection empty (metric stable, improving, or first run)")
+	}
 
 	return stats, nil
 }
