@@ -14,8 +14,8 @@
 	mkdir="/conf"
 
 [build-conf]
-    from="/nodes/configs/apps/metricsd/metrics_config.toml"
-    to="/conf/config.toml"
+	from="/nodes/configs/apps/metricsd/metrics_config.toml"
+	to="/conf/config.toml"
 
 [capp-exec]
 	name="metricsd"

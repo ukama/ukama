@@ -11,8 +11,8 @@
 	bin_to="/sbin/"
 
 [build-conf]
-    from="/nodes/configs/apps/notifyd/status.map"
-    to="/ukama/configs/notifyd/status.map"
+	from="/nodes/configs/apps/notifyd/status.map"
+	to="/ukama/configs/notifyd/status.map"
 
 [capp-exec]
 	name="notifyd"

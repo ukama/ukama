@@ -1,6 +1,6 @@
 [build-from]
-    base="alpine"
-    version="latest"
+	base="alpine"
+	version="latest"
 
 [build-compile]
 	version="0.1"
@@ -11,16 +11,16 @@
 	bin_to="/sbin"
 
 [build-conf]
-    from="/nodes/configs/apps/femd/safety_config.json"
-    to="/ukama/configs/femd"
+	from="/nodes/configs/apps/femd/safety_config.json"
+	to="/ukama/configs/femd"
     
 [capp-exec]
 	name="femd"
 	version="latest"
 	bin="fem.d"
 	path="/sbin"
-    args="--config /ukama/configs/femd/safety_config.json"
+	args="--config /ukama/configs/femd/safety_config.json"
 	autostart="false"
-    autorestart="true"
-    startretries=5
+	autorestart="true"
+	startretries=5
 	group="service"
