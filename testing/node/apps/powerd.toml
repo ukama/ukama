@@ -11,11 +11,11 @@
 	bin_to="/sbin"
 
 [capp-exec]
-	name="power-monitor"
+	name="power"
 	version="latest"
 	bin="power-monitor"
 	path="/sbin"
 	autostart="false"
-    autorestart="true"
-    startretries=5
+        autorestart="true"
+        startretries=5
 	group="service"
