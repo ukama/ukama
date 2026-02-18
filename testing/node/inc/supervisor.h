@@ -82,7 +82,7 @@ supervisor.rpcinterface:make_main_rpcinterface\n\n"
     "BACKHAULD_CONNECT_TIMEOUT_MS=\"2000\"," \
     "BACKHAULD_TOTAL_TIMEOUT_MS=\"10000\"," \
     "FEMD_SYSROOT=\"/tmp/sys\"," \
-    "ENV_FEM_BAND=\"B41\"" \
+    "FEM_BAND=\"B41\"" \
     "\n"
 
 int create_supervisor_config(Configs *configs);

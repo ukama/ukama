@@ -51,7 +51,7 @@
 
 /* for sysroot */
 #define ENV_FEMD_SYSROOT      "FEMD_SYSROOT"
-#define ENV_FEM_BAND          "ENV_FEM_BAND"
+#define ENV_FEM_BAND          "FEM_BAND"
 
 #define I2C_DEV_PATH_MAX      128
 #define I2C_TX_MAX            256  /* reg + payload */

@@ -38,7 +38,7 @@ VNODE_ID=""
 VNODE_METADATA=$(cat <<'JSON'
 {
     "nodeInfo": {
-        "type": "hnode",
+        "type": "anode",
         "partNumber": "",
         "skew": "",
         "mac": "",
@@ -52,7 +52,7 @@ VNODE_METADATA=$(cat <<'JSON'
     "nodeConfig": [
         {
             "moduleID": "ukma-sa2219-trx-m0-e479",
-            "type": "trx",
+            "type": "ctrl",
             "partNumber": "",
             "hwVersion": "",
             "mac": "",
