@@ -41,8 +41,12 @@ int invt_create_db(char *pUuid);;
  * @return  On success, 0
  *          On failure, non zero value
  */
-int invt_deserialize_node_cfg_data(NodeCfg **nodeCfg, char *payload,
-                uint8_t count, uint16_t *size);
+
+int invt_deserialize_module_cfg_data(ModuleCfg **p_mcfg,
+                                     char *payload,
+                                     uint32_t payloadSize,
+                                     uint8_t count,
+                                     uint16_t *size);
 
 /**
  * @fn      int invt_deserialize_module_cfg_data(ModuleCfg**, char*,
@@ -58,8 +62,6 @@ int invt_deserialize_node_cfg_data(NodeCfg **nodeCfg, char *payload,
  * @return  On success, 0
  *          On failure, non zero value
  */
-int invt_deserialize_module_cfg_data(ModuleCfg **modCfg, char *payload,
-                                uint8_t count, uint16_t *size);
 /**
  * @fn      int invt_erase_db(char*)
  * @brief   Erase the complete database for the module uuid.

@@ -2062,6 +2062,83 @@ int invt_read_module_info(char *pUuid, ModuleInfo *p_info, uint16_t *size) {
     return ret;
 }
 
+/* Bounded variant to avoid reading past payload end. */
+static void *invt_deserialize_devices_bounded(const char *payload,
+                                              uint32_t payloadSize,
+                                              int offset,
+                                              uint16_t devClass,
+                                              int *size) {
+    if (!payload || !size || offset < 0 || (uint32_t)offset >= payloadSize) {
+        if (size) *size = 0;
+        usys_log_error("Device cfg parse: invalid bounds (class=%u off=%d len=%u)",
+                       devClass, offset, payloadSize);
+        return NULL;
+    }
+
+    const char *cfgData = payload + offset;
+
+    switch (devClass) {
+    case DEV_CLASS_GPIO: {
+        if ((uint32_t)offset + sizeof(DevGpioCfg) > payloadSize) {
+            *size = 0;
+            usys_log_error("Device cfg parse: GPIO overruns payload (off=%d need=%zu len=%u)",
+                           offset, sizeof(DevGpioCfg), payloadSize);
+            return NULL;
+        }
+        DevGpioCfg *cfg = usys_zmalloc(sizeof(*cfg));
+        if (!cfg) { *size = 0; return NULL; }
+        usys_memcpy(cfg, cfgData, sizeof(*cfg));
+        *size = (int)sizeof(*cfg);
+        return cfg;
+    }
+    case DEV_CLASS_I2C: {
+        if ((uint32_t)offset + sizeof(DevI2cCfg) > payloadSize) {
+            *size = 0;
+            usys_log_error("Device cfg parse: I2C overruns payload (off=%d need=%zu len=%u)",
+                           offset, sizeof(DevI2cCfg), payloadSize);
+            return NULL;
+        }
+        DevI2cCfg *cfg = usys_zmalloc(sizeof(*cfg));
+        if (!cfg) { *size = 0; return NULL; }
+        usys_memcpy(cfg, cfgData, sizeof(*cfg));
+        *size = (int)sizeof(*cfg);
+        return cfg;
+    }
+    case DEV_CLASS_SPI: {
+        if ((uint32_t)offset + sizeof(DevSpiCfg) > payloadSize) {
+            *size = 0;
+            usys_log_error("Device cfg parse: SPI overruns payload (off=%d need=%zu len=%u)",
+                           offset, sizeof(DevSpiCfg), payloadSize);
+            return NULL;
+        }
+        DevSpiCfg *cfg = usys_zmalloc(sizeof(*cfg));
+        if (!cfg) { *size = 0; return NULL; }
+        usys_memcpy(cfg, cfgData, sizeof(*cfg));
+        *size = (int)sizeof(*cfg);
+        return cfg;
+    }
+    case DEV_CLASS_UART: {
+        if ((uint32_t)offset + sizeof(DevUartCfg) > payloadSize) {
+            *size = 0;
+            usys_log_error("Device cfg parse: UART overruns payload (off=%d need=%zu len=%u)",
+                           offset, sizeof(DevUartCfg), payloadSize);
+            return NULL;
+        }
+        DevUartCfg *cfg = usys_zmalloc(sizeof(*cfg));
+        if (!cfg) { *size = 0; return NULL; }
+        usys_memcpy(cfg, cfgData, sizeof(*cfg));
+        *size = (int)sizeof(*cfg);
+        return cfg;
+    }
+    default:
+        *size = 0;
+        usys_log_error("Unknown device class=%u (0x%04x) at offset=%d (len=%u). Err=%d",
+                       devClass, devClass, offset, payloadSize,
+                       ERR_NODED_INVALID_DEVICE_CFG);
+        return NULL;
+    }
+}
+
 void *invt_deserialize_devices(const char *payload, int offset, uint16_t class,
                                int *size) {
     void *dev = NULL;
@@ -2116,41 +2193,74 @@ void *invt_deserialize_devices(const char *payload, int offset, uint16_t class,
         *size = 0;
         usys_log_error("Unkown device type failed to parse.Error Code: %d",
                        ERR_NODED_INVALID_DEVICE_CFG);
+	   usys_log_error("Unknown device class=%u (0x%04x) at offset=%d. Err=%d",
+                   class, class, offset, ERR_NODED_INVALID_DEVICE_CFG);
     }
     return dev;
 }
 
-int invt_deserialize_module_cfg_data(ModuleCfg **p_mcfg, char *payload,
-                                uint8_t count, uint16_t *size) {
-    /* Layout
-     *  || Node Info 1 | EEPROM CFG  || Node Info 2 | EEPROM CFG  ||
-     *  */
-    int ret = 0;
+int invt_deserialize_module_cfg_data(ModuleCfg **p_mcfg,
+                                     char *payload,
+                                     uint32_t payloadSize,
+                                     uint8_t count,
+                                     uint16_t *size) {
     int offset = 0;
-    for (int iter = 0; iter < count; iter++) {
-        /* Copy Module Cfg first*/
-        usys_memcpy(&(*p_mcfg)[iter], payload + offset, sizeof(ModuleCfg));
-        offset = offset + sizeof(ModuleCfg);
-        int cfg_size = 0;
 
-        /* Create a device cfg and assign reference to cfg in ModuleCfg */
-        void *cfg = invt_deserialize_devices(
-            payload, offset, (*p_mcfg)[iter].devClass, &cfg_size);
-        if (cfg) {
-            (*p_mcfg)[iter].cfg = cfg;
-        } else {
-            ret = ERR_NODED_DESERIAL_FAIL;
-            usys_log_error("Deserialization failure for module config."
-                           "Error Code: %d",
-                           ret);
-        }
-
-        offset = offset + cfg_size;
-        /* Size returned to reader of Node Config.*/
-        *size = *size + sizeof(ModuleCfg);
+    if (!p_mcfg || !*p_mcfg || !payload || !size) {
+        return ERR_NODED_INVALID_POINTER;
     }
 
-    return ret;
+    *size = 0;
+
+    for (int iter = 0; iter < (int)count; iter++) {
+
+        /* Must have room for the fixed ModuleCfg header */
+        if ((uint32_t)offset + sizeof(ModuleCfg) > payloadSize) {
+            usys_log_error("ModuleCfg parse: count=%u exceeds payload (iter=%d off=%d hdr=%zu len=%u)",
+                           count, iter, offset, sizeof(ModuleCfg), payloadSize);
+            return ERR_NODED_DESERIAL_FAIL;
+        }
+
+        /* Copy fixed header */
+        usys_memcpy(&(*p_mcfg)[iter], payload + offset, sizeof(ModuleCfg));
+        offset += (int)sizeof(ModuleCfg);
+
+        /* Must have some bytes left for the variable cfg */
+        if ((uint32_t)offset >= payloadSize) {
+            usys_log_error("ModuleCfg parse: truncated before device cfg (iter=%d off=%d len=%u)",
+                           iter, offset, payloadSize);
+            return ERR_NODED_DESERIAL_FAIL;
+        }
+
+        int cfg_size = 0;
+        void *cfg = invt_deserialize_devices_bounded(payload, payloadSize,
+                                                     offset,
+                                                     (*p_mcfg)[iter].devClass,
+                                                     &cfg_size);
+        if (!cfg || cfg_size <= 0) {
+            usys_log_error("ModuleCfg parse: deserialize failed (iter=%d devClass=%u off=%d len=%u). Err=%d",
+                           iter, (*p_mcfg)[iter].devClass, offset, payloadSize,
+                           ERR_NODED_DESERIAL_FAIL);
+            (*p_mcfg)[iter].cfg = NULL;
+            return ERR_NODED_DESERIAL_FAIL;
+        }
+
+        /* Ensure cfg fits */
+        if ((uint32_t)offset + (uint32_t)cfg_size > payloadSize) {
+            usys_log_error("ModuleCfg parse: cfg overruns payload (iter=%d devClass=%u off=%d cfg=%d len=%u)",
+                           iter, (*p_mcfg)[iter].devClass, offset, cfg_size, payloadSize);
+            usys_free(cfg);
+            (*p_mcfg)[iter].cfg = NULL;
+            return ERR_NODED_DESERIAL_FAIL;
+        }
+
+        (*p_mcfg)[iter].cfg = cfg;
+
+        offset += cfg_size;
+        *size = (uint16_t)(*size + (uint16_t)sizeof(ModuleCfg) + (uint16_t)cfg_size);
+    }
+
+    return 0;
 }
 
 /* This will read module config and count of the module*/
@@ -2192,7 +2302,8 @@ int invt_read_module_cfg(char *pUuid, ModuleCfg *pCfg, uint8_t count,
 
         if (pCfg) {
             /* Deserialize payload to Module Config */
-            ret = invt_deserialize_module_cfg_data(&pCfg, payload, count, size);
+            ret = invt_deserialize_module_cfg_data(&pCfg, payload, idxData->payloadSize, count, size);
+
             if (!ret) {
                 usys_log_debug("Read Module Info %d bytes for Module %s "
                                "with device count %d.",
