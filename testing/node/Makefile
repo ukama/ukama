@@ -4,50 +4,47 @@
 #
 # Copyright (c) 2023-present, Ukama Inc.
 
-# some generic defs.
-CC   = gcc
-ARCH = X86_64
-XGCC = gcc
-XLD  = ld
-XGXX = g++
-HOST = $(shell gcc -dumpmachine)
+UKAMAOS_ROOT := ../../nodes/ukamaOS
 
-VERSION=$(shell git describe --always --dirty=-dirty)
-REPO_ROOT := $(abspath $(CURDIR)/../..)
-STAGE_DIR := /tmp/virtnode
-PKG_NAME  := ukama_${VERSION}.tgz
+VENDOR_DIR   := $(UKAMAOS_ROOT)/distro/vendor
+VENDOR_BUILD := $(VENDOR_DIR)/build
+VENDOR_INC   := $(VENDOR_BUILD)/include
+VENDOR_LIB   := $(VENDOR_BUILD)/lib
+VENDOR_LIB64 := $(VENDOR_BUILD)/lib64
 
-# used for version.h
+PLATFORM_DIR := $(UKAMAOS_ROOT)/distro/platform
+
+# Packages to build (targets in vendor Makefile)
+VENDOR_PKG := tomlc jansson ulfius
+PLATFORM   := platform
+
+CC := gcc
+
+VERSION     := $(shell git describe --always --dirty=-dirty)
+REPO_ROOT   := $(abspath $(CURDIR)/../..)
+STAGE_DIR   := /tmp/virtnode
+PKG_NAME    := ukama_$(VERSION).tgz
 GITMETA_DIR := $(STAGE_DIR)/ukama/.gitmeta
 
-OPENSSLTARGET = linux-generic64
+TARGET_EXEC := virtualNode
 
-TARGET_EXEC = virtualNode
+CFLAGS  := -c -g -Wall -O0 -D_REENTRANT
+CFLAGS  += -I./inc -I$(VENDOR_INC)
 
-# Setting up various compile and link flags
-CFLAGS=-c
-CFLAGS+=-g
-CFLAGS+=-Wall
-CFLAGS+=-O0
-CFLAGS+=-I./inc -I../../nodes/ukamaOS/distro/vendor/build/include
-CFLAGS+=-D_REENTRANT
+LIBS    := -ltoml -ljansson
+LDFLAGS := -L$(VENDOR_LIB) -L$(VENDOR_LIB64)
 
-# Libs
-LIBS=-ltoml
-LIBS+=-ljansson
+# Sources
+CFILES   := $(wildcard ./src/*.c)
+OBJFILES := $(CFILES:.c=.o)
 
-LDFLAGS+=-L../../nodes/ukamaOS/distro/vendor/build/lib
-LDFLAGS+=-L../../nodes/ukamaOS/distro/vendor/build/lib64
-
-# Soruce files
-CFILES   = $(wildcard ./src/*.c)
-OBJFILES = $(CFILES:.c=.o)
-
+# Docker build context + boards staging
 DOCKER_CONTEXT := $(CURDIR)
 BOARDS_SRC     := $(REPO_ROOT)/nodes/configs/boards
 BOARDS_STAGE   := $(DOCKER_CONTEXT)/boards
 
-.PHONY: stage-boards unstage-boards $(TARGET_EXEC)
+.PHONY: all clean container sourcetgz stage-boards unstage-boards \
+        print-version print-local-image $(PLATFORM) $(VENDOR_PKG)
 
 stage-boards:
 	@echo "Staging boards into build context..."
@@ -60,14 +57,22 @@ unstage-boards:
 	@echo "Removing staged boards from build context..."
 	rm -rf "$(BOARDS_STAGE)"
 
+all: $(TARGET_EXEC)
+
 srvc_router: $(TARGET_EXEC)
 
-$(TARGET_EXEC): $(OBJFILES)
-	$(CC) -o $(TARGET_EXEC) $(OBJFILES) $(COMM_OBJFILES) $(LDFLAGS) $(LIBS)
-	echo "Done."
+$(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(OBJFILES)
+	$(CC) -o $(TARGET_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
+	@echo "Done."
+
+$(PLATFORM):
+	$(MAKE) -C $(PLATFORM_DIR)
+
+$(VENDOR_PKG):
+	$(MAKE) -C $(VENDOR_DIR) $@
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $< -o $@
 
 sourcetgz: $(TARGET_EXEC)
 	rm -rf $(STAGE_DIR)
@@ -95,8 +100,8 @@ sourcetgz: $(TARGET_EXEC)
 	)
 
 container: sourcetgz stage-boards
-	@echo Building container
-	podman build -t testing/virtualnode:${VERSION} .
+	@echo "Building container"
+	podman build -t testing/virtualnode:$(VERSION) .
 	@$(MAKE) unstage-boards
 
 print-version:
@@ -105,11 +110,9 @@ print-version:
 print-local-image:
 	@echo testing/virtualnode:$(VERSION)
 
-all: $(TARGET_EXEC)
-
 clean:
 	rm -f $(TARGET_EXEC) $(OBJFILES)
 	rm -rf $(STAGE_DIR)
-	rm -f ${PKG_NAME}
+	rm -f $(PKG_NAME)
 	rm -rf build/
 	rm -rf $(BOARDS_STAGE)
