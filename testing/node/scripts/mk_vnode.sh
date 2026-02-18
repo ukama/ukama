@@ -7,6 +7,9 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
+
 log() {
     local level="$1"; shift
     printf '[%s] %s\n' "$level" "$*"
@@ -114,6 +117,9 @@ build_utils() {
     [ -f "${NODED_ROOT}/utils/prepare_env.sh" ] || die "Missing prepare_env.sh"
     cp -f "${NODED_ROOT}/utils/prepare_env.sh" "${BUILD_DIR}/utils/"
 
+    [ -f "${NODED_ROOT}/utils/mock-sysfs-anode.sh" ] || die "Missing mock-sysfs-anode.sh"
+    cp -f "${NODED_ROOT}/utils/mock-sysfs-anode.sh" "${BUILD_DIR}/utils/"
+
     # gps.d
     [ -f "${UKAMA_ROOT}/nodes/apps/gps/scripts/process_gps_data.sh" ] || \
         die "Missing process_gps_data.sh"
@@ -135,8 +141,16 @@ build_sysfs() {
 
     log "INFO" "Preparing sysfs (type=${node_type}, uuid=${node_uuid})"
 
-    "${NODED_ROOT}/utils/prepare_env.sh" --clean
-    "${NODED_ROOT}/utils/prepare_env.sh" -u tnode -u anode
+    if [ $node_type == "anode" ]; then
+        "${NODED_ROOT}/utils/mock-sysfs-anode.sh" --clean
+        "${NODED_ROOT}/utils/mock-sysfs-anode.sh"
+    elif [ $node_type == "tnode" ]; then
+        "${NODED_ROOT}/utils/prepare_env.sh" --clean
+        "${NODED_ROOT}/utils/prepare_env.sh" -u tnode -u anode
+    else
+        log "ERROR" "Uknown node type"
+        die "Can not proceed for unknown node type"
+    fi
 
     # Copy schema + mfgdata locally
     mkdir -p "${BUILD_DIR}/schemas"
@@ -145,26 +159,39 @@ build_sysfs() {
 
     pushd "${BUILD_DIR}" >/dev/null
 
-    "${BUILD_DIR}/utils/genSchema" --u "${node_uuid}" \
-                                   --n com --m UK-SA9001-COM-A1-1103  \
-                                   --f mfgdata/schema/com.json --n trx \
-                                   --m UK-SA9001-TRX-A1-1103  \
-                                   --f mfgdata/schema/trx.json --n mask \
-                                   --m UK-SA9001-MSK-A1-1103 \
-                                   --f mfgdata/schema/mask.json
+    if [ $node_type == "anode" ]; then
+        "${BUILD_DIR}/utils/genSchema" --u "${node_uuid}" \
+                                       --n ctrl --m UK-8001-RFC-1102 --f mfgdata/schema/ctrl.json \
+                                       --n fe1  --m UK-8001-RFE-1103 --f mfgdata/schema/fe1.json \
+                                       --n fe2  --m UK-8001-RFE-1104 --f mfgdata/schema/fe2.json
 
-    "${BUILD_DIR}/utils/genInventory" --n com --m UK-SA9001-COM-A1-1103 \
-                                      --f mfgdata/schema/com.json -n trx \
-                                      --m UK-SA9001-TRX-A1-1103 \
-                                      --f mfgdata/schema/trx.json \
-                                      --n mask -m UK-SA9001-MSK-A1-1103 \
-                                      --f mfgdata/schema/mask.json
+        "${BUILD_DIR}/utils/genInventory" -n ctrl -m UK-8001-RFC-1102 -f mfgdata/schema/ctrl.json \
+                                          -n fe1  -m UK-8001-RFE-1103 -f mfgdata/schema/fe1.json \
+                                          -n fe2  -m UK-8001-RFE-1104 -f mfgdata/schema/fe2.json
+    elif [ $node_type == "tnode" ]; then
+        "${BUILD_DIR}/utils/genSchema" --u "${node_uuid}" \
+                                       --n com --m UK-SA9001-COM-A1-1103  \
+                                       --f mfgdata/schema/com.json --n trx \
+                                       --m UK-SA9001-TRX-A1-1103  \
+                                       --f mfgdata/schema/trx.json --n mask \
+                                       --m UK-SA9001-MSK-A1-1103 \
+                                       --f mfgdata/schema/mask.json
+
+        "${BUILD_DIR}/utils/genInventory" --n com --m UK-SA9001-COM-A1-1103 \
+                                          --f mfgdata/schema/com.json -n trx \
+                                          --m UK-SA9001-TRX-A1-1103 \
+                                          --f mfgdata/schema/trx.json \
+                                          --n mask -m UK-SA9001-MSK-A1-1103 \
+                                          --f mfgdata/schema/mask.json
+    else
+        log "ERROR" "Tmp sysfs not setup"
+        die "Can not proceed for unknown node type"
+    fi
 
     popd >/dev/null
 
     # Verify sysfs exists
     [ -d /tmp/sys ] || die "/tmp/sys not found after prepare_env/genSchema steps"
-
     # Destination inside build context
     mkdir -p "${BUILD_DIR}/ukama/mocksysfs"
 
