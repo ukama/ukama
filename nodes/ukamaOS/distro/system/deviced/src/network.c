@@ -90,12 +90,6 @@ static void setup_webservice_endpoints(Config *config, UInst *instance) {
                                    &web_service_cb_post_reboot, config);
         setup_unsupported_methods(instance, "POST",
                                   URL_PREFIX, API_RES_EP("reboot/:id"));
-
-        ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
-                                   API_RES_EP("restart/:id"), 0,
-                                   &web_service_cb_post_restart, config);
-        setup_unsupported_methods(instance, "POST",
-                              URL_PREFIX, API_RES_EP("restart/:id"));
     }
 
     ulfius_set_default_endpoint(instance, &web_service_cb_default, config);
