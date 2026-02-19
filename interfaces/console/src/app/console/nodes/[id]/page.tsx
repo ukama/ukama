@@ -27,10 +27,6 @@ import {
 import EditNode from '@/components/EditNode';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import { NodeActionUI } from '@/components/NodeActionUI';
-import NodeNetworkTab from '@/components/NodeNetworkTab';
-import NodeOverviewTab from '@/components/NodeOverviewTab';
-import NodeRadioTab from '@/components/NodeRadioTab';
-import NodeResourcesTab from '@/components/NodeResourcesTab';
 import NodeStatus from '@/components/NodeStatus';
 import TabPanel from '@/components/TabPanel';
 import {
@@ -52,8 +48,12 @@ import {
 import { Stack, Tab, Tabs } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import HealthTab from '../_tabs/HealthTab/index';
+import NetworkTab from '../_tabs/NetworkTab/index';
+import OverviewTab from '../_tabs/OverviewTab/index';
+import RFTab from '../_tabs/RFTab';
 
-const NODE_UPTIME_KEY = 'unit_uptime';
+  const NODE_UPTIME_KEY = 'unit_uptime';
 interface INodePage {
   params: {
     id: string;
@@ -376,15 +376,15 @@ const Page: React.FC<INodePage> = ({ params }) => {
     });
   };
 
-  const handleOverviewSectionChange = (type: Graphs_Type) => {
-    setGraphType(type);
-    setMetricFrom(() => getUnixTime() - METRIC_RANGE_10800);
-  };
+  // const handleOverviewSectionChange = (type: Graphs_Type) => {
+  //   setGraphType(type);
+  //   setMetricFrom(() => getUnixTime() - METRIC_RANGE_10800);
+  // };
 
-  const handleNetworkSectionChange = (type: Graphs_Type) => {
-    setGraphType(type);
-    setMetricFrom(() => getUnixTime() - METRIC_RANGE_10800);
-  };
+  // const handleNetworkSectionChange = (type: Graphs_Type) => {
+  //   setGraphType(type);
+  //   setMetricFrom(() => getUnixTime() - METRIC_RANGE_10800);
+  // };
 
   const onTabSelected = (_: any, value: number) => {
     setSelectedTab(value);
@@ -425,7 +425,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
         return;
     }
   };
-
+  console.log(nodeMetricsLoading, statData, metrics);
   return (
     <Stack width={'100%'} height={'100%'} mt={1} spacing={1}>
       <NodeStatus
@@ -475,7 +475,8 @@ const Page: React.FC<INodePage> = ({ params }) => {
             }}
           >
             <TabPanel id={'node-overview-tab'} value={selectedTab} index={0}>
-              <NodeOverviewTab
+              <OverviewTab />
+              {/* <NodeOverviewTab
                 nodeId={id}
                 metrics={metrics}
                 connectedUsers={'0'}
@@ -491,10 +492,13 @@ const Page: React.FC<INodePage> = ({ params }) => {
                 nodeMetricsStatData={
                   statData?.getMetricsStat ?? { metrics: [] }
                 }
-              />
+              /> */}
             </TabPanel>
-            <TabPanel id={'node-network-tab'} value={selectedTab} index={1}>
-              <NodeNetworkTab
+            <TabPanel id={'node-health-tab'} value={selectedTab} index={1}>
+              <HealthTab />
+            </TabPanel>
+            <TabPanel id={'node-network-tab'} value={selectedTab} index={2}>
+              {/* <NodeNetworkTab
                 metrics={metrics}
                 metricFrom={metricFrom}
                 statLoading={statLoading}
@@ -504,9 +508,13 @@ const Page: React.FC<INodePage> = ({ params }) => {
                 nodeMetricsStatData={
                   statData?.getMetricsStat ?? { metrics: [] }
                 }
-              />
+              /> */}
+              <NetworkTab />
             </TabPanel>
-            <TabPanel id={'node-resources-tab'} value={selectedTab} index={2}>
+            <TabPanel id={'node-rf-tab'} value={selectedTab} index={3}>
+              <RFTab />
+            </TabPanel>
+            {/* <TabPanel id={'node-resources-tab'} value={selectedTab} index={4}>
               <NodeResourcesTab
                 metrics={metrics}
                 metricFrom={metricFrom}
@@ -518,7 +526,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
                 }
               />
             </TabPanel>
-            <TabPanel id={'node-radio-tab'} value={selectedTab} index={3}>
+            <TabPanel id={'node-radio-tab'} value={selectedTab} index={5}>
               <NodeRadioTab
                 metrics={metrics}
                 metricFrom={metricFrom}
@@ -529,7 +537,8 @@ const Page: React.FC<INodePage> = ({ params }) => {
                   statData?.getMetricsStat ?? { metrics: [] }
                 }
               />
-            </TabPanel>
+            </TabPanel> */}
+           
             {/* <TabPanel id={'node-software-tab'} value={selectedTab} index={4}>
           <NodeSoftwareTab
             loading={nodeAppsLoading}
@@ -544,7 +553,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
             loading={false}
           />
         </TabPanel> */}
-          </LoadingWrapper>
+        </LoadingWrapper>
         </div>
       ) : (
         <NodeActionUI

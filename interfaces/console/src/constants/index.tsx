@@ -254,9 +254,11 @@ export const ROAMING_SELECT = [
 
 export const NodePageTabs = [
   { id: 'node-tab-0', label: 'Overview', value: 0 },
-  { id: 'node-tab-1', label: 'Network', value: 1 },
-  { id: 'node-tab-2', label: 'Resources', value: 2 },
-  { id: 'node-tab-3', label: 'Radio', value: 3 },
+  { id: 'node-tab-1', label: 'Health', value: 1 },
+  { id: 'node-tab-2', label: 'Network', value: 2 },
+  { id: 'node-tab-3', label: 'RF', value: 3 },
+  // { id: 'node-tab-4', label: 'Resources', value: 3 },
+  // { id: 'node-tab-5', label: 'Radio', value: 4 },
 ];
 
 export const MASK_BY_TYPE = {
@@ -279,6 +281,8 @@ export const NODE_IMAGES = {
   hnode:
     'https://ukama-site-assets.s3.amazonaws.com/images/ukama_home_node.png',
 };
+
+export const UNIT_DEPLOYMENT_IMAGE = 'https://ukama-site-assets.s3.us-east-1.amazonaws.com/images/tnode_anode_tower.png'
 
 export { NodeApps } from './stubData';
 
