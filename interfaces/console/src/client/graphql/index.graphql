@@ -1180,3 +1180,49 @@ query GetDataUsages($data: SimUsagesInputDto!) {
 }
 
 ##
+
+### Metrics calls start ###
+
+query GetMetricDomain($nodeId: String!, $metricId: String!) {
+  getMetricDomain(nodeId: $nodeId, metricId: $metricId) {
+    rule_id
+    severity
+    headline
+    root_cause
+    service_impact
+    rule_confidence
+    evaluated_at
+    computed_at
+  }
+}
+
+query GetMetricAnalysis($nodeId: String!, $metricId: String!) {
+  getMetricAnalysis(nodeId: $nodeId, metricId: $metricId) {
+    aggregated {
+      computed_at
+      value
+      min
+      max
+      p95
+      mean
+      median
+      sample_count
+      aggregation
+      noise_estimate
+    }
+    trend {
+      type
+      value
+    }
+    confidence {
+      value
+    }
+    projection {
+      type
+      eta_sec
+    }
+    state
+  }
+}
+
+### Metrics calls end ###

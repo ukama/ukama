@@ -279,11 +279,6 @@ export type FeeDto = {
   units: Scalars['Float']['output'];
 };
 
-export type GetNodeLatestMetricInput = {
-  nodeId: Scalars['String']['input'];
-  type: Scalars['String']['input'];
-};
-
 export type GetNodesByStateInput = {
   connectivity: NodeConnectivityEnum;
   state: NodeStateEnum;
@@ -407,6 +402,58 @@ export type Members = {
 export type MembersResDto = {
   __typename?: 'MembersResDto';
   members: Array<MemberDto>;
+};
+
+export type MetricAggregated = {
+  __typename?: 'MetricAggregated';
+  aggregation: Scalars['String']['output'];
+  computed_at: Scalars['String']['output'];
+  max: Scalars['Float']['output'];
+  mean: Scalars['Float']['output'];
+  median: Scalars['Float']['output'];
+  min: Scalars['Float']['output'];
+  noise_estimate: Scalars['Float']['output'];
+  p95: Scalars['Float']['output'];
+  sample_count: Scalars['Float']['output'];
+  value: Scalars['Float']['output'];
+};
+
+export type MetricAnalysis = {
+  __typename?: 'MetricAnalysis';
+  aggregated: MetricAggregated;
+  confidence: MetricConfidence;
+  projection: MetricProjection;
+  state: Scalars['String']['output'];
+  trend: MetricTrend;
+};
+
+export type MetricConfidence = {
+  __typename?: 'MetricConfidence';
+  value: Scalars['Float']['output'];
+};
+
+export type MetricDomain = {
+  __typename?: 'MetricDomain';
+  computed_at: Scalars['String']['output'];
+  evaluated_at: Scalars['String']['output'];
+  headline: Scalars['String']['output'];
+  root_cause: Scalars['String']['output'];
+  rule_confidence: Scalars['Float']['output'];
+  rule_id: Scalars['String']['output'];
+  service_impact: Scalars['String']['output'];
+  severity: Scalars['String']['output'];
+};
+
+export type MetricProjection = {
+  __typename?: 'MetricProjection';
+  eta_sec: Scalars['Float']['output'];
+  type: Scalars['String']['output'];
+};
+
+export type MetricTrend = {
+  __typename?: 'MetricTrend';
+  type: Scalars['String']['output'];
+  value: Scalars['Float']['output'];
 };
 
 export type Mutation = {
@@ -709,13 +756,6 @@ export type NetworkDto = {
   trafficPolicy: Scalars['Float']['output'];
 };
 
-export type NetworkStats = {
-  __typename?: 'NetworkStats';
-  activeSubscriber: Scalars['Float']['output'];
-  averageSignalStrength: Scalars['Float']['output'];
-  averageThroughput: Scalars['Float']['output'];
-};
-
 export type NetworksResDto = {
   __typename?: 'NetworksResDto';
   networks: Array<NetworkDto>;
@@ -762,16 +802,6 @@ export enum NodeConnectivityEnum {
 
 export type NodeInput = {
   id: Scalars['String']['input'];
-};
-
-export type NodeLatestMetric = {
-  __typename?: 'NodeLatestMetric';
-  msg: Scalars['String']['output'];
-  nodeId: Scalars['String']['output'];
-  orgId: Scalars['String']['output'];
-  success: Scalars['Boolean']['output'];
-  type: Scalars['String']['output'];
-  value: Array<Scalars['Float']['output']>;
 };
 
 export type NodeSite = {
@@ -1011,12 +1041,12 @@ export type Query = {
   getMember: MemberDto;
   getMemberByUserId: MemberDto;
   getMembers: MembersResDto;
+  getMetricAnalysis: MetricAnalysis;
+  getMetricDomain: MetricDomain;
   getNetwork: NetworkDto;
-  getNetworkStats: NetworkStats;
   getNetworks: NetworksResDto;
   getNode: Node;
   getNodeApps: NodeApps;
-  getNodeLatestMetric: NodeLatestMetric;
   getNodeState: NodeStateRes;
   getNodes: Nodes;
   getNodesByNetwork: Nodes;
@@ -1109,12 +1139,19 @@ export type QueryGetMemberByUserIdArgs = {
 };
 
 
-export type QueryGetNetworkArgs = {
-  networkId: Scalars['String']['input'];
+export type QueryGetMetricAnalysisArgs = {
+  metricId: Scalars['String']['input'];
+  nodeId: Scalars['String']['input'];
 };
 
 
-export type QueryGetNetworkStatsArgs = {
+export type QueryGetMetricDomainArgs = {
+  metricId: Scalars['String']['input'];
+  nodeId: Scalars['String']['input'];
+};
+
+
+export type QueryGetNetworkArgs = {
   networkId: Scalars['String']['input'];
 };
 
@@ -1126,11 +1163,6 @@ export type QueryGetNodeArgs = {
 
 export type QueryGetNodeAppsArgs = {
   data: NodeAppsChangeLogInput;
-};
-
-
-export type QueryGetNodeLatestMetricArgs = {
-  data: GetNodeLatestMetricInput;
 };
 
 
@@ -2313,6 +2345,22 @@ export type GetDataUsagesQueryVariables = Exact<{
 
 
 export type GetDataUsagesQuery = { __typename?: 'Query', getDataUsages: { __typename?: 'SimDataUsages', usages: Array<{ __typename?: 'SimDataUsage', usage: string, simId: string }> } };
+
+export type GetMetricDomainQueryVariables = Exact<{
+  nodeId: Scalars['String']['input'];
+  metricId: Scalars['String']['input'];
+}>;
+
+
+export type GetMetricDomainQuery = { __typename?: 'Query', getMetricDomain: { __typename?: 'MetricDomain', rule_id: string, severity: string, headline: string, root_cause: string, service_impact: string, rule_confidence: number, evaluated_at: string, computed_at: string } };
+
+export type GetMetricAnalysisQueryVariables = Exact<{
+  nodeId: Scalars['String']['input'];
+  metricId: Scalars['String']['input'];
+}>;
+
+
+export type GetMetricAnalysisQuery = { __typename?: 'Query', getMetricAnalysis: { __typename?: 'MetricAnalysis', state: string, aggregated: { __typename?: 'MetricAggregated', computed_at: string, value: number, min: number, max: number, p95: number, mean: number, median: number, sample_count: number, aggregation: string, noise_estimate: number }, trend: { __typename?: 'MetricTrend', type: string, value: number }, confidence: { __typename?: 'MetricConfidence', value: number }, projection: { __typename?: 'MetricProjection', type: string, eta_sec: number } } };
 
 export const NodeFragmentDoc = gql`
     fragment node on Node {
@@ -5665,3 +5713,115 @@ export type GetDataUsagesQueryHookResult = ReturnType<typeof useGetDataUsagesQue
 export type GetDataUsagesLazyQueryHookResult = ReturnType<typeof useGetDataUsagesLazyQuery>;
 export type GetDataUsagesSuspenseQueryHookResult = ReturnType<typeof useGetDataUsagesSuspenseQuery>;
 export type GetDataUsagesQueryResult = Apollo.QueryResult<GetDataUsagesQuery, GetDataUsagesQueryVariables>;
+export const GetMetricDomainDocument = gql`
+    query GetMetricDomain($nodeId: String!, $metricId: String!) {
+  getMetricDomain(nodeId: $nodeId, metricId: $metricId) {
+    rule_id
+    severity
+    headline
+    root_cause
+    service_impact
+    rule_confidence
+    evaluated_at
+    computed_at
+  }
+}
+    `;
+
+/**
+ * __useGetMetricDomainQuery__
+ *
+ * To run a query within a React component, call `useGetMetricDomainQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricDomainQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricDomainQuery({
+ *   variables: {
+ *      nodeId: // value for 'nodeId'
+ *      metricId: // value for 'metricId'
+ *   },
+ * });
+ */
+export function useGetMetricDomainQuery(baseOptions: Apollo.QueryHookOptions<GetMetricDomainQuery, GetMetricDomainQueryVariables> & ({ variables: GetMetricDomainQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetMetricDomainQuery, GetMetricDomainQueryVariables>(GetMetricDomainDocument, options);
+      }
+export function useGetMetricDomainLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMetricDomainQuery, GetMetricDomainQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetMetricDomainQuery, GetMetricDomainQueryVariables>(GetMetricDomainDocument, options);
+        }
+export function useGetMetricDomainSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMetricDomainQuery, GetMetricDomainQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetMetricDomainQuery, GetMetricDomainQueryVariables>(GetMetricDomainDocument, options);
+        }
+export type GetMetricDomainQueryHookResult = ReturnType<typeof useGetMetricDomainQuery>;
+export type GetMetricDomainLazyQueryHookResult = ReturnType<typeof useGetMetricDomainLazyQuery>;
+export type GetMetricDomainSuspenseQueryHookResult = ReturnType<typeof useGetMetricDomainSuspenseQuery>;
+export type GetMetricDomainQueryResult = Apollo.QueryResult<GetMetricDomainQuery, GetMetricDomainQueryVariables>;
+export const GetMetricAnalysisDocument = gql`
+    query GetMetricAnalysis($nodeId: String!, $metricId: String!) {
+  getMetricAnalysis(nodeId: $nodeId, metricId: $metricId) {
+    aggregated {
+      computed_at
+      value
+      min
+      max
+      p95
+      mean
+      median
+      sample_count
+      aggregation
+      noise_estimate
+    }
+    trend {
+      type
+      value
+    }
+    confidence {
+      value
+    }
+    projection {
+      type
+      eta_sec
+    }
+    state
+  }
+}
+    `;
+
+/**
+ * __useGetMetricAnalysisQuery__
+ *
+ * To run a query within a React component, call `useGetMetricAnalysisQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricAnalysisQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricAnalysisQuery({
+ *   variables: {
+ *      nodeId: // value for 'nodeId'
+ *      metricId: // value for 'metricId'
+ *   },
+ * });
+ */
+export function useGetMetricAnalysisQuery(baseOptions: Apollo.QueryHookOptions<GetMetricAnalysisQuery, GetMetricAnalysisQueryVariables> & ({ variables: GetMetricAnalysisQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetMetricAnalysisQuery, GetMetricAnalysisQueryVariables>(GetMetricAnalysisDocument, options);
+      }
+export function useGetMetricAnalysisLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMetricAnalysisQuery, GetMetricAnalysisQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetMetricAnalysisQuery, GetMetricAnalysisQueryVariables>(GetMetricAnalysisDocument, options);
+        }
+export function useGetMetricAnalysisSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMetricAnalysisQuery, GetMetricAnalysisQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetMetricAnalysisQuery, GetMetricAnalysisQueryVariables>(GetMetricAnalysisDocument, options);
+        }
+export type GetMetricAnalysisQueryHookResult = ReturnType<typeof useGetMetricAnalysisQuery>;
+export type GetMetricAnalysisLazyQueryHookResult = ReturnType<typeof useGetMetricAnalysisLazyQuery>;
+export type GetMetricAnalysisSuspenseQueryHookResult = ReturnType<typeof useGetMetricAnalysisSuspenseQuery>;
+export type GetMetricAnalysisQueryResult = Apollo.QueryResult<GetMetricAnalysisQuery, GetMetricAnalysisQueryVariables>;
