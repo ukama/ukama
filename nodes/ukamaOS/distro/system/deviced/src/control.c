@@ -40,26 +40,30 @@ static ControlSubsysState *get_subsys(ControlCtx *ctx, ControlSubsystem subsyste
 
 static bool is_active_phase(ControlPhase phase) {
 
-    if (phase == CONTROL_PHASE_PENDING) return true;
+    if (phase == CONTROL_PHASE_PENDING)   return true;
     if (phase == CONTROL_PHASE_EXECUTING) return true;
+
     return false;
 }
 
 static bool is_pending_subsys(ControlSubsysState *ss) {
 
     if (!ss) return false;
+
     return ss->Phase == CONTROL_PHASE_PENDING;
 }
 
 static bool is_executing_subsys(ControlSubsysState *ss) {
 
     if (!ss) return false;
+
     return ss->Phase == CONTROL_PHASE_EXECUTING;
 }
 
 static void cancel_pending_subsys(ControlSubsysState *ss) {
 
     if (!ss) return;
+
     ss->Phase = CONTROL_PHASE_IDLE;
     ss->Token++;
 }
@@ -77,17 +81,17 @@ ControlCtx *control_create(void) {
     ctx->Service.Phase   = CONTROL_PHASE_IDLE;
     ctx->Service.Current = CONTROL_STATE_OFF;
     ctx->Service.Desired = CONTROL_STATE_OFF;
-    ctx->Service.Token = 1;
+    ctx->Service.Token   = 1;
 
     ctx->Radio.Phase   = CONTROL_PHASE_IDLE;
     ctx->Radio.Current = CONTROL_STATE_OFF;
     ctx->Radio.Desired = CONTROL_STATE_OFF;
-    ctx->Radio.Token = 1;
+    ctx->Radio.Token   = 1;
 
     ctx->Restart.Phase   = CONTROL_PHASE_IDLE;
     ctx->Restart.Current = CONTROL_STATE_OFF;
     ctx->Restart.Desired = CONTROL_STATE_OFF;
-    ctx->Restart.Token = 1;
+    ctx->Restart.Token   = 1;
 
     return ctx;
 }
@@ -95,6 +99,7 @@ ControlCtx *control_create(void) {
 void control_destroy(ControlCtx *ctx) {
 
     if (!ctx) return;
+
     pthread_mutex_destroy(&ctx->Lock);
     free(ctx);
 }
@@ -157,9 +162,9 @@ bool control_set_pending(ControlCtx *ctx,
                          unsigned long long *outToken) {
 
     ControlSubsysState *ss = NULL;
-    bool allowed = false;
+    bool allowed   = false;
     bool immediate = false;
-    int status = HttpStatus_Conflict;
+    int status     = HttpStatus_Conflict;
 
     if (!ctx || !httpStatus || !runImmediate || !outToken) return false;
 
@@ -205,10 +210,10 @@ bool control_set_pending(ControlCtx *ctx,
 
         ss->Desired = desired;
         ss->Token++;
-        immediate = true;
+        immediate   = true;
         ctx->Active = subsystem;
-        allowed = true;
-        status = HttpStatus_Accepted;
+        allowed     = true;
+        status      = HttpStatus_Accepted;
         goto done;
     }
 
@@ -222,21 +227,21 @@ bool control_set_pending(ControlCtx *ctx,
     }
 
     if (ss->Phase == CONTROL_PHASE_IDLE && ss->Current == desired) {
-        status = HttpStatus_OK;
+        status  = HttpStatus_OK;
         allowed = false;
         goto done;
     }
 
     ss->Desired = desired;
-    ss->Phase = CONTROL_PHASE_PENDING;
+    ss->Phase   = CONTROL_PHASE_PENDING;
     ss->Token++;
     ctx->Active = subsystem;
-    allowed = true;
-    status = HttpStatus_Accepted;
-    immediate = force ? true : false;
+    allowed     = true;
+    status      = HttpStatus_Accepted;
+    immediate   = force ? true : false;
 
 done:
-    *httpStatus = status;
+    *httpStatus   = status;
     *runImmediate = immediate;
     *outToken = ss ? ss->Token : 0;
     pthread_mutex_unlock(&ctx->Lock);
@@ -310,7 +315,7 @@ void control_mark_done(ControlCtx *ctx,
     ss = get_subsys(ctx, subsystem);
     if (ss) {
         ss->Current = finalState;
-        ss->Phase = CONTROL_PHASE_IDLE;
+        ss->Phase   = CONTROL_PHASE_IDLE;
         ss->Token++;
     }
 
@@ -332,13 +337,20 @@ int control_request(ControlCtx *ctx,
                     bool force,
                     int *httpStatus) {
 
-    bool allowed = false;
-    bool runImmediate = false;
+    bool allowed             = false;
+    bool runImmediate        = false;
     unsigned long long token = 0;
 
     if (!ctx || !nodeType || !httpStatus) return STATUS_NOK;
 
-    allowed = control_set_pending(ctx, subsystem, desired, force, httpStatus, &runImmediate, &token);
+    allowed = control_set_pending(ctx,
+                                  subsystem,
+                                  desired,
+                                  force,
+                                  httpStatus,
+                                  &runImmediate,
+                                  &token);
+
     if (!allowed) return STATUS_OK;
 
     (void)runImmediate;

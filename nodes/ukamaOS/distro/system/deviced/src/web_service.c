@@ -32,7 +32,7 @@ typedef struct {
     unsigned long long Token;
 } WorkerArgs;
 
-static int _set_empty(UResponse *response, int status) {
+static int json_set_empty(UResponse *response, int status) {
 
     ulfius_set_empty_body_response(response, status);
     return U_CALLBACK_CONTINUE;
@@ -100,7 +100,7 @@ static bool _parse_state_request(const URequest *request,
     return true;
 }
 
-static void *_worker_run(void *arg) {
+static void* _worker_run(void *arg) {
 
     WorkerArgs *args = NULL;
     Config *config = NULL;
@@ -168,9 +168,10 @@ static void *_worker_run(void *arg) {
 
     if (args->Subsystem == CONTROL_SUBSYS_SERVICE) {
         (void)wc_send_action_alarm_to_notifyd(config,
-                                              (desired == CONTROL_STATE_ON) ? "service_on" : "service_off",
-                                              (desired == CONTROL_STATE_ON) ? "Enabling cellular service" : "Disabling cellular service",
-                                              &retCode);
+                     (desired == CONTROL_STATE_ON) ? "service_on" : "service_off",
+                                          (desired == CONTROL_STATE_ON) ?
+                                          "Enabling cellular service" : "Disabling cellular service",
+                                           &retCode);
 
         execRet = actions_service_apply(config, desired);
         if (execRet == STATUS_OK) {
@@ -184,8 +185,10 @@ static void *_worker_run(void *arg) {
 
     if (args->Subsystem == CONTROL_SUBSYS_RADIO) {
         (void)wc_send_action_alarm_to_notifyd(config,
-                                              (desired == CONTROL_STATE_ON) ? "radio_on" : "radio_off",
-                                              (desired == CONTROL_STATE_ON) ? "Enabling radio" : "Disabling radio",
+                                              (desired == CONTROL_STATE_ON) ?
+                                              "radio_on" : "radio_off",
+                                              (desired == CONTROL_STATE_ON) ?
+                                              "Enabling radio" : "Disabling radio",
                                               &retCode);
 
         execRet = actions_radio_apply(config, desired);
@@ -245,11 +248,11 @@ static int _post_state_change(const URequest *request,
     unsigned long long token = 0;
 
     if (!config || !config->control) {
-        return _set_empty(response, HttpStatus_InternalServerError);
+        return json_set_empty(response, HttpStatus_InternalServerError);
     }
 
     if (!_parse_state_request(request, &desired, &force)) {
-        return _set_empty(response, HttpStatus_BadRequest);
+        return json_set_empty(response, HttpStatus_BadRequest);
     }
 
     allowed = control_set_pending(config->control,
@@ -261,19 +264,19 @@ static int _post_state_change(const URequest *request,
                                  &token);
 
     if (httpStatus == HttpStatus_OK) {
-        return _set_empty(response, HttpStatus_OK);
+        return json_set_empty(response, HttpStatus_OK);
     }
 
     if (!allowed) {
-        return _set_empty(response, httpStatus);
+        return json_set_empty(response, httpStatus);
     }
 
     if (_schedule_worker(config, subsystem, immediate, token) != STATUS_OK) {
         control_mark_fault(config->control, subsystem);
-        return _set_empty(response, HttpStatus_InternalServerError);
+        return json_set_empty(response, HttpStatus_InternalServerError);
     }
 
-    return _set_empty(response, HttpStatus_Accepted);
+    return json_set_empty(response, HttpStatus_Accepted);
 }
 
 int web_service_cb_ping(const URequest *request,
@@ -282,7 +285,7 @@ int web_service_cb_ping(const URequest *request,
 
     (void)request;
     (void)epConfig;
-    return _set_empty(response, HttpStatus_OK);
+    return json_set_empty(response, HttpStatus_OK);
 }
 
 int web_service_cb_version(const URequest *request,
@@ -310,7 +313,7 @@ int web_service_cb_state(const URequest *request,
 
     config = (Config *)epConfig;
     if (!config || !config->control || !config->nodeType) {
-        return _set_empty(response, HttpStatus_InternalServerError);
+        return json_set_empty(response, HttpStatus_InternalServerError);
     }
 
     memset(state, 0, sizeof(state));
@@ -318,7 +321,7 @@ int web_service_cb_state(const URequest *request,
                                  config->nodeType,
                                  state,
                                  sizeof(state)) != STATUS_OK) {
-        return _set_empty(response, HttpStatus_InternalServerError);
+        return json_set_empty(response, HttpStatus_InternalServerError);
     }
 
     now = time(NULL);
@@ -328,7 +331,7 @@ int web_service_cb_state(const URequest *request,
 
     json = json_object();
     if (!json) {
-        return _set_empty(response, HttpStatus_InternalServerError);
+        return json_set_empty(response, HttpStatus_InternalServerError);
     }
 
     if (strcmp(config->nodeType, UKAMA_TOWER_NODE) == 0) {
@@ -337,7 +340,7 @@ int web_service_cb_state(const URequest *request,
         json_object_set_new(json, "radio", json_string(state));
     } else {
         json_decref(json);
-        return _set_empty(response, HttpStatus_BadRequest);
+        return json_set_empty(response, HttpStatus_BadRequest);
     }
 
     json_object_set_new(json, "uptime_s", json_integer(uptime));
@@ -355,11 +358,11 @@ int web_service_cb_post_service(const URequest *request,
 
     config = (Config *)epConfig;
     if (!config || !config->nodeType) {
-        return _set_empty(response, HttpStatus_InternalServerError);
+        return json_set_empty(response, HttpStatus_InternalServerError);
     }
 
     if (strcmp(config->nodeType, UKAMA_TOWER_NODE) != 0) {
-        return _set_empty(response, HttpStatus_BadRequest);
+        return json_set_empty(response, HttpStatus_BadRequest);
     }
 
     return _post_state_change(request, response, config, CONTROL_SUBSYS_SERVICE);
@@ -373,11 +376,11 @@ int web_service_cb_post_radio(const URequest *request,
 
     config = (Config *)epConfig;
     if (!config || !config->nodeType) {
-        return _set_empty(response, HttpStatus_InternalServerError);
+        return json_set_empty(response, HttpStatus_InternalServerError);
     }
 
     if (strcmp(config->nodeType, UKAMA_AMPLIFIER_NODE) != 0) {
-        return _set_empty(response, HttpStatus_BadRequest);
+        return json_set_empty(response, HttpStatus_BadRequest);
     }
 
     return _post_state_change(request, response, config, CONTROL_SUBSYS_RADIO);
@@ -402,7 +405,7 @@ int web_service_cb_post_restart(const URequest *request,
 
     config = (Config *)epConfig;
     if (!config || !config->control) {
-        return _set_empty(response, HttpStatus_InternalServerError);
+        return json_set_empty(response, HttpStatus_InternalServerError);
     }
 
     force = false;
@@ -413,13 +416,13 @@ int web_service_cb_post_restart(const URequest *request,
                           0,
                           &err);
         if (!json) {
-            return _set_empty(response, HttpStatus_BadRequest);
+            return json_set_empty(response, HttpStatus_BadRequest);
         }
         jForce = json_object_get(json, "force");
         if (jForce) {
             if (!json_is_boolean(jForce)) {
                 json_decref(json);
-                return _set_empty(response, HttpStatus_BadRequest);
+                return json_set_empty(response, HttpStatus_BadRequest);
             }
             force = json_is_true(jForce) ? true : false;
         }
@@ -435,19 +438,19 @@ int web_service_cb_post_restart(const URequest *request,
                                  &token);
 
     if (httpStatus == HttpStatus_OK) {
-        return _set_empty(response, HttpStatus_OK);
+        return json_set_empty(response, HttpStatus_OK);
     }
 
     if (!allowed) {
-        return _set_empty(response, httpStatus);
+        return json_set_empty(response, httpStatus);
     }
 
     if (_schedule_worker(config, CONTROL_SUBSYS_RESTART, immediate, token) != STATUS_OK) {
         control_mark_fault(config->control, CONTROL_SUBSYS_RESTART);
-        return _set_empty(response, HttpStatus_InternalServerError);
+        return json_set_empty(response, HttpStatus_InternalServerError);
     }
 
-    return _set_empty(response, HttpStatus_Accepted);
+    return json_set_empty(response, HttpStatus_Accepted);
 }
 
 int web_service_cb_default(const URequest *request,
@@ -456,7 +459,7 @@ int web_service_cb_default(const URequest *request,
 
     (void)request;
     (void)epConfig;
-    return _set_empty(response, HttpStatus_NotFound);
+    return json_set_empty(response, HttpStatus_NotFound);
 }
 
 int web_service_cb_not_allowed(const URequest *request,
@@ -465,5 +468,5 @@ int web_service_cb_not_allowed(const URequest *request,
 
     (void)request;
     (void)user_data;
-    return _set_empty(response, HttpStatus_MethodNotAllowed);
+    return json_set_empty(response, HttpStatus_MethodNotAllowed);
 }
