@@ -117,12 +117,12 @@ static void *_worker_run(void *arg) {
     }
 
     config = args->Config;
-    if (!config || !config->Control || !config->nodeType) {
+    if (!config || !config->control || !config->nodeType) {
         usys_free(args);
         pthread_exit(NULL);
     }
 
-    control = config->Control;
+    control = config->control;
 
     delay = args->Immediate ? 0 : WAIT_BEFORE_REBOOT;
     if (delay > 0) {
@@ -211,7 +211,7 @@ static int _schedule_worker(Config *config,
     WorkerArgs *args = NULL;
     int ret = 0;
 
-    if (!config || !config->Control) return STATUS_NOK;
+    if (!config || !config->control) return STATUS_NOK;
 
     args = (WorkerArgs *)usys_malloc(sizeof(WorkerArgs));
     if (!args) return STATUS_NOK;
@@ -244,7 +244,7 @@ static int _post_state_change(const URequest *request,
     bool immediate = false;
     unsigned long long token = 0;
 
-    if (!config || !config->Control) {
+    if (!config || !config->control) {
         return _set_empty(response, HttpStatus_InternalServerError);
     }
 
@@ -252,7 +252,7 @@ static int _post_state_change(const URequest *request,
         return _set_empty(response, HttpStatus_BadRequest);
     }
 
-    allowed = control_set_pending(config->Control,
+    allowed = control_set_pending(config->control,
                                  subsystem,
                                  desired,
                                  force,
@@ -269,7 +269,7 @@ static int _post_state_change(const URequest *request,
     }
 
     if (_schedule_worker(config, subsystem, immediate, token) != STATUS_OK) {
-        control_mark_fault(config->Control, subsystem);
+        control_mark_fault(config->control, subsystem);
         return _set_empty(response, HttpStatus_InternalServerError);
     }
 
@@ -309,12 +309,12 @@ int web_service_cb_state(const URequest *request,
     (void)request;
 
     config = (Config *)epConfig;
-    if (!config || !config->Control || !config->nodeType) {
+    if (!config || !config->control || !config->nodeType) {
         return _set_empty(response, HttpStatus_InternalServerError);
     }
 
     memset(state, 0, sizeof(state));
-    if (control_get_public_state(config->Control,
+    if (control_get_public_state(config->control,
                                  config->nodeType,
                                  state,
                                  sizeof(state)) != STATUS_OK) {
@@ -322,8 +322,8 @@ int web_service_cb_state(const URequest *request,
     }
 
     now = time(NULL);
-    if (config->StartTime > 0 && now >= config->StartTime) {
-        uptime = (long)(now - config->StartTime);
+    if (config->startTime > 0 && now >= config->startTime) {
+        uptime = (long)(now - config->startTime);
     }
 
     json = json_object();
@@ -401,7 +401,7 @@ int web_service_cb_post_restart(const URequest *request,
     (void)desired;
 
     config = (Config *)epConfig;
-    if (!config || !config->Control) {
+    if (!config || !config->control) {
         return _set_empty(response, HttpStatus_InternalServerError);
     }
 
@@ -426,7 +426,7 @@ int web_service_cb_post_restart(const URequest *request,
         json_decref(json);
     }
 
-    allowed = control_set_pending(config->Control,
+    allowed = control_set_pending(config->control,
                                  CONTROL_SUBSYS_RESTART,
                                  CONTROL_STATE_OFF,
                                  force,
@@ -443,7 +443,7 @@ int web_service_cb_post_restart(const URequest *request,
     }
 
     if (_schedule_worker(config, CONTROL_SUBSYS_RESTART, immediate, token) != STATUS_OK) {
-        control_mark_fault(config->Control, CONTROL_SUBSYS_RESTART);
+        control_mark_fault(config->control, CONTROL_SUBSYS_RESTART);
         return _set_empty(response, HttpStatus_InternalServerError);
     }
 

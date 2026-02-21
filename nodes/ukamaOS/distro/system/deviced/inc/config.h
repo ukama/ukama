@@ -28,8 +28,8 @@ typedef struct {
     char  *nodeType;
     bool  clientMode;
 
-    ControlCtx *Control;
-    time_t StartTime;
+    ControlCtx *control;
+    time_t     startTime;
 } Config;
 
 #endif /* CONFIG_H_ */

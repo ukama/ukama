@@ -74,17 +74,17 @@ ControlCtx *control_create(void) {
     pthread_mutex_init(&ctx->Lock, NULL);
     ctx->Active = CONTROL_SUBSYS_NONE;
 
-    ctx->Service.Phase = CONTROL_PHASE_IDLE;
+    ctx->Service.Phase   = CONTROL_PHASE_IDLE;
     ctx->Service.Current = CONTROL_STATE_OFF;
     ctx->Service.Desired = CONTROL_STATE_OFF;
     ctx->Service.Token = 1;
 
-    ctx->Radio.Phase = CONTROL_PHASE_IDLE;
+    ctx->Radio.Phase   = CONTROL_PHASE_IDLE;
     ctx->Radio.Current = CONTROL_STATE_OFF;
     ctx->Radio.Desired = CONTROL_STATE_OFF;
     ctx->Radio.Token = 1;
 
-    ctx->Restart.Phase = CONTROL_PHASE_IDLE;
+    ctx->Restart.Phase   = CONTROL_PHASE_IDLE;
     ctx->Restart.Current = CONTROL_STATE_OFF;
     ctx->Restart.Desired = CONTROL_STATE_OFF;
     ctx->Restart.Token = 1;

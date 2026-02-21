@@ -33,15 +33,16 @@ typedef enum {
 } ControlState;
 
 typedef struct {
-    ControlPhase Phase;
-    ControlState Current;
-    ControlState Desired;
+    ControlPhase       Phase;
+    ControlState       Current;
+    ControlState       Desired;
     unsigned long long Token;
 } ControlSubsysState;
 
 typedef struct {
     pthread_mutex_t Lock;
-    ControlSubsystem Active;
+
+    ControlSubsystem   Active;
     ControlSubsysState Service;
     ControlSubsysState Radio;
     ControlSubsysState Restart;
