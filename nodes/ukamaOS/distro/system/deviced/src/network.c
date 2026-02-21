@@ -77,20 +77,29 @@ static void setup_webservice_endpoints(Config *config, UInst *instance) {
     setup_unsupported_methods(instance, "GET",
                               URL_PREFIX, API_RES_EP("version"));
 
-    if (config->clientMode == USYS_TRUE) {
-        /* Node ID is not requried in client-mode */
-        ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
-                                   API_RES_EP("reboot"), 0,
-                                   &web_service_cb_post_reboot, config);
-        setup_unsupported_methods(instance, "POST",
-                                  URL_PREFIX, API_RES_EP("reboot"));
-    } else {
-        ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
-                                   API_RES_EP("reboot/:id"), 0,
-                                   &web_service_cb_post_reboot, config);
-        setup_unsupported_methods(instance, "POST",
-                                  URL_PREFIX, API_RES_EP("reboot/:id"));
-    }
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("state"), 0,
+                               &web_service_cb_state, config);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("state"));
+
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("restart"), 0,
+                               &web_service_cb_post_restart, config);
+    setup_unsupported_methods(instance, "POST",
+                              URL_PREFIX, API_RES_EP("restart"));
+
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("service"), 0,
+                               &web_service_cb_post_service, config);
+    setup_unsupported_methods(instance, "POST",
+                              URL_PREFIX, API_RES_EP("service"));
+
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("radio"), 0,
+                               &web_service_cb_post_radio, config);
+    setup_unsupported_methods(instance, "POST",
+                              URL_PREFIX, API_RES_EP("radio"));
 
     ulfius_set_default_endpoint(instance, &web_service_cb_default, config);
 }

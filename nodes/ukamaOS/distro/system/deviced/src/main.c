@@ -9,6 +9,7 @@
 #include "config.h"
 #include "deviced.h"
 #include "web_client.h"
+#include "control.h"
 
 #include "usys_api.h"
 #include "usys_file.h"
@@ -70,6 +71,7 @@ int main(int argc, char **argv) {
     char *clientHost   = DEF_SERVICE_CLIENT_HOST;
     UInst serviceInst;
     Config serviceConfig = {0};
+    const char *envNodeType = NULL;
 
     usys_log_set_service(SERVICE_NAME);
     //    usys_log_remote_init(SERVICE_NAME);
@@ -147,7 +149,16 @@ int main(int argc, char **argv) {
 
     /* Read Node Info from node.d */
     if (serviceConfig.clientMode == USYS_FALSE) {
-        if (getenv(ENV_DEVICED_DEBUG_MODE)) {
+        envNodeType = getenv(ENV_DEVICED_NODE_TYPE);
+        if (envNodeType && *envNodeType) {
+            serviceConfig.nodeType = strdup(envNodeType);
+            serviceConfig.nodeID = strdup(DEF_NODE_ID);
+            usys_log_debug("%s: using ENV nodeType: %s",
+                           SERVICE_NAME,
+                           serviceConfig.nodeType);
+        }
+
+        if (getenv(ENV_DEVICED_DEBUG_MODE) && !serviceConfig.nodeType) {
             serviceConfig.nodeID   = strdup(DEF_NODE_ID);
             serviceConfig.nodeType = strdup(DEF_NODE_TYPE);
             usys_log_debug("%s: using default Node ID: %s Type: %s",
@@ -155,11 +166,31 @@ int main(int argc, char **argv) {
                            DEF_NODE_ID,
                            DEF_NODE_TYPE);
         } else {
-            if (get_nodeid_and_type_from_noded(&serviceConfig) == STATUS_NOK) {
-                usys_log_error(
-                    "%s: unable to connect with node.d", SERVICE_NAME);
-                goto done;
+            if (!serviceConfig.nodeType) {
+                if (get_nodeid_and_type_from_noded(&serviceConfig) == STATUS_NOK) {
+                    usys_log_error(
+                        "%s: unable to connect with node.d", SERVICE_NAME);
+                    goto done;
+                }
             }
+        }
+    }
+
+    serviceConfig.Control = control_create();
+    if (!serviceConfig.Control) {
+        usys_log_error("%s: unable to allocate control context", SERVICE_NAME);
+        goto done;
+    }
+
+    serviceConfig.StartTime = time(NULL);
+
+    if (serviceConfig.nodeType) {
+        if (strcmp(serviceConfig.nodeType, UKAMA_TOWER_NODE) == 0) {
+            serviceConfig.Control->Service.Current = CONTROL_STATE_ON;
+            serviceConfig.Control->Service.Desired = CONTROL_STATE_ON;
+        } else if (strcmp(serviceConfig.nodeType, UKAMA_AMPLIFIER_NODE) == 0) {
+            serviceConfig.Control->Radio.Current = CONTROL_STATE_ON;
+            serviceConfig.Control->Radio.Desired = CONTROL_STATE_ON;
         }
     }
 
@@ -174,6 +205,11 @@ done:
     ulfius_stop_framework(&serviceInst);
     ulfius_clean_instance(&serviceInst);
     free(serviceConfig.serviceName);
+
+    if (serviceConfig.Control) {
+        control_destroy(serviceConfig.Control);
+        serviceConfig.Control = NULL;
+    }
 
     usys_log_debug("Exiting device.d ...");
 

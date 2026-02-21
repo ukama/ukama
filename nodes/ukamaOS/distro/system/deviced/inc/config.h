@@ -9,6 +9,10 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
+#include <time.h>
+
+#include "control.h"
+
 #include "usys_types.h"
 
 /* Service configuration */
@@ -23,6 +27,9 @@ typedef struct {
     char  *nodeID;
     char  *nodeType;
     bool  clientMode;
+
+    ControlCtx *Control;
+    time_t StartTime;
 } Config;
 
 #endif /* CONFIG_H_ */

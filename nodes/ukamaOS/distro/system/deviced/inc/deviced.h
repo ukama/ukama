@@ -29,6 +29,7 @@
 #define DEF_NODE_ID            "ukama-aaa-bbbb-ccc-dddd"
 #define DEF_NODE_TYPE          "tower"
 #define ENV_DEVICED_DEBUG_MODE "DEVICED_DEBUG_MODE"
+#define ENV_DEVICED_NODE_TYPE  "DEVICED_NODE_TYPE"
 
 #define EP_BS                  "/"
 #define REST_API_VERSION       "v1"
