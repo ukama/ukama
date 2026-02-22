@@ -63,7 +63,7 @@ static void setup_unsupported_methods(UInst *instance,
     }
 }
 
-static void setup_webservice_endpoints(Config *config, UInst *instance) {
+static void setup_common_webservice_endpoints(Config *config, UInst *instance) {
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("ping"), 0,
@@ -77,26 +77,68 @@ static void setup_webservice_endpoints(Config *config, UInst *instance) {
     setup_unsupported_methods(instance, "GET",
                               URL_PREFIX, API_RES_EP("version"));
 
-    if (config->clientMode == USYS_TRUE) {
-        /* Node ID is not requried in client-mode */
-        ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
-                                   API_RES_EP("reboot"), 0,
-                                   &web_service_cb_post_reboot, config);
-        setup_unsupported_methods(instance, "POST",
-                                  URL_PREFIX, API_RES_EP("reboot"));
-    } else {
-        ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
-                                   API_RES_EP("reboot/:id"), 0,
-                                   &web_service_cb_post_reboot, config);
-        setup_unsupported_methods(instance, "POST",
-                                  URL_PREFIX, API_RES_EP("reboot/:id"));
+}
 
-        ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
-                                   API_RES_EP("restart/:id"), 0,
-                                   &web_service_cb_post_restart, config);
-        setup_unsupported_methods(instance, "POST",
-                              URL_PREFIX, API_RES_EP("restart/:id"));
-    }
+static void setup_client_webservice_endpoints(Config *config, UInst *instance) {
+
+    setup_common_webservice_endpoints(config, instance);
+
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("restart"), 0,
+                               &web_service_cb_post_restart, config);
+    setup_unsupported_methods(instance, "POST",
+                              URL_PREFIX, API_RES_EP("restart"));
+
+    ulfius_set_default_endpoint(instance, &web_service_cb_default, config);
+}
+
+static void setup_tower_node_webservice_endpoints(Config *config, UInst *instance) {
+
+    setup_common_webservice_endpoints(config, instance);
+
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("state"), 0,
+                               &web_service_cb_state, config);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("state"));
+
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("restart"), 0,
+                               &web_service_cb_post_restart, config);
+    setup_unsupported_methods(instance, "POST",
+                              URL_PREFIX, API_RES_EP("restart"));
+
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("service"), 0,
+                               &web_service_cb_post_service, config);
+    setup_unsupported_methods(instance, "POST",
+                              URL_PREFIX, API_RES_EP("service"));
+
+    ulfius_set_default_endpoint(instance, &web_service_cb_default, config);
+}
+
+
+static void setup_amplifier_node_webservice_endpoints(Config *config, UInst *instance) {
+
+    setup_common_webservice_endpoints(config, instance);
+
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("state"), 0,
+                               &web_service_cb_state, config);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("state"));
+
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("restart"), 0,
+                               &web_service_cb_post_restart, config);
+    setup_unsupported_methods(instance, "POST",
+                              URL_PREFIX, API_RES_EP("restart"));
+
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("radio"), 0,
+                               &web_service_cb_post_radio, config);
+    setup_unsupported_methods(instance, "POST",
+                              URL_PREFIX, API_RES_EP("radio"));
 
     ulfius_set_default_endpoint(instance, &web_service_cb_default, config);
 }
@@ -116,7 +158,19 @@ int start_web_service(Config *config, UInst *serviceInst) {
 	u_map_put(serviceInst->default_headers, "Access-Control-Allow-Origin", "*");
     
 	/* setup endpoints and methods callback. */
-	setup_webservice_endpoints(config, serviceInst);
+    if (config->clientMode) {
+        setup_client_webservice_endpoints(config, serviceInst);
+    } else {
+        if (strcmp(config->nodeType, UKAMA_TOWER_NODE) == 0) {
+            setup_tower_node_webservice_endpoints(config, serviceInst);
+        } else if (strcmp(config->nodeType, UKAMA_AMPLIFIER_NODE) == 0) {
+            setup_amplifier_node_webservice_endpoints(config, serviceInst);
+        } else {
+            usys_log_error("Unable to setup web services for: %s",
+                           config->nodeType);
+            return USYS_FALSE;
+        }
+    }
 
 	if (!start_framework(config, serviceInst)) {
 		usys_log_error("Failed to start webservices on port: %d",

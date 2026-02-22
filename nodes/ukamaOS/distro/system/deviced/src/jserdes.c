@@ -79,6 +79,29 @@ bool json_serialize_alarm_notification(JsonObj **json,
     return USYS_TRUE;
 }
 
+bool json_serialize_action_alarm_notification(JsonObj **json,
+                                              Config *config,
+                                              const char *value,
+                                              const char *details) {
+
+    if (!json || !config || !value || !details) return USYS_FALSE;
+
+    *json = json_object();
+    if (!*json) return USYS_FALSE;
+
+    json_object_set_new(*json, JTAG_SERVICE_NAME,
+                        json_string(config->serviceName));
+    json_object_set_new(*json, JTAG_SEVERITY, json_string(ALARM_HIGH));
+    json_object_set_new(*json, JTAG_TIME,     json_integer(time(NULL)));
+    json_object_set_new(*json, JTAG_MODULE,   json_string(MODULE_NONE));
+    json_object_set_new(*json, JTAG_NAME,     json_string(ALARM_NODE));
+    json_object_set_new(*json, JTAG_VALUE,    json_string(value));
+    json_object_set_new(*json, JTAG_UNITS,    json_string(EMPTY_STRING));
+    json_object_set_new(*json, JTAG_DETAILS,  json_string(details));
+
+    return USYS_TRUE;
+}
+
 /*
  * deserialize_node_info --
  *

@@ -9,6 +9,7 @@
 #include "config.h"
 #include "deviced.h"
 #include "web_client.h"
+#include "control.h"
 
 #include "usys_api.h"
 #include "usys_file.h"
@@ -31,9 +32,9 @@ void handle_sigint(int signum) {
 static UsysOption longOptions[] = {
     { "logs",        required_argument, 0, 'l' },
     { "client-host", required_argument, 0, 'H' },
-    { "client-mode", no_argument, 0, 'c' },
-    { "help",        no_argument, 0, 'h' },
-    { "version",     no_argument, 0, 'v' },
+    { "client-mode", no_argument,       0, 'c' },
+    { "help",        no_argument,       0, 'h' },
+    { "version",     no_argument,       0, 'v' },
     { 0, 0, 0, 0 }
 };
 
@@ -64,15 +65,17 @@ void usage() {
 
 int main(int argc, char **argv) {
 
-    int opt, optIdx, clientMode=USYS_FALSE;
-
+    int opt, optIdx;
+    int clientMode     = USYS_FALSE;
+    int exitCode       = USYS_FALSE;
     char *debug        = DEF_LOG_LEVEL;
     char *clientHost   = DEF_SERVICE_CLIENT_HOST;
     UInst serviceInst;
     Config serviceConfig = {0};
 
     usys_log_set_service(SERVICE_NAME);
-    usys_log_remote_init(SERVICE_NAME);
+    //usys_log_remote_init(SERVICE_NAME);
+
     /* Parsing command line args. */
     while (true) {
         
@@ -116,56 +119,86 @@ int main(int argc, char **argv) {
     }
 
     /* Service config update */
-    serviceConfig.serviceName  = usys_strdup(SERVICE_NAME);
-    if (!clientMode)  {
-        serviceConfig.servicePort  = usys_find_service_port(SERVICE_NAME);
+    if (!clientMode) {
+        serviceConfig.serviceName  = usys_strdup(SERVICE_DEVICE);
     } else {
-        serviceConfig.servicePort  =
-            usys_find_service_port(SERVICE_DEVICE_CLIENT);
+        serviceConfig.serviceName  = usys_strdup(SERVICE_DEVICE_CLIENT);
     }
+    serviceConfig.servicePort      = usys_find_service_port(serviceConfig.serviceName);
+
     serviceConfig.nodedPort    = usys_find_service_port(SERVICE_NODE);
     serviceConfig.notifydPort  = usys_find_service_port(SERVICE_NOTIFY);
+    serviceConfig.femPort      = usys_find_service_port(SERVICE_FEM);
     serviceConfig.nodeID       = NULL;
     serviceConfig.nodeType     = NULL;
     serviceConfig.clientMode   = clientMode;
-    serviceConfig.clientHost   = strdup(clientHost);
-    serviceConfig.clientPort   = usys_find_service_port(SERVICE_DEVICE_CLIENT);
-
-    if (!serviceConfig.servicePort ||
-        !serviceConfig.nodedPort   ||
-        !serviceConfig.notifydPort ||
-        !serviceConfig.clientPort) {
-        usys_log_error("Unable to determine the port for services");
-        usys_exit(1);
+    if (!clientMode) {
+        serviceConfig.clientHost   = strdup(clientHost);
+        serviceConfig.clientPort   = usys_find_service_port(SERVICE_DEVICE_CLIENT);
     }
 
-    usys_log_debug("Starting %s ... [client-mode:%d]",
-                   SERVICE_NAME, clientMode);
+    /* only valid if !clientMode */
+    if (!clientMode) {
+        if (!serviceConfig.servicePort ||
+            !serviceConfig.nodedPort   ||
+            !serviceConfig.notifydPort ||
+            !serviceConfig.clientPort  ||
+            !serviceConfig.femPort ) {
+            usys_log_error("Unable to determine the port for services: %s %s %s %s",
+                           SERVICE_DEVICE,
+                           SERVICE_NODE,
+                           SERVICE_NOTIFY,
+                           SERVICE_DEVICE_CLIENT);
+            exitCode = USYS_TRUE;
+            goto done;
+        }
+    } else {
+        if (!serviceConfig.servicePort) {
+            usys_log_error("Unable to determine the service port for %s",
+                           SERVICE_DEVICE_CLIENT);
+            exitCode = USYS_TRUE;
+            goto done;
+        }
+    }
+
+    usys_log_debug("Starting %s ... [client-mode:%d]", SERVICE_NAME, clientMode);
 
     /* Signal handler */
     signal(SIGINT, handle_sigint);
 
-    /* Read Node Info from node.d */
-    if (serviceConfig.clientMode == USYS_FALSE) {
-        if (getenv(ENV_DEVICED_DEBUG_MODE)) {
-            serviceConfig.nodeID   = strdup(DEF_NODE_ID);
-            serviceConfig.nodeType = strdup(DEF_NODE_TYPE);
-            usys_log_debug("%s: using default Node ID: %s Type: %s",
-                           SERVICE_NAME,
-                           DEF_NODE_ID,
-                           DEF_NODE_TYPE);
-        } else {
-            if (get_nodeid_and_type_from_noded(&serviceConfig) == STATUS_NOK) {
-                usys_log_error(
-                    "%s: unable to connect with node.d", SERVICE_NAME);
-                goto done;
-            }
+    /* not in client-mode */
+    if (!serviceConfig.clientMode) {
+        if (get_nodeid_and_type_from_noded(&serviceConfig) == STATUS_NOK) {
+            usys_log_error(
+                "%s: unable to connect with node.d", serviceConfig.serviceName);
+            exitCode = USYS_TRUE;
+            goto done;
+        }
+
+        serviceConfig.control = control_create();
+        if (!serviceConfig.control) {
+            usys_log_error("%s: unable to allocate control context", SERVICE_NAME);
+            exitCode = USYS_TRUE;
+            goto done;
+        }
+    }
+
+    serviceConfig.startTime = time(NULL);
+
+    if (serviceConfig.nodeType) {
+        if (strcmp(serviceConfig.nodeType, UKAMA_TOWER_NODE) == 0) {
+            serviceConfig.control->Service.Current = CONTROL_STATE_ON;
+            serviceConfig.control->Service.Desired = CONTROL_STATE_ON;
+        } else if (strcmp(serviceConfig.nodeType, UKAMA_AMPLIFIER_NODE) == 0) {
+            serviceConfig.control->Radio.Current = CONTROL_STATE_ON;
+            serviceConfig.control->Radio.Desired = CONTROL_STATE_ON;
         }
     }
 
     if (start_web_service(&serviceConfig, &serviceInst) != USYS_TRUE) {
         usys_log_error("Webservice failed to setup for clients. Exiting.");
-        usys_exit(1);
+        exitCode = USYS_TRUE;
+        goto done;
     }
 
     pause();
@@ -173,9 +206,17 @@ int main(int argc, char **argv) {
 done:
     ulfius_stop_framework(&serviceInst);
     ulfius_clean_instance(&serviceInst);
-    free(serviceConfig.serviceName);
+
+    if (serviceConfig.serviceName) free(serviceConfig.serviceName);
+    if (serviceConfig.nodeType)    free(serviceConfig.nodeType);
+    if (serviceConfig.nodeID)      free(serviceConfig.nodeID);
+
+    if (serviceConfig.control) {
+        control_destroy(serviceConfig.control);
+        serviceConfig.control = NULL;
+    }
 
     usys_log_debug("Exiting device.d ...");
 
-    return USYS_TRUE;
+    return exitCode;
 }
