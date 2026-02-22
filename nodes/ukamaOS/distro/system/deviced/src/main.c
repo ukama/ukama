@@ -128,6 +128,7 @@ int main(int argc, char **argv) {
 
     serviceConfig.nodedPort    = usys_find_service_port(SERVICE_NODE);
     serviceConfig.notifydPort  = usys_find_service_port(SERVICE_NOTIFY);
+    serviceConfig.femPort      = usys_find_service_port(SERVICE_FEM);
     serviceConfig.nodeID       = NULL;
     serviceConfig.nodeType     = NULL;
     serviceConfig.clientMode   = clientMode;
@@ -141,7 +142,8 @@ int main(int argc, char **argv) {
         if (!serviceConfig.servicePort ||
             !serviceConfig.nodedPort   ||
             !serviceConfig.notifydPort ||
-            !serviceConfig.clientPort) {
+            !serviceConfig.clientPort  ||
+            !serviceConfig.femPort ) {
             usys_log_error("Unable to determine the port for services: %s %s %s %s",
                            SERVICE_DEVICE,
                            SERVICE_NODE,

@@ -6,73 +6,40 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
-#include <fcntl.h>
-#include <unistd.h>
 #include <string.h>
 
 #include "actions.h"
 #include "deviced.h"
+#include "web_client.h"
 
 #include "usys_log.h"
-
-static int _write_sysfs_value(const char *path, const char *value) {
-
-    int fd = -1;
-    ssize_t wr = 0;
-
-    if (!path || !*path || !value) return STATUS_NOK;
-
-    fd = open(path, O_WRONLY);
-    if (fd < 0) {
-        return STATUS_NOK;
-    }
-
-    wr = write(fd, value, (size_t)strlen(value));
-    close(fd);
-
-    if (wr < 0) return STATUS_NOK;
-    return STATUS_OK;
-}
-
-static int _set_chain(const char *base, const char *val) {
-
-    int ret = STATUS_NOK;
-    char path[256];
-
-    memset(path, 0, sizeof(path));
-    snprintf(path, sizeof(path), "%s/tx_enable", base);
-    ret = _write_sysfs_value(path, val);
-    if (ret != STATUS_OK) return ret;
-
-    memset(path, 0, sizeof(path));
-    snprintf(path, sizeof(path), "%s/PA_disable", base);
-    ret = _write_sysfs_value(path, val);
-    if (ret != STATUS_OK) return ret;
-
-    memset(path, 0, sizeof(path));
-    snprintf(path, sizeof(path), "%s/rx_enable", base);
-    ret = _write_sysfs_value(path, val);
-    if (ret != STATUS_OK) return ret;
-
-    return STATUS_OK;
-}
+#include "usys_services.h"
 
 int actions_radio_apply(Config *config, ControlState desired) {
 
-    const char *val = NULL;
-    int ret = STATUS_NOK;
+    int ret;
+    int retCode;
+
+    ret = STATUS_NOK;
+    retCode = 0;
 
     (void)config;
 
-    val = (desired == CONTROL_STATE_ON) ? "1" : "0";
+    usys_log_info("radio: %s (via femd:%d)",
+                  (desired == CONTROL_STATE_ON) ? "on" : "off",
+                  config->femPort);
 
-    usys_log_info("radio: %s", (desired == CONTROL_STATE_ON) ? "on" : "off");
+    ret = wc_put_gpio_to_femd(config, 1, desired, &retCode);
+    if (ret != STATUS_OK) {
+        usys_log_error("radio: femd gpio apply failed fem=1 http=%d", retCode);
+        return ret;
+    }
 
-    ret = _set_chain("/devices/platform/fema1-gpios", val);
-    if (ret != STATUS_OK) return ret;
-
-    ret = _set_chain("/devices/platform/fema2-gpios", val);
-    if (ret != STATUS_OK) return ret;
+    ret = wc_put_gpio_to_femd(config, 2, desired, &retCode);
+    if (ret != STATUS_OK) {
+        usys_log_error("radio: femd gpio apply failed fem=2 http=%d", retCode);
+        return ret;
+    }
 
     return STATUS_OK;
 }

@@ -157,6 +157,20 @@ cleanup:
     return ret;
 }
 
+static JsonObj *build_femd_gpio_body(ControlState desired) {
+
+    int on;
+
+    on = (desired == CONTROL_STATE_ON) ? 1 : 0;
+
+    return json_pack("{s:b, s:b, s:b, s:b, s:b}",
+                     "tx_rf_enable",  on ? 1 : 0,
+                     "rx_rf_enable",  on ? 1 : 0,
+                     "pa_vds_enable", on ? 1 : 0,
+                     "rf_pal_enable", on ? 1 : 0,
+                     "pa_disable",    on ? 0 : 1);
+}
+
 int get_nodeid_and_type_from_noded(Config *config) {
 
     char url[128] = {0};
@@ -323,6 +337,93 @@ int wc_send_reboot_to_client(Config *config, int *retCode) {
     *retCode = httpResp->status;
 
     /* cleaup code */
+    if (httpReq) {
+        ulfius_clean_request(httpReq);
+        usys_free(httpReq);
+    }
+
+    if (httpResp) {
+        ulfius_clean_response(httpResp);
+        usys_free(httpResp);
+    }
+
+    return ret;
+}
+
+int wc_put_gpio_to_femd(Config *config,
+                        int femUnit,
+                        ControlState desired,
+                        int *retCode) {
+
+    int ret;
+    char url[128];
+    char *jsonStr;
+
+    JsonObj *json;
+    UResponse *httpResp;
+    URequest *httpReq;
+
+    ret = STATUS_NOK;
+
+    memset(url, 0, sizeof(url));
+
+    jsonStr = NULL;
+    json = NULL;
+    httpResp = NULL;
+    httpReq = NULL;
+
+    if (!config || !retCode)          return STATUS_NOK;
+    if (config->femPort <= 0)         return STATUS_NOK;
+    if (femUnit != 1 && femUnit != 2) return STATUS_NOK;
+
+    sprintf(url, "http://%s:%d%s%s%d%s",
+            DEF_FEMD_HOST,
+            config->femPort,
+            URL_PREFIX,
+            API_RES_EP("fems/"),
+            femUnit,
+            "/gpio");
+
+    json = build_femd_gpio_body(desired);
+    if (!json) {
+        usys_log_error("Unable to build femd gpio json");
+        return STATUS_NOK;
+    }
+
+    httpReq = wc_create_http_request(url, "PUT", json);
+    if (!httpReq) {
+        json_decref(json);
+        return STATUS_NOK;
+    }
+
+    jsonStr = json_dumps(json, 0);
+    usys_log_debug("Sending femd gpio. URL: %s method: PUT, json: %s",
+                   url, jsonStr ? jsonStr : "");
+    if (jsonStr) free(jsonStr);
+
+    ret = wc_send_http_request(httpReq, &httpResp);
+    if (ret != STATUS_OK) {
+        usys_log_error("Failed to send femd gpio request. URL: %s", url);
+        ret = STATUS_NOK;
+        goto cleanup;
+    }
+
+    *retCode = httpResp->status;
+
+    if (httpResp->status != HttpStatus_Accepted) {
+        usys_log_error("femd gpio failed. URL: %s Code: %d Str: %s",
+                       url,
+                       httpResp->status,
+                       HttpStatusStr(httpResp->status));
+        ret = STATUS_NOK;
+        goto cleanup;
+    }
+
+    ret = STATUS_OK;
+
+cleanup:
+    json_decref(json);
+
     if (httpReq) {
         ulfius_clean_request(httpReq);
         usys_free(httpReq);

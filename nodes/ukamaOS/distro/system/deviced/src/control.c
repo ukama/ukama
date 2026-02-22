@@ -248,7 +248,9 @@ done:
     return allowed;
 }
 
-bool control_begin_execute(ControlCtx *ctx, ControlSubsystem subsystem, unsigned long long token) {
+bool control_begin_execute(ControlCtx *ctx,
+                           ControlSubsystem subsystem,
+                           unsigned long long token) {
 
     ControlSubsysState *ss = NULL;
     bool ok = false;
@@ -327,7 +329,9 @@ void control_mark_done(ControlCtx *ctx,
 }
 
 void control_mark_restart_done(ControlCtx *ctx) {
-    control_mark_done(ctx, CONTROL_SUBSYS_RESTART, CONTROL_STATE_OFF);
+    control_mark_done(ctx,
+                      CONTROL_SUBSYS_RESTART,
+                      CONTROL_STATE_OFF);
 }
 
 int control_request(ControlCtx *ctx,
