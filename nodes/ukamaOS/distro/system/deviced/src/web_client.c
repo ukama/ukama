@@ -307,16 +307,28 @@ int wc_send_action_alarm_to_notifyd(Config *config,
 
 int wc_send_reboot_to_client(Config *config, int *retCode) {
 
-    int ret = USYS_OK;
-    char url[128] = {0};
-    UResponse *httpResp = NULL;
-    URequest *httpReq = NULL;
+    int ret;
+    char url[128];
+    UResponse *httpResp;
+    URequest *httpReq;
 
-    sprintf(url,"http://%s:%d%s%s",
-            config->clientHost,
-            config->clientPort,
-            URL_PREFIX,
-            API_RES_EP("reboot/"));
+    ret = USYS_NOK;
+    httpResp = NULL;
+    httpReq = NULL;
+
+    if (!config || !retCode) {
+        return USYS_NOK;
+    }
+
+    *retCode = -1;
+    memset(url, 0, sizeof(url));
+
+    snprintf(url, sizeof(url),
+             "http://%s:%d%s%s",
+             config->clientHost,
+             config->clientPort,
+             URL_PREFIX,
+             API_RES_EP("reboot/"));
 
     httpReq = wc_create_http_request(url, "POST", NULL);
     if (!httpReq) {
@@ -326,17 +338,28 @@ int wc_send_reboot_to_client(Config *config, int *retCode) {
     usys_log_debug("Sending client reboot. URL: %s", url);
 
     ret = wc_send_http_request(httpReq, &httpResp);
-    if (ret != STATUS_OK || httpResp->status != HttpStatus_Accepted) {
+    if (ret != USYS_OK || !httpResp) {
         usys_log_error("Failed sending reboot to client device.d");
-        usys_log_error("URL: %s Code: %d Str: %s",
-                       url, httpResp->status,
-                       HttpStatusStr(httpResp->status));
+        usys_log_error("URL: %s Ret: %d", url, ret);
         ret = USYS_NOK;
+        goto cleanup;
     }
 
     *retCode = httpResp->status;
 
-    /* cleaup code */
+    if (httpResp->status != HttpStatus_Accepted) {
+        usys_log_error("Failed sending reboot to client device.d");
+        usys_log_error("URL: %s Code: %d Str: %s",
+                       url,
+                       httpResp->status,
+                       HttpStatusStr(httpResp->status));
+        ret = USYS_NOK;
+        goto cleanup;
+    }
+
+    ret = USYS_OK;
+
+cleanup:
     if (httpReq) {
         ulfius_clean_request(httpReq);
         usys_free(httpReq);

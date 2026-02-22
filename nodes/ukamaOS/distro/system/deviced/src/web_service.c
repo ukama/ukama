@@ -24,6 +24,10 @@
 
 #include "version.h"
 
+#ifndef WAIT_AFTER_REMOTE_REBOOT
+#define WAIT_AFTER_REMOTE_REBOOT 2
+#endif
+
 typedef struct {
     Config *Config;
     ControlSubsystem Subsystem;
@@ -31,6 +35,48 @@ typedef struct {
     bool Immediate;
     unsigned long long Token;
 } WorkerArgs;
+
+static bool is_tower_node(Config *config) {
+
+    if (!config || !config->nodeType) {
+        return false;
+    }
+
+    return strcmp(config->nodeType, UKAMA_TOWER_NODE) == 0;
+}
+
+static bool restart_remote_client_reboot(Config *config) {
+
+    int retCode;
+
+    retCode = -1;
+
+    if (!config) {
+        return false;
+    }
+
+    if (!is_tower_node(config)) {
+        return true;
+    }
+
+    if (config->clientMode) {
+        return true;
+    }
+
+    if (wc_send_reboot_to_client(config, &retCode) != USYS_OK) {
+        usys_log_error("Remote client reboot failed");
+        return false;
+    }
+
+    if (retCode != HttpStatus_Accepted) {
+        usys_log_error("Remote client reboot not accepted: %d (%s)",
+                       retCode,
+                       HttpStatusStr(retCode));
+        return false;
+    }
+
+    return true;
+}
 
 static int json_set_empty(UResponse *response, int status) {
 
@@ -125,7 +171,7 @@ static void* _worker_run(void *arg) {
     control = config->control;
 
     delay = args->Immediate ? 0 : WAIT_BEFORE_REBOOT;
-    if (delay > 0) {
+    if (delay > 0 && args->Subsystem != CONTROL_SUBSYS_RESTART) {
         sleep(delay);
     }
 
@@ -154,14 +200,40 @@ static void* _worker_run(void *arg) {
     }
 
     if (args->Subsystem == CONTROL_SUBSYS_RESTART) {
-        (void)wc_send_action_alarm_to_notifyd(config,
-                                              "restart",
-                                              "Restarting the node",
-                                              &retCode);
+
+        if (wc_send_action_alarm_to_notifyd(config,
+                                            "restart",
+                                            "Restarting the node",
+                                            &retCode) == USYS_NOK) {
+            usys_log_error("Unable to send notification to notify.d");
+            control_mark_fault(control, args->Subsystem);
+            usys_free(args);
+            pthread_exit(NULL);
+        }
+
+        if (!args->Immediate) {
+            sleep(WAIT_BEFORE_REBOOT);
+        }
+
+        if (!restart_remote_client_reboot(config)) {
+            control_mark_fault(control, args->Subsystem);
+            usys_free(args);
+            pthread_exit(NULL);
+        }
+
+        if (!args->Immediate) {
+            sleep(WAIT_AFTER_REMOTE_REBOOT);
+        }
+
         execRet = actions_restart_apply(config);
+
+        /* reboot() shouldn't return (except debug mode). If we reached here and
+         * apply failed, mark fault.
+         */
         if (execRet != STATUS_OK) {
             control_mark_fault(control, args->Subsystem);
         }
+
         usys_free(args);
         pthread_exit(NULL);
     }
