@@ -336,7 +336,8 @@ static int _post_state_change(const URequest *request,
                                  &token);
 
     if (httpStatus == HttpStatus_OK) {
-        return json_set_empty(response, HttpStatus_OK);
+        /* This means desired is same as current - we still send 202 */
+        return json_set_empty(response, HttpStatus_Accepted);
     }
 
     if (!allowed) {
