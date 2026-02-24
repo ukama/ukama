@@ -149,7 +149,7 @@ func TestControllerServer_ToggleRf(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 	conRepo := &mocks.NodeLogRepo{}
 
-	nodeId := "uk-983794-hnode-78-7830"
+	nodeId := "uk-983794-anode-78-7830"
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
 
 	msg := &pb.ToggleRfSwitchRequest{
@@ -180,7 +180,7 @@ func TestControllerServer_ToggleNodeService(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 	conRepo := &mocks.NodeLogRepo{}
 
-	nodeId := "uk-983794-hnode-78-7830"
+	nodeId := "uk-983794-tnode-78-7830"
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
 
 	msg := &pb.ToggleNodeServiceRequest{
@@ -214,10 +214,10 @@ func TestControllerServer_ToggleNodeService_InvalidNodeId(t *testing.T) {
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
 
 	_, err := s.ToggleNodeService(context.TODO(), &pb.ToggleNodeServiceRequest{
-		NodeId: "invalid-node-id",
+		NodeId: "uk-983794-anode-78-7830",
 		State:  "on",
 	})
 
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "invalid format of node id")
+	assert.Contains(t, err.Error(), "node is not a tower node")
 }

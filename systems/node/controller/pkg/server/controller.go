@@ -278,6 +278,12 @@ func (c *ControllerServer) ToggleRfSwitch(ctx context.Context, req *pb.ToggleRfS
 			"invalid format of node id. Error %s", err.Error())
 	}
 
+	ntype := ukama.GetNodeType(nId.String())
+
+	if *ntype != ukama.NODE_ID_TYPE_AMPNODE {
+		return nil, status.Errorf(codes.InvalidArgument, "node is not an amplifier node")
+	}
+
 	msg := &pb.ToggleRfSwitchRequest{
 		NodeId: nId.String(),
 		Status: req.Status,
@@ -303,6 +309,11 @@ func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.Toggle
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of node id. Error %s", err.Error())
+	}
+
+	ntype := ukama.GetNodeType(nId.String())
+	if *ntype != ukama.NODE_ID_TYPE_TOWERNODE {
+		return nil, status.Errorf(codes.InvalidArgument, "node is not a tower node")
 	}
 
 	msg := &pb.ToggleNodeServiceRequest{
