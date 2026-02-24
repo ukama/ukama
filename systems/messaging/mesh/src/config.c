@@ -9,6 +9,7 @@
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
+#include <errno.h>
 
 #include "mesh.h"
 #include "config.h"
@@ -57,7 +58,6 @@ int read_config_from_env(Config **config) {
 
     (*config)->bindingIP      = strdup(bindingIP);
 	(*config)->websocketPort  = strdup(websocketPort);
-    (*config)->servicesPort   = strdup(servicesPort);
     (*config)->adminPort      = strdup(adminPort);
     (*config)->amqpHost       = strdup(amqpHost);
     (*config)->amqpPort       = strdup(amqpPort);
@@ -68,6 +68,22 @@ int read_config_from_env(Config **config) {
     (*config)->initClientPort = strdup(initClientPort);
     (*config)->orgName        = strdup(orgName);
     (*config)->orgID          = strdup(orgID);
+
+    /* get servicesPort */
+    {
+        char *end = NULL;
+        long portVal = 0;
+
+        errno = 0;
+        portVal = strtol(servicesPort, &end, 10);
+        if (errno != 0 || end == servicesPort || *end != '\0' ||
+            portVal < 1 || portVal > 65535) {
+            log_error("Invalid servicesPort: %s", servicesPort);
+            return FALSE;
+        }
+
+        (*config)->servicesPort = (int)portVal;
+    }
 
     if (!(*config)->logLevel) {
         log_debug("Log level not defined, setting to default: DEBUG");
@@ -83,7 +99,7 @@ void print_config(Config *config) {
     log_debug("Ukama org ID:   %s",  config->orgID);
     log_debug("Binding IP:     %s",  config->bindingIP);
 	log_debug("Websocket port: %s",  config->websocketPort);
-    log_debug("Services port:  %s",  config->servicesPort);
+    log_debug("Services port:  %d",  config->servicesPort);
     log_debug("Admin port:     %s",  config->adminPort);
 	log_debug("AMQP: %s:***@%s:%s",  config->amqpUser,
                                      config->amqpHost, config->amqpPort);
@@ -99,7 +115,6 @@ void clear_config(Config *config) {
 
     free(config->bindingIP);
     free(config->websocketPort);
-    free(config->servicesPort);
     free(config->adminPort);
 	free(config->amqpHost);
 	free(config->amqpPort);

@@ -50,12 +50,12 @@ extern int start_forward_service(Config *config, UInst **forwardInst);
 int callback_websocket(const URequest *request, UResponse *response,
                        void *data) {
 	int ret, forwardPort;
-	char *nodeID=NULL;
-	Config *config=NULL;
-    MapItem *map=NULL;
+	char *nodeID = NULL;
+	Config *config = NULL;
+    MapItem *map = NULL;
     char ip[INET_ADDRSTRLEN]={0};
     struct sockaddr_in *sin = NULL;
-    UInst *forwardInst      = NULL;
+    UInst *forwardInst = NULL;
 
     config = (Config *)data;
 
@@ -108,19 +108,19 @@ int callback_websocket(const URequest *request, UResponse *response,
 
     map->configData = data;
 
-	/* Publish device (nodeID) 'connect' event to AMQP exchange */
-	if (publish_event(CONN_CONNECT,
+    /* Publish device (nodeID) 'connect' event to AMQP exchange */
+    if (publish_event(CONN_CONNECT,
                       config->orgName,
                       nodeID,
                       &ip[0], sin->sin_port,
                       config->bindingIP,
                       config->servicesPort) == FALSE) {
-		log_error("Error publishing device connect msg on AMQP exchange");
+        log_error("Error publishing device connect msg on AMQP exchange");
         remove_map_item_from_table(NodesTable, nodeID);
         ulfius_stop_framework(forwardInst);
         ulfius_clean_instance(forwardInst);
         return U_CALLBACK_ERROR;
-	}
+    }
 
     log_debug("Forward service started on port: %d for NodeID: %s",
               config->servicesPort, nodeID);

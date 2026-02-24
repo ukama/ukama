@@ -212,12 +212,12 @@ int start_forward_service(Config *config, UInst *forwardInst) {
 
     memset(&bindAddr, 0, sizeof(bindAddr));
     bindAddr.sin_family      = AF_INET;
-    bindAddr.sin_port        = htons(config->servicesPort);
+    bindAddr.sin_port        = config->servicesPort;
     bindAddr.sin_addr.s_addr = inet_addr(config->bindingIP);
 
 	if (init_framework(forwardInst,
                        NULL,
-                       atoi(config->servicesPort)) != TRUE) {
+                       config->servicesPort) != TRUE) {
 		log_error("Error initializing forward framework");
 		return FALSE;
 	}
@@ -228,12 +228,12 @@ int start_forward_service(Config *config, UInst *forwardInst) {
                         forwardInst,
                         FORWARD) == FALSE) {
 		log_error("Failed to start forward service at port %d",
-                  atoi(config->servicesPort));
+                  config->servicesPort);
 		return FALSE;
 	}
 
 	log_debug("Forward service accepting on port: %d",
-              atoi(config->servicesPort));
+              config->servicesPort);
 
     return TRUE;
 }
@@ -276,7 +276,7 @@ int start_admin_services(Config *config, UInst *adminInst) {
 	setup_admin_endpoints(config, adminInst);
 
 	if (!start_framework(config, adminInst, ADMIN)) {
-		log_error("Failed to start webservices for admin: %s",
+		log_error("Failed to start webservices for admin: %d",
                   config->adminPort);
 		return FALSE;
 	}

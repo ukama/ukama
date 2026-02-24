@@ -649,15 +649,23 @@ int publish_event(MeshEvent event, char *orgName,
                   char *meshIP, int meshPort) {
 
     WAMQPConn *conn=NULL;
-    char *amqpHost=NULL, *amqpPort=NULL, *amqpUser=NULL, *amqpPassword=NULL;
+    char *amqpHost=NULL;
+    char *amqpPort=NULL;
+    char *amqpUser=NULL;
+    char *amqpPassword=NULL;
 
-    amqpHost = getenv(ENV_AMQP_HOST);
-    amqpPort = getenv(ENV_AMQP_PORT);
-    amqpUser = getenv(ENV_AMQP_USER);
+    amqpHost     = getenv(ENV_AMQP_HOST);
+    amqpPort     = getenv(ENV_AMQP_PORT);
+    amqpUser     = getenv(ENV_AMQP_USER);
     amqpPassword = getenv(ENV_AMQP_PASSWORD);
+
     conn = init_amqp_connection(amqpHost, amqpPort, amqpUser, amqpPassword);
     if (conn == NULL) {
-        log_error("Failed to connect with AMQP at %s:%s@%s:%s", amqpUser, amqpPassword, amqpHost, amqpPort);
+        log_error("Failed to connect with AMQP at %s:%s@%s:%s",
+                  amqpUser,
+                  amqpPassword,
+                  amqpHost,
+                  amqpPort);
         return FALSE;
     }
 
