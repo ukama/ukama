@@ -33,8 +33,6 @@ func (u *nnsClientProvider) GetClient() (pb.NnsClient, error) {
 	if u.nnsClient == nil {
 		var conn *grpc.ClientConn
 
-		log.Infoln("Connecting to NNS service ", u.nnsHost)
-
 		conn, err := grpc.NewClient(u.nnsHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			log.Fatalf("Failed to connect to NNS service %s. Error: %v", u.nnsHost, err)

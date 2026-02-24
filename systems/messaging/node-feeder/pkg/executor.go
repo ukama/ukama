@@ -50,7 +50,6 @@ func NewRequestExecutor(deviceNet NodeIpResolver, devicePort int, timeoutSeconds
 }
 
 func (e *requestExecutor) Execute(req *cpb.NodeFeederMessage) error {
-	logrus.Infof("Executing request %+v", req)
 	segs := strings.Split(req.Target, ".")
 	if len(segs) != 4 {
 		return fmt.Errorf("invalid target format")

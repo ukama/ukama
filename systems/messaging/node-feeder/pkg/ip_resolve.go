@@ -10,7 +10,6 @@ package pkg
 
 import (
 	"context"
-	"strconv"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -34,7 +33,6 @@ func NewNodeIpResolver(netHost string, timeoutSecond int) (*nodeIpResolver, erro
 }
 
 func (r *nodeIpResolver) Resolve(nodeId ukama.NodeID) (string, error) {
-	logrus.Infof("Resolving node %v", nodeId)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeoutSecond)*time.Second)
 	defer cancel()
 
@@ -51,5 +49,5 @@ func (r *nodeIpResolver) Resolve(nodeId ukama.NodeID) (string, error) {
 	}
 
 	logrus.Infof("Resolved node %v to %v:%v", nodeId, res.NodeIp, res.NodePort)
-	return res.NodeIp + ":" + strconv.Itoa(int(res.NodePort)), nil
+	return res.NodeIp + ":8082" , nil
 }
