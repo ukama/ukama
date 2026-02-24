@@ -270,7 +270,7 @@ func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.Tog
 }
 
 func (c *ControllerServer) ToggleRfSwitch(ctx context.Context, req *pb.ToggleRfSwitchRequest) (*pb.ToggleRfSwitchResponse, error) {
-	log.Infof("Toggling Radio on/off for node %v, to %v", req.NodeId, req.Status)
+	log.Infof("Toggling Radio on/off for node %v, to %v", req.NodeId, req.State)
 
 	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
@@ -284,9 +284,8 @@ func (c *ControllerServer) ToggleRfSwitch(ctx context.Context, req *pb.ToggleRfS
 		return nil, status.Errorf(codes.InvalidArgument, "node is not an amplifier node")
 	}
 
-	msg := &pb.ToggleRfSwitchRequest{
-		NodeId: nId.String(),
-		Status: req.Status,
+	msg := &pb.PublishMsgRequest{
+		State: req.State,
 	}
 
 	data, err := proto.Marshal(msg)
@@ -316,8 +315,7 @@ func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.Toggle
 		return nil, status.Errorf(codes.InvalidArgument, "node is not a tower node")
 	}
 
-	msg := &pb.ToggleNodeServiceRequest{
-		NodeId: nId.String(),
+	msg := &pb.PublishMsgRequest{
 		State: req.State,
 	}
 

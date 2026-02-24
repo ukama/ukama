@@ -50,7 +50,7 @@ message RestartSiteResponse {
 
 message ToggleRfSwitchRequest {
   string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
-  bool status = 2;  // true for on, false for off
+  string state = 2 [(validator.field) = {string_not_empty: true}, json_name = "state"];
 }
 
 message ToggleRfSwitchResponse {
@@ -75,5 +75,9 @@ message ToggleNodeServiceRequest {
 }
 
 message ToggleNodeServiceResponse {
+}
+
+message PublishMsgRequest {
+  string state = 1 [(validator.field) = {string_not_empty: true}, json_name = "state"];
 }
 

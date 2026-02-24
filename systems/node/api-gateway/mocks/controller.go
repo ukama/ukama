@@ -192,9 +192,9 @@ func (_m *controller) ToggleNodeService(nodeId string, state string) (*gen.Toggl
 	return r0, r1
 }
 
-// ToggleRf provides a mock function with given fields: nodeId, status
-func (_m *controller) ToggleRf(nodeId string, status bool) (*gen.ToggleRfSwitchResponse, error) {
-	ret := _m.Called(nodeId, status)
+// ToggleRf provides a mock function with given fields: nodeId, state
+func (_m *controller) ToggleRf(nodeId string, state string) (*gen.ToggleRfSwitchResponse, error) {
+	ret := _m.Called(nodeId, state)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ToggleRf")
@@ -202,19 +202,19 @@ func (_m *controller) ToggleRf(nodeId string, status bool) (*gen.ToggleRfSwitchR
 
 	var r0 *gen.ToggleRfSwitchResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, bool) (*gen.ToggleRfSwitchResponse, error)); ok {
-		return rf(nodeId, status)
+	if rf, ok := ret.Get(0).(func(string, string) (*gen.ToggleRfSwitchResponse, error)); ok {
+		return rf(nodeId, state)
 	}
-	if rf, ok := ret.Get(0).(func(string, bool) *gen.ToggleRfSwitchResponse); ok {
-		r0 = rf(nodeId, status)
+	if rf, ok := ret.Get(0).(func(string, string) *gen.ToggleRfSwitchResponse); ok {
+		r0 = rf(nodeId, state)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.ToggleRfSwitchResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, bool) error); ok {
-		r1 = rf(nodeId, status)
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(nodeId, state)
 	} else {
 		r1 = ret.Error(1)
 	}

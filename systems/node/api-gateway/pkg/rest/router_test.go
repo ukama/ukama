@@ -251,8 +251,8 @@ func Test_postToggleRfHandler(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	nodeId := "60285a2a-fe1d-4261-a868-5be480075b8f"
-	jsonPayload := `{"status": false}`
-	req, _ := http.NewRequest("POST", "/v1/controller/nodes/"+nodeId+"/toggle-rf", strings.NewReader(jsonPayload))
+	jsonPayload := `{"state": "off"}`
+	req, _ := http.NewRequest("POST", "/v1/controller/nodes/"+nodeId+"/toggle-radio", strings.NewReader(jsonPayload))
 	req.Header.Set("Content-Type", "application/json")
 	arc := &cmmocks.AuthClient{}
 	c := &nmocks.ControllerServiceClient{}
@@ -261,7 +261,7 @@ func Test_postToggleRfHandler(t *testing.T) {
 
 	c.On("ToggleRfSwitch", mock.Anything, &cpb.ToggleRfSwitchRequest{
 		NodeId: nodeId,
-		Status: false,
+		State:  "off",
 	}).Return(&cpb.ToggleRfSwitchResponse{}, nil)
 
 	r := NewRouter(&Clients{

@@ -50,7 +50,7 @@ type ToggleInternetSwitchRequest struct {
 }
 type ToggleRfRequest struct {
 	NodeId string `json:"node_id" example:"{{NodeId}}" validate:"required" path:"node_id"`
-	Status bool   `json:"status" example:"{{Status}}"`
+	State  string `json:"state" example:"on" validate:"required,oneof=on off"`
 }
 
 type ToggleNodeServiceRequest struct {

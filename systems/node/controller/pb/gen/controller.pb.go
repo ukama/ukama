@@ -373,7 +373,7 @@ func (*RestartSiteResponse) Descriptor() ([]byte, []int) {
 type ToggleRfSwitchRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	NodeId        string                 `protobuf:"bytes,1,opt,name=nodeId,json=node_id,proto3" json:"nodeId,omitempty"`
-	Status        bool                   `protobuf:"varint,2,opt,name=status,proto3" json:"status,omitempty"` // true for on, false for off
+	State         string                 `protobuf:"bytes,2,opt,name=state,proto3" json:"state,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -415,11 +415,11 @@ func (x *ToggleRfSwitchRequest) GetNodeId() string {
 	return ""
 }
 
-func (x *ToggleRfSwitchRequest) GetStatus() bool {
+func (x *ToggleRfSwitchRequest) GetState() string {
 	if x != nil {
-		return x.Status
+		return x.State
 	}
-	return false
+	return ""
 }
 
 type ToggleRfSwitchResponse struct {
@@ -678,6 +678,50 @@ func (*ToggleNodeServiceResponse) Descriptor() ([]byte, []int) {
 	return file_controller_proto_rawDescGZIP(), []int{13}
 }
 
+type PublishMsgRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	State         string                 `protobuf:"bytes,1,opt,name=state,proto3" json:"state,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PublishMsgRequest) Reset() {
+	*x = PublishMsgRequest{}
+	mi := &file_controller_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PublishMsgRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PublishMsgRequest) ProtoMessage() {}
+
+func (x *PublishMsgRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_controller_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PublishMsgRequest.ProtoReflect.Descriptor instead.
+func (*PublishMsgRequest) Descriptor() ([]byte, []int) {
+	return file_controller_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *PublishMsgRequest) GetState() string {
+	if x != nil {
+		return x.State
+	}
+	return ""
+}
+
 var File_controller_proto protoreflect.FileDescriptor
 
 const file_controller_proto_rawDesc = "" +
@@ -704,10 +748,10 @@ const file_controller_proto_rawDesc = "" +
 	"\x04port\x18\x03 \x01(\x05R\x04port\"\x1e\n" +
 	"\x1cToggleInternetSwitchResponse\"\x16\n" +
 	"\x14RestartNodesResponse\"\x15\n" +
-	"\x13RestartSiteResponse\"P\n" +
+	"\x13RestartSiteResponse\"V\n" +
 	"\x15ToggleRfSwitchRequest\x12\x1f\n" +
-	"\x06nodeId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\anode_id\x12\x16\n" +
-	"\x06status\x18\x02 \x01(\bR\x06status\"\x18\n" +
+	"\x06nodeId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\anode_id\x12\x1c\n" +
+	"\x05state\x18\x02 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x05state\"\x18\n" +
 	"\x16ToggleRfSwitchResponse\"5\n" +
 	"\x12RestartNodeRequest\x12\x1f\n" +
 	"\x06nodeId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\anode_id\"_\n" +
@@ -719,7 +763,9 @@ const file_controller_proto_rawDesc = "" +
 	"\x18ToggleNodeServiceRequest\x12\x1f\n" +
 	"\x06nodeId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\anode_id\x12\x1c\n" +
 	"\x05state\x18\x02 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x05state\"\x1b\n" +
-	"\x19ToggleNodeServiceResponse2\xb8\x06\n" +
+	"\x19ToggleNodeServiceResponse\"1\n" +
+	"\x11PublishMsgRequest\x12\x1c\n" +
+	"\x05state\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x05state2\xb8\x06\n" +
 	"\x11ControllerService\x12j\n" +
 	"\vRestartSite\x12,.ukama.node.controller.v1.RestartSiteRequest\x1a-.ukama.node.controller.v1.RestartSiteResponse\x12j\n" +
 	"\vRestartNode\x12,.ukama.node.controller.v1.RestartNodeRequest\x1a-.ukama.node.controller.v1.RestartNodeResponse\x12m\n" +
@@ -741,7 +787,7 @@ func file_controller_proto_rawDescGZIP() []byte {
 	return file_controller_proto_rawDescData
 }
 
-var file_controller_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_controller_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_controller_proto_goTypes = []any{
 	(*PingNodeRequest)(nil),              // 0: ukama.node.controller.v1.PingNodeRequest
 	(*PingNodeResponse)(nil),             // 1: ukama.node.controller.v1.PingNodeResponse
@@ -757,6 +803,7 @@ var file_controller_proto_goTypes = []any{
 	(*RestartNodeResponse)(nil),          // 11: ukama.node.controller.v1.RestartNodeResponse
 	(*ToggleNodeServiceRequest)(nil),     // 12: ukama.node.controller.v1.ToggleNodeServiceRequest
 	(*ToggleNodeServiceResponse)(nil),    // 13: ukama.node.controller.v1.ToggleNodeServiceResponse
+	(*PublishMsgRequest)(nil),            // 14: ukama.node.controller.v1.PublishMsgRequest
 }
 var file_controller_proto_depIdxs = []int32{
 	10, // 0: ukama.node.controller.v1.ControllerService.RestartSite:input_type -> ukama.node.controller.v1.RestartSiteRequest
@@ -791,7 +838,7 @@ func file_controller_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_controller_proto_rawDesc), len(file_controller_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   14,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

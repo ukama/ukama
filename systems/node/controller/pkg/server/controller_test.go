@@ -152,13 +152,12 @@ func TestControllerServer_ToggleRf(t *testing.T) {
 	nodeId := "uk-983794-anode-78-7830"
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
 
-	msg := &pb.ToggleRfSwitchRequest{
-		NodeId: nodeId,
-		Status: true,
+	msg := &pb.PublishMsgRequest{
+		State: "on",
 	}
 	data, err := proto.Marshal(msg)
 	if err != nil {
-		return
+		t.Fatalf("failed to marshal message: %v", err)
 	}
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
 		Target:     "test-org" + "..." + nodeId,
@@ -169,7 +168,7 @@ func TestControllerServer_ToggleRf(t *testing.T) {
 
 	_, err = s.ToggleRfSwitch(context.TODO(), &pb.ToggleRfSwitchRequest{
 		NodeId: nodeId,
-		Status: true,
+		State: "on",
 	})
 
 	msgclientRepo.AssertExpectations(t)
@@ -183,9 +182,8 @@ func TestControllerServer_ToggleNodeService(t *testing.T) {
 	nodeId := "uk-983794-tnode-78-7830"
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
 
-	msg := &pb.ToggleNodeServiceRequest{
-		NodeId: nodeId,
-		State:  "on",
+	msg := &pb.PublishMsgRequest{
+		State: "on",
 	}
 	data, err := proto.Marshal(msg)
 	if err != nil {
