@@ -6,13 +6,19 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
-import GlowieBg from "@/components/GlowieBg";
+import { MetricItem } from "@/types";
 import { Grid2 } from "@mui/material";
-import Image from "next/image";
-import KeyMetricsCard from "./KeyMetricsCard";
+import { useState } from "react";
+import KeyMetricsCard from "../../_components/KeyMetricsCard";
 import OverallUnitStatusCard from "./OverallUnitStatusCard";
 import OverviewStatusGrid from "./OverviewStatusGrid";
-import RecentEventsCard from "./RecentEventsCard";
+
+const HEALTH_METRICS: MetricItem[] = [
+  { label: "Health", value: "health" },
+  { label: "Network", value: "network" },
+  { label: "RF", value: "rf" },
+  { label: "Software", value: "software" },
+];
 
 /** Viewport offset for scroll containers (header + chrome). */
 const SCROLL_OFFSET = {
@@ -23,19 +29,26 @@ const SCROLL_OFFSET = {
 } as const;
 
 export default function OverviewTab() {
+  const [selectedMetric, setSelectedMetric] = useState<string>("health");
+
+  const handleSelectMetric = (metric: string) => {
+    setSelectedMetric(metric);
+  };
+
   return (
     <Grid2
       mt={2}
       container
-      rowSpacing={{ xs: 2, md: 8 }}
+      rowSpacing={2}
+      columnSpacing={2}
       sx={{
         height: "100%",
         overflowX: "hidden",
-        overflowY: { xs: "auto", sm: "hidden" },
-        maxHeight: { xs: `calc(100vh - ${SCROLL_OFFSET.xs}px)`, sm: "none" },
+        overflowY: "auto",
+        maxHeight: `calc(100vh - ${SCROLL_OFFSET.xs}px)`,
       }}
     >
-      <Grid2 size={{ xs: 12, md: 2 }}>
+      {/* <Grid2 size={{ xs: 12, md: 2 }}>
         <GlowieBg>
           <Image
             src="/images/tnode_anode.png"
@@ -45,32 +58,20 @@ export default function OverviewTab() {
             style={{ objectFit: "contain" }}
           />
         </GlowieBg>
+      </Grid2> */}
+      
+      <Grid2 size={12}>
+        <OverallUnitStatusCard />
       </Grid2>
-
-      <Grid2
-        container
-        size={{ xs: 12, md: 10 }}
-        rowSpacing={2}
-        columnSpacing={2}
-        sx={{
-          overflowX: "hidden",
-          overflowY: { xs: "hidden", sm: "auto" },
-          maxHeight: { xs: "none", sm: `calc(100vh - ${SCROLL_OFFSET.sm}px)` },
-          minHeight: 0, // Allow flex child to scroll
-        }}
-      >
-        <Grid2 size={{ xs: 12, md: 6 }}>
-          <OverallUnitStatusCard />
-        </Grid2>
-        <Grid2 size={{ xs: 12, md: 6 }}>  
-          <KeyMetricsCard />
-        </Grid2>
-        <Grid2 size={{ xs: 12, md: 12 }}>  
-          <OverviewStatusGrid />
-        </Grid2>
-        <Grid2 size={12}>  
-          <RecentEventsCard />
-        </Grid2>
+      <Grid2 size={{ xs: 12, md: 3 }}>  
+        <KeyMetricsCard 
+          selectedMetric={selectedMetric} 
+          handleSelectMetric={handleSelectMetric} 
+          metrics={HEALTH_METRICS}
+        />
+      </Grid2>
+      <Grid2 size={{ xs: 12, md: 9 }}>  
+        <OverviewStatusGrid selectedMetric={selectedMetric} />
       </Grid2>
     </Grid2>
   );

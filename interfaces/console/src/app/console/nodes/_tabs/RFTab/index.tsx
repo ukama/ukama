@@ -21,7 +21,6 @@ export default function RFTab() {
         width: "100%",
         overflow: "auto",
         height: "calc(100vh - 272px)",
-        maxWidth: 800,
       }}
     >
       <UnitRFStatusCard />

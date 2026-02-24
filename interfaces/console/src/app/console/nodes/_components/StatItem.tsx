@@ -6,23 +6,25 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
-import { Stack, Typography } from "@mui/material";
+import { Stack, Typography, TypographyVariant } from "@mui/material";
 
 interface StatItemProps {
   label: string;
   value: string;
   impact?: string;
+  labelVariant?: TypographyVariant;
+  valueVariant?: TypographyVariant;
 }
 
-export default function StatItem({ label, value, impact }: StatItemProps) {
+export default function StatItem({ label, value, impact, labelVariant = "body2", valueVariant = "body2" }: Readonly<StatItemProps>) {
   return (
     <Stack direction="column" spacing={0.2}>
-        <Stack direction="row" spacing={2} mb={0.8}>
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>{label}:</Typography>
-            <Typography variant="body2">{value}</Typography>
+        <Stack direction="row" spacing={2}>
+            <Typography variant={labelVariant} sx={{ fontWeight: 500 }}>{label}:</Typography>
+            <Typography variant={valueVariant}>{value}</Typography>
         </Stack>
         {impact && (
-            <Stack direction="row" spacing={2} mb={0.8}>
+            <Stack direction="row" spacing={2}>
                 <Typography variant="body2" sx={{ fontWeight: 500 }}>Service impact:</Typography>
                 <Typography variant="body2">{value}</Typography>
             </Stack>

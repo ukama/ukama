@@ -12,9 +12,10 @@ import { Paper, SxProps, Theme } from "@mui/material";
 interface ICardUI {
   children: React.ReactNode;
   sx?: SxProps<Theme>;
+  isBorderLeft?: boolean;
 }
 
-export default function CardUI({ children, sx }: ICardUI) {
+export default function CardUI({ children, sx, isBorderLeft = false }: Readonly<ICardUI>) {
   return (
     <Paper
       elevation={1}
@@ -22,7 +23,7 @@ export default function CardUI({ children, sx }: ICardUI) {
         p: 2,
         borderRadius: 1,
         height: "-webkit-fill-available",
-        border: `1px solid ${colors.white}`,
+        borderLeft: isBorderLeft ? `5px solid ${colors.primaryMain}` : "none",
         ...sx,
       }}
     >

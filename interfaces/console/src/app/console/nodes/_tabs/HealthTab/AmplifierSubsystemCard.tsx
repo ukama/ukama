@@ -6,34 +6,32 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
-import { Link, Stack } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 import CardUI from "../../_components/CardUI";
 import StatItem from "../../_components/StatItem";
-import StatTitle from "../../_components/StatTitle";
 
-export default function AmplifierSubsystemCard() {
+interface AmplifierSubsystemCardProps {
+  selectedMetric: string;
+}
+
+export default function AmplifierSubsystemCard({ selectedMetric }: Readonly<AmplifierSubsystemCardProps>) {
   return (
     <CardUI>
-      <StatTitle label="AMPLIFIER SUBSYSTEM" icon="📡" />
-      <Stack direction="column" spacing={0.5}>
-        <StatItem label="RF Output" value="Nominal" />
-        <StatItem label="Temperature" value="61°C → stable" />
-        <StatItem label="Power" value="48 W → stable" impact="No immediate impact" />
+      <Stack direction="column" spacing={1}>
+        <Typography
+          variant="overline"
+          fontWeight={700}
+        >
+          AMPLIFIER SUBSYSTEM
+        </Typography> 
+        <Stack direction="column" spacing={0.5}>
+          {selectedMetric === "compute" && <StatItem label="CPU" value="75% → stable" impact="No immediate impact" />}
+          {selectedMetric === "memory" && <StatItem label="Memory" value="90% ↑ slowly" impact="Risk of control-plane instability if sustained" />}
+          {selectedMetric === "storage" && <StatItem label="Storage" value="42% → stable" impact="No immediate impact" />}
+          {selectedMetric === "thermal" && <StatItem label="Thermal" value="42% → stable" impact="No immediate impact" />}
+          {selectedMetric === "power" && <StatItem label="Power" value="23 W → stable" impact="No immediate impact" />}
+        </Stack>
       </Stack>
-      <Link
-        href="#"
-        sx={{
-          display: "inline-flex",
-          alignItems: "center",
-          mt: 1,
-          fontFamily: "monospace",
-          fontSize: "0.75rem",
-          textDecoration: "none",
-          "&:hover": { textDecoration: "underline" },
-        }}
-      >
-        ► View board-level details
-      </Link>
     </CardUI>
   );
 }

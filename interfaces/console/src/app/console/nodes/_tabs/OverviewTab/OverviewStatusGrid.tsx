@@ -15,6 +15,7 @@ export interface StatusItem {
 }
 
 export interface StatusGridCardData {
+  id: string;
   title: string;
   icon: string;
   items: StatusItem[];
@@ -26,17 +27,7 @@ export interface StatusGridCardData {
 
 const DEFAULT_CARDS: StatusGridCardData[] = [
   {
-    title: "NETWORK",
-    icon: "🌐",
-    items: [
-      { label: "Status", value: "🟡 Backhaul Limited" },
-      { label: "Cellular", value: "🟢 Healthy" },
-      { label: "Backhaul", value: "🟡 Degraded" },
-    ],
-    impact: "Throughput capped at ~20 Mbps",
-    viewLabel: "View Network",
-  },
-  {
+    id: "health",
     title: "HEALTH",
     icon: "🔧",
     items: [
@@ -50,6 +41,19 @@ const DEFAULT_CARDS: StatusGridCardData[] = [
     viewLabel: "View Health",
   },
   {
+    id: "network",
+    title: "NETWORK",
+    icon: "🌐",
+    items: [
+      { label: "Status", value: "🟡 Backhaul Limited" },
+      { label: "Cellular", value: "🟢 Healthy" },
+      { label: "Backhaul", value: "🟡 Degraded" },
+    ],
+    impact: "Throughput capped at ~20 Mbps",
+    viewLabel: "View Network",
+  },
+  {
+    id: "rf",
     title: "RF",
     icon: "📡",
     items: [
@@ -60,6 +64,7 @@ const DEFAULT_CARDS: StatusGridCardData[] = [
     viewLabel: "View RF",
   },
   {
+    id: "software",
     title: "SOFTWARE",
     icon: "⚙️",
     items: [
@@ -77,6 +82,7 @@ export interface OverviewStatusGridProps {
   cards?: StatusGridCardData[];
   /** Max items per column before adding a new column. Default: 3 */
   maxItemsPerColumn?: number;
+  selectedMetric: string;
 }
 
 function chunkItems<T>(items: T[], chunkSize: number): T[][] {
@@ -113,7 +119,6 @@ function StatusGridCard({
           alignItems: "center",
         }}
       >
-        <span>{card.icon}</span> &nbsp; &nbsp;
         {card.title}
       </Typography>
       <Grid2 container spacing={2} rowSpacing={2} columnSpacing={2}> 
@@ -166,6 +171,7 @@ function StatusGridCard({
 }
 
 export default function OverviewStatusGrid({
+  selectedMetric,
   cards = DEFAULT_CARDS,
   maxItemsPerColumn = MAX_ITEMS_PER_COLUMN,
 }: Readonly<OverviewStatusGridProps>) {
@@ -176,7 +182,7 @@ export default function OverviewStatusGrid({
       columnSpacing={2}
     >
       {cards.map((card) => (
-        <Grid2 size={{ xs: 12, sm: 6 }} key={card.title} >
+        card.id === selectedMetric && <Grid2 size={12} key={card.id} >
           <StatusGridCard
             card={card}
             maxItemsPerColumn={maxItemsPerColumn}

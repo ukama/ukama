@@ -311,3 +311,11 @@ export type CreatePlanType = {
   amount: number | undefined;
   dataVolume: number | undefined;
 };
+
+export interface MetricItem {
+  label: string;
+  value: string;
+  icon?: string;
+}
+
+export type TypographyVariant = "overline" | "caption" | "body1" | "body2" | "body3" | "body4" | "body5" | "body6";

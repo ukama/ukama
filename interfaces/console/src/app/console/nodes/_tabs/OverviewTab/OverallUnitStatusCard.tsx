@@ -6,8 +6,10 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
-import { Box, Typography } from "@mui/material";
+import { HorizontalContainerJustify } from "@/styles/global";
+import { Stack, Typography } from "@mui/material";
 import CardUI from "../../_components/CardUI";
+import StatItem from "../../_components/StatItem";
 
 export interface OverallUnitStatusCardProps {
   status?: string;
@@ -29,55 +31,38 @@ export default function OverallUnitStatusCard({
   severity = "Degraded",
   confidence = "High (0.92)",
   lastEvaluated = "2 min ago",
-}: OverallUnitStatusCardProps) {
+}: Readonly<OverallUnitStatusCardProps>) {
   return (
-    <CardUI sx={{ height: {xs: "auto", sm: "220px"} }}>
-      <Typography
-        variant="overline"
-        sx={{
-          display: "flex",
-          fontWeight: 700,
-          alignItems: "center",
-        }}
-      >
-        OVERALL UNIT STATUS
-      </Typography>
-      <Typography
-        variant="subtitle1"
-        sx={{
-          fontWeight: 700,
-          letterSpacing: 0.5,
-          display: "flex",
-          alignItems: "center",
-          mb: 1,
-        }}
-      >
-        {status}
-      </Typography>
-      <Typography variant="body2" sx={{ mb: 1, lineHeight: 1.6 }}>
-        {description}
-      </Typography>
-      <Typography variant="body2" sx={{ mb: 2, lineHeight: 1.6 }}>
-        {additionalInfo}
-      </Typography>
-      <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
-        {serviceImpact}
-      </Typography>
-      <Typography variant="body2" sx={{ mb: 2, lineHeight: 1.6 }}>
-        {serviceImpactDetail}
-      </Typography>
-      <Box
-        sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 2,
-          fontSize: "0.875rem",
-        }}
-      >
-        <span>Severity: {severity}</span>
-        <span>Confidence: {confidence}</span>
-        <span>Last evaluated: {lastEvaluated}</span>
-      </Box>
+    <CardUI>
+      <Stack direction="column" spacing={1}>
+      <HorizontalContainerJustify>
+        <Typography
+          variant="overline"
+          fontWeight={700}
+        >
+          OVERALL UNIT STATUS
+        </Typography>
+        <StatItem label="Last evaluated" value={lastEvaluated} labelVariant="caption" valueVariant="caption" />
+      </HorizontalContainerJustify>
+      
+      <Stack direction="column" spacing={1}>
+        <Typography
+          variant="subtitle1"
+          sx={{
+            fontWeight: 700,
+            letterSpacing: 0.5,
+          }}
+        >
+          {status}
+        </Typography>
+        <Typography variant="body2">
+          {description}&nbsp;{additionalInfo}
+        </Typography>
+      </Stack>
+      <StatItem label="Severity" value={severity} labelVariant="body2" valueVariant="body2" />
+      <StatItem label="Confidence" value={confidence} labelVariant="body2" valueVariant="body2" />
+      <StatItem label={serviceImpact} value={serviceImpactDetail} labelVariant="body2" valueVariant="body2" />
+      </Stack>
     </CardUI>
   );
 }
