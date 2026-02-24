@@ -49,5 +49,6 @@ func (r *nodeIpResolver) Resolve(nodeId ukama.NodeID) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	logrus.Infof("Resolved node %v to %v:%v", nodeId, res.NodeIp, res.NodePort)
 	return res.NodeIp + ":" + strconv.Itoa(int(res.NodePort)), nil
 }
