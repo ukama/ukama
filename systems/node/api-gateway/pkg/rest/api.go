@@ -53,6 +53,10 @@ type ToggleRfRequest struct {
 	Status bool   `json:"status" example:"{{Status}}"`
 }
 
+type ToggleNodeServiceRequest struct {
+	NodeId string `json:"node_id" example:"{{NodeId}}" validate:"required" path:"node_id"`
+	State  string `json:"state" example:"on" validate:"required,oneof=on off"`
+}
 type ApplyConfigRequest struct {
 	Commit string `json:"commit" path:"commit" example:"commit" validate:"required"`
 }

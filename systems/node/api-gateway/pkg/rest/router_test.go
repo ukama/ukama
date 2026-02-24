@@ -275,3 +275,54 @@ func Test_postToggleRfHandler(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	c.AssertExpectations(t)
 }
+
+func Test_postToggleNodeServiceHandler(t *testing.T) {
+	// arrange
+	w := httptest.NewRecorder()
+	nodeId := "uk-983794-hnode-78-7830"
+	jsonPayload := `{"state": "on"}`
+	req, _ := http.NewRequest("POST", "/v1/controller/nodes/"+nodeId+"/toggle-service", strings.NewReader(jsonPayload))
+	req.Header.Set("Content-Type", "application/json")
+	arc := &cmmocks.AuthClient{}
+	c := &nmocks.ControllerServiceClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
+	c.On("ToggleNodeService", mock.Anything, &cpb.ToggleNodeServiceRequest{
+		NodeId: nodeId,
+		State:  "on",
+	}).Return(&cpb.ToggleNodeServiceResponse{}, nil)
+
+	r := NewRouter(&Clients{
+		Controller: client.NewControllerFromClient(c),
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	c.AssertExpectations(t)
+}
+
+func Test_postToggleNodeServiceHandler_InvalidState(t *testing.T) {
+	// arrange
+	w := httptest.NewRecorder()
+	nodeId := "uk-983794-hnode-78-7830"
+	jsonPayload := `{"state": "invalid"}`
+	req, _ := http.NewRequest("POST", "/v1/controller/nodes/"+nodeId+"/toggle-service", strings.NewReader(jsonPayload))
+	req.Header.Set("Content-Type", "application/json")
+	arc := &cmmocks.AuthClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
+	r := NewRouter(&Clients{
+		Controller: client.NewControllerFromClient(&nmocks.ControllerServiceClient{}),
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert - validation should reject invalid state
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}

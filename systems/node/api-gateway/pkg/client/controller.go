@@ -99,3 +99,10 @@ func (c *Controller) ToggleRf(nodeId string, status bool) (*pb.ToggleRfSwitchRes
 
 	return c.client.ToggleRfSwitch(ctx, &pb.ToggleRfSwitchRequest{NodeId: nodeId, Status: status})
 }
+
+func (c *Controller) ToggleNodeService(nodeId string, state string) (*pb.ToggleNodeServiceResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
+	defer cancel()
+
+	return c.client.ToggleNodeService(ctx, &pb.ToggleNodeServiceRequest{NodeId: nodeId, State: state})
+}

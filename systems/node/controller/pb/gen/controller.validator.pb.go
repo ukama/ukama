@@ -106,3 +106,15 @@ func (this *RestartSiteRequest) Validate() error {
 func (this *RestartNodeResponse) Validate() error {
 	return nil
 }
+func (this *ToggleNodeServiceRequest) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
+	if this.State == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("State", fmt.Errorf(`value '%v' must not be an empty string`, this.State))
+	}
+	return nil
+}
+func (this *ToggleNodeServiceResponse) Validate() error {
+	return nil
+}

@@ -32,10 +32,11 @@ import (
 )
 
 var actions = map[string]string{
-	"REBOOT":     "/device/v1/reboot",
+	"REBOOT":   "/device/v1/reboot",
 	"PING":     "/device/v1/node/ping",
-	"SWITCH":     "/device/v1/switch",
-	"RF":         "/device/v1/rf",
+	"SWITCH":   "/device/v1/switch",
+	"Radio":    "/device/v1/radio",
+	"Service":  "/device/v1/service",
 }
 
 type ControllerServer struct {
@@ -269,7 +270,7 @@ func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.Tog
 }
 
 func (c *ControllerServer) ToggleRfSwitch(ctx context.Context, req *pb.ToggleRfSwitchRequest) (*pb.ToggleRfSwitchResponse, error) {
-	log.Infof("Toggling RF on/off for node %v, to %v", req.NodeId, req.Status)
+	log.Infof("Toggling Radio on/off for node %v, to %v", req.NodeId, req.Status)
 
 	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
@@ -287,12 +288,39 @@ func (c *ControllerServer) ToggleRfSwitch(ctx context.Context, req *pb.ToggleRfS
 		return nil, err
 	}
 
-	err = c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), actions["RF"], data)
+	err = c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), actions["Radio"], data)
 	if err != nil {
-		log.Errorf("Failed to publish RF switch message. Errors: %s", err.Error())
-		return nil, status.Errorf(codes.Internal, "Failed to publish RF switch message: %s", err.Error())
+		log.Errorf("Failed to publish Radio switch message. Errors: %s", err.Error())
+		return nil, status.Errorf(codes.Internal, "Failed to publish Radio switch message: %s", err.Error())
 	}
 	return &pb.ToggleRfSwitchResponse{}, nil
+}
+
+func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.ToggleNodeServiceRequest) (*pb.ToggleNodeServiceResponse, error) {
+	log.Infof("Toggling Node Service on/off for node %v, to %v", req.NodeId, req.State)
+
+	nId, err := ukama.ValidateNodeId(req.NodeId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of node id. Error %s", err.Error())
+	}
+
+	msg := &pb.ToggleNodeServiceRequest{
+		NodeId: nId.String(),
+		State: req.State,
+	}
+
+	data, err := proto.Marshal(msg)
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), actions["Service"], data)
+	if err != nil {
+		log.Errorf("Failed to publish Node Service switch message. Errors: %s", err.Error())
+		return nil, status.Errorf(codes.Internal, "Failed to publish Node Service switch message: %s", err.Error())
+	}
+	return &pb.ToggleNodeServiceResponse{}, nil
 }
 
 func (c *ControllerServer) publishMessage(target string, path string, anyMsg []byte) error {

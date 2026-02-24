@@ -163,7 +163,7 @@ func TestControllerServer_ToggleRf(t *testing.T) {
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
 		Target:     "test-org" + "..." + nodeId,
 		HTTPMethod: "POST",
-		Path:       "/device/v1/rf",
+		Path:       "/device/v1/radio",
 		Msg:        data,
 	}).Return(nil).Once()
 
@@ -174,4 +174,50 @@ func TestControllerServer_ToggleRf(t *testing.T) {
 
 	msgclientRepo.AssertExpectations(t)
 	assert.NoError(t, err)
+}
+
+func TestControllerServer_ToggleNodeService(t *testing.T) {
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	conRepo := &mocks.NodeLogRepo{}
+
+	nodeId := "uk-983794-hnode-78-7830"
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
+
+	msg := &pb.ToggleNodeServiceRequest{
+		NodeId: nodeId,
+		State:  "on",
+	}
+	data, err := proto.Marshal(msg)
+	if err != nil {
+		t.Fatalf("failed to marshal message: %v", err)
+	}
+	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
+		Target:     "test-org" + "..." + nodeId,
+		HTTPMethod: "POST",
+		Path:       "/device/v1/service",
+		Msg:        data,
+	}).Return(nil).Once()
+
+	_, err = s.ToggleNodeService(context.TODO(), &pb.ToggleNodeServiceRequest{
+		NodeId: nodeId,
+		State:  "on",
+	})
+
+	msgclientRepo.AssertExpectations(t)
+	assert.NoError(t, err)
+}
+
+func TestControllerServer_ToggleNodeService_InvalidNodeId(t *testing.T) {
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	conRepo := &mocks.NodeLogRepo{}
+
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
+
+	_, err := s.ToggleNodeService(context.TODO(), &pb.ToggleNodeServiceRequest{
+		NodeId: "invalid-node-id",
+		State:  "on",
+	})
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid format of node id")
 }
