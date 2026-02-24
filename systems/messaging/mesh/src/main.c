@@ -214,7 +214,7 @@ int main (int argc, char *argv[]) {
 	}
 
     /* Step-3: publish register event with IP and binding port */
-    if (publish_register_event(DEFAULT_MESH_AMQP_EXCHANGE, atoi(config->servicesPort))) {
+    if (publish_register_event(DEFAULT_MESH_AMQP_EXCHANGE, config->servicesPort)) {
         log_debug("Mesh(server) running for Ukama Org: %s", config->orgName);
         pause();
     } else {
