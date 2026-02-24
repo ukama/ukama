@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -284,11 +285,8 @@ func (c *ControllerServer) ToggleRfSwitch(ctx context.Context, req *pb.ToggleRfS
 		return nil, status.Errorf(codes.InvalidArgument, "node is not an amplifier node")
 	}
 
-	msg := &pb.PublishMsgRequest{
-		State: req.State,
-	}
-
-	data, err := proto.Marshal(msg)
+	jsonBody := map[string]string{"state": req.State}
+	data, err := json.Marshal(jsonBody)
 	if err != nil {
 		return nil, err
 	}
@@ -315,11 +313,8 @@ func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.Toggle
 		return nil, status.Errorf(codes.InvalidArgument, "node is not a tower node")
 	}
 
-	msg := &pb.PublishMsgRequest{
-		State: req.State,
-	}
-
-	data, err := proto.Marshal(msg)
+	jsonBody := map[string]string{"state": req.State}
+	data, err := json.Marshal(jsonBody)
 	if err != nil {
 		return nil, err
 	}

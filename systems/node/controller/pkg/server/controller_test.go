@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -152,10 +153,8 @@ func TestControllerServer_ToggleRf(t *testing.T) {
 	nodeId := "uk-983794-anode-78-7830"
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
 
-	msg := &pb.PublishMsgRequest{
-		State: "on",
-	}
-	data, err := proto.Marshal(msg)
+	jsonBody := map[string]string{"state": "on"}
+	data, err := json.Marshal(jsonBody)
 	if err != nil {
 		t.Fatalf("failed to marshal message: %v", err)
 	}
@@ -182,10 +181,8 @@ func TestControllerServer_ToggleNodeService(t *testing.T) {
 	nodeId := "uk-983794-tnode-78-7830"
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
 
-	msg := &pb.PublishMsgRequest{
-		State: "on",
-	}
-	data, err := proto.Marshal(msg)
+	jsonBody := map[string]string{"state": "on"}
+	data, err := json.Marshal(jsonBody)
 	if err != nil {
 		t.Fatalf("failed to marshal message: %v", err)
 	}
