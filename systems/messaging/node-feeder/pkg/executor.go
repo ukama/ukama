@@ -88,7 +88,7 @@ func (e *requestExecutor) Execute(req *cpb.NodeFeederMessage) error {
 		Method: req.HTTPMethod,
 		URL:    u,
 	}
-	logrus.Infof("sending request %+v to %s ", httpReq, u.String())
+	logrus.Infof("sending request %+v to %s with body %s", httpReq, u.String(), string(req.GetMsg()))
 
 	resp, err := c.Do(&httpReq)
 	if err != nil {
