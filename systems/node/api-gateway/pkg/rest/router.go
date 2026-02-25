@@ -166,10 +166,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 func (r *Router) postPingNodeHandler(c *gin.Context, req *PingNodeRequest) (*contPb.PingNodeResponse, error) {
 	return r.clients.Controller.PingNode(&contPb.PingNodeRequest{
-		NodeId:    req.NodeId,
-		RequestId: req.RequestId,
-		Message:   req.Message,
-		Timestamp: req.TimeStamp,
+		NodeId: req.NodeId,
 	})
 }
 

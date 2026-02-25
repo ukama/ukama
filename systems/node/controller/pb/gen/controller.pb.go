@@ -25,9 +25,6 @@ const (
 type PingNodeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	NodeId        string                 `protobuf:"bytes,1,opt,name=nodeId,json=node_id,proto3" json:"nodeId,omitempty"`
-	RequestId     string                 `protobuf:"bytes,2,opt,name=requestId,json=request_id,proto3" json:"requestId,omitempty"`
-	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
-	Timestamp     uint64                 `protobuf:"varint,4,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -69,32 +66,8 @@ func (x *PingNodeRequest) GetNodeId() string {
 	return ""
 }
 
-func (x *PingNodeRequest) GetRequestId() string {
-	if x != nil {
-		return x.RequestId
-	}
-	return ""
-}
-
-func (x *PingNodeRequest) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
-func (x *PingNodeRequest) GetTimestamp() uint64 {
-	if x != nil {
-		return x.Timestamp
-	}
-	return 0
-}
-
 type PingNodeResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	NodeId        string                 `protobuf:"bytes,1,opt,name=nodeId,json=node_id,proto3" json:"nodeId,omitempty"`
-	RequestId     string                 `protobuf:"bytes,2,opt,name=requestId,json=request_id,proto3" json:"requestId,omitempty"`
-	Timestamp     uint64                 `protobuf:"varint,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -127,27 +100,6 @@ func (x *PingNodeResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use PingNodeResponse.ProtoReflect.Descriptor instead.
 func (*PingNodeResponse) Descriptor() ([]byte, []int) {
 	return file_controller_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *PingNodeResponse) GetNodeId() string {
-	if x != nil {
-		return x.NodeId
-	}
-	return ""
-}
-
-func (x *PingNodeResponse) GetRequestId() string {
-	if x != nil {
-		return x.RequestId
-	}
-	return ""
-}
-
-func (x *PingNodeResponse) GetTimestamp() uint64 {
-	if x != nil {
-		return x.Timestamp
-	}
-	return 0
 }
 
 type RestartNodesRequest struct {
@@ -726,18 +678,10 @@ var File_controller_proto protoreflect.FileDescriptor
 
 const file_controller_proto_rawDesc = "" +
 	"\n" +
-	"\x10controller.proto\x12\x18ukama.node.controller.v1\x1a\x0fvalidator.proto\"\x91\x01\n" +
+	"\x10controller.proto\x12\x18ukama.node.controller.v1\x1a\x0fvalidator.proto\"2\n" +
 	"\x0fPingNodeRequest\x12\x1f\n" +
-	"\x06nodeId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\anode_id\x12%\n" +
-	"\trequestId\x18\x02 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\n" +
-	"request_id\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\x12\x1c\n" +
-	"\ttimestamp\x18\x04 \x01(\x04R\ttimestamp\"x\n" +
-	"\x10PingNodeResponse\x12\x1f\n" +
-	"\x06nodeId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\anode_id\x12%\n" +
-	"\trequestId\x18\x02 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\n" +
-	"request_id\x12\x1c\n" +
-	"\ttimestamp\x18\x03 \x01(\x04R\ttimestamp\"b\n" +
+	"\x06nodeId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\anode_id\"\x12\n" +
+	"\x10PingNodeResponse\"b\n" +
 	"\x13RestartNodesRequest\x12(\n" +
 	"\tnetworkId\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\n" +
 	"network_id\x12!\n" +

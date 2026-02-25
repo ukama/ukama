@@ -10,9 +10,6 @@ package rest
 
 type PingNodeRequest struct {
 	NodeId    string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
-	RequestId string `json:"request_id" validate:"required"`
-	Message   string `json:"message"`
-	TimeStamp uint64 `json:"time_stamp"`
 }
 
 type RestartNodeRequest struct {

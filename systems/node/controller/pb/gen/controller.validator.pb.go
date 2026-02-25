@@ -21,18 +21,9 @@ func (this *PingNodeRequest) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
 	}
-	if this.RequestId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("RequestId", fmt.Errorf(`value '%v' must not be an empty string`, this.RequestId))
-	}
 	return nil
 }
 func (this *PingNodeResponse) Validate() error {
-	if this.NodeId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
-	}
-	if this.RequestId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("RequestId", fmt.Errorf(`value '%v' must not be an empty string`, this.RequestId))
-	}
 	return nil
 }
 

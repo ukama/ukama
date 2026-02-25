@@ -12,7 +12,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
@@ -174,29 +173,14 @@ func (c *ControllerServer) PingNode(ctx context.Context, req *pb.PingNodeRequest
 			"invalid format of node id. Error %s", err.Error())
 	}
 
-	msg := &pb.PingNodeRequest{
-		NodeId:    nId.String(),
-		Message:   req.Message,
-		Timestamp: req.Timestamp,
-	}
-	data, err := proto.Marshal(msg)
-	if err != nil {
-		return nil, err
-	}
-
-	timestamp := uint64(time.Now().Unix())
-	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), actions["PING"], data)
+	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), actions["PING"], nil)
 	if err != nil {
 		log.Errorf("Failed to publish message. Errors %s", err.Error())
 		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
 
 	}
 
-	return &pb.PingNodeResponse{
-		NodeId:    nId.String(),
-		RequestId: req.RequestId,
-		Timestamp: timestamp,
-	}, nil
+	return &pb.PingNodeResponse{}, nil
 }
 
 func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNodesRequest) (*pb.RestartNodesResponse, error) {
