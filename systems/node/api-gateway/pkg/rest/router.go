@@ -143,7 +143,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		controller.POST("/sites/:site_id/toggle-internet-port", formatDoc("Toggle internet port for a site", "Turns the internet port on or off for a specific site"), tonic.Handler(r.postToggleInternetSwitchHandler, http.StatusOK))
 		controller.POST("/nodes/:node_id/toggle-radio", formatDoc("Toggle RF on/off for a node", "Turns the radio on or off for a specific node"), tonic.Handler(r.postToggleRfHandler, http.StatusOK))
 		controller.POST("/nodes/:node_id/toggle-service", formatDoc("Toggle Node Service on/off for a node", "Turns the Node Service on or off for a specific node"), tonic.Handler(r.postToggleNodeServiceHandler, http.StatusOK))
-		controller.POST("/nodes/:node_id/ping", formatDoc("Ping a node", "Ping a node"), tonic.Handler(r.postPingNodeHandler, http.StatusAccepted))
+		controller.GET("/nodes/:node_id/ping", formatDoc("Ping a node", "Ping a node"), tonic.Handler(r.getPingNodeHandler, http.StatusAccepted))
 
 		const cfg = "/configurator"
 		cfgS := auth.Group(cfg, "Configurator", "Config for nodes")
@@ -164,7 +164,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	}
 }
 
-func (r *Router) postPingNodeHandler(c *gin.Context, req *PingNodeRequest) (*contPb.PingNodeResponse, error) {
+func (r *Router) getPingNodeHandler(c *gin.Context, req *PingNodeRequest) (*contPb.PingNodeResponse, error) {
 	return r.clients.Controller.PingNode(&contPb.PingNodeRequest{
 		NodeId: req.NodeId,
 	})
