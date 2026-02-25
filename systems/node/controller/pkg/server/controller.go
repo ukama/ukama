@@ -33,7 +33,7 @@ import (
 
 var actions = map[string]string{
 	"REBOOT":   "/device/v1/reboot",
-	"PING":     "/device/v1/node/ping",
+	"PING":     "/device/v1/ping",
 	"SWITCH":   "/device/v1/switch",
 	"Radio":    "/device/v1/radio",
 	"Service":  "/device/v1/service",
