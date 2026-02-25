@@ -118,7 +118,7 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 			return nil, err
 		}
 
-		err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), actions["REBOOT"], data)
+		err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), "POST", actions["REBOOT"], data)
 		if err != nil {
 			log.Errorf("Failed to publish message. Errors %s", err.Error())
 			return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
@@ -153,7 +153,7 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 		return nil, err
 	}
 
-	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), actions["REBOOT"], data)
+	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), "POST", actions["REBOOT"], data)
 	if err != nil {
 		log.Errorf("Failed to publish message. Errors %s", err.Error())
 		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
@@ -173,7 +173,7 @@ func (c *ControllerServer) PingNode(ctx context.Context, req *pb.PingNodeRequest
 			"invalid format of node id. Error %s", err.Error())
 	}
 
-	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), actions["PING"], nil)
+	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), "GET", actions["PING"], []byte(""))
 	if err != nil {
 		log.Errorf("Failed to publish message. Errors %s", err.Error())
 		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
@@ -207,7 +207,7 @@ func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNode
 			return nil, err
 		}
 
-		err = c.publishMessage(c.orgName+"."+"."+"."+nodeId, actions["REBOOT"], data)
+		err = c.publishMessage(c.orgName+"."+"."+"."+nodeId, "POST", actions["REBOOT"], data)
 
 		if err != nil {
 			log.Errorf("Failed to publish message . Errors %s", err.Error())
@@ -245,7 +245,7 @@ func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.Tog
 	if err != nil {
 		return nil, err
 	}
-	err = c.publishMessage(c.orgName+"."+"."+"."+siteId.String(), actions["SWITCH"], data)
+	err = c.publishMessage(c.orgName+"."+"."+"."+siteId.String(), "POST", actions["SWITCH"], data)
 
 	if err != nil {
 		log.Errorf("Failed to publish switch port reboot message. Errors: %s", err.Error())
@@ -275,7 +275,7 @@ func (c *ControllerServer) ToggleRfSwitch(ctx context.Context, req *pb.ToggleRfS
 		return nil, err
 	}
 
-	err = c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), actions["Radio"], data)
+	err = c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), "POST", actions["Radio"], data)
 	if err != nil {
 		log.Errorf("Failed to publish Radio switch message. Errors: %s", err.Error())
 		return nil, status.Errorf(codes.Internal, "Failed to publish Radio switch message: %s", err.Error())
@@ -303,7 +303,7 @@ func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.Toggle
 		return nil, err
 	}
 
-	err = c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), actions["Service"], data)
+	err = c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), "POST", actions["Service"], data)
 	if err != nil {
 		log.Errorf("Failed to publish Node Service switch message. Errors: %s", err.Error())
 		return nil, status.Errorf(codes.Internal, "Failed to publish Node Service switch message: %s", err.Error())
@@ -311,11 +311,11 @@ func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.Toggle
 	return &pb.ToggleNodeServiceResponse{}, nil
 }
 
-func (c *ControllerServer) publishMessage(target string, path string, anyMsg []byte) error {
+func (c *ControllerServer) publishMessage(target string, method string, path string, anyMsg []byte) error {
 	route := "request.cloud.local" + "." + c.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
 	msg := &cpb.NodeFeederMessage{
 		Target:     target,
-		HTTPMethod: "POST",
+		HTTPMethod: method,
 		Path:       path,
 		Msg:        anyMsg,
 	}
