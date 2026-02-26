@@ -89,11 +89,13 @@ func (e *requestExecutor) Execute(req *cpb.NodeFeederMessage) error {
 			URL:    u,
 		}
 	} else {
+		body := req.GetMsg()
 		httpReq = http.Request{
-			Body:   io.NopCloser(bytes.NewReader((req.GetMsg()))),
-			Header: map[string][]string{"Content-Type": {"application/json"}},
-			Method: req.HTTPMethod,
-			URL:    u,
+			Body:          io.NopCloser(bytes.NewReader(body)),
+			ContentLength: int64(len(body)),
+			Header:        map[string][]string{"Content-Type": {"application/json"}},
+			Method:        req.HTTPMethod,
+			URL:           u,
 		}
 	}
 
