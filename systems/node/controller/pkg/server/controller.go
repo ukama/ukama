@@ -32,7 +32,7 @@ import (
 )
 
 var actions = map[string]string{
-	"REBOOT":   "/device/v1/reboot",
+	"RESTART":   "/device/v1/restart",
 	"PING":     "/device/v1/ping",
 	"SWITCH":   "/device/v1/switch",
 	"Radio":    "/device/v1/radio",
@@ -110,15 +110,7 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 			return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
 		}
 
-		msg := &pb.RestartNodeRequest{
-			NodeId: nId.String(),
-		}
-		data, err := proto.Marshal(msg)
-		if err != nil {
-			return nil, err
-		}
-
-		err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), "POST", actions["REBOOT"], data)
+		err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), "POST", actions["RESTART"], []byte(""))
 		if err != nil {
 			log.Errorf("Failed to publish message. Errors %s", err.Error())
 			return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
@@ -153,7 +145,7 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 		return nil, err
 	}
 
-	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), "POST", actions["REBOOT"], data)
+	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), "POST", actions["RESTART"], data)
 	if err != nil {
 		log.Errorf("Failed to publish message. Errors %s", err.Error())
 		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
@@ -207,7 +199,7 @@ func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNode
 			return nil, err
 		}
 
-		err = c.publishMessage(c.orgName+"."+"."+"."+nodeId, "POST", actions["REBOOT"], data)
+		err = c.publishMessage(c.orgName+"."+"."+"."+nodeId, "POST", actions["RESTART"], data)
 
 		if err != nil {
 			log.Errorf("Failed to publish message . Errors %s", err.Error())
