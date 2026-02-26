@@ -83,7 +83,7 @@ func (e *requestExecutor) Execute(req *cpb.NodeFeederMessage) error {
 	}
 
 	var httpReq http.Request
-	if req.HTTPMethod == "GET" {
+	if req.HTTPMethod == "GET" || req.GetMsg() == nil {
 		httpReq = http.Request{
 			Method: req.HTTPMethod,
 			URL:    u,
@@ -96,7 +96,7 @@ func (e *requestExecutor) Execute(req *cpb.NodeFeederMessage) error {
 			URL:    u,
 		}
 	}
-	
+
 	logrus.Infof("sending request %+v to %s with body %s", httpReq, u.String(), string(req.GetMsg()))
 
 	resp, err := c.Do(&httpReq)

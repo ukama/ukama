@@ -78,27 +78,19 @@ func TestControllerServer_RestartNode(t *testing.T) {
 	}
 	conRepo.On("Get", nodeId).Return(&NodeLog, nil).Once()
 
-	msg := &pb.RestartNodeRequest{
-		NodeId: nodeId,
-	}
-	data, err := proto.Marshal(msg)
-	if err != nil {
-		return
-	}
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
 		Target:     "test-org" + "." + "." + "." + nodeId,
 		HTTPMethod: "POST",
 		Path:       "/device/v1/restart",
-		Msg:        data,
+		Msg:        nil,
 	}).Return(nil).Once()
 	// Act
-	_, err = s.RestartNode(context.TODO(), &pb.RestartNodeRequest{
+	_, err := s.RestartNode(context.TODO(), &pb.RestartNodeRequest{
 		NodeId: nodeId,
 	})
 	// Assert
 	msgclientRepo.AssertExpectations(t)
 	assert.NoError(t, err)
-
 }
 
 func TestControllerServer_RestartNodes(t *testing.T) {
@@ -108,27 +100,20 @@ func TestControllerServer_RestartNodes(t *testing.T) {
 	netId := uuid.NewV4()
 	nodeId := "uk-983794-hnode-78-7830"
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
+
 	msg := &pb.RestartNodeRequest{
 		NodeId: nodeId,
 	}
-	_, err := proto.Marshal(msg)
+	data, err := proto.Marshal(msg)
 	if err != nil {
-		return
+		t.Fatalf("failed to marshal message: %v", err)
 	}
 
 	NodeLog := db.NodeLog{
 		NodeId: nodeId,
 	}
-
 	conRepo.On("Get", nodeId).Return(&NodeLog, nil).Once()
 
-	msg = &pb.RestartNodeRequest{
-		NodeId: nodeId,
-	}
-	data, err := proto.Marshal(msg)
-	if err != nil {
-		return
-	}
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
 		Target:     "test-org" + "." + "." + "." + nodeId,
 		HTTPMethod: "POST",

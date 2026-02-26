@@ -35,8 +35,8 @@ var actions = map[string]string{
 	"RESTART":   "/device/v1/restart",
 	"PING":     "/device/v1/ping",
 	"SWITCH":   "/device/v1/switch",
-	"Radio":    "/device/v1/radio",
-	"Service":  "/device/v1/service",
+	"RADIO":    "/device/v1/radio",
+	"SERVICE":  "/device/v1/service",
 }
 
 type ControllerServer struct {
@@ -137,15 +137,7 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 		return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
 	}
 
-	msg := &pb.RestartNodeRequest{
-		NodeId: nId.String(),
-	}
-	data, err := proto.Marshal(msg)
-	if err != nil {
-		return nil, err
-	}
-
-	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), "POST", actions["RESTART"], data)
+	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), "POST", actions["RESTART"], nil)
 	if err != nil {
 		log.Errorf("Failed to publish message. Errors %s", err.Error())
 		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
@@ -247,7 +239,7 @@ func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.Tog
 }
 
 func (c *ControllerServer) ToggleRfSwitch(ctx context.Context, req *pb.ToggleRfSwitchRequest) (*pb.ToggleRfSwitchResponse, error) {
-	log.Infof("Toggling Radio on/off for node %v, to %v", req.NodeId, req.State)
+	log.Infof("Toggling RADIO on/off for node %v, to %v", req.NodeId, req.State)
 
 	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
@@ -267,16 +259,16 @@ func (c *ControllerServer) ToggleRfSwitch(ctx context.Context, req *pb.ToggleRfS
 		return nil, err
 	}
 
-	err = c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), "POST", actions["Radio"], data)
+	err = c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), "POST", actions["RADIO"], data)
 	if err != nil {
-		log.Errorf("Failed to publish Radio switch message. Errors: %s", err.Error())
-		return nil, status.Errorf(codes.Internal, "Failed to publish Radio switch message: %s", err.Error())
+		log.Errorf("Failed to publish RADIO switch message. Errors: %s", err.Error())
+		return nil, status.Errorf(codes.Internal, "Failed to publish RADIO switch message: %s", err.Error())
 	}
 	return &pb.ToggleRfSwitchResponse{}, nil
 }
 
 func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.ToggleNodeServiceRequest) (*pb.ToggleNodeServiceResponse, error) {
-	log.Infof("Toggling Node Service on/off for node %v, to %v", req.NodeId, req.State)
+	log.Infof("Toggling Node SERVICE on/off for node %v, to %v", req.NodeId, req.State)
 
 	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
@@ -295,10 +287,10 @@ func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.Toggle
 		return nil, err
 	}
 
-	err = c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), "POST", actions["Service"], data)
+	err = c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), "POST", actions["SERVICE"], data)
 	if err != nil {
-		log.Errorf("Failed to publish Node Service switch message. Errors: %s", err.Error())
-		return nil, status.Errorf(codes.Internal, "Failed to publish Node Service switch message: %s", err.Error())
+		log.Errorf("Failed to publish Node SERVICE switch message. Errors: %s", err.Error())
+		return nil, status.Errorf(codes.Internal, "Failed to publish Node SERVICE switch message: %s", err.Error())
 	}
 	return &pb.ToggleNodeServiceResponse{}, nil
 }
