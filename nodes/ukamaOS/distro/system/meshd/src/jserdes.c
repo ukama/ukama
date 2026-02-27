@@ -100,32 +100,36 @@ int serialize_device_info(json_t **json, NodeInfo *device) {
 
 int serialize_local_service_response(char **response, Message *message,
                                      int code, int len, char *data) {
+    json_t *json;
+    json_t *obj;
 
-    json_t *json, *obj;
-    
-    /* basic sanity check */
-	if (len == 0 || data == NULL || message == NULL)
-		return FALSE;
+    if (response == NULL || message == NULL) {
+        return FALSE;
+    }
 
-	json = json_object();
-	if (json == NULL) {
-		return FALSE;
-	}
+    if (data == NULL) {
+        data = "";
+        len = 0;
+    }
 
-	json_object_set_new(json, JSON_TYPE, json_string(MESH_SERVICE_RESPONSE));
+    json = json_object();
+    if (json == NULL)
+        return FALSE;
+
+    json_object_set_new(json, JSON_TYPE, json_string(MESH_SERVICE_RESPONSE));
     json_object_set_new(json, JSON_UUID, json_string(message->seqNo));
 
-	/* Add response info. */
-	json_object_set_new(json, JSON_MESSAGE, json_object());
-	obj = json_object_get(json, JSON_MESSAGE);
+    json_object_set_new(json, JSON_MESSAGE, json_object());
+    obj = json_object_get(json, JSON_MESSAGE);
+
     json_object_set_new(obj, JSON_CODE,   json_integer(code));
-	json_object_set_new(obj, JSON_LENGTH, json_integer(len));
-	json_object_set_new(obj, JSON_DATA,   json_string(data));
+    json_object_set_new(obj, JSON_LENGTH, json_integer(len));
+    json_object_set_new(obj, JSON_DATA,   json_string(data));
 
     *response = json_dumps(json, 0);
     json_decref(json);
 
-	return TRUE;
+    return (*response != NULL);
 }
 
 STATIC void serialize_message_data(URequest *request, char **data) {
