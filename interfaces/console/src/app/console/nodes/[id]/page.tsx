@@ -433,18 +433,46 @@ const Page: React.FC<INodePage> = ({ params }) => {
           },
         });
         break;
-      case NODE_ACTIONS_ENUM.NODE_RF_ON:
-      case NODE_ACTIONS_ENUM.NODE_RF_OFF:
-        if (currentNode?.id) {
-          toggleRFStatus({
-            variables: {
-              data: {
-                nodeId: currentNode.id,
-                status: action === NODE_ACTIONS_ENUM.NODE_RF_ON,
-              },
+      case NODE_ACTIONS_ENUM.NODE_RADIO_ON:
+        toggleRFStatus({
+          variables: {
+            data: {
+              nodeId: currentNode?.id ?? '',
+              status: true,
             },
-          });
-        }
+          },
+        });
+        break;
+
+      case NODE_ACTIONS_ENUM.NODE_RADIO_OFF:
+        toggleRFStatus({
+          variables: {
+            data: {
+              nodeId: currentNode?.id ?? '',
+              status: false,
+            },
+          },
+        });
+        break;
+      case NODE_ACTIONS_ENUM.NODE_SERVICE_ON:
+        toggleService({
+          variables: {
+            data: {
+              nodeId: currentNode?.id ?? '',
+              status: true,
+            },
+          },
+        });
+        break;
+      case NODE_ACTIONS_ENUM.NODE_SERVICE_OFF:
+        toggleService({
+          variables: {
+            data: {
+              nodeId: currentNode?.id ?? '',
+              status: false,
+            },
+          },
+        });
         break;
       default:
         return;
@@ -575,7 +603,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
         <NodeActionUI
           value={nodeAction.progress}
           nodeType={currentNode?.type}
-          action={nodeAction.actionInitiated || NODE_ACTIONS_ENUM.NODE_OFF}
+          action={nodeAction.actionInitiated || NODE_ACTIONS_ENUM.NODE_RESTART}
           connectivity={
             (currentNode?.status?.connectivity as NodeConnectivityEnum) ||
             undefined
