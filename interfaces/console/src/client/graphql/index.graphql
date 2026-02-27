@@ -148,6 +148,12 @@ mutation ToggleRFStatus($data: ToggleRFStatusInputDto!) {
   }
 }
 
+mutation ToggleService($data: ToggleRFStatusInputDto!) {
+  toggleService(data: $data) {
+    success
+  }
+}
+
 ### End Node ###
 
 ### Member Start ###

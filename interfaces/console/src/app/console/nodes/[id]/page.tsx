@@ -15,6 +15,7 @@ import {
   useGetNodesQuery,
   useRestartNodeMutation,
   useToggleRfStatusMutation,
+  useToggleServiceMutation,
   useUpdateNodeMutation,
 } from '@/client/graphql/generated';
 import {
@@ -228,6 +229,30 @@ const Page: React.FC<INodePage> = ({ params }) => {
       setSnackbarMessage({
         id: 'toggle-rf-status-error-msg',
         message: `Failed to turn RF status ${
+          context?.variables?.data?.status ? 'On' : 'Off'
+        }.`,
+        type: 'error',
+        show: true,
+      });
+    },
+  });
+
+  const [toggleService] = useToggleServiceMutation({
+    fetchPolicy: 'network-only',
+    onCompleted: (_, context) => {
+      setSnackbarMessage({
+        id: 'toggle-service-status-success-msg',
+        message: `Service status turned ${
+          context?.variables?.data?.status ? 'On' : 'Off'
+        } successfully.`,
+        type: 'success',
+        show: true,
+      });
+    },
+    onError: (_, context) => {
+      setSnackbarMessage({
+        id: 'toggle-service-status-error-msg',
+        message: `Failed to turn service status ${
           context?.variables?.data?.status ? 'On' : 'Off'
         }.`,
         type: 'error',
