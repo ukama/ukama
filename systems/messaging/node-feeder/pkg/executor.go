@@ -83,19 +83,23 @@ func (e *requestExecutor) Execute(req *cpb.NodeFeederMessage) error {
 	}
 
 	var httpReq http.Request
-	if req.HTTPMethod == "GET" || req.GetMsg() == nil {
+	if req.HttpMethod == "GET" || req.GetMsg() == nil {
 		httpReq = http.Request{
-			Method: req.HTTPMethod,
+			Method: req.HttpMethod,
 			URL:    u,
+			Header: map[string][]string{"X-node-id": {req.NodeId}},
 		}
 	} else {
 		body := req.GetMsg()
 		httpReq = http.Request{
 			Body:          io.NopCloser(bytes.NewReader(body)),
 			ContentLength: int64(len(body)),
-			Header:        map[string][]string{"Content-Type": {"application/json"}},
-			Method:        req.HTTPMethod,
-			URL:           u,
+			Header: map[string][]string{
+				"Content-Type": {"application/json"},
+				"X-node-id":    {req.NodeId},
+			},
+			Method: req.HttpMethod,
+			URL:    u,
 		}
 	}
 

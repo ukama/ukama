@@ -110,7 +110,7 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 			return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
 		}
 
-		err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), "POST", actions["RESTART"], []byte(""))
+		err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), "POST", actions["RESTART"], nId.String(), []byte(""))
 		if err != nil {
 			log.Errorf("Failed to publish message. Errors %s", err.Error())
 			return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
@@ -137,7 +137,7 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 		return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
 	}
 
-	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), "POST", actions["RESTART"], nil)
+	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), "POST", actions["RESTART"], nId.String(), []byte(""))
 	if err != nil {
 		log.Errorf("Failed to publish message. Errors %s", err.Error())
 		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
@@ -157,7 +157,7 @@ func (c *ControllerServer) PingNode(ctx context.Context, req *pb.PingNodeRequest
 			"invalid format of node id. Error %s", err.Error())
 	}
 
-	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), "GET", actions["PING"], []byte(""))
+	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), "GET", actions["PING"], nId.String(), []byte(""))
 	if err != nil {
 		log.Errorf("Failed to publish message. Errors %s", err.Error())
 		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
@@ -191,7 +191,7 @@ func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNode
 			return nil, err
 		}
 
-		err = c.publishMessage(c.orgName+"."+"."+"."+nodeId, "POST", actions["RESTART"], data)
+		err = c.publishMessage(c.orgName+"."+"."+"."+nodeId, "POST", actions["RESTART"], nodeId, data)
 
 		if err != nil {
 			log.Errorf("Failed to publish message . Errors %s", err.Error())
@@ -229,7 +229,7 @@ func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.Tog
 	if err != nil {
 		return nil, err
 	}
-	err = c.publishMessage(c.orgName+"."+"."+"."+siteId.String(), "POST", actions["SWITCH"], data)
+	err = c.publishMessage(c.orgName+"."+"."+"."+siteId.String(), "POST", actions["SWITCH"], siteId.String(), data)
 
 	if err != nil {
 		log.Errorf("Failed to publish switch port reboot message. Errors: %s", err.Error())
@@ -259,7 +259,7 @@ func (c *ControllerServer) ToggleRfSwitch(ctx context.Context, req *pb.ToggleRfS
 		return nil, err
 	}
 
-	err = c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), "POST", actions["RADIO"], data)
+	err = c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), "POST", actions["RADIO"], nId.String(), data)
 	if err != nil {
 		log.Errorf("Failed to publish RADIO switch message. Errors: %s", err.Error())
 		return nil, status.Errorf(codes.Internal, "Failed to publish RADIO switch message: %s", err.Error())
@@ -287,7 +287,7 @@ func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.Toggle
 		return nil, err
 	}
 
-	err = c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), "POST", actions["SERVICE"], data)
+	err = c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), "POST", actions["SERVICE"], nId.String(), data)
 	if err != nil {
 		log.Errorf("Failed to publish Node SERVICE switch message. Errors: %s", err.Error())
 		return nil, status.Errorf(codes.Internal, "Failed to publish Node SERVICE switch message: %s", err.Error())
@@ -295,13 +295,14 @@ func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.Toggle
 	return &pb.ToggleNodeServiceResponse{}, nil
 }
 
-func (c *ControllerServer) publishMessage(target string, method string, path string, anyMsg []byte) error {
+func (c *ControllerServer) publishMessage(target string, method string, path string, nodeId string, anyMsg []byte) error {
 	route := "request.cloud.local" + "." + c.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
 	msg := &cpb.NodeFeederMessage{
 		Target:     target,
-		HTTPMethod: method,
+		HttpMethod: method,
 		Path:       path,
 		Msg:        anyMsg,
+		NodeId:     nodeId,
 	}
 	log.Infof("Published controller %s on route %s on target %s ", anyMsg, route, target)
 	err := c.msgbus.PublishRequest(route, msg)

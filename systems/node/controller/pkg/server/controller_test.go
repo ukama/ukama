@@ -80,9 +80,10 @@ func TestControllerServer_RestartNode(t *testing.T) {
 
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
 		Target:     "test-org" + "." + "." + "." + nodeId,
-		HTTPMethod: "POST",
+		HttpMethod: "POST",
 		Path:       "/device/v1/restart",
-		Msg:        nil,
+		Msg:        []byte{},
+		NodeId:     nodeId,
 	}).Return(nil).Once()
 	// Act
 	_, err := s.RestartNode(context.TODO(), &pb.RestartNodeRequest{
@@ -116,9 +117,10 @@ func TestControllerServer_RestartNodes(t *testing.T) {
 
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
 		Target:     "test-org" + "." + "." + "." + nodeId,
-		HTTPMethod: "POST",
+		HttpMethod: "POST",
 		Path:       "/device/v1/restart",
 		Msg:        data,
+		NodeId:     nodeId,
 	}).Return(nil).Once()
 	// Act
 	_, err = s.RestartNodes(context.TODO(), &pb.RestartNodesRequest{
@@ -145,9 +147,10 @@ func TestControllerServer_ToggleRf(t *testing.T) {
 	}
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
 		Target:     "test-org" + "..." + nodeId,
-		HTTPMethod: "POST",
+		HttpMethod: "POST",
 		Path:       "/device/v1/radio",
 		Msg:        data,
+		NodeId:     nodeId,
 	}).Return(nil).Once()
 
 	_, err = s.ToggleRfSwitch(context.TODO(), &pb.ToggleRfSwitchRequest{
@@ -173,9 +176,10 @@ func TestControllerServer_ToggleNodeService(t *testing.T) {
 	}
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
 		Target:     "test-org" + "..." + nodeId,
-		HTTPMethod: "POST",
+		HttpMethod: "POST",
 		Path:       "/device/v1/service",
 		Msg:        data,
+		NodeId:     nodeId,
 	}).Return(nil).Once()
 
 	_, err = s.ToggleNodeService(context.TODO(), &pb.ToggleNodeServiceRequest{
