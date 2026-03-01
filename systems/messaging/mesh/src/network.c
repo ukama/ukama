@@ -163,11 +163,11 @@ static void setup_forward_endpoints(Config *config, UInst *instance) {
 
     ulfius_add_endpoint_by_val(instance, "GET", EP_FORWARD, NULL, 0,
 							   &callback_forward, config);
-    ulfius_add_endpoint_by_val(instance, "GET", EP_FORWARD, NULL, 0,
+    ulfius_add_endpoint_by_val(instance, "POST", EP_FORWARD, NULL, 0,
 							   &callback_forward, config);
-    ulfius_add_endpoint_by_val(instance, "GET", EP_FORWARD, NULL, 0,
+    ulfius_add_endpoint_by_val(instance, "PUT", EP_FORWARD, NULL, 0,
 							   &callback_forward, config);
-    ulfius_add_endpoint_by_val(instance, "GET", EP_FORWARD, NULL, 0,
+    ulfius_add_endpoint_by_val(instance, "DELETE", EP_FORWARD, NULL, 0,
 							   &callback_forward, config);
 
     ulfius_set_default_endpoint(instance,
