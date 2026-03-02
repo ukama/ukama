@@ -10,9 +10,6 @@ package rest
 
 type PingNodeRequest struct {
 	NodeId    string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
-	RequestId string `json:"request_id" validate:"required"`
-	Message   string `json:"message"`
-	TimeStamp uint64 `json:"time_stamp"`
 }
 
 type RestartNodeRequest struct {
@@ -50,9 +47,13 @@ type ToggleInternetSwitchRequest struct {
 }
 type ToggleRfRequest struct {
 	NodeId string `json:"node_id" example:"{{NodeId}}" validate:"required" path:"node_id"`
-	Status bool   `json:"status" example:"{{Status}}"`
+	State  string `json:"state" example:"on" validate:"required,oneof=on off"`
 }
 
+type ToggleNodeServiceRequest struct {
+	NodeId string `json:"node_id" example:"{{NodeId}}" validate:"required" path:"node_id"`
+	State  string `json:"state" example:"on" validate:"required,oneof=on off"`
+}
 type ApplyConfigRequest struct {
 	Commit string `json:"commit" path:"commit" example:"commit" validate:"required"`
 }

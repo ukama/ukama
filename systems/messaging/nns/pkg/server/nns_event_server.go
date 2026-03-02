@@ -87,17 +87,6 @@ func (l *NnsEventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 			return nil, err
 		}
 
-	case msgbus.PrepareRoute(l.orgName, "event.cloud.global.{{ .Org}}.messaging.mesh.ip.update"):
-		msg, err := epb.UnmarshalMeshRegisterEvent(e.Msg, "MeshRegisterEvent")
-		if err != nil {
-			return nil, err
-		}
-
-		err = l.handleMeshRegisterEvent(e.RoutingKey, msg)
-		if err != nil {
-			return nil, err
-		}
-
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)
 	}
@@ -135,9 +124,18 @@ func (l *NnsEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineEv
 		nodeInfo.Site.NetworkId = ""
 	}
 
+	node, err := l.Nns.nns.Get(context.Background(), msg.GetNodeId())
+	if err == nil && node != nil {
+		err = l.Nns.nns.Delete(context.Background(), msg.GetNodeId())
+		if err != nil {
+			log.Errorf("failed to delete node %s. Error %v", msg.GetNodeId(), err)
+			return err
+		}
+	}
+
 	_, err = l.Nns.Set(context.Background(), &pb.SetRequest{
 		NodeId:       msg.GetNodeId(),
-		NodeIp:       msg.GetMeshIp(),
+		NodeIp:       msg.GetNodeIp(),
 		MeshIp:       msg.GetMeshIp(),
 		NodePort:     msg.GetNodePort(),
 		MeshPort:     msg.GetMeshPort(),
@@ -248,20 +246,6 @@ func (l *NnsEventServer) handleNodeReleaseEvent(key string, msg *epb.NodeRelease
 		log.Errorf("failed to update labels for %s. Error %v", msg.GetNodeId(), err)
 		return err
 	}
-
-	return nil
-}
-
-func (l *NnsEventServer) handleMeshRegisterEvent(key string, msg *epb.MeshRegisterEvent) error {
-	log.Infof("Keys %s and Proto is: %+v", key, msg)
-
-	// err := l.Nns.nns.UpdateNodeMesh(context.Background(), msg.GetIp(), msg.GetPort())
-	// if err != nil {
-	// 	log.Errorf("failed to set mesh IP and port for %s. Error %v", msg.GetIp(), err)
-	// 	return err
-	// }
-
-	log.Infof("Updated mesh IP and port for %s:%d", msg.GetIp(), msg.GetPort())
 
 	return nil
 }

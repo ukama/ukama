@@ -93,9 +93,16 @@ func (c *Controller) ToggleInternetSwitch(status bool, port int32, siteId string
 	return c.client.ToggleInternetSwitch(ctx, &pb.ToggleInternetSwitchRequest{Status: status, SiteId: siteId, Port: port})
 }
 
-func (c *Controller) ToggleRf(nodeId string, status bool) (*pb.ToggleRfSwitchResponse, error) {
+func (c *Controller) ToggleRf(nodeId string, state string) (*pb.ToggleRfSwitchResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	return c.client.ToggleRfSwitch(ctx, &pb.ToggleRfSwitchRequest{NodeId: nodeId, Status: status})
+	return c.client.ToggleRfSwitch(ctx, &pb.ToggleRfSwitchRequest{NodeId: nodeId, State: state})
+}
+
+func (c *Controller) ToggleNodeService(nodeId string, state string) (*pb.ToggleNodeServiceResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
+	defer cancel()
+
+	return c.client.ToggleNodeService(ctx, &pb.ToggleNodeServiceRequest{NodeId: nodeId, State: state})
 }

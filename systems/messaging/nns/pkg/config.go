@@ -54,7 +54,7 @@ func NewConfig(name string) *Config {
 				"event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
 				"event.cloud.local.{{ .Org}}.registry.node.node.assigned",
 				"event.cloud.local.{{ .Org}}.registry.node.node.release",
-				"event.cloud.global.{{ .Org}}.messaging.mesh.ip.update"},
+			},
 		},
 	}
 }

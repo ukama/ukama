@@ -251,8 +251,8 @@ func Test_postToggleRfHandler(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	nodeId := "60285a2a-fe1d-4261-a868-5be480075b8f"
-	jsonPayload := `{"status": false}`
-	req, _ := http.NewRequest("POST", "/v1/controller/nodes/"+nodeId+"/toggle-rf", strings.NewReader(jsonPayload))
+	jsonPayload := `{"state": "off"}`
+	req, _ := http.NewRequest("POST", "/v1/controller/nodes/"+nodeId+"/toggle-radio", strings.NewReader(jsonPayload))
 	req.Header.Set("Content-Type", "application/json")
 	arc := &cmmocks.AuthClient{}
 	c := &nmocks.ControllerServiceClient{}
@@ -261,7 +261,7 @@ func Test_postToggleRfHandler(t *testing.T) {
 
 	c.On("ToggleRfSwitch", mock.Anything, &cpb.ToggleRfSwitchRequest{
 		NodeId: nodeId,
-		Status: false,
+		State:  "off",
 	}).Return(&cpb.ToggleRfSwitchResponse{}, nil)
 
 	r := NewRouter(&Clients{
@@ -274,4 +274,55 @@ func Test_postToggleRfHandler(t *testing.T) {
 	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	c.AssertExpectations(t)
+}
+
+func Test_postToggleNodeServiceHandler(t *testing.T) {
+	// arrange
+	w := httptest.NewRecorder()
+	nodeId := "uk-983794-hnode-78-7830"
+	jsonPayload := `{"state": "on"}`
+	req, _ := http.NewRequest("POST", "/v1/controller/nodes/"+nodeId+"/toggle-service", strings.NewReader(jsonPayload))
+	req.Header.Set("Content-Type", "application/json")
+	arc := &cmmocks.AuthClient{}
+	c := &nmocks.ControllerServiceClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
+	c.On("ToggleNodeService", mock.Anything, &cpb.ToggleNodeServiceRequest{
+		NodeId: nodeId,
+		State:  "on",
+	}).Return(&cpb.ToggleNodeServiceResponse{}, nil)
+
+	r := NewRouter(&Clients{
+		Controller: client.NewControllerFromClient(c),
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	c.AssertExpectations(t)
+}
+
+func Test_postToggleNodeServiceHandler_InvalidState(t *testing.T) {
+	// arrange
+	w := httptest.NewRecorder()
+	nodeId := "uk-983794-hnode-78-7830"
+	jsonPayload := `{"state": "invalid"}`
+	req, _ := http.NewRequest("POST", "/v1/controller/nodes/"+nodeId+"/toggle-service", strings.NewReader(jsonPayload))
+	req.Header.Set("Content-Type", "application/json")
+	arc := &cmmocks.AuthClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
+	r := NewRouter(&Clients{
+		Controller: client.NewControllerFromClient(&nmocks.ControllerServiceClient{}),
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert - validation should reject invalid state
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }

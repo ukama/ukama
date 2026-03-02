@@ -10,8 +10,8 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
@@ -31,11 +31,15 @@ import (
 	"github.com/ukama/ukama/systems/node/controller/pkg/db"
 )
 
-var actions = map[string]string{
-	"REBOOT":     "/device/v1/reboot",
-	"PING":     "/device/v1/node/ping",
-	"SWITCH":     "/device/v1/switch",
-	"RF":         "/device/v1/rf",
+var actions = map[string]struct {
+	path   string
+	method string
+}{
+	"RESTART":   {path: "/device/v1/restart", method: "POST"},
+	"PING":     {path: "/device/v1/ping", method: "GET"},
+	"SWITCH":   {path: "/device/v1/switch", method: "POST"},
+	"RADIO":    {path: "/device/v1/radio", method: "POST"},
+	"SERVICE":  {path: "/device/v1/service", method: "POST"},
 }
 
 type ControllerServer struct {
@@ -109,15 +113,7 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 			return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
 		}
 
-		msg := &pb.RestartNodeRequest{
-			NodeId: nId.String(),
-		}
-		data, err := proto.Marshal(msg)
-		if err != nil {
-			return nil, err
-		}
-
-		err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), actions["REBOOT"], data)
+		err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), actions["RESTART"].method, actions["RESTART"].path, nId.String(), []byte(""))
 		if err != nil {
 			log.Errorf("Failed to publish message. Errors %s", err.Error())
 			return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
@@ -144,15 +140,7 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 		return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
 	}
 
-	msg := &pb.RestartNodeRequest{
-		NodeId: nId.String(),
-	}
-	data, err := proto.Marshal(msg)
-	if err != nil {
-		return nil, err
-	}
-
-	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), actions["REBOOT"], data)
+	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), actions["RESTART"].method, actions["RESTART"].path, nId.String(), []byte(""))
 	if err != nil {
 		log.Errorf("Failed to publish message. Errors %s", err.Error())
 		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
@@ -172,29 +160,14 @@ func (c *ControllerServer) PingNode(ctx context.Context, req *pb.PingNodeRequest
 			"invalid format of node id. Error %s", err.Error())
 	}
 
-	msg := &pb.PingNodeRequest{
-		NodeId:    nId.String(),
-		Message:   req.Message,
-		Timestamp: req.Timestamp,
-	}
-	data, err := proto.Marshal(msg)
-	if err != nil {
-		return nil, err
-	}
-
-	timestamp := uint64(time.Now().Unix())
-	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), actions["PING"], data)
+	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), actions["PING"].method, actions["PING"].path, nId.String(), []byte(""))
 	if err != nil {
 		log.Errorf("Failed to publish message. Errors %s", err.Error())
 		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
 
 	}
 
-	return &pb.PingNodeResponse{
-		NodeId:    nId.String(),
-		RequestId: req.RequestId,
-		Timestamp: timestamp,
-	}, nil
+	return &pb.PingNodeResponse{}, nil
 }
 
 func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNodesRequest) (*pb.RestartNodesResponse, error) {
@@ -221,7 +194,7 @@ func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNode
 			return nil, err
 		}
 
-		err = c.publishMessage(c.orgName+"."+"."+"."+nodeId, actions["REBOOT"], data)
+		err = c.publishMessage(c.orgName+"."+"."+"."+nodeId, actions["RESTART"].method, actions["RESTART"].path, nodeId, data)
 
 		if err != nil {
 			log.Errorf("Failed to publish message . Errors %s", err.Error())
@@ -259,7 +232,7 @@ func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.Tog
 	if err != nil {
 		return nil, err
 	}
-	err = c.publishMessage(c.orgName+"."+"."+"."+siteId.String(), actions["SWITCH"], data)
+	err = c.publishMessage(c.orgName+"."+"."+"."+siteId.String(), actions["SWITCH"].method, actions["SWITCH"].path, siteId.String(), data)
 
 	if err != nil {
 		log.Errorf("Failed to publish switch port reboot message. Errors: %s", err.Error())
@@ -269,7 +242,7 @@ func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.Tog
 }
 
 func (c *ControllerServer) ToggleRfSwitch(ctx context.Context, req *pb.ToggleRfSwitchRequest) (*pb.ToggleRfSwitchResponse, error) {
-	log.Infof("Toggling RF on/off for node %v, to %v", req.NodeId, req.Status)
+	log.Infof("Toggling RADIO on/off for node %v, to %v", req.NodeId, req.State)
 
 	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
@@ -277,31 +250,62 @@ func (c *ControllerServer) ToggleRfSwitch(ctx context.Context, req *pb.ToggleRfS
 			"invalid format of node id. Error %s", err.Error())
 	}
 
-	msg := &pb.ToggleRfSwitchRequest{
-		NodeId: nId.String(),
-		Status: req.Status,
+	ntype := ukama.GetNodeType(nId.String())
+
+	if *ntype != ukama.NODE_ID_TYPE_AMPNODE {
+		return nil, status.Errorf(codes.InvalidArgument, "node is not an amplifier node")
 	}
 
-	data, err := proto.Marshal(msg)
+	jsonBody := map[string]string{"state": req.State}
+	data, err := json.Marshal(jsonBody)
 	if err != nil {
 		return nil, err
 	}
 
-	err = c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), actions["RF"], data)
+	err = c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), actions["RADIO"].method, actions["RADIO"].path, nId.String(), data)
 	if err != nil {
-		log.Errorf("Failed to publish RF switch message. Errors: %s", err.Error())
-		return nil, status.Errorf(codes.Internal, "Failed to publish RF switch message: %s", err.Error())
+		log.Errorf("Failed to publish RADIO switch message. Errors: %s", err.Error())
+		return nil, status.Errorf(codes.Internal, "Failed to publish RADIO switch message: %s", err.Error())
 	}
 	return &pb.ToggleRfSwitchResponse{}, nil
 }
 
-func (c *ControllerServer) publishMessage(target string, path string, anyMsg []byte) error {
+func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.ToggleNodeServiceRequest) (*pb.ToggleNodeServiceResponse, error) {
+	log.Infof("Toggling Node SERVICE on/off for node %v, to %v", req.NodeId, req.State)
+
+	nId, err := ukama.ValidateNodeId(req.NodeId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of node id. Error %s", err.Error())
+	}
+
+	ntype := ukama.GetNodeType(nId.String())
+	if *ntype != ukama.NODE_ID_TYPE_TOWERNODE {
+		return nil, status.Errorf(codes.InvalidArgument, "node is not a tower node")
+	}
+
+	jsonBody := map[string]string{"state": req.State}
+	data, err := json.Marshal(jsonBody)
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), actions["SERVICE"].method, actions["SERVICE"].path, nId.String(), data)
+	if err != nil {
+		log.Errorf("Failed to publish Node SERVICE switch message. Errors: %s", err.Error())
+		return nil, status.Errorf(codes.Internal, "Failed to publish Node SERVICE switch message: %s", err.Error())
+	}
+	return &pb.ToggleNodeServiceResponse{}, nil
+}
+
+func (c *ControllerServer) publishMessage(target string, method string, path string, nodeId string, anyMsg []byte) error {
 	route := "request.cloud.local" + "." + c.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
 	msg := &cpb.NodeFeederMessage{
 		Target:     target,
-		HTTPMethod: "POST",
+		HttpMethod: method,
 		Path:       path,
 		Msg:        anyMsg,
+		NodeId:     nodeId,
 	}
 	log.Infof("Published controller %s on route %s on target %s ", anyMsg, route, target)
 	err := c.msgbus.PublishRequest(route, msg)

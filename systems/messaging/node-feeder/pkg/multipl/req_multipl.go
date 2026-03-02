@@ -72,9 +72,10 @@ func (r *requestMultiplier) Process(req *cpb.NodeFeederMessage) error {
 func (r *requestMultiplier) PublishToNode(req *cpb.NodeFeederMessage, orgName string, node string) error {
 	err := r.queue.Publish(&cpb.NodeFeederMessage{
 		Target:     orgName + "." + node,
-		HTTPMethod: req.HTTPMethod,
+		HttpMethod: req.HttpMethod,
 		Path:       req.Path,
 		Msg:        req.Msg,
+		NodeId:     req.NodeId,
 	})
 
 	if err != nil {

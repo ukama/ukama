@@ -5,8 +5,9 @@ package ukama.nodefeeder.v1;
 option go_package = "github.com/ukama/ukama/systems/common/pb/gen/ukama/";
 
 message NodeFeederMessage {
-    string Target = 1;
-    string HTTPMethod = 2;
-    string Path = 3;
-    bytes msg = 4;  // Use bytes for binary data
+    string target = 1;
+    string httpMethod = 2;
+    string path = 3;
+    bytes msg = 4;
+    string nodeId = 5;
 }

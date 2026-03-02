@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -77,27 +78,20 @@ func TestControllerServer_RestartNode(t *testing.T) {
 	}
 	conRepo.On("Get", nodeId).Return(&NodeLog, nil).Once()
 
-	msg := &pb.RestartNodeRequest{
-		NodeId: nodeId,
-	}
-	data, err := proto.Marshal(msg)
-	if err != nil {
-		return
-	}
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
 		Target:     "test-org" + "." + "." + "." + nodeId,
-		HTTPMethod: "POST",
-		Path:       "/device/v1/reboot",
-		Msg:        data,
+		HttpMethod: "POST",
+		Path:       "/device/v1/restart",
+		Msg:        []byte{},
+		NodeId:     nodeId,
 	}).Return(nil).Once()
 	// Act
-	_, err = s.RestartNode(context.TODO(), &pb.RestartNodeRequest{
+	_, err := s.RestartNode(context.TODO(), &pb.RestartNodeRequest{
 		NodeId: nodeId,
 	})
 	// Assert
 	msgclientRepo.AssertExpectations(t)
 	assert.NoError(t, err)
-
 }
 
 func TestControllerServer_RestartNodes(t *testing.T) {
@@ -107,32 +101,26 @@ func TestControllerServer_RestartNodes(t *testing.T) {
 	netId := uuid.NewV4()
 	nodeId := "uk-983794-hnode-78-7830"
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
+
 	msg := &pb.RestartNodeRequest{
 		NodeId: nodeId,
 	}
-	_, err := proto.Marshal(msg)
+	data, err := proto.Marshal(msg)
 	if err != nil {
-		return
+		t.Fatalf("failed to marshal message: %v", err)
 	}
 
 	NodeLog := db.NodeLog{
 		NodeId: nodeId,
 	}
-
 	conRepo.On("Get", nodeId).Return(&NodeLog, nil).Once()
 
-	msg = &pb.RestartNodeRequest{
-		NodeId: nodeId,
-	}
-	data, err := proto.Marshal(msg)
-	if err != nil {
-		return
-	}
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
 		Target:     "test-org" + "." + "." + "." + nodeId,
-		HTTPMethod: "POST",
-		Path:       "/device/v1/reboot",
+		HttpMethod: "POST",
+		Path:       "/device/v1/restart",
 		Msg:        data,
+		NodeId:     nodeId,
 	}).Return(nil).Once()
 	// Act
 	_, err = s.RestartNodes(context.TODO(), &pb.RestartNodesRequest{
@@ -149,29 +137,71 @@ func TestControllerServer_ToggleRf(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 	conRepo := &mocks.NodeLogRepo{}
 
-	nodeId := "uk-983794-hnode-78-7830"
+	nodeId := "uk-983794-anode-78-7830"
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
 
-	msg := &pb.ToggleRfSwitchRequest{
-		NodeId: nodeId,
-		Status: true,
-	}
-	data, err := proto.Marshal(msg)
+	jsonBody := map[string]string{"state": "on"}
+	data, err := json.Marshal(jsonBody)
 	if err != nil {
-		return
+		t.Fatalf("failed to marshal message: %v", err)
 	}
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
 		Target:     "test-org" + "..." + nodeId,
-		HTTPMethod: "POST",
-		Path:       "/device/v1/rf",
+		HttpMethod: "POST",
+		Path:       "/device/v1/radio",
 		Msg:        data,
+		NodeId:     nodeId,
 	}).Return(nil).Once()
 
 	_, err = s.ToggleRfSwitch(context.TODO(), &pb.ToggleRfSwitchRequest{
 		NodeId: nodeId,
-		Status: true,
+		State: "on",
 	})
 
 	msgclientRepo.AssertExpectations(t)
 	assert.NoError(t, err)
+}
+
+func TestControllerServer_ToggleNodeService(t *testing.T) {
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	conRepo := &mocks.NodeLogRepo{}
+
+	nodeId := "uk-983794-tnode-78-7830"
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
+
+	jsonBody := map[string]string{"state": "on"}
+	data, err := json.Marshal(jsonBody)
+	if err != nil {
+		t.Fatalf("failed to marshal message: %v", err)
+	}
+	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
+		Target:     "test-org" + "..." + nodeId,
+		HttpMethod: "POST",
+		Path:       "/device/v1/service",
+		Msg:        data,
+		NodeId:     nodeId,
+	}).Return(nil).Once()
+
+	_, err = s.ToggleNodeService(context.TODO(), &pb.ToggleNodeServiceRequest{
+		NodeId: nodeId,
+		State:  "on",
+	})
+
+	msgclientRepo.AssertExpectations(t)
+	assert.NoError(t, err)
+}
+
+func TestControllerServer_ToggleNodeService_InvalidNodeId(t *testing.T) {
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	conRepo := &mocks.NodeLogRepo{}
+
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
+
+	_, err := s.ToggleNodeService(context.TODO(), &pb.ToggleNodeServiceRequest{
+		NodeId: "uk-983794-anode-78-7830",
+		State:  "on",
+	})
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "node is not a tower node")
 }
