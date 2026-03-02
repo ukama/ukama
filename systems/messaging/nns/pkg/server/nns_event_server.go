@@ -135,6 +135,15 @@ func (l *NnsEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineEv
 		nodeInfo.Site.NetworkId = ""
 	}
 
+	node, err := l.Nns.nns.Get(context.Background(), msg.GetNodeId())
+	if err == nil && node != nil {
+		err = l.Nns.nns.Delete(context.Background(), msg.GetNodeId())
+		if err != nil {
+			log.Errorf("failed to delete node %s. Error %v", msg.GetNodeId(), err)
+			return err
+		}
+	}
+
 	_, err = l.Nns.Set(context.Background(), &pb.SetRequest{
 		NodeId:       msg.GetNodeId(),
 		NodeIp:       msg.GetMeshIp(),
@@ -255,7 +264,7 @@ func (l *NnsEventServer) handleNodeReleaseEvent(key string, msg *epb.NodeRelease
 func (l *NnsEventServer) handleMeshRegisterEvent(key string, msg *epb.MeshRegisterEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
-	// err := l.Nns.nns.UpdateNodeMesh(context.Background(), msg.GetIp(), msg.GetPort())
+	// err := l.Nns.nns.UpdateNodeMesh(context.Background(), msg., msg.GetIp(), msg.GetPort())
 	// if err != nil {
 	// 	log.Errorf("failed to set mesh IP and port for %s. Error %v", msg.GetIp(), err)
 	// 	return err
