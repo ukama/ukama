@@ -82,13 +82,28 @@ func (e *requestExecutor) Execute(req *cpb.NodeFeederMessage) error {
 		Timeout: time.Duration(e.timeoutSeconds) * time.Second,
 	}
 
-	httpReq := http.Request{
-		Body:   io.NopCloser(bytes.NewReader((req.GetMsg()))),
-		Header: map[string][]string{"Content-Type": {"application/json"}},
-		Method: req.HTTPMethod,
-		URL:    u,
+	var httpReq http.Request
+	if req.HttpMethod == "GET" || req.GetMsg() == nil {
+		httpReq = http.Request{
+			Method: req.HttpMethod,
+			URL:    u,
+			Header: map[string][]string{"X-node-id": {req.NodeId}},
+		}
+	} else {
+		body := req.GetMsg()
+		httpReq = http.Request{
+			Body:          io.NopCloser(bytes.NewReader(body)),
+			ContentLength: int64(len(body)),
+			Header: map[string][]string{
+				"Content-Type": {"application/json"},
+				"X-node-id":    {req.NodeId},
+			},
+			Method: req.HttpMethod,
+			URL:    u,
+		}
 	}
-	logrus.Infof("sending request %+v to %s ", httpReq, u.String())
+
+	logrus.Infof("sending request %+v to %s with body %s", httpReq, u.String(), string(req.GetMsg()))
 
 	resp, err := c.Do(&httpReq)
 	if err != nil {

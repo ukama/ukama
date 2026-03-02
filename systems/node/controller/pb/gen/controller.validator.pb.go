@@ -21,18 +21,9 @@ func (this *PingNodeRequest) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
 	}
-	if this.RequestId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("RequestId", fmt.Errorf(`value '%v' must not be an empty string`, this.RequestId))
-	}
 	return nil
 }
 func (this *PingNodeResponse) Validate() error {
-	if this.NodeId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
-	}
-	if this.RequestId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("RequestId", fmt.Errorf(`value '%v' must not be an empty string`, this.RequestId))
-	}
 	return nil
 }
 
@@ -77,6 +68,9 @@ func (this *ToggleRfSwitchRequest) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
 	}
+	if this.State == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("State", fmt.Errorf(`value '%v' must not be an empty string`, this.State))
+	}
 	return nil
 }
 func (this *ToggleRfSwitchResponse) Validate() error {
@@ -104,5 +98,23 @@ func (this *RestartSiteRequest) Validate() error {
 	return nil
 }
 func (this *RestartNodeResponse) Validate() error {
+	return nil
+}
+func (this *ToggleNodeServiceRequest) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
+	if this.State == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("State", fmt.Errorf(`value '%v' must not be an empty string`, this.State))
+	}
+	return nil
+}
+func (this *ToggleNodeServiceResponse) Validate() error {
+	return nil
+}
+func (this *PublishMsgRequest) Validate() error {
+	if this.State == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("State", fmt.Errorf(`value '%v' must not be an empty string`, this.State))
+	}
 	return nil
 }

@@ -2,7 +2,7 @@
  "setup": {
   "name": "Admin",
   "org-name": "ukama",
-  "password": "@Pass2025.",
+  "password": "@Pass2026.",
   "country": "cod",
   "currency": "cdf",
   "email": "admin@ukama.com",
@@ -10,5 +10,5 @@
  },
  "key": "the-key-has-to-be-32-bytes-long!",
  "lago-api-key": "ad5ca9af-9d60-47e3-9b8c-43d354d5f6c7",
- "systems": "auth-services, services, init, inventory, nucleus, registry, dataplan, subscriber, notification, node, ukamaagent, messaging"
+ "systems": "auth-services, services, init, inventory, nucleus, registry, dataplan, subscriber, notification, node, ukamaagent, messaging, dummy, metrics"
 }

@@ -1,0 +1,89 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2026-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/metrics/reasoning/pb/gen";
+
+import "validator.proto";
+package ukama.metrics.reasoning.v1;
+
+service ReasoningService {
+    rpc StartScheduler(StartSchedulerRequest) returns (StartSchedulerResponse);
+    rpc StopScheduler(StopSchedulerRequest) returns (StopSchedulerResponse);
+    rpc GetAlgoStatsForMetric(GetAlgoStatsForMetricRequest) returns (GetAlgoStatsForMetricResponse);
+    rpc GetDomains(GetDomainsRequest) returns (GetDomainsResponse);
+}
+
+message GetAlgoStatsForMetricRequest {
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+    string metric = 2 [(validator.field) = {string_not_empty: true}, json_name = "metric"];
+}
+
+message GetAlgoStatsForMetricResponse {
+    AggregatedStats aggregated = 1 [json_name = "aggregated"];
+    Trend trend = 2 [json_name = "trend"];
+    Confidence confidence = 3 [json_name = "confidence"];
+    Projection projection = 4 [json_name = "projection"];
+    string state = 5 [json_name = "state"];
+}
+
+message GetDomainsRequest {
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+    string metric = 2 [(validator.field) = {string_not_empty: true}, json_name = "metric"];
+}
+
+message GetDomainsResponse {
+    Domain domain = 1 [json_name = "domain"];
+}
+
+message StartSchedulerRequest {}
+
+message StartSchedulerResponse {}
+
+message StopSchedulerRequest {}
+
+message StopSchedulerResponse {}
+
+message AggregatedStats {
+    int64 computed_at = 1 [json_name = "computed_at"];
+    double value = 2 [json_name = "value"];
+    double min = 3 [json_name = "min"];
+    double max = 4 [json_name = "max"];
+    double p95 = 5 [json_name = "p95"];
+    double mean = 6 [json_name = "mean"];
+    double median = 7 [json_name = "median"];
+    double sample_count = 8 [json_name = "sample_count"];
+    string aggregation = 9 [json_name = "aggregation"];
+    double noise_estimate = 10 [json_name = "noise_estimate"];
+}
+
+message Trend {
+    string type = 1 [json_name = "type"];
+    double value = 2 [json_name = "value"];
+}
+
+message Confidence {
+    double value = 1 [json_name = "value"];
+}
+
+message Projection {
+    string type = 1 [json_name = "type"];
+    double eta_sec = 2 [json_name = "eta_sec"];
+}
+
+message Domain {
+    string rule_id = 1 [json_name = "rule_id"];
+    string severity = 2 [json_name = "severity"];
+    string headline = 3 [json_name = "headline"];
+    string root_cause = 4 [json_name = "root_cause"];
+    string service_impact = 5 [json_name = "service_impact"];
+    double rule_confidence = 6 [json_name = "rule_confidence"];
+    int64 evaluated_at = 7 [json_name = "evaluated_at"];
+    int64 computed_at = 8 [json_name = "computed_at"];
+}

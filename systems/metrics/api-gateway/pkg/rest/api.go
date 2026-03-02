@@ -78,3 +78,17 @@ type GetWsMetricInput struct {
 
 type DummyParameters struct {
 }
+
+type GetAlgoStatsForMetricInput struct {
+	NodeID     string `path:"node" validate:"required"`
+	Metric string `path:"metric" validate:"required"`
+}
+
+type GetDomainStats struct {
+	NodeID     string `path:"node" validate:"required"`
+	Metric string `path:"metric" validate:"required"`
+}
+
+type StartSchedulerInput struct {}
+
+type StopSchedulerInput struct {}

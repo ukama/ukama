@@ -15,6 +15,7 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -113,9 +114,12 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 
 func pushMetrics(kpis config.NodeKPIs, nodeID string, scenario cenums.SCENARIOS, profile cenums.Profile) {
 	values := make(map[string]float64)
-
+	lNodeID := nodeID
 	for _, kpi := range kpis.KPIs {
-		labels := prometheus.Labels{"node_id": nodeID, "metric": kpi.Metric}
+		if kpi.Key == "ctl_memory_ddr_used" || kpi.Key == "ctl_soc_cpu_usage" {
+			lNodeID = strings.Replace(nodeID, "tnode", "anode", 1)
+		} 
+		labels := prometheus.Labels{"node_id": lNodeID, "metric": kpi.Metric}
 		switch kpi.Key {
 		case "unit_uptime":
 			kpi.KPI.With(labels).Inc()
