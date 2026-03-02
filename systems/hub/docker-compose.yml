@@ -5,8 +5,8 @@ services:
   image: quay.io/minio/minio
   command: server /tmp/data --console-address ":9001"
   ports:
-   - 9000:9000
-   - 9001:9001
+   - "0.0.0.0:9001:9000"
+   - "0.0.0.0:9002:9001"
   networks:
    - ukama-net
      # Don't copy those addresses in your application. Use the local docker socket to get them.
