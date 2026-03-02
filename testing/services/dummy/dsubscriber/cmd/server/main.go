@@ -73,16 +73,18 @@ func runGrpcServer() {
 
 	cdrC := clients.NewCDRClient(serviceConfig.Http.AgentNodeGateway)
 
-	ukamaAgentUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
+	initClient := ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode))
+
+	ukamaAgentUrl, err := ic.GetHostUrl(initClient,
 		ic.CreateHostString(serviceConfig.OrgName, "ukamaagent"), &serviceConfig.OrgName)
 	if err != nil {
-		log.Errorf("Failed to resolve ukama agent address: %v", err)
+		log.Fatalf("Failed to resolve ukama agent address: %v", err)
 	}
 
-	regUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
+	regUrl, err := ic.GetHostUrl(initClient,
 		ic.CreateHostString(serviceConfig.OrgName, "registry"), &serviceConfig.OrgName)
 	if err != nil {
-		log.Errorf("Failed to resolve registry address: %v", err)
+		log.Fatalf("Failed to resolve registry address: %v", err)
 	}
 
 	nodeClient := creg.NewNodeClient(regUrl.String())

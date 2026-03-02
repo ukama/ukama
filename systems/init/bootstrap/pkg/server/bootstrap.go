@@ -72,11 +72,13 @@ func NewBootstrapServerWithDeps(msgBus mb.MsgBusServiceClient, debug bool, looku
 	} else {
 		c, err := rest.InClusterConfig()
 		if err != nil {
-			panic(err.Error())
-		}
-		cs, err = kubernetes.NewForConfig(c)
-		if err != nil {
-			panic(err.Error())
+			log.Warnf("Not running in Kubernetes (in-cluster config unavailable: %v). Mesh pod spawning will be disabled.", err)
+			cs = nil
+		} else {
+			cs, err = kubernetes.NewForConfig(c)
+			if err != nil {
+				log.Fatalf("Failed to create Kubernetes client: %v", err)
+			}
 		}
 		dns = serverConfig.Config.ToDNSMap()
 	}

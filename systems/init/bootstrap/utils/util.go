@@ -38,6 +38,11 @@ func getPodName(orgName, nodeId string) string {
 }
 
 func SpawnReplica(ctx context.Context, node NodeMeshInfo, config *pkg.Config, clientSet kubernetes.Interface) error {
+	if clientSet == nil {
+		log.Debugf("Kubernetes client not available, skipping mesh pod spawn for node %s", node.NodeId)
+		return nil
+	}
+
 	namespace := config.OrgName + "-" + config.MeshNamespace
 	podNamePrefix := getPodName(config.OrgName, node.NodeId)
 
