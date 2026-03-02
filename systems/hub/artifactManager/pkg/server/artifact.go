@@ -182,7 +182,11 @@ func (s *ArtifcatServer) GetArtifact(ctx context.Context, in *pb.GetArtifactRequ
 	if err != nil {
 		return nil, err
 	}
-	defer rd.Close()
+	defer func() {
+		if cerr := rd.Close(); cerr != nil {
+			log.Errorf("Failed to close reader: %v", cerr)
+		}
+	}()
 
 	data, err := io.ReadAll(rd)
 	if err != nil {

@@ -49,14 +49,22 @@ func GetArtifactFromLocalStore(ctx context.Context, fname string, aType string, 
 	if err != nil {
 		return err
 	}
-	defer sourceFile.Close()
+	defer func() {
+		if cerr := sourceFile.Close(); cerr != nil {
+			log.Errorf("Failed to close source file %s: %v", cpath, cerr)
+		}
+	}()
 
 	/* Create a copy of file */
 	osFile, err := os.Create(dest)
 	if err != nil {
 		return err
 	}
-	defer osFile.Close()
+	defer func() {
+		if cerr := osFile.Close(); cerr != nil {
+			log.Errorf("Failed to close dest file %s: %v", dest, cerr)
+		}
+	}()
 
 	bytes, err := io.Copy(osFile, sourceFile)
 	if err != nil {
@@ -94,13 +102,21 @@ func GetArtifactFromS3(ctx context.Context, fname string, aType string, fversion
 		return err
 	}
 
-	defer r.Close()
+	defer func() {
+		if cerr := r.Close(); cerr != nil {
+			log.Errorf("Failed to close reader: %v", cerr)
+		}
+	}()
 
 	file, err := os.Create(dest)
 	if err != nil {
 		return fmt.Errorf("opening source archive: %v", err)
 	}
-	defer file.Close()
+	defer func() {
+		if cerr := file.Close(); cerr != nil {
+			log.Errorf("Failed to close file %s: %v", dest, cerr)
+		}
+	}()
 
 	bytes, err := io.Copy(file, r)
 	if err != nil {

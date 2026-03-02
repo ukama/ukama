@@ -63,7 +63,11 @@ func RunDistribution(ctx context.Context, serverCfg *pkg.DistributionConfig) err
 
 			return err
 		}
-		defer l.Close()
+		defer func() {
+			if cerr := l.Close(); cerr != nil {
+				logrus.Errorf("Failed to close log file: %v", cerr)
+			}
+		}()
 
 		handler = withLog(handler, log.New(l, "", log.LstdFlags))
 		logrus.Debugf("Distribution server logging at %s", serverCfg.LogFile)
@@ -165,7 +169,7 @@ func serve(ctx context.Context, storeOptions *pkg.SecurityConfig, addresses ...s
 
 			err := server.ListenAndServe()
 
-			fmt.Fprintln(stderr, err)
+			_, _ = fmt.Fprintln(stderr, err)
 			cancel()
 		}(addr)
 	}

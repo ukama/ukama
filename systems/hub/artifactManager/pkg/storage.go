@@ -267,10 +267,7 @@ func (m *MinioWrapper) createBucketIfMissing(bucketName string) error {
 	}
 
 	log.Infof("Bucket %s does not exist, creating it", bucketName)
-	objLocking := true
-	if IsDebugMode {
-		objLocking = false
-	}
+	objLocking := !IsDebugMode
 
 	err = m.minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{
 		ObjectLocking: objLocking,
