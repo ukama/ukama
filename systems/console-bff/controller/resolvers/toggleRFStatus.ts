@@ -19,6 +19,9 @@ export class ToggleRFStatusResolver {
     @Ctx() ctx: Context
   ): Promise<CBooleanResponse> {
     const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.toggleRFStatus(baseURL, data);
+    if (data.nodeId.includes("anode")) {
+      return dataSources.dataSource.toggleRFStatus(baseURL, data);
+    }
+    return { success: false };
   }
 }

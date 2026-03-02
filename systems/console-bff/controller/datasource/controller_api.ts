@@ -7,15 +7,12 @@
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
 
+
+
 import { VERSION } from "../../common/configs";
 import { TBooleanResponse } from "../../common/types";
-import {
-  RestartNodeInputDto,
-  RestartNodesInputDto,
-  RestartSiteInputDto,
-  ToggleInternetSwitchInputDto,
-  ToggleRFStatusInputDto,
-} from "../resolvers/types";
+import { RestartNodeInputDto, RestartNodesInputDto, RestartSiteInputDto, ToggleInternetSwitchInputDto, ToggleRFStatusInputDto } from "../resolvers/types";
+
 
 const CONTROLLER = "controller";
 
@@ -105,15 +102,21 @@ class ControllerApi extends RESTDataSource {
     req: ToggleRFStatusInputDto
   ): Promise<TBooleanResponse> => {
     this.logger.info(
-      `ToggleRFStatus [POST]: ${baseURL}/${VERSION}/${CONTROLLER}/nodes/${req.nodeId}/toggle-radio`
+      `ToggleRFStatus [POST]: ${baseURL}/${VERSION}/${CONTROLLER}/nodes/${req.nodeId.replace(
+        "tnode",
+        "anode"
+      )}/toggle-radio`
     );
 
     this.baseURL = baseURL;
     return this.post(
-      `/${VERSION}/${CONTROLLER}/nodes/${req.nodeId}/toggle-radio`,
+      `/${VERSION}/${CONTROLLER}/nodes/${req.nodeId.replace(
+        "tnode",
+        "anode"
+      )}/toggle-radio`,
       {
         body: {
-          status: req.status ? "on" : "off",
+          state: req.status ? "on" : "off",
         },
       }
     )
@@ -137,7 +140,7 @@ class ControllerApi extends RESTDataSource {
       `/${VERSION}/${CONTROLLER}/nodes/${req.nodeId}/toggle-service`,
       {
         body: {
-          status: req.status ? "on" : "off",
+          state: req.status ? "on" : "off",
         },
       }
     )
