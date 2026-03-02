@@ -253,48 +253,66 @@ func NewConfig() *Config {
 					),
 					Metric: "trx_disk_usage",
 				},
+				//// COM SOC KPIs ////
 				{
-					Key:    "com_memory_usage",
+					Key:    "com_memory_ddr_used",
 					Min:    getConfigValue("KPIRANGES_MEMORYUSAGE_MIN", 10),
 					Normal: getConfigValue("KPIRANGES_MEMORYUSAGE_NORMAL", 80),
 					Max:    getConfigValue("KPIRANGES_MEMORYUSAGE_MAX", 100),
 					KPI: prometheus.NewGaugeVec(
 						prometheus.GaugeOpts{
-							Name: "com_memory_usage",
+							Name: "com_memory_ddr_used",
 							Help: "Com Memory usage",
 						},
 						[]string{"node_id", "metric"},
 					),
-					Metric: "com_memory_usage",
+					Metric: "com_memory_ddr_used",
 				},
 				{
-					Key:    "com_cpu_usage",
+					Key:    "com_soc_cpu_usage",
 					Min:    getConfigValue("KPIRANGES_CPUUSAGE_MIN", 10),
 					Normal: getConfigValue("KPIRANGES_CPUUSAGE_NORMAL", 80),
 					Max:    getConfigValue("KPIRANGES_CPUUSAGE_MAX", 100),
 					KPI: prometheus.NewGaugeVec(
 						prometheus.GaugeOpts{
-							Name: "com_cpu_usage",
+							Name: "com_soc_cpu_usage",
 							Help: "Com CPU usage",
 						},
 						[]string{"node_id", "metric"},
 					),
-					Metric: "com_cpu_usage",
+					Metric: "com_soc_cpu_usage",
 				},
+				
 				{
-					Key:    "com_disk_usage",
-					Min:    getConfigValue("KPIRANGES_DISKUSAGE_MIN", 10),
-					Normal: getConfigValue("KPIRANGES_DISKUSAGE_NORMAL", 80),
-					Max:    getConfigValue("KPIRANGES_DISKUSAGE_MAX", 100),
+					Key:    "ctl_memory_ddr_used",
+					Min:    getConfigValue("KPIRANGES_MEMORYUSAGE_MIN", 10),
+					Normal: getConfigValue("KPIRANGES_MEMORYUSAGE_NORMAL", 80),
+					Max:    getConfigValue("KPIRANGES_MEMORYUSAGE_MAX", 100),
 					KPI: prometheus.NewGaugeVec(
 						prometheus.GaugeOpts{
-							Name: "com_disk_usage",
-							Help: "Com disk usage",
+							Name: "ctl_memory_ddr_used",
+							Help: "CTL Memory usage",
 						},
 						[]string{"node_id", "metric"},
 					),
-					Metric: "com_disk_usage",
+					Metric: "ctl_memory_ddr_used",
 				},
+				{
+					Key:    "ctl_soc_cpu_usage",
+					Min:    getConfigValue("KPIRANGES_CPUUSAGE_MIN", 10),
+					Normal: getConfigValue("KPIRANGES_CPUUSAGE_NORMAL", 80),
+					Max:    getConfigValue("KPIRANGES_CPUUSAGE_MAX", 100),
+					KPI: prometheus.NewGaugeVec(
+						prometheus.GaugeOpts{
+							Name: "ctl_soc_cpu_usage",
+							Help: "CTL CPU usage",
+						},
+						[]string{"node_id", "metric"},
+					),
+					Metric: "ctl_soc_cpu_usage",
+				},
+				
+				//// END ///
 				{
 					Key:    "txpower",
 					Min:    getConfigValue("KPIRANGES_TXPOWER_MIN", 25),

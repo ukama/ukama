@@ -75,6 +75,7 @@ type GrpcEndpoints struct {
 	Timeout   time.Duration
 	Exporter  string
 	Sanitizer string
+	Reasoning string
 }
 
 type HttpEndpoints struct {
@@ -94,8 +95,9 @@ func NewConfig() *Config {
 
 		Services: GrpcEndpoints{
 			Timeout:   3 * time.Second,
-			Exporter:  "0.0.0.0:9090",
+			Exporter:  "exporter:9090",
 			Sanitizer: "sanitizer:9090",
+			Reasoning: "reasoning:9090",
 		},
 		HttpServices: HttpEndpoints{
 			Timeout:     3 * time.Second,

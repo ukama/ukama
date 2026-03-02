@@ -1,0 +1,116 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2026-present, Ukama Inc.
+ */
+package utils
+
+import (
+	"fmt"
+	"math"
+	"strconv"
+	"strings"
+	"time"
+
+	log "github.com/sirupsen/logrus"
+	ukama "github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/metrics/reasoning/pkg"
+	"github.com/ukama/ukama/systems/metrics/reasoning/pkg/store"
+)
+
+const startEndKey = "start_end"
+
+// RoundToDecimalPoints rounds value to the specified number of decimal places.
+// Preserves NaN and Inf unchanged. Uses half-up rounding.
+func RoundToDecimalPoints(value float64, decimalPoints int) float64 {
+	if math.IsNaN(value) || math.IsInf(value, 0) {
+		return value
+	}
+	if decimalPoints < 0 {
+		return value
+	}
+	shift := math.Pow(10, float64(decimalPoints))
+	return math.Round(value*shift) / shift
+}
+
+type Nodes struct {
+	TNode string
+	ANode string
+}
+
+func startEndStoreKey(nodeID string) string {
+	return nodeID + "/" + startEndKey
+}
+
+func GetAlgoStatsStoreKey(nodeID string, metricKey string) string {
+	return nodeID + "/" + metricKey + "/" + "algo_stats"
+}
+
+// SortNodeIds validates a tower node ID and returns the tower + amp node pair.
+func SortNodeIds(nodeID string) (Nodes, error) {
+	nid, err := ukama.ValidateNodeId(nodeID)
+	if err != nil {
+		return Nodes{}, fmt.Errorf("validate node id: %w", err)
+	}
+
+	nodeType := nid.GetNodeType()
+	if nodeType != ukama.NODE_ID_TYPE_TOWERNODE {
+		return Nodes{}, fmt.Errorf("expected tower node, got %s", nid.String())
+	}
+
+	tNode := nid.String()
+	aNode := strings.Replace(tNode, nodeType, ukama.NODE_ID_TYPE_AMPNODE, 1)
+	return Nodes{TNode: tNode, ANode: aNode}, nil
+}
+
+// GetStartEndFromStore returns the next rolling window (start, end) for a node.
+// Stores previous end as new start to avoid overlapping queries.
+// If the stored window is stale (prevEnd too far in the past), resets to the current window.
+func GetStartEndFromStore(s *store.Store, nodeID string, interval int) (start, end string, err error) {
+	now := time.Now().Unix()
+	key := startEndStoreKey(nodeID)
+	value, err := s.Get(key)
+	if err != nil {
+		start = strconv.FormatInt(now-int64(interval), 10)
+		end = strconv.FormatInt(now, 10)
+		_ = s.Put(key, start+":"+end)
+		log.Warnf("No start/end in store for node %s, using current window", nodeID)
+		return start, end, nil
+	}
+
+	parts := strings.SplitN(value, ":", 2)
+	if len(parts) != 2 {
+		return "", "", fmt.Errorf("invalid stored value %q, expected start:end", value)
+	}
+
+	prevEnd, err := strconv.ParseInt(parts[1], 10, 64)
+	if err != nil {
+		return "", "", fmt.Errorf("invalid end timestamp %q: %w", parts[1], err)
+	}
+
+	// If stored window is stale (more than one interval behind now), reset to current window.
+	// This handles gaps when the job didn't run for a long time (scheduler stopped, service down, etc.).
+	if prevEnd+int64(interval) < now-int64(interval) {
+		start = strconv.FormatInt(now-int64(interval), 10)
+		end = strconv.FormatInt(now, 10)
+		_ = s.Put(key, start+":"+end)
+		log.Warnf("Stored start/end for node %s was stale (behind by %d sec), reset to current window", nodeID, now-(prevEnd+int64(interval)))
+		return start, end, nil
+	}
+
+	start = parts[1]
+	end = strconv.FormatInt(prevEnd+int64(interval), 10)
+	_ = s.Put(key, start+":"+end)
+	return start, end, nil
+}
+
+func ValidateMetricKey(metricKey string, metricsCfg pkg.Metrics, nodeType string) (string, error) {
+	for _, m := range metricsCfg.Metrics {
+		if m.Key == metricKey {
+			return m.MetricKey, nil
+		}
+	}
+	return "", fmt.Errorf("metric key %q is not valid for node type %s", metricKey, nodeType)
+}

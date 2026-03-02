@@ -340,6 +340,125 @@ func TestNodeClient_GetAll(t *testing.T) {
 	})
 }
 
+func TestNodeClient_List(t *testing.T) {
+	t.Run("NodesFound", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), registry.NodeEndpoint+"/list?")
+
+			nodes := `{"nodes":[{"id": "uk-sa2341-hnode-v0-a1a0", "name": "Node-A"}]}`
+
+			return &http.Response{
+				StatusCode: 200,
+				Status:     "200 OK",
+				Body:       io.NopCloser(bytes.NewBufferString(nodes)),
+				Header:     make(http.Header),
+			}
+		}
+
+		testNodeClient := registry.NewNodeClient("")
+		testNodeClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		nodes, err := testNodeClient.List(registry.ListNodesRequest{})
+
+		assert.NoError(tt, err)
+		assert.NotNil(tt, nodes)
+		assert.Equal(tt, 1, len(nodes.Nodes))
+		assert.Equal(tt, testNodeId, nodes.Nodes[0].Id)
+	})
+
+	t.Run("NodesFoundWithQueryParams", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Contains(tt, req.URL.String(), registry.NodeEndpoint+"/list?")
+			q := req.URL.Query()
+			assert.Equal(tt, "net-1", q.Get("network_id"))
+			assert.Equal(tt, "site-1", q.Get("site_id"))
+			assert.Equal(tt, "active", q.Get("state"))
+
+			nodes := `{"nodes":[{"id": "uk-sa2341-hnode-v0-a1a0", "name": "Node-A"}]}`
+
+			return &http.Response{
+				StatusCode: 200,
+				Status:     "200 OK",
+				Body:       io.NopCloser(bytes.NewBufferString(nodes)),
+				Header:     make(http.Header),
+			}
+		}
+
+		testNodeClient := registry.NewNodeClient("")
+		testNodeClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		nodes, err := testNodeClient.List(registry.ListNodesRequest{
+			NetworkId: "net-1",
+			SiteId:    "site-1",
+			State:     "active",
+		})
+
+		assert.NoError(tt, err)
+		assert.NotNil(tt, nodes)
+		assert.Equal(tt, 1, len(nodes.Nodes))
+	})
+
+	t.Run("NodesNotFound", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), registry.NodeEndpoint+"/list?")
+
+			resp := `{"error":"not found"}`
+
+			return &http.Response{
+				StatusCode: 404,
+				Status:     "404 NOT FOUND",
+				Body:       io.NopCloser(bytes.NewBufferString(resp)),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
+			}
+		}
+
+		testNodeClient := registry.NewNodeClient("")
+		testNodeClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		n, err := testNodeClient.List(registry.ListNodesRequest{})
+
+		assert.Error(tt, err)
+		assert.Nil(tt, n)
+	})
+
+	t.Run("InvalidResponsePayload", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), registry.NodeEndpoint+"/list?")
+
+			return &http.Response{
+				StatusCode: 200,
+				Status:     "200 OK",
+				Body:       io.NopCloser(bytes.NewBufferString(`OK`)),
+				Header:     make(http.Header),
+			}
+		}
+
+		testNodeClient := registry.NewNodeClient("")
+		testNodeClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		n, err := testNodeClient.List(registry.ListNodesRequest{})
+
+		assert.Error(tt, err)
+		assert.Nil(tt, n)
+	})
+
+	t.Run("RequestFailure", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), registry.NodeEndpoint+"/list?")
+
+			return nil
+		}
+
+		testNodeClient := registry.NewNodeClient("")
+		testNodeClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		n, err := testNodeClient.List(registry.ListNodesRequest{})
+
+		assert.Error(tt, err)
+		assert.Nil(tt, n)
+	})
+}
+
 func TestNodeClient_GetNodesBySite(t *testing.T) {
 	t.Run("NodesFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {

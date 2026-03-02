@@ -79,10 +79,24 @@ type AddToSiteRequest struct {
 	NetworkId string `json:"net_id"`
 }
 
+type ListNodesRequest struct {
+	NetworkId    string `json:"network_id"`
+	SiteId       string `json:"site_id"`
+	Connectivity string `json:"connectivity,omitempty"`
+	State        string `json:"state,omitempty"`
+	NodeId       string `json:"node_id"`
+	Type         string `json:"type"`
+}
+
+type ListNodesResponse struct {
+	Nodes []*NodeInfo `json:"nodes"`
+}
+
 type NodeClient interface {
 	Get(string) (*NodeInfo, error)
 	GetAll() (*Nodes, error)
 	GetNodesBySite(string) (*NodesBySite, error)
+	List(ListNodesRequest) (*ListNodesResponse, error)
 	Add(AddNodeRequest) (*NodeInfo, error)
 	Attach(string, AttachNodesRequest) error
 	Detach(string) error
@@ -275,6 +289,48 @@ func (n *nodeClient) GetNodesBySite(id string) (*NodesBySite, error) {
 	if err != nil {
 		log.Tracef("Failed to deserialize node info. Error message is: %s", err.Error())
 
+		return nil, fmt.Errorf("node info deserialization failure: %w", err)
+	}
+
+	return &nodes, nil
+}
+
+func (n *nodeClient) List(req ListNodesRequest) (*ListNodesResponse, error) {
+	log.Debugf("Listing nodes: %v", req)
+
+	nodes := ListNodesResponse{}
+
+	queryParams := url.Values{}
+
+	if req.NetworkId != "" {
+		queryParams.Add("network_id", req.NetworkId)
+	}
+	if req.SiteId != "" {
+		queryParams.Add("site_id", req.SiteId)
+	}
+	if req.Connectivity != "" {
+		queryParams.Add("connectivity", req.Connectivity)
+	}
+
+	if req.State != "" {
+		queryParams.Add("state", req.State)
+	}
+	if req.NodeId != "" {
+		queryParams.Add("node_id", req.NodeId)
+	}
+	if req.Type != "" {
+		queryParams.Add("type", req.Type)
+	}
+
+	resp, err := n.R.Get(n.u.String() + NodeEndpoint + "/list?" + queryParams.Encode())
+	if err != nil {
+		log.Errorf("ListNodes failure. error: %s", err.Error())
+		return nil, fmt.Errorf("ListNodes failure: %w", err)
+	}
+
+	err = json.Unmarshal(resp.Body(), &nodes)
+	if err != nil {
+		log.Tracef("Failed to deserialize node info. Error message is: %s", err.Error())
 		return nil, fmt.Errorf("node info deserialization failure: %w", err)
 	}
 
