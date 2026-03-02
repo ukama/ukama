@@ -120,6 +120,7 @@ services:
   depends_on:
    - health
    - postgresd-node
+   - initclient-node
 
  api-gateway-node:
   build: ./api-gateway
@@ -134,6 +135,7 @@ services:
   depends_on:
    - controller
    - postgresd-node
+   - initclient-node
 
  msgclient-node:
   build: ../services/msgClient
