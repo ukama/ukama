@@ -8,8 +8,7 @@ services:
    - POSTGRES_USER=postgres
    - POSTGRES_PASSWORD=Pass2020!
   networks:
-   ukama-net:
-    ipv4_address: 10.1.0.101
+   - ukama-net
   volumes:
    - postgress-data:/var/lib/postgresql
 
@@ -62,8 +61,7 @@ services:
    - 8072:8080
   restart: always
   networks:
-   ukama-net:
-    ipv4_address: 10.1.0.103
+   - ukama-net
   environment:
    - DEBUGMODE=true
    - AUTH_BYPASSAUTHMODE=true
@@ -77,8 +75,7 @@ services:
   ports:
    - 8073:8080
   networks:
-   ukama-net:
-    ipv4_address: 10.1.0.102
+   - ukama-net
   environment:
    - DEBUGMODE=true
    - AUTH_BYPASSAUTHMODE=true
