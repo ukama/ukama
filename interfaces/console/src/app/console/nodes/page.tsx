@@ -104,11 +104,15 @@ export default function Page() {
     switch (action) {
       case 'edit-node':
         break;
-      case NODE_ACTIONS_ENUM.NODE_OFF:
-        break;
       case NODE_ACTIONS_ENUM.NODE_RESTART:
         break;
-      case NODE_ACTIONS_ENUM.NODE_RF_OFF:
+      case NODE_ACTIONS_ENUM.NODE_RADIO_ON:
+        break;
+      case NODE_ACTIONS_ENUM.NODE_RADIO_OFF:
+        break;
+      case NODE_ACTIONS_ENUM.NODE_SERVICE_ON:
+        break;
+      case NODE_ACTIONS_ENUM.NODE_SERVICE_OFF:
         break;
     }
   };
