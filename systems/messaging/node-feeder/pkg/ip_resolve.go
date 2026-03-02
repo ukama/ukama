@@ -10,6 +10,7 @@ package pkg
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -42,12 +43,12 @@ func (r *nodeIpResolver) Resolve(nodeId ukama.NodeID) (string, error) {
 		return "", err
 	}
 
-	res, err := svc.GetNode(ctx, &pb.GetNodeRequest{NodeId: nodeId.String()})
+	res, err := svc.GetMesh(ctx, &pb.GetMeshRequest{NodeId: nodeId.String()})
 	if err != nil {
 		logrus.Errorf("Error resolving node %v: %v", nodeId, err)
 		return "", err
 	}
 
-	logrus.Infof("Resolved node %v to %v:%v", nodeId, res.NodeIp, res.NodePort)
-	return res.NodeIp + ":8082" , nil
+	logrus.Infof("Resolved node %v to %v:%v", nodeId, res.MeshIp, res.MeshPort)
+	return res.MeshIp + ":" + strconv.Itoa(int(res.MeshPort)), nil
 }
