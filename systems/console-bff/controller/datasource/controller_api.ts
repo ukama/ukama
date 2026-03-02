@@ -7,12 +7,15 @@
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
 
-
-
 import { VERSION } from "../../common/configs";
 import { TBooleanResponse } from "../../common/types";
-import { RestartNodeInputDto, RestartNodesInputDto, RestartSiteInputDto, ToggleInternetSwitchInputDto, ToggleRFStatusInputDto } from "../resolvers/types";
-
+import {
+  RestartNodeInputDto,
+  RestartNodesInputDto,
+  RestartSiteInputDto,
+  ToggleInternetSwitchInputDto,
+  ToggleRFStatusInputDto,
+} from "../resolvers/types";
 
 const CONTROLLER = "controller";
 
