@@ -59,6 +59,9 @@ filter_make_sys() {
             "ukamaagent")
                 PATHS+=("ukama-agent/api-gateway" "ukama-agent/cdr" "ukama-agent/asr" "ukama-agent/node-gateway")
                 ;;
+            "hub")
+                PATHS+=("hub/api-gateway" "hub/artifactmanager" "hub/distributor" "hub/node-gateway")
+                ;;
         esac
     done
 }
