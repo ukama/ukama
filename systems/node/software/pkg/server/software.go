@@ -28,7 +28,6 @@ import (
 	providers "github.com/ukama/ukama/systems/node/software/pkg/provider"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 )
 
 type SoftwareServer struct {
@@ -63,7 +62,6 @@ func (s *SoftwareServer) CreateSoftwareUpdate(ctx context.Context, req *pb.Creat
 	softwareUpdate := &db.Software{
 		Id:          uuid.NewV4(),
 		Name:        req.Name,
-		Space:       req.Space,
 		Tag:         req.Tag,
 		ReleaseDate: time.Now(),
 		Status:      db.Beta,
@@ -120,14 +118,11 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 		return nil, grpc.SqlErrorToGrpc(err, "Failed to get running apps")
 	}
 
+	log.Infof("Running apps %+v", runningApps.RunningApps)
+
 	for _, capp := range runningApps.RunningApps.Capps {
 		log.Infof("Running app %s", capp.Name)
-		softReq := &pb.UpdateSoftwareRequest{
-			NodeId: runningApps.RunningApps.NodeId,
-			Tag:    capp.Tag,
-			Name:   capp.Name,
-			Space:  capp.Space,
-		}
+		
 		if capp.Tag == softwareUpdate.Tag {
 			log.Infof("App %s is already running and tag %s", capp.Name, capp.Tag)
 			msg := fmt.Sprintf("Capp %s is already running and tag %s", capp.Name, capp.Tag)
@@ -136,11 +131,7 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 			}, nil
 		}
 
-		data, err := proto.Marshal(softReq)
-		if err != nil {
-			log.Fatalf("Failed to marshal message: %v", err)
-		}
-		err = s.publishMessage(s.orgName+"."+"."+"."+runningApps.RunningApps.NodeId, data, capp.Space, capp.Name, capp.Tag)
+		err = s.publishMessage(s.orgName+"."+"."+"."+nId.String(), "POST", "/starter/v1/update/"+softwareUpdate.Name+"/"+softwareUpdate.Tag, nId.String())
 		if err != nil {
 			log.Errorf("Failed to publish message. Errors %s", err.Error())
 			return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
@@ -158,22 +149,20 @@ func dbSoftwareToPbSoftwareUpdate(software *db.Software) *pb.SoftwareUpdate {
 		Id:     software.Id.String(),
 		Name:   software.Name,
 		Tag:    software.Tag,
-		Space:  software.Space,
 		Status: pb.Status(software.Status),
 	}
 }
 
-func (c *SoftwareServer) publishMessage(target string, anyMsg []byte, space string, name string, tag string) error {
+func (c *SoftwareServer) publishMessage(target string, method string, path string, nodeId string) error {
 	route := "request.cloud.local" + "." + c.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
-
 	msg := &cpb.NodeFeederMessage{
 		Target:     target,
-		HttpMethod: "POST",
-		Path:       "wimc/v1/ping",
-		Msg:        anyMsg,
+		HttpMethod: method,
+		Path:       path,
+		Msg:        []byte(""),
+		NodeId:     nodeId,
 	}
-	log.Infof("Published controller %s on route %s on target %s ", anyMsg, route, target)
-
+	log.Infof("Published software update node %s on path %s on target %s ", nodeId, path, target)
 	err := c.msgbus.PublishRequest(route, msg)
 	return err
 }

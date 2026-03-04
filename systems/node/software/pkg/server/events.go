@@ -15,9 +15,6 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
-
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 type SoftwareUpdateEventServer struct {
@@ -43,7 +40,6 @@ func (n *SoftwareUpdateEventServer) EventNotification(ctx context.Context, e *ep
 		_, err = n.s.CreateSoftwareUpdate(ctx, &pb.CreateSoftwareUpdateRequest{
 			Name: msg.Name,
 			Tag:  msg.Version,
-			Space: "event",
 		})
 		if err != nil {
 			return nil, err
@@ -55,15 +51,4 @@ func (n *SoftwareUpdateEventServer) EventNotification(ctx context.Context, e *ep
 	}
 
 	return &epb.EventResponse{}, nil
-}
-
-func (n *SoftwareUpdateEventServer) unmarshalSoftwareHubEvent(msg *anypb.Any) (*epb.EventArtifactChunkReady, error) {
-	p := &epb.EventArtifactChunkReady{}
-
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal node health  message with : %+v. Error %s.", msg, err.Error())
-		return nil, err
-	}
-	return p, nil
 }

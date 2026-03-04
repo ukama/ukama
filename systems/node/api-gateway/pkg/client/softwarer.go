@@ -59,14 +59,13 @@ func (s *SoftwareManager) Close() {
 	}
 }
 
-func (s *SoftwareManager) UpdateSoftware(space string, name string, tag string,
+func (s *SoftwareManager) UpdateSoftware(name string, tag string,
 	nodeId string) (*pb.UpdateSoftwareResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
 	return s.client.UpdateSoftware(ctx, &pb.UpdateSoftwareRequest{
 		NodeId: nodeId,
-		Space:  space,
 		Name:   name,
 		Tag:    tag,
 	})

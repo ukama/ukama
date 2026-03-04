@@ -12,9 +12,9 @@ type softwareManager struct {
 	mock.Mock
 }
 
-// UpdateSoftware provides a mock function with given fields: space, name, tag, nodeId
-func (_m *softwareManager) UpdateSoftware(space string, name string, tag string, nodeId string) (*gen.UpdateSoftwareResponse, error) {
-	ret := _m.Called(space, name, tag, nodeId)
+// UpdateSoftware provides a mock function with given fields: name, tag, nodeId
+func (_m *softwareManager) UpdateSoftware(name string, tag string, nodeId string) (*gen.UpdateSoftwareResponse, error) {
+	ret := _m.Called(name, tag, nodeId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateSoftware")
@@ -22,19 +22,19 @@ func (_m *softwareManager) UpdateSoftware(space string, name string, tag string,
 
 	var r0 *gen.UpdateSoftwareResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string) (*gen.UpdateSoftwareResponse, error)); ok {
-		return rf(space, name, tag, nodeId)
+	if rf, ok := ret.Get(0).(func(string, string, string) (*gen.UpdateSoftwareResponse, error)); ok {
+		return rf(name, tag, nodeId)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string) *gen.UpdateSoftwareResponse); ok {
-		r0 = rf(space, name, tag, nodeId)
+	if rf, ok := ret.Get(0).(func(string, string, string) *gen.UpdateSoftwareResponse); ok {
+		r0 = rf(name, tag, nodeId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.UpdateSoftwareResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string) error); ok {
-		r1 = rf(space, name, tag, nodeId)
+	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
+		r1 = rf(name, tag, nodeId)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -84,7 +84,6 @@ type UpdateSoftwareRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	NodeId        string                 `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
 	Tag           string                 `protobuf:"bytes,2,opt,name=tag,proto3" json:"tag,omitempty"`
-	Space         string                 `protobuf:"bytes,3,opt,name=space,proto3" json:"space,omitempty"`
 	Name          string                 `protobuf:"bytes,5,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -130,13 +129,6 @@ func (x *UpdateSoftwareRequest) GetNodeId() string {
 func (x *UpdateSoftwareRequest) GetTag() string {
 	if x != nil {
 		return x.Tag
-	}
-	return ""
-}
-
-func (x *UpdateSoftwareRequest) GetSpace() string {
-	if x != nil {
-		return x.Space
 	}
 	return ""
 }
@@ -196,7 +188,6 @@ type CreateSoftwareUpdateRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Tag           string                 `protobuf:"bytes,2,opt,name=tag,proto3" json:"tag,omitempty"`
-	Space         string                 `protobuf:"bytes,3,opt,name=space,proto3" json:"space,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -241,13 +232,6 @@ func (x *CreateSoftwareUpdateRequest) GetName() string {
 func (x *CreateSoftwareUpdateRequest) GetTag() string {
 	if x != nil {
 		return x.Tag
-	}
-	return ""
-}
-
-func (x *CreateSoftwareUpdateRequest) GetSpace() string {
-	if x != nil {
-		return x.Space
 	}
 	return ""
 }
@@ -300,7 +284,6 @@ type SoftwareUpdate struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Tag           string                 `protobuf:"bytes,2,opt,name=tag,proto3" json:"tag,omitempty"`
-	Space         string                 `protobuf:"bytes,3,opt,name=space,proto3" json:"space,omitempty"`
 	Status        Status                 `protobuf:"varint,4,opt,name=status,proto3,enum=ukama.node.software.v1.Status" json:"status,omitempty"`
 	Name          string                 `protobuf:"bytes,5,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -347,13 +330,6 @@ func (x *SoftwareUpdate) GetId() string {
 func (x *SoftwareUpdate) GetTag() string {
 	if x != nil {
 		return x.Tag
-	}
-	return ""
-}
-
-func (x *SoftwareUpdate) GetSpace() string {
-	if x != nil {
-		return x.Space
 	}
 	return ""
 }
@@ -456,24 +432,21 @@ var File_software_proto protoreflect.FileDescriptor
 
 const file_software_proto_rawDesc = "" +
 	"\n" +
-	"\x0esoftware.proto\x12\x16ukama.node.software.v1\x1a\x0fvalidator.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/wrappers.proto\"k\n" +
+	"\x0esoftware.proto\x12\x16ukama.node.software.v1\x1a\x0fvalidator.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/wrappers.proto\"U\n" +
 	"\x15UpdateSoftwareRequest\x12\x16\n" +
 	"\x06nodeId\x18\x01 \x01(\tR\x06nodeId\x12\x10\n" +
-	"\x03tag\x18\x02 \x01(\tR\x03tag\x12\x14\n" +
-	"\x05space\x18\x03 \x01(\tR\x05space\x12\x12\n" +
+	"\x03tag\x18\x02 \x01(\tR\x03tag\x12\x12\n" +
 	"\x04name\x18\x05 \x01(\tR\x04name\"2\n" +
 	"\x16UpdateSoftwareResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage\"Y\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\"C\n" +
 	"\x1bCreateSoftwareUpdateRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x10\n" +
-	"\x03tag\x18\x02 \x01(\tR\x03tag\x12\x14\n" +
-	"\x05space\x18\x03 \x01(\tR\x05space\"o\n" +
+	"\x03tag\x18\x02 \x01(\tR\x03tag\"o\n" +
 	"\x1cCreateSoftwareUpdateResponse\x12O\n" +
-	"\x0fsoftware_update\x18\x01 \x01(\v2&.ukama.node.software.v1.SoftwareUpdateR\x0esoftwareUpdate\"\x9f\x01\n" +
+	"\x0fsoftware_update\x18\x01 \x01(\v2&.ukama.node.software.v1.SoftwareUpdateR\x0esoftwareUpdate\"\x89\x01\n" +
 	"\x0eSoftwareUpdate\x12\x19\n" +
 	"\x02id\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x02id\x12\x10\n" +
-	"\x03tag\x18\x02 \x01(\tR\x03tag\x12\x14\n" +
-	"\x05space\x18\x03 \x01(\tR\x05space\x126\n" +
+	"\x03tag\x18\x02 \x01(\tR\x03tag\x126\n" +
 	"\x06status\x18\x04 \x01(\x0e2\x1e.ukama.node.software.v1.StatusR\x06status\x12\x12\n" +
 	"\x04name\x18\x05 \x01(\tR\x04name\" \n" +
 	"\x1eGetLatestSoftwareUpdateRequest\"r\n" +
