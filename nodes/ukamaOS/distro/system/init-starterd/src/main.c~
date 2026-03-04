@@ -1,0 +1,169 @@
+#include <errno.h>
+#include <signal.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+
+#include "usys_log.h"
+
+#define BOOT_SERVICE_NAME "starter-bootstrap"
+#define BOOT_DEFAULT_ROOT "/ukama/system/starter"
+#define BOOT_EXIT_SWITCH  77
+
+static volatile sig_atomic_t gTerminate = 0;
+
+static void on_signal(int sig) {
+
+    (void)sig;
+    gTerminate = 1;
+}
+
+static void setup_signals(void) {
+
+    struct sigaction sa;
+
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = on_signal;
+    sigaction(SIGTERM, &sa, NULL);
+    sigaction(SIGINT, &sa, NULL);
+}
+
+static char* get_str(const char *name, const char *defVal) {
+
+    const char *v;
+
+    v = getenv(name);
+    if (v && *v) return strdup(v);
+    return defVal ? strdup(defVal) : NULL;
+}
+
+static bool path_exists(const char *p) {
+
+    struct stat st;
+    if (!p) return false;
+    return stat(p, &st) == 0;
+}
+
+static bool symlink_atomic(const char *linkPath, const char *target) {
+
+    char tmp[512];
+
+    snprintf(tmp, sizeof(tmp), "%s.tmp.%d", linkPath, getpid());
+    unlink(tmp);
+
+    if (symlink(target, tmp) != 0) return false;
+    if (rename(tmp, linkPath) != 0) {
+        unlink(tmp);
+        return false;
+    }
+
+    return true;
+}
+
+static char* readlink_dup(const char *p) {
+
+    char buf[512];
+    ssize_t n;
+
+    n = readlink(p, buf, sizeof(buf) - 1);
+    if (n <= 0) return NULL;
+    buf[n] = '\0';
+    return strdup(buf);
+}
+
+static bool maybe_flip_slot(const char *root) {
+
+    char cur[512];
+    char nextFile[512];
+    char *next;
+
+    snprintf(cur, sizeof(cur), "%s/current", root);
+    snprintf(nextFile, sizeof(nextFile), "%s/next", root);
+
+    next = readlink_dup(nextFile);
+    if (!next) return false;
+
+    if (!symlink_atomic(cur, next)) {
+        free(next);
+        return false;
+    }
+
+    unlink(nextFile);
+    free(next);
+    return true;
+}
+
+static int run_once(const char *root) {
+
+    char cur[512];
+    char bin[512];
+    pid_t pid;
+    int status;
+
+    snprintf(cur, sizeof(cur), "%s/current", root);
+    snprintf(bin, sizeof(bin), "%s/%s", cur, "starter.d");
+
+    if (!path_exists(bin)) {
+        usys_log_error("bootstrap: missing %s", bin);
+        return 127;
+    }
+
+    pid = fork();
+    if (pid < 0) return 127;
+
+    if (pid == 0) {
+        execl(bin, "starter.d", (char *)NULL);
+        _exit(127);
+    }
+
+    waitpid(pid, &status, 0);
+
+    if (WIFEXITED(status)) return WEXITSTATUS(status);
+    if (WIFSIGNALED(status)) return 128 + WTERMSIG(status);
+    return 127;
+}
+
+int main(int argc, char **argv) {
+
+    char *root;
+    int code;
+    int backoff;
+
+    (void)argc;
+    (void)argv;
+
+    setup_signals();
+
+    usys_log_set_service(BOOT_SERVICE_NAME);
+    usys_log_set_level(USYS_LOG_INFO);
+
+    root = get_str("STARTER_BOOT_ROOT", BOOT_DEFAULT_ROOT);
+    if (!root) return 1;
+
+    backoff = 1;
+
+    while (!gTerminate) {
+
+        code = run_once(root);
+
+        if (code == 0) {
+            backoff = 1;
+        } else if (code == BOOT_EXIT_SWITCH) {
+            usys_log_info("bootstrap: switch requested");
+            maybe_flip_slot(root);
+            backoff = 1;
+        } else {
+            usys_log_error("bootstrap: starterd exit %d", code);
+            sleep(backoff);
+            backoff *= 2;
+            if (backoff > 30) backoff = 30;
+        }
+    }
+
+    free(root);
+    return 0;
+}
