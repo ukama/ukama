@@ -130,7 +130,8 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	{
 		artifact := auth.Group("/hub", "Artifact store", "Artifact operations")
 		artifact.GET("/:type/:name/:filename", formatDoc("Get Artifact contents", "Get artifact contents or its index files"), tonic.Handler(r.artifactGetHandler, http.StatusOK))
-		artifact.PUT("/:type/:name/:version", formatDoc("Upload artifact", "Upload a artifact contents"), tonic.Handler(r.artifactPutHandler, http.StatusCreated))
+		artifact.PUT("/:type/:name/:version", formatDocWithFileUpload("Upload artifact", "Upload a gzip-compressed artifact (.tar.gz) via multipart form or raw body"),
+			tonic.Handler(r.artifactPutHandler, http.StatusCreated))
 		artifact.GET("/:type/:name", formatDoc("List of versions for artifact", "List all the available version and location info for artifact"), tonic.Handler(r.artifactListVersionsHandler, http.StatusOK))
 		artifact.GET("/:type", formatDoc("List all artifact", "List all artifact of the matching type"), tonic.Handler(r.listArtifactsHandler, http.StatusOK))
 
@@ -138,6 +139,8 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		distr.GET("/*proxypath", formatDoc("Get chunks", "Get artifact chunks"), tonic.Handler(r.proxy, http.StatusOK))
 
 	}
+
+	r.patchUploadSpec()
 }
 
 func (r *Router) proxy(c *gin.Context) error {
@@ -204,16 +207,36 @@ func (r *Router) artifactPutHandler(c *gin.Context) (*apb.StoreArtifactResponse,
 
 	var buf bytes.Buffer
 
-	// Copy the uploaded data to the buffer
-	size, err := io.Copy(&buf, c.Request.Body)
-	if err != nil {
-		log.Errorf("Failed to copy buffer: %v", err)
+	file, _, fErr := c.Request.FormFile("file")
+	if fErr == nil {
+		defer func() { _ = file.Close() }()
+		size, cpErr := io.Copy(&buf, file)
+		if cpErr != nil {
+			log.Errorf("Failed to copy multipart file: %v", cpErr)
+			return nil, rest.HttpError{
+				HttpCode: http.StatusInternalServerError,
+				Message:  fmt.Sprintf("copy multipart file err: %s", cpErr.Error()),
+			}
+		}
+		log.Infof("Got multipart tar file with size %d", size)
+	} else {
+		size, cpErr := io.Copy(&buf, c.Request.Body)
+		if cpErr != nil {
+			log.Errorf("Failed to copy buffer: %v", cpErr)
+			return nil, rest.HttpError{
+				HttpCode: http.StatusInternalServerError,
+				Message:  fmt.Sprintf("copy to buffer err: %s", cpErr.Error()),
+			}
+		}
+		log.Infof("Got tar file with size %d", size)
+	}
+
+	if buf.Len() == 0 {
 		return nil, rest.HttpError{
-			HttpCode: http.StatusInternalServerError,
-			Message:  fmt.Sprintf("copy to buffer err: %s", err.Error()),
+			HttpCode: http.StatusBadRequest,
+			Message:  "empty request body: upload a gzip file via multipart form field 'file' or raw body",
 		}
 	}
-	log.Infof("Got tar file with size %d", size)
 
 	err = IsValidGzip(buf)
 	if err != nil {
@@ -277,4 +300,47 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 		info.Summary = summary
 		info.Description = description
 	}}
+}
+
+func formatDocWithFileUpload(summary string, description string) []fizz.OperationOption {
+	return []fizz.OperationOption{
+		func(info *openapi.OperationInfo) {
+			info.Summary = summary
+			info.Description = description
+			info.InputModel = &ArtifactUploadRequest{}
+		},
+	}
+}
+
+func (r *Router) patchUploadSpec() {
+	api := r.f.Generator().API()
+	pathItem := api.Paths["/v1/hub/{type}/{name}/{version}"]
+	if pathItem == nil || pathItem.PUT == nil {
+		log.Warn("Could not patch OpenAPI spec for artifact upload endpoint")
+		return
+	}
+
+	pathItem.PUT.RequestBody = &openapi.RequestBody{
+		Description: "Gzip compressed artifact file (.tar.gz)",
+		Required:    true,
+		Content: map[string]*openapi.MediaType{
+			"multipart/form-data": {
+				Schema: &openapi.SchemaOrRef{
+					Schema: &openapi.Schema{
+						Type: "object",
+						Properties: map[string]*openapi.SchemaOrRef{
+							"file": {
+								Schema: &openapi.Schema{
+									Type:        "string",
+									Format:      "binary",
+									Description: "Gzip compressed artifact file (.tar.gz)",
+								},
+							},
+						},
+						Required: []string{"file"},
+					},
+				},
+			},
+		},
+	}
 }
