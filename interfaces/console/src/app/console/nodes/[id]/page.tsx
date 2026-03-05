@@ -475,7 +475,13 @@ const Page: React.FC<INodePage> = ({ params }) => {
         });
         break;
       default:
-        return;
+       setSnackbarMessage({
+        id: 'node-action-error-msg',
+        message: 'Invalid action.',
+        type: 'error',
+        show: true,
+      });
+      break;
     }
   };
 
