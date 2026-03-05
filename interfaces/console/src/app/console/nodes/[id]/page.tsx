@@ -15,6 +15,7 @@ import {
   useGetNodesQuery,
   useRestartNodeMutation,
   useToggleRfStatusMutation,
+  useToggleServiceMutation,
   useUpdateNodeMutation,
 } from '@/client/graphql/generated';
 import {
@@ -236,6 +237,30 @@ const Page: React.FC<INodePage> = ({ params }) => {
     },
   });
 
+  const [toggleService] = useToggleServiceMutation({
+    fetchPolicy: 'network-only',
+    onCompleted: (_, context) => {
+      setSnackbarMessage({
+        id: 'toggle-service-status-success-msg',
+        message: `Service status turned ${
+          context?.variables?.data?.status ? 'On' : 'Off'
+        } successfully.`,
+        type: 'success',
+        show: true,
+      });
+    },
+    onError: (_, context) => {
+      setSnackbarMessage({
+        id: 'toggle-service-status-error-msg',
+        message: `Failed to turn service status ${
+          context?.variables?.data?.status ? 'On' : 'Off'
+        }.`,
+        type: 'error',
+        show: true,
+      });
+    },
+  });
+
   useEffect(() => {
     const to = getUnixTime();
     const from = to - STAT_STEP_29;
@@ -408,21 +433,55 @@ const Page: React.FC<INodePage> = ({ params }) => {
           },
         });
         break;
-      case NODE_ACTIONS_ENUM.NODE_RF_ON:
-      case NODE_ACTIONS_ENUM.NODE_RF_OFF:
-        if (currentNode?.id) {
-          toggleRFStatus({
-            variables: {
-              data: {
-                nodeId: currentNode.id,
-                status: action === NODE_ACTIONS_ENUM.NODE_RF_ON,
-              },
+      case NODE_ACTIONS_ENUM.NODE_RADIO_ON:
+        toggleRFStatus({
+          variables: {
+            data: {
+              nodeId: currentNode?.id ?? '',
+              status: true,
             },
-          });
-        }
+          },
+        });
+        break;
+
+      case NODE_ACTIONS_ENUM.NODE_RADIO_OFF:
+        toggleRFStatus({
+          variables: {
+            data: {
+              nodeId: currentNode?.id ?? '',
+              status: false,
+            },
+          },
+        });
+        break;
+      case NODE_ACTIONS_ENUM.NODE_SERVICE_ON:
+        toggleService({
+          variables: {
+            data: {
+              nodeId: currentNode?.id ?? '',
+              status: true,
+            },
+          },
+        });
+        break;
+      case NODE_ACTIONS_ENUM.NODE_SERVICE_OFF:
+        toggleService({
+          variables: {
+            data: {
+              nodeId: currentNode?.id ?? '',
+              status: false,
+            },
+          },
+        });
         break;
       default:
-        return;
+       setSnackbarMessage({
+        id: 'node-action-error-msg',
+        message: 'Invalid action.',
+        type: 'error',
+        show: true,
+      });
+      break;
     }
   };
 
@@ -550,7 +609,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
         <NodeActionUI
           value={nodeAction.progress}
           nodeType={currentNode?.type}
-          action={nodeAction.actionInitiated || NODE_ACTIONS_ENUM.NODE_OFF}
+          action={nodeAction.actionInitiated || NODE_ACTIONS_ENUM.NODE_RESTART}
           connectivity={
             (currentNode?.status?.connectivity as NodeConnectivityEnum) ||
             undefined

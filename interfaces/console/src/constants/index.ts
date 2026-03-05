@@ -35,9 +35,10 @@ export const SETTING_MENU = [
 
 export const NODE_ACTIONS_ENUM = {
   NODE_RESTART: 'node-restart',
-  NODE_RF_OFF: 'node-rf-off',
-  NODE_OFF: 'node-off',
-  NODE_RF_ON: 'node-rf-on',
+  NODE_RADIO_ON: 'node-radio-on',
+  NODE_RADIO_OFF: 'node-radio-off',
+  NODE_SERVICE_ON: 'node-service-on',
+  NODE_SERVICE_OFF: 'node-service-off',
 };
 
 export const NODE_ACTIONS_BUTTONS = [
@@ -45,10 +46,32 @@ export const NODE_ACTIONS_BUTTONS = [
     id: NODE_ACTIONS_ENUM.NODE_RESTART,
     name: 'Restart',
     consent: 'Are you sure you want to restart node?',
+    type: 'button',
   },
-  { id: NODE_ACTIONS_ENUM.NODE_RF_OFF, name: 'Turn RF Off' },
-  { id: NODE_ACTIONS_ENUM.NODE_RF_ON, name: 'Turn RF On' },
-  // { id: 'node-on-off', name: 'Turn Node Off' },
+  {
+    id: NODE_ACTIONS_ENUM.NODE_RADIO_ON,
+    name: 'Turn Radio On',
+    type: 'toggle',
+    consent: 'Are you sure you want to turn the radio on?',
+  },
+  {
+    id: NODE_ACTIONS_ENUM.NODE_RADIO_OFF,
+    name: 'Turn Radio Off',
+    type: 'toggle',
+    consent: 'Are you sure you want to turn the radio off?',
+  },
+  {
+    id: NODE_ACTIONS_ENUM.NODE_SERVICE_ON,
+    name: 'Turn Service On',
+    type: 'toggle',
+    consent: 'Are you sure you want to turn the service on?',
+  },
+  {
+    id: NODE_ACTIONS_ENUM.NODE_SERVICE_OFF,
+    name: 'Turn Service Off',
+    type: 'toggle',
+    consent: 'Are you sure you want to turn the service off?',
+  },
 ];
 
 export const SITE_CONFIG_STEPS = [
