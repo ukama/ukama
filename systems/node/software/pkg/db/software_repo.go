@@ -10,12 +10,12 @@ package db
 
 import (
 	"github.com/ukama/ukama/systems/common/sql"
-	"gorm.io/gorm"
 )
 
 type SoftwareRepo interface {
-	CreateSoftwareUpdate(Software *Software, nestedFunc func(string, string) error) error
-	GetLatestSoftwareUpdate() (*Software, error)
+	Create(Software *Software) error
+	GetAll(nodeId string, status string) ([]Software, error)
+	Update(Software *Software) error
 }
 
 type softwareRepo struct {
@@ -27,24 +27,20 @@ func NewSoftwareRepo(db sql.Db) SoftwareRepo {
 		Db: db,
 	}
 }
-func (r *softwareRepo) CreateSoftwareUpdate(Software *Software, nestedFunc func(string, string) error) error {
-	err := r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		if nestedFunc != nil {
-			nestErr := nestedFunc("", "")
-			if nestErr != nil {
-				return nestErr
-			}
-		}
-		if err := tx.Create(Software).Error; err != nil {
-			return err
-		}
-		return nil
-	})
-	return err
+
+func (r *softwareRepo) Create(Software *Software) error {
+	return r.Db.GetGormDb().Create(Software).Error
 }
 
-func (r *softwareRepo) GetLatestSoftwareUpdate() (*Software, error) {
-	var Software Software
-	err := r.Db.GetGormDb().Order("release_date desc").First(&Software).Error
-	return &Software, err
+func (r *softwareRepo) GetAll(nodeId string, status string) ([]Software, error) {
+	var Software []Software
+	err := r.Db.GetGormDb().Where("node_id = ? AND status = ?", nodeId, status).Find(&Software).Error
+	if err != nil {
+		return nil, err
+	}
+	return Software, nil
+}
+
+func (r *softwareRepo) Update(Software *Software) error {
+	return r.Db.GetGormDb().Save(Software).Error
 }

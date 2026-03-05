@@ -1,0 +1,21 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2026-present, Ukama Inc.
+ */
+
+ syntax = "proto3";
+
+ option go_package = "github.com/ukama/ukama/systems/common/pb/gen/ukama";
+ 
+ package ukama.common.v1;
+
+ enum SoftwareStatus {
+    SOFTWARE_STATUS_INVALID = 0;
+    SOFTWARE_STATUS_UP_TO_DATE = 1;
+    SOFTWARE_STATUS_UPDATE_AVAILABLE = 2;
+    SOFTWARE_STATUS_UPDATE_IN_PROGRESS = 3;
+    SOFTWARE_STATUS_UPDATE_FAILED = 4;
+}

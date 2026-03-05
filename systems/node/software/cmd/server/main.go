@@ -62,7 +62,7 @@ func initConfig() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
-	err := d.Init(&db.Software{})
+	err := d.Init(&db.Software{}, &db.App{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -82,11 +82,11 @@ func runGrpcServer(gormdb sql.Db) {
 
 	softServer := server.NewSoftwareServer(svcConf.OrgName, db.NewSoftwareRepo(gormdb),
 		mbClient, svcConf.DebugMode, providers.NewHealthClientProvider(svcConf.Health))
-	controllerEventServer := server.NewSoftwareEventServer(svcConf.OrgName, softServer)
+	// controllerEventServer := server.NewSoftwareEventServer(svcConf.OrgName, softServer)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterSoftwareServiceServer(s, softServer)
-		epb.RegisterEventNotificationServiceServer(s, controllerEventServer)
+		epb.RegisterEventNotificationServiceServer(s, nil)
 
 	})
 
