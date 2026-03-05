@@ -6,285 +6,166 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-#include <pthread.h>
+#include <errno.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
 
+#include "starterd.h"
 #include "config.h"
-#include "starter.h"
 #include "manifest.h"
-#include "web_client.h"
+#include "state_store.h"
+#include "actions.h"
+#include "supervisor.h"
+#include "network.h"
+#include "web_service.h"
 
-#include "usys_api.h"
-#include "usys_file.h"
-#include "usys_getopt.h"
 #include "usys_log.h"
-#include "usys_string.h"
-#include "usys_types.h"
-#include "usys_services.h"
 
-#include "version.h"
+static volatile sig_atomic_t gTerminate = 0;
 
-/* capp_runtime.c */
-extern void fetch_unpack_run(Space *space, Config *config);
-extern void run_space_all_capps(Space *space);
+static void on_signal(int sig) {
 
-/* network.c */
-extern int start_web_service(Config *config, UInst *serviceInst);
-
-/* space.c */
-extern void process_manifest_file(SpaceList **spaceList, Manifest *manifest);
-extern void print_spaces_list(SpaceList *spaceList);
-extern void copy_capps_to_rootfs(SpaceList *spaceList);
-extern bool find_matching_space(SpaceList **spaceList, char *name, Space **space);
-
-/* unpack.c */
-extern bool unpack_all_capps(SpaceList *spaceList);
-
-SpaceList *gSpaceList = NULL;
-
-void handle_sigint(int signum) {
-    usys_log_debug("Terminate signal.\n");
-    usys_exit(0);
+    (void)sig;
+    gTerminate = 1;
 }
 
-static UsysOption longOptions[] = {
-    { "logs",          required_argument, 0, 'l' },
-    { "manifest-file", required_argument, 0, 'm' },
-    { "help",          no_argument, 0, 'h' },
-    { "version",       no_argument, 0, 'v' },
-    { 0, 0, 0, 0 }
-};
+static void setup_signals(void) {
 
-void set_log_level(char *slevel) {
+    struct sigaction sa;
 
-    int ilevel = USYS_LOG_TRACE;
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = on_signal;
+    sigaction(SIGTERM, &sa, NULL);
+    sigaction(SIGINT, &sa, NULL);
+}
 
-    if (!strcmp(slevel, "TRACE")) {
-        ilevel = USYS_LOG_TRACE;
-    } else if (!strcmp(slevel, "DEBUG")) {
-        ilevel = USYS_LOG_DEBUG;
-    } else if (!strcmp(slevel, "INFO")) {
-        ilevel = USYS_LOG_INFO;
+static void redirect_logs(const char *path) {
+
+    int fd;
+
+    if (!path || !*path) return;
+
+    fd = open(path, O_CREAT | O_APPEND | O_WRONLY, 0644);
+    if (fd < 0) return;
+
+    dup2(fd, STDOUT_FILENO);
+    dup2(fd, STDERR_FILENO);
+
+    if (fd > 2) {
+        close(fd);
     }
-    usys_log_set_level(ilevel);
 }
 
-void usage() {
+static int log_level_from_env(void) {
 
-    usys_puts("Usage: starter.d [options]");
-    usys_puts("Options:");
-    usys_puts("-h, --help                    Help menu");
-    usys_puts("-l, --logs <TRACE|DEBUG|INFO> Log level for the process");
-    usys_puts("-m, --manifest-file <file>    Manifest file");
-    usys_puts("-v, --version                 Software version");
-}
+    const char *v;
 
-void* fetch_and_update(void *config) {
-
-    SpaceList *spacePtr = NULL;
-
-    while (USYS_TRUE) {
-        /* for each capp, with missing pkg, run a thred which fetch via wimc,
-         * unpack into its space rootfs and run.
-         */
-        for (spacePtr = gSpaceList;
-             spacePtr;
-             spacePtr = spacePtr->next) {
-
-            /* Always skip BOOT space */
-            if (strcmp(spacePtr->space->name, SPACE_BOOT) == 0) {
-                continue;
-            }
-
-            fetch_unpack_run(spacePtr->space, (Config *)config);
-        }
-
-        sleep(FETCH_AND_UPDATE_RETRY);
+    v = getenv("STARTERD_LOG_LEVEL");
+    if (!v || !*v) {
+        return USYS_LOG_DEBUG;
     }
+
+    if (strcmp(v, "debug") == 0) return USYS_LOG_DEBUG;
+    if (strcmp(v, "info") == 0)  return USYS_LOG_INFO;
+    if (strcmp(v, "warn") == 0)  return USYS_LOG_WARN;
+    if (strcmp(v, "error") == 0) return USYS_LOG_ERROR;
+
+    return USYS_LOG_DEBUG;
 }
 
 int main(int argc, char **argv) {
 
-    int opt, optIdx;
-    char *debug        = DEF_LOG_LEVEL;
-    char *manifestFile = DEF_MANIFEST_FILE;
-    UInst  serviceInst; 
-    Config serviceConfig = {0};
+    Config config;
+    Space *spaceList;
+    ActionQueue queue;
+    StarterContext ctx;
+    Supervisor *sup;
+    Action *a;
 
-    Manifest  *manifest  = NULL;
-    SpaceList *spacePtr  = NULL;
-    Space     *bootSpace = NULL;
+    (void)argc;
+    (void)argv;
 
-    pthread_t thread;
+    setup_signals();
 
-    usys_log_set_service(SERVICE_NAME);
-    usys_log_remote_init(SERVICE_NAME);
+    usys_log_set_service(STARTERD_SERVICE_NAME);
+    usys_log_set_level(log_level_from_env());
 
-    /* Parsing command line args. */
-    while (true) {
-
-        opt = 0;
-        optIdx = 0;
-
-        opt = usys_getopt_long(argc, argv, "vh:m:p:l:n:d:w", longOptions,
-                               &optIdx);
-        if (opt == -1) {
-            break;
-        }
-
-        switch (opt) {
-        case 'h':
-            usage();
-            usys_exit(0);
-            break;
-
-        case 'v':
-            usys_puts(VERSION);
-            usys_exit(0);
-            break;
-
-        case 'l':
-            debug = optarg;
-            set_log_level(debug);
-            break;
-
-        case 'm':
-            manifestFile = optarg;
-            if (!manifestFile) {
-                usage();
-                usys_exit(0);
-            }
-            break;
-
-        default:
-            usage();
-            usys_exit(0);
-        }
+    if (!config_load(&config)) {
+        usys_log_error("startup: config load failed");
+        return 1;
     }
 
-    /* Service config update */
-    serviceConfig.servicePort  = usys_find_service_port(SERVICE_NAME);
-    serviceConfig.nodedPort    = usys_find_service_port(SERVICE_NODE);
-    serviceConfig.notifydPort  = usys_find_service_port(SERVICE_NOTIFY);
-    serviceConfig.wimcPort     = usys_find_service_port(SERVICE_WIMC);
-    serviceConfig.manifestFile = strdup(manifestFile);
-    serviceConfig.nodeID       = NULL;
+    redirect_logs(config.logPath);
 
-    if (!serviceConfig.servicePort ||
-        !serviceConfig.nodedPort   ||
-        !serviceConfig.notifydPort ||
-        !serviceConfig.wimcPort) {
-        usys_log_error("Unable to determine the port for services");
-        usys_exit(1);
+    spaceList = NULL;
+    if (!manifest_load(&config, &spaceList)) {
+        usys_log_error("startup: manifest load failed");
+        config_free(&config);
+        return 1;
     }
 
-    usys_log_debug("Starting %s ... ", SERVICE_NAME);
+    state_store_load(&config, spaceList);
 
-    /* Signal handler */
-    signal(SIGINT, handle_sigint);
+    actions_init(&queue);
 
-    /* Read and handle spaces/capps from the manifest file */
-    if (!read_manifest_file(&manifest, serviceConfig.manifestFile)) {
-        usys_log_error("Error with manifest file: %s",
-                       serviceConfig.manifestFile);
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.config    = &config;
+    ctx.spaceList = spaceList;
+    ctx.queue     = &queue;
 
-        if (start_web_service(&serviceConfig,
-                              &serviceInst) != USYS_TRUE) {
-            usys_log_error("Webservice failed to setup for clients. Exiting.");
-            exit(1);
-        }
-
-        pause();
-        goto done;
+    if (!network_init(&ctx)) {
+        usys_log_error("startup: network init failed");
+        manifest_free(spaceList);
+        config_free(&config);
+        return 1;
     }
 
-    if (validate_capp_dependency(&manifest) == USYS_FALSE) {
-
-        usys_log_error("Invalid manifest file: %s",
-                       serviceConfig.manifestFile);
-
-        if (start_web_service(&serviceConfig,
-                              &serviceInst) != USYS_TRUE) {
-            usys_log_error("Webservice failed to setup for clients. Exiting.");
-            exit(1);
-        }
-
-        pause();
-        goto done;
+    sup = supervisor_start(&config, spaceList, &queue);
+    if (!sup) {
+        usys_log_error("startup: supervisor start failed");
+        network_shutdown(&ctx);
+        manifest_free(spaceList);
+        config_free(&config);
+        return 1;
     }
 
-    process_manifest_file(&gSpaceList, manifest);
-    print_spaces_list(gSpaceList);
+    ctx.supervisor = sup;
 
-    /* for each space: copy their capps into their rootfs at
-     * /capps/rootfs/[space_name]/capps/pkg
-     * paths are: DEF_CAPP_PATH and DEF_SPACE_ROOTFS_PATH
-     */
-    copy_capps_to_rootfs(gSpaceList);
-    if (unpack_all_capps(gSpaceList) == USYS_FALSE) {
-        usys_log_error("Unable to unpack the capps for cspace rootfs.");
-        exit(1);
+    if (!web_service_start(&ctx)) {
+        usys_log_error("startup: web service start failed");
+        supervisor_stop(sup);
+        network_shutdown(&ctx);
+        manifest_free(spaceList);
+        config_free(&config);
+        return 1;
     }
 
-    /* start all the apps - boot is reserved space and is
-     * started first. Reboot is also reserved and only executed
-     * when the system is rebooting
-     */
-    if (find_matching_space(&gSpaceList, SPACE_BOOT, &bootSpace)) {
-        run_space_all_capps(bootSpace);
+    a = action_new(ACTION_RUN_BOOT, NULL, NULL, NULL);
+    actions_enqueue(&queue, a);
+
+    a = action_new(ACTION_RUN_ALL, NULL, NULL, NULL);
+    actions_enqueue(&queue, a);
+
+    supervisor_signal(sup);
+
+    usys_log_info("starterd: running on %s:%d", config.httpAddr, config.httpPort);
+
+    while (!gTerminate) {
+        sleep(1);
     }
 
-    /* and everything else except 'boot' and 'reboot'*/
-    for (spacePtr = gSpaceList;
-         spacePtr;
-         spacePtr = spacePtr->next) {
+    usys_log_info("starterd: terminating");
 
-        /* BOOT space is already running */
-        if (strcmp(spacePtr->space->name, SPACE_BOOT) == 0) {
-            continue;
-        }
+    supervisor_stop(sup);
+    network_shutdown(&ctx);
+    actions_free(&queue);
+    state_store_save(&config, spaceList);
+    manifest_free(spaceList);
+    config_free(&config);
 
-        /* REBOOT is only run when system is restarting */
-        if (strcmp(spacePtr->space->name, SPACE_REBOOT) == 0) {
-            continue;
-        }
-
-        run_space_all_capps(spacePtr->space);
-    }
-
-    /* for each capp, with missing pkg, run a thread which fetch via wimc,
-     *  unpack into its space rootfs and run.
-     */
-    for (spacePtr = gSpaceList;
-         spacePtr;
-         spacePtr = spacePtr->next) {
-
-        /* BOOT space is already running */
-        if (strcmp(spacePtr->space->name, SPACE_BOOT) == 0) {
-            continue;
-        }
-
-        fetch_unpack_run(spacePtr->space, &serviceConfig);
-    }
-
-    pthread_create(&thread,
-                   NULL,
-                   fetch_and_update,
-                   &serviceConfig);
-
-    /* and finally, start the web service */
-    if (start_web_service(&serviceConfig,
-                          &serviceInst) != USYS_TRUE) {
-        usys_log_error("Webservice failed to setup for clients. Exiting.");
-        exit(1);
-    }
-
-    pthread_join(thread, NULL);
-    pause();
-
-done:
-    free_manifest(manifest);
-    usys_log_debug("Exiting %s ...", SERVICE_NAME);
-
-    return USYS_TRUE;
+    return 0;
 }
-

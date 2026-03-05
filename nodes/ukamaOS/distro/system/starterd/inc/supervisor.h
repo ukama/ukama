@@ -10,8 +10,12 @@
 
 #include <stdbool.h>
 #include "config.h"
+#include "space.h"
+#include "actions.h"
 
-typedef struct Space Space;
+typedef struct Supervisor Supervisor;
 
-bool manifest_load(Config *config, Space **spaceListOut);
-void manifest_free(Space *spaceList);
+Supervisor* supervisor_start(Config *config, Space *spaceList, ActionQueue *queue);
+void supervisor_stop(Supervisor *s);
+
+bool supervisor_signal(Supervisor *s);

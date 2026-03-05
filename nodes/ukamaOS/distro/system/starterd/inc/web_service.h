@@ -6,45 +6,22 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-#ifndef WEB_SERVICE_H_
-#define WEB_SERVICE_H_
+#pragma once
 
-#include "starter.h"
+#include <stdbool.h>
+#include "config.h"
+#include "space.h"
+#include "actions.h"
 
-int web_service_cb_ping(const URequest *request,
-                        UResponse *response,
-                        void *epConfig);
+struct _u_instance;
 
-int web_service_cb_version(const URequest *request,
-                           UResponse *response,
-                           void *epConfig);
+typedef struct StarterContext {
+    Config *config;
+    Space *spaceList;
+    ActionQueue *queue;
+    void *supervisor;
+    struct _u_instance *uInstance;
+} StarterContext;
 
-int web_service_cb_get_status(const URequest *request,
-                              UResponse *response,
-                              void *epConfig);
-
-int web_service_cb_post_terminate(const URequest *request,
-                                  UResponse *response,
-                                  void *epConfig);
-
-int web_service_cb_post_update(const URequest *request,
-                               UResponse *response,
-                               void *epConfig);
-
-int web_service_cb_post_exec(const URequest *request,
-                             UResponse *response,
-                             void *epConfig);
-
-int web_service_cb_get_all_capps_status(const URequest *request,
-                                        UResponse *response,
-                                        void *epConfig);
-
-int web_service_cb_default(const URequest *request,
-                           UResponse *response,
-                           void *epConfig);
-
-int web_service_cb_not_allowed(const URequest *request,
-                               UResponse *response,
-                               void *user_data);
-
-#endif /* WEB_SERVICE_H_ */
+bool web_service_start(StarterContext *ctx);
+void web_service_stop(StarterContext *ctx);

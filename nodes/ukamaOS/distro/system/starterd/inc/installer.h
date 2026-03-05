@@ -10,8 +10,8 @@
 
 #include <stdbool.h>
 #include "config.h"
+#include "app.h"
 
-typedef struct Space Space;
-
-bool manifest_load(Config *config, Space **spaceListOut);
-void manifest_free(Space *spaceList);
+bool installer_ensure_installed(Config *config, App *app);
+bool installer_switch_current(Config *config, App *app);
+bool installer_revert_to_last_good(Config *config, App *app);
