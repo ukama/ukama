@@ -168,7 +168,7 @@ func (c *SoftwareServer) publishMessage(target string, anyMsg []byte, space stri
 
 	msg := &cpb.NodeFeederMessage{
 		Target:     target,
-		HTTPMethod: "POST",
+		HttpMethod: "POST",
 		Path:       "wimc/v1/ping",
 		Msg:        anyMsg,
 	}

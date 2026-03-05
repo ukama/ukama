@@ -53,7 +53,9 @@ func NewChunkerFromClient(c pb.ChunkerServiceClient) *Chunker {
 }
 
 func (d *Chunker) Close() {
-	d.conn.Close()
+	if err := d.conn.Close(); err != nil {
+		log.Errorf("Failed to close connection: %v", err)
+	}
 }
 
 func (d *Chunker) CreateChunk(in *pb.CreateChunkRequest) (*pb.CreateChunkResponse, error) {

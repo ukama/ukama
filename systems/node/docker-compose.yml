@@ -120,6 +120,7 @@ services:
   depends_on:
    - health
    - postgresd-node
+   - initclient-node
 
  api-gateway-node:
   build: ./api-gateway
@@ -134,6 +135,7 @@ services:
   depends_on:
    - controller
    - postgresd-node
+   - initclient-node
 
  msgclient-node:
   build: ../services/msgClient
@@ -166,7 +168,7 @@ services:
    - ENV_INIT_CLIENT_ADDR=initclient-node
    - ENV_INIT_CLIENT_PORT=8080
    - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
-   - ENV_SYSTEM_NODE_GW_ADDR=node-gateway-node
+   - ENV_SYSTEM_DNS_NODE_GW=node-gateway-node
    - ENV_SYSTEM_NODE_GW_PORT=8080
   restart: always
   networks:

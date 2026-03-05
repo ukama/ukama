@@ -464,7 +464,7 @@ func (c *ConfigStore) CommitConfig(m map[string]*ConfigData, nodes map[string][]
 
 			msg := &pb.NodeFeederMessage{
 				Target:     c.OrgName + "." + metaData.network + "." + metaData.site + "." + n,
-				HTTPMethod: "POST",
+				HttpMethod: "POST",
 				Path:       "configd/v1/config",
 				Msg:        jd,
 			}
@@ -546,7 +546,7 @@ func (c *ConfigStore) PublishCommitInfo(m *ConfigMetaData, route string, ver str
 
 	msg := &pb.NodeFeederMessage{
 		Target:     c.OrgName + "." + m.network + "." + m.site + "." + m.node,
-		HTTPMethod: "POST",
+		HttpMethod: "POST",
 		Path:       "configd/v1/config",
 		Msg:        jsonMsg,
 	}

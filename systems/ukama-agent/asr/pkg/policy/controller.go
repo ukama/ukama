@@ -289,7 +289,7 @@ func (p *policyController) syncSubscriberPolicy(method string, imsi string, netw
 
 	msg := &pb.NodeFeederMessage{
 		Target:     p.OrgName + "." + network + "." + "*" + "." + "*",
-		HTTPMethod: method,
+		HttpMethod: method,
 		Path:       path,
 		Msg:        jd,
 	}

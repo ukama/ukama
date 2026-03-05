@@ -46,7 +46,11 @@ func IndexToString(idx casync.Index) (*string, error) {
 	r, w := io.Pipe()
 
 	go func() {
-		defer w.Close()
+		defer func() {
+			if cerr := w.Close(); cerr != nil {
+				log.Errorf("Failed to close pipe writer: %v", cerr)
+			}
+		}()
 
 		_, err := idx.WriteTo(w)
 		if err != nil {
@@ -92,7 +96,11 @@ func storeIndex(name string, idx casync.Index) error {
 	if err != nil {
 		return err
 	}
-	defer i.Close()
+	defer func() {
+		if cerr := i.Close(); cerr != nil {
+			log.Errorf("Failed to close index file: %v", cerr)
+		}
+	}()
 
 	_, err = idx.WriteTo(i)
 
@@ -210,7 +218,9 @@ func ReadFromStore(ctx context.Context, fname string, aType string, fversion *se
 
 /* Remove the workplace */
 func removeWorkplace(wp string) {
-	os.RemoveAll(wp)
+	if err := os.RemoveAll(wp); err != nil {
+		log.Errorf("Failed to remove workplace %s: %v", wp, err)
+	}
 }
 
 /* Prepare w workplace dir */
@@ -323,7 +333,11 @@ func (a *archive) MakeChunk(ctx context.Context, content string, store string, w
 			if err != nil {
 				return nil, err
 			}
-			defer r.Close()
+			defer func() {
+				if cerr := r.Close(); cerr != nil {
+					log.Errorf("Failed to close file %s: %v", content, cerr)
+				}
+			}()
 		}
 
 		var op casync.TarReaderOptions
@@ -343,7 +357,11 @@ func (a *archive) MakeChunk(ctx context.Context, content string, store string, w
 
 		return nil, err
 	}
-	defer s.Close()
+	defer func() {
+		if cerr := s.Close(); cerr != nil {
+			log.Errorf("Failed to close writable store: %v", cerr)
+		}
+	}()
 
 	if s == nil {
 		log.Errorf("Error Writable store %s not found", store)
@@ -361,7 +379,9 @@ func (a *archive) MakeChunk(ctx context.Context, content string, store string, w
 	var tarErr error
 	go func() {
 		tarErr = casync.Tar(ctx, w, fs)
-		w.Close()
+		if cerr := w.Close(); cerr != nil {
+			log.Errorf("Failed to close pipe writer: %v", cerr)
+		}
 	}()
 
 	/* Store chunks */
@@ -397,7 +417,11 @@ func (b *blob) MakeChunk(ctx context.Context, content string, storeLoc string, w
 		log.Errorf("failed to get writable store: %v", err)
 		return nil, err
 	}
-	defer s.Close()
+	defer func() {
+		if cerr := s.Close(); cerr != nil {
+			log.Errorf("Failed to close writable store: %v", cerr)
+		}
+	}()
 
 	if s == nil {
 		log.Errorf("Err:: No store avalibale.")
