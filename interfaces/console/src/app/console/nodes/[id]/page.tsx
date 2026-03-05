@@ -32,6 +32,7 @@ import NodeNetworkTab from '@/components/NodeNetworkTab';
 import NodeOverviewTab from '@/components/NodeOverviewTab';
 import NodeRadioTab from '@/components/NodeRadioTab';
 import NodeResourcesTab from '@/components/NodeResourcesTab';
+import NodeSoftwareTab from '@/components/NodeSoftwareTab';
 import NodeStatus from '@/components/NodeStatus';
 import TabPanel from '@/components/TabPanel';
 import {
@@ -589,12 +590,45 @@ const Page: React.FC<INodePage> = ({ params }) => {
                 }
               />
             </TabPanel>
-            {/* <TabPanel id={'node-software-tab'} value={selectedTab} index={4}>
-          <NodeSoftwareTab
-            loading={nodeAppsLoading}
-            nodeApps={nodeAppsRes?.getNodeApps.apps ?? []}
-          />
-        </TabPanel> */}
+            <TabPanel id={'node-software-tab'} value={selectedTab} index={4}>
+              <NodeSoftwareTab
+                loading={false}
+                nodeApps={[
+                  {
+                    name: 'Backhaul',
+                    version: '1.0.0',
+                    date: getUnixTime(),
+                    cpu: '1.0',
+                    memory: '1.0',
+                    notes: 'Backhaul',
+                  },
+                  {
+                    name: 'Cellular',
+                    version: '1.0.0',
+                    date: 1714857600,
+                    cpu: '1.0',
+                    memory: '1.0',
+                    notes: 'Cellular',
+                  },
+                  {
+                    name: 'Radio',
+                    version: '1.0.0',
+                    date: getUnixTime(),
+                    cpu: '1.0',
+                    memory: '1.0',
+                    notes: 'Radio',
+                  },
+                  {
+                    name: 'Metricsd',
+                    version: '1.0.0',
+                    date: getUnixTime(),
+                    cpu: '1.0',
+                    memory: '1.0',
+                    notes: 'metricsd',
+                  },
+                ]}
+              />
+            </TabPanel>
             {/* <TabPanel id={'node-schematic-tab'} value={selectedTab} index={5}>
           <NodeSchematicTab
             getSearchValue={() => {}}

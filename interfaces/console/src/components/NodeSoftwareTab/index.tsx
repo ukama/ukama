@@ -7,10 +7,8 @@
  */
 
 import { NodeApp } from '@/client/graphql/generated';
-import LoadingWrapper from '@/components/LoadingWrapper';
-import SimpleDataTable from '@/components/SimpleDataTable';
 import { NodeAppsColumns } from '@/constants/tableColumns';
-import { colors } from '@/theme';
+import colors from '@/theme/colors';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import {
   Box,
@@ -18,11 +16,12 @@ import {
   Card,
   CardActions,
   CardContent,
-  Grid,
+  Grid2,
   Paper,
   Stack,
   Typography,
 } from '@mui/material';
+import SimpleDataTable from '../SimpleDataTable';
 interface INodeRadioTab {
   loading: boolean;
   nodeApps: NodeApp[];
@@ -30,16 +29,11 @@ interface INodeRadioTab {
 
 const NodeSoftwareTab = ({ loading, nodeApps }: INodeRadioTab) => {
   return (
-    <Stack direction={'column'} spacing={2}>
-      <LoadingWrapper isLoading={loading} height={400}>
+    <Grid2 container spacing={2} sx={{ overflowY: 'scroll' }}>
+      <Grid2 size={12} sx={{ gridRowStart: 1, gridRowEnd: 6 }}>
         <Paper
           sx={{
-            py: 3,
-            pl: 3,
-            height: '100%',
-            overflow: 'hidden',
-            borderRadius: '4px',
-            marginBottom: 2,
+            p: 3,
           }}
         >
           <Typography variant="h6" sx={{ marginBottom: 3 }}>
@@ -53,24 +47,21 @@ const NodeSoftwareTab = ({ loading, nodeApps }: INodeRadioTab) => {
             />
           </Box>
         </Paper>
-      </LoadingWrapper>
-      <LoadingWrapper isLoading={loading} height={500}>
+      </Grid2>
+
+      <Grid2 size={12}>
         <Paper
           sx={{
-            py: 3,
-            pl: 3,
-            height: '100%',
-            borderRadius: '4px',
-            overflow: 'hidden',
+            p: 3,
           }}
         >
           <Typography variant="h6" sx={{ mb: 4 }}>
             Node Apps
           </Typography>
           <Box sx={{ overflow: 'scroll', height: '100%', pb: 8, pr: 3 }}>
-            <Grid container spacing={3}>
+            <Grid2 container spacing={3}>
               {nodeApps?.map(({ id, title, cpu, memory, version }: any) => (
-                <Grid item xs={12} md={6} lg={3} key={id}>
+                <Grid2 size={4} key={id}>
                   <Card variant="outlined">
                     <CardContent>
                       <Stack
@@ -116,13 +107,13 @@ const NodeSoftwareTab = ({ loading, nodeApps }: INodeRadioTab) => {
                       <Button>VIEW MORE</Button>
                     </CardActions>
                   </Card>
-                </Grid>
+                </Grid2>
               ))}
-            </Grid>
+            </Grid2>
           </Box>
         </Paper>
-      </LoadingWrapper>
-    </Stack>
+      </Grid2>
+    </Grid2>
   );
 };
 
