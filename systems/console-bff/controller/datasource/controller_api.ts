@@ -105,15 +105,45 @@ class ControllerApi extends RESTDataSource {
     req: ToggleRFStatusInputDto
   ): Promise<TBooleanResponse> => {
     this.logger.info(
-      `ToggleRFStatus [POST]: ${baseURL}/${VERSION}/${CONTROLLER}/nodes/${req.nodeId}/toggle-rf`
+      `ToggleRFStatus [POST]: ${baseURL}/${VERSION}/${CONTROLLER}/nodes/${req.nodeId.replace(
+        "tnode",
+        "anode"
+      )}/toggle-radio`
     );
 
     this.baseURL = baseURL;
     return this.post(
-      `/${VERSION}/${CONTROLLER}/nodes/${req.nodeId}/toggle-rf`,
+      `/${VERSION}/${CONTROLLER}/nodes/${req.nodeId.replace(
+        "tnode",
+        "anode"
+      )}/toggle-radio`,
       {
         body: {
-          status: req.status,
+          state: req.status ? "on" : "off",
+        },
+      }
+    )
+      .then(() => {
+        return { success: true };
+      })
+      .catch(() => {
+        return { success: false };
+      });
+  };
+  toggleService = async (
+    baseURL: string,
+    req: ToggleRFStatusInputDto
+  ): Promise<TBooleanResponse> => {
+    this.logger.info(
+      `ToggleServiceStatus [POST]: ${baseURL}/${VERSION}/${CONTROLLER}/nodes/${req.nodeId}/toggle-service`
+    );
+
+    this.baseURL = baseURL;
+    return this.post(
+      `/${VERSION}/${CONTROLLER}/nodes/${req.nodeId}/toggle-service`,
+      {
+        body: {
+          state: req.status ? "on" : "off",
         },
       }
     )

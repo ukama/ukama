@@ -439,6 +439,7 @@ export type Mutation = {
   setDefaultNetwork: CBooleanResponse;
   toggleInternetSwitch: CBooleanResponse;
   toggleRFStatus: CBooleanResponse;
+  toggleService: CBooleanResponse;
   toggleSimStatus: SimStatusResDto;
   updateFirstVisit: UserFistVisitResDto;
   updateInvitation: UpdateInvitationResDto;
@@ -590,6 +591,11 @@ export type MutationToggleInternetSwitchArgs = {
 
 
 export type MutationToggleRfStatusArgs = {
+  data: ToggleRfStatusInputDto;
+};
+
+
+export type MutationToggleServiceArgs = {
   data: ToggleRfStatusInputDto;
 };
 
@@ -1860,6 +1866,13 @@ export type ToggleRfStatusMutationVariables = Exact<{
 
 
 export type ToggleRfStatusMutation = { __typename?: 'Mutation', toggleRFStatus: { __typename?: 'CBooleanResponse', success: boolean } };
+
+export type ToggleServiceMutationVariables = Exact<{
+  data: ToggleRfStatusInputDto;
+}>;
+
+
+export type ToggleServiceMutation = { __typename?: 'Mutation', toggleService: { __typename?: 'CBooleanResponse', success: boolean } };
 
 export type MemberFragment = { __typename?: 'MemberDto', role: string, userId: string, isDeactivated: boolean, memberSince?: string | null, id: string };
 
@@ -3299,6 +3312,39 @@ export function useToggleRfStatusMutation(baseOptions?: Apollo.MutationHookOptio
 export type ToggleRfStatusMutationHookResult = ReturnType<typeof useToggleRfStatusMutation>;
 export type ToggleRfStatusMutationResult = Apollo.MutationResult<ToggleRfStatusMutation>;
 export type ToggleRfStatusMutationOptions = Apollo.BaseMutationOptions<ToggleRfStatusMutation, ToggleRfStatusMutationVariables>;
+export const ToggleServiceDocument = gql`
+    mutation ToggleService($data: ToggleRFStatusInputDto!) {
+  toggleService(data: $data) {
+    success
+  }
+}
+    `;
+export type ToggleServiceMutationFn = Apollo.MutationFunction<ToggleServiceMutation, ToggleServiceMutationVariables>;
+
+/**
+ * __useToggleServiceMutation__
+ *
+ * To run a mutation, you first call `useToggleServiceMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useToggleServiceMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [toggleServiceMutation, { data, loading, error }] = useToggleServiceMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useToggleServiceMutation(baseOptions?: Apollo.MutationHookOptions<ToggleServiceMutation, ToggleServiceMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ToggleServiceMutation, ToggleServiceMutationVariables>(ToggleServiceDocument, options);
+      }
+export type ToggleServiceMutationHookResult = ReturnType<typeof useToggleServiceMutation>;
+export type ToggleServiceMutationResult = Apollo.MutationResult<ToggleServiceMutation>;
+export type ToggleServiceMutationOptions = Apollo.BaseMutationOptions<ToggleServiceMutation, ToggleServiceMutationVariables>;
 export const GetMembersDocument = gql`
     query GetMembers {
   getMembers {
