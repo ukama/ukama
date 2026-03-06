@@ -1,0 +1,44 @@
+include ../../../config.mk
+
+TARGET_EXEC = init-starter
+
+ARTIFACTS = $(TARGET_EXEC)
+
+APP_NAME = $(CUR_BUILD_DIRNAME)
+TARGET_CONFIG_DIR = $(INSTALL_DIR)$(NODE_APP_CONFIG_DIR)/$(APP_NAME)
+APP_CONFIG =
+
+CFLAGS=-c
+CFLAGS+=-g
+CFLAGS+=-Wall
+CFLAGS+=-O0
+CFLAGS+=-I.
+CFLAGS+=-I$(PLATFORM_INC_SYS)
+CFLAGS+=-I$(PLATFORM_INC_LOG)
+CFLAGS+=-D_REENTRANT
+
+LDFLAGS+=$(RPATH_FLAGS)
+LDFLAGS+=-L$(PLATFORM_LIB)
+
+LIBS = -lpthread -lusys
+
+CFILES   = $(wildcard ./src/*.c)
+OBJFILES = $(CFILES:.c=.o)
+
+all: $(TARGET_EXEC)
+
+$(TARGET_EXEC): $(OBJFILES)
+	$(CC) -o $(TARGET_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+install: $(ARTIFACTS)
+	mkdir -p $(TARGET_CONFIG_DIR)
+	cp -vrf $(ARTIFACTS) $(INSTALL_DIR)$(NODE_APP_DIR)
+	if [ "$(APP_CONFIG)" != "" ]; then \
+		cp -vrf $(APP_CONFIG) $(TARGET_CONFIG_DIR);\
+	fi
+
+clean:
+	rm -f $(TARGET_EXEC) $(OBJFILES)

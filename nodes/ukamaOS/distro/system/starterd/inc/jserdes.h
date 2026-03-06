@@ -9,9 +9,7 @@
 #pragma once
 
 #include <stdbool.h>
-#include "config.h"
+#include <jansson.h>
+#include "space.h"
 
-typedef struct Space Space;
-
-bool manifest_load(Config *config, Space **spaceListOut);
-void manifest_free(Space *spaceList);
+json_t* jserdes_status_json(Space *spaceList);
