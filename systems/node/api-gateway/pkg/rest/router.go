@@ -225,14 +225,6 @@ func (r *Router) postConfigApplyVersionHandler(c *gin.Context, req *ApplyConfigR
 		return err
 	}
 
-	log.Infof("received apply config with %+v", req)
-
-	_, err = r.clients.Configurator.ApplyConfig(req.Commit)
-	if err != nil {
-		log.Errorf("Failed to apply config version %s to nodes.Error %s", req.Commit, err.Error())
-		return err
-	}
-
 	return nil
 }
 

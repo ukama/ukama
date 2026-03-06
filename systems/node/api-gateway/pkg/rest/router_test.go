@@ -31,6 +31,10 @@ import (
 	cmocks "github.com/ukama/ukama/systems/node/configurator/pb/gen/mocks"
 	cpb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	nmocks "github.com/ukama/ukama/systems/node/controller/pb/gen/mocks"
+	spb "github.com/ukama/ukama/systems/node/software/pb/gen"
+	smocks "github.com/ukama/ukama/systems/node/software/pb/gen/mocks"
+	nspb "github.com/ukama/ukama/systems/node/state/pb/gen"
+	stmocks "github.com/ukama/ukama/systems/node/state/pb/gen/mocks"
 )
 
 var defaultCors = cors.Config{
@@ -76,7 +80,7 @@ func TestPingRoute(t *testing.T) {
 	assert.Contains(t, w.Body.String(), "pong")
 }
 
-func Test_RestarteNode(t *testing.T) {
+func TestRestartNode(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/v1/controller/nodes/60285a2a-fe1d-4261-a868-5be480075b8f/restart", nil)
@@ -101,7 +105,7 @@ func Test_RestarteNode(t *testing.T) {
 	c.AssertExpectations(t)
 }
 
-func Test_RestarteNodes(t *testing.T) {
+func TestRestartNodes(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	// Create a JSON payload with the necessary data.
@@ -132,7 +136,7 @@ func Test_RestarteNodes(t *testing.T) {
 	c.AssertExpectations(t)
 }
 
-func Test_RestarteSite(t *testing.T) {
+func TestRestartSite(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/v1/controller/networks/0f37639d-3fd6-4741-b63b-9dd4f7ce55f0/sites/site-1/restart", nil)
@@ -160,7 +164,7 @@ func Test_RestarteSite(t *testing.T) {
 	c.AssertExpectations(t)
 }
 
-func Test_postConfigApplyVersionHandler(t *testing.T) {
+func TestPostConfigApplyVersionHandler(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	hash := "1c924398265578d35e2b16adca25dcc021923c89"
@@ -184,10 +188,239 @@ func Test_postConfigApplyVersionHandler(t *testing.T) {
 
 	// assert
 	assert.Equal(t, http.StatusAccepted, w.Code)
+	cfg.AssertExpectations(t)
+}
+
+func TestGetPingNodeHandler(t *testing.T) {
+	// arrange
+	w := httptest.NewRecorder()
+	nodeId := "60285a2a-fe1d-4261-a868-5be480075b8f"
+	req, _ := http.NewRequest("GET", "/v1/controller/nodes/"+nodeId+"/ping", nil)
+	arc := &cmmocks.AuthClient{}
+	c := &nmocks.ControllerServiceClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+	c.On("PingNode", mock.Anything, &cpb.PingNodeRequest{NodeId: nodeId}).Return(&cpb.PingNodeResponse{}, nil)
+
+	r := NewRouter(&Clients{
+		Controller: client.NewControllerFromClient(c),
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusAccepted, w.Code)
 	c.AssertExpectations(t)
 }
 
-func Test_getRunningConfigVersionHandler(t *testing.T) {
+func TestPostToggleInternetSwitchHandler(t *testing.T) {
+	// arrange
+	w := httptest.NewRecorder()
+	siteId := "site-123"
+	jsonPayload := `{"status": true, "port": 8080}`
+	req, _ := http.NewRequest("POST", "/v1/controller/sites/"+siteId+"/toggle-internet-port", strings.NewReader(jsonPayload))
+	req.Header.Set("Content-Type", "application/json")
+	arc := &cmmocks.AuthClient{}
+	c := &nmocks.ControllerServiceClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+	c.On("ToggleInternetSwitch", mock.Anything, &cpb.ToggleInternetSwitchRequest{
+		SiteId: siteId,
+		Status: true,
+		Port:   8080,
+	}).Return(&cpb.ToggleInternetSwitchResponse{}, nil)
+
+	r := NewRouter(&Clients{
+		Controller: client.NewControllerFromClient(c),
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	c.AssertExpectations(t)
+}
+
+func TestPostConfigEventHandler(t *testing.T) {
+	// arrange
+	w := httptest.NewRecorder()
+	body := `{"event": "push", "repo": "test-repo"}`
+	req, _ := http.NewRequest("POST", "/v1/configurator/config", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	arc := &cmmocks.AuthClient{}
+	cfg := &cmocks.ConfiguratorServiceClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+	cfg.On("ConfigEvent", mock.Anything, &cfgPb.ConfigStoreEvent{Data: []byte(body)}).Return(&cfgPb.ConfigStoreEventResponse{}, nil)
+
+	r := NewRouter(&Clients{
+		Configurator: client.NewConfiguratorFromClient(cfg),
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusAccepted, w.Code)
+	cfg.AssertExpectations(t)
+}
+
+func TestGetListAppsHandler(t *testing.T) {
+	// arrange
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/software/apps", nil)
+	arc := &cmmocks.AuthClient{}
+	sw := &smocks.SoftwareServiceClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+	sw.On("GetAppList", mock.Anything, &spb.GetAppListRequest{}).Return(&spb.GetAppListResponse{Apps: []*spb.App{}}, nil)
+
+	r := NewRouter(&Clients{
+		SoftwareManager: client.NewSoftwareManagerFromClient(sw),
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	sw.AssertExpectations(t)
+}
+
+func TestGetListSoftwareHandler(t *testing.T) {
+	// arrange
+	w := httptest.NewRecorder()
+	nodeId := ukama.NewVirtualHomeNodeId().String()
+	req, _ := http.NewRequest("GET", "/v1/software?node_id="+nodeId+"&app_name=ukama&status=up_to_date", nil)
+	arc := &cmmocks.AuthClient{}
+	sw := &smocks.SoftwareServiceClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+	sw.On("GetSoftwareList", mock.Anything, mock.Anything).Return(&spb.GetSoftwareListResponse{Software: []*spb.Software{}}, nil)
+
+	r := NewRouter(&Clients{
+		SoftwareManager: client.NewSoftwareManagerFromClient(sw),
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	sw.AssertExpectations(t)
+}
+
+func TestPostUpdateSoftwareHandler(t *testing.T) {
+	// arrange
+	w := httptest.NewRecorder()
+	nodeId := "60285a2a-fe1d-4261-a868-5be480075b8f"
+	name := "ukama-node"
+	tag := "v1.0.0"
+	req, _ := http.NewRequest("POST", "/v1/software/update/"+name+"/"+tag+"/"+nodeId, nil)
+	arc := &cmmocks.AuthClient{}
+	sw := &smocks.SoftwareServiceClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+	sw.On("UpdateSoftware", mock.Anything, &spb.UpdateSoftwareRequest{
+		NodeId: nodeId,
+		Name:   name,
+		Tag:    tag,
+	}).Return(&spb.UpdateSoftwareResponse{Message: "updated"}, nil)
+
+	r := NewRouter(&Clients{
+		SoftwareManager: client.NewSoftwareManagerFromClient(sw),
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	sw.AssertExpectations(t)
+}
+
+func TestGetStatesHandler(t *testing.T) {
+	// arrange
+	w := httptest.NewRecorder()
+	nodeId := ukama.NewVirtualHomeNodeId().String()
+	req, _ := http.NewRequest("POST", "/v1/state/"+nodeId, nil)
+	arc := &cmmocks.AuthClient{}
+	st := &stmocks.StateServiceClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+	st.On("GetStates", mock.Anything, &nspb.GetStatesRequest{NodeId: nodeId}).Return(&nspb.GetStatesResponse{}, nil)
+
+	r := NewRouter(&Clients{
+		State: client.NewStateFromClient(st),
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	st.AssertExpectations(t)
+}
+
+func TestGetStatesHistoryHandler(t *testing.T) {
+	// arrange
+	w := httptest.NewRecorder()
+	nodeId := ukama.NewVirtualHomeNodeId().String()
+	req, _ := http.NewRequest("GET", "/v1/state/"+nodeId+"/history?page_size=10&page_number=1", nil)
+	arc := &cmmocks.AuthClient{}
+	st := &stmocks.StateServiceClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+	st.On("GetStatesHistory", mock.Anything, &nspb.GetStatesHistoryRequest{
+		NodeId:     nodeId,
+		PageSize:   10,
+		PageNumber: 1,
+		StartTime:  "",
+		EndTime:    "",
+	}).Return(&nspb.GetStatesHistoryResponse{}, nil)
+
+	r := NewRouter(&Clients{
+		State: client.NewStateFromClient(st),
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	st.AssertExpectations(t)
+}
+
+func TestEnforceStateTransitionHandler(t *testing.T) {
+	// arrange
+	w := httptest.NewRecorder()
+	nodeId := ukama.NewVirtualHomeNodeId().String()
+	event := "activate"
+	req, _ := http.NewRequest("POST", "/v1/state/"+nodeId+"/enforce/"+event, nil)
+	arc := &cmmocks.AuthClient{}
+	st := &stmocks.StateServiceClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+	st.On("EnforceStateTransition", mock.Anything, &nspb.EnforceStateTransitionRequest{
+		NodeId: nodeId,
+		Event:  event,
+	}).Return(&nspb.EnforceStateTransitionResponse{}, nil)
+
+	r := NewRouter(&Clients{
+		State: client.NewStateFromClient(st),
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	st.AssertExpectations(t)
+}
+
+func TestGetRunningConfigVersionHandler(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	node := ukama.NewVirtualHomeNodeId().String()
@@ -222,7 +455,7 @@ func Test_getRunningConfigVersionHandler(t *testing.T) {
 	c.AssertExpectations(t)
 }
 
-func Test_postToggleRfHandler(t *testing.T) {
+func TestPostToggleRfHandler(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	nodeId := "60285a2a-fe1d-4261-a868-5be480075b8f"
@@ -251,7 +484,7 @@ func Test_postToggleRfHandler(t *testing.T) {
 	c.AssertExpectations(t)
 }
 
-func Test_postToggleNodeServiceHandler(t *testing.T) {
+func TestPostToggleNodeServiceHandler(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	nodeId := "uk-983794-hnode-78-7830"
@@ -280,7 +513,7 @@ func Test_postToggleNodeServiceHandler(t *testing.T) {
 	c.AssertExpectations(t)
 }
 
-func Test_postToggleNodeServiceHandler_InvalidState(t *testing.T) {
+func TestPostToggleNodeServiceHandlerInvalidState(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	nodeId := "uk-983794-hnode-78-7830"

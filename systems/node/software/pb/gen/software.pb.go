@@ -30,6 +30,118 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type CreateAppRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Space         string                 `protobuf:"bytes,2,opt,name=space,proto3" json:"space,omitempty"`
+	Notes         string                 `protobuf:"bytes,3,opt,name=notes,proto3" json:"notes,omitempty"`
+	MetricsKeys   []string               `protobuf:"bytes,4,rep,name=metricsKeys,proto3" json:"metricsKeys,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateAppRequest) Reset() {
+	*x = CreateAppRequest{}
+	mi := &file_software_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateAppRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateAppRequest) ProtoMessage() {}
+
+func (x *CreateAppRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_software_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateAppRequest.ProtoReflect.Descriptor instead.
+func (*CreateAppRequest) Descriptor() ([]byte, []int) {
+	return file_software_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *CreateAppRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CreateAppRequest) GetSpace() string {
+	if x != nil {
+		return x.Space
+	}
+	return ""
+}
+
+func (x *CreateAppRequest) GetNotes() string {
+	if x != nil {
+		return x.Notes
+	}
+	return ""
+}
+
+func (x *CreateAppRequest) GetMetricsKeys() []string {
+	if x != nil {
+		return x.MetricsKeys
+	}
+	return nil
+}
+
+type CreateAppResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateAppResponse) Reset() {
+	*x = CreateAppResponse{}
+	mi := &file_software_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateAppResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateAppResponse) ProtoMessage() {}
+
+func (x *CreateAppResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_software_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateAppResponse.ProtoReflect.Descriptor instead.
+func (*CreateAppResponse) Descriptor() ([]byte, []int) {
+	return file_software_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *CreateAppResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 type GetAppListRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -38,7 +150,7 @@ type GetAppListRequest struct {
 
 func (x *GetAppListRequest) Reset() {
 	*x = GetAppListRequest{}
-	mi := &file_software_proto_msgTypes[0]
+	mi := &file_software_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -50,7 +162,7 @@ func (x *GetAppListRequest) String() string {
 func (*GetAppListRequest) ProtoMessage() {}
 
 func (x *GetAppListRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_software_proto_msgTypes[0]
+	mi := &file_software_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -63,7 +175,7 @@ func (x *GetAppListRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAppListRequest.ProtoReflect.Descriptor instead.
 func (*GetAppListRequest) Descriptor() ([]byte, []int) {
-	return file_software_proto_rawDescGZIP(), []int{0}
+	return file_software_proto_rawDescGZIP(), []int{2}
 }
 
 type GetAppListResponse struct {
@@ -75,7 +187,7 @@ type GetAppListResponse struct {
 
 func (x *GetAppListResponse) Reset() {
 	*x = GetAppListResponse{}
-	mi := &file_software_proto_msgTypes[1]
+	mi := &file_software_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -87,7 +199,7 @@ func (x *GetAppListResponse) String() string {
 func (*GetAppListResponse) ProtoMessage() {}
 
 func (x *GetAppListResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_software_proto_msgTypes[1]
+	mi := &file_software_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -100,7 +212,7 @@ func (x *GetAppListResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAppListResponse.ProtoReflect.Descriptor instead.
 func (*GetAppListResponse) Descriptor() ([]byte, []int) {
-	return file_software_proto_rawDescGZIP(), []int{1}
+	return file_software_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetAppListResponse) GetApps() []*App {
@@ -121,7 +233,7 @@ type GetSoftwareListRequest struct {
 
 func (x *GetSoftwareListRequest) Reset() {
 	*x = GetSoftwareListRequest{}
-	mi := &file_software_proto_msgTypes[2]
+	mi := &file_software_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -133,7 +245,7 @@ func (x *GetSoftwareListRequest) String() string {
 func (*GetSoftwareListRequest) ProtoMessage() {}
 
 func (x *GetSoftwareListRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_software_proto_msgTypes[2]
+	mi := &file_software_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -146,7 +258,7 @@ func (x *GetSoftwareListRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSoftwareListRequest.ProtoReflect.Descriptor instead.
 func (*GetSoftwareListRequest) Descriptor() ([]byte, []int) {
-	return file_software_proto_rawDescGZIP(), []int{2}
+	return file_software_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetSoftwareListRequest) GetNodeId() string {
@@ -179,7 +291,7 @@ type GetSoftwareListResponse struct {
 
 func (x *GetSoftwareListResponse) Reset() {
 	*x = GetSoftwareListResponse{}
-	mi := &file_software_proto_msgTypes[3]
+	mi := &file_software_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -191,7 +303,7 @@ func (x *GetSoftwareListResponse) String() string {
 func (*GetSoftwareListResponse) ProtoMessage() {}
 
 func (x *GetSoftwareListResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_software_proto_msgTypes[3]
+	mi := &file_software_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -204,7 +316,7 @@ func (x *GetSoftwareListResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSoftwareListResponse.ProtoReflect.Descriptor instead.
 func (*GetSoftwareListResponse) Descriptor() ([]byte, []int) {
-	return file_software_proto_rawDescGZIP(), []int{3}
+	return file_software_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetSoftwareListResponse) GetSoftware() []*Software {
@@ -225,7 +337,7 @@ type UpdateSoftwareRequest struct {
 
 func (x *UpdateSoftwareRequest) Reset() {
 	*x = UpdateSoftwareRequest{}
-	mi := &file_software_proto_msgTypes[4]
+	mi := &file_software_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -237,7 +349,7 @@ func (x *UpdateSoftwareRequest) String() string {
 func (*UpdateSoftwareRequest) ProtoMessage() {}
 
 func (x *UpdateSoftwareRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_software_proto_msgTypes[4]
+	mi := &file_software_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -250,7 +362,7 @@ func (x *UpdateSoftwareRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateSoftwareRequest.ProtoReflect.Descriptor instead.
 func (*UpdateSoftwareRequest) Descriptor() ([]byte, []int) {
-	return file_software_proto_rawDescGZIP(), []int{4}
+	return file_software_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *UpdateSoftwareRequest) GetNodeId() string {
@@ -283,7 +395,7 @@ type UpdateSoftwareResponse struct {
 
 func (x *UpdateSoftwareResponse) Reset() {
 	*x = UpdateSoftwareResponse{}
-	mi := &file_software_proto_msgTypes[5]
+	mi := &file_software_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -295,7 +407,7 @@ func (x *UpdateSoftwareResponse) String() string {
 func (*UpdateSoftwareResponse) ProtoMessage() {}
 
 func (x *UpdateSoftwareResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_software_proto_msgTypes[5]
+	mi := &file_software_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -308,7 +420,7 @@ func (x *UpdateSoftwareResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateSoftwareResponse.ProtoReflect.Descriptor instead.
 func (*UpdateSoftwareResponse) Descriptor() ([]byte, []int) {
-	return file_software_proto_rawDescGZIP(), []int{5}
+	return file_software_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *UpdateSoftwareResponse) GetMessage() string {
@@ -339,7 +451,7 @@ type Software struct {
 
 func (x *Software) Reset() {
 	*x = Software{}
-	mi := &file_software_proto_msgTypes[6]
+	mi := &file_software_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -351,7 +463,7 @@ func (x *Software) String() string {
 func (*Software) ProtoMessage() {}
 
 func (x *Software) ProtoReflect() protoreflect.Message {
-	mi := &file_software_proto_msgTypes[6]
+	mi := &file_software_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -364,7 +476,7 @@ func (x *Software) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Software.ProtoReflect.Descriptor instead.
 func (*Software) Descriptor() ([]byte, []int) {
-	return file_software_proto_rawDescGZIP(), []int{6}
+	return file_software_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Software) GetId() string {
@@ -470,7 +582,7 @@ type App struct {
 
 func (x *App) Reset() {
 	*x = App{}
-	mi := &file_software_proto_msgTypes[7]
+	mi := &file_software_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -482,7 +594,7 @@ func (x *App) String() string {
 func (*App) ProtoMessage() {}
 
 func (x *App) ProtoReflect() protoreflect.Message {
-	mi := &file_software_proto_msgTypes[7]
+	mi := &file_software_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -495,7 +607,7 @@ func (x *App) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use App.ProtoReflect.Descriptor instead.
 func (*App) Descriptor() ([]byte, []int) {
-	return file_software_proto_rawDescGZIP(), []int{7}
+	return file_software_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *App) GetName() string {
@@ -530,7 +642,14 @@ var File_software_proto protoreflect.FileDescriptor
 
 const file_software_proto_rawDesc = "" +
 	"\n" +
-	"\x0esoftware.proto\x12\x16ukama.node.software.v1\x1a\x0fvalidator.proto\x1a\x1bukama/software-status.proto\"\x13\n" +
+	"\x0esoftware.proto\x12\x16ukama.node.software.v1\x1a\x0fvalidator.proto\x1a\x1bukama/software-status.proto\"t\n" +
+	"\x10CreateAppRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
+	"\x05space\x18\x02 \x01(\tR\x05space\x12\x14\n" +
+	"\x05notes\x18\x03 \x01(\tR\x05notes\x12 \n" +
+	"\vmetricsKeys\x18\x04 \x03(\tR\vmetricsKeys\"-\n" +
+	"\x11CreateAppResponse\x12\x18\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\"\x13\n" +
 	"\x11GetAppListRequest\"E\n" +
 	"\x12GetAppListResponse\x12/\n" +
 	"\x04apps\x18\x01 \x03(\v2\x1b.ukama.node.software.v1.AppR\x04apps\"\x83\x01\n" +
@@ -565,8 +684,9 @@ const file_software_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05space\x18\x02 \x01(\tR\x05space\x12\x14\n" +
 	"\x05notes\x18\x03 \x01(\tR\x05notes\x12 \n" +
-	"\vmetricsKeys\x18\x04 \x03(\tR\vmetricsKeys2\xdb\x02\n" +
-	"\x0fSoftwareService\x12c\n" +
+	"\vmetricsKeys\x18\x04 \x03(\tR\vmetricsKeys2\xbd\x03\n" +
+	"\x0fSoftwareService\x12`\n" +
+	"\tCreateApp\x12(.ukama.node.software.v1.CreateAppRequest\x1a).ukama.node.software.v1.CreateAppResponse\x12c\n" +
 	"\n" +
 	"GetAppList\x12).ukama.node.software.v1.GetAppListRequest\x1a*.ukama.node.software.v1.GetAppListResponse\x12r\n" +
 	"\x0fGetSoftwareList\x12..ukama.node.software.v1.GetSoftwareListRequest\x1a/.ukama.node.software.v1.GetSoftwareListResponse\x12o\n" +
@@ -584,33 +704,37 @@ func file_software_proto_rawDescGZIP() []byte {
 	return file_software_proto_rawDescData
 }
 
-var file_software_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_software_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_software_proto_goTypes = []any{
-	(*GetAppListRequest)(nil),       // 0: ukama.node.software.v1.GetAppListRequest
-	(*GetAppListResponse)(nil),      // 1: ukama.node.software.v1.GetAppListResponse
-	(*GetSoftwareListRequest)(nil),  // 2: ukama.node.software.v1.GetSoftwareListRequest
-	(*GetSoftwareListResponse)(nil), // 3: ukama.node.software.v1.GetSoftwareListResponse
-	(*UpdateSoftwareRequest)(nil),   // 4: ukama.node.software.v1.UpdateSoftwareRequest
-	(*UpdateSoftwareResponse)(nil),  // 5: ukama.node.software.v1.UpdateSoftwareResponse
-	(*Software)(nil),                // 6: ukama.node.software.v1.Software
-	(*App)(nil),                     // 7: ukama.node.software.v1.App
-	(ukama.SoftwareStatus)(0),       // 8: ukama.common.v1.SoftwareStatus
+	(*CreateAppRequest)(nil),        // 0: ukama.node.software.v1.CreateAppRequest
+	(*CreateAppResponse)(nil),       // 1: ukama.node.software.v1.CreateAppResponse
+	(*GetAppListRequest)(nil),       // 2: ukama.node.software.v1.GetAppListRequest
+	(*GetAppListResponse)(nil),      // 3: ukama.node.software.v1.GetAppListResponse
+	(*GetSoftwareListRequest)(nil),  // 4: ukama.node.software.v1.GetSoftwareListRequest
+	(*GetSoftwareListResponse)(nil), // 5: ukama.node.software.v1.GetSoftwareListResponse
+	(*UpdateSoftwareRequest)(nil),   // 6: ukama.node.software.v1.UpdateSoftwareRequest
+	(*UpdateSoftwareResponse)(nil),  // 7: ukama.node.software.v1.UpdateSoftwareResponse
+	(*Software)(nil),                // 8: ukama.node.software.v1.Software
+	(*App)(nil),                     // 9: ukama.node.software.v1.App
+	(ukama.SoftwareStatus)(0),       // 10: ukama.common.v1.SoftwareStatus
 }
 var file_software_proto_depIdxs = []int32{
-	7, // 0: ukama.node.software.v1.GetAppListResponse.apps:type_name -> ukama.node.software.v1.App
-	8, // 1: ukama.node.software.v1.GetSoftwareListRequest.status:type_name -> ukama.common.v1.SoftwareStatus
-	6, // 2: ukama.node.software.v1.GetSoftwareListResponse.software:type_name -> ukama.node.software.v1.Software
-	0, // 3: ukama.node.software.v1.SoftwareService.GetAppList:input_type -> ukama.node.software.v1.GetAppListRequest
-	2, // 4: ukama.node.software.v1.SoftwareService.GetSoftwareList:input_type -> ukama.node.software.v1.GetSoftwareListRequest
-	4, // 5: ukama.node.software.v1.SoftwareService.UpdateSoftware:input_type -> ukama.node.software.v1.UpdateSoftwareRequest
-	1, // 6: ukama.node.software.v1.SoftwareService.GetAppList:output_type -> ukama.node.software.v1.GetAppListResponse
-	3, // 7: ukama.node.software.v1.SoftwareService.GetSoftwareList:output_type -> ukama.node.software.v1.GetSoftwareListResponse
-	5, // 8: ukama.node.software.v1.SoftwareService.UpdateSoftware:output_type -> ukama.node.software.v1.UpdateSoftwareResponse
-	6, // [6:9] is the sub-list for method output_type
-	3, // [3:6] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	9,  // 0: ukama.node.software.v1.GetAppListResponse.apps:type_name -> ukama.node.software.v1.App
+	10, // 1: ukama.node.software.v1.GetSoftwareListRequest.status:type_name -> ukama.common.v1.SoftwareStatus
+	8,  // 2: ukama.node.software.v1.GetSoftwareListResponse.software:type_name -> ukama.node.software.v1.Software
+	0,  // 3: ukama.node.software.v1.SoftwareService.CreateApp:input_type -> ukama.node.software.v1.CreateAppRequest
+	2,  // 4: ukama.node.software.v1.SoftwareService.GetAppList:input_type -> ukama.node.software.v1.GetAppListRequest
+	4,  // 5: ukama.node.software.v1.SoftwareService.GetSoftwareList:input_type -> ukama.node.software.v1.GetSoftwareListRequest
+	6,  // 6: ukama.node.software.v1.SoftwareService.UpdateSoftware:input_type -> ukama.node.software.v1.UpdateSoftwareRequest
+	1,  // 7: ukama.node.software.v1.SoftwareService.CreateApp:output_type -> ukama.node.software.v1.CreateAppResponse
+	3,  // 8: ukama.node.software.v1.SoftwareService.GetAppList:output_type -> ukama.node.software.v1.GetAppListResponse
+	5,  // 9: ukama.node.software.v1.SoftwareService.GetSoftwareList:output_type -> ukama.node.software.v1.GetSoftwareListResponse
+	7,  // 10: ukama.node.software.v1.SoftwareService.UpdateSoftware:output_type -> ukama.node.software.v1.UpdateSoftwareResponse
+	7,  // [7:11] is the sub-list for method output_type
+	3,  // [3:7] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_software_proto_init() }
@@ -624,7 +748,7 @@ func file_software_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_software_proto_rawDesc), len(file_software_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

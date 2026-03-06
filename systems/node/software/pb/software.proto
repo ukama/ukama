@@ -14,9 +14,20 @@ import "validator.proto";
 import "ukama/software-status.proto";
 
 service SoftwareService {
+    rpc CreateApp (CreateAppRequest) returns (CreateAppResponse);
     rpc GetAppList (GetAppListRequest) returns (GetAppListResponse);
     rpc GetSoftwareList (GetSoftwareListRequest) returns (GetSoftwareListResponse);
     rpc UpdateSoftware (UpdateSoftwareRequest) returns (UpdateSoftwareResponse);
+}
+
+message CreateAppRequest {
+    string name = 1;
+    string space = 2;
+    string notes = 3;
+    repeated string metricsKeys = 4;
+}
+message CreateAppResponse {
+    string message = 1;
 }
 
 message GetAppListRequest {

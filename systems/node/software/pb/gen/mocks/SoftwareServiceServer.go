@@ -14,6 +14,36 @@ type SoftwareServiceServer struct {
 	mock.Mock
 }
 
+// CreateApp provides a mock function with given fields: _a0, _a1
+func (_m *SoftwareServiceServer) CreateApp(_a0 context.Context, _a1 *gen.CreateAppRequest) (*gen.CreateAppResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateApp")
+	}
+
+	var r0 *gen.CreateAppResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.CreateAppRequest) (*gen.CreateAppResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.CreateAppRequest) *gen.CreateAppResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.CreateAppResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.CreateAppRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetAppList provides a mock function with given fields: _a0, _a1
 func (_m *SoftwareServiceServer) GetAppList(_a0 context.Context, _a1 *gen.GetAppListRequest) (*gen.GetAppListResponse, error) {
 	ret := _m.Called(_a0, _a1)

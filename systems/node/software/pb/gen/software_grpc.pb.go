@@ -26,6 +26,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	SoftwareService_CreateApp_FullMethodName       = "/ukama.node.software.v1.SoftwareService/CreateApp"
 	SoftwareService_GetAppList_FullMethodName      = "/ukama.node.software.v1.SoftwareService/GetAppList"
 	SoftwareService_GetSoftwareList_FullMethodName = "/ukama.node.software.v1.SoftwareService/GetSoftwareList"
 	SoftwareService_UpdateSoftware_FullMethodName  = "/ukama.node.software.v1.SoftwareService/UpdateSoftware"
@@ -35,6 +36,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SoftwareServiceClient interface {
+	CreateApp(ctx context.Context, in *CreateAppRequest, opts ...grpc.CallOption) (*CreateAppResponse, error)
 	GetAppList(ctx context.Context, in *GetAppListRequest, opts ...grpc.CallOption) (*GetAppListResponse, error)
 	GetSoftwareList(ctx context.Context, in *GetSoftwareListRequest, opts ...grpc.CallOption) (*GetSoftwareListResponse, error)
 	UpdateSoftware(ctx context.Context, in *UpdateSoftwareRequest, opts ...grpc.CallOption) (*UpdateSoftwareResponse, error)
@@ -46,6 +48,16 @@ type softwareServiceClient struct {
 
 func NewSoftwareServiceClient(cc grpc.ClientConnInterface) SoftwareServiceClient {
 	return &softwareServiceClient{cc}
+}
+
+func (c *softwareServiceClient) CreateApp(ctx context.Context, in *CreateAppRequest, opts ...grpc.CallOption) (*CreateAppResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateAppResponse)
+	err := c.cc.Invoke(ctx, SoftwareService_CreateApp_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *softwareServiceClient) GetAppList(ctx context.Context, in *GetAppListRequest, opts ...grpc.CallOption) (*GetAppListResponse, error) {
@@ -82,6 +94,7 @@ func (c *softwareServiceClient) UpdateSoftware(ctx context.Context, in *UpdateSo
 // All implementations must embed UnimplementedSoftwareServiceServer
 // for forward compatibility.
 type SoftwareServiceServer interface {
+	CreateApp(context.Context, *CreateAppRequest) (*CreateAppResponse, error)
 	GetAppList(context.Context, *GetAppListRequest) (*GetAppListResponse, error)
 	GetSoftwareList(context.Context, *GetSoftwareListRequest) (*GetSoftwareListResponse, error)
 	UpdateSoftware(context.Context, *UpdateSoftwareRequest) (*UpdateSoftwareResponse, error)
@@ -95,6 +108,9 @@ type SoftwareServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedSoftwareServiceServer struct{}
 
+func (UnimplementedSoftwareServiceServer) CreateApp(context.Context, *CreateAppRequest) (*CreateAppResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateApp not implemented")
+}
 func (UnimplementedSoftwareServiceServer) GetAppList(context.Context, *GetAppListRequest) (*GetAppListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAppList not implemented")
 }
@@ -123,6 +139,24 @@ func RegisterSoftwareServiceServer(s grpc.ServiceRegistrar, srv SoftwareServiceS
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&SoftwareService_ServiceDesc, srv)
+}
+
+func _SoftwareService_CreateApp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateAppRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SoftwareServiceServer).CreateApp(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SoftwareService_CreateApp_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SoftwareServiceServer).CreateApp(ctx, req.(*CreateAppRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _SoftwareService_GetAppList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -186,6 +220,10 @@ var SoftwareService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "ukama.node.software.v1.SoftwareService",
 	HandlerType: (*SoftwareServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CreateApp",
+			Handler:    _SoftwareService_CreateApp_Handler,
+		},
 		{
 			MethodName: "GetAppList",
 			Handler:    _SoftwareService_GetAppList_Handler,

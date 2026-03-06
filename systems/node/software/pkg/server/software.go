@@ -47,6 +47,21 @@ func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, appRepo db.AppRepo
 	}
 }
 
+func (s *SoftwareServer) CreateApp(ctx context.Context, req *pb.CreateAppRequest) (*pb.CreateAppResponse, error) {
+	log.Infof("Creating app with name: %s, space: %s, notes: %s, metricsKeys: %v", req.Name, req.Space, req.Notes, req.MetricsKeys)
+	app := db.App{
+		Name: req.Name,
+		Space: req.Space,
+		Notes: req.Notes,
+		MetricsKeys: req.MetricsKeys,
+	}
+	err := s.appRepo.Create(app)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Failed to create app: %v", err)
+	}
+	return &pb.CreateAppResponse{Message: "App created successfully"}, nil
+}
+
 func (s *SoftwareServer) GetAppList(ctx context.Context, req *pb.GetAppListRequest) (*pb.GetAppListResponse, error) {
 	log.Infof("Getting apps list")
 	apps, err := s.appRepo.GetAll()

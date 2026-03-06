@@ -18,6 +18,12 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *CreateAppRequest) Validate() error {
+	return nil
+}
+func (this *CreateAppResponse) Validate() error {
+	return nil
+}
 func (this *GetAppListRequest) Validate() error {
 	return nil
 }
