@@ -59,11 +59,11 @@ Action* action_new(ActionType type, const char *space, const char *name, const c
     a = calloc(1, sizeof(*a));
     if (!a) return NULL;
 
-    a->type = type;
+    a->type  = type;
     a->space = a_strdup(space);
-    a->name = a_strdup(name);
-    a->tag = a_strdup(tag);
-    a->next = NULL;
+    a->name  = a_strdup(name);
+    a->tag   = a_strdup(tag);
+    a->next  = NULL;
 
     return a;
 }

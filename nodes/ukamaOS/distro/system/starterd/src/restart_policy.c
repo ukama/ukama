@@ -31,8 +31,8 @@ void restart_policy_on_start(Config *config, App *app, time_t now) {
 
     if (app->lastExitTime > 0) {
         if ((now - app->lastExitTime) >= config->restartStableResetSec) {
-            app->restartCount = 0;
-            app->nextBackoffSec = 1;
+            app->restartCount       = 0;
+            app->nextBackoffSec     = 1;
             app->restartWindowStart = now;
         }
     }

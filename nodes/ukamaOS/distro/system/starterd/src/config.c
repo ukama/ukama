@@ -15,17 +15,8 @@
 #include <ctype.h>
 
 #include "usys_log.h"
-
-static char* cfg_strdup(const char *s) {
-
-    char *out;
-
-    out = NULL;
-    if (s && *s) {
-        out = strdup(s);
-    }
-    return out;
-}
+#include "usys_file.h"
+#include "usys_services.h"
 
 static int cfg_get_int(const char *name, int defVal) {
 
@@ -172,18 +163,36 @@ bool config_load(Config *config) {
     config->pkgsDir      = cfg_get_str("STARTERD_PKGS_DIR",  "/ukama/apps/pkgs");
     config->stateDir     = cfg_get_str("STARTERD_STATE_DIR", "/ukama/state/starterd");
 
-    config->httpAddr     = cfg_get_str("STARTERD_HTTP_ADDR", "0.0.0.0");
-    config->httpPort     = cfg_get_int("STARTERD_HTTP_PORT", 18000);
+    config->httpAddr = cfg_get_str("STARTERD_HTTP_ADDR", "0.0.0.0");
 
-    config->wimcHost         = cfg_get_str("STARTERD_WIMC_HOST", "127.0.0.1");
-    config->wimcPort         = cfg_get_int("STARTERD_WIMC_PORT", 18010);
-    config->wimcPathTemplate = cfg_get_str("STARTERD_WIMC_PATH_TEMPLATE", "/v1/apps/%s/%s/pkg");
+    /* starter.d port from service registry */
+    config->httpPort = usys_find_service_port(SERVICE_STARTER);
+    if (config->httpPort <= 0) {
+        usys_log_error("SERVICE_STARTER port not found in service registry");
+        return false;
+    }
+
+    config->httpPort = cfg_get_int("STARTERD_HTTP_PORT", config->httpPort);
+
+    config->wimcHost = cfg_get_str("STARTERD_WIMC_HOST", "127.0.0.1");
+
+    /* wimc.d port from service registry */
+    config->wimcPort = usys_find_service_port(SERVICE_WIMC);
+    if (config->wimcPort <= 0) {
+        usys_log_error("SERVICE_WIMC port not found in service registry");
+        return false;
+    }
+
+    config->wimcPort = cfg_get_int("STARTERD_WIMC_PORT", config->wimcPort);
+
+    config->wimcPathTemplate =
+        cfg_get_str("STARTERD_WIMC_PATH_TEMPLATE", "/v1/apps/%s/%s/pkg");
 
     config->commitTimeoutSec = cfg_get_int("STARTERD_COMMIT_TIMEOUT_SEC", 20);
     config->pingTimeoutSec   = cfg_get_int("STARTERD_PING_TIMEOUT_SEC",   3);
     config->termGraceSec     = cfg_get_int("STARTERD_TERM_GRACE_SEC",     5);
 
-    config->restartMaxBackoffSec  = cfg_get_int("STARTERD_RESTART_MAX_BACKOFF_SEC", 60);
+    config->restartMaxBackoffSec  = cfg_get_int("STARTERD_RESTART_MAX_BACKOFF_SEC",  60);
     config->restartStableResetSec = cfg_get_int("STARTERD_RESTART_STABLE_RESET_SEC", 300);
 
     config->bootSpace = cfg_get_str("STARTERD_BOOT_SPACE", "boot");
