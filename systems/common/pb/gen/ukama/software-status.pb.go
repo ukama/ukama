@@ -31,28 +31,28 @@ const (
 type SoftwareStatus int32
 
 const (
-	SoftwareStatus_SOFTWARE_STATUS_INVALID            SoftwareStatus = 0
-	SoftwareStatus_SOFTWARE_STATUS_UP_TO_DATE         SoftwareStatus = 1
-	SoftwareStatus_SOFTWARE_STATUS_UPDATE_AVAILABLE   SoftwareStatus = 2
-	SoftwareStatus_SOFTWARE_STATUS_UPDATE_IN_PROGRESS SoftwareStatus = 3
-	SoftwareStatus_SOFTWARE_STATUS_UPDATE_FAILED      SoftwareStatus = 4
+	SoftwareStatus_unknown            SoftwareStatus = 0
+	SoftwareStatus_up_to_date         SoftwareStatus = 1
+	SoftwareStatus_update_available   SoftwareStatus = 2
+	SoftwareStatus_update_in_progress SoftwareStatus = 3
+	SoftwareStatus_update_failed      SoftwareStatus = 4
 )
 
 // Enum value maps for SoftwareStatus.
 var (
 	SoftwareStatus_name = map[int32]string{
-		0: "SOFTWARE_STATUS_INVALID",
-		1: "SOFTWARE_STATUS_UP_TO_DATE",
-		2: "SOFTWARE_STATUS_UPDATE_AVAILABLE",
-		3: "SOFTWARE_STATUS_UPDATE_IN_PROGRESS",
-		4: "SOFTWARE_STATUS_UPDATE_FAILED",
+		0: "unknown",
+		1: "up_to_date",
+		2: "update_available",
+		3: "update_in_progress",
+		4: "update_failed",
 	}
 	SoftwareStatus_value = map[string]int32{
-		"SOFTWARE_STATUS_INVALID":            0,
-		"SOFTWARE_STATUS_UP_TO_DATE":         1,
-		"SOFTWARE_STATUS_UPDATE_AVAILABLE":   2,
-		"SOFTWARE_STATUS_UPDATE_IN_PROGRESS": 3,
-		"SOFTWARE_STATUS_UPDATE_FAILED":      4,
+		"unknown":            0,
+		"up_to_date":         1,
+		"update_available":   2,
+		"update_in_progress": 3,
+		"update_failed":      4,
 	}
 )
 
@@ -87,13 +87,14 @@ var File_ukama_software_status_proto protoreflect.FileDescriptor
 
 const file_ukama_software_status_proto_rawDesc = "" +
 	"\n" +
-	"\x1bukama/software-status.proto\x12\x0fukama.common.v1*\xbe\x01\n" +
-	"\x0eSoftwareStatus\x12\x1b\n" +
-	"\x17SOFTWARE_STATUS_INVALID\x10\x00\x12\x1e\n" +
-	"\x1aSOFTWARE_STATUS_UP_TO_DATE\x10\x01\x12$\n" +
-	" SOFTWARE_STATUS_UPDATE_AVAILABLE\x10\x02\x12&\n" +
-	"\"SOFTWARE_STATUS_UPDATE_IN_PROGRESS\x10\x03\x12!\n" +
-	"\x1dSOFTWARE_STATUS_UPDATE_FAILED\x10\x04B4Z2github.com/ukama/ukama/systems/common/pb/gen/ukamab\x06proto3"
+	"\x1bukama/software-status.proto\x12\x0fukama.common.v1*n\n" +
+	"\x0eSoftwareStatus\x12\v\n" +
+	"\aunknown\x10\x00\x12\x0e\n" +
+	"\n" +
+	"up_to_date\x10\x01\x12\x14\n" +
+	"\x10update_available\x10\x02\x12\x16\n" +
+	"\x12update_in_progress\x10\x03\x12\x11\n" +
+	"\rupdate_failed\x10\x04B4Z2github.com/ukama/ukama/systems/common/pb/gen/ukamab\x06proto3"
 
 var (
 	file_ukama_software_status_proto_rawDescOnce sync.Once

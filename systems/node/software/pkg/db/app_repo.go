@@ -9,20 +9,22 @@
 package db
 
 import (
+	"github.com/ukama/ukama/systems/common/sql"
 	"gorm.io/gorm"
 )
 
 type AppRepo interface {
 	Create(app App) error
 	GetAll() ([]App, error)
+	Get(name string) (App, error)
 }
 
 type appRepo struct {
 	db *gorm.DB
 }
 
-func NewAppRepo(db *gorm.DB) AppRepo {
-	return &appRepo{db: db}
+func NewAppRepo(db sql.Db) AppRepo {
+	return &appRepo{db: db.GetGormDb()}
 }
 
 func (r *appRepo) Create(app App) error {
@@ -33,7 +35,16 @@ func (r *appRepo) GetAll() ([]App, error) {
 	var apps []App
 	err := r.db.Find(&apps).Error
 	if err != nil {
-		return nil, err
+		return nil, gorm.ErrRecordNotFound
 	}
 	return apps, nil
+}
+
+func (r *appRepo) Get(name string) (App, error) {
+	var app App
+	err := r.db.Where("name = ?", name).First(&app).Error
+	if err != nil {
+		return App{}, gorm.ErrRecordNotFound
+	}
+	return app, nil
 }

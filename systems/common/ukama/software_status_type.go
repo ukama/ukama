@@ -16,15 +16,15 @@ import (
 type SoftwareStatusType uint8
 
 const (
-	SoftwareStatusTypeUnknown SoftwareStatusType = 0
-	SoftwareStatusTypeUpdateAvailable SoftwareStatusType = 1
-	SoftwareStatusTypeUpToDate SoftwareStatusType = 2
-	SoftwareStatusTypeUpdateInProgress SoftwareStatusType = 3
-	SoftwareStatusTypeUpdateFailed SoftwareStatusType = 4
+	Unknown SoftwareStatusType = 0
+	UpToDate SoftwareStatusType = 1
+	UpdateAvailable SoftwareStatusType = 2
+	UpdateInProgress SoftwareStatusType = 3
+	UpdateFailed SoftwareStatusType = 4
 )
 
 func (s SoftwareStatusType) String() string {
-	t := map[SoftwareStatusType]string{0: "unknown", 1: "update_available", 2: "up_to_date", 3: "update_in_progress", 4: "update_failed"}
+	t := map[SoftwareStatusType]string{0: "unknown", 1: "up_to_date", 2: "update_available", 3: "update_in_progress", 4: "update_failed"}
 	v, ok := t[s]
 	if !ok {
 		return t[0]
@@ -37,7 +37,7 @@ func ParseSoftwareStatusType(value string) SoftwareStatusType {
 	if err == nil {
 		return SoftwareStatusType(i)
 	}
-	t := map[string]SoftwareStatusType{"unknown": 0, "update_available": 1, "up_to_date": 2, "update_in_progress": 3, "update_failed": 4}
+	t := map[string]SoftwareStatusType{"unknown": 0, "up_to_date": 1, "update_available": 2, "update_in_progress": 3, "update_failed": 4}
 	v, ok := t[strings.ToLower(value)]
 	if !ok {
 		return SoftwareStatusType(0)

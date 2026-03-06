@@ -114,6 +114,7 @@ type GetSoftwareListRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	NodeId        string                 `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
 	Status        ukama.SoftwareStatus   `protobuf:"varint,2,opt,name=status,proto3,enum=ukama.common.v1.SoftwareStatus" json:"status,omitempty"`
+	AppName       string                 `protobuf:"bytes,3,opt,name=appName,proto3" json:"appName,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -160,6 +161,13 @@ func (x *GetSoftwareListRequest) GetStatus() ukama.SoftwareStatus {
 		return x.Status
 	}
 	return ukama.SoftwareStatus(0)
+}
+
+func (x *GetSoftwareListRequest) GetAppName() string {
+	if x != nil {
+		return x.AppName
+	}
+	return ""
 }
 
 type GetSoftwareListResponse struct {
@@ -310,94 +318,6 @@ func (x *UpdateSoftwareResponse) GetMessage() string {
 	return ""
 }
 
-type CreateSoftwareUpdateRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Tag           string                 `protobuf:"bytes,2,opt,name=tag,proto3" json:"tag,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CreateSoftwareUpdateRequest) Reset() {
-	*x = CreateSoftwareUpdateRequest{}
-	mi := &file_software_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CreateSoftwareUpdateRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CreateSoftwareUpdateRequest) ProtoMessage() {}
-
-func (x *CreateSoftwareUpdateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_software_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CreateSoftwareUpdateRequest.ProtoReflect.Descriptor instead.
-func (*CreateSoftwareUpdateRequest) Descriptor() ([]byte, []int) {
-	return file_software_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *CreateSoftwareUpdateRequest) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *CreateSoftwareUpdateRequest) GetTag() string {
-	if x != nil {
-		return x.Tag
-	}
-	return ""
-}
-
-type CreateSoftwareUpdateResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CreateSoftwareUpdateResponse) Reset() {
-	*x = CreateSoftwareUpdateResponse{}
-	mi := &file_software_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CreateSoftwareUpdateResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CreateSoftwareUpdateResponse) ProtoMessage() {}
-
-func (x *CreateSoftwareUpdateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_software_proto_msgTypes[7]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CreateSoftwareUpdateResponse.ProtoReflect.Descriptor instead.
-func (*CreateSoftwareUpdateResponse) Descriptor() ([]byte, []int) {
-	return file_software_proto_rawDescGZIP(), []int{7}
-}
-
 type Software struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -419,7 +339,7 @@ type Software struct {
 
 func (x *Software) Reset() {
 	*x = Software{}
-	mi := &file_software_proto_msgTypes[8]
+	mi := &file_software_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -431,7 +351,7 @@ func (x *Software) String() string {
 func (*Software) ProtoMessage() {}
 
 func (x *Software) ProtoReflect() protoreflect.Message {
-	mi := &file_software_proto_msgTypes[8]
+	mi := &file_software_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -444,7 +364,7 @@ func (x *Software) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Software.ProtoReflect.Descriptor instead.
 func (*Software) Descriptor() ([]byte, []int) {
-	return file_software_proto_rawDescGZIP(), []int{8}
+	return file_software_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Software) GetId() string {
@@ -550,7 +470,7 @@ type App struct {
 
 func (x *App) Reset() {
 	*x = App{}
-	mi := &file_software_proto_msgTypes[9]
+	mi := &file_software_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -562,7 +482,7 @@ func (x *App) String() string {
 func (*App) ProtoMessage() {}
 
 func (x *App) ProtoReflect() protoreflect.Message {
-	mi := &file_software_proto_msgTypes[9]
+	mi := &file_software_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -575,7 +495,7 @@ func (x *App) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use App.ProtoReflect.Descriptor instead.
 func (*App) Descriptor() ([]byte, []int) {
-	return file_software_proto_rawDescGZIP(), []int{9}
+	return file_software_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *App) GetName() string {
@@ -613,10 +533,11 @@ const file_software_proto_rawDesc = "" +
 	"\x0esoftware.proto\x12\x16ukama.node.software.v1\x1a\x0fvalidator.proto\x1a\x1bukama/software-status.proto\"\x13\n" +
 	"\x11GetAppListRequest\"E\n" +
 	"\x12GetAppListResponse\x12/\n" +
-	"\x04apps\x18\x01 \x03(\v2\x1b.ukama.node.software.v1.AppR\x04apps\"i\n" +
+	"\x04apps\x18\x01 \x03(\v2\x1b.ukama.node.software.v1.AppR\x04apps\"\x83\x01\n" +
 	"\x16GetSoftwareListRequest\x12\x16\n" +
 	"\x06nodeId\x18\x01 \x01(\tR\x06nodeId\x127\n" +
-	"\x06status\x18\x02 \x01(\x0e2\x1f.ukama.common.v1.SoftwareStatusR\x06status\"W\n" +
+	"\x06status\x18\x02 \x01(\x0e2\x1f.ukama.common.v1.SoftwareStatusR\x06status\x12\x18\n" +
+	"\aappName\x18\x03 \x01(\tR\aappName\"W\n" +
 	"\x17GetSoftwareListResponse\x12<\n" +
 	"\bsoftware\x18\x01 \x03(\v2 .ukama.node.software.v1.SoftwareR\bsoftware\"U\n" +
 	"\x15UpdateSoftwareRequest\x12\x16\n" +
@@ -624,11 +545,7 @@ const file_software_proto_rawDesc = "" +
 	"\x03tag\x18\x02 \x01(\tR\x03tag\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\"2\n" +
 	"\x16UpdateSoftwareResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage\"C\n" +
-	"\x1bCreateSoftwareUpdateRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x10\n" +
-	"\x03tag\x18\x02 \x01(\tR\x03tag\"\x1e\n" +
-	"\x1cCreateSoftwareUpdateResponse\"\x83\x03\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\"\x83\x03\n" +
 	"\bSoftware\x12\x19\n" +
 	"\x02id\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x02id\x12 \n" +
 	"\vreleaseDate\x18\x02 \x01(\tR\vreleaseDate\x12\x16\n" +
@@ -648,12 +565,11 @@ const file_software_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05space\x18\x02 \x01(\tR\x05space\x12\x14\n" +
 	"\x05notes\x18\x03 \x01(\tR\x05notes\x12 \n" +
-	"\vmetricsKeys\x18\x04 \x03(\tR\vmetricsKeys2\xdf\x03\n" +
+	"\vmetricsKeys\x18\x04 \x03(\tR\vmetricsKeys2\xdb\x02\n" +
 	"\x0fSoftwareService\x12c\n" +
 	"\n" +
 	"GetAppList\x12).ukama.node.software.v1.GetAppListRequest\x1a*.ukama.node.software.v1.GetAppListResponse\x12r\n" +
-	"\x0fGetSoftwareList\x12..ukama.node.software.v1.GetSoftwareListRequest\x1a/.ukama.node.software.v1.GetSoftwareListResponse\x12\x81\x01\n" +
-	"\x14CreateSoftwareUpdate\x123.ukama.node.software.v1.CreateSoftwareUpdateRequest\x1a4.ukama.node.software.v1.CreateSoftwareUpdateResponse\x12o\n" +
+	"\x0fGetSoftwareList\x12..ukama.node.software.v1.GetSoftwareListRequest\x1a/.ukama.node.software.v1.GetSoftwareListResponse\x12o\n" +
 	"\x0eUpdateSoftware\x12-.ukama.node.software.v1.UpdateSoftwareRequest\x1a..ukama.node.software.v1.UpdateSoftwareResponseB5Z3github.com/ukama/ukama/systems/node/software/pb/genb\x06proto3"
 
 var (
@@ -668,37 +584,33 @@ func file_software_proto_rawDescGZIP() []byte {
 	return file_software_proto_rawDescData
 }
 
-var file_software_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_software_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_software_proto_goTypes = []any{
-	(*GetAppListRequest)(nil),            // 0: ukama.node.software.v1.GetAppListRequest
-	(*GetAppListResponse)(nil),           // 1: ukama.node.software.v1.GetAppListResponse
-	(*GetSoftwareListRequest)(nil),       // 2: ukama.node.software.v1.GetSoftwareListRequest
-	(*GetSoftwareListResponse)(nil),      // 3: ukama.node.software.v1.GetSoftwareListResponse
-	(*UpdateSoftwareRequest)(nil),        // 4: ukama.node.software.v1.UpdateSoftwareRequest
-	(*UpdateSoftwareResponse)(nil),       // 5: ukama.node.software.v1.UpdateSoftwareResponse
-	(*CreateSoftwareUpdateRequest)(nil),  // 6: ukama.node.software.v1.CreateSoftwareUpdateRequest
-	(*CreateSoftwareUpdateResponse)(nil), // 7: ukama.node.software.v1.CreateSoftwareUpdateResponse
-	(*Software)(nil),                     // 8: ukama.node.software.v1.Software
-	(*App)(nil),                          // 9: ukama.node.software.v1.App
-	(ukama.SoftwareStatus)(0),            // 10: ukama.common.v1.SoftwareStatus
+	(*GetAppListRequest)(nil),       // 0: ukama.node.software.v1.GetAppListRequest
+	(*GetAppListResponse)(nil),      // 1: ukama.node.software.v1.GetAppListResponse
+	(*GetSoftwareListRequest)(nil),  // 2: ukama.node.software.v1.GetSoftwareListRequest
+	(*GetSoftwareListResponse)(nil), // 3: ukama.node.software.v1.GetSoftwareListResponse
+	(*UpdateSoftwareRequest)(nil),   // 4: ukama.node.software.v1.UpdateSoftwareRequest
+	(*UpdateSoftwareResponse)(nil),  // 5: ukama.node.software.v1.UpdateSoftwareResponse
+	(*Software)(nil),                // 6: ukama.node.software.v1.Software
+	(*App)(nil),                     // 7: ukama.node.software.v1.App
+	(ukama.SoftwareStatus)(0),       // 8: ukama.common.v1.SoftwareStatus
 }
 var file_software_proto_depIdxs = []int32{
-	9,  // 0: ukama.node.software.v1.GetAppListResponse.apps:type_name -> ukama.node.software.v1.App
-	10, // 1: ukama.node.software.v1.GetSoftwareListRequest.status:type_name -> ukama.common.v1.SoftwareStatus
-	8,  // 2: ukama.node.software.v1.GetSoftwareListResponse.software:type_name -> ukama.node.software.v1.Software
-	0,  // 3: ukama.node.software.v1.SoftwareService.GetAppList:input_type -> ukama.node.software.v1.GetAppListRequest
-	2,  // 4: ukama.node.software.v1.SoftwareService.GetSoftwareList:input_type -> ukama.node.software.v1.GetSoftwareListRequest
-	6,  // 5: ukama.node.software.v1.SoftwareService.CreateSoftwareUpdate:input_type -> ukama.node.software.v1.CreateSoftwareUpdateRequest
-	4,  // 6: ukama.node.software.v1.SoftwareService.UpdateSoftware:input_type -> ukama.node.software.v1.UpdateSoftwareRequest
-	1,  // 7: ukama.node.software.v1.SoftwareService.GetAppList:output_type -> ukama.node.software.v1.GetAppListResponse
-	3,  // 8: ukama.node.software.v1.SoftwareService.GetSoftwareList:output_type -> ukama.node.software.v1.GetSoftwareListResponse
-	7,  // 9: ukama.node.software.v1.SoftwareService.CreateSoftwareUpdate:output_type -> ukama.node.software.v1.CreateSoftwareUpdateResponse
-	5,  // 10: ukama.node.software.v1.SoftwareService.UpdateSoftware:output_type -> ukama.node.software.v1.UpdateSoftwareResponse
-	7,  // [7:11] is the sub-list for method output_type
-	3,  // [3:7] is the sub-list for method input_type
-	3,  // [3:3] is the sub-list for extension type_name
-	3,  // [3:3] is the sub-list for extension extendee
-	0,  // [0:3] is the sub-list for field type_name
+	7, // 0: ukama.node.software.v1.GetAppListResponse.apps:type_name -> ukama.node.software.v1.App
+	8, // 1: ukama.node.software.v1.GetSoftwareListRequest.status:type_name -> ukama.common.v1.SoftwareStatus
+	6, // 2: ukama.node.software.v1.GetSoftwareListResponse.software:type_name -> ukama.node.software.v1.Software
+	0, // 3: ukama.node.software.v1.SoftwareService.GetAppList:input_type -> ukama.node.software.v1.GetAppListRequest
+	2, // 4: ukama.node.software.v1.SoftwareService.GetSoftwareList:input_type -> ukama.node.software.v1.GetSoftwareListRequest
+	4, // 5: ukama.node.software.v1.SoftwareService.UpdateSoftware:input_type -> ukama.node.software.v1.UpdateSoftwareRequest
+	1, // 6: ukama.node.software.v1.SoftwareService.GetAppList:output_type -> ukama.node.software.v1.GetAppListResponse
+	3, // 7: ukama.node.software.v1.SoftwareService.GetSoftwareList:output_type -> ukama.node.software.v1.GetSoftwareListResponse
+	5, // 8: ukama.node.software.v1.SoftwareService.UpdateSoftware:output_type -> ukama.node.software.v1.UpdateSoftwareResponse
+	6, // [6:9] is the sub-list for method output_type
+	3, // [3:6] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_software_proto_init() }
@@ -712,7 +624,7 @@ func file_software_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_software_proto_rawDesc), len(file_software_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

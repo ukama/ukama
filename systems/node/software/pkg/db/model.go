@@ -16,22 +16,24 @@ import (
 )
 
 type App struct {
-	Name        string `gorm:"not null;primaryKey"`
-	Space 	 	string
+	Id          uuid.UUID `gorm:"primaryKey;type:uuid;index"`
+	Name        string    `gorm:"not null;index:idx_app_name,unique"`
+	Space       string
 	Notes       string
-	MetricsKeys []string
+	MetricsKeys []string `gorm:"serializer:json"`
 }
 
 type Software struct {
-	Id          	uuid.UUID `gorm:"primaryKey;type:uuid"`
-	ReleaseDate 	time.Time `gorm:"not null"`
-	NodeId      	string		`gorm:"not null"`
-	ChangeLog   	[]string
-	CurrentVersion  string
-	DesiredVersion  string
-	CreatedAt   	time.Time  `gorm:"not null;default:now()"`
-	UpdatedAt   	time.Time  `gorm:"not null;default:now()"`
-	DeletedAt   	*time.Time `gorm:"index;default:null"`
-	App             App 		`gorm:"foreignKey:Name;references:Name"`
-	Status 	 		ukama.SoftwareStatusType	`gorm:"not null;default:unknown"`
+	Id             uuid.UUID `gorm:"primaryKey;type:uuid;index"`
+	NodeId         string    `gorm:"not null;uniqueIndex:idx_software_node_app"`
+	AppName        string    `gorm:"not null;uniqueIndex:idx_software_node_app"`
+	App            App       `gorm:"foreignKey:AppName;references:Name"`
+	ChangeLogs     []string  `gorm:"serializer:json"`
+	CurrentVersion string    `gorm:"not null;default:'0.0.1'"`
+	DesiredVersion string    `gorm:"not null;default:''"`
+	ReleaseDate    time.Time
+	CreatedAt      time.Time                `gorm:"not null;default:now()"`
+	UpdatedAt      time.Time                `gorm:"not null;default:now()"`
+	DeletedAt      *time.Time               `gorm:"index;default:null"`
+	Status         ukama.SoftwareStatusType
 }

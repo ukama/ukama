@@ -25,7 +25,6 @@ import (
 
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
-	providers "github.com/ukama/ukama/systems/node/software/pkg/provider"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
@@ -41,6 +40,7 @@ func main() {
 	pkg.InstanceId = os.Getenv("POD_NAME")
 	initConfig()
 	cDb := initDb()
+	populateApps(cDb)
 	runGrpcServer(cDb)
 	log.Infof("Starting %s", pkg.ServiceName)
 }
@@ -62,12 +62,34 @@ func initConfig() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
-	err := d.Init(&db.Software{}, &db.App{})
+
+	err := d.Init(&db.App{}, &db.Software{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
 	return d
 }
+
+func populateApps(gormdb sql.Db) {
+	repo := db.NewAppRepo(gormdb)
+	for _, app := range svcConf.Apps {
+		_, err := repo.Get(app.Name)
+		if err == nil {
+			continue // app already exists
+		}
+		err = repo.Create(db.App{
+			Id:          uuid.NewV4(),
+			Name:        app.Name,
+			Space:       app.Space,
+			Notes:       app.Notes,
+			MetricsKeys: app.MetricsKeys,
+		})
+		if err != nil {
+			log.Fatalf("Failed to populate apps. Error: %v", err)
+		}
+	}
+}
+
 func runGrpcServer(gormdb sql.Db) {
 	instanceId := os.Getenv("POD_NAME")
 	if instanceId == "" {
@@ -81,12 +103,12 @@ func runGrpcServer(gormdb sql.Db) {
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	softServer := server.NewSoftwareServer(svcConf.OrgName, db.NewSoftwareRepo(gormdb),
-		mbClient, svcConf.DebugMode, providers.NewHealthClientProvider(svcConf.Health))
-	// controllerEventServer := server.NewSoftwareEventServer(svcConf.OrgName, softServer)
+		db.NewAppRepo(gormdb), mbClient, svcConf.DebugMode)
+	eventServer := server.NewSoftwareEventServer(svcConf.OrgName, softServer)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterSoftwareServiceServer(s, softServer)
-		epb.RegisterEventNotificationServiceServer(s, nil)
+		epb.RegisterEventNotificationServiceServer(s, eventServer)
 
 	})
 

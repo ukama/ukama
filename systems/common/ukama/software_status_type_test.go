@@ -21,7 +21,7 @@ func TestSoftwareStatusType(t *testing.T) {
 		status := ukama.ParseSoftwareStatusType("update_available")
 
 		assert.NotNil(tt, status)
-		assert.Equal(tt, status.String(), ukama.SoftwareStatusTypeUpdateAvailable.String())
+		assert.Equal(tt, status.String(), ukama.UpdateAvailable.String())
 		assert.Equal(tt, uint8(status), uint8(1))
 	})
 
@@ -29,7 +29,7 @@ func TestSoftwareStatusType(t *testing.T) {
 		status := ukama.ParseSoftwareStatusType("UPDATE_IN_PROGRESS")
 
 		assert.NotNil(tt, status)
-		assert.Equal(tt, status.String(), ukama.SoftwareStatusTypeUpdateInProgress.String())
+		assert.Equal(tt, status.String(), ukama.UpdateInProgress.String())
 		assert.Equal(tt, uint8(status), uint8(3))
 	})
 
@@ -38,14 +38,14 @@ func TestSoftwareStatusType(t *testing.T) {
 
 		assert.NotNil(tt, status)
 		assert.Equal(tt, uint8(status), uint8(4))
-		assert.Equal(tt, status.String(), ukama.SoftwareStatusTypeUpdateFailed.String())
+		assert.Equal(tt, status.String(), ukama.UpdateFailed.String())
 	})
 
 	t.Run("NonValidString", func(tt *testing.T) {
 		status := ukama.ParseSoftwareStatusType("invalid_status")
 
 		assert.NotNil(tt, status)
-		assert.Equal(tt, status.String(), ukama.SoftwareStatusTypeUnknown.String())
+		assert.Equal(tt, status.String(), ukama.Unknown.String())
 		assert.Equal(tt, uint8(status), uint8(0))
 	})
 
@@ -53,7 +53,7 @@ func TestSoftwareStatusType(t *testing.T) {
 		status := ukama.SoftwareStatusType(uint8(10))
 
 		assert.NotNil(tt, status)
-		assert.Equal(tt, status.String(), ukama.SoftwareStatusTypeUnknown.String())
+		assert.Equal(tt, status.String(), ukama.Unknown.String())
 		assert.Equal(tt, uint8(status), uint8(10))
 	})
 
@@ -63,11 +63,11 @@ func TestSoftwareStatusType(t *testing.T) {
 			constant ukama.SoftwareStatusType
 			expectStr string
 		}{
-			{"unknown", ukama.SoftwareStatusTypeUnknown, "unknown"},
-			{"update_available", ukama.SoftwareStatusTypeUpdateAvailable, "update_available"},
-			{"up_to_date", ukama.SoftwareStatusTypeUpToDate, "up_to_date"},
-			{"update_in_progress", ukama.SoftwareStatusTypeUpdateInProgress, "update_in_progress"},
-			{"update_failed", ukama.SoftwareStatusTypeUpdateFailed, "update_failed"},
+			{"unknown", ukama.Unknown, "unknown"},
+			{"up_to_date", ukama.UpToDate, "up_to_date"},
+			{"update_available", ukama.UpdateAvailable, "update_available"},
+			{"update_in_progress", ukama.UpdateInProgress, "update_in_progress"},
+			{"update_failed", ukama.UpdateFailed, "update_failed"},
 		}
 		for _, c := range cases {
 			status := ukama.ParseSoftwareStatusType(c.parsed)
@@ -77,7 +77,7 @@ func TestSoftwareStatusType(t *testing.T) {
 	})
 
 	t.Run("Value", func(tt *testing.T) {
-		status := ukama.SoftwareStatusTypeUpToDate
+		status := ukama.UpToDate
 		val, err := status.Value()
 
 		assert.NoError(tt, err)
@@ -89,6 +89,6 @@ func TestSoftwareStatusType(t *testing.T) {
 		err := status.Scan(int64(3))
 
 		assert.NoError(tt, err)
-		assert.Equal(tt, ukama.SoftwareStatusTypeUpdateInProgress, status)
+		assert.Equal(tt, ukama.UpdateInProgress, status)
 	})
 }

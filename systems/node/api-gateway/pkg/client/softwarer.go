@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	log "github.com/sirupsen/logrus"
+	ukamapb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
 )
 
@@ -59,15 +60,28 @@ func (s *SoftwareManager) Close() {
 	}
 }
 
-func (s *SoftwareManager) UpdateSoftware(space string, name string, tag string,
-	nodeId string) (*pb.UpdateSoftwareResponse, error) {
+func (s *SoftwareManager) UpdateSoftware(nodeId string, name string, tag string) (*pb.UpdateSoftwareResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
 	return s.client.UpdateSoftware(ctx, &pb.UpdateSoftwareRequest{
 		NodeId: nodeId,
-		Space:  space,
 		Name:   name,
 		Tag:    tag,
 	})
 }
+
+func (s *SoftwareManager) ListApps() (*pb.GetAppListResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
+
+	return s.client.GetAppList(ctx, &pb.GetAppListRequest{})
+}
+
+func (s *SoftwareManager) ListSoftware(nodeId string, status string, appName string) (*pb.GetSoftwareListResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
+	return s.client.GetSoftwareList(ctx, &pb.GetSoftwareListRequest{
+		NodeId: nodeId, Status: ukamapb.SoftwareStatus(ukamapb.SoftwareStatus_value[status]), AppName: appName})
+}
+

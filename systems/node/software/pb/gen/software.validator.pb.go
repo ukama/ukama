@@ -50,12 +50,6 @@ func (this *UpdateSoftwareRequest) Validate() error {
 func (this *UpdateSoftwareResponse) Validate() error {
 	return nil
 }
-func (this *CreateSoftwareUpdateRequest) Validate() error {
-	return nil
-}
-func (this *CreateSoftwareUpdateResponse) Validate() error {
-	return nil
-}
 
 var _regex_Software_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 

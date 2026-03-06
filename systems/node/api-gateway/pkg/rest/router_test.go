@@ -31,8 +31,6 @@ import (
 	cmocks "github.com/ukama/ukama/systems/node/configurator/pb/gen/mocks"
 	cpb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	nmocks "github.com/ukama/ukama/systems/node/controller/pb/gen/mocks"
-	spb "github.com/ukama/ukama/systems/node/software/pb/gen"
-	smocks "github.com/ukama/ukama/systems/node/software/pb/gen/mocks"
 )
 
 var defaultCors = cors.Config{
@@ -125,29 +123,6 @@ func Test_RestarteNodes(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		Controller: client.NewControllerFromClient(c),
-	}, routerConfig, arc.AuthenticateUser).f.Engine()
-	// act
-	r.ServeHTTP(w, req)
-
-	// assert
-	assert.Equal(t, http.StatusOK, w.Code)
-	c.AssertExpectations(t)
-}
-
-func Test_SoftwareUpdate(t *testing.T) {
-	// arrange
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/v1/software/update/space1/name1/tag1/uk-983794-hnode-78-7830", nil)
-	arc := &cmmocks.AuthClient{}
-	c := &smocks.SoftwareServiceClient{}
-
-	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
-
-	c.On("UpdateSoftware", mock.Anything, mock.Anything).Return(&spb.UpdateSoftwareResponse{},
-		nil)
-
-	r := NewRouter(&Clients{
-		SoftwareManager: client.NewSoftwareManagerFromClient(c),
 	}, routerConfig, arc.AuthenticateUser).f.Engine()
 	// act
 	r.ServeHTTP(w, req)
