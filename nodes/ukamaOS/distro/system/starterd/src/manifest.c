@@ -18,13 +18,6 @@
 
 #include "usys_log.h"
 
-static char* m_strdup(const char *s) {
-
-    if (!s || !*s) return NULL;
-
-    return strdup(s);
-}
-
 static bool m_is_valid_name(const char *s) {
 
     const char *p;

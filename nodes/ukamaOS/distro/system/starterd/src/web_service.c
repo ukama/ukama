@@ -17,6 +17,7 @@
 #include "starterd.h"
 #include "version.h"
 #include "web_service.h"
+#include "web_client.h"
 #include "network.h"
 #include "jserdes.h"
 #include "supervisor.h"
@@ -224,15 +225,88 @@ static int ws_terminate_cb(const struct _u_request *req,
                          HttpStatusStr(HttpStatus_Accepted));
 }
 
+static int ws_cb_not_allowed(const struct _u_request *request,
+                             struct _u_response *response,
+                             void *user_data) {
+
+    const char *allowedMethod = (const char *)user_data;
+
+    u_map_put(response->map_header, "Allow", allowedMethod);
+    ulfius_set_string_body_response(response,
+                                    HttpStatus_MethodNotAllowed,
+                                    HttpStatusStr(HttpStatus_MethodNotAllowed));
+    return U_CALLBACK_CONTINUE;
+}
+
+static void setup_unsupported_methods(UInst *instance,
+                                      const char *allowedMethod,
+                                      const char *prefix,
+                                      const char *resource) {
+
+    if (strcmp(allowedMethod, "GET") != 0) {
+        ulfius_add_endpoint_by_val(instance, "GET",
+                                   prefix, resource, 0,
+                                   &ws_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "POST") != 0) {
+        ulfius_add_endpoint_by_val(instance, "POST",
+                                   prefix, resource, 0,
+                                   &ws_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "PUT") != 0) {
+        ulfius_add_endpoint_by_val(instance, "PUT",
+                                   prefix, resource, 0,
+                                   &ws_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "DELETE") != 0) {
+        ulfius_add_endpoint_by_val(instance, "DELETE",
+                                   prefix, resource, 0,
+                                   &ws_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+}
+
 bool web_service_start(StarterContext *ctx) {
 
-    if (!ctx || !ctx->uInstance) return false;
+    if (!ctx || !ctx->uInstance) {
+        return false;
+    }
 
-    ulfius_add_endpoint_by_val(ctx->uInstance, "GET",  "/v1", "/ping",     0, &ws_ping_cb,      ctx);
-    ulfius_add_endpoint_by_val(ctx->uInstance, "GET",  "/v1", "/version",  0, &ws_version_cb,   ctx);
-    ulfius_add_endpoint_by_val(ctx->uInstance, "GET",  "/v1", "/status",   0, &ws_status_cb,    ctx);
-    ulfius_add_endpoint_by_val(ctx->uInstance, "POST", "/v1", "/update",   0, &ws_update_cb,    ctx);
-    ulfius_add_endpoint_by_val(ctx->uInstance, "POST", "/v1", "/terminate",0, &ws_terminate_cb, ctx);
+    ulfius_add_endpoint_by_val(ctx->uInstance, "GET",
+                               "/v1", "/ping", 0,
+                               &ws_ping_cb, ctx);
+    setup_unsupported_methods(ctx->uInstance, "GET",
+                              "/v1", "/ping");
+
+    ulfius_add_endpoint_by_val(ctx->uInstance, "GET",
+                               "/v1", "/version", 0,
+                               &ws_version_cb, ctx);
+    setup_unsupported_methods(ctx->uInstance, "GET",
+                              "/v1", "/version");
+
+    ulfius_add_endpoint_by_val(ctx->uInstance, "GET",
+                               "/v1", "/status", 0,
+                               &ws_status_cb, ctx);
+    setup_unsupported_methods(ctx->uInstance, "GET",
+                              "/v1", "/status");
+
+    ulfius_add_endpoint_by_val(ctx->uInstance, "POST",
+                               "/v1", "/update", 0,
+                               &ws_update_cb, ctx);
+    setup_unsupported_methods(ctx->uInstance, "POST",
+                              "/v1", "/update");
+
+    ulfius_add_endpoint_by_val(ctx->uInstance, "POST",
+                               "/v1", "/terminate", 0,
+                               &ws_terminate_cb, ctx);
+    setup_unsupported_methods(ctx->uInstance, "POST",
+                              "/v1", "/terminate");
 
     if (ulfius_start_framework(ctx->uInstance) != U_OK) {
         usys_log_error("web: start failed");
