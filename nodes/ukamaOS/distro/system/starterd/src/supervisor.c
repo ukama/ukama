@@ -6,382 +6,601 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
+#include "supervisor.h"
+#include "space.h"
+#include "app.h"
+#include "installer.h"
+#include "state_store.h"
+#include "web_client.h"
+#include "restart_policy.h"
+#include "app_runtime.h"
+#include "starterd.h"
+
+#include <errno.h>
+#include <pthread.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
 #include <unistd.h>
-
-#include <ulfius.h>
-#include <jansson.h>
+#include <time.h>
 
 #include "usys_log.h"
-#include "starterd.h"
-#include "version.h"
-#include "web_service.h"
-#include "web_client.h"
-#include "network.h"
-#include "jserdes.h"
-#include "supervisor.h"
-#include "http_status.h"
 
-static int ws_reply_text(struct _u_response *resp, int status, const char *text) {
-
-    ulfius_set_string_body_response(resp, status, text ? text : "");
-    return U_CALLBACK_CONTINUE;
-}
-
-static int ws_ping_cb(const struct _u_request *req,
-                      struct _u_response *resp,
-                      void *userData) {
-
-    (void)req;
-    (void)userData;
-
-    return ws_reply_text(resp,
-                         HttpStatus_OK,
-                         HttpStatusStr(HttpStatus_OK));
-}
-
-static int ws_version_cb(const struct _u_request *req,
-                         struct _u_response *resp,
-                         void *userData) {
-
-    (void)req;
-    (void)userData;
-
-    return ws_reply_text(resp,
-                         HttpStatus_OK,
-                         VERSION);
-}
-
-static int ws_status_cb(const struct _u_request *req,
-                        struct _u_response *resp,
-                        void *userData) {
-
+struct Supervisor {
+    Config         *config;
+    Space          *spaceList;
+    ActionQueue    *queue;
     StarterContext *ctx;
-    json_t *j;
-    json_t *meta;
-    char *body;
 
-    (void)req;
+    pthread_t       thread;
+    pthread_mutex_t mu;
+    pthread_cond_t  cv;
 
-    ctx = (StarterContext *)userData;
-    if (!ctx || !ctx->spaceList) {
-        return ws_reply_text(resp,
-                             HttpStatus_InternalServerError,
-                             HttpStatusStr(HttpStatus_InternalServerError));
-    }
+    bool running;
+    bool bootDone;
+};
 
-    j = jserdes_status_json(ctx->spaceList);
-    if (!j) {
-        return ws_reply_text(resp,
-                             HttpStatus_InternalServerError,
-                             HttpStatusStr(HttpStatus_InternalServerError));
-    }
+static void action_free(Action *a) {
 
-    meta = json_object();
-    if (meta) {
-        json_object_set_new(meta, "updateInProgress",
-                            json_boolean(ctx->updateInProgress ? 1 : 0));
-        json_object_set_new(meta, "switchRequested",
-                            json_boolean(ctx->switchRequested ? 1 : 0));
-        json_object_set_new(meta, "exitCode",
-                            json_integer(ctx->exitCode));
-        json_object_set_new(j, "starterd", meta);
-    }
-
-    body = json_dumps(j, JSON_INDENT(2) | JSON_SORT_KEYS);
-    json_decref(j);
-
-    ulfius_add_header_to_response(resp, "Content-Type", "application/json");
-    ulfius_set_string_body_response(resp,
-                                    HttpStatus_OK,
-                                    body ? body : "{}");
-    free(body);
-
-    return U_CALLBACK_CONTINUE;
-}
-
-static bool ws_parse_update(json_t *j,
-                            char **spaceOut,
-                            char **nameOut,
-                            char **tagOut) {
-
-    json_t *v;
-    const char *space;
-    const char *name;
-    const char *tag;
-
-    if (spaceOut) *spaceOut = NULL;
-    if (nameOut)  *nameOut  = NULL;
-    if (tagOut)   *tagOut   = NULL;
-
-    if (!j || !json_is_object(j)) {
-        return false;
-    }
-
-    v = json_object_get(j, "space");
-    space = json_is_string(v) ? json_string_value(v) : NULL;
-
-    v = json_object_get(j, "name");
-    name = json_is_string(v) ? json_string_value(v) : NULL;
-
-    v = json_object_get(j, "tag");
-    tag = json_is_string(v) ? json_string_value(v) : NULL;
-
-    if (!space || !name || !tag) {
-        return false;
-    }
-
-    if (spaceOut) *spaceOut = strdup(space);
-    if (nameOut)  *nameOut  = strdup(name);
-    if (tagOut)   *tagOut   = strdup(tag);
-
-    return true;
-}
-
-static int ws_update_cb(const struct _u_request *req,
-                        struct _u_response *resp,
-                        void *userData) {
-
-    StarterContext *ctx;
-    json_error_t err;
-    json_t *j;
-    char *space;
-    char *name;
-    char *tag;
-    Action *a;
-
-    ctx = (StarterContext *)userData;
-    if (!ctx || !ctx->queue || !ctx->supervisor) {
-        return ws_reply_text(resp,
-                             HttpStatus_InternalServerError,
-                             HttpStatusStr(HttpStatus_InternalServerError));
-    }
-
-    if (ctx->switchRequested || ctx->terminateRequested) {
-        return ws_reply_text(resp,
-                             HttpStatus_Conflict,
-                             HttpStatusStr(HttpStatus_Conflict));
-    }
-
-    if (ctx->updateInProgress) {
-        return ws_reply_text(resp,
-                             HttpStatus_Locked,
-                             HttpStatusStr(HttpStatus_Locked));
-    }
-
-    j = json_loads(req->binary_body ? (const char *)req->binary_body : "{}",
-                   0,
-                   &err);
-    if (!j) {
-        return ws_reply_text(resp,
-                             HttpStatus_BadRequest,
-                             HttpStatusStr(HttpStatus_BadRequest));
-    }
-
-    space = NULL;
-    name  = NULL;
-    tag   = NULL;
-
-    if (!ws_parse_update(j, &space, &name, &tag)) {
-        json_decref(j);
-        free(space);
-        free(name);
-        free(tag);
-        return ws_reply_text(resp,
-                             HttpStatus_BadRequest,
-                             HttpStatusStr(HttpStatus_BadRequest));
-    }
-
-    ctx->updateInProgress = 1;
-
-    a = action_new(ACTION_UPDATE_APP, space, name, tag);
-    free(space);
-    free(name);
-    free(tag);
-    json_decref(j);
-
-    if (!a || !actions_enqueue(ctx->queue, a)) {
-        if (a) {
-            free(a);
-        }
-        ctx->updateInProgress = 0;
-        return ws_reply_text(resp,
-                             HttpStatus_InternalServerError,
-                             HttpStatusStr(HttpStatus_InternalServerError));
-    }
-
-    supervisor_signal((Supervisor *)ctx->supervisor);
-
-    return ws_reply_text(resp,
-                         HttpStatus_Accepted,
-                         HttpStatusStr(HttpStatus_Accepted));
-}
-
-static int ws_terminate_cb(const struct _u_request *req,
-                           struct _u_response *resp,
-                           void *userData) {
-
-    StarterContext *ctx;
-    json_error_t err;
-    json_t *j;
-    json_t *v;
-    const char *space;
-    const char *name;
-    Action *a;
-
-    ctx = (StarterContext *)userData;
-    if (!ctx || !ctx->queue || !ctx->supervisor) {
-        return ws_reply_text(resp,
-                             HttpStatus_InternalServerError,
-                             HttpStatusStr(HttpStatus_InternalServerError));
-    }
-
-    if (ctx->switchRequested) {
-        return ws_reply_text(resp,
-                             HttpStatus_Conflict,
-                             HttpStatusStr(HttpStatus_Conflict));
-    }
-
-    j = json_loads(req->binary_body ? (const char *)req->binary_body : "{}",
-                   0,
-                   &err);
-    if (!j) {
-        return ws_reply_text(resp,
-                             HttpStatus_BadRequest,
-                             HttpStatusStr(HttpStatus_BadRequest));
-    }
-
-    v = json_object_get(j, "space");
-    space = json_is_string(v) ? json_string_value(v) : NULL;
-
-    v = json_object_get(j, "name");
-    name = json_is_string(v) ? json_string_value(v) : NULL;
-
-    if (!space || !name) {
-        json_decref(j);
-        return ws_reply_text(resp,
-                             HttpStatus_BadRequest,
-                             HttpStatusStr(HttpStatus_BadRequest));
-    }
-
-    a = action_new(ACTION_TERMINATE_APP, space, name, NULL);
-    json_decref(j);
-
-    if (!a || !actions_enqueue(ctx->queue, a)) {
-        if (a) {
-            free(a);
-        }
-        return ws_reply_text(resp,
-                             HttpStatus_InternalServerError,
-                             HttpStatusStr(HttpStatus_InternalServerError));
-    }
-
-    supervisor_signal((Supervisor *)ctx->supervisor);
-
-    return ws_reply_text(resp,
-                         HttpStatus_Accepted,
-                         HttpStatusStr(HttpStatus_Accepted));
-}
-
-static int ws_cb_not_allowed(const struct _u_request *request,
-                             struct _u_response *response,
-                             void *user_data) {
-
-    const char *allowedMethod = (const char *)user_data;
-
-    (void)request;
-
-    u_map_put(response->map_header, "Allow", allowedMethod);
-    ulfius_set_string_body_response(response,
-                                    HttpStatus_MethodNotAllowed,
-                                    HttpStatusStr(HttpStatus_MethodNotAllowed));
-    return U_CALLBACK_CONTINUE;
-}
-
-static void setup_unsupported_methods(UInst *instance,
-                                      const char *allowedMethod,
-                                      const char *prefix,
-                                      const char *resource) {
-
-    if (strcmp(allowedMethod, "GET") != 0) {
-        ulfius_add_endpoint_by_val(instance, "GET",
-                                   prefix, resource, 0,
-                                   &ws_cb_not_allowed,
-                                   (void *)allowedMethod);
-    }
-
-    if (strcmp(allowedMethod, "POST") != 0) {
-        ulfius_add_endpoint_by_val(instance, "POST",
-                                   prefix, resource, 0,
-                                   &ws_cb_not_allowed,
-                                   (void *)allowedMethod);
-    }
-
-    if (strcmp(allowedMethod, "PUT") != 0) {
-        ulfius_add_endpoint_by_val(instance, "PUT",
-                                   prefix, resource, 0,
-                                   &ws_cb_not_allowed,
-                                   (void *)allowedMethod);
-    }
-
-    if (strcmp(allowedMethod, "DELETE") != 0) {
-        ulfius_add_endpoint_by_val(instance, "DELETE",
-                                   prefix, resource, 0,
-                                   &ws_cb_not_allowed,
-                                   (void *)allowedMethod);
-    }
-}
-
-bool web_service_start(StarterContext *ctx) {
-
-    if (!ctx || !ctx->uInstance) {
-        return false;
-    }
-
-    ulfius_add_endpoint_by_val(ctx->uInstance, "GET",
-                               "/v1", "/ping", 0,
-                               &ws_ping_cb, ctx);
-    setup_unsupported_methods(ctx->uInstance, "GET",
-                              "/v1", "/ping");
-
-    ulfius_add_endpoint_by_val(ctx->uInstance, "GET",
-                               "/v1", "/version", 0,
-                               &ws_version_cb, ctx);
-    setup_unsupported_methods(ctx->uInstance, "GET",
-                              "/v1", "/version");
-
-    ulfius_add_endpoint_by_val(ctx->uInstance, "GET",
-                               "/v1", "/status", 0,
-                               &ws_status_cb, ctx);
-    setup_unsupported_methods(ctx->uInstance, "GET",
-                              "/v1", "/status");
-
-    ulfius_add_endpoint_by_val(ctx->uInstance, "POST",
-                               "/v1", "/update", 0,
-                               &ws_update_cb, ctx);
-    setup_unsupported_methods(ctx->uInstance, "POST",
-                              "/v1", "/update");
-
-    ulfius_add_endpoint_by_val(ctx->uInstance, "POST",
-                               "/v1", "/terminate", 0,
-                               &ws_terminate_cb, ctx);
-    setup_unsupported_methods(ctx->uInstance, "POST",
-                              "/v1", "/terminate");
-
-    if (ulfius_start_framework(ctx->uInstance) != U_OK) {
-        usys_log_error("web: start failed");
-        return false;
-    }
-
-    return true;
-}
-
-void web_service_stop(StarterContext *ctx) {
-
-    if (!ctx || !ctx->uInstance) {
+    if (!a) {
         return;
     }
 
-    ulfius_stop_framework(ctx->uInstance);
+    free(a->space);
+    free(a->name);
+    free(a->tag);
+    free(a);
+}
+
+static void ready_touch(Config *config) {
+
+    FILE *f;
+    char *p;
+    char *slash;
+
+    if (!config || !config->readyFile) {
+        return;
+    }
+
+    p = strdup(config->readyFile);
+    if (!p) {
+        return;
+    }
+
+    slash = strrchr(p, '/');
+    if (slash) {
+        *slash = '\0';
+        mkdir(p, 0755);
+    }
+    free(p);
+
+    f = fopen(config->readyFile, "w");
+    if (f) {
+        fputs("ready\n", f);
+        fclose(f);
+    }
+}
+
+static char* app_exec_path(Config *config, App *app) {
+
+    char *p;
+
+    if (!config || !app || !app->cmd) {
+        return NULL;
+    }
+
+    if (app->cmd[0] == '/') {
+        return strdup(app->cmd);
+    }
+
+    p = NULL;
+    if (asprintf(&p, "%s/%s/%s/current/%s",
+                 config->appsRoot,
+                 app->space,
+                 app->name,
+                 app->cmd) < 0) {
+        p = NULL;
+    }
+
+    return p;
+}
+
+static bool app_start(Config *config, App *app) {
+
+    char *execPath;
+    bool ok;
+    time_t now;
+
+    execPath = NULL;
+    ok = false;
+
+    if (!config || !app) {
+        return false;
+    }
+
+    execPath = app_exec_path(config, app);
+    if (!execPath) {
+        return false;
+    }
+
+    app->state = APP_STATE_STARTING;
+
+    now = time(NULL);
+    restart_policy_on_start(config, app, now);
+
+    ok = app_runtime_start(config, app, execPath);
+    if (!ok) {
+        app->state = APP_STATE_FAILED;
+    } else {
+        app->state = APP_STATE_RUNNING;
+    }
+
+    free(execPath);
+    return ok;
+}
+
+static bool app_stop(Config *config, App *app) {
+
+    if (!config || !app) {
+        return false;
+    }
+
+    app->state = APP_STATE_STOPPING;
+    app_runtime_stop(config, app);
+    app->state = APP_STATE_STOPPED;
+
+    return true;
+}
+
+static bool app_is_self(const App *app) {
+
+    if (!app || !app->name) {
+        return false;
+    }
+
+    return strcmp(app->name, STARTERD_SERVICE_NAME) == 0;
+}
+
+static void supervisor_stop_all_apps(Supervisor *s) {
+
+    Space *sp;
+    App *a;
+
+    if (!s) {
+        return;
+    }
+
+    sp = s->spaceList;
+    while (sp) {
+        a = sp->appList;
+        while (a) {
+            if (!app_is_self(a) &&
+                (a->state == APP_STATE_RUNNING ||
+                 a->state == APP_STATE_STARTING ||
+                 a->state == APP_STATE_FAILED)) {
+                usys_log_info("shutdown: stopping %s/%s", a->space, a->name);
+                app_stop(s->config, a);
+            }
+            a = a->next;
+        }
+        sp = sp->next;
+    }
+
+    state_store_save(s->config, s->spaceList);
+}
+
+static void supervisor_reap(Supervisor *s) {
+
+    int status;
+    pid_t pid;
+    Space *sp;
+    App *a;
+    time_t now;
+    int delay;
+
+    if (!s) {
+        return;
+    }
+
+    while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+
+        sp = s->spaceList;
+        while (sp) {
+            a = sp->appList;
+            while (a) {
+                if (a->pid == pid) {
+                    app_runtime_note_exit(a, status);
+                    now = time(NULL);
+                    restart_policy_on_exit(s->config, a, now);
+
+                    if (a->state == APP_STATE_STOPPING ||
+                        a->state == APP_STATE_STOPPED) {
+                        a->state = APP_STATE_STOPPED;
+                        break;
+                    }
+
+                    a->state = APP_STATE_FAILED;
+
+                    delay = restart_policy_next_delay(s->config, a, now);
+                    usys_log_error("app: exited %s/%s restart in %d sec",
+                                   a->space, a->name, delay);
+                    sleep(delay);
+                    app_start(s->config, a);
+                    state_store_save(s->config, s->spaceList);
+                    break;
+                }
+                a = a->next;
+            }
+            sp = sp->next;
+        }
+    }
+}
+
+static bool app_wait_commit(Config *config, App *app) {
+
+    time_t start;
+
+    if (!config || !app) {
+        return false;
+    }
+
+    start = time(NULL);
+    while (true) {
+
+        if (wc_app_ping(config, app) &&
+            wc_app_version_matches(config, app, app->tag)) {
+            return true;
+        }
+
+        if ((int)(time(NULL) - start) >= config->commitTimeoutSec) {
+            break;
+        }
+
+        usleep(200 * 1000);
+    }
+
+    return false;
+}
+
+static bool run_space(Config *config,
+                      Space *spaceList,
+                      const char *spaceName,
+                      bool gate) {
+
+    Space *s;
+    App *a;
+
+    s = space_find(spaceList, spaceName);
+    if (!s) {
+        return true;
+    }
+
+    a = s->appList;
+    while (a) {
+
+        if (!installer_ensure_installed(config, a)) {
+            return false;
+        }
+
+        if (!installer_switch_current(config, a)) {
+            return false;
+        }
+
+        if (!app_start(config, a)) {
+            return false;
+        }
+
+        if (gate) {
+            if (!app_wait_commit(config, a)) {
+                usys_log_error("boot: gate failed %s/%s", a->space, a->name);
+                return false;
+            }
+        }
+
+        a = a->next;
+    }
+
+    return true;
+}
+
+static bool update_self(Supervisor *s, App *a, const char *tag) {
+
+    char *oldTag;
+    char *oldLastGood;
+
+    if (!s || !s->config || !a || !tag) {
+        return false;
+    }
+
+    oldTag = strdup(a->tag ? a->tag : "");
+    oldLastGood = strdup(a->lastGoodTag ? a->lastGoodTag : "");
+    if (!oldTag || !oldLastGood) {
+        free(oldTag);
+        free(oldLastGood);
+        return false;
+    }
+
+    usys_log_info("self-update: %s/%s -> %s", a->space, a->name, tag);
+
+    free(a->tag);
+    a->tag = strdup(tag);
+    if (!a->tag) {
+        a->tag = oldTag;
+        free(oldLastGood);
+        return false;
+    }
+
+    if (!installer_ensure_installed(s->config, a)) {
+        usys_log_error("self-update: install failed %s/%s", a->space, a->name);
+        free(a->tag);
+        a->tag = oldTag;
+        free(oldLastGood);
+        return false;
+    }
+
+    if (!installer_switch_current(s->config, a)) {
+        usys_log_error("self-update: switch failed %s/%s", a->space, a->name);
+        free(a->tag);
+        a->tag = oldTag;
+        free(oldLastGood);
+        return false;
+    }
+
+    free(a->lastGoodTag);
+    a->lastGoodTag = strdup(tag);
+    if (!a->lastGoodTag) {
+        a->lastGoodTag = oldLastGood;
+        free(oldTag);
+        return false;
+    }
+
+    state_store_save(s->config, s->spaceList);
+
+    if (s->ctx) {
+        s->ctx->switchRequested = 1;
+        s->ctx->exitCode = 77;
+    }
+
+    free(oldTag);
+    free(oldLastGood);
+
+    usys_log_info("self-update: staged successfully, switch requested");
+    return true;
+}
+
+static bool update_app(Supervisor *s,
+                       const char *space,
+                       const char *name,
+                       const char *tag) {
+
+    App *a;
+    char *oldTag;
+    char *oldLastGood;
+
+    if (!s || !space || !name || !tag) {
+        return false;
+    }
+
+    a = app_find(s->spaceList, space, name);
+    if (!a) {
+        return false;
+    }
+
+    if (app_is_self(a)) {
+        return update_self(s, a, tag);
+    }
+
+    oldTag = strdup(a->tag ? a->tag : "");
+    oldLastGood = strdup(a->lastGoodTag ? a->lastGoodTag : "");
+    if (!oldTag || !oldLastGood) {
+        free(oldTag);
+        free(oldLastGood);
+        return false;
+    }
+
+    usys_log_info("update: %s/%s -> %s", space, name, tag);
+
+    app_stop(s->config, a);
+
+    free(a->tag);
+    a->tag = strdup(tag);
+    if (!a->tag) {
+        a->tag = oldTag;
+        free(oldLastGood);
+        return false;
+    }
+
+    if (!installer_ensure_installed(s->config, a)) {
+        usys_log_error("update: install failed %s/%s", space, name);
+        free(a->tag);
+        a->tag = oldTag;
+        app_start(s->config, a);
+        free(oldLastGood);
+        return false;
+    }
+
+    if (!installer_switch_current(s->config, a)) {
+        usys_log_error("update: switch failed %s/%s", space, name);
+        free(a->tag);
+        a->tag = oldTag;
+        app_start(s->config, a);
+        free(oldLastGood);
+        return false;
+    }
+
+    if (!app_start(s->config, a)) {
+        usys_log_error("update: start failed %s/%s", space, name);
+        installer_revert_to_last_good(s->config, a);
+        free(a->tag);
+        a->tag = oldTag;
+        app_start(s->config, a);
+        free(oldLastGood);
+        return false;
+    }
+
+    if (!app_wait_commit(s->config, a)) {
+        usys_log_error("update: commit failed %s/%s auto-revert", space, name);
+        app_stop(s->config, a);
+        free(a->tag);
+        a->tag = oldTag;
+        installer_switch_current(s->config, a);
+        app_start(s->config, a);
+        free(oldLastGood);
+        return false;
+    }
+
+    free(a->lastGoodTag);
+    a->lastGoodTag = strdup(tag);
+
+    state_store_save(s->config, s->spaceList);
+
+    free(oldTag);
+    free(oldLastGood);
+    return true;
+}
+
+static void* supervisor_thread(void *arg) {
+
+    Supervisor *s;
+    Action *a;
+
+    s = (Supervisor *)arg;
+
+    pthread_mutex_lock(&s->mu);
+
+    while (s->running) {
+
+        supervisor_reap(s);
+
+        a = actions_dequeue(s->queue);
+        if (!a) {
+            struct timespec ts;
+            clock_gettime(CLOCK_REALTIME, &ts);
+            ts.tv_sec += 1;
+            pthread_cond_timedwait(&s->cv, &s->mu, &ts);
+            continue;
+        }
+
+        pthread_mutex_unlock(&s->mu);
+
+        if (a->type == ACTION_RUN_BOOT) {
+            if (!run_space(s->config, s->spaceList, s->config->bootSpace, true)) {
+                usys_log_error("boot: failed");
+            } else {
+                s->bootDone = true;
+                ready_touch(s->config);
+                usys_log_info("boot: ready");
+            }
+        } else if (a->type == ACTION_RUN_ALL) {
+            Space *sp;
+
+            sp = s->spaceList;
+            while (sp) {
+                if (strcmp(sp->name, s->config->bootSpace) != 0) {
+                    run_space(s->config, s->spaceList, sp->name, false);
+                }
+                sp = sp->next;
+            }
+        } else if (a->type == ACTION_TERMINATE_APP) {
+            App *app;
+
+            app = app_find(s->spaceList, a->space, a->name);
+            if (app) {
+                usys_log_info("terminate: %s/%s", a->space, a->name);
+                app_stop(s->config, app);
+                state_store_save(s->config, s->spaceList);
+            }
+        } else if (a->type == ACTION_UPDATE_APP) {
+            if (!update_app(s, a->space, a->name, a->tag)) {
+                usys_log_error("update: failed %s/%s -> %s",
+                               a->space ? a->space : "(null)",
+                               a->name ? a->name : "(null)",
+                               a->tag ? a->tag : "(null)");
+            }
+            if (s->ctx) {
+                s->ctx->updateInProgress = 0;
+            }
+        }
+
+        action_free(a);
+
+        pthread_mutex_lock(&s->mu);
+    }
+
+    pthread_mutex_unlock(&s->mu);
+    return NULL;
+}
+
+Supervisor* supervisor_start(Config *config,
+                             Space *spaceList,
+                             ActionQueue *queue,
+                             StarterContext *ctx) {
+
+    Supervisor *s;
+
+    if (!config || !spaceList || !queue || !ctx) {
+        return NULL;
+    }
+
+    s = calloc(1, sizeof(*s));
+    if (!s) {
+        return NULL;
+    }
+
+    s->config = config;
+    s->spaceList = spaceList;
+    s->queue = queue;
+    s->ctx = ctx;
+
+    pthread_mutex_init(&s->mu, NULL);
+    pthread_cond_init(&s->cv, NULL);
+
+    s->running = true;
+    s->bootDone = false;
+
+    if (pthread_create(&s->thread, NULL, supervisor_thread, s) != 0) {
+        pthread_mutex_destroy(&s->mu);
+        pthread_cond_destroy(&s->cv);
+        free(s);
+        return NULL;
+    }
+
+    return s;
+}
+
+void supervisor_stop(Supervisor *s) {
+
+    if (!s) {
+        return;
+    }
+
+    pthread_mutex_lock(&s->mu);
+    s->running = false;
+    pthread_cond_broadcast(&s->cv);
+    pthread_mutex_unlock(&s->mu);
+
+    pthread_join(s->thread, NULL);
+
+    supervisor_stop_all_apps(s);
+
+    pthread_mutex_destroy(&s->mu);
+    pthread_cond_destroy(&s->cv);
+
+    free(s);
+}
+
+bool supervisor_signal(Supervisor *s) {
+
+    if (!s) {
+        return false;
+    }
+
+    pthread_mutex_lock(&s->mu);
+    pthread_cond_broadcast(&s->cv);
+    pthread_mutex_unlock(&s->mu);
+
+    return true;
 }

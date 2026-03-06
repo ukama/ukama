@@ -21,6 +21,7 @@ Supervisor* supervisor_start(Config *config,
                              Space *spaceList,
                              ActionQueue *queue,
                              StarterContext *ctx);
-void supervisor_stop(Supervisor *s);
-bool supervisor_signal(Supervisor *s);
 
+void supervisor_stop(Supervisor *s);
+
+bool supervisor_signal(Supervisor *s);

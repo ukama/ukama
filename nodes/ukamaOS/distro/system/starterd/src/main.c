@@ -171,9 +171,6 @@ int main(int argc, char **argv) {
 
     if (gTerminate) {
         ctx.terminateRequested = 1;
-        if (ctx.exitCode == 0) {
-            ctx.exitCode = 0;
-        }
         usys_log_info("starterd: terminating by signal");
     } else if (ctx.switchRequested) {
         usys_log_info("starterd: self-update switch requested");
