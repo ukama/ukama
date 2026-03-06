@@ -47,10 +47,14 @@ static void redirect_logs(const char *path) {
 
     int fd;
 
-    if (!path || !*path) return;
+    if (!path || !*path) {
+        return;
+    }
 
     fd = open(path, O_CREAT | O_APPEND | O_WRONLY, 0644);
-    if (fd < 0) return;
+    if (fd < 0) {
+        return;
+    }
 
     dup2(fd, STDOUT_FILENO);
     dup2(fd, STDERR_FILENO);
@@ -85,6 +89,7 @@ int main(int argc, char **argv) {
     StarterContext ctx;
     Supervisor *sup;
     Action *a;
+    int exitCode;
 
     (void)argc;
     (void)argv;
@@ -113,9 +118,15 @@ int main(int argc, char **argv) {
     actions_init(&queue);
 
     memset(&ctx, 0, sizeof(ctx));
-    ctx.config    = &config;
-    ctx.spaceList = spaceList;
-    ctx.queue     = &queue;
+    ctx.config             = &config;
+    ctx.spaceList          = spaceList;
+    ctx.queue              = &queue;
+    ctx.supervisor         = NULL;
+    ctx.uInstance          = NULL;
+    ctx.terminateRequested = 0;
+    ctx.switchRequested    = 0;
+    ctx.updateInProgress   = 0;
+    ctx.exitCode           = 0;
 
     if (!network_init(&ctx)) {
         usys_log_error("startup: network init failed");
@@ -124,7 +135,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    sup = supervisor_start(&config, spaceList, &queue);
+    sup = supervisor_start(&config, spaceList, &queue, &ctx);
     if (!sup) {
         usys_log_error("startup: supervisor start failed");
         network_shutdown(&ctx);
@@ -154,12 +165,21 @@ int main(int argc, char **argv) {
 
     usys_log_info("starterd: running on %s:%d", config.httpAddr, config.httpPort);
 
-    while (!gTerminate) {
+    while (!gTerminate && !ctx.switchRequested) {
         sleep(1);
     }
 
-    usys_log_info("starterd: terminating");
+    if (gTerminate) {
+        ctx.terminateRequested = 1;
+        if (ctx.exitCode == 0) {
+            ctx.exitCode = 0;
+        }
+        usys_log_info("starterd: terminating by signal");
+    } else if (ctx.switchRequested) {
+        usys_log_info("starterd: self-update switch requested");
+    }
 
+    web_service_stop(&ctx);
     supervisor_stop(sup);
     network_shutdown(&ctx);
     actions_free(&queue);
@@ -167,5 +187,13 @@ int main(int argc, char **argv) {
     manifest_free(spaceList);
     config_free(&config);
 
-    return 0;
+    exitCode = ctx.switchRequested ? 77 : ctx.exitCode;
+
+    if (exitCode == 77) {
+        usys_log_info("starterd: exiting with switch code 77");
+    } else {
+        usys_log_info("starterd: exiting with code %d", exitCode);
+    }
+
+    return exitCode;
 }

@@ -9,6 +9,8 @@
 #pragma once
 
 #include <stdbool.h>
+#include <signal.h>
+
 #include "config.h"
 #include "space.h"
 #include "actions.h"
@@ -21,6 +23,12 @@ typedef struct StarterContext {
     ActionQueue *queue;
     void *supervisor;
     struct _u_instance *uInstance;
+
+    volatile sig_atomic_t terminateRequested;
+    volatile sig_atomic_t switchRequested;
+    volatile sig_atomic_t updateInProgress;
+
+    int exitCode;
 } StarterContext;
 
 bool web_service_start(StarterContext *ctx);

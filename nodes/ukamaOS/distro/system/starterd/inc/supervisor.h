@@ -9,13 +9,18 @@
 #pragma once
 
 #include <stdbool.h>
+
 #include "config.h"
 #include "space.h"
 #include "actions.h"
+#include "web_service.h"
 
 typedef struct Supervisor Supervisor;
 
-Supervisor* supervisor_start(Config *config, Space *spaceList, ActionQueue *queue);
+Supervisor* supervisor_start(Config *config,
+                             Space *spaceList,
+                             ActionQueue *queue,
+                             StarterContext *ctx);
 void supervisor_stop(Supervisor *s);
-
 bool supervisor_signal(Supervisor *s);
+
