@@ -1,0 +1,18 @@
+{
+  "spaces": [
+    {
+      "name": "boot",
+      "apps": [
+        {
+          "name": "example_app",
+          "tag": "v1",
+          "cmd": "example_app.py",
+          "port": 18110,
+          "env": {
+            "APP_PORT": "18110"
+          }
+        }
+      ]
+    }
+  ]
+}
