@@ -11,9 +11,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define STARTERD_SERVICE_NAME        "starterd"
-#define STARTERD_DEFAULT_LOG_PATH    "/ukama/apps.log"
-#define STARTERD_DEFAULT_READY_FILE  "/ukama/init/starter/ready"
+#define STARTERD_SERVICE_NAME          "starter"
+#define STARTERD_DEFAULT_MANIFEST_FILE "/manifest.json"
+#define STARTERD_DEFAULT_LOG_PATH      "/ukama/apps.log"
+#define STARTERD_DEFAULT_READY_FILE    "/ukama/init/starter/ready"
 
 typedef enum {
     APP_STATE_STOPPED = 0,

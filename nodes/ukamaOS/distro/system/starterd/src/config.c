@@ -155,7 +155,7 @@ bool config_load(Config *config) {
 
     cfg_load_env_file_if_enabled();
 
-    config->manifestPath = cfg_get_str("STARTERD_MANIFEST",  "/ukama/manifest.json");
+    config->manifestPath = cfg_get_str("STARTERD_MANIFEST",   STARTERD_DEFAULT_MANIFEST_FILE);
     config->logPath      = cfg_get_str("STARTERD_LOG_PATH",   STARTERD_DEFAULT_LOG_PATH);
     config->readyFile    = cfg_get_str("STARTERD_READY_FILE", STARTERD_DEFAULT_READY_FILE);
 
@@ -163,7 +163,7 @@ bool config_load(Config *config) {
     config->pkgsDir      = cfg_get_str("STARTERD_PKGS_DIR",  "/ukama/apps/pkgs");
     config->stateDir     = cfg_get_str("STARTERD_STATE_DIR", "/ukama/state/starterd");
 
-    config->httpAddr = cfg_get_str("STARTERD_HTTP_ADDR", "0.0.0.0");
+    config->httpAddr     = cfg_get_str("STARTERD_HTTP_ADDR", "0.0.0.0");
 
     /* starter.d port from service registry */
     config->httpPort = usys_find_service_port(SERVICE_STARTER);
@@ -172,18 +172,12 @@ bool config_load(Config *config) {
         return false;
     }
 
-    config->httpPort = cfg_get_int("STARTERD_HTTP_PORT", config->httpPort);
-
-    config->wimcHost = cfg_get_str("STARTERD_WIMC_HOST", "127.0.0.1");
-
-    /* wimc.d port from service registry */
+    config->wimcHost = cfg_get_str("STARTERD_WIMC_HOST", "0.0.0.0");
     config->wimcPort = usys_find_service_port(SERVICE_WIMC);
     if (config->wimcPort <= 0) {
         usys_log_error("SERVICE_WIMC port not found in service registry");
         return false;
     }
-
-    config->wimcPort = cfg_get_int("STARTERD_WIMC_PORT", config->wimcPort);
 
     config->wimcPathTemplate =
         cfg_get_str("STARTERD_WIMC_PATH_TEMPLATE", "/v1/apps/%s/%s/pkg");
