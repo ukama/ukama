@@ -22,7 +22,8 @@ bool network_init(StarterContext *ctx) {
 
     if (ulfius_init_instance(ctx->uInstance,
                              ctx->config->httpPort,
-                             ctx->config->httpAddr, NULL) != U_OK) {
+                             NULL,
+                             NULL) != U_OK) {
         usys_log_error("network: init failed");
         free(ctx->uInstance);
         ctx->uInstance = NULL;
