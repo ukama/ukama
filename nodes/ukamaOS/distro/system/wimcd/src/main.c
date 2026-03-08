@@ -13,6 +13,7 @@
 #include <ulfius.h>
 #include <curl/curl.h>
 #include <signal.h>
+#include <pthread.h>
 
 #include "db.h"
 #include "log.h"
@@ -31,27 +32,24 @@
 
 #include "version.h"
 
-/* init.c */
-extern void open_db(sqlite3 **db, char *dbFile, int flag);
-
 static volatile sig_atomic_t gTerminate = 0;
 
-void handle_sigint(int signum) {
+static void handle_sigint(int signum) {
 
     (void)signum;
     gTerminate = 1;
 }
 
 static UsysOption longOptions[] = {
-    { "logs",          required_argument, 0, 'l' },
-    { "dbFile",        required_argument, 0, 'd' },
-    { "url",           required_argument, 0, 'u' },
-    { "help",          no_argument, 0, 'h' },
-    { "version",       no_argument, 0, 'v' },
+    { "logs",    required_argument, 0, 'l' },
+    { "dbFile",  required_argument, 0, 'd' },
+    { "url",     required_argument, 0, 'u' },
+    { "help",    no_argument,       0, 'h' },
+    { "version", no_argument,       0, 'v' },
     { 0, 0, 0, 0 }
 };
 
-void set_log_level(char *slevel) {
+static void set_log_level(char *slevel) {
 
     int ilevel = USYS_LOG_TRACE;
 
@@ -62,56 +60,65 @@ void set_log_level(char *slevel) {
     } else if (!strcmp(slevel, "INFO")) {
         ilevel = USYS_LOG_INFO;
     }
+
     usys_log_set_level(ilevel);
 }
 
-void usage() {
+static void usage(void) {
 
     usys_puts("Usage: wimc.d [options]");
     usys_puts("Options:");
     usys_puts("-h, --help                    Help menu");
     usys_puts("-l, --logs <TRACE|DEBUG|INFO> Log level for the process");
-    usys_puts("-d, --dbFile                  dB file path");
+    usys_puts("-d, --dbFile                  DB file path");
     usys_puts("-u, --url                     Hub URL");
     usys_puts("-v, --version                 Software version");
 }
 
-int main (int argc, char **argv) {
+int main(int argc, char **argv) {
 
     int opt, optIdx;
-    
+    int rc = EXIT_FAILURE;
+    int taskMutexInit = 0;
+    int dbMutexInit   = 0;
+    int curlInit      = 0;
+    int webStarted    = 0;
+
     Agent  *agents = NULL;
     WTasks *tasks  = NULL;
     char   *debug  = DEF_LOG_LEVEL;
-    char   *dbFile = DEF_DB_FILE;
-    char   hubURL[WIMC_MAX_URL_LEN] = {0};
+    char   *dbFile = NULL;
+    char    hubURL[WIMC_MAX_URL_LEN] = {0};
 
     UInst  serviceInst;
-    Config serviceConfig = {0};
+    Config serviceConfig;
+
+    memset(&serviceInst, 0, sizeof(serviceInst));
+    memset(&serviceConfig, 0, sizeof(serviceConfig));
 
     usys_log_set_service(SERVICE_NAME);
     usys_log_remote_init(SERVICE_NAME);
 
     if (usys_find_service_port(SERVICE_NAME) == 0) {
         usys_log_error("Unable to find service port for %s", SERVICE_NAME);
-        usys_exit(1);
+        goto cleanup;
     }
 
     if (usys_find_service_port(SERVICE_UKAMA) == 0) {
         usys_log_error("Unable to find service port for %s", SERVICE_UKAMA);
-        usys_exit(1);
+        goto cleanup;
     }
 
-    sprintf(hubURL, "http://localhost:%d",
-            usys_find_service_port(SERVICE_UKAMA));
+    snprintf(hubURL, sizeof(hubURL), "http://localhost:%d",
+             usys_find_service_port(SERVICE_UKAMA));
 
-    while (true) {
+    dbFile = DEF_DB_FILE;
 
+    while (USYS_TRUE) {
         opt = 0;
         optIdx = 0;
 
-        opt = usys_getopt_long(argc, argv, "hvl:d:u:", longOptions,
-                               &optIdx);
+        opt = usys_getopt_long(argc, argv, "hvl:d:u:", longOptions, &optIdx);
         if (opt == -1) {
             break;
         }
@@ -119,100 +126,154 @@ int main (int argc, char **argv) {
         switch (opt) {
         case 'h':
             usage();
-            usys_exit(0);
-            break;
-            
+            rc = EXIT_SUCCESS;
+            goto cleanup;
+
         case 'v':
             usys_puts(VERSION);
-            usys_exit(0);
-            break;
+            rc = EXIT_SUCCESS;
+            goto cleanup;
 
         case 'd':
-            dbFile = optarg;
-            if (!dbFile) {
+            if (optarg == NULL || *optarg == '\0') {
                 usage();
-                usys_exit(0);
+                goto cleanup;
             }
+            dbFile = optarg;
             break;
-          
+
         case 'l':
-            debug = optarg;
-            set_log_level(debug);
+            if (optarg != NULL && *optarg != '\0') {
+                debug = optarg;
+                set_log_level(debug);
+            }
             break;
 
         case 'u':
-            strcpy(&hubURL[0], optarg);
-            if (strlen(hubURL) == 0) {
+            if (optarg == NULL || *optarg == '\0') {
                 usage();
-                usys_exit(0);
+                goto cleanup;
+            }
+
+            snprintf(hubURL, sizeof(hubURL), "%s", optarg);
+            if (strlen(hubURL) >= sizeof(hubURL)) {
+                usys_log_error("Hub URL too long");
+                goto cleanup;
             }
             break;
 
         default:
             usage();
-            usys_exit(0);
+            goto cleanup;
         }
     }
-    
-    /* Service config update */
-    serviceConfig.servicePort  = usys_find_service_port(SERVICE_NAME);
-    serviceConfig.dbFile       = strdup(dbFile);
-    serviceConfig.hubURL       = strdup(hubURL);
-    serviceConfig.dbFile       = strdup(WIMC_DB_PATH);
+
+    serviceConfig.servicePort = usys_find_service_port(SERVICE_NAME);
+    serviceConfig.dbFile      = strdup(dbFile ? dbFile : WIMC_DB_PATH);
+    serviceConfig.hubURL      = strdup(hubURL);
+
+    if (serviceConfig.dbFile == NULL || serviceConfig.hubURL == NULL) {
+        usys_log_error("Memory allocation failure");
+        goto cleanup;
+    }
 
     if (!serviceConfig.servicePort) {
         usys_log_error("Unable to determine the port for %s", SERVICE_NAME);
-        usys_exit(1);
+        goto cleanup;
     }
 
-    /* Signal handler */
     signal(SIGINT,  handle_sigint);
     signal(SIGTERM, handle_sigint);
-  
+
     usys_log_debug("Starting %s ... ", SERVICE_NAME);
-  
+
     agents = (Agent *)calloc(MAX_AGENTS, sizeof(Agent));
-    if (!agents) {
+    if (agents == NULL) {
         usys_log_error("Memory failure. Exiting");
-        exit(1);
+        goto cleanup;
     }
+
     serviceConfig.agents = &agents;
     serviceConfig.tasks  = &tasks;
 
-    /* Step-1: open the local db */
     if (db_open_or_create(serviceConfig.dbFile, &serviceConfig.db) != 0) {
         usys_log_error("Unable to open/create DB file: %s",
                        serviceConfig.dbFile);
-        usys_exit(0);
+        goto cleanup;
     }
 
-    pthread_mutex_init(&serviceConfig.taskMutex, NULL);
-    pthread_mutex_init(&serviceConfig.dbMutex, NULL);
-    curl_global_init(CURL_GLOBAL_ALL);
+    if (pthread_mutex_init(&serviceConfig.taskMutex, NULL) != 0) {
+        usys_log_error("taskMutex init failed");
+        goto cleanup;
+    }
+    taskMutexInit = 1;
+
+    if (pthread_mutex_init(&serviceConfig.dbMutex, NULL) != 0) {
+        usys_log_error("dbMutex init failed");
+        goto cleanup;
+    }
+    dbMutexInit = 1;
+
+    if (curl_global_init(CURL_GLOBAL_ALL) != 0) {
+        usys_log_error("curl_global_init failed");
+        goto cleanup;
+    }
+    curlInit = 1;
+
     db_mark_old_downloads_failed(serviceConfig.db);
 
-    /* Step-2: setup all endpoints, cb and run webservice */
     if (start_web_service(&serviceConfig, &serviceInst) != USYS_TRUE) {
         usys_log_error("Webservice failed to setup. Exiting");
-        usys_exit(0);
+        goto cleanup;
     }
+    webStarted = 1;
 
     while (!gTerminate) {
         pause();
     }
 
-    ulfius_stop_framework(&serviceInst);
-    ulfius_clean_instance(&serviceInst);
-    sqlite3_close(serviceConfig.db);
+    rc = EXIT_SUCCESS;
 
-    pthread_mutex_destroy(&serviceConfig.taskMutex);
-    pthread_mutex_destroy(&serviceConfig.dbMutex);
-    curl_global_cleanup();
+cleanup:
+    if (webStarted) {
+        ulfius_stop_framework(&serviceInst);
+        ulfius_clean_instance(&serviceInst);
+    }
 
-    clear_agents(agents);
+    if (serviceConfig.db != NULL) {
+        sqlite3_close(serviceConfig.db);
+        serviceConfig.db = NULL;
+    }
+
+    if (dbMutexInit) {
+        pthread_mutex_destroy(&serviceConfig.dbMutex);
+    }
+
+    if (taskMutexInit) {
+        pthread_mutex_destroy(&serviceConfig.taskMutex);
+    }
+
+    if (curlInit) {
+        curl_global_cleanup();
+    }
+
     clear_tasks(&tasks);
+    clear_agents(agents);
 
-    free(agents);
-  
-    return 1;
+    if (agents != NULL) {
+        free(agents);
+        agents = NULL;
+    }
+
+    if (serviceConfig.dbFile != NULL) {
+        free(serviceConfig.dbFile);
+        serviceConfig.dbFile = NULL;
+    }
+
+    if (serviceConfig.hubURL != NULL) {
+        free(serviceConfig.hubURL);
+        serviceConfig.hubURL = NULL;
+    }
+
+    return rc;
 }
