@@ -23,6 +23,7 @@
 /* db.c */
 extern int db_read_status(sqlite3 *db, char *name, char *tag, char **status);
 extern int db_insert_entry(sqlite3 *db, char *name, char *tag, char *status);
+extern int db_update_status(sqlite3 *db, char *name, char *tag, char *status);
 
 /* agent.c */
 extern void cleanup_wimc_request(WimcReq *request);
@@ -39,6 +40,47 @@ extern int process_agent_update_request(WTasks **tasks,
 bool deserialize_agent_request_update(Update **update, json_t *json);
 
 
+
+static bool is_absolute_url(const char *url) {
+
+    if (url == NULL) {
+        return false;
+    }
+
+    if (strncmp(url, "http://", 7) == 0 ||
+        strncmp(url, "https://", 8) == 0) {
+        return true;
+    }
+
+    return false;
+}
+
+static bool is_valid_identifier(const char *value) {
+
+    size_t i;
+
+    if (value == NULL || *value == '\0') {
+        return false;
+    }
+
+    if (strlen(value) >= WIMC_MAX_NAME_LEN) {
+        return false;
+    }
+
+    for (i = 0; value[i] != '\0'; i++) {
+        if ((value[i] >= 'a' && value[i] <= 'z') ||
+            (value[i] >= 'A' && value[i] <= 'Z') ||
+            (value[i] >= '0' && value[i] <= '9') ||
+            value[i] == '-' || value[i] == '_' || value[i] == '.') {
+            continue;
+        }
+
+        return false;
+    }
+
+    return true;
+}
+
 static void free_agent_request_update(AgentReq *req) {
 
     usys_free(req->update->voidStr);
@@ -54,18 +96,16 @@ static void create_hub_urls_for_agent(char *hubURL,
         destExtraURL == NULL)
         return;
 
-    if (strstr(srcURL, "https://") == NULL ||
-        strstr(srcURL, "http://") == NULL) {
-        sprintf(destURL, "%s%s", hubURL, srcURL);
+    if (!is_absolute_url(srcURL)) {
+        snprintf(destURL, WIMC_MAX_URL_LEN, "%s%s", hubURL, srcURL);
     } else {
-        strncpy(destURL, srcURL, strlen(srcURL));
+        snprintf(destURL, WIMC_MAX_URL_LEN, "%s", srcURL);
     }
 
-    if (strstr(srcExtraURL, "https://") == NULL ||
-        strstr(srcExtraURL, "http://") == NULL) {
-        sprintf(destExtraURL, "%s%s", hubURL, srcExtraURL);
+    if (!is_absolute_url(srcExtraURL)) {
+        snprintf(destExtraURL, WIMC_MAX_URL_LEN, "%s%s", hubURL, srcExtraURL);
     } else {
-        strncpy(destExtraURL, srcExtraURL, strlen(srcExtraURL));
+        snprintf(destExtraURL, WIMC_MAX_URL_LEN, "%s", srcExtraURL);
     }
 }
 
@@ -77,20 +117,23 @@ static int file_exists_and_non_empty(char *name, char *tag) {
     long filesize  = 0;
 
     fileName = (char *)malloc((strlen(DEFAULT_APPS_PKGS_PATH) +
-                               strlen(name) + strlen(tag) + 2)*sizeof(char));
+                               strlen(name) + strlen(tag) + 16)*sizeof(char));
 
-    sprintf(fileName, "%s/%s_%s.tar.gz",
+    snprintf(fileName, strlen(DEFAULT_APPS_PKGS_PATH) + strlen(name) + strlen(tag) + 16, "%s/%s_%s.tar.gz",
             DEFAULT_APPS_PKGS_PATH,
             name, tag);
 
     file = fopen(fileName, "r");
     if (file == NULL) {
+        free(fileName);
         return 0;
     }
 
     fseek(file, 0, SEEK_END);
     filesize = ftell(file);
     fclose(file);
+
+    free(fileName);
 
     if (filesize > 0) {
         return 1;
@@ -112,13 +155,14 @@ int web_service_cb_get_app_status(const URequest *request,
     name = (char *)u_map_get(request->map_url, "name");
     tag  = (char *)u_map_get(request->map_url, "tag");
 
-    if (name == NULL || tag == NULL) {
+    if (name == NULL || tag == NULL || !is_valid_identifier(name) || !is_valid_identifier(tag)) {
         usys_log_error("app name:tag not found in the request.");
         ulfius_set_string_body_response(response, HttpStatus_BadRequest,
                                         HttpStatusStr(HttpStatus_BadRequest));
         return U_CALLBACK_CONTINUE;
     }
 
+    pthread_mutex_lock(&config->dbMutex);
     if (db_read_status(config->db, name, tag, &status)) {
         if (strcmp(status, "download") == 0) {
             jResponse = json_pack("{s:s}",
@@ -145,6 +189,13 @@ int web_service_cb_get_app_status(const URequest *request,
                                             jResponse);
                 json_decref(jResponse);
             }
+        } else if (strcmp(status, "failed") == 0) {
+            jResponse = json_pack("{s:s}",
+                                  "message", "failed");
+            ulfius_set_json_body_response(response,
+                                          HttpStatus_OK,
+                                          jResponse);
+            json_decref(jResponse);
         } else {
             usys_log_error("Unknown status found for app '%s:%s'.", name, tag);
             jResponse = json_pack("{s:s}",
@@ -163,6 +214,7 @@ int web_service_cb_get_app_status(const URequest *request,
                                       jResponse);
         json_decref(jResponse);
     }
+    pthread_mutex_unlock(&config->dbMutex);
 
     return U_CALLBACK_CONTINUE;
 }
@@ -189,7 +241,7 @@ int web_service_cb_post_app(const URequest *request,
     name = (char *)u_map_get(request->map_url, "name");
     tag  = (char *)u_map_get(request->map_url, "tag");
 
-    if (name == NULL || tag == NULL) {
+    if (name == NULL || tag == NULL || !is_valid_identifier(name) || !is_valid_identifier(tag)) {
         usys_log_error("capp name:tag not found");
         ulfius_set_string_body_response(response, HttpStatus_BadRequest,
                                         HttpStatusStr(HttpStatus_BadRequest));
@@ -201,6 +253,7 @@ int web_service_cb_post_app(const URequest *request,
      * if app is 'available' but not found in pkg -> start downloading - 202
      * if app is 'available and also found in pkg -> 304
      */
+    pthread_mutex_lock(&config->dbMutex);
     if (db_read_status(config->db, name, tag, &status)) {
         if (strcmp(status, "download") == 0) {
             usys_log_debug("capp found in db. name:%s tag:%s status:%s",
@@ -209,6 +262,7 @@ int web_service_cb_post_app(const URequest *request,
                                             HttpStatus_Conflict,
                                             HttpStatusStr(HttpStatus_Conflict));
             free(status);
+            pthread_mutex_unlock(&config->dbMutex);
             return U_CALLBACK_CONTINUE;
         } else if (strcmp(status, "available") == 0) {
             if (file_exists_and_non_empty(name, tag)) {
@@ -217,11 +271,13 @@ int web_service_cb_post_app(const URequest *request,
                                                 HttpStatus_NotModified,
                                                 HttpStatusStr(HttpStatus_NotModified));
                 free(status);
+                pthread_mutex_unlock(&config->dbMutex);
                 return U_CALLBACK_CONTINUE;
             }
         }
         free(status);
     }
+    pthread_mutex_unlock(&config->dbMutex);
 
     /* Check with hub */
     if (!get_artifacts_info_from_hub(&artifact, config, name, tag, &httpStatus)) {
@@ -278,13 +334,22 @@ int web_service_cb_post_app(const URequest *request,
                         storeURL,
                         artifactFormat->type,
                         DEFAULT_INTERVAL);
+    if (wimcRequest == NULL) {
+        free_artifact(&artifact);
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_InternalServerError,
+                                        HttpStatusStr(HttpStatus_InternalServerError));
+        return U_CALLBACK_CONTINUE;
+    }
 
     /* Send the request to agent */
     if (communicate_with_agent(wimcRequest, artifactFormat->type, config)) {
         ulfius_set_string_body_response(response,
                                         HttpStatus_Accepted,
                                         HttpStatusStr(HttpStatus_Accepted));
-        db_insert_entry(config->db, name, tag, "download");
+        pthread_mutex_lock(&config->dbMutex);
+        db_update_status(config->db, name, tag, "download");
+        pthread_mutex_unlock(&config->dbMutex);
     } else {
         usys_log_error("Error sending capp fetch request to agent %s:%s", name, tag);
         ulfius_set_string_body_response(response,
@@ -303,25 +368,26 @@ int web_service_cb_put_app_stats_update(const struct _u_request *request,
                                         void *data) {
 
     int retCode=0;
-    char *agentID = NULL;
     json_t *json  = NULL;
     json_error_t jerr;
     AgentReq *agentRequest=NULL;
 
     Config *config = NULL;
 
-    agentID      = (char *)u_map_get(request->map_url, "id");
     agentRequest = (AgentReq *)calloc(sizeof(AgentReq), 1);
     config       = (Config *)data;
     json         = ulfius_get_json_body_request(request, &jerr);
 
-    if (agentID == NULL || json == NULL ) {
+    if (json == NULL ) {
+        usys_free(agentRequest);
         ulfius_set_string_body_response(response, HttpStatus_BadRequest,
                                         HttpStatusStr(HttpStatus_BadRequest));
         return U_CALLBACK_CONTINUE;
     }
-    
+
     if (agentRequest == NULL || config == NULL ) {
+        json_decref(json);
+        usys_free(agentRequest);
         ulfius_set_string_body_response(response,
                               HttpStatus_InternalServerError,
                               HttpStatusStr(HttpStatus_InternalServerError));
@@ -329,14 +395,20 @@ int web_service_cb_put_app_stats_update(const struct _u_request *request,
     }
 
     if (!deserialize_agent_request_update(&agentRequest->update, json)) {
+        json_decref(json);
+        usys_free(agentRequest);
         ulfius_set_string_body_response(response, HttpStatus_BadRequest,
                                         HttpStatusStr(HttpStatus_BadRequest));
         return U_CALLBACK_CONTINUE;
     }
 
+    pthread_mutex_lock(&config->taskMutex);
+    pthread_mutex_lock(&config->dbMutex);
     retCode = process_agent_update_request(config->tasks,
                                            agentRequest,
                                            config->db);
+    pthread_mutex_unlock(&config->dbMutex);
+    pthread_mutex_unlock(&config->taskMutex);
 
     ulfius_set_string_body_response(response,
                                     retCode,

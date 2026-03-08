@@ -27,6 +27,7 @@
 
 /* db.c */
 extern void update_local_db(sqlite3 *db, char *name, char *tag, char *path);
+extern int db_update_status(sqlite3 *db, char *name, char *tag, char *status);
 
 struct Response {
     char *buffer;
@@ -48,26 +49,20 @@ int process_agent_update_request(WTasks **tasks,
 
   Update *update;
   char idStr1[36+1] = {0};
-  char idStr2[36+1] = {0};
   WTasks *task=NULL;
-  
+
+  if (tasks == NULL || req == NULL || req->update == NULL) {
+      return HttpStatus_InternalServerError;
+  }
+
   if (*tasks == NULL) return HttpStatus_InternalServerError;
 
   update = req->update;
-  task = *tasks;
 
   uuid_unparse(update->uuid, &idStr1[0]);
   usys_log_debug("Looking up task with ID: %s", idStr1);
 
-  /* Find matching task in our list. */
-  while (task != NULL) {
-      uuid_unparse(task->uuid, &idStr2[0]);
-      if (uuid_compare(task->uuid, update->uuid) == 0) {
-          usys_log_debug("Found. Ask: %s Match: %s", idStr1, idStr2);
-          break;
-      }
-      task = task->next;
-  }
+  task = find_task_by_uuid(*tasks, update->uuid);
 
   if (task == NULL) {
       usys_log_error("No record found for ID: %s", idStr1);
@@ -81,14 +76,28 @@ int process_agent_update_request(WTasks **tasks,
   /* Update the status */
   task->update->transferState = req->update->transferState;
   task->state = req->update->transferState;
+  if (task->update->voidStr) {
+      usys_free(task->update->voidStr);
+      task->update->voidStr = NULL;
+  }
+
   if (req->update->voidStr) {
       task->update->voidStr = strdup(req->update->voidStr);
   }
 
   if (task->state == DONE) {
-      task->localPath = strdup(req->update->voidStr);
-      update_local_db(db, task->content->name, task->content->tag,
-                      task->localPath);
+      if (task->localPath) {
+          usys_free(task->localPath);
+      }
+      task->localPath = req->update->voidStr ? strdup(req->update->voidStr) : NULL;
+      if (task->localPath != NULL) {
+          update_local_db(db, task->content->name, task->content->tag,
+                          task->localPath);
+      }
+  } else if (task->state == ERR) {
+      db_update_status(db, task->content->name, task->content->tag, "failed");
+  } else {
+      db_update_status(db, task->content->name, task->content->tag, "download");
   }
 
   return HttpStatus_OK;
@@ -191,7 +200,6 @@ static bool send_request_to_agent(char *name, char *tag,
 
     *statusCode = 0;
   
-    curl_global_init(CURL_GLOBAL_ALL);
     curl = curl_easy_init();
     if (curl == NULL) {
         usys_log_error("Error initializing curl");
@@ -219,6 +227,8 @@ static bool send_request_to_agent(char *name, char *tag,
     curl_easy_setopt(curl, CURLOPT_WRITEDATA,     (void *)&response);
 
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "wimc/0.1");
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
 
     res = curl_easy_perform(curl);
     if ( res != CURLE_OK) {
@@ -235,8 +245,6 @@ static bool send_request_to_agent(char *name, char *tag,
 
     curl_slist_free_all(headers);
     curl_easy_cleanup(curl);
-    curl_global_cleanup();
-
     return ret;
 }
 
@@ -252,12 +260,13 @@ bool communicate_with_agent(WimcReq *request,
         return USYS_FALSE;
     }
 
-    add_to_tasks(config->tasks, request);
-
     if (send_request_to_agent(request->fetch->content->name,
                               request->fetch->content->tag,
                               agentMethod, json, &agentRetCode)) {
         if (agentRetCode == HttpStatus_OK) {
+            pthread_mutex_lock(&config->taskMutex);
+            add_to_tasks(config->tasks, request);
+            pthread_mutex_unlock(&config->taskMutex);
             usys_log_debug("Agent iniated to fetch capp");
         } else {
             usys_log_error("Agent reutrned an error: %ld", agentRetCode);

@@ -14,6 +14,7 @@
 #include <ulfius.h>
 #include <sqlite3.h>
 #include <uuid/uuid.h>
+#include <pthread.h>
 
 #include "usys_types.h"
 #include "usys_services.h"
@@ -277,6 +278,8 @@ typedef struct {
   int     maxAgents;   /* Max. number of agents allowed. */
   Agent   **agents;    /* Ptr to Agents, needed for http callback func() */
   WTasks  **tasks;     /* Ptr to Tasks, mostly for http cb */
+  pthread_mutex_t taskMutex;
+  pthread_mutex_t dbMutex;
 } Config;
 
 typedef struct _u_instance  UInst;

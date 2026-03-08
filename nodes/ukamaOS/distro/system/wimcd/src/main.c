@@ -12,6 +12,7 @@
 #include <getopt.h>
 #include <ulfius.h>
 #include <curl/curl.h>
+#include <signal.h>
 
 #include "log.h"
 #include "wimc.h"
@@ -31,11 +32,15 @@
 
 /* init.c */
 extern void open_db(sqlite3 **db, char *dbFile, int flag);
+/* db.c */
+extern int db_mark_old_downloads_failed(sqlite3 *db);
+
+static volatile sig_atomic_t gTerminate = 0;
 
 void handle_sigint(int signum) {
 
-    usys_log_debug("Terminate signal.\n");
-    usys_exit(0);
+    (void)signum;
+    gTerminate = 1;
 }
 
 static UsysOption longOptions[] = {
@@ -106,7 +111,7 @@ int main (int argc, char **argv) {
         opt = 0;
         optIdx = 0;
 
-        opt = usys_getopt_long(argc, argv, "vh:p:l:d:u", longOptions,
+        opt = usys_getopt_long(argc, argv, "hvl:d:u:", longOptions,
                                &optIdx);
         if (opt == -1) {
             break;
@@ -162,6 +167,7 @@ int main (int argc, char **argv) {
 
     /* Signal handler */
     signal(SIGINT, handle_sigint);
+    signal(SIGTERM, handle_sigint);
   
     usys_log_debug("Starting %s ... ", SERVICE_NAME);
   
@@ -188,17 +194,28 @@ int main (int argc, char **argv) {
         usys_exit(0);
     }
 
+    pthread_mutex_init(&serviceConfig.taskMutex, NULL);
+    pthread_mutex_init(&serviceConfig.dbMutex, NULL);
+    curl_global_init(CURL_GLOBAL_ALL);
+    db_mark_old_downloads_failed(serviceConfig.db);
+
     /* Step-2: setup all endpoints, cb and run webservice */
     if (start_web_service(&serviceConfig, &serviceInst) != USYS_TRUE) {
         usys_log_error("Webservice failed to setup. Exiting");
         usys_exit(0);
     }
 
-    pause();
+    while (!gTerminate) {
+        pause();
+    }
 
     ulfius_stop_framework(&serviceInst);
     ulfius_clean_instance(&serviceInst);
     sqlite3_close(serviceConfig.db);
+
+    pthread_mutex_destroy(&serviceConfig.taskMutex);
+    pthread_mutex_destroy(&serviceConfig.dbMutex);
+    curl_global_cleanup();
 
     clear_agents(agents);
     clear_tasks(&tasks);
