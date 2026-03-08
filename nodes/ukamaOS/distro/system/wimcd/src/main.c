@@ -14,6 +14,7 @@
 #include <curl/curl.h>
 #include <signal.h>
 
+#include "db.h"
 #include "log.h"
 #include "wimc.h"
 #include "agent.h"
@@ -32,8 +33,6 @@
 
 /* init.c */
 extern void open_db(sqlite3 **db, char *dbFile, int flag);
-/* db.c */
-extern int db_mark_old_downloads_failed(sqlite3 *db);
 
 static volatile sig_atomic_t gTerminate = 0;
 
@@ -159,6 +158,7 @@ int main (int argc, char **argv) {
     serviceConfig.servicePort  = usys_find_service_port(SERVICE_NAME);
     serviceConfig.dbFile       = strdup(dbFile);
     serviceConfig.hubURL       = strdup(hubURL);
+    serviceConfig.dbFile       = strdup(WIMC_DB_PATH);
 
     if (!serviceConfig.servicePort) {
         usys_log_error("Unable to determine the port for %s", SERVICE_NAME);
@@ -166,7 +166,7 @@ int main (int argc, char **argv) {
     }
 
     /* Signal handler */
-    signal(SIGINT, handle_sigint);
+    signal(SIGINT,  handle_sigint);
     signal(SIGTERM, handle_sigint);
   
     usys_log_debug("Starting %s ... ", SERVICE_NAME);
@@ -177,20 +177,12 @@ int main (int argc, char **argv) {
         exit(1);
     }
     serviceConfig.agents = &agents;
-
-    /*
-      tasks = (WTasks *)calloc(1, sizeof(WTasks));
-      if (!tasks) {
-      log_error("Memory failure. Exiting");
-      exit(1);
-      }
-    */
-    serviceConfig.tasks = &tasks;
+    serviceConfig.tasks  = &tasks;
 
     /* Step-1: open the local db */
-    open_db(&serviceConfig.db, serviceConfig.dbFile, WIMC_FLAG_CREATE_DB);
-    if (serviceConfig.db == NULL) {
-        usys_log_error("Error creating db at: %s", serviceConfig.dbFile);
+    if (db_open_or_create(serviceConfig.dbFile, &serviceConfig.db) != 0) {
+        usys_log_error("Unable to open/create DB file: %s",
+                       serviceConfig.dbFile);
         usys_exit(0);
     }
 

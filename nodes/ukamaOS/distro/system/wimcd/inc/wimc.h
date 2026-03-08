@@ -103,15 +103,16 @@
 #define DEFAULT_PATH "/tmp"
 
 #define DEFAULT_APPS_PKGS_PATH "/ukama/apps/pkgs"
+#define WIMC_DB_PATH           "/ukama/db/wimc.db"
 
 typedef struct _u_request req_t;
 typedef struct _u_response resp_t;
 
 typedef struct {
-  char *method; /* Mechanisim supported by service at the url. */
-  char *url;    /* callback URL for the agent. */
-  char *iURL;   /* Index URL - only when method is chunk */
-  char *sURL;   /* Chunk store URL - only when method is chunk */
+    char *method; /* Mechanisim supported by service at the url. */
+    char *url;    /* callback URL for the agent. */
+    char *iURL;   /* Index URL - only when method is chunk */
+    char *sURL;   /* Chunk store URL - only when method is chunk */
 } ServiceURL;
 
 /*

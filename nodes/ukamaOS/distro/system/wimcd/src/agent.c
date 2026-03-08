@@ -12,6 +12,7 @@
 #include <curl/curl.h>
 #include <curl/easy.h>
 
+#include "db.h"
 #include "agent.h"
 #include "wimc.h"
 #include "tasks.h"

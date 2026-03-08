@@ -8,6 +8,7 @@
 
 #include <curl/curl.h>
 
+#include "db.h"
 #include "callback.h"
 #include "tasks.h"
 #include "jserdes.h"
@@ -19,11 +20,6 @@
 #include "usys_types.h"
 
 #include "version.h"
-
-/* db.c */
-extern int db_read_status(sqlite3 *db, char *name, char *tag, char **status);
-extern int db_insert_entry(sqlite3 *db, char *name, char *tag, char *status);
-extern int db_update_status(sqlite3 *db, char *name, char *tag, char *status);
 
 /* agent.c */
 extern void cleanup_wimc_request(WimcReq *request);
@@ -38,8 +34,6 @@ extern int process_agent_update_request(WTasks **tasks,
 
 /* jserdes.c */
 bool deserialize_agent_request_update(Update **update, json_t *json);
-
-
 
 static bool is_absolute_url(const char *url) {
 

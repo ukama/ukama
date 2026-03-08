@@ -6,10 +6,6 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
-/*
- * database helper functions.
- */
-
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,12 +14,132 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <limits.h>
+#include <stdbool.h>
 
 #include "log.h"
 #include "wimc.h"
 
+#include "usys_log.h"
+
 #define TRUE 1
 #define FALSE 0
+
+/*
+ * Create parent directories for a DB path.
+ * Example: /ukama/db/wimc.db -> creates /ukama and /ukama/db if needed.
+ */
+static int make_parent_dirs(const char *filePath) {
+
+    char tmp[PATH_MAX];
+    char *p;
+
+    if (filePath == NULL || *filePath == '\0') {
+        return -1;
+    }
+
+    memset(tmp, 0, sizeof(tmp));
+
+    if (strlen(filePath) >= sizeof(tmp)) {
+        usys_log_error("DB path too long: %s", filePath);
+        return -1;
+    }
+
+    strncpy(tmp, filePath, sizeof(tmp) - 1);
+
+    p = strrchr(tmp, '/');
+    if (p == NULL) {
+        /*
+         * No parent directory component.
+         * Nothing to create.
+         */
+        return 0;
+    }
+
+    *p = '\0';
+
+    if (tmp[0] == '\0') {
+        /*
+         * Path like "/wimc.db" -> parent is root.
+         */
+        return 0;
+    }
+
+    for (p = tmp + 1; *p != '\0'; p++) {
+        if (*p == '/') {
+            *p = '\0';
+            if (mkdir(tmp, 0755) != 0 && errno != EEXIST) {
+                usys_log_error("mkdir failed for %s: %s",
+                               tmp, strerror(errno));
+                return -1;
+            }
+            *p = '/';
+        }
+    }
+
+    if (mkdir(tmp, 0755) != 0 && errno != EEXIST) {
+        usys_log_error("mkdir failed for %s: %s",
+                       tmp, strerror(errno));
+        return -1;
+    }
+
+    return 0;
+}
+
+/*
+ * Initialize the local wimc DB schema if missing.
+ */
+static int db_init_schema(sqlite3 *db) {
+
+    char *errMsg = NULL;
+    int rc;
+    const char *sql =
+        "CREATE TABLE IF NOT EXISTS Containers ("
+        "  Name   TEXT NOT NULL,"
+        "  Tag    TEXT NOT NULL,"
+        "  Path   TEXT,"
+        "  Status TEXT NOT NULL,"
+        "  Flags  TEXT,"
+        "  UNIQUE(Name, Tag)"
+        ");";
+
+    rc = sqlite3_exec(db, sql, NULL, NULL, &errMsg);
+    if (rc != SQLITE_OK) {
+        usys_log_error("Failed to initialize DB schema: %s",
+                       errMsg ? errMsg : "unknown");
+        if (errMsg) {
+            sqlite3_free(errMsg);
+        }
+        return -1;
+    }
+
+    return 0;
+}
+
+/*
+ * Optional but useful on restart: mark stale in-progress rows as failed.
+ */
+static int db_reconcile_stale_rows(sqlite3 *db) {
+
+    char *errMsg = NULL;
+    int rc;
+    const char *sql =
+        "UPDATE Containers "
+        "SET Status='failed' "
+        "WHERE Status='download' OR Status='downloading';";
+
+    rc = sqlite3_exec(db, sql, NULL, NULL, &errMsg);
+    if (rc != SQLITE_OK) {
+        usys_log_error("Failed to reconcile stale DB rows: %s",
+                       errMsg ? errMsg : "unknown");
+        if (errMsg) {
+            sqlite3_free(errMsg);
+        }
+        return -1;
+    }
+
+    return 0;
+}
 
 static int bind_text_or_null(sqlite3_stmt *stmt, int idx, char *val) {
 
@@ -193,4 +309,54 @@ void update_local_db(sqlite3 *db, char *name, char *tag, char *path) {
 
     /* All checks passed. Add into the db for future generations. */
     db_update_path_status(db, name, tag, path, "available");
+}
+
+/*
+ * Open the DB, creating parent directories and schema if needed.
+ * This is the function you should call from startup instead of raw sqlite3_open().
+ */
+int db_open_or_create(const char *dbPath, sqlite3 **db) {
+
+    int rc;
+
+    if (dbPath == NULL || db == NULL) {
+        return -1;
+    }
+
+    if (make_parent_dirs(dbPath) != 0) {
+        usys_log_error("Failed to create parent dir for DB path: %s", dbPath);
+        return -1;
+    }
+
+    rc = sqlite3_open(dbPath, db);
+    if (rc != SQLITE_OK) {
+        usys_log_error("sqlite3_open failed for %s: %s",
+                       dbPath, *db ? sqlite3_errmsg(*db) : "unknown");
+        if (*db) {
+            sqlite3_close(*db);
+            *db = NULL;
+        }
+        return -1;
+    }
+
+    /* Good defaults for a small local daemon DB. */
+    (void)sqlite3_exec(*db, "PRAGMA journal_mode=WAL;", NULL, NULL, NULL);
+    (void)sqlite3_exec(*db, "PRAGMA synchronous=NORMAL;", NULL, NULL, NULL);
+    (void)sqlite3_busy_timeout(*db, 5000);
+
+    if (db_init_schema(*db) != 0) {
+        sqlite3_close(*db);
+        *db = NULL;
+        return -1;
+    }
+
+    if (db_reconcile_stale_rows(*db) != 0) {
+        sqlite3_close(*db);
+        *db = NULL;
+        return -1;
+    }
+
+    usys_log_info("DB ready: %s", dbPath);
+
+    return 0;
 }
