@@ -228,17 +228,10 @@ curl -fsS \
     >/dev/null
 
 wait_for_example_version v2
-
 echo "[ok] example_app updated to v2 and is reachable"
-echo "logs: $LOG_DIR"
-
-curl -X GET \
-     "http://${STARTER_HOST}:${STARTER_PORT}/v1/status"
 
 sleep 5
-
 curl -X GET \
      "http://${STARTER_HOST}:${STARTER_PORT}/v1/status"
-
 
 echo "smoke_example_app: PASS"
