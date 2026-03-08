@@ -64,9 +64,10 @@ char *convert_tx_state_to_str(TransferState state) {
     return strdup(AGENT_TX_STATE_DONE_STR);
   } else if (state == ERR) {
     return strdup(AGENT_TX_STATE_ERR_STR);
-  } else {
-    return strdup("");
   }
+  
+  return strdup("");
+
 }
 
 AgentState convert_str_to_state(char *str) {

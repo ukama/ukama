@@ -27,7 +27,7 @@
 
 void delete_file(char *fileName) {
 
-  if (remove(fileName)) {
+  if (remove(fileName) == 0) {
     log_debug("File removed: %s", fileName);
   } else {
     log_error("Error removing file: %s", fileName);
@@ -48,7 +48,7 @@ int table_exists(sqlite3 *db) {
 
   ret = sqlite3_exec(db, sql, NULL, NULL, &errMsg);
 
-  if (ret) {
+  if (ret == SQLITE_OK) {
     return TRUE;
   } else {
     log_debug("Table exists query returned error: %s", errMsg);
@@ -57,6 +57,18 @@ int table_exists(sqlite3 *db) {
   }
 }
   
+
+static void configure_db(sqlite3 *db) {
+
+  if (db == NULL) {
+    return;
+  }
+
+  sqlite3_busy_timeout(db, 5000);
+  sqlite3_exec(db, "PRAGMA journal_mode=WAL;", NULL, NULL, NULL);
+  sqlite3_exec(db, "PRAGMA synchronous=NORMAL;", NULL, NULL, NULL);
+}
+
 /* 
  * create_db -- 
  *
@@ -77,6 +89,8 @@ sqlite3 *create_db(char *dbFile) {
     log_debug("db opened: %s", dbFile);
   }
   
+  configure_db(db);
+
   return db;
 }
 
@@ -100,7 +114,8 @@ int init_db(sqlite3 *db) {
       "Tag TEXT NOT NULL,"
       "Path TEXT NOT NULL,"
       "Status TEXT NOT NULL,"
-      "Flags TEXT);";
+      "Flags TEXT, "
+      "UNIQUE(Name, Tag));";
 
   ret = sqlite3_exec(db, sql, NULL, NULL, &errMsg);
     
