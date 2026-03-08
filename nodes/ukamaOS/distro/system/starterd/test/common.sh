@@ -72,49 +72,102 @@ wait_for_file() {
     done
 }
 
-wait_for_json_condition() {
-    local url="$1"
-    local pyexpr="$2"
-    local timeout="${3:-20}"
-    local start now body
+wait_for_command_ok() {
+    local timeout="${1:-20}"
+    shift
+
+    local start now
     start="$(date +%s)"
     while true; do
-        if body="$(curl -fsS "$url" 2>/dev/null || true)"; then
-            if [[ -n "$body" ]]; then
-                if python3 - "$pyexpr" <<'PY' <<<"$body" >/dev/null 2>&1
-import json, sys
-expr = sys.argv[1]
-data = json.load(sys.stdin)
-if eval(expr, {"__builtins__": {}}, {"data": data}):
-    raise SystemExit(0)
-raise SystemExit(1)
-PY
-                then
-                    return 0
-                fi
-            fi
+        if bash -o pipefail -c "$*" >/dev/null 2>&1; then
+            return 0
         fi
         now="$(date +%s)"
         if (( now - start >= timeout )); then
-            echo "timeout waiting for JSON condition on: $url" >&2
-            echo "last body: ${body:-<none>}" >&2
+            echo "timeout waiting for command: $*" >&2
             return 1
         fi
-        sleep 0.25
+        sleep 0.2
+    done
+}
+
+wait_for_json_condition() {
+    local url="${1:?url required}"
+    local pyexpr="${2:?python expression required}"
+    local timeout_sec="${3:-20}"
+    local start_ts
+    local now
+    local body
+
+    start_ts="$(date +%s)"
+    while true; do
+        body="$(curl -fsS "$url" 2>/dev/null || true)"
+        if [[ -n "$body" ]]; then
+            if JSON_BODY="$body" python3 -c '
+import json
+import os
+import sys
+
+expr = sys.argv[1]
+data = json.loads(os.environ["JSON_BODY"])
+
+safe_builtins = {
+    "any": any,
+    "all": all,
+    "len": len,
+    "min": min,
+    "max": max,
+    "sum": sum,
+    "sorted": sorted,
+}
+
+if eval(expr, {"__builtins__": safe_builtins}, {"data": data}):
+    raise SystemExit(0)
+raise SystemExit(1)
+' "$pyexpr" >/dev/null 2>&1
+            then
+                return 0
+            fi
+        fi
+
+        now="$(date +%s)"
+        if (( now - start_ts >= timeout_sec )); then
+            echo "timeout waiting for JSON condition on: $url" >&2
+            echo "last body: ${body:-<empty>}" >&2
+            return 1
+        fi
+
+        sleep 1
     done
 }
 
 assert_json_condition() {
-    local url="$1"
-    local pyexpr="$2"
+    local url="${1:?url required}"
+    local pyexpr="${2:?python expression required}"
     local body
+
     body="$(curl -fsS "$url")"
-    python3 - "$pyexpr" <<'PY' <<<"$body"
-import json, sys
+
+    JSON_BODY="$body" python3 -c '
+import json
+import os
+import sys
+
 expr = sys.argv[1]
-data = json.load(sys.stdin)
-assert eval(expr, {"__builtins__": {}}, {"data": data}), json.dumps(data, indent=2)
-PY
+data = json.loads(os.environ["JSON_BODY"])
+
+safe_builtins = {
+    "any": any,
+    "all": all,
+    "len": len,
+    "min": min,
+    "max": max,
+    "sum": sum,
+    "sorted": sorted,
+}
+
+assert eval(expr, {"__builtins__": safe_builtins}, {"data": data}), json.dumps(data, indent=2)
+' "$pyexpr"
 }
 
 find_space_app() {
