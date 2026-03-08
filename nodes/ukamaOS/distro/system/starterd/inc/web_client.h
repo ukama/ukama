@@ -3,30 +3,30 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2021-present, Ukama Inc.
+ * Copyright (c) 2023-present, Ukama Inc.
  */
 
+#pragma once
 
-#ifndef WEB_CLIENT_H
-#define WEB_CLIENT_H
+#include <stdbool.h>
 
-#define MAX_URL_LEN  256
+#include "ulfius.h"
 
-#define WIMC_EP "/content/containers"
+#include "config.h"
+#include "app.h"
 
-#define WIMC_RESP_TYPE_RESULT     "result"
-#define WIMC_RESP_TYPE_ERROR      "error"
-#define WIMC_RESP_TYPE_PROCESSING "processing"
+typedef struct _u_instance  UInst;
+typedef struct _u_instance  UInst;
+typedef struct _u_request   URequest;
+typedef struct _u_response  UResponse;
+typedef json_t              JsonObj;
+typedef json_error_t        JsonErrObj;
 
-/* For JSON de-serialization */
-#define JSON_TYPE            "type"
-#define JSON_TYPE_RESULT     "type_result"
-#define JSON_VOID_STR        "void"
-
-#define JSON_WIMC_RESPONSE   "wimc_response"
-
-int get_capp_path(Config *config, char *name, char *tag,
-                  char **path, int *retCode);
-bool ping_capp(char *name);
-
-#endif /* WEB_CLIENT_H */
+bool wc_app_ping(Config *config, App *app);
+bool wc_app_version_matches(Config *config,
+                            App *app,
+                            const char *tag);
+bool wc_fetch_package(Config *config,
+                      const char *appName,
+                      const char *tag,
+                      const char *dstPath);

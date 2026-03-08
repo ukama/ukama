@@ -6,359 +6,342 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+#include "manifest.h"
+#include "space.h"
+#include "app.h"
+
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
 #include <jansson.h>
 
-#include "manifest.h"
-#include "json_types.h"
-#include "config.h"
-#include "starter.h"
-
-#include "usys_error.h"
 #include "usys_log.h"
-#include "usys_mem.h"
-#include "usys_string.h"
-#include "usys_types.h"
 
-void json_log(json_t *json) {
+static bool m_is_valid_name(const char *s) {
 
-    char *str = NULL;
+    const char *p;
 
-    str = json_dumps(json, 0);
-    if (str) {
-        log_debug("json str: %s", str);
-        free(str);
+    if (!s || !*s) return false;
+
+    p = s;
+    while (*p) {
+        if ((*p >= 'a' && *p <= 'z') ||
+            (*p >= 'A' && *p <= 'Z') ||
+            (*p >= '0' && *p <= '9') ||
+            (*p == '-') || (*p == '_') || (*p == '.')) {
+            p++;
+            continue;
+        }
+        return false;
     }
+
+    return true;
 }
 
-static bool get_json_entry(json_t *json, char *key, json_type type,
-                           char **strValue,
-                           int *intValue,
-                           double *doubleValue,
-                           json_t **jsonObj) {
+static char** m_parse_str_array(json_t *arr, int *countOut) {
 
-    json_t *jEntry=NULL;
+    size_t i;
+    size_t n;
+    char **out;
+    json_t *v;
 
-    if (json == NULL || key == NULL) return USYS_FALSE;
+    if (countOut) *countOut = 0;
+    if (!arr || !json_is_array(arr)) return NULL;
 
-    jEntry = json_object_get(json, key);
-    if (jEntry == NULL) {
-        log_error("Missing %s key in json", key);
-        return USYS_FALSE;
+    n = json_array_size(arr);
+    if (n == 0) return NULL;
+
+    out = calloc(n + 1, sizeof(char*));
+    if (!out) return NULL;
+
+    for (i = 0; i < n; i++) {
+        v = json_array_get(arr, i);
+        if (!json_is_string(v)) continue;
+        out[i] = strdup(json_string_value(v));
     }
 
-    switch(type) {
-    case (JSON_STRING):
-        *strValue = strdup(json_string_value(jEntry));
-        break;
-    case (JSON_INTEGER):
-        *intValue = json_integer_value(jEntry);
-        break;
-    case (JSON_REAL):
-        *doubleValue = json_real_value(jEntry);
-        break;
-    case (JSON_OBJECT):
-        *jsonObj = json_object_get(json, key);
-        break;
-    default:
-        log_error("Invalid type for json key-value: %d", type);
-        return USYS_FALSE;
-    }
-
-    return USYS_TRUE;
+    out[n] = NULL;
+    if (countOut) *countOut = (int)n;
+    return out;
 }
 
-static void free_capps(CappsManifest *ptr) {
+static char** m_parse_env_object(json_t *obj, int *countOut) {
 
-    usys_free(ptr->name);
-    usys_free(ptr->tag);
-    usys_free(ptr->space);
-    usys_free(ptr->dependencyCapp);
-    usys_free(ptr->dependencyState);
-}
+    const char *key;
+    json_t *val;
+    size_t n;
+    size_t i;
+    char **out;
+    char *kv;
+    const char *vs;
 
-void free_manifest(Manifest *ptr) {
+    if (countOut) *countOut = 0;
+    if (!obj || !json_is_object(obj)) return NULL;
 
-    CappsManifest *cPtr, *oldPtr;
+    n = json_object_size(obj);
+    if (n == 0) return NULL;
 
-    if (ptr == NULL) return;
+    out = calloc(n + 1, sizeof(char*));
+    if (!out) return NULL;
 
-    cPtr = ptr->cappsManifest;
-    usys_free(ptr->version);
-    usys_free(ptr->target);
-
-    while(cPtr) {
-
-        oldPtr = cPtr;
-        free_capps(cPtr);
-        cPtr = cPtr->next;
-        usys_free(oldPtr);
-    }
-
-    usys_free(ptr);
-    return;
-}
-
-static bool deserialize_spaces(Manifest **manifest, json_t *json) {
-
-    int ret=USYS_FALSE;
-    SpacesManifest *spaces, *ptr;
-    
-    spaces = (SpacesManifest *)calloc(1, sizeof(SpacesManifest));
-    if (spaces == NULL) {
-        usys_log_error("Error allocating memory of size: %d",
-                       sizeof(SpacesManifest));
-        return USYS_FALSE;
-    }
-
-    ret |= get_json_entry(json, JTAG_NAME, JSON_STRING,
-                          &spaces->name, NULL, NULL, NULL);
-    if (ret == USYS_FALSE) {
-          usys_log_error("Error deserializing the spaces json.");
-          return USYS_FALSE;
-    }
-
-    if ((*manifest)->spacesManifest == NULL ){
-        (*manifest)->spacesManifest = spaces;
-    } else {
-        for (ptr=(*manifest)->spacesManifest; ptr->next; ptr=ptr->next);
-        ptr->next = spaces;
-    }
-
-    return USYS_TRUE;
-}
-
-static int deserialize_capps(Manifest **manifest, json_t *json) {
-
-    int ret=USYS_FALSE;
-    CappsManifest *capp, *ptr;
-    json_t *jDependency = NULL;
-    json_t *jEntry = NULL;
-    
-    capp = (CappsManifest *)calloc(1, sizeof(CappsManifest));
-    if (capp == NULL) {
-        usys_log_error("Error allocating memory of size: %d",
-                       sizeof(CappsManifest));
-        return USYS_FALSE;
-    }
-
-    ret |= get_json_entry(json, JTAG_NAME, JSON_STRING,
-                          &capp->name, NULL, NULL, NULL);
-    ret |= get_json_entry(json, JTAG_TAG, JSON_STRING,
-                          &capp->tag, NULL, NULL, NULL);
-    ret |= get_json_entry(json, JTAG_RESTART, JSON_INTEGER,
-                          NULL, &capp->restart, NULL, NULL);
-    ret |= get_json_entry(json, JTAG_SPACE, JSON_STRING,
-                          &capp->space, NULL, NULL, NULL);
-
-    if (ret == USYS_FALSE) {
-          usys_log_error("Error deserializing the capp json.");
-          free_capps(capp);
-
-          return USYS_FALSE;
-    }
-
-    /* Dependency is optional and is only for boot and reboot spaces */
-    ret = get_json_entry(json, JTAG_DEPENDS_ON, JSON_OBJECT,
-                          NULL, NULL, NULL, &jDependency);
-
-    if (ret != USYS_FALSE &&
-        (strcasecmp(capp->space, SPACE_BOOT) == 0 ||
-         strcasecmp(capp->space, SPACE_REBOOT) == 0)) {
-        if (json_array_size(jDependency) != 1) {
-            usys_log_error("%s can only be 1 item",
-                           JTAG_DEPENDS_ON);
-            capp->dependencyCapp  = NULL;
-            capp->dependencyState = NULL;
+    i = 0;
+    json_object_foreach(obj, key, val) {
+        if (!key) continue;
+        if (json_is_string(val)) {
+            vs = json_string_value(val);
+        } else if (json_is_integer(val)) {
+            static char tmp[64];
+            snprintf(tmp, sizeof(tmp), "%lld", (long long)json_integer_value(val));
+            vs = tmp;
+        } else if (json_is_boolean(val)) {
+            vs = json_is_true(val) ? "true" : "false";
         } else {
-
-            jEntry = json_array_get(jDependency, 0);
-            ret |= get_json_entry(jEntry, JTAG_CAPP, JSON_STRING,
-                                  &capp->dependencyCapp,
-                                  NULL, NULL, NULL);
-            ret |= get_json_entry(jEntry, JTAG_STATE, JSON_STRING,
-                                  &capp->dependencyState,
-                                  NULL, NULL, NULL);
+            continue;
         }
-    } else {
-        capp->dependencyCapp  = NULL;
-        capp->dependencyState = NULL;
+
+        kv = NULL;
+        if (asprintf(&kv, "%s=%s", key, vs) < 0) kv = NULL;
+        out[i++] = kv;
+        if (i >= n) break;
     }
 
-    if ((*manifest)->cappsManifest == NULL ){
-        (*manifest)->cappsManifest = capp;
-    } else {
-        for (ptr=(*manifest)->cappsManifest; ptr->next; ptr=ptr->next);
-        ptr->next = capp;
-    }
-
-    return USYS_TRUE;
+    out[i] = NULL;
+    if (countOut) *countOut = (int)i;
+    return out;
 }
 
-static bool deserialize_manifest_file(Manifest **manifest,
-                                      json_t *json) {
+static void m_free_argv(char **argv) {
 
-    int ret=USYS_TRUE, count=0, i;
-    json_t *jCappsArray=NULL;
-    json_t *jEntry=NULL;
-    json_t *jSpacesArray=NULL;
-    
-    *manifest = (Manifest *)calloc(1, sizeof(Manifest));
-    if (*manifest == NULL) {
-        usys_log_error("Error allocating memory of size: %ld",
-                       sizeof(Manifest));
-        return USYS_FALSE;
-    }
+    int i;
 
-    ret |= get_json_entry(json, JTAG_VERSION, JSON_STRING,
-                          &(*manifest)->version, NULL, NULL, NULL);
-    ret |= get_json_entry(json, JTAG_TARGET, JSON_STRING,
-                          &(*manifest)->target, NULL, NULL, NULL);
-    ret |= get_json_entry(json, JTAG_SPACES, JSON_OBJECT,
-                          NULL, NULL, NULL, &jSpacesArray);
-    ret |= get_json_entry(json, JTAG_CAPPS, JSON_OBJECT,
-                          NULL, NULL, NULL, &jCappsArray);
-
-    if (ret == USYS_FALSE) {
-        usys_log_error("Error deserializing the manifest json");
-        free_manifest(*manifest);
-        json_log(json);
-        return USYS_FALSE;
-    }
-
-    /* spaces */
-    count = json_array_size(jSpacesArray);
-    if (count == 0) {
-        usys_log_error("No space defined!");
-        json_log(json);
-        return USYS_FALSE;
-    } 
-    for (i=0; i<count; i++) {
-        jEntry = json_array_get(jSpacesArray, i);
-        deserialize_spaces(manifest, jEntry);
-    }
-
-    /* capps */
-    count = json_array_size(jCappsArray);
-    if (count == 0) {
-        usys_log_error("No capps to run!");
-        json_log(json);
-        return USYS_FALSE;
-    }
-    
-    for (i=0; i<count; i++) {
-        jEntry = json_array_get(jCappsArray, i);
-        deserialize_capps(manifest, jEntry);
-    }
-
-    return USYS_TRUE;
+    if (!argv) return;
+    for (i = 0; argv[i]; i++) free(argv[i]);
+    free(argv);
 }
 
-bool validate_capp_dependency(Manifest **manifest) {
+static void m_free_envp(char **envp) {
 
-    CappsManifest *ptr, *temp;
-    bool ret=USYS_FALSE;
+    int i;
 
-    for (ptr = (*manifest)->cappsManifest;
-         ptr != NULL;
-         ptr = ptr->next) {
+    if (!envp) return;
+    for (i = 0; envp[i]; i++) free(envp[i]);
+    free(envp);
+}
 
-        ret = USYS_FALSE;
+static App* m_parse_app(const char *spaceName, json_t *j) {
 
-        if (ptr->dependencyCapp  != NULL &&
-            ptr->dependencyState != NULL) {
-            if (strcasecmp(ptr->space, SPACE_BOOT) == 0 ||
-                strcasecmp(ptr->space, SPACE_REBOOT) == 0) {
-                for (temp = (*manifest)->cappsManifest;
-                     temp != NULL;
-                     temp = temp->next) {
+    App *a;
+    json_t *v;
+    const char *name;
+    const char *tag;
+    const char *cmd;
+    const char *workdir;
 
-                    if (strcasecmp(ptr->name, temp->name) == 0)
-                        continue;
+    if (!json_is_object(j)) return NULL;
 
-                    if (strcasecmp(ptr->dependencyCapp,
-                                   temp->name) == 0 &&
-                        strcasecmp(temp->space,
-                                   ptr->space) == 0) {
-                        ret=USYS_TRUE;
-                    }
-                }
+    v = json_object_get(j, "name");
+    name = json_is_string(v) ? json_string_value(v) : NULL;
 
-                if (ret != USYS_TRUE) {
-                    usys_log_error("%s:%s unable to find dependency: %s",
-                                   ptr->name, ptr->tag, ptr->dependencyCapp);
-                    return USYS_FALSE;
-                }
-            } else {
-                usys_log_error("%s:%s dependencies only allowed for %s %s",
-                               ptr->name, ptr->tag,
-                               SPACE_BOOT,
-                               SPACE_REBOOT);
-                return USYS_FALSE;
-            }
+    v = json_object_get(j, "tag");
+    tag = json_is_string(v) ? json_string_value(v) : NULL;
+
+    v = json_object_get(j, "cmd");
+    cmd = json_is_string(v) ? json_string_value(v) : NULL;
+
+    v = json_object_get(j, "workdir");
+    workdir = json_is_string(v) ? json_string_value(v) : NULL;
+
+    if (!m_is_valid_name(name) || !m_is_valid_name(spaceName)) {
+        usys_log_error("manifest: invalid app/space name");
+        return NULL;
+    }
+
+    if (!tag || !*tag) tag = "latest";
+    if (!cmd || !*cmd) {
+        usys_log_error("manifest: missing cmd for %s/%s", spaceName, name);
+        return NULL;
+    }
+
+    a = calloc(1, sizeof(*a));
+    if (!a) return NULL;
+
+    a->space = strdup(spaceName);
+    a->name  = strdup(name);
+    a->tag   = strdup(tag);
+    a->cmd   = strdup(cmd);
+    a->workdir = workdir ? strdup(workdir) : NULL;
+
+    v = json_object_get(j, "argv");
+    a->argv = m_parse_str_array(v, &a->argc);
+    if (!a->argv) {
+        a->argv = calloc(2, sizeof(char*));
+        if (a->argv) {
+            a->argv[0] = strdup(cmd);
+            a->argv[1] = NULL;
+            a->argc = 1;
         }
     }
 
-    return USYS_TRUE;
+    v = json_object_get(j, "env");
+    a->envp = m_parse_env_object(v, &a->envc);
+
+    v = json_object_get(j, "port");
+    a->port = json_is_integer(v) ? (int)json_integer_value(v) : 0;
+
+    a->state        = APP_STATE_STOPPED;
+    a->installState = INSTALL_STATE_NONE;
+    a->pid  = -1;
+    a->pgid = -1;
+    a->lastGoodTag = strdup(tag);
+
+    return a;
 }
 
-bool read_manifest_file(Manifest **manifest, char *fileName) {
+static void m_free_app(App *a) {
 
-    int ret=USYS_FALSE;
-    FILE *fp;
-    char *buffer=NULL;
-    long size=0;
-    json_t *json;
-    json_error_t jerror;
+    if (!a) return;
 
-    /* Sanity check */
-    if (fileName == NULL || manifest == NULL) return USYS_FALSE;
+    free(a->space);
+    free(a->name);
+    free(a->tag);
+    free(a->cmd);
+    m_free_argv(a->argv);
+    m_free_envp(a->envp);
+    free(a->workdir);
+    free(a->lastGoodTag);
+    free(a);
+}
 
-    if ((fp = fopen(fileName, "rb")) == NULL) {
-        log_error("Error opening manifest file: %s Error %s", fileName,
-                  strerror(errno));
-        return USYS_FALSE;
+static void m_free_space(Space *s) {
+
+    App *a;
+    App *n;
+
+    if (!s) return;
+
+    a = s->appList;
+    while (a) {
+        n = a->next;
+        m_free_app(a);
+        a = n;
     }
 
-    /* Read everything into buffer */
-    fseek(fp, 0, SEEK_END);
-    size = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
+    free(s->name);
+    free(s);
+}
 
-    if (size > MAX_MANIFEST_FILE_SIZE) {
-        usys_log_error("Error opening manifest file: %s "
-                       "Error: File size too big: %ld",
-                       fileName, size);
-        fclose(fp);
-        return USYS_FALSE;
+bool manifest_load(Config *config, Space **spaceListOut) {
+
+    json_error_t err;
+    json_t *root;
+    json_t *spaces;
+    size_t i;
+    size_t n;
+    json_t *js;
+    json_t *apps;
+    json_t *capps;
+    json_t *arr;
+    const char *spaceName;
+    Space *head;
+    Space *tail;
+    Space *s;
+    App *a;
+    App *alast;
+
+    if (!config || !spaceListOut) return false;
+
+    *spaceListOut = NULL;
+
+    root = json_load_file(config->manifestPath, 0, &err);
+    if (!root) {
+        usys_log_error("manifest: load failed %s:%d %s", err.source, err.line, err.text);
+        return false;
     }
 
-    buffer = (char *)calloc(1, size+1);
-    if (buffer == NULL) {
-        log_error("Error allocating memory of size: %ld", size+1);
-        fclose(fp);
-        return USYS_FALSE;
-    }
-    memset(buffer, 0, size+1);
-    fread(buffer, 1, size, fp); /* Read everything into buffer */
-
-    /* Trying loading it as JSON */
-    json = json_loads(buffer, 0, &jerror);
-    if (json == NULL) {
-        usys_log_error("Error loading manifest into JSON format."
-                       "File: %s Size: %ld",
-                       fileName, size);
-        usys_log_error("JSON error on line: %d: %s", jerror.line, jerror.text);
-    } else {
-        /* Now convert JSON into internal struct */
-        ret = deserialize_manifest_file(manifest, json);
+    spaces = json_object_get(root, "spaces");
+    if (!json_is_array(spaces)) {
+        usys_log_error("manifest: missing spaces array");
+        json_decref(root);
+        return false;
     }
 
-    if (buffer) free(buffer);
+    head = NULL;
+    tail = NULL;
 
-    fclose(fp);
-    json_decref(json);
+    n = json_array_size(spaces);
+    for (i = 0; i < n; i++) {
 
-    return ret;
+        js = json_array_get(spaces, i);
+        if (!json_is_object(js)) continue;
+
+        spaceName = NULL;
+        if (json_is_string(json_object_get(js, "name"))) {
+            spaceName = json_string_value(json_object_get(js, "name"));
+        }
+
+        if (!m_is_valid_name(spaceName)) {
+            usys_log_error("manifest: invalid space name");
+            continue;
+        }
+
+        s = calloc(1, sizeof(*s));
+        if (!s) continue;
+
+        s->name = strdup(spaceName);
+        s->appList = NULL;
+        s->next = NULL;
+
+        apps = json_object_get(js, "apps");
+        capps = json_object_get(js, "capps");
+        arr = json_is_array(apps) ? apps : (json_is_array(capps) ? capps : NULL);
+        if (!arr) {
+            usys_log_error("manifest: space %s missing apps/capps array", spaceName);
+            m_free_space(s);
+            continue;
+        }
+
+        alast = NULL;
+        for (size_t j = 0; j < json_array_size(arr); j++) {
+            a = m_parse_app(spaceName, json_array_get(arr, j));
+            if (!a) continue;
+
+            if (!s->appList) s->appList = a;
+            if (alast) alast->next = a;
+            alast = a;
+        }
+
+        if (!s->appList) {
+            usys_log_error("manifest: space %s has no valid apps", spaceName);
+            m_free_space(s);
+            continue;
+        }
+
+        if (!head) head = s;
+        if (tail) tail->next = s;
+        tail = s;
+    }
+
+    json_decref(root);
+
+    if (!head) {
+        usys_log_error("manifest: no valid spaces");
+        return false;
+    }
+
+    *spaceListOut = head;
+    return true;
+}
+
+void manifest_free(Space *spaceList) {
+
+    Space *s;
+    Space *n;
+
+    s = spaceList;
+    while (s) {
+        n = s->next;
+        m_free_space(s);
+        s = n;
+    }
 }

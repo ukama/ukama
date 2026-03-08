@@ -3,15 +3,19 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2026-present, Ukama Inc.
+ * Copyright (c) 2023-present, Ukama Inc.
  */
 
 #pragma once
 
 #include <stdbool.h>
-#include "config.h"
 
-typedef struct Space Space;
+typedef struct App App;
 
-bool manifest_load(Config *config, Space **spaceListOut);
-void manifest_free(Space *spaceList);
+typedef struct Space {
+    char *name;
+    App *appList;
+    struct Space *next;
+} Space;
+
+Space* space_find(Space *spaceList, const char *name);
