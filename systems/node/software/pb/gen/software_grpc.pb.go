@@ -26,17 +26,19 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SoftwareService_CreateSoftwareUpdate_FullMethodName    = "/ukama.node.software.v1.SoftwareService/CreateSoftwareUpdate"
-	SoftwareService_GetLatestSoftwareUpdate_FullMethodName = "/ukama.node.software.v1.SoftwareService/GetLatestSoftwareUpdate"
-	SoftwareService_UpdateSoftware_FullMethodName          = "/ukama.node.software.v1.SoftwareService/UpdateSoftware"
+	SoftwareService_CreateApp_FullMethodName       = "/ukama.node.software.v1.SoftwareService/CreateApp"
+	SoftwareService_GetAppList_FullMethodName      = "/ukama.node.software.v1.SoftwareService/GetAppList"
+	SoftwareService_GetSoftwareList_FullMethodName = "/ukama.node.software.v1.SoftwareService/GetSoftwareList"
+	SoftwareService_UpdateSoftware_FullMethodName  = "/ukama.node.software.v1.SoftwareService/UpdateSoftware"
 )
 
 // SoftwareServiceClient is the client API for SoftwareService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SoftwareServiceClient interface {
-	CreateSoftwareUpdate(ctx context.Context, in *CreateSoftwareUpdateRequest, opts ...grpc.CallOption) (*CreateSoftwareUpdateResponse, error)
-	GetLatestSoftwareUpdate(ctx context.Context, in *GetLatestSoftwareUpdateRequest, opts ...grpc.CallOption) (*GetLatestSoftwareUpdateResponse, error)
+	CreateApp(ctx context.Context, in *CreateAppRequest, opts ...grpc.CallOption) (*CreateAppResponse, error)
+	GetAppList(ctx context.Context, in *GetAppListRequest, opts ...grpc.CallOption) (*GetAppListResponse, error)
+	GetSoftwareList(ctx context.Context, in *GetSoftwareListRequest, opts ...grpc.CallOption) (*GetSoftwareListResponse, error)
 	UpdateSoftware(ctx context.Context, in *UpdateSoftwareRequest, opts ...grpc.CallOption) (*UpdateSoftwareResponse, error)
 }
 
@@ -48,20 +50,30 @@ func NewSoftwareServiceClient(cc grpc.ClientConnInterface) SoftwareServiceClient
 	return &softwareServiceClient{cc}
 }
 
-func (c *softwareServiceClient) CreateSoftwareUpdate(ctx context.Context, in *CreateSoftwareUpdateRequest, opts ...grpc.CallOption) (*CreateSoftwareUpdateResponse, error) {
+func (c *softwareServiceClient) CreateApp(ctx context.Context, in *CreateAppRequest, opts ...grpc.CallOption) (*CreateAppResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CreateSoftwareUpdateResponse)
-	err := c.cc.Invoke(ctx, SoftwareService_CreateSoftwareUpdate_FullMethodName, in, out, cOpts...)
+	out := new(CreateAppResponse)
+	err := c.cc.Invoke(ctx, SoftwareService_CreateApp_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *softwareServiceClient) GetLatestSoftwareUpdate(ctx context.Context, in *GetLatestSoftwareUpdateRequest, opts ...grpc.CallOption) (*GetLatestSoftwareUpdateResponse, error) {
+func (c *softwareServiceClient) GetAppList(ctx context.Context, in *GetAppListRequest, opts ...grpc.CallOption) (*GetAppListResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetLatestSoftwareUpdateResponse)
-	err := c.cc.Invoke(ctx, SoftwareService_GetLatestSoftwareUpdate_FullMethodName, in, out, cOpts...)
+	out := new(GetAppListResponse)
+	err := c.cc.Invoke(ctx, SoftwareService_GetAppList_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *softwareServiceClient) GetSoftwareList(ctx context.Context, in *GetSoftwareListRequest, opts ...grpc.CallOption) (*GetSoftwareListResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetSoftwareListResponse)
+	err := c.cc.Invoke(ctx, SoftwareService_GetSoftwareList_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -82,8 +94,9 @@ func (c *softwareServiceClient) UpdateSoftware(ctx context.Context, in *UpdateSo
 // All implementations must embed UnimplementedSoftwareServiceServer
 // for forward compatibility.
 type SoftwareServiceServer interface {
-	CreateSoftwareUpdate(context.Context, *CreateSoftwareUpdateRequest) (*CreateSoftwareUpdateResponse, error)
-	GetLatestSoftwareUpdate(context.Context, *GetLatestSoftwareUpdateRequest) (*GetLatestSoftwareUpdateResponse, error)
+	CreateApp(context.Context, *CreateAppRequest) (*CreateAppResponse, error)
+	GetAppList(context.Context, *GetAppListRequest) (*GetAppListResponse, error)
+	GetSoftwareList(context.Context, *GetSoftwareListRequest) (*GetSoftwareListResponse, error)
 	UpdateSoftware(context.Context, *UpdateSoftwareRequest) (*UpdateSoftwareResponse, error)
 	mustEmbedUnimplementedSoftwareServiceServer()
 }
@@ -95,11 +108,14 @@ type SoftwareServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedSoftwareServiceServer struct{}
 
-func (UnimplementedSoftwareServiceServer) CreateSoftwareUpdate(context.Context, *CreateSoftwareUpdateRequest) (*CreateSoftwareUpdateResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateSoftwareUpdate not implemented")
+func (UnimplementedSoftwareServiceServer) CreateApp(context.Context, *CreateAppRequest) (*CreateAppResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateApp not implemented")
 }
-func (UnimplementedSoftwareServiceServer) GetLatestSoftwareUpdate(context.Context, *GetLatestSoftwareUpdateRequest) (*GetLatestSoftwareUpdateResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetLatestSoftwareUpdate not implemented")
+func (UnimplementedSoftwareServiceServer) GetAppList(context.Context, *GetAppListRequest) (*GetAppListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAppList not implemented")
+}
+func (UnimplementedSoftwareServiceServer) GetSoftwareList(context.Context, *GetSoftwareListRequest) (*GetSoftwareListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSoftwareList not implemented")
 }
 func (UnimplementedSoftwareServiceServer) UpdateSoftware(context.Context, *UpdateSoftwareRequest) (*UpdateSoftwareResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateSoftware not implemented")
@@ -125,38 +141,56 @@ func RegisterSoftwareServiceServer(s grpc.ServiceRegistrar, srv SoftwareServiceS
 	s.RegisterService(&SoftwareService_ServiceDesc, srv)
 }
 
-func _SoftwareService_CreateSoftwareUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateSoftwareUpdateRequest)
+func _SoftwareService_CreateApp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateAppRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SoftwareServiceServer).CreateSoftwareUpdate(ctx, in)
+		return srv.(SoftwareServiceServer).CreateApp(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: SoftwareService_CreateSoftwareUpdate_FullMethodName,
+		FullMethod: SoftwareService_CreateApp_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SoftwareServiceServer).CreateSoftwareUpdate(ctx, req.(*CreateSoftwareUpdateRequest))
+		return srv.(SoftwareServiceServer).CreateApp(ctx, req.(*CreateAppRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SoftwareService_GetLatestSoftwareUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetLatestSoftwareUpdateRequest)
+func _SoftwareService_GetAppList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAppListRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SoftwareServiceServer).GetLatestSoftwareUpdate(ctx, in)
+		return srv.(SoftwareServiceServer).GetAppList(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: SoftwareService_GetLatestSoftwareUpdate_FullMethodName,
+		FullMethod: SoftwareService_GetAppList_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SoftwareServiceServer).GetLatestSoftwareUpdate(ctx, req.(*GetLatestSoftwareUpdateRequest))
+		return srv.(SoftwareServiceServer).GetAppList(ctx, req.(*GetAppListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SoftwareService_GetSoftwareList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSoftwareListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SoftwareServiceServer).GetSoftwareList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SoftwareService_GetSoftwareList_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SoftwareServiceServer).GetSoftwareList(ctx, req.(*GetSoftwareListRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -187,12 +221,16 @@ var SoftwareService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*SoftwareServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CreateSoftwareUpdate",
-			Handler:    _SoftwareService_CreateSoftwareUpdate_Handler,
+			MethodName: "CreateApp",
+			Handler:    _SoftwareService_CreateApp_Handler,
 		},
 		{
-			MethodName: "GetLatestSoftwareUpdate",
-			Handler:    _SoftwareService_GetLatestSoftwareUpdate_Handler,
+			MethodName: "GetAppList",
+			Handler:    _SoftwareService_GetAppList_Handler,
+		},
+		{
+			MethodName: "GetSoftwareList",
+			Handler:    _SoftwareService_GetSoftwareList_Handler,
 		},
 		{
 			MethodName: "UpdateSoftware",

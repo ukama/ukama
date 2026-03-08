@@ -22,6 +22,7 @@ package events
 	 NodeStateEventOnline
 	 NodeStateEventOffline
 	 NodeStateTransition
+	 NodeAppChunkReady
  )
  
  var NodeStateEventRoutingKey = map[NodeStateEventId]string{
@@ -58,5 +59,10 @@ package events
 		 Key:        NodeStateTransition,
 		 Name:       "transition",
 		 RoutingKey: NodeStateEventRoutingKey[NodeStateTransition],
+	 },
+	 NodeAppChunkReady: {
+		 Key:        NodeAppChunkReady,
+		 Name:       "chunk ready",
+		 RoutingKey: "event.cloud.global.{{ .Org}}.hub.distributor.app.chunkready",
 	 },
  }

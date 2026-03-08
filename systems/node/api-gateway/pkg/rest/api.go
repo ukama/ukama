@@ -67,3 +67,11 @@ type UpdateSoftwareRequest struct {
 	Tag    string `json:"tag" validate:"required" path:"tag"`
 	NodeId string `json:"node_id" validate:"required" path:"node_id"`
 }
+
+type ListAppsRequest struct {}
+
+type ListSoftwareRequest struct {
+	NodeId string `json:"node_id" form:"node_id" query:"node_id" binding:"required"`
+	AppName string `json:"app_name" form:"app_name" query:"app_name" binding:"required"`
+	Status string `json:"status" form:"status" query:"status" binding:"required" validate:"eq=unknown|eq=update_available|eq=up_to_date|eq=update_in_progress|eq=update_failed"`
+}

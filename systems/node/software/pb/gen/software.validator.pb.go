@@ -8,8 +8,7 @@ import (
 	math "math"
 	proto "github.com/golang/protobuf/proto"
 	_ "github.com/mwitkow/go-proto-validators"
-	_ "google.golang.org/protobuf/types/known/timestamppb"
-	_ "google.golang.org/protobuf/types/known/wrapperspb"
+	_ "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -19,28 +18,49 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *CreateAppRequest) Validate() error {
+	return nil
+}
+func (this *CreateAppResponse) Validate() error {
+	return nil
+}
+func (this *GetAppListRequest) Validate() error {
+	return nil
+}
+func (this *GetAppListResponse) Validate() error {
+	for _, item := range this.Apps {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Apps", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *GetSoftwareListRequest) Validate() error {
+	return nil
+}
+func (this *GetSoftwareListResponse) Validate() error {
+	for _, item := range this.Software {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Software", err)
+			}
+		}
+	}
+	return nil
+}
 func (this *UpdateSoftwareRequest) Validate() error {
 	return nil
 }
 func (this *UpdateSoftwareResponse) Validate() error {
 	return nil
 }
-func (this *CreateSoftwareUpdateRequest) Validate() error {
-	return nil
-}
-func (this *CreateSoftwareUpdateResponse) Validate() error {
-	if this.SoftwareUpdate != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.SoftwareUpdate); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("SoftwareUpdate", err)
-		}
-	}
-	return nil
-}
 
-var _regex_SoftwareUpdate_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_Software_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
-func (this *SoftwareUpdate) Validate() error {
-	if !_regex_SoftwareUpdate_Id.MatchString(this.Id) {
+func (this *Software) Validate() error {
+	if !_regex_Software_Id.MatchString(this.Id) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Id))
 	}
 	if this.Id == "" {
@@ -48,14 +68,6 @@ func (this *SoftwareUpdate) Validate() error {
 	}
 	return nil
 }
-func (this *GetLatestSoftwareUpdateRequest) Validate() error {
-	return nil
-}
-func (this *GetLatestSoftwareUpdateResponse) Validate() error {
-	if this.SoftwareUpdate != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.SoftwareUpdate); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("SoftwareUpdate", err)
-		}
-	}
+func (this *App) Validate() error {
 	return nil
 }
