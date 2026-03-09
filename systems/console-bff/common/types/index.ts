@@ -8,7 +8,10 @@
 import { IsOptional } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
 
+
+
 import { API_METHOD_TYPE } from "../enums";
+
 
 export type ApiMethodDataDto = {
   url: string;
@@ -117,4 +120,8 @@ type TCorrespondents = {
 
 export type TCorrespondentsMap = {
   [key: string]: TCorrespondents[];
+};
+
+export type StringResponse = {
+  [key: string]: string;
 };
