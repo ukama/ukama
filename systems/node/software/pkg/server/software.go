@@ -150,7 +150,7 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 	path := fmt.Sprintf("/starter/v1/update/%s/%s", req.Name, req.Tag)
 	log.Infof("Publishing update for software %s to version %s on node %s", req.Name, req.Tag, nId.String())
 	
-	nodeGwIP := s.getNodeGwIP(nId.String())
+	nodeGwIP := s.getNodeGwIP(s.nodeGwIPs)
 	if nodeGwIP == "" {
 		return nil, status.Errorf(codes.Internal, "failed to get node gw ip for node %s", nId.String())
 	}
@@ -218,11 +218,14 @@ func (c *SoftwareServer) publishMessage(target string, method string, path strin
 	return err
 }
 
-func (c *SoftwareServer) getNodeGwIP(nodeId string) string {
-	for _, nodeGwIP := range c.nodeGwIPs {
+func (c *SoftwareServer) getNodeGwIP(ips []string) string {
+	if len(ips) == 0 {
+		return "no node gw ips found"
+	}
+	for _, nodeGwIP := range ips {
 		if net.ParseIP(nodeGwIP) != nil {
 			return nodeGwIP
 		}
 	}
-	return ""
+	return "no valid node gw ips found"
 }
