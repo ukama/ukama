@@ -87,10 +87,6 @@ func (e *requestExecutor) Execute(req *cpb.NodeFeederMessage) error {
 		"X-node-id":    {req.NodeId},
 	}
 	
-	if req.Host != "" {
-		header["X-host"] = []string{req.Host}
-	}
-
 	var httpReq http.Request
 	if req.HttpMethod == "GET" || req.GetMsg() == nil {
 		httpReq = http.Request{

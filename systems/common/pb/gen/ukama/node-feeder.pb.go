@@ -28,7 +28,6 @@ type NodeFeederMessage struct {
 	Path          string                 `protobuf:"bytes,3,opt,name=path,proto3" json:"path,omitempty"`
 	Msg           []byte                 `protobuf:"bytes,4,opt,name=msg,proto3" json:"msg,omitempty"`
 	NodeId        string                 `protobuf:"bytes,5,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
-	Host          string                 `protobuf:"bytes,6,opt,name=host,proto3" json:"host,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -98,18 +97,11 @@ func (x *NodeFeederMessage) GetNodeId() string {
 	return ""
 }
 
-func (x *NodeFeederMessage) GetHost() string {
-	if x != nil {
-		return x.Host
-	}
-	return ""
-}
-
 var File_ukama_node_feeder_proto protoreflect.FileDescriptor
 
 const file_ukama_node_feeder_proto_rawDesc = "" +
 	"\n" +
-	"\x17ukama/node-feeder.proto\x12\x13ukama.nodefeeder.v1\"\x9d\x01\n" +
+	"\x17ukama/node-feeder.proto\x12\x13ukama.nodefeeder.v1\"\x89\x01\n" +
 	"\x11NodeFeederMessage\x12\x16\n" +
 	"\x06target\x18\x01 \x01(\tR\x06target\x12\x1e\n" +
 	"\n" +
@@ -117,8 +109,7 @@ const file_ukama_node_feeder_proto_rawDesc = "" +
 	"httpMethod\x12\x12\n" +
 	"\x04path\x18\x03 \x01(\tR\x04path\x12\x10\n" +
 	"\x03msg\x18\x04 \x01(\fR\x03msg\x12\x16\n" +
-	"\x06nodeId\x18\x05 \x01(\tR\x06nodeId\x12\x12\n" +
-	"\x04host\x18\x06 \x01(\tR\x04hostB5Z3github.com/ukama/ukama/systems/common/pb/gen/ukama/b\x06proto3"
+	"\x06nodeId\x18\x05 \x01(\tR\x06nodeIdB5Z3github.com/ukama/ukama/systems/common/pb/gen/ukama/b\x06proto3"
 
 var (
 	file_ukama_node_feeder_proto_rawDescOnce sync.Once

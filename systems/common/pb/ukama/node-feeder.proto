@@ -10,5 +10,4 @@ message NodeFeederMessage {
     string path = 3;
     bytes msg = 4;
     string nodeId = 5;
-    string host = 6;
 }

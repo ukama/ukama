@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"time"
@@ -153,8 +154,14 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 	if nodeGwIP == "" {
 		return nil, status.Errorf(codes.Internal, "failed to get node gw ip for node %s", nId.String())
 	}
+
+	jsonBody := map[string]string{"host": nodeGwIP}
+	data, err := json.Marshal(jsonBody)
+	if err != nil {
+		return nil, err
+	}
 	
-	if err := s.publishMessage(target, "POST", path, nId.String(), nodeGwIP); err != nil {
+	if err := s.publishMessage(target, "POST", path, nId.String(), data); err != nil {
 		log.Errorf("Failed to publish update message: %v", err)
 		return nil, status.Errorf(codes.Internal, "failed to publish update message: %v", err)
 	}
@@ -197,15 +204,14 @@ func dbAppToPbApp(app *db.App) *pb.App {
 	}
 }
 
-func (c *SoftwareServer) publishMessage(target string, method string, path string, nodeId string, nodeGwIP string) error {
+func (c *SoftwareServer) publishMessage(target string, method string, path string, nodeId string, data []byte) error {
 	route := "request.cloud.local" + "." + c.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
 	msg := &cpb.NodeFeederMessage{
 		Target:     target,
 		HttpMethod: method,
 		Path:       path,
-		Msg:        []byte(""),
+		Msg:        data,
 		NodeId:     nodeId,
-		Host:       nodeGwIP,
 	}
 	log.Infof("Published software update node %s on path %s on target %s ", nodeId, path, target)
 	err := c.msgbus.PublishRequest(route, msg)
