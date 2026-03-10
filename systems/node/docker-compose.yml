@@ -63,6 +63,7 @@ services:
    - SOFTWARE_SERVICE_PORT=9090
    - ORGNAME=${ORGNAME}
    - WIMSI_HOST=http://${LOCAL_HOST_IP}:8080
+   - NODEGWIPS='["node-gateway-node"]'
   restart: always
   networks:
    - ukama-net

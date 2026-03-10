@@ -21,12 +21,13 @@ type Config struct {
 	Grpc             *uconf.Grpc     `default:"{}"`
 	Queue            *uconf.Queue    `default:"{}"`
 	Timeout          time.Duration   `default:"20s"`
-	Service          *uconf.Service
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	OrgName          string           `default:"ukama"`
 	WimsiHost        string           `default:"http://wimsi:8080"`
 	Health           string           `default:"health:9090"`
 	Apps             []*App           `default:"[]"`
+	NodeGwIPs        []string         `default:"[]"`
+	Service          *uconf.Service
 }
 
 type App struct {

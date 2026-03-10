@@ -57,7 +57,7 @@ var (
 // ========== Helpers to build server with mocks ==========
 
 func newTestServer(sRepo *mocks.SoftwareRepo, appRepo *mocks.AppRepo, msgBus *mbmocks.MsgBusServiceClient) *SoftwareServer {
-	return NewSoftwareServer(testOrgName, sRepo, appRepo, msgBus, false)
+	return NewSoftwareServer(testOrgName, sRepo, appRepo, msgBus, false, []string{"0.0.0.0"})
 }
 
 func dbAppFixture() db.App {

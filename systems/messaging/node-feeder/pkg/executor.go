@@ -82,22 +82,28 @@ func (e *requestExecutor) Execute(req *cpb.NodeFeederMessage) error {
 		Timeout: time.Duration(e.timeoutSeconds) * time.Second,
 	}
 
+	header := map[string][]string{
+		"Content-Type": {"application/json"},
+		"X-node-id":    {req.NodeId},
+	}
+	
+	if req.Host != "" {
+		header["X-host"] = []string{req.Host}
+	}
+
 	var httpReq http.Request
 	if req.HttpMethod == "GET" || req.GetMsg() == nil {
 		httpReq = http.Request{
 			Method: req.HttpMethod,
 			URL:    u,
-			Header: map[string][]string{"X-node-id": {req.NodeId}},
+			Header: header,
 		}
 	} else {
 		body := req.GetMsg()
 		httpReq = http.Request{
 			Body:          io.NopCloser(bytes.NewReader(body)),
 			ContentLength: int64(len(body)),
-			Header: map[string][]string{
-				"Content-Type": {"application/json"},
-				"X-node-id":    {req.NodeId},
-			},
+			Header: header,
 			Method: req.HttpMethod,
 			URL:    u,
 		}
