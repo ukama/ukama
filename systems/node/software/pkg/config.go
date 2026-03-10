@@ -26,7 +26,7 @@ type Config struct {
 	WimsiHost        string           `default:"http://wimsi:8080"`
 	Health           string           `default:"health:9090"`
 	Apps             []*App           `default:"[]"`
-	NodeGwIP         string           `default:"0.0.0.0"`
+	NodeGwIPs        []string         `default:"[]"`
 	Service          *uconf.Service
 }
 
