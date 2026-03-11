@@ -177,7 +177,9 @@ bool installer_revert_to_last_good(Config *config, App *app) {
     return true;
 }
 
-bool installer_ensure_installed(Config *config, App *app, const char *hub) {
+bool installer_ensure_installed(Config *config,
+                                App *app,
+                                const char *hub) {
 
     char *tagDir;
     char *pkgPath;
@@ -185,13 +187,13 @@ bool installer_ensure_installed(Config *config, App *app, const char *hub) {
     char *appDir;
     bool ok;
 
-    tagDir = NULL;
-    pkgPath = NULL;
+    tagDir   = NULL;
+    pkgPath  = NULL;
     stageDir = NULL;
-    appDir = NULL;
-    ok = false;
+    appDir   = NULL;
+    ok       = false;
 
-    if (!config || !app || !hub || !*hub) return false;
+    if (!config || !app) return false;
 
     tagDir = inst_tag_dir(config, app, app->tag);
     if (!tagDir) return false;
@@ -213,8 +215,7 @@ bool installer_ensure_installed(Config *config, App *app, const char *hub) {
         app->installState = INSTALL_STATE_FETCHING;
         if (!wc_fetch_package(config, app->name, app->tag, hub, pkgPath)) {
             app->installState = INSTALL_STATE_FAILED;
-            usys_log_error("install: fetch failed %s:%s hub=%s",
-                           app->name, app->tag, hub);
+            usys_log_error("install: fetch failed %s:%s", app->name, app->tag);
             goto cleanup;
         }
     }
@@ -249,11 +250,12 @@ bool installer_ensure_installed(Config *config, App *app, const char *hub) {
 
 cleanup:
     if (stageDir) {
-        app_remove_dir_recursive(stageDir);
         free(stageDir);
     }
+
     free(appDir);
     free(pkgPath);
     free(tagDir);
+
     return ok;
 }

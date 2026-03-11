@@ -281,7 +281,7 @@ static bool run_space(Config *config,
     a = s->appList;
     while (a) {
 
-        if (!installer_ensure_installed(config, a)) {
+        if (!installer_ensure_installed(config, a, NULL)) {
             return false;
         }
 
@@ -314,7 +314,7 @@ static bool update_self(Supervisor *s,
     char *oldTag;
     char *oldLastGood;
 
-    if (!s || !a || !tag || !hub || !*hub) {
+    if (!s || !s->config || !a || !tag) {
         return false;
     }
 
@@ -326,8 +326,7 @@ static bool update_self(Supervisor *s,
         return false;
     }
 
-    usys_log_info("self-update: %s/%s -> %s hub=%s",
-                  a->space, a->name, tag, hub);
+    usys_log_info("self-update: %s/%s -> %s", a->space, a->name, tag);
 
     free(a->tag);
     a->tag = strdup(tag);
@@ -385,7 +384,7 @@ static bool update_app(Supervisor *s,
     char *oldTag;
     char *oldLastGood;
 
-    if (!s || !space || !name || !tag || !hub || !*hub) {
+    if (!s || !space || !name || !tag) {
         return false;
     }
 
@@ -406,7 +405,7 @@ static bool update_app(Supervisor *s,
         return false;
     }
 
-    usys_log_info("update: %s/%s -> %s hub=%s", space, name, tag, hub);
+    usys_log_info("update: %s/%s -> %s", space, name, tag);
 
     app_stop(s->config, a);
 

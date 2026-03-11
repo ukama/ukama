@@ -167,23 +167,21 @@ bool wc_fetch_package(Config *config,
 
     char url[512];
     char path[256];
-    char *body;
     URequest *req;
     UResponse *resp;
     FILE *f;
     bool ok;
     JsonObj *jreq;
+    char *body;
 
     req = NULL;
     resp = NULL;
     f = NULL;
     ok = false;
-    body = NULL;
     jreq = NULL;
+    body = NULL;
 
-    if (!config || !appName || !tag || !hub || !*hub || !dstPath) {
-        return false;
-    }
+    if (!config || !appName || !tag || !dstPath) return false;
 
     snprintf(path,
              sizeof(path),
@@ -198,38 +196,45 @@ bool wc_fetch_package(Config *config,
         return false;
     }
 
-    req = wc_create_request(url, "POST", 60);
+    if (hub && *hub) {
+        req = wc_create_request(url, "POST", 60);
+    } else {
+        req = wc_create_request(url, "GET", 60);
+    }
+
     if (!req) return false;
 
-    jreq = json_object();
-    if (!jreq) {
-        wc_clean(req, NULL);
-        return false;
+    if (hub && *hub) {
+        jreq = json_object();
+        if (!jreq) {
+            wc_clean(req, NULL);
+            return false;
+        }
+
+        json_object_set_new(jreq, "hub", json_string(hub));
+        body = json_dumps(jreq, JSON_COMPACT);
+        json_decref(jreq);
+
+        if (!body) {
+            wc_clean(req, NULL);
+            return false;
+        }
+
+        ulfius_set_string_body_request(req, body);
+        u_map_put(req->map_header, "Content-Type", "application/json");
     }
-
-    json_object_set_new(jreq, "hub", json_string(hub));
-    body = json_dumps(jreq, JSON_COMPACT);
-    json_decref(jreq);
-
-    if (!body) {
-        wc_clean(req, NULL);
-        return false;
-    }
-
-    ulfius_set_string_body_request(req, body);
-    u_map_put(req->map_header, "Content-Type", "application/json");
 
     if (!wc_send(req, &resp)) {
-        usys_log_error("wimc: request failed %s hub=%s", url, hub);
-        free(body);
         wc_clean(req, NULL);
+        free(body);
+        usys_log_error("wimc: request failed %s", url);
         return false;
     }
 
     free(body);
 
     if (resp->status != 200 || !resp->binary_body || resp->binary_body_length == 0) {
-        usys_log_error("wimc: bad response http=%d hub=%s", resp->status, hub);
+        usys_log_error("wimc: bad response http=%d", resp->status);
         wc_clean(req, resp);
         return false;
     }

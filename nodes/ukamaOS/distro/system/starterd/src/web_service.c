@@ -156,6 +156,7 @@ static int ws_update_cb(const struct _u_request *req,
     char *space;
     char *name;
     char *tag;
+    char *hub;
     Action *a;
 
     ctx = (StarterContext *)userData;
@@ -189,6 +190,7 @@ static int ws_update_cb(const struct _u_request *req,
     space = NULL;
     name  = NULL;
     tag   = NULL;
+    hub   = NULL;
 
     if (!ws_parse_update(j, &space, &name, &tag, &hub)) {
         json_decref(j);
@@ -203,7 +205,7 @@ static int ws_update_cb(const struct _u_request *req,
 
     ctx->updateInProgress = 1;
 
-    a = action_new(ACTION_UPDATE_APP, space, name, tag);
+    a = action_new(ACTION_UPDATE_APP, space, name, tag, hub);
     free(space);
     free(name);
     free(tag);
@@ -212,6 +214,10 @@ static int ws_update_cb(const struct _u_request *req,
 
     if (!a || !actions_enqueue(ctx->queue, a)) {
         if (a) {
+            free(a->space);
+            free(a->name);
+            free(a->tag);
+            free(a->hub);
             free(a);
         }
         ctx->updateInProgress = 0;
@@ -274,7 +280,7 @@ static int ws_terminate_cb(const struct _u_request *req,
                              HttpStatusStr(HttpStatus_BadRequest));
     }
 
-    a = action_new(ACTION_TERMINATE_APP, space, name, NULL);
+    a = action_new(ACTION_TERMINATE_APP, space, name, NULL, NULL);
     json_decref(j);
 
     if (!a || !actions_enqueue(ctx->queue, a)) {
