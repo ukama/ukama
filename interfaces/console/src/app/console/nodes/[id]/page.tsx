@@ -12,11 +12,15 @@ import {
   NodeConnectivityEnum,
   NodeStateEnum,
   NodeTypeEnum,
+  SoftwareStatusEnum,
+  useGetAppsQuery,
   useGetNodesQuery,
   useRestartNodeMutation,
+  useSoftwareQuery,
   useToggleRfStatusMutation,
   useToggleServiceMutation,
   useUpdateNodeMutation,
+  useUpdateSoftwareMutation,
 } from '@/client/graphql/generated';
 import {
   Graphs_Type,
@@ -168,6 +172,43 @@ const Page: React.FC<INodePage> = ({ params }) => {
       });
     },
   });
+
+  const { loading: appsLoading, data: appsData } = useGetAppsQuery({
+    fetchPolicy: 'cache-and-network',
+    onCompleted: (data) => {
+      console.log('appsData', data);
+    },
+  });
+
+  const { loading: softwaresLoading, data: softwaresData } = useSoftwareQuery({
+    fetchPolicy: 'network-only',
+    variables: {
+      data: {
+        name: '',
+        nodeId: id,
+        status: SoftwareStatusEnum.UpdateAvailable,
+      },
+    },
+  });
+
+  const [updateSoftware, { loading: updateSoftwareLoading }] =
+    useUpdateSoftwareMutation({
+      fetchPolicy: 'network-only',
+      onCompleted: (data) => {
+        console.log('updateSoftwareData', data);
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'update-software-error-msg',
+          message: error.message,
+          type: 'error',
+          show: true,
+        });
+      },
+    });
+
+  console.log('appsData', appsData);
+  console.log('softwaresData', softwaresData);
 
   const [
     getNodeMetricByTab,

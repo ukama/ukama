@@ -1186,3 +1186,42 @@ query GetDataUsages($data: SimUsagesInputDto!) {
 }
 
 ##
+
+### Software Start ###
+query GetApps {
+  getApps {
+    apps {
+      name
+      space
+      notes
+      metricsKeys
+    }
+  }
+}
+
+query Software($data: GetSoftwaresInput!) {
+  getSoftwares(data: $data) {
+    software {
+      id
+      releaseDate
+      nodeId
+      status
+      changeLog
+      currentVersion
+      desiredVersion
+      name
+      space
+      notes
+      metricsKeys
+      createdAt
+      updatedAt
+    }
+  }
+}
+
+mutation UpdateSoftware($data: UpdateSoftwareInputDto!) {
+  updateSoftware(data: $data) {
+    message
+  }
+}
+### Software End ###
