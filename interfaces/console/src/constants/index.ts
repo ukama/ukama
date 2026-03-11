@@ -34,6 +34,7 @@ export const SETTING_MENU = [
 ];
 
 export const NODE_ACTIONS_ENUM = {
+  NODE_LOADING: 'node-loading',
   NODE_RESTART: 'node-restart',
   NODE_RADIO_ON: 'node-radio-on',
   NODE_RADIO_OFF: 'node-radio-off',

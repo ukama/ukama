@@ -74,7 +74,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
   const [nodeAction, setNodeAction] = useState({
     progress: 0,
     currentAction: '',
-    actionInitiated: '',
+    actionInitiated: NODE_ACTIONS_ENUM.NODE_LOADING,
   });
   const [graphType, setGraphType] = useState<Graphs_Type>(
     Graphs_Type.NodeHealth,
@@ -307,6 +307,16 @@ const Page: React.FC<INodePage> = ({ params }) => {
       });
     },
   });
+
+  useEffect(() => {
+    if (currentNode?.status.connectivity === NodeConnectivityEnum.Online) {
+      setNodeAction({
+        progress: 0,
+        currentAction: '',
+        actionInitiated: '',
+      });
+    }
+  }, [currentNode]);
 
   useEffect(() => {
     const to = getUnixTime();
@@ -655,7 +665,9 @@ const Page: React.FC<INodePage> = ({ params }) => {
 
             <TabPanel id={'node-software-tab'} value={selectedTab} index={4}>
               <NodeSoftwareTab
-                loading={false}
+                loading={
+                  softwaresLoading || updateSoftwareLoading || appsLoading
+                }
                 nodeApps={softwaresData?.getSoftwares.software ?? []}
                 handleUpdateAvailable={handleUpdateAvailable}
               />
