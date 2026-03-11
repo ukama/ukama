@@ -134,7 +134,7 @@ const NodeSoftwareTab = ({
                         >
                           Version: {currentVersion}
                         </Typography>
-                        <Stack direction="row" spacing={1 / 2} mt={'12px'}>
+                        <Stack direction="row" spacing={1 / 2} mt={1.5}>
                           <Typography variant="body2">CPU:</Typography>
                           <Typography
                             variant="body2"
@@ -153,7 +153,7 @@ const NodeSoftwareTab = ({
                           </Typography>
                         </Stack>
                       </CardContent>
-                      <CardActions sx={{ p: 2 }}>
+                      <CardActions sx={{ pb: 2, pt: 0, px: 2 }}>
                         <HorizontalContainerJustify>
                           <Button sx={{ p: 0 }}>View More</Button>
                           {status === SoftwareStatusEnum.UpdateAvailable && (
