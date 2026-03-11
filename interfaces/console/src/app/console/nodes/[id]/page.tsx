@@ -175,18 +175,20 @@ const Page: React.FC<INodePage> = ({ params }) => {
 
   const { loading: appsLoading, data: appsData } = useGetAppsQuery({
     fetchPolicy: 'cache-and-network',
-    onCompleted: (data) => {
-      console.log('appsData', data);
-    },
+    onCompleted: (data) => {},
   });
 
-  const { loading: softwaresLoading, data: softwaresData } = useSoftwareQuery({
+  const {
+    loading: softwaresLoading,
+    data: softwaresData,
+    refetch: refetchSoftwares,
+  } = useSoftwareQuery({
     fetchPolicy: 'network-only',
     variables: {
       data: {
         name: '',
         nodeId: id,
-        status: SoftwareStatusEnum.UpdateAvailable,
+        status: SoftwareStatusEnum.Unknown,
       },
     },
   });
@@ -195,7 +197,13 @@ const Page: React.FC<INodePage> = ({ params }) => {
     useUpdateSoftwareMutation({
       fetchPolicy: 'network-only',
       onCompleted: (data) => {
-        console.log('updateSoftwareData', data);
+        refetchSoftwares();
+        setSnackbarMessage({
+          id: 'update-software-success-msg',
+          message: 'Software updated successfully.',
+          type: 'success',
+          show: true,
+        });
       },
       onError: (error) => {
         setSnackbarMessage({
@@ -206,9 +214,6 @@ const Page: React.FC<INodePage> = ({ params }) => {
         });
       },
     });
-
-  console.log('appsData', appsData);
-  console.log('softwaresData', softwaresData);
 
   const [
     getNodeMetricByTab,
@@ -517,14 +522,30 @@ const Page: React.FC<INodePage> = ({ params }) => {
         });
         break;
       default:
-       setSnackbarMessage({
-        id: 'node-action-error-msg',
-        message: 'Invalid action.',
-        type: 'error',
-        show: true,
-      });
-      break;
+        setSnackbarMessage({
+          id: 'node-action-error-msg',
+          message: 'Invalid action.',
+          type: 'error',
+          show: true,
+        });
+        break;
     }
+  };
+
+  const handleUpdateAvailable = (
+    name: string,
+    desiredVersion: string,
+    nodeId: string,
+  ) => {
+    updateSoftware({
+      variables: {
+        data: {
+          name: name,
+          nodeId: nodeId,
+          tag: desiredVersion,
+        },
+      },
+    });
   };
 
   return (
@@ -631,43 +652,12 @@ const Page: React.FC<INodePage> = ({ params }) => {
                 }
               />
             </TabPanel>
+
             <TabPanel id={'node-software-tab'} value={selectedTab} index={4}>
               <NodeSoftwareTab
                 loading={false}
-                nodeApps={[
-                  {
-                    name: 'Backhaul',
-                    version: '1.0.0',
-                    date: getUnixTime(),
-                    cpu: '1.0',
-                    memory: '1.0',
-                    notes: 'Backhaul',
-                  },
-                  {
-                    name: 'Cellular',
-                    version: '1.0.0',
-                    date: 1714857600,
-                    cpu: '1.0',
-                    memory: '1.0',
-                    notes: 'Cellular',
-                  },
-                  {
-                    name: 'Radio',
-                    version: '1.0.0',
-                    date: getUnixTime(),
-                    cpu: '1.0',
-                    memory: '1.0',
-                    notes: 'Radio',
-                  },
-                  {
-                    name: 'Metricsd',
-                    version: '1.0.0',
-                    date: getUnixTime(),
-                    cpu: '1.0',
-                    memory: '1.0',
-                    notes: 'metricsd',
-                  },
-                ]}
+                nodeApps={softwaresData?.getSoftwares.software ?? []}
+                handleUpdateAvailable={handleUpdateAvailable}
               />
             </TabPanel>
             {/* <TabPanel id={'node-schematic-tab'} value={selectedTab} index={5}>

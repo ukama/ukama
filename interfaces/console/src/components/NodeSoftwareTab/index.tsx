@@ -6,10 +6,11 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { NodeApp } from '@/client/graphql/generated';
-import { NodeAppsColumns } from '@/constants/tableColumns';
+import { Software, SoftwareStatusEnum } from '@/client/graphql/generated';
+import { HorizontalContainerJustify } from '@/styles/global';
 import colors from '@/theme/colors';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import {
   Box,
   Button,
@@ -17,20 +18,30 @@ import {
   CardActions,
   CardContent,
   Grid2,
+  IconButton,
   Paper,
   Stack,
+  Tooltip,
   Typography,
 } from '@mui/material';
-import SimpleDataTable from '../SimpleDataTable';
 interface INodeRadioTab {
   loading: boolean;
-  nodeApps: NodeApp[];
+  nodeApps: Software[];
+  handleUpdateAvailable: (
+    name: string,
+    desiredVersion: string,
+    nodeId: string,
+  ) => void;
 }
 
-const NodeSoftwareTab = ({ loading, nodeApps }: INodeRadioTab) => {
+const NodeSoftwareTab = ({
+  loading,
+  nodeApps,
+  handleUpdateAvailable,
+}: INodeRadioTab) => {
   return (
     <Grid2 container spacing={2} sx={{ overflowY: 'scroll' }}>
-      <Grid2 size={12} sx={{ gridRowStart: 1, gridRowEnd: 6 }}>
+      {/* <Grid2 size={12} sx={{ gridRowStart: 1, gridRowEnd: 6 }}>
         <Paper
           sx={{
             p: 3,
@@ -47,7 +58,7 @@ const NodeSoftwareTab = ({ loading, nodeApps }: INodeRadioTab) => {
             />
           </Box>
         </Paper>
-      </Grid2>
+      </Grid2> */}
 
       <Grid2 size={12}>
         <Paper
@@ -60,55 +71,111 @@ const NodeSoftwareTab = ({ loading, nodeApps }: INodeRadioTab) => {
           </Typography>
           <Box sx={{ overflow: 'scroll', height: '100%', pb: 8, pr: 3 }}>
             <Grid2 container spacing={3}>
-              {nodeApps?.map(({ id, title, cpu, memory, version }: any) => (
-                <Grid2 size={4} key={id}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Stack
-                        spacing={1}
-                        direction="row"
-                        sx={{ alignItems: 'center' }}
-                      >
-                        <CheckCircleIcon
-                          htmlColor={colors.green}
-                          fontSize="medium"
-                        />
-                        <Typography variant="h5" textTransform={'capitalize'}>
-                          {title}
-                        </Typography>
-                      </Stack>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        gutterBottom
-                      >
-                        Version: {version}
-                      </Typography>
-                      <Stack direction="row" spacing={1 / 2} mt={'12px'}>
-                        <Typography variant="body2">CPU:</Typography>
+              {nodeApps?.map(
+                ({
+                  id,
+                  name,
+                  currentVersion,
+                  desiredVersion,
+                  nodeId,
+                  updatedAt,
+                  status,
+                  changeLog,
+                }: Software) => (
+                  <Grid2 size={3} key={id}>
+                    <Card variant="outlined">
+                      <CardContent>
+                        <Stack
+                          spacing={1}
+                          direction="row"
+                          sx={{ alignItems: 'center' }}
+                        >
+                          <CheckCircleIcon
+                            htmlColor={colors.green}
+                            fontSize="medium"
+                          />
+                          <Typography
+                            variant="h5"
+                            fontWeight={400}
+                            textTransform={'capitalize'}
+                          >
+                            {name}
+                          </Typography>
+                          {status == SoftwareStatusEnum.UpdateAvailable && (
+                            <Tooltip
+                              arrow
+                              placement="right"
+                              title={`Update Available: ${
+                                changeLog?.[changeLog?.length - 1] ?? ''
+                              }`}
+                            >
+                              <IconButton
+                                color="info"
+                                sx={{
+                                  '&:hover svg path': {
+                                    fill: 'inherit',
+                                  },
+                                }}
+                              >
+                                <InfoOutlinedIcon
+                                  sx={{
+                                    width: '16px',
+                                    height: '16px',
+                                  }}
+                                />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                        </Stack>
                         <Typography
                           variant="body2"
-                          sx={{ color: colors.darkBlue }}
+                          color="text.secondary"
+                          gutterBottom
                         >
-                          {parseFloat(cpu).toFixed(2)} %
+                          Version: {currentVersion}
                         </Typography>
-                      </Stack>
-                      <Stack direction="row" spacing={1 / 2}>
-                        <Typography variant="body2">MEMORY:</Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{ color: colors.darkBlue }}
-                        >
-                          {parseFloat(memory).toFixed(2)} KB
-                        </Typography>
-                      </Stack>
-                    </CardContent>
-                    <CardActions sx={{ ml: 1 }}>
-                      <Button>VIEW MORE</Button>
-                    </CardActions>
-                  </Card>
-                </Grid2>
-              ))}
+                        <Stack direction="row" spacing={1 / 2} mt={'12px'}>
+                          <Typography variant="body2">CPU:</Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{ color: colors.darkBlue }}
+                          >
+                            {12.2} %
+                          </Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={1 / 2}>
+                          <Typography variant="body2">MEMORY:</Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{ color: colors.darkBlue }}
+                          >
+                            {12.2} KB
+                          </Typography>
+                        </Stack>
+                      </CardContent>
+                      <CardActions sx={{ p: 2 }}>
+                        <HorizontalContainerJustify>
+                          <Button sx={{ p: 0 }}>View More</Button>
+                          {status === SoftwareStatusEnum.UpdateAvailable && (
+                            <Button
+                              sx={{ p: 0, color: colors.green }}
+                              onClick={() =>
+                                handleUpdateAvailable(
+                                  name,
+                                  desiredVersion,
+                                  nodeId,
+                                )
+                              }
+                            >
+                              Update Available
+                            </Button>
+                          )}
+                        </HorizontalContainerJustify>
+                      </CardActions>
+                    </Card>
+                  </Grid2>
+                ),
+              )}
             </Grid2>
           </Box>
         </Paper>
