@@ -306,12 +306,15 @@ static bool run_space(Config *config,
     return true;
 }
 
-static bool update_self(Supervisor *s, App *a, const char *tag) {
+static bool update_self(Supervisor *s,
+                        App *a,
+                        const char *tag,
+                        const char *hub) {
 
     char *oldTag;
     char *oldLastGood;
 
-    if (!s || !s->config || !a || !tag) {
+    if (!s || !a || !tag || !hub || !*hub) {
         return false;
     }
 
@@ -323,7 +326,8 @@ static bool update_self(Supervisor *s, App *a, const char *tag) {
         return false;
     }
 
-    usys_log_info("self-update: %s/%s -> %s", a->space, a->name, tag);
+    usys_log_info("self-update: %s/%s -> %s hub=%s",
+                  a->space, a->name, tag, hub);
 
     free(a->tag);
     a->tag = strdup(tag);
@@ -333,7 +337,7 @@ static bool update_self(Supervisor *s, App *a, const char *tag) {
         return false;
     }
 
-    if (!installer_ensure_installed(s->config, a)) {
+    if (!installer_ensure_installed(s->config, a, hub)) {
         usys_log_error("self-update: install failed %s/%s", a->space, a->name);
         free(a->tag);
         a->tag = oldTag;
@@ -374,13 +378,14 @@ static bool update_self(Supervisor *s, App *a, const char *tag) {
 static bool update_app(Supervisor *s,
                        const char *space,
                        const char *name,
-                       const char *tag) {
+                       const char *tag,
+                       const char *hub) {
 
     App *a;
     char *oldTag;
     char *oldLastGood;
 
-    if (!s || !space || !name || !tag) {
+    if (!s || !space || !name || !tag || !hub || !*hub) {
         return false;
     }
 
@@ -390,7 +395,7 @@ static bool update_app(Supervisor *s,
     }
 
     if (app_is_self(a)) {
-        return update_self(s, a, tag);
+        return update_self(s, a, tag, hub);
     }
 
     oldTag = strdup(a->tag ? a->tag : "");
@@ -401,7 +406,7 @@ static bool update_app(Supervisor *s,
         return false;
     }
 
-    usys_log_info("update: %s/%s -> %s", space, name, tag);
+    usys_log_info("update: %s/%s -> %s hub=%s", space, name, tag, hub);
 
     app_stop(s->config, a);
 
@@ -413,7 +418,7 @@ static bool update_app(Supervisor *s,
         return false;
     }
 
-    if (!installer_ensure_installed(s->config, a)) {
+    if (!installer_ensure_installed(s->config, a, hub)) {
         usys_log_error("update: install failed %s/%s", space, name);
         free(a->tag);
         a->tag = oldTag;
@@ -514,11 +519,12 @@ static void* supervisor_thread(void *arg) {
                 state_store_save(s->config, s->spaceList);
             }
         } else if (a->type == ACTION_UPDATE_APP) {
-            if (!update_app(s, a->space, a->name, a->tag)) {
+            if (!update_app(s, a->space, a->name, a->tag, a->hub)) {
                 usys_log_error("update: failed %s/%s -> %s",
                                a->space ? a->space : "(null)",
-                               a->name ? a->name : "(null)",
-                               a->tag ? a->tag : "(null)");
+                               a->name ? a->name :   "(null)",
+                               a->tag ? a->tag :     "(null)",
+                               a->hub ? a->hub :     "(null)");
             }
             if (s->ctx) {
                 s->ctx->updateInProgress = 0;
