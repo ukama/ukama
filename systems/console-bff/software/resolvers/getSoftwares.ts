@@ -6,13 +6,12 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
-
 import { Context } from "../context";
 import { GetSoftwaresInput, Softwares } from "./types";
 
 @Resolver()
 export class GetSoftwares {
-  @Query(() => String, { nullable: true })
+  @Query(() => Softwares)
   async getSoftwares(
     @Ctx() ctx: Context,
     @Arg("data") data: GetSoftwaresInput

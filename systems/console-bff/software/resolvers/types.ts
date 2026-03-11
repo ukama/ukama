@@ -21,7 +21,7 @@ export class App {
   notes: string;
 
   @Field(() => [String])
-  metricsKey: string[];
+  metricsKeys: string[];
 }
 
 @ObjectType()

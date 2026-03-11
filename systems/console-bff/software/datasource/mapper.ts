@@ -7,14 +7,10 @@
  */
 import { Apps, Softwares, StringResponse } from "../resolvers/types";
 
-export const mapApps = (apps: Apps): Apps => {
+
+export const mapApps = (res: Apps): Apps => {
   return {
-    apps: apps.apps.map(app => ({
-      name: app.name,
-      space: app.space,
-      notes: app.notes,
-      metricsKey: app.metricsKey,
-    })),
+    apps: res.apps,
   };
 };
 
