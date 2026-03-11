@@ -8,10 +8,7 @@
 import { IsOptional } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
 
-
-
 import { API_METHOD_TYPE } from "../enums";
-
 
 export type ApiMethodDataDto = {
   url: string;

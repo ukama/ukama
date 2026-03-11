@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
+
 import { Context } from "../context";
 import { GetSoftwaresInput, Softwares } from "./types";
 
