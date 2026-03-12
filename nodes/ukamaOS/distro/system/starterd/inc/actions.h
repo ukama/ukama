@@ -23,6 +23,7 @@ typedef struct Action {
     char *space;
     char *name;
     char *tag;
+    char *hub;
     struct Action *next;
 } Action;
 
@@ -35,4 +36,8 @@ void actions_init(ActionQueue *q);
 void actions_free(ActionQueue *q);
 bool actions_enqueue(ActionQueue *q, Action *a);
 Action* actions_dequeue(ActionQueue *q);
-Action* action_new(ActionType type, const char *space, const char *name, const char *tag);
+Action* action_new(ActionType type,
+                   const char *space,
+                   const char *name,
+                   const char *tag,
+                   const char *hub);

@@ -180,7 +180,7 @@ bool config_load(Config *config) {
     }
 
     config->wimcPathTemplate =
-        cfg_get_str("STARTERD_WIMC_PATH_TEMPLATE", "/v1/apps/%s/%s/pkg");
+        cfg_get_str("STARTERD_WIMC_PATH_TEMPLATE", "/v1/apps/%s/%s");
 
     config->commitTimeoutSec = cfg_get_int("STARTERD_COMMIT_TIMEOUT_SEC", 20);
     config->pingTimeoutSec   = cfg_get_int("STARTERD_PING_TIMEOUT_SEC",   3);
