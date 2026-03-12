@@ -75,6 +75,39 @@ static bool is_valid_identifier(const char *value) {
     return true;
 }
 
+static char* parse_hub_override(const URequest *request) {
+
+    json_t *json;
+    json_error_t jerr;
+    json_t *jhub;
+    const char *hub;
+    char *ret;
+
+    json = NULL;
+    jhub = NULL;
+    hub = NULL;
+    ret = NULL;
+
+    if (!request || !request->binary_body || request->binary_body_length == 0) {
+        return NULL;
+    }
+
+    json = ulfius_get_json_body_request(request, &jerr);
+    if (!json) {
+        return NULL;
+    }
+
+    jhub = json_object_get(json, "hub");
+    hub = json_is_string(jhub) ? json_string_value(jhub) : NULL;
+
+    if (hub && *hub && is_absolute_url(hub)) {
+        ret = strdup(hub);
+    }
+
+    json_decref(json);
+    return ret;
+}
+
 static void free_agent_request_update(AgentReq *req) {
 
     usys_free(req->update->voidStr);
@@ -226,6 +259,8 @@ int web_service_cb_post_app(const URequest *request,
     Config *config;
 
     char *name=NULL, *tag=NULL, *status=NULL;
+    char *hubOverride=NULL;
+    const char *hubURL=NULL;
 
     WimcReq   *wimcRequest  = NULL;
     ArtifactFormat *artifactFormat=NULL;
@@ -242,11 +277,9 @@ int web_service_cb_post_app(const URequest *request,
         return U_CALLBACK_CONTINUE;
     }
 
-    /*
-     * if app is downloading -> 409 (conflict)
-     * if app is 'available' but not found in pkg -> start downloading - 202
-     * if app is 'available and also found in pkg -> 304
-     */
+    hubOverride = parse_hub_override(request);
+    hubURL = (hubOverride && *hubOverride) ? hubOverride : config->hubURL;
+
     pthread_mutex_lock(&config->dbMutex);
     if (db_read_status(config->db, name, tag, &status)) {
         if (strcmp(status, "download") == 0) {
@@ -256,6 +289,7 @@ int web_service_cb_post_app(const URequest *request,
                                             HttpStatus_Conflict,
                                             HttpStatusStr(HttpStatus_Conflict));
             free(status);
+            free(hubOverride);
             pthread_mutex_unlock(&config->dbMutex);
             return U_CALLBACK_CONTINUE;
         } else if (strcmp(status, "available") == 0) {
@@ -265,6 +299,7 @@ int web_service_cb_post_app(const URequest *request,
                                                 HttpStatus_NotModified,
                                                 HttpStatusStr(HttpStatus_NotModified));
                 free(status);
+                free(hubOverride);
                 pthread_mutex_unlock(&config->dbMutex);
                 return U_CALLBACK_CONTINUE;
             }
@@ -273,27 +308,26 @@ int web_service_cb_post_app(const URequest *request,
     }
     pthread_mutex_unlock(&config->dbMutex);
 
-    /* Check with hub */
-    if (!get_artifacts_info_from_hub(&artifact, config, name, tag, &httpStatus)) {
+    if (!get_artifacts_info_from_hub(&artifact, config, hubURL, name, tag, &httpStatus)) {
         if (httpStatus == HttpStatus_InternalServerError) {
-            usys_log_error("Unable to connect with hub at: %s", config->hubURL);
+            usys_log_error("Unable to connect with hub at: %s", hubURL);
             ulfius_set_string_body_response(response,
-                                HttpStatus_InternalServerError,
-                                HttpStatusStr(HttpStatus_InternalServerError));
+                                            HttpStatus_InternalServerError,
+                                            HttpStatusStr(HttpStatus_InternalServerError));
         } else if (httpStatus == HttpStatus_NotFound) {
             usys_log_error("No matching capp %s:%s found by hub: %s",
-                           name, tag, config->hubURL);
+                           name, tag, hubURL);
             ulfius_set_string_body_response(response,
                                             HttpStatus_NotFound,
                                             HttpStatusStr(HttpStatus_NotFound));
         }
 
+        free(hubOverride);
         return U_CALLBACK_CONTINUE;
     } else {
         usys_log_debug("capp %s:%s is available at hub", name, tag);
     }
 
-    /* Find matching agent */
     for (int i=0; i < artifact.formatsCount; i++) {
         if (get_agent_port_by_method(artifact.formats[i]->type)) {
             artifactFormat = artifact.formats[i];
@@ -306,22 +340,21 @@ int web_service_cb_post_app(const URequest *request,
     if (artifactFormat == NULL) {
         usys_log_error("No matching agent found for app %s:%s", name, tag);
         free_artifact(&artifact);
+        free(hubOverride);
         ulfius_set_string_body_response(response,
                                         HttpStatus_InternalServerError,
                                         HttpStatusStr(HttpStatus_InternalServerError));
         return U_CALLBACK_CONTINUE;
     }
 
-    /* create URLs for agent to fetch the artifacts from */
     if (strcmp(artifactFormat->type, WIMC_METHOD_CHUNK_STR) == 0) {
-        create_hub_urls_for_agent(config->hubURL,
+        create_hub_urls_for_agent((char *)hubURL,
                                   artifactFormat->url,
                                   &indexURL[0],
                                   artifactFormat->extraInfo,
                                   &storeURL[0]);
     }
 
-    /* create request */
     create_wimc_request(&wimcRequest,
                         name, tag,
                         indexURL,
@@ -330,13 +363,13 @@ int web_service_cb_post_app(const URequest *request,
                         DEFAULT_INTERVAL);
     if (wimcRequest == NULL) {
         free_artifact(&artifact);
+        free(hubOverride);
         ulfius_set_string_body_response(response,
                                         HttpStatus_InternalServerError,
                                         HttpStatusStr(HttpStatus_InternalServerError));
         return U_CALLBACK_CONTINUE;
     }
 
-    /* Send the request to agent */
     if (communicate_with_agent(wimcRequest, artifactFormat->type, config)) {
         ulfius_set_string_body_response(response,
                                         HttpStatus_Accepted,
@@ -347,12 +380,13 @@ int web_service_cb_post_app(const URequest *request,
     } else {
         usys_log_error("Error sending capp fetch request to agent %s:%s", name, tag);
         ulfius_set_string_body_response(response,
-                               HttpStatus_ServiceUnavailable,
-                               HttpStatusStr(HttpStatus_ServiceUnavailable));
+                                        HttpStatus_ServiceUnavailable,
+                                        HttpStatusStr(HttpStatus_ServiceUnavailable));
     }
 
     cleanup_wimc_request(wimcRequest);
     free_artifact(&artifact);
+    free(hubOverride);
 
     return U_CALLBACK_CONTINUE;
 }

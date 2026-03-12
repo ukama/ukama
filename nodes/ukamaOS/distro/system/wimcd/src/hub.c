@@ -167,6 +167,7 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
  */
 bool get_artifacts_info_from_hub(Artifact *artifact,
                                  Config *config,
+                                 const char *hubURL,
                                  char *name, char *tag,
                                  int *status) {
 
@@ -180,10 +181,11 @@ bool get_artifacts_info_from_hub(Artifact *artifact,
 
     Artifact **artifacts=NULL;
 
-    if (name == NULL || tag == NULL) return USYS_FALSE;
+    if (name == NULL || tag == NULL || hubURL == NULL || *hubURL == '\0') {
+        return USYS_FALSE;
+    }
 
-    /* create HUB EP: http://localhost:18300/v1/hub/apps/:name */
-    sprintf(hubEP, "%s/%s/%s", config->hubURL, WIMC_EP_HUB_APPS, name);
+    sprintf(hubEP, "%s/%s/%s", hubURL, WIMC_EP_HUB_APPS, name);
 
     curl = curl_easy_init();
     if (curl == NULL) {
@@ -204,21 +206,19 @@ bool get_artifacts_info_from_hub(Artifact *artifact,
 
     if (res != CURLE_OK) {
         usys_log_error("Error sending request to hub for %s:%s: %s",
-                       curl_easy_strerror(res), name, tag);
+                       name, tag, curl_easy_strerror(res));
         *status = HttpStatus_InternalServerError;
         goto done;
     }
 
-    /* get status code. */
     count = process_response_from_hub(&artifacts, &response);
-    if (count == 0) { /* No matching capp found by 'name' */
-        usys_log_debug("No matching capp returned from the hub "
-                       "Requested: %s:%s", name, tag);
+    if (count == 0) {
+        usys_log_debug("No matching capp returned from the hub Requested: %s:%s",
+                       name, tag);
         *status = HttpStatus_NotFound;
         goto done;
     }
 
-    /* Find matching capp (with right tag/version) */
     for (i=0; i<count; i++) {
         if (strcmp(artifacts[i]->version, tag) == 0) {
             copy_artifact(artifacts[i], artifact);
