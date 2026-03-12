@@ -9,19 +9,15 @@
 package validation
 
 import (
-	"net/http"
+	"errors"
 
 	"github.com/coreos/go-semver/semver"
-	"github.com/ukama/ukama/systems/common/rest"
 )
 
 func ParseVersion(version string) (*semver.Version, error) {
 	v, err := semver.NewVersion(version)
 	if err != nil {
-		return nil, rest.HttpError{
-			HttpCode: http.StatusBadRequest,
-			Message:  "Invalid version format. Refer to https://semver.org/ for more information",
-		}
+		return nil, errors.New("Invalid version format. Refer to https://semver.org/ for more information")
 	}
 
 	return v, err

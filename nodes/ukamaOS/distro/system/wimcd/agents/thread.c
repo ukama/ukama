@@ -54,11 +54,8 @@ static void create_working_dir_file(WFetch *fetch) {
     FILE *fp;
     char folder[WIMC_MAX_PATH_LEN]={0};
     char idStr[36+1]; /* 36-bytes for UUID + trailing `\0` */
-    WContent *content;
 
     if (fetch==NULL || uuid_is_null(fetch->uuid)) return;
-
-    content = fetch->content;
 
     uuid_unparse(fetch->uuid, idStr);
     sprintf(folder, "%s/%s", DEFAULT_PATH, idStr);
@@ -198,33 +195,56 @@ done:
 static void *execute_agent(void *data) {
 
     WFetch *fetch;
-    TStats *stats=NULL;
     TParams *params;
     pid_t pid=0;
     int ret=0, i=0;
-    char buffer[1027] = {0};
+    char  buffer[1027] = {0};
     char *args[MAX_ARGS] = {0};
+    size_t used = 0;
 
     fetch   = (WFetch *)data;
     params  = (TParams *)malloc(sizeof(TParams));
     memFile = (char *)calloc(1, WIMC_MAX_PATH_LEN);
-    if (params==NULL || memFile==NULL) {
-        usys_log_error("Memory allocation error. size: %s", sizeof(TParams));
+    if (params == NULL || memFile == NULL) {
+        usys_log_error("Memory allocation error. size: %zu", sizeof(TParams));
+        free(params);
+        free(memFile);
         pthread_exit(&ret);
     }
 
-    /* create working directory anf file (for shared memory) */
+    /* create working directory and file (for shared memory) */
     create_working_dir_file(fetch);
 
     /* Step 1. configure runtime argument for agent. */
     configure_runtime_args(fetch, args);
     if (args[0] == NULL) {
         usys_log_error("Can not setup runtime argument for the Agent");
+        free(params);
+        free(memFile);
         pthread_exit(&ret);
     } else {
-        for (i=0; args[i] != NULL && i < MAX_ARGS; i++) {
-            sprintf(buffer, "%s %s", buffer, args[i]);
+        for (i = 0; i < MAX_ARGS && args[i] != NULL; i++) {
+            int n;
+
+            n = snprintf(buffer + used,
+                         sizeof(buffer) - used,
+                         "%s%s",
+                         (used > 0) ? " " : "",
+                         args[i]);
+            if (n < 0) {
+                usys_log_error("Failed to build agent runtime argument string");
+                break;
+            }
+
+            if ((size_t)n >= sizeof(buffer) - used) {
+                usys_log_warn("Agent runtime arguments truncated");
+                used = sizeof(buffer) - 1;
+                break;
+            }
+
+            used += (size_t)n;
         }
+
         usys_log_debug("Agent runtime arguments: %s", buffer);
     }
 
@@ -277,7 +297,6 @@ void process_capp_fetch_request(WFetch *fetch) {
     int ret, exitStatus;
     void *status;
     pthread_t tid;
-    pid_t pid, w;
 
     ret = pthread_create(&tid, NULL, execute_agent, (void *)fetch);
     if (ret) {

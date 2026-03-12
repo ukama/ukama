@@ -3,23 +3,42 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2023-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 
-#ifndef CONFIG_H_
-#define CONFIG_H_
+#pragma once
 
-#include "usys_types.h"
+#include <stdbool.h>
+#include <stdint.h>
 
-/* Service configuration */
 typedef struct {
 
-    int   servicePort;
-    int   nodedPort;
-    int   notifydPort;
-    int   wimcPort;
-    char  *nodeID;
-    char  *manifestFile;
+    char *manifestPath;
+    char *logPath;
+    char *readyFile;
+
+    char *appsRoot;
+    char *pkgsDir;
+    char *stateDir;
+
+    char *httpAddr;
+    int  httpPort;
+
+    char *wimcHost;
+    int  wimcPort;
+    char *wimcPathTemplate;
+
+    int commitTimeoutSec;
+    int pingTimeoutSec;
+
+    int termGraceSec;
+
+    int restartMaxBackoffSec;
+    int restartStableResetSec;
+
+    char *bootSpace;
+
 } Config;
 
-#endif /* CONFIG_H_ */
+bool config_load(Config *config);
+void config_free(Config *config);

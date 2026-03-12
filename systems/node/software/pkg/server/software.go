@@ -159,7 +159,10 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 	jsonBody := map[string]string{"host": nodeGwIP}
 	data, err := json.Marshal(jsonBody)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to get software: %v", err)
+	}
+	if len(list) == 0 {
+		return nil, status.Errorf(codes.NotFound, "software not found or already up to date")
 	}
 	
 	if err := s.publishMessage(target, "POST", path, nId.String(), data); err != nil {

@@ -3,454 +3,385 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2023-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 
-#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-#include "web_service.h"
-#include "http_status.h"
-#include "json_types.h"
-#include "config.h"
-
-#include "starter.h"
+#include <ulfius.h>
+#include <jansson.h>
 
 #include "usys_log.h"
-#include "usys_mem.h"
-
+#include "starterd.h"
 #include "version.h"
+#include "web_service.h"
+#include "web_client.h"
+#include "network.h"
+#include "jserdes.h"
+#include "supervisor.h"
+#include "http_status.h"
 
-extern SpaceList *gSpaceList;
-extern void json_free(JsonObj** json);
-extern bool json_serialize_add_capp_to_array(JsonObj **json,
-                                             char *space,
-                                             char *name,
-                                             char *tag,
-                                             char *status,
-                                             int  pid);
+static int ws_reply_text(struct _u_response *resp, int status, const char *text) {
 
-extern bool find_matching_space(SpaceList **spaceList, char *name, Space **space);
-
-static char *capp_status_str(int status) {
-
-    char *str;
-
-    switch(status) {
-    case CAPP_RUNTIME_PEND:
-        str = "Pending";
-        break;
-    case CAPP_RUNTIME_EXEC:
-        str = "Active";
-        break;
-    case CAPP_RUNTIME_DONE:
-        str = "Done";
-        break;
-    case CAPP_RUNTIME_FAILURE:
-        str = "Failure";
-        break;
-    case CAPP_RUNTIME_UNKNOWN:
-        str = "Unknown";
-        break;
-    default:
-        str = "Unknown";
-        break;
-    }
-
-    return str;
+    ulfius_set_string_body_response(resp, status, text ? text : "");
+    return U_CALLBACK_CONTINUE;
 }
 
-static Capp *find_matching_capp(char *spaceName, char *cappName, char *tag) {
+static int ws_ping_cb(const struct _u_request *req,
+                      struct _u_response *resp,
+                      void *userData) {
 
-    SpaceList *spacePtr = NULL;
-    CappList  *cappList  = NULL;
+    (void)req;
+    (void)userData;
 
-    for (spacePtr = gSpaceList;
-         spacePtr;
-         spacePtr = spacePtr->next) {
+    return ws_reply_text(resp,
+                         HttpStatus_OK,
+                         HttpStatusStr(HttpStatus_OK));
+}
 
-        if (strcmp(spacePtr->space->name, spaceName) != 0)
-            continue;
+static int ws_version_cb(const struct _u_request *req,
+                         struct _u_response *resp,
+                         void *userData) {
 
-        for (cappList=spacePtr->space->cappList;
-             cappList;
-             cappList=cappList->next) {
+    (void)req;
+    (void)userData;
 
-            if (strcmp(cappList->capp->name, cappName) == 0) {
+    return ws_reply_text(resp,
+                         HttpStatus_OK,
+                         VERSION);
+}
 
-                if (tag != NULL) {
-                    if (strcmp(cappList->capp->tag, tag) == 0)
-                        return cappList->capp;
-                    else
-                        continue;
-                } else {
-                    return cappList->capp;
-                }
-            }
+static int ws_status_cb(const struct _u_request *req,
+                        struct _u_response *resp,
+                        void *userData) {
+
+    StarterContext *ctx;
+    json_t *j;
+    json_t *meta;
+    char *body;
+
+    (void)req;
+
+    ctx = (StarterContext *)userData;
+    if (!ctx || !ctx->spaceList) {
+        return ws_reply_text(resp,
+                             HttpStatus_InternalServerError,
+                             HttpStatusStr(HttpStatus_InternalServerError));
+    }
+
+    j = jserdes_status_json(ctx->spaceList);
+    if (!j) {
+        return ws_reply_text(resp,
+                             HttpStatus_InternalServerError,
+                             HttpStatusStr(HttpStatus_InternalServerError));
+    }
+
+    meta = json_object();
+    if (meta) {
+        json_object_set_new(meta, "updateInProgress",
+                            json_boolean(ctx->updateInProgress ? 1 : 0));
+        json_object_set_new(meta, "switchRequested",
+                            json_boolean(ctx->switchRequested ? 1 : 0));
+        json_object_set_new(meta, "exitCode",
+                            json_integer(ctx->exitCode));
+        json_object_set_new(j, "starterd", meta);
+    }
+
+    body = json_dumps(j, JSON_INDENT(2) | JSON_SORT_KEYS);
+    json_decref(j);
+
+    ulfius_add_header_to_response(resp, "Content-Type", "application/json");
+    ulfius_set_string_body_response(resp,
+                                    HttpStatus_OK,
+                                    body ? body : "{}");
+    free(body);
+
+    return U_CALLBACK_CONTINUE;
+}
+
+static bool ws_parse_update(json_t *j,
+                            char **spaceOut,
+                            char **nameOut,
+                            char **tagOut) {
+
+    json_t *v;
+    const char *space;
+    const char *name;
+    const char *tag;
+
+    if (spaceOut) *spaceOut = NULL;
+    if (nameOut)  *nameOut  = NULL;
+    if (tagOut)   *tagOut   = NULL;
+
+    if (!j || !json_is_object(j)) {
+        return false;
+    }
+
+    v = json_object_get(j, "space");
+    space = json_is_string(v) ? json_string_value(v) : NULL;
+
+    v = json_object_get(j, "name");
+    name = json_is_string(v) ? json_string_value(v) : NULL;
+
+    v = json_object_get(j, "tag");
+    tag = json_is_string(v) ? json_string_value(v) : NULL;
+
+    if (!space || !name || !tag) {
+        return false;
+    }
+
+    if (spaceOut) *spaceOut = strdup(space);
+    if (nameOut)  *nameOut  = strdup(name);
+    if (tagOut)   *tagOut   = strdup(tag);
+
+    return true;
+}
+
+static int ws_update_cb(const struct _u_request *req,
+                        struct _u_response *resp,
+                        void *userData) {
+
+    StarterContext *ctx;
+    json_error_t err;
+    json_t *j;
+    char *space;
+    char *name;
+    char *tag;
+    Action *a;
+
+    ctx = (StarterContext *)userData;
+    if (!ctx || !ctx->queue || !ctx->supervisor) {
+        return ws_reply_text(resp,
+                             HttpStatus_InternalServerError,
+                             HttpStatusStr(HttpStatus_InternalServerError));
+    }
+
+    if (ctx->switchRequested || ctx->terminateRequested) {
+        return ws_reply_text(resp,
+                             HttpStatus_Conflict,
+                             HttpStatusStr(HttpStatus_Conflict));
+    }
+
+    if (ctx->updateInProgress) {
+        return ws_reply_text(resp,
+                             HttpStatus_Locked,
+                             HttpStatusStr(HttpStatus_Locked));
+    }
+
+    j = json_loads(req->binary_body ? (const char *)req->binary_body : "{}",
+                   0,
+                   &err);
+    if (!j) {
+        return ws_reply_text(resp,
+                             HttpStatus_BadRequest,
+                             HttpStatusStr(HttpStatus_BadRequest));
+    }
+
+    space = NULL;
+    name  = NULL;
+    tag   = NULL;
+
+    if (!ws_parse_update(j, &space, &name, &tag)) {
+        json_decref(j);
+        free(space);
+        free(name);
+        free(tag);
+        return ws_reply_text(resp,
+                             HttpStatus_BadRequest,
+                             HttpStatusStr(HttpStatus_BadRequest));
+    }
+
+    ctx->updateInProgress = 1;
+
+    a = action_new(ACTION_UPDATE_APP, space, name, tag);
+    free(space);
+    free(name);
+    free(tag);
+    json_decref(j);
+
+    if (!a || !actions_enqueue(ctx->queue, a)) {
+        if (a) {
+            free(a);
         }
+        ctx->updateInProgress = 0;
+        return ws_reply_text(resp,
+                             HttpStatus_InternalServerError,
+                             HttpStatusStr(HttpStatus_InternalServerError));
     }
 
-    return NULL;
+    supervisor_signal((Supervisor *)ctx->supervisor);
+
+    return ws_reply_text(resp,
+                         HttpStatus_Accepted,
+                         HttpStatusStr(HttpStatus_Accepted));
 }
 
-static int add_new_capp_to_space(char *spaceName,
-                                 char *cappName,
-                                 char *cappTag) {
+static int ws_terminate_cb(const struct _u_request *req,
+                           struct _u_response *resp,
+                           void *userData) {
 
-    SpaceList *currentSpaceList = NULL, *newSpaceList = NULL;
-    CappList  *newCappList = NULL;
-    bool      addSpace = USYS_TRUE;
+    StarterContext *ctx;
+    json_error_t err;
+    json_t *j;
+    json_t *v;
+    const char *space;
+    const char *name;
+    Action *a;
 
-    for (currentSpaceList = gSpaceList;
-         currentSpaceList;
-         currentSpaceList = currentSpaceList->next) {
+    ctx = (StarterContext *)userData;
+    if (!ctx || !ctx->queue || !ctx->supervisor) {
+        return ws_reply_text(resp,
+                             HttpStatus_InternalServerError,
+                             HttpStatusStr(HttpStatus_InternalServerError));
+    }
 
-        if (strcmp(currentSpaceList->space->name, spaceName) == 0) {
-            addSpace = USYS_FALSE;
+    if (ctx->switchRequested) {
+        return ws_reply_text(resp,
+                             HttpStatus_Conflict,
+                             HttpStatusStr(HttpStatus_Conflict));
+    }
+
+    j = json_loads(req->binary_body ? (const char *)req->binary_body : "{}",
+                   0,
+                   &err);
+    if (!j) {
+        return ws_reply_text(resp,
+                             HttpStatus_BadRequest,
+                             HttpStatusStr(HttpStatus_BadRequest));
+    }
+
+    v = json_object_get(j, "space");
+    space = json_is_string(v) ? json_string_value(v) : NULL;
+
+    v = json_object_get(j, "name");
+    name = json_is_string(v) ? json_string_value(v) : NULL;
+
+    if (!space || !name) {
+        json_decref(j);
+        return ws_reply_text(resp,
+                             HttpStatus_BadRequest,
+                             HttpStatusStr(HttpStatus_BadRequest));
+    }
+
+    a = action_new(ACTION_TERMINATE_APP, space, name, NULL);
+    json_decref(j);
+
+    if (!a || !actions_enqueue(ctx->queue, a)) {
+        if (a) {
+            free(a);
         }
+        return ws_reply_text(resp,
+                             HttpStatus_InternalServerError,
+                             HttpStatusStr(HttpStatus_InternalServerError));
     }
 
-    if (addSpace) {
-        /* add new space */
-        newSpaceList        = (SpaceList *) calloc(1, sizeof(SpaceList));
-        newSpaceList->space = (Space *) calloc(1, sizeof(Space));
+    supervisor_signal((Supervisor *)ctx->supervisor);
 
-        newSpaceList->space->name     = strdup(spaceName);
-        newSpaceList->space->rootfs   = NULL;
-        newSpaceList->space->cappList = NULL;
-        newSpaceList->next            = NULL;
-
-        /* Forward to last spot on the list*/
-        for (currentSpaceList = gSpaceList;
-             currentSpaceList->next;
-             currentSpaceList = currentSpaceList->next) ;
-
-        currentSpaceList->next = newSpaceList;
-    }
-
-    /* Now find the matching space and add to it */
-    for (currentSpaceList = gSpaceList;
-         currentSpaceList;
-         currentSpaceList = currentSpaceList->next) {
-
-        if (strcmp(currentSpaceList->space->name, spaceName) == 0) {
-
-            newCappList = (CappList *)calloc(1, sizeof(CappList));
-
-            newCappList->capp          = (Capp *)calloc(1, sizeof(Capp));
-            newCappList->capp->name    = strdup(cappName);
-            newCappList->capp->tag     = strdup(cappTag);
-            newCappList->capp->rootfs  = NULL;
-            newCappList->capp->space   = strdup(spaceName);
-            newCappList->capp->restart = USYS_FALSE;
-            newCappList->capp->fetch   = CAPP_PKG_NOT_FOUND;
-
-            newCappList->next = currentSpaceList->space->cappList;
-            currentSpaceList->space->cappList = newCappList;
-
-            return USYS_TRUE;
-        }
-    }
-
-    return USYS_FALSE;
+    return ws_reply_text(resp,
+                         HttpStatus_Accepted,
+                         HttpStatusStr(HttpStatus_Accepted));
 }
 
-int web_service_cb_ping(const URequest *request,
-                        UResponse *response,
-                        void *epConfig) {
+static int ws_cb_not_allowed(const struct _u_request *request,
+                             struct _u_response *response,
+                             void *user_data) {
 
-    ulfius_set_string_body_response(response, HttpStatus_OK,
-                                    HttpStatusStr(HttpStatus_OK));
+    const char *allowedMethod = (const char *)user_data;
 
-    return U_CALLBACK_CONTINUE;
-}
+    (void)request;
 
-int web_service_cb_version(const URequest *request,
-                           UResponse *response,
-                           void *data) {
-
-    ulfius_set_string_body_response(response, HttpStatus_OK, VERSION);
-
-    return U_CALLBACK_CONTINUE;
-}
-
-int web_service_cb_default(const URequest *request,
-                           UResponse *response,
-                           void *epConfig) {
-    
-    ulfius_set_string_body_response(response, HttpStatus_NotFound,
-                                    HttpStatusStr(HttpStatus_NotFound));
-
-    return U_CALLBACK_CONTINUE;
-}
-
-int web_service_cb_get_status(const URequest *request,
-                              UResponse *response,
-                              void *epConfig) {
-
-    const char   *cappName=NULL, *spaceName=NULL;
-    Capp *capp =NULL;
-    int  status=-1;
-
-    cappName  = u_map_get(request->map_url, "name");
-    spaceName = u_map_get(request->map_url, "space");
-
-    capp = find_matching_capp(spaceName, cappName, NULL);
-    if (capp == NULL) {
-        ulfius_set_string_body_response(response, HttpStatus_NotFound,
-                                        HttpStatusStr(HttpStatus_NotFound));
-        return U_CALLBACK_CONTINUE;
-    }
-
-    if (capp->runtime) {
-            status = capp->runtime->status;
-    } else {
-            status = CAPP_RUNTIME_PEND;
-    }
-
-    if (status == -1) {
-        ulfius_set_string_body_response(response, HttpStatus_NotFound,
-                                        HttpStatusStr(HttpStatus_NotFound));
-    } else {
-        ulfius_set_string_body_response(response, HttpStatus_OK,
-                                        capp_status_str(status));
-    }
-
-    return U_CALLBACK_CONTINUE;
-}
-
-int web_service_cb_get_all_capps_status(const URequest *request,
-                                        UResponse *response,
-                                        void *epConfig) {
-
-    SpaceList *spacePtr = NULL;
-    CappList  *cappList = NULL;
-    JsonObj   *json     = NULL;
-    char      *status   = NULL;
-    char      *jStr     = NULL;
-    int       pid       = 0;
-
-    json = json_object();
-    json_object_set_new(json, JTAG_CAPPS, json_array());
-    if (json == NULL) {
-        ulfius_set_string_body_response(response,
-                               HttpStatus_InternalServerError,
-                               HttpStatusStr(HttpStatus_InternalServerError));
-        return U_CALLBACK_CONTINUE;
-    }
-
-    for (spacePtr = gSpaceList;
-         spacePtr;
-         spacePtr = spacePtr->next) {
-
-        /* for each space find all the capps */
-        for (cappList=spacePtr->space->cappList;
-             cappList;
-             cappList=cappList->next) {
-
-            if (cappList->capp->runtime) {
-                status = capp_status_str(cappList->capp->runtime->status);
-                pid    = cappList->capp->runtime->pid;
-            } else {
-                status = capp_status_str(CAPP_RUNTIME_PEND);
-                pid    = 0;
-            }
-
-            json_serialize_add_capp_to_array(&json,
-                                             spacePtr->space->name,
-                                             cappList->capp->name,
-                                             cappList->capp->tag,
-                                             status, pid);
-        }
-    }
-
-    jStr = json_dumps(json, 0);
-    if (jStr == NULL) {
-        ulfius_set_string_body_response(response, HttpStatus_NotFound,
-                                        HttpStatusStr(HttpStatus_NotFound));
-    } else {
-        ulfius_set_json_body_response(response, HttpStatus_OK, json);
-    }
-
-    usys_free(jStr);
-    json_free(&json);
-
-    return U_CALLBACK_CONTINUE;
-}
-
-int web_service_cb_post_update(const URequest *request,
-                               UResponse *response,
-                               void *epConfig) {
-
-    const char *cappName = NULL, *tag = NULL;
-    const char *spaceName = NULL;
-    Capp *capp = NULL;
-    int  status;
-
-    spaceName = u_map_get(request->map_url, "space");
-    cappName  = u_map_get(request->map_url, "name");
-    tag       = u_map_get(request->map_url, "tag");
-
-    if (strcmp(spaceName, SPACE_BOOT) == 0 ||
-        strcmp(spaceName, SPACE_REBOOT) == 0) {
-
-        ulfius_set_string_body_response(response,
-                                        HttpStatus_Forbidden,
-                                        HttpStatusStr(HttpStatus_Forbidden));
-        return U_CALLBACK_CONTINUE;
-    }
-
-    capp = find_matching_capp(spaceName, cappName, tag);
-    if (capp == NULL) {
-        ulfius_set_string_body_response(response, HttpStatus_NotFound,
-                                        HttpStatusStr(HttpStatus_NotFound));
-        return U_CALLBACK_CONTINUE;
-    }
-
-    /* Terminate and set fetch flag */
-    /* Only if the capp is running */
-    if (capp->runtime != NULL) {
-        if (capp->runtime->status == CAPP_RUNTIME_EXEC) {
-            status = killpg(capp->runtime->pid, SIGTERM);
-            if ( status == 0 ){
-                usys_log_debug("Capp update - %s:%s", cappName, tag);
-                usys_log_debug("SIGTERM send to capp: %s:%s", cappName, tag);
-            } else {
-                usys_log_debug("Unable to kill capp: %s:%s",
-                               capp->name, capp->tag);
-                ulfius_set_string_body_response(response,
-                                HttpStatus_InternalServerError,
-                                HttpStatusStr(HttpStatus_InternalServerError));
-                return U_CALLBACK_CONTINUE;
-            }
-        }
-    }
-
-    /* set the flag */
-    capp->fetch = CAPP_PKG_NOT_FOUND;
-
-    ulfius_set_empty_body_response(response, HttpStatus_Accepted);
-
-    return U_CALLBACK_CONTINUE;
-}
-
-int web_service_cb_post_terminate(const URequest *request,
-                                  UResponse *response,
-                                  void *epConfig) {
-
-    char   *cappName=NULL, *spaceName=NULL;
-    Capp   *capp = NULL;
-    int    status;
-
-    cappName  = u_map_get(request->map_url, "name");
-    spaceName = u_map_get(request->map_url, "space");
-
-    if (strcmp(spaceName, SPACE_BOOT) == 0 ||
-        strcmp(spaceName, SPACE_REBOOT) == 0) {
-
-        ulfius_set_string_body_response(response,
-                                        HttpStatus_Forbidden,
-                                        HttpStatusStr(HttpStatus_Forbidden));
-        return U_CALLBACK_CONTINUE;
-    }
-
-    capp = find_matching_capp(spaceName, cappName, NULL);
-    if (capp == NULL) {
-        ulfius_set_string_body_response(response, HttpStatus_NotFound,
-                                        HttpStatusStr(HttpStatus_NotFound));
-        return U_CALLBACK_CONTINUE;
-    }
-
-    if (capp->runtime == NULL) {
-        /* capp is not yet gone through the runtime setup */
-        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
-                                        HttpStatusStr(HttpStatus_BadRequest));
-        return U_CALLBACK_CONTINUE;
-    } else {
-        /* already done or not executing */
-        if (capp->runtime->status == CAPP_RUNTIME_PEND ||
-            capp->runtime->status == CAPP_RUNTIME_FAILURE ||
-            capp->runtime->status == CAPP_RUNTIME_DONE) {
-            ulfius_set_string_body_response(response, HttpStatus_BadRequest,
-                                        HttpStatusStr(HttpStatus_BadRequest));
-            return U_CALLBACK_CONTINUE;
-        }
-    }
-
-    /* Only if the capp is running */
-    status = killpg(capp->runtime->pid, SIGTERM);
-    if (status == 0){
-        usys_log_debug("SIGTERM send to capp: %s:%s", capp->name, capp->tag);
-        ulfius_set_string_body_response(response, HttpStatus_Accepted,
-                                        HttpStatusStr(HttpStatus_Accepted));
-    } else {
-        usys_log_debug("Unable to kill capp: %s:%s", capp->name, capp->tag);
-        ulfius_set_string_body_response(response,
-                              HttpStatus_InternalServerError,
-                              HttpStatusStr(HttpStatus_InternalServerError));
-    }
-
-    return U_CALLBACK_CONTINUE;
-}
-
-int web_service_cb_post_exec(const URequest *request,
-                             UResponse *response,
-                             void *epConfig) {
-
-    char *cappName = NULL, *tag = NULL;
-    char *spaceName = NULL;
-    Capp *capp = NULL;
-
-    spaceName = u_map_get(request->map_url, "space");
-    cappName  = u_map_get(request->map_url, "name");
-    tag       = u_map_get(request->map_url, "tag");
-
-    if (strcmp(spaceName, SPACE_BOOT) == 0 ||
-        strcmp(spaceName, SPACE_REBOOT) == 0) {
-
-        ulfius_set_string_body_response(response,
-                                        HttpStatus_Forbidden,
-                                        HttpStatusStr(HttpStatus_Forbidden));
-        return U_CALLBACK_CONTINUE;
-    }
-
-    capp = find_matching_capp(spaceName, cappName, tag);
-    if (capp != NULL) {
-        if (capp->runtime) {
-            if (capp->runtime->status == CAPP_RUNTIME_EXEC) {
-                usys_log_debug("Can't exec already running capp %s:%s:%s",
-                               spaceName, cappName, tag);
-                ulfius_set_string_body_response(response,
-                                         HttpStatus_Forbidden,
-                                         HttpStatusStr(HttpStatus_Forbidden));
-                return U_CALLBACK_CONTINUE;
-            }
-        }
-
-        /* Set the fetch flag so it can automatically start in next cycle */
-        capp->fetch = CAPP_PKG_NOT_FOUND;
-
-        ulfius_set_empty_body_response(response, HttpStatus_Accepted);
-        return U_CALLBACK_CONTINUE;
-    }
-
-    /* Add new capp */
-    if (add_new_capp_to_space(spaceName, cappName, tag)) {
-        ulfius_set_empty_body_response(response, HttpStatus_Accepted);
-    } else {
-        ulfius_set_string_body_response(response,
-                               HttpStatus_InternalServerError,
-                               HttpStatusStr(HttpStatus_InternalServerError));
-    }
-
-    return U_CALLBACK_CONTINUE;
-}
-
-int web_service_cb_not_allowed(const URequest *request,
-                               UResponse *response,
-                               void *user_data) {
-
+    u_map_put(response->map_header, "Allow", allowedMethod);
     ulfius_set_string_body_response(response,
                                     HttpStatus_MethodNotAllowed,
                                     HttpStatusStr(HttpStatus_MethodNotAllowed));
     return U_CALLBACK_CONTINUE;
+}
+
+static void setup_unsupported_methods(UInst *instance,
+                                      const char *allowedMethod,
+                                      const char *prefix,
+                                      const char *resource) {
+
+    if (strcmp(allowedMethod, "GET") != 0) {
+        ulfius_add_endpoint_by_val(instance, "GET",
+                                   prefix, resource, 0,
+                                   &ws_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "POST") != 0) {
+        ulfius_add_endpoint_by_val(instance, "POST",
+                                   prefix, resource, 0,
+                                   &ws_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "PUT") != 0) {
+        ulfius_add_endpoint_by_val(instance, "PUT",
+                                   prefix, resource, 0,
+                                   &ws_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+
+    if (strcmp(allowedMethod, "DELETE") != 0) {
+        ulfius_add_endpoint_by_val(instance, "DELETE",
+                                   prefix, resource, 0,
+                                   &ws_cb_not_allowed,
+                                   (void *)allowedMethod);
+    }
+}
+
+bool web_service_start(StarterContext *ctx) {
+
+    if (!ctx || !ctx->uInstance) {
+        return false;
+    }
+
+    ulfius_add_endpoint_by_val(ctx->uInstance, "GET",
+                               "/v1", "/ping", 0,
+                               &ws_ping_cb, ctx);
+    setup_unsupported_methods(ctx->uInstance, "GET",
+                              "/v1", "/ping");
+
+    ulfius_add_endpoint_by_val(ctx->uInstance, "GET",
+                               "/v1", "/version", 0,
+                               &ws_version_cb, ctx);
+    setup_unsupported_methods(ctx->uInstance, "GET",
+                              "/v1", "/version");
+
+    ulfius_add_endpoint_by_val(ctx->uInstance, "GET",
+                               "/v1", "/status", 0,
+                               &ws_status_cb, ctx);
+    setup_unsupported_methods(ctx->uInstance, "GET",
+                              "/v1", "/status");
+
+    ulfius_add_endpoint_by_val(ctx->uInstance, "POST",
+                               "/v1", "/update", 0,
+                               &ws_update_cb, ctx);
+    setup_unsupported_methods(ctx->uInstance, "POST",
+                              "/v1", "/update");
+
+    ulfius_add_endpoint_by_val(ctx->uInstance, "POST",
+                               "/v1", "/terminate", 0,
+                               &ws_terminate_cb, ctx);
+    setup_unsupported_methods(ctx->uInstance, "POST",
+                              "/v1", "/terminate");
+
+    if (ulfius_start_framework(ctx->uInstance) != U_OK) {
+        usys_log_error("web: start failed");
+        return false;
+    }
+
+    return true;
+}
+
+void web_service_stop(StarterContext *ctx) {
+
+    if (!ctx || !ctx->uInstance) {
+        return;
+    }
+
+    ulfius_stop_framework(ctx->uInstance);
 }

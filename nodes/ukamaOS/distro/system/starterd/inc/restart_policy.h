@@ -9,9 +9,10 @@
 #pragma once
 
 #include <stdbool.h>
+#include <time.h>
 #include "config.h"
+#include "app.h"
 
-typedef struct Space Space;
-
-bool manifest_load(Config *config, Space **spaceListOut);
-void manifest_free(Space *spaceList);
+int restart_policy_next_delay(Config *config, App *app, time_t now);
+void restart_policy_on_start(Config *config, App *app, time_t now);
+void restart_policy_on_exit(Config *config, App *app, time_t now);

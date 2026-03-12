@@ -6,20 +6,25 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
+#include "app.h"
 #include "space.h"
 
 #include <string.h>
 
-Space* space_find(Space *spaceList, const char *name) {
+App* app_find(Space *spaceList, const char *space, const char *name) {
 
     Space *s;
+    App *a;
 
-    if (!name) return NULL;
+    if (!space || !name) return NULL;
 
-    s = spaceList;
-    while (s) {
-        if (s->name && strcmp(s->name, name) == 0) return s;
-        s = s->next;
+    s = space_find(spaceList, space);
+    if (!s) return NULL;
+
+    a = s->appList;
+    while (a) {
+        if (a->name && strcmp(a->name, name) == 0) return a;
+        a = a->next;
     }
 
     return NULL;

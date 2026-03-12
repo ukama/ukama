@@ -9,10 +9,14 @@
 #ifndef WIMC_TASKS_H
 #define WIMC_TASKS_H
 
+#include <pthread.h>
+#include "wimc.h"
+
 void clear_tasks(WTasks **tasks);
 void add_to_tasks(WTasks **tasks, WimcReq *req);
 void delete_from_tasks(WTasks **tasks, WTasks *target);
 char *process_task_request(WTasks *task);
+WTasks *find_task_by_uuid(WTasks *tasks, uuid_t uuid);
 char *process_cli_response(WRespType type, char *path, char *idStr,
                            WTasks *task, char *errStr); 
 

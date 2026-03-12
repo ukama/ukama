@@ -7,6 +7,9 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
+
+#include "usys_log.h"
 
 #include "wimc.h"
 #include "agent.h"
@@ -28,12 +31,16 @@ void clear_tasks(WTasks **tasks) {
       free(content->name);
       free(content->tag);
       free(content->method);
+      free(content->indexURL);
+      free(content->storeURL);
     }
 
     free(curr->content);
-    if (curr->update->voidStr)
-      free(curr->update->voidStr);
-    free(curr->update);
+    if (curr->update) {
+      if (curr->update->voidStr)
+        free(curr->update->voidStr);
+      free(curr->update);
+    }
     if (curr->localPath)
       free(curr->localPath);
 
@@ -52,13 +59,15 @@ void clear_tasks(WTasks **tasks) {
 static void copy_contents(WContent *src, WContent *dest) {
 
   /* sanity check. */
-  if (!src && !dest) {
+  if (!src || !dest) {
     return;
   }
 
   dest->name        = strndup(src->name, strlen(src->name));
   dest->tag         = strndup(src->tag, strlen(src->tag));
   dest->method      = strndup(src->method, strlen(src->method));
+  dest->indexURL    = src->indexURL ? strndup(src->indexURL, strlen(src->indexURL)) : NULL;
+  dest->storeURL    = src->storeURL ? strndup(src->storeURL, strlen(src->storeURL)) : NULL;
 }
 
 /*
@@ -72,14 +81,14 @@ static void add_task_entry(WTasks **task, WimcReq *req) {
   Update *update;
 
   /* sanity check. */
-  if (!req && !req->fetch && !task)
+  if (!req || !req->fetch || !task)
     return;
 
   ptr = *task;
 
   ptr->content = (WContent *)calloc(1, sizeof(WContent));
   ptr->update  = (Update *)calloc(1, sizeof(Update));
-  if (!ptr->content && !ptr->update) {
+  if (!ptr->content || !ptr->update) {
     return;
   }
 
@@ -145,10 +154,15 @@ static void free_task_element(WTasks *task) {
     free(content->name);
     free(content->tag);
     free(content->method);
+    free(content->indexURL);
+    free(content->storeURL);
   }
 
   free(task->content);
-  free(task->update);
+  if (task->update) {
+    if (task->update->voidStr) free(task->update->voidStr);
+    free(task->update);
+  }
   if (task->localPath)
     free(task->localPath);
 
@@ -210,7 +224,7 @@ char *process_task_request(WTasks *task) {
 
     retStr = json_dumps(json, 0);
     if (retStr) {
-      log_debug("Task json-str: %s", retStr);
+      usys_log_debug("Task json-str: %s", retStr);
     }
   }
 
@@ -266,9 +280,23 @@ char *process_cli_response(WRespType type, char *path, char *idStr,
 
   if (ret && json) {
     retStr = json_dumps(json, 0);
-    log_debug("Sending JSON response: %s", retStr);
+    usys_log_debug("Sending JSON response: %s", retStr);
     json_decref(json);
   }
 
   return retStr;
+}
+
+WTasks *find_task_by_uuid(WTasks *tasks, uuid_t uuid) {
+
+  WTasks *curr = tasks;
+
+  while (curr != NULL) {
+    if (uuid_compare(curr->uuid, uuid) == 0) {
+      return curr;
+    }
+    curr = curr->next;
+  }
+
+  return NULL;
 }

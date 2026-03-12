@@ -10,8 +10,7 @@
 
 #include <stdbool.h>
 #include "config.h"
+#include "space.h"
 
-typedef struct Space Space;
-
-bool manifest_load(Config *config, Space **spaceListOut);
-void manifest_free(Space *spaceList);
+bool state_store_load(Config *config, Space *spaceList);
+bool state_store_save(Config *config, Space *spaceList);

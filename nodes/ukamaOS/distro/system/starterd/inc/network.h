@@ -9,9 +9,7 @@
 #pragma once
 
 #include <stdbool.h>
-#include "config.h"
+#include "web_service.h"
 
-typedef struct Space Space;
-
-bool manifest_load(Config *config, Space **spaceListOut);
-void manifest_free(Space *spaceList);
+bool network_init(StarterContext *ctx);
+void network_shutdown(StarterContext *ctx);

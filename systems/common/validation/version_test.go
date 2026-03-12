@@ -9,12 +9,12 @@
 package validation
 
 import (
-	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukama/systems/common/rest"
 )
+
+const invalidVersionErrMsg = "Invalid version format. Refer to https://semver.org/ for more information"
 
 func TestParseVersion(t *testing.T) {
 	tests := []struct {
@@ -47,10 +47,7 @@ func TestParseVersion(t *testing.T) {
 			version: "",
 			wantErr: true,
 			checkErr: func(t *testing.T, err error) {
-				var httpErr rest.HttpError
-				assert.ErrorAs(t, err, &httpErr)
-				assert.Equal(t, http.StatusBadRequest, httpErr.HttpCode)
-				assert.Equal(t, "Invalid version format. Refer to https://semver.org/ for more information", httpErr.Message)
+				assert.Equal(t, invalidVersionErrMsg, err.Error())
 			},
 		},
 		{
@@ -58,9 +55,7 @@ func TestParseVersion(t *testing.T) {
 			version: "1.0",
 			wantErr: true,
 			checkErr: func(t *testing.T, err error) {
-				var httpErr rest.HttpError
-				assert.ErrorAs(t, err, &httpErr)
-				assert.Equal(t, http.StatusBadRequest, httpErr.HttpCode)
+				assert.Equal(t, invalidVersionErrMsg, err.Error())
 			},
 		},
 		{
@@ -68,9 +63,7 @@ func TestParseVersion(t *testing.T) {
 			version: "invalid",
 			wantErr: true,
 			checkErr: func(t *testing.T, err error) {
-				var httpErr rest.HttpError
-				assert.ErrorAs(t, err, &httpErr)
-				assert.Equal(t, http.StatusBadRequest, httpErr.HttpCode)
+				assert.Equal(t, invalidVersionErrMsg, err.Error())
 			},
 		},
 		{
@@ -78,9 +71,7 @@ func TestParseVersion(t *testing.T) {
 			version: "1.0.0 ",
 			wantErr: true,
 			checkErr: func(t *testing.T, err error) {
-				var httpErr rest.HttpError
-				assert.ErrorAs(t, err, &httpErr)
-				assert.Equal(t, http.StatusBadRequest, httpErr.HttpCode)
+				assert.Equal(t, invalidVersionErrMsg, err.Error())
 			},
 		},
 	}
@@ -160,9 +151,7 @@ func TestCompareVersions(t *testing.T) {
 			version2: "1.0.0",
 			wantErr:  true,
 			checkErr: func(t *testing.T, err error) {
-				var httpErr rest.HttpError
-				assert.ErrorAs(t, err, &httpErr)
-				assert.Equal(t, http.StatusBadRequest, httpErr.HttpCode)
+				assert.Equal(t, invalidVersionErrMsg, err.Error())
 			},
 		},
 		{
@@ -171,9 +160,7 @@ func TestCompareVersions(t *testing.T) {
 			version2: "invalid",
 			wantErr:  true,
 			checkErr: func(t *testing.T, err error) {
-				var httpErr rest.HttpError
-				assert.ErrorAs(t, err, &httpErr)
-				assert.Equal(t, http.StatusBadRequest, httpErr.HttpCode)
+				assert.Equal(t, invalidVersionErrMsg, err.Error())
 			},
 		},
 		{
@@ -182,9 +169,7 @@ func TestCompareVersions(t *testing.T) {
 			version2: "1.0.0",
 			wantErr:  true,
 			checkErr: func(t *testing.T, err error) {
-				var httpErr rest.HttpError
-				assert.ErrorAs(t, err, &httpErr)
-				assert.Equal(t, http.StatusBadRequest, httpErr.HttpCode)
+				assert.Equal(t, invalidVersionErrMsg, err.Error())
 			},
 		},
 		{
@@ -193,9 +178,7 @@ func TestCompareVersions(t *testing.T) {
 			version2: "",
 			wantErr:  true,
 			checkErr: func(t *testing.T, err error) {
-				var httpErr rest.HttpError
-				assert.ErrorAs(t, err, &httpErr)
-				assert.Equal(t, http.StatusBadRequest, httpErr.HttpCode)
+				assert.Equal(t, invalidVersionErrMsg, err.Error())
 			},
 		},
 	}
