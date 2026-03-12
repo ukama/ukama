@@ -155,10 +155,10 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    a = action_new(ACTION_RUN_BOOT, NULL, NULL, NULL);
+    a = action_new(ACTION_RUN_BOOT, NULL, NULL, NULL, NULL);
     actions_enqueue(&queue, a);
 
-    a = action_new(ACTION_RUN_ALL, NULL, NULL, NULL);
+    a = action_new(ACTION_RUN_ALL, NULL, NULL, NULL, NULL);
     actions_enqueue(&queue, a);
 
     supervisor_signal(sup);

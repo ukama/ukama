@@ -104,16 +104,19 @@ static int ws_status_cb(const struct _u_request *req,
 static bool ws_parse_update(json_t *j,
                             char **spaceOut,
                             char **nameOut,
-                            char **tagOut) {
+                            char **tagOut,
+                            char **hubOut) {
 
     json_t *v;
     const char *space;
     const char *name;
     const char *tag;
+    const char *hub;
 
     if (spaceOut) *spaceOut = NULL;
     if (nameOut)  *nameOut  = NULL;
     if (tagOut)   *tagOut   = NULL;
+    if (hubOut)   *hubOut   = NULL;
 
     if (!j || !json_is_object(j)) {
         return false;
@@ -128,13 +131,17 @@ static bool ws_parse_update(json_t *j,
     v = json_object_get(j, "tag");
     tag = json_is_string(v) ? json_string_value(v) : NULL;
 
+    v = json_object_get(j, "hub");
+    hub = json_is_string(v) ? json_string_value(v) : NULL;
+
     if (!space || !name || !tag) {
         return false;
     }
 
-    if (spaceOut) *spaceOut = strdup(space);
-    if (nameOut)  *nameOut  = strdup(name);
-    if (tagOut)   *tagOut   = strdup(tag);
+    if (spaceOut)                *spaceOut = strdup(space);
+    if (nameOut)                 *nameOut  = strdup(name);
+    if (tagOut)                  *tagOut   = strdup(tag);
+    if (hubOut && hub && *hub)   *hubOut   = strdup(hub);
 
     return true;
 }
@@ -149,6 +156,7 @@ static int ws_update_cb(const struct _u_request *req,
     char *space;
     char *name;
     char *tag;
+    char *hub;
     Action *a;
 
     ctx = (StarterContext *)userData;
@@ -182,12 +190,14 @@ static int ws_update_cb(const struct _u_request *req,
     space = NULL;
     name  = NULL;
     tag   = NULL;
+    hub   = NULL;
 
-    if (!ws_parse_update(j, &space, &name, &tag)) {
+    if (!ws_parse_update(j, &space, &name, &tag, &hub)) {
         json_decref(j);
         free(space);
         free(name);
         free(tag);
+        free(hub);
         return ws_reply_text(resp,
                              HttpStatus_BadRequest,
                              HttpStatusStr(HttpStatus_BadRequest));
@@ -195,14 +205,19 @@ static int ws_update_cb(const struct _u_request *req,
 
     ctx->updateInProgress = 1;
 
-    a = action_new(ACTION_UPDATE_APP, space, name, tag);
+    a = action_new(ACTION_UPDATE_APP, space, name, tag, hub);
     free(space);
     free(name);
     free(tag);
+    free(hub);
     json_decref(j);
 
     if (!a || !actions_enqueue(ctx->queue, a)) {
         if (a) {
+            free(a->space);
+            free(a->name);
+            free(a->tag);
+            free(a->hub);
             free(a);
         }
         ctx->updateInProgress = 0;
@@ -265,7 +280,7 @@ static int ws_terminate_cb(const struct _u_request *req,
                              HttpStatusStr(HttpStatus_BadRequest));
     }
 
-    a = action_new(ACTION_TERMINATE_APP, space, name, NULL);
+    a = action_new(ACTION_TERMINATE_APP, space, name, NULL, NULL);
     json_decref(j);
 
     if (!a || !actions_enqueue(ctx->queue, a)) {
