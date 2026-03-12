@@ -134,14 +134,14 @@ static bool ws_parse_update(json_t *j,
     v = json_object_get(j, "hub");
     hub = json_is_string(v) ? json_string_value(v) : NULL;
 
-    if (!space || !name || !tag || !hub || !*hub) {
+    if (!space || !name || !tag) {
         return false;
     }
 
-    if (spaceOut) *spaceOut = strdup(space);
-    if (nameOut)  *nameOut  = strdup(name);
-    if (tagOut)   *tagOut   = strdup(tag);
-    if (hubOut)   *hubOut   = strdup(hub);
+    if (spaceOut)                *spaceOut = strdup(space);
+    if (nameOut)                 *nameOut  = strdup(name);
+    if (tagOut)                  *tagOut   = strdup(tag);
+    if (hubOut && hub && *hub)   *hubOut   = strdup(hub);
 
     return true;
 }

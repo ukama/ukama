@@ -52,6 +52,7 @@ static void action_free(Action *a) {
     free(a->space);
     free(a->name);
     free(a->tag);
+    free(a->hub);
     free(a);
 }
 
@@ -522,8 +523,7 @@ static void* supervisor_thread(void *arg) {
                 usys_log_error("update: failed %s/%s -> %s",
                                a->space ? a->space : "(null)",
                                a->name ? a->name :   "(null)",
-                               a->tag ? a->tag :     "(null)",
-                               a->hub ? a->hub :     "(null)");
+                               a->tag ? a->tag :     "(null)");
             }
             if (s->ctx) {
                 s->ctx->updateInProgress = 0;

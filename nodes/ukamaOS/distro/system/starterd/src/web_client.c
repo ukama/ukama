@@ -159,6 +159,106 @@ bool wc_app_version_matches(Config *config,
     return ok;
 }
 
+static bool wc_copy_file(const char *srcPath, const char *dstPath) {
+
+    FILE *src;
+    FILE *dst;
+    char buf[8192];
+    size_t n;
+
+    src = NULL;
+    dst = NULL;
+
+    if (!srcPath || !dstPath) return false;
+
+    src = fopen(srcPath, "rb");
+    if (!src) return false;
+
+    dst = fopen(dstPath, "wb");
+    if (!dst) {
+        fclose(src);
+        return false;
+    }
+
+    while ((n = fread(buf, 1, sizeof(buf), src)) > 0) {
+        if (fwrite(buf, 1, n, dst) != n) {
+            fclose(src);
+            fclose(dst);
+            return false;
+        }
+    }
+
+    if (ferror(src)) {
+        fclose(src);
+        fclose(dst);
+        return false;
+    }
+
+    fclose(src);
+    fclose(dst);
+    return true;
+}
+
+static bool wc_wait_for_available(Config *config,
+                                  const char *appName,
+                                  const char *tag,
+                                  int timeoutSec) {
+
+    char url[512];
+    char path[256];
+    URequest *req;
+    UResponse *resp;
+    time_t start;
+    const char *body;
+
+    req = NULL;
+    resp = NULL;
+    body = NULL;
+
+    snprintf(path, sizeof(path), "/v1/apps/%s/%s/status", appName, tag);
+    if (!wc_build_url(url, sizeof(url), config->wimcHost, config->wimcPort, path)) {
+        usys_log_error("wimc: status url build failed");
+        return false;
+    }
+
+    start = time(NULL);
+    while ((int)(time(NULL) - start) < timeoutSec) {
+
+        req = wc_create_request(url, "GET", 10);
+        if (!req) {
+            return false;
+        }
+
+        if (!wc_send(req, &resp)) {
+            wc_clean(req, NULL);
+            usleep(500 * 1000);
+            continue;
+        }
+
+        if (resp->status == 200 && resp->binary_body) {
+            body = (const char *)resp->binary_body;
+
+            if (strstr(body, "\"available\"") != NULL) {
+                wc_clean(req, resp);
+                return true;
+            }
+
+            if (strstr(body, "\"failed\"") != NULL) {
+                wc_clean(req, resp);
+                return false;
+            }
+        }
+
+        wc_clean(req, resp);
+        req = NULL;
+        resp = NULL;
+
+        usleep(500 * 1000);
+    }
+
+    return false;
+}
+
 bool wc_fetch_package(Config *config,
                       const char *appName,
                       const char *tag,
@@ -167,19 +267,18 @@ bool wc_fetch_package(Config *config,
 
     char url[512];
     char path[256];
+    char srcPath[512];
     URequest *req;
     UResponse *resp;
-    FILE *f;
-    bool ok;
     JsonObj *jreq;
     char *body;
+    bool ok;
 
     req = NULL;
     resp = NULL;
-    f = NULL;
-    ok = false;
     jreq = NULL;
     body = NULL;
+    ok = false;
 
     if (!config || !appName || !tag || !dstPath) return false;
 
@@ -187,7 +286,7 @@ bool wc_fetch_package(Config *config,
              sizeof(path),
              config->wimcPathTemplate ?
                  config->wimcPathTemplate :
-                 "/v1/apps/%s/%s/pkg",
+                 "/v1/apps/%s/%s",
              appName,
              tag);
 
@@ -196,12 +295,7 @@ bool wc_fetch_package(Config *config,
         return false;
     }
 
-    if (hub && *hub) {
-        req = wc_create_request(url, "POST", 60);
-    } else {
-        req = wc_create_request(url, "GET", 60);
-    }
-
+    req = wc_create_request(url, "POST", 30);
     if (!req) return false;
 
     if (hub && *hub) {
@@ -225,37 +319,34 @@ bool wc_fetch_package(Config *config,
     }
 
     if (!wc_send(req, &resp)) {
-        wc_clean(req, NULL);
         free(body);
+        wc_clean(req, NULL);
         usys_log_error("wimc: request failed %s", url);
         return false;
     }
 
     free(body);
 
-    if (resp->status != 200 || !resp->binary_body || resp->binary_body_length == 0) {
-        usys_log_error("wimc: bad response http=%d", resp->status);
+    if (resp->status != 202 && resp->status != 304 && resp->status != 409) {
+        usys_log_error("wimc: unexpected response http=%d", resp->status);
         wc_clean(req, resp);
         return false;
     }
-
-    f = fopen(dstPath, "wb");
-    if (!f) {
-        usys_log_error("wimc: cannot open %s", dstPath);
-        wc_clean(req, resp);
-        return false;
-    }
-
-    if (fwrite(resp->binary_body, 1, resp->binary_body_length, f) != resp->binary_body_length) {
-        usys_log_error("wimc: write failed %s", dstPath);
-        fclose(f);
-        wc_clean(req, resp);
-        return false;
-    }
-
-    fclose(f);
-    ok = true;
 
     wc_clean(req, resp);
+
+    if (!wc_wait_for_available(config, appName, tag, 120)) {
+        usys_log_error("wimc: package not available %s:%s", appName, tag);
+        return false;
+    }
+
+    snprintf(srcPath, sizeof(srcPath), "/ukama/apps/pkgs/%s_%s.tar.gz", appName, tag);
+
+    if (!wc_copy_file(srcPath, dstPath)) {
+        usys_log_error("wimc: failed copying package %s -> %s", srcPath, dstPath);
+        return false;
+    }
+
+    ok = true;
     return ok;
 }

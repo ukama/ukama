@@ -177,9 +177,7 @@ bool installer_revert_to_last_good(Config *config, App *app) {
     return true;
 }
 
-bool installer_ensure_installed(Config *config,
-                                App *app,
-                                const char *hub) {
+bool installer_ensure_installed(Config *config, App *app, const char *hub) {
 
     char *tagDir;
     char *pkgPath;
@@ -187,11 +185,11 @@ bool installer_ensure_installed(Config *config,
     char *appDir;
     bool ok;
 
-    tagDir   = NULL;
-    pkgPath  = NULL;
+    tagDir = NULL;
+    pkgPath = NULL;
     stageDir = NULL;
-    appDir   = NULL;
-    ok       = false;
+    appDir = NULL;
+    ok = false;
 
     if (!config || !app) return false;
 
@@ -252,10 +250,8 @@ cleanup:
     if (stageDir) {
         free(stageDir);
     }
-
     free(appDir);
     free(pkgPath);
     free(tagDir);
-
     return ok;
 }
