@@ -130,7 +130,7 @@ func runGrpcServer(gormdb sql.Db) {
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	softServer := server.NewSoftwareServer(svcConf.OrgName, db.NewSoftwareRepo(gormdb),
-		db.NewAppRepo(gormdb), mbClient, svcConf.DebugMode)
+		db.NewAppRepo(gormdb), mbClient, svcConf.DebugMode, svcConf.NodeGwIPs)
 	eventServer := server.NewSoftwareEventServer(svcConf.OrgName, softServer)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {

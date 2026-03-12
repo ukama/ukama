@@ -156,7 +156,7 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 		return nil, status.Errorf(codes.Internal, "failed to get node gw ip: %v", err)
 	}
 	log.Infof("Node gw ip: %s", nodeGwIP)
-	jsonBody := map[string]string{"host": nodeGwIP}
+	jsonBody := map[string]string{"host": fmt.Sprintf("http://%s:8080", nodeGwIP)}
 	data, err := json.Marshal(jsonBody)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get software: %v", err)
