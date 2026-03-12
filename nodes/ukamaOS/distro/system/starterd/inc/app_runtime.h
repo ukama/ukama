@@ -9,9 +9,10 @@
 #pragma once
 
 #include <stdbool.h>
+#include <sys/types.h>
 #include "config.h"
+#include "app.h"
 
-typedef struct Space Space;
-
-bool manifest_load(Config *config, Space **spaceListOut);
-void manifest_free(Space *spaceList);
+bool app_runtime_start(Config *config, App *app, const char *execPath);
+bool app_runtime_stop(Config *config, App *app);
+void app_runtime_note_exit(App *app, int status);

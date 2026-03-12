@@ -113,11 +113,6 @@ long communicate_with_wimc(int reqType,
 
     long code=0;
     json_t   *json=NULL;
-    TStats   *stats=NULL;
-
-    if (reqType == REQUEST_UPDATE) {
-        stats = (TStats *)data;
-    }
 
     code = send_request_to_wimc(wimcURL, json);
     if (code == HttpStatus_OK) {

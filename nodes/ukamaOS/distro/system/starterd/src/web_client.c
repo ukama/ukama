@@ -3,230 +3,208 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2023-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 
-#include <jansson.h>
-#include <ulfius.h>
-#include <curl/curl.h>
+#include "web_client.h"
+
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include "starter.h"
-#include "config.h"
-#include "web_client.h"
-#include "http_status.h"
-
 #include "usys_log.h"
-#include "usys_types.h"
 #include "usys_mem.h"
-#include "usys_api.h"
-#include "usys_file.h"
-#include "usys_services.h"
 
-static int wc_send_http_request(URequest *httpReq, UResponse **httpResp) {
+#include <ulfius.h>
 
-    *httpResp = (UResponse *)usys_calloc(1, sizeof(UResponse));
-    if (*httpResp == NULL) {
-        usys_log_error("Error allocating memory of size: %lu for http response",
-                       sizeof(UResponse));
-        return STATUS_NOK;
-    }
+static URequest* wc_create_request(const char *url, const char *method, int timeoutSec) {
 
-    if (ulfius_init_response(*httpResp)) {
-        usys_log_error("Error initializing new http response.");
-        return STATUS_NOK;
-    }
+    URequest *req;
 
-    if (ulfius_send_http_request(httpReq, *httpResp) != STATUS_OK) {
-        usys_log_error( "Web client failed to send %s web request to %s",
-                        httpReq->http_verb, httpReq->http_url);
-        return STATUS_NOK;
-    }
+    req = (URequest *)usys_calloc(1, sizeof(URequest));
+    if (!req) return NULL;
 
-    return STATUS_OK;
-}
-
-static bool deserialzie_wimc_response(json_t *json, char **path) {
-
-    const char *type, *result;
-    json_t *jResp, *obj;
-
-    jResp = json_object_get(json, JSON_WIMC_RESPONSE);
-    if (jResp == NULL) {
-        return USYS_FALSE;
-    }
-    
-    obj = json_object_get(jResp, JSON_TYPE);
-    if (obj == NULL) {
-        log_error("Missing response type");
-        return USYS_FALSE;
-    }
-    type = json_string_value(obj);
-
-    obj = json_object_get(jResp, JSON_VOID_STR);
-    if (obj == NULL) {
-        log_error("Missing str response.");
-        return USYS_FALSE;
-    }
-    result = json_string_value(obj);
-
-    if (strcmp(type, WIMC_RESP_TYPE_RESULT) == 0) {
-        *path = strdup(result);
-        return USYS_TRUE;
-    } else if (strcmp(type, WIMC_RESP_TYPE_ERROR) == 0) {
-        *path = NULL;
-        log_error("WIMC responded with an error: %s", result);
-        return USYS_FALSE;
-    } else if (strcmp(type, WIMC_RESP_TYPE_PROCESSING) == 0) {
-        *path = NULL;
-        log_error("WIMC is processing the request.");
-        return USYS_FALSE;
-    }
-
-    return USYS_FALSE;
-}
-
-static URequest* wc_create_http_request(char *url,
-                                        char *method,
-                                        JsonObj *body) {
-
-    URequest *httpReq;
-    
-    httpReq = (URequest *)usys_calloc(1, sizeof(URequest));
-    if (httpReq == NULL) {
-      usys_log_error("Error allocating memory of size: %lu for http Request",
-                      sizeof(URequest));
-      return NULL;
-    }
-
-    if (ulfius_init_request(httpReq)) {
-        usys_log_error("Error initializing new http request.");
+    if (ulfius_init_request(req) != U_OK) {
+        usys_free(req);
         return NULL;
     }
 
-    ulfius_set_request_properties(httpReq,
-                       U_OPT_HTTP_VERB, method,
-                       U_OPT_HTTP_URL, url,
-                       U_OPT_TIMEOUT, 20,
-                       U_OPT_NONE);
+    ulfius_set_request_properties(req,
+                                  U_OPT_HTTP_VERB, method,
+                                  U_OPT_HTTP_URL, url,
+                                  U_OPT_TIMEOUT, timeoutSec,
+                                  U_OPT_NONE);
 
-    if (body) {
-       if (STATUS_OK != ulfius_set_json_body_request(httpReq, body)) {
-           ulfius_clean_request(httpReq);
-           usys_free(httpReq);
-           httpReq = NULL;
-       }
-    }
-
-    return httpReq;
+    return req;
 }
 
-/*
- * get_capp_path -- location of the capp referred by name:tag
- *
- */
-int get_capp_path(Config *config, char *name, char *tag,
-                  char **path, int *retCode) {
+static bool wc_send(URequest *req, UResponse **respOut) {
 
-    int ret = USYS_NOK;
-    char url[128] = {0};
-    UResponse *httpResp = NULL;
-    URequest *httpReq = NULL;
-    JsonObj *json = NULL;
-    JsonErrObj jErr;
+    UResponse *resp;
 
-    sprintf(url, "%s:%d/%s?name=%s&tag=%s",
-            DEF_WIMC_HOST,
-            config->wimcPort,
-            API_RES_EP("content/containers"),
-            name, tag);
+    resp = (UResponse *)usys_calloc(1, sizeof(UResponse));
+    if (!resp) return false;
 
-    httpReq = wc_create_http_request(url, "POST", NULL);
-    if (!httpReq) {
-        return USYS_NOK;
-    }
-    usys_log_debug("Sending capp path request. URL: %s", url);
-
-    ret = wc_send_http_request(httpReq, &httpResp);
-    if (ret != STATUS_OK) {
-        usys_log_error("Failed sending rquest to wimc.d");
-        *retCode = 0;
-        ret = USYS_NOK;
-        goto done;
+    if (ulfius_init_response(resp) != U_OK) {
+        usys_free(resp);
+        return false;
     }
 
-    *retCode = httpResp->status;
-    json = ulfius_get_json_body_response(httpResp, &jErr);
-    if (json) {
-        if (deserialzie_wimc_response(json, path) == USYS_FALSE) {
-            usys_log_error("Failed to get path from wimc.d for %s:%s",
-                           name, tag);
-            ret = STATUS_NOK;
-        } else {
-            ret = STATUS_OK;
-        }
+    if (ulfius_send_http_request(req, resp) != U_OK) {
+        ulfius_clean_response(resp);
+        usys_free(resp);
+        return false;
     }
 
-    json_decref(json);
-
-done:
-    /* cleaup code */
-    if (httpReq) {
-        ulfius_clean_request(httpReq);
-        usys_free(httpReq);
-    }
-
-    if (httpResp) {
-        ulfius_clean_response(httpResp);
-        usys_free(httpResp);
-    }
-
-    return ret;
+    *respOut = resp;
+    return true;
 }
 
-bool ping_capp(char *name) {
+static void wc_clean(URequest *req, UResponse *resp) {
 
-    bool status = USYS_FALSE;
-    int port, httpStatus;
-    CURL *curl = NULL;
-    CURLcode res;
-    char url[MAX_BUFFER] = {0};
+    if (req) {
+        ulfius_clean_request(req);
+        usys_free(req);
+    }
+    if (resp) {
+        ulfius_clean_response(resp);
+        usys_free(resp);
+    }
+}
 
-    curl_global_init(CURL_GLOBAL_ALL);
-    curl = curl_easy_init();
-    if (curl == NULL) {
-        usys_log_error("%s: Unable to initialize curl", name);
-        return USYS_FALSE;
+static bool wc_build_url(char *buf, size_t buflen, const char *addr, int port, const char *path) {
+
+    int n;
+
+    if (!buf || buflen == 0 || !addr || !path) return false;
+
+    n = snprintf(buf, buflen, "http://%s:%d%s", addr, port, path);
+    return (n > 0 && (size_t)n < buflen);
+}
+
+bool wc_app_ping(Config *config, App *app) {
+
+    char url[256];
+    URequest *req;
+    UResponse *resp;
+    bool ok;
+
+    req = NULL;
+    resp = NULL;
+    ok = false;
+
+    if (!config || !app) return false;
+    if (app->port <= 0) return false;
+
+    if (!wc_build_url(url, sizeof(url), "127.0.0.1", app->port, "/v1/ping")) {
+        return false;
     }
 
-    port = usys_find_service_port(name);
-    if (port <= 0) {
-        usys_log_error("Unable to find service in /etc/services: %s", name);
-        return USYS_FALSE;
+    req = wc_create_request(url, "GET", config->pingTimeoutSec);
+    if (!req) return false;
+
+    if (!wc_send(req, &resp)) {
+        wc_clean(req, NULL);
+        return false;
     }
 
-    sprintf(url, "http://localhost:%d/v1/ping", port);
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
+    if (resp->status == 200) ok = true;
 
-    res = curl_easy_perform(curl);
-    if (res != CURLE_OK) {
-        usys_log_error("%s: Error sending ping. URL: %s Error: %s",
-                       name, url, curl_easy_strerror(res));
-        status = USYS_FALSE;
-    } else {
-        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpStatus);
-        if (httpStatus != HttpStatus_OK) {
-            usys_log_error("%s: Recevied wrong status for ping request: %s URL: %s",
-                           name, HttpStatusStr(httpStatus), url);
-            status = USYS_FALSE;
-        } else {
-            status = USYS_TRUE;
-        }
+    wc_clean(req, resp);
+    return ok;
+}
+
+bool wc_app_version_matches(Config *config, App *app, const char *tag) {
+
+    char url[256];
+    URequest *req;
+    UResponse *resp;
+    bool ok;
+    const char *body;
+
+    req = NULL;
+    resp = NULL;
+    ok = false;
+    body = NULL;
+
+    if (!config || !app || !tag) return false;
+    if (app->port <= 0) return false;
+
+    if (!wc_build_url(url, sizeof(url), "127.0.0.1", app->port, "/v1/version")) {
+        return false;
     }
 
-    curl_easy_cleanup(curl);
-    curl_global_cleanup();
+    req = wc_create_request(url, "GET", config->commitTimeoutSec);
+    if (!req) return false;
 
-    return status;
+    if (!wc_send(req, &resp)) {
+        wc_clean(req, NULL);
+        return false;
+    }
+
+    if (resp->status == 200) {
+        body = resp->binary_body ? (const char *)resp->binary_body : NULL;
+        if (body && strstr(body, tag) != NULL) ok = true;
+    }
+
+    wc_clean(req, resp);
+    return ok;
+}
+
+bool wc_fetch_package(Config *config, const char *appName, const char *tag, const char *dstPath) {
+
+    char url[512];
+    char path[256];
+    URequest *req;
+    UResponse *resp;
+    FILE *f;
+    bool ok;
+
+    req = NULL;
+    resp = NULL;
+    f = NULL;
+    ok = false;
+
+    if (!config || !appName || !tag || !dstPath) return false;
+
+    snprintf(path, sizeof(path), config->wimcPathTemplate ? config->wimcPathTemplate : "/v1/apps/%s/%s/pkg", appName, tag);
+    if (!wc_build_url(url, sizeof(url), config->wimcHost, config->wimcPort, path)) {
+        usys_log_error("wimc: url build failed");
+        return false;
+    }
+
+    req = wc_create_request(url, "GET", 60);
+    if (!req) return false;
+
+    if (!wc_send(req, &resp)) {
+        wc_clean(req, NULL);
+        usys_log_error("wimc: request failed %s", url);
+        return false;
+    }
+
+    if (resp->status != 200 || !resp->binary_body || resp->binary_body_length == 0) {
+        usys_log_error("wimc: bad response http=%d", resp->status);
+        wc_clean(req, resp);
+        return false;
+    }
+
+    f = fopen(dstPath, "wb");
+    if (!f) {
+        usys_log_error("wimc: cannot open %s", dstPath);
+        wc_clean(req, resp);
+        return false;
+    }
+
+    if (fwrite(resp->binary_body, 1, resp->binary_body_length, f) != resp->binary_body_length) {
+        usys_log_error("wimc: write failed %s", dstPath);
+        fclose(f);
+        wc_clean(req, resp);
+        return false;
+    }
+
+    fclose(f);
+    ok = true;
+
+    wc_clean(req, resp);
+    return ok;
 }

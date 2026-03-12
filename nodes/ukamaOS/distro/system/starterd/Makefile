@@ -12,19 +12,16 @@ VERSION_FILE = version.h
 ARTIFACTS = $(TARGET_EXEC)
 
 APP_NAME = $(CUR_BUILD_DIRNAME)
-APP_CONFIG = $(NODES_DIR)/manifest.json
 TARGET_CONFIG_DIR = $(INSTALL_DIR)$(NODE_APP_CONFIG_DIR)/$(APP_NAME)
+APP_CONFIG =
 
-# Packages needed to compile target
 ifeq ($(ALPINE_BUILD),1)
-    $(info Excluding vendor library for Alpine build)
-        VENDOR_PKG=
+	VENDOR_PKG=
 else
-	VENDOR_PKG = tomlc jansson ulfius libuuid
+	VENDOR_PKG = jansson ulfius tomlc libuuid
 endif
-PLATFORM   = platform
+PLATFORM = platform
 
-# Setting up various compile and link flags
 CFLAGS=-c
 CFLAGS+=-g
 CFLAGS+=-Wall
@@ -34,56 +31,48 @@ CFLAGS+=-I$(VENDOR_INC)
 CFLAGS+=-I$(PLATFORM_INC_SYS)
 CFLAGS+=-I$(PLATFORM_INC_LOG)
 CFLAGS+=-I./inc
-CFLAGS+=-I./inc/common/
-CFLAGS+=-I../common/inc
 CFLAGS+=-D_REENTRANT
+CFLAGS+=-D_GNU_SOURCE
 
 LDFLAGS+=$(RPATH_FLAGS)
-LDFLAGS+=-L${VENDOR_LIB} 
+LDFLAGS+=-L${VENDOR_LIB}
 LDFLAGS+=-L$(VENDOR_LIB64)
 LDFLAGS+=-L$(PLATFORM_LIB)
 
-# Libraries needed
 CURL_LIB=-lcurl -lssl -lcrypto
-ULFIUS_LIB=-lulfius -lorcania -lmicrohttpd -lgnutls -lnettle
-ULFIUS_LIB+=-lhogweed -lp11-kit -lz
+ULFIUS_LIB=-lulfius -lorcania -lmicrohttpd -lgnutls -lnettle -lhogweed -lp11-kit -lz
 ifneq ($(ALPINE_BUILD),1)
 ULFIUS_LIB+=-lyder
 endif
 LIBS = $(ULFIUS_LIB) $(CURL_LIB)
-LIBS+=-ltoml
 LIBS+=-ljansson
 LIBS+=-lpthread
 LIBS+=-lusys
 
-# Soruce files
 CFILES   = $(wildcard ./src/*.c)
 OBJFILES = $(CFILES:.c=.o)
 
 .PHONY: $(TARGET_EXEC)
 
-all: version.h starter
+all: $(VERSION_FILE) starterd
 
-starter: $(TARGET_EXEC)
+starterd: $(TARGET_EXEC)
 
-$(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(OBJFILES) $(COMM_OBJFILES)
-	$(CC) -o $(TARGET_EXEC) $(OBJFILES) $(COMM_OBJFILES) $(LDFLAGS) $(LIBS)
+$(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(OBJFILES)
+	$(CC) -o $(TARGET_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 
 $(PLATFORM):
 	$(MAKE) -C $(PLATFORM_DIR)
 
 $(VENDOR_PKG):
-	$(MAKE) -C $(VENDOR_DIR) $@ 
-
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(MAKE) -C $(VENDOR_DIR) $@
 
 $(VERSION_FILE):
 	$(NODES_DIR)/utils/scripts/generate_version.sh
 
-clean:
-	rm -f $(TARGET_EXEC) $(OBJFILES) version.h
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 install: $(ARTIFACTS) $(VERSION_FILE)
 	mkdir -p $(TARGET_CONFIG_DIR)
@@ -92,3 +81,6 @@ install: $(ARTIFACTS) $(VERSION_FILE)
 	if [ "$(APP_CONFIG)" != "" ]; then \
 		cp -vrf $(APP_CONFIG) $(TARGET_CONFIG_DIR);\
 	fi
+
+clean:
+	rm -f $(TARGET_EXEC) $(OBJFILES) version.h

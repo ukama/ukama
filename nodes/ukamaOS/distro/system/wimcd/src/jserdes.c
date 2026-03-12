@@ -36,7 +36,6 @@ void json_log(json_t *json) {
 
 bool serialize_wimc_request(WimcReq *req, json_t **json) {
 
-    json_t *jContent=NULL;;
     WFetch *fetch=NULL;
     WContent *content=NULL;
 
@@ -180,11 +179,17 @@ int deserialize_hub_response(Artifact ***artifacts,
     int i=0, j=0, count=0, formatsCount=0;
 
     json_t *name=NULL;
-    json_t *jArray=NULL, *formatsArray=NULL, *elem=NULL;
-    json_t *url=NULL, *additionalInfo=NULL;
-    json_t *version=NULL, *createdAt=NULL;
-    json_t *size=NULL, *type=NULL, *extraInfo=NULL;
-    json_t *formatElem=NULL, *value=NULL;
+    json_t *jArray=NULL;
+    json_t *formatsArray=NULL;
+    json_t *elem=NULL;
+    json_t *url=NULL;
+    json_t *version=NULL;
+    json_t *createdAt=NULL;
+    json_t *size=NULL;
+    json_t *type=NULL;
+    json_t *extraInfo=NULL;
+    json_t *formatElem=NULL;
+    json_t *value=NULL;
 
     ArtifactFormat *formats = NULL;
 
