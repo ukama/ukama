@@ -23,9 +23,6 @@ typedef struct _u_instance  UInst;
 typedef struct _u_request   URequest;
 typedef struct _u_response  UResponse;
 
-/*
- * Endpoint context - passed to all callbacks
- */
 typedef struct {
     const Config            *config;
     MetricsStore            *store;
@@ -33,11 +30,9 @@ typedef struct {
     void                    *driver_ctx;
 } EpCtx;
 
-/* Lifecycle */
 int  web_service_start(const Config *config, UInst *inst, EpCtx *ctx);
 void web_service_stop(UInst *inst);
 
-/* Callback prototypes */
 int web_service_cb_get_ping(const URequest *request, UResponse *response,
                             void *user_data);
 int web_service_cb_get_version(const URequest *request, UResponse *response,

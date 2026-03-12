@@ -12,7 +12,6 @@
 #include "drv_victron.h"
 #include "usys_log.h"
 
-/* List of available drivers */
 static const ControllerDriver *drivers[] = {
     &victron_driver,
     /* Future drivers:

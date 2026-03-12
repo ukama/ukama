@@ -13,33 +13,26 @@
 #include <stdbool.h>
 
 typedef struct {
-    /* Web service */
     char        *listenAddr;
     uint16_t    listenPort;
 
-    /* Sampling */
     uint32_t    sampleMs;
 
-    /* Driver selection */
     char        *driverName;        /* "victron", "epever", etc. */
 
-    /* Serial port configuration */
     char        *serialPort;        /* e.g., /dev/ttyUSB0 */
     int         baudRate;
 
-    /* Notify.d integration */
     char        notifyHost[64];
     int         notifyPort;
     char        notifyPath[128];
     bool        enableNotify;
 
-    /* Alarm thresholds */
     double      lowVoltageWarn;     /* V */
     double      lowVoltageCrit;     /* V */
     double      highTempWarn;       /* °C */
     double      highTempCrit;       /* °C */
 
-    /* Node identification */
     char        *nodeId;
 } Config;
 

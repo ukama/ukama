@@ -6,14 +6,6 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
-/*
- * Victron VE.Direct Text-Mode Protocol Driver
- *
- * Reference: VE.Direct Protocol v3.34
- * Serial: 19200 baud, 8N1, no flow control
- * Frames arrive automatically ~1/sec. Each frame ends with "Checksum\t<byte>".
- * Modulo-256 sum of all bytes in the frame (including the checksum byte) = 0.
- */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,7 +54,6 @@ static int configure_serial(int fd, int baud) {
     tty.c_iflag &= ~(INLCR | ICRNL | IGNCR);
     tty.c_oflag &= ~OPOST;
 
-    /* Return after 100 ms or when data is available */
     tty.c_cc[VMIN]  = 0;
     tty.c_cc[VTIME] = 1;
 

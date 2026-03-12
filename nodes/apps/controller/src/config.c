@@ -58,19 +58,15 @@ int config_load_from_env(Config *config) {
 
     memset(config, 0, sizeof(*config));
 
-    /* Web service configuration */
     config->listenAddr = getenv_dup("CONTROLLER_LISTEN_ADDR", DEF_LISTEN_ADDR);
     config->listenPort = (uint16_t)getenv_int("CONTROLLER_LISTEN_PORT", DEF_LISTEN_PORT);
 
-    /* Sampling configuration */
     config->sampleMs = (uint32_t)getenv_int("CONTROLLER_SAMPLE_MS", DEF_SAMPLE_MS);
 
-    /* Driver configuration */
     config->driverName = getenv_dup("CONTROLLER_DRIVER", "victron");
     config->serialPort = getenv_dup("CONTROLLER_SERIAL_PORT", DEF_SERIAL_PORT);
     config->baudRate = getenv_int("CONTROLLER_BAUD_RATE", DEF_BAUD_RATE);
 
-    /* Notify.d configuration */
     config->notifyPort = usys_find_service_port(SERVICE_NOTIFY);
     if (!config->notifyPort) {
         config->notifyPort = 8080;
@@ -80,16 +76,13 @@ int config_load_from_env(Config *config) {
     snprintf(config->notifyPath, sizeof(config->notifyPath), "%s", DEF_NOTIFY_EP);
     config->enableNotify = getenv_bool("CONTROLLER_ENABLE_NOTIFY", true);
 
-    /* Alarm thresholds */
     config->lowVoltageWarn = getenv_double("CONTROLLER_LOW_VOLT_WARN", DEF_LOW_VOLT_WARN);
     config->lowVoltageCrit = getenv_double("CONTROLLER_LOW_VOLT_CRIT", DEF_LOW_VOLT_CRIT);
     config->highTempWarn = getenv_double("CONTROLLER_HIGH_TEMP_WARN", DEF_HIGH_TEMP_WARN);
     config->highTempCrit = getenv_double("CONTROLLER_HIGH_TEMP_CRIT", DEF_HIGH_TEMP_CRIT);
 
-    /* Node identification */
     config->nodeId = getenv_dup("NODE_ID", "unknown");
 
-    /* Validate required fields */
     if (!config->serialPort) {
         usys_log_error("config: CONTROLLER_SERIAL_PORT is required");
         return -1;

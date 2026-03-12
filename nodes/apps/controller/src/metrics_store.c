@@ -24,7 +24,6 @@ int metrics_store_init(MetricsStore *store) {
         return -1;
     }
 
-    /* Initialize alarms to inactive */
     for (int i = 0; i < ALARM_MAX; i++) {
         store->snapshot.alarms[i].type = (AlarmType)i;
         store->snapshot.alarms[i].active = false;
@@ -48,10 +47,8 @@ void metrics_store_update(MetricsStore *store, const ControllerData *data) {
 
     pthread_mutex_lock(&store->lock);
 
-    /* Copy controller data */
     memcpy(&store->snapshot.data, data, sizeof(ControllerData));
 
-    /* Update statistics */
     store->snapshot.total_samples++;
 
     if (data->comm_ok) {
@@ -66,7 +63,6 @@ void metrics_store_update(MetricsStore *store, const ControllerData *data) {
         }
     }
 
-    /* Calculate efficiency if we have valid power readings */
     if (data->pv_power_w > 0 && data->batt_voltage_v > 0 && data->batt_current_a > 0) {
         double batt_power = data->batt_voltage_v * data->batt_current_a;
         store->snapshot.efficiency_pct = (batt_power / data->pv_power_w) * 100.0;
@@ -125,7 +121,6 @@ void metrics_store_set_alarm(MetricsStore *store, AlarmType type,
             snprintf(alarm->message, sizeof(alarm->message), "%s", msg);
         }
 
-        /* Add to history */
         int idx = store->alarm_history_head;
         memcpy(&store->alarm_history[idx], alarm, sizeof(AlarmRecord));
         store->alarm_history_head = (store->alarm_history_head + 1) % 64;
@@ -137,7 +132,6 @@ void metrics_store_set_alarm(MetricsStore *store, AlarmType type,
                       alarm_type_str(type), severity_str(severity), msg ? msg : "");
     }
 
-    /* Recalculate overall severity */
     store->snapshot.overall_severity = SEVERITY_OK;
     store->snapshot.active_alarm_count = 0;
     for (int i = 0; i < ALARM_MAX; i++) {
@@ -164,8 +158,7 @@ void metrics_store_clear_alarm(MetricsStore *store, AlarmType type) {
 
         usys_log_info("metrics_store: alarm cleared - type=%s", alarm_type_str(type));
 
-        /* Recalculate overall severity */
-        store->snapshot.overall_severity = SEVERITY_OK;
+            store->snapshot.overall_severity = SEVERITY_OK;
         store->snapshot.active_alarm_count = 0;
         for (int i = 0; i < ALARM_MAX; i++) {
             if (store->snapshot.alarms[i].active) {

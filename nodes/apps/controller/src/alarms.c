@@ -36,9 +36,6 @@ void alarms_check(AlarmChecker *checker, const ControllerData *data) {
 
     const Config *cfg = checker->config;
 
-    /*
-     * Low battery voltage alarm
-     */
     if (data->batt_voltage_v > 0) {
         if (data->batt_voltage_v < cfg->lowVoltageCrit) {
             checker->low_volt_count++;
@@ -70,9 +67,6 @@ void alarms_check(AlarmChecker *checker, const ControllerData *data) {
         }
     }
 
-    /*
-     * High temperature alarm
-     */
     if (!isnan(data->temperature_c)) {
         if (data->temperature_c > cfg->highTempCrit) {
             checker->high_temp_count++;
@@ -104,9 +98,6 @@ void alarms_check(AlarmChecker *checker, const ControllerData *data) {
         }
     }
 
-    /*
-     * Controller fault alarm (from error code)
-     */
     if (data->error_code != 0) {
         checker->fault_count++;
         if (checker->fault_count >= checker->debounce_samples) {
@@ -126,7 +117,6 @@ void alarms_check(AlarmChecker *checker, const ControllerData *data) {
         }
     }
 
-    /* Communication OK - clear comm alarm */
     if (data->comm_ok) {
         checker->comm_fail_count = 0;
         metrics_store_clear_alarm(checker->store, ALARM_COMMUNICATION_LOST);
@@ -167,14 +157,12 @@ int alarms_send_notification(const Config *config, AlarmType type,
 
     if (!config || !config->enableNotify) return 0;
 
-    /* Build URL */
     if (snprintf(url, sizeof(url), "http://%s:%d%s",
                  config->notifyHost, config->notifyPort, config->notifyPath)
         >= (int)sizeof(url)) {
         return -1;
     }
 
-    /* Serialize alarm notification */
     json = json_serialize_alarm_notification(config, type, severity, message);
     if (!json) {
         usys_log_error("alarms: failed to serialize notification");
@@ -189,7 +177,6 @@ int alarms_send_notification(const Config *config, AlarmType type,
         return -1;
     }
 
-    /* Send HTTP request */
     ulfius_init_request(&req);
     ulfius_init_response(&resp);
 
