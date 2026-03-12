@@ -106,6 +106,14 @@ export type AllocateSimInputDto = {
   traffic_policy: Scalars['Float']['input'];
 };
 
+export type App = {
+  __typename?: 'App';
+  metricsKeys: Array<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+  notes: Scalars['String']['output'];
+  space: Scalars['String']['output'];
+};
+
 export type AppChangeLog = {
   __typename?: 'AppChangeLog';
   date: Scalars['Float']['output'];
@@ -116,6 +124,11 @@ export type AppChangeLogs = {
   __typename?: 'AppChangeLogs';
   logs: Array<AppChangeLog>;
   type: NodeTypeEnum;
+};
+
+export type Apps = {
+  __typename?: 'Apps';
+  apps: Array<App>;
 };
 
 export type AttachNodeInput = {
@@ -346,6 +359,12 @@ export type GetSimsInput = {
   type: Sim_Types;
 };
 
+export type GetSoftwaresInput = {
+  name: Scalars['String']['input'];
+  nodeId: Scalars['String']['input'];
+  status: SoftwareStatusEnum;
+};
+
 export enum Invitation_Status {
   InviteAccepted = 'INVITE_ACCEPTED',
   InviteDeclined = 'INVITE_DECLINED',
@@ -450,6 +469,7 @@ export type Mutation = {
   updatePackage: PackageDto;
   updatePayment: PaymentDto;
   updateSite: SiteDto;
+  updateSoftware: StringResponse;
   updateSubscriber: CBooleanResponse;
   uploadSims: UploadSimsResDto;
 };
@@ -651,6 +671,11 @@ export type MutationUpdatePaymentArgs = {
 export type MutationUpdateSiteArgs = {
   data: UpdateSiteInputDto;
   siteId: Scalars['String']['input'];
+};
+
+
+export type MutationUpdateSoftwareArgs = {
+  data: UpdateSoftwareInputDto;
 };
 
 
@@ -1001,6 +1026,7 @@ export type ProcessPaymentInputDto = {
 export type Query = {
   __typename?: 'Query';
   example?: Maybe<Scalars['String']['output']>;
+  getApps?: Maybe<Apps>;
   getAppsChangeLog: AppChangeLogs;
   getComponentById: ComponentDto;
   getComponentsByUserId: ComponentsResDto;
@@ -1050,6 +1076,7 @@ export type Query = {
   getSimsFromPool: SimsPoolResDto;
   getSite: SiteDto;
   getSites: SitesResDto;
+  getSoftwares: Softwares;
   getSubscriber: SubscriberDto;
   getSubscriberMetricsByNetwork: SubscriberMetricsByNetworkDto;
   getSubscribersByNetwork: SubscribersResDto;
@@ -1242,6 +1269,11 @@ export type QueryGetSiteArgs = {
 
 export type QueryGetSitesArgs = {
   data: SitesInputDto;
+};
+
+
+export type QueryGetSoftwaresArgs = {
+  data: GetSoftwaresInput;
 };
 
 
@@ -1521,6 +1553,42 @@ export type SitesResDto = {
   sites: Array<SiteDto>;
 };
 
+export type Software = {
+  __typename?: 'Software';
+  changeLog: Array<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  currentVersion: Scalars['String']['output'];
+  desiredVersion: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  metricsKeys: Array<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+  nodeId: Scalars['String']['output'];
+  notes: Scalars['String']['output'];
+  releaseDate: Scalars['String']['output'];
+  space: Scalars['String']['output'];
+  status: SoftwareStatusEnum;
+  updatedAt: Scalars['String']['output'];
+};
+
+/** Software status enums */
+export enum SoftwareStatusEnum {
+  Unknown = 'unknown',
+  UpToDate = 'up_to_date',
+  UpdateAvailable = 'update_available',
+  UpdateFailed = 'update_failed',
+  UpdateInProgress = 'update_in_progress'
+}
+
+export type Softwares = {
+  __typename?: 'Softwares';
+  software: Array<Software>;
+};
+
+export type StringResponse = {
+  __typename?: 'StringResponse';
+  message: Scalars['String']['output'];
+};
+
 export type SubscriberDto = {
   __typename?: 'SubscriberDto';
   address: Scalars['String']['output'];
@@ -1702,6 +1770,12 @@ export type UpdatePaymentInputDto = {
 
 export type UpdateSiteInputDto = {
   name: Scalars['String']['input'];
+};
+
+export type UpdateSoftwareInputDto = {
+  name: Scalars['String']['input'];
+  nodeId: Scalars['String']['input'];
+  tag: Scalars['String']['input'];
 };
 
 export type UpdateSubscriberInputDto = {
@@ -2326,6 +2400,25 @@ export type GetDataUsagesQueryVariables = Exact<{
 
 
 export type GetDataUsagesQuery = { __typename?: 'Query', getDataUsages: { __typename?: 'SimDataUsages', usages: Array<{ __typename?: 'SimDataUsage', usage: string, simId: string }> } };
+
+export type GetAppsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetAppsQuery = { __typename?: 'Query', getApps?: { __typename?: 'Apps', apps: Array<{ __typename?: 'App', name: string, space: string, notes: string, metricsKeys: Array<string> }> } | null };
+
+export type SoftwareQueryVariables = Exact<{
+  data: GetSoftwaresInput;
+}>;
+
+
+export type SoftwareQuery = { __typename?: 'Query', getSoftwares: { __typename?: 'Softwares', software: Array<{ __typename?: 'Software', id: string, releaseDate: string, nodeId: string, status: SoftwareStatusEnum, changeLog: Array<string>, currentVersion: string, desiredVersion: string, name: string, space: string, notes: string, metricsKeys: Array<string>, createdAt: string, updatedAt: string }> } };
+
+export type UpdateSoftwareMutationVariables = Exact<{
+  data: UpdateSoftwareInputDto;
+}>;
+
+
+export type UpdateSoftwareMutation = { __typename?: 'Mutation', updateSoftware: { __typename?: 'StringResponse', message: string } };
 
 export const NodeFragmentDoc = gql`
     fragment node on Node {
@@ -5711,3 +5804,134 @@ export type GetDataUsagesQueryHookResult = ReturnType<typeof useGetDataUsagesQue
 export type GetDataUsagesLazyQueryHookResult = ReturnType<typeof useGetDataUsagesLazyQuery>;
 export type GetDataUsagesSuspenseQueryHookResult = ReturnType<typeof useGetDataUsagesSuspenseQuery>;
 export type GetDataUsagesQueryResult = Apollo.QueryResult<GetDataUsagesQuery, GetDataUsagesQueryVariables>;
+export const GetAppsDocument = gql`
+    query GetApps {
+  getApps {
+    apps {
+      name
+      space
+      notes
+      metricsKeys
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetAppsQuery__
+ *
+ * To run a query within a React component, call `useGetAppsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetAppsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetAppsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetAppsQuery(baseOptions?: Apollo.QueryHookOptions<GetAppsQuery, GetAppsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetAppsQuery, GetAppsQueryVariables>(GetAppsDocument, options);
+      }
+export function useGetAppsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAppsQuery, GetAppsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetAppsQuery, GetAppsQueryVariables>(GetAppsDocument, options);
+        }
+export function useGetAppsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAppsQuery, GetAppsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetAppsQuery, GetAppsQueryVariables>(GetAppsDocument, options);
+        }
+export type GetAppsQueryHookResult = ReturnType<typeof useGetAppsQuery>;
+export type GetAppsLazyQueryHookResult = ReturnType<typeof useGetAppsLazyQuery>;
+export type GetAppsSuspenseQueryHookResult = ReturnType<typeof useGetAppsSuspenseQuery>;
+export type GetAppsQueryResult = Apollo.QueryResult<GetAppsQuery, GetAppsQueryVariables>;
+export const SoftwareDocument = gql`
+    query Software($data: GetSoftwaresInput!) {
+  getSoftwares(data: $data) {
+    software {
+      id
+      releaseDate
+      nodeId
+      status
+      changeLog
+      currentVersion
+      desiredVersion
+      name
+      space
+      notes
+      metricsKeys
+      createdAt
+      updatedAt
+    }
+  }
+}
+    `;
+
+/**
+ * __useSoftwareQuery__
+ *
+ * To run a query within a React component, call `useSoftwareQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSoftwareQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSoftwareQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useSoftwareQuery(baseOptions: Apollo.QueryHookOptions<SoftwareQuery, SoftwareQueryVariables> & ({ variables: SoftwareQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SoftwareQuery, SoftwareQueryVariables>(SoftwareDocument, options);
+      }
+export function useSoftwareLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SoftwareQuery, SoftwareQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SoftwareQuery, SoftwareQueryVariables>(SoftwareDocument, options);
+        }
+export function useSoftwareSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SoftwareQuery, SoftwareQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SoftwareQuery, SoftwareQueryVariables>(SoftwareDocument, options);
+        }
+export type SoftwareQueryHookResult = ReturnType<typeof useSoftwareQuery>;
+export type SoftwareLazyQueryHookResult = ReturnType<typeof useSoftwareLazyQuery>;
+export type SoftwareSuspenseQueryHookResult = ReturnType<typeof useSoftwareSuspenseQuery>;
+export type SoftwareQueryResult = Apollo.QueryResult<SoftwareQuery, SoftwareQueryVariables>;
+export const UpdateSoftwareDocument = gql`
+    mutation UpdateSoftware($data: UpdateSoftwareInputDto!) {
+  updateSoftware(data: $data) {
+    message
+  }
+}
+    `;
+export type UpdateSoftwareMutationFn = Apollo.MutationFunction<UpdateSoftwareMutation, UpdateSoftwareMutationVariables>;
+
+/**
+ * __useUpdateSoftwareMutation__
+ *
+ * To run a mutation, you first call `useUpdateSoftwareMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateSoftwareMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateSoftwareMutation, { data, loading, error }] = useUpdateSoftwareMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useUpdateSoftwareMutation(baseOptions?: Apollo.MutationHookOptions<UpdateSoftwareMutation, UpdateSoftwareMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateSoftwareMutation, UpdateSoftwareMutationVariables>(UpdateSoftwareDocument, options);
+      }
+export type UpdateSoftwareMutationHookResult = ReturnType<typeof useUpdateSoftwareMutation>;
+export type UpdateSoftwareMutationResult = Apollo.MutationResult<UpdateSoftwareMutation>;
+export type UpdateSoftwareMutationOptions = Apollo.BaseMutationOptions<UpdateSoftwareMutation, UpdateSoftwareMutationVariables>;

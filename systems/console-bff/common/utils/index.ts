@@ -304,6 +304,7 @@ const getSystemNameByService = (service: string): string => {
       return "planning";
     case "nodeState":
     case "controller":
+    case "software":
       return "node";
     default:
       return "";
