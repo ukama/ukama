@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include <sys/time.h>
 
 #include "metrics_store.h"
@@ -18,6 +19,9 @@ int metrics_store_init(MetricsStore *store) {
     if (!store) return -1;
 
     memset(store, 0, sizeof(*store));
+
+    store->snapshot.data.batt_soc_pct  = -1;
+    store->snapshot.data.temperature_c = NAN;
 
     if (pthread_mutex_init(&store->lock, NULL) != 0) {
         usys_log_error("metrics_store: mutex init failed");
@@ -85,6 +89,8 @@ void metrics_store_set_error(MetricsStore *store, int err_code, const char *msg)
     store->snapshot.data.comm_errors++;
     store->snapshot.consecutive_errors++;
     store->snapshot.failed_samples++;
+    store->snapshot.data.timestamp_ms = time_now_ms();
+    store->snapshot.total_samples++;
 
     if (store->snapshot.consecutive_errors > 5) {
         store->snapshot.comm_healthy = false;

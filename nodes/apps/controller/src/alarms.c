@@ -38,8 +38,9 @@ void alarms_check(AlarmChecker *checker, const ControllerData *data) {
 
     if (data->batt_voltage_v > 0) {
         if (data->batt_voltage_v < cfg->lowVoltageCrit) {
-            checker->low_volt_count++;
-            if (checker->low_volt_count >= checker->debounce_samples) {
+            if (checker->low_volt_count < checker->debounce_samples)
+                checker->low_volt_count++;
+            if (checker->low_volt_count == checker->debounce_samples) {
                 char msg[128];
                 snprintf(msg, sizeof(msg), "Battery voltage critical: %.2fV < %.2fV",
                          data->batt_voltage_v, cfg->lowVoltageCrit);
@@ -49,8 +50,9 @@ void alarms_check(AlarmChecker *checker, const ControllerData *data) {
                                          SEVERITY_CRITICAL, msg);
             }
         } else if (data->batt_voltage_v < cfg->lowVoltageWarn) {
-            checker->low_volt_count++;
-            if (checker->low_volt_count >= checker->debounce_samples) {
+            if (checker->low_volt_count < checker->debounce_samples)
+                checker->low_volt_count++;
+            if (checker->low_volt_count == checker->debounce_samples) {
                 char msg[128];
                 snprintf(msg, sizeof(msg), "Battery voltage low: %.2fV < %.2fV",
                          data->batt_voltage_v, cfg->lowVoltageWarn);
@@ -58,19 +60,16 @@ void alarms_check(AlarmChecker *checker, const ControllerData *data) {
                                         SEVERITY_WARN, msg);
             }
         } else {
-            if (checker->low_volt_count > 0) {
-                checker->low_volt_count--;
-                if (checker->low_volt_count == 0) {
-                    metrics_store_clear_alarm(checker->store, ALARM_LOW_BATTERY_VOLTAGE);
-                }
-            }
+            checker->low_volt_count = 0;
+            metrics_store_clear_alarm(checker->store, ALARM_LOW_BATTERY_VOLTAGE);
         }
     }
 
     if (!isnan(data->temperature_c)) {
         if (data->temperature_c > cfg->highTempCrit) {
-            checker->high_temp_count++;
-            if (checker->high_temp_count >= checker->debounce_samples) {
+            if (checker->high_temp_count < checker->debounce_samples)
+                checker->high_temp_count++;
+            if (checker->high_temp_count == checker->debounce_samples) {
                 char msg[128];
                 snprintf(msg, sizeof(msg), "Controller temperature critical: %.1f°C > %.1f°C",
                          data->temperature_c, cfg->highTempCrit);
@@ -80,8 +79,9 @@ void alarms_check(AlarmChecker *checker, const ControllerData *data) {
                                          SEVERITY_CRITICAL, msg);
             }
         } else if (data->temperature_c > cfg->highTempWarn) {
-            checker->high_temp_count++;
-            if (checker->high_temp_count >= checker->debounce_samples) {
+            if (checker->high_temp_count < checker->debounce_samples)
+                checker->high_temp_count++;
+            if (checker->high_temp_count == checker->debounce_samples) {
                 char msg[128];
                 snprintf(msg, sizeof(msg), "Controller temperature high: %.1f°C > %.1f°C",
                          data->temperature_c, cfg->highTempWarn);
@@ -89,18 +89,15 @@ void alarms_check(AlarmChecker *checker, const ControllerData *data) {
                                         SEVERITY_WARN, msg);
             }
         } else {
-            if (checker->high_temp_count > 0) {
-                checker->high_temp_count--;
-                if (checker->high_temp_count == 0) {
-                    metrics_store_clear_alarm(checker->store, ALARM_HIGH_TEMPERATURE);
-                }
-            }
+            checker->high_temp_count = 0;
+            metrics_store_clear_alarm(checker->store, ALARM_HIGH_TEMPERATURE);
         }
     }
 
     if (data->error_code != 0) {
-        checker->fault_count++;
-        if (checker->fault_count >= checker->debounce_samples) {
+        if (checker->fault_count < checker->debounce_samples)
+            checker->fault_count++;
+        if (checker->fault_count == checker->debounce_samples) {
             char msg[128];
             snprintf(msg, sizeof(msg), "Controller error: %s (code %u)",
                      error_code_str(data->error_code), data->error_code);
@@ -109,12 +106,8 @@ void alarms_check(AlarmChecker *checker, const ControllerData *data) {
             alarms_send_notification(cfg, ALARM_CONTROLLER_FAULT, SEVERITY_CRITICAL, msg);
         }
     } else {
-        if (checker->fault_count > 0) {
-            checker->fault_count--;
-            if (checker->fault_count == 0) {
-                metrics_store_clear_alarm(checker->store, ALARM_CONTROLLER_FAULT);
-            }
-        }
+        checker->fault_count = 0;
+        metrics_store_clear_alarm(checker->store, ALARM_CONTROLLER_FAULT);
     }
 
     if (data->comm_ok) {
@@ -127,8 +120,9 @@ void alarms_check_comm_failure(AlarmChecker *checker, bool comm_ok) {
     if (!checker || !checker->config || !checker->store) return;
 
     if (!comm_ok) {
-        checker->comm_fail_count++;
-        if (checker->comm_fail_count >= checker->debounce_samples) {
+        if (checker->comm_fail_count < checker->debounce_samples)
+            checker->comm_fail_count++;
+        if (checker->comm_fail_count == checker->debounce_samples) {
             char msg[128];
             snprintf(msg, sizeof(msg), "Communication lost with charge controller");
             metrics_store_set_alarm(checker->store, ALARM_COMMUNICATION_LOST,
@@ -137,12 +131,8 @@ void alarms_check_comm_failure(AlarmChecker *checker, bool comm_ok) {
                                      SEVERITY_CRITICAL, msg);
         }
     } else {
-        if (checker->comm_fail_count > 0) {
-            checker->comm_fail_count--;
-            if (checker->comm_fail_count == 0) {
-                metrics_store_clear_alarm(checker->store, ALARM_COMMUNICATION_LOST);
-            }
-        }
+        checker->comm_fail_count = 0;
+        metrics_store_clear_alarm(checker->store, ALARM_COMMUNICATION_LOST);
     }
 }
 

@@ -66,7 +66,7 @@ LIBS+=-lusys
 CFILES   = $(wildcard ./src/*.c)
 OBJFILES = $(CFILES:.c=.o)
 
-.PHONY: $(TARGET_EXEC)
+.PHONY: $(TARGET_EXEC) $(VERSION_FILE)
 
 all: version.h controllerd
 
@@ -89,4 +89,4 @@ $(VERSION_FILE):
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(TARGET_EXEC) $(OBJFILES) version.h
+	rm -f $(TARGET_EXEC) $(OBJFILES) $(VERSION_FILE)
