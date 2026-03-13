@@ -180,8 +180,8 @@ int alarms_send_notification(const Config *config, AlarmType type,
     ulfius_init_request(&req);
     ulfius_init_response(&resp);
 
-    req.http_url = url;
-    req.http_verb = "POST";
+    req.http_url  = strdup(url);
+    req.http_verb = strdup("POST");
     u_map_put(req.map_header, "Content-Type", "application/json");
     ulfius_set_string_body_request(&req, body);
 

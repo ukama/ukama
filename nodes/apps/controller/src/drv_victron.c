@@ -276,22 +276,31 @@ static int read_frame(VictronCtx *ctx, int timeout_ms) {
         /* "Checksum\t<byte>" marks the end of a frame */
         char *checksum_pos = strstr(ctx->rx_buf, "Checksum\t");
         if (checksum_pos) {
-            char *frame_end = checksum_pos + 9 + 1;
+            char *frame_end = checksum_pos + 9 + 1;  /* past the checksum byte */
             if (frame_end <= ctx->rx_buf + ctx->rx_len) {
                 size_t frame_len = frame_end - ctx->rx_buf;
 
+                /* Skip the trailing \r\n that follows the checksum byte.
+                 * Without this, \r\n stays in rx_buf and corrupts the
+                 * checksum of the next frame (+13+10 = +23 offset). */
+                char *next_frame = frame_end;
+                if (next_frame + 1 < ctx->rx_buf + ctx->rx_len &&
+                    next_frame[0] == '\r' && next_frame[1] == '\n') {
+                    next_frame += 2;
+                }
+
                 if (parse_frame(ctx, ctx->rx_buf, frame_len) == 0) {
-                    int remaining = ctx->rx_len - (int)frame_len;
+                    int remaining = ctx->rx_len - (int)(next_frame - ctx->rx_buf);
                     if (remaining > 0) {
-                        memmove(ctx->rx_buf, frame_end, remaining);
+                        memmove(ctx->rx_buf, next_frame, remaining);
                     }
                     ctx->rx_len = remaining;
                     return 0;
                 }
 
-                int remaining = ctx->rx_len - (int)frame_len;
+                int remaining = ctx->rx_len - (int)(next_frame - ctx->rx_buf);
                 if (remaining > 0) {
-                    memmove(ctx->rx_buf, frame_end, remaining);
+                    memmove(ctx->rx_buf, next_frame, remaining);
                 }
                 ctx->rx_len = remaining;
             }
@@ -390,37 +399,16 @@ int victron_read_data(void *vctx, ControllerData *out) {
  * Not all MPPT models support all registers via HEX.
  */
 
-int victron_set_absorption_voltage(void *vctx, double voltage_v) {
-    (void)vctx;
-    (void)voltage_v;
-    usys_log_warn("victron: set_absorption_voltage not yet implemented");
-    return -1;
-}
-
-int victron_set_float_voltage(void *vctx, double voltage_v) {
-    (void)vctx;
-    (void)voltage_v;
-    usys_log_warn("victron: set_float_voltage not yet implemented");
-    return -1;
-}
-
-int victron_set_relay(void *vctx, bool state) {
-    (void)vctx;
-    (void)state;
-    usys_log_warn("victron: set_relay not yet implemented");
-    return -1;
-}
-
 const ControllerDriver victron_driver = {
     .name        = "victron",
     .description = "Victron VE.Direct (MPPT SmartSolar/BlueSolar)",
     .open        = victron_open,
     .close       = victron_close,
     .read_data   = victron_read_data,
-    .set_absorption_voltage = victron_set_absorption_voltage,
-    .set_float_voltage      = victron_set_float_voltage,
+    .set_absorption_voltage = NULL,
+    .set_float_voltage      = NULL,
     .set_charge_mode        = NULL,
-    .set_relay              = victron_set_relay,
+    .set_relay              = NULL,
     .set_load_output        = NULL,
     .ctx_size    = sizeof(VictronCtx)
 };
