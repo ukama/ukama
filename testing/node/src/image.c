@@ -26,7 +26,10 @@ static char *module_schema_file(char* nodeType, char *type);
 static void set_schema_args(Node *node, char **buffer);
 static FILE* init_container_file(char *fileName);
 static int write_to_container_file(char *buffer, char *fileName, FILE *fp);
-static int create_container_file(char *target, Configs *config, Node *node);
+static int create_container_file(char *target, Configs *config, Node *node,
+                                 RuntimeType runtime);
+static int stage_starter_pkgs(Configs *configs);
+
 
 static char *module_schema_file(char* nodeType, char *type) {
 
@@ -99,7 +102,49 @@ static int write_to_container_file(char *buffer, char *fileName, FILE *fp) {
 	return TRUE;
 }
 
-static int create_container_file(char *target, Configs *config, Node *node) {
+static int stage_starter_pkgs(Configs *configs) {
+
+    Configs *ptr = NULL;
+    char runMe[MAX_BUFFER] = {0};
+    char src[MAX_BUFFER] = {0};
+    char dst[MAX_BUFFER] = {0};
+
+    if (!configs) {
+        return FALSE;
+    }
+
+    for (ptr = configs; ptr; ptr = ptr->next) {
+        if (!ptr->valid || !ptr->config || !ptr->config->capp) {
+            continue;
+        }
+
+        /*
+         * Builder script you shared copies packages into ./pkgs
+         * using name-tag.tar.gz. We pre-seed only the apps selected
+         * for this vnode.
+         */
+        snprintf(src, sizeof(src), "./pkgs/%s-%s.tar.gz",
+                 ptr->config->capp->name,
+                 ptr->config->capp->version);
+
+        snprintf(dst, sizeof(dst), "ukama/apps/pkgs/%s-%s.tar.gz",
+                 ptr->config->capp->name,
+                 ptr->config->capp->version);
+
+        snprintf(runMe, sizeof(runMe), "%s cp %s %s", SCRIPT, src, dst);
+        if (system(runMe) != 0) {
+            log_error("Unable to stage package: %s", src);
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+static int create_container_file(char *target,
+                                 Configs *config,
+                                 Node *node,
+                                 RuntimeType runtime) {
 
     FILE *fp = NULL;
     char buffer[MAX_BUFFER] = {0};
@@ -177,8 +222,9 @@ static int create_container_file(char *target, Configs *config, Node *node) {
 
     /*
      * Make /tmp/sys point to /ukama/mocksysfs/sys
-     * NOTE: If something created a real /tmp/sys directory earlier, ln -sfn might not replace it
-     * deterministically. If you never create /tmp/sys anywhere else, we're fine.
+     * NOTE: If something created a real /tmp/sys directory earlier, 
+     * ln -sfn might not replace it deterministically. 
+     * If you never create /tmp/sys anywhere else, we're fine.
      */
     sprintf(buffer, CF_SYMLINK, "/ukama/mocksysfs/sys", "/tmp/sys");
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
@@ -186,18 +232,30 @@ static int create_container_file(char *target, Configs *config, Node *node) {
     sprintf(buffer, CF_ADD, "supervisor.conf", "/etc/supervisor.conf");
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-    sprintf(buffer, CF_CMD, SUPERVISOR_CMD);
+    if (runtime == RUNTIME_STARTER) {
+        sprintf(buffer, CF_ADD, MANIFEST_FILENAME, "/ukama/manifest.json");
+        if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+    }
+
+    if (runtime == RUNTIME_STARTER) {
+        sprintf(buffer, CF_CMD, STARTER_CMD);
+    } else {
+        sprintf(buffer, CF_CMD, SUPERVISOR_CMD);
+    }
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
     sprintf(buffer, CF_ENV, LIB_PATH, NODE_LIBS);
-    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;    
 
     fclose(fp);
     return TRUE;
 }
 
-int create_vnode_image(char *target, Configs *config, Node *node,
-					   char *runTarget) {
+int create_vnode_image(char *target,
+                       Configs *config,
+                       Node *node,
+					   char *runTarget,
+                       RuntimeType runtime) {
 
 	char runMe[MAX_BUFFER]={0};
 	char *buffer=NULL;
@@ -254,11 +312,18 @@ int create_vnode_image(char *target, Configs *config, Node *node,
     sprintf(runMe, "%s ukamadirs %s %s", SCRIPT, nodeInfo->uuid, bootstrapServer);
 	if (system(runMe) < 0) goto failure;
 
+    if (runtime == RUNTIME_STARTER) {
+        if (!stage_starter_pkgs(config)) {
+            log_error("Unable to stage starter packages into /ukama/apps/pkgs");
+            goto failure;
+        }
+    }
+
 	sprintf(runMe, "%s sysfs %s %s", SCRIPT, nodeInfo->type, nodeInfo->uuid);
 	if (system(runMe) < 0) goto failure;
 
 	/* Step:2 create the container file */
-	if (!create_container_file(target, config, node)) {
+	if (!create_container_file(target, config, node, runtime)) {
 		log_error("Unable to create container file: %s", CONTAINER_FILE);
 		goto failure;
 	}

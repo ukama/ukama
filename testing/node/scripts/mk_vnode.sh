@@ -98,6 +98,41 @@ update_ukama_os_env() {
     log "INFO" "UKAMA_OS set to ${UKAMA_OS} (BUILD_ENV=${BUILD_ENV})"
 }
 
+build_starter() {
+    local starter_root=""
+
+    update_ukama_os_env
+
+    starter_root="${UKAMA_OS}/distro/system/starterd"
+    [ -d "${starter_root}" ] || die "Failed to find starterd root at: ${starter_root}"
+
+    mkdir -p "${BUILD_DIR}/sbin" "${BUILD_DIR}/lib"
+
+    log "INFO" "Building starter.d in ${starter_root}"
+
+    pushd "${starter_root}" >/dev/null
+
+    make clean
+    make
+
+    [ -f "${starter_root}/starter.d" ] || die "starter.d build failed"
+
+    cp -f "${starter_root}/starter.d" "${BUILD_DIR}/sbin/"
+
+    # copy runtime libs for starter.d into BUILD_DIR/lib
+    while IFS= read -r lib; do
+        [ -z "$lib" ] && continue
+        if [ -f "$lib" ]; then
+            cp --parents "$lib" "${BUILD_DIR}" || true
+            cp -f "$lib" "${BUILD_DIR}/lib/" || true
+        fi
+    done < <(ldd "${starter_root}/starter.d" | awk '/=>/ {print $3} /^[[:space:]]*\// {print $1}' | sort -u)
+
+    popd >/dev/null
+
+    log "SUCCESS" "starter.d built into ${BUILD_DIR}/sbin"
+}
+
 build_utils() {
     mkdir -p "${BUILD_DIR}/utils"
     update_ukama_os_env
@@ -334,6 +369,7 @@ shift || true
 case "${ACTION}" in
     init)
         build_utils
+        build_starter
         ;;
     sysfs)
         build_sysfs "${1:-}" "${2:-}"

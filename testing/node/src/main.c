@@ -26,6 +26,7 @@
 #include "image.h"
 #include "setup_env.h"
 #include "board_config.h"
+#include "manifest_gen.h"
 
 #define VERSION       "0.0.1"
 #define DEF_LOG_LEVEL "TRACE"
@@ -39,6 +40,9 @@
 #define ENV_VNODE_METADATA   "VNODE_METADATA"
 #define ENV_VNODE_RUN_TARGET "VNODE_RUN_TARGET"
 
+#define RUNTIME_SUPERVISOR_STR "supervisor"
+#define RUNTIME_STARTER_STR    "starter"
+
 enum {
 	VNODE_CMD_NONE=0,
 	VNODE_CMD_VERIFY,
@@ -49,19 +53,35 @@ enum {
 
 extern int build_capp(Config *config);
 
+static RuntimeType get_runtime_type(char *arg) {
+
+    if (arg == NULL) {
+        return RUNTIME_SUPERVISOR;
+    }
+
+    if (strcasecmp(arg, RUNTIME_SUPERVISOR_STR) == 0) {
+        return RUNTIME_SUPERVISOR;
+    } else if (strcasecmp(arg, RUNTIME_STARTER_STR) == 0) {
+        return RUNTIME_STARTER;
+    }
+
+    return RUNTIME_SUPERVISOR;
+}
+
 void usage() {
 
 	printf("Usage: [options] \n");
 	printf("Options:\n");
-	printf("--h, --help                      help menu.\n");
-	printf("--t, --target                    FROM Target (alpine:latest)\n");
-	printf("--x, --exec                      command to execute\n");
-	printf("                                 [create delete inspect verify]\n");
-	printf("--c, --apps                      apps config folder\n");
-    printf("--b, --board                     board-apps config folder\n");
-	printf("--r, --registry                  registry URL\n");
+	printf("--h, --help                         help menu.\n");
+	printf("--t, --target                       FROM Target (alpine:latest)\n");
+	printf("--x, --exec                         command to execute\n");
+	printf("                                    [create delete inspect verify]\n");
+	printf("--c, --apps                         apps config folder\n");
+    printf("--b, --board                        board-apps config folder\n");
+	printf("--r, --registry                     registry URL\n");
+    printf("--R, --runtime <supervisor|starter> runtime mode\n");
 	printf("--l, --level <ERROR | DEBUG | INFO> logging levels\n");
-	printf("--V, --version                   version.\n");
+	printf("--V, --version                      version.\n");
 }
 
 static void set_log_level(char *slevel) {
@@ -117,10 +137,11 @@ int main (int argc, char *argv[]) {
 	json_t *jNode=NULL;
     BoardConfig boardConfig;
     NodeType nodeType;
+    RuntimeType runtime = RUNTIME_SUPERVISOR;
 
 	while (TRUE) {
 
-		int opt = 0;
+		int opt    = 0;
 		int opdidx = 0;
 
 		static struct option long_options[] = {
@@ -129,13 +150,17 @@ int main (int argc, char *argv[]) {
 			{ "target",    required_argument, 0, 't'},
 			{ "capp",      required_argument, 0, 'c'},
 			{ "registry",  required_argument, 0, 'r'},
+            { "runtime",   required_argument, 0, 'R'},
 			{ "level",     required_argument, 0, 'l'},
 			{ "help",      no_argument,       0, 'h'},
 			{ "version",   no_argument,       0, 'V'},
 			{ 0,           0,                 0,  0}
 		};
 
-		opt = getopt_long(argc, argv, "b:t:x:c:r:l:hV:", long_options, &opdidx);
+		opt = getopt_long(argc, argv,
+                          "b:t:x:c:r:l:R:hV:",
+                          long_options,
+                          &opdidx);
 		if (opt == -1) {
 			break;
 		}
@@ -166,6 +191,10 @@ int main (int argc, char *argv[]) {
 			registryURL = optarg;
 			break;
 
+        case 'R':
+            runtime = get_runtime_type(optarg);
+            break;
+            
 		case 'l':
 			debug = optarg;
 			set_log_level(debug);
@@ -284,7 +313,7 @@ int main (int argc, char *argv[]) {
 		ptr = ptr->next;
 	}
 
-	/* Create config file supervisor.d */
+    /* always have supervisor flow */
 	if (!create_supervisor_config(configs)) {
 		log_error("Unable to create configuration file for supervisor.d");
 		purge_supervisor_config(SVISOR_FILENAME);
@@ -292,15 +321,29 @@ int main (int argc, char *argv[]) {
 		exit(1);
 	}
 
+	if (runtime == RUNTIME_STARTER) {
+		if (!create_manifest_config(configs)) {
+			log_error("Unable to create manifest file for starter.d");
+			purge_supervisor_config(SVISOR_FILENAME);
+			free_configs(configs);
+			exit(1);
+		}
+	}
+
 	/* create the image for the virtual node. */
-	if (!create_vnode_image(target, configs, node, envVNodeRunTarget)) {
+	if (!create_vnode_image(target, configs, node, envVNodeRunTarget, runtime)) {
 		log_error("Unable to create image for virtual node");
 		purge_vnode_image(node);
 		exit(1);
 	}
 
+    if (runtime == RUNTIME_STARTER) {
+        purge_manifest_config(MANIFEST_FILENAME);
+    }
+
 	free_configs(configs);
 	json_decref(jNode);
 	free_node(node);
+
 	exit(0);
 }
