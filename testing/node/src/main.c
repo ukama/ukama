@@ -11,7 +11,6 @@
  *                virtual node
  *
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,7 +41,13 @@
 
 #define RUNTIME_SUPERVISOR_STR "supervisor"
 #define RUNTIME_STARTER_STR    "starter"
+#define LONG_OPTIONS_SIZE      9
 
+#define RUNTIME_SUPERVISOR_STR "supervisor"
+#define RUNTIME_STARTER_STR    "starter"
+
+extern char *envVnodeBoardVersion;
+extern char *envVNodeRunTarget;
 enum {
 	VNODE_CMD_NONE=0,
 	VNODE_CMD_VERIFY,

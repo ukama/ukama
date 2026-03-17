@@ -30,7 +30,6 @@ static int create_container_file(char *target, Configs *config, Node *node,
                                  RuntimeType runtime);
 static int stage_starter_pkgs(Configs *configs);
 
-
 static char *module_schema_file(char* nodeType, char *type) {
 
 	if (strcmp(type, MODULE_TYPE_COM) == 0)  return SCHEMA_FILE_COM;
@@ -60,13 +59,13 @@ static void set_schema_args(Node *node, char **buffer) {
 	ptr = node->nodeConfig;
 	while (ptr) {
 		sprintf(temp, " --n %s --m %s --f ./schemas/%s",
-				ptr->type, ptr->moduleID, module_schema_file(node->nodeInfo->type, ptr->type));
+				ptr->type, ptr->moduleID,
+                module_schema_file(node->nodeInfo->type, ptr->type));
 		strcat(temp1, temp);
 		ptr = ptr->next;
 	}
 
 	sprintf(*buffer, "%s=%s", ENV_VNODE_SCHEMA_ARGS, temp1);
-	//	sprintf(*buffer, "%s", temp1);
 }
 
 static FILE* init_container_file(char *fileName) {
@@ -118,10 +117,16 @@ static int stage_starter_pkgs(Configs *configs) {
             continue;
         }
 
+        if (ptr->config->capp->name == NULL ||
+            ptr->config->capp->version == NULL) {
+            continue;
+        }
+
         /*
-         * Builder script you shared copies packages into ./pkgs
-         * using name-tag.tar.gz. We pre-seed only the apps selected
-         * for this vnode.
+         * App builder output:
+         *   ./pkgs/name-tag.tar.gz
+         *
+         * Pre-seed only apps selected for this vnode.
          */
         snprintf(src, sizeof(src), "./pkgs/%s-%s.tar.gz",
                  ptr->config->capp->name,
@@ -222,9 +227,6 @@ static int create_container_file(char *target,
 
     /*
      * Make /tmp/sys point to /ukama/mocksysfs/sys
-     * NOTE: If something created a real /tmp/sys directory earlier, 
-     * ln -sfn might not replace it deterministically. 
-     * If you never create /tmp/sys anywhere else, we're fine.
      */
     sprintf(buffer, CF_SYMLINK, "/ukama/mocksysfs/sys", "/tmp/sys");
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
@@ -245,7 +247,7 @@ static int create_container_file(char *target,
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
     sprintf(buffer, CF_ENV, LIB_PATH, NODE_LIBS);
-    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;    
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
     fclose(fp);
     return TRUE;
@@ -269,11 +271,11 @@ int create_vnode_image(char *target,
 	bootstrapServer = getenv(ENV_BOOTSTRAP_SERVER);
 	if (bootstrapServer == NULL) {
 		log_error("Env variable: %s not set \n default to localhost.",
-            ENV_BOOTSTRAP_SERVER);
+                  ENV_BOOTSTRAP_SERVER);
         bootstrapServer = "localhost";
 	}
 
-	nodeInfo   = node->nodeInfo;
+	nodeInfo = node->nodeInfo;
 
 	if (nodeInfo->moduleCount == 0){
 		log_error("Node has no module. Node uuid: %s type: %s",
