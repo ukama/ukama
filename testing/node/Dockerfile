@@ -95,8 +95,9 @@ COPY boards /boards
 COPY ./scripts/*.sh /scripts/
 COPY supervisord.conf /
 
-CMD ["/sbin/virtualNode", \
-    "--target", "ubuntu:24.04", \
-    "--exec", "create", \
-    "--c", "/apps/", \
-    "--b", "/boards/"]
+CMD /bin/sh -c '/sbin/virtualNode \
+    --target "ubuntu:24.04" \
+    --exec "create" \
+    --c "/apps/" \
+    --b "/boards/" \
+    --runtime "${VNODE_RUNTIME:-supervisor}"'
