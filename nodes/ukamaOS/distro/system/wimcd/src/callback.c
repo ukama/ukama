@@ -146,9 +146,12 @@ static int file_exists_and_non_empty(char *name, char *tag) {
     fileName = (char *)malloc((strlen(DEFAULT_APPS_PKGS_PATH) +
                                strlen(name) + strlen(tag) + 16)*sizeof(char));
 
-    snprintf(fileName, strlen(DEFAULT_APPS_PKGS_PATH) + strlen(name) + strlen(tag) + 16, "%s/%s_%s.tar.gz",
-            DEFAULT_APPS_PKGS_PATH,
-            name, tag);
+    snprintf(fileName,
+             strlen(DEFAULT_APPS_PKGS_PATH) + strlen(name) + strlen(tag) + 16,
+             "%s/%s-%s.tar.gz",
+             DEFAULT_APPS_PKGS_PATH,
+             name,
+             tag);
 
     file = fopen(fileName, "r");
     if (file == NULL) {
