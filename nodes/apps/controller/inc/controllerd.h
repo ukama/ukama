@@ -9,11 +9,16 @@
 #ifndef CONTROLLERD_H
 #define CONTROLLERD_H
 
+#include "ulfius.h"
+
+#include "usys_types.h"
+#include "usys_services.h"
+
 #define SERVICE_NAME        "controller.d"
 #define DEF_LOG_LEVEL       "DEBUG"
 
 /* REST API */
-#define URL_PREFIX          "/v1/controller"
+#define URL_PREFIX          "/v1"
 #define API_RES_EP(ep)      "/" ep
 
 /* Default configuration */
@@ -23,9 +28,14 @@
 #define DEF_SERIAL_PORT     "/dev/ttyUSB0"
 #define DEF_BAUD_RATE       19200
 
-/* Notify.d integration */
-#define DEF_NOTIFY_HOST     "127.0.0.1"
+#define DEF_NODED_HOST      "localhost"
+#define DEF_NODED_EP        "/v1/nodeinfo"
+
+#define DEF_NOTIFY_HOST     "localhost"
 #define DEF_NOTIFY_EP       "/notify/v1/event/"
+
+#define DEF_NODE_ID         "ukama-aaa-bbbb-ccc-dddd"
+#define DEF_NODE_TYPE       "amplifier"
 
 /* Alarm thresholds (48V system defaults) */
 #define DEF_LOW_VOLT_WARN   46.0
@@ -48,5 +58,12 @@ typedef enum {
 /* Status codes */
 #define STATUS_OK   0
 #define STATUS_NOK  (-1)
+
+typedef struct _u_instance  UInst;
+typedef struct _u_instance  UInst;
+typedef struct _u_request   URequest;
+typedef struct _u_response  UResponse;
+typedef json_t              JsonObj;
+typedef json_error_t        JsonErrObj;
 
 #endif /* CONTROLLERD_H */

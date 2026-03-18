@@ -11,7 +11,7 @@ set -o pipefail
 
 HOST="${1:-${CONTROLLER_HOST:-127.0.0.1}}"
 PORT="${2:-${CONTROLLER_PORT:-8095}}"
-BASE="${BASE_URL:-http://${HOST}:${PORT}/v1/controller}"
+BASE="${BASE_URL:-http://${HOST}:${PORT}/v1}"
 TMP_BODY="$(mktemp /tmp/controllerd-api.XXXXXX.json)"
 
 PASS=0

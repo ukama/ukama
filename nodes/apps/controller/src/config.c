@@ -65,22 +65,29 @@ int config_load_from_env(Config *config) {
 
     config->driverName = getenv_dup("CONTROLLER_DRIVER", "victron");
     config->serialPort = getenv_dup("CONTROLLER_SERIAL_PORT", DEF_SERIAL_PORT);
-    config->baudRate = getenv_int("CONTROLLER_BAUD_RATE", DEF_BAUD_RATE);
+    config->baudRate   = getenv_int("CONTROLLER_BAUD_RATE", DEF_BAUD_RATE);
 
     config->notifyPort = usys_find_service_port(SERVICE_NOTIFY);
-    if (!config->notifyPort) {
-        config->notifyPort = 8080;
+    config->nodedPort  = usys_find_service_port(SERVICE_NODE);
+    if (!config->notifyPort || !config->nodedPort) {
+        usys_log_error("Services port not found");
+        return -1;
     }
     snprintf(config->notifyHost, sizeof(config->notifyHost), "%s",
              getenv("NOTIFY_HOST") ? getenv("NOTIFY_HOST") : DEF_NOTIFY_HOST);
     snprintf(config->notifyPath, sizeof(config->notifyPath), "%s", DEF_NOTIFY_EP);
-    config->enableNotify = getenv_bool("CONTROLLER_ENABLE_NOTIFY", true);
+    snprintf(config->nodedHost, sizeof(config->nodedHost), "%s",
+             getenv("NODED_HOST") ? getenv("NODED_HOST") : DEF_NODED_HOST);
 
-    config->lowVoltageWarn = getenv_double("CONTROLLER_LOW_VOLT_WARN", DEF_LOW_VOLT_WARN);
-    config->lowVoltageCrit = getenv_double("CONTROLLER_LOW_VOLT_CRIT", DEF_LOW_VOLT_CRIT);
-    config->highTempWarn = getenv_double("CONTROLLER_HIGH_TEMP_WARN", DEF_HIGH_TEMP_WARN);
-    config->highTempCrit = getenv_double("CONTROLLER_HIGH_TEMP_CRIT", DEF_HIGH_TEMP_CRIT);
-
+    config->enableNotify   = getenv_bool("CONTROLLER_ENABLE_NOTIFY", true);
+    config->lowVoltageWarn = getenv_double("CONTROLLER_LOW_VOLT_WARN",
+                                           DEF_LOW_VOLT_WARN);
+    config->lowVoltageCrit = getenv_double("CONTROLLER_LOW_VOLT_CRIT",
+                                           DEF_LOW_VOLT_CRIT);
+    config->highTempWarn   = getenv_double("CONTROLLER_HIGH_TEMP_WARN",
+                                           DEF_HIGH_TEMP_WARN);
+    config->highTempCrit   = getenv_double("CONTROLLER_HIGH_TEMP_CRIT",
+                                           DEF_HIGH_TEMP_CRIT);
     config->nodeId = getenv_dup("NODE_ID", "unknown");
 
     if (!config->serialPort) {

@@ -38,4 +38,9 @@ json_t *json_serialize_alarm_notification(const Config *config,
 int json_deserialize_voltage_request(json_t *json, double *voltage_v);
 int json_deserialize_relay_request(json_t *json, bool *state);
 
+bool json_deserialize_node_info(char **data,
+                                int  *iData,
+                                char *tag,
+                                json_type type,
+                                json_t *json);
 #endif /* JSERDES_H */

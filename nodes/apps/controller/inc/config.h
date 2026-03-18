@@ -28,12 +28,16 @@ typedef struct {
     char        notifyPath[128];
     bool        enableNotify;
 
+    char        nodedHost[64];
+    int         nodedPort;
+    
     double      lowVoltageWarn;     /* V */
     double      lowVoltageCrit;     /* V */
     double      highTempWarn;       /* °C */
     double      highTempCrit;       /* °C */
 
     char        *nodeId;
+    char        *nodeType;
 } Config;
 
 int  config_load_from_env(Config *config);
