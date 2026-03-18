@@ -58,21 +58,22 @@ int config_load_from_env(Config *config) {
 
     memset(config, 0, sizeof(*config));
 
+    config->listenPort = usys_find_service_port(SERVICE_CONTROLLER);
+    config->notifyPort = usys_find_service_port(SERVICE_NOTIFY);
+    config->nodedPort  = usys_find_service_port(SERVICE_NODE);
+    if (!config->listenPort ||
+        !config->notifyPort ||
+        !config->nodedPort) {
+        usys_log_error("Services port not found");
+        return -1;
+    }
+
     config->listenAddr = getenv_dup("CONTROLLER_LISTEN_ADDR", DEF_LISTEN_ADDR);
-    config->listenPort = (uint16_t)getenv_int("CONTROLLER_LISTEN_PORT", DEF_LISTEN_PORT);
-
-    config->sampleMs = (uint32_t)getenv_int("CONTROLLER_SAMPLE_MS", DEF_SAMPLE_MS);
-
+    config->sampleMs   = (uint32_t)getenv_int("CONTROLLER_SAMPLE_MS", DEF_SAMPLE_MS);
     config->driverName = getenv_dup("CONTROLLER_DRIVER", "victron");
     config->serialPort = getenv_dup("CONTROLLER_SERIAL_PORT", DEF_SERIAL_PORT);
     config->baudRate   = getenv_int("CONTROLLER_BAUD_RATE", DEF_BAUD_RATE);
 
-    config->notifyPort = usys_find_service_port(SERVICE_NOTIFY);
-    config->nodedPort  = usys_find_service_port(SERVICE_NODE);
-    if (!config->notifyPort || !config->nodedPort) {
-        usys_log_error("Services port not found");
-        return -1;
-    }
     snprintf(config->notifyHost, sizeof(config->notifyHost), "%s",
              getenv("NOTIFY_HOST") ? getenv("NOTIFY_HOST") : DEF_NOTIFY_HOST);
     snprintf(config->notifyPath, sizeof(config->notifyPath), "%s", DEF_NOTIFY_EP);
