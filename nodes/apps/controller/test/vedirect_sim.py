@@ -583,23 +583,22 @@ def lookup_sunrise_sunset_api(lat: float, lon: float,
     except Exception:
         return None
 
-
 def resolve_site(args: argparse.Namespace) -> SiteInfo:
     if args.city:
-    city = resolve_city_preset(args.city)
-    if city is not None:
-        tz_offset_h = city["tz_offset_h"]
-        if args.tz_offset is not None:
-            tz_offset_h = args.tz_offset
+        city = resolve_city_preset(args.city)
+        if city is not None:
+            tz_offset_h = city["tz_offset_h"]
+            if args.tz_offset is not None:
+                tz_offset_h = args.tz_offset
 
-        return SiteInfo(
-            name=city["display_name"],
-            lat=city["lat"],
-            lon=city["lon"],
-            tz_offset_h=tz_offset_h,
-            sunrise_h=city["sunrise_h"],
-            sunset_h=city["sunset_h"],
-        )
+            return SiteInfo(
+                name=city["display_name"],
+                lat=city["lat"],
+                lon=city["lon"],
+                tz_offset_h=tz_offset_h,
+                sunrise_h=city["sunrise_h"],
+                sunset_h=city["sunset_h"],
+            )
 
         if not args.use_api:
             raise SystemExit(
@@ -614,7 +613,11 @@ def resolve_site(args: argparse.Namespace) -> SiteInfo:
         lat, lon, display_name = geo
         tz_offset_h = 0.0 if args.tz_offset is None else args.tz_offset
         day_of_year = now_at_offset(tz_offset_h).timetuple().tm_yday
-        sunrise_h, sunset_h = fallback_sunrise_sunset(lat, day_of_year)
+        sunrise_h, sunset_h = fallback_sunrise_sunset(
+            lat,
+            day_of_year,
+        )
+
         return SiteInfo(
             name=display_name,
             lat=lat,
@@ -627,7 +630,10 @@ def resolve_site(args: argparse.Namespace) -> SiteInfo:
     if args.lat is not None and args.lon is not None:
         tz_offset_h = 0.0 if args.tz_offset is None else args.tz_offset
         day_of_year = now_at_offset(tz_offset_h).timetuple().tm_yday
-        sunrise_h, sunset_h = fallback_sunrise_sunset(args.lat, day_of_year)
+        sunrise_h, sunset_h = fallback_sunrise_sunset(
+            args.lat,
+            day_of_year,
+        )
         return SiteInfo(
             name=f"Lat {args.lat:.4f}, Lon {args.lon:.4f}",
             lat=args.lat,
@@ -650,7 +656,6 @@ def resolve_site(args: argparse.Namespace) -> SiteInfo:
         sunrise_h=city["sunrise_h"],
         sunset_h=city["sunset_h"],
     )
-
 
 def pv_peak_w(config: PlantConfig) -> float:
     return config.pv_count * config.pv_watts_each * config.pv_derate
