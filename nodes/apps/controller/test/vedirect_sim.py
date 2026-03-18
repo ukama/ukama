@@ -476,19 +476,36 @@ def scenario_order(name: str) -> list[str]:
         return ["sunny", "night", "low_batt", "fault"]
     return [name]
 
-
 def city_key(value: str) -> str:
-    return value.strip().lower().replace("_", "-").replace(" ", "-")
+    value = value.strip().lower()
+    value = value.replace(",", " ")
+    value = value.replace("_", " ")
+    value = " ".join(value.split())
+    return value.replace(" ", "-")
 
+def resolve_city_preset(value: str) -> Optional[dict[str, object]]:
+    key = city_key(value)
+
+    if key in CITY_PRESETS:
+        return CITY_PRESETS[key]
+
+    for preset_key, preset in CITY_PRESETS.items():
+        display_key = city_key(preset["display_name"])
+        if key == display_key:
+            return preset
+
+        city_only = city_key(preset["display_name"].split(",")[0])
+        if key == city_only:
+            return preset
+
+    return None
 
 def hour_from_dt(dt: datetime) -> float:
     return dt.hour + dt.minute / 60.0 + dt.second / 3600.0
 
-
 def now_at_offset(tz_offset_h: float) -> datetime:
     tz = timezone(timedelta(hours=tz_offset_h))
     return datetime.now(tz)
-
 
 def fallback_sunrise_sunset(lat: float,
                             day_of_year: int) -> tuple[float, float]:
@@ -569,21 +586,20 @@ def lookup_sunrise_sunset_api(lat: float, lon: float,
 
 def resolve_site(args: argparse.Namespace) -> SiteInfo:
     if args.city:
-        key = city_key(args.city)
-        if key in CITY_PRESETS:
-            city = CITY_PRESETS[key]
-            tz_offset_h = city["tz_offset_h"]
-            if args.tz_offset is not None:
-                tz_offset_h = args.tz_offset
+    city = resolve_city_preset(args.city)
+    if city is not None:
+        tz_offset_h = city["tz_offset_h"]
+        if args.tz_offset is not None:
+            tz_offset_h = args.tz_offset
 
-            return SiteInfo(
-                name=city["display_name"],
-                lat=city["lat"],
-                lon=city["lon"],
-                tz_offset_h=tz_offset_h,
-                sunrise_h=city["sunrise_h"],
-                sunset_h=city["sunset_h"],
-            )
+        return SiteInfo(
+            name=city["display_name"],
+            lat=city["lat"],
+            lon=city["lon"],
+            tz_offset_h=tz_offset_h,
+            sunrise_h=city["sunrise_h"],
+            sunset_h=city["sunset_h"],
+        )
 
         if not args.use_api:
             raise SystemExit(
