@@ -1,81 +1,89 @@
-# Local controller.d build for testing with the VE.Direct simulator.
-# Prefers pkg-config on both macOS and Linux; falls back to Homebrew paths on macOS.
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #
-# Usage:
-#   cd nodes/apps/controller
-#   make -f test/Makefile.test
-#   CONTROLLER_SERIAL_PORT=/dev/ttys027 ./controllerd
+# Copyright (c) 2026-present, Ukama Inc.
 
-CC      ?= cc
-PYTHON  ?= python3
-PKG_CONFIG ?= pkg-config
-BREW    ?= brew
-TARGET  = controllerd
+include ../../ukamaOS/config.mk
 
-UNAME_S := $(shell uname -s)
-HB      ?= $(shell $(BREW) --prefix 2>/dev/null || echo /opt/homebrew)
+CC          ?= cc
+PYTHON      ?= python3
+TARGET      = controllerd
 
-PLATFORM_ROOT = ../../ukamaOS/distro/platform
 CONTROLLER_HOST ?= 127.0.0.1
-CONTROLLER_PORT ?= 8095
+CONTROLLER_PORT ?= 18021
 
-PKG_DEPS = libulfius jansson libcurl
-PKG_CONFIG_READY := $(shell command -v $(PKG_CONFIG) >/dev/null 2>&1 && $(PKG_CONFIG) --exists $(PKG_DEPS) >/dev/null 2>&1 && echo yes || echo no)
+VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor/
+VENDOR_BUILD = $(VENDOR_DIR)/build/
+VENDOR_INC   = $(VENDOR_BUILD)/include/
+VENDOR_LIB   = $(VENDOR_BUILD)/lib/
+VENDOR_LIB64 = $(VENDOR_BUILD)/lib64/
 
-CFLAGS  = -g -Wall -Wextra -O0 -D_REENTRANT
+PLATFORM_DIR     = $(UKAMAOS_ROOT)/distro/platform/
+PLATFORM_BUILD   = $(PLATFORM_DIR)/build/
+PLATFORM_INC_SYS = $(PLATFORM_DIR)/sys/inc
+PLATFORM_INC_LOG = $(PLATFORM_DIR)/log/inc
+PLATFORM_LIB     = $(PLATFORM_DIR)/build/
+
+ifeq ($(ALPINE_BUILD),1)
+    $(info Excluding vendor library for Alpine build)
+    VENDOR_PKG =
+else
+    VENDOR_PKG = tomlc jansson ulfius libuuid
+endif
+PLATFORM = platform
+
+CFLAGS  = -c
+CFLAGS += -g
+CFLAGS += -Wall
+CFLAGS += -Wextra
+CFLAGS += -O0
+CFLAGS += -D_REENTRANT
 CFLAGS += -I.
 CFLAGS += -I./inc
 CFLAGS += -I../common/inc
-CFLAGS += -I$(PLATFORM_ROOT)/sys/inc
-CFLAGS += -I$(PLATFORM_ROOT)/log/inc
+CFLAGS += -I$(VENDOR_INC)
+CFLAGS += -I$(PLATFORM_INC_SYS)
+CFLAGS += -I$(PLATFORM_INC_LOG)
 
-LDFLAGS =
-LIBS    =
+LDFLAGS += $(RPATH_FLAGS)
+LDFLAGS += -L$(VENDOR_LIB)
+LDFLAGS += -L$(VENDOR_LIB64)
+LDFLAGS += -L$(PLATFORM_LIB)
 
-ifeq ($(PKG_CONFIG_READY),yes)
-	CFLAGS += $(shell $(PKG_CONFIG) --cflags $(PKG_DEPS))
-	LIBS   += $(shell $(PKG_CONFIG) --libs $(PKG_DEPS))
-else ifeq ($(UNAME_S),Darwin)
-	CFLAGS += -I$(HB)/include
-	LDFLAGS += -L$(HB)/lib
-	LIBS   += -lulfius -lorcania -lyder -lmicrohttpd -lgnutls -lnettle -lhogweed -lp11-kit -lz
-	LIBS   += -ljansson
-	LIBS   += -lcurl
-else
-	LIBS   += -lulfius -lorcania -ljansson -lcurl
+CURL_LIB   = -lcurl -lssl -lcrypto
+ULFIUS_LIB = -lulfius -lorcania -lmicrohttpd -lgnutls -lnettle
+ULFIUS_LIB += -lhogweed -lp11-kit -lz
+ifneq ($(ALPINE_BUILD),1)
+ULFIUS_LIB += -lyder
 endif
 
-ifeq ($(UNAME_S),Darwin)
-	CFLAGS += -I$(HB)/include
-	LDFLAGS += -L$(HB)/lib
-	CFLAGS += -I./test/compat
-	CFLAGS += -Dpthread_spinlock_t=pthread_mutex_t
-endif
+LIBS  = $(ULFIUS_LIB) $(CURL_LIB)
+LIBS += -ljansson
+LIBS += -lpthread
+LIBS += -lm
+LIBS += -lusys
 
-LIBS   += -lpthread
-LIBS   += -lm
+SRCS = $(wildcard src/*.c)
+OBJS = $(SRCS:.c=.o)
 
-SRCS    = $(wildcard src/*.c)
-SRCS   += test/usys_stubs.c
-
-OBJS    = $(SRCS:.c=.o)
-
-.PHONY: all clean check sim-sunny sim-night sim-all api-test
+.PHONY: all clean check sim-sunny sim-night sim-all api-test $(PLATFORM) $(VENDOR_PKG)
 
 all: $(TARGET)
 
-$(TARGET): $(OBJS)
-	$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
+$(TARGET): $(VENDOR_PKG) $(PLATFORM) $(OBJS) $(COMM_OBJFILES)
+	$(CC) -o $@ $(OBJS) $(COMM_OBJFILES) $(LDFLAGS) $(LIBS)
 	@echo ""
-	@echo "  Build complete: ./$(TARGET)"
+	@echo "Build complete: ./$(TARGET)"
+	@echo "Run daemon: CONTROLLER_SERIAL_PORT=/dev/ttyXXX CONTROLLER_DRIVER=victron ./$(TARGET)"
+	@echo "API test:   make -f test/Makefile.test api-test"
 	@echo ""
-	@echo "  Host OS:           $(UNAME_S)"
-	@echo "  pkg-config:        $(PKG_CONFIG_READY)"
-	@echo "  Script checks:     make -f test/Makefile.test check"
-	@echo "  Start simulator:   make -f test/Makefile.test sim-sunny"
-	@echo "  Run daemon:        CONTROLLER_SERIAL_PORT=/dev/ttys0XX CONTROLLER_DRIVER=victron ./$(TARGET)"
-	@echo "  Test API:          make -f test/Makefile.test api-test"
-	@echo ""
+
+$(PLATFORM):
+	$(MAKE) -C $(PLATFORM_DIR)
+
+$(VENDOR_PKG):
+	$(MAKE) -C $(VENDOR_DIR) $@
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -94,7 +102,8 @@ sim-all:
 	cd test && $(PYTHON) vedirect_sim.py --scenario all
 
 api-test:
-	cd test && CONTROLLER_HOST=$(CONTROLLER_HOST) CONTROLLER_PORT=$(CONTROLLER_PORT) ./test_api.sh
+	cd test && CONTROLLER_HOST=$(CONTROLLER_HOST) \
+CONTROLLER_PORT=$(CONTROLLER_PORT) ./test_api.sh
 
 clean:
 	rm -f $(TARGET) $(OBJS)
