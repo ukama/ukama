@@ -144,7 +144,7 @@ static inline char *usys_strcat(char *dest, const char *src) {
  * @return destination string
  */
 static inline char *usys_strncat(char *dest, const char *src, size_t num) {
-    return strcat(dest, src);
+    return strncat(dest, src, num);
 }
 
 /**
