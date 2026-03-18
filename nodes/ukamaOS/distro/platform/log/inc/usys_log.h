@@ -50,7 +50,7 @@ static inline const char *usys_log_level_string(int level) {
  * @param fn
  * @param udata
  */
-void static inline usys_log_set_lock(log_LockFn fn, void *udata) {
+static inline void usys_log_set_lock(log_LockFn fn, void *udata) {
     log_set_lock(fn, udata);
 }
 
