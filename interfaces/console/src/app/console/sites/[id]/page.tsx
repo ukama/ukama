@@ -109,7 +109,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const [activeSubscribers, setActiveSubscribers] = useState<number>(0);
   const [activeView, setActiveView] = useState<ActiveView>({
     graphType: Graphs_Type.Solar,
-    kpi: 'solar',
+    kpi: 'node',
   });
 
   const subscribersSubscriptionRef = useRef<string | null>(null);
@@ -340,8 +340,8 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     if (id && user.id && user.orgName) {
       filterActiveSite(id);
       setActiveView({
-        graphType: Graphs_Type.Solar,
-        kpi: 'solar',
+        graphType: Graphs_Type.NodeHealth,
+        kpi: 'node',
       });
     }
   }, [id, user.id, user.orgName, filterActiveSite]);
@@ -453,6 +453,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         overflowX: 'hidden',
         borderRadius: '10px',
         width: '100%',
+        height: 'calc(100vh - 164px)',
       }}
     >
       <SiteDetailsHeader
@@ -508,24 +509,23 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
             userCount={activeSubscribers}
           />
         </Grid2>
+        <Grid2 size={12}>
+          <SiteComponents
+            key={`${activeView.kpi}-${metricFrom}`}
+            siteId={activeSite.id}
+            metrics={metrics}
+            sections={sections}
+            activeKPI={activeView.kpi}
+            activeSection={getSectionName(activeView.graphType)}
+            metricFrom={metricFrom}
+            metricsLoading={metricsLoading}
+            onComponentClick={handleViewChange}
+            onSwitchChange={handleSwitchChange}
+            nodeIds={nodeIds}
+            initialNodeUptimes={initialNodeUptimes}
+          />
+        </Grid2>
       </Grid2>
-
-      <Box sx={{ mt: 4, mb: 4 }}>
-        <SiteComponents
-          key={`${activeView.kpi}-${metricFrom}`}
-          siteId={activeSite.id}
-          metrics={metrics}
-          sections={sections}
-          activeKPI={activeView.kpi}
-          activeSection={getSectionName(activeView.graphType)}
-          metricFrom={metricFrom}
-          metricsLoading={metricsLoading}
-          onComponentClick={handleViewChange}
-          onSwitchChange={handleSwitchChange}
-          nodeIds={nodeIds}
-          initialNodeUptimes={initialNodeUptimes}
-        />
-      </Box>
     </Box>
   );
 };

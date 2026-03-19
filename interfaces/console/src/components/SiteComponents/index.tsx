@@ -14,7 +14,6 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
-  Card,
   Paper,
   Stack,
   Switch,
@@ -24,6 +23,7 @@ import Grid from '@mui/material/Grid2';
 import React, { useEffect, useState } from 'react';
 import SiteFlowDiagram from '../../../public/svg/sitecomps';
 import LineChart from '../LineChart';
+import NodeStatusDisplay from '../NodeStatusDisplay';
 interface SiteComponentsProps {
   siteId: string;
   metrics: MetricsRes;
@@ -291,100 +291,99 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
   };
 
   return (
-    <Box>
-      <Card
-        sx={{
-          p: 3,
-          borderRadius: 2,
-          width: '100%',
-        }}
-      >
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12, md: 3 }}>
-            <Stack spacing={2}>
-              <SiteFlowDiagram
-                defaultOpacity={0.1}
-                onNodeClick={onComponentClick}
-                activeKPI={activeKPI}
-              />
-            </Stack>
-          </Grid>
+    <Paper
+      sx={{
+        p: 2,
+        borderRadius: 2,
+        minHeight: 'fit-content',
+        height: 'fit-content',
+      }}
+    >
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, md: 3 }} alignSelf="center">
+          <SiteFlowDiagram
+            defaultOpacity={0.1}
+            onNodeClick={onComponentClick}
+            activeKPI={activeKPI}
+          />
+        </Grid>
 
-          <Grid size={{ xs: 12, md: 9 }}>
-            {activeKPI === 'node' ? (
-              // <NodeStatusDisplay nodeUptimes={nodeUptimes} />
-              <div>Node Status Display</div>
-            ) : (
-              <Paper
-                sx={{
-                  p: 3,
-                  pr: 5,
-                  overflow: 'auto',
-                  height: {
-                    xs: 'calc(100vh - 480px)',
-                    md: 'calc(100vh - 328px)',
-                  },
-                }}
-              >
-                {activeSection === 'SWITCH' && (
-                  <Box sx={{ mb: 4 }}>
-                    <Box
+        <Grid size={{ xs: 12, md: 9 }}>
+          {activeKPI === 'node' ? (
+            <NodeStatusDisplay
+              nodeIds={nodeIds ?? []}
+              nodeUptimes={nodeUptimes}
+            />
+          ) : (
+            <Paper
+              sx={{
+                p: 3,
+                pr: 5,
+                overflow: 'auto',
+                height: {
+                  xs: 'calc(100vh - 480px)',
+                  md: 'calc(100vh - 328px)',
+                },
+              }}
+            >
+              {activeSection === 'SWITCH' && (
+                <Box sx={{ mb: 4 }}>
+                  <Box
+                    sx={{
+                      p: 2,
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Typography
+                      variant="h6"
+                      fontWeight="medium"
                       sx={{
-                        p: 2,
-                        borderRadius: 1,
+                        mb: 2,
+                        pb: 1,
+                        borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
                       }}
                     >
-                      <Typography
-                        variant="h6"
-                        fontWeight="medium"
-                        sx={{
-                          mb: 2,
-                          pb: 1,
-                          borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
-                        }}
-                      >
-                        {(() => {
-                          const portMetrics = getPortMetrics();
-                          const totalPorts = portMetrics.length;
-                          const activePorts = Object.values(
-                            localSwitchStatus,
-                          ).filter((status) => status === true).length;
-                          return `Switch ports (${activePorts} active / ${totalPorts} total)`;
-                        })()}
-                      </Typography>
+                      {(() => {
+                        const portMetrics = getPortMetrics();
+                        const totalPorts = portMetrics.length;
+                        const activePorts = Object.values(
+                          localSwitchStatus,
+                        ).filter((status) => status === true).length;
+                        return `Switch ports (${activePorts} active / ${totalPorts} total)`;
+                      })()}
+                    </Typography>
 
-                      {getPortMetrics().map((portGroup) =>
-                        renderPortItem(portGroup),
-                      )}
-                    </Box>
+                    {getPortMetrics().map((portGroup) =>
+                      renderPortItem(portGroup),
+                    )}
                   </Box>
-                )}
+                </Box>
+              )}
 
-                {activeSection !== 'SWITCH' && (
-                  <Stack spacing={4}>
-                    {sections[activeSection]?.map((config) => (
-                      <LineChart
-                        from={metricFrom}
-                        topic={config.id}
-                        title={config.name}
-                        yunit={config.unit}
-                        loading={metricsLoading}
-                        key={config.id}
-                        tickInterval={config.tickInterval}
-                        tickPositions={config.tickPositions}
-                        hasData={isMetricValue(config.id, metrics)}
-                        initData={getMetricValue(config.id, metrics)}
-                        format={config.format}
-                      />
-                    ))}
-                  </Stack>
-                )}
-              </Paper>
-            )}
-          </Grid>
+              {activeSection !== 'SWITCH' && (
+                <Stack spacing={4}>
+                  {sections[activeSection]?.map((config) => (
+                    <LineChart
+                      from={metricFrom}
+                      topic={config.id}
+                      title={config.name}
+                      yunit={config.unit}
+                      loading={metricsLoading}
+                      key={config.id}
+                      tickInterval={config.tickInterval}
+                      tickPositions={config.tickPositions}
+                      hasData={isMetricValue(config.id, metrics)}
+                      initData={getMetricValue(config.id, metrics)}
+                      format={config.format}
+                    />
+                  ))}
+                </Stack>
+              )}
+            </Paper>
+          )}
         </Grid>
-      </Card>
-    </Box>
+      </Grid>
+    </Paper>
   );
 };
 
