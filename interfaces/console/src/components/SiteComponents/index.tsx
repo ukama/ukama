@@ -5,27 +5,25 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import React, { useState, useEffect } from 'react';
+import { MetricsRes } from '@/client/graphql/generated/subscriptions';
+import { SectionData, SITE_KPI_TYPES } from '@/constants';
+import { getMetricValue, getPortInfo, isMetricValue } from '@/utils';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Card,
-  Grid,
-  Stack,
   Paper,
-  Typography,
+  Stack,
   Switch,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
+  Typography,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import LineChart from '../LineChart';
-import { MetricsRes } from '@/client/graphql/generated/subscriptions';
-import { getMetricValue, getPortInfo, isMetricValue } from '@/utils';
+import Grid from '@mui/material/Grid2';
+import React, { useEffect, useState } from 'react';
 import SiteFlowDiagram from '../../../public/svg/sitecomps';
-import NodeStatusDisplay from '@/components/NodeStatusDisplay';
-import { SectionData, SITE_KPI_TYPES } from '@/constants';
-
+import LineChart from '../LineChart';
 interface SiteComponentsProps {
   siteId: string;
   metrics: MetricsRes;
@@ -302,7 +300,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
         }}
       >
         <Grid container spacing={3}>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Stack spacing={2}>
               <SiteFlowDiagram
                 defaultOpacity={0.1}
@@ -312,9 +310,10 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
             </Stack>
           </Grid>
 
-          <Grid item xs={12} md={9}>
+          <Grid size={{ xs: 12, md: 9 }}>
             {activeKPI === 'node' ? (
-              <NodeStatusDisplay nodeUptimes={nodeUptimes} />
+              // <NodeStatusDisplay nodeUptimes={nodeUptimes} />
+              <div>Node Status Display</div>
             ) : (
               <Paper
                 sx={{

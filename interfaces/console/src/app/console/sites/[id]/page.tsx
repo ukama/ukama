@@ -31,7 +31,7 @@ import {
 } from '@/utils';
 import { useFetchAddress } from '@/utils/useFetchAddress';
 import { useMetricSubscriptions } from '@/utils/useMetricSubscriptions';
-import { AlertColor, Box, Grid, Skeleton } from '@mui/material';
+import { AlertColor, Box, Grid2, Skeleton } from '@mui/material';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import PubSub from 'pubsub-js';
@@ -369,12 +369,6 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   useEffect(() => {
     const handleFetchAddress = async () => {
       if (activeSite.latitude && activeSite.longitude) {
-        setSnackbarMessage({
-          id: 'fetching-address',
-          type: 'info',
-          show: true,
-          message: 'Fetching address with coordinates',
-        });
         await fetchAddress(
           activeSite.latitude.toString(),
           activeSite.longitude.toString(),
@@ -437,18 +431,18 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
 
   if (!isDataReady) {
     return (
-      <Grid container columnSpacing={2}>
+      <Grid2 container columnSpacing={2}>
         {[1, 2].map((item) => (
-          <Grid item xs={6} key={item}>
+          <Grid2 size={6} key={item}>
             <Skeleton
               variant="rectangular"
               height={158}
               width={'100%'}
               sx={{ borderRadius: '5px' }}
             />
-          </Grid>
+          </Grid2>
         ))}
-      </Grid>
+      </Grid2>
     );
   }
 
@@ -469,43 +463,52 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         siteStatMetrics={statData?.getSiteStat ?? { metrics: [] }}
       />
 
-      <Grid
+      <Grid2
         container
         spacing={2}
+        alignItems="stretch"
         sx={{
           mt: 1,
-          height: 'calc(50vh - 50px)',
+          height: 'max-content',
         }}
       >
-        <Grid item sx={{ height: '100%' }} xs={12} sm={6} md={4}>
+        <Grid2
+          size={{ xs: 12, sm: 6, md: 4 }}
+          sx={{ height: 'auto', display: 'flex' }}
+        >
           <SiteInfo
             selectedSite={activeSite}
             address={CurrentSiteaddress}
             nodeIds={nodeIds}
           />
-        </Grid>
-        <Grid item sx={{ height: '100%' }} xs={12} sm={6} md={5}>
+        </Grid2>
+        <Grid2
+          size={{ xs: 12, sm: 6, md: 5 }}
+          sx={{ height: '100%', display: 'flex' }}
+        >
           <SiteOverview
             installationDate={new Date(activeSite.installDate)}
             isLoading={statLoading}
             siteId={activeSite.id}
             siteStatMetrics={statData?.getSiteStat ?? { metrics: [] }}
           />
-        </Grid>
-        <Grid item sx={{ height: '100%' }} xs={12} sm={6} md={3}>
+        </Grid2>
+        <Grid2
+          size={{ xs: 12, sm: 6, md: 3 }}
+          sx={{ height: 'auto', display: 'flex', minHeight: 200 }}
+        >
           <SiteMapComponent
-            posix={[
-              Number.parseFloat(activeSite.latitude),
-              Number.parseFloat(activeSite.longitude),
-            ]}
+            id="site-map"
+            zoom={15}
+            posix={[activeSite.latitude ?? '0', activeSite.longitude ?? '0']}
             address={CurrentSiteaddress}
             height={'100%'}
             mapStyle="satellite"
             showUserCount={true}
             userCount={activeSubscribers}
           />
-        </Grid>
-      </Grid>
+        </Grid2>
+      </Grid2>
 
       <Box sx={{ mt: 4, mb: 4 }}>
         <SiteComponents
