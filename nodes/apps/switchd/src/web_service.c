@@ -43,7 +43,7 @@ static int ws_reply_error(UResponse *response,
     int ret;
 
     json = json_object();
-    json_object_set_new(json, JTAG_ERROR, json_string(error));
+    json_object_set_new(json, JTAG_ERROR,  json_string(error));
     json_object_set_new(json, JTAG_DETAIL, json_string(detail ? detail : ""));
     ret = ws_reply_json(response, status, json);
     json_free(&json);
@@ -75,7 +75,9 @@ int web_service_cb_ping(const URequest *request,
     (void)epConfig;
 
     json = json_object();
-    json_object_set_new(json, JTAG_STATUS, json_string("ok"));
+    json_object_set_new(json,
+                        JTAG_STATUS,
+                        json_string(HttpStatusStr(HttpStatus_OK)));
     return ws_reply_json(response, HttpStatus_OK, json);
 }
 
@@ -174,7 +176,7 @@ int web_service_cb_get_port(const URequest *request,
     if (ws_get_port_id(request, &portId) != STATUS_OK) {
         return ws_reply_error(response,
                               HttpStatus_BadRequest,
-                              "invalidRequest",
+                              HttpStatusStr(HttpStatus_BadRequest),
                               "bad port id");
     }
 
@@ -182,7 +184,7 @@ int web_service_cb_get_port(const URequest *request,
     if (port == NULL) {
         return ws_reply_error(response,
                               HttpStatus_NotFound,
-                              "notFound",
+                              HttpStatusStr(HttpStatus_NotFound),
                               "port not found");
     }
 
@@ -210,24 +212,32 @@ int web_service_cb_post_port_admin(const URequest *request,
         !json_deserialize_bool_request(request, JTAG_UP, &up)) {
         return ws_reply_error(response,
                               HttpStatus_BadRequest,
-                              "invalidRequest",
+                              HttpStatusStr(HttpStatus_BadRequest),
                               "expected {\"up\":true|false}");
     }
 
     ret = switchd_set_port_admin(ctx, portId, up);
     if (ret == SWITCHD_ERR_BUSY) {
-        return ws_reply_error(response, HttpStatus_Conflict, "busy", "operation in progress");
+        return ws_reply_error(response,
+                              HttpStatus_Conflict,
+                              HttpStatusStr(HttpStatus_Conflict),
+                              "operation in progress");
     } else if (ret == SWITCHD_ERR_NOTFOUND) {
-        return ws_reply_error(response, HttpStatus_NotFound, "notFound", "port not found");
+        return ws_reply_error(response,
+                              HttpStatus_NotFound,
+                              HttpStatusStr(HttpStatus_NotFound),
+                              "port not found");
     } else if (ret != SWITCHD_OK) {
         return ws_reply_error(response,
                               HttpStatus_InternalServerError,
-                              "failed",
+                              HttpStatusStr(HttpStatus_InternalServerError),
                               switch_error_to_str(ret));
     }
 
     json = json_object();
-    json_object_set_new(json, JTAG_RESULT, json_string("ok"));
+    json_object_set_new(json,
+                        JTAG_RESULT,
+                        json_string(HttpStatusStr(HttpStatus_OK)));
     return ws_reply_json(response, HttpStatus_OK, json);
 }
 
@@ -245,29 +255,38 @@ int web_service_cb_post_port_poe(const URequest *request,
         !json_deserialize_bool_request(request, JTAG_ON, &on)) {
         return ws_reply_error(response,
                               HttpStatus_BadRequest,
-                              "invalidRequest",
+                              HttpStatusStr(HttpStatus_BadRequest),
                               "expected {\"on\":true|false}");
     }
 
     ret = switchd_set_port_poe(ctx, portId, on);
     if (ret == SWITCHD_ERR_BUSY) {
-        return ws_reply_error(response, HttpStatus_Conflict, "busy", "operation in progress");
+        return ws_reply_error(response,
+                              HttpStatus_Conflict,
+                              HttpStatusStr(HttpStatus_Conflict),
+                              "operation in progress");
     } else if (ret == SWITCHD_ERR_NOTFOUND) {
-        return ws_reply_error(response, HttpStatus_NotFound, "notFound", "port not found");
+        return ws_reply_error(response,
+                              HttpStatus_NotFound,
+                              HttpStatusStr(HttpStatus_NotFound),
+                              "port not found");
     } else if (ret == SWITCHD_ERR_UNSUPPORTED) {
         return ws_reply_error(response,
                               HttpStatus_NotImplemented,
-                              "unsupported",
+                              HttpStatusStr(HttpStatus_NotImplemented),
                               "PoE not supported on this port");
     } else if (ret != SWITCHD_OK) {
         return ws_reply_error(response,
                               HttpStatus_InternalServerError,
-                              "failed",
+                              HttpStatusStr(HttpStatus_InternalServerError),
                               switch_error_to_str(ret));
     }
 
     json = json_object();
-    json_object_set_new(json, JTAG_RESULT, json_string("ok"));
+    json_object_set_new(json,
+                        JTAG_RESULT,
+                        json_string(HttpStatusStr(HttpStatus_OK)));
+
     return ws_reply_json(response, HttpStatus_OK, json);
 }
 
@@ -284,7 +303,7 @@ int web_service_cb_post_port_poe_cycle(const URequest *request,
     if (ws_get_port_id(request, &portId) != STATUS_OK) {
         return ws_reply_error(response,
                               HttpStatus_BadRequest,
-                              "invalidRequest",
+                              HttpStatusStr(HttpStatus_NotFound),
                               "bad port id");
     }
 
@@ -293,23 +312,31 @@ int web_service_cb_post_port_poe_cycle(const URequest *request,
 
     ret = switchd_cycle_port_poe(ctx, portId, offMs);
     if (ret == SWITCHD_ERR_BUSY) {
-        return ws_reply_error(response, HttpStatus_Conflict, "busy", "operation in progress");
+        return ws_reply_error(response,
+                              HttpStatus_Conflict,
+                              HttpStatusStr(HttpStatus_Conflict),
+                              "operation in progress");
     } else if (ret == SWITCHD_ERR_NOTFOUND) {
-        return ws_reply_error(response, HttpStatus_NotFound, "notFound", "port not found");
+        return ws_reply_error(response,
+                              HttpStatus_NotFound,
+                              HttpStatusStr(HttpStatus_NotFound),
+                              "port not found");
     } else if (ret == SWITCHD_ERR_UNSUPPORTED) {
         return ws_reply_error(response,
                               HttpStatus_NotImplemented,
-                              "unsupported",
+                              HttpStatusStr(HttpStatus_NotImplemented),
                               "PoE not supported on this port");
     } else if (ret != SWITCHD_OK) {
         return ws_reply_error(response,
                               HttpStatus_InternalServerError,
-                              "failed",
+                              HttpStatusStr(HttpStatus_InternalServerError),
                               switch_error_to_str(ret));
     }
 
     json = json_object();
-    json_object_set_new(json, JTAG_RESULT, json_string("ok"));
+    json_object_set_new(json,
+                        JTAG_RESULT,
+                        json_string(HttpStatusStr(HttpStatus_OK)));
     return ws_reply_json(response, HttpStatus_OK, json);
 }
 
@@ -348,7 +375,7 @@ int web_service_cb_post_firmware_stage(const URequest *request,
                                                  sizeof(sha256))) {
         return ws_reply_error(response,
                               HttpStatus_BadRequest,
-                              "invalidRequest",
+                              HttpStatusStr(HttpStatus_BadRequest),
                               "expected path, optional version/sha256");
     }
 
@@ -357,16 +384,19 @@ int web_service_cb_post_firmware_stage(const URequest *request,
                                  version[0] ? version : NULL,
                                  sha256[0] ? sha256 : NULL);
     if (ret == SWITCHD_ERR_BUSY) {
-        return ws_reply_error(response, HttpStatus_Conflict, "busy", "operation in progress");
+        return ws_reply_error(response,
+                              HttpStatus_Conflict,
+                              HttpStatusStr(HttpStatus_Conflict),
+                              "operation in progress");
     } else if (ret == SWITCHD_ERR_NOTFOUND) {
         return ws_reply_error(response,
                               HttpStatus_NotFound,
-                              "notFound",
+                              HttpStatusStr(HttpStatus_NotFound),
                               "firmware file not readable");
     } else if (ret != SWITCHD_OK) {
         return ws_reply_error(response,
                               HttpStatus_InternalServerError,
-                              "failed",
+                              HttpStatusStr(HttpStatus_InternalServerError),
                               switch_error_to_str(ret));
     }
 
@@ -385,16 +415,19 @@ int web_service_cb_post_firmware_apply(const URequest *request,
     ctx = ws_ctx(epConfig);
     ret = switchd_apply_firmware(ctx);
     if (ret == SWITCHD_ERR_BUSY) {
-        return ws_reply_error(response, HttpStatus_Conflict, "busy", "operation in progress");
+        return ws_reply_error(response,
+                              HttpStatus_Conflict,
+                              HttpStatusStr(HttpStatus_Conflict),
+                              "operation in progress");
     } else if (ret == SWITCHD_ERR_STATE) {
         return ws_reply_error(response,
                               HttpStatus_Conflict,
-                              "invalidState",
+                              HttpStatusStr(HttpStatus_Conflict),
                               "firmware is not staged");
     } else if (ret != SWITCHD_OK) {
         return ws_reply_error(response,
                               HttpStatus_InternalServerError,
-                              "failed",
+                              HttpStatusStr(HttpStatus_InternalServerError),
                               switch_error_to_str(ret));
     }
 
@@ -422,7 +455,7 @@ int web_service_cb_default(const URequest *request,
     (void)epConfig;
     return ws_reply_error(response,
                           HttpStatus_NotFound,
-                          "notFound",
+                          HttpStatusStr(HttpStatus_NotFound),
                           "endpoint not found");
 }
 
@@ -433,13 +466,15 @@ int web_service_cb_not_allowed(const URequest *request,
     (void)epConfig;
     return ws_reply_error(response,
                           HttpStatus_MethodNotAllowed,
-                          "methodNotAllowed",
+                          HttpStatusStr(HttpStatus_MethodNotAllowed),
                           HttpStatusStr(HttpStatus_MethodNotAllowed));
 }
 
 int web_service_start(SwitchdContext *ctx, UInst *serviceInst) {
-    if (ulfius_init_instance(serviceInst, ctx->config.httpPort, NULL, NULL) !=
-        U_OK) {
+
+    if (ulfius_init_instance(serviceInst,
+                             ctx->config.httpPort,
+                             NULL, NULL) != U_OK) {
         return STATUS_NOK;
     }
 

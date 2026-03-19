@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    signal(SIGINT, handle_signal);
+    signal(SIGINT,  handle_signal);
     signal(SIGTERM, handle_signal);
 
     if (switchd_init(&gSwitchd) != SWITCHD_OK) {
