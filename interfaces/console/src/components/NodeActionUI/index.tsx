@@ -41,6 +41,7 @@ export const NodeActionUI = ({
           {action && (
             <Typography variant="h6" color="text.secondary">
               {action === NODE_ACTIONS_ENUM.NODE_RESTART && 'Restarting node'}
+              {action === NODE_ACTIONS_ENUM.NODE_LOADING && 'Loading node'}
             </Typography>
           )}
           <Stack

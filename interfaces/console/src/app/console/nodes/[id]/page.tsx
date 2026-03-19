@@ -12,11 +12,15 @@ import {
   NodeConnectivityEnum,
   NodeStateEnum,
   NodeTypeEnum,
+  SoftwareStatusEnum,
+  useGetAppsQuery,
   useGetNodesQuery,
   useRestartNodeMutation,
+  useSoftwareQuery,
   useToggleRfStatusMutation,
   useToggleServiceMutation,
   useUpdateNodeMutation,
+  useUpdateSoftwareMutation,
 } from '@/client/graphql/generated';
 import {
   Graphs_Type,
@@ -32,6 +36,7 @@ import NodeNetworkTab from '@/components/NodeNetworkTab';
 import NodeOverviewTab from '@/components/NodeOverviewTab';
 import NodeRadioTab from '@/components/NodeRadioTab';
 import NodeResourcesTab from '@/components/NodeResourcesTab';
+import NodeSoftwareTab from '@/components/NodeSoftwareTab';
 import NodeStatus from '@/components/NodeStatus';
 import TabPanel from '@/components/TabPanel';
 import {
@@ -69,7 +74,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
   const [nodeAction, setNodeAction] = useState({
     progress: 0,
     currentAction: '',
-    actionInitiated: '',
+    actionInitiated: NODE_ACTIONS_ENUM.NODE_LOADING,
   });
   const [graphType, setGraphType] = useState<Graphs_Type>(
     Graphs_Type.NodeHealth,
@@ -168,6 +173,48 @@ const Page: React.FC<INodePage> = ({ params }) => {
     },
   });
 
+  const { loading: appsLoading, data: appsData } = useGetAppsQuery({
+    fetchPolicy: 'cache-and-network',
+    onCompleted: (data) => {},
+  });
+
+  const {
+    loading: softwaresLoading,
+    data: softwaresData,
+    refetch: refetchSoftwares,
+  } = useSoftwareQuery({
+    fetchPolicy: 'network-only',
+    variables: {
+      data: {
+        name: '',
+        nodeId: id,
+        status: SoftwareStatusEnum.Unknown,
+      },
+    },
+  });
+
+  const [updateSoftware, { loading: updateSoftwareLoading }] =
+    useUpdateSoftwareMutation({
+      fetchPolicy: 'network-only',
+      onCompleted: (data) => {
+        refetchSoftwares();
+        setSnackbarMessage({
+          id: 'update-software-success-msg',
+          message: 'Software updated successfully.',
+          type: 'success',
+          show: true,
+        });
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'update-software-error-msg',
+          message: error.message,
+          type: 'error',
+          show: true,
+        });
+      },
+    });
+
   const [
     getNodeMetricByTab,
     { loading: nodeMetricsLoading, variables: nodeMetricsVariables },
@@ -260,6 +307,16 @@ const Page: React.FC<INodePage> = ({ params }) => {
       });
     },
   });
+
+  useEffect(() => {
+    if (currentNode?.status.connectivity === NodeConnectivityEnum.Online) {
+      setNodeAction({
+        progress: 0,
+        currentAction: '',
+        actionInitiated: '',
+      });
+    }
+  }, [currentNode]);
 
   useEffect(() => {
     const to = getUnixTime();
@@ -475,14 +532,30 @@ const Page: React.FC<INodePage> = ({ params }) => {
         });
         break;
       default:
-       setSnackbarMessage({
-        id: 'node-action-error-msg',
-        message: 'Invalid action.',
-        type: 'error',
-        show: true,
-      });
-      break;
+        setSnackbarMessage({
+          id: 'node-action-error-msg',
+          message: 'Invalid action.',
+          type: 'error',
+          show: true,
+        });
+        break;
     }
+  };
+
+  const handleUpdateAvailable = (
+    name: string,
+    desiredVersion: string,
+    nodeId: string,
+  ) => {
+    updateSoftware({
+      variables: {
+        data: {
+          name: name,
+          nodeId: nodeId,
+          tag: desiredVersion,
+        },
+      },
+    });
   };
 
   return (
@@ -589,12 +662,16 @@ const Page: React.FC<INodePage> = ({ params }) => {
                 }
               />
             </TabPanel>
-            {/* <TabPanel id={'node-software-tab'} value={selectedTab} index={4}>
-          <NodeSoftwareTab
-            loading={nodeAppsLoading}
-            nodeApps={nodeAppsRes?.getNodeApps.apps ?? []}
-          />
-        </TabPanel> */}
+
+            <TabPanel id={'node-software-tab'} value={selectedTab} index={4}>
+              <NodeSoftwareTab
+                loading={
+                  softwaresLoading || updateSoftwareLoading || appsLoading
+                }
+                nodeApps={softwaresData?.getSoftwares.software ?? []}
+                handleUpdateAvailable={handleUpdateAvailable}
+              />
+            </TabPanel>
             {/* <TabPanel id={'node-schematic-tab'} value={selectedTab} index={5}>
           <NodeSchematicTab
             getSearchValue={() => {}}

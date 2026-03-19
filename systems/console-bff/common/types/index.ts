@@ -118,3 +118,7 @@ type TCorrespondents = {
 export type TCorrespondentsMap = {
   [key: string]: TCorrespondents[];
 };
+
+export type StringResponse = {
+  [key: string]: string;
+};
