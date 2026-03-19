@@ -30,7 +30,8 @@ agent_map_t agent_map[MAX_AGENTS] = {
     {.type = "network_agent",  .agentHandler = network_collector},
     {.type = "ssd_agent",      .agentHandler = ssd_collector},
     {.type = "backhaul_agent", .agentHandler = backhaul_collector},
-    {.type = "femd_agent",     .agentHandler = femd_collector},
+    {.type = "femd_agent",        .agentHandler = femd_collector},
+    {.type = "controllerd_agent", .agentHandler = controllerd_collector},
 };
 
 CollectorFxn get_agent_handler_fxn(char *agent) {
@@ -95,6 +96,11 @@ int backhaul_collector(MetricsCatConfig *stat) {
 int femd_collector(MetricsCatConfig *stat) {
     usys_log_trace("Femd Agent started for source %s", stat->source);
     return femd_collect_stat(stat, metric_server_add_kpi_data);
+}
+
+int controllerd_collector(MetricsCatConfig *stat) {
+    usys_log_trace("Controller Agent started for source %s.", stat->source);
+    return controllerd_collect_stat(stat, metric_server_add_kpi_data);
 }
 
 int collector(char *cfg) {
