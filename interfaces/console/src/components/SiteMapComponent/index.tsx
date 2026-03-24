@@ -35,16 +35,7 @@ interface IMap {
   posix: [string, string];
 }
 
-const SiteMap = ({
-  id,
-  zoom,
-  address,
-  height,
-  mapStyle,
-  showUserCount,
-  userCount,
-  posix,
-}: IMap) => {
+const SiteMap = ({ id, showUserCount, userCount, posix }: IMap) => {
   const mapClassName = styles.map;
   const mapContainer = styles['leaflet-container'];
 
