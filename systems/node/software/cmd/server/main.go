@@ -9,7 +9,9 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
+	"strings"
 
 	"github.com/num30/config"
 
@@ -54,6 +56,31 @@ func initConfig() {
 		b, err := yaml.Marshal(svcConf)
 		if err != nil {
 			log.Infof("Config:\n%s", string(b))
+		}
+	}
+	
+	raw := os.Getenv("NODEGWIPS")
+	if raw == "" {
+		raw = os.Getenv("NODEGWIPs")
+	}
+	if raw != "" {
+		raw = strings.TrimSpace(raw)
+		// Trim surrounding quotes (e.g. from docker-compose: NODEGWIPS='["0.0.0.0", "1.1.1.1"]')
+		raw = strings.TrimPrefix(raw, "'")
+		raw = strings.TrimSuffix(raw, "'")
+		raw = strings.TrimPrefix(raw, "\"")
+		raw = strings.TrimSuffix(raw, "\"")
+		raw = strings.TrimSpace(raw)
+
+		var ips []string
+		if err := json.Unmarshal([]byte(raw), &ips); err != nil {
+			ips = strings.Split(raw, ",")
+			for i := range ips {
+				ips[i] = strings.TrimSpace(strings.Trim(ips[i], "\"'"))
+			}
+		}
+		if len(ips) > 0 {
+			svcConf.NodeGwIPs = ips
 		}
 	}
 	pkg.IsDebugMode = svcConf.DebugMode
@@ -103,7 +130,7 @@ func runGrpcServer(gormdb sql.Db) {
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	softServer := server.NewSoftwareServer(svcConf.OrgName, db.NewSoftwareRepo(gormdb),
-		db.NewAppRepo(gormdb), mbClient, svcConf.DebugMode)
+		db.NewAppRepo(gormdb), mbClient, svcConf.DebugMode, svcConf.NodeGwIPs)
 	eventServer := server.NewSoftwareEventServer(svcConf.OrgName, softServer)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {

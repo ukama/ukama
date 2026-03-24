@@ -10,7 +10,10 @@ package server
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"net"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -34,15 +37,17 @@ type SoftwareServer struct {
 	msgbus               mb.MsgBusServiceClient
 	debug                bool
 	orgName              string
+	nodeGwIPs             []string
 }
 
-func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, appRepo db.AppRepo, msgBus mb.MsgBusServiceClient, debug bool) *SoftwareServer {
+func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, appRepo db.AppRepo, msgBus mb.MsgBusServiceClient, debug bool, nodeGwIP []string) *SoftwareServer {
 	return &SoftwareServer{
 		sRepo:                sRepo,
 		debug:                debug,
 		msgbus:               msgBus,
 		appRepo:              appRepo,
 		orgName:              orgName,
+		nodeGwIPs:             nodeGwIP,
 		nodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
 }
@@ -145,11 +150,25 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 	target := fmt.Sprintf("%s...%s", s.orgName, nId.String())
 	path := fmt.Sprintf("/starter/v1/update/%s/%s", req.Name, req.Tag)
 	log.Infof("Publishing update for software %s to version %s on node %s", req.Name, req.Tag, nId.String())
-	if err := s.publishMessage(target, "POST", path, nId.String()); err != nil {
+
+	nodeGwIP, err := s.getNodeGwIP()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get node gw ip: %v", err)
+	}
+	log.Infof("Node gw ip: %s", nodeGwIP)
+	jsonBody := map[string]string{"host": fmt.Sprintf("http://%s:8080", nodeGwIP)}
+	data, err := json.Marshal(jsonBody)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get software: %v", err)
+	}
+	if len(list) == 0 {
+		return nil, status.Errorf(codes.NotFound, "software not found or already up to date")
+	}
+	
+	if err := s.publishMessage(target, "POST", path, nId.String(), data); err != nil {
 		log.Errorf("Failed to publish update message: %v", err)
 		return nil, status.Errorf(codes.Internal, "failed to publish update message: %v", err)
 	}
-
 	sw.CurrentVersion = req.Tag
 	sw.ChangeLogs = append(sw.ChangeLogs, "Software updated to version "+req.Tag)
 	sw.Status = ukama.SoftwareStatusType(ukama.UpToDate)
@@ -189,16 +208,31 @@ func dbAppToPbApp(app *db.App) *pb.App {
 	}
 }
 
-func (c *SoftwareServer) publishMessage(target string, method string, path string, nodeId string) error {
+func (c *SoftwareServer) publishMessage(target string, method string, path string, nodeId string, data []byte) error {
 	route := "request.cloud.local" + "." + c.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
 	msg := &cpb.NodeFeederMessage{
 		Target:     target,
 		HttpMethod: method,
 		Path:       path,
-		Msg:        []byte(""),
+		Msg:        data,
 		NodeId:     nodeId,
 	}
 	log.Infof("Published software update node %s on path %s on target %s ", nodeId, path, target)
 	err := c.msgbus.PublishRequest(route, msg)
 	return err
+}
+
+func (c *SoftwareServer) getNodeGwIP() (string, error) {
+	if len(c.nodeGwIPs) == 0 {
+		return "", errors.New("no node gw ip found")
+	}
+
+	for _, ip := range c.nodeGwIPs {
+		log.Infof("validating IP : %s", ip)
+		if net.ParseIP(ip) != nil {
+			return ip, nil
+		}
+	}
+	
+	return "", errors.New("no valid node gw ip found")
 }

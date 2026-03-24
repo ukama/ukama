@@ -62,6 +62,13 @@
 #define TRUE  1
 #define FALSE 0
 
+#define MANIFEST_FILENAME "manifest.json"
+
+typedef enum {
+    RUNTIME_SUPERVISOR = 0,
+    RUNTIME_STARTER
+} RuntimeType;
+
 typedef struct build_config_t {
 
 	/* from */

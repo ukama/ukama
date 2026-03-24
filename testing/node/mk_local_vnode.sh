@@ -34,6 +34,7 @@ DEFAULT_VNODE_ID="${DEFAULT_VNODE_ID:-uk-sa2601-tnode-v0-62f1}"
 
 DO_SETUP=0
 VNODE_ID=""
+VNODE_RUNTIME="supervisor"
 
 VNODE_METADATA=$(cat <<'JSON'
 {
@@ -71,11 +72,12 @@ export VNODE_METADATA
 usage() {
     cat <<EOF
 Usage:
-    $0 [--setup] [--node-id <id>|--node-id=<id>]
+    $0 [--setup] [--node-id <id>|--node-id=<id>] [--runtime <supervisor|starter>]
 
 Options:
-    --setup              Install build tools + runtime libs (Ubuntu).
-    --node-id <id>       Virtual node ID (default: $DEFAULT_VNODE_ID)
+    --setup                  Install build tools + runtime libs (Ubuntu).
+    --node-id <id>           Virtual node ID (default: $DEFAULT_VNODE_ID)
+    --runtime <mode>         Runtime mode: supervisor or starter
 EOF
 }
 
@@ -112,6 +114,15 @@ while [[ $# -gt 0 ]]; do
             VNODE_ID="${1#*=}"
             shift
             ;;
+        --runtime)
+            [[ $# -ge 2 ]] || die "--runtime requires a value"
+            VNODE_RUNTIME="$2"
+            shift 2
+            ;;
+        --runtime=*)
+            VNODE_RUNTIME="${1#*=}"
+            shift
+            ;;
         -h|--help)
             usage
             exit 0
@@ -123,7 +134,16 @@ while [[ $# -gt 0 ]]; do
 done
 
 : "${VNODE_ID:=$DEFAULT_VNODE_ID}"
-export VNODE_ID BOOTSTRAP_SERVER
+
+case "$VNODE_RUNTIME" in
+    supervisor|starter)
+        ;;
+    *)
+        die "Invalid runtime: $VNODE_RUNTIME (expected supervisor or starter)"
+        ;;
+esac
+
+export VNODE_ID BOOTSTRAP_SERVER VNODE_RUNTIME
 
 apt_has() {
     apt-cache show "$1" >/dev/null 2>&1
@@ -274,6 +294,7 @@ RUN podman run --network host --privileged -it \
     -e VNODE_METADATA="$VNODE_METADATA" \
     -e VNODE_ID="$VNODE_ID" \
     -e VNODE_RUN_TARGET="local" \
+    -e VNODE_RUNTIME="$VNODE_RUNTIME" \
     -e REPO_SERVER_URL="$REPO_SERVER_URL" \
     -e REPO_NAME="$REPO_NAME" \
     -e BOOTSTRAP_SERVER="$BOOTSTRAP_SERVER" \
