@@ -316,9 +316,11 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
             />
           ) : (
             <Paper
+              elevation={0}
               sx={{
                 p: 3,
                 pr: 5,
+                boxShadow: 'none',
                 overflow: 'auto',
                 height: {
                   xs: 'calc(100vh - 480px)',
@@ -327,36 +329,34 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
               }}
             >
               {activeSection === 'SWITCH' && (
-                <Box sx={{ mb: 4 }}>
-                  <Box
+                <Box
+                  sx={{
+                    p: 2,
+                    borderRadius: 1,
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    fontWeight="medium"
                     sx={{
-                      p: 2,
-                      borderRadius: 1,
+                      mb: 2,
+                      pb: 1,
+                      borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
                     }}
                   >
-                    <Typography
-                      variant="h6"
-                      fontWeight="medium"
-                      sx={{
-                        mb: 2,
-                        pb: 1,
-                        borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
-                      }}
-                    >
-                      {(() => {
-                        const portMetrics = getPortMetrics();
-                        const totalPorts = portMetrics.length;
-                        const activePorts = Object.values(
-                          localSwitchStatus,
-                        ).filter((status) => status === true).length;
-                        return `Switch ports (${activePorts} active / ${totalPorts} total)`;
-                      })()}
-                    </Typography>
+                    {(() => {
+                      const portMetrics = getPortMetrics();
+                      const totalPorts = portMetrics.length;
+                      const activePorts = Object.values(
+                        localSwitchStatus,
+                      ).filter((status) => status === true).length;
+                      return `Switch ports (${activePorts} active / ${totalPorts} total)`;
+                    })()}
+                  </Typography>
 
-                    {getPortMetrics().map((portGroup) =>
-                      renderPortItem(portGroup),
-                    )}
-                  </Box>
+                  {getPortMetrics().map((portGroup) =>
+                    renderPortItem(portGroup),
+                  )}
                 </Box>
               )}
 

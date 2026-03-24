@@ -25,6 +25,7 @@ const NodeStatusDisplay: React.FC<NodeStatusDisplayProps> = ({
 
   return (
     <Paper
+      elevation={0}
       sx={{
         p: 2,
         height: 'fit-content',

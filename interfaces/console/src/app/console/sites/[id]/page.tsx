@@ -431,17 +431,25 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
 
   if (!isDataReady) {
     return (
-      <Grid2 container columnSpacing={2}>
-        {[1, 2].map((item) => (
-          <Grid2 size={6} key={item}>
+      <Grid2 container columnSpacing={2} rowSpacing={2}>
+        {[1, 2, 3].map((item) => (
+          <Grid2 size={4} key={item}>
             <Skeleton
-              variant="rectangular"
-              height={158}
+              height={164}
               width={'100%'}
+              variant="rectangular"
               sx={{ borderRadius: '5px' }}
             />
           </Grid2>
         ))}
+        <Grid2 size={12}>
+          <Skeleton
+            height={300}
+            width={'100%'}
+            variant="rectangular"
+            sx={{ borderRadius: '5px' }}
+          />
+        </Grid2>
       </Grid2>
     );
   }
