@@ -144,7 +144,6 @@ const SiteFlowDiagram: React.FC<SiteFlowDiagramProps> = ({
           height="56"
           rx="12"
           // fill="#0260C1"
-          fillOpacity="0.07"
           fill={getFillColor('solar')}
           fillOpacity={activeKPI === 'solar' ? 0.6 : defaultOpacity}
         />
@@ -175,7 +174,6 @@ const SiteFlowDiagram: React.FC<SiteFlowDiagramProps> = ({
           rx="12"
           // fill=" #ff0000"
           data-testid="site-switch"
-          fillOpacity="0.07"
           fill={getFillColor('switch')}
           fillOpacity={activeKPI === 'switch' ? 0.6 : defaultOpacity}
         />
@@ -206,7 +204,6 @@ const SiteFlowDiagram: React.FC<SiteFlowDiagramProps> = ({
           height="56"
           rx="12"
           // fill="#ff0000"
-          fillOpacity="0.07"
           fill={getFillColor('battery')}
           fillOpacity={activeKPI === 'battery' ? 0.6 : defaultOpacity}
         />
@@ -237,7 +234,6 @@ const SiteFlowDiagram: React.FC<SiteFlowDiagramProps> = ({
           height="56"
           rx="12"
           // fill="#0260C1"
-          fillOpacity="0.07"
           fill={getFillColor('backhaul')}
           fillOpacity={activeKPI === 'backhaul' ? 0.6 : defaultOpacity}
         />
@@ -274,7 +270,6 @@ const SiteFlowDiagram: React.FC<SiteFlowDiagramProps> = ({
           height="56"
           rx="12"
           // fill="#ff0000"
-          fillOpacity="0.07"
           fill={getFillColor('controller')}
           fillOpacity={activeKPI === 'controller' ? 0.6 : defaultOpacity}
         />

@@ -13,7 +13,6 @@ import colors from '@/theme/colors';
 import { Button, Divider, Stack, TextField, Typography } from '@mui/material';
 import { FormikProvider, FormikValues, useFormik } from 'formik';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
 
 interface ISiteName {
   params: {
@@ -38,10 +37,6 @@ const SiteName = ({ params }: ISiteName) => {
     },
     validationSchema: SiteNameSchemaValidation,
   });
-  const [latlng] = useState<[number, number]>([
-    parseFloat(qpLat),
-    parseFloat(qpLng),
-  ]);
 
   const handleBack = () => {
     router.back();
@@ -68,9 +63,10 @@ const SiteName = ({ params }: ISiteName) => {
 
             <Stack spacing={1} mb={3}>
               <SiteMapComponent
-                posix={[latlng[0], latlng[1]]}
+                posix={[qpLat, qpLng]}
                 address={address}
                 height={'128px'}
+                id="configure-site-map-name"
               />
 
               <LField label="Site Location" value={address} />

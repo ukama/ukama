@@ -26,16 +26,16 @@ const ICON = {
 };
 interface IMap {
   id: string;
-  zoom: number;
-  address: string;
-  height: string;
+  zoom?: number;
+  address?: string;
+  height?: string;
   mapStyle?: 'terrain' | 'satellite' | 'streets' | 'light' | 'dark';
-  showUserCount: boolean;
-  userCount: number;
+  showUserCount?: boolean;
+  userCount?: number;
   posix: [string, string];
 }
 
-const SiteMap = ({ id, showUserCount, userCount, posix }: IMap) => {
+const SiteMap = ({ id, showUserCount = false, userCount, posix }: IMap) => {
   const mapClassName = styles.map;
   const mapContainer = styles['leaflet-container'];
 
