@@ -63,16 +63,53 @@ func (n *NodeEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 			return nil, err
 		}
 	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.registry.site.site.create"):
-		c := evt.EventToEventConfig[evt.EventPaymentFailed]
+		c := evt.EventToEventConfig[evt.EventSiteCreate]
 		msg, err := epb.UnmarshalEventAddSite(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
 
+		aId, err := ukama.GetANodeIdFromTNodeId(msg.AccessId)
+		if err != nil {
+			return nil, err
+		}
+		aNodeId, err := ukama.ValidateNodeId(aId.StringLowercase())
+		if err != nil {
+			return nil, err
+		}
+		
+		cId, err := ukama.GetCNodeIdFromTNodeId(msg.AccessId)
+		if err != nil {
+			return nil, err
+		}
+
+		cNodeId, err := ukama.ValidateNodeId(cId.StringLowercase())
+		if err != nil {
+			return nil, err
+		}
+
+		// Add Tower Node to Site
+		log.Infof("Adding Tower Node %s to Site %s with Network %s", msg.AccessId, msg.SiteId, msg.NetworkId)
 		err = n.s.addNodeToSite(msg.AccessId, msg.SiteId, msg.NetworkId)
 		if err != nil {
 			return nil, err
 		}
+
+		// Add Amplifier Node to Site
+		log.Infof("Adding Amplifier Node %s to Site %s with Network %s", aNodeId.StringLowercase(), msg.SiteId, msg.NetworkId)
+		err = n.s.addNodeToSite(aNodeId.StringLowercase(), msg.SiteId, msg.NetworkId)
+		if err != nil {
+			return nil, err
+		}
+
+		// Add Controller Node to Site
+		log.Infof("Adding Controller Node %s to Site %s with Network %s", cNodeId.StringLowercase(), msg.SiteId, msg.NetworkId)
+		err = n.s.addNodeToSite(cNodeId.StringLowercase(), msg.SiteId, msg.NetworkId)
+		if err != nil {
+			return nil, err
+		}
+
+		return &epb.EventResponse{}, nil
 	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.inventory.component.node.added"):
 		msg, err := epb.UnmarshalEventInventoryNodeComponentAdd(e.Msg, "EventInventoryComponentNodeAdded")
 		if err != nil {

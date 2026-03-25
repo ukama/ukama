@@ -16,6 +16,7 @@ import "database/sql/driver"
 	 NODE_TYPE_HOMENODE  = "hnode"
 	 NODE_TYPE_TOWERNODE = "tnode"
 	 NODE_TYPE_AMPNODE   = "anode"
+	 NODE_TYPE_CNODE = "cnode"
 	 NODE_TYPE_UNDEFINED = "undef"
  )
  
