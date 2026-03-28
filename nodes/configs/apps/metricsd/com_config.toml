@@ -601,3 +601,72 @@ metric_server_port = 7001
 			desc   = "Load output current (A)"
 			type   = "METRICTYPE_GAUGE"
 			labels = []
+
+[[stats]]
+	[[stats.switch]]
+		source = "switch"
+		agent  = "switchd_agent"
+		url    = "/v1/metrics/switch"
+
+		[[stats.switch.switch.kpi]]
+			name   = "poe_total_power_watts"
+			ext    = ""
+			desc   = "Total PoE power delivered (W)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.switch.switch.kpi]]
+			name   = "poe_max_power_watts"
+			ext    = ""
+			desc   = "Maximum PoE power budget (W)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.switch.switch.kpi]]
+			name   = "system_temperature_c"
+			ext    = ""
+			desc   = "Switch system temperature (C)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.switch.switch.kpi]]
+			name   = "ambient_temperature_c"
+			ext    = ""
+			desc   = "Switch ambient temperature (C)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.switch.switch.kpi]]
+			name   = "system_power_watts"
+			ext    = ""
+			desc   = "Total system power consumption (W)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.switch.switch.kpi]]
+			name   = "input_voltage"
+			ext    = ""
+			desc   = "Input voltage (V)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.switch.switch.kpi]]
+			name   = "system_current_amps"
+			ext    = ""
+			desc   = "System current draw (A)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.switch.switch.kpi]]
+			name   = "input_link_failure_alarm"
+			ext    = ""
+			desc   = "Input link failure alarm (0=ok, 1=alarm)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.switch.switch.kpi]]
+			name   = "input_poe_failure_alarm"
+			ext    = ""
+			desc   = "Input PoE failure alarm (0=ok, 1=alarm)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []

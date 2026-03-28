@@ -36,7 +36,8 @@ extern "C" {
 #define SERVICE_FEM              "fem"
 #define SERVICE_BACKHAUL         "backhaul"
 #define SERVICE_CONTROLLER       "controller"
-    
+#define SERVICE_SWITCH           "switch"
+
 #ifdef __cplusplus
 }
 #endif
