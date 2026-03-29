@@ -173,9 +173,8 @@ const Page: React.FC<INodePage> = ({ params }) => {
     },
   });
 
-  const { loading: appsLoading, data: appsData } = useGetAppsQuery({
+  const { loading: appsLoading } = useGetAppsQuery({
     fetchPolicy: 'cache-and-network',
-    onCompleted: (data) => {},
   });
 
   const {
@@ -196,7 +195,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
   const [updateSoftware, { loading: updateSoftwareLoading }] =
     useUpdateSoftwareMutation({
       fetchPolicy: 'network-only',
-      onCompleted: (data) => {
+      onCompleted: () => {
         refetchSoftwares();
         setSnackbarMessage({
           id: 'update-software-success-msg',

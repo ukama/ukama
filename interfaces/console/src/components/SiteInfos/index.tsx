@@ -5,10 +5,11 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import React from 'react';
-import { Box, Card, CardContent, Grid, Typography } from '@mui/material';
 import { SiteDto } from '@/client/graphql/generated';
+import { Card, CardContent, Stack, Typography } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import { format } from 'date-fns';
+import React from 'react';
 
 interface SiteInfoProps {
   selectedSite: SiteDto;
@@ -17,22 +18,64 @@ interface SiteInfoProps {
   createdDate?: string;
 }
 
+interface InfoRowProps {
+  label: string;
+  children: React.ReactNode;
+}
+
+const InfoRow = ({ label, children }: InfoRowProps) => {
+  return (
+    <>
+      <Grid size={{ xs: 12, md: 4 }}>
+        <Typography variant="body2" color="text.secondary" fontWeight="medium">
+          {label}
+        </Typography>
+      </Grid>
+      <Grid size={{ xs: 12, md: 8 }}>{children}</Grid>
+    </>
+  );
+};
+
 const SiteInfo: React.FC<SiteInfoProps> = ({
   selectedSite,
   address,
   nodeIds = [],
   createdDate,
 }) => {
-  const formattedDate = createdDate
-    ? format(new Date(createdDate), 'MMMM d, yyyy')
-    : selectedSite.installDate
-      ? format(new Date(selectedSite.installDate), 'MMMM d, yyyy')
-      : 'Not available';
+  const formatMaybeDate = (value?: string | null) => {
+    if (!value) return null;
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return null;
+    return format(parsed, 'MMMM d, yyyy');
+  };
 
-  const formattedCoordinates =
-    selectedSite.latitude && selectedSite.longitude
-      ? `(${selectedSite.latitude}° N, ${selectedSite.longitude}° W)`
-      : '';
+  const formattedDate =
+    formatMaybeDate(createdDate) ??
+    formatMaybeDate(selectedSite.installDate ?? null) ??
+    'Not available';
+
+  const toNumberOrNull = (value: unknown) => {
+    if (value == null) return null;
+    if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+    if (typeof value === 'string') {
+      const parsed = Number.parseFloat(value);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+    return null;
+  };
+
+  const latitude = toNumberOrNull(selectedSite.latitude);
+  const longitude = toNumberOrNull(selectedSite.longitude);
+  const hasCoordinates = latitude != null && longitude != null;
+  const latitudeHemisphere = latitude != null && latitude >= 0 ? 'N' : 'S';
+  const longitudeHemisphere = longitude != null && longitude >= 0 ? 'E' : 'W';
+  const formattedCoordinates = hasCoordinates
+    ? `(${Math.abs(latitude)}° ${latitudeHemisphere}, ${Math.abs(
+        longitude,
+      )}° ${longitudeHemisphere})`
+    : null;
+
+  const locationLabel = address || selectedSite.location || 'Not available';
 
   return (
     <Card
@@ -44,67 +87,40 @@ const SiteInfo: React.FC<SiteInfoProps> = ({
         flexDirection: 'column',
       }}
     >
-      <CardContent sx={{ padding: 4, flexGrow: 1 }}>
-        <Typography variant="h6" sx={{ mb: 4 }}>
+      <CardContent sx={{ padding: 2, flexGrow: 1, minHeight: 0 }}>
+        <Typography variant="h6" sx={{ mb: { xs: 2, md: 4 } }}>
           Site information
         </Typography>
 
-        <Grid container spacing={4}>
-          <Grid item xs={12} md={4}>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              fontWeight="medium"
-            >
-              Nodes:
-            </Typography>
-          </Grid>
-          <Grid item xs={12} md={8}>
-            {nodeIds && nodeIds.length > 0 ? (
-              <Box>
-                {nodeIds.map((nodeId, index) => (
-                  <Typography key={index} variant="body1" sx={{ mb: 1 }}>
+        <Grid container spacing={{ xs: 1, md: 4 }}>
+          <InfoRow label="Nodes:">
+            {nodeIds.length > 0 ? (
+              <Stack spacing={0.5}>
+                {nodeIds.map((nodeId) => (
+                  <Typography key={nodeId} variant="body2">
                     {nodeId}
                   </Typography>
                 ))}
-              </Box>
+              </Stack>
             ) : (
               <Typography variant="body2">Not available</Typography>
             )}
-          </Grid>
+          </InfoRow>
 
-          <Grid item xs={12} md={4}>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              fontWeight="medium"
-            >
-              Date created:
-            </Typography>
-          </Grid>
-          <Grid item xs={12} md={8}>
+          <InfoRow label="Date created:">
             <Typography variant="body2">{formattedDate}</Typography>
-          </Grid>
-
-          <Grid item xs={12} md={4}>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              fontWeight="medium"
-            >
-              Location:
-            </Typography>
-          </Grid>
-          <Grid item xs={12} md={8}>
-            <Typography variant="body2">
-              {address || selectedSite.location || 'Not available'}
-            </Typography>
-            {formattedCoordinates && (
-              <Typography variant="body2" sx={{ mt: 1 }}>
-                {formattedCoordinates}
-              </Typography>
-            )}
-          </Grid>
+          </InfoRow>
+          
+          <InfoRow label="Location:">
+            <Stack spacing={0.5}>
+              <Typography variant="body2">{locationLabel}</Typography>
+              {formattedCoordinates ? (
+                <Typography variant="body2" color="text.secondary">
+                  {formattedCoordinates}
+                </Typography>
+              ) : null}
+            </Stack>
+          </InfoRow>
         </Grid>
       </CardContent>
     </Card>
