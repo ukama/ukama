@@ -133,6 +133,54 @@ build_starter() {
     log "SUCCESS" "starter.d built into ${BUILD_DIR}/sbin"
 }
 
+build_apps_pkg() {
+
+    local builder_root=""
+    local pkgs_src=""
+    local pkgs_dst=""
+    local found_pkgs=0
+
+    update_ukama_os_env
+
+    builder_root="${UKAMA_ROOT}/builder"
+    pkgs_src="${builder_root}/pkgs"
+    pkgs_dst="${BUILD_DIR}/ukama/apps/pkgs"
+
+    [ -d "${builder_root}" ] || die "Failed to find builder root at: ${builder_root}"
+
+    mkdir -p "${pkgs_dst}"
+
+    log "INFO" "Building app packages in ${builder_root}"
+
+    pushd "${builder_root}" >/dev/null
+
+    make clean
+    make app_builder
+
+    [ -x "${builder_root}/scripts/build-all-apps.sh" ] || \
+        die "Missing or non-executable build script: ${builder_root}/scripts/build-all-apps.sh"
+
+    "${builder_root}/scripts/build-all-apps.sh" "${UKAMA_ROOT}"
+
+    [ -d "${pkgs_src}" ] || die "Package directory not found after build: ${pkgs_src}"
+
+    shopt -s nullglob
+    for pkg in "${pkgs_src}"/*_latest.tar.gz; do
+        [ -f "${pkg}" ] || continue
+        cp -f "${pkg}" "${pkgs_dst}/"
+        found_pkgs=1
+    done
+    shopt -u nullglob
+
+    make clean
+
+    popd >/dev/null
+
+    [ "${found_pkgs}" -eq 1 ] || die "No app packages were generated in ${pkgs_src}"
+
+    log "SUCCESS" "App packages copied into ${pkgs_dst}"
+}
+
 build_utils() {
     mkdir -p "${BUILD_DIR}/utils"
     update_ukama_os_env
@@ -373,6 +421,9 @@ case "${ACTION}" in
         ;;
     sysfs)
         build_sysfs "${1:-}" "${2:-}"
+        ;;
+    apps-pkg)
+        build_apps_pkg
         ;;
     ukamadirs)
         update_ukama_os_env

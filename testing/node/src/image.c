@@ -314,6 +314,10 @@ int create_vnode_image(char *target,
     sprintf(runMe, "%s ukamadirs %s %s", SCRIPT, nodeInfo->uuid, bootstrapServer);
 	if (system(runMe) < 0) goto failure;
 
+    /* build apps pkg */
+    sprintf(runMe, "%s apps-pkg", SCRIPT);
+	if (system(runMe) < 0) goto failure;
+
     if (runtime == RUNTIME_STARTER) {
         if (!stage_starter_pkgs(config)) {
             log_error("Unable to stage starter packages into /ukama/apps/pkgs");
