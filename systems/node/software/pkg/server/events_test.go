@@ -35,7 +35,7 @@ var (
 
 func newEventServerWithMocks(t *testing.T, sRepo *mocks.SoftwareRepo, appRepo *mocks.AppRepo) *SoftwareUpdateEventServer {
 	t.Helper()
-	swServer := NewSoftwareServer(testOrgName, sRepo, appRepo, mbmocks.NewMsgBusServiceClient(t), false)
+	swServer := NewSoftwareServer(testOrgName, sRepo, appRepo, mbmocks.NewMsgBusServiceClient(t), false, []string{"192.168.0.1"})
 	return NewSoftwareEventServer(testOrgName, swServer)
 }
 

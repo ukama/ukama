@@ -177,7 +177,7 @@ bool installer_revert_to_last_good(Config *config, App *app) {
     return true;
 }
 
-bool installer_ensure_installed(Config *config, App *app) {
+bool installer_ensure_installed(Config *config, App *app, const char *hub) {
 
     char *tagDir;
     char *pkgPath;
@@ -211,7 +211,7 @@ bool installer_ensure_installed(Config *config, App *app) {
 
     if (!inst_path_exists(pkgPath)) {
         app->installState = INSTALL_STATE_FETCHING;
-        if (!wc_fetch_package(config, app->name, app->tag, pkgPath)) {
+        if (!wc_fetch_package(config, app->name, app->tag, hub, pkgPath)) {
             app->installState = INSTALL_STATE_FAILED;
             usys_log_error("install: fetch failed %s:%s", app->name, app->tag);
             goto cleanup;
@@ -248,11 +248,9 @@ bool installer_ensure_installed(Config *config, App *app) {
 
 cleanup:
     if (stageDir) {
-        /* best effort cleanup */
-        rmdir(stageDir);
+        free(stageDir);
     }
     free(appDir);
-    free(stageDir);
     free(pkgPath);
     free(tagDir);
     return ok;

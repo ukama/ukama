@@ -29,4 +29,5 @@ bool wc_app_version_matches(Config *config,
 bool wc_fetch_package(Config *config,
                       const char *appName,
                       const char *tag,
+                      const char *hub,
                       const char *dstPath);
