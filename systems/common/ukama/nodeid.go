@@ -32,6 +32,7 @@ const (
 	NODE_ID_TYPE_TOWERNODE = "tnode"
 	NODE_ID_TYPE_AMPNODE   = "anode"
 	NODE_ID_TYPE_UNDEFINED = "undef"
+	NODE_ID_TYPE_CNODE     = "cnode"
 
 	MODULE_ID_TYPE_COMP      = "comv1"
 	MODULE_ID_TYPE_TRX       = "trx"
@@ -44,12 +45,14 @@ const (
 	placeholder_component_type_home      = "Home node"
 	placeholder_component_type_tower     = "Tower node"
 	placeholder_component_type_amplifier = "Amplifier node"
+	placeholder_component_type_cnode     = "Controller node"
 	placeholder_component_type_undefined = "Undefined node"
 )
 
 var nodeTypeToPlaceholderName = map[string]string{
 	NODE_ID_TYPE_HOMENODE:  placeholder_component_type_home,
 	NODE_ID_TYPE_TOWERNODE: placeholder_component_type_tower,
+	NODE_ID_TYPE_CNODE:     placeholder_component_type_cnode,
 	NODE_ID_TYPE_AMPNODE:   placeholder_component_type_amplifier,
 }
 
@@ -84,6 +87,10 @@ func (n NodeID) GetNodeType() string {
 
 	case NODE_ID_TYPE_TOWERNODE:
 		return NODE_ID_TYPE_TOWERNODE
+
+	case NODE_ID_TYPE_CNODE:
+		return NODE_ID_TYPE_CNODE
+
 	default:
 		return NODE_ID_TYPE_UNDEFINED
 	}
@@ -109,6 +116,8 @@ func GetNodeCodeForUnits(ntype string) string {
 		code = NODE_ID_TYPE_TOWERNODE
 	case NODE_ID_TYPE_AMPNODE, "ampnode":
 		code = NODE_ID_TYPE_AMPNODE
+	case NODE_ID_TYPE_CNODE:
+		code = NODE_ID_TYPE_CNODE
 	default:
 		code = NODE_ID_TYPE_UNDEFINED
 	}
@@ -210,7 +219,8 @@ func GetNodeType(n string) *string {
 	codes := [...]string{
 		NODE_ID_TYPE_HOMENODE,
 		NODE_ID_TYPE_TOWERNODE,
-		NODE_ID_TYPE_AMPNODE}
+		NODE_ID_TYPE_AMPNODE,
+		NODE_ID_TYPE_CNODE}
 
 	var nodeType *string
 	for _, code := range codes {
@@ -247,7 +257,8 @@ func ValidateNodeId(id string) (NodeID, error) {
 	codes := [...]string{
 		NODE_ID_TYPE_HOMENODE,
 		NODE_ID_TYPE_AMPNODE,
-		NODE_ID_TYPE_TOWERNODE}
+		NODE_ID_TYPE_TOWERNODE,
+		NODE_ID_TYPE_CNODE}
 	match := false
 	for _, code := range codes {
 		if strings.Contains(strings.ToLower(id), code) {
@@ -270,4 +281,26 @@ func ValidateNodeId(id string) (NodeID, error) {
 	lid := strings.ToLower(id)
 
 	return NodeID(lid), nil
+}
+
+func GetANodeIdFromTNodeId(tNodeId string) (NodeID, error) {
+	if len(tNodeId) != NodeIDLength {
+		err := errors.New("invalid length")
+		return "", err
+	}
+
+	tNodeId = strings.ToLower(tNodeId)
+
+	return NodeID(strings.Replace(tNodeId, NODE_ID_TYPE_TOWERNODE, NODE_ID_TYPE_AMPNODE, 1)), nil
+}
+
+func GetCNodeIdFromTNodeId(tNodeId string) (NodeID, error) {
+	if len(tNodeId) != NodeIDLength {
+		err := errors.New("invalid length")
+		return "", err
+	}
+
+	tNodeId = strings.ToLower(tNodeId)
+
+	return NodeID(strings.Replace(tNodeId, NODE_ID_TYPE_TOWERNODE, NODE_ID_TYPE_CNODE, 1)), nil
 }

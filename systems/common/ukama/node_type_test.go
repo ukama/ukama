@@ -22,6 +22,7 @@ func TestNodeType(t *testing.T) {
 		assert.Equal(t, "tnode", ukama.NODE_TYPE_TOWERNODE)
 		assert.Equal(t, "anode", ukama.NODE_TYPE_AMPNODE)
 		assert.Equal(t, "undef", ukama.NODE_TYPE_UNDEFINED)
+		assert.Equal(t, "cnode", ukama.NODE_TYPE_CNODE)
 	})
 
 	t.Run("StringReturnsCorrectValue", func(tt *testing.T) {
@@ -34,6 +35,7 @@ func TestNodeType(t *testing.T) {
 		assert.Equal(t, "tnode", ukama.NodeType(ukama.NODE_TYPE_TOWERNODE).String())
 		assert.Equal(t, "anode", ukama.NodeType(ukama.NODE_TYPE_AMPNODE).String())
 		assert.Equal(t, "undef", ukama.NodeType(ukama.NODE_TYPE_UNDEFINED).String())
+		assert.Equal(t, "cnode", ukama.NodeType(ukama.NODE_TYPE_CNODE).String())
 	})
 
 	t.Run("StringWithEmptyValue", func(tt *testing.T) {
@@ -60,6 +62,7 @@ func TestNodeType(t *testing.T) {
 			{"TowerNode", ukama.NodeType(ukama.NODE_TYPE_TOWERNODE), "tnode"},
 			{"AmpNode", ukama.NodeType(ukama.NODE_TYPE_AMPNODE), "anode"},
 			{"Undefined", ukama.NodeType(ukama.NODE_TYPE_UNDEFINED), "undef"},
+			{"ControllerNode", ukama.NodeType(ukama.NODE_TYPE_CNODE), "cnode"},
 		}
 
 		for _, tc := range testCases {
@@ -97,6 +100,7 @@ func TestNodeType(t *testing.T) {
 			{"TowerNode", "tnode", ukama.NodeType(ukama.NODE_TYPE_TOWERNODE)},
 			{"AmpNode", "anode", ukama.NodeType(ukama.NODE_TYPE_AMPNODE)},
 			{"Undefined", "undef", ukama.NodeType(ukama.NODE_TYPE_UNDEFINED)},
+			{"ControllerNode", "cnode", ukama.NodeType(ukama.NODE_TYPE_CNODE)},
 		}
 
 		for _, tc := range testCases {
