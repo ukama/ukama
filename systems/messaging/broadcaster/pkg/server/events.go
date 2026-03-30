@@ -35,7 +35,8 @@ func NewBroadcasterEventServer(orgName string, s *BroadcasterServer) *Broadcaste
 func (n *BroadcasterEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof(logMsgRoutingKey, e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
-		case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.messaging.broadcast"):
+		case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.messaging.broadcast.nodefeeder"):
+			
 			return &epb.EventResponse{}, nil
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)

@@ -1,0 +1,35 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2026-present, Ukama Inc.
+*/
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
+ 
+package ukama.events.v1;
+ 
+import "validator.proto";
+
+message BroadcasterEvent {
+    bytes msg = 1;
+    BroadcastScope type = 2;
+    BroadcastType broadcastType = 3;
+    string routingKey = 4 [(validator.field) = {string_not_empty: true}];
+}
+
+enum BroadcastScope {
+    UNKNOWN_SCOPE = 0;
+    SITE_SCOPE = 1;
+    NETWORK_SCOPE = 2;
+    ORGANIZATIONAL_SCOPE = 3;
+    GLOBAL_SCOPE = 4;
+}
+
+enum BroadcastType {
+    UNKNOWN_BROADCAST = 0;
+    NODE_BROADCAST = 1;
+}

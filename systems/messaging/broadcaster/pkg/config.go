@@ -35,7 +35,7 @@ func NewConfig(name string) *Config {
 		MsgClient: &uconf.MsgClient{
 			Timeout: 7 * time.Second,
 			ListenerRoutes: []string{
-				"event.cloud.local.{{ .Org}}.messaging.broadcast",
+				"event.cloud.local.{{ .Org}}.messaging.broadcast.nodefeeder",
 			},
 		},
 	}
