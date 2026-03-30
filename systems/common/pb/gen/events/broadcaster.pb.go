@@ -133,8 +133,8 @@ func (BroadcastType) EnumDescriptor() ([]byte, []int) {
 type BroadcasterEvent struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Msg           []byte                 `protobuf:"bytes,1,opt,name=msg,proto3" json:"msg,omitempty"`
-	Type          BroadcastScope         `protobuf:"varint,2,opt,name=type,proto3,enum=ukama.events.v1.BroadcastScope" json:"type,omitempty"`
-	BroadcastType BroadcastType          `protobuf:"varint,3,opt,name=broadcastType,proto3,enum=ukama.events.v1.BroadcastType" json:"broadcastType,omitempty"`
+	Scope         BroadcastScope         `protobuf:"varint,2,opt,name=scope,proto3,enum=ukama.events.v1.BroadcastScope" json:"scope,omitempty"`
+	Type          BroadcastType          `protobuf:"varint,3,opt,name=type,proto3,enum=ukama.events.v1.BroadcastType" json:"type,omitempty"`
 	RoutingKey    string                 `protobuf:"bytes,4,opt,name=routingKey,proto3" json:"routingKey,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -177,16 +177,16 @@ func (x *BroadcasterEvent) GetMsg() []byte {
 	return nil
 }
 
-func (x *BroadcasterEvent) GetType() BroadcastScope {
+func (x *BroadcasterEvent) GetScope() BroadcastScope {
 	if x != nil {
-		return x.Type
+		return x.Scope
 	}
 	return BroadcastScope_UNKNOWN_SCOPE
 }
 
-func (x *BroadcasterEvent) GetBroadcastType() BroadcastType {
+func (x *BroadcasterEvent) GetType() BroadcastType {
 	if x != nil {
-		return x.BroadcastType
+		return x.Type
 	}
 	return BroadcastType_UNKNOWN_BROADCAST
 }
@@ -202,11 +202,11 @@ var File_events_broadcaster_proto protoreflect.FileDescriptor
 
 const file_events_broadcaster_proto_rawDesc = "" +
 	"\n" +
-	"\x18events/broadcaster.proto\x12\x0fukama.events.v1\x1a\x0fvalidator.proto\"\xc7\x01\n" +
+	"\x18events/broadcaster.proto\x12\x0fukama.events.v1\x1a\x0fvalidator.proto\"\xb7\x01\n" +
 	"\x10BroadcasterEvent\x12\x10\n" +
-	"\x03msg\x18\x01 \x01(\fR\x03msg\x123\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x1f.ukama.events.v1.BroadcastScopeR\x04type\x12D\n" +
-	"\rbroadcastType\x18\x03 \x01(\x0e2\x1e.ukama.events.v1.BroadcastTypeR\rbroadcastType\x12&\n" +
+	"\x03msg\x18\x01 \x01(\fR\x03msg\x125\n" +
+	"\x05scope\x18\x02 \x01(\x0e2\x1f.ukama.events.v1.BroadcastScopeR\x05scope\x122\n" +
+	"\x04type\x18\x03 \x01(\x0e2\x1e.ukama.events.v1.BroadcastTypeR\x04type\x12&\n" +
 	"\n" +
 	"routingKey\x18\x04 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\n" +
 	"routingKey*r\n" +
@@ -241,8 +241,8 @@ var file_events_broadcaster_proto_goTypes = []any{
 	(*BroadcasterEvent)(nil), // 2: ukama.events.v1.BroadcasterEvent
 }
 var file_events_broadcaster_proto_depIdxs = []int32{
-	0, // 0: ukama.events.v1.BroadcasterEvent.type:type_name -> ukama.events.v1.BroadcastScope
-	1, // 1: ukama.events.v1.BroadcasterEvent.broadcastType:type_name -> ukama.events.v1.BroadcastType
+	0, // 0: ukama.events.v1.BroadcasterEvent.scope:type_name -> ukama.events.v1.BroadcastScope
+	1, // 1: ukama.events.v1.BroadcasterEvent.type:type_name -> ukama.events.v1.BroadcastType
 	2, // [2:2] is the sub-list for method output_type
 	2, // [2:2] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name

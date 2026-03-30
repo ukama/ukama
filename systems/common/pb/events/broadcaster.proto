@@ -16,8 +16,8 @@ import "validator.proto";
 
 message BroadcasterEvent {
     bytes msg = 1;
-    BroadcastScope type = 2;
-    BroadcastType broadcastType = 3;
+    BroadcastScope scope = 2;
+    BroadcastType type = 3;
     string routingKey = 4 [(validator.field) = {string_not_empty: true}];
 }
 
