@@ -134,21 +134,24 @@ build_starter() {
 }
 
 build_apps_pkg() {
-
     local builder_root=""
     local pkgs_src=""
-    local pkgs_dst=""
+    local pkgs_stage=""
     local found_pkgs=0
+    local pkg=""
+    local base=""
+    local staged_name=""
 
     update_ukama_os_env
 
     builder_root="${UKAMA_ROOT}/builder"
     pkgs_src="${builder_root}/pkgs"
-    pkgs_dst="${BUILD_DIR}/ukama/apps/pkgs"
+    pkgs_stage="${BUILD_DIR}/pkgs"
 
     [ -d "${builder_root}" ] || die "Failed to find builder root at: ${builder_root}"
 
-    mkdir -p "${pkgs_dst}"
+    rm -rf "${pkgs_stage}"
+    mkdir -p "${pkgs_stage}"
 
     log "INFO" "Building app packages in ${builder_root}"
 
@@ -165,9 +168,18 @@ build_apps_pkg() {
     [ -d "${pkgs_src}" ] || die "Package directory not found after build: ${pkgs_src}"
 
     shopt -s nullglob
-    for pkg in "${pkgs_src}"/*_latest.tar.gz; do
+    for pkg in "${pkgs_src}"/*.tar.gz; do
         [ -f "${pkg}" ] || continue
-        cp -f "${pkg}" "${pkgs_dst}/"
+
+        base="$(basename "${pkg}")"
+
+        /*
+         * Normalize builder output:
+         *   bootstrap_latest.tar.gz -> bootstrap-latest.tar.gz
+         */
+        staged_name="${base/_latest.tar.gz/-latest.tar.gz}"
+
+        cp -f "${pkg}" "${pkgs_stage}/${staged_name}"
         found_pkgs=1
     done
     shopt -u nullglob
@@ -178,7 +190,7 @@ build_apps_pkg() {
 
     [ "${found_pkgs}" -eq 1 ] || die "No app packages were generated in ${pkgs_src}"
 
-    log "SUCCESS" "App packages copied into ${pkgs_dst}"
+    log "SUCCESS" "App packages staged into ${pkgs_stage}"
 }
 
 build_utils() {
