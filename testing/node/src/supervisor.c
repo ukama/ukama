@@ -22,20 +22,26 @@ static int streq(const char *a, const char *b) {
     return (a && b && strcmp(a, b) == 0);
 }
 
-/* Append formatted string to dst safely. Returns 0 on success, -1 on overflow/error. */
 static int appendf(char *dst, size_t dstsz, const char *fmt, ...) {
     size_t len = strnlen(dst, dstsz);
-    if (len >= dstsz) return -1;
-
     va_list ap;
     int n = 0;
+
+    if (len >= dstsz) {
+        return -1;
+    }
 
     va_start(ap, fmt);
     n = vsnprintf(dst + len, dstsz - len, fmt, ap);
     va_end(ap);
 
-    if (n < 0) return -1;
-    if ((size_t)n >= (dstsz - len)) return -1;
+    if (n < 0) {
+        return -1;
+    }
+
+    if ((size_t)n >= (dstsz - len)) {
+        return -1;
+    }
 
     return 0;
 }
@@ -46,6 +52,10 @@ static int is_bootstrap_program(const CappConfig *capp) {
 
 static int is_controller_program(const CappConfig *capp) {
     return (capp && capp->name && strcmp(capp->name, "controller") == 0);
+}
+
+static int is_switch_program(const CappConfig *capp) {
+    return (capp && capp->name && strcmp(capp->name, "switch") == 0);
 }
 
 static int config_has_controller(Configs *configs) {
@@ -60,7 +70,18 @@ static int config_has_controller(Configs *configs) {
     return FALSE;
 }
 
-/* group string is a comma-separated list of program names */
+static int config_has_switch(Configs *configs) {
+    Configs *ptr = NULL;
+
+    for (ptr = configs; ptr; ptr = ptr->next) {
+        if (!ptr->valid) continue;
+        if (!ptr->config || !ptr->config->capp) continue;
+        if (is_switch_program(ptr->config->capp)) return TRUE;
+    }
+
+    return FALSE;
+}
+
 static void append_service_to_group(char *group,
                                     size_t groupsz,
                                     const char *name,
@@ -116,10 +137,6 @@ static FILE* init_supervisor_config(const char *fileName) {
     return fp;
 }
 
-/*
- * on-boot: started by kickstart before bootstrap
- * sys-service: started after meshd is running
- */
 static int create_supervisor_groups(FILE *fp,
                                     Configs *configs,
                                     char *onBootGroup,
@@ -130,6 +147,7 @@ static int create_supervisor_groups(FILE *fp,
     CappConfig *capp = NULL;
     char block[SVISOR_MAX_SIZE];
     int hasController = FALSE;
+    int hasSwitch = FALSE;
 
     if (!fp || !configs || !onBootGroup || !sysGroup) return FALSE;
 
@@ -137,11 +155,20 @@ static int create_supervisor_groups(FILE *fp,
     sysGroup[0] = '\0';
 
     hasController = config_has_controller(configs);
+    hasSwitch = config_has_switch(configs);
+
     if (hasController) {
         append_service_to_group(onBootGroup,
                                 onBootSz,
                                 SVISOR_VEDIRECT_EMULATOR_NAME,
                                 SVISOR_VEDIRECT_EMULATOR_VERSION);
+    }
+
+    if (hasSwitch) {
+        append_service_to_group(onBootGroup,
+                                onBootSz,
+                                SVISOR_SWITCH_EMULATOR_NAME,
+                                SVISOR_SWITCH_EMULATOR_VERSION);
     }
 
     for (ptr = configs; ptr; ptr = ptr->next) {
@@ -222,17 +249,34 @@ static int write_vedirect_emulator_program(FILE *fp) {
     return TRUE;
 }
 
-/*
- * Update Groups
- *
- *  on-boot: Services which will be started by supervisorctl
- *           before bootstrap.
- *  system-services: Services started by supervisorctl once
- *           bootstrap is completed and meshd is started.
- *
- * Note: If Services has dependency that should be handled by events not
- *       by init.
- */
+static int write_switch_emulator_program(FILE *fp) {
+    char buffer[SVISOR_MAX_SIZE];
+
+    if (!fp) return FALSE;
+
+    memset(buffer, 0, sizeof(buffer));
+
+    if (appendf(buffer, sizeof(buffer), "%s",
+                SVISOR_SWITCH_EMULATOR_PROGRAM) < 0 ||
+        appendf(buffer, sizeof(buffer), "%s",
+                SVISOR_SWITCH_EMULATOR_COMMAND) < 0 ||
+        appendf(buffer, sizeof(buffer), "%s",
+                SVISOR_GLOBAL_ENV) < 0 ||
+        appendf(buffer, sizeof(buffer), "%s",
+                SVISOR_SWITCH_EMULATOR_POLICY) < 0) {
+        log_error("Supervisor config overflow building switch emulator program");
+        return FALSE;
+    }
+
+    if (fwrite(buffer, strlen(buffer), 1, fp) <= 0) {
+        log_error("Error writing switch emulator to %s. Error: %s",
+                  SVISOR_FILENAME, strerror(errno));
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 int create_supervisor_config(Configs *configs) {
     Configs *ptr = NULL;
     CappConfig *capp = NULL;
@@ -241,6 +285,7 @@ int create_supervisor_config(Configs *configs) {
     char onBootGroup[SVISOR_GROUP_LIST_MAX_SIZE];
     char sysGroup[SVISOR_GROUP_LIST_MAX_SIZE];
     int hasController = FALSE;
+    int hasSwitch = FALSE;
 
     if (!configs) return FALSE;
 
@@ -260,8 +305,17 @@ int create_supervisor_config(Configs *configs) {
     }
 
     hasController = config_has_controller(configs);
+    hasSwitch = config_has_switch(configs);
+
     if (hasController) {
         if (!write_vedirect_emulator_program(fp)) {
+            fclose(fp);
+            return FALSE;
+        }
+    }
+
+    if (hasSwitch) {
+        if (!write_switch_emulator_program(fp)) {
             fclose(fp);
             return FALSE;
         }
@@ -285,10 +339,6 @@ int create_supervisor_config(Configs *configs) {
             continue;
         }
 
-        /*
-         * Keep it simple: tolerate the existing typo in controllerd.toml
-         * so old configs do not break.
-         */
         bin = capp->bin;
         if (is_controller_program(capp) &&
             strcmp(capp->bin, "cotrollerd") == 0) {

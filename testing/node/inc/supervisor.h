@@ -56,9 +56,7 @@ supervisor.rpcinterface:make_main_rpcinterface\n\n"
 #define SVISOR_GROUP_NIL                NULL
 
 /*
- * Keep env simple and global.
- * Yes, this is broader than needed, but it keeps container behavior
- * deterministic and avoids per-app special handling.
+ * Keep env simple and global across apps.
  */
 #define SVISOR_GLOBAL_ENV \
     "environment=" \
@@ -79,7 +77,21 @@ supervisor.rpcinterface:make_main_rpcinterface\n\n"
     "FEMD_SYSROOT=\"/tmp/sys\"," \
     "FEM_BAND=\"B41\"," \
     "CONTROLLER_DRIVER=\"victron\"," \
-    "CONTROLLER_SERIAL_PORT=\"/tmp/victron-tty\"" \
+    "CONTROLLER_SERIAL_PORT=\"/tmp/victron-tty\"," \
+    "SWITCHD_DRIVER=\"tycon_snmp\"," \
+    "SWITCHD_SNMP_HOST=\"127.0.0.1\"," \
+    "SWITCHD_SNMP_PORT=\"1161\"," \
+    "SWITCHD_TFTP_BIND_IP=\"0.0.0.0\"," \
+    "SWITCHD_TFTP_PORT=\"1069\"," \
+    "SWITCHD_TFTP_ROOT=\"/tmp/switchd/tftp\"," \
+    "SWITCHD_NOTIFY_HOST=\"127.0.0.1\"," \
+    "SWITCHD_NOTIFY_PORT=\"18010\"," \
+    "SWITCHEMU_HTTP_PORT=\"18088\"," \
+    "SWITCHEMU_SNMP_PORT=\"1161\"," \
+    "SWITCHEMU_TFTP_PORT=\"1069\"," \
+    "SWITCHEMU_BIND_ADDRESS=\"0.0.0.0\"," \
+    "SWITCHEMU_NOTIFY_HOST=\"127.0.0.1\"," \
+    "SWITCHEMU_NOTIFY_PORT=\"18010\"" \
     "\n"
 
 #define SVISOR_VEDIRECT_EMULATOR_NAME        "vedirect-emulator"
@@ -87,11 +99,26 @@ supervisor.rpcinterface:make_main_rpcinterface\n\n"
 #define SVISOR_VEDIRECT_EMULATOR_PROGRAM     \
     "[program:vedirect-emulator_latest]\n"
 #define SVISOR_VEDIRECT_EMULATOR_COMMAND     \
-    "command=/usr/bin/python3 /sbin/vedirect_sim.py " \
-    "--mode realtime --city \"Goma, DRC\" " \
-    "--serial-link /tmp/victron-tty " \
-    "--ready-file /tmp/victron-emu.ready\n"
+    "command=/usr/bin/python3 /sbin/vedirect_emulator.py " \
+    "--mode realtime --city \"Goma, DRC\"\n"
 #define SVISOR_VEDIRECT_EMULATOR_POLICY      \
+    "autostart=false\n" \
+    "autorestart=true\n" \
+    "startretries=5\n" \
+    "startsecs=2\n" \
+    "stdout_logfile=/dev/stdout\n" \
+    "stdout_logfile_maxbytes=0\n" \
+    "stderr_logfile=/dev/stderr\n" \
+    "stderr_logfile_maxbytes=0\n\n"
+
+#define SVISOR_SWITCH_EMULATOR_NAME          "switchemu"
+#define SVISOR_SWITCH_EMULATOR_VERSION       "latest"
+#define SVISOR_SWITCH_EMULATOR_PROGRAM       \
+    "[program:switchemu_latest]\n"
+#define SVISOR_SWITCH_EMULATOR_COMMAND       \
+    "command=/sbin/switchemu.d " \
+    "--http-port 18088 --snmp-port 1161 --tftp-port 1069\n"
+#define SVISOR_SWITCH_EMULATOR_POLICY        \
     "autostart=false\n" \
     "autorestart=true\n" \
     "startretries=5\n" \
