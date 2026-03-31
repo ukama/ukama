@@ -49,12 +49,12 @@ NodeType detect_node_type(const char *nodeID) {
 
     if (!nodeID) return NODE_UNKNOWN;
 
-    if (strstr(nodeID, "tnode")) {
+    if (strstr(nodeID, "tnode") != NULL) {
         return NODE_TOWER;
-    }
-
-    if (strstr(nodeID, "anode")) {
+    } else if (strstr(nodeID, "anode") != NULL) {
         return NODE_AMPLIFIER;
+    } else if (strstr(nodeID, "cnode") != NULL) {
+        return NODE_CONTROLLER;
     }
 
     return NODE_UNKNOWN;
@@ -94,7 +94,7 @@ static int load_board_file(BoardConfig *cfg, const char *filePath) {
         trim(val);
 
         enabled = parse_yesno(val);
-        idx = find_entry(cfg, key);
+        idx     = find_entry(cfg, key);
 
         if (idx >= 0) {
             /* override existing (board overrides common) */
@@ -137,6 +137,10 @@ int board_config_load(BoardConfig *cfg,
 
     case NODE_AMPLIFIER:
         filename = NODE_AMPLIFIER_CONFIG;
+        break;
+
+    case NODE_CONTROLLER:
+        filename = NODE_CONTROLLER_CONFIG;
         break;
 
     default:

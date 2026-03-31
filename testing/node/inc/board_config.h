@@ -13,13 +13,15 @@
 #define MAX_BOARD_APPS 128
 #define MAX_APP_KEY    64
 
-#define NODE_TOWER_CONFIG     "virtual-tower.conf"
-#define NODE_AMPLIFIER_CONFIG "virtual-amplifier.conf"
+#define NODE_TOWER_CONFIG      "virtual-tower.conf"
+#define NODE_AMPLIFIER_CONFIG  "virtual-amplifier.conf"
+#define NODE_CONTROLLER_CONFIG "virtual-controller.conf"
 
 typedef enum {
     NODE_UNKNOWN = 0,
     NODE_TOWER,
-    NODE_AMPLIFIER
+    NODE_AMPLIFIER,
+    NODE_CONTROLLER
 } NodeType;
 
 typedef struct {
