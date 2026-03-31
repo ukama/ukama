@@ -41,30 +41,25 @@ supervisor.rpcinterface:make_main_rpcinterface\n\n"
  exitcodes=0\n\
  stdout_logfile=/dev/stdout\n\
  stdout_logfile_maxbytes=0\n\
- stderr_logfile=/dev/stderr\n\n\
+ stderr_logfile=/dev/stderr\n\
  stderr_logfile_maxbytes=0\n\n"
 
-#define SVISOR_STDOUT_LOGFILE_MAXBYTES  "%s stdout_logfile_maxbytes=0\n"
-#define SVISOR_STDERR_LOGFILE_MAXBYTES  "%s stderr_logfile_maxbytes=0\n"
 #define SVISOR_GROUP_ONBOOT             "[group:on-boot]\n programs=%s\n\n"
 #define SVISOR_GROUP_SYSSVC             "[group:sys-service]\n programs=%s\n\n"
 
 #define SVISOR_PROGRAM                  "[program:%s_%s]\n"
-#define SVISOR_COMMAND                  "%s command=%s/%s \n"
-#define SVISOR_COMMAND_WITH_ARGS        "%s command=%s/%s %s \n"
-#define SVISOR_AUTOSTART                "%s autostart=%s\n"
-#define SVISOR_AUTORESTART              "%s autorestart=%s\n"
-#define SVISOR_STARTRETRIES             "%s startretries=%d\n"
-#define SVISOR_EXITCODES                "%s exitcodes=0\n"
-#define SVISOR_STARTSECS                "%s startsecs=%d\n"
-#define SVISOR_STDERR_LOGFILE           "%s stderr_logfile=/dev/stderr\n"
-#define SVISOR_STDOUT_LOGFILE           "%s stdout_logfile=/dev/stdout\n"
 #define SVISOR_MAX_SIZE                 4096
-#define SVISOR_GROUP_LIST_MAX_SIZE      256
+#define SVISOR_GROUP_LIST_MAX_SIZE      512
 #define SVISOR_GROUP_ON_BOOT            "on-boot"
 #define SVISOR_GROUP_SYS_SVC            "sys-service"
+#define SVISOR_GROUP_SERVICE            "service"
 #define SVISOR_GROUP_NIL                NULL
 
+/*
+ * Keep env simple and global.
+ * Yes, this is broader than needed, but it keeps container behavior
+ * deterministic and avoids per-app special handling.
+ */
 #define SVISOR_GLOBAL_ENV \
     "environment=" \
     "UKAMA_GPS_MODE=\"mock\"," \
@@ -82,8 +77,29 @@ supervisor.rpcinterface:make_main_rpcinterface\n\n"
     "BACKHAULD_CONNECT_TIMEOUT_MS=\"2000\"," \
     "BACKHAULD_TOTAL_TIMEOUT_MS=\"10000\"," \
     "FEMD_SYSROOT=\"/tmp/sys\"," \
-    "FEM_BAND=\"B41\"" \
+    "FEM_BAND=\"B41\"," \
+    "CONTROLLER_DRIVER=\"victron\"," \
+    "CONTROLLER_SERIAL_PORT=\"/tmp/victron-tty\"" \
     "\n"
+
+#define SVISOR_VEDIRECT_EMULATOR_NAME        "vedirect-emulator"
+#define SVISOR_VEDIRECT_EMULATOR_VERSION     "latest"
+#define SVISOR_VEDIRECT_EMULATOR_PROGRAM     \
+    "[program:vedirect-emulator_latest]\n"
+#define SVISOR_VEDIRECT_EMULATOR_COMMAND     \
+    "command=/usr/bin/python3 /sbin/vedirect_sim.py " \
+    "--mode realtime --city \"Goma, DRC\" " \
+    "--serial-link /tmp/victron-tty " \
+    "--ready-file /tmp/victron-emu.ready\n"
+#define SVISOR_VEDIRECT_EMULATOR_POLICY      \
+    "autostart=false\n" \
+    "autorestart=true\n" \
+    "startretries=5\n" \
+    "startsecs=2\n" \
+    "stdout_logfile=/dev/stdout\n" \
+    "stdout_logfile_maxbytes=0\n" \
+    "stderr_logfile=/dev/stderr\n" \
+    "stderr_logfile_maxbytes=0\n\n"
 
 int create_supervisor_config(Configs *configs);
 void purge_supervisor_config(char *fileName);
