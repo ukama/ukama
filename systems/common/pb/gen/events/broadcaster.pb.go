@@ -133,9 +133,10 @@ func (BroadcastType) EnumDescriptor() ([]byte, []int) {
 type BroadcasterEvent struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Msg           []byte                 `protobuf:"bytes,1,opt,name=msg,proto3" json:"msg,omitempty"`
-	Scope         BroadcastScope         `protobuf:"varint,2,opt,name=scope,proto3,enum=ukama.events.v1.BroadcastScope" json:"scope,omitempty"`
-	Type          BroadcastType          `protobuf:"varint,3,opt,name=type,proto3,enum=ukama.events.v1.BroadcastType" json:"type,omitempty"`
-	RoutingKey    string                 `protobuf:"bytes,4,opt,name=routingKey,proto3" json:"routingKey,omitempty"`
+	TargetId      string                 `protobuf:"bytes,2,opt,name=targetId,proto3" json:"targetId,omitempty"`
+	Scope         BroadcastScope         `protobuf:"varint,3,opt,name=scope,proto3,enum=ukama.events.v1.BroadcastScope" json:"scope,omitempty"`
+	Type          BroadcastType          `protobuf:"varint,4,opt,name=type,proto3,enum=ukama.events.v1.BroadcastType" json:"type,omitempty"`
+	RoutingKey    string                 `protobuf:"bytes,5,opt,name=routingKey,proto3" json:"routingKey,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -177,6 +178,13 @@ func (x *BroadcasterEvent) GetMsg() []byte {
 	return nil
 }
 
+func (x *BroadcasterEvent) GetTargetId() string {
+	if x != nil {
+		return x.TargetId
+	}
+	return ""
+}
+
 func (x *BroadcasterEvent) GetScope() BroadcastScope {
 	if x != nil {
 		return x.Scope
@@ -202,13 +210,14 @@ var File_events_broadcaster_proto protoreflect.FileDescriptor
 
 const file_events_broadcaster_proto_rawDesc = "" +
 	"\n" +
-	"\x18events/broadcaster.proto\x12\x0fukama.events.v1\x1a\x0fvalidator.proto\"\xb7\x01\n" +
+	"\x18events/broadcaster.proto\x12\x0fukama.events.v1\x1a\x0fvalidator.proto\"\xd3\x01\n" +
 	"\x10BroadcasterEvent\x12\x10\n" +
-	"\x03msg\x18\x01 \x01(\fR\x03msg\x125\n" +
-	"\x05scope\x18\x02 \x01(\x0e2\x1f.ukama.events.v1.BroadcastScopeR\x05scope\x122\n" +
-	"\x04type\x18\x03 \x01(\x0e2\x1e.ukama.events.v1.BroadcastTypeR\x04type\x12&\n" +
+	"\x03msg\x18\x01 \x01(\fR\x03msg\x12\x1a\n" +
+	"\btargetId\x18\x02 \x01(\tR\btargetId\x125\n" +
+	"\x05scope\x18\x03 \x01(\x0e2\x1f.ukama.events.v1.BroadcastScopeR\x05scope\x122\n" +
+	"\x04type\x18\x04 \x01(\x0e2\x1e.ukama.events.v1.BroadcastTypeR\x04type\x12&\n" +
 	"\n" +
-	"routingKey\x18\x04 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\n" +
+	"routingKey\x18\x05 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\n" +
 	"routingKey*r\n" +
 	"\x0eBroadcastScope\x12\x11\n" +
 	"\rUNKNOWN_SCOPE\x10\x00\x12\x0e\n" +

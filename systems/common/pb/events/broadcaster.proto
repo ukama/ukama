@@ -16,9 +16,10 @@ import "validator.proto";
 
 message BroadcasterEvent {
     bytes msg = 1;
-    BroadcastScope scope = 2;
-    BroadcastType type = 3;
-    string routingKey = 4 [(validator.field) = {string_not_empty: true}];
+    string targetId = 2;
+    BroadcastScope scope = 3;
+    BroadcastType type = 4;
+    string routingKey = 5 [(validator.field) = {string_not_empty: true}];
 }
 
 enum BroadcastScope {

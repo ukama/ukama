@@ -19,8 +19,6 @@ deps:
 			github.com/ysugimoto/grpc-graphql-gateway/protoc-gen-graphql/...
 			github.com/vektra/mockery/v2/.../
 gen:
-	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep --go_out=$(GOPATH)/src --go-grpc_out=$(GOPATH)/src --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=$(GOPATH)/src \
- 			  broadcaster.proto
 	mockery --all --recursive --dir ./internal
 	mockery --all --recursive --dir ./pkg
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks

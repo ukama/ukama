@@ -643,6 +643,16 @@ func UnmarshalNodeDeletedEvent(msg *anypb.Any, emsg string) (*NodeDeletedEvent, 
 	return p, nil
 }
 
+func UnmarshalNodeFeederMessage(msg *anypb.Any, emsg string) (*NodeFeederMessage, error) {
+	p := &NodeFeederMessage{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
+		return nil, err
+	}
+	return p, nil
+}
+
 func UnmarshalNodeOfflineEvent(msg *anypb.Any, emsg string) (*NodeOfflineEvent, error) {
 	p := &NodeOfflineEvent{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})

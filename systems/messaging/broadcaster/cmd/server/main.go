@@ -25,12 +25,17 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	client "github.com/ukama/ukama/systems/common/rest/client"
+	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc"
 )
 
 var svcConf *pkg.Config
-
+const (
+	registrySystemName = "registry"
+)
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	pkg.InstanceId = os.Getenv("POD_NAME")
@@ -65,7 +70,15 @@ func runGrpcServer() {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	broadServer := server.NewBroadcasterServer(svcConf.OrgName, mbClient, svcConf.DebugMode)
+	regUrl, err := ic.GetHostUrl(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode)),
+	ic.CreateHostString(svcConf.OrgName, registrySystemName), &svcConf.OrgName)
+	if err != nil {
+		log.Errorf("Failed to resolve registry address: %v", err)
+	}
+
+	nodeClient := creg.NewNodeClient(regUrl.String())
+
+	broadServer := server.NewBroadcasterServer(svcConf.OrgName, mbClient, nodeClient, svcConf.DebugMode)
 	eventServer := server.NewBroadcasterEventServer(svcConf.OrgName, broadServer)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
