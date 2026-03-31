@@ -1,0 +1,21 @@
+[build-from]
+	base="alpine"
+	version="latest"
+
+[build-compile]
+	version="0.1"
+	static="false"
+	source="/nodes/apps/switchd"
+	cmd="make"
+	bin_from="/nodes/apps/switchd/switch.d"
+	bin_to="/sbin"
+
+[capp-exec]
+	name="switch"
+	version="latest"
+	bin="switch.d"
+	path="/sbin"
+	autostart="false"
+        autorestart="true"
+        startretries=5
+	group="service"
