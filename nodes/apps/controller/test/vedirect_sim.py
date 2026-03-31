@@ -170,6 +170,7 @@ class PlantState:
     sunrise_h: float = 6.0
     sunset_h: float = 18.0
 
+
 def _safe_unlink(path: str) -> None:
     try:
         os.unlink(path)
@@ -180,16 +181,6 @@ def _safe_unlink(path: str) -> None:
 def publish_serial_endpoint(slave_path: str,
                             serial_link: Optional[str],
                             ready_file: Optional[str]) -> None:
-    """
-    Publish a stable path for the dynamically allocated PTY slave.
-
-    serial_link:
-        Symlink path such as /tmp/victron-tty -> /dev/pts/N
-
-    ready_file:
-        Small text file containing the resolved PTY slave path.
-        Useful for supervisor/container startup sequencing.
-    """
     if serial_link:
         parent = os.path.dirname(serial_link)
         if parent:
@@ -205,8 +196,8 @@ def publish_serial_endpoint(slave_path: str,
         if parent:
             os.makedirs(parent, exist_ok=True)
 
-        with open(ready_file, "w", encoding="utf-8") as f:
-            f.write(slave_path + "\n")
+        with open(ready_file, "w", encoding="utf-8") as file_desc:
+            file_desc.write(slave_path + "\n")
 
 
 def cleanup_serial_endpoint(serial_link: Optional[str],
@@ -265,702 +256,135 @@ def build_frame(fields: list[tuple[str, str]]) -> bytes:
     pairs. Appends a Checksum field so that sum of all frame bytes is
     0 mod 256.
     """
-    frame = b""
-    for label, value in fields:
-        line = f"{label}\t{value}\r\n".encode("latin-1")
-        frame += line
-
-    prefix = frame + b"Checksum\t"
-    total = sum(prefix) % 256
-    chk = (256 - total) % 256
-
-    return prefix + bytes([chk]) + b"\r\n"
+    body = b"".join(f"{k}\t{v}\r\n".encode("ascii") for k, v in fields)
+    prefix = body + b"Checksum\t"
+    current_sum = sum(prefix) % 256
+    checksum_byte = (-current_sum) % 256
+    return prefix + bytes([checksum_byte]) + b"\r\n"
 
 
-def frame_sunny(t: float) -> tuple[bytes, dict[str, object]]:
-    local_hour = compressed_hour(t, SUNNY_CYCLE_S, 5.67, 18.17)
-    daylight = (local_hour - 5.67) / (18.17 - 5.67)
-    daylight = clamp(daylight, 0.0, 1.0)
+def scenario_frame_sunny(t: float) -> tuple[bytes, dict[str, object]]:
+    hour = compressed_hour(t, SUNNY_CYCLE_S, 6.0, 18.5)
+    day_factor = math.sin(math.pi * clamp((hour - 6.0) / 12.0, 0.0, 1.0))
+    day_factor = max(0.0, day_factor)
 
-    solar_shape = math.sin(math.pi * daylight)
-    solar_shape = max(0.0, solar_shape) ** 1.15
-    yield_ratio = smoothstep01(daylight)
+    pv_w = int(round(SUNNY_PEAK_POWER_W * day_factor))
+    batt_v = lerp(49.2, 56.4, smoothstep01(day_factor))
+    batt_a = pv_w / batt_v if batt_v > 0 else 0.0
+    temp_c = lerp(23.0, 36.0, smoothstep01(day_factor))
+    mppt = 2 if pv_w > 80 else 0
+    cs = 5 if pv_w > 220 else (3 if pv_w > 30 else 0)
+    yield_today = SUNNY_DAY_YIELD_KWH * smoothstep01(day_factor)
+    pmax = pv_w
 
-    pv_w = int(round(SUNNY_PEAK_POWER_W * solar_shape))
-    pv_mv = int(round(90000 + 38000 * solar_shape)) if pv_w > 0 else 0
-    load_a = lerp(1.1, 1.8, solar_shape)
-    temp_c = lerp(21.0, 34.0, solar_shape)
+    summary = {
+        "site_name": "Sunny scenario",
+        "local_time": hhmm_string(hour),
+        "pv_w": pv_w,
+        "batt_v": batt_v,
+        "temp_c": temp_c,
+        "yield_today_kwh": yield_today,
+        "state": charge_state_label(cs),
+        "err": "0",
+    }
 
-    if daylight < 0.55:
-        stage = smoothstep01(daylight / 0.55)
-        batt_v = lerp(50.8, 57.4, stage)
-        batt_a = lerp(2.5, 18.0, solar_shape)
-        cs, mppt = 3, 2
-    elif daylight < 0.78:
-        stage = smoothstep01((daylight - 0.55) / 0.23)
-        batt_v = lerp(57.4, 57.7, stage)
-        batt_a = lerp(10.5, 4.0, stage)
-        cs, mppt = 4, 2
-    else:
-        stage = smoothstep01((daylight - 0.78) / 0.22)
-        batt_v = lerp(56.2, 55.2, stage)
-        batt_a = lerp(2.5, -0.4, stage)
-        cs, mppt = 5, 1
-
-    yield_today = SUNNY_DAY_YIELD_KWH * yield_ratio
-    max_power_today = max(pv_w, int(round(SUNNY_PEAK_POWER_W *
-                                          yield_ratio)))
-    total_yield = TOTAL_YIELD_BASE_KWH + yield_today
-
-    fields = [
+    frame = build_frame([
         ("PID", PRODUCT_ID),
         ("FW", FIRMWARE),
         ("SER#", SERIAL),
-        ("V", str(int(round(batt_v * 1000)))),
-        ("I", str(int(round(batt_a * 1000)))),
-        ("VPV", str(pv_mv)),
+        ("V", str(int(round(batt_v * 1000.0)))),
+        ("I", str(int(round(batt_a * 1000.0)))),
+        ("VPV", str(int(round((batt_v + 4.0 + 8.0 * day_factor) * 1000.0)))),
         ("PPV", str(pv_w)),
         ("CS", str(cs)),
         ("MPPT", str(mppt)),
+        ("OR", "0"),
         ("ERR", "0"),
-        ("T", str(int(round(temp_c)))),
         ("LOAD", "ON"),
-        ("IL", str(int(round(load_a * 1000)))),
-        ("Relay", "OFF"),
-        ("H19", str(int(round(total_yield * 100)))),
-        ("H20", str(int(round(yield_today * 100)))),
-        ("H21", str(max_power_today)),
-        ("H22", str(int(round(YESTERDAY_YIELD_KWH * 100)))),
+        ("IL", "0"),
+        ("H19", f"{yield_today:.2f}"),
+        ("H20", f"{yield_today:.2f}"),
+        ("H21", str(pmax)),
+        ("H22", f"{YESTERDAY_YIELD_KWH:.2f}"),
         ("H23", str(YESTERDAY_MAX_POWER_W)),
-    ]
+        ("T", str(int(round(temp_c)))),
+    ])
+    return frame, summary
+
+
+def scenario_frame_night(t: float) -> tuple[bytes, dict[str, object]]:
+    hour = compressed_hour(t, NIGHT_CYCLE_S, 19.0, 5.5)
+    phase = cycle_ratio(t, NIGHT_CYCLE_S)
+    load_breath = 0.5 + 0.5 * math.sin(2.0 * math.pi * phase)
+
+    pv_w = 0
+    batt_v = lerp(52.4, 48.2, phase)
+    batt_a = -lerp(1.8, 4.5, load_breath)
+    temp_c = lerp(24.0, 20.5, smoothstep01(phase))
+    cs = 0
+    mppt = 0
+    yield_today = 0.0
+    pmax = 0
+    err = "0"
+
+    if 0.55 < phase < 0.68:
+        err = "18"
 
     summary = {
-        "site_name": "Goma, DRC",
-        "local_time": hhmm_string(local_hour),
-        "batt_v": batt_v,
+        "site_name": "Night scenario",
+        "local_time": hhmm_string(hour),
         "pv_w": pv_w,
+        "batt_v": batt_v,
         "temp_c": temp_c,
-        "state": charge_state_label(cs),
         "yield_today_kwh": yield_today,
-        "err": "0",
+        "state": charge_state_label(cs),
+        "err": err,
     }
-    return build_frame(fields), summary
 
-
-def frame_low_batt(t: float) -> tuple[bytes, dict[str, object]]:
-    phase = clamp((t % 60.0) / 60.0, 0.0, 1.0)
-    batt_v = lerp(52.0, 42.0, phase)
-    batt_a = -2.0
-    temp_c = 24.0
-
-    fields = [
+    frame = build_frame([
         ("PID", PRODUCT_ID),
         ("FW", FIRMWARE),
         ("SER#", SERIAL),
-        ("V", str(int(round(batt_v * 1000)))),
-        ("I", str(int(round(batt_a * 1000)))),
-        ("VPV", "0"),
-        ("PPV", "0"),
-        ("CS", "0"),
-        ("MPPT", "0"),
-        ("ERR", "0"),
-        ("T", str(int(round(temp_c)))),
-        ("LOAD", "ON"),
-        ("IL", "1800"),
-        ("Relay", "OFF"),
-        ("H19", str(int(round((TOTAL_YIELD_BASE_KWH +
-                               YESTERDAY_YIELD_KWH) * 100)))),
-        ("H20", "0"),
-        ("H21", "0"),
-        ("H22", str(int(round(YESTERDAY_YIELD_KWH * 100)))),
-        ("H23", str(YESTERDAY_MAX_POWER_W)),
-    ]
-
-    summary = {
-        "site_name": "Synthetic",
-        "local_time": "03:20",
-        "batt_v": batt_v,
-        "pv_w": 0,
-        "temp_c": temp_c,
-        "state": charge_state_label(0),
-        "yield_today_kwh": 0.0,
-        "err": "0",
-    }
-    return build_frame(fields), summary
-
-
-def frame_fault(t: float) -> tuple[bytes, dict[str, object]]:
-    pv_w = 120
-    temp_c = 68.0
-    fields = [
-        ("PID", PRODUCT_ID),
-        ("FW", FIRMWARE),
-        ("SER#", SERIAL),
-        ("V", "51200"),
-        ("I", "0"),
-        ("VPV", "145000"),
-        ("PPV", str(pv_w)),
-        ("CS", "2"),
-        ("MPPT", "0"),
-        ("ERR", "17"),
-        ("T", str(int(round(temp_c)))),
-        ("LOAD", "ON"),
-        ("IL", "1500"),
-        ("Relay", "OFF"),
-        ("H19", str(int(round((TOTAL_YIELD_BASE_KWH + 4.8) * 100)))),
-        ("H20", "480"),
-        ("H21", "860"),
-        ("H22", str(int(round(YESTERDAY_YIELD_KWH * 100)))),
-        ("H23", str(YESTERDAY_MAX_POWER_W)),
-    ]
-
-    summary = {
-        "site_name": "Synthetic",
-        "local_time": "13:40",
-        "batt_v": 51.2,
-        "pv_w": pv_w,
-        "temp_c": temp_c,
-        "state": charge_state_label(2),
-        "yield_today_kwh": 4.8,
-        "err": "17",
-    }
-    return build_frame(fields), summary
-
-
-def frame_night(t: float) -> tuple[bytes, dict[str, object]]:
-    start_h = 18.17 + 0.35
-    end_h = 5.67 + 24.0 - 0.25
-    absolute_hour = compressed_hour(t, NIGHT_CYCLE_S, start_h, end_h)
-    phase = clamp((absolute_hour - start_h) / (end_h - start_h), 0.0, 1.0)
-    local_hour = absolute_hour % 24.0
-
-    batt_v = lerp(54.8, 50.9, smoothstep01(phase))
-    batt_a = -lerp(1.3, 2.4, phase)
-    temp_c = lerp(28.0, 21.5, smoothstep01(phase))
-    load_a = lerp(1.4, 2.2, phase)
-
-    if phase < 0.12:
-        cs, mppt = 5, 1
-    else:
-        cs, mppt = 1, 0
-
-    if absolute_hour < 24.0:
-        yield_today = 5.4
-    else:
-        yield_today = 0.0
-
-    total_yield = TOTAL_YIELD_BASE_KWH + 5.4
-
-    fields = [
-        ("PID", PRODUCT_ID),
-        ("FW", FIRMWARE),
-        ("SER#", SERIAL),
-        ("V", str(int(round(batt_v * 1000)))),
-        ("I", str(int(round(batt_a * 1000)))),
+        ("V", str(int(round(batt_v * 1000.0)))),
+        ("I", str(int(round(batt_a * 1000.0)))),
         ("VPV", "0"),
         ("PPV", "0"),
         ("CS", str(cs)),
         ("MPPT", str(mppt)),
-        ("ERR", "0"),
-        ("T", str(int(round(temp_c)))),
+        ("OR", "0"),
+        ("ERR", err),
         ("LOAD", "ON"),
-        ("IL", str(int(round(load_a * 1000)))),
-        ("Relay", "OFF"),
-        ("H19", str(int(round(total_yield * 100)))),
-        ("H20", str(int(round(yield_today * 100)))),
-        ("H21", "0"),
-        ("H22", str(int(round(YESTERDAY_YIELD_KWH * 100)))),
+        ("IL", "0"),
+        ("H19", f"{yield_today:.2f}"),
+        ("H20", f"{yield_today:.2f}"),
+        ("H21", str(pmax)),
+        ("H22", f"{YESTERDAY_YIELD_KWH:.2f}"),
         ("H23", str(YESTERDAY_MAX_POWER_W)),
-    ]
-
-    summary = {
-        "site_name": "Goma, DRC",
-        "local_time": hhmm_string(local_hour),
-        "batt_v": batt_v,
-        "pv_w": 0,
-        "temp_c": temp_c,
-        "state": charge_state_label(cs),
-        "yield_today_kwh": yield_today,
-        "err": "0",
-    }
-    return build_frame(fields), summary
+        ("T", str(int(round(temp_c)))),
+    ])
+    return frame, summary
 
 
 SCENARIOS = {
     "sunny": ScenarioSpec(
-        title="Sunny day in Goma",
-        summary="Compressed clear-sky day with bulk, absorption, "
-                "float, and about 5.6 kWh daily yield.",
+        title="Sunny daytime",
+        summary="Healthy production arc with charging and harvest",
         duration_s=SUNNY_CYCLE_S,
-        frame_func=frame_sunny,
+        frame_func=scenario_frame_sunny,
     ),
     "night": ScenarioSpec(
-        title="Night in Goma",
-        summary="Compressed post-sunset to pre-dawn profile with "
-                "battery discharge under site load and no PV.",
+        title="Night discharge",
+        summary="No PV, site running from battery, occasional low-input alarm",
         duration_s=NIGHT_CYCLE_S,
-        frame_func=frame_night,
-    ),
-    "low_batt": ScenarioSpec(
-        title="Low battery",
-        summary="Synthetic discharge case that crosses the 46V and "
-                "44V alarm thresholds.",
-        duration_s=45.0,
-        frame_func=frame_low_batt,
-    ),
-    "fault": ScenarioSpec(
-        title="Controller fault",
-        summary="Hot-controller fault injection with ERR=17 and "
-                "elevated temperature.",
-        duration_s=30.0,
-        frame_func=frame_fault,
+        frame_func=scenario_frame_night,
     ),
 }
 
 
 def scenario_order(name: str) -> list[str]:
     if name == "all":
-        return ["sunny", "night", "low_batt", "fault"]
+        return list(SCENARIOS.keys())
     return [name]
-
-def city_key(value: str) -> str:
-    value = value.strip().lower()
-    value = value.replace(",", " ")
-    value = value.replace("_", " ")
-    value = " ".join(value.split())
-    return value.replace(" ", "-")
-
-def resolve_city_preset(value: str) -> Optional[dict[str, object]]:
-    key = city_key(value)
-
-    if key in CITY_PRESETS:
-        return CITY_PRESETS[key]
-
-    for preset_key, preset in CITY_PRESETS.items():
-        display_key = city_key(preset["display_name"])
-        if key == display_key:
-            return preset
-
-        city_only = city_key(preset["display_name"].split(",")[0])
-        if key == city_only:
-            return preset
-
-    return None
-
-def hour_from_dt(dt: datetime) -> float:
-    return dt.hour + dt.minute / 60.0 + dt.second / 3600.0
-
-def now_at_offset(tz_offset_h: float) -> datetime:
-    tz = timezone(timedelta(hours=tz_offset_h))
-    return datetime.now(tz)
-
-def fallback_sunrise_sunset(lat: float,
-                            day_of_year: int) -> tuple[float, float]:
-    """
-    Cheap local approximation for offline use.
-    """
-    lat_factor = clamp(abs(lat) / 60.0, 0.0, 1.0)
-    seasonal = math.cos((2.0 * math.pi * (day_of_year - 172)) / 365.25)
-    daylight_h = 12.1 + 2.2 * lat_factor * seasonal
-    daylight_h = clamp(daylight_h, 10.7, 13.4)
-    solar_noon = 12.0
-    sunrise = solar_noon - daylight_h / 2.0
-    sunset = solar_noon + daylight_h / 2.0
-    return sunrise, sunset
-
-
-def http_get_json(url: str, timeout_s: float = 8.0) -> dict:
-    req = urllib.request.Request(
-        url,
-        headers={
-            "User-Agent": "vedirect-sim/1.0 (+controller.d test utility)"
-        },
-    )
-    with urllib.request.urlopen(req, timeout=timeout_s) as resp:
-        return json.loads(resp.read().decode("utf-8"))
-
-
-def geocode_city_nominatim(query: str) -> Optional[tuple[float, float, str]]:
-    params = urllib.parse.urlencode({
-        "q": query,
-        "format": "jsonv2",
-        "limit": 1,
-    })
-    url = f"https://nominatim.openstreetmap.org/search?{params}"
-    try:
-        data = http_get_json(url)
-        if not data:
-            return None
-        row = data[0]
-        return float(row["lat"]), float(row["lon"]), row.get(
-            "display_name", query
-        )
-    except Exception:
-        return None
-
-
-def lookup_sunrise_sunset_api(lat: float, lon: float,
-                              local_dt: datetime) -> Optional[
-                                  tuple[float, float]]:
-    day_str = local_dt.date().isoformat()
-    params = urllib.parse.urlencode({
-        "lat": f"{lat:.6f}",
-        "lng": f"{lon:.6f}",
-        "date": day_str,
-        "formatted": 0,
-    })
-    url = f"https://api.sunrise-sunset.org/json?{params}"
-    try:
-        data = http_get_json(url)
-        if data.get("status") != "OK":
-            return None
-
-        results = data["results"]
-        sunrise_utc = datetime.fromisoformat(
-            results["sunrise"].replace("Z", "+00:00")
-        )
-        sunset_utc = datetime.fromisoformat(
-            results["sunset"].replace("Z", "+00:00")
-        )
-
-        local_tz = local_dt.tzinfo
-        sunrise_local = sunrise_utc.astimezone(local_tz)
-        sunset_local = sunset_utc.astimezone(local_tz)
-        return hour_from_dt(sunrise_local), hour_from_dt(sunset_local)
-    except Exception:
-        return None
-
-def resolve_site(args: argparse.Namespace) -> SiteInfo:
-    if args.city:
-        city = resolve_city_preset(args.city)
-        if city is not None:
-            tz_offset_h = city["tz_offset_h"]
-            if args.tz_offset is not None:
-                tz_offset_h = args.tz_offset
-
-            return SiteInfo(
-                name=city["display_name"],
-                lat=city["lat"],
-                lon=city["lon"],
-                tz_offset_h=tz_offset_h,
-                sunrise_h=city["sunrise_h"],
-                sunset_h=city["sunset_h"],
-            )
-
-        if not args.use_api:
-            raise SystemExit(
-                f"Unknown city preset: {args.city!r}. Use --use-api "
-                f"for online geocoding, or provide --lat/--lon."
-            )
-
-        geo = geocode_city_nominatim(args.city)
-        if geo is None:
-            raise SystemExit(f"Could not geocode city: {args.city!r}")
-
-        lat, lon, display_name = geo
-        tz_offset_h = 0.0 if args.tz_offset is None else args.tz_offset
-        day_of_year = now_at_offset(tz_offset_h).timetuple().tm_yday
-        sunrise_h, sunset_h = fallback_sunrise_sunset(
-            lat,
-            day_of_year,
-        )
-
-        return SiteInfo(
-            name=display_name,
-            lat=lat,
-            lon=lon,
-            tz_offset_h=tz_offset_h,
-            sunrise_h=sunrise_h,
-            sunset_h=sunset_h,
-        )
-
-    if args.lat is not None and args.lon is not None:
-        tz_offset_h = 0.0 if args.tz_offset is None else args.tz_offset
-        day_of_year = now_at_offset(tz_offset_h).timetuple().tm_yday
-        sunrise_h, sunset_h = fallback_sunrise_sunset(
-            args.lat,
-            day_of_year,
-        )
-        return SiteInfo(
-            name=f"Lat {args.lat:.4f}, Lon {args.lon:.4f}",
-            lat=args.lat,
-            lon=args.lon,
-            tz_offset_h=tz_offset_h,
-            sunrise_h=sunrise_h,
-            sunset_h=sunset_h,
-        )
-
-    city = CITY_PRESETS["goma"]
-    tz_offset_h = city["tz_offset_h"]
-    if args.tz_offset is not None:
-        tz_offset_h = args.tz_offset
-
-    return SiteInfo(
-        name=city["display_name"],
-        lat=city["lat"],
-        lon=city["lon"],
-        tz_offset_h=tz_offset_h,
-        sunrise_h=city["sunrise_h"],
-        sunset_h=city["sunset_h"],
-    )
-
-def pv_peak_w(config: PlantConfig) -> float:
-    return config.pv_count * config.pv_watts_each * config.pv_derate
-
-
-def update_site_sun_times_if_needed(config: PlantConfig,
-                                    state: PlantState,
-                                    local_dt: datetime) -> None:
-    if state.last_local_date == local_dt.date():
-        return
-
-    prior_date = state.last_local_date
-    state.last_local_date = local_dt.date()
-
-    sunrise_h = config.site.sunrise_h
-    sunset_h = config.site.sunset_h
-
-    if config.use_api:
-        online = lookup_sunrise_sunset_api(
-            config.site.lat, config.site.lon, local_dt
-        )
-        if online is not None:
-            sunrise_h, sunset_h = online
-        else:
-            day_of_year = local_dt.timetuple().tm_yday
-            sunrise_h, sunset_h = fallback_sunrise_sunset(
-                config.site.lat, day_of_year
-            )
-    else:
-        day_of_year = local_dt.timetuple().tm_yday
-        sunrise_h, sunset_h = fallback_sunrise_sunset(
-            config.site.lat, day_of_year
-        )
-
-    state.sunrise_h = sunrise_h
-    state.sunset_h = sunset_h
-
-    if prior_date is not None:
-        state.yesterday_yield_kwh = state.today_yield_kwh
-        state.yesterday_max_power_w = state.today_max_power_w
-        state.today_yield_kwh = 0.0
-        state.today_max_power_w = 0
-
-
-def solar_shape_for_hour(local_hour: float,
-                         sunrise_h: float,
-                         sunset_h: float) -> float:
-    if local_hour <= sunrise_h or local_hour >= sunset_h:
-        return 0.0
-
-    daylight = (local_hour - sunrise_h) / (sunset_h - sunrise_h)
-    shape = math.sin(math.pi * daylight)
-    return max(0.0, shape) ** 1.18
-
-
-def cloud_multiplier(now_ts: float, base_cloud_factor: float) -> float:
-    ripple = (
-        0.04 * math.sin(now_ts / 37.0) +
-        0.02 * math.sin(now_ts / 11.0) +
-        0.01 * math.sin(now_ts / 5.0)
-    )
-    factor = base_cloud_factor + ripple
-    return clamp(factor, 0.25, 1.02)
-
-
-def ambient_temp_for_hour(local_hour: float,
-                          sunrise_h: float,
-                          sunset_h: float,
-                          ambient_night_c: float,
-                          ambient_day_c: float) -> float:
-    shape = solar_shape_for_hour(local_hour, sunrise_h, sunset_h)
-    return lerp(ambient_night_c, ambient_day_c, smoothstep01(shape))
-
-
-def load_power_for_hour(local_hour: float,
-                        sunrise_h: float,
-                        sunset_h: float,
-                        day_w: float,
-                        night_w: float) -> float:
-    shape = solar_shape_for_hour(local_hour, sunrise_h, sunset_h)
-    return lerp(night_w, day_w, smoothstep01(shape))
-
-
-def estimate_batt_v_from_soc(soc: float, cs: int,
-                             batt_a: float,
-                             nominal_v: float) -> float:
-    """
-    Simple, believable approximation for a 48V-class system.
-    """
-    base_v = lerp(46.0, 54.2, soc)
-
-    if cs == 3:
-        base_v += 2.0
-    elif cs == 4:
-        base_v += 3.2
-    elif cs == 5:
-        base_v += 1.2
-
-    if batt_a < 0:
-        base_v += batt_a * 0.08
-    else:
-        base_v += batt_a * 0.03
-
-    return clamp(base_v, nominal_v - 8.0, nominal_v + 10.0)
-
-
-def choose_charge_state(soc: float, pv_w: float,
-                        net_w: float) -> tuple[int, int]:
-    if pv_w <= 5:
-        if net_w < -10:
-            return 1, 0
-        return 0, 0
-
-    if soc < 0.85:
-        return 3, 2
-    if soc < 0.98:
-        return 4, 2
-    return 5, 1
-
-
-def build_realtime_frame(config: PlantConfig,
-                         state: PlantState) -> bytes:
-    fields = [
-        ("PID", PRODUCT_ID),
-        ("FW", FIRMWARE),
-        ("SER#", SERIAL),
-        ("V", str(int(round(state.batt_v * 1000)))),
-        ("I", str(int(round(state.batt_a * 1000)))),
-        ("VPV", str(int(round(state.pv_mv)))),
-        ("PPV", str(int(round(state.pv_w)))),
-        ("CS", str(state.cs)),
-        ("MPPT", str(state.mppt)),
-        ("ERR", str(state.err)),
-        ("T", str(int(round(state.temp_c)))),
-        ("LOAD", "ON" if config.load_base_output_enabled else "OFF"),
-        ("IL", str(int(round(state.load_a * 1000)))),
-        ("Relay", "OFF"),
-        ("H19", str(int(round(state.total_yield_kwh * 100)))),
-        ("H20", str(int(round(state.today_yield_kwh * 100)))),
-        ("H21", str(int(round(state.today_max_power_w)))),
-        ("H22", str(int(round(state.yesterday_yield_kwh * 100)))),
-        ("H23", str(int(round(state.yesterday_max_power_w)))),
-    ]
-    return build_frame(fields)
-
-
-def realtime_tick(config: PlantConfig,
-                  state: PlantState,
-                  now_ts: float) -> tuple[bytes, dict[str, object]]:
-    local_dt = now_at_offset(config.site.tz_offset_h)
-    update_site_sun_times_if_needed(config, state, local_dt)
-
-    if state.last_update_ts <= 0:
-        dt_h = INTERVAL_S / 3600.0
-    else:
-        dt_h = clamp(
-            (now_ts - state.last_update_ts) / 3600.0,
-            0.0,
-            10.0 / 3600.0,
-        )
-
-    local_hour = hour_from_dt(local_dt)
-    sunrise_h = state.sunrise_h
-    sunset_h = state.sunset_h
-
-    sun_shape = solar_shape_for_hour(local_hour, sunrise_h, sunset_h)
-    cloud = cloud_multiplier(now_ts, config.cloud_factor)
-    ambient = ambient_temp_for_hour(
-        local_hour,
-        sunrise_h,
-        sunset_h,
-        config.ambient_night_c,
-        config.ambient_day_c,
-    )
-
-    max_pv = pv_peak_w(config)
-    pv_w = max_pv * sun_shape * cloud
-
-    temp_derate = 1.0 - max(0.0, ambient - 25.0) * 0.0035
-    temp_derate = clamp(temp_derate, 0.82, 1.02)
-    pv_w *= temp_derate
-
-    if pv_w < 2.0:
-        pv_w = 0.0
-
-    load_w = load_power_for_hour(
-        local_hour,
-        sunrise_h,
-        sunset_h,
-        config.load_day_w,
-        config.load_night_w,
-    )
-
-    batt_v_guess = state.batt_v if state.batt_v > 1.0 else \
-        config.battery_nominal_v
-    net_w = pv_w - load_w
-    batt_a = net_w / batt_v_guess
-    batt_a = clamp(batt_a, -20.0, 30.0)
-
-    state.soc = clamp(
-        state.soc + (batt_a * dt_h) / config.battery_capacity_ah,
-        0.05,
-        1.0,
-    )
-
-    cs, mppt = choose_charge_state(state.soc, pv_w, net_w)
-    batt_v = estimate_batt_v_from_soc(
-        state.soc, cs, batt_a, config.battery_nominal_v
-    )
-
-    batt_a = clamp(net_w / max(batt_v, 1.0), -20.0, 30.0)
-
-    controller_temp = ambient + 4.0 * sun_shape + 0.007 * pv_w
-    controller_temp = clamp(
-        controller_temp,
-        config.ambient_night_c - 2.0,
-        72.0,
-    )
-
-    err = "17" if controller_temp >= 67.0 else "0"
-    if err != "0":
-        cs, mppt = 2, 0
-
-    pv_mv = 0.0
-    if pv_w > 0:
-        pv_mv = lerp(90000.0, 145000.0, smoothstep01(sun_shape))
-
-    load_a = load_w / max(batt_v, 1.0)
-
-    pv_kwh = (pv_w * dt_h) / 1000.0
-    state.today_yield_kwh += max(0.0, pv_kwh)
-    state.total_yield_kwh += max(0.0, pv_kwh)
-    state.today_max_power_w = max(state.today_max_power_w,
-                                  int(round(pv_w)))
-
-    state.batt_v = batt_v
-    state.batt_a = batt_a
-    state.pv_w = int(round(pv_w))
-    state.pv_mv = int(round(pv_mv))
-    state.temp_c = controller_temp
-    state.load_a = load_a
-    state.cs = cs
-    state.mppt = mppt
-    state.err = err
-    state.last_update_ts = now_ts
-
-    summary = {
-        "site_name": config.site.name,
-        "local_time": local_dt.strftime("%H:%M:%S"),
-        "batt_v": state.batt_v,
-        "pv_w": state.pv_w,
-        "temp_c": state.temp_c,
-        "state": charge_state_label(state.cs),
-        "yield_today_kwh": state.today_yield_kwh,
-        "err": state.err,
-    }
-
-    return build_realtime_frame(config, state), summary
 
 
 def print_banner_scenario(requested_name: str,
@@ -992,6 +416,345 @@ def print_banner_scenario(requested_name: str,
     print("    curl http://localhost:18021/v1/alarms  | python3 -m json.tool")
     print("\n  Press Ctrl+C to stop.\n")
     print(f"{'=' * 76}\n")
+
+
+def local_dt_and_hour(now_ts: float, tz_offset_h: float) -> tuple[datetime, float]:
+    tz = timezone(timedelta(hours=tz_offset_h))
+    dt = datetime.fromtimestamp(now_ts, tz=tz)
+    hour = dt.hour + (dt.minute / 60.0) + (dt.second / 3600.0)
+    return dt, hour
+
+
+def estimate_sunrise_sunset_offline(site: SiteInfo, local_day: date) -> tuple[float, float]:
+    day_of_year = local_day.timetuple().tm_yday
+    seasonal = math.sin((2.0 * math.pi / 365.0) * (day_of_year - 80))
+    shift = 0.30 * seasonal * math.cos(math.radians(site.lat))
+    sunrise = clamp(site.sunrise_h - shift, 4.5, 7.5)
+    sunset = clamp(site.sunset_h + shift, 16.5, 19.5)
+    return sunrise, sunset
+
+
+def geocode_location(query: str) -> Optional[dict[str, object]]:
+    base = "https://geocoding-api.open-meteo.com/v1/search"
+    params = urllib.parse.urlencode({"name": query, "count": 1, "language": "en", "format": "json"})
+    url = f"{base}?{params}"
+
+    try:
+        with urllib.request.urlopen(url, timeout=10) as response:
+            data = json.loads(response.read().decode("utf-8"))
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError):
+        return None
+
+    results = data.get("results") or []
+    if not results:
+        return None
+
+    first = results[0]
+    return {
+        "name": first.get("name"),
+        "country": first.get("country"),
+        "latitude": first.get("latitude"),
+        "longitude": first.get("longitude"),
+        "timezone": first.get("timezone"),
+        "utc_offset_seconds": first.get("utc_offset_seconds"),
+    }
+
+
+def fetch_sunrise_sunset_api(lat: float, lon: float,
+                             local_day: date,
+                             tz_offset_h: float) -> Optional[tuple[float, float]]:
+    start = local_day.isoformat()
+    end = local_day.isoformat()
+    tz_name = "auto"
+
+    params = urllib.parse.urlencode({
+        "latitude": f"{lat:.6f}",
+        "longitude": f"{lon:.6f}",
+        "daily": "sunrise,sunset",
+        "start_date": start,
+        "end_date": end,
+        "timezone": tz_name,
+    })
+    url = f"https://api.open-meteo.com/v1/forecast?{params}"
+
+    try:
+        with urllib.request.urlopen(url, timeout=10) as response:
+            data = json.loads(response.read().decode("utf-8"))
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError):
+        return None
+
+    daily = data.get("daily") or {}
+    sunrises = daily.get("sunrise") or []
+    sunsets = daily.get("sunset") or []
+    if not sunrises or not sunsets:
+        return None
+
+    try:
+        sunrise_dt = datetime.fromisoformat(sunrises[0])
+        sunset_dt = datetime.fromisoformat(sunsets[0])
+    except ValueError:
+        return None
+
+    sunrise_h = sunrise_dt.hour + sunrise_dt.minute / 60.0 + sunrise_dt.second / 3600.0
+    sunset_h = sunset_dt.hour + sunset_dt.minute / 60.0 + sunset_dt.second / 3600.0
+
+    return sunrise_h, sunset_h
+
+
+def resolve_city_preset(name: str) -> Optional[SiteInfo]:
+    key = name.strip().lower()
+    if key in CITY_PRESETS:
+        item = CITY_PRESETS[key]
+        return SiteInfo(
+            name=item["display_name"],
+            lat=item["lat"],
+            lon=item["lon"],
+            tz_offset_h=item["tz_offset_h"],
+            sunrise_h=item["sunrise_h"],
+            sunset_h=item["sunset_h"],
+        )
+
+    for _, item in CITY_PRESETS.items():
+        if key == item["display_name"].lower():
+            return SiteInfo(
+                name=item["display_name"],
+                lat=item["lat"],
+                lon=item["lon"],
+                tz_offset_h=item["tz_offset_h"],
+                sunrise_h=item["sunrise_h"],
+                sunset_h=item["sunset_h"],
+            )
+    return None
+
+
+def resolve_site(args: argparse.Namespace) -> SiteInfo:
+    if args.lat is not None or args.lon is not None:
+        if args.lat is None or args.lon is None:
+            raise SystemExit("--lat and --lon must be provided together")
+        if args.tz_offset is None:
+            raise SystemExit("--tz-offset is required with --lat/--lon")
+        return SiteInfo(
+            name="Custom coordinates",
+            lat=args.lat,
+            lon=args.lon,
+            tz_offset_h=args.tz_offset,
+            sunrise_h=6.0,
+            sunset_h=18.0,
+        )
+
+    if args.city:
+        preset = resolve_city_preset(args.city)
+        if preset:
+            return preset
+
+        if args.use_api:
+            geo = geocode_location(args.city)
+            if geo is not None:
+                offset_seconds = geo.get("utc_offset_seconds")
+                if offset_seconds is None and args.tz_offset is None:
+                    raise SystemExit("Geocoder did not return UTC offset; pass --tz-offset")
+                tz_offset_h = (
+                    float(offset_seconds) / 3600.0
+                    if offset_seconds is not None else args.tz_offset
+                )
+                return SiteInfo(
+                    name=f"{geo.get('name')}, {geo.get('country')}",
+                    lat=float(geo["latitude"]),
+                    lon=float(geo["longitude"]),
+                    tz_offset_h=float(tz_offset_h),
+                    sunrise_h=6.0,
+                    sunset_h=18.0,
+                )
+
+        print(f"Warning: unknown city preset '{args.city}', "
+              "using offline fallback. Pass --use-api or exact coords "
+              "for a better site lookup.",
+              file=sys.stderr)
+        return SiteInfo(
+            name=args.city,
+            lat=0.0,
+            lon=0.0,
+            tz_offset_h=args.tz_offset if args.tz_offset is not None else 0.0,
+            sunrise_h=6.0,
+            sunset_h=18.0,
+        )
+
+    return resolve_city_preset("goma")
+
+
+def estimate_batt_v_from_soc(soc: float,
+                             cs: int,
+                             batt_a: float,
+                             nominal_v: float) -> float:
+    if nominal_v < 20.0:
+        v_empty = 11.8
+        v_full = 14.4
+    elif nominal_v < 40.0:
+        v_empty = 23.6
+        v_full = 28.8
+    else:
+        v_empty = 47.2
+        v_full = 57.6
+
+    base = lerp(v_empty, v_full, clamp(soc, 0.0, 1.0))
+
+    if batt_a > 0.2:
+        base += clamp(batt_a * 0.015, 0.0, 0.8)
+    elif batt_a < -0.2:
+        base += clamp(batt_a * 0.020, -1.0, 0.0)
+
+    if cs == 5:
+        base = max(base, nominal_v * 1.12)
+    elif cs == 4:
+        base = max(base, nominal_v * 1.15)
+
+    return base
+
+
+def realtime_tick(config: PlantConfig,
+                  state: PlantState,
+                  now_ts: float) -> tuple[bytes, dict[str, object]]:
+    dt, local_hour = local_dt_and_hour(now_ts, config.site.tz_offset_h)
+    local_day = dt.date()
+
+    if state.last_local_date != local_day:
+        if state.last_local_date is not None:
+            state.yesterday_yield_kwh = state.today_yield_kwh
+            state.yesterday_max_power_w = state.today_max_power_w
+
+        state.today_yield_kwh = 0.0
+        state.today_max_power_w = 0
+        state.last_local_date = local_day
+
+        if config.use_api:
+            api_sun = fetch_sunrise_sunset_api(
+                config.site.lat,
+                config.site.lon,
+                local_day,
+                config.site.tz_offset_h,
+            )
+            if api_sun is not None:
+                state.sunrise_h, state.sunset_h = api_sun
+            else:
+                state.sunrise_h, state.sunset_h = estimate_sunrise_sunset_offline(
+                    config.site, local_day
+                )
+        else:
+            state.sunrise_h, state.sunset_h = estimate_sunrise_sunset_offline(
+                config.site, local_day
+            )
+
+    if state.last_update_ts <= 0.0:
+        state.last_update_ts = now_ts
+
+    dt_hours = clamp((now_ts - state.last_update_ts) / 3600.0, 0.0, 0.05)
+    state.last_update_ts = now_ts
+
+    day_start = state.sunrise_h
+    day_end = state.sunset_h
+
+    if local_hour < day_start or local_hour > day_end:
+        solar_shape = 0.0
+    else:
+        span = max(0.1, day_end - day_start)
+        solar_phase = (local_hour - day_start) / span
+        solar_shape = math.sin(math.pi * clamp(solar_phase, 0.0, 1.0))
+        solar_shape = max(0.0, solar_shape)
+
+    cloud_wave = 0.90 + 0.10 * math.sin(now_ts / 900.0)
+    cloud_factor = clamp(config.cloud_factor * cloud_wave, 0.25, 1.0)
+
+    pv_capacity_w = config.pv_count * config.pv_watts_each * config.pv_derate
+    pv_w = int(round(pv_capacity_w * solar_shape * cloud_factor))
+    pv_w = max(0, pv_w)
+
+    state.today_max_power_w = max(state.today_max_power_w, pv_w)
+
+    is_day = pv_w > 20
+    load_w = config.load_day_w if is_day else config.load_night_w
+    net_w = pv_w - load_w
+
+    batt_capacity_wh = max(1.0, config.battery_nominal_v * config.battery_capacity_ah)
+    delta_soc = (net_w * dt_hours) / batt_capacity_wh
+    state.soc = clamp(state.soc + delta_soc, 0.05, 1.00)
+
+    if pv_w <= 5 and state.soc < 0.20:
+        state.cs = 2
+        state.err = "2"
+        state.mppt = 0
+    elif pv_w <= 5:
+        state.cs = 0
+        state.err = "0"
+        state.mppt = 0
+    elif state.soc < 0.85:
+        state.cs = 3
+        state.err = "0"
+        state.mppt = 2
+    elif state.soc < 0.97:
+        state.cs = 4
+        state.err = "0"
+        state.mppt = 2
+    else:
+        state.cs = 5
+        state.err = "0"
+        state.mppt = 2
+
+    batt_v_est = estimate_batt_v_from_soc(
+        state.soc, state.cs,
+        (net_w / max(config.battery_nominal_v, 1.0)),
+        config.battery_nominal_v,
+    )
+    state.batt_v = batt_v_est
+    state.batt_a = net_w / max(state.batt_v, 1.0)
+
+    if is_day:
+        temp_base = lerp(config.ambient_night_c, config.ambient_day_c, smoothstep01(solar_shape))
+        state.temp_c = temp_base + (pv_w / max(pv_capacity_w, 1.0)) * 4.0
+    else:
+        night_phase = 0.5 + 0.5 * math.sin(now_ts / 3600.0)
+        state.temp_c = lerp(config.ambient_night_c - 1.0, config.ambient_night_c + 1.0, night_phase)
+
+    state.load_a = load_w / max(state.batt_v, 1.0)
+    state.pv_w = pv_w
+    state.pv_mv = int(round((state.batt_v + 3.0 + 10.0 * solar_shape) * 1000.0))
+
+    if pv_w > 0:
+        state.today_yield_kwh += (pv_w * dt_hours) / 1000.0
+        state.total_yield_kwh += (pv_w * dt_hours) / 1000.0
+
+    summary = {
+        "site_name": config.site.name,
+        "local_time": dt.strftime("%H:%M:%S"),
+        "pv_w": state.pv_w,
+        "batt_v": state.batt_v,
+        "temp_c": state.temp_c,
+        "yield_today_kwh": state.today_yield_kwh,
+        "state": charge_state_label(state.cs),
+        "err": state.err,
+    }
+
+    frame = build_frame([
+        ("PID", PRODUCT_ID),
+        ("FW", FIRMWARE),
+        ("SER#", SERIAL),
+        ("V", str(int(round(state.batt_v * 1000.0)))),
+        ("I", str(int(round(state.batt_a * 1000.0)))),
+        ("VPV", str(state.pv_mv)),
+        ("PPV", str(state.pv_w)),
+        ("CS", str(state.cs)),
+        ("MPPT", str(state.mppt)),
+        ("OR", "0"),
+        ("ERR", state.err),
+        ("LOAD", "ON"),
+        ("IL", str(int(round(state.load_a * 1000.0)))),
+        ("H19", f"{state.today_yield_kwh:.2f}"),
+        ("H20", f"{state.total_yield_kwh:.2f}"),
+        ("H21", str(state.today_max_power_w)),
+        ("H22", f"{state.yesterday_yield_kwh:.2f}"),
+        ("H23", str(state.yesterday_max_power_w)),
+        ("T", str(int(round(state.temp_c)))),
+    ])
+    return frame, summary
 
 
 def print_banner_realtime(config: PlantConfig,
@@ -1195,27 +958,36 @@ def run_realtime(config: PlantConfig,
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="VE.Direct frame emulator for controller.d"
+        description="VE.Direct SmartSolar emulator for controller.d",
     )
-
     parser.add_argument(
         "--mode",
-        choices=["scenario", "realtime"],
+        choices=("scenario", "realtime"),
         default="scenario",
-        help="scenario = compressed synthetic mode, realtime = "
-             "wall-clock plant emulation",
+        help="Emulation mode",
     )
     parser.add_argument(
         "--scenario",
-        choices=list(SCENARIOS.keys()) + ["all"],
+        choices=("sunny", "night", "all"),
         default="sunny",
-        help="Scenario to simulate in scenario mode",
+        help="Scenario profile for scenario mode",
     )
     parser.add_argument(
         "--interval",
         type=float,
         default=INTERVAL_S,
         help="Seconds between frames",
+    )
+
+    parser.add_argument(
+        "--serial-link",
+        default=None,
+        help="Stable symlink for the PTY slave, e.g. /tmp/victron-tty",
+    )
+    parser.add_argument(
+        "--ready-file",
+        default=None,
+        help="Write the resolved PTY slave path here when ready",
     )
 
     parser.add_argument(
@@ -1303,17 +1075,6 @@ def main() -> None:
         help="Night ambient temp C",
     )
 
-    parser.add_argument(
-        "--serial-link",
-        default=None,
-        help="Stable symlink for the PTY slave, e.g. /tmp/victron-tty",
-    )
-    parser.add_argument(
-        "--ready-file",
-        default=None,
-        help="Write the resolved PTY slave path here when ready",
-    )
-
     args = parser.parse_args()
 
     if args.mode == "scenario":
@@ -1333,22 +1094,22 @@ def main() -> None:
         pv_derate=args.pv_derate,
         battery_nominal_v=args.battery_v,
         battery_capacity_ah=args.battery_ah,
-        soc_init=args.soc_init,
-        load_day_w=args.load_day_w,
-        load_night_w=args.load_night_w,
-        cloud_factor=args.cloud_factor,
+        soc_init=clamp(args.soc_init, 0.05, 1.0),
+        load_day_w=max(0.0, args.load_day_w),
+        load_night_w=max(0.0, args.load_night_w),
+        cloud_factor=clamp(args.cloud_factor, 0.2, 1.0),
         ambient_day_c=args.ambient_day_c,
         ambient_night_c=args.ambient_night_c,
         use_api=args.use_api,
         geocode_query=args.city,
     )
-
     run_realtime(
         config,
         args.interval,
         serial_link=args.serial_link,
         ready_file=args.ready_file,
     )
+
 
 if __name__ == "__main__":
     main()
