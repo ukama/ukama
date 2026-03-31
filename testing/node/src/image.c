@@ -13,6 +13,7 @@
 #include <string.h>
 #include <errno.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "log.h"
 #include "node.h"
@@ -106,9 +107,11 @@ static int stage_starter_pkgs(Configs *configs) {
     Configs *ptr = NULL;
     char runMe[MAX_BUFFER] = {0};
     char src[MAX_BUFFER] = {0};
+    char src_alt[MAX_BUFFER] = {0};
     char dst[MAX_BUFFER] = {0};
+    const char *pkg_src = NULL;
 
-    if (!configs) {
+    if (configs == NULL) {
         return FALSE;
     }
 
@@ -122,23 +125,31 @@ static int stage_starter_pkgs(Configs *configs) {
             continue;
         }
 
-        /*
-         * App builder output:
-         *   ./pkgs/name-tag.tar.gz
-         *
-         * Pre-seed only apps selected for this vnode.
-         */
         snprintf(src, sizeof(src), "./pkgs/%s-%s.tar.gz",
                  ptr->config->capp->name,
                  ptr->config->capp->version);
+
+        snprintf(src_alt, sizeof(src_alt), "./pkgs/%s_%s.tar.gz",
+                 ptr->config->capp->name,
+                 ptr->config->capp->version);
+
+        if (access(src, F_OK) == 0) {
+            pkg_src = src;
+        } else if (access(src_alt, F_OK) == 0) {
+            pkg_src = src_alt;
+        } else {
+            log_error("Unable to find starter package: %s or %s",
+                      src, src_alt);
+            return FALSE;
+        }
 
         snprintf(dst, sizeof(dst), "ukama/apps/pkgs/%s-%s.tar.gz",
                  ptr->config->capp->name,
                  ptr->config->capp->version);
 
-        snprintf(runMe, sizeof(runMe), "%s cp %s %s", SCRIPT, src, dst);
+        snprintf(runMe, sizeof(runMe), "%s cp %s %s", SCRIPT, pkg_src, dst);
         if (system(runMe) != 0) {
-            log_error("Unable to stage package: %s", src);
+            log_error("Unable to stage package: %s", pkg_src);
             return FALSE;
         }
     }
@@ -312,6 +323,10 @@ int create_vnode_image(char *target,
 	}
 
     sprintf(runMe, "%s ukamadirs %s %s", SCRIPT, nodeInfo->uuid, bootstrapServer);
+	if (system(runMe) < 0) goto failure;
+
+    /* build apps pkg */
+    sprintf(runMe, "%s apps-pkg", SCRIPT);
 	if (system(runMe) < 0) goto failure;
 
     if (runtime == RUNTIME_STARTER) {

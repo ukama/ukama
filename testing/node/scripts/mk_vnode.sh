@@ -133,6 +133,71 @@ build_starter() {
     log "SUCCESS" "starter.d built into ${BUILD_DIR}/sbin"
 }
 
+build_apps_pkg() {
+    local builder_root=""
+    local pkgs_src=""
+    local pkgs_stage=""
+    local found_pkgs=0
+    local pkg=""
+    local base=""
+    local staged_name=""
+
+    update_ukama_os_env
+
+    builder_root="${UKAMA_ROOT}/builder"
+
+    #
+    # build-all-apps.sh writes packages here
+    #
+    pkgs_src="${UKAMA_ROOT}/build/pkgs"
+
+    #
+    # image.c expects ./pkgs/<name>-<version>.tar.gz
+    # relative to the current vnode build working directory.
+    # Use CWD (captured at script startup) so it matches the caller.
+    #
+    pkgs_stage="${CWD}/pkgs"
+
+    [ -d "${builder_root}" ] || die "Failed to find builder root at: ${builder_root}"
+
+    rm -rf "${pkgs_stage}"
+    mkdir -p "${pkgs_stage}"
+
+    log "INFO" "Building app packages in ${builder_root}"
+    log "INFO" "Builder package source is ${pkgs_src}"
+    log "INFO" "Staging packages into ${pkgs_stage}"
+
+    pushd "${builder_root}" >/dev/null
+
+    make clean
+    make app_builder
+
+    [ -x "${builder_root}/scripts/build-all-apps.sh" ] || \
+        die "Missing or non-executable build script: ${builder_root}/scripts/build-all-apps.sh"
+
+    "${builder_root}/scripts/build-all-apps.sh" "${UKAMA_ROOT}"
+
+    [ -d "${pkgs_src}" ] || die "Package directory not found after build: ${pkgs_src}"
+
+    shopt -s nullglob
+    for pkg in "${pkgs_src}"/*.tar.gz; do
+        [ -f "${pkg}" ] || continue
+
+        base="$(basename "${pkg}")"
+        staged_name="${base/_latest.tar.gz/-latest.tar.gz}"
+
+        cp -f "${pkg}" "${pkgs_stage}/${staged_name}"
+        found_pkgs=1
+    done
+    shopt -u nullglob
+
+    popd >/dev/null
+
+    [ "${found_pkgs}" -eq 1 ] || die "No app packages were generated in ${pkgs_src}"
+
+    log "SUCCESS" "App packages staged into ${pkgs_stage}"
+}
+
 build_utils() {
     mkdir -p "${BUILD_DIR}/utils"
     update_ukama_os_env
@@ -373,6 +438,9 @@ case "${ACTION}" in
         ;;
     sysfs)
         build_sysfs "${1:-}" "${2:-}"
+        ;;
+    apps-pkg)
+        build_apps_pkg
         ;;
     ukamadirs)
         update_ukama_os_env
