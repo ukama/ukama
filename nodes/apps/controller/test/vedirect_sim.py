@@ -170,6 +170,53 @@ class PlantState:
     sunrise_h: float = 6.0
     sunset_h: float = 18.0
 
+def _safe_unlink(path: str) -> None:
+    try:
+        os.unlink(path)
+    except FileNotFoundError:
+        pass
+
+
+def publish_serial_endpoint(slave_path: str,
+                            serial_link: Optional[str],
+                            ready_file: Optional[str]) -> None:
+    """
+    Publish a stable path for the dynamically allocated PTY slave.
+
+    serial_link:
+        Symlink path such as /tmp/victron-tty -> /dev/pts/N
+
+    ready_file:
+        Small text file containing the resolved PTY slave path.
+        Useful for supervisor/container startup sequencing.
+    """
+    if serial_link:
+        parent = os.path.dirname(serial_link)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+
+        if os.path.lexists(serial_link):
+            _safe_unlink(serial_link)
+
+        os.symlink(slave_path, serial_link)
+
+    if ready_file:
+        parent = os.path.dirname(ready_file)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+
+        with open(ready_file, "w", encoding="utf-8") as f:
+            f.write(slave_path + "\n")
+
+
+def cleanup_serial_endpoint(serial_link: Optional[str],
+                            ready_file: Optional[str]) -> None:
+    if serial_link and os.path.islink(serial_link):
+        _safe_unlink(serial_link)
+
+    if ready_file and os.path.exists(ready_file):
+        _safe_unlink(ready_file)
+
 
 def clamp(value: float, low: float, high: float) -> float:
     return max(low, min(value, high))
@@ -916,9 +963,12 @@ def realtime_tick(config: PlantConfig,
     return build_realtime_frame(config, state), summary
 
 
-def print_banner_scenario(requested_name: str, slave_path: str) -> None:
+def print_banner_scenario(requested_name: str,
+                          slave_path: str,
+                          advertised_path: Optional[str] = None) -> None:
     order = scenario_order(requested_name)
     first = SCENARIOS[order[0]]
+    display_path = advertised_path or slave_path
 
     print(f"\n{'=' * 76}")
     title = first.title if requested_name != "all" else "All scenarios"
@@ -930,9 +980,11 @@ def print_banner_scenario(requested_name: str, slave_path: str) -> None:
     else:
         print(f"  Profile: {first.summary}")
     print(f"\n  Virtual serial port: {slave_path}")
+    if advertised_path:
+        print(f"  Stable serial link:  {advertised_path}")
     print("\n  Run the daemon with:")
     print("    CONTROLLER_DRIVER=victron "
-          f"CONTROLLER_SERIAL_PORT={slave_path} ./controllerd")
+          f"CONTROLLER_SERIAL_PORT={display_path} ./controllerd")
     print("\n  Then test the API:")
     print("    curl http://localhost:18021/v1/ping")
     print("    curl http://localhost:18021/v1/status  | python3 -m json.tool")
@@ -942,7 +994,11 @@ def print_banner_scenario(requested_name: str, slave_path: str) -> None:
     print(f"{'=' * 76}\n")
 
 
-def print_banner_realtime(config: PlantConfig, slave_path: str) -> None:
+def print_banner_realtime(config: PlantConfig,
+                          slave_path: str,
+                          advertised_path: Optional[str] = None) -> None:
+    display_path = advertised_path or slave_path
+
     print(f"\n{'=' * 76}")
     print("  VE.Direct Emulator — Real-time plant emulation")
     print(f"{'=' * 76}")
@@ -962,9 +1018,11 @@ def print_banner_realtime(config: PlantConfig, slave_path: str) -> None:
     source = "API+fallback" if config.use_api else "offline fallback/preset"
     print(f"  Sunrise/sunset source: {source}")
     print(f"\n  Virtual serial port: {slave_path}")
+    if advertised_path:
+        print(f"  Stable serial link:  {advertised_path}")
     print("\n  Run the daemon with:")
     print("    CONTROLLER_DRIVER=victron "
-          f"CONTROLLER_SERIAL_PORT={slave_path} ./controllerd")
+          f"CONTROLLER_SERIAL_PORT={display_path} ./controllerd")
     print("\n  Then test the API:")
     print("    curl http://localhost:18021/v1/ping")
     print("    curl http://localhost:18021/v1/status  | python3 -m json.tool")
@@ -974,12 +1032,22 @@ def print_banner_realtime(config: PlantConfig, slave_path: str) -> None:
     print(f"{'=' * 76}\n")
 
 
-def run_scenario(scenario_name: str, interval: float) -> None:
+def run_scenario(scenario_name: str,
+                 interval: float,
+                 serial_link: Optional[str] = None,
+                 ready_file: Optional[str] = None) -> None:
     master_fd, slave_fd = pty.openpty()
     slave_path = os.ttyname(slave_fd)
-    order = scenario_order(scenario_name)
+    publish_serial_endpoint(slave_path, serial_link, ready_file)
 
-    print_banner_scenario(scenario_name, slave_path)
+    order = scenario_order(scenario_name)
+    display_path = serial_link or slave_path
+
+    print_banner_scenario(
+        scenario_name,
+        slave_path,
+        advertised_path=display_path,
+    )
 
     scenario_idx = 0
     t0 = time.time()
@@ -988,6 +1056,7 @@ def run_scenario(scenario_name: str, interval: float) -> None:
 
     def handle_exit(_sig, _frame):
         print(f"\n\nSent {frame_count} frames. Bye.")
+        cleanup_serial_endpoint(serial_link, ready_file)
         try:
             os.close(master_fd)
         except OSError:
@@ -1041,12 +1110,24 @@ def run_scenario(scenario_name: str, interval: float) -> None:
 
         time.sleep(interval)
 
+    cleanup_serial_endpoint(serial_link, ready_file)
 
-def run_realtime(config: PlantConfig, interval: float) -> None:
+
+def run_realtime(config: PlantConfig,
+                 interval: float,
+                 serial_link: Optional[str] = None,
+                 ready_file: Optional[str] = None) -> None:
     master_fd, slave_fd = pty.openpty()
     slave_path = os.ttyname(slave_fd)
+    publish_serial_endpoint(slave_path, serial_link, ready_file)
 
-    print_banner_realtime(config, slave_path)
+    display_path = serial_link or slave_path
+
+    print_banner_realtime(
+        config,
+        slave_path,
+        advertised_path=display_path,
+    )
 
     init_batt_v = estimate_batt_v_from_soc(
         config.soc_init, 0, 0.0, config.battery_nominal_v
@@ -1066,6 +1147,7 @@ def run_realtime(config: PlantConfig, interval: float) -> None:
 
     def handle_exit(_sig, _frame):
         print(f"\n\nSent {frame_count} frames. Bye.")
+        cleanup_serial_endpoint(serial_link, ready_file)
         try:
             os.close(master_fd)
         except OSError:
@@ -1107,6 +1189,8 @@ def run_realtime(config: PlantConfig, interval: float) -> None:
         )
 
         time.sleep(interval)
+
+    cleanup_serial_endpoint(serial_link, ready_file)
 
 
 def main() -> None:
@@ -1219,10 +1303,26 @@ def main() -> None:
         help="Night ambient temp C",
     )
 
+    parser.add_argument(
+        "--serial-link",
+        default=None,
+        help="Stable symlink for the PTY slave, e.g. /tmp/victron-tty",
+    )
+    parser.add_argument(
+        "--ready-file",
+        default=None,
+        help="Write the resolved PTY slave path here when ready",
+    )
+
     args = parser.parse_args()
 
     if args.mode == "scenario":
-        run_scenario(args.scenario, args.interval)
+        run_scenario(
+            args.scenario,
+            args.interval,
+            serial_link=args.serial_link,
+            ready_file=args.ready_file,
+        )
         return
 
     site = resolve_site(args)
@@ -1233,17 +1333,22 @@ def main() -> None:
         pv_derate=args.pv_derate,
         battery_nominal_v=args.battery_v,
         battery_capacity_ah=args.battery_ah,
-        soc_init=clamp(args.soc_init, 0.05, 1.0),
-        load_day_w=max(0.0, args.load_day_w),
-        load_night_w=max(0.0, args.load_night_w),
-        cloud_factor=clamp(args.cloud_factor, 0.2, 1.0),
+        soc_init=args.soc_init,
+        load_day_w=args.load_day_w,
+        load_night_w=args.load_night_w,
+        cloud_factor=args.cloud_factor,
         ambient_day_c=args.ambient_day_c,
         ambient_night_c=args.ambient_night_c,
         use_api=args.use_api,
         geocode_query=args.city,
     )
-    run_realtime(config, args.interval)
 
+    run_realtime(
+        config,
+        args.interval,
+        serial_link=args.serial_link,
+        ready_file=args.ready_file,
+    )
 
 if __name__ == "__main__":
     main()
