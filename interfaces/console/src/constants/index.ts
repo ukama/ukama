@@ -34,6 +34,7 @@ export const SETTING_MENU = [
 ];
 
 export const NODE_ACTIONS_ENUM = {
+  NODE_LOADING: 'node-loading',
   NODE_RESTART: 'node-restart',
   NODE_RADIO_ON: 'node-radio-on',
   NODE_RADIO_OFF: 'node-radio-off',
@@ -280,6 +281,7 @@ export const NodePageTabs = [
   { id: 'node-tab-1', label: 'Network', value: 1 },
   { id: 'node-tab-2', label: 'Resources', value: 2 },
   { id: 'node-tab-3', label: 'Radio', value: 3 },
+  { id: 'node-tab-4', label: 'Software', value: 4 },
 ];
 
 export const MASK_BY_TYPE = {

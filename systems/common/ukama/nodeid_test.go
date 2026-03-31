@@ -26,7 +26,10 @@ func TestNodeId_GetNodeType(t *testing.T) {
 			"TNODE":     NODE_ID_TYPE_TOWERNODE,
 			"ANode":     NODE_ID_TYPE_AMPNODE,
 			"anode":     NODE_ID_TYPE_AMPNODE,
-			"ANODE":     NODE_ID_TYPE_AMPNODE}
+			"ANODE":     NODE_ID_TYPE_AMPNODE,
+			"CNode":     NODE_ID_TYPE_CNODE,
+			"cnode":     NODE_ID_TYPE_CNODE,
+			"CNODE":     NODE_ID_TYPE_CNODE}
 
 		for k, v := range ntypes {
 			nodeId := NewVirtualNodeId(k)
@@ -72,7 +75,10 @@ func TestGetNodeType(t *testing.T) {
 			"TNODE":     NODE_ID_TYPE_TOWERNODE,
 			"ANode":     NODE_ID_TYPE_AMPNODE,
 			"anode":     NODE_ID_TYPE_AMPNODE,
-			"ANODE":     NODE_ID_TYPE_AMPNODE}
+			"ANODE":     NODE_ID_TYPE_AMPNODE,
+			"CNode":     NODE_ID_TYPE_CNODE,
+			"cnode":     NODE_ID_TYPE_CNODE,
+			"CNODE":     NODE_ID_TYPE_CNODE}
 
 		for k, v := range ntypes {
 			nodeId := NewVirtualNodeId(k)
@@ -104,5 +110,37 @@ func TestValidateNodeId(t *testing.T) {
 
 		_, err := ValidateNodeId(string(nodeId))
 		assert.Error(tt, err)
+	})
+}
+
+func TestGetANodeIdFromTNodeId(t *testing.T) {
+	t.Run("InvalidLength", func(tt *testing.T) {
+		id, err := GetANodeIdFromTNodeId("too-short")
+		assert.Error(tt, err)
+		assert.Equal(tt, NodeID(""), id)
+	})
+
+	t.Run("Valid_TNodeToANodeAndLowercase", func(tt *testing.T) {
+		tNodeId := "UK-SA2156-TNODE-A1-XXXX"
+
+		aNodeId, err := GetANodeIdFromTNodeId(tNodeId)
+		assert.NoError(tt, err)
+		assert.Equal(tt, NodeID("uk-sa2156-anode-a1-xxxx"), aNodeId)
+	})
+}
+
+func TestGetCNodeIdFromTNodeId(t *testing.T) {
+	t.Run("InvalidLength", func(tt *testing.T) {
+		id, err := GetCNodeIdFromTNodeId("too-short")
+		assert.Error(tt, err)
+		assert.Equal(tt, NodeID(""), id)
+	})
+
+	t.Run("Valid_TNodeToCNodeAndLowercase", func(tt *testing.T) {
+		tNodeId := "UK-SA2156-TNODE-A1-XXXX"
+
+		cNodeId, err := GetCNodeIdFromTNodeId(tNodeId)
+		assert.NoError(tt, err)
+		assert.Equal(tt, NodeID("uk-sa2156-cnode-a1-xxxx"), cNodeId)
 	})
 }

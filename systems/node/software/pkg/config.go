@@ -12,19 +12,29 @@ import (
 	"time"
 
 	uconf "github.com/ukama/ukama/systems/common/config"
+	evt "github.com/ukama/ukama/systems/common/events"
 )
 
 type Config struct {
 	uconf.BaseConfig `mapstructure:",squash"`
-	DB               *uconf.Database `default:"{}"`
-	Grpc             *uconf.Grpc     `default:"{}"`
-	Queue            *uconf.Queue    `default:"{}"`
-	Timeout          time.Duration   `default:"20s"`
-	Service          *uconf.Service
+	DB               *uconf.Database  `default:"{}"`
+	Grpc             *uconf.Grpc      `default:"{}"`
+	Queue            *uconf.Queue     `default:"{}"`
+	Timeout          time.Duration    `default:"20s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	OrgName          string           `default:"ukama"`
 	WimsiHost        string           `default:"http://wimsi:8080"`
 	Health           string           `default:"health:9090"`
+	Apps             []*App           `default:"[]"`
+	NodeGwIPs        []string         `default:"[]"`
+	Service          *uconf.Service
+}
+
+type App struct {
+	Name        string
+	Space       string
+	Notes       string
+	MetricsKeys []string
 }
 
 func NewConfig(name string) *Config {
@@ -36,7 +46,34 @@ func NewConfig(name string) *Config {
 		MsgClient: &uconf.MsgClient{
 			Timeout: 7 * time.Second,
 			ListenerRoutes: []string{
-				"event.cloud.local.{{ .Org}}.hub.distributor.capp",
+				"event.cloud.global.{{ .Org}}.hub.distributor.app.chunkready",
+				evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline],
+			},
+		},
+		Apps: []*App{
+			{
+				Name:        "backhaul",
+				Space:       "system",
+				Notes:       "Backhaul software",
+				MetricsKeys: []string{"backhaul_software_cpu", "backhaul_software_memory"},
+			},
+			{
+				Name:        "core",
+				Space:       "system",
+				Notes:       "Core software",
+				MetricsKeys: []string{"core_software_cpu", "core_software_memory"},
+			},
+			{
+				Name:        "metricsd",
+				Space:       "system",
+				Notes:       "Metrics software",
+				MetricsKeys: []string{"metrics_software_cpu", "metrics_software_memory"},
+			},
+			{
+				Name:        "switch",
+				Space:       "system",
+				Notes:       "Switch software",
+				MetricsKeys: []string{"switch_software_cpu", "switch_software_memory"},
 			},
 		},
 	}

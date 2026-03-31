@@ -75,7 +75,9 @@ type configurator interface {
 }
 
 type softwareManager interface {
-	UpdateSoftware(space string, name string, tag string, nodeId string) (*spb.UpdateSoftwareResponse, error)
+	ListApps() (*spb.GetAppListResponse, error)
+	ListSoftware(nodeId string, status string, appName string) (*spb.GetSoftwareListResponse, error)
+	UpdateSoftware(nodeId string, name string, tag string) (*spb.UpdateSoftwareResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -153,7 +155,9 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 		const soft = "/software"
 		softS := auth.Group(soft, "Software manager", "Operations on software")
-		softS.POST("/update/:space/:name/:tag/:node_id", formatDoc("Update software", "Update software"), tonic.Handler(r.postUpdateSoftwareHandler, http.StatusOK))
+		softS.GET("/apps", formatDoc("List apps", "List apps"), tonic.Handler(r.getListAppsHandler, http.StatusOK))
+		softS.GET("", formatDoc("List software", "List software"), tonic.Handler(r.getListSoftwareHandler, http.StatusOK))
+		softS.POST("/update/:name/:tag/:node_id", formatDoc("Update software", "Update software"), tonic.Handler(r.postUpdateSoftwareHandler, http.StatusOK))
 
 		const state = "/state"
 		stateS := auth.Group(state, "State", "Operations on state")
@@ -178,8 +182,16 @@ func (r *Router) postRestartSiteHandler(c *gin.Context, req *RestartSiteRequest)
 	return r.clients.Controller.RestartSite(req.SiteId, req.NetworkId)
 }
 
+func (r *Router) getListAppsHandler(c *gin.Context, req *ListAppsRequest) (*spb.GetAppListResponse, error) {
+	return r.clients.SoftwareManager.ListApps()
+}
+
+func (r *Router) getListSoftwareHandler(c *gin.Context, req *ListSoftwareRequest) (*spb.GetSoftwareListResponse, error) {
+	return r.clients.SoftwareManager.ListSoftware(req.NodeId, req.Status, req.AppName)
+}
+
 func (r *Router) postUpdateSoftwareHandler(c *gin.Context, req *UpdateSoftwareRequest) (*spb.UpdateSoftwareResponse, error) {
-	return r.clients.SoftwareManager.UpdateSoftware(req.Space, req.Name, req.Tag, req.NodeId)
+	return r.clients.SoftwareManager.UpdateSoftware(req.NodeId, req.Name, req.Tag)
 }
 
 func (r *Router) getStatesHandler(c *gin.Context, req *GetStatesRequest) (*nspb.GetStatesResponse, error) {
@@ -208,14 +220,6 @@ func (r *Router) postConfigApplyVersionHandler(c *gin.Context, req *ApplyConfigR
 	log.Infof("received apply config with %+v", req)
 
 	_, err := r.clients.Configurator.ApplyConfig(req.Commit)
-	if err != nil {
-		log.Errorf("Failed to apply config version %s to nodes.Error %s", req.Commit, err.Error())
-		return err
-	}
-
-	log.Infof("received apply config with %+v", req)
-
-	_, err = r.clients.Configurator.ApplyConfig(req.Commit)
 	if err != nil {
 		log.Errorf("Failed to apply config version %s to nodes.Error %s", req.Commit, err.Error())
 		return err

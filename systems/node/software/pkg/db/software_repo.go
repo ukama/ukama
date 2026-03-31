@@ -10,12 +10,16 @@ package db
 
 import (
 	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/ukama"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
 )
 
 type SoftwareRepo interface {
-	CreateSoftwareUpdate(Software *Software, nestedFunc func(string, string) error) error
-	GetLatestSoftwareUpdate() (*Software, error)
+	Create(Software *Software) error
+	Get(id uuid.UUID) (Software, error)
+	List(nodeId string, status ukama.SoftwareStatusType, appName string) ([]*Software, error)
+	Update(Software *Software) error
 }
 
 type softwareRepo struct {
@@ -27,24 +31,42 @@ func NewSoftwareRepo(db sql.Db) SoftwareRepo {
 		Db: db,
 	}
 }
-func (r *softwareRepo) CreateSoftwareUpdate(Software *Software, nestedFunc func(string, string) error) error {
-	err := r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		if nestedFunc != nil {
-			nestErr := nestedFunc("", "")
-			if nestErr != nil {
-				return nestErr
-			}
-		}
-		if err := tx.Create(Software).Error; err != nil {
-			return err
-		}
-		return nil
-	})
-	return err
+
+func (r *softwareRepo) Create(Software *Software) error {
+	return r.Db.GetGormDb().Create(Software).Error
 }
 
-func (r *softwareRepo) GetLatestSoftwareUpdate() (*Software, error) {
-	var Software Software
-	err := r.Db.GetGormDb().Order("release_date desc").First(&Software).Error
-	return &Software, err
+func (r *softwareRepo) Get(id uuid.UUID) (Software, error) {
+	var software Software
+	err := r.Db.GetGormDb().Where("id = ?", id).Preload("App").First(&software).Error
+	if err != nil {
+		return Software{}, gorm.ErrRecordNotFound
+	}
+	return software, nil
+}
+
+func (r *softwareRepo) List(nodeId string, status ukama.SoftwareStatusType, appName string) ([]*Software, error) {
+	var software []*Software
+
+	tx := r.Db.GetGormDb().Model(&Software{}).Preload("App")
+	if appName != "" {
+		tx = tx.Where("app_name = ?", appName)
+	}
+	if nodeId != "" {
+		tx = tx.Where("node_id = ?", nodeId)
+	}
+	if status != ukama.SoftwareStatusType(0) {
+		tx = tx.Where("status = ?", status)
+	}
+
+	result := tx.Find(&software)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return software, nil
+}
+
+func (r *softwareRepo) Update(Software *Software) error {
+	return r.Db.GetGormDb().Save(Software).Error
 }

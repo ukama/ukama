@@ -7,6 +7,7 @@ replace github.com/ukama/ukama/systems/common => ./
 replace github.com/ukama/ukama/systems/services/msgClient => ../services/msgClient
 
 require (
+	github.com/coreos/go-semver v0.3.0
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-git/go-git/v5 v5.12.0

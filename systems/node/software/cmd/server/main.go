@@ -9,7 +9,9 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
+	"strings"
 
 	"github.com/num30/config"
 
@@ -25,7 +27,6 @@ import (
 
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
-	providers "github.com/ukama/ukama/systems/node/software/pkg/provider"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
@@ -41,6 +42,7 @@ func main() {
 	pkg.InstanceId = os.Getenv("POD_NAME")
 	initConfig()
 	cDb := initDb()
+	populateApps(cDb)
 	runGrpcServer(cDb)
 	log.Infof("Starting %s", pkg.ServiceName)
 }
@@ -56,18 +58,65 @@ func initConfig() {
 			log.Infof("Config:\n%s", string(b))
 		}
 	}
+	
+	raw := os.Getenv("NODEGWIPS")
+	if raw == "" {
+		raw = os.Getenv("NODEGWIPs")
+	}
+	if raw != "" {
+		raw = strings.TrimSpace(raw)
+		// Trim surrounding quotes (e.g. from docker-compose: NODEGWIPS='["0.0.0.0", "1.1.1.1"]')
+		raw = strings.TrimPrefix(raw, "'")
+		raw = strings.TrimSuffix(raw, "'")
+		raw = strings.TrimPrefix(raw, "\"")
+		raw = strings.TrimSuffix(raw, "\"")
+		raw = strings.TrimSpace(raw)
+
+		var ips []string
+		if err := json.Unmarshal([]byte(raw), &ips); err != nil {
+			ips = strings.Split(raw, ",")
+			for i := range ips {
+				ips[i] = strings.TrimSpace(strings.Trim(ips[i], "\"'"))
+			}
+		}
+		if len(ips) > 0 {
+			svcConf.NodeGwIPs = ips
+		}
+	}
 	pkg.IsDebugMode = svcConf.DebugMode
 }
 
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
-	err := d.Init(&db.Software{})
+
+	err := d.Init(&db.App{}, &db.Software{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
 	return d
 }
+
+func populateApps(gormdb sql.Db) {
+	repo := db.NewAppRepo(gormdb)
+	for _, app := range svcConf.Apps {
+		_, err := repo.Get(app.Name)
+		if err == nil {
+			continue // app already exists
+		}
+		err = repo.Create(db.App{
+			Id:          uuid.NewV4(),
+			Name:        app.Name,
+			Space:       app.Space,
+			Notes:       app.Notes,
+			MetricsKeys: app.MetricsKeys,
+		})
+		if err != nil {
+			log.Fatalf("Failed to populate apps. Error: %v", err)
+		}
+	}
+}
+
 func runGrpcServer(gormdb sql.Db) {
 	instanceId := os.Getenv("POD_NAME")
 	if instanceId == "" {
@@ -81,12 +130,12 @@ func runGrpcServer(gormdb sql.Db) {
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	softServer := server.NewSoftwareServer(svcConf.OrgName, db.NewSoftwareRepo(gormdb),
-		mbClient, svcConf.DebugMode, providers.NewHealthClientProvider(svcConf.Health))
-	controllerEventServer := server.NewSoftwareEventServer(svcConf.OrgName, softServer)
+		db.NewAppRepo(gormdb), mbClient, svcConf.DebugMode, svcConf.NodeGwIPs)
+	eventServer := server.NewSoftwareEventServer(svcConf.OrgName, softServer)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterSoftwareServiceServer(s, softServer)
-		epb.RegisterEventNotificationServiceServer(s, controllerEventServer)
+		epb.RegisterEventNotificationServiceServer(s, eventServer)
 
 	})
 

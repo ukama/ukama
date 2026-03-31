@@ -518,3 +518,155 @@ metric_server_port = 7001
 			desc   = "1 if lastDiagName is non-empty, else 0"
 			type   = "METRICTYPE_GAUGE"
 			labels = []
+
+[[stats]]
+	[[stats.controller]]
+		source = "controller"
+		agent  = "controllerd_agent"
+		url    = "/v1/controller/metrics"
+
+		[[stats.controller.controller.kpi]]
+			name   = "solar_panel_voltage"
+			ext    = ""
+			desc   = "Solar panel voltage (V)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.controller.controller.kpi]]
+			name   = "solar_panel_current"
+			ext    = ""
+			desc   = "Solar panel current (A)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.controller.controller.kpi]]
+			name   = "solar_panel_power"
+			ext    = ""
+			desc   = "Solar panel power (W)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.controller.controller.kpi]]
+			name   = "solar_yield_today"
+			ext    = ""
+			desc   = "Solar yield today (kWh)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.controller.controller.kpi]]
+			name   = "solar_yield_total"
+			ext    = ""
+			desc   = "Solar yield total (kWh)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.controller.controller.kpi]]
+			name   = "battery_voltage"
+			ext    = ""
+			desc   = "Battery voltage (V)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.controller.controller.kpi]]
+			name   = "battery_current"
+			ext    = ""
+			desc   = "Battery current (A)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.controller.controller.kpi]]
+			name   = "mppt_efficiency"
+			ext    = ""
+			desc   = "MPPT tracking efficiency (percent)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.controller.controller.kpi]]
+			name   = "battery_charge_percentage"
+			ext    = ""
+			desc   = "Battery state of charge (percent)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.controller.controller.kpi]]
+			name   = "controller_temperature"
+			ext    = ""
+			desc   = "Charge controller internal temperature (C)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.controller.controller.kpi]]
+			name   = "load_current"
+			ext    = ""
+			desc   = "Load output current (A)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+[[stats]]
+	[[stats.switch]]
+		source = "switch"
+		agent  = "switchd_agent"
+		url    = "/v1/metrics/switch"
+
+		[[stats.switch.switch.kpi]]
+			name   = "poe_total_power_watts"
+			ext    = ""
+			desc   = "Total PoE power delivered (W)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.switch.switch.kpi]]
+			name   = "poe_max_power_watts"
+			ext    = ""
+			desc   = "Maximum PoE power budget (W)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.switch.switch.kpi]]
+			name   = "system_temperature_c"
+			ext    = ""
+			desc   = "Switch system temperature (C)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.switch.switch.kpi]]
+			name   = "ambient_temperature_c"
+			ext    = ""
+			desc   = "Switch ambient temperature (C)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.switch.switch.kpi]]
+			name   = "system_power_watts"
+			ext    = ""
+			desc   = "Total system power consumption (W)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.switch.switch.kpi]]
+			name   = "input_voltage"
+			ext    = ""
+			desc   = "Input voltage (V)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.switch.switch.kpi]]
+			name   = "system_current_amps"
+			ext    = ""
+			desc   = "System current draw (A)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.switch.switch.kpi]]
+			name   = "input_link_failure_alarm"
+			ext    = ""
+			desc   = "Input link failure alarm (0=ok, 1=alarm)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.switch.switch.kpi]]
+			name   = "input_poe_failure_alarm"
+			ext    = ""
+			desc   = "Input PoE failure alarm (0=ok, 1=alarm)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []

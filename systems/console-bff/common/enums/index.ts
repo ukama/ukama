@@ -65,6 +65,18 @@ registerEnumType(NETWORK_STATUS, {
   name: "NETWORK_STATUS",
 });
 
+export enum SOFTWARE_STATUS {
+  unknown = "unknown",
+  up_to_date = "up_to_date",
+  update_available = "update_available",
+  update_in_progress = "update_in_progress",
+  update_failed = "update_failed",
+}
+registerEnumType(SOFTWARE_STATUS, {
+  name: "SoftwareStatusEnum",
+  description: "Software status enums",
+});
+
 export enum SIM_TYPES {
   unknown = "unknown",
   test = "test",

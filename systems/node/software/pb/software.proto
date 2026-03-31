@@ -9,54 +9,70 @@
 syntax = "proto3";
 option go_package = "github.com/ukama/ukama/systems/node/software/pb/gen";
 package ukama.node.software.v1;
-import "validator.proto";
-import "google/protobuf/timestamp.proto";
-import "google/protobuf/wrappers.proto";
-service SoftwareService {
-    rpc CreateSoftwareUpdate (CreateSoftwareUpdateRequest) returns (CreateSoftwareUpdateResponse);
-    rpc GetLatestSoftwareUpdate (GetLatestSoftwareUpdateRequest) returns (GetLatestSoftwareUpdateResponse);
 
+import "validator.proto";
+import "ukama/software-status.proto";
+
+service SoftwareService {
+    rpc CreateApp (CreateAppRequest) returns (CreateAppResponse);
+    rpc GetAppList (GetAppListRequest) returns (GetAppListResponse);
+    rpc GetSoftwareList (GetSoftwareListRequest) returns (GetSoftwareListResponse);
     rpc UpdateSoftware (UpdateSoftwareRequest) returns (UpdateSoftwareResponse);
+}
+
+message CreateAppRequest {
+    string name = 1;
+    string space = 2;
+    string notes = 3;
+    repeated string metricsKeys = 4;
+}
+message CreateAppResponse {
+    string message = 1;
+}
+
+message GetAppListRequest {
+}
+message GetAppListResponse {
+    repeated App apps = 1;
+}
+
+message GetSoftwareListRequest {
+    string nodeId = 1;
+    ukama.common.v1.SoftwareStatus status = 2;
+    string appName = 3;
+}
+message GetSoftwareListResponse {
+    repeated Software software = 1;
 }
 
 message UpdateSoftwareRequest {
     string nodeId = 1;
     string tag = 2;
-    string space = 3;
-    string name = 5;
+    string name = 3;
 }
-
 message UpdateSoftwareResponse {
     string message =1;
+}
 
-}
-message CreateSoftwareUpdateRequest {
-    string name = 1;
-    string tag = 2;
-    string space = 3;
-
-}
-message CreateSoftwareUpdateResponse {
-    SoftwareUpdate software_update = 1;
-}
-message SoftwareUpdate {
+message Software {
     string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
-    string tag = 2;
-    string space = 3;
-    Status status = 4;
-    string name = 5;
+    string releaseDate = 2;
+    string nodeId = 3;
+    string status = 4;
+    repeated string changeLog = 5;
+    string currentVersion = 6;
+    string desiredVersion = 7;
+    string name = 8;
+    string space = 9;
+    string notes = 10;
+    repeated string metricsKeys = 11;    
+    string createdAt = 12;
+    string updatedAt = 13;
 }
 
-message GetLatestSoftwareUpdateRequest {
-}
-message GetLatestSoftwareUpdateResponse {
-    SoftwareUpdate software_update = 1;
-}
-
-
-
-enum Status {
-    Stable  = 0;
-	Beta    = 1;
-	Alpha   = 2;
+message App {
+    string name = 1;
+    string space = 2;
+    string notes = 3;
+    repeated string metricsKeys = 4;
 }

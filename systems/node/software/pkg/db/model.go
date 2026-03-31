@@ -11,35 +11,29 @@ package db
 import (
 	"time"
 
+	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
 
+type App struct {
+	Id          uuid.UUID `gorm:"primaryKey;type:uuid;index"`
+	Name        string    `gorm:"not null;index:idx_app_name,unique"`
+	Space       string
+	Notes       string
+	MetricsKeys []string `gorm:"serializer:json"`
+}
+
 type Software struct {
-	Id          uuid.UUID `gorm:"primaryKey;type:uuid"`
-	Name        string
-	Tag         string
-	Space 	 string
-	Status      Status `gorm:"type:smallint" default:"0"`
-	ReleaseDate time.Time
-	CreatedAt   time.Time  `gorm:"not null"`
-	UpdatedAt   time.Time  `gorm:"not null"`
-	DeletedAt   *time.Time `gorm:"index"`
-}
-
-type Status uint8
-
-const (
-	Stable Status = 0
-	Beta   Status = 1
-	Alpha  Status = 2
-)
-
-func (e *Status) Scan(value interface{}) error {
-	*e = Status(uint8(value.(int64)))
-
-	return nil
-}
-
-func (e Status) Value() (uint8, error) {
-	return uint8(e), nil
+	Id             uuid.UUID `gorm:"primaryKey;type:uuid;index"`
+	NodeId         string    `gorm:"not null;uniqueIndex:idx_software_node_app"`
+	AppName        string    `gorm:"not null;uniqueIndex:idx_software_node_app"`
+	App            App       `gorm:"foreignKey:AppName;references:Name"`
+	ChangeLogs     []string  `gorm:"serializer:json"`
+	CurrentVersion string    `gorm:"not null;default:'0.0.1'"`
+	DesiredVersion string    `gorm:"not null;default:''"`
+	ReleaseDate    time.Time
+	CreatedAt      time.Time                `gorm:"not null;default:now()"`
+	UpdatedAt      time.Time                `gorm:"not null;default:now()"`
+	DeletedAt      *time.Time               `gorm:"index;default:null"`
+	Status         ukama.SoftwareStatusType
 }

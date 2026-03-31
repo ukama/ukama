@@ -12,9 +12,69 @@ type softwareManager struct {
 	mock.Mock
 }
 
-// UpdateSoftware provides a mock function with given fields: space, name, tag, nodeId
-func (_m *softwareManager) UpdateSoftware(space string, name string, tag string, nodeId string) (*gen.UpdateSoftwareResponse, error) {
-	ret := _m.Called(space, name, tag, nodeId)
+// ListApps provides a mock function with no fields
+func (_m *softwareManager) ListApps() (*gen.GetAppListResponse, error) {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListApps")
+	}
+
+	var r0 *gen.GetAppListResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func() (*gen.GetAppListResponse, error)); ok {
+		return rf()
+	}
+	if rf, ok := ret.Get(0).(func() *gen.GetAppListResponse); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetAppListResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ListSoftware provides a mock function with given fields: nodeId, status, appName
+func (_m *softwareManager) ListSoftware(nodeId string, status string, appName string) (*gen.GetSoftwareListResponse, error) {
+	ret := _m.Called(nodeId, status, appName)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListSoftware")
+	}
+
+	var r0 *gen.GetSoftwareListResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, string) (*gen.GetSoftwareListResponse, error)); ok {
+		return rf(nodeId, status, appName)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, string) *gen.GetSoftwareListResponse); ok {
+		r0 = rf(nodeId, status, appName)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetSoftwareListResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
+		r1 = rf(nodeId, status, appName)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateSoftware provides a mock function with given fields: nodeId, name, tag
+func (_m *softwareManager) UpdateSoftware(nodeId string, name string, tag string) (*gen.UpdateSoftwareResponse, error) {
+	ret := _m.Called(nodeId, name, tag)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateSoftware")
@@ -22,19 +82,19 @@ func (_m *softwareManager) UpdateSoftware(space string, name string, tag string,
 
 	var r0 *gen.UpdateSoftwareResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string) (*gen.UpdateSoftwareResponse, error)); ok {
-		return rf(space, name, tag, nodeId)
+	if rf, ok := ret.Get(0).(func(string, string, string) (*gen.UpdateSoftwareResponse, error)); ok {
+		return rf(nodeId, name, tag)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string) *gen.UpdateSoftwareResponse); ok {
-		r0 = rf(space, name, tag, nodeId)
+	if rf, ok := ret.Get(0).(func(string, string, string) *gen.UpdateSoftwareResponse); ok {
+		r0 = rf(nodeId, name, tag)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.UpdateSoftwareResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string) error); ok {
-		r1 = rf(space, name, tag, nodeId)
+	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
+		r1 = rf(nodeId, name, tag)
 	} else {
 		r1 = ret.Error(1)
 	}
