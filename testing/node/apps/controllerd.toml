@@ -13,7 +13,7 @@
 [capp-exec]
 	name="controller"
 	version="latest"
-	bin="cotrollerd"
+	bin="controllerd"
 	path="/sbin"
 	autostart="false"
         autorestart="true"
