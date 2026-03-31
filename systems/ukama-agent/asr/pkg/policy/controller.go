@@ -276,7 +276,7 @@ func (p *policyController) RunPolicyControl(imsi string, event bool) (error, boo
 func (p *policyController) syncSubscriberPolicy(method string, imsi string, network string, policy *db.Policy) error {
 	log.Infof("Syncing policy for subscriber %s", imsi)
 
-	route := p.NodeFeederRoutingKey.SetObject("nodefeeder").SetAction("publish").MustBuild()
+	route := p.MsgBusRoutingKey.SetObject("publish").SetAction("policies").MustBuild()
 	pMsg := createMessage(policy, p.reroute)
 
 	jd, err := json.Marshal(pMsg)
