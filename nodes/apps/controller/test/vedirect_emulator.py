@@ -2,17 +2,19 @@
 """
 Standalone VE.Direct emulator launcher for supervisor/container use.
 
-This wrapper reuses the existing implementation in test/vedirect_sim.py
-and only adds stable runtime defaults suitable for controllerd running
-inside the same container.
+This wrapper reuses the existing implementation in vedirect_sim.py and
+adds stable runtime defaults suitable for controllerd running inside the
+same container/image.
 
 Examples:
 
-  python3 utils/vedirect_emulator.py
+  /usr/bin/python3 /sbin/vedirect_emulator.py
 
-  python3 utils/vedirect_emulator.py --mode realtime --city "Goma, DRC"
+  /usr/bin/python3 /sbin/vedirect_emulator.py \
+      --mode realtime --city "Goma, DRC"
 
-  python3 utils/vedirect_emulator.py --mode scenario --scenario sunny
+  /usr/bin/python3 /sbin/vedirect_emulator.py \
+      --mode scenario --scenario sunny
 """
 
 from __future__ import annotations
@@ -23,13 +25,11 @@ import sys
 
 def main() -> None:
     here = os.path.abspath(os.path.dirname(__file__))
-    root = os.path.abspath(os.path.join(here, ".."))
-    test_dir = os.path.join(root, "test")
 
-    if test_dir not in sys.path:
-        sys.path.insert(0, test_dir)
+    if here not in sys.path:
+        sys.path.insert(0, here)
 
-    import vedirect_sim  # noqa: WPS433
+    import vedirect_sim
 
     argv = sys.argv[1:]
 
