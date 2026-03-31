@@ -269,6 +269,8 @@ int main (int argc, char *argv[]) {
         log_debug("==== Building for Ukama Tower Node (virtual) ====");
     } else if (nodeType == NODE_AMPLIFIER) {
         log_debug("==== Building for Ukama Amplifer Node (virtual) ====");
+    } else if (nodeType == NODE_CONTROLLER) {
+        log_debug("==== Building for Ukama Controller Node (virtual) ====");
     } else {
         log_error("==== Unknown node type ====\n Exiting");
         json_decref(jNode);
