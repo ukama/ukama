@@ -16,6 +16,6 @@
 	bin="controllerd"
 	path="/sbin"
 	autostart="false"
-        autorestart="true"
-        startretries=5
-	group="service"
+	autorestart="true"
+	startretries=5
+	group="sys-service"
