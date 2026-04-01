@@ -24,7 +24,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	pb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 )
 
 type policyController struct {
@@ -288,7 +287,7 @@ func (p *policyController) syncSubscriberPolicy(method string, imsi string, netw
 
 	path := "/pcrf/v1/subscriber/imsi/" + imsi
 
-	msg := &pb.NodeFeederMessage{
+	msg := &epb.NodeFeederMessage{
 		Target:     p.OrgName + "." + network + "." + "*" + "." + "*",
 		HttpMethod: method,
 		Path:       path,

@@ -15,7 +15,7 @@ import (
 	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg"
 
 	log "github.com/sirupsen/logrus"
-	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	rc "github.com/ukama/ukama/systems/common/rest/client/registry"
 )
 
@@ -31,7 +31,7 @@ func NewRequestMultiplier(registryClient string, queue QueuePublisher) pkg.Reque
 	}
 }
 
-func (r *requestMultiplier) Process(req *cpb.NodeFeederMessage) error {
+func (r *requestMultiplier) Process(req *epb.NodeFeederMessage) error {
 	// "org.nodeId"
 	counter := 0
 	//target = orgId.networkId.siteId.nodeId
@@ -69,8 +69,8 @@ func (r *requestMultiplier) Process(req *cpb.NodeFeederMessage) error {
 	return nil
 }
 
-func (r *requestMultiplier) PublishToNode(req *cpb.NodeFeederMessage, orgName string, node string) error {
-	err := r.queue.Publish(&cpb.NodeFeederMessage{
+func (r *requestMultiplier) PublishToNode(req *epb.NodeFeederMessage, orgName string, node string) error {
+	err := r.queue.Publish(&epb.NodeFeederMessage{
 		Target:     orgName + "." + node,
 		HttpMethod: req.HttpMethod,
 		Path:       req.Path,
@@ -85,7 +85,7 @@ func (r *requestMultiplier) PublishToNode(req *cpb.NodeFeederMessage, orgName st
 	return nil
 }
 
-func (r *requestMultiplier) PublishToFilteredNodes(req *cpb.NodeFeederMessage, nodeResp []*rc.NodeInfo, orgName string, networkId string, siteId string, nodeId string) error {
+func (r *requestMultiplier) PublishToFilteredNodes(req *epb.NodeFeederMessage, nodeResp []*rc.NodeInfo, orgName string, networkId string, siteId string, nodeId string) error {
 	counter := 0
 
 	for _, n := range nodeResp {
