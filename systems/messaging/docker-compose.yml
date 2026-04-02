@@ -38,6 +38,20 @@ services:
   networks:
    - ukama-net
 
+ broadcaster:
+  build: ./broadcaster
+  environment:
+   - DEBUGMODE=true
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-messaging:9095
+   - BROADCASTER_SERVICE_HOST=broadcaster
+   - BROADCASTER_SERVICE_PORT=9090
+   - ORGNAME=${ORGNAME}
+   - HTTP_INITCLIENT=http://api-gateway-init:8080
+  restart: always
+  networks:
+   - ukama-net
+
  api-gateway-messaging:
   build: ./api-gateway
   restart: always
