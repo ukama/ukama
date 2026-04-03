@@ -116,7 +116,7 @@ func GetNodeCodeForUnits(ntype string) string {
 		code = NODE_ID_TYPE_TOWERNODE
 	case NODE_ID_TYPE_AMPNODE, "ampnode":
 		code = NODE_ID_TYPE_AMPNODE
-	case NODE_ID_TYPE_CNODE:
+	case NODE_ID_TYPE_CNODE, "ctrlnode":
 		code = NODE_ID_TYPE_CNODE
 	default:
 		code = NODE_ID_TYPE_UNDEFINED

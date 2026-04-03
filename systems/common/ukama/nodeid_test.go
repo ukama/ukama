@@ -106,7 +106,8 @@ func TestValidateNodeId(t *testing.T) {
 	})
 
 	t.Run("ValidateNodeIdCase2", func(tt *testing.T) {
-		nodeId := "UK-SA2156-CNODE-A1-XXXX"
+		// Valid length but node code is not hnode/anode/tnode/cnode (e.g. undef).
+		nodeId := "UK-SA2156-undef-A1-XXXX"
 
 		_, err := ValidateNodeId(string(nodeId))
 		assert.Error(tt, err)
