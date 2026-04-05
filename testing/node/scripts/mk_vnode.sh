@@ -220,10 +220,42 @@ build_utils() {
     [ -f "${NODED_ROOT}/utils/mock-sysfs-anode.sh" ] || die "Missing mock-sysfs-anode.sh"
     cp -f "${NODED_ROOT}/utils/mock-sysfs-anode.sh" "${BUILD_DIR}/utils/"
 
-    # gps.d
+    # gps.d helper
     [ -f "${UKAMA_ROOT}/nodes/apps/gps/scripts/process_gps_data.sh" ] || \
         die "Missing process_gps_data.sh"
-    cp -f "${UKAMA_ROOT}/nodes/apps/gps/scripts/process_gps_data.sh" "${BUILD_DIR}/utils/"
+    cp -f "${UKAMA_ROOT}/nodes/apps/gps/scripts/process_gps_data.sh" \
+        "${BUILD_DIR}/utils/"
+
+    # controller.d VE.Direct emulator helpers -> /sbin
+    [ -f "${UKAMA_ROOT}/nodes/apps/controller/test/vedirect_sim.py" ] || \
+        die "Missing vedirect_sim.py"
+    cp -f "${UKAMA_ROOT}/nodes/apps/controller/test/vedirect_sim.py" \
+        "${BUILD_DIR}/utils/"
+
+    [ -f "${UKAMA_ROOT}/nodes/apps/controller/test/vedirect_emulator.py" ] || \
+        die "Missing vedirect_emulator.py"
+    cp -f "${UKAMA_ROOT}/nodes/apps/controller/test/vedirect_emulator.py" \
+        "${BUILD_DIR}/utils/"
+
+    # switch.d emulator binary -> /sbin
+    [ -d "${UKAMA_ROOT}/nodes/apps/switchd/emu" ] || \
+        die "Missing switchd emu directory"
+
+    pushd "${UKAMA_ROOT}/nodes/apps/switchd/emu" >/dev/null
+    make clean
+    make
+    [ -f "${UKAMA_ROOT}/nodes/apps/switchd/emu/switchemu.d" ] || \
+        die "Error building switchemu.d"
+    cp -f "${UKAMA_ROOT}/nodes/apps/switchd/emu/switchemu.d" \
+        "${BUILD_DIR}/utils/"
+    popd >/dev/null
+
+    chmod 0755 "${BUILD_DIR}/utils/prepare_env.sh"
+    chmod 0755 "${BUILD_DIR}/utils/mock-sysfs-anode.sh"
+    chmod 0755 "${BUILD_DIR}/utils/process_gps_data.sh"
+    chmod 0755 "${BUILD_DIR}/utils/vedirect_sim.py"
+    chmod 0755 "${BUILD_DIR}/utils/vedirect_emulator.py"
+    chmod 0755 "${BUILD_DIR}/utils/switchemu.d"
 
     popd >/dev/null
 

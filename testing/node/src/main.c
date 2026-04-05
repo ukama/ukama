@@ -269,6 +269,8 @@ int main (int argc, char *argv[]) {
         log_debug("==== Building for Ukama Tower Node (virtual) ====");
     } else if (nodeType == NODE_AMPLIFIER) {
         log_debug("==== Building for Ukama Amplifer Node (virtual) ====");
+    } else if (nodeType == NODE_CONTROLLER) {
+        log_debug("==== Building for Ukama Controller Node (virtual) ====");
     } else {
         log_error("==== Unknown node type ====\n Exiting");
         json_decref(jNode);
@@ -306,6 +308,9 @@ int main (int argc, char *argv[]) {
 	ptr = configs;
 	while (ptr) {
 		if (ptr->valid && ptr->config) {
+
+            log_debug("Building app: %s", ptr->config->capp->name);
+           
 			if (!build_capp(ptr->config)) {
 				log_error("Error building capp %s:%s using config file: %s",
 						  ptr->config->capp->name, ptr->config->capp->version,

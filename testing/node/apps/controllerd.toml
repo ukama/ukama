@@ -1,0 +1,21 @@
+[build-from]
+	base="alpine"
+	version="latest"
+
+[build-compile]
+	version="0.1"
+	static="false"
+	source="/nodes/apps/controller"
+	cmd="make"
+	bin_from="/nodes/apps/controller/controllerd"
+	bin_to="/sbin"
+
+[capp-exec]
+	name="controller"
+	version="latest"
+	bin="controllerd"
+	path="/sbin"
+	autostart="false"
+	autorestart="true"
+	startretries=5
+	group="sys-service"
