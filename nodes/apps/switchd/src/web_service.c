@@ -6,8 +6,10 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
-#include <jansson.h>
 #include <string.h>
+#include <stdlib.h>
+
+#include <jansson.h>
 
 #include "http_status.h"
 #include "jserdes.h"
@@ -20,34 +22,66 @@
 
 #include "version.h"
 
-static int ws_reply_json(UResponse *response, int status, JsonObj *json) {
-    char *body;
-
-    body = json_dumps(json, JSON_INDENT(2));
-    if (body == NULL) {
-        json_free(&json);
-        return U_CALLBACK_ERROR;
+static void ws_setup_unsupported_methods(UInst *serviceInst,
+                                         const char *allowed,
+                                         const char *prefix,
+                                         const char *resource) {
+    if (strcmp(allowed, "GET") != 0) {
+        ulfius_add_endpoint_by_val(serviceInst, "GET", prefix, resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowed);
     }
+    if (strcmp(allowed, "POST") != 0) {
+        ulfius_add_endpoint_by_val(serviceInst, "POST", prefix, resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowed);
+    }
+    if (strcmp(allowed, "PUT") != 0) {
+        ulfius_add_endpoint_by_val(serviceInst, "PUT", prefix, resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowed);
+    }
+    if (strcmp(allowed, "DELETE") != 0) {
+        ulfius_add_endpoint_by_val(serviceInst, "DELETE", prefix, resource, 0,
+                                   &web_service_cb_not_allowed,
+                                   (void *)allowed);
+    }
+}
 
-    ulfius_set_string_body_response(response, status, body);
-    free(body);
-    json_free(&json);
+static int ws_reply_text(UResponse *response, int status, const char *body) {
+    ulfius_set_string_body_response(response, status, body ? body : "");
     return U_CALLBACK_CONTINUE;
 }
 
-static int ws_reply_error(UResponse *response,
-                          int status,
-                          const char *error,
-                          const char *detail) {
-    JsonObj *json;
-    int ret;
+static int ws_reply_json(UResponse *response, int status, JsonObj *json) {
+    char *body;
 
-    json = json_object();
-    json_object_set_new(json, JTAG_ERROR,  json_string(error));
-    json_object_set_new(json, JTAG_DETAIL, json_string(detail ? detail : ""));
-    ret = ws_reply_json(response, status, json);
+    if (json == NULL) {
+        ulfius_add_header_to_response(response,
+                                      "Content-Type",
+                                      "application/json");
+        ulfius_set_string_body_response(response, status, "{}");
+        return U_CALLBACK_CONTINUE;
+    }
+
+    body = json_dumps(json, JSON_INDENT(2));
     json_free(&json);
-    return ret;
+
+    if (body == NULL) {
+        ulfius_add_header_to_response(response,
+                                      "Content-Type",
+                                      "application/json");
+        ulfius_set_string_body_response(response, status, "{}");
+        return U_CALLBACK_CONTINUE;
+    }
+
+    ulfius_add_header_to_response(response,
+                                  "Content-Type",
+                                  "application/json");
+    ulfius_set_string_body_response(response, status, body);
+    free(body);
+
+    return U_CALLBACK_CONTINUE;
 }
 
 static SwitchdContext *ws_ctx(void *epConfig) {
@@ -69,38 +103,33 @@ static int ws_get_port_id(const URequest *request, uint32_t *portId) {
 int web_service_cb_ping(const URequest *request,
                         UResponse *response,
                         void *epConfig) {
-    JsonObj *json;
-
     (void)request;
     (void)epConfig;
 
-    json = json_object();
-    json_object_set_new(json,
-                        JTAG_STATUS,
-                        json_string(HttpStatusStr(HttpStatus_OK)));
-    return ws_reply_json(response, HttpStatus_OK, json);
+    return ws_reply_text(response,
+                         HttpStatus_OK,
+                         HttpStatusStr(HttpStatus_OK));
 }
 
 int web_service_cb_version(const URequest *request,
                            UResponse *response,
                            void *epConfig) {
-    JsonObj *json;
-
     (void)request;
     (void)epConfig;
 
-    json = json_object();
-    json_object_set_new(json, JTAG_VERSION, json_string(VERSION));
-    return ws_reply_json(response, HttpStatus_OK, json);
+    return ws_reply_text(response, HttpStatus_OK, VERSION);
 }
 
-int web_service_cb_status(const URequest *request,
-                          UResponse *response,
-                          void *epConfig) {
+int web_service_cb_get_metrics(const URequest *request,
+                               UResponse *response,
+                               void *epConfig) {
+    SwitchdContext *ctx;
     JsonObj *json;
 
     (void)request;
-    json = json_serialize_status(ws_ctx(epConfig));
+
+    ctx = ws_ctx(epConfig);
+    json = json_serialize_metrics(ctx);
     return ws_reply_json(response, HttpStatus_OK, json);
 }
 
@@ -174,18 +203,16 @@ int web_service_cb_get_port(const URequest *request,
 
     ctx = ws_ctx(epConfig);
     if (ws_get_port_id(request, &portId) != STATUS_OK) {
-        return ws_reply_error(response,
-                              HttpStatus_BadRequest,
-                              HttpStatusStr(HttpStatus_BadRequest),
-                              "bad port id");
+        return ws_reply_text(response,
+                             HttpStatus_BadRequest,
+                             "bad port id");
     }
 
     port = switchd_get_port(ctx, portId);
     if (port == NULL) {
-        return ws_reply_error(response,
-                              HttpStatus_NotFound,
-                              HttpStatusStr(HttpStatus_NotFound),
-                              "port not found");
+        return ws_reply_text(response,
+                             HttpStatus_NotFound,
+                             "port not found");
     }
 
     json = json_serialize_port(port);
@@ -205,40 +232,31 @@ int web_service_cb_post_port_admin(const URequest *request,
     uint32_t portId;
     bool up;
     int ret;
-    JsonObj *json;
 
     ctx = ws_ctx(epConfig);
     if (ws_get_port_id(request, &portId) != STATUS_OK ||
         !json_deserialize_bool_request(request, JTAG_UP, &up)) {
-        return ws_reply_error(response,
-                              HttpStatus_BadRequest,
-                              HttpStatusStr(HttpStatus_BadRequest),
-                              "expected {\"up\":true|false}");
+        return ws_reply_text(response,
+                             HttpStatus_BadRequest,
+                             "expected {\"up\":true|false}");
     }
 
     ret = switchd_set_port_admin(ctx, portId, up);
     if (ret == SWITCHD_ERR_BUSY) {
-        return ws_reply_error(response,
-                              HttpStatus_Conflict,
-                              HttpStatusStr(HttpStatus_Conflict),
-                              "operation in progress");
+        return ws_reply_text(response,
+                             HttpStatus_Conflict,
+                             "operation in progress");
     } else if (ret == SWITCHD_ERR_NOTFOUND) {
-        return ws_reply_error(response,
-                              HttpStatus_NotFound,
-                              HttpStatusStr(HttpStatus_NotFound),
-                              "port not found");
+        return ws_reply_text(response,
+                             HttpStatus_NotFound,
+                             "port not found");
     } else if (ret != SWITCHD_OK) {
-        return ws_reply_error(response,
-                              HttpStatus_InternalServerError,
-                              HttpStatusStr(HttpStatus_InternalServerError),
-                              switch_error_to_str(ret));
+        return ws_reply_text(response,
+                             HttpStatus_InternalServerError,
+                             switch_error_to_str(ret));
     }
 
-    json = json_object();
-    json_object_set_new(json,
-                        JTAG_RESULT,
-                        json_string(HttpStatusStr(HttpStatus_OK)));
-    return ws_reply_json(response, HttpStatus_OK, json);
+    return ws_reply_text(response, HttpStatus_OK, HttpStatusStr(HttpStatus_OK));
 }
 
 int web_service_cb_post_port_poe(const URequest *request,
@@ -248,46 +266,35 @@ int web_service_cb_post_port_poe(const URequest *request,
     uint32_t portId;
     bool on;
     int ret;
-    JsonObj *json;
 
     ctx = ws_ctx(epConfig);
     if (ws_get_port_id(request, &portId) != STATUS_OK ||
         !json_deserialize_bool_request(request, JTAG_ON, &on)) {
-        return ws_reply_error(response,
-                              HttpStatus_BadRequest,
-                              HttpStatusStr(HttpStatus_BadRequest),
-                              "expected {\"on\":true|false}");
+        return ws_reply_text(response,
+                             HttpStatus_BadRequest,
+                             "expected {\"on\":true|false}");
     }
 
     ret = switchd_set_port_poe(ctx, portId, on);
     if (ret == SWITCHD_ERR_BUSY) {
-        return ws_reply_error(response,
-                              HttpStatus_Conflict,
-                              HttpStatusStr(HttpStatus_Conflict),
-                              "operation in progress");
+        return ws_reply_text(response,
+                             HttpStatus_Conflict,
+                             "operation in progress");
     } else if (ret == SWITCHD_ERR_NOTFOUND) {
-        return ws_reply_error(response,
-                              HttpStatus_NotFound,
-                              HttpStatusStr(HttpStatus_NotFound),
-                              "port not found");
+        return ws_reply_text(response,
+                             HttpStatus_NotFound,
+                             "port not found");
     } else if (ret == SWITCHD_ERR_UNSUPPORTED) {
-        return ws_reply_error(response,
-                              HttpStatus_NotImplemented,
-                              HttpStatusStr(HttpStatus_NotImplemented),
-                              "PoE not supported on this port");
+        return ws_reply_text(response,
+                             HttpStatus_NotImplemented,
+                             "PoE not supported on this port");
     } else if (ret != SWITCHD_OK) {
-        return ws_reply_error(response,
-                              HttpStatus_InternalServerError,
-                              HttpStatusStr(HttpStatus_InternalServerError),
-                              switch_error_to_str(ret));
+        return ws_reply_text(response,
+                             HttpStatus_InternalServerError,
+                             switch_error_to_str(ret));
     }
 
-    json = json_object();
-    json_object_set_new(json,
-                        JTAG_RESULT,
-                        json_string(HttpStatusStr(HttpStatus_OK)));
-
-    return ws_reply_json(response, HttpStatus_OK, json);
+    return ws_reply_text(response, HttpStatus_OK, HttpStatusStr(HttpStatus_OK));
 }
 
 int web_service_cb_post_port_poe_cycle(const URequest *request,
@@ -297,14 +304,12 @@ int web_service_cb_post_port_poe_cycle(const URequest *request,
     uint32_t portId;
     int offMs;
     int ret;
-    JsonObj *json;
 
     ctx = ws_ctx(epConfig);
     if (ws_get_port_id(request, &portId) != STATUS_OK) {
-        return ws_reply_error(response,
-                              HttpStatus_BadRequest,
-                              HttpStatusStr(HttpStatus_NotFound),
-                              "bad port id");
+        return ws_reply_text(response,
+                             HttpStatus_BadRequest,
+                             "bad port id");
     }
 
     offMs = ctx->config.poeCycleMs;
@@ -312,32 +317,24 @@ int web_service_cb_post_port_poe_cycle(const URequest *request,
 
     ret = switchd_cycle_port_poe(ctx, portId, offMs);
     if (ret == SWITCHD_ERR_BUSY) {
-        return ws_reply_error(response,
-                              HttpStatus_Conflict,
-                              HttpStatusStr(HttpStatus_Conflict),
-                              "operation in progress");
+        return ws_reply_text(response,
+                             HttpStatus_Conflict,
+                             "operation in progress");
     } else if (ret == SWITCHD_ERR_NOTFOUND) {
-        return ws_reply_error(response,
-                              HttpStatus_NotFound,
-                              HttpStatusStr(HttpStatus_NotFound),
-                              "port not found");
+        return ws_reply_text(response,
+                             HttpStatus_NotFound,
+                             "port not found");
     } else if (ret == SWITCHD_ERR_UNSUPPORTED) {
-        return ws_reply_error(response,
-                              HttpStatus_NotImplemented,
-                              HttpStatusStr(HttpStatus_NotImplemented),
-                              "PoE not supported on this port");
+        return ws_reply_text(response,
+                             HttpStatus_NotImplemented,
+                             "PoE not supported on this port");
     } else if (ret != SWITCHD_OK) {
-        return ws_reply_error(response,
-                              HttpStatus_InternalServerError,
-                              HttpStatusStr(HttpStatus_InternalServerError),
-                              switch_error_to_str(ret));
+        return ws_reply_text(response,
+                             HttpStatus_InternalServerError,
+                             switch_error_to_str(ret));
     }
 
-    json = json_object();
-    json_object_set_new(json,
-                        JTAG_RESULT,
-                        json_string(HttpStatusStr(HttpStatus_OK)));
-    return ws_reply_json(response, HttpStatus_OK, json);
+    return ws_reply_text(response, HttpStatus_OK, HttpStatusStr(HttpStatus_OK));
 }
 
 int web_service_cb_get_firmware(const URequest *request,
@@ -373,10 +370,9 @@ int web_service_cb_post_firmware_stage(const URequest *request,
                                                  sizeof(version),
                                                  sha256,
                                                  sizeof(sha256))) {
-        return ws_reply_error(response,
-                              HttpStatus_BadRequest,
-                              HttpStatusStr(HttpStatus_BadRequest),
-                              "expected path, optional version/sha256");
+        return ws_reply_text(response,
+                             HttpStatus_BadRequest,
+                             "expected path, optional version/sha256");
     }
 
     ret = switchd_stage_firmware(ctx,
@@ -384,20 +380,17 @@ int web_service_cb_post_firmware_stage(const URequest *request,
                                  version[0] ? version : NULL,
                                  sha256[0] ? sha256 : NULL);
     if (ret == SWITCHD_ERR_BUSY) {
-        return ws_reply_error(response,
-                              HttpStatus_Conflict,
-                              HttpStatusStr(HttpStatus_Conflict),
-                              "operation in progress");
+        return ws_reply_text(response,
+                             HttpStatus_Conflict,
+                             "operation in progress");
     } else if (ret == SWITCHD_ERR_NOTFOUND) {
-        return ws_reply_error(response,
-                              HttpStatus_NotFound,
-                              HttpStatusStr(HttpStatus_NotFound),
-                              "firmware file not readable");
+        return ws_reply_text(response,
+                             HttpStatus_NotFound,
+                             "firmware file not readable");
     } else if (ret != SWITCHD_OK) {
-        return ws_reply_error(response,
-                              HttpStatus_InternalServerError,
-                              HttpStatusStr(HttpStatus_InternalServerError),
-                              switch_error_to_str(ret));
+        return ws_reply_text(response,
+                             HttpStatus_InternalServerError,
+                             switch_error_to_str(ret));
     }
 
     return ws_reply_json(response,
@@ -415,20 +408,17 @@ int web_service_cb_post_firmware_apply(const URequest *request,
     ctx = ws_ctx(epConfig);
     ret = switchd_apply_firmware(ctx);
     if (ret == SWITCHD_ERR_BUSY) {
-        return ws_reply_error(response,
-                              HttpStatus_Conflict,
-                              HttpStatusStr(HttpStatus_Conflict),
-                              "operation in progress");
+        return ws_reply_text(response,
+                             HttpStatus_Conflict,
+                             "operation in progress");
     } else if (ret == SWITCHD_ERR_STATE) {
-        return ws_reply_error(response,
-                              HttpStatus_Conflict,
-                              HttpStatusStr(HttpStatus_Conflict),
-                              "firmware is not staged");
+        return ws_reply_text(response,
+                             HttpStatus_Conflict,
+                             "firmware is not staged");
     } else if (ret != SWITCHD_OK) {
-        return ws_reply_error(response,
-                              HttpStatus_InternalServerError,
-                              HttpStatusStr(HttpStatus_InternalServerError),
-                              switch_error_to_str(ret));
+        return ws_reply_text(response,
+                             HttpStatus_InternalServerError,
+                             switch_error_to_str(ret));
     }
 
     return ws_reply_json(response,
@@ -436,27 +426,15 @@ int web_service_cb_post_firmware_apply(const URequest *request,
                          json_serialize_firmware(ctx));
 }
 
-int web_service_cb_get_metrics_switch(const URequest *request,
-                                      UResponse *response,
-                                      void *epConfig) {
-    return web_service_cb_get_switch_kpis(request, response, epConfig);
-}
-
-int web_service_cb_get_metrics_ports(const URequest *request,
-                                     UResponse *response,
-                                     void *epConfig) {
-    return web_service_cb_get_ports(request, response, epConfig);
-}
-
 int web_service_cb_default(const URequest *request,
                            UResponse *response,
                            void *epConfig) {
     (void)request;
     (void)epConfig;
-    return ws_reply_error(response,
-                          HttpStatus_NotFound,
-                          HttpStatusStr(HttpStatus_NotFound),
-                          "endpoint not found");
+
+    return ws_reply_text(response,
+                         HttpStatus_NotFound,
+                         HttpStatusStr(HttpStatus_NotFound));
 }
 
 int web_service_cb_not_allowed(const URequest *request,
@@ -464,17 +442,17 @@ int web_service_cb_not_allowed(const URequest *request,
                                void *epConfig) {
     (void)request;
     (void)epConfig;
-    return ws_reply_error(response,
-                          HttpStatus_MethodNotAllowed,
-                          HttpStatusStr(HttpStatus_MethodNotAllowed),
-                          HttpStatusStr(HttpStatus_MethodNotAllowed));
+
+    return ws_reply_text(response,
+                         HttpStatus_MethodNotAllowed,
+                         HttpStatusStr(HttpStatus_MethodNotAllowed));
 }
 
 int web_service_start(SwitchdContext *ctx, UInst *serviceInst) {
-
     if (ulfius_init_instance(serviceInst,
                              ctx->config.httpPort,
-                             NULL, NULL) != U_OK) {
+                             NULL,
+                             NULL) != U_OK) {
         return STATUS_NOK;
     }
 
@@ -485,6 +463,8 @@ int web_service_start(SwitchdContext *ctx, UInst *serviceInst) {
                                0,
                                &web_service_cb_ping,
                                ctx);
+    ws_setup_unsupported_methods(serviceInst, "GET", "/v1", "ping");
+
     ulfius_add_endpoint_by_val(serviceInst,
                                "GET",
                                "/v1/version",
@@ -492,13 +472,17 @@ int web_service_start(SwitchdContext *ctx, UInst *serviceInst) {
                                0,
                                &web_service_cb_version,
                                ctx);
+    ws_setup_unsupported_methods(serviceInst, "GET", "/v1", "version");
+
     ulfius_add_endpoint_by_val(serviceInst,
                                "GET",
-                               "/v1/status",
+                               "/v1/metrics",
                                NULL,
                                0,
-                               &web_service_cb_status,
+                               &web_service_cb_get_metrics,
                                ctx);
+    ws_setup_unsupported_methods(serviceInst, "GET", "/v1", "metrics");
+
     ulfius_add_endpoint_by_val(serviceInst,
                                "GET",
                                "/v1/switch",
@@ -506,6 +490,8 @@ int web_service_start(SwitchdContext *ctx, UInst *serviceInst) {
                                0,
                                &web_service_cb_get_switch,
                                ctx);
+    ws_setup_unsupported_methods(serviceInst, "GET", "/v1", "switch");
+
     ulfius_add_endpoint_by_val(serviceInst,
                                "GET",
                                "/v1/switch/health",
@@ -513,6 +499,8 @@ int web_service_start(SwitchdContext *ctx, UInst *serviceInst) {
                                0,
                                &web_service_cb_get_switch_health,
                                ctx);
+    ws_setup_unsupported_methods(serviceInst, "GET", "/v1/switch", "health");
+
     ulfius_add_endpoint_by_val(serviceInst,
                                "GET",
                                "/v1/switch/capabilities",
@@ -520,6 +508,11 @@ int web_service_start(SwitchdContext *ctx, UInst *serviceInst) {
                                0,
                                &web_service_cb_get_switch_capabilities,
                                ctx);
+    ws_setup_unsupported_methods(serviceInst,
+                                 "GET",
+                                 "/v1/switch",
+                                 "capabilities");
+
     ulfius_add_endpoint_by_val(serviceInst,
                                "GET",
                                "/v1/switch/alarms",
@@ -527,6 +520,8 @@ int web_service_start(SwitchdContext *ctx, UInst *serviceInst) {
                                0,
                                &web_service_cb_get_switch_alarms,
                                ctx);
+    ws_setup_unsupported_methods(serviceInst, "GET", "/v1/switch", "alarms");
+
     ulfius_add_endpoint_by_val(serviceInst,
                                "GET",
                                "/v1/switch/kpis",
@@ -534,6 +529,8 @@ int web_service_start(SwitchdContext *ctx, UInst *serviceInst) {
                                0,
                                &web_service_cb_get_switch_kpis,
                                ctx);
+    ws_setup_unsupported_methods(serviceInst, "GET", "/v1/switch", "kpis");
+
     ulfius_add_endpoint_by_val(serviceInst,
                                "GET",
                                "/v1/ports",
@@ -541,6 +538,8 @@ int web_service_start(SwitchdContext *ctx, UInst *serviceInst) {
                                0,
                                &web_service_cb_get_ports,
                                ctx);
+    ws_setup_unsupported_methods(serviceInst, "GET", "/v1", "ports");
+
     ulfius_add_endpoint_by_val(serviceInst,
                                "GET",
                                "/v1/ports/:id",
@@ -548,6 +547,8 @@ int web_service_start(SwitchdContext *ctx, UInst *serviceInst) {
                                0,
                                &web_service_cb_get_port,
                                ctx);
+    ws_setup_unsupported_methods(serviceInst, "GET", "/v1", "ports/:id");
+
     ulfius_add_endpoint_by_val(serviceInst,
                                "GET",
                                "/v1/ports/:id/kpis",
@@ -555,6 +556,8 @@ int web_service_start(SwitchdContext *ctx, UInst *serviceInst) {
                                0,
                                &web_service_cb_get_port_kpis,
                                ctx);
+    ws_setup_unsupported_methods(serviceInst, "GET", "/v1", "ports/:id/kpis");
+
     ulfius_add_endpoint_by_val(serviceInst,
                                "POST",
                                "/v1/ports/:id/admin",
@@ -562,6 +565,8 @@ int web_service_start(SwitchdContext *ctx, UInst *serviceInst) {
                                0,
                                &web_service_cb_post_port_admin,
                                ctx);
+    ws_setup_unsupported_methods(serviceInst, "POST", "/v1", "ports/:id/admin");
+
     ulfius_add_endpoint_by_val(serviceInst,
                                "POST",
                                "/v1/ports/:id/poe",
@@ -569,6 +574,8 @@ int web_service_start(SwitchdContext *ctx, UInst *serviceInst) {
                                0,
                                &web_service_cb_post_port_poe,
                                ctx);
+    ws_setup_unsupported_methods(serviceInst, "POST", "/v1", "ports/:id/poe");
+
     ulfius_add_endpoint_by_val(serviceInst,
                                "POST",
                                "/v1/ports/:id/poe/cycle",
@@ -576,6 +583,11 @@ int web_service_start(SwitchdContext *ctx, UInst *serviceInst) {
                                0,
                                &web_service_cb_post_port_poe_cycle,
                                ctx);
+    ws_setup_unsupported_methods(serviceInst,
+                                 "POST",
+                                 "/v1",
+                                 "ports/:id/poe/cycle");
+
     ulfius_add_endpoint_by_val(serviceInst,
                                "GET",
                                "/v1/firmware",
@@ -583,6 +595,8 @@ int web_service_start(SwitchdContext *ctx, UInst *serviceInst) {
                                0,
                                &web_service_cb_get_firmware,
                                ctx);
+    ws_setup_unsupported_methods(serviceInst, "GET", "/v1", "firmware");
+
     ulfius_add_endpoint_by_val(serviceInst,
                                "GET",
                                "/v1/firmware/status",
@@ -590,6 +604,8 @@ int web_service_start(SwitchdContext *ctx, UInst *serviceInst) {
                                0,
                                &web_service_cb_get_firmware_status,
                                ctx);
+    ws_setup_unsupported_methods(serviceInst, "GET", "/v1/firmware", "status");
+
     ulfius_add_endpoint_by_val(serviceInst,
                                "POST",
                                "/v1/firmware/stage",
@@ -597,6 +613,8 @@ int web_service_start(SwitchdContext *ctx, UInst *serviceInst) {
                                0,
                                &web_service_cb_post_firmware_stage,
                                ctx);
+    ws_setup_unsupported_methods(serviceInst, "POST", "/v1/firmware", "stage");
+
     ulfius_add_endpoint_by_val(serviceInst,
                                "POST",
                                "/v1/firmware/apply",
@@ -604,22 +622,10 @@ int web_service_start(SwitchdContext *ctx, UInst *serviceInst) {
                                0,
                                &web_service_cb_post_firmware_apply,
                                ctx);
-    ulfius_add_endpoint_by_val(serviceInst,
-                               "GET",
-                               "/v1/metrics/switch",
-                               NULL,
-                               0,
-                               &web_service_cb_get_metrics_switch,
-                               ctx);
-    ulfius_add_endpoint_by_val(serviceInst,
-                               "GET",
-                               "/v1/metrics/ports",
-                               NULL,
-                               0,
-                               &web_service_cb_get_metrics_ports,
-                               ctx);
+    ws_setup_unsupported_methods(serviceInst, "POST", "/v1/firmware", "apply");
 
     serviceInst->default_endpoint = web_service_cb_default;
+
     if (ulfius_start_framework(serviceInst) != U_OK) {
         ulfius_clean_instance(serviceInst);
         return STATUS_NOK;
@@ -629,6 +635,7 @@ int web_service_start(SwitchdContext *ctx, UInst *serviceInst) {
                   SERVICE_NAME,
                   ctx->config.httpHost,
                   ctx->config.httpPort);
+
     return STATUS_OK;
 }
 

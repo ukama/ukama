@@ -59,4 +59,27 @@
 #define ALARM_MODULE_NONE "none"
 #define EMPTY_STRING      ""
 
+#define JSON_KEY_NODE_ID              "node_id"
+#define JSON_KEY_TIMESTAMP_MS         "timestamp_ms"
+#define JSON_KEY_METRICS              "metrics"
+#define JSON_KEY_NAME                 "name"
+#define JSON_KEY_VALUE                "value"
+#define JSON_KEY_UNIT                 "unit"
+
+#define JSON_UNIT_W                   "W"
+#define JSON_UNIT_C                   "C"
+#define JSON_UNIT_V                   "V"
+#define JSON_UNIT_A                   "A"
+#define JSON_UNIT_BOOL                "bool"
+
+#define JSON_METRIC_POE_TOTAL_POWER_WATTS    "poe_total_power_watts"
+#define JSON_METRIC_POE_MAX_POWER_WATTS      "poe_max_power_watts"
+#define JSON_METRIC_SYSTEM_TEMPERATURE_C      "system_temperature_c"
+#define JSON_METRIC_AMBIENT_TEMPERATURE_C     "ambient_temperature_c"
+#define JSON_METRIC_SYSTEM_POWER_WATTS        "system_power_watts"
+#define JSON_METRIC_INPUT_VOLTAGE             "input_voltage"
+#define JSON_METRIC_SYSTEM_CURRENT_AMPS       "system_current_amps"
+#define JSON_METRIC_INPUT_LINK_FAILURE_ALARM  "input_link_failure_alarm"
+#define JSON_METRIC_INPUT_POE_FAILURE_ALARM   "input_poe_failure_alarm"
+
 #endif /* JSON_TYPES_H_ */
