@@ -593,7 +593,7 @@ metric_server_port = 7001
 	[[stats.switch]]
 		source = "switch"
 		agent  = "switchd_agent"
-		url    = "/v1/metrics/switch"
+		url    = "/v1/metrics"
 
 		[[stats.switch.switch.kpi]]
 			name   = "poe_total_power_watts"
