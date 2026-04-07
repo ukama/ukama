@@ -189,7 +189,7 @@ int sys_read_and_push_cpu_usage(MetricsCatConfig *cpuCfg,
 
   KPIConfig *kpi = kpi_lookup(cpuCfg, "cpu_usage");
   if (kpi) {
-	  addFunc(kpi, &cpu_per);
+      addFunc(kpi, &cpu_per);
   }
   usys_log_trace("Pushed realtime cpu usage %lf to metrics server.", cpu_per);
 

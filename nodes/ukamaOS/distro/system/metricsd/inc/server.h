@@ -6,8 +6,8 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
-#ifndef METRICSERVER_INC_METRIC_H_
-#define METRICSERVER_INC_METRIC_H_
+#ifndef METRIC_H_
+#define METRIC_H_
 
 #include "config.h"
 #include "metrics.h"
@@ -17,9 +17,9 @@ void metric_server_free_kpi(KPIConfig *kpi);
 int metric_server_register_kpi(KPIConfig *kpi);
 int metric_server_start(int port);
 
-void metric_server_registry_init();
-void metric_server_registry_destroy();
-void metric_server_set_active_registry();
-void metric_server_stop();
+void metric_server_registry_init(void);
+void metric_server_registry_destroy(void);
+void metric_server_set_active_registry(void);
+void metric_server_stop(void);
 
-#endif /* METRICSERVER_INC_METRIC_H_ */
+#endif /* METRIC_H_ */

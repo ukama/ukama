@@ -10,82 +10,64 @@
 
 #include "usys_log.h"
 
-#define MAX_STR_LENGTH 64
-
-int file_path_exist(char *fname) {
-  int ret = 0;
-  if (access(fname, F_OK) != -1) {
-    ret = 1;
-  } else {
-    usys_log_trace("File %s is missing.", fname);
-  }
-  return ret;
-}
-
 int file_exist(char *fname) {
-  int ret = 0;
-  struct stat sb;
-  int fd = file_open(fname, O_RDONLY);
-  if (fd > 0) {
+
+    int ret        = 0;
+    int fd         = 0;
+    struct stat sb;
+
+    fd = file_open(fname, O_RDONLY);
+    if (fd <= 0) {
+        return 0;
+    }
+
     stat(fname, &sb);
     ret = S_ISREG(sb.st_mode);
-    if (!ret) {
-      usys_log_error("Error %s is not a file.", fname);
-      return ret;
+    if (ret == 0) {
+        usys_log_error("%s is not a regular file", fname);
+        file_close(fd);
+        return 0;
     }
+
     file_close(fd);
-    ret = 1;
-  }
-  return ret;
+
+    return 1;
 }
 
 int file_open(char *fname, int flags) {
-  int fd = 0;
-  /* Create input file descriptor */
-  fd = open(fname, flags, 0644);
-  if (fd == -1) {
-    perror("open");
-  }
-  return fd;
+
+    int fd = 0;
+
+    fd = open(fname, flags, 0644);
+    if (fd == -1) {
+        perror("open");
+    }
+
+    return fd;
 }
 
 int file_remove(void *data) {
-  int ret = -1;
-  if (data) {
-    char *fname = data;
-    ret = remove(fname);
-    if (!ret) {
-      usys_log_debug("%s db file deleted successfully.", fname);
-    } else {
-      usys_log_debug("%s db file deleted successfully.", ret, fname);
+
+    int ret      = -1;
+    char *fname  = NULL;
+
+    if (data == NULL) {
+        return ret;
     }
-  }
-  return ret;
+
+    fname = data;
+    ret = remove(fname);
+    if (ret == 0) {
+        usys_log_debug("%s deleted successfully", fname);
+    } else {
+        usys_log_debug("failed to delete %s", fname);
+    }
+
+    return ret;
 }
 
-void file_close(int fd) {
-  fsync(fd);
-  close(fd);
-}
+void file_close(int fd){
 
-int file_cleanup(void *fname) {
-  int ret = 0;
-  ret = remove(fname);
-  if (!ret) {
-    usys_log_debug("DB %s deleted successfully.", fname);
-  } else {
-    usys_log_debug("DB %s deletion failed.", fname);
-  }
-  return ret;
-}
-
-int file_rename(char *old_name, char *new_name) {
-  int ret = 0;
-  if (rename(old_name, new_name) == 0) {
-    usys_log_debug("DB %s renamed to %s.", old_name, new_name);
-  } else {
-    ret = -1;
-    usys_log_error("Unable to rename file %s to %s.", old_name, new_name);
-  }
-  return ret;
+    fsync(fd);
+    close(fd);
 }
