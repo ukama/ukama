@@ -11,16 +11,15 @@
 
 #include "ulfius.h"
 
-#define EP_BS                           "/"
-#define REST_API_VERSION                "v1"
-#define URL_PREFIX                      EP_BS REST_API_VERSION
-#define API_RES_EP(RES)                 EP_BS RES
+#define EP_BS            "/"
+#define REST_API_VERSION "v1"
+#define URL_PREFIX       EP_BS REST_API_VERSION
+#define API_RES_EP(RES)  EP_BS RES
 
-typedef struct _u_instance  UInst;
-typedef struct _u_instance  UInst;
-typedef struct _u_request   URequest;
-typedef struct _u_response  UResponse;
-    
+typedef struct _u_instance UInst;
+typedef struct _u_request URequest;
+typedef struct _u_response UResponse;
+
 int web_service_cb_ping(const URequest *request,
                         UResponse *response,
                         void *data);

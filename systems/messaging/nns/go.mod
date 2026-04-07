@@ -2,8 +2,6 @@ module github.com/ukama/ukama/systems/messaging/nns
 
 go 1.24.0
 
-replace github.com/ukama/ukama/systems/common => ../../common
-
 replace github.com/ukama/ukama/systems/messaging/nns => ./
 
 replace github.com/ukama/ukama/systems/messaging/nns/mocks => ./mocks
@@ -11,6 +9,8 @@ replace github.com/ukama/ukama/systems/messaging/nns/mocks => ./mocks
 replace github.com/ukama/ukama/systems/common/services/msgClient => ../../services/
 
 replace github.com/ukama/ukama/systems/registry/node => ../../registry/node
+
+replace github.com/ukama/ukama/systems/common => ../../common
 
 require (
 	github.com/coredns/coredns v1.14.1

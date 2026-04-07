@@ -12,15 +12,6 @@
 #include "config.h"
 #include "metrics.h"
 
-#define MAX_AGENTS  12
-
-typedef int (*CollectorFxn)(MetricsCatConfig *stat);
-
-typedef struct {
-    char *type;
-    CollectorFxn agentHandler;
-} agent_map_t;
-
 int rest_collector(MetricsCatConfig *stat);
 int lte_stack_collector(MetricsCatConfig *stat);
 int sysfs_collector(MetricsCatConfig *stat);
@@ -35,6 +26,6 @@ int controllerd_collector(MetricsCatConfig *stat);
 int switchd_collector(MetricsCatConfig *stat);
 
 int collector(char *cfg);
-void collector_exit();
+void collector_exit(int signum);
 
 #endif /* INC_COLLECTOR_H_ */

@@ -378,6 +378,63 @@ JsonObj *json_serialize_active_alarms(const SwitchdContext *ctx) {
     return json;
 }
 
+JsonObj *json_serialize_metrics(const SwitchdContext *ctx) {
+    JsonObj *obj;
+    JsonObj *metrics;
+
+    if (ctx == NULL) {
+        return NULL;
+    }
+
+    obj = json_object();
+    metrics = json_array();
+
+    json_object_set_new(obj,
+                        JSON_KEY_TIMESTAMP_MS,
+                        json_integer((json_int_t)ctx->kpis.updatedAt));
+
+#define ADD_METRIC(metricName, metricValue, metricUnit) do { \
+    JsonObj *m = json_object(); \
+    json_object_set_new(m, JSON_KEY_NAME, json_string(metricName)); \
+    json_object_set_new(m, JSON_KEY_VALUE, json_real(metricValue)); \
+    json_object_set_new(m, JSON_KEY_UNIT, json_string(metricUnit)); \
+    json_array_append_new(metrics, m); \
+} while (0)
+
+    ADD_METRIC(JSON_METRIC_POE_TOTAL_POWER_WATTS,
+               ctx->kpis.poeTotalPowerWatts,
+               JSON_UNIT_W);
+    ADD_METRIC(JSON_METRIC_POE_MAX_POWER_WATTS,
+               ctx->kpis.poeMaxPowerWatts,
+               JSON_UNIT_W);
+    ADD_METRIC(JSON_METRIC_SYSTEM_TEMPERATURE_C,
+               ctx->kpis.systemTemperatureC,
+               JSON_UNIT_C);
+    ADD_METRIC(JSON_METRIC_AMBIENT_TEMPERATURE_C,
+               ctx->kpis.ambientTemperatureC,
+               JSON_UNIT_C);
+    ADD_METRIC(JSON_METRIC_SYSTEM_POWER_WATTS,
+               ctx->kpis.systemPowerWatts,
+               JSON_UNIT_W);
+    ADD_METRIC(JSON_METRIC_INPUT_VOLTAGE,
+               ctx->kpis.inputVoltage,
+               JSON_UNIT_V);
+    ADD_METRIC(JSON_METRIC_SYSTEM_CURRENT_AMPS,
+               ctx->kpis.systemCurrentAmps,
+               JSON_UNIT_A);
+    ADD_METRIC(JSON_METRIC_INPUT_LINK_FAILURE_ALARM,
+               ctx->kpis.inputLinkFailureAlarm ? 1.0 : 0.0,
+               JSON_UNIT_BOOL);
+    ADD_METRIC(JSON_METRIC_INPUT_POE_FAILURE_ALARM,
+               ctx->kpis.inputPoeFailureAlarm ? 1.0 : 0.0,
+               JSON_UNIT_BOOL);
+
+#undef ADD_METRIC
+
+    json_object_set_new(obj, JSON_KEY_METRICS, metrics);
+    return obj;
+}
+
 JsonObj *json_serialize_status(const SwitchdContext *ctx) {
     JsonObj *json;
     JsonObj *switchd;

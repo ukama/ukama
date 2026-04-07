@@ -17,6 +17,7 @@
 #define NODE_TYPE_HNODE "hnode"
 #define NODE_TYPE_ANODE "anode"
 #define NODE_TYPE_TNODE "tnode"
+#define NODE_TYPE_CNODE "cnode"
 #define NODE_TYPE_NONE  ""
 
 #define MODULE_TYPE_COM  "com"

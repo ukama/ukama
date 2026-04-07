@@ -97,6 +97,14 @@ func TestValidateNodeId(t *testing.T) {
 		assert.NoError(tt, err)
 		assert.Equal(tt, strings.ToLower(nodeId), string(uid))
 	})
+	t.Run("NodeIdIsValid", func(tt *testing.T) {
+		nodeId := "UK-SA2156-CNODE-A1-XXXX"
+
+		uid, err := ValidateNodeId(string(nodeId))
+
+		assert.NoError(tt, err)
+		assert.Equal(tt, strings.ToLower(nodeId), string(uid))
+	})
 
 	t.Run("ValidateNodeIdCase1", func(tt *testing.T) {
 		nodeId := "UK-SA2156"
@@ -106,7 +114,8 @@ func TestValidateNodeId(t *testing.T) {
 	})
 
 	t.Run("ValidateNodeIdCase2", func(tt *testing.T) {
-		nodeId := "UK-SA2156-CNODE-A1-XXXX"
+		// Valid length but node code is not hnode/anode/tnode/cnode (e.g. undef).
+		nodeId := "UK-SA2156-undef-A1-XXXX"
 
 		_, err := ValidateNodeId(string(nodeId))
 		assert.Error(tt, err)

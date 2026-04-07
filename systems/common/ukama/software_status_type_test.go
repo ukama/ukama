@@ -22,7 +22,7 @@ func TestSoftwareStatusType(t *testing.T) {
 
 		assert.NotNil(tt, status)
 		assert.Equal(tt, status.String(), ukama.UpdateAvailable.String())
-		assert.Equal(tt, uint8(status), uint8(1))
+		assert.Equal(tt, uint8(status), uint8(ukama.UpdateAvailable))
 	})
 
 	t.Run("ValidStringCaseInsensitive", func(tt *testing.T) {
@@ -81,7 +81,7 @@ func TestSoftwareStatusType(t *testing.T) {
 		val, err := status.Value()
 
 		assert.NoError(tt, err)
-		assert.Equal(tt, uint8(2), val)
+		assert.Equal(tt, uint8(ukama.UpToDate), val)
 	})
 
 	t.Run("Scan", func(tt *testing.T) {
