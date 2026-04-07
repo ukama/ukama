@@ -20,9 +20,9 @@ int web_service_cb_ping(const URequest *request,
 int web_service_cb_version(const URequest *request,
                            UResponse *response,
                            void *epConfig);
-int web_service_cb_status(const URequest *request,
-                          UResponse *response,
-                          void *epConfig);
+int web_service_cb_get_metrics(const URequest *request,
+                               UResponse *response,
+                               void *epConfig);
 int web_service_cb_get_switch(const URequest *request,
                               UResponse *response,
                               void *epConfig);
@@ -68,12 +68,6 @@ int web_service_cb_post_firmware_stage(const URequest *request,
 int web_service_cb_post_firmware_apply(const URequest *request,
                                        UResponse *response,
                                        void *epConfig);
-int web_service_cb_get_metrics_switch(const URequest *request,
-                                      UResponse *response,
-                                      void *epConfig);
-int web_service_cb_get_metrics_ports(const URequest *request,
-                                     UResponse *response,
-                                     void *epConfig);
 int web_service_cb_default(const URequest *request,
                            UResponse *response,
                            void *epConfig);

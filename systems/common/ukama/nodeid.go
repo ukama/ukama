@@ -56,6 +56,19 @@ var nodeTypeToPlaceholderName = map[string]string{
 	NODE_ID_TYPE_AMPNODE:   placeholder_component_type_amplifier,
 }
 
+// Sentinel errors returned by ValidateNodeId.
+var (
+	ErrInvalidNodeIDLength = errors.New("invalid length")
+	ErrInvalidNodeIDCode   = errors.New("invalid Node Code")
+)
+
+var validNodeIDTypeCodes = map[string]struct{}{
+	NODE_ID_TYPE_HOMENODE:  {},
+	NODE_ID_TYPE_AMPNODE:   {},
+	NODE_ID_TYPE_TOWERNODE: {},
+	NODE_ID_TYPE_CNODE:     {},
+}
+
 type NodeID string
 
 type ModuleID string
@@ -246,47 +259,42 @@ func GetPlaceholderNameByType(nodeType string) string {
 	return placeholder_component_type_undefined
 }
 
+// nodeTypeSegmentFromLowerID returns the hardware node-type token at CODE_IDX up to
+// the next '-', matching NodeID.GetNodeType parsing rules.
+func nodeTypeSegmentFromLowerID(lid string) (string, bool) {
+	if len(lid) <= CODE_IDX {
+		return "", false
+	}
+	rest := lid[CODE_IDX:]
+	i := strings.IndexRune(rest, '-')
+	if i < 0 {
+		return "", false
+	}
+	return rest[:i], true
+}
+
 func ValidateNodeId(id string) (NodeID, error) {
 	/* TODO :: ADD more validation once we finalized this format */
 	if len(id) != NodeIDLength {
-		err := errors.New("invalid length")
-		return "", err
+		return "", ErrInvalidNodeIDLength
 	}
 
-	/* Check for HW codes */
-	codes := [...]string{
-		NODE_ID_TYPE_HOMENODE,
-		NODE_ID_TYPE_AMPNODE,
-		NODE_ID_TYPE_TOWERNODE,
-		NODE_ID_TYPE_CNODE}
-	match := false
-	for _, code := range codes {
-		if strings.Contains(strings.ToLower(id), code) {
-
-			/* Check index of substring */
-			idx := strings.Index(strings.ToLower(id), code)
-			if idx == CODE_IDX {
-				match = true
-				break
-			}
-		}
+	lid := strings.ToLower(id)
+	seg, ok := nodeTypeSegmentFromLowerID(lid)
+	if !ok {
+		return "", ErrInvalidNodeIDCode
 	}
-
-	if !match {
-		err := errors.New("invalid Node Code")
-		return "", err
+	if _, valid := validNodeIDTypeCodes[seg]; !valid {
+		return "", ErrInvalidNodeIDCode
 	}
 
 	/* RFC 1123 lowercase id and tags*/
-	lid := strings.ToLower(id)
-
 	return NodeID(lid), nil
 }
 
 func GetANodeIdFromTNodeId(tNodeId string) (NodeID, error) {
 	if len(tNodeId) != NodeIDLength {
-		err := errors.New("invalid length")
-		return "", err
+		return "", ErrInvalidNodeIDLength
 	}
 
 	tNodeId = strings.ToLower(tNodeId)
@@ -296,8 +304,7 @@ func GetANodeIdFromTNodeId(tNodeId string) (NodeID, error) {
 
 func GetCNodeIdFromTNodeId(tNodeId string) (NodeID, error) {
 	if len(tNodeId) != NodeIDLength {
-		err := errors.New("invalid length")
-		return "", err
+		return "", ErrInvalidNodeIDLength
 	}
 
 	tNodeId = strings.ToLower(tNodeId)

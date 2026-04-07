@@ -97,6 +97,14 @@ func TestValidateNodeId(t *testing.T) {
 		assert.NoError(tt, err)
 		assert.Equal(tt, strings.ToLower(nodeId), string(uid))
 	})
+	t.Run("NodeIdIsValid", func(tt *testing.T) {
+		nodeId := "UK-SA2156-CNODE-A1-XXXX"
+
+		uid, err := ValidateNodeId(string(nodeId))
+
+		assert.NoError(tt, err)
+		assert.Equal(tt, strings.ToLower(nodeId), string(uid))
+	})
 
 	t.Run("ValidateNodeIdCase1", func(tt *testing.T) {
 		nodeId := "UK-SA2156"

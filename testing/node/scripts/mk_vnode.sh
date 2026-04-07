@@ -351,6 +351,9 @@ build_sysfs() {
 setup_ukama_dirs() {
     local nodeid="${1:-unknown}"
     local bootstrap_server="${2:-}"
+    local node_type=""
+    local metrics_dir=""
+    local metrics_target=""
 
     log "INFO" "Creating Ukama directories..."
 
@@ -376,6 +379,38 @@ setup_ukama_dirs() {
     [ -f "${UKAMA_OS}/distro/scripts/files/protocols" ] || die "missing protocols file"
     cp "${UKAMA_OS}/distro/scripts/files/services"  "${BUILD_DIR}/ukama/etc"
     cp "${UKAMA_OS}/distro/scripts/files/protocols" "${BUILD_DIR}/ukama/etc"
+
+    # Determine node type from nodeid and link metricsd config.toml
+    case "${nodeid}" in
+        *-tnode-*)
+            node_type="tower"
+            metrics_target="com_config.toml"
+            ;;
+        *-cnode-*)
+            node_type="controller"
+            metrics_target="cnode_config.toml"
+            ;;
+        *-anode-*)
+            node_type="amplifier"
+            metrics_target="amplifier_config.toml"
+            ;;
+        *)
+            log "WARN" "Unable to determine node type from nodeid: ${nodeid}"
+            ;;
+    esac
+
+    if [ -n "${metrics_target}" ]; then
+        metrics_dir="${BUILD_DIR}/ukama/configs/metricsd"
+
+        [ -d "${metrics_dir}" ] || die "missing metricsd config directory: ${metrics_dir}"
+        [ -f "${metrics_dir}/${metrics_target}" ] || \
+            die "missing metricsd target config: ${metrics_dir}/${metrics_target}"
+
+        rm -f "${metrics_dir}/config.toml"
+        ln -s "${metrics_target}" "${metrics_dir}/config.toml"
+
+        log "INFO" "Configured metricsd for ${node_type} node: config.toml -> ${metrics_target}"
+    fi
 
     log "SUCCESS" "Ukama directories created at ${BUILD_DIR}/ukama"
 }

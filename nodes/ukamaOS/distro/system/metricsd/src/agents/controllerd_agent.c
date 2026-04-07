@@ -309,7 +309,7 @@ int controllerd_collect_stat(MetricsCatConfig *cfgStat, metricAddFunc addFunc) {
 	}
 
 	path = (cfgStat && cfgStat->url && cfgStat->url[0]) ?
-	       cfgStat->url : "/v1/controller/metrics";
+	       cfgStat->url : "/v1/metrics";
 
 	snprintf(urlBuf, sizeof(urlBuf), "http://127.0.0.1:%d%s", port, path);
 
