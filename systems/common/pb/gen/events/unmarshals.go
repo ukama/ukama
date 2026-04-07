@@ -53,6 +53,16 @@ func UnmarshalAsrUpdated(msg *anypb.Any, emsg string) (*AsrUpdated, error) {
 	return p, nil
 }
 
+func UnmarshalBroadcasterEvent(msg *anypb.Any, emsg string) (*BroadcasterEvent, error) {
+	p := &BroadcasterEvent{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
+		return nil, err
+	}
+	return p, nil
+}
+
 func UnmarshalCDRReported(msg *anypb.Any, emsg string) (*CDRReported, error) {
 	p := &CDRReported{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
@@ -625,6 +635,16 @@ func UnmarshalNodeCreatedEvent(msg *anypb.Any, emsg string) (*NodeCreatedEvent, 
 
 func UnmarshalNodeDeletedEvent(msg *anypb.Any, emsg string) (*NodeDeletedEvent, error) {
 	p := &NodeDeletedEvent{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
+		return nil, err
+	}
+	return p, nil
+}
+
+func UnmarshalNodeFeederMessage(msg *anypb.Any, emsg string) (*NodeFeederMessage, error) {
+	p := &NodeFeederMessage{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
