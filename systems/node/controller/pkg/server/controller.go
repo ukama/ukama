@@ -14,7 +14,7 @@ import (
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
-	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 
 	"github.com/ukama/ukama/systems/common/ukama"
 	"google.golang.org/grpc/codes"
@@ -300,7 +300,7 @@ func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.Toggle
 
 func (c *ControllerServer) publishMessage(target string, method string, path string, nodeId string, anyMsg []byte) error {
 	route := "request.cloud.local" + "." + c.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
-	msg := &cpb.NodeFeederMessage{
+	msg := &epb.NodeFeederMessage{
 		Target:     target,
 		HttpMethod: method,
 		Path:       path,

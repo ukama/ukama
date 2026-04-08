@@ -24,7 +24,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	amqp "github.com/streadway/amqp"
 	mb "github.com/ukama/ukama/systems/common/msgbus"
-	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
 const (
@@ -46,7 +46,7 @@ type QueueListener struct {
 }
 
 type RequestMultiplier interface {
-	Process(body *cpb.NodeFeederMessage) error
+	Process(body *epb.NodeFeederMessage) error
 }
 
 func NewQueueListener(service string, queueUri string, serviceId string, requestMult RequestMultiplier, requestExec RequestExecutor, conf ListenerConfig) (*QueueListener, error) {
@@ -232,7 +232,7 @@ func (q *QueueListener) processRequest(delivery amqp.Delivery) error {
 		return nil
 	}
 
-	request := &cpb.NodeFeederMessage{}
+	request := &epb.NodeFeederMessage{}
 	err = evtAny.UnmarshalTo(request)
 	if err != nil {
 		log.Errorf("Error unmarshaling message. Error %v", err)

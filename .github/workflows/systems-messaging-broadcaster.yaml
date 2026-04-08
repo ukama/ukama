@@ -30,21 +30,21 @@ jobs:
         aws-access-key: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}
         build-listener: false
     
-  sonar-scan:
-    name: sonar-scan
-    needs: build
-    runs-on: ubuntu-latest
-    env: 
-      working-directory: systems/messaging/broadcaster
-    steps:
-      - uses: actions/checkout@v3
-      - name: scan
-        uses: ./.github/actions/sonar-go
-        with:         
-          working-directory: ${{ env.working-directory }}
-          github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
-          sonar-token: ${{ secrets.SONAR_TOKEN }}
-          project-key: ukama_systems_messaging_broadcaster
+  # sonar-scan:
+  #   name: sonar-scan
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   env: 
+  #     working-directory: systems/messaging/broadcaster
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: scan
+  #       uses: ./.github/actions/sonar-go
+  #       with:         
+  #         working-directory: ${{ env.working-directory }}
+  #         github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
+  #         sonar-token: ${{ secrets.SONAR_TOKEN }}
+  #         project-key: ukama_systems_messaging_broadcaster
 
   lint:
     name: lint

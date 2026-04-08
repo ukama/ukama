@@ -48,7 +48,7 @@ filter_make_sys() {
                 PATHS+=("metrics/exporter" "metrics/api-gateway" "metrics/sanitizer" "metrics/reasoning")
                 ;;
             "messaging")
-                PATHS+=("messaging/mesh" "messaging/nns" "messaging/node-feeder" "messaging/api-gateway")
+                PATHS+=("messaging/mesh" "messaging/nns" "messaging/broadcaster" "messaging/node-feeder" "messaging/api-gateway")
                 ;;
             "services")
                 PATHS+=("services/msgClient")

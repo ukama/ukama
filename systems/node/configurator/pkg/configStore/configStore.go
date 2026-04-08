@@ -24,7 +24,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	pb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	utils "github.com/ukama/ukama/systems/node/configurator/pkg/utils"
 )
@@ -462,7 +462,7 @@ func (c *ConfigStore) CommitConfig(m map[string]*ConfigData, nodes map[string][]
 				return err
 			}
 
-			msg := &pb.NodeFeederMessage{
+			msg := &epb.NodeFeederMessage{
 				Target:     c.OrgName + "." + metaData.network + "." + metaData.site + "." + n,
 				HttpMethod: "POST",
 				Path:       "configd/v1/config",
@@ -544,7 +544,7 @@ func (c *ConfigStore) PublishCommitInfo(m *ConfigMetaData, route string, ver str
 		return err
 	}
 
-	msg := &pb.NodeFeederMessage{
+	msg := &epb.NodeFeederMessage{
 		Target:     c.OrgName + "." + m.network + "." + m.site + "." + m.node,
 		HttpMethod: "POST",
 		Path:       "configd/v1/config",

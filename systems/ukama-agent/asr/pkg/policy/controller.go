@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
@@ -23,7 +24,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	pb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 )
 
 type policyController struct {
@@ -276,7 +276,7 @@ func (p *policyController) RunPolicyControl(imsi string, event bool) (error, boo
 func (p *policyController) syncSubscriberPolicy(method string, imsi string, network string, policy *db.Policy) error {
 	log.Infof("Syncing policy for subscriber %s", imsi)
 
-	route := p.NodeFeederRoutingKey.SetObject("nodefeeder").SetAction("publish").MustBuild()
+	route := p.MsgBusRoutingKey.SetObject("publish").SetAction("policies").MustBuild()
 	pMsg := createMessage(policy, p.reroute)
 
 	jd, err := json.Marshal(pMsg)
@@ -287,14 +287,27 @@ func (p *policyController) syncSubscriberPolicy(method string, imsi string, netw
 
 	path := "/pcrf/v1/subscriber/imsi/" + imsi
 
-	msg := &pb.NodeFeederMessage{
+	msg := &epb.NodeFeederMessage{
 		Target:     p.OrgName + "." + network + "." + "*" + "." + "*",
 		HttpMethod: method,
 		Path:       path,
 		Msg:        jd,
 	}
 
-	err = p.msgbus.PublishRequest(route, msg)
+	msgBytes, err := proto.Marshal(msg)
+	if err != nil {
+		log.Errorf("Failed to protobuf marshal message %+v. Errors %s", msg, err.Error())
+		return err
+	}
+
+	broadcasterMsg := &epb.BroadcasterEvent{
+		Msg : msgBytes,
+		RoutingKey: p.NodeFeederRoutingKey.SetObject("nodefeeder").SetAction("publish").MustBuild(),
+		Type: epb.BroadcastType_NODE_BROADCAST,
+		Scope: epb.BroadcastScope_ORGANIZATIONAL_SCOPE,
+	}
+
+	err = p.msgbus.PublishRequest(route, broadcasterMsg)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", pMsg, route, err.Error())
 		return err

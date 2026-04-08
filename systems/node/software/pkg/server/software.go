@@ -19,7 +19,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/validation"
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
@@ -210,7 +210,7 @@ func dbAppToPbApp(app *db.App) *pb.App {
 
 func (c *SoftwareServer) publishMessage(target string, method string, path string, nodeId string, data []byte) error {
 	route := "request.cloud.local" + "." + c.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
-	msg := &cpb.NodeFeederMessage{
+	msg := &epb.NodeFeederMessage{
 		Target:     target,
 		HttpMethod: method,
 		Path:       path,
