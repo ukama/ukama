@@ -50,7 +50,7 @@ type Clients struct {
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
 	c.Bootstrap = client.NewBootstrap(endpoints.Bootstrap, endpoints.Timeout)
-
+	c.Reflector = client.NewReflector(endpoints.Reflector, endpoints.Timeout)
 	return c
 }
 
