@@ -15,7 +15,7 @@ type GetNodeRequest struct {
 type ReflectorPingRequest struct {}
 
 type ReflectorGetRequest struct {
-	NodeId string `path:"nodeId" validate:"required"`
+	NodeId string `query:"nodeId" validate:"required"`
 }
 
 type ReflectorDownloadRequest struct {
