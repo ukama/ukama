@@ -50,6 +50,25 @@ services:
   networks:
    - ukama-net
 
+ reflector:
+  build: ./reflector
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - lookup
+  environment:
+    - DEBUGMODE=true
+    - REFLECTOR_SERVICE_HOST=reflector
+    - REFLECTOR_SERVICE_PORT=9090
+    - SERVICECONFIG_SCHEME=http
+    - SERVICECONFIG_HOST=reflector
+    - SERVICECONFIG_PORT=8088
+    - SERVICECONFIG_SEED=1
+    - SERVICECONFIG_MAXUPLOADBYTES=67108864
+    - SERVICECONFIG_MAXDOWNLOADBYTES=67108864
+    - ORGNAME=${ORGNAME}
+
  node-gateway-init:
   build: ./node-gateway
   restart: always

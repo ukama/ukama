@@ -13,7 +13,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"math/rand"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -25,42 +24,12 @@ import (
 
 type ReflectorServer struct {
 	pb.UnimplementedReflectorServiceServer
-	config 				*pkg.Config
-	rng    				*rand.Rand
+	config *pkg.Config
 }
 
 func NewReflectorServer(config *pkg.Config) *ReflectorServer {
 	return &ReflectorServer{
-		config: 		config,
-		rng:    		rand.New(rand.NewSource(config.ServiceConfig.Seed)),
-	}
-}
-
-func (s *ReflectorServer) shouldDrop(f *pb.FaultOptions) bool {
-	if f == nil || f.LossPct <= 0 {
-		return false
-	}
-
-	if f.LossPct >= 100 {
-		return true
-	}
-
-	return s.rng.Int31n(100) < f.LossPct
-}
-
-func (s *ReflectorServer) applyLatency(f *pb.FaultOptions) {
-	if f == nil {
-		return
-	}
-
-	delay := int(f.LatencyMs)
-	if f.JitterMs > 0 {
-		jitter := int(f.JitterMs)
-		delay += s.rng.Intn((2*jitter)+1) - jitter
-	}
-
-	if delay > 0 {
-		time.Sleep(time.Duration(delay) * time.Millisecond)
+		config: config,
 	}
 }
 
@@ -88,11 +57,6 @@ func (s *ReflectorServer) Download(ctx context.Context, req *pb.DownloadRequest)
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is required")
 	}
-
-	if s.shouldDrop(req.Fault) {
-		return nil, status.Error(codes.Unavailable, "dropped")
-	}
-	s.applyLatency(req.Fault)
 
 	if req.Bytes <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "bytes must be > 0")
@@ -125,11 +89,6 @@ func (s *ReflectorServer) Upload(ctx context.Context, req *pb.UploadRequest) (*p
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is required")
 	}
-
-	if s.shouldDrop(req.Fault) {
-		return nil, status.Error(codes.Unavailable, "dropped")
-	}
-	s.applyLatency(req.Fault)
 
 	payload := req.GetPayload()
 	if int64(len(payload)) > s.config.ServiceConfig.MaxUploadBytes {

@@ -71,17 +71,6 @@ func TestDownloadSuccessAndValidation(t *testing.T) {
 	assert.Equal(t, codes.ResourceExhausted, status.Code(err))
 }
 
-func TestDownloadFaultDropReturnsUnavailable(t *testing.T) {
-	s := NewReflectorServer(testConfig())
-
-	_, err := s.Download(context.Background(), &pb.DownloadRequest{
-		Bytes: 128,
-		Fault: &pb.FaultOptions{LossPct: 100},
-	})
-	require.Error(t, err)
-	assert.Equal(t, codes.Unavailable, status.Code(err))
-}
-
 func TestUploadSuccessAndValidation(t *testing.T) {
 	s := NewReflectorServer(testConfig())
 	payload := []byte("hello")
@@ -98,15 +87,4 @@ func TestUploadSuccessAndValidation(t *testing.T) {
 	_, err = s.Upload(context.Background(), &pb.UploadRequest{Payload: tooBig})
 	require.Error(t, err)
 	assert.Equal(t, codes.ResourceExhausted, status.Code(err))
-}
-
-func TestUploadFaultDropReturnsUnavailable(t *testing.T) {
-	s := NewReflectorServer(testConfig())
-
-	_, err := s.Upload(context.Background(), &pb.UploadRequest{
-		Payload: []byte("abc"),
-		Fault:   &pb.FaultOptions{LossPct: 100},
-	})
-	require.Error(t, err)
-	assert.Equal(t, codes.Unavailable, status.Code(err))
 }

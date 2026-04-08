@@ -17,12 +17,6 @@ service ReflectorService {
     rpc Upload(UploadRequest) returns (UploadResponse);
 }
 
-message FaultOptions {
-    int32 latencyMs = 1;
-    int32 jitterMs = 2;
-    int32 lossPct = 3;
-}
-
 message GetRequest {
     string nodeId = 1;
 }
@@ -44,7 +38,6 @@ message DownloadRequest {
     int64 bytes = 2;
     int32 chunkBytes = 3;
     int32 chunkDelayMs = 4;
-    FaultOptions fault = 5;
 }
 
 message DownloadResponse {
@@ -54,7 +47,6 @@ message DownloadResponse {
 message UploadRequest {
     string nodeId = 1;
     bytes payload = 2;
-    FaultOptions fault = 3;
 }
 
 message UploadResponse {

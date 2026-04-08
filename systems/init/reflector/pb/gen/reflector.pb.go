@@ -28,66 +28,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type FaultOptions struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	LatencyMs     int32                  `protobuf:"varint,1,opt,name=latencyMs,proto3" json:"latencyMs,omitempty"`
-	JitterMs      int32                  `protobuf:"varint,2,opt,name=jitterMs,proto3" json:"jitterMs,omitempty"`
-	LossPct       int32                  `protobuf:"varint,3,opt,name=lossPct,proto3" json:"lossPct,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *FaultOptions) Reset() {
-	*x = FaultOptions{}
-	mi := &file_reflector_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *FaultOptions) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*FaultOptions) ProtoMessage() {}
-
-func (x *FaultOptions) ProtoReflect() protoreflect.Message {
-	mi := &file_reflector_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use FaultOptions.ProtoReflect.Descriptor instead.
-func (*FaultOptions) Descriptor() ([]byte, []int) {
-	return file_reflector_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *FaultOptions) GetLatencyMs() int32 {
-	if x != nil {
-		return x.LatencyMs
-	}
-	return 0
-}
-
-func (x *FaultOptions) GetJitterMs() int32 {
-	if x != nil {
-		return x.JitterMs
-	}
-	return 0
-}
-
-func (x *FaultOptions) GetLossPct() int32 {
-	if x != nil {
-		return x.LossPct
-	}
-	return 0
-}
-
 type GetRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	NodeId        string                 `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
@@ -97,7 +37,7 @@ type GetRequest struct {
 
 func (x *GetRequest) Reset() {
 	*x = GetRequest{}
-	mi := &file_reflector_proto_msgTypes[1]
+	mi := &file_reflector_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -109,7 +49,7 @@ func (x *GetRequest) String() string {
 func (*GetRequest) ProtoMessage() {}
 
 func (x *GetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_reflector_proto_msgTypes[1]
+	mi := &file_reflector_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -122,7 +62,7 @@ func (x *GetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRequest.ProtoReflect.Descriptor instead.
 func (*GetRequest) Descriptor() ([]byte, []int) {
-	return file_reflector_proto_rawDescGZIP(), []int{1}
+	return file_reflector_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *GetRequest) GetNodeId() string {
@@ -143,7 +83,7 @@ type GetResponse struct {
 
 func (x *GetResponse) Reset() {
 	*x = GetResponse{}
-	mi := &file_reflector_proto_msgTypes[2]
+	mi := &file_reflector_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -155,7 +95,7 @@ func (x *GetResponse) String() string {
 func (*GetResponse) ProtoMessage() {}
 
 func (x *GetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_reflector_proto_msgTypes[2]
+	mi := &file_reflector_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -168,7 +108,7 @@ func (x *GetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetResponse.ProtoReflect.Descriptor instead.
 func (*GetResponse) Descriptor() ([]byte, []int) {
-	return file_reflector_proto_rawDescGZIP(), []int{2}
+	return file_reflector_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *GetResponse) GetReflectorNearUrl() string {
@@ -200,7 +140,7 @@ type PingRequest struct {
 
 func (x *PingRequest) Reset() {
 	*x = PingRequest{}
-	mi := &file_reflector_proto_msgTypes[3]
+	mi := &file_reflector_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -212,7 +152,7 @@ func (x *PingRequest) String() string {
 func (*PingRequest) ProtoMessage() {}
 
 func (x *PingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_reflector_proto_msgTypes[3]
+	mi := &file_reflector_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -225,7 +165,7 @@ func (x *PingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PingRequest.ProtoReflect.Descriptor instead.
 func (*PingRequest) Descriptor() ([]byte, []int) {
-	return file_reflector_proto_rawDescGZIP(), []int{3}
+	return file_reflector_proto_rawDescGZIP(), []int{2}
 }
 
 type PingResponse struct {
@@ -237,7 +177,7 @@ type PingResponse struct {
 
 func (x *PingResponse) Reset() {
 	*x = PingResponse{}
-	mi := &file_reflector_proto_msgTypes[4]
+	mi := &file_reflector_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -249,7 +189,7 @@ func (x *PingResponse) String() string {
 func (*PingResponse) ProtoMessage() {}
 
 func (x *PingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_reflector_proto_msgTypes[4]
+	mi := &file_reflector_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -262,7 +202,7 @@ func (x *PingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PingResponse.ProtoReflect.Descriptor instead.
 func (*PingResponse) Descriptor() ([]byte, []int) {
-	return file_reflector_proto_rawDescGZIP(), []int{4}
+	return file_reflector_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PingResponse) GetMessage() string {
@@ -278,14 +218,13 @@ type DownloadRequest struct {
 	Bytes         int64                  `protobuf:"varint,2,opt,name=bytes,proto3" json:"bytes,omitempty"`
 	ChunkBytes    int32                  `protobuf:"varint,3,opt,name=chunkBytes,proto3" json:"chunkBytes,omitempty"`
 	ChunkDelayMs  int32                  `protobuf:"varint,4,opt,name=chunkDelayMs,proto3" json:"chunkDelayMs,omitempty"`
-	Fault         *FaultOptions          `protobuf:"bytes,5,opt,name=fault,proto3" json:"fault,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *DownloadRequest) Reset() {
 	*x = DownloadRequest{}
-	mi := &file_reflector_proto_msgTypes[5]
+	mi := &file_reflector_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -297,7 +236,7 @@ func (x *DownloadRequest) String() string {
 func (*DownloadRequest) ProtoMessage() {}
 
 func (x *DownloadRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_reflector_proto_msgTypes[5]
+	mi := &file_reflector_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -310,7 +249,7 @@ func (x *DownloadRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DownloadRequest.ProtoReflect.Descriptor instead.
 func (*DownloadRequest) Descriptor() ([]byte, []int) {
-	return file_reflector_proto_rawDescGZIP(), []int{5}
+	return file_reflector_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *DownloadRequest) GetNodeId() string {
@@ -341,13 +280,6 @@ func (x *DownloadRequest) GetChunkDelayMs() int32 {
 	return 0
 }
 
-func (x *DownloadRequest) GetFault() *FaultOptions {
-	if x != nil {
-		return x.Fault
-	}
-	return nil
-}
-
 type DownloadResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Payload       []byte                 `protobuf:"bytes,1,opt,name=payload,proto3" json:"payload,omitempty"`
@@ -357,7 +289,7 @@ type DownloadResponse struct {
 
 func (x *DownloadResponse) Reset() {
 	*x = DownloadResponse{}
-	mi := &file_reflector_proto_msgTypes[6]
+	mi := &file_reflector_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -369,7 +301,7 @@ func (x *DownloadResponse) String() string {
 func (*DownloadResponse) ProtoMessage() {}
 
 func (x *DownloadResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_reflector_proto_msgTypes[6]
+	mi := &file_reflector_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -382,7 +314,7 @@ func (x *DownloadResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DownloadResponse.ProtoReflect.Descriptor instead.
 func (*DownloadResponse) Descriptor() ([]byte, []int) {
-	return file_reflector_proto_rawDescGZIP(), []int{6}
+	return file_reflector_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *DownloadResponse) GetPayload() []byte {
@@ -396,14 +328,13 @@ type UploadRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	NodeId        string                 `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
 	Payload       []byte                 `protobuf:"bytes,2,opt,name=payload,proto3" json:"payload,omitempty"`
-	Fault         *FaultOptions          `protobuf:"bytes,3,opt,name=fault,proto3" json:"fault,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UploadRequest) Reset() {
 	*x = UploadRequest{}
-	mi := &file_reflector_proto_msgTypes[7]
+	mi := &file_reflector_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -415,7 +346,7 @@ func (x *UploadRequest) String() string {
 func (*UploadRequest) ProtoMessage() {}
 
 func (x *UploadRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_reflector_proto_msgTypes[7]
+	mi := &file_reflector_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -428,7 +359,7 @@ func (x *UploadRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadRequest.ProtoReflect.Descriptor instead.
 func (*UploadRequest) Descriptor() ([]byte, []int) {
-	return file_reflector_proto_rawDescGZIP(), []int{7}
+	return file_reflector_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *UploadRequest) GetNodeId() string {
@@ -445,13 +376,6 @@ func (x *UploadRequest) GetPayload() []byte {
 	return nil
 }
 
-func (x *UploadRequest) GetFault() *FaultOptions {
-	if x != nil {
-		return x.Fault
-	}
-	return nil
-}
-
 type UploadResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Ok            bool                   `protobuf:"varint,1,opt,name=ok,proto3" json:"ok,omitempty"`
@@ -464,7 +388,7 @@ type UploadResponse struct {
 
 func (x *UploadResponse) Reset() {
 	*x = UploadResponse{}
-	mi := &file_reflector_proto_msgTypes[8]
+	mi := &file_reflector_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -476,7 +400,7 @@ func (x *UploadResponse) String() string {
 func (*UploadResponse) ProtoMessage() {}
 
 func (x *UploadResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_reflector_proto_msgTypes[8]
+	mi := &file_reflector_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -489,7 +413,7 @@ func (x *UploadResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadResponse.ProtoReflect.Descriptor instead.
 func (*UploadResponse) Descriptor() ([]byte, []int) {
-	return file_reflector_proto_rawDescGZIP(), []int{8}
+	return file_reflector_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *UploadResponse) GetOk() bool {
@@ -524,11 +448,7 @@ var File_reflector_proto protoreflect.FileDescriptor
 
 const file_reflector_proto_rawDesc = "" +
 	"\n" +
-	"\x0freflector.proto\x12\x12ukama.reflector.v1\"b\n" +
-	"\fFaultOptions\x12\x1c\n" +
-	"\tlatencyMs\x18\x01 \x01(\x05R\tlatencyMs\x12\x1a\n" +
-	"\bjitterMs\x18\x02 \x01(\x05R\bjitterMs\x12\x18\n" +
-	"\alossPct\x18\x03 \x01(\x05R\alossPct\"$\n" +
+	"\x0freflector.proto\x12\x12ukama.reflector.v1\"$\n" +
 	"\n" +
 	"GetRequest\x12\x16\n" +
 	"\x06nodeId\x18\x01 \x01(\tR\x06nodeId\"}\n" +
@@ -538,21 +458,19 @@ const file_reflector_proto_rawDesc = "" +
 	"\aversion\x18\x03 \x01(\tR\aversion\"\r\n" +
 	"\vPingRequest\"(\n" +
 	"\fPingResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage\"\xbb\x01\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\"\x83\x01\n" +
 	"\x0fDownloadRequest\x12\x16\n" +
 	"\x06nodeId\x18\x01 \x01(\tR\x06nodeId\x12\x14\n" +
 	"\x05bytes\x18\x02 \x01(\x03R\x05bytes\x12\x1e\n" +
 	"\n" +
 	"chunkBytes\x18\x03 \x01(\x05R\n" +
 	"chunkBytes\x12\"\n" +
-	"\fchunkDelayMs\x18\x04 \x01(\x05R\fchunkDelayMs\x126\n" +
-	"\x05fault\x18\x05 \x01(\v2 .ukama.reflector.v1.FaultOptionsR\x05fault\",\n" +
+	"\fchunkDelayMs\x18\x04 \x01(\x05R\fchunkDelayMs\",\n" +
 	"\x10DownloadResponse\x12\x18\n" +
-	"\apayload\x18\x01 \x01(\fR\apayload\"y\n" +
+	"\apayload\x18\x01 \x01(\fR\apayload\"A\n" +
 	"\rUploadRequest\x12\x16\n" +
 	"\x06nodeId\x18\x01 \x01(\tR\x06nodeId\x12\x18\n" +
-	"\apayload\x18\x02 \x01(\fR\apayload\x126\n" +
-	"\x05fault\x18\x03 \x01(\v2 .ukama.reflector.v1.FaultOptionsR\x05fault\"n\n" +
+	"\apayload\x18\x02 \x01(\fR\apayload\"n\n" +
 	"\x0eUploadResponse\x12\x0e\n" +
 	"\x02ok\x18\x01 \x01(\bR\x02ok\x12$\n" +
 	"\rbytesReceived\x18\x02 \x01(\x03R\rbytesReceived\x12\x16\n" +
@@ -576,34 +494,31 @@ func file_reflector_proto_rawDescGZIP() []byte {
 	return file_reflector_proto_rawDescData
 }
 
-var file_reflector_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_reflector_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_reflector_proto_goTypes = []any{
-	(*FaultOptions)(nil),     // 0: ukama.reflector.v1.FaultOptions
-	(*GetRequest)(nil),       // 1: ukama.reflector.v1.GetRequest
-	(*GetResponse)(nil),      // 2: ukama.reflector.v1.GetResponse
-	(*PingRequest)(nil),      // 3: ukama.reflector.v1.PingRequest
-	(*PingResponse)(nil),     // 4: ukama.reflector.v1.PingResponse
-	(*DownloadRequest)(nil),  // 5: ukama.reflector.v1.DownloadRequest
-	(*DownloadResponse)(nil), // 6: ukama.reflector.v1.DownloadResponse
-	(*UploadRequest)(nil),    // 7: ukama.reflector.v1.UploadRequest
-	(*UploadResponse)(nil),   // 8: ukama.reflector.v1.UploadResponse
+	(*GetRequest)(nil),       // 0: ukama.reflector.v1.GetRequest
+	(*GetResponse)(nil),      // 1: ukama.reflector.v1.GetResponse
+	(*PingRequest)(nil),      // 2: ukama.reflector.v1.PingRequest
+	(*PingResponse)(nil),     // 3: ukama.reflector.v1.PingResponse
+	(*DownloadRequest)(nil),  // 4: ukama.reflector.v1.DownloadRequest
+	(*DownloadResponse)(nil), // 5: ukama.reflector.v1.DownloadResponse
+	(*UploadRequest)(nil),    // 6: ukama.reflector.v1.UploadRequest
+	(*UploadResponse)(nil),   // 7: ukama.reflector.v1.UploadResponse
 }
 var file_reflector_proto_depIdxs = []int32{
-	0, // 0: ukama.reflector.v1.DownloadRequest.fault:type_name -> ukama.reflector.v1.FaultOptions
-	0, // 1: ukama.reflector.v1.UploadRequest.fault:type_name -> ukama.reflector.v1.FaultOptions
-	1, // 2: ukama.reflector.v1.ReflectorService.Get:input_type -> ukama.reflector.v1.GetRequest
-	3, // 3: ukama.reflector.v1.ReflectorService.Ping:input_type -> ukama.reflector.v1.PingRequest
-	5, // 4: ukama.reflector.v1.ReflectorService.Download:input_type -> ukama.reflector.v1.DownloadRequest
-	7, // 5: ukama.reflector.v1.ReflectorService.Upload:input_type -> ukama.reflector.v1.UploadRequest
-	2, // 6: ukama.reflector.v1.ReflectorService.Get:output_type -> ukama.reflector.v1.GetResponse
-	4, // 7: ukama.reflector.v1.ReflectorService.Ping:output_type -> ukama.reflector.v1.PingResponse
-	6, // 8: ukama.reflector.v1.ReflectorService.Download:output_type -> ukama.reflector.v1.DownloadResponse
-	8, // 9: ukama.reflector.v1.ReflectorService.Upload:output_type -> ukama.reflector.v1.UploadResponse
-	6, // [6:10] is the sub-list for method output_type
-	2, // [2:6] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	0, // 0: ukama.reflector.v1.ReflectorService.Get:input_type -> ukama.reflector.v1.GetRequest
+	2, // 1: ukama.reflector.v1.ReflectorService.Ping:input_type -> ukama.reflector.v1.PingRequest
+	4, // 2: ukama.reflector.v1.ReflectorService.Download:input_type -> ukama.reflector.v1.DownloadRequest
+	6, // 3: ukama.reflector.v1.ReflectorService.Upload:input_type -> ukama.reflector.v1.UploadRequest
+	1, // 4: ukama.reflector.v1.ReflectorService.Get:output_type -> ukama.reflector.v1.GetResponse
+	3, // 5: ukama.reflector.v1.ReflectorService.Ping:output_type -> ukama.reflector.v1.PingResponse
+	5, // 6: ukama.reflector.v1.ReflectorService.Download:output_type -> ukama.reflector.v1.DownloadResponse
+	7, // 7: ukama.reflector.v1.ReflectorService.Upload:output_type -> ukama.reflector.v1.UploadResponse
+	4, // [4:8] is the sub-list for method output_type
+	0, // [0:4] is the sub-list for method input_type
+	0, // [0:0] is the sub-list for extension type_name
+	0, // [0:0] is the sub-list for extension extendee
+	0, // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_reflector_proto_init() }
@@ -617,7 +532,7 @@ func file_reflector_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_reflector_proto_rawDesc), len(file_reflector_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
