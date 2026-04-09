@@ -22,7 +22,7 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import { SiteDto } from '@/client/graphql/generated';
 import { duration } from '@/utils';
 import CancelIcon from '@mui/icons-material/Cancel';
-import { SiteMetricsStateRes } from '@/client/graphql/generated/subscriptions';
+import { MetricsStateRes } from '@/client/graphql/generated/subscriptions';
 import { SITE_KPI_TYPES } from '@/constants';
 
 interface SiteDetailsHeaderProps {
@@ -30,7 +30,7 @@ interface SiteDetailsHeaderProps {
   selectedSiteId: string | null;
   onSiteChange: (siteId: string) => void;
   isLoading: boolean;
-  siteStatMetrics: SiteMetricsStateRes;
+  siteStatMetrics: MetricsStateRes;
 }
 
 const SiteDetailsHeader: React.FC<SiteDetailsHeaderProps> = ({

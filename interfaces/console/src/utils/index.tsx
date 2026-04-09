@@ -20,7 +20,6 @@ import {
   MetricRes,
   MetricsRes,
   MetricsStateRes,
-  SiteMetricsStateRes,
 } from '@/client/graphql/generated/subscriptions';
 import {
   INSTALLATION_FLOW,
@@ -427,7 +426,7 @@ const NodeEnumToString = (type: NodeTypeEnum): string => {
 const getKPIStatValue = (
   id: string,
   loading: boolean,
-  statsData: MetricsStateRes | SiteMetricsStateRes,
+  statsData: MetricsStateRes | MetricsStateRes,
 ): string => {
   if (loading || !statsData?.metrics) return KPI_PLACEHOLDER_VALUE;
   const stat = statsData.metrics.find((item) => item.type === id);

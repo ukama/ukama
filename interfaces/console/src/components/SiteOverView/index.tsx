@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { SiteMetricsStateRes } from '@/client/graphql/generated/subscriptions';
+import { MetricsStateRes } from '@/client/graphql/generated/subscriptions';
 import { SITE_KPI_TYPES } from '@/constants';
 import colors from '@/theme/colors';
 import { duration } from '@/utils';
@@ -34,7 +34,7 @@ interface SiteOverviewProps {
   includeFutureDays?: boolean;
   isLoading: boolean;
   siteId: string;
-  siteStatMetrics: SiteMetricsStateRes;
+  siteStatMetrics: MetricsStateRes;
 }
 
 const SiteOverview: React.FC<SiteOverviewProps> = ({
