@@ -8,10 +8,7 @@
 import crypto from "crypto";
 import { Arg, Query, Resolver } from "type-graphql";
 
-
-
 import { NodeApps, NodeAppsChangeLogInput } from "./types";
-
 
 @Resolver()
 export class GetNodeAppsResolver {
