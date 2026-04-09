@@ -8,7 +8,10 @@
 import crypto from "crypto";
 import { Arg, Query, Resolver } from "type-graphql";
 
+
+
 import { NodeApps, NodeAppsChangeLogInput } from "./types";
+
 
 @Resolver()
 export class GetNodeAppsResolver {
@@ -19,6 +22,7 @@ export class GetNodeAppsResolver {
       tnode: 10,
       anode: 7,
       hnode: 5,
+      cnode: 3,
     };
     for (let i = type[data.type]; i > 0; i--) {
       apps.apps.push({
