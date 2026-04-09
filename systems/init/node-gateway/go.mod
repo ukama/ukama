@@ -8,6 +8,8 @@ replace github.com/ukama/ukama/systems/init/node-gateway => ./
 
 replace github.com/ukama/ukama/systems/init/bootstrap => ../bootstrap
 
+replace github.com/ukama/ukama/systems/init/reflector => ../reflector
+
 require (
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-gonic/gin v1.10.1
@@ -17,6 +19,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/init/bootstrap v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/init/reflector v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.22.0
 	google.golang.org/grpc v1.78.0
 )
@@ -93,7 +96,7 @@ require (
 	golang.org/x/text v0.31.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251029180050-ab9386a59fda // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251029180050-ab9386a59fda // indirect
-	google.golang.org/protobuf v1.36.11 // indirect
+	google.golang.org/protobuf v1.36.10 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.5.9 // indirect
