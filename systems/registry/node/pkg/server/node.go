@@ -577,12 +577,10 @@ func (n *NodeServer) ReleaseNodeFromSite(ctx context.Context,
 
 	return &pb.ReleaseNodeFromSiteResponse{}, nil
 }
-func (n *NodeServer) addNodeToSite(nodeId, siteId, networkId string) error {
+func (n *NodeServer) addNodeToSiteServer(nodeId, siteId, networkId string) error {
 	log.Infof("Add node to site %s", nodeId)
-	r, err := n.inventoryClient.Get(nodeId)
-	if err != nil {
-		return status.Errorf(codes.InvalidArgument, "node not found in inventory against component id: %s, Error %s", nodeId, err.Error())
-	}
+
+	nType := ukama.GetNodeType(nodeId)
 
 	netID, err := uuid.FromString(networkId)
 	if err != nil {
@@ -595,7 +593,7 @@ func (n *NodeServer) addNodeToSite(nodeId, siteId, networkId string) error {
 	}
 
 	site := &db.Site{
-		NodeId:    r.PartNumber,
+		NodeId:    nodeId,
 		SiteId:    siteID,
 		NetworkId: netID,
 	}
@@ -609,8 +607,8 @@ func (n *NodeServer) addNodeToSite(nodeId, siteId, networkId string) error {
 		route := n.baseRoutingKey.SetAction("assign").SetObject("node").MustBuild()
 
 		evt := &epb.EventRegistryNodeAssign{
-			NodeId:  r.PartNumber,
-			Type:    r.Type,
+			NodeId:  nodeId,
+			Type:    *nType,
 			Site:    siteId,
 			Network: networkId,
 		}
