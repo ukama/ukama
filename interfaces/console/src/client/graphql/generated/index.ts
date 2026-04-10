@@ -840,6 +840,7 @@ export type NodeStatus = {
 /** Node type enums */
 export enum NodeTypeEnum {
   Anode = 'anode',
+  Cnode = 'cnode',
   Hnode = 'hnode',
   Tnode = 'tnode'
 }

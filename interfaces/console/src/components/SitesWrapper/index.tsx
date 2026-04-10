@@ -5,13 +5,13 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import React from 'react';
-import { Box, Grid, Typography, Divider } from '@mui/material';
+import { SiteDto } from '@/client/graphql/generated';
+import { MetricsStateRes } from '@/client/graphql/generated/subscriptions';
+import LoadingWrapper from '@/components/LoadingWrapper';
 import SiteCard from '@/components/SiteCard';
 import UnassignedNodeCard from '@/components/UnassingedNodecard';
-import { SiteDto } from '@/client/graphql/generated';
-import LoadingWrapper from '@/components/LoadingWrapper';
-import { SiteMetricsStateRes } from '@/client/graphql/generated/subscriptions';
+import { Box, Divider, Grid, Typography } from '@mui/material';
+import React from 'react';
 
 interface NodeStatus {
   connectivity: string;
@@ -37,7 +37,7 @@ interface SitesWrapperProps {
   handleAddSite?: () => void;
   handleSiteNameUpdate: (siteId: string, siteName: string) => void;
   handleConfigureNode: (nodeId: string) => void;
-  siteMetricsStatData: SiteMetricsStateRes;
+  siteMetricsStatData: MetricsStateRes;
 }
 
 const SitesWrapper: React.FC<SitesWrapperProps> = ({

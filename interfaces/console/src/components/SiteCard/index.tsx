@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { SiteMetricsStateRes } from '@/client/graphql/generated/subscriptions';
+import { MetricsStateRes } from '@/client/graphql/generated/subscriptions';
 import { SITE_KPI_TYPES } from '@/constants';
 import colors from '@/theme/colors';
 import { getStatusStyles } from '@/utils';
@@ -59,7 +59,7 @@ interface SiteCardProps {
   loading?: boolean;
   handleSiteNameUpdate: (siteId: string, newSiteName: string) => void;
   maxAddressLength?: number;
-  metricsData?: SiteMetricsStateRes;
+  metricsData?: MetricsStateRes;
 }
 
 const truncateText = (text: string, maxLength: number): string => {
@@ -70,7 +70,7 @@ const truncateText = (text: string, maxLength: number): string => {
 
 const getSiteMetricValue = (
   metricId: string,
-  metricsData?: SiteMetricsStateRes,
+  metricsData?: MetricsStateRes,
   siteId?: string,
 ): number | null => {
   if (!metricsData || !metricsData.metrics || !siteId) return null;
@@ -83,7 +83,7 @@ const getSiteMetricValue = (
 };
 
 const getSiteActiveSubscribers = (
-  metricsData?: SiteMetricsStateRes,
+  metricsData?: MetricsStateRes,
   siteId?: string,
 ): number | null => {
   if (!metricsData || !metricsData.metrics || !siteId) return null;

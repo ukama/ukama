@@ -40,6 +40,7 @@ export enum NODE_TYPE {
   tnode = "tnode",
   anode = "anode",
   hnode = "hnode",
+  cnode = "cnode",
 }
 registerEnumType(NODE_TYPE, {
   name: "NodeTypeEnum",
