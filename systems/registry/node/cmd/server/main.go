@@ -97,7 +97,7 @@ func runGrpcServer(gormdb sql.Db) {
 		providers.NewSiteClientProvider(serviceConfig.SiteHost),
 		orgId, invClient)
 
-	nSrv := server.NewNodeEventServer(serviceConfig.OrgName, srv)
+	nSrv := server.NewNodeEventServer(serviceConfig.OrgName, srv, invClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterNodeServiceServer(s, srv)

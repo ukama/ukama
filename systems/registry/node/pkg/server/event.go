@@ -18,6 +18,7 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	npb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	cinvent "github.com/ukama/ukama/systems/common/rest/client/inventory"
 	"github.com/ukama/ukama/systems/common/ukama"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 
@@ -30,13 +31,15 @@ const errFailedAddNodeToSiteFmt = "failed to add node to site: %w"
 type NodeEventServer struct {
 	s       *NodeServer
 	orgName string
+	invClient cinvent.ComponentClient
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewNodeEventServer(orgName string, s *NodeServer) *NodeEventServer {
+func NewNodeEventServer(orgName string, s *NodeServer, invClient cinvent.ComponentClient) *NodeEventServer {
 	return &NodeEventServer{
 		s:       s,
 		orgName: orgName,
+		invClient: invClient,
 	}
 }
 
@@ -235,8 +238,17 @@ func parseCoordinates(coordinates string) (string, string, error) {
 	return latStr, lonStr, nil
 }
 
-func (n *NodeEventServer) handleAddNodeToSite(ctx context.Context, nodeID string, siteID string, networkID string) error {
-	log.Infof("Adding node %s to site %s with network %s", nodeID, siteID, networkID)
+func (n *NodeEventServer) handleAddNodeToSite(ctx context.Context, accessId string, siteID string, networkID string) error {
+	log.Infof("Adding node with access id %s to site %s with network %s", accessId, siteID, networkID)
+
+	component, err := n.invClient.Get(accessId)
+	if err != nil {
+		return fmt.Errorf("failed to get component: %w", err)
+	}
+	nodeID := component.PartNumber
+	
+	log.Infof("Node ID is: %s", nodeID)
+	
 	aId, err := ukama.GetANodeIdFromTNodeId(nodeID)
 	if err != nil {
 		return fmt.Errorf("failed to get A Node ID: %w", err)
