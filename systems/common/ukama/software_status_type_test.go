@@ -22,7 +22,7 @@ func TestSoftwareStatusType(t *testing.T) {
 
 		assert.NotNil(tt, status)
 		assert.Equal(tt, status.String(), ukama.UpdateAvailable.String())
-		assert.Equal(tt, uint8(status), uint8(1))
+		assert.Equal(tt, uint8(status), uint8(2))
 	})
 
 	t.Run("ValidStringCaseInsensitive", func(tt *testing.T) {
@@ -59,8 +59,8 @@ func TestSoftwareStatusType(t *testing.T) {
 
 	t.Run("AllConstantsString", func(tt *testing.T) {
 		cases := []struct {
-			parsed string
-			constant ukama.SoftwareStatusType
+			parsed    string
+			constant  ukama.SoftwareStatusType
 			expectStr string
 		}{
 			{"unknown", ukama.Unknown, "unknown"},
@@ -81,7 +81,7 @@ func TestSoftwareStatusType(t *testing.T) {
 		val, err := status.Value()
 
 		assert.NoError(tt, err)
-		assert.Equal(tt, uint8(2), val)
+		assert.Equal(tt, uint8(1), val)
 	})
 
 	t.Run("Scan", func(tt *testing.T) {

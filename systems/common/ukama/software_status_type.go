@@ -16,11 +16,11 @@ import (
 type SoftwareStatusType uint8
 
 const (
-	Unknown SoftwareStatusType = 0
-	UpToDate SoftwareStatusType = 1
-	UpdateAvailable SoftwareStatusType = 2
-	UpdateInProgress SoftwareStatusType = 3
-	UpdateFailed SoftwareStatusType = 4
+	Unknown SoftwareStatusType = iota
+	UpToDate
+	UpdateAvailable
+	UpdateInProgress
+	UpdateFailed
 )
 
 func (s SoftwareStatusType) String() string {
