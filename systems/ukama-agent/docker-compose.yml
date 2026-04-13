@@ -21,7 +21,6 @@ services:
    - DB_HOST=postgresd-ukama-agent
    - MSGCLIENT_HOST=msgclient-ukama-agent:9095
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-   - FACTORYHOST=http://api-gateway-dummy:8080
    - ASR_SERVICE_HOST=asr
    - ASR_SERVICE_PORT=9090
    - ORGNAME=${ORGNAME}
