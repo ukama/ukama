@@ -5,27 +5,25 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Card,
-  Grid,
-  Stack,
-  Paper,
-  Typography,
-  Switch,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-} from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import LineChart from '../LineChart';
 import { MetricsRes } from '@/client/graphql/generated/subscriptions';
-import { getMetricValue, getPortInfo, isMetricValue } from '@/utils';
-import SiteFlowDiagram from '../../../public/svg/sitecomps';
-import NodeStatusDisplay from '@/components/NodeStatusDisplay';
 import { SectionData, SITE_KPI_TYPES } from '@/constants';
-
+import { getMetricValue, getPortInfo, isMetricValue } from '@/utils';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Box,
+  Paper,
+  Stack,
+  Switch,
+  Typography,
+} from '@mui/material';
+import Grid from '@mui/material/Grid2';
+import React, { useEffect, useState } from 'react';
+import SiteFlowDiagram from '../../../public/svg/sitecomps';
+import LineChart from '../LineChart';
+import NodeStatusDisplay from '../NodeStatusDisplay';
 interface SiteComponentsProps {
   siteId: string;
   metrics: MetricsRes;
@@ -293,99 +291,99 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
   };
 
   return (
-    <Box>
-      <Card
-        sx={{
-          p: 3,
-          borderRadius: 2,
-          width: '100%',
-        }}
-      >
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={3}>
-            <Stack spacing={2}>
-              <SiteFlowDiagram
-                defaultOpacity={0.1}
-                onNodeClick={onComponentClick}
-                activeKPI={activeKPI}
-              />
-            </Stack>
-          </Grid>
-
-          <Grid item xs={12} md={9}>
-            {activeKPI === 'node' ? (
-              <NodeStatusDisplay nodeUptimes={nodeUptimes} />
-            ) : (
-              <Paper
-                sx={{
-                  p: 3,
-                  pr: 5,
-                  overflow: 'auto',
-                  height: {
-                    xs: 'calc(100vh - 480px)',
-                    md: 'calc(100vh - 328px)',
-                  },
-                }}
-              >
-                {activeSection === 'SWITCH' && (
-                  <Box sx={{ mb: 4 }}>
-                    <Box
-                      sx={{
-                        p: 2,
-                        borderRadius: 1,
-                      }}
-                    >
-                      <Typography
-                        variant="h6"
-                        fontWeight="medium"
-                        sx={{
-                          mb: 2,
-                          pb: 1,
-                          borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
-                        }}
-                      >
-                        {(() => {
-                          const portMetrics = getPortMetrics();
-                          const totalPorts = portMetrics.length;
-                          const activePorts = Object.values(
-                            localSwitchStatus,
-                          ).filter((status) => status === true).length;
-                          return `Switch ports (${activePorts} active / ${totalPorts} total)`;
-                        })()}
-                      </Typography>
-
-                      {getPortMetrics().map((portGroup) =>
-                        renderPortItem(portGroup),
-                      )}
-                    </Box>
-                  </Box>
-                )}
-
-                {activeSection !== 'SWITCH' && (
-                  <Stack spacing={4}>
-                    {sections[activeSection]?.map((config) => (
-                      <LineChart
-                        from={metricFrom}
-                        topic={config.id}
-                        title={config.name}
-                        yunit={config.unit}
-                        loading={metricsLoading}
-                        key={config.id}
-                        tickInterval={config.tickInterval}
-                        tickPositions={config.tickPositions}
-                        hasData={isMetricValue(config.id, metrics)}
-                        initData={getMetricValue(config.id, metrics)}
-                        format={config.format}
-                      />
-                    ))}
-                  </Stack>
-                )}
-              </Paper>
-            )}
-          </Grid>
+    <Paper
+      sx={{
+        p: 2,
+        borderRadius: 2,
+        minHeight: 'fit-content',
+        height: 'fit-content',
+      }}
+    >
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, md: 3 }} alignSelf="center">
+          <SiteFlowDiagram
+            defaultOpacity={0.1}
+            onNodeClick={onComponentClick}
+            activeKPI={activeKPI}
+          />
         </Grid>
-      </Card>
-    </Box>
+
+        <Grid size={{ xs: 12, md: 9 }}>
+          {activeKPI === 'node' ? (
+            <NodeStatusDisplay
+              nodeIds={nodeIds ?? []}
+              nodeUptimes={nodeUptimes}
+            />
+          ) : (
+            <Paper
+              elevation={0}
+              sx={{
+                p: 3,
+                pr: 5,
+                boxShadow: 'none',
+                overflow: 'auto',
+                height: {
+                  xs: 'calc(100vh - 480px)',
+                  md: 'calc(100vh - 328px)',
+                },
+              }}
+            >
+              {activeSection === 'SWITCH' && (
+                <Box
+                  sx={{
+                    p: 2,
+                    borderRadius: 1,
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    fontWeight="medium"
+                    sx={{
+                      mb: 2,
+                      pb: 1,
+                      borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
+                    }}
+                  >
+                    {(() => {
+                      const portMetrics = getPortMetrics();
+                      const totalPorts = portMetrics.length;
+                      const activePorts = Object.values(
+                        localSwitchStatus,
+                      ).filter((status) => status === true).length;
+                      return `Switch ports (${activePorts} active / ${totalPorts} total)`;
+                    })()}
+                  </Typography>
+
+                  {getPortMetrics().map((portGroup) =>
+                    renderPortItem(portGroup),
+                  )}
+                </Box>
+              )}
+
+              {activeSection !== 'SWITCH' && (
+                <Stack spacing={4}>
+                  {sections[activeSection]?.map((config) => (
+                    <LineChart
+                      from={metricFrom}
+                      topic={config.id}
+                      title={config.name}
+                      yunit={config.unit}
+                      loading={metricsLoading}
+                      key={config.id}
+                      tickInterval={config.tickInterval}
+                      tickPositions={config.tickPositions}
+                      hasData={isMetricValue(config.id, metrics)}
+                      initData={getMetricValue(config.id, metrics)}
+                      format={config.format}
+                    />
+                  ))}
+                </Stack>
+              )}
+            </Paper>
+          )}
+        </Grid>
+      </Grid>
+    </Paper>
   );
 };
 

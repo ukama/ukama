@@ -35,7 +35,6 @@ interface INodeRadioTab {
 }
 
 const NodeSoftwareTab = ({
-  loading,
   nodeApps,
   handleUpdateAvailable,
 }: INodeRadioTab) => {
@@ -78,7 +77,6 @@ const NodeSoftwareTab = ({
                   currentVersion,
                   desiredVersion,
                   nodeId,
-                  updatedAt,
                   status,
                   changeLog,
                 }: Software) => (

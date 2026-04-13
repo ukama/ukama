@@ -6,8 +6,8 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
-#ifndef INC_AGENTS_H_
-#define INC_AGENTS_H_
+#ifndef AGENTS_H_
+#define AGENTS_H_
 
 #include "collector.h"
 #include "config.h"
@@ -21,6 +21,10 @@ int sys_net_collect_stat(MetricsCatConfig *stat, metricAddFunc addFunc);
 int sys_storage_collect_stat(MetricsCatConfig *stat, metricAddFunc addFunc);
 int sysfs_collect_kpi(MetricsCatConfig *stat, metricAddFunc addFunc);
 int backhaul_collect_stat(MetricsCatConfig *stat, metricAddFunc addFunc);
-int controllerd_collect_stat(MetricsCatConfig *cfgStat, metricAddFunc addFunc);
+int controllerd_collect_stat(MetricsCatConfig *cfgStat,
+                             metricAddFunc addFunc);
+int switchd_collect_stat(MetricsCatConfig *cfgStat,
+                         metricAddFunc addFunc);
 int femd_collect_stat(MetricsCatConfig *cfgStat, metricAddFunc addFunc);
-#endif /* INC_AGENTS_H_ */
+
+#endif /* AGENTS_H_ */

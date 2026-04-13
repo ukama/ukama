@@ -146,9 +146,10 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
         </Typography>
 
         <SiteMapComponent
-          posix={[Number.parseFloat(qpLat), Number.parseFloat(qpLng)]}
+          posix={[qpLat, qpLng]}
           address={address}
           height={'128px'}
+          id="configure-site-map"
         />
 
         <Stack

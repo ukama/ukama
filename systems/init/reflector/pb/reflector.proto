@@ -1,0 +1,57 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2026-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+option go_package = "github.com/ukama/ukama/systems/init/reflector/pb/gen";
+package ukama.reflector.v1;
+
+service ReflectorService {
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc Ping(PingRequest) returns (PingResponse);
+    rpc Download(DownloadRequest) returns (DownloadResponse);
+    rpc Upload(UploadRequest) returns (UploadResponse);
+}
+
+message GetRequest {
+    string nodeId = 1;
+}
+
+message GetResponse {
+    string reflectorNearUrl = 1;
+    string reflectorFarUrl = 2;
+    string version = 3;
+}
+
+message PingRequest {}
+
+message PingResponse {
+    string message = 1;
+}
+
+message DownloadRequest {
+    string nodeId = 1;
+    int64 bytes = 2;
+    int32 chunkBytes = 3;
+    int32 chunkDelayMs = 4;
+}
+
+message DownloadResponse {
+    bytes payload = 1;
+}
+
+message UploadRequest {
+    string nodeId = 1;
+    bytes payload = 2;
+}
+
+message UploadResponse {
+    bool ok = 1;
+    int64 bytesReceived = 2;
+    string sha256 = 3;
+    int64 ts = 4;
+}

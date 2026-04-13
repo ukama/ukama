@@ -1205,5 +1205,6 @@ gps		        18018/tcp   gpsd
 backhaul        18019/tcp   backhauld
 power           18020/tcp   powerd
 controller      18021/tcp   controllerd    
+switch          10310/tcp   switchd
 ukama		    18100/tcp   ukama
 remote          18200/tcp   remote

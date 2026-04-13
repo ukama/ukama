@@ -1,0 +1,21 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2026-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
+
+package ukama.events.v1;
+
+message NodeFeederMessage {
+    string target = 1;
+    string httpMethod = 2;
+    string path = 3;
+    bytes msg = 4;
+    string nodeId = 5;
+}

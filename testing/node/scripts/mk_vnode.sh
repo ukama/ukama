@@ -98,6 +98,106 @@ update_ukama_os_env() {
     log "INFO" "UKAMA_OS set to ${UKAMA_OS} (BUILD_ENV=${BUILD_ENV})"
 }
 
+build_starter() {
+    local starter_root=""
+
+    update_ukama_os_env
+
+    starter_root="${UKAMA_OS}/distro/system/starterd"
+    [ -d "${starter_root}" ] || die "Failed to find starterd root at: ${starter_root}"
+
+    mkdir -p "${BUILD_DIR}/sbin" "${BUILD_DIR}/lib"
+
+    log "INFO" "Building starter.d in ${starter_root}"
+
+    pushd "${starter_root}" >/dev/null
+
+    make clean
+    make
+
+    [ -f "${starter_root}/starter.d" ] || die "starter.d build failed"
+
+    cp -f "${starter_root}/starter.d" "${BUILD_DIR}/sbin/"
+
+    # copy runtime libs for starter.d into BUILD_DIR/lib
+    while IFS= read -r lib; do
+        [ -z "$lib" ] && continue
+        if [ -f "$lib" ]; then
+            cp --parents "$lib" "${BUILD_DIR}" || true
+            cp -f "$lib" "${BUILD_DIR}/lib/" || true
+        fi
+    done < <(ldd "${starter_root}/starter.d" | awk '/=>/ {print $3} /^[[:space:]]*\// {print $1}' | sort -u)
+
+    popd >/dev/null
+
+    log "SUCCESS" "starter.d built into ${BUILD_DIR}/sbin"
+}
+
+build_apps_pkg() {
+    local builder_root=""
+    local pkgs_src=""
+    local pkgs_stage=""
+    local found_pkgs=0
+    local pkg=""
+    local base=""
+    local staged_name=""
+
+    update_ukama_os_env
+
+    builder_root="${UKAMA_ROOT}/builder"
+
+    #
+    # build-all-apps.sh writes packages here
+    #
+    pkgs_src="${UKAMA_ROOT}/build/pkgs"
+
+    #
+    # image.c expects ./pkgs/<name>-<version>.tar.gz
+    # relative to the current vnode build working directory.
+    # Use CWD (captured at script startup) so it matches the caller.
+    #
+    pkgs_stage="${CWD}/pkgs"
+
+    [ -d "${builder_root}" ] || die "Failed to find builder root at: ${builder_root}"
+
+    rm -rf "${pkgs_stage}"
+    mkdir -p "${pkgs_stage}"
+
+    log "INFO" "Building app packages in ${builder_root}"
+    log "INFO" "Builder package source is ${pkgs_src}"
+    log "INFO" "Staging packages into ${pkgs_stage}"
+
+    pushd "${builder_root}" >/dev/null
+
+    make clean
+    make app_builder
+
+    [ -x "${builder_root}/scripts/build-all-apps.sh" ] || \
+        die "Missing or non-executable build script: ${builder_root}/scripts/build-all-apps.sh"
+
+    "${builder_root}/scripts/build-all-apps.sh" "${UKAMA_ROOT}"
+
+    [ -d "${pkgs_src}" ] || die "Package directory not found after build: ${pkgs_src}"
+
+    shopt -s nullglob
+    for pkg in "${pkgs_src}"/*.tar.gz; do
+        [ -f "${pkg}" ] || continue
+
+        base="$(basename "${pkg}")"
+        staged_name="${base/_latest.tar.gz/-latest.tar.gz}"
+
+        cp -f "${pkg}" "${pkgs_stage}/${staged_name}"
+        found_pkgs=1
+    done
+    shopt -u nullglob
+
+    popd >/dev/null
+
+    [ "${found_pkgs}" -eq 1 ] || die "No app packages were generated in ${pkgs_src}"
+
+    log "SUCCESS" "App packages staged into ${pkgs_stage}"
+}
+
 build_utils() {
     mkdir -p "${BUILD_DIR}/utils"
     update_ukama_os_env
@@ -120,10 +220,42 @@ build_utils() {
     [ -f "${NODED_ROOT}/utils/mock-sysfs-anode.sh" ] || die "Missing mock-sysfs-anode.sh"
     cp -f "${NODED_ROOT}/utils/mock-sysfs-anode.sh" "${BUILD_DIR}/utils/"
 
-    # gps.d
+    # gps.d helper
     [ -f "${UKAMA_ROOT}/nodes/apps/gps/scripts/process_gps_data.sh" ] || \
         die "Missing process_gps_data.sh"
-    cp -f "${UKAMA_ROOT}/nodes/apps/gps/scripts/process_gps_data.sh" "${BUILD_DIR}/utils/"
+    cp -f "${UKAMA_ROOT}/nodes/apps/gps/scripts/process_gps_data.sh" \
+        "${BUILD_DIR}/utils/"
+
+    # controller.d VE.Direct emulator helpers -> /sbin
+    [ -f "${UKAMA_ROOT}/nodes/apps/controller/test/vedirect_sim.py" ] || \
+        die "Missing vedirect_sim.py"
+    cp -f "${UKAMA_ROOT}/nodes/apps/controller/test/vedirect_sim.py" \
+        "${BUILD_DIR}/utils/"
+
+    [ -f "${UKAMA_ROOT}/nodes/apps/controller/test/vedirect_emulator.py" ] || \
+        die "Missing vedirect_emulator.py"
+    cp -f "${UKAMA_ROOT}/nodes/apps/controller/test/vedirect_emulator.py" \
+        "${BUILD_DIR}/utils/"
+
+    # switch.d emulator binary -> /sbin
+    [ -d "${UKAMA_ROOT}/nodes/apps/switchd/emu" ] || \
+        die "Missing switchd emu directory"
+
+    pushd "${UKAMA_ROOT}/nodes/apps/switchd/emu" >/dev/null
+    make clean
+    make
+    [ -f "${UKAMA_ROOT}/nodes/apps/switchd/emu/switchemu.d" ] || \
+        die "Error building switchemu.d"
+    cp -f "${UKAMA_ROOT}/nodes/apps/switchd/emu/switchemu.d" \
+        "${BUILD_DIR}/utils/"
+    popd >/dev/null
+
+    chmod 0755 "${BUILD_DIR}/utils/prepare_env.sh"
+    chmod 0755 "${BUILD_DIR}/utils/mock-sysfs-anode.sh"
+    chmod 0755 "${BUILD_DIR}/utils/process_gps_data.sh"
+    chmod 0755 "${BUILD_DIR}/utils/vedirect_sim.py"
+    chmod 0755 "${BUILD_DIR}/utils/vedirect_emulator.py"
+    chmod 0755 "${BUILD_DIR}/utils/switchemu.d"
 
     popd >/dev/null
 
@@ -219,6 +351,9 @@ build_sysfs() {
 setup_ukama_dirs() {
     local nodeid="${1:-unknown}"
     local bootstrap_server="${2:-}"
+    local node_type=""
+    local metrics_dir=""
+    local metrics_target=""
 
     log "INFO" "Creating Ukama directories..."
 
@@ -244,6 +379,38 @@ setup_ukama_dirs() {
     [ -f "${UKAMA_OS}/distro/scripts/files/protocols" ] || die "missing protocols file"
     cp "${UKAMA_OS}/distro/scripts/files/services"  "${BUILD_DIR}/ukama/etc"
     cp "${UKAMA_OS}/distro/scripts/files/protocols" "${BUILD_DIR}/ukama/etc"
+
+    # Determine node type from nodeid and link metricsd config.toml
+    case "${nodeid}" in
+        *-tnode-*)
+            node_type="tower"
+            metrics_target="com_config.toml"
+            ;;
+        *-cnode-*)
+            node_type="controller"
+            metrics_target="cnode_config.toml"
+            ;;
+        *-anode-*)
+            node_type="amplifier"
+            metrics_target="amplifier_config.toml"
+            ;;
+        *)
+            log "WARN" "Unable to determine node type from nodeid: ${nodeid}"
+            ;;
+    esac
+
+    if [ -n "${metrics_target}" ]; then
+        metrics_dir="${BUILD_DIR}/ukama/configs/metricsd"
+
+        [ -d "${metrics_dir}" ] || die "missing metricsd config directory: ${metrics_dir}"
+        [ -f "${metrics_dir}/${metrics_target}" ] || \
+            die "missing metricsd target config: ${metrics_dir}/${metrics_target}"
+
+        rm -f "${metrics_dir}/config.toml"
+        ln -s "${metrics_target}" "${metrics_dir}/config.toml"
+
+        log "INFO" "Configured metricsd for ${node_type} node: config.toml -> ${metrics_target}"
+    fi
 
     log "SUCCESS" "Ukama directories created at ${BUILD_DIR}/ukama"
 }
@@ -334,9 +501,13 @@ shift || true
 case "${ACTION}" in
     init)
         build_utils
+        build_starter
         ;;
     sysfs)
         build_sysfs "${1:-}" "${2:-}"
+        ;;
+    apps-pkg)
+        build_apps_pkg
         ;;
     ukamadirs)
         update_ukama_os_env

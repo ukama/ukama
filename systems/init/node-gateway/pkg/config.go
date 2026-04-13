@@ -28,6 +28,7 @@ type Config struct {
 type GrpcEndpoints struct {
 	Timeout   time.Duration
 	Bootstrap string
+	Reflector string
 }
 
 type HttpEndpoints struct {
@@ -48,6 +49,7 @@ func NewConfig() *Config {
 		Services: GrpcEndpoints{
 			Timeout:   3 * time.Second,
 			Bootstrap: "bootstrap:9090",
+			Reflector: "reflector:9090",
 		},
 
 		HttpServices: HttpEndpoints{

@@ -32,6 +32,7 @@ const (
 	NODE_ID_TYPE_TOWERNODE = "tnode"
 	NODE_ID_TYPE_AMPNODE   = "anode"
 	NODE_ID_TYPE_UNDEFINED = "undef"
+	NODE_ID_TYPE_CNODE     = "cnode"
 
 	MODULE_ID_TYPE_COMP      = "comv1"
 	MODULE_ID_TYPE_TRX       = "trx"
@@ -44,13 +45,28 @@ const (
 	placeholder_component_type_home      = "Home node"
 	placeholder_component_type_tower     = "Tower node"
 	placeholder_component_type_amplifier = "Amplifier node"
+	placeholder_component_type_cnode     = "Controller node"
 	placeholder_component_type_undefined = "Undefined node"
 )
 
 var nodeTypeToPlaceholderName = map[string]string{
 	NODE_ID_TYPE_HOMENODE:  placeholder_component_type_home,
 	NODE_ID_TYPE_TOWERNODE: placeholder_component_type_tower,
+	NODE_ID_TYPE_CNODE:     placeholder_component_type_cnode,
 	NODE_ID_TYPE_AMPNODE:   placeholder_component_type_amplifier,
+}
+
+// Sentinel errors returned by ValidateNodeId.
+var (
+	ErrInvalidNodeIDLength = errors.New("invalid length")
+	ErrInvalidNodeIDCode   = errors.New("invalid Node Code")
+)
+
+var validNodeIDTypeCodes = map[string]struct{}{
+	NODE_ID_TYPE_HOMENODE:  {},
+	NODE_ID_TYPE_AMPNODE:   {},
+	NODE_ID_TYPE_TOWERNODE: {},
+	NODE_ID_TYPE_CNODE:     {},
 }
 
 type NodeID string
@@ -84,6 +100,10 @@ func (n NodeID) GetNodeType() string {
 
 	case NODE_ID_TYPE_TOWERNODE:
 		return NODE_ID_TYPE_TOWERNODE
+
+	case NODE_ID_TYPE_CNODE:
+		return NODE_ID_TYPE_CNODE
+
 	default:
 		return NODE_ID_TYPE_UNDEFINED
 	}
@@ -109,6 +129,8 @@ func GetNodeCodeForUnits(ntype string) string {
 		code = NODE_ID_TYPE_TOWERNODE
 	case NODE_ID_TYPE_AMPNODE, "ampnode":
 		code = NODE_ID_TYPE_AMPNODE
+	case NODE_ID_TYPE_CNODE, "ctrlnode":
+		code = NODE_ID_TYPE_CNODE
 	default:
 		code = NODE_ID_TYPE_UNDEFINED
 	}
@@ -210,7 +232,8 @@ func GetNodeType(n string) *string {
 	codes := [...]string{
 		NODE_ID_TYPE_HOMENODE,
 		NODE_ID_TYPE_TOWERNODE,
-		NODE_ID_TYPE_AMPNODE}
+		NODE_ID_TYPE_AMPNODE,
+		NODE_ID_TYPE_CNODE}
 
 	var nodeType *string
 	for _, code := range codes {
@@ -236,38 +259,55 @@ func GetPlaceholderNameByType(nodeType string) string {
 	return placeholder_component_type_undefined
 }
 
+// nodeTypeSegmentFromLowerID returns the hardware node-type token at CODE_IDX up to
+// the next '-', matching NodeID.GetNodeType parsing rules.
+func nodeTypeSegmentFromLowerID(lid string) (string, bool) {
+	if len(lid) <= CODE_IDX {
+		return "", false
+	}
+	rest := lid[CODE_IDX:]
+	i := strings.IndexRune(rest, '-')
+	if i < 0 {
+		return "", false
+	}
+	return rest[:i], true
+}
+
 func ValidateNodeId(id string) (NodeID, error) {
 	/* TODO :: ADD more validation once we finalized this format */
 	if len(id) != NodeIDLength {
-		err := errors.New("invalid length")
-		return "", err
+		return "", ErrInvalidNodeIDLength
 	}
 
-	/* Check for HW codes */
-	codes := [...]string{
-		NODE_ID_TYPE_HOMENODE,
-		NODE_ID_TYPE_AMPNODE,
-		NODE_ID_TYPE_TOWERNODE}
-	match := false
-	for _, code := range codes {
-		if strings.Contains(strings.ToLower(id), code) {
-
-			/* Check index of substring */
-			idx := strings.Index(strings.ToLower(id), code)
-			if idx == CODE_IDX {
-				match = true
-				break
-			}
-		}
+	lid := strings.ToLower(id)
+	seg, ok := nodeTypeSegmentFromLowerID(lid)
+	if !ok {
+		return "", ErrInvalidNodeIDCode
 	}
-
-	if !match {
-		err := errors.New("invalid Node Code")
-		return "", err
+	if _, valid := validNodeIDTypeCodes[seg]; !valid {
+		return "", ErrInvalidNodeIDCode
 	}
 
 	/* RFC 1123 lowercase id and tags*/
-	lid := strings.ToLower(id)
-
 	return NodeID(lid), nil
+}
+
+func GetANodeIdFromTNodeId(tNodeId string) (NodeID, error) {
+	if len(tNodeId) != NodeIDLength {
+		return "", ErrInvalidNodeIDLength
+	}
+
+	tNodeId = strings.ToLower(tNodeId)
+
+	return NodeID(strings.Replace(tNodeId, NODE_ID_TYPE_TOWERNODE, NODE_ID_TYPE_AMPNODE, 1)), nil
+}
+
+func GetCNodeIdFromTNodeId(tNodeId string) (NodeID, error) {
+	if len(tNodeId) != NodeIDLength {
+		return "", ErrInvalidNodeIDLength
+	}
+
+	tNodeId = strings.ToLower(tNodeId)
+
+	return NodeID(strings.Replace(tNodeId, NODE_ID_TYPE_TOWERNODE, NODE_ID_TYPE_CNODE, 1)), nil
 }

@@ -1,0 +1,31 @@
+[build-from]
+	rootfs="default"     # default is busybox minimal capp config
+	contained="default"  # default namespace, cgroup, etc.
+
+[build-compile]
+	version="0.1"
+	static="false"
+	source="/nodes/apps/femd"
+	cmd="make"
+	bin_from="/nodes/apps/femd/fem.d"
+	bin_to="/sbin"
+
+[build-rootfs]
+	mkdir="/conf"
+
+[build-conf]
+	from="/nodes/configs/apps/femd/safety_config.json"
+	to="/conf/safety_config.json"
+
+# Following are use to create config.json file which is used by starter.d to start 
+# the capp within ukamaOS and pkg everything
+[capp-exec]
+	name="femd"
+	version="latest"
+	bin="fem.d"
+	path="/sbin" # path where the exec should be. Mathches build.bin_to
+	args="--config /ukama/configs/femd/safety_config.json"
+	
+# Final output format for capp
+[capp-output]
+	format="tar.gz"

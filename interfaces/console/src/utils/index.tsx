@@ -20,7 +20,6 @@ import {
   MetricRes,
   MetricsRes,
   MetricsStateRes,
-  SiteMetricsStateRes,
 } from '@/client/graphql/generated/subscriptions';
 import {
   INSTALLATION_FLOW,
@@ -427,7 +426,7 @@ const NodeEnumToString = (type: NodeTypeEnum): string => {
 const getKPIStatValue = (
   id: string,
   loading: boolean,
-  statsData: MetricsStateRes | SiteMetricsStateRes,
+  statsData: MetricsStateRes | MetricsStateRes,
 ): string => {
   if (loading || !statsData?.metrics) return KPI_PLACEHOLDER_VALUE;
   const stat = statsData.metrics.find((item) => item.type === id);
@@ -736,6 +735,21 @@ const getNodeActionDescriptionByProgress = (
   return '';
 };
 
+const getMapStyleURL = (style: string, token: string) => {
+  switch (style) {
+    case 'terrain':
+      return `https://api.mapbox.com/styles/v1/mapbox/outdoors-v11/tiles/256/{z}/{x}/{y}@2x?access_token=${token}`;
+    case 'satellite':
+      return `https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}@2x?access_token=${token}`;
+    case 'streets':
+      return `https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}@2x?access_token=${token}`;
+    case 'light':
+      return `https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/256/{z}/{x}/{y}@2x?access_token=${token}`;
+    case 'dark':
+      return `https://api.mapbox.com/styles/v1/mapbox/dark-v10/tiles/256/{z}/{x}/{y}@2x?access_token=${token}`;
+  }
+};
+
 export {
   base64ToBlob,
   ConfigureStep,
@@ -752,6 +766,7 @@ export {
   getGraphFilterByType,
   getInvitationStatusColor,
   getKPIStatValue,
+  getMapStyleURL,
   getNodeActionDescriptionByProgress,
   getPortInfo,
   getSectionFromKPI,
@@ -771,3 +786,4 @@ export {
   setQueryParam,
   structureNodeSiteDate,
 };
+

@@ -20,7 +20,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
-	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/ukama"
 
 	"google.golang.org/grpc/codes"
@@ -36,7 +36,7 @@ type Device4xxServerError struct {
 }
 
 type RequestExecutor interface {
-	Execute(req *cpb.NodeFeederMessage) error
+	Execute(req *epb.NodeFeederMessage) error
 }
 
 type requestExecutor struct {
@@ -49,7 +49,7 @@ func NewRequestExecutor(deviceNet NodeIpResolver, devicePort int, timeoutSeconds
 	return &requestExecutor{nodeResolver: deviceNet, devicePort: devicePort, timeoutSeconds: timeoutSeconds}
 }
 
-func (e *requestExecutor) Execute(req *cpb.NodeFeederMessage) error {
+func (e *requestExecutor) Execute(req *epb.NodeFeederMessage) error {
 	segs := strings.Split(req.Target, ".")
 	if len(segs) != 4 {
 		return fmt.Errorf("invalid target format")
@@ -82,22 +82,24 @@ func (e *requestExecutor) Execute(req *cpb.NodeFeederMessage) error {
 		Timeout: time.Duration(e.timeoutSeconds) * time.Second,
 	}
 
+	header := map[string][]string{
+		"Content-Type": {"application/json"},
+		"X-node-id":    {req.NodeId},
+	}
+	
 	var httpReq http.Request
 	if req.HttpMethod == "GET" || req.GetMsg() == nil {
 		httpReq = http.Request{
 			Method: req.HttpMethod,
 			URL:    u,
-			Header: map[string][]string{"X-node-id": {req.NodeId}},
+			Header: header,
 		}
 	} else {
 		body := req.GetMsg()
 		httpReq = http.Request{
 			Body:          io.NopCloser(bytes.NewReader(body)),
 			ContentLength: int64(len(body)),
-			Header: map[string][]string{
-				"Content-Type": {"application/json"},
-				"X-node-id":    {req.NodeId},
-			},
+			Header: header,
 			Method: req.HttpMethod,
 			URL:    u,
 		}

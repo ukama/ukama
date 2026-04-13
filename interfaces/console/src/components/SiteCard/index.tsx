@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { SiteMetricsStateRes } from '@/client/graphql/generated/subscriptions';
+import { MetricsStateRes } from '@/client/graphql/generated/subscriptions';
 import { SITE_KPI_TYPES } from '@/constants';
 import colors from '@/theme/colors';
 import { getStatusStyles } from '@/utils';
@@ -22,17 +22,33 @@ import {
   Menu,
   MenuItem,
   Skeleton,
-  Tooltip,
   Typography,
 } from '@mui/material';
 import PubSub from 'pubsub-js';
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 
-const extractMetricValue = (value: any): number | null => {
+type MetricValuePayload = number | [unknown, number] | unknown[];
+type PubSubPayload = MetricValuePayload | [unknown, MetricValuePayload];
+type SubscriptionMap = {
+  uptime?: string;
+  battery?: string;
+  backhaul?: string;
+  subscribers?: string;
+};
+
+const extractMetricValue = (value: unknown): number | null => {
   if (Array.isArray(value) && value.length > 1) {
     return typeof value[1] === 'number' ? value[1] : null;
   }
   return typeof value === 'number' ? value : null;
+};
+
+const extractMetricFromPubSubPayload = (payload: unknown): number | null => {
+  if (payload === null || payload === undefined) return null;
+  if (Array.isArray(payload) && payload.length > 1) {
+    return extractMetricValue(payload[1]);
+  }
+  return extractMetricValue(payload);
 };
 
 interface SiteCardProps {
@@ -43,7 +59,7 @@ interface SiteCardProps {
   loading?: boolean;
   handleSiteNameUpdate: (siteId: string, newSiteName: string) => void;
   maxAddressLength?: number;
-  metricsData?: SiteMetricsStateRes;
+  metricsData?: MetricsStateRes;
 }
 
 const truncateText = (text: string, maxLength: number): string => {
@@ -54,7 +70,7 @@ const truncateText = (text: string, maxLength: number): string => {
 
 const getSiteMetricValue = (
   metricId: string,
-  metricsData?: SiteMetricsStateRes,
+  metricsData?: MetricsStateRes,
   siteId?: string,
 ): number | null => {
   if (!metricsData || !metricsData.metrics || !siteId) return null;
@@ -67,14 +83,14 @@ const getSiteMetricValue = (
 };
 
 const getSiteActiveSubscribers = (
-  metricsData?: SiteMetricsStateRes,
+  metricsData?: MetricsStateRes,
   siteId?: string,
 ): number | null => {
   if (!metricsData || !metricsData.metrics || !siteId) return null;
 
   const subscriberMetrics = metricsData.metrics.filter(
     (m) =>
-      m.type === 'node_active_subscribers' &&
+      m.type === SITE_KPI_TYPES.ACTIVE_SUBSCRIBERS &&
       m.success === true &&
       m.siteId === siteId,
   );
@@ -108,7 +124,7 @@ const SiteCard: React.FC<SiteCardProps> = memo(
       null,
     );
 
-    const subscriptionsRef = useRef<Record<string, string>>({});
+    const subscriptionsRef = useRef<SubscriptionMap>({});
 
     useEffect(() => {
       if (
@@ -155,47 +171,12 @@ const SiteCard: React.FC<SiteCardProps> = memo(
 
       if (loading || !siteId) return;
 
-      const handleUptimeUpdate = (_: any, data: any) => {
-        if (data !== null && data !== undefined) {
-          const value =
-            Array.isArray(data) && data.length > 1
-              ? extractMetricValue(data[1])
-              : extractMetricValue(data);
-          if (value !== null) setUptimeValue(value);
-        }
-      };
-
-      const handleBatteryUpdate = (_: any, data: any) => {
-        if (data !== null && data !== undefined) {
-          const value =
-            Array.isArray(data) && data.length > 1
-              ? extractMetricValue(data[1])
-              : extractMetricValue(data);
-          if (value !== null) setBatteryValue(value);
-        }
-      };
-
-      const handleBackhaulUpdate = (_: any, data: any) => {
-        if (data !== null && data !== undefined) {
-          const value =
-            Array.isArray(data) && data.length > 1
-              ? extractMetricValue(data[1])
-              : extractMetricValue(data);
-          if (value !== null) setBackhaulValue(value);
-        }
-      };
-
-      const handleSubscribersUpdate = (_: any, data: any) => {
-        if (data !== null && data !== undefined) {
-          const value =
-            Array.isArray(data) && data.length > 1
-              ? extractMetricValue(data[1])
-              : extractMetricValue(data);
-          if (value !== null) {
-            setActiveSubscribers(value);
-          }
-        }
-      };
+      const createMetricHandler =
+        (setter: React.Dispatch<React.SetStateAction<number | null>>) =>
+        (_: string, data: PubSubPayload) => {
+          const value = extractMetricFromPubSubPayload(data);
+          if (value !== null) setter(value);
+        };
 
       const uptimeTopic = `stat-${SITE_KPI_TYPES.SITE_UPTIME}-${siteId}`;
       const batteryTopic = `stat-${SITE_KPI_TYPES.BATTERY_CHARGE_PERCENTAGE}-${siteId}`;
@@ -204,19 +185,19 @@ const SiteCard: React.FC<SiteCardProps> = memo(
 
       subscriptionsRef.current.uptime = PubSub.subscribe(
         uptimeTopic,
-        handleUptimeUpdate,
+        createMetricHandler(setUptimeValue),
       );
       subscriptionsRef.current.battery = PubSub.subscribe(
         batteryTopic,
-        handleBatteryUpdate,
+        createMetricHandler(setBatteryValue),
       );
       subscriptionsRef.current.backhaul = PubSub.subscribe(
         backhaulTopic,
-        handleBackhaulUpdate,
+        createMetricHandler(setBackhaulValue),
       );
       subscriptionsRef.current.subscribers = PubSub.subscribe(
         subscribersTopic,
-        handleSubscribersUpdate,
+        createMetricHandler(setActiveSubscribers),
       );
 
       return cleanup;
@@ -271,6 +252,45 @@ const SiteCard: React.FC<SiteCardProps> = memo(
             color: colors.darkGray,
           };
 
+    const statusTextSx = {
+      display: { xs: 'none', sm: 'block' },
+    };
+
+    const getSubscribersDisplayValue = () =>
+      loading || activeSubscribers === null ? 0 : activeSubscribers;
+
+    const getConnectionLabel = () => {
+      if (loading || uptimeValue === null) return 'Pending';
+      return uptimeValue <= 0 ? 'Offline' : 'Online';
+    };
+
+    const getBatteryLabel = () => {
+      if (loading || batteryValue === null) return 'Pending';
+      if (batteryValue < 20) return 'Critical';
+      if (batteryValue < 40) return 'Low';
+      return 'Charged';
+    };
+
+    const getSignalLabel = () => {
+      if (loading || backhaulValue === null) return 'Pending';
+      if (backhaulValue < 10) return 'No signal';
+      if (backhaulValue < 70) return 'Low signal';
+      return 'Strong';
+    };
+
+    const renderMetricItem = (
+      icon: React.ReactNode,
+      value: string,
+      color: string,
+    ) => (
+      <Box display="flex" alignItems="center" gap={1}>
+        {icon}
+        <Typography variant="body2" sx={{ color, ...statusTextSx }}>
+          {value}
+        </Typography>
+      </Box>
+    );
+
     return (
       <Card
         sx={{
@@ -306,20 +326,18 @@ const SiteCard: React.FC<SiteCardProps> = memo(
                   <Skeleton width={200} />
                 </Typography>
               ) : (
-                <Tooltip title={address || ''} placement="top-start">
-                  <Typography
-                    color="textSecondary"
-                    variant="body1"
-                    sx={{
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      maxWidth: '100%',
-                    }}
-                  >
-                    {displayAddress}
-                  </Typography>
-                </Tooltip>
+                <Typography
+                  color="textSecondary"
+                  variant="body1"
+                  sx={{
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth: '100%',
+                  }}
+                >
+                  {displayAddress}
+                </Typography>
               )}
             </Box>
 
@@ -339,79 +357,29 @@ const SiteCard: React.FC<SiteCardProps> = memo(
 
           <Box display="flex" mt={3} gap={4}>
             <Box display="flex" alignItems="center" gap={1}>
-              {loading ||
-              activeSubscribers === undefined ||
-              activeSubscribers === null ? (
-                <>
-                  <PeopleIcon sx={{ color: colors.darkGray }} />
-                  <Typography variant="body2" sx={{ color: colors.darkGray }}>
-                    0
-                  </Typography>
-                </>
-              ) : (
-                <>
-                  <PeopleIcon sx={{ color: colors.darkGray }} />
-                  <Typography variant="body2" sx={{ color: colors.darkGray }}>
-                    {activeSubscribers}
-                  </Typography>
-                </>
-              )}
-            </Box>
-
-            <Box display="flex" alignItems="center" gap={1}>
-              {connectionStyles.icon}
-              <Typography
-                variant="body2"
-                sx={{
-                  color: connectionStyles.color,
-                  display: { xs: 'none', sm: 'block' },
-                }}
-              >
-                {loading || uptimeValue === null
-                  ? 'Pending'
-                  : uptimeValue <= 0
-                    ? 'Offline'
-                    : 'Online'}
+              <PeopleIcon sx={{ color: colors.darkGray }} />
+              <Typography variant="body2" sx={{ color: colors.darkGray }}>
+                {getSubscribersDisplayValue()}
               </Typography>
             </Box>
 
-            <Box display="flex" alignItems="center" gap={1}>
-              {batteryStyles.icon}
-              <Typography
-                variant="body2"
-                sx={{
-                  color: batteryStyles.color,
-                  display: { xs: 'none', sm: 'block' },
-                }}
-              >
-                {loading || batteryValue === null
-                  ? 'Pending'
-                  : batteryValue < 20
-                    ? 'Critical'
-                    : batteryValue < 40
-                      ? 'Low'
-                      : 'Charged'}
-              </Typography>
-            </Box>
+            {renderMetricItem(
+              connectionStyles.icon,
+              getConnectionLabel(),
+              connectionStyles.color,
+            )}
 
-            <Box display="flex" alignItems="center" gap={1}>
-              {signalStyles.icon}
-              <Typography
-                variant="body2"
-                sx={{
-                  color: signalStyles.color,
-                  display: { xs: 'none', sm: 'block' },
-                }}
-              >
-                {loading || backhaulValue === null
-                  ? 'Pending'
-                  : backhaulValue < 10
-                    ? 'No signal'
-                    : backhaulValue < 70
-                      ? 'Low signal'
-                      : 'Strong'}
-              </Typography>
-            </Box>
+            {renderMetricItem(
+              batteryStyles.icon,
+              getBatteryLabel(),
+              batteryStyles.color,
+            )}
+
+            {renderMetricItem(
+              signalStyles.icon,
+              getSignalLabel(),
+              signalStyles.color,
+            )}
           </Box>
         </CardContent>
       </Card>

@@ -22,10 +22,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	evt "github.com/ukama/ukama/systems/common/events"
-	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
 type NotifiyEventServer struct {
@@ -73,7 +72,7 @@ func (n *NotifiyEventServer) EventNotification(ctx context.Context, e *epb.Event
 		}
 
 	case msgbus.PrepareRoute(n.orgName,"request.cloud.local.{{ .Org}}.node.controller.nodefeeder.publish"):
-		nodeMsg := &cpb.NodeFeederMessage{}
+		nodeMsg := &epb.NodeFeederMessage{}
 		if err := anypb.UnmarshalTo(e.Msg, nodeMsg, proto.UnmarshalOptions{}); err != nil {
 			log.Errorf("Failed to unmarshal to NodeFeederMessage: %v", err)
 			return nil, err
@@ -124,7 +123,7 @@ func (n *NotifiyEventServer) handleNodeOnlineEvent(msg *epb.NodeOnlineEvent, nam
 	)
 
 }
-func (n *NotifiyEventServer) handleNodeRestartEvent(msg *cpb.NodeFeederMessage) error {
+func (n *NotifiyEventServer) handleNodeRestartEvent(msg *epb.NodeFeederMessage) error {
 	log.Infof("Handling node restart event: target=%s, path=%s", msg.Target, msg.Path)
 	
 	targetParts := strings.Split(msg.Target, ".")

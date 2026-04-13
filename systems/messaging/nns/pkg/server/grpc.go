@@ -19,14 +19,24 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// NnsStore is the persistence layer used by NnsServer (implemented by *pkg.Nns).
+type NnsStore interface {
+	Get(ctx context.Context, nodeId string) (*pkg.NodeMeshMap, error)
+	GetAll(ctx context.Context) ([]pkg.NodeMeshMap, error)
+	Add(ctx context.Context, obj pkg.NodeMeshMap) error
+	Delete(ctx context.Context, nodeId string) error
+	UpdateNodeMesh(ctx context.Context, nodeId string, ip string, port int32) error
+	UpdateNode(ctx context.Context, nodeId string, nodeIp string, nodePort int32) error
+}
+
 type NnsServer struct {
 	pb.UnimplementedNnsServer
 	config    *pkg.Config
 	dnsConfig *pkg.DnsConfig
-	nns       *pkg.Nns
+	nns       NnsStore
 }
 
-func NewNnsServer(nnsClient *pkg.Nns, config *pkg.Config, dnsConfig *pkg.DnsConfig) *NnsServer {
+func NewNnsServer(nnsClient NnsStore, config *pkg.Config, dnsConfig *pkg.DnsConfig) *NnsServer {
 	return &NnsServer{
 		config:    config,
 		dnsConfig: dnsConfig,
@@ -51,7 +61,7 @@ func (n *NnsServer) GetNode(c context.Context, req *pb.GetNodeRequest) (*pb.GetN
 }
 
 func (n *NnsServer) GetMesh(c context.Context, req *pb.GetMeshRequest) (*pb.GetMeshResponse, error) {
-	log.Infof("Getting mesh")
+	log.Infof("Getting mesh for node %s", req.GetNodeId())
 	if _, err := ukama.ValidateNodeId(req.GetNodeId()); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -140,7 +150,7 @@ func parseNodeMeshMap(item pkg.NodeMeshMap) *pb.NodeMeshInfo {
 		NodePort:     item.NodePort,
 		MeshPort:     item.MeshPort,
 		Org:          item.Org,
-		Network:      item.Network,	
+		Network:      item.Network,
 		Site:         item.Site,
 		MeshIp:       item.MeshIp,
 		MeshHostName: item.MeshHostName,

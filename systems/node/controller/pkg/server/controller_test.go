@@ -15,7 +15,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
-	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/node/controller/pkg/db"
 
@@ -78,7 +78,7 @@ func TestControllerServer_RestartNode(t *testing.T) {
 	}
 	conRepo.On("Get", nodeId).Return(&NodeLog, nil).Once()
 
-	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
+	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
 		Target:     "test-org" + "." + "." + "." + nodeId,
 		HttpMethod: "POST",
 		Path:       "/device/v1/restart",
@@ -115,7 +115,7 @@ func TestControllerServer_RestartNodes(t *testing.T) {
 	}
 	conRepo.On("Get", nodeId).Return(&NodeLog, nil).Once()
 
-	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
+	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
 		Target:     "test-org" + "." + "." + "." + nodeId,
 		HttpMethod: "POST",
 		Path:       "/device/v1/restart",
@@ -145,7 +145,7 @@ func TestControllerServer_ToggleRf(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to marshal message: %v", err)
 	}
-	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
+	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
 		Target:     "test-org" + "..." + nodeId,
 		HttpMethod: "POST",
 		Path:       "/device/v1/radio",
@@ -174,7 +174,7 @@ func TestControllerServer_ToggleNodeService(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to marshal message: %v", err)
 	}
-	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
+	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
 		Target:     "test-org" + "..." + nodeId,
 		HttpMethod: "POST",
 		Path:       "/device/v1/service",

@@ -18,6 +18,7 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	npb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	cinvent "github.com/ukama/ukama/systems/common/rest/client/inventory"
 	"github.com/ukama/ukama/systems/common/ukama"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 
@@ -25,16 +26,20 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const errFailedAddNodeToSiteFmt = "failed to add node to site: %w"
+
 type NodeEventServer struct {
 	s       *NodeServer
 	orgName string
+	invClient cinvent.ComponentClient
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewNodeEventServer(orgName string, s *NodeServer) *NodeEventServer {
+func NewNodeEventServer(orgName string, s *NodeServer, invClient cinvent.ComponentClient) *NodeEventServer {
 	return &NodeEventServer{
 		s:       s,
 		orgName: orgName,
+		invClient: invClient,
 	}
 }
 
@@ -63,16 +68,19 @@ func (n *NodeEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 			return nil, err
 		}
 	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.registry.site.site.create"):
-		c := evt.EventToEventConfig[evt.EventPaymentFailed]
+		c := evt.EventToEventConfig[evt.EventSiteCreate]
 		msg, err := epb.UnmarshalEventAddSite(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
 
-		err = n.s.addNodeToSite(msg.AccessId, msg.SiteId, msg.NetworkId)
+		err = n.handleAddNodeToSite(ctx, msg.AccessId, msg.SiteId, msg.NetworkId)
 		if err != nil {
 			return nil, err
 		}
+
+		return &epb.EventResponse{}, nil
+
 	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.inventory.component.node.added"):
 		msg, err := epb.UnmarshalEventInventoryNodeComponentAdd(e.Msg, "EventInventoryComponentNodeAdded")
 		if err != nil {
@@ -228,4 +236,74 @@ func parseCoordinates(coordinates string) (string, string, error) {
 	}
 
 	return latStr, lonStr, nil
+}
+
+func (n *NodeEventServer) handleAddNodeToSite(ctx context.Context, accessId string, siteID string, networkID string) error {
+	log.Infof("Adding node with access id %s to site %s with network %s", accessId, siteID, networkID)
+
+	component, err := n.invClient.Get(accessId)
+	if err != nil {
+		return fmt.Errorf("failed to get component: %w", err)
+	}
+	nodeID := component.PartNumber
+	
+	log.Infof("Node ID is: %s", nodeID)
+	
+	aId, err := ukama.GetANodeIdFromTNodeId(nodeID)
+	if err != nil {
+		return fmt.Errorf("failed to get A Node ID: %w", err)
+	}
+
+	aNodeId, err := ukama.ValidateNodeId(aId.StringLowercase())
+	if err != nil {
+		return fmt.Errorf("failed to validate A Node ID: %w", err)
+	}
+	
+	cId, err := ukama.GetCNodeIdFromTNodeId(nodeID)
+	if err != nil {
+		return fmt.Errorf("failed to get C Node ID: %w", err)
+	}
+
+	cNodeId, err := ukama.ValidateNodeId(cId.StringLowercase())
+	if err != nil {
+		return fmt.Errorf("failed to validate C Node ID: %w", err)
+	}
+
+	// Add Tower Node to Site
+	log.Infof("Adding Tower Node %s to Site %s with Network %s", nodeID, siteID, networkID)
+	err = n.addNodeToSite(ctx, nodeID, siteID, networkID)
+	if err != nil {
+		return fmt.Errorf(errFailedAddNodeToSiteFmt, err)
+	}
+
+	// Add Amplifier Node to Site
+	log.Infof("Adding Amplifier Node %s to Site %s with Network %s", aNodeId.StringLowercase(), siteID, networkID)
+	err = n.addNodeToSite(ctx, aNodeId.StringLowercase(), siteID, networkID)
+	if err != nil {
+		return fmt.Errorf(errFailedAddNodeToSiteFmt, err)
+	}
+
+	// Add Controller Node to Site
+	log.Infof("Adding Controller Node %s to Site %s with Network %s", cNodeId.StringLowercase(), siteID, networkID)
+	err = n.addNodeToSite(ctx, cNodeId.StringLowercase(), siteID, networkID)
+	if err != nil {
+		return fmt.Errorf(errFailedAddNodeToSiteFmt, err)
+	}
+	return nil
+}
+
+func (n *NodeEventServer) addNodeToSite(ctx context.Context, nodeID string, siteID string, networkID string) error {
+	log.Infof("Adding node %s to site %s with network %s", nodeID, siteID, networkID)
+	node, err := n.s.GetNode(ctx, &pb.GetNodeRequest{NodeId: nodeID})
+	if err != nil {
+		return fmt.Errorf("failed to get node: %w", err)
+	}
+	if node == nil || node.Node == nil {
+		return fmt.Errorf("node not found")
+	}
+	err = n.s.addNodeToSiteServer(nodeID, siteID, networkID)
+	if err != nil {
+		return fmt.Errorf(errFailedAddNodeToSiteFmt, err)
+	}
+	return nil
 }

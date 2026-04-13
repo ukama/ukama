@@ -18,7 +18,7 @@ import (
 	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg/global"
 
 	log "github.com/sirupsen/logrus"
-	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
 type queuePublisher struct {
@@ -29,7 +29,7 @@ type queuePublisher struct {
 }
 
 type QueuePublisher interface {
-	Publish(msg *cpb.NodeFeederMessage) error
+	Publish(msg *epb.NodeFeederMessage) error
 	PublishProto(payload proto.Message, routingKey string) error
 	PublishToQueue(queueName string, payload any) error
 	Close() error
@@ -61,7 +61,7 @@ func NewQPub(queueUri string, serviceName string, exchange string, instanceId st
 	}, nil
 }
 
-func (q *queuePublisher) Publish(msg *cpb.NodeFeederMessage) error {
+func (q *queuePublisher) Publish(msg *epb.NodeFeederMessage) error {
 
 	b, err := proto.Marshal(msg)
 	if err != nil {

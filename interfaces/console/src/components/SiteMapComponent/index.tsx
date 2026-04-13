@@ -5,97 +5,61 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-'use client';
 
-import { useAppContext } from '@/context';
-import { isValidLatLng } from '@/utils';
-import { LatLngTuple, Map } from 'leaflet';
-import 'leaflet-defaulticon-compatibility';
-import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.webpack.css';
-import 'leaflet/dist/leaflet.css';
-import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
-import { useEffect, useRef } from 'react';
-import { Box, Typography } from '@mui/material';
+import styles from '@/styles/Map.module.css';
 import PeopleIcon from '@mui/icons-material/People';
+import { Box, Typography } from '@mui/material';
+import Leaflet from 'leaflet';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import 'leaflet/dist/leaflet.css';
+import { useEffect } from 'react';
+import * as ReactLeaflet from 'react-leaflet';
+import { MapLayer } from './MapLayer';
 
-type MapStyle = 'terrain' | 'satellite' | 'streets' | 'light' | 'dark';
+const { MapContainer } = ReactLeaflet;
 
-interface SiteMapProps {
-  posix: LatLngTuple;
-  address: string;
+const ICON = {
+  iconUrl: markerIcon.src,
+  iconRetinaUrl: markerIcon.src,
+  shadowUrl: markerShadow.src,
+};
+interface IMap {
+  id: string;
+  zoom?: number;
+  address?: string;
   height?: string;
-  mapStyle?: MapStyle;
+  mapStyle?: 'terrain' | 'satellite' | 'streets' | 'light' | 'dark';
   showUserCount?: boolean;
   userCount?: number;
+  posix: [string, string];
 }
 
-const SiteMapComponent = ({
-  posix,
-  address,
-  height,
-  mapStyle = 'terrain',
-  showUserCount = false,
-  userCount = 0,
-}: SiteMapProps) => {
-  const { env } = useAppContext();
-  const mapRef = useRef<Map | null>(null);
-
-  const mapStyleUrls = {
-    terrain: `https://api.mapbox.com/styles/v1/mapbox/outdoors-v11/tiles/256/{z}/{x}/{y}@2x?access_token=${env.MAP_BOX_TOKEN}`,
-    satellite: `https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}@2x?access_token=${env.MAP_BOX_TOKEN}`,
-    streets: `https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}@2x?access_token=${env.MAP_BOX_TOKEN}`,
-    light: `https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/256/{z}/{x}/{y}@2x?access_token=${env.MAP_BOX_TOKEN}`,
-    dark: `https://api.mapbox.com/styles/v1/mapbox/dark-v10/tiles/256/{z}/{x}/{y}@2x?access_token=${env.MAP_BOX_TOKEN}`,
-  };
+const SiteMap = ({ id, showUserCount = false, userCount, posix }: IMap) => {
+  const mapClassName = styles.map;
+  const mapContainer = styles['leaflet-container'];
 
   useEffect(() => {
-    if (mapRef.current && isValidLatLng(posix)) {
-      mapRef.current.setView(posix, 15);
-    }
-  }, [posix]);
+    (function init() {
+      Leaflet.Icon.Default.mergeOptions(ICON);
+      Leaflet.Control.Zoom.prototype.options.position = 'bottomright';
+    })();
+  }, []);
 
   return (
-    <Box
-      sx={{
-        position: 'relative',
-        height: height ? height : '100%',
-        width: '100%',
-      }}
+    <MapContainer
+      id={id}
+      zoom={8}
+      touchZoom={false}
+      zoomControl={false}
+      doubleClickZoom={false}
+      scrollWheelZoom={false}
+      attributionControl={false}
+      center={[37.7780627, -121.9822475]}
+      className={`${mapClassName} ${mapContainer}`}
     >
-      <MapContainer
-        zoomControl={false}
-        preferCanvas={true}
-        scrollWheelZoom={false}
-        zoom={isValidLatLng(posix) ? 15 : 10}
-        center={isValidLatLng(posix) ? posix : undefined}
-        bounds={[
-          [84.67351256610522, -174.0234375],
-          [-58.995311187950925, 223.2421875],
-        ]}
-        style={{
-          height: '100%',
-          width: '100%',
-          borderRadius: '5px',
-        }}
-        ref={(map) => {
-          if (map) {
-            mapRef.current = map;
-          }
-        }}
-      >
-        <TileLayer
-          url={mapStyleUrls[mapStyle]}
-          maxNativeZoom={18}
-          minZoom={10}
-          maxZoom={18}
-        />
-        {isValidLatLng(posix) && (
-          <Marker position={posix}>
-            <Popup>{address || 'Fetching site location...'}</Popup>
-          </Marker>
-        )}
-      </MapContainer>
-
+      <ReactLeaflet.ZoomControl position="bottomright" />
+      <MapLayer posix={posix} />
       {showUserCount && (
         <Box
           sx={{
@@ -121,8 +85,8 @@ const SiteMapComponent = ({
           </Typography>
         </Box>
       )}
-    </Box>
+    </MapContainer>
   );
 };
 
-export default SiteMapComponent;
+export default SiteMap;

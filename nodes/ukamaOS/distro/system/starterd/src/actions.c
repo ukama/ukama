@@ -31,6 +31,7 @@ static void action_free(Action *a) {
     free(a->space);
     free(a->name);
     free(a->tag);
+    free(a->hub);
     free(a);
 }
 
@@ -52,7 +53,11 @@ void actions_free(ActionQueue *q) {
     q->tail = NULL;
 }
 
-Action* action_new(ActionType type, const char *space, const char *name, const char *tag) {
+Action* action_new(ActionType type,
+                   const char *space,
+                   const char *name,
+                   const char *tag,
+                   const char *hub) {
 
     Action *a;
 
@@ -63,6 +68,7 @@ Action* action_new(ActionType type, const char *space, const char *name, const c
     a->space = a_strdup(space);
     a->name  = a_strdup(name);
     a->tag   = a_strdup(tag);
+    a->hub   = a_strdup(hub);
     a->next  = NULL;
 
     return a;
