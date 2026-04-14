@@ -127,7 +127,7 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
     }
   };
 
-  if (isLoading || addressLoading) <LoadingSkelton />;
+  if (isLoading || addressLoading) return <LoadingSkelton />;
 
   return (
     <Stack spacing={2} overflow={'scroll'}>
@@ -148,7 +148,8 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
         <SiteMapComponent
           posix={[qpLat, qpLng]}
           address={address}
-          height={'128px'}
+          height={'200px'}
+          zoom={14}
           id="configure-site-map"
         />
 

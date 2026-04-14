@@ -8,10 +8,9 @@
 'use client';
 
 import {
-  NodeConnectivityEnum,
   NodeStateEnum,
   SiteDto,
-  useGetNodesLazyQuery,
+  useGetNodesForSiteLazyQuery,
   useGetSitesQuery,
   useToggleInternetSwitchMutation,
 } from '@/client/graphql/generated';
@@ -299,16 +298,14 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     },
   });
 
-  const [fetchNodesForSite] = useGetNodesLazyQuery({
+  const [fetchNodesForSite] = useGetNodesForSiteLazyQuery({
     fetchPolicy: 'cache-first',
     onCompleted: (data) => {
-      const nodeIds = data.getNodes.nodes
+      const nodeIds = data.getNodesForSite.nodes
         .filter(
           (node) =>
-            node.latitude !== null &&
+            // node.status.connectivity === NodeConnectivityEnum.Online &&
             node.site.siteId === activeSite.id &&
-            node.longitude !== null &&
-            node.status.connectivity === NodeConnectivityEnum.Online &&
             node.status.state === NodeStateEnum.Configured,
         )
         .map((node) => node.id);
@@ -399,10 +396,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       setNodesFetched(false);
       fetchNodesForSite({
         variables: {
-          data: {
-            state: NodeStateEnum.Configured,
-            siteId: activeSite.id,
-          },
+          siteId: activeSite.id,
         },
       });
     }

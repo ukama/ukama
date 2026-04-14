@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { SiteDto } from '@/client/graphql/generated';
+import { NodeTypeEnum, SiteDto } from '@/client/graphql/generated';
 import { Card, CardContent, Stack, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { format } from 'date-fns';
@@ -92,25 +92,33 @@ const SiteInfo: React.FC<SiteInfoProps> = ({
           Site information
         </Typography>
 
-        <Grid container spacing={{ xs: 1, md: 4 }}>
-          <InfoRow label="Nodes:">
-            {nodeIds.length > 0 ? (
-              <Stack spacing={0.5}>
-                {nodeIds.map((nodeId) => (
-                  <Typography key={nodeId} variant="body2">
-                    {nodeId}
-                  </Typography>
-                ))}
-              </Stack>
-            ) : (
-              <Typography variant="body2">Not available</Typography>
-            )}
+        <Grid container spacing={{ xs: 1, md: 3 }}>
+          <InfoRow label="Tower Node:">
+            <Typography variant="body2">
+              {nodeIds.map((nodeId) =>
+                nodeId.includes(NodeTypeEnum.Tnode) ? nodeId : '',
+              )}
+            </Typography>
+          </InfoRow>
+          <InfoRow label="Controller Node:">
+            <Typography variant="body2">
+              {nodeIds.map((nodeId) =>
+                nodeId.includes(NodeTypeEnum.Cnode) ? nodeId : '',
+              )}
+            </Typography>
+          </InfoRow>
+          <InfoRow label="Amplifier Node:">
+            <Typography variant="body2">
+              {nodeIds.map((nodeId) =>
+                nodeId.includes(NodeTypeEnum.Anode) ? nodeId : '',
+              )}
+            </Typography>
           </InfoRow>
 
           <InfoRow label="Date created:">
             <Typography variant="body2">{formattedDate}</Typography>
           </InfoRow>
-          
+
           <InfoRow label="Location:">
             <Stack spacing={0.5}>
               <Typography variant="body2">{locationLabel}</Typography>

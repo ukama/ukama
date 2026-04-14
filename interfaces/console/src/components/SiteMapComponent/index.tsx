@@ -35,7 +35,14 @@ interface IMap {
   posix: [string, string];
 }
 
-const SiteMap = ({ id, showUserCount = false, userCount, posix }: IMap) => {
+const SiteMap = ({
+  id,
+  zoom = 8,
+  showUserCount = false,
+  userCount,
+  posix,
+  height,
+}: IMap) => {
   const mapClassName = styles.map;
   const mapContainer = styles['leaflet-container'];
 
@@ -49,7 +56,7 @@ const SiteMap = ({ id, showUserCount = false, userCount, posix }: IMap) => {
   return (
     <MapContainer
       id={id}
-      zoom={8}
+      zoom={zoom}
       touchZoom={false}
       zoomControl={false}
       doubleClickZoom={false}
@@ -57,6 +64,7 @@ const SiteMap = ({ id, showUserCount = false, userCount, posix }: IMap) => {
       attributionControl={false}
       center={[37.7780627, -121.9822475]}
       className={`${mapClassName} ${mapContainer}`}
+      style={{ height: height ?? '200px', width: '100%' }}
     >
       <ReactLeaflet.ZoomControl position="bottomright" />
       <MapLayer posix={posix} />
