@@ -97,7 +97,7 @@ static char* inst_pkg_path(Config *config, App *app, const char *tag) {
     char *p;
 
     p = NULL;
-    if (asprintf(&p, "%s/%s-%s.tar.gz",
+    if (asprintf(&p, "%s/%s_%s.tar.gz",
                  config->pkgsDir,
                  app->name,
                  tag) < 0) p = NULL;
