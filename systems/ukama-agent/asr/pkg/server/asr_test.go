@@ -17,9 +17,9 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/rest/client/factory"
 	"github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/client"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
 
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
@@ -49,7 +49,7 @@ var sub = db.Asr{
 	NetworkId:      networkId,
 }
 
-var sim = client.SimCardInfo{
+var sim = factory.SimCardInfo{
 	Iccid:          "0123456789012345678912",
 	Imsi:           "012345678912345",
 	Op:             []byte("0123456789012345"),
@@ -126,7 +126,7 @@ func TestAsr_Read(t *testing.T) {
 	asrRepo := &mocks.AsrRecordRepo{}
 	gutiRepo := &mocks.GutiRepo{}
 
-	factory := &mocks.Factory{}
+	factory := &cmocks.SimFactoryClient{}
 	ctrl := &mocks.Controller{}
 	network := &cmocks.NetworkClient{}
 	mbC := &cmocks.MsgBusServiceClient{}
@@ -185,7 +185,7 @@ func TestAsr_UpdatePackage(t *testing.T) {
 	asrRepo := &mocks.AsrRecordRepo{}
 	gutiRepo := &mocks.GutiRepo{}
 
-	factory := &mocks.Factory{}
+	factory := &cmocks.SimFactoryClient{}
 	ctrl := &mocks.Controller{}
 	network := &cmocks.NetworkClient{}
 	mbC := &cmocks.MsgBusServiceClient{}
@@ -235,7 +235,7 @@ func TestAsr_Activate(t *testing.T) {
 	asrRepo := &mocks.AsrRecordRepo{}
 	gutiRepo := &mocks.GutiRepo{}
 
-	factory := &mocks.Factory{}
+	factory := &cmocks.SimFactoryClient{}
 	ctrl := &mocks.Controller{}
 	network := &cmocks.NetworkClient{}
 	mbC := &cmocks.MsgBusServiceClient{}
@@ -318,7 +318,7 @@ func TestAsr_Inactivate(t *testing.T) {
 	asrRepo := &mocks.AsrRecordRepo{}
 	gutiRepo := &mocks.GutiRepo{}
 
-	factory := &mocks.Factory{}
+	factory := &cmocks.SimFactoryClient{}
 	ctrl := &mocks.Controller{}
 	network := &cmocks.NetworkClient{}
 	mbC := &cmocks.MsgBusServiceClient{}
@@ -361,7 +361,7 @@ func TestAsr_UpdateGuti(t *testing.T) {
 	asrRepo := &mocks.AsrRecordRepo{}
 	gutiRepo := &mocks.GutiRepo{}
 
-	factory := &mocks.Factory{}
+	factory := &cmocks.SimFactoryClient{}
 	ctrl := &mocks.Controller{}
 	network := &cmocks.NetworkClient{}
 	mbC := &cmocks.MsgBusServiceClient{}
@@ -401,7 +401,7 @@ func TestAsr_UpdateTai(t *testing.T) {
 	asrRepo := &mocks.AsrRecordRepo{}
 	gutiRepo := &mocks.GutiRepo{}
 
-	factory := &mocks.Factory{}
+	factory := &cmocks.SimFactoryClient{}
 	ctrl := &mocks.Controller{}
 	network := &cmocks.NetworkClient{}
 	mbC := &cmocks.MsgBusServiceClient{}
