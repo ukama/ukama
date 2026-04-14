@@ -482,8 +482,8 @@ github.com/ugorji/go/codec v1.1.7/go.mod h1:Ax+UKWsSmolVDwsd+7N3ZtXu+yMGCf907BLY
 github.com/ugorji/go/codec v1.2.6/go.mod h1:V6TCNZ4PHqoHGFZuSG1W8nrCzzdgA2DozYxWFFpvxTw=
 github.com/ugorji/go/codec v1.3.0 h1:Qd2W2sQawAfG8XSvzwhBeoGq71zXOC/Q1E9y/wUcsUA=
 github.com/ugorji/go/codec v1.3.0/go.mod h1:pRBVtBSKl77K30Bv8R2P+cLSGaTtex6fsA2Wjqmfxj4=
-github.com/ukama/ukama/systems/subscriber/registry v0.0.0-20250825053111-8a6ba12c32a6 h1:bbM1duyAyQP2dIy2F8a3qmiHJuTDyn7K9pqXSrWorFY=
-github.com/ukama/ukama/systems/subscriber/registry v0.0.0-20250825053111-8a6ba12c32a6/go.mod h1:frEx5Pvci4PiPvLDXymjF5lWfjyDhnFbOHQbhw0oegQ=
+github.com/ukama/ukama/systems/subscriber/registry v0.0.0-20260410174425-ded5598810b9 h1:1ZwmomfFA6NdjFCK/XPNzbqmO6Nol9b7Gm/AmLzWUPc=
+github.com/ukama/ukama/systems/subscriber/registry v0.0.0-20260410174425-ded5598810b9/go.mod h1:frEx5Pvci4PiPvLDXymjF5lWfjyDhnFbOHQbhw0oegQ=
 github.com/wI2L/fizz v0.22.0 h1:mgRA+uUdESvgsIeBFkMSS/MEIQ4EZ4I2xyRxnCqkhJY=
 github.com/wI2L/fizz v0.22.0/go.mod h1:CMxMR1amz8id9wr2YUpONf+F/F9hW1cqRXxVNNuWVxE=
 github.com/wagslane/go-rabbitmq v0.14.2 h1:3l75Unsy0b8sb3ILqJxMTXkQLUPI67BOuubV9YBjGLE=
