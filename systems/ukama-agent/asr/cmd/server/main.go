@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 
+	"github.com/ukama/ukama/systems/common/rest/client/factory"
 	"github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/cmd/version"
@@ -37,6 +38,7 @@ import (
 const (
 	registrySystem = "registry"
 	dataPlanSystem = "dataplan"
+	factorySystem  = "factory"
 )
 
 var serviceConfig *pkg.Config
@@ -111,14 +113,16 @@ func runGrpcServer(gormdb sql.Db) {
 	gutiRepo := db.NewGutiRepo(gormdb)
 	//policyRepo := db.NewPolicyRepo(gormdb)
 
-	// For now, we either assuming factory is global and/or currently using a dummy stub unter ukama/testing
-	factory, err := client.NewFactoryClient(serviceConfig.FactoryHost, pkg.IsDebugMode)
-	if err != nil {
-		log.Fatalf("Factory Client initialization failed. Error: %v", err)
-	}
-
 	//TODO: We should perform InitClient resolutions on demand, in order to avoid URL changes side effects.
 	// Looking up registry system's host from initClient
+	factoryServiceUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, cclient.WithDebug(serviceConfig.DebugMode)),
+		ic.CreateHostString(serviceConfig.OrgName, factorySystem), &serviceConfig.OrgName)
+	if err != nil {
+		log.Fatalf("Failed to resolve %s system address from initClient: %v", factorySystem, err)
+	}
+
+	factoryClient := factory.NewSimFactoryClient(factoryServiceUrl.String(), cclient.WithDebug(serviceConfig.DebugMode))
+
 	networkServiceUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, cclient.WithDebug(serviceConfig.DebugMode)),
 		ic.CreateHostString(serviceConfig.OrgName, registrySystem), &serviceConfig.OrgName)
 	if err != nil {
@@ -146,7 +150,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	// ASR service
 	asrServer, err := server.NewAsrRecordServer(asrRepo, gutiRepo,
-		factory, networkClient, controller, cdr, serviceConfig.OrgId, serviceConfig.OrgName,
+		factoryClient, networkClient, controller, cdr, serviceConfig.OrgId, serviceConfig.OrgName,
 		mbClient, serviceConfig.AllowedTimeOfService) //
 	if err != nil {
 		log.Fatalf("asr server initialization failed. Error: %v", err)

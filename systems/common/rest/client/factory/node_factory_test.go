@@ -25,8 +25,8 @@ import (
 )
 
 const (
-	testNodeId = "test-node-123"
-	testHost   = "http://test-host:8080"
+	testNodeId      = "test-node-123"
+	testFactoryHost = "http://test-host:8080"
 )
 
 func TestMain(m *testing.M) {
@@ -37,14 +37,14 @@ func TestMain(m *testing.M) {
 
 func TestNewNodeFactoryClient(t *testing.T) {
 	t.Run("ValidHost", func(tt *testing.T) {
-		client := factory.NewNodeFactoryClient(testHost)
+		client := factory.NewNodeFactoryClient(testFactoryHost)
 
 		assert.NotNil(tt, client)
 		assert.NotNil(tt, client.R)
 	})
 
 	t.Run("WithOptions", func(tt *testing.T) {
-		client := factory.NewNodeFactoryClient(testHost, client.WithDebug(true))
+		client := factory.NewNodeFactoryClient(testFactoryHost, client.WithDebug(true))
 
 		assert.NotNil(tt, client)
 		assert.NotNil(tt, client.R)
@@ -66,7 +66,7 @@ func TestNodeFactoryClient_Get(t *testing.T) {
 
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
-			expectedURL := testHost + factory.FactoryEndpoint + "/node/" + testNodeId
+			expectedURL := testFactoryHost + factory.NodeFactoryEndpoint + "/node/" + testNodeId
 			assert.Equal(tt, expectedURL, req.URL.String())
 			assert.Equal(tt, "GET", req.Method)
 
@@ -81,7 +81,7 @@ func TestNodeFactoryClient_Get(t *testing.T) {
 			}
 		}
 
-		testClient := factory.NewNodeFactoryClient(testHost)
+		testClient := factory.NewNodeFactoryClient(testFactoryHost)
 		testClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		result, err := testClient.Get(testNodeId)
@@ -97,7 +97,7 @@ func TestNodeFactoryClient_Get(t *testing.T) {
 
 	t.Run("NodeNotFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			expectedURL := testHost + factory.FactoryEndpoint + "/node/" + testNodeId
+			expectedURL := testFactoryHost + factory.NodeFactoryEndpoint + "/node/" + testNodeId
 			assert.Equal(tt, expectedURL, req.URL.String())
 
 			errorResponse := `{"error": "node not found"}`
@@ -110,7 +110,7 @@ func TestNodeFactoryClient_Get(t *testing.T) {
 			}
 		}
 
-		testClient := factory.NewNodeFactoryClient(testHost)
+		testClient := factory.NewNodeFactoryClient(testFactoryHost)
 		testClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		result, err := testClient.Get(testNodeId)
@@ -121,7 +121,7 @@ func TestNodeFactoryClient_Get(t *testing.T) {
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			expectedURL := testHost + factory.FactoryEndpoint + "/node/" + testNodeId
+			expectedURL := testFactoryHost + factory.NodeFactoryEndpoint + "/node/" + testNodeId
 			assert.Equal(tt, expectedURL, req.URL.String())
 
 			// Return invalid JSON
@@ -133,7 +133,7 @@ func TestNodeFactoryClient_Get(t *testing.T) {
 			}
 		}
 
-		testClient := factory.NewNodeFactoryClient(testHost)
+		testClient := factory.NewNodeFactoryClient(testFactoryHost)
 		testClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		result, err := testClient.Get(testNodeId)
@@ -145,14 +145,14 @@ func TestNodeFactoryClient_Get(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			expectedURL := testHost + factory.FactoryEndpoint + "/node/" + testNodeId
+			expectedURL := testFactoryHost + factory.NodeFactoryEndpoint + "/node/" + testNodeId
 			assert.Equal(tt, expectedURL, req.URL.String())
 
 			// Return nil to simulate network failure
 			return nil
 		}
 
-		testClient := factory.NewNodeFactoryClient(testHost)
+		testClient := factory.NewNodeFactoryClient(testFactoryHost)
 		testClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		result, err := testClient.Get(testNodeId)
@@ -163,7 +163,7 @@ func TestNodeFactoryClient_Get(t *testing.T) {
 
 	t.Run("EmptyResponseBody", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			expectedURL := testHost + factory.FactoryEndpoint + "/node/" + testNodeId
+			expectedURL := testFactoryHost + factory.NodeFactoryEndpoint + "/node/" + testNodeId
 			assert.Equal(tt, expectedURL, req.URL.String())
 
 			return &http.Response{
@@ -174,7 +174,7 @@ func TestNodeFactoryClient_Get(t *testing.T) {
 			}
 		}
 
-		testClient := factory.NewNodeFactoryClient(testHost)
+		testClient := factory.NewNodeFactoryClient(testFactoryHost)
 		testClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		result, err := testClient.Get(testNodeId)
@@ -201,7 +201,7 @@ func TestNodeFactoryClient_List(t *testing.T) {
 		}
 
 		mockTransport := func(req *http.Request) *http.Response {
-			expectedURL := testHost + factory.FactoryEndpoint + "/nodes?nodeType=tnode&orgName=test-org&isProvisioned=true"
+			expectedURL := testFactoryHost + factory.NodeFactoryEndpoint + "/nodes?nodeType=tnode&orgName=test-org&isProvisioned=true"
 			assert.Equal(tt, expectedURL, req.URL.String())
 
 			// Serialize expected response
@@ -215,7 +215,7 @@ func TestNodeFactoryClient_List(t *testing.T) {
 			}
 		}
 
-		testClient := factory.NewNodeFactoryClient(testHost)
+		testClient := factory.NewNodeFactoryClient(testFactoryHost)
 		testClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		result, err := testClient.List("tnode", "test-org", true)
@@ -231,7 +231,7 @@ func TestNodeFactoryClient_List(t *testing.T) {
 
 	t.Run("ListNodesNotFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			expectedURL := testHost + factory.FactoryEndpoint + "/nodes?nodeType=tnode&orgName=test-org&isProvisioned=true"
+			expectedURL := testFactoryHost + factory.NodeFactoryEndpoint + "/nodes?nodeType=tnode&orgName=test-org&isProvisioned=true"
 			assert.Equal(tt, expectedURL, req.URL.String())
 
 			return &http.Response{
@@ -242,7 +242,7 @@ func TestNodeFactoryClient_List(t *testing.T) {
 			}
 		}
 
-		testClient := factory.NewNodeFactoryClient(testHost)
+		testClient := factory.NewNodeFactoryClient(testFactoryHost)
 		testClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		result, err := testClient.List("tnode", "test-org", true)
