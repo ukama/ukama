@@ -361,6 +361,7 @@ setup_ukama_dirs() {
     : "${UKAMA_OS:?UKAMA_OS not set}"
 
     mkdir -p "${BUILD_DIR}/ukama"/{configs,apps/lib,apps/pkgs,apps/rootfs,apps/registry,etc}
+    mkdir -p "${BUILD_DIR}/ukama"/{state/starter, init/starter}
 
     # Metadata
     echo "${nodeid}" > "${BUILD_DIR}/ukama/nodeid"
