@@ -125,7 +125,7 @@ static int stage_starter_pkgs(Configs *configs) {
             continue;
         }
 
-        snprintf(src, sizeof(src), "./pkgs/%s-%s.tar.gz",
+        snprintf(src, sizeof(src), "./pkgs/%s_%s.tar.gz",
                  ptr->config->capp->name,
                  ptr->config->capp->version);
 
@@ -143,7 +143,7 @@ static int stage_starter_pkgs(Configs *configs) {
             return FALSE;
         }
 
-        snprintf(dst, sizeof(dst), "ukama/apps/pkgs/%s-%s.tar.gz",
+        snprintf(dst, sizeof(dst), "ukama/apps/pkgs/%s_%s.tar.gz",
                  ptr->config->capp->name,
                  ptr->config->capp->version);
 
