@@ -18,6 +18,7 @@
 #include "usys_log.h"
 #include "usys_services.h"
 #include "usys_api.h"
+#include "usys_file.h"
 
 /* forward decleration */
 static void m_free_app(App *a);
