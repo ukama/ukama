@@ -8,8 +8,6 @@
 import { Arg, Query, Resolver, Root, Subscription } from "type-graphql";
 import { Worker } from "worker_threads";
 
-
-
 import { METRIC_WS_INTERVAL } from "../../common/constants";
 import {
   NODE_TYPE,

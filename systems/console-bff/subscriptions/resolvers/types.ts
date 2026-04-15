@@ -7,11 +7,14 @@
  */
 import { Field, InputType, ObjectType } from "type-graphql";
 
-
-
 import { METRICS_INTERVAL } from "../../common/configs";
-import { GRAPHS_TYPE, NOTIFICATION_SCOPE, NOTIFICATION_TYPE, ROLE_TYPE, STATS_TYPE } from "../../common/enums";
-
+import {
+  GRAPHS_TYPE,
+  NOTIFICATION_SCOPE,
+  NOTIFICATION_TYPE,
+  ROLE_TYPE,
+  STATS_TYPE,
+} from "../../common/enums";
 
 @ObjectType()
 export class MetricRes {
