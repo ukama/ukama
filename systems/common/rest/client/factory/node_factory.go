@@ -20,7 +20,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const FactoryEndpoint = "/v1/nodefactory"
+const NodeFactoryEndpoint = "/v1/nodefactory"
 
 type NodeFactoryInfo struct {
 	Id            string    `json:"id,omitempty"`
@@ -65,7 +65,7 @@ func (s *nodeFactoryClient) Get(id string) (*Node, error) {
 	log.Debugf("Getting node by id from factory: %v", id)
 
 	nodeFactory := Node{}
-	resp, err := s.R.Get(s.u.String() + FactoryEndpoint + "/node/" + id)
+	resp, err := s.R.Get(s.u.String() + NodeFactoryEndpoint + "/node/" + id)
 	if err != nil {
 		log.Errorf("Get node failure. error: %s", err.Error())
 
@@ -89,7 +89,7 @@ func (s *nodeFactoryClient) List(nodeType string, orgName string, isProvisioned 
 
 	nodes := Nodes{}
 
-	resp, err := s.R.Get(s.u.String() + FactoryEndpoint + "/nodes?nodeType=" + nodeType + "&orgName=" + orgName + "&isProvisioned=" + strconv.FormatBool(isProvisioned))
+	resp, err := s.R.Get(s.u.String() + NodeFactoryEndpoint + "/nodes?nodeType=" + nodeType + "&orgName=" + orgName + "&isProvisioned=" + strconv.FormatBool(isProvisioned))
 	if err != nil {
 		log.Errorf("ListNodes failure. error: %s", err.Error())
 

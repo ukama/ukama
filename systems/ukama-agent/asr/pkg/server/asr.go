@@ -18,6 +18,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/rest/client/factory"
 	"github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg"
@@ -35,7 +36,7 @@ type AsrRecordServer struct {
 	asrRepo        db.AsrRecordRepo
 	gutiRepo       db.GutiRepo
 	network        registry.NetworkClient
-	factory        client.Factory
+	factory        factory.SimFactoryClient
 	cdr            client.CDRService
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
@@ -45,7 +46,7 @@ type AsrRecordServer struct {
 	allowedToS     int64
 }
 
-func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, factory client.Factory, network registry.NetworkClient,
+func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, factory factory.SimFactoryClient, network registry.NetworkClient,
 	pc pm.Controller, cdr client.CDRService, orgId, orgName string, msgBus mb.MsgBusServiceClient, aToS int64) (*AsrRecordServer, error) {
 	asr := AsrRecordServer{
 		asrRepo:    asrRepo,

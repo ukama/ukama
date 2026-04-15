@@ -59,8 +59,8 @@ func TestSoftwareStatusType(t *testing.T) {
 
 	t.Run("AllConstantsString", func(tt *testing.T) {
 		cases := []struct {
-			parsed string
-			constant ukama.SoftwareStatusType
+			parsed    string
+			constant  ukama.SoftwareStatusType
 			expectStr string
 		}{
 			{"unknown", ukama.Unknown, "unknown"},

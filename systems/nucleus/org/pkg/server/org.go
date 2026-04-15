@@ -12,25 +12,25 @@ import (
 	"context"
 	"errors"
 
-	log "github.com/sirupsen/logrus"
-	"gorm.io/gorm"
-
-	"github.com/ukama/ukama/systems/common/grpc"
-
-	metric "github.com/ukama/ukama/systems/common/metrics"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	"github.com/ukama/ukama/systems/common/msgbus"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
-	"github.com/ukama/ukama/systems/common/sql"
-	"github.com/ukama/ukama/systems/common/uuid"
-	pb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
-	"github.com/ukama/ukama/systems/nucleus/org/pkg"
-	"github.com/ukama/ukama/systems/nucleus/org/pkg/db"
-	"github.com/ukama/ukama/systems/nucleus/org/pkg/providers"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"gorm.io/gorm"
+
+	"github.com/ukama/ukama/systems/common/grpc"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/nucleus/org/pkg"
+	"github.com/ukama/ukama/systems/nucleus/org/pkg/db"
+	"github.com/ukama/ukama/systems/nucleus/org/pkg/providers"
+
+	log "github.com/sirupsen/logrus"
+	metric "github.com/ukama/ukama/systems/common/metrics"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	pb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
 )
 
 type OrgService struct {
@@ -44,10 +44,6 @@ type OrgService struct {
 	msgbus              mb.MsgBusServiceClient
 	pushgateway         string
 	debug               bool
-}
-
-type HttpServices struct {
-	InitClient string `default:"api-gateway-init:8080"`
 }
 
 func NewOrgServer(orgName string, orgRepo db.OrgRepo, userRepo db.UserRepo, orch providers.OrchestratorProvider, registry creg.MemberClient, msgBus mb.MsgBusServiceClient, pushgateway string, debug bool) *OrgService {
