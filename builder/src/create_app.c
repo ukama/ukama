@@ -64,10 +64,6 @@ int create_app(Config *config) {
         return FALSE;
     }
 
-    /*
-     * config.json is intentionally no longer created/copied.
-     * VERSION is now the package source of truth for starter.d.
-     */
     if (!create_version_file(config)) {
         log_error("Error creating VERSION file");
         return FALSE;
