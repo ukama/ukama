@@ -43,6 +43,8 @@ type SiteConfig struct {
 }
 
 type StartReq struct {
+	NetworkId  string      `form:"networkId" json:"networkId,omitempty"`
+	NodeId     string      `form:"nodeId" json:"nodeId,omitempty" validate:"required"`
 	SiteId     string      `form:"siteId" json:"siteId,omitempty" validate:"required"`
 	Profile    string      `form:"profile" json:"profile,omitempty"`
 	SiteConfig *SiteConfig `form:"siteConfig" json:"siteConfig,omitempty"`

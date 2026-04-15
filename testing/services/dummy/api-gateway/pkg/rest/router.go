@@ -12,8 +12,10 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/testing/services/dummy/api-gateway/cmd/version"
 	"github.com/ukama/ukama/testing/services/dummy/api-gateway/pkg"
 	"github.com/ukama/ukama/testing/services/dummy/api-gateway/pkg/client"
@@ -226,9 +228,21 @@ func (r *Router) startHandler(c *gin.Context, req *StartReq) (*pbdc.StartMetrics
 		profile = pbdc.Profile(profileValue)
 	}
 
+	var nodeId string
+	nodeType := ukama.GetNodeType(req.NodeId)
+	if nodeType != nil && *nodeType == ukama.NODE_ID_TYPE_AMPNODE {
+		nodeId = strings.ReplaceAll(req.NodeId, "anode-", "cnode-")
+	} else if nodeType != nil && *nodeType == ukama.NODE_ID_TYPE_TOWERNODE {
+		nodeId = strings.ReplaceAll(req.NodeId, "tnode-", "cnode-")
+	} else {
+		nodeId = req.NodeId
+	}
+
 	startReq := &pbdc.StartMetricsRequest{
-		SiteId:  req.SiteId,
 		Profile: profile,
+		NodeId: nodeId,
+		SiteId:  req.SiteId,
+		NetworkId: req.NetworkId,
 	}
 
 	if req.SiteConfig.AvgBackhaulSpeed != 0 ||
