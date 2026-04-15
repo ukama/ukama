@@ -36,6 +36,7 @@ export enum Graphs_Type {
 
 export type GetMetricBySiteInput = {
   from: Scalars['Float']['input'];
+  nodeIds?: InputMaybe<Array<Scalars['String']['input']>>;
   orgName: Scalars['String']['input'];
   siteId: Scalars['String']['input'];
   step?: Scalars['Float']['input'];

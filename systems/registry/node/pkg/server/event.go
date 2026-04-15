@@ -26,7 +26,10 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const errFailedAddNodeToSiteFmt = "failed to add node to site: %w"
+const errFailedAddNodeToSiteFmt = "failed to add node to site: %v"
+const errFailedGetNodeFmt = "failed to get node: %v"
+const errFailedUpdateNodeStatusFmt = "failed to update node status: %v"
+const errNodeNotFoundFmt = "node %s not found"
 
 type NodeEventServer struct {
 	s       *NodeServer
@@ -90,11 +93,83 @@ func (n *NodeEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 		if err != nil {
 			return nil, err
 		}
+
+	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline]):
+		c := evt.NodeEventToEventConfig[evt.NodeStateEventOnline]
+		msg, err := epb.UnmarshalNodeOnlineEvent(e.Msg, c.Name)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal node online event: %w", err)
+		}
+		err = n.handleNodeOnlineEvent(ctx, e.RoutingKey, msg)
+		if err != nil {
+			return nil, err
+		}
+	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventOffline]):
+		c := evt.NodeEventToEventConfig[evt.NodeStateEventOffline]
+		msg, err := epb.UnmarshalNodeOfflineEvent(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+		err = n.handleNodeOfflineEvent(ctx, e.RoutingKey, msg)
+		if err != nil {
+			return nil, err
+		}
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)
 	}
 
 	return &epb.EventResponse{}, nil
+}
+
+func (n *NodeEventServer) handleNodeOnlineEvent(ctx context.Context, key string, msg *epb.NodeOnlineEvent) error {
+	log.Infof("Processing node online event: %s, nodeID: %s", key, msg.NodeId)
+
+	node, err := n.s.GetNode(ctx, &pb.GetNodeRequest{NodeId: msg.NodeId})
+	if err != nil {
+		log.Errorf(errFailedGetNodeFmt, err)
+		return fmt.Errorf(errFailedGetNodeFmt, err)
+	}
+	if node == nil || node.Node == nil {
+		log.Errorf(errNodeNotFoundFmt, msg.NodeId)
+		return fmt.Errorf(errNodeNotFoundFmt, msg.NodeId)
+	}	
+
+	_, err = n.s.UpdateNodeStatus(ctx, &pb.UpdateNodeStateRequest{
+		NodeId:       msg.NodeId,
+		Connectivity: npb.NodeConnectivity_Online.String(),
+		State:        node.Node.Status.State.String(),
+	})
+	if err != nil {
+		log.Errorf(errFailedUpdateNodeStatusFmt, err)
+		return fmt.Errorf(errFailedUpdateNodeStatusFmt, err)
+	}
+	return nil
+}
+
+func (n *NodeEventServer) handleNodeOfflineEvent(ctx context.Context, key string, msg *epb.NodeOfflineEvent) error {
+	log.Infof("Processing node offline event: %s, nodeID: %s", key, msg.NodeId)
+
+	node, err := n.s.GetNode(ctx, &pb.GetNodeRequest{NodeId: msg.NodeId})
+	if err != nil {
+		log.Errorf(errFailedGetNodeFmt, err)
+		return fmt.Errorf(errFailedGetNodeFmt, err)
+	}
+	if node == nil || node.Node == nil {
+		log.Errorf(errNodeNotFoundFmt, msg.NodeId)
+		return fmt.Errorf(errNodeNotFoundFmt, msg.NodeId)
+	}
+
+	_, err = n.s.UpdateNodeStatus(ctx, &pb.UpdateNodeStateRequest{
+		NodeId:       msg.NodeId,
+		Connectivity: npb.NodeConnectivity_Offline.String(),
+		State:        node.Node.Status.State.String(),
+	})
+
+	if err != nil {
+		log.Errorf(errFailedUpdateNodeStatusFmt, err)
+		return fmt.Errorf(errFailedUpdateNodeStatusFmt, err)
+	}
+	return nil
 }
 
 func (n *NodeEventServer) handleStoreRunningAppsInfoEvent(ctx context.Context, key string, msg *epb.StoreRunningAppsInfoEvent) error {

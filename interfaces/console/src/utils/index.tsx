@@ -418,6 +418,8 @@ const NodeEnumToString = (type: NodeTypeEnum): string => {
       return 'Amplifier Node';
     case NodeTypeEnum.Hnode:
       return 'Home Node';
+    case NodeTypeEnum.Cnode:
+      return 'Controller Node';
     default:
       return 'Unknown';
   }

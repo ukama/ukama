@@ -66,7 +66,6 @@ const MapLayer = ({ data }: IMapLayer) => {
           return (
             <ReactLeaflet.Marker
               autoPan
-              draggable
               key={item.id}
               icon={svgIcon}
               title={`Node: ${item.id}`}

@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import { Node } from '@/client/graphql/generated';
 import { MetricsRes } from '@/client/graphql/generated/subscriptions';
 import { SectionData, SITE_KPI_TYPES } from '@/constants';
 import { getMetricValue, getPortInfo, isMetricValue } from '@/utils';
@@ -34,7 +35,7 @@ interface SiteComponentsProps {
   metricsLoading: boolean;
   onComponentClick: (kpiType: string) => void;
   onSwitchChange?: (portNumber: number, currentStatus: boolean) => void;
-  nodeIds?: string[];
+  nodes?: Node[];
   initialNodeUptimes?: Record<string, number>;
 }
 
@@ -48,7 +49,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
   metricsLoading,
   onComponentClick,
   onSwitchChange,
-  nodeIds,
+  nodes,
   initialNodeUptimes,
 }) => {
   const hasMetricsData =
@@ -73,14 +74,14 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
     }
   }, [initialNodeUptimes]);
   useEffect(() => {
-    if (!siteId || !nodeIds || nodeIds.length === 0) return;
+    if (!siteId || !nodes || nodes.length === 0) return;
 
-    const tokens = nodeIds.map((nodeId) => {
-      const topic = `stat-${SITE_KPI_TYPES.NODE_UPTIME}-${nodeId}`;
+    const tokens = nodes.map((node) => {
+      const topic = `stat-${SITE_KPI_TYPES.NODE_UPTIME}-${node.id}`;
       return PubSub.subscribe(topic, (_, uptimeValue) => {
         setNodeUptimes((prev) => ({
           ...prev,
-          [nodeId]: Math.floor(uptimeValue[1]),
+          [node.id]: Math.floor(uptimeValue[1]),
         }));
       });
     });
@@ -88,7 +89,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
     return () => {
       [...tokens].forEach((token) => PubSub.unsubscribe(token));
     };
-  }, [siteId, nodeIds]);
+  }, [siteId, nodes]);
 
   useEffect(() => {
     if (hasMetricsData && activeSection === 'SWITCH') {
@@ -310,10 +311,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
 
         <Grid size={{ xs: 12, md: 9 }}>
           {activeKPI === 'node' ? (
-            <NodeStatusDisplay
-              nodeIds={nodeIds ?? []}
-              nodeUptimes={nodeUptimes}
-            />
+            <NodeStatusDisplay nodes={nodes ?? []} nodeUptimes={nodeUptimes} />
           ) : (
             <Paper
               elevation={0}

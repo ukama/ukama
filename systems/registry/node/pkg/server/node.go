@@ -113,7 +113,7 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 			Name:      node.Name,
 			Type:      node.Type.String(),
 		}
-
+		log.Infof("Publishing event %+v with key %+v", evt, route)
 		err = n.msgbus.PublishRequest(route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())

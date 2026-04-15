@@ -233,7 +233,6 @@ const CustomMarker = ({
           return (
             <Marker
               autoPan
-              draggable
               key={item.id}
               icon={svgIcon}
               title={`Population Covered: ${item.populationCovered}`}

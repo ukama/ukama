@@ -21,7 +21,7 @@ replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgC
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/golang/protobuf v1.5.4
-	github.com/jackc/pgtype v1.14.3
+	github.com/jackc/pgtype v1.14.4
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/num30/config v0.1.3
 	github.com/sirupsen/logrus v1.9.3

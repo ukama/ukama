@@ -69,59 +69,59 @@ func New() *Metrics {
 	m := &Metrics{
 		backhaulLatency: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "main_backhaul_latency", Help: "Backhaul latency in milliseconds",
-		}, []string{"site","node","network"}),
+		}, []string{"site","node_id","network"}),
 		backhaulSpeed: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "backhaul_speed", Help: "Backhaul speed in Mbps",
-		}, []string{"site","node","network"}),
+		}, []string{"site","node_id","network"}),
 		batteryChargePercentage: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "battery_charge_percentage", Help: "Battery charge percentage",
-		}, []string{"site","node","network"}),
+		}, []string{"site","node_id","network"}),
 		solarPanelVoltage: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "solar_panel_voltage", Help: "Solar panel voltage in volts",
-		}, []string{"site","node","network"}),
+		}, []string{"site","node_id","network"}),
 		solarPanelCurrent: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "solar_panel_current", Help: "Solar panel current in amperes",
-		}, []string{"site","node","network"}),
+		}, []string{"site","node_id","network"}),
 		solarPanelPower: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "solar_panel_power", Help: "Solar panel power in watts",
-		}, []string{"site","node","network"}),
+		}, []string{"site","node_id","network"}),
 
 		siteUptimeSeconds: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "site_uptime_seconds",
 			Help: "Site current continuous uptime streak in seconds (resets on critical port down)",
-		}, []string{"site","node","network"}),
+		}, []string{"site","node_id","network"}),
 		siteUptimePercentage: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "site_uptime_percentage",
 			Help: "Site historical uptime percentage (0-100%) since monitoring started",
-		}, []string{"site","node","network"}),
+		}, []string{"site","node_id","network"}),
 
 		backhaulSwitchPortStatus: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "backhaul_switch_port_status", Help: "Backhaul switch port status (1 = up, 0 = down)",
-		}, []string{"site","node","network"}),
+		}, []string{"site","node_id","network"}),
 		backhaulSwitchPortSpeed: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "backhaul_switch_port_speed", Help: "Backhaul switch port speed in Mbps",
-		}, []string{"site","node","network"}),
+		}, []string{"site","node_id","network"}),
 		backhaulSwitchPortPower: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "backhaul_switch_port_power", Help: "Backhaul switch port power in watts",
-		}, []string{"site","node","network"}),
+		}, []string{"site","node_id","network"}),
 		solarSwitchPortStatus: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "solar_switch_port_status", Help: "Solar switch port status (1 = up, 0 = down)",
-		}, []string{"site","node","network"}),
+		}, []string{"site","node_id","network"}),
 		solarSwitchPortSpeed: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "solar_switch_port_speed", Help: "Solar switch port speed in Mbps",
-		}, []string{"site","node","network"}),
+		}, []string{"site","node_id","network"}),
 		solarSwitchPortPower: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "solar_switch_port_power", Help: "Solar switch port power in watts",
-		}, []string{"site","node","network"}),
+		}, []string{"site","node_id","network"}),
 		nodeSwitchPortPowerVec: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "node_switch_port_power", Help: "Node switch port power in watts",
-		}, []string{"site","node","network"}),
+		}, []string{"site","node_id","network"}),
 		nodeSwitchPortSpeedVec: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "node_switch_port_speed", Help: "Node switch port speed in Mbps",
-		}, []string{"site","node","network"}),
+		}, []string{"site","node_id","network"}),
 		nodeSwitchPortStatusVec: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "node_switch_port_status", Help: "Node switch port status (1 = up, 0 = down)",
-		}, []string{"site","node","network"}),
+		}, []string{"site","node_id","network"}),
 
 		siteUptimeStreakCounters: make(map[string]int64),   
 		lastUptimeBeforeReset:    make(map[string]int64),  
