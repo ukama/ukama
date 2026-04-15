@@ -8,8 +8,11 @@
 import { Arg, Query, Resolver, Root, Subscription } from "type-graphql";
 import { Worker } from "worker_threads";
 
+
+
 import { METRIC_WS_INTERVAL } from "../../common/constants";
 import {
+  NODE_TYPE,
   NotificationScopeEnumValue,
   NotificationTypeEnumValue,
   STATS_TYPE,
@@ -534,7 +537,7 @@ class SubscriptionsResolvers {
       return { metrics: [] };
     }
 
-    const { type, from, userId, siteId, to } = data;
+    const { type, from, userId, siteId, to, nodeIds } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
 
     const metricsKey = getGraphsKeyByType(type);
@@ -548,6 +551,9 @@ class SubscriptionsResolvers {
             userId,
             siteId,
             step: data.step,
+            nodeId: nodeIds?.find(nodeId =>
+              nodeId.includes(NODE_TYPE.cnode) ? nodeId : undefined
+            ),
             orgName: data.orgName,
             withSubscription: false,
             type: STATS_TYPE.SITE,
