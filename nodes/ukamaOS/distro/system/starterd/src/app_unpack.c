@@ -105,7 +105,12 @@ bool app_unpack_package(const char *tarPath, const char *dstDir) {
     if (pid < 0) return false;
 
     if (pid == 0) {
-        execlp("tar", "tar", "-xzf", tarPath, "-C", dstDir, (char *)NULL);
+        execlp("tar", "tar",
+               "-xzf", tarPath,
+               "--no-same-owner",
+               "--no-same-permissions",
+               "-C", dstDir,
+               (char *)NULL);
         _exit(127);
     }
 
