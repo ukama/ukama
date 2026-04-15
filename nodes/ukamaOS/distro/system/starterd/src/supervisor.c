@@ -251,8 +251,8 @@ static bool app_wait_commit(Config *config, App *app) {
     start = time(NULL);
     while (true) {
 
-        if (wc_app_ping(config, app) &&
-            wc_app_version_matches(config, app, app->tag)) {
+        if (wc_app_ping(config, app)) {
+            //  && wc_app_version_matches(config, app, app->tag)) { XXX - #1256
             return true;
         }
 
