@@ -116,7 +116,8 @@ bool app_unpack_package(const char *tarPath, const char *dstDir) {
 
     waitpid(pid, &status, 0);
     if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-        usys_log_error("unpack: tar extract failed %s", tarPath);
+        usys_log_error("unpack: tar extract failed for %s into %s",
+                       tarPath, dstDir);
         return false;
     }
 
