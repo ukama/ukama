@@ -6,19 +6,88 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
-#include "installer.h"
-#include "web_client.h"
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <dirent.h>
+
+#include "installer.h"
+#include "web_client.h"
 
 #include "usys_log.h"
 
 extern bool app_unpack_package(const char *tarPath, const char *dstDir);
+
+static bool inst_is_dot_name(const char *name) {
+
+    if (!name) return false;
+    return (strcmp(name, ".") == 0 || strcmp(name, "..") == 0);
+}
+
+static char* inst_find_single_child_dir(const char *path) {
+
+    DIR *dir;
+    struct dirent *de;
+    char *childName;
+    char *childPath;
+    struct stat st;
+    int entries;
+
+    dir       = NULL;
+    childName = NULL;
+    childPath = NULL;
+    entries   = 0;
+
+    if (!path) return NULL;
+
+    dir = opendir(path);
+    if (!dir) return NULL;
+
+    while ((de = readdir(dir)) != NULL) {
+        if (inst_is_dot_name(de->d_name)) {
+            continue;
+        }
+
+        entries++;
+
+        if (entries > 1) {
+            free(childName);
+            closedir(dir);
+            return NULL;
+        }
+
+        childName = strdup(de->d_name);
+        if (!childName) {
+            closedir(dir);
+            return NULL;
+        }
+    }
+
+    closedir(dir);
+
+    if (entries != 1 || !childName) {
+        free(childName);
+        return NULL;
+    }
+
+    if (asprintf(&childPath, "%s/%s", path, childName) < 0) {
+        childPath = NULL;
+    }
+
+    free(childName);
+
+    if (!childPath) return NULL;
+
+    if (stat(childPath, &st) != 0 || !S_ISDIR(st.st_mode)) {
+        free(childPath);
+        return NULL;
+    }
+
+    return childPath;
+}
 
 static bool inst_mkdir_p(const char *path) {
 
@@ -97,7 +166,7 @@ static char* inst_pkg_path(Config *config, App *app, const char *tag) {
     char *p;
 
     p = NULL;
-    if (asprintf(&p, "%s/%s-%s.tar.gz",
+    if (asprintf(&p, "%s/%s_%s.tar.gz",
                  config->pkgsDir,
                  app->name,
                  tag) < 0) p = NULL;
@@ -183,13 +252,15 @@ bool installer_ensure_installed(Config *config, App *app, const char *hub) {
     char *pkgPath;
     char *stageDir;
     char *appDir;
+    char *payloadDir;
     bool ok;
 
-    tagDir = NULL;
-    pkgPath = NULL;
-    stageDir = NULL;
-    appDir = NULL;
-    ok = false;
+    tagDir     = NULL;
+    pkgPath    = NULL;
+    stageDir   = NULL;
+    appDir     = NULL;
+    payloadDir = NULL;
+    ok         = false;
 
     if (!config || !app) return false;
 
@@ -197,6 +268,7 @@ bool installer_ensure_installed(Config *config, App *app, const char *hub) {
     if (!tagDir) return false;
 
     if (inst_path_exists(tagDir)) {
+        app->installState = INSTALL_STATE_SWITCHED;
         free(tagDir);
         return true;
     }
@@ -213,7 +285,8 @@ bool installer_ensure_installed(Config *config, App *app, const char *hub) {
         app->installState = INSTALL_STATE_FETCHING;
         if (!wc_fetch_package(config, app->name, app->tag, hub, pkgPath)) {
             app->installState = INSTALL_STATE_FAILED;
-            usys_log_error("install: fetch failed %s:%s", app->name, app->tag);
+            usys_log_error("install: fetch failed %s:%s",
+                           app->name, app->tag);
             goto cleanup;
         }
     }
@@ -232,24 +305,46 @@ bool installer_ensure_installed(Config *config, App *app, const char *hub) {
     app->installState = INSTALL_STATE_STAGING;
     if (!app_unpack_package(pkgPath, stageDir)) {
         app->installState = INSTALL_STATE_FAILED;
+        usys_log_error("install: unpack failed %s", pkgPath);
         goto cleanup;
     }
 
-    if (rename(stageDir, tagDir) != 0) {
-        app->installState = INSTALL_STATE_FAILED;
-        usys_log_error("install: rename failed %s -> %s", stageDir, tagDir);
-        goto cleanup;
+    /*
+     * Flatten packages that unpack as:
+     *   <stageDir>/<name>_<tag>/...
+     * into:
+     *   <tagDir>/...
+     */
+    payloadDir = inst_find_single_child_dir(stageDir);
+    if (payloadDir) {
+        if (rename(payloadDir, tagDir) != 0) {
+            app->installState = INSTALL_STATE_FAILED;
+            usys_log_error("install: rename failed %s -> %s",
+                           payloadDir, tagDir);
+            goto cleanup;
+        }
+
+        if (rmdir(stageDir) != 0) {
+            usys_log_warn("install: unable to remove stage dir %s",
+                          stageDir);
+        }
+    } else {
+        if (rename(stageDir, tagDir) != 0) {
+            app->installState = INSTALL_STATE_FAILED;
+            usys_log_error("install: rename failed %s -> %s",
+                           stageDir, tagDir);
+            goto cleanup;
+        }
+
+        stageDir = NULL;
     }
 
-    stageDir = NULL;
     app->installState = INSTALL_STATE_SWITCHED;
-
     ok = true;
 
 cleanup:
-    if (stageDir) {
-        free(stageDir);
-    }
+    free(payloadDir);
+    free(stageDir);
     free(appDir);
     free(pkgPath);
     free(tagDir);
