@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -51,7 +52,7 @@ func (s *DControllerServer) StartMetrics(ctx context.Context, req *pb.StartMetri
 			Message: "Site ID is required",
 		}, nil
 	}
-    nodeId := req.NodeId
+    nodeId := strings.ReplaceAll(req.NodeId, "tnode-", "cnode-")
     if nodeId == "" {
         return &pb.StartMetricsResponse{
             Success: false,
@@ -242,7 +243,7 @@ func (s *DControllerServer) Start(ctx context.Context, req *pb.StartMetricsReque
         }, nil
     }
 
-    nodeId := req.NodeId
+    nodeId := strings.ReplaceAll(req.NodeId, "tnode-", "cnode-")
     if nodeId == "" {
         return &pb.StartMetricsResponse{
             Success: false,
