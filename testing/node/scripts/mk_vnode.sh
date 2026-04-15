@@ -360,8 +360,15 @@ setup_ukama_dirs() {
     : "${BUILD_DIR:?BUILD_DIR not set}"
     : "${UKAMA_OS:?UKAMA_OS not set}"
 
-    mkdir -p "${BUILD_DIR}/ukama"/{configs,apps/lib,apps/pkgs,apps/rootfs,apps/registry,etc}
-    mkdir -p "${BUILD_DIR}/ukama"/{state/starter, init/starter}
+    mkdir -p "${BUILD_DIR}/ukama/configs" \
+          "${BUILD_DIR}/ukama/apps/lib" \
+          "${BUILD_DIR}/ukama/apps/pkgs" \
+          "${BUILD_DIR}/ukama/apps/rootfs" \
+          "${BUILD_DIR}/ukama/apps/registry" \
+          "${BUILD_DIR}/ukama/etc"
+
+    mkdir -p "${BUILD_DIR}/ukama/state/starter" \
+          "${BUILD_DIR}/ukama/init/starter"
 
     # Metadata
     echo "${nodeid}" > "${BUILD_DIR}/ukama/nodeid"
