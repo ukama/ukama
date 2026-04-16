@@ -13,8 +13,8 @@ trap cleanup EXIT
 REQUIRED_TOOLS=(dd lsblk grep timeout screen expect sudo lsusb make gcc libusb-1.0-0-dev git)
 
 IMAGE_NAME="ukama-access-node.img"
-UART_PORT="/dev/ttyUSB0}"
-EXPECTED_BOOT_STRING="Ukama OS boot complete}"
+UART_PORT="/dev/ttyUSB0"
+EXPECTED_BOOT_STRING="Ukama OS boot complete"
 
 BAUD_RATE=115200
 UART_LOG="/tmp/rpi_uart.log"
