@@ -22,8 +22,8 @@ UKAMA_OS=$(realpath ../../../nodes/ukamaOS)
 UKAMA_ROOT=$(realpath ../../../)
 UKAMA_REPO_APP_PKG="${UKAMA_ROOT}/build/pkgs"
 UKAMA_REPO_LIB_PKG="${UKAMA_ROOT}/build/libs"
-COMMON_CONFIG_FILE="${UKAMA_ROOT}/builder/boards/common.config"
-ACCESS_CONFIG_FILE="${UKAMA_ROOT}/builder/boards/access.config"
+COMMON_CONFIG_FILE="${UKAMA_ROOT}/nodes/configs/boards/common.conf"
+ACCESS_CONFIG_FILE="${UKAMA_ROOT}/nodes/configs/boards/access-node.conf"
 MANIFEST_FILE="manifest.json"
 
 BOOT_MOUNT="/media/boot"
