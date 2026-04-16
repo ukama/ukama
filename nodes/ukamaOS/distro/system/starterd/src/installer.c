@@ -27,6 +27,147 @@ static bool inst_is_dot_name(const char *name) {
     return (strcmp(name, ".") == 0 || strcmp(name, "..") == 0);
 }
 
+static bool inst_set_app_tag(App *app, const char *tag) {
+
+    char *dup;
+
+    if (!app || !tag || !*tag) return false;
+
+    dup = strdup(tag);
+    if (!dup) return false;
+
+    free(app->tag);
+    app->tag = dup;
+    return true;
+}
+
+static void inst_trim(char *s) {
+
+    char *start;
+    char *end;
+    size_t len;
+
+    if (!s || !*s) return;
+
+    start = s;
+    while (*start == ' ' || *start == '\t' ||
+           *start == '\r' || *start == '\n') {
+        start++;
+    }
+
+    if (start != s) {
+        memmove(s, start, strlen(start) + 1);
+    }
+
+    len = strlen(s);
+    if (len == 0) return;
+
+    end = s + len - 1;
+    while (end >= s &&
+           (*end == ' ' || *end == '\t' ||
+            *end == '\r' || *end == '\n')) {
+        *end = '\0';
+        end--;
+    }
+}
+
+static char* inst_read_version_file(const char *dirPath) {
+
+    char path[512];
+    char buf[256];
+    FILE *fp;
+    char *out;
+
+    fp  = NULL;
+    out = NULL;
+
+    if (!dirPath) return NULL;
+
+    snprintf(path, sizeof(path), "%s/VERSION", dirPath);
+
+    fp = fopen(path, "r");
+    if (!fp) return NULL;
+
+    if (!fgets(buf, sizeof(buf), fp)) {
+        fclose(fp);
+        return NULL;
+    }
+
+    fclose(fp);
+
+    inst_trim(buf);
+    if (!buf[0]) return NULL;
+
+    out = strdup(buf);
+    return out;
+}
+
+static char* inst_find_latest_pkg_path(Config *config, App *app) {
+
+    DIR *dir;
+    struct dirent *de;
+    struct stat st;
+    char prefix[256];
+    char *bestPath;
+    time_t bestMtime;
+    char fullPath[512];
+    size_t prefixLen;
+    size_t nameLen;
+    const char *name;
+
+    dir       = NULL;
+    bestPath  = NULL;
+    bestMtime = 0;
+
+    if (!config ||
+        !app ||
+        !config->pkgsDir ||
+        !app->name) {
+        return NULL;
+    }
+
+    snprintf(prefix, sizeof(prefix), "%s_", app->name);
+    prefixLen = strlen(prefix);
+
+    dir = opendir(config->pkgsDir);
+    if (!dir) return NULL;
+
+    while ((de = readdir(dir)) != NULL) {
+        name = de->d_name;
+        if (inst_is_dot_name(name)) {
+            continue;
+        }
+
+        nameLen = strlen(name);
+        if (nameLen <= prefixLen + 7) {
+            continue;
+        }
+
+        if (strncmp(name, prefix, prefixLen) != 0) {
+            continue;
+        }
+
+        if (strcmp(name + nameLen - 7, ".tar.gz") != 0) {
+            continue;
+        }
+
+        snprintf(fullPath, sizeof(fullPath), "%s/%s", config->pkgsDir, name);
+
+        if (stat(fullPath, &st) != 0 || !S_ISREG(st.st_mode)) {
+            continue;
+        }
+
+        if (!bestPath || st.st_mtime > bestMtime) {
+            free(bestPath);
+            bestPath  = strdup(fullPath);
+            bestMtime = st.st_mtime;
+        }
+    }
+
+    closedir(dir);
+    return bestPath;
+}
+
 static char* inst_find_single_child_dir(const char *path) {
 
     DIR *dir;
@@ -248,45 +389,69 @@ bool installer_revert_to_last_good(Config *config, App *app) {
 
 bool installer_ensure_installed(Config *config, App *app, const char *hub) {
 
+    char *requestedTag;
     char *tagDir;
     char *pkgPath;
     char *stageDir;
     char *appDir;
     char *payloadDir;
+    char *contentDir;
+    char *pkgVersion;
+    char *localLatestPkg;
     bool ok;
 
-    tagDir     = NULL;
-    pkgPath    = NULL;
-    stageDir   = NULL;
-    appDir     = NULL;
-    payloadDir = NULL;
-    ok         = false;
+    requestedTag   = NULL;
+    tagDir         = NULL;
+    pkgPath        = NULL;
+    stageDir       = NULL;
+    appDir         = NULL;
+    payloadDir     = NULL;
+    contentDir     = NULL;
+    pkgVersion     = NULL;
+    localLatestPkg = NULL;
+    ok             = false;
 
     if (!config || !app) return false;
 
+    requestedTag = strdup(app->tag ? app->tag : "");
+    if (!requestedTag) return false;
+
     tagDir = inst_tag_dir(config, app, app->tag);
-    if (!tagDir) return false;
+    if (!tagDir) goto cleanup;
 
     if (inst_path_exists(tagDir)) {
         app->installState = INSTALL_STATE_SWITCHED;
-        free(tagDir);
-        return true;
+        ok = true;
+        goto cleanup;
     }
 
     inst_mkdir_p(config->pkgsDir);
 
-    pkgPath = inst_pkg_path(config, app, app->tag);
+    pkgPath = inst_pkg_path(config, app, requestedTag);
     if (!pkgPath) {
-        free(tagDir);
-        return false;
+        goto cleanup;
+    }
+
+    /*
+     * Backward-safe local lookup:
+     * if requested tag is "latest" but local packages are now versioned,
+     * pick the newest matching local package.
+     */
+    if (!inst_path_exists(pkgPath) && strcmp(requestedTag, "latest") == 0) {
+        localLatestPkg = inst_find_latest_pkg_path(config, app);
+        if (localLatestPkg) {
+            free(pkgPath);
+            pkgPath = localLatestPkg;
+            localLatestPkg = NULL;
+        }
     }
 
     if (!inst_path_exists(pkgPath)) {
         app->installState = INSTALL_STATE_FETCHING;
-        if (!wc_fetch_package(config, app->name, app->tag, hub, pkgPath)) {
+        if (!wc_fetch_package(config, app->name, requestedTag, hub, pkgPath)) {
             app->installState = INSTALL_STATE_FAILED;
             usys_log_error("install: fetch failed %s:%s",
-                           app->name, app->tag);
+                           app->name, requestedTag);
             goto cleanup;
         }
     }
@@ -309,13 +474,40 @@ bool installer_ensure_installed(Config *config, App *app, const char *hub) {
         goto cleanup;
     }
 
+    payloadDir = inst_find_single_child_dir(stageDir);
+    contentDir = payloadDir ? payloadDir : stageDir;
+
+    pkgVersion = inst_read_version_file(contentDir);
+    if (!pkgVersion) {
+        app->installState = INSTALL_STATE_FAILED;
+        usys_log_error("install: missing VERSION file in pkg %s", pkgPath);
+        goto cleanup;
+    }
+
+    if (!inst_set_app_tag(app, pkgVersion)) {
+        app->installState = INSTALL_STATE_FAILED;
+        goto cleanup;
+    }
+
+    free(tagDir);
+    tagDir = inst_tag_dir(config, app, app->tag);
+    if (!tagDir) {
+        app->installState = INSTALL_STATE_FAILED;
+        goto cleanup;
+    }
+
+    if (inst_path_exists(tagDir)) {
+        app->installState = INSTALL_STATE_SWITCHED;
+        ok = true;
+        goto cleanup;
+    }
+
     /*
      * Flatten packages that unpack as:
-     *   <stageDir>/<name>_<tag>/...
+     *   <stageDir>/<name>_<version>/...
      * into:
      *   <tagDir>/...
      */
-    payloadDir = inst_find_single_child_dir(stageDir);
     if (payloadDir) {
         if (rename(payloadDir, tagDir) != 0) {
             app->installState = INSTALL_STATE_FAILED;
@@ -343,10 +535,16 @@ bool installer_ensure_installed(Config *config, App *app, const char *hub) {
     ok = true;
 
 cleanup:
+    free(localLatestPkg);
+    free(pkgVersion);
+    if (contentDir != payloadDir) {
+        free(contentDir);
+    }
     free(payloadDir);
     free(stageDir);
     free(appDir);
     free(pkgPath);
     free(tagDir);
+    free(requestedTag);
     return ok;
 }

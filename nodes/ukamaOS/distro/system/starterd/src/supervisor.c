@@ -251,8 +251,8 @@ static bool app_wait_commit(Config *config, App *app) {
     start = time(NULL);
     while (true) {
 
-        if (wc_app_ping(config, app)) {
-            //  && wc_app_version_matches(config, app, app->tag)) { XXX - #1256
+        if (wc_app_ping(config, app) &&
+            wc_app_version_matches(config, app, app->tag)) {
             return true;
         }
 
@@ -388,7 +388,7 @@ static bool update_self(Supervisor *s,
     }
 
     free(a->lastGoodTag);
-    a->lastGoodTag = strdup(tag);
+    a->lastGoodTag = strdup(a->tag);
     if (!a->lastGoodTag) {
         a->lastGoodTag = oldLastGood;
         free(oldTag);

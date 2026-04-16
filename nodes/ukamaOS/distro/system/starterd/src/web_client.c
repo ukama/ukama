@@ -5,17 +5,16 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-
-#include "web_client.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ulfius.h>
+
+#include "web_client.h"
+#include "http_status.h"
 
 #include "usys_log.h"
 #include "usys_mem.h"
-
-#include <ulfius.h>
 
 static URequest* wc_create_request(const char *url,
                                    const char *method,
@@ -114,7 +113,9 @@ bool wc_app_ping(Config *config, App *app) {
         return false;
     }
 
-    if (resp->status == 200) ok = true;
+    if (resp->status == HttpStatus_OK) {
+        ok = true;
+    }
 
     wc_clean(req, resp);
     return ok;
@@ -129,11 +130,15 @@ bool wc_app_version_matches(Config *config,
     UResponse *resp;
     bool ok;
     const char *body;
+    char *copy;
+    char *p;
+    char *end;
 
-    req = NULL;
+    req  = NULL;
     resp = NULL;
-    ok = false;
+    ok   = false;
     body = NULL;
+    copy = NULL;
 
     if (!config || !app || !tag) return false;
     if (app->port <= 0) return false;
@@ -150,11 +155,32 @@ bool wc_app_version_matches(Config *config,
         return false;
     }
 
-    if (resp->status == 200) {
+    if (resp->status == HttpStatus_OK) {
         body = resp->binary_body ? (const char *)resp->binary_body : NULL;
-        if (body && strstr(body, tag) != NULL) ok = true;
+        if (body) {
+            copy = strdup(body);
+            if (copy) {
+                p = copy;
+                while (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') {
+                    p++;
+                }
+
+                end = p + strlen(p);
+                while (end > p &&
+                       (end[-1] == ' ' || end[-1] == '\t' ||
+                        end[-1] == '\r' || end[-1] == '\n')) {
+                    end--;
+                }
+                *end = '\0';
+
+                if (strcmp(p, tag) == 0) {
+                    ok = true;
+                }
+            }
+        }
     }
 
+    free(copy);
     wc_clean(req, resp);
     return ok;
 }
@@ -235,7 +261,7 @@ static bool wc_wait_for_available(Config *config,
             continue;
         }
 
-        if (resp->status == 200 && resp->binary_body) {
+        if (resp->status == HttpStatus_OK && resp->binary_body) {
             body = (const char *)resp->binary_body;
 
             if (strstr(body, "\"available\"") != NULL) {
@@ -327,7 +353,9 @@ bool wc_fetch_package(Config *config,
 
     free(body);
 
-    if (resp->status != 202 && resp->status != 304 && resp->status != 409) {
+    if (resp->status != HttpStatus_Accepted &&
+        resp->status != HttpStatus_NotModified &&
+        resp->status != HttpStatus_Conflict) {
         usys_log_error("wimc: unexpected response http=%d", resp->status);
         wc_clean(req, resp);
         return false;
