@@ -7,17 +7,22 @@
 include ../../../config.mk
 
 TARGET_EXEC = example.d
-TARGET_NAME = example
-CAPP_BUILD  = ./$(TARGET_NAME)_capp/
-CAPP        = ./capp/
+VERSION_FILE = version.h
+ARTIFACTS = $(TARGET_EXEC)
 
-SCRIPTS = $(UKAMAOS_ROOT)/distro/scripts
-ROOTFS  = ./_ukama_minimal_rootfs
+APP_NAME = $(CUR_BUILD_DIRNAME)
+TARGET_CONFIG_DIR = $(INSTALL_DIR)$(NODE_APP_CONFIG_DIR)/$(APP_NAME)
+APP_CONFIG =
 
-# Packages needed to compile target.
-VENDOR_PKG = 
+# Packages needed to compile target
+ifeq ($(ALPINE_BUILD),1)
+    $(info Excluding vendor library for Alpine build)
+    VENDOR_PKG =
+else
+    VENDOR_PKG =
+endif
 
-# Setting up various compile and link flags.
+# Setting up various compile and link flags
 CFLAGS=-c
 CFLAGS+=-g
 CFLAGS+=-Wall
@@ -28,48 +33,42 @@ CFLAGS+=-D_REENTRANT
 CFLAGS+=-static
 
 LDFLAGS+=$(RPATH_FLAGS)
-LDFLAGS+=-L${VENDOR_LIB}
+LDFLAGS+=-L$(VENDOR_LIB)
 LDFLAGS+=-static
 
-# Libraries needed.
+# Libraries needed
 LIBS =
 
-# Soruce files.
+# Source files
 CFILES   = $(wildcard ./src/*.c)
 OBJFILES = $(CFILES:.c=.o)
 
-XCC := $(XGCCPATH)$(XGCC)
-XLD := $(XGCCPATH)$(XLD)
+.PHONY: all clean install $(TARGET_EXEC)
 
-.PHONY: $(TARGET_EXEC)
+all: $(VERSION_FILE) example
 
-lxce: $(TARGET_EXEC)
+example: $(TARGET_EXEC)
 
 $(TARGET_EXEC): $(VENDOR_PKG) $(OBJFILES)
-	$(XCC) -o $(TARGET_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
+	$(CC) -o $(TARGET_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 
 $(VENDOR_PKG):
-	cd $(VENDOR_DIR) && make $@
+	$(MAKE) -C $(VENDOR_DIR) $@
+
+$(VERSION_FILE):
+	$(NODES_DIR)/utils/scripts/generate_version.sh
 
 %.o: %.c
-	$(XCC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
-capp: $(TARGET_EXEC)
-	rm -rf $(CAPP_BUILD); mkdir $(CAPP_BUILD)
-	cd $(SCRIPTS); ./mk_minimal_rootfs.sh; cd -
-	cp -rf $(SCRIPTS)/$(ROOTFS)/* $(CAPP_BUILD)
-
-	mkdir -p $(CAPP_BUILD)/conf $(CAPP_BUILD)/sbin $(CAPP_BUILD)/cert
-	cp $(CAPP)/config.json $(CAPP_BUILD)
-	cp $(CAPP)/conf/* $(CAPP_BUILD)/conf
-	cp $(TARGET_EXEC) $(CAPP_BUILD)/sbin
-	tar -czf $(TARGET_NAME)_capp.tar.gz $(CAPP_BUILD)
-	rm -rf $(CAPP_BUILD)
-
-	echo "$(TARGET_NAME) capp is available $(TARGET_NAME)_capp.tar.gz Done."
-
+install: $(ARTIFACTS) $(VERSION_FILE)
+	mkdir -p $(TARGET_CONFIG_DIR)
+	cp -vrf $(ARTIFACTS) $(INSTALL_DIR)$(NODE_APP_DIR)
+	cp -vrf $(VERSION_FILE) $(TARGET_CONFIG_DIR)
+	if [ "$(APP_CONFIG)" != "" ]; then \
+		cp -vrf $(APP_CONFIG) $(TARGET_CONFIG_DIR); \
+	fi
 
 clean:
-	rm -rf $(SCRIPTS)/$(ROOTFS)
-	rm -rf $(TARGET_EXEC) $(OBJFILES) $(CAPP_BUILD) *.tar.gz
+	rm -f $(TARGET_EXEC) $(OBJFILES) $(VERSION_FILE)
