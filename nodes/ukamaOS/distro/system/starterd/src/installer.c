@@ -537,7 +537,9 @@ bool installer_ensure_installed(Config *config, App *app, const char *hub) {
 cleanup:
     free(localLatestPkg);
     free(pkgVersion);
-    free(contentDir);
+    if (contentDir != payloadDir) {
+        free(contentDir);
+    }
     free(payloadDir);
     free(stageDir);
     free(appDir);
