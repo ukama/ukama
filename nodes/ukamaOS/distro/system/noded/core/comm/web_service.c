@@ -17,6 +17,7 @@
 #include "ledger.h"
 #include "property.h"
 #include "service.h"
+#include "version.h"
 
 #include "usys_api.h"
 #include "usys_error.h"
@@ -316,6 +317,17 @@ static int web_service_cb_ping(const URequest *request, UResponse *response,
     ulfius_set_string_body_response(response,
                                     200,
                                     "OK");
+
+    return U_CALLBACK_CONTINUE;
+}
+
+static int web_service_cb_version(const URequest *request,
+                                  UResponse *response,
+                                  void *epConfig) {
+
+    ulfius_set_string_body_response(response,
+                                    200,
+                                    VERSION);
 
     return U_CALLBACK_CONTINUE;
 }
@@ -1387,11 +1399,12 @@ void web_service_add_mfg_data_endpoints() {
  */
 static void setup_web_service_endpoints(UInst *instance, void *config) {
 
-    /* Ping */
     web_service_add_end_point("GET", API_RES_EP("ping"), NULL,
                     web_service_cb_ping);
 
-    /* default endpoint. */
+    web_service_add_end_point("GET", API_RES_EP("version"), NULL,
+                    web_service_cb_version);
+
     ulfius_set_default_endpoint(instance, &web_service_cb_default, NULL);
 }
 
