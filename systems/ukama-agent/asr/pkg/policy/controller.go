@@ -27,17 +27,16 @@ import (
 )
 
 type policyController struct {
-	dp                   dataplan.PackageClient
-	Rules                []Rule
-	asrRepo              db.AsrRecordRepo
-	period               time.Duration
-	pR                   chan bool
-	msgbus               mb.MsgBusServiceClient
-	NodeFeederRoutingKey msgbus.RoutingKeyBuilder
-	MsgBusRoutingKey     msgbus.RoutingKeyBuilder
-	OrgName              string
-	OrgId                string
-	reroute              string
+	dp               dataplan.PackageClient
+	Rules            []Rule
+	asrRepo          db.AsrRecordRepo
+	period           time.Duration
+	pR               chan bool
+	msgbus           mb.MsgBusServiceClient
+	MsgBusRoutingKey msgbus.RoutingKeyBuilder
+	OrgName          string
+	OrgId            string
+	reroute          string
 }
 
 const (
@@ -85,15 +84,14 @@ type Controller interface {
 
 func NewPolicyController(asrRepo db.AsrRecordRepo, msgB mb.MsgBusServiceClient, dataplanHost string, orgName string, orgId string, reroute string, period time.Duration, monitor bool) *policyController {
 	p := &policyController{
-		dp:                   dataplan.NewPackageClient(dataplanHost),
-		asrRepo:              asrRepo,
-		msgbus:               msgB,
-		NodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetRequestType().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName), //Need to have something same to other routes
-		MsgBusRoutingKey:     msgbus.NewRoutingKeyBuilder().SetEventType().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
-		OrgName:              orgName,
-		OrgId:                orgId,
-		reroute:              reroute,
-		period:               period,
+		dp:               dataplan.NewPackageClient(dataplanHost),
+		asrRepo:          asrRepo,
+		msgbus:           msgB,
+		MsgBusRoutingKey: msgbus.NewRoutingKeyBuilder().SetEventType().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		OrgName:          orgName,
+		OrgId:            orgId,
+		reroute:          reroute,
+		period:           period,
 	}
 	p.InitPolicyController()
 
@@ -301,10 +299,10 @@ func (p *policyController) syncSubscriberPolicy(method string, imsi string, netw
 	}
 
 	broadcasterMsg := &epb.BroadcasterEvent{
-		Msg : msgBytes,
-		RoutingKey: p.NodeFeederRoutingKey.SetObject("nodefeeder").SetAction("publish").MustBuild(),
-		Type: epb.BroadcastType_NODE_BROADCAST,
-		Scope: epb.BroadcastScope_ORGANIZATIONAL_SCOPE,
+		Msg:        msgBytes,
+		RoutingKey: route,
+		Type:       epb.BroadcastType_NODE_BROADCAST,
+		Scope:      epb.BroadcastScope_ORGANIZATIONAL_SCOPE,
 	}
 
 	err = p.msgbus.PublishRequest(route, broadcasterMsg)
