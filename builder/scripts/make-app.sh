@@ -84,13 +84,18 @@ case "$ACTION" in
 	    rm -rf $2
 	    ;;
     "pack")
-	    mkdir -p $2/build/pkgs/
-	    tar -czf $2/build/pkgs/$3 $4
-	    if [ $5 -eq 1 ]
-	    then
-	        rm -rf $4 ${ROOTFS}
-	    fi
-	    ;;
+        mkdir -p "$2/build/pkgs/"
+        tar -czf "$2/build/pkgs/$3" "$4" || exit 1
+
+        latest_link="$(echo "$3" | sed -E 's/_[^/]+\.tar\.gz$/_latest.tar.gz/')"
+        rm -f "$2/build/pkgs/$latest_link"
+        ln -s "$3" "$2/build/pkgs/$latest_link" || exit 1
+
+        if [ "$5" -eq 1 ]
+        then
+            rm -rf "$4" "${ROOTFS}"
+        fi
+        ;;
 esac
 
 exit 0
