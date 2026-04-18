@@ -13,73 +13,89 @@
 #include "config_app.h"
 #include "log_app.h"
 
-#define SCRIPT       "builder/scripts/make-app.sh"
-#define LIB_USYS     "nodes/ukamaOS/distro/platform/build/libusys.so"
-#define MAX_BUFFER   1024
-#define MAX_LINE     512
+#define SCRIPT            "builder/scripts/make-app.sh"
+#define VERSION_SCRIPT    "nodes/utils/scripts/generate_version.sh"
+#define LIB_USYS          "nodes/ukamaOS/distro/platform/build/libusys.so"
+#define MAX_BUFFER        1024
+#define MAX_LINE          512
 
-static int read_version_from_header(const char *srcDir, char **versionOut) {
+static int git_mark_safe(const char *repoRoot) {
 
-    char path[MAX_BUFFER] = {0};
+    char cmd[MAX_BUFFER] = {0};
+
+    if (repoRoot == NULL) {
+        return FALSE;
+    }
+
+    snprintf(cmd, sizeof(cmd),
+             "git config --global --add safe.directory \"%s\" >/dev/null 2>&1",
+             repoRoot);
+
+    if (system(cmd) < 0) {
+        log_error("Unable to mark repo as git safe.directory: %s", repoRoot);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static int get_app_version(const char *ukamaRoot, char **versionOut) {
+
+    char cmd[MAX_BUFFER]  = {0};
     char line[MAX_LINE]   = {0};
-    char *start           = NULL;
-    char *end             = NULL;
-    char *version         = NULL;
+    char *nl              = NULL;
     FILE *fp              = NULL;
 
-    if (versionOut == NULL || srcDir == NULL) {
+    if (ukamaRoot == NULL || versionOut == NULL) {
         return FALSE;
     }
 
     *versionOut = NULL;
 
-    snprintf(path, sizeof(path), "%s/version.h", srcDir);
+    snprintf(cmd, sizeof(cmd),
+             "git config --global --add safe.directory \"%s\" >/dev/null 2>&1; "
+             "cd \"%s\" && ./%s --print",
+             ukamaRoot, ukamaRoot, VERSION_SCRIPT);
 
-    fp = fopen(path, "r");
+    fp = popen(cmd, "r");
     if (fp == NULL) {
-        log_error("Unable to open version header: %s", path);
+        log_error("Unable to run version script");
         return FALSE;
     }
 
-    while (fgets(line, sizeof(line), fp) != NULL) {
-        if (strstr(line, "#define VERSION") == NULL) {
-            continue;
-        }
-
-        start = strchr(line, '"');
-        if (start == NULL) {
-            continue;
-        }
-
-        start++;
-
-        end = strchr(start, '"');
-        if (end == NULL || end <= start) {
-            continue;
-        }
-
-        *end = '\0';
-
-        version = strdup(start);
-        if (version == NULL) {
-            fclose(fp);
-            return FALSE;
-        }
-
-        *versionOut = version;
-        fclose(fp);
-        return TRUE;
+    if (fgets(line, sizeof(line), fp) == NULL) {
+        pclose(fp);
+        log_error("Unable to read version from script");
+        return FALSE;
     }
 
-    fclose(fp);
-    log_error("VERSION not found in: %s", path);
-    return FALSE;
+    if (pclose(fp) != 0) {
+        log_error("Version script failed");
+        return FALSE;
+    }
+
+    nl = strchr(line, '\n');
+    if (nl != NULL) {
+        *nl = '\0';
+    }
+
+    if (line[0] == '\0' || strcmp(line, "-") == 0) {
+        log_error("Invalid app version from script: '%s'", line);
+        return FALSE;
+    }
+
+    *versionOut = strdup(line);
+    if (*versionOut == NULL) {
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 int build_app(Config *config) {
 
-    char *ukamaRoot    = NULL;
-    char *builtVersion = NULL;
+    char *ukamaRoot        = NULL;
+    char *builtVersion     = NULL;
     char runMe[MAX_BUFFER] = {0};
     BuildConfig *build;
 
@@ -92,21 +108,27 @@ int build_app(Config *config) {
 
     build = config->build;
 
-    /* Build first so version.h is generated/updated by the app build. */
-    snprintf(runMe, sizeof(runMe), "%s/%s build app %s \"%s\"",
-             ukamaRoot, SCRIPT, build->source, build->cmd);
+    if (!git_mark_safe(ukamaRoot)) {
+        return FALSE;
+    }
+
+    /* Build first so app artifacts and version state are up to date. */
+    snprintf(runMe, sizeof(runMe),
+             "git config --global --add safe.directory \"%s\" >/dev/null 2>&1; "
+             "%s/%s build app %s \"%s\"",
+             ukamaRoot, ukamaRoot, SCRIPT, build->source, build->cmd);
     if (system(runMe) < 0) return FALSE;
 
-    /* Source of truth for app package version is version.h. */
-    if (!read_version_from_header(build->source, &builtVersion)) {
-        log_error("Unable to read app version from version.h");
+    /* Source of truth for app package version comes from generate_version.sh. */
+    if (!get_app_version(ukamaRoot, &builtVersion)) {
+        log_error("Unable to determine app version");
         return FALSE;
     }
 
     free(config->capp->version);
     config->capp->version = builtVersion;
 
-    /* initialize package staging area using the real VERSION. */
+    /* Initialize package staging area using the real VERSION. */
     snprintf(runMe, sizeof(runMe), "%s/%s init %s_%s",
              ukamaRoot,
              SCRIPT,

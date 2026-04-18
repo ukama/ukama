@@ -478,9 +478,9 @@ bool installer_ensure_installed(Config *config, App *app, const char *hub) {
     contentDir = payloadDir ? payloadDir : stageDir;
 
     pkgVersion = inst_read_version_file(contentDir);
-    if (!pkgVersion) {
+    if (!pkgVersion || !pkgVersion[0] || strcmp(pkgVersion, "-") == 0) {
         app->installState = INSTALL_STATE_FAILED;
-        usys_log_error("install: missing VERSION file in pkg %s", pkgPath);
+        usys_log_error("install: invalid VERSION in pkg %s", pkgPath);
         goto cleanup;
     }
 
