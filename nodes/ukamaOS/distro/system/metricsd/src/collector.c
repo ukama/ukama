@@ -33,6 +33,7 @@ static bool collectionFlag        = true;
 
 static AgentMap agentMap[] = {
     {.type = "sys_generic",      .agentHandler = generic_stat_collector},
+    {.type = "generic_agent",    .agentHandler = generic_stat_collector},
     {.type = "lte_agent",        .agentHandler = lte_stack_collector},
     {.type = "rest_agent",       .agentHandler = rest_collector},
     {.type = "sysfs_agent",      .agentHandler = sysfs_collector},
@@ -42,9 +43,13 @@ static AgentMap agentMap[] = {
     {.type = "ssd_agent",        .agentHandler = ssd_collector},
     {.type = "backhaul_agent",   .agentHandler = backhaul_collector},
     {.type = "femd_agent",       .agentHandler = femd_collector},
+    {.type = "fem_agent",        .agentHandler = femd_collector},
     {.type = "controllerd_agent",
       .agentHandler = controllerd_collector},
+    {.type = "controller_agent",
+      .agentHandler = controllerd_collector},
     {.type = "switchd_agent",    .agentHandler = switchd_collector},
+    {.type = "switch_agent",     .agentHandler = switchd_collector},
 };
 
 static CollectorFxn get_agent_handler(char *agent) {

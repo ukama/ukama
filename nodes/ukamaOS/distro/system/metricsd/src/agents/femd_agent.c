@@ -55,21 +55,6 @@ typedef struct {
     FemUnitMetrics fem[2];       /* fem_unit 1 -> [0], fem_unit 2 -> [1] */
 } FemMetrics;
 
-static int str_ieq(const char *a, const char *b) {
-    if (!a || !b) return 0;
-    while (*a && *b) {
-        char ca = *a;
-        char cb = *b;
-        if (ca >= 'A' && ca <= 'Z') ca = (char)(ca - 'A' + 'a');
-        if (cb >= 'A' && cb <= 'Z') cb = (char)(cb - 'A' + 'a');
-        if (ca != cb) return 0;
-        a++;
-        b++;
-    }
-    return (*a == '\0' && *b == '\0');
-}
-
-/* very small helper: “contains”, but case-insensitive */
 static int str_icontains(const char *hay, const char *needle) {
     size_t i = 0, nlen = 0, hlen = 0;
 

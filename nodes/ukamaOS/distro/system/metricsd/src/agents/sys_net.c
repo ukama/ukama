@@ -6,6 +6,7 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -50,21 +51,37 @@ int sys_net_dev_read_stat(SysNetDevMetrics *netDev, int maxDev,
     }
 
     while (fgets(line, sizeof(line), fp) != NULL) {
-        if (!strncmp(line, ifName, strlen(ifName))) {
-            sscanf(line + strlen(ifName) + 2,
-                   "%llu %llu %llu %llu %llu %llu %llu %llu %llu %llu "
-                   "%llu %llu %llu %llu %llu %llu",
-                   &netDev->rxBytes, &netDev->rxPackets,
-                   &netDev->rxErrors, &netDev->rxDropped,
-                   &netDev->rxFifoErrors, &netDev->rxOverruns,
-                   &netDev->rxCompressed, &netDev->multicast,
-                   &netDev->txBytes, &netDev->txPackets,
-                   &netDev->txErrors, &netDev->txDropped,
-                   &netDev->txFifoErrors, &netDev->collisions,
-                   &netDev->txCarrierErrors, &netDev->txCompressed);
-            ret = RETURN_OK;
-            break;
+        char *p     = line;
+        char *colon = NULL;
+
+        while (isspace((unsigned char)*p)) {
+            p++;
         }
+
+        colon = strchr(p, ':');
+        if (colon == NULL) {
+            continue;
+        }
+
+        *colon = '\0';
+        if (strcmp(p, ifName) != 0) {
+            continue;
+        }
+
+        memset(netDev, 0, sizeof(SysNetDevMetrics));
+        sscanf(colon + 1,
+               "%llu %llu %llu %llu %llu %llu %llu %llu "
+               "%llu %llu %llu %llu %llu %llu %llu %llu",
+               &netDev->rxBytes, &netDev->rxPackets,
+               &netDev->rxErrors, &netDev->rxDropped,
+               &netDev->rxFifoErrors, &netDev->rxOverruns,
+               &netDev->rxCompressed, &netDev->multicast,
+               &netDev->txBytes, &netDev->txPackets,
+               &netDev->txErrors, &netDev->txDropped,
+               &netDev->txFifoErrors, &netDev->collisions,
+               &netDev->txCarrierErrors, &netDev->txCompressed);
+        ret = RETURN_OK;
+        break;
     }
 
     fclose(fp);
@@ -84,9 +101,9 @@ int sys_net_push_stat_to_metric_server(MetricsCatConfig *cfgStat,
         KPIConfig *kpi = &(cfgStat->kpi[idx]);
 
         if ((kpi != NULL) && (kpi->fqname != NULL)) {
-            if (strstr(kpi->fqname, "rxBytes")) {
+            if (strstr(kpi->fqname, "rx_bytes")) {
                 val = nstat->rxBytes;
-            } else if (strstr(kpi->fqname, "rx_errors")) {
+            } else if (strstr(kpi->fqname, "rx_error")) {
                 val = nstat->rxErrors;
             } else if (strstr(kpi->fqname, "rx_dropped")) {
                 val = nstat->rxDropped;
@@ -96,18 +113,18 @@ int sys_net_push_stat_to_metric_server(MetricsCatConfig *cfgStat,
                 val = nstat->rxPackets;
             } else if (strstr(kpi->fqname, "tx_bytes")) {
                 val = nstat->txBytes;
-            } else if (strstr(kpi->fqname, "tx_errors")) {
+            } else if (strstr(kpi->fqname, "tx_error")) {
                 val = nstat->txErrors;
             } else if (strstr(kpi->fqname, "tx_dropped")) {
                 val = nstat->txDropped;
-            } else if (strstr(kpi->fqname, "tx_carrier_errors")) {
-                val = nstat->txCarrierErrors;
+            } else if (strstr(kpi->fqname, "tx_overruns")) {
+                val = nstat->txFifoErrors;
             } else if (strstr(kpi->fqname, "tx_packets")) {
                 val = nstat->txPackets;
+            } else if (strstr(kpi->fqname, "linkspeed")) {
+                val = nstat->linkspeed;
             } else if (strstr(kpi->fqname, "link")) {
                 val = nstat->linkstatus;
-            } else if (strstr(kpi->fqname, "speed")) {
-                val = nstat->linkspeed;
             } else if (strstr(kpi->fqname, "latency")) {
                 val = nstat->latency;
             } else {

@@ -56,6 +56,17 @@ static char *read_str_value(toml_table_t *tab, char *key) {
     return value;
 }
 
+static char *read_opt_str_value(toml_table_t *tab, char *key) {
+
+    toml_datum_t str = toml_string_in(tab, key);
+
+    if (!str.ok) {
+        return NULL;
+    }
+
+    return read_str_value(tab, key);
+}
+
 static int read_int_value(toml_table_t *tab, char *key) {
 
     toml_datum_t val = toml_int_in(tab, key);
@@ -413,9 +424,9 @@ static int toml_parse_kpi_table(char *category,
     int ret = RETURN_NOTOK;
 
     kpi->name   = read_str_value(tabKpi, TAG_NAME);
-    kpi->ext    = read_str_value(tabKpi, TAG_EXT);
+    kpi->ext    = read_opt_str_value(tabKpi, TAG_EXT);
     kpi->desc   = read_str_value(tabKpi, TAG_DESC);
-    kpi->unit   = read_str_value(tabKpi, TAG_UNIT);
+    kpi->unit   = read_opt_str_value(tabKpi, TAG_UNIT);
     kpi->type   = read_metric_type(tabKpi);
     kpi->labels = read_labels(&kpi->numLabels, tabKpi);
 

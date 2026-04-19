@@ -183,7 +183,11 @@ int sys_read_and_push_cpu_usage(MetricsCatConfig *cpuCfg,
 
   unsigned long long didle = idle - old_idle;
 
-  double cpu_per = ((double)(dtotal - didle)/dtotal)*100;
+  double cpu_per = 0.0;
+
+  if (dtotal > 0) {
+    cpu_per = ((double)(dtotal - didle) / (double)dtotal) * 100.0;
+  }
 
   memcpy(&pCpuStat,cpuStat, sizeof(SysCPUMetrics));
 
@@ -287,6 +291,16 @@ int sys_cpu_push_stat_to_metric_server(MetricsCatConfig *cpuCfg,
   /* Start Collecting other KPI */
   for (int idx = 0; idx < cpuCfg->kpiCount; idx++) {
     KPIConfig *kpi = &(cpuCfg->kpi[idx]);
+
+    if ((kpi == NULL) || (kpi->name == NULL)) {
+      continue;
+    }
+
+    if ((strcmp(kpi->name, "cores") == 0) ||
+        (strcmp(kpi->name, "usage") == 0) ||
+        (strcmp(kpi->name, "temperature") == 0)) {
+      continue;
+    }
 
     if (sys_cpu_get_kpi_value(kpi, cpuStat, &val) != RETURN_OK) {
       continue;
