@@ -222,100 +222,101 @@ metric_server_port = 7001
                 labels = []
 
 [[stats]]
-        [[stats.network]]
-            source = "eth0"
-            agent = "network_agent"
-            url ="/proc/net"
-            [[stats.network.wlp0s20f3.kpi]]
-                name = "link"
-                ext = ""
-                desc = "Link status"
-                type = "METRICTYPE_GAUGE"
-                labels = []
+    [[stats.network]]
+        source = "uplink"
+        agent  = "network_agent"
+        url    = "/proc/net"
 
-            [[stats.network.wlp0s20f3.kpi]]
-                name = "latency"
-                ext = ""
-                desc = "Latency to reach cloud"
-                type = "METRICTYPE_GAUGE"
-                labels = []
+        [[stats.network.uplink.kpi]]
+            name   = "link"
+            ext    = ""
+            desc   = "Link status"
+            type   = "METRICTYPE_GAUGE"
+            labels = []
 
-            [[stats.network.wlp0s20f3.kpi]]
-                name = "linkspeed"
-                ext = ""
-                desc = "Link speed negotiated"
-                type = "METRICTYPE_GAUGE"
-                labels = []
+        [[stats.network.uplink.kpi]]
+            name   = "latency"
+            ext    = ""
+            desc   = "Latency to reach cloud"
+            type   = "METRICTYPE_GAUGE"
+            labels = []
 
-            [[stats.network.wlp0s20f3.kpi]]
-                name = "rx_bytes"
-                ext = ""
-                desc = "Received bytes"
-                type = "METRICTYPE_GAUGE"
-                labels = []
+        [[stats.network.uplink.kpi]]
+            name   = "linkspeed"
+            ext    = ""
+            desc   = "Link speed negotiated"
+            type   = "METRICTYPE_GAUGE"
+            labels = []
 
-            [[stats.network.wlp0s20f3.kpi]]
-                name = "rx_error"
-                ext = ""
-                desc = "Receive errors"
-                type = "METRICTYPE_GAUGE"
-                labels = []
+        [[stats.network.uplink.kpi]]
+            name   = "rx_bytes"
+            ext    = ""
+            desc   = "Received bytes"
+            type   = "METRICTYPE_GAUGE"
+            labels = []
 
-            [[stats.network.wlp0s20f3.kpi]]
-                name = "rx_dropped"
-                ext = ""
-                desc = "Received packets dropped"
-                type = "METRICTYPE_GAUGE"
-                labels = []
+        [[stats.network.uplink.kpi]]
+            name   = "rx_error"
+            ext    = ""
+            desc   = "Receive errors"
+            type   = "METRICTYPE_GAUGE"
+            labels = []
 
-            [[stats.network.wlp0s20f3.kpi]]
-                name = "rx_overruns"
-                ext = ""
-                desc = "Receive overruns"
-                type = "METRICTYPE_GAUGE"
-                labels = []
+        [[stats.network.uplink.kpi]]
+            name   = "rx_dropped"
+            ext    = ""
+            desc   = "Receive packets dropped"
+            type   = "METRICTYPE_GAUGE"
+            labels = []
 
-            [[stats.network.wlp0s20f3.kpi]]
-                name = "rx_packets"
-                ext = ""
-                desc = "Receive packets"
-                type = "METRICTYPE_GAUGE"
-                labels = []
+        [[stats.network.uplink.kpi]]
+            name   = "rx_overruns"
+            ext    = ""
+            desc   = "Receive overruns"
+            type   = "METRICTYPE_GAUGE"
+            labels = []
 
-            [[stats.network.wlp0s20f3.kpi]]
-                name = "tx_bytes"
-                ext = ""
-                desc = "Transmitted bytes"
-                type = "METRICTYPE_GAUGE"
-                labels = []
+        [[stats.network.uplink.kpi]]
+            name   = "rx_packets"
+            ext    = ""
+            desc   = "Receive packets"
+            type   = "METRICTYPE_GAUGE"
+            labels = []
 
-            [[stats.network.wlp0s20f3.kpi]]
-                name = "tx_error"
-                ext = ""
-                desc = "Transmitted errors"
-                type = "METRICTYPE_GAUGE"
-                labels = []
+        [[stats.network.uplink.kpi]]
+            name   = "tx_bytes"
+            ext    = ""
+            desc   = "Transmitted bytes"
+            type   = "METRICTYPE_GAUGE"
+            labels = []
 
-            [[stats.network.wlp0s20f3.kpi]]
-                name = "tx_dropped"
-                ext = ""
-                desc = "Transmitted packets dropped"
-                type = "METRICTYPE_GAUGE"
-                labels = []
+        [[stats.network.uplink.kpi]]
+            name   = "tx_error"
+            ext    = ""
+            desc   = "Transmit errors"
+            type   = "METRICTYPE_GAUGE"
+            labels = []
 
-            [[stats.network.wlp0s20f3.kpi]]
-                name = "tx_overruns"
-                ext = ""
-                desc = "Transmitted overruns"
-                type = "METRICTYPE_GAUGE"
-                labels = []
+        [[stats.network.uplink.kpi]]
+            name   = "tx_dropped"
+            ext    = ""
+            desc   = "Transmit packets dropped"
+            type   = "METRICTYPE_GAUGE"
+            labels = []
 
-            [[stats.network.wlp0s20f3.kpi]]
-                name = "tx_packets"
-                ext = ""
-                desc = "Transmitted packets"
-                type = "METRICTYPE_GAUGE"
-                labels = []
+        [[stats.network.uplink.kpi]]
+            name   = "tx_overruns"
+            ext    = ""
+            desc   = "Transmit overruns"
+            type   = "METRICTYPE_GAUGE"
+            labels = []
+
+        [[stats.network.uplink.kpi]]
+            name   = "tx_packets"
+            ext    = ""
+            desc   = "Transmit packets"
+            type   = "METRICTYPE_GAUGE"
+            labels = []
 
 [[stats]]
         [[stats.storage]]
