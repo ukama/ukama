@@ -288,7 +288,6 @@ int sys_cpu_push_stat_to_metric_server(MetricsCatConfig *cpuCfg,
     usys_log_error("Failed to collect cpu_usage kpi info.");
   }
 
-  /* Start Collecting other KPI */
   for (int idx = 0; idx < cpuCfg->kpiCount; idx++) {
     KPIConfig *kpi = &(cpuCfg->kpi[idx]);
 
@@ -296,9 +295,9 @@ int sys_cpu_push_stat_to_metric_server(MetricsCatConfig *cpuCfg,
       continue;
     }
 
-    if ((strcmp(kpi->name, "cores") == 0) ||
-        (strcmp(kpi->name, "usage") == 0) ||
-        (strcmp(kpi->name, "temperature") == 0)) {
+    if (!strcmp(kpi->name, "cores") ||
+        !strcmp(kpi->name, "usage") ||
+        !strcmp(kpi->name, "temperature")) {
       continue;
     }
 
@@ -306,9 +305,10 @@ int sys_cpu_push_stat_to_metric_server(MetricsCatConfig *cpuCfg,
       continue;
     }
 
-    /* Add KPI to server*/
-    double castVal = (double)val;
-    addFunc(kpi, &castVal);
+    {
+      double castVal = (double)val;
+      addFunc(kpi, &castVal);
+    }
   }
 
   usys_log_trace("CPU KPI pushed to server.");

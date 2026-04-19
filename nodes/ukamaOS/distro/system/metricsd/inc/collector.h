@@ -18,6 +18,7 @@ int sysfs_collector(MetricsCatConfig *stat);
 int cpu_collector(MetricsCatConfig *stat);
 int memory_collector(MetricsCatConfig *stat);
 int network_collector(MetricsCatConfig *stat);
+int thermal_collector(MetricsCatConfig *stat);
 int ssd_collector(MetricsCatConfig *stat);
 int generic_stat_collector(MetricsCatConfig *stat);
 int backhaul_collector(MetricsCatConfig *stat);

@@ -20,6 +20,7 @@ int sys_mem_collect_stat(MetricsCatConfig *stat, metricAddFunc addFunc);
 int sys_net_collect_stat(MetricsCatConfig *stat, metricAddFunc addFunc);
 int sys_storage_collect_stat(MetricsCatConfig *stat, metricAddFunc addFunc);
 int sysfs_collect_kpi(MetricsCatConfig *stat, metricAddFunc addFunc);
+int thermal_collect_stat(MetricsCatConfig *stat, metricAddFunc addFunc);
 int backhaul_collect_stat(MetricsCatConfig *stat, metricAddFunc addFunc);
 int controllerd_collect_stat(MetricsCatConfig *cfgStat,
                              metricAddFunc addFunc);

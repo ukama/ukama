@@ -32,24 +32,23 @@ static MetricsConfig *metricsCfg  = NULL;
 static bool collectionFlag        = true;
 
 static AgentMap agentMap[] = {
-    {.type = "sys_generic",      .agentHandler = generic_stat_collector},
-    {.type = "generic_agent",    .agentHandler = generic_stat_collector},
-    {.type = "lte_agent",        .agentHandler = lte_stack_collector},
-    {.type = "rest_agent",       .agentHandler = rest_collector},
-    {.type = "sysfs_agent",      .agentHandler = sysfs_collector},
-    {.type = "cpu_agent",        .agentHandler = cpu_collector},
-    {.type = "memory_agent",     .agentHandler = memory_collector},
-    {.type = "network_agent",    .agentHandler = network_collector},
-    {.type = "ssd_agent",        .agentHandler = ssd_collector},
-    {.type = "backhaul_agent",   .agentHandler = backhaul_collector},
-    {.type = "femd_agent",       .agentHandler = femd_collector},
-    {.type = "fem_agent",        .agentHandler = femd_collector},
-    {.type = "controllerd_agent",
-      .agentHandler = controllerd_collector},
-    {.type = "controller_agent",
-      .agentHandler = controllerd_collector},
-    {.type = "switchd_agent",    .agentHandler = switchd_collector},
-    {.type = "switch_agent",     .agentHandler = switchd_collector},
+    {.type = "sys_generic",       .agentHandler = generic_stat_collector},
+    {.type = "generic_agent",     .agentHandler = generic_stat_collector},
+    {.type = "lte_agent",         .agentHandler = lte_stack_collector},
+    {.type = "rest_agent",        .agentHandler = rest_collector},
+    {.type = "sysfs_agent",       .agentHandler = sysfs_collector},
+    {.type = "thermal_agent",     .agentHandler = thermal_collector},
+    {.type = "cpu_agent",         .agentHandler = cpu_collector},
+    {.type = "memory_agent",      .agentHandler = memory_collector},
+    {.type = "network_agent",     .agentHandler = network_collector},
+    {.type = "ssd_agent",         .agentHandler = ssd_collector},
+    {.type = "backhaul_agent",    .agentHandler = backhaul_collector},
+    {.type = "femd_agent",        .agentHandler = femd_collector},
+    {.type = "fem_agent",         .agentHandler = femd_collector},
+    {.type = "controllerd_agent", .agentHandler = controllerd_collector},
+    {.type = "controller_agent",  .agentHandler = controllerd_collector},
+    {.type = "switchd_agent",     .agentHandler = switchd_collector},
+    {.type = "switch_agent",      .agentHandler = switchd_collector},
 };
 
 static CollectorFxn get_agent_handler(char *agent) {
@@ -123,6 +122,12 @@ int generic_stat_collector(MetricsCatConfig *stat) {
 
     usys_log_trace("generic agent started for source %s", stat->source);
     return sys_gen_collect_stat(stat, metric_server_add_kpi_data);
+}
+
+int thermal_collector(MetricsCatConfig *stat) {
+
+    usys_log_trace("thermal agent started for source %s", stat->source);
+    return thermal_collect_stat(stat, metric_server_add_kpi_data);
 }
 
 int backhaul_collector(MetricsCatConfig *stat) {
