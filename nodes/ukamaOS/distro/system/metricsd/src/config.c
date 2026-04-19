@@ -58,13 +58,26 @@ static char *read_str_value(toml_table_t *tab, char *key) {
 
 static char *read_opt_str_value(toml_table_t *tab, char *key) {
 
-    toml_datum_t str = toml_string_in(tab, key);
+    int len            = 0;
+    char *value        = NULL;
+    toml_datum_t str   = toml_string_in(tab, key);
 
     if (!str.ok) {
         return NULL;
     }
 
-    return read_str_value(tab, key);
+    len = strlen(str.u.s);
+    usys_log_trace("string key=%s value=%s length=%d", key, str.u.s, len);
+
+    value = calloc(len + 1, sizeof(char));
+    if (value != NULL) {
+        memcpy(value, str.u.s, len);
+        value[len] = '\0';
+    }
+
+    free(str.u.s);
+
+    return value;
 }
 
 static int read_int_value(toml_table_t *tab, char *key) {
