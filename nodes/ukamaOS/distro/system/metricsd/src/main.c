@@ -29,7 +29,7 @@
 #include "version.h"
 
 #define METRIC_CONFIG "./config/config.toml"
-#define DEF_LOG_LEVEL "TRACE"
+#define DEF_LOG_LEVEL "DEBUG"
 
 static struct option longOptions[] = {
     {"config",  required_argument, 0, 'c'},
