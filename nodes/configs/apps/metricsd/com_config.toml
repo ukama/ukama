@@ -223,7 +223,7 @@ metric_server_port = 7001
 
 [[stats]]
         [[stats.network]]
-            source = "eth0"
+            source = "wlp0s20f3"
             agent = "network_agent"
             url ="/proc/net"
             [[stats.network.wlp0s20f3.kpi]]
@@ -341,19 +341,6 @@ metric_server_port = 7001
                 name = "free"
                 ext = ""
                 desc = "Available storage"
-                type = "METRICTYPE_GAUGE"
-                labels = []
-
-[[stats]]
-        [[stats.sensors]]
-            source = "tempsensor1"
-            agent = "sysfs_agent"
-            url = "/ukama/configs/metricsd/com/tempsensor1/"
-
-        [[stats.sensors.tempsensor1.kpi]]
-                name = "temp"
-                ext = "proc"
-                desc = "Processor temperature"
                 type = "METRICTYPE_GAUGE"
                 labels = []
 
@@ -511,3 +498,56 @@ metric_server_port = 7001
 			desc   = "1 if lastDiagName is non-empty, else 0"
 			type   = "METRICTYPE_GAUGE"
 			labels = []
+
+[[stats]]
+    [[stats.sensors]]
+        source = "thermal_zone0"
+        agent  = "thermal_agent"
+        url    = "/sys/class/thermal/thermal_zone0/"
+
+        [[stats.sensors.thermal_zone0.kpi]]
+            name   = "temperature"
+            ext    = "temp"
+            desc   = "CPU thermal zone 0 temperature"
+            unit   = "celsius"
+            type   = "METRICTYPE_GAUGE"
+            labels = []
+
+    [[stats.sensors]]
+        source = "thermal_zone1"
+        agent  = "thermal_agent"
+        url    = "/sys/class/thermal/thermal_zone1/"
+
+        [[stats.sensors.thermal_zone1.kpi]]
+            name   = "temperature"
+            ext    = "temp"
+            desc   = "CPU thermal zone 1 temperature"
+            unit   = "celsius"
+            type   = "METRICTYPE_GAUGE"
+            labels = []
+
+    [[stats.sensors]]
+        source = "thermal_zone2"
+        agent  = "thermal_agent"
+        url    = "/sys/class/thermal/thermal_zone2/"
+
+        [[stats.sensors.thermal_zone2.kpi]]
+            name   = "temperature"
+            ext    = "temp"
+            desc   = "CPU thermal zone 2 temperature"
+            unit   = "celsius"
+            type   = "METRICTYPE_GAUGE"
+            labels = []
+
+    [[stats.sensors]]
+        source = "thermal_zone3"
+        agent  = "thermal_agent"
+        url    = "/sys/class/thermal/thermal_zone3/"
+
+        [[stats.sensors.thermal_zone3.kpi]]
+            name   = "temperature"
+            ext    = "temp"
+            desc   = "CPU thermal zone 3 temperature"
+            unit   = "celsius"
+            type   = "METRICTYPE_GAUGE"
+            labels = []

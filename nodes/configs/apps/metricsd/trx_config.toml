@@ -345,17 +345,18 @@ metric_server_port = 7001
                 labels = []
 
 [[stats]]
-        [[stats.sensors]]
-            source = "tempsensor1"
-            agent = "sysfs_agent"
-            url = "/ukama/configs/metricsd/config/trx/tempsensor1/"
+    [[stats.sensors]]
+        source = "thermal_zone0"
+        agent  = "thermal_agent"
+        url    = "/sys/class/thermal/thermal_zone0/"
 
-        [[stats.sensors.tempsensor1.kpi]]
-                name = "temp"
-                ext = "proc"
-                desc = "Temperature for processor"
-                type = "METRICTYPE_GAUGE"
-                labels = []
+        [[stats.sensors.thermal_zone0.kpi]]
+            name   = "temperature"
+            ext    = "temp"
+            desc   = "Processor temperature"
+            unit   = "celsius"
+            type   = "METRICTYPE_GAUGE"
+            labels = []
 
 [[stats]]
        [[stats.lte]]

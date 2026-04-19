@@ -346,25 +346,6 @@ metric_server_port = 7001
 
 [[stats]]
         [[stats.sensors]]
-            source = "tempsensor"
-            agent = "sysfs_agent"
-            url = "/ukama/configs/metricsd/anode/tempsensor/"
-
-            [[stats.sensors.tempsensor.kpi]]
-                name = "microprocessor"
-                ext = "proc"
-                desc = "Temperature for microprocessor"
-                type = "METRICTYPE_GAUGE"
-                labels = []
-
-            [[stats.sensors.tempsensor.kpi]]
-                name = "pa"
-                ext = "pa"
-                desc = "Temperature for Power amplifier"
-                type = "METRICTYPE_GAUGE"
-                labels = []
-
-        [[stats.sensors]]
             source = "adc"
             agent = "sysfs_agent"
             url = "/ukama/configs/metricsd/anode/adc/"
@@ -577,3 +558,17 @@ metric_server_port = 7001
                 desc   = "FEM2 snapshot timestamp (units from fem.d)"
                 type   = "METRICTYPE_GAUGE"
                 labels = []
+
+[[stats]]
+    [[stats.sensors]]
+        source = "thermal_zone0"
+        agent  = "thermal_agent"
+        url    = "/sys/class/thermal/thermal_zone0/"
+
+        [[stats.sensors.thermal_zone0.kpi]]
+            name   = "temperature"
+            ext    = "temp"
+            desc   = "Microprocessor temperature"
+            unit   = "celsius"
+            type   = "METRICTYPE_GAUGE"
+            labels = []

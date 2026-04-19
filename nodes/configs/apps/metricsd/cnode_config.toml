@@ -650,3 +650,17 @@ metric_server_port = 7001
 			desc   = "Input PoE failure alarm (0=ok, 1=alarm)"
 			type   = "METRICTYPE_GAUGE"
 			labels = []
+
+[[stats]]
+    [[stats.sensors]]
+        source = "thermal_zone0"
+        agent  = "thermal_agent"
+        url    = "/sys/class/thermal/thermal_zone0/"
+
+        [[stats.sensors.thermal_zone0.kpi]]
+            name   = "temperature"
+            ext    = "temp"
+            desc   = "SoC temperature"
+            unit   = "celsius"
+            type   = "METRICTYPE_GAUGE"
+            labels = []
