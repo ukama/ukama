@@ -12,33 +12,35 @@
 #include <stdint.h>
 
 typedef struct {
-	uint64_t	sampleUnixMs;
+    uint64_t    sampleUnixMs;
+    char        board[16];
 
-	char		board[16];
+    int         ok;
+    char        err[128];
 
-	/* LM25066 (if present): input telemetry */
-	int		    haveLm25066;
-	double		inVolts;			/* VIN */
-	double		outVolts;			/* VOUT (after hot-swap) */
-	double		inAmps;				/* IIN (requires RS) */
-	double		inWatts;			/* PIN (requires RS) */
-	double		hsTempC;			/* READ_TEMPERATURE_1 (if used) */
-	uint16_t	statusWord;
-	uint16_t	diagnosticWord;
+    char        severity[16];
+    char        reason[128];
 
-	/* LM75 (if present): board temp */
-	int		    haveLm75;
-	double		boardTempC;
+    int         haveLm25066;
+    double      inVolts;
+    double      outVolts;
+    double      inAmps;
+    double      inWatts;
+    double      hsTempC;
+    uint16_t    statusWord;
+    uint16_t    diagnosticWord;
+    int         assumedDirect;
 
-	/* ADS1015 (if present): raw ADC voltages (as seen at ADC input) */
-	int		    haveAds1015;
-	double		adcVin;				/* channel mapped "vin" */
-	double		adcVpa;				/* channel mapped "vpa" */
-	double		adcAux;				/* channel mapped "aux" */
+    int         haveLm75;
+    double      boardTempC;
 
-	/* basic health */
-	int		ok;
-	char		err[128];
+    int         haveAds1015;
+    double      adcVin;
+    double      adcVpa;
+    double      adcAux;
+
+    double      totalWatts;
+    double      energyWh;
 } PowerMetrics;
 
 #endif

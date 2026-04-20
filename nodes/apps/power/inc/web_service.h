@@ -17,35 +17,30 @@ struct _u_instance;
 struct _u_request;
 struct _u_response;
 
-typedef struct _u_instance  UInst;
-typedef struct _u_request   URequest;
-typedef struct _u_response  UResponse;
+typedef struct _u_instance UInst;
+typedef struct _u_request URequest;
+typedef struct _u_response UResponse;
 
 typedef struct {
-	const Config *config;
-	MetricsStore *store;
+    const Config *config;
+    MetricsStore *store;
 } EpCtx;
 
 int start_web_service(Config *config, UInst *inst, EpCtx *epCtx);
-
 void web_service_stop(struct _u_instance *inst);
 
 int web_service_cb_get_ping(const URequest *request,
                             UResponse *response,
                             void *epConfig);
-
 int web_service_cb_get_version(const URequest *request,
                                UResponse *response,
                                void *epConfig);
-
-int web_service_cb_get_power(const URequest *request,
-                             UResponse *response,
-                             void *epConfig);
-
+int web_service_cb_get_metrics(const URequest *request,
+                               UResponse *response,
+                               void *epConfig);
 int web_service_cb_default(const URequest *request,
                            UResponse *response,
                            void *epConfig);
-
 int web_service_cb_not_allowed(const URequest *request,
                                UResponse *response,
                                void *user_data);

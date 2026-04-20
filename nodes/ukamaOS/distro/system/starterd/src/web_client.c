@@ -15,6 +15,8 @@
 
 #include "usys_log.h"
 #include "usys_mem.h"
+#include "usys_file.h"
+#include "usys_services.h"
 
 static URequest* wc_create_request(const char *url,
                                    const char *method,
@@ -87,102 +89,35 @@ static bool wc_build_url(char *buf,
     return (n > 0 && (size_t)n < buflen);
 }
 
-bool wc_app_ping(Config *config, App *app) {
+static int wc_get_probe_port(App *app) {
 
-    char url[256];
-    URequest *req;
-    UResponse *resp;
-    bool ok;
+    int port;
 
-    req = NULL;
-    resp = NULL;
-    ok = false;
+    port = -1;
 
-    if (!config || !app) return false;
-    if (app->port <= 0) return false;
+    if (!app) return -1;
 
-    if (!wc_build_url(url, sizeof(url), "127.0.0.1", app->port, "/v1/ping")) {
-        return false;
+    /* some apps expose /v1/ping and /v1/version on their admin port,
+     * not on the main app port.
+     */
+    if (strcmp(app->name, "metrics") == 0) {
+        port = usys_find_service_port(SERVICE_METRICS_ADMIN);
+    }
+    else if (strcmp(app->name, "notify") == 0) {
+        port = usys_find_service_port(SERVICE_NOTIFY_ADMIN);
+    }
+    else if (strcmp(app->name, "rlog") == 0) {
+        port = usys_find_service_port(SERVICE_RLOG_ADMIN);
+    }
+    else {
+        port = app->port;
     }
 
-    req = wc_create_request(url, "GET", config->pingTimeoutSec);
-    if (!req) return false;
-
-    if (!wc_send(req, &resp)) {
-        wc_clean(req, NULL);
-        return false;
+    if (port <= 0) {
+        port = app->port;
     }
 
-    if (resp->status == HttpStatus_OK) {
-        ok = true;
-    }
-
-    wc_clean(req, resp);
-    return ok;
-}
-
-bool wc_app_version_matches(Config *config,
-                            App *app,
-                            const char *tag) {
-
-    char url[256];
-    URequest *req;
-    UResponse *resp;
-    bool ok;
-    const char *body;
-    char *copy;
-    char *p;
-    char *end;
-
-    req  = NULL;
-    resp = NULL;
-    ok   = false;
-    body = NULL;
-    copy = NULL;
-
-    if (!config || !app || !tag) return false;
-    if (app->port <= 0) return false;
-
-    if (!wc_build_url(url, sizeof(url), "127.0.0.1", app->port, "/v1/version")) {
-        return false;
-    }
-
-    req = wc_create_request(url, "GET", config->commitTimeoutSec);
-    if (!req) return false;
-
-    if (!wc_send(req, &resp)) {
-        wc_clean(req, NULL);
-        return false;
-    }
-
-    if (resp->status == HttpStatus_OK) {
-        body = resp->binary_body ? (const char *)resp->binary_body : NULL;
-        if (body) {
-            copy = strdup(body);
-            if (copy) {
-                p = copy;
-                while (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') {
-                    p++;
-                }
-
-                end = p + strlen(p);
-                while (end > p &&
-                       (end[-1] == ' ' || end[-1] == '\t' ||
-                        end[-1] == '\r' || end[-1] == '\n')) {
-                    end--;
-                }
-                *end = '\0';
-
-                if (strcmp(p, tag) == 0) {
-                    ok = true;
-                }
-            }
-        }
-    }
-
-    free(copy);
-    wc_clean(req, resp);
-    return ok;
+    return port;
 }
 
 static bool wc_copy_file(const char *srcPath, const char *dstPath) {
@@ -283,6 +218,114 @@ static bool wc_wait_for_available(Config *config,
     }
 
     return false;
+}
+
+bool wc_app_ping(Config *config, App *app) {
+
+    char url[256];
+    URequest *req;
+    UResponse *resp;
+    bool ok;
+    int probePort;
+
+    req       = NULL;
+    resp      = NULL;
+    ok        = false;
+    probePort = -1;
+
+    if (!config || !app) return false;
+
+    probePort = wc_get_probe_port(app);
+    if (probePort <= 0) return false;
+
+    if (!wc_build_url(url, sizeof(url), "127.0.0.1", probePort, "/v1/ping")) {
+        return false;
+    }
+
+    req = wc_create_request(url, "GET", config->pingTimeoutSec);
+    if (!req) return false;
+
+    if (!wc_send(req, &resp)) {
+        wc_clean(req, NULL);
+        return false;
+    }
+
+    if (resp->status == HttpStatus_OK) {
+        ok = true;
+    }
+
+    wc_clean(req, resp);
+    return ok;
+}
+
+bool wc_app_version_matches(Config *config,
+                            App *app,
+                            const char *tag) {
+
+    char url[256];
+    URequest *req;
+    UResponse *resp;
+    bool ok;
+    const char *body;
+    char *copy;
+    char *p;
+    char *end;
+    int probePort;
+
+    req       = NULL;
+    resp      = NULL;
+    ok        = false;
+    body      = NULL;
+    copy      = NULL;
+    probePort = -1;
+
+    if (!config || !app || !tag) return false;
+
+    probePort = wc_get_probe_port(app);
+    if (probePort <= 0) return false;
+
+    if (!wc_build_url(url, sizeof(url), "127.0.0.1", probePort,
+                      "/v1/version")) {
+        return false;
+    }
+
+    req = wc_create_request(url, "GET", config->commitTimeoutSec);
+    if (!req) return false;
+
+    if (!wc_send(req, &resp)) {
+        wc_clean(req, NULL);
+        return false;
+    }
+
+    if (resp->status == HttpStatus_OK) {
+        body = resp->binary_body ? (const char *)resp->binary_body : NULL;
+        if (body) {
+            copy = strdup(body);
+            if (copy) {
+                p = copy;
+                while (*p == ' ' || *p == '\t' ||
+                       *p == '\r' || *p == '\n') {
+                    p++;
+                }
+
+                end = p + strlen(p);
+                while (end > p &&
+                       (end[-1] == ' ' || end[-1] == '\t' ||
+                        end[-1] == '\r' || end[-1] == '\n')) {
+                    end--;
+                }
+                *end = '\0';
+
+                if (strcmp(p, tag) == 0) {
+                    ok = true;
+                }
+            }
+        }
+    }
+
+    free(copy);
+    wc_clean(req, resp);
+    return ok;
 }
 
 bool wc_fetch_package(Config *config,
