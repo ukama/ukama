@@ -501,6 +501,121 @@ metric_server_port = 7001
 			labels = []
 
 [[stats]]
+	[[stats.power]]
+		source = "power"
+		agent  = "power_agent"
+		# url is treated as the PATH for the service endpoint
+		# (agent will resolve port via /etc/services using usys_find_service_port()).
+		url    = "/v1/metrics"
+
+		[[stats.power.power.kpi]]
+			name   = "power_ok"
+			ext    = ""
+			desc   = "Power app health status (1=ok, 0=not ok)"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.power.power.kpi]]
+			name   = "power_total_watts"
+			ext    = ""
+			desc   = "Total measured power in watts"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.power.power.kpi]]
+			name   = "power_energy_wh"
+			ext    = ""
+			desc   = "Accumulated energy in watt-hours"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.power.power.kpi]]
+			name   = "power_board_temp_c"
+			ext    = ""
+			desc   = "Board temperature from LM75 in celsius"
+			unit   = "celsius"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.power.power.kpi]]
+			name   = "power_lm25066_in_volts"
+			ext    = ""
+			desc   = "LM25066 input voltage"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.power.power.kpi]]
+			name   = "power_lm25066_out_volts"
+			ext    = ""
+			desc   = "LM25066 output voltage"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.power.power.kpi]]
+			name   = "power_lm25066_in_amps"
+			ext    = ""
+			desc   = "LM25066 input current"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.power.power.kpi]]
+			name   = "power_lm25066_in_watts"
+			ext    = ""
+			desc   = "LM25066 input power"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.power.power.kpi]]
+			name   = "power_lm25066_temp_c"
+			ext    = ""
+			desc   = "LM25066 hotspot temperature in celsius"
+			unit   = "celsius"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.power.power.kpi]]
+			name   = "power_lm25066_status_word"
+			ext    = ""
+			desc   = "LM25066 status word"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.power.power.kpi]]
+			name   = "power_lm25066_diagnostic_word"
+			ext    = ""
+			desc   = "LM25066 diagnostic word"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.power.power.kpi]]
+			name   = "power_lm25066_assumed_direct"
+			ext    = ""
+			desc   = "LM25066 direct-scaling flag"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.power.power.kpi]]
+			name   = "power_ads1015_adc_vin"
+			ext    = ""
+			desc   = "ADS1015 VIN ADC channel"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.power.power.kpi]]
+			name   = "power_ads1015_adc_vpa"
+			ext    = ""
+			desc   = "ADS1015 VPA ADC channel"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+		[[stats.power.power.kpi]]
+			name   = "power_ads1015_adc_aux"
+			ext    = ""
+			desc   = "ADS1015 AUX ADC channel"
+			type   = "METRICTYPE_GAUGE"
+			labels = []
+
+[[stats]]
     [[stats.sensors]]
         source = "thermal_zone0"
         agent  = "thermal_agent"
