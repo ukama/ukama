@@ -214,7 +214,7 @@ int config_load_from_env(Config *cfg) {
 
     memset(cfg, 0, sizeof(*cfg));
 
-    cfg->listenAddr = dup_env("POWER_LISTEN_ADDR", "0.0.0.0");
+    cfg->listenAddr = dup_env("POWER_LISTEN_ADDR", "127.0.0.1");
     cfg->boardName  = dup_env("POWER_BOARD", "unknown");
 
     cfg->listenPort = usys_find_service_port(SERVICE_NAME);

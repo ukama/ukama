@@ -43,9 +43,9 @@ static void set_log_level(char *slevel) {
 
     int ilevel = USYS_LOG_TRACE;
 
-    if (!strcmp(slevel, "TRACE")) ilevel = USYS_LOG_TRACE;
+    if (!strcmp(slevel, "TRACE"))      ilevel = USYS_LOG_TRACE;
     else if (!strcmp(slevel, "DEBUG")) ilevel = USYS_LOG_DEBUG;
-    else if (!strcmp(slevel, "INFO")) ilevel = USYS_LOG_INFO;
+    else if (!strcmp(slevel, "INFO"))  ilevel = USYS_LOG_INFO;
 
     usys_log_set_level(ilevel);
 }
@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
 
     usys_log_set_service(SERVICE_NAME);
 
-    signal(SIGINT, handle_term);
+    signal(SIGINT,  handle_term);
     signal(SIGTERM, handle_term);
 
     while (1) {

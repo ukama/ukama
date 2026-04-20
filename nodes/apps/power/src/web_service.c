@@ -8,6 +8,8 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 
 #include "powerd.h"
 #include "web_service.h"
@@ -20,6 +22,28 @@
 #include "usys_log.h"
 
 #include "version.h"
+
+static int build_bind_addr(const char *ip,
+                           uint16_t port,
+                           struct sockaddr_in *sa) {
+
+    if (!sa) return USYS_FALSE;
+
+    memset(sa, 0, sizeof(*sa));
+    sa->sin_family = AF_INET;
+    sa->sin_port = htons(port);
+
+    if (!ip || !*ip || !strcmp(ip, "0.0.0.0")) {
+        sa->sin_addr.s_addr = htonl(INADDR_ANY);
+        return USYS_TRUE;
+    }
+
+    if (inet_pton(AF_INET, ip, &sa->sin_addr) != 1) {
+        return USYS_FALSE;
+    }
+
+    return USYS_TRUE;
+}
 
 static void setup_unsupported_methods(UInst *instance,
                                       char *allowedMethod,
@@ -176,20 +200,51 @@ int web_service_cb_not_allowed(const URequest *request,
 
 int start_web_service(Config *config, UInst *inst, EpCtx *ctx) {
 
-    if (!config || !inst || !ctx) return USYS_FALSE;
+    int rc;
+    struct sockaddr_in bindAddr;
 
-    if (ulfius_init_instance(inst,
-                             config->listenPort,
-                             config->listenAddr,
-                             NULL) != U_OK) {
+    if (!config || !inst || !ctx) {
+        usys_log_error("web_service: invalid args");
         return USYS_FALSE;
     }
 
-    u_map_put(inst->default_headers, "Access-Control-Allow-Origin", "*");
+    if (!build_bind_addr(config->listenAddr, config->listenPort, &bindAddr)) {
+        usys_log_error("web_service: invalid bind address '%s'",
+                       config->listenAddr ? config->listenAddr : "(null)");
+        return USYS_FALSE;
+    }
+
+    usys_log_debug("web_service: init addr=%s port=%d",
+                   config->listenAddr ? config->listenAddr : "(null)",
+                   config->listenPort);
+
+    rc = ulfius_init_instance(inst,
+                              config->listenPort,
+                              &bindAddr,
+                              NULL);
+    if (rc != U_OK) {
+        usys_log_error("web_service: ulfius_init_instance failed rc=%d",
+                       rc);
+        return USYS_FALSE;
+    }
+
+    if (inst->default_headers) {
+        rc = u_map_put(inst->default_headers,
+                       "Access-Control-Allow-Origin",
+                       "*");
+        if (rc != U_OK) {
+            usys_log_error("web_service: u_map_put failed rc=%d", rc);
+        }
+    }
+
+    usys_log_debug("web_service: adding endpoints");
     setup_webservice_endpoints(inst, ctx);
 
-    if (ulfius_start_framework(inst) != U_OK) {
-        ulfius_stop_framework(inst);
+    usys_log_debug("web_service: starting framework");
+    rc = ulfius_start_framework(inst);
+    if (rc != U_OK) {
+        usys_log_error("web_service: ulfius_start_framework failed rc=%d",
+                       rc);
         ulfius_clean_instance(inst);
         return USYS_FALSE;
     }
