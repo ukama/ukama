@@ -27,5 +27,6 @@ int controllerd_collect_stat(MetricsCatConfig *cfgStat,
 int switchd_collect_stat(MetricsCatConfig *cfgStat,
                          metricAddFunc addFunc);
 int femd_collect_stat(MetricsCatConfig *cfgStat, metricAddFunc addFunc);
+int power_collect_stat(MetricsCatConfig *cfgStat, metricAddFunc addFunc);
 
 #endif /* AGENTS_H_ */

@@ -49,6 +49,8 @@ static AgentMap agentMap[] = {
     {.type = "controller_agent",  .agentHandler = controllerd_collector},
     {.type = "switchd_agent",     .agentHandler = switchd_collector},
     {.type = "switch_agent",      .agentHandler = switchd_collector},
+    {.type = "power_agent",       .agentHandler = power_collector},
+    {.type = "powerd_agent",      .agentHandler = power_collector},
 };
 
 static CollectorFxn get_agent_handler(char *agent) {
@@ -153,6 +155,12 @@ int switchd_collector(MetricsCatConfig *stat) {
 
     usys_log_trace("switchd agent started for source %s", stat->source);
     return switchd_collect_stat(stat, metric_server_add_kpi_data);
+}
+
+int power_collector(MetricsCatConfig *stat) {
+
+    usys_log_trace("power agent started for source %s", stat->source);
+    return power_collect_stat(stat, metric_server_add_kpi_data);
 }
 
 int collector(char *cfg) {

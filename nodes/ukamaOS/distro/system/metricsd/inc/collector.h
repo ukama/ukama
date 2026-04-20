@@ -25,6 +25,7 @@ int backhaul_collector(MetricsCatConfig *stat);
 int femd_collector(MetricsCatConfig *stat);
 int controllerd_collector(MetricsCatConfig *stat);
 int switchd_collector(MetricsCatConfig *stat);
+int power_collector(MetricsCatConfig *stat);
 
 int collector(char *cfg);
 void collector_exit(int signum);
