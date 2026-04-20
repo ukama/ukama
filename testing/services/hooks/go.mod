@@ -1,10 +1,8 @@
 module github.com/ukama/ukama/testing/services/hooks
 
-go 1.24.0
+go 1.25.0
 
 replace github.com/ukama/ukama/systems/common => ../../../systems/common
-
-replace github.com/ukama/ukama/testing/services/hooks => ./
 
 require (
 	github.com/go-co-op/gocron v1.37.0
