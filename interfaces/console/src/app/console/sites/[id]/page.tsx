@@ -8,10 +8,10 @@
 'use client';
 
 import {
-  NodeConnectivityEnum,
+  Node,
   NodeStateEnum,
   SiteDto,
-  useGetNodesLazyQuery,
+  useGetNodesForSiteLazyQuery,
   useGetSitesQuery,
   useToggleInternetSwitchMutation,
 } from '@/client/graphql/generated';
@@ -103,7 +103,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const { id } = params;
   const router = useRouter();
   const [activeSite, setActiveSite] = useState<SiteDto>(defaultSite);
-  const [nodeIds, setNodeIds] = useState<string[]>([]);
+  const [nodes, setNodes] = useState<Node[]>([]);
   const [nodesFetched, setNodesFetched] = useState(false);
   const [isDataReady, setIsDataReady] = useState(false);
   const [activeSubscribers, setActiveSubscribers] = useState<number>(0);
@@ -137,7 +137,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     metricUrl: env.METRIC_URL,
     subscriptionClient: subscriptionClient!,
     activeGraphType: activeView.graphType,
-    nodeIds,
+    nodeIds: nodes.map((node) => node.id),
     nodesFetched,
   });
 
@@ -299,20 +299,16 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     },
   });
 
-  const [fetchNodesForSite] = useGetNodesLazyQuery({
+  const [fetchNodesForSite] = useGetNodesForSiteLazyQuery({
     fetchPolicy: 'cache-first',
     onCompleted: (data) => {
-      const nodeIds = data.getNodes.nodes
-        .filter(
-          (node) =>
-            node.latitude !== null &&
-            node.site.siteId === activeSite.id &&
-            node.longitude !== null &&
-            node.status.connectivity === NodeConnectivityEnum.Online &&
-            node.status.state === NodeStateEnum.Configured,
-        )
-        .map((node) => node.id);
-      setNodeIds(nodeIds);
+      const n = data.getNodesForSite.nodes.map((node) =>
+        node.site.siteId === activeSite.id &&
+        node.status.state === NodeStateEnum.Configured
+          ? node
+          : null,
+      );
+      setNodes(n.filter((node) => node !== null) as Node[]);
       setNodesFetched(true);
     },
   });
@@ -399,17 +395,14 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       setNodesFetched(false);
       fetchNodesForSite({
         variables: {
-          data: {
-            state: NodeStateEnum.Configured,
-            siteId: activeSite.id,
-          },
+          siteId: activeSite.id,
         },
       });
     }
   }, [activeSite.id, fetchNodesForSite]);
 
   const getInitialNodeUptimes = (): Record<string, number> => {
-    if (!statData?.getSiteStat?.metrics || !nodeIds || nodeIds.length === 0) {
+    if (!statData?.getSiteStat?.metrics || !nodes || nodes.length === 0) {
       return {};
     }
 
@@ -488,7 +481,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
           <SiteInfo
             selectedSite={activeSite}
             address={CurrentSiteaddress}
-            nodeIds={nodeIds}
+            nodeIds={nodes.map((node) => node.id)}
           />
         </Grid2>
         <Grid2
@@ -529,7 +522,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
             metricsLoading={metricsLoading}
             onComponentClick={handleViewChange}
             onSwitchChange={handleSwitchChange}
-            nodeIds={nodeIds}
+            nodes={nodes}
             initialNodeUptimes={initialNodeUptimes}
           />
         </Grid2>

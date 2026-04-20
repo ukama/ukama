@@ -23,30 +23,12 @@ void metric_server_free_kpi(KPIConfig *kpi) {
         return;
     }
 
-    switch (kpi->type) {
-    case METRICTYPE_COUNTER:
-        if (kpi->registry->counter != NULL) {
-            prom_counter_destroy(kpi->registry->counter);
-        }
-        break;
-
-    case METRICTYPE_GAUGE:
-        if (kpi->registry->gauge != NULL) {
-            prom_gauge_destroy(kpi->registry->gauge);
-        }
-        break;
-
-    case METRICTYPE_HISTOGRAM:
-        if (kpi->registry->histogram != NULL) {
-            prom_histogram_destroy(kpi->registry->histogram);
-        }
-        break;
-
-    default:
-        usys_log_error("invalid kpi type %d for %s", kpi->type, kpi->name);
-        break;
-    }
-
+    /*
+     * Registered Prometheus metrics are owned by the collector registry.
+     * They must be destroyed only by prom_collector_registry_destroy().
+     *
+     * We only free our wrapper object here.
+     */
     free(kpi->registry);
     kpi->registry = NULL;
 }
@@ -68,6 +50,8 @@ int metric_server_register_kpi(KPIConfig *kpi) {
                                  kpi->numLabels,
                                  (const char **)kpi->labels));
         if (kpi->registry->counter == NULL) {
+            free(kpi->registry);
+            kpi->registry = NULL;
             return RETURN_NOTOK;
         }
         break;
@@ -78,6 +62,8 @@ int metric_server_register_kpi(KPIConfig *kpi) {
                 prom_gauge_new(kpi->fqname, kpi->desc, kpi->numLabels,
                                (const char **)kpi->labels));
         if (kpi->registry->gauge == NULL) {
+            free(kpi->registry);
+            kpi->registry = NULL;
             return RETURN_NOTOK;
         }
         break;
@@ -89,12 +75,16 @@ int metric_server_register_kpi(KPIConfig *kpi) {
                                    kpi->numLabels,
                                    (const char **)kpi->labels));
         if (kpi->registry->histogram == NULL) {
+            free(kpi->registry);
+            kpi->registry = NULL;
             return RETURN_NOTOK;
         }
         break;
 
     default:
         usys_log_error("invalid kpi type %d for %s", kpi->type, kpi->name);
+        free(kpi->registry);
+        kpi->registry = NULL;
         return RETURN_NOTOK;
     }
 

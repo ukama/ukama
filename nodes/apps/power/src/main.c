@@ -8,6 +8,8 @@
 
 #include <signal.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 
 #include "powerd.h"
 #include "config.h"
@@ -24,8 +26,9 @@
 static volatile int gStop = 0;
 
 static void handle_term(int signum) {
+
     (void)signum;
-    usys_log_info("Terminate signal.");
+    usys_log_info("terminate signal");
     gStop = 1;
 }
 
@@ -52,29 +55,32 @@ static void usage(void) {
     usys_puts("Usage: power-monitor [options]");
     usys_puts("Options:");
     usys_puts("-h, --help                    Help menu");
-    usys_puts("-l, --logs <TRACE|DEBUG|INFO> Log level for the process");
+    usys_puts("-l, --logs <TRACE|DEBUG|INFO> Log level");
     usys_puts("-v, --version                 Software version");
 }
 
 int main(int argc, char **argv) {
 
-    int opt, optIdx;
+    int opt;
+    int optIdx;
     char *debug = DEF_LOG_LEVEL;
 
     Config config = {0};
-    SampleLoop sampler;
+    SampleLoop sampler = {0};
     MetricsStore store = {0};
     struct _u_instance inst;
     EpCtx ctx = {0};
 
+    memset(&inst, 0, sizeof(inst));
+
     usys_log_set_service(SERVICE_NAME);
-    usys_log_info("starting %s", SERVICE_NAME);
 
     signal(SIGINT,  handle_term);
     signal(SIGTERM, handle_term);
 
     while (1) {
-        opt = 0; optIdx = 0;
+        opt = 0;
+        optIdx = 0;
         opt = usys_getopt_long(argc, argv, "vh:l:", longOptions, &optIdx);
         if (opt == -1) break;
 
@@ -94,48 +100,53 @@ int main(int argc, char **argv) {
             break;
         default:
             usage();
-            usys_exit(0);
+            usys_exit(1);
         }
     }
 
-	if (config_load_from_env(&config) != 0) {
-		usys_log_error("Failed to load required config");
+    usys_log_info("starting %s", SERVICE_NAME);
+
+    if (config_load_from_env(&config) != 0) {
+        usys_log_error("failed to load config");
         usys_exit(1);
-	}
+    }
+
+    config_log(&config);
 
     if (metrics_store_init(&store) != USYS_TRUE) {
-		usys_log_error("Failed to initialize metrics store");
-		config_free(&config);
+        usys_log_error("failed to initialize metrics store");
+        config_free(&config);
         usys_exit(1);
-	}
+    }
 
     ctx.config = &config;
-	ctx.store  = &store;
+    ctx.store = &store;
 
     if (!start_web_service(&config, &inst, &ctx)) {
-		usys_log_error("Failed to start the web services");
-		metrics_store_free(&store);
-		config_free(&config);
+        usys_log_error("failed to start web service");
+        metrics_store_free(&store);
+        config_free(&config);
         usys_exit(1);
-	}
+    }
 
-	if (!sample_loop_start(&sampler, &config, &store)) {
-		usys_log_error("failed to start the sampling loop");
+    if (!sample_loop_start(&sampler, &config, &store)) {
+        usys_log_error("failed to start sample loop");
         web_service_stop(&inst);
-		metrics_store_free(&store);
-		config_free(&config);
-		usys_exit(1);
-	}
+        metrics_store_free(&store);
+        config_free(&config);
+        usys_exit(1);
+    }
 
-    pause();
+    while (!gStop) {
+        sleep(1);
+    }
 
-	usys_log_info("stopping %s", SERVICE_NAME);
+    usys_log_info("stopping %s", SERVICE_NAME);
 
-	web_service_stop(&inst);
-	sample_loop_stop(&sampler);
+    sample_loop_stop(&sampler);
+    web_service_stop(&inst);
+    metrics_store_free(&store);
+    config_free(&config);
 
-	metrics_store_free(&store);
-	config_free(&config);
-
-	return 0;
+    return 0;
 }

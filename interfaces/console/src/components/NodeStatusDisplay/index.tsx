@@ -5,22 +5,19 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import { Node, NodeConnectivityEnum } from '@/client/graphql/generated';
 import { colors } from '@/theme';
-import { duration } from '@/utils';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import { Box, Button, Paper, Stack, Typography } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 
 interface NodeStatusDisplayProps {
-  nodeIds: string[];
+  nodes: Node[];
   nodeUptimes: Record<string, number>;
 }
 
-const NodeStatusDisplay: React.FC<NodeStatusDisplayProps> = ({
-  nodeIds,
-  nodeUptimes,
-}) => {
+const NodeStatusDisplay: React.FC<NodeStatusDisplayProps> = ({ nodes }) => {
   const router = useRouter();
 
   return (
@@ -34,11 +31,12 @@ const NodeStatusDisplay: React.FC<NodeStatusDisplayProps> = ({
       }}
     >
       <Stack spacing={4}>
-        {nodeIds.map((id) => {
-          // const isNodeDown = uptime <= 0;
+        {nodes.map((node) => {
+          const isNodeDown =
+            node.status.connectivity !== NodeConnectivityEnum.Online;
           return (
             <Paper
-              key={id}
+              key={node.id}
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -50,31 +48,20 @@ const NodeStatusDisplay: React.FC<NodeStatusDisplayProps> = ({
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <FiberManualRecordIcon
                   sx={{
-                    // color: isNodeDown ? 'red' : colors.green,
-                    color: colors.green,
+                    color: isNodeDown ? 'red' : colors.green,
                     mr: 2,
                     fontSize: 24,
                   }}
                 />
 
                 <Typography variant="h6" fontWeight={500}>
-                  {`${id} is online and well`}
+                  {`${node.id} ${isNodeDown ? 'is offline' : 'is online and well'}`}
                 </Typography>
               </Box>
 
-              <Typography
-                variant="body1"
-                sx={{
-                  ml: 4,
-                  mb: 3,
-                  color: colors.black70,
-                }}
-              >
-                {`Node health has been up for ${duration(nodeUptimes[id] ?? 0)}`}
-              </Typography>
-
               <Button
                 variant="text"
+                disabled={isNodeDown}
                 sx={{
                   ml: 4,
                   fontWeight: 'bold',
@@ -82,7 +69,7 @@ const NodeStatusDisplay: React.FC<NodeStatusDisplayProps> = ({
                   color: colors.primaryMain,
                 }}
                 onClick={() => {
-                  router.push(`/console/nodes/${id}`);
+                  router.push(`/console/nodes/${node.id}`);
                 }}
               >
                 VIEW NODE

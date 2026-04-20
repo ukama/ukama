@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 
+#include "config.h"
 #include "metrics_store.h"
 #include "power_kpi.h"
 #include "drv_lm75.h"
@@ -18,17 +19,17 @@
 #include "drv_lm25066.h"
 
 typedef struct {
-	MetricsStore	*store;
-	PowerCal	*cal;        /* may be NULL */
+    MetricsStore *store;
+    const Config *config;
+    PowerCal     *cal;
 
-	Lm75		*lm75_board;
+    Lm75         *lm75_board;
+    Ads1015      *ads1015;
+    Lm25066      *lm25066;
 
-	/* Optional devices depending on board */
-	Ads1015		*ads1015;
-	Lm25066		*lm25066;
-
+    int          mockMode;
 } PowerCollectorCtx;
 
 int power_collect_once(PowerCollectorCtx *c, uint64_t now_ms);
 
-#endif /* __POWER_COLLECTOR_H__ */
+#endif

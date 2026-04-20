@@ -139,23 +139,17 @@ build_apps_pkg() {
     local pkgs_stage=""
     local found_pkgs=0
     local pkg=""
-    local base=""
-    local staged_name=""
 
     update_ukama_os_env
 
     builder_root="${UKAMA_ROOT}/builder"
 
-    #
     # build-all-apps.sh writes packages here
-    #
     pkgs_src="${UKAMA_ROOT}/build/pkgs"
 
-    #
     # image.c expects ./pkgs/<name>-<version>.tar.gz
     # relative to the current vnode build working directory.
     # Use CWD (captured at script startup) so it matches the caller.
-    #
     pkgs_stage="${CWD}/pkgs"
 
     [ -d "${builder_root}" ] || die "Failed to find builder root at: ${builder_root}"
@@ -183,10 +177,7 @@ build_apps_pkg() {
     for pkg in "${pkgs_src}"/*.tar.gz; do
         [ -f "${pkg}" ] || continue
 
-        base="$(basename "${pkg}")"
-        staged_name="${base/_latest.tar.gz/-latest.tar.gz}"
-
-        cp -f "${pkg}" "${pkgs_stage}/${staged_name}"
+        cp -f "${pkg}" "${pkgs_stage}/"
         found_pkgs=1
     done
     shopt -u nullglob
@@ -360,7 +351,15 @@ setup_ukama_dirs() {
     : "${BUILD_DIR:?BUILD_DIR not set}"
     : "${UKAMA_OS:?UKAMA_OS not set}"
 
-    mkdir -p "${BUILD_DIR}/ukama"/{configs,apps/lib,apps/pkgs,apps/rootfs,apps/registry,etc}
+    mkdir -p "${BUILD_DIR}/ukama/configs" \
+          "${BUILD_DIR}/ukama/apps/lib" \
+          "${BUILD_DIR}/ukama/apps/pkgs" \
+          "${BUILD_DIR}/ukama/apps/rootfs" \
+          "${BUILD_DIR}/ukama/apps/registry" \
+          "${BUILD_DIR}/ukama/etc"
+
+    mkdir -p "${BUILD_DIR}/ukama/state/starter" \
+          "${BUILD_DIR}/ukama/init/starter"
 
     # Metadata
     echo "${nodeid}" > "${BUILD_DIR}/ukama/nodeid"

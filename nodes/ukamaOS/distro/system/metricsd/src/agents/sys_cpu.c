@@ -183,7 +183,11 @@ int sys_read_and_push_cpu_usage(MetricsCatConfig *cpuCfg,
 
   unsigned long long didle = idle - old_idle;
 
-  double cpu_per = ((double)(dtotal - didle)/dtotal)*100;
+  double cpu_per = 0.0;
+
+  if (dtotal > 0) {
+    cpu_per = ((double)(dtotal - didle) / (double)dtotal) * 100.0;
+  }
 
   memcpy(&pCpuStat,cpuStat, sizeof(SysCPUMetrics));
 
@@ -284,17 +288,27 @@ int sys_cpu_push_stat_to_metric_server(MetricsCatConfig *cpuCfg,
     usys_log_error("Failed to collect cpu_usage kpi info.");
   }
 
-  /* Start Collecting other KPI */
   for (int idx = 0; idx < cpuCfg->kpiCount; idx++) {
     KPIConfig *kpi = &(cpuCfg->kpi[idx]);
+
+    if ((kpi == NULL) || (kpi->name == NULL)) {
+      continue;
+    }
+
+    if (!strcmp(kpi->name, "cores") ||
+        !strcmp(kpi->name, "usage") ||
+        !strcmp(kpi->name, "temperature")) {
+      continue;
+    }
 
     if (sys_cpu_get_kpi_value(kpi, cpuStat, &val) != RETURN_OK) {
       continue;
     }
 
-    /* Add KPI to server*/
-    double castVal = (double)val;
-    addFunc(kpi, &castVal);
+    {
+      double castVal = (double)val;
+      addFunc(kpi, &castVal);
+    }
   }
 
   usys_log_trace("CPU KPI pushed to server.");

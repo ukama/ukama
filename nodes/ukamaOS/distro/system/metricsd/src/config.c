@@ -56,6 +56,30 @@ static char *read_str_value(toml_table_t *tab, char *key) {
     return value;
 }
 
+static char *read_opt_str_value(toml_table_t *tab, char *key) {
+
+    int len            = 0;
+    char *value        = NULL;
+    toml_datum_t str   = toml_string_in(tab, key);
+
+    if (!str.ok) {
+        return NULL;
+    }
+
+    len = strlen(str.u.s);
+    usys_log_trace("string key=%s value=%s length=%d", key, str.u.s, len);
+
+    value = calloc(len + 1, sizeof(char));
+    if (value != NULL) {
+        memcpy(value, str.u.s, len);
+        value[len] = '\0';
+    }
+
+    free(str.u.s);
+
+    return value;
+}
+
 static int read_int_value(toml_table_t *tab, char *key) {
 
     toml_datum_t val = toml_int_in(tab, key);
@@ -199,20 +223,30 @@ static MetricsConfig *alloc_stat_cfg(int count) {
     return calloc(count, sizeof(MetricsConfig));
 }
 
-static void lower_string(char *string) {
+static void copy_lower(char *dst, size_t size, char *src) {
 
-    int idx = 0;
+    size_t i = 0;
 
-    if (string == NULL) {
+    if ((dst == NULL) || (size == 0)) {
         return;
     }
 
-    while (string[idx] != '\0') {
-        if ((string[idx] >= 'A') && (string[idx] <= 'Z')) {
-            string[idx] = string[idx] + 32;
-        }
-        idx++;
+    dst[0] = '\0';
+
+    if (src == NULL) {
+        return;
     }
+
+    while ((src[i] != '\0') && (i < (size - 1))) {
+        if ((src[i] >= 'A') && (src[i] <= 'Z')) {
+            dst[i] = src[i] + 32;
+        } else {
+            dst[i] = src[i];
+        }
+        i++;
+    }
+
+    dst[i] = '\0';
 }
 
 static char *set_fqkname(char *node,
@@ -227,49 +261,59 @@ static char *set_fqkname(char *node,
     char *name                               = NULL;
     char fqkn[MAX_KPI_KEY_NAME_LENGTH]       = {'\0'};
     char extKpiName[MAX_KPI_KEY_NAME_LENGTH] = {'\0'};
+    char nodeName[MAX_KPI_KEY_NAME_LENGTH]   = {'\0'};
+    char catName[MAX_KPI_KEY_NAME_LENGTH]    = {'\0'};
+    char srcName[MAX_KPI_KEY_NAME_LENGTH]    = {'\0'};
+    char kpiName[MAX_KPI_KEY_NAME_LENGTH]    = {'\0'};
+    char unitName[MAX_KPI_KEY_NAME_LENGTH]   = {'\0'};
+    char extName[MAX_KPI_KEY_NAME_LENGTH]    = {'\0'};
+    char srcWithRange[MAX_KPI_KEY_NAME_LENGTH] = {'\0'};
 
-    lower_string(node);
-    lower_string(category);
-    lower_string(source);
-    lower_string(kpi);
-    lower_string(unit);
+    copy_lower(nodeName, sizeof(nodeName), node);
+    copy_lower(catName, sizeof(catName), category);
+    copy_lower(srcName, sizeof(srcName), source);
+    copy_lower(kpiName, sizeof(kpiName), kpi);
+    copy_lower(unitName, sizeof(unitName), unit);
+    copy_lower(extName, sizeof(extName), ext);
 
-    if ((ext != NULL) && (ext[0] != '\0')) {
-        lower_string(ext);
+    if (unitName[0] != '\0') {
+        len = snprintf(extKpiName, sizeof(extKpiName), "%s%s%s",
+                       kpiName, TAG_SEP, unitName);
     } else {
-        ext = NULL;
+        len = snprintf(extKpiName, sizeof(extKpiName), "%s", kpiName);
     }
 
-    if ((unit != NULL) && (unit[0] != '\0')) {
-        snprintf(extKpiName, sizeof(extKpiName), "%s%s%s",
-                 kpi, TAG_SEP, unit);
-    } else {
-        snprintf(extKpiName, sizeof(extKpiName), "%s", kpi);
+    if ((len < 0) || (len >= (int)sizeof(extKpiName))) {
+        return NULL;
     }
 
     if (range < 0) {
-        if (ext != NULL) {
-            len = snprintf(fqkn, sizeof(fqkn), "%s%s%s%s%s%s%s%s%s",
-                           node, TAG_SEP, category, TAG_SEP, source,
-                           TAG_SEP, ext, TAG_SEP, extKpiName);
-        } else {
-            len = snprintf(fqkn, sizeof(fqkn), "%s%s%s%s%s%s%s",
-                           node, TAG_SEP, category, TAG_SEP, source,
-                           TAG_SEP, extKpiName);
-        }
+        len = snprintf(srcWithRange, sizeof(srcWithRange), "%s", srcName);
     } else {
-        if (ext != NULL) {
-            len = snprintf(fqkn, sizeof(fqkn), "%s%s%s%s%s%d%s%s%s%s%s",
-                           node, TAG_SEP, category, TAG_SEP, source,
-                           range, TAG_SEP, ext, TAG_SEP, extKpiName);
-        } else {
-            len = snprintf(fqkn, sizeof(fqkn), "%s%s%s%s%s%d%s%s",
-                           node, TAG_SEP, category, TAG_SEP, source,
-                           range, TAG_SEP, extKpiName);
-        }
+        len = snprintf(srcWithRange, sizeof(srcWithRange), "%s%d",
+                       srcName, range);
     }
 
-    if (len < 0) {
+    if ((len < 0) || (len >= (int)sizeof(srcWithRange))) {
+        return NULL;
+    }
+
+    if (extName[0] != '\0') {
+        len = snprintf(fqkn, sizeof(fqkn), "%s%s%s%s%s%s%s%s%s",
+                       nodeName, TAG_SEP,
+                       catName, TAG_SEP,
+                       srcWithRange, TAG_SEP,
+                       extName, TAG_SEP,
+                       extKpiName);
+    } else {
+        len = snprintf(fqkn, sizeof(fqkn), "%s%s%s%s%s%s%s",
+                       nodeName, TAG_SEP,
+                       catName, TAG_SEP,
+                       srcWithRange, TAG_SEP,
+                       extKpiName);
+    }
+
+    if ((len < 0) || (len >= (int)sizeof(fqkn))) {
         return NULL;
     }
 
@@ -413,9 +457,9 @@ static int toml_parse_kpi_table(char *category,
     int ret = RETURN_NOTOK;
 
     kpi->name   = read_str_value(tabKpi, TAG_NAME);
-    kpi->ext    = read_str_value(tabKpi, TAG_EXT);
+    kpi->ext    = read_opt_str_value(tabKpi, TAG_EXT);
     kpi->desc   = read_str_value(tabKpi, TAG_DESC);
-    kpi->unit   = read_str_value(tabKpi, TAG_UNIT);
+    kpi->unit   = read_opt_str_value(tabKpi, TAG_UNIT);
     kpi->type   = read_metric_type(tabKpi);
     kpi->labels = read_labels(&kpi->numLabels, tabKpi);
 

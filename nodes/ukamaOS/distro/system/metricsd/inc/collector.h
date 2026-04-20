@@ -18,12 +18,14 @@ int sysfs_collector(MetricsCatConfig *stat);
 int cpu_collector(MetricsCatConfig *stat);
 int memory_collector(MetricsCatConfig *stat);
 int network_collector(MetricsCatConfig *stat);
+int thermal_collector(MetricsCatConfig *stat);
 int ssd_collector(MetricsCatConfig *stat);
 int generic_stat_collector(MetricsCatConfig *stat);
 int backhaul_collector(MetricsCatConfig *stat);
 int femd_collector(MetricsCatConfig *stat);
 int controllerd_collector(MetricsCatConfig *stat);
 int switchd_collector(MetricsCatConfig *stat);
+int power_collector(MetricsCatConfig *stat);
 
 int collector(char *cfg);
 void collector_exit(int signum);

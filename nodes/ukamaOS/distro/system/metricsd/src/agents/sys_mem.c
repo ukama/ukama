@@ -157,11 +157,11 @@ int sys_mem_collect_stat(MetricsCatConfig *cfgStat, metricAddFunc addFunc) {
             usys_log_error("failed to add memory stats %s to metric server",
                            MEM_SOURCE_SWAP);
             ret = RETURN_NOTOK;
-        } else {
-            usys_log_error("failed to find memory stats source %s",
-                           cfgStat->source);
-            ret = RETURN_NOTOK;
         }
+    } else {
+        usys_log_error("failed to find memory stats source %s",
+                       cfgStat->source);
+        ret = RETURN_NOTOK;
     }
 
     free(memStat);

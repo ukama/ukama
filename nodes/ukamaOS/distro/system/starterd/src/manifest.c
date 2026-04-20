@@ -6,17 +6,22 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <jansson.h>
+
 #include "manifest.h"
 #include "space.h"
 #include "app.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include <jansson.h>
-
 #include "usys_log.h"
+#include "usys_services.h"
+#include "usys_api.h"
+#include "usys_file.h"
+
+/* forward decleration */
+static void m_free_app(App *a);
 
 static bool m_is_valid_name(const char *s) {
 
@@ -137,6 +142,7 @@ static App* m_parse_app(const char *spaceName, json_t *j) {
     const char *tag;
     const char *cmd;
     const char *workdir;
+    int svcPort;
 
     if (!json_is_object(j)) return NULL;
 
@@ -166,16 +172,22 @@ static App* m_parse_app(const char *spaceName, json_t *j) {
     a = calloc(1, sizeof(*a));
     if (!a) return NULL;
 
-    a->space = strdup(spaceName);
-    a->name  = strdup(name);
-    a->tag   = strdup(tag);
-    a->cmd   = strdup(cmd);
+    a->space   = strdup(spaceName);
+    a->name    = strdup(name);
+    a->tag     = strdup(tag);
+    a->cmd     = strdup(cmd);
     a->workdir = workdir ? strdup(workdir) : NULL;
+
+    if (!a->space || !a->name || !a->tag || !a->cmd ||
+        (workdir && !a->workdir)) {
+        m_free_app(a);
+        return NULL;
+    }
 
     v = json_object_get(j, "argv");
     a->argv = m_parse_str_array(v, &a->argc);
     if (!a->argv) {
-        a->argv = calloc(2, sizeof(char*));
+        a->argv = calloc(2, sizeof(char *));
         if (a->argv) {
             a->argv[0] = strdup(cmd);
             a->argv[1] = NULL;
@@ -183,17 +195,36 @@ static App* m_parse_app(const char *spaceName, json_t *j) {
         }
     }
 
+    if (!a->argv) {
+        m_free_app(a);
+        return NULL;
+    }
+
     v = json_object_get(j, "env");
     a->envp = m_parse_env_object(v, &a->envc);
 
-    v = json_object_get(j, "port");
-    a->port = json_is_integer(v) ? (int)json_integer_value(v) : 0;
+    svcPort = usys_find_service_port(a->name);
+    if (svcPort > 0) {
+        a->port = svcPort;
+    } else {
+        v = json_object_get(j, "port");
+        a->port = json_is_integer(v) ? (int)json_integer_value(v) : 0;
+        if (a->port <= 0) {
+            usys_log_warn("manifest: app %s has no service port and no manifest port",
+                          a->name);
+        }
+    }
 
     a->state        = APP_STATE_STOPPED;
     a->installState = INSTALL_STATE_NONE;
-    a->pid  = -1;
-    a->pgid = -1;
-    a->lastGoodTag = strdup(tag);
+    a->pid          = -1;
+    a->pgid         = -1;
+    a->lastGoodTag  = strdup(tag);
+
+    if (!a->lastGoodTag) {
+        m_free_app(a);
+        return NULL;
+    }
 
     return a;
 }

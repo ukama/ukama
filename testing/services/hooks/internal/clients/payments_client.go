@@ -40,7 +40,7 @@ func NewPaymentsClient(h string) *paymentsClient {
 	return &paymentsClient{
 		u: u,
 		R: client.NewResty(client.WithError(&Err{}),
-			client.WithDebug(), client.WithContentTypeJSON()),
+			client.WithDebug(true), client.WithContentTypeJSON()),
 	}
 }
 

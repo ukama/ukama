@@ -338,6 +338,9 @@ export class GetMetricBySiteInput {
   @Field()
   to: number;
 
+  @Field(() => [String], { nullable: true })
+  nodeIds?: string[];
+
   @Field({ defaultValue: 1 })
   step: number;
 

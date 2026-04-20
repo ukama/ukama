@@ -272,31 +272,65 @@ static bool run_space(Config *config,
                       bool gate) {
 
     Space *s;
-    App *a;
+    App   *a;
+    bool  ok;
+    bool  allOk;
 
     s = space_find(spaceList, spaceName);
     if (!s) {
         return true;
     }
 
+    allOk = true;
+
     a = s->appList;
     while (a) {
 
-        if (!installer_ensure_installed(config, a, NULL)) {
-            return false;
+        ok = installer_ensure_installed(config, a, NULL);
+        if (!ok) {
+            a->installState = INSTALL_STATE_FAILED;
+            usys_log_error("space: install failed %s/%s", a->space, a->name);
+            allOk = false;
+
+            if (gate) {
+                return false;
+            }
+
+            a = a->next;
+            continue;
         }
 
-        if (!installer_switch_current(config, a)) {
-            return false;
+        ok = installer_switch_current(config, a);
+        if (!ok) {
+            usys_log_error("space: switch failed %s/%s", a->space, a->name);
+            allOk = false;
+
+            if (gate) {
+                return false;
+            }
+
+            a = a->next;
+            continue;
         }
 
-        if (!app_start(config, a)) {
-            return false;
+        ok = app_start(config, a);
+        if (!ok) {
+            usys_log_error("space: start failed %s/%s", a->space, a->name);
+            allOk = false;
+
+            if (gate) {
+                return false;
+            }
+
+            a = a->next;
+            continue;
         }
 
         if (gate) {
-            if (!app_wait_commit(config, a)) {
+            ok = app_wait_commit(config, a);
+            if (!ok) {
                 usys_log_error("boot: gate failed %s/%s", a->space, a->name);
+                allOk = false;
                 return false;
             }
         }
@@ -304,7 +338,7 @@ static bool run_space(Config *config,
         a = a->next;
     }
 
-    return true;
+    return allOk;
 }
 
 static bool update_self(Supervisor *s,
@@ -354,7 +388,7 @@ static bool update_self(Supervisor *s,
     }
 
     free(a->lastGoodTag);
-    a->lastGoodTag = strdup(tag);
+    a->lastGoodTag = strdup(a->tag);
     if (!a->lastGoodTag) {
         a->lastGoodTag = oldLastGood;
         free(oldTag);
