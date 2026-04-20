@@ -63,10 +63,16 @@ func RemoveProfile(p *policyController, pf db.Asr, event bool) (error, bool) {
 		},
 	}
 
-	_ = p.syncSubscriberPolicy(http.MethodDelete, pf.Imsi, pf.NetworkId.String(), &pf.Policy)
+	err = p.syncSubscriberPolicy(http.MethodDelete, pf.Imsi, pf.NetworkId.String(), &pf.Policy)
+	if err != nil {
+		log.Errorf("Failed to sync subscriber policy after profile removal: %v", err)
+	}
 
 	if event {
-		_ = p.publishEvent(msgbus.ACTION_CRUD_DELETE, "activesubscriber", e)
+		err = p.publishEvent(msgbus.ACTION_CRUD_DELETE, "activesubscriber", e)
+		if err != nil {
+			log.Errorf("Failed to publish subscriber profile removal event to backend: %v", err)
+		}
 	}
 
 	return nil, true

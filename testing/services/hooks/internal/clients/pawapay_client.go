@@ -54,7 +54,7 @@ func NewPawapayClient(h string, key string) *pawapayClient {
 	return &pawapayClient{
 		u: u,
 		R: client.NewResty(client.WithBearer(key), client.WithError(&Err{}),
-			client.WithDebug(), client.WithContentTypeJSON()),
+			client.WithDebug(true), client.WithContentTypeJSON()),
 	}
 }
 
@@ -117,7 +117,7 @@ func (p *pawapayClient) AddDeposit(req AddDepositRequest) (*payments.Deposit, er
 			dep.RejectionReason.RejectionMessage, dep.RejectionReason.RejectionCode)
 
 		return nil, fmt.Errorf("failed to submit a deposit. %w",
-			client.ErrorStatus{
+			&client.ErrorStatus{
 				StatusCode: invalidArgCode,
 				RawError:   err,
 			})

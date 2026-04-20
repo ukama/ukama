@@ -44,7 +44,7 @@ func NewWebhooksClient(h string) *webhooksClient {
 	return &webhooksClient{
 		u: u,
 		R: client.NewResty(client.WithError(&Err{}),
-			client.WithDebug(), client.WithContentTypeJSON()),
+			client.WithDebug(true), client.WithContentTypeJSON()),
 	}
 }
 
