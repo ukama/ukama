@@ -17,13 +17,13 @@ import {
 } from '@/client/graphql/generated';
 import { Graphs_Type } from '@/client/graphql/generated/subscriptions';
 import SiteComponents from '@/components/SiteComponents';
-import SiteDetailsHeader from '@/components/SiteDetailsHeader';
 import SiteInfo from '@/components/SiteInfos';
 import SiteOverview from '@/components/SiteOverView';
-import { SITE_KPI_TYPES, SITE_KPIS } from '@/constants';
+import StatusBar from '@/components/StatusBar';
+import { SITE_ACTIONS_BUTTONS, SITE_KPI_TYPES, SITE_KPIS } from '@/constants';
 import { SectionData } from '@/constants/index';
 import { useAppContext } from '@/context';
-import { ActiveView, KPIType } from '@/types';
+import { ActiveView, KPIType, TStatusBarObj } from '@/types';
 import {
   extractMetricValue,
   graphTypeToSection,
@@ -420,6 +420,32 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     return nodeUptimes;
   };
 
+  const handleActionClick = useCallback(
+    (id: string) => {
+      router.push(`/console/sites/${id}`);
+    },
+    [router],
+  );
+
+  const getSiteUptime = useCallback(() => {
+    if (!activeSite.id || !statData?.getSiteStat?.metrics?.length) return;
+
+    const siteMetrics = statData.getSiteStat.metrics.filter(
+      (metric) => metric.siteId === activeSite.id && metric.success,
+    );
+
+    const uptimeSecondsMetric = siteMetrics.find(
+      (metric) => metric.type === SITE_KPI_TYPES.SITE_UPTIME,
+    );
+
+    if (uptimeSecondsMetric?.value !== undefined) {
+      const value = uptimeSecondsMetric.value;
+      const numValue = typeof value === 'number' ? value : parseFloat(value);
+      return Math.floor(numValue);
+    }
+    return 0;
+  }, [statData, activeSite.id]);
+
   const initialNodeUptimes = getInitialNodeUptimes();
 
   if (!isDataReady) {
@@ -457,14 +483,6 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         height: 'calc(100vh - 164px)',
       }}
     >
-      <SiteDetailsHeader
-        siteList={siteData?.getSites.sites || []}
-        selectedSiteId={activeSite.id}
-        onSiteChange={handleSiteChange}
-        isLoading={sitesLoading || statLoading}
-        siteStatMetrics={statData?.getSiteStat ?? { metrics: [] }}
-      />
-
       <Grid2
         container
         spacing={2}
@@ -474,6 +492,17 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
           height: 'max-content',
         }}
       >
+        <Grid2 size={12}>
+          <StatusBar
+            selected={activeSite}
+            uptime={getSiteUptime() ?? 0}
+            loading={sitesLoading || statLoading}
+            objs={siteData?.getSites.sites ?? []}
+            handleActionClick={handleActionClick}
+            ActionOptions={SITE_ACTIONS_BUTTONS}
+            handleSelected={(obj: TStatusBarObj) => handleSiteChange(obj.id)}
+          />
+        </Grid2>
         <Grid2
           size={{ xs: 12, sm: 6, md: 4 }}
           sx={{ height: 'auto', display: 'flex' }}

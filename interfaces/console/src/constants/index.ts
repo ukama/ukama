@@ -40,6 +40,8 @@ export const NODE_ACTIONS_ENUM = {
   NODE_RADIO_OFF: 'node-radio-off',
   NODE_SERVICE_ON: 'node-service-on',
   NODE_SERVICE_OFF: 'node-service-off',
+  TOGGLE_RADIO: 'toggle-radio',
+  TOGGLE_SERVICE: 'toggle-service',
 };
 
 export const NODE_ACTIONS_BUTTONS = [
@@ -49,29 +51,19 @@ export const NODE_ACTIONS_BUTTONS = [
     consent: 'Are you sure you want to restart node?',
     type: 'button',
   },
+];
+export const SITE_ACTIONS_BUTTONS = [
   {
-    id: NODE_ACTIONS_ENUM.NODE_RADIO_ON,
-    name: 'Turn Radio On',
+    id: NODE_ACTIONS_ENUM.TOGGLE_RADIO,
+    name: 'Toggle Radio',
     type: 'toggle',
-    consent: 'Are you sure you want to turn the radio on?',
+    consent: 'Are you sure you want to toggle the radio?',
   },
   {
-    id: NODE_ACTIONS_ENUM.NODE_RADIO_OFF,
-    name: 'Turn Radio Off',
+    id: NODE_ACTIONS_ENUM.TOGGLE_SERVICE,
+    name: 'Toggle Service',
     type: 'toggle',
-    consent: 'Are you sure you want to turn the radio off?',
-  },
-  {
-    id: NODE_ACTIONS_ENUM.NODE_SERVICE_ON,
-    name: 'Turn Service On',
-    type: 'toggle',
-    consent: 'Are you sure you want to turn the service on?',
-  },
-  {
-    id: NODE_ACTIONS_ENUM.NODE_SERVICE_OFF,
-    name: 'Turn Service Off',
-    type: 'toggle',
-    consent: 'Are you sure you want to turn the service off?',
+    consent: 'Are you sure you want to toggle the service?',
   },
 ];
 

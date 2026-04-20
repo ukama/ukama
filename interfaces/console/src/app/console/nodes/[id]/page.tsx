@@ -8,7 +8,6 @@
 'use client';
 
 import {
-  Node,
   NodeConnectivityEnum,
   NodeStateEnum,
   NodeTypeEnum,
@@ -37,7 +36,7 @@ import NodeOverviewTab from '@/components/NodeOverviewTab';
 import NodeRadioTab from '@/components/NodeRadioTab';
 import NodeResourcesTab from '@/components/NodeResourcesTab';
 import NodeSoftwareTab from '@/components/NodeSoftwareTab';
-import NodeStatus from '@/components/NodeStatus';
+import StatusBar from '@/components/StatusBar';
 import TabPanel from '@/components/TabPanel';
 import {
   METRIC_RANGE_10800,
@@ -49,7 +48,7 @@ import {
 import { useAppContext } from '@/context';
 import MetricStatSubscription from '@/lib/MetricStatSubscription';
 import { colors } from '@/theme';
-import { TMetricResDto } from '@/types';
+import { TMetricResDto, TStatusBarObj } from '@/types';
 import {
   getNodeActionDescriptionByProgress,
   getNodeTabTypeByIndex,
@@ -441,8 +440,8 @@ const Page: React.FC<INodePage> = ({ params }) => {
     }
   };
 
-  const handleNodeSelected = (node: Node) => {
-    router.push(`/console/nodes/${node.id}`);
+  const handleNodeSelected = (obj: TStatusBarObj) => {
+    router.push(`/console/nodes/${obj.id}`);
   };
 
   const handleEditNode = (str: string) => {
@@ -559,21 +558,16 @@ const Page: React.FC<INodePage> = ({ params }) => {
 
   return (
     <Stack width={'100%'} height={'100%'} mt={1} spacing={1}>
-      <NodeStatus
+      <StatusBar
         uptime={nodeUptime}
-        onAddNode={() => {}}
-        selectedNode={currentNode}
-        handleEditNodeClick={() => {
+        selected={currentNode}
+        handleEditClick={() => {
           setIsEditNode(true);
         }}
-        handleNodeSelected={handleNodeSelected}
-        nodes={nodesData?.getNodes.nodes ?? []}
-        nodeActionOptions={NODE_ACTIONS_BUTTONS}
-        handleNodeActionClick={handleNodeActionClick}
-        isShowNodeAction={
-          currentNode?.status.connectivity === NodeConnectivityEnum.Online &&
-          !nodeAction.actionInitiated
-        }
+        handleSelected={handleNodeSelected}
+        objs={nodesData?.getNodes.nodes ?? []}
+        ActionOptions={NODE_ACTIONS_BUTTONS}
+        handleActionClick={handleNodeActionClick}
         loading={nodesLoading || updateNodeLoading || statLoading}
       />
       {currentNode?.status.connectivity === NodeConnectivityEnum.Online &&

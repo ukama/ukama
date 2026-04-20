@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { Node } from '@/client/graphql/generated';
+import { Node, SiteDto as Site } from '@/client/graphql/generated';
 import { Button } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { styled } from '@mui/material/styles';
@@ -20,44 +20,39 @@ const StyledBtn = styled(Button)({
 });
 
 interface INodeStatus {
-  nodes: any;
+  objs: any;
   uptime: number;
   loading: boolean;
-  onAddNode?: () => void;
-  isShowNodeAction?: boolean;
-  nodeActionOptions: any[];
-  handleNodeSelected: (node: Node) => void;
-  handleEditNodeClick: (node: Node) => void;
-  selectedNode: Node | undefined;
-  handleNodeActionClick: (id: string) => void;
+  ActionOptions: any[];
+  handleSelected: (obj: Node | Site) => void;
+  handleEditClick?: (obj: Node | Site) => void;
+  selected: Node | Site | undefined;
+  handleActionClick: (id: string) => void;
 }
 
-const NodeStatus = ({
-  nodes,
+const StatusBar = ({
+  objs,
   uptime,
-  onAddNode,
-  selectedNode,
+  selected,
   loading = false,
-  nodeActionOptions,
-  handleNodeSelected,
-  handleEditNodeClick,
-  handleNodeActionClick,
-  isShowNodeAction = true,
+  ActionOptions,
+  handleSelected,
+  handleEditClick,
+  handleActionClick,
 }: INodeStatus) => {
   const handleUpdateNode = () =>
-    handleEditNodeClick(nodes.find((item: any) => item.id === selectedNode));
+    handleEditClick?.(objs.find((item: any) => item.id === selected) as Node | Site);
 
   return (
     <Grid container alignItems={'center'}>
       <Grid size={{ xs: 12, md: 9 }}>
         <NodeDropDown
-          nodes={nodes}
+          objs={objs}
           uptime={uptime}
           loading={loading}
-          onAddNode={onAddNode}
-          selectedNode={selectedNode}
-          isNodeReady={isShowNodeAction}
-          onNodeSelected={handleNodeSelected}
+          selected={selected}
+          isReady={uptime > 0}
+          onSelected={handleSelected}
         />
       </Grid>
       <Grid
@@ -65,21 +60,23 @@ const NodeStatus = ({
         columnSpacing={2}
         size={{ xs: 12, md: 3 }}
         justifyContent="flex-end"
-        visibility={isShowNodeAction ? 'visible' : 'hidden'}
+        visibility={uptime > 0 ? 'visible' : 'hidden'}
       >
-        <Grid>
-          <LoadingWrapper isLoading={loading} height={40}>
-            <StyledBtn variant="contained" onClick={handleUpdateNode}>
-              Edit NODE
-            </StyledBtn>
-          </LoadingWrapper>
-        </Grid>
+        {handleEditClick && 
+          <Grid>
+            <LoadingWrapper isLoading={loading} height={40}>
+              <StyledBtn variant="contained" onClick={handleUpdateNode}>
+                Edit NODE
+              </StyledBtn>
+            </LoadingWrapper>
+          </Grid>
+        }
 
         <Grid>
           <LoadingWrapper isLoading={loading} height={40} width={'100%'}>
             <SplitButton
-              options={nodeActionOptions}
-              handleSplitActionClick={handleNodeActionClick}
+              options={ActionOptions}
+              handleSplitActionClick={handleActionClick}
             />
           </LoadingWrapper>
         </Grid>
@@ -88,4 +85,4 @@ const NodeStatus = ({
   );
 };
 
-export default NodeStatus;
+export default StatusBar;
