@@ -88,26 +88,11 @@ var nt = AddNotificationReq{
 	Details:     json.RawMessage(`{"reason":"testing","component":"router_test"}`),
 }
 
-func Test_GetRunningsApps(t *testing.T) {
+func TestListHealthInfo(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/health/nodes/60285a2a-fe1d-4261-a868-5be480075b8f/performance", nil)
+	req, _ := http.NewRequest("GET", "/v1/health/nodes/60285a2a-fe1d-4261-a868-5be480075b8f/list?filter=all%7Clatest", nil)
 	c := &hmocks.HealhtServiceClient{}
-	getRunningAppsReq := &hpb.GetRunningAppsRequest{
-		NodeId: "60285a2a-fe1d-4261-a868-5be480075b8f",
-	}
-
-	// Set up the mock expectations for GetRunningApps.
-	c.On("GetRunningApps", mock.Anything, getRunningAppsReq).Return(
-		&hpb.GetRunningAppsResponse{
-			RunningApps: &hpb.App{
-				Id:        "60285a2a-fe1d-4261-a868-5be480075b8f",
-				NodeId:    getRunningAppsReq.NodeId,
-				Timestamp: "12-12-2024",
-			},
-		},
-		nil,
-	).Once() // Use Once() to indicate that this expectation should be called once.
 
 	// Create a new router with the mock client.
 	r := NewRouter(&Clients{
@@ -118,8 +103,8 @@ func Test_GetRunningsApps(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	// assert
-	assert.Equal(t, http.StatusOK, w.Code)
-	c.AssertExpectations(t)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Contains(t, w.Body.String(), "Field validation")
 }
 
 func Test_StoreRunningApps(t *testing.T) {

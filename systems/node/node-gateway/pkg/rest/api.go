@@ -10,8 +10,9 @@ package rest
 
 import "encoding/json"
 
-type GetRunningAppsRequest struct {
-	NodeId string `example:"{{NodeId}}" validate:"required" path:"node_id" `
+type ListHealthRequest struct {
+	NodeId  string `example:"{{NodeId}}" validate:"required" path:"node_id" `
+	Filter  string `example:"{{Filter}}" json:"type,omitempty" validate:"eq=all|eq=latest"`
 }
 
 type AddNotificationReq struct {
