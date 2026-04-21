@@ -48,12 +48,6 @@ export interface FormValues {
   location: string;
 }
 
-export type Site = {
-  name: string;
-  health: 'online' | 'offline';
-  duration: string;
-};
-
 export type NodeAppDetailsTypes = {
   id: number;
   cpu: number;
