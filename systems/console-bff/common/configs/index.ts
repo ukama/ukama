@@ -7,6 +7,7 @@
  */
 import "dotenv/config";
 
+
 export const VERSION = process.env.VERSION ?? "v1";
 
 export const METRICS_INTERVAL = 30;
@@ -55,16 +56,17 @@ const NODE_PORT = parseInt(process.env.NODE_PORT ?? "5051");
 const SUBSCRIBER_PORT = parseInt(process.env.SUBSCRIBER_PORT ?? "5052");
 const SIM_PORT = parseInt(process.env.SIM_PORT ?? "5053");
 const NOTIFICATION_PORT = parseInt(process.env.NOTIFICATION_PORT ?? "5054");
-const CONTROLLER_PORT = parseInt(process.env.CONTROLLER_PORT ?? "5058");
-const PAYMENT_PORT = parseInt(process.env.PAYMENT_PORT ?? "5059");
-const REPORT_PORT = parseInt(process.env.REPORT_PORT ?? "5060");
-const SOFTWARE_PORT = parseInt(process.env.SOFTWARE_PORT ?? "5061");
 export const BILLING_PORT = parseInt(process.env.BILLING_PORT ?? "5055");
 export const COMPONENT_INVENTORY_PORT = parseInt(
   process.env.COMPONENT_INVENTORY_PORT ?? "5056"
 );
 export const METRIC_PORT = parseInt(process.env.METRIC_PORT ?? "5057");
 const NODE_STATE_PORT = parseInt(process.env.NODE_STATE_PORT ?? "5058");
+const CONTROLLER_PORT = parseInt(process.env.CONTROLLER_PORT ?? "5059");
+const HEALTH_PORT = parseInt(process.env.HEALTH_PORT ?? "5060");
+const PAYMENT_PORT = parseInt(process.env.PAYMENT_PORT ?? "5061");
+const REPORT_PORT = parseInt(process.env.REPORT_PORT ?? "5062");
+const SOFTWARE_PORT = parseInt(process.env.SOFTWARE_PORT ?? "5063");
 export const SUB_GRAPHS = {
   nodeState: {
     name: "nodeState",
@@ -142,6 +144,12 @@ export const SUB_GRAPHS = {
     name: "controller",
     port: CONTROLLER_PORT,
     url: `http://localhost:${CONTROLLER_PORT}`,
+    isPingedSuccess: false,
+  },
+  health: {
+    name: "health",
+    port: HEALTH_PORT,
+    url: `http://localhost:${HEALTH_PORT}`,
     isPingedSuccess: false,
   },
   software: {

@@ -8,6 +8,7 @@
 import "reflect-metadata";
 import { registerEnumType } from "type-graphql";
 
+
 export enum API_METHOD_TYPE {
   GET = "get",
   POST = "post",
@@ -203,6 +204,15 @@ export enum PAYMENT_ITEM_TYPE {
 }
 registerEnumType(PAYMENT_ITEM_TYPE, {
   name: "PAYMENT_ITEM_TYPE",
+});
+
+export enum TIMEFRAME_FILTER {
+  UNKNOWN = "unknown",
+  ALL = "all",
+  LATEST = "latest",
+}
+registerEnumType(TIMEFRAME_FILTER, {
+  name: "TIMEFRAME_FILTER",
 });
 
 export enum COMPONENT_TYPE {
