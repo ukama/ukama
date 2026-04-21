@@ -4,7 +4,7 @@ package ukama.node.health.v1;
 import "validator.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
-import "ukama/filter_timestamp.proto";
+import "ukama/filter_timeframes.proto";
 
 service healhtService {
     rpc List (ListRequest) returns (ListResponse);
@@ -13,7 +13,7 @@ service healhtService {
 
 message ListRequest {
     string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
-    ukama.common.v1.FilterTimestampType filter = 2;
+    ukama.common.v1.FilterTimeframesType filter = 2;
 }
 
 message ListResponse {

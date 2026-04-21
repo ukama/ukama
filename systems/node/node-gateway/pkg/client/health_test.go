@@ -77,7 +77,7 @@ func TestHealthClientList(t *testing.T) {
 	mc := &pbmocks.HealhtServiceClient{}
 	expectedReq := &pb.ListRequest{
 		NodeId: testNodeID,
-		Filter: ukamapb.FilterTimestampType_ALL,
+		Filter: ukamapb.FilterTimeframesType_ALL,
 	}
 	expectedResp := &pb.ListResponse{
 		Healths: []*pb.Health{

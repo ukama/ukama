@@ -149,7 +149,7 @@ func (h *HealthServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListR
 			"invalid format of node id. Error %s", err.Error())
 	}
 
-	filter := ukama.ParseFilterTimestampType(strings.ToLower(req.Filter.String()))
+	filter := ukama.ParseFilterTimeframesType(strings.ToLower(req.Filter.String()))
 	healths, err := h.sRepo.List(nId, filter)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "health")

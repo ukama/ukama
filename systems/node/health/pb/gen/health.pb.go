@@ -78,9 +78,9 @@ func (Status) EnumDescriptor() ([]byte, []int) {
 }
 
 type ListRequest struct {
-	state         protoimpl.MessageState    `protogen:"open.v1"`
-	NodeId        string                    `protobuf:"bytes,1,opt,name=nodeId,json=node_id,proto3" json:"nodeId,omitempty"`
-	Filter        ukama.FilterTimestampType `protobuf:"varint,2,opt,name=filter,proto3,enum=ukama.common.v1.FilterTimestampType" json:"filter,omitempty"`
+	state         protoimpl.MessageState     `protogen:"open.v1"`
+	NodeId        string                     `protobuf:"bytes,1,opt,name=nodeId,json=node_id,proto3" json:"nodeId,omitempty"`
+	Filter        ukama.FilterTimeframesType `protobuf:"varint,2,opt,name=filter,proto3,enum=ukama.common.v1.FilterTimeframesType" json:"filter,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -122,11 +122,11 @@ func (x *ListRequest) GetNodeId() string {
 	return ""
 }
 
-func (x *ListRequest) GetFilter() ukama.FilterTimestampType {
+func (x *ListRequest) GetFilter() ukama.FilterTimeframesType {
 	if x != nil {
 		return x.Filter
 	}
-	return ukama.FilterTimestampType(0)
+	return ukama.FilterTimeframesType(0)
 }
 
 type ListResponse struct {
@@ -577,10 +577,10 @@ var File_health_proto protoreflect.FileDescriptor
 
 const file_health_proto_rawDesc = "" +
 	"\n" +
-	"\fhealth.proto\x12\x14ukama.node.health.v1\x1a\x0fvalidator.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x1cukama/filter_timestamp.proto\"l\n" +
+	"\fhealth.proto\x12\x14ukama.node.health.v1\x1a\x0fvalidator.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x1dukama/filter_timeframes.proto\"m\n" +
 	"\vListRequest\x12\x1f\n" +
-	"\x06nodeId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\anode_id\x12<\n" +
-	"\x06filter\x18\x02 \x01(\x0e2$.ukama.common.v1.FilterTimestampTypeR\x06filter\"F\n" +
+	"\x06nodeId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\anode_id\x12=\n" +
+	"\x06filter\x18\x02 \x01(\x0e2%.ukama.common.v1.FilterTimeframesTypeR\x06filter\"F\n" +
 	"\fListResponse\x126\n" +
 	"\ahealths\x18\x01 \x03(\v2\x1c.ukama.node.health.v1.HealthR\ahealths\"\xc5\x01\n" +
 	"\x1bStoreRunningAppsInfoRequest\x12\x1f\n" +
@@ -646,10 +646,10 @@ var file_health_proto_goTypes = []any{
 	(*Capps)(nil),                        // 6: ukama.node.health.v1.Capps
 	(*System)(nil),                       // 7: ukama.node.health.v1.System
 	(*Resource)(nil),                     // 8: ukama.node.health.v1.Resource
-	(ukama.FilterTimestampType)(0),       // 9: ukama.common.v1.FilterTimestampType
+	(ukama.FilterTimeframesType)(0),      // 9: ukama.common.v1.FilterTimeframesType
 }
 var file_health_proto_depIdxs = []int32{
-	9,  // 0: ukama.node.health.v1.ListRequest.filter:type_name -> ukama.common.v1.FilterTimestampType
+	9,  // 0: ukama.node.health.v1.ListRequest.filter:type_name -> ukama.common.v1.FilterTimeframesType
 	5,  // 1: ukama.node.health.v1.ListResponse.healths:type_name -> ukama.node.health.v1.Health
 	7,  // 2: ukama.node.health.v1.StoreRunningAppsInfoRequest.system:type_name -> ukama.node.health.v1.System
 	6,  // 3: ukama.node.health.v1.StoreRunningAppsInfoRequest.capps:type_name -> ukama.node.health.v1.Capps

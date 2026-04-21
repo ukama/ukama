@@ -225,7 +225,7 @@ func (r *Router) postSystemPerformanceInfoHandler(c *gin.Context, req *StoreRunn
 func (r *Router) listHealthInfoHandler(c *gin.Context, req *ListHealthRequest) (*healthPb.ListResponse, error) {
 	return r.clients.Health.List(&healthPb.ListRequest{
 		NodeId:  req.NodeId,
-		Filter:  ukamaPb.FilterTimestampType(ukama.ReturnFilterTimestampType(ukama.ParseFilterTimestampType(req.Filter))),
+		Filter:  ukamaPb.FilterTimeframesType(ukama.ReturnFilterTimeframesType(ukama.ParseFilterTimeframesType(req.Filter))),
 	})
 }
 

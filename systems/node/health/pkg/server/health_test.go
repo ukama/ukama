@@ -172,12 +172,12 @@ func TestHealthServerListLatest(t *testing.T) {
 		},
 	}
 
-	hRepo.On("List", testNode, ukama.FilterTimestampTypeLatest).Return([]*db.Health{&health}, nil).Once()
+	hRepo.On("List", testNode, ukama.FilterTimeframesTypeLatest).Return([]*db.Health{&health}, nil).Once()
 	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
 
 	resp, err := s.List(context.TODO(), &pb.ListRequest{
 		NodeId: testNode.String(),
-		Filter: ukamapb.FilterTimestampType_LATEST,
+		Filter: ukamapb.FilterTimeframesType_LATEST,
 	})
 
 	assert.NoError(t, err)
@@ -211,12 +211,12 @@ func TestHealthServerListAll(t *testing.T) {
 		{Id: id2, NodeId: testNode.String(), TimeStamp: "ts-2"},
 	}
 
-	hRepo.On("List", testNode, ukama.FilterTimestampTypeAll).Return(healths, nil).Once()
+	hRepo.On("List", testNode, ukama.FilterTimeframesTypeAll).Return(healths, nil).Once()
 	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
 
 	resp, err := s.List(context.TODO(), &pb.ListRequest{
 		NodeId: testNode.String(),
-		Filter: ukamapb.FilterTimestampType_ALL,
+		Filter: ukamapb.FilterTimeframesType_ALL,
 	})
 
 	assert.NoError(t, err)
@@ -236,7 +236,7 @@ func TestHealthServerListInvalidNodeId(t *testing.T) {
 
 	resp, err := s.List(context.TODO(), &pb.ListRequest{
 		NodeId: "invalid-node",
-		Filter: ukamapb.FilterTimestampType_LATEST,
+		Filter: ukamapb.FilterTimeframesType_LATEST,
 	})
 
 	assert.Nil(t, resp)
@@ -252,12 +252,12 @@ func TestHealthServerListLatestRepoError(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 	hRepo := &mocks.HealthRepo{}
 
-	hRepo.On("List", testNode, ukama.FilterTimestampTypeLatest).Return(([]*db.Health)(nil), assert.AnError).Once()
+	hRepo.On("List", testNode, ukama.FilterTimeframesTypeLatest).Return(([]*db.Health)(nil), assert.AnError).Once()
 	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
 
 	resp, err := s.List(context.TODO(), &pb.ListRequest{
 		NodeId: testNode.String(),
-		Filter: ukamapb.FilterTimestampType_LATEST,
+		Filter: ukamapb.FilterTimeframesType_LATEST,
 	})
 
 	assert.Nil(t, resp)
@@ -271,12 +271,12 @@ func TestHealthServerListAllRepoError(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 	hRepo := &mocks.HealthRepo{}
 
-	hRepo.On("List", testNode, ukama.FilterTimestampTypeAll).Return(([]*db.Health)(nil), assert.AnError).Once()
+	hRepo.On("List", testNode, ukama.FilterTimeframesTypeAll).Return(([]*db.Health)(nil), assert.AnError).Once()
 	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
 
 	resp, err := s.List(context.TODO(), &pb.ListRequest{
 		NodeId: testNode.String(),
-		Filter: ukamapb.FilterTimestampType_ALL,
+		Filter: ukamapb.FilterTimeframesType_ALL,
 	})
 
 	assert.Nil(t, resp)

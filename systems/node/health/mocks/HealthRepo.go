@@ -15,7 +15,7 @@ type HealthRepo struct {
 }
 
 // List provides a mock function with given fields: nodeId, filter
-func (_m *HealthRepo) List(nodeId ukama.NodeID, filter ukama.FilterTimestampType) ([]*db.Health, error) {
+func (_m *HealthRepo) List(nodeId ukama.NodeID, filter ukama.FilterTimeframesType) ([]*db.Health, error) {
 	ret := _m.Called(nodeId, filter)
 
 	if len(ret) == 0 {
@@ -24,10 +24,10 @@ func (_m *HealthRepo) List(nodeId ukama.NodeID, filter ukama.FilterTimestampType
 
 	var r0 []*db.Health
 	var r1 error
-	if rf, ok := ret.Get(0).(func(ukama.NodeID, ukama.FilterTimestampType) ([]*db.Health, error)); ok {
+	if rf, ok := ret.Get(0).(func(ukama.NodeID, ukama.FilterTimeframesType) ([]*db.Health, error)); ok {
 		return rf(nodeId, filter)
 	}
-	if rf, ok := ret.Get(0).(func(ukama.NodeID, ukama.FilterTimestampType) []*db.Health); ok {
+	if rf, ok := ret.Get(0).(func(ukama.NodeID, ukama.FilterTimeframesType) []*db.Health); ok {
 		r0 = rf(nodeId, filter)
 	} else {
 		if ret.Get(0) != nil {
@@ -35,7 +35,7 @@ func (_m *HealthRepo) List(nodeId ukama.NodeID, filter ukama.FilterTimestampType
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(ukama.NodeID, ukama.FilterTimestampType) error); ok {
+	if rf, ok := ret.Get(1).(func(ukama.NodeID, ukama.FilterTimeframesType) error); ok {
 		r1 = rf(nodeId, filter)
 	} else {
 		r1 = ret.Error(1)
