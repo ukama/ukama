@@ -302,7 +302,7 @@ const getSystemNameByService = (service: string): string => {
       return "metrics";
     case "planning-tool":
       return "planning";
-    case "nodeState":
+    case "state":
     case "controller":
     case "software":
       return "node";

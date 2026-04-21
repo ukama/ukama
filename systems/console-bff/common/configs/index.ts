@@ -60,13 +60,19 @@ export const COMPONENT_INVENTORY_PORT = parseInt(
   process.env.COMPONENT_INVENTORY_PORT ?? "5056"
 );
 export const METRIC_PORT = parseInt(process.env.METRIC_PORT ?? "5057");
-
+const NODE_STATE_PORT = parseInt(process.env.NODE_STATE_PORT ?? "5058");
 const CONTROLLER_PORT = parseInt(process.env.CONTROLLER_PORT ?? "5059");
 const HEALTH_PORT = parseInt(process.env.HEALTH_PORT ?? "5060");
 const PAYMENT_PORT = parseInt(process.env.PAYMENT_PORT ?? "5061");
 const REPORT_PORT = parseInt(process.env.REPORT_PORT ?? "5062");
 const SOFTWARE_PORT = parseInt(process.env.SOFTWARE_PORT ?? "5063");
 export const SUB_GRAPHS = {
+  state: {
+    name: "state",
+    port: NODE_STATE_PORT,
+    url: `http://localhost:${NODE_STATE_PORT}`,
+    isPingedSuccess: false,
+  },
   metric: {
     name: "metric",
     port: METRIC_PORT,
