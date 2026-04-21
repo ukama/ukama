@@ -176,9 +176,11 @@ STATIC void serialize_message_data(URequest *request, char **data) {
     json_decref(json);
 }
 
-int serialize_websocket_message(char **str, URequest *request, char *uuid) {
+int serialize_websocket_message(char **str,
+                                URequest *request,
+                                const char *uuid) {
 
-    json_t *json=NULL, *jDevice=NULL, *jService=NULL;
+    json_t *json=NULL;
 	json_t *jRequest=NULL;
     char *data=NULL;
 
@@ -224,26 +226,6 @@ int deserialize_node_info(NodeInfo **node, json_t *json) {
 
     (*node)->nodeID = strdup(json_string_value(id));
     (*node)->port   = strdup(json_string_value(port));
-
-	return TRUE;
-}
-
-STATIC int deserialize_service_info(ServiceInfo **service, json_t *json) {
-
-	json_t *name, *port;
-  
-	if (json == NULL && service == NULL) return FALSE;
-
-    name = json_object_get(json, JSON_NAME);
-    port = json_object_get(json, JSON_PORT);
-
-    if (name == NULL || port == NULL) return FALSE;
-
-	*service = (ServiceInfo *)calloc(1, sizeof(ServiceInfo));
-	if (*service == NULL) return FALSE;
-
-    (*service)->name = strdup(json_string_value(name));
-    (*service)->port = strdup(json_string_value(port));
 
 	return TRUE;
 }
@@ -304,7 +286,7 @@ STATIC void deserialize_map(URequest **request, json_t *json) {
 int deserialize_request_info(URequest **request, char *str) {
 
 	json_t *json, *obj, *jRaw;
-	int size, i;
+	int size;
 
 	if (str == NULL) return FALSE;
 

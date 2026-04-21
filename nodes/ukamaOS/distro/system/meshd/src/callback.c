@@ -58,7 +58,7 @@ int callback_websocket(const URequest *request,
                        void *data) {
 
     int ret;
-    char *nodeID = NULL;
+    const char *nodeID = NULL;
     Config *config = (Config *)data;
 
     nodeID = u_map_get(request->map_header, "User-Agent");
@@ -117,7 +117,7 @@ int callback_forward_service(const URequest *request,
                              void *data) {
 
     int ret;
-    char *service = NULL;
+    const char *service = NULL;
     char *requestStr = NULL;
     char ip[INET_ADDRSTRLEN] = {0};
     char sourcePort[MAX_BUFFER] = {0};

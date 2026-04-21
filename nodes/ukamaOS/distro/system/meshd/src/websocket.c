@@ -83,23 +83,6 @@ STATIC void clear_message(Message **msg) {
     *msg = NULL;
 }
 
-STATIC void clear_response(MResponse **resp) {
-    if (!resp || !*resp) return;
-
-    MResponse *r = *resp;
-
-    SAFE_FREE(r->reqType);
-    SAFE_FREE(r->seqNo);
-
-    /* If ServiceInfo is heap-allocated with strings, free properly */
-    free_service_info(r->serviceInfo);
-
-    SAFE_FREE(r->data);
-
-    free(r);
-    *resp = NULL;
-}
-
 STATIC bool is_websocket_client_valid(struct _websocket_client_handler *handler,
                                       char *port) {
 
