@@ -24,31 +24,36 @@ void init_map_table(MapTable **table) {
 	pthread_mutex_init(&(*table)->mutex, NULL);
 }
 
-STATIC MapItem *create_map_item(char *name, char *port, char *uuid) {
+STATIC MapItem *create_map_item(char *name,
+                                char *port,
+                                char *uuid) {
 
-	MapItem *map;
+    MapItem *map = NULL;
 
-	/* Sanity check */
-	if (name == NULL || port == NULL || uuid == NULL) return NULL;
+    if (name == NULL || port == NULL || uuid == NULL) {
+        return NULL;
+    }
 
-	map = (MapItem *)malloc(sizeof(MapItem));
-	if (map == NULL) {
-		usys_log_error("Error allocating memory: %d", sizeof(MapItem));
-		return NULL;
-	}
+    map = (MapItem *)malloc(sizeof(MapItem));
+    if (map == NULL) {
+        usys_log_error("Error allocating memory: %d", sizeof(MapItem));
+        return NULL;
+    }
 
     map->serviceName = strdup(name);
     map->servicePort = strdup(port);
     map->uuid        = strdup(uuid);
     map->transmit    = NULL;
     map->receive     = NULL;
+    map->data        = NULL;
+    map->size        = 0;
+    map->code        = 0;
+    map->next        = NULL;
 
-	pthread_mutex_init(&map->mutex, NULL);
-	pthread_cond_init(&map->hasResp, NULL);
+    pthread_mutex_init(&map->mutex, NULL);
+    pthread_cond_init(&map->hasResp, NULL);
 
-	map->next = NULL;
-
-	return map;
+    return map;
 }
 
 void free_map_item(MapItem *map) {

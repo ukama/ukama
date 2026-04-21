@@ -16,7 +16,7 @@ import (
 
 type HealthRepo interface {
 	StoreRunningAppsInfo(health *Health, nestedFunc func(string, string) error) error
-	GetRunningAppsInfo(nodeId ukama.NodeID) (*Health, error)
+	List(nodeId ukama.NodeID, filter ukama.FilterTimeframesType) ([]*Health, error)
 }
 type healthRepo struct {
 	Db sql.Db
@@ -27,6 +27,27 @@ func NewHealthRepo(db sql.Db) HealthRepo {
 		Db: db,
 	}
 }
+
+func (r *healthRepo) List(nodeId ukama.NodeID, filter ukama.FilterTimeframesType) ([]*Health, error) {
+	query := r.Db.GetGormDb().Where("node_id = ?", nodeId).
+		Preload("System").
+		Preload("Capps.Resources").
+		Order("created_at DESC")
+
+	if filter == ukama.FilterTimeframesTypeLatest {
+		var health Health
+		result := query.Limit(1).First(&health)
+		if result.Error != nil {
+			return nil, result.Error
+		}
+		return []*Health{&health}, nil
+	}
+
+	var healths []*Health
+	result := query.Find(&healths)
+	return healths, result.Error
+}
+
 func (r *healthRepo) StoreRunningAppsInfo(health *Health, nestedFunc func(string, string) error) error {
 	err := r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		if nestedFunc != nil {
@@ -41,19 +62,4 @@ func (r *healthRepo) StoreRunningAppsInfo(health *Health, nestedFunc func(string
 		return nil
 	})
 	return err
-}
-
-
-
-func (r *healthRepo) GetRunningAppsInfo(nodeId ukama.NodeID) (*Health, error) {
-	var healths Health
-	result := r.Db.GetGormDb().Where("node_id = ?", nodeId).
-		Preload("System").
-		Preload("Capps.Resources").
-		First(&healths)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-
-	return &healths, nil
 }

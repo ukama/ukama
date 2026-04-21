@@ -245,24 +245,33 @@ cleanup:
 
 void process_incoming_websocket_response(Message *message, void *data) {
 
-    MapItem *item=NULL;
+    MapItem *item = NULL;
 
-    usys_log_debug("Response to local service Code: %d Data: %s",
-              message->code, message->data);
-
-    item = is_existing_item(ClientTable, message->seqNo);
-    if (item == NULL) {
-        usys_log_error("Matching client not found. Port: %s. Ignoring",
-                  message->serviceInfo->port);
+    if (message == NULL || message->seqNo == NULL) {
+        usys_log_error("process_incoming_websocket_response: invalid message");
         return;
     }
 
+    usys_log_debug("Response to local service Code: %d Data: %s",
+                   message->code,
+                   message->data ? message->data : "");
+
+    item = is_existing_item(ClientTable, message->seqNo);
+    if (item == NULL) {
+        usys_log_error("Matching client not found for uuid: %s. Ignoring",
+                       message->seqNo);
+        return;
+    }
+
+    pthread_mutex_lock(&item->mutex);
+
     item->size = message->dataSize;
-    SAFE_FREE(item->data); /* free old one, if any*/
-    item->data = strdup(message->data);
+    SAFE_FREE(item->data);
+    item->data = strdup(message->data ? message->data : "");
     item->code = message->code;
 
     pthread_cond_broadcast(&item->hasResp);
+    pthread_mutex_unlock(&item->mutex);
 }
 
 int process_incoming_websocket_message(Message *message, Config *config) {

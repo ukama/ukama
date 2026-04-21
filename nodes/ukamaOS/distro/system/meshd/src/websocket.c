@@ -30,10 +30,8 @@ extern State    *state;
 extern int start_websocket_client(Config *config,
                                   struct _websocket_client_handler *handler);
 
-static 	pthread_mutex_t websocketMutex;
-static	pthread_cond_t  websocketFail;
-
 STATIC const char *ts_now(void) {
+
     static char buf[32];
     struct timeval tv;
     struct tm tm;
@@ -85,23 +83,6 @@ STATIC void clear_message(Message **msg) {
     *msg = NULL;
 }
 
-STATIC void clear_response(MResponse **resp) {
-    if (!resp || !*resp) return;
-
-    MResponse *r = *resp;
-
-    SAFE_FREE(r->reqType);
-    SAFE_FREE(r->seqNo);
-
-    /* If ServiceInfo is heap-allocated with strings, free properly */
-    free_service_info(r->serviceInfo);
-
-    SAFE_FREE(r->data);
-
-    free(r);
-    *resp = NULL;
-}
-
 STATIC bool is_websocket_client_valid(struct _websocket_client_handler *handler,
                                       char *port) {
 
@@ -133,39 +114,39 @@ STATIC bool is_websocket_valid(WSManager *manager, char *port) {
     return USYS_FALSE;
 }
 
-void* monitor_websocket(void *args){
+void *monitor_websocket(void *args) {
 
-    int ret;
-    struct timespec ts;
-    Config *config=NULL;
-    struct _websocket_client_handler *handler=NULL;
-    ThreadArgs *threadArgs;
+    Config *config = NULL;
+    struct _websocket_client_handler *handler = NULL;
+    ThreadArgs *threadArgs = NULL;
 
     threadArgs = (ThreadArgs *)args;
+    if (threadArgs == NULL) {
+        usys_log_error("monitor_websocket: invalid args");
+        return NULL;
+    }
 
-    config  = (Config *)threadArgs->config;
+    config = (Config *)threadArgs->config;
     handler = threadArgs->handler;
 
+    if (config == NULL || handler == NULL) {
+        usys_log_error("monitor_websocket: missing config/handler");
+        return NULL;
+    }
+
     while (TRUE) {
+        sleep(MESH_LOCK_TIMEOUT);
 
-        clock_gettime(CLOCK_REALTIME, &ts);
-        ts.tv_sec += MESH_LOCK_TIMEOUT;
+        if (is_websocket_client_valid(handler, config->remoteConnect)) {
+            continue;
+        }
 
-        /* Wait or timed out until the socket closes */
-        ret = pthread_cond_timedwait(&websocketFail, &websocketMutex, &ts);
-        if (ret == ETIMEDOUT) {
-            pthread_mutex_unlock(&websocketMutex);
-            if (!is_websocket_client_valid(handler, config->remoteConnect)) {
-                usys_log_error("Trying to reconnect ...");
-                /* Connect again */
-                while (start_websocket_client(config, handler) == FALSE) {
-                    usys_log_error("Remote websocket connect failure. Retrying: %d",
-                              MESH_LOCK_TIMEOUT);
-                    sleep(MESH_LOCK_TIMEOUT);
-                }
-            } else {
-                continue;
-            }
+        usys_log_error("Trying to reconnect ...");
+
+        while (start_websocket_client(config, handler) == FALSE) {
+            usys_log_error("Remote websocket connect failure. Retrying: %d",
+                           MESH_LOCK_TIMEOUT);
+            sleep(MESH_LOCK_TIMEOUT);
         }
     }
 
@@ -175,68 +156,62 @@ void* monitor_websocket(void *args){
 #define WDBG(fmt, ...) usys_log_debug("[%s] " fmt, ts_now(), ##__VA_ARGS__)
 #define WERR(fmt, ...) usys_log_error("[%s] " fmt, ts_now(), ##__VA_ARGS__)
 
-void websocket_manager(const URequest *request, WSManager *manager,
-					   void *data) {
+void websocket_manager(const URequest *request,
+                       WSManager *manager,
+                       void *data) {
 
     int ret;
-	WorkList *list=NULL;
-	WorkItem *work=NULL;
-	WorkList **transmit = &Transmit;
-    json_t *jData=NULL;
+    WorkList *list = NULL;
+    WorkItem *work = NULL;
+    WorkList **transmit = &Transmit;
+    json_t *jData = NULL;
     struct timespec ts;
-    Config *config=NULL;
+    Config *config = NULL;
 
-	if (*transmit == NULL)
-		return;
+    if (*transmit == NULL) {
+        return;
+    }
 
-	list   = *transmit;
+    list   = *transmit;
     config = (Config *)data;
 
-    pthread_mutex_init(&websocketMutex, NULL);
-    pthread_cond_init(&websocketFail, NULL);
+    while (TRUE) {
 
-	while (TRUE) {
-
-		pthread_mutex_lock(&(list->mutex));
+        pthread_mutex_lock(&(list->mutex));
 
         clock_gettime(CLOCK_REALTIME, &ts);
         ts.tv_sec += MESH_LOCK_TIMEOUT;
 
-		if (list->exit) { /* Likely we are closing the socket. */
-			break;
-		}
+        if (list->exit) {
+            pthread_mutex_unlock(&(list->mutex));
+            break;
+        }
 
-        if (list->exit) break;
-
-		if (list->first == NULL) { /* Empty. Wait. */
-			ret = pthread_cond_timedwait(&(list->hasWork), &(list->mutex), &ts);
+        if (list->first == NULL) {
+            ret = pthread_cond_timedwait(&(list->hasWork), &(list->mutex), &ts);
             if (ret == ETIMEDOUT) {
                 pthread_mutex_unlock(&(list->mutex));
+
                 if (!is_websocket_valid(manager, config->remoteConnect)) {
-                    pthread_cond_broadcast(&websocketFail);
-                    return; /* Close the websocket */
-                } else {
-                    continue;
+                    return;
                 }
+
+                continue;
             }
         }
 
-		/* We have some packet to transmit. */
-		work = get_work_to_transmit(list);
+        work = get_work_to_transmit(list);
 
-		/* Unlock. */
-		pthread_mutex_unlock(&(list->mutex));
+        pthread_mutex_unlock(&(list->mutex));
 
-		if (work == NULL) {
-			continue;
-		}
+        if (work == NULL) {
+            continue;
+        }
 
-		/* 1. Any pre-processing. */
-		if (work->preFunc) {
-			work->preFunc(work->data, work->preArgs);
-		}
+        if (work->preFunc) {
+            work->preFunc(work->data, work->preArgs);
+        }
 
-        /* 2. Send data over the wire. */
         if (ulfius_websocket_wait_close(manager, 1) == U_WEBSOCKET_STATUS_OPEN) {
 
             json_error_t jerr;
@@ -245,43 +220,41 @@ void websocket_manager(const URequest *request, WSManager *manager,
             if (jData == NULL) {
                 WERR("json_loads failed: line=%d col=%d pos=%d text=%s",
                      jerr.line, jerr.column, jerr.position, jerr.text);
-                WERR("payload (first 256): %.256s", work->data ? work->data : "(null)");
+                WERR("payload (first 256): %.256s",
+                     work->data ? work->data : "(null)");
                 destroy_work_item(work);
                 continue;
             }
 
-            /* Optional: dump outbound JSON (bounded) */
-            char *dump = json_dumps(jData, JSON_COMPACT);
-            if (dump) {
-                WDBG("WS TX -> %zu bytes: %.512s%s",
-                     strlen(dump), dump, (strlen(dump) > 512) ? "..." : "");
-                free(dump);
+            {
+                char *dump = json_dumps(jData, JSON_COMPACT);
+                if (dump) {
+                    WDBG("WS TX -> %zu bytes: %.512s%s",
+                         strlen(dump),
+                         dump,
+                         (strlen(dump) > 512) ? "..." : "");
+                    free(dump);
+                }
             }
 
-            int rc = ulfius_websocket_send_json_message(manager, jData);
-            if (rc != U_OK) {
-                WERR("ulfius_websocket_send_json_message failed rc=%d", rc);
-            } else {
-                WDBG("WS TX OK");
-            }
+            ret = ulfius_websocket_send_json_message(manager, jData);
 
             json_decref(jData);
             jData = NULL;
 
-        } else {
-            WERR("websocket not open; dropping message");
+            if (ret != U_OK) {
+                WERR("WS TX FAILED ret=%d", ret);
+            } else {
+                WDBG("WS TX OK");
+            }
         }
 
-		/* 3. Any post-processing. */
-		if (work->postFunc) {
-			work->postFunc(work->data, work->postArgs);
-		}
+        if (work->postFunc) {
+            work->postFunc(work->data, work->postArgs);
+        }
 
-		/* Free up the memory */
-		destroy_work_item(work);
-	}
-
-	return;
+        destroy_work_item(work);
+    }
 }
 
 void websocket_incoming_message(const URequest *request,

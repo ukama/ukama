@@ -96,11 +96,9 @@ func (h *Health) StoreRunningAppsInfo(request *pb.StoreRunningAppsInfoRequest) (
 	})
 }
 
-func (h *Health) GetRunningAppsInfo(nodeId string) (*pb.GetRunningAppsResponse, error) {
+func (h *Health) List(request *pb.ListRequest) (*pb.ListResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
 	defer cancel()
 
-	return h.client.GetRunningApps(ctx, &pb.GetRunningAppsRequest{
-		NodeId: nodeId,
-	})
+	return h.client.List(ctx, request)
 }

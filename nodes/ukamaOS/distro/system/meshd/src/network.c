@@ -60,22 +60,6 @@ STATIC void setup_webservice_endpoints(Config *config, UInst *instance) {
   ulfius_set_default_endpoint(instance, &callback_not_allowed, config);
 }
 
-STATIC void setup_websocket_endpoints(Config *config, UInst *instance) {
-
-  /* Endpoint list declaration. */
-  ulfius_add_endpoint_by_val(instance, "GET", PREFIX_WEBSOCKET, NULL, 0,
-			     &callback_websocket, config);
-  ulfius_add_endpoint_by_val(instance, "POST", PREFIX_WEBSOCKET, NULL, 0,
-			     &callback_websocket, config);
-  ulfius_add_endpoint_by_val(instance, "PUT", PREFIX_WEBSOCKET, NULL, 0,
-			     &callback_not_allowed, config);
-  ulfius_add_endpoint_by_val(instance, "DELETE", PREFIX_WEBSOCKET, NULL, 0,
-			     &callback_not_allowed, config);
-  
-  /* default endpoint. */
-  ulfius_set_default_endpoint(instance, &callback_not_allowed, config);
-}
-
 STATIC int start_framework(Config *config, UInst *instance, int flag) {
   
   if (ulfius_start_framework(instance) != U_OK) {
