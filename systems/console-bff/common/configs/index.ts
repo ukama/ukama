@@ -66,6 +66,9 @@ const HEALTH_PORT = parseInt(process.env.HEALTH_PORT ?? "5060");
 const PAYMENT_PORT = parseInt(process.env.PAYMENT_PORT ?? "5061");
 const REPORT_PORT = parseInt(process.env.REPORT_PORT ?? "5062");
 const SOFTWARE_PORT = parseInt(process.env.SOFTWARE_PORT ?? "5063");
+
+const SkipSubGraphs = ["state"] as const;
+const skipSubGraphsSet = new Set<string>(SkipSubGraphs);
 export const SUB_GRAPHS = {
   state: {
     name: "state",
@@ -206,9 +209,11 @@ export const SUB_GRAPHS = {
   },
 };
 
-export const SUB_GRAPH_LIST = Object.entries(SUB_GRAPHS).map(
-  ([key, value]) => ({
+export const SUB_GRAPH_LIST = Object.entries(SUB_GRAPHS)
+  .filter(([key, value]) => {
+    return !skipSubGraphsSet.has(key) && !skipSubGraphsSet.has(value.name);
+  })
+  .map(([key, value]) => ({
     type: key,
     ...value,
-  })
-);
+  }));
