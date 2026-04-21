@@ -53,46 +53,53 @@ static void generate_uuid(char *seqno) {
     uuid_unparse(uuid, seqno);
 }
 
-int callback_websocket (const URequest *request, UResponse *response,
-						void *data) {
-	int ret;
-	char *nodeID=NULL;
-	Config *config = (Config *)data;
+int callback_websocket(const URequest *request,
+                       UResponse *response,
+                       void *data) {
 
-	nodeID = u_map_get(request->map_header, "User-Agent");
-	if (nodeID == NULL) {
-		usys_log_error("Missing NodeID as User-Agent");
-		return U_CALLBACK_ERROR;
-	}
+    int ret;
+    char *nodeID = NULL;
+    Config *config = (Config *)data;
 
-	if (config->deviceInfo) {
-		if (strcmp(config->deviceInfo->nodeID, nodeID) != 0) {
-			/* Only accept one device at a time until the socket is closed. */
-			usys_log_error("Only accept one device at a time. Ignoring");
-			return U_CALLBACK_ERROR;
-		}
-	} else {
-		config->deviceInfo = (DeviceInfo *)malloc(sizeof(DeviceInfo));
-		if (config->deviceInfo == NULL) {
-			usys_log_error("Error allocating memory: %d", sizeof(DeviceInfo));
-            free(nodeID);
-			return U_CALLBACK_ERROR;
-		}
+    nodeID = u_map_get(request->map_header, "User-Agent");
+    if (nodeID == NULL) {
+        usys_log_error("Missing NodeID as User-Agent");
+        return U_CALLBACK_ERROR;
+    }
+
+    if (config->deviceInfo) {
+        if (strcmp(config->deviceInfo->nodeID, nodeID) != 0) {
+            usys_log_error("Only accept one device at a time. Ignoring");
+            return U_CALLBACK_ERROR;
+        }
+    } else {
+        config->deviceInfo = (DeviceInfo *)malloc(sizeof(DeviceInfo));
+        if (config->deviceInfo == NULL) {
+            usys_log_error("Error allocating memory: %d", sizeof(DeviceInfo));
+            return U_CALLBACK_ERROR;
+        }
+
         config->deviceInfo->nodeID = strdup(nodeID);
-	}
+        if (config->deviceInfo->nodeID == NULL) {
+            free(config->deviceInfo);
+            config->deviceInfo = NULL;
+            usys_log_error("Error duplicating nodeID");
+            return U_CALLBACK_ERROR;
+        }
+    }
 
-	if ((ret = ulfius_set_websocket_response(response, NULL, NULL,
-											 &websocket_manager,
-											 data,
-											 &websocket_incoming_message,
-											 data,
-											 &websocket_onclose,
-											 data)) == U_OK) {
-		ulfius_add_websocket_deflate_extension(response);
-		return U_CALLBACK_CONTINUE;
-	}
+    if ((ret = ulfius_set_websocket_response(response, NULL, NULL,
+                                             &websocket_manager,
+                                             data,
+                                             &websocket_incoming_message,
+                                             data,
+                                             &websocket_onclose,
+                                             data)) == U_OK) {
+        ulfius_add_websocket_deflate_extension(response);
+        return U_CALLBACK_CONTINUE;
+    }
 
-	return U_CALLBACK_CONTINUE;
+    return U_CALLBACK_CONTINUE;
 }
 
 int callback_not_allowed(const URequest *request,
@@ -109,20 +116,20 @@ int callback_forward_service(const URequest *request,
                              UResponse *response,
                              void *data) {
 
-	int ret;
-	char *service=NULL;
-    char *requestStr=NULL;
-    char ip[INET_ADDRSTRLEN]={0}, sourcePort[MAX_BUFFER]={0};
-    struct sockaddr_in *sin=NULL;
-    MapItem *map=NULL;
-    char idStr[36+1];
-    
+    int ret;
+    char *service = NULL;
+    char *requestStr = NULL;
+    char ip[INET_ADDRSTRLEN] = {0};
+    char sourcePort[MAX_BUFFER] = {0};
+    struct sockaddr_in *sin = NULL;
+    MapItem *map = NULL;
+    char idStr[36 + 1];
+
     sin = (struct sockaddr_in *)request->client_address;
     inet_ntop(AF_INET, &sin->sin_addr, &ip[0], INET_ADDRSTRLEN);
-    sprintf(sourcePort, "%d",sin->sin_port);
+    sprintf(sourcePort, "%d", sin->sin_port);
 
-    /* Who send this request */
-    service  = u_map_get(request->map_header, "User-Agent");
+    service = u_map_get(request->map_header, "User-Agent");
     if (service == NULL) {
         ulfius_set_string_body_response(response,
                                         HttpStatus_BadRequest,
@@ -130,45 +137,56 @@ int callback_forward_service(const URequest *request,
         return U_CALLBACK_CONTINUE;
     }
 
-    /* get UUID as seqno */
     generate_uuid(idStr);
 
     ret = serialize_websocket_message(&requestStr, request, idStr);
-	if (ret == FALSE && requestStr == NULL) {
-		usys_log_error("Failed to convert request to JSON");
+    if (ret == FALSE && requestStr == NULL) {
+        usys_log_error("Failed to convert request to JSON");
         ulfius_set_string_body_response(response,
                                         HttpStatus_BadRequest,
                                         HttpStatusStr(HttpStatus_BadRequest));
         return U_CALLBACK_CONTINUE;
-	} else {
-		usys_log_debug("Forward request JSON: %s", requestStr);
-	}
+    } else {
+        usys_log_debug("Forward request JSON: %s", requestStr);
+    }
 
-    /* map it */
     map = add_map_to_table(&ClientTable, service, sourcePort, idStr);
     if (map == NULL) {
         usys_log_error("Unable to add service to internal map");
         ulfius_set_string_body_response(response,
                                         HttpStatus_InternalServerError,
                                         HttpStatusStr(HttpStatus_InternalServerError));
+        SAFE_FREE(requestStr);
         return U_CALLBACK_CONTINUE;
-	}
+    }
 
-	/* Add work for the websocket for transmission. */
+    pthread_mutex_lock(&map->mutex);
+    map->code = 0;
+    map->size = 0;
+    SAFE_FREE(map->data);
+    pthread_mutex_unlock(&map->mutex);
+
     add_work_to_queue(&Transmit, requestStr, NULL, 0, NULL, 0);
 
-	/* Wait for the response back. The cond is set by the websocket thread */
-	pthread_mutex_lock(&map->mutex);
-	usys_log_debug("Waiting for response back from the server ...");
-	pthread_cond_wait(&map->hasResp, &map->mutex);
-	pthread_mutex_unlock(&map->mutex);
+    pthread_mutex_lock(&map->mutex);
+    usys_log_debug("Waiting for response back from the server ...");
+
+    while (map->data == NULL) {
+        pthread_cond_wait(&map->hasResp, &map->mutex);
+    }
+
+    pthread_mutex_unlock(&map->mutex);
 
     usys_log_debug("Response from System Code: %d len: %d Data: %s",
-                   map->code, map->size, map->data);
+                   map->code,
+                   map->size,
+                   map->data ? map->data : "");
 
-    ulfius_set_string_body_response(response, map->code, (char *)map->data);
+    ulfius_set_string_body_response(response,
+                                    map->code,
+                                    map->data ? map->data : "");
 
-	return U_CALLBACK_CONTINUE;
+    return U_CALLBACK_CONTINUE;
 }
 
 int web_service_cb_ping(const URequest *request,
