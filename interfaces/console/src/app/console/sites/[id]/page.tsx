@@ -451,6 +451,14 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   if (!isDataReady) {
     return (
       <Grid2 container columnSpacing={2} rowSpacing={2}>
+        <Grid2 size={12}>
+          <Skeleton
+            height={64}
+            width={'100%'}
+            variant="rectangular"
+            sx={{ borderRadius: '5px' }}
+          />
+        </Grid2>
         {[1, 2, 3].map((item) => (
           <Grid2 size={4} key={item}>
             <Skeleton
@@ -494,12 +502,14 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       >
         <Grid2 size={12}>
           <StatusBar
+            type="toggle"
             selected={activeSite}
             uptime={getSiteUptime() ?? 0}
             loading={sitesLoading || statLoading}
             objs={siteData?.getSites.sites ?? []}
             handleActionClick={handleActionClick}
-            ActionOptions={SITE_ACTIONS_BUTTONS}
+            actionOptions={SITE_ACTIONS_BUTTONS}
+            actionOptionValues={SITE_ACTIONS_BUTTONS.map((option) => ({ id: option.id, value: false }))}
             handleSelected={(obj: TStatusBarObj) => handleSiteChange(obj.id)}
           />
         </Grid2>

@@ -559,6 +559,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
   return (
     <Stack width={'100%'} height={'100%'} mt={1} spacing={1}>
       <StatusBar
+        type="split"
         uptime={nodeUptime}
         selected={currentNode}
         handleEditClick={() => {
@@ -566,7 +567,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
         }}
         handleSelected={handleNodeSelected}
         objs={nodesData?.getNodes.nodes ?? []}
-        ActionOptions={NODE_ACTIONS_BUTTONS}
+        actionOptions={NODE_ACTIONS_BUTTONS}
         handleActionClick={handleNodeActionClick}
         loading={nodesLoading || updateNodeLoading || statLoading}
       />

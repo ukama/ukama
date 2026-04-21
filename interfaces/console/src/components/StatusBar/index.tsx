@@ -13,6 +13,7 @@ import { styled } from '@mui/material/styles';
 import LoadingWrapper from '../LoadingWrapper';
 import NodeDropDown from '../NodeDropDown';
 import SplitButton from '../SplitButton';
+import ToggleButtonsMenu from '../ToggleButtonsMenu';
 
 const StyledBtn = styled(Button)({
   whiteSpace: 'nowrap',
@@ -23,7 +24,9 @@ interface INodeStatus {
   objs: any;
   uptime: number;
   loading: boolean;
-  ActionOptions: any[];
+  actionOptions: any[];
+  type: 'split' | 'toggle';
+  actionOptionValues?: any[];
   handleSelected: (obj: Node | Site) => void;
   handleEditClick?: (obj: Node | Site) => void;
   selected: Node | Site | undefined;
@@ -32,16 +35,24 @@ interface INodeStatus {
 
 const StatusBar = ({
   objs,
+  type,
   uptime,
   selected,
   loading = false,
-  ActionOptions,
+  actionOptions,
   handleSelected,
   handleEditClick,
   handleActionClick,
+  actionOptionValues,
 }: INodeStatus) => {
   const handleUpdateNode = () =>
-    handleEditClick?.(objs.find((item: any) => item.id === selected) as Node | Site);
+    handleEditClick?.(
+      objs.find((item: any) => item.id === selected) as Node | Site,
+    );
+
+  const handleToggle = (id: string, value: boolean) => {
+    console.log(id, value);
+  };
 
   return (
     <Grid container alignItems={'center'}>
@@ -62,7 +73,7 @@ const StatusBar = ({
         justifyContent="flex-end"
         visibility={uptime > 0 ? 'visible' : 'hidden'}
       >
-        {handleEditClick && 
+        {handleEditClick && (
           <Grid>
             <LoadingWrapper isLoading={loading} height={40}>
               <StyledBtn variant="contained" onClick={handleUpdateNode}>
@@ -70,14 +81,25 @@ const StatusBar = ({
               </StyledBtn>
             </LoadingWrapper>
           </Grid>
-        }
+        )}
 
         <Grid>
           <LoadingWrapper isLoading={loading} height={40} width={'100%'}>
-            <SplitButton
-              options={ActionOptions}
-              handleSplitActionClick={handleActionClick}
-            />
+            {type === 'toggle' ? (
+              <ToggleButtonsMenu
+                title="Actions"
+                options={actionOptions}
+                values={actionOptionValues ?? []}
+                handleToggle={(id: string, value: boolean) => {
+                  handleToggle(id, value);
+                }}
+              />
+            ) : (
+              <SplitButton
+                options={actionOptions}
+                handleSplitActionClick={handleActionClick}
+              />
+            )}
           </LoadingWrapper>
         </Grid>
       </Grid>
