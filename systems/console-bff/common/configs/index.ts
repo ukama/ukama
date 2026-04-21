@@ -69,7 +69,16 @@ const SOFTWARE_PORT = parseInt(process.env.SOFTWARE_PORT ?? "5063");
 
 const SkipSubGraphs = ["state"] as const;
 const skipSubGraphsSet = new Set<string>(SkipSubGraphs);
-export const SUB_GRAPHS = {
+export const SUB_GRAPHS: Record<
+  string,
+  {
+    name: string;
+    port: number;
+    url: string;
+    isForNodeGw?: boolean;
+    isPingedSuccess: boolean;
+  }
+> = {
   state: {
     name: "state",
     port: NODE_STATE_PORT,
@@ -152,6 +161,7 @@ export const SUB_GRAPHS = {
     name: "health",
     port: HEALTH_PORT,
     url: `http://localhost:${HEALTH_PORT}`,
+    isForNodeGw: true,
     isPingedSuccess: false,
   },
   software: {

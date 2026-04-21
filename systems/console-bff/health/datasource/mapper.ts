@@ -7,12 +7,35 @@
  */
 import { HealthInfo } from "../resolvers/types";
 
-export const dtoToHealthInfo = (res: HealthInfo): HealthInfo => {
+export const dtoToHealthInfo = (res: any): HealthInfo => {
+  const health = res?.healths?.[0] ?? {};
+
+  const system = (health.system ?? []).map((item: any) => ({
+    id: item.id,
+    healthId: item.healthId,
+    name: item.name,
+    value: item.value,
+  }));
+
+  const capps = (health.capps ?? []).map((item: any) => ({
+    id: item.id,
+    space: item.space,
+    name: item.name,
+    tag: item.tag,
+    status: item.status,
+    resources: (item.resources ?? []).map((resource: any) => ({
+      id: resource.id,
+      cappId: resource.cappId,
+      name: resource.name,
+      value: resource.value,
+    })),
+  }));
+
   return {
-    id: res.id,
-    nodeId: res.nodeId,
-    timestamp: res.timestamp,
-    system: res.system,
-    capps: res.capps,
+    id: health.id ?? "",
+    nodeId: health.nodeId ?? "",
+    timestamp: health.timestamp ?? "",
+    system,
+    capps,
   };
 };
