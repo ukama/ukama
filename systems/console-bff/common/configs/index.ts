@@ -7,7 +7,6 @@
  */
 import "dotenv/config";
 
-
 export const VERSION = process.env.VERSION ?? "v1";
 
 export const METRICS_INTERVAL = 30;

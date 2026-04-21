@@ -8,7 +8,6 @@
 import "reflect-metadata";
 import { registerEnumType } from "type-graphql";
 
-
 export enum API_METHOD_TYPE {
   GET = "get",
   POST = "post",
