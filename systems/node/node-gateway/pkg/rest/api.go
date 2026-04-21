@@ -12,7 +12,7 @@ import "encoding/json"
 
 type ListHealthRequest struct {
 	NodeId  string `example:"{{NodeId}}" validate:"required" path:"node_id" `
-	Filter  string `example:"{{Filter}}" json:"type,omitempty" validate:"eq=all|eq=latest"`
+	Filter  string `default:"all" json:"type,omitempty" form:"filter" query:"filter" binding:"required" validate:"eq=all|eq=latest"`
 }
 
 type AddNotificationReq struct {
