@@ -10,7 +10,10 @@
 import {
   Node,
   NodeStateEnum,
+  NodeTypeEnum,
   SiteDto,
+  Timeframe_Filter,
+  useGetHealthReportQuery,
   useGetNodesForSiteLazyQuery,
   useGetSitesQuery,
   useToggleInternetSwitchMutation,
@@ -20,7 +23,12 @@ import SiteComponents from '@/components/SiteComponents';
 import SiteInfo from '@/components/SiteInfos';
 import SiteOverview from '@/components/SiteOverView';
 import StatusBar from '@/components/StatusBar';
-import { SITE_ACTIONS_BUTTONS, SITE_KPI_TYPES, SITE_KPIS } from '@/constants';
+import {
+  NODE_ACTIONS_ENUM,
+  SITE_ACTIONS_BUTTONS,
+  SITE_KPI_TYPES,
+  SITE_KPIS,
+} from '@/constants';
 import { SectionData } from '@/constants/index';
 import { useAppContext } from '@/context';
 import { ActiveView, KPIType, TStatusBarObj } from '@/types';
@@ -28,6 +36,7 @@ import {
   extractMetricValue,
   graphTypeToSection,
   kpiToGraphType,
+  stringToBoolean,
 } from '@/utils';
 import { useFetchAddress } from '@/utils/useFetchAddress';
 import { useMetricSubscriptions } from '@/utils/useMetricSubscriptions';
@@ -107,6 +116,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const [nodesFetched, setNodesFetched] = useState(false);
   const [isDataReady, setIsDataReady] = useState(false);
   const [activeSubscribers, setActiveSubscribers] = useState<number>(0);
+  const [siteActionData, setSiteActionData] = useState<any[]>([]);
   const [activeView, setActiveView] = useState<ActiveView>({
     graphType: Graphs_Type.Solar,
     kpi: 'node',
@@ -313,6 +323,47 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     },
   });
 
+  const { loading: healthLoading } = useGetHealthReportQuery({
+    variables: {
+      data: {
+        id: '',
+        timestamp: '',
+        timeframe: Timeframe_Filter.Latest,
+        nodeId:
+          nodes.find((node) => node.id.includes(NodeTypeEnum.Tnode))?.id || '',
+      },
+    },
+    onCompleted: (data) => {
+      if (data.getHealthReport.system.length > 0) {
+        const am: any[] = [];
+        data.getHealthReport.system.forEach((system: any) => {
+          system.name === 'radio' &&
+            am.push({
+              id: NODE_ACTIONS_ENUM.TOGGLE_RADIO,
+              key: system.name,
+              value: stringToBoolean(system.value),
+            });
+
+          system.name === 'service' &&
+            am.push({
+              id: NODE_ACTIONS_ENUM.TOGGLE_SERVICE,
+              key: system.name,
+              value: stringToBoolean(system.value),
+            });
+        });
+        setSiteActionData(am);
+      }
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'fetching-health-report-msg',
+        message: error.message,
+        type: 'error',
+        show: true,
+      });
+    },
+  });
+
   const checkDataReadiness = useCallback(() => {
     if (activeSite.id && CurrentSiteaddress && !CurrentSiteAddressLoading) {
       setIsDataReady(true);
@@ -421,10 +472,14 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   };
 
   const handleActionClick = useCallback(
-    (id: string) => {
-      router.push(`/console/sites/${id}`);
+    (id: string, value: boolean) => {
+      setSiteActionData(
+        siteActionData.map((item: any) =>
+          item.id === id ? { ...item, value: value } : item,
+        ),
+      );
     },
-    [router],
+    [siteActionData],
   );
 
   const getSiteUptime = useCallback(() => {
@@ -480,7 +535,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       </Grid2>
     );
   }
-
+  
   return (
     <Box
       sx={{
@@ -505,12 +560,13 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
             type="toggle"
             selected={activeSite}
             uptime={getSiteUptime() ?? 0}
+            actionLoading={healthLoading}
             loading={sitesLoading || statLoading}
             objs={siteData?.getSites.sites ?? []}
             handleActionClick={handleActionClick}
             actionOptions={SITE_ACTIONS_BUTTONS}
-            actionOptionValues={SITE_ACTIONS_BUTTONS.map((option) => ({ id: option.id, value: false }))}
             handleSelected={(obj: TStatusBarObj) => handleSiteChange(obj.id)}
+            actionOptionValues={siteActionData}
           />
         </Grid2>
         <Grid2

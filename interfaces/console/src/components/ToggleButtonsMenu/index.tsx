@@ -8,14 +8,15 @@
 
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import {
-    Button,
-    ClickAwayListener,
-    MenuList,
-    Paper,
-    Popper,
-    Stack,
-    Switch,
-    Typography
+  Button,
+  ClickAwayListener,
+  MenuList,
+  Paper,
+  Popper,
+  Skeleton,
+  Stack,
+  Switch,
+  Typography,
 } from '@mui/material';
 import React from 'react';
 import BasicDialog from '../BasicDialog';
@@ -24,6 +25,7 @@ interface IToggleButtonsMenu {
   title: string;
   values: any[];
   options: any[];
+  isLoading: boolean;
   handleToggle: (id: string, value: boolean) => void;
 }
 
@@ -31,12 +33,12 @@ const ToggleButtonsMenu = ({
   title,
   values,
   options,
+  isLoading,
   handleToggle,
 }: IToggleButtonsMenu) => {
   const [open, setOpen] = React.useState(false);
   const anchorRef = React.useRef<HTMLButtonElement>(null);
   const [consentDialog, setConsentDialog] = React.useState(false);
-  const [valuesState, setValuesState] = React.useState<any[]>(values);
 
   const handleOpen = () => {
     setOpen((open) => !open);
@@ -46,10 +48,14 @@ const ToggleButtonsMenu = ({
     setOpen(false);
   };
 
-  const handleToggleChange = (id: string, value: boolean) => {
-    setValuesState(valuesState.map((option) => option.id === id ? { ...option, value } : option));
-    handleToggle(id, valuesState.find((i: any) => i.id === id)?.value);
-  };
+  if (isLoading) {
+    return (
+      <Stack direction="row" spacing={1}>
+        <Skeleton variant="rectangular" height={40} width={100} />
+        <Skeleton variant="rectangular" height={40} width={100} />
+      </Stack>
+    );
+  }
 
   return (
     <>
@@ -88,7 +94,7 @@ const ToggleButtonsMenu = ({
       <Popper
         open={open}
         role={undefined}
-        placement='bottom-end'
+        placement="bottom-end"
         anchorEl={anchorRef.current}
         sx={{
           zIndex: 1000,
@@ -109,8 +115,8 @@ const ToggleButtonsMenu = ({
                   <Switch
                     name={id}
                     size="small"
-                    checked={valuesState.find((i: any) => i.id === id)?.value}
-                    onChange={(e) => handleToggleChange(id, e.target.checked)}
+                    onChange={(e) => handleToggle(id, e.target.checked)}
+                    checked={values.find((j: any) => j.id === id)?.value}
                   />
                 </Stack>
               ))}
@@ -122,13 +128,21 @@ const ToggleButtonsMenu = ({
         isOpen={consentDialog}
         labelSuccessBtn={'Confirm'}
         labelNegativeBtn={'Cancel'}
-        title={options.find((i) => i.id === values.find((j: any) => j.id === i.id)?.id)?.name}
-        description={options.find((i) => i.id === values.find((j: any) => j.id === i.id)?.id)?.consent}
+        title={
+          options.find(
+            (i) => i.id === values.find((j: any) => j.id === i.id)?.id,
+          )?.name
+        }
+        description={
+          options.find(
+            (i) => i.id === values.find((j: any) => j.id === i.id)?.id,
+          )?.consent
+        }
         handleCloseAction={() => setConsentDialog(false)}
         handleSuccessAction={() => {
           setConsentDialog(false);
         }}
-      ></BasicDialog>
+      />
     </>
   );
 };

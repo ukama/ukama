@@ -25,12 +25,13 @@ interface INodeStatus {
   uptime: number;
   loading: boolean;
   actionOptions: any[];
+  actionLoading?: boolean;
   type: 'split' | 'toggle';
   actionOptionValues?: any[];
   handleSelected: (obj: Node | Site) => void;
   handleEditClick?: (obj: Node | Site) => void;
   selected: Node | Site | undefined;
-  handleActionClick: (id: string) => void;
+  handleActionClick: (id: string, value: boolean) => void;
 }
 
 const StatusBar = ({
@@ -39,6 +40,7 @@ const StatusBar = ({
   uptime,
   selected,
   loading = false,
+  actionLoading = false,
   actionOptions,
   handleSelected,
   handleEditClick,
@@ -49,10 +51,6 @@ const StatusBar = ({
     handleEditClick?.(
       objs.find((item: any) => item.id === selected) as Node | Site,
     );
-
-  const handleToggle = (id: string, value: boolean) => {
-    console.log(id, value);
-  };
 
   return (
     <Grid container alignItems={'center'}>
@@ -84,20 +82,21 @@ const StatusBar = ({
         )}
 
         <Grid>
-          <LoadingWrapper isLoading={loading} height={40} width={'100%'}>
+          <LoadingWrapper isLoading={actionLoading} height={40} width={'100%'}>
             {type === 'toggle' ? (
               <ToggleButtonsMenu
                 title="Actions"
                 options={actionOptions}
+                isLoading={actionLoading}
                 values={actionOptionValues ?? []}
-                handleToggle={(id: string, value: boolean) => {
-                  handleToggle(id, value);
-                }}
+                handleToggle={handleActionClick}
               />
             ) : (
               <SplitButton
                 options={actionOptions}
-                handleSplitActionClick={handleActionClick}
+                handleSplitActionClick={(id: string) => {
+                  handleActionClick(id, true);
+                }}
               />
             )}
           </LoadingWrapper>

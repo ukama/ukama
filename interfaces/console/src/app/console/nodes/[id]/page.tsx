@@ -472,7 +472,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
     setMetricFrom(() => getUnixTime() - METRIC_RANGE_10800);
   };
 
-  const handleNodeActionClick = (action: string) => {
+  const handleNodeActionClick = (action: string, _: boolean) => {
     switch (action) {
       case NODE_ACTIONS_ENUM.NODE_RESTART:
         setNodeAction({

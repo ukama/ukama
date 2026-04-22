@@ -292,6 +292,13 @@ export type FeeDto = {
   units: Scalars['Float']['output'];
 };
 
+export type GetHealthReportInputDto = {
+  id: Scalars['String']['input'];
+  nodeId: Scalars['String']['input'];
+  timeframe: Timeframe_Filter;
+  timestamp: Scalars['String']['input'];
+};
+
 export type GetNodeLatestMetricInput = {
   nodeId: Scalars['String']['input'];
   type: Scalars['String']['input'];
@@ -363,6 +370,41 @@ export type GetSoftwaresInput = {
   name: Scalars['String']['input'];
   nodeId: Scalars['String']['input'];
   status: SoftwareStatusEnum;
+};
+
+export type HealthCappInfo = {
+  __typename?: 'HealthCappInfo';
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  resources: Array<HealthResourceInfo>;
+  space: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  tag: Scalars['String']['output'];
+};
+
+export type HealthInfo = {
+  __typename?: 'HealthInfo';
+  capps: Array<HealthCappInfo>;
+  id: Scalars['String']['output'];
+  nodeId: Scalars['String']['output'];
+  system: Array<HealthSystemInfo>;
+  timestamp: Scalars['String']['output'];
+};
+
+export type HealthResourceInfo = {
+  __typename?: 'HealthResourceInfo';
+  cappId: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  value: Scalars['String']['output'];
+};
+
+export type HealthSystemInfo = {
+  __typename?: 'HealthSystemInfo';
+  healthId: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  value: Scalars['String']['output'];
 };
 
 export enum Invitation_Status {
@@ -1038,6 +1080,7 @@ export type Query = {
   getDefaultMarkup: DefaultMarkupResDto;
   getDefaultMarkupHistory: DefaultMarkupHistoryResDto;
   getGeneratedPdfReport: GetPdfReportUrlDto;
+  getHealthReport: HealthInfo;
   getInvitation: InvitationDto;
   getInvitations: InvitationsResDto;
   getInvitationsByEmail: InvitationsResDto;
@@ -1120,6 +1163,11 @@ export type QueryGetDataUsagesArgs = {
 
 export type QueryGetGeneratedPdfReportArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type QueryGetHealthReportArgs = {
+  data: GetHealthReportInputDto;
 };
 
 
@@ -1688,6 +1736,12 @@ export type SubscriptionDto = {
   terminatedAt?: Maybe<Scalars['String']['output']>;
 };
 
+export enum Timeframe_Filter {
+  All = 'ALL',
+  Latest = 'LATEST',
+  Unknown = 'UNKNOWN'
+}
+
 export type TimezoneDto = {
   __typename?: 'TimezoneDto';
   abbr: Scalars['String']['output'];
@@ -1948,6 +2002,13 @@ export type ToggleServiceMutationVariables = Exact<{
 
 
 export type ToggleServiceMutation = { __typename?: 'Mutation', toggleService: { __typename?: 'CBooleanResponse', success: boolean } };
+
+export type GetHealthReportQueryVariables = Exact<{
+  data: GetHealthReportInputDto;
+}>;
+
+
+export type GetHealthReportQuery = { __typename?: 'Query', getHealthReport: { __typename?: 'HealthInfo', id: string, nodeId: string, timestamp: string, system: Array<{ __typename?: 'HealthSystemInfo', id: string, healthId: string, name: string, value: string }>, capps: Array<{ __typename?: 'HealthCappInfo', id: string, space: string, name: string, tag: string, status: string, resources: Array<{ __typename?: 'HealthResourceInfo', id: string, cappId: string, name: string, value: string }> }> } };
 
 export type MemberFragment = { __typename?: 'MemberDto', role: string, userId: string, isDeactivated: boolean, memberSince?: string | null, id: string };
 
@@ -3439,6 +3500,67 @@ export function useToggleServiceMutation(baseOptions?: Apollo.MutationHookOption
 export type ToggleServiceMutationHookResult = ReturnType<typeof useToggleServiceMutation>;
 export type ToggleServiceMutationResult = Apollo.MutationResult<ToggleServiceMutation>;
 export type ToggleServiceMutationOptions = Apollo.BaseMutationOptions<ToggleServiceMutation, ToggleServiceMutationVariables>;
+export const GetHealthReportDocument = gql`
+    query GetHealthReport($data: GetHealthReportInputDto!) {
+  getHealthReport(data: $data) {
+    id
+    nodeId
+    timestamp
+    system {
+      id
+      healthId
+      name
+      value
+    }
+    capps {
+      id
+      space
+      name
+      tag
+      status
+      resources {
+        id
+        cappId
+        name
+        value
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetHealthReportQuery__
+ *
+ * To run a query within a React component, call `useGetHealthReportQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetHealthReportQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetHealthReportQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetHealthReportQuery(baseOptions: Apollo.QueryHookOptions<GetHealthReportQuery, GetHealthReportQueryVariables> & ({ variables: GetHealthReportQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetHealthReportQuery, GetHealthReportQueryVariables>(GetHealthReportDocument, options);
+      }
+export function useGetHealthReportLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetHealthReportQuery, GetHealthReportQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetHealthReportQuery, GetHealthReportQueryVariables>(GetHealthReportDocument, options);
+        }
+export function useGetHealthReportSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetHealthReportQuery, GetHealthReportQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetHealthReportQuery, GetHealthReportQueryVariables>(GetHealthReportDocument, options);
+        }
+export type GetHealthReportQueryHookResult = ReturnType<typeof useGetHealthReportQuery>;
+export type GetHealthReportLazyQueryHookResult = ReturnType<typeof useGetHealthReportLazyQuery>;
+export type GetHealthReportSuspenseQueryHookResult = ReturnType<typeof useGetHealthReportSuspenseQuery>;
+export type GetHealthReportQueryResult = Apollo.QueryResult<GetHealthReportQuery, GetHealthReportQueryVariables>;
 export const GetMembersDocument = gql`
     query GetMembers {
   getMembers {
