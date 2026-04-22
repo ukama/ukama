@@ -19,14 +19,19 @@ class HealthApi extends RESTDataSource {
     req: GetHealthReportInputDto
   ): Promise<HealthInfo> => {
     this.baseURL = baseURL;
+    const query = new URLSearchParams();
+    query.set("timeframe", req.timeframe || "all");
+    if (req.id) query.set("id", req.id);
+    if (req.nodeId) query.set("node_id", req.nodeId);
+    if (req.timestamp) query.set("timestamp", req.timestamp);
     this.logger.info(
-      `GetHealthReport [GET]: ${baseURL}/${VERSION}/${HEALTH}/nodes/${req.nodeId}/list?filter=${req.filter}`
+      `GetHealthReport [GET]: ${baseURL}/${VERSION}/${HEALTH}/list?${query.toString()}`
     );
-    return this.get(
-      `/${VERSION}/${HEALTH}/nodes/${req.nodeId}/list?filter=${req.filter}`
-    ).then((res: any) => {
-      return dtoToHealthInfo(res);
-    });
+    return this.get(`/${VERSION}/${HEALTH}/list?${query.toString()}`).then(
+      (res: any) => {
+        return dtoToHealthInfo(res);
+      }
+    );
   };
 }
 

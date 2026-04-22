@@ -14,7 +14,7 @@ type ListHealthRequest struct {
 	Id      string `form:"id" json:"id" query:"id" binding:"required"`
 	NodeId  string `form:"node_id" json:"node_id" query:"node_id" binding:"required"`
 	Timestamp string `form:"timestamp" json:"timestamp" query:"timestamp" binding:"required"`
-	Timeframe  string `form:"timeframe" json:"timeframe" query:"timeframe" binding:"required" validate:"eq=all|eq=latest"`
+	Timeframe  string `default:"all" form:"timeframe" json:"timeframe" query:"timeframe" binding:"required" validate:"eq=all|eq=latest"`
 }
 
 type AddNotificationReq struct {

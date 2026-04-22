@@ -12,10 +12,16 @@ import { TIMEFRAME_FILTER } from "../../common/enums";
 @InputType()
 export class GetHealthReportInputDto {
   @Field()
-  nodeId: string;
+  id: string;
+
+  @Field()
+  timestamp: string;
 
   @Field(() => TIMEFRAME_FILTER)
-  filter: TIMEFRAME_FILTER;
+  timeframe: TIMEFRAME_FILTER;
+
+  @Field()
+  nodeId: string;
 }
 
 @ObjectType()
