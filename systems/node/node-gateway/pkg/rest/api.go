@@ -11,8 +11,10 @@ package rest
 import "encoding/json"
 
 type ListHealthRequest struct {
-	NodeId  string `example:"{{NodeId}}" validate:"required" path:"node_id" `
-	Filter  string `default:"all" json:"type,omitempty" form:"filter" query:"filter" binding:"required" validate:"eq=all|eq=latest"`
+	Id      string `form:"id" json:"id" query:"id" binding:"required"`
+	NodeId  string `form:"node_id" json:"node_id" query:"node_id" binding:"required"`
+	Timestamp string `form:"timestamp" json:"timestamp" query:"timestamp" binding:"required"`
+	Filter  string `form:"filter" json:"filter" query:"filter" binding:"required" validate:"eq=all|eq=latest"`
 }
 
 type AddNotificationReq struct {

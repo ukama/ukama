@@ -12,8 +12,10 @@ service healhtService {
 }
 
 message ListRequest {
-    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
-    ukama.common.v1.FilterTimeframesType filter = 2;
+    string id = 1;
+    string nodeId = 2;
+    string timestamp = 3; 
+    ukama.common.v1.FilterTimeframesType filter = 4;
 }
 
 message ListResponse {
@@ -21,7 +23,7 @@ message ListResponse {
 }
 
 message StoreRunningAppsInfoRequest {
-    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}];
     string timestamp = 5;
 	repeated System system = 3;
 	repeated Capps  capps = 6;
