@@ -39,7 +39,7 @@ func (r *healthRepo) List(id string, nodeId string, timestamp string, filter uka
 	}
 
 	if timestamp != "" {
-		query = query.Where("timestamp = ?", timestamp)
+		query = query.Where("time_stamp = ?", timestamp)
 	}
 
 	if nodeId != "" {
