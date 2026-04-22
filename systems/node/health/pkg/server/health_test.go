@@ -177,7 +177,7 @@ func TestHealthServerListLatest(t *testing.T) {
 
 	resp, err := s.List(context.TODO(), &pb.ListRequest{
 		NodeId: testNode.String(),
-		Filter: ukamapb.FilterTimeframesType_LATEST,
+		Timeframe: ukamapb.FilterTimeframesType_LATEST,
 	})
 
 	assert.NoError(t, err)
@@ -216,7 +216,7 @@ func TestHealthServerListAll(t *testing.T) {
 
 	resp, err := s.List(context.TODO(), &pb.ListRequest{
 		NodeId: testNode.String(),
-		Filter: ukamapb.FilterTimeframesType_ALL,
+		Timeframe: ukamapb.FilterTimeframesType_ALL,
 	})
 
 	assert.NoError(t, err)
@@ -235,7 +235,7 @@ func TestHealthServerListMissingIdAndNodeId(t *testing.T) {
 	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
 
 	resp, err := s.List(context.TODO(), &pb.ListRequest{
-		Filter: ukamapb.FilterTimeframesType_LATEST,
+		Timeframe: ukamapb.FilterTimeframesType_LATEST,
 	})
 
 	assert.Nil(t, resp)
@@ -256,7 +256,7 @@ func TestHealthServerListLatestRepoError(t *testing.T) {
 
 	resp, err := s.List(context.TODO(), &pb.ListRequest{
 		NodeId: testNode.String(),
-		Filter: ukamapb.FilterTimeframesType_LATEST,
+		Timeframe: ukamapb.FilterTimeframesType_LATEST,
 	})
 
 	assert.Nil(t, resp)
@@ -275,7 +275,7 @@ func TestHealthServerListAllRepoError(t *testing.T) {
 
 	resp, err := s.List(context.TODO(), &pb.ListRequest{
 		NodeId: testNode.String(),
-		Filter: ukamapb.FilterTimeframesType_ALL,
+		Timeframe: ukamapb.FilterTimeframesType_ALL,
 	})
 
 	assert.Nil(t, resp)

@@ -227,7 +227,7 @@ func (r *Router) listHealthInfoHandler(c *gin.Context, req *ListHealthRequest) (
 		Id:      req.Id,
 		NodeId:  req.NodeId,
 		Timestamp: req.Timestamp,
-		Filter:  ukamaPb.FilterTimeframesType(ukama.ReturnFilterTimeframesType(ukama.ParseFilterTimeframesType(req.Filter))),
+		Timeframe:  ukamaPb.FilterTimeframesType(ukama.ReturnFilterTimeframesType(ukama.ParseFilterTimeframesType(req.Timeframe))),
 	})
 }
 

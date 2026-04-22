@@ -96,7 +96,7 @@ func TestListHealthInfo(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest(
 		"GET",
-		"/v1/health/list?id=60420da4-364b-494d-92ce-4be280d78c9b&node_id="+testListNodeID+"&timestamp=1776703063&filter=latest",
+		"/v1/health/list?id=60420da4-364b-494d-92ce-4be280d78c9b&node_id="+testListNodeID+"&timestamp=1776703063&timeframe=latest",
 		nil,
 	)
 	c := &hmocks.HealhtServiceClient{}
@@ -104,7 +104,7 @@ func TestListHealthInfo(t *testing.T) {
 		Id:        "60420da4-364b-494d-92ce-4be280d78c9b",
 		NodeId:    testListNodeID,
 		Timestamp: "1776703063",
-		Filter:    ukamapb.FilterTimeframesType_LATEST,
+		Timeframe:    ukamapb.FilterTimeframesType_LATEST,
 	}
 	listResp := &hpb.ListResponse{
 		Healths: []*hpb.Health{

@@ -15,7 +15,7 @@ message ListRequest {
     string id = 1;
     string nodeId = 2;
     string timestamp = 3; 
-    ukama.common.v1.FilterTimeframesType filter = 4;
+    ukama.common.v1.FilterTimeframesType timeframe = 4;
 }
 
 message ListResponse {

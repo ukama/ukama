@@ -148,8 +148,8 @@ func (h *HealthServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListR
 			"either provide id or node id")
 	}
 
-	filter := ukama.ParseFilterTimeframesType(strings.ToLower(req.Filter.String()))
-	healths, err := h.sRepo.List(req.Id, req.NodeId, req.Timestamp, filter)
+	timeframe := ukama.ParseFilterTimeframesType(strings.ToLower(req.Timeframe.String()))
+	healths, err := h.sRepo.List(req.Id, req.NodeId, req.Timestamp, timeframe)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "health")
 	}
