@@ -88,7 +88,7 @@ const getSiteActiveSubscribers = (
   metricsData: any,
   siteId: string,
 ): number | null => {
-  if (!metricsData || !metricsData.metrics || !siteId) return null;
+  if (!metricsData?.metrics || !siteId) return null;
 
   const subscriberMetrics = metricsData.metrics.filter(
     (m: any) =>
@@ -295,9 +295,8 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     [id, updateSwitchPort, setSnackbarMessage],
   );
 
-  const { data: siteData, loading: sitesLoading } = useGetSitesQuery({
-    fetchPolicy: 'cache-first',
-    nextFetchPolicy: 'cache-and-network',
+  const { data: siteData } = useGetSitesQuery({
+    fetchPolicy: 'cache-and-network',
     variables: {
       data: {},
     },
@@ -390,19 +389,21 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       if (data.getHealthReport.system.length > 0) {
         const am: any[] = [];
         data.getHealthReport.system.forEach((system: any) => {
-          system.name === 'radio' &&
+          if (system.name === 'radio') {
             am.push({
               id: NODE_ACTIONS_ENUM.TOGGLE_RADIO,
               key: system.name,
               value: stringToBoolean(system.value),
             });
+          }
 
-          system.name === 'service' &&
+          if (system.name === 'service') {
             am.push({
               id: NODE_ACTIONS_ENUM.TOGGLE_SERVICE,
               key: system.name,
               value: stringToBoolean(system.value),
             });
+          }
         });
         setSiteActionData(am);
       }
