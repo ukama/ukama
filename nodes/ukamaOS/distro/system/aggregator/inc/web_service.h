@@ -1,0 +1,38 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2026-present, Ukama Inc.
+ */
+
+#ifndef AGG_WEB_SERVICE_H_
+#define AGG_WEB_SERVICE_H_
+
+#include "network.h"
+
+#define EP_BS            "/"
+#define REST_API_VERSION "v1"
+#define URL_PREFIX       EP_BS REST_API_VERSION
+#define API_RES_EP(RES)  EP_BS RES
+
+int web_service_cb_ping(const URequest *request,
+                        UResponse *response,
+                        void *data);
+int web_service_cb_version(const URequest *request,
+                           UResponse *response,
+                           void *data);
+int web_service_cb_status(const URequest *request,
+                          UResponse *response,
+                          void *data);
+int web_service_cb_metrics(const URequest *request,
+                           UResponse *response,
+                           void *data);
+int web_service_cb_default(const URequest *request,
+                           UResponse *response,
+                           void *data);
+int web_service_cb_not_allowed(const URequest *request,
+                               UResponse *response,
+                               void *data);
+
+#endif /* AGG_WEB_SERVICE_H_ */
