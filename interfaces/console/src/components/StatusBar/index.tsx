@@ -69,7 +69,6 @@ const StatusBar = ({
         columnSpacing={2}
         size={{ xs: 12, md: 3 }}
         justifyContent="flex-end"
-        visibility={uptime > 0 ? 'visible' : 'hidden'}
       >
         {handleEditClick && (
           <Grid>
