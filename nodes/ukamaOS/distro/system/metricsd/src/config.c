@@ -607,6 +607,7 @@ static int toml_parse_stat_cat_array(MetricsConfig *statCfg,
 int toml_parse_config(char *cfg,
                       char **version,
                       int *scrapingTimePeriod,
+                      int *configPort,
                       MetricsConfig **pstatCfg,
                       int *catCount) {
 
@@ -647,6 +648,17 @@ int toml_parse_config(char *cfg,
 
     *scrapingTimePeriod = read_int_value(conf, TAG_SCRAPING_TIME_PERIOD);
     usys_log_trace("scraping time period is %d", *scrapingTimePeriod);
+
+    if (configPort != NULL) {
+        char *portValue = read_opt_str_value(conf, TAG_PORT);
+
+        *configPort = 0;
+        if (portValue != NULL) {
+            *configPort = atoi(portValue);
+            usys_log_trace("config port is %d", *configPort);
+            free_str_value(portValue);
+        }
+    }
 
     arrStatCfg = toml_array_in(conf, TAG_TABLE);
     if (arrStatCfg == NULL) {
