@@ -48,18 +48,27 @@ cleanup() {
 trap cleanup EXIT
 
 REQUIRED_KEYS=(
-    ".network.host_eth" ".network.host_ip" ".network.target_ip"
     ".image.name" ".image.path"
-    ".host_device.device" ".host_device.iso_url"
     ".serial.device" ".serial.baud"
-    ".flash.target_device" ".flash.success_marker" ".flash.boot_marker"
+    ".flash.method" ".flash.boot_marker"
 )
 
 ensure_yq() {
     if [ ! -x "$YQ_BIN" ]; then
         echo "Downloading yq..." | tee -a "$ORCHESTRATOR_LOG"
         mkdir -p .bin
-        curl -L https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -o "$YQ_BIN"
+        OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+        ARCH=$(uname -m)
+        if [ "$OS" = "darwin" ]; then
+            if [ "$ARCH" = "arm64" ]; then
+                YQ_URL="https://github.com/mikefarah/yq/releases/latest/download/yq_darwin_arm64"
+            else
+                YQ_URL="https://github.com/mikefarah/yq/releases/latest/download/yq_darwin_amd64"
+            fi
+        else
+            YQ_URL="https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64"
+        fi
+        curl -L "$YQ_URL" -o "$YQ_BIN"
         chmod +x "$YQ_BIN"
     fi
 }
@@ -134,20 +143,67 @@ FLASH_SCRIPT="flash-${BOARD_NAME}.sh"
 ensure_yq
 validate_config
 
-HOST_ETH=$(yq_read        '.network.host_eth')
-HOST_IP=$(yq_read         '.network.host_ip')
-TARGET_IP=$(yq_read       '.network.target_ip')
+FLASH_METHOD=$(yq_read    '.flash.method')
 IMG_NAME=$(yq_read        '.image.name')
 IMG_PATH=$(yq_read        '.image.path')
-HOST_DEV=$(yq_read        '.host_device.device')
-ISO_URL=$(yq_read         '.host_device.iso_url')
 SERIAL_DEV=$(yq_read      '.serial.device')
 SERIAL_BAUD=$(yq_read     '.serial.baud')
-TARGET_DEV=$(yq_read      '.flash.target_device')
-SUCCESS_MARKER=$(yq_read  '.flash.success_marker')
 BOOT_MARKER=$(yq_read     '.flash.boot_marker')
 
+# Validate method-specific required fields
+if [ "$FLASH_METHOD" = "network" ]; then
+    NETWORK_KEYS=(".network.host_eth" ".network.host_ip" ".network.target_ip" 
+                  ".host_device.device" ".host_device.iso_url"
+                  ".flash.target_device" ".flash.success_marker")
+    for key in "${NETWORK_KEYS[@]}"; do
+        if ! "$YQ_BIN" eval "$key" "$CONFIG" &>/dev/null; then
+            echo "Missing config for network method: $key" | tee -a "$ORCHESTRATOR_LOG"
+            exit 1
+        fi
+    done
+    
+    HOST_ETH=$(yq_read        '.network.host_eth')
+    HOST_IP=$(yq_read         '.network.host_ip')
+    TARGET_IP=$(yq_read       '.network.target_ip')
+    HOST_DEV=$(yq_read        '.host_device.device')
+    ISO_URL=$(yq_read         '.host_device.iso_url')
+    TARGET_DEV=$(yq_read      '.flash.target_device')
+    SUCCESS_MARKER=$(yq_read  '.flash.success_marker')
+elif [ "$FLASH_METHOD" = "rpiboot" ]; then
+    echo "Using rpiboot method for $BOARD_NAME" | tee -a "$ORCHESTRATOR_LOG"
+else
+    echo "Unknown flash method: $FLASH_METHOD" | tee -a "$ORCHESTRATOR_LOG"
+    exit 1
+fi
+
 {
+    if [ "$FLASH_METHOD" = "rpiboot" ]; then
+        # rpiboot method: call flash-access-node.sh
+        echo "Starting rpiboot flash for $BOARD_NAME..." | tee -a "$ORCHESTRATOR_LOG"
+        
+        if [ ! -f "$IMG_PATH" ]; then
+            echo "Image not found: $IMG_PATH" | tee -a "$ORCHESTRATOR_LOG"
+            exit 1
+        fi
+        
+        # Copy image to current directory with expected name
+        cp "$IMG_PATH" "$IMG_NAME"
+        
+        # Call flash-access-node.sh
+        if [ ! -x "./flash-access-node.sh" ]; then
+            echo "flash-access-node.sh not found or not executable" | tee -a "$ORCHESTRATOR_LOG"
+            exit 1
+        fi
+        
+        ./flash-access-node.sh | tee -a "$ORCHESTRATOR_LOG"
+        
+        echo "Flash completed. Verify boot with: ./flash-access-node.sh --verify" | tee -a "$ORCHESTRATOR_LOG"
+        echo "PASS" > "$STATUS_FILE"
+        
+    elif [ "$FLASH_METHOD" = "network" ]; then
+        # Network method: existing USB boot flow
+        echo "Starting network flash for $BOARD_NAME..." | tee -a "$ORCHESTRATOR_LOG"
+        
     # Verify device exists
     if [ ! -b "$HOST_DEV" ]; then
         echo "Host device '$HOST_DEV' not found or is not a block device."
@@ -306,6 +362,8 @@ EOF
 
         echo "PASS" > "$STATUS_FILE"
     fi
+    
+    fi  # End of network method
 } 2>&1 | tee -a "$ORCHESTRATOR_LOG" || {
     echo "Flashing failed — logs in: $TMP_LOG_DIR" | tee -a "$ORCHESTRATOR_LOG"
     echo "FAIL" > "$STATUS_FILE"

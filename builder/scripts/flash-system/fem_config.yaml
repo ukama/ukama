@@ -5,7 +5,7 @@ network:
 
 image:
   name: "ukama-amplifier-image.img"
-  path: "/home/kashif/work/ukama/repos/ukama/builder/scripts/build-system/ukama-amplifier-image.img"
+  path: "../build-system/ukama-amplifier-image.img"
 
 host_device:
   device:  "/dev/sdcard"
@@ -16,6 +16,7 @@ serial:
   baud:   115200
 
 flash:
+  method: "network"
   target_device:  "/dev/mmcblk0"
   success_marker: "Flash complete. Rebooting."
   boot_marker:    "login:"

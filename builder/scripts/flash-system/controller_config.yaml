@@ -1,0 +1,11 @@
+flash:
+  method: "rpiboot"
+  boot_marker: "Ukama OS boot complete"
+
+image:
+  name: "ukama-access-node.img"
+  path: "../build-system/ukama-access-node.img"
+
+serial:
+  device: "/dev/ttyUSB0"
+  baud: 115200
