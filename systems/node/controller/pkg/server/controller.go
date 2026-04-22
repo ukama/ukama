@@ -243,7 +243,7 @@ func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.Tog
 
 func (c *ControllerServer) ToggleRfSwitch(ctx context.Context, req *pb.ToggleRfSwitchRequest) (*pb.ToggleRfSwitchResponse, error) {
 	log.Infof("Toggling RADIO on/off for node %v, to %v", req.NodeId, req.State)
-
+	// TODO: RF toggle will send command to Tnode and Anode both
 	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
