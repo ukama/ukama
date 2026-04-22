@@ -117,7 +117,7 @@ func (r *Router) init() {
 	health := endpoint.Group("/health", "Health", "Health service for the node")
 	health.POST("/nodes/:node_id/performance", formatDoc("Create system performance report", "This endpoint allows you to create and update system performance information."), tonic.Handler(r.postSystemPerformanceInfoHandler, http.StatusCreated))
 	health.POST("/logger/node/:node_id", formatDoc("Log data", "Endpoint to log data"), tonic.Handler(r.logHandler, http.StatusCreated))
-	health.GET("/nodes/:node_id/list", formatDoc("List health info", "Retrieve the health information for the node."), tonic.Handler(r.listHealthInfoHandler, http.StatusOK))
+	health.GET("/list", formatDoc("List health info", "Retrieve the health information for the node."), tonic.Handler(r.listHealthInfoHandler, http.StatusOK))
 
 	notif := endpoint.Group("/notify", "Node Notify", "Notify service for the node")
 	notif.POST("", formatDoc("Insert Notification", "Insert a new notification"), tonic.Handler(r.postNotification, http.StatusCreated))
@@ -224,8 +224,10 @@ func (r *Router) postSystemPerformanceInfoHandler(c *gin.Context, req *StoreRunn
 
 func (r *Router) listHealthInfoHandler(c *gin.Context, req *ListHealthRequest) (*healthPb.ListResponse, error) {
 	return r.clients.Health.List(&healthPb.ListRequest{
+		Id:      req.Id,
 		NodeId:  req.NodeId,
-		Filter:  ukamaPb.FilterTimeframesType(ukama.ReturnFilterTimeframesType(ukama.ParseFilterTimeframesType(req.Filter))),
+		Timestamp: req.Timestamp,
+		Timeframe:  ukamaPb.FilterTimeframesType(ukama.ReturnFilterTimeframesType(ukama.ParseFilterTimeframesType(req.Timeframe))),
 	})
 }
 

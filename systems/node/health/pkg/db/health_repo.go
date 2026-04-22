@@ -16,7 +16,7 @@ import (
 
 type HealthRepo interface {
 	StoreRunningAppsInfo(health *Health, nestedFunc func(string, string) error) error
-	List(nodeId ukama.NodeID, filter ukama.FilterTimeframesType) ([]*Health, error)
+	List(id string, nodeId string, timestamp string, timeframe ukama.FilterTimeframesType) ([]*Health, error)
 }
 type healthRepo struct {
 	Db sql.Db
@@ -28,13 +28,25 @@ func NewHealthRepo(db sql.Db) HealthRepo {
 	}
 }
 
-func (r *healthRepo) List(nodeId ukama.NodeID, filter ukama.FilterTimeframesType) ([]*Health, error) {
-	query := r.Db.GetGormDb().Where("node_id = ?", nodeId).
+func (r *healthRepo) List(id string, nodeId string, timestamp string, timeframe ukama.FilterTimeframesType) ([]*Health, error) {
+	query := r.Db.GetGormDb().
 		Preload("System").
 		Preload("Capps.Resources").
 		Order("created_at DESC")
 
-	if filter == ukama.FilterTimeframesTypeLatest {
+	if id != "" {
+		query = query.Where("id = ?", id)
+	}
+
+	if timestamp != "" {
+		query = query.Where("time_stamp = ?", timestamp)
+	}
+
+	if nodeId != "" {
+		query = query.Where("node_id = ?", nodeId)
+	}
+
+	if timeframe == ukama.FilterTimeframesTypeLatest {
 		var health Health
 		result := query.Limit(1).First(&health)
 		if result.Error != nil {

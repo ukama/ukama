@@ -143,14 +143,13 @@ func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRu
 
 func (h *HealthServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
 	log.Infof("List: %v", req)
-	nId, err := ukama.ValidateNodeId(req.NodeId)
-	if err != nil {
+	if req.Id == "" && req.NodeId == "" {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of node id. Error %s", err.Error())
+			"either provide id or node id")
 	}
 
-	filter := ukama.ParseFilterTimeframesType(strings.ToLower(req.Filter.String()))
-	healths, err := h.sRepo.List(nId, filter)
+	timeframe := ukama.ParseFilterTimeframesType(strings.ToLower(req.Timeframe.String()))
+	healths, err := h.sRepo.List(req.Id, req.NodeId, req.Timestamp, timeframe)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "health")
 	}

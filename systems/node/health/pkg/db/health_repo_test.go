@@ -90,7 +90,7 @@ func TestHealthRepoList(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		healths, err := r.List(nid, ukama.FilterTimeframesTypeAll)
+		healths, err := r.List("", nid.String(), "", ukama.FilterTimeframesTypeAll)
 
 		// Assert
 		assert.NoError(t, err)
@@ -132,7 +132,7 @@ func TestHealthRepoList(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		_, err = r.List(nid, ukama.FilterTimeframesTypeAll)
+		_, err = r.List("", nid.String(), "", ukama.FilterTimeframesTypeAll)
 
 		// Assert
 		assert.NoError(t, err)
@@ -172,7 +172,7 @@ func TestHealthRepoList(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		healths, err := r.List(nid, ukama.FilterTimeframesTypeLatest)
+		healths, err := r.List("", nid.String(), "", ukama.FilterTimeframesTypeLatest)
 
 		// Assert
 		assert.NoError(t, err)
@@ -211,7 +211,7 @@ func TestHealthRepoList(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		_, err = r.List(nid, ukama.FilterTimeframesTypeLatest)
+		_, err = r.List("", nid.String(), "", ukama.FilterTimeframesTypeLatest)
 
 		// Assert
 		if assert.Error(t, err) {
