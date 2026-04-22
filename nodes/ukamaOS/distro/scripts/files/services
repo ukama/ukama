@@ -1182,29 +1182,31 @@ fido		60179/udp
 
 # UkamaOS local services
 bootstrap-remote 17998/tcp   bootstrap-remote
-init 		    17999/tcp   initd
+init 		17999/tcp   initd
 node   	        18000/tcp   noded 
-starter 	    18001/tcp   starterd
+starter 	18001/tcp   starterd
 mesh          	18002/tcp   meshd
-device  	    18003/tcp   deviced
+device  	18003/tcp   deviced
 device-client   18004/tcp   device-client
-lookout 	    18005/tcp   lookoutd
-wimc       	    18006/tcp   wimcd
+lookout 	18005/tcp   lookoutd
+wimc       	18006/tcp   wimcd
 metrics     	18007/tcp   metricsd
 metrics-admin   18008/tcp   metricsd-admin
 config      	18009/tcp   configd
-notify		    18010/tcp   notifyd
+notify		18010/tcp   notifyd
 notify-admin	18011/tcp   notifyd-admin
-rlog 		    18012/tcp   rlogd
+rlog 		18012/tcp   rlogd
 rlog-admin      18013/tcp   rlogd-admin
 bootstrap       18014/tcp   bootstrap
 wimc-agent-test 18015/tcp   wimc-agent-test
 wimc-agent-chunk 18016/tcp  wimc-agent-chunk
 fem             18017/tcp   femd
-gps		        18018/tcp   gpsd
+gps		18018/tcp   gpsd
 backhaul        18019/tcp   backhauld
 power           18020/tcp   powerd
 controller      18021/tcp   controllerd    
 switch          10310/tcp   switchd
-ukama		    18100/tcp   ukama
+aggregator      18022/tcp   
+aggregator-admin 18023/tcp
+ukama		18100/tcp   ukama
 remote          18200/tcp   remote
