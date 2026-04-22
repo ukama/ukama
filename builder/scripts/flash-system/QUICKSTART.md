@@ -2,7 +2,7 @@
 
 ## TL;DR - Flash in 3 Steps
 
-### Controller Board (RPi CM4)
+### Controller Board (RPi CM4 / Access Node)
 ```bash
 # 1. Build image
 cd builder/scripts/build-system
@@ -15,6 +15,20 @@ cd ../flash-system
 ./orchestrate_board_flash.sh -c controller_config.yaml -b controller
 
 # 4. Remove BOOT jumper, reboot
+```
+
+### Controller Board (Microchip SOM)
+```bash
+# 1. Download image from Google Drive (or build if available)
+
+# 2. Prepare SD card (find device with 'lsblk')
+cd builder/scripts/flash-system
+nano microchip-controller_config.yaml  # Update paths
+
+# 3. Flash (creates auto-flash SD card)
+./orchestrate_board_flash.sh -c microchip-controller_config.yaml -b microchip-controller
+
+# 4. Insert SD into board, power on, wait for auto-flash, remove SD after reboot
 ```
 
 ### COM Board (x86 SMARC)
@@ -45,19 +59,27 @@ nano smarc_config.yaml  # Update host_device.device to your USB stick
 After building, images are here:
 ```
 builder/scripts/build-system/
-├── ukama-access-node.img      ← Controller
+├── ukama-access-node.img      ← Controller (RPi CM4)
 ├── ukama-com-image.img        ← COM
 └── ukama-amplifier-image.img  ← FEM
 ```
+
+**Controller (Microchip SOM):** Download from Google Drive:
+https://drive.google.com/file/d/1JuZ1EDS4p4mB_rid_gxyWzO-xecvMHeP/view
 
 Config files already point to these locations (relative path `../build-system/`).
 
 ## What You Need
 
-**Controller Board:**
+**Controller (RPi CM4):**
 - ✅ USB cable
 - ✅ BOOT jumper set
 - ❌ No USB stick needed
+- ❌ No network needed
+
+**Controller (Microchip SOM):**
+- ✅ SD card (8GB+, will be erased)
+- ❌ No USB cable needed
 - ❌ No network needed
 
 **COM/FEM Boards:**

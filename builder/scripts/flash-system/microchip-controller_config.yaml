@@ -1,0 +1,15 @@
+flash:
+  method: "sdcard"
+  target_device: "/dev/mmcblk0"  # eMMC device on Microchip SOM
+  boot_marker: "login:"
+
+image:
+  name: "controller.img"
+  path: "/path/to/controller.img"  # Download from Google Drive
+
+host_device:
+  device: "/dev/sdc"  # SD card device on host (check with lsblk)
+
+serial:
+  device: "/dev/ttyUSB0"
+  baud: 115200

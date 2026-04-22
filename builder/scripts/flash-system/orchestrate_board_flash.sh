@@ -171,6 +171,18 @@ if [ "$FLASH_METHOD" = "network" ]; then
     SUCCESS_MARKER=$(yq_read  '.flash.success_marker')
 elif [ "$FLASH_METHOD" = "rpiboot" ]; then
     echo "Using rpiboot method for $BOARD_NAME" | tee -a "$ORCHESTRATOR_LOG"
+elif [ "$FLASH_METHOD" = "sdcard" ]; then
+    SDCARD_KEYS=(".host_device.device" ".flash.target_device")
+    for key in "${SDCARD_KEYS[@]}"; do
+        if ! "$YQ_BIN" eval "$key" "$CONFIG" &>/dev/null; then
+            echo "Missing config for sdcard method: $key" | tee -a "$ORCHESTRATOR_LOG"
+            exit 1
+        fi
+    done
+    
+    HOST_DEV=$(yq_read        '.host_device.device')
+    TARGET_DEV=$(yq_read      '.flash.target_device')
+    echo "Using sdcard method for $BOARD_NAME" | tee -a "$ORCHESTRATOR_LOG"
 else
     echo "Unknown flash method: $FLASH_METHOD" | tee -a "$ORCHESTRATOR_LOG"
     exit 1
@@ -198,6 +210,35 @@ fi
         ./flash-access-node.sh | tee -a "$ORCHESTRATOR_LOG"
         
         echo "Flash completed. Verify boot with: ./flash-access-node.sh --verify" | tee -a "$ORCHESTRATOR_LOG"
+        echo "PASS" > "$STATUS_FILE"
+        
+    elif [ "$FLASH_METHOD" = "sdcard" ]; then
+        # sdcard method: create SD card with auto-flash script
+        echo "Starting SD card creation for $BOARD_NAME..." | tee -a "$ORCHESTRATOR_LOG"
+        
+        if [ ! -f "$IMG_PATH" ]; then
+            echo "Image not found: $IMG_PATH" | tee -a "$ORCHESTRATOR_LOG"
+            exit 1
+        fi
+        
+        if [ ! -b "$HOST_DEV" ]; then
+            echo "SD card device not found: $HOST_DEV" | tee -a "$ORCHESTRATOR_LOG"
+            echo "Please insert SD card and check device with 'lsblk'" | tee -a "$ORCHESTRATOR_LOG"
+            exit 1
+        fi
+        
+        # Call SD card creation script
+        if [ ! -x "./create_sdcard_autoflash.sh" ]; then
+            echo "create_sdcard_autoflash.sh not found or not executable" | tee -a "$ORCHESTRATOR_LOG"
+            exit 1
+        fi
+        
+        SD_DEVICE="$HOST_DEV" \
+        IMAGE_FILE="$IMG_PATH" \
+        TARGET_EMMC="$TARGET_DEV" \
+            ./create_sdcard_autoflash.sh | tee -a "$ORCHESTRATOR_LOG"
+        
+        echo "SD card ready. Insert into board and power on." | tee -a "$ORCHESTRATOR_LOG"
         echo "PASS" > "$STATUS_FILE"
         
     elif [ "$FLASH_METHOD" = "network" ]; then

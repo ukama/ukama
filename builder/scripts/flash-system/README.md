@@ -58,7 +58,7 @@ cd builder/scripts/flash-system
 
 ---
 
-## 1. Flashing Controller Board (RPi CM4)
+## 1. Flashing Controller Board (RPi CM4 / Access Node)
 
 ### What is eMMC?
 eMMC (embedded MultiMediaCard) is permanent storage soldered on the board. You don't need to remove or insert any memory card - it's already inside the board.
@@ -106,7 +106,60 @@ The script will:
 
 ---
 
-## 2. Flashing COM Board (x86 SMARC)
+## 2. Flashing Controller Board (Microchip SOM)
+
+### Hardware Setup
+1. Prepare an SD card (minimum 8GB, will be erased!)
+2. Find the SD card device name:
+```bash
+lsblk
+# Example output: /dev/sdc (your SD card)
+```
+
+### Configuration
+Edit `microchip-controller_config.yaml`:
+```bash
+nano microchip-controller_config.yaml
+```
+
+Update these paths:
+```yaml
+image:
+  name: "controller.img"
+  path: "/full/path/to/controller.img"  # Update this! (Download from Google Drive)
+
+host_device:
+  device: "/dev/sdc"  # Update with your SD card device from lsblk!
+```
+
+### Flash the Board
+```bash
+./orchestrate_board_flash.sh -c microchip-controller_config.yaml -b microchip-controller
+```
+
+The script will:
+1. Write the image to SD card
+2. Add auto-flash script to SD card
+3. Configure systemd service to run on boot
+
+### Hardware Steps
+1. Remove SD card from laptop
+2. Insert SD card into Microchip SOM controller board
+3. Power on the board
+4. Board will:
+   - Boot from SD card
+   - Automatically copy SD card → eMMC
+   - Reboot automatically
+5. **Remove SD card after reboot**
+6. Board will boot from eMMC
+
+### Post-Flash Steps
+- SD card can be reused for other boards
+- Board now runs from internal eMMC
+
+---
+
+## 3. Flashing COM Board (x86 SMARC)
 
 ### Hardware Setup
 1. Prepare a USB stick (minimum 2GB, will be erased!)
@@ -163,7 +216,7 @@ The script will:
 
 ---
 
-## 3. Flashing FEM Boards (x86 SMARC)
+## 4. Flashing FEM Boards (x86 SMARC)
 
 Same process as COM board, but use `fem_config.yaml`:
 
@@ -248,11 +301,12 @@ Update the `path` field in config files to point to these images.
 
 ## Quick Reference
 
-| Board | Config File | Flash Method | USB Stick Needed? |
-|-------|-------------|--------------|-------------------|
-| Controller | controller_config.yaml | rpiboot (direct USB) | ❌ No |
-| COM | smarc_config.yaml | network boot | ✅ Yes |
-| FEM | fem_config.yaml | network boot | ✅ Yes |
+| Board | Config File | Flash Method | USB/SD Needed? |
+|-------|-------------|--------------|----------------|
+| Controller (RPi CM4) | controller_config.yaml | rpiboot (direct USB) | ❌ No |
+| Controller (Microchip SOM) | microchip-controller_config.yaml | sdcard (auto-flash) | ✅ SD card |
+| COM | smarc_config.yaml | network boot | ✅ USB stick |
+| FEM | fem_config.yaml | network boot | ✅ USB stick |
 
 ---
 
