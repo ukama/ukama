@@ -9,6 +9,7 @@
 version = "0.0.1"
 scraping_time_period = 5
 ukamnode = "COM"
+port = "7001"
 
 [[stats]]
         [[stats.generic]]
