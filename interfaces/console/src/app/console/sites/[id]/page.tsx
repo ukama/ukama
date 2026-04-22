@@ -17,6 +17,8 @@ import {
   useGetNodesForSiteLazyQuery,
   useGetSitesQuery,
   useToggleInternetSwitchMutation,
+  useToggleRfStatusMutation,
+  useToggleServiceMutation,
 } from '@/client/graphql/generated';
 import { Graphs_Type } from '@/client/graphql/generated/subscriptions';
 import SiteComponents from '@/components/SiteComponents';
@@ -323,6 +325,57 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     },
   });
 
+
+  const [toggleRFStatus, { loading: toggleRFStatusLoading }] =
+    useToggleRfStatusMutation({
+      fetchPolicy: 'network-only',
+      onCompleted: (_, context) => {
+        setSnackbarMessage({
+          id: 'toggle-rf-status-success-msg',
+          message: `RF status turned ${
+            context?.variables?.data?.status ? 'On' : 'Off'
+          } successfully.`,
+          type: 'success',
+          show: true,
+        });
+      },
+      onError: (_, context) => {
+        setSnackbarMessage({
+          id: 'toggle-rf-status-error-msg',
+          message: `Failed to turn RF status ${
+            context?.variables?.data?.status ? 'On' : 'Off'
+          }.`,
+          type: 'error',
+          show: true,
+        });
+      },
+    });
+
+  const [toggleService, { loading: toggleServiceLoading }] =
+    useToggleServiceMutation({
+      fetchPolicy: 'network-only',
+      onCompleted: (_, context) => {
+        setSnackbarMessage({
+          id: 'toggle-service-status-success-msg',
+          message: `Service status turned ${
+            context?.variables?.data?.status ? 'On' : 'Off'
+          } successfully.`,
+          type: 'success',
+          show: true,
+        });
+      },
+      onError: (_, context) => {
+        setSnackbarMessage({
+          id: 'toggle-service-status-error-msg',
+          message: `Failed to turn service status ${
+            context?.variables?.data?.status ? 'On' : 'Off'
+          }.`,
+          type: 'error',
+          show: true,
+        });
+      },
+    });
+
   const { loading: healthLoading } = useGetHealthReportQuery({
     variables: {
       data: {
@@ -473,6 +526,34 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
 
   const handleActionClick = useCallback(
     (id: string, value: boolean) => {
+      switch (id) {
+        case NODE_ACTIONS_ENUM.TOGGLE_RADIO:
+          toggleRFStatus({
+            variables: {
+              data: {
+                nodeId:
+                  nodes.find((node) => node.id.includes(NodeTypeEnum.Tnode))
+                    ?.id ?? '',
+                status: value,
+              },
+            },
+          });
+          break;
+        case NODE_ACTIONS_ENUM.TOGGLE_SERVICE:
+          toggleService({
+            variables: {
+              data: {
+                nodeId:
+                  nodes.find((node) => node.id.includes(NodeTypeEnum.Tnode))
+                    ?.id ?? '',
+                status: value,
+              },
+            },
+          });
+          break;
+        default:
+          break;
+      }
       setSiteActionData(
         siteActionData.map((item: any) =>
           item.id === id ? { ...item, value: value } : item,
@@ -560,8 +641,9 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
             type="toggle"
             selected={activeSite}
             uptime={getSiteUptime() ?? 0}
-            actionLoading={healthLoading}
-            loading={sitesLoading || statLoading}
+            actionLoading={
+              healthLoading || toggleRFStatusLoading || toggleServiceLoading
+            }
             objs={siteData?.getSites.sites ?? []}
             handleActionClick={handleActionClick}
             actionOptions={SITE_ACTIONS_BUTTONS}

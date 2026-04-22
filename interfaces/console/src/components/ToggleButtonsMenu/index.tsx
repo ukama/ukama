@@ -48,15 +48,6 @@ const ToggleButtonsMenu = ({
     setOpen(false);
   };
 
-  if (isLoading) {
-    return (
-      <Stack direction="row" spacing={1}>
-        <Skeleton variant="rectangular" height={40} width={100} />
-        <Skeleton variant="rectangular" height={40} width={100} />
-      </Stack>
-    );
-  }
-
   return (
     <>
       <Stack
@@ -109,15 +100,25 @@ const ToggleButtonsMenu = ({
                   direction="row"
                   alignItems="center"
                   justifyContent="space-between"
-                  sx={{ px: 2, py: 1, minWidth: 220 }}
+                  sx={{ px: 2, py: 1, width: 220 }}
                 >
                   <Typography variant="body2">{name}</Typography>
-                  <Switch
-                    name={id}
-                    size="small"
-                    onChange={(e) => handleToggle(id, e.target.checked)}
-                    checked={values.find((j: any) => j.id === id)?.value}
-                  />
+
+                  {isLoading ? (
+                    <Skeleton
+                      width={40}
+                      height={20}
+                      variant="rounded"
+                      sx={{ borderRadius: '25%' }}
+                    />
+                  ) : (
+                    <Switch
+                      name={id}
+                      size="small"
+                      onChange={(e) => handleToggle(id, e.target.checked)}
+                      checked={values.find((j: any) => j.id === id)?.value}
+                    />
+                  )}
                 </Stack>
               ))}
             </MenuList>

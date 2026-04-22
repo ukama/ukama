@@ -23,7 +23,7 @@ const StyledBtn = styled(Button)({
 interface INodeStatus {
   objs: any;
   uptime: number;
-  loading: boolean;
+  loading?: boolean;
   actionOptions: any[];
   actionLoading?: boolean;
   type: 'split' | 'toggle';
@@ -82,24 +82,22 @@ const StatusBar = ({
         )}
 
         <Grid>
-          <LoadingWrapper isLoading={actionLoading} height={40} width={'100%'}>
-            {type === 'toggle' ? (
-              <ToggleButtonsMenu
-                title="Actions"
-                options={actionOptions}
-                isLoading={actionLoading}
-                values={actionOptionValues ?? []}
-                handleToggle={handleActionClick}
-              />
-            ) : (
-              <SplitButton
-                options={actionOptions}
-                handleSplitActionClick={(id: string) => {
-                  handleActionClick(id, true);
-                }}
-              />
-            )}
-          </LoadingWrapper>
+          {type === 'toggle' ? (
+            <ToggleButtonsMenu
+              title="Actions"
+              options={actionOptions}
+              isLoading={actionLoading}
+              values={actionOptionValues ?? []}
+              handleToggle={handleActionClick}
+            />
+          ) : (
+            <SplitButton
+              options={actionOptions}
+              handleSplitActionClick={(id: string) => {
+                handleActionClick(id, true);
+              }}
+            />
+          )}
         </Grid>
       </Grid>
     </Grid>
