@@ -60,6 +60,7 @@ supervisor.rpcinterface:make_main_rpcinterface\n\n"
  */
 #define SVISOR_GLOBAL_ENV \
     "environment=" \
+    "METRICSD_USE_CONFIG_PORT=\"1\"," \
     "UKAMA_GPS_MODE=\"mock\"," \
     "UKAMA_GPS_COORDS=\"-90.000000,0.000000\"," \
     "BACKHAULD_BOOTSTRAP_SCHEME=\"http\"," \
