@@ -82,6 +82,7 @@ static int fetch_metrics(const char *url,
     CURL *curl = NULL;
     CURLcode rc;
     MemBuf buf = {0};
+    long responseCode = 0;
 
     if (url == NULL || httpCode == NULL || body == NULL) {
         return RETURN_NOTOK;
@@ -99,6 +100,8 @@ static int fetch_metrics(const char *url,
 
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, (long)timeoutMs);
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT_MS, (long)timeoutMs);
+    curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_cb);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buf);
@@ -106,13 +109,25 @@ static int fetch_metrics(const char *url,
 
     rc = curl_easy_perform(curl);
     if (rc != CURLE_OK) {
+        usys_log_error("fetch failed url=%s rc=%d err=%s",
+                       url, rc, curl_easy_strerror(rc));
         curl_easy_cleanup(curl);
         free(buf.buf);
         return RETURN_NOTOK;
     }
 
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, httpCode);
+    rc = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
+    if (rc != CURLE_OK) {
+        usys_log_error("getinfo failed url=%s rc=%d err=%s",
+                       url, rc, curl_easy_strerror(rc));
+        curl_easy_cleanup(curl);
+        free(buf.buf);
+        return RETURN_NOTOK;
+    }
+
     curl_easy_cleanup(curl);
+
+    *httpCode = (int)responseCode;
 
     if (*httpCode < 200 || *httpCode >= 300) {
         free(buf.buf);
@@ -400,10 +415,16 @@ static void refresh_once(AppState *state) {
 
     now = time(NULL);
 
+    usys_log_info("refresh_once: starting");
+
     for (idx = 0; idx < state->sourceCount; idx++) {
         int httpCode = 0;
         char *body = NULL;
         int rc = RETURN_NOTOK;
+
+        usys_log_info("refresh_once: fetching source=%s url=%s",
+                      state->sources[idx].name,
+                      state->sources[idx].url);
 
         rc = fetch_metrics(state->sources[idx].url,
                            state->requestTimeoutMs,
@@ -419,10 +440,14 @@ static void refresh_once(AppState *state) {
             state->sources[idx].body = body;
             state->sources[idx].up = 1;
             state->sources[idx].lastSuccess = now;
+            usys_log_info("refresh_once: source=%s ok http=%d",
+                          state->sources[idx].name, httpCode);
         } else {
             state->sources[idx].up = 0;
             state->sources[idx].errorCount++;
             free(body);
+            usys_log_error("refresh_once: source=%s failed http=%d",
+                           state->sources[idx].name, httpCode);
         }
         pthread_mutex_unlock(&state->mutex);
     }
@@ -432,6 +457,8 @@ static void refresh_once(AppState *state) {
     state->snapshot = build_snapshot_locked(state);
     state->snapshotAt = now;
     pthread_mutex_unlock(&state->mutex);
+
+    usys_log_info("refresh_once: snapshot updated");
 }
 
 static void *refresh_thread(void *arg) {
@@ -439,11 +466,18 @@ static void *refresh_thread(void *arg) {
     AppState *state = NULL;
 
     state = (AppState *)arg;
+    if (state == NULL) {
+        return NULL;
+    }
+
+    usys_log_info("refresh thread started");
 
     while (state->running == 1) {
         refresh_once(state);
         sleep(state->refreshIntervalSec);
     }
+
+    usys_log_info("refresh thread stopped");
 
     return NULL;
 }
@@ -517,7 +551,6 @@ int app_state_start(AppState *state) {
     }
 
     state->running = 1;
-    refresh_once(state);
 
     if (pthread_create(&state->thread, NULL, refresh_thread, state) != 0) {
         state->running = 0;
