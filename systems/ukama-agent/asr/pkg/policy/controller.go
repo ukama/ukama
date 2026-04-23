@@ -274,7 +274,7 @@ func (p *policyController) RunPolicyControl(imsi string, event bool) (error, boo
 func (p *policyController) syncSubscriberPolicy(method string, imsi string, network string, policy *db.Policy) error {
 	log.Infof("Syncing policy for subscriber %s", imsi)
 
-	route := p.MsgBusRoutingKey.SetObject("publish").SetAction("policies").MustBuild()
+	route := p.MsgBusRoutingKey.SetObject("policies").SetAction("publish").MustBuild()
 	pMsg := createMessage(policy, p.reroute)
 
 	jd, err := json.Marshal(pMsg)
@@ -300,7 +300,7 @@ func (p *policyController) syncSubscriberPolicy(method string, imsi string, netw
 
 	broadcasterMsg := &epb.BroadcasterEvent{
 		Msg:        msgBytes,
-		RoutingKey: route,
+		RoutingKey: "request.cloud.local" + "." + p.OrgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish",
 		Type:       epb.BroadcastType_NODE_BROADCAST,
 		Scope:      epb.BroadcastScope_ORGANIZATIONAL_SCOPE,
 	}
