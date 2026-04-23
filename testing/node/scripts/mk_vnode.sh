@@ -106,7 +106,8 @@ build_starter() {
     starter_root="${UKAMA_OS}/distro/system/starterd"
     [ -d "${starter_root}" ] || die "Failed to find starterd root at: ${starter_root}"
 
-    mkdir -p "${BUILD_DIR}/sbin" "${BUILD_DIR}/lib"
+    mkdir -p "${BUILD_DIR}/sbin" \
+          "${BUILD_DIR}/lib"
 
     log "INFO" "Building starter.d in ${starter_root}"
 
@@ -345,6 +346,7 @@ setup_ukama_dirs() {
     local node_type=""
     local metrics_dir=""
     local metrics_target=""
+    local aggregator_dir=""
     local aggregator_target=""
 
     log "INFO" "Creating Ukama directories..."
@@ -447,7 +449,11 @@ build_image() {
     log "INFO" "Building image ${IMAGE_NS}/${IMAGE_NAME}:${name_tag}"
 
     # copy capp's sbin, conf and lib to /sbin, /conf and /lib
-    mkdir -p "${BUILD_DIR}/"{sbin,lib,conf,tmp,bin}
+    mkdir -p "${BUILD_DIR}/sbin" \
+          "${BUILD_DIR}/lib" \
+          "${BUILD_DIR}/conf" \
+          "${BUILD_DIR}/tmp" \
+          "${BUILD_DIR}/bin"
 
     # Safer copy of apps content: avoid failing if glob doesn't match
     shopt -s nullglob
