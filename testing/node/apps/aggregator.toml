@@ -18,13 +18,13 @@
 	to="/conf/config.toml"
 
 [capp-exec]
-	name="aggregatord"
+	name="aggregator"
 	version="latest"
 	bin="aggregator"
 	path="/sbin"
 	args="--config /ukama/configs/aggregator/config.toml"
-    wait_for="10s"
-    autostart="false"
-    autorestart="true"
-    startretries=5
+	wait_for="10s"
+	autostart="false"
+	autorestart="true"
+	startretries=5
 	group="service"
