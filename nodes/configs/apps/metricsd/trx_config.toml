@@ -9,7 +9,8 @@
 version = "0.0.1"
 scraping_time_period = 5
 ukamnode = "TRX"
-port = "7002"
+# +1 for admin
+port = "7003"
 
 [[stats]]
         [[stats.generic]]
