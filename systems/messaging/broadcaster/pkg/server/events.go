@@ -36,7 +36,7 @@ func NewBroadcasterEventServer(orgName string, s *BroadcasterServer) *Broadcaste
 func (n *BroadcasterEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof(logMsgRoutingKey, e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
-		case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.asr.publish.policies"):
+		case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.asr.policies.publish"):
 			c := evt.EventToEventConfig[evt.EventSiteCreate]
 			msg, err := epb.UnmarshalBroadcasterEvent(e.Msg, c.Name)
 			if err != nil {

@@ -77,7 +77,7 @@ func TestPolicy_RemoveProfile(t *testing.T) {
 
 	t.Run("RemoveProfile", func(t *testing.T) {
 		asrRepo.On("Delete", sub.Imsi, db.POLICY_FAILURE).Return(nil).Once()
-		mbC.On("PublishRequest", "event.cloud.local.ukama.ukamaagent.asr.publish.policies", mock.Anything).Return(nil).Once()
+		mbC.On("PublishRequest", "event.cloud.local.ukama.ukamaagent.asr.policies.publish", mock.Anything).Return(nil).Once()
 		mbC.On("PublishRequest", "event.cloud.local.ukama.ukamaagent.asr.activesubscriber.create", mock.Anything).Return(nil).Once()
 
 		pc := ip.NewPolicyController(asrRepo, mbC, dataplanHost, OrgName, OrgId, Reroute, MonitoringPeriod, false)

@@ -4,29 +4,34 @@ package ukama.node.health.v1;
 import "validator.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
+import "ukama/filter_timeframes.proto";
+
 service healhtService {
-    rpc GetRunningApps (GetRunningAppsRequest) returns (GetRunningAppsResponse);
+    rpc List (ListRequest) returns (ListResponse);
     rpc StoreRunningAppsInfo (StoreRunningAppsInfoRequest) returns (StoreRunningAppsInfoResponse);
 }
 
-message GetRunningAppsRequest {
-    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+message ListRequest {
+    string id = 1;
+    string nodeId = 2;
+    string timestamp = 3; 
+    ukama.common.v1.FilterTimeframesType timeframe = 4;
 }
 
-message GetRunningAppsResponse {
-     App running_apps = 1;
+message ListResponse {
+     repeated Health healths = 1;
 }
-
 
 message StoreRunningAppsInfoRequest {
-    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}];
     string timestamp = 5;
 	repeated System system = 3;
 	repeated Capps  capps = 6;
 }
 
+message StoreRunningAppsInfoResponse {}
 
-message App {
+message Health {
     string id = 1 ;
     string nodeId = 2;
     string timestamp = 5;
@@ -56,10 +61,6 @@ message Resource {
     string cappId = 2;
     string name = 3;
     string value = 4;
-}
-
-
-message StoreRunningAppsInfoResponse {
 }
 
 enum Status {

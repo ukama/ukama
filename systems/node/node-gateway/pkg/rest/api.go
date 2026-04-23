@@ -10,8 +10,11 @@ package rest
 
 import "encoding/json"
 
-type GetRunningAppsRequest struct {
-	NodeId string `example:"{{NodeId}}" validate:"required" path:"node_id" `
+type ListHealthRequest struct {
+	Id      string `form:"id" json:"id" query:"id" binding:"required"`
+	NodeId  string `form:"node_id" json:"node_id" query:"node_id" binding:"required"`
+	Timestamp string `form:"timestamp" json:"timestamp" query:"timestamp" binding:"required"`
+	Timeframe  string `form:"timeframe" json:"timeframe" query:"timeframe" binding:"required" validate:"eq=all|eq=latest"`
 }
 
 type AddNotificationReq struct {

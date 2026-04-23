@@ -24,6 +24,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	ukamapb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/node/node-gateway/pkg"
@@ -88,26 +89,33 @@ var nt = AddNotificationReq{
 	Details:     json.RawMessage(`{"reason":"testing","component":"router_test"}`),
 }
 
-func Test_GetRunningsApps(t *testing.T) {
+func TestListHealthInfo(t *testing.T) {
 	// arrange
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/health/nodes/60285a2a-fe1d-4261-a868-5be480075b8f/performance", nil)
-	c := &hmocks.HealhtServiceClient{}
-	getRunningAppsReq := &hpb.GetRunningAppsRequest{
-		NodeId: "60285a2a-fe1d-4261-a868-5be480075b8f",
-	}
+	const testListNodeID = "uk-sa2602-tnode-v0-344c"
 
-	// Set up the mock expectations for GetRunningApps.
-	c.On("GetRunningApps", mock.Anything, getRunningAppsReq).Return(
-		&hpb.GetRunningAppsResponse{
-			RunningApps: &hpb.App{
-				Id:        "60285a2a-fe1d-4261-a868-5be480075b8f",
-				NodeId:    getRunningAppsReq.NodeId,
-				Timestamp: "12-12-2024",
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(
+		"GET",
+		"/v1/health/list?id=60420da4-364b-494d-92ce-4be280d78c9b&node_id="+testListNodeID+"&timestamp=1776703063&timeframe=latest",
+		nil,
+	)
+	c := &hmocks.HealhtServiceClient{}
+	listReq := &hpb.ListRequest{
+		Id:        "60420da4-364b-494d-92ce-4be280d78c9b",
+		NodeId:    testListNodeID,
+		Timestamp: "1776703063",
+		Timeframe:    ukamapb.FilterTimeframesType_LATEST,
+	}
+	listResp := &hpb.ListResponse{
+		Healths: []*hpb.Health{
+			{
+				Id:        "60420da4-364b-494d-92ce-4be280d78c9b",
+				NodeId:    testListNodeID,
+				Timestamp: "1776703063",
 			},
 		},
-		nil,
-	).Once() // Use Once() to indicate that this expectation should be called once.
+	}
+	c.On("List", mock.Anything, listReq).Return(listResp, nil).Once()
 
 	// Create a new router with the mock client.
 	r := NewRouter(&Clients{
@@ -119,6 +127,7 @@ func Test_GetRunningsApps(t *testing.T) {
 
 	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), testListNodeID)
 	c.AssertExpectations(t)
 }
 
