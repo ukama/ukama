@@ -21,7 +21,7 @@ import (
 
 const (
 	testOrgName      = "org"
-	broadcastRouteT  = "event.cloud.local.{{ .Org}}.ukamaagent.asr.publish.policies"
+	broadcastRouteT  = "event.cloud.local.{{ .Org}}.ukamaagent.asr.policies.publish"
 	unknownRouteKey  = "event.cloud.local.org.ukamaagent.asr.publish.unknown"
 	errWrapAnyEvent  = "failed to wrap broadcaster event in any: %v"
 	errWrapAnyGeneric = "failed to wrap generic message in any: %v"
