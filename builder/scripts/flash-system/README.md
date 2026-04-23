@@ -108,6 +108,12 @@ The script will:
 
 ## 2. Flashing Controller Board (Microchip SOM)
 
+### Image Requirements
+The image file must be a **complete disk image** with partitions (not just a filesystem).
+- Download from: https://drive.google.com/file/d/1JuZ1EDS4p4mB_rid_gxyWzO-xecvMHeP/view
+- The image should contain at least 2 partitions (boot + root)
+- Script will verify partitions exist after writing
+
 ### Hardware Setup
 1. Prepare an SD card (minimum 8GB, will be erased!)
 2. Find the SD card device name:
