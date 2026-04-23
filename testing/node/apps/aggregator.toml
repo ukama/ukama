@@ -1,0 +1,30 @@
+[build-from]
+    base="alpine"
+    version="latest"
+
+[build-compile]
+	version="0.1"
+	static="false"
+	source="/nodes/ukamaOS/distro/system/aggregator"
+	cmd="make"
+	bin_from="/nodes/ukamaOS/distro/system/aggregator/aggregator"
+	bin_to="/sbin"
+
+[build-rootfs]
+	mkdir="/conf"
+
+[build-conf]
+	from="/nodes/configs/apps/aggregator/aggregator_config.toml"
+	to="/conf/config.toml"
+
+[capp-exec]
+	name="aggregator"
+	version="latest"
+	bin="aggregator"
+	path="/sbin"
+	args="--config /ukama/configs/aggregator/config.toml"
+	wait_for="10s"
+	autostart="false"
+	autorestart="true"
+	startretries=5
+	group="service"

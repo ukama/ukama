@@ -128,7 +128,7 @@ STATIC void find_service_name_and_ep(char *input,
     }
 
     /* metrics is a special case - prom ep is hard coded */
-    if (strcasecmp(*name, SERVICE_METRICS) == 0) {
+    if (strcasecmp(*name, SERVICE_AGGREGATOR) == 0) {
         free(*ep);
         *ep = strdup(*name);
     }

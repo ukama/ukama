@@ -8,6 +8,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 
 #include <ulfius.h>
 
@@ -18,6 +19,56 @@
 #include "usys_log.h"
 #include "usys_services.h"
 #include "usys_types.h"
+
+#define ENV_USE_CONFIG_PORT "METRICSD_USE_CONFIG_PORT"
+
+static int use_config_port(void) {
+
+    char *value = getenv(ENV_USE_CONFIG_PORT);
+
+    if (value == NULL) {
+        return USYS_FALSE;
+    }
+
+    if (value[0] == '\0') {
+        return USYS_FALSE;
+    }
+
+    if ((strcmp(value, "0") == 0) ||
+        (strcasecmp(value, "false") == 0) ||
+        (strcasecmp(value, "no") == 0)) {
+        return USYS_FALSE;
+    }
+
+    return USYS_TRUE;
+}
+
+static int get_admin_port(int configPort) {
+
+    int adminPort = 0;
+
+    if (use_config_port() == USYS_TRUE) {
+        if (configPort <= 0) {
+            usys_log_error("config port requested but invalid config port %d",
+                           configPort);
+            return 0;
+        }
+
+        adminPort = configPort + 1;
+        usys_log_info("using admin port %d from config", adminPort);
+        return adminPort;
+    }
+
+    adminPort = usys_find_service_port(SERVICE_METRICS_ADMIN);
+    if (adminPort <= 0) {
+        usys_log_error("unable to determine admin port for %s",
+                       SERVICE_METRICS_ADMIN);
+        return 0;
+    }
+
+    usys_log_info("using admin port %d from services", adminPort);
+    return adminPort;
+}
 
 static int init_framework(UInst *instance, int port) {
 
@@ -92,14 +143,12 @@ static void setup_admin_web_service_endpoints(UInst *instance) {
     ulfius_set_default_endpoint(instance, &web_service_cb_default, NULL);
 }
 
-int start_admin_web_service(UInst *adminInst) {
+int start_admin_web_service(UInst *adminInst, int configPort) {
 
     int adminPort = 0;
 
-    adminPort = usys_find_service_port(SERVICE_METRICS_ADMIN);
+    adminPort = get_admin_port(configPort);
     if (adminPort <= 0) {
-        usys_log_error("unable to determine admin port for %s",
-                       SERVICE_METRICS_ADMIN);
         return USYS_FALSE;
     }
 

@@ -9,7 +9,8 @@
 version = "0.0.1"
 scraping_time_period = 5
 ukamnode = "COM"
-metric_server_port = 7001
+# +1 will be for admin
+port = "7001"
 
 [[stats]]
         [[stats.generic]]

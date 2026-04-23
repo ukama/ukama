@@ -37,6 +37,8 @@ extern "C" {
 #define SERVICE_BACKHAUL         "backhaul"
 #define SERVICE_CONTROLLER       "controller"
 #define SERVICE_SWITCH           "switch"
+#define SERVICE_AGGREGATOR       "aggregator"
+#define SERVICE_AGGREGATOR_ADMIN "aggregator-admin"
 
 #ifdef __cplusplus
 }

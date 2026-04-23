@@ -11,7 +11,7 @@
 
 #include "web_service.h"
 
-int start_admin_web_service(UInst *adminInst);
+int start_admin_web_service(UInst *adminInst, int configPort);
 void stop_admin_web_service(UInst *adminInst);
 
 #endif /* INC_NETWORK_H_ */

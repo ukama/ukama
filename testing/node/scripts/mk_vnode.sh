@@ -106,7 +106,8 @@ build_starter() {
     starter_root="${UKAMA_OS}/distro/system/starterd"
     [ -d "${starter_root}" ] || die "Failed to find starterd root at: ${starter_root}"
 
-    mkdir -p "${BUILD_DIR}/sbin" "${BUILD_DIR}/lib"
+    mkdir -p "${BUILD_DIR}/sbin" \
+          "${BUILD_DIR}/lib"
 
     log "INFO" "Building starter.d in ${starter_root}"
 
@@ -345,6 +346,8 @@ setup_ukama_dirs() {
     local node_type=""
     local metrics_dir=""
     local metrics_target=""
+    local aggregator_dir=""
+    local aggregator_target=""
 
     log "INFO" "Creating Ukama directories..."
 
@@ -384,20 +387,24 @@ setup_ukama_dirs() {
         *-tnode-*)
             node_type="tower"
             metrics_target="com_config.toml"
+            aggregator_target="virtual_tnode_config.toml"
             ;;
         *-cnode-*)
             node_type="controller"
             metrics_target="cnode_config.toml"
+            aggregator_target="virtual_cnode_config.toml"
             ;;
         *-anode-*)
             node_type="amplifier"
             metrics_target="amplifier_config.toml"
+            aggregator_target="virtual_anode_config.toml"
             ;;
         *)
             log "WARN" "Unable to determine node type from nodeid: ${nodeid}"
             ;;
     esac
 
+    # metrics app
     if [ -n "${metrics_target}" ]; then
         metrics_dir="${BUILD_DIR}/ukama/configs/metricsd"
 
@@ -411,6 +418,20 @@ setup_ukama_dirs() {
         log "INFO" "Configured metricsd for ${node_type} node: config.toml -> ${metrics_target}"
     fi
 
+    # aggregator app
+    if [ -n "${aggregator_target}" ]; then
+        aggregator_dir="${BUILD_DIR}/ukama/configs/aggregator"
+
+        [ -d "${aggregator_dir}" ] || die "missing aggregator config directory: ${aggregator_dir}"
+        [ -f "${aggregator_dir}/${aggregator_target}" ] || \
+            die "missing aggregator target config: ${aggregator_dir}/${aggregator_target}"
+
+        rm -f "${aggregator_dir}/config.toml"
+        ln -s "${aggregator_target}" "${aggregator_dir}/config.toml"
+
+        log "INFO" "Configured aggregator for ${node_type} node: config.toml -> ${aggregator_target}"
+    fi
+    
     log "SUCCESS" "Ukama directories created at ${BUILD_DIR}/ukama"
 }
 
@@ -428,7 +449,11 @@ build_image() {
     log "INFO" "Building image ${IMAGE_NS}/${IMAGE_NAME}:${name_tag}"
 
     # copy capp's sbin, conf and lib to /sbin, /conf and /lib
-    mkdir -p "${BUILD_DIR}/"{sbin,lib,conf,tmp,bin}
+    mkdir -p "${BUILD_DIR}/sbin" \
+          "${BUILD_DIR}/lib" \
+          "${BUILD_DIR}/conf" \
+          "${BUILD_DIR}/tmp" \
+          "${BUILD_DIR}/bin"
 
     # Safer copy of apps content: avoid failing if glob doesn't match
     shopt -s nullglob

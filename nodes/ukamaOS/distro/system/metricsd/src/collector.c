@@ -7,7 +7,9 @@
  */
 
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <unistd.h>
 
 #include "collector.h"
@@ -21,6 +23,54 @@
 #include "usys_services.h"
 
 typedef int (*CollectorFxn)(MetricsCatConfig *stat);
+
+#define ENV_USE_CONFIG_PORT "METRICSD_USE_CONFIG_PORT"
+
+static int use_config_port(void) {
+
+    char *value = getenv(ENV_USE_CONFIG_PORT);
+
+    if (value == NULL) {
+        return USYS_FALSE;
+    }
+
+    if (value[0] == '\0') {
+        return USYS_FALSE;
+    }
+
+    if ((strcmp(value, "0") == 0) ||
+        (strcasecmp(value, "false") == 0) ||
+        (strcasecmp(value, "no") == 0)) {
+        return USYS_FALSE;
+    }
+
+    return USYS_TRUE;
+}
+
+static int get_metrics_port(int configPort) {
+
+    int port = 0;
+
+    if (use_config_port() == USYS_TRUE) {
+        if (configPort <= 0) {
+            usys_log_error("config port requested but invalid config port %d",
+                           configPort);
+            return 0;
+        }
+
+        usys_log_info("using metrics port %d from config", configPort);
+        return configPort;
+    }
+
+    port = usys_find_service_port(SERVICE_METRICS);
+    if (port <= 0) {
+        usys_log_error("unable to determine metrics port from services");
+        return 0;
+    }
+
+    usys_log_info("using metrics port %d from services", port);
+    return port;
+}
 
 typedef struct {
     char *type;
@@ -167,6 +217,7 @@ int collector(char *cfg) {
 
     int ret                 = RETURN_OK;
     int scrapingTimePeriod  = 0;
+    int configPort          = 0;
     int serverPort          = 0;
     int idx                 = 0;
     int categoryIndex       = 0;
@@ -176,7 +227,7 @@ int collector(char *cfg) {
     metric_server_registry_init();
 
     ret = toml_parse_config(cfg, &version, &scrapingTimePeriod,
-                            &metricsCfg, &categoryCount);
+                            &configPort, &metricsCfg, &categoryCount);
     if ((ret != RETURN_OK) || (metricsCfg == NULL) || (categoryCount <= 0)) {
         usys_log_error("failed to parse metrics config");
         metric_server_registry_destroy();
@@ -188,9 +239,8 @@ int collector(char *cfg) {
 
     metric_server_set_active_registry();
 
-    serverPort = usys_find_service_port(SERVICE_METRICS);
+    serverPort = get_metrics_port(configPort);
     if (serverPort <= 0) {
-        usys_log_error("unable to determine metrics port");
         free_stat_cfg(metricsCfg, categoryCount);
         metricsCfg = NULL;
         categoryCount = 0;

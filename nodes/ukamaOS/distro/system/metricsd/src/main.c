@@ -17,6 +17,7 @@
 #include "file.h"
 #include "network.h"
 #include "web_service.h"
+#include "config.h"
 
 #include "usys_error.h"
 #include "usys_file.h"
@@ -123,6 +124,7 @@ int main(int argc, char **argv) {
     int ret              = EXIT_SUCCESS;
     int opt              = 0;
     int optIndex         = 0;
+    int configPort       = 0;
     char *configPath     = METRIC_CONFIG;
     char *logLevel       = DEF_LOG_LEVEL;
     UInst adminInstance;
@@ -176,9 +178,14 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
+    if (toml_parse_config_port(configPath, &configPort) != RETURN_OK) {
+        usys_log_error("failed to parse config port from %s", configPath);
+        return EXIT_FAILURE;
+    }
+
     usys_log_info("starting metrics collector");
 
-    if (start_admin_web_service(&adminInstance) != USYS_TRUE) {
+    if (start_admin_web_service(&adminInstance, configPort) != USYS_TRUE) {
         usys_log_error("failed to start admin web service");
         return EXIT_FAILURE;
     }
