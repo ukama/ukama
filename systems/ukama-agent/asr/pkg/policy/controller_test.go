@@ -141,7 +141,7 @@ func TestController_SyncProfile(t *testing.T) {
 	pc := ip.NewPolicyController(asrRepo, mbC, dataplanHost, OrgName, OrgId, Reroute, MonitoringPeriod, false)
 	assert.NotNil(t, pc)
 
-	mbC.On("PublishRequest", "event.cloud.local.ukama.ukamaagent.asr.publish.policies", mock.Anything).Return(nil).Once()
+	mbC.On("PublishRequest", "event.cloud.local.ukama.ukamaagent.asr.policies.publish", mock.Anything).Return(nil).Once()
 	mbC.On("PublishRequest", "event.cloud.local.ukama.ukamaagent.asr.activesubscriber.create", mock.Anything).Return(nil).Once()
 
 	err := pc.SyncProfile(&simInfo, &sub, msgbus.ACTION_CRUD_CREATE, "activesubscriber", true)
