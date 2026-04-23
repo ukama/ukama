@@ -47,6 +47,7 @@ int toml_parse_config(char *cfg,
                       MetricsConfig **pstatCfg,
                       int *sourceCount);
 
+int toml_parse_config_port(char *cfg, int *configPort);
 void free_stat_cfg(MetricsConfig *statCfg, int count);
 
 #endif /* CONFIG_H_ */

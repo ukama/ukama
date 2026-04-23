@@ -723,3 +723,43 @@ int toml_parse_config(char *cfg,
 
     return RETURN_OK;
 }
+
+int toml_parse_config_port(char *cfg, int *configPort) {
+
+    FILE *fp          = NULL;
+    char errbuf[200]  = {'\0'};
+    char *portValue   = NULL;
+    toml_table_t *conf = NULL;
+
+    if ((cfg == NULL) || (configPort == NULL)) {
+        return RETURN_NOTOK;
+    }
+
+    *configPort = 0;
+
+    fp = fopen(cfg, "r");
+    if (fp == NULL) {
+        usys_log_error("cannot open %s", cfg);
+        return RETURN_NOTOK;
+    }
+
+    conf = toml_parse_file(fp, errbuf, sizeof(errbuf));
+    fclose(fp);
+
+    if (conf == NULL) {
+        usys_log_error("cannot parse %s", errbuf);
+        return RETURN_NOTOK;
+    }
+
+    portValue = read_opt_str_value(conf, TAG_PORT);
+    if (portValue != NULL) {
+        *configPort = atoi(portValue);
+        usys_log_trace("config port is %d", *configPort);
+        free_str_value(portValue);
+    }
+
+    toml_free(conf);
+
+    return RETURN_OK;
+}
+
