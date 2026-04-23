@@ -9,5 +9,5 @@ required = true
 
 [[source]]
 name = "trx"
-url = "http://127.0.0.1:7002/metrics"
+url = "http://127.0.0.1:7003/metrics"
 required = true
