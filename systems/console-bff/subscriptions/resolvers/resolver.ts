@@ -69,7 +69,10 @@ const processMetricResult = (metric: any) => ({
   networkId: metric.networkId || "",
   packageId: metric.packageId || "",
   dataPlanId: metric.dataPlanId || "",
-  value: metric.values[metric.values.length - 1][1],
+  value:
+    Array.isArray(metric.values) && metric.values.length > 0
+      ? metric.values[metric.values.length - 1][1]
+      : 0,
 });
 
 const handleWebSocketMessage = (

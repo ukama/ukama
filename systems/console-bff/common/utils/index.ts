@@ -153,7 +153,7 @@ const getGraphsKeyByType = (type: string): string[] => {
       return ["cpu", "memory", "disk"];
     case STATS_TYPE.RADIO:
     case GRAPHS_TYPE.RADIO:
-      return ["tx_power"];
+      return ["power"];
     case STATS_TYPE.ALL_NODE:
       return [
         "uptime",

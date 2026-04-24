@@ -44,10 +44,19 @@ const getNodeMetricRange = async (
     method: API_METHOD_TYPE.GET,
     url: `${baseUrl}/${VERSION}/range/metrics/${type}?${params}`,
   })
-    .then(res => parseMetricsResponse(res.data.data.result, type, args))
+    .then(res => {
+      const result = res?.data?.data?.result;
+      if (!Array.isArray(result)) {
+        logger.warn(
+          `[getNodeMetricRange] No valid Prometheus result for metric '${type}' — response: ${JSON.stringify(res?.data)}`
+        );
+        return { metrics: [] } as MetricsRes;
+      }
+      return parseMetricsResponse(result, type, args);
+    })
     .catch(err => {
-      logger.error(`Error fetching metrics: ${err}`);
-      throw new GraphQLError(err);
+      logger.error(`Error fetching metrics for '${type}': ${err}`);
+      return { metrics: [] } as MetricsRes;
     });
 };
 
