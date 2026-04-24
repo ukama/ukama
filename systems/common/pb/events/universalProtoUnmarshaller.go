@@ -13,7 +13,7 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
-func unmarshalProtoEvent[T any,
+func UnmarshalProtoEvent[T any,
 	PT interface {
 		*T
 		proto.Message
