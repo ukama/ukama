@@ -10,7 +10,7 @@
 	bin_from="/nodes/ukamaOS/distro/system/lookoutd/lookout.d"
 	bin_to="/sbin"
 
-[capp-exec]
+[app-exec]
 	name="lookoutd"
 	version="latest"
 	bin="lookout.d"

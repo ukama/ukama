@@ -10,7 +10,7 @@
 	bin_from="/nodes/apps/controller/controllerd"
 	bin_to="/sbin"
 
-[capp-exec]
+[app-exec]
 	name="controller"
 	version="latest"
 	bin="controllerd"
@@ -19,3 +19,7 @@
 	autorestart="true"
 	startretries=5
 	group="sys-service"
+
+[app-exec.env]
+	CONTROLLER_DRIVER="victron"
+	CONTROLLER_SERIAL_PORT="/tmp/victron-tty",

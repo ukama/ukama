@@ -10,7 +10,7 @@
 	bin_from="/nodes/ukamaOS/distro/system/wimcd/wimc.d"
 	bin_to="/sbin"
 
-[capp-exec]
+[app-exec]
 	name="wimcd"
 	version="latest"
 	bin="wimc.d"

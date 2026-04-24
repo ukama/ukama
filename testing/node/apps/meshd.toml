@@ -18,7 +18,7 @@
 	to="/ukama/configs/meshd"
 
 # for [program:<exec>] in supervisor.conf
-[capp-exec]
+[app-exec]
 	name="meshd"
 	version="latest"
 	depends_on="bootstrap"

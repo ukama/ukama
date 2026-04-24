@@ -10,7 +10,7 @@
 	bin_from="/nodes/ukamaOS/distro/system/configd/config.d"
 	bin_to="/sbin"
 
-[capp-exec]
+[app-exec]
 	name="configd"
 	version="latest"
 	autostart="false"

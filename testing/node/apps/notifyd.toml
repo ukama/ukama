@@ -14,7 +14,7 @@
 	from="/nodes/configs/apps/notifyd/status.map"
 	to="/ukama/configs/notifyd/status.map"
 
-[capp-exec]
+[app-exec]
 	name="notifyd"
 	version="latest"
 	autostart="false"
