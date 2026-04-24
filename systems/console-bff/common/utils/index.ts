@@ -165,9 +165,10 @@ const getGraphsKeyByType = (type: string): string[] => {
         "backhaul_uplink",
         "backhaul_downlink",
         "backhaul_latency",
+        "cpu",
         "memory",
         "disk",
-        "tx_power",
+        "power",
       ];
     case GRAPHS_TYPE.BATTERY:
       return ["battery_charge"];
