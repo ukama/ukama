@@ -13,6 +13,7 @@ YQ_BIN="./.bin/yq"
 FLASH_SCRIPT=""
 ISO_BUILDER="./create_dual_partition.sh"
 RETRIES=3
+DRY_RUN=false
 
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 TMP_LOG_DIR="logs/${TIMESTAMP}_UNKNOWN"
@@ -158,11 +159,12 @@ detect_ssh_state() {
 ORIGINAL_SSH_STATE=$(detect_ssh_state)
 
 # Parse options: -c for config, -b for board name (SMARC, FEM-Control)
-while getopts ":c:b:" opt; do
+while getopts ":c:b:d" opt; do
   case "${opt}" in
     c) CONFIG="${OPTARG}" ;;
     b) BOARD_NAME="${OPTARG}" ;;
-    *) echo "Usage: $0 [-c <config_file>] [-b <board_name>]" >&2; exit 1 ;;
+    d) DRY_RUN=true ;;
+    *) echo "Usage: $0 [-c <config_file>] [-b <board_name>] [-d (dry-run)]" >&2; exit 1 ;;
   esac
 done
 shift $((OPTIND-1))
@@ -240,6 +242,17 @@ fi
 if ! preflight_check; then
     echo "Pre-flight checks failed. Aborting." | tee -a "$ORCHESTRATOR_LOG"
     exit 1
+fi
+
+if [ "$DRY_RUN" = true ]; then
+    echo "=== DRY RUN MODE ===" | tee -a "$ORCHESTRATOR_LOG"
+    echo "Method: $FLASH_METHOD" | tee -a "$ORCHESTRATOR_LOG"
+    echo "Image: $IMG_PATH" | tee -a "$ORCHESTRATOR_LOG"
+    [ -n "${HOST_DEV:-}" ] && echo "Device: $HOST_DEV" | tee -a "$ORCHESTRATOR_LOG"
+    [ -n "${TARGET_DEV:-}" ] && echo "Target: $TARGET_DEV" | tee -a "$ORCHESTRATOR_LOG"
+    echo "Would execute flash process now" | tee -a "$ORCHESTRATOR_LOG"
+    echo "Run without -d flag to actually flash" | tee -a "$ORCHESTRATOR_LOG"
+    exit 0
 fi
 
 {
