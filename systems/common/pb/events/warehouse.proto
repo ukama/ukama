@@ -16,7 +16,7 @@ import "validator.proto";
 
 
 
-message EventAddSim{
+message InventorySimEvent{
     string iccid = 1 [(validator.field) = {string_not_empty: true}];
     string imsi = 2;
     string batchId = 3 [json_name = "batch_id"];
@@ -26,9 +26,3 @@ message EventAddSim{
     string vendor = 7;
     string orgName = 8 [json_name = "org_name"];
 }
-
-
-message EventDeleteSim{
-    string iccid = 1 [(validator.field) = {string_not_empty: true}];
-}
-

@@ -29,7 +29,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type EventAddSim struct {
+type InventorySimEvent struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Iccid         string                 `protobuf:"bytes,1,opt,name=iccid,proto3" json:"iccid,omitempty"`
 	Imsi          string                 `protobuf:"bytes,2,opt,name=imsi,proto3" json:"imsi,omitempty"`
@@ -43,20 +43,20 @@ type EventAddSim struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *EventAddSim) Reset() {
-	*x = EventAddSim{}
+func (x *InventorySimEvent) Reset() {
+	*x = InventorySimEvent{}
 	mi := &file_events_warehouse_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *EventAddSim) String() string {
+func (x *InventorySimEvent) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*EventAddSim) ProtoMessage() {}
+func (*InventorySimEvent) ProtoMessage() {}
 
-func (x *EventAddSim) ProtoReflect() protoreflect.Message {
+func (x *InventorySimEvent) ProtoReflect() protoreflect.Message {
 	mi := &file_events_warehouse_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -68,107 +68,63 @@ func (x *EventAddSim) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use EventAddSim.ProtoReflect.Descriptor instead.
-func (*EventAddSim) Descriptor() ([]byte, []int) {
+// Deprecated: Use InventorySimEvent.ProtoReflect.Descriptor instead.
+func (*InventorySimEvent) Descriptor() ([]byte, []int) {
 	return file_events_warehouse_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *EventAddSim) GetIccid() string {
+func (x *InventorySimEvent) GetIccid() string {
 	if x != nil {
 		return x.Iccid
 	}
 	return ""
 }
 
-func (x *EventAddSim) GetImsi() string {
+func (x *InventorySimEvent) GetImsi() string {
 	if x != nil {
 		return x.Imsi
 	}
 	return ""
 }
 
-func (x *EventAddSim) GetBatchId() string {
+func (x *InventorySimEvent) GetBatchId() string {
 	if x != nil {
 		return x.BatchId
 	}
 	return ""
 }
 
-func (x *EventAddSim) GetCardSerial() string {
+func (x *InventorySimEvent) GetCardSerial() string {
 	if x != nil {
 		return x.CardSerial
 	}
 	return ""
 }
 
-func (x *EventAddSim) GetFormFactor() string {
+func (x *InventorySimEvent) GetFormFactor() string {
 	if x != nil {
 		return x.FormFactor
 	}
 	return ""
 }
 
-func (x *EventAddSim) GetProfile() string {
+func (x *InventorySimEvent) GetProfile() string {
 	if x != nil {
 		return x.Profile
 	}
 	return ""
 }
 
-func (x *EventAddSim) GetVendor() string {
+func (x *InventorySimEvent) GetVendor() string {
 	if x != nil {
 		return x.Vendor
 	}
 	return ""
 }
 
-func (x *EventAddSim) GetOrgName() string {
+func (x *InventorySimEvent) GetOrgName() string {
 	if x != nil {
 		return x.OrgName
-	}
-	return ""
-}
-
-type EventDeleteSim struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Iccid         string                 `protobuf:"bytes,1,opt,name=iccid,proto3" json:"iccid,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *EventDeleteSim) Reset() {
-	*x = EventDeleteSim{}
-	mi := &file_events_warehouse_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *EventDeleteSim) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*EventDeleteSim) ProtoMessage() {}
-
-func (x *EventDeleteSim) ProtoReflect() protoreflect.Message {
-	mi := &file_events_warehouse_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use EventDeleteSim.ProtoReflect.Descriptor instead.
-func (*EventDeleteSim) Descriptor() ([]byte, []int) {
-	return file_events_warehouse_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *EventDeleteSim) GetIccid() string {
-	if x != nil {
-		return x.Iccid
 	}
 	return ""
 }
@@ -177,8 +133,8 @@ var File_events_warehouse_proto protoreflect.FileDescriptor
 
 const file_events_warehouse_proto_rawDesc = "" +
 	"\n" +
-	"\x16events/warehouse.proto\x12\x0fukama.events.v1\x1a\x0fvalidator.proto\"\xe9\x01\n" +
-	"\vEventAddSim\x12\x1c\n" +
+	"\x16events/warehouse.proto\x12\x0fukama.events.v1\x1a\x0fvalidator.proto\"\xef\x01\n" +
+	"\x11InventorySimEvent\x12\x1c\n" +
 	"\x05iccid\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x05iccid\x12\x12\n" +
 	"\x04imsi\x18\x02 \x01(\tR\x04imsi\x12\x19\n" +
 	"\abatchId\x18\x03 \x01(\tR\bbatch_id\x12\x1f\n" +
@@ -188,9 +144,7 @@ const file_events_warehouse_proto_rawDesc = "" +
 	"formFactor\x18\x05 \x01(\tR\vform_factor\x12\x18\n" +
 	"\aprofile\x18\x06 \x01(\tR\aprofile\x12\x16\n" +
 	"\x06vendor\x18\a \x01(\tR\x06vendor\x12\x19\n" +
-	"\aorgName\x18\b \x01(\tR\borg_name\".\n" +
-	"\x0eEventDeleteSim\x12\x1c\n" +
-	"\x05iccid\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x05iccidB5Z3github.com/ukama/ukama/systems/common/pb/gen/eventsb\x06proto3"
+	"\aorgName\x18\b \x01(\tR\borg_nameB5Z3github.com/ukama/ukama/systems/common/pb/gen/eventsb\x06proto3"
 
 var (
 	file_events_warehouse_proto_rawDescOnce sync.Once
@@ -204,10 +158,9 @@ func file_events_warehouse_proto_rawDescGZIP() []byte {
 	return file_events_warehouse_proto_rawDescData
 }
 
-var file_events_warehouse_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_events_warehouse_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_events_warehouse_proto_goTypes = []any{
-	(*EventAddSim)(nil),    // 0: ukama.events.v1.EventAddSim
-	(*EventDeleteSim)(nil), // 1: ukama.events.v1.EventDeleteSim
+	(*InventorySimEvent)(nil), // 0: ukama.events.v1.InventorySimEvent
 }
 var file_events_warehouse_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -228,7 +181,7 @@ func file_events_warehouse_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_events_warehouse_proto_rawDesc), len(file_events_warehouse_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
