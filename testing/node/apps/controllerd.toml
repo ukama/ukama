@@ -22,4 +22,4 @@
 
 [app-exec.env]
 	CONTROLLER_DRIVER="victron"
-	CONTROLLER_SERIAL_PORT="/tmp/victron-tty",
+	CONTROLLER_SERIAL_PORT="/tmp/victron-tty"
