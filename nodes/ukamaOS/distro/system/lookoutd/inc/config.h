@@ -9,13 +9,24 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
+#include <stdbool.h>
+
+typedef enum {
+    LOOKOUT_APP_MANAGER_STARTERD = 0,
+    LOOKOUT_APP_MANAGER_SUPERVISORD
+} LookoutAppManager;
+
 /* Service configuration */
 typedef struct {
 
-    int   servicePort;
-    int   nodedPort;
-    int   starterdPort;
-    char  *nodeID;
+    int servicePort;
+    int nodedPort;
+    int starterdPort;
+
+    char *nodeID;
+
+    LookoutAppManager appManager;
+    bool isTowerNode;
 } Config;
 
 #endif /* CONFIG_H_ */

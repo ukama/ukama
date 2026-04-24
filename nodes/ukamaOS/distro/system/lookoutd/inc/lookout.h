@@ -34,6 +34,14 @@
 #define DEF_NODE_ID            "ukama-aaa-bbbb-ccc-dddd"
 #define ENV_LOOKOUT_DEBUG_MODE "LOOKOUT_DEBUG_MODE"
 
+#define ENV_LOOKOUT_APP_MANAGER    "LOOKOUT_APP_MANAGER"
+#define LOOKOUT_MANAGER_STARTER    "starter"
+#define LOOKOUT_MANAGER_SUPERVISOR "supervisor"
+
+#define LOOKOUT_STATUS_NA         "not-available"
+#define LOOKOUT_GPS_COORD_NA      "-999.000000,-999.000000"
+#define LOOKOUT_GPS_TIME_NA       "not-available"
+
 #define EP_BS              "/"
 #define REST_API_VERSION   "v1"
 #define URL_PREFIX         EP_BS REST_API_VERSION
@@ -71,9 +79,9 @@ typedef struct _cappList {
     struct _cappList *next;
 } CappList;
 
-
 typedef struct {
 
+    bool  available;
     bool  gpsLock;
     char *coordinates; /* "lon,lat" */
     char *gpsTime;     /* string */

@@ -6,7 +6,11 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+#include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "lookout.h"
 #include "config.h"
@@ -27,6 +31,7 @@
 extern int start_web_services(Config *config, UInst *serviceInst);
 
 void handle_sigint(int signum) {
+
     usys_log_debug("Terminate signal.\n");
     usys_exit(0);
 }
@@ -37,6 +42,42 @@ static UsysOption longOptions[] = {
     { "version",       no_argument, 0, 'v' },
     { 0, 0, 0, 0 }
 };
+
+static bool str_eq(const char *a, const char *b) {
+
+    if (a == NULL || b == NULL) return false;
+
+    return strcmp(a, b) == 0;
+}
+
+static bool node_id_is_tower(const char *nodeID) {
+
+    if (nodeID == NULL || nodeID[0] == '\0') {
+        return false;
+    }
+
+    if (strstr(nodeID, "tnode") != NULL) {
+        return true;
+    }
+
+    if (strstr(nodeID, "tower") != NULL) {
+        return true;
+    }
+
+    return false;
+}
+
+static void configure_app_manager(Config *config) {
+
+    char *mgr = NULL;
+
+    config->appManager = LOOKOUT_APP_MANAGER_STARTERD;
+
+    mgr = getenv(ENV_LOOKOUT_APP_MANAGER);
+    if (str_eq(mgr, LOOKOUT_MANAGER_SUPERVISOR)) {
+        config->appManager = LOOKOUT_APP_MANAGER_SUPERVISORD;
+    }
+}
 
 void set_log_level(char *slevel) {
 
@@ -49,6 +90,7 @@ void set_log_level(char *slevel) {
     } else if (!strcmp(slevel, "INFO")) {
         ilevel = USYS_LOG_INFO;
     }
+
     usys_log_set_level(ilevel);
 }
 
@@ -64,14 +106,13 @@ void usage() {
 int main(int argc, char **argv) {
 
     int opt, optIdx;
-    char *debug        = DEF_LOG_LEVEL;
-    UInst  serviceInst; 
+    char *debug = DEF_LOG_LEVEL;
+
+    UInst  serviceInst;
     Config serviceConfig = {0};
 
     usys_log_set_service(SERVICE_NAME);
-    //    usys_log_remote_init(SERVICE_NAME);
 
-    /* Parsing command line args. */
     while (true) {
 
         opt = 0;
@@ -105,50 +146,67 @@ int main(int argc, char **argv) {
         }
     }
 
-    serviceConfig.servicePort    = usys_find_service_port(SERVICE_NAME);
-    serviceConfig.nodedPort      = usys_find_service_port(SERVICE_NODE);
-    serviceConfig.starterdPort   = usys_find_service_port(SERVICE_STARTER);
-    serviceConfig.nodeID         = NULL;
+    configure_app_manager(&serviceConfig);
+
+    serviceConfig.servicePort  = usys_find_service_port(SERVICE_NAME);
+    serviceConfig.nodedPort    = usys_find_service_port(SERVICE_NODE);
+    serviceConfig.starterdPort = usys_find_service_port(SERVICE_STARTER);
+    serviceConfig.nodeID       = NULL;
+    serviceConfig.isTowerNode  = false;
 
     if (!usys_find_service_port(SERVICE_UKAMA)) {
         usys_log_error("Unable to determine the port for Ukama");
         usys_exit(1);
     }
 
-    if (!serviceConfig.servicePort  ||
-        !serviceConfig.nodedPort    ||
+    if (!serviceConfig.servicePort || !serviceConfig.nodedPort) {
+        usys_log_error("Unable to determine the port for required services");
+        usys_exit(1);
+    }
+
+    if (serviceConfig.appManager == LOOKOUT_APP_MANAGER_STARTERD &&
         !serviceConfig.starterdPort) {
-        usys_log_error("Unable to determine the port for services");
+        usys_log_error("Unable to determine the port for starter.d");
         usys_exit(1);
     }
 
     usys_log_debug("Starting %s ... ", SERVICE_NAME);
 
-    /* Signal handler */
     signal(SIGINT, handle_sigint);
 
-    /* Read Node Info from noded */
     if (getenv(ENV_LOOKOUT_DEBUG_MODE)) {
-       serviceConfig.nodeID = strdup(DEF_NODE_ID);
-       usys_log_debug("%s: Using default Node ID: %s", SERVICE_NAME, DEF_NODE_ID);
+        serviceConfig.nodeID = strdup(DEF_NODE_ID);
+        usys_log_debug("%s: Using default Node ID: %s",
+                       SERVICE_NAME,
+                       DEF_NODE_ID);
     } else {
         if (get_nodeid_from_noded(&serviceConfig) == STATUS_NOK) {
-            usys_log_error("%s: Unable to connect with node.d", SERVICE_NAME);
+            usys_log_error("%s: Unable to connect with node.d",
+                           SERVICE_NAME);
             goto done;
         }
     }
 
-    /* start web service */
+    serviceConfig.isTowerNode = node_id_is_tower(serviceConfig.nodeID);
+
+    usys_log_info("%s: nodeID=%s nodeType=%s appManager=%s",
+                  SERVICE_NAME,
+                  serviceConfig.nodeID,
+                  serviceConfig.isTowerNode ? "tower" : "non-tower",
+                  serviceConfig.appManager == LOOKOUT_APP_MANAGER_STARTERD ?
+                      "starter" : "supervisor");
+
     if (start_web_services(&serviceConfig, &serviceInst) != USYS_TRUE) {
-        usys_log_error("%s: unable to start webservice. Exiting.", SERVICE_NAME);
+        usys_log_error("%s: unable to start webservice. Exiting.",
+                       SERVICE_NAME);
         exit(1);
     }
 
-    /* until interrupted by SIG */
     while (USYS_TRUE) {
         if (send_health_report(&serviceConfig) == USYS_FALSE) {
             usys_log_error("Failed to send health report to ukama system");
         }
+
         sleep(DEF_REPORT_INTERVAL);
     }
 

@@ -21,10 +21,7 @@
 #include "usys_string.h"
 #include "usys_types.h"
 
-/* define in resources.c */
-extern int get_memory_usage(int pid);
-extern int get_disk_usage(int pid);
-extern double get_cpu_usage(int pid);
+/* defined in resources.c */
 extern char *get_radio_status(void);
 
 void json_log(json_t *json) {
@@ -38,11 +35,14 @@ void json_log(json_t *json) {
     }
 }
 
-static bool get_json_entry(json_t *json, char *key, json_type type,
-                           char **strValue, int *intValue,
+static bool get_json_entry(json_t *json,
+                           char *key,
+                           json_type type,
+                           char **strValue,
+                           int *intValue,
                            double *doubleValue) {
 
-    json_t *jEntry=NULL;
+    json_t *jEntry = NULL;
 
     if (json == NULL || key == NULL) return USYS_FALSE;
 
@@ -53,15 +53,18 @@ static bool get_json_entry(json_t *json, char *key, json_type type,
     }
 
     switch(type) {
-    case (JSON_STRING): 
+    case (JSON_STRING):
         *strValue = strdup(json_string_value(jEntry));
         break;
+
     case (JSON_INTEGER):
         *intValue = json_integer_value(jEntry);
         break;
+
     case (JSON_REAL):
         *doubleValue = json_real_value(jEntry);
         break;
+
     default:
         log_error("Invalid type for json key-value: %d", type);
         return USYS_FALSE;
@@ -70,35 +73,9 @@ static bool get_json_entry(json_t *json, char *key, json_type type,
     return USYS_TRUE;
 }
 
-/*
- * deserialize_node_info --
- *
- * {
- * "nodeInfo": {
- *   "UUID": "ukma-7001-tnode-sa03-1100",
- *   "name": "tNode",
- *   "type": 2,
- *   "partNumber": "LTE-BAND-3-0XXXX",
- *   "skew": "UK_TNODE-LTE-0001",
- *   "mac": "10:20:30:20:50:60",
- *   "prodSwVersion": {
- *     "major": 1,
- *     "minor": 1
- *   },
- *   "swVersion": {
- *     "major": 0,
- *     "minor": 0
- *   },
- *   "assemblyDate": "30-07-2020",
- *   "oemName": "SANMINA",
- *   "moduleCount": 3
- * }
- *}
- *
- */
 bool json_deserialize_node_id(char **nodeID, JsonObj *json) {
 
-    JsonObj *jNodeInfo=NULL;
+    JsonObj *jNodeInfo = NULL;
 
     if (json == NULL) return USYS_FALSE;
 
@@ -107,70 +84,180 @@ bool json_deserialize_node_id(char **nodeID, JsonObj *json) {
         log_error("Missing mandatory %s from JSON", JTAG_NODE_INFO);
         return USYS_FALSE;
     }
-    
-    if (get_json_entry(jNodeInfo, JTAG_UUID, JSON_STRING,
-                       nodeID, NULL, NULL) == USYS_FALSE) {
+
+    if (get_json_entry(jNodeInfo,
+                       JTAG_UUID,
+                       JSON_STRING,
+                       nodeID,
+                       NULL,
+                       NULL) == USYS_FALSE) {
         log_error("Error deserializing node info");
         json_log(json);
         *nodeID = NULL;
 
         return USYS_FALSE;
     }
-    
+
     return USYS_TRUE;
 }
 
+static const char *starter_state_to_ukama_status(const char *state) {
+
+    if (state == NULL) {
+        return "Unknown";
+    }
+
+    if (strcmp(state, "running") == 0) {
+        return "Active";
+    }
+
+    if (strcmp(state, "starting") == 0 ||
+        strcmp(state, "pending") == 0 ||
+        strcmp(state, "switching") == 0 ||
+        strcmp(state, "installing") == 0) {
+        return "Pending";
+    }
+
+    if (strcmp(state, "stopped") == 0 ||
+        strcmp(state, "exited") == 0 ||
+        strcmp(state, "failed") == 0 ||
+        strcmp(state, "fatal") == 0) {
+        return "Failure";
+    }
+
+    return "Unknown";
+}
+
+static void add_starter_app(CappList **cappList,
+                            const char *spaceName,
+                            JsonObj *jApp) {
+
+    JsonObj *jName = NULL;
+    JsonObj *jTag = NULL;
+    JsonObj *jState = NULL;
+    JsonObj *jPid = NULL;
+
+    const char *name = NULL;
+    const char *tag = NULL;
+    const char *state = NULL;
+    const char *status = NULL;
+    int pid = 0;
+
+    if (cappList == NULL || spaceName == NULL || jApp == NULL) {
+        return;
+    }
+
+    jName  = json_object_get(jApp, JTAG_NAME);
+    jTag   = json_object_get(jApp, JTAG_TAG);
+    jState = json_object_get(jApp, "state");
+    jPid   = json_object_get(jApp, JTAG_PID);
+
+    if (!json_is_string(jName)) {
+        return;
+    }
+
+    name = json_string_value(jName);
+
+    if (json_is_string(jTag)) {
+        tag = json_string_value(jTag);
+    } else {
+        tag = "latest";
+    }
+
+    if (json_is_string(jState)) {
+        state = json_string_value(jState);
+    } else {
+        state = "unknown";
+    }
+
+    if (json_is_integer(jPid)) {
+        pid = (int)json_integer_value(jPid);
+    }
+
+    status = starter_state_to_ukama_status(state);
+
+    add_capp_to_list(cappList,
+                     spaceName,
+                     name,
+                     tag,
+                     status,
+                     pid);
+}
+
 /*
- * "capps" : [
- *    {
- *      "space" : "boot",
- *      "name" : "example",
- *      "tag" : "0.0.1",
- *      "status" : "run",
- *      "pid" : "123"
- *    }
- * ]
+ * Latest starter.d status:
+ *
+ * {
+ *   "spaces": [
+ *     {
+ *       "name": "boot",
+ *       "apps": [
+ *         {
+ *           "name": "noded",
+ *           "tag": "old_arch-7bd935d06",
+ *           "state": "running",
+ *           "pid": 11
+ *         }
+ *       ]
+ *     }
+ *   ],
+ *   "starterd": {
+ *     "exitCode": 0,
+ *     "switchRequested": false,
+ *     "updateInProgress": false
+ *   }
+ * }
  */
 bool json_deserialize_capps(CappList **cappList, JsonObj *json) {
 
-    int i=0, count=0;
-    JsonObj *jCapp=NULL, *jArray=NULL;
-    JsonObj *jName=NULL, *jTag=NULL;
-    JsonObj *jStatus=NULL, *jPid=NULL;
-    JsonObj *jSpace=NULL;
+    int i = 0;
+    int j = 0;
+    int spaceCount = 0;
+    int appCount = 0;
+    int totalApps = 0;
 
-    if (json == NULL) {
+    JsonObj *jSpaces = NULL;
+    JsonObj *jSpace = NULL;
+    JsonObj *jSpaceName = NULL;
+    JsonObj *jApps = NULL;
+    JsonObj *jApp = NULL;
+
+    const char *spaceName = NULL;
+
+    if (json == NULL || cappList == NULL) {
         return USYS_FALSE;
     }
 
-    jArray = json_object_get(json, JTAG_CAPPS);
-    if (!json_is_array(jArray)) {
+    jSpaces = json_object_get(json, "spaces");
+    if (!json_is_array(jSpaces)) {
+        usys_log_error("starter.d status missing spaces[]");
         return USYS_FALSE;
     }
 
-    count = json_array_size(jArray);
-    for (i=0; i<count; i++) {
-        jCapp = json_array_get(jArray, i);
+    spaceCount = json_array_size(jSpaces);
 
-        if (jCapp == NULL) continue;
+    for (i = 0; i < spaceCount; i++) {
+        jSpace = json_array_get(jSpaces, i);
+        if (jSpace == NULL) continue;
 
-        jSpace  = json_object_get(jCapp, JTAG_SPACE);
-        jName   = json_object_get(jCapp, JTAG_NAME);
-        jTag    = json_object_get(jCapp, JTAG_TAG);
-        jStatus = json_object_get(jCapp, JTAG_STATUS);
-        jPid    = json_object_get(jCapp, JTAG_PID);
+        jSpaceName = json_object_get(jSpace, JTAG_NAME);
+        jApps = json_object_get(jSpace, "apps");
 
-        if (jSpace && jName && jTag && jStatus && jPid) {
-            add_capp_to_list(cappList,
-                             json_string_value(jSpace),
-                             json_string_value(jName),
-                             json_string_value(jTag),
-                             json_string_value(jStatus),
-                             json_integer_value(jPid));
+        if (!json_is_string(jSpaceName) || !json_is_array(jApps)) {
+            continue;
+        }
+
+        spaceName = json_string_value(jSpaceName);
+        appCount = json_array_size(jApps);
+
+        for (j = 0; j < appCount; j++) {
+            jApp = json_array_get(jApps, j);
+            add_starter_app(cappList, spaceName, jApp);
+            totalApps++;
         }
     }
 
-    usys_log_debug("Recevied %d capps from starter.d", count);
+    usys_log_debug("Received %d capps from starter.d", totalApps);
 
     return USYS_TRUE;
 }
@@ -179,7 +266,9 @@ static void json_add_resources_to_capp_report(JsonObj **json,
                                               CappRuntime *runtime) {
 
     JsonObj *jArray = NULL;
-    JsonObj *jMemory = NULL, *jDisk = NULL, *jCpu = NULL;
+    JsonObj *jMemory = NULL;
+    JsonObj *jDisk = NULL;
+    JsonObj *jCpu = NULL;
 
     char buffer[MAX_BUFFER] = {0};
 
@@ -191,7 +280,6 @@ static void json_add_resources_to_capp_report(JsonObj **json,
     jDisk   = json_object();
     jCpu    = json_object();
 
-    /* memory */
     sprintf(buffer, "%d", runtime->memory);
     json_object_set_new(jMemory,
                         JTAG_NAME,
@@ -200,7 +288,6 @@ static void json_add_resources_to_capp_report(JsonObj **json,
                         JTAG_VALUE,
                         json_string(buffer));
 
-    /* disk */
     sprintf(buffer, "%d", runtime->disk);
     json_object_set_new(jDisk,
                         JTAG_NAME,
@@ -209,7 +296,6 @@ static void json_add_resources_to_capp_report(JsonObj **json,
                         JTAG_VALUE,
                         json_string(buffer));
 
-    /* cpu */
     sprintf(buffer, "%f", runtime->cpu);
     json_object_set_new(jCpu,
                         JTAG_NAME,
@@ -223,25 +309,31 @@ static void json_add_resources_to_capp_report(JsonObj **json,
     json_array_append_new(jArray, jCpu);
 }
 
-static void json_add_system_info_to_report(JsonObj **json) {
+static void json_add_system_info_to_report(JsonObj **json,
+                                           bool radioAvailable) {
 
     JsonObj *jArray = NULL;
     JsonObj *jRadio = NULL;
 
     jRadio = json_object();
 
-    /* system */
     json_object_set_new(*json, JTAG_SYSTEM, json_array());
     jArray = json_object_get(*json, JTAG_SYSTEM);
     if (jArray == NULL) return;
 
-    /* radio */
     json_object_set_new(jRadio,
                         JTAG_NAME,
                         json_string("radio"));
-    json_object_set_new(jRadio,
-                        JTAG_VALUE,
-                        json_string(get_radio_status()));
+
+    if (radioAvailable == USYS_TRUE) {
+        json_object_set_new(jRadio,
+                            JTAG_VALUE,
+                            json_string(get_radio_status()));
+    } else {
+        json_object_set_new(jRadio,
+                            JTAG_VALUE,
+                            json_string(LOOKOUT_STATUS_NA));
+    }
 
     json_array_append_new(jArray, jRadio);
 }
@@ -251,17 +343,17 @@ static void json_add_gps_info_to_report(JsonObj **json, GPSClientData *gps) {
     JsonObj *jArray = NULL;
     JsonObj *jEntry = NULL;
 
-    const char *lockStr = "false";
-    const char *coord   = "";
-    const char *timeStr = "";
+    const char *lockStr = LOOKOUT_STATUS_NA;
+    const char *coord = LOOKOUT_GPS_COORD_NA;
+    const char *timeStr = LOOKOUT_GPS_TIME_NA;
 
     if (json == NULL || *json == NULL || gps == NULL) return;
 
     jArray = json_object_get(*json, JTAG_SYSTEM);
     if (jArray == NULL || !json_is_array(jArray)) return;
 
-    if (gps->gpsLock == USYS_TRUE) {
-        lockStr = "true";
+    if (gps->available == USYS_TRUE) {
+        lockStr = gps->gpsLock ? "true" : "false";
 
         if (gps->coordinates && gps->coordinates[0] != '\0') {
             coord = gps->coordinates;
@@ -272,108 +364,65 @@ static void json_add_gps_info_to_report(JsonObj **json, GPSClientData *gps) {
         }
     }
 
-    /* coordinates */
     jEntry = json_object();
-    json_object_set_new(jEntry, JTAG_NAME,  json_string("coordinates"));
+    json_object_set_new(jEntry, JTAG_NAME, json_string("coordinates"));
     json_object_set_new(jEntry, JTAG_VALUE, json_string(coord));
     json_array_append_new(jArray, jEntry);
 
-    /* gpsLock */
     jEntry = json_object();
-    json_object_set_new(jEntry, JTAG_NAME,  json_string("gpsLock"));
+    json_object_set_new(jEntry, JTAG_NAME, json_string("gpsLock"));
     json_object_set_new(jEntry, JTAG_VALUE, json_string(lockStr));
     json_array_append_new(jArray, jEntry);
 
-    /* gpsTime */
     jEntry = json_object();
-    json_object_set_new(jEntry, JTAG_NAME,  json_string("gpsTime"));
+    json_object_set_new(jEntry, JTAG_NAME, json_string("gpsTime"));
     json_object_set_new(jEntry, JTAG_VALUE, json_string(timeStr));
     json_array_append_new(jArray, jEntry);
 }
-/*
-{
-  "nodeID": "ukma-xx-xxx-xxxx-xxx",
-  "timestamp": "12345678",
-  "system": [
-    {
-      "name": "radio",
-      "value": "off"
-    },
-    {
-      "name": "coordinates",
-      "value": "90.0000, 0.00000"
-    },
-    {
-      "name": "gpsLock",
-      "value": "true"
-    },
-    {
-      "name": "gpsTime",
-      "value": "123456789"
-    }
-  ],
-  "capps": [
-    {
-      "space": "boot",
-      "name": "bootstrap",
-      "tag": "0.0.1",
-      "status": "run",
-      "resources": [
-        {
-          "name": "disk",
-          "value": "3456"
-        },
-        {
-          "name": "memory",
-          "value": "12345"
-        }
-      ]
-    }
-  ]
-  }
-*/
+
 bool json_serialize_health_report(JsonObj **json,
                                   char *nodeID,
                                   CappList *list,
-                                  GPSClientData *gps) {
+                                  GPSClientData *gps,
+                                  bool radioAvailable) {
 
-    JsonObj *jArray     = NULL;
-    JsonObj *jCapp      = NULL;
-    JsonObj *jResources = NULL;
-    CappList *ptr       = NULL;
-    Capp     *capp      = NULL;
-    char     buffer[MAX_BUFFER] = {0};
-    time_t   currTime;
+    JsonObj *jArray = NULL;
+    JsonObj *jCapp = NULL;
+    CappList *ptr = NULL;
+    Capp *capp = NULL;
+
+    char buffer[MAX_BUFFER] = {0};
+    time_t currTime;
 
     *json = json_object();
     if (*json == NULL) return USYS_FALSE;
 
-    /* nodeID */
     json_object_set_new(*json,
                         JTAG_NODE_ID,
-                        json_string(nodeID));
+                        json_string(nodeID ? nodeID : ""));
 
-    /* time-stamp */
     time(&currTime);
     sprintf(buffer, "%ld", (long)currTime);
     json_object_set_new(*json,
                         JTAG_TIMESTAMP,
                         json_string(buffer));
 
-    /* capps */
     json_object_set_new(*json, JTAG_CAPPS, json_array());
     jArray = json_object_get(*json, JTAG_CAPPS);
     if (jArray == NULL) {
         json_decref(*json);
+        *json = NULL;
         return USYS_FALSE;
     }
 
     for (ptr = list; ptr; ptr = ptr->next) {
         capp = ptr->capp;
+        if (capp == NULL || capp->runtime == NULL) {
+            continue;
+        }
 
-        jCapp      = json_object();
-        jResources = json_object();
-        if (jCapp == NULL || jResources == NULL) {
+        jCapp = json_object();
+        if (jCapp == NULL) {
             json_decref(*json);
             *json = NULL;
             return USYS_FALSE;
@@ -381,34 +430,31 @@ bool json_serialize_health_report(JsonObj **json,
 
         json_object_set_new(jCapp,
                             JTAG_SPACE,
-                            json_string(capp->space));
+                            json_string(capp->space ? capp->space : ""));
         json_object_set_new(jCapp,
                             JTAG_NAME,
-                            json_string(capp->name));
+                            json_string(capp->name ? capp->name : ""));
         json_object_set_new(jCapp,
                             JTAG_TAG,
-                            json_string(capp->tag));
+                            json_string(capp->tag ? capp->tag : ""));
         json_object_set_new(jCapp,
                             JTAG_STATUS,
-                            json_string(capp->runtime->status));
+                            json_string(capp->runtime->status ?
+                                        capp->runtime->status : "Unknown"));
 
         json_add_resources_to_capp_report(&jCapp, capp->runtime);
         json_array_append_new(jArray, jCapp);
     }
 
-    /* system */
-    json_add_system_info_to_report(json);
-
-    /* gps */
-    if (gps != NULL) {
-        json_add_gps_info_to_report(json, gps);
-    }
+    json_add_system_info_to_report(json, radioAvailable);
+    json_add_gps_info_to_report(json, gps);
 
     return USYS_TRUE;
 }
 
 void json_free(JsonObj** json) {
-    if (*json){
+
+    if (*json) {
         json_decref(*json);
         *json = NULL;
     }
