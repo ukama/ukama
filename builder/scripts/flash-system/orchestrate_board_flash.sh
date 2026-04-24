@@ -200,7 +200,9 @@ if [ "$FLASH_METHOD" = "network" ]; then
                   ".flash.target_device" ".flash.success_marker")
     for key in "${NETWORK_KEYS[@]}"; do
         if ! "$YQ_BIN" eval "$key" "$CONFIG" &>/dev/null; then
-            echo "Missing config for network method: $key" | tee -a "$ORCHESTRATOR_LOG"
+            echo "ERROR: Missing required config: $key" | tee -a "$ORCHESTRATOR_LOG"
+            echo "Add to $CONFIG:" | tee -a "$ORCHESTRATOR_LOG"
+            echo "  ${key#.}: <value>" | tee -a "$ORCHESTRATOR_LOG"
             exit 1
         fi
     done
@@ -218,7 +220,9 @@ elif [ "$FLASH_METHOD" = "sdcard" ]; then
     SDCARD_KEYS=(".host_device.device" ".flash.target_device")
     for key in "${SDCARD_KEYS[@]}"; do
         if ! "$YQ_BIN" eval "$key" "$CONFIG" &>/dev/null; then
-            echo "Missing config for sdcard method: $key" | tee -a "$ORCHESTRATOR_LOG"
+            echo "ERROR: Missing required config: $key" | tee -a "$ORCHESTRATOR_LOG"
+            echo "Add to $CONFIG:" | tee -a "$ORCHESTRATOR_LOG"
+            echo "  ${key#.}: <value>" | tee -a "$ORCHESTRATOR_LOG"
             exit 1
         fi
     done
@@ -227,7 +231,9 @@ elif [ "$FLASH_METHOD" = "sdcard" ]; then
     TARGET_DEV=$(yq_read      '.flash.target_device')
     echo "Using sdcard method for $BOARD_NAME" | tee -a "$ORCHESTRATOR_LOG"
 else
-    echo "Unknown flash method: $FLASH_METHOD" | tee -a "$ORCHESTRATOR_LOG"
+    echo "ERROR: Unknown flash method: $FLASH_METHOD" | tee -a "$ORCHESTRATOR_LOG"
+    echo "Supported methods: network, rpiboot, sdcard" | tee -a "$ORCHESTRATOR_LOG"
+    echo "Check flash.method in $CONFIG" | tee -a "$ORCHESTRATOR_LOG"
     exit 1
 fi
 
@@ -242,7 +248,9 @@ fi
         echo "Starting rpiboot flash for $BOARD_NAME..." | tee -a "$ORCHESTRATOR_LOG"
         
         if [ ! -f "$IMG_PATH" ]; then
-            echo "Image not found: $IMG_PATH" | tee -a "$ORCHESTRATOR_LOG"
+            echo "ERROR: Image file not found: $IMG_PATH" | tee -a "$ORCHESTRATOR_LOG"
+            echo "Build image with: cd ../build-system && ./build-access-image.sh" | tee -a "$ORCHESTRATOR_LOG"
+            echo "Or update image.path in $CONFIG" | tee -a "$ORCHESTRATOR_LOG"
             exit 1
         fi
         
@@ -265,7 +273,9 @@ fi
         echo "Starting SD card creation for $BOARD_NAME..." | tee -a "$ORCHESTRATOR_LOG"
         
         if [ ! -f "$IMG_PATH" ]; then
-            echo "Image not found: $IMG_PATH" | tee -a "$ORCHESTRATOR_LOG"
+            echo "ERROR: Image file not found: $IMG_PATH" | tee -a "$ORCHESTRATOR_LOG"
+            echo "Build image with: cd ../build-system && ./build-access-image.sh" | tee -a "$ORCHESTRATOR_LOG"
+            echo "Or update image.path in $CONFIG" | tee -a "$ORCHESTRATOR_LOG"
             exit 1
         fi
         
