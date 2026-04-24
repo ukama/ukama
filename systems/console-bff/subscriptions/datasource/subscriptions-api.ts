@@ -5,8 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { GraphQLError } from "graphql";
-
 import { asyncRestCall } from "../../common/axiosClient";
 import { VERSION } from "../../common/configs";
 import { API_METHOD_TYPE } from "../../common/enums";
@@ -48,7 +46,9 @@ const getNodeMetricRange = async (
       const result = res?.data?.data?.result;
       if (!Array.isArray(result)) {
         logger.warn(
-          `[getNodeMetricRange] No valid Prometheus result for metric '${type}' — response: ${JSON.stringify(res?.data)}`
+          `[getNodeMetricRange] No valid Prometheus result for metric '${type}' — response: ${JSON.stringify(
+            res?.data
+          )}`
         );
         return { metrics: [] } as MetricsRes;
       }
