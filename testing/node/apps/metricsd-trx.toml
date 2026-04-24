@@ -17,7 +17,7 @@
 	from="/nodes/configs/apps/metricsd/metrics_config.toml"
 	to="/conf/config.toml"
 
-[capp-exec]
+[app-exec]
 	name="metricsd-trx"
 	version="latest"
 	bin="metrics.d"
@@ -28,3 +28,6 @@
         autorestart="true"
         startretries=5
 	group="service"
+
+[app-exec.env]
+        METRICSD_USE_CONFIG_PORT="1"

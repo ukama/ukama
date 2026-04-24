@@ -10,7 +10,7 @@
 	bin_from="/nodes/ukamaOS/distro/system/rlog/rlog.d"
 	bin_to="/sbin"
 
-[capp-exec]
+[app-exec]
 	name="rlog"
 	version="latest"
 	bin="rlog.d"

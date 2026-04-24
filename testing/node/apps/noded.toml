@@ -10,7 +10,7 @@
 	bin_from="/nodes/ukamaOS/distro/system/noded/build/node.d"
 	bin_to="/sbin/"
 
-[capp-exec]
+[app-exec]
 	name="noded"
 	version="latest"
 	autostart="false"

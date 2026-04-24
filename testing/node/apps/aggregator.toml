@@ -17,7 +17,7 @@
 	from="/nodes/configs/apps/aggregator/aggregator_config.toml"
 	to="/conf/config.toml"
 
-[capp-exec]
+[app-exec]
 	name="aggregator"
 	version="latest"
 	bin="aggregator"

@@ -18,7 +18,7 @@
 #define TABLE_BUILD_COMPILE "build-compile"
 #define TABLE_BUILD_ROOTFS  "build-rootfs"
 #define TABLE_BUILD_CONF    "build-conf"
-#define TABLE_CAPP_EXEC     "capp-exec"
+#define TABLE_CAPP_EXEC     "app-exec"
 
 /* Keys for various table */
 #define KEY_BASE        "base"
@@ -35,7 +35,7 @@
 #define KEY_EXEC        "exec"
 #define KEY_PATH        "path"
 #define KEY_ARGS        "args"
-#define KEY_ENVS        "envs"
+#define KEY_ENV         "env"
 #define KEY_NAME        "name"
 #define KEY_BIN         "bin"
 #define KEY_AUTOSTART   "autostart"
@@ -69,61 +69,66 @@ typedef enum {
     RUNTIME_STARTER
 } RuntimeType;
 
+typedef struct env_var_t {
+    char *key;
+    char *value;
+    struct env_var_t *next;
+} EnvVar;
+
 typedef struct build_config_t {
 
-	/* from */
-	char *baseImage;
-	char *baseVersion;
+    /* from */
+    char *baseImage;
+    char *baseVersion;
 
-	/* build */
-	char *version;
-	int  staticFlag;
-	char *source;
-	char *cmd;
-	char *binFrom;
-	char *binTo;
+    /* build */
+    char *version;
+    int  staticFlag;
+    char *source;
+    char *cmd;
+    char *binFrom;
+    char *binTo;
 
-	/* rootfs */
-	char *mkdir;
+    /* rootfs */
+    char *mkdir;
 
-	/* conf */
-	char *from;
-	char *to;
+    /* conf */
+    char *from;
+    char *to;
 } BuildConfig;
 
 typedef struct capp_config_t {
 
-	char *name;       /* Name of the capp */
-	char *version;    /* Version of the capp */
-	char *bin;        /* capp binary */
-	char *path;       /* Absolute path to the bin */
-	char *args;       /* Runtime arguments, if any */
-	char *envs;       /* Environment variables, if any */
-	char *dependsOn;  /* wait on program(s) to finish exec */
-	char *waitFor;    /* time to wait before executing */
-	int  autostart;   /* autostart for supervisor.d */
-	int  autorestart; /* autorestart for supervisor.d */
-	int  startretries;/* Number of times app would be restarted.*/
-	char *group;	  /* nil, on-boot or sys-service */
+    char *name;       /* Name of the capp */
+    char *version;    /* Version of the capp */
+    char *bin;        /* capp binary */
+    char *path;       /* Absolute path to the bin */
+    char *args;       /* Runtime arguments, if any */
+    EnvVar *env;      /* Environment variables, if any */
+    char *dependsOn;  /* wait on program(s) to finish exec */
+    char *waitFor;    /* time to wait before executing */
+    int  autostart;   /* autostart for supervisor.d */
+    int  autorestart; /* autorestart for supervisor.d */
+    int  startretries;/* Number of times app would be restarted.*/
+    char *group;      /* nil, on-boot or sys-service */
 } CappConfig;
 
 typedef struct config_t {
 
-	CappConfig  *capp;
-	BuildConfig *build;
+    CappConfig  *capp;
+    BuildConfig *build;
 } Config;
 
 typedef struct configs_t {
 
-	char   *fileName;
-	int    valid;
-	char   *errorStr;
-	Config *config;
+    char   *fileName;
+    int    valid;
+    char   *errorStr;
+    Config *config;
 
-	struct configs_t *next;
+    struct configs_t *next;
 } Configs;
 
-/* Function headers */
 int read_config_files(Configs **configs,
                       char *configDir,
                       BoardConfig *boardCfg);

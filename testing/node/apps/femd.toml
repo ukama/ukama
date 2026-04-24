@@ -14,7 +14,7 @@
 	from="/nodes/configs/apps/femd/safety_config.json"
 	to="/ukama/configs/femd"
     
-[capp-exec]
+[app-exec]
 	name="femd"
 	version="latest"
 	bin="fem.d"
@@ -24,3 +24,7 @@
 	autorestart="true"
 	startretries=5
 	group="service"
+
+[app-exec.env]
+	FEMD_SYSROOT="/tmp/sys"
+	FEM_BAND="B41"

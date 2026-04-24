@@ -14,14 +14,186 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <time.h>
 
 #include "usys_log.h"
+
+extern char **environ;
 
 static bool runtime_set_workdir(const char *workdir) {
 
     if (!workdir || !*workdir) return true;
     if (chdir(workdir) != 0) return false;
     return true;
+}
+
+static int runtime_env_count(char **envp) {
+
+    int n = 0;
+
+    if (!envp) {
+        return 0;
+    }
+
+    while (envp[n]) {
+        n++;
+    }
+
+    return n;
+}
+
+static size_t runtime_env_key_len(const char *kv) {
+
+    const char *eq;
+
+    if (!kv) {
+        return 0;
+    }
+
+    eq = strchr(kv, '=');
+    if (!eq) {
+        return strlen(kv);
+    }
+
+    return (size_t)(eq - kv);
+}
+
+static bool runtime_env_same_key(const char *a, const char *b) {
+
+    size_t alen;
+    size_t blen;
+
+    if (!a || !b) {
+        return false;
+    }
+
+    alen = runtime_env_key_len(a);
+    blen = runtime_env_key_len(b);
+
+    if (alen != blen) {
+        return false;
+    }
+
+    return strncmp(a, b, alen) == 0;
+}
+
+static void runtime_free_env_array(char **envp) {
+
+    int i;
+
+    if (!envp) {
+        return;
+    }
+
+    for (i = 0; envp[i]; i++) {
+        free(envp[i]);
+    }
+
+    free(envp);
+}
+
+static char **runtime_dup_env_array(char **src) {
+
+    int i;
+    int n;
+    char **dst;
+
+    n = runtime_env_count(src);
+
+    dst = (char **)calloc(n + 1, sizeof(char *));
+    if (!dst) {
+        return NULL;
+    }
+
+    for (i = 0; i < n; i++) {
+        dst[i] = strdup(src[i]);
+        if (!dst[i]) {
+            runtime_free_env_array(dst);
+            return NULL;
+        }
+    }
+
+    dst[n] = NULL;
+    return dst;
+}
+
+static char **runtime_env_add(char **envp, const char *kv) {
+
+    int n;
+    char **newEnvp;
+
+    if (!kv) {
+        return envp;
+    }
+
+    n = runtime_env_count(envp);
+
+    newEnvp = (char **)realloc(envp, sizeof(char *) * (n + 2));
+    if (!newEnvp) {
+        runtime_free_env_array(envp);
+        return NULL;
+    }
+
+    newEnvp[n] = strdup(kv);
+    if (!newEnvp[n]) {
+        runtime_free_env_array(newEnvp);
+        return NULL;
+    }
+
+    newEnvp[n + 1] = NULL;
+    return newEnvp;
+}
+
+static bool runtime_env_set(char ***envpRef, const char *kv) {
+
+    int i;
+    char **envp;
+
+    if (!envpRef || !kv) {
+        return false;
+    }
+
+    envp = *envpRef;
+    for (i = 0; envp && envp[i]; i++) {
+        if (runtime_env_same_key(envp[i], kv)) {
+            char *dup = strdup(kv);
+            if (!dup) {
+                return false;
+            }
+
+            free(envp[i]);
+            envp[i] = dup;
+            return true;
+        }
+    }
+
+    envp = runtime_env_add(envp, kv);
+    if (!envp) {
+        return false;
+    }
+
+    *envpRef = envp;
+    return true;
+}
+
+static char **runtime_build_child_envp(char **appEnvp) {
+
+    int i;
+    char **merged;
+
+    merged = runtime_dup_env_array(environ);
+    if (!merged) {
+        return NULL;
+    }
+
+    for (i = 0; appEnvp && appEnvp[i]; i++) {
+        if (!runtime_env_set(&merged, appEnvp[i])) {
+            runtime_free_env_array(merged);
+            return NULL;
+        }
+    }
+
+    return merged;
 }
 
 bool app_runtime_start(Config *config, App *app, const char *execPath) {
@@ -42,6 +214,7 @@ bool app_runtime_start(Config *config, App *app, const char *execPath) {
     }
 
     if (pid == 0) {
+        char **childEnvp = NULL;
 
         if (setpgid(0, 0) != 0) {
             _exit(127);
@@ -52,7 +225,13 @@ bool app_runtime_start(Config *config, App *app, const char *execPath) {
         }
 
         if (envp && envp[0]) {
-            execvpe(execPath, argv, envp);
+            childEnvp = runtime_build_child_envp(envp);
+            if (!childEnvp) {
+                _exit(127);
+            }
+
+            execvpe(execPath, argv, childEnvp);
+            runtime_free_env_array(childEnvp);
         } else {
             execvp(execPath, argv);
         }

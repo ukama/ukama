@@ -92,45 +92,63 @@ void clear_request(MRequest **data) {
 STATIC void find_service_name_and_ep(char *input,
                                      char **name,
                                      char **ep) {
-    char *start, *separator;
+    char *start;
+    char *separator;
+    size_t nameLen;
 
-    if (input[0] != '/') {
+    *name = NULL;
+    *ep   = NULL;
+
+    if (!input || input[0] != '/') {
         *name = strdup("");
         *ep   = strdup("");
         return;
     }
 
-    start     = &input[1];
+    start = &input[1];
+
+    /*
+     * Special case:
+     * /metrics is served by aggregator, but endpoint remains metrics.
+     */
+    if (strcasecmp(start, "metrics") == 0) {
+        *name = strdup("aggregator");
+        *ep   = strdup("metrics");
+        return;
+    }
+
     separator = strchr(start, '/');
 
-    if (separator != NULL) {
-        size_t name_len = separator - start;
-        if (name_len > 0) {
-            *name = (char *)calloc(name_len + 1, sizeof(char));
-            strncpy(*name, start, name_len);
-        } else {
-            *name = strdup("");
-        }
+    if (!separator) {
+        *name = (*start) ? strdup(start) : strdup("");
+        *ep   = strdup("");
+        return;
+    }
 
-        const char *ep_start = separator + 1;
-        if (*ep_start != '\0') {
-            *ep = strdup(ep_start);
-        } else {
-            *ep = strdup("");
+    nameLen = separator - start;
+
+    if (nameLen > 0) {
+        *name = calloc(nameLen + 1, sizeof(char));
+        if (*name) {
+            memcpy(*name, start, nameLen);
+            (*name)[nameLen] = '\0';
         }
     } else {
-        if (strlen(start) > 0) {
-            *name = strdup(start);
-        } else {
-            *name = strdup("");
-        }
+        *name = strdup("");
+    }
+
+    if (*(separator + 1) != '\0') {
+        *ep = strdup(separator + 1);
+    } else {
         *ep = strdup("");
     }
 
-    /* metrics is a special case - prom ep is hard coded */
-    if (strcasecmp(*name, SERVICE_AGGREGATOR) == 0) {
-        free(*ep);
-        *ep = strdup(*name);
+    if (!*name) {
+        *name = strdup("");
+    }
+
+    if (!*ep) {
+        *ep = strdup("");
     }
 }
 

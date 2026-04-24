@@ -68,6 +68,50 @@ static int append_arg_tokens(json_t *jargv, const char *args) {
     return TRUE;
 }
 
+static int append_env_object(json_t *japp, EnvVar *env) {
+
+    json_t *jenv = NULL;
+    EnvVar *curr = NULL;
+
+    if (!japp) {
+        return FALSE;
+    }
+
+    if (!env) {
+        return TRUE;
+    }
+
+    jenv = json_object();
+    if (!jenv) {
+        return FALSE;
+    }
+
+    for (curr = env; curr; curr = curr->next) {
+        if (!curr->key || !curr->value) {
+            continue;
+        }
+
+        if (json_object_set_new(jenv,
+                                curr->key,
+                                json_string(curr->value)) != 0) {
+            json_decref(jenv);
+            return FALSE;
+        }
+    }
+
+    if (json_object_size(jenv) == 0) {
+        json_decref(jenv);
+        return TRUE;
+    }
+
+    if (json_object_set_new(japp, "env", jenv) != 0) {
+        json_decref(jenv);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 static int manifest_add_app(json_t *apps, Config *config) {
 
     json_t *japp = NULL;
@@ -95,15 +139,6 @@ static int manifest_add_app(json_t *apps, Config *config) {
     bin   = config->capp->bin;
     binTo = config->build->binTo;
 
-    /*
-     * starter.d resolves relative cmd as:
-     *   /ukama/apps/<space>/<name>/current/<cmd>
-     *
-     * So cmd should be package-root relative, e.g.
-     *   sbin/node.d
-     *   sbin/bootstrap
-     *   sbin/mesh.d
-     */
     snprintf(cmd,
              sizeof(cmd),
              "%s/%s",
@@ -119,10 +154,6 @@ static int manifest_add_app(json_t *apps, Config *config) {
     json_object_set_new(japp, "tag",  json_string(tag));
     json_object_set_new(japp, "cmd",  json_string(cmd));
 
-    /*
-     * argv[0] should be the executable name, not the full path.
-     * starter.d builds the full exec path separately from cmd.
-     */
     jargv = json_array();
     if (!jargv) {
         json_decref(japp);
@@ -142,6 +173,11 @@ static int manifest_add_app(json_t *apps, Config *config) {
     }
 
     json_object_set_new(japp, "argv", jargv);
+
+    if (!append_env_object(japp, config->capp->env)) {
+        json_decref(japp);
+        return FALSE;
+    }
 
     if (json_array_append_new(apps, japp) != 0) {
         json_decref(japp);

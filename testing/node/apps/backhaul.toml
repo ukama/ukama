@@ -10,7 +10,7 @@
 	bin_from="/nodes/apps/backhaul/backhaul-monitor"
 	bin_to="/sbin"
 
-[capp-exec]
+[app-exec]
 	name="backhaul"
 	version="latest"
 	bin="backhaul-monitor"
@@ -19,3 +19,17 @@
 	autorestart="true"
 	startretries=5
 	group="service"
+
+[app-exec.env]
+	BACKHAULD_BOOTSTRAP_SCHEME="http"
+	BACKHAULD_BOOTSTRAP_HOST="127.0.0.1"
+	BACKHAULD_BOOTSTRAP_EP="/reflector"
+	BACKHAULD_REFLECTOR_NEAR_URL="http://127.0.0.1:8088/reflector"
+	BACKHAULD_REFLECTOR_FAR_URL="http://127.0.0.1:8088/reflector"
+	BACKHAULD_STRICT_ENV="1"
+	BACKHAULD_MICRO_PERIOD_MS="3000"
+	BACKHAULD_MULTI_PERIOD_MS="7000"
+	BACKHAULD_CLASSIFY_PERIOD_SEC="10"
+	BACKHAULD_CHG_PERIOD_SEC="30"
+	BACKHAULD_CONNECT_TIMEOUT_MS="2000"
+	BACKHAULD_TOTAL_TIMEOUT_MS="10000"
