@@ -131,11 +131,11 @@ const getGraphsKeyByType = (type: string): string[] => {
         "network_uptime",
       ];
     case GRAPHS_TYPE.NODE_HEALTH:
-      return ["uptime", "unit_health", "node_load"];
+      return ["uptime", "cpu_temperature", "memory"];
     case GRAPHS_TYPE.SUBSCRIBERS:
       return ["subscribers_active"];
     case STATS_TYPE.OVERVIEW:
-      return ["uptime", "unit_health", "node_load", "subscribers_active"];
+      return ["uptime", "cpu_temperature", "memory", "subscribers_active"];
     case GRAPHS_TYPE.NETWORK_CELLULAR:
       return ["cellular_uplink", "cellular_downlink"];
     case GRAPHS_TYPE.NETWORK_BACKHAUL:
