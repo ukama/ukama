@@ -299,7 +299,7 @@ func (r *Router) liveMetricHandler(c *gin.Context, m *GetWsMetricInput) error {
 }
 
 func (r *Router) metricHandler(c *gin.Context, in *GetMetricsInput) error {
-	httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NewFilter(), c.Writer)
+	httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NodeTypeSystem, pkg.NewFilter(), c.Writer)
 	return httpErrorOrNil(httpCode, err)
 }
 
@@ -318,7 +318,7 @@ func (r *Router) simMetricHandler(c *gin.Context, in *GetSimMetricsInput) error 
 }
 
 func (r *Router) networkMetricHandler(c *gin.Context, in *GetNetworkMetricsInput) error {
-	httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NewFilter().WithNetwork(in.Network), c.Writer)
+	httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NodeTypeSystem, pkg.NewFilter().WithNetwork(in.Network), c.Writer)
 	return httpErrorOrNil(httpCode, err)
 }
 func (r *Router) siteMetricHandler(c *gin.Context, in *GetSiteMetricsInput) error {
@@ -354,7 +354,9 @@ func (r *Router) wsMetricHandler(w io.Writer, in *GetWsMetricInput) error {
 }
 
 func (r *Router) requestMetricRangeInternal(writer io.Writer, filterBase FilterBase, filter *pkg.Filter) error {
-	ok := r.m.MetricsExist(filterBase.Metric)
+	nodeType := pkg.ExtractNodeType(filter.GetNodeId())
+
+	ok := r.m.MetricsExist(filterBase.Metric, nodeType)
 	if !ok {
 		return rest.HttpError{
 			HttpCode: http.StatusNotFound,
@@ -366,8 +368,8 @@ func (r *Router) requestMetricRangeInternal(writer io.Writer, filterBase FilterB
 		to = time.Now().Unix()
 	}
 
-	log.Infof("Metrics request with filters: %+v", filter)
-	httpCode, err := r.m.GetMetricRange(strings.ToLower(filterBase.Metric), filter, &pkg.Interval{
+	log.Infof("Metrics request with filters: %+v nodeType: %s", filter, nodeType)
+	httpCode, err := r.m.GetMetricRange(strings.ToLower(filterBase.Metric), nodeType, filter, &pkg.Interval{
 		Start: filterBase.From,
 		End:   to,
 		Step:  filterBase.Step,
@@ -377,16 +379,17 @@ func (r *Router) requestMetricRangeInternal(writer io.Writer, filterBase FilterB
 }
 
 func (r *Router) requestMetricInternal(writer io.Writer, metric string, filter *pkg.Filter, formatting bool) error {
+	nodeType := pkg.ExtractNodeType(filter.GetNodeId())
 
-	ok := r.m.MetricsExist(metric)
+	ok := r.m.MetricsExist(metric, nodeType)
 	if !ok {
 		return rest.HttpError{
 			HttpCode: http.StatusNotFound,
 			Message:  "Metric not found"}
 	}
 
-	log.Infof("Metrics %s requested with filters: %+v", metric, filter)
-	httpCode, err := r.m.GetMetric(strings.ToLower(metric), filter, writer, formatting)
+	log.Infof("Metrics %s requested with filters: %+v nodeType: %s", metric, filter, nodeType)
+	httpCode, err := r.m.GetMetric(strings.ToLower(metric), nodeType, filter, writer, formatting)
 
 	return httpErrorOrNil(httpCode, err)
 }

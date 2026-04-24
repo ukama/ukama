@@ -24,6 +24,23 @@ import (
 	"github.com/pkg/errors"
 )
 
+// NodeTypeSystem is the fallback node-type bucket used when no hardware node ID is present in a request
+// (e.g. platform-level endpoints for org, network, subscriber, SIM stats).
+const NodeTypeSystem = "system"
+
+// ExtractNodeType parses a node ID such as "uk-sa2602-tnode-v0-344c" and returns the embedded
+// node type token ("tnode", "anode", or "cnode"). Returns NodeTypeSystem when the ID is empty
+// or does not contain a recognised type, so callers always receive a valid YAML bucket name.
+func ExtractNodeType(nodeId string) string {
+	parts := strings.Split(strings.ToLower(nodeId), "-")
+	for _, p := range parts {
+		if p == "tnode" || p == "anode" || p == "cnode" {
+			return p
+		}
+	}
+	return NodeTypeSystem
+}
+
 type Metrics struct {
 	conf *MetricsConfig
 }
@@ -83,6 +100,10 @@ func (f *Filter) WithAny(network string, subscriber string, sim string, site str
 	return f
 }
 
+func (f *Filter) GetNodeId() string {
+	return f.nodeId
+}
+
 func (f *Filter) HasNetwork() bool {
 	return f.network != ""
 }
@@ -121,13 +142,12 @@ func NewMetrics(config *MetricsConfig) (m *Metrics, err error) {
 	}, nil
 }
 
-// GetMetrics returns metrics for specified interval and metric type.
-// metricType should be a value from  MetricTypes array (case-sensitive)
-func (m *Metrics) GetMetricRange(metricType string, metricFilter *Filter, in *Interval, w io.Writer) (httpStatus int, err error) {
-
-	_, ok := m.conf.Metrics[metricType]
+// GetMetricRange returns metrics for the specified interval, generic metric key, and node type.
+// nodeType is one of "tnode", "anode", "cnode", or "system".
+func (m *Metrics) GetMetricRange(metricType string, nodeType string, metricFilter *Filter, in *Interval, w io.Writer) (httpStatus int, err error) {
+	metric, ok := m.resolveMetric(metricType, nodeType)
 	if !ok {
-		return http.StatusNotFound, errors.New("metric type not found")
+		return http.StatusNotFound, errors.New("metric type not found for node type")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(m.conf.Timeout))
@@ -140,18 +160,17 @@ func (m *Metrics) GetMetricRange(metricType string, metricFilter *Filter, in *In
 	data.Set("start", strconv.FormatInt(in.Start, 10))
 	data.Set("end", strconv.FormatInt(in.End, 10))
 	data.Set("step", strconv.FormatUint(uint64(in.Step), 10))
-	data.Set("query", m.conf.Metrics[metricType].getQuery(metricFilter, m.conf.DefaultRateInterval, metricFilter.operation))
+	data.Set("query", metric.getQuery(metricFilter, m.conf.DefaultRateInterval, metricFilter.operation))
 
 	log.Infof("GetMetricRange query: %s", data.Encode())
 
 	return m.processPromRequest(ctx, metricType, u, data, w, false)
 }
 
-func (m *Metrics) GetMetric(metricType string, metricFilter *Filter, w io.Writer, formatting bool) (httpStatus int, err error) {
-
-	_, ok := m.conf.Metrics[metricType]
+func (m *Metrics) GetMetric(metricType string, nodeType string, metricFilter *Filter, w io.Writer, formatting bool) (httpStatus int, err error) {
+	metric, ok := m.resolveMetric(metricType, nodeType)
 	if !ok {
-		return http.StatusNotFound, errors.New("metric type not found")
+		return http.StatusNotFound, errors.New("metric type not found for node type")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(m.conf.Timeout))
@@ -160,20 +179,19 @@ func (m *Metrics) GetMetric(metricType string, metricFilter *Filter, w io.Writer
 	u := fmt.Sprintf("%s/api/v1/query", strings.TrimSuffix(m.conf.MetricsServer, "/"))
 
 	data := url.Values{}
-
-	data.Set("query", m.conf.Metrics[metricType].getQuery(metricFilter, m.conf.DefaultRateInterval, metricFilter.operation))
+	data.Set("query", metric.getQuery(metricFilter, m.conf.DefaultRateInterval, metricFilter.operation))
 
 	log.Infof("GetMetric query: %s", data.Encode())
 
 	return m.processPromRequest(ctx, metricType, u, data, w, formatting)
 }
 
-// GetAggregateMetric returns aggregated value of a metric based on filter
-// uses Sum function by default
-func (m *Metrics) GetAggregateMetric(metricType string, metricFilter *Filter, w io.Writer) (httpStatus int, err error) {
-	_, ok := m.conf.Metrics[metricType]
+// GetAggregateMetric returns aggregated value of a metric based on filter, uses Sum by default.
+// nodeType is one of "tnode", "anode", "cnode", or "system".
+func (m *Metrics) GetAggregateMetric(metricType string, nodeType string, metricFilter *Filter, w io.Writer) (httpStatus int, err error) {
+	metric, ok := m.resolveMetric(metricType, nodeType)
 	if !ok {
-		return http.StatusNotFound, errors.New("metric type not found")
+		return http.StatusNotFound, errors.New("metric type not found for node type")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(m.conf.Timeout))
@@ -182,7 +200,7 @@ func (m *Metrics) GetAggregateMetric(metricType string, metricFilter *Filter, w 
 	u := fmt.Sprintf("%s/api/v1/query", strings.TrimSuffix(m.conf.MetricsServer, "/"))
 
 	data := url.Values{}
-	data.Set("query", m.conf.Metrics[metricType].getAggregateQuery(metricFilter, "sum"))
+	data.Set("query", metric.getAggregateQuery(metricFilter, "sum"))
 
 	log.Infof("GetAggregateMetric query: %s", data.Encode())
 
@@ -259,19 +277,37 @@ func UpdatedName(oldName string, slice string, newSlice string) string {
 	return strings.Replace(oldName, slice, newSlice, 1)
 }
 
-func (m *Metrics) MetricsExist(metricType string) bool {
-	_, ok := m.conf.Metrics[metricType]
+// resolveMetric looks up the Metric definition for the given generic key and node type.
+func (m *Metrics) resolveMetric(metricType, nodeType string) (Metric, bool) {
+	keyMap, ok := m.conf.Metrics[nodeType]
+	if !ok {
+		return Metric{}, false
+	}
+	metric, ok := keyMap[metricType]
+	return metric, ok
+}
+
+// MetricsExist reports whether the generic metric key is defined for the given node type.
+func (m *Metrics) MetricsExist(metricType, nodeType string) bool {
+	_, ok := m.resolveMetric(metricType, nodeType)
 	return ok
 }
 
-func (m *Metrics) MetricsCfg(metricType string) (Metric, bool) {
-	me, ok := m.conf.Metrics[metricType]
-	return me, ok
+// MetricsCfg returns the Metric configuration for the given generic key and node type.
+func (m *Metrics) MetricsCfg(metricType, nodeType string) (Metric, bool) {
+	return m.resolveMetric(metricType, nodeType)
 }
 
+// List returns deduplicated generic KPI keys across all node-type buckets.
 func (m *Metrics) List() (r []string) {
-	for k := range m.conf.Metrics {
-		r = append(r, k)
+	seen := make(map[string]struct{})
+	for _, keyMap := range m.conf.Metrics {
+		for k := range keyMap {
+			if _, exists := seen[k]; !exists {
+				seen[k] = struct{}{}
+				r = append(r, k)
+			}
+		}
 	}
 	return r
 }
