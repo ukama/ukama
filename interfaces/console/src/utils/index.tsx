@@ -40,7 +40,6 @@ import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 import SignalCellularConnectedNoInternet4BarIcon from '@mui/icons-material/SignalCellularConnectedNoInternet4Bar';
 import SignalCellularOffIcon from '@mui/icons-material/SignalCellularOff';
 import { Skeleton, Stack, Typography } from '@mui/material';
-import { formatDistance } from 'date-fns';
 import { DashStyleValue } from 'highcharts';
 import { LatLngTuple } from 'leaflet';
 
@@ -453,8 +452,24 @@ const base64ToBlob = (base64: string, contentType = ''): Blob => {
   return new Blob(byteArrays, { type: contentType });
 };
 
-export const duration = (s: number) =>
-  formatDistance(0, s * 1000, { includeSeconds: true });
+export const duration = (s: number) => {
+  const totalSeconds = Math.max(0, Math.floor(s || 0));
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  const parts = [
+    days ? `${days} day${days === 1 ? '' : 's'}` : '',
+    hours ? `${hours} hour${hours === 1 ? '' : 's'}` : '',
+    minutes ? `${minutes} minute${minutes === 1 ? '' : 's'}` : '',
+    seconds || (!days && !hours && !minutes)
+      ? `${seconds} second${seconds === 1 ? '' : 's'}`
+      : '',
+  ].filter(Boolean);
+
+  return parts.join(' ');
+};
 
 const findNullZones = (data: any) => {
   const zones = [];
