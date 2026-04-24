@@ -897,7 +897,7 @@ export const NODE_KPIS = {
     tnode: [
       {
         unit: 'dBm',
-        id: 'tx_power',
+        id: 'power',
         description: 'Transmit power',
         name: 'TX Power',
         tickInterval: 10,

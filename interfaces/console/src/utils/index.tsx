@@ -452,21 +452,31 @@ const base64ToBlob = (base64: string, contentType = ''): Blob => {
   return new Blob(byteArrays, { type: contentType });
 };
 
-export const duration = (s: number) => {
-  const totalSeconds = Math.max(0, Math.floor(s || 0));
-  const days = Math.floor(totalSeconds / 86400);
-  const hours = Math.floor((totalSeconds % 86400) / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
+export const duration = (s: number | string | null | undefined) => {
+  const normalizedInput =
+    typeof s === 'number' && Number.isFinite(s)
+      ? s
+      : Number(
+          String(s ?? '')
+            .trim()
+            .replaceAll(',', ''),
+        );
+  const totalSeconds = Number.isFinite(normalizedInput)
+    ? Math.max(0, Math.floor(normalizedInput))
+    : 0;
+  const units: Array<[label: string, value: number]> = [
+    ['day', Math.floor(totalSeconds / 86400)],
+    ['hour', Math.floor((totalSeconds % 86400) / 3600)],
+    ['minute', Math.floor((totalSeconds % 3600) / 60)],
+    ['second', totalSeconds % 60],
+  ];
 
-  const parts = [
-    days ? `${days} day${days === 1 ? '' : 's'}` : '',
-    hours ? `${hours} hour${hours === 1 ? '' : 's'}` : '',
-    minutes ? `${minutes} minute${minutes === 1 ? '' : 's'}` : '',
-    seconds || (!days && !hours && !minutes)
-      ? `${seconds} second${seconds === 1 ? '' : 's'}`
-      : '',
-  ].filter(Boolean);
+  const parts = units
+    .filter(([label, value]) => value > 0 || label === 'second')
+    .map(([label, value]) => `${value} ${label}${value === 1 ? '' : 's'}`)
+    .filter(
+      (part, index, list) => part !== '0 seconds' || index === list.length - 1,
+    );
 
   return parts.join(' ');
 };
