@@ -77,6 +77,49 @@ yq_read() {
     "$YQ_BIN" eval "$1" "$CONFIG"
 }
 
+preflight_check() {
+    local errors=0
+    
+    if [ -n "${IMG_PATH:-}" ] && [ ! -f "$IMG_PATH" ]; then
+        echo "ERROR: Image file not found: $IMG_PATH"
+        ((errors++))
+    fi
+    
+    if [ -n "${IMG_PATH:-}" ] && [ -f "$IMG_PATH" ]; then
+        local size=$(stat -f%z "$IMG_PATH" 2>/dev/null || stat -c%s "$IMG_PATH" 2>/dev/null || echo 0)
+        if [ $size -lt 50000000 ]; then
+            echo "WARNING: Image file seems small ($(($size/1024/1024))MB)"
+        fi
+    fi
+    
+    if [ -n "${HOST_DEV:-}" ]; then
+        if [ ! -b "$HOST_DEV" ]; then
+            echo "ERROR: Device $HOST_DEV is not a block device"
+            echo "Run 'lsblk' to see available devices"
+            ((errors++))
+        fi
+        
+        if mount | grep -q "^$HOST_DEV"; then
+            echo "ERROR: Device $HOST_DEV is currently mounted"
+            echo "Run: sudo umount ${HOST_DEV}*"
+            ((errors++))
+        fi
+        
+        if [[ "$HOST_DEV" =~ (sda|nvme0n1|mmcblk0)$ ]]; then
+            echo "WARNING: $HOST_DEV might be your system disk!"
+            echo "Press Enter to continue or Ctrl+C to cancel"
+            read
+        fi
+    fi
+    
+    local free_space=$(df /tmp 2>/dev/null | tail -1 | awk '{print $4}')
+    if [ -n "$free_space" ] && [ $free_space -lt 2000000 ]; then
+        echo "WARNING: Low disk space in /tmp ($(($free_space/1024))MB free)"
+    fi
+    
+    return $errors
+}
+
 validate_config() {
     echo "Validating config..." | tee -a "$ORCHESTRATOR_LOG"
     for key in "${REQUIRED_KEYS[@]}"; do
@@ -185,6 +228,11 @@ elif [ "$FLASH_METHOD" = "sdcard" ]; then
     echo "Using sdcard method for $BOARD_NAME" | tee -a "$ORCHESTRATOR_LOG"
 else
     echo "Unknown flash method: $FLASH_METHOD" | tee -a "$ORCHESTRATOR_LOG"
+    exit 1
+fi
+
+if ! preflight_check; then
+    echo "Pre-flight checks failed. Aborting." | tee -a "$ORCHESTRATOR_LOG"
     exit 1
 fi
 
