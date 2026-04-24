@@ -121,7 +121,6 @@ const getPaginatedOutput = (
 };
 
 const getGraphsKeyByType = (type: string): string[] => {
-  // TODO: NEED TO UPDATE KPI KEYS
   switch (type) {
     case GRAPHS_TYPE.HOME:
     case STATS_TYPE.HOME:
@@ -132,11 +131,11 @@ const getGraphsKeyByType = (type: string): string[] => {
         "network_uptime",
       ];
     case GRAPHS_TYPE.NODE_HEALTH:
-      return ["unit_uptime", "unit_health", "node_load"];
+      return ["uptime", "unit_health", "node_load"];
     case GRAPHS_TYPE.SUBSCRIBERS:
       return ["subscribers_active"];
     case STATS_TYPE.OVERVIEW:
-      return ["unit_uptime", "unit_health", "node_load", "subscribers_active"];
+      return ["uptime", "unit_health", "node_load", "subscribers_active"];
     case GRAPHS_TYPE.NETWORK_CELLULAR:
       return ["cellular_uplink", "cellular_downlink"];
     case GRAPHS_TYPE.NETWORK_BACKHAUL:
@@ -151,13 +150,13 @@ const getGraphsKeyByType = (type: string): string[] => {
       ];
     case STATS_TYPE.RESOURCES:
     case GRAPHS_TYPE.RESOURCES:
-      return ["hwd_load", "memory_usage", "cpu_usage", "disk_usage"];
+      return ["cpu", "memory", "disk"];
     case STATS_TYPE.RADIO:
     case GRAPHS_TYPE.RADIO:
-      return ["txpower"];
+      return ["tx_power"];
     case STATS_TYPE.ALL_NODE:
       return [
-        "unit_uptime",
+        "uptime",
         "unit_health",
         "node_load",
         "subscribers_active",
@@ -166,14 +165,12 @@ const getGraphsKeyByType = (type: string): string[] => {
         "backhaul_uplink",
         "backhaul_downlink",
         "backhaul_latency",
-        "hwd_load",
-        "memory_usage",
-        "cpu_usage",
-        "disk_usage",
-        "txpower",
+        "memory",
+        "disk",
+        "tx_power",
       ];
     case GRAPHS_TYPE.BATTERY:
-      return ["battery_charge_percentage"];
+      return ["battery_charge"];
     case GRAPHS_TYPE.SOLAR:
       return [
         "solar_panel_voltage",
@@ -185,10 +182,10 @@ const getGraphsKeyByType = (type: string): string[] => {
         "solar_panel_voltage",
         "solar_panel_current",
         "solar_panel_power",
-        "battery_charge_percentage",
+        "battery_charge",
       ];
     case GRAPHS_TYPE.MAIN_BACKHAUL:
-      return ["main_backhaul_latency", "backhaul_speed"];
+      return ["backhaul_latency", "backhaul_downlink"];
     case GRAPHS_TYPE.DATA_USAGE:
       return ["data_usage"];
     case GRAPHS_TYPE.SWITCH:
@@ -206,14 +203,14 @@ const getGraphsKeyByType = (type: string): string[] => {
     case GRAPHS_TYPE.SITE:
       return [
         "site_uptime_seconds",
-        "unit_uptime",
+        "uptime",
         "solar_panel_voltage",
         "solar_panel_current",
         "site_uptime_percentage",
         "solar_panel_power",
-        "battery_charge_percentage",
-        "main_backhaul_latency",
-        "backhaul_speed",
+        "battery_charge",
+        "backhaul_latency",
+        "backhaul_downlink",
         "backhaul_switch_port_status",
         "backhaul_switch_port_speed",
         "backhaul_switch_port_power",
@@ -376,6 +373,8 @@ export const formatKPIValue = (type: string, value: any) => {
   if (value === "NaN") return 0;
   switch (type) {
     case "backhaul_latency":
+      return Math.floor(Number(value || 0));
+    case "uptime":
       return Math.floor(Number(value || 0));
     case "subscribers_active":
     case "node_active_subscribers":
