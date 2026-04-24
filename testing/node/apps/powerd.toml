@@ -16,11 +16,12 @@
 	bin="power-monitor"
 	path="/sbin"
 	autostart="false"
-        autorestart="true"
-        startretries=5
+	autorestart="true"
+	startretries=5
 	group="service"
 
 [app-exec.env]
-	POWER_MOCK=1
-	POWER_BOARD=dev
-	POWER_SAMPLE_MS=1000
+	POWER_MOCK="1"
+	POWER_BOARD="dev"
+	POWER_SAMPLE_MS="1000"
+
