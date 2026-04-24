@@ -78,6 +78,13 @@ yq_read() {
     "$YQ_BIN" eval "$1" "$CONFIG"
 }
 
+show_progress() {
+    local step=$1
+    local total=$2
+    local msg=$3
+    echo "[$step/$total] $msg" | tee -a "$ORCHESTRATOR_LOG"
+}
+
 preflight_check() {
     local errors=0
     
@@ -257,8 +264,7 @@ fi
 
 {
     if [ "$FLASH_METHOD" = "rpiboot" ]; then
-        # rpiboot method: call flash-access-node.sh
-        echo "Starting rpiboot flash for $BOARD_NAME..." | tee -a "$ORCHESTRATOR_LOG"
+        show_progress 1 3 "Validating image file"
         
         if [ ! -f "$IMG_PATH" ]; then
             echo "ERROR: Image file not found: $IMG_PATH" | tee -a "$ORCHESTRATOR_LOG"
@@ -267,23 +273,22 @@ fi
             exit 1
         fi
         
-        # Copy image to current directory with expected name
+        show_progress 2 3 "Preparing flash environment"
         cp "$IMG_PATH" "$IMG_NAME"
         
-        # Call flash-access-node.sh
         if [ ! -x "./flash-access-node.sh" ]; then
             echo "flash-access-node.sh not found or not executable" | tee -a "$ORCHESTRATOR_LOG"
             exit 1
         fi
         
+        show_progress 3 3 "Flashing to device"
         ./flash-access-node.sh | tee -a "$ORCHESTRATOR_LOG"
         
         echo "Flash completed. Verify boot with: ./flash-access-node.sh --verify" | tee -a "$ORCHESTRATOR_LOG"
         echo "PASS" > "$STATUS_FILE"
         
     elif [ "$FLASH_METHOD" = "sdcard" ]; then
-        # sdcard method: create SD card with auto-flash script
-        echo "Starting SD card creation for $BOARD_NAME..." | tee -a "$ORCHESTRATOR_LOG"
+        show_progress 1 4 "Validating image and device"
         
         if [ ! -f "$IMG_PATH" ]; then
             echo "ERROR: Image file not found: $IMG_PATH" | tee -a "$ORCHESTRATOR_LOG"
@@ -298,18 +303,20 @@ fi
             exit 1
         fi
         
-        # Call SD card creation script
+        show_progress 2 4 "Checking SD card script"
         if [ ! -x "./create_sdcard_autoflash.sh" ]; then
             echo "create_sdcard_autoflash.sh not found or not executable" | tee -a "$ORCHESTRATOR_LOG"
             exit 1
         fi
         
+        show_progress 3 4 "Creating bootable SD card"
         SD_DEVICE="$HOST_DEV" \
         IMAGE_FILE="$IMG_PATH" \
         TARGET_EMMC="$TARGET_DEV" \
             ./create_sdcard_autoflash.sh | tee -a "$ORCHESTRATOR_LOG"
         
-        echo "SD card ready. Insert into board and power on." | tee -a "$ORCHESTRATOR_LOG"
+        show_progress 4 4 "SD card ready"
+        echo "Insert into board and power on." | tee -a "$ORCHESTRATOR_LOG"
         echo "PASS" > "$STATUS_FILE"
         
     elif [ "$FLASH_METHOD" = "network" ]; then
