@@ -85,7 +85,7 @@ enum HttpStatusCode {
 	HttpStatus_NetworkAuthenticationRequired = 511,
 };
 
-static const char *HttpStatusStr(int code) {
+static inline const char *HttpStatusStr(int code) {
 
 	switch (code) {
 

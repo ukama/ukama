@@ -5,5 +5,5 @@ stale_grace_sec = 15
 
 [[source]]
 name = "local"
-url = "http://127.0.0.1:18007/metrics"
+url = "http://127.0.0.1:7001/metrics"
 required = true
