@@ -49,7 +49,7 @@
 /* various Ukama nodes */
 #define UKAMA_TOWER_NODE     "tower"
 #define UKAMA_AMPLIFIER_NODE "amplifier"
-#define UKAMA_POWER_NODE     "power"
+#define UKAMA_POWER_NODE     "controller"
 
 typedef struct _u_instance  UInst;
 typedef struct _u_instance  UInst;

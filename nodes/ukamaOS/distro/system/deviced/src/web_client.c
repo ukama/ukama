@@ -32,7 +32,7 @@ static char *ukama_node_type_from_nodeid(const char *nodeID) {
     /* Match the embedded type token */
     if (strstr(nodeID, "-tnode-") != NULL) return strdup(UKAMA_TOWER_NODE);
     if (strstr(nodeID, "-anode-") != NULL) return strdup(UKAMA_AMPLIFIER_NODE);
-    if (strstr(nodeID, "-pnode-") != NULL) return strdup(UKAMA_POWER_NODE);
+    if (strstr(nodeID, "-cnode-") != NULL) return strdup(UKAMA_CONTROLLER_NODE);
 
     return NULL;
 }
