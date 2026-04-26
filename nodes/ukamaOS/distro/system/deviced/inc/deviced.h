@@ -47,9 +47,9 @@
 #define MODULE_NONE            "none"
 
 /* various Ukama nodes */
-#define UKAMA_TOWER_NODE     "tower"
-#define UKAMA_AMPLIFIER_NODE "amplifier"
-#define UKAMA_POWER_NODE     "controller"
+#define UKAMA_TOWER_NODE      "tower"
+#define UKAMA_AMPLIFIER_NODE  "amplifier"
+#define UKAMA_CONTROLLER_NODE "controller"
 
 typedef struct _u_instance  UInst;
 typedef struct _u_instance  UInst;
