@@ -760,6 +760,33 @@ export const NODE_KPIS = {
         tickPositions: undefined,
       },
     ],
+    anode: [
+      {
+        unit: 's',
+        show: true,
+        format: 'number',
+        name: 'Node uptime',
+        id: 'uptime',
+      },
+    ],
+    hnode: [
+      {
+        unit: 's',
+        show: true,
+        format: 'number',
+        name: 'Node uptime',
+        id: 'uptime',
+      },
+    ],
+    cnode: [
+      {
+        unit: 's',
+        show: true,
+        format: 'number',
+        name: 'Node uptime',
+        id: 'uptime',
+      },
+    ],
   },
   HEALTH: {
     tnode: [

@@ -424,6 +424,29 @@ const NodeEnumToString = (type: NodeTypeEnum): string => {
   }
 };
 
+const getNodeTypeFromId = (id: string) => {
+  if (id.includes('tnode')) return NodeTypeEnum.Tnode;
+  if (id.includes('anode')) return NodeTypeEnum.Anode;
+  if (id.includes('hnode')) return NodeTypeEnum.Hnode;
+  if (id.includes('cnode')) return NodeTypeEnum.Cnode;
+  return null;
+};
+
+const nodeTypeEnumToString = (nodeType: NodeTypeEnum) => {
+  switch (nodeType) {
+    case NodeTypeEnum.Tnode:
+      return 'tnode';
+    case NodeTypeEnum.Anode:
+      return 'anode';
+    case NodeTypeEnum.Hnode:
+      return 'hnode';
+    case NodeTypeEnum.Cnode:
+      return 'cnode';
+    default:
+      return 'tnode';
+  }
+};
+
 const getKPIStatValue = (
   id: string,
   loading: boolean,
@@ -795,6 +818,7 @@ export {
   getKPIStatValue,
   getMapStyleURL,
   getNodeActionDescriptionByProgress,
+  getNodeTypeFromId,
   getPortInfo,
   getSectionFromKPI,
   getSignalStyles,
@@ -808,6 +832,7 @@ export {
   isValidLatLng,
   kpiToGraphType,
   NodeEnumToString,
+  nodeTypeEnumToString,
   provideStatusColor,
   roleEnumToString,
   setQueryParam,

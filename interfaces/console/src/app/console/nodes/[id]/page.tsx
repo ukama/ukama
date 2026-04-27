@@ -43,6 +43,7 @@ import {
   METRIC_RANGE_10800,
   NODE_ACTIONS_BUTTONS,
   NODE_ACTIONS_ENUM,
+  NODE_KPIS,
   NodePageTabs,
   STAT_STEP_29,
 } from '@/constants';
@@ -53,13 +54,13 @@ import { TMetricResDto } from '@/types';
 import {
   getNodeActionDescriptionByProgress,
   getNodeTabTypeByIndex,
+  getNodeTypeFromId,
   getUnixTime,
+  nodeTypeEnumToString,
 } from '@/utils';
 import { Stack, Tab, Tabs } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
-
-const NODE_UPTIME_KEY = 'unit_uptime';
 interface INodePage {
   params: {
     id: string;
@@ -68,6 +69,7 @@ interface INodePage {
 
 const Page: React.FC<INodePage> = ({ params }) => {
   const { id } = params;
+  const nodeType = nodeTypeEnumToString(getNodeTypeFromId(id) as NodeTypeEnum);
   const router = useRouter();
   const [metricFrom, setMetricFrom] = useState<number>(0);
   const [isEditNode, setIsEditNode] = useState<boolean>(false);
@@ -234,7 +236,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
     onCompleted: async (data) => {
       if (data.getMetricsStat.metrics.length > 0) {
         data.getMetricsStat.metrics.forEach((m) => {
-          if (m.type === NODE_UPTIME_KEY) {
+          if (m.type === NODE_KPIS.NODE_UPTIME[nodeType][0].id) {
             setNodeUptime(m.value);
           }
         });
@@ -434,7 +436,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
     const parsedData: TMetricResDto = JSON.parse(data);
     const { value, type, success } = parsedData.data.getMetricStatSub;
     if (success) {
-      if (type === NODE_UPTIME_KEY) {
+      if (type === NODE_KPIS.NODE_UPTIME[nodeType][0].id) {
         setNodeUptime(Math.floor(value[1]));
       }
       PubSub.publish(`stat-${type}`, value);
