@@ -56,7 +56,7 @@ const NodeOverviewTab = ({
   handleOverviewSectionChange,
 }: INodeOverviewTab) => {
   const nodeType = selectedNode?.type ?? NodeTypeEnum.Tnode;
-  const healthConfig = NODE_KPIS.HEALTH[NodeTypeEnum.Tnode];
+  const healthConfig = NODE_KPIS.HEALTH[nodeType];
   const subscriberConfig = NODE_KPIS.SUBSCRIBER[NodeTypeEnum.Tnode];
   const [selected, setSelected] = useState<number>(0);
   useEffect(() => {
@@ -126,7 +126,7 @@ const NodeOverviewTab = ({
               />
             ))}
           </NodeStatsContainer>
-          {selectedNode?.type !== NodeTypeEnum.Anode && (
+          {selectedNode?.type === NodeTypeEnum.Tnode && (
             <NodeStatsContainer
               index={2}
               loading={statLoading}

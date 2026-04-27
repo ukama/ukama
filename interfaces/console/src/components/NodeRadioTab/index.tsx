@@ -29,9 +29,11 @@ const NodeRadioTab = ({
   metrics,
   metricFrom,
   statLoading,
+  selectedNode,
   nodeMetricsStatData,
 }: INodeRadioTab) => {
-  const radioConfig = NODE_KPIS.RADIO[NodeTypeEnum.Tnode];
+  const nodeType = selectedNode?.type ?? NodeTypeEnum.Tnode;
+  const radioConfig = NODE_KPIS.RADIO[nodeType];
   return (
     <Grid container spacing={3}>
       <Grid size={{ xs: 12, md: 3 }}>
