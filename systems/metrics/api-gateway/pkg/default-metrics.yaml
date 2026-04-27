@@ -118,7 +118,7 @@ anode:
     needRate: false
     rateInterval: ""
   cpu_temperature:
-    metric: ctl_soc_cpu_temperature
+    metric: com_power_power_power_board_temp_c_celsius
     needRate: false
     rateInterval: ""
   processor_temperature:
@@ -133,12 +133,16 @@ anode:
     metric: ctl_storage_emmc_used
     needRate: false
     rateInterval: ""
-  power:
+  pa_power:
     metric: ctl_sensors_adc_pa_pa_power
     needRate: false
     rateInterval: ""
-  pa_temperature:
-    metric: ctl_sensors_tempsensor_pa_pa
+  rx_power:
+    metric: ctl_sensors_adc_rp_rx_power
+    needRate: false
+    rateInterval: ""
+  tx_power:
+    metric: ctl_sensors_adc_tp_tx_power
     needRate: false
     rateInterval: ""
   fem1_temperature:
