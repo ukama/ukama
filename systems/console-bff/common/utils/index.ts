@@ -157,8 +157,8 @@ const getGraphsKeyByType = (type: string): string[] => {
     case STATS_TYPE.ALL_NODE:
       return [
         "uptime",
-        "unit_health",
-        "node_load",
+        "cpu_temperature",
+        "memory",
         "subscribers_active",
         "cellular_uplink",
         "cellular_downlink",
