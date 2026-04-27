@@ -31,6 +31,7 @@
 #define OID_ALARM_POE    "1.3.6.1.4.1.12284.5.6.29.0"
 
 /* Standard IF-MIB OID prefixes */
+#define OID_IF_NUMBER          "1.3.6.1.2.1.2.1.0"
 #define OID_IF_DESCR_PFX       "1.3.6.1.2.1.2.2.1.2."
 #define OID_IF_SPEED_PFX       "1.3.6.1.2.1.2.2.1.5."
 #define OID_IF_ADMIN_PFX       "1.3.6.1.2.1.2.2.1.7."
@@ -67,22 +68,53 @@ static int port_index(const char *oid, const char *prefix) {
 }
 
 int oid_get_string(EmuModel *model, const char *oid, char *buf, size_t len) {
+
     int idx;
+
+    if (!model || !oid || !buf || len == 0) {
+        return STATUS_NOK;
+    }
+
+    model_recompute(model);
 
     if (strcmp(oid, OID_SERIAL) == 0) {
         snprintf(buf, len, "%s", model->info.serial);
+
     } else if (strcmp(oid, OID_MANUFACTURER) == 0) {
         snprintf(buf, len, "%s", model->info.manufacturer);
+
     } else if (strcmp(oid, OID_HWVER) == 0) {
         snprintf(buf, len, "%s", model->info.hardwareVersion);
+
     } else if (strcmp(oid, OID_SWVER) == 0) {
         snprintf(buf, len, "%s", model->info.softwareVersion);
+
+    } else if (strcmp(oid, OID_SYS_TEMP) == 0) {
+        snprintf(buf, len, "%d C", model->info.systemTempC);
+
+    } else if (strcmp(oid, OID_AMB_TEMP) == 0) {
+        snprintf(buf, len, "%d C", model->info.ambientTempC);
+
+    } else if (strcmp(oid, OID_IN_VOLT) == 0) {
+        snprintf(buf, len, "%.2f V",
+                 ((double)model->info.inputVoltageMv) / 1000.0);
+
+    } else if (strcmp(oid, OID_SYS_CURR) == 0) {
+        snprintf(buf, len, "%.2f A",
+                 ((double)model->info.systemCurrentMa) / 1000.0);
+
+    } else if (strcmp(oid, OID_SYS_POWER) == 0) {
+        snprintf(buf, len, "%.2f W",
+                 ((double)model->info.systemPowerMw) / 1000.0);
+
     } else if ((idx = port_index(oid, OID_IF_NAME_PFX)) > 0 &&
                idx <= (int)model->portCount) {
         snprintf(buf, len, "%s", model->ports[idx - 1].name);
+
     } else if ((idx = port_index(oid, OID_IF_DESCR_PFX)) > 0 &&
                idx <= (int)model->portCount) {
         snprintf(buf, len, "%s", model->ports[idx - 1].name);
+
     } else {
         return STATUS_NOK;
     }
@@ -91,88 +123,134 @@ int oid_get_string(EmuModel *model, const char *oid, char *buf, size_t len) {
 }
 
 int oid_get_int(EmuModel *model, const char *oid, int *value) {
-    int idx = 0;
 
-    if (strcmp(oid, OID_EXEC_STATUS) == 0) {
+    int idx;
+
+    idx = 0;
+
+    if (!model || !oid || !value) {
+        return STATUS_NOK;
+    }
+
+    model_recompute(model);
+
+    if (strcmp(oid, OID_IF_NUMBER) == 0) {
+        *value = (int)model->portCount;
+
+    } else if (strcmp(oid, OID_EXEC_STATUS) == 0) {
         *value = model->firmware.executeStatus;
+
     } else if (strcmp(oid, OID_POE_USED) == 0) {
-        *value = model->info.poeUsedMw;
+        /*
+         * switch.d expects this KPI in watts.
+         * Emulator keeps internal value in milliwatts.
+         */
+        *value = (model->info.poeUsedMw + 500) / 1000;
+
     } else if (strcmp(oid, OID_POE_BUDGET) == 0) {
-        *value = model->info.poeBudgetMw;
-    } else if (strcmp(oid, OID_SYS_TEMP) == 0) {
-        *value = model->info.systemTempC;
-    } else if (strcmp(oid, OID_AMB_TEMP) == 0) {
-        *value = model->info.ambientTempC;
-    } else if (strcmp(oid, OID_IN_VOLT) == 0) {
-        *value = model->info.inputVoltageMv;
-    } else if (strcmp(oid, OID_SYS_CURR) == 0) {
-        *value = model->info.systemCurrentMa;
-    } else if (strcmp(oid, OID_SYS_POWER) == 0) {
-        *value = model->info.systemPowerMw;
+        /*
+         * switch.d expects this KPI in watts.
+         * Emulator keeps internal value in milliwatts.
+         */
+        *value = (model->info.poeBudgetMw + 500) / 1000;
+
     } else if (strcmp(oid, OID_ALARM_LINK) == 0) {
         *value = model->info.alarmLinkFailure;
+
     } else if (strcmp(oid, OID_ALARM_POE) == 0) {
         *value = model->info.alarmPoeFailure;
+
     } else if ((idx = port_index(oid, OID_IF_SPEED_PFX)) > 0 &&
                idx <= (int)model->portCount) {
         *value = (int)(model->ports[idx - 1].speedMbps * 1000000U);
+
     } else if ((idx = port_index(oid, OID_IF_ADMIN_PFX)) > 0 &&
                idx <= (int)model->portCount) {
         *value = model->ports[idx - 1].adminUp ? 1 : 2;
+
     } else if ((idx = port_index(oid, OID_IF_OPER_PFX)) > 0 &&
                idx <= (int)model->portCount) {
         *value = model->ports[idx - 1].linkUp ? 1 : 2;
+
     } else if ((idx = port_index(oid, OID_IF_IN_OCT_PFX)) > 0 &&
                idx <= (int)model->portCount) {
         *value = (int)(model->ports[idx - 1].rxBytes & 0xFFFFFFFF);
+
     } else if ((idx = port_index(oid, OID_IF_OUT_OCT_PFX)) > 0 &&
                idx <= (int)model->portCount) {
         *value = (int)(model->ports[idx - 1].txBytes & 0xFFFFFFFF);
+
     } else if ((idx = port_index(oid, OID_IF_IN_UCAST_PFX)) > 0 &&
                idx <= (int)model->portCount) {
         *value = (int)(model->ports[idx - 1].rxPackets & 0xFFFFFFFF);
+
     } else if ((idx = port_index(oid, OID_IF_OUT_UCAST_PFX)) > 0 &&
                idx <= (int)model->portCount) {
         *value = (int)(model->ports[idx - 1].txPackets & 0xFFFFFFFF);
+
     } else if ((idx = port_index(oid, OID_IF_IN_ERR_PFX)) > 0 &&
                idx <= (int)model->portCount) {
         *value = (int)(model->ports[idx - 1].rxErrors & 0xFFFFFFFF);
+
     } else if ((idx = port_index(oid, OID_IF_OUT_ERR_PFX)) > 0 &&
                idx <= (int)model->portCount) {
         *value = (int)(model->ports[idx - 1].txErrors & 0xFFFFFFFF);
+
     } else if ((idx = port_index(oid, OID_IF_IN_DISC_PFX)) > 0 &&
                idx <= (int)model->portCount) {
         *value = 0;
+
     } else if ((idx = port_index(oid, OID_IF_OUT_DISC_PFX)) > 0 &&
                idx <= (int)model->portCount) {
         *value = 0;
+
     } else if ((idx = port_index(oid, OID_IF_HC_IN_PFX)) > 0 &&
                idx <= (int)model->portCount) {
         *value = (int)(model->ports[idx - 1].rxBytes & 0xFFFFFFFF);
+
     } else if ((idx = port_index(oid, OID_IF_HC_OUT_PFX)) > 0 &&
                idx <= (int)model->portCount) {
         *value = (int)(model->ports[idx - 1].txBytes & 0xFFFFFFFF);
+
     } else if ((idx = port_index(oid, OID_POE_EXIST_PFX)) > 0 &&
                idx <= (int)model->portCount) {
         *value = model->ports[idx - 1].poeSupported;
+
     } else if ((idx = port_index(oid, OID_POE_ADMIN_PFX)) > 0 &&
                idx <= (int)model->portCount) {
         *value = model->ports[idx - 1].poeAdminEnabled;
+
     } else if ((idx = port_index(oid, OID_POE_OPER_PFX)) > 0 &&
                idx <= (int)model->portCount) {
         *value = model->ports[idx - 1].poeOperStatus;
+
     } else if ((idx = port_index(oid, OID_POE_POWER_PFX)) > 0 &&
                idx <= (int)model->portCount) {
-        *value = model->ports[idx - 1].poePowerMw;
+        /*
+         * switch.d expects port PoE power in watts.
+         * Emulator keeps it in milliwatts.
+         */
+        *value = (model->ports[idx - 1].poePowerMw + 500) / 1000;
+
     } else if ((idx = port_index(oid, OID_POE_CURR_PFX)) > 0 &&
                idx <= (int)model->portCount) {
+        /*
+         * switch.d expects PoE current in mA and divides by 1000.
+         */
         *value = model->ports[idx - 1].poeCurrentMa;
+
     } else if ((idx = port_index(oid, OID_POE_VOLT_PFX)) > 0 &&
                idx <= (int)model->portCount) {
-        *value = model->ports[idx - 1].poeVoltageMv;
+        /*
+         * switch.d expects PoE voltage in decivolts and divides by 10.
+         * Emulator keeps it in millivolts.
+         */
+        *value = model->ports[idx - 1].poeVoltageMv / 100;
+
     } else if ((idx = port_index(oid, OID_POE_CLASS_PFX)) > 0 &&
                idx <= (int)model->portCount) {
         *value = model->ports[idx - 1].poeClassId;
+
     } else {
         return STATUS_NOK;
     }
@@ -235,6 +313,7 @@ int oid_get_next(EmuModel *model, const char *oid, char *nextOid, size_t nextLen
     };
 
     static const char *scalarOids[] = {
+        OID_IF_NUMBER,
         OID_SERIAL,
         OID_MANUFACTURER,
         OID_HWVER,

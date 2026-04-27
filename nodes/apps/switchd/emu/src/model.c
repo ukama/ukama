@@ -105,6 +105,63 @@ void model_init(EmuModel *model, const EmuConfig *cfg) {
         port->updatedAt       = time(NULL);
     }
 
+    /*
+     * Ukama virtual switch profile.
+     *
+     * Keep the switch generic, but make the default ports meaningful:
+     *   port1: tower node PoE
+     *   port2: controller node PoE
+     *   port3: amplifier node PoE
+     *   port4: spare PoE
+     *   port9: uplink/backhaul SFP
+     */
+    if (model->portCount >= 1) {
+        snprintf(model->ports[0].name, sizeof(model->ports[0].name),
+                 "tnode-poe");
+        model->ports[0].linkUp = 1;
+        model->ports[0].poeSupported = 1;
+        model->ports[0].poeAdminEnabled = 1;
+        model->ports[0].poeClassId = 4;
+    }
+
+    if (model->portCount >= 2) {
+        snprintf(model->ports[1].name, sizeof(model->ports[1].name),
+                 "cnode-poe");
+        model->ports[1].linkUp = 1;
+        model->ports[1].poeSupported = 1;
+        model->ports[1].poeAdminEnabled = 1;
+        model->ports[1].poeClassId = 3;
+    }
+
+    if (model->portCount >= 3) {
+        snprintf(model->ports[2].name, sizeof(model->ports[2].name),
+                 "anode-poe");
+        model->ports[2].linkUp = 1;
+        model->ports[2].poeSupported = 1;
+        model->ports[2].poeAdminEnabled = 1;
+        model->ports[2].poeClassId = 4;
+    }
+
+    if (model->portCount >= 4) {
+        snprintf(model->ports[3].name, sizeof(model->ports[3].name),
+                 "spare-poe");
+        model->ports[3].linkUp = 0;
+        model->ports[3].poeSupported = 1;
+        model->ports[3].poeAdminEnabled = 0;
+        model->ports[3].poeClassId = 0;
+    }
+
+    if (model->portCount >= 9) {
+        snprintf(model->ports[8].name, sizeof(model->ports[8].name),
+                 "uplink-sfp");
+        snprintf(model->ports[8].media, sizeof(model->ports[8].media),
+                 "sfp");
+        model->ports[8].linkUp = 1;
+        model->ports[8].poeSupported = 0;
+        model->ports[8].poeAdminEnabled = 0;
+        model->ports[8].speedMbps = 1000U;
+    }
+    
     model_recompute(model);
 }
 
