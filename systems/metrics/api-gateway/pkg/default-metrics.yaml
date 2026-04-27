@@ -24,7 +24,7 @@ tnode:
     needRate: false
     rateInterval: ""
   cpu_temperature:
-    metric: com_soc_cpu_temperature
+    metric: com_power_power_power_board_temp_c_celsius
     needRate: false
     rateInterval: ""
   temperature_z0:
