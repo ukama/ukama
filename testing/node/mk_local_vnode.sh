@@ -36,38 +36,38 @@ DO_SETUP=0
 VNODE_ID=""
 VNODE_RUNTIME="supervisor"
 
-VNODE_METADATA=$(cat <<'JSON'
-{
-    "nodeInfo": {
-        "type": "anode",
-        "partNumber": "",
-        "skew": "",
-        "mac": "",
-        "swVersion": "",
-        "mfgSwVersion": "",
-        "assemblyDate": "2022-05-09T14:08:02.985079028-07:00",
-        "oem": "",
-        "mfgTestStatus": "pending",
-        "status": "LabelGenerated"
-    },
-    "nodeConfig": [
-        {
-            "moduleID": "ukma-sa2219-trx-m0-e479",
-            "type": "ctrl",
-            "partNumber": "",
-            "hwVersion": "",
-            "mac": "",
-            "swVersion": "",
-            "mfgSwVersion": "",
-            "mfgDate": "2022-05-09T14:08:02.985112609-07:00",
-            "mfgName": "",
-            "status": "AssemblyCompleted"
-        }
-    ]
-}
-JSON
-)
-export VNODE_METADATA
+#VNODE_METADATA=$(cat <<'JSON'
+#{
+#    "nodeInfo": {
+#        "type": "anode",
+#        "partNumber": "",
+#        "skew": "",
+#        "mac": "",
+#        "swVersion": "",
+#        "mfgSwVersion": "",
+#        "assemblyDate": "2022-05-09T14:08:02.985079028-07:00",
+#        "oem": "",
+#        "mfgTestStatus": "pending",
+#        "status": "LabelGenerated"
+#    },
+#    "nodeConfig": [
+#        {
+#            "moduleID": "ukma-sa2219-trx-m0-e479",
+#            "type": "ctrl",
+#            "partNumber": "",
+#            "hwVersion": "",
+#            "mac": "",
+#            "swVersion": "",
+#            "mfgSwVersion": "",
+#            "mfgDate": "2022-05-09T14:08:02.985112609-07:00",
+#            "mfgName": "",
+#            "status": "AssemblyCompleted"
+#        }
+#    ]
+#}
+#JSON
+#)
+#export VNODE_METADATA
 
 usage() {
     cat <<EOF
@@ -92,6 +92,65 @@ die() {
 
 have() {
     command -v "$1" >/dev/null 2>&1
+}
+
+build_vnode_metadata() {
+    local node_id="$1"
+    local node_type=""
+    local module_id=""
+    local module_type=""
+
+    case "$node_id" in
+        *-tnode-*)
+            node_type="tnode"
+            module_id="UK-SA9001-COM-A1-1103"
+            module_type="com"
+            ;;
+        *-anode-*)
+            node_type="anode"
+            module_id="UK-8001-RFC-1102"
+            module_type="ctrl"
+            ;;
+        *-cnode-*)
+            node_type="cnode"
+            module_id="UK-SA2602-CM4-1102"
+            module_type="cm4"
+            ;;
+        *)
+            die "Unable to determine node type from node ID: $node_id"
+            ;;
+    esac
+
+    cat <<JSON
+{
+    "nodeInfo": {
+        "type": "${node_type}",
+        "partNumber": "",
+        "skew": "",
+        "mac": "",
+        "swVersion": "",
+        "mfgSwVersion": "",
+        "assemblyDate": "2022-05-09T14:08:02.985079028-07:00",
+        "oem": "",
+        "mfgTestStatus": "pending",
+        "status": "LabelGenerated"
+    },
+    "nodeConfig": [
+        {
+            "moduleID": "${module_id}",
+            "type": "${module_type}",
+            "partNumber": "",
+            "hwVersion": "",
+            "mac": "",
+            "swVersion": "",
+            "mfgSwVersion": "",
+            "mfgDate": "2022-05-09T14:08:02.985112609-07:00",
+            "mfgName": "",
+            "status": "AssemblyCompleted"
+        }
+    ]
+}
+JSON
 }
 
 RUN() {
@@ -134,6 +193,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 : "${VNODE_ID:=$DEFAULT_VNODE_ID}"
+VNODE_METADATA="$(build_vnode_metadata "$VNODE_ID")"
+export VNODE_METADATA
 
 case "$VNODE_RUNTIME" in
     supervisor|starter)
