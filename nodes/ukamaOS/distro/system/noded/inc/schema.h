@@ -105,7 +105,8 @@ typedef enum {
     UNIT_TNODELTE = 2,
     UNIT_HNODE    = 3,
     UNIT_ANODE    = 4,
-    UNIT_PSNODE   = 5
+    UNIT_PSNODE   = 5,
+    UNIT_CNODE    = 6
 } NodeType;
 
 typedef enum {
