@@ -8,10 +8,13 @@
 import { Arg, Query, Resolver, Root, Subscription } from "type-graphql";
 import { Worker } from "worker_threads";
 
-
-
 import { METRIC_WS_INTERVAL } from "../../common/constants";
-import { NODE_TYPE, NotificationScopeEnumValue, NotificationTypeEnumValue, STATS_TYPE } from "../../common/enums";
+import {
+  NODE_TYPE,
+  NotificationScopeEnumValue,
+  NotificationTypeEnumValue,
+  STATS_TYPE,
+} from "../../common/enums";
 import { logger } from "../../common/logger";
 import { eventKeyToAction } from "../../common/notification";
 import { addInStore, openStore } from "../../common/storage";
