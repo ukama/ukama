@@ -41,11 +41,9 @@ static bool ukama_config_set_node_type(Config *config) {
 
     if (!config) return USYS_FALSE;
 
-    char *t = ukama_node_type_from_nodeid(config->nodeID);
-    if (!t) return USYS_FALSE;
-
-    free(config->nodeType);
-    config->nodeType = t;
+    config->nodeType = ukama_node_type_from_nodeid(config->nodeID);
+    if (config->nodeType == NULL)
+        return USYS_FALSE;
 
     return USYS_TRUE;
 }
