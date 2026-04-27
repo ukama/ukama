@@ -8,13 +8,10 @@
 import { Arg, Query, Resolver, Root, Subscription } from "type-graphql";
 import { Worker } from "worker_threads";
 
+
+
 import { METRIC_WS_INTERVAL } from "../../common/constants";
-import {
-  NODE_TYPE,
-  NotificationScopeEnumValue,
-  NotificationTypeEnumValue,
-  STATS_TYPE,
-} from "../../common/enums";
+import { NODE_TYPE, NotificationScopeEnumValue, NotificationTypeEnumValue, STATS_TYPE } from "../../common/enums";
 import { logger } from "../../common/logger";
 import { eventKeyToAction } from "../../common/notification";
 import { addInStore, openStore } from "../../common/storage";
@@ -22,6 +19,8 @@ import {
   formatKPIValue,
   getBaseURL,
   getGraphsKeyByType,
+  getInfraGraphKpiKeysByType,
+  getNodeTypeFromId,
   getScopesByRole,
   transformMetricsArray,
   wsUrlResolver,
@@ -235,7 +234,10 @@ class SubscriptionsResolvers {
     const { type, from, userId, withSubscription, nodeId } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
 
-    const metricsKey = getGraphsKeyByType(type);
+    const metricsKey = getGraphsKeyByType(
+      type,
+      getNodeTypeFromId(nodeId || "")
+    );
     const metrics: MetricsStateRes = { metrics: [] };
 
     if (metricsKey.length > 0) {
@@ -308,8 +310,10 @@ class SubscriptionsResolvers {
     const { type, from, userId, nodeId, to } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
 
-    const metricsKey = getGraphsKeyByType(type);
-
+    const metricsKey = getGraphsKeyByType(
+      type,
+      getNodeTypeFromId(nodeId || "")
+    );
     if (metricsKey.length > 0) {
       const metricPromises = metricsKey.map(
         async key =>
@@ -465,7 +469,7 @@ class SubscriptionsResolvers {
       const { type, from, withSubscription, nodeIds, siteIds } = data;
       if (from === 0) throw new Error("Argument 'from' can't be zero.");
 
-      const metricsKey = getGraphsKeyByType(type);
+      const metricsKey = getInfraGraphKpiKeysByType(type);
       const metrics: MetricsStateRes = { metrics: [] };
 
       if (metricsKey.length > 0) {
@@ -541,7 +545,7 @@ class SubscriptionsResolvers {
     const { type, from, userId, siteId, to, nodeIds } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
 
-    const metricsKey = getGraphsKeyByType(type);
+    const metricsKey = getInfraGraphKpiKeysByType(type);
 
     if (metricsKey.length > 0) {
       const metricPromises = metricsKey.map(
