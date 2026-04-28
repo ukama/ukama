@@ -1,8 +1,6 @@
 module github.com/ukama/ukama/systems/ukama-agent/asr
 
-go 1.23.0
-
-toolchain go1.24.2
+go 1.25.0
 
 replace github.com/ukama/ukama/systems/ukama-agent/cdr => ../cdr
 
@@ -25,7 +23,7 @@ require (
 	github.com/ukama/ukama/systems/ukama-agent/cdr v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.22.0
 	google.golang.org/grpc v1.73.0
-	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1
+	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0
 	google.golang.org/protobuf v1.36.6
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/postgres v1.6.0
