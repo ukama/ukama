@@ -21,7 +21,10 @@ PLATFORM_INC_LOG = $(PLATFORM_DIR)/log/inc
 PLATFORM_LIB     = $(PLATFORM_DIR)/build/
 
 VERSION_FILE = version.h
-ARTIFACTS = $(TARGET_EXEC)
+EMU_SRC      = test/vedirect_emulator.py
+EMU_OUT      = vedirect_emulator.py
+
+ARTIFACTS = $(TARGET_EXEC) $(EMU_OUT)
 
 ifeq ($(ALPINE_BUILD),1)
     $(info Excluding vendor library for Alpine build)
@@ -66,9 +69,9 @@ LIBS+=-lusys
 CFILES   = $(wildcard ./src/*.c)
 OBJFILES = $(CFILES:.c=.o)
 
-.PHONY: $(TARGET_EXEC) $(VERSION_FILE)
+.PHONY: $(TARGET_EXEC)
 
-all: version.h controllerd
+all: $(VERSION_FILE) $(EMU_OUT) controllerd
 
 controllerd: $(TARGET_EXEC)
 
@@ -85,8 +88,12 @@ $(VENDOR_PKG):
 $(VERSION_FILE):
 	$(NODES_DIR)/utils/scripts/generate_version.sh
 
+$(EMU_OUT): $(EMU_SRC)
+	cp $(EMU_SRC) $(EMU_OUT)
+	chmod 0755 $(EMU_OUT)
+
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(TARGET_EXEC) $(OBJFILES) $(VERSION_FILE)
+	rm -f $(TARGET_EXEC) $(OBJFILES) $(VERSION_FILE) $(EMU_OUT)
