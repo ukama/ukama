@@ -134,6 +134,28 @@ FLASH_SCRIPT="flash-${BOARD_NAME}.sh"
 ensure_yq
 validate_config
 
+FLASH_METHOD=$(yq_read '.flash.method' 2>/dev/null || echo "network")
+
+if [ "$FLASH_METHOD" = "rpiboot" ]; then
+    IMG_NAME=$(yq_read '.image.name')
+    IMG_PATH=$(yq_read '.image.path')
+    
+    if [ ! -f "$IMG_PATH" ]; then
+        echo "Image not found: $IMG_PATH"
+        exit 1
+    fi
+    
+    cp "$IMG_PATH" "$IMG_NAME"
+    
+    if [ ! -x "./flash-cnode.sh" ]; then
+        echo "flash-cnode.sh not found"
+        exit 1
+    fi
+    
+    ./flash-cnode.sh
+    exit 0
+fi
+
 HOST_ETH=$(yq_read        '.network.host_eth')
 HOST_IP=$(yq_read         '.network.host_ip')
 TARGET_IP=$(yq_read       '.network.target_ip')
