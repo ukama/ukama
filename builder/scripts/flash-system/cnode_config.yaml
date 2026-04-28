@@ -1,3 +1,6 @@
+flash:
+  method: "rpiboot"
+
 image:
   name: "cnode-image.img"
   path: "../build-system/cnode-image.img"
