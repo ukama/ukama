@@ -11,13 +11,11 @@ package server
 import (
 	"context"
 
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/anypb"
-
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
 
 	log "github.com/sirupsen/logrus"
+	cpb "github.com/ukama/ukama/systems/common/pb/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
@@ -42,7 +40,7 @@ func (l *AsrEventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
 	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.cdr.cdr.create"):
-		msg, err := l.unmarshalCDRCreate(e.Msg)
+		msg, err := cpb.UnmarshalProtoEvent[epb.CDRReported](e.Msg)
 		if err != nil {
 			return nil, err
 		}
@@ -56,16 +54,6 @@ func (l *AsrEventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 	}
 
 	return &epb.EventResponse{}, nil
-}
-
-func (l *AsrEventServer) unmarshalCDRCreate(msg *anypb.Any) (*epb.CDRReported, error) {
-	p := &epb.CDRReported{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal AddSystemRequest message with : %+v. Error %s.", msg, err.Error())
-		return nil, err
-	}
-	return p, nil
 }
 
 func (l *AsrEventServer) handleEventCDRCreate(key string, msg *epb.CDRReported) error {
