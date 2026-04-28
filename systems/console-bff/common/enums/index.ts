@@ -205,6 +205,15 @@ registerEnumType(PAYMENT_ITEM_TYPE, {
   name: "PAYMENT_ITEM_TYPE",
 });
 
+export enum TIMEFRAME_FILTER {
+  UNKNOWN = "unknown",
+  ALL = "all",
+  LATEST = "latest",
+}
+registerEnumType(TIMEFRAME_FILTER, {
+  name: "TIMEFRAME_FILTER",
+});
+
 export enum COMPONENT_TYPE {
   all = "all",
   access = "access",

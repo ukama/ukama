@@ -8,7 +8,6 @@
 'use client';
 
 import {
-  Node,
   NodeConnectivityEnum,
   NodeStateEnum,
   NodeTypeEnum,
@@ -17,8 +16,6 @@ import {
   useGetNodesQuery,
   useRestartNodeMutation,
   useSoftwareQuery,
-  useToggleRfStatusMutation,
-  useToggleServiceMutation,
   useUpdateNodeMutation,
   useUpdateSoftwareMutation,
 } from '@/client/graphql/generated';
@@ -37,7 +34,7 @@ import NodeOverviewTab from '@/components/NodeOverviewTab';
 import NodeRadioTab from '@/components/NodeRadioTab';
 import NodeResourcesTab from '@/components/NodeResourcesTab';
 import NodeSoftwareTab from '@/components/NodeSoftwareTab';
-import NodeStatus from '@/components/NodeStatus';
+import StatusBar from '@/components/StatusBar';
 import TabPanel from '@/components/TabPanel';
 import {
   METRIC_RANGE_10800,
@@ -50,7 +47,7 @@ import {
 import { useAppContext } from '@/context';
 import MetricStatSubscription from '@/lib/MetricStatSubscription';
 import { colors } from '@/theme';
-import { TMetricResDto } from '@/types';
+import { TMetricResDto, TStatusBarObj } from '@/types';
 import {
   getNodeActionDescriptionByProgress,
   getNodeTabTypeByIndex,
@@ -261,54 +258,6 @@ const Page: React.FC<INodePage> = ({ params }) => {
     },
   });
 
-  const [toggleRFStatus] = useToggleRfStatusMutation({
-    fetchPolicy: 'network-only',
-    onCompleted: (_, context) => {
-      setSnackbarMessage({
-        id: 'toggle-rf-status-success-msg',
-        message: `RF status turned ${
-          context?.variables?.data?.status ? 'On' : 'Off'
-        } successfully.`,
-        type: 'success',
-        show: true,
-      });
-    },
-    onError: (_, context) => {
-      setSnackbarMessage({
-        id: 'toggle-rf-status-error-msg',
-        message: `Failed to turn RF status ${
-          context?.variables?.data?.status ? 'On' : 'Off'
-        }.`,
-        type: 'error',
-        show: true,
-      });
-    },
-  });
-
-  const [toggleService] = useToggleServiceMutation({
-    fetchPolicy: 'network-only',
-    onCompleted: (_, context) => {
-      setSnackbarMessage({
-        id: 'toggle-service-status-success-msg',
-        message: `Service status turned ${
-          context?.variables?.data?.status ? 'On' : 'Off'
-        } successfully.`,
-        type: 'success',
-        show: true,
-      });
-    },
-    onError: (_, context) => {
-      setSnackbarMessage({
-        id: 'toggle-service-status-error-msg',
-        message: `Failed to turn service status ${
-          context?.variables?.data?.status ? 'On' : 'Off'
-        }.`,
-        type: 'error',
-        show: true,
-      });
-    },
-  });
-
   useEffect(() => {
     if (currentNode?.status.connectivity === NodeConnectivityEnum.Online) {
       setNodeAction({
@@ -443,8 +392,8 @@ const Page: React.FC<INodePage> = ({ params }) => {
     }
   };
 
-  const handleNodeSelected = (node: Node) => {
-    router.push(`/console/nodes/${node.id}`);
+  const handleNodeSelected = (obj: TStatusBarObj) => {
+    router.push(`/console/nodes/${obj.id}`);
   };
 
   const handleEditNode = (str: string) => {
@@ -475,71 +424,20 @@ const Page: React.FC<INodePage> = ({ params }) => {
     setMetricFrom(() => getUnixTime() - METRIC_RANGE_10800);
   };
 
-  const handleNodeActionClick = (action: string) => {
-    switch (action) {
-      case NODE_ACTIONS_ENUM.NODE_RESTART:
-        setNodeAction({
-          progress: 0,
-          currentAction: NODE_ACTIONS_ENUM.NODE_RESTART,
-          actionInitiated: NODE_ACTIONS_ENUM.NODE_RESTART,
-        });
-        restartNode({
-          variables: {
-            data: {
-              nodeId: currentNode?.id ?? '',
-            },
+  const handleNodeActionClick = (action: string, _: boolean) => {
+    if (action === NODE_ACTIONS_ENUM.NODE_RESTART) {
+      setNodeAction({
+        progress: 0,
+        currentAction: NODE_ACTIONS_ENUM.NODE_RESTART,
+        actionInitiated: NODE_ACTIONS_ENUM.NODE_RESTART,
+      });
+      restartNode({
+        variables: {
+          data: {
+            nodeId: currentNode?.id ?? '',
           },
-        });
-        break;
-      case NODE_ACTIONS_ENUM.NODE_RADIO_ON:
-        toggleRFStatus({
-          variables: {
-            data: {
-              nodeId: currentNode?.id ?? '',
-              status: true,
-            },
-          },
-        });
-        break;
-
-      case NODE_ACTIONS_ENUM.NODE_RADIO_OFF:
-        toggleRFStatus({
-          variables: {
-            data: {
-              nodeId: currentNode?.id ?? '',
-              status: false,
-            },
-          },
-        });
-        break;
-      case NODE_ACTIONS_ENUM.NODE_SERVICE_ON:
-        toggleService({
-          variables: {
-            data: {
-              nodeId: currentNode?.id ?? '',
-              status: true,
-            },
-          },
-        });
-        break;
-      case NODE_ACTIONS_ENUM.NODE_SERVICE_OFF:
-        toggleService({
-          variables: {
-            data: {
-              nodeId: currentNode?.id ?? '',
-              status: false,
-            },
-          },
-        });
-        break;
-      default:
-        setSnackbarMessage({
-          id: 'node-action-error-msg',
-          message: 'Invalid action.',
-          type: 'error',
-          show: true,
-        });
-        break;
+        },
+      });
     }
   };
 
@@ -561,21 +459,17 @@ const Page: React.FC<INodePage> = ({ params }) => {
 
   return (
     <Stack width={'100%'} height={'100%'} mt={1} spacing={1}>
-      <NodeStatus
+      <StatusBar
+        type="split"
         uptime={nodeUptime}
-        onAddNode={() => {}}
-        selectedNode={currentNode}
-        handleEditNodeClick={() => {
+        selected={currentNode}
+        handleEditClick={() => {
           setIsEditNode(true);
         }}
-        handleNodeSelected={handleNodeSelected}
-        nodes={nodesData?.getNodes.nodes ?? []}
-        nodeActionOptions={NODE_ACTIONS_BUTTONS}
-        handleNodeActionClick={handleNodeActionClick}
-        isShowNodeAction={
-          currentNode?.status.connectivity === NodeConnectivityEnum.Online &&
-          !nodeAction.actionInitiated
-        }
+        handleSelected={handleNodeSelected}
+        objs={nodesData?.getNodes.nodes ?? []}
+        actionOptions={NODE_ACTIONS_BUTTONS}
+        handleActionClick={handleNodeActionClick}
         loading={nodesLoading || updateNodeLoading || statLoading}
       />
       {currentNode?.status.connectivity === NodeConnectivityEnum.Online &&

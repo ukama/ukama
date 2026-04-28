@@ -11,6 +11,7 @@ import { RootDatabase } from "lmdb";
 
 import InitAPI from "../../init/datasource/init_api";
 import { MetricRes, MetricsRes } from "../../subscriptions/resolvers/types";
+import { SUB_GRAPHS } from "../configs";
 import {
   GRAPHS_TYPE,
   NODE_TYPE,
@@ -380,7 +381,8 @@ const getSystemNameByService = (service: string): string => {
       return "metrics";
     case "planning-tool":
       return "planning";
-    case "nodeState":
+    case "state":
+    case "health":
     case "controller":
     case "software":
       return "node";
@@ -394,6 +396,7 @@ const getBaseURL = async (
   orgName: string,
   store?: RootDatabase
 ): Promise<ResponseObj> => {
+  const isForNodeGw = SUB_GRAPHS[serviceName]?.isForNodeGw ?? false;
   const sysName = getSystemNameByService(serviceName);
   logger.info(`${store?.get("org")}`);
 
@@ -401,13 +404,19 @@ const getBaseURL = async (
   if (orgName && sysName) {
     try {
       const intRes = await initAPI.getSystem(orgName, sysName);
-      const url = intRes.apiGwUrl
-        ? intRes.apiGwUrl
-        : `http://${intRes.apiGwIp}:${intRes.apiGwPort}`;
-      return {
-        status: 200,
-        message: url,
-      };
+      if (isForNodeGw) {
+        return {
+          status: 200,
+          message: `http://${intRes.nodeGwIp}:${intRes.nodeGwPort}`,
+        };
+      } else {
+        return {
+          status: 200,
+          message: intRes.apiGwUrl
+            ? intRes.apiGwUrl
+            : `http://${intRes.apiGwIp}:${intRes.apiGwPort}`,
+        };
+      }
     } catch (e) {
       logger.error(`Error getting base URL for ${orgName}-${sysName}: ${e}`);
     }

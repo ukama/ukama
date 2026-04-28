@@ -30,6 +30,8 @@ bool json_deserialize_capps(CappList **cappList, JsonObj *json);
 bool json_serialize_health_report(JsonObj **json,
                                   char *nodeID,
                                   CappList *list,
-                                  GPSClientData *gps);
+                                  GPSClientData *gps,
+                                  bool radioAvailable);
 
 #endif /* JSERDES_H_ */
+

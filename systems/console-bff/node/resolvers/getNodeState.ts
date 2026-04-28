@@ -20,7 +20,7 @@ export class GetNodeStateResolver {
     const { dataSources, headers } = context;
     const store = openStore();
     const baseURL = await getBaseURL(
-      SUB_GRAPHS.nodeState.name,
+      SUB_GRAPHS.state.name,
       headers.orgName,
       store
     );

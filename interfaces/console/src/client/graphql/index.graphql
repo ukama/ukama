@@ -156,6 +156,35 @@ mutation ToggleService($data: ToggleRFStatusInputDto!) {
 
 ### End Node ###
 
+### Health Start ###
+query GetHealthReport($data: GetHealthReportInputDto!) {
+  getHealthReport(data: $data) {
+    id
+    nodeId
+    timestamp
+    system {
+      id
+      healthId
+      name
+      value
+    }
+    capps {
+      id
+      space
+      name
+      tag
+      status
+      resources {
+        id
+        cappId
+        name
+        value
+      }
+    }
+  }
+}
+### Health End ###
+
 ### Member Start ###
 
 fragment member on MemberDto {

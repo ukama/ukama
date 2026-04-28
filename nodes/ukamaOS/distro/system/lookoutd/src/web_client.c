@@ -22,21 +22,6 @@ extern int    get_memory_usage(int pid);
 extern int    get_disk_usage(int pid);
 extern double get_cpu_usage(int pid);
 
-static bool is_container_environment(void) {
-
-    /* podman / docker / k8s */
-    if (getenv("container") != NULL) {
-        return USYS_TRUE;
-    }
-
-    /* podman guarantee */
-    if (access("/run/.containerenv", F_OK) == 0) {
-        return USYS_TRUE;
-    }
-
-    return USYS_FALSE;
-}
-
 static int wc_send_http_request(URequest* httpReq, UResponse** httpResp) {
 
     int ret = STATUS_NOK;
@@ -55,9 +40,11 @@ static int wc_send_http_request(URequest* httpReq, UResponse** httpResp) {
 
     ret = ulfius_send_http_request(httpReq, *httpResp);
     if (ret != STATUS_OK) {
-        usys_log_error( "Web client failed to send %s web request to %s",
-                        httpReq->http_verb, httpReq->http_url);
+        usys_log_error("Web client failed to send %s web request to %s",
+                       httpReq->http_verb,
+                       httpReq->http_url);
     }
+
     return ret;
 }
 
@@ -66,9 +53,9 @@ static URequest* wc_create_http_request(char* url,
                                         char* body) {
 
     JsonObj *jBody = NULL;
+    URequest* httpReq = NULL;
 
-    /* Preparing Request */
-    URequest* httpReq = (URequest *)usys_calloc(1, sizeof(URequest));
+    httpReq = (URequest *)usys_calloc(1, sizeof(URequest));
     if (!httpReq) {
         usys_log_error("Error allocating memory of size: %lu for http Request",
                        sizeof(URequest));
@@ -77,13 +64,15 @@ static URequest* wc_create_http_request(char* url,
 
     if (ulfius_init_request(httpReq)) {
         usys_log_error("Error initializing new http request.");
+        usys_free(httpReq);
         return NULL;
     }
 
     ulfius_set_request_properties(httpReq,
                                   U_OPT_HTTP_VERB, method,
                                   U_OPT_HTTP_URL, url,
-                                  U_OPT_HEADER_PARAMETER, "User-Agent", SERVICE_NAME,
+                                  U_OPT_HEADER_PARAMETER, "User-Agent",
+                                  SERVICE_NAME,
                                   U_OPT_TIMEOUT, 20,
                                   U_OPT_NONE);
 
@@ -133,7 +122,9 @@ static int wc_send_request_raw(char *url,
     if (respBody && httpResp->binary_body && httpResp->binary_body_length > 0) {
         *respBody = (char *)usys_calloc(1, httpResp->binary_body_length + 1);
         if (*respBody) {
-            memcpy(*respBody, httpResp->binary_body, httpResp->binary_body_length);
+            memcpy(*respBody,
+                   httpResp->binary_body,
+                   httpResp->binary_body_length);
             (*respBody)[httpResp->binary_body_length] = '\0';
         }
     }
@@ -143,6 +134,7 @@ cleanup:
         ulfius_clean_request(httpReq);
         usys_free(httpReq);
     }
+
     if (httpResp) {
         ulfius_clean_response(httpResp);
         usys_free(httpResp);
@@ -179,11 +171,11 @@ static int wc_send_request(char *url,
         json = ulfius_get_json_body_response(httpResp, &jErr);
         if (json) {
             *buffer = json_dumps(json, 0);
-            ret     = STATUS_OK;
+            ret = STATUS_OK;
         }
     } else {
         *buffer = NULL;
-        ret     = STATUS_NOK;
+        ret = STATUS_NOK;
     }
 
     json_decref(json);
@@ -193,6 +185,7 @@ cleanup:
         ulfius_clean_request(httpReq);
         usys_free(httpReq);
     }
+
     if (httpResp) {
         ulfius_clean_response(httpResp);
         usys_free(httpResp);
@@ -209,12 +202,12 @@ static int wc_read_from_local_service(Config* config,
     char url[MAX_BUFFER] = {0};
 
     if (service == SERVICE_NODED) {
-        sprintf(url,"http://%s:%d/%s",
+        sprintf(url, "http://%s:%d/%s",
                 DEF_NODED_HOST,
                 config->nodedPort,
                 DEF_NODED_EP);
     } else if (service == SERVICE_STARTERD) {
-        sprintf(url,"http://%s:%d/%s",
+        sprintf(url, "http://%s:%d/%s",
                 DEF_STARTERD_HOST,
                 config->starterdPort,
                 DEF_STARTERD_EP);
@@ -276,17 +269,15 @@ static int get_capps_from_supervisord(Config *config, CappList **cappList) {
         memset(procName, 0, sizeof(procName));
         memset(procState, 0, sizeof(procState));
         pid = 0;
+        ukamaStatus = "Unknown";
 
-        /* Examples:
-         * meshd_latest RUNNING pid 456, uptime 0:10:12
-         * bootstrap_latest STOPPED Not started
-         */
         if (sscanf(line, "%127s %31s pid %d",
-                   procName, procState, &pid) < 2) {
+                   procName,
+                   procState,
+                   &pid) < 2) {
             continue;
         }
 
-        /* Only Ukama apps */
         if (strstr(procName, "_latest") == NULL) {
             continue;
         }
@@ -304,12 +295,6 @@ static int get_capps_from_supervisord(Config *config, CappList **cappList) {
             pid = 0;
         }
 
-        /*
-         * Naming convention:
-         * <app>_latest
-         * space = "system"
-         * tag   = "latest"
-         */
         add_capp_to_list(cappList,
                          "system",
                          procName,
@@ -355,8 +340,36 @@ static void wc_free_gps_data(GPSClientData *gps) {
 
     usys_free(gps->coordinates);
     usys_free(gps->gpsTime);
+
+    gps->available   = USYS_FALSE;
+    gps->gpsLock     = USYS_FALSE;
     gps->coordinates = NULL;
     gps->gpsTime     = NULL;
+}
+
+static void wc_free_capp_list(CappList *list) {
+
+    CappList *ptr = NULL;
+    CappList *next = NULL;
+
+    for (ptr = list; ptr; ptr = next) {
+        next = ptr->next;
+
+        if (ptr->capp) {
+            usys_free(ptr->capp->space);
+            usys_free(ptr->capp->name);
+            usys_free(ptr->capp->tag);
+
+            if (ptr->capp->runtime) {
+                usys_free(ptr->capp->runtime->status);
+                usys_free(ptr->capp->runtime);
+            }
+
+            usys_free(ptr->capp);
+        }
+
+        usys_free(ptr);
+    }
 }
 
 static int get_gps_data(GPSClientData *gps) {
@@ -372,18 +385,17 @@ static int get_gps_data(GPSClientData *gps) {
         return STATUS_NOK;
     }
 
+    gps->available   = USYS_TRUE;
     gps->gpsLock     = USYS_FALSE;
     gps->coordinates = NULL;
     gps->gpsTime     = NULL;
 
-    /* resolve local GPS service port */
     port = usys_find_service_port(SERVICE_GPS);
     if (port <= 0) {
         usys_log_error("Failed to resolve port for %s", SERVICE_GPS);
         return STATUS_NOK;
     }
 
-    /* lock: GET http://localhost:<port>/v1/lock  -> 200 empty if locked else 404 */
     snprintf(url, sizeof(url), "http://localhost:%d/v1/lock", port);
     ret = wc_send_request_raw(url, "GET", NULL, &status, &body);
     usys_free(body);
@@ -396,26 +408,26 @@ static int get_gps_data(GPSClientData *gps) {
 
     if (status != HttpStatus_OK) {
         gps->gpsLock = USYS_FALSE;
-        return STATUS_OK; /* not locked is not a client failure */
+        return STATUS_OK;
     }
 
     gps->gpsLock = USYS_TRUE;
 
-    /* coordinates: GET http://localhost:<port>/v1/coordinates -> 200 "lon,lat" else 404 */
     snprintf(url, sizeof(url), "http://localhost:%d/v1/coordinates", port);
     ret = wc_send_request_raw(url, "GET", NULL, &status, &body);
     if (ret == STATUS_OK && status == HttpStatus_OK && body && body[0] != '\0') {
         gps->coordinates = strdup(body);
     }
+
     usys_free(body);
     body = NULL;
 
-    /* time: GET http://localhost:<port>/v1/time -> 200 "<time>" else 404 */
     snprintf(url, sizeof(url), "http://localhost:%d/v1/time", port);
     ret = wc_send_request_raw(url, "GET", NULL, &status, &body);
     if (ret == STATUS_OK && status == HttpStatus_OK && body && body[0] != '\0') {
         gps->gpsTime = strdup(body);
     }
+
     usys_free(body);
     body = NULL;
 
@@ -440,8 +452,11 @@ int send_health_report(Config *config) {
     GPSClientData gps;
     memset(&gps, 0, sizeof(GPSClientData));
 
-    /* Get capps */
-    if (is_container_environment()) {
+    if (config == NULL || config->nodeID == NULL) {
+        return USYS_FALSE;
+    }
+
+    if (config->appManager == LOOKOUT_APP_MANAGER_SUPERVISORD) {
         status = get_capps_from_supervisord(config, &cappList);
         if (status != STATUS_OK) {
             usys_log_error("Unable to get capps from supervisord");
@@ -453,11 +468,14 @@ int send_health_report(Config *config) {
         }
     }
 
-    /* Collect resource usage only if we got capps */
     if (status == STATUS_OK) {
         for (ptr = cappList; ptr; ptr = ptr->next) {
+            if (ptr->capp == NULL || ptr->capp->runtime == NULL) {
+                continue;
+            }
+
             runtime = ptr->capp->runtime;
-            if (runtime == NULL || runtime->pid <= 0) {
+            if (runtime->pid <= 0) {
                 continue;
             }
 
@@ -467,31 +485,40 @@ int send_health_report(Config *config) {
         }
     }
 
-    /* GPS data (best-effort) */
-    if (get_gps_data(&gps) != STATUS_OK) {
-        gps.gpsLock = USYS_FALSE;
-        gps.coordinates = NULL;
-        gps.gpsTime = NULL;
+    gps.available = config->isTowerNode;
+
+    if (config->isTowerNode) {
+        if (get_gps_data(&gps) != STATUS_OK) {
+            gps.available = USYS_TRUE;
+            gps.gpsLock = USYS_FALSE;
+            gps.coordinates = NULL;
+            gps.gpsTime = NULL;
+        }
     }
 
     if (!json_serialize_health_report(&json,
                                       config->nodeID,
                                       cappList,
-                                      &gps)) {
+                                      &gps,
+                                      config->isTowerNode)) {
         usys_log_error("Error serializing health report. Ignoring");
         wc_free_gps_data(&gps);
+        wc_free_capp_list(cappList);
         return USYS_FALSE;
     }
 
     wc_free_gps_data(&gps);
 
     usys_find_ukama_service_address(&ukama);
-    sprintf(url,"%s/node/v1/health/nodes/%s/performance",
-            ukama, config->nodeID);
+    sprintf(url, "%s/node/v1/health/nodes/%s/performance",
+            ukama,
+            config->nodeID);
+
     report = json_dumps(json, 0);
 
     usys_log_debug("Sending to URL: %s the health report %s",
-                   url, report);
+                   url,
+                   report);
 
     if (wc_send_request(url, "POST", report, &buffer) == STATUS_NOK) {
         usys_log_error("failed to parse response from local service");
@@ -500,7 +527,10 @@ int send_health_report(Config *config) {
 
     json_decref(json);
     usys_free(report);
+    usys_free(buffer);
     usys_free(ukama);
+    wc_free_capp_list(cappList);
+
     return ret;
 }
 
@@ -514,7 +544,11 @@ void add_capp_to_list(CappList **list,
     CappList *newEntry = NULL;
     CappList *tail = NULL;
 
-    if (list == NULL || space == NULL || name == NULL || tag == NULL || status == NULL) {
+    if (list == NULL ||
+        space == NULL ||
+        name == NULL ||
+        tag == NULL ||
+        status == NULL) {
         return;
     }
 
@@ -549,13 +583,11 @@ void add_capp_to_list(CappList **list,
 
     newEntry->next = NULL;
 
-    /* First entry */
     if (*list == NULL) {
         *list = newEntry;
         return;
     }
 
-    /* Append to tail */
     tail = *list;
     while (tail->next != NULL) {
         tail = tail->next;

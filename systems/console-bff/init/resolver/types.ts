@@ -24,6 +24,12 @@ export class InitSystemAPIResDto {
   certificate: string;
 
   @Field()
+  nodeGwPort: number;
+
+  @Field()
+  nodeGwIp: string;
+
+  @Field()
   apiGwIp: string;
 
   @Field()

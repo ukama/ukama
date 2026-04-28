@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { Node, NodeConnectivityEnum } from '@/client/graphql/generated';
+import { Node, SiteDto as Site } from '@/client/graphql/generated';
 import { colors } from '@/theme';
 import { hexToRGB } from '@/utils';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -16,55 +16,49 @@ import { formatDistance } from 'date-fns';
 import LoadingWrapper from '../LoadingWrapper';
 import { PaperProps, SelectDisplayProps, SelectStyle } from './styles';
 
-const getStatusIcon = (status: NodeConnectivityEnum) => {
+const getStatusIcon = (status: boolean) => {
   switch (status) {
-    case NodeConnectivityEnum.Unknown:
-      return <CheckCircleIcon fontSize={'small'} color="warning" />;
-    case NodeConnectivityEnum.Online:
+    case true:
       return <CheckCircleIcon fontSize={'small'} color="success" />;
-    case NodeConnectivityEnum.Offline:
+    case false:
       return <InfoIcon fontSize={'small'} color="error" />;
-    default:
-      return <CheckCircleIcon fontSize={'small'} color="disabled" />;
   }
 };
 
 interface INodeDropDown {
   uptime: number;
   loading: boolean;
-  isNodeReady?: boolean;
-  onAddNode?: () => void;
-  nodes: Node[] | [];
-  onNodeSelected: (node: Node) => void;
-  selectedNode: Node | undefined;
+  isReady: boolean;
+  objs: Node[] | Site[] | [];
+  onSelected: (obj: Node | Site) => void;
+  selected: Node | Site | undefined;
 }
 
 const NodeDropDown = ({
-  uptime = 0,
-  nodes = [],
-  selectedNode,
+  uptime,
+  objs = [],
+  selected,
   loading = true,
-  onNodeSelected,
-  isNodeReady = true,
+  onSelected,
+  isReady = true,
 }: INodeDropDown) => {
   const handleChange = (e: SelectChangeEvent<unknown>) => {
     const value = e.target.value as string;
-    const node = nodes.find((item: Node) => item.name === value);
-    if (node) {
-      onNodeSelected(node);
+    const obj = objs.find((item: Node | Site) => item.name === value);
+    if (obj) {
+      onSelected(obj);
     }
   };
   return (
     <Stack direction={'row'} spacing={1} alignItems="center">
-      {selectedNode &&
-        getStatusIcon(selectedNode.status.connectivity as NodeConnectivityEnum)}
+      {getStatusIcon(isReady)}
 
       <LoadingWrapper radius="small" isLoading={loading} width={'fit-content'}>
         <SelectStyle
           disableUnderline
           variant="standard"
           onChange={handleChange}
-          value={selectedNode?.name ?? ''}
+          value={selected?.name ?? ''}
           SelectDisplayProps={{
             style: { ...SelectDisplayProps.style, marginRight: '8px' },
           }}
@@ -87,7 +81,7 @@ const NodeDropDown = ({
           }}
           renderValue={(selected: unknown) => selected as React.ReactNode}
         >
-          {nodes.map(({ id, name }) => (
+          {objs.map(({ id, name }) => (
             <MenuItem
               key={id}
               value={name}
@@ -95,7 +89,7 @@ const NodeDropDown = ({
                 m: 0,
                 p: '6px 24px',
                 backgroundColor: `${
-                  id === selectedNode?.id
+                  id === selected?.id
                     ? hexToRGB(colors.secondaryLight, 0.25)
                     : 'inherit'
                 } !important`,
@@ -112,9 +106,9 @@ const NodeDropDown = ({
         </SelectStyle>
       </LoadingWrapper>
 
-      {selectedNode && (
+      {selected && (
         <Typography variant={'subtitle1'}>
-          {isNodeReady && (
+          {isReady ? (
             <>
               Node is up for{' '}
               <b>
@@ -123,9 +117,9 @@ const NodeDropDown = ({
                 })}
               </b>
             </>
+          ) : (
+            <>{selected.name} is offline</>
           )}
-          {selectedNode.status.connectivity === NodeConnectivityEnum.Offline &&
-            'Node is offline'}
         </Typography>
       )}
     </Stack>

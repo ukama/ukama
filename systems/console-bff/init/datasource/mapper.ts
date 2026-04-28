@@ -19,6 +19,8 @@ export const dtoToSystenResDto = (
     orgName: res.orgName,
     systemId: res.systemId,
     systemName: res.systemName,
+    nodeGwPort: res.nodeGwPort,
+    nodeGwIp: res.nodeGwIp,
   };
 };
 
