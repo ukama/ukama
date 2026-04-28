@@ -17,6 +17,8 @@
 #include "utils.h"
 #include "log.h"
 
+#include "usys_log.h"
+
 /* Standard IF-MIB/MIB-II */
 static const uint32_t OID_ifNumber[]       = {1,3,6,1,2,1,2,1,0};
 static const uint32_t OID_ifDescr[]        = {1,3,6,1,2,1,2,2,1,2};
@@ -251,9 +253,38 @@ static void tycon_cleanup(SwitchdContext *ctx) {
 }
 
 static int tycon_probe(SwitchdContext *ctx) {
-    TyconPriv *priv = (TyconPriv *)ctx->driver->priv;
+    TyconPriv *priv;
     SnmpVarBind vb;
-    int ret = snmp_get(&priv->session, OID_softwareVersion, sizeof(OID_softwareVersion)/sizeof(OID_softwareVersion[0]), &vb);
+    int ret;
+
+    if (!ctx || !ctx->driver || !ctx->driver->priv) {
+        return SWITCHD_ERR_INVAL;
+    }
+
+    priv = (TyconPriv *)ctx->driver->priv;
+    memset(&vb, 0, sizeof(vb));
+
+    usys_log_debug("tycon: probe snmp=%s:%d community=%s timeoutMs=%d retries=%d",
+                   priv->session.host,
+                   priv->session.port,
+                   priv->session.community,
+                   priv->session.timeoutMs,
+                   priv->session.retries);
+
+    ret = snmp_get(&priv->session,
+                   OID_softwareVersion,
+                   sizeof(OID_softwareVersion) /
+                   sizeof(OID_softwareVersion[0]),
+                   &vb);
+
+    if (ret == SWITCHD_OK) {
+        usys_log_info("tycon: probe ok swType=%d sw='%s'",
+                      vb.value.type,
+                      vb.value.stringValue);
+    } else {
+        usys_log_error("tycon: probe failed ret=%d", ret);
+    }
+
     return ret;
 }
 
@@ -328,39 +359,291 @@ static int tycon_refresh_ports(SwitchdContext *ctx, SwitchPortState *ports, uint
     return SWITCHD_OK;
 }
 
+static double normalize_watts(int64_t value) {
+
+    if (value > 1000) {
+        return ((double)value) / 1000.0;
+    }
+
+    return (double)value;
+}
+
+static double normalize_voltage(int64_t value) {
+
+    if (value > 1000) {
+        return ((double)value) / 1000.0;
+    }
+
+    return (double)value;
+}
+
+static double normalize_current(int64_t value) {
+
+    if (value > 50) {
+        return ((double)value) / 1000.0;
+    }
+
+    return (double)value;
+}
+
+static int get_double_any(SnmpSession *s,
+                          const uint32_t *oid,
+                          size_t oidLen,
+                          double *out,
+                          double (*normalize)(int64_t)) {
+
+    SnmpVarBind vb;
+    int ret;
+
+    if (!s || !oid || !out) {
+        return SWITCHD_ERR_INVAL;
+    }
+
+    ret = snmp_get(s, oid, oidLen, &vb);
+    if (ret != SWITCHD_OK) {
+        return ret;
+    }
+
+    if (vb.value.type == SNMP_VALUE_STRING) {
+        *out = parse_prefixed_double(vb.value.stringValue);
+        return SWITCHD_OK;
+    }
+
+    if (vb.value.type == SNMP_VALUE_INT) {
+        *out = normalize ? normalize(vb.value.intValue) :
+                           (double)vb.value.intValue;
+        return SWITCHD_OK;
+    }
+
+    if (vb.value.type == SNMP_VALUE_UINT) {
+        *out = normalize ? normalize((int64_t)vb.value.uintValue) :
+                           (double)vb.value.uintValue;
+        return SWITCHD_OK;
+    }
+
+    return SWITCHD_ERR_PROTOCOL;
+}
+
+static int get_bool_any(SnmpSession *s,
+                        const uint32_t *oid,
+                        size_t oidLen,
+                        bool *out) {
+
+    SnmpVarBind vb;
+    int ret;
+
+    if (!s || !oid || !out) {
+        return SWITCHD_ERR_INVAL;
+    }
+
+    ret = snmp_get(s, oid, oidLen, &vb);
+    if (ret != SWITCHD_OK) {
+        return ret;
+    }
+
+    if (vb.value.type == SNMP_VALUE_INT) {
+        *out = (vb.value.intValue != 0);
+        return SWITCHD_OK;
+    }
+
+    if (vb.value.type == SNMP_VALUE_UINT) {
+        *out = (vb.value.uintValue != 0);
+        return SWITCHD_OK;
+    }
+
+    if (vb.value.type == SNMP_VALUE_STRING) {
+        *out = (parse_prefixed_double(vb.value.stringValue) != 0.0);
+        return SWITCHD_OK;
+    }
+
+    return SWITCHD_ERR_PROTOCOL;
+}
+
+static int read_double_metric(SnmpSession *session,
+                              const char *name,
+                              const uint32_t *oid,
+                              size_t oidLen,
+                              double *value,
+                              double (*normalize)(int64_t),
+                              int *okCount) {
+    int ret;
+
+    ret = get_double_any(session, oid, oidLen, value, normalize);
+    if (ret == SWITCHD_OK) {
+        (*okCount)++;
+        usys_log_debug("tycon: kpi %-28s ok value=%.3f", name, *value);
+    } else {
+        usys_log_error("tycon: kpi %-28s failed ret=%d", name, ret);
+    }
+
+    return ret;
+}
+
+static int read_bool_metric(SnmpSession *session,
+                            const char *name,
+                            const uint32_t *oid,
+                            size_t oidLen,
+                            bool *value,
+                            int *okCount) {
+    int ret;
+
+    ret = get_bool_any(session, oid, oidLen, value);
+    if (ret == SWITCHD_OK) {
+        (*okCount)++;
+        usys_log_debug("tycon: kpi %-28s ok value=%d", name, *value);
+    } else {
+        usys_log_error("tycon: kpi %-28s failed ret=%d", name, ret);
+    }
+
+    return ret;
+}
+
 static int tycon_refresh_kpis(SwitchdContext *ctx, SwitchKpis *kpis) {
-    TyconPriv *priv = (TyconPriv *)ctx->driver->priv;
-    int64_t iv;
-    char s[128];
+    TyconPriv *priv;
+    double dv;
+    bool bv;
+    int okCount;
+
+    if (!ctx || !ctx->driver || !ctx->driver->priv || !kpis) {
+        return SWITCHD_ERR_INVAL;
+    }
+
+    priv = (TyconPriv *)ctx->driver->priv;
+    okCount = 0;
+
     memset(kpis, 0, sizeof(*kpis));
-    if (get_int(&priv->session, OID_poeTotalPowerConsumption, sizeof(OID_poeTotalPowerConsumption)/sizeof(OID_poeTotalPowerConsumption[0]), &iv) == SWITCHD_OK) {
-        kpis->poeTotalPowerWatts = (double)iv;
+
+    usys_log_debug("tycon: refresh_kpis begin snmp=%s:%d",
+                   priv->session.host,
+                   priv->session.port);
+
+    dv = 0.0;
+    if (read_double_metric(&priv->session,
+                           "poe_total_power_watts",
+                           OID_poeTotalPowerConsumption,
+                           sizeof(OID_poeTotalPowerConsumption) /
+                           sizeof(OID_poeTotalPowerConsumption[0]),
+                           &dv,
+                           normalize_watts,
+                           &okCount) == SWITCHD_OK) {
+        kpis->poeTotalPowerWatts = dv;
     }
-    if (get_int(&priv->session, OID_poeTotalMaxPower, sizeof(OID_poeTotalMaxPower)/sizeof(OID_poeTotalMaxPower[0]), &iv) == SWITCHD_OK) {
-        kpis->poeMaxPowerWatts = (double)iv;
+
+    dv = 0.0;
+    if (read_double_metric(&priv->session,
+                           "poe_max_power_watts",
+                           OID_poeTotalMaxPower,
+                           sizeof(OID_poeTotalMaxPower) /
+                           sizeof(OID_poeTotalMaxPower[0]),
+                           &dv,
+                           normalize_watts,
+                           &okCount) == SWITCHD_OK) {
+        kpis->poeMaxPowerWatts = dv;
     }
-    if (get_string(&priv->session, OID_industrySystemTemperature, sizeof(OID_industrySystemTemperature)/sizeof(OID_industrySystemTemperature[0]), s, sizeof(s)) == SWITCHD_OK) {
-        kpis->systemTemperatureC = parse_prefixed_double(s);
+
+    dv = 0.0;
+    if (read_double_metric(&priv->session,
+                           "system_temperature_c",
+                           OID_industrySystemTemperature,
+                           sizeof(OID_industrySystemTemperature) /
+                           sizeof(OID_industrySystemTemperature[0]),
+                           &dv,
+                           NULL,
+                           &okCount) == SWITCHD_OK) {
+        kpis->systemTemperatureC = dv;
     }
-    if (get_string(&priv->session, OID_industryAmbientTemperature, sizeof(OID_industryAmbientTemperature)/sizeof(OID_industryAmbientTemperature[0]), s, sizeof(s)) == SWITCHD_OK) {
-        kpis->ambientTemperatureC = parse_prefixed_double(s);
+
+    dv = 0.0;
+    if (read_double_metric(&priv->session,
+                           "ambient_temperature_c",
+                           OID_industryAmbientTemperature,
+                           sizeof(OID_industryAmbientTemperature) /
+                           sizeof(OID_industryAmbientTemperature[0]),
+                           &dv,
+                           NULL,
+                           &okCount) == SWITCHD_OK) {
+        kpis->ambientTemperatureC = dv;
     }
-    if (get_string(&priv->session, OID_industryPowerIn, sizeof(OID_industryPowerIn)/sizeof(OID_industryPowerIn[0]), s, sizeof(s)) == SWITCHD_OK) {
-        kpis->inputVoltage = parse_prefixed_double(s);
+
+    dv = 0.0;
+    if (read_double_metric(&priv->session,
+                           "input_voltage",
+                           OID_industryPowerIn,
+                           sizeof(OID_industryPowerIn) /
+                           sizeof(OID_industryPowerIn[0]),
+                           &dv,
+                           normalize_voltage,
+                           &okCount) == SWITCHD_OK) {
+        kpis->inputVoltage = dv;
     }
-    if (get_string(&priv->session, OID_industrySystemCurrent, sizeof(OID_industrySystemCurrent)/sizeof(OID_industrySystemCurrent[0]), s, sizeof(s)) == SWITCHD_OK) {
-        kpis->systemCurrentAmps = parse_prefixed_double(s);
+
+    dv = 0.0;
+    if (read_double_metric(&priv->session,
+                           "system_current_amps",
+                           OID_industrySystemCurrent,
+                           sizeof(OID_industrySystemCurrent) /
+                           sizeof(OID_industrySystemCurrent[0]),
+                           &dv,
+                           normalize_current,
+                           &okCount) == SWITCHD_OK) {
+        kpis->systemCurrentAmps = dv;
     }
-    if (get_string(&priv->session, OID_industrySystemPower, sizeof(OID_industrySystemPower)/sizeof(OID_industrySystemPower[0]), s, sizeof(s)) == SWITCHD_OK) {
-        kpis->systemPowerWatts = parse_prefixed_double(s);
+
+    dv = 0.0;
+    if (read_double_metric(&priv->session,
+                           "system_power_watts",
+                           OID_industrySystemPower,
+                           sizeof(OID_industrySystemPower) /
+                           sizeof(OID_industrySystemPower[0]),
+                           &dv,
+                           normalize_watts,
+                           &okCount) == SWITCHD_OK) {
+        kpis->systemPowerWatts = dv;
     }
-    if (get_int(&priv->session, OID_industryOutAlarmPortLinkFail, sizeof(OID_industryOutAlarmPortLinkFail)/sizeof(OID_industryOutAlarmPortLinkFail[0]), &iv) == SWITCHD_OK) {
-        kpis->inputLinkFailureAlarm = (iv != 0);
+
+    bv = false;
+    if (read_bool_metric(&priv->session,
+                         "input_link_failure_alarm",
+                         OID_industryOutAlarmPortLinkFail,
+                         sizeof(OID_industryOutAlarmPortLinkFail) /
+                         sizeof(OID_industryOutAlarmPortLinkFail[0]),
+                         &bv,
+                         &okCount) == SWITCHD_OK) {
+        kpis->inputLinkFailureAlarm = bv;
     }
-    if (get_int(&priv->session, OID_industryOutAlarmPortPoeFail, sizeof(OID_industryOutAlarmPortPoeFail)/sizeof(OID_industryOutAlarmPortPoeFail[0]), &iv) == SWITCHD_OK) {
-        kpis->inputPoeFailureAlarm = (iv != 0);
+
+    bv = false;
+    if (read_bool_metric(&priv->session,
+                         "input_poe_failure_alarm",
+                         OID_industryOutAlarmPortPoeFail,
+                         sizeof(OID_industryOutAlarmPortPoeFail) /
+                         sizeof(OID_industryOutAlarmPortPoeFail[0]),
+                         &bv,
+                         &okCount) == SWITCHD_OK) {
+        kpis->inputPoeFailureAlarm = bv;
     }
+
+    if (okCount == 0) {
+        usys_log_error("tycon: refresh_kpis failed: no KPI OID read");
+        return SWITCHD_ERR_SNMP;
+    }
+
     kpis->updatedAt = time(NULL);
+
+    usys_log_info("tycon: refresh_kpis ok okCount=%d poe=%.2fW budget=%.2fW "
+                  "temp=%.2fC ambient=%.2fC sysPower=%.2fW vin=%.2fV "
+                  "current=%.3fA linkAlarm=%d poeAlarm=%d",
+                  okCount,
+                  kpis->poeTotalPowerWatts,
+                  kpis->poeMaxPowerWatts,
+                  kpis->systemTemperatureC,
+                  kpis->ambientTemperatureC,
+                  kpis->systemPowerWatts,
+                  kpis->inputVoltage,
+                  kpis->systemCurrentAmps,
+                  kpis->inputLinkFailureAlarm,
+                  kpis->inputPoeFailureAlarm);
+
     return SWITCHD_OK;
 }
 

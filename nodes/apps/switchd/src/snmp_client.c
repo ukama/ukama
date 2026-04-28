@@ -200,42 +200,129 @@ static int build_request(int pduType, const char *community, int32_t reqId,
                          uint8_t *out, size_t outLen, size_t *written) {
     uint8_t oidTlv[256];
     uint8_t valTlv[300];
-    uint8_t vbSeq[600];
-    uint8_t vblSeq[700];
-    uint8_t pdu[900];
-    uint8_t msg[1100];
-    uint8_t tmp[64];
-    size_t nOid, nVal, nReq, nErr, nErrIdx, nVb, nVbl, nCom, nVer, nPdu, nMsg;
-    uint8_t *p;
+    uint8_t vbContent[600];
+    uint8_t vbSeq[700];
+    uint8_t vblSeq[800];
+    uint8_t pduContent[900];
+    uint8_t pdu[1000];
+    uint8_t msgContent[1100];
+    size_t nOid, nVal, nVbSeq, nVbl, nReq, nErr, nErrIdx;
+    size_t nPdu, nVer, nCom, nMsg;
+    uint8_t *ptr;
 
-    if (ber_encode_oid(oid, oidLen, oidTlv, sizeof(oidTlv), &nOid) != 0) return -1;
+    if (ber_encode_oid(oid, oidLen, oidTlv, sizeof(oidTlv), &nOid) != 0) {
+        return -1;
+    }
+
     if (setVal == NULL || setVal->type == SNMP_VALUE_NONE) {
-        if (ber_put_tlv(ASN_NULL, NULL, 0, valTlv, sizeof(valTlv), &nVal) != 0) return -1;
+        if (ber_put_tlv(ASN_NULL, NULL, 0, valTlv, sizeof(valTlv),
+                        &nVal) != 0) {
+            return -1;
+        }
     } else if (setVal->type == SNMP_VALUE_INT) {
-        if (ber_encode_int(setVal->intValue, valTlv, sizeof(valTlv), &nVal) != 0) return -1;
+        if (ber_encode_int(setVal->intValue, valTlv, sizeof(valTlv),
+                           &nVal) != 0) {
+            return -1;
+        }
     } else if (setVal->type == SNMP_VALUE_STRING) {
         if (ber_encode_string(ASN_OCTET_STR, setVal->stringValue,
-                              strlen(setVal->stringValue), valTlv, sizeof(valTlv), &nVal) != 0) return -1;
+                              strlen(setVal->stringValue),
+                              valTlv, sizeof(valTlv), &nVal) != 0) {
+            return -1;
+        }
     } else {
         return -1;
     }
-    p = vbSeq;
-    memcpy(p, oidTlv, nOid); p += nOid;
-    memcpy(p, valTlv, nVal); p += nVal;
-    if (ber_put_tlv(ASN_SEQUENCE, vbSeq, (size_t)(p - vbSeq), vblSeq, sizeof(vblSeq), &nVb) != 0) return -1;
-    if (ber_put_tlv(ASN_SEQUENCE, vblSeq, nVb, vblSeq, sizeof(vblSeq), &nVbl) != 0) return -1;
-    if (ber_encode_int(reqId, tmp, sizeof(tmp), &nReq) != 0) return -1;
-    if (ber_encode_int(0, tmp + nReq, sizeof(tmp) - nReq, &nErr) != 0) return -1;
-    if (ber_encode_int(0, tmp + nReq + nErr, sizeof(tmp) - nReq - nErr, &nErrIdx) != 0) return -1;
-    p = pdu;
-    memcpy(p, tmp, nReq + nErr + nErrIdx); p += nReq + nErr + nErrIdx;
-    memcpy(p, vblSeq, nVbl); p += nVbl;
-    if (ber_put_tlv((uint8_t)pduType, pdu, (size_t)(p - pdu), pdu, sizeof(pdu), &nPdu) != 0) return -1;
-    if (ber_encode_int(1, msg, sizeof(msg), &nVer) != 0) return -1;
-    if (ber_encode_string(ASN_OCTET_STR, community, strlen(community), msg + nVer, sizeof(msg) - nVer, &nCom) != 0) return -1;
-    p = msg + nVer + nCom;
-    memcpy(p, pdu, nPdu); p += nPdu;
-    if (ber_put_tlv(ASN_SEQUENCE, msg, (size_t)(p - msg), out, outLen, &nMsg) != 0) return -1;
+
+    ptr = vbContent;
+    memcpy(ptr, oidTlv, nOid);
+    ptr += nOid;
+    memcpy(ptr, valTlv, nVal);
+    ptr += nVal;
+
+    if (ber_put_tlv(ASN_SEQUENCE,
+                    vbContent,
+                    (size_t)(ptr - vbContent),
+                    vbSeq,
+                    sizeof(vbSeq),
+                    &nVbSeq) != 0) {
+        return -1;
+    }
+
+    /*
+     * Do not wrap in-place. The old code used vblSeq as both source and
+     * destination here, corrupting SNMP packets before the emulator could
+     * parse them.
+     */
+    if (ber_put_tlv(ASN_SEQUENCE,
+                    vbSeq,
+                    nVbSeq,
+                    vblSeq,
+                    sizeof(vblSeq),
+                    &nVbl) != 0) {
+        return -1;
+    }
+
+    ptr = pduContent;
+    if (ber_encode_int(reqId, ptr, sizeof(pduContent), &nReq) != 0) {
+        return -1;
+    }
+    ptr += nReq;
+
+    if (ber_encode_int(0, ptr,
+                       sizeof(pduContent) - (size_t)(ptr - pduContent),
+                       &nErr) != 0) {
+        return -1;
+    }
+    ptr += nErr;
+
+    if (ber_encode_int(0, ptr,
+                       sizeof(pduContent) - (size_t)(ptr - pduContent),
+                       &nErrIdx) != 0) {
+        return -1;
+    }
+    ptr += nErrIdx;
+
+    memcpy(ptr, vblSeq, nVbl);
+    ptr += nVbl;
+
+    if (ber_put_tlv((uint8_t)pduType,
+                    pduContent,
+                    (size_t)(ptr - pduContent),
+                    pdu,
+                    sizeof(pdu),
+                    &nPdu) != 0) {
+        return -1;
+    }
+
+    ptr = msgContent;
+    if (ber_encode_int(1, ptr, sizeof(msgContent), &nVer) != 0) {
+        return -1;
+    }
+    ptr += nVer;
+
+    if (ber_encode_string(ASN_OCTET_STR,
+                          community,
+                          strlen(community),
+                          ptr,
+                          sizeof(msgContent) - (size_t)(ptr - msgContent),
+                          &nCom) != 0) {
+        return -1;
+    }
+    ptr += nCom;
+
+    memcpy(ptr, pdu, nPdu);
+    ptr += nPdu;
+
+    if (ber_put_tlv(ASN_SEQUENCE,
+                    msgContent,
+                    (size_t)(ptr - msgContent),
+                    out,
+                    outLen,
+                    &nMsg) != 0) {
+        return -1;
+    }
+
     *written = nMsg;
     return 0;
 }
@@ -320,6 +407,27 @@ int snmp_session_init(SnmpSession *s, const char *host, int port,
     return SWITCHD_OK;
 }
 
+static void snmp_oid_debug(const uint32_t *oid, size_t oidLen,
+                           char *buf, size_t bufLen) {
+    size_t i;
+    size_t off;
+
+    if (!buf || bufLen == 0) {
+        return;
+    }
+
+    off = 0;
+    buf[0] = '\0';
+
+    for (i = 0; i < oidLen && off < bufLen; i++) {
+        off += (size_t)snprintf(buf + off,
+                                (off < bufLen) ? bufLen - off : 0,
+                                "%s%u",
+                                (i == 0) ? "" : ".",
+                                oid[i]);
+    }
+}
+
 static int snmp_request(SnmpSession *s, int pduType, const uint32_t *oid, size_t oidLen,
                         const SnmpValue *setVal, SnmpVarBind *out) {
     int sockFd = -1;
@@ -329,44 +437,112 @@ static int snmp_request(SnmpSession *s, int pduType, const uint32_t *oid, size_t
     size_t reqLen;
     ssize_t n;
     int attempt;
+    int timeoutMs;
     int32_t reqId;
     fd_set rfds;
     struct timeval tv;
+    char oidStr[256];
+
+    if (!s || !oid || oidLen == 0) {
+        return SWITCHD_ERR_INVAL;
+    }
+
+    snmp_oid_debug(oid, oidLen, oidStr, sizeof(oidStr));
+    timeoutMs = (s->timeoutMs > 0) ? s->timeoutMs : 500;
 
     reqId = (int32_t)(time(NULL) ^ getpid() ^ rand());
-    if (build_request(pduType, s->community, reqId, oid, oidLen, setVal, req, sizeof(req), &reqLen) != 0) {
+    if (build_request(pduType,
+                      s->community,
+                      reqId,
+                      oid,
+                      oidLen,
+                      setVal,
+                      req,
+                      sizeof(req),
+                      &reqLen) != 0) {
+        log_error("snmp: build request failed pdu=%d oid=%s",
+                  pduType, oidStr);
         return SWITCHD_ERR_PROTOCOL;
     }
+
     sockFd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sockFd < 0) return SWITCHD_ERR_IO;
+    if (sockFd < 0) {
+        log_error("snmp: socket failed host=%s port=%d errno=%d",
+                  s->host, s->port, errno);
+        return SWITCHD_ERR_IO;
+    }
+
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_port = htons((uint16_t)s->port);
+
     if (inet_pton(AF_INET, s->host, &addr.sin_addr) != 1) {
+        log_error("snmp: invalid host '%s'", s->host);
         close(sockFd);
         return SWITCHD_ERR_INVAL;
     }
+
     for (attempt = 0; attempt <= s->retries; attempt++) {
-        if (sendto(sockFd, req, reqLen, 0, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+        if (sendto(sockFd,
+                   req,
+                   reqLen,
+                   0,
+                   (struct sockaddr *)&addr,
+                   sizeof(addr)) < 0) {
+            log_error("snmp: sendto failed host=%s port=%d oid=%s errno=%d",
+                      s->host, s->port, oidStr, errno);
             close(sockFd);
             return SWITCHD_ERR_IO;
         }
+
         FD_ZERO(&rfds);
         FD_SET(sockFd, &rfds);
-        tv.tv_sec = s->timeoutMs / 1000;
-        tv.tv_usec = (s->timeoutMs % 1000) * 1000;
+
+        tv.tv_sec = timeoutMs / 1000;
+        tv.tv_usec = (timeoutMs % 1000) * 1000;
+
         n = select(sockFd + 1, &rfds, NULL, NULL, &tv);
         if (n < 0) {
-            if (errno == EINTR) continue;
+            if (errno == EINTR) {
+                continue;
+            }
+
+            log_error("snmp: select failed host=%s port=%d oid=%s errno=%d",
+                      s->host, s->port, oidStr, errno);
             close(sockFd);
             return SWITCHD_ERR_IO;
         }
-        if (n == 0) continue;
+
+        if (n == 0) {
+            log_error("snmp: timeout host=%s port=%d oid=%s attempt=%d/%d",
+                      s->host,
+                      s->port,
+                      oidStr,
+                      attempt + 1,
+                      s->retries + 1);
+            continue;
+        }
+
         n = recvfrom(sockFd, resp, sizeof(resp), 0, NULL, NULL);
-        if (n <= 0) continue;
+        if (n <= 0) {
+            log_error("snmp: recv failed host=%s port=%d oid=%s errno=%d",
+                      s->host, s->port, oidStr, errno);
+            continue;
+        }
+
         close(sockFd);
-        return (parse_response(resp, (size_t)n, reqId, out) == 0) ? SWITCHD_OK : SWITCHD_ERR_SNMP;
+
+        if (parse_response(resp, (size_t)n, reqId, out) == 0) {
+            log_info("snmp: ok pdu=%d oid=%s bytes=%zd",
+                     pduType, oidStr, n);
+            return SWITCHD_OK;
+        }
+
+        log_error("snmp: parse response failed pdu=%d oid=%s bytes=%zd",
+                  pduType, oidStr, n);
+        return SWITCHD_ERR_SNMP;
     }
+
     close(sockFd);
     return SWITCHD_ERR_TIMEOUT;
 }
