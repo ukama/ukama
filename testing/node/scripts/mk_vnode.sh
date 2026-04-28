@@ -212,6 +212,9 @@ build_utils() {
     [ -f "${NODED_ROOT}/utils/mock-sysfs-anode.sh" ] || die "Missing mock-sysfs-anode.sh"
     cp -f "${NODED_ROOT}/utils/mock-sysfs-anode.sh" "${BUILD_DIR}/utils/"
 
+    [ -f "${NODED_ROOT}/utils/mock-sysfs-cnode.sh" ] || die "Missing mock-sysfs-cnode.sh"
+    cp -f "${NODED_ROOT}/utils/mock-sysfs-cnode.sh" "${BUILD_DIR}/utils/"
+
     # gps.d helper
     [ -f "${UKAMA_ROOT}/nodes/apps/gps/scripts/process_gps_data.sh" ] || \
         die "Missing process_gps_data.sh"
@@ -244,6 +247,7 @@ build_utils() {
 
     chmod 0755 "${BUILD_DIR}/utils/prepare_env.sh"
     chmod 0755 "${BUILD_DIR}/utils/mock-sysfs-anode.sh"
+    chmod 0755 "${BUILD_DIR}/utils/mock-sysfs-cnode.sh"
     chmod 0755 "${BUILD_DIR}/utils/process_gps_data.sh"
     chmod 0755 "${BUILD_DIR}/utils/vedirect_sim.py"
     chmod 0755 "${BUILD_DIR}/utils/vedirect_emulator.py"
@@ -265,14 +269,20 @@ build_sysfs() {
 
     log "INFO" "Preparing sysfs (type=${node_type}, uuid=${node_uuid})"
 
-    if [ $node_type == "anode" ]; then
+    if [ "$node_type" = "anode" ]; then
         "${NODED_ROOT}/utils/mock-sysfs-anode.sh" --clean
         "${NODED_ROOT}/utils/mock-sysfs-anode.sh"
-    elif [ $node_type == "tnode" ]; then
+
+    elif [ "$node_type" = "tnode" ]; then
         "${NODED_ROOT}/utils/prepare_env.sh" --clean
         "${NODED_ROOT}/utils/prepare_env.sh" -u tnode -u anode
+
+    elif [ "$node_type" = "cnode" ]; then
+        "${NODED_ROOT}/utils/mock-sysfs-cnode.sh" --clean
+        "${NODED_ROOT}/utils/mock-sysfs-cnode.sh"
+
     else
-        log "ERROR" "Uknown node type"
+        log "ERROR" "Unknown node type: ${node_type}"
         die "Can not proceed for unknown node type"
     fi
 
@@ -307,6 +317,15 @@ build_sysfs() {
                                           --f mfgdata/schema/trx.json \
                                           --n mask -m UK-SA9001-MSK-A1-1103 \
                                           --f mfgdata/schema/mask.json
+    elif [ "$node_type" = "cnode" ]; then
+        "${BUILD_DIR}/utils/genSchema" --u "${node_uuid}" \
+                                       --n cm4 \
+                                       --m UK-SA2602-CM4-1102 \
+                                       --f mfgdata/schema/cnode.json
+
+        "${BUILD_DIR}/utils/genInventory" --n cm4 \
+                                          --m UK-SA2602-CM4-1102 \
+                                          --f mfgdata/schema/cnode.json
     else
         log "ERROR" "Tmp sysfs not setup"
         die "Can not proceed for unknown node type"

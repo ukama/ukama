@@ -1,0 +1,73 @@
+{
+    "header": {
+        "version": {
+            "major": 0,
+            "minor": 1
+        },
+        "indexTableOffset": 64,
+        "indexTupleSize": 24,
+        "indexTupleMaxCount": 50,
+        "indexCurrentTuple": 2,
+        "moduleCapability": "AUTONOMOUS",
+        "moduleMode": "MASTER",
+        "moduleDeviceOwner": "OWNER"
+    },
+    "indexTable": [
+        {
+            "fieldId": 3,
+            "payloadOffset": 3776,
+            "payloadSize": 167,
+            "payloadVersion": {
+                "major": 0,
+                "minor": 3
+            },
+            "payloadCRC": 3421000616,
+            "state": "ENABLED",
+            "valid": true
+        },
+        {
+            "fieldId": 4,
+            "payloadOffset": 3968,
+            "payloadSize": 124,
+            "payloadVersion": {
+                "major": 0,
+                "minor": 4
+            },
+            "payloadCRC": 1876718055,
+            "state": "ENABLED",
+            "valid": true
+        }
+    ],
+    "moduleInfo": {
+        "UUID": "UK-SA2602-CM4-1102",
+        "name": "cm4",
+        "type": 0,
+        "partNumber": "RPI-CM4",
+        "hwVersion": "REV-A",
+        "mac": "10:20:30:20:50:66",
+        "swVersion": {
+            "major": 0,
+            "minor": 1
+        },
+        "prodSwVersion": {
+            "major": 1,
+            "minor": 1
+        },
+        "manufacturingDate": "31-07-2020",
+        "manufacturerName": "Raspberry Pi",
+        "deviceCount": 1
+    },
+    "moduleConfig": [
+        {
+            "name": "TMP464",
+            "description": "CM4 CPU temperature",
+            "type": 1,
+            "class": 2,
+            "devSysFsFile": "/tmp/sys/class/hwmon/hwmon0/0/tmp464_1/",
+            "devHwAttrs": {
+                "bus": 0,
+                "address": 72
+            }
+        }
+    ]
+}

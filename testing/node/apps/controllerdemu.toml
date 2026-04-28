@@ -1,0 +1,29 @@
+[build-from]
+	base="alpine"
+	version="latest"
+
+[build-compile]
+	version="0.1"
+	static="false"
+	source="/nodes/apps/controller/test"
+	cmd="true"
+	bin_from="/nodes/apps/controller/controller/test/vedirect_emulator.py"
+	bin_to="/sbin"
+
+[app-exec]
+	name="controlleremu"
+	version="latest"
+	bin="vedirect_emulator.py"
+	path="/sbin"
+	args="--mode realtime --city Goma"
+	autostart="false"
+	autorestart="true"
+	startretries=5
+	group="on-boot"
+
+[app-exec.env]
+	CONTROLLEREMU_VERSION="old_arch-8c3701309"
+	CONTROLLEREMU_HTTP_PORT="18089"
+	CONTROLLEREMU_SERIAL_LINK="/tmp/victron-tty"
+	CONTROLLEREMU_READY_FILE="/tmp/victron-emu.ready"
+	CONTROLLEREMU_INTERVAL_SEC="1"    

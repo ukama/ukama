@@ -115,16 +115,84 @@ static int safe_copy_sysfs_path(NodeCfg *pcfg, const char *absPath) {
 }
 
 /* Writing a newly parsed json to DB (sysFs/eeprom) */
-int create_db_hook(char **puuid, char** name, char** schema, int count) {
-    int ret = 0;
+int create_db_hook(char **puuid, char **name, char **schema, int count) {
 
+    typedef struct {
+        const char *modUuid;
+        const char *modName;
+        const char *sysFs;
+        uint8_t bus;
+        uint16_t addr;
+    } ModuleMap;
+
+    static const ModuleMap moduleMap[] = {
+        {
+            .modUuid = "UK-SA9001-COM-A1-1103",
+            .modName = "com",
+            .sysFs   = "/bus/i2c/devices/i2c-0/0-0050/eeprom",
+            .bus     = 0,
+            .addr    = 0x50
+        },
+        {
+            .modUuid = "UK-SA9001-TRX-A1-1103",
+            .modName = "trx",
+            .sysFs   = "/bus/i2c/devices/i2c-1/1-0050/eeprom",
+            .bus     = 1,
+            .addr    = 0x50
+        },
+        {
+            .modUuid = "UK-SA9001-MSK-A1-1103",
+            .modName = "mask",
+            .sysFs   = "/bus/i2c/devices/i2c-1/1-0051/eeprom",
+            .bus     = 1,
+            .addr    = 0x51
+        },
+        {
+            .modUuid = "UK-8001-RFC-1102",
+            .modName = "ctrl",
+            .sysFs   = "/bus/i2c/devices/i2c-0/0-0051/eeprom",
+            .bus     = 0,
+            .addr    = 0x51
+        },
+        {
+            .modUuid = "UK-8001-RFE-1103",
+            .modName = "fe1",
+            .sysFs   = "/bus/i2c/devices/i2c-1/1-0050/eeprom",
+            .bus     = 1,
+            .addr    = 0x50
+        },
+        {
+            .modUuid = "UK-8001-RFE-1104",
+            .modName = "fe2",
+            .sysFs   = "/bus/i2c/devices/i2c-2/2-0050/eeprom",
+            .bus     = 2,
+            .addr    = 0x50
+        },
+        {
+            .modUuid = "UK-SA2602-CM4-1102",
+            .modName = "cm4",
+            .sysFs   = "/bus/i2c/devices/i2c-0/0-0050/eeprom",
+            .bus     = 0,
+            .addr    = 0x50
+        }
+    };
+
+    int ret;
+    int idx;
+    size_t iter;
+    size_t moduleCount;
     JSONInput jip;
+    NodeCfg *pcfg;
+    DevI2cCfg *i2cCfg;
+
+    ret = 0;
+    pcfg = NULL;
+    i2cCfg = NULL;
+    moduleCount = sizeof(moduleMap) / sizeof(moduleMap[0]);
+
     jip.fname = schema;
     jip.count = count;
     jip.pname = PROPERTY_JSON;
-
-    NodeCfg *pcfg = NULL;
-    DevI2cCfg *i2cCfg = NULL;
 
     ret = ldgr_init(jip.pname);
     if (ret) {
@@ -140,100 +208,96 @@ int create_db_hook(char **puuid, char** name, char** schema, int count) {
 
     ret = invt_init(NULL, &ldgr_register);
     if (ret) {
-        usys_log_warn("MFGUTIL:: Inventory init failed %d (Expected -1)", ret);
+        usys_log_warn("MFGUTIL:: Inventory init failed %d (Expected -1)",
+                      ret);
     }
 
-    for(int idx = 0; idx < count; idx++) {
+    for (idx = 0; idx < count; idx++) {
 
         log_debug("UUID[%d] = %24s Name[%d] = %24s Schema file[%d] = %s \n",
                   idx, puuid[idx], idx, name[idx], idx, jip.fname[idx]);
 
-        /*
-         * Updated mapping for your mock sysroot tree:
-         *   ctrl : /bus/i2c/devices/i2c-0/0-0051/eeprom
-         *   fe1  : /bus/i2c/devices/i2c-1/1-0050/eeprom
-         *   fe2  : /bus/i2c/devices/i2c-2/2-0050/eeprom
-         *
-         * NOTE: sysFs paths are sysroot-relative.
-         */
-        NodeCfg *udata = (NodeCfg[]){
-            {   .modUuid = "ukma-8001-ctrl-1102",
-                .modName = "ctrl",
-                .sysFs   = "/bus/i2c/devices/i2c-0/0-0051/eeprom",
-                .eepromCfg = &(DevI2cCfg){ .bus = 0, .add = 0x51ul }
-            },
-            {   .modUuid = "ukma-8001-fe1-1102",
-                .modName = "fe1",
-                .sysFs   = "/bus/i2c/devices/i2c-1/1-0050/eeprom",
-                .eepromCfg = &(DevI2cCfg){ .bus = 1, .add = 0x50ul }
-            },
-            {   .modUuid = "ukma-8001-fe2-1102",
-                .modName = "fe2",
-                .sysFs   = "/bus/i2c/devices/i2c-2/2-0050/eeprom",
-                .eepromCfg = &(DevI2cCfg){ .bus = 2, .add = 0x50ul }
-            },
-        };
+        pcfg = NULL;
+        i2cCfg = NULL;
 
-        for (int iter = 0; iter < MAX_BOARDS; iter++) {
-            if (!udata[iter].modName) continue;
+        for (iter = 0; iter < moduleCount; iter++) {
 
-            if (!usys_strcmp(name[idx], udata[iter].modName)) {
+            if (usys_strcmp(name[idx], moduleMap[iter].modName)) {
+                continue;
+            }
 
-                pcfg = usys_zmalloc(sizeof(NodeCfg));
-                if (!pcfg) {
-                    log_error("MFGUTIL:: Err(%d): Memory exhausted while getting node config.",
-                              ERR_NODED_MEMORY_EXHAUSTED);
+            pcfg = usys_zmalloc(sizeof(NodeCfg));
+            if (!pcfg) {
+                log_error("MFGUTIL:: Err(%d): Memory exhausted while getting "
+                          "node config.",
+                          ERR_NODED_MEMORY_EXHAUSTED);
+                goto cleanup;
+            }
+
+            i2cCfg = usys_zmalloc(sizeof(DevI2cCfg));
+            if (!i2cCfg) {
+                log_error("MFGUTIL:: Err(%d): Memory exhausted while copying "
+                          "eepromCfg.",
+                          ERR_NODED_MEMORY_EXHAUSTED);
+                goto cleanup;
+            }
+
+            usys_memset(pcfg, 0, sizeof(NodeCfg));
+            usys_memset(i2cCfg, 0, sizeof(DevI2cCfg));
+
+            usys_memcpy(pcfg->modUuid,
+                        puuid[idx],
+                        usys_strlen(puuid[idx]));
+
+            usys_memcpy(pcfg->modName,
+                        moduleMap[iter].modName,
+                        usys_strlen(moduleMap[iter].modName));
+
+            i2cCfg->bus = moduleMap[iter].bus;
+            i2cCfg->add = moduleMap[iter].addr;
+            pcfg->eepromCfg = i2cCfg;
+
+            {
+                char absPath[512];
+                int n;
+
+                usys_memset(absPath, 0, sizeof(absPath));
+
+                if (!femd_sysroot()) {
+                    n = snprintf(absPath,
+                                 sizeof(absPath),
+                                 "%s%s",
+                                 "/tmp/sys",
+                                 moduleMap[iter].sysFs);
+
+                    if (n < 0 || (size_t)n >= sizeof(absPath)) {
+                        log_error("MFGUTIL:: sysFs path truncated for %s",
+                                  moduleMap[iter].modName);
+                        goto cleanup;
+                    }
+                } else {
+                    if (resolve_with_sysroot(absPath,
+                                             sizeof(absPath),
+                                             moduleMap[iter].sysFs) != 0) {
+                        log_error("MFGUTIL:: Failed to resolve sysFs for %s: %s",
+                                  moduleMap[iter].modName,
+                                  moduleMap[iter].sysFs);
+                        goto cleanup;
+                    }
+                }
+
+                if (safe_copy_sysfs_path(pcfg, absPath) != 0) {
                     goto cleanup;
                 }
-
-                usys_memcpy(pcfg, &udata[iter], sizeof(NodeCfg));
-
-                if (udata[iter].eepromCfg) {
-                    i2cCfg = usys_zmalloc(sizeof(DevI2cCfg));
-                    if (!i2cCfg) {
-                        log_error("MFGUTIL:: Err(%d): Memory exhausted while copying eepromCfg.",
-                                  ERR_NODED_MEMORY_EXHAUSTED);
-                        goto cleanup;
-                    }
-                    usys_memcpy(i2cCfg, udata[iter].eepromCfg, sizeof(DevI2cCfg));
-                }
-                pcfg->eepromCfg = i2cCfg;
-
-                /* Update Module UUID */
-                usys_memset(pcfg->modUuid, 0, 32);
-                usys_memcpy(pcfg->modUuid, puuid[idx], usys_strlen(puuid[idx]));
-
-                /* Resolve sysFs into FEMD_SYSROOT (or fallback /tmp/sys) */
-                {
-                    char absPath[512] = {0};
-
-                    if (!femd_sysroot()) {
-                        /* preserve old behavior: write into /tmp/sys */
-                        int n = snprintf(absPath, sizeof(absPath), "%s%s", "/tmp/sys", udata[iter].sysFs);
-                        if (n < 0 || (size_t)n >= sizeof(absPath)) {
-                            log_error("MFGUTIL:: sysFs path truncated for %s", udata[iter].modName);
-                            goto cleanup;
-                        }
-                    } else {
-                        if (resolve_with_sysroot(absPath, sizeof(absPath), udata[iter].sysFs) != 0) {
-                            log_error("MFGUTIL:: Failed to resolve sysFs for %s: %s",
-                                      udata[iter].modName, udata[iter].sysFs);
-                            goto cleanup;
-                        }
-                    }
-
-                    if (safe_copy_sysfs_path(pcfg, absPath) != 0) {
-                        goto cleanup;
-                    }
-                }
-
-                break;
             }
+
+            break;
         }
 
         if (!pcfg) {
-            log_debug("No module with name %s found.", name[idx]);
-            continue;
+            log_error("MFGUTIL:: No module with name %s found.", name[idx]);
+            ret = -1;
+            goto cleanup;
         }
 
         ret = invt_register_module(pcfg);
@@ -245,21 +309,24 @@ int create_db_hook(char **puuid, char** name, char** schema, int count) {
         ret = invt_create_db(pcfg->modUuid);
         if (ret) {
             log_error("MFGUTIL:: Failed while creating inventory Database "
-                      "for module %s UUID %s.", name[idx], pcfg->modUuid);
+                      "for module %s UUID %s.",
+                      name[idx],
+                      pcfg->modUuid);
             goto cleanup;
         }
 
-        usys_log_info("MFGUTIL:: Created inventory Database for module %s UUID %s at %s",
-                      name[idx], pcfg->modUuid, pcfg->sysFs);
+        usys_log_info("MFGUTIL:: Created inventory Database for module %s "
+                      "UUID %s at %s",
+                      name[idx],
+                      pcfg->modUuid,
+                      pcfg->sysFs);
 
-        /* cleanup per-module allocations */
-        if (pcfg) {
-            usys_free(pcfg->eepromCfg);
-            pcfg->eepromCfg = NULL;
-            usys_free(pcfg);
-            pcfg = NULL;
-            i2cCfg = NULL;
-        }
+        usys_free(pcfg->eepromCfg);
+        pcfg->eepromCfg = NULL;
+
+        usys_free(pcfg);
+        pcfg = NULL;
+        i2cCfg = NULL;
     }
 
 cleanup:
@@ -269,9 +336,11 @@ cleanup:
         usys_free(pcfg);
         pcfg = NULL;
     }
+
     invt_mfg_exit();
     ldgr_exit();
     invt_exit();
+
     return ret;
 }
 

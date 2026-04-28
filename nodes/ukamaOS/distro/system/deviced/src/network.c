@@ -92,7 +92,36 @@ static void setup_client_webservice_endpoints(Config *config, UInst *instance) {
     ulfius_set_default_endpoint(instance, &web_service_cb_default, config);
 }
 
-static void setup_tower_node_webservice_endpoints(Config *config, UInst *instance) {
+static void setup_controller_node_webservice_endpoints(Config *config,
+                                                       UInst *instance) {
+
+    setup_common_webservice_endpoints(config, instance);
+
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("state"), 0,
+                               &web_service_cb_state, config);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("state"));
+
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("restart"), 0,
+                               &web_service_cb_post_restart, config);
+    setup_unsupported_methods(instance, "POST",
+                              URL_PREFIX, API_RES_EP("restart"));
+
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("service"), 0,
+                               &web_service_cb_post_service, config);
+    setup_unsupported_methods(instance, "POST",
+                              URL_PREFIX, API_RES_EP("service"));
+
+    /* need to add ep related to switch/charger/HAT/etc. TODO */
+   
+    ulfius_set_default_endpoint(instance, &web_service_cb_default, config);
+}
+
+static void setup_tower_node_webservice_endpoints(Config *config,
+                                                  UInst *instance) {
 
     setup_common_webservice_endpoints(config, instance);
 
@@ -117,7 +146,6 @@ static void setup_tower_node_webservice_endpoints(Config *config, UInst *instanc
     ulfius_set_default_endpoint(instance, &web_service_cb_default, config);
 }
 
-
 static void setup_amplifier_node_webservice_endpoints(Config *config, UInst *instance) {
 
     setup_common_webservice_endpoints(config, instance);
@@ -139,6 +167,12 @@ static void setup_amplifier_node_webservice_endpoints(Config *config, UInst *ins
                                &web_service_cb_post_radio, config);
     setup_unsupported_methods(instance, "POST",
                               URL_PREFIX, API_RES_EP("radio"));
+
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("service"), 0,
+                               &web_service_cb_post_service, config);
+    setup_unsupported_methods(instance, "POST",
+                              URL_PREFIX, API_RES_EP("service"));
 
     ulfius_set_default_endpoint(instance, &web_service_cb_default, config);
 }
@@ -165,6 +199,8 @@ int start_web_service(Config *config, UInst *serviceInst) {
             setup_tower_node_webservice_endpoints(config, serviceInst);
         } else if (strcmp(config->nodeType, UKAMA_AMPLIFIER_NODE) == 0) {
             setup_amplifier_node_webservice_endpoints(config, serviceInst);
+        } else if (strcmp(config->nodeType, UKAMA_CONTROLLER_NODE) == 0) {
+            setup_controller_node_webservice_endpoints(config, serviceInst);
         } else {
             usys_log_error("Unable to setup web services for: %s",
                            config->nodeType);

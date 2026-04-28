@@ -14,6 +14,8 @@
 #include "config.h"
 #include "switchemu.h"
 
+#include "version.h"
+
 #ifdef __has_include
 #  if __has_include("usys_getopt.h")
 #    include "usys_getopt.h"
