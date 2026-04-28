@@ -1,8 +1,6 @@
 module github.com/ukama/ukama/systems/ukama-agent/api-gateway
 
-go 1.23.0
-
-toolchain go1.24.2
+go 1.25.0
 
 replace github.com/ukama/ukama/systems/common => ../../common
 
