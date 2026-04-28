@@ -25,15 +25,23 @@ static int streq(const char *a, const char *b) {
     return (a && b && strcmp(a, b) == 0);
 }
 
-static int is_boot_app(const char *name) {
+static int is_boot_app(Config *config) {
 
-    if (!name) {
+    CappConfig *capp = NULL;
+
+    if (!config || !config->capp) {
         return FALSE;
     }
 
-    return streq(name, "noded")     ||
-           streq(name, "bootstrap") ||
-           streq(name, "meshd");
+    capp = config->capp;
+
+    if (capp->group && streq(capp->group, "on-boot")) {
+        return TRUE;
+    }
+
+    return streq(capp->name, "noded")     ||
+           streq(capp->name, "bootstrap") ||
+           streq(capp->name, "meshd");
 }
 
 static int append_arg_tokens(json_t *jargv, const char *args) {
@@ -217,8 +225,9 @@ static int append_boot_apps_in_order(json_t *bootApps, Configs *configs) {
         "meshd"
     };
 
-    size_t i;
+    size_t i = 0;
     Config *cfg = NULL;
+    Configs *ptr = NULL;
 
     if (!bootApps || !configs) {
         return FALSE;
@@ -231,6 +240,27 @@ static int append_boot_apps_in_order(json_t *bootApps, Configs *configs) {
         }
 
         if (!manifest_add_app(bootApps, cfg)) {
+            return FALSE;
+        }
+    }
+
+    for (ptr = configs; ptr; ptr = ptr->next) {
+        if (!ptr->valid || !ptr->config || !ptr->config->capp) {
+            continue;
+        }
+
+        if (!ptr->config->capp->group ||
+            !streq(ptr->config->capp->group, "on-boot")) {
+            continue;
+        }
+
+        if (streq(ptr->config->capp->name, "noded") ||
+            streq(ptr->config->capp->name, "bootstrap") ||
+            streq(ptr->config->capp->name, "meshd")) {
+            continue;
+        }
+
+        if (!manifest_add_app(bootApps, ptr->config)) {
             return FALSE;
         }
     }
@@ -257,7 +287,7 @@ static int append_service_apps(json_t *svcApps, Configs *configs) {
             continue;
         }
 
-        if (is_boot_app(name)) {
+        if (is_boot_app(ptr->config)) {
             continue;
         }
 
