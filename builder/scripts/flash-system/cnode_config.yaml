@@ -1,0 +1,7 @@
+image:
+  name: "cnode-image.img"
+  path: "../build-system/cnode-image.img"
+
+serial:
+  device: "/dev/ttyUSB0"
+  baud: 115200
