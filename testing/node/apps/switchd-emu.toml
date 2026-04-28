@@ -18,7 +18,7 @@
 	autostart="false"
 	autorestart="true"
 	startretries=5
-	group="boot"
+	group="on-boot"
 
 [app-exec.env]
 	SWITCHEMU_HTTP_PORT="18088"
