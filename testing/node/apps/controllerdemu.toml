@@ -19,7 +19,7 @@
 	autostart="false"
 	autorestart="true"
 	startretries=5
-	group="sys-service"
+	group="boot"
 
 [app-exec.env]
 	CONTROLLEREMU_VERSION="old_arch-8c3701309"
