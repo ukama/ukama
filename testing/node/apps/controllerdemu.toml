@@ -22,4 +22,8 @@
 	group="sys-service"
 
 [app-exec.env]
-	CONTROLLER_SERIAL_PORT="/tmp/victron-tty"
+	CONTROLLEREMU_VERSION="old_arch-8c3701309"
+	CONTROLLEREMU_HTTP_PORT="18089"
+	CONTROLLEREMU_SERIAL_LINK="/tmp/victron-tty"
+	CONTROLLEREMU_READY_FILE="/tmp/victron-emu.ready"
+	CONTROLLEREMU_INTERVAL_SEC="1"    
