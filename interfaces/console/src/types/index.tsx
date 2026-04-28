@@ -7,8 +7,10 @@
  */
 
 import {
+  Node,
   Notification_Scope,
   Notification_Type,
+  SiteDto as Site,
 } from '@/client/graphql/generated';
 import {
   Graphs_Type,
@@ -45,12 +47,6 @@ export interface FormValues {
   longitude: number;
   location: string;
 }
-
-export type Site = {
-  name: string;
-  health: 'online' | 'offline';
-  duration: string;
-};
 
 export type NodeAppDetailsTypes = {
   id: number;
@@ -311,3 +307,5 @@ export type CreatePlanType = {
   amount: number | undefined;
   dataVolume: number | undefined;
 };
+
+export type TStatusBarObj = Node | Site;

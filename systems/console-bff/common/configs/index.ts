@@ -55,19 +55,32 @@ const NODE_PORT = parseInt(process.env.NODE_PORT ?? "5051");
 const SUBSCRIBER_PORT = parseInt(process.env.SUBSCRIBER_PORT ?? "5052");
 const SIM_PORT = parseInt(process.env.SIM_PORT ?? "5053");
 const NOTIFICATION_PORT = parseInt(process.env.NOTIFICATION_PORT ?? "5054");
-const CONTROLLER_PORT = parseInt(process.env.CONTROLLER_PORT ?? "5058");
-const PAYMENT_PORT = parseInt(process.env.PAYMENT_PORT ?? "5059");
-const REPORT_PORT = parseInt(process.env.REPORT_PORT ?? "5060");
-const SOFTWARE_PORT = parseInt(process.env.SOFTWARE_PORT ?? "5061");
 export const BILLING_PORT = parseInt(process.env.BILLING_PORT ?? "5055");
 export const COMPONENT_INVENTORY_PORT = parseInt(
   process.env.COMPONENT_INVENTORY_PORT ?? "5056"
 );
 export const METRIC_PORT = parseInt(process.env.METRIC_PORT ?? "5057");
 const NODE_STATE_PORT = parseInt(process.env.NODE_STATE_PORT ?? "5058");
-export const SUB_GRAPHS = {
-  nodeState: {
-    name: "nodeState",
+const CONTROLLER_PORT = parseInt(process.env.CONTROLLER_PORT ?? "5059");
+const HEALTH_PORT = parseInt(process.env.HEALTH_PORT ?? "5060");
+const PAYMENT_PORT = parseInt(process.env.PAYMENT_PORT ?? "5061");
+const REPORT_PORT = parseInt(process.env.REPORT_PORT ?? "5062");
+const SOFTWARE_PORT = parseInt(process.env.SOFTWARE_PORT ?? "5063");
+
+const SkipSubGraphs = ["state"] as const;
+const skipSubGraphsSet = new Set<string>(SkipSubGraphs);
+export const SUB_GRAPHS: Record<
+  string,
+  {
+    name: string;
+    port: number;
+    url: string;
+    isForNodeGw?: boolean;
+    isPingedSuccess: boolean;
+  }
+> = {
+  state: {
+    name: "state",
     port: NODE_STATE_PORT,
     url: `http://localhost:${NODE_STATE_PORT}`,
     isPingedSuccess: false,
@@ -144,6 +157,13 @@ export const SUB_GRAPHS = {
     url: `http://localhost:${CONTROLLER_PORT}`,
     isPingedSuccess: false,
   },
+  health: {
+    name: "health",
+    port: HEALTH_PORT,
+    url: `http://localhost:${HEALTH_PORT}`,
+    isForNodeGw: true,
+    isPingedSuccess: false,
+  },
   software: {
     name: "software",
     port: SOFTWARE_PORT,
@@ -199,9 +219,11 @@ export const SUB_GRAPHS = {
   },
 };
 
-export const SUB_GRAPH_LIST = Object.entries(SUB_GRAPHS).map(
-  ([key, value]) => ({
+export const SUB_GRAPH_LIST = Object.entries(SUB_GRAPHS)
+  .filter(([key, value]) => {
+    return !skipSubGraphsSet.has(key) && !skipSubGraphsSet.has(value.name);
+  })
+  .map(([key, value]) => ({
     type: key,
     ...value,
-  })
-);
+  }));

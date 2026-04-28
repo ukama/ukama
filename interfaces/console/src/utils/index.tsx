@@ -752,6 +752,16 @@ const getMapStyleURL = (style: string, token: string) => {
   }
 };
 
+const stringToBoolean = (value: string): boolean => {
+  return (
+    value === 'true' ||
+    value === '1' ||
+    value === 'on' ||
+    value === 'yes' ||
+    value === 'enabled'
+  );
+};
+
 export {
   base64ToBlob,
   ConfigureStep,
@@ -786,6 +796,7 @@ export {
   provideStatusColor,
   roleEnumToString,
   setQueryParam,
+  stringToBoolean,
   structureNodeSiteDate,
 };
 

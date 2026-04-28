@@ -86,6 +86,9 @@ const SplitButton = ({ options, handleSplitActionClick }: splitButtonProps) => {
         anchorEl={anchorRef.current}
         role={undefined}
         transition
+        sx={{
+          zIndex: 1000,
+        }}
       >
         {({ TransitionProps, placement }) => (
           <Grow

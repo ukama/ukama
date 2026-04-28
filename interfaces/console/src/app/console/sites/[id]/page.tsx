@@ -10,24 +10,35 @@
 import {
   Node,
   NodeStateEnum,
+  NodeTypeEnum,
   SiteDto,
+  Timeframe_Filter,
+  useGetHealthReportQuery,
   useGetNodesForSiteLazyQuery,
   useGetSitesQuery,
   useToggleInternetSwitchMutation,
+  useToggleRfStatusMutation,
+  useToggleServiceMutation,
 } from '@/client/graphql/generated';
 import { Graphs_Type } from '@/client/graphql/generated/subscriptions';
 import SiteComponents from '@/components/SiteComponents';
-import SiteDetailsHeader from '@/components/SiteDetailsHeader';
 import SiteInfo from '@/components/SiteInfos';
 import SiteOverview from '@/components/SiteOverView';
-import { SITE_KPI_TYPES, SITE_KPIS } from '@/constants';
+import StatusBar from '@/components/StatusBar';
+import {
+  NODE_ACTIONS_ENUM,
+  SITE_ACTIONS_BUTTONS,
+  SITE_KPI_TYPES,
+  SITE_KPIS,
+} from '@/constants';
 import { SectionData } from '@/constants/index';
 import { useAppContext } from '@/context';
-import { ActiveView, KPIType } from '@/types';
+import { ActiveView, KPIType, TStatusBarObj } from '@/types';
 import {
   extractMetricValue,
   graphTypeToSection,
   kpiToGraphType,
+  stringToBoolean,
 } from '@/utils';
 import { useFetchAddress } from '@/utils/useFetchAddress';
 import { useMetricSubscriptions } from '@/utils/useMetricSubscriptions';
@@ -77,7 +88,7 @@ const getSiteActiveSubscribers = (
   metricsData: any,
   siteId: string,
 ): number | null => {
-  if (!metricsData || !metricsData.metrics || !siteId) return null;
+  if (!metricsData?.metrics || !siteId) return null;
 
   const subscriberMetrics = metricsData.metrics.filter(
     (m: any) =>
@@ -107,6 +118,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const [nodesFetched, setNodesFetched] = useState(false);
   const [isDataReady, setIsDataReady] = useState(false);
   const [activeSubscribers, setActiveSubscribers] = useState<number>(0);
+  const [siteActionData, setSiteActionData] = useState<any[]>([]);
   const [activeView, setActiveView] = useState<ActiveView>({
     graphType: Graphs_Type.Solar,
     kpi: 'node',
@@ -283,9 +295,8 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     [id, updateSwitchPort, setSnackbarMessage],
   );
 
-  const { data: siteData, loading: sitesLoading } = useGetSitesQuery({
-    fetchPolicy: 'cache-first',
-    nextFetchPolicy: 'cache-and-network',
+  const { data: siteData } = useGetSitesQuery({
+    fetchPolicy: 'cache-and-network',
     variables: {
       data: {},
     },
@@ -310,6 +321,100 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       );
       setNodes(n.filter((node) => node !== null) as Node[]);
       setNodesFetched(true);
+    },
+  });
+
+
+  const [toggleRFStatus, { loading: toggleRFStatusLoading }] =
+    useToggleRfStatusMutation({
+      fetchPolicy: 'network-only',
+      onCompleted: (_, context) => {
+        setSnackbarMessage({
+          id: 'toggle-rf-status-success-msg',
+          message: `RF status turned ${
+            context?.variables?.data?.status ? 'On' : 'Off'
+          } successfully.`,
+          type: 'success',
+          show: true,
+        });
+      },
+      onError: (_, context) => {
+        setSnackbarMessage({
+          id: 'toggle-rf-status-error-msg',
+          message: `Failed to turn RF status ${
+            context?.variables?.data?.status ? 'On' : 'Off'
+          }.`,
+          type: 'error',
+          show: true,
+        });
+      },
+    });
+
+  const [toggleService, { loading: toggleServiceLoading }] =
+    useToggleServiceMutation({
+      fetchPolicy: 'network-only',
+      onCompleted: (_, context) => {
+        setSnackbarMessage({
+          id: 'toggle-service-status-success-msg',
+          message: `Service status turned ${
+            context?.variables?.data?.status ? 'On' : 'Off'
+          } successfully.`,
+          type: 'success',
+          show: true,
+        });
+      },
+      onError: (_, context) => {
+        setSnackbarMessage({
+          id: 'toggle-service-status-error-msg',
+          message: `Failed to turn service status ${
+            context?.variables?.data?.status ? 'On' : 'Off'
+          }.`,
+          type: 'error',
+          show: true,
+        });
+      },
+    });
+
+  const { loading: healthLoading } = useGetHealthReportQuery({
+    variables: {
+      data: {
+        id: '',
+        timestamp: '',
+        timeframe: Timeframe_Filter.Latest,
+        nodeId:
+          nodes.find((node) => node.id.includes(NodeTypeEnum.Tnode))?.id || '',
+      },
+    },
+    onCompleted: (data) => {
+      if (data.getHealthReport.system.length > 0) {
+        const am: any[] = [];
+        data.getHealthReport.system.forEach((system: any) => {
+          if (system.name === 'radio') {
+            am.push({
+              id: NODE_ACTIONS_ENUM.TOGGLE_RADIO,
+              key: system.name,
+              value: stringToBoolean(system.value),
+            });
+          }
+
+          if (system.name === 'service') {
+            am.push({
+              id: NODE_ACTIONS_ENUM.TOGGLE_SERVICE,
+              key: system.name,
+              value: stringToBoolean(system.value),
+            });
+          }
+        });
+        setSiteActionData(am);
+      }
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'fetching-health-report-msg',
+        message: error.message,
+        type: 'error',
+        show: true,
+      });
     },
   });
 
@@ -420,11 +525,77 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     return nodeUptimes;
   };
 
+  const handleActionClick = useCallback(
+    (id: string, value: boolean) => {
+      switch (id) {
+        case NODE_ACTIONS_ENUM.TOGGLE_RADIO:
+          toggleRFStatus({
+            variables: {
+              data: {
+                nodeId:
+                  nodes.find((node) => node.id.includes(NodeTypeEnum.Tnode))
+                    ?.id ?? '',
+                status: value,
+              },
+            },
+          });
+          break;
+        case NODE_ACTIONS_ENUM.TOGGLE_SERVICE:
+          toggleService({
+            variables: {
+              data: {
+                nodeId:
+                  nodes.find((node) => node.id.includes(NodeTypeEnum.Tnode))
+                    ?.id ?? '',
+                status: value,
+              },
+            },
+          });
+          break;
+        default:
+          break;
+      }
+      setSiteActionData(
+        siteActionData.map((item: any) =>
+          item.id === id ? { ...item, value: value } : item,
+        ),
+      );
+    },
+    [siteActionData],
+  );
+
+  const getSiteUptime = useCallback(() => {
+    if (!activeSite.id || !statData?.getSiteStat?.metrics?.length) return;
+
+    const siteMetrics = statData.getSiteStat.metrics.filter(
+      (metric) => metric.siteId === activeSite.id && metric.success,
+    );
+
+    const uptimeSecondsMetric = siteMetrics.find(
+      (metric) => metric.type === SITE_KPI_TYPES.SITE_UPTIME,
+    );
+
+    if (uptimeSecondsMetric?.value !== undefined) {
+      const value = uptimeSecondsMetric.value;
+      const numValue = typeof value === 'number' ? value : parseFloat(value);
+      return Math.floor(numValue);
+    }
+    return 0;
+  }, [statData, activeSite.id]);
+
   const initialNodeUptimes = getInitialNodeUptimes();
 
   if (!isDataReady) {
     return (
       <Grid2 container columnSpacing={2} rowSpacing={2}>
+        <Grid2 size={12}>
+          <Skeleton
+            height={64}
+            width={'100%'}
+            variant="rectangular"
+            sx={{ borderRadius: '5px' }}
+          />
+        </Grid2>
         {[1, 2, 3].map((item) => (
           <Grid2 size={4} key={item}>
             <Skeleton
@@ -446,7 +617,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       </Grid2>
     );
   }
-
+  
   return (
     <Box
       sx={{
@@ -457,14 +628,6 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         height: 'calc(100vh - 164px)',
       }}
     >
-      <SiteDetailsHeader
-        siteList={siteData?.getSites.sites || []}
-        selectedSiteId={activeSite.id}
-        onSiteChange={handleSiteChange}
-        isLoading={sitesLoading || statLoading}
-        siteStatMetrics={statData?.getSiteStat ?? { metrics: [] }}
-      />
-
       <Grid2
         container
         spacing={2}
@@ -474,6 +637,21 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
           height: 'max-content',
         }}
       >
+        <Grid2 size={12}>
+          <StatusBar
+            type="toggle"
+            selected={activeSite}
+            uptime={getSiteUptime() ?? 0}
+            actionLoading={
+              healthLoading || toggleRFStatusLoading || toggleServiceLoading
+            }
+            objs={siteData?.getSites.sites ?? []}
+            handleActionClick={handleActionClick}
+            actionOptions={SITE_ACTIONS_BUTTONS}
+            handleSelected={(obj: TStatusBarObj) => handleSiteChange(obj.id)}
+            actionOptionValues={siteActionData}
+          />
+        </Grid2>
         <Grid2
           size={{ xs: 12, sm: 6, md: 4 }}
           sx={{ height: 'auto', display: 'flex' }}
