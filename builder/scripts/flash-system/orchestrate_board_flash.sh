@@ -8,7 +8,7 @@
 set -euo pipefail
 
 BOARD_NAME=""
-CONFIG="smarc_config.yaml"
+CONFIG="boards.yaml"
 YQ_BIN="./.bin/yq"
 FLASH_SCRIPT=""
 ISO_BUILDER="./create_dual_partition.sh"
@@ -65,7 +65,7 @@ ensure_yq() {
 }
 
 yq_read() {
-    "$YQ_BIN" eval "$1" "$CONFIG"
+    "$YQ_BIN" eval ".boards.$BOARD_NAME.$1" "$CONFIG"
 }
 
 validate_config() {
@@ -110,22 +110,20 @@ while getopts ":c:b:" opt; do
   case "${opt}" in
     c) CONFIG="${OPTARG}" ;;
     b) BOARD_NAME="${OPTARG}" ;;
-    *) echo "Usage: $0 [-c <config_file>] [-b <board_name>]" >&2; exit 1 ;;
+    *) echo "Usage: $0 -b <board_name> [-c <config_file>]" >&2; exit 1 ;;
   esac
 done
 shift $((OPTIND-1))
 
-# Ensure both flags are provided
-if [[ -z "$CONFIG" || -z "$BOARD_NAME" ]]; then
-    echo "Error: Both -c <config_file> and -b <board_name> are required."
-    echo "Usage: $0 -c <config_file> -b <board_name>"
+if [[ -z "$BOARD_NAME" ]]; then
+    echo "Error: -b <board_name> is required."
+    echo "Usage: $0 -b <board_name> [-c <config_file>]"
+    echo "Available boards: tnode, anode, cnode"
     exit 1
 fi
 
-# Ensure the config file exists
 if [ ! -f "$CONFIG" ]; then
     echo "Config file '$CONFIG' not found."
-    echo "Usage: $0 -c <config_file>"
     exit 1
 fi
 
@@ -134,11 +132,11 @@ FLASH_SCRIPT="flash-${BOARD_NAME}.sh"
 ensure_yq
 validate_config
 
-FLASH_METHOD=$(yq_read '.flash.method' 2>/dev/null || echo "network")
+FLASH_METHOD=$(yq_read 'method' 2>/dev/null || echo "network")
 
 if [ "$FLASH_METHOD" = "rpiboot" ]; then
-    IMG_NAME=$(yq_read '.image.name')
-    IMG_PATH=$(yq_read '.image.path')
+    IMG_NAME=$(yq_read 'image.name')
+    IMG_PATH=$(yq_read 'image.path')
     
     if [ ! -f "$IMG_PATH" ]; then
         echo "Image not found: $IMG_PATH"
@@ -156,18 +154,18 @@ if [ "$FLASH_METHOD" = "rpiboot" ]; then
     exit 0
 fi
 
-HOST_ETH=$(yq_read        '.network.host_eth')
-HOST_IP=$(yq_read         '.network.host_ip')
-TARGET_IP=$(yq_read       '.network.target_ip')
-IMG_NAME=$(yq_read        '.image.name')
-IMG_PATH=$(yq_read        '.image.path')
-HOST_DEV=$(yq_read        '.host_device.device')
-ISO_URL=$(yq_read         '.host_device.iso_url')
-SERIAL_DEV=$(yq_read      '.serial.device')
-SERIAL_BAUD=$(yq_read     '.serial.baud')
-TARGET_DEV=$(yq_read      '.flash.target_device')
-SUCCESS_MARKER=$(yq_read  '.flash.success_marker')
-BOOT_MARKER=$(yq_read     '.flash.boot_marker')
+HOST_ETH=$(yq_read        'network.host_eth')
+HOST_IP=$(yq_read         'network.host_ip')
+TARGET_IP=$(yq_read       'network.target_ip')
+IMG_NAME=$(yq_read        'image.name')
+IMG_PATH=$(yq_read        'image.path')
+HOST_DEV=$(yq_read        'host_device.device')
+ISO_URL=$(yq_read         'host_device.iso_url')
+SERIAL_DEV=$(yq_read      'serial.device')
+SERIAL_BAUD=$(yq_read     'serial.baud')
+TARGET_DEV=$(yq_read      'flash.target_device')
+SUCCESS_MARKER=$(yq_read  'flash.success_marker')
+BOOT_MARKER=$(yq_read     'flash.boot_marker')
 
 {
     # Verify device exists
