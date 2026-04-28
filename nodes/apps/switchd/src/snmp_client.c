@@ -533,8 +533,8 @@ static int snmp_request(SnmpSession *s, int pduType, const uint32_t *oid, size_t
         close(sockFd);
 
         if (parse_response(resp, (size_t)n, reqId, out) == 0) {
-            log_info("snmp: ok pdu=%d oid=%s bytes=%zd",
-                     pduType, oidStr, n);
+            log_debug("snmp: ok pdu=%d oid=%s bytes=%zd",
+                      pduType, oidStr, n);
             return SWITCHD_OK;
         }
 
