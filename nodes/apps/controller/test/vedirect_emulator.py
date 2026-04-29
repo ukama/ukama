@@ -30,10 +30,39 @@ DEF_HTTP_PORT = 18089
 DEF_SERIAL_LINK = "/tmp/victron-tty"
 DEF_READY_FILE = "/tmp/victron-emu.ready"
 DEF_INTERVAL_SEC = 1.0
+DEF_MODE = "static"
+DEF_CITY = "Goma"
 
 PRODUCT_ID = "0xA042"
 FIRMWARE = "159"
 SERIAL = "HQ2242ABCDE"
+
+CITY_PROFILES = {
+    "goma": {
+        "pv_max_w": 980.0,
+        "battery_base_v": 49.2,
+        "battery_swing_v": 7.0,
+        "temp_base_c": 24.0,
+        "temp_swing_c": 12.0,
+        "cycle_sec": 180.0,
+    },
+    "calgary": {
+        "pv_max_w": 760.0,
+        "battery_base_v": 48.8,
+        "battery_swing_v": 5.5,
+        "temp_base_c": 10.0,
+        "temp_swing_c": 14.0,
+        "cycle_sec": 220.0,
+    },
+    "default": {
+        "pv_max_w": 850.0,
+        "battery_base_v": 49.0,
+        "battery_swing_v": 6.0,
+        "temp_base_c": 22.0,
+        "temp_swing_c": 10.0,
+        "cycle_sec": 180.0,
+    },
+}
 
 g_stop = False
 g_stats_lock = threading.Lock()
@@ -41,6 +70,8 @@ g_stats = {
     "started": False,
     "serial_path": "",
     "serial_link": "",
+    "mode": "",
+    "city": "",
     "frame_count": 0,
     "last_frame_ms": 0,
     "battery_voltage_v": 0.0,
@@ -86,6 +117,13 @@ def ensure_parent(path: str) -> None:
 
     if parent:
         os.makedirs(parent, exist_ok=True)
+
+
+def get_city_profile(city: str) -> dict[str, float]:
+    if not city:
+        return CITY_PROFILES["default"]
+
+    return CITY_PROFILES.get(city.strip().lower(), CITY_PROFILES["default"])
 
 
 def publish_serial(slave_path: str,
@@ -141,23 +179,36 @@ def build_frame(fields: list[tuple[str, str]]) -> bytes:
     return prefix + bytes([checksum]) + b"\r\n"
 
 
-def build_sample_frame(elapsed_sec: float) -> tuple[bytes, dict[str, object]]:
-    cycle_sec = 180.0
-    phase = (elapsed_sec % cycle_sec) / cycle_sec
-    sun = math.sin(math.pi * phase)
+def build_sample_frame(elapsed_sec: float,
+                       mode: str,
+                       city: str) -> tuple[bytes, dict[str, object]]:
+    profile = get_city_profile(city)
 
-    if sun < 0.0:
-        sun = 0.0
+    if mode == "static":
+        sun = 0.75
+    else:
+        cycle_sec = profile["cycle_sec"]
+        phase = (elapsed_sec % cycle_sec) / cycle_sec
+        sun = math.sin(math.pi * phase)
 
-    pv_power_w = int(round(980.0 * sun))
-    battery_voltage_v = 49.2 + (7.0 * sun)
-    battery_current_a = pv_power_w / battery_voltage_v
+        if sun < 0.0:
+            sun = 0.0
+
+    pv_power_w = int(round(profile["pv_max_w"] * sun))
+
+    battery_voltage_v = profile["battery_base_v"]
+    battery_voltage_v += profile["battery_swing_v"] * sun
+
+    battery_current_a = 0.0
+    if battery_voltage_v > 0.0:
+        battery_current_a = pv_power_w / battery_voltage_v
 
     pv_voltage_v = 0.0
     if pv_power_w > 0:
         pv_voltage_v = battery_voltage_v + 8.0 + (8.0 * sun)
 
-    temp_c = int(round(24.0 + (12.0 * sun)))
+    temp_c = int(round(profile["temp_base_c"] +
+                       (profile["temp_swing_c"] * sun)))
 
     charge_state = 0
     mppt = 0
@@ -194,6 +245,8 @@ def build_sample_frame(elapsed_sec: float) -> tuple[bytes, dict[str, object]]:
     ])
 
     sample = {
+        "mode": mode,
+        "city": city,
         "battery_voltage_v": battery_voltage_v,
         "battery_current_a": battery_current_a,
         "pv_voltage_v": pv_voltage_v,
@@ -315,6 +368,8 @@ def run_emulator(args: argparse.Namespace) -> None:
             g_stats["started"] = True
             g_stats["serial_path"] = slave_path
             g_stats["serial_link"] = args.serial_link or ""
+            g_stats["mode"] = args.mode
+            g_stats["city"] = args.city
 
         print(f"{SERVICE_NAME}: serial path {slave_path}", flush=True)
         print(f"{SERVICE_NAME}: serial link {args.serial_link}", flush=True)
@@ -323,7 +378,9 @@ def run_emulator(args: argparse.Namespace) -> None:
 
         while not g_stop:
             elapsed_sec = time.time() - start_sec
-            frame, sample = build_sample_frame(elapsed_sec)
+            frame, sample = build_sample_frame(elapsed_sec,
+                                               args.mode,
+                                               args.city)
 
             try:
                 os.write(master_fd, frame)
@@ -384,6 +441,15 @@ def getenv_float(name: str, default: float) -> float:
         return default
 
 
+def getenv_str(name: str, default: str) -> str:
+    value = os.getenv(name)
+
+    if value and value.strip():
+        return value.strip()
+
+    return default
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="VE.Direct emulator for controller.d",
@@ -391,7 +457,7 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument(
         "--listen-addr",
-        default=os.getenv("CONTROLLEREMU_LISTEN_ADDR", DEF_LISTEN_ADDR),
+        default=getenv_str("CONTROLLEREMU_LISTEN_ADDR", DEF_LISTEN_ADDR),
         help="HTTP listen address",
     )
 
@@ -404,13 +470,13 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument(
         "--serial-link",
-        default=os.getenv("CONTROLLEREMU_SERIAL_LINK", DEF_SERIAL_LINK),
+        default=getenv_str("CONTROLLEREMU_SERIAL_LINK", DEF_SERIAL_LINK),
         help="Stable serial symlink used by controller.d",
     )
 
     parser.add_argument(
         "--ready-file",
-        default=os.getenv("CONTROLLEREMU_READY_FILE", DEF_READY_FILE),
+        default=getenv_str("CONTROLLEREMU_READY_FILE", DEF_READY_FILE),
         help="File written when PTY is ready",
     )
 
@@ -420,6 +486,19 @@ def parse_args() -> argparse.Namespace:
         default=getenv_float("CONTROLLEREMU_INTERVAL_SEC",
                              DEF_INTERVAL_SEC),
         help="Seconds between VE.Direct frames",
+    )
+
+    parser.add_argument(
+        "--mode",
+        choices=["static", "realtime"],
+        default=getenv_str("CONTROLLEREMU_MODE", DEF_MODE),
+        help="Emulation mode",
+    )
+
+    parser.add_argument(
+        "--city",
+        default=getenv_str("CONTROLLEREMU_CITY", DEF_CITY),
+        help="City profile used for realtime solar simulation",
     )
 
     return parser.parse_args()
@@ -437,6 +516,8 @@ def main() -> int:
         flush=True,
     )
     print(f"{SERVICE_NAME}: version {VERSION}", flush=True)
+    print(f"{SERVICE_NAME}: mode {args.mode}", flush=True)
+    print(f"{SERVICE_NAME}: city {args.city}", flush=True)
 
     try:
         run_emulator(args)
