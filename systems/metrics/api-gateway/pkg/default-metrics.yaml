@@ -195,26 +195,6 @@ cnode:
     metric: com_generic_system_uptime_seconds
     needRate: false
     rateInterval: ""
-  cpu_temperature:
-    metric: com_soc_cpu_temperature
-    needRate: false
-    rateInterval: ""
-  temperature_z0:
-    metric: com_sensors_thermal_zone0_temp_temperature_celsius
-    needRate: false
-    rateInterval: ""
-  temperature_z1:
-    metric: com_sensors_thermal_zone1_temp_temperature_celsius
-    needRate: false
-    rateInterval: ""
-  temperature_z2:
-    metric: com_sensors_thermal_zone2_temp_temperature_celsius
-    needRate: false
-    rateInterval: ""
-  temperature_z3:
-    metric: com_sensors_thermal_zone3_temp_temperature_celsius
-    needRate: false
-    rateInterval: ""
   cpu:
     metric: com_soc_cpu_usage
     needRate: false

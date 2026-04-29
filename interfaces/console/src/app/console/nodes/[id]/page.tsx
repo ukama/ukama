@@ -483,10 +483,12 @@ const Page: React.FC<INodePage> = ({ params }) => {
                 id={`node-tab-${value}`}
                 sx={{
                   display:
-                    (currentNode?.type === NodeTypeEnum.Hnode &&
+                    ((currentNode?.type === NodeTypeEnum.Cnode ||
+                      currentNode?.type === NodeTypeEnum.Hnode) &&
                       label === 'Radio') ||
                     ((currentNode?.type === NodeTypeEnum.Anode ||
-                      currentNode?.type === NodeTypeEnum.Cnode) &&
+                      currentNode?.type === NodeTypeEnum.Cnode ||
+                      currentNode?.type === NodeTypeEnum.Hnode) &&
                       label === 'Network')
                       ? 'none'
                       : 'block',

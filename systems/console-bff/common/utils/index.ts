@@ -151,6 +151,7 @@ const TYPE_NODE_KEYS_GROUPS: {
     nodeKeys: {
       [NODE_TYPE.tnode]: ["uptime", "cpu_temperature", "memory"],
       [NODE_TYPE.anode]: ["uptime", "fem1_temperature", "fem2_temperature"],
+      [NODE_TYPE.cnode]: ["uptime", "memory"],
     },
   },
   {
@@ -169,6 +170,7 @@ const TYPE_NODE_KEYS_GROUPS: {
         "subscribers_active",
       ],
       [NODE_TYPE.anode]: ["uptime", "fem1_temperature", "fem2_temperature"],
+      [NODE_TYPE.cnode]: ["uptime", "memory"],
     },
   },
   {
@@ -212,7 +214,6 @@ const TYPE_NODE_KEYS_GROUPS: {
       [NODE_TYPE.tnode]: [
         "uptime",
         "cpu_temperature",
-        "memory",
         "subscribers_active",
         "cellular_uplink",
         "cellular_downlink",
@@ -235,6 +236,7 @@ const TYPE_NODE_KEYS_GROUPS: {
         "rx_power",
         "tx_power",
       ],
+      [NODE_TYPE.cnode]: ["uptime", "cpu", "memory", "disk"],
     },
   },
 ];
