@@ -27,6 +27,25 @@ import NodeDetailsCard from '../NodeDetailsCard';
 import NodeStatItem from '../NodeStatItem';
 import NodeStatsContainer from '../NodeStatsContainer';
 
+const withApiDisplayMeta = (
+  config: any,
+  statsData: MetricsStateRes,
+  metrics: MetricsRes,
+) => {
+  const statMeta = statsData?.metrics?.find((m: any) => m.type === config.id);
+  const rangeMeta = metrics?.metrics?.find((m: any) => m.type === config.id);
+  const meta = statMeta ?? rangeMeta;
+
+  return {
+    ...config,
+    unit: meta?.unit ?? config.unit,
+    format: meta?.format ?? config.format ?? 'number',
+    tickInterval: meta?.tickInterval ?? config.tickInterval,
+    tickPositions: meta?.tickPositions ?? config.tickPositions,
+    threshold: meta?.threshold ?? config.threshold,
+  };
+};
+
 interface INodeOverviewTab {
   nodeId: string;
   metricFrom: number;
@@ -56,8 +75,12 @@ const NodeOverviewTab = ({
   handleOverviewSectionChange,
 }: INodeOverviewTab) => {
   const nodeType = selectedNode?.type ?? NodeTypeEnum.Tnode;
-  const healthConfig = NODE_KPIS.HEALTH[nodeType];
-  const subscriberConfig = NODE_KPIS.SUBSCRIBER[NodeTypeEnum.Tnode];
+  const healthConfig = NODE_KPIS.HEALTH[nodeType].map((config) =>
+    withApiDisplayMeta(config, nodeMetricsStatData, metrics),
+  );
+  const subscriberConfig = NODE_KPIS.SUBSCRIBER[NodeTypeEnum.Tnode].map(
+    (config) => withApiDisplayMeta(config, nodeMetricsStatData, metrics),
+  );
   const [selected, setSelected] = useState<number>(0);
   useEffect(() => {
     setSelected(0);

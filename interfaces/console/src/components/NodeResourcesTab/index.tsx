@@ -16,6 +16,25 @@ import LineChart from '../LineChart';
 import NodeStatItem from '../NodeStatItem';
 import NodeStatsContainer from '../NodeStatsContainer';
 
+const withApiDisplayMeta = (
+  config: any,
+  statsData: MetricsStateRes,
+  metrics: any,
+) => {
+  const statMeta = statsData?.metrics?.find((m: any) => m.type === config.id);
+  const rangeMeta = metrics?.metrics?.find((m: any) => m.type === config.id);
+  const meta = statMeta ?? rangeMeta;
+
+  return {
+    ...config,
+    unit: meta?.unit ?? config.unit,
+    format: meta?.format ?? config.format ?? 'number',
+    tickInterval: meta?.tickInterval ?? config.tickInterval,
+    tickPositions: meta?.tickPositions ?? config.tickPositions,
+    threshold: meta?.threshold ?? config.threshold,
+  };
+};
+
 interface INodeResourcesTab {
   metrics: any;
   loading: boolean;
@@ -31,7 +50,9 @@ const NodeResourcesTab = ({
   statLoading,
   nodeMetricsStatData,
 }: INodeResourcesTab) => {
-  const resourcesConfig = NODE_KPIS.RESOURCES[NodeTypeEnum.Tnode];
+  const resourcesConfig = NODE_KPIS.RESOURCES[NodeTypeEnum.Tnode].map((config) =>
+    withApiDisplayMeta(config, nodeMetricsStatData, metrics),
+  );
 
   return (
     <Grid container spacing={3}>
