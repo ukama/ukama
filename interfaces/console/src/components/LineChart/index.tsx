@@ -68,10 +68,22 @@ const LineChart = ({
   const chartRef = useRef<HighchartsReact.RefObject>(null);
 
   const fixedInitData = useMemo(() => initDataFixes(initData), [initData]);
-  const normalizedTickPositions = useMemo(
-    () => (tickPositions && tickPositions.length > 0 ? tickPositions : undefined),
-    [tickPositions],
-  );
+  const normalizedTickPositions = useMemo(() => {
+    if (!tickPositions || tickPositions.length === 0) {
+      return undefined;
+    }
+
+    // Keep at most 5 y-axis tick lines to avoid noisy charts.
+    if (tickPositions.length <= 5) {
+      return tickPositions;
+    }
+
+    const lastIndex = tickPositions.length - 1;
+    const picks = [0, 0.25, 0.5, 0.75, 1].map((ratio) =>
+      tickPositions[Math.round(lastIndex * ratio)],
+    );
+    return Array.from(new Set(picks));
+  }, [tickPositions]);
 
   const chartOptions = useMemo<Highcharts.Options>(
     () => ({
@@ -157,7 +169,7 @@ const LineChart = ({
         gridLineDashStyle: 'Dash',
         tickPositions: normalizedTickPositions,
         gridLineWidth: normalizedTickPositions ? 0 : 2,
-        tickAmount: normalizedTickPositions?.length ?? 5,
+        tickAmount: 5,
         tickInterval: tickInterval,
         labels: {
           y: 5,
