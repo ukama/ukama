@@ -52,7 +52,22 @@ const getNodeMetricRange = async (
         );
         return { metrics: [] } as MetricsRes;
       }
-      return parseMetricsResponse(result, type, args);
+      return parseMetricsResponse(result, type, args, {
+        unit: res?.data?.unit ?? "",
+        format: res?.data?.format ?? "number",
+        tickInterval: Number(res?.data?.tickInterval ?? 0),
+        tickPositions: Array.isArray(res?.data?.tickPositions)
+          ? res.data.tickPositions
+          : [],
+        threshold:
+          typeof res?.data?.threshold === "object" && res?.data?.threshold
+            ? {
+                min: Number(res.data.threshold.min ?? 0),
+                normal: Number(res.data.threshold.normal ?? 0),
+                max: Number(res.data.threshold.max ?? 0),
+              }
+            : { min: 0, normal: 0, max: 0 },
+      });
     })
     .catch(err => {
       logger.error(`Error fetching metrics for '${type}': ${err}`);

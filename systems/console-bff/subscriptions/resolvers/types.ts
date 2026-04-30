@@ -17,6 +17,18 @@ import {
 } from "../../common/enums";
 
 @ObjectType()
+export class MetricThreshold {
+  @Field()
+  min: number;
+
+  @Field()
+  normal: number;
+
+  @Field()
+  max: number;
+}
+
+@ObjectType()
 export class MetricRes {
   @Field()
   success: boolean;
@@ -44,6 +56,21 @@ export class MetricRes {
 
   @Field(() => [[Number, Number]])
   values: [number, number][];
+
+  @Field({ nullable: true })
+  unit?: string;
+
+  @Field({ nullable: true })
+  format?: string;
+
+  @Field({ nullable: true })
+  tickInterval?: number;
+
+  @Field(() => [Number], { nullable: true })
+  tickPositions?: number[];
+
+  @Field(() => MetricThreshold, { nullable: true })
+  threshold?: MetricThreshold;
 }
 @InputType()
 export class GetLatestMetricInput {
@@ -106,6 +133,21 @@ export class LatestMetricSubRes {
 
   @Field(() => [Number, Number])
   value: [number, number];
+
+  @Field({ nullable: true })
+  unit?: string;
+
+  @Field({ nullable: true })
+  format?: string;
+
+  @Field({ nullable: true })
+  tickInterval?: number;
+
+  @Field(() => [Number], { nullable: true })
+  tickPositions?: number[];
+
+  @Field(() => MetricThreshold, { nullable: true })
+  threshold?: MetricThreshold;
 }
 
 @InputType()
@@ -316,6 +358,21 @@ export class MetricStateRes {
 
   @Field({ nullable: true })
   dataPlanId?: string;
+
+  @Field({ nullable: true })
+  unit?: string;
+
+  @Field({ nullable: true })
+  format?: string;
+
+  @Field({ nullable: true })
+  tickInterval?: number;
+
+  @Field(() => [Number], { nullable: true })
+  tickPositions?: number[];
+
+  @Field(() => MetricThreshold, { nullable: true })
+  threshold?: MetricThreshold;
 }
 
 @InputType()
