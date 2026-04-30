@@ -14,9 +14,6 @@ import (
 	"fmt"
 	"time"
 
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/anypb"
-
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg"
@@ -25,6 +22,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	cpb "github.com/ukama/ukama/systems/common/pb/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
 	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
@@ -85,7 +83,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 
 	switch e.RoutingKey {
 	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate"):
-		msg, err := epb.UnmarshalEventSimAllocation(e.Msg, "EventSimAllocate")
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventSimAllocation](e.Msg)
 		if err != nil {
 			return nil, err
 		}
@@ -96,7 +94,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 		}
 
 	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.payments.processor.payment.success"):
-		msg, err := unmarshalProcessorPaymentSuccess(e.Msg)
+		msg, err := cpb.UnmarshalProtoEvent[epb.Payment](e.Msg)
 		if err != nil {
 			return nil, err
 		}
@@ -107,7 +105,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 		}
 
 	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.operator.cdr.cdr.create"):
-		msg, err := unmarshalOperatorCdrCreate(e.Msg)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventOperatorCdrReport](e.Msg)
 		if err != nil {
 			return nil, err
 		}
@@ -118,7 +116,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 		}
 
 	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.cdr.cdr.create"):
-		msg, err := unmarshalUkamaAgentCdrCreate(e.Msg)
+		msg, err := cpb.UnmarshalProtoEvent[epb.CDRReported](e.Msg)
 		if err != nil {
 			return nil, err
 		}
@@ -129,7 +127,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 		}
 
 	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.delete"):
-		msg, err := unmarshalUkamaAgentAsrProfileDelete(e.Msg)
+		msg, err := cpb.UnmarshalProtoEvent[epb.Profile](e.Msg)
 		if err != nil {
 			return nil, err
 		}
@@ -357,56 +355,4 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key strin
 	}
 
 	return nil
-}
-
-func unmarshalProcessorPaymentSuccess(msg *anypb.Any) (*epb.Payment, error) {
-	p := &epb.Payment{}
-
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal payment message with : %+v. Error %s.", msg, err.Error())
-
-		return nil, err
-	}
-
-	return p, nil
-}
-
-func unmarshalOperatorCdrCreate(msg *anypb.Any) (*epb.EventOperatorCdrReport, error) {
-	p := &epb.EventOperatorCdrReport{}
-
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal EventOperatorCdrReport message with : %+v. Error %s.", msg, err.Error())
-
-		return nil, err
-	}
-
-	return p, nil
-}
-
-func unmarshalUkamaAgentCdrCreate(msg *anypb.Any) (*epb.CDRReported, error) {
-	p := &epb.CDRReported{}
-
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal UkamaAgent CDRReported message with : %+v. Error %s.", msg, err.Error())
-
-		return nil, err
-	}
-
-	return p, nil
-}
-
-func unmarshalUkamaAgentAsrProfileDelete(msg *anypb.Any) (*epb.Profile, error) {
-	p := &epb.Profile{}
-
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal UkamaAgent ASR profile message with : %+v. Error %s.", msg, err.Error())
-
-		return nil, err
-	}
-
-	return p, nil
 }
