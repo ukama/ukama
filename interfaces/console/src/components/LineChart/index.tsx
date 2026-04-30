@@ -68,6 +68,10 @@ const LineChart = ({
   const chartRef = useRef<HighchartsReact.RefObject>(null);
 
   const fixedInitData = useMemo(() => initDataFixes(initData), [initData]);
+  const normalizedTickPositions = useMemo(
+    () => (tickPositions && tickPositions.length > 0 ? tickPositions : undefined),
+    [tickPositions],
+  );
 
   const chartOptions = useMemo<Highcharts.Options>(
     () => ({
@@ -145,15 +149,15 @@ const LineChart = ({
       },
       yAxis: {
         endOnTick: true,
-        max: tickPositions
-          ? tickPositions[tickPositions.length - 1]
+        max: normalizedTickPositions
+          ? normalizedTickPositions[normalizedTickPositions.length - 1]
           : undefined,
-        min: tickPositions ? tickPositions[0] : undefined,
+        min: normalizedTickPositions ? normalizedTickPositions[0] : undefined,
         opposite: false,
         gridLineDashStyle: 'Dash',
-        tickPositions: tickPositions,
-        gridLineWidth: tickPositions ? 0 : 2,
-        tickAmount: tickPositions?.length ?? 5,
+        tickPositions: normalizedTickPositions,
+        gridLineWidth: normalizedTickPositions ? 0 : 2,
+        tickAmount: normalizedTickPositions?.length ?? 5,
         tickInterval: tickInterval,
         labels: {
           y: 5,
@@ -162,7 +166,7 @@ const LineChart = ({
           },
         },
 
-        plotLines: [...generatePlotLines(tickPositions)],
+        plotLines: [...generatePlotLines(normalizedTickPositions)],
       },
 
       series: [
@@ -179,7 +183,7 @@ const LineChart = ({
         },
       ],
     }),
-    [fixedInitData, tickInterval, tickPositions, title, topic, yunit],
+    [fixedInitData, normalizedTickPositions, tickInterval, title, topic, yunit],
   );
 
   return (
