@@ -49,7 +49,7 @@ type SimManagerEventServer struct {
 	baseRoutingKey            msgbus.RoutingKeyBuilder
 	orgId                     string
 	orgName                   string
-	pushMetricHost            string
+	metricsPusher             MetricsPusher
 	s                         *SimManagerServer
 	epb.UnimplementedEventNotificationServiceServer
 }
@@ -71,10 +71,10 @@ func NewSimManagerEventServer(orgName, orgId string, simRepo sims.SimRepo, packa
 		msgbus:                    msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).
 			SetOrgName(orgName).SetService(pkg.ServiceName),
-		orgName:        orgName,
-		orgId:          orgId,
-		pushMetricHost: pushMetricHost,
-		s:              s,
+		orgName:       orgName,
+		orgId:         orgId,
+		metricsPusher: NewMetricsPusher(pushMetricHost),
+		s:             s,
 	}
 }
 
@@ -150,7 +150,7 @@ func (es *SimManagerEventServer) handleSimManagerSimAllocateEvent(key string, ms
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
 	defer cancel()
 
-	return activateSim(ctx, msg.Id, es.simRepo, es.agentFactory, es.orgId, es.pushMetricHost, es.msgbus, es.baseRoutingKey)
+	return activateSim(ctx, msg.Id, es.simRepo, es.agentFactory, es.orgId, es.metricsPusher, es.msgbus, es.baseRoutingKey)
 }
 
 func (es *SimManagerEventServer) handleProcessorPaymentSuccessEvent(key string, msg *epb.Payment) error {
@@ -184,7 +184,7 @@ func (es *SimManagerEventServer) handleProcessorPaymentSuccessEvent(key string, 
 	log.Infof("Adding package %s to sim %s", msg.ItemId, simId)
 
 	return addPackageForSim(ctx, simId, msg.ItemId, startDate, es.simRepo, es.packageRepo, es.packageClient,
-		es.orgName, es.orgId, es.pushMetricHost, es.nucleusOrgClient, es.nucleusUserClient,
+		es.orgName, es.orgId, es.metricsPusher, es.nucleusOrgClient, es.nucleusUserClient,
 		es.subscriberRegistryService, es.networkClient, es.mailerClient, es.msgbus, es.baseRoutingKey)
 }
 
