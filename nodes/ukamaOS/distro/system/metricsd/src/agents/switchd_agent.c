@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #include <curl/curl.h>
 #include <jansson.h>
@@ -29,22 +30,23 @@
 #define RETURN_NOTOK -1
 #endif
 
+#define SWITCHD_METRIC_NAME_LEN 128
+
 typedef struct {
     char    *data;
     size_t   len;
 } HttpBuf;
 
 typedef struct {
-    double  poeTotalPowerWatts;
-    double  poeMaxPowerWatts;
-    double  systemTemperatureC;
-    double  ambientTemperatureC;
-    double  systemPowerWatts;
-    double  inputVoltage;
-    double  systemCurrentAmps;
-    double  inputLinkFailureAlarm;
-    double  inputPoeFailureAlarm;
-} SwitchMetrics;
+    char   name[SWITCHD_METRIC_NAME_LEN];
+    double value;
+} SwitchMetric;
+
+typedef struct {
+    SwitchMetric *items;
+    size_t        count;
+    size_t        cap;
+} SwitchMetricList;
 
 static int str_ieq(const char *a, const char *b) {
     if (!a || !b) return 0;
@@ -88,6 +90,39 @@ static int str_icontains(const char *hay, const char *needle) {
     }
 
     return 0;
+}
+
+static int str_iendswith(const char *s, const char *suffix) {
+    size_t slen = 0;
+    size_t tlen = 0;
+
+    if (!s || !suffix) return 0;
+
+    slen = strlen(s);
+    tlen = strlen(suffix);
+
+    if (tlen == 0 || slen < tlen) return 0;
+
+    return str_ieq(s + slen - tlen, suffix);
+}
+
+static int str_istartswith(const char *s, const char *prefix) {
+    size_t i = 0;
+
+    if (!s || !prefix) return 0;
+
+    while (prefix[i] != '\0') {
+        char a = s[i];
+        char b = prefix[i];
+
+        if (a == '\0') return 0;
+        if (a >= 'A' && a <= 'Z') a = (char)(a - 'A' + 'a');
+        if (b >= 'A' && b <= 'Z') b = (char)(b - 'A' + 'a');
+        if (a != b) return 0;
+        i++;
+    }
+
+    return 1;
 }
 
 static size_t curl_write_cb(void *contents, size_t size, size_t nmemb,
@@ -162,6 +197,7 @@ static double j_get_num(json_t *root, const char *key) {
 
     if (json_is_real(v)) return json_real_value(v);
     if (json_is_integer(v)) return (double)json_integer_value(v);
+    if (json_is_boolean(v)) return json_is_true(v) ? 1.0 : 0.0;
 
     return 0;
 }
@@ -188,10 +224,47 @@ static json_t *j_get_arr(json_t *root, const char *key) {
     return v;
 }
 
-static int switchd_read_metrics(const char *url, SwitchMetrics *out) {
+static void switchd_metrics_free(SwitchMetricList *list) {
+    if (!list) return;
+
+    free(list->items);
+    list->items = NULL;
+    list->count = 0;
+    list->cap = 0;
+}
+
+static int switchd_metrics_add(SwitchMetricList *list,
+                               const char *name,
+                               double value) {
+    SwitchMetric *items = NULL;
+    size_t nextCap = 0;
+
+    if (!list || !name || !*name) return RETURN_NOTOK;
+
+    if (list->count == list->cap) {
+        nextCap = (list->cap == 0) ? 32 : (list->cap * 2);
+        items = realloc(list->items, nextCap * sizeof(SwitchMetric));
+        if (!items) return RETURN_NOTOK;
+
+        list->items = items;
+        list->cap = nextCap;
+    }
+
+    snprintf(list->items[list->count].name,
+             sizeof(list->items[list->count].name),
+             "%s",
+             name);
+    list->items[list->count].value = value;
+    list->count++;
+
+    return RETURN_OK;
+}
+
+static int switchd_read_metrics(const char *url, SwitchMetricList *out) {
     int ret = RETURN_NOTOK;
     json_t *root = NULL;
     json_t *metrics = NULL;
+    size_t i = 0;
 
     if (!out) return RETURN_NOTOK;
     memset(out, 0, sizeof(*out));
@@ -206,7 +279,7 @@ static int switchd_read_metrics(const char *url, SwitchMetrics *out) {
         goto done;
     }
 
-    for (size_t i = 0; i < json_array_size(metrics); i++) {
+    for (i = 0; i < json_array_size(metrics); i++) {
         json_t *metric = json_array_get(metrics, i);
         const char *name = NULL;
         double value = 0;
@@ -214,66 +287,119 @@ static int switchd_read_metrics(const char *url, SwitchMetrics *out) {
         if (!metric || !json_is_object(metric)) continue;
 
         name = j_get_str(metric, "name");
-        if (!name) continue;
+        if (!name || !*name) continue;
 
         value = j_get_num(metric, "value");
-
-        if (str_ieq(name, "poe_total_power_watts")) {
-            out->poeTotalPowerWatts = value;
-        } else if (str_ieq(name, "poe_max_power_watts")) {
-            out->poeMaxPowerWatts = value;
-        } else if (str_ieq(name, "system_temperature_c")) {
-            out->systemTemperatureC = value;
-        } else if (str_ieq(name, "ambient_temperature_c")) {
-            out->ambientTemperatureC = value;
-        } else if (str_ieq(name, "system_power_watts")) {
-            out->systemPowerWatts = value;
-        } else if (str_ieq(name, "input_voltage")) {
-            out->inputVoltage = value;
-        } else if (str_ieq(name, "system_current_amps")) {
-            out->systemCurrentAmps = value;
-        } else if (str_ieq(name, "input_link_failure_alarm")) {
-            out->inputLinkFailureAlarm = value;
-        } else if (str_ieq(name, "input_poe_failure_alarm")) {
-            out->inputPoeFailureAlarm = value;
+        if (switchd_metrics_add(out, name, value) != RETURN_OK) {
+            usys_log_error("switchd_agent: oom storing metric %s", name);
+            goto done;
         }
     }
 
     ret = RETURN_OK;
 
 done:
+    if (ret != RETURN_OK) switchd_metrics_free(out);
     if (root) json_decref(root);
     return ret;
 }
 
+static void build_kpi_suffix(KPIConfig *kpi, char *buf, size_t size) {
+    int len = 0;
+
+    if (!buf || size == 0) return;
+
+    buf[0] = '\0';
+    if (!kpi || !kpi->name) return;
+
+    if (kpi->unit && kpi->unit[0]) {
+        len = snprintf(buf, size, "%s_%s", kpi->name, kpi->unit);
+    } else {
+        len = snprintf(buf, size, "%s", kpi->name);
+    }
+
+    if (len < 0 || len >= (int)size) {
+        buf[0] = '\0';
+    }
+}
+
+static int metric_matches_kpi(const SwitchMetric *metric,
+                              KPIConfig *kpi,
+                              int portId) {
+    char suffix[SWITCHD_METRIC_NAME_LEN] = {0};
+    char portPrefix[32] = {0};
+
+    if (!metric || !kpi || !kpi->fqname) return 0;
+
+    if (str_ieq(metric->name, kpi->fqname) ||
+        str_icontains(kpi->fqname, metric->name)) {
+        return 1;
+    }
+
+    build_kpi_suffix(kpi, suffix, sizeof(suffix));
+    if (suffix[0] == '\0') return 0;
+
+    if (portId > 0) {
+        snprintf(portPrefix, sizeof(portPrefix), "port_%d_", portId);
+        return str_istartswith(metric->name, portPrefix) &&
+               str_iendswith(metric->name, suffix);
+    }
+
+    if (str_istartswith(metric->name, "port_")) {
+        return 0;
+    }
+
+    return str_iendswith(metric->name, suffix) ||
+           str_icontains(kpi->fqname, suffix);
+}
+
+static int switchd_find_metric(SwitchMetricList *metrics,
+                               KPIConfig *kpi,
+                               int portId,
+                               double *value) {
+    size_t i = 0;
+
+    if (!metrics || !kpi || !value) return RETURN_NOTOK;
+
+    for (i = 0; i < metrics->count; i++) {
+        if (metric_matches_kpi(&metrics->items[i], kpi, portId)) {
+            *value = metrics->items[i].value;
+            return RETURN_OK;
+        }
+    }
+
+    return RETURN_NOTOK;
+}
+
 static int switchd_push_stat_to_metric_server(MetricsCatConfig *cfgStat,
-                                              SwitchMetrics *m,
+                                              SwitchMetricList *metrics,
                                               metricAddFunc addFunc) {
-    for (int idx = 0; idx < cfgStat->kpiCount; idx++) {
+    int idx = 0;
+    int total = 0;
+    int kpiCount = 0;
+
+    if (!cfgStat || !metrics || !addFunc) return RETURN_NOTOK;
+
+    kpiCount = cfgStat->kpiCount;
+    total = kpiCount;
+
+    if (cfgStat->instances > 0 && cfgStat->range != NULL) {
+        total = cfgStat->instances * cfgStat->kpiCount;
+    }
+
+    for (idx = 0; idx < total; idx++) {
         KPIConfig *kpi = &(cfgStat->kpi[idx]);
         double val = 0;
+        int portId = -1;
 
         if (!kpi || !kpi->fqname) continue;
 
-        if (str_icontains(kpi->fqname, "poe_total_power_watts")) {
-            val = m->poeTotalPowerWatts;
-        } else if (str_icontains(kpi->fqname, "poe_max_power_watts")) {
-            val = m->poeMaxPowerWatts;
-        } else if (str_icontains(kpi->fqname, "system_temperature_c")) {
-            val = m->systemTemperatureC;
-        } else if (str_icontains(kpi->fqname, "ambient_temperature_c")) {
-            val = m->ambientTemperatureC;
-        } else if (str_icontains(kpi->fqname, "system_power_watts")) {
-            val = m->systemPowerWatts;
-        } else if (str_icontains(kpi->fqname, "input_voltage")) {
-            val = m->inputVoltage;
-        } else if (str_icontains(kpi->fqname, "system_current_amps")) {
-            val = m->systemCurrentAmps;
-        } else if (str_icontains(kpi->fqname, "input_link_failure_alarm")) {
-            val = m->inputLinkFailureAlarm;
-        } else if (str_icontains(kpi->fqname, "input_poe_failure_alarm")) {
-            val = m->inputPoeFailureAlarm;
-        } else {
+        if (cfgStat->instances > 0 && cfgStat->range != NULL &&
+            kpiCount > 0) {
+            portId = cfgStat->range[idx / kpiCount];
+        }
+
+        if (switchd_find_metric(metrics, kpi, portId, &val) != RETURN_OK) {
             continue;
         }
 
@@ -287,19 +413,14 @@ int switchd_collect_stat(MetricsCatConfig *cfgStat, metricAddFunc addFunc) {
     int port = 0;
     char urlBuf[256] = {0};
     const char *path = NULL;
-    SwitchMetrics *m;
+    SwitchMetricList metrics;
 
-    m = calloc(1, sizeof(SwitchMetrics));
-    if (!m) {
-        usys_log_error("switchd_agent: oom allocating metrics");
-        return RETURN_NOTOK;
-    }
+    memset(&metrics, 0, sizeof(metrics));
 
     port = usys_find_service_port(SERVICE_SWITCH);
     if (port <= 0) {
         usys_log_error("switchd_agent: could not resolve service port for '%s'",
                        SERVICE_SWITCH);
-        free(m);
         return RETURN_NOTOK;
     }
 
@@ -308,18 +429,19 @@ int switchd_collect_stat(MetricsCatConfig *cfgStat, metricAddFunc addFunc) {
 
     snprintf(urlBuf, sizeof(urlBuf), "http://127.0.0.1:%d%s", port, path);
 
-    if (switchd_read_metrics(urlBuf, m) != RETURN_OK) {
+    if (switchd_read_metrics(urlBuf, &metrics) != RETURN_OK) {
         usys_log_error("switchd_agent: failed to read %s", urlBuf);
-        free(m);
         return RETURN_NOTOK;
     }
 
-    if (switchd_push_stat_to_metric_server(cfgStat, m, addFunc) != RETURN_OK) {
+    if (switchd_push_stat_to_metric_server(cfgStat,
+                                           &metrics,
+                                           addFunc) != RETURN_OK) {
         usys_log_error("switchd_agent: failed to push metrics to server");
-        free(m);
+        switchd_metrics_free(&metrics);
         return RETURN_NOTOK;
     }
 
-    free(m);
+    switchd_metrics_free(&metrics);
     return RETURN_OK;
 }
