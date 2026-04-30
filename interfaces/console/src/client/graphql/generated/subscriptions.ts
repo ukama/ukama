@@ -89,40 +89,62 @@ export type GetMetricsStatInput = {
 export type LatestMetricSubRes = {
   __typename?: 'LatestMetricSubRes';
   dataPlanId?: Maybe<Scalars['String']['output']>;
+  format?: Maybe<Scalars['String']['output']>;
   msg: Scalars['String']['output'];
   networkId?: Maybe<Scalars['String']['output']>;
   nodeId: Scalars['String']['output'];
   packageId?: Maybe<Scalars['String']['output']>;
   siteId: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
+  threshold?: Maybe<MetricThreshold>;
+  tickInterval?: Maybe<Scalars['Float']['output']>;
+  tickPositions?: Maybe<Array<Scalars['Float']['output']>>;
   type: Scalars['String']['output'];
+  unit?: Maybe<Scalars['String']['output']>;
   value: Array<Scalars['Float']['output']>;
 };
 
 export type MetricRes = {
   __typename?: 'MetricRes';
   dataPlanId?: Maybe<Scalars['String']['output']>;
+  format?: Maybe<Scalars['String']['output']>;
   msg: Scalars['String']['output'];
   networkId?: Maybe<Scalars['String']['output']>;
   nodeId?: Maybe<Scalars['String']['output']>;
   packageId?: Maybe<Scalars['String']['output']>;
   siteId?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
+  threshold?: Maybe<MetricThreshold>;
+  tickInterval?: Maybe<Scalars['Float']['output']>;
+  tickPositions?: Maybe<Array<Scalars['Float']['output']>>;
   type: Scalars['String']['output'];
+  unit?: Maybe<Scalars['String']['output']>;
   values: Array<Array<Scalars['Float']['output']>>;
 };
 
 export type MetricStateRes = {
   __typename?: 'MetricStateRes';
   dataPlanId?: Maybe<Scalars['String']['output']>;
+  format?: Maybe<Scalars['String']['output']>;
   msg: Scalars['String']['output'];
   networkId?: Maybe<Scalars['String']['output']>;
   nodeId: Scalars['String']['output'];
   packageId?: Maybe<Scalars['String']['output']>;
   siteId?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
+  threshold?: Maybe<MetricThreshold>;
+  tickInterval?: Maybe<Scalars['Float']['output']>;
+  tickPositions?: Maybe<Array<Scalars['Float']['output']>>;
   type: Scalars['String']['output'];
+  unit?: Maybe<Scalars['String']['output']>;
   value: Scalars['Float']['output'];
+};
+
+export type MetricThreshold = {
+  __typename?: 'MetricThreshold';
+  max: Scalars['Float']['output'];
+  min: Scalars['Float']['output'];
+  normal: Scalars['Float']['output'];
 };
 
 export type MetricsRes = {
@@ -331,28 +353,28 @@ export type GetMetricByTabQueryVariables = Exact<{
 }>;
 
 
-export type GetMetricByTabQuery = { __typename?: 'Query', getMetricByTab: { __typename?: 'MetricsRes', metrics: Array<{ __typename?: 'MetricRes', msg: string, nodeId?: string | null, success: boolean, type: string, values: Array<Array<number>>, networkId?: string | null, siteId?: string | null, packageId?: string | null, dataPlanId?: string | null }> } };
+export type GetMetricByTabQuery = { __typename?: 'Query', getMetricByTab: { __typename?: 'MetricsRes', metrics: Array<{ __typename?: 'MetricRes', dataPlanId?: string | null, format?: string | null, msg: string, networkId?: string | null, nodeId?: string | null, siteId?: string | null, packageId?: string | null, success: boolean, tickInterval?: number | null, tickPositions?: Array<number> | null, type: string, unit?: string | null, values: Array<Array<number>>, threshold?: { __typename?: 'MetricThreshold', max: number, min: number, normal: number } | null }> } };
 
 export type GetMetricsStatQueryVariables = Exact<{
   data: GetMetricsStatInput;
 }>;
 
 
-export type GetMetricsStatQuery = { __typename?: 'Query', getMetricsStat: { __typename?: 'MetricsStateRes', metrics: Array<{ __typename?: 'MetricStateRes', success: boolean, msg: string, nodeId: string, type: string, value: number, networkId?: string | null, packageId?: string | null, dataPlanId?: string | null }> } };
+export type GetMetricsStatQuery = { __typename?: 'Query', getMetricsStat: { __typename?: 'MetricsStateRes', metrics: Array<{ __typename?: 'MetricStateRes', dataPlanId?: string | null, format?: string | null, msg: string, networkId?: string | null, nodeId: string, packageId?: string | null, siteId?: string | null, success: boolean, tickInterval?: number | null, tickPositions?: Array<number> | null, type: string, unit?: string | null, value: number, threshold?: { __typename?: 'MetricThreshold', max: number, min: number, normal: number } | null }> } };
 
 export type GetSiteStatQueryVariables = Exact<{
   data: GetMetricsSiteStatInput;
 }>;
 
 
-export type GetSiteStatQuery = { __typename?: 'Query', getSiteStat: { __typename?: 'MetricsStateRes', metrics: Array<{ __typename?: 'MetricStateRes', success: boolean, msg: string, siteId?: string | null, nodeId: string, type: string, value: number }> } };
+export type GetSiteStatQuery = { __typename?: 'Query', getSiteStat: { __typename?: 'MetricsStateRes', metrics: Array<{ __typename?: 'MetricStateRes', dataPlanId?: string | null, format?: string | null, msg: string, networkId?: string | null, nodeId: string, siteId?: string | null, packageId?: string | null, success: boolean, tickInterval?: number | null, tickPositions?: Array<number> | null, type: string, unit?: string | null, value: number, threshold?: { __typename?: 'MetricThreshold', max: number, min: number, normal: number } | null }> } };
 
 export type GetMetricBySiteQueryVariables = Exact<{
   data: GetMetricBySiteInput;
 }>;
 
 
-export type GetMetricBySiteQuery = { __typename?: 'Query', getMetricBySite: { __typename?: 'MetricsRes', metrics: Array<{ __typename?: 'MetricRes', msg: string, success: boolean, type: string, values: Array<Array<number>> }> } };
+export type GetMetricBySiteQuery = { __typename?: 'Query', getMetricBySite: { __typename?: 'MetricsRes', metrics: Array<{ __typename?: 'MetricRes', dataPlanId?: string | null, format?: string | null, msg: string, networkId?: string | null, nodeId?: string | null, siteId?: string | null, packageId?: string | null, success: boolean, tickInterval?: number | null, tickPositions?: Array<number> | null, type: string, unit?: string | null, values: Array<Array<number>>, threshold?: { __typename?: 'MetricThreshold', max: number, min: number, normal: number } | null }> } };
 
 export type GetMetricsStatSubSubscriptionVariables = Exact<{
   data: SubMetricsStatInput;
@@ -497,15 +519,24 @@ export const GetMetricByTabDocument = gql`
     query GetMetricByTab($data: GetMetricByTabInput!) {
   getMetricByTab(data: $data) {
     metrics {
+      dataPlanId
+      format
       msg
-      nodeId
-      success
-      type
-      values
       networkId
+      nodeId
       siteId
       packageId
-      dataPlanId
+      success
+      tickInterval
+      threshold {
+        max
+        min
+        normal
+      }
+      tickPositions
+      type
+      unit
+      values
     }
   }
 }
@@ -547,14 +578,24 @@ export const GetMetricsStatDocument = gql`
     query GetMetricsStat($data: GetMetricsStatInput!) {
   getMetricsStat(data: $data) {
     metrics {
-      success
-      msg
-      nodeId
-      type
-      value
-      networkId
-      packageId
       dataPlanId
+      format
+      msg
+      networkId
+      nodeId
+      packageId
+      siteId
+      success
+      threshold {
+        max
+        min
+        normal
+      }
+      tickInterval
+      tickPositions
+      type
+      unit
+      value
     }
   }
 }
@@ -596,11 +637,23 @@ export const GetSiteStatDocument = gql`
     query GetSiteStat($data: GetMetricsSiteStatInput!) {
   getSiteStat(data: $data) {
     metrics {
-      success
+      dataPlanId
+      format
       msg
-      siteId
+      networkId
       nodeId
+      siteId
+      packageId
+      success
+      tickInterval
+      threshold {
+        max
+        min
+        normal
+      }
+      tickPositions
       type
+      unit
       value
     }
   }
@@ -643,9 +696,23 @@ export const GetMetricBySiteDocument = gql`
     query GetMetricBySite($data: GetMetricBySiteInput!) {
   getMetricBySite(data: $data) {
     metrics {
+      dataPlanId
+      format
       msg
+      networkId
+      nodeId
+      siteId
+      packageId
       success
+      tickInterval
+      threshold {
+        max
+        min
+        normal
+      }
+      tickPositions
       type
+      unit
       values
     }
   }
