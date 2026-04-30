@@ -425,33 +425,58 @@ static void metric_add(JsonObj *metrics,
     json_array_append_new(metrics, metric);
 }
 
+static void sanitize_metric_token(char *token) {
+
+    size_t i;
+
+    if (!token) {
+        return;
+    }
+
+    for (i = 0; token[i] != '\0'; i++) {
+        if (token[i] >= 'A' && token[i] <= 'Z') {
+            token[i] = (char)(token[i] - 'A' + 'a');
+        } else if ((token[i] >= 'a' && token[i] <= 'z') ||
+                   (token[i] >= '0' && token[i] <= '9') ||
+                   token[i] == '_') {
+            continue;
+        } else {
+            token[i] = '_';
+        }
+    }
+}
+
 static void metric_name_for_port(char *buf,
                                  size_t len,
                                  const SwitchPortState *port,
                                  const char *suffix) {
 
     char role[SWITCHD_NAME_LEN];
-    size_t i;
+    int ret;
 
     if (!buf || len == 0 || !port || !suffix) {
         return;
     }
 
-    snprintf(role, sizeof(role), "%s", port->name[0] ?
-             port->name : "unknown");
+    buf[0] = '\0';
 
-    for (i = 0; role[i] != '\0'; i++) {
-        if (role[i] == '-' || role[i] == ' ' || role[i] == '.') {
-            role[i] = '_';
-        }
+    if (port->name[0] != '\0') {
+        snprintf(role, sizeof(role), "%s", port->name);
+    } else {
+        snprintf(role, sizeof(role), "port%u", port->id);
     }
 
-    snprintf(buf,
-             len,
-             "port_%u_%s_%s",
-             port->id,
-             role,
-             suffix);
+    sanitize_metric_token(role);
+
+    ret = snprintf(buf,
+                   len,
+                   "port_%u_%s_%s",
+                   port->id,
+                   role,
+                   suffix);
+    if (ret < 0 || ret >= (int)len) {
+        buf[0] = '\0';
+    }
 }
 
 static void metrics_add_port(JsonObj *metrics, const SwitchPortState *port) {
@@ -499,10 +524,12 @@ static void metrics_add_port(JsonObj *metrics, const SwitchPortState *port) {
     metric_add(metrics, name, (double)port->txDrops, "count");
 
     metric_name_for_port(name, sizeof(name), port, "poe_supported");
-    metric_add(metrics, name, port->poeSupported ? 1.0 : 0.0, JSON_UNIT_BOOL);
+    metric_add(metrics, name, port->poeSupported ? 1.0 : 0.0,
+               JSON_UNIT_BOOL);
 
     metric_name_for_port(name, sizeof(name), port, "poe_enabled");
-    metric_add(metrics, name, port->poeEnabled ? 1.0 : 0.0, JSON_UNIT_BOOL);
+    metric_add(metrics, name, port->poeEnabled ? 1.0 : 0.0,
+               JSON_UNIT_BOOL);
 
     metric_name_for_port(name, sizeof(name), port, "poe_operational");
     metric_add(metrics, name, port->poeOperational ? 1.0 : 0.0,
@@ -536,8 +563,10 @@ JsonObj *json_serialize_metrics(const SwitchdContext *ctx) {
     metrics = json_array();
 
     updatedAt = ctx->kpis.updatedAt;
-    if (ctx->portCount > 0 && ctx->ports[0].updatedAt > updatedAt) {
-        updatedAt = ctx->ports[0].updatedAt;
+    for (i = 0; i < ctx->portCount && i < SWITCHD_MAX_PORTS; i++) {
+        if (ctx->ports[i].updatedAt > updatedAt) {
+            updatedAt = ctx->ports[i].updatedAt;
+        }
     }
 
     json_object_set_new(obj,
