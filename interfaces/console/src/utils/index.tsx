@@ -561,11 +561,14 @@ const graphTypeToSection: Record<Graphs_Type | string, string> = {
 };
 
 export const generatePlotLines = (values: number[] | undefined): any[] => {
-  if (!values) {
+  if (!values || values.length === 0) {
     return [];
   }
+
+  // API-driven chart metadata can omit tickPositions or return short arrays.
+  // In these cases we should simply render no threshold plot lines.
   if (values.length < 3 || values.length > 7) {
-    throw new Error('invalid length');
+    return [];
   }
 
   return values.slice(1).map((value, index, arr) => ({
