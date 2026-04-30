@@ -78,7 +78,9 @@ const processMetricResult = (metric: any) => ({
   unit: metric.unit || "",
   format: metric.format || "number",
   tickInterval: metric.tickInterval || 0,
-  tickPositions: Array.isArray(metric.tickPositions) ? metric.tickPositions : [],
+  tickPositions: Array.isArray(metric.tickPositions)
+    ? metric.tickPositions
+    : [],
   threshold: metric.threshold || { min: 0, normal: 0, max: 0 },
 });
 
