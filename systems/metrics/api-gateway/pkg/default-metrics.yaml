@@ -23,86 +23,191 @@ tnode:
     metric: com_soc_cpu_usage
     needRate: false
     rateInterval: ""
+    unit: "%"
+    format: "number"
+    tickInterval: 20
+    tickPositions: [0, 20, 40, 60, 80, 100]
+    threshold: { min: 0, normal: 80, max: 100 }
   cpu_temperature:
     metric: com_power_power_power_board_temp_c_celsius
     needRate: false
     rateInterval: ""
+    unit: "C"
+    format: "number"
+    tickInterval: 10
+    tickPositions: [0, 10, 20, 30, 40, 50, 60, 70, 80]
+    threshold: { min: 0, normal: 65, max: 80 }
   temperature_z0:
     metric: com_sensors_thermal_zone0_temp_temperature_celsius
     needRate: false
     rateInterval: ""
+    unit: "C"
+    format: "number"
+    tickInterval: 10
+    tickPositions: [0, 10, 20, 30, 40, 50, 60, 70, 80]
+    threshold: { min: 0, normal: 65, max: 80 }
   temperature_z1:
     metric: com_sensors_thermal_zone1_temp_temperature_celsius
     needRate: false
     rateInterval: ""
+    unit: "C"
+    format: "number"
+    tickInterval: 10
+    tickPositions: [0, 10, 20, 30, 40, 50, 60, 70, 80]
+    threshold: { min: 0, normal: 65, max: 80 }
   temperature_z2:
     metric: com_sensors_thermal_zone2_temp_temperature_celsius
     needRate: false
     rateInterval: ""
+    unit: "C"
+    format: "number"
+    tickInterval: 10
+    tickPositions: [0, 10, 20, 30, 40, 50, 60, 70, 80]
+    threshold: { min: 0, normal: 65, max: 80 }
   temperature_z3:
     metric: com_sensors_thermal_zone3_temp_temperature_celsius
     needRate: false
     rateInterval: ""
+    unit: "C"
+    format: "number"
+    tickInterval: 10
+    tickPositions: [0, 10, 20, 30, 40, 50, 60, 70, 80]
+    threshold: { min: 0, normal: 65, max: 80 }
   uptime:
     metric: com_generic_system_uptime_seconds
     needRate: false
     rateInterval: ""
+    unit: "s"
+    format: "number"
+    tickInterval: 3600
+    tickPositions: []
+    threshold: { min: 0, normal: 0, max: 0 }
   memory:
     metric: com_memory_ddr_used
     needRate: false
     rateInterval: ""
+    unit: "MB"
+    format: "number"
+    tickInterval: 20
+    tickPositions: []
+    threshold: { min: 0, normal: 80, max: 100 }
   disk:
     metric: com_storage_emmc_used
     needRate: false
     rateInterval: ""
+    unit: "MB"
+    format: "number"
+    tickInterval: 20
+    tickPositions: []
+    threshold: { min: 0, normal: 80, max: 100 }
   power:
     metric: com_power_power_power_total_watts
     needRate: false
     rateInterval: ""
+    unit: "W"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 60, max: 100 }
   backhaul_uplink:
     metric: com_backhaul_backhaul_ul_goodput_mbps
     needRate: false
     rateInterval: ""
+    unit: "Mbps"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 100, max: 200 }
   backhaul_downlink:
     metric: com_backhaul_backhaul_dl_goodput_mbps
     needRate: false
     rateInterval: ""
+    unit: "Mbps"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 100, max: 200 }
   backhaul_latency:
     metric: com_network_uplink_latency
     needRate: false
     rateInterval: ""
+    unit: "ms"
+    format: "number"
+    tickInterval: 200
+    tickPositions: [0, 200, 400, 600, 800, 1000]
+    threshold: { min: 0, normal: 800, max: 1000 }
   cellular_uplink:
     metric: trx_lte_stack_throughput_uplink
     needRate: false
     rateInterval: ""
+    unit: "Mbps"
+    format: "number"
+    tickInterval: 5
+    tickPositions: []
+    threshold: { min: 0, normal: 30, max: 100 }
   cellular_downlink:
     metric: trx_lte_stack_throughput_downlink
     needRate: false
     rateInterval: ""
+    unit: "Mbps"
+    format: "number"
+    tickInterval: 5
+    tickPositions: []
+    threshold: { min: 0, normal: 60, max: 160 }
   lte_signal_strength:
     metric: trx_lte_stack_signal_strength
     needRate: false
     rateInterval: ""
+    unit: "dBm"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: -120, normal: -95, max: -70 }
   lte_dl_throughput:
     metric: trx_lte_stack_throughput_downlink
     needRate: false
     rateInterval: ""
+    unit: "Mbps"
+    format: "number"
+    tickInterval: 5
+    tickPositions: []
+    threshold: { min: 0, normal: 60, max: 160 }
   lte_ul_throughput:
     metric: trx_lte_stack_throughput_uplink
     needRate: false
     rateInterval: ""
+    unit: "Mbps"
+    format: "number"
+    tickInterval: 5
+    tickPositions: []
+    threshold: { min: 0, normal: 30, max: 100 }
   lte_active_ue:
     metric: trx_lte_core_active_ue
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 100, max: 1000 }
   lte_subscribers:
     metric: trx_lte_core_subscribers
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 100, max: 1000 }
   lte_cell_id:
     metric: trx_lte_cell_id
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: []
+    threshold: { min: 0, normal: 0, max: 0 }
 
 # ---------------------------------------------------------------------------
 # ANode — RF/antenna node metrics (ctl_*)
@@ -113,78 +218,173 @@ anode:
     metric: ctl_soc_cpu_usage
     needRate: false
     rateInterval: ""
+    unit: "%"
+    format: "number"
+    tickInterval: 20
+    tickPositions: [0, 20, 40, 60, 80, 100]
+    threshold: { min: 0, normal: 80, max: 100 }
   uptime:
     metric: ctl_generic_system_uptime_seconds
     needRate: false
     rateInterval: ""
+    unit: "s"
+    format: "number"
+    tickInterval: 3600
+    tickPositions: []
+    threshold: { min: 0, normal: 0, max: 0 }
   cpu_temperature:
     metric: com_power_power_power_board_temp_c_celsius
     needRate: false
     rateInterval: ""
+    unit: "C"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 65, max: 80 }
   processor_temperature:
     metric: ctl_sensors_tempsensor_proc_microprocessor
     needRate: false
     rateInterval: ""
+    unit: "C"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 70, max: 85 }
   memory:
     metric: ctl_memory_ddr_used
     needRate: false
     rateInterval: ""
+    unit: "MB"
+    format: "number"
+    tickInterval: 20
+    tickPositions: []
+    threshold: { min: 0, normal: 80, max: 100 }
   disk:
     metric: ctl_storage_emmc_used
     needRate: false
     rateInterval: ""
+    unit: "MB"
+    format: "number"
+    tickInterval: 20
+    tickPositions: []
+    threshold: { min: 0, normal: 80, max: 100 }
   pa_power:
     metric: ctl_sensors_adc_pa_pa_power
     needRate: false
     rateInterval: ""
+    unit: "W"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 30, max: 60 }
   rx_power:
     metric: ctl_sensors_adc_rp_rx_power
     needRate: false
     rateInterval: ""
+    unit: "dBm"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: -120, normal: -90, max: -40 }
   tx_power:
     metric: ctl_sensors_adc_tp_tx_power
     needRate: false
     rateInterval: ""
+    unit: "dBm"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 31, max: 34 }
   fem1_temperature:
     metric: ctl_sensors_femd_fem1_temperature_c
     needRate: false
     rateInterval: ""
+    unit: "C"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 70, max: 90 }
   fem1_forward_power:
     metric: ctl_sensors_femd_fem1_forward_power
     needRate: false
     rateInterval: ""
+    unit: "W"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 30, max: 60 }
   fem1_reverse_power:
     metric: ctl_sensors_femd_fem1_reverse_power
     needRate: false
     rateInterval: ""
+    unit: "W"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 20, max: 40 }
   fem1_pa_current:
     metric: ctl_sensors_femd_fem1_pa_current
     needRate: false
     rateInterval: ""
+    unit: "A"
+    format: "number"
+    tickInterval: 2
+    tickPositions: []
+    threshold: { min: 0, normal: 10, max: 20 }
   fem1_ok:
     metric: ctl_sensors_femd_fem1_ok
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
   fem2_temperature:
     metric: ctl_sensors_femd_fem2_temperature_c
     needRate: false
     rateInterval: ""
+    unit: "C"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 70, max: 90 }
   fem2_forward_power:
     metric: ctl_sensors_femd_fem2_forward_power
     needRate: false
     rateInterval: ""
+    unit: "W"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 30, max: 60 }
   fem2_reverse_power:
     metric: ctl_sensors_femd_fem2_reverse_power
     needRate: false
     rateInterval: ""
+    unit: "W"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 20, max: 40 }
   fem2_pa_current:
     metric: ctl_sensors_femd_fem2_pa_current
     needRate: false
     rateInterval: ""
+    unit: "A"
+    format: "number"
+    tickInterval: 2
+    tickPositions: []
+    threshold: { min: 0, normal: 10, max: 20 }
   fem2_ok:
     metric: ctl_sensors_femd_fem2_ok
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
 
 # ---------------------------------------------------------------------------
 # CNode — connectivity/aggregator node metrics (com_*)
@@ -195,98 +395,218 @@ cnode:
     metric: com_generic_system_uptime_seconds
     needRate: false
     rateInterval: ""
+    unit: "s"
+    format: "number"
+    tickInterval: 3600
+    tickPositions: []
+    threshold: { min: 0, normal: 0, max: 0 }
   cpu:
     metric: com_soc_cpu_usage
     needRate: false
     rateInterval: ""
+    unit: "%"
+    format: "number"
+    tickInterval: 20
+    tickPositions: [0, 20, 40, 60, 80, 100]
+    threshold: { min: 0, normal: 80, max: 100 }
   memory:
     metric: com_memory_ddr_used
     needRate: false
     rateInterval: ""
+    unit: "MB"
+    format: "number"
+    tickInterval: 20
+    tickPositions: []
+    threshold: { min: 0, normal: 80, max: 100 }
   disk:
     metric: com_storage_emmc_used
     needRate: false
     rateInterval: ""
+    unit: "MB"
+    format: "number"
+    tickInterval: 20
+    tickPositions: []
+    threshold: { min: 0, normal: 80, max: 100 }
   power:
     metric: com_power_power_power_total_watts
     needRate: false
     rateInterval: ""
+    unit: "W"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 60, max: 100 }
   backhaul_uplink:
     metric: com_backhaul_backhaul_ul_goodput_mbps
     needRate: false
     rateInterval: ""
+    unit: "Mbps"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 100, max: 200 }
   backhaul_downlink:
     metric: com_backhaul_backhaul_dl_goodput_mbps
     needRate: false
     rateInterval: ""
+    unit: "Mbps"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 100, max: 200 }
   backhaul_latency:
     metric: com_network_uplink_latency
     needRate: false
     rateInterval: ""
+    unit: "ms"
+    format: "number"
+    tickInterval: 200
+    tickPositions: [0, 200, 400, 600, 800, 1000]
+    threshold: { min: 0, normal: 800, max: 1000 }
   backhaul_state:
     metric: com_backhaul_backhaul_state
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
   backhaul_link_guess:
     metric: com_backhaul_backhaul_link_guess
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
   backhaul_confidence:
     metric: com_backhaul_backhaul_confidence
     needRate: false
     rateInterval: ""
+    unit: "%"
+    format: "number"
+    tickInterval: 20
+    tickPositions: [0, 20, 40, 60, 80, 100]
+    threshold: { min: 0, normal: 70, max: 100 }
   backhaul_dl_goodput:
     metric: com_backhaul_backhaul_dl_goodput_mbps
     needRate: false
     rateInterval: ""
+    unit: "Mbps"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 100, max: 200 }
   backhaul_ul_goodput:
     metric: com_backhaul_backhaul_ul_goodput_mbps
     needRate: false
     rateInterval: ""
+    unit: "Mbps"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 100, max: 200 }
   solar_panel_voltage:
     metric: com_controller_controller_solar_panel_voltage
     needRate: false
     rateInterval: ""
+    unit: "V"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 75, max: 100 }
   solar_panel_current:
     metric: com_controller_controller_solar_panel_current
     needRate: false
     rateInterval: ""
+    unit: "A"
+    format: "number"
+    tickInterval: 2
+    tickPositions: []
+    threshold: { min: 0, normal: 5, max: 12 }
   solar_panel_power:
     metric: com_controller_controller_solar_panel_power
     needRate: false
     rateInterval: ""
+    unit: "W"
+    format: "number"
+    tickInterval: 100
+    tickPositions: []
+    threshold: { min: 0, normal: 300, max: 600 }
   battery_voltage:
     metric: com_controller_controller_battery_voltage
     needRate: false
     rateInterval: ""
+    unit: "V"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 48, max: 60 }
   battery_current:
     metric: com_controller_controller_battery_current
     needRate: false
     rateInterval: ""
+    unit: "A"
+    format: "number"
+    tickInterval: 2
+    tickPositions: []
+    threshold: { min: 0, normal: 10, max: 20 }
   battery_charge:
     metric: com_controller_controller_battery_charge_percentage
     needRate: false
     rateInterval: ""
+    unit: "%"
+    format: "number"
+    tickInterval: 20
+    tickPositions: [0, 20, 40, 60, 80, 100]
+    threshold: { min: 0, normal: 70, max: 100 }
   poe_total_power:
     metric: com_switch_switch_poe_total_power_watts
     needRate: false
     rateInterval: ""
+    unit: "W"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 60, max: 120 }
   poe_max_power:
     metric: com_switch_switch_poe_max_power_watts
     needRate: false
     rateInterval: ""
+    unit: "W"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 90, max: 120 }
   switch_temperature:
     metric: com_switch_switch_system_temperature_c
     needRate: false
     rateInterval: ""
+    unit: "C"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 65, max: 80 }
   power_total_watts:
     metric: com_power_power_power_total_watts
     needRate: false
     rateInterval: ""
+    unit: "W"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 60, max: 100 }
   power_board_temp:
     metric: com_power_power_power_board_temp_c_celsius
     needRate: false
     rateInterval: ""
+    unit: "C"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 65, max: 85 }
 
 # ---------------------------------------------------------------------------
 # System — platform-level / internal KPIs with no node type affinity.
@@ -298,79 +618,179 @@ system:
     metric: trx_lte_core_active_ue
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 100, max: 1000 }
   subscribers_attached:
     metric: trx_lte_core_subscribers
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 100, max: 1000 }
   active_org_users:
     metric: number_of_active_users
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 100, max: 10000 }
   inactive_org_users:
     metric: number_of_inactive_users
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 100, max: 10000 }
   active_orgs:
     metric: number_of_active_org
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 10, max: 1000 }
   inactive_orgs:
     metric: number_of_inactive_org
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 10, max: 1000 }
   platform_active_users:
     metric: platform_active_users
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 100, max: 10000 }
   platform_inactive_users:
     metric: platform_inactive_users
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 100, max: 10000 }
   networks:
     metric: number_of_networks
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 20, max: 10000 }
   sites:
     metric: number_of_sites
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 100, max: 100000 }
   online_node_count:
     metric: online_node_count
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 100, max: 100000 }
   offline_node_count:
     metric: offline_node_count
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 20, max: 100000 }
   active_members:
     metric: active_members
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 50, max: 100000 }
   inactive_members:
     metric: inactive_members
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 20, max: 100000 }
   node_active_subscribers:
     metric: active_subscribers_per_node
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 100, max: 1000 }
   sims:
     metric: number_of_sims
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 1000, max: 1000000 }
   active_sims:
     metric: active_sim_count
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 800, max: 1000000 }
   inactive_sims:
     metric: inactive_sim_count
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 200, max: 1000000 }
   package_sales:
     metric: package_sales_sum
     needRate: false
     rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 1000, max: 10000000 }
   data_usage:
     metric: data_usage
     needRate: false
     rateInterval: ""
+    unit: "GB"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 500, max: 1000000 }

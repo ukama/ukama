@@ -164,7 +164,7 @@ func (m *Metrics) GetMetricRange(metricType string, nodeType string, metricFilte
 
 	log.Infof("GetMetricRange query: %s", data.Encode())
 
-	return m.processPromRequest(ctx, metricType, u, data, w, false)
+	return m.processPromRequest(ctx, metricType, metric, u, data, w, false)
 }
 
 func (m *Metrics) GetMetric(metricType string, nodeType string, metricFilter *Filter, w io.Writer, formatting bool) (httpStatus int, err error) {
@@ -183,7 +183,7 @@ func (m *Metrics) GetMetric(metricType string, nodeType string, metricFilter *Fi
 
 	log.Infof("GetMetric query: %s", data.Encode())
 
-	return m.processPromRequest(ctx, metricType, u, data, w, formatting)
+	return m.processPromRequest(ctx, metricType, metric, u, data, w, formatting)
 }
 
 // GetAggregateMetric returns aggregated value of a metric based on filter, uses Sum by default.
@@ -204,10 +204,10 @@ func (m *Metrics) GetAggregateMetric(metricType string, nodeType string, metricF
 
 	log.Infof("GetAggregateMetric query: %s", data.Encode())
 
-	return m.processPromRequest(ctx, metricType, u, data, w, false)
+	return m.processPromRequest(ctx, metricType, metric, u, data, w, false)
 }
 
-func formatMetricsResponse(metricName string, w io.Writer, b io.ReadCloser) error {
+func formatMetricsResponse(metricName string, metricCfg Metric, w io.Writer, b io.ReadCloser) error {
 
 	bytes, err := io.ReadAll(b)
 	if err != nil {
@@ -222,6 +222,11 @@ func formatMetricsResponse(metricName string, w io.Writer, b io.ReadCloser) erro
 		return err
 	}
 	rmap["Name"] = metricName
+	rmap["unit"] = metricCfg.Unit
+	rmap["format"] = metricCfg.Format
+	rmap["tickInterval"] = metricCfg.TickInterval
+	rmap["tickPositions"] = metricCfg.TickPositions
+	rmap["threshold"] = metricCfg.Threshold
 
 	rb, err := json.Marshal(rmap)
 	if err != nil {
@@ -239,7 +244,7 @@ func formatMetricsResponse(metricName string, w io.Writer, b io.ReadCloser) erro
 	return nil
 }
 
-func (m *Metrics) processPromRequest(ctx context.Context, metricName string, url string, data url.Values, w io.Writer, formatting bool) (httpStatusCode int, err error) {
+func (m *Metrics) processPromRequest(ctx context.Context, metricName string, metricCfg Metric, url string, data url.Values, w io.Writer, formatting bool) (httpStatusCode int, err error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, strings.NewReader(data.Encode()))
 	if err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, "failed to create request")
@@ -253,13 +258,18 @@ func (m *Metrics) processPromRequest(ctx context.Context, metricName string, url
 		return http.StatusInternalServerError, errors.Wrap(err, "failed to execute request")
 	}
 	log.Infof("Response Body %+v", res.Body)
-	if formatting {
-		err = formatMetricsResponse(metricName, w, res.Body)
-		if err != nil {
+	bodyBytes, readErr := io.ReadAll(res.Body)
+	if readErr != nil {
+		return http.StatusInternalServerError, errors.Wrap(readErr, "failed to read response body")
+	}
+
+	// Always try to enrich Prometheus JSON with display metadata. If upstream response
+	// isn't JSON (e.g. test stubs), keep legacy passthrough behaviour for non-streaming paths.
+	if err = formatMetricsResponse(metricName, metricCfg, w, io.NopCloser(strings.NewReader(string(bodyBytes)))); err != nil {
+		if formatting {
 			return http.StatusInternalServerError, errors.Wrap(err, "failed to format response")
 		}
-	} else {
-		_, err = io.Copy(w, res.Body)
+		_, err = w.Write(bodyBytes)
 		if err != nil {
 			return http.StatusInternalServerError, errors.Wrap(err, "failed to copy response")
 		}

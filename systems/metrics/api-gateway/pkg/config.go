@@ -53,7 +53,18 @@ type Metric struct {
 	// Range vector duration used in Rate func https://prometheus.io/docs/prometheus/latest/querying/basics/#time-durations
 	// if NeedRate is false then this field is ignored
 	// Example: 1d or 5h, or 30s
-	RateInterval string `json:"rateInterval" yaml:"rateInterval"`
+	RateInterval  string    `json:"rateInterval" yaml:"rateInterval"`
+	Unit          string    `json:"unit,omitempty" yaml:"unit,omitempty"`
+	Format        string    `json:"format,omitempty" yaml:"format,omitempty"`
+	TickInterval  int       `json:"tickInterval,omitempty" yaml:"tickInterval,omitempty"`
+	TickPositions []int     `json:"tickPositions,omitempty" yaml:"tickPositions,omitempty"`
+	Threshold     Threshold `json:"threshold,omitempty" yaml:"threshold,omitempty"`
+}
+
+type Threshold struct {
+	Min    float64 `json:"min" yaml:"min"`
+	Normal float64 `json:"normal" yaml:"normal"`
+	Max    float64 `json:"max" yaml:"max"`
 }
 
 type MetricsConfig struct {
