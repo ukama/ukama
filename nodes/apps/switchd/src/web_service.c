@@ -127,18 +127,33 @@ int web_service_cb_get_metrics(const URequest *request,
                                void *epConfig) {
     SwitchdContext *ctx;
     JsonObj *json;
+    int ret;
 
     (void)request;
 
     ctx = ws_ctx(epConfig);
+    if (ctx == NULL) {
+        return ws_reply_json(response, HttpStatus_OK, NULL);
+    }
 
     /*
-     * Do not poll SNMP from the HTTP path.
+     * /v1/metrics is consumed by metrics.d, so it must return the current
+     * switch view, not an empty cache. Keep this endpoint simple: refresh
+     * aggregate KPIs and per-port state, then serialize the cached result.
      *
-     * SNMP can timeout or block behind the poller driver mutex. The web
-     * endpoint should only serialize the latest cached values. The poller
-     * owns refresh timing.
+     * switchd_refresh_* already serializes access to the driver using
+     * ctx->driverMutex, so this is safe even when the poller is running.
      */
+    ret = switchd_refresh_kpis(ctx);
+    if (ret != SWITCHD_OK) {
+        usys_log_error("switchd: /v1/metrics refresh_kpis failed: %d", ret);
+    }
+
+    ret = switchd_refresh_ports(ctx);
+    if (ret != SWITCHD_OK) {
+        usys_log_error("switchd: /v1/metrics refresh_ports failed: %d", ret);
+    }
+
     json = json_serialize_metrics(ctx);
     return ws_reply_json(response, HttpStatus_OK, json);
 }
