@@ -18,7 +18,7 @@
 	autostart="false"
 	autorestart="true"
 	startretries=5
-	group="sys-service"
+	group="service"
 
 [app-exec.env]
 	SWITCHD_DRIVER="tycon_snmp"
