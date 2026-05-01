@@ -240,6 +240,20 @@ static void supervisor_reap(Supervisor *s) {
     }
 }
 
+static bool app_skip_version_check(App *app) {
+
+    if (!app || !app->name) {
+        return false;
+    }
+
+    if (strcmp(app->name, "controlleremu") == 0 ||
+        strcmp(app->name, "switchemu") == 0) {
+        return true;
+    }
+
+    return false;
+}
+
 static bool app_wait_commit(Config *config, App *app) {
 
     time_t start;
@@ -251,9 +265,14 @@ static bool app_wait_commit(Config *config, App *app) {
     start = time(NULL);
     while (true) {
 
-        if (wc_app_ping(config, app) &&
-            wc_app_version_matches(config, app, app->tag)) {
-            return true;
+        if (wc_app_ping(config, app)) {
+            if (app_skip_version_check(app)) {
+                return true;
+            }
+
+            if (wc_app_version_matches(config, app, app->tag)) {
+                return true;
+            }
         }
 
         if ((int)(time(NULL) - start) >= config->commitTimeoutSec) {
