@@ -13,7 +13,6 @@
 #include <ulfius.h>
 #include <jansson.h>
 
-#include "usys_log.h"
 #include "starterd.h"
 #include "version.h"
 #include "web_service.h"
@@ -22,6 +21,9 @@
 #include "jserdes.h"
 #include "supervisor.h"
 #include "http_status.h"
+#include "app.h"
+
+#include "usys_log.h"
 
 static json_t *ws_load_json_body(const struct _u_request *req) {
 
@@ -36,6 +38,24 @@ static json_t *ws_load_json_body(const struct _u_request *req) {
                       req->binary_body_length,
                       0,
                       &err);
+}
+
+static bool ws_app_exists(StarterContext *ctx,
+                          const char *space,
+                          const char *name) {
+
+    if (!ctx || !ctx->spaceList || !space || !name) {
+        return false;
+    }
+
+    if (!app_find(ctx->spaceList, space, name)) {
+        usys_log_error("web: app not found: space=%s name=%s",
+                       space,
+                       name);
+        return false;
+    }
+
+    return true;
 }
 
 static int ws_reply_text(struct _u_response *resp, int status, const char *text) {
@@ -166,7 +186,6 @@ static int ws_update_cb(const struct _u_request *req,
                         void *userData) {
 
     StarterContext *ctx;
-    json_error_t err;
     json_t *j;
     char *space;
     char *name;
@@ -175,7 +194,7 @@ static int ws_update_cb(const struct _u_request *req,
     Action *a;
 
     ctx = (StarterContext *)userData;
-    if (!ctx || !ctx->queue || !ctx->supervisor) {
+    if (!ctx || !ctx->queue || !ctx->supervisor || !ctx->spaceList) {
         return ws_reply_text(resp,
                              HttpStatus_InternalServerError,
                              HttpStatusStr(HttpStatus_InternalServerError));
@@ -193,9 +212,7 @@ static int ws_update_cb(const struct _u_request *req,
                              HttpStatusStr(HttpStatus_Locked));
     }
 
-    j = json_loads(req->binary_body ? (const char *)req->binary_body : "{}",
-                   0,
-                   &err);
+    j = ws_load_json_body(req);
     if (!j) {
         return ws_reply_text(resp,
                              HttpStatus_BadRequest,
@@ -213,14 +230,28 @@ static int ws_update_cb(const struct _u_request *req,
         free(name);
         free(tag);
         free(hub);
+
         return ws_reply_text(resp,
                              HttpStatus_BadRequest,
                              HttpStatusStr(HttpStatus_BadRequest));
     }
 
+    if (!ws_app_exists(ctx, space, name)) {
+        json_decref(j);
+        free(space);
+        free(name);
+        free(tag);
+        free(hub);
+
+        return ws_reply_text(resp,
+                             HttpStatus_NotFound,
+                             HttpStatusStr(HttpStatus_NotFound));
+    }
+
     ctx->updateInProgress = 1;
 
     a = action_new(ACTION_UPDATE_APP, space, name, tag, hub);
+
     free(space);
     free(name);
     free(tag);
@@ -235,7 +266,9 @@ static int ws_update_cb(const struct _u_request *req,
             free(a->hub);
             free(a);
         }
+
         ctx->updateInProgress = 0;
+
         return ws_reply_text(resp,
                              HttpStatus_InternalServerError,
                              HttpStatusStr(HttpStatus_InternalServerError));
@@ -260,13 +293,15 @@ static int ws_terminate_cb(const struct _u_request *req,
     Action *a;
 
     ctx = (StarterContext *)userData;
-    if (!ctx || !ctx->queue || !ctx->supervisor) {
+    if (!ctx || !ctx->queue || !ctx->supervisor || !ctx->spaceList) {
         return ws_reply_text(resp,
                              HttpStatus_InternalServerError,
                              HttpStatusStr(HttpStatus_InternalServerError));
     }
 
-    if (ctx->switchRequested) {
+    if (ctx->switchRequested ||
+        ctx->updateInProgress ||
+        ctx->terminateRequested) {
         return ws_reply_text(resp,
                              HttpStatus_Conflict,
                              HttpStatusStr(HttpStatus_Conflict));
@@ -292,17 +327,31 @@ static int ws_terminate_cb(const struct _u_request *req,
                              HttpStatusStr(HttpStatus_BadRequest));
     }
 
+    if (!ws_app_exists(ctx, space, name)) {
+        json_decref(j);
+        return ws_reply_text(resp,
+                             HttpStatus_NotFound,
+                             HttpStatusStr(HttpStatus_NotFound));
+    }
+
     a = action_new(ACTION_TERMINATE_APP, space, name, NULL, NULL);
     json_decref(j);
 
     if (!a || !actions_enqueue(ctx->queue, a)) {
         if (a) {
+            free(a->space);
+            free(a->name);
+            free(a->tag);
+            free(a->hub);
             free(a);
         }
+
         return ws_reply_text(resp,
                              HttpStatus_InternalServerError,
                              HttpStatusStr(HttpStatus_InternalServerError));
     }
+
+    ctx->terminateRequested = 1;
 
     supervisor_signal((Supervisor *)ctx->supervisor);
 
