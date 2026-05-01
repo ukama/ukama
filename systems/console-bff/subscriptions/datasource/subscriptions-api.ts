@@ -26,12 +26,12 @@ const getNodeMetricRange = async (
   if (nodeId) {
     params = params + `&node=${nodeId}`;
   }
-  if (networkId) {
-    params = params + `&network=${networkId}`;
-  }
-  if (siteId) {
-    params = params + `&site=${siteId}`;
-  }
+  // if (networkId) {
+  //   params = params + `&network=${networkId}`;
+  // }
+  // if (siteId) {
+  //   params = params + `&site=${siteId}`;
+  // }
   if (args.operation) {
     params = params + `&operation=${args.operation}`;
   }
