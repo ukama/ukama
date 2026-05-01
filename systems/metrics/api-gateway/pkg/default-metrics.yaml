@@ -940,7 +940,7 @@ cnode:
     tickInterval: 1
     tickPositions: [0, 1]
     threshold: { min: 0, normal: 1, max: 1 }
-  switch_port_1_speed_bps:
+  switch_port_1_speed:
     metric: com_switch_switch_port_1_tnode_poe_speed_bps
     needRate: false
     rateInterval: ""
@@ -949,7 +949,7 @@ cnode:
     tickInterval: 100000000
     tickPositions: []
     threshold: { min: 0, normal: 1000000000, max: 10000000000 }
-  switch_port_1_poe_power:
+  switch_port_1_power:
     metric: com_switch_switch_port_1_tnode_poe_poe_power_watts
     needRate: false
     rateInterval: ""
@@ -985,7 +985,7 @@ cnode:
     tickInterval: 1
     tickPositions: [0, 1]
     threshold: { min: 0, normal: 1, max: 1 }
-  switch_port_2_speed_bps:
+  switch_port_2_speed:
     metric: com_switch_switch_port_2_cnode_poe_speed_bps
     needRate: false
     rateInterval: ""
@@ -994,7 +994,7 @@ cnode:
     tickInterval: 100000000
     tickPositions: []
     threshold: { min: 0, normal: 1000000000, max: 10000000000 }
-  switch_port_2_poe_power:
+  switch_port_2_power:
     metric: com_switch_switch_port_2_cnode_poe_poe_power_watts
     needRate: false
     rateInterval: ""
@@ -1030,7 +1030,7 @@ cnode:
     tickInterval: 1
     tickPositions: [0, 1]
     threshold: { min: 0, normal: 1, max: 1 }
-  switch_port_3_speed_bps:
+  switch_port_3_speed:
     metric: com_switch_switch_port_3_anode_poe_speed_bps
     needRate: false
     rateInterval: ""
@@ -1039,7 +1039,7 @@ cnode:
     tickInterval: 100000000
     tickPositions: []
     threshold: { min: 0, normal: 1000000000, max: 10000000000 }
-  switch_port_3_poe_power:
+  switch_port_3_power:
     metric: com_switch_switch_port_3_anode_poe_poe_power_watts
     needRate: false
     rateInterval: ""
@@ -1075,7 +1075,7 @@ cnode:
     tickInterval: 1
     tickPositions: [0, 1]
     threshold: { min: 0, normal: 1, max: 1 }
-  switch_port_4_speed_bps:
+  switch_port_4_speed:
     metric: com_switch_switch_port_4_spare_poe_speed_bps
     needRate: false
     rateInterval: ""
@@ -1084,7 +1084,7 @@ cnode:
     tickInterval: 100000000
     tickPositions: []
     threshold: { min: 0, normal: 1000000000, max: 10000000000 }
-  switch_port_4_poe_power:
+  switch_port_4_power:
     metric: com_switch_switch_port_4_spare_poe_poe_power_watts
     needRate: false
     rateInterval: ""
@@ -1120,7 +1120,7 @@ cnode:
     tickInterval: 1
     tickPositions: [0, 1]
     threshold: { min: 0, normal: 1, max: 1 }
-  switch_port_5_speed_bps:
+  switch_port_5_speed:
     metric: com_switch_switch_port_5_port5_speed_bps
     needRate: false
     rateInterval: ""
@@ -1129,7 +1129,7 @@ cnode:
     tickInterval: 100000000
     tickPositions: []
     threshold: { min: 0, normal: 1000000000, max: 10000000000 }
-  switch_port_5_poe_power:
+  switch_port_5_power:
     metric: com_switch_switch_port_5_port5_poe_power_watts
     needRate: false
     rateInterval: ""
@@ -1165,7 +1165,7 @@ cnode:
     tickInterval: 1
     tickPositions: [0, 1]
     threshold: { min: 0, normal: 1, max: 1 }
-  switch_port_6_speed_bps:
+  switch_port_6_speed:
     metric: com_switch_switch_port_6_port6_speed_bps
     needRate: false
     rateInterval: ""
@@ -1174,7 +1174,7 @@ cnode:
     tickInterval: 100000000
     tickPositions: []
     threshold: { min: 0, normal: 1000000000, max: 10000000000 }
-  switch_port_6_poe_power:
+  switch_port_6_power:
     metric: com_switch_switch_port_6_port6_poe_power_watts
     needRate: false
     rateInterval: ""
@@ -1210,7 +1210,7 @@ cnode:
     tickInterval: 1
     tickPositions: [0, 1]
     threshold: { min: 0, normal: 1, max: 1 }
-  switch_port_7_speed_bps:
+  switch_port_7_speed:
     metric: com_switch_switch_port_7_port7_speed_bps
     needRate: false
     rateInterval: ""
@@ -1219,7 +1219,7 @@ cnode:
     tickInterval: 100000000
     tickPositions: []
     threshold: { min: 0, normal: 1000000000, max: 10000000000 }
-  switch_port_7_poe_power:
+  switch_port_7_power:
     metric: com_switch_switch_port_7_port7_poe_power_watts
     needRate: false
     rateInterval: ""
@@ -1255,7 +1255,7 @@ cnode:
     tickInterval: 1
     tickPositions: [0, 1]
     threshold: { min: 0, normal: 1, max: 1 }
-  switch_port_8_speed_bps:
+  switch_port_8_speed:
     metric: com_switch_switch_port_8_port8_speed_bps
     needRate: false
     rateInterval: ""
@@ -1264,7 +1264,7 @@ cnode:
     tickInterval: 100000000
     tickPositions: []
     threshold: { min: 0, normal: 1000000000, max: 10000000000 }
-  switch_port_8_poe_power:
+  switch_port_8_power:
     metric: com_switch_switch_port_8_port8_poe_power_watts
     needRate: false
     rateInterval: ""
@@ -1300,7 +1300,7 @@ cnode:
     tickInterval: 1
     tickPositions: [0, 1]
     threshold: { min: 0, normal: 1, max: 1 }
-  switch_port_9_speed_bps:
+  switch_port_9_speed:
     metric: com_switch_switch_port_9_uplink_sfp_speed_bps
     needRate: false
     rateInterval: ""
@@ -1309,7 +1309,7 @@ cnode:
     tickInterval: 100000000
     tickPositions: []
     threshold: { min: 0, normal: 1000000000, max: 10000000000 }
-  switch_port_9_poe_power:
+  switch_port_9_power:
     metric: com_switch_switch_port_9_uplink_sfp_poe_power_watts
     needRate: false
     rateInterval: ""
@@ -1345,7 +1345,7 @@ cnode:
     tickInterval: 1
     tickPositions: [0, 1]
     threshold: { min: 0, normal: 1, max: 1 }
-  switch_port_10_speed_bps:
+  switch_port_10_speed:
     metric: com_switch_switch_port_10_port10_speed_bps
     needRate: false
     rateInterval: ""
@@ -1354,7 +1354,7 @@ cnode:
     tickInterval: 100000000
     tickPositions: []
     threshold: { min: 0, normal: 1000000000, max: 10000000000 }
-  switch_port_10_poe_power:
+  switch_port_10_power:
     metric: com_switch_switch_port_10_port10_poe_power_watts
     needRate: false
     rateInterval: ""

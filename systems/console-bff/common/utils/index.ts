@@ -252,46 +252,42 @@ const getInfraGraphKpiKeysByType = (type: string): string[] => {
         "solar_panel_power",
       ];
     case GRAPHS_TYPE.CONTROLLER:
-      return [
-        "solar_panel_voltage",
-        "solar_panel_current",
-        "solar_panel_power",
-        "battery_charge",
-      ];
+      return ["controller_temperature", "load_current"];
     case GRAPHS_TYPE.MAIN_BACKHAUL:
       return ["backhaul_latency", "backhaul_downlink"];
     case GRAPHS_TYPE.SWITCH:
       return [
-        "backhaul_switch_port_status",
-        "backhaul_switch_port_speed",
-        "backhaul_switch_port_power",
-        "solar_switch_port_status",
-        "solar_switch_port_speed",
-        "solar_switch_port_power",
-        "node_switch_port_status",
-        "node_switch_port_speed",
-        "node_switch_port_power",
+        "switch_port_1_speed",
+        "switch_port_1_power",
+        "switch_port_2_speed",
+        "switch_port_2_power",
+        "switch_port_3_speed",
+        "switch_port_3_power",
+        "switch_port_4_speed",
+        "switch_port_4_power",
+        "switch_port_9_speed",
+        "switch_port_9_power",
       ];
     case GRAPHS_TYPE.SITE:
       return [
-        "site_uptime_seconds",
-        "uptime",
         "solar_panel_voltage",
         "solar_panel_current",
-        "site_uptime_percentage",
         "solar_panel_power",
+        "controller_temperature",
+        "load_current",
         "battery_charge",
         "backhaul_latency",
         "backhaul_downlink",
-        "backhaul_switch_port_status",
-        "backhaul_switch_port_speed",
-        "backhaul_switch_port_power",
-        "solar_switch_port_status",
-        "solar_switch_port_speed",
-        "solar_switch_port_power",
-        "node_switch_port_status",
-        "node_switch_port_speed",
-        "node_switch_port_power",
+        "switch_port_1_speed",
+        "switch_port_1_power",
+        "switch_port_2_speed",
+        "switch_port_2_power",
+        "switch_port_3_speed",
+        "switch_port_3_power",
+        "switch_port_4_speed",
+        "switch_port_4_power",
+        "switch_port_9_speed",
+        "switch_port_9_power",
         "node_active_subscribers",
       ];
     default:
