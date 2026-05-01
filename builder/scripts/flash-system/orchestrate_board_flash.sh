@@ -137,20 +137,78 @@ FLASH_METHOD=$(yq_read 'method' 2>/dev/null || echo "network")
 if [ "$FLASH_METHOD" = "rpiboot" ]; then
     IMG_NAME=$(yq_read 'image.name')
     IMG_PATH=$(yq_read 'image.path')
-    
+
     if [ ! -f "$IMG_PATH" ]; then
         echo "Image not found: $IMG_PATH"
         exit 1
     fi
-    
+
     cp "$IMG_PATH" "$IMG_NAME"
-    
+
     if [ ! -x "./flash-cnode.sh" ]; then
         echo "flash-cnode.sh not found"
         exit 1
     fi
-    
+
     ./flash-cnode.sh
+    exit 0
+fi
+
+if [ "$FLASH_METHOD" = "sd-card" ]; then
+    IMG_PATH=$(yq_read 'image.path')
+    SD_DEV=$(yq_read 'sd_card.device')
+    HOST_IP=$(yq_read 'network.host_ip')
+    SERIAL_DEV=$(yq_read 'serial.device')
+    SUCCESS_MARKER=$(yq_read 'flash.success_marker')
+    BOOT_MARKER=$(yq_read 'flash.boot_marker')
+
+    if [ ! -f "$IMG_PATH" ]; then
+        echo "Image not found: $IMG_PATH"
+        exit 1
+    fi
+
+    if [ ! -b "$SD_DEV" ]; then
+        echo "SD card device '$SD_DEV' not found."
+        echo "Make sure SD card is inserted and use the correct device path."
+        exit 1
+    fi
+
+    echo "Creating SD card for $BOARD_NAME..."
+    DEV="$SD_DEV" \
+    IMAGE_PATH="$IMG_PATH" \
+    BOARD_NAME="$BOARD_NAME" \
+    HOST_IP="$HOST_IP" \
+        ./create_sdcard.sh
+
+    echo ""
+    echo "========================================"
+    echo "SD card created successfully!"
+    echo "========================================"
+    echo ""
+    echo "Next steps:"
+    echo "1. Remove SD card from Ubuntu"
+    echo "2. Insert SD card into $BOARD_NAME board"
+    echo "3. Connect serial cable: $SERIAL_DEV"
+    echo "4. Power on the board"
+    echo "5. Board will auto-flash to eMMC"
+    echo ""
+    echo "Press ENTER when ready to monitor serial..."
+    read -r
+
+    touch "$SERIAL_LOG"
+    cat "$SERIAL_DEV" | tee "$RAW_SERIAL" "$SERIAL_LOG" &
+    SERIAL_PID=$!
+
+    echo "Monitoring serial output from $BOARD_NAME via ${SERIAL_DEV}..."
+    echo "Waiting for '${SUCCESS_MARKER}'"
+    retry timeout 300 grep -q "$SUCCESS_MARKER" "$SERIAL_LOG"
+    echo "Flash completed."
+
+    echo "Waiting for '${BOOT_MARKER}'"
+    retry timeout 120 grep -q "$BOOT_MARKER" "$SERIAL_LOG"
+    echo "System booted."
+
+    echo "PASS" > "$STATUS_FILE"
     exit 0
 fi
 

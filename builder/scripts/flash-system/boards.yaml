@@ -3,14 +3,14 @@ boards:
     name: "Tower Node (COM Board)"
     method: "network"
     network:
-      host_eth: "enp0s25"
+      host_eth: "enp0s31f6"
       host_ip: "192.168.100.1"
       target_ip: "192.168.100.2"
     image:
       name: "ukama-com-image.img"
-      path: "/home/kashif/work/ukama/repos/ukama/builder/scripts/build-system/ukama-com-image.img"
+      path: "/usr/ukm/ukama/builder/scripts/build-system/ukama-com-image.img"
     host_device:
-      device: "/dev/sdb"
+      device: "/dev/sda"
       iso_url: "https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/x86_64/alpine-standard-3.20.0-x86_64.iso"
     serial:
       device: "/dev/ttyUSB0"
@@ -22,17 +22,17 @@ boards:
 
   anode:
     name: "Amplifier Node (Controller Board)"
-    method: "network"
-    network:
-      host_eth: "enp0s25"
-      host_ip: "192.168.100.1"
-      target_ip: "192.168.100.2"
+    method: "sd-card"
     image:
       name: "ukama-amplifier-image.img"
-      path: "/home/kashif/work/ukama/repos/ukama/builder/scripts/build-system/ukama-amplifier-image.img"
-    host_device:
-      device: "/dev/sdcard"
-      iso_url: "https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/x86_64/alpine-standard-3.20.0-x86_64.iso"
+      path: "/usr/ukm/ukama/builder/scripts/build-system/ukama-amplifier-image.img"
+    sd_card:
+      device: "/dev/sdb"
+      boot_partition: "/dev/sdb1"
+      root_partition: "/dev/sdb2"
+    network:
+      host_eth: "enp0s31f6"
+      host_ip: "192.168.100.1"
     serial:
       device: "/dev/ttyUSB0"
       baud: 115200
