@@ -71,7 +71,17 @@ $(VENDOR_PKG):
 	$(MAKE) -C $(VENDOR_DIR) $@
 
 $(VERSION_FILE):
-	$(NODES_DIR)/utils/scripts/generate_version.sh
+	@if [ -n "$(EXAMPLE_VERSION)" ]; then \
+		echo "#ifndef VERSION_H_" > $(VERSION_FILE); \
+		echo "#define VERSION_H_" >> $(VERSION_FILE); \
+		echo "" >> $(VERSION_FILE); \
+		echo "#define VERSION \"$(EXAMPLE_VERSION)\"" >> $(VERSION_FILE); \
+		echo "" >> $(VERSION_FILE); \
+		echo "#endif /* VERSION_H_ */" >> $(VERSION_FILE); \
+		echo "Generated $(VERSION_FILE) from EXAMPLE_VERSION=$(EXAMPLE_VERSION)"; \
+	else \
+		$(NODES_DIR)/utils/scripts/generate_version.sh; \
+	fi
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
