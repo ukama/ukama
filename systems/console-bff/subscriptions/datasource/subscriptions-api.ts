@@ -21,7 +21,7 @@ const getNodeMetricRange = async (
   type: string,
   args: GetMetricsStatInput
 ): Promise<MetricsRes> => {
-  const { to, from, nodeId, networkId = "", siteId } = args;
+  const { to, from, nodeId } = args;
   let params = `from=${from}&to=${to}&step=1`;
   if (nodeId) {
     params = params + `&node=${nodeId}`;
