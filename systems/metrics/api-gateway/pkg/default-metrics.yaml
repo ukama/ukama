@@ -607,6 +607,762 @@ cnode:
     tickInterval: 10
     tickPositions: []
     threshold: { min: 0, normal: 65, max: 85 }
+  switch_system_power:
+    metric: com_switch_switch_system_power_watts
+    needRate: false
+    rateInterval: ""
+    unit: "W"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 80, max: 240 }
+  switch_system_current:
+    metric: com_switch_switch_system_current_amps
+    needRate: false
+    rateInterval: ""
+    unit: "A"
+    format: "number"
+    tickInterval: 2
+    tickPositions: []
+    threshold: { min: 0, normal: 2, max: 10 }
+  switch_input_voltage:
+    metric: com_switch_switch_input_voltage
+    needRate: false
+    rateInterval: ""
+    unit: "V"
+    format: "number"
+    tickInterval: 5
+    tickPositions: []
+    threshold: { min: 0, normal: 54, max: 60 }
+  switch_ambient_temperature:
+    metric: com_switch_switch_ambient_temperature_c
+    needRate: false
+    rateInterval: ""
+    unit: "C"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 45, max: 70 }
+  network_uplink_link:
+    metric: com_network_uplink_link
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  network_uplink_linkspeed:
+    metric: com_network_uplink_linkspeed
+    needRate: false
+    rateInterval: ""
+    unit: "Mbps"
+    format: "number"
+    tickInterval: 1000
+    tickPositions: []
+    threshold: { min: 0, normal: 1000, max: 10000 }
+  network_uplink_rx_bytes:
+    metric: com_network_uplink_rx_bytes
+    needRate: false
+    rateInterval: ""
+    unit: "Bytes"
+    format: "number"
+    tickInterval: 1000
+    tickPositions: []
+    threshold: { min: 0, normal: 1000000, max: 1000000000 }
+  network_uplink_tx_bytes:
+    metric: com_network_uplink_tx_bytes
+    needRate: false
+    rateInterval: ""
+    unit: "Bytes"
+    format: "number"
+    tickInterval: 1000
+    tickPositions: []
+    threshold: { min: 0, normal: 1000000, max: 1000000000 }
+  network_uplink_rx_packets:
+    metric: com_network_uplink_rx_packets
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 100
+    tickPositions: []
+    threshold: { min: 0, normal: 10000, max: 1000000 }
+  network_uplink_tx_packets:
+    metric: com_network_uplink_tx_packets
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 100
+    tickPositions: []
+    threshold: { min: 0, normal: 10000, max: 1000000 }
+  network_uplink_rx_error:
+    metric: com_network_uplink_rx_error
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: []
+    threshold: { min: 0, normal: 0, max: 100 }
+  network_uplink_tx_error:
+    metric: com_network_uplink_tx_error
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: []
+    threshold: { min: 0, normal: 0, max: 100 }
+  network_uplink_rx_dropped:
+    metric: com_network_uplink_rx_dropped
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: []
+    threshold: { min: 0, normal: 0, max: 100 }
+  network_uplink_tx_dropped:
+    metric: com_network_uplink_tx_dropped
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: []
+    threshold: { min: 0, normal: 0, max: 100 }
+  backhaul_near_ttfb_median:
+    metric: com_backhaul_backhaul_near_ttfb_median_ms
+    needRate: false
+    rateInterval: ""
+    unit: "ms"
+    format: "number"
+    tickInterval: 50
+    tickPositions: []
+    threshold: { min: 0, normal: 100, max: 500 }
+  backhaul_near_ttfb_p95:
+    metric: com_backhaul_backhaul_near_ttfb_p95_ms
+    needRate: false
+    rateInterval: ""
+    unit: "ms"
+    format: "number"
+    tickInterval: 50
+    tickPositions: []
+    threshold: { min: 0, normal: 200, max: 1000 }
+  backhaul_near_ttfb_p99:
+    metric: com_backhaul_backhaul_near_ttfb_p99_ms
+    needRate: false
+    rateInterval: ""
+    unit: "ms"
+    format: "number"
+    tickInterval: 50
+    tickPositions: []
+    threshold: { min: 0, normal: 300, max: 1500 }
+  backhaul_far_ttfb_median:
+    metric: com_backhaul_backhaul_far_ttfb_median_ms
+    needRate: false
+    rateInterval: ""
+    unit: "ms"
+    format: "number"
+    tickInterval: 50
+    tickPositions: []
+    threshold: { min: 0, normal: 100, max: 500 }
+  backhaul_far_ttfb_p95:
+    metric: com_backhaul_backhaul_far_ttfb_p95_ms
+    needRate: false
+    rateInterval: ""
+    unit: "ms"
+    format: "number"
+    tickInterval: 50
+    tickPositions: []
+    threshold: { min: 0, normal: 200, max: 1000 }
+  backhaul_far_ttfb_p99:
+    metric: com_backhaul_backhaul_far_ttfb_p99_ms
+    needRate: false
+    rateInterval: ""
+    unit: "ms"
+    format: "number"
+    tickInterval: 50
+    tickPositions: []
+    threshold: { min: 0, normal: 300, max: 1500 }
+  backhaul_probe_success_rate:
+    metric: com_backhaul_backhaul_probe_success_rate_pct
+    needRate: false
+    rateInterval: ""
+    unit: "%"
+    format: "number"
+    tickInterval: 10
+    tickPositions: [0, 20, 40, 60, 80, 100]
+    threshold: { min: 0, normal: 90, max: 100 }
+  backhaul_stall_rate:
+    metric: com_backhaul_backhaul_stall_rate_pct
+    needRate: false
+    rateInterval: ""
+    unit: "%"
+    format: "number"
+    tickInterval: 10
+    tickPositions: [0, 20, 40, 60, 80, 100]
+    threshold: { min: 0, normal: 10, max: 100 }
+  backhaul_cap_detected:
+    metric: com_backhaul_backhaul_cap_detected_mbps
+    needRate: false
+    rateInterval: ""
+    unit: "Mbps"
+    format: "number"
+    tickInterval: 100
+    tickPositions: []
+    threshold: { min: 0, normal: 200, max: 1000 }
+  backhaul_bufferbloat_inflation:
+    metric: com_backhaul_backhaul_bufferbloat_inflation_factor
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "decimal"
+    tickInterval: 1
+    tickPositions: []
+    threshold: { min: 0, normal: 1, max: 5 }
+  backhaul_diag_present:
+    metric: com_backhaul_backhaul_diag_present
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  solar_yield_today:
+    metric: com_controller_controller_solar_yield_today
+    needRate: false
+    rateInterval: ""
+    unit: "kWh"
+    format: "number"
+    tickInterval: 1
+    tickPositions: []
+    threshold: { min: 0, normal: 20, max: 100 }
+  solar_yield_total:
+    metric: com_controller_controller_solar_yield_total
+    needRate: false
+    rateInterval: ""
+    unit: "kWh"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 500, max: 50000 }
+  controller_temperature:
+    metric: com_controller_controller_controller_temperature
+    needRate: false
+    rateInterval: ""
+    unit: "C"
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 60, max: 80 }
+  mppt_efficiency:
+    metric: com_controller_controller_mppt_efficiency
+    needRate: false
+    rateInterval: ""
+    unit: "%"
+    format: "number"
+    tickInterval: 10
+    tickPositions: [0, 20, 40, 60, 80, 100]
+    threshold: { min: 0, normal: 90, max: 100 }
+  load_current:
+    metric: com_controller_controller_load_current
+    needRate: false
+    rateInterval: ""
+    unit: "A"
+    format: "number"
+    tickInterval: 2
+    tickPositions: []
+    threshold: { min: 0, normal: 10, max: 30 }
+  memory_total:
+    metric: com_memory_ddr_total
+    needRate: false
+    rateInterval: ""
+    unit: "MB"
+    format: "number"
+    tickInterval: 100
+    tickPositions: []
+    threshold: { min: 0, normal: 16000, max: 64000 }
+  memory_free:
+    metric: com_memory_ddr_free
+    needRate: false
+    rateInterval: ""
+    unit: "MB"
+    format: "number"
+    tickInterval: 100
+    tickPositions: []
+    threshold: { min: 0, normal: 2000, max: 32000 }
+  storage_total:
+    metric: com_storage_emmc_total
+    needRate: false
+    rateInterval: ""
+    unit: "MB"
+    format: "number"
+    tickInterval: 1000
+    tickPositions: []
+    threshold: { min: 0, normal: 64000, max: 256000 }
+  storage_free:
+    metric: com_storage_emmc_free
+    needRate: false
+    rateInterval: ""
+    unit: "MB"
+    format: "number"
+    tickInterval: 1000
+    tickPositions: []
+    threshold: { min: 0, normal: 10000, max: 200000 }
+  switch_port_1_present:
+    metric: com_switch_switch_port_1_tnode_poe_present
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_1_admin_up:
+    metric: com_switch_switch_port_1_tnode_poe_admin_up
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_1_link_up:
+    metric: com_switch_switch_port_1_tnode_poe_link_up
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_1_speed_bps:
+    metric: com_switch_switch_port_1_tnode_poe_speed_bps
+    needRate: false
+    rateInterval: ""
+    unit: "bps"
+    format: "number"
+    tickInterval: 100000000
+    tickPositions: []
+    threshold: { min: 0, normal: 1000000000, max: 10000000000 }
+  switch_port_1_poe_power:
+    metric: com_switch_switch_port_1_tnode_poe_poe_power_watts
+    needRate: false
+    rateInterval: ""
+    unit: "W"
+    format: "number"
+    tickInterval: 5
+    tickPositions: []
+    threshold: { min: 0, normal: 15, max: 60 }
+  switch_port_2_present:
+    metric: com_switch_switch_port_2_cnode_poe_present
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_2_admin_up:
+    metric: com_switch_switch_port_2_cnode_poe_admin_up
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_2_link_up:
+    metric: com_switch_switch_port_2_cnode_poe_link_up
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_2_speed_bps:
+    metric: com_switch_switch_port_2_cnode_poe_speed_bps
+    needRate: false
+    rateInterval: ""
+    unit: "bps"
+    format: "number"
+    tickInterval: 100000000
+    tickPositions: []
+    threshold: { min: 0, normal: 1000000000, max: 10000000000 }
+  switch_port_2_poe_power:
+    metric: com_switch_switch_port_2_cnode_poe_poe_power_watts
+    needRate: false
+    rateInterval: ""
+    unit: "W"
+    format: "number"
+    tickInterval: 5
+    tickPositions: []
+    threshold: { min: 0, normal: 15, max: 60 }
+  switch_port_3_present:
+    metric: com_switch_switch_port_3_anode_poe_present
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_3_admin_up:
+    metric: com_switch_switch_port_3_anode_poe_admin_up
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_3_link_up:
+    metric: com_switch_switch_port_3_anode_poe_link_up
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_3_speed_bps:
+    metric: com_switch_switch_port_3_anode_poe_speed_bps
+    needRate: false
+    rateInterval: ""
+    unit: "bps"
+    format: "number"
+    tickInterval: 100000000
+    tickPositions: []
+    threshold: { min: 0, normal: 1000000000, max: 10000000000 }
+  switch_port_3_poe_power:
+    metric: com_switch_switch_port_3_anode_poe_poe_power_watts
+    needRate: false
+    rateInterval: ""
+    unit: "W"
+    format: "number"
+    tickInterval: 5
+    tickPositions: []
+    threshold: { min: 0, normal: 15, max: 60 }
+  switch_port_4_present:
+    metric: com_switch_switch_port_4_spare_poe_present
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_4_admin_up:
+    metric: com_switch_switch_port_4_spare_poe_admin_up
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_4_link_up:
+    metric: com_switch_switch_port_4_spare_poe_link_up
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_4_speed_bps:
+    metric: com_switch_switch_port_4_spare_poe_speed_bps
+    needRate: false
+    rateInterval: ""
+    unit: "bps"
+    format: "number"
+    tickInterval: 100000000
+    tickPositions: []
+    threshold: { min: 0, normal: 1000000000, max: 10000000000 }
+  switch_port_4_poe_power:
+    metric: com_switch_switch_port_4_spare_poe_poe_power_watts
+    needRate: false
+    rateInterval: ""
+    unit: "W"
+    format: "number"
+    tickInterval: 5
+    tickPositions: []
+    threshold: { min: 0, normal: 15, max: 60 }
+  switch_port_5_present:
+    metric: com_switch_switch_port_5_port5_present
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_5_admin_up:
+    metric: com_switch_switch_port_5_port5_admin_up
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_5_link_up:
+    metric: com_switch_switch_port_5_port5_link_up
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_5_speed_bps:
+    metric: com_switch_switch_port_5_port5_speed_bps
+    needRate: false
+    rateInterval: ""
+    unit: "bps"
+    format: "number"
+    tickInterval: 100000000
+    tickPositions: []
+    threshold: { min: 0, normal: 1000000000, max: 10000000000 }
+  switch_port_5_poe_power:
+    metric: com_switch_switch_port_5_port5_poe_power_watts
+    needRate: false
+    rateInterval: ""
+    unit: "W"
+    format: "number"
+    tickInterval: 5
+    tickPositions: []
+    threshold: { min: 0, normal: 15, max: 60 }
+  switch_port_6_present:
+    metric: com_switch_switch_port_6_port6_present
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_6_admin_up:
+    metric: com_switch_switch_port_6_port6_admin_up
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_6_link_up:
+    metric: com_switch_switch_port_6_port6_link_up
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_6_speed_bps:
+    metric: com_switch_switch_port_6_port6_speed_bps
+    needRate: false
+    rateInterval: ""
+    unit: "bps"
+    format: "number"
+    tickInterval: 100000000
+    tickPositions: []
+    threshold: { min: 0, normal: 1000000000, max: 10000000000 }
+  switch_port_6_poe_power:
+    metric: com_switch_switch_port_6_port6_poe_power_watts
+    needRate: false
+    rateInterval: ""
+    unit: "W"
+    format: "number"
+    tickInterval: 5
+    tickPositions: []
+    threshold: { min: 0, normal: 15, max: 60 }
+  switch_port_7_present:
+    metric: com_switch_switch_port_7_port7_present
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_7_admin_up:
+    metric: com_switch_switch_port_7_port7_admin_up
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_7_link_up:
+    metric: com_switch_switch_port_7_port7_link_up
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_7_speed_bps:
+    metric: com_switch_switch_port_7_port7_speed_bps
+    needRate: false
+    rateInterval: ""
+    unit: "bps"
+    format: "number"
+    tickInterval: 100000000
+    tickPositions: []
+    threshold: { min: 0, normal: 1000000000, max: 10000000000 }
+  switch_port_7_poe_power:
+    metric: com_switch_switch_port_7_port7_poe_power_watts
+    needRate: false
+    rateInterval: ""
+    unit: "W"
+    format: "number"
+    tickInterval: 5
+    tickPositions: []
+    threshold: { min: 0, normal: 15, max: 60 }
+  switch_port_8_present:
+    metric: com_switch_switch_port_8_port8_present
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_8_admin_up:
+    metric: com_switch_switch_port_8_port8_admin_up
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_8_link_up:
+    metric: com_switch_switch_port_8_port8_link_up
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_8_speed_bps:
+    metric: com_switch_switch_port_8_port8_speed_bps
+    needRate: false
+    rateInterval: ""
+    unit: "bps"
+    format: "number"
+    tickInterval: 100000000
+    tickPositions: []
+    threshold: { min: 0, normal: 1000000000, max: 10000000000 }
+  switch_port_8_poe_power:
+    metric: com_switch_switch_port_8_port8_poe_power_watts
+    needRate: false
+    rateInterval: ""
+    unit: "W"
+    format: "number"
+    tickInterval: 5
+    tickPositions: []
+    threshold: { min: 0, normal: 15, max: 60 }
+  switch_port_9_present:
+    metric: com_switch_switch_port_9_uplink_sfp_present
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_9_admin_up:
+    metric: com_switch_switch_port_9_uplink_sfp_admin_up
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_9_link_up:
+    metric: com_switch_switch_port_9_uplink_sfp_link_up
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_9_speed_bps:
+    metric: com_switch_switch_port_9_uplink_sfp_speed_bps
+    needRate: false
+    rateInterval: ""
+    unit: "bps"
+    format: "number"
+    tickInterval: 100000000
+    tickPositions: []
+    threshold: { min: 0, normal: 1000000000, max: 10000000000 }
+  switch_port_9_poe_power:
+    metric: com_switch_switch_port_9_uplink_sfp_poe_power_watts
+    needRate: false
+    rateInterval: ""
+    unit: "W"
+    format: "number"
+    tickInterval: 5
+    tickPositions: []
+    threshold: { min: 0, normal: 15, max: 60 }
+  switch_port_10_present:
+    metric: com_switch_switch_port_10_port10_present
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_10_admin_up:
+    metric: com_switch_switch_port_10_port10_admin_up
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_10_link_up:
+    metric: com_switch_switch_port_10_port10_link_up
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 1
+    tickPositions: [0, 1]
+    threshold: { min: 0, normal: 1, max: 1 }
+  switch_port_10_speed_bps:
+    metric: com_switch_switch_port_10_port10_speed_bps
+    needRate: false
+    rateInterval: ""
+    unit: "bps"
+    format: "number"
+    tickInterval: 100000000
+    tickPositions: []
+    threshold: { min: 0, normal: 1000000000, max: 10000000000 }
+  switch_port_10_poe_power:
+    metric: com_switch_switch_port_10_port10_poe_power_watts
+    needRate: false
+    rateInterval: ""
+    unit: "W"
+    format: "number"
+    tickInterval: 5
+    tickPositions: []
+    threshold: { min: 0, normal: 15, max: 60 }
 
 # ---------------------------------------------------------------------------
 # System — platform-level / internal KPIs with no node type affinity.
