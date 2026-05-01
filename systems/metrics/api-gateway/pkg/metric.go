@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -207,6 +208,110 @@ func (m *Metrics) GetAggregateMetric(metricType string, nodeType string, metricF
 	return m.processPromRequest(ctx, metricType, metric, u, data, w, false)
 }
 
+func extractPromValues(rmap map[string]interface{}) []float64 {
+	var values []float64
+
+	data, ok := rmap["data"].(map[string]interface{})
+	if !ok {
+		return values
+	}
+	result, ok := data["result"].([]interface{})
+	if !ok {
+		return values
+	}
+
+	for _, entry := range result {
+		item, ok := entry.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if vv, ok := item["values"].([]interface{}); ok {
+			for _, p := range vv {
+				pair, ok := p.([]interface{})
+				if !ok || len(pair) < 2 {
+					continue
+				}
+				s, ok := pair[1].(string)
+				if !ok {
+					continue
+				}
+				f, err := strconv.ParseFloat(s, 64)
+				if err == nil && !math.IsNaN(f) && !math.IsInf(f, 0) {
+					values = append(values, f)
+				}
+			}
+		}
+		if pair, ok := item["value"].([]interface{}); ok && len(pair) >= 2 {
+			s, ok := pair[1].(string)
+			if !ok {
+				continue
+			}
+			f, err := strconv.ParseFloat(s, 64)
+			if err == nil && !math.IsNaN(f) && !math.IsInf(f, 0) {
+				values = append(values, f)
+			}
+		}
+	}
+	return values
+}
+
+func dynamicAxisMeta(metricCfg Metric, samples []float64) (tickPositions []int, tickInterval int, threshold Threshold) {
+	threshold = metricCfg.Threshold
+	tickPositions = metricCfg.TickPositions
+	tickInterval = metricCfg.TickInterval
+
+	if len(samples) == 0 {
+		return
+	}
+
+	minV, maxV := samples[0], samples[0]
+	for _, v := range samples[1:] {
+		if v < minV {
+			minV = v
+		}
+		if v > maxV {
+			maxV = v
+		}
+	}
+
+	if minV == maxV {
+		pad := math.Max(math.Abs(minV)*0.1, 1)
+		minV -= pad
+		maxV += pad
+	}
+
+	step := (maxV - minV) / 4.0
+	genTicks := make([]int, 0, 5)
+	for i := 0; i < 5; i++ {
+		genTicks = append(genTicks, int(math.Round(minV+step*float64(i))))
+	}
+
+	if len(tickPositions) < 2 {
+		tickPositions = genTicks
+	}
+	if tickInterval <= 0 {
+		if len(tickPositions) >= 2 {
+			iv := tickPositions[1] - tickPositions[0]
+			if iv <= 0 {
+				iv = 1
+			}
+			tickInterval = iv
+		} else {
+			tickInterval = int(math.Max(step, 1))
+		}
+	}
+
+	if threshold.Min == 0 && threshold.Normal == 0 && threshold.Max == 0 {
+		threshold = Threshold{
+			Min:    minV,
+			Normal: minV + (maxV-minV)*0.75,
+			Max:    maxV,
+		}
+	}
+
+	return
+}
+
 func formatMetricsResponse(metricName string, metricCfg Metric, w io.Writer, b io.ReadCloser) error {
 
 	bytes, err := io.ReadAll(b)
@@ -221,12 +326,13 @@ func formatMetricsResponse(metricName string, metricCfg Metric, w io.Writer, b i
 		log.Errorf("Failed to unmarshal prometheus response for %s Error: %v", metricName, err)
 		return err
 	}
+	tickPositions, tickInterval, threshold := dynamicAxisMeta(metricCfg, extractPromValues(rmap))
 	rmap["Name"] = metricName
 	rmap["unit"] = metricCfg.Unit
 	rmap["format"] = metricCfg.Format
-	rmap["tickInterval"] = metricCfg.TickInterval
-	rmap["tickPositions"] = metricCfg.TickPositions
-	rmap["threshold"] = metricCfg.Threshold
+	rmap["tickInterval"] = tickInterval
+	rmap["tickPositions"] = tickPositions
+	rmap["threshold"] = threshold
 
 	rb, err := json.Marshal(rmap)
 	if err != nil {

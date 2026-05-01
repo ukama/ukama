@@ -82,7 +82,8 @@ const LineChart = ({
     const picks = [0, 0.25, 0.5, 0.75, 1].map((ratio) =>
       tickPositions[Math.round(lastIndex * ratio)],
     );
-    return Array.from(new Set(picks));
+    const uniq = Array.from(new Set(picks));
+    return uniq.length >= 2 ? uniq : undefined;
   }, [tickPositions]);
 
   const chartOptions = useMemo<Highcharts.Options>(
@@ -170,7 +171,10 @@ const LineChart = ({
         tickPositions: normalizedTickPositions,
         gridLineWidth: normalizedTickPositions ? 0 : 2,
         tickAmount: 5,
-        tickInterval: tickInterval,
+        tickInterval:
+          tickInterval && tickInterval > 0 && !normalizedTickPositions
+            ? tickInterval
+            : undefined,
         labels: {
           y: 5,
           formatter: function (v: any) {
@@ -178,7 +182,7 @@ const LineChart = ({
           },
         },
 
-        plotLines: [...generatePlotLines(normalizedTickPositions)],
+        plotLines: generatePlotLines(normalizedTickPositions),
       },
 
       series: [
@@ -195,7 +199,7 @@ const LineChart = ({
         },
       ],
     }),
-    [fixedInitData, normalizedTickPositions, tickInterval, title, topic, yunit],
+    [fixedInitData, normalizedTickPositions, tickInterval, title, topic, yunit, format],
   );
 
   return (
