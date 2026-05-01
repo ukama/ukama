@@ -23,6 +23,21 @@
 #include "supervisor.h"
 #include "http_status.h"
 
+static json_t *ws_load_json_body(const struct _u_request *req) {
+
+    json_error_t err;
+
+    if (!req || !req->binary_body || req->binary_body_length <= 0) {
+        usys_log_error("web: empty json body");
+        return NULL;
+    }
+
+    return json_loadb((const char *)req->binary_body,
+                      req->binary_body_length,
+                      0,
+                      &err);
+}
+
 static int ws_reply_text(struct _u_response *resp, int status, const char *text) {
 
     ulfius_set_string_body_response(resp, status, text ? text : "");
@@ -238,7 +253,6 @@ static int ws_terminate_cb(const struct _u_request *req,
                            void *userData) {
 
     StarterContext *ctx;
-    json_error_t err;
     json_t *j;
     json_t *v;
     const char *space;
@@ -258,9 +272,7 @@ static int ws_terminate_cb(const struct _u_request *req,
                              HttpStatusStr(HttpStatus_Conflict));
     }
 
-    j = json_loads(req->binary_body ? (const char *)req->binary_body : "{}",
-                   0,
-                   &err);
+    j = ws_load_json_body(req);
     if (!j) {
         return ws_reply_text(resp,
                              HttpStatus_BadRequest,
