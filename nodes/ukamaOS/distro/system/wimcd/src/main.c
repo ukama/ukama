@@ -16,6 +16,7 @@
 #include <pthread.h>
 
 #include "db.h"
+#include "package_cache.h"
 #include "log.h"
 #include "wimc.h"
 #include "agent.h"
@@ -220,7 +221,10 @@ int main(int argc, char **argv) {
     }
     curlInit = 1;
 
-    db_mark_old_downloads_failed(serviceConfig.db);
+    if (pkg_reconcile_startup(serviceConfig.db, DEFAULT_APPS_PKGS_PATH) != 0) {
+        usys_log_error("Package cache startup reconcile failed");
+        goto cleanup;
+    }
 
     if (start_web_service(&serviceConfig, &serviceInst) != USYS_TRUE) {
         usys_log_error("Webservice failed to setup. Exiting");

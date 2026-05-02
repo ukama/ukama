@@ -6,312 +6,433 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
-#include <pthread.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include <curl/curl.h>
+#include <dirent.h>
 #include <errno.h>
+#include <jansson.h>
+#include <pthread.h>
+#include <signal.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
-#include <sys/mman.h>
+#include <sys/types.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 #include "agent.h"
+#include "agent/jserdes.h"
+#include "http_status.h"
+#include "package_cache.h"
 #include "wimc.h"
 
-#include "usys_types.h"
-#include "usys_mem.h"
 #include "usys_log.h"
+#include "usys_mem.h"
+#include "usys_types.h"
 
-#define AGENT_EXEC   "/usr/bin/casync"
-#define DEFAULT_PATH "/tmp"
 #define MAX_ARGS 10
+#define CASYNC_RETRIES 3
+#define CASYNC_TIMEOUT_SEC 900
 
-/* For shared memory object and map */
-static char *memFile=NULL;
-static void *shMem=NULL;
-static int shmId=0;
+static int mkdir_p(const char *path, mode_t mode) {
 
-/* from shmem. */
-extern void *create_shared_memory(int *shmId, char *memFile, size_t size);
-extern void delete_shared_memory(int shmId, void *shMem);
-extern void read_stats_and_update_wimc(void *args);
+    char tmp[WIMC_MAX_PATH_LEN];
+    char *p;
 
-static bool is_valid_folder(char *folder) {
-
-    struct stat sb;
-  
-    if (stat(folder, &sb) == 0) {
-        if (S_ISDIR(sb.st_mode)) return USYS_TRUE;
+    if (path == NULL || *path == '\0') {
+        return -1;
     }
 
-    return USYS_FALSE;
-}
+    if (strlen(path) >= sizeof(tmp)) {
+        return -1;
+    }
 
-static void create_working_dir_file(WFetch *fetch) {
+    snprintf(tmp, sizeof(tmp), "%s", path);
 
-    FILE *fp;
-    char folder[WIMC_MAX_PATH_LEN]={0};
-    char idStr[36+1]; /* 36-bytes for UUID + trailing `\0` */
-
-    if (fetch==NULL || uuid_is_null(fetch->uuid)) return;
-
-    uuid_unparse(fetch->uuid, idStr);
-    sprintf(folder, "%s/%s", DEFAULT_PATH, idStr);
-
-    /* check if directory exists */
-    if (!is_valid_folder(&folder[0])) {
-        usys_log_debug("Creating default folder for Agent at: %s", folder);
-        if (mkdir(folder, 0700) == -1) {
-            usys_log_error("Error creating dir: %s. Error: %s",
-                           folder, strerror(errno));
+    for (p = tmp + 1; *p != '\0'; p++) {
+        if (*p == '/') {
+            *p = '\0';
+            if (mkdir(tmp, mode) != 0 && errno != EEXIST) {
+                return -1;
+            }
+            *p = '/';
         }
     }
 
-    /* Create shared memory file. */
-    sprintf(memFile, "%s/%s/shared.mem", DEFAULT_PATH, idStr);
-    usys_log_debug("Creating default shared memory file for Agent at: %s",
-                   memFile);
-    fp = fopen(memFile, "a");
-    if (fp) {
-        fclose(fp);
+    if (mkdir(tmp, mode) != 0 && errno != EEXIST) {
+        return -1;
     }
+
+    return 0;
 }
 
-static void reset_stat_counter(void *ptr) {
+static int rm_rf(const char *path) {
 
-    TStats *stat = (TStats *)ptr;
+    DIR *dir;
+    struct dirent *ent;
+    struct stat st;
+    char child[WIMC_MAX_PATH_LEN];
 
-    stat->start = 0;
-    stat->stop = 0;
-    stat->exitStatus =0;
+    if (path == NULL || lstat(path, &st) != 0) {
+        return 0;
+    }
 
-    stat->n_bytes=UINT64_MAX;
-    stat->n_requests=UINT64_MAX;
-    stat->n_local_requests=UINT64_MAX;
-    stat->n_seed_requests=UINT64_MAX;
-    stat->n_remote_requests=UINT64_MAX;
-    stat->n_local_bytes=UINT64_MAX;
-    stat->n_seed_bytes=UINT64_MAX;
-    stat->n_remote_bytes=UINT64_MAX;
-    stat->total_requests=UINT64_MAX;
-    stat->total_bytes=UINT64_MAX;
-    stat->nsec=UINT64_MAX;
-    stat->runtime_nsec=UINT64_MAX;
-    
-    stat->status=WSTATUS_PEND;
-    memset(stat->statusStr, 0, WIMC_MAX_ERR_STR);
+    if (!S_ISDIR(st.st_mode)) {
+        return unlink(path);
+    }
+
+    dir = opendir(path);
+    if (dir == NULL) {
+        return -1;
+    }
+
+    while ((ent = readdir(dir)) != NULL) {
+        if (strcmp(ent->d_name, ".") == 0 ||
+            strcmp(ent->d_name, "..") == 0) {
+            continue;
+        }
+
+        if (snprintf(child, sizeof(child), "%s/%s", path,
+                     ent->d_name) >= (int)sizeof(child)) {
+            closedir(dir);
+            return -1;
+        }
+
+        if (rm_rf(child) != 0) {
+            closedir(dir);
+            return -1;
+        }
+    }
+
+    closedir(dir);
+    return rmdir(path);
 }
 
 static void copy_fetch_request(WFetch **dest, WFetch *src) {
 
-    WContent *content;
     WFetch *df;
+    WContent *content;
 
-    if (src == NULL) return;
+    if (dest == NULL || src == NULL || src->content == NULL) {
+        return;
+    }
 
     *dest = (WFetch *)calloc(1, sizeof(WFetch));
-    if (*dest == NULL) return;
+    if (*dest == NULL) {
+        return;
+    }
 
     df = *dest;
-
     uuid_copy(df->uuid, src->uuid);
-    df->cbURL = strdup(src->cbURL);
+    df->cbURL = src->cbURL ? strdup(src->cbURL) : NULL;
     df->interval = src->interval;
 
     df->content = (WContent *)calloc(1, sizeof(WContent));
-    if (df->content == NULL) goto fail;
+    if (df->content == NULL) {
+        goto fail;
+    }
 
     content = df->content;
-    content->name = strdup(src->content->name);
-    content->tag  = strdup(src->content->tag);
-    content->method = strdup(src->content->method);
-    content->indexURL = strdup(src->content->indexURL);
-    content->storeURL = strdup(src->content->storeURL);
+    content->name = src->content->name ? strdup(src->content->name) : NULL;
+    content->tag = src->content->tag ? strdup(src->content->tag) : NULL;
+    content->method = src->content->method ? strdup(src->content->method) :
+                      NULL;
+    content->indexURL = src->content->indexURL ?
+                        strdup(src->content->indexURL) : NULL;
+    content->storeURL = src->content->storeURL ?
+                        strdup(src->content->storeURL) : NULL;
 
     return;
 
 fail:
-    free(df->cbURL);
-    free(df);
+    usys_free(df->cbURL);
+    usys_free(df);
+    *dest = NULL;
 }
 
 void free_fetch_request(WFetch *ptr) {
 
-    if (!ptr)          return;
-    if (!ptr->content) return;
-  
-    usys_free(ptr->cbURL);
-    usys_free(ptr->content->name);
-    usys_free(ptr->content->tag);
-    usys_free(ptr->content->method);
-    usys_free(ptr->content->indexURL);
-    usys_free(ptr->content->storeURL);
-    usys_free(ptr->content);
+    if (ptr == NULL) {
+        return;
+    }
 
+    if (ptr->content != NULL) {
+        usys_free(ptr->content->name);
+        usys_free(ptr->content->tag);
+        usys_free(ptr->content->method);
+        usys_free(ptr->content->indexURL);
+        usys_free(ptr->content->storeURL);
+        usys_free(ptr->content);
+    }
+
+    usys_free(ptr->cbURL);
     usys_free(ptr);
 }
 
-static void configure_runtime_args(WFetch *fetch, char **args) {
+static size_t response_callback(void *contents, size_t size, size_t nmemb,
+                                void *userp) {
 
-    WContent *content=NULL;
-    char folder[WIMC_MAX_PATH_LEN];
-    char idStr[36+1]; /* 36-bytes for UUID + trailing `\0` */
-  
-    /* sanity check. */
-    if (fetch == NULL) return;
+    (void)contents;
+    (void)userp;
+    return size * nmemb;
+}
 
-    content = fetch->content;
-  
-    if (content->indexURL==NULL && content->storeURL==NULL) return;
+static long send_update_to_wimc(WFetch *fetch, TransferState state,
+                                const char *voidStr) {
 
-    memset(&folder[0], 0, WIMC_MAX_PATH_LEN);
+    AgentReq req;
+    Update update;
+    json_t *json = NULL;
+    char *jsonStr = NULL;
+    CURL *curl = NULL;
+    CURLcode res;
+    struct curl_slist *headers = NULL;
+    long code = 0;
 
-    /* Setup download path */
-    if (!uuid_is_null(fetch->uuid)) {
-        uuid_unparse(fetch->uuid, idStr);
-        sprintf(folder, "%s/%s/%s_%s", DEFAULT_PATH, idStr, content->name,
-                content->tag);
-    } else {
-        goto done;
+    if (fetch == NULL || fetch->cbURL == NULL) {
+        return 0;
     }
 
-    /* Put everything together */
+    memset(&req, 0, sizeof(req));
+    memset(&update, 0, sizeof(update));
+
+    uuid_copy(update.uuid, fetch->uuid);
+    update.totalKB = 0;
+    update.transferKB = 0;
+    update.transferState = state;
+    update.voidStr = (char *)(voidStr ? voidStr : "");
+    req.update = &update;
+
+    if (!serialize_agent_request(&req, &json)) {
+        return 0;
+    }
+
+    jsonStr = json_dumps(json, 0);
+    if (jsonStr == NULL) {
+        json_decref(json);
+        return 0;
+    }
+
+    curl = curl_easy_init();
+    if (curl == NULL) {
+        usys_free(jsonStr);
+        json_decref(json);
+        return 0;
+    }
+
+    headers = curl_slist_append(headers, "Accept: application/json");
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+    headers = curl_slist_append(headers, "charset: utf-8");
+
+    curl_easy_setopt(curl, CURLOPT_URL, fetch->cbURL);
+    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, jsonStr);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, response_callback);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "wimc-agent/0.1");
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
+
+    res = curl_easy_perform(curl);
+    if (res == CURLE_OK) {
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+    } else {
+        usys_log_error("Failed to update WIMC: %s", curl_easy_strerror(res));
+    }
+
+    curl_slist_free_all(headers);
+    curl_easy_cleanup(curl);
+    usys_free(jsonStr);
+    json_decref(json);
+
+    return code;
+}
+
+static int wait_for_child(pid_t pid, int timeoutSec) {
+
+    int status;
+    int elapsed;
+    pid_t ret;
+
+    elapsed = 0;
+    while (1) {
+        ret = waitpid(pid, &status, WNOHANG);
+        if (ret == pid) {
+            if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
+                return 0;
+            }
+            return -1;
+        }
+
+        if (ret < 0) {
+            return -1;
+        }
+
+        if (elapsed >= timeoutSec) {
+            kill(pid, SIGTERM);
+            sleep(2);
+            kill(pid, SIGKILL);
+            waitpid(pid, &status, 0);
+            return -1;
+        }
+
+        sleep(1);
+        elapsed++;
+    }
+}
+
+static int run_casync(WFetch *fetch, const char *extractPath) {
+
+    pid_t pid;
+    char *args[MAX_ARGS];
+    int i;
+
+    memset(args, 0, sizeof(args));
+
     args[0] = strdup(AGENT_EXEC);
     args[1] = strdup("extract");
-    args[2] = strdup(content->indexURL);
+    args[2] = strdup(fetch->content->indexURL);
     args[3] = strdup("--store");
-    args[4] = strdup(content->storeURL);
-    args[5] = strdup(folder);
-    args[6] = NULL; /* Null terminate for execv */
+    args[4] = strdup(fetch->content->storeURL);
+    args[5] = strdup(extractPath);
+    args[6] = NULL;
 
-    return;
-done:
-    args[0] = NULL;
-    return;
+    for (i = 0; i < 6; i++) {
+        if (args[i] == NULL) {
+            goto fail;
+        }
+    }
+
+    pid = fork();
+    if (pid < 0) {
+        goto fail;
+    }
+
+    if (pid == 0) {
+        execv(AGENT_EXEC, args);
+        _exit(127);
+    }
+
+    for (i = 0; args[i] != NULL; i++) {
+        free(args[i]);
+    }
+
+    return wait_for_child(pid, CASYNC_TIMEOUT_SEC);
+
+fail:
+    for (i = 0; args[i] != NULL; i++) {
+        free(args[i]);
+    }
+    return -1;
 }
 
 static void *execute_agent(void *data) {
 
     WFetch *fetch;
-    TParams *params;
-    pid_t pid=0;
-    int ret=0, i=0;
-    char  buffer[1027] = {0};
-    char *args[MAX_ARGS] = {0};
-    size_t used = 0;
+    WContent *content;
+    char uuidStr[36 + 1];
+    char extractPath[WIMC_MAX_PATH_LEN];
+    char uuidTmpDir[WIMC_MAX_PATH_LEN];
+    char publishedPath[WIMC_MAX_PATH_LEN];
+    char actualVersion[WIMC_MAX_NAME_LEN];
+    int attempt;
+    int ok;
 
-    fetch   = (WFetch *)data;
-    params  = (TParams *)malloc(sizeof(TParams));
-    memFile = (char *)calloc(1, WIMC_MAX_PATH_LEN);
-    if (params == NULL || memFile == NULL) {
-        usys_log_error("Memory allocation error. size: %zu", sizeof(TParams));
-        free(params);
-        free(memFile);
-        pthread_exit(&ret);
+    fetch = (WFetch *)data;
+    if (fetch == NULL || fetch->content == NULL) {
+        pthread_exit(NULL);
     }
 
-    /* create working directory and file (for shared memory) */
-    create_working_dir_file(fetch);
+    content = fetch->content;
+    uuid_unparse(fetch->uuid, uuidStr);
 
-    /* Step 1. configure runtime argument for agent. */
-    configure_runtime_args(fetch, args);
-    if (args[0] == NULL) {
-        usys_log_error("Can not setup runtime argument for the Agent");
-        free(params);
-        free(memFile);
-        pthread_exit(&ret);
-    } else {
-        for (i = 0; i < MAX_ARGS && args[i] != NULL; i++) {
-            int n;
+    if (pkg_ensure_cache_dirs() != 0) {
+        send_update_to_wimc(fetch, ERR, "failed to create package cache dirs");
+        goto done;
+    }
 
-            n = snprintf(buffer + used,
-                         sizeof(buffer) - used,
-                         "%s%s",
-                         (used > 0) ? " " : "",
-                         args[i]);
-            if (n < 0) {
-                usys_log_error("Failed to build agent runtime argument string");
-                break;
-            }
+    if (snprintf(uuidTmpDir, sizeof(uuidTmpDir), "%s/.tmp/%s",
+                 DEFAULT_APPS_PKGS_PATH, uuidStr) >=
+        (int)sizeof(uuidTmpDir)) {
+        send_update_to_wimc(fetch, ERR, "tmp path too long");
+        goto done;
+    }
 
-            if ((size_t)n >= sizeof(buffer) - used) {
-                usys_log_warn("Agent runtime arguments truncated");
-                used = sizeof(buffer) - 1;
-                break;
-            }
+    if (pkg_extract_path(uuidStr, content->name, content->tag,
+                         extractPath, sizeof(extractPath)) != 0) {
+        send_update_to_wimc(fetch, ERR, "extract path failure");
+        goto done;
+    }
 
-            used += (size_t)n;
+    rm_rf(uuidTmpDir);
+    if (mkdir_p(uuidTmpDir, 0700) != 0) {
+        send_update_to_wimc(fetch, ERR, "failed to create tmp dir");
+        goto done;
+    }
+
+    send_update_to_wimc(fetch, FETCH, "");
+
+    ok = 0;
+    for (attempt = 1; attempt <= CASYNC_RETRIES; attempt++) {
+        rm_rf(extractPath);
+        usys_log_debug("casync attempt %d for %s:%s",
+                       attempt, content->name, content->tag);
+
+        if (run_casync(fetch, extractPath) == 0) {
+            ok = 1;
+            break;
         }
 
-        usys_log_debug("Agent runtime arguments: %s", buffer);
+        sleep(attempt * 2);
     }
 
-    /* Step 2. configure shared memory */
-    shMem = create_shared_memory(&shmId, memFile, sizeof(TStats));
-    if (shMem == MAP_FAILED || shMem == NULL) {
-        log_error("Error creating shared memory of size: %d. Error: %s",
-                  sizeof(TStats), strerror(errno));
-        goto failure;
-    }
-    reset_stat_counter(shMem);
-  
-    /* Step 3. Fork and exec */
-    pid = fork();
-    if (pid < 0) {
-        log_error("Failed to fork for agent");
-        goto failure;
-    }
-  
-    if (pid == 0) { /* Child process. */
-        execv(AGENT_EXEC, args);
-        _exit(127);
-    } else {
-        params->stats = shMem;
-        copy_fetch_request((WFetch **)&params->fetch, fetch);
-    
-        /* Step 4. process status chanage and update wimc.d */
-        /* Thread to read the update status from agent and send to WIMC */
-        // read_stats_and_update_wimc(params);
-        ret = 1; /* We are good. */
-        return NULL;
+    if (!ok) {
+        send_update_to_wimc(fetch, ERR, "casync failed");
+        goto done;
     }
 
-failure:
-    delete_shared_memory(shmId, shMem);
-    shMem = NULL;
-    free(params);
-    free(memFile);
-    for (i=0; args[i] != NULL && i < MAX_ARGS; i++) {
-        if (args[i]) free(args[i]);
-    }
-    
-    pthread_exit(&ret);
+    memset(publishedPath, 0, sizeof(publishedPath));
+    memset(actualVersion, 0, sizeof(actualVersion));
 
-    return NULL;
+    if (pkg_publish_from_dir(content->name, content->tag, uuidStr,
+                             extractPath, publishedPath,
+                             sizeof(publishedPath), actualVersion,
+                             sizeof(actualVersion)) != 0) {
+        send_update_to_wimc(fetch, ERR, "package publish failed");
+        goto done;
+    }
+
+    usys_log_debug("Published package %s:%s actual=%s path=%s",
+                   content->name, content->tag, actualVersion,
+                   publishedPath);
+    send_update_to_wimc(fetch, DONE, publishedPath);
+
+done:
+    rm_rf(uuidTmpDir);
+    free_fetch_request(fetch);
+    pthread_exit(NULL);
 }
 
 void process_capp_fetch_request(WFetch *fetch) {
 
-    int ret, exitStatus;
-    void *status;
+    int ret;
     pthread_t tid;
+    WFetch *threadFetch = NULL;
 
-    ret = pthread_create(&tid, NULL, execute_agent, (void *)fetch);
-    if (ret) {
-        usys_log_error("Error creating agent thread. Return code: %s", ret);
+    copy_fetch_request(&threadFetch, fetch);
+    if (threadFetch == NULL) {
+        usys_log_error("Unable to copy fetch request");
         return;
     }
 
-    usys_log_debug("Waiting for agent thread to finish its work.");
-
-    pthread_join(tid, &status);
-
-    exitStatus = (int)(intptr_t)status;
-    if (exitStatus == 0) {
-        usys_log_error("Error executing agent for request handler.");
-    } else if (exitStatus == 1) {
-        usys_log_debug("Successfully executed capp fetch request.");
+    ret = pthread_create(&tid, NULL, execute_agent, threadFetch);
+    if (ret) {
+        usys_log_error("Error creating agent thread. Return code: %d", ret);
+        free_fetch_request(threadFetch);
+        return;
     }
+
+    pthread_detach(tid);
+    usys_log_debug("Agent fetch thread started");
 }

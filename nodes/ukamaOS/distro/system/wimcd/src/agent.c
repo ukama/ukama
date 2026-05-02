@@ -13,6 +13,7 @@
 #include <curl/easy.h>
 
 #include "db.h"
+#include "package_cache.h"
 #include "agent.h"
 #include "wimc.h"
 #include "tasks.h"
@@ -48,60 +49,95 @@ int process_agent_update_request(WTasks **tasks,
                                  AgentReq *req,
                                  sqlite3 *db) {
 
-  Update *update;
-  char idStr1[36+1] = {0};
-  WTasks *task=NULL;
+    Update *update;
+    char idStr1[36 + 1] = {0};
+    WTasks *task = NULL;
+    PackageInfo info;
 
-  if (tasks == NULL || req == NULL || req->update == NULL) {
-      return HttpStatus_InternalServerError;
-  }
+    if (tasks == NULL || req == NULL || req->update == NULL) {
+        return HttpStatus_InternalServerError;
+    }
 
-  if (*tasks == NULL) return HttpStatus_InternalServerError;
+    if (*tasks == NULL) {
+        return HttpStatus_InternalServerError;
+    }
 
-  update = req->update;
+    update = req->update;
 
-  uuid_unparse(update->uuid, &idStr1[0]);
-  usys_log_debug("Looking up task with ID: %s", idStr1);
+    uuid_unparse(update->uuid, idStr1);
+    usys_log_debug("Looking up task with ID: %s", idStr1);
 
-  task = find_task_by_uuid(*tasks, update->uuid);
+    task = find_task_by_uuid(*tasks, update->uuid);
+    if (task == NULL) {
+        usys_log_error("No record found for ID: %s", idStr1);
+        return HttpStatus_BadRequest;
+    }
 
-  if (task == NULL) {
-      usys_log_error("No record found for ID: %s", idStr1);
-      return HttpStatus_BadRequest;
-  }
+    task->update->totalKB = req->update->totalKB;
+    task->update->transferKB = req->update->transferKB;
+    task->update->transferState = req->update->transferState;
+    task->state = req->update->transferState;
 
-  /* update the task entry. */
-  task->update->totalKB = req->update->totalKB;
-  task->update->transferKB = req->update->transferKB;
+    if (task->update->voidStr) {
+        usys_free(task->update->voidStr);
+        task->update->voidStr = NULL;
+    }
 
-  /* Update the status */
-  task->update->transferState = req->update->transferState;
-  task->state = req->update->transferState;
-  if (task->update->voidStr) {
-      usys_free(task->update->voidStr);
-      task->update->voidStr = NULL;
-  }
+    if (req->update->voidStr) {
+        task->update->voidStr = strdup(req->update->voidStr);
+    }
 
-  if (req->update->voidStr) {
-      task->update->voidStr = strdup(req->update->voidStr);
-  }
+    if (task->state == DONE) {
+        if (task->localPath) {
+            usys_free(task->localPath);
+        }
 
-  if (task->state == DONE) {
-      if (task->localPath) {
-          usys_free(task->localPath);
-      }
-      task->localPath = req->update->voidStr ? strdup(req->update->voidStr) : NULL;
-      if (task->localPath != NULL) {
-          update_local_db(db, task->content->name, task->content->tag,
-                          task->localPath);
-      }
-  } else if (task->state == ERR) {
-      db_update_status(db, task->content->name, task->content->tag, "failed");
-  } else {
-      db_update_status(db, task->content->name, task->content->tag, "download");
-  }
+        task->localPath = req->update->voidStr ?
+                          strdup(req->update->voidStr) : NULL;
+        if (task->localPath == NULL) {
+            db_update_package_status(db, task->content->name,
+                                     task->content->tag, NULL,
+                                     WIMC_STATUS_FAILED, NULL,
+                                     "agent did not return package path");
+            return HttpStatus_InternalServerError;
+        }
 
-  return HttpStatus_OK;
+        if (pkg_validate_tar(task->content->name, task->content->tag,
+                             task->localPath, &info)) {
+            db_update_package_status(db, task->content->name,
+                                     task->content->tag,
+                                     task->localPath,
+                                     WIMC_STATUS_AVAILABLE,
+                                     info.actualVersion, NULL);
+            db_update_package_status(db, task->content->name,
+                                     info.actualVersion,
+                                     task->localPath,
+                                     WIMC_STATUS_AVAILABLE,
+                                     info.actualVersion, NULL);
+        } else {
+            db_update_package_status(db, task->content->name,
+                                     task->content->tag,
+                                     task->localPath,
+                                     WIMC_STATUS_CORRUPT,
+                                     info.actualVersion[0] ?
+                                     info.actualVersion : NULL,
+                                     info.error[0] ? info.error :
+                                     "invalid package");
+        }
+    } else if (task->state == ERR) {
+        db_update_package_status(db, task->content->name,
+                                 task->content->tag, NULL,
+                                 WIMC_STATUS_FAILED, NULL,
+                                 req->update->voidStr ?
+                                 req->update->voidStr :
+                                 "agent error");
+    } else {
+        db_update_package_status(db, task->content->name,
+                                 task->content->tag, NULL,
+                                 WIMC_STATUS_DOWNLOAD, NULL, NULL);
+    }
+
+    return HttpStatus_OK;
 }
 
 void cleanup_wimc_request(WimcReq *request) {

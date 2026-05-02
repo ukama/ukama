@@ -7,13 +7,16 @@
  */
 
 #include <curl/curl.h>
+#include <stdbool.h>
+#include <string.h>
 
-#include "db.h"
 #include "callback.h"
-#include "tasks.h"
-#include "jserdes.h"
-#include "hub.h"
+#include "db.h"
 #include "http_status.h"
+#include "hub.h"
+#include "jserdes.h"
+#include "package_cache.h"
+#include "tasks.h"
 
 #include "usys_log.h"
 #include "usys_mem.h"
@@ -21,7 +24,6 @@
 
 #include "version.h"
 
-/* agent.c */
 extern void cleanup_wimc_request(WimcReq *request);
 extern void create_wimc_request(WimcReq **request, char *name, char *tag,
                                 char *indexURL, char *storeURL, char *method,
@@ -32,7 +34,6 @@ extern int process_agent_update_request(WTasks **tasks,
                                         AgentReq *req,
                                         sqlite3 *db);
 
-/* jserdes.c */
 bool deserialize_agent_request_update(Update **update, json_t *json);
 
 static bool is_absolute_url(const char *url) {
@@ -41,41 +42,11 @@ static bool is_absolute_url(const char *url) {
         return false;
     }
 
-    if (strncmp(url, "http://", 7) == 0 ||
-        strncmp(url, "https://", 8) == 0) {
-        return true;
-    }
-
-    return false;
+    return strncmp(url, "http://", 7) == 0 ||
+           strncmp(url, "https://", 8) == 0;
 }
 
-static bool is_valid_identifier(const char *value) {
-
-    size_t i;
-
-    if (value == NULL || *value == '\0') {
-        return false;
-    }
-
-    if (strlen(value) >= WIMC_MAX_NAME_LEN) {
-        return false;
-    }
-
-    for (i = 0; value[i] != '\0'; i++) {
-        if ((value[i] >= 'a' && value[i] <= 'z') ||
-            (value[i] >= 'A' && value[i] <= 'Z') ||
-            (value[i] >= '0' && value[i] <= '9') ||
-            value[i] == '-' || value[i] == '_' || value[i] == '.') {
-            continue;
-        }
-
-        return false;
-    }
-
-    return true;
-}
-
-static char* parse_hub_override(const URequest *request) {
+static char *parse_hub_override(const URequest *request) {
 
     json_t *json;
     json_error_t jerr;
@@ -110,6 +81,10 @@ static char* parse_hub_override(const URequest *request) {
 
 static void free_agent_request_update(AgentReq *req) {
 
+    if (req == NULL || req->update == NULL) {
+        return;
+    }
+
     usys_free(req->update->voidStr);
     usys_free(req->update);
 }
@@ -118,10 +93,10 @@ static void create_hub_urls_for_agent(char *hubURL,
                                       char *srcURL, char *destURL,
                                       char *srcExtraURL, char *destExtraURL) {
 
-    if (hubURL == NULL || srcURL == NULL ||
-        destURL == NULL || srcExtraURL == NULL ||
-        destExtraURL == NULL)
+    if (hubURL == NULL || srcURL == NULL || destURL == NULL ||
+        srcExtraURL == NULL || destExtraURL == NULL) {
         return;
+    }
 
     if (!is_absolute_url(srcURL)) {
         snprintf(destURL, WIMC_MAX_URL_LEN, "%s%s", hubURL, srcURL);
@@ -130,121 +105,148 @@ static void create_hub_urls_for_agent(char *hubURL,
     }
 
     if (!is_absolute_url(srcExtraURL)) {
-        snprintf(destExtraURL, WIMC_MAX_URL_LEN, "%s%s", hubURL, srcExtraURL);
+        snprintf(destExtraURL, WIMC_MAX_URL_LEN, "%s%s", hubURL,
+                 srcExtraURL);
     } else {
         snprintf(destExtraURL, WIMC_MAX_URL_LEN, "%s", srcExtraURL);
     }
 }
 
-static int file_exists_and_non_empty(char *name, char *tag) {
+static json_t *status_json(char *name, char *tag, char *status,
+                           char *path, char *actualVersion, char *error) {
 
+    json_t *json;
 
-    char *fileName = NULL;
-    FILE *file     = NULL;
-    long filesize  = 0;
+    json = json_object();
+    if (json == NULL) {
+        return NULL;
+    }
 
-    fileName = (char *)malloc((strlen(DEFAULT_APPS_PKGS_PATH) +
-                               strlen(name) + strlen(tag) + 16)*sizeof(char));
+    json_object_set_new(json, "name", json_string(name ? name : ""));
+    json_object_set_new(json, "tag", json_string(tag ? tag : ""));
+    json_object_set_new(json, "status", json_string(status ? status : ""));
+    json_object_set_new(json, "message", json_string(status ? status : ""));
 
-    snprintf(fileName,
-             strlen(DEFAULT_APPS_PKGS_PATH) + strlen(name) + strlen(tag) + 16,
-             "%s/%s-%s.tar.gz",
-             DEFAULT_APPS_PKGS_PATH,
-             name,
-             tag);
+    if (path != NULL) {
+        json_object_set_new(json, "path", json_string(path));
+    }
 
-    file = fopen(fileName, "r");
-    if (file == NULL) {
-        free(fileName);
+    if (actualVersion != NULL) {
+        json_object_set_new(json, "actualVersion",
+                            json_string(actualVersion));
+    }
+
+    if (error != NULL) {
+        json_object_set_new(json, "error", json_string(error));
+    }
+
+    return json;
+}
+
+static int validate_cached_package(Config *config, char *name, char *tag,
+                                   char **pathOut, char **versionOut) {
+
+    char path[WIMC_MAX_PATH_LEN];
+    PackageInfo info;
+
+    if (pathOut != NULL) {
+        *pathOut = NULL;
+    }
+    if (versionOut != NULL) {
+        *versionOut = NULL;
+    }
+
+    if (pkg_path_for_tag(name, tag, path, sizeof(path)) != 0) {
         return 0;
     }
 
-    fseek(file, 0, SEEK_END);
-    filesize = ftell(file);
-    fclose(file);
-
-    free(fileName);
-
-    if (filesize > 0) {
-        return 1;
+    if (!pkg_validate_tar(name, tag, path, &info)) {
+        return 0;
     }
 
-    return 0;
+    pthread_mutex_lock(&config->dbMutex);
+    db_update_package_status(config->db, name, tag, path,
+                             WIMC_STATUS_AVAILABLE,
+                             info.actualVersion, NULL);
+    db_update_package_status(config->db, name, info.actualVersion, path,
+                             WIMC_STATUS_AVAILABLE,
+                             info.actualVersion, NULL);
+    pthread_mutex_unlock(&config->dbMutex);
+
+    if (pathOut != NULL) {
+        *pathOut = strdup(path);
+    }
+    if (versionOut != NULL) {
+        *versionOut = strdup(info.actualVersion);
+    }
+
+    return 1;
 }
 
 int web_service_cb_get_app_status(const URequest *request,
                                   UResponse *response,
                                   void *data) {
 
-    char   *name=NULL, *tag=NULL, *status=NULL;
-    Config *config=NULL;
-    json_t *jResponse = NULL;
+    char *name;
+    char *tag;
+    char *status = NULL;
+    char *path = NULL;
+    char *actualVersion = NULL;
+    char *error = NULL;
+    Config *config;
+    json_t *jResponse;
+    PackageInfo info;
+    int httpStatus;
 
     config = (Config *)data;
-
     name = (char *)u_map_get(request->map_url, "name");
     tag  = (char *)u_map_get(request->map_url, "tag");
 
-    if (name == NULL || tag == NULL || !is_valid_identifier(name) || !is_valid_identifier(tag)) {
-        usys_log_error("app name:tag not found in the request.");
+    if (!pkg_is_valid_identifier(name) || !pkg_is_valid_identifier(tag)) {
         ulfius_set_string_body_response(response, HttpStatus_BadRequest,
                                         HttpStatusStr(HttpStatus_BadRequest));
         return U_CALLBACK_CONTINUE;
     }
 
     pthread_mutex_lock(&config->dbMutex);
-    if (db_read_status(config->db, name, tag, &status)) {
-        if (strcmp(status, "download") == 0) {
-            jResponse = json_pack("{s:s}",
-                                  "message", "download");
-            ulfius_set_json_body_response(response,
-                                          HttpStatus_OK,
-                                          jResponse);
-            json_decref(jResponse);
-        } else if (strcmp(status, "available") == 0) {
-            if (file_exists_and_non_empty(name, tag)) {
-                usys_log_debug("app found in the default location");
-                jResponse = json_pack("{s:s}",
-                                      "message", "available");
-                ulfius_set_json_body_response(response,
-                                              HttpStatus_OK,
-                                              jResponse);
-                json_decref(jResponse);
-            } else {
-                usys_log_error("app is corrupted at default location");
-                jResponse = json_pack("{s:s}",
-                                      "message", "App corrupted at default location.");
-                ulfius_set_json_body_response(response,
-                                            HttpStatus_InternalServerError,
-                                            jResponse);
-                json_decref(jResponse);
-            }
-        } else if (strcmp(status, "failed") == 0) {
-            jResponse = json_pack("{s:s}",
-                                  "message", "failed");
-            ulfius_set_json_body_response(response,
-                                          HttpStatus_OK,
-                                          jResponse);
-            json_decref(jResponse);
+    if (!db_read_package(config->db, name, tag, &status, &path,
+                         &actualVersion, &error)) {
+        pthread_mutex_unlock(&config->dbMutex);
+        if (validate_cached_package(config, name, tag,
+                                    &path, &actualVersion)) {
+            status = strdup(WIMC_STATUS_AVAILABLE);
+            httpStatus = HttpStatus_OK;
         } else {
-            usys_log_error("Unknown status found for app '%s:%s'.", name, tag);
-            jResponse = json_pack("{s:s}",
-                                  "message", "Unknown app status.");
-            ulfius_set_json_body_response(response,
-                                          HttpStatus_InternalServerError,
-                                          jResponse);
-            json_decref(jResponse);
+            status = strdup(WIMC_STATUS_MISSING);
+            httpStatus = HttpStatus_NotFound;
         }
-        free(status);
     } else {
-        jResponse = json_pack("{s:s}",
-                              "message", HttpStatusStr(HttpStatus_NotFound));
-        ulfius_set_json_body_response(response,
-                                      HttpStatus_NotFound,
-                                      jResponse);
-        json_decref(jResponse);
+        if (status != NULL && strcmp(status, WIMC_STATUS_AVAILABLE) == 0) {
+            if (path == NULL || !pkg_validate_tar(name, tag, path, &info)) {
+                db_update_package_status(config->db, name, tag, path,
+                                         WIMC_STATUS_CORRUPT,
+                                         actualVersion,
+                                         "package missing or invalid");
+                free(status);
+                status = strdup(WIMC_STATUS_CORRUPT);
+                free(error);
+                error = strdup("package missing or invalid");
+            } else if (actualVersion == NULL) {
+                actualVersion = strdup(info.actualVersion);
+            }
+        }
+        pthread_mutex_unlock(&config->dbMutex);
+        httpStatus = HttpStatus_OK;
     }
-    pthread_mutex_unlock(&config->dbMutex);
+
+    jResponse = status_json(name, tag, status, path, actualVersion, error);
+    ulfius_set_json_body_response(response, httpStatus, jResponse);
+    json_decref(jResponse);
+
+    free(status);
+    free(path);
+    free(actualVersion);
+    free(error);
 
     return U_CALLBACK_CONTINUE;
 }
@@ -253,138 +255,156 @@ int web_service_cb_post_app(const URequest *request,
                             UResponse *response,
                             void *data) {
 
-    int httpStatus=0;
-
+    int httpStatus = 0;
     char indexURL[WIMC_MAX_URL_LEN] = {0};
     char storeURL[WIMC_MAX_URL_LEN] = {0};
-
+    char *name;
+    char *tag;
+    char *status = NULL;
+    char *path = NULL;
+    char *actualVersion = NULL;
+    char *error = NULL;
+    char *hubOverride = NULL;
+    const char *hubURL;
     Artifact artifact;
     Config *config;
+    WimcReq *wimcRequest = NULL;
+    ArtifactFormat *artifactFormat = NULL;
+    json_t *jResponse;
+    int i;
 
-    char *name=NULL, *tag=NULL, *status=NULL;
-    char *hubOverride=NULL;
-    const char *hubURL=NULL;
-
-    WimcReq   *wimcRequest  = NULL;
-    ArtifactFormat *artifactFormat=NULL;
-
+    memset(&artifact, 0, sizeof(artifact));
     config = (Config *)data;
-
     name = (char *)u_map_get(request->map_url, "name");
     tag  = (char *)u_map_get(request->map_url, "tag");
 
-    if (name == NULL || tag == NULL || !is_valid_identifier(name) || !is_valid_identifier(tag)) {
-        usys_log_error("capp name:tag not found");
+    if (!pkg_is_valid_identifier(name) || !pkg_is_valid_identifier(tag)) {
         ulfius_set_string_body_response(response, HttpStatus_BadRequest,
                                         HttpStatusStr(HttpStatus_BadRequest));
         return U_CALLBACK_CONTINUE;
     }
 
+    if (validate_cached_package(config, name, tag, &path, &actualVersion)) {
+        jResponse = status_json(name, tag, WIMC_STATUS_AVAILABLE, path,
+                                actualVersion, NULL);
+        ulfius_set_json_body_response(response, HttpStatus_NotModified,
+                                      jResponse);
+        json_decref(jResponse);
+        free(path);
+        free(actualVersion);
+        return U_CALLBACK_CONTINUE;
+    }
+
+    pthread_mutex_lock(&config->dbMutex);
+    if (db_read_package(config->db, name, tag, &status, &path,
+                        &actualVersion, &error)) {
+        if (strcmp(status, WIMC_STATUS_DOWNLOAD) == 0 ||
+            strcmp(status, WIMC_STATUS_DOWNLOADING) == 0 ||
+            strcmp(status, WIMC_STATUS_QUEUED) == 0) {
+            jResponse = status_json(name, tag, status, path,
+                                    actualVersion, error);
+            ulfius_set_json_body_response(response, HttpStatus_Conflict,
+                                          jResponse);
+            json_decref(jResponse);
+            free(status);
+            free(path);
+            free(actualVersion);
+            free(error);
+            pthread_mutex_unlock(&config->dbMutex);
+            return U_CALLBACK_CONTINUE;
+        }
+    }
+
+    db_update_package_status(config->db, name, tag, NULL,
+                             WIMC_STATUS_QUEUED, NULL, NULL);
+    pthread_mutex_unlock(&config->dbMutex);
+
+    free(status);
+    free(path);
+    free(actualVersion);
+    free(error);
+
     hubOverride = parse_hub_override(request);
     hubURL = (hubOverride && *hubOverride) ? hubOverride : config->hubURL;
 
-    pthread_mutex_lock(&config->dbMutex);
-    if (db_read_status(config->db, name, tag, &status)) {
-        if (strcmp(status, "download") == 0) {
-            usys_log_debug("capp found in db. name:%s tag:%s status:%s",
-                           name, tag, status);
-            ulfius_set_string_body_response(response,
-                                            HttpStatus_Conflict,
-                                            HttpStatusStr(HttpStatus_Conflict));
-            free(status);
-            free(hubOverride);
-            pthread_mutex_unlock(&config->dbMutex);
-            return U_CALLBACK_CONTINUE;
-        } else if (strcmp(status, "available") == 0) {
-            if (file_exists_and_non_empty(name, tag)) {
-                usys_log_debug("capp found in the default location");
-                ulfius_set_string_body_response(response,
-                                                HttpStatus_NotModified,
-                                                HttpStatusStr(HttpStatus_NotModified));
-                free(status);
-                free(hubOverride);
-                pthread_mutex_unlock(&config->dbMutex);
-                return U_CALLBACK_CONTINUE;
-            }
-        }
-        free(status);
-    }
-    pthread_mutex_unlock(&config->dbMutex);
+    if (!get_artifacts_info_from_hub(&artifact, config, hubURL,
+                                     name, tag, &httpStatus)) {
+        pthread_mutex_lock(&config->dbMutex);
+        db_update_package_status(config->db, name, tag, NULL,
+                                 WIMC_STATUS_FAILED, NULL,
+                                 "hub lookup failed");
+        pthread_mutex_unlock(&config->dbMutex);
 
-    if (!get_artifacts_info_from_hub(&artifact, config, hubURL, name, tag, &httpStatus)) {
-        if (httpStatus == HttpStatus_InternalServerError) {
-            usys_log_error("Unable to connect with hub at: %s", hubURL);
-            ulfius_set_string_body_response(response,
-                                            HttpStatus_InternalServerError,
-                                            HttpStatusStr(HttpStatus_InternalServerError));
-        } else if (httpStatus == HttpStatus_NotFound) {
-            usys_log_error("No matching capp %s:%s found by hub: %s",
-                           name, tag, hubURL);
-            ulfius_set_string_body_response(response,
-                                            HttpStatus_NotFound,
-                                            HttpStatusStr(HttpStatus_NotFound));
-        }
-
+        ulfius_set_string_body_response(response,
+                                        httpStatus ? httpStatus :
+                                        HttpStatus_InternalServerError,
+                                        HttpStatusStr(httpStatus ? httpStatus :
+                                        HttpStatus_InternalServerError));
         free(hubOverride);
         return U_CALLBACK_CONTINUE;
-    } else {
-        usys_log_debug("capp %s:%s is available at hub", name, tag);
     }
 
-    for (int i=0; i < artifact.formatsCount; i++) {
+    for (i = 0; i < artifact.formatsCount; i++) {
         if (get_agent_port_by_method(artifact.formats[i]->type)) {
             artifactFormat = artifact.formats[i];
-            usys_log_debug("Matching agent for method: %s",
-                           artifact.formats[i]->type);
             break;
         }
     }
 
     if (artifactFormat == NULL) {
-        usys_log_error("No matching agent found for app %s:%s", name, tag);
+        pthread_mutex_lock(&config->dbMutex);
+        db_update_package_status(config->db, name, tag, NULL,
+                                 WIMC_STATUS_FAILED, NULL,
+                                 "no matching agent");
+        pthread_mutex_unlock(&config->dbMutex);
+
         free_artifact(&artifact);
         free(hubOverride);
         ulfius_set_string_body_response(response,
-                                        HttpStatus_InternalServerError,
-                                        HttpStatusStr(HttpStatus_InternalServerError));
+                                        HttpStatus_ServiceUnavailable,
+                                        HttpStatusStr(
+                                        HttpStatus_ServiceUnavailable));
         return U_CALLBACK_CONTINUE;
     }
 
     if (strcmp(artifactFormat->type, WIMC_METHOD_CHUNK_STR) == 0) {
-        create_hub_urls_for_agent((char *)hubURL,
-                                  artifactFormat->url,
-                                  &indexURL[0],
-                                  artifactFormat->extraInfo,
-                                  &storeURL[0]);
+        create_hub_urls_for_agent((char *)hubURL, artifactFormat->url,
+                                  indexURL, artifactFormat->extraInfo,
+                                  storeURL);
     }
 
-    create_wimc_request(&wimcRequest,
-                        name, tag,
-                        indexURL,
-                        storeURL,
-                        artifactFormat->type,
-                        DEFAULT_INTERVAL);
+    create_wimc_request(&wimcRequest, name, tag, indexURL, storeURL,
+                        artifactFormat->type, DEFAULT_INTERVAL);
     if (wimcRequest == NULL) {
         free_artifact(&artifact);
         free(hubOverride);
         ulfius_set_string_body_response(response,
                                         HttpStatus_InternalServerError,
-                                        HttpStatusStr(HttpStatus_InternalServerError));
+                                        HttpStatusStr(
+                                        HttpStatus_InternalServerError));
         return U_CALLBACK_CONTINUE;
     }
 
     if (communicate_with_agent(wimcRequest, artifactFormat->type, config)) {
-        ulfius_set_string_body_response(response,
-                                        HttpStatus_Accepted,
-                                        HttpStatusStr(HttpStatus_Accepted));
         pthread_mutex_lock(&config->dbMutex);
-        db_update_status(config->db, name, tag, "download");
+        db_update_package_status(config->db, name, tag, NULL,
+                                 WIMC_STATUS_DOWNLOAD, NULL, NULL);
         pthread_mutex_unlock(&config->dbMutex);
+        jResponse = status_json(name, tag, WIMC_STATUS_DOWNLOAD,
+                                NULL, NULL, NULL);
+        ulfius_set_json_body_response(response, HttpStatus_Accepted,
+                                      jResponse);
+        json_decref(jResponse);
     } else {
-        usys_log_error("Error sending capp fetch request to agent %s:%s", name, tag);
+        pthread_mutex_lock(&config->dbMutex);
+        db_update_package_status(config->db, name, tag, NULL,
+                                 WIMC_STATUS_FAILED, NULL,
+                                 "agent request failed");
+        pthread_mutex_unlock(&config->dbMutex);
         ulfius_set_string_body_response(response,
                                         HttpStatus_ServiceUnavailable,
-                                        HttpStatusStr(HttpStatus_ServiceUnavailable));
+                                        HttpStatusStr(
+                                        HttpStatus_ServiceUnavailable));
     }
 
     cleanup_wimc_request(wimcRequest);
@@ -398,25 +418,25 @@ int web_service_cb_put_app_stats_update(const struct _u_request *request,
                                         struct _u_response *response,
                                         void *data) {
 
-    int retCode=0;
-    json_t *json  = NULL;
+    int retCode;
+    json_t *json;
     json_error_t jerr;
-    AgentReq *agentRequest=NULL;
+    AgentReq *agentRequest;
+    Config *config;
 
-    Config *config = NULL;
-
+    retCode = 0;
     agentRequest = (AgentReq *)calloc(sizeof(AgentReq), 1);
-    config       = (Config *)data;
-    json         = ulfius_get_json_body_request(request, &jerr);
+    config = (Config *)data;
+    json = ulfius_get_json_body_request(request, &jerr);
 
-    if (json == NULL ) {
+    if (json == NULL) {
         usys_free(agentRequest);
         ulfius_set_string_body_response(response, HttpStatus_BadRequest,
                                         HttpStatusStr(HttpStatus_BadRequest));
         return U_CALLBACK_CONTINUE;
     }
 
-    if (agentRequest == NULL || config == NULL ) {
+    if (agentRequest == NULL || config == NULL) {
         json_decref(json);
         usys_free(agentRequest);
         ulfius_set_string_body_response(response,
@@ -441,12 +461,56 @@ int web_service_cb_put_app_stats_update(const struct _u_request *request,
     pthread_mutex_unlock(&config->dbMutex);
     pthread_mutex_unlock(&config->taskMutex);
 
-    ulfius_set_string_body_response(response,
-                                    retCode,
+    ulfius_set_string_body_response(response, retCode,
                                     HttpStatusStr(retCode));
-    
+
     free_agent_request_update(agentRequest);
     usys_free(agentRequest);
+    json_decref(json);
+
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_get_status(const URequest *request,
+                              UResponse *response,
+                              void *epConfig) {
+
+    Config *config;
+    json_t *json;
+
+    config = (Config *)epConfig;
+    json = json_pack("{s:s, s:s, s:i, s:s}",
+                     "service", SERVICE_NAME,
+                     "status", "ok",
+                     "port", config ? config->servicePort : 0,
+                     "pkgDir", DEFAULT_APPS_PKGS_PATH);
+    ulfius_set_json_body_response(response, HttpStatus_OK, json);
+    json_decref(json);
+
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_get_metrics(const URequest *request,
+                               UResponse *response,
+                               void *epConfig) {
+
+    Config *config;
+    json_t *json;
+
+    config = (Config *)epConfig;
+    pthread_mutex_lock(&config->dbMutex);
+    json = json_pack("{s:i, s:i, s:i, s:i}",
+                     "packages_available",
+                     db_count_status(config->db, WIMC_STATUS_AVAILABLE),
+                     "packages_downloading",
+                     db_count_status(config->db, WIMC_STATUS_DOWNLOAD),
+                     "packages_failed",
+                     db_count_status(config->db, WIMC_STATUS_FAILED),
+                     "packages_corrupt",
+                     db_count_status(config->db, WIMC_STATUS_CORRUPT));
+    pthread_mutex_unlock(&config->dbMutex);
+
+    ulfius_set_json_body_response(response, HttpStatus_OK, json);
     json_decref(json);
 
     return U_CALLBACK_CONTINUE;

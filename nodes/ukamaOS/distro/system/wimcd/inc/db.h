@@ -17,7 +17,14 @@ int db_insert_entry(sqlite3 *db, char *name, char *tag, char *status);
 int db_update_status(sqlite3 *db, char *name, char *tag, char *status);
 int db_update_path_status(sqlite3 *db, char *name, char *tag,
                           char *path, char *status);
+int db_update_package_status(sqlite3 *db, char *name, char *tag,
+                             char *path, char *status,
+                             char *actualVersion, char *error);
 int db_mark_old_downloads_failed(sqlite3 *db);
+int db_revalidate_available(sqlite3 *db);
 int db_read_status(sqlite3 *db, char *name, char *tag, char **status);
+int db_read_package(sqlite3 *db, char *name, char *tag, char **status,
+                    char **path, char **actualVersion, char **error);
+int db_count_status(sqlite3 *db, const char *status);
 
 #endif

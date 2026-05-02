@@ -15,6 +15,7 @@
 #include <sqlite3.h>
 #include <uuid/uuid.h>
 #include <pthread.h>
+#include <stdint.h>
 
 #include "usys_types.h"
 #include "usys_services.h"
