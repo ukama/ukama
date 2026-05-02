@@ -13,6 +13,7 @@
 #include <ulfius.h>
 #include <jansson.h>
 
+#include "usys_log.h"
 #include "starterd.h"
 #include "version.h"
 #include "web_service.h"
@@ -23,7 +24,13 @@
 #include "http_status.h"
 #include "app.h"
 
-#include "usys_log.h"
+static int ws_reply_text(struct _u_response *resp,
+                         int status,
+                         const char *text) {
+
+    ulfius_set_string_body_response(resp, status, text ? text : "");
+    return U_CALLBACK_CONTINUE;
+}
 
 static json_t *ws_load_json_body(const struct _u_request *req) {
 
@@ -49,19 +56,11 @@ static bool ws_app_exists(StarterContext *ctx,
     }
 
     if (!app_find(ctx->spaceList, space, name)) {
-        usys_log_error("web: app not found: space=%s name=%s",
-                       space,
-                       name);
+        usys_log_error("web: app not found: space=%s name=%s", space, name);
         return false;
     }
 
     return true;
-}
-
-static int ws_reply_text(struct _u_response *resp, int status, const char *text) {
-
-    ulfius_set_string_body_response(resp, status, text ? text : "");
-    return U_CALLBACK_CONTINUE;
 }
 
 static int ws_ping_cb(const struct _u_request *req,
@@ -117,6 +116,8 @@ static int ws_status_cb(const struct _u_request *req,
     if (meta) {
         json_object_set_new(meta, "updateInProgress",
                             json_boolean(ctx->updateInProgress ? 1 : 0));
+        json_object_set_new(meta, "terminateRequested",
+                            json_boolean(ctx->terminateRequested ? 1 : 0));
         json_object_set_new(meta, "switchRequested",
                             json_boolean(ctx->switchRequested ? 1 : 0));
         json_object_set_new(meta, "exitCode",
@@ -200,7 +201,8 @@ static int ws_update_cb(const struct _u_request *req,
                              HttpStatusStr(HttpStatus_InternalServerError));
     }
 
-    if (ctx->switchRequested || ctx->terminateRequested) {
+    if (ctx->switchRequested ||
+        ctx->terminateRequested) {
         return ws_reply_text(resp,
                              HttpStatus_Conflict,
                              HttpStatusStr(HttpStatus_Conflict));
@@ -230,7 +232,6 @@ static int ws_update_cb(const struct _u_request *req,
         free(name);
         free(tag);
         free(hub);
-
         return ws_reply_text(resp,
                              HttpStatus_BadRequest,
                              HttpStatusStr(HttpStatus_BadRequest));
@@ -242,7 +243,6 @@ static int ws_update_cb(const struct _u_request *req,
         free(name);
         free(tag);
         free(hub);
-
         return ws_reply_text(resp,
                              HttpStatus_NotFound,
                              HttpStatusStr(HttpStatus_NotFound));
@@ -251,7 +251,6 @@ static int ws_update_cb(const struct _u_request *req,
     ctx->updateInProgress = 1;
 
     a = action_new(ACTION_UPDATE_APP, space, name, tag, hub);
-
     free(space);
     free(name);
     free(tag);
@@ -266,9 +265,7 @@ static int ws_update_cb(const struct _u_request *req,
             free(a->hub);
             free(a);
         }
-
         ctx->updateInProgress = 0;
-
         return ws_reply_text(resp,
                              HttpStatus_InternalServerError,
                              HttpStatusStr(HttpStatus_InternalServerError));
@@ -334,6 +331,8 @@ static int ws_terminate_cb(const struct _u_request *req,
                              HttpStatusStr(HttpStatus_NotFound));
     }
 
+    ctx->terminateRequested = 1;
+
     a = action_new(ACTION_TERMINATE_APP, space, name, NULL, NULL);
     json_decref(j);
 
@@ -345,13 +344,11 @@ static int ws_terminate_cb(const struct _u_request *req,
             free(a->hub);
             free(a);
         }
-
+        ctx->terminateRequested = 0;
         return ws_reply_text(resp,
                              HttpStatus_InternalServerError,
                              HttpStatusStr(HttpStatus_InternalServerError));
     }
-
-    ctx->terminateRequested = 1;
 
     supervisor_signal((Supervisor *)ctx->supervisor);
 

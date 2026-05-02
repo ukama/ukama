@@ -33,8 +33,11 @@ typedef struct App {
 
     pid_t pid;
     pid_t pgid;
+    pid_t lastPid;
+    pid_t lastPgid;
 
     AppState state;
+    AppReason reason;
     InstallState installState;
 
     int lastExitCode;

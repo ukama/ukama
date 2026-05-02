@@ -15,24 +15,42 @@
 static const char* app_state_str(AppState st) {
 
     switch (st) {
-        case APP_STATE_STOPPED:  return "stopped";
-        case APP_STATE_STARTING: return "starting";
-        case APP_STATE_RUNNING:  return "running";
-        case APP_STATE_STOPPING: return "stopping";
-        case APP_STATE_FAILED:   return "failed";
-        default:                 return "unknown";
+    case APP_STATE_STOPPED:  return "stopped";
+    case APP_STATE_STARTING: return "starting";
+    case APP_STATE_RUNNING:  return "running";
+    case APP_STATE_STOPPING: return "stopping";
+    case APP_STATE_FAILED:   return "failed";
+    default:                 return "unknown";
+    }
+}
+
+static const char* app_reason_str(AppReason reason) {
+
+    switch (reason) {
+    case APP_REASON_NONE:           return "none";
+    case APP_REASON_STARTED:        return "started";
+    case APP_REASON_EXITED:         return "exited";
+    case APP_REASON_TERMINATED:     return "terminated";
+    case APP_REASON_KILLED:         return "killed";
+    case APP_REASON_CRASHED:        return "crashed";
+    case APP_REASON_UPDATE:         return "update";
+    case APP_REASON_RESTART:        return "restart";
+    case APP_REASON_START_FAILED:   return "start_failed";
+    case APP_REASON_RESTART_FAILED: return "restart_failed";
+    case APP_REASON_UNKNOWN:        return "unknown";
+    default:                        return "unknown";
     }
 }
 
 static const char* install_state_str(InstallState st) {
 
     switch (st) {
-        case INSTALL_STATE_NONE:     return "none";
-        case INSTALL_STATE_FETCHING: return "fetching";
-        case INSTALL_STATE_STAGING:  return "staging";
-        case INSTALL_STATE_SWITCHED: return "switched";
-        case INSTALL_STATE_FAILED:   return "failed";
-        default:                     return "unknown";
+    case INSTALL_STATE_NONE:     return "none";
+    case INSTALL_STATE_FETCHING: return "fetching";
+    case INSTALL_STATE_STAGING:  return "staging";
+    case INSTALL_STATE_SWITCHED: return "switched";
+    case INSTALL_STATE_FAILED:   return "failed";
+    default:                     return "unknown";
     }
 }
 
@@ -63,15 +81,32 @@ json_t* jserdes_status_json(Space *spaceList) {
             json_t *ja;
 
             ja = json_object();
-            json_object_set_new(ja, "name", json_string(a->name ? a->name : ""));
-            json_object_set_new(ja, "tag", json_string(a->tag ? a->tag : ""));
-            json_object_set_new(ja, "state", json_string(app_state_str(a->state)));
-            json_object_set_new(ja, "installState", json_string(install_state_str(a->installState)));
-            json_object_set_new(ja, "pid", json_integer((json_int_t)a->pid));
-            json_object_set_new(ja, "pgid", json_integer((json_int_t)a->pgid));
-            json_object_set_new(ja, "lastExitCode", json_integer((json_int_t)a->lastExitCode));
-            json_object_set_new(ja, "lastExitSignal", json_integer((json_int_t)a->lastExitSignal));
-            json_object_set_new(ja, "lastGoodTag", json_string(a->lastGoodTag ? a->lastGoodTag : ""));
+            json_object_set_new(ja, "name",
+                                json_string(a->name ? a->name : ""));
+            json_object_set_new(ja, "tag",
+                                json_string(a->tag ? a->tag : ""));
+            json_object_set_new(ja, "state",
+                                json_string(app_state_str(a->state)));
+            json_object_set_new(ja, "reason",
+                                json_string(app_reason_str(a->reason)));
+            json_object_set_new(ja, "installState",
+                                json_string(
+                                    install_state_str(a->installState)));
+            json_object_set_new(ja, "pid",
+                                json_integer((json_int_t)a->pid));
+            json_object_set_new(ja, "pgid",
+                                json_integer((json_int_t)a->pgid));
+            json_object_set_new(ja, "lastPid",
+                                json_integer((json_int_t)a->lastPid));
+            json_object_set_new(ja, "lastPgid",
+                                json_integer((json_int_t)a->lastPgid));
+            json_object_set_new(ja, "lastExitCode",
+                                json_integer((json_int_t)a->lastExitCode));
+            json_object_set_new(ja, "lastExitSignal",
+                                json_integer((json_int_t)a->lastExitSignal));
+            json_object_set_new(ja, "lastGoodTag",
+                                json_string(a->lastGoodTag ?
+                                            a->lastGoodTag : ""));
 
             json_array_append_new(apps, ja);
             a = a->next;
