@@ -81,6 +81,18 @@ static void setup_webservice_endpoints(Config *config,
                               URL_PREFIX, API_RES_EP("version"));
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("status"), 0,
+                               &web_service_cb_get_status, config);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("status"));
+
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("metrics"), 0,
+                               &web_service_cb_get_metrics, config);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("metrics"));
+
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("capps/:name/:tag"), 0,
                                &web_service_cb_get_app_status, config);
 

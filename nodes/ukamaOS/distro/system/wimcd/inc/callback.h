@@ -9,19 +9,20 @@
 #ifndef CALLBACK_H
 #define CALLBACK_H
 
-#include <string.h>
-#include <sqlite3.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <uuid/uuid.h>
-#include <unistd.h>
 #include <jansson.h>
+#include <pthread.h>
+#include <sqlite3.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <uuid/uuid.h>
 
-#include "ulfius.h"
-#include "log.h"
-#include "err.h"
-#include "wimc.h"
 #include "agent.h"
+#include "err.h"
+#include "log.h"
+#include "ulfius.h"
+#include "wimc.h"
 
 #define WIMC_EP_STATS  "/stats"
 #define WIMC_EP_CLIENT "/content/containers/*"
@@ -33,7 +34,7 @@
 #define WIMC_PARAM_CONTAINER_NAME    "name"
 #define WIMC_PARAM_CONTAINER_TAG     "tag"
 #define WIMC_PARAM_CONTAINER_PATH    "path"
-#define WIMC_PARAMS_CONTAINER_STATUS "status" 
+#define WIMC_PARAMS_CONTAINER_STATUS "status"
 #define WIMC_PARAMS_FLAGS            "flag"
 
 int web_service_cb_ping(const URequest *request,
@@ -60,10 +61,16 @@ int web_service_cb_get_app_status(const URequest *request,
                                   UResponse *response,
                                   void *epConfig);
 
+int web_service_cb_get_status(const URequest *request,
+                              UResponse *response,
+                              void *epConfig);
+
+int web_service_cb_get_metrics(const URequest *request,
+                               UResponse *response,
+                               void *epConfig);
+
 int web_service_cb_put_app_stats_update(const struct _u_request *request,
                                         struct _u_response *response,
                                         void *data);
-
-extern int db_read_path(sqlite3 *db, char *name, char *tag, char *path);
 
 #endif /* CALLBACK_H */

@@ -112,3 +112,35 @@ install: $(ARTIFACTS) $(VERSION_FILE)
 		cp -vrf $(APP_CONFIG) $(TARGET_CONFIG_DIR);\
 	fi
 
+
+# Test targets. Default test path runs inside Podman so tests can safely touch
+# /ukama/apps/pkgs and /ukama/apps/db inside an isolated container.
+TEST_IMAGE ?= wimc-test:latest
+TEST_WORKDIR ?= /work
+REPO_ROOT ?= $(shell git rev-parse --show-toplevel 2>/dev/null || pwd)
+APP_REL_PATH ?= $(shell realpath --relative-to=$(REPO_ROOT) $(PWD) 2>/dev/null || echo .)
+
+podman-test-image:
+	podman build -t $(TEST_IMAGE) -f test/Containerfile .
+
+test: podman-test-image
+	podman run --rm \
+		-e UKAMA_TEST_CONTAINER=1 \
+		-v $(REPO_ROOT):$(TEST_WORKDIR):Z \
+		-w $(TEST_WORKDIR)/$(APP_REL_PATH) \
+		$(TEST_IMAGE) \
+		make test-local
+
+test-local:
+	$(MAKE) -C test run
+
+test-unit:
+	$(MAKE) -C test unit
+
+test-integration:
+	$(MAKE) -C test integration
+
+test-clean:
+	$(MAKE) -C test clean
+
+.PHONY: podman-test-image test test-local test-unit test-integration test-clean

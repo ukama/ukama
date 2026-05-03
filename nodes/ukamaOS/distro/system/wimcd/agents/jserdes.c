@@ -119,6 +119,7 @@ bool deserialize_wimc_request(WimcReq **request, json_t *json) {
     json_t *jMethod   = NULL;
     json_t *jIndexURL = NULL;
     json_t *jStoreURL = NULL;
+    json_t *jExpected = NULL;
 
     WFetch *fetch;
 
@@ -130,6 +131,7 @@ bool deserialize_wimc_request(WimcReq **request, json_t *json) {
     jMethod   = json_object_get(json, JSON_METHOD);
     jIndexURL = json_object_get(json, JSON_INDEX_URL);
     jStoreURL = json_object_get(json, JSON_STORE_URL);
+    jExpected = json_object_get(json, JSON_EXPECTED_SIZE);
 
     if (!jInterval || !jName || !jTag || !jMethod ||
         !jIndexURL || !jStoreURL) {
@@ -158,6 +160,8 @@ bool deserialize_wimc_request(WimcReq **request, json_t *json) {
     fetch->content->method   = strdup(json_string_value(jMethod));
     fetch->content->indexURL = strdup(json_string_value(jIndexURL));
     fetch->content->storeURL = strdup(json_string_value(jStoreURL));
+    fetch->content->expectedSizeBytes = jExpected ?
+                                        json_integer_value(jExpected) : 0;
 
     return USYS_TRUE;
 }

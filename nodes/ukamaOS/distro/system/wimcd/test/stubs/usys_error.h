@@ -1,0 +1,3 @@
+#ifndef TEST_STUB_USYS_ERROR_H
+#define TEST_STUB_USYS_ERROR_H
+#endif

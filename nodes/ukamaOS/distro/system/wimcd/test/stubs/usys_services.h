@@ -1,0 +1,4 @@
+#ifndef TEST_STUB_USYS_SERVICES_H
+#define TEST_STUB_USYS_SERVICES_H
+#define SERVICE_WIMC "wimc"
+#endif
