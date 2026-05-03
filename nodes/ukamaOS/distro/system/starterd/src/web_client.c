@@ -185,9 +185,12 @@ static bool wc_copy_file(const char *srcPath, const char *dstPath) {
     return true;
 }
 
-bool wc_wait_for_available(Config *config) {
+static bool wc_wait_for_available(Config *config,
+                                  const char *appName,
+                                  const char *tag) {
 
-    char url[256];
+    char url[512];
+    char path[256];
     URequest *req;
     UResponse *resp;
     char *body;
@@ -198,12 +201,22 @@ bool wc_wait_for_available(Config *config) {
     body  = NULL;
     start = 0;
 
-    if (!config) {
+    if (!config || !appName || !tag) {
         return false;
     }
 
-    if (!wc_build_url(url, sizeof(url), config->wimcHost,
-                      config->wimcPort, "/v1/status")) {
+    snprintf(path,
+             sizeof(path),
+             "/v1/apps/%s/%s/status",
+             appName,
+             tag);
+
+    if (!wc_build_url(url,
+                      sizeof(url),
+                      config->wimcHost,
+                      config->wimcPort,
+                      path)) {
+        usys_log_error("wimc: status url build failed");
         return false;
     }
 
@@ -211,7 +224,7 @@ bool wc_wait_for_available(Config *config) {
 
     while (true) {
 
-        req = wc_create_request(url, "GET", config->commitTimeoutSec);
+        req = wc_create_request(url, "GET", config->pingTimeoutSec);
         if (!req) {
             return false;
         }
@@ -255,6 +268,7 @@ bool wc_wait_for_available(Config *config) {
         usleep(200 * 1000);
     }
 
+    usys_log_error("wimc: timed out waiting for %s:%s", appName, tag);
     return false;
 }
 
@@ -441,7 +455,7 @@ bool wc_fetch_package(Config *config,
 
     wc_clean(req, resp);
 
-    if (!wc_wait_for_available(config)) {
+    if (!wc_wait_for_available(config, appName, tag)) {
         usys_log_error("wimc: package not available %s:%s", appName, tag);
         return false;
     }
