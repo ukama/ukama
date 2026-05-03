@@ -20,7 +20,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "db.h"
 #include "package_cache.h"
 #include "usys_log.h"
 
@@ -672,78 +671,3 @@ int pkg_publish_from_dir(const char *name, const char *tag,
     return 0;
 }
 
-static void reconcile_one(sqlite3 *db, const char *path,
-                          const char *name, const char *tag) {
-
-    PackageInfo info;
-
-    if (pkg_validate_tar(name, tag, path, &info)) {
-        db_update_package_status(db, (char *)name, (char *)tag,
-                                 (char *)path, WIMC_STATUS_AVAILABLE,
-                                 info.actualVersion, NULL);
-        if (!pkg_is_alias_tag(tag) && strcmp(tag, info.actualVersion) == 0) {
-            db_update_package_status(db, (char *)name,
-                                     info.actualVersion, (char *)path,
-                                     WIMC_STATUS_AVAILABLE,
-                                     info.actualVersion, NULL);
-        }
-    } else {
-        db_update_package_status(db, (char *)name, (char *)tag,
-                                 (char *)path, WIMC_STATUS_CORRUPT,
-                                 info.actualVersion[0] ?
-                                 info.actualVersion : NULL,
-                                 info.error[0] ? info.error : "invalid");
-    }
-}
-
-int pkg_reconcile_startup(sqlite3 *db, const char *pkgDir) {
-
-    DIR *dir;
-    struct dirent *ent;
-    char name[WIMC_MAX_NAME_LEN];
-    char tag[WIMC_MAX_NAME_LEN];
-    char path[WIMC_MAX_PATH_LEN];
-
-    if (db == NULL || pkgDir == NULL) {
-        return -1;
-    }
-
-    if (pkg_ensure_cache_dirs() != 0) {
-        return -1;
-    }
-
-    pkg_cleanup_tmp();
-    db_mark_old_downloads_failed(db);
-
-    dir = opendir(pkgDir);
-    if (dir == NULL) {
-        usys_log_error("Unable to open package dir %s: %s",
-                       pkgDir, strerror(errno));
-        return -1;
-    }
-
-    while ((ent = readdir(dir)) != NULL) {
-        if (strcmp(ent->d_name, ".") == 0 ||
-            strcmp(ent->d_name, "..") == 0 ||
-            strcmp(ent->d_name, ".tmp") == 0) {
-            continue;
-        }
-
-        if (snprintf(path, sizeof(path), "%s/%s", pkgDir,
-                     ent->d_name) >= (int)sizeof(path)) {
-            continue;
-        }
-
-        if (parse_pkg_filename(ent->d_name, path, name, sizeof(name),
-                               tag, sizeof(tag)) != 0) {
-            continue;
-        }
-
-        reconcile_one(db, path, name, tag);
-    }
-
-    closedir(dir);
-    db_revalidate_available(db);
-
-    return 0;
-}

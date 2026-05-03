@@ -462,6 +462,197 @@ void update_local_db(sqlite3 *db, char *name, char *tag, char *path) {
     }
 }
 
+
+
+#define PKG_SUFFIX ".tar.gz"
+
+static int db_filename_has_suffix(const char *name, const char *suffix) {
+
+    size_t nameLen;
+    size_t suffixLen;
+
+    if (name == NULL || suffix == NULL) {
+        return 0;
+    }
+
+    nameLen = strlen(name);
+    suffixLen = strlen(suffix);
+
+    if (nameLen <= suffixLen) {
+        return 0;
+    }
+
+    return strcmp(name + nameLen - suffixLen, suffix) == 0;
+}
+
+static int db_parse_pkg_filename(const char *fileName, const char *path,
+                                 char *name, size_t nameLen,
+                                 char *tag, size_t tagLen) {
+
+    char actualVersion[WIMC_MAX_NAME_LEN];
+    char suffix[WIMC_MAX_NAME_LEN + 16];
+    size_t fileLen;
+    size_t suffixLen;
+    size_t baseLen;
+
+    if (fileName == NULL || path == NULL || name == NULL || tag == NULL) {
+        return -1;
+    }
+
+    if (!db_filename_has_suffix(fileName, PKG_SUFFIX)) {
+        return -1;
+    }
+
+    fileLen = strlen(fileName);
+
+    if (pkg_read_version_from_tar(path, actualVersion,
+                                  sizeof(actualVersion)) != 0) {
+        if (snprintf(suffix, sizeof(suffix), "_%s%s", WIMC_ALIAS_LATEST,
+                     PKG_SUFFIX) >= (int)sizeof(suffix)) {
+            return -1;
+        }
+
+        suffixLen = strlen(suffix);
+        if (fileLen <= suffixLen ||
+            strcmp(fileName + fileLen - suffixLen, suffix) != 0) {
+            return -1;
+        }
+
+        baseLen = fileLen - suffixLen;
+        if (baseLen == 0 || baseLen >= nameLen) {
+            return -1;
+        }
+
+        memcpy(name, fileName, baseLen);
+        name[baseLen] = '\0';
+        snprintf(tag, tagLen, "%s", WIMC_ALIAS_LATEST);
+
+        return pkg_is_valid_identifier(name) ? 0 : -1;
+    }
+
+    if (snprintf(suffix, sizeof(suffix), "_%s%s", actualVersion,
+                 PKG_SUFFIX) >= (int)sizeof(suffix)) {
+        return -1;
+    }
+
+    suffixLen = strlen(suffix);
+    if (fileLen > suffixLen &&
+        strcmp(fileName + fileLen - suffixLen, suffix) == 0) {
+        baseLen = fileLen - suffixLen;
+        if (baseLen == 0 || baseLen >= nameLen) {
+            return -1;
+        }
+
+        memcpy(name, fileName, baseLen);
+        name[baseLen] = '\0';
+        snprintf(tag, tagLen, "%s", actualVersion);
+
+        return pkg_is_valid_identifier(name) ? 0 : -1;
+    }
+
+    if (snprintf(suffix, sizeof(suffix), "_%s%s", WIMC_ALIAS_LATEST,
+                 PKG_SUFFIX) >= (int)sizeof(suffix)) {
+        return -1;
+    }
+
+    suffixLen = strlen(suffix);
+    if (fileLen > suffixLen &&
+        strcmp(fileName + fileLen - suffixLen, suffix) == 0) {
+        baseLen = fileLen - suffixLen;
+        if (baseLen == 0 || baseLen >= nameLen) {
+            return -1;
+        }
+
+        memcpy(name, fileName, baseLen);
+        name[baseLen] = '\0';
+        snprintf(tag, tagLen, "%s", WIMC_ALIAS_LATEST);
+
+        return pkg_is_valid_identifier(name) ? 0 : -1;
+    }
+
+    return -1;
+}
+
+static void db_reconcile_one(sqlite3 *db, const char *path,
+                             const char *name, const char *tag) {
+
+    PackageInfo info;
+
+    memset(&info, 0, sizeof(info));
+
+    if (pkg_validate_tar(name, tag, path, &info)) {
+        db_update_package_status(db, (char *)name, (char *)tag,
+                                 (char *)path, WIMC_STATUS_AVAILABLE,
+                                 info.actualVersion, NULL);
+
+        if (!pkg_is_alias_tag(tag) &&
+            strcmp(tag, info.actualVersion) == 0) {
+            db_update_package_status(db, (char *)name,
+                                     info.actualVersion, (char *)path,
+                                     WIMC_STATUS_AVAILABLE,
+                                     info.actualVersion, NULL);
+        }
+    } else {
+        db_update_package_status(db, (char *)name, (char *)tag,
+                                 (char *)path, WIMC_STATUS_CORRUPT,
+                                 info.actualVersion[0] ?
+                                 info.actualVersion : NULL,
+                                 info.error[0] ? info.error : "invalid");
+    }
+}
+
+int pkg_reconcile_startup(sqlite3 *db, const char *pkgDir) {
+
+    DIR *dir;
+    struct dirent *ent;
+    char name[WIMC_MAX_NAME_LEN];
+    char tag[WIMC_MAX_NAME_LEN];
+    char path[WIMC_MAX_PATH_LEN];
+
+    if (db == NULL || pkgDir == NULL) {
+        return -1;
+    }
+
+    if (pkg_ensure_cache_dirs() != 0) {
+        return -1;
+    }
+
+    pkg_cleanup_tmp();
+    db_mark_old_downloads_failed(db);
+
+    dir = opendir(pkgDir);
+    if (dir == NULL) {
+        usys_log_error("Unable to open package dir %s: %s",
+                       pkgDir, strerror(errno));
+        return -1;
+    }
+
+    while ((ent = readdir(dir)) != NULL) {
+        if (strcmp(ent->d_name, ".") == 0 ||
+            strcmp(ent->d_name, "..") == 0 ||
+            strcmp(ent->d_name, ".tmp") == 0) {
+            continue;
+        }
+
+        if (snprintf(path, sizeof(path), "%s/%s", pkgDir,
+                     ent->d_name) >= (int)sizeof(path)) {
+            continue;
+        }
+
+        if (db_parse_pkg_filename(ent->d_name, path, name, sizeof(name),
+                                  tag, sizeof(tag)) != 0) {
+            continue;
+        }
+
+        db_reconcile_one(db, path, name, tag);
+    }
+
+    closedir(dir);
+    db_revalidate_available(db);
+
+    return 0;
+}
+
 int db_open_or_create(const char *dbPath, sqlite3 **db) {
 
     int rc;
