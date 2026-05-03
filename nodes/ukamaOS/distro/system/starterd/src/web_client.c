@@ -9,6 +9,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ulfius.h>
+#include <sys/stat.h>
+#include <time.h>
+#include <unistd.h>
+#include <jansson.h>
 
 #include "web_client.h"
 #include "http_status.h"
@@ -17,6 +21,59 @@
 #include "usys_mem.h"
 #include "usys_file.h"
 #include "usys_services.h"
+
+static bool wc_file_exists_non_empty(const char *path) {
+
+    struct stat st;
+
+    if (!path) {
+        return false;
+    }
+
+    if (stat(path, &st) != 0) {
+        return false;
+    }
+
+    if (!S_ISREG(st.st_mode)) {
+        return false;
+    }
+
+    return st.st_size > 0;
+}
+
+static bool wc_json_status_is(const char *body, const char *expected) {
+
+    json_t *root;
+    json_t *status;
+    json_error_t error;
+    const char *value;
+    bool ok;
+
+    root   = NULL;
+    status = NULL;
+    value  = NULL;
+    ok     = false;
+
+    if (!body || !expected) {
+        return false;
+    }
+
+    root = json_loads(body, 0, &error);
+    if (!root) {
+        return false;
+    }
+
+    status = json_object_get(root, "status");
+    if (json_is_string(status)) {
+        value = json_string_value(status);
+        if (value && strcmp(value, expected) == 0) {
+            ok = true;
+        }
+    }
+
+    json_decref(root);
+    return ok;
+}
 
 static URequest* wc_create_request(const char *url,
                                    const char *method,
@@ -230,6 +287,7 @@ static bool wc_wait_for_available(Config *config,
         }
 
         resp = NULL;
+        body = NULL;
 
         if (wc_send(req, &resp)) {
 
@@ -241,13 +299,18 @@ static bool wc_wait_for_available(Config *config,
                 body = wc_copy_response_body(resp);
                 if (body) {
 
-                    if (strstr(body, "\"available\"") != NULL) {
+                    if (wc_json_status_is(body, "available")) {
                         free(body);
                         wc_clean(req, resp);
                         return true;
                     }
 
-                    if (strstr(body, "\"failed\"") != NULL) {
+                    if (wc_json_status_is(body, "failed") ||
+                        wc_json_status_is(body, "corrupt") ||
+                        wc_json_status_is(body, "missing")) {
+                        usys_log_error("wimc: fetch failed %s:%s",
+                                       appName,
+                                       tag);
                         free(body);
                         wc_clean(req, resp);
                         return false;
@@ -256,6 +319,13 @@ static bool wc_wait_for_available(Config *config,
                     free(body);
                     body = NULL;
                 }
+
+            } else if (resp &&
+                       (resp->status == HttpStatus_NotFound ||
+                        resp->status == HttpStatus_InternalServerError)) {
+
+                wc_clean(req, resp);
+                return false;
             }
         }
 
@@ -386,19 +456,20 @@ bool wc_fetch_package(Config *config,
     char url[512];
     char path[256];
     char srcPath[512];
+    const char *pkgsDir;
     URequest *req;
     UResponse *resp;
     JsonObj *jreq;
     char *body;
-    bool ok;
 
-    req = NULL;
+    req  = NULL;
     resp = NULL;
     jreq = NULL;
     body = NULL;
-    ok = false;
 
-    if (!config || !appName || !tag || !dstPath) return false;
+    if (!config || !appName || !tag || !dstPath) {
+        return false;
+    }
 
     snprintf(path,
              sizeof(path),
@@ -408,13 +479,19 @@ bool wc_fetch_package(Config *config,
              appName,
              tag);
 
-    if (!wc_build_url(url, sizeof(url), config->wimcHost, config->wimcPort, path)) {
+    if (!wc_build_url(url,
+                      sizeof(url),
+                      config->wimcHost,
+                      config->wimcPort,
+                      path)) {
         usys_log_error("wimc: url build failed");
         return false;
     }
 
     req = wc_create_request(url, "POST", 30);
-    if (!req) return false;
+    if (!req) {
+        return false;
+    }
 
     if (hub && *hub) {
         jreq = json_object();
@@ -444,10 +521,13 @@ bool wc_fetch_package(Config *config,
     }
 
     free(body);
+    body = NULL;
 
-    if (resp->status != HttpStatus_Accepted &&
+    if (resp->status != HttpStatus_OK &&
+        resp->status != HttpStatus_Accepted &&
         resp->status != HttpStatus_NotModified &&
         resp->status != HttpStatus_Conflict) {
+
         usys_log_error("wimc: unexpected response http=%d", resp->status);
         wc_clean(req, resp);
         return false;
@@ -460,13 +540,40 @@ bool wc_fetch_package(Config *config,
         return false;
     }
 
-    snprintf(srcPath, sizeof(srcPath), "/ukama/apps/pkgs/%s_%s.tar.gz", appName, tag);
+    pkgsDir = config->pkgsDir ? config->pkgsDir : "/ukama/apps/pkgs";
+
+    snprintf(srcPath,
+             sizeof(srcPath),
+             "%s/%s_%s.tar.gz",
+             pkgsDir,
+             appName,
+             tag);
+
+    /*
+     * In the normal starter/wimc contract both daemons share the same
+     * package cache. Do not copy the package onto itself.
+     */
+    if (strcmp(srcPath, dstPath) == 0) {
+        if (!wc_file_exists_non_empty(dstPath)) {
+            usys_log_error("wimc: package missing or empty %s", dstPath);
+            return false;
+        }
+
+        return true;
+    }
 
     if (!wc_copy_file(srcPath, dstPath)) {
-        usys_log_error("wimc: failed copying package %s -> %s", srcPath, dstPath);
+        usys_log_error("wimc: failed copying package %s -> %s",
+                       srcPath,
+                       dstPath);
         return false;
     }
 
-    ok = true;
-    return ok;
+    if (!wc_file_exists_non_empty(dstPath)) {
+        usys_log_error("wimc: copied package is missing or empty %s",
+                       dstPath);
+        return false;
+    }
+
+    return true;
 }
