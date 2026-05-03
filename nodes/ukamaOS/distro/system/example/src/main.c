@@ -1,56 +1,164 @@
-/**
- * Copyright (c) 2021-present, Ukama Inc.
- * All rights reserved.
- *
- * This source code is licensed under the XXX-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
- */
-
 /*
- * example.d -- example system module using capp
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
+ * Copyright (c) 2021-present, Ukama Inc.
  */
 
+#include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "example.h"
+#include "version.h"
 
-int main(int argc, char **argv, char **envp) {
+#include "usys_getopt.h"
+#include "usys_log.h"
+#include "usys_string.h"
+#include "usys_types.h"
+#include "usys_api.h"
+#include "usys_file.h"
 
-  int loop=FALSE, interval;
-  char **env;
-  FILE *fp;
+extern int start_web_services(Config *config, UInst *serviceInst);
 
-  if (argc>1) {
-    if (strcmp(argv[1], "-f")==0) { /* loop forever. */
-      loop = TRUE;
+static UInst serviceInst;
+
+static UsysOption longOptions[] = {
+    { "logs",    required_argument, 0, 'l' },
+    { "help",    no_argument,       0, 'h' },
+    { "version", no_argument,       0, 'v' },
+    { 0, 0, 0, 0 }
+};
+
+static void handle_sigint(int signum) {
+
+    usys_log_debug("Terminate signal.");
+
+    ulfius_stop_framework(&serviceInst);
+    ulfius_clean_instance(&serviceInst);
+
+    usys_exit(0);
+}
+
+static void set_log_level(char *slevel) {
+
+    int ilevel;
+
+    ilevel = USYS_LOG_TRACE;
+
+    if (!strcmp(slevel, "TRACE")) {
+        ilevel = USYS_LOG_TRACE;
+    } else if (!strcmp(slevel, "DEBUG")) {
+        ilevel = USYS_LOG_DEBUG;
+    } else if (!strcmp(slevel, "INFO")) {
+        ilevel = USYS_LOG_INFO;
     }
-  }
 
-  /* List all the environment variables */
-  for (env = envp; *env != 0; env++) {
-    char *thisEnv = *env;
-    fprintf(stdout, "%s\n", thisEnv);
-  }
+    usys_log_set_level(ilevel);
+}
 
-  /* Open the config file and read the sleep interval */
-  fp = fopen(CONFIG_FILE, "r");
-  if (fp == NULL) {
-    fprintf(stderr, "Error opening config file at: %s \n", CONFIG_FILE);
-    return 1;
-  }
-  fscanf(fp, "%d", &interval);
-  fclose(fp);
+static void usage(void) {
 
-  do {
-    fprintf(stdout, "Hello world from %s\n", UKAMA_STR);
-    sleep(interval);
-  } while (loop);
+    usys_puts("Usage: example.d [options]");
+    usys_puts("Options:");
+    usys_puts("-h, --help                    Help menu");
+    usys_puts("-l, --logs <TRACE|DEBUG|INFO> Log level for the process");
+    usys_puts("-v, --version                 Software version");
+}
 
-  fprintf(stderr, "... Exiting \n");
+static int get_service_port(void) {
 
-  return 1;
+    char *envPort;
+    int port;
+
+    envPort = NULL;
+    port    = 0;
+
+    envPort = getenv(ENV_EXAMPLE_SERVICE_PORT);
+    if (envPort && envPort[0] != '\0') {
+        port = atoi(envPort);
+        if (port > 0) {
+            return port;
+        }
+    }
+
+    port = usys_find_service_port(SERVICE_NAME);
+    if (port > 0) {
+        return port;
+    }
+
+    return DEF_SERVICE_PORT;
+}
+
+int main(int argc, char **argv) {
+
+    int opt;
+    int optIdx;
+    char *debug;
+
+    Config serviceConfig;
+
+    debug = DEF_LOG_LEVEL;
+
+    memset(&serviceInst, 0, sizeof(UInst));
+    memset(&serviceConfig, 0, sizeof(Config));
+
+    usys_log_set_service(SERVICE_NAME);
+
+    while (USYS_TRUE) {
+
+        opt    = 0;
+        optIdx = 0;
+
+        opt = usys_getopt_long(argc, argv, "vh:l:", longOptions, &optIdx);
+        if (opt == -1) {
+            break;
+        }
+
+        switch (opt) {
+        case 'h':
+            usage();
+            usys_exit(0);
+            break;
+
+        case 'v':
+            usys_puts(VERSION);
+            usys_exit(0);
+            break;
+
+        case 'l':
+            debug = optarg;
+            set_log_level(debug);
+            break;
+
+        default:
+            usage();
+            usys_exit(0);
+        }
+    }
+
+    set_log_level(debug);
+
+    serviceConfig.servicePort = get_service_port();
+
+    signal(SIGINT, handle_sigint);
+    signal(SIGTERM, handle_sigint);
+
+    usys_log_info("%s: starting on port %d",
+                  SERVICE_NAME,
+                  serviceConfig.servicePort);
+
+    if (start_web_services(&serviceConfig, &serviceInst) != USYS_TRUE) {
+        usys_log_error("%s: unable to start webservice", SERVICE_NAME);
+        usys_exit(1);
+    }
+
+    while (USYS_TRUE) {
+        sleep(1);
+    }
+
+    return USYS_TRUE;
 }

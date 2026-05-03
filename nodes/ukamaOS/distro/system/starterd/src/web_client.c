@@ -75,6 +75,31 @@ static void wc_clean(URequest *req, UResponse *resp) {
     }
 }
 
+static char *wc_copy_response_body(UResponse *resp) {
+
+    char *copy;
+    size_t len;
+
+    copy = NULL;
+    len  = 0;
+
+    if (!resp || !resp->binary_body || resp->binary_body_length <= 0) {
+        return NULL;
+    }
+
+    len = (size_t)resp->binary_body_length;
+
+    copy = (char *)calloc(1, len + 1);
+    if (!copy) {
+        return NULL;
+    }
+
+    memcpy(copy, resp->binary_body, len);
+    copy[len] = '\0';
+
+    return copy;
+}
+
 static bool wc_build_url(char *buf,
                          size_t buflen,
                          const char *addr,
@@ -162,61 +187,88 @@ static bool wc_copy_file(const char *srcPath, const char *dstPath) {
 
 static bool wc_wait_for_available(Config *config,
                                   const char *appName,
-                                  const char *tag,
-                                  int timeoutSec) {
+                                  const char *tag) {
 
     char url[512];
     char path[256];
     URequest *req;
     UResponse *resp;
+    char *body;
     time_t start;
-    const char *body;
 
-    req = NULL;
-    resp = NULL;
-    body = NULL;
+    req   = NULL;
+    resp  = NULL;
+    body  = NULL;
+    start = 0;
 
-    snprintf(path, sizeof(path), "/v1/apps/%s/%s/status", appName, tag);
-    if (!wc_build_url(url, sizeof(url), config->wimcHost, config->wimcPort, path)) {
+    if (!config || !appName || !tag) {
+        return false;
+    }
+
+    snprintf(path,
+             sizeof(path),
+             "/v1/apps/%s/%s/status",
+             appName,
+             tag);
+
+    if (!wc_build_url(url,
+                      sizeof(url),
+                      config->wimcHost,
+                      config->wimcPort,
+                      path)) {
         usys_log_error("wimc: status url build failed");
         return false;
     }
 
     start = time(NULL);
-    while ((int)(time(NULL) - start) < timeoutSec) {
 
-        req = wc_create_request(url, "GET", 10);
+    while (true) {
+
+        req = wc_create_request(url, "GET", config->pingTimeoutSec);
         if (!req) {
             return false;
         }
 
-        if (!wc_send(req, &resp)) {
-            wc_clean(req, NULL);
-            usleep(500 * 1000);
-            continue;
-        }
+        resp = NULL;
 
-        if (resp->status == HttpStatus_OK && resp->binary_body) {
-            body = (const char *)resp->binary_body;
+        if (wc_send(req, &resp)) {
 
-            if (strstr(body, "\"available\"") != NULL) {
-                wc_clean(req, resp);
-                return true;
-            }
+            if (resp &&
+                resp->status == HttpStatus_OK &&
+                resp->binary_body &&
+                resp->binary_body_length > 0) {
 
-            if (strstr(body, "\"failed\"") != NULL) {
-                wc_clean(req, resp);
-                return false;
+                body = wc_copy_response_body(resp);
+                if (body) {
+
+                    if (strstr(body, "\"available\"") != NULL) {
+                        free(body);
+                        wc_clean(req, resp);
+                        return true;
+                    }
+
+                    if (strstr(body, "\"failed\"") != NULL) {
+                        free(body);
+                        wc_clean(req, resp);
+                        return false;
+                    }
+
+                    free(body);
+                    body = NULL;
+                }
             }
         }
 
         wc_clean(req, resp);
-        req = NULL;
-        resp = NULL;
 
-        usleep(500 * 1000);
+        if ((int)(time(NULL) - start) >= config->commitTimeoutSec) {
+            break;
+        }
+
+        usleep(200 * 1000);
     }
 
+    usys_log_error("wimc: timed out waiting for %s:%s", appName, tag);
     return false;
 }
 
@@ -266,7 +318,6 @@ bool wc_app_version_matches(Config *config,
     URequest *req;
     UResponse *resp;
     bool ok;
-    const char *body;
     char *copy;
     char *p;
     char *end;
@@ -275,7 +326,6 @@ bool wc_app_version_matches(Config *config,
     req       = NULL;
     resp      = NULL;
     ok        = false;
-    body      = NULL;
     copy      = NULL;
     probePort = -1;
 
@@ -298,33 +348,32 @@ bool wc_app_version_matches(Config *config,
     }
 
     if (resp->status == HttpStatus_OK) {
-        body = resp->binary_body ? (const char *)resp->binary_body : NULL;
-        if (body) {
-            copy = strdup(body);
-            if (copy) {
-                p = copy;
-                while (*p == ' ' || *p == '\t' ||
-                       *p == '\r' || *p == '\n') {
-                    p++;
-                }
+        copy = wc_copy_response_body(resp);
+        if (copy) {
+            p = copy;
 
-                end = p + strlen(p);
-                while (end > p &&
-                       (end[-1] == ' ' || end[-1] == '\t' ||
-                        end[-1] == '\r' || end[-1] == '\n')) {
-                    end--;
-                }
-                *end = '\0';
+            while (*p == ' ' || *p == '\t' ||
+                   *p == '\r' || *p == '\n') {
+                p++;
+            }
 
-                if (strcmp(p, tag) == 0) {
-                    ok = true;
-                }
+            end = p + strlen(p);
+            while (end > p &&
+                   (end[-1] == ' ' || end[-1] == '\t' ||
+                    end[-1] == '\r' || end[-1] == '\n')) {
+                end--;
+            }
+            *end = '\0';
+
+            if (strcmp(p, tag) == 0) {
+                ok = true;
             }
         }
     }
 
     free(copy);
     wc_clean(req, resp);
+
     return ok;
 }
 
@@ -406,7 +455,7 @@ bool wc_fetch_package(Config *config,
 
     wc_clean(req, resp);
 
-    if (!wc_wait_for_available(config, appName, tag, 120)) {
+    if (!wc_wait_for_available(config, appName, tag)) {
         usys_log_error("wimc: package not available %s:%s", appName, tag);
         return false;
     }
