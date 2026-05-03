@@ -137,8 +137,12 @@ last:
 
       content = fetch->content;
       uuid_unparse(fetch->uuid, idStr);
-      sprintf(folder, "%s/%s/%s_%s", DEFAULT_PATH, idStr, content->name,
-              content->tag);
+      if (snprintf(folder, sizeof(folder), "%s/%s/%s_%s", DEFAULT_PATH,
+                   idStr, content->name, content->tag) >=
+          (int)sizeof(folder)) {
+          usys_log_error("Folder path too long");
+          goto cleanup;
+      }
 
       /* Update the path location and notify WIMC of it */
       stats->status = WSTATUS_DONE;

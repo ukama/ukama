@@ -10,16 +10,17 @@
 #ifndef WIMC_H
 #define WIMC_H
 
-#include <stdio.h>
-#include <ulfius.h>
-#include <sqlite3.h>
-#include <uuid/uuid.h>
+#include <jansson.h>
 #include <pthread.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <sqlite3.h>
+#include <ulfius.h>
+#include <uuid/uuid.h>
 
-#include "usys_types.h"
-#include "usys_services.h"
 #include "agent.h"
+#include "usys_services.h"
+#include "usys_types.h"
 
 #define SERVICE_NAME       SERVICE_WIMC
 
@@ -28,26 +29,16 @@
 #define URL_PREFIX         EP_BS REST_API_VERSION
 #define API_RES_EP(RES)    EP_BS RES
 
-#define ENV_CLIENT_PORT "WIMC_CLIENT_PORT"
-#define ENV_ADMIN_PORT  "WMIN_ADMIN_PORT"
-#define ENV_DB_FILE     "WIMC_DB"
-#define ENV_UKAMA_HUB   "WIMC_UKAMA_HUB"
-#define DEF_LOG_LEVEL   "TRACE"
-
-#define WIMC_FLAG_CREATE_DB 1
-
-#define DEF_DB_FILE       "test.db"
-#define DEF_LOG_LEVEL     "TRACE"
+#define DEF_LOG_LEVEL      "TRACE"
 
 #define WIMC_REQ_TYPE_FETCH  "fetch"
 #define WIMC_REQ_TYPE_UPDATE "update"
 #define WIMC_REQ_TYPE_CANCEL "cancel"
 
-#define WIMC_RESP_TYPE_STATUS "status"
-#define WIMC_RESP_TYPE_RESULT "result"
-#define WIMC_RESP_TYPE_ERROR  "error"
+#define WIMC_RESP_TYPE_STATUS     "status"
+#define WIMC_RESP_TYPE_RESULT     "result"
+#define WIMC_RESP_TYPE_ERROR      "error"
 #define WIMC_RESP_TYPE_PROCESSING "processing"
-
 
 #define WIMC_CMD_TRANSFER 1
 #define WIMC_CMD_INFO     2
@@ -58,9 +49,8 @@
 #define WIMC_CMD_INFO_STR     "info"
 #define WIMC_CMD_INSPECT_STR  "inspect"
 #define WIMC_CMD_ALL_TAGS_STR "all-tags"
- 
-/* type of content to download. */
-#define WIMC_TYPE_CONTAINER 1  
+
+#define WIMC_TYPE_CONTAINER 1
 #define WIMC_TYPE_DATA      2
 
 #define WIMC_TYPE_CONTAINER_STR "containers"
@@ -83,208 +73,160 @@
 #define WIMC_MAX_URL_LEN    1024
 #define WIMC_MAX_ERR_STR    1024
 
-#define WIMC_ACTION_FETCH_STR      "fetch"
-#define WIMC_ACTION_UPDATE_STR     "update"
-#define WIMC_ACTION_CANCEL_STR     "cancel"
+#define WIMC_ACTION_FETCH_STR  "fetch"
+#define WIMC_ACTION_UPDATE_STR "update"
+#define WIMC_ACTION_CANCEL_STR "cancel"
 
-#define WIMC_METHOD_CHUNK_STR      "chunk"
-#define WIMC_METHOD_TEST_STR       "test"
+#define WIMC_METHOD_CHUNK_STR "chunk"
+#define WIMC_METHOD_TEST_STR  "test"
 
 #define WIMC_REQ_TYPE_AGENT_STR    "agent"
 #define WIMC_REQ_TYPE_PROVIDER_STR "provider"
 
 #define MAX_AGENTS       10
-#define DEFAULT_INTERVAL 10 /* 10 seconds. */
+#define DEFAULT_INTERVAL 10
 
-#define TRUE 1
+#define TRUE  1
 #define FALSE 0
 
 #define DEFAULT_SHMEM "shared_memory"
-#define AGENT_EXEC "/usr/bin/casync"
-#define DEFAULT_PATH "/tmp"
+#define AGENT_EXEC    "/usr/bin/casync"
+#define DEFAULT_PATH  "/tmp"
 
 #define DEFAULT_APPS_PKGS_PATH "/ukama/apps/pkgs"
-#define WIMC_DB_PATH           "/ukama/db/wimc.db"
+#define WIMC_DB_PATH           "/ukama/apps/db/wimc.db"
+
+#define WIMC_HTTP_CONNECT_TIMEOUT_SEC 5L
+#define WIMC_HTTP_TIMEOUT_SEC         30L
+#define WIMC_MAX_HTTP_RESPONSE_BYTES  (1024 * 1024)
+#define WIMC_MIN_FREE_BYTES           (128LL * 1024LL * 1024LL)
+#define WIMC_MAX_PACKAGE_BYTES        (512LL * 1024LL * 1024LL)
 
 typedef struct _u_request req_t;
 typedef struct _u_response resp_t;
 
 typedef struct {
-    char *method; /* Mechanisim supported by service at the url. */
-    char *url;    /* callback URL for the agent. */
-    char *iURL;   /* Index URL - only when method is chunk */
-    char *sURL;   /* Chunk store URL - only when method is chunk */
+    char *method;
+    char *url;
+    char *iURL;
+    char *sURL;
 } ServiceURL;
 
-/*
- {
-    "name": "cspace",
-    "artifacts": [
-        {
-            "version": "0.0.1",
-            "formats": [
-                {
-                    "type": "tar.gz",
-                    "url": "/capps/cspace/0.0.1.tar.gz",
-                    "created_at": "2022-02-24T23:53:48Z",
-                    "size_bytes": 279435
-                },
-                {
-                    "type": "chunk",
-                    "url": "/capps/cspace/0.0.1.caidx",
-                    "created_at": "0001-01-01T00:00:00Z",
-                    "extra_info": {
-                        "chunks": "/chunks/"
-                    }
-                }
-            ]
-        }
-    ]
-}
-*/
-
 typedef struct {
-
-  char *type;      /* type of artifact, e.g., tgz, chunk, etc. */
-  char *url;       /* to get the artifact from */
-  char *extraInfo; /* any additional info. e.g., chunk URL */
-  char *createdAt; /* when was it created (and updated) */
-  int  size;       /* size of the artifact (in bytes) */
+    char *type;
+    char *url;
+    char *extraInfo;
+    char *createdAt;
+    int  size;
 } ArtifactFormat;
 
 typedef struct {
-
-  char *name;        /* Name of the artifact */
-  char *version;     /* version/tag */
-  int  formatsCount; /* various format for the artifact */
-
-  ArtifactFormat **formats; /* def of the format */
+    char *name;
+    char *version;
+    int  formatsCount;
+    ArtifactFormat **formats;
 } Artifact;
 
 typedef enum {
-
-  WREQ_FETCH=1,
-  WREQ_UPDATE,
-  WREQ_CANCEL
+    WREQ_FETCH = 1,
+    WREQ_UPDATE,
+    WREQ_CANCEL
 } WReqType;
 
 typedef enum {
-
-  WRESP_PROCESSING=1,
-  WRESP_UPDATE,
-  WRESP_RESULT,
-  WRESP_ERROR
+    WRESP_PROCESSING = 1,
+    WRESP_UPDATE,
+    WRESP_RESULT,
+    WRESP_ERROR
 } WRespType;
 
 typedef enum {
-  TEST=1,
-  CHUNK,
+    TEST = 1,
+    CHUNK,
 } MethodType;
 
 typedef enum {
-  WSTATUS_PEND=1,
-  WSTATUS_START,
-  WSTATUS_RUNNING,
-  WSTATUS_DONE,
-  WSTATUS_ERROR
+    WSTATUS_PEND = 1,
+    WSTATUS_START,
+    WSTATUS_RUNNING,
+    WSTATUS_DONE,
+    WSTATUS_ERROR
 } TaskStatus;
 
 typedef struct {
-
-  char *name;        /* to fetch. */
-  char *tag;         /* to fetch. */
-  char *method;      /* Method to use with provider. */
-  char *indexURL;    /* index URL for CA */
-  char *storeURL;    /* chunk store */
+    char *name;
+    char *tag;
+    char *method;
+    char *indexURL;
+    char *storeURL;
+    long expectedSizeBytes;
 } WContent;
 
 typedef struct {
-
-  uuid_t   uuid;     /* UID for future transactions */
-  char     *cbURL;   /* Callback URL to send update (from Agent to wimc) */
-  int      interval; /* update interval */
-  WContent *content; /* Content definition */
+    uuid_t   uuid;
+    char     *cbURL;
+    int      interval;
+    WContent *content;
 } WFetch;
 
 typedef struct {
-
-  uuid_t uuid;
-  int    interval;
-  char   *cbURL;
+    uuid_t uuid;
+    int    interval;
+    char   *cbURL;
 } WUpdate;
 
 typedef struct {
-
-  uuid_t uuid;
+    uuid_t uuid;
 } WCancel;
 
-/* struct to define the request originating from wimc to agent. */
 typedef struct {
-
-  WReqType type;
-  WFetch   *fetch;
-  WUpdate  *update;
-  WCancel  *cancel;
+    WReqType type;
+    WFetch   *fetch;
+    WUpdate  *update;
+    WCancel  *cancel;
 } WimcReq;
 
-/* struct to define the contents activites within wimc. Each
- * client request, not found in the local db, results in adding to the
- * WTasks list.
- *
- * Client can query the task (GET) or cancel it (DELETE), both, using UUID
- * as handle.
- */
-
 typedef struct wtask {
-
-  uuid_t   uuid;      /* Unique ID. */
-  WContent *content;  /* define the content. */
-  Update   *update;   /* define status of the content activity. */
-  char     *localPath;/* Path where content is available at */
-
-  TransferState state; /* current state of the task. */
-
-  struct wtask *next; /* pointer to next record. */
+    uuid_t   uuid;
+    WContent *content;
+    Update   *update;
+    char     *localPath;
+    TransferState state;
+    struct wtask *next;
 } WTasks;
 
 typedef struct tStats {
-
-  int start;
-  int stop;
-  int exitStatus;  /* as returned by waitpid */
-
-  /* various stats */
-  uint64_t n_bytes;
-  uint64_t n_requests;
-  uint64_t n_local_requests;
-  uint64_t n_seed_requests;
-  uint64_t n_remote_requests;
-  uint64_t n_local_bytes;
-  uint64_t n_seed_bytes;
-  uint64_t n_remote_bytes;
-  uint64_t total_requests;
-  uint64_t total_bytes;
-  uint64_t nsec;
-  uint64_t runtime_nsec;
-
-  TaskStatus status;
-  char statusStr[WIMC_MAX_ERR_STR];
+    int start;
+    int stop;
+    int exitStatus;
+    uint64_t n_bytes;
+    uint64_t n_requests;
+    uint64_t n_local_requests;
+    uint64_t n_seed_requests;
+    uint64_t n_remote_requests;
+    uint64_t n_local_bytes;
+    uint64_t n_seed_bytes;
+    uint64_t n_remote_bytes;
+    uint64_t total_requests;
+    uint64_t total_bytes;
+    uint64_t nsec;
+    uint64_t runtime_nsec;
+    TaskStatus status;
+    char statusStr[WIMC_MAX_ERR_STR];
 } TStats;
 
 typedef struct {
-
-  int     servicePort;
-  char    *dbFile;
-  char    *hubURL;     /* Hub URL */
-  sqlite3 *db;         /* SQLite3 db for various stats */
-  int     maxAgents;   /* Max. number of agents allowed. */
-  Agent   **agents;    /* Ptr to Agents, needed for http callback func() */
-  WTasks  **tasks;     /* Ptr to Tasks, mostly for http cb */
-  pthread_mutex_t taskMutex;
-  pthread_mutex_t dbMutex;
+    int     servicePort;
+    char    *dbFile;
+    char    *hubURL;
+    sqlite3 *db;
+    int     maxAgents;
+    Agent   **agents;
+    WTasks  **tasks;
+    pthread_mutex_t taskMutex;
+    pthread_mutex_t dbMutex;
 } Config;
 
-typedef struct _u_instance  UInst;
 typedef struct _u_instance  UInst;
 typedef struct _u_request   URequest;
 typedef struct _u_response  UResponse;

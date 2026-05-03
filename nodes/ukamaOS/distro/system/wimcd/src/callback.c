@@ -287,7 +287,7 @@ int web_service_cb_post_app(const URequest *request,
     if (validate_cached_package(config, name, tag, &path, &actualVersion)) {
         jResponse = status_json(name, tag, WIMC_STATUS_AVAILABLE, path,
                                 actualVersion, NULL);
-        ulfius_set_json_body_response(response, HttpStatus_NotModified,
+        ulfius_set_json_body_response(response, HttpStatus_OK,
                                       jResponse);
         json_decref(jResponse);
         free(path);
@@ -383,6 +383,27 @@ int web_service_cb_post_app(const URequest *request,
                                         HttpStatusStr(
                                         HttpStatus_InternalServerError));
         return U_CALLBACK_CONTINUE;
+    }
+
+    if (artifactFormat->size > 0) {
+        if ((long)artifactFormat->size > WIMC_MAX_PACKAGE_BYTES) {
+            pthread_mutex_lock(&config->dbMutex);
+            db_update_package_status(config->db, name, tag, NULL,
+                                     WIMC_STATUS_FAILED, NULL,
+                                     "package too large");
+            pthread_mutex_unlock(&config->dbMutex);
+
+            cleanup_wimc_request(wimcRequest);
+            free_artifact(&artifact);
+            free(hubOverride);
+            ulfius_set_string_body_response(response,
+                                            HttpStatus_BadRequest,
+                                            HttpStatusStr(
+                                            HttpStatus_BadRequest));
+            return U_CALLBACK_CONTINUE;
+        }
+        wimcRequest->fetch->content->expectedSizeBytes =
+            (long)artifactFormat->size;
     }
 
     if (communicate_with_agent(wimcRequest, artifactFormat->type, config)) {
@@ -498,6 +519,14 @@ int web_service_cb_get_metrics(const URequest *request,
     json_t *json;
 
     config = (Config *)epConfig;
+    if (config == NULL || config->db == NULL) {
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_InternalServerError,
+                                        HttpStatusStr(
+                                        HttpStatus_InternalServerError));
+        return U_CALLBACK_CONTINUE;
+    }
+
     pthread_mutex_lock(&config->dbMutex);
     json = json_pack("{s:i, s:i, s:i, s:i}",
                      "packages_available",
@@ -520,8 +549,7 @@ int web_service_cb_ping(const URequest *request,
                         UResponse *response,
                         void *epConfig) {
 
-    ulfius_set_string_body_response(response, HttpStatus_OK,
-                                    HttpStatusStr(HttpStatus_OK));
+    ulfius_set_empty_body_response(response, HttpStatus_OK);
 
     return U_CALLBACK_CONTINUE;
 }

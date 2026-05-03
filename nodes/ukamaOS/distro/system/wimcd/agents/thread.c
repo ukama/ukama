@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -34,6 +35,15 @@
 #define MAX_ARGS 10
 #define CASYNC_RETRIES 3
 #define CASYNC_TIMEOUT_SEC 900
+
+typedef struct AgentJob {
+    char name[WIMC_MAX_NAME_LEN];
+    char tag[WIMC_MAX_NAME_LEN];
+    struct AgentJob *next;
+} AgentJob;
+
+static AgentJob *gJobs = NULL;
+static pthread_mutex_t gJobsMutex = PTHREAD_MUTEX_INITIALIZER;
 
 static int mkdir_p(const char *path, mode_t mode) {
 
@@ -109,6 +119,107 @@ static int rm_rf(const char *path) {
     return rmdir(path);
 }
 
+int agent_job_is_active(const char *name, const char *tag) {
+
+    AgentJob *curr;
+    int found;
+
+    found = 0;
+
+    pthread_mutex_lock(&gJobsMutex);
+    curr = gJobs;
+    while (curr != NULL) {
+        if (strcmp(curr->name, name) == 0 && strcmp(curr->tag, tag) == 0) {
+            found = 1;
+            break;
+        }
+        curr = curr->next;
+    }
+    pthread_mutex_unlock(&gJobsMutex);
+
+    return found;
+}
+
+static int agent_job_add(const char *name, const char *tag) {
+
+    AgentJob *job;
+    AgentJob *curr;
+
+    if (!pkg_is_valid_identifier(name) || !pkg_is_valid_identifier(tag)) {
+        return -1;
+    }
+
+    pthread_mutex_lock(&gJobsMutex);
+    curr = gJobs;
+    while (curr != NULL) {
+        if (strcmp(curr->name, name) == 0 && strcmp(curr->tag, tag) == 0) {
+            pthread_mutex_unlock(&gJobsMutex);
+            return -1;
+        }
+        curr = curr->next;
+    }
+
+    job = (AgentJob *)calloc(1, sizeof(AgentJob));
+    if (job == NULL) {
+        pthread_mutex_unlock(&gJobsMutex);
+        return -1;
+    }
+
+    snprintf(job->name, sizeof(job->name), "%s", name);
+    snprintf(job->tag, sizeof(job->tag), "%s", tag);
+    job->next = gJobs;
+    gJobs = job;
+
+    pthread_mutex_unlock(&gJobsMutex);
+    return 0;
+}
+
+static void agent_job_remove(const char *name, const char *tag) {
+
+    AgentJob *curr;
+    AgentJob *prev;
+
+    pthread_mutex_lock(&gJobsMutex);
+
+    prev = NULL;
+    curr = gJobs;
+    while (curr != NULL) {
+        if (strcmp(curr->name, name) == 0 && strcmp(curr->tag, tag) == 0) {
+            if (prev == NULL) {
+                gJobs = curr->next;
+            } else {
+                prev->next = curr->next;
+            }
+            free(curr);
+            break;
+        }
+        prev = curr;
+        curr = curr->next;
+    }
+
+    pthread_mutex_unlock(&gJobsMutex);
+}
+
+static int has_enough_disk_space(const char *path, long expectedBytes) {
+
+    struct statvfs vfs;
+    long long freeBytes;
+    long long needed;
+
+    if (statvfs(path, &vfs) != 0) {
+        return 0;
+    }
+
+    freeBytes = (long long)vfs.f_bavail * (long long)vfs.f_frsize;
+    needed = WIMC_MIN_FREE_BYTES;
+
+    if (expectedBytes > 0) {
+        needed += (long long)expectedBytes * 2LL;
+    }
+
+    return freeBytes > needed;
+}
+
 static void copy_fetch_request(WFetch **dest, WFetch *src) {
 
     WFetch *df;
@@ -136,17 +247,32 @@ static void copy_fetch_request(WFetch **dest, WFetch *src) {
     content = df->content;
     content->name = src->content->name ? strdup(src->content->name) : NULL;
     content->tag = src->content->tag ? strdup(src->content->tag) : NULL;
-    content->method = src->content->method ? strdup(src->content->method) :
-                      NULL;
+    content->method = src->content->method ?
+                      strdup(src->content->method) : NULL;
     content->indexURL = src->content->indexURL ?
                         strdup(src->content->indexURL) : NULL;
     content->storeURL = src->content->storeURL ?
                         strdup(src->content->storeURL) : NULL;
+    content->expectedSizeBytes = src->content->expectedSizeBytes;
+
+    if (df->cbURL == NULL || content->name == NULL || content->tag == NULL ||
+        content->method == NULL || content->indexURL == NULL ||
+        content->storeURL == NULL) {
+        goto fail;
+    }
 
     return;
 
-fail:
+ fail:
     usys_free(df->cbURL);
+    if (df->content != NULL) {
+        usys_free(df->content->name);
+        usys_free(df->content->tag);
+        usys_free(df->content->method);
+        usys_free(df->content->indexURL);
+        usys_free(df->content->storeURL);
+        usys_free(df->content);
+    }
     usys_free(df);
     *dest = NULL;
 }
@@ -183,12 +309,18 @@ static long send_update_to_wimc(WFetch *fetch, TransferState state,
 
     AgentReq req;
     Update update;
-    json_t *json = NULL;
-    char *jsonStr = NULL;
-    CURL *curl = NULL;
+    json_t *json;
+    char *jsonStr;
+    CURL *curl;
     CURLcode res;
-    struct curl_slist *headers = NULL;
-    long code = 0;
+    struct curl_slist *headers;
+    long code;
+
+    json = NULL;
+    jsonStr = NULL;
+    curl = NULL;
+    headers = NULL;
+    code = 0;
 
     if (fetch == NULL || fetch->cbURL == NULL) {
         return 0;
@@ -231,8 +363,9 @@ static long send_update_to_wimc(WFetch *fetch, TransferState state,
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, jsonStr);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, response_callback);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "wimc-agent/0.1");
-    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT,
+                     WIMC_HTTP_CONNECT_TIMEOUT_SEC);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, WIMC_HTTP_TIMEOUT_SEC);
 
     res = curl_easy_perform(curl);
     if (res == CURLE_OK) {
@@ -320,7 +453,7 @@ static int run_casync(WFetch *fetch, const char *extractPath) {
 
     return wait_for_child(pid, CASYNC_TIMEOUT_SEC);
 
-fail:
+ fail:
     for (i = 0; args[i] != NULL; i++) {
         free(args[i]);
     }
@@ -339,6 +472,11 @@ static void *execute_agent(void *data) {
     int attempt;
     int ok;
 
+    memset(extractPath, 0, sizeof(extractPath));
+    memset(uuidTmpDir, 0, sizeof(uuidTmpDir));
+    memset(publishedPath, 0, sizeof(publishedPath));
+    memset(actualVersion, 0, sizeof(actualVersion));
+
     fetch = (WFetch *)data;
     if (fetch == NULL || fetch->content == NULL) {
         pthread_exit(NULL);
@@ -349,6 +487,12 @@ static void *execute_agent(void *data) {
 
     if (pkg_ensure_cache_dirs() != 0) {
         send_update_to_wimc(fetch, ERR, "failed to create package cache dirs");
+        goto done;
+    }
+
+    if (!has_enough_disk_space(DEFAULT_APPS_PKGS_PATH,
+                               content->expectedSizeBytes)) {
+        send_update_to_wimc(fetch, ERR, "not enough disk space");
         goto done;
     }
 
@@ -408,8 +552,11 @@ static void *execute_agent(void *data) {
                    publishedPath);
     send_update_to_wimc(fetch, DONE, publishedPath);
 
-done:
-    rm_rf(uuidTmpDir);
+ done:
+    if (uuidTmpDir[0] != '\0') {
+        rm_rf(uuidTmpDir);
+    }
+    agent_job_remove(content->name, content->tag);
     free_fetch_request(fetch);
     pthread_exit(NULL);
 }
@@ -418,16 +565,30 @@ void process_capp_fetch_request(WFetch *fetch) {
 
     int ret;
     pthread_t tid;
-    WFetch *threadFetch = NULL;
+    WFetch *threadFetch;
+
+    threadFetch = NULL;
+
+    if (fetch == NULL || fetch->content == NULL) {
+        return;
+    }
+
+    if (agent_job_add(fetch->content->name, fetch->content->tag) != 0) {
+        usys_log_error("Fetch already active for %s:%s",
+                       fetch->content->name, fetch->content->tag);
+        return;
+    }
 
     copy_fetch_request(&threadFetch, fetch);
     if (threadFetch == NULL) {
+        agent_job_remove(fetch->content->name, fetch->content->tag);
         usys_log_error("Unable to copy fetch request");
         return;
     }
 
     ret = pthread_create(&tid, NULL, execute_agent, threadFetch);
-    if (ret) {
+    if (ret != 0) {
+        agent_job_remove(fetch->content->name, fetch->content->tag);
         usys_log_error("Error creating agent thread. Return code: %d", ret);
         free_fetch_request(threadFetch);
         return;

@@ -6,28 +6,36 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
-#include <ulfius.h>
 #include <stdlib.h>
+#include <string.h>
+#include <ulfius.h>
 
-#include "log.h"
-#include "callback.h"
 #include "agent.h"
-#include "wimc.h"
-#include "agent/network.h"
-#include "agent/jserdes.h"
 #include "agent/callback.h"
+#include "agent/jserdes.h"
+#include "agent/network.h"
+#include "callback.h"
+#include "log.h"
+#include "wimc.h"
 
-#include "usys_types.h"
-#include "usys_log.h"
-#include "usys_services.h"
 #include "usys_api.h"
 #include "usys_file.h"
+#include "usys_log.h"
+#include "usys_services.h"
+#include "usys_types.h"
 
 static int get_agent_port(char *method) {
 
-    char buffer[128] = {0};
+    char buffer[128];
 
-    sprintf(buffer, "wimc-agent-%s", method);
+    if (method == NULL || *method == '\0') {
+        return 0;
+    }
+
+    if (snprintf(buffer, sizeof(buffer), "wimc-agent-%s", method) >=
+        (int)sizeof(buffer)) {
+        return 0;
+    }
 
     return usys_find_service_port(buffer);
 }
@@ -92,29 +100,36 @@ static void setup_endpoints(struct _u_instance *instance) {
 
 bool start_web_service(char *method, struct _u_instance *webInstance) {
 
-    int servicePort = 0;
+    int servicePort;
 
     servicePort = get_agent_port(method);
+    if (servicePort <= 0) {
+        usys_log_error("Unable to find service port for wimc-agent-%s",
+                       method ? method : "(null)");
+        return USYS_FALSE;
+    }
+
     if (ulfius_init_instance(webInstance, servicePort, NULL, NULL) != U_OK) {
-        usys_log_error("Error initializing instance for port %d", servicePort);
+        usys_log_error("Error initializing instance for port %d",
+                       servicePort);
         return USYS_FALSE;
     }
 
     u_map_put(webInstance->default_headers, "Access-Control-Allow-Origin", "*");
-    webInstance->max_post_body_size = 1024;
+    webInstance->max_post_body_size = 4096;
 
     setup_endpoints(webInstance);
 
     if (ulfius_start_framework(webInstance) != U_OK) {
-        usys_log_error("Failed to start webservices at port:%s", servicePort);
+        usys_log_error("Failed to start webservices at port:%d",
+                       servicePort);
 
-        ulfius_stop_framework(webInstance); 
+        ulfius_stop_framework(webInstance);
         ulfius_clean_instance(webInstance);
 
         return USYS_FALSE;
     }
 
     usys_log_debug("Webservice started on port: %d", servicePort);
-
     return USYS_TRUE;
 }

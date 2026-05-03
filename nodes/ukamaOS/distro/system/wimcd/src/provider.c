@@ -73,7 +73,11 @@ static int process_response_from_provider(Config *cfg, long statusCode,
 static void create_provider_url(Config *cfg, char *url, char *name,
                                 char *tag) {
 
-  sprintf(url, "%s/%s?name=%s&tag=%s", cfg->hubURL, WIMC_EP_PROVIDER, name, tag);
+  if (snprintf(url, WIMC_MAX_URL_LEN, "%s/%s?name=%s&tag=%s",
+               cfg->hubURL, WIMC_EP_PROVIDER, name, tag) >=
+      WIMC_MAX_URL_LEN) {
+    url[0] = '\0';
+  }
 
   return;
 }

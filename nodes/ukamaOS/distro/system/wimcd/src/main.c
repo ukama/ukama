@@ -6,28 +6,30 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
+#include <curl/curl.h>
+#include <getopt.h>
+#include <pthread.h>
+#include <signal.h>
+#include <sqlite3.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sqlite3.h>
-#include <getopt.h>
 #include <ulfius.h>
-#include <curl/curl.h>
-#include <signal.h>
-#include <pthread.h>
+#include <unistd.h>
 
-#include "db.h"
-#include "package_cache.h"
-#include "log.h"
-#include "wimc.h"
 #include "agent.h"
 #include "common/utils.h"
+#include "db.h"
+#include "log.h"
 #include "network.h"
+#include "package_cache.h"
 #include "tasks.h"
+#include "wimc.h"
 
 #include "usys_api.h"
 #include "usys_file.h"
 #include "usys_getopt.h"
 #include "usys_log.h"
+#include "usys_services.h"
 #include "usys_string.h"
 #include "usys_types.h"
 
@@ -35,7 +37,7 @@
 
 static volatile sig_atomic_t gTerminate = 0;
 
-static void handle_sigint(int signum) {
+static void handle_signal(int signum) {
 
     (void)signum;
     gTerminate = 1;
@@ -43,7 +45,6 @@ static void handle_sigint(int signum) {
 
 static UsysOption longOptions[] = {
     { "logs",    required_argument, 0, 'l' },
-    { "dbFile",  required_argument, 0, 'd' },
     { "url",     required_argument, 0, 'u' },
     { "help",    no_argument,       0, 'h' },
     { "version", no_argument,       0, 'v' },
@@ -52,7 +53,13 @@ static UsysOption longOptions[] = {
 
 static void set_log_level(char *slevel) {
 
-    int ilevel = USYS_LOG_TRACE;
+    int ilevel;
+
+    ilevel = USYS_LOG_TRACE;
+
+    if (slevel == NULL) {
+        return;
+    }
 
     if (!strcmp(slevel, "TRACE")) {
         ilevel = USYS_LOG_TRACE;
@@ -71,55 +78,67 @@ static void usage(void) {
     usys_puts("Options:");
     usys_puts("-h, --help                    Help menu");
     usys_puts("-l, --logs <TRACE|DEBUG|INFO> Log level for the process");
-    usys_puts("-d, --dbFile                  DB file path");
     usys_puts("-u, --url                     Hub URL");
     usys_puts("-v, --version                 Software version");
 }
 
 int main(int argc, char **argv) {
 
-    int opt, optIdx;
-    int rc = EXIT_FAILURE;
-    int taskMutexInit = 0;
-    int dbMutexInit   = 0;
-    int curlInit      = 0;
-    int webStarted    = 0;
-
-    Agent  *agents = NULL;
-    WTasks *tasks  = NULL;
-    char   *debug  = DEF_LOG_LEVEL;
-    char   *dbFile = NULL;
-    char    hubURL[WIMC_MAX_URL_LEN] = {0};
-
-    UInst  serviceInst;
+    int opt;
+    int optIdx;
+    int rc;
+    int taskMutexInit;
+    int dbMutexInit;
+    int curlInit;
+    int webStarted;
+    int wimcPort;
+    int ukamaPort;
+    Agent *agents;
+    WTasks *tasks;
+    char *debug;
+    char hubURL[WIMC_MAX_URL_LEN];
+    UInst serviceInst;
     Config serviceConfig;
 
+    rc = EXIT_FAILURE;
+    taskMutexInit = 0;
+    dbMutexInit = 0;
+    curlInit = 0;
+    webStarted = 0;
+    agents = NULL;
+    tasks = NULL;
+    debug = DEF_LOG_LEVEL;
+
+    memset(hubURL, 0, sizeof(hubURL));
     memset(&serviceInst, 0, sizeof(serviceInst));
     memset(&serviceConfig, 0, sizeof(serviceConfig));
 
     usys_log_set_service(SERVICE_NAME);
     usys_log_remote_init(SERVICE_NAME);
 
-    if (usys_find_service_port(SERVICE_NAME) == 0) {
+    wimcPort = usys_find_service_port(SERVICE_NAME);
+    if (wimcPort == 0) {
         usys_log_error("Unable to find service port for %s", SERVICE_NAME);
         goto cleanup;
     }
 
-    if (usys_find_service_port(SERVICE_UKAMA) == 0) {
+    ukamaPort = usys_find_service_port(SERVICE_UKAMA);
+    if (ukamaPort == 0) {
         usys_log_error("Unable to find service port for %s", SERVICE_UKAMA);
         goto cleanup;
     }
 
-    snprintf(hubURL, sizeof(hubURL), "http://localhost:%d",
-             usys_find_service_port(SERVICE_UKAMA));
-
-    dbFile = DEF_DB_FILE;
+    if (snprintf(hubURL, sizeof(hubURL), "http://localhost:%d",
+                 ukamaPort) >= (int)sizeof(hubURL)) {
+        usys_log_error("Hub URL too long");
+        goto cleanup;
+    }
 
     while (USYS_TRUE) {
         opt = 0;
         optIdx = 0;
 
-        opt = usys_getopt_long(argc, argv, "hvl:d:u:", longOptions, &optIdx);
+        opt = usys_getopt_long(argc, argv, "hvl:u:", longOptions, &optIdx);
         if (opt == -1) {
             break;
         }
@@ -135,14 +154,6 @@ int main(int argc, char **argv) {
             rc = EXIT_SUCCESS;
             goto cleanup;
 
-        case 'd':
-            if (optarg == NULL || *optarg == '\0') {
-                usage();
-                goto cleanup;
-            }
-            dbFile = optarg;
-            break;
-
         case 'l':
             if (optarg != NULL && *optarg != '\0') {
                 debug = optarg;
@@ -156,8 +167,8 @@ int main(int argc, char **argv) {
                 goto cleanup;
             }
 
-            snprintf(hubURL, sizeof(hubURL), "%s", optarg);
-            if (strlen(hubURL) >= sizeof(hubURL)) {
+            if (snprintf(hubURL, sizeof(hubURL), "%s", optarg) >=
+                (int)sizeof(hubURL)) {
                 usys_log_error("Hub URL too long");
                 goto cleanup;
             }
@@ -169,33 +180,28 @@ int main(int argc, char **argv) {
         }
     }
 
-    serviceConfig.servicePort = usys_find_service_port(SERVICE_NAME);
-    serviceConfig.dbFile      = strdup(dbFile ? dbFile : WIMC_DB_PATH);
-    serviceConfig.hubURL      = strdup(hubURL);
+    serviceConfig.servicePort = wimcPort;
+    serviceConfig.dbFile = strdup(WIMC_DB_PATH);
+    serviceConfig.hubURL = strdup(hubURL);
 
     if (serviceConfig.dbFile == NULL || serviceConfig.hubURL == NULL) {
         usys_log_error("Memory allocation failure");
         goto cleanup;
     }
 
-    if (!serviceConfig.servicePort) {
-        usys_log_error("Unable to determine the port for %s", SERVICE_NAME);
-        goto cleanup;
-    }
+    signal(SIGINT, handle_signal);
+    signal(SIGTERM, handle_signal);
 
-    signal(SIGINT,  handle_sigint);
-    signal(SIGTERM, handle_sigint);
-
-    usys_log_debug("Starting %s ... ", SERVICE_NAME);
+    usys_log_debug("Starting %s", SERVICE_NAME);
 
     agents = (Agent *)calloc(MAX_AGENTS, sizeof(Agent));
     if (agents == NULL) {
-        usys_log_error("Memory failure. Exiting");
+        usys_log_error("Memory failure");
         goto cleanup;
     }
 
     serviceConfig.agents = &agents;
-    serviceConfig.tasks  = &tasks;
+    serviceConfig.tasks = &tasks;
 
     if (db_open_or_create(serviceConfig.dbFile, &serviceConfig.db) != 0) {
         usys_log_error("Unable to open/create DB file: %s",
@@ -227,7 +233,7 @@ int main(int argc, char **argv) {
     }
 
     if (start_web_service(&serviceConfig, &serviceInst) != USYS_TRUE) {
-        usys_log_error("Webservice failed to setup. Exiting");
+        usys_log_error("Webservice failed to setup");
         goto cleanup;
     }
     webStarted = 1;
@@ -264,20 +270,9 @@ cleanup:
     clear_tasks(&tasks);
     clear_agents(agents);
 
-    if (agents != NULL) {
-        free(agents);
-        agents = NULL;
-    }
-
-    if (serviceConfig.dbFile != NULL) {
-        free(serviceConfig.dbFile);
-        serviceConfig.dbFile = NULL;
-    }
-
-    if (serviceConfig.hubURL != NULL) {
-        free(serviceConfig.hubURL);
-        serviceConfig.hubURL = NULL;
-    }
+    free(agents);
+    free(serviceConfig.dbFile);
+    free(serviceConfig.hubURL);
 
     return rc;
 }
