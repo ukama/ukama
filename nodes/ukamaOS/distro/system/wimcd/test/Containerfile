@@ -1,0 +1,16 @@
+FROM alpine:3.20
+
+RUN apk add --no-cache \
+    build-base \
+    bash \
+    curl \
+    jansson-dev \
+    sqlite-dev \
+    util-linux-dev \
+    linux-headers \
+    python3 \
+    py3-pip \
+    tar \
+    gzip
+
+WORKDIR /work
