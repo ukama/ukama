@@ -454,6 +454,46 @@ setup_ukama_dirs() {
     log "SUCCESS" "Ukama directories created at ${BUILD_DIR}/ukama"
 }
 
+build_casync_runtime() {
+    local vendor_root=""
+    local casync_bin=""
+
+    update_ukama_os_env
+
+    vendor_root="${UKAMA_OS}/distro/vendor"
+    casync_bin="${vendor_root}/build/bin/casync"
+
+    [ -d "${vendor_root}" ] || die "Failed to find vendor root at: ${vendor_root}"
+
+    if [ ! -x "${casync_bin}" ]; then
+        log "INFO" "Building casync in ${vendor_root}"
+        $(MAKE) -C "${vendor_root}" casync
+    fi
+
+    [ -x "${casync_bin}" ] || die "Missing casync binary: ${casync_bin}"
+
+    mkdir -p "${BUILD_DIR}/usr/bin" \
+          "${BUILD_DIR}/usr/share/licenses" \
+          "${BUILD_DIR}/lib"
+
+    cp -f "${casync_bin}" "${BUILD_DIR}/usr/bin/casync"
+    chmod 0755 "${BUILD_DIR}/usr/bin/casync"
+
+    if [ -d "${vendor_root}/build/share/licenses/casync" ]; then
+        cp -a "${vendor_root}/build/share/licenses/casync" \
+              "${BUILD_DIR}/usr/share/licenses/"
+    fi
+
+    while IFS= read -r lib; do
+        [ -z "${lib}" ] && continue
+        if [ -f "${lib}" ]; then
+            cp --parents "${lib}" "${BUILD_DIR}" || true
+        fi
+    done < <(ldd "${casync_bin}" | awk '/=>/ {print $3} /^[[:space:]]*\// {print $1}' | sort -u)
+
+    log "SUCCESS" "casync staged into ${BUILD_DIR}/usr/bin/casync"
+}
+
 build_image() {
     local file="${1:-}"
     local uuid="${2:-}"
@@ -467,14 +507,15 @@ build_image() {
 
     log "INFO" "Building image ${IMAGE_NS}/${IMAGE_NAME}:${name_tag}"
 
-    # copy capp's sbin, conf and lib to /sbin, /conf and /lib
     mkdir -p "${BUILD_DIR}/sbin" \
           "${BUILD_DIR}/lib" \
           "${BUILD_DIR}/conf" \
           "${BUILD_DIR}/tmp" \
-          "${BUILD_DIR}/bin"
+          "${BUILD_DIR}/bin" \
+          "${BUILD_DIR}/usr/bin"
 
-    # Safer copy of apps content: avoid failing if glob doesn't match
+    build_casync_runtime
+
     shopt -s nullglob
     for d in "${BUILD_DIR}"/apps/*; do
         [ -d "$d" ] || continue

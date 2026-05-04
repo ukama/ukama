@@ -15,7 +15,7 @@ VENDOR_LIB64 := $(VENDOR_BUILD)/lib64
 PLATFORM_DIR := $(UKAMAOS_ROOT)/distro/platform
 
 # Packages to build (targets in vendor Makefile)
-VENDOR_PKG := tomlc jansson ulfius
+VENDOR_PKG := tomlc jansson ulfius casync
 PLATFORM   := platform
 
 CC := gcc
