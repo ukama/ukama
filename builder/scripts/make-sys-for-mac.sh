@@ -7,6 +7,13 @@ NC='\033[0m' # No Color
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 
+if [ -z "${1:-}" ] || [ ! -f "$1" ]; then
+    echo -e "${TAG} ${RED}Missing or invalid deploy config.${NC}" >&2
+    echo "Usage: $0 <path-to-deploy_config.json>" >&2
+    echo "Example (from builder/scripts): $0 ../deploy_config.json" >&2
+    exit 1
+fi
+
 root_dir=$(pwd)
 METADATA=$(jq -c '.' ../metadata.json)
 SYS=$(jq -r '.systems' "$1")
