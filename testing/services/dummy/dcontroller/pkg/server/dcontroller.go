@@ -171,21 +171,21 @@ func (s *DControllerServer) GetSiteMetrics(ctx context.Context, req *pb.GetSiteM
 
     return &pb.GetSiteMetricsResponse{
         Backhaul: &pb.BackhaulMetrics{
-            Latency: metrics["main_backhaul_latency"],
-            Speed:   metrics["backhaul_speed"],
-            Status:  metrics["backhaul_switch_port_status"],
+            Latency: metrics["com_network_uplink_latency"],
+            Speed:   metrics["com_backhaul_backhaul_dl_goodput_mbps"],
+            Status:  metrics["com_switch_switch_port_9_tnode_poe_status"],
         },
         Ethernet: &pb.EthernetMetrics{
-            PortStatus: metrics["node_switch_port_status"],
-            PortSpeed:  metrics["node_switch_port_speed"],
+            PortStatus: metrics["com_switch_switch_port_1_tnode_poe_status"],
+            PortSpeed:  metrics["com_switch_switch_port_1_tnode_poe_poe_power_watts"],
         },
         Power: &pb.PowerMetrics{
-            BatteryPower:      metrics["battery_charge_percentage"],
-            SolarPanelVoltage: metrics["solar_panel_voltage"],
-            SolarPanelCurrent: metrics["solar_panel_current"],
-            SolarPanelPower:   metrics["solar_panel_power"],
+            BatteryPower:      metrics["com_controller_controller_battery_charge_percentage"],
+            SolarPanelVoltage: metrics["com_controller_controller_solar_panel_voltage"],
+            SolarPanelCurrent: metrics["com_controller_controller_solar_panel_current"],
+            SolarPanelPower:   metrics["com_controller_controller_solar_panel_power"],
         },
-        UptimeSeconds: metrics["site_uptime_seconds"],
+        UptimeSeconds: metrics["com_controller_controller_controller_temperature"],
     }, nil
 }
 

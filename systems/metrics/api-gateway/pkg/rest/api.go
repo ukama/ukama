@@ -8,6 +8,10 @@
 
 package rest
 
+type GetMetricsListInput struct {
+	NodeType string `query:"nodeType" validate:"omitempty,oneof=tnode hnode anode cnode"`
+}
+
 type GetNodeMetricsInput struct {
 	FilterBase
 	NodeID string `path:"node" validate:"required"`

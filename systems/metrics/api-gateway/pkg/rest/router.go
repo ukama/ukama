@@ -326,8 +326,16 @@ func (r *Router) siteMetricHandler(c *gin.Context, in *GetSiteMetricsInput) erro
 	return r.requestMetricRangeInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithSite(in.SiteID))
 }
 
-func (r *Router) metricListHandler(c *gin.Context) ([]string, error) {
-	return r.m.List(), nil
+func (r *Router) metricListHandler(c *gin.Context, in *GetMetricsListInput) ([]string, error) {
+	nodeType := strings.TrimSpace(in.NodeType)
+	if nodeType == "" {
+		// Keep this fallback to tolerate binding edge-cases and query key variations.
+		nodeType = strings.TrimSpace(c.Query("nodeType"))
+		if nodeType == "" {
+			nodeType = strings.TrimSpace(c.Query("nodetype"))
+		}
+	}
+	return r.m.List(nodeType), nil
 }
 
 func httpErrorOrNil(httpCode int, err error) error {

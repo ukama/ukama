@@ -16,6 +16,7 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -414,10 +415,19 @@ func (m *Metrics) MetricsCfg(metricType, nodeType string) (Metric, bool) {
 	return m.resolveMetric(metricType, nodeType)
 }
 
-// List returns deduplicated generic KPI keys across all node-type buckets.
-func (m *Metrics) List() (r []string) {
+// List returns deduplicated generic KPI keys.
+// - when nodeType is empty, keys from all buckets are returned
+// - when nodeType is provided, only that bucket is returned
+// - legacy alias "hnode" is mapped to "tnode"
+func (m *Metrics) List(nodeType string) (r []string) {
 	seen := make(map[string]struct{})
-	for _, keyMap := range m.conf.Metrics {
+	log.Infof("Listing metrics for node type: %s", nodeType)
+	normalized := strings.ToLower(strings.TrimSpace(nodeType))
+	if normalized == "hnode" {
+		normalized = "tnode"
+	}
+
+	appendKeys := func(keyMap map[string]Metric) {
 		for k := range keyMap {
 			if _, exists := seen[k]; !exists {
 				seen[k] = struct{}{}
@@ -425,6 +435,20 @@ func (m *Metrics) List() (r []string) {
 			}
 		}
 	}
+
+	if normalized == "" {
+		for _, keyMap := range m.conf.Metrics {
+			appendKeys(keyMap)
+		}
+	} else {
+		keyMap, ok := m.conf.Metrics[normalized]
+		if !ok {
+			return []string{}
+		}
+		appendKeys(keyMap)
+	}
+
+	sort.Strings(r)
 	return r
 }
 
