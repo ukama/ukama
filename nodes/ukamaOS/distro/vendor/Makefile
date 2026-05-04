@@ -58,6 +58,7 @@ LIST += tomlc
 LIST += amqp
 LIST += libcap
 LIST += libuuid
+LIST += casync
 
 .PHONY: $(LIST)
 
@@ -196,6 +197,22 @@ libcap:
 ifeq (,$(wildcard ${DEP_DIR}/libcap.*))
 	$(MAKE) -C $@ CC=$(CC) clean
 	$(MAKE) -C $@ CC=$(CC) BUILD_CC=gcc GOLANG=no install DESTDIR=$(DEP_DIR)
+	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
+else
+	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
+endif
+
+casync:
+	$(call print_msg,"casync")
+ifeq (,$(wildcard ${DEP_DIR}/bin/casync))
+	DEP_DIR=$(DEP_DIR) \
+	CC=$(CC) \
+	HOST=$(HOST) \
+	BUILD=$(BUILD) \
+	NPROCS=$(NPROCS) \
+	BUILD_CLEANUP=$(BUILD_CLEANUP) \
+		./casync/build.sh
+	$(call post_build_cleanup,casync/tmpbuild)
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
