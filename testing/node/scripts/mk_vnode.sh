@@ -457,6 +457,7 @@ setup_ukama_dirs() {
 build_casync_runtime() {
     local vendor_root=""
     local casync_bin=""
+    local lib=""
 
     update_ukama_os_env
 
@@ -475,10 +476,24 @@ build_casync_runtime() {
     [ -x "${casync_bin}" ] || die "Missing casync binary: ${casync_bin}"
 
     mkdir -p "${BUILD_DIR}/usr/bin" \
-          "${BUILD_DIR}/usr/share/licenses"
+             "${BUILD_DIR}/usr/share/licenses" \
+             "${BUILD_DIR}/lib" \
+             "${BUILD_DIR}/lib64" \
+             "${BUILD_DIR}/usr/lib"
 
     cp -f "${casync_bin}" "${BUILD_DIR}/usr/bin/casync"
     chmod 0755 "${BUILD_DIR}/usr/bin/casync"
+
+    while IFS= read -r lib; do
+        [ -n "${lib}" ] || continue
+        [ -f "${lib}" ] || continue
+
+        mkdir -p "${BUILD_DIR}$(dirname "${lib}")"
+        cp -f "${lib}" "${BUILD_DIR}${lib}"
+    done < <(ldd "${casync_bin}" | awk '
+        /=>/ && $3 ~ /^\// { print $3 }
+        /^[[:space:]]*\// { print $1 }
+    ' | sort -u)
 
     if [ -d "${vendor_root}/build/share/licenses/casync" ]; then
         cp -a "${vendor_root}/build/share/licenses/casync" \
