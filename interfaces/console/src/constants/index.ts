@@ -306,6 +306,7 @@ export interface SiteKpiConfig {
   name: string;
   unit: string;
   description: string;
+  port?: number;
   tickInterval?: number;
   tickPositions?: number[];
   threshold?: {
@@ -492,6 +493,7 @@ export const SITE_KPIS = {
           max: 1000000000,
         },
         format: 'number',
+        port: 1,
       },
       {
         unit: 'W',
@@ -508,6 +510,7 @@ export const SITE_KPIS = {
           max: 24,
         },
         format: 'number',
+        port: 1,
       },
       {
         unit: 'bps',
@@ -524,6 +527,7 @@ export const SITE_KPIS = {
           max: 1000000000,
         },
         format: 'number',
+        port: 2,
       },
       {
         unit: 'W',
@@ -540,6 +544,7 @@ export const SITE_KPIS = {
           max: 24,
         },
         format: 'number',
+        port: 2,
       },
       {
         unit: 'bps',
@@ -556,6 +561,7 @@ export const SITE_KPIS = {
           max: 1000000000,
         },
         format: 'number',
+        port: 3,
       },
       {
         unit: 'W',
@@ -572,6 +578,7 @@ export const SITE_KPIS = {
           max: 24,
         },
         format: 'number',
+        port: 3,
       },
       {
         unit: 'bps',
@@ -588,6 +595,7 @@ export const SITE_KPIS = {
           max: 1000000000,
         },
         format: 'number',
+        port: 9,
       },
       {
         unit: 'W',
@@ -604,6 +612,7 @@ export const SITE_KPIS = {
           max: 24,
         },
         format: 'number',
+        port: 9,
       },
     ],
   },
