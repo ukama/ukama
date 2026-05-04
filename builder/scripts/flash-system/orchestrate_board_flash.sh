@@ -7,12 +7,18 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 BOARD_NAME=""
-CONFIG="boards.yaml"
-YQ_BIN="./.bin/yq"
+CONFIG="${SCRIPT_DIR}/boards.yaml"
+YQ_BIN="${SCRIPT_DIR}/.bin/yq"
 FLASH_SCRIPT=""
-ISO_BUILDER="./create_dual_partition.sh"
+ISO_BUILDER="${SCRIPT_DIR}/create_dual_partition.sh"
 RETRIES=3
+HOST_ETH=""
+SERIAL_PID=""
+HTTP_PID=""
+SSH_STARTED=0
 
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 TMP_LOG_DIR="logs/${TIMESTAMP}_UNKNOWN"
@@ -35,30 +41,45 @@ cleanup() {
         kill "$HTTP_PID" 2>/dev/null || true
     fi
 
-    if [ "$ORIGINAL_SSH_STATE" != "active" ]; then
+    if [ "${ORIGINAL_SSH_STATE:-}" = "inactive" ] && [ "${SSH_STARTED:-0}" -eq 1 ]; then
         echo "Restoring SSH state — stopping SSHD" | tee -a "$ORCHESTRATOR_LOG"
         sudo systemctl stop sshd || true
     fi
-    echo "Restoring NetworkManager control of $HOST_ETH"
-    nmcli device set "$HOST_ETH" managed yes 2>/dev/null || true
+    if [[ -n "${HOST_ETH:-}" ]]; then
+        echo "Restoring NetworkManager control of $HOST_ETH"
+        nmcli device set "$HOST_ETH" managed yes 2>/dev/null || true
+    fi
     rm -f "$YQ_BIN"
     rm -f alpine.iso
-    rm -f ${FLASH_SCRIPT}
+    rm -f "${FLASH_SCRIPT:-}"
 }
 trap cleanup EXIT
 
-REQUIRED_KEYS=(
-    ".network.host_eth" ".network.host_ip" ".network.target_ip"
-    ".image.name" ".image.path"
-    ".host_device.device" ".host_device.iso_url"
-    ".serial.device" ".serial.baud"
-    ".flash.target_device" ".flash.success_marker" ".flash.boot_marker"
+NETWORK_REQUIRED_KEYS=(
+    "network.host_eth" "network.host_ip" "network.target_ip"
+    "image.name" "image.path"
+    "host_device.device" "host_device.iso_url"
+    "serial.device" "serial.baud"
+    "flash.target_device" "flash.success_marker" "flash.boot_marker"
+)
+
+SD_CARD_REQUIRED_KEYS=(
+    "image.name" "image.path"
+    "sd_card.device"
+    "network.host_eth" "network.host_ip"
+    "serial.device" "serial.baud"
+    "flash.target_device" "flash.success_marker" "flash.boot_marker"
+)
+
+RPIBOOT_REQUIRED_KEYS=(
+    "image.name" "image.path"
+    "serial.device" "serial.baud"
 )
 
 ensure_yq() {
     if [ ! -x "$YQ_BIN" ]; then
         echo "Downloading yq..." | tee -a "$ORCHESTRATOR_LOG"
-        mkdir -p .bin
+        mkdir -p "$(dirname "$YQ_BIN")"
         curl -L https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -o "$YQ_BIN"
         chmod +x "$YQ_BIN"
     fi
@@ -68,11 +89,45 @@ yq_read() {
     "$YQ_BIN" eval ".boards.$BOARD_NAME.$1" "$CONFIG"
 }
 
+config_value_exists() {
+    local key="$1"
+    local value
+
+    value=$("$YQ_BIN" eval ".boards.${BOARD_NAME}.${key} // \"__MISSING__\"" "$CONFIG")
+    [[ "$value" != "__MISSING__" && "$value" != "null" ]]
+}
+
 validate_config() {
+    local flash_method
+    local -a required_keys=()
+
     echo "Validating config..." | tee -a "$ORCHESTRATOR_LOG"
-    for key in "${REQUIRED_KEYS[@]}"; do
-        if ! "$YQ_BIN" eval "$key" "$CONFIG" &>/dev/null; then
-            echo "Missing config: $key" | tee -a "$ORCHESTRATOR_LOG"
+
+    if ! config_value_exists "method"; then
+        echo "Board '$BOARD_NAME' is missing or has no flash method in $CONFIG" | tee -a "$ORCHESTRATOR_LOG"
+        exit 1
+    fi
+
+    flash_method=$(yq_read 'method')
+    case "$flash_method" in
+        network)
+            required_keys=("${NETWORK_REQUIRED_KEYS[@]}")
+            ;;
+        sd-card)
+            required_keys=("${SD_CARD_REQUIRED_KEYS[@]}")
+            ;;
+        rpiboot)
+            required_keys=("${RPIBOOT_REQUIRED_KEYS[@]}")
+            ;;
+        *)
+            echo "Unsupported flash method '$flash_method' for board '$BOARD_NAME'" | tee -a "$ORCHESTRATOR_LOG"
+            exit 1
+            ;;
+    esac
+
+    for key in "${required_keys[@]}"; do
+        if ! config_value_exists "$key"; then
+            echo "Missing config for board '$BOARD_NAME': $key" | tee -a "$ORCHESTRATOR_LOG"
             exit 1
         fi
     done
@@ -93,8 +148,11 @@ retry() {
 }
 
 detect_ssh_state() {
-    systemctl status sshd.service &>/dev/null
-    case $? in
+    local status=0
+
+    systemctl status sshd.service &>/dev/null || status=$?
+
+    case $status in
         0) echo "active" ;;
         3) echo "inactive" ;;
         4) echo "not-installed" ;;
@@ -132,7 +190,7 @@ FLASH_SCRIPT="flash-${BOARD_NAME}.sh"
 ensure_yq
 validate_config
 
-FLASH_METHOD=$(yq_read 'method' 2>/dev/null || echo "network")
+FLASH_METHOD=$(yq_read 'method')
 
 if [ "$FLASH_METHOD" = "rpiboot" ]; then
     IMG_NAME=$(yq_read 'image.name')
@@ -145,12 +203,12 @@ if [ "$FLASH_METHOD" = "rpiboot" ]; then
 
     cp "$IMG_PATH" "$IMG_NAME"
 
-    if [ ! -x "./flash-cnode.sh" ]; then
+    if [ ! -f "${SCRIPT_DIR}/flash-cnode.sh" ]; then
         echo "flash-cnode.sh not found"
         exit 1
     fi
 
-    ./flash-cnode.sh
+    bash "${SCRIPT_DIR}/flash-cnode.sh"
     exit 0
 fi
 
@@ -178,7 +236,7 @@ if [ "$FLASH_METHOD" = "sd-card" ]; then
     IMAGE_PATH="$IMG_PATH" \
     BOARD_NAME="$BOARD_NAME" \
     HOST_IP="$HOST_IP" \
-        ./create_sdcard.sh
+        bash "${SCRIPT_DIR}/create_sdcard.sh"
 
     echo ""
     echo "========================================"
@@ -263,6 +321,7 @@ EOF
     if [ "$ORIGINAL_SSH_STATE" = "inactive" ]; then
         echo "Starting SSH temporarily for image transfer"
         sudo systemctl start sshd
+        SSH_STARTED=1
     elif [ "$ORIGINAL_SSH_STATE" = "not-installed" ]; then
         echo "SSHD is not installed — skipping SSH-related steps."
     fi
