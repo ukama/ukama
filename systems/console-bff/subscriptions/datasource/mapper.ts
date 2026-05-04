@@ -69,7 +69,9 @@ export const parseMetricsResponse = (
     threshold?: { min: number; normal: number; max: number };
   }
 ): MetricsRes => {
+  console.log("parseMetricsResponse res", res);
   const metricResArray: MetricRes[] = res.map(item => {
+    console.log("parseMetricsResponse item", item);
     if (
       isMetricNetworkCheckFailed(
         args.networkId || "",

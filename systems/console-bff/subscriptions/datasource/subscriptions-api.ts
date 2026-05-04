@@ -21,8 +21,8 @@ const getNodeMetricRange = async (
   type: string,
   args: GetMetricsStatInput
 ): Promise<MetricsRes> => {
-  const { to, from, nodeId } = args;
-  let params = `from=${from}&to=${to}&step=1`;
+  const { to, from, nodeId, operation = "avg" } = args;
+  let params = `from=${from}&to=${to}&step=1&operation=${operation}`;
   if (nodeId) {
     params = params + `&node=${nodeId}`;
   }
@@ -32,9 +32,9 @@ const getNodeMetricRange = async (
   // if (siteId) {
   //   params = params + `&site=${siteId}`;
   // }
-  if (args.operation) {
-    params = params + `&operation=${args.operation}`;
-  }
+  // if (args.operation) {
+  //   params = params + `&operation=${args.operation}`;
+  // }
   logger.info(
     `[getNodeMetricRange] Request URL: ${baseUrl}/${VERSION}/range/metrics/${type}?${params}`
   );
