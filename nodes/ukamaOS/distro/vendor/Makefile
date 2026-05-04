@@ -220,7 +220,7 @@ endif
 
 clean:
 	echo "Cleaning Dependencies."
-	rm -rf $(DEP_DIR)
+	rm -rf $(DEP_DIR) tmpbuild
 
 info :
 	@echo "Build info for vendor:"
