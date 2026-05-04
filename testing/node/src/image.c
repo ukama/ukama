@@ -263,6 +263,12 @@ static int create_container_file(char *target,
     sprintf(buffer, CF_COPY, "./build/usr", "/usr");
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
+    sprintf(buffer, CF_COPY, "./build/lib", "/lib");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    sprintf(buffer, CF_COPY, "./build/lib64", "/lib64");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
     fclose(fp);
     return TRUE;
 }
