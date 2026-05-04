@@ -24,8 +24,13 @@ fi
 : "${CASYNC_REF:?CASYNC_REF is not set}"
 
 DEP_DIR="${DEP_DIR:-${SCRIPT_DIR}/../build}"
-BUILD_DIR="${BUILD_DIR:-${SCRIPT_DIR}/tmpbuild}"
+BUILD_DIR="${BUILD_DIR:-${SCRIPT_DIR}/../tmpbuild}"
 DIST_DIR="${DIST_DIR:-${SCRIPT_DIR}/distfiles}"
+
+DEP_DIR="$(mkdir -p "${DEP_DIR}" && cd "${DEP_DIR}" && pwd)"
+BUILD_DIR="$(mkdir -p "${BUILD_DIR}" && cd "${BUILD_DIR}" && pwd)"
+DIST_DIR="$(mkdir -p "${DIST_DIR}" && cd "${DIST_DIR}" && pwd)"
+
 SRC_DIR="${BUILD_DIR}/src"
 OBJ_DIR="${BUILD_DIR}/obj"
 STAGE_DIR="${BUILD_DIR}/stage"
