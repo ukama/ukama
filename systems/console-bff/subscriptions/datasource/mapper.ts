@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { logger } from "../../common/logger";
-import { formatKPIValue, isMetricNetworkCheckFailed } from "../../common/utils";
+import { formatKPIValue } from "../../common/utils";
 import {
   GetLatestMetricInput,
   GetMetricsStatInput,
@@ -69,27 +69,25 @@ export const parseMetricsResponse = (
     threshold?: { min: number; normal: number; max: number };
   }
 ): MetricsRes => {
-  console.log("parseMetricsResponse res", res);
   const metricResArray: MetricRes[] = res.map(item => {
-    console.log("parseMetricsResponse item", item);
-    if (
-      isMetricNetworkCheckFailed(
-        args.networkId || "",
-        item.metric.network || "",
-        args.operation || ""
-      )
-    ) {
-      return { ...ERROR_RESPONSE, values: [[0, 0]] };
-    }
-    if (
-      isMetricNetworkCheckFailed(
-        args.siteId || "",
-        item.metric.site || "",
-        args.operation || ""
-      )
-    ) {
-      return { ...ERROR_RESPONSE, values: [[0, 0]] };
-    }
+    // if (
+    //   isMetricNetworkCheckFailed(
+    //     args.networkId || "",
+    //     item.metric.network || "",
+    //     args.operation || ""
+    //   )
+    // ) {
+    //   return { ...ERROR_RESPONSE, values: [[0, 0]] };
+    // }
+    // if (
+    //   isMetricNetworkCheckFailed(
+    //     args.siteId || "",
+    //     item.metric.site || "",
+    //     args.operation || ""
+    //   )
+    // ) {
+    //   return { ...ERROR_RESPONSE, values: [[0, 0]] };
+    // }
     return {
       type: type,
       success: true,
