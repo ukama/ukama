@@ -188,8 +188,9 @@ static int create_container_file(char *target,
     if (strstr(target, TARGET_ALPINE) != NULL) {
         sprintf(buffer, "RUN apk add --no-cache curl ca-certificates\n");
     } else {
-        sprintf(buffer, "RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && rm -rf /var/lib/apt/lists/*\n");
+	sprintf(buffer, "RUN rm -rf /var/lib/apt/lists/* && apt-get clean && for i in 1 2 3 4 5; do apt-get update -o Acquire::Retries=5 && apt-get install -y --no-install-recommends curl ca-certificates && rm -rf /var/lib/apt/lists/* && break; echo \"apt failed, retrying...\"; sleep 10; done\n");
     }
+
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
     sprintf(buffer, CF_MKDIR, NODE_LIBS);
