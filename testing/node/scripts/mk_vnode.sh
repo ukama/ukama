@@ -466,15 +466,16 @@ build_casync_runtime() {
     [ -d "${vendor_root}" ] || die "Failed to find vendor root at: ${vendor_root}"
 
     if [ ! -x "${casync_bin}" ]; then
+        command -v make >/dev/null 2>&1 || die "make not found; unable to build casync"
+
         log "INFO" "Building casync in ${vendor_root}"
-        $(MAKE) -C "${vendor_root}" casync
+        make -C "${vendor_root}" casync
     fi
 
     [ -x "${casync_bin}" ] || die "Missing casync binary: ${casync_bin}"
 
     mkdir -p "${BUILD_DIR}/usr/bin" \
-          "${BUILD_DIR}/usr/share/licenses" \
-          "${BUILD_DIR}/lib"
+          "${BUILD_DIR}/usr/share/licenses"
 
     cp -f "${casync_bin}" "${BUILD_DIR}/usr/bin/casync"
     chmod 0755 "${BUILD_DIR}/usr/bin/casync"
@@ -483,13 +484,6 @@ build_casync_runtime() {
         cp -a "${vendor_root}/build/share/licenses/casync" \
               "${BUILD_DIR}/usr/share/licenses/"
     fi
-
-    while IFS= read -r lib; do
-        [ -z "${lib}" ] && continue
-        if [ -f "${lib}" ]; then
-            cp --parents "${lib}" "${BUILD_DIR}" || true
-        fi
-    done < <(ldd "${casync_bin}" | awk '/=>/ {print $3} /^[[:space:]]*\// {print $1}' | sort -u)
 
     log "SUCCESS" "casync staged into ${BUILD_DIR}/usr/bin/casync"
 }
