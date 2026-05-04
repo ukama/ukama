@@ -1,0 +1,11 @@
+# Pinned casync source.
+#
+# Do not use a branch name here.
+# Use a release tag or exact commit hash.
+
+CASYNC_REPO="https://github.com/systemd/casync.git"
+
+# Replace this with the exact commit/tag you want to pin.
+# Example:
+# CASYNC_REF="v2"
+CASYNC_REF="v2"

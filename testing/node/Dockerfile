@@ -19,6 +19,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         autoconf \
         libtool \
         pkg-config \
+        meson \
+        ninja-build \
         bison \
         flex \
         gawk \
@@ -31,6 +33,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libssl-dev \
         libelf-dev \
         zlib1g-dev \
+        libzstd-dev \
+        liblzma-dev \
+        libacl1-dev \
+        libfuse-dev \
+        libudev-dev \
+        libselinux1-dev \
+        linux-libc-dev \
         libisl-dev \
         libjansson-dev \
         libmicrohttpd-dev \
@@ -44,6 +53,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         python3 \
         python3-dev \
         python3-venv \
+        python3-sphinx \
         curl \
         wget \
         rsync \
