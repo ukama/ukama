@@ -8,6 +8,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+IMAGE_UTILS="${SCRIPT_DIR}/image_utils.sh"
 
 BOARD_NAME=""
 CONFIG="${SCRIPT_DIR}/boards.yaml"
@@ -19,6 +20,7 @@ HOST_ETH=""
 SERIAL_PID=""
 HTTP_PID=""
 SSH_STARTED=0
+PREPARED_IMAGE_PATH=""
 
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 TMP_LOG_DIR="logs/${TIMESTAMP}_UNKNOWN"
@@ -52,6 +54,7 @@ cleanup() {
     rm -f "$YQ_BIN"
     rm -f alpine.iso
     rm -f "${FLASH_SCRIPT:-}"
+    rm -f "${PREPARED_IMAGE_PATH:-}"
 }
 trap cleanup EXIT
 
@@ -83,6 +86,26 @@ ensure_yq() {
         curl -L https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -o "$YQ_BIN"
         chmod +x "$YQ_BIN"
     fi
+}
+
+prepare_image_if_needed() {
+    local image_path="$1"
+    local image_format=""
+
+    if ! image_format=$(detect_image_format "$image_path"); then
+        echo "Unsupported image format: $image_path" | tee -a "$ORCHESTRATOR_LOG"
+        echo "Expected a raw disk image or a gzip/xz/zstd/bzip2-compressed raw image" | tee -a "$ORCHESTRATOR_LOG"
+        exit 1
+    fi
+
+    if [ "$image_format" = "raw" ]; then
+        printf '%s\n' "$image_path"
+        return 0
+    fi
+
+    echo "Preparing raw image from $image_format-compressed source..." | tee -a "$ORCHESTRATOR_LOG"
+    PREPARED_IMAGE_PATH=$(prepare_image_for_host_use "$image_path" "$TMP_LOG_DIR")
+    printf '%s\n' "$PREPARED_IMAGE_PATH"
 }
 
 yq_read() {
@@ -185,6 +208,13 @@ if [ ! -f "$CONFIG" ]; then
     exit 1
 fi
 
+if [ ! -f "$IMAGE_UTILS" ]; then
+    echo "Missing helper script '$IMAGE_UTILS'"
+    exit 1
+fi
+
+source "$IMAGE_UTILS"
+
 FLASH_SCRIPT="flash-${BOARD_NAME}.sh"
 
 ensure_yq
@@ -201,6 +231,8 @@ if [ "$FLASH_METHOD" = "rpiboot" ]; then
         exit 1
     fi
 
+    IMG_PATH=$(prepare_image_if_needed "$IMG_PATH")
+    IMG_NAME=$(basename "$IMG_PATH")
     cp "$IMG_PATH" "$IMG_NAME"
 
     if [ ! -f "${SCRIPT_DIR}/flash-cnode.sh" ]; then
@@ -228,6 +260,11 @@ if [ "$FLASH_METHOD" = "sd-card" ]; then
     if [ ! -b "$SD_DEV" ]; then
         echo "SD card device '$SD_DEV' not found."
         echo "Make sure SD card is inserted and use the correct device path."
+        exit 1
+    fi
+
+    if [ ! -f "${SCRIPT_DIR}/create_sdcard.sh" ]; then
+        echo "create_sdcard.sh not found"
         exit 1
     fi
 
@@ -282,6 +319,9 @@ SERIAL_BAUD=$(yq_read     'serial.baud')
 TARGET_DEV=$(yq_read      'flash.target_device')
 SUCCESS_MARKER=$(yq_read  'flash.success_marker')
 BOOT_MARKER=$(yq_read     'flash.boot_marker')
+
+IMG_PATH=$(prepare_image_if_needed "$IMG_PATH")
+IMG_NAME=$(basename "$IMG_PATH")
 
 {
     # Verify device exists

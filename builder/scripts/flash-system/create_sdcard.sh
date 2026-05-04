@@ -9,9 +9,19 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+IMAGE_UTILS="${SCRIPT_DIR}/image_utils.sh"
+
 : "${DEV:?Must set DEV (e.g., /dev/sdb or /dev/mmcblk0)}"
 : "${IMAGE_PATH:?Must set IMAGE_PATH (path to OS image)}"
 : "${BOARD_NAME:?Must set BOARD_NAME (e.g., anode)}"
+
+if [ ! -f "$IMAGE_UTILS" ]; then
+    echo "ERROR: Missing $IMAGE_UTILS"
+    exit 1
+fi
+
+source "$IMAGE_UTILS"
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
@@ -37,6 +47,8 @@ verify_device() {
 }
 
 flash_raw_image() {
+    local image_format=""
+
     log "Flashing raw image to $DEV..."
     log "Image: $IMAGE_PATH"
     log "Target: $DEV"
@@ -46,20 +58,50 @@ flash_raw_image() {
         exit 1
     fi
 
+    if ! image_format=$(detect_image_format "$IMAGE_PATH"); then
+        log "ERROR: Unsupported image format: $IMAGE_PATH"
+        log "Expected a raw disk image or a gzip/xz/zstd/bzip2-compressed raw image"
+        exit 1
+    fi
+
+    if [ "$image_format" != "raw" ]; then
+        log "Detected $image_format-compressed image; flashing decompressed contents"
+    elif [[ "$IMAGE_PATH" == *.imgc ]]; then
+        log "Detected .imgc file containing a raw disk image"
+    fi
+
     # Get image size
     IMG_SIZE=$(stat -c%s "$IMAGE_PATH")
     log "Image size: $IMG_SIZE bytes ($(numfmt --to=iec $IMG_SIZE))"
 
     # Flash with progress
     log "Writing image... (this may take several minutes)"
-    if command -v pv &>/dev/null; then
-        pv "$IMAGE_PATH" | sudo dd of="$DEV" bs=4M conv=fsync
-    else
-        sudo dd if="$IMAGE_PATH" of="$DEV" bs=4M status=progress conv=fsync
-    fi
+    case "$image_format" in
+        raw)
+            if command -v pv &>/dev/null; then
+                pv "$IMAGE_PATH" | sudo dd of="$DEV" bs=4M conv=fsync
+            else
+                sudo dd if="$IMAGE_PATH" of="$DEV" bs=4M status=progress conv=fsync
+            fi
+            ;;
+        *)
+            stream_image_to_stdout "$IMAGE_PATH" "$image_format" | sudo dd of="$DEV" bs=4M status=progress conv=fsync
+            ;;
+    esac
 
     sync
     log "Raw image flashed successfully"
+
+    # Re-read partition table so new partitions are visible
+    log "Re-reading partition table..."
+    sudo partprobe "$DEV" 2>/dev/null || sudo blockdev --rereadpt "$DEV" || true
+    sleep 2
+
+    # Verify partitions exist
+    if ! lsblk "$DEV" | grep -q "part"; then
+        log "WARNING: No partitions found on $DEV after flashing"
+        log "You may need to manually run: sudo partprobe $DEV"
+    fi
 }
 
 add_auto_flash_script() {
