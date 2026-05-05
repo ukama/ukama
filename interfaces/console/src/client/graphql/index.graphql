@@ -130,14 +130,18 @@ query GetNodeState($getNodeStateId: String!) {
   }
 }
 
+query PingSwitchPort($data: PingSwitchPortInputDto!) {
+  pingSwitchPort(data: $data)
+}
+
 mutation RestartNode($data: RestartNodeInputDto!) {
   restartNode(data: $data) {
     success
   }
 }
 
-mutation ToggleInternetSwitch($data: ToggleInternetSwitchInputDto!) {
-  toggleInternetSwitch(data: $data) {
+mutation ToggleSwitchPort($data: ToggleSwitchPortInputDto!) {
+  toggleSwitchPort(data: $data) {
     success
   }
 }

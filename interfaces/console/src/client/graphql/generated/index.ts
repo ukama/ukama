@@ -498,10 +498,10 @@ export type Mutation = {
   restartNodes: CBooleanResponse;
   restartSite: CBooleanResponse;
   setDefaultNetwork: CBooleanResponse;
-  toggleInternetSwitch: CBooleanResponse;
   toggleRFStatus: CBooleanResponse;
   toggleService: CBooleanResponse;
   toggleSimStatus: SimStatusResDto;
+  toggleSwitchPort: CBooleanResponse;
   updateFirstVisit: UserFistVisitResDto;
   updateInvitation: UpdateInvitationResDto;
   updateMember: CBooleanResponse;
@@ -647,11 +647,6 @@ export type MutationSetDefaultNetworkArgs = {
 };
 
 
-export type MutationToggleInternetSwitchArgs = {
-  data: ToggleInternetSwitchInputDto;
-};
-
-
 export type MutationToggleRfStatusArgs = {
   data: ToggleRfStatusInputDto;
 };
@@ -664,6 +659,11 @@ export type MutationToggleServiceArgs = {
 
 export type MutationToggleSimStatusArgs = {
   data: ToggleSimStatusInputDto;
+};
+
+
+export type MutationToggleSwitchPortArgs = {
+  data: ToggleSwitchPortInputDto;
 };
 
 
@@ -1055,6 +1055,11 @@ export type PaymentsDto = {
   payments: Array<PaymentDto>;
 };
 
+export type PingSwitchPortInputDto = {
+  nodeId: Scalars['String']['input'];
+  port: Scalars['Float']['input'];
+};
+
 export type ProcessPaymentDto = {
   __typename?: 'ProcessPaymentDto';
   payment: PaymentDto;
@@ -1068,7 +1073,6 @@ export type ProcessPaymentInputDto = {
 
 export type Query = {
   __typename?: 'Query';
-  example?: Maybe<Scalars['String']['output']>;
   getApps?: Maybe<Apps>;
   getAppsChangeLog: AppChangeLogs;
   getComponentById: ComponentDto;
@@ -1127,6 +1131,7 @@ export type Query = {
   getTimezones: TimezoneRes;
   getToken: TokenResDto;
   getUser: UserResDto;
+  pingSwitchPort?: Maybe<Scalars['String']['output']>;
   whoami: WhoamiDto;
 };
 
@@ -1348,6 +1353,11 @@ export type QueryGetTokenArgs = {
 
 export type QueryGetUserArgs = {
   userId: Scalars['String']['input'];
+};
+
+
+export type QueryPingSwitchPortArgs = {
+  data: PingSwitchPortInputDto;
 };
 
 export enum Role_Type {
@@ -1757,12 +1767,6 @@ export type TimezoneRes = {
   timezones: Array<TimezoneDto>;
 };
 
-export type ToggleInternetSwitchInputDto = {
-  port: Scalars['Float']['input'];
-  siteId: Scalars['String']['input'];
-  status: Scalars['Boolean']['input'];
-};
-
 export type ToggleRfStatusInputDto = {
   nodeId: Scalars['String']['input'];
   status: Scalars['Boolean']['input'];
@@ -1771,6 +1775,12 @@ export type ToggleRfStatusInputDto = {
 export type ToggleSimStatusInputDto = {
   sim_id: Scalars['String']['input'];
   status: Scalars['String']['input'];
+};
+
+export type ToggleSwitchPortInputDto = {
+  nodeId: Scalars['String']['input'];
+  port: Scalars['Float']['input'];
+  status: Scalars['Boolean']['input'];
 };
 
 export type TokenResDto = {
@@ -1975,6 +1985,13 @@ export type GetNodeStateQueryVariables = Exact<{
 
 export type GetNodeStateQuery = { __typename?: 'Query', getNodeState: { __typename?: 'NodeStateRes', id: string, nodeId: string, previousStateId?: string | null, previousState?: NodeStateEnum | null, currentState: NodeStateEnum, createdAt: string } };
 
+export type PingSwitchPortQueryVariables = Exact<{
+  data: PingSwitchPortInputDto;
+}>;
+
+
+export type PingSwitchPortQuery = { __typename?: 'Query', pingSwitchPort?: string | null };
+
 export type RestartNodeMutationVariables = Exact<{
   data: RestartNodeInputDto;
 }>;
@@ -1982,12 +1999,12 @@ export type RestartNodeMutationVariables = Exact<{
 
 export type RestartNodeMutation = { __typename?: 'Mutation', restartNode: { __typename?: 'CBooleanResponse', success: boolean } };
 
-export type ToggleInternetSwitchMutationVariables = Exact<{
-  data: ToggleInternetSwitchInputDto;
+export type ToggleSwitchPortMutationVariables = Exact<{
+  data: ToggleSwitchPortInputDto;
 }>;
 
 
-export type ToggleInternetSwitchMutation = { __typename?: 'Mutation', toggleInternetSwitch: { __typename?: 'CBooleanResponse', success: boolean } };
+export type ToggleSwitchPortMutation = { __typename?: 'Mutation', toggleSwitchPort: { __typename?: 'CBooleanResponse', success: boolean } };
 
 export type ToggleRfStatusMutationVariables = Exact<{
   data: ToggleRfStatusInputDto;
@@ -3368,6 +3385,44 @@ export type GetNodeStateQueryHookResult = ReturnType<typeof useGetNodeStateQuery
 export type GetNodeStateLazyQueryHookResult = ReturnType<typeof useGetNodeStateLazyQuery>;
 export type GetNodeStateSuspenseQueryHookResult = ReturnType<typeof useGetNodeStateSuspenseQuery>;
 export type GetNodeStateQueryResult = Apollo.QueryResult<GetNodeStateQuery, GetNodeStateQueryVariables>;
+export const PingSwitchPortDocument = gql`
+    query PingSwitchPort($data: PingSwitchPortInputDto!) {
+  pingSwitchPort(data: $data)
+}
+    `;
+
+/**
+ * __usePingSwitchPortQuery__
+ *
+ * To run a query within a React component, call `usePingSwitchPortQuery` and pass it any options that fit your needs.
+ * When your component renders, `usePingSwitchPortQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = usePingSwitchPortQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function usePingSwitchPortQuery(baseOptions: Apollo.QueryHookOptions<PingSwitchPortQuery, PingSwitchPortQueryVariables> & ({ variables: PingSwitchPortQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<PingSwitchPortQuery, PingSwitchPortQueryVariables>(PingSwitchPortDocument, options);
+      }
+export function usePingSwitchPortLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<PingSwitchPortQuery, PingSwitchPortQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<PingSwitchPortQuery, PingSwitchPortQueryVariables>(PingSwitchPortDocument, options);
+        }
+export function usePingSwitchPortSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<PingSwitchPortQuery, PingSwitchPortQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<PingSwitchPortQuery, PingSwitchPortQueryVariables>(PingSwitchPortDocument, options);
+        }
+export type PingSwitchPortQueryHookResult = ReturnType<typeof usePingSwitchPortQuery>;
+export type PingSwitchPortLazyQueryHookResult = ReturnType<typeof usePingSwitchPortLazyQuery>;
+export type PingSwitchPortSuspenseQueryHookResult = ReturnType<typeof usePingSwitchPortSuspenseQuery>;
+export type PingSwitchPortQueryResult = Apollo.QueryResult<PingSwitchPortQuery, PingSwitchPortQueryVariables>;
 export const RestartNodeDocument = gql`
     mutation RestartNode($data: RestartNodeInputDto!) {
   restartNode(data: $data) {
@@ -3401,39 +3456,39 @@ export function useRestartNodeMutation(baseOptions?: Apollo.MutationHookOptions<
 export type RestartNodeMutationHookResult = ReturnType<typeof useRestartNodeMutation>;
 export type RestartNodeMutationResult = Apollo.MutationResult<RestartNodeMutation>;
 export type RestartNodeMutationOptions = Apollo.BaseMutationOptions<RestartNodeMutation, RestartNodeMutationVariables>;
-export const ToggleInternetSwitchDocument = gql`
-    mutation ToggleInternetSwitch($data: ToggleInternetSwitchInputDto!) {
-  toggleInternetSwitch(data: $data) {
+export const ToggleSwitchPortDocument = gql`
+    mutation ToggleSwitchPort($data: ToggleSwitchPortInputDto!) {
+  toggleSwitchPort(data: $data) {
     success
   }
 }
     `;
-export type ToggleInternetSwitchMutationFn = Apollo.MutationFunction<ToggleInternetSwitchMutation, ToggleInternetSwitchMutationVariables>;
+export type ToggleSwitchPortMutationFn = Apollo.MutationFunction<ToggleSwitchPortMutation, ToggleSwitchPortMutationVariables>;
 
 /**
- * __useToggleInternetSwitchMutation__
+ * __useToggleSwitchPortMutation__
  *
- * To run a mutation, you first call `useToggleInternetSwitchMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useToggleInternetSwitchMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useToggleSwitchPortMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useToggleSwitchPortMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [toggleInternetSwitchMutation, { data, loading, error }] = useToggleInternetSwitchMutation({
+ * const [toggleSwitchPortMutation, { data, loading, error }] = useToggleSwitchPortMutation({
  *   variables: {
  *      data: // value for 'data'
  *   },
  * });
  */
-export function useToggleInternetSwitchMutation(baseOptions?: Apollo.MutationHookOptions<ToggleInternetSwitchMutation, ToggleInternetSwitchMutationVariables>) {
+export function useToggleSwitchPortMutation(baseOptions?: Apollo.MutationHookOptions<ToggleSwitchPortMutation, ToggleSwitchPortMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<ToggleInternetSwitchMutation, ToggleInternetSwitchMutationVariables>(ToggleInternetSwitchDocument, options);
+        return Apollo.useMutation<ToggleSwitchPortMutation, ToggleSwitchPortMutationVariables>(ToggleSwitchPortDocument, options);
       }
-export type ToggleInternetSwitchMutationHookResult = ReturnType<typeof useToggleInternetSwitchMutation>;
-export type ToggleInternetSwitchMutationResult = Apollo.MutationResult<ToggleInternetSwitchMutation>;
-export type ToggleInternetSwitchMutationOptions = Apollo.BaseMutationOptions<ToggleInternetSwitchMutation, ToggleInternetSwitchMutationVariables>;
+export type ToggleSwitchPortMutationHookResult = ReturnType<typeof useToggleSwitchPortMutation>;
+export type ToggleSwitchPortMutationResult = Apollo.MutationResult<ToggleSwitchPortMutation>;
+export type ToggleSwitchPortMutationOptions = Apollo.BaseMutationOptions<ToggleSwitchPortMutation, ToggleSwitchPortMutationVariables>;
 export const ToggleRfStatusDocument = gql`
     mutation ToggleRFStatus($data: ToggleRFStatusInputDto!) {
   toggleRFStatus(data: $data) {
