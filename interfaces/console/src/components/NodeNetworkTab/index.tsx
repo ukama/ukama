@@ -21,6 +21,25 @@ import LineChart from '../LineChart';
 import NodeStatItem from '../NodeStatItem';
 import NodeStatsContainer from '../NodeStatsContainer';
 
+const withApiDisplayMeta = (
+  config: any,
+  statsData: MetricsStateRes,
+  metrics: MetricsRes,
+) => {
+  const statMeta = statsData?.metrics?.find((m: any) => m.type === config.id);
+  const rangeMeta = metrics?.metrics?.find((m: any) => m.type === config.id);
+  const meta = statMeta ?? rangeMeta;
+
+  return {
+    ...config,
+    unit: meta?.unit ?? config.unit,
+    format: meta?.format ?? config.format ?? 'number',
+    tickInterval: meta?.tickInterval ?? config.tickInterval,
+    tickPositions: meta?.tickPositions ?? config.tickPositions,
+    threshold: meta?.threshold ?? config.threshold,
+  };
+};
+
 interface INodeOverviewTab {
   loading: boolean;
   metricFrom: number;
@@ -39,8 +58,12 @@ const NodeNetworkTab = ({
   nodeMetricsStatData,
 }: INodeOverviewTab) => {
   const [selected, setSelected] = useState<number>(0);
-  const networkCellular = NODE_KPIS.NETWORK_CELLULAR[NodeTypeEnum.Tnode];
-  const networkBackhaul = NODE_KPIS.NETWORK_BACKHAUL[NodeTypeEnum.Tnode];
+  const networkCellular = NODE_KPIS.NETWORK_CELLULAR[NodeTypeEnum.Tnode].map(
+    (config) => withApiDisplayMeta(config, nodeMetricsStatData, metrics),
+  );
+  const networkBackhaul = NODE_KPIS.NETWORK_BACKHAUL[NodeTypeEnum.Tnode].map(
+    (config) => withApiDisplayMeta(config, nodeMetricsStatData, metrics),
+  );
 
   const handleOnSelected = (value: number) => {
     handleSectionChange(

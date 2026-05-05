@@ -13,8 +13,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -23,6 +25,23 @@ import (
 
 	"github.com/pkg/errors"
 )
+
+// NodeTypeSystem is the fallback node-type bucket used when no hardware node ID is present in a request
+// (e.g. platform-level endpoints for org, network, subscriber, SIM stats).
+const NodeTypeSystem = "system"
+
+// ExtractNodeType parses a node ID such as "uk-sa2602-tnode-v0-344c" and returns the embedded
+// node type token ("tnode", "anode", or "cnode"). Returns NodeTypeSystem when the ID is empty
+// or does not contain a recognised type, so callers always receive a valid YAML bucket name.
+func ExtractNodeType(nodeId string) string {
+	parts := strings.Split(strings.ToLower(nodeId), "-")
+	for _, p := range parts {
+		if p == "tnode" || p == "anode" || p == "cnode" {
+			return p
+		}
+	}
+	return NodeTypeSystem
+}
 
 type Metrics struct {
 	conf *MetricsConfig
@@ -83,6 +102,10 @@ func (f *Filter) WithAny(network string, subscriber string, sim string, site str
 	return f
 }
 
+func (f *Filter) GetNodeId() string {
+	return f.nodeId
+}
+
 func (f *Filter) HasNetwork() bool {
 	return f.network != ""
 }
@@ -121,13 +144,12 @@ func NewMetrics(config *MetricsConfig) (m *Metrics, err error) {
 	}, nil
 }
 
-// GetMetrics returns metrics for specified interval and metric type.
-// metricType should be a value from  MetricTypes array (case-sensitive)
-func (m *Metrics) GetMetricRange(metricType string, metricFilter *Filter, in *Interval, w io.Writer) (httpStatus int, err error) {
-
-	_, ok := m.conf.Metrics[metricType]
+// GetMetricRange returns metrics for the specified interval, generic metric key, and node type.
+// nodeType is one of "tnode", "anode", "cnode", or "system".
+func (m *Metrics) GetMetricRange(metricType string, nodeType string, metricFilter *Filter, in *Interval, w io.Writer) (httpStatus int, err error) {
+	metric, ok := m.resolveMetric(metricType, nodeType)
 	if !ok {
-		return http.StatusNotFound, errors.New("metric type not found")
+		return http.StatusNotFound, errors.New("metric type not found for node type")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(m.conf.Timeout))
@@ -140,18 +162,17 @@ func (m *Metrics) GetMetricRange(metricType string, metricFilter *Filter, in *In
 	data.Set("start", strconv.FormatInt(in.Start, 10))
 	data.Set("end", strconv.FormatInt(in.End, 10))
 	data.Set("step", strconv.FormatUint(uint64(in.Step), 10))
-	data.Set("query", m.conf.Metrics[metricType].getQuery(metricFilter, m.conf.DefaultRateInterval, metricFilter.operation))
+	data.Set("query", metric.getQuery(metricFilter, m.conf.DefaultRateInterval, metricFilter.operation))
 
 	log.Infof("GetMetricRange query: %s", data.Encode())
 
-	return m.processPromRequest(ctx, metricType, u, data, w, false)
+	return m.processPromRequest(ctx, metricType, metric, u, data, w, false)
 }
 
-func (m *Metrics) GetMetric(metricType string, metricFilter *Filter, w io.Writer, formatting bool) (httpStatus int, err error) {
-
-	_, ok := m.conf.Metrics[metricType]
+func (m *Metrics) GetMetric(metricType string, nodeType string, metricFilter *Filter, w io.Writer, formatting bool) (httpStatus int, err error) {
+	metric, ok := m.resolveMetric(metricType, nodeType)
 	if !ok {
-		return http.StatusNotFound, errors.New("metric type not found")
+		return http.StatusNotFound, errors.New("metric type not found for node type")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(m.conf.Timeout))
@@ -160,20 +181,19 @@ func (m *Metrics) GetMetric(metricType string, metricFilter *Filter, w io.Writer
 	u := fmt.Sprintf("%s/api/v1/query", strings.TrimSuffix(m.conf.MetricsServer, "/"))
 
 	data := url.Values{}
-
-	data.Set("query", m.conf.Metrics[metricType].getQuery(metricFilter, m.conf.DefaultRateInterval, metricFilter.operation))
+	data.Set("query", metric.getQuery(metricFilter, m.conf.DefaultRateInterval, metricFilter.operation))
 
 	log.Infof("GetMetric query: %s", data.Encode())
 
-	return m.processPromRequest(ctx, metricType, u, data, w, formatting)
+	return m.processPromRequest(ctx, metricType, metric, u, data, w, formatting)
 }
 
-// GetAggregateMetric returns aggregated value of a metric based on filter
-// uses Sum function by default
-func (m *Metrics) GetAggregateMetric(metricType string, metricFilter *Filter, w io.Writer) (httpStatus int, err error) {
-	_, ok := m.conf.Metrics[metricType]
+// GetAggregateMetric returns aggregated value of a metric based on filter, uses Sum by default.
+// nodeType is one of "tnode", "anode", "cnode", or "system".
+func (m *Metrics) GetAggregateMetric(metricType string, nodeType string, metricFilter *Filter, w io.Writer) (httpStatus int, err error) {
+	metric, ok := m.resolveMetric(metricType, nodeType)
 	if !ok {
-		return http.StatusNotFound, errors.New("metric type not found")
+		return http.StatusNotFound, errors.New("metric type not found for node type")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(m.conf.Timeout))
@@ -182,14 +202,118 @@ func (m *Metrics) GetAggregateMetric(metricType string, metricFilter *Filter, w 
 	u := fmt.Sprintf("%s/api/v1/query", strings.TrimSuffix(m.conf.MetricsServer, "/"))
 
 	data := url.Values{}
-	data.Set("query", m.conf.Metrics[metricType].getAggregateQuery(metricFilter, "sum"))
+	data.Set("query", metric.getAggregateQuery(metricFilter, "sum"))
 
 	log.Infof("GetAggregateMetric query: %s", data.Encode())
 
-	return m.processPromRequest(ctx, metricType, u, data, w, false)
+	return m.processPromRequest(ctx, metricType, metric, u, data, w, false)
 }
 
-func formatMetricsResponse(metricName string, w io.Writer, b io.ReadCloser) error {
+func extractPromValues(rmap map[string]interface{}) []float64 {
+	var values []float64
+
+	data, ok := rmap["data"].(map[string]interface{})
+	if !ok {
+		return values
+	}
+	result, ok := data["result"].([]interface{})
+	if !ok {
+		return values
+	}
+
+	for _, entry := range result {
+		item, ok := entry.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if vv, ok := item["values"].([]interface{}); ok {
+			for _, p := range vv {
+				pair, ok := p.([]interface{})
+				if !ok || len(pair) < 2 {
+					continue
+				}
+				s, ok := pair[1].(string)
+				if !ok {
+					continue
+				}
+				f, err := strconv.ParseFloat(s, 64)
+				if err == nil && !math.IsNaN(f) && !math.IsInf(f, 0) {
+					values = append(values, f)
+				}
+			}
+		}
+		if pair, ok := item["value"].([]interface{}); ok && len(pair) >= 2 {
+			s, ok := pair[1].(string)
+			if !ok {
+				continue
+			}
+			f, err := strconv.ParseFloat(s, 64)
+			if err == nil && !math.IsNaN(f) && !math.IsInf(f, 0) {
+				values = append(values, f)
+			}
+		}
+	}
+	return values
+}
+
+func dynamicAxisMeta(metricCfg Metric, samples []float64) (tickPositions []int, tickInterval int, threshold Threshold) {
+	threshold = metricCfg.Threshold
+	tickPositions = metricCfg.TickPositions
+	tickInterval = metricCfg.TickInterval
+
+	if len(samples) == 0 {
+		return
+	}
+
+	minV, maxV := samples[0], samples[0]
+	for _, v := range samples[1:] {
+		if v < minV {
+			minV = v
+		}
+		if v > maxV {
+			maxV = v
+		}
+	}
+
+	if minV == maxV {
+		pad := math.Max(math.Abs(minV)*0.1, 1)
+		minV -= pad
+		maxV += pad
+	}
+
+	step := (maxV - minV) / 4.0
+	genTicks := make([]int, 0, 5)
+	for i := 0; i < 5; i++ {
+		genTicks = append(genTicks, int(math.Round(minV+step*float64(i))))
+	}
+
+	if len(tickPositions) < 2 {
+		tickPositions = genTicks
+	}
+	if tickInterval <= 0 {
+		if len(tickPositions) >= 2 {
+			iv := tickPositions[1] - tickPositions[0]
+			if iv <= 0 {
+				iv = 1
+			}
+			tickInterval = iv
+		} else {
+			tickInterval = int(math.Max(step, 1))
+		}
+	}
+
+	if threshold.Min == 0 && threshold.Normal == 0 && threshold.Max == 0 {
+		threshold = Threshold{
+			Min:    minV,
+			Normal: minV + (maxV-minV)*0.75,
+			Max:    maxV,
+		}
+	}
+
+	return
+}
+
+func formatMetricsResponse(metricName string, metricCfg Metric, w io.Writer, b io.ReadCloser) error {
 
 	bytes, err := io.ReadAll(b)
 	if err != nil {
@@ -203,7 +327,13 @@ func formatMetricsResponse(metricName string, w io.Writer, b io.ReadCloser) erro
 		log.Errorf("Failed to unmarshal prometheus response for %s Error: %v", metricName, err)
 		return err
 	}
+	tickPositions, tickInterval, threshold := dynamicAxisMeta(metricCfg, extractPromValues(rmap))
 	rmap["Name"] = metricName
+	rmap["unit"] = metricCfg.Unit
+	rmap["format"] = metricCfg.Format
+	rmap["tickInterval"] = tickInterval
+	rmap["tickPositions"] = tickPositions
+	rmap["threshold"] = threshold
 
 	rb, err := json.Marshal(rmap)
 	if err != nil {
@@ -221,7 +351,7 @@ func formatMetricsResponse(metricName string, w io.Writer, b io.ReadCloser) erro
 	return nil
 }
 
-func (m *Metrics) processPromRequest(ctx context.Context, metricName string, url string, data url.Values, w io.Writer, formatting bool) (httpStatusCode int, err error) {
+func (m *Metrics) processPromRequest(ctx context.Context, metricName string, metricCfg Metric, url string, data url.Values, w io.Writer, formatting bool) (httpStatusCode int, err error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, strings.NewReader(data.Encode()))
 	if err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, "failed to create request")
@@ -235,13 +365,18 @@ func (m *Metrics) processPromRequest(ctx context.Context, metricName string, url
 		return http.StatusInternalServerError, errors.Wrap(err, "failed to execute request")
 	}
 	log.Infof("Response Body %+v", res.Body)
-	if formatting {
-		err = formatMetricsResponse(metricName, w, res.Body)
-		if err != nil {
+	bodyBytes, readErr := io.ReadAll(res.Body)
+	if readErr != nil {
+		return http.StatusInternalServerError, errors.Wrap(readErr, "failed to read response body")
+	}
+
+	// Always try to enrich Prometheus JSON with display metadata. If upstream response
+	// isn't JSON (e.g. test stubs), keep legacy passthrough behaviour for non-streaming paths.
+	if err = formatMetricsResponse(metricName, metricCfg, w, io.NopCloser(strings.NewReader(string(bodyBytes)))); err != nil {
+		if formatting {
 			return http.StatusInternalServerError, errors.Wrap(err, "failed to format response")
 		}
-	} else {
-		_, err = io.Copy(w, res.Body)
+		_, err = w.Write(bodyBytes)
 		if err != nil {
 			return http.StatusInternalServerError, errors.Wrap(err, "failed to copy response")
 		}
@@ -259,20 +394,61 @@ func UpdatedName(oldName string, slice string, newSlice string) string {
 	return strings.Replace(oldName, slice, newSlice, 1)
 }
 
-func (m *Metrics) MetricsExist(metricType string) bool {
-	_, ok := m.conf.Metrics[metricType]
+// resolveMetric looks up the Metric definition for the given generic key and node type.
+func (m *Metrics) resolveMetric(metricType, nodeType string) (Metric, bool) {
+	keyMap, ok := m.conf.Metrics[nodeType]
+	if !ok {
+		return Metric{}, false
+	}
+	metric, ok := keyMap[metricType]
+	return metric, ok
+}
+
+// MetricsExist reports whether the generic metric key is defined for the given node type.
+func (m *Metrics) MetricsExist(metricType, nodeType string) bool {
+	_, ok := m.resolveMetric(metricType, nodeType)
 	return ok
 }
 
-func (m *Metrics) MetricsCfg(metricType string) (Metric, bool) {
-	me, ok := m.conf.Metrics[metricType]
-	return me, ok
+// MetricsCfg returns the Metric configuration for the given generic key and node type.
+func (m *Metrics) MetricsCfg(metricType, nodeType string) (Metric, bool) {
+	return m.resolveMetric(metricType, nodeType)
 }
 
-func (m *Metrics) List() (r []string) {
-	for k := range m.conf.Metrics {
-		r = append(r, k)
+// List returns deduplicated generic KPI keys.
+// - when nodeType is empty, keys from all buckets are returned
+// - when nodeType is provided, only that bucket is returned
+// - legacy alias "hnode" is mapped to "tnode"
+func (m *Metrics) List(nodeType string) (r []string) {
+	seen := make(map[string]struct{})
+	log.Infof("Listing metrics for node type: %s", nodeType)
+	normalized := strings.ToLower(strings.TrimSpace(nodeType))
+	if normalized == "hnode" {
+		normalized = "tnode"
 	}
+
+	appendKeys := func(keyMap map[string]Metric) {
+		for k := range keyMap {
+			if _, exists := seen[k]; !exists {
+				seen[k] = struct{}{}
+				r = append(r, k)
+			}
+		}
+	}
+
+	if normalized == "" {
+		for _, keyMap := range m.conf.Metrics {
+			appendKeys(keyMap)
+		}
+	} else {
+		keyMap, ok := m.conf.Metrics[normalized]
+		if !ok {
+			return []string{}
+		}
+		appendKeys(keyMap)
+	}
+
+	sort.Strings(r)
 	return r
 }
 

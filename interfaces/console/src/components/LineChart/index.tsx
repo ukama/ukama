@@ -68,6 +68,23 @@ const LineChart = ({
   const chartRef = useRef<HighchartsReact.RefObject>(null);
 
   const fixedInitData = useMemo(() => initDataFixes(initData), [initData]);
+  const normalizedTickPositions = useMemo(() => {
+    if (!tickPositions || tickPositions.length === 0) {
+      return undefined;
+    }
+
+    // Keep at most 5 y-axis tick lines to avoid noisy charts.
+    if (tickPositions.length <= 5) {
+      return tickPositions;
+    }
+
+    const lastIndex = tickPositions.length - 1;
+    const picks = [0, 0.25, 0.5, 0.75, 1].map((ratio) =>
+      tickPositions[Math.round(lastIndex * ratio)],
+    );
+    const uniq = Array.from(new Set(picks));
+    return uniq.length >= 2 ? uniq : undefined;
+  }, [tickPositions]);
 
   const chartOptions = useMemo<Highcharts.Options>(
     () => ({
@@ -145,16 +162,19 @@ const LineChart = ({
       },
       yAxis: {
         endOnTick: true,
-        max: tickPositions
-          ? tickPositions[tickPositions.length - 1]
+        max: normalizedTickPositions
+          ? normalizedTickPositions[normalizedTickPositions.length - 1]
           : undefined,
-        min: tickPositions ? tickPositions[0] : undefined,
+        min: normalizedTickPositions ? normalizedTickPositions[0] : undefined,
         opposite: false,
         gridLineDashStyle: 'Dash',
-        tickPositions: tickPositions,
-        gridLineWidth: tickPositions ? 0 : 2,
-        tickAmount: tickPositions?.length ?? 5,
-        tickInterval: tickInterval,
+        tickPositions: normalizedTickPositions,
+        gridLineWidth: normalizedTickPositions ? 0 : 2,
+        tickAmount: 5,
+        tickInterval:
+          tickInterval && tickInterval > 0 && !normalizedTickPositions
+            ? tickInterval
+            : undefined,
         labels: {
           y: 5,
           formatter: function (v: any) {
@@ -162,7 +182,7 @@ const LineChart = ({
           },
         },
 
-        plotLines: [...generatePlotLines(tickPositions)],
+        plotLines: generatePlotLines(normalizedTickPositions),
       },
 
       series: [
@@ -179,7 +199,7 @@ const LineChart = ({
         },
       ],
     }),
-    [fixedInitData, tickInterval, tickPositions, title, topic, yunit],
+    [fixedInitData, normalizedTickPositions, tickInterval, title, topic, yunit, format],
   );
 
   return (

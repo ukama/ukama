@@ -40,7 +40,6 @@ import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 import SignalCellularConnectedNoInternet4BarIcon from '@mui/icons-material/SignalCellularConnectedNoInternet4Bar';
 import SignalCellularOffIcon from '@mui/icons-material/SignalCellularOff';
 import { Skeleton, Stack, Typography } from '@mui/material';
-import { formatDistance } from 'date-fns';
 import { DashStyleValue } from 'highcharts';
 import { LatLngTuple } from 'leaflet';
 
@@ -425,6 +424,29 @@ const NodeEnumToString = (type: NodeTypeEnum): string => {
   }
 };
 
+const getNodeTypeFromId = (id: string) => {
+  if (id.includes('tnode')) return NodeTypeEnum.Tnode;
+  if (id.includes('anode')) return NodeTypeEnum.Anode;
+  if (id.includes('hnode')) return NodeTypeEnum.Hnode;
+  if (id.includes('cnode')) return NodeTypeEnum.Cnode;
+  return null;
+};
+
+const nodeTypeEnumToString = (nodeType: NodeTypeEnum) => {
+  switch (nodeType) {
+    case NodeTypeEnum.Tnode:
+      return 'tnode';
+    case NodeTypeEnum.Anode:
+      return 'anode';
+    case NodeTypeEnum.Hnode:
+      return 'hnode';
+    case NodeTypeEnum.Cnode:
+      return 'cnode';
+    default:
+      return 'tnode';
+  }
+};
+
 const getKPIStatValue = (
   id: string,
   loading: boolean,
@@ -453,8 +475,34 @@ const base64ToBlob = (base64: string, contentType = ''): Blob => {
   return new Blob(byteArrays, { type: contentType });
 };
 
-export const duration = (s: number) =>
-  formatDistance(0, s * 1000, { includeSeconds: true });
+export const duration = (s: number | string | null | undefined) => {
+  const normalizedInput =
+    typeof s === 'number' && Number.isFinite(s)
+      ? s
+      : Number(
+          String(s ?? '')
+            .trim()
+            .replaceAll(',', ''),
+        );
+  const totalSeconds = Number.isFinite(normalizedInput)
+    ? Math.max(0, Math.floor(normalizedInput))
+    : 0;
+  const units: Array<[label: string, value: number]> = [
+    ['day', Math.floor(totalSeconds / 86400)],
+    ['hour', Math.floor((totalSeconds % 86400) / 3600)],
+    ['minute', Math.floor((totalSeconds % 3600) / 60)],
+    ['second', totalSeconds % 60],
+  ];
+
+  const parts = units
+    .filter(([label, value]) => value > 0 || label === 'second')
+    .map(([label, value]) => `${value} ${label}${value === 1 ? '' : 's'}`)
+    .filter(
+      (part, index, list) => part !== '0 seconds' || index === list.length - 1,
+    );
+
+  return parts.join(' ');
+};
 
 const findNullZones = (data: any) => {
   const zones = [];
@@ -513,11 +561,14 @@ const graphTypeToSection: Record<Graphs_Type | string, string> = {
 };
 
 export const generatePlotLines = (values: number[] | undefined): any[] => {
-  if (!values) {
+  if (!values || values.length === 0) {
     return [];
   }
+
+  // API-driven chart metadata can omit tickPositions or return short arrays.
+  // In these cases we should simply render no threshold plot lines.
   if (values.length < 3 || values.length > 7) {
-    throw new Error('invalid length');
+    return [];
   }
 
   return values.slice(1).map((value, index, arr) => ({
@@ -780,6 +831,7 @@ export {
   getKPIStatValue,
   getMapStyleURL,
   getNodeActionDescriptionByProgress,
+  getNodeTypeFromId,
   getPortInfo,
   getSectionFromKPI,
   getSignalStyles,
@@ -793,6 +845,7 @@ export {
   isValidLatLng,
   kpiToGraphType,
   NodeEnumToString,
+  nodeTypeEnumToString,
   provideStatusColor,
   roleEnumToString,
   setQueryParam,

@@ -73,15 +73,24 @@ subscription NotificationSubscription(
 query GetMetricByTab($data: GetMetricByTabInput!) {
   getMetricByTab(data: $data) {
     metrics {
+      dataPlanId
+      format
       msg
-      nodeId
-      success
-      type
-      values
       networkId
+      nodeId
       siteId
       packageId
-      dataPlanId
+      success
+      tickInterval
+      threshold {
+        max
+        min
+        normal
+      }
+      tickPositions
+      type
+      unit
+      values
     }
   }
 }
@@ -89,25 +98,47 @@ query GetMetricByTab($data: GetMetricByTabInput!) {
 query GetMetricsStat($data: GetMetricsStatInput!) {
   getMetricsStat(data: $data) {
     metrics {
-      success
-      msg
-      nodeId
-      type
-      value
-      networkId
-      packageId
       dataPlanId
+      format
+      msg
+      networkId
+      nodeId
+      packageId
+      siteId
+      success
+      threshold {
+        max
+        min
+        normal
+      }
+      tickInterval
+      tickPositions
+      type
+      unit
+      value
     }
   }
 }
 query GetSiteStat($data: GetMetricsSiteStatInput!) {
   getSiteStat(data: $data) {
     metrics {
-      success
+      dataPlanId
+      format
       msg
-      siteId
+      networkId
       nodeId
+      siteId
+      packageId
+      success
+      tickInterval
+      threshold {
+        max
+        min
+        normal
+      }
+      tickPositions
       type
+      unit
       value
     }
   }
@@ -115,9 +146,23 @@ query GetSiteStat($data: GetMetricsSiteStatInput!) {
 query GetMetricBySite($data: GetMetricBySiteInput!) {
   getMetricBySite(data: $data) {
     metrics {
+      dataPlanId
+      format
       msg
+      networkId
+      nodeId
+      siteId
+      packageId
       success
+      tickInterval
+      threshold {
+        max
+        min
+        normal
+      }
+      tickPositions
       type
+      unit
       values
     }
   }

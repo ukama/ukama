@@ -5,8 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { GraphQLError } from "graphql";
-
 import { asyncRestCall } from "../../common/axiosClient";
 import { VERSION } from "../../common/configs";
 import { API_METHOD_TYPE } from "../../common/enums";
@@ -23,20 +21,20 @@ const getNodeMetricRange = async (
   type: string,
   args: GetMetricsStatInput
 ): Promise<MetricsRes> => {
-  const { to, from, nodeId, networkId = "", siteId } = args;
-  let params = `from=${from}&to=${to}&step=1`;
+  const { to, from, nodeId, operation = "avg" } = args;
+  let params = `from=${from}&to=${to}&step=1&operation=${operation}`;
   if (nodeId) {
     params = params + `&node=${nodeId}`;
   }
-  if (networkId) {
-    params = params + `&network=${networkId}`;
-  }
-  if (siteId) {
-    params = params + `&site=${siteId}`;
-  }
-  if (args.operation) {
-    params = params + `&operation=${args.operation}`;
-  }
+  // if (networkId) {
+  //   params = params + `&network=${networkId}`;
+  // }
+  // if (siteId) {
+  //   params = params + `&site=${siteId}`;
+  // }
+  // if (args.operation) {
+  //   params = params + `&operation=${args.operation}`;
+  // }
   logger.info(
     `[getNodeMetricRange] Request URL: ${baseUrl}/${VERSION}/range/metrics/${type}?${params}`
   );
@@ -44,10 +42,36 @@ const getNodeMetricRange = async (
     method: API_METHOD_TYPE.GET,
     url: `${baseUrl}/${VERSION}/range/metrics/${type}?${params}`,
   })
-    .then(res => parseMetricsResponse(res.data.data.result, type, args))
+    .then(res => {
+      const result = res?.data?.data?.result;
+      if (!Array.isArray(result)) {
+        logger.warn(
+          `[getNodeMetricRange] No valid Prometheus result for metric '${type}' — response: ${JSON.stringify(
+            res?.data
+          )}`
+        );
+        return { metrics: [] } as MetricsRes;
+      }
+      return parseMetricsResponse(result, type, args, {
+        unit: res?.data?.unit ?? "",
+        format: res?.data?.format ?? "number",
+        tickInterval: Number(res?.data?.tickInterval ?? 0),
+        tickPositions: Array.isArray(res?.data?.tickPositions)
+          ? res.data.tickPositions
+          : [],
+        threshold:
+          typeof res?.data?.threshold === "object" && res?.data?.threshold
+            ? {
+                min: Number(res.data.threshold.min ?? 0),
+                normal: Number(res.data.threshold.normal ?? 0),
+                max: Number(res.data.threshold.max ?? 0),
+              }
+            : { min: 0, normal: 0, max: 0 },
+      });
+    })
     .catch(err => {
-      logger.error(`Error fetching metrics: ${err}`);
-      throw new GraphQLError(err);
+      logger.error(`Error fetching metrics for '${type}': ${err}`);
+      return { metrics: [] } as MetricsRes;
     });
 };
 

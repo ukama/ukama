@@ -14,6 +14,7 @@ import { MetricRes, MetricsRes } from "../../subscriptions/resolvers/types";
 import { SUB_GRAPHS } from "../configs";
 import {
   GRAPHS_TYPE,
+  NODE_TYPE,
   NOTIFICATION_SCOPE,
   ROLE_TYPE,
   STATS_TYPE,
@@ -121,60 +122,129 @@ const getPaginatedOutput = (
   };
 };
 
-const getGraphsKeyByType = (type: string): string[] => {
-  // TODO: NEED TO UPDATE KPI KEYS
-  switch (type) {
-    case GRAPHS_TYPE.HOME:
-    case STATS_TYPE.HOME:
-      return [
-        "package_sales",
-        "data_usage",
-        "node_active_subscribers",
-        "network_uptime",
-      ];
-    case GRAPHS_TYPE.NODE_HEALTH:
-      return ["unit_uptime", "unit_health", "node_load"];
-    case GRAPHS_TYPE.SUBSCRIBERS:
-      return ["subscribers_active"];
-    case STATS_TYPE.OVERVIEW:
-      return ["unit_uptime", "unit_health", "node_load", "subscribers_active"];
-    case GRAPHS_TYPE.NETWORK_CELLULAR:
-      return ["cellular_uplink", "cellular_downlink"];
-    case GRAPHS_TYPE.NETWORK_BACKHAUL:
-      return ["backhaul_uplink", "backhaul_downlink", "backhaul_latency"];
-    case STATS_TYPE.NETWORK:
-      return [
+const TYPE_KEYS_GROUPS: { types: string[]; keys: string[] }[] = [
+  {
+    types: [GRAPHS_TYPE.HOME, STATS_TYPE.HOME],
+    keys: [
+      "package_sales",
+      "data_usage",
+      "node_active_subscribers",
+      "network_uptime",
+    ],
+  },
+  {
+    types: [STATS_TYPE.RESOURCES, GRAPHS_TYPE.RESOURCES],
+    keys: ["cpu", "memory", "disk"],
+  },
+  {
+    types: [GRAPHS_TYPE.DATA_USAGE],
+    keys: ["data_usage"],
+  },
+];
+
+const TYPE_NODE_KEYS_GROUPS: {
+  types: string[];
+  nodeKeys: Partial<Record<NODE_TYPE, string[]>>;
+}[] = [
+  {
+    types: [GRAPHS_TYPE.NODE_HEALTH],
+    nodeKeys: {
+      [NODE_TYPE.tnode]: ["uptime", "cpu_temperature", "memory"],
+      [NODE_TYPE.anode]: ["uptime", "fem1_temperature", "fem2_temperature"],
+      [NODE_TYPE.cnode]: ["uptime", "memory"],
+    },
+  },
+  {
+    types: [GRAPHS_TYPE.SUBSCRIBERS],
+    nodeKeys: {
+      [NODE_TYPE.tnode]: ["subscribers_active"],
+    },
+  },
+  {
+    types: [STATS_TYPE.OVERVIEW],
+    nodeKeys: {
+      [NODE_TYPE.tnode]: [
+        "uptime",
+        "cpu_temperature",
+        "memory",
+        "subscribers_active",
+      ],
+      [NODE_TYPE.anode]: ["uptime", "fem1_temperature", "fem2_temperature"],
+      [NODE_TYPE.cnode]: ["uptime", "memory"],
+    },
+  },
+  {
+    types: [GRAPHS_TYPE.NETWORK_CELLULAR],
+    nodeKeys: {
+      [NODE_TYPE.tnode]: ["cellular_uplink", "cellular_downlink"],
+    },
+  },
+  {
+    types: [GRAPHS_TYPE.NETWORK_BACKHAUL],
+    nodeKeys: {
+      [NODE_TYPE.tnode]: [
+        "backhaul_uplink",
+        "backhaul_downlink",
+        "backhaul_latency",
+      ],
+    },
+  },
+  {
+    types: [STATS_TYPE.NETWORK],
+    nodeKeys: {
+      [NODE_TYPE.tnode]: [
         "cellular_uplink",
         "cellular_downlink",
         "backhaul_uplink",
         "backhaul_downlink",
         "backhaul_latency",
-      ];
-    case STATS_TYPE.RESOURCES:
-    case GRAPHS_TYPE.RESOURCES:
-      return ["hwd_load", "memory_usage", "cpu_usage", "disk_usage"];
-    case STATS_TYPE.RADIO:
-    case GRAPHS_TYPE.RADIO:
-      return ["txpower"];
-    case STATS_TYPE.ALL_NODE:
-      return [
-        "unit_uptime",
-        "unit_health",
-        "node_load",
+      ],
+    },
+  },
+  {
+    types: [STATS_TYPE.RADIO, GRAPHS_TYPE.RADIO],
+    nodeKeys: {
+      [NODE_TYPE.tnode]: ["power"],
+      [NODE_TYPE.anode]: ["pa_power", "rx_power", "tx_power"],
+    },
+  },
+  {
+    types: [STATS_TYPE.ALL_NODE],
+    nodeKeys: {
+      [NODE_TYPE.tnode]: [
+        "uptime",
+        "cpu_temperature",
         "subscribers_active",
         "cellular_uplink",
         "cellular_downlink",
         "backhaul_uplink",
         "backhaul_downlink",
         "backhaul_latency",
-        "hwd_load",
-        "memory_usage",
-        "cpu_usage",
-        "disk_usage",
-        "txpower",
-      ];
+        "cpu",
+        "memory",
+        "disk",
+        "power",
+      ],
+      [NODE_TYPE.anode]: [
+        "uptime",
+        "fem1_temperature",
+        "fem2_temperature",
+        "cpu",
+        "memory",
+        "disk",
+        "pa_power",
+        "rx_power",
+        "tx_power",
+      ],
+      [NODE_TYPE.cnode]: ["uptime", "cpu", "memory", "disk"],
+    },
+  },
+];
+
+const getInfraGraphKpiKeysByType = (type: string): string[] => {
+  switch (type) {
     case GRAPHS_TYPE.BATTERY:
-      return ["battery_charge_percentage"];
+      return ["battery_charge"];
     case GRAPHS_TYPE.SOLAR:
       return [
         "solar_panel_voltage",
@@ -182,53 +252,59 @@ const getGraphsKeyByType = (type: string): string[] => {
         "solar_panel_power",
       ];
     case GRAPHS_TYPE.CONTROLLER:
-      return [
-        "solar_panel_voltage",
-        "solar_panel_current",
-        "solar_panel_power",
-        "battery_charge_percentage",
-      ];
+      return ["controller_temperature", "load_current"];
     case GRAPHS_TYPE.MAIN_BACKHAUL:
-      return ["main_backhaul_latency", "backhaul_speed"];
-    case GRAPHS_TYPE.DATA_USAGE:
-      return ["data_usage"];
+      return ["backhaul_latency", "backhaul_downlink"];
     case GRAPHS_TYPE.SWITCH:
       return [
-        "backhaul_switch_port_status",
-        "backhaul_switch_port_speed",
-        "backhaul_switch_port_power",
-        "solar_switch_port_status",
-        "solar_switch_port_speed",
-        "solar_switch_port_power",
-        "node_switch_port_status",
-        "node_switch_port_speed",
-        "node_switch_port_power",
+        "switch_port_1_speed",
+        "switch_port_1_power",
+        "switch_port_2_speed",
+        "switch_port_2_power",
+        "switch_port_3_speed",
+        "switch_port_3_power",
+        "switch_port_4_speed",
+        "switch_port_4_power",
+        "switch_port_9_speed",
+        "switch_port_9_power",
       ];
     case GRAPHS_TYPE.SITE:
       return [
-        "site_uptime_seconds",
-        "unit_uptime",
         "solar_panel_voltage",
         "solar_panel_current",
-        "site_uptime_percentage",
         "solar_panel_power",
-        "battery_charge_percentage",
-        "main_backhaul_latency",
-        "backhaul_speed",
-        "backhaul_switch_port_status",
-        "backhaul_switch_port_speed",
-        "backhaul_switch_port_power",
-        "solar_switch_port_status",
-        "solar_switch_port_speed",
-        "solar_switch_port_power",
-        "node_switch_port_status",
-        "node_switch_port_speed",
-        "node_switch_port_power",
+        "controller_temperature",
+        "load_current",
+        "battery_charge",
+        "backhaul_latency",
+        "backhaul_downlink",
+        "switch_port_1_speed",
+        "switch_port_1_power",
+        "switch_port_2_speed",
+        "switch_port_2_power",
+        "switch_port_3_speed",
+        "switch_port_3_power",
+        "switch_port_4_speed",
+        "switch_port_4_power",
+        "switch_port_9_speed",
+        "switch_port_9_power",
         "node_active_subscribers",
       ];
     default:
       return [];
   }
+};
+
+const getGraphsKeyByType = (type: string, nodeType: NODE_TYPE): string[] => {
+  const typeGroup = TYPE_KEYS_GROUPS.find(group => group.types.includes(type));
+  if (typeGroup) {
+    return typeGroup.keys;
+  }
+
+  const nodeTypeGroup = TYPE_NODE_KEYS_GROUPS.find(group =>
+    group.types.includes(type)
+  );
+  return nodeTypeGroup?.nodeKeys[nodeType] ?? [];
 };
 
 const findProcessNKill = (port: string): Promise<boolean> => {
@@ -386,6 +462,8 @@ export const formatKPIValue = (type: string, value: any) => {
   switch (type) {
     case "backhaul_latency":
       return Math.floor(Number(value || 0));
+    case "uptime":
+      return Math.floor(Number(value || 0));
     case "subscribers_active":
     case "node_active_subscribers":
       return Math.floor(parseFloat(value || "0"));
@@ -461,12 +539,21 @@ const isMetricNetworkCheckFailed = (
   return false;
 };
 
+const getNodeTypeFromId = (id: string): NODE_TYPE => {
+  if (id.includes("tnode")) return NODE_TYPE.tnode;
+  if (id.includes("anode")) return NODE_TYPE.anode;
+  if (id.includes("hnode")) return NODE_TYPE.hnode;
+  if (id.includes("cnode")) return NODE_TYPE.cnode;
+  return NODE_TYPE.tnode;
+};
 export {
   csvToBase64,
   epochToISOString,
   findProcessNKill,
   getBaseURL,
   getGraphsKeyByType,
+  getInfraGraphKpiKeysByType,
+  getNodeTypeFromId,
   getPaginatedOutput,
   getScopesByRole,
   getStripeIdByUserId,

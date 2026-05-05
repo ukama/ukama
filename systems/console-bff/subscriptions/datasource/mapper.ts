@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { logger } from "../../common/logger";
-import { formatKPIValue, isMetricNetworkCheckFailed } from "../../common/utils";
+import { formatKPIValue } from "../../common/utils";
 import {
   GetLatestMetricInput,
   GetMetricsStatInput,
@@ -60,27 +60,34 @@ export const parseMetricsResponse = (
     values: [number, string][];
   }>,
   type: string,
-  args: GetMetricsStatInput
+  args: GetMetricsStatInput,
+  metadata?: {
+    unit?: string;
+    format?: string;
+    tickInterval?: number;
+    tickPositions?: number[];
+    threshold?: { min: number; normal: number; max: number };
+  }
 ): MetricsRes => {
   const metricResArray: MetricRes[] = res.map(item => {
-    if (
-      isMetricNetworkCheckFailed(
-        args.networkId || "",
-        item.metric.network || "",
-        args.operation || ""
-      )
-    ) {
-      return { ...ERROR_RESPONSE, values: [[0, 0]] };
-    }
-    if (
-      isMetricNetworkCheckFailed(
-        args.siteId || "",
-        item.metric.site || "",
-        args.operation || ""
-      )
-    ) {
-      return { ...ERROR_RESPONSE, values: [[0, 0]] };
-    }
+    // if (
+    //   isMetricNetworkCheckFailed(
+    //     args.networkId || "",
+    //     item.metric.network || "",
+    //     args.operation || ""
+    //   )
+    // ) {
+    //   return { ...ERROR_RESPONSE, values: [[0, 0]] };
+    // }
+    // if (
+    //   isMetricNetworkCheckFailed(
+    //     args.siteId || "",
+    //     item.metric.site || "",
+    //     args.operation || ""
+    //   )
+    // ) {
+    //   return { ...ERROR_RESPONSE, values: [[0, 0]] };
+    // }
     return {
       type: type,
       success: true,
@@ -97,6 +104,11 @@ export const parseMetricsResponse = (
         args.from,
         type
       ),
+      unit: metadata?.unit ?? "",
+      format: metadata?.format ?? "number",
+      tickInterval: metadata?.tickInterval ?? 0,
+      tickPositions: metadata?.tickPositions ?? [],
+      threshold: metadata?.threshold ?? { min: 0, normal: 0, max: 0 },
     };
   });
 

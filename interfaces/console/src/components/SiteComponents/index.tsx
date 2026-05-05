@@ -7,8 +7,8 @@
  */
 import { Node } from '@/client/graphql/generated';
 import { MetricsRes } from '@/client/graphql/generated/subscriptions';
-import { SectionData, SITE_KPI_TYPES } from '@/constants';
-import { getMetricValue, getPortInfo, isMetricValue } from '@/utils';
+import { SectionData, SITE_KPI_TYPES, SiteKpiConfig } from '@/constants';
+import { getMetricValue, isMetricValue } from '@/utils';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
   Accordion,
@@ -126,7 +126,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
         }));
       }
     }
-  }, [metrics, activeSection, hasMetricsData]);
+  }, [metrics, activeSection, hasMetricsData, sections]);
 
   const togglePortExpand = (portId: string) => {
     setExpandedPorts((prev) => ({
@@ -135,33 +135,43 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
     }));
   };
 
+  const SWITCH_PORT_DESCRIPTIONS: Record<number, string> = {
+    1: 'Tower node',
+    2: 'Amplifier node',
+    3: 'Controller node',
+    9: 'Backhaul node',
+  };
+
+  const resolveSwitchPortNumber = (metric: SiteKpiConfig): number | null => {
+    if (typeof metric.port === 'number' && !Number.isNaN(metric.port)) {
+      return metric.port;
+    }
+    const m = /^switch_port_(\d+)_/.exec(metric.id);
+    if (m) return Number.parseInt(m[1], 10);
+    return null;
+  };
+
   const getPortMetrics = () => {
     const switchMetrics = sections[activeSection] || [];
 
-    const portGroups: Record<string, any[]> = {};
+    const byPort: Record<number, SiteKpiConfig[]> = {};
 
     switchMetrics.forEach((metric) => {
-      let portType = '';
-      if (metric.id.startsWith('solar_')) portType = 'solar';
-      else if (metric.id.startsWith('backhaul_')) portType = 'backhaul';
-      else if (metric.id.startsWith('node_')) portType = 'node';
-      else return;
-
-      if (!portGroups[portType]) {
-        portGroups[portType] = [];
-      }
-
-      portGroups[portType].push(metric);
+      const portNum = resolveSwitchPortNumber(metric);
+      if (portNum == null) return;
+      if (!byPort[portNum]) byPort[portNum] = [];
+      byPort[portNum].push(metric);
     });
 
-    return Object.entries(portGroups)
-      .map(([portType, metrics]) => {
-        const port = getPortInfo[portType] || { number: 0, desc: '' };
+    return Object.entries(byPort)
+      .map(([portStr, portMetrics]) => {
+        const portNumber = Number.parseInt(portStr, 10);
+        const description = SWITCH_PORT_DESCRIPTIONS[portNumber] ?? '';
         return {
-          id: portType,
-          portNumber: port.number,
-          description: port.desc,
-          metrics,
+          id: `port-${portNumber}`,
+          portNumber,
+          description,
+          metrics: portMetrics,
         };
       })
       .sort((a, b) => a.portNumber - b.portNumber);

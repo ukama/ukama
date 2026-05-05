@@ -86,19 +86,20 @@ func Test_GetMetrics(t *testing.T) {
 
 	t.Run("NodeMetrics", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/v1/nodes/node-id/metrics/cpu?from=1643106506&to=1644936312&step=3600", nil)
+		// Node ID must contain a recognised node type token so ExtractNodeType resolves "tnode".
+		req, _ := http.NewRequest("GET", "/v1/nodes/uk-sa0001-tnode-v0-test/metrics/cpu?from=1643106506&to=1644936312&step=3600", nil)
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, 200, w.Code)
-		assert.Contains(t, body, c.MetricsConfig.Metrics["cpu"].Metric)
+		assert.Contains(t, body, c.MetricsConfig.Metrics["tnode"]["cpu"].Metric)
 	})
 
 	t.Run("MissingMetric", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/v1/nodes/node-id/metrics/test-metrics-miss?from=1643106506&to=1644936312&step=3600", nil)
+		req, _ := http.NewRequest("GET", "/v1/nodes/uk-sa0001-tnode-v0-test/metrics/test-metrics-miss?from=1643106506&to=1644936312&step=3600", nil)
 
 		// act
 		r.ServeHTTP(w, req)
@@ -117,8 +118,11 @@ func Test_GetMetrics(t *testing.T) {
 		// assert
 		assert.Equal(t, 200, w.Code)
 
-		for k := range c.MetricsConfig.Metrics {
-			assert.Contains(t, w.Body.String(), k)
+		// List returns deduplicated generic keys across all node-type buckets.
+		for _, keyMap := range c.MetricsConfig.Metrics {
+			for k := range keyMap {
+				assert.Contains(t, w.Body.String(), k)
+			}
 		}
 
 	})

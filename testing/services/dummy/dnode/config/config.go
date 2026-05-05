@@ -72,34 +72,6 @@ func NewConfig() *Config {
 		KpiConfig: NodeKPIs{
 			KPIs: []NodeKPI{
 				{
-					Key:    "unit_uptime",
-					Min:    getConfigValue("KPIRANGES_UNITUPTIME_MIN", 0),
-					Normal: getConfigValue("KPIRANGES_UNITUPTIME_NORMAL", 2678400),
-					Max:    getConfigValue("KPIRANGES_UNITUPTIME_MAX", 3678400),
-					KPI: prometheus.NewGaugeVec(
-						prometheus.GaugeOpts{
-							Name: "unit_uptime",
-							Help: "Node uptime",
-						},
-							[]string{"node_id", "metric"},
-					),
-					Metric: "unit_uptime",
-				},
-				{
-					Key:    "unit_health",
-					Min:    getConfigValue("KPIRANGES_UNITHEALTH_MIN", 10),
-					Normal: getConfigValue("KPIRANGES_UNITHEALTH_NORMAL", 80),
-					Max:    getConfigValue("KPIRANGES_UNITHEALTH_MAX", 100),
-					KPI: prometheus.NewGaugeVec(
-						prometheus.GaugeOpts{
-							Name: "unit_health",
-							Help: "Health status of the unit",
-						},
-						[]string{"node_id", "metric"},
-					),
-					Metric: "unit_health",
-				},
-				{
 					Key:    "trx_lte_core_active_ue",
 					Min:    getConfigValue("KPIRANGES_TRXLTECOREACTIVEUE_MIN", 80),
 					Normal: getConfigValue("KPIRANGES_TRXLTECOREACTIVEUE_NORMAL", 95),
@@ -114,218 +86,228 @@ func NewConfig() *Config {
 					Metric: "trx_lte_core_active_ue",
 				},
 				{
-					Key:    "node_load",
+					Key:    "com_generic_system_uptime_seconds",
 					Min:    getConfigValue("KPIRANGES_NODELOAD_MIN", 10),
 					Normal: getConfigValue("KPIRANGES_NODELOAD_NORMAL", 80),
 					Max:    getConfigValue("KPIRANGES_NODELOAD_MAX", 100),
 					KPI: prometheus.NewGaugeVec(
 						prometheus.GaugeOpts{
-							Name: "node_load",
+							Name: "com_generic_system_uptime_seconds",
 							Help: "Load on the node",
 						},
 						[]string{"node_id", "metric"},
 					),
-					Metric: "node_load",
+					Metric: "com_generic_system_uptime_seconds",
 				},
 				{
-					Key:    "cellular_uplink",
+					Key:    "trx_lte_stack_throughput_uplink",
 					Min:    getConfigValue("KPIRANGES_CELLULARUP_MIN", 2),
 					Normal: getConfigValue("KPIRANGES_CELLULARUP_NORMAL", 5),
 					Max:    getConfigValue("KPIRANGES_CELLULARUP_MAX", 30),
 					KPI: prometheus.NewGaugeVec(
 						prometheus.GaugeOpts{
-							Name: "cellular_uplink",
+							Name: "trx_lte_stack_throughput_uplink",
 							Help: "Cellular uplink",
 						},
 						[]string{"node_id", "metric"},
 					),
-					Metric: "cellular_uplink",
+					Metric: "trx_lte_stack_throughput_uplink",
 				},
 				{
-					Key:    "cellular_downlink",
+					Key:    "trx_lte_stack_throughput_downlink",
 					Min:    getConfigValue("KPIRANGES_CELLULARDOWN_MIN", 8),
 					Normal: getConfigValue("KPIRANGES_CELLULARDOWN_NORMAL", 60),
 					Max:    getConfigValue("KPIRANGES_CELLULARDOWN_MAX", 160),
 					KPI: prometheus.NewGaugeVec(
 						prometheus.GaugeOpts{
-							Name: "cellular_downlink",
+							Name: "trx_lte_stack_throughput_downlink",
 							Help: "Cellular downlink",
 						},
 						[]string{"node_id", "metric"},
 					),
-					Metric: "cellular_downlink",
+					Metric: "trx_lte_stack_throughput_downlink",
 				},
 				{
-					Key:    "backhaul_uplink",
+					Key:    "com_backhaul_backhaul_dl_goodput_mbps",
 					Min:    getConfigValue("KPIRANGES_BACKHAULUP_MIN", 2),
 					Normal: getConfigValue("KPIRANGES_BACKHAULUP_NORMAL", 10),
 					Max:    getConfigValue("KPIRANGES_BACKHAULUP_MAX", 200),
 					KPI: prometheus.NewGaugeVec(
 						prometheus.GaugeOpts{
-							Name: "backhaul_uplink",
+							Name: "com_backhaul_backhaul_dl_goodput_mbps",
 							Help: "Backhaul uplink",
 						},
 						[]string{"node_id", "metric"},
 					),
-					Metric: "backhaul_uplink",
+					Metric: "com_backhaul_backhaul_dl_goodput_mbps",
 				},
 				{
-					Key:    "backhaul_downlink",
+					Key:    "com_backhaul_backhaul_ul_goodput_mbps",
 					Min:    getConfigValue("KPIRANGES_BACKHAULDOWN_MIN", 2),
 					Normal: getConfigValue("KPIRANGES_BACKHAULDOWN_NORMAL", 10),
 					Max:    getConfigValue("KPIRANGES_BACKHAULDOWN_MAX", 200),
 					KPI: prometheus.NewGaugeVec(
 						prometheus.GaugeOpts{
-							Name: "backhaul_downlink",
+							Name: "com_backhaul_backhaul_ul_goodput_mbps",
 							Help: "Backhaul downlink",
 						},
 						[]string{"node_id", "metric"},
 					),
-					Metric: "backhaul_downlink",
+					Metric: "com_backhaul_backhaul_ul_goodput_mbps",
 				},
 				{
-					Key:    "backhaul_latency",
+					Key:    "com_network_uplink_latency",
 					Min:    getConfigValue("KPIRANGES_BACKHAULLATENCY_MIN", 10),
 					Normal: getConfigValue("KPIRANGES_BACKHAULLATENCY_NORMAL", 800),
 					Max:    getConfigValue("KPIRANGES_BACKHAULLATENCY_MAX", 1000),
 					KPI: prometheus.NewGaugeVec(
 						prometheus.GaugeOpts{
-							Name: "backhaul_latency",
+							Name: "com_network_uplink_latency",
 							Help: "Backhaul latency",
 						},
 						[]string{"node_id", "metric"},
 					),
-					Metric: "backhaul_latency",
+					Metric: "com_network_uplink_latency",
 				},
 				{
-					Key:    "hwd_load",
+					Key:    "cpu_temperature",
 					Min:    getConfigValue("KPIRANGES_HWLOAD_MIN", 10),
 					Normal: getConfigValue("KPIRANGES_HWLOAD_NORMAL", 80),
 					Max:    getConfigValue("KPIRANGES_HWLOAD_MAX", 100),
 					KPI: prometheus.NewGaugeVec(
 						prometheus.GaugeOpts{
-							Name: "hwd_load",
+							Name: "cpu_temperature",
 							Help: "Hardware load",
 						},
 						[]string{"node_id", "metric"},
 					),
-					Metric: "hwd_load",
+					Metric: "cpu_temperature",
 				},
 				{
-					Key:    "trx_memory_usage",
+					Key:    "memory",
 					Min:    getConfigValue("KPIRANGES_MEMORYUSAGE_MIN", 10),
 					Normal: getConfigValue("KPIRANGES_MEMORYUSAGE_NORMAL", 80),
 					Max:    getConfigValue("KPIRANGES_MEMORYUSAGE_MAX", 100),
 					KPI: prometheus.NewGaugeVec(
 						prometheus.GaugeOpts{
-							Name: "trx_memory_usage",
+							Name: "memory",
 							Help: "Trx memory usage",
 						},
 						[]string{"node_id", "metric"},
 					),
-					Metric: "trx_memory_usage",
+					Metric: "memory",
 				},
 				{
-					Key:    "trx_cpu_usage",
+					Key:    "cpu",
 					Min:    getConfigValue("KPIRANGES_CPUUSAGE_MIN", 10),
 					Normal: getConfigValue("KPIRANGES_CPUUSAGE_NORMAL", 80),
 					Max:    getConfigValue("KPIRANGES_CPUUSAGE_MAX", 100),
 					KPI: prometheus.NewGaugeVec(
 						prometheus.GaugeOpts{
-							Name: "trx_cpu_usage",
+							Name: "cpu",
 							Help: "Trx cpu usage",
 						},
 						[]string{"node_id", "metric"},
 					),
-					Metric: "trx_cpu_usage",
+					Metric: "cpu",
 				},
 				{
-					Key:    "trx_disk_usage",
+					Key:    "disk",
 					Min:    getConfigValue("KPIRANGES_DISKUSAGE_MIN", 10),
 					Normal: getConfigValue("KPIRANGES_DISKUSAGE_NORMAL", 80),
 					Max:    getConfigValue("KPIRANGES_DISKUSAGE_MAX", 100),
 					KPI: prometheus.NewGaugeVec(
 						prometheus.GaugeOpts{
-							Name: "trx_disk_usage",
+							Name: "disk",
 							Help: "Trx disk usage",
 						},
 						[]string{"node_id", "metric"},
 					),
-					Metric: "trx_disk_usage",
-				},
-				//// COM SOC KPIs ////
+					Metric: "disk",
+				},				
 				{
-					Key:    "com_memory_ddr_used",
-					Min:    getConfigValue("KPIRANGES_MEMORYUSAGE_MIN", 10),
-					Normal: getConfigValue("KPIRANGES_MEMORYUSAGE_NORMAL", 80),
-					Max:    getConfigValue("KPIRANGES_MEMORYUSAGE_MAX", 100),
-					KPI: prometheus.NewGaugeVec(
-						prometheus.GaugeOpts{
-							Name: "com_memory_ddr_used",
-							Help: "Com Memory usage",
-						},
-						[]string{"node_id", "metric"},
-					),
-					Metric: "com_memory_ddr_used",
-				},
-				{
-					Key:    "com_soc_cpu_usage",
-					Min:    getConfigValue("KPIRANGES_CPUUSAGE_MIN", 10),
-					Normal: getConfigValue("KPIRANGES_CPUUSAGE_NORMAL", 80),
-					Max:    getConfigValue("KPIRANGES_CPUUSAGE_MAX", 100),
-					KPI: prometheus.NewGaugeVec(
-						prometheus.GaugeOpts{
-							Name: "com_soc_cpu_usage",
-							Help: "Com CPU usage",
-						},
-						[]string{"node_id", "metric"},
-					),
-					Metric: "com_soc_cpu_usage",
-				},
-				
-				{
-					Key:    "ctl_memory_ddr_used",
-					Min:    getConfigValue("KPIRANGES_MEMORYUSAGE_MIN", 10),
-					Normal: getConfigValue("KPIRANGES_MEMORYUSAGE_NORMAL", 80),
-					Max:    getConfigValue("KPIRANGES_MEMORYUSAGE_MAX", 100),
-					KPI: prometheus.NewGaugeVec(
-						prometheus.GaugeOpts{
-							Name: "ctl_memory_ddr_used",
-							Help: "CTL Memory usage",
-						},
-						[]string{"node_id", "metric"},
-					),
-					Metric: "ctl_memory_ddr_used",
-				},
-				{
-					Key:    "ctl_soc_cpu_usage",
-					Min:    getConfigValue("KPIRANGES_CPUUSAGE_MIN", 10),
-					Normal: getConfigValue("KPIRANGES_CPUUSAGE_NORMAL", 80),
-					Max:    getConfigValue("KPIRANGES_CPUUSAGE_MAX", 100),
-					KPI: prometheus.NewGaugeVec(
-						prometheus.GaugeOpts{
-							Name: "ctl_soc_cpu_usage",
-							Help: "CTL CPU usage",
-						},
-						[]string{"node_id", "metric"},
-					),
-					Metric: "ctl_soc_cpu_usage",
-				},
-				
-				//// END ///
-				{
-					Key:    "txpower",
+					Key:    "com_power_power_power_total_watts",
 					Min:    getConfigValue("KPIRANGES_TXPOWER_MIN", 25),
 					Normal: getConfigValue("KPIRANGES_TXPOWER_NORMAL", 31),
 					Max:    getConfigValue("KPIRANGES_TXPOWER_MAX", 34),
 					KPI: prometheus.NewGaugeVec(
 						prometheus.GaugeOpts{
-							Name: "txpower",
-							Help: "Transmit power",
+							Name: "com_power_power_power_total_watts",
+							Help: "Total power",
 						},
 						[]string{"node_id", "metric"},
 					),
-					Metric: "txpower",
+					Metric: "com_power_power_power_total_watts",
+				},
+				{
+					Key:    "ctl_sensors_adc_tp_tx_power",
+					Min:    getConfigValue("KPIRANGES_TXPOWER_MIN", 25),
+					Normal: getConfigValue("KPIRANGES_TXPOWER_NORMAL", 31),
+					Max:    getConfigValue("KPIRANGES_TXPOWER_MAX", 34),
+					KPI: prometheus.NewGaugeVec(
+						prometheus.GaugeOpts{
+							Name: "ctl_sensors_adc_tp_tx_power",
+							Help: "TX power",
+						},
+						[]string{"node_id", "metric"},
+					),
+					Metric: "ctl_sensors_adc_tp_tx_power",
+				},
+				{
+					Key:    "ctl_sensors_adc_rp_rx_power",
+					Min:    getConfigValue("KPIRANGES_TXPOWER_MIN", 25),
+					Normal: getConfigValue("KPIRANGES_TXPOWER_NORMAL", 31),
+					Max:    getConfigValue("KPIRANGES_TXPOWER_MAX", 34),
+					KPI: prometheus.NewGaugeVec(
+						prometheus.GaugeOpts{
+							Name: "ctl_sensors_adc_rp_rx_power",
+							Help: "RX power",
+						},
+						[]string{"node_id", "metric"},
+					),
+					Metric: "ctl_sensors_adc_rp_rx_power",
+				},
+				{
+					Key:    "ctl_sensors_adc_pa_pa_power",
+					Min:    getConfigValue("KPIRANGES_TXPOWER_MIN", 25),
+					Normal: getConfigValue("KPIRANGES_TXPOWER_NORMAL", 31),
+					Max:    getConfigValue("KPIRANGES_TXPOWER_MAX", 34),
+					KPI: prometheus.NewGaugeVec(
+						prometheus.GaugeOpts{
+							Name: "ctl_sensors_adc_pa_pa_power",
+							Help: "PA power",
+						},
+						[]string{"node_id", "metric"},
+					),
+					Metric: "ctl_sensors_adc_pa_pa_power",
+				},
+				{
+					Key:    "ctl_sensors_femd_fem1_temperature_c",
+					Min:    getConfigValue("KPIRANGES_TXPOWER_MIN", 25),
+					Normal: getConfigValue("KPIRANGES_TXPOWER_NORMAL", 31),
+					Max:    getConfigValue("KPIRANGES_TXPOWER_MAX", 34),
+					KPI: prometheus.NewGaugeVec(
+						prometheus.GaugeOpts{
+							Name: "ctl_sensors_femd_fem1_temperature_c",
+							Help: "FEM1 temperature",
+						},
+						[]string{"node_id", "metric"},
+					),
+					Metric: "ctl_sensors_femd_fem1_temperature_c",
+				},
+				{
+					Key:    "ctl_sensors_femd_fem2_temperature_c",
+					Min:    getConfigValue("KPIRANGES_TXPOWER_MIN", 25),
+					Normal: getConfigValue("KPIRANGES_TXPOWER_NORMAL", 31),
+					Max:    getConfigValue("KPIRANGES_TXPOWER_MAX", 34),
+					KPI: prometheus.NewGaugeVec(
+						prometheus.GaugeOpts{
+							Name: "ctl_sensors_femd_fem2_temperature_c",
+							Help: "FEM2 temperature",
+						},
+						[]string{"node_id", "metric"},
+					),
+					Metric: "ctl_sensors_femd_fem2_temperature_c",
 				},
 			},
 		},

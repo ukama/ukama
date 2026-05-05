@@ -16,6 +16,25 @@ import LineChart from '../LineChart';
 import NodeStatItem from '../NodeStatItem';
 import NodeStatsContainer from '../NodeStatsContainer';
 
+const withApiDisplayMeta = (
+  config: any,
+  statsData: MetricsStateRes,
+  metrics: any,
+) => {
+  const statMeta = statsData?.metrics?.find((m: any) => m.type === config.id);
+  const rangeMeta = metrics?.metrics?.find((m: any) => m.type === config.id);
+  const meta = statMeta ?? rangeMeta;
+
+  return {
+    ...config,
+    unit: meta?.unit ?? config.unit,
+    format: meta?.format ?? config.format ?? 'number',
+    tickInterval: meta?.tickInterval ?? config.tickInterval,
+    tickPositions: meta?.tickPositions ?? config.tickPositions,
+    threshold: meta?.threshold ?? config.threshold,
+  };
+};
+
 interface INodeRadioTab {
   metrics: any;
   loading: boolean;
@@ -29,9 +48,13 @@ const NodeRadioTab = ({
   metrics,
   metricFrom,
   statLoading,
+  selectedNode,
   nodeMetricsStatData,
 }: INodeRadioTab) => {
-  const radioConfig = NODE_KPIS.RADIO[NodeTypeEnum.Tnode];
+  const nodeType = selectedNode?.type ?? NodeTypeEnum.Tnode;
+  const radioConfig = NODE_KPIS.RADIO[nodeType].map((config) =>
+    withApiDisplayMeta(config, nodeMetricsStatData, metrics),
+  );
   return (
     <Grid container spacing={3}>
       <Grid size={{ xs: 12, md: 3 }}>

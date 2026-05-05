@@ -22,6 +22,8 @@ import {
   formatKPIValue,
   getBaseURL,
   getGraphsKeyByType,
+  getInfraGraphKpiKeysByType,
+  getNodeTypeFromId,
   getScopesByRole,
   transformMetricsArray,
   wsUrlResolver,
@@ -69,7 +71,17 @@ const processMetricResult = (metric: any) => ({
   networkId: metric.networkId || "",
   packageId: metric.packageId || "",
   dataPlanId: metric.dataPlanId || "",
-  value: metric.values[metric.values.length - 1][1],
+  value:
+    Array.isArray(metric.values) && metric.values.length > 0
+      ? metric.values[metric.values.length - 1][1]
+      : 0,
+  unit: metric.unit || "",
+  format: metric.format || "number",
+  tickInterval: metric.tickInterval || 0,
+  tickPositions: Array.isArray(metric.tickPositions)
+    ? metric.tickPositions
+    : [],
+  threshold: metric.threshold || { min: 0, normal: 0, max: 0 },
 });
 
 const handleWebSocketMessage = (
@@ -103,6 +115,13 @@ const handleWebSocketMessage = (
               Math.floor(result.value[0]) * 1000,
               formatKPIValue(res.Name, result.value[1]),
             ],
+            unit: res.unit || "",
+            format: res.format || "number",
+            tickInterval: Number(res.tickInterval || 0),
+            tickPositions: Array.isArray(res.tickPositions)
+              ? res.tickPositions
+              : [],
+            threshold: res.threshold || { min: 0, normal: 0, max: 0 },
           });
         }
       });
@@ -232,7 +251,10 @@ class SubscriptionsResolvers {
     const { type, from, userId, withSubscription, nodeId } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
 
-    const metricsKey = getGraphsKeyByType(type);
+    const metricsKey = getGraphsKeyByType(
+      type,
+      getNodeTypeFromId(nodeId || "")
+    );
     const metrics: MetricsStateRes = { metrics: [] };
 
     if (metricsKey.length > 0) {
@@ -305,8 +327,10 @@ class SubscriptionsResolvers {
     const { type, from, userId, nodeId, to } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
 
-    const metricsKey = getGraphsKeyByType(type);
-
+    const metricsKey = getGraphsKeyByType(
+      type,
+      getNodeTypeFromId(nodeId || "")
+    );
     if (metricsKey.length > 0) {
       const metricPromises = metricsKey.map(
         async key =>
@@ -462,7 +486,7 @@ class SubscriptionsResolvers {
       const { type, from, withSubscription, nodeIds, siteIds } = data;
       if (from === 0) throw new Error("Argument 'from' can't be zero.");
 
-      const metricsKey = getGraphsKeyByType(type);
+      const metricsKey = getInfraGraphKpiKeysByType(type);
       const metrics: MetricsStateRes = { metrics: [] };
 
       if (metricsKey.length > 0) {
@@ -538,7 +562,7 @@ class SubscriptionsResolvers {
     const { type, from, userId, siteId, to, nodeIds } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
 
-    const metricsKey = getGraphsKeyByType(type);
+    const metricsKey = getInfraGraphKpiKeysByType(type);
 
     if (metricsKey.length > 0) {
       const metricPromises = metricsKey.map(

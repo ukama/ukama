@@ -8,10 +8,11 @@
 
 import { Node, SiteDto as Site } from '@/client/graphql/generated';
 import { colors } from '@/theme';
-import { duration, hexToRGB } from '@/utils';
+import { hexToRGB } from '@/utils';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import InfoIcon from '@mui/icons-material/InfoOutlined';
 import { MenuItem, SelectChangeEvent, Stack, Typography } from '@mui/material';
+import { formatDistance } from 'date-fns';
 import LoadingWrapper from '../LoadingWrapper';
 import { PaperProps, SelectDisplayProps, SelectStyle } from './styles';
 
@@ -109,7 +110,12 @@ const NodeDropDown = ({
         <Typography variant={'subtitle1'}>
           {isReady ? (
             <>
-              {selected.name} is up for <b>{duration(uptime)}</b>
+              Node is up for{' '}
+              <b>
+                {formatDistance(0, Math.floor(uptime) * 1000, {
+                  includeSeconds: true,
+                })}
+              </b>
             </>
           ) : (
             <>{selected.name} is offline</>
