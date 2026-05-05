@@ -94,7 +94,7 @@ prepare_image_if_needed() {
 
     if ! image_format=$(detect_image_format "$image_path"); then
         echo "Unsupported image format: $image_path" | tee -a "$ORCHESTRATOR_LOG"
-        echo "Expected a raw disk image or a gzip/xz/zstd/bzip2-compressed raw image" | tee -a "$ORCHESTRATOR_LOG"
+        echo "Expected a raw disk image, an HDD Raw Copy .imgc image, or a gzip/xz/zstd/bzip2-compressed raw image" | tee -a "$ORCHESTRATOR_LOG"
         exit 1
     fi
 
