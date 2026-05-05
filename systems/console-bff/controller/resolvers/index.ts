@@ -7,22 +7,22 @@
  */
 import { NonEmptyArray } from "type-graphql";
 
-import { ExampleResolver } from "./exampleResolver";
+import { PingSwitchPortResolver } from "./pingSwitchPort";
 import { RestartNodeResolver } from "./restartNode";
 import { RestartNodesResolver } from "./restartNodes";
 import { RestartSiteResolver } from "./restartSite";
-import { ToggleInternetSwitchResolver } from "./toggleInternetSwitch";
 import { ToggleRFStatusResolver } from "./toggleRFStatus";
 import { ToggleServiceResolver } from "./toggleService";
+import { ToggleSwitchPortResolver } from "./toggleSwitchPort";
 
 const resolvers: NonEmptyArray<any> = [
-  ExampleResolver,
+  PingSwitchPortResolver,
   RestartNodeResolver,
   RestartNodesResolver,
   RestartSiteResolver,
   ToggleServiceResolver,
   ToggleRFStatusResolver,
-  ToggleInternetSwitchResolver,
+  ToggleSwitchPortResolver,
 ];
 
 export default resolvers;

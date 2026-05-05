@@ -32,15 +32,24 @@ export class RestartSiteInputDto {
 }
 
 @InputType()
-export class ToggleInternetSwitchInputDto {
+export class ToggleSwitchPortInputDto {
   @Field()
-  siteId: string;
+  nodeId: string;
 
   @Field()
   port: number;
 
   @Field()
   status: boolean;
+}
+
+@InputType()
+export class PingSwitchPortInputDto {
+  @Field()
+  nodeId: string;
+
+  @Field()
+  port: number;
 }
 
 @InputType()

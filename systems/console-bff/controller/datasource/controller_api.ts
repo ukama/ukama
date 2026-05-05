@@ -10,11 +10,12 @@ import { RESTDataSource } from "@apollo/datasource-rest";
 import { VERSION } from "../../common/configs";
 import { TBooleanResponse } from "../../common/types";
 import {
+  PingSwitchPortInputDto,
   RestartNodeInputDto,
   RestartNodesInputDto,
   RestartSiteInputDto,
-  ToggleInternetSwitchInputDto,
   ToggleRFStatusInputDto,
+  ToggleSwitchPortInputDto,
 } from "../resolvers/types";
 
 const CONTROLLER = "controller";
@@ -75,20 +76,18 @@ class ControllerApi extends RESTDataSource {
       });
   };
 
-  toggleInternetSwitch = async (
+  toggleSwitchPort = async (
     baseURL: string,
-    req: ToggleInternetSwitchInputDto
+    req: ToggleSwitchPortInputDto
   ): Promise<TBooleanResponse> => {
-    this.logger.info(
-      `ToggleInternetSwitch [POST]: ${baseURL}/${VERSION}/${CONTROLLER}/sites/${req.siteId}/toggle-internet-switch`
-    );
-
     this.baseURL = baseURL;
+    this.logger.info(
+      `ToggleSwitchPort [POST]: ${baseURL}/${VERSION}/${CONTROLLER}/nodes/${req.nodeId}/switch-ports/${req.port}/toggle`
+    );
     return this.post(
-      `/${VERSION}/${CONTROLLER}/sites/${req.siteId}/toggle-internet-port`,
+      `/${VERSION}/${CONTROLLER}/nodes/${req.nodeId}/switch-ports/${req.port}/toggle`,
       {
         body: {
-          port: req.port,
           status: req.status,
         },
       }
@@ -100,6 +99,25 @@ class ControllerApi extends RESTDataSource {
         return { success: false };
       });
   };
+  pingSwitchPort = async (
+    baseURL: string,
+    req: PingSwitchPortInputDto
+  ): Promise<TBooleanResponse> => {
+    this.baseURL = baseURL;
+    this.logger.info(
+      `PingSwitchPort [GET]: ${baseURL}/${VERSION}/${CONTROLLER}/nodes/${req.nodeId}/switch-ports/${req.port}/ping`
+    );
+    return this.get(
+      `/${VERSION}/${CONTROLLER}/nodes/${req.nodeId}/switch-ports/${req.port}/ping`
+    )
+      .then(() => {
+        return { success: true };
+      })
+      .catch(() => {
+        return { success: false };
+      });
+  };
+
   toggleRFStatus = async (
     baseURL: string,
     req: ToggleRFStatusInputDto

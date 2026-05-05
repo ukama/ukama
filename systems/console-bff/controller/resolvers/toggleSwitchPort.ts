@@ -9,16 +9,16 @@ import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
 import { CBooleanResponse } from "../../common/types";
 import { Context } from "../context";
-import { ToggleInternetSwitchInputDto } from "./types";
+import { ToggleSwitchPortInputDto } from "./types";
 
 @Resolver()
-export class ToggleInternetSwitchResolver {
+export class ToggleSwitchPortResolver {
   @Mutation(() => CBooleanResponse)
-  async toggleInternetSwitch(
-    @Arg("data") data: ToggleInternetSwitchInputDto,
+  async toggleSwitchPort(
+    @Arg("data") data: ToggleSwitchPortInputDto,
     @Ctx() ctx: Context
   ): Promise<CBooleanResponse> {
     const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.toggleInternetSwitch(baseURL, data);
+    return dataSources.dataSource.toggleSwitchPort(baseURL, data);
   }
 }
