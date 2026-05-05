@@ -27,7 +27,7 @@ import (
 
 const testOrgName = "test-org"
 
-// TODO: Commenting this test as it is failing and not making sense to me, need to revisit this with @Brackleycassinga
+// TODO: Commenting this test as it is failing, need to revisit this with @Brackleycassinga
 // func TestControllerServer_RestartSite(t *testing.T) {
 // 	// Arrange
 // 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
@@ -204,4 +204,93 @@ func TestControllerServer_ToggleNodeService_InvalidNodeId(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "node is not a tower node")
+}
+
+func TestControllerServer_PingSwitchPort(t *testing.T) {
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	conRepo := &mocks.NodeLogRepo{}
+
+	nodeId := "uk-983794-cnode-78-7830"
+	port := int32(9)
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
+
+	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
+		Target:     "test-org" + "..." + nodeId,
+		HttpMethod: "GET",
+		Path:       "/switch/v1/ports/9",
+		Msg:        []byte(""),
+		NodeId:     nodeId,
+	}).Return(nil).Once()
+
+	_, err := s.PingSwitchPort(context.TODO(), &pb.PingSwitchPortRequest{
+		NodeId: nodeId,
+		Port:   port,
+	})
+
+	msgclientRepo.AssertExpectations(t)
+	assert.NoError(t, err)
+}
+
+func TestControllerServer_PingSwitchPort_InvalidNodeType(t *testing.T) {
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	conRepo := &mocks.NodeLogRepo{}
+
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
+
+	_, err := s.PingSwitchPort(context.TODO(), &pb.PingSwitchPortRequest{
+		NodeId: "uk-983794-tnode-78-7830",
+		Port:   1,
+	})
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "node is not a cnode")
+}
+
+func TestControllerServer_ToggleSwitchPort(t *testing.T) {
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	conRepo := &mocks.NodeLogRepo{}
+
+	nodeId := "uk-983794-cnode-78-7830"
+	port := int32(9)
+	status := true
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
+
+	jsonBody := map[string]bool{"on": status}
+	data, err := json.Marshal(jsonBody)
+	if err != nil {
+		t.Fatalf("failed to marshal message: %v", err)
+	}
+
+	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
+		Target:     "test-org" + "..." + nodeId,
+		HttpMethod: "POST",
+		Path:       "/switch/v1/ports/9/poe",
+		Msg:        data,
+		NodeId:     nodeId,
+	}).Return(nil).Once()
+
+	_, err = s.ToggleSwitchPort(context.TODO(), &pb.ToggleSwitchPortRequest{
+		NodeId: nodeId,
+		Port:   port,
+		Status: status,
+	})
+
+	msgclientRepo.AssertExpectations(t)
+	assert.NoError(t, err)
+}
+
+func TestControllerServer_ToggleSwitchPort_InvalidNodeType(t *testing.T) {
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	conRepo := &mocks.NodeLogRepo{}
+
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
+
+	_, err := s.ToggleSwitchPort(context.TODO(), &pb.ToggleSwitchPortRequest{
+		NodeId: "uk-983794-anode-78-7830",
+		Port:   2,
+		Status: true,
+	})
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "node is not a cnode")
 }

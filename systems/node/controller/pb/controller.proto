@@ -11,9 +11,18 @@ service ControllerService {
   rpc RestartNode(RestartNodeRequest) returns (RestartNodeResponse);
   rpc RestartNodes(RestartNodesRequest) returns (RestartNodesResponse);
   rpc ToggleRfSwitch(ToggleRfSwitchRequest) returns (ToggleRfSwitchResponse);
-  rpc ToggleInternetSwitch(ToggleInternetSwitchRequest) returns (ToggleInternetSwitchResponse);
+  rpc ToggleSwitchPort(ToggleSwitchPortRequest) returns (ToggleSwitchPortResponse);
   rpc ToggleNodeService(ToggleNodeServiceRequest) returns (ToggleNodeServiceResponse);
   rpc PingNode(PingNodeRequest) returns  (PingNodeResponse);
+  rpc PingSwitchPort(PingSwitchPortRequest) returns (PingSwitchPortResponse);
+}
+
+message PingSwitchPortRequest {
+  string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+  int32 port = 2;
+}
+
+message PingSwitchPortResponse {
 }
 
 message PingNodeRequest {
@@ -27,12 +36,13 @@ message RestartNodesRequest {
   repeated string nodeIds = 2 [(validator.field) = {string_not_empty: true}, json_name = "node_ids"];
 }
 
-message ToggleInternetSwitchRequest {
-  string siteId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "site_id"];
-  bool status = 2;  // true for on, false for off
-  int32 port = 3;  // New field to specify the port number
+message ToggleSwitchPortRequest {
+  string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+  bool status = 2;
+  int32 port = 3;
 }
-message ToggleInternetSwitchResponse {
+
+message ToggleSwitchPortResponse {
 }
 
 message RestartNodesResponse {
@@ -51,7 +61,6 @@ message ToggleRfSwitchResponse {
 
 message RestartNodeRequest {
   string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
-
 }
 
 message RestartSiteRequest {

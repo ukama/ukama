@@ -12,6 +12,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	log "github.com/sirupsen/logrus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
@@ -37,7 +38,7 @@ var actions = map[string]struct {
 }{
 	"RESTART":   {path: "/device/v1/restart", method: "POST"},
 	"PING":     {path: "/device/v1/ping", method: "GET"},
-	"SWITCH":   {path: "/device/v1/switch", method: "POST"},
+	"SWITCH":   {path: "/switch/v1/ports", method: "POST"},
 	"RADIO":    {path: "/device/v1/radio", method: "POST"},
 	"SERVICE":  {path: "/device/v1/service", method: "POST"},
 }
@@ -170,6 +171,27 @@ func (c *ControllerServer) PingNode(ctx context.Context, req *pb.PingNodeRequest
 	return &pb.PingNodeResponse{}, nil
 }
 
+func (c *ControllerServer) PingSwitchPort(ctx context.Context, req *pb.PingSwitchPortRequest) (*pb.PingSwitchPortResponse, error) {
+	nId, err := ukama.ValidateNodeId(req.NodeId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of node id. Error %s", err.Error())
+	}
+
+	ntype := ukama.GetNodeType(nId.String())
+	if *ntype != ukama.NODE_ID_TYPE_CNODE{
+		return nil, status.Errorf(codes.InvalidArgument, "node is not a cnode")
+	}
+
+	path := actions["SWITCH"].path + "/" + strconv.Itoa(int(req.Port))
+	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), "GET", path, nId.String(), []byte(""))
+	if err != nil {
+		log.Errorf("Failed to publish message. Errors %s", err.Error())
+		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
+	}
+	return &pb.PingSwitchPortResponse{}, nil
+}
+
 func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNodesRequest) (*pb.RestartNodesResponse, error) {
 	if len(req.NodeIds) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "node IDs cannot be empty")
@@ -206,39 +228,33 @@ func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNode
 	return &pb.RestartNodesResponse{}, nil
 
 }
-func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.ToggleInternetSwitchRequest) (*pb.ToggleInternetSwitchResponse, error) {
-	log.Infof("Toggling internet switch for site %v, port %v to %v", req.SiteId, req.Port, req.Status)
 
-	if req.SiteId == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "site ID cannot be empty")
-	}
-	siteId, err := uuid.FromString(req.GetSiteId())
+func (c *ControllerServer) ToggleSwitchPort(ctx context.Context, req *pb.ToggleSwitchPortRequest) (*pb.ToggleSwitchPortResponse, error) {
+	log.Infof("Toggling switch port for node %v, port %v to %v", req.NodeId, req.Port, req.Status)
+	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid site ID format: %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of node id. Error %s", err.Error())
+	}
+	
+	ntype := ukama.GetNodeType(nId.String())
+	if *ntype != ukama.NODE_ID_TYPE_CNODE{
+		return nil, status.Errorf(codes.InvalidArgument, "node is not a cnode")
 	}
 
-	_, err = c.siteClient.Get(req.SiteId)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to validate site %s. Error %s", req.SiteId, err.Error())
-	}
-
-	msg := &pb.ToggleInternetSwitchRequest{
-		SiteId: siteId.String(),
-		Status: req.Status,
-		Port:   req.Port,
-	}
-	data, err := proto.Marshal(msg)
+	path := actions["SWITCH"].path + "/" + strconv.Itoa(int(req.Port)) + "/poe"
+	jsonBody := map[string]bool{"on": req.Status}
+	data, err := json.Marshal(jsonBody)
 	if err != nil {
 		return nil, err
 	}
-	err = c.publishMessage(c.orgName+"."+"."+"."+siteId.String(), actions["SWITCH"].method, actions["SWITCH"].path, siteId.String(), data)
+	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), actions["SWITCH"].method, path, nId.String(), data)
 
 	if err != nil {
 		log.Errorf("Failed to publish switch port reboot message. Errors: %s", err.Error())
 		return nil, status.Errorf(codes.Internal, "Failed to publish switch port reboot message: %s", err.Error())
 	}
-	return &pb.ToggleInternetSwitchResponse{}, nil
+	return &pb.ToggleSwitchPortResponse{}, nil
 }
 
 func (c *ControllerServer) ToggleRfSwitch(ctx context.Context, req *pb.ToggleRfSwitchRequest) (*pb.ToggleRfSwitchResponse, error) {

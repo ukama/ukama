@@ -44,6 +44,36 @@ func (_m *ControllerServiceServer) PingNode(_a0 context.Context, _a1 *gen.PingNo
 	return r0, r1
 }
 
+// PingSwitchPort provides a mock function with given fields: _a0, _a1
+func (_m *ControllerServiceServer) PingSwitchPort(_a0 context.Context, _a1 *gen.PingSwitchPortRequest) (*gen.PingSwitchPortResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PingSwitchPort")
+	}
+
+	var r0 *gen.PingSwitchPortResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PingSwitchPortRequest) (*gen.PingSwitchPortResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PingSwitchPortRequest) *gen.PingSwitchPortResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.PingSwitchPortResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.PingSwitchPortRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RestartNode provides a mock function with given fields: _a0, _a1
 func (_m *ControllerServiceServer) RestartNode(_a0 context.Context, _a1 *gen.RestartNodeRequest) (*gen.RestartNodeResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -134,36 +164,6 @@ func (_m *ControllerServiceServer) RestartSite(_a0 context.Context, _a1 *gen.Res
 	return r0, r1
 }
 
-// ToggleInternetSwitch provides a mock function with given fields: _a0, _a1
-func (_m *ControllerServiceServer) ToggleInternetSwitch(_a0 context.Context, _a1 *gen.ToggleInternetSwitchRequest) (*gen.ToggleInternetSwitchResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ToggleInternetSwitch")
-	}
-
-	var r0 *gen.ToggleInternetSwitchResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleInternetSwitchRequest) (*gen.ToggleInternetSwitchResponse, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleInternetSwitchRequest) *gen.ToggleInternetSwitchResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ToggleInternetSwitchResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ToggleInternetSwitchRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // ToggleNodeService provides a mock function with given fields: _a0, _a1
 func (_m *ControllerServiceServer) ToggleNodeService(_a0 context.Context, _a1 *gen.ToggleNodeServiceRequest) (*gen.ToggleNodeServiceResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -216,6 +216,36 @@ func (_m *ControllerServiceServer) ToggleRfSwitch(_a0 context.Context, _a1 *gen.
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.ToggleRfSwitchRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ToggleSwitchPort provides a mock function with given fields: _a0, _a1
+func (_m *ControllerServiceServer) ToggleSwitchPort(_a0 context.Context, _a1 *gen.ToggleSwitchPortRequest) (*gen.ToggleSwitchPortResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ToggleSwitchPort")
+	}
+
+	var r0 *gen.ToggleSwitchPortResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleSwitchPortRequest) (*gen.ToggleSwitchPortResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleSwitchPortRequest) *gen.ToggleSwitchPortResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ToggleSwitchPortResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ToggleSwitchPortRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

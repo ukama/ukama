@@ -53,6 +53,43 @@ func (_m *ControllerServiceClient) PingNode(ctx context.Context, in *gen.PingNod
 	return r0, r1
 }
 
+// PingSwitchPort provides a mock function with given fields: ctx, in, opts
+func (_m *ControllerServiceClient) PingSwitchPort(ctx context.Context, in *gen.PingSwitchPortRequest, opts ...grpc.CallOption) (*gen.PingSwitchPortResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PingSwitchPort")
+	}
+
+	var r0 *gen.PingSwitchPortResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PingSwitchPortRequest, ...grpc.CallOption) (*gen.PingSwitchPortResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PingSwitchPortRequest, ...grpc.CallOption) *gen.PingSwitchPortResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.PingSwitchPortResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.PingSwitchPortRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RestartNode provides a mock function with given fields: ctx, in, opts
 func (_m *ControllerServiceClient) RestartNode(ctx context.Context, in *gen.RestartNodeRequest, opts ...grpc.CallOption) (*gen.RestartNodeResponse, error) {
 	_va := make([]interface{}, len(opts))
@@ -164,43 +201,6 @@ func (_m *ControllerServiceClient) RestartSite(ctx context.Context, in *gen.Rest
 	return r0, r1
 }
 
-// ToggleInternetSwitch provides a mock function with given fields: ctx, in, opts
-func (_m *ControllerServiceClient) ToggleInternetSwitch(ctx context.Context, in *gen.ToggleInternetSwitchRequest, opts ...grpc.CallOption) (*gen.ToggleInternetSwitchResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ToggleInternetSwitch")
-	}
-
-	var r0 *gen.ToggleInternetSwitchResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleInternetSwitchRequest, ...grpc.CallOption) (*gen.ToggleInternetSwitchResponse, error)); ok {
-		return rf(ctx, in, opts...)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleInternetSwitchRequest, ...grpc.CallOption) *gen.ToggleInternetSwitchResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ToggleInternetSwitchResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ToggleInternetSwitchRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // ToggleNodeService provides a mock function with given fields: ctx, in, opts
 func (_m *ControllerServiceClient) ToggleNodeService(ctx context.Context, in *gen.ToggleNodeServiceRequest, opts ...grpc.CallOption) (*gen.ToggleNodeServiceResponse, error) {
 	_va := make([]interface{}, len(opts))
@@ -267,6 +267,43 @@ func (_m *ControllerServiceClient) ToggleRfSwitch(ctx context.Context, in *gen.T
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.ToggleRfSwitchRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ToggleSwitchPort provides a mock function with given fields: ctx, in, opts
+func (_m *ControllerServiceClient) ToggleSwitchPort(ctx context.Context, in *gen.ToggleSwitchPortRequest, opts ...grpc.CallOption) (*gen.ToggleSwitchPortResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ToggleSwitchPort")
+	}
+
+	var r0 *gen.ToggleSwitchPortResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleSwitchPortRequest, ...grpc.CallOption) (*gen.ToggleSwitchPortResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleSwitchPortRequest, ...grpc.CallOption) *gen.ToggleSwitchPortResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ToggleSwitchPortResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ToggleSwitchPortRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

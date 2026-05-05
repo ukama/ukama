@@ -17,6 +17,15 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *PingSwitchPortRequest) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
+	return nil
+}
+func (this *PingSwitchPortResponse) Validate() error {
+	return nil
+}
 func (this *PingNodeRequest) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
@@ -43,19 +52,13 @@ func (this *RestartNodesRequest) Validate() error {
 	}
 	return nil
 }
-
-var _regex_ToggleInternetSwitchRequest_SiteId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-
-func (this *ToggleInternetSwitchRequest) Validate() error {
-	if !_regex_ToggleInternetSwitchRequest_SiteId.MatchString(this.SiteId) {
-		return github_com_mwitkow_go_proto_validators.FieldError("SiteId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SiteId))
-	}
-	if this.SiteId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("SiteId", fmt.Errorf(`value '%v' must not be an empty string`, this.SiteId))
+func (this *ToggleSwitchPortRequest) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
 	}
 	return nil
 }
-func (this *ToggleInternetSwitchResponse) Validate() error {
+func (this *ToggleSwitchPortResponse) Validate() error {
 	return nil
 }
 func (this *RestartNodesResponse) Validate() error {
