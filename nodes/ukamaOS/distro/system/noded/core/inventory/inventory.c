@@ -22,20 +22,20 @@
 #include "usys_string.h"
 
 static int validate_node_type(NodeType node) {
-    int ret = 0;
+
     switch (node) {
     case UNIT_TNODESDR:
     case UNIT_TNODELTE:
     case UNIT_HNODE:
     case UNIT_ANODE:
     case UNIT_PSNODE:
-        ret = 1;
-        break;
+    case UNIT_CNODE:
+        return 1;
     default:
-        ret = 0;
+        return -1;
     }
 
-    return ret;
+    return -1;
 }
 
 static int validate_node_info(NodeInfo *nodeInfo) {

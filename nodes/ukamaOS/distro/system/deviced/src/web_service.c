@@ -409,6 +409,8 @@ int web_service_cb_state(const URequest *request,
 
     if (strcmp(config->nodeType, UKAMA_TOWER_NODE) == 0) {
         json_object_set_new(json, "service", json_string(state));
+    } else if (strcmp(config->nodeType, UKAMA_CONTROLLER_NODE) == 0){
+        json_object_set_new(json, "service", json_string(state));
     } else if (strcmp(config->nodeType, UKAMA_AMPLIFIER_NODE) == 0) {
         json_object_set_new(json, "radio", json_string(state));
     } else {
@@ -432,10 +434,6 @@ int web_service_cb_post_service(const URequest *request,
     config = (Config *)epConfig;
     if (!config || !config->nodeType) {
         return json_set_empty(response, HttpStatus_InternalServerError);
-    }
-
-    if (strcmp(config->nodeType, UKAMA_TOWER_NODE) != 0) {
-        return json_set_empty(response, HttpStatus_BadRequest);
     }
 
     return _post_state_change(request, response, config, CONTROL_SUBSYS_SERVICE);

@@ -28,3 +28,5 @@
 	bin="bootstrap"
 	path="/sbin"
 	args="--config /ukama/configs/bootstrap/config.toml"
+        group="on-boot"
+

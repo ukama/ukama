@@ -38,14 +38,6 @@ static ControlSubsysState *get_subsys(ControlCtx *ctx, ControlSubsystem subsyste
     return ss;
 }
 
-static bool is_active_phase(ControlPhase phase) {
-
-    if (phase == CONTROL_PHASE_PENDING)   return true;
-    if (phase == CONTROL_PHASE_EXECUTING) return true;
-
-    return false;
-}
-
 static bool is_pending_subsys(ControlSubsysState *ss) {
 
     if (!ss) return false;
@@ -125,11 +117,17 @@ int control_get_public_state(ControlCtx *ctx,
     ControlSubsysState *ss = NULL;
     const char *stateStr = NULL;
 
-    if (!ctx || !nodeType || !outState || outStateSize == 0) return STATUS_NOK;
+    if (!ctx ||
+        !nodeType ||
+        !outState ||
+        outStateSize == 0)
+        return STATUS_NOK;
 
     pthread_mutex_lock(&ctx->Lock);
 
     if (strcmp(nodeType, UKAMA_TOWER_NODE) == 0) {
+        ss = &ctx->Service;
+    } else if (strcmp(nodeType, UKAMA_CONTROLLER_NODE) == 0){
         ss = &ctx->Service;
     } else if (strcmp(nodeType, UKAMA_AMPLIFIER_NODE) == 0) {
         ss = &ctx->Radio;

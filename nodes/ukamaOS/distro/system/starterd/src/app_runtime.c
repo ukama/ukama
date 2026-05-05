@@ -244,7 +244,7 @@ bool app_runtime_start(Config *config, App *app, const char *execPath) {
     return true;
 }
 
-static bool runtime_wait_pid(pid_t pid, int timeoutSec) {
+static int runtime_wait_pid(pid_t pid, int timeoutSec, int *statusOut) {
 
     time_t start;
     int status;
@@ -253,17 +253,31 @@ static bool runtime_wait_pid(pid_t pid, int timeoutSec) {
     start = time(NULL);
     while (true) {
         r = waitpid(pid, &status, WNOHANG);
-        if (r == pid) return true;
-        if (r == -1 && errno == ECHILD) return true;
+        if (r == pid) {
+            if (statusOut) {
+                *statusOut = status;
+            }
+            return 1;
+        }
 
-        if ((int)(time(NULL) - start) >= timeoutSec) break;
+        if (r == -1 && errno == ECHILD) {
+            return -1;
+        }
+
+        if ((int)(time(NULL) - start) >= timeoutSec) {
+            break;
+        }
+
         usleep(100 * 1000);
     }
 
-    return false;
+    return 0;
 }
 
 bool app_runtime_stop(Config *config, App *app) {
+
+    int status;
+    int rc;
 
     if (!config || !app) return false;
 
@@ -271,17 +285,47 @@ bool app_runtime_stop(Config *config, App *app) {
 
     killpg(app->pgid, SIGTERM);
 
-    if (!runtime_wait_pid(app->pid, config->termGraceSec)) {
-        killpg(app->pgid, SIGKILL);
-        runtime_wait_pid(app->pid, 2);
+    status = 0;
+    rc = runtime_wait_pid(app->pid, config->termGraceSec, &status);
+    if (rc == 1) {
+        app_runtime_note_exit(app, status);
+        return true;
     }
 
-    return true;
+    if (rc == -1) {
+        app->lastPid = app->pid;
+        app->lastPgid = app->pgid;
+        app->pid = 0;
+        app->pgid = 0;
+        return true;
+    }
+
+    killpg(app->pgid, SIGKILL);
+
+    status = 0;
+    rc = runtime_wait_pid(app->pid, 2, &status);
+    if (rc == 1) {
+        app_runtime_note_exit(app, status);
+        return true;
+    }
+
+    if (rc == -1) {
+        app->lastPid = app->pid;
+        app->lastPgid = app->pgid;
+        app->pid = 0;
+        app->pgid = 0;
+        return true;
+    }
+
+    return false;
 }
 
 void app_runtime_note_exit(App *app, int status) {
 
     if (!app) return;
+
+    app->lastPid = app->pid;
+    app->lastPgid = app->pgid;
 
     if (WIFEXITED(status)) {
         app->lastExitCode = WEXITSTATUS(status);
@@ -294,6 +338,6 @@ void app_runtime_note_exit(App *app, int status) {
         app->lastExitSignal = 0;
     }
 
-    app->pid = -1;
-    app->pgid = -1;
+    app->pid = 0;
+    app->pgid = 0;
 }

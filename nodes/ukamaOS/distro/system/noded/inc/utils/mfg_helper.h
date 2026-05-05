@@ -11,14 +11,14 @@
 
 #include "noded_macros.h"
 
-#define UUID_MAX_LENGTH			UUID_LENGTH
-#define NAME_MAX_LENGTH			NAME_LENGTH
+#define UUID_MAX_LENGTH                 UUID_LENGTH
+#define NAME_MAX_LENGTH                 NAME_LENGTH
 
-/* TYPE OF UNITS */
-#define MODULE_TYPE_MAX			6
+/* Supported module names */
+#define MODULE_TYPE_MAX                 7
 
 /* Max board Count */
-#define MAX_BOARDS				6
+#define MAX_BOARDS                      7
 
 /**
  * @fn      int verify_board_name(char*)

@@ -88,6 +88,8 @@ static SwitchdContext *ws_ctx(void *epConfig) {
     return (SwitchdContext *)epConfig;
 }
 
+extern JsonObj *switchd_debug_status_json(SwitchdContext *ctx);
+
 static int ws_get_port_id(const URequest *request, uint32_t *portId) {
     const char *value;
 
@@ -125,12 +127,45 @@ int web_service_cb_get_metrics(const URequest *request,
                                void *epConfig) {
     SwitchdContext *ctx;
     JsonObj *json;
+    int ret;
 
     (void)request;
 
     ctx = ws_ctx(epConfig);
+    if (ctx == NULL) {
+        return ws_reply_json(response, HttpStatus_OK, NULL);
+    }
+
+    /*
+     * /v1/metrics is consumed by metrics.d, so it must return the current
+     * switch view, not an empty cache. Keep this endpoint simple: refresh
+     * aggregate KPIs and per-port state, then serialize the cached result.
+     *
+     * switchd_refresh_* already serializes access to the driver using
+     * ctx->driverMutex, so this is safe even when the poller is running.
+     */
+    ret = switchd_refresh_kpis(ctx);
+    if (ret != SWITCHD_OK) {
+        usys_log_error("switchd: /v1/metrics refresh_kpis failed: %d", ret);
+    }
+
+    ret = switchd_refresh_ports(ctx);
+    if (ret != SWITCHD_OK) {
+        usys_log_error("switchd: /v1/metrics refresh_ports failed: %d", ret);
+    }
+
     json = json_serialize_metrics(ctx);
     return ws_reply_json(response, HttpStatus_OK, json);
+}
+
+int web_service_cb_get_status(const URequest *request,
+                             UResponse *response,
+                             void *epConfig) {
+    (void)request;
+
+    return ws_reply_json(response,
+                         HttpStatus_OK,
+                         switchd_debug_status_json(ws_ctx(epConfig)));
 }
 
 int web_service_cb_get_switch(const URequest *request,
@@ -485,6 +520,15 @@ int web_service_start(SwitchdContext *ctx, UInst *serviceInst) {
 
     ulfius_add_endpoint_by_val(serviceInst,
                                "GET",
+                               "/v1/status",
+                               NULL,
+                               0,
+                               &web_service_cb_get_status,
+                               ctx);
+    ws_setup_unsupported_methods(serviceInst, "GET", "/v1", "status");
+
+    ulfius_add_endpoint_by_val(serviceInst,
+                               "GET",
                                "/v1/switch",
                                NULL,
                                0,
@@ -624,17 +668,23 @@ int web_service_start(SwitchdContext *ctx, UInst *serviceInst) {
                                ctx);
     ws_setup_unsupported_methods(serviceInst, "POST", "/v1/firmware", "apply");
 
-    serviceInst->default_endpoint = web_service_cb_default;
+    if (ulfius_set_default_endpoint(serviceInst,
+                                    &web_service_cb_default,
+                                    ctx) != U_OK) {
+        usys_log_error("Failed to set default endpoint");
+        ulfius_clean_instance(serviceInst);
+        return STATUS_NOK;
+    }
 
     if (ulfius_start_framework(serviceInst) != U_OK) {
         ulfius_clean_instance(serviceInst);
         return STATUS_NOK;
     }
 
-    usys_log_info("%s web service listening on %s:%d",
-                  SERVICE_NAME,
-                  ctx->config.httpHost,
-                  ctx->config.httpPort);
+    usys_log_debug("%s web service listening on %s:%d",
+                   SERVICE_NAME,
+                   ctx->config.httpHost,
+                   ctx->config.httpPort);
 
     return STATUS_OK;
 }

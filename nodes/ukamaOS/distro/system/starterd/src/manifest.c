@@ -216,9 +216,12 @@ static App* m_parse_app(const char *spaceName, json_t *j) {
     }
 
     a->state        = APP_STATE_STOPPED;
+    a->reason       = APP_REASON_NONE;
     a->installState = INSTALL_STATE_NONE;
-    a->pid          = -1;
-    a->pgid         = -1;
+    a->pid          = 0;
+    a->pgid         = 0;
+    a->lastPid      = 0;
+    a->lastPgid     = 0;
     a->lastGoodTag  = strdup(tag);
 
     if (!a->lastGoodTag) {

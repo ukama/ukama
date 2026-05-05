@@ -212,6 +212,9 @@ build_utils() {
     [ -f "${NODED_ROOT}/utils/mock-sysfs-anode.sh" ] || die "Missing mock-sysfs-anode.sh"
     cp -f "${NODED_ROOT}/utils/mock-sysfs-anode.sh" "${BUILD_DIR}/utils/"
 
+    [ -f "${NODED_ROOT}/utils/mock-sysfs-cnode.sh" ] || die "Missing mock-sysfs-cnode.sh"
+    cp -f "${NODED_ROOT}/utils/mock-sysfs-cnode.sh" "${BUILD_DIR}/utils/"
+
     # gps.d helper
     [ -f "${UKAMA_ROOT}/nodes/apps/gps/scripts/process_gps_data.sh" ] || \
         die "Missing process_gps_data.sh"
@@ -244,6 +247,7 @@ build_utils() {
 
     chmod 0755 "${BUILD_DIR}/utils/prepare_env.sh"
     chmod 0755 "${BUILD_DIR}/utils/mock-sysfs-anode.sh"
+    chmod 0755 "${BUILD_DIR}/utils/mock-sysfs-cnode.sh"
     chmod 0755 "${BUILD_DIR}/utils/process_gps_data.sh"
     chmod 0755 "${BUILD_DIR}/utils/vedirect_sim.py"
     chmod 0755 "${BUILD_DIR}/utils/vedirect_emulator.py"
@@ -265,14 +269,20 @@ build_sysfs() {
 
     log "INFO" "Preparing sysfs (type=${node_type}, uuid=${node_uuid})"
 
-    if [ $node_type == "anode" ]; then
+    if [ "$node_type" = "anode" ]; then
         "${NODED_ROOT}/utils/mock-sysfs-anode.sh" --clean
         "${NODED_ROOT}/utils/mock-sysfs-anode.sh"
-    elif [ $node_type == "tnode" ]; then
+
+    elif [ "$node_type" = "tnode" ]; then
         "${NODED_ROOT}/utils/prepare_env.sh" --clean
         "${NODED_ROOT}/utils/prepare_env.sh" -u tnode -u anode
+
+    elif [ "$node_type" = "cnode" ]; then
+        "${NODED_ROOT}/utils/mock-sysfs-cnode.sh" --clean
+        "${NODED_ROOT}/utils/mock-sysfs-cnode.sh"
+
     else
-        log "ERROR" "Uknown node type"
+        log "ERROR" "Unknown node type: ${node_type}"
         die "Can not proceed for unknown node type"
     fi
 
@@ -307,6 +317,15 @@ build_sysfs() {
                                           --f mfgdata/schema/trx.json \
                                           --n mask -m UK-SA9001-MSK-A1-1103 \
                                           --f mfgdata/schema/mask.json
+    elif [ "$node_type" = "cnode" ]; then
+        "${BUILD_DIR}/utils/genSchema" --u "${node_uuid}" \
+                                       --n cm4 \
+                                       --m UK-SA2602-CM4-1102 \
+                                       --f mfgdata/schema/cnode.json
+
+        "${BUILD_DIR}/utils/genInventory" --n cm4 \
+                                          --m UK-SA2602-CM4-1102 \
+                                          --f mfgdata/schema/cnode.json
     else
         log "ERROR" "Tmp sysfs not setup"
         die "Can not proceed for unknown node type"
@@ -435,6 +454,55 @@ setup_ukama_dirs() {
     log "SUCCESS" "Ukama directories created at ${BUILD_DIR}/ukama"
 }
 
+build_casync_runtime() {
+    local vendor_root=""
+    local casync_bin=""
+    local lib=""
+
+    update_ukama_os_env
+
+    vendor_root="${UKAMA_OS}/distro/vendor"
+    casync_bin="${vendor_root}/build/bin/casync"
+
+    [ -d "${vendor_root}" ] || die "Failed to find vendor root at: ${vendor_root}"
+
+    if [ ! -x "${casync_bin}" ]; then
+        command -v make >/dev/null 2>&1 || die "make not found; unable to build casync"
+
+        log "INFO" "Building casync in ${vendor_root}"
+        make -C "${vendor_root}" casync
+    fi
+
+    [ -x "${casync_bin}" ] || die "Missing casync binary: ${casync_bin}"
+
+    mkdir -p "${BUILD_DIR}/usr/bin" \
+             "${BUILD_DIR}/usr/share/licenses" \
+             "${BUILD_DIR}/lib" \
+             "${BUILD_DIR}/lib64" \
+             "${BUILD_DIR}/usr/lib"
+
+    cp -f "${casync_bin}" "${BUILD_DIR}/usr/bin/casync"
+    chmod 0755 "${BUILD_DIR}/usr/bin/casync"
+
+    while IFS= read -r lib; do
+        [ -n "${lib}" ] || continue
+        [ -f "${lib}" ] || continue
+
+        mkdir -p "${BUILD_DIR}$(dirname "${lib}")"
+        cp -f "${lib}" "${BUILD_DIR}${lib}"
+    done < <(ldd "${casync_bin}" | awk '
+        /=>/ && $3 ~ /^\// { print $3 }
+        /^[[:space:]]*\// { print $1 }
+    ' | sort -u)
+
+    if [ -d "${vendor_root}/build/share/licenses/casync" ]; then
+        cp -a "${vendor_root}/build/share/licenses/casync" \
+              "${BUILD_DIR}/usr/share/licenses/"
+    fi
+
+    log "SUCCESS" "casync staged into ${BUILD_DIR}/usr/bin/casync"
+}
+
 build_image() {
     local file="${1:-}"
     local uuid="${2:-}"
@@ -448,14 +516,15 @@ build_image() {
 
     log "INFO" "Building image ${IMAGE_NS}/${IMAGE_NAME}:${name_tag}"
 
-    # copy capp's sbin, conf and lib to /sbin, /conf and /lib
     mkdir -p "${BUILD_DIR}/sbin" \
           "${BUILD_DIR}/lib" \
           "${BUILD_DIR}/conf" \
           "${BUILD_DIR}/tmp" \
-          "${BUILD_DIR}/bin"
+          "${BUILD_DIR}/bin" \
+          "${BUILD_DIR}/usr/bin"
 
-    # Safer copy of apps content: avoid failing if glob doesn't match
+    build_casync_runtime
+
     shopt -s nullglob
     for d in "${BUILD_DIR}"/apps/*; do
         [ -d "$d" ] || continue

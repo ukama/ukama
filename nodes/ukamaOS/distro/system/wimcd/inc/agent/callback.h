@@ -1,32 +1,36 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2021-present, Ukama Inc.
- */
+#ifndef WIMC_AGENT_CALLBACK_H_
+#define WIMC_AGENT_CALLBACK_H_
 
-#ifndef AGENT_CALLBACK_H
-#define AGENT_CALLBACK_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <ulfius.h>
+
+#include "wimc.h"
 
 int agent_web_service_cb_default(const URequest *request,
                                  UResponse *response,
-                                 void *data);
+                                 void *userData);
+
 int agent_web_service_cb_post_capp(const URequest *request,
                                    UResponse *response,
-                                   void *data);
+                                   void *userData);
+
 int agent_web_service_cb_ping(const URequest *request,
                               UResponse *response,
-                              void *data);
+                              void *userData);
+
 int agent_web_service_cb_version(const URequest *request,
                                  UResponse *response,
-                                 void *data);
-int agent_web_service_cb_default(const URequest *request,
-                                 UResponse *response,
-                                 void *data);
+                                 void *userData);
 
 int web_service_cb_not_allowed(const URequest *request,
                                UResponse *response,
-                               void *user_data);
+                               void *userData);
 
-#endif /* AGENT_CALLBACK_H */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* WIMC_AGENT_CALLBACK_H_ */

@@ -1,0 +1,24 @@
+[build-from]
+    base="alpine"
+    version="latest"
+
+[build-compile]
+    version="0.1"
+    static="false"
+    source="/nodes/ukamaOS/distro/system/example"
+    cmd="make"
+    bin_from="/nodes/ukamaOS/distro/system/example/example.d"
+    bin_to="/sbin"
+
+[app-exec]
+    name="example"
+    version="latest"
+    bin="example.d"
+    path="/sbin"
+    autostart="false"
+    autorestart="true"
+    startretries=5
+    group="service"
+
+[app-exec.env]
+    KEY="value"

@@ -39,7 +39,7 @@ bool serialize_wimc_request(WimcReq *req, json_t **json) {
     WFetch *fetch=NULL;
     WContent *content=NULL;
 
-    if (req == NULL && req->fetch == NULL) return USYS_FALSE;
+    if (req == NULL || req->fetch == NULL) return USYS_FALSE;
 
     fetch   = req->fetch;
     content = fetch->content;
@@ -60,6 +60,8 @@ bool serialize_wimc_request(WimcReq *req, json_t **json) {
                         json_string(content->indexURL));
     json_object_set_new(*json, JSON_STORE_URL,
                         json_string(content->storeURL));
+    json_object_set_new(*json, JSON_EXPECTED_SIZE,
+                        json_integer(content->expectedSizeBytes));
 
     return USYS_TRUE;
 }

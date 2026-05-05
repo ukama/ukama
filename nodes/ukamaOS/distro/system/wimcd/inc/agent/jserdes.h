@@ -9,7 +9,12 @@
 #ifndef AGENT_JSERDES_H
 #define AGENT_JSERDES_H
 
+#include <stdbool.h>
+
+#include <jansson.h>
+
 #include "usys_types.h"
+#include "wimc.h"
 
 int serialize_agent_request(AgentReq *request, json_t **json);
 int serialize_agent_request_register(AgentReq *req, json_t **json);

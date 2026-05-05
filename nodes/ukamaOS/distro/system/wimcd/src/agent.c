@@ -6,114 +6,159 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
+#include <curl/curl.h>
+#include <curl/easy.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <curl/curl.h>
-#include <curl/easy.h>
 
-#include "db.h"
 #include "agent.h"
-#include "wimc.h"
-#include "tasks.h"
-#include "jserdes.h"
 #include "common/utils.h"
+#include "db.h"
 #include "http_status.h"
+#include "jserdes.h"
+#include "package_cache.h"
+#include "tasks.h"
+#include "wimc.h"
 
-#include "usys_types.h"
-#include "usys_mem.h"
-#include "usys_log.h"
-#include "usys_services.h"
 #include "usys_file.h"
+#include "usys_log.h"
+#include "usys_mem.h"
+#include "usys_services.h"
+#include "usys_types.h"
 
-/* db.c */
-extern void update_local_db(sqlite3 *db, char *name, char *tag, char *path);
-extern int db_update_status(sqlite3 *db, char *name, char *tag, char *status);
-
-struct Response {
+typedef struct {
     char *buffer;
     size_t size;
-};
+    size_t maxSize;
+} Response;
 
 int get_agent_port_by_method(char *method) {
 
-    char buffer[128] = {0};
+    char buffer[128];
 
-    sprintf(buffer, "wimc-agent-%s", method);
+    if (method == NULL || *method == '\0') {
+        return 0;
+    }
+
+    if (snprintf(buffer, sizeof(buffer), "wimc-agent-%s", method) >=
+        (int)sizeof(buffer)) {
+        return 0;
+    }
 
     return usys_find_service_port(buffer);
 }
-    
+
 int process_agent_update_request(WTasks **tasks,
                                  AgentReq *req,
                                  sqlite3 *db) {
 
-  Update *update;
-  char idStr1[36+1] = {0};
-  WTasks *task=NULL;
+    Update *update;
+    char idStr[36 + 1];
+    WTasks *task;
+    PackageInfo info;
+    int finalState;
+    int httpStatus;
 
-  if (tasks == NULL || req == NULL || req->update == NULL) {
-      return HttpStatus_InternalServerError;
-  }
+    if (tasks == NULL || req == NULL || req->update == NULL || db == NULL) {
+        return HttpStatus_InternalServerError;
+    }
 
-  if (*tasks == NULL) return HttpStatus_InternalServerError;
+    if (*tasks == NULL) {
+        return HttpStatus_InternalServerError;
+    }
 
-  update = req->update;
+    update = req->update;
+    uuid_unparse(update->uuid, idStr);
+    usys_log_debug("Looking up task with ID: %s", idStr);
 
-  uuid_unparse(update->uuid, &idStr1[0]);
-  usys_log_debug("Looking up task with ID: %s", idStr1);
+    task = find_task_by_uuid(*tasks, update->uuid);
+    if (task == NULL) {
+        usys_log_error("No record found for ID: %s", idStr);
+        return HttpStatus_BadRequest;
+    }
 
-  task = find_task_by_uuid(*tasks, update->uuid);
+    task->update->totalKB = update->totalKB;
+    task->update->transferKB = update->transferKB;
+    task->update->transferState = update->transferState;
+    task->state = update->transferState;
 
-  if (task == NULL) {
-      usys_log_error("No record found for ID: %s", idStr1);
-      return HttpStatus_BadRequest;
-  }
+    free(task->update->voidStr);
+    task->update->voidStr = update->voidStr ? strdup(update->voidStr) : NULL;
 
-  /* update the task entry. */
-  task->update->totalKB = req->update->totalKB;
-  task->update->transferKB = req->update->transferKB;
+    finalState = 0;
+    httpStatus = HttpStatus_OK;
 
-  /* Update the status */
-  task->update->transferState = req->update->transferState;
-  task->state = req->update->transferState;
-  if (task->update->voidStr) {
-      usys_free(task->update->voidStr);
-      task->update->voidStr = NULL;
-  }
+    if (task->state == DONE) {
+        free(task->localPath);
+        task->localPath = update->voidStr ? strdup(update->voidStr) : NULL;
+        finalState = 1;
 
-  if (req->update->voidStr) {
-      task->update->voidStr = strdup(req->update->voidStr);
-  }
+        if (task->localPath == NULL) {
+            db_update_package_status(db, task->content->name,
+                                     task->content->tag, NULL,
+                                     WIMC_STATUS_FAILED, NULL,
+                                     "agent did not return package path");
+            httpStatus = HttpStatus_InternalServerError;
+            goto done;
+        }
 
-  if (task->state == DONE) {
-      if (task->localPath) {
-          usys_free(task->localPath);
-      }
-      task->localPath = req->update->voidStr ? strdup(req->update->voidStr) : NULL;
-      if (task->localPath != NULL) {
-          update_local_db(db, task->content->name, task->content->tag,
-                          task->localPath);
-      }
-  } else if (task->state == ERR) {
-      db_update_status(db, task->content->name, task->content->tag, "failed");
-  } else {
-      db_update_status(db, task->content->name, task->content->tag, "download");
-  }
+        if (pkg_validate_tar(task->content->name, task->content->tag,
+                             task->localPath, &info)) {
+            db_update_package_status(db, task->content->name,
+                                     task->content->tag,
+                                     task->localPath,
+                                     WIMC_STATUS_AVAILABLE,
+                                     info.actualVersion, NULL);
+            db_update_package_status(db, task->content->name,
+                                     info.actualVersion,
+                                     task->localPath,
+                                     WIMC_STATUS_AVAILABLE,
+                                     info.actualVersion, NULL);
+        } else {
+            db_update_package_status(db, task->content->name,
+                                     task->content->tag,
+                                     task->localPath,
+                                     WIMC_STATUS_CORRUPT,
+                                     info.actualVersion[0] ?
+                                     info.actualVersion : NULL,
+                                     info.error[0] ? info.error :
+                                     "invalid package");
+        }
+    } else if (task->state == ERR) {
+        finalState = 1;
+        db_update_package_status(db, task->content->name,
+                                 task->content->tag, NULL,
+                                 WIMC_STATUS_FAILED, NULL,
+                                 update->voidStr ? update->voidStr :
+                                 "agent error");
+    } else {
+        db_update_package_status(db, task->content->name,
+                                 task->content->tag, NULL,
+                                 WIMC_STATUS_DOWNLOAD, NULL, NULL);
+    }
 
-  return HttpStatus_OK;
+ done:
+    if (finalState) {
+        delete_from_tasks(tasks, task);
+    }
+
+    return httpStatus;
 }
 
 void cleanup_wimc_request(WimcReq *request) {
 
-    if (request == NULL) return;
+    WFetch *fetch;
+    WContent *content;
 
-    if (request->fetch) {
-        if (request->fetch->content) {
+    if (request == NULL) {
+        return;
+    }
 
-            WFetch   *fetch   = request->fetch;
-            WContent *content = fetch->content;
-
+    fetch = request->fetch;
+    if (fetch != NULL) {
+        content = fetch->content;
+        if (content != NULL) {
             usys_free(content->name);
             usys_free(content->tag);
             usys_free(content->method);
@@ -121,8 +166,8 @@ void cleanup_wimc_request(WimcReq *request) {
             usys_free(content->storeURL);
             usys_free(content);
         }
-
-        usys_free(request->fetch);
+        usys_free(fetch->cbURL);
+        usys_free(fetch);
     }
 
     usys_free(request);
@@ -131,58 +176,89 @@ void cleanup_wimc_request(WimcReq *request) {
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
                                 void *userp) {
 
-    size_t realsize = size * nmemb;
-    struct Response *response = (struct Response *)userp;
+    size_t realSize;
+    char *newBuffer;
+    Response *response;
 
-    response->buffer = realloc(response->buffer, response->size + realsize + 1);
+    realSize = size * nmemb;
+    response = (Response *)userp;
 
-    if(response->buffer == NULL) {
-        log_error("Not enough memory to realloc of size: %s",
-                  response->size + realsize + 1);
+    if (response == NULL) {
         return 0;
     }
 
-    memcpy(&(response->buffer[response->size]), contents, realsize);
-    response->size += realsize;
-    response->buffer[response->size] = 0;
+    if (response->size + realSize + 1 > response->maxSize) {
+        usys_log_error("Agent response too large");
+        return 0;
+    }
 
-    return realsize;
+    newBuffer = realloc(response->buffer,
+                        response->size + realSize + 1);
+    if (newBuffer == NULL) {
+        usys_log_error("Unable to allocate agent response buffer");
+        return 0;
+    }
+
+    response->buffer = newBuffer;
+    memcpy(&(response->buffer[response->size]), contents, realSize);
+    response->size += realSize;
+    response->buffer[response->size] = '\0';
+
+    return realSize;
 }
 
 void create_wimc_request(WimcReq **request,
-                         char *name, char *tag,
+                         char *name,
+                         char *tag,
                          char *indexURL,
                          char *storeURL,
                          char *method,
                          int interval) {
 
-  WFetch   *fetch=NULL;
-  WContent *content=NULL;
+    WFetch *fetch;
+    WContent *content;
 
-  *request = (WimcReq *) calloc(1, sizeof(WimcReq));
-  fetch    = (WFetch *)  calloc(1, sizeof(WFetch));
-  content  = (WContent *)calloc(1, sizeof(WContent));
-  
-  if (*request == NULL || fetch == NULL || content == NULL) {
-      usys_free(*request);
-      usys_free(fetch);
-      usys_free(content);
+    if (request == NULL) {
+        return;
+    }
 
-      return;
-  }
+    *request = NULL;
+    fetch = NULL;
+    content = NULL;
 
-  (*request)->type = WREQ_FETCH;
-  uuid_generate(fetch->uuid);
-  fetch->interval = interval;
+    *request = (WimcReq *)calloc(1, sizeof(WimcReq));
+    fetch = (WFetch *)calloc(1, sizeof(WFetch));
+    content = (WContent *)calloc(1, sizeof(WContent));
 
-  content->name        = strdup(name);
-  content->tag         = strdup(tag);
-  content->method      = strdup(method);
-  content->indexURL    = strdup(indexURL);
-  content->storeURL    = strdup(storeURL);
-  
-  fetch->content    = content;
-  (*request)->fetch = fetch;
+    if (*request == NULL || fetch == NULL || content == NULL) {
+        usys_free(*request);
+        usys_free(fetch);
+        usys_free(content);
+        *request = NULL;
+        return;
+    }
+
+    (*request)->type = WREQ_FETCH;
+    uuid_generate(fetch->uuid);
+    fetch->interval = interval;
+
+    content->name = name ? strdup(name) : NULL;
+    content->tag = tag ? strdup(tag) : NULL;
+    content->method = method ? strdup(method) : NULL;
+    content->indexURL = indexURL ? strdup(indexURL) : NULL;
+    content->storeURL = storeURL ? strdup(storeURL) : NULL;
+    content->expectedSizeBytes = 0;
+
+    if (content->name == NULL || content->tag == NULL ||
+        content->method == NULL || content->indexURL == NULL ||
+        content->storeURL == NULL) {
+        cleanup_wimc_request(*request);
+        *request = NULL;
+        return;
+    }
+
+    fetch->content = content;
+    (*request)->fetch = fetch;
 }
 
 static bool send_request_to_agent(char *name, char *tag,
@@ -190,62 +266,94 @@ static bool send_request_to_agent(char *name, char *tag,
                                   const json_t *json,
                                   long *statusCode) {
 
-    bool  ret  = USYS_FALSE;
-    CURL *curl = NULL;
-    char *jStr = NULL;
-    char agentURL[WIMC_MAX_URL_LEN] = {0};
+    bool ret;
+    CURL *curl;
+    char *jStr;
+    char agentURL[WIMC_MAX_URL_LEN];
     CURLcode res;
+    struct curl_slist *headers;
+    Response response;
+    int agentPort;
 
-    struct curl_slist *headers=NULL;
-    struct Response response;
+    ret = USYS_FALSE;
+    curl = NULL;
+    jStr = NULL;
+    headers = NULL;
+    agentPort = 0;
+    memset(agentURL, 0, sizeof(agentURL));
+    memset(&response, 0, sizeof(response));
 
-    *statusCode = 0;
-  
+    if (statusCode != NULL) {
+        *statusCode = 0;
+    }
+
+    agentPort = get_agent_port_by_method(agentMethod);
+    if (agentPort <= 0) {
+        usys_log_error("No agent port for method: %s", agentMethod);
+        return USYS_FALSE;
+    }
+
+    if (snprintf(agentURL, sizeof(agentURL),
+                 "http://localhost:%d/v1/apps/%s/%s", agentPort,
+                 name, tag) >= (int)sizeof(agentURL)) {
+        usys_log_error("Agent URL too long");
+        return USYS_FALSE;
+    }
+
     curl = curl_easy_init();
     if (curl == NULL) {
         usys_log_error("Error initializing curl");
         return USYS_FALSE;
     }
 
-    sprintf(agentURL,
-            "http://localhost:%d/v1/apps/%s/%s",
-            get_agent_port_by_method(agentMethod), name, tag);
-
     response.buffer = malloc(1);
-    response.size   = 0;
+    response.size = 0;
+    response.maxSize = WIMC_MAX_HTTP_RESPONSE_BYTES;
+    if (response.buffer == NULL) {
+        goto done;
+    }
+    response.buffer[0] = '\0';
+
     jStr = json_dumps(json, 0);
+    if (jStr == NULL) {
+        goto done;
+    }
+
     usys_log_debug("Sending request to Agent: %s", jStr);
 
     headers = curl_slist_append(headers, "Accept: application/json");
     headers = curl_slist_append(headers, "Content-Type: application/json");
     headers = curl_slist_append(headers, "charset: utf-8");
 
-    curl_easy_setopt(curl, CURLOPT_URL,           agentURL);
+    curl_easy_setopt(curl, CURLOPT_URL, agentURL);
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER,    headers);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS,    jStr);
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, jStr);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, response_callback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA,     (void *)&response);
-
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "wimc/0.1");
-    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT,
+                     WIMC_HTTP_CONNECT_TIMEOUT_SEC);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, WIMC_HTTP_TIMEOUT_SEC);
 
     res = curl_easy_perform(curl);
-    if ( res != CURLE_OK) {
-        log_error("Error sending request to Agent: %s", curl_easy_strerror(res));
-        *statusCode = 0;
-        ret = USYS_FALSE;
-    } else {
-        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, statusCode);
-        ret = USYS_TRUE;
+    if (res != CURLE_OK) {
+        usys_log_error("Error sending request to Agent: %s",
+                       curl_easy_strerror(res));
+        goto done;
     }
 
+    if (statusCode != NULL) {
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, statusCode);
+    }
+    ret = USYS_TRUE;
+
+ done:
     usys_free(jStr);
     usys_free(response.buffer);
-
     curl_slist_free_all(headers);
     curl_easy_cleanup(curl);
+
     return ret;
 }
 
@@ -253,8 +361,15 @@ bool communicate_with_agent(WimcReq *request,
                             char *agentMethod,
                             Config *config) {
 
-    json_t *json=NULL;
-    long agentRetCode=0;
+    json_t *json;
+    long agentRetCode;
+
+    json = NULL;
+    agentRetCode = 0;
+
+    if (request == NULL || request->fetch == NULL || config == NULL) {
+        return USYS_FALSE;
+    }
 
     if (!serialize_wimc_request(request, &json)) {
         usys_log_error("Error serializing wimc request to agent");
@@ -268,17 +383,15 @@ bool communicate_with_agent(WimcReq *request,
             pthread_mutex_lock(&config->taskMutex);
             add_to_tasks(config->tasks, request);
             pthread_mutex_unlock(&config->taskMutex);
-            usys_log_debug("Agent iniated to fetch capp");
+            usys_log_debug("Agent initiated to fetch capp");
         } else {
-            usys_log_error("Agent reutrned an error: %ld", agentRetCode);
+            usys_log_error("Agent returned an error: %ld", agentRetCode);
             json_decref(json);
-
             return USYS_FALSE;
         }
     } else {
         usys_log_error("Error communicating with Agent");
         json_decref(json);
-
         return USYS_FALSE;
     }
 
@@ -288,12 +401,16 @@ bool communicate_with_agent(WimcReq *request,
 
 void clear_agents(Agent *agent) {
 
-  int i;
+    int i;
 
-  for (i=0; i<MAX_AGENTS; i++){
-    if (uuid_is_null(agent[i].uuid)==0) {
-      free(agent[i].method);
-      free(agent[i].url);
+    if (agent == NULL) {
+        return;
     }
-  }
+
+    for (i = 0; i < MAX_AGENTS; i++) {
+        if (uuid_is_null(agent[i].uuid) == 0) {
+            free(agent[i].method);
+            free(agent[i].url);
+        }
+    }
 }

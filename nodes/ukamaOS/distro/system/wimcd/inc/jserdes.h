@@ -7,7 +7,7 @@
  */
 
 #ifndef WIMC_JSERDES_H
-#define WIMC_JSERDES_J
+#define WIMC_JSERDES_H
 
 #include "wimc.h"
 #include "agent.h"
@@ -40,6 +40,7 @@
 #define JSON_CALLBACK_URL    "callback_url"
 #define JSON_INDEX_URL       "index_url"
 #define JSON_STORE_URL       "store_url"
+#define JSON_EXPECTED_SIZE   "expected_size_bytes"
 #define JSON_UPDATE_INTERVAL "update_interval"
 #define JSON_CONTENT         "content"
 #define JSON_TASK            "task"

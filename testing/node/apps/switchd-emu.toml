@@ -1,0 +1,29 @@
+[build-from]
+	base="alpine"
+	version="latest"
+
+[build-compile]
+	version="0.1"
+	static="false"
+	source="/nodes/apps/switchd/emu"
+	cmd="make"
+	bin_from="/nodes/apps/switchd/emu/switchemu.d"
+	bin_to="/sbin"
+
+[app-exec]
+	name="switchemu"
+	version="latest"
+	bin="switchemu.d"
+	path="/sbin"
+	autostart="false"
+	autorestart="true"
+	startretries=5
+	group="on-boot"
+
+[app-exec.env]
+	SWITCHEMU_HTTP_PORT="18088"
+	SWITCHEMU_SNMP_PORT="1161"
+	SWITCHEMU_TFTP_PORT="1069"
+	SWITCHEMU_BIND_ADDRESS="0.0.0.0"
+	SWITCHEMU_NOTIFY_HOST="127.0.0.1"
+	SWITCHEMU_NOTIFY_PORT="18010"

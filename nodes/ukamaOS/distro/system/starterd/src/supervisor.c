@@ -124,10 +124,13 @@ static bool app_start(Config *config, App *app) {
 
     execPath = app_exec_path(config, app);
     if (!execPath) {
+        app->state = APP_STATE_FAILED;
+        app->reason = APP_REASON_START_FAILED;
         return false;
     }
 
     app->state = APP_STATE_STARTING;
+    app->reason = APP_REASON_STARTED;
 
     now = time(NULL);
     restart_policy_on_start(config, app, now);
@@ -135,25 +138,43 @@ static bool app_start(Config *config, App *app) {
     ok = app_runtime_start(config, app, execPath);
     if (!ok) {
         app->state = APP_STATE_FAILED;
+        app->reason = APP_REASON_START_FAILED;
     } else {
         app->state = APP_STATE_RUNNING;
+        app->reason = APP_REASON_NONE;
     }
 
     free(execPath);
     return ok;
 }
 
-static bool app_stop(Config *config, App *app) {
+static bool app_stop(Config *config, App *app, AppReason reason) {
+
+    bool ok;
 
     if (!config || !app) {
         return false;
     }
 
-    app->state = APP_STATE_STOPPING;
-    app_runtime_stop(config, app);
-    app->state = APP_STATE_STOPPED;
+    if (app->pid <= 0 || app->pgid <= 0) {
+        app->state = APP_STATE_STOPPED;
+        app->reason = reason;
+        return true;
+    }
 
-    return true;
+    app->state = APP_STATE_STOPPING;
+    app->reason = reason;
+
+    ok = app_runtime_stop(config, app);
+
+    app->state = APP_STATE_STOPPED;
+    if (app->lastExitSignal == SIGKILL) {
+        app->reason = APP_REASON_KILLED;
+    } else {
+        app->reason = reason;
+    }
+
+    return ok;
 }
 
 static bool app_is_self(const App *app) {
@@ -183,7 +204,7 @@ static void supervisor_stop_all_apps(Supervisor *s) {
                  a->state == APP_STATE_STARTING ||
                  a->state == APP_STATE_FAILED)) {
                 usys_log_info("shutdown: stopping %s/%s", a->space, a->name);
-                app_stop(s->config, a);
+                app_stop(s->config, a, APP_REASON_TERMINATED);
             }
             a = a->next;
         }
@@ -220,14 +241,25 @@ static void supervisor_reap(Supervisor *s) {
                     if (a->state == APP_STATE_STOPPING ||
                         a->state == APP_STATE_STOPPED) {
                         a->state = APP_STATE_STOPPED;
+                        if (a->reason == APP_REASON_NONE) {
+                            a->reason = APP_REASON_TERMINATED;
+                        }
+                        state_store_save(s->config, s->spaceList);
                         break;
                     }
 
-                    a->state = APP_STATE_FAILED;
+                    if (a->lastExitCode != 0 || a->lastExitSignal != 0) {
+                        a->state = APP_STATE_FAILED;
+                        a->reason = APP_REASON_CRASHED;
+                    } else {
+                        a->state = APP_STATE_STOPPED;
+                        a->reason = APP_REASON_EXITED;
+                    }
 
                     delay = restart_policy_next_delay(s->config, a, now);
-                    usys_log_error("app: exited %s/%s restart in %d sec",
-                                   a->space, a->name, delay);
+                    usys_log_error("app: exited %s/%s reason=%d "
+                                   "restart in %d sec",
+                                   a->space, a->name, a->reason, delay);
                     sleep(delay);
                     app_start(s->config, a);
                     state_store_save(s->config, s->spaceList);
@@ -442,7 +474,7 @@ static bool update_app(Supervisor *s,
 
     usys_log_info("update: %s/%s -> %s", space, name, tag);
 
-    app_stop(s->config, a);
+    app_stop(s->config, a, APP_REASON_UPDATE);
 
     free(a->tag);
     a->tag = strdup(tag);
@@ -482,7 +514,7 @@ static bool update_app(Supervisor *s,
 
     if (!app_wait_commit(s->config, a)) {
         usys_log_error("update: commit failed %s/%s auto-revert", space, name);
-        app_stop(s->config, a);
+        app_stop(s->config, a, APP_REASON_UPDATE);
         free(a->tag);
         a->tag = oldTag;
         installer_switch_current(s->config, a);
@@ -526,7 +558,10 @@ static void* supervisor_thread(void *arg) {
         pthread_mutex_unlock(&s->mu);
 
         if (a->type == ACTION_RUN_BOOT) {
-            if (!run_space(s->config, s->spaceList, s->config->bootSpace, true)) {
+            if (!run_space(s->config,
+                           s->spaceList,
+                           s->config->bootSpace,
+                           true)) {
                 usys_log_error("boot: failed");
             } else {
                 s->bootDone = true;
@@ -549,8 +584,11 @@ static void* supervisor_thread(void *arg) {
             app = app_find(s->spaceList, a->space, a->name);
             if (app) {
                 usys_log_info("terminate: %s/%s", a->space, a->name);
-                app_stop(s->config, app);
+                app_stop(s->config, app, APP_REASON_TERMINATED);
                 state_store_save(s->config, s->spaceList);
+            }
+            if (s->ctx) {
+                s->ctx->terminateRequested = 0;
             }
         } else if (a->type == ACTION_UPDATE_APP) {
             if (!update_app(s, a->space, a->name, a->tag, a->hub)) {

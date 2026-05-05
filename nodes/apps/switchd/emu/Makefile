@@ -4,7 +4,11 @@
 #
 # Copyright (c) 2026-present, Ukama Inc.
 
+include ../../../ukamaOS/config.mk
+
 TARGET_EXEC = switchemu.d
+
+VERSION ?= latest
 
 CC ?= gcc
 CFLAGS += -c
@@ -35,13 +39,9 @@ $(TARGET_EXEC): $(TARGET_OBJFILES)
 	echo "Done."
 
 version.h:
-	@printf '%s\n' '/* auto-generated for local build */'                  > version.h
-	@printf '%s\n' '#ifndef VERSION_H'                                    >> version.h
-	@printf '%s\n' '#define VERSION_H'                                    >> version.h
-	@printf '%s\n' '#define VERSION "dev-build"'                         >> version.h
-	@printf '%s\n' '#endif'                                               >> version.h
+	$(NODES_DIR)/utils/scripts/generate_version.sh
 
-%.o: %.c
+%.o: %.c version.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
