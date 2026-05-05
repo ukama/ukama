@@ -40,11 +40,17 @@ type RestartNodesRequest struct {
 	NetworkId string   `json:"network_id" example:"{{NetworkId}}" validate:"required" path:"network_id"`
 	NodeIds   []string `json:"node_ids" example:"{{NodeIds}}" validate:"required"`
 }
-type ToggleInternetSwitchRequest struct {
-	SiteId string `json:"site_id" example:"{{SiteId}}" validate:"required" path:"site_id"`
+type ToggleSwitchPortRequest struct {
+	NodeId string `json:"node_id" validate:"required" path:"node_id"`
+	Port   int32  `json:"port" path:"port" validate:"required"`
 	Status bool   `json:"status" example:"{{Status}}"`
-	Port   int32  `json:"port" example:"{{Port}}" validate:"required"`
 }
+
+type PingSwitchPortRequest struct {
+	NodeId string `json:"node_id"  validate:"required" path:"node_id"`
+	Port   int32  `json:"port" validate:"required" path:"port"`
+}
+
 type ToggleRfRequest struct {
 	NodeId string `json:"node_id" example:"{{NodeId}}" validate:"required" path:"node_id"`
 	State  string `json:"state" example:"on" validate:"required,oneof=on off"`

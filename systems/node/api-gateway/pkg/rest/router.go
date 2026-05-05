@@ -62,7 +62,8 @@ type controller interface {
 	RestartSite(siteName, networkId string) (*contPb.RestartSiteResponse, error)
 	RestartNode(nodeId string) (*contPb.RestartNodeResponse, error)
 	RestartNodes(networkId string, nodeIds []string) (*contPb.RestartNodesResponse, error)
-	ToggleInternetSwitch(status bool, port int32, siteId string) (*contPb.ToggleInternetSwitchResponse, error)
+	ToggleSwitchPort(nodeId string, port int32, status bool) (*contPb.ToggleSwitchPortResponse, error)
+	PingSwitchPort(nodeId string, port int32) (*contPb.PingSwitchPortResponse, error)
 	PingNode(*contPb.PingNodeRequest) (*contPb.PingNodeResponse, error)
 	ToggleRf(nodeId string, state string) (*contPb.ToggleRfSwitchResponse, error)
 	ToggleNodeService(nodeId string, state string) (*contPb.ToggleNodeServiceResponse, error)
@@ -142,11 +143,12 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		controller.POST("/networks/:network_id/sites/:site_name/restart", formatDoc("Restart a site in an organization", "Restarting a site within an organization"), tonic.Handler(r.postRestartSiteHandler, http.StatusOK))
 		controller.POST("/nodes/:node_id/restart", formatDoc("Restart a node", "Restarting a node"), tonic.Handler(r.postRestartNodeHandler, http.StatusOK))
 		controller.POST("/networks/:network_id/restart-nodes", formatDoc("Restart multiple nodes within a network", "Restarting multiple nodes within a network"), tonic.Handler(r.postRestartNodesHandler, http.StatusOK))
-		controller.POST("/sites/:site_id/toggle-internet-port", formatDoc("Toggle internet port for a site", "Turns the internet port on or off for a specific site"), tonic.Handler(r.postToggleInternetSwitchHandler, http.StatusOK))
 		controller.POST("/nodes/:node_id/toggle-radio", formatDoc("Toggle RF on/off for a node", "Turns the radio on or off for a specific node"), tonic.Handler(r.postToggleRfHandler, http.StatusOK))
 		controller.POST("/nodes/:node_id/toggle-service", formatDoc("Toggle Node Service on/off for a node", "Turns the Node Service on or off for a specific node"), tonic.Handler(r.postToggleNodeServiceHandler, http.StatusOK))
 		controller.GET("/nodes/:node_id/ping", formatDoc("Ping a node", "Ping a node"), tonic.Handler(r.getPingNodeHandler, http.StatusAccepted))
-
+		controller.GET("/nodes/:node_id/switch-ports/:port/ping", formatDoc("Ping a switch port", "Ping a switch port"), tonic.Handler(r.getPingSwitchPortHandler, http.StatusAccepted))
+		controller.POST("/nodes/:node_id/switch-ports/:port/toggle", formatDoc("Toggle a switch port", "Toggle a switch port"), tonic.Handler(r.postToggleSwitchPortHandler, http.StatusAccepted))
+		
 		const cfg = "/configurator"
 		cfgS := auth.Group(cfg, "Configurator", "Config for nodes")
 		cfgS.POST("/config", formatDoc("Event in config store", "push event has happened in config store"), tonic.Handler(r.postConfigEventHandler, http.StatusAccepted))
@@ -244,8 +246,12 @@ func (r *Router) getRunningConfigVersionHandler(c *gin.Context, req *GetConfigVe
 func (r *Router) postRestartNodesHandler(c *gin.Context, req *RestartNodesRequest) (*contPb.RestartNodesResponse, error) {
 	return r.clients.Controller.RestartNodes(req.NetworkId, req.NodeIds)
 }
-func (r *Router) postToggleInternetSwitchHandler(c *gin.Context, req *ToggleInternetSwitchRequest) (*contPb.ToggleInternetSwitchResponse, error) {
-	return r.clients.Controller.ToggleInternetSwitch(req.Status, req.Port, req.SiteId)
+func (r *Router) postToggleSwitchPortHandler(c *gin.Context, req *ToggleSwitchPortRequest) (*contPb.ToggleSwitchPortResponse, error) {
+	return r.clients.Controller.ToggleSwitchPort(req.NodeId, req.Port, req.Status)
+}
+
+func (r *Router) getPingSwitchPortHandler(c *gin.Context, req *PingSwitchPortRequest) (*contPb.PingSwitchPortResponse, error) {
+	return r.clients.Controller.PingSwitchPort(req.NodeId, req.Port)
 }
 
 func (r *Router) postToggleRfHandler(c *gin.Context, req *ToggleRfRequest) (*contPb.ToggleRfSwitchResponse, error) {

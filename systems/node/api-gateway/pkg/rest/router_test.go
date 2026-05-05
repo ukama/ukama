@@ -217,19 +217,19 @@ func TestGetPingNodeHandler(t *testing.T) {
 func TestPostToggleInternetSwitchHandler(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
-	siteId := "site-123"
+	nodeId := "uk-983794-cnode-78-7830"
 	jsonPayload := `{"status": true, "port": 8080}`
-	req, _ := http.NewRequest("POST", "/v1/controller/sites/"+siteId+"/toggle-internet-port", strings.NewReader(jsonPayload))
+	req, _ := http.NewRequest("POST", "/v1/controller/nodes/"+nodeId+"/switch-ports/8080/toggle", strings.NewReader(jsonPayload))
 	req.Header.Set("Content-Type", "application/json")
 	arc := &cmmocks.AuthClient{}
 	c := &nmocks.ControllerServiceClient{}
 
 	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
-	c.On("ToggleInternetSwitch", mock.Anything, &cpb.ToggleInternetSwitchRequest{
-		SiteId: siteId,
+	c.On("ToggleSwitchPort", mock.Anything, &cpb.ToggleSwitchPortRequest{
+		NodeId: nodeId,
 		Status: true,
 		Port:   8080,
-	}).Return(&cpb.ToggleInternetSwitchResponse{}, nil)
+	}).Return(&cpb.ToggleSwitchPortResponse{}, nil)
 
 	r := NewRouter(&Clients{
 		Controller: client.NewControllerFromClient(c),
@@ -239,7 +239,62 @@ func TestPostToggleInternetSwitchHandler(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	// assert
-	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, http.StatusAccepted, w.Code)
+	c.AssertExpectations(t)
+}
+
+func TestGetPingSwitchPortHandler(t *testing.T) {
+	// arrange
+	w := httptest.NewRecorder()
+	nodeId := "uk-983794-cnode-78-7830"
+	req, _ := http.NewRequest("GET", "/v1/controller/nodes/"+nodeId+"/switch-ports/8080/ping", nil)
+	arc := &cmmocks.AuthClient{}
+	c := &nmocks.ControllerServiceClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+	c.On("PingSwitchPort", mock.Anything, &cpb.PingSwitchPortRequest{
+		NodeId: nodeId,
+		Port:   8080,
+	}).Return(&cpb.PingSwitchPortResponse{}, nil)
+
+	r := NewRouter(&Clients{
+		Controller: client.NewControllerFromClient(c),
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusAccepted, w.Code)
+	c.AssertExpectations(t)
+}
+
+func TestPostToggleSwitchPortHandler(t *testing.T) {
+	// arrange
+	w := httptest.NewRecorder()
+	nodeId := "uk-983794-cnode-78-7830"
+	jsonPayload := `{"status": false, "port": 9}`
+	req, _ := http.NewRequest("POST", "/v1/controller/nodes/"+nodeId+"/switch-ports/9/toggle", strings.NewReader(jsonPayload))
+	req.Header.Set("Content-Type", "application/json")
+	arc := &cmmocks.AuthClient{}
+	c := &nmocks.ControllerServiceClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+	c.On("ToggleSwitchPort", mock.Anything, &cpb.ToggleSwitchPortRequest{
+		NodeId: nodeId,
+		Status: false,
+		Port:   9,
+	}).Return(&cpb.ToggleSwitchPortResponse{}, nil)
+
+	r := NewRouter(&Clients{
+		Controller: client.NewControllerFromClient(c),
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusAccepted, w.Code)
 	c.AssertExpectations(t)
 }
 

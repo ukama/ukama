@@ -42,6 +42,36 @@ func (_m *controller) PingNode(_a0 *gen.PingNodeRequest) (*gen.PingNodeResponse,
 	return r0, r1
 }
 
+// PingSwitchPort provides a mock function with given fields: nodeId, port
+func (_m *controller) PingSwitchPort(nodeId string, port int32) (*gen.PingSwitchPortResponse, error) {
+	ret := _m.Called(nodeId, port)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PingSwitchPort")
+	}
+
+	var r0 *gen.PingSwitchPortResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, int32) (*gen.PingSwitchPortResponse, error)); ok {
+		return rf(nodeId, port)
+	}
+	if rf, ok := ret.Get(0).(func(string, int32) *gen.PingSwitchPortResponse); ok {
+		r0 = rf(nodeId, port)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.PingSwitchPortResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, int32) error); ok {
+		r1 = rf(nodeId, port)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RestartNode provides a mock function with given fields: nodeId
 func (_m *controller) RestartNode(nodeId string) (*gen.RestartNodeResponse, error) {
 	ret := _m.Called(nodeId)
@@ -132,36 +162,6 @@ func (_m *controller) RestartSite(siteName string, networkId string) (*gen.Resta
 	return r0, r1
 }
 
-// ToggleInternetSwitch provides a mock function with given fields: status, port, siteId
-func (_m *controller) ToggleInternetSwitch(status bool, port int32, siteId string) (*gen.ToggleInternetSwitchResponse, error) {
-	ret := _m.Called(status, port, siteId)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ToggleInternetSwitch")
-	}
-
-	var r0 *gen.ToggleInternetSwitchResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(bool, int32, string) (*gen.ToggleInternetSwitchResponse, error)); ok {
-		return rf(status, port, siteId)
-	}
-	if rf, ok := ret.Get(0).(func(bool, int32, string) *gen.ToggleInternetSwitchResponse); ok {
-		r0 = rf(status, port, siteId)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ToggleInternetSwitchResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(bool, int32, string) error); ok {
-		r1 = rf(status, port, siteId)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // ToggleNodeService provides a mock function with given fields: nodeId, state
 func (_m *controller) ToggleNodeService(nodeId string, state string) (*gen.ToggleNodeServiceResponse, error) {
 	ret := _m.Called(nodeId, state)
@@ -215,6 +215,36 @@ func (_m *controller) ToggleRf(nodeId string, state string) (*gen.ToggleRfSwitch
 
 	if rf, ok := ret.Get(1).(func(string, string) error); ok {
 		r1 = rf(nodeId, state)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ToggleSwitchPort provides a mock function with given fields: nodeId, port, status
+func (_m *controller) ToggleSwitchPort(nodeId string, port int32, status bool) (*gen.ToggleSwitchPortResponse, error) {
+	ret := _m.Called(nodeId, port, status)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ToggleSwitchPort")
+	}
+
+	var r0 *gen.ToggleSwitchPortResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, int32, bool) (*gen.ToggleSwitchPortResponse, error)); ok {
+		return rf(nodeId, port, status)
+	}
+	if rf, ok := ret.Get(0).(func(string, int32, bool) *gen.ToggleSwitchPortResponse); ok {
+		r0 = rf(nodeId, port, status)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ToggleSwitchPortResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, int32, bool) error); ok {
+		r1 = rf(nodeId, port, status)
 	} else {
 		r1 = ret.Error(1)
 	}

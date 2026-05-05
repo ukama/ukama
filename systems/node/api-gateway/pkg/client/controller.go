@@ -86,11 +86,18 @@ func (c *Controller) RestartNodes(networkId string, nodeIds []string) (*pb.Resta
 	return c.client.RestartNodes(ctx, &pb.RestartNodesRequest{NetworkId: networkId, NodeIds: nodeIds})
 }
 
-func (c *Controller) ToggleInternetSwitch(status bool, port int32, siteId string) (*pb.ToggleInternetSwitchResponse, error) {
+func (c *Controller) ToggleSwitchPort(nodeId string, port int32, status bool) (*pb.ToggleSwitchPortResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	return c.client.ToggleInternetSwitch(ctx, &pb.ToggleInternetSwitchRequest{Status: status, SiteId: siteId, Port: port})
+	return c.client.ToggleSwitchPort(ctx, &pb.ToggleSwitchPortRequest{NodeId: nodeId, Status: status, Port: port})
+}
+
+func (c *Controller) PingSwitchPort(nodeId string, port int32) (*pb.PingSwitchPortResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
+	defer cancel()
+
+	return c.client.PingSwitchPort(ctx, &pb.PingSwitchPortRequest{NodeId: nodeId, Port: port})
 }
 
 func (c *Controller) ToggleRf(nodeId string, state string) (*pb.ToggleRfSwitchResponse, error) {
