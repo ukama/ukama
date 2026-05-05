@@ -187,7 +187,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
       m.id.includes('switch_port_status'),
     );
 
-    const isOn = localSwitchStatus[portGroup.id] ?? false;
+    const isOn = localSwitchStatus[portGroup.id] ?? true;
     const isDisabled = disabledSwitches[portGroup.id] || false;
 
     const handleToggle = () => {
@@ -244,57 +244,66 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
             sx={{ mt: 2, ml: 2, p: 0 }}
             data-testid={`accordion-details-${portGroup.id}`}
           >
-            {statusMetric && (
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  mb: 3,
-                  pb: 2,
-                  borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
-                }}
-                data-testid={`status-metric-${portGroup.id}`}
-              >
-                <Typography variant="body1">{statusMetric.name}</Typography>
-                <Box display="flex" alignItems="center">
-                  <Typography variant="body2" sx={{ mr: 1 }}>
-                    {isOn ? 'On' : 'Off'}
-                  </Typography>
-                  <Switch
-                    checked={isOn}
-                    onChange={handleToggle}
-                    disabled={isDisabled}
-                    color="primary"
-                    data-testid={`toggle-switch-${portGroup.id}`}
-                  />
-                </Box>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                mb: 3,
+                pb: 2,
+                borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
+              }}
+              data-testid={`status-metric-${portGroup.id}`}
+            >
+              <Typography variant="body1">
+                {statusMetric?.name ?? 'Port status'}
+              </Typography>
+              <Box display="flex" alignItems="center">
+                <Typography variant="body2" sx={{ mr: 1 }}>
+                  {isOn ? 'On' : 'Off'}
+                </Typography>
+                <Switch
+                  checked={isOn}
+                  onChange={handleToggle}
+                  disabled={isDisabled}
+                  color="primary"
+                  data-testid={`toggle-switch-${portGroup.id}`}
+                />
               </Box>
-            )}
+            </Box>
 
-            <Stack spacing={3}>
-              {portGroup.metrics
-                .filter((m: any) => !m.id.includes('switch_port_status'))
-                .map((metric: any, _: number) => (
-                  <Box key={metric.id} data-testid={`metric-item-${metric.id}`}>
-                    <Typography variant="body1" sx={{ mb: 1 }}>
-                      {metric.name}
-                    </Typography>
-                    <LineChart
-                      from={metricFrom}
-                      topic={metric.id}
-                      yunit={metric.unit}
-                      loading={metricsLoading}
-                      tickInterval={metric.tickInterval}
-                      tickPositions={metric.tickPositions}
-                      hasData={isMetricValue(metric.id, metrics)}
-                      initData={getMetricValue(metric.id, metrics)}
-                      format={metric.format}
-                      data-testid={`line-chart-${metric.id}`}
-                    />
-                  </Box>
-                ))}
-            </Stack>
+            {isOn ? (
+              <Stack spacing={3}>
+                {portGroup.metrics
+                  .filter((m: any) => !m.id.includes('switch_port_status'))
+                  .map((metric: any, _: number) => (
+                    <Box
+                      key={metric.id}
+                      data-testid={`metric-item-${metric.id}`}
+                    >
+                      <Typography variant="body1" sx={{ mb: 1 }}>
+                        {metric.name}
+                      </Typography>
+                      <LineChart
+                        from={metricFrom}
+                        topic={metric.id}
+                        yunit={metric.unit}
+                        loading={metricsLoading}
+                        tickInterval={metric.tickInterval}
+                        tickPositions={metric.tickPositions}
+                        hasData={isMetricValue(metric.id, metrics)}
+                        initData={getMetricValue(metric.id, metrics)}
+                        format={metric.format}
+                        data-testid={`line-chart-${metric.id}`}
+                      />
+                    </Box>
+                  ))}
+              </Stack>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                Port {portGroup.portNumber} status is off.
+              </Typography>
+            )}
           </AccordionDetails>
         </Accordion>
       </Box>

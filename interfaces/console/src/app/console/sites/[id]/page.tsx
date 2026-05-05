@@ -16,9 +16,9 @@ import {
   useGetHealthReportQuery,
   useGetNodesForSiteLazyQuery,
   useGetSitesQuery,
-  useToggleInternetSwitchMutation,
   useToggleRfStatusMutation,
   useToggleServiceMutation,
+  useToggleSwitchPortMutation,
 } from '@/client/graphql/generated';
 import { Graphs_Type } from '@/client/graphql/generated/subscriptions';
 import SiteComponents from '@/components/SiteComponents';
@@ -175,7 +175,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     return graphTypeToSection[graphType] || 'SOLAR';
   }, []);
 
-  const [updateSwitchPort] = useToggleInternetSwitchMutation({
+  const [updateSwitchPort] = useToggleSwitchPortMutation({
     onError: (err) => {
       setSnackbarMessage({
         id: 'update-node-err-msg',
@@ -265,13 +265,15 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
           variables: {
             data: {
               port: portNumber,
-              siteId: id,
+              nodeId:
+                nodes.find((node) => node.id.includes(NodeTypeEnum.Cnode))
+                  ?.id ?? '',
               status: newStatus,
             },
           },
         });
 
-        if (result.data?.toggleInternetSwitch?.success) {
+        if (result.data?.toggleSwitchPort?.success) {
           setSnackbarMessage({
             id: 'update-switch-success',
             message: `Port ${portNumber} status updated successfully to ${
