@@ -67,9 +67,7 @@ NETWORK_REQUIRED_KEYS=(
 )
 
 SD_CARD_REQUIRED_KEYS=(
-    "image.name" "image.path"
     "sd_card.device"
-    "network.host_eth" "network.host_ip"
     "serial.device" "serial.baud"
     "flash.target_device" "flash.success_marker" "flash.boot_marker"
 )
@@ -94,7 +92,7 @@ prepare_image_if_needed() {
 
     if ! image_format=$(detect_image_format "$image_path"); then
         echo "Unsupported image format: $image_path" | tee -a "$ORCHESTRATOR_LOG"
-        echo "Expected a raw disk image, an HDD Raw Copy .imgc image, or a gzip/xz/zstd/bzip2-compressed raw image" | tee -a "$ORCHESTRATOR_LOG"
+        echo "Expected a raw disk image or a gzip/xz/zstd/bzip2-compressed raw image" | tee -a "$ORCHESTRATOR_LOG"
         exit 1
     fi
 
@@ -245,17 +243,11 @@ if [ "$FLASH_METHOD" = "rpiboot" ]; then
 fi
 
 if [ "$FLASH_METHOD" = "sd-card" ]; then
-    IMG_PATH=$(yq_read 'image.path')
     SD_DEV=$(yq_read 'sd_card.device')
-    HOST_IP=$(yq_read 'network.host_ip')
     SERIAL_DEV=$(yq_read 'serial.device')
+    SERIAL_BAUD=$(yq_read 'serial.baud')
     SUCCESS_MARKER=$(yq_read 'flash.success_marker')
     BOOT_MARKER=$(yq_read 'flash.boot_marker')
-
-    if [ ! -f "$IMG_PATH" ]; then
-        echo "Image not found: $IMG_PATH"
-        exit 1
-    fi
 
     if [ ! -b "$SD_DEV" ]; then
         echo "SD card device '$SD_DEV' not found."
@@ -263,17 +255,57 @@ if [ "$FLASH_METHOD" = "sd-card" ]; then
         exit 1
     fi
 
-    if [ ! -f "${SCRIPT_DIR}/create_sdcard.sh" ]; then
-        echo "create_sdcard.sh not found"
-        exit 1
-    fi
+    if [ "$BOARD_NAME" = "anode" ]; then
+        BOOT_TARBALL=$(yq_read 'tarballs.boot')
+        ROOTFSA_TARBALL=$(yq_read 'tarballs.rootfsA')
+        ROOTFSB_TARBALL=$(yq_read 'tarballs.rootfsB')
 
-    echo "Creating SD card for $BOARD_NAME..."
-    DEV="$SD_DEV" \
-    IMAGE_PATH="$IMG_PATH" \
-    BOARD_NAME="$BOARD_NAME" \
-    HOST_IP="$HOST_IP" \
-        bash "${SCRIPT_DIR}/create_sdcard.sh"
+        if [ ! -f "$BOOT_TARBALL" ]; then
+            echo "Boot tarball not found: $BOOT_TARBALL"
+            exit 1
+        fi
+        if [ ! -f "$ROOTFSA_TARBALL" ]; then
+            echo "rootfsA tarball not found: $ROOTFSA_TARBALL"
+            exit 1
+        fi
+        if [ ! -f "$ROOTFSB_TARBALL" ]; then
+            echo "rootfsB tarball not found: $ROOTFSB_TARBALL"
+            exit 1
+        fi
+
+        if [ ! -f "${SCRIPT_DIR}/create_sdcard_legacy.sh" ]; then
+            echo "create_sdcard_legacy.sh not found"
+            exit 1
+        fi
+
+        echo "Creating legacy SD card for $BOARD_NAME..."
+        DEV="$SD_DEV" \
+        BOARD_NAME="$BOARD_NAME" \
+        BOOT_TARBALL="$BOOT_TARBALL" \
+        ROOTFSA_TARBALL="$ROOTFSA_TARBALL" \
+        ROOTFSB_TARBALL="$ROOTFSB_TARBALL" \
+            bash "${SCRIPT_DIR}/create_sdcard_legacy.sh"
+    else
+        IMG_PATH=$(yq_read 'image.path')
+        HOST_IP=$(yq_read 'network.host_ip')
+
+        if [ ! -f "$IMG_PATH" ]; then
+            echo "Image not found: $IMG_PATH"
+            exit 1
+        fi
+
+        if [ ! -f "${SCRIPT_DIR}/create_sdcard.sh" ]; then
+            echo "create_sdcard.sh not found"
+            exit 1
+        fi
+
+        echo "Creating SD card for $BOARD_NAME..."
+        DEV="$SD_DEV" \
+        IMAGE_PATH="$IMG_PATH" \
+        BOARD_NAME="$BOARD_NAME" \
+        HOST_IP="$HOST_IP" \
+            bash "${SCRIPT_DIR}/create_sdcard.sh"
+    fi
 
     echo ""
     echo "========================================"
@@ -287,6 +319,15 @@ if [ "$FLASH_METHOD" = "sd-card" ]; then
     echo "4. Power on the board"
     echo "5. Board will auto-flash to eMMC"
     echo ""
+
+    if [ ! -e "$SERIAL_DEV" ]; then
+        echo "Serial device $SERIAL_DEV not found."
+        echo "Board is ready to boot. Monitor manually if needed:"
+        echo "  screen $SERIAL_DEV $SERIAL_BAUD"
+        echo "PASS" > "$STATUS_FILE"
+        exit 0
+    fi
+
     echo "Press ENTER when ready to monitor serial..."
     read -r
 

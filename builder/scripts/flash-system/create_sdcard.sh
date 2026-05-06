@@ -60,16 +60,12 @@ flash_raw_image() {
 
     if ! image_format=$(detect_image_format "$IMAGE_PATH"); then
         log "ERROR: Unsupported image format: $IMAGE_PATH"
-        log "Expected a raw disk image, an HDD Raw Copy .imgc image, or a gzip/xz/zstd/bzip2-compressed raw image"
+        log "Expected a raw disk image or a gzip/xz/zstd/bzip2-compressed raw image"
         exit 1
     fi
 
-    if [ "$image_format" = "imgc" ]; then
-        log "Detected HDD Raw Copy .imgc image; decoding before flashing"
-    elif [ "$image_format" != "raw" ]; then
+    if [ "$image_format" != "raw" ]; then
         log "Detected $image_format-compressed image; flashing decompressed contents"
-    elif [[ "$IMAGE_PATH" == *.imgc ]]; then
-        log "Detected .imgc file containing a raw disk image"
     fi
 
     # Get image size

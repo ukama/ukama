@@ -23,16 +23,12 @@ boards:
   anode:
     name: "Amplifier Node (Controller Board)"
     method: "sd-card"
-    image:
-      name: "ukama-amplifier-image.img"
-      path: "/usr/ukm/ukama/builder/scripts/build-system/ukama-amplifier-image.img"
+    tarballs:
+      boot: "/usr/ukm/ukama/builder/scripts/build-system/boot.tgz"
+      rootfsA: "/usr/ukm/ukama/builder/scripts/build-system/rootfsA.tgz"
+      rootfsB: "/usr/ukm/ukama/builder/scripts/build-system/rootfsB.tgz"
     sd_card:
-      device: "/dev/sdb"
-      boot_partition: "/dev/sdb1"
-      root_partition: "/dev/sdb2"
-    network:
-      host_eth: "enp0s31f6"
-      host_ip: "192.168.100.1"
+      device: "/dev/sda"
     serial:
       device: "/dev/ttyUSB0"
       baud: 115200
