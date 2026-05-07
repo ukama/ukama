@@ -1,0 +1,64 @@
+{
+  "site_id": "emu-site",
+  "source": "local-file",
+  "updated_at": "2026-05-06T00:00:00Z",
+  "ports": [
+    {
+      "port": 1,
+      "role": "tower",
+      "node_id": "emu-tnode",
+      "class": "critical",
+      "policy": "protected"
+    },
+    {
+      "port": 2,
+      "role": "cnode",
+      "node_id": "emu-cnode",
+      "class": "critical",
+      "policy": "never_off_remote"
+    },
+    {
+      "port": 3,
+      "role": "amplifier",
+      "node_id": "emu-anode",
+      "class": "critical",
+      "policy": "protected"
+    },
+    {
+      "port": 4,
+      "role": "spare",
+      "class": "spare",
+      "policy": "free"
+    },
+    {
+      "port": 5,
+      "role": "external",
+      "class": "external",
+      "policy": "free"
+    },
+    {
+      "port": 6,
+      "role": "external",
+      "class": "external",
+      "policy": "free"
+    },
+    {
+      "port": 7,
+      "role": "external",
+      "class": "external",
+      "policy": "free"
+    },
+    {
+      "port": 8,
+      "role": "external",
+      "class": "external",
+      "policy": "free"
+    },
+    {
+      "port": 9,
+      "role": "uplink",
+      "class": "critical",
+      "policy": "protected"
+    }
+  ]
+}

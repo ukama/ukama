@@ -38,6 +38,12 @@ int web_service_cb_get_switch_alarms(const URequest *request,
 int web_service_cb_get_switch_kpis(const URequest *request,
                                    UResponse *response,
                                    void *epConfig);
+int web_service_cb_get_ports_policy(const URequest *request,
+                                    UResponse *response,
+                                    void *epConfig);
+int web_service_cb_put_ports_policy(const URequest *request,
+                                    UResponse *response,
+                                    void *epConfig);
 int web_service_cb_get_ports(const URequest *request,
                              UResponse *response,
                              void *epConfig);

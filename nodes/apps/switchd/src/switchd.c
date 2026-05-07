@@ -16,6 +16,7 @@
 #include "alarms.h"
 #include "config.h"
 #include "driver.h"
+#include "policy.h"
 #include "switchd.h"
 #include "tftp_server.h"
 #include "utils.h"
@@ -221,6 +222,8 @@ int switchd_init(SwitchdContext *ctx) {
     if (mkdir_p(ctx->config.tftpRoot, 0755) != 0) {
         return SWITCHD_ERR_IO;
     }
+    (void)policy_load(ctx);
+
     if (driver_init(ctx) != SWITCHD_OK) {
         return SWITCHD_ERR_INTERNAL;
     }
@@ -536,6 +539,7 @@ JsonObj *switchd_debug_status_json(SwitchdContext *ctx) {
     json_object_set_new(cache, "systemCurrentAmps",
                         json_real(ctx->kpis.systemCurrentAmps));
     json_object_set_new(root, "cache", cache);
+    json_object_set_new(root, "policy", policy_serialize(ctx));
 
     return root;
 }
