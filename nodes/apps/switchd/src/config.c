@@ -81,6 +81,7 @@ void config_print_env_help(void) {
     usys_puts("  SWITCHD_TFTP_ROOT              TFTP root directory");
     usys_puts("  SWITCHD_STRICT_LINK_ALARMS     true|false");
     usys_puts("  SWITCHD_SAVE_AFTER_WRITE       true|false");
+    usys_puts("  SWITCHD_POLICY_PATH            Port policy path");
 }
 
 void config_usage(void) {
@@ -181,6 +182,10 @@ int config_load(SwitchdConfig *cfg) {
 
     cfg->strictLinkAlarms = env_bool(ENV_SWITCHD_STRICT_LINK_ALARMS, false);
     cfg->saveAfterWrite = env_bool(ENV_SWITCHD_SAVE_AFTER_WRITE, true);
+    env_str(ENV_SWITCHD_POLICY_PATH,
+            cfg->policyPath,
+            sizeof(cfg->policyPath),
+            DEF_POLICY_PATH);
 
     usys_log_debug("Loaded %s configuration: http=%s:%d snmp=%s:%d driver=%s",
                    SERVICE_NAME,

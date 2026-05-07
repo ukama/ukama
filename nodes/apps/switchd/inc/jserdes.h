@@ -39,6 +39,8 @@ JsonObj *json_serialize_switch_health(const SwitchdContext *ctx);
 JsonObj *json_serialize_switch_capabilities(const SwitchdContext *ctx);
 JsonObj *json_serialize_switch_kpis(const SwitchdContext *ctx);
 JsonObj *json_serialize_port(const SwitchPortState *port);
+JsonObj *json_serialize_port_with_policy(const SwitchdContext *ctx,
+                                         const SwitchPortState *port);
 JsonObj *json_serialize_ports(const SwitchdContext *ctx);
 JsonObj *json_serialize_firmware(const SwitchdContext *ctx);
 JsonObj *json_serialize_active_alarms(const SwitchdContext *ctx);

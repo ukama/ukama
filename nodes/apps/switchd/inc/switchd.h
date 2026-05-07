@@ -36,6 +36,7 @@
 #define DEF_SNMP_COMMUNITY           "public"
 #define DEF_TFTP_BIND_IP             "0.0.0.0"
 #define DEF_TFTP_ROOT                "/tmp/switchd-tftp"
+#define DEF_POLICY_PATH              "/ukama/configs/switch/policy.json"
 #define DEF_URL_PREFIX               "/v1"
 #define DEF_DRIVER_NAME              "tycon_snmp"
 #define DEF_NOTIFY_HOST              "127.0.0.1"
@@ -69,6 +70,7 @@
 #define ENV_SWITCHD_TFTP_ROOT              "SWITCHD_TFTP_ROOT"
 #define ENV_SWITCHD_STRICT_LINK_ALARMS     "SWITCHD_STRICT_LINK_ALARMS"
 #define ENV_SWITCHD_SAVE_AFTER_WRITE       "SWITCHD_SAVE_AFTER_WRITE"
+#define ENV_SWITCHD_POLICY_PATH            "SWITCHD_POLICY_PATH"
 
 typedef struct _u_instance UInst;
 typedef struct _u_request URequest;

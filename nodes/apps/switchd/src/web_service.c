@@ -14,6 +14,7 @@
 #include "http_status.h"
 #include "jserdes.h"
 #include "json_types.h"
+#include "policy.h"
 #include "switchd.h"
 #include "utils.h"
 #include "web_service.h"
@@ -86,6 +87,64 @@ static int ws_reply_json(UResponse *response, int status, JsonObj *json) {
 
 static SwitchdContext *ws_ctx(void *epConfig) {
     return (SwitchdContext *)epConfig;
+}
+
+static void ws_get_source(const URequest *request, char *source, size_t len) {
+    JsonErrObj err;
+    JsonObj *json;
+    JsonObj *entry;
+    const char *value;
+
+    if (source == NULL || len == 0) {
+        return;
+    }
+
+    source[0] = '\0';
+    if (request == NULL || request->binary_body == NULL ||
+        request->binary_body_length == 0) {
+        return;
+    }
+
+    memset(&err, 0, sizeof(err));
+    json = json_loadb((const char *)request->binary_body,
+                      request->binary_body_length,
+                      0,
+                      &err);
+    if (json == NULL) {
+        return;
+    }
+
+    entry = json_object_get(json, JTAG_SOURCE);
+    if (entry != NULL && json_is_string(entry)) {
+        value = json_string_value(entry);
+        snprintf(source, len, "%s", value ? value : "");
+    }
+
+    json_decref(json);
+}
+
+static int ws_policy_reply(UResponse *response,
+                           int ret,
+                           const char *detail) {
+    JsonObj *json;
+
+    json = json_object();
+    json_object_set_new(json,
+                        JTAG_ERROR,
+                        json_string(switch_error_to_str(ret)));
+    json_object_set_new(json, JTAG_DETAIL, json_string(detail ? detail : ""));
+
+    if (ret == SWITCHD_ERR_AUTH) {
+        return ws_reply_json(response, HttpStatus_Forbidden, json);
+    }
+    if (ret == SWITCHD_ERR_INVAL) {
+        return ws_reply_json(response, HttpStatus_BadRequest, json);
+    }
+    if (ret == SWITCHD_ERR_NOTFOUND) {
+        return ws_reply_json(response, HttpStatus_NotFound, json);
+    }
+
+    return ws_reply_json(response, HttpStatus_InternalServerError, json);
 }
 
 extern JsonObj *switchd_debug_status_json(SwitchdContext *ctx);
@@ -218,6 +277,46 @@ int web_service_cb_get_switch_kpis(const URequest *request,
     return ws_reply_json(response, HttpStatus_OK, json);
 }
 
+int web_service_cb_get_ports_policy(const URequest *request,
+                                    UResponse *response,
+                                    void *epConfig) {
+    (void)request;
+    return ws_reply_json(response,
+                         HttpStatus_OK,
+                         policy_serialize(ws_ctx(epConfig)));
+}
+
+int web_service_cb_put_ports_policy(const URequest *request,
+                                    UResponse *response,
+                                    void *epConfig) {
+    SwitchdContext *ctx;
+    char err[SWITCHD_OP_DETAIL_LEN];
+    int ret;
+
+    ctx = ws_ctx(epConfig);
+    memset(err, 0, sizeof(err));
+
+    if (ctx == NULL || request == NULL || request->binary_body == NULL ||
+        request->binary_body_length == 0) {
+        return ws_reply_text(response,
+                             HttpStatus_BadRequest,
+                             "empty policy body");
+    }
+
+    ret = policy_apply_body(ctx,
+                            (const char *)request->binary_body,
+                            request->binary_body_length,
+                            err,
+                            sizeof(err));
+    if (ret != SWITCHD_OK) {
+        return ws_policy_reply(response, ret, err);
+    }
+
+    return ws_reply_json(response,
+                         HttpStatus_OK,
+                         policy_serialize(ctx));
+}
+
 int web_service_cb_get_ports(const URequest *request,
                              UResponse *response,
                              void *epConfig) {
@@ -250,7 +349,7 @@ int web_service_cb_get_port(const URequest *request,
                              "port not found");
     }
 
-    json = json_serialize_port(port);
+    json = json_serialize_port_with_policy(ctx, port);
     return ws_reply_json(response, HttpStatus_OK, json);
 }
 
@@ -267,6 +366,8 @@ int web_service_cb_post_port_admin(const URequest *request,
     uint32_t portId;
     bool up;
     int ret;
+    char source[SWITCHD_NAME_LEN];
+    char err[SWITCHD_OP_DETAIL_LEN];
 
     ctx = ws_ctx(epConfig);
     if (ws_get_port_id(request, &portId) != STATUS_OK ||
@@ -274,6 +375,19 @@ int web_service_cb_post_port_admin(const URequest *request,
         return ws_reply_text(response,
                              HttpStatus_BadRequest,
                              "expected {\"up\":true|false}");
+    }
+
+    ws_get_source(request, source, sizeof(source));
+    memset(err, 0, sizeof(err));
+    ret = policy_check_action(ctx,
+                              portId,
+                              up ? SWITCH_POLICY_ACTION_ADMIN_UP :
+                                   SWITCH_POLICY_ACTION_ADMIN_DOWN,
+                              source,
+                              err,
+                              sizeof(err));
+    if (ret != SWITCHD_OK) {
+        return ws_policy_reply(response, ret, err);
     }
 
     ret = switchd_set_port_admin(ctx, portId, up);
@@ -301,6 +415,8 @@ int web_service_cb_post_port_poe(const URequest *request,
     uint32_t portId;
     bool on;
     int ret;
+    char source[SWITCHD_NAME_LEN];
+    char err[SWITCHD_OP_DETAIL_LEN];
 
     ctx = ws_ctx(epConfig);
     if (ws_get_port_id(request, &portId) != STATUS_OK ||
@@ -308,6 +424,19 @@ int web_service_cb_post_port_poe(const URequest *request,
         return ws_reply_text(response,
                              HttpStatus_BadRequest,
                              "expected {\"on\":true|false}");
+    }
+
+    ws_get_source(request, source, sizeof(source));
+    memset(err, 0, sizeof(err));
+    ret = policy_check_action(ctx,
+                              portId,
+                              on ? SWITCH_POLICY_ACTION_POE_ON :
+                                   SWITCH_POLICY_ACTION_POE_OFF,
+                              source,
+                              err,
+                              sizeof(err));
+    if (ret != SWITCHD_OK) {
+        return ws_policy_reply(response, ret, err);
     }
 
     ret = switchd_set_port_poe(ctx, portId, on);
@@ -339,12 +468,26 @@ int web_service_cb_post_port_poe_cycle(const URequest *request,
     uint32_t portId;
     int offMs;
     int ret;
+    char source[SWITCHD_NAME_LEN];
+    char err[SWITCHD_OP_DETAIL_LEN];
 
     ctx = ws_ctx(epConfig);
     if (ws_get_port_id(request, &portId) != STATUS_OK) {
         return ws_reply_text(response,
                              HttpStatus_BadRequest,
                              "bad port id");
+    }
+
+    ws_get_source(request, source, sizeof(source));
+    memset(err, 0, sizeof(err));
+    ret = policy_check_action(ctx,
+                              portId,
+                              SWITCH_POLICY_ACTION_POE_CYCLE,
+                              source,
+                              err,
+                              sizeof(err));
+    if (ret != SWITCHD_OK) {
+        return ws_policy_reply(response, ret, err);
     }
 
     offMs = ctx->config.poeCycleMs;
@@ -574,6 +717,22 @@ int web_service_start(SwitchdContext *ctx, UInst *serviceInst) {
                                &web_service_cb_get_switch_kpis,
                                ctx);
     ws_setup_unsupported_methods(serviceInst, "GET", "/v1/switch", "kpis");
+
+    ulfius_add_endpoint_by_val(serviceInst,
+                               "GET",
+                               "/v1/ports/policy",
+                               NULL,
+                               0,
+                               &web_service_cb_get_ports_policy,
+                               ctx);
+
+    ulfius_add_endpoint_by_val(serviceInst,
+                               "PUT",
+                               "/v1/ports/policy",
+                               NULL,
+                               0,
+                               &web_service_cb_put_ports_policy,
+                               ctx);
 
     ulfius_add_endpoint_by_val(serviceInst,
                                "GET",

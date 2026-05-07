@@ -202,6 +202,50 @@ typedef struct {
     char detail[SWITCHD_OP_DETAIL_LEN];
 } SwitchFirmware;
 
+
+
+typedef enum {
+    SWITCH_POLICY_STATE_MISSING = 0,
+    SWITCH_POLICY_STATE_LOADED,
+    SWITCH_POLICY_STATE_INVALID
+} SwitchPolicyState;
+
+typedef enum {
+    SWITCH_PORT_POLICY_UNKNOWN = 0,
+    SWITCH_PORT_POLICY_PROTECTED,
+    SWITCH_PORT_POLICY_FREE,
+    SWITCH_PORT_POLICY_NEVER_OFF_REMOTE,
+    SWITCH_PORT_POLICY_DISABLED
+} SwitchPortPolicyType;
+
+typedef enum {
+    SWITCH_POLICY_ACTION_ADMIN_UP = 0,
+    SWITCH_POLICY_ACTION_ADMIN_DOWN,
+    SWITCH_POLICY_ACTION_POE_ON,
+    SWITCH_POLICY_ACTION_POE_OFF,
+    SWITCH_POLICY_ACTION_POE_CYCLE
+} SwitchPolicyAction;
+
+typedef struct {
+    uint32_t port;
+    char role[SWITCHD_NAME_LEN];
+    char nodeId[SWITCHD_NAME_LEN];
+    char klass[SWITCHD_NAME_LEN];
+    SwitchPortPolicyType policy;
+    bool present;
+} SwitchPortPolicy;
+
+typedef struct {
+    SwitchPolicyState state;
+    char siteId[SWITCHD_NAME_LEN];
+    char source[SWITCHD_NAME_LEN];
+    char updatedAt[SWITCHD_NAME_LEN];
+    char path[SWITCHD_STAGE_PATH_LEN];
+    char error[SWITCHD_OP_DETAIL_LEN];
+    SwitchPortPolicy ports[SWITCHD_MAX_PORTS];
+    time_t loadedAt;
+} SwitchPolicy;
+
 typedef struct {
     char driverName[SWITCHD_NAME_LEN];
     char httpHost[64];
@@ -234,6 +278,7 @@ typedef struct {
 
     bool strictLinkAlarms;
     bool saveAfterWrite;
+    char policyPath[SWITCHD_STAGE_PATH_LEN];
 } SwitchdConfig;
 
 struct SwitchDriver;
@@ -266,6 +311,8 @@ typedef struct {
 
     SwitchAlarm alarms[SWITCHD_MAX_PORTS + 8];
     size_t alarmCount;
+
+    SwitchPolicy policy;
 
     SwitchDriver *driver;
 } SwitchdContext;

@@ -13,6 +13,7 @@
 #include "jserdes.h"
 #include "driver.h"
 #include "json_types.h"
+#include "policy.h"
 #include "utils.h"
 
 static bool load_request_json(const URequest *request, JsonObj **json) {
@@ -294,6 +295,18 @@ JsonObj *json_serialize_switch_kpis(const SwitchdContext *ctx) {
     return json;
 }
 
+static void add_policy_overlay(JsonObj *json,
+                               const SwitchdContext *ctx,
+                               uint32_t portId) {
+
+    if (json == NULL || ctx == NULL) {
+        return;
+    }
+
+    json_object_set_new(json, "policy",
+                        policy_serialize_overlay(ctx, portId));
+}
+
 JsonObj *json_serialize_port(const SwitchPortState *port) {
 
     JsonObj *json;
@@ -337,6 +350,19 @@ JsonObj *json_serialize_port(const SwitchPortState *port) {
     return json;
 }
 
+JsonObj *json_serialize_port_with_policy(const SwitchdContext *ctx,
+                                           const SwitchPortState *port) {
+
+    JsonObj *json;
+
+    json = json_serialize_port(port);
+    if (port != NULL) {
+        add_policy_overlay(json, ctx, port->id);
+    }
+
+    return json;
+}
+
 JsonObj *json_serialize_ports(const SwitchdContext *ctx) {
 
     JsonObj *json;
@@ -344,8 +370,10 @@ JsonObj *json_serialize_ports(const SwitchdContext *ctx) {
 
     json = json_array();
 
-    for (i = 0; i < ctx->portCount && i < SWITCHD_MAX_PORTS; i++) {
-        json_array_append_new(json, json_serialize_port(&ctx->ports[i]));
+    for (i = 0; ctx && i < ctx->portCount && i < SWITCHD_MAX_PORTS; i++) {
+        json_array_append_new(json,
+                              json_serialize_port_with_policy(ctx,
+                                                              &ctx->ports[i]));
     }
 
     return json;
