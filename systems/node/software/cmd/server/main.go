@@ -16,6 +16,7 @@ import (
 	"github.com/num30/config"
 
 	"github.com/ukama/ukama/systems/node/software/pkg/server"
+	"github.com/ukama/ukama/systems/node/software/providers"
 	"gopkg.in/yaml.v3"
 
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
@@ -42,7 +43,6 @@ func main() {
 	pkg.InstanceId = os.Getenv("POD_NAME")
 	initConfig()
 	cDb := initDb()
-	populateApps(cDb)
 	runGrpcServer(cDb)
 	log.Infof("Starting %s", pkg.ServiceName)
 }
@@ -90,32 +90,13 @@ func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
 
-	err := d.Init(&db.App{}, &db.Software{})
+	err := d.Init(&db.App{}, &db.Node{}, &db.Software{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
 	return d
 }
 
-func populateApps(gormdb sql.Db) {
-	repo := db.NewAppRepo(gormdb)
-	for _, app := range svcConf.Apps {
-		_, err := repo.Get(app.Name)
-		if err == nil {
-			continue // app already exists
-		}
-		err = repo.Create(db.App{
-			Id:          uuid.NewV4(),
-			Name:        app.Name,
-			Space:       app.Space,
-			Notes:       app.Notes,
-			MetricsKeys: app.MetricsKeys,
-		})
-		if err != nil {
-			log.Fatalf("Failed to populate apps. Error: %v", err)
-		}
-	}
-}
 
 func runGrpcServer(gormdb sql.Db) {
 	instanceId := os.Getenv("POD_NAME")
@@ -130,7 +111,7 @@ func runGrpcServer(gormdb sql.Db) {
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	softServer := server.NewSoftwareServer(svcConf.OrgName, db.NewSoftwareRepo(gormdb),
-		db.NewAppRepo(gormdb), mbClient, svcConf.DebugMode, svcConf.NodeGwIPs)
+		db.NewAppRepo(gormdb), db.NewNodeRepo(gormdb), providers.NewHealthClientProvider(svcConf.Health), mbClient, svcConf.DebugMode, svcConf.NodeGwIPs)
 	eventServer := server.NewSoftwareEventServer(svcConf.OrgName, softServer)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {

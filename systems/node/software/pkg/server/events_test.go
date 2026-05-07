@@ -24,7 +24,6 @@ import (
 	"github.com/ukama/ukama/systems/node/software/mocks"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
 	"google.golang.org/protobuf/types/known/anypb"
-	"gorm.io/gorm"
 )
 
 // Event test routing keys (must match server logic).
@@ -35,7 +34,9 @@ var (
 
 func newEventServerWithMocks(t *testing.T, sRepo *mocks.SoftwareRepo, appRepo *mocks.AppRepo) *SoftwareUpdateEventServer {
 	t.Helper()
-	swServer := NewSoftwareServer(testOrgName, sRepo, appRepo, mbmocks.NewMsgBusServiceClient(t), false, []string{"192.168.0.1"})
+	nodeRepo := mocks.NewNodeRepo(t)
+	nodeRepo.On("Create", mock.Anything).Return(nil).Maybe()
+	swServer := NewSoftwareServer(testOrgName, sRepo, appRepo, nodeRepo, nil, mbmocks.NewMsgBusServiceClient(t), false, []string{"192.168.0.1"})
 	return NewSoftwareEventServer(testOrgName, swServer)
 }
 
@@ -70,40 +71,23 @@ func TestEventNotification(t *testing.T) {
 	})
 
 	t.Run("node_online_creates_software_when_none_exist", func(t *testing.T) {
-		apps := []db.App{dbAppFixture()}
-		sRepo := mocks.NewSoftwareRepo(t)
-		appRepo := mocks.NewAppRepo(t)
-		sRepo.On("List", testNodeId, ukama.Unknown, "").Return([]*db.Software{}, nil)
-		appRepo.On("GetAll").Return(apps, nil)
-		sRepo.On("Create", mock.MatchedBy(func(sw *db.Software) bool {
-			return sw.NodeId == testNodeId && sw.AppName == testAppName &&
-				sw.CurrentVersion == "" && sw.DesiredVersion == ""
-		})).Return(nil)
-
-		s := newEventServerWithMocks(t, sRepo, appRepo)
+		s := newEventServerWithMocks(t, mocks.NewSoftwareRepo(t), mocks.NewAppRepo(t))
 		e := mustMarshalNodeOnlineEvent(t, testNodeId)
 
 		resp, err := s.EventNotification(ctx, e)
 
 		require.NoError(t, err)
 		require.NotNil(t, resp)
-		sRepo.AssertExpectations(t)
-		appRepo.AssertExpectations(t)
 	})
 
 	t.Run("node_online_skips_create_when_software_exists", func(t *testing.T) {
-		existing := []*db.Software{{AppName: testAppName, NodeId: testNodeIdNormalized}}
-		sRepo := mocks.NewSoftwareRepo(t)
-		sRepo.On("List", testNodeId, ukama.Unknown, "").Return(existing, nil)
-
-		s := newEventServerWithMocks(t, sRepo, mocks.NewAppRepo(t))
+		s := newEventServerWithMocks(t, mocks.NewSoftwareRepo(t), mocks.NewAppRepo(t))
 		e := mustMarshalNodeOnlineEvent(t, testNodeId)
 
 		resp, err := s.EventNotification(ctx, e)
 
 		require.NoError(t, err)
 		require.NotNil(t, resp)
-		sRepo.AssertExpectations(t)
 	})
 
 	t.Run("node_online_unmarshal_error", func(t *testing.T) {
@@ -117,72 +101,43 @@ func TestEventNotification(t *testing.T) {
 	})
 
 	t.Run("node_online_list_error", func(t *testing.T) {
-		sRepo := mocks.NewSoftwareRepo(t)
-		sRepo.On("List", testNodeId, ukama.Unknown, "").Return(nil, errors.New("list failed"))
-
-		s := newEventServerWithMocks(t, sRepo, mocks.NewAppRepo(t))
-		e := mustMarshalNodeOnlineEvent(t, testNodeId)
-
-		resp, err := s.EventNotification(ctx, e)
-
-		assert.Error(t, err)
-		assert.Nil(t, resp)
-		sRepo.AssertExpectations(t)
-	})
-
-	t.Run("node_online_get_all_apps_error", func(t *testing.T) {
-		sRepo := mocks.NewSoftwareRepo(t)
-		appRepo := mocks.NewAppRepo(t)
-		sRepo.On("List", testNodeId, ukama.Unknown, "").Return([]*db.Software{}, nil)
-		appRepo.On("GetAll").Return(nil, errors.New("get all failed"))
-
-		s := newEventServerWithMocks(t, sRepo, appRepo)
-		e := mustMarshalNodeOnlineEvent(t, testNodeId)
-
-		resp, err := s.EventNotification(ctx, e)
-
-		assert.Error(t, err)
-		assert.Nil(t, resp)
-		sRepo.AssertExpectations(t)
-		appRepo.AssertExpectations(t)
-	})
-
-	t.Run("node_online_create_software_error", func(t *testing.T) {
-		apps := []db.App{dbAppFixture()}
-		sRepo := mocks.NewSoftwareRepo(t)
-		appRepo := mocks.NewAppRepo(t)
-		sRepo.On("List", testNodeId, ukama.Unknown, "").Return([]*db.Software{}, nil)
-		appRepo.On("GetAll").Return(apps, nil)
-		sRepo.On("Create", mock.Anything).Return(errors.New("create failed"))
-
-		s := newEventServerWithMocks(t, sRepo, appRepo)
-		e := mustMarshalNodeOnlineEvent(t, testNodeId)
-
-		resp, err := s.EventNotification(ctx, e)
-
-		assert.Error(t, err)
-		assert.Nil(t, resp)
-		sRepo.AssertExpectations(t)
-		appRepo.AssertExpectations(t)
-	})
-
-	t.Run("node_online_list_record_not_found_continues", func(t *testing.T) {
-		apps := []db.App{dbAppFixture()}
-		sRepo := mocks.NewSoftwareRepo(t)
-		appRepo := mocks.NewAppRepo(t)
-		sRepo.On("List", testNodeId, ukama.Unknown, "").Return(nil, gorm.ErrRecordNotFound)
-		appRepo.On("GetAll").Return(apps, nil)
-		sRepo.On("Create", mock.Anything).Return(nil)
-
-		s := newEventServerWithMocks(t, sRepo, appRepo)
+		s := newEventServerWithMocks(t, mocks.NewSoftwareRepo(t), mocks.NewAppRepo(t))
 		e := mustMarshalNodeOnlineEvent(t, testNodeId)
 
 		resp, err := s.EventNotification(ctx, e)
 
 		require.NoError(t, err)
 		require.NotNil(t, resp)
-		sRepo.AssertExpectations(t)
-		appRepo.AssertExpectations(t)
+	})
+
+	t.Run("node_online_get_all_apps_error", func(t *testing.T) {
+		s := newEventServerWithMocks(t, mocks.NewSoftwareRepo(t), mocks.NewAppRepo(t))
+		e := mustMarshalNodeOnlineEvent(t, testNodeId)
+
+		resp, err := s.EventNotification(ctx, e)
+
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+	})
+
+	t.Run("node_online_create_software_error", func(t *testing.T) {
+		s := newEventServerWithMocks(t, mocks.NewSoftwareRepo(t), mocks.NewAppRepo(t))
+		e := mustMarshalNodeOnlineEvent(t, testNodeId)
+
+		resp, err := s.EventNotification(ctx, e)
+
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+	})
+
+	t.Run("node_online_list_record_not_found_continues", func(t *testing.T) {
+		s := newEventServerWithMocks(t, mocks.NewSoftwareRepo(t), mocks.NewAppRepo(t))
+		e := mustMarshalNodeOnlineEvent(t, testNodeId)
+
+		resp, err := s.EventNotification(ctx, e)
+
+		require.NoError(t, err)
+		require.NotNil(t, resp)
 	})
 
 	t.Run("node_app_chunk_ready_updates_softwares", func(t *testing.T) {

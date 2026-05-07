@@ -10,45 +10,45 @@ package server
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 	evt "github.com/ukama/ukama/systems/common/events"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
+	hpb "github.com/ukama/ukama/systems/node/health/pb/gen"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
-	"gorm.io/gorm"
 )
 
 const logMsgRoutingKey = "Received a message with Routing key %s and Message %+v"
 
 type SoftwareUpdateEventServer struct {
-	s       *SoftwareServer
-	orgName string
+	s                 *SoftwareServer
+	orgName           string
 	epb.UnimplementedEventNotificationServiceServer
 }
 
 func NewSoftwareEventServer(orgName string, s *SoftwareServer) *SoftwareUpdateEventServer {
 	return &SoftwareUpdateEventServer{
-		s:       s,
-		orgName: orgName,
+		s:                 s,
+		orgName:           orgName,
 	}
 }
 func (n *SoftwareUpdateEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof(logMsgRoutingKey, e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
-		case msgbus.PrepareRoute(n.orgName, evt.NodeEventToEventConfig[evt.NodeAppChunkReady].RoutingKey):
-			return n.handleNodeAppChunkReadyEvent(ctx, e)
-		case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline]):
-			log.Infof(logMsgRoutingKey, e.RoutingKey, e.Msg)
-			return n.handleNodeOnlineEvent(ctx, e)
-			
+	case msgbus.PrepareRoute(n.orgName, evt.NodeEventToEventConfig[evt.NodeAppChunkReady].RoutingKey):
+		return n.handleNodeAppChunkReadyEvent(ctx, e)
+	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline]):
+		log.Infof(logMsgRoutingKey, e.RoutingKey, e.Msg)
+		return n.handleNodeOnlineEvent(ctx, e)
 
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)
@@ -63,35 +63,31 @@ func (n *SoftwareUpdateEventServer) handleNodeOnlineEvent(ctx context.Context, e
 		return nil, fmt.Errorf("failed to unmarshal node online event: %w", err)
 	}
 
-	s, err := n.s.sRepo.List(msg.NodeId, ukama.Unknown, "")
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, fmt.Errorf("failed to get software: %w", err)
+	nodeType := ukama.GetNodeType(msg.NodeId)
+	if nodeType == nil {
+		return nil, fmt.Errorf("failed to get node type for node %s: %w", msg.NodeId, err)
 	}
 
-	if len(s) > 0 {
-		return &epb.EventResponse{}, nil
-	}
-
-	apps, err := n.s.appRepo.GetAll()
+	err = n.s.nodeRepo.Create(db.Node{
+		NodeId:   msg.NodeId,
+		NodeType: ukama.NodeType(*nodeType),
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get apps: %w", err)
-	}
-	for _, app := range apps {
-		swID := uuid.NewV4()
-		err := n.s.sRepo.Create(&db.Software{
-			Id:             swID,
-			AppName:        app.Name,
-			NodeId:         msg.NodeId,
-			CurrentVersion: "",
-			DesiredVersion: "",
-			ReleaseDate:    time.Now(),
-			ChangeLogs:     []string{},
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to create software update: %w", err)
+		if !strings.Contains(strings.ToLower(err.Error()), "duplicate") {
+			return nil, fmt.Errorf("failed to create node %s: %w", msg.NodeId, err)
 		}
+		log.Infof("Node %s already exists, reusing existing record", msg.NodeId)
 	}
-	
+
+	time.AfterFunc(120*time.Second, func() {
+		if err := n.reconcileApps(msg.NodeId); err != nil {
+			log.Errorf("failed to reconcile apps for node %s: %v", msg.NodeId, err)
+		}
+		if err := n.reconcileSoftware(msg.NodeId); err != nil {
+			log.Errorf("failed to reconcile software for node %s: %v", msg.NodeId, err)
+		}
+	})
+
 	return &epb.EventResponse{}, nil
 }
 
@@ -101,7 +97,7 @@ func (n *SoftwareUpdateEventServer) handleNodeAppChunkReadyEvent(ctx context.Con
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal node app chunk ready event: %w", err)
 	}
-	
+
 	log.Infof(logMsgRoutingKey, e.RoutingKey, p)
 	softwares, err := n.s.sRepo.List("", ukama.Unknown, p.Name)
 	if err != nil {
@@ -112,7 +108,7 @@ func (n *SoftwareUpdateEventServer) handleNodeAppChunkReadyEvent(ctx context.Con
 		software.DesiredVersion = p.Version
 		software.ReleaseDate = time.Now()
 		software.Status = ukama.SoftwareStatusType(ukama.UpdateAvailable)
-		software.ChangeLogs = append(software.ChangeLogs, "New version " + p.Version + " available. Please update to the latest version.")
+		software.ChangeLogs = append(software.ChangeLogs, "New version "+p.Version+" available. Please update to the latest version.")
 		err := n.s.sRepo.Update(software)
 		if err != nil {
 			return nil, fmt.Errorf("failed to update software: %w", err)
@@ -120,4 +116,157 @@ func (n *SoftwareUpdateEventServer) handleNodeAppChunkReadyEvent(ctx context.Con
 	}
 	log.Infof("Updated software update for app %s and version %s", p.Name, p.Version)
 	return &epb.EventResponse{}, nil
+}
+
+func (n *SoftwareUpdateEventServer) reconcileSoftware(nodeID string) error {
+	log.Infof("Reconciling software for node %s", nodeID)
+	healthReport, err := n.getHealthReport(nodeID)
+	if err != nil {
+		return fmt.Errorf("failed to get health report for node %s: %w", nodeID, err)
+	}
+
+	capps := healthReport.Healths[0].Capps
+
+	for _, capp := range capps {
+		listSoftware, err := n.s.sRepo.List(nodeID, ukama.Unknown, capp.Name)
+		if err != nil {
+			return fmt.Errorf("failed to list software for node %s: %w", nodeID, err)
+		}
+
+		if len(listSoftware) == 0 {
+			err := n.s.sRepo.Create(&db.Software{
+				Id:             uuid.NewV4(),
+				NodeId:         nodeID,
+				AppName:        capp.Name,
+				CurrentVersion: capp.Tag,
+				DesiredVersion: "",
+				ReleaseDate:    time.Now(),
+				Status:         ukama.UpToDate,
+				ChangeLogs:     []string{},
+			})
+			if err != nil {
+				return fmt.Errorf("failed to create software: %w", err)
+			}
+
+		} else {
+			err := n.s.sRepo.Update(&db.Software{
+				Id:             listSoftware[0].Id,
+				NodeId:         nodeID,
+				AppName:        capp.Name,
+				CurrentVersion: capp.Tag,
+				DesiredVersion: listSoftware[0].DesiredVersion,
+				ReleaseDate:    listSoftware[0].ReleaseDate,
+				Status:         listSoftware[0].Status,
+				ChangeLogs:     listSoftware[0].ChangeLogs,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to update software: %w", err)
+			}
+		}
+	}
+	log.Infof("Reconciled software for node %s", nodeID)
+	return nil
+}
+
+func (n *SoftwareUpdateEventServer) reconcileApps(nodeID string) error {
+	log.Infof("Reconciling apps for node %s", nodeID)
+
+	nID, nodeType, err := ukama.ValidateNodeIdAndType(nodeID)
+	if err != nil {
+		return err
+	}
+
+	capps, err := n.getApps()
+	if err != nil {
+		return fmt.Errorf("failed to get health apps: %w", err)
+	}
+
+	if len(capps.Capps) == 0 {
+		log.Infof("No apps found from health for node %s", nID.String())
+		return nil
+	}
+
+	apps, err := n.s.appRepo.GetAll()
+	if err != nil {
+		return fmt.Errorf("failed to get apps: %w", err)
+	}
+
+	missingApps := findMissingApps(capps.Capps, apps, nodeType)
+	if err := n.createMissingApps(missingApps); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func findMissingApps(capps []*hpb.Capps, apps []db.App, nodeType *string) map[string]db.App {
+	appNames := make(map[string]struct{}, len(apps))
+	for _, app := range apps {
+		appNames[strings.ToLower(app.Name)] = struct{}{}
+	}
+
+	missingByName := make(map[string]db.App)
+	for _, capp := range capps {
+		name := strings.TrimSpace(capp.Name)
+		if name == "" {
+			continue
+		}
+
+		lowerName := strings.ToLower(name)
+		if _, found := appNames[lowerName]; found {
+			continue
+		}
+		if _, exists := missingByName[lowerName]; exists {
+			continue
+		}
+		uid := uuid.NewV4()
+		missingByName[lowerName] = db.App{
+			Id:          uid,
+			Name:        name,
+			Space:       "system",
+			MetricsKeys: []string{name + "_cpu", name + "_memory", name + "_disk"},
+			Notes:       "App is installed on " + ukama.GetPlaceholderNameByType(*nodeType),
+		}
+	}
+
+	return missingByName
+}
+
+func (n *SoftwareUpdateEventServer) createMissingApps(missingApps map[string]db.App) error {
+	for _, app := range missingApps {
+		if err := n.s.appRepo.Create(app); err != nil {
+			if strings.Contains(strings.ToLower(err.Error()), "duplicate") {
+				continue
+			}
+			return fmt.Errorf("failed to create app: %w", err)
+		}
+	}
+	return nil
+}
+
+func (n *SoftwareUpdateEventServer) getHealthReport(nodeID string) (*hpb.ListResponse, error) {
+	healthClient, err := n.s.healthClient.GetClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get health client: %w", err)
+	}
+	healthReport, err := healthClient.List(context.Background(), &hpb.ListRequest{
+		NodeId:    nodeID,
+		Timeframe: upb.FilterTimeframesType_LATEST,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get health report for node %s: %w", nodeID, err)
+	}
+	return healthReport, nil
+}
+
+func (n *SoftwareUpdateEventServer) getApps() (*hpb.GetAppsResponse, error) {
+	healthClient, err := n.s.healthClient.GetClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get health client: %w", err)
+	}
+	response, err := healthClient.GetApps(context.Background(), &hpb.GetAppsRequest{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get capps: %w", err)
+	}
+	return response, nil
 }

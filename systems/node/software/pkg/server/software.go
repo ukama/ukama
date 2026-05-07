@@ -25,6 +25,7 @@ import (
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
 	"github.com/ukama/ukama/systems/node/software/pkg"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
+	"github.com/ukama/ukama/systems/node/software/providers"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -33,21 +34,25 @@ type SoftwareServer struct {
 	pb.UnimplementedSoftwareServiceServer
 	sRepo                db.SoftwareRepo
 	appRepo              db.AppRepo
+	nodeRepo             db.NodeRepo
 	nodeFeederRoutingKey msgbus.RoutingKeyBuilder
 	msgbus               mb.MsgBusServiceClient
+	healthClient         providers.HealthClientProvider
 	debug                bool
 	orgName              string
 	nodeGwIPs             []string
 }
 
-func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, appRepo db.AppRepo, msgBus mb.MsgBusServiceClient, debug bool, nodeGwIP []string) *SoftwareServer {
+func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, appRepo db.AppRepo, nodeRepo db.NodeRepo, healthClient providers.HealthClientProvider, msgBus mb.MsgBusServiceClient, debug bool, nodeGwIP []string) *SoftwareServer {
 	return &SoftwareServer{
 		sRepo:                sRepo,
 		debug:                debug,
 		msgbus:               msgBus,
 		appRepo:              appRepo,
+		nodeRepo:             nodeRepo,
+		healthClient:         healthClient,
 		orgName:              orgName,
-		nodeGwIPs:             nodeGwIP,
+		nodeGwIPs:            nodeGwIP,
 		nodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
 }

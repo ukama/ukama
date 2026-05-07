@@ -49,15 +49,15 @@ var (
 	testCreateAppReq   = &pb.CreateAppRequest{Name: testAppName, Space: testAppSpace, Notes: testAppNotes, MetricsKeys: testMetricsKeys}
 	testGetAppListReq  = &pb.GetAppListRequest{}
 	successCreateMsg   = "App created successfully"
-	successUpdateMsg  = "Software updated successfully"
-	invalidVersionMsg = "Invalid software version provided"
+	successUpdateMsg   = "Software updated successfully"
+	invalidVersionMsg  = "Invalid software version provided"
 	alreadyUpToDateMsg = "Software is already up to date"
 )
 
 // ========== Helpers to build server with mocks ==========
 
-func newTestServer(sRepo *mocks.SoftwareRepo, appRepo *mocks.AppRepo, msgBus *mbmocks.MsgBusServiceClient) *SoftwareServer {
-	return NewSoftwareServer(testOrgName, sRepo, appRepo, msgBus, false, []string{"192.168.0.1"})
+func newTestServer(sRepo *mocks.SoftwareRepo, appRepo *mocks.AppRepo, nodeRepo *mocks.NodeRepo, msgBus *mbmocks.MsgBusServiceClient) *SoftwareServer {
+	return NewSoftwareServer(testOrgName, sRepo, appRepo, nodeRepo, nil, msgBus, false, []string{"192.168.0.1"})
 }
 
 func dbAppFixture() db.App {
@@ -100,7 +100,7 @@ func TestCreateApp(t *testing.T) {
 				len(a.MetricsKeys) == len(testMetricsKeys)
 		})).Return(nil)
 
-		s := newTestServer(mocks.NewSoftwareRepo(t), appRepo, mbmocks.NewMsgBusServiceClient(t))
+		s := newTestServer(mocks.NewSoftwareRepo(t), appRepo, mocks.NewNodeRepo(t), mbmocks.NewMsgBusServiceClient(t))
 		resp, err := s.CreateApp(ctx, testCreateAppReq)
 
 		require.NoError(t, err)
@@ -113,7 +113,7 @@ func TestCreateApp(t *testing.T) {
 		appRepo := mocks.NewAppRepo(t)
 		appRepo.On("Create", mock.Anything).Return(errors.New(errMsgDB))
 
-		s := newTestServer(mocks.NewSoftwareRepo(t), appRepo, mbmocks.NewMsgBusServiceClient(t))
+		s := newTestServer(mocks.NewSoftwareRepo(t), appRepo, mocks.NewNodeRepo(t), mbmocks.NewMsgBusServiceClient(t))
 		resp, err := s.CreateApp(ctx, testCreateAppReq)
 
 		assert.Error(t, err)
@@ -135,7 +135,7 @@ func TestGetAppList(t *testing.T) {
 		appRepo := mocks.NewAppRepo(t)
 		appRepo.On("GetAll").Return(apps, nil)
 
-		s := newTestServer(mocks.NewSoftwareRepo(t), appRepo, mbmocks.NewMsgBusServiceClient(t))
+		s := newTestServer(mocks.NewSoftwareRepo(t), appRepo, mocks.NewNodeRepo(t), mbmocks.NewMsgBusServiceClient(t))
 		resp, err := s.GetAppList(ctx, testGetAppListReq)
 
 		require.NoError(t, err)
@@ -152,7 +152,7 @@ func TestGetAppList(t *testing.T) {
 		appRepo := mocks.NewAppRepo(t)
 		appRepo.On("GetAll").Return([]db.App{}, nil)
 
-		s := newTestServer(mocks.NewSoftwareRepo(t), appRepo, mbmocks.NewMsgBusServiceClient(t))
+		s := newTestServer(mocks.NewSoftwareRepo(t), appRepo, mocks.NewNodeRepo(t), mbmocks.NewMsgBusServiceClient(t))
 		resp, err := s.GetAppList(ctx, testGetAppListReq)
 
 		require.NoError(t, err)
@@ -165,7 +165,7 @@ func TestGetAppList(t *testing.T) {
 		appRepo := mocks.NewAppRepo(t)
 		appRepo.On("GetAll").Return(nil, errors.New(errMsgDB))
 
-		s := newTestServer(mocks.NewSoftwareRepo(t), appRepo, mbmocks.NewMsgBusServiceClient(t))
+		s := newTestServer(mocks.NewSoftwareRepo(t), appRepo, mocks.NewNodeRepo(t), mbmocks.NewMsgBusServiceClient(t))
 		resp, err := s.GetAppList(ctx, testGetAppListReq)
 
 		assert.Error(t, err)
@@ -187,7 +187,7 @@ func TestGetSoftwareList(t *testing.T) {
 		sRepo := mocks.NewSoftwareRepo(t)
 		sRepo.On("List", testNodeIdNormalized, ukama.SoftwareStatusType(0), "").Return([]*db.Software{sw}, nil)
 
-		s := newTestServer(sRepo, mocks.NewAppRepo(t), mbmocks.NewMsgBusServiceClient(t))
+		s := newTestServer(sRepo, mocks.NewAppRepo(t), mocks.NewNodeRepo(t), mbmocks.NewMsgBusServiceClient(t))
 		req := &pb.GetSoftwareListRequest{NodeId: testNodeId}
 		resp, err := s.GetSoftwareList(ctx, req)
 
@@ -203,7 +203,7 @@ func TestGetSoftwareList(t *testing.T) {
 	})
 
 	t.Run("invalid_node_id", func(t *testing.T) {
-		s := newTestServer(mocks.NewSoftwareRepo(t), mocks.NewAppRepo(t), mbmocks.NewMsgBusServiceClient(t))
+		s := newTestServer(mocks.NewSoftwareRepo(t), mocks.NewAppRepo(t), mocks.NewNodeRepo(t), mbmocks.NewMsgBusServiceClient(t))
 		req := &pb.GetSoftwareListRequest{NodeId: "short"}
 		resp, err := s.GetSoftwareList(ctx, req)
 
@@ -218,7 +218,7 @@ func TestGetSoftwareList(t *testing.T) {
 		sRepo := mocks.NewSoftwareRepo(t)
 		sRepo.On("List", "", ukama.SoftwareStatusType(0), "").Return(nil, errors.New(errMsgDB))
 
-		s := newTestServer(sRepo, mocks.NewAppRepo(t), mbmocks.NewMsgBusServiceClient(t))
+		s := newTestServer(sRepo, mocks.NewAppRepo(t), mocks.NewNodeRepo(t), mbmocks.NewMsgBusServiceClient(t))
 		req := &pb.GetSoftwareListRequest{}
 		resp, err := s.GetSoftwareList(ctx, req)
 
@@ -247,7 +247,7 @@ func TestUpdateSoftware(t *testing.T) {
 		msgBus := mbmocks.NewMsgBusServiceClient(t)
 		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil)
 
-		s := newTestServer(sRepo, mocks.NewAppRepo(t), msgBus)
+		s := newTestServer(sRepo, mocks.NewAppRepo(t), mocks.NewNodeRepo(t), msgBus)
 		req := &pb.UpdateSoftwareRequest{NodeId: testNodeId, Name: testAppNameForUpdate, Tag: testTagVersion}
 		resp, err := s.UpdateSoftware(ctx, req)
 
@@ -259,7 +259,7 @@ func TestUpdateSoftware(t *testing.T) {
 	})
 
 	t.Run("invalid_node_id", func(t *testing.T) {
-		s := newTestServer(mocks.NewSoftwareRepo(t), mocks.NewAppRepo(t), mbmocks.NewMsgBusServiceClient(t))
+		s := newTestServer(mocks.NewSoftwareRepo(t), mocks.NewAppRepo(t), mocks.NewNodeRepo(t), mbmocks.NewMsgBusServiceClient(t))
 		req := &pb.UpdateSoftwareRequest{NodeId: "bad", Name: testAppNameForUpdate, Tag: testTagVersion}
 		resp, err := s.UpdateSoftware(ctx, req)
 
@@ -271,7 +271,7 @@ func TestUpdateSoftware(t *testing.T) {
 	})
 
 	t.Run("invalid_tag", func(t *testing.T) {
-		s := newTestServer(mocks.NewSoftwareRepo(t), mocks.NewAppRepo(t), mbmocks.NewMsgBusServiceClient(t))
+		s := newTestServer(mocks.NewSoftwareRepo(t), mocks.NewAppRepo(t), mocks.NewNodeRepo(t), mbmocks.NewMsgBusServiceClient(t))
 		req := &pb.UpdateSoftwareRequest{NodeId: testNodeId, Name: testAppNameForUpdate, Tag: "not-a-version"}
 		resp, err := s.UpdateSoftware(ctx, req)
 
@@ -286,7 +286,7 @@ func TestUpdateSoftware(t *testing.T) {
 		sRepo := mocks.NewSoftwareRepo(t)
 		sRepo.On("List", testNodeIdNormalized, ukama.UpdateAvailable, testAppNameForUpdate).Return([]*db.Software{}, nil)
 
-		s := newTestServer(sRepo, mocks.NewAppRepo(t), mbmocks.NewMsgBusServiceClient(t))
+		s := newTestServer(sRepo, mocks.NewAppRepo(t), mocks.NewNodeRepo(t), mbmocks.NewMsgBusServiceClient(t))
 		req := &pb.UpdateSoftwareRequest{NodeId: testNodeId, Name: testAppNameForUpdate, Tag: testTagVersion}
 		resp, err := s.UpdateSoftware(ctx, req)
 
@@ -304,7 +304,7 @@ func TestUpdateSoftware(t *testing.T) {
 		sRepo := mocks.NewSoftwareRepo(t)
 		sRepo.On("List", testNodeIdNormalized, ukama.UpdateAvailable, testAppNameForUpdate).Return([]*db.Software{sw}, nil)
 
-		s := newTestServer(sRepo, mocks.NewAppRepo(t), mbmocks.NewMsgBusServiceClient(t))
+		s := newTestServer(sRepo, mocks.NewAppRepo(t), mocks.NewNodeRepo(t), mbmocks.NewMsgBusServiceClient(t))
 		req := &pb.UpdateSoftwareRequest{NodeId: testNodeId, Name: testAppNameForUpdate, Tag: testTagVersion}
 		resp, err := s.UpdateSoftware(ctx, req)
 
@@ -320,7 +320,7 @@ func TestUpdateSoftware(t *testing.T) {
 		sRepo := mocks.NewSoftwareRepo(t)
 		sRepo.On("List", testNodeIdNormalized, ukama.UpdateAvailable, testAppNameForUpdate).Return([]*db.Software{sw}, nil)
 
-		s := newTestServer(sRepo, mocks.NewAppRepo(t), mbmocks.NewMsgBusServiceClient(t))
+		s := newTestServer(sRepo, mocks.NewAppRepo(t), mocks.NewNodeRepo(t), mbmocks.NewMsgBusServiceClient(t))
 		req := &pb.UpdateSoftwareRequest{NodeId: testNodeId, Name: testAppNameForUpdate, Tag: testTagVersion}
 		resp, err := s.UpdateSoftware(ctx, req)
 
@@ -337,7 +337,7 @@ func TestUpdateSoftware(t *testing.T) {
 		msgBus := mbmocks.NewMsgBusServiceClient(t)
 		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(errors.New("publish failed"))
 
-		s := newTestServer(sRepo, mocks.NewAppRepo(t), msgBus)
+		s := newTestServer(sRepo, mocks.NewAppRepo(t), mocks.NewNodeRepo(t), msgBus)
 		req := &pb.UpdateSoftwareRequest{NodeId: testNodeId, Name: testAppNameForUpdate, Tag: testTagVersion}
 		resp, err := s.UpdateSoftware(ctx, req)
 
@@ -358,7 +358,7 @@ func TestUpdateSoftware(t *testing.T) {
 		msgBus := mbmocks.NewMsgBusServiceClient(t)
 		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil)
 
-		s := newTestServer(sRepo, mocks.NewAppRepo(t), msgBus)
+		s := newTestServer(sRepo, mocks.NewAppRepo(t), mocks.NewNodeRepo(t), msgBus)
 		req := &pb.UpdateSoftwareRequest{NodeId: testNodeId, Name: testAppNameForUpdate, Tag: testTagVersion}
 		resp, err := s.UpdateSoftware(ctx, req)
 

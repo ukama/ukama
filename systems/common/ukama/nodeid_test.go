@@ -153,3 +153,25 @@ func TestGetCNodeIdFromTNodeId(t *testing.T) {
 		assert.Equal(tt, NodeID("uk-sa2156-cnode-a1-xxxx"), cNodeId)
 	})
 }
+
+func TestValidateNodeIdAndType(t *testing.T) {
+	t.Run("ValidNodeIDAndType", func(tt *testing.T) {
+		nodeID := "UK-SA2602-CNODE-V0-344C"
+
+		nID, nodeType, err := ValidateNodeIdAndType(nodeID)
+
+		assert.NoError(tt, err)
+		assert.Equal(tt, NodeID("uk-sa2602-cnode-v0-344c"), nID)
+		if assert.NotNil(tt, nodeType) {
+			assert.Equal(tt, NODE_ID_TYPE_CNODE, *nodeType)
+		}
+	})
+
+	t.Run("InvalidNodeIDReturnsError", func(tt *testing.T) {
+		nID, nodeType, err := ValidateNodeIdAndType("invalid-node-id")
+
+		assert.Error(tt, err)
+		assert.Equal(tt, NodeID(""), nID)
+		assert.Nil(tt, nodeType)
+	})
+}
