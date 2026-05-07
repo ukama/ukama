@@ -15,6 +15,7 @@ import (
 )
 
 type HealthRepo interface {
+	GetCapps() ([]*Capp, error)
 	StoreRunningAppsInfo(health *Health, nestedFunc func(string, string) error) error
 	List(id string, nodeId string, timestamp string, timeframe ukama.FilterTimeframesType) ([]*Health, error)
 }
@@ -26,6 +27,13 @@ func NewHealthRepo(db sql.Db) HealthRepo {
 	return &healthRepo{
 		Db: db,
 	}
+}
+
+func (r *healthRepo) GetCapps() ([]*Capp, error) {
+	query := r.Db.GetGormDb().Model(&Capp{})
+	var capps []*Capp
+	result := query.Find(&capps)
+	return capps, result.Error
 }
 
 func (r *healthRepo) List(id string, nodeId string, timestamp string, timeframe ukama.FilterTimeframesType) ([]*Health, error) {

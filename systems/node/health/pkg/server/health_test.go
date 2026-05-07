@@ -176,7 +176,7 @@ func TestHealthServerListLatest(t *testing.T) {
 	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
 
 	resp, err := s.List(context.TODO(), &pb.ListRequest{
-		NodeId: testNode.String(),
+		NodeId:    testNode.String(),
 		Timeframe: ukamapb.FilterTimeframesType_LATEST,
 	})
 
@@ -215,7 +215,7 @@ func TestHealthServerListAll(t *testing.T) {
 	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
 
 	resp, err := s.List(context.TODO(), &pb.ListRequest{
-		NodeId: testNode.String(),
+		NodeId:    testNode.String(),
 		Timeframe: ukamapb.FilterTimeframesType_ALL,
 	})
 
@@ -255,7 +255,7 @@ func TestHealthServerListLatestRepoError(t *testing.T) {
 	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
 
 	resp, err := s.List(context.TODO(), &pb.ListRequest{
-		NodeId: testNode.String(),
+		NodeId:    testNode.String(),
 		Timeframe: ukamapb.FilterTimeframesType_LATEST,
 	})
 
@@ -274,7 +274,7 @@ func TestHealthServerListAllRepoError(t *testing.T) {
 	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
 
 	resp, err := s.List(context.TODO(), &pb.ListRequest{
-		NodeId: testNode.String(),
+		NodeId:    testNode.String(),
 		Timeframe: ukamapb.FilterTimeframesType_ALL,
 	})
 
@@ -285,3 +285,65 @@ func TestHealthServerListAllRepoError(t *testing.T) {
 	msgclientRepo.AssertExpectations(t)
 }
 
+func TestHealthServerGetApps(t *testing.T) {
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	hRepo := &mocks.HealthRepo{}
+
+	cappID := uuid.NewV4()
+	capps := []*db.Capp{
+		{
+			Id:       cappID,
+			Space:    "services",
+			Name:     "deviced",
+			Tag:      "v1.2.3",
+			Status:   db.Active,
+			HealthID: uuid.NewV4(),
+			Resources: []db.Resource{
+				{
+					Id:     uuid.NewV4(),
+					CappID: cappID,
+					Name:   "cpu",
+					Value:  "12.0",
+				},
+			},
+		},
+	}
+
+	hRepo.On("GetCapps").Return(capps, nil).Once()
+
+	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
+	resp, err := s.GetApps(context.TODO(), &pb.GetAppsRequest{})
+
+	assert.NoError(t, err)
+	if assert.NotNil(t, resp) && assert.Len(t, resp.Capps, 1) {
+		assert.Equal(t, capps[0].Id.String(), resp.Capps[0].Id)
+		assert.Equal(t, capps[0].Space, resp.Capps[0].Space)
+		assert.Equal(t, capps[0].Name, resp.Capps[0].Name)
+		assert.Equal(t, capps[0].Tag, resp.Capps[0].Tag)
+		assert.Equal(t, pb.Status(capps[0].Status), resp.Capps[0].Status)
+		if assert.Len(t, resp.Capps[0].Resources, 1) {
+			assert.Equal(t, capps[0].Resources[0].Name, resp.Capps[0].Resources[0].Name)
+			assert.Equal(t, capps[0].Resources[0].Value, resp.Capps[0].Resources[0].Value)
+			assert.Equal(t, capps[0].Resources[0].CappID.String(), resp.Capps[0].Resources[0].CappId)
+		}
+	}
+
+	hRepo.AssertExpectations(t)
+	msgclientRepo.AssertExpectations(t)
+}
+
+func TestHealthServerGetAppsRepoError(t *testing.T) {
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	hRepo := &mocks.HealthRepo{}
+
+	hRepo.On("GetCapps").Return(([]*db.Capp)(nil), assert.AnError).Once()
+
+	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
+	resp, err := s.GetApps(context.TODO(), &pb.GetAppsRequest{})
+
+	assert.Nil(t, resp)
+	assert.Error(t, err)
+
+	hRepo.AssertExpectations(t)
+	msgclientRepo.AssertExpectations(t)
+}

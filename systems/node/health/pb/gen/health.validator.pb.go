@@ -19,6 +19,19 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *GetAppsRequest) Validate() error {
+	return nil
+}
+func (this *GetAppsResponse) Validate() error {
+	for _, item := range this.Capps {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Capps", err)
+			}
+		}
+	}
+	return nil
+}
 func (this *ListRequest) Validate() error {
 	return nil
 }

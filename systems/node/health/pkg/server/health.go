@@ -54,7 +54,6 @@ func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRu
 	}
 
 	healthID := uuid.NewV4()
-	cappID := uuid.NewV4()
 
 	// Create a Health instance
 	health := db.Health{
@@ -74,6 +73,9 @@ func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRu
 	}
 
 	for _, capp := range req.GetCapps() {
+		// Each capp must have a unique ID; reusing one ID causes PK collisions
+		// and the whole transaction rolls back.
+		cappID := uuid.NewV4()
 		health.Capps = append(health.Capps, db.Capp{
 			Id:       cappID,
 			HealthID: healthID,
@@ -115,22 +117,22 @@ func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRu
 
 	for _, capp := range health.Capps {
 		capps := &epb.Capps{
-			Id:        capp.Id.String(),
-			Space:     capp.Space,
-			Name:      capp.Name,
-			Tag:       capp.Tag,
-			Status:    epb.Status(capp.Status), 
+			Id:     capp.Id.String(),
+			Space:  capp.Space,
+			Name:   capp.Name,
+			Tag:    capp.Tag,
+			Status: epb.Status(capp.Status),
 		}
 		for _, resource := range capp.Resources {
 			resource := &epb.Resource{
-				Id:     resource.Id.String(),
-				Name:   resource.Name,
-				Value:  resource.Value,
+				Id:    resource.Id.String(),
+				Name:  resource.Name,
+				Value: resource.Value,
 			}
 			capps.Resources = append(capps.Resources, resource)
 		}
 		msg.Capps = append(msg.Capps, capps)
-	}	
+	}
 
 	route := h.healthRoutingKey.SetAction("store").SetObject("capps").MustBuild()
 	err = h.msgbus.PublishRequest(route, msg)
@@ -159,6 +161,19 @@ func (h *HealthServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListR
 	return &pb.ListResponse{
 		Healths: healthsPb,
 	}, nil
+}
+
+func (h *HealthServer) GetApps(ctx context.Context, req *pb.GetAppsRequest) (*pb.GetAppsResponse, error) {
+	log.Infof("GetApps: %v", req)
+	capps, err := h.sRepo.GetCapps()
+	if err != nil {
+		return nil, err
+	}
+	cappsPb := make([]*pb.Capps, len(capps))
+	for i, c := range capps {
+		cappsPb[i] = convertToPbCapp(c)
+	}
+	return &pb.GetAppsResponse{Capps: cappsPb}, nil
 }
 
 func convertToPbHealths(healths []*db.Health) []*pb.Health {
