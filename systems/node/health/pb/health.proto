@@ -7,14 +7,17 @@ import "google/protobuf/wrappers.proto";
 import "ukama/filter_timeframes.proto";
 
 service healhtService {
-    rpc GetApps (GetAppsRequest) returns (GetAppsResponse);
+    rpc ListApps (ListAppsRequest) returns (ListAppsResponse);
     rpc List (ListRequest) returns (ListResponse);
     rpc StoreRunningAppsInfo (StoreRunningAppsInfoRequest) returns (StoreRunningAppsInfoResponse);
 }
 
-message GetAppsRequest {}
+message ListAppsRequest {
+    string nodeId = 1;
+    string name = 2;
+}
 
-message GetAppsResponse {
+message ListAppsResponse {
     repeated Capps capps = 1;
 }
 

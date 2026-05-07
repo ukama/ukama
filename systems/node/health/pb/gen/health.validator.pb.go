@@ -19,10 +19,10 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *GetAppsRequest) Validate() error {
+func (this *ListAppsRequest) Validate() error {
 	return nil
 }
-func (this *GetAppsResponse) Validate() error {
+func (this *ListAppsResponse) Validate() error {
 	for _, item := range this.Capps {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {

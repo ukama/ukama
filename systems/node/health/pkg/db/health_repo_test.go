@@ -274,3 +274,88 @@ func TestHealthRepo_StoreRunningAppsInfo(t *testing.T) {
 	})
 
 }
+
+func TestHealthRepo_ListApps(t *testing.T) {
+	t.Run("app exists for node and name", func(t *testing.T) {
+		nid := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+		appName := "deviced"
+
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		rows := sqlmock.NewRows([]string{"name"}).AddRow(appName)
+		mock.ExpectQuery(`^SELECT.*FROM "capps".*JOIN healths ON healths.id = capps.health_id.*WHERE.*healths\.node_id.*capps\.name.*`).
+			WithArgs(nid.String(), appName).
+			WillReturnRows(rows)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewHealthRepo(&UkamaDbMock{GormDb: gdb})
+		capps, err := r.ListApps(nid.String(), appName)
+
+		assert.NoError(t, err)
+		if assert.Len(t, capps, 1) {
+			assert.Equal(t, appName, capps[0].Name)
+		}
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("app does not exist", func(t *testing.T) {
+		nid := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+		appName := "nonexistent"
+
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		mock.ExpectQuery(`^SELECT.*FROM "capps".*JOIN healths ON healths.id = capps.health_id.*WHERE.*healths\.node_id.*capps\.name.*`).
+			WithArgs(nid.String(), appName).
+			WillReturnRows(sqlmock.NewRows([]string{"name"}))
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewHealthRepo(&UkamaDbMock{GormDb: gdb})
+		capps, err := r.ListApps(nid.String(), appName)
+
+		assert.NoError(t, err)
+		assert.Empty(t, capps)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("list all apps when no filters provided", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		rows := sqlmock.NewRows([]string{"name"}).AddRow("deviced").AddRow("configd")
+		mock.ExpectQuery(`^SELECT.*FROM "capps"`).WillReturnRows(rows)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewHealthRepo(&UkamaDbMock{GormDb: gdb})
+		capps, err := r.ListApps("", "")
+
+		assert.NoError(t, err)
+		assert.Len(t, capps, 2)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}

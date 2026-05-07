@@ -163,17 +163,22 @@ func (h *HealthServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListR
 	}, nil
 }
 
-func (h *HealthServer) GetApps(ctx context.Context, req *pb.GetAppsRequest) (*pb.GetAppsResponse, error) {
-	log.Infof("GetApps: %v", req)
-	capps, err := h.sRepo.GetCapps()
+func (h *HealthServer) ListApps(ctx context.Context, req *pb.ListAppsRequest) (*pb.ListAppsResponse, error) {
+	log.Infof("ListApps: %v", req)
+	capps, err := h.sRepo.ListApps(req.NodeId, req.Name)
 	if err != nil {
 		return nil, err
 	}
+	cappsPb := convertToPbCapps(capps)
+	return &pb.ListAppsResponse{Capps: cappsPb}, nil
+}
+
+func convertToPbCapps(capps []*db.Capp) []*pb.Capps {
 	cappsPb := make([]*pb.Capps, len(capps))
 	for i, c := range capps {
 		cappsPb[i] = convertToPbCapp(c)
 	}
-	return &pb.GetAppsResponse{Capps: cappsPb}, nil
+	return cappsPb
 }
 
 func convertToPbHealths(healths []*db.Health) []*pb.Health {

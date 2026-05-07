@@ -14,36 +14,6 @@ type HealthRepo struct {
 	mock.Mock
 }
 
-// GetCapps provides a mock function with no fields
-func (_m *HealthRepo) GetCapps() ([]*db.Capp, error) {
-	ret := _m.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetCapps")
-	}
-
-	var r0 []*db.Capp
-	var r1 error
-	if rf, ok := ret.Get(0).(func() ([]*db.Capp, error)); ok {
-		return rf()
-	}
-	if rf, ok := ret.Get(0).(func() []*db.Capp); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*db.Capp)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // List provides a mock function with given fields: id, nodeId, timestamp, timeframe
 func (_m *HealthRepo) List(id string, nodeId string, timestamp string, timeframe ukama.FilterTimeframesType) ([]*db.Health, error) {
 	ret := _m.Called(id, nodeId, timestamp, timeframe)
@@ -67,6 +37,36 @@ func (_m *HealthRepo) List(id string, nodeId string, timestamp string, timeframe
 
 	if rf, ok := ret.Get(1).(func(string, string, string, ukama.FilterTimeframesType) error); ok {
 		r1 = rf(id, nodeId, timestamp, timeframe)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ListApps provides a mock function with given fields: nodeId, name
+func (_m *HealthRepo) ListApps(nodeId string, name string) ([]*db.Capp, error) {
+	ret := _m.Called(nodeId, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListApps")
+	}
+
+	var r0 []*db.Capp
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string) ([]*db.Capp, error)); ok {
+		return rf(nodeId, name)
+	}
+	if rf, ok := ret.Get(0).(func(string, string) []*db.Capp); ok {
+		r0 = rf(nodeId, name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*db.Capp)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(nodeId, name)
 	} else {
 		r1 = ret.Error(1)
 	}

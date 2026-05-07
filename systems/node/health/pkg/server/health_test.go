@@ -309,10 +309,10 @@ func TestHealthServerGetApps(t *testing.T) {
 		},
 	}
 
-	hRepo.On("GetCapps").Return(capps, nil).Once()
+	hRepo.On("ListApps", "", "").Return(capps, nil).Once()
 
 	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
-	resp, err := s.GetApps(context.TODO(), &pb.GetAppsRequest{})
+	resp, err := s.ListApps(context.TODO(), &pb.ListAppsRequest{})
 
 	assert.NoError(t, err)
 	if assert.NotNil(t, resp) && assert.Len(t, resp.Capps, 1) {
@@ -336,10 +336,10 @@ func TestHealthServerGetAppsRepoError(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 	hRepo := &mocks.HealthRepo{}
 
-	hRepo.On("GetCapps").Return(([]*db.Capp)(nil), assert.AnError).Once()
+	hRepo.On("ListApps", "", "").Return(([]*db.Capp)(nil), assert.AnError).Once()
 
 	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
-	resp, err := s.GetApps(context.TODO(), &pb.GetAppsRequest{})
+	resp, err := s.ListApps(context.TODO(), &pb.ListAppsRequest{})
 
 	assert.Nil(t, resp)
 	assert.Error(t, err)

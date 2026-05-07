@@ -14,36 +14,6 @@ type HealhtServiceServer struct {
 	mock.Mock
 }
 
-// GetApps provides a mock function with given fields: _a0, _a1
-func (_m *HealhtServiceServer) GetApps(_a0 context.Context, _a1 *gen.GetAppsRequest) (*gen.GetAppsResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetApps")
-	}
-
-	var r0 *gen.GetAppsResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetAppsRequest) (*gen.GetAppsResponse, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetAppsRequest) *gen.GetAppsResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetAppsResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetAppsRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // List provides a mock function with given fields: _a0, _a1
 func (_m *HealhtServiceServer) List(_a0 context.Context, _a1 *gen.ListRequest) (*gen.ListResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -66,6 +36,36 @@ func (_m *HealhtServiceServer) List(_a0 context.Context, _a1 *gen.ListRequest) (
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ListApps provides a mock function with given fields: _a0, _a1
+func (_m *HealhtServiceServer) ListApps(_a0 context.Context, _a1 *gen.ListAppsRequest) (*gen.ListAppsResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListApps")
+	}
+
+	var r0 *gen.ListAppsResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListAppsRequest) (*gen.ListAppsResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListAppsRequest) *gen.ListAppsResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ListAppsResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListAppsRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

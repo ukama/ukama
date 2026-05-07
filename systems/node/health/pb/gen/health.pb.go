@@ -77,26 +77,28 @@ func (Status) EnumDescriptor() ([]byte, []int) {
 	return file_health_proto_rawDescGZIP(), []int{0}
 }
 
-type GetAppsRequest struct {
+type ListAppsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	NodeId        string                 `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetAppsRequest) Reset() {
-	*x = GetAppsRequest{}
+func (x *ListAppsRequest) Reset() {
+	*x = ListAppsRequest{}
 	mi := &file_health_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetAppsRequest) String() string {
+func (x *ListAppsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetAppsRequest) ProtoMessage() {}
+func (*ListAppsRequest) ProtoMessage() {}
 
-func (x *GetAppsRequest) ProtoReflect() protoreflect.Message {
+func (x *ListAppsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_health_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -108,32 +110,46 @@ func (x *GetAppsRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetAppsRequest.ProtoReflect.Descriptor instead.
-func (*GetAppsRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ListAppsRequest.ProtoReflect.Descriptor instead.
+func (*ListAppsRequest) Descriptor() ([]byte, []int) {
 	return file_health_proto_rawDescGZIP(), []int{0}
 }
 
-type GetAppsResponse struct {
+func (x *ListAppsRequest) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *ListAppsRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type ListAppsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Capps         []*Capps               `protobuf:"bytes,1,rep,name=capps,proto3" json:"capps,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetAppsResponse) Reset() {
-	*x = GetAppsResponse{}
+func (x *ListAppsResponse) Reset() {
+	*x = ListAppsResponse{}
 	mi := &file_health_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetAppsResponse) String() string {
+func (x *ListAppsResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetAppsResponse) ProtoMessage() {}
+func (*ListAppsResponse) ProtoMessage() {}
 
-func (x *GetAppsResponse) ProtoReflect() protoreflect.Message {
+func (x *ListAppsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_health_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -145,12 +161,12 @@ func (x *GetAppsResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetAppsResponse.ProtoReflect.Descriptor instead.
-func (*GetAppsResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ListAppsResponse.ProtoReflect.Descriptor instead.
+func (*ListAppsResponse) Descriptor() ([]byte, []int) {
 	return file_health_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *GetAppsResponse) GetCapps() []*Capps {
+func (x *ListAppsResponse) GetCapps() []*Capps {
 	if x != nil {
 		return x.Capps
 	}
@@ -673,9 +689,11 @@ var File_health_proto protoreflect.FileDescriptor
 
 const file_health_proto_rawDesc = "" +
 	"\n" +
-	"\fhealth.proto\x12\x14ukama.node.health.v1\x1a\x0fvalidator.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x1dukama/filter_timeframes.proto\"\x10\n" +
-	"\x0eGetAppsRequest\"D\n" +
-	"\x0fGetAppsResponse\x121\n" +
+	"\fhealth.proto\x12\x14ukama.node.health.v1\x1a\x0fvalidator.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x1dukama/filter_timeframes.proto\"=\n" +
+	"\x0fListAppsRequest\x12\x16\n" +
+	"\x06nodeId\x18\x01 \x01(\tR\x06nodeId\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"E\n" +
+	"\x10ListAppsResponse\x121\n" +
 	"\x05capps\x18\x01 \x03(\v2\x1b.ukama.node.health.v1.CappsR\x05capps\"\x98\x01\n" +
 	"\vListRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
@@ -718,9 +736,9 @@ const file_health_proto_rawDesc = "" +
 	"\n" +
 	"\x06ACTIVE\x10\x01\x12\b\n" +
 	"\x04DONE\x10\x02\x12\v\n" +
-	"\aUNKNOWN\x10\x032\xb5\x02\n" +
-	"\rhealhtService\x12V\n" +
-	"\aGetApps\x12$.ukama.node.health.v1.GetAppsRequest\x1a%.ukama.node.health.v1.GetAppsResponse\x12M\n" +
+	"\aUNKNOWN\x10\x032\xb8\x02\n" +
+	"\rhealhtService\x12Y\n" +
+	"\bListApps\x12%.ukama.node.health.v1.ListAppsRequest\x1a&.ukama.node.health.v1.ListAppsResponse\x12M\n" +
 	"\x04List\x12!.ukama.node.health.v1.ListRequest\x1a\".ukama.node.health.v1.ListResponse\x12}\n" +
 	"\x14StoreRunningAppsInfo\x121.ukama.node.health.v1.StoreRunningAppsInfoRequest\x1a2.ukama.node.health.v1.StoreRunningAppsInfoResponseB3Z1github.com/ukama/ukama/systems/node/health/pb/genb\x06proto3"
 
@@ -740,8 +758,8 @@ var file_health_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_health_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_health_proto_goTypes = []any{
 	(Status)(0),                          // 0: ukama.node.health.v1.Status
-	(*GetAppsRequest)(nil),               // 1: ukama.node.health.v1.GetAppsRequest
-	(*GetAppsResponse)(nil),              // 2: ukama.node.health.v1.GetAppsResponse
+	(*ListAppsRequest)(nil),              // 1: ukama.node.health.v1.ListAppsRequest
+	(*ListAppsResponse)(nil),             // 2: ukama.node.health.v1.ListAppsResponse
 	(*ListRequest)(nil),                  // 3: ukama.node.health.v1.ListRequest
 	(*ListResponse)(nil),                 // 4: ukama.node.health.v1.ListResponse
 	(*StoreRunningAppsInfoRequest)(nil),  // 5: ukama.node.health.v1.StoreRunningAppsInfoRequest
@@ -753,7 +771,7 @@ var file_health_proto_goTypes = []any{
 	(ukama.FilterTimeframesType)(0),      // 11: ukama.common.v1.FilterTimeframesType
 }
 var file_health_proto_depIdxs = []int32{
-	8,  // 0: ukama.node.health.v1.GetAppsResponse.capps:type_name -> ukama.node.health.v1.Capps
+	8,  // 0: ukama.node.health.v1.ListAppsResponse.capps:type_name -> ukama.node.health.v1.Capps
 	11, // 1: ukama.node.health.v1.ListRequest.timeframe:type_name -> ukama.common.v1.FilterTimeframesType
 	7,  // 2: ukama.node.health.v1.ListResponse.healths:type_name -> ukama.node.health.v1.Health
 	9,  // 3: ukama.node.health.v1.StoreRunningAppsInfoRequest.system:type_name -> ukama.node.health.v1.System
@@ -762,10 +780,10 @@ var file_health_proto_depIdxs = []int32{
 	8,  // 6: ukama.node.health.v1.Health.capps:type_name -> ukama.node.health.v1.Capps
 	0,  // 7: ukama.node.health.v1.Capps.status:type_name -> ukama.node.health.v1.Status
 	10, // 8: ukama.node.health.v1.Capps.resources:type_name -> ukama.node.health.v1.Resource
-	1,  // 9: ukama.node.health.v1.healhtService.GetApps:input_type -> ukama.node.health.v1.GetAppsRequest
+	1,  // 9: ukama.node.health.v1.healhtService.ListApps:input_type -> ukama.node.health.v1.ListAppsRequest
 	3,  // 10: ukama.node.health.v1.healhtService.List:input_type -> ukama.node.health.v1.ListRequest
 	5,  // 11: ukama.node.health.v1.healhtService.StoreRunningAppsInfo:input_type -> ukama.node.health.v1.StoreRunningAppsInfoRequest
-	2,  // 12: ukama.node.health.v1.healhtService.GetApps:output_type -> ukama.node.health.v1.GetAppsResponse
+	2,  // 12: ukama.node.health.v1.healhtService.ListApps:output_type -> ukama.node.health.v1.ListAppsResponse
 	4,  // 13: ukama.node.health.v1.healhtService.List:output_type -> ukama.node.health.v1.ListResponse
 	6,  // 14: ukama.node.health.v1.healhtService.StoreRunningAppsInfo:output_type -> ukama.node.health.v1.StoreRunningAppsInfoResponse
 	12, // [12:15] is the sub-list for method output_type
