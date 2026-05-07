@@ -115,7 +115,7 @@ extract_tarball() {
     MOUNT_POINTS+=("$mnt")
 
     sudo mount "$part" "$mnt"
-    sudo tar -xzf "$tarball" -C "$mnt"
+    sudo tar -xzf "$tarball" -C "$mnt" --no-same-owner --no-same-permissions
     sync
     sudo umount "$mnt"
     rm -rf "$mnt"
