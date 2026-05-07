@@ -21,6 +21,8 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/ukama"
+	hpb "github.com/ukama/ukama/systems/node/health/pb/gen"
+	healthmocks "github.com/ukama/ukama/systems/node/health/pb/gen/mocks"
 	"github.com/ukama/ukama/systems/node/software/mocks"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -36,7 +38,14 @@ func newEventServerWithMocks(t *testing.T, sRepo *mocks.SoftwareRepo, appRepo *m
 	t.Helper()
 	nodeRepo := mocks.NewNodeRepo(t)
 	nodeRepo.On("Create", mock.Anything).Return(nil).Maybe()
+	nodeRepo.On("List").Return([]db.Node{}, nil).Maybe()
 	swServer := NewSoftwareServer(testOrgName, sRepo, appRepo, nodeRepo, nil, mbmocks.NewMsgBusServiceClient(t), false, []string{"192.168.0.1"})
+	return NewSoftwareEventServer(testOrgName, swServer)
+}
+
+func newEventServerWithAllMocks(t *testing.T, sRepo *mocks.SoftwareRepo, appRepo *mocks.AppRepo, nodeRepo *mocks.NodeRepo, healthProvider *mocks.HealthClientProvider) *SoftwareUpdateEventServer {
+	t.Helper()
+	swServer := NewSoftwareServer(testOrgName, sRepo, appRepo, nodeRepo, healthProvider, mbmocks.NewMsgBusServiceClient(t), false, []string{"192.168.0.1"})
 	return NewSoftwareEventServer(testOrgName, swServer)
 }
 
@@ -213,4 +222,77 @@ func TestEventNotification(t *testing.T) {
 		require.NotNil(t, resp)
 		sRepo.AssertExpectations(t)
 	})
+}
+
+func TestHandleNodeAppChunkReadyEvent_VersionCompareFallback(t *testing.T) {
+	ctx := context.Background()
+	routeNodeAppChunkReady := msgbus.PrepareRoute(testOrgName, evt.NodeEventToEventConfig[evt.NodeAppChunkReady].RoutingKey)
+
+	sRepo := mocks.NewSoftwareRepo(t)
+	nodeRepo := mocks.NewNodeRepo(t)
+	appRepo := mocks.NewAppRepo(t)
+	healthProvider := mocks.NewHealthClientProvider(t)
+
+	nodeRepo.On("List").Return([]db.Node{}, nil).Once()
+
+	sw := dbSoftwareFixture()
+	sw.AppName = testAppNameForUpdate
+	sw.CurrentVersion = "old_arch-40ab36dc2"
+	sw.ChangeLogs = []string{}
+
+	sRepo.On("List", "", ukama.Unknown, testAppNameForUpdate).Return([]*db.Software{sw}, nil).Once()
+	sRepo.On("Update", mock.MatchedBy(func(s *db.Software) bool {
+		return s.Id == sw.Id &&
+			s.DesiredVersion == testTagVersion &&
+			s.Status == ukama.UpdateAvailable &&
+			len(s.ChangeLogs) == 1
+	})).Return(nil).Once()
+
+	s := newEventServerWithAllMocks(t, sRepo, appRepo, nodeRepo, healthProvider)
+	msg, err := anypb.New(&epb.EventArtifactChunkReady{Name: testAppNameForUpdate, Version: testTagVersion})
+	require.NoError(t, err)
+	e := &epb.Event{RoutingKey: routeNodeAppChunkReady, Msg: msg}
+
+	resp, err := s.EventNotification(ctx, e)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+}
+
+func TestReconcileCurrentAppVersion_UpdatesCurrentVersionFromHealth(t *testing.T) {
+	sRepo := mocks.NewSoftwareRepo(t)
+	nodeRepo := mocks.NewNodeRepo(t)
+	appRepo := mocks.NewAppRepo(t)
+	healthProvider := mocks.NewHealthClientProvider(t)
+	healthClient := healthmocks.NewHealhtServiceClient(t)
+
+	nodeRepo.On("List").Return([]db.Node{
+		{NodeId: testNodeId},
+	}, nil).Once()
+
+	healthProvider.On("GetClient").Return(healthClient, nil)
+	healthClient.On("ListApps", mock.Anything, mock.MatchedBy(func(req *hpb.ListAppsRequest) bool {
+		return req.NodeId == testNodeId && req.Name == ""
+	})).Return(&hpb.ListAppsResponse{
+		Capps: []*hpb.Capps{
+			{Name: testAppNameForUpdate, Tag: testTagVersion},
+		},
+	}, nil).Once()
+
+	sw := dbSoftwareFixture()
+	sw.NodeId = testNodeId
+	sw.AppName = testAppNameForUpdate
+	sw.CurrentVersion = "1.0.0"
+	sw.ChangeLogs = []string{"keep-me"}
+
+	sRepo.On("List", testNodeId, ukama.Unknown, testAppNameForUpdate).Return([]*db.Software{sw}, nil).Once()
+	sRepo.On("Update", mock.MatchedBy(func(updated *db.Software) bool {
+		return updated.Id == sw.Id &&
+			updated.CurrentVersion == testTagVersion &&
+			len(updated.ChangeLogs) == 1 &&
+			updated.ChangeLogs[0] == "keep-me"
+	})).Return(nil).Once()
+
+	s := newEventServerWithAllMocks(t, sRepo, appRepo, nodeRepo, healthProvider)
+	err := s.reconcileCurrentAppVersion()
+	assert.NoError(t, err)
 }
