@@ -31,6 +31,7 @@ import (
 	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
+	crpc "github.com/ukama/ukama/systems/node/controller/pkg/rpc"
 )
 
 const registrySystemName = "registry"
@@ -97,6 +98,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterControllerServiceServer(s, contServer)
+		crpc.RegisterCommandServiceServer(s, contServer)
 		epb.RegisterEventNotificationServiceServer(s, controllerEventServer)
 
 	})

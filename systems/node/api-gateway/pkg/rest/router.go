@@ -28,6 +28,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	cfgPb "github.com/ukama/ukama/systems/node/configurator/pb/gen"
 	contPb "github.com/ukama/ukama/systems/node/controller/pb/gen"
+	sitepb "github.com/ukama/ukama/systems/node/site-controller/pb/gen"
 	spb "github.com/ukama/ukama/systems/node/software/pb/gen"
 	nspb "github.com/ukama/ukama/systems/node/state/pb/gen"
 )
@@ -51,6 +52,7 @@ type Clients struct {
 	Configurator    configurator
 	SoftwareManager softwareManager
 	State           state
+	SiteController  siteController
 }
 
 type state interface {
@@ -66,6 +68,17 @@ type controller interface {
 	PingNode(*contPb.PingNodeRequest) (*contPb.PingNodeResponse, error)
 	ToggleRf(nodeId string, state string) (*contPb.ToggleRfSwitchResponse, error)
 	ToggleNodeService(nodeId string, state string) (*contPb.ToggleNodeServiceResponse, error)
+}
+
+type siteController interface {
+	SetSite(siteID, state, reason string) (*sitepb.SetSiteResponse, error)
+	SetService(siteID, state, reason string) (*sitepb.SetServiceResponse, error)
+	SetRadio(siteID, state, reason string) (*sitepb.SetRadioResponse, error)
+	GetSiteState(siteID string) (*sitepb.GetSiteStateResponse, error)
+	UpsertPortMap(siteID, cnodeID string, ports []*sitepb.PortMapEntry) (*sitepb.UpsertPortMapResponse, error)
+	GetPortMap(siteID string) (*sitepb.GetPortMapResponse, error)
+	ApplySwitchPolicy(siteID string) (*sitepb.ApplySwitchPolicyResponse, error)
+	PowerCycleNode(siteID, role, reason string) (*sitepb.PowerCycleNodeResponse, error)
 }
 
 type configurator interface {
@@ -86,6 +99,7 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c.Configurator = client.NewConfigurator(endpoints.Configurator, endpoints.Timeout)
 	c.SoftwareManager = client.NewSoftwareManager(endpoints.Software, endpoints.Timeout)
 	c.State = client.NewState(endpoints.State, endpoints.Timeout)
+	c.SiteController = client.NewSiteController(endpoints.SiteController, endpoints.Timeout)
 	return c
 }
 
@@ -142,10 +156,21 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		controller.POST("/networks/:network_id/sites/:site_name/restart", formatDoc("Restart a site in an organization", "Restarting a site within an organization"), tonic.Handler(r.postRestartSiteHandler, http.StatusOK))
 		controller.POST("/nodes/:node_id/restart", formatDoc("Restart a node", "Restarting a node"), tonic.Handler(r.postRestartNodeHandler, http.StatusOK))
 		controller.POST("/networks/:network_id/restart-nodes", formatDoc("Restart multiple nodes within a network", "Restarting multiple nodes within a network"), tonic.Handler(r.postRestartNodesHandler, http.StatusOK))
-		controller.POST("/sites/:site_id/toggle-internet-port", formatDoc("Toggle internet port for a site", "Turns the internet port on or off for a specific site"), tonic.Handler(r.postToggleInternetSwitchHandler, http.StatusOK))
-		controller.POST("/nodes/:node_id/toggle-radio", formatDoc("Toggle RF on/off for a node", "Turns the radio on or off for a specific node"), tonic.Handler(r.postToggleRfHandler, http.StatusOK))
-		controller.POST("/nodes/:node_id/toggle-service", formatDoc("Toggle Node Service on/off for a node", "Turns the Node Service on or off for a specific node"), tonic.Handler(r.postToggleNodeServiceHandler, http.StatusOK))
 		controller.GET("/nodes/:node_id/ping", formatDoc("Ping a node", "Ping a node"), tonic.Handler(r.getPingNodeHandler, http.StatusAccepted))
+
+		const sites = "/sites"
+		siteS := auth.Group(sites, "Site Controller", "Operations on sites")
+		siteS.POST("/:site_id/on", formatDoc("Turn site on", "Make site customer-serving"), tonic.Handler(r.postSiteOnHandler, http.StatusOK))
+		siteS.POST("/:site_id/off", formatDoc("Turn site off", "Make site non-serving without powering nodes off"), tonic.Handler(r.postSiteOffHandler, http.StatusOK))
+		siteS.POST("/:site_id/service/on", formatDoc("Turn site service on", "Start digital cellular service"), tonic.Handler(r.postServiceOnHandler, http.StatusOK))
+		siteS.POST("/:site_id/service/off", formatDoc("Turn site service off", "Stop digital cellular service"), tonic.Handler(r.postServiceOffHandler, http.StatusOK))
+		siteS.POST("/:site_id/radio/on", formatDoc("Turn site radio on", "Enable RF chain"), tonic.Handler(r.postRadioOnHandler, http.StatusOK))
+		siteS.POST("/:site_id/radio/off", formatDoc("Turn site radio off", "Disable RF chain"), tonic.Handler(r.postRadioOffHandler, http.StatusOK))
+		siteS.GET("/:site_id/state", formatDoc("Get site state", "Get desired and derived site state"), tonic.Handler(r.getSiteStateHandler, http.StatusOK))
+		siteS.GET("/:site_id/ports", formatDoc("Get site port map", "Get static site switch port map"), tonic.Handler(r.getSitePortMapHandler, http.StatusOK))
+		siteS.PUT("/:site_id/ports", formatDoc("Update site port map", "Update static site switch port map"), tonic.Handler(r.putSitePortMapHandler, http.StatusOK))
+		siteS.POST("/:site_id/switch-policy", formatDoc("Apply switch policy", "Generate and push switch.d policy"), tonic.Handler(r.postApplySwitchPolicyHandler, http.StatusOK))
+		siteS.POST("/:site_id/nodes/:role/power-cycle", formatDoc("Power-cycle site node", "Power-cycle a site node through CNode switch.d"), tonic.Handler(r.postPowerCycleNodeHandler, http.StatusOK))
 
 		const cfg = "/configurator"
 		cfgS := auth.Group(cfg, "Configurator", "Config for nodes")

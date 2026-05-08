@@ -9,7 +9,7 @@
 package rest
 
 type PingNodeRequest struct {
-	NodeId    string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
+	NodeId string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
 }
 
 type RestartNodeRequest struct {
@@ -68,10 +68,38 @@ type UpdateSoftwareRequest struct {
 	NodeId string `json:"node_id" validate:"required" path:"node_id"`
 }
 
-type ListAppsRequest struct {}
+type ListAppsRequest struct{}
 
 type ListSoftwareRequest struct {
-	NodeId string `json:"node_id" form:"node_id" query:"node_id" binding:"required"`
+	NodeId  string `json:"node_id" form:"node_id" query:"node_id" binding:"required"`
 	AppName string `json:"app_name" form:"app_name" query:"app_name" binding:"required"`
-	Status string `json:"status" form:"status" query:"status" binding:"required" validate:"eq=unknown|eq=update_available|eq=up_to_date|eq=update_in_progress|eq=update_failed"`
+	Status  string `json:"status" form:"status" query:"status" binding:"required" validate:"eq=unknown|eq=update_available|eq=up_to_date|eq=update_in_progress|eq=update_failed"`
+}
+type SiteActionRequest struct {
+	SiteId string `json:"site_id" validate:"required" path:"site_id"`
+	Reason string `json:"reason"`
+}
+
+type SiteStateRequest struct {
+	SiteId string `json:"site_id" validate:"required" path:"site_id"`
+}
+
+type SitePortMapRequest struct {
+	SiteId  string             `json:"site_id" validate:"required" path:"site_id"`
+	CNodeId string             `json:"cnode_id"`
+	Ports   []SitePortMapEntry `json:"ports" validate:"required"`
+}
+
+type SitePortMapEntry struct {
+	Port   int32  `json:"port" validate:"required"`
+	Role   string `json:"role" validate:"required"`
+	NodeId string `json:"node_id"`
+	Class  string `json:"class" validate:"required"`
+	Policy string `json:"policy" validate:"required"`
+}
+
+type PowerCycleNodeRequest struct {
+	SiteId string `json:"site_id" validate:"required" path:"site_id"`
+	Role   string `json:"role" validate:"required" path:"role"`
+	Reason string `json:"reason"`
 }
