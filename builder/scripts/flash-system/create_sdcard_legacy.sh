@@ -65,9 +65,22 @@ verify_tarballs() {
     done
 }
 
+unmount_existing_partitions() {
+    local part
+    for part in $(lsblk -nrpo NAME,MOUNTPOINT "$DEV" | awk 'NF>1 && $2!=""{print $1}'); do
+        log "Unmounting $part"
+        sudo umount "$part" 2>/dev/null || true
+    done
+    sudo partprobe "$DEV" 2>/dev/null || true
+    sleep 1
+}
+
 wipe_and_partition() {
+    unmount_existing_partitions
+
     log "Wiping $DEV..."
-    sudo sgdisk --clear "$DEV" 2>/dev/null || sudo dd if=/dev/zero of="$DEV" bs=512 count=2048 2>/dev/null || true
+    sudo sgdisk --clear "$DEV" 2>/dev/null || true
+    sudo dd if=/dev/zero of="$DEV" bs=1M count=8 2>/dev/null || true
 
     log "Creating partitions..."
     sudo parted -s "$DEV" mklabel msdos
