@@ -32,6 +32,27 @@ services:
    - msgclient-node
    - postgresd-node
 
+
+ site-controller:
+  build: ./site-controller
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-node
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-node:9095
+   - SITE_CONTROLLER_SERVICE_HOST=site-controller
+   - SITE_CONTROLLER_SERVICE_PORT=9090
+   - ORGNAME=${ORGNAME}
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - controller
+   - msgclient-node
+   - postgresd-node
+
  health:
   build: ./health
   environment:
@@ -135,6 +156,7 @@ services:
    - BYPASS_AUTH_MODE=true
   depends_on:
    - controller
+   - site-controller
    - postgresd-node
    - initclient-node
 

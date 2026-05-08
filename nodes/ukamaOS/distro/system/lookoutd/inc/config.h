@@ -17,6 +17,7 @@ typedef enum {
 } LookoutAppManager;
 
 /* Service configuration */
+/* Service configuration */
 typedef struct {
 
     int servicePort;
@@ -27,6 +28,7 @@ typedef struct {
 
     LookoutAppManager appManager;
     bool isTowerNode;
+    bool isCNode;
 } Config;
 
 #endif /* CONFIG_H_ */

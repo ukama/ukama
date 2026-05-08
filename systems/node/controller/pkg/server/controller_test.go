@@ -155,7 +155,7 @@ func TestControllerServer_ToggleRf(t *testing.T) {
 
 	_, err = s.ToggleRfSwitch(context.TODO(), &pb.ToggleRfSwitchRequest{
 		NodeId: nodeId,
-		State: "on",
+		State:  "on",
 	})
 
 	msgclientRepo.AssertExpectations(t)

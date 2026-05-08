@@ -87,4 +87,16 @@ typedef struct {
     char *gpsTime;     /* string */
 } GPSClientData;
 
+typedef struct {
+
+    bool  available;       /* This node should report switch status */
+    bool  switchAvailable; /* switch.d responded successfully */
+
+    char *siteID;
+    char *policyState;
+    char *policyHash;
+    char *policySource;
+    char *policyError;
+} SwitchPolicyStatusData;
+
 #endif /* LOOKOUT_H_ */

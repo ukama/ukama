@@ -347,6 +347,25 @@ static void wc_free_gps_data(GPSClientData *gps) {
     gps->gpsTime     = NULL;
 }
 
+static void wc_free_switch_policy_data(SwitchPolicyStatusData *switchPolicy) {
+
+    if (!switchPolicy) return;
+
+    usys_free(switchPolicy->siteID);
+    usys_free(switchPolicy->policyState);
+    usys_free(switchPolicy->policyHash);
+    usys_free(switchPolicy->policySource);
+    usys_free(switchPolicy->policyError);
+
+    switchPolicy->available       = USYS_FALSE;
+    switchPolicy->switchAvailable = USYS_FALSE;
+    switchPolicy->siteID          = NULL;
+    switchPolicy->policyState     = NULL;
+    switchPolicy->policyHash      = NULL;
+    switchPolicy->policySource    = NULL;
+    switchPolicy->policyError     = NULL;
+}
+
 static void wc_free_capp_list(CappList *list) {
 
     CappList *ptr = NULL;
@@ -434,6 +453,88 @@ static int get_gps_data(GPSClientData *gps) {
     return STATUS_OK;
 }
 
+static char *json_dup_string(JsonObj *json, const char *key) {
+
+    JsonObj *entry = NULL;
+    const char *value = NULL;
+
+    if (json == NULL || key == NULL) {
+        return NULL;
+    }
+
+    entry = json_object_get(json, key);
+    if (entry == NULL || !json_is_string(entry)) {
+        return NULL;
+    }
+
+    value = json_string_value(entry);
+    if (value == NULL) {
+        return NULL;
+    }
+
+    return strdup(value);
+}
+
+static int get_switch_policy_data(SwitchPolicyStatusData *switchPolicy) {
+
+    int  ret = STATUS_NOK;
+    int  port = 0;
+    long status = 0;
+
+    char url[MAX_BUFFER] = {0};
+    char *body = NULL;
+
+    JsonObj *json = NULL;
+    JsonErrObj jErr;
+
+    if (switchPolicy == NULL) {
+        return STATUS_NOK;
+    }
+
+    switchPolicy->available       = USYS_TRUE;
+    switchPolicy->switchAvailable = USYS_FALSE;
+    switchPolicy->siteID          = NULL;
+    switchPolicy->policyState     = NULL;
+    switchPolicy->policyHash      = NULL;
+    switchPolicy->policySource    = NULL;
+    switchPolicy->policyError     = NULL;
+
+    port = usys_find_service_port(SERVICE_SWITCH);
+    if (port <= 0) {
+        usys_log_error("Failed to resolve port for %s", SERVICE_SWITCH);
+        return STATUS_NOK;
+    }
+
+    snprintf(url, sizeof(url), "http://localhost:%d/v1/ports/policy", port);
+
+    ret = wc_send_request_raw(url, "GET", NULL, &status, &body);
+    if (ret != STATUS_OK || status != HttpStatus_OK || body == NULL) {
+        usys_log_error("Failed to read switch policy from %s", url);
+        usys_free(body);
+        return STATUS_NOK;
+    }
+
+    memset(&jErr, 0, sizeof(JsonErrObj));
+    json = json_loads(body, JSON_DECODE_ANY, &jErr);
+    usys_free(body);
+    body = NULL;
+
+    if (json == NULL) {
+        usys_log_error("Failed to parse switch policy response");
+        return STATUS_NOK;
+    }
+
+    switchPolicy->switchAvailable = USYS_TRUE;
+    switchPolicy->siteID          = json_dup_string(json, "site_id");
+    switchPolicy->policyState     = json_dup_string(json, "state");
+    switchPolicy->policyHash      = json_dup_string(json, "hash");
+    switchPolicy->policySource    = json_dup_string(json, "source");
+    switchPolicy->policyError     = json_dup_string(json, "error");
+
+    json_decref(json);
+    return STATUS_OK;
+}
+
 int send_health_report(Config *config) {
 
     CappList    *cappList = NULL;
@@ -451,6 +552,9 @@ int send_health_report(Config *config) {
 
     GPSClientData gps;
     memset(&gps, 0, sizeof(GPSClientData));
+
+    SwitchPolicyStatusData switchPolicy;
+    memset(&switchPolicy, 0, sizeof(SwitchPolicyStatusData));
 
     if (config == NULL || config->nodeID == NULL) {
         return USYS_FALSE;
@@ -486,7 +590,6 @@ int send_health_report(Config *config) {
     }
 
     gps.available = config->isTowerNode;
-
     if (config->isTowerNode) {
         if (get_gps_data(&gps) != STATUS_OK) {
             gps.available = USYS_TRUE;
@@ -496,18 +599,34 @@ int send_health_report(Config *config) {
         }
     }
 
+    switchPolicy.available = config->isCNode;
+    if (config->isCNode) {
+        if (get_switch_policy_data(&switchPolicy) != STATUS_OK) {
+            switchPolicy.available       = USYS_TRUE;
+            switchPolicy.switchAvailable = USYS_FALSE;
+            switchPolicy.siteID          = NULL;
+            switchPolicy.policyState     = NULL;
+            switchPolicy.policyHash      = NULL;
+            switchPolicy.policySource    = NULL;
+            switchPolicy.policyError     = NULL;
+        }
+    }
+
     if (!json_serialize_health_report(&json,
                                       config->nodeID,
                                       cappList,
                                       &gps,
+                                      &switchPolicy,
                                       config->isTowerNode)) {
         usys_log_error("Error serializing health report. Ignoring");
         wc_free_gps_data(&gps);
+        wc_free_switch_policy_data(&switchPolicy);
         wc_free_capp_list(cappList);
         return USYS_FALSE;
     }
 
     wc_free_gps_data(&gps);
+    wc_free_switch_policy_data(&switchPolicy);
 
     usys_find_ukama_service_address(&ukama);
     sprintf(url, "%s/node/v1/health/nodes/%s/performance",

@@ -84,4 +84,3 @@ func (s *SoftwareManager) ListSoftware(nodeId string, status string, appName str
 	return s.client.GetSoftwareList(ctx, &pb.GetSoftwareListRequest{
 		NodeId: nodeId, Status: ukamapb.SoftwareStatus(ukamapb.SoftwareStatus_value[status]), AppName: appName})
 }
-

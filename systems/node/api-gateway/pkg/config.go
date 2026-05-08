@@ -26,11 +26,12 @@ type Config struct {
 }
 
 type GrpcEndpoints struct {
-	Timeout      time.Duration
-	Controller   string
-	Configurator string
-	Software     string
-	State        string
+	Timeout        time.Duration
+	Controller     string
+	Configurator   string
+	Software       string
+	State          string
+	SiteController string
 }
 
 type HttpEndpoints struct {
@@ -48,11 +49,12 @@ func NewConfig() *Config {
 		},
 
 		Services: GrpcEndpoints{
-			Timeout:      3 * time.Second,
-			Controller:   "controller:9090",
-			Software:     "software:9090",
-			Configurator: "configurator:9090",
-			State:        "state:9090",
+			Timeout:        3 * time.Second,
+			Controller:     "controller:9090",
+			Software:       "software:9090",
+			Configurator:   "configurator:9090",
+			State:          "state:9090",
+			SiteController: "site-controller:9090",
 		},
 		HttpServices: HttpEndpoints{
 			Timeout: 3 * time.Second,
