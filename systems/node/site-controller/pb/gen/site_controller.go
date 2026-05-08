@@ -2,6 +2,7 @@ package gen
 
 import (
 	"context"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -39,23 +40,27 @@ type GetSiteStateRequest struct {
 type GetSiteStateResponse struct {
 	State *SiteState `json:"state,omitempty"`
 }
-type UpsertPortMapRequest struct {
-	SiteId  string          `json:"site_id"`
-	CnodeId string          `json:"cnode_id,omitempty"`
-	Ports   []*PortMapEntry `json:"ports"`
-}
-type UpsertPortMapResponse struct{}
-type GetPortMapRequest struct {
+type GetSwitchPolicyRequest struct {
 	SiteId string `json:"site_id"`
 }
-type GetPortMapResponse struct {
-	Ports []*PortMapEntry `json:"ports"`
+type GetSwitchPolicyResponse struct {
+	Policy *SwitchPolicyStatus `json:"policy,omitempty"`
 }
-type ApplySwitchPolicyRequest struct {
-	SiteId string `json:"site_id"`
+type RefreshSwitchPolicyRequest struct {
+	SiteId  string `json:"site_id"`
+	CnodeId string `json:"cnode_id,omitempty"`
+	Reason  string `json:"reason,omitempty"`
 }
-type ApplySwitchPolicyResponse struct {
-	Applied bool `json:"applied"`
+type RefreshSwitchPolicyResponse struct {
+	Requested bool `json:"requested"`
+}
+type ReportSwitchPolicyRequest struct {
+	SiteId  string        `json:"site_id"`
+	CnodeId string        `json:"cnode_id"`
+	Policy  *SwitchPolicy `json:"policy,omitempty"`
+}
+type ReportSwitchPolicyResponse struct {
+	Policy *SwitchPolicyStatus `json:"policy,omitempty"`
 }
 type PowerCycleNodeRequest struct {
 	SiteId string `json:"site_id"`
@@ -63,23 +68,48 @@ type PowerCycleNodeRequest struct {
 	Reason string `json:"reason,omitempty"`
 }
 type PowerCycleNodeResponse struct{}
-type PortMapEntry struct {
+
+type SiteState struct {
+	SiteId         string              `json:"site_id"`
+	DesiredSite    string              `json:"desired_site"`
+	DesiredService string              `json:"desired_service"`
+	DesiredRadio   string              `json:"desired_radio"`
+	Power          string              `json:"power"`
+	Service        string              `json:"service"`
+	Radio          string              `json:"radio"`
+	Access         string              `json:"access"`
+	Reason         string              `json:"reason"`
+	SwitchPolicy   *SwitchPolicyStatus `json:"switch_policy,omitempty"`
+}
+
+type SwitchPolicyStatus struct {
+	SiteId  string        `json:"site_id"`
+	CnodeId string        `json:"cnode_id"`
+	State   string        `json:"state"`
+	Hash    string        `json:"hash"`
+	Source  string        `json:"source"`
+	Error   string        `json:"error"`
+	Valid   bool          `json:"valid"`
+	Reason  string        `json:"reason"`
+	Policy  *SwitchPolicy `json:"policy,omitempty"`
+}
+
+type SwitchPolicy struct {
+	SiteId    string              `json:"site_id"`
+	Source    string              `json:"source"`
+	UpdatedAt string              `json:"updated_at"`
+	State     string              `json:"state,omitempty"`
+	Hash      string              `json:"hash,omitempty"`
+	Error     string              `json:"error,omitempty"`
+	Ports     []*SwitchPolicyPort `json:"ports"`
+}
+
+type SwitchPolicyPort struct {
 	Port   int32  `json:"port"`
 	Role   string `json:"role"`
 	NodeId string `json:"node_id,omitempty"`
 	Class  string `json:"class"`
 	Policy string `json:"policy"`
-}
-type SiteState struct {
-	SiteId         string `json:"site_id"`
-	DesiredSite    string `json:"desired_site"`
-	DesiredService string `json:"desired_service"`
-	DesiredRadio   string `json:"desired_radio"`
-	Power          string `json:"power"`
-	Service        string `json:"service"`
-	Radio          string `json:"radio"`
-	Access         string `json:"access"`
-	Reason         string `json:"reason"`
 }
 
 type SiteControllerServiceClient interface {
@@ -87,15 +117,16 @@ type SiteControllerServiceClient interface {
 	SetService(context.Context, *SetServiceRequest, ...grpc.CallOption) (*SetServiceResponse, error)
 	SetRadio(context.Context, *SetRadioRequest, ...grpc.CallOption) (*SetRadioResponse, error)
 	GetSiteState(context.Context, *GetSiteStateRequest, ...grpc.CallOption) (*GetSiteStateResponse, error)
-	UpsertPortMap(context.Context, *UpsertPortMapRequest, ...grpc.CallOption) (*UpsertPortMapResponse, error)
-	GetPortMap(context.Context, *GetPortMapRequest, ...grpc.CallOption) (*GetPortMapResponse, error)
-	ApplySwitchPolicy(context.Context, *ApplySwitchPolicyRequest, ...grpc.CallOption) (*ApplySwitchPolicyResponse, error)
+	GetSwitchPolicy(context.Context, *GetSwitchPolicyRequest, ...grpc.CallOption) (*GetSwitchPolicyResponse, error)
+	RefreshSwitchPolicy(context.Context, *RefreshSwitchPolicyRequest, ...grpc.CallOption) (*RefreshSwitchPolicyResponse, error)
+	ReportSwitchPolicy(context.Context, *ReportSwitchPolicyRequest, ...grpc.CallOption) (*ReportSwitchPolicyResponse, error)
 	PowerCycleNode(context.Context, *PowerCycleNodeRequest, ...grpc.CallOption) (*PowerCycleNodeResponse, error)
 }
+
 type siteControllerServiceClient struct{ cc grpc.ClientConnInterface }
 
 func NewSiteControllerServiceClient(cc grpc.ClientConnInterface) SiteControllerServiceClient {
-	return &siteControllerServiceClient{cc}
+	return &siteControllerServiceClient{cc: cc}
 }
 func (c *siteControllerServiceClient) invoke(ctx context.Context, method string, in, out interface{}, opts ...grpc.CallOption) error {
 	opts = append(opts, grpc.ForceCodec(ForceJSONCodec()))
@@ -121,19 +152,19 @@ func (c *siteControllerServiceClient) GetSiteState(ctx context.Context, in *GetS
 	err := c.invoke(ctx, "GetSiteState", in, out, opts...)
 	return out, err
 }
-func (c *siteControllerServiceClient) UpsertPortMap(ctx context.Context, in *UpsertPortMapRequest, opts ...grpc.CallOption) (*UpsertPortMapResponse, error) {
-	out := new(UpsertPortMapResponse)
-	err := c.invoke(ctx, "UpsertPortMap", in, out, opts...)
+func (c *siteControllerServiceClient) GetSwitchPolicy(ctx context.Context, in *GetSwitchPolicyRequest, opts ...grpc.CallOption) (*GetSwitchPolicyResponse, error) {
+	out := new(GetSwitchPolicyResponse)
+	err := c.invoke(ctx, "GetSwitchPolicy", in, out, opts...)
 	return out, err
 }
-func (c *siteControllerServiceClient) GetPortMap(ctx context.Context, in *GetPortMapRequest, opts ...grpc.CallOption) (*GetPortMapResponse, error) {
-	out := new(GetPortMapResponse)
-	err := c.invoke(ctx, "GetPortMap", in, out, opts...)
+func (c *siteControllerServiceClient) RefreshSwitchPolicy(ctx context.Context, in *RefreshSwitchPolicyRequest, opts ...grpc.CallOption) (*RefreshSwitchPolicyResponse, error) {
+	out := new(RefreshSwitchPolicyResponse)
+	err := c.invoke(ctx, "RefreshSwitchPolicy", in, out, opts...)
 	return out, err
 }
-func (c *siteControllerServiceClient) ApplySwitchPolicy(ctx context.Context, in *ApplySwitchPolicyRequest, opts ...grpc.CallOption) (*ApplySwitchPolicyResponse, error) {
-	out := new(ApplySwitchPolicyResponse)
-	err := c.invoke(ctx, "ApplySwitchPolicy", in, out, opts...)
+func (c *siteControllerServiceClient) ReportSwitchPolicy(ctx context.Context, in *ReportSwitchPolicyRequest, opts ...grpc.CallOption) (*ReportSwitchPolicyResponse, error) {
+	out := new(ReportSwitchPolicyResponse)
+	err := c.invoke(ctx, "ReportSwitchPolicy", in, out, opts...)
 	return out, err
 }
 func (c *siteControllerServiceClient) PowerCycleNode(ctx context.Context, in *PowerCycleNodeRequest, opts ...grpc.CallOption) (*PowerCycleNodeResponse, error) {
@@ -147,11 +178,12 @@ type SiteControllerServiceServer interface {
 	SetService(context.Context, *SetServiceRequest) (*SetServiceResponse, error)
 	SetRadio(context.Context, *SetRadioRequest) (*SetRadioResponse, error)
 	GetSiteState(context.Context, *GetSiteStateRequest) (*GetSiteStateResponse, error)
-	UpsertPortMap(context.Context, *UpsertPortMapRequest) (*UpsertPortMapResponse, error)
-	GetPortMap(context.Context, *GetPortMapRequest) (*GetPortMapResponse, error)
-	ApplySwitchPolicy(context.Context, *ApplySwitchPolicyRequest) (*ApplySwitchPolicyResponse, error)
+	GetSwitchPolicy(context.Context, *GetSwitchPolicyRequest) (*GetSwitchPolicyResponse, error)
+	RefreshSwitchPolicy(context.Context, *RefreshSwitchPolicyRequest) (*RefreshSwitchPolicyResponse, error)
+	ReportSwitchPolicy(context.Context, *ReportSwitchPolicyRequest) (*ReportSwitchPolicyResponse, error)
 	PowerCycleNode(context.Context, *PowerCycleNodeRequest) (*PowerCycleNodeResponse, error)
 }
+
 type UnimplementedSiteControllerServiceServer struct{}
 
 func (UnimplementedSiteControllerServiceServer) SetSite(context.Context, *SetSiteRequest) (*SetSiteResponse, error) {
@@ -166,22 +198,26 @@ func (UnimplementedSiteControllerServiceServer) SetRadio(context.Context, *SetRa
 func (UnimplementedSiteControllerServiceServer) GetSiteState(context.Context, *GetSiteStateRequest) (*GetSiteStateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSiteState not implemented")
 }
-func (UnimplementedSiteControllerServiceServer) UpsertPortMap(context.Context, *UpsertPortMapRequest) (*UpsertPortMapResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpsertPortMap not implemented")
+func (UnimplementedSiteControllerServiceServer) GetSwitchPolicy(context.Context, *GetSwitchPolicyRequest) (*GetSwitchPolicyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSwitchPolicy not implemented")
 }
-func (UnimplementedSiteControllerServiceServer) GetPortMap(context.Context, *GetPortMapRequest) (*GetPortMapResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPortMap not implemented")
+func (UnimplementedSiteControllerServiceServer) RefreshSwitchPolicy(context.Context, *RefreshSwitchPolicyRequest) (*RefreshSwitchPolicyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RefreshSwitchPolicy not implemented")
 }
-func (UnimplementedSiteControllerServiceServer) ApplySwitchPolicy(context.Context, *ApplySwitchPolicyRequest) (*ApplySwitchPolicyResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ApplySwitchPolicy not implemented")
+func (UnimplementedSiteControllerServiceServer) ReportSwitchPolicy(context.Context, *ReportSwitchPolicyRequest) (*ReportSwitchPolicyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReportSwitchPolicy not implemented")
 }
 func (UnimplementedSiteControllerServiceServer) PowerCycleNode(context.Context, *PowerCycleNodeRequest) (*PowerCycleNodeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PowerCycleNode not implemented")
 }
+
 func RegisterSiteControllerServiceServer(s grpc.ServiceRegistrar, srv SiteControllerServiceServer) {
 	s.RegisterService(&SiteControllerService_ServiceDesc, srv)
 }
-func unary[T any](srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor, method string, call func(SiteControllerServiceServer, context.Context, *T) (interface{}, error)) (interface{}, error) {
+
+type scHandlerFunc func(SiteControllerServiceServer, context.Context, interface{}) (interface{}, error)
+
+func handler[T any](srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor, method string, call func(SiteControllerServiceServer, context.Context, *T) (interface{}, error)) (interface{}, error) {
 	in := new(T)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -190,50 +226,51 @@ func unary[T any](srv interface{}, ctx context.Context, dec func(interface{}) er
 		return call(srv.(SiteControllerServiceServer), ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{Server: srv, FullMethod: "/" + SiteControllerServiceName + "/" + method}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	h := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return call(srv.(SiteControllerServiceServer), ctx, req.(*T))
 	}
-	return interceptor(ctx, in, info, handler)
+	return interceptor(ctx, in, info, h)
 }
 
 var SiteControllerService_ServiceDesc = grpc.ServiceDesc{ServiceName: SiteControllerServiceName, HandlerType: (*SiteControllerServiceServer)(nil), Methods: []grpc.MethodDesc{
 	{MethodName: "SetSite", Handler: func(s interface{}, c context.Context, d func(interface{}) error, i grpc.UnaryServerInterceptor) (interface{}, error) {
-		return unary[SetSiteRequest](s, c, d, i, "SetSite", func(srv SiteControllerServiceServer, ctx context.Context, req *SetSiteRequest) (interface{}, error) {
+		return handler[SetSiteRequest](s, c, d, i, "SetSite", func(srv SiteControllerServiceServer, ctx context.Context, req *SetSiteRequest) (interface{}, error) {
 			return srv.SetSite(ctx, req)
 		})
 	}},
 	{MethodName: "SetService", Handler: func(s interface{}, c context.Context, d func(interface{}) error, i grpc.UnaryServerInterceptor) (interface{}, error) {
-		return unary[SetServiceRequest](s, c, d, i, "SetService", func(srv SiteControllerServiceServer, ctx context.Context, req *SetServiceRequest) (interface{}, error) {
+		return handler[SetServiceRequest](s, c, d, i, "SetService", func(srv SiteControllerServiceServer, ctx context.Context, req *SetServiceRequest) (interface{}, error) {
 			return srv.SetService(ctx, req)
 		})
 	}},
 	{MethodName: "SetRadio", Handler: func(s interface{}, c context.Context, d func(interface{}) error, i grpc.UnaryServerInterceptor) (interface{}, error) {
-		return unary[SetRadioRequest](s, c, d, i, "SetRadio", func(srv SiteControllerServiceServer, ctx context.Context, req *SetRadioRequest) (interface{}, error) {
+		return handler[SetRadioRequest](s, c, d, i, "SetRadio", func(srv SiteControllerServiceServer, ctx context.Context, req *SetRadioRequest) (interface{}, error) {
 			return srv.SetRadio(ctx, req)
 		})
 	}},
 	{MethodName: "GetSiteState", Handler: func(s interface{}, c context.Context, d func(interface{}) error, i grpc.UnaryServerInterceptor) (interface{}, error) {
-		return unary[GetSiteStateRequest](s, c, d, i, "GetSiteState", func(srv SiteControllerServiceServer, ctx context.Context, req *GetSiteStateRequest) (interface{}, error) {
+		return handler[GetSiteStateRequest](s, c, d, i, "GetSiteState", func(srv SiteControllerServiceServer, ctx context.Context, req *GetSiteStateRequest) (interface{}, error) {
 			return srv.GetSiteState(ctx, req)
 		})
 	}},
-	{MethodName: "UpsertPortMap", Handler: func(s interface{}, c context.Context, d func(interface{}) error, i grpc.UnaryServerInterceptor) (interface{}, error) {
-		return unary[UpsertPortMapRequest](s, c, d, i, "UpsertPortMap", func(srv SiteControllerServiceServer, ctx context.Context, req *UpsertPortMapRequest) (interface{}, error) {
-			return srv.UpsertPortMap(ctx, req)
+	{MethodName: "GetSwitchPolicy", Handler: func(s interface{}, c context.Context, d func(interface{}) error, i grpc.UnaryServerInterceptor) (interface{}, error) {
+		return handler[GetSwitchPolicyRequest](s, c, d, i, "GetSwitchPolicy", func(srv SiteControllerServiceServer, ctx context.Context, req *GetSwitchPolicyRequest) (interface{}, error) {
+			return srv.GetSwitchPolicy(ctx, req)
 		})
 	}},
-	{MethodName: "GetPortMap", Handler: func(s interface{}, c context.Context, d func(interface{}) error, i grpc.UnaryServerInterceptor) (interface{}, error) {
-		return unary[GetPortMapRequest](s, c, d, i, "GetPortMap", func(srv SiteControllerServiceServer, ctx context.Context, req *GetPortMapRequest) (interface{}, error) {
-			return srv.GetPortMap(ctx, req)
+	{MethodName: "RefreshSwitchPolicy", Handler: func(s interface{}, c context.Context, d func(interface{}) error, i grpc.UnaryServerInterceptor) (interface{}, error) {
+		return handler[RefreshSwitchPolicyRequest](s, c, d, i, "RefreshSwitchPolicy", func(srv SiteControllerServiceServer, ctx context.Context, req *RefreshSwitchPolicyRequest) (interface{}, error) {
+			return srv.RefreshSwitchPolicy(ctx, req)
 		})
 	}},
-	{MethodName: "ApplySwitchPolicy", Handler: func(s interface{}, c context.Context, d func(interface{}) error, i grpc.UnaryServerInterceptor) (interface{}, error) {
-		return unary[ApplySwitchPolicyRequest](s, c, d, i, "ApplySwitchPolicy", func(srv SiteControllerServiceServer, ctx context.Context, req *ApplySwitchPolicyRequest) (interface{}, error) {
-			return srv.ApplySwitchPolicy(ctx, req)
+	{MethodName: "ReportSwitchPolicy", Handler: func(s interface{}, c context.Context, d func(interface{}) error, i grpc.UnaryServerInterceptor) (interface{}, error) {
+		return handler[ReportSwitchPolicyRequest](s, c, d, i, "ReportSwitchPolicy", func(srv SiteControllerServiceServer, ctx context.Context, req *ReportSwitchPolicyRequest) (interface{}, error) {
+			return srv.ReportSwitchPolicy(ctx, req)
 		})
 	}},
 	{MethodName: "PowerCycleNode", Handler: func(s interface{}, c context.Context, d func(interface{}) error, i grpc.UnaryServerInterceptor) (interface{}, error) {
-		return unary[PowerCycleNodeRequest](s, c, d, i, "PowerCycleNode", func(srv SiteControllerServiceServer, ctx context.Context, req *PowerCycleNodeRequest) (interface{}, error) {
+		return handler[PowerCycleNodeRequest](s, c, d, i, "PowerCycleNode", func(srv SiteControllerServiceServer, ctx context.Context, req *PowerCycleNodeRequest) (interface{}, error) {
 			return srv.PowerCycleNode(ctx, req)
 		})
-	}}}, Streams: []grpc.StreamDesc{}, Metadata: "site_controller.json.grpc"}
+	}},
+}, Streams: []grpc.StreamDesc{}, Metadata: "site_controller.proto"}

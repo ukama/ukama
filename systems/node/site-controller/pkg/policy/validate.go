@@ -1,73 +1,52 @@
 package policy
 
-import (
-	"fmt"
-	"github.com/ukama/ukama/systems/node/site-controller/pkg/db"
-)
+import "fmt"
 
-const (
-	RoleTower            = "tower"
-	RoleAmplifier        = "amplifier"
-	RoleCNode            = "cnode"
-	RoleBackhaul         = "backhaul"
-	RoleUplink           = "uplink"
-	RoleExternal         = "external"
-	RoleSpare            = "spare"
-	ClassCritical        = "critical"
-	ClassExternal        = "external"
-	ClassSpare           = "spare"
-	PolicyProtected      = "protected"
-	PolicyNeverOffRemote = "never_off_remote"
-	PolicyFree           = "free"
-	PolicyDisabled       = "disabled"
-)
-
-func ValidatePortMap(ports []db.SitePortMap) error {
-	if len(ports) == 0 {
-		return fmt.Errorf("port map is empty")
+func ValidateSwitchPolicy(siteID string, cnodeID string, p *SwitchPolicy) error {
+	if p == nil {
+		return fmt.Errorf("switch policy missing")
+	}
+	if p.SiteID != "" && siteID != "" && p.SiteID != siteID {
+		return fmt.Errorf("switch_policy_site_mismatch")
+	}
+	if len(p.Ports) == 0 {
+		return fmt.Errorf("switch_policy_ports_empty")
 	}
 	seen := map[int]bool{}
 	hasCNode := false
-	for _, p := range ports {
-		if p.Port <= 0 {
-			return fmt.Errorf("invalid port %d", p.Port)
+	for _, port := range p.Ports {
+		if port.Port <= 0 {
+			return fmt.Errorf("invalid port %d", port.Port)
 		}
-		if seen[p.Port] {
-			return fmt.Errorf("duplicate port %d", p.Port)
+		if seen[port.Port] {
+			return fmt.Errorf("duplicate port %d", port.Port)
 		}
-		seen[p.Port] = true
-		if !validRole(p.Role) {
-			return fmt.Errorf("invalid role %s on port %d", p.Role, p.Port)
+		seen[port.Port] = true
+		if !validRole(port.Role) {
+			return fmt.Errorf("invalid role %s on port %d", port.Role, port.Port)
 		}
-		if !validClass(p.Class) {
-			return fmt.Errorf("invalid class %s on port %d", p.Class, p.Port)
+		if !validPolicy(port.Policy) {
+			return fmt.Errorf("invalid policy %s on port %d", port.Policy, port.Port)
 		}
-		if !validPolicy(p.Policy) {
-			return fmt.Errorf("invalid policy %s on port %d", p.Policy, p.Port)
-		}
-		if p.Role == RoleCNode {
+		if port.Role == RoleCNode {
 			hasCNode = true
-			if p.Policy != PolicyNeverOffRemote {
-				return fmt.Errorf("cnode port must use policy %s", PolicyNeverOffRemote)
+			if port.Policy != PolicyNeverOffRemote {
+				return fmt.Errorf("invalid_cnode_policy")
+			}
+			if cnodeID != "" && port.NodeID != "" && port.NodeID != cnodeID {
+				return fmt.Errorf("switch_policy_cnode_mismatch")
 			}
 		}
-		if criticalRole(p.Role) && p.Policy == PolicyFree {
-			return fmt.Errorf("critical role %s cannot use free policy", p.Role)
+		if criticalRole(port.Role) && port.Policy == PolicyFree {
+			return fmt.Errorf("critical_role_free_policy")
 		}
 	}
 	if !hasCNode {
-		return fmt.Errorf("port map missing cnode port")
+		return fmt.Errorf("switch_policy_missing_cnode")
 	}
 	return nil
 }
-func FindRole(ports []db.SitePortMap, role string) (*db.SitePortMap, error) {
-	for i := range ports {
-		if ports[i].Role == role {
-			return &ports[i], nil
-		}
-	}
-	return nil, fmt.Errorf("role %s not found in port map", role)
-}
+
 func validRole(v string) bool {
 	switch v {
 	case RoleTower, RoleAmplifier, RoleCNode, RoleBackhaul, RoleUplink, RoleExternal, RoleSpare:
@@ -75,13 +54,7 @@ func validRole(v string) bool {
 	}
 	return false
 }
-func validClass(v string) bool {
-	switch v {
-	case ClassCritical, ClassExternal, ClassSpare:
-		return true
-	}
-	return false
-}
+
 func validPolicy(v string) bool {
 	switch v {
 	case PolicyProtected, PolicyNeverOffRemote, PolicyFree, PolicyDisabled:
@@ -89,6 +62,7 @@ func validPolicy(v string) bool {
 	}
 	return false
 }
+
 func criticalRole(v string) bool {
 	switch v {
 	case RoleTower, RoleAmplifier, RoleCNode, RoleBackhaul, RoleUplink:

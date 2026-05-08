@@ -84,17 +84,33 @@ type SiteStateRequest struct {
 	SiteId string `json:"site_id" validate:"required" path:"site_id"`
 }
 
-type SitePortMapRequest struct {
-	SiteId  string             `json:"site_id" validate:"required" path:"site_id"`
-	CNodeId string             `json:"cnode_id"`
-	Ports   []SitePortMapEntry `json:"ports" validate:"required"`
+type RefreshSwitchPolicyRequest struct {
+	SiteId  string `json:"site_id" validate:"required" path:"site_id"`
+	CNodeId string `json:"cnode_id"`
+	Reason  string `json:"reason"`
 }
 
-type SitePortMapEntry struct {
+type ReportSwitchPolicyRequest struct {
+	SiteId  string              `json:"site_id" validate:"required" path:"site_id"`
+	CNodeId string              `json:"cnode_id" validate:"required"`
+	Policy  SwitchPolicyPayload `json:"policy" validate:"required"`
+}
+
+type SwitchPolicyPayload struct {
+	SiteID    string                    `json:"site_id"`
+	Source    string                    `json:"source"`
+	UpdatedAt string                    `json:"updated_at"`
+	State     string                    `json:"state"`
+	Hash      string                    `json:"hash"`
+	Error     string                    `json:"error"`
+	Ports     []SwitchPolicyPortPayload `json:"ports" validate:"required"`
+}
+
+type SwitchPolicyPortPayload struct {
 	Port   int32  `json:"port" validate:"required"`
 	Role   string `json:"role" validate:"required"`
 	NodeId string `json:"node_id"`
-	Class  string `json:"class" validate:"required"`
+	Class  string `json:"class"`
 	Policy string `json:"policy" validate:"required"`
 }
 

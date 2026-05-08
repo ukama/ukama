@@ -75,9 +75,9 @@ type siteController interface {
 	SetService(siteID, state, reason string) (*sitepb.SetServiceResponse, error)
 	SetRadio(siteID, state, reason string) (*sitepb.SetRadioResponse, error)
 	GetSiteState(siteID string) (*sitepb.GetSiteStateResponse, error)
-	UpsertPortMap(siteID, cnodeID string, ports []*sitepb.PortMapEntry) (*sitepb.UpsertPortMapResponse, error)
-	GetPortMap(siteID string) (*sitepb.GetPortMapResponse, error)
-	ApplySwitchPolicy(siteID string) (*sitepb.ApplySwitchPolicyResponse, error)
+	GetSwitchPolicy(siteID string) (*sitepb.GetSwitchPolicyResponse, error)
+	RefreshSwitchPolicy(siteID, cnodeID, reason string) (*sitepb.RefreshSwitchPolicyResponse, error)
+	ReportSwitchPolicy(siteID, cnodeID string, policy *sitepb.SwitchPolicy) (*sitepb.ReportSwitchPolicyResponse, error)
 	PowerCycleNode(siteID, role, reason string) (*sitepb.PowerCycleNodeResponse, error)
 }
 
@@ -167,9 +167,9 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		siteS.POST("/:site_id/radio/on", formatDoc("Turn site radio on", "Enable RF chain"), tonic.Handler(r.postRadioOnHandler, http.StatusOK))
 		siteS.POST("/:site_id/radio/off", formatDoc("Turn site radio off", "Disable RF chain"), tonic.Handler(r.postRadioOffHandler, http.StatusOK))
 		siteS.GET("/:site_id/state", formatDoc("Get site state", "Get desired and derived site state"), tonic.Handler(r.getSiteStateHandler, http.StatusOK))
-		siteS.GET("/:site_id/ports", formatDoc("Get site port map", "Get static site switch port map"), tonic.Handler(r.getSitePortMapHandler, http.StatusOK))
-		siteS.PUT("/:site_id/ports", formatDoc("Update site port map", "Update static site switch port map"), tonic.Handler(r.putSitePortMapHandler, http.StatusOK))
-		siteS.POST("/:site_id/switch-policy", formatDoc("Apply switch policy", "Generate and push switch.d policy"), tonic.Handler(r.postApplySwitchPolicyHandler, http.StatusOK))
+		siteS.GET("/:site_id/switch-policy", formatDoc("Get switch policy", "Get last validated switch.d policy observed by site-controller"), tonic.Handler(r.getSiteSwitchPolicyHandler, http.StatusOK))
+		siteS.POST("/:site_id/switch-policy/refresh", formatDoc("Refresh switch policy", "Ask CNode switch.d for its current policy"), tonic.Handler(r.postRefreshSwitchPolicyHandler, http.StatusAccepted))
+		siteS.PUT("/:site_id/switch-policy", formatDoc("Report switch policy", "Update site-controller cache with switch.d policy"), tonic.Handler(r.putReportSwitchPolicyHandler, http.StatusOK))
 		siteS.POST("/:site_id/nodes/:role/power-cycle", formatDoc("Power-cycle site node", "Power-cycle a site node through CNode switch.d"), tonic.Handler(r.postPowerCycleNodeHandler, http.StatusOK))
 
 		const cfg = "/configurator"

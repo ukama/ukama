@@ -1,5 +1,6 @@
 package server
 
-// Event handling will consume node/state/health and registry events in the
-// same process. For this first production slice, site actions are driven via
-// API-GW -> site-controller gRPC, while the service remains event-ready.
+// Site-controller consumes backend events in this process. The current
+// implementation keeps the event surface intentionally small: node online and
+// health events trigger future switch-policy refresh handling, while the gRPC
+// API remains the authoritative control path for site operations.

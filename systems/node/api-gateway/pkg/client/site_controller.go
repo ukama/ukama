@@ -29,36 +29,43 @@ func (s *SiteController) SetSite(siteID, state, reason string) (*pb.SetSiteRespo
 	defer cancel()
 	return s.client.SetSite(ctx, &pb.SetSiteRequest{SiteId: siteID, State: state, Reason: reason})
 }
+
 func (s *SiteController) SetService(siteID, state, reason string) (*pb.SetServiceResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 	return s.client.SetService(ctx, &pb.SetServiceRequest{SiteId: siteID, State: state, Reason: reason})
 }
+
 func (s *SiteController) SetRadio(siteID, state, reason string) (*pb.SetRadioResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 	return s.client.SetRadio(ctx, &pb.SetRadioRequest{SiteId: siteID, State: state, Reason: reason})
 }
+
 func (s *SiteController) GetSiteState(siteID string) (*pb.GetSiteStateResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 	return s.client.GetSiteState(ctx, &pb.GetSiteStateRequest{SiteId: siteID})
 }
-func (s *SiteController) UpsertPortMap(siteID, cnodeID string, ports []*pb.PortMapEntry) (*pb.UpsertPortMapResponse, error) {
+
+func (s *SiteController) GetSwitchPolicy(siteID string) (*pb.GetSwitchPolicyResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
-	return s.client.UpsertPortMap(ctx, &pb.UpsertPortMapRequest{SiteId: siteID, CnodeId: cnodeID, Ports: ports})
+	return s.client.GetSwitchPolicy(ctx, &pb.GetSwitchPolicyRequest{SiteId: siteID})
 }
-func (s *SiteController) GetPortMap(siteID string) (*pb.GetPortMapResponse, error) {
+
+func (s *SiteController) RefreshSwitchPolicy(siteID, cnodeID, reason string) (*pb.RefreshSwitchPolicyResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
-	return s.client.GetPortMap(ctx, &pb.GetPortMapRequest{SiteId: siteID})
+	return s.client.RefreshSwitchPolicy(ctx, &pb.RefreshSwitchPolicyRequest{SiteId: siteID, CnodeId: cnodeID, Reason: reason})
 }
-func (s *SiteController) ApplySwitchPolicy(siteID string) (*pb.ApplySwitchPolicyResponse, error) {
+
+func (s *SiteController) ReportSwitchPolicy(siteID, cnodeID string, policy *pb.SwitchPolicy) (*pb.ReportSwitchPolicyResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
-	return s.client.ApplySwitchPolicy(ctx, &pb.ApplySwitchPolicyRequest{SiteId: siteID})
+	return s.client.ReportSwitchPolicy(ctx, &pb.ReportSwitchPolicyRequest{SiteId: siteID, CnodeId: cnodeID, Policy: policy})
 }
+
 func (s *SiteController) PowerCycleNode(siteID, role, reason string) (*pb.PowerCycleNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()

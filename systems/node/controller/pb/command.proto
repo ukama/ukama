@@ -1,0 +1,20 @@
+syntax = "proto3";
+package ukama.node.controller.v1;
+option go_package = "github.com/ukama/ukama/systems/node/controller/pkg/rpc";
+
+import "validator.proto";
+
+service CommandService {
+  rpc SendNodeCommand(SendNodeCommandRequest) returns (SendNodeCommandResponse);
+}
+
+message SendNodeCommandRequest {
+  string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+  string method = 2 [(validator.field) = {string_not_empty: true}, json_name = "method"];
+  string path = 3 [(validator.field) = {string_not_empty: true}, json_name = "path"];
+  bytes body = 4;
+  string source = 5 [json_name = "source"];
+  string reason = 6 [json_name = "reason"];
+}
+
+message SendNodeCommandResponse {}

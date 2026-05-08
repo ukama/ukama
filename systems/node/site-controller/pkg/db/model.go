@@ -35,17 +35,19 @@ type SiteComponent struct {
 
 func (SiteComponent) TableName() string { return "site_components" }
 
-type SitePortMap struct {
-	ID        uint      `gorm:"primaryKey" json:"id"`
-	SiteID    string    `gorm:"column:site_id;index" json:"site_id"`
-	CNodeID   string    `gorm:"column:cnode_id" json:"cnode_id"`
-	Port      int       `gorm:"column:port" json:"port"`
-	Role      string    `gorm:"column:role" json:"role"`
-	NodeID    string    `gorm:"column:node_id" json:"node_id"`
-	Class     string    `gorm:"column:class" json:"class"`
-	Policy    string    `gorm:"column:policy" json:"policy"`
-	CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
-	UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
+type SiteSwitchPolicy struct {
+	SiteID     string    `gorm:"primaryKey;column:site_id" json:"site_id"`
+	CNodeID    string    `gorm:"column:cnode_id;index" json:"cnode_id"`
+	State      string    `gorm:"column:state" json:"state"`
+	Hash       string    `gorm:"column:hash" json:"hash"`
+	Source     string    `gorm:"column:source" json:"source"`
+	Error      string    `gorm:"column:error" json:"error"`
+	Valid      bool      `gorm:"column:valid" json:"valid"`
+	Reason     string    `gorm:"column:reason" json:"reason"`
+	PolicyJSON string    `gorm:"column:policy_json;type:text" json:"policy_json"`
+	ObservedAt time.Time `gorm:"column:observed_at" json:"observed_at"`
+	CreatedAt  time.Time `gorm:"column:created_at" json:"created_at"`
+	UpdatedAt  time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
 
-func (SitePortMap) TableName() string { return "site_port_maps" }
+func (SiteSwitchPolicy) TableName() string { return "site_switch_policies" }
