@@ -1,0 +1,19 @@
+1. CNode boots.
+2. switch.d starts.
+3. switch.d loads local /ukama/configs/switch/policy.json.
+4. CNode connects to backend.
+5. Backend emits node.online(cnode).
+6. site-controller receives node.online.
+7. site-controller looks up site and node role in Registry.
+8. site-controller probes CNode switch.d status.
+9. If policy loaded:
+      fetch full policy
+      validate against Registry
+      cache observed policy
+      derive site state
+10. If policy missing/invalid/unreachable:
+      mark site degraded
+      wait for health/retry/operator fix
+11. Health starts flowing every 10 seconds.
+12. If policy hash changes later:
+      fetch/validate/cache again.

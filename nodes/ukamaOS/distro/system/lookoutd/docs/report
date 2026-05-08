@@ -1,0 +1,88 @@
+{
+  "nodeID": "emu-cnode",
+  "timestamp": "1715274302",
+  "capps": [
+    {
+      "space": "services",
+      "name": "switchd",
+      "tag": "latest",
+      "status": "Active",
+      "resources": [
+        {
+          "name": "memory",
+          "value": "13000 bytes"
+        },
+        {
+          "name": "disk",
+          "value": "6000 bytes"
+        },
+        {
+          "name": "cpu",
+          "value": "0.10 %"
+        }
+      ]
+    },
+    {
+      "space": "services",
+      "name": "controllerd",
+      "tag": "latest",
+      "status": "Active",
+      "resources": [
+        {
+          "name": "memory",
+          "value": "12500 bytes"
+        },
+        {
+          "name": "disk",
+          "value": "5500 bytes"
+        },
+        {
+          "name": "cpu",
+          "value": "0.08 %"
+        }
+      ]
+    }
+  ],
+  "system": [
+    {
+      "name": "radio",
+      "value": "not-available"
+    },
+    {
+      "name": "coordinates",
+      "value": "-999.000000,-999.000000"
+    },
+    {
+      "name": "gpsLock",
+      "value": "not-available"
+    },
+    {
+      "name": "gpsTime",
+      "value": "not-available"
+    },
+    {
+      "name": "switch",
+      "value": "available"
+    },
+    {
+      "name": "switchPolicySiteID",
+      "value": "emu-site"
+    },
+    {
+      "name": "switchPolicy",
+      "value": "loaded"
+    },
+    {
+      "name": "switchPolicyHash",
+      "value": "fnv64:6a1b2c3d4e5f6789"
+    },
+    {
+      "name": "switchPolicySource",
+      "value": "local-file"
+    },
+    {
+      "name": "switchPolicyError",
+      "value": ""
+    }
+  ]
+}

@@ -6,10 +6,10 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <jansson.h>
@@ -21,14 +21,17 @@
 #include "usys_log.h"
 
 #define POLICY_TMP_SUFFIX ".tmp"
+#define POLICY_HASH_PREFIX "fnv64:"
 
 static void set_err(char *err, size_t errLen, const char *msg) {
+
     if (err && errLen > 0) {
         snprintf(err, errLen, "%s", msg ? msg : "");
     }
 }
 
 const char *policy_state_to_str(SwitchPolicyState state) {
+
     switch (state) {
     case SWITCH_POLICY_STATE_MISSING:
         return "missing";
@@ -42,6 +45,7 @@ const char *policy_state_to_str(SwitchPolicyState state) {
 }
 
 const char *policy_type_to_str(SwitchPortPolicyType type) {
+
     switch (type) {
     case SWITCH_PORT_POLICY_PROTECTED:
         return "protected";
@@ -58,6 +62,7 @@ const char *policy_type_to_str(SwitchPortPolicyType type) {
 }
 
 const char *policy_action_to_str(SwitchPolicyAction action) {
+
     switch (action) {
     case SWITCH_POLICY_ACTION_ADMIN_UP:
         return "admin_up";
@@ -75,18 +80,23 @@ const char *policy_action_to_str(SwitchPolicyAction action) {
 }
 
 static SwitchPortPolicyType policy_type_from_str(const char *value) {
+
     if (value == NULL) {
         return SWITCH_PORT_POLICY_UNKNOWN;
     }
+
     if (strcmp(value, "protected") == 0) {
         return SWITCH_PORT_POLICY_PROTECTED;
     }
+
     if (strcmp(value, "free") == 0) {
         return SWITCH_PORT_POLICY_FREE;
     }
+
     if (strcmp(value, "never_off_remote") == 0) {
         return SWITCH_PORT_POLICY_NEVER_OFF_REMOTE;
     }
+
     if (strcmp(value, "disabled") == 0) {
         return SWITCH_PORT_POLICY_DISABLED;
     }
@@ -95,12 +105,14 @@ static SwitchPortPolicyType policy_type_from_str(const char *value) {
 }
 
 static bool action_turns_off(SwitchPolicyAction action) {
+
     return (action == SWITCH_POLICY_ACTION_ADMIN_DOWN ||
             action == SWITCH_POLICY_ACTION_POE_OFF ||
             action == SWITCH_POLICY_ACTION_POE_CYCLE);
 }
 
 static void policy_clear(SwitchPolicy *policy) {
+
     if (!policy) {
         return;
     }
@@ -109,7 +121,84 @@ static void policy_clear(SwitchPolicy *policy) {
     policy->state = SWITCH_POLICY_STATE_MISSING;
 }
 
+static void policy_hash_body(const char *body,
+                             size_t len,
+                             char *dst,
+                             size_t dstLen) {
+
+    size_t i;
+    unsigned long long hash;
+
+    if (dst == NULL || dstLen == 0) {
+        return;
+    }
+
+    hash = 1469598103934665603ULL;
+
+    if (body != NULL) {
+        for (i = 0; i < len; i++) {
+            hash ^= (unsigned char)body[i];
+            hash *= 1099511628211ULL;
+        }
+    }
+
+    snprintf(dst, dstLen, POLICY_HASH_PREFIX "%016llx", hash);
+}
+
+static int read_policy_file(const char *path,
+                            char **body,
+                            size_t *bodyLen,
+                            time_t *mtime) {
+
+    FILE *fp;
+    struct stat st;
+    char *buffer;
+    size_t nread;
+
+    if (body == NULL || bodyLen == NULL || path == NULL) {
+        return SWITCHD_ERR_INVAL;
+    }
+
+    *body = NULL;
+    *bodyLen = 0;
+
+    if (stat(path, &st) != 0) {
+        return SWITCHD_ERR_NOTFOUND;
+    }
+
+    fp = fopen(path, "rb");
+    if (fp == NULL) {
+        return SWITCHD_ERR_IO;
+    }
+
+    buffer = calloc(1, (size_t)st.st_size + 1);
+    if (buffer == NULL) {
+        fclose(fp);
+        return SWITCHD_ERR_NOMEM;
+    }
+
+    nread = fread(buffer, 1, (size_t)st.st_size, fp);
+    fclose(fp);
+
+    if (nread != (size_t)st.st_size) {
+        free(buffer);
+        return SWITCHD_ERR_IO;
+    }
+
+    buffer[nread] = '\0';
+
+    *body = buffer;
+    *bodyLen = nread;
+
+    if (mtime) {
+        *mtime = st.st_mtime;
+    }
+
+    return SWITCHD_OK;
+}
+
 static int ensure_parent_dir(const char *path) {
+
     char dir[SWITCHD_STAGE_PATH_LEN];
     char *slash;
 
@@ -118,6 +207,7 @@ static int ensure_parent_dir(const char *path) {
     }
 
     snprintf(dir, sizeof(dir), "%s", path);
+
     slash = strrchr(dir, '/');
     if (slash == NULL) {
         return SWITCHD_OK;
@@ -132,6 +222,7 @@ static int ensure_parent_dir(const char *path) {
 }
 
 static int write_policy_file(const char *path, const char *body, size_t len) {
+
     char tmp[SWITCHD_STAGE_PATH_LEN + 8];
     FILE *fp;
 
@@ -144,7 +235,8 @@ static int write_policy_file(const char *path, const char *body, size_t len) {
     }
 
     snprintf(tmp, sizeof(tmp), "%s%s", path, POLICY_TMP_SUFFIX);
-    fp = fopen(tmp, "w");
+
+    fp = fopen(tmp, "wb");
     if (fp == NULL) {
         return SWITCHD_ERR_IO;
     }
@@ -172,6 +264,7 @@ static bool copy_json_str(JsonObj *root,
                           const char *key,
                           char *dst,
                           size_t dstLen) {
+
     JsonObj *entry;
     const char *value;
 
@@ -184,6 +277,7 @@ static bool copy_json_str(JsonObj *root,
         dst[0] = '\0';
         return true;
     }
+
     if (!json_is_string(entry)) {
         return false;
     }
@@ -195,11 +289,13 @@ static bool copy_json_str(JsonObj *root,
 
 static int parse_policy(JsonObj *root,
                         const char *path,
+                        const char *hash,
+                        time_t fileMtime,
                         SwitchPolicy *out,
                         char *err,
                         size_t errLen) {
+
     JsonObj *ports;
-    JsonObj *entry;
     JsonObj *item;
     size_t index;
 
@@ -209,9 +305,14 @@ static int parse_policy(JsonObj *root,
     }
 
     policy_clear(out);
-    out->state = SWITCH_POLICY_STATE_LOADED;
-    out->loadedAt = time(NULL);
+
+    out->state     = SWITCH_POLICY_STATE_LOADED;
+    out->loadedAt  = time(NULL);
+    out->fileMtime = fileMtime;
+    out->checkedAt = time(NULL);
+
     snprintf(out->path, sizeof(out->path), "%s", path ? path : "");
+    snprintf(out->hash, sizeof(out->hash), "%s", hash ? hash : "");
 
     if (!copy_json_str(root, "site_id", out->siteId, sizeof(out->siteId)) ||
         !copy_json_str(root, JTAG_SOURCE, out->source, sizeof(out->source)) ||
@@ -239,10 +340,12 @@ static int parse_policy(JsonObj *root,
         }
 
         memset(&port, 0, sizeof(port));
+
         field = json_object_get(item, "port");
         if (field == NULL || !json_is_integer(field)) {
             field = json_object_get(item, JTAG_PORT_ID);
         }
+
         if (field == NULL || !json_is_integer(field)) {
             set_err(err, errLen, "port policy missing port");
             return SWITCHD_ERR_INVAL;
@@ -253,6 +356,7 @@ static int parse_policy(JsonObj *root,
             set_err(err, errLen, "port policy has invalid port");
             return SWITCHD_ERR_INVAL;
         }
+
         if (out->ports[portId - 1].present) {
             set_err(err, errLen, "duplicate port policy");
             return SWITCHD_ERR_INVAL;
@@ -288,11 +392,54 @@ static int parse_policy(JsonObj *root,
     return SWITCHD_OK;
 }
 
-int policy_load(SwitchdContext *ctx) {
+static int parse_policy_body(const char *path,
+                             const char *body,
+                             size_t bodyLen,
+                             time_t fileMtime,
+                             SwitchPolicy *out,
+                             char *err,
+                             size_t errLen) {
+
     JsonErrObj jerr;
     JsonObj *root;
+    char hash[SWITCHD_SHA256_LEN];
+    int ret;
+
+    if (body == NULL || bodyLen == 0) {
+        set_err(err, errLen, "empty policy body");
+        return SWITCHD_ERR_INVAL;
+    }
+
+    memset(&jerr, 0, sizeof(jerr));
+
+    root = json_loadb(body, bodyLen, 0, &jerr);
+    if (root == NULL) {
+        set_err(err, errLen, "invalid policy json");
+        return SWITCHD_ERR_INVAL;
+    }
+
+    policy_hash_body(body, bodyLen, hash, sizeof(hash));
+
+    ret = parse_policy(root,
+                       path,
+                       hash,
+                       fileMtime,
+                       out,
+                       err,
+                       errLen);
+
+    json_decref(root);
+    return ret;
+}
+
+int policy_load(SwitchdContext *ctx) {
+
     SwitchPolicy loaded;
+    char *body;
+    size_t bodyLen;
+    time_t mtime;
     char err[SWITCHD_OP_DETAIL_LEN];
+    int ret;
 
     if (ctx == NULL) {
         return SWITCHD_ERR_INVAL;
@@ -302,40 +449,130 @@ int policy_load(SwitchdContext *ctx) {
     snprintf(ctx->policy.path, sizeof(ctx->policy.path), "%s",
              ctx->config.policyPath);
 
-    if (access(ctx->config.policyPath, R_OK) != 0) {
+    body = NULL;
+    bodyLen = 0;
+    mtime = 0;
+
+    ret = read_policy_file(ctx->config.policyPath, &body, &bodyLen, &mtime);
+    if (ret != SWITCHD_OK) {
         ctx->policy.state = SWITCH_POLICY_STATE_MISSING;
+        ctx->policy.checkedAt = time(NULL);
         snprintf(ctx->policy.error, sizeof(ctx->policy.error), "missing");
         usys_log_warn("switchd: no policy file at %s", ctx->config.policyPath);
-        return SWITCHD_ERR_NOTFOUND;
-    }
-
-    memset(&jerr, 0, sizeof(jerr));
-    root = json_load_file(ctx->config.policyPath, 0, &jerr);
-    if (root == NULL) {
-        ctx->policy.state = SWITCH_POLICY_STATE_INVALID;
-        snprintf(ctx->policy.error,
-                 sizeof(ctx->policy.error),
-                 "json parse error line %d",
-                 jerr.line);
-        usys_log_error("switchd: invalid policy file: %s", ctx->policy.error);
-        return SWITCHD_ERR_INVAL;
+        return ret;
     }
 
     memset(err, 0, sizeof(err));
-    if (parse_policy(root, ctx->config.policyPath, &loaded, err, sizeof(err)) !=
-        SWITCHD_OK) {
-        json_decref(root);
+
+    ret = parse_policy_body(ctx->config.policyPath,
+                            body,
+                            bodyLen,
+                            mtime,
+                            &loaded,
+                            err,
+                            sizeof(err));
+
+    free(body);
+
+    if (ret != SWITCHD_OK) {
         ctx->policy.state = SWITCH_POLICY_STATE_INVALID;
+        ctx->policy.checkedAt = time(NULL);
         snprintf(ctx->policy.error, sizeof(ctx->policy.error), "%s", err);
         usys_log_error("switchd: policy validation failed: %s", err);
+        return ret;
+    }
+
+    ctx->policy = loaded;
+
+    usys_log_info("switchd: loaded policy path=%s state=%s hash=%s",
+                  ctx->config.policyPath,
+                  policy_state_to_str(ctx->policy.state),
+                  ctx->policy.hash);
+
+    return SWITCHD_OK;
+}
+
+int policy_reload_if_changed(SwitchdContext *ctx) {
+
+    struct stat st;
+    SwitchPolicy loaded;
+    char *body;
+    size_t bodyLen;
+    char err[SWITCHD_OP_DETAIL_LEN];
+    int ret;
+
+    if (ctx == NULL) {
         return SWITCHD_ERR_INVAL;
     }
 
-    json_decref(root);
+    ctx->policy.checkedAt = time(NULL);
+
+    if (stat(ctx->config.policyPath, &st) != 0) {
+        if (ctx->policy.state == SWITCH_POLICY_STATE_LOADED) {
+            snprintf(ctx->policy.error,
+                     sizeof(ctx->policy.error),
+                     "policy_file_missing");
+            return SWITCHD_OK;
+        }
+
+        ctx->policy.state = SWITCH_POLICY_STATE_MISSING;
+        snprintf(ctx->policy.path,
+                 sizeof(ctx->policy.path),
+                 "%s",
+                 ctx->config.policyPath);
+        snprintf(ctx->policy.error, sizeof(ctx->policy.error), "missing");
+        return SWITCHD_ERR_NOTFOUND;
+    }
+
+    if (ctx->policy.state == SWITCH_POLICY_STATE_LOADED &&
+        ctx->policy.fileMtime == st.st_mtime) {
+        return SWITCHD_OK;
+    }
+
+    body = NULL;
+    bodyLen = 0;
+
+    ret = read_policy_file(ctx->config.policyPath, &body, &bodyLen, NULL);
+    if (ret != SWITCHD_OK) {
+        snprintf(ctx->policy.error,
+                 sizeof(ctx->policy.error),
+                 "policy_read_failed");
+        return ret;
+    }
+
+    memset(err, 0, sizeof(err));
+
+    ret = parse_policy_body(ctx->config.policyPath,
+                            body,
+                            bodyLen,
+                            st.st_mtime,
+                            &loaded,
+                            err,
+                            sizeof(err));
+
+    free(body);
+
+    if (ret != SWITCHD_OK) {
+        if (ctx->policy.state == SWITCH_POLICY_STATE_LOADED) {
+            snprintf(ctx->policy.error,
+                     sizeof(ctx->policy.error),
+                     "new_policy_invalid");
+            usys_log_error("switchd: new policy invalid, keeping old: %s",
+                           err);
+            return SWITCHD_OK;
+        }
+
+        ctx->policy.state = SWITCH_POLICY_STATE_INVALID;
+        snprintf(ctx->policy.error, sizeof(ctx->policy.error), "%s", err);
+        return ret;
+    }
+
     ctx->policy = loaded;
-    usys_log_info("switchd: loaded policy from %s state=%s",
+
+    usys_log_info("switchd: reloaded policy path=%s hash=%s",
                   ctx->config.policyPath,
-                  policy_state_to_str(ctx->policy.state));
+                  ctx->policy.hash);
+
     return SWITCHD_OK;
 }
 
@@ -344,8 +581,7 @@ int policy_apply_body(SwitchdContext *ctx,
                       size_t bodyLen,
                       char *err,
                       size_t errLen) {
-    JsonErrObj jerr;
-    JsonObj *root;
+
     SwitchPolicy loaded;
     int ret;
 
@@ -354,15 +590,13 @@ int policy_apply_body(SwitchdContext *ctx,
         return SWITCHD_ERR_INVAL;
     }
 
-    memset(&jerr, 0, sizeof(jerr));
-    root = json_loadb(body, bodyLen, 0, &jerr);
-    if (root == NULL) {
-        set_err(err, errLen, "invalid policy json");
-        return SWITCHD_ERR_INVAL;
-    }
-
-    ret = parse_policy(root, ctx->config.policyPath, &loaded, err, errLen);
-    json_decref(root);
+    ret = parse_policy_body(ctx->config.policyPath,
+                            body,
+                            bodyLen,
+                            time(NULL),
+                            &loaded,
+                            err,
+                            errLen);
     if (ret != SWITCHD_OK) {
         return ret;
     }
@@ -373,17 +607,25 @@ int policy_apply_body(SwitchdContext *ctx,
         return ret;
     }
 
-    ctx->policy = loaded;
-    usys_log_info("switchd: applied policy from request path=%s",
-                  ctx->config.policyPath);
+    ret = policy_reload_if_changed(ctx);
+    if (ret != SWITCHD_OK) {
+        ctx->policy = loaded;
+    }
+
+    usys_log_info("switchd: applied policy path=%s hash=%s",
+                  ctx->config.policyPath,
+                  ctx->policy.hash);
+
     return SWITCHD_OK;
 }
 
 const SwitchPortPolicy *policy_get_port(const SwitchdContext *ctx,
                                         uint32_t portId) {
+
     if (ctx == NULL || portId == 0 || portId > SWITCHD_MAX_PORTS) {
         return NULL;
     }
+
     if (!ctx->policy.ports[portId - 1].present) {
         return NULL;
     }
@@ -397,6 +639,7 @@ int policy_check_action(SwitchdContext *ctx,
                         const char *source,
                         char *err,
                         size_t errLen) {
+
     const SwitchPortPolicy *port;
     bool fromSiteController;
 
@@ -404,6 +647,8 @@ int policy_check_action(SwitchdContext *ctx,
         set_err(err, errLen, "no context");
         return SWITCHD_ERR_INVAL;
     }
+
+    (void)policy_reload_if_changed(ctx);
 
     if (ctx->policy.state != SWITCH_POLICY_STATE_LOADED) {
         set_err(err, errLen, "port policy is not loaded");
@@ -436,7 +681,13 @@ int policy_check_action(SwitchdContext *ctx,
             set_err(err, errLen, "port cannot be disabled remotely");
             return SWITCHD_ERR_AUTH;
         }
-        return fromSiteController ? SWITCHD_OK : SWITCHD_ERR_AUTH;
+
+        if (fromSiteController) {
+            return SWITCHD_OK;
+        }
+
+        set_err(err, errLen, "port is protected by site-controller");
+        return SWITCHD_ERR_AUTH;
 
     case SWITCH_PORT_POLICY_DISABLED:
         set_err(err, errLen, "port is disabled by policy");
@@ -451,6 +702,7 @@ int policy_check_action(SwitchdContext *ctx,
 
 JsonObj *policy_serialize_overlay(const SwitchdContext *ctx,
                                   uint32_t portId) {
+
     const SwitchPortPolicy *port;
     JsonObj *json;
 
@@ -462,6 +714,7 @@ JsonObj *policy_serialize_overlay(const SwitchdContext *ctx,
     json_object_set_new(json,
                         JTAG_STATE,
                         json_string(policy_state_to_str(ctx->policy.state)));
+    json_object_set_new(json, "hash", json_string(ctx->policy.hash));
 
     port = policy_get_port(ctx, portId);
     if (port == NULL) {
@@ -480,6 +733,7 @@ JsonObj *policy_serialize_overlay(const SwitchdContext *ctx,
 }
 
 JsonObj *policy_serialize(const SwitchdContext *ctx) {
+
     JsonObj *root;
     JsonObj *ports;
     uint32_t i;
@@ -500,9 +754,16 @@ JsonObj *policy_serialize(const SwitchdContext *ctx) {
     json_object_set_new(root, "updated_at", json_string(ctx->policy.updatedAt));
     json_object_set_new(root, JTAG_PATH, json_string(ctx->policy.path));
     json_object_set_new(root, JTAG_ERROR, json_string(ctx->policy.error));
+    json_object_set_new(root, "hash", json_string(ctx->policy.hash));
     json_object_set_new(root,
                         "loaded_at",
                         json_integer((json_int_t)ctx->policy.loadedAt));
+    json_object_set_new(root,
+                        "checked_at",
+                        json_integer((json_int_t)ctx->policy.checkedAt));
+    json_object_set_new(root,
+                        "file_mtime",
+                        json_integer((json_int_t)ctx->policy.fileMtime));
 
     for (i = 0; i < SWITCHD_MAX_PORTS; i++) {
         SwitchPortPolicy *port;

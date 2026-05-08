@@ -380,10 +380,91 @@ static void json_add_gps_info_to_report(JsonObj **json, GPSClientData *gps) {
     json_array_append_new(jArray, jEntry);
 }
 
+static void json_add_system_entry(JsonObj *jArray,
+                                  const char *name,
+                                  const char *value) {
+
+    JsonObj *jEntry = NULL;
+
+    if (jArray == NULL || !json_is_array(jArray) ||
+        name == NULL || value == NULL) {
+        return;
+    }
+
+    jEntry = json_object();
+    if (jEntry == NULL) {
+        return;
+    }
+
+    json_object_set_new(jEntry, JTAG_NAME, json_string(name));
+    json_object_set_new(jEntry, JTAG_VALUE, json_string(value));
+    json_array_append_new(jArray, jEntry);
+}
+
+static void json_add_switch_policy_info_to_report(JsonObj **json,
+                                                  SwitchPolicyStatusData *sp) {
+
+    JsonObj *jArray = NULL;
+
+    const char *switchValue = LOOKOUT_STATUS_NA;
+    const char *siteID      = LOOKOUT_STATUS_NA;
+    const char *state       = LOOKOUT_STATUS_NA;
+    const char *hash        = LOOKOUT_STATUS_NA;
+    const char *source      = LOOKOUT_STATUS_NA;
+    const char *error       = "";
+
+    if (json == NULL || *json == NULL || sp == NULL) return;
+
+    if (sp->available != USYS_TRUE) {
+        return;
+    }
+
+    jArray = json_object_get(*json, JTAG_SYSTEM);
+    if (jArray == NULL || !json_is_array(jArray)) return;
+
+    if (sp->switchAvailable == USYS_TRUE) {
+        switchValue = "available";
+
+        if (sp->siteID && sp->siteID[0] != '\0') {
+            siteID = sp->siteID;
+        }
+
+        if (sp->policyState && sp->policyState[0] != '\0') {
+            state = sp->policyState;
+        }
+
+        if (sp->policyHash && sp->policyHash[0] != '\0') {
+            hash = sp->policyHash;
+        }
+
+        if (sp->policySource && sp->policySource[0] != '\0') {
+            source = sp->policySource;
+        }
+
+        if (sp->policyError && sp->policyError[0] != '\0') {
+            error = sp->policyError;
+        }
+    } else {
+        switchValue = "unavailable";
+        state = "unknown";
+        hash = LOOKOUT_STATUS_NA;
+        source = LOOKOUT_STATUS_NA;
+        error = "switchd_unreachable";
+    }
+
+    json_add_system_entry(jArray, "switch", switchValue);
+    json_add_system_entry(jArray, "switchPolicySiteID", siteID);
+    json_add_system_entry(jArray, "switchPolicy", state);
+    json_add_system_entry(jArray, "switchPolicyHash", hash);
+    json_add_system_entry(jArray, "switchPolicySource", source);
+    json_add_system_entry(jArray, "switchPolicyError", error);
+}
+
 bool json_serialize_health_report(JsonObj **json,
                                   char *nodeID,
                                   CappList *list,
                                   GPSClientData *gps,
+                                  SwitchPolicyStatusData *switchPolicy,
                                   bool radioAvailable) {
 
     JsonObj *jArray = NULL;
@@ -448,6 +529,7 @@ bool json_serialize_health_report(JsonObj **json,
 
     json_add_system_info_to_report(json, radioAvailable);
     json_add_gps_info_to_report(json, gps);
+    json_add_switch_policy_info_to_report(json, switchPolicy);
 
     return USYS_TRUE;
 }

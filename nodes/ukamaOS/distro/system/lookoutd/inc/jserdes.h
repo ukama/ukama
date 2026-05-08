@@ -31,7 +31,7 @@ bool json_serialize_health_report(JsonObj **json,
                                   char *nodeID,
                                   CappList *list,
                                   GPSClientData *gps,
+                                  SwitchPolicyStatusData *switchPolicy,
                                   bool radioAvailable);
-
 #endif /* JSERDES_H_ */
 

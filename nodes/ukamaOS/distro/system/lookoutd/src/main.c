@@ -67,6 +67,23 @@ static bool node_id_is_tower(const char *nodeID) {
     return false;
 }
 
+static bool node_id_is_cnode(const char *nodeID) {
+
+    if (nodeID == NULL || nodeID[0] == '\0') {
+        return false;
+    }
+
+    if (strstr(nodeID, "cnode") != NULL) {
+        return true;
+    }
+
+    if (strstr(nodeID, "control") != NULL) {
+        return true;
+    }
+
+    return false;
+}
+
 static void configure_app_manager(Config *config) {
 
     char *mgr = NULL;
@@ -153,6 +170,7 @@ int main(int argc, char **argv) {
     serviceConfig.starterdPort = usys_find_service_port(SERVICE_STARTER);
     serviceConfig.nodeID       = NULL;
     serviceConfig.isTowerNode  = false;
+    serviceConfig.isCNode      = false;
 
     if (!usys_find_service_port(SERVICE_UKAMA)) {
         usys_log_error("Unable to determine the port for Ukama");
@@ -188,13 +206,14 @@ int main(int argc, char **argv) {
     }
 
     serviceConfig.isTowerNode = node_id_is_tower(serviceConfig.nodeID);
-
+    serviceConfig.isCNode     = node_id_is_cnode(serviceConfig.nodeID);
     usys_log_info("%s: nodeID=%s nodeType=%s appManager=%s",
                   SERVICE_NAME,
                   serviceConfig.nodeID,
-                  serviceConfig.isTowerNode ? "tower" : "non-tower",
+                  serviceConfig.isTowerNode ? "tower" :
+                  (serviceConfig.isCNode ? "cnode" : "non-tower"),
                   serviceConfig.appManager == LOOKOUT_APP_MANAGER_STARTERD ?
-                      "starter" : "supervisor");
+                  "starter" : "supervisor");
 
     if (start_web_services(&serviceConfig, &serviceInst) != USYS_TRUE) {
         usys_log_error("%s: unable to start webservice. Exiting.",
