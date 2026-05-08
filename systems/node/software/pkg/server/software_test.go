@@ -271,15 +271,18 @@ func TestUpdateSoftware(t *testing.T) {
 	})
 
 	t.Run("invalid_tag", func(t *testing.T) {
-		s := newTestServer(mocks.NewSoftwareRepo(t), mocks.NewAppRepo(t), mocks.NewNodeRepo(t), mbmocks.NewMsgBusServiceClient(t))
+		sw := dbSoftwareFixture()
+		sRepo := mocks.NewSoftwareRepo(t)
+		sRepo.On("List", testNodeIdNormalized, ukama.UpdateAvailable, testAppNameForUpdate).Return([]*db.Software{sw}, nil)
+
+		s := newTestServer(sRepo, mocks.NewAppRepo(t), mocks.NewNodeRepo(t), mbmocks.NewMsgBusServiceClient(t))
 		req := &pb.UpdateSoftwareRequest{NodeId: testNodeId, Name: testAppNameForUpdate, Tag: "not-a-version"}
 		resp, err := s.UpdateSoftware(ctx, req)
 
-		assert.Error(t, err)
-		assert.Nil(t, resp)
-		st, ok := status.FromError(err)
-		require.True(t, ok)
-		assert.Equal(t, codes.InvalidArgument, st.Code())
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, invalidVersionMsg, resp.Message)
+		sRepo.AssertExpectations(t)
 	})
 
 	t.Run("not_found", func(t *testing.T) {

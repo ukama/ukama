@@ -118,11 +118,6 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 		return nil, status.Errorf(codes.InvalidArgument, "invalid node id: %s", err.Error())
 	}
 
-	reqTagVersion, err := validation.ParseVersion(req.Tag)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid version tag %q: %v", req.Tag, err)
-	}
-
 	list, err := s.sRepo.List(nId.String(), ukama.UpdateAvailable, req.Name)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get software: %v", err)
@@ -134,20 +129,12 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 	// Unique index on (node_id, app_name) implies at most one record for this request
 	sw := list[0]
 
-	desiredVersion, err := validation.ParseVersion(sw.DesiredVersion)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "invalid desired version in DB: %v", err)
-	}
-	if desiredVersion.Compare(*reqTagVersion) != 0 {
+	if validation.IsVersionMismatch(sw.DesiredVersion, req.Tag) {
 		log.Infof("Requested tag %s does not match desired version %s", req.Tag, sw.DesiredVersion)
 		return &pb.UpdateSoftwareResponse{Message: "Invalid software version provided"}, nil
 	}
 
-	currentVersion, err := validation.ParseVersion(sw.CurrentVersion)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "invalid current version in DB: %v", err)
-	}
-	if currentVersion.Compare(*reqTagVersion) >= 0 {
+	if !validation.IsVersionMismatch(sw.CurrentVersion, req.Tag) {
 		log.Infof("Software %s already at or above version %s for node %s", req.Name, req.Tag, nId.String())
 		return &pb.UpdateSoftwareResponse{Message: "Software is already up to date"}, nil
 	}

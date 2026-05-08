@@ -15,6 +15,7 @@ import (
  
  type NodeRepo interface {
 	Create(node Node) error
+	List() ([]Node, error)
 }
 
 type nodeRepo struct {
@@ -27,4 +28,13 @@ func NewNodeRepo(db sql.Db) NodeRepo {
 
 func (r *nodeRepo) Create(node Node) error {
 return r.db.Create(&node).Error
+}
+
+func (r *nodeRepo) List() ([]Node, error) {
+	var nodes []Node
+	err := r.db.Find(&nodes).Error
+	if err != nil {
+		return nil, err
+	}
+	return nodes, nil
 }

@@ -46,7 +46,7 @@ func NewSoftwareEventServer(orgName string, s *SoftwareServer) *SoftwareUpdateEv
 func (n *SoftwareUpdateEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof(logMsgRoutingKey, e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
-	case msgbus.PrepareRoute(n.orgName, evt.NodeEventToEventConfig[evt.NodeAppChunkReady].RoutingKey):
+	case msgbus.PrepareRoute(n.orgName, "event.cloud.global.{{ .Org}}.hub.distributor.app.chunkready"):
 		return n.handleNodeAppChunkReadyEvent(ctx, e)
 	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline]):
 		log.Infof(logMsgRoutingKey, e.RoutingKey, e.Msg)
