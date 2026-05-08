@@ -128,8 +128,10 @@ extract_tarball() {
     MOUNT_POINTS+=("$mnt")
 
     sudo mount "$part" "$mnt"
-    sudo tar -xzf "$tarball" -C "$mnt" --no-same-owner --no-same-permissions
+    log "Tarball $tarball: $(tar tzf "$tarball" | wc -l) entries, $(du -h "$tarball" | cut -f1) size"
+    sudo tar -xzf "$tarball" -C "$mnt" --no-same-owner --no-same-permissions --warning=no-timestamp
     sync
+    log "Extracted top-level: $(ls -A "$mnt" | head -5 | tr '\n' ' ')"
     sudo umount "$mnt"
     rm -rf "$mnt"
 }
@@ -299,7 +301,7 @@ verify_layout() {
     for part in "$primary_part" "$passive_part"; do
         sudo mount "$part" "$mnt"
         if [ ! -f "$mnt/bin/sh" ] && [ ! -L "$mnt/bin/sh" ]; then
-            log "ERROR: $part missing rootfs content"
+            log "ERROR: $part missing rootfs content (found: $(ls -A "$mnt" | head -5 | tr '\n' ' '))"
             sudo umount "$mnt"
             exit 1
         fi
