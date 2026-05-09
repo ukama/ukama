@@ -9,16 +9,38 @@ import (
 )
 
 type Reconciler struct {
-	intents   db.IntentRepo
-	states    db.StateRepo
-	ports     db.PortMapRepo
-	tower     *adapters.TowerAdapter
-	amplifier *adapters.AmplifierAdapter
-	cnode     *adapters.CNodeAdapter
+	intents    db.IntentRepo
+	states     db.StateRepo
+	ports      db.PortMapRepo
+	components db.ComponentRepo
+	tower      *adapters.TowerAdapter
+	amplifier  *adapters.AmplifierAdapter
+	cnode      *adapters.CNodeAdapter
 }
 
-func New(intents db.IntentRepo, states db.StateRepo, ports db.PortMapRepo, tower *adapters.TowerAdapter, amp *adapters.AmplifierAdapter, cnode *adapters.CNodeAdapter) *Reconciler {
-	return &Reconciler{intents: intents, states: states, ports: ports, tower: tower, amplifier: amp, cnode: cnode}
+func New(intents db.IntentRepo, states db.StateRepo, ports db.PortMapRepo, components db.ComponentRepo, tower *adapters.TowerAdapter, amp *adapters.AmplifierAdapter, cnode *adapters.CNodeAdapter) *Reconciler {
+	return &Reconciler{intents: intents, states: states, ports: ports, components: components, tower: tower, amplifier: amp, cnode: cnode}
+}
+
+// GetSnapshot returns desired intent, derived state, component snapshot JSON, and static port map.
+func (r *Reconciler) GetSnapshot(ctx context.Context, siteID string) (*SiteSnapshot, error) {
+	st, intent, err := r.GetState(ctx, siteID)
+	if err != nil {
+		return nil, err
+	}
+	ports, err := r.ports.GetBySite(siteID)
+	if err != nil {
+		return nil, err
+	}
+	var componentsJSON string
+	c, err := r.components.Get(siteID)
+	if err != nil {
+		return nil, err
+	}
+	if c != nil {
+		componentsJSON = c.Components
+	}
+	return &SiteSnapshot{Intent: intent, DerivedState: st, ComponentsJSON: componentsJSON, Ports: ports}, nil
 }
 func (r *Reconciler) GetState(ctx context.Context, siteID string) (*db.SiteState, *db.SiteIntent, error) {
 	intent, err := r.getIntent(siteID)
@@ -62,7 +84,7 @@ func (r *Reconciler) ApplySwitchPolicy(ctx context.Context, siteID string) error
 	}
 	return r.cnode.ApplySwitchPolicy(ctx, cnodePort.NodeID, sp)
 }
-func (r *Reconciler) SetSite(ctx context.Context, siteID, state, reason string) (*db.SiteState, error) {
+func (r *Reconciler) SetSite(ctx context.Context, siteID, state, reason, requestedBy string) (*db.SiteState, error) {
 	if state != StateOn && state != StateOff {
 		return nil, fmt.Errorf("invalid site state %s", state)
 	}
@@ -72,6 +94,9 @@ func (r *Reconciler) SetSite(ctx context.Context, siteID, state, reason string) 
 	}
 	intent.DesiredSite = state
 	intent.Reason = reason
+	if requestedBy != "" {
+		intent.RequestedBy = requestedBy
+	}
 	if state == StateOn {
 		intent.DesiredService = StateOn
 		intent.DesiredRadio = StateOn
@@ -88,7 +113,7 @@ func (r *Reconciler) SetSite(ctx context.Context, siteID, state, reason string) 
 	st := derive(intent)
 	return st, r.states.Upsert(st)
 }
-func (r *Reconciler) SetService(ctx context.Context, siteID, state, reason string) (*db.SiteState, error) {
+func (r *Reconciler) SetService(ctx context.Context, siteID, state, reason, requestedBy string) (*db.SiteState, error) {
 	if state != StateOn && state != StateOff {
 		return nil, fmt.Errorf("invalid service state %s", state)
 	}
@@ -98,6 +123,9 @@ func (r *Reconciler) SetService(ctx context.Context, siteID, state, reason strin
 	}
 	intent.DesiredService = state
 	intent.Reason = reason
+	if requestedBy != "" {
+		intent.RequestedBy = requestedBy
+	}
 	if err := r.intents.Upsert(intent); err != nil {
 		return nil, err
 	}
@@ -107,7 +135,7 @@ func (r *Reconciler) SetService(ctx context.Context, siteID, state, reason strin
 	st := derive(intent)
 	return st, r.states.Upsert(st)
 }
-func (r *Reconciler) SetRadio(ctx context.Context, siteID, state, reason string) (*db.SiteState, error) {
+func (r *Reconciler) SetRadio(ctx context.Context, siteID, state, reason, requestedBy string) (*db.SiteState, error) {
 	if state != StateOn && state != StateOff {
 		return nil, fmt.Errorf("invalid radio state %s", state)
 	}
@@ -117,6 +145,9 @@ func (r *Reconciler) SetRadio(ctx context.Context, siteID, state, reason string)
 	}
 	intent.DesiredRadio = state
 	intent.Reason = reason
+	if requestedBy != "" {
+		intent.RequestedBy = requestedBy
+	}
 	if err := r.intents.Upsert(intent); err != nil {
 		return nil, err
 	}
@@ -126,10 +157,9 @@ func (r *Reconciler) SetRadio(ctx context.Context, siteID, state, reason string)
 	st := derive(intent)
 	return st, r.states.Upsert(st)
 }
+// PowerCycleNode looks up the port for role and forwards PoE cycle to the CNode. It does not reject
+// the cnode role; switch.d on the node enforces never_off_remote and related policy.
 func (r *Reconciler) PowerCycleNode(ctx context.Context, siteID, role, reason string) error {
-	if role == policy.RoleCNode {
-		return fmt.Errorf("cnode cannot be power-cycled remotely")
-	}
 	ports, err := r.ports.GetBySite(siteID)
 	if err != nil {
 		return err

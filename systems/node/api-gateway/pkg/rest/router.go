@@ -71,14 +71,14 @@ type controller interface {
 }
 
 type siteController interface {
-	SetSite(siteID, state, reason string) (*sitepb.SetSiteResponse, error)
-	SetService(siteID, state, reason string) (*sitepb.SetServiceResponse, error)
-	SetRadio(siteID, state, reason string) (*sitepb.SetRadioResponse, error)
+	SetSite(siteID, state, reason, requestedBy string) (*sitepb.SetSiteResponse, error)
+	SetService(siteID, state, reason, requestedBy string) (*sitepb.SetServiceResponse, error)
+	SetRadio(siteID, state, reason, requestedBy string) (*sitepb.SetRadioResponse, error)
 	GetSiteState(siteID string) (*sitepb.GetSiteStateResponse, error)
 	UpsertPortMap(siteID, cnodeID string, ports []*sitepb.PortMapEntry) (*sitepb.UpsertPortMapResponse, error)
 	GetPortMap(siteID string) (*sitepb.GetPortMapResponse, error)
 	ApplySwitchPolicy(siteID string) (*sitepb.ApplySwitchPolicyResponse, error)
-	PowerCycleNode(siteID, role, reason string) (*sitepb.PowerCycleNodeResponse, error)
+	PowerCycleNode(siteID, role, reason, requestedBy string) (*sitepb.PowerCycleNodeResponse, error)
 }
 
 type configurator interface {

@@ -55,9 +55,8 @@
 ## Power-cycle
 
 1. Look up target role in static port map.
-2. Reject CNode power-cycle.
-3. Send `POST /switch/v1/ports/{port}/poe/cycle` through node-controller to CNode switch.d.
-4. Keep desired site/service/radio unchanged and reconcile after node health returns.
+2. Send `POST /switch/v1/ports/{port}/poe/cycle` through node-controller to CNode switch.d (site-controller does not reject by role; **switch.d** on the node enforces policy, e.g. `never_off_remote` for the CNode port).
+3. Keep desired site/service/radio unchanged and reconcile after node health returns.
 
 ## Edge cases
 
@@ -66,4 +65,4 @@
 - CNode unreachable: mark control degraded; running access may continue but control is degraded.
 - switch.d policy missing: push policy again.
 - Wrong static map: operator must correct it; discovery will be added later.
-- CNode port: must be `never_off_remote` and cannot be power-cycled remotely.
+- CNode port: operator maps it as `never_off_remote`; **switch.d** rejects destructive actions for that port at the node.

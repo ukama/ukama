@@ -1,0 +1,133 @@
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/node/site-controller/pb/gen";
+
+package ukama.node.site_controller.v1;
+
+import "validator.proto";
+
+// SiteController drives site intent, static switch port map, switch.d policy, and derived site state.
+service SiteControllerService {
+  rpc SetSite(SetSiteRequest) returns (SetSiteResponse);
+  rpc SetService(SetServiceRequest) returns (SetServiceResponse);
+  rpc SetRadio(SetRadioRequest) returns (SetRadioResponse);
+  rpc GetSiteState(GetSiteStateRequest) returns (GetSiteStateResponse);
+  rpc UpsertPortMap(UpsertPortMapRequest) returns (UpsertPortMapResponse);
+  rpc GetPortMap(GetPortMapRequest) returns (GetPortMapResponse);
+  rpc ApplySwitchPolicy(ApplySwitchPolicyRequest) returns (ApplySwitchPolicyResponse);
+  rpc PowerCycleNode(PowerCycleNodeRequest) returns (PowerCycleNodeResponse);
+}
+
+message SiteIntentMsg {
+  string site_id = 1;
+  string desired_site = 2;
+  string desired_service = 3;
+  string desired_radio = 4;
+  string reason = 5;
+  string requested_by = 6;
+}
+
+// DerivedState mirrors persisted SiteState (power/service/radio/access) plus desired fields for convenience.
+message DerivedStateMsg {
+  string site_id = 1;
+  string desired_site = 2;
+  string desired_service = 3;
+  string desired_radio = 4;
+  string power = 5;
+  string service = 6;
+  string radio = 7;
+  string access = 8;
+  string reason = 9;
+}
+
+message SiteSnapshot {
+  SiteIntentMsg intent = 1;
+  DerivedStateMsg derived = 2;
+  // Raw JSON blob from site_components.components
+  string components_json = 3;
+  repeated PortMapEntry ports = 4;
+}
+
+message PortMapEntry {
+  int32 port = 1;
+  string role = 2;
+  string node_id = 3;
+  string class = 4;
+  string policy = 5;
+  // Optional per-row cnode id (defaults from UpsertPortMapRequest.cnode_id when empty)
+  string cnode_id = 6;
+}
+
+message SetSiteRequest {
+  string site_id = 1 [(validator.field) = { string_not_empty: true }];
+  string state = 2;
+  string reason = 3;
+  string requested_by = 4;
+}
+
+message SetSiteResponse {
+  DerivedStateMsg state = 1;
+}
+
+message SetServiceRequest {
+  string site_id = 1 [(validator.field) = { string_not_empty: true }];
+  string state = 2;
+  string reason = 3;
+  string requested_by = 4;
+}
+
+message SetServiceResponse {
+  DerivedStateMsg state = 1;
+}
+
+message SetRadioRequest {
+  string site_id = 1 [(validator.field) = { string_not_empty: true }];
+  string state = 2;
+  string reason = 3;
+  string requested_by = 4;
+}
+
+message SetRadioResponse {
+  DerivedStateMsg state = 1;
+}
+
+message GetSiteStateRequest {
+  string site_id = 1 [(validator.field) = { string_not_empty: true }];
+}
+
+message GetSiteStateResponse {
+  SiteSnapshot snapshot = 1;
+}
+
+message UpsertPortMapRequest {
+  string site_id = 1 [(validator.field) = { string_not_empty: true }];
+  string cnode_id = 2;
+  repeated PortMapEntry ports = 3;
+}
+
+message UpsertPortMapResponse {}
+
+message GetPortMapRequest {
+  string site_id = 1 [(validator.field) = { string_not_empty: true }];
+}
+
+message GetPortMapResponse {
+  repeated PortMapEntry ports = 1;
+}
+
+message ApplySwitchPolicyRequest {
+  string site_id = 1 [(validator.field) = { string_not_empty: true }];
+}
+
+message ApplySwitchPolicyResponse {
+  bool applied = 1;
+}
+
+message PowerCycleNodeRequest {
+  string site_id = 1 [(validator.field) = { string_not_empty: true }];
+  string role = 2;
+  string reason = 3;
+  string requested_by = 4;
+}
+
+message PowerCycleNodeResponse {}

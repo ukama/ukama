@@ -1,10 +1,22 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package server
 
 import (
 	"context"
+	"strings"
+
 	pb "github.com/ukama/ukama/systems/node/site-controller/pb/gen"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/db"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/reconciler"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type SiteControllerServer struct {
@@ -15,75 +27,158 @@ type SiteControllerServer struct {
 func NewSiteControllerServer(r *reconciler.Reconciler) *SiteControllerServer {
 	return &SiteControllerServer{reconciler: r}
 }
+
 func (s *SiteControllerServer) SetSite(ctx context.Context, req *pb.SetSiteRequest) (*pb.SetSiteResponse, error) {
-	st, err := s.reconciler.SetSite(ctx, req.SiteId, req.State, req.Reason)
+	st, err := s.reconciler.SetSite(ctx, req.SiteId, req.State, req.Reason, req.RequestedBy)
 	if err != nil {
-		return nil, err
+		return nil, mapErr(err)
 	}
-	intent, _ := s.getIntent(ctx, req.SiteId)
-	return &pb.SetSiteResponse{State: toPB(st, intent)}, nil
+	intent, err := s.getIntent(ctx, req.SiteId)
+	if err != nil {
+		return nil, mapErr(err)
+	}
+	return &pb.SetSiteResponse{State: derivedStateToPB(st, intent)}, nil
 }
+
 func (s *SiteControllerServer) SetService(ctx context.Context, req *pb.SetServiceRequest) (*pb.SetServiceResponse, error) {
-	st, err := s.reconciler.SetService(ctx, req.SiteId, req.State, req.Reason)
+	st, err := s.reconciler.SetService(ctx, req.SiteId, req.State, req.Reason, req.RequestedBy)
 	if err != nil {
-		return nil, err
+		return nil, mapErr(err)
 	}
-	intent, _ := s.getIntent(ctx, req.SiteId)
-	return &pb.SetServiceResponse{State: toPB(st, intent)}, nil
+	intent, err := s.getIntent(ctx, req.SiteId)
+	if err != nil {
+		return nil, mapErr(err)
+	}
+	return &pb.SetServiceResponse{State: derivedStateToPB(st, intent)}, nil
 }
+
 func (s *SiteControllerServer) SetRadio(ctx context.Context, req *pb.SetRadioRequest) (*pb.SetRadioResponse, error) {
-	st, err := s.reconciler.SetRadio(ctx, req.SiteId, req.State, req.Reason)
+	st, err := s.reconciler.SetRadio(ctx, req.SiteId, req.State, req.Reason, req.RequestedBy)
 	if err != nil {
-		return nil, err
+		return nil, mapErr(err)
 	}
-	intent, _ := s.getIntent(ctx, req.SiteId)
-	return &pb.SetRadioResponse{State: toPB(st, intent)}, nil
+	intent, err := s.getIntent(ctx, req.SiteId)
+	if err != nil {
+		return nil, mapErr(err)
+	}
+	return &pb.SetRadioResponse{State: derivedStateToPB(st, intent)}, nil
 }
+
 func (s *SiteControllerServer) GetSiteState(ctx context.Context, req *pb.GetSiteStateRequest) (*pb.GetSiteStateResponse, error) {
-	st, intent, err := s.reconciler.GetState(ctx, req.SiteId)
+	snap, err := s.reconciler.GetSnapshot(ctx, req.SiteId)
 	if err != nil {
-		return nil, err
+		return nil, mapErr(err)
 	}
-	return &pb.GetSiteStateResponse{State: toPB(st, intent)}, nil
+	return &pb.GetSiteStateResponse{Snapshot: snapshotToPB(snap)}, nil
 }
+
 func (s *SiteControllerServer) UpsertPortMap(ctx context.Context, req *pb.UpsertPortMapRequest) (*pb.UpsertPortMapResponse, error) {
 	ports := make([]db.SitePortMap, 0, len(req.Ports))
 	for _, p := range req.Ports {
-		ports = append(ports, db.SitePortMap{Port: int(p.Port), Role: p.Role, NodeID: p.NodeId, Class: p.Class, Policy: p.Policy, CNodeID: req.CnodeId})
+		cn := p.CnodeId
+		if cn == "" {
+			cn = req.CnodeId
+		}
+		ports = append(ports, db.SitePortMap{
+			Port: int(p.Port), Role: p.Role, NodeID: p.NodeId, Class: p.Class, Policy: p.Policy, CNodeID: cn,
+		})
 	}
-	return &pb.UpsertPortMapResponse{}, s.reconciler.UpsertPortMap(ctx, req.SiteId, req.CnodeId, ports)
+	if err := s.reconciler.UpsertPortMap(ctx, req.SiteId, req.CnodeId, ports); err != nil {
+		return nil, mapErr(err)
+	}
+	return &pb.UpsertPortMapResponse{}, nil
 }
+
 func (s *SiteControllerServer) GetPortMap(ctx context.Context, req *pb.GetPortMapRequest) (*pb.GetPortMapResponse, error) {
 	ports, err := s.reconciler.GetPortMap(ctx, req.SiteId)
 	if err != nil {
-		return nil, err
+		return nil, mapErr(err)
 	}
 	out := make([]*pb.PortMapEntry, 0, len(ports))
 	for _, p := range ports {
-		out = append(out, &pb.PortMapEntry{Port: int32(p.Port), Role: p.Role, NodeId: p.NodeID, Class: p.Class, Policy: p.Policy})
+		out = append(out, &pb.PortMapEntry{
+			Port: int32(p.Port), Role: p.Role, NodeId: p.NodeID, Class: p.Class, Policy: p.Policy, CnodeId: p.CNodeID,
+		})
 	}
 	return &pb.GetPortMapResponse{Ports: out}, nil
 }
+
 func (s *SiteControllerServer) ApplySwitchPolicy(ctx context.Context, req *pb.ApplySwitchPolicyRequest) (*pb.ApplySwitchPolicyResponse, error) {
 	err := s.reconciler.ApplySwitchPolicy(ctx, req.SiteId)
-	return &pb.ApplySwitchPolicyResponse{Applied: err == nil}, err
+	if err != nil {
+		return nil, mapErr(err)
+	}
+	return &pb.ApplySwitchPolicyResponse{Applied: true}, nil
 }
+
 func (s *SiteControllerServer) PowerCycleNode(ctx context.Context, req *pb.PowerCycleNodeRequest) (*pb.PowerCycleNodeResponse, error) {
-	return &pb.PowerCycleNodeResponse{}, s.reconciler.PowerCycleNode(ctx, req.SiteId, req.Role, req.Reason)
+	if err := s.reconciler.PowerCycleNode(ctx, req.SiteId, req.Role, req.Reason); err != nil {
+		return nil, mapErr(err)
+	}
+	return &pb.PowerCycleNodeResponse{}, nil
 }
+
 func (s *SiteControllerServer) getIntent(ctx context.Context, siteID string) (*db.SiteIntent, error) {
 	_, intent, err := s.reconciler.GetState(ctx, siteID)
 	return intent, err
 }
-func toPB(st *db.SiteState, intent *db.SiteIntent) *pb.SiteState {
+
+func intentToPB(in *db.SiteIntent) *pb.SiteIntentMsg {
+	if in == nil {
+		return nil
+	}
+	return &pb.SiteIntentMsg{
+		SiteId: in.SiteID, DesiredSite: in.DesiredSite, DesiredService: in.DesiredService,
+		DesiredRadio: in.DesiredRadio, Reason: in.Reason, RequestedBy: in.RequestedBy,
+	}
+}
+
+func derivedStateToPB(st *db.SiteState, intent *db.SiteIntent) *pb.DerivedStateMsg {
 	if st == nil {
 		return nil
 	}
-	out := &pb.SiteState{SiteId: st.SiteID, Power: st.PowerState, Service: st.ServiceState, Radio: st.RadioState, Access: st.AccessState, Reason: st.Reason}
+	out := &pb.DerivedStateMsg{
+		SiteId: st.SiteID, Power: st.PowerState, Service: st.ServiceState, Radio: st.RadioState, Access: st.AccessState, Reason: st.Reason,
+	}
 	if intent != nil {
 		out.DesiredSite = intent.DesiredSite
 		out.DesiredService = intent.DesiredService
 		out.DesiredRadio = intent.DesiredRadio
 	}
 	return out
+}
+
+func snapshotToPB(s *reconciler.SiteSnapshot) *pb.SiteSnapshot {
+	if s == nil {
+		return nil
+	}
+	ports := make([]*pb.PortMapEntry, 0, len(s.Ports))
+	for _, p := range s.Ports {
+		ports = append(ports, &pb.PortMapEntry{
+			Port: int32(p.Port), Role: p.Role, NodeId: p.NodeID, Class: p.Class, Policy: p.Policy, CnodeId: p.CNodeID,
+		})
+	}
+	return &pb.SiteSnapshot{
+		Intent:          intentToPB(s.Intent),
+		Derived:         derivedStateToPB(s.DerivedState, s.Intent),
+		ComponentsJson: s.ComponentsJSON,
+		Ports:           ports,
+	}
+}
+
+func mapErr(err error) error {
+	if err == nil {
+		return nil
+	}
+	if _, ok := status.FromError(err); ok {
+		return err
+	}
+	msg := err.Error()
+	if strings.Contains(msg, "missing") || strings.Contains(msg, "invalid") {
+		return status.Errorf(codes.InvalidArgument, "%s", msg)
+	}
+	if strings.Contains(msg, "not found") {
+		return status.Errorf(codes.NotFound, "%s", msg)
+	}
+	return status.Errorf(codes.Internal, "%s", msg)
 }

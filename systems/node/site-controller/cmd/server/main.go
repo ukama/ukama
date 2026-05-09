@@ -57,7 +57,7 @@ func runGrpcServer(gormdb sql.Db) {
 	if err != nil {
 		log.Fatalf("failed to connect controller: %v", err)
 	}
-	r := reconciler.New(db.NewIntentRepo(gormdb), db.NewStateRepo(gormdb), db.NewPortMapRepo(gormdb), adapters.NewTowerAdapter(cmdAdapter), adapters.NewAmplifierAdapter(cmdAdapter), adapters.NewCNodeAdapter(cmdAdapter))
+	r := reconciler.New(db.NewIntentRepo(gormdb), db.NewStateRepo(gormdb), db.NewPortMapRepo(gormdb), db.NewComponentRepo(gormdb), adapters.NewTowerAdapter(cmdAdapter), adapters.NewAmplifierAdapter(cmdAdapter), adapters.NewCNodeAdapter(cmdAdapter))
 	srv := server.NewSiteControllerServer(r)
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) { pb.RegisterSiteControllerServiceServer(s, srv) })
 	go grpcServer.StartServer()

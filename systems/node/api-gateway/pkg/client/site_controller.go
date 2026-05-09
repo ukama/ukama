@@ -24,43 +24,50 @@ func NewSiteController(host string, timeout time.Duration) *SiteController {
 	return &SiteController{conn: conn, client: pb.NewSiteControllerServiceClient(conn), timeout: timeout}
 }
 
-func (s *SiteController) SetSite(siteID, state, reason string) (*pb.SetSiteResponse, error) {
+func (s *SiteController) SetSite(siteID, state, reason, requestedBy string) (*pb.SetSiteResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
-	return s.client.SetSite(ctx, &pb.SetSiteRequest{SiteId: siteID, State: state, Reason: reason})
+	return s.client.SetSite(ctx, &pb.SetSiteRequest{SiteId: siteID, State: state, Reason: reason, RequestedBy: requestedBy})
 }
-func (s *SiteController) SetService(siteID, state, reason string) (*pb.SetServiceResponse, error) {
+
+func (s *SiteController) SetService(siteID, state, reason, requestedBy string) (*pb.SetServiceResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
-	return s.client.SetService(ctx, &pb.SetServiceRequest{SiteId: siteID, State: state, Reason: reason})
+	return s.client.SetService(ctx, &pb.SetServiceRequest{SiteId: siteID, State: state, Reason: reason, RequestedBy: requestedBy})
 }
-func (s *SiteController) SetRadio(siteID, state, reason string) (*pb.SetRadioResponse, error) {
+
+func (s *SiteController) SetRadio(siteID, state, reason, requestedBy string) (*pb.SetRadioResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
-	return s.client.SetRadio(ctx, &pb.SetRadioRequest{SiteId: siteID, State: state, Reason: reason})
+	return s.client.SetRadio(ctx, &pb.SetRadioRequest{SiteId: siteID, State: state, Reason: reason, RequestedBy: requestedBy})
 }
+
 func (s *SiteController) GetSiteState(siteID string) (*pb.GetSiteStateResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 	return s.client.GetSiteState(ctx, &pb.GetSiteStateRequest{SiteId: siteID})
 }
+
 func (s *SiteController) UpsertPortMap(siteID, cnodeID string, ports []*pb.PortMapEntry) (*pb.UpsertPortMapResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 	return s.client.UpsertPortMap(ctx, &pb.UpsertPortMapRequest{SiteId: siteID, CnodeId: cnodeID, Ports: ports})
 }
+
 func (s *SiteController) GetPortMap(siteID string) (*pb.GetPortMapResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 	return s.client.GetPortMap(ctx, &pb.GetPortMapRequest{SiteId: siteID})
 }
+
 func (s *SiteController) ApplySwitchPolicy(siteID string) (*pb.ApplySwitchPolicyResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 	return s.client.ApplySwitchPolicy(ctx, &pb.ApplySwitchPolicyRequest{SiteId: siteID})
 }
-func (s *SiteController) PowerCycleNode(siteID, role, reason string) (*pb.PowerCycleNodeResponse, error) {
+
+func (s *SiteController) PowerCycleNode(siteID, role, reason, requestedBy string) (*pb.PowerCycleNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
-	return s.client.PowerCycleNode(ctx, &pb.PowerCycleNodeRequest{SiteId: siteID, Role: role, Reason: reason})
+	return s.client.PowerCycleNode(ctx, &pb.PowerCycleNodeRequest{SiteId: siteID, Role: role, Reason: reason, RequestedBy: requestedBy})
 }
