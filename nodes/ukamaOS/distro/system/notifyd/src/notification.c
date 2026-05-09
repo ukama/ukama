@@ -65,17 +65,10 @@ static NotifyHandler handler[MAX_SERVICE_COUNT] = {
 static ServiceHandler find_handler(const char* service, char* type) {
 
     int idx;
-
-    if (service == NULL || type == NULL) {
-        return NULL;
-    }
-
-    for (idx = 1; idx < MAX_SERVICE_COUNT; idx++) {
-        if (handler[idx].service == NULL) {
-            continue;
-        }
-
+    
+    for (idx = 1; idx <= MAX_SERVICE_COUNT ; idx++) {
         if (usys_strcmp(service, handler[idx].service) == 0) {
+
             if (usys_strcmp(type, NOTIFICATION_ALERT) == 0) {
                 return handler[idx].alertHandler;
             }
@@ -88,17 +81,16 @@ static ServiceHandler find_handler(const char* service, char* type) {
         }
     }
 
+    /* return default */
     if (usys_strcmp(type, NOTIFICATION_ALERT) == 0) {
         return handler[0].alertHandler;
-    }
-
-    if (usys_strcmp(type, NOTIFICATION_EVENT) == 0) {
+    } else if (usys_strcmp(type, NOTIFICATION_EVENT) == 0) {
         return handler[0].eventHandler;
+    } else {
+        usys_log_error("Failed to forward notification from %s to remote "
+                       "server as no agent to process the notification found "
+                       "for event type: %s", service, type);
     }
-
-    usys_log_error("No notification handler for service=%s type=%s",
-                   service,
-                   type);
 
     return NULL;
 }
@@ -193,13 +185,7 @@ static int get_code_and_severity(const Entry* entries, int numEntries,
                                  char **severity,
                                  int *code) {
 
-    int i;
-
-    if (notif == NULL ||
-        severity == NULL ||
-        code == NULL) {
-        return USYS_FALSE;
-    }
+    int found=USYS_FALSE, i;
 
     for (i = 0; i < numEntries; i++) {
         if (strcmp(notif->serviceName, entries[i].serviceName) == 0 &&
@@ -207,28 +193,14 @@ static int get_code_and_severity(const Entry* entries, int numEntries,
             strcmp(notif->propertyName, entries[i].propertyName) == 0 &&
             strcmp(type, entries[i].type) == 0) {
 
-            *code = entries[i].code;
+            *code     = entries[i].code;
             *severity = strdup(entries[i].severity);
-
-            return (*severity != NULL) ? USYS_TRUE : USYS_FALSE;
+            found     = USYS_TRUE;
+            break;
         }
     }
 
-    /*
-     * Allow switch.d alarms even if status.map has not been updated yet.
-     * The forwarded code is generic, but name/module/device/details still
-     * carry the useful structured alarm data.
-     */
-    if (strcmp(notif->serviceName, "switch.d") == 0 &&
-        strcmp(type, NOTIFICATION_ALERT) == 0) {
-
-        *code = 1;
-        *severity = strdup(notif->severity ? notif->severity : "warning");
-
-        return (*severity != NULL) ? USYS_TRUE : USYS_FALSE;
-    }
-
-    return USYS_FALSE;
+    return found;
 }
 
 static int notify_process_incoming_generic_notification(JsonObj *json, char *type,
