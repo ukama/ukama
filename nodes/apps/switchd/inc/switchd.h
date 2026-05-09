@@ -36,7 +36,7 @@
 #define DEF_SNMP_COMMUNITY           "public"
 #define DEF_TFTP_BIND_IP             "0.0.0.0"
 #define DEF_TFTP_ROOT                "/tmp/switchd-tftp"
-#define DEF_POLICY_PATH              "/ukama/configs/switch/policy.json"
+#define DEF_POLICY_PATH              "/ukama/configs/switchd/policy.json"
 #define DEF_URL_PREFIX               "/v1"
 #define DEF_DRIVER_NAME              "tycon_snmp"
 #define DEF_NOTIFY_HOST              "127.0.0.1"
