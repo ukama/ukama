@@ -40,7 +40,7 @@
 #define DEF_URL_PREFIX               "/v1"
 #define DEF_DRIVER_NAME              "tycon_snmp"
 #define DEF_NOTIFY_HOST              "127.0.0.1"
-#define DEF_NOTIFY_EP                "/notify/v1/event/"
+#define DEF_NOTIFY_EP                "/v1/alert/switch"
 
 #define ENV_SWITCHD_LOG_LEVEL              "SWITCHD_LOG_LEVEL"
 #define ENV_SWITCHD_DRIVER                 "SWITCHD_DRIVER"

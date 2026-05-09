@@ -195,9 +195,9 @@ bool json_serialize_notification(JsonObj **json, Notification* notification,
 bool json_deserialize_notification(JsonObj *json,
                                    Notification **notification) {
 
-    bool ret=USYS_TRUE;
+    bool ok;
 
-    if (json == NULL) {
+    if (json == NULL || notification == NULL) {
         usys_log_error("No data to deserialize");
         return USYS_FALSE;
     }
@@ -208,34 +208,52 @@ bool json_deserialize_notification(JsonObj *json,
                        sizeof(Notification));
         return USYS_FALSE;
     }
-    
-    ret |= get_json_entry(json, JTAG_SERVICE_NAME, JSON_STRING,
-                          &(*notification)->serviceName, NULL, NULL);
-    ret |= get_json_entry(json, JTAG_SEVERITY, JSON_STRING,
-                          &(*notification)->severity, NULL, NULL);
-    ret |= get_json_entry(json, JTAG_TIME, JSON_INTEGER,
-                          NULL, &(*notification)->epochTime, NULL);
-    ret |= get_json_entry(json, JTAG_NAME, JSON_STRING,
-                          &(*notification)->propertyName, NULL, NULL);
-    ret |= get_json_entry(json, JTAG_VALUE, JSON_STRING,
-                          &(*notification)->propertyValue, NULL, NULL);
-    ret |= get_json_entry(json, JTAG_UNITS, JSON_STRING,
-                          &(*notification)->propertyUnit, NULL, NULL);
-    ret |= get_json_entry(json, JTAG_DETAILS, JSON_STRING,
-                          &(*notification)->details, NULL, NULL);
 
-    if (ret == USYS_FALSE) {
-        usys_log_error("Error deserializing the notifiction JSON");
+    ok = USYS_TRUE;
+
+    ok = get_json_entry(json, JTAG_SERVICE_NAME, JSON_STRING,
+                        &(*notification)->serviceName, NULL, NULL) && ok;
+
+    ok = get_json_entry(json, JTAG_SEVERITY, JSON_STRING,
+                        &(*notification)->severity, NULL, NULL) && ok;
+
+    ok = get_json_entry(json, JTAG_TIME, JSON_INTEGER,
+                        NULL, &(*notification)->epochTime, NULL) && ok;
+
+    ok = get_json_entry(json, JTAG_NAME, JSON_STRING,
+                        &(*notification)->propertyName, NULL, NULL) && ok;
+
+    ok = get_json_entry(json, JTAG_VALUE, JSON_STRING,
+                        &(*notification)->propertyValue, NULL, NULL) && ok;
+
+    ok = get_json_entry(json, JTAG_UNITS, JSON_STRING,
+                        &(*notification)->propertyUnit, NULL, NULL) && ok;
+
+    ok = get_json_entry(json, JTAG_DETAILS, JSON_STRING,
+                        &(*notification)->details, NULL, NULL) && ok;
+
+    if (ok == USYS_FALSE) {
+        usys_log_error("Error deserializing the notification JSON");
         json_log(json);
         free_notification(*notification);
+        *notification = NULL;
         return USYS_FALSE;
     }
 
-    /* Module and device are optional */
     get_json_entry(json, JTAG_MODULE, JSON_STRING,
-                              &(*notification)->module, NULL, NULL);
+                   &(*notification)->module, NULL, NULL);
+
     get_json_entry(json, JTAG_DEVICE, JSON_STRING,
-                              &(*notification)->device, NULL, NULL);
+                   &(*notification)->device, NULL, NULL);
+
+    if ((*notification)->module == NULL) {
+        (*notification)->module = strdup(EMPTY_STRING);
+    }
+
+    if ((*notification)->device == NULL) {
+        (*notification)->device = strdup(EMPTY_STRING);
+    }
+
     return USYS_TRUE;
 }
 
