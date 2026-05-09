@@ -40,20 +40,6 @@ type RestartNodesRequest struct {
 	NetworkId string   `json:"network_id" example:"{{NetworkId}}" validate:"required" path:"network_id"`
 	NodeIds   []string `json:"node_ids" example:"{{NodeIds}}" validate:"required"`
 }
-type ToggleInternetSwitchRequest struct {
-	SiteId string `json:"site_id" example:"{{SiteId}}" validate:"required" path:"site_id"`
-	Status bool   `json:"status" example:"{{Status}}"`
-	Port   int32  `json:"port" example:"{{Port}}" validate:"required"`
-}
-type ToggleRfRequest struct {
-	NodeId string `json:"node_id" example:"{{NodeId}}" validate:"required" path:"node_id"`
-	State  string `json:"state" example:"on" validate:"required,oneof=on off"`
-}
-
-type ToggleNodeServiceRequest struct {
-	NodeId string `json:"node_id" example:"{{NodeId}}" validate:"required" path:"node_id"`
-	State  string `json:"state" example:"on" validate:"required,oneof=on off"`
-}
 type ApplyConfigRequest struct {
 	Commit string `json:"commit" path:"commit" example:"commit" validate:"required"`
 }
@@ -79,6 +65,7 @@ type SiteActionRequest struct {
 	SiteId      string `json:"site_id" validate:"required" path:"site_id"`
 	Reason      string `json:"reason"`
 	RequestedBy string `json:"requestedBy"`
+	State       string `json:"state" path:"state" validate:"required,oneof=on off"`
 }
 
 type SiteStateRequest struct {

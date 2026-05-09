@@ -160,12 +160,9 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 		const sites = "/sites"
 		siteS := auth.Group(sites, "Site Controller", "Operations on sites")
-		siteS.POST("/:site_id/on", formatDoc("Turn site on", "Make site customer-serving"), tonic.Handler(r.postSiteOnHandler, http.StatusOK))
-		siteS.POST("/:site_id/off", formatDoc("Turn site off", "Make site non-serving without powering nodes off"), tonic.Handler(r.postSiteOffHandler, http.StatusOK))
-		siteS.POST("/:site_id/service/on", formatDoc("Turn site service on", "Start digital cellular service"), tonic.Handler(r.postServiceOnHandler, http.StatusOK))
-		siteS.POST("/:site_id/service/off", formatDoc("Turn site service off", "Stop digital cellular service"), tonic.Handler(r.postServiceOffHandler, http.StatusOK))
-		siteS.POST("/:site_id/radio/on", formatDoc("Turn site radio on", "Enable RF chain"), tonic.Handler(r.postRadioOnHandler, http.StatusOK))
-		siteS.POST("/:site_id/radio/off", formatDoc("Turn site radio off", "Disable RF chain"), tonic.Handler(r.postRadioOffHandler, http.StatusOK))
+		siteS.POST("/:site_id/:state", formatDoc("Turn site on/off", "Make site customer-serving/non-serving"), tonic.Handler(r.toggleSiteStateHandler, http.StatusOK))
+		siteS.POST("/:site_id/service/:state", formatDoc("Turn site service on/off", "Start/Stop digital cellular service"), tonic.Handler(r.postToggleServiceHandler, http.StatusOK))
+		siteS.POST("/:site_id/radio/:state", formatDoc("Turn site radio on/off", "Enable/Disable RF chain"), tonic.Handler(r.postToggleRadioHandler, http.StatusOK))
 		siteS.GET("/:site_id/state", formatDoc("Get site state", "Get desired and derived site state"), tonic.Handler(r.getSiteStateHandler, http.StatusOK))
 		siteS.GET("/:site_id/ports", formatDoc("Get site port map", "Get static site switch port map"), tonic.Handler(r.getSitePortMapHandler, http.StatusOK))
 		siteS.PUT("/:site_id/ports", formatDoc("Update site port map", "Update static site switch port map"), tonic.Handler(r.putSitePortMapHandler, http.StatusOK))
@@ -269,17 +266,6 @@ func (r *Router) getRunningConfigVersionHandler(c *gin.Context, req *GetConfigVe
 func (r *Router) postRestartNodesHandler(c *gin.Context, req *RestartNodesRequest) (*contPb.RestartNodesResponse, error) {
 	return r.clients.Controller.RestartNodes(req.NetworkId, req.NodeIds)
 }
-func (r *Router) postToggleInternetSwitchHandler(c *gin.Context, req *ToggleInternetSwitchRequest) (*contPb.ToggleInternetSwitchResponse, error) {
-	return r.clients.Controller.ToggleInternetSwitch(req.Status, req.Port, req.SiteId)
-}
-
-func (r *Router) postToggleRfHandler(c *gin.Context, req *ToggleRfRequest) (*contPb.ToggleRfSwitchResponse, error) {
-	return r.clients.Controller.ToggleRf(req.NodeId, req.State)
-}
-
-func (r *Router) postToggleNodeServiceHandler(c *gin.Context, req *ToggleNodeServiceRequest) (*contPb.ToggleNodeServiceResponse, error) {
-	return r.clients.Controller.ToggleNodeService(req.NodeId, req.State)
-}
 
 func (r *Router) getStatesHistoryHandler(c *gin.Context, req *GetStatesHistoryRequest) (*nspb.GetStatesHistoryResponse, error) {
 	nodeId := c.Param("node_id")
@@ -302,6 +288,42 @@ func (r *Router) getStatesHistoryHandler(c *gin.Context, req *GetStatesHistoryRe
 	}
 
 	return r.clients.State.GetStatesHistory(nodeId, int32(pageSize), int32(pageNumber), startTime, endTime)
+}
+
+func (r *Router) toggleSiteStateHandler(c *gin.Context, req *SiteActionRequest) (*sitepb.SetSiteResponse, error) {
+	return r.clients.SiteController.SetSite(req.SiteId, req.State, req.Reason, req.RequestedBy)
+}
+
+func (r *Router) postToggleServiceHandler(c *gin.Context, req *SiteActionRequest) (*sitepb.SetServiceResponse, error) {
+	return r.clients.SiteController.SetService(req.SiteId, req.State, req.Reason, req.RequestedBy)
+}
+
+func (r *Router) postToggleRadioHandler(c *gin.Context, req *SiteActionRequest) (*sitepb.SetRadioResponse, error) {
+	return r.clients.SiteController.SetRadio(req.SiteId, req.State, req.Reason, req.RequestedBy)
+}
+
+func (r *Router) getSiteStateHandler(c *gin.Context, req *SiteStateRequest) (*sitepb.GetSiteStateResponse, error) {
+	return r.clients.SiteController.GetSiteState(req.SiteId)
+}
+
+func (r *Router) getSitePortMapHandler(c *gin.Context, req *SiteStateRequest) (*sitepb.GetPortMapResponse, error) {
+	return r.clients.SiteController.GetPortMap(req.SiteId)
+}
+
+func (r *Router) putSitePortMapHandler(c *gin.Context, req *SitePortMapRequest) (*sitepb.UpsertPortMapResponse, error) {
+	ports := make([]*sitepb.PortMapEntry, 0, len(req.Ports))
+	for _, p := range req.Ports {
+		ports = append(ports, &sitepb.PortMapEntry{Port: p.Port, Role: p.Role, NodeId: p.NodeId, Class: p.Class, Policy: p.Policy, CnodeId: p.CnodeId})
+	}
+	return r.clients.SiteController.UpsertPortMap(req.SiteId, req.CNodeId, ports)
+}
+
+func (r *Router) postApplySwitchPolicyHandler(c *gin.Context, req *SiteStateRequest) (*sitepb.ApplySwitchPolicyResponse, error) {
+	return r.clients.SiteController.ApplySwitchPolicy(req.SiteId)
+}
+
+func (r *Router) postPowerCycleNodeHandler(c *gin.Context, req *PowerCycleNodeRequest) (*sitepb.PowerCycleNodeResponse, error) {
+	return r.clients.SiteController.PowerCycleNode(req.SiteId, req.Role, req.Reason, req.RequestedBy)
 }
 
 func (r *Router) enforceStateTransitionHandler(c *gin.Context, req *EnforceStateTransitionRequest) (*nspb.EnforceStateTransitionResponse, error) {

@@ -1,7 +1,6 @@
 package adapters
 
 import (
-	"encoding/json"
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
@@ -43,11 +42,4 @@ func (a *NodeFeederAdapter) Send(nodeId string, method string, path string, body
 	}
 	log.Infof("site-controller: publishing node command node=%s method=%s path=%s", nodeId, method, path)
 	return a.msgbus.PublishRequest(route, msg)
-}
-
-func marshalBody(v interface{}) ([]byte, error) {
-	if v == nil {
-		return []byte(""), nil
-	}
-	return json.Marshal(v)
 }
