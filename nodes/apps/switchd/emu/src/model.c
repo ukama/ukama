@@ -104,8 +104,7 @@ void model_recompute(EmuModel *model) {
             poeAlarm = 1;
         }
 
-        if (port->faultLink ||
-            (port->adminUp && !port->linkUp && port->id <= 8)) {
+        if (port->faultLink) {
             linkAlarm = 1;
         }
 
