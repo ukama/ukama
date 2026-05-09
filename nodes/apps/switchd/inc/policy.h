@@ -12,7 +12,7 @@
 #include "switchd.h"
 
 #define SWITCHD_POLICY_SOURCE_SITE_CONTROLLER "site-controller"
-#define SWITCHD_POLICY_PATH_DEFAULT "/ukama/configs/switch/policy.json"
+#define SWITCHD_POLICY_PATH_DEFAULT           "/ukama/configs/switchd/policy.json"
 
 const char *policy_state_to_str(SwitchPolicyState state);
 const char *policy_type_to_str(SwitchPortPolicyType type);
