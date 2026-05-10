@@ -1,8 +1,6 @@
 module github.com/ukama/ukama/systems/ukama-agent/node-gateway
 
-go 1.23.0
-
-toolchain go1.24.2
+go 1.25.0
 
 replace github.com/ukama/ukama/systems/common => ../../common
 
@@ -19,8 +17,8 @@ require (
 	github.com/loopfz/gadgeto v0.11.5
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
-	github.com/ukama/ukama/systems/common v0.0.0-20250429131922-e128286343a9
-	github.com/ukama/ukama/systems/ukama-agent/asr v0.0.0-20250429122633-4c606513ba27
+	github.com/ukama/ukama/systems/common v0.0.0-20260424133213-448b64544fad
+	github.com/ukama/ukama/systems/ukama-agent/asr v0.0.0-20260428062756-185718f3c7c3
 	github.com/ukama/ukama/systems/ukama-agent/cdr v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.22.0
 	google.golang.org/grpc v1.73.0
@@ -100,7 +98,7 @@ require (
 	golang.org/x/text v0.26.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250324211829-b45e905df463 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250324211829-b45e905df463 // indirect
-	google.golang.org/protobuf v1.36.6 // indirect
+	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.6.0 // indirect
