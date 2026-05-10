@@ -9,15 +9,16 @@
 package db
 
 import (
+	"fmt"
 	"time"
 
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
 
 type Health struct {
-	Id        uuid.UUID  `gorm:"primaryKey;type:uuid"`
-	NodeId    string     `gorm:"not null"`
-	TimeStamp string     
+	Id        uuid.UUID `gorm:"primaryKey;type:uuid"`
+	NodeId    string    `gorm:"not null"`
+	TimeStamp string
 	System    []System   `gorm:"foreignKey:HealthID"`
 	Capps     []Capp     `gorm:"foreignKey:HealthID"`
 	CreatedAt time.Time  `gorm:"not null"`
@@ -32,12 +33,12 @@ type System struct {
 }
 
 type Capp struct {
-	Id        uuid.UUID  `gorm:"primaryKey;type:uuid"`
-	HealthID  uuid.UUID  `gorm:"type:uuid"`
-	Space    string     
-	Name      string     
-	Tag       string     
-	Status    Status `gorm:"type:uint;not null;default:3"`
+	Id        uuid.UUID `gorm:"primaryKey;type:uuid"`
+	HealthID  uuid.UUID `gorm:"type:uuid"`
+	Space     string
+	Name      string
+	Tag       string
+	Status    Status     `gorm:"type:uint;not null;default:3"`
 	Resources []Resource `gorm:"foreignKey:CappID"`
 }
 
@@ -58,8 +59,37 @@ const (
 )
 
 func (e *Status) Scan(value interface{}) error {
-	*e = Status(uint8(value.(int64)))
+	if value == nil {
+		*e = Unknown
+		return nil
+	}
 
+	switch v := value.(type) {
+	case int64:
+		*e = Status(uint8(v))
+	case int32:
+		*e = Status(uint8(v))
+	case int:
+		*e = Status(uint8(v))
+	case uint8:
+		*e = Status(v)
+	case uint16:
+		*e = Status(uint8(v))
+	case uint32:
+		*e = Status(uint8(v))
+	case []byte:
+		if len(v) == 0 {
+			*e = Unknown
+			return nil
+		}
+		*e = Status(v[0])
+	default:
+		return fmt.Errorf("unsupported status type %T", value)
+	}
+
+	if *e > Unknown {
+		*e = Unknown
+	}
 	return nil
 }
 

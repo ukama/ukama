@@ -15,6 +15,7 @@ import (
 )
 
 type HealthRepo interface {
+	ListApps(nodeId string, name string) ([]*Capp, error)
 	StoreRunningAppsInfo(health *Health, nestedFunc func(string, string) error) error
 	List(id string, nodeId string, timestamp string, timeframe ukama.FilterTimeframesType) ([]*Health, error)
 }
@@ -26,6 +27,19 @@ func NewHealthRepo(db sql.Db) HealthRepo {
 	return &healthRepo{
 		Db: db,
 	}
+}
+
+func (r *healthRepo) ListApps(nodeId string, name string) ([]*Capp, error) {
+	query := r.Db.GetGormDb().Model(&Capp{})
+	if nodeId != "" {
+		query = query.Joins("JOIN healths ON healths.id = capps.health_id").Where("healths.node_id = ?", nodeId)
+	}
+	if name != "" {
+		query = query.Where("capps.name = ?", name)
+	}
+	var capps []*Capp
+	result := query.Find(&capps)
+	return capps, result.Error
 }
 
 func (r *healthRepo) List(id string, nodeId string, timestamp string, timeframe ukama.FilterTimeframesType) ([]*Health, error) {

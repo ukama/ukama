@@ -19,6 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	HealhtService_ListApps_FullMethodName             = "/ukama.node.health.v1.healhtService/ListApps"
 	HealhtService_List_FullMethodName                 = "/ukama.node.health.v1.healhtService/List"
 	HealhtService_StoreRunningAppsInfo_FullMethodName = "/ukama.node.health.v1.healhtService/StoreRunningAppsInfo"
 )
@@ -27,6 +28,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type HealhtServiceClient interface {
+	ListApps(ctx context.Context, in *ListAppsRequest, opts ...grpc.CallOption) (*ListAppsResponse, error)
 	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
 	StoreRunningAppsInfo(ctx context.Context, in *StoreRunningAppsInfoRequest, opts ...grpc.CallOption) (*StoreRunningAppsInfoResponse, error)
 }
@@ -37,6 +39,16 @@ type healhtServiceClient struct {
 
 func NewHealhtServiceClient(cc grpc.ClientConnInterface) HealhtServiceClient {
 	return &healhtServiceClient{cc}
+}
+
+func (c *healhtServiceClient) ListApps(ctx context.Context, in *ListAppsRequest, opts ...grpc.CallOption) (*ListAppsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListAppsResponse)
+	err := c.cc.Invoke(ctx, HealhtService_ListApps_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *healhtServiceClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error) {
@@ -63,6 +75,7 @@ func (c *healhtServiceClient) StoreRunningAppsInfo(ctx context.Context, in *Stor
 // All implementations must embed UnimplementedHealhtServiceServer
 // for forward compatibility.
 type HealhtServiceServer interface {
+	ListApps(context.Context, *ListAppsRequest) (*ListAppsResponse, error)
 	List(context.Context, *ListRequest) (*ListResponse, error)
 	StoreRunningAppsInfo(context.Context, *StoreRunningAppsInfoRequest) (*StoreRunningAppsInfoResponse, error)
 	mustEmbedUnimplementedHealhtServiceServer()
@@ -75,6 +88,9 @@ type HealhtServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedHealhtServiceServer struct{}
 
+func (UnimplementedHealhtServiceServer) ListApps(context.Context, *ListAppsRequest) (*ListAppsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListApps not implemented")
+}
 func (UnimplementedHealhtServiceServer) List(context.Context, *ListRequest) (*ListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
 }
@@ -100,6 +116,24 @@ func RegisterHealhtServiceServer(s grpc.ServiceRegistrar, srv HealhtServiceServe
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&HealhtService_ServiceDesc, srv)
+}
+
+func _HealhtService_ListApps_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAppsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HealhtServiceServer).ListApps(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HealhtService_ListApps_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HealhtServiceServer).ListApps(ctx, req.(*ListAppsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _HealhtService_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -145,6 +179,10 @@ var HealhtService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "ukama.node.health.v1.healhtService",
 	HandlerType: (*HealhtServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ListApps",
+			Handler:    _HealhtService_ListApps_Handler,
+		},
 		{
 			MethodName: "List",
 			Handler:    _HealhtService_List_Handler,

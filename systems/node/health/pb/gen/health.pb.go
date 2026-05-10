@@ -77,6 +77,102 @@ func (Status) EnumDescriptor() ([]byte, []int) {
 	return file_health_proto_rawDescGZIP(), []int{0}
 }
 
+type ListAppsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	NodeId        string                 `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAppsRequest) Reset() {
+	*x = ListAppsRequest{}
+	mi := &file_health_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAppsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAppsRequest) ProtoMessage() {}
+
+func (x *ListAppsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_health_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAppsRequest.ProtoReflect.Descriptor instead.
+func (*ListAppsRequest) Descriptor() ([]byte, []int) {
+	return file_health_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *ListAppsRequest) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *ListAppsRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type ListAppsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Capps         []*Capps               `protobuf:"bytes,1,rep,name=capps,proto3" json:"capps,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAppsResponse) Reset() {
+	*x = ListAppsResponse{}
+	mi := &file_health_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAppsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAppsResponse) ProtoMessage() {}
+
+func (x *ListAppsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_health_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAppsResponse.ProtoReflect.Descriptor instead.
+func (*ListAppsResponse) Descriptor() ([]byte, []int) {
+	return file_health_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ListAppsResponse) GetCapps() []*Capps {
+	if x != nil {
+		return x.Capps
+	}
+	return nil
+}
+
 type ListRequest struct {
 	state         protoimpl.MessageState     `protogen:"open.v1"`
 	Id            string                     `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -89,7 +185,7 @@ type ListRequest struct {
 
 func (x *ListRequest) Reset() {
 	*x = ListRequest{}
-	mi := &file_health_proto_msgTypes[0]
+	mi := &file_health_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -101,7 +197,7 @@ func (x *ListRequest) String() string {
 func (*ListRequest) ProtoMessage() {}
 
 func (x *ListRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[0]
+	mi := &file_health_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -114,7 +210,7 @@ func (x *ListRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRequest.ProtoReflect.Descriptor instead.
 func (*ListRequest) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{0}
+	return file_health_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ListRequest) GetId() string {
@@ -154,7 +250,7 @@ type ListResponse struct {
 
 func (x *ListResponse) Reset() {
 	*x = ListResponse{}
-	mi := &file_health_proto_msgTypes[1]
+	mi := &file_health_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -166,7 +262,7 @@ func (x *ListResponse) String() string {
 func (*ListResponse) ProtoMessage() {}
 
 func (x *ListResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[1]
+	mi := &file_health_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -179,7 +275,7 @@ func (x *ListResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListResponse.ProtoReflect.Descriptor instead.
 func (*ListResponse) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{1}
+	return file_health_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ListResponse) GetHealths() []*Health {
@@ -201,7 +297,7 @@ type StoreRunningAppsInfoRequest struct {
 
 func (x *StoreRunningAppsInfoRequest) Reset() {
 	*x = StoreRunningAppsInfoRequest{}
-	mi := &file_health_proto_msgTypes[2]
+	mi := &file_health_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -213,7 +309,7 @@ func (x *StoreRunningAppsInfoRequest) String() string {
 func (*StoreRunningAppsInfoRequest) ProtoMessage() {}
 
 func (x *StoreRunningAppsInfoRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[2]
+	mi := &file_health_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -226,7 +322,7 @@ func (x *StoreRunningAppsInfoRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StoreRunningAppsInfoRequest.ProtoReflect.Descriptor instead.
 func (*StoreRunningAppsInfoRequest) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{2}
+	return file_health_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *StoreRunningAppsInfoRequest) GetNodeId() string {
@@ -265,7 +361,7 @@ type StoreRunningAppsInfoResponse struct {
 
 func (x *StoreRunningAppsInfoResponse) Reset() {
 	*x = StoreRunningAppsInfoResponse{}
-	mi := &file_health_proto_msgTypes[3]
+	mi := &file_health_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -277,7 +373,7 @@ func (x *StoreRunningAppsInfoResponse) String() string {
 func (*StoreRunningAppsInfoResponse) ProtoMessage() {}
 
 func (x *StoreRunningAppsInfoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[3]
+	mi := &file_health_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -290,7 +386,7 @@ func (x *StoreRunningAppsInfoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StoreRunningAppsInfoResponse.ProtoReflect.Descriptor instead.
 func (*StoreRunningAppsInfoResponse) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{3}
+	return file_health_proto_rawDescGZIP(), []int{5}
 }
 
 type Health struct {
@@ -306,7 +402,7 @@ type Health struct {
 
 func (x *Health) Reset() {
 	*x = Health{}
-	mi := &file_health_proto_msgTypes[4]
+	mi := &file_health_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -318,7 +414,7 @@ func (x *Health) String() string {
 func (*Health) ProtoMessage() {}
 
 func (x *Health) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[4]
+	mi := &file_health_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -331,7 +427,7 @@ func (x *Health) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Health.ProtoReflect.Descriptor instead.
 func (*Health) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{4}
+	return file_health_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Health) GetId() string {
@@ -383,7 +479,7 @@ type Capps struct {
 
 func (x *Capps) Reset() {
 	*x = Capps{}
-	mi := &file_health_proto_msgTypes[5]
+	mi := &file_health_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -395,7 +491,7 @@ func (x *Capps) String() string {
 func (*Capps) ProtoMessage() {}
 
 func (x *Capps) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[5]
+	mi := &file_health_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -408,7 +504,7 @@ func (x *Capps) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Capps.ProtoReflect.Descriptor instead.
 func (*Capps) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{5}
+	return file_health_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *Capps) GetId() string {
@@ -465,7 +561,7 @@ type System struct {
 
 func (x *System) Reset() {
 	*x = System{}
-	mi := &file_health_proto_msgTypes[6]
+	mi := &file_health_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -477,7 +573,7 @@ func (x *System) String() string {
 func (*System) ProtoMessage() {}
 
 func (x *System) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[6]
+	mi := &file_health_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -490,7 +586,7 @@ func (x *System) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use System.ProtoReflect.Descriptor instead.
 func (*System) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{6}
+	return file_health_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *System) GetId() string {
@@ -533,7 +629,7 @@ type Resource struct {
 
 func (x *Resource) Reset() {
 	*x = Resource{}
-	mi := &file_health_proto_msgTypes[7]
+	mi := &file_health_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -545,7 +641,7 @@ func (x *Resource) String() string {
 func (*Resource) ProtoMessage() {}
 
 func (x *Resource) ProtoReflect() protoreflect.Message {
-	mi := &file_health_proto_msgTypes[7]
+	mi := &file_health_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -558,7 +654,7 @@ func (x *Resource) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Resource.ProtoReflect.Descriptor instead.
 func (*Resource) Descriptor() ([]byte, []int) {
-	return file_health_proto_rawDescGZIP(), []int{7}
+	return file_health_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *Resource) GetId() string {
@@ -593,7 +689,12 @@ var File_health_proto protoreflect.FileDescriptor
 
 const file_health_proto_rawDesc = "" +
 	"\n" +
-	"\fhealth.proto\x12\x14ukama.node.health.v1\x1a\x0fvalidator.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x1dukama/filter_timeframes.proto\"\x98\x01\n" +
+	"\fhealth.proto\x12\x14ukama.node.health.v1\x1a\x0fvalidator.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x1dukama/filter_timeframes.proto\"=\n" +
+	"\x0fListAppsRequest\x12\x16\n" +
+	"\x06nodeId\x18\x01 \x01(\tR\x06nodeId\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"E\n" +
+	"\x10ListAppsResponse\x121\n" +
+	"\x05capps\x18\x01 \x03(\v2\x1b.ukama.node.health.v1.CappsR\x05capps\"\x98\x01\n" +
 	"\vListRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06nodeId\x18\x02 \x01(\tR\x06nodeId\x12\x1c\n" +
@@ -635,8 +736,9 @@ const file_health_proto_rawDesc = "" +
 	"\n" +
 	"\x06ACTIVE\x10\x01\x12\b\n" +
 	"\x04DONE\x10\x02\x12\v\n" +
-	"\aUNKNOWN\x10\x032\xdd\x01\n" +
-	"\rhealhtService\x12M\n" +
+	"\aUNKNOWN\x10\x032\xb8\x02\n" +
+	"\rhealhtService\x12Y\n" +
+	"\bListApps\x12%.ukama.node.health.v1.ListAppsRequest\x1a&.ukama.node.health.v1.ListAppsResponse\x12M\n" +
 	"\x04List\x12!.ukama.node.health.v1.ListRequest\x1a\".ukama.node.health.v1.ListResponse\x12}\n" +
 	"\x14StoreRunningAppsInfo\x121.ukama.node.health.v1.StoreRunningAppsInfoRequest\x1a2.ukama.node.health.v1.StoreRunningAppsInfoResponseB3Z1github.com/ukama/ukama/systems/node/health/pb/genb\x06proto3"
 
@@ -653,37 +755,42 @@ func file_health_proto_rawDescGZIP() []byte {
 }
 
 var file_health_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_health_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_health_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_health_proto_goTypes = []any{
 	(Status)(0),                          // 0: ukama.node.health.v1.Status
-	(*ListRequest)(nil),                  // 1: ukama.node.health.v1.ListRequest
-	(*ListResponse)(nil),                 // 2: ukama.node.health.v1.ListResponse
-	(*StoreRunningAppsInfoRequest)(nil),  // 3: ukama.node.health.v1.StoreRunningAppsInfoRequest
-	(*StoreRunningAppsInfoResponse)(nil), // 4: ukama.node.health.v1.StoreRunningAppsInfoResponse
-	(*Health)(nil),                       // 5: ukama.node.health.v1.Health
-	(*Capps)(nil),                        // 6: ukama.node.health.v1.Capps
-	(*System)(nil),                       // 7: ukama.node.health.v1.System
-	(*Resource)(nil),                     // 8: ukama.node.health.v1.Resource
-	(ukama.FilterTimeframesType)(0),      // 9: ukama.common.v1.FilterTimeframesType
+	(*ListAppsRequest)(nil),              // 1: ukama.node.health.v1.ListAppsRequest
+	(*ListAppsResponse)(nil),             // 2: ukama.node.health.v1.ListAppsResponse
+	(*ListRequest)(nil),                  // 3: ukama.node.health.v1.ListRequest
+	(*ListResponse)(nil),                 // 4: ukama.node.health.v1.ListResponse
+	(*StoreRunningAppsInfoRequest)(nil),  // 5: ukama.node.health.v1.StoreRunningAppsInfoRequest
+	(*StoreRunningAppsInfoResponse)(nil), // 6: ukama.node.health.v1.StoreRunningAppsInfoResponse
+	(*Health)(nil),                       // 7: ukama.node.health.v1.Health
+	(*Capps)(nil),                        // 8: ukama.node.health.v1.Capps
+	(*System)(nil),                       // 9: ukama.node.health.v1.System
+	(*Resource)(nil),                     // 10: ukama.node.health.v1.Resource
+	(ukama.FilterTimeframesType)(0),      // 11: ukama.common.v1.FilterTimeframesType
 }
 var file_health_proto_depIdxs = []int32{
-	9,  // 0: ukama.node.health.v1.ListRequest.timeframe:type_name -> ukama.common.v1.FilterTimeframesType
-	5,  // 1: ukama.node.health.v1.ListResponse.healths:type_name -> ukama.node.health.v1.Health
-	7,  // 2: ukama.node.health.v1.StoreRunningAppsInfoRequest.system:type_name -> ukama.node.health.v1.System
-	6,  // 3: ukama.node.health.v1.StoreRunningAppsInfoRequest.capps:type_name -> ukama.node.health.v1.Capps
-	7,  // 4: ukama.node.health.v1.Health.system:type_name -> ukama.node.health.v1.System
-	6,  // 5: ukama.node.health.v1.Health.capps:type_name -> ukama.node.health.v1.Capps
-	0,  // 6: ukama.node.health.v1.Capps.status:type_name -> ukama.node.health.v1.Status
-	8,  // 7: ukama.node.health.v1.Capps.resources:type_name -> ukama.node.health.v1.Resource
-	1,  // 8: ukama.node.health.v1.healhtService.List:input_type -> ukama.node.health.v1.ListRequest
-	3,  // 9: ukama.node.health.v1.healhtService.StoreRunningAppsInfo:input_type -> ukama.node.health.v1.StoreRunningAppsInfoRequest
-	2,  // 10: ukama.node.health.v1.healhtService.List:output_type -> ukama.node.health.v1.ListResponse
-	4,  // 11: ukama.node.health.v1.healhtService.StoreRunningAppsInfo:output_type -> ukama.node.health.v1.StoreRunningAppsInfoResponse
-	10, // [10:12] is the sub-list for method output_type
-	8,  // [8:10] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	8,  // 0: ukama.node.health.v1.ListAppsResponse.capps:type_name -> ukama.node.health.v1.Capps
+	11, // 1: ukama.node.health.v1.ListRequest.timeframe:type_name -> ukama.common.v1.FilterTimeframesType
+	7,  // 2: ukama.node.health.v1.ListResponse.healths:type_name -> ukama.node.health.v1.Health
+	9,  // 3: ukama.node.health.v1.StoreRunningAppsInfoRequest.system:type_name -> ukama.node.health.v1.System
+	8,  // 4: ukama.node.health.v1.StoreRunningAppsInfoRequest.capps:type_name -> ukama.node.health.v1.Capps
+	9,  // 5: ukama.node.health.v1.Health.system:type_name -> ukama.node.health.v1.System
+	8,  // 6: ukama.node.health.v1.Health.capps:type_name -> ukama.node.health.v1.Capps
+	0,  // 7: ukama.node.health.v1.Capps.status:type_name -> ukama.node.health.v1.Status
+	10, // 8: ukama.node.health.v1.Capps.resources:type_name -> ukama.node.health.v1.Resource
+	1,  // 9: ukama.node.health.v1.healhtService.ListApps:input_type -> ukama.node.health.v1.ListAppsRequest
+	3,  // 10: ukama.node.health.v1.healhtService.List:input_type -> ukama.node.health.v1.ListRequest
+	5,  // 11: ukama.node.health.v1.healhtService.StoreRunningAppsInfo:input_type -> ukama.node.health.v1.StoreRunningAppsInfoRequest
+	2,  // 12: ukama.node.health.v1.healhtService.ListApps:output_type -> ukama.node.health.v1.ListAppsResponse
+	4,  // 13: ukama.node.health.v1.healhtService.List:output_type -> ukama.node.health.v1.ListResponse
+	6,  // 14: ukama.node.health.v1.healhtService.StoreRunningAppsInfo:output_type -> ukama.node.health.v1.StoreRunningAppsInfoResponse
+	12, // [12:15] is the sub-list for method output_type
+	9,  // [9:12] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_health_proto_init() }
@@ -697,7 +804,7 @@ func file_health_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_health_proto_rawDesc), len(file_health_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   8,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
