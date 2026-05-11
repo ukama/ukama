@@ -1,88 +1,423 @@
 {
-  "nodeID": "emu-cnode",
-  "timestamp": "1715274302",
-  "capps": [
+  "schemaVersion": "1.0",
+  "nodeId": "...",
+  "nodeType": "tower | amplifier | control | unknown",
+  "reportedAt": "...",
+  "capabilities": [],
+  "system": {},
+  "interfaces": {},
+  "apps": [],
+  "events": []
+}
+
+=== Capability mapping ===
+{
+  "tower": [
+    "power",
+    "cellular",
+    "radio",
+    "gps",
+    "backhaul"
+  ],
+  "amplifier": [
+    "power",
+    "radio",
+    "fem"
+  ],
+  "control": [
+    "power",
+    "switch",
+    "controller",
+    "backhaul"
+  ]
+}    
+    
+=== Generic ====
+{
+  "schemaVersion": "1.0",
+  "nodeId": "node-abc",
+  "nodeType": "tower",
+  "reportedAt": "2026-05-10T18:30:00Z",
+
+  "capabilities": [
+    "power",
+    "radio"
+  ],
+
+  "system": {
+    "uptimeSec": 86400,
+    "starter": {
+      "available": true,
+      "state": "ready",
+      "updateInProgress": false,
+      "switchRequested": false,
+      "terminateRequested": false,
+      "exitCode": 0
+    },
+    "power": {
+      "available": true,
+      "ok": true,
+      "board": "tower",
+      "reason": "",
+      "totalWatts": 42.5,
+      "temperatureC": 44.2
+    }
+  },
+
+  "interfaces": {},
+
+  "apps": [
+    {
+      "space": "services",
+      "name": "deviced",
+      "tag": "latest",
+      "version": "latest",
+      "state": "running",
+      "pid": 1234,
+      "resources": {
+        "cpuPercent": 3.2,
+        "memoryRssKb": 18432,
+        "diskReadBytes": 0,
+        "diskWriteBytes": 204800
+      }
+    }
+  ],
+
+  "events": []
+}
+
+=== Tower node ===
+{
+  "schemaVersion": "1.0",
+  "nodeId": "tnode-abc",
+  "nodeType": "tower",
+  "reportedAt": "2026-05-10T18:30:00Z",
+
+  "capabilities": [
+    "power",
+    "cellular",
+    "radio",
+    "gps",
+    "backhaul"
+  ],
+
+  "system": {
+    "uptimeSec": 86400,
+    "starter": {
+      "available": true,
+      "state": "ready",
+      "updateInProgress": false,
+      "switchRequested": false,
+      "terminateRequested": false,
+      "exitCode": 0
+    },
+    "power": {
+      "available": true,
+      "ok": true,
+      "board": "tower",
+      "reason": "",
+      "totalWatts": 42.5,
+      "temperatureC": 44.2
+    }
+  },
+
+  "interfaces": {
+    "cellular": {
+      "available": false,
+      "error": "cellular_status_not_supported"
+    },
+    "radio": {
+      "available": true,
+      "state": "on"
+    },
+    "gps": {
+      "available": true,
+      "lock": true,
+      "coordinates": "-114.0719,51.0447",
+      "time": "2026-05-10T18:29:55Z"
+    },
+    "backhaul": {
+      "available": true,
+      "state": "GOOD",
+      "linkGuess": "TERRESTRIAL_LIKE",
+      "confidence": 0.92
+    }
+  },
+
+  "apps": [
+    {
+      "space": "services",
+      "name": "deviced",
+      "tag": "latest",
+      "version": "latest",
+      "state": "running",
+      "pid": 1234,
+      "resources": {
+        "cpuPercent": 3.2,
+        "memoryRssKb": 18432,
+        "diskReadBytes": 0,
+        "diskWriteBytes": 204800
+      }
+    },
+    {
+      "space": "services",
+      "name": "gpsd",
+      "tag": "latest",
+      "version": "latest",
+      "state": "running",
+      "pid": 1235,
+      "resources": {
+        "cpuPercent": 1.1,
+        "memoryRssKb": 9200,
+        "diskReadBytes": 0,
+        "diskWriteBytes": 35000
+      }
+    }
+  ],
+
+  "events": []
+}
+
+=== Amplifier node ===
+{
+  "schemaVersion": "1.0",
+  "nodeId": "anode-abc",
+  "nodeType": "amplifier",
+  "reportedAt": "2026-05-10T18:30:00Z",
+
+  "capabilities": [
+    "power",
+    "radio",
+    "fem"
+  ],
+
+  "system": {
+    "uptimeSec": 86400,
+    "starter": {
+      "available": true,
+      "state": "ready",
+      "updateInProgress": false,
+      "switchRequested": false,
+      "terminateRequested": false,
+      "exitCode": 0
+    },
+    "power": {
+      "available": true,
+      "ok": true,
+      "board": "amplifier",
+      "reason": "",
+      "totalWatts": 61.8,
+      "temperatureC": 48.6
+    }
+  },
+
+  "interfaces": {
+    "radio": {
+      "available": true,
+      "state": "on"
+    },
+    "fem": {
+      "available": true,
+      "fems": [
+        {
+          "unit": 1,
+          "present": true,
+          "gpio": {
+            "txRfEnable": true,
+            "rxRfEnable": true,
+            "paVdsEnable": true,
+            "rfPalEnable": true,
+            "vds28vEnable": true,
+            "psuPgood": true
+          }
+        },
+        {
+          "unit": 2,
+          "present": true,
+          "gpio": {
+            "txRfEnable": true,
+            "rxRfEnable": true,
+            "paVdsEnable": true,
+            "rfPalEnable": true,
+            "vds28vEnable": true,
+            "psuPgood": true
+          }
+        }
+      ]
+    }
+  },
+
+  "apps": [
+    {
+      "space": "services",
+      "name": "femd",
+      "tag": "latest",
+      "version": "latest",
+      "state": "running",
+      "pid": 1236,
+      "resources": {
+        "cpuPercent": 1.4,
+        "memoryRssKb": 9800,
+        "diskReadBytes": 0,
+        "diskWriteBytes": 68000
+      }
+    }
+  ],
+
+  "events": []
+}
+
+=== Controller Node ===
+{
+  "schemaVersion": "1.0",
+  "nodeId": "cnode-abc",
+  "nodeType": "control",
+  "reportedAt": "2026-05-10T18:30:00Z",
+
+  "capabilities": [
+    "power",
+    "switch",
+    "controller",
+    "backhaul"
+  ],
+
+  "system": {
+    "uptimeSec": 86400,
+    "starter": {
+      "available": true,
+      "state": "ready",
+      "updateInProgress": false,
+      "switchRequested": false,
+      "terminateRequested": false,
+      "exitCode": 0
+    },
+    "power": {
+      "available": true,
+      "ok": true,
+      "board": "control",
+      "reason": "",
+      "totalWatts": 18.2,
+      "temperatureC": 41.0
+    }
+  },
+
+  "interfaces": {
+    "switch": {
+      "available": true,
+      "reachable": true,
+      "state": "ready",
+      "model": "Tycon TP-SW8GAT/BT",
+      "softwareVersion": "SW-1.0.0",
+      "portCount": 9,
+      "policy": {
+        "state": "loaded",
+        "hash": "abc123",
+        "source": "backend",
+        "error": ""
+      },
+      "ports": [
+        {
+          "id": 1,
+          "name": "port1",
+          "present": true,
+          "adminState": "up",
+          "linkState": "up",
+          "poeState": "on",
+          "poeOperational": true,
+          "speedBps": 1000000000,
+          "powerWatts": 12.5,
+          "fault": ""
+        },
+        {
+          "id": 2,
+          "name": "port2",
+          "present": true,
+          "adminState": "up",
+          "linkState": "up",
+          "poeState": "on",
+          "poeOperational": true,
+          "speedBps": 1000000000,
+          "powerWatts": 18.2,
+          "fault": ""
+        }
+      ]
+    },
+
+    "controller": {
+      "available": true,
+      "commOk": true,
+      "chargeState": "bulk",
+      "errorCode": 0,
+      "error": "",
+      "activeAlarmCount": 0,
+      "solar": {
+        "voltageV": 37.4,
+        "currentA": 4.8,
+        "powerW": 179.5
+      },
+      "battery": {
+        "voltageV": 25.6,
+        "currentA": 2.1,
+        "socPct": 82
+      },
+      "load": {
+        "outputOn": true,
+        "currentA": 3.8
+      }
+    },
+
+    "backhaul": {
+      "available": true,
+      "state": "GOOD",
+      "linkGuess": "TERRESTRIAL_LIKE",
+      "confidence": 0.92
+    }
+  },
+
+  "apps": [
     {
       "space": "services",
       "name": "switchd",
       "tag": "latest",
-      "status": "Active",
-      "resources": [
-        {
-          "name": "memory",
-          "value": "13000 bytes"
-        },
-        {
-          "name": "disk",
-          "value": "6000 bytes"
-        },
-        {
-          "name": "cpu",
-          "value": "0.10 %"
-        }
-      ]
+      "version": "latest",
+      "state": "running",
+      "pid": 1234,
+      "resources": {
+        "cpuPercent": 2.0,
+        "memoryRssKb": 15200,
+        "diskReadBytes": 0,
+        "diskWriteBytes": 99000
+      }
     },
     {
       "space": "services",
       "name": "controllerd",
       "tag": "latest",
-      "status": "Active",
-      "resources": [
-        {
-          "name": "memory",
-          "value": "12500 bytes"
-        },
-        {
-          "name": "disk",
-          "value": "5500 bytes"
-        },
-        {
-          "name": "cpu",
-          "value": "0.08 %"
-        }
-      ]
+      "version": "latest",
+      "state": "running",
+      "pid": 1237,
+      "resources": {
+        "cpuPercent": 1.7,
+        "memoryRssKb": 13400,
+        "diskReadBytes": 0,
+        "diskWriteBytes": 87000
+      }
+    },
+    {
+      "space": "services",
+      "name": "backhauld",
+      "tag": "latest",
+      "version": "latest",
+      "state": "running",
+      "pid": 1238,
+      "resources": {
+        "cpuPercent": 0.9,
+        "memoryRssKb": 11200,
+        "diskReadBytes": 0,
+        "diskWriteBytes": 42000
+      }
     }
   ],
-  "system": [
-    {
-      "name": "radio",
-      "value": "not-available"
-    },
-    {
-      "name": "coordinates",
-      "value": "-999.000000,-999.000000"
-    },
-    {
-      "name": "gpsLock",
-      "value": "not-available"
-    },
-    {
-      "name": "gpsTime",
-      "value": "not-available"
-    },
-    {
-      "name": "switch",
-      "value": "available"
-    },
-    {
-      "name": "switchPolicySiteID",
-      "value": "emu-site"
-    },
-    {
-      "name": "switchPolicy",
-      "value": "loaded"
-    },
-    {
-      "name": "switchPolicyHash",
-      "value": "fnv64:6a1b2c3d4e5f6789"
-    },
-    {
-      "name": "switchPolicySource",
-      "value": "local-file"
-    },
-    {
-      "name": "switchPolicyError",
-      "value": ""
-    }
-  ]
+
+  "events": []
 }

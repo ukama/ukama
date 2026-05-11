@@ -146,9 +146,7 @@ int callback_forward_service(const URequest *request,
                                         HttpStatus_BadRequest,
                                         HttpStatusStr(HttpStatus_BadRequest));
         return U_CALLBACK_CONTINUE;
-    } else {
-        usys_log_debug("Forward request JSON: %s", requestStr);
-    }
+    } 
 
     map = add_map_to_table(&ClientTable, service, sourcePort, idStr);
     if (map == NULL) {

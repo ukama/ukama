@@ -12,7 +12,6 @@
 #include "usys_log.h"
 
 #include "work.h"
-
 #include "static.h"
 
 void init_work_list(WorkList **list) {
@@ -100,7 +99,6 @@ int add_work_to_queue(WorkList **list, char *data, thread_func_t pre,
 
 	/* Unlock */
 	pthread_mutex_unlock(&((*list)->mutex));
-    usys_log_debug("Work added on the queue. Len: %d Data: %s", strlen(data), data);
 
 	return TRUE;
 }
