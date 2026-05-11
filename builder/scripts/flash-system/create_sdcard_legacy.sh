@@ -18,7 +18,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MOUNT_POINTS=()
 
 cleanup() {
-    for mnt in "${MOUNT_POINTS[@]}"; do
+    for mnt in "${MOUNT_POINTS[@]:-}"; do
+        [ -z "$mnt" ] && continue
         if mountpoint -q "$mnt" 2>/dev/null; then
             sudo umount "$mnt" 2>/dev/null || true
         fi
@@ -57,12 +58,26 @@ verify_device() {
 }
 
 verify_tarballs() {
-    for t in "$BOOT_TARBALL" "$ROOTFSA_TARBALL" "$ROOTFSB_TARBALL"; do
-        if [ ! -f "$t" ]; then
-            log "ERROR: missing tarball $t"
-            exit 1
-        fi
-    done
+    local validate_lib="${SCRIPT_DIR}/lib/validate.sh"
+    if [ ! -f "$validate_lib" ]; then
+        log "ERROR: missing helper $validate_lib"
+        exit 1
+    fi
+    source "$validate_lib"
+
+    log "Validating tarballs (no disk writes yet)..."
+    local fail=0
+    validate_tarball "$BOOT_TARBALL"    "boot"    "u-boot.bin"      3    || fail=1
+    validate_tarball "$ROOTFSA_TARBALL" "rootfsA" "bin,lib,etc,usr" 1000 || fail=1
+    validate_tarball "$ROOTFSB_TARBALL" "rootfsB" "bin,lib,etc,usr" 1000 || fail=1
+
+    if [ "$fail" -ne 0 ]; then
+        log "ERROR: tarball validation failed — SD card NOT modified."
+        log "Fix the tarballs above and re-run. They must be created with:"
+        log "  cd <mounted_partition_dir> && sudo tar czf out.tgz ."
+        exit 1
+    fi
+    log "Tarballs OK."
 }
 
 unmount_existing_partitions() {

@@ -1,0 +1,39 @@
+#!/bin/bash
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2025-present, Ukama Inc.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ORCHESTRATOR="${SCRIPT_DIR}/orchestrate_board_flash.sh"
+CONFIG="${SCRIPT_DIR}/boards.yaml"
+
+usage() {
+    local boards=""
+    if [ -f "$CONFIG" ]; then
+        boards=$(awk '/^  [a-z][a-z0-9_-]*:$/{gsub(":",""); printf "%s ", $1}' "$CONFIG")
+    fi
+    echo "Usage: $0 <board>"
+    echo "Available boards: ${boards:-unknown}"
+    exit 1
+}
+
+if [ $# -lt 1 ]; then
+    usage
+fi
+
+BOARD="$1"
+
+if [ ! -x "$ORCHESTRATOR" ]; then
+    echo "ERROR: missing orchestrator at $ORCHESTRATOR" >&2
+    exit 1
+fi
+
+if [ "$(id -u)" -ne 0 ]; then
+    exec sudo "$ORCHESTRATOR" -b "$BOARD"
+fi
+
+exec "$ORCHESTRATOR" -b "$BOARD"
