@@ -309,61 +309,140 @@ static int get_capps_from_supervisord(Config *config, CappList **cappList) {
     return STATUS_OK;
 }
 
-static int get_capps_from_starterd(Config *config, CappList **cappList) {
+static int wc_find_service_port3(const char *a,
+                                 const char *b,
+                                 const char *c) {
+
+    int port = 0;
+
+    if (a) {
+        port = usys_find_service_port((char *)a);
+        if (port > 0) return port;
+    }
+
+    if (b) {
+        port = usys_find_service_port((char *)b);
+        if (port > 0) return port;
+    }
+
+    if (c) {
+        port = usys_find_service_port((char *)c);
+        if (port > 0) return port;
+    }
+
+    return 0;
+}
+
+static int wc_get_json_from_service(int port,
+                                    const char *path,
+                                    JsonObj **out) {
+
+    int ret = STATUS_NOK;
+    long status = 0;
+
+    char url[MAX_BUFFER] = {0};
+    char *body = NULL;
+
+    JsonErrObj jErr;
+
+    if (out == NULL || port <= 0 || path == NULL) {
+        return STATUS_NOK;
+    }
+
+    *out = NULL;
+
+    snprintf(url, sizeof(url), "http://localhost:%d%s", port, path);
+
+    ret = wc_send_request_raw(url, "GET", NULL, &status, &body);
+    if (ret != STATUS_OK || status != HttpStatus_OK || body == NULL) {
+        usys_log_error("Failed to read %s", url);
+        usys_free(body);
+        return STATUS_NOK;
+    }
+
+    memset(&jErr, 0, sizeof(JsonErrObj));
+    *out = json_loads(body, JSON_DECODE_ANY, &jErr);
+    usys_free(body);
+
+    if (*out == NULL) {
+        usys_log_error("Failed to parse response from %s", url);
+        return STATUS_NOK;
+    }
+
+    return STATUS_OK;
+}
+
+static bool wc_json_bool(JsonObj *json, const char *key, bool defVal) {
+
+    JsonObj *entry = NULL;
+
+    if (json == NULL || key == NULL) {
+        return defVal;
+    }
+
+    entry = json_object_get(json, key);
+    if (!json_is_boolean(entry)) {
+        return defVal;
+    }
+
+    return json_boolean_value(entry) ? true : false;
+}
+
+static double wc_json_num(JsonObj *json, const char *key, double defVal) {
+
+    JsonObj *entry = NULL;
+
+    if (json == NULL || key == NULL) {
+        return defVal;
+    }
+
+    entry = json_object_get(json, key);
+    if (!json_is_number(entry)) {
+        return defVal;
+    }
+
+    return json_number_value(entry);
+}
+
+static int get_capps_from_starterd(Config *config,
+                                   CappList **cappList,
+                                   StarterStatusData *starter) {
 
     int     ret     = STATUS_OK;
     char    *buffer = NULL;
     JsonObj *json   = NULL;
 
+    if (starter) {
+        memset(starter, 0, sizeof(StarterStatusData));
+    }
+
     if (wc_read_from_local_service(config, SERVICE_STARTERD, &buffer)) {
-        usys_log_error("Error reading capps from starter.d");
+        usys_log_error("Error reading status from starter.d");
         return STATUS_NOK;
     }
 
-    usys_log_debug("%s: capps: %s", SERVICE_NAME, buffer);
+    usys_log_debug("%s: starter status: %s", SERVICE_NAME, buffer);
 
     json = json_loads(buffer, JSON_DECODE_ANY, NULL);
+    if (json == NULL) {
+        usys_log_error("Failed to parse starter.d status");
+        usys_free(buffer);
+        return STATUS_NOK;
+    }
+
     if (json_deserialize_capps(cappList, json) == USYS_FALSE) {
-        usys_log_error("Failed to parse capps response from starterd");
+        usys_log_error("Failed to parse apps response from starter.d");
         ret = STATUS_NOK;
+    }
+
+    if (starter) {
+        json_deserialize_starter_status(starter, json);
     }
 
     json_decref(json);
     usys_free(buffer);
 
     return ret;
-}
-
-static void wc_free_gps_data(GPSClientData *gps) {
-
-    if (!gps) return;
-
-    usys_free(gps->coordinates);
-    usys_free(gps->gpsTime);
-
-    gps->available   = USYS_FALSE;
-    gps->gpsLock     = USYS_FALSE;
-    gps->coordinates = NULL;
-    gps->gpsTime     = NULL;
-}
-
-static void wc_free_switch_policy_data(SwitchPolicyStatusData *switchPolicy) {
-
-    if (!switchPolicy) return;
-
-    usys_free(switchPolicy->siteID);
-    usys_free(switchPolicy->policyState);
-    usys_free(switchPolicy->policyHash);
-    usys_free(switchPolicy->policySource);
-    usys_free(switchPolicy->policyError);
-
-    switchPolicy->available       = USYS_FALSE;
-    switchPolicy->switchAvailable = USYS_FALSE;
-    switchPolicy->siteID          = NULL;
-    switchPolicy->policyState     = NULL;
-    switchPolicy->policyHash      = NULL;
-    switchPolicy->policySource    = NULL;
-    switchPolicy->policyError     = NULL;
 }
 
 static void wc_free_capp_list(CappList *list) {
@@ -391,69 +470,7 @@ static void wc_free_capp_list(CappList *list) {
     }
 }
 
-static int get_gps_data(GPSClientData *gps) {
-
-    int  ret = STATUS_NOK;
-    int  port = 0;
-    long status = 0;
-
-    char url[MAX_BUFFER] = {0};
-    char *body = NULL;
-
-    if (gps == NULL) {
-        return STATUS_NOK;
-    }
-
-    gps->available   = USYS_TRUE;
-    gps->gpsLock     = USYS_FALSE;
-    gps->coordinates = NULL;
-    gps->gpsTime     = NULL;
-
-    port = usys_find_service_port(SERVICE_GPS);
-    if (port <= 0) {
-        usys_log_error("Failed to resolve port for %s", SERVICE_GPS);
-        return STATUS_NOK;
-    }
-
-    snprintf(url, sizeof(url), "http://localhost:%d/v1/lock", port);
-    ret = wc_send_request_raw(url, "GET", NULL, &status, &body);
-    usys_free(body);
-    body = NULL;
-
-    if (ret != STATUS_OK) {
-        usys_log_error("Failed to read gps lock from %s", url);
-        return STATUS_NOK;
-    }
-
-    if (status != HttpStatus_OK) {
-        gps->gpsLock = USYS_FALSE;
-        return STATUS_OK;
-    }
-
-    gps->gpsLock = USYS_TRUE;
-
-    snprintf(url, sizeof(url), "http://localhost:%d/v1/coordinates", port);
-    ret = wc_send_request_raw(url, "GET", NULL, &status, &body);
-    if (ret == STATUS_OK && status == HttpStatus_OK && body && body[0] != '\0') {
-        gps->coordinates = strdup(body);
-    }
-
-    usys_free(body);
-    body = NULL;
-
-    snprintf(url, sizeof(url), "http://localhost:%d/v1/time", port);
-    ret = wc_send_request_raw(url, "GET", NULL, &status, &body);
-    if (ret == STATUS_OK && status == HttpStatus_OK && body && body[0] != '\0') {
-        gps->gpsTime = strdup(body);
-    }
-
-    usys_free(body);
-    body = NULL;
-
-    return STATUS_OK;
-}
-
-static char *json_dup_string(JsonObj *json, const char *key) {
+static char *wc_json_dup_string(JsonObj *json, const char *key) {
 
     JsonObj *entry = NULL;
     const char *value = NULL;
@@ -475,7 +492,99 @@ static char *json_dup_string(JsonObj *json, const char *key) {
     return strdup(value);
 }
 
-static int get_switch_policy_data(SwitchPolicyStatusData *switchPolicy) {
+static void wc_free_starter_data(StarterStatusData *starter) {
+
+    if (!starter) return;
+
+    usys_free(starter->state);
+    memset(starter, 0, sizeof(StarterStatusData));
+}
+
+static void wc_free_power_data(PowerStatusData *power) {
+
+    if (!power) return;
+
+    usys_free(power->board);
+    usys_free(power->reason);
+    memset(power, 0, sizeof(PowerStatusData));
+}
+
+static void wc_free_gps_data(GPSClientData *gps) {
+
+    if (!gps) return;
+
+    usys_free(gps->coordinates);
+    usys_free(gps->time);
+    memset(gps, 0, sizeof(GPSClientData));
+}
+
+static void wc_free_radio_data(RadioStatusData *radio) {
+
+    if (!radio) return;
+
+    usys_free(radio->state);
+    memset(radio, 0, sizeof(RadioStatusData));
+}
+
+static void wc_free_cellular_data(CellularStatusData *cellular) {
+
+    if (!cellular) return;
+
+    usys_free(cellular->service);
+    usys_free(cellular->error);
+    memset(cellular, 0, sizeof(CellularStatusData));
+}
+
+static void wc_free_switch_data(SwitchStatusData *sw) {
+
+    if (!sw) return;
+
+    json_decref(sw->status);
+    json_decref(sw->policy);
+    json_decref(sw->ports);
+    memset(sw, 0, sizeof(SwitchStatusData));
+}
+
+static void wc_free_controller_data(ControllerStatusData *controller) {
+
+    if (!controller) return;
+
+    json_decref(controller->status);
+    memset(controller, 0, sizeof(ControllerStatusData));
+}
+
+static void wc_free_backhaul_data(BackhaulStatusData *backhaul) {
+
+    if (!backhaul) return;
+
+    json_decref(backhaul->status);
+    memset(backhaul, 0, sizeof(BackhaulStatusData));
+}
+
+static void wc_free_fem_data(FemStatusData *fem) {
+
+    if (!fem) return;
+
+    json_decref(fem->status);
+    memset(fem, 0, sizeof(FemStatusData));
+}
+
+static void wc_free_status_data(LookoutStatusData *status) {
+
+    if (!status) return;
+
+    wc_free_starter_data(&status->starter);
+    wc_free_power_data(&status->power);
+    wc_free_gps_data(&status->gps);
+    wc_free_radio_data(&status->radio);
+    wc_free_cellular_data(&status->cellular);
+    wc_free_switch_data(&status->sw);
+    wc_free_controller_data(&status->controller);
+    wc_free_backhaul_data(&status->backhaul);
+    wc_free_fem_data(&status->fem);
+}
+
+static int get_gps_data(GPSClientData *gps) {
 
     int  ret = STATUS_NOK;
     int  port = 0;
@@ -484,55 +593,195 @@ static int get_switch_policy_data(SwitchPolicyStatusData *switchPolicy) {
     char url[MAX_BUFFER] = {0};
     char *body = NULL;
 
-    JsonObj *json = NULL;
-    JsonErrObj jErr;
-
-    if (switchPolicy == NULL) {
+    if (gps == NULL) {
         return STATUS_NOK;
     }
 
-    switchPolicy->available       = USYS_TRUE;
-    switchPolicy->switchAvailable = USYS_FALSE;
-    switchPolicy->siteID          = NULL;
-    switchPolicy->policyState     = NULL;
-    switchPolicy->policyHash      = NULL;
-    switchPolicy->policySource    = NULL;
-    switchPolicy->policyError     = NULL;
+    memset(gps, 0, sizeof(GPSClientData));
+    gps->available = USYS_TRUE;
+    gps->lock = USYS_FALSE;
 
-    port = usys_find_service_port(SERVICE_SWITCH);
+    port = wc_find_service_port3(LOOKOUT_SERVICE_GPS,
+                                 "gpsd",
+                                 "gps.d");
     if (port <= 0) {
-        usys_log_error("Failed to resolve port for %s", SERVICE_SWITCH);
+        usys_log_error("Failed to resolve gps service port");
         return STATUS_NOK;
     }
 
-    snprintf(url, sizeof(url), "http://localhost:%d/v1/ports/policy", port);
-
+    snprintf(url, sizeof(url), "http://localhost:%d/v1/lock", port);
     ret = wc_send_request_raw(url, "GET", NULL, &status, &body);
-    if (ret != STATUS_OK || status != HttpStatus_OK || body == NULL) {
-        usys_log_error("Failed to read switch policy from %s", url);
-        usys_free(body);
-        return STATUS_NOK;
-    }
-
-    memset(&jErr, 0, sizeof(JsonErrObj));
-    json = json_loads(body, JSON_DECODE_ANY, &jErr);
     usys_free(body);
     body = NULL;
 
-    if (json == NULL) {
-        usys_log_error("Failed to parse switch policy response");
+    if (ret != STATUS_OK) {
+        usys_log_error("Failed to read gps lock from %s", url);
         return STATUS_NOK;
     }
 
-    switchPolicy->switchAvailable = USYS_TRUE;
-    switchPolicy->siteID          = json_dup_string(json, "site_id");
-    switchPolicy->policyState     = json_dup_string(json, "state");
-    switchPolicy->policyHash      = json_dup_string(json, "hash");
-    switchPolicy->policySource    = json_dup_string(json, "source");
-    switchPolicy->policyError     = json_dup_string(json, "error");
+    gps->lock = status == HttpStatus_OK ? USYS_TRUE : USYS_FALSE;
+
+    snprintf(url, sizeof(url), "http://localhost:%d/v1/coordinates", port);
+    ret = wc_send_request_raw(url, "GET", NULL, &status, &body);
+    if (ret == STATUS_OK && status == HttpStatus_OK &&
+        body && body[0] != '\0') {
+        gps->coordinates = strdup(body);
+    }
+
+    usys_free(body);
+    body = NULL;
+
+    snprintf(url, sizeof(url), "http://localhost:%d/v1/time", port);
+    ret = wc_send_request_raw(url, "GET", NULL, &status, &body);
+    if (ret == STATUS_OK && status == HttpStatus_OK &&
+        body && body[0] != '\0') {
+        gps->time = strdup(body);
+    }
+
+    usys_free(body);
+    body = NULL;
+
+    return STATUS_OK;
+}
+
+static void collect_radio_data(RadioStatusData *radio) {
+
+    extern char *get_radio_status(void);
+
+    if (!radio) return;
+
+    memset(radio, 0, sizeof(RadioStatusData));
+
+    radio->available = USYS_TRUE;
+    radio->state = strdup(get_radio_status());
+}
+
+static void collect_cellular_data(CellularStatusData *cellular) {
+
+    if (!cellular) return;
+
+    memset(cellular, 0, sizeof(CellularStatusData));
+
+    cellular->available = USYS_TRUE;
+    cellular->service = NULL;
+    cellular->error = strdup("cellular_status_not_supported");
+}
+
+static void collect_power_data(PowerStatusData *power) {
+
+    int port = 0;
+    JsonObj *json = NULL;
+    JsonObj *lm75 = NULL;
+    JsonObj *lm25066 = NULL;
+
+    if (!power) return;
+
+    memset(power, 0, sizeof(PowerStatusData));
+
+    port = wc_find_service_port3(LOOKOUT_SERVICE_POWER,
+                                 LOOKOUT_SERVICE_POWERD,
+                                 "power.d");
+    if (port <= 0 ||
+        wc_get_json_from_service(port, "/v1/status", &json) != STATUS_OK) {
+        power->available = USYS_FALSE;
+        return;
+    }
+
+    power->available = USYS_TRUE;
+    power->ok = wc_json_bool(json, "ok", false);
+    power->board = wc_json_dup_string(json, "board");
+    power->reason = wc_json_dup_string(json, "reason");
+    power->totalWatts = wc_json_num(json, "totalWatts", 0.0);
+
+    lm75 = json_object_get(json, "lm75");
+    if (json_is_object(lm75)) {
+        power->temperatureC = wc_json_num(lm75, "boardTempC", 0.0);
+    } else {
+        lm25066 = json_object_get(json, "lm25066");
+        if (json_is_object(lm25066)) {
+            power->temperatureC = wc_json_num(lm25066, "hsTempC", 0.0);
+        }
+    }
 
     json_decref(json);
-    return STATUS_OK;
+}
+
+static void collect_switch_data(SwitchStatusData *sw) {
+
+    int port = 0;
+
+    if (!sw) return;
+
+    memset(sw, 0, sizeof(SwitchStatusData));
+    sw->available = USYS_TRUE;
+
+    port = wc_find_service_port3(LOOKOUT_SERVICE_SWITCH,
+                                 "switch",
+                                 "switch.d");
+    if (port <= 0) {
+        return;
+    }
+
+    wc_get_json_from_service(port, "/v1/status", &sw->status);
+    wc_get_json_from_service(port, "/v1/ports/policy", &sw->policy);
+    wc_get_json_from_service(port, "/v1/ports", &sw->ports);
+}
+
+static void collect_controller_data(ControllerStatusData *controller) {
+
+    int port = 0;
+
+    if (!controller) return;
+
+    memset(controller, 0, sizeof(ControllerStatusData));
+    controller->available = USYS_TRUE;
+
+    port = wc_find_service_port3(LOOKOUT_SERVICE_CONTROLLER,
+                                 "controller",
+                                 "controller.d");
+    if (port <= 0) {
+        return;
+    }
+
+    wc_get_json_from_service(port, "/v1/status", &controller->status);
+}
+
+static void collect_backhaul_data(BackhaulStatusData *backhaul) {
+
+    int port = 0;
+
+    if (!backhaul) return;
+
+    memset(backhaul, 0, sizeof(BackhaulStatusData));
+    backhaul->available = USYS_TRUE;
+
+    port = wc_find_service_port3(LOOKOUT_SERVICE_BACKHAUL,
+                                 "backhaul",
+                                 "backhaul.d");
+    if (port <= 0) {
+        return;
+    }
+
+    wc_get_json_from_service(port, "/v1/status", &backhaul->status);
+}
+
+static void collect_fem_data(FemStatusData *fem) {
+
+    int port = 0;
+
+    if (!fem) return;
+
+    memset(fem, 0, sizeof(FemStatusData));
+    fem->available = USYS_TRUE;
+
+    port = wc_find_service_port3(LOOKOUT_SERVICE_FEM,
+                                 "fem",
+                                 "fem.d");
+    if (port <= 0) {
+        return;
+    }
+
+    wc_get_json_from_service(port, "/v1/fems", &fem->status);
 }
 
 int send_health_report(Config *config) {
@@ -542,6 +791,8 @@ int send_health_report(Config *config) {
     CappRuntime *runtime  = NULL;
     JsonObj     *json     = NULL;
 
+    LookoutStatusData statusData;
+
     char url[MAX_BUFFER] = {0};
     char *ukama  = NULL;
     char *buffer = NULL;
@@ -550,11 +801,7 @@ int send_health_report(Config *config) {
     int ret    = USYS_TRUE;
     int status = STATUS_NOK;
 
-    GPSClientData gps;
-    memset(&gps, 0, sizeof(GPSClientData));
-
-    SwitchPolicyStatusData switchPolicy;
-    memset(&switchPolicy, 0, sizeof(SwitchPolicyStatusData));
+    memset(&statusData, 0, sizeof(LookoutStatusData));
 
     if (config == NULL || config->nodeID == NULL) {
         return USYS_FALSE;
@@ -563,12 +810,14 @@ int send_health_report(Config *config) {
     if (config->appManager == LOOKOUT_APP_MANAGER_SUPERVISORD) {
         status = get_capps_from_supervisord(config, &cappList);
         if (status != STATUS_OK) {
-            usys_log_error("Unable to get capps from supervisord");
+            usys_log_error("Unable to get apps from supervisord");
         }
     } else {
-        status = get_capps_from_starterd(config, &cappList);
+        status = get_capps_from_starterd(config,
+                                         &cappList,
+                                         &statusData.starter);
         if (status != STATUS_OK) {
-            usys_log_error("Unable to get capps from starterd");
+            usys_log_error("Unable to get apps from starter.d");
         }
     }
 
@@ -589,44 +838,40 @@ int send_health_report(Config *config) {
         }
     }
 
-    gps.available = config->isTowerNode;
-    if (config->isTowerNode) {
-        if (get_gps_data(&gps) != STATUS_OK) {
-            gps.available = USYS_TRUE;
-            gps.gpsLock = USYS_FALSE;
-            gps.coordinates = NULL;
-            gps.gpsTime = NULL;
+    collect_power_data(&statusData.power);
+
+    if (config->nodeType == LOOKOUT_NODE_TOWER) {
+        collect_cellular_data(&statusData.cellular);
+        collect_radio_data(&statusData.radio);
+
+        if (get_gps_data(&statusData.gps) != STATUS_OK) {
+            statusData.gps.available = USYS_TRUE;
+            statusData.gps.lock = USYS_FALSE;
         }
+
+        collect_backhaul_data(&statusData.backhaul);
     }
 
-    switchPolicy.available = config->isCNode;
-    if (config->isCNode) {
-        if (get_switch_policy_data(&switchPolicy) != STATUS_OK) {
-            switchPolicy.available       = USYS_TRUE;
-            switchPolicy.switchAvailable = USYS_FALSE;
-            switchPolicy.siteID          = NULL;
-            switchPolicy.policyState     = NULL;
-            switchPolicy.policyHash      = NULL;
-            switchPolicy.policySource    = NULL;
-            switchPolicy.policyError     = NULL;
-        }
+    if (config->nodeType == LOOKOUT_NODE_AMPLIFIER) {
+        collect_radio_data(&statusData.radio);
+        collect_fem_data(&statusData.fem);
+    }
+
+    if (config->nodeType == LOOKOUT_NODE_CONTROL) {
+        collect_switch_data(&statusData.sw);
+        collect_controller_data(&statusData.controller);
+        collect_backhaul_data(&statusData.backhaul);
     }
 
     if (!json_serialize_health_report(&json,
-                                      config->nodeID,
+                                      config,
                                       cappList,
-                                      &gps,
-                                      &switchPolicy,
-                                      config->isTowerNode)) {
-        usys_log_error("Error serializing health report. Ignoring");
-        wc_free_gps_data(&gps);
-        wc_free_switch_policy_data(&switchPolicy);
+                                      &statusData)) {
+        usys_log_error("Error serializing node status report");
+        wc_free_status_data(&statusData);
         wc_free_capp_list(cappList);
         return USYS_FALSE;
     }
-
-    wc_free_gps_data(&gps);
-    wc_free_switch_policy_data(&switchPolicy);
 
     usys_find_ukama_service_address(&ukama);
     sprintf(url, "%s/node/v1/health/nodes/%s/performance",
@@ -635,12 +880,12 @@ int send_health_report(Config *config) {
 
     report = json_dumps(json, 0);
 
-    usys_log_debug("Sending to URL: %s the health report %s",
+    usys_log_debug("Sending to URL: %s the node status report %s",
                    url,
                    report);
 
     if (wc_send_request(url, "POST", report, &buffer) == STATUS_NOK) {
-        usys_log_error("failed to parse response from local service");
+        usys_log_error("failed to send node status report");
         ret = USYS_FALSE;
     }
 
@@ -648,6 +893,7 @@ int send_health_report(Config *config) {
     usys_free(report);
     usys_free(buffer);
     usys_free(ukama);
+    wc_free_status_data(&statusData);
     wc_free_capp_list(cappList);
 
     return ret;

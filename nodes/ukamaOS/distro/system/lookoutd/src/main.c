@@ -50,38 +50,54 @@ static bool str_eq(const char *a, const char *b) {
     return strcmp(a, b) == 0;
 }
 
-static bool node_id_is_tower(const char *nodeID) {
+static bool str_contains(const char *s, const char *needle) {
 
-    if (nodeID == NULL || nodeID[0] == '\0') {
+    if (s == NULL || needle == NULL) {
         return false;
     }
 
-    if (strstr(nodeID, "tnode") != NULL) {
-        return true;
-    }
-
-    if (strstr(nodeID, "tower") != NULL) {
-        return true;
-    }
-
-    return false;
+    return strstr(s, needle) != NULL;
 }
 
-static bool node_id_is_cnode(const char *nodeID) {
+static LookoutNodeType detect_node_type(const char *nodeID) {
 
     if (nodeID == NULL || nodeID[0] == '\0') {
-        return false;
+        return LOOKOUT_NODE_UNKNOWN;
     }
 
-    if (strstr(nodeID, "cnode") != NULL) {
-        return true;
+    if (str_contains(nodeID, "tnode") ||
+        str_contains(nodeID, "tower")) {
+        return LOOKOUT_NODE_TOWER;
     }
 
-    if (strstr(nodeID, "control") != NULL) {
-        return true;
+    if (str_contains(nodeID, "anode") ||
+        str_contains(nodeID, "amplifier")) {
+        return LOOKOUT_NODE_AMPLIFIER;
     }
 
-    return false;
+    if (str_contains(nodeID, "cnode") ||
+        str_contains(nodeID, "control")) {
+        return LOOKOUT_NODE_CONTROL;
+    }
+
+    return LOOKOUT_NODE_UNKNOWN;
+}
+
+static const char *node_type_to_string(LookoutNodeType nodeType) {
+
+    switch (nodeType) {
+    case LOOKOUT_NODE_TOWER:
+        return "tower";
+
+    case LOOKOUT_NODE_AMPLIFIER:
+        return "amplifier";
+
+    case LOOKOUT_NODE_CONTROL:
+        return "control";
+
+    default:
+        return "unknown";
+    }
 }
 
 static void configure_app_manager(Config *config) {
@@ -168,9 +184,11 @@ int main(int argc, char **argv) {
     serviceConfig.servicePort  = usys_find_service_port(SERVICE_NAME);
     serviceConfig.nodedPort    = usys_find_service_port(SERVICE_NODE);
     serviceConfig.starterdPort = usys_find_service_port(SERVICE_STARTER);
-    serviceConfig.nodeID       = NULL;
-    serviceConfig.isTowerNode  = false;
-    serviceConfig.isCNode      = false;
+
+    serviceConfig.nodeType        = LOOKOUT_NODE_UNKNOWN;
+    serviceConfig.isTowerNode     = false;
+    serviceConfig.isAmplifierNode = false;
+    serviceConfig.isControlNode   = false;
 
     if (!usys_find_service_port(SERVICE_UKAMA)) {
         usys_log_error("Unable to determine the port for Ukama");
@@ -205,13 +223,19 @@ int main(int argc, char **argv) {
         }
     }
 
-    serviceConfig.isTowerNode = node_id_is_tower(serviceConfig.nodeID);
-    serviceConfig.isCNode     = node_id_is_cnode(serviceConfig.nodeID);
+    serviceConfig.nodeType = detect_node_type(serviceConfig.nodeID);
+
+    serviceConfig.isTowerNode =
+        serviceConfig.nodeType == LOOKOUT_NODE_TOWER;
+    serviceConfig.isAmplifierNode =
+        serviceConfig.nodeType == LOOKOUT_NODE_AMPLIFIER;
+    serviceConfig.isControlNode =
+        serviceConfig.nodeType == LOOKOUT_NODE_CONTROL;
+
     usys_log_info("%s: nodeID=%s nodeType=%s appManager=%s",
                   SERVICE_NAME,
                   serviceConfig.nodeID,
-                  serviceConfig.isTowerNode ? "tower" :
-                  (serviceConfig.isCNode ? "cnode" : "non-tower"),
+                  node_type_to_string(serviceConfig.nodeType),
                   serviceConfig.appManager == LOOKOUT_APP_MANAGER_STARTERD ?
                   "starter" : "supervisor");
 
