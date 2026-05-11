@@ -23,7 +23,7 @@ validate_tarball() {
     fi
 
     local entry_count
-    entry_count=$(printf '%s\n' "$listing" | grep -c '.')
+    entry_count=$(printf '%s\n' "$listing" | grep -c '.' || true)
     if [ "$entry_count" -lt "$min_entries" ]; then
         echo "  [FAIL] $label: only $entry_count entries (need >= $min_entries) — likely empty or truncated" >&2
         return 1
@@ -53,7 +53,7 @@ validate_tarball() {
     for entry in "${required[@]}"; do
         entry="${entry// /}"
         [ -z "$entry" ] && continue
-        if ! printf '%s\n' "$top_levels" | grep -qx "$entry"; then
+        if ! printf '%s\n' "$top_levels" | grep -Fqx "$entry"; then
             missing+=("$entry")
         fi
     done

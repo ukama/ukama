@@ -336,8 +336,8 @@ log "========================================"
 log "Ukama Legacy SD Card Creator for $BOARD_NAME"
 log "========================================"
 
-verify_device
 verify_tarballs
+verify_device
 wipe_and_partition
 format_partitions
 
