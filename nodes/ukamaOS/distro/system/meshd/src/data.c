@@ -270,9 +270,9 @@ void process_incoming_websocket_response(Message *message, void *data) {
         return;
     }
 
-    usys_log_debug("Response to local service Code: %d Data: %s",
-                   message->code,
-                   message->data ? message->data : "");
+    usys_log_info("Response to local service Code: %d Data: %s",
+                  message->code,
+                  message->data ? message->data : "");
 
     item = is_existing_item(ClientTable, message->seqNo);
     if (item == NULL) {
@@ -316,8 +316,8 @@ int process_incoming_websocket_message(Message *message, Config *config) {
                                      &responseLocal);
 
     if (ret) {
-        usys_log_debug("Received response from local server Code: %d Response: %s",
-                       httpStatus, responseLocal ? responseLocal : "(null)");
+        usys_log_info("Received response from local server Code: %d Response: %s",
+                      httpStatus, responseLocal ? responseLocal : "(null)");
 
         serialize_local_service_response(&responseRemote,
                                          message,
@@ -335,7 +335,7 @@ int process_incoming_websocket_message(Message *message, Config *config) {
     }
 
     if (responseRemote) {
-        usys_log_debug("Adding response to websocket queue: %s", responseRemote);
+        usys_log_info("Adding response to websocket queue: %s", responseRemote);
         add_work_to_queue(&Transmit, responseRemote, NULL, 0, NULL, 0);
     }
 

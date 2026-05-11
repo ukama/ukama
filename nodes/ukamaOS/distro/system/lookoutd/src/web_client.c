@@ -881,8 +881,7 @@ int send_health_report(Config *config) {
     report = json_dumps(json, 0);
 
     usys_log_debug("Sending to URL: %s the node status report %s",
-                   url,
-                   report);
+                   url, report);
 
     if (wc_send_request(url, "POST", report, &buffer) == STATUS_NOK) {
         usys_log_error("failed to send node status report");
