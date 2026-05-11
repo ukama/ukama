@@ -243,7 +243,6 @@ STATIC int send_data_to_local_service(URequest *data,
         *httpStatus = (int)code;
 
         if (response.size && response.buffer) {
-            usys_log_debug("Response received from server: %s", response.buffer);
             *retStr = strdup(response.buffer);
         } else {
             *retStr = strdup("");
@@ -269,10 +268,6 @@ void process_incoming_websocket_response(Message *message, void *data) {
         usys_log_error("process_incoming_websocket_response: invalid message");
         return;
     }
-
-    usys_log_info("Response to local service Code: %d Data: %s",
-                  message->code,
-                  message->data ? message->data : "");
 
     item = is_existing_item(ClientTable, message->seqNo);
     if (item == NULL) {
@@ -316,9 +311,6 @@ int process_incoming_websocket_message(Message *message, Config *config) {
                                      &responseLocal);
 
     if (ret) {
-        usys_log_info("Received response from local server Code: %d Response: %s",
-                      httpStatus, responseLocal ? responseLocal : "(null)");
-
         serialize_local_service_response(&responseRemote,
                                          message,
                                          httpStatus,
@@ -335,7 +327,6 @@ int process_incoming_websocket_message(Message *message, Config *config) {
     }
 
     if (responseRemote) {
-        usys_log_info("Adding response to websocket queue: %s", responseRemote);
         add_work_to_queue(&Transmit, responseRemote, NULL, 0, NULL, 0);
     }
 

@@ -158,6 +158,8 @@ int main (int argc, char *argv[]) {
     state->webInst = &webInst;
     state->handler = &websocketHandler;
 
+	set_log_level("DEBUG");	
+
     catch_sigterm();
 
 	/* Prase command line args. */
