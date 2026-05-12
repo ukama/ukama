@@ -311,3 +311,13 @@ func GetCNodeIdFromTNodeId(tNodeId string) (NodeID, error) {
 
 	return NodeID(strings.Replace(tNodeId, NODE_ID_TYPE_TOWERNODE, NODE_ID_TYPE_CNODE, 1)), nil
 }
+
+func ValidateNodeIdAndType(nodeID string) (NodeID, *string, error) {
+	nID, err := ValidateNodeId(nodeID)
+	if err != nil {
+		return "", nil, err
+	}
+
+	nodeType := GetNodeType(nID.String())
+	return nID, nodeType, nil
+}

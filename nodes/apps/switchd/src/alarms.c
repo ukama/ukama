@@ -6,6 +6,7 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
+#include <stdio.h>
 #include <string.h>
 #include <time.h>
 
@@ -38,18 +39,32 @@ static void upsert_alarm(SwitchdContext *ctx,
     SwitchAlarm *alarm;
     time_t now;
 
+    if (ctx == NULL || resource == NULL || text == NULL) {
+        return;
+    }
+
     now = time(NULL);
     alarm = find_alarm(ctx, code, resource);
+
     if (alarm == NULL) {
-        if (ctx->alarmCount >= (sizeof(ctx->alarms) / sizeof(ctx->alarms[0]))) {
+        if (ctx->alarmCount >= (sizeof(ctx->alarms) /
+                                sizeof(ctx->alarms[0]))) {
             return;
         }
 
         alarm = &ctx->alarms[ctx->alarmCount++];
         memset(alarm, 0, sizeof(*alarm));
+
         alarm->code = code;
         snprintf(alarm->resource, sizeof(alarm->resource), "%s", resource);
         alarm->firstSeen = now;
+
+        /*
+         * First healthy observation should not emit a clear.
+         * Only emit clears after the alarm was previously active.
+         */
+        alarm->active = active;
+        alarm->latched = !active;
     }
 
     alarm->severity = severity;
@@ -66,7 +81,8 @@ static void upsert_alarm(SwitchdContext *ctx,
 }
 
 static void maybe_send_alarm(SwitchdContext *ctx, SwitchAlarm *alarm) {
-    if (alarm->latched) {
+
+    if (ctx == NULL || alarm == NULL || alarm->latched) {
         return;
     }
 
@@ -75,17 +91,22 @@ static void maybe_send_alarm(SwitchdContext *ctx, SwitchAlarm *alarm) {
                                 !alarm->active) == SWITCHD_OK) {
         alarm->latched = true;
         alarm->lastSent = time(NULL);
-    } else {
-        usys_log_error("Failed to send alarm %d for %s",
-                       alarm->code,
-                       alarm->resource);
+        return;
     }
+
+    usys_log_error("Failed to send alarm %d for %s",
+                   alarm->code,
+                   alarm->resource);
 }
 
 int alarms_scan(SwitchdContext *ctx) {
     uint32_t i;
     char resource[32];
     char text[128];
+
+    if (ctx == NULL) {
+        return SWITCHD_ERR_INVAL;
+    }
 
     pthread_mutex_lock(&ctx->alarmMutex);
 
@@ -95,13 +116,6 @@ int alarms_scan(SwitchdContext *ctx) {
                  "switch",
                  "Switch is unreachable",
                  !ctx->info.reachable);
-
-    upsert_alarm(ctx,
-                 SWITCHD_ALARM_SWITCH_RECOVERED,
-                 SWITCHD_ALARM_SEV_INFO,
-                 "switch",
-                 "Switch recovered",
-                 ctx->info.reachable);
 
     upsert_alarm(ctx,
                  SWITCHD_ALARM_HIGH_SYSTEM_TEMP,
@@ -120,7 +134,9 @@ int alarms_scan(SwitchdContext *ctx) {
     for (i = 0; i < ctx->portCount; i++) {
         snprintf(resource, sizeof(resource), "port%u", ctx->ports[i].id);
 
-        snprintf(text, sizeof(text), "Port %u link is down", ctx->ports[i].id);
+        snprintf(text, sizeof(text), "Port %u link is down",
+                 ctx->ports[i].id);
+
         upsert_alarm(ctx,
                      SWITCHD_ALARM_PORT_LINK_DOWN,
                      SWITCHD_ALARM_SEV_WARNING,
@@ -131,7 +147,9 @@ int alarms_scan(SwitchdContext *ctx) {
                      !ctx->ports[i].linkUp &&
                      ctx->config.strictLinkAlarms);
 
-        snprintf(text, sizeof(text), "Port %u PoE is off", ctx->ports[i].id);
+        snprintf(text, sizeof(text), "Port %u PoE is off",
+                 ctx->ports[i].id);
+
         upsert_alarm(ctx,
                      SWITCHD_ALARM_PORT_POE_OFF,
                      SWITCHD_ALARM_SEV_WARNING,
@@ -145,7 +163,8 @@ int alarms_scan(SwitchdContext *ctx) {
                      SWITCHD_ALARM_PORT_POE_FAULT,
                      SWITCHD_ALARM_SEV_CRITICAL,
                      resource,
-                     ctx->ports[i].fault[0] ? ctx->ports[i].fault : "Port PoE fault",
+                     ctx->ports[i].fault[0] ?
+                     ctx->ports[i].fault : "Port PoE fault",
                      ctx->ports[i].fault[0] != '\0');
     }
 
@@ -153,20 +172,15 @@ int alarms_scan(SwitchdContext *ctx) {
                  SWITCHD_ALARM_FIRMWARE_FAILED,
                  SWITCHD_ALARM_SEV_CRITICAL,
                  "firmware",
-                 ctx->fw.detail[0] ? ctx->fw.detail : "Firmware update failed",
+                 ctx->fw.detail[0] ?
+                 ctx->fw.detail : "Firmware update failed",
                  ctx->fw.state == SWITCHD_FW_FAILED);
-
-    upsert_alarm(ctx,
-                 SWITCHD_ALARM_FIRMWARE_DONE,
-                 SWITCHD_ALARM_SEV_INFO,
-                 "firmware",
-                 "Firmware update completed",
-                 ctx->fw.state == SWITCHD_FW_DONE);
 
     for (i = 0; i < ctx->alarmCount; i++) {
         maybe_send_alarm(ctx, &ctx->alarms[i]);
     }
 
     pthread_mutex_unlock(&ctx->alarmMutex);
+
     return SWITCHD_OK;
 }

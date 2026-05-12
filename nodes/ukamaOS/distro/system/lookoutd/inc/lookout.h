@@ -42,6 +42,16 @@
 #define LOOKOUT_GPS_COORD_NA      "-999.000000,-999.000000"
 #define LOOKOUT_GPS_TIME_NA       "not-available"
 
+#define LOOKOUT_SCHEMA_VERSION "1.0"
+
+#define LOOKOUT_SERVICE_POWER      "power"
+#define LOOKOUT_SERVICE_POWERD     "powerd"
+#define LOOKOUT_SERVICE_CONTROLLER "controllerd"
+#define LOOKOUT_SERVICE_BACKHAUL   "backhauld"
+#define LOOKOUT_SERVICE_FEM        "femd"
+#define LOOKOUT_SERVICE_GPS        "gps"
+#define LOOKOUT_SERVICE_SWITCH     "switchd"
+
 #define EP_BS              "/"
 #define REST_API_VERSION   "v1"
 #define URL_PREFIX         EP_BS REST_API_VERSION
@@ -58,19 +68,19 @@ typedef json_error_t        JsonErrObj;
 
 typedef struct _runtime {
 
-    char   *status; /* Current status 0: not executed, 1: running, 2: done */
-    pid_t  pid;     /* process ID */
-    int    memory;  /* memory usage, in bytes */
-    int    disk;    /* disk usage, in bytes */
-    double cpu;     /* CPU usage, in percentage */
+    char   *status;
+    pid_t  pid;
+    int    memory;
+    int    disk;
+    double cpu;
 } CappRuntime;
 
 typedef struct _capp {
 
-    char        *space;    /* space capp belongs */
-    char        *name;     /* Name of the cApp */
-    char        *tag;      /* cApp tag/version */
-    CappRuntime *runtime;  /* runtime of capp */
+    char        *space;
+    char        *name;
+    char        *tag;
+    CappRuntime *runtime;
 } Capp;
 
 typedef struct _cappList {
@@ -82,9 +92,81 @@ typedef struct _cappList {
 typedef struct {
 
     bool  available;
-    bool  gpsLock;
-    char *coordinates; /* "lon,lat" */
-    char *gpsTime;     /* string */
+    char *state;
+    bool  updateInProgress;
+    bool  switchRequested;
+    bool  terminateRequested;
+    int   exitCode;
+} StarterStatusData;
+
+typedef struct {
+
+    bool  available;
+    bool  ok;
+    char *board;
+    char *reason;
+    double totalWatts;
+    double temperatureC;
+} PowerStatusData;
+
+typedef struct {
+
+    bool  available;
+    bool  lock;
+    char *coordinates;
+    char *time;
 } GPSClientData;
+
+typedef struct {
+
+    bool available;
+    char *state;
+} RadioStatusData;
+
+typedef struct {
+
+    bool available;
+    char *service;
+    char *error;
+} CellularStatusData;
+
+typedef struct {
+
+    bool available;
+    JsonObj *status;
+    JsonObj *policy;
+    JsonObj *ports;
+} SwitchStatusData;
+
+typedef struct {
+
+    bool available;
+    JsonObj *status;
+} ControllerStatusData;
+
+typedef struct {
+
+    bool available;
+    JsonObj *status;
+} BackhaulStatusData;
+
+typedef struct {
+
+    bool available;
+    JsonObj *status;
+} FemStatusData;
+
+typedef struct {
+
+    StarterStatusData   starter;
+    PowerStatusData     power;
+    GPSClientData       gps;
+    RadioStatusData     radio;
+    CellularStatusData  cellular;
+    SwitchStatusData    sw;
+    ControllerStatusData controller;
+    BackhaulStatusData  backhaul;
+    FemStatusData       fem;
+} LookoutStatusData;
 
 #endif /* LOOKOUT_H_ */

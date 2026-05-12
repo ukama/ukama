@@ -1,0 +1,28 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
+
+package ukama.events.v1;
+
+import "validator.proto";
+
+
+
+message InventorySimEvent{
+    string iccid = 1 [(validator.field) = {string_not_empty: true}];
+    string imsi = 2;
+    string batchId = 3 [json_name = "batch_id"];
+    string cardSerial = 4 [json_name = "card_serial"];
+    string formFactor = 5 [json_name = "form_factor"];
+    string profile = 6;
+    string vendor = 7;
+    string orgName = 8 [json_name = "org_name"];
+}

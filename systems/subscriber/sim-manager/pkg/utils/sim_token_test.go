@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	testIccid    = "8910300000003540781"
+	testIccid    = "89860012345678901000"
 	textToEncode = `{"iccid": ` + testIccid + `}`
 	testKey1     = "the-key-has-to-be-32-bytes-long!"
 	testKey2     = "that--key-is-also-32-bytes-long!"

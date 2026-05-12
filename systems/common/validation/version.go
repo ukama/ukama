@@ -36,3 +36,7 @@ func CompareVersions(version1 string, version2 string) (int, error) {
 	return c, nil // 1 if version1 is greater than version2, 0 if they are equal, -1 if version1 is less than version2
 }
 
+func IsVersionMismatch(version1 string, version2 string) bool {
+	return version1 != version2
+}
+

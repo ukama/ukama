@@ -9,6 +9,7 @@
 #include <jansson.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "jserdes.h"
 #include "driver.h"
@@ -142,12 +143,66 @@ bool json_deserialize_firmware_stage_request(const URequest *request,
     return true;
 }
 
+static const char *alarm_name(const SwitchAlarm *alarm) {
+
+    if (alarm == NULL) {
+        return "switch.alarm";
+    }
+
+    switch (alarm->code) {
+    case SWITCHD_ALARM_SWITCH_UNREACHABLE:
+        return "switch.unreachable";
+
+    case SWITCHD_ALARM_SWITCH_RECOVERED:
+        return "switch.recovered";
+
+    case SWITCHD_ALARM_PORT_LINK_DOWN:
+        return "switch.port.link_down";
+
+    case SWITCHD_ALARM_PORT_POE_OFF:
+        return "switch.port.poe_off";
+
+    case SWITCHD_ALARM_PORT_POE_FAULT:
+        return "switch.port.poe_fault";
+
+    case SWITCHD_ALARM_HIGH_SYSTEM_TEMP:
+        return "switch.system.high_temperature";
+
+    case SWITCHD_ALARM_HIGH_AMBIENT_TEMP:
+        return "switch.ambient.high_temperature";
+
+    case SWITCHD_ALARM_FIRMWARE_FAILED:
+        return "switch.firmware.failed";
+
+    case SWITCHD_ALARM_FIRMWARE_DONE:
+        return "switch.firmware.done";
+
+    default:
+        return "switch.alarm";
+    }
+}
+
+static const char *alarm_module(const SwitchAlarm *alarm) {
+
+    if (alarm == NULL || alarm->resource[0] == '\0') {
+        return "switch";
+    }
+
+    if (strncmp(alarm->resource, "port", 4) == 0) {
+        return "port";
+    }
+
+    return alarm->resource;
+}
+
 bool json_serialize_alarm_notification(JsonObj **json,
                                        const char *serviceName,
                                        const SwitchAlarm *alarm,
                                        bool clear) {
 
-    if (json == NULL || serviceName == NULL || alarm == NULL) {
+    if (json == NULL ||
+        serviceName == NULL ||
+        alarm == NULL) {
         return false;
     }
 
@@ -156,15 +211,41 @@ bool json_serialize_alarm_notification(JsonObj **json,
         return false;
     }
 
-    json_object_set_new(*json, JTAG_SERVICE_NAME, json_string(serviceName));
-    json_object_set_new(*json, JTAG_CLEAR, json_boolean(clear));
-    json_object_set_new(*json, JTAG_CODE, json_integer(alarm->code));
     json_object_set_new(*json,
-                        JTAG_SEVERITY,
+                        "service_name",
+                        json_string(serviceName));
+
+    json_object_set_new(*json,
+                        "severity",
                         json_string(alarm_severity_to_str(alarm->severity)));
-    json_object_set_new(*json, JTAG_RESOURCE, json_string(alarm->resource));
-    json_object_set_new(*json, JTAG_TEXT, json_string(alarm->text));
-    json_object_set_new(*json, JTAG_TIME, json_integer(time(NULL)));
+
+    json_object_set_new(*json,
+                        "time",
+                        json_integer(time(NULL)));
+
+    json_object_set_new(*json,
+                        "module",
+                        json_string(alarm_module(alarm)));
+
+    json_object_set_new(*json,
+                        "device",
+                        json_string(alarm->resource));
+
+    json_object_set_new(*json,
+                        "name",
+                        json_string(alarm_name(alarm)));
+
+    json_object_set_new(*json,
+                        "value",
+                        json_string(clear ? "clear" : "active"));
+
+    json_object_set_new(*json,
+                        "units",
+                        json_string(""));
+
+    json_object_set_new(*json,
+                        "details",
+                        json_string(alarm->text));
 
     return true;
 }

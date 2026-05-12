@@ -202,8 +202,6 @@ typedef struct {
     char detail[SWITCHD_OP_DETAIL_LEN];
 } SwitchFirmware;
 
-
-
 typedef enum {
     SWITCH_POLICY_STATE_MISSING = 0,
     SWITCH_POLICY_STATE_LOADED,
@@ -242,8 +240,11 @@ typedef struct {
     char updatedAt[SWITCHD_NAME_LEN];
     char path[SWITCHD_STAGE_PATH_LEN];
     char error[SWITCHD_OP_DETAIL_LEN];
+    char hash[SWITCHD_SHA256_LEN];
     SwitchPortPolicy ports[SWITCHD_MAX_PORTS];
     time_t loadedAt;
+    time_t fileMtime;
+    time_t checkedAt;
 } SwitchPolicy;
 
 typedef struct {

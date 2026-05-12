@@ -14,7 +14,7 @@ runs:
   steps:
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: '>=1.19.0'
           cache-dependency-path: |
              **/go.sum
 
@@ -24,8 +24,8 @@ runs:
             git config --global url."https://none:${{ inputs.github-bot-token }}@github.com/ukama".insteadOf "https://github.com/ukama"
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v8
         with:
-          version: v1.64
+          version: latest
           args: --timeout=5m
           working-directory: ${{ inputs.working-directory }}

@@ -53,6 +53,43 @@ func (_m *HealhtServiceClient) List(ctx context.Context, in *gen.ListRequest, op
 	return r0, r1
 }
 
+// ListApps provides a mock function with given fields: ctx, in, opts
+func (_m *HealhtServiceClient) ListApps(ctx context.Context, in *gen.ListAppsRequest, opts ...grpc.CallOption) (*gen.ListAppsResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListApps")
+	}
+
+	var r0 *gen.ListAppsResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListAppsRequest, ...grpc.CallOption) (*gen.ListAppsResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListAppsRequest, ...grpc.CallOption) *gen.ListAppsResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ListAppsResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListAppsRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // StoreRunningAppsInfo provides a mock function with given fields: ctx, in, opts
 func (_m *HealhtServiceClient) StoreRunningAppsInfo(ctx context.Context, in *gen.StoreRunningAppsInfoRequest, opts ...grpc.CallOption) (*gen.StoreRunningAppsInfoResponse, error) {
 	_va := make([]interface{}, len(opts))

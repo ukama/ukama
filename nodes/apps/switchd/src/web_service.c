@@ -280,10 +280,17 @@ int web_service_cb_get_switch_kpis(const URequest *request,
 int web_service_cb_get_ports_policy(const URequest *request,
                                     UResponse *response,
                                     void *epConfig) {
+
+    SwitchdContext *ctx;
+
     (void)request;
+
+    ctx = ws_ctx(epConfig);
+    (void)policy_reload_if_changed(ctx);
+
     return ws_reply_json(response,
                          HttpStatus_OK,
-                         policy_serialize(ws_ctx(epConfig)));
+                         policy_serialize(ctx));
 }
 
 int web_service_cb_put_ports_policy(const URequest *request,

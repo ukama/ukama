@@ -11,6 +11,7 @@
 
 #include <jansson.h>
 
+#include "config.h"
 #include "lookout.h"
 #include "json_types.h"
 
@@ -19,19 +20,22 @@
 #define EMPTY_STRING  ""
 
 #define JSON_OK           STATUS_OK
-#define JSON_FAILURE      STATUS_NOTOK
+#define JSON_FAILURE      STATUS_NOK
 #define JSON_ENCODING_OK  JSON_OK
 #define JSON_DECODING_OK  JSON_OK
 
 void json_log(json_t *json);
 void json_free(JsonObj** json);
+
 bool json_deserialize_node_id(char **nodeID, json_t *json);
 bool json_deserialize_capps(CappList **cappList, JsonObj *json);
+bool json_deserialize_starter_status(StarterStatusData *starter,
+                                     JsonObj *json);
+
 bool json_serialize_health_report(JsonObj **json,
-                                  char *nodeID,
+                                  Config *config,
                                   CappList *list,
-                                  GPSClientData *gps,
-                                  bool radioAvailable);
+                                  LookoutStatusData *status);
 
 #endif /* JSERDES_H_ */
 

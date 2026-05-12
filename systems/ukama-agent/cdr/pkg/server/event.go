@@ -13,10 +13,8 @@ import (
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/anypb"
-
 	log "github.com/sirupsen/logrus"
+	cpb "github.com/ukama/ukama/systems/common/pb/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
@@ -37,7 +35,7 @@ func (n *CDREventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch msgbus.UpdateToAcceptFromAllOrg(e.RoutingKey) {
 	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.create"):
-		msg, err := n.unmarshalActiveSubscriberCreate(e.Msg)
+		msg, err := cpb.UnmarshalProtoEvent[epb.AsrActivated](e.Msg)
 		if err != nil {
 			return nil, err
 		}
@@ -47,7 +45,7 @@ func (n *CDREventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 			return nil, err
 		}
 	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.update"):
-		msg, err := n.unmarshalActiveSubscriberUpdate(e.Msg)
+		msg, err := cpb.UnmarshalProtoEvent[epb.AsrUpdated](e.Msg)
 		if err != nil {
 			return nil, err
 		}
@@ -63,16 +61,6 @@ func (n *CDREventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 	return &epb.EventResponse{}, nil
 }
 
-func (n *CDREventServer) unmarshalActiveSubscriberCreate(msg *anypb.Any) (*epb.AsrActivated, error) {
-	p := &epb.AsrActivated{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal Active Subscriber create message with : %+v. Error %s.", msg, err.Error())
-		return nil, err
-	}
-	return p, nil
-}
-
 func (n *CDREventServer) handleEventActiveSubscriberCreate(key string, msg *epb.AsrActivated) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 	err := n.s.InitUsage(msg.Subscriber.Imsi, msg.Subscriber.Policy)
@@ -82,16 +70,6 @@ func (n *CDREventServer) handleEventActiveSubscriberCreate(key string, msg *epb.
 	}
 
 	return nil
-}
-
-func (n *CDREventServer) unmarshalActiveSubscriberUpdate(msg *anypb.Any) (*epb.AsrUpdated, error) {
-	p := &epb.AsrUpdated{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal Active Subscriber update message with : %+v. Error %s.", msg, err.Error())
-		return nil, err
-	}
-	return p, nil
 }
 
 func (n *CDREventServer) handleEventActiveSubscriberUpdate(key string, msg *epb.AsrUpdated) error {

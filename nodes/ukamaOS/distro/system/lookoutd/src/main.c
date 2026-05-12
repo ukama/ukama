@@ -50,21 +50,54 @@ static bool str_eq(const char *a, const char *b) {
     return strcmp(a, b) == 0;
 }
 
-static bool node_id_is_tower(const char *nodeID) {
+static bool str_contains(const char *s, const char *needle) {
 
-    if (nodeID == NULL || nodeID[0] == '\0') {
+    if (s == NULL || needle == NULL) {
         return false;
     }
 
-    if (strstr(nodeID, "tnode") != NULL) {
-        return true;
+    return strstr(s, needle) != NULL;
+}
+
+static LookoutNodeType detect_node_type(const char *nodeID) {
+
+    if (nodeID == NULL || nodeID[0] == '\0') {
+        return LOOKOUT_NODE_UNKNOWN;
     }
 
-    if (strstr(nodeID, "tower") != NULL) {
-        return true;
+    if (str_contains(nodeID, "tnode") ||
+        str_contains(nodeID, "tower")) {
+        return LOOKOUT_NODE_TOWER;
     }
 
-    return false;
+    if (str_contains(nodeID, "anode") ||
+        str_contains(nodeID, "amplifier")) {
+        return LOOKOUT_NODE_AMPLIFIER;
+    }
+
+    if (str_contains(nodeID, "cnode") ||
+        str_contains(nodeID, "control")) {
+        return LOOKOUT_NODE_CONTROL;
+    }
+
+    return LOOKOUT_NODE_UNKNOWN;
+}
+
+static const char *node_type_to_string(LookoutNodeType nodeType) {
+
+    switch (nodeType) {
+    case LOOKOUT_NODE_TOWER:
+        return "tower";
+
+    case LOOKOUT_NODE_AMPLIFIER:
+        return "amplifier";
+
+    case LOOKOUT_NODE_CONTROL:
+        return "control";
+
+    default:
+        return "unknown";
+    }
 }
 
 static void configure_app_manager(Config *config) {
@@ -105,11 +138,13 @@ void usage() {
 
 int main(int argc, char **argv) {
 
-    int opt, optIdx;
+    int opt, optIdx, ret=-1;
     char *debug = DEF_LOG_LEVEL;
 
     UInst  serviceInst;
     Config serviceConfig = {0};
+
+    memset(&serviceInst, 0, sizeof(UInst));
 
     usys_log_set_service(SERVICE_NAME);
 
@@ -151,23 +186,26 @@ int main(int argc, char **argv) {
     serviceConfig.servicePort  = usys_find_service_port(SERVICE_NAME);
     serviceConfig.nodedPort    = usys_find_service_port(SERVICE_NODE);
     serviceConfig.starterdPort = usys_find_service_port(SERVICE_STARTER);
-    serviceConfig.nodeID       = NULL;
-    serviceConfig.isTowerNode  = false;
+
+    serviceConfig.nodeType        = LOOKOUT_NODE_UNKNOWN;
+    serviceConfig.isTowerNode     = false;
+    serviceConfig.isAmplifierNode = false;
+    serviceConfig.isControlNode   = false;
 
     if (!usys_find_service_port(SERVICE_UKAMA)) {
         usys_log_error("Unable to determine the port for Ukama");
-        usys_exit(1);
+        goto done;
     }
 
     if (!serviceConfig.servicePort || !serviceConfig.nodedPort) {
         usys_log_error("Unable to determine the port for required services");
-        usys_exit(1);
+        goto done;
     }
 
     if (serviceConfig.appManager == LOOKOUT_APP_MANAGER_STARTERD &&
         !serviceConfig.starterdPort) {
         usys_log_error("Unable to determine the port for starter.d");
-        usys_exit(1);
+        goto done;
     }
 
     usys_log_debug("Starting %s ... ", SERVICE_NAME);
@@ -187,19 +225,26 @@ int main(int argc, char **argv) {
         }
     }
 
-    serviceConfig.isTowerNode = node_id_is_tower(serviceConfig.nodeID);
+    serviceConfig.nodeType = detect_node_type(serviceConfig.nodeID);
+
+    serviceConfig.isTowerNode =
+        serviceConfig.nodeType == LOOKOUT_NODE_TOWER;
+    serviceConfig.isAmplifierNode =
+        serviceConfig.nodeType == LOOKOUT_NODE_AMPLIFIER;
+    serviceConfig.isControlNode =
+        serviceConfig.nodeType == LOOKOUT_NODE_CONTROL;
 
     usys_log_info("%s: nodeID=%s nodeType=%s appManager=%s",
                   SERVICE_NAME,
                   serviceConfig.nodeID,
-                  serviceConfig.isTowerNode ? "tower" : "non-tower",
+                  node_type_to_string(serviceConfig.nodeType),
                   serviceConfig.appManager == LOOKOUT_APP_MANAGER_STARTERD ?
-                      "starter" : "supervisor");
+                  "starter" : "supervisor");
 
     if (start_web_services(&serviceConfig, &serviceInst) != USYS_TRUE) {
         usys_log_error("%s: unable to start webservice. Exiting.",
                        SERVICE_NAME);
-        exit(1);
+        goto done;
     }
 
     while (USYS_TRUE) {
@@ -210,13 +255,14 @@ int main(int argc, char **argv) {
         sleep(DEF_REPORT_INTERVAL);
     }
 
-done:
     ulfius_stop_framework(&serviceInst);
     ulfius_clean_instance(&serviceInst);
 
+    ret = 0;
+done:
     usys_free(serviceConfig.nodeID);
 
     usys_log_debug("Exiting %s ...", SERVICE_NAME);
 
-    return USYS_TRUE;
+    return ret;
 }

@@ -1,11 +1,3 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
-
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
@@ -16,7 +8,13 @@ typedef enum {
     LOOKOUT_APP_MANAGER_SUPERVISORD
 } LookoutAppManager;
 
-/* Service configuration */
+typedef enum {
+    LOOKOUT_NODE_UNKNOWN = 0,
+    LOOKOUT_NODE_TOWER,
+    LOOKOUT_NODE_AMPLIFIER,
+    LOOKOUT_NODE_CONTROL
+} LookoutNodeType;
+
 typedef struct {
 
     int servicePort;
@@ -26,7 +24,11 @@ typedef struct {
     char *nodeID;
 
     LookoutAppManager appManager;
+    LookoutNodeType   nodeType;
+
     bool isTowerNode;
+    bool isAmplifierNode;
+    bool isControlNode;
 } Config;
 
 #endif /* CONFIG_H_ */
