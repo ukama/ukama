@@ -64,8 +64,6 @@ func (h *HealthServer) StoreHealthReport(ctx context.Context, req *pb.StoreHealt
 		NodeType:      ukama.NodeType(req.GetNodeType()),
 		SchemaVersion: req.GetSchemaVersion(),
 		ReportedAt:    reportedAt,
-		ParseStatus:   ukama.AppStatus(req.GetParseStatus()),
-		ParseError:    req.GetParseError(),
 		Payload:       payload,
 	}
 
@@ -115,8 +113,6 @@ func healthReportToPb(r *db.HealthReport) *pb.HealthReport {
 		SchemaVersion: r.SchemaVersion,
 		ReportedAt:    timestamppb.New(r.ReportedAt),
 		ReceivedAt:    timestamppb.New(r.ReceivedAt),
-		ParseStatus:   pb.AppStatus(r.ParseStatus),
-		ParseError:    r.ParseError,
 		Payload:       r.Payload,
 	}
 }

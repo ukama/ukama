@@ -41,8 +41,6 @@ func latestToReport(l *NodeLatestHealth) *HealthReport {
 		SchemaVersion: l.SchemaVersion,
 		ReportedAt:    l.ReportedAt,
 		ReceivedAt:    l.ReceivedAt,
-		ParseStatus:   l.ParseStatus,
-		ParseError:    l.ParseError,
 		Payload:       l.Payload,
 	}
 }
@@ -129,8 +127,6 @@ func syncNodeLatestHealth(tx *gorm.DB, report *HealthReport, receivedAt time.Tim
 		SchemaVersion: report.SchemaVersion,
 		ReportedAt:    report.ReportedAt,
 		ReceivedAt:    report.ReceivedAt,
-		ParseStatus:   report.ParseStatus,
-		ParseError:    report.ParseError,
 		Payload:       report.Payload,
 		UpdatedAt:     receivedAt,
 	}
@@ -146,8 +142,6 @@ func syncNodeLatestHealth(tx *gorm.DB, report *HealthReport, receivedAt time.Tim
 		"schemaVersion": next.SchemaVersion,
 		"reportedAt":    next.ReportedAt,
 		"receivedAt":    next.ReceivedAt,
-		"parseStatus":   next.ParseStatus,
-		"parseError":    next.ParseError,
 		"payload":       next.Payload,
 		"updatedAt":     next.UpdatedAt,
 	}).Error

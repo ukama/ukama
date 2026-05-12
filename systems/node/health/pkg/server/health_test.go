@@ -41,8 +41,6 @@ func TestHealthServerStoreHealthReport(t *testing.T) {
 		NodeType:      string(ukama.NODE_TYPE_HOMENODE),
 		SchemaVersion: "1",
 		ReportedAt:    timestamppb.New(reported),
-		ParseStatus:   pb.AppStatus_APP_STATUS_ACTIVE,
-		ParseError:    "",
 		Payload:       payload,
 	}
 
@@ -52,7 +50,6 @@ func TestHealthServerStoreHealthReport(t *testing.T) {
 			r.NodeType == ukama.NodeType(req.GetNodeType()) &&
 			r.SchemaVersion == "1" &&
 			r.ReportedAt.Equal(reported) &&
-			r.ParseStatus == ukama.AppStatusActive &&
 			string(r.Payload) == string(payload)
 	}), mock.MatchedBy(func(ts time.Time) bool {
 		return !ts.IsZero()
@@ -72,10 +69,9 @@ func TestHealthServerStoreHealthReportInvalidNodeId(t *testing.T) {
 	s := NewHealthServer(testOrgName, hRepo, false)
 
 	resp, err := s.StoreHealthReport(context.Background(), &pb.StoreHealthReportRequest{
-		NodeId:        "invalid-node",
-		NodeType:    string(ukama.NODE_TYPE_HOMENODE),
-		ReportedAt:  timestamppb.New(time.Now()),
-		ParseStatus: pb.AppStatus_APP_STATUS_UNKNOWN,
+		NodeId:       "invalid-node",
+		NodeType:   string(ukama.NODE_TYPE_HOMENODE),
+		ReportedAt: timestamppb.New(time.Now()),
 	})
 
 	assert.Nil(t, resp)
@@ -90,9 +86,8 @@ func TestHealthServerStoreHealthReportMissingReportedAt(t *testing.T) {
 	s := NewHealthServer(testOrgName, hRepo, false)
 
 	resp, err := s.StoreHealthReport(context.Background(), &pb.StoreHealthReportRequest{
-		NodeId:        testNode.String(),
-		NodeType:    string(ukama.NODE_TYPE_HOMENODE),
-		ParseStatus: pb.AppStatus_APP_STATUS_UNKNOWN,
+		NodeId:     testNode.String(),
+		NodeType: string(ukama.NODE_TYPE_HOMENODE),
 	})
 
 	assert.Nil(t, resp)
@@ -105,10 +100,9 @@ func TestHealthServerStoreHealthReportMissingReportedAt(t *testing.T) {
 func TestHealthServerStoreHealthReportRepoError(t *testing.T) {
 	hRepo := &mocks.HealthRepo{}
 	req := &pb.StoreHealthReportRequest{
-		NodeId:        testNode.String(),
-		NodeType:    string(ukama.NODE_TYPE_HOMENODE),
-		ReportedAt:  timestamppb.New(time.Now().UTC()),
-		ParseStatus: pb.AppStatus_APP_STATUS_UNKNOWN,
+		NodeId:       testNode.String(),
+		NodeType:   string(ukama.NODE_TYPE_HOMENODE),
+		ReportedAt: timestamppb.New(time.Now().UTC()),
 	}
 
 	hRepo.On("StoreHealthReport", mock.Anything, mock.Anything).Return(assert.AnError).Once()
@@ -135,8 +129,6 @@ func TestHealthServerListLatest(t *testing.T) {
 		SchemaVersion: "1",
 		ReportedAt:    reported,
 		ReceivedAt:    received,
-		ParseStatus:   ukama.AppStatusRunning,
-		ParseError:    "",
 		Payload:       raw,
 	}
 
@@ -154,7 +146,6 @@ func TestHealthServerListLatest(t *testing.T) {
 		assert.Equal(t, reportID.String(), r.Id)
 		assert.Equal(t, testNode.String(), r.NodeId)
 		assert.Equal(t, string(ukama.NODE_TYPE_HOMENODE), r.NodeType)
-		assert.Equal(t, pb.AppStatus_APP_STATUS_RUNNING, r.ParseStatus)
 	}
 	hRepo.AssertExpectations(t)
 }
@@ -166,8 +157,8 @@ func TestHealthServerListAll(t *testing.T) {
 	ts1 := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 	ts2 := time.Date(2026, 1, 2, 0, 0, 0, 0, time.UTC)
 	reports := []*db.HealthReport{
-		{ID: id1, NodeID: testNode.String(), ReportedAt: ts1, SchemaVersion: "1", Payload: json.RawMessage(`{}`), ParseStatus: ukama.AppStatusUnknown},
-		{ID: id2, NodeID: testNode.String(), ReportedAt: ts2, SchemaVersion: "1", Payload: json.RawMessage(`{}`), ParseStatus: ukama.AppStatusUnknown},
+		{ID: id1, NodeID: testNode.String(), ReportedAt: ts1, SchemaVersion: "1", Payload: json.RawMessage(`{}`)},
+		{ID: id2, NodeID: testNode.String(), ReportedAt: ts2, SchemaVersion: "1", Payload: json.RawMessage(`{}`)},
 	}
 
 	hRepo.On("List", "", testNode.String(), (*time.Time)(nil), ukama.FilterTimeframesTypeAll).Return(reports, nil).Once()

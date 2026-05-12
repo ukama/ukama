@@ -35,8 +35,6 @@ type HealthReport struct {
 	SchemaVersion string          `gorm:"column:schemaVersion;not null" json:"schemaVersion"`
 	ReportedAt    time.Time       `gorm:"column:reportedAt;not null;index" json:"reportedAt"`
 	ReceivedAt    time.Time       `gorm:"column:receivedAt;not null" json:"receivedAt"`
-	ParseStatus   ukama.AppStatus `gorm:"column:parseStatus;not null" json:"parseStatus"`
-	ParseError    string          `gorm:"column:parseError;not null;default:''" json:"parseError"`
 	Payload       json.RawMessage `gorm:"column:payload;type:jsonb;not null" json:"payload"`
 }
 
@@ -47,8 +45,6 @@ type NodeLatestHealth struct {
 	SchemaVersion string          `gorm:"column:schemaVersion;not null" json:"schemaVersion"`
 	ReportedAt    time.Time       `gorm:"column:reportedAt;not null" json:"reportedAt"`
 	ReceivedAt    time.Time       `gorm:"column:receivedAt;not null" json:"receivedAt"`
-	ParseStatus   ukama.AppStatus `gorm:"column:parseStatus;not null" json:"parseStatus"`
-	ParseError    string          `gorm:"column:parseError;not null;default:''" json:"parseError"`
 	Payload       json.RawMessage `gorm:"column:payload;type:jsonb;not null" json:"payload"`
 	UpdatedAt     time.Time       `gorm:"column:updatedAt;not null" json:"updatedAt"`
 }

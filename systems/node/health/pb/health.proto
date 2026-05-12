@@ -33,9 +33,7 @@ message StoreHealthReportRequest {
     string nodeType = 2 [(validator.field) = {string_not_empty: true}];
     string schemaVersion = 3;
     google.protobuf.Timestamp reportedAt = 4;
-    AppStatus parseStatus = 5;
-    string parseError = 6;
-    bytes payload = 7;
+    bytes payload = 5;
 }
 
 message StoreHealthReportResponse {
@@ -49,16 +47,5 @@ message HealthReport {
     string schemaVersion = 4;
     google.protobuf.Timestamp reportedAt = 5;
     google.protobuf.Timestamp receivedAt = 6;
-    AppStatus parseStatus = 7;
-    string parseError = 8;
-    bytes payload = 9;
-}
-
-enum AppStatus {
-    APP_STATUS_UNKNOWN = 0;
-    APP_STATUS_PENDING = 1;
-    APP_STATUS_ACTIVE = 2;
-    APP_STATUS_INACTIVE = 3;
-    APP_STATUS_RUNNING = 4;
-    APP_STATUS_STOPPED = 5;
+    bytes payload = 7;
 }
