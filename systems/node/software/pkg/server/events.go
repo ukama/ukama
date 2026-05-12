@@ -18,7 +18,6 @@ import (
 	evt "github.com/ukama/ukama/systems/common/events"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/common/validation"
@@ -149,21 +148,21 @@ func (n *SoftwareUpdateEventServer) reconcileCurrentAppVersion() error {
 }
 
 func (n *SoftwareUpdateEventServer) reconcileCurrentVersionForNode(nodeID string) error {
-	cApps, err := n.listCApps(nodeID, "")
+	cApps, err := n.listApps(nodeID)
 	if err != nil {
 		return fmt.Errorf("failed to list capps for node %s: %w", nodeID, err)
 	}
 
-	for _, capp := range cApps.Capps {
+	for _, capp := range cApps.Apps {
 		app, err := n.s.sRepo.List(nodeID, ukama.Unknown, capp.Name)
 		if err != nil {
 			return fmt.Errorf("failed to get app %s: %w", capp.Name, err)
 		}
-		if len(app) == 0 || app[0].CurrentVersion == capp.Tag {
+		if len(app) == 0 || app[0].CurrentVersion == capp.Version {
 			continue
 		}
 
-		app[0].CurrentVersion = capp.Tag
+		app[0].CurrentVersion = capp.Version
 		err = n.s.sRepo.Update(app[0])
 		if err != nil {
 			return fmt.Errorf(errFailedUpdateSoftware, err)
@@ -174,18 +173,18 @@ func (n *SoftwareUpdateEventServer) reconcileCurrentVersionForNode(nodeID string
 
 func (n *SoftwareUpdateEventServer) reconcileSoftware(nodeID string) error {
 	log.Infof("Reconciling software for node %s", nodeID)
-	healthReport, err := n.getHealthReport(nodeID)
+	hrApps, err := n.listApps(nodeID)
 	if err != nil {
-		return fmt.Errorf("failed to get health report for node %s: %w", nodeID, err)
+		return fmt.Errorf("failed to get apps for node %s: %w", nodeID, err)
 	}
-	if len(healthReport.Healths) == 0 {
-		log.Infof("No health report found for node %s", nodeID)
+	if len(hrApps.Apps) == 0 {
+		log.Infof("No apps found for node %s", nodeID)
 		return nil
 	}
 
-	capps := healthReport.Healths[0].Capps
+	
 
-	for _, capp := range capps {
+	for _, capp := range hrApps.Apps {
 		listSoftware, err := n.s.sRepo.List(nodeID, ukama.Unknown, capp.Name)
 		if err != nil {
 			return fmt.Errorf("failed to list software for node %s: %w", nodeID, err)
@@ -196,7 +195,7 @@ func (n *SoftwareUpdateEventServer) reconcileSoftware(nodeID string) error {
 				Id:             uuid.NewV4(),
 				NodeId:         nodeID,
 				AppName:        capp.Name,
-				CurrentVersion: capp.Tag,
+				CurrentVersion: capp.Version,
 				DesiredVersion: "",
 				ReleaseDate:    time.Now(),
 				Status:         ukama.UpToDate,
@@ -234,12 +233,12 @@ func (n *SoftwareUpdateEventServer) reconcileApps(nodeID string) error {
 		return err
 	}
 
-	capps, err := n.listCApps(nodeID, "")
+	hrApps, err := n.listApps(nodeID)
 	if err != nil {
-		return fmt.Errorf("failed to list capps: %w", err)
+		return fmt.Errorf("failed to list apps: %w", err)
 	}
 
-	if len(capps.Capps) == 0 {
+	if len(hrApps.Apps) == 0 {
 		log.Infof("No apps found from health for node %s", nID.String())
 		return nil
 	}
@@ -249,7 +248,7 @@ func (n *SoftwareUpdateEventServer) reconcileApps(nodeID string) error {
 		return fmt.Errorf("failed to get apps: %w", err)
 	}
 
-	missingApps := findMissingApps(capps.Capps, apps, nodeType)
+	missingApps := findMissingApps(hrApps.Apps, apps, nodeType)
 	if err := n.createMissingApps(missingApps); err != nil {
 		return err
 	}
@@ -257,14 +256,14 @@ func (n *SoftwareUpdateEventServer) reconcileApps(nodeID string) error {
 	return nil
 }
 
-func findMissingApps(capps []*hpb.Capps, apps []db.App, nodeType *string) map[string]db.App {
+func findMissingApps(hrApps []*hpb.App, apps []db.App, nodeType *string) map[string]db.App {
 	appNames := make(map[string]struct{}, len(apps))
 	for _, app := range apps {
 		appNames[strings.ToLower(app.Name)] = struct{}{}
 	}
 
 	missingByName := make(map[string]db.App)
-	for _, capp := range capps {
+	for _, capp := range hrApps {
 		name := strings.TrimSpace(capp.Name)
 		if name == "" {
 			continue
@@ -302,32 +301,16 @@ func (n *SoftwareUpdateEventServer) createMissingApps(missingApps map[string]db.
 	return nil
 }
 
-func (n *SoftwareUpdateEventServer) getHealthReport(nodeID string) (*hpb.ListResponse, error) {
+func (n *SoftwareUpdateEventServer) listApps(nodeId string) (*hpb.GetAppsResponse, error) {
 	healthClient, err := n.s.healthClient.GetClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get health client: %w", err)
 	}
-	healthReport, err := healthClient.List(context.Background(), &hpb.ListRequest{
-		NodeId:    nodeID,
-		Timeframe: upb.FilterTimeframesType_LATEST,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get health report for node %s: %w", nodeID, err)
-	}
-	return healthReport, nil
-}
-
-func (n *SoftwareUpdateEventServer) listCApps(nodeId string, name string) (*hpb.ListAppsResponse, error) {
-	healthClient, err := n.s.healthClient.GetClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get health client: %w", err)
-	}
-	response, err := healthClient.ListApps(context.Background(), &hpb.ListAppsRequest{
+	response, err := healthClient.GetApps(context.Background(), &hpb.GetAppsRequest{
 		NodeId: nodeId,
-		Name:   name,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to list capps: %w", err)
+		return nil, fmt.Errorf("failed to get apps: %w", err)
 	}
 	return response, nil
 }

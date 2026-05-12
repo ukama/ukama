@@ -25,6 +25,7 @@ import (
 	healthmocks "github.com/ukama/ukama/systems/node/health/pb/gen/mocks"
 	"github.com/ukama/ukama/systems/node/software/mocks"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
+	"github.com/ukama/ukama/systems/node/software/providers"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
@@ -43,7 +44,7 @@ func newEventServerWithMocks(t *testing.T, sRepo *mocks.SoftwareRepo, appRepo *m
 	return NewSoftwareEventServer(testOrgName, swServer)
 }
 
-func newEventServerWithAllMocks(t *testing.T, sRepo *mocks.SoftwareRepo, appRepo *mocks.AppRepo, nodeRepo *mocks.NodeRepo, healthProvider *mocks.HealthClientProvider) *SoftwareUpdateEventServer {
+func newEventServerWithAllMocks(t *testing.T, sRepo *mocks.SoftwareRepo, appRepo *mocks.AppRepo, nodeRepo *mocks.NodeRepo, healthProvider providers.HealthClientProvider) *SoftwareUpdateEventServer {
 	t.Helper()
 	swServer := NewSoftwareServer(testOrgName, sRepo, appRepo, nodeRepo, healthProvider, mbmocks.NewMsgBusServiceClient(t), false, []string{"192.168.0.1"})
 	return NewSoftwareEventServer(testOrgName, swServer)
@@ -263,18 +264,18 @@ func TestReconcileCurrentAppVersion_UpdatesCurrentVersionFromHealth(t *testing.T
 	nodeRepo := mocks.NewNodeRepo(t)
 	appRepo := mocks.NewAppRepo(t)
 	healthProvider := mocks.NewHealthClientProvider(t)
-	healthClient := healthmocks.NewHealhtServiceClient(t)
+	healthClient := healthmocks.NewHealthServiceClient(t)
 
 	nodeRepo.On("List").Return([]db.Node{
 		{NodeId: testNodeId},
 	}, nil).Once()
 
 	healthProvider.On("GetClient").Return(healthClient, nil)
-	healthClient.On("ListApps", mock.Anything, mock.MatchedBy(func(req *hpb.ListAppsRequest) bool {
-		return req.NodeId == testNodeId && req.Name == ""
-	})).Return(&hpb.ListAppsResponse{
-		Capps: []*hpb.Capps{
-			{Name: testAppNameForUpdate, Tag: testTagVersion},
+	healthClient.On("GetApps", mock.Anything, mock.MatchedBy(func(req *hpb.GetAppsRequest) bool {
+		return req.NodeId == testNodeId
+	})).Return(&hpb.GetAppsResponse{
+		Apps: []*hpb.App{
+			{Name: testAppNameForUpdate, Version: testTagVersion},
 		},
 	}, nil).Once()
 
