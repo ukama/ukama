@@ -9,90 +9,46 @@
 package db
 
 import (
-	"fmt"
+	"encoding/json"
 	"time"
 
-	uuid "github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/common/uuid"
 )
 
-type Health struct {
-	Id        uuid.UUID `gorm:"primaryKey;type:uuid"`
-	NodeId    string    `gorm:"not null"`
-	TimeStamp string
-	System    []System   `gorm:"foreignKey:HealthID"`
-	Capps     []Capp     `gorm:"foreignKey:HealthID"`
-	CreatedAt time.Time  `gorm:"not null"`
-	UpdatedAt time.Time  `gorm:"not null"`
-	DeletedAt *time.Time `gorm:"index"`
-}
-type System struct {
-	Id       uuid.UUID `gorm:"primaryKey;type:uuid"`
-	HealthID uuid.UUID `gorm:"type:uuid"`
-	Name     string    `gorm:"not null"`
-	Value    string    `gorm:"not null"`
+type Node struct {
+	NodeID         string         `gorm:"column:node_id;primaryKey;not null" json:"nodeId"`
+	NodeType       ukama.NodeType `gorm:"column:node_type;not null" json:"nodeType"`
+	FirstSeenAt    time.Time      `gorm:"column:first_seen_at;not null" json:"firstSeenAt"`
+	LastSeenAt     time.Time      `gorm:"column:last_seen_at;not null" json:"lastSeenAt"`
+	LastReportedAt *time.Time     `gorm:"column:last_reported_at" json:"lastReportedAt,omitempty"`
 }
 
-type Capp struct {
-	Id        uuid.UUID `gorm:"primaryKey;type:uuid"`
-	HealthID  uuid.UUID `gorm:"type:uuid"`
-	Space     string
-	Name      string
-	Tag       string
-	Status    Status     `gorm:"type:uint;not null;default:3"`
-	Resources []Resource `gorm:"foreignKey:CappID"`
+func (Node) TableName() string {
+	return "health_nodes"
 }
 
-type Resource struct {
-	Id     uuid.UUID `gorm:"primaryKey;type:uuid"`
-	CappID uuid.UUID `gorm:"type:uuid"` // Foreign key to associate with Capp
-	Name   string    `gorm:"not null"`
-	Value  string    `gorm:"not null"` // "value" field from the JSON payload
+type HealthReport struct {
+	ID            uuid.UUID       `gorm:"column:id;type:uuid;primaryKey" json:"id"`
+	NodeID        string          `gorm:"column:node_id;not null;index" json:"nodeId"`
+	NodeType      ukama.NodeType  `gorm:"column:node_type;not null;index" json:"nodeType"`
+	SchemaVersion string          `gorm:"column:schema_version;not null" json:"schemaVersion"`
+	ReportedAt    time.Time       `gorm:"column:reported_at;not null;index" json:"reportedAt"`
+	ReceivedAt    time.Time       `gorm:"column:received_at;not null" json:"receivedAt"`
+	ParseStatus   ukama.AppStatus `gorm:"column:parse_status;not null" json:"parseStatus"`
+	ParseError    string          `gorm:"column:parse_error;not null;default:''" json:"parseError"`
+	Payload       json.RawMessage `gorm:"column:payload;type:jsonb;not null" json:"payload"`
 }
 
-type Status uint8
-
-const (
-	Pending Status = 0
-	Active  Status = 1
-	Done    Status = 2
-	Unknown Status = 3
-)
-
-func (e *Status) Scan(value interface{}) error {
-	if value == nil {
-		*e = Unknown
-		return nil
-	}
-
-	switch v := value.(type) {
-	case int64:
-		*e = Status(uint8(v))
-	case int32:
-		*e = Status(uint8(v))
-	case int:
-		*e = Status(uint8(v))
-	case uint8:
-		*e = Status(v)
-	case uint16:
-		*e = Status(uint8(v))
-	case uint32:
-		*e = Status(uint8(v))
-	case []byte:
-		if len(v) == 0 {
-			*e = Unknown
-			return nil
-		}
-		*e = Status(v[0])
-	default:
-		return fmt.Errorf("unsupported status type %T", value)
-	}
-
-	if *e > Unknown {
-		*e = Unknown
-	}
-	return nil
-}
-
-func (e Status) Value() (uint8, error) {
-	return uint8(e), nil
+type NodeLatestHealth struct {
+	NodeID        string          `gorm:"column:node_id;primaryKey;not null" json:"nodeId"`
+	NodeType      ukama.NodeType  `gorm:"column:node_type;not null" json:"nodeType"`
+	ReportID      uuid.UUID       `gorm:"column:report_id;type:uuid;not null" json:"reportId"`
+	SchemaVersion string          `gorm:"column:schema_version;not null" json:"schemaVersion"`
+	ReportedAt    time.Time       `gorm:"column:reported_at;not null" json:"reportedAt"`
+	ReceivedAt    time.Time       `gorm:"column:received_at;not null" json:"receivedAt"`
+	ParseStatus   ukama.AppStatus `gorm:"column:parse_status;not null" json:"parseStatus"`
+	ParseError    string          `gorm:"column:parse_error;not null;default:''" json:"parseError"`
+	Payload       json.RawMessage `gorm:"column:payload;type:jsonb;not null" json:"payload"`
+	UpdatedAt     time.Time       `gorm:"column:updated_at;not null" json:"updatedAt"`
 }

@@ -7,10 +7,9 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
-	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	_ "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	_ "github.com/mwitkow/go-proto-validators"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
@@ -19,36 +18,55 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *ListAppsRequest) Validate() error {
+func (this *ListRequest) Validate() error {
+	if this.ReportedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.ReportedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("ReportedAt", err)
+		}
+	}
 	return nil
 }
-func (this *ListAppsResponse) Validate() error {
-	for _, item := range this.Capps {
+func (this *ListResponse) Validate() error {
+	for _, item := range this.Reports {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Capps", err)
+				return github_com_mwitkow_go_proto_validators.FieldError("Reports", err)
 			}
 		}
 	}
 	return nil
 }
-func (this *ListRequest) Validate() error {
+func (this *StoreHealthReportRequest) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
+	if this.NodeType == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeType", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeType))
+	}
+	if this.ReportedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.ReportedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("ReportedAt", err)
+		}
+	}
 	return nil
 }
-func (this *ListResponse) Validate() error {
-	for _, item := range this.Healths {
-		if item != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Healths", err)
-			}
+func (this *StoreHealthReportResponse) Validate() error {
+	return nil
+}
+func (this *HealthReport) Validate() error {
+	if this.ReportedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.ReportedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("ReportedAt", err)
+		}
+	}
+	if this.ReceivedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.ReceivedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("ReceivedAt", err)
 		}
 	}
 	return nil
 }
 func (this *StoreRunningAppsInfoRequest) Validate() error {
-	if this.NodeId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
-	}
 	for _, item := range this.System {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
@@ -68,21 +86,10 @@ func (this *StoreRunningAppsInfoRequest) Validate() error {
 func (this *StoreRunningAppsInfoResponse) Validate() error {
 	return nil
 }
-func (this *Health) Validate() error {
-	for _, item := range this.System {
-		if item != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("System", err)
-			}
-		}
-	}
-	for _, item := range this.Capps {
-		if item != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Capps", err)
-			}
-		}
-	}
+func (this *System) Validate() error {
+	return nil
+}
+func (this *Resource) Validate() error {
 	return nil
 }
 func (this *Capps) Validate() error {
@@ -93,11 +100,5 @@ func (this *Capps) Validate() error {
 			}
 		}
 	}
-	return nil
-}
-func (this *System) Validate() error {
-	return nil
-}
-func (this *Resource) Validate() error {
 	return nil
 }
