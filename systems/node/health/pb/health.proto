@@ -14,7 +14,16 @@ import "ukama/filter_timeframes.proto";
 
 service HealthService {
     rpc List (ListRequest) returns (ListResponse);
+    rpc GetApps (GetAppsRequest) returns (GetAppsResponse);
     rpc StoreHealthReport (StoreHealthReportRequest) returns (StoreHealthReportResponse);
+}
+
+message GetAppsRequest {
+    string nodeId = 1;
+}
+
+message GetAppsResponse {
+    repeated App apps = 1;
 }
 
 message ListRequest {
@@ -45,4 +54,11 @@ message HealthReport {
     google.protobuf.Timestamp reportedAt = 5;
     google.protobuf.Timestamp receivedAt = 6;
     bytes payload = 7;
+}
+
+message App {
+    string name = 1;
+    string version = 2;
+    string tag = 3;
+    string status = 4;
 }

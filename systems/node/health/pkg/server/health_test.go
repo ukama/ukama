@@ -222,3 +222,48 @@ func TestHealthServerListRepoError(t *testing.T) {
 	assert.Error(t, err)
 	hRepo.AssertExpectations(t)
 }
+
+func TestHealthServerGetApps(t *testing.T) {
+	hRepo := &mocks.HealthRepo{}
+	reportID := uuid.NewV4()
+	reported := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+	received := reported.Add(time.Minute)
+	payload, err := json.Marshal(map[string]interface{}{
+		"apps": []map[string]string{
+			{
+				"name":    "test-app",
+				"version": "1.0.0",
+				"tag":     "latest",
+				"state":   "active",
+			},
+		},
+	})
+	assert.NoError(t, err)
+	raw := json.RawMessage(payload)
+
+	report := &db.HealthReport{
+		ID:            reportID,
+		NodeID:        testNode.String(),
+		NodeType:      ukama.NODE_TYPE_HOMENODE,
+		SchemaVersion: "1",
+		ReportedAt:    reported,
+		ReceivedAt:    received,
+		Payload:       raw,
+	}
+
+	hRepo.On("List", "", testNode.String(), (*time.Time)(nil), ukama.FilterTimeframesTypeLatest).Return([]*db.HealthReport{report}, nil).Once()
+	s := NewHealthServer(testOrgName, hRepo, false)
+
+	resp, err := s.GetApps(context.Background(), &pb.GetAppsRequest{
+		NodeId: testNode.String(),
+	})
+
+	assert.NoError(t, err)
+	if assert.NotNil(t, resp) && assert.Len(t, resp.Apps, 1) {
+		assert.Equal(t, "test-app", resp.Apps[0].Name)
+		assert.Equal(t, "1.0.0", resp.Apps[0].Version)
+		assert.Equal(t, "latest", resp.Apps[0].Tag)
+		assert.Equal(t, "active", resp.Apps[0].Status)
+	}
+	hRepo.AssertExpectations(t)
+}

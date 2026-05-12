@@ -7,9 +7,9 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
+	_ "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
@@ -18,6 +18,19 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *GetAppsRequest) Validate() error {
+	return nil
+}
+func (this *GetAppsResponse) Validate() error {
+	for _, item := range this.Apps {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Apps", err)
+			}
+		}
+	}
+	return nil
+}
 func (this *ListRequest) Validate() error {
 	if this.ReportedAt != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.ReportedAt); err != nil {
@@ -56,5 +69,8 @@ func (this *HealthReport) Validate() error {
 			return github_com_mwitkow_go_proto_validators.FieldError("ReceivedAt", err)
 		}
 	}
+	return nil
+}
+func (this *App) Validate() error {
 	return nil
 }

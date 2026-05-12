@@ -111,6 +111,36 @@ func (h *HealthServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListR
 	return &pb.ListResponse{Reports: out}, nil
 }
 
+func (h *HealthServer) GetApps(ctx context.Context, req *pb.GetAppsRequest) (*pb.GetAppsResponse, error) {
+	log.Infof("GetApps: %v", req)
+
+	reports, err := h.sRepo.List("", req.GetNodeId(), nil, ukama.FilterTimeframesTypeLatest)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "health")
+	}
+
+	if len(reports) == 0 {
+		return &pb.GetAppsResponse{Apps: make([]*pb.App, 0)}, nil
+	}
+
+	parsed, err := parser.ParseHealthPayload(reports[0].Payload)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "payload is invalid: %v", err)
+	}
+
+	apps := make([]*pb.App, len(parsed.Apps))
+	for i, a := range parsed.Apps {
+		apps[i] = &pb.App{
+			Name: a.Name,
+			Version: a.Version,
+			Tag: a.Tag,
+			Status: a.State,
+		}
+	}
+
+	return &pb.GetAppsResponse{Apps: apps}, nil
+}
+
 func healthReportToPb(r *db.HealthReport) *pb.HealthReport {
 	if r == nil {
 		return nil
