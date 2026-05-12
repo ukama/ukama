@@ -12,15 +12,15 @@ import "validator.proto";
 import "google/protobuf/timestamp.proto";
 import "ukama/filter_timeframes.proto";
 
-service healhtService {
+service HealthService {
     rpc List (ListRequest) returns (ListResponse);
     rpc StoreHealthReport (StoreHealthReportRequest) returns (StoreHealthReportResponse);
 }
 
 message ListRequest {
-    string report_id = 1;
-    string node_id = 2;
-    google.protobuf.Timestamp reported_at = 3;
+    string reportId = 1;
+    string nodeId = 2;
+    google.protobuf.Timestamp reportedAt = 3;
     ukama.common.v1.FilterTimeframesType timeframe = 4;
 }
 
@@ -29,28 +29,28 @@ message ListResponse {
 }
 
 message StoreHealthReportRequest {
-    string node_id = 1 [(validator.field) = {string_not_empty: true}];
-    string node_type = 2 [(validator.field) = {string_not_empty: true}];
-    string schema_version = 3;
-    google.protobuf.Timestamp reported_at = 4;
-    AppStatus parse_status = 5;
-    string parse_error = 6;
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}];
+    string nodeType = 2 [(validator.field) = {string_not_empty: true}];
+    string schemaVersion = 3;
+    google.protobuf.Timestamp reportedAt = 4;
+    AppStatus parseStatus = 5;
+    string parseError = 6;
     bytes payload = 7;
 }
 
 message StoreHealthReportResponse {
-    string report_id = 1;
+    string reportId = 1;
 }
 
 message HealthReport {
     string id = 1;
-    string node_id = 2;
-    string node_type = 3;
-    string schema_version = 4;
-    google.protobuf.Timestamp reported_at = 5;
-    google.protobuf.Timestamp received_at = 6;
-    AppStatus parse_status = 7;
-    string parse_error = 8;
+    string nodeId = 2;
+    string nodeType = 3;
+    string schemaVersion = 4;
+    google.protobuf.Timestamp reportedAt = 5;
+    google.protobuf.Timestamp receivedAt = 6;
+    AppStatus parseStatus = 7;
+    string parseError = 8;
     bytes payload = 9;
 }
 

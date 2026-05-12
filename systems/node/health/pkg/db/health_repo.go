@@ -15,6 +15,7 @@ import (
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type HealthRepo interface {
@@ -50,10 +51,10 @@ func (r *healthRepo) List(reportID, nodeID string, reportedAt *time.Time, timefr
 	if timeframe == ukama.FilterTimeframesTypeLatest {
 		q := r.Db.GetGormDb().Model(&NodeLatestHealth{})
 		if nodeID != "" {
-			q = q.Where("node_id = ?", nodeID)
+			q = q.Where(map[string]interface{}{"nodeId": nodeID})
 		}
 		if reportID != "" {
-			q = q.Where("report_id = ?", reportID)
+			q = q.Where(map[string]interface{}{"reportId": reportID})
 		}
 		var rows []NodeLatestHealth
 		if err := q.Find(&rows).Error; err != nil {
@@ -66,15 +67,18 @@ func (r *healthRepo) List(reportID, nodeID string, reportedAt *time.Time, timefr
 		return out, nil
 	}
 
-	q := r.Db.GetGormDb().Model(&HealthReport{}).Order("reported_at DESC")
+	q := r.Db.GetGormDb().Model(&HealthReport{}).Order(clause.OrderByColumn{
+		Column: clause.Column{Name: "reportedAt"},
+		Desc:   true,
+	})
 	if reportID != "" {
 		q = q.Where("id = ?", reportID)
 	}
 	if nodeID != "" {
-		q = q.Where("node_id = ?", nodeID)
+		q = q.Where(map[string]interface{}{"nodeId": nodeID})
 	}
 	if reportedAt != nil {
-		q = q.Where("reported_at = ?", *reportedAt)
+		q = q.Where(map[string]interface{}{"reportedAt": *reportedAt})
 	}
 	var reports []*HealthReport
 	err := q.Find(&reports).Error
@@ -90,7 +94,7 @@ func shouldReplaceNodeLatest(report *HealthReport, current *NodeLatestHealth) bo
 
 func upsertHealthNode(tx *gorm.DB, report *HealthReport, receivedAt time.Time) error {
 	var existing Node
-	err := tx.Where("node_id = ?", report.NodeID).First(&existing).Error
+	err := tx.Where(map[string]interface{}{"nodeId": report.NodeID}).First(&existing).Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return err
 	}
@@ -104,16 +108,16 @@ func upsertHealthNode(tx *gorm.DB, report *HealthReport, receivedAt time.Time) e
 		}
 		return tx.Create(node).Error
 	}
-	return tx.Model(&Node{}).Where("node_id = ?", report.NodeID).Updates(map[string]interface{}{
-		"last_seen_at":      receivedAt,
-		"node_type":         report.NodeType,
-		"last_reported_at": report.ReportedAt,
+	return tx.Model(&Node{}).Where(map[string]interface{}{"nodeId": report.NodeID}).Updates(map[string]interface{}{
+		"lastSeenAt":     receivedAt,
+		"nodeType":       report.NodeType,
+		"lastReportedAt": report.ReportedAt,
 	}).Error
 }
 
 func syncNodeLatestHealth(tx *gorm.DB, report *HealthReport, receivedAt time.Time) error {
 	var current NodeLatestHealth
-	err := tx.Where("node_id = ?", report.NodeID).First(&current).Error
+	err := tx.Where(map[string]interface{}{"nodeId": report.NodeID}).First(&current).Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return err
 	}
@@ -136,16 +140,16 @@ func syncNodeLatestHealth(tx *gorm.DB, report *HealthReport, receivedAt time.Tim
 	if !shouldReplaceNodeLatest(report, &current) {
 		return nil
 	}
-	return tx.Model(&NodeLatestHealth{}).Where("node_id = ?", report.NodeID).Updates(map[string]interface{}{
-		"node_type":      next.NodeType,
-		"report_id":      next.ReportID,
-		"schema_version": next.SchemaVersion,
-		"reported_at":    next.ReportedAt,
-		"received_at":    next.ReceivedAt,
-		"parse_status":   next.ParseStatus,
-		"parse_error":    next.ParseError,
-		"payload":        next.Payload,
-		"updated_at":     next.UpdatedAt,
+	return tx.Model(&NodeLatestHealth{}).Where(map[string]interface{}{"nodeId": report.NodeID}).Updates(map[string]interface{}{
+		"nodeType":      next.NodeType,
+		"reportId":      next.ReportID,
+		"schemaVersion": next.SchemaVersion,
+		"reportedAt":    next.ReportedAt,
+		"receivedAt":    next.ReceivedAt,
+		"parseStatus":   next.ParseStatus,
+		"parseError":    next.ParseError,
+		"payload":       next.Payload,
+		"updatedAt":     next.UpdatedAt,
 	}).Error
 }
 

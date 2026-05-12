@@ -62,7 +62,7 @@ func TestHealthRepoList(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"node_id"}).
+		rows := sqlmock.NewRows([]string{"nodeId"}).
 			AddRow(nid.String())
 
 		mock.ExpectQuery(`SELECT.*"health_reports"`).
@@ -99,7 +99,7 @@ func TestHealthRepoList(t *testing.T) {
 
 		mock.ExpectQuery(`SELECT.*"health_reports"`).
 			WithArgs(nid.String()).
-			WillReturnRows(sqlmock.NewRows([]string{"node_id"}))
+			WillReturnRows(sqlmock.NewRows([]string{"nodeId"}))
 
 		dialector := postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
@@ -124,7 +124,7 @@ func TestHealthRepoList(t *testing.T) {
 		assert.NoError(t, err)
 
 		rid := "a0000000-0000-4000-8000-000000000001"
-		rows := sqlmock.NewRows([]string{"node_id", "report_id"}).
+		rows := sqlmock.NewRows([]string{"nodeId", "reportId"}).
 			AddRow(nid.String(), rid)
 
 		mock.ExpectQuery(`SELECT.*"node_latest_healths"`).
@@ -158,7 +158,7 @@ func TestHealthRepoList(t *testing.T) {
 
 		mock.ExpectQuery(`SELECT.*"node_latest_healths"`).
 			WithArgs(nid.String()).
-			WillReturnRows(sqlmock.NewRows([]string{"node_id"}))
+			WillReturnRows(sqlmock.NewRows([]string{"nodeId"}))
 
 		dialector := postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",

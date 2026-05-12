@@ -24,7 +24,6 @@ const _ = grpc.SupportPackageIsVersion7
 type HealthServiceClient interface {
 	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
 	StoreHealthReport(ctx context.Context, in *StoreHealthReportRequest, opts ...grpc.CallOption) (*StoreHealthReportResponse, error)
-	StoreRunningAppsInfo(ctx context.Context, in *StoreRunningAppsInfoRequest, opts ...grpc.CallOption) (*StoreRunningAppsInfoResponse, error)
 }
 
 type healthServiceClient struct {
@@ -53,22 +52,12 @@ func (c *healthServiceClient) StoreHealthReport(ctx context.Context, in *StoreHe
 	return out, nil
 }
 
-func (c *healthServiceClient) StoreRunningAppsInfo(ctx context.Context, in *StoreRunningAppsInfoRequest, opts ...grpc.CallOption) (*StoreRunningAppsInfoResponse, error) {
-	out := new(StoreRunningAppsInfoResponse)
-	err := c.cc.Invoke(ctx, "/ukama.node.health.v1.HealthService/StoreRunningAppsInfo", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // HealthServiceServer is the server API for HealthService service.
 // All implementations must embed UnimplementedHealthServiceServer
 // for forward compatibility
 type HealthServiceServer interface {
 	List(context.Context, *ListRequest) (*ListResponse, error)
 	StoreHealthReport(context.Context, *StoreHealthReportRequest) (*StoreHealthReportResponse, error)
-	StoreRunningAppsInfo(context.Context, *StoreRunningAppsInfoRequest) (*StoreRunningAppsInfoResponse, error)
 	mustEmbedUnimplementedHealthServiceServer()
 }
 
@@ -81,9 +70,6 @@ func (UnimplementedHealthServiceServer) List(context.Context, *ListRequest) (*Li
 }
 func (UnimplementedHealthServiceServer) StoreHealthReport(context.Context, *StoreHealthReportRequest) (*StoreHealthReportResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StoreHealthReport not implemented")
-}
-func (UnimplementedHealthServiceServer) StoreRunningAppsInfo(context.Context, *StoreRunningAppsInfoRequest) (*StoreRunningAppsInfoResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method StoreRunningAppsInfo not implemented")
 }
 func (UnimplementedHealthServiceServer) mustEmbedUnimplementedHealthServiceServer() {}
 
@@ -134,24 +120,6 @@ func _HealthService_StoreHealthReport_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _HealthService_StoreRunningAppsInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StoreRunningAppsInfoRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(HealthServiceServer).StoreRunningAppsInfo(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.node.health.v1.HealthService/StoreRunningAppsInfo",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HealthServiceServer).StoreRunningAppsInfo(ctx, req.(*StoreRunningAppsInfoRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // HealthService_ServiceDesc is the grpc.ServiceDesc for HealthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -166,10 +134,6 @@ var HealthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "StoreHealthReport",
 			Handler:    _HealthService_StoreHealthReport_Handler,
-		},
-		{
-			MethodName: "StoreRunningAppsInfo",
-			Handler:    _HealthService_StoreRunningAppsInfo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

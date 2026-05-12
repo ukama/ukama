@@ -49,7 +49,7 @@ func (h *HealthServer) StoreHealthReport(ctx context.Context, req *pb.StoreHealt
 	}
 
 	if req.GetReportedAt() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "reported_at is required")
+		return nil, status.Errorf(codes.InvalidArgument, "reportedAt is required")
 	}
 	reportedAt := req.GetReportedAt().AsTime()
 
@@ -81,7 +81,7 @@ func (h *HealthServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListR
 	log.Infof("List: %v", req)
 	if req.GetReportId() == "" && req.GetNodeId() == "" {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"either provide report_id or node_id")
+			"either provide reportId or nodeId")
 	}
 
 	var reportedAt *time.Time

@@ -66,39 +66,3 @@ func (this *HealthReport) Validate() error {
 	}
 	return nil
 }
-func (this *StoreRunningAppsInfoRequest) Validate() error {
-	for _, item := range this.System {
-		if item != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("System", err)
-			}
-		}
-	}
-	for _, item := range this.Capps {
-		if item != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Capps", err)
-			}
-		}
-	}
-	return nil
-}
-func (this *StoreRunningAppsInfoResponse) Validate() error {
-	return nil
-}
-func (this *System) Validate() error {
-	return nil
-}
-func (this *Resource) Validate() error {
-	return nil
-}
-func (this *Capps) Validate() error {
-	for _, item := range this.Resources {
-		if item != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Resources", err)
-			}
-		}
-	}
-	return nil
-}

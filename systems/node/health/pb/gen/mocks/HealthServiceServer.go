@@ -74,36 +74,6 @@ func (_m *HealthServiceServer) StoreHealthReport(_a0 context.Context, _a1 *gen.S
 	return r0, r1
 }
 
-// StoreRunningAppsInfo provides a mock function with given fields: _a0, _a1
-func (_m *HealthServiceServer) StoreRunningAppsInfo(_a0 context.Context, _a1 *gen.StoreRunningAppsInfoRequest) (*gen.StoreRunningAppsInfoResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for StoreRunningAppsInfo")
-	}
-
-	var r0 *gen.StoreRunningAppsInfoResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.StoreRunningAppsInfoRequest) (*gen.StoreRunningAppsInfoResponse, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.StoreRunningAppsInfoRequest) *gen.StoreRunningAppsInfoResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.StoreRunningAppsInfoResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.StoreRunningAppsInfoRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // mustEmbedUnimplementedHealthServiceServer provides a mock function with no fields
 func (_m *HealthServiceServer) mustEmbedUnimplementedHealthServiceServer() {
 	_m.Called()
