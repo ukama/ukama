@@ -42,28 +42,28 @@ func (_m *health) List(request *gen.ListRequest) (*gen.ListResponse, error) {
 	return r0, r1
 }
 
-// StoreRunningAppsInfo provides a mock function with given fields: req
-func (_m *health) StoreRunningAppsInfo(req *gen.StoreRunningAppsInfoRequest) (*gen.StoreRunningAppsInfoResponse, error) {
+// StoreHealthReport provides a mock function with given fields: req
+func (_m *health) StoreHealthReport(req *gen.StoreHealthReportRequest) (*gen.StoreHealthReportResponse, error) {
 	ret := _m.Called(req)
 
 	if len(ret) == 0 {
-		panic("no return value specified for StoreRunningAppsInfo")
+		panic("no return value specified for StoreHealthReport")
 	}
 
-	var r0 *gen.StoreRunningAppsInfoResponse
+	var r0 *gen.StoreHealthReportResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*gen.StoreRunningAppsInfoRequest) (*gen.StoreRunningAppsInfoResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(*gen.StoreHealthReportRequest) (*gen.StoreHealthReportResponse, error)); ok {
 		return rf(req)
 	}
-	if rf, ok := ret.Get(0).(func(*gen.StoreRunningAppsInfoRequest) *gen.StoreRunningAppsInfoResponse); ok {
+	if rf, ok := ret.Get(0).(func(*gen.StoreHealthReportRequest) *gen.StoreHealthReportResponse); ok {
 		r0 = rf(req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.StoreRunningAppsInfoResponse)
+			r0 = ret.Get(0).(*gen.StoreHealthReportResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*gen.StoreRunningAppsInfoRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(*gen.StoreHealthReportRequest) error); ok {
 		r1 = rf(req)
 	} else {
 		r1 = ret.Error(1)

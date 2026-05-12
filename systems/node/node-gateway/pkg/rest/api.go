@@ -11,10 +11,10 @@ package rest
 import "encoding/json"
 
 type ListHealthRequest struct {
-	Id        string `form:"id" json:"id" query:"id" binding:"required"`
-	NodeId    string `form:"node_id" json:"node_id" query:"node_id" binding:"required"`
-	Timestamp string `form:"timestamp" json:"timestamp" query:"timestamp" binding:"required"`
-	Timeframe string `form:"timeframe" default:"all" json:"timeframe" query:"timeframe" binding:"required" validate:"eq=all|eq=latest"`
+	ReportId   string `form:"reportId" json:"reportId" query:"reportId"`
+	NodeId     string `form:"nodeId" json:"nodeId" query:"nodeId"`
+	ReportedAt string `form:"reportedAt" json:"reportedAt" query:"reportedAt"`
+	Timeframe  string `form:"timeframe" default:"all" json:"timeframe" query:"timeframe" binding:"required" validate:"eq=all|eq=latest"`
 }
 
 type AddNotificationReq struct {
@@ -57,27 +57,26 @@ type AddLogsRequest struct {
 	Logs   []Logs `json:"logs" validate:"required"`
 }
 
-type StoreRunningAppsInfoRequest struct {
-	NodeId    string   `validate:"required" example:"{{NodeId}}" path:"node_id" `
-	Timestamp string   `json:"timestamp" validate:"required" example:"{{time}}"`
-	System    []System `json:"system" example:"{{system}}"`
-	Capps     []Capps  `json:"capps" example:"{{capps}}"`
+type StoreHealthReportRequest struct {
+	NodeId string          `path:"node_id" validate:"required" example:"{{NodeId}}"`
+	raw    json.RawMessage `json:"-"`
 }
 
-type System struct {
-	Name  string `json:"name" validate:"required" example:"{{name}}"`
-	Value string `json:"value" validate:"required" example:"{{value}}"`
+// UnmarshalJSON captures the entire POST body as the health payload (HealthPayload JSON).
+func (s *StoreHealthReportRequest) UnmarshalJSON(data []byte) error {
+	if len(data) == 0 {
+		s.raw = []byte("{}")
+		return nil
+	}
+	// copy so later mutations do not alias gin's buffer
+	s.raw = append(json.RawMessage(nil), data...)
+	return nil
 }
 
-type Capps struct {
-	Space     string      `json:"space" validate:"required" example:"{{space}}"`
-	Name      string      `json:"name" validate:"required" example:"{{name}}"`
-	Tag       string      `json:"tag" validate:"required" example:"{{tag}}"`
-	Status    string      `json:"status" validate:"required" example:"{{status}}"`
-	Resources []Resources `json:"resources" validate:"required" example:"{{resources}}"`
-}
-
-type Resources struct {
-	Name  string `json:"name" validate:"required" example:"{{name}}"`
-	Value string `json:"value" validate:"required" example:"{{value}}"`
+// HealthPayloadBytes returns bytes forwarded to the health service (defaults to {}).
+func (s *StoreHealthReportRequest) HealthPayloadBytes() []byte {
+	if len(s.raw) == 0 {
+		return []byte("{}")
+	}
+	return s.raw
 }

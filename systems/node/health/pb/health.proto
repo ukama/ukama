@@ -30,10 +30,7 @@ message ListResponse {
 
 message StoreHealthReportRequest {
     string nodeId = 1 [(validator.field) = {string_not_empty: true}];
-    string nodeType = 2 [(validator.field) = {string_not_empty: true}];
-    string schemaVersion = 3;
-    google.protobuf.Timestamp reportedAt = 4;
-    bytes payload = 5;
+    bytes payload = 2;
 }
 
 message StoreHealthReportResponse {

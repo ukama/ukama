@@ -24,7 +24,6 @@ import (
 	"github.com/ukama/ukama/systems/node/health/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const testOrgName = "test-org"
@@ -35,19 +34,22 @@ func TestHealthServerStoreHealthReport(t *testing.T) {
 	hRepo := &mocks.HealthRepo{}
 
 	reported := time.Date(2026, 4, 21, 10, 0, 0, 0, time.UTC)
-	payload, _ := json.Marshal(map[string]string{"k": "v"})
+	inner := map[string]interface{}{
+		"k":             "v",
+		"nodeType":      string(ukama.NODE_TYPE_HOMENODE),
+		"schemaVersion": "1",
+		"reportedAt":    reported.Format(time.RFC3339),
+	}
+	payload, _ := json.Marshal(inner)
 	req := &pb.StoreHealthReportRequest{
-		NodeId:        testNode.String(),
-		NodeType:      string(ukama.NODE_TYPE_HOMENODE),
-		SchemaVersion: "1",
-		ReportedAt:    timestamppb.New(reported),
-		Payload:       payload,
+		NodeId:  testNode.String(),
+		Payload: payload,
 	}
 
 	hRepo.On("StoreHealthReport", mock.MatchedBy(func(r *db.HealthReport) bool {
 		return r != nil &&
 			r.NodeID == testNode.StringLowercase() &&
-			r.NodeType == ukama.NodeType(req.GetNodeType()) &&
+			r.NodeType == ukama.NODE_TYPE_HOMENODE &&
 			r.SchemaVersion == "1" &&
 			r.ReportedAt.Equal(reported) &&
 			string(r.Payload) == string(payload)
@@ -68,10 +70,15 @@ func TestHealthServerStoreHealthReportInvalidNodeId(t *testing.T) {
 	hRepo := &mocks.HealthRepo{}
 	s := NewHealthServer(testOrgName, hRepo, false)
 
+	reported := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	payload, _ := json.Marshal(map[string]interface{}{
+		"nodeType":      string(ukama.NODE_TYPE_HOMENODE),
+		"schemaVersion": "1",
+		"reportedAt":    reported.Format(time.RFC3339),
+	})
 	resp, err := s.StoreHealthReport(context.Background(), &pb.StoreHealthReportRequest{
-		NodeId:       "invalid-node",
-		NodeType:   string(ukama.NODE_TYPE_HOMENODE),
-		ReportedAt: timestamppb.New(time.Now()),
+		NodeId:  "invalid-node",
+		Payload: payload,
 	})
 
 	assert.Nil(t, resp)
@@ -85,9 +92,12 @@ func TestHealthServerStoreHealthReportMissingReportedAt(t *testing.T) {
 	hRepo := &mocks.HealthRepo{}
 	s := NewHealthServer(testOrgName, hRepo, false)
 
+	payload, _ := json.Marshal(map[string]string{
+		"nodeType": string(ukama.NODE_TYPE_HOMENODE),
+	})
 	resp, err := s.StoreHealthReport(context.Background(), &pb.StoreHealthReportRequest{
-		NodeId:     testNode.String(),
-		NodeType: string(ukama.NODE_TYPE_HOMENODE),
+		NodeId:  testNode.String(),
+		Payload: payload,
 	})
 
 	assert.Nil(t, resp)
@@ -99,10 +109,15 @@ func TestHealthServerStoreHealthReportMissingReportedAt(t *testing.T) {
 
 func TestHealthServerStoreHealthReportRepoError(t *testing.T) {
 	hRepo := &mocks.HealthRepo{}
+	reported := time.Now().UTC()
+	payload, _ := json.Marshal(map[string]interface{}{
+		"nodeType":      string(ukama.NODE_TYPE_HOMENODE),
+		"schemaVersion": "1",
+		"reportedAt":    reported.Format(time.RFC3339),
+	})
 	req := &pb.StoreHealthReportRequest{
-		NodeId:       testNode.String(),
-		NodeType:   string(ukama.NODE_TYPE_HOMENODE),
-		ReportedAt: timestamppb.New(time.Now().UTC()),
+		NodeId:  testNode.String(),
+		Payload: payload,
 	}
 
 	hRepo.On("StoreHealthReport", mock.Anything, mock.Anything).Return(assert.AnError).Once()
@@ -157,8 +172,8 @@ func TestHealthServerListAll(t *testing.T) {
 	ts1 := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 	ts2 := time.Date(2026, 1, 2, 0, 0, 0, 0, time.UTC)
 	reports := []*db.HealthReport{
-		{ID: id1, NodeID: testNode.String(), ReportedAt: ts1, SchemaVersion: "1", Payload: json.RawMessage(`{}`)},
-		{ID: id2, NodeID: testNode.String(), ReportedAt: ts2, SchemaVersion: "1", Payload: json.RawMessage(`{}`)},
+		{ID: id1, NodeID: testNode.String(), NodeType: ukama.NODE_TYPE_HOMENODE, ReportedAt: ts1, SchemaVersion: "1", Payload: json.RawMessage(`{}`)},
+		{ID: id2, NodeID: testNode.String(), NodeType: ukama.NODE_TYPE_HOMENODE, ReportedAt: ts2, SchemaVersion: "1", Payload: json.RawMessage(`{}`)},
 	}
 
 	hRepo.On("List", "", testNode.String(), (*time.Time)(nil), ukama.FilterTimeframesTypeAll).Return(reports, nil).Once()

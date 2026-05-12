@@ -19,6 +19,7 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/node/health/pb/gen"
 	"github.com/ukama/ukama/systems/node/health/pkg/db"
+	"github.com/ukama/ukama/systems/node/health/pkg/parser"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -48,23 +49,31 @@ func (h *HealthServer) StoreHealthReport(ctx context.Context, req *pb.StoreHealt
 			"invalid format of node id. Error %s", err.Error())
 	}
 
-	if req.GetReportedAt() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "reportedAt is required")
+	raw := req.GetPayload()
+	if len(raw) == 0 {
+		raw = []byte("{}")
 	}
-	reportedAt := req.GetReportedAt().AsTime()
+	parsed, err := parser.ParseHealthPayload(raw)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "payload is invalid: %v", err)
+	}
+	if parsed.NodeType == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "nodeType is required in payload")
+	}
+	if parsed.ReportedAt.IsZero() {
+		return nil, status.Errorf(codes.InvalidArgument, "reportedAt is required in payload")
+	}
 
-	payload := req.GetPayload()
-	if len(payload) == 0 {
-		payload = []byte("{}")
-	}
+	nodeType := ukama.NodeType(parsed.NodeType)
+	schemaVersion := parsed.SchemaVersion
 
 	report := &db.HealthReport{
 		ID:            uuid.NewV4(),
 		NodeID:        nID.StringLowercase(),
-		NodeType:      ukama.NodeType(req.GetNodeType()),
-		SchemaVersion: req.GetSchemaVersion(),
-		ReportedAt:    reportedAt,
-		Payload:       payload,
+		NodeType:      nodeType,
+		SchemaVersion: schemaVersion,
+		ReportedAt:    parsed.ReportedAt,
+		Payload:       raw,
 	}
 
 	receivedAt := time.Now().UTC()
