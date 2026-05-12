@@ -116,7 +116,12 @@ func (r *Router) init() {
 	endpoint.GET("/ping", formatDoc("Ping the server", "Returns a response indicating that the server is running."), tonic.Handler(r.pingHandler, http.StatusOK))
 
 	health := endpoint.Group("/health", "Health", "Health service for the node")
-	health.POST("/nodes/:node_id/performance", formatDoc("Store health report", "Path: node id. Body: full health JSON (nodeType, reportedAt RFC3339, schemaVersion, capabilities, system, interfaces, apps, events, etc.)."), tonic.Handler(r.postHealthReportHandler, http.StatusCreated))
+	health.POST("/nodes/:node_id/performance",
+		append(formatDoc("Store health report", "Path: node id. Body: full health JSON (nodeType, reportedAt RFC3339, schemaVersion, capabilities, system, interfaces, apps, events, etc.)."),
+			fizz.InputModel(&StoreHealthReportOpenAPIInput{}),
+		),
+		tonic.Handler(r.postHealthReportHandler, http.StatusCreated),
+	)
 	health.POST("/logger/node/:node_id", formatDoc("Log data", "Endpoint to log data"), tonic.Handler(r.logHandler, http.StatusCreated))
 	health.GET("/list", formatDoc("List health info", "Retrieve the health information for the node."), tonic.Handler(r.listHealthInfoHandler, http.StatusOK))
 

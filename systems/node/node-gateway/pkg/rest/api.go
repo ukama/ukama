@@ -62,6 +62,21 @@ type StoreHealthReportRequest struct {
 	raw    json.RawMessage `json:"-"`
 }
 
+// StoreHealthReportOpenAPIInput is only for OpenAPI (fizz.InputModel). Runtime binding
+// uses StoreHealthReportRequest, which accepts the same JSON object as the request body.
+type StoreHealthReportOpenAPIInput struct {
+	NodeId         string                   `path:"node_id" example:"{{NodeId}}"`
+	SchemaVersion string                   `json:"schemaVersion" example:"1"`
+	NodeID        string                   `json:"nodeId,omitempty"`
+	NodeType      string                   `json:"nodeType" example:"HomeNode"`
+	ReportedAt    string                   `json:"reportedAt" example:"2023-12-12T00:00:00Z"`
+	Capabilities  []string                 `json:"capabilities,omitempty"`
+	System        map[string]interface{}   `json:"system,omitempty"`
+	Interfaces    map[string]interface{}   `json:"interfaces,omitempty"`
+	Apps          []map[string]interface{} `json:"apps,omitempty"`
+	Events        []map[string]interface{} `json:"events,omitempty"`
+}
+
 // UnmarshalJSON captures the entire POST body as the health payload (HealthPayload JSON).
 func (s *StoreHealthReportRequest) UnmarshalJSON(data []byte) error {
 	if len(data) == 0 {
