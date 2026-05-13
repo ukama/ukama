@@ -12,7 +12,11 @@ import (
 	"context"
 	"strings"
 
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	pb "github.com/ukama/ukama/systems/node/site-controller/pb/gen"
+	"github.com/ukama/ukama/systems/node/site-controller/pkg"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/db"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/reconciler"
 	"google.golang.org/grpc/codes"
@@ -21,11 +25,15 @@ import (
 
 type SiteControllerServer struct {
 	pb.UnimplementedSiteControllerServiceServer
-	reconciler *reconciler.Reconciler
+	orgName        string
+	reconciler     *reconciler.Reconciler
+	msgbus         mb.MsgBusServiceClient
+	nodeClient     creg.NodeClient
+	baseRoutingKey msgbus.RoutingKeyBuilder
 }
 
-func NewSiteControllerServer(r *reconciler.Reconciler) *SiteControllerServer {
-	return &SiteControllerServer{reconciler: r}
+func NewSiteControllerServer(orgName string, r *reconciler.Reconciler, mb mb.MsgBusServiceClient, nodeClient creg.NodeClient) *SiteControllerServer {
+	return &SiteControllerServer{reconciler: r, baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName), nodeClient: nodeClient}
 }
 
 func (s *SiteControllerServer) SetSite(ctx context.Context, req *pb.SetSiteRequest) (*pb.SetSiteResponse, error) {
@@ -159,10 +167,10 @@ func snapshotToPB(s *reconciler.SiteSnapshot) *pb.SiteSnapshot {
 		})
 	}
 	return &pb.SiteSnapshot{
-		Intent:          intentToPB(s.Intent),
-		Derived:         derivedStateToPB(s.DerivedState, s.Intent),
+		Intent:         intentToPB(s.Intent),
+		Derived:        derivedStateToPB(s.DerivedState, s.Intent),
 		ComponentsJson: s.ComponentsJSON,
-		Ports:           ports,
+		Ports:          ports,
 	}
 }
 
