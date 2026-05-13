@@ -1,5 +1,4 @@
-FROM alpine:3.13.5
+FROM 003664043471.dkr.ecr.us-east-1.amazonaws.com/e2e-base-image:latest 
 
-COPY bin/site-controller /usr/bin/site-controller
-
-CMD ["/usr/bin/site-controller"]
+ENV PROJECT_NAME=node-site-controller
+COPY bin/integration /usr/bin/integration

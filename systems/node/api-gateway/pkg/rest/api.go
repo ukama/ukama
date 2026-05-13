@@ -40,20 +40,6 @@ type RestartNodesRequest struct {
 	NetworkId string   `json:"network_id" example:"{{NetworkId}}" validate:"required" path:"network_id"`
 	NodeIds   []string `json:"node_ids" example:"{{NodeIds}}" validate:"required"`
 }
-type ToggleInternetSwitchRequest struct {
-	SiteId string `json:"site_id" example:"{{SiteId}}" validate:"required" path:"site_id"`
-	Status bool   `json:"status" example:"{{Status}}"`
-	Port   int32  `json:"port" example:"{{Port}}" validate:"required"`
-}
-type ToggleRfRequest struct {
-	NodeId string `json:"node_id" example:"{{NodeId}}" validate:"required" path:"node_id"`
-	State  string `json:"state" example:"on" validate:"required,oneof=on off"`
-}
-
-type ToggleNodeServiceRequest struct {
-	NodeId string `json:"node_id" example:"{{NodeId}}" validate:"required" path:"node_id"`
-	State  string `json:"state" example:"on" validate:"required,oneof=on off"`
-}
 type ApplyConfigRequest struct {
 	Commit string `json:"commit" path:"commit" example:"commit" validate:"required"`
 }
@@ -76,46 +62,34 @@ type ListSoftwareRequest struct {
 	Status  string `json:"status" form:"status" query:"status" binding:"required" validate:"eq=unknown|eq=update_available|eq=up_to_date|eq=update_in_progress|eq=update_failed"`
 }
 type SiteActionRequest struct {
-	SiteId string `json:"site_id" validate:"required" path:"site_id"`
-	Reason string `json:"reason"`
+	SiteId      string `json:"site_id" validate:"required" path:"site_id"`
+	Reason      string `json:"reason"`
+	RequestedBy string `json:"requestedBy"`
+	State       string `json:"state" path:"state" validate:"required,oneof=on off"`
 }
 
 type SiteStateRequest struct {
 	SiteId string `json:"site_id" validate:"required" path:"site_id"`
 }
 
-type RefreshSwitchPolicyRequest struct {
-	SiteId  string `json:"site_id" validate:"required" path:"site_id"`
-	CNodeId string `json:"cnode_id"`
-	Reason  string `json:"reason"`
+type SitePortMapRequest struct {
+	SiteId  string             `json:"site_id" validate:"required" path:"site_id"`
+	CNodeId string             `json:"cnode_id"`
+	Ports   []SitePortMapEntry `json:"ports" validate:"required"`
 }
 
-type ReportSwitchPolicyRequest struct {
-	SiteId  string              `json:"site_id" validate:"required" path:"site_id"`
-	CNodeId string              `json:"cnode_id" validate:"required"`
-	Policy  SwitchPolicyPayload `json:"policy" validate:"required"`
-}
-
-type SwitchPolicyPayload struct {
-	SiteID    string                    `json:"site_id"`
-	Source    string                    `json:"source"`
-	UpdatedAt string                    `json:"updated_at"`
-	State     string                    `json:"state"`
-	Hash      string                    `json:"hash"`
-	Error     string                    `json:"error"`
-	Ports     []SwitchPolicyPortPayload `json:"ports" validate:"required"`
-}
-
-type SwitchPolicyPortPayload struct {
-	Port   int32  `json:"port" validate:"required"`
-	Role   string `json:"role" validate:"required"`
-	NodeId string `json:"node_id"`
-	Class  string `json:"class"`
-	Policy string `json:"policy" validate:"required"`
+type SitePortMapEntry struct {
+	Port    int32  `json:"port" validate:"required"`
+	Role    string `json:"role" validate:"required"`
+	NodeId  string `json:"node_id"`
+	Class   string `json:"class" validate:"required"`
+	Policy  string `json:"policy" validate:"required"`
+	CnodeId string `json:"cnode_id"`
 }
 
 type PowerCycleNodeRequest struct {
-	SiteId string `json:"site_id" validate:"required" path:"site_id"`
-	Role   string `json:"role" validate:"required" path:"role"`
-	Reason string `json:"reason"`
+	SiteId      string `json:"site_id" validate:"required" path:"site_id"`
+	Role        string `json:"role" validate:"required" path:"role"`
+	Reason      string `json:"reason"`
+	RequestedBy string `json:"requestedBy"`
 }

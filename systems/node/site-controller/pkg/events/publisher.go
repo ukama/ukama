@@ -1,12 +1,12 @@
 package events
 
 import (
-	"encoding/json"
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/db"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type Publisher interface {
@@ -60,11 +60,26 @@ func (p *MsgBusPublisher) publish(event string, payload interface{}) error {
 	if p == nil || p.msgbus == nil {
 		return nil
 	}
-	body, err := json.Marshal(payload)
+	msg, err := payloadToStruct(payload)
 	if err != nil {
 		return err
 	}
 	route := fmt.Sprintf("event.cloud.local.%s.node.site-controller.%s", p.orgName, event)
-	log.Infof("site-controller: event=%s payload=%s", event, string(body))
-	return p.msgbus.PublishRequest(route, body)
+	log.Infof("site-controller: event=%s payload=%v", event, msg)
+	return p.msgbus.PublishRequest(route, msg)
+}
+
+func payloadToStruct(payload interface{}) (*structpb.Struct, error) {
+	switch p := payload.(type) {
+	case map[string]string:
+		m := make(map[string]interface{}, len(p))
+		for k, v := range p {
+			m[k] = v
+		}
+		return structpb.NewStruct(m)
+	case map[string]interface{}:
+		return structpb.NewStruct(p)
+	default:
+		return nil, fmt.Errorf("unsupported payload type")
+	}
 }

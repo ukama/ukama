@@ -1,121 +1,133 @@
 syntax = "proto3";
-package ukama.node.site_controller.v1;
+
 option go_package = "github.com/ukama/ukama/systems/node/site-controller/pb/gen";
+
+package ukama.node.site_controller.v1;
 
 import "validator.proto";
 
+// SiteController drives site intent, static switch port map, switch.d policy, and derived site state.
 service SiteControllerService {
   rpc SetSite(SetSiteRequest) returns (SetSiteResponse);
   rpc SetService(SetServiceRequest) returns (SetServiceResponse);
   rpc SetRadio(SetRadioRequest) returns (SetRadioResponse);
-
   rpc GetSiteState(GetSiteStateRequest) returns (GetSiteStateResponse);
-  rpc GetSwitchPolicy(GetSwitchPolicyRequest) returns (GetSwitchPolicyResponse);
-  rpc RefreshSwitchPolicy(RefreshSwitchPolicyRequest) returns (RefreshSwitchPolicyResponse);
-  rpc ReportSwitchPolicy(ReportSwitchPolicyRequest) returns (ReportSwitchPolicyResponse);
-
+  rpc UpsertPortMap(UpsertPortMapRequest) returns (UpsertPortMapResponse);
+  rpc GetPortMap(GetPortMapRequest) returns (GetPortMapResponse);
+  rpc ApplySwitchPolicy(ApplySwitchPolicyRequest) returns (ApplySwitchPolicyResponse);
   rpc PowerCycleNode(PowerCycleNodeRequest) returns (PowerCycleNodeResponse);
 }
 
-message SetSiteRequest {
-  string siteId = 1 [(validator.field) = {string_not_empty: true}, json_name = "site_id"];
-  string state = 2 [(validator.field) = {string_not_empty: true}, json_name = "state"];
-  string reason = 3 [json_name = "reason"];
+message SiteIntentMsg {
+  string site_id = 1;
+  string desired_site = 2;
+  string desired_service = 3;
+  string desired_radio = 4;
+  string reason = 5;
+  string requested_by = 6;
 }
 
-message SetSiteResponse { SiteState state = 1; }
+// DerivedState mirrors persisted SiteState (power/service/radio/access) plus desired fields for convenience.
+message DerivedStateMsg {
+  string site_id = 1;
+  string desired_site = 2;
+  string desired_service = 3;
+  string desired_radio = 4;
+  string power = 5;
+  string service = 6;
+  string radio = 7;
+  string access = 8;
+  string reason = 9;
+}
+
+message SiteSnapshot {
+  SiteIntentMsg intent = 1;
+  DerivedStateMsg derived = 2;
+  // Raw JSON blob from site_components.components
+  string components_json = 3;
+  repeated PortMapEntry ports = 4;
+}
+
+message PortMapEntry {
+  int32 port = 1;
+  string role = 2;
+  string node_id = 3;
+  string class = 4;
+  string policy = 5;
+  // Optional per-row cnode id (defaults from UpsertPortMapRequest.cnode_id when empty)
+  string cnode_id = 6;
+}
+
+message SetSiteRequest {
+  string site_id = 1 [(validator.field) = { string_not_empty: true }];
+  string state = 2;
+  string reason = 3;
+  string requested_by = 4;
+}
+
+message SetSiteResponse {
+  DerivedStateMsg state = 1;
+}
 
 message SetServiceRequest {
-  string siteId = 1 [(validator.field) = {string_not_empty: true}, json_name = "site_id"];
-  string state = 2 [(validator.field) = {string_not_empty: true}, json_name = "state"];
-  string reason = 3 [json_name = "reason"];
+  string site_id = 1 [(validator.field) = { string_not_empty: true }];
+  string state = 2;
+  string reason = 3;
+  string requested_by = 4;
 }
 
-message SetServiceResponse { SiteState state = 1; }
+message SetServiceResponse {
+  DerivedStateMsg state = 1;
+}
 
 message SetRadioRequest {
-  string siteId = 1 [(validator.field) = {string_not_empty: true}, json_name = "site_id"];
-  string state = 2 [(validator.field) = {string_not_empty: true}, json_name = "state"];
-  string reason = 3 [json_name = "reason"];
+  string site_id = 1 [(validator.field) = { string_not_empty: true }];
+  string state = 2;
+  string reason = 3;
+  string requested_by = 4;
 }
 
-message SetRadioResponse { SiteState state = 1; }
+message SetRadioResponse {
+  DerivedStateMsg state = 1;
+}
 
 message GetSiteStateRequest {
-  string siteId = 1 [(validator.field) = {string_not_empty: true}, json_name = "site_id"];
+  string site_id = 1 [(validator.field) = { string_not_empty: true }];
 }
 
-message GetSiteStateResponse { SiteState state = 1; }
-
-message GetSwitchPolicyRequest {
-  string siteId = 1 [(validator.field) = {string_not_empty: true}, json_name = "site_id"];
+message GetSiteStateResponse {
+  SiteSnapshot snapshot = 1;
 }
 
-message GetSwitchPolicyResponse { SwitchPolicyStatus policy = 1; }
-
-message RefreshSwitchPolicyRequest {
-  string siteId = 1 [(validator.field) = {string_not_empty: true}, json_name = "site_id"];
-  string cnodeId = 2 [json_name = "cnode_id"];
-  string reason = 3 [json_name = "reason"];
+message UpsertPortMapRequest {
+  string site_id = 1 [(validator.field) = { string_not_empty: true }];
+  string cnode_id = 2;
+  repeated PortMapEntry ports = 3;
 }
 
-message RefreshSwitchPolicyResponse { bool requested = 1; }
+message UpsertPortMapResponse {}
 
-message ReportSwitchPolicyRequest {
-  string siteId = 1 [(validator.field) = {string_not_empty: true}, json_name = "site_id"];
-  string cnodeId = 2 [(validator.field) = {string_not_empty: true}, json_name = "cnode_id"];
-  SwitchPolicy policy = 3;
+message GetPortMapRequest {
+  string site_id = 1 [(validator.field) = { string_not_empty: true }];
 }
 
-message ReportSwitchPolicyResponse { SwitchPolicyStatus policy = 1; }
+message GetPortMapResponse {
+  repeated PortMapEntry ports = 1;
+}
+
+message ApplySwitchPolicyRequest {
+  string site_id = 1 [(validator.field) = { string_not_empty: true }];
+}
+
+message ApplySwitchPolicyResponse {
+  bool applied = 1;
+}
 
 message PowerCycleNodeRequest {
-  string siteId = 1 [(validator.field) = {string_not_empty: true}, json_name = "site_id"];
-  string role = 2 [(validator.field) = {string_not_empty: true}, json_name = "role"];
-  string reason = 3 [json_name = "reason"];
+  string site_id = 1 [(validator.field) = { string_not_empty: true }];
+  string role = 2;
+  string reason = 3;
+  string requested_by = 4;
 }
 
 message PowerCycleNodeResponse {}
-
-message SiteState {
-  string siteId = 1 [json_name = "site_id"];
-  string desiredSite = 2 [json_name = "desired_site"];
-  string desiredService = 3 [json_name = "desired_service"];
-  string desiredRadio = 4 [json_name = "desired_radio"];
-  string power = 5 [json_name = "power"];
-  string service = 6 [json_name = "service"];
-  string radio = 7 [json_name = "radio"];
-  string access = 8 [json_name = "access"];
-  string reason = 9 [json_name = "reason"];
-  SwitchPolicyStatus switchPolicy = 10 [json_name = "switch_policy"];
-}
-
-message SwitchPolicyStatus {
-  string siteId = 1 [json_name = "site_id"];
-  string cnodeId = 2 [json_name = "cnode_id"];
-  string state = 3 [json_name = "state"];
-  string hash = 4 [json_name = "hash"];
-  string source = 5 [json_name = "source"];
-  string error = 6 [json_name = "error"];
-  bool valid = 7 [json_name = "valid"];
-  string reason = 8 [json_name = "reason"];
-  SwitchPolicy policy = 9 [json_name = "policy"];
-}
-
-message SwitchPolicy {
-  string siteId = 1 [json_name = "site_id"];
-  string source = 2 [json_name = "source"];
-  string updatedAt = 3 [json_name = "updated_at"];
-  string state = 4 [json_name = "state"];
-  string hash = 5 [json_name = "hash"];
-  string error = 6 [json_name = "error"];
-  repeated SwitchPolicyPort ports = 7 [json_name = "ports"];
-}
-
-message SwitchPolicyPort {
-  int32 port = 1 [json_name = "port"];
-  string role = 2 [json_name = "role"];
-  string nodeId = 3 [json_name = "node_id"];
-  string class = 4 [json_name = "class"];
-  string policy = 5 [json_name = "policy"];
-}

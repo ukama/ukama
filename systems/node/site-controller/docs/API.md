@@ -75,4 +75,4 @@ Example:
 POST /v1/sites/emu-site/nodes/amplifier/power-cycle
 ```
 
-CNode power-cycle is rejected because the CNode controls the switch and is powered by PoE.
+site-controller forwards the command through node-controller to CNode `switch.d`. **Whether a power-cycle is allowed** (including for the CNode role / `never_off_remote` ports) is **enforced on the node** by policy in `switch.d`, not in site-controller.

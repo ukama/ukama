@@ -3,10 +3,10 @@ package reconciler
 const (
 	StateOn          = "on"
 	StateOff         = "off"
-	StateUnknown     = "unknown"
-	StateHealthy     = "healthy"
-	StateDegraded    = "degraded"
 	StateRunning     = "running"
+	StateHealthy     = "healthy"
 	StateAvailable   = "available"
 	StateUnavailable = "unavailable"
+	StateUnknown     = "unknown"
+	ReasonOK         = "ok"
 )

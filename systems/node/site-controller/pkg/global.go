@@ -1,7 +1,7 @@
 package pkg
 
 const SystemName = "node"
-const ServiceName = "site-controller"
+const ServiceName = "site_controller"
 
 var InstanceId = ""
 var IsDebugMode = false
