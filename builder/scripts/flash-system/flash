@@ -7,17 +7,24 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ORCHESTRATOR="${SCRIPT_DIR}/orchestrate_board_flash.sh"
-CONFIG="${SCRIPT_DIR}/boards.yaml"
+FLASH_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BOARDS_DIR="${FLASH_DIR}/boards"
+METHODS_DIR="${FLASH_DIR}/methods"
+LIB_DIR="${FLASH_DIR}/lib"
 
 usage() {
-    local boards=""
-    if [ -f "$CONFIG" ]; then
-        boards=$(awk '/^  [a-z][a-z0-9_-]*:$/{gsub(":",""); printf "%s ", $1}' "$CONFIG")
-    fi
     echo "Usage: $0 <board>"
-    echo "Available boards: ${boards:-unknown}"
+    if [ -d "$BOARDS_DIR" ]; then
+        echo ""
+        echo "Available boards:"
+        local d
+        for d in "$BOARDS_DIR"/*/; do
+            [ -f "${d}board.yaml" ] || continue
+            local name
+            name=$(basename "$d")
+            echo "  - $name"
+        done
+    fi
     exit 1
 }
 
@@ -26,14 +33,67 @@ if [ $# -lt 1 ]; then
 fi
 
 BOARD="$1"
+BOARD_DIR="${BOARDS_DIR}/${BOARD}"
+BOARD_CONFIG="${BOARD_DIR}/board.yaml"
 
-if [ ! -x "$ORCHESTRATOR" ]; then
-    echo "ERROR: missing orchestrator at $ORCHESTRATOR" >&2
-    exit 1
+if [ ! -f "$BOARD_CONFIG" ]; then
+    echo "ERROR: board '$BOARD' not found at $BOARD_CONFIG"
+    usage
 fi
 
 if [ "$(id -u)" -ne 0 ]; then
-    exec sudo "$ORCHESTRATOR" -b "$BOARD"
+    exec sudo -E env "FLASH_DIR=$FLASH_DIR" "$0" "$@"
 fi
 
-exec "$ORCHESTRATOR" -b "$BOARD"
+source "${LIB_DIR}/config.sh"
+source "${LIB_DIR}/validate.sh"
+source "${LIB_DIR}/image.sh"
+
+ensure_yq
+
+METHOD=$(yq_read "$BOARD_CONFIG" method)
+if [ ! -f "${METHODS_DIR}/${METHOD}.sh" ]; then
+    echo "ERROR: unknown flash method '$METHOD' (no ${METHODS_DIR}/${METHOD}.sh)"
+    exit 1
+fi
+
+source "${METHODS_DIR}/${METHOD}.sh"
+
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+LOG_DIR="${FLASH_DIR}/logs/${TIMESTAMP}_${BOARD}"
+mkdir -p "$LOG_DIR"
+
+echo "================================================"
+echo " Ukama flash — $(yq_read "$BOARD_CONFIG" name)"
+echo " method: $METHOD"
+echo " logs:   $LOG_DIR"
+echo "================================================"
+
+echo ""
+echo "[1/5] Validating..."
+if ! method_validate; then
+    echo "Validation failed — nothing was written."
+    exit 1
+fi
+
+echo ""
+echo "[2/5] Confirming..."
+if ! method_confirm; then
+    echo "Aborted by user."
+    exit 1
+fi
+
+echo ""
+echo "[3/5] Applying..."
+method_apply
+
+echo ""
+echo "[4/5] Verifying..."
+method_verify
+
+echo ""
+echo "[5/5] Monitor..."
+method_monitor || true
+
+echo ""
+echo "Done. Logs in $LOG_DIR"

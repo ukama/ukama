@@ -1,0 +1,14 @@
+[Unit]
+Description=Ukama Auto-Flash to eMMC
+After=multi-user.target
+ConditionPathExists=!/var/lib/ukama-autoflash-complete
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/ukama-auto-flash.sh
+RemainAfterExit=yes
+StandardOutput=journal+console
+StandardError=journal+console
+
+[Install]
+WantedBy=multi-user.target
