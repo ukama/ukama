@@ -271,9 +271,9 @@ func TestReconcileCurrentAppVersion_UpdatesCurrentVersionFromHealth(t *testing.T
 	}, nil).Once()
 
 	healthProvider.On("GetClient").Return(healthClient, nil)
-	healthClient.On("GetApps", mock.Anything, mock.MatchedBy(func(req *hpb.GetAppsRequest) bool {
+	healthClient.On("ListApps", mock.Anything, mock.MatchedBy(func(req *hpb.ListAppsRequest) bool {
 		return req.NodeId == testNodeId
-	})).Return(&hpb.GetAppsResponse{
+	})).Return(&hpb.ListAppsResponse{
 		Apps: []*hpb.App{
 			{Name: testAppNameForUpdate, Version: testTagVersion},
 		},

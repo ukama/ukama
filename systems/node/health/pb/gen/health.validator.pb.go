@@ -18,10 +18,10 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *GetAppsRequest) Validate() error {
+func (this *ListAppsRequest) Validate() error {
 	return nil
 }
-func (this *GetAppsResponse) Validate() error {
+func (this *ListAppsResponse) Validate() error {
 	for _, item := range this.Apps {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
@@ -31,7 +31,18 @@ func (this *GetAppsResponse) Validate() error {
 	}
 	return nil
 }
-func (this *ListRequest) Validate() error {
+func (this *ListInterfacesRequest) Validate() error {
+	return nil
+}
+func (this *ListInterfacesResponse) Validate() error {
+	if this.Interfaces != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Interfaces); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Interfaces", err)
+		}
+	}
+	return nil
+}
+func (this *ListReportsRequest) Validate() error {
 	if this.ReportedAt != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.ReportedAt); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("ReportedAt", err)
@@ -39,7 +50,7 @@ func (this *ListRequest) Validate() error {
 	}
 	return nil
 }
-func (this *ListResponse) Validate() error {
+func (this *ListReportsResponse) Validate() error {
 	for _, item := range this.Reports {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
@@ -72,5 +83,147 @@ func (this *HealthReport) Validate() error {
 	return nil
 }
 func (this *App) Validate() error {
+	if this.Resource != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Resource); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Resource", err)
+		}
+	}
+	return nil
+}
+func (this *AppResource) Validate() error {
+	return nil
+}
+func (this *SwitchPolicy) Validate() error {
+	for _, item := range this.Ports {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Ports", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *SwitchPort) Validate() error {
+	return nil
+}
+func (this *Interface) Validate() error {
+	if this.Cellular != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Cellular); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Cellular", err)
+		}
+	}
+	if this.Radio != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Radio); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Radio", err)
+		}
+	}
+	if this.Gps != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Gps); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Gps", err)
+		}
+	}
+	if this.Backhaul != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Backhaul); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Backhaul", err)
+		}
+	}
+	if this.Fem != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Fem); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Fem", err)
+		}
+	}
+	if this.Switch != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Switch); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Switch", err)
+		}
+	}
+	if this.Controller != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Controller); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Controller", err)
+		}
+	}
+	return nil
+}
+func (this *CellularInterface) Validate() error {
+	return nil
+}
+func (this *RadioInterface) Validate() error {
+	return nil
+}
+func (this *GPSInterface) Validate() error {
+	if this.Time != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Time); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Time", err)
+		}
+	}
+	return nil
+}
+func (this *BackhaulInterface) Validate() error {
+	return nil
+}
+func (this *FEMInterface) Validate() error {
+	for _, item := range this.Fems {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Fems", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *FEMUnit) Validate() error {
+	if this.Gpio != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Gpio); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Gpio", err)
+		}
+	}
+	return nil
+}
+func (this *FEMGPIO) Validate() error {
+	return nil
+}
+func (this *SwitchInterface) Validate() error {
+	if this.Policy != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Policy); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Policy", err)
+		}
+	}
+	for _, item := range this.Ports {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Ports", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *SwitchInterfacePolicy) Validate() error {
+	return nil
+}
+func (this *NodeControllerInterface) Validate() error {
+	if this.Solar != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Solar); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Solar", err)
+		}
+	}
+	if this.Battery != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Battery); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Battery", err)
+		}
+	}
+	if this.Load != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Load); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Load", err)
+		}
+	}
+	return nil
+}
+func (this *ControllerSolarMetrics) Validate() error {
+	return nil
+}
+func (this *ControllerBatteryMetrics) Validate() error {
+	return nil
+}
+func (this *ControllerLoadMetrics) Validate() error {
 	return nil
 }

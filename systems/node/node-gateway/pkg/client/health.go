@@ -65,9 +65,22 @@ func (h *Health) StoreHealthReport(request *pb.StoreHealthReportRequest) (*pb.St
 	return h.client.StoreHealthReport(ctx, request)
 }
 
-func (h *Health) List(request *pb.ListRequest) (*pb.ListResponse, error) {
+func (h *Health) ListReports(request *pb.ListReportsRequest) (*pb.ListReportsResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
 	defer cancel()
 
-	return h.client.List(ctx, request)
+	return h.client.ListReports(ctx, request)
+}
+
+func (h *Health) ListApps(request *pb.ListAppsRequest) (*pb.ListAppsResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
+	defer cancel()
+
+	return h.client.ListApps(ctx, request)
+}
+
+func (h *Health) ListInterfaces(request *pb.ListInterfacesRequest) (*pb.ListInterfacesResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
+	defer cancel()
+	return h.client.ListInterfaces(ctx, request)
 }

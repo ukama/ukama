@@ -42,20 +42,20 @@ func TestHealthClientStoreHealthReport(t *testing.T) {
 	mc.AssertExpectations(t)
 }
 
-func TestHealthClientList(t *testing.T) {
+func TestHealthClientListReports(t *testing.T) {
 	mc := &pbmocks.HealthServiceClient{}
-	expectedReq := &pb.ListRequest{
+	expectedReq := &pb.ListReportsRequest{
 		NodeId:    testNodeID,
 		Timeframe: ukamapb.FilterTimeframesType_ALL,
 	}
-	expectedResp := &pb.ListResponse{
+	expectedResp := &pb.ListReportsResponse{
 		Reports: []*pb.HealthReport{{NodeId: testNodeID}},
 	}
 
-	mc.On("List", mock.Anything, expectedReq).Return(expectedResp, nil).Once()
+	mc.On("ListReports", mock.Anything, expectedReq).Return(expectedResp, nil).Once()
 
 	c := client.NewHealthFromClient(mc)
-	resp, err := c.List(expectedReq)
+	resp, err := c.ListReports(expectedReq)
 
 	assert.NoError(t, err)
 	if assert.NotNil(t, resp) && assert.Len(t, resp.Reports, 1) {

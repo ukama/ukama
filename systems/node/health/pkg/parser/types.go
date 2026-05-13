@@ -96,7 +96,7 @@ type BackhaulInterface struct {
 
 type FEMInterface struct {
 	Available bool      `json:"available"`
-	FEMs      []FEMUnit `json:"fems"`
+	FEMs      []*FEMUnit `json:"fems"`
 }
 
 type FEMUnit struct {
@@ -133,7 +133,7 @@ type SwitchPolicy struct {
 }
 
 type SwitchPort struct {
-	ID             int     `json:"id"`
+	ID             int64   `json:"id"`
 	Name           string  `json:"name"`
 	Present        bool    `json:"present"`
 	AdminState     string  `json:"adminState"`
@@ -186,7 +186,7 @@ type HealthApp struct {
 
 type AppResources struct {
 	CPUPercent     float64 `json:"cpuPercent"`
-	MemoryRssKb    int64   `json:"memoryRssKb"`
-	DiskReadBytes  int64   `json:"diskReadBytes"`
-	DiskWriteBytes int64   `json:"diskWriteBytes"`
+	MemoryRssKb    float64   `json:"memoryRssKb"`
+	DiskReadBytes  float64   `json:"diskReadBytes"`
+	DiskWriteBytes float64   `json:"diskWriteBytes"`
 }

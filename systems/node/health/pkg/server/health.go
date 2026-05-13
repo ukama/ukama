@@ -84,8 +84,8 @@ func (h *HealthServer) StoreHealthReport(ctx context.Context, req *pb.StoreHealt
 	return &pb.StoreHealthReportResponse{ReportId: report.ID.String()}, nil
 }
 
-func (h *HealthServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
-	log.Infof("List: %v", req)
+func (h *HealthServer) ListReports(ctx context.Context, req *pb.ListReportsRequest) (*pb.ListReportsResponse, error) {
+	log.Infof("ListReports: %v", req)
 	if req.GetReportId() == "" && req.GetNodeId() == "" {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"either provide reportId or nodeId")
@@ -108,11 +108,11 @@ func (h *HealthServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListR
 		out[i] = healthReportToPb(r)
 	}
 
-	return &pb.ListResponse{Reports: out}, nil
+	return &pb.ListReportsResponse{Reports: out}, nil
 }
 
-func (h *HealthServer) GetApps(ctx context.Context, req *pb.GetAppsRequest) (*pb.GetAppsResponse, error) {
-	log.Infof("GetApps: %v", req)
+func (h *HealthServer) ListApps(ctx context.Context, req *pb.ListAppsRequest) (*pb.ListAppsResponse, error) {
+	log.Infof("ListApps: %v", req)
 
 	reports, err := h.sRepo.List("", req.GetNodeId(), nil, ukama.FilterTimeframesTypeLatest)
 	if err != nil {
@@ -120,7 +120,7 @@ func (h *HealthServer) GetApps(ctx context.Context, req *pb.GetAppsRequest) (*pb
 	}
 
 	if len(reports) == 0 {
-		return &pb.GetAppsResponse{Apps: make([]*pb.App, 0)}, nil
+		return &pb.ListAppsResponse{Apps: make([]*pb.App, 0)}, nil
 	}
 
 	parsed, err := parser.ParseHealthPayload(reports[0].Payload)
@@ -130,15 +130,224 @@ func (h *HealthServer) GetApps(ctx context.Context, req *pb.GetAppsRequest) (*pb
 
 	apps := make([]*pb.App, len(parsed.Apps))
 	for i, a := range parsed.Apps {
-		apps[i] = &pb.App{
-			Name: a.Name,
-			Version: a.Version,
-			Tag: a.Tag,
-			Status: a.State,
+		if req.GetAppName() != "" && a.Name == req.GetAppName() {
+			apps[i] = parseAppToPb(&a)
+			break
 		}
+		apps[i] = parseAppToPb(&a)
 	}
 
-	return &pb.GetAppsResponse{Apps: apps}, nil
+	return &pb.ListAppsResponse{Apps: apps}, nil
+}
+
+func (h *HealthServer) ListInterfaces(ctx context.Context, req *pb.ListInterfacesRequest) (*pb.ListInterfacesResponse, error) {
+	log.Infof("ListInterfaces: %v", req)
+
+	_, err := ukama.ValidateNodeId(req.GetNodeId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of node id. Error %s", err.Error())
+	}
+
+	nodeType := ukama.GetNodeType(req.GetNodeId())
+	if nodeType == nil || *nodeType != ukama.NODE_ID_TYPE_CNODE {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"node type is not a cnode")
+	}
+
+	reports, err := h.sRepo.List("", req.GetNodeId(), nil, ukama.FilterTimeframesTypeLatest)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "health")
+	}
+
+	if len(reports) == 0 {
+		return &pb.ListInterfacesResponse{
+			Interfaces: &pb.Interface{},
+		}, nil
+	}
+
+	parsed, err := parser.ParseHealthPayload(reports[0].Payload)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "payload is invalid: %v", err)
+	}
+
+	interfaces := parseInterfaceToPb(&parsed.Interfaces)
+
+	return &pb.ListInterfacesResponse{
+		Interfaces: interfaces,
+	}, nil
+}
+
+func parseInterfaceToPb(i *parser.HealthInterfaces) *pb.Interface {
+	return &pb.Interface{
+		Cellular:   parseCellularInterfaceToPb(i.Cellular),
+		Radio:      parseRadioInterfaceToPb(i.Radio),
+		Gps:        parseGPSInterfaceToPb(i.GPS),
+		Backhaul:   parseBackhaulInterfaceToPb(i.Backhaul),
+		Fem:        parseFEMInterfaceToPb(i.FEM),
+		Switch:     parseSwitchInterfaceToPb(i.Switch),
+		Controller: parseControllerInterfaceToPb(i.Controller),
+	}
+}
+
+func parseCellularInterfaceToPb(c *parser.CellularInterface) *pb.CellularInterface {
+	if c == nil {
+		return nil
+	}
+	return &pb.CellularInterface{
+		Available: c.Available,
+		Error:     c.Error,
+	}
+}
+
+func parseRadioInterfaceToPb(r *parser.RadioInterface) *pb.RadioInterface {
+	if r == nil {
+		return nil
+	}
+	return &pb.RadioInterface{
+		Available: r.Available,
+		State:     r.State,
+	}
+}
+
+func parseGPSInterfaceToPb(g *parser.GPSInterface) *pb.GPSInterface {
+	if g == nil {
+		return nil
+	}
+	return &pb.GPSInterface{
+		Available:   g.Available,
+		Lock:        g.Lock,
+		Coordinates: g.Coordinates,
+		Time:        timestamppb.New(g.Time),
+	}
+}
+
+func parseBackhaulInterfaceToPb(b *parser.BackhaulInterface) *pb.BackhaulInterface {
+	if b == nil {
+		return nil
+	}
+	return &pb.BackhaulInterface{
+		Available:  b.Available,
+		State:      b.State,
+		LinkGuess: b.LinkGuess,
+		Confidence: b.Confidence,
+	}
+}
+
+func parseFEMInterfaceToPb(f *parser.FEMInterface) *pb.FEMInterface {
+	if f == nil {
+		return nil
+	}
+	return &pb.FEMInterface{
+		Available: f.Available,
+		Fems:      parseFEMsToPb(f.FEMs),
+	}
+}
+
+func parseSwitchInterfaceToPb(s *parser.SwitchInterface) *pb.SwitchInterface {
+	if s == nil {
+		return nil
+	}
+	return &pb.SwitchInterface{
+		Available:       s.Available,
+		Reachable:       s.Reachable,
+		State:           s.State,
+		Model:           s.Model,
+		SoftwareVersion: s.SoftwareVersion,
+		PortCount:       int32(s.PortCount),
+		Policy: &pb.SwitchInterfacePolicy{
+			State:  s.Policy.State,
+			Hash:   s.Policy.Hash,
+			Source: s.Policy.Source,
+			Error:  s.Policy.Error,
+		},
+		Ports: parseSwitchPortsToPb(s.Ports),
+	}
+}
+
+func parseSwitchPortsToPb(p []parser.SwitchPort) []*pb.SwitchPort {
+	ports := make([]*pb.SwitchPort, len(p))
+	for i, p := range p {
+		ports[i] = &pb.SwitchPort{
+			Id:             p.ID,
+			Name:           p.Name,
+			Present:        p.Present,
+			AdminState:     p.AdminState,
+			LinkState:      p.LinkState,
+			PoeState:       p.PoeState,
+			PoeOperational: p.PoeOperational,
+			SpeedBps:       p.SpeedBps,
+			PowerWatts:     p.PowerWatts,
+			Fault:          p.Fault,
+		}
+	}
+	return ports
+}
+
+func parseFEMsToPb(f []*parser.FEMUnit) []*pb.FEMUnit {
+	fems := make([]*pb.FEMUnit, len(f))
+	for i, f := range f {
+		fems[i] = &pb.FEMUnit{
+			Unit: int32(f.Unit),
+			Present: f.Present,
+		}
+	}
+	return fems
+}
+
+func parseControllerInterfaceToPb(c *parser.NodeControllerInterface) *pb.NodeControllerInterface {
+	if c == nil {
+		return nil
+	}
+	return &pb.NodeControllerInterface{
+		Available:        c.Available,
+		CommOk:           c.CommOk,
+		ChargeState:      c.ChargeState,
+		ErrorCode:        int32(c.ErrorCode),
+		Error:            c.Error,
+		ActiveAlarmCount: int32(c.ActiveAlarmCount),
+		Solar:            parseControllerSolarMetricsToPb(&c.Solar),
+		Battery:          parseControllerBatteryMetricsToPb(&c.Battery),
+		Load:             parseControllerLoadMetricsToPb(&c.Load),
+	}
+}
+
+func parseControllerSolarMetricsToPb(s *parser.ControllerSolarMetrics) *pb.ControllerSolarMetrics {
+	return &pb.ControllerSolarMetrics{
+		VoltageV: s.VoltageV,
+		CurrentA: s.CurrentA,
+		PowerW: s.PowerW,
+	}
+}
+
+func parseControllerBatteryMetricsToPb(b *parser.ControllerBatteryMetrics) *pb.ControllerBatteryMetrics {
+	return &pb.ControllerBatteryMetrics{
+		VoltageV: b.VoltageV,
+		CurrentA: b.CurrentA,
+		SocPct: int32(b.SocPct),
+	}
+}
+
+func parseControllerLoadMetricsToPb(l *parser.ControllerLoadMetrics) *pb.ControllerLoadMetrics {
+	return &pb.ControllerLoadMetrics{
+		OutputOn: l.OutputOn,
+		CurrentA: l.CurrentA,
+	}
+}
+
+func parseAppToPb(a *parser.HealthApp) *pb.App {
+	return &pb.App{
+		Name: a.Name,
+		Version: a.Version,
+		Tag: a.Tag,
+		Status: a.State,
+		Resource: &pb.AppResource{
+			CpuPercent: float32(a.Resources.CPUPercent),
+			MemoryRssKb: float32(a.Resources.MemoryRssKb),
+			DiskReadBytes: float32(a.Resources.DiskReadBytes),
+			DiskWriteBytes: float32(a.Resources.DiskWriteBytes),
+		},
+	}
 }
 
 func healthReportToPb(r *db.HealthReport) *pb.HealthReport {

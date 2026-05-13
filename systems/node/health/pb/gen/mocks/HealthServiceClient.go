@@ -16,8 +16,8 @@ type HealthServiceClient struct {
 	mock.Mock
 }
 
-// GetApps provides a mock function with given fields: ctx, in, opts
-func (_m *HealthServiceClient) GetApps(ctx context.Context, in *gen.GetAppsRequest, opts ...grpc.CallOption) (*gen.GetAppsResponse, error) {
+// ListApps provides a mock function with given fields: ctx, in, opts
+func (_m *HealthServiceClient) ListApps(ctx context.Context, in *gen.ListAppsRequest, opts ...grpc.CallOption) (*gen.ListAppsResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -28,23 +28,23 @@ func (_m *HealthServiceClient) GetApps(ctx context.Context, in *gen.GetAppsReque
 	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetApps")
+		panic("no return value specified for ListApps")
 	}
 
-	var r0 *gen.GetAppsResponse
+	var r0 *gen.ListAppsResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetAppsRequest, ...grpc.CallOption) (*gen.GetAppsResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListAppsRequest, ...grpc.CallOption) (*gen.ListAppsResponse, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetAppsRequest, ...grpc.CallOption) *gen.GetAppsResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListAppsRequest, ...grpc.CallOption) *gen.ListAppsResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetAppsResponse)
+			r0 = ret.Get(0).(*gen.ListAppsResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetAppsRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListAppsRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -53,8 +53,8 @@ func (_m *HealthServiceClient) GetApps(ctx context.Context, in *gen.GetAppsReque
 	return r0, r1
 }
 
-// List provides a mock function with given fields: ctx, in, opts
-func (_m *HealthServiceClient) List(ctx context.Context, in *gen.ListRequest, opts ...grpc.CallOption) (*gen.ListResponse, error) {
+// ListInterfaces provides a mock function with given fields: ctx, in, opts
+func (_m *HealthServiceClient) ListInterfaces(ctx context.Context, in *gen.ListInterfacesRequest, opts ...grpc.CallOption) (*gen.ListInterfacesResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -65,23 +65,60 @@ func (_m *HealthServiceClient) List(ctx context.Context, in *gen.ListRequest, op
 	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
-		panic("no return value specified for List")
+		panic("no return value specified for ListInterfaces")
 	}
 
-	var r0 *gen.ListResponse
+	var r0 *gen.ListInterfacesResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListRequest, ...grpc.CallOption) (*gen.ListResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListInterfacesRequest, ...grpc.CallOption) (*gen.ListInterfacesResponse, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListRequest, ...grpc.CallOption) *gen.ListResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListInterfacesRequest, ...grpc.CallOption) *gen.ListInterfacesResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ListResponse)
+			r0 = ret.Get(0).(*gen.ListInterfacesResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListInterfacesRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ListReports provides a mock function with given fields: ctx, in, opts
+func (_m *HealthServiceClient) ListReports(ctx context.Context, in *gen.ListReportsRequest, opts ...grpc.CallOption) (*gen.ListReportsResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListReports")
+	}
+
+	var r0 *gen.ListReportsResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListReportsRequest, ...grpc.CallOption) (*gen.ListReportsResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListReportsRequest, ...grpc.CallOption) *gen.ListReportsResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ListReportsResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListReportsRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

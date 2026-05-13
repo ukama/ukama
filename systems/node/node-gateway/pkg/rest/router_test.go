@@ -100,17 +100,17 @@ func TestListHealthInfo(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest(
 		"GET",
-		"/v1/health/list?reportId="+reportID+"&nodeId="+testListNodeID+"&reportedAt="+reportedRFC+"&timeframe=latest",
+		"/v1/health/reports?reportId="+reportID+"&nodeId="+testListNodeID+"&reportedAt="+reportedRFC+"&timeframe=latest",
 		nil,
 	)
 	c := &hmocks.HealthServiceClient{}
-	listReq := &hpb.ListRequest{
+	listReq := &hpb.ListReportsRequest{
 		ReportId:   reportID,
 		NodeId:     testListNodeID,
 		ReportedAt: timestamppb.New(reported),
 		Timeframe:  ukamapb.FilterTimeframesType_LATEST,
 	}
-	listResp := &hpb.ListResponse{
+	listResp := &hpb.ListReportsResponse{
 		Reports: []*hpb.HealthReport{
 			{
 				Id:     reportID,
@@ -118,7 +118,7 @@ func TestListHealthInfo(t *testing.T) {
 			},
 		},
 	}
-	c.On("List", mock.Anything, listReq).Return(listResp, nil).Once()
+	c.On("ListReports", mock.Anything, listReq).Return(listResp, nil).Once()
 
 	// Create a new router with the mock client.
 	r := NewRouter(&Clients{

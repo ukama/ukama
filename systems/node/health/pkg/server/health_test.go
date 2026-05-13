@@ -29,6 +29,7 @@ import (
 const testOrgName = "test-org"
 
 var testNode = ukama.NewVirtualNodeId("HomeNode")
+var testCNode = ukama.NewVirtualNodeId("ctrlnode")
 
 func TestHealthServerStoreHealthReport(t *testing.T) {
 	hRepo := &mocks.HealthRepo{}
@@ -150,7 +151,7 @@ func TestHealthServerListLatest(t *testing.T) {
 	hRepo.On("List", "", testNode.String(), (*time.Time)(nil), ukama.FilterTimeframesTypeLatest).Return([]*db.HealthReport{report}, nil).Once()
 	s := NewHealthServer(testOrgName, hRepo, false)
 
-	resp, err := s.List(context.Background(), &pb.ListRequest{
+	resp, err := s.ListReports(context.Background(), &pb.ListReportsRequest{
 		NodeId:    testNode.String(),
 		Timeframe: ukamapb.FilterTimeframesType_LATEST,
 	})
@@ -179,7 +180,7 @@ func TestHealthServerListAll(t *testing.T) {
 	hRepo.On("List", "", testNode.String(), (*time.Time)(nil), ukama.FilterTimeframesTypeAll).Return(reports, nil).Once()
 	s := NewHealthServer(testOrgName, hRepo, false)
 
-	resp, err := s.List(context.Background(), &pb.ListRequest{
+	resp, err := s.ListReports(context.Background(), &pb.ListReportsRequest{
 		NodeId:    testNode.String(),
 		Timeframe: ukamapb.FilterTimeframesType_ALL,
 	})
@@ -196,7 +197,7 @@ func TestHealthServerListMissingIdAndNodeId(t *testing.T) {
 	hRepo := &mocks.HealthRepo{}
 	s := NewHealthServer(testOrgName, hRepo, false)
 
-	resp, err := s.List(context.Background(), &pb.ListRequest{
+	resp, err := s.ListReports(context.Background(), &pb.ListReportsRequest{
 		Timeframe: ukamapb.FilterTimeframesType_LATEST,
 	})
 
@@ -213,7 +214,7 @@ func TestHealthServerListRepoError(t *testing.T) {
 	hRepo.On("List", "", testNode.String(), (*time.Time)(nil), ukama.FilterTimeframesTypeLatest).Return(([]*db.HealthReport)(nil), assert.AnError).Once()
 	s := NewHealthServer(testOrgName, hRepo, false)
 
-	resp, err := s.List(context.Background(), &pb.ListRequest{
+	resp, err := s.ListReports(context.Background(), &pb.ListReportsRequest{
 		NodeId:    testNode.String(),
 		Timeframe: ukamapb.FilterTimeframesType_LATEST,
 	})
@@ -223,7 +224,7 @@ func TestHealthServerListRepoError(t *testing.T) {
 	hRepo.AssertExpectations(t)
 }
 
-func TestHealthServerGetApps(t *testing.T) {
+func TestHealthServerListApps(t *testing.T) {
 	hRepo := &mocks.HealthRepo{}
 	reportID := uuid.NewV4()
 	reported := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
@@ -254,7 +255,7 @@ func TestHealthServerGetApps(t *testing.T) {
 	hRepo.On("List", "", testNode.String(), (*time.Time)(nil), ukama.FilterTimeframesTypeLatest).Return([]*db.HealthReport{report}, nil).Once()
 	s := NewHealthServer(testOrgName, hRepo, false)
 
-	resp, err := s.GetApps(context.Background(), &pb.GetAppsRequest{
+	resp, err := s.ListApps(context.Background(), &pb.ListAppsRequest{
 		NodeId: testNode.String(),
 	})
 
@@ -266,4 +267,105 @@ func TestHealthServerGetApps(t *testing.T) {
 		assert.Equal(t, "active", resp.Apps[0].Status)
 	}
 	hRepo.AssertExpectations(t)
+}
+
+func TestHealthServerListInterfaces(t *testing.T) {
+	t.Run("invalid_node_type_returns_error", func(t *testing.T) {
+		hRepo := &mocks.HealthRepo{}
+		s := NewHealthServer(testOrgName, hRepo, false)
+
+		resp, err := s.ListInterfaces(context.Background(), &pb.ListInterfacesRequest{
+			NodeId: testNode.String(),
+		})
+
+		assert.Nil(t, resp)
+		if assert.Error(t, err) {
+			assert.Equal(t, codes.InvalidArgument, status.Code(err))
+		}
+		hRepo.AssertExpectations(t)
+	})
+
+	t.Run("no_reports_returns_empty_switch_policy", func(t *testing.T) {
+		hRepo := &mocks.HealthRepo{}
+		hRepo.On("List", "", testCNode.String(), (*time.Time)(nil), ukama.FilterTimeframesTypeLatest).
+			Return([]*db.HealthReport{}, nil).Once()
+
+		s := NewHealthServer(testOrgName, hRepo, false)
+		resp, err := s.ListInterfaces(context.Background(), &pb.ListInterfacesRequest{
+			NodeId: testCNode.String(),
+		})
+
+		assert.NoError(t, err)
+		if assert.NotNil(t, resp) && assert.NotNil(t, resp.Interfaces) {
+			assert.Nil(t, resp.Interfaces.Switch)
+		}
+		hRepo.AssertExpectations(t)
+	})
+
+	t.Run("maps_policy_and_ports_from_latest_report", func(t *testing.T) {
+		hRepo := &mocks.HealthRepo{}
+		reportID := uuid.NewV4()
+		reported := time.Date(2026, 1, 3, 10, 0, 0, 0, time.UTC)
+		received := reported.Add(time.Minute)
+
+		payload, err := json.Marshal(map[string]interface{}{
+			"interfaces": map[string]interface{}{
+				"switch": map[string]interface{}{
+					"state": "active",
+					"policy": map[string]interface{}{
+						"state":  "applied",
+						"hash":   "hash-123",
+						"source": "controller",
+						"error":  "",
+					},
+					"ports": []map[string]interface{}{
+						{
+							"id":         1,
+							"name":       "ge1",
+							"present":    true,
+							"adminState": "up",
+							"linkState":  "up",
+							"poeState":   "on",
+						},
+					},
+				},
+			},
+		})
+		assert.NoError(t, err)
+
+		report := &db.HealthReport{
+			ID:            reportID,
+			NodeID:        testCNode.String(),
+			NodeType:      ukama.NODE_TYPE_CNODE,
+			SchemaVersion: "1",
+			ReportedAt:    reported,
+			ReceivedAt:    received,
+			Payload:       json.RawMessage(payload),
+		}
+
+		hRepo.On("List", "", testCNode.String(), (*time.Time)(nil), ukama.FilterTimeframesTypeLatest).
+			Return([]*db.HealthReport{report}, nil).Once()
+
+		s := NewHealthServer(testOrgName, hRepo, false)
+		resp, err := s.ListInterfaces(context.Background(), &pb.ListInterfacesRequest{
+			NodeId: testCNode.String(),
+		})
+
+		assert.NoError(t, err)
+		if assert.NotNil(t, resp) && assert.NotNil(t, resp.Interfaces) && assert.NotNil(t, resp.Interfaces.Switch) {
+			assert.Equal(t, "active", resp.Interfaces.Switch.State)
+			assert.Equal(t, "hash-123", resp.Interfaces.Switch.Policy.Hash)
+			assert.Equal(t, "controller", resp.Interfaces.Switch.Policy.Source)
+			if assert.Len(t, resp.Interfaces.Switch.Ports, 1) {
+				p := resp.Interfaces.Switch.Ports[0]
+				assert.Equal(t, int64(1), p.Id)
+				assert.Equal(t, "ge1", p.Name)
+				assert.Equal(t, true, p.Present)
+				assert.Equal(t, "up", p.AdminState)
+				assert.Equal(t, "up", p.LinkState)
+				assert.Equal(t, "on", p.PoeState)
+			}
+		}
+		hRepo.AssertExpectations(t)
+	})
 }

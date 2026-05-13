@@ -68,7 +68,9 @@ type notify interface {
 
 type health interface {
 	StoreHealthReport(req *healthPb.StoreHealthReportRequest) (*healthPb.StoreHealthReportResponse, error)
-	List(request *healthPb.ListRequest) (*healthPb.ListResponse, error)
+	ListReports(request *healthPb.ListReportsRequest) (*healthPb.ListReportsResponse, error)
+	ListApps(request *healthPb.ListAppsRequest) (*healthPb.ListAppsResponse, error)
+	ListInterfaces(request *healthPb.ListInterfacesRequest) (*healthPb.ListInterfacesResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -123,7 +125,9 @@ func (r *Router) init() {
 		tonic.Handler(r.postHealthReportHandler, http.StatusCreated),
 	)
 	health.POST("/logger/node/:node_id", formatDoc("Log data", "Endpoint to log data"), tonic.Handler(r.logHandler, http.StatusCreated))
-	health.GET("/list", formatDoc("List health info", "Retrieve the health information for the node."), tonic.Handler(r.listHealthInfoHandler, http.StatusOK))
+	health.GET("/reports", formatDoc("List health reports", "Retrieve the health reports for the node."), tonic.Handler(r.listHealthReportsHandler, http.StatusOK))
+	health.GET("/apps", formatDoc("List apps", "Retrieve the apps for the node."), tonic.Handler(r.listAppsHandler, http.StatusOK))
+	health.GET("/interfaces", formatDoc("List interfaces", "Retrieve the interfaces for the node."), tonic.Handler(r.listInterfacesHandler, http.StatusOK))
 
 	notif := endpoint.Group("/notify", "Node Notify", "Notify service for the node")
 	notif.POST("", formatDoc("Insert Notification", "Insert a new notification"), tonic.Handler(r.postNotification, http.StatusCreated))
@@ -205,7 +209,7 @@ func (r *Router) postHealthReportHandler(c *gin.Context, req *StoreHealthReportR
 	})
 }
 
-func (r *Router) listHealthInfoHandler(c *gin.Context, req *ListHealthRequest) (*healthPb.ListResponse, error) {
+func (r *Router) listHealthReportsHandler(c *gin.Context, req *ListHealthReportsRequest) (*healthPb.ListReportsResponse, error) {
 	var reportedAtPb *timestamppb.Timestamp
 	if req.ReportedAt != "" {
 		t, err := time.Parse(time.RFC3339, req.ReportedAt)
@@ -215,11 +219,25 @@ func (r *Router) listHealthInfoHandler(c *gin.Context, req *ListHealthRequest) (
 		reportedAtPb = timestamppb.New(t)
 	}
 
-	return r.clients.Health.List(&healthPb.ListRequest{
+	return r.clients.Health.ListReports(&healthPb.ListReportsRequest{
 		ReportId:   req.ReportId,
 		NodeId:     req.NodeId,
 		ReportedAt: reportedAtPb,
 		Timeframe:  ukamaPb.FilterTimeframesType(ukama.ReturnFilterTimeframesType(ukama.ParseFilterTimeframesType(req.Timeframe))),
+	})
+}
+
+func (r *Router) listAppsHandler(c *gin.Context, req *ListAppsRequest) (*healthPb.ListAppsResponse, error) {
+	return r.clients.Health.ListApps(&healthPb.ListAppsRequest{
+		NodeId: req.NodeId,
+		AppName: req.AppName,
+	})
+}
+
+func (r *Router) listInterfacesHandler(c *gin.Context, req *ListInterfacesRequest) (*healthPb.ListInterfacesResponse, error) {
+	return r.clients.Health.ListInterfaces(&healthPb.ListInterfacesRequest{
+		NodeId: req.NodeId,
+		InterfaceName: req.InterfaceName,
 	})
 }
 

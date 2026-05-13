@@ -10,11 +10,21 @@ package rest
 
 import "encoding/json"
 
-type ListHealthRequest struct {
+type ListHealthReportsRequest struct {
 	ReportId   string `form:"reportId" json:"reportId" query:"reportId"`
 	NodeId     string `form:"nodeId" json:"nodeId" query:"nodeId"`
 	ReportedAt string `form:"reportedAt" json:"reportedAt" query:"reportedAt"`
 	Timeframe  string `form:"timeframe" default:"all" json:"timeframe" query:"timeframe" binding:"required" validate:"eq=all|eq=latest"`
+}
+
+type ListAppsRequest struct {
+	NodeId string `form:"nodeId" json:"nodeId" query:"nodeId"`
+	AppName string `form:"appName" json:"appName" query:"appName"`
+}
+
+type ListInterfacesRequest struct {
+	NodeId string `form:"nodeId" json:"nodeId" query:"nodeId"`
+	InterfaceName string `form:"interfaceName" json:"interfaceName" query:"interfaceName"`
 }
 
 type AddNotificationReq struct {

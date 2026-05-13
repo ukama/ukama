@@ -13,27 +13,38 @@ import "google/protobuf/timestamp.proto";
 import "ukama/filter_timeframes.proto";
 
 service HealthService {
-    rpc List (ListRequest) returns (ListResponse);
-    rpc GetApps (GetAppsRequest) returns (GetAppsResponse);
+    rpc ListReports (ListReportsRequest) returns (ListReportsResponse);
+    rpc ListApps (ListAppsRequest) returns (ListAppsResponse);
+    rpc ListInterfaces (ListInterfacesRequest) returns (ListInterfacesResponse);
     rpc StoreHealthReport (StoreHealthReportRequest) returns (StoreHealthReportResponse);
 }
 
-message GetAppsRequest {
+message ListAppsRequest {
     string nodeId = 1;
+    string appName = 2;
 }
 
-message GetAppsResponse {
+message ListAppsResponse {
     repeated App apps = 1;
 }
 
-message ListRequest {
+message ListInterfacesRequest {
+    string nodeId = 1;
+    string interfaceName = 2;
+}
+
+message ListInterfacesResponse {
+    Interface interfaces = 1;
+}
+
+message ListReportsRequest {
     string reportId = 1;
     string nodeId = 2;
     google.protobuf.Timestamp reportedAt = 3;
     ukama.common.v1.FilterTimeframesType timeframe = 4;
 }
 
-message ListResponse {
+message ListReportsResponse {
     repeated HealthReport reports = 1;
 }
 
@@ -61,4 +72,134 @@ message App {
     string version = 2;
     string tag = 3;
     string status = 4;
+    AppResource resource = 5;
+}
+
+message AppResource {
+    float cpuPercent = 1;
+    float memoryRssKb = 2;
+    float diskReadBytes = 3;
+    float diskWriteBytes = 4;
+}
+
+message SwitchPolicy {
+    string state = 1;
+    string hash = 2;
+    string source = 3;
+    string error = 4;
+    repeated SwitchPort ports = 5;
+}
+
+message SwitchPort {
+    int64 id = 1;
+    string name = 2;
+    bool present = 3;
+    string adminState = 4;
+    string linkState = 5;
+    string poeState = 6;
+    bool poeOperational = 7;
+    int64 speedBps = 8;
+    double powerWatts = 9;
+    string fault = 10;
+}
+
+message Interface {
+    CellularInterface cellular = 1;
+    RadioInterface radio = 2;
+    GPSInterface gps = 3;
+    BackhaulInterface backhaul = 4;
+    FEMInterface fem = 5;
+    SwitchInterface switch = 6;
+    NodeControllerInterface controller = 7;
+}
+
+message CellularInterface {
+    bool available = 1;
+    string error = 2;
+}
+
+message RadioInterface {
+    bool available = 1;
+    string state = 2;
+}
+
+message GPSInterface {
+    bool available = 1;
+    bool lock = 2;
+    string coordinates = 3;
+    google.protobuf.Timestamp time = 4;
+}
+
+message BackhaulInterface {
+    bool available = 1;
+    string state = 2;
+    string linkGuess = 3;
+    double confidence = 4;
+}
+
+message FEMInterface {
+    bool available = 1;
+    repeated FEMUnit fems = 2;
+}
+
+message FEMUnit {
+    int32 unit = 1;
+    bool present = 2;
+    FEMGPIO gpio = 3;
+}
+
+message FEMGPIO {
+    bool txRfEnable = 1;
+    bool rxRfEnable = 2;
+    bool paVdsEnable = 3;
+    bool rfPalEnable = 4;
+    bool vds28vEnable = 5;
+    bool psuPgood = 6;
+}
+
+message SwitchInterface {
+    bool available = 1;
+    bool reachable = 2;
+    string state = 3;
+    string model = 4;
+    string softwareVersion = 5;
+    int32 portCount = 6;
+    SwitchInterfacePolicy policy = 7;
+    repeated SwitchPort ports = 8;
+}
+
+message SwitchInterfacePolicy {
+    string state = 1;
+    string hash = 2;
+    string source = 3;
+    string error = 4;
+}
+
+message NodeControllerInterface {
+    bool available = 1;
+    bool commOk = 2;
+    string chargeState = 3;
+    int32 errorCode = 4;
+    string error = 5;
+    int32 activeAlarmCount = 6;
+    ControllerSolarMetrics solar = 7;
+    ControllerBatteryMetrics battery = 8;
+    ControllerLoadMetrics load = 9;
+}
+
+message ControllerSolarMetrics {
+    double voltageV = 1;
+    double currentA = 2;
+    double powerW = 3;
+}
+
+message ControllerBatteryMetrics {
+    double voltageV = 1;
+    double currentA = 2;
+    int32 socPct = 3;
+}
+
+message ControllerLoadMetrics {
+    bool outputOn = 1;
+    double currentA = 2;
 }

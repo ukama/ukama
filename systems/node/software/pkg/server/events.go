@@ -301,12 +301,12 @@ func (n *SoftwareUpdateEventServer) createMissingApps(missingApps map[string]db.
 	return nil
 }
 
-func (n *SoftwareUpdateEventServer) listApps(nodeId string) (*hpb.GetAppsResponse, error) {
+func (n *SoftwareUpdateEventServer) listApps(nodeId string) (*hpb.ListAppsResponse, error) {
 	healthClient, err := n.s.healthClient.GetClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get health client: %w", err)
 	}
-	response, err := healthClient.GetApps(context.Background(), &hpb.GetAppsRequest{
+	response, err := healthClient.ListApps(context.Background(), &hpb.ListAppsRequest{
 		NodeId: nodeId,
 	})
 	if err != nil {

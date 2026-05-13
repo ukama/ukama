@@ -14,28 +14,28 @@ type HealthServiceServer struct {
 	mock.Mock
 }
 
-// GetApps provides a mock function with given fields: _a0, _a1
-func (_m *HealthServiceServer) GetApps(_a0 context.Context, _a1 *gen.GetAppsRequest) (*gen.GetAppsResponse, error) {
+// ListApps provides a mock function with given fields: _a0, _a1
+func (_m *HealthServiceServer) ListApps(_a0 context.Context, _a1 *gen.ListAppsRequest) (*gen.ListAppsResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetApps")
+		panic("no return value specified for ListApps")
 	}
 
-	var r0 *gen.GetAppsResponse
+	var r0 *gen.ListAppsResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetAppsRequest) (*gen.GetAppsResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListAppsRequest) (*gen.ListAppsResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetAppsRequest) *gen.GetAppsResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListAppsRequest) *gen.ListAppsResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetAppsResponse)
+			r0 = ret.Get(0).(*gen.ListAppsResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetAppsRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListAppsRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -44,28 +44,58 @@ func (_m *HealthServiceServer) GetApps(_a0 context.Context, _a1 *gen.GetAppsRequ
 	return r0, r1
 }
 
-// List provides a mock function with given fields: _a0, _a1
-func (_m *HealthServiceServer) List(_a0 context.Context, _a1 *gen.ListRequest) (*gen.ListResponse, error) {
+// ListInterfaces provides a mock function with given fields: _a0, _a1
+func (_m *HealthServiceServer) ListInterfaces(_a0 context.Context, _a1 *gen.ListInterfacesRequest) (*gen.ListInterfacesResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
-		panic("no return value specified for List")
+		panic("no return value specified for ListInterfaces")
 	}
 
-	var r0 *gen.ListResponse
+	var r0 *gen.ListInterfacesResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListRequest) (*gen.ListResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListInterfacesRequest) (*gen.ListInterfacesResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListRequest) *gen.ListResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListInterfacesRequest) *gen.ListInterfacesResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ListResponse)
+			r0 = ret.Get(0).(*gen.ListInterfacesResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListInterfacesRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ListReports provides a mock function with given fields: _a0, _a1
+func (_m *HealthServiceServer) ListReports(_a0 context.Context, _a1 *gen.ListReportsRequest) (*gen.ListReportsResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListReports")
+	}
+
+	var r0 *gen.ListReportsResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListReportsRequest) (*gen.ListReportsResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListReportsRequest) *gen.ListReportsResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ListReportsResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListReportsRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
