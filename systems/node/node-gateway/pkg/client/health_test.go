@@ -22,83 +22,50 @@ import (
 
 const testNodeID = "ukma-0000-tnode-0000"
 
-func TestHealthClientStoreRunningAppsInfo(t *testing.T) {
-	mc := &pbmocks.HealhtServiceClient{}
+func TestHealthClientStoreHealthReport(t *testing.T) {
+	mc := &pbmocks.HealthServiceClient{}
 
-	req := &pb.StoreRunningAppsInfoRequest{
-		NodeId:    testNodeID,
-		Timestamp: "2026-04-21T10:00:00Z",
-		System: []*pb.System{
-			{Name: "cpu", Value: "30"},
-		},
-		Capps: []*pb.Capps{
-			{
-				Space:  "core",
-				Name:   "agent",
-				Tag:    "v1.0.0",
-				Status: pb.Status_ACTIVE,
-				Resources: []*pb.Resource{
-					{Name: "mem", Value: "100mb"},
-				},
-			},
-		},
+	req := &pb.StoreHealthReportRequest{
+		NodeId:  testNodeID,
+		Payload: []byte(`{"nodeType":"tower","schemaVersion":"1.0","reportedAt":"2026-04-21T10:00:00Z","ok":true}`),
 	}
 
-	expectedReq := &pb.StoreRunningAppsInfoRequest{
-		NodeId:    req.NodeId,
-		Timestamp: req.Timestamp,
-		System: []*pb.System{
-			{Name: "cpu", Value: "30"},
-		},
-		Capps: []*pb.Capps{
-			{
-				Space:  "core",
-				Name:   "agent",
-				Tag:    "v1.0.0",
-				Status: pb.Status_ACTIVE,
-				Resources: []*pb.Resource{
-					{Name: "mem", Value: "100mb"},
-				},
-			},
-		},
-	}
-
-	mc.On("StoreRunningAppsInfo", mock.Anything, expectedReq).Return(&pb.StoreRunningAppsInfoResponse{}, nil).Once()
+	mc.On("StoreHealthReport", mock.Anything, req).Return(&pb.StoreHealthReportResponse{ReportId: "rid-1"}, nil).Once()
 
 	c := client.NewHealthFromClient(mc)
-	resp, err := c.StoreRunningAppsInfo(req)
+	resp, err := c.StoreHealthReport(req)
 
 	assert.NoError(t, err)
-	assert.NotNil(t, resp)
+	if assert.NotNil(t, resp) {
+		assert.Equal(t, "rid-1", resp.GetReportId())
+	}
 	mc.AssertExpectations(t)
 }
 
-func TestHealthClientList(t *testing.T) {
-	mc := &pbmocks.HealhtServiceClient{}
-	expectedReq := &pb.ListRequest{
-		NodeId: testNodeID,
+func TestHealthClientListReports(t *testing.T) {
+	mc := &pbmocks.HealthServiceClient{}
+	expectedReq := &pb.ListReportsRequest{
+		NodeId:    testNodeID,
 		Timeframe: ukamapb.FilterTimeframesType_ALL,
 	}
-	expectedResp := &pb.ListResponse{
-		Healths: []*pb.Health{
-			{NodeId: testNodeID},
-		},
+	expectedResp := &pb.ListReportsResponse{
+		Reports: []*pb.HealthReport{{NodeId: testNodeID}},
 	}
 
-	mc.On("List", mock.Anything, expectedReq).Return(expectedResp, nil).Once()
+	mc.On("ListReports", mock.Anything, expectedReq).Return(expectedResp, nil).Once()
 
 	c := client.NewHealthFromClient(mc)
-	resp, err := c.List(expectedReq)
+	resp, err := c.ListReports(expectedReq)
 
 	assert.NoError(t, err)
-	if assert.NotNil(t, resp) && assert.Len(t, resp.Healths, 1) {
-		assert.Equal(t, testNodeID, resp.Healths[0].NodeId)
+	if assert.NotNil(t, resp) && assert.Len(t, resp.Reports, 1) {
+		assert.Equal(t, testNodeID, resp.Reports[0].NodeId)
 	}
 	mc.AssertExpectations(t)
 }
 
 func TestNewHealthFromClientDefaults(t *testing.T) {
-	mc := &pbmocks.HealhtServiceClient{}
+	mc := &pbmocks.HealthServiceClient{}
 
 	c := client.NewHealthFromClient(mc)
 	assert.NotNil(t, c)
@@ -106,7 +73,7 @@ func TestNewHealthFromClientDefaults(t *testing.T) {
 }
 
 func TestHealthCloseWithNilConn(t *testing.T) {
-	mc := &pbmocks.HealhtServiceClient{}
+	mc := &pbmocks.HealthServiceClient{}
 	c := client.NewHealthFromClient(mc)
 
 	// Ensure Close is safe when no real gRPC connection exists.

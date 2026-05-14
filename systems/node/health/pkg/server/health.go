@@ -11,231 +11,356 @@ package server
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/cloudflare/cfssl/log"
 	"github.com/ukama/ukama/systems/common/grpc"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	"github.com/ukama/ukama/systems/common/msgbus"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/node/health/pb/gen"
-	"github.com/ukama/ukama/systems/node/health/pkg"
 	"github.com/ukama/ukama/systems/node/health/pkg/db"
+	"github.com/ukama/ukama/systems/node/health/pkg/parser"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type HealthServer struct {
-	pb.UnimplementedHealhtServiceServer
-	sRepo            db.HealthRepo
-	healthRoutingKey msgbus.RoutingKeyBuilder
-	msgbus           mb.MsgBusServiceClient
-	debug            bool
-	orgName          string
+	pb.UnimplementedHealthServiceServer
+	sRepo   db.HealthRepo
+	debug   bool
+	orgName string
 }
 
-func NewHealthServer(orgName string, sRepo db.HealthRepo, msgBus mb.MsgBusServiceClient, debug bool) *HealthServer {
+func NewHealthServer(orgName string, sRepo db.HealthRepo, debug bool) *HealthServer {
 	return &HealthServer{
-		sRepo:            sRepo,
-		orgName:          orgName,
-		healthRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
-		msgbus:           msgBus,
-		debug:            debug,
+		sRepo:   sRepo,
+		orgName: orgName,
+		debug:   debug,
 	}
 }
 
-func (h *HealthServer) StoreRunningAppsInfo(ctx context.Context, req *pb.StoreRunningAppsInfoRequest) (*pb.StoreRunningAppsInfoResponse, error) {
-	log.Infof("StoreRunningAppsInfo: %v", req)
-	nId, err := ukama.ValidateNodeId(req.NodeId)
+func (h *HealthServer) StoreHealthReport(ctx context.Context, req *pb.StoreHealthReportRequest) (*pb.StoreHealthReportResponse, error) {
+	log.Infof("StoreHealthReport: %v", req)
+
+	nID, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of node id. Error %s", err.Error())
 	}
 
-	healthID := uuid.NewV4()
-
-	// Create a Health instance
-	health := db.Health{
-		Id:        healthID,
-		NodeId:    nId.StringLowercase(),
-		TimeStamp: req.GetTimestamp(),
+	raw := req.GetPayload()
+	if len(raw) == 0 {
+		raw = []byte("{}")
 	}
-
-	// Populate the System array from the request
-	for _, sys := range req.GetSystem() {
-		health.System = append(health.System, db.System{
-			Id:       uuid.NewV4(),
-			HealthID: healthID,
-			Name:     sys.GetName(),
-			Value:    sys.GetValue(),
-		})
-	}
-
-	for _, capp := range req.GetCapps() {
-		// Each capp must have a unique ID; reusing one ID causes PK collisions
-		// and the whole transaction rolls back.
-		cappID := uuid.NewV4()
-		health.Capps = append(health.Capps, db.Capp{
-			Id:       cappID,
-			HealthID: healthID,
-			Space:    capp.GetSpace(),
-			Name:     capp.GetName(),
-			Tag:      capp.GetTag(),
-			Status:   db.Status(capp.GetStatus()),
-		})
-
-		for _, resource := range capp.GetResources() {
-			health.Capps[len(health.Capps)-1].Resources = append(health.Capps[len(health.Capps)-1].Resources, db.Resource{
-				Id:     uuid.NewV4(),
-				CappID: cappID,
-				Name:   resource.GetName(),
-				Value:  resource.GetValue(),
-			})
-		}
-	}
-
-	err = h.sRepo.StoreRunningAppsInfo(&health, nil)
+	parsed, err := parser.ParseHealthPayload(raw)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.InvalidArgument, "payload is invalid: %v", err)
+	}
+	if parsed.NodeType == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "nodeType is required in payload")
+	}
+	if parsed.ReportedAt.IsZero() {
+		return nil, status.Errorf(codes.InvalidArgument, "reportedAt is required in payload")
 	}
 
-	msg := &epb.StoreRunningAppsInfoEvent{
-		NodeId:    req.NodeId,
-		Timestamp: req.Timestamp,
-		System:    []*epb.System{},
-		Capps:     []*epb.Capps{},
-	}
-	for _, sys := range health.System {
-		msg.System = append(msg.System, &epb.System{
-			Id:       sys.Id.String(),
-			HealthId: health.Id.String(),
-			Name:     sys.Name,
-			Value:    sys.Value,
-		})
+	nodeType := ukama.NodeType(parsed.NodeType)
+	schemaVersion := parsed.SchemaVersion
+
+	report := &db.HealthReport{
+		ID:            uuid.NewV4(),
+		NodeID:        nID.StringLowercase(),
+		NodeType:      nodeType,
+		SchemaVersion: schemaVersion,
+		ReportedAt:    parsed.ReportedAt,
+		Payload:       raw,
 	}
 
-	for _, capp := range health.Capps {
-		capps := &epb.Capps{
-			Id:     capp.Id.String(),
-			Space:  capp.Space,
-			Name:   capp.Name,
-			Tag:    capp.Tag,
-			Status: epb.Status(capp.Status),
-		}
-		for _, resource := range capp.Resources {
-			resource := &epb.Resource{
-				Id:    resource.Id.String(),
-				Name:  resource.Name,
-				Value: resource.Value,
-			}
-			capps.Resources = append(capps.Resources, resource)
-		}
-		msg.Capps = append(msg.Capps, capps)
+	receivedAt := time.Now().UTC()
+	if err := h.sRepo.StoreHealthReport(report, receivedAt); err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "health")
 	}
 
-	route := h.healthRoutingKey.SetAction("store").SetObject("capps").MustBuild()
-	err = h.msgbus.PublishRequest(route, msg)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-	}
-
-	return &pb.StoreRunningAppsInfoResponse{}, nil
+	return &pb.StoreHealthReportResponse{ReportId: report.ID.String()}, nil
 }
 
-func (h *HealthServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
-	log.Infof("List: %v", req)
-	if req.Id == "" && req.NodeId == "" {
+func (h *HealthServer) ListReports(ctx context.Context, req *pb.ListReportsRequest) (*pb.ListReportsResponse, error) {
+	log.Infof("ListReports: %v", req)
+	if req.GetReportId() == "" && req.GetNodeId() == "" {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"either provide id or node id")
+			"either provide reportId or nodeId")
 	}
 
-	timeframe := ukama.ParseFilterTimeframesType(strings.ToLower(req.Timeframe.String()))
-	healths, err := h.sRepo.List(req.Id, req.NodeId, req.Timestamp, timeframe)
+	var reportedAt *time.Time
+	if req.GetReportedAt() != nil {
+		t := req.GetReportedAt().AsTime()
+		reportedAt = &t
+	}
+
+	timeframe := ukama.ParseFilterTimeframesType(strings.ToLower(req.GetTimeframe().String()))
+	reports, err := h.sRepo.List(req.GetReportId(), req.GetNodeId(), reportedAt, timeframe)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "health")
 	}
 
-	healthsPb := convertToPbHealths(healths)
+	out := make([]*pb.HealthReport, len(reports))
+	for i, r := range reports {
+		out[i] = healthReportToPb(r)
+	}
 
-	return &pb.ListResponse{
-		Healths: healthsPb,
-	}, nil
+	return &pb.ListReportsResponse{Reports: out}, nil
 }
 
 func (h *HealthServer) ListApps(ctx context.Context, req *pb.ListAppsRequest) (*pb.ListAppsResponse, error) {
 	log.Infof("ListApps: %v", req)
-	capps, err := h.sRepo.ListApps(req.NodeId, req.Name)
+
+	reports, err := h.sRepo.List("", req.GetNodeId(), nil, ukama.FilterTimeframesTypeLatest)
 	if err != nil {
-		return nil, err
+		return nil, grpc.SqlErrorToGrpc(err, "health")
 	}
-	cappsPb := convertToPbCapps(capps)
-	return &pb.ListAppsResponse{Capps: cappsPb}, nil
+
+	if len(reports) == 0 {
+		return &pb.ListAppsResponse{Apps: make([]*pb.App, 0)}, nil
+	}
+
+	parsed, err := parser.ParseHealthPayload(reports[0].Payload)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "payload is invalid: %v", err)
+	}
+
+	apps := make([]*pb.App, len(parsed.Apps))
+	for i, a := range parsed.Apps {
+		if req.GetAppName() != "" && a.Name == req.GetAppName() {
+			apps[i] = parseAppToPb(&a)
+			break
+		}
+		apps[i] = parseAppToPb(&a)
+	}
+
+	return &pb.ListAppsResponse{Apps: apps}, nil
 }
 
-func convertToPbCapps(capps []*db.Capp) []*pb.Capps {
-	cappsPb := make([]*pb.Capps, len(capps))
-	for i, c := range capps {
-		cappsPb[i] = convertToPbCapp(c)
+func (h *HealthServer) ListInterfaces(ctx context.Context, req *pb.ListInterfacesRequest) (*pb.ListInterfacesResponse, error) {
+	log.Infof("ListInterfaces: %v", req)
+
+	_, err := ukama.ValidateNodeId(req.GetNodeId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of node id. Error %s", err.Error())
 	}
-	return cappsPb
+
+	nodeType := ukama.GetNodeType(req.GetNodeId())
+	if nodeType == nil || *nodeType != ukama.NODE_ID_TYPE_CNODE {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"node type is not a cnode")
+	}
+
+	reports, err := h.sRepo.List("", req.GetNodeId(), nil, ukama.FilterTimeframesTypeLatest)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "health")
+	}
+
+	if len(reports) == 0 {
+		return &pb.ListInterfacesResponse{
+			Interfaces: &pb.Interface{},
+		}, nil
+	}
+
+	parsed, err := parser.ParseHealthPayload(reports[0].Payload)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "payload is invalid: %v", err)
+	}
+
+	interfaces := parseInterfaceToPb(&parsed.Interfaces)
+
+	return &pb.ListInterfacesResponse{
+		Interfaces: interfaces,
+	}, nil
 }
 
-func convertToPbHealths(healths []*db.Health) []*pb.Health {
-	healthsPb := make([]*pb.Health, len(healths))
-	for i, h := range healths {
-		healthsPb[i] = convertToPbHealth(h)
-	}
-	return healthsPb
-}
-
-func convertToPbHealth(health *db.Health) *pb.Health {
-	systems := make([]*pb.System, len(health.System))
-	for i, s := range health.System {
-		systems[i] = convertToPbSystem(&s)
-	}
-	capps := make([]*pb.Capps, len(health.Capps))
-	for i, c := range health.Capps {
-		capps[i] = convertToPbCapp(&c)
-	}
-	return &pb.Health{
-		Id:        health.Id.String(),
-		NodeId:    health.NodeId,
-		Timestamp: health.TimeStamp,
-		System:    systems,
-		Capps:     capps,
+func parseInterfaceToPb(i *parser.HealthInterfaces) *pb.Interface {
+	return &pb.Interface{
+		Cellular:   parseCellularInterfaceToPb(i.Cellular),
+		Radio:      parseRadioInterfaceToPb(i.Radio),
+		Gps:        parseGPSInterfaceToPb(i.GPS),
+		Backhaul:   parseBackhaulInterfaceToPb(i.Backhaul),
+		Fem:        parseFEMInterfaceToPb(i.FEM),
+		Switch:     parseSwitchInterfaceToPb(i.Switch),
+		Controller: parseControllerInterfaceToPb(i.Controller),
 	}
 }
 
-func convertToPbSystem(system *db.System) *pb.System {
-	return &pb.System{
-		Id:       system.Id.String(),
-		HealthId: system.HealthID.String(),
-		Name:     system.Name,
-		Value:    system.Value,
+func parseCellularInterfaceToPb(c *parser.CellularInterface) *pb.CellularInterface {
+	if c == nil {
+		return nil
+	}
+	return &pb.CellularInterface{
+		Available: c.Available,
+		Error:     c.Error,
 	}
 }
 
-func convertToPbResource(resources *db.Resource) *pb.Resource {
-	return &pb.Resource{
-		Id:     resources.Id.String(),
-		Name:   resources.Name,
-		Value:  resources.Value,
-		CappId: resources.CappID.String(),
+func parseRadioInterfaceToPb(r *parser.RadioInterface) *pb.RadioInterface {
+	if r == nil {
+		return nil
+	}
+	return &pb.RadioInterface{
+		Available: r.Available,
+		State:     r.State,
 	}
 }
 
-func convertToPbCapp(capp *db.Capp) *pb.Capps {
-	resources := make([]*pb.Resource, len(capp.Resources))
-	for i, r := range capp.Resources {
-		resources[i] = convertToPbResource(&r)
+func parseGPSInterfaceToPb(g *parser.GPSInterface) *pb.GPSInterface {
+	if g == nil {
+		return nil
 	}
-	return &pb.Capps{
-		Id:        capp.Id.String(),
-		Space:     capp.Space,
-		Name:      capp.Name,
-		Tag:       capp.Tag,
-		Status:    pb.Status(capp.Status),
-		Resources: resources,
+	return &pb.GPSInterface{
+		Available:   g.Available,
+		Lock:        g.Lock,
+		Coordinates: g.Coordinates,
+		Time:        timestamppb.New(g.Time),
+	}
+}
+
+func parseBackhaulInterfaceToPb(b *parser.BackhaulInterface) *pb.BackhaulInterface {
+	if b == nil {
+		return nil
+	}
+	return &pb.BackhaulInterface{
+		Available:  b.Available,
+		State:      b.State,
+		LinkGuess: b.LinkGuess,
+		Confidence: b.Confidence,
+	}
+}
+
+func parseFEMInterfaceToPb(f *parser.FEMInterface) *pb.FEMInterface {
+	if f == nil {
+		return nil
+	}
+	return &pb.FEMInterface{
+		Available: f.Available,
+		Fems:      parseFEMsToPb(f.FEMs),
+	}
+}
+
+func parseSwitchInterfaceToPb(s *parser.SwitchInterface) *pb.SwitchInterface {
+	if s == nil {
+		return nil
+	}
+	return &pb.SwitchInterface{
+		Available:       s.Available,
+		Reachable:       s.Reachable,
+		State:           s.State,
+		Model:           s.Model,
+		SoftwareVersion: s.SoftwareVersion,
+		PortCount:       int32(s.PortCount),
+		Policy: &pb.SwitchInterfacePolicy{
+			State:  s.Policy.State,
+			Hash:   s.Policy.Hash,
+			Source: s.Policy.Source,
+			Error:  s.Policy.Error,
+		},
+		Ports: parseSwitchPortsToPb(s.Ports),
+	}
+}
+
+func parseSwitchPortsToPb(p []parser.SwitchPort) []*pb.SwitchPort {
+	ports := make([]*pb.SwitchPort, len(p))
+	for i, p := range p {
+		ports[i] = &pb.SwitchPort{
+			Id:             p.ID,
+			Name:           p.Name,
+			Present:        p.Present,
+			AdminState:     p.AdminState,
+			LinkState:      p.LinkState,
+			PoeState:       p.PoeState,
+			PoeOperational: p.PoeOperational,
+			SpeedBps:       p.SpeedBps,
+			PowerWatts:     p.PowerWatts,
+			Fault:          p.Fault,
+		}
+	}
+	return ports
+}
+
+func parseFEMsToPb(f []*parser.FEMUnit) []*pb.FEMUnit {
+	fems := make([]*pb.FEMUnit, len(f))
+	for i, f := range f {
+		fems[i] = &pb.FEMUnit{
+			Unit: int32(f.Unit),
+			Present: f.Present,
+		}
+	}
+	return fems
+}
+
+func parseControllerInterfaceToPb(c *parser.NodeControllerInterface) *pb.NodeControllerInterface {
+	if c == nil {
+		return nil
+	}
+	return &pb.NodeControllerInterface{
+		Available:        c.Available,
+		CommOk:           c.CommOk,
+		ChargeState:      c.ChargeState,
+		ErrorCode:        int32(c.ErrorCode),
+		Error:            c.Error,
+		ActiveAlarmCount: int32(c.ActiveAlarmCount),
+		Solar:            parseControllerSolarMetricsToPb(&c.Solar),
+		Battery:          parseControllerBatteryMetricsToPb(&c.Battery),
+		Load:             parseControllerLoadMetricsToPb(&c.Load),
+	}
+}
+
+func parseControllerSolarMetricsToPb(s *parser.ControllerSolarMetrics) *pb.ControllerSolarMetrics {
+	return &pb.ControllerSolarMetrics{
+		VoltageV: s.VoltageV,
+		CurrentA: s.CurrentA,
+		PowerW: s.PowerW,
+	}
+}
+
+func parseControllerBatteryMetricsToPb(b *parser.ControllerBatteryMetrics) *pb.ControllerBatteryMetrics {
+	return &pb.ControllerBatteryMetrics{
+		VoltageV: b.VoltageV,
+		CurrentA: b.CurrentA,
+		SocPct: int32(b.SocPct),
+	}
+}
+
+func parseControllerLoadMetricsToPb(l *parser.ControllerLoadMetrics) *pb.ControllerLoadMetrics {
+	return &pb.ControllerLoadMetrics{
+		OutputOn: l.OutputOn,
+		CurrentA: l.CurrentA,
+	}
+}
+
+func parseAppToPb(a *parser.HealthApp) *pb.App {
+	return &pb.App{
+		Name: a.Name,
+		Version: a.Version,
+		Tag: a.Tag,
+		Status: a.State,
+		Resource: &pb.AppResource{
+			CpuPercent: float32(a.Resources.CPUPercent),
+			MemoryRssKb: float32(a.Resources.MemoryRssKb),
+			DiskReadBytes: float32(a.Resources.DiskReadBytes),
+			DiskWriteBytes: float32(a.Resources.DiskWriteBytes),
+		},
+	}
+}
+
+func healthReportToPb(r *db.HealthReport) *pb.HealthReport {
+	if r == nil {
+		return nil
+	}
+	return &pb.HealthReport{
+		Id:            r.ID.String(),
+		NodeId:        r.NodeID,
+		NodeType:      string(r.NodeType),
+		SchemaVersion: r.SchemaVersion,
+		ReportedAt:    timestamppb.New(r.ReportedAt),
+		ReceivedAt:    timestamppb.New(r.ReceivedAt),
+		Payload:       r.Payload,
 	}
 }

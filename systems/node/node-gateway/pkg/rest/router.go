@@ -24,6 +24,7 @@ import (
 	"github.com/wI2L/fizz/openapi"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/ukama/ukama/systems/common/config"
 	ukamaPb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
@@ -66,8 +67,10 @@ type notify interface {
 }
 
 type health interface {
-	StoreRunningAppsInfo(req *healthPb.StoreRunningAppsInfoRequest) (*healthPb.StoreRunningAppsInfoResponse, error)
-	List(request *healthPb.ListRequest) (*healthPb.ListResponse, error)
+	StoreHealthReport(req *healthPb.StoreHealthReportRequest) (*healthPb.StoreHealthReportResponse, error)
+	ListReports(request *healthPb.ListReportsRequest) (*healthPb.ListReportsResponse, error)
+	ListApps(request *healthPb.ListAppsRequest) (*healthPb.ListAppsResponse, error)
+	ListInterfaces(request *healthPb.ListInterfacesRequest) (*healthPb.ListInterfacesResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -115,9 +118,16 @@ func (r *Router) init() {
 	endpoint.GET("/ping", formatDoc("Ping the server", "Returns a response indicating that the server is running."), tonic.Handler(r.pingHandler, http.StatusOK))
 
 	health := endpoint.Group("/health", "Health", "Health service for the node")
-	health.POST("/nodes/:node_id/performance", formatDoc("Create system performance report", "This endpoint allows you to create and update system performance information."), tonic.Handler(r.postSystemPerformanceInfoHandler, http.StatusCreated))
+	health.POST("/nodes/:node_id/performance",
+		append(formatDoc("Store health report", "Path: node id. Body: full health JSON (nodeType, reportedAt RFC3339, schemaVersion, capabilities, system, interfaces, apps, events, etc.)."),
+			fizz.InputModel(&StoreHealthReportOpenAPIInput{}),
+		),
+		tonic.Handler(r.postHealthReportHandler, http.StatusCreated),
+	)
 	health.POST("/logger/node/:node_id", formatDoc("Log data", "Endpoint to log data"), tonic.Handler(r.logHandler, http.StatusCreated))
-	health.GET("/list", formatDoc("List health info", "Retrieve the health information for the node."), tonic.Handler(r.listHealthInfoHandler, http.StatusOK))
+	health.GET("/reports", formatDoc("List health reports", "Retrieve the health reports for the node."), tonic.Handler(r.listHealthReportsHandler, http.StatusOK))
+	health.GET("/apps", formatDoc("List apps", "Retrieve the apps for the node."), tonic.Handler(r.listAppsHandler, http.StatusOK))
+	health.GET("/interfaces", formatDoc("List interfaces", "Retrieve the interfaces for the node."), tonic.Handler(r.listInterfacesHandler, http.StatusOK))
 
 	notif := endpoint.Group("/notify", "Node Notify", "Notify service for the node")
 	notif.POST("", formatDoc("Insert Notification", "Insert a new notification"), tonic.Handler(r.postNotification, http.StatusCreated))
@@ -184,50 +194,50 @@ func (r *Router) logHandler(c *gin.Context, req *AddLogsRequest) (string, error)
 	return "Logs received", nil
 }
 
-func (r *Router) postSystemPerformanceInfoHandler(c *gin.Context, req *StoreRunningAppsInfoRequest) (*healthPb.StoreRunningAppsInfoResponse, error) {
-	var genSystems []*healthPb.System
-	for _, sys := range req.System {
-		genSystem := &healthPb.System{
-			Name:  sys.Name,
-			Value: sys.Value,
-		}
-		genSystems = append(genSystems, genSystem)
+func (r *Router) postHealthReportHandler(c *gin.Context, req *StoreHealthReportRequest) (*healthPb.StoreHealthReportResponse, error) {
+	nID, err := ukama.ValidateNodeId(req.NodeId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of node id. Error %s", err.Error())
 	}
 
-	var genCapps []*healthPb.Capps
-	for _, capp := range req.Capps {
-		var genResources []*healthPb.Resource
-		for _, resource := range capp.Resources {
-			genResource := &healthPb.Resource{
-				Name:  resource.Name,
-				Value: resource.Value,
-			}
-			genResources = append(genResources, genResource)
-		}
-		genCapp := &healthPb.Capps{
-			Space:     capp.Space,
-			Name:      capp.Name,
-			Tag:       capp.Tag,
-			Status:    healthPb.Status(healthPb.Status_value[capp.Status]),
-			Resources: genResources,
-		}
-		genCapps = append(genCapps, genCapp)
-	}
+	payload := req.HealthPayloadBytes()
 
-	return r.clients.Health.StoreRunningAppsInfo(&healthPb.StoreRunningAppsInfoRequest{
-		NodeId:    req.NodeId,
-		Timestamp: req.Timestamp,
-		System:    genSystems,
-		Capps:     genCapps,
+	return r.clients.Health.StoreHealthReport(&healthPb.StoreHealthReportRequest{
+		NodeId:  nID.StringLowercase(),
+		Payload: payload,
 	})
 }
 
-func (r *Router) listHealthInfoHandler(c *gin.Context, req *ListHealthRequest) (*healthPb.ListResponse, error) {
-	return r.clients.Health.List(&healthPb.ListRequest{
-		Id:      req.Id,
-		NodeId:  req.NodeId,
-		Timestamp: req.Timestamp,
+func (r *Router) listHealthReportsHandler(c *gin.Context, req *ListHealthReportsRequest) (*healthPb.ListReportsResponse, error) {
+	var reportedAtPb *timestamppb.Timestamp
+	if req.ReportedAt != "" {
+		t, err := time.Parse(time.RFC3339, req.ReportedAt)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "reportedAt must be RFC3339: %v", err)
+		}
+		reportedAtPb = timestamppb.New(t)
+	}
+
+	return r.clients.Health.ListReports(&healthPb.ListReportsRequest{
+		ReportId:   req.ReportId,
+		NodeId:     req.NodeId,
+		ReportedAt: reportedAtPb,
 		Timeframe:  ukamaPb.FilterTimeframesType(ukama.ReturnFilterTimeframesType(ukama.ParseFilterTimeframesType(req.Timeframe))),
+	})
+}
+
+func (r *Router) listAppsHandler(c *gin.Context, req *ListAppsRequest) (*healthPb.ListAppsResponse, error) {
+	return r.clients.Health.ListApps(&healthPb.ListAppsRequest{
+		NodeId: req.NodeId,
+		AppName: req.AppName,
+	})
+}
+
+func (r *Router) listInterfacesHandler(c *gin.Context, req *ListInterfacesRequest) (*healthPb.ListInterfacesResponse, error) {
+	return r.clients.Health.ListInterfaces(&healthPb.ListInterfacesRequest{
+		NodeId: req.NodeId,
+		InterfaceName: req.InterfaceName,
 	})
 }
 

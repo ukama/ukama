@@ -21,7 +21,7 @@ import (
 
 type Health struct {
 	conn    *grpc.ClientConn
-	client  pb.HealhtServiceClient
+	client  pb.HealthServiceClient
 	timeout time.Duration
 	host    string
 }
@@ -31,7 +31,7 @@ func NewHealth(healthHost string, timeout time.Duration) *Health {
 	if err != nil {
 		log.Fatalf("Failed to connect to Health Service host: %v", err)
 	}
-	client := pb.NewHealhtServiceClient(conn)
+	client := pb.NewHealthServiceClient(conn)
 
 	return &Health{
 		conn:    conn,
@@ -41,7 +41,7 @@ func NewHealth(healthHost string, timeout time.Duration) *Health {
 	}
 }
 
-func NewHealthFromClient(mClient pb.HealhtServiceClient) *Health {
+func NewHealthFromClient(mClient pb.HealthServiceClient) *Health {
 	return &Health{
 		host:    "localhost",
 		timeout: 1 * time.Second,
@@ -58,47 +58,29 @@ func (h *Health) Close() {
 	}
 }
 
-func (h *Health) StoreRunningAppsInfo(request *pb.StoreRunningAppsInfoRequest) (*pb.StoreRunningAppsInfoResponse, error) {
+func (h *Health) StoreHealthReport(request *pb.StoreHealthReportRequest) (*pb.StoreHealthReportResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
 	defer cancel()
 
-	genSystems := make([]*pb.System, len(request.System))
-	for i, system := range request.System {
-		genSystems[i] = &pb.System{
-			Name:  system.Name,
-			Value: system.Value,
-		}
-	}
-
-	genCapps := make([]*pb.Capps, len(request.Capps))
-	for i, capp := range request.Capps {
-		genResources := make([]*pb.Resource, len(capp.Resources))
-		for j, resource := range capp.Resources {
-			genResources[j] = &pb.Resource{
-				Name:  resource.Name,
-				Value: resource.Value,
-			}
-		}
-		genCapps[i] = &pb.Capps{
-			Space:     capp.Space,
-			Name:      capp.Name,
-			Tag:       capp.Tag,
-			Status:    capp.Status,
-			Resources: genResources,
-		}
-	}
-
-	return h.client.StoreRunningAppsInfo(ctx, &pb.StoreRunningAppsInfoRequest{
-		NodeId:    request.NodeId,
-		Timestamp: request.Timestamp,
-		System:    genSystems,
-		Capps:     genCapps,
-	})
+	return h.client.StoreHealthReport(ctx, request)
 }
 
-func (h *Health) List(request *pb.ListRequest) (*pb.ListResponse, error) {
+func (h *Health) ListReports(request *pb.ListReportsRequest) (*pb.ListReportsResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
 	defer cancel()
 
-	return h.client.List(ctx, request)
+	return h.client.ListReports(ctx, request)
+}
+
+func (h *Health) ListApps(request *pb.ListAppsRequest) (*pb.ListAppsResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
+	defer cancel()
+
+	return h.client.ListApps(ctx, request)
+}
+
+func (h *Health) ListInterfaces(request *pb.ListInterfacesRequest) (*pb.ListInterfacesResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
+	defer cancel()
+	return h.client.ListInterfaces(ctx, request)
 }

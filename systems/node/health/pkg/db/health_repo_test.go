@@ -9,10 +9,9 @@
 package db_test
 
 import (
-	extsql "database/sql"
-	"errors"
 	"log"
 	"testing"
+	"time"
 
 	"github.com/ukama/ukama/systems/common/ukama"
 	int_db "github.com/ukama/ukama/systems/node/health/pkg/db"
@@ -57,20 +56,16 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 
 func TestHealthRepoList(t *testing.T) {
 
-	t.Run("all healths exist", func(t *testing.T) {
-		// Arrange
+	t.Run("all reports for node", func(t *testing.T) {
 		nid := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
 
-		var db *extsql.DB
-		var err error
-
-		db, mock, err := sqlmock.New() // mock sql.DB
+		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"node_id"}).
+		rows := sqlmock.NewRows([]string{"nodeId"}).
 			AddRow(nid.String())
 
-		mock.ExpectQuery(`^SELECT.*healths.*`).
+		mock.ExpectQuery(`SELECT.*"health_reports"`).
 			WithArgs(nid.String()).
 			WillReturnRows(rows)
 
@@ -87,34 +82,24 @@ func TestHealthRepoList(t *testing.T) {
 			GormDb: gdb,
 		})
 
-		assert.NoError(t, err)
+		reports, err := r.List("", nid.String(), nil, ukama.FilterTimeframesTypeAll)
 
-		// Act
-		healths, err := r.List("", nid.String(), "", ukama.FilterTimeframesTypeAll)
-
-		// Assert
 		assert.NoError(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-		assert.NoError(t, err)
-		if assert.Len(t, healths, 1) {
-			assert.Equal(t, nid.String(), healths[0].NodeId)
+		assert.NoError(t, mock.ExpectationsWereMet())
+		if assert.Len(t, reports, 1) {
+			assert.Equal(t, nid.String(), reports[0].NodeID)
 		}
 	})
 
-	t.Run("all healths do not exist", func(t *testing.T) {
-		// Arrange
+	t.Run("no reports for node", func(t *testing.T) {
 		nid := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
-		var db *extsql.DB
-		var err error
 
-		db, mock, err := sqlmock.New() // mock sql.DB
+		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
 
-		mock.ExpectQuery(`^SELECT.*healths.*`).
+		mock.ExpectQuery(`SELECT.*"health_reports"`).
 			WithArgs(nid.String()).
-			WillReturnRows(sqlmock.NewRows([]string{"node_id"}))
+			WillReturnRows(sqlmock.NewRows([]string{"nodeId"}))
 
 		dialector := postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
@@ -125,167 +110,25 @@ func TestHealthRepoList(t *testing.T) {
 		gdb, err := gorm.Open(dialector, &gorm.Config{})
 		assert.NoError(t, err)
 
-		r := int_db.NewHealthRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
+		r := int_db.NewHealthRepo(&UkamaDbMock{GormDb: gdb})
+		_, err = r.List("", nid.String(), nil, ukama.FilterTimeframesTypeAll)
 
 		assert.NoError(t, err)
-
-		// Act
-		_, err = r.List("", nid.String(), "", ukama.FilterTimeframesTypeAll)
-
-		// Assert
-		assert.NoError(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
-	t.Run("latest health exists", func(t *testing.T) {
-		// Arrange
+	t.Run("latest row exists", func(t *testing.T) {
 		nid := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
-		var db *extsql.DB
-		var err error
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
-
-		rows := sqlmock.NewRows([]string{"node_id"}).
-			AddRow(nid.String())
-
-		mock.ExpectQuery(`^SELECT.*healths.*`).
-			WithArgs(nid.String(), sqlmock.AnyArg()).
-			WillReturnRows(rows)
-
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := int_db.NewHealthRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-		assert.NoError(t, err)
-
-		// Act
-		healths, err := r.List("", nid.String(), "", ukama.FilterTimeframesTypeLatest)
-
-		// Assert
-		assert.NoError(t, err)
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-		if assert.Len(t, healths, 1) {
-			assert.Equal(t, nid.String(), healths[0].NodeId)
-		}
-	})
-
-	t.Run("latest health does not exist", func(t *testing.T) {
-		// Arrange
-		nid := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
-		var db *extsql.DB
-		var err error
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
-
-		mock.ExpectQuery(`^SELECT.*healths.*`).
-			WithArgs(nid.String(), sqlmock.AnyArg()).
-			WillReturnError(gorm.ErrRecordNotFound)
-
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := int_db.NewHealthRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-		assert.NoError(t, err)
-
-		// Act
-		_, err = r.List("", nid.String(), "", ukama.FilterTimeframesTypeLatest)
-
-		// Assert
-		if assert.Error(t, err) {
-			assert.Equal(t, true, errors.Is(err, gorm.ErrRecordNotFound))
-		}
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-	})
-}
-
-func TestHealthRepo_StoreRunningAppsInfo(t *testing.T) {
-
-	t.Run("StoreRunningAppsInfo", func(t *testing.T) {
-		// Arrange
-
-		nid := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
-
-		var db *extsql.DB
-		var err error
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
-
-		mock.ExpectBegin()
-
-		expectedQuery := `INSERT INTO "healths" (.+)`
-		mock.ExpectExec(expectedQuery).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectCommit()
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := int_db.NewHealthRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		assert.NoError(t, err)
-		nestedFunc := func(string, string) error {
-			return nil
-		}
-		// Act
-		err = r.StoreRunningAppsInfo(
-			&int_db.Health{
-				NodeId:    nid.String(),
-				TimeStamp: "12-12-2024",
-			},
-			nestedFunc)
-
-		// Assert
-		assert.NoError(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-	})
-
-}
-
-func TestHealthRepo_ListApps(t *testing.T) {
-	t.Run("app exists for node and name", func(t *testing.T) {
-		nid := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
-		appName := "deviced"
 
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"name"}).AddRow(appName)
-		mock.ExpectQuery(`^SELECT.*FROM "capps".*JOIN healths ON healths.id = capps.health_id.*WHERE.*healths\.node_id.*capps\.name.*`).
-			WithArgs(nid.String(), appName).
+		rid := "a0000000-0000-4000-8000-000000000001"
+		rows := sqlmock.NewRows([]string{"nodeId", "reportId"}).
+			AddRow(nid.String(), rid)
+
+		mock.ExpectQuery(`SELECT.*"node_latest_healths"`).
+			WithArgs(nid.String()).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -298,25 +141,24 @@ func TestHealthRepo_ListApps(t *testing.T) {
 		assert.NoError(t, err)
 
 		r := int_db.NewHealthRepo(&UkamaDbMock{GormDb: gdb})
-		capps, err := r.ListApps(nid.String(), appName)
+		reports, err := r.List("", nid.String(), nil, ukama.FilterTimeframesTypeLatest)
 
 		assert.NoError(t, err)
-		if assert.Len(t, capps, 1) {
-			assert.Equal(t, appName, capps[0].Name)
+		assert.NoError(t, mock.ExpectationsWereMet())
+		if assert.Len(t, reports, 1) {
+			assert.Equal(t, nid.String(), reports[0].NodeID)
 		}
-		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
-	t.Run("app does not exist", func(t *testing.T) {
+	t.Run("latest empty", func(t *testing.T) {
 		nid := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
-		appName := "nonexistent"
 
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
 
-		mock.ExpectQuery(`^SELECT.*FROM "capps".*JOIN healths ON healths.id = capps.health_id.*WHERE.*healths\.node_id.*capps\.name.*`).
-			WithArgs(nid.String(), appName).
-			WillReturnRows(sqlmock.NewRows([]string{"name"}))
+		mock.ExpectQuery(`SELECT.*"node_latest_healths"`).
+			WithArgs(nid.String()).
+			WillReturnRows(sqlmock.NewRows([]string{"nodeId"}))
 
 		dialector := postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
@@ -328,20 +170,18 @@ func TestHealthRepo_ListApps(t *testing.T) {
 		assert.NoError(t, err)
 
 		r := int_db.NewHealthRepo(&UkamaDbMock{GormDb: gdb})
-		capps, err := r.ListApps(nid.String(), appName)
+		reports, err := r.List("", nid.String(), nil, ukama.FilterTimeframesTypeLatest)
 
 		assert.NoError(t, err)
-		assert.Empty(t, capps)
+		assert.Empty(t, reports)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
+}
 
-	t.Run("list all apps when no filters provided", func(t *testing.T) {
-		db, mock, err := sqlmock.New()
+func TestHealthRepoStoreHealthReport(t *testing.T) {
+	t.Run("nil report", func(t *testing.T) {
+		db, _, err := sqlmock.New()
 		assert.NoError(t, err)
-
-		rows := sqlmock.NewRows([]string{"name"}).AddRow("deviced").AddRow("configd")
-		mock.ExpectQuery(`^SELECT.*FROM "capps"`).WillReturnRows(rows)
-
 		dialector := postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
 			DriverName:           "postgres",
@@ -350,12 +190,8 @@ func TestHealthRepo_ListApps(t *testing.T) {
 		})
 		gdb, err := gorm.Open(dialector, &gorm.Config{})
 		assert.NoError(t, err)
-
 		r := int_db.NewHealthRepo(&UkamaDbMock{GormDb: gdb})
-		capps, err := r.ListApps("", "")
-
-		assert.NoError(t, err)
-		assert.Len(t, capps, 2)
-		assert.NoError(t, mock.ExpectationsWereMet())
+		err = r.StoreHealthReport(nil, time.Now().UTC())
+		assert.Error(t, err)
 	})
 }

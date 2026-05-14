@@ -6,6 +6,8 @@ import (
 	mock "github.com/stretchr/testify/mock"
 	db "github.com/ukama/ukama/systems/node/health/pkg/db"
 
+	time "time"
+
 	ukama "github.com/ukama/ukama/systems/common/ukama"
 )
 
@@ -14,29 +16,29 @@ type HealthRepo struct {
 	mock.Mock
 }
 
-// List provides a mock function with given fields: id, nodeId, timestamp, timeframe
-func (_m *HealthRepo) List(id string, nodeId string, timestamp string, timeframe ukama.FilterTimeframesType) ([]*db.Health, error) {
-	ret := _m.Called(id, nodeId, timestamp, timeframe)
+// List provides a mock function with given fields: reportID, nodeID, reportedAt, timeframe
+func (_m *HealthRepo) List(reportID string, nodeID string, reportedAt *time.Time, timeframe ukama.FilterTimeframesType) ([]*db.HealthReport, error) {
+	ret := _m.Called(reportID, nodeID, reportedAt, timeframe)
 
 	if len(ret) == 0 {
 		panic("no return value specified for List")
 	}
 
-	var r0 []*db.Health
+	var r0 []*db.HealthReport
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, ukama.FilterTimeframesType) ([]*db.Health, error)); ok {
-		return rf(id, nodeId, timestamp, timeframe)
+	if rf, ok := ret.Get(0).(func(string, string, *time.Time, ukama.FilterTimeframesType) ([]*db.HealthReport, error)); ok {
+		return rf(reportID, nodeID, reportedAt, timeframe)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, ukama.FilterTimeframesType) []*db.Health); ok {
-		r0 = rf(id, nodeId, timestamp, timeframe)
+	if rf, ok := ret.Get(0).(func(string, string, *time.Time, ukama.FilterTimeframesType) []*db.HealthReport); ok {
+		r0 = rf(reportID, nodeID, reportedAt, timeframe)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*db.Health)
+			r0 = ret.Get(0).([]*db.HealthReport)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, ukama.FilterTimeframesType) error); ok {
-		r1 = rf(id, nodeId, timestamp, timeframe)
+	if rf, ok := ret.Get(1).(func(string, string, *time.Time, ukama.FilterTimeframesType) error); ok {
+		r1 = rf(reportID, nodeID, reportedAt, timeframe)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -44,47 +46,17 @@ func (_m *HealthRepo) List(id string, nodeId string, timestamp string, timeframe
 	return r0, r1
 }
 
-// ListApps provides a mock function with given fields: nodeId, name
-func (_m *HealthRepo) ListApps(nodeId string, name string) ([]*db.Capp, error) {
-	ret := _m.Called(nodeId, name)
+// StoreHealthReport provides a mock function with given fields: report, receivedAt
+func (_m *HealthRepo) StoreHealthReport(report *db.HealthReport, receivedAt time.Time) error {
+	ret := _m.Called(report, receivedAt)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ListApps")
-	}
-
-	var r0 []*db.Capp
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) ([]*db.Capp, error)); ok {
-		return rf(nodeId, name)
-	}
-	if rf, ok := ret.Get(0).(func(string, string) []*db.Capp); ok {
-		r0 = rf(nodeId, name)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*db.Capp)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(nodeId, name)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// StoreRunningAppsInfo provides a mock function with given fields: health, nestedFunc
-func (_m *HealthRepo) StoreRunningAppsInfo(health *db.Health, nestedFunc func(string, string) error) error {
-	ret := _m.Called(health, nestedFunc)
-
-	if len(ret) == 0 {
-		panic("no return value specified for StoreRunningAppsInfo")
+		panic("no return value specified for StoreHealthReport")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.Health, func(string, string) error) error); ok {
-		r0 = rf(health, nestedFunc)
+	if rf, ok := ret.Get(0).(func(*db.HealthReport, time.Time) error); ok {
+		r0 = rf(report, receivedAt)
 	} else {
 		r0 = ret.Error(0)
 	}

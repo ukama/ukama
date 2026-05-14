@@ -9,16 +9,20 @@
 package db
 
 import (
+	"errors"
+	"time"
+
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type HealthRepo interface {
-	ListApps(nodeId string, name string) ([]*Capp, error)
-	StoreRunningAppsInfo(health *Health, nestedFunc func(string, string) error) error
-	List(id string, nodeId string, timestamp string, timeframe ukama.FilterTimeframesType) ([]*Health, error)
+	List(reportID, nodeID string, reportedAt *time.Time, timeframe ukama.FilterTimeframesType) ([]*HealthReport, error)
+	StoreHealthReport(report *HealthReport, receivedAt time.Time) error
 }
+
 type healthRepo struct {
 	Db sql.Db
 }
@@ -29,63 +33,133 @@ func NewHealthRepo(db sql.Db) HealthRepo {
 	}
 }
 
-func (r *healthRepo) ListApps(nodeId string, name string) ([]*Capp, error) {
-	query := r.Db.GetGormDb().Model(&Capp{})
-	if nodeId != "" {
-		query = query.Joins("JOIN healths ON healths.id = capps.health_id").Where("healths.node_id = ?", nodeId)
+func latestToReport(l *NodeLatestHealth) *HealthReport {
+	return &HealthReport{
+		ID:            l.ReportID,
+		NodeID:        l.NodeID,
+		NodeType:      l.NodeType,
+		SchemaVersion: l.SchemaVersion,
+		ReportedAt:    l.ReportedAt,
+		ReceivedAt:    l.ReceivedAt,
+		Payload:       l.Payload,
 	}
-	if name != "" {
-		query = query.Where("capps.name = ?", name)
-	}
-	var capps []*Capp
-	result := query.Find(&capps)
-	return capps, result.Error
 }
 
-func (r *healthRepo) List(id string, nodeId string, timestamp string, timeframe ukama.FilterTimeframesType) ([]*Health, error) {
-	query := r.Db.GetGormDb().
-		Preload("System").
-		Preload("Capps.Resources").
-		Order("created_at DESC")
-
-	if id != "" {
-		query = query.Where("id = ?", id)
-	}
-
-	if timestamp != "" {
-		query = query.Where("time_stamp = ?", timestamp)
-	}
-
-	if nodeId != "" {
-		query = query.Where("node_id = ?", nodeId)
-	}
-
+func (r *healthRepo) List(reportID, nodeID string, reportedAt *time.Time, timeframe ukama.FilterTimeframesType) ([]*HealthReport, error) {
 	if timeframe == ukama.FilterTimeframesTypeLatest {
-		var health Health
-		result := query.Limit(1).First(&health)
-		if result.Error != nil {
-			return nil, result.Error
+		q := r.Db.GetGormDb().Model(&NodeLatestHealth{})
+		if nodeID != "" {
+			q = q.Where(map[string]interface{}{"nodeId": nodeID})
 		}
-		return []*Health{&health}, nil
+		if reportID != "" {
+			q = q.Where(map[string]interface{}{"reportId": reportID})
+		}
+		var rows []NodeLatestHealth
+		if err := q.Find(&rows).Error; err != nil {
+			return nil, err
+		}
+		out := make([]*HealthReport, len(rows))
+		for i := range rows {
+			out[i] = latestToReport(&rows[i])
+		}
+		return out, nil
 	}
 
-	var healths []*Health
-	result := query.Find(&healths)
-	return healths, result.Error
+	q := r.Db.GetGormDb().Model(&HealthReport{}).Order(clause.OrderByColumn{
+		Column: clause.Column{Name: "reportedAt"},
+		Desc:   true,
+	})
+	if reportID != "" {
+		q = q.Where("id = ?", reportID)
+	}
+	if nodeID != "" {
+		q = q.Where(map[string]interface{}{"nodeId": nodeID})
+	}
+	if reportedAt != nil {
+		q = q.Where(map[string]interface{}{"reportedAt": *reportedAt})
+	}
+	var reports []*HealthReport
+	err := q.Find(&reports).Error
+	return reports, err
 }
 
-func (r *healthRepo) StoreRunningAppsInfo(health *Health, nestedFunc func(string, string) error) error {
-	err := r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		if nestedFunc != nil {
-			nestErr := nestedFunc("", "")
-			if nestErr != nil {
-				return nestErr
-			}
+func shouldReplaceNodeLatest(report *HealthReport, current *NodeLatestHealth) bool {
+	if report.ReportedAt.After(current.ReportedAt) {
+		return true
+	}
+	return report.ReportedAt.Equal(current.ReportedAt) && report.ReceivedAt.After(current.ReceivedAt)
+}
+
+func upsertHealthNode(tx *gorm.DB, report *HealthReport, receivedAt time.Time) error {
+	var existing Node
+	err := tx.Where(map[string]interface{}{"nodeId": report.NodeID}).First(&existing).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		node := &Node{
+			NodeID:         report.NodeID,
+			NodeType:       report.NodeType,
+			FirstSeenAt:    receivedAt,
+			LastSeenAt:     receivedAt,
+			LastReportedAt: &report.ReportedAt,
 		}
-		if err := tx.Create(health).Error; err != nil {
+		return tx.Create(node).Error
+	}
+	return tx.Model(&Node{}).Where(map[string]interface{}{"nodeId": report.NodeID}).Updates(map[string]interface{}{
+		"lastSeenAt":     receivedAt,
+		"nodeType":       report.NodeType,
+		"lastReportedAt": report.ReportedAt,
+	}).Error
+}
+
+func syncNodeLatestHealth(tx *gorm.DB, report *HealthReport, receivedAt time.Time) error {
+	var current NodeLatestHealth
+	err := tx.Where(map[string]interface{}{"nodeId": report.NodeID}).First(&current).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+
+	next := NodeLatestHealth{
+		NodeID:        report.NodeID,
+		NodeType:      report.NodeType,
+		ReportID:      report.ID,
+		SchemaVersion: report.SchemaVersion,
+		ReportedAt:    report.ReportedAt,
+		ReceivedAt:    report.ReceivedAt,
+		Payload:       report.Payload,
+		UpdatedAt:     receivedAt,
+	}
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return tx.Create(&next).Error
+	}
+	if !shouldReplaceNodeLatest(report, &current) {
+		return nil
+	}
+	return tx.Model(&NodeLatestHealth{}).Where(map[string]interface{}{"nodeId": report.NodeID}).Updates(map[string]interface{}{
+		"nodeType":      next.NodeType,
+		"reportId":      next.ReportID,
+		"schemaVersion": next.SchemaVersion,
+		"reportedAt":    next.ReportedAt,
+		"receivedAt":    next.ReceivedAt,
+		"payload":       next.Payload,
+		"updatedAt":     next.UpdatedAt,
+	}).Error
+}
+
+func (r *healthRepo) StoreHealthReport(report *HealthReport, receivedAt time.Time) error {
+	if report == nil {
+		return errors.New("nil health report")
+	}
+	report.ReceivedAt = receivedAt
+
+	return r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(report).Error; err != nil {
 			return err
 		}
-		return nil
+		if err := upsertHealthNode(tx, report, receivedAt); err != nil {
+			return err
+		}
+		return syncNodeLatestHealth(tx, report, receivedAt)
 	})
-	return err
 }

@@ -10,11 +10,21 @@ package rest
 
 import "encoding/json"
 
-type ListHealthRequest struct {
-	Id        string `form:"id" json:"id" query:"id" binding:"required"`
-	NodeId    string `form:"node_id" json:"node_id" query:"node_id" binding:"required"`
-	Timestamp string `form:"timestamp" json:"timestamp" query:"timestamp" binding:"required"`
-	Timeframe string `form:"timeframe" default:"all" json:"timeframe" query:"timeframe" binding:"required" validate:"eq=all|eq=latest"`
+type ListHealthReportsRequest struct {
+	ReportId   string `form:"reportId" json:"reportId" query:"reportId"`
+	NodeId     string `form:"nodeId" json:"nodeId" query:"nodeId"`
+	ReportedAt string `form:"reportedAt" json:"reportedAt" query:"reportedAt"`
+	Timeframe  string `form:"timeframe" default:"all" json:"timeframe" query:"timeframe" binding:"required" validate:"eq=all|eq=latest"`
+}
+
+type ListAppsRequest struct {
+	NodeId string `form:"nodeId" json:"nodeId" query:"nodeId"`
+	AppName string `form:"appName" json:"appName" query:"appName"`
+}
+
+type ListInterfacesRequest struct {
+	NodeId string `form:"nodeId" json:"nodeId" query:"nodeId"`
+	InterfaceName string `form:"interfaceName" json:"interfaceName" query:"interfaceName"`
 }
 
 type AddNotificationReq struct {
@@ -57,27 +67,41 @@ type AddLogsRequest struct {
 	Logs   []Logs `json:"logs" validate:"required"`
 }
 
-type StoreRunningAppsInfoRequest struct {
-	NodeId    string   `validate:"required" example:"{{NodeId}}" path:"node_id" `
-	Timestamp string   `json:"timestamp" validate:"required" example:"{{time}}"`
-	System    []System `json:"system" example:"{{system}}"`
-	Capps     []Capps  `json:"capps" example:"{{capps}}"`
+type StoreHealthReportRequest struct {
+	NodeId string          `path:"node_id" validate:"required" example:"{{NodeId}}"`
+	raw    json.RawMessage `json:"-"`
 }
 
-type System struct {
-	Name  string `json:"name" validate:"required" example:"{{name}}"`
-	Value string `json:"value" validate:"required" example:"{{value}}"`
+// StoreHealthReportOpenAPIInput is only for OpenAPI (fizz.InputModel). Runtime binding
+// uses StoreHealthReportRequest, which accepts the same JSON object as the request body.
+type StoreHealthReportOpenAPIInput struct {
+	NodeId         string                   `path:"node_id" example:"{{NodeId}}"`
+	SchemaVersion string                   `json:"schemaVersion" example:"1"`
+	NodeID        string                   `json:"nodeId,omitempty"`
+	NodeType      string                   `json:"nodeType" example:"HomeNode"`
+	ReportedAt    string                   `json:"reportedAt" example:"2023-12-12T00:00:00Z"`
+	Capabilities  []string                 `json:"capabilities,omitempty"`
+	System        map[string]interface{}   `json:"system,omitempty"`
+	Interfaces    map[string]interface{}   `json:"interfaces,omitempty"`
+	Apps          []map[string]interface{} `json:"apps,omitempty"`
+	Events        []map[string]interface{} `json:"events,omitempty"`
 }
 
-type Capps struct {
-	Space     string      `json:"space" validate:"required" example:"{{space}}"`
-	Name      string      `json:"name" validate:"required" example:"{{name}}"`
-	Tag       string      `json:"tag" validate:"required" example:"{{tag}}"`
-	Status    string      `json:"status" validate:"required" example:"{{status}}"`
-	Resources []Resources `json:"resources" validate:"required" example:"{{resources}}"`
+// UnmarshalJSON captures the entire POST body as the health payload (HealthPayload JSON).
+func (s *StoreHealthReportRequest) UnmarshalJSON(data []byte) error {
+	if len(data) == 0 {
+		s.raw = []byte("{}")
+		return nil
+	}
+	// copy so later mutations do not alias gin's buffer
+	s.raw = append(json.RawMessage(nil), data...)
+	return nil
 }
 
-type Resources struct {
-	Name  string `json:"name" validate:"required" example:"{{name}}"`
-	Value string `json:"value" validate:"required" example:"{{value}}"`
+// HealthPayloadBytes returns bytes forwarded to the health service (defaults to {}).
+func (s *StoreHealthReportRequest) HealthPayloadBytes() []byte {
+	if len(s.raw) == 0 {
+		return []byte("{}")
+	}
+	return s.raw
 }

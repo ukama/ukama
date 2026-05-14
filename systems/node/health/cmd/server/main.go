@@ -61,7 +61,7 @@ func initConfig() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
-	err := d.Init(&db.Health{}, &db.System{}, &db.Capp{}, &db.Resource{})
+	err := d.Init(&db.Node{}, &db.HealthReport{}, &db.NodeLatestHealth{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -78,11 +78,10 @@ func runGrpcServer(gormdb sql.Db) {
 	mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
-	regServer := server.NewHealthServer(svcConf.OrgName, db.NewHealthRepo(gormdb),
-		mbClient, svcConf.DebugMode)
+	regServer := server.NewHealthServer(svcConf.OrgName, db.NewHealthRepo(gormdb), svcConf.DebugMode)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
-		pb.RegisterHealhtServiceServer(s, regServer)
+		pb.RegisterHealthServiceServer(s, regServer)
 	})
 
 	go grpcServer.StartServer()

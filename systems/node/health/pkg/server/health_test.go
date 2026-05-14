@@ -10,11 +10,12 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	ukamapb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
@@ -26,65 +27,59 @@ import (
 )
 
 const testOrgName = "test-org"
-const testTimestamp = "2026-04-21T10:00:00Z"
 
 var testNode = ukama.NewVirtualNodeId("HomeNode")
+var testCNode = ukama.NewVirtualNodeId("ctrlnode")
 
-func TestHealthServerStoreRunningAppsInfo(t *testing.T) {
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+func TestHealthServerStoreHealthReport(t *testing.T) {
 	hRepo := &mocks.HealthRepo{}
 
-	req := &pb.StoreRunningAppsInfoRequest{
-		NodeId:    testNode.String(),
-		Timestamp: testTimestamp,
-		System: []*pb.System{
-			{Name: "cpu", Value: "35"},
-		},
-		Capps: []*pb.Capps{
-			{
-				Space:  "core",
-				Name:   "agent",
-				Tag:    "v1",
-				Status: pb.Status_ACTIVE,
-				Resources: []*pb.Resource{
-					{Name: "mem", Value: "100mb"},
-				},
-			},
-		},
+	reported := time.Date(2026, 4, 21, 10, 0, 0, 0, time.UTC)
+	inner := map[string]interface{}{
+		"k":             "v",
+		"nodeType":      string(ukama.NODE_TYPE_HOMENODE),
+		"schemaVersion": "1",
+		"reportedAt":    reported.Format(time.RFC3339),
+	}
+	payload, _ := json.Marshal(inner)
+	req := &pb.StoreHealthReportRequest{
+		NodeId:  testNode.String(),
+		Payload: payload,
 	}
 
-	hRepo.On("StoreRunningAppsInfo", mock.MatchedBy(func(health *db.Health) bool {
-		return health != nil &&
-			health.NodeId == testNode.StringLowercase() &&
-			health.TimeStamp == req.Timestamp &&
-			len(health.System) == 1 &&
-			health.System[0].Name == "cpu" &&
-			health.System[0].Value == "35" &&
-			len(health.Capps) == 1 &&
-			health.Capps[0].Name == "agent" &&
-			health.Capps[0].Status == db.Status(pb.Status_ACTIVE) &&
-			len(health.Capps[0].Resources) == 1 &&
-			health.Capps[0].Resources[0].Name == "mem" &&
-			health.Capps[0].Resources[0].Value == "100mb"
-	}), mock.Anything).Return(nil).Once()
-	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+	hRepo.On("StoreHealthReport", mock.MatchedBy(func(r *db.HealthReport) bool {
+		return r != nil &&
+			r.NodeID == testNode.StringLowercase() &&
+			r.NodeType == ukama.NODE_TYPE_HOMENODE &&
+			r.SchemaVersion == "1" &&
+			r.ReportedAt.Equal(reported) &&
+			string(r.Payload) == string(payload)
+	}), mock.MatchedBy(func(ts time.Time) bool {
+		return !ts.IsZero()
+	})).Return(nil).Once()
 
-	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
-	resp, err := s.StoreRunningAppsInfo(context.TODO(), req)
+	s := NewHealthServer(testOrgName, hRepo, false)
+	resp, err := s.StoreHealthReport(context.Background(), req)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
+	assert.NotEmpty(t, resp.GetReportId())
 	hRepo.AssertExpectations(t)
-	msgclientRepo.AssertExpectations(t)
 }
 
-func TestHealthServerStoreRunningAppsInfoInvalidNodeId(t *testing.T) {
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+func TestHealthServerStoreHealthReportInvalidNodeId(t *testing.T) {
 	hRepo := &mocks.HealthRepo{}
-	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
+	s := NewHealthServer(testOrgName, hRepo, false)
 
-	resp, err := s.StoreRunningAppsInfo(context.TODO(), &pb.StoreRunningAppsInfoRequest{
-		NodeId: "invalid-node",
+	reported := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	payload, _ := json.Marshal(map[string]interface{}{
+		"nodeType":      string(ukama.NODE_TYPE_HOMENODE),
+		"schemaVersion": "1",
+		"reportedAt":    reported.Format(time.RFC3339),
+	})
+	resp, err := s.StoreHealthReport(context.Background(), &pb.StoreHealthReportRequest{
+		NodeId:  "invalid-node",
+		Payload: payload,
 	})
 
 	assert.Nil(t, resp)
@@ -92,149 +87,117 @@ func TestHealthServerStoreRunningAppsInfoInvalidNodeId(t *testing.T) {
 		assert.Equal(t, codes.InvalidArgument, status.Code(err))
 	}
 	hRepo.AssertExpectations(t)
-	msgclientRepo.AssertExpectations(t)
 }
 
-func TestHealthServerStoreRunningAppsInfoRepoError(t *testing.T) {
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+func TestHealthServerStoreHealthReportMissingReportedAt(t *testing.T) {
 	hRepo := &mocks.HealthRepo{}
-	req := &pb.StoreRunningAppsInfoRequest{
-		NodeId:    testNode.String(),
-		Timestamp: testTimestamp,
+	s := NewHealthServer(testOrgName, hRepo, false)
+
+	payload, _ := json.Marshal(map[string]string{
+		"nodeType": string(ukama.NODE_TYPE_HOMENODE),
+	})
+	resp, err := s.StoreHealthReport(context.Background(), &pb.StoreHealthReportRequest{
+		NodeId:  testNode.String(),
+		Payload: payload,
+	})
+
+	assert.Nil(t, resp)
+	if assert.Error(t, err) {
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	}
+	hRepo.AssertExpectations(t)
+}
+
+func TestHealthServerStoreHealthReportRepoError(t *testing.T) {
+	hRepo := &mocks.HealthRepo{}
+	reported := time.Now().UTC()
+	payload, _ := json.Marshal(map[string]interface{}{
+		"nodeType":      string(ukama.NODE_TYPE_HOMENODE),
+		"schemaVersion": "1",
+		"reportedAt":    reported.Format(time.RFC3339),
+	})
+	req := &pb.StoreHealthReportRequest{
+		NodeId:  testNode.String(),
+		Payload: payload,
 	}
 
-	hRepo.On("StoreRunningAppsInfo", mock.Anything, mock.Anything).Return(assert.AnError).Once()
+	hRepo.On("StoreHealthReport", mock.Anything, mock.Anything).Return(assert.AnError).Once()
 
-	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
-	resp, err := s.StoreRunningAppsInfo(context.TODO(), req)
+	s := NewHealthServer(testOrgName, hRepo, false)
+	resp, err := s.StoreHealthReport(context.Background(), req)
 
 	assert.Nil(t, resp)
 	assert.Error(t, err)
 	hRepo.AssertExpectations(t)
-	msgclientRepo.AssertExpectations(t)
-}
-
-func TestHealthServerStoreRunningAppsInfoPublishError(t *testing.T) {
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
-	hRepo := &mocks.HealthRepo{}
-	req := &pb.StoreRunningAppsInfoRequest{
-		NodeId:    testNode.String(),
-		Timestamp: testTimestamp,
-	}
-
-	hRepo.On("StoreRunningAppsInfo", mock.Anything, mock.Anything).Return(nil).Once()
-	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(assert.AnError).Once()
-
-	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
-	resp, err := s.StoreRunningAppsInfo(context.TODO(), req)
-
-	assert.NoError(t, err)
-	assert.NotNil(t, resp)
-	hRepo.AssertExpectations(t)
-	msgclientRepo.AssertExpectations(t)
 }
 
 func TestHealthServerListLatest(t *testing.T) {
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 	hRepo := &mocks.HealthRepo{}
-	id := uuid.NewV4()
-	cappID := uuid.NewV4()
+	reportID := uuid.NewV4()
+	reported := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+	received := reported.Add(time.Minute)
+	raw := json.RawMessage(`{}`)
 
-	health := db.Health{
-		Id:        id,
-		NodeId:    testNode.String(),
-		TimeStamp: "test",
-		System: []db.System{
-			{
-				Id:       uuid.NewV4(),
-				HealthID: id,
-				Name:     "cpu",
-				Value:    "40",
-			},
-		},
-		Capps: []db.Capp{
-			{
-				Id:       cappID,
-				HealthID: id,
-				Space:    "core",
-				Name:     "agent",
-				Tag:      "v1",
-				Status:   db.Status(1),
-				Resources: []db.Resource{
-					{
-						Id:     uuid.NewV4(),
-						CappID: cappID,
-						Name:   "memory",
-						Value:  "100mb",
-					},
-				},
-			},
-		},
+	report := &db.HealthReport{
+		ID:            reportID,
+		NodeID:        testNode.String(),
+		NodeType:      ukama.NODE_TYPE_HOMENODE,
+		SchemaVersion: "1",
+		ReportedAt:    reported,
+		ReceivedAt:    received,
+		Payload:       raw,
 	}
 
-	hRepo.On("List", "", testNode.String(), "", ukama.FilterTimeframesTypeLatest).Return([]*db.Health{&health}, nil).Once()
-	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
+	hRepo.On("List", "", testNode.String(), (*time.Time)(nil), ukama.FilterTimeframesTypeLatest).Return([]*db.HealthReport{report}, nil).Once()
+	s := NewHealthServer(testOrgName, hRepo, false)
 
-	resp, err := s.List(context.TODO(), &pb.ListRequest{
+	resp, err := s.ListReports(context.Background(), &pb.ListReportsRequest{
 		NodeId:    testNode.String(),
 		Timeframe: ukamapb.FilterTimeframesType_LATEST,
 	})
 
 	assert.NoError(t, err)
-	if assert.NotNil(t, resp) && assert.Len(t, resp.Healths, 1) {
-		assert.Equal(t, health.NodeId, resp.Healths[0].NodeId)
-		assert.Equal(t, health.TimeStamp, resp.Healths[0].Timestamp)
-		if assert.Len(t, resp.Healths[0].System, 1) {
-			assert.Equal(t, health.System[0].Name, resp.Healths[0].System[0].Name)
-			assert.Equal(t, health.System[0].Value, resp.Healths[0].System[0].Value)
-		}
-		if assert.Len(t, resp.Healths[0].Capps, 1) {
-			assert.Equal(t, health.Capps[0].Name, resp.Healths[0].Capps[0].Name)
-			if assert.Len(t, resp.Healths[0].Capps[0].Resources, 1) {
-				assert.Equal(t, health.Capps[0].Resources[0].Name, resp.Healths[0].Capps[0].Resources[0].Name)
-				assert.Equal(t, health.Capps[0].Resources[0].Value, resp.Healths[0].Capps[0].Resources[0].Value)
-			}
-		}
+	if assert.NotNil(t, resp) && assert.Len(t, resp.Reports, 1) {
+		r := resp.Reports[0]
+		assert.Equal(t, reportID.String(), r.Id)
+		assert.Equal(t, testNode.String(), r.NodeId)
+		assert.Equal(t, string(ukama.NODE_TYPE_HOMENODE), r.NodeType)
 	}
-
 	hRepo.AssertExpectations(t)
-	msgclientRepo.AssertExpectations(t)
 }
 
 func TestHealthServerListAll(t *testing.T) {
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 	hRepo := &mocks.HealthRepo{}
 	id1 := uuid.NewV4()
 	id2 := uuid.NewV4()
-	healths := []*db.Health{
-		{Id: id1, NodeId: testNode.String(), TimeStamp: "ts-1"},
-		{Id: id2, NodeId: testNode.String(), TimeStamp: "ts-2"},
+	ts1 := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	ts2 := time.Date(2026, 1, 2, 0, 0, 0, 0, time.UTC)
+	reports := []*db.HealthReport{
+		{ID: id1, NodeID: testNode.String(), NodeType: ukama.NODE_TYPE_HOMENODE, ReportedAt: ts1, SchemaVersion: "1", Payload: json.RawMessage(`{}`)},
+		{ID: id2, NodeID: testNode.String(), NodeType: ukama.NODE_TYPE_HOMENODE, ReportedAt: ts2, SchemaVersion: "1", Payload: json.RawMessage(`{}`)},
 	}
 
-	hRepo.On("List", "", testNode.String(), "", ukama.FilterTimeframesTypeAll).Return(healths, nil).Once()
-	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
+	hRepo.On("List", "", testNode.String(), (*time.Time)(nil), ukama.FilterTimeframesTypeAll).Return(reports, nil).Once()
+	s := NewHealthServer(testOrgName, hRepo, false)
 
-	resp, err := s.List(context.TODO(), &pb.ListRequest{
+	resp, err := s.ListReports(context.Background(), &pb.ListReportsRequest{
 		NodeId:    testNode.String(),
 		Timeframe: ukamapb.FilterTimeframesType_ALL,
 	})
 
 	assert.NoError(t, err)
-	if assert.NotNil(t, resp) && assert.Len(t, resp.Healths, 2) {
-		assert.Equal(t, "ts-1", resp.Healths[0].Timestamp)
-		assert.Equal(t, "ts-2", resp.Healths[1].Timestamp)
+	if assert.NotNil(t, resp) && assert.Len(t, resp.Reports, 2) {
+		assert.Equal(t, ts1.Unix(), resp.Reports[0].ReportedAt.AsTime().Unix())
+		assert.Equal(t, ts2.Unix(), resp.Reports[1].ReportedAt.AsTime().Unix())
 	}
-
 	hRepo.AssertExpectations(t)
-	msgclientRepo.AssertExpectations(t)
 }
 
 func TestHealthServerListMissingIdAndNodeId(t *testing.T) {
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 	hRepo := &mocks.HealthRepo{}
-	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
+	s := NewHealthServer(testOrgName, hRepo, false)
 
-	resp, err := s.List(context.TODO(), &pb.ListRequest{
+	resp, err := s.ListReports(context.Background(), &pb.ListReportsRequest{
 		Timeframe: ukamapb.FilterTimeframesType_LATEST,
 	})
 
@@ -242,108 +205,167 @@ func TestHealthServerListMissingIdAndNodeId(t *testing.T) {
 	if assert.Error(t, err) {
 		assert.Equal(t, codes.InvalidArgument, status.Code(err))
 	}
-
 	hRepo.AssertExpectations(t)
-	msgclientRepo.AssertExpectations(t)
 }
 
-func TestHealthServerListLatestRepoError(t *testing.T) {
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+func TestHealthServerListRepoError(t *testing.T) {
 	hRepo := &mocks.HealthRepo{}
 
-	hRepo.On("List", "", testNode.String(), "", ukama.FilterTimeframesTypeLatest).Return(([]*db.Health)(nil), assert.AnError).Once()
-	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
+	hRepo.On("List", "", testNode.String(), (*time.Time)(nil), ukama.FilterTimeframesTypeLatest).Return(([]*db.HealthReport)(nil), assert.AnError).Once()
+	s := NewHealthServer(testOrgName, hRepo, false)
 
-	resp, err := s.List(context.TODO(), &pb.ListRequest{
+	resp, err := s.ListReports(context.Background(), &pb.ListReportsRequest{
 		NodeId:    testNode.String(),
 		Timeframe: ukamapb.FilterTimeframesType_LATEST,
 	})
 
 	assert.Nil(t, resp)
 	assert.Error(t, err)
-
 	hRepo.AssertExpectations(t)
-	msgclientRepo.AssertExpectations(t)
 }
 
-func TestHealthServerListAllRepoError(t *testing.T) {
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+func TestHealthServerListApps(t *testing.T) {
 	hRepo := &mocks.HealthRepo{}
-
-	hRepo.On("List", "", testNode.String(), "", ukama.FilterTimeframesTypeAll).Return(([]*db.Health)(nil), assert.AnError).Once()
-	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
-
-	resp, err := s.List(context.TODO(), &pb.ListRequest{
-		NodeId:    testNode.String(),
-		Timeframe: ukamapb.FilterTimeframesType_ALL,
-	})
-
-	assert.Nil(t, resp)
-	assert.Error(t, err)
-
-	hRepo.AssertExpectations(t)
-	msgclientRepo.AssertExpectations(t)
-}
-
-func TestHealthServerGetApps(t *testing.T) {
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
-	hRepo := &mocks.HealthRepo{}
-
-	cappID := uuid.NewV4()
-	capps := []*db.Capp{
-		{
-			Id:       cappID,
-			Space:    "services",
-			Name:     "deviced",
-			Tag:      "v1.2.3",
-			Status:   db.Active,
-			HealthID: uuid.NewV4(),
-			Resources: []db.Resource{
-				{
-					Id:     uuid.NewV4(),
-					CappID: cappID,
-					Name:   "cpu",
-					Value:  "12.0",
-				},
+	reportID := uuid.NewV4()
+	reported := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+	received := reported.Add(time.Minute)
+	payload, err := json.Marshal(map[string]interface{}{
+		"apps": []map[string]string{
+			{
+				"name":    "test-app",
+				"version": "1.0.0",
+				"tag":     "latest",
+				"state":   "active",
 			},
 		},
+	})
+	assert.NoError(t, err)
+	raw := json.RawMessage(payload)
+
+	report := &db.HealthReport{
+		ID:            reportID,
+		NodeID:        testNode.String(),
+		NodeType:      ukama.NODE_TYPE_HOMENODE,
+		SchemaVersion: "1",
+		ReportedAt:    reported,
+		ReceivedAt:    received,
+		Payload:       raw,
 	}
 
-	hRepo.On("ListApps", "", "").Return(capps, nil).Once()
+	hRepo.On("List", "", testNode.String(), (*time.Time)(nil), ukama.FilterTimeframesTypeLatest).Return([]*db.HealthReport{report}, nil).Once()
+	s := NewHealthServer(testOrgName, hRepo, false)
 
-	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
-	resp, err := s.ListApps(context.TODO(), &pb.ListAppsRequest{})
+	resp, err := s.ListApps(context.Background(), &pb.ListAppsRequest{
+		NodeId: testNode.String(),
+	})
 
 	assert.NoError(t, err)
-	if assert.NotNil(t, resp) && assert.Len(t, resp.Capps, 1) {
-		assert.Equal(t, capps[0].Id.String(), resp.Capps[0].Id)
-		assert.Equal(t, capps[0].Space, resp.Capps[0].Space)
-		assert.Equal(t, capps[0].Name, resp.Capps[0].Name)
-		assert.Equal(t, capps[0].Tag, resp.Capps[0].Tag)
-		assert.Equal(t, pb.Status(capps[0].Status), resp.Capps[0].Status)
-		if assert.Len(t, resp.Capps[0].Resources, 1) {
-			assert.Equal(t, capps[0].Resources[0].Name, resp.Capps[0].Resources[0].Name)
-			assert.Equal(t, capps[0].Resources[0].Value, resp.Capps[0].Resources[0].Value)
-			assert.Equal(t, capps[0].Resources[0].CappID.String(), resp.Capps[0].Resources[0].CappId)
-		}
+	if assert.NotNil(t, resp) && assert.Len(t, resp.Apps, 1) {
+		assert.Equal(t, "test-app", resp.Apps[0].Name)
+		assert.Equal(t, "1.0.0", resp.Apps[0].Version)
+		assert.Equal(t, "latest", resp.Apps[0].Tag)
+		assert.Equal(t, "active", resp.Apps[0].Status)
 	}
-
 	hRepo.AssertExpectations(t)
-	msgclientRepo.AssertExpectations(t)
 }
 
-func TestHealthServerGetAppsRepoError(t *testing.T) {
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
-	hRepo := &mocks.HealthRepo{}
+func TestHealthServerListInterfaces(t *testing.T) {
+	t.Run("invalid_node_type_returns_error", func(t *testing.T) {
+		hRepo := &mocks.HealthRepo{}
+		s := NewHealthServer(testOrgName, hRepo, false)
 
-	hRepo.On("ListApps", "", "").Return(([]*db.Capp)(nil), assert.AnError).Once()
+		resp, err := s.ListInterfaces(context.Background(), &pb.ListInterfacesRequest{
+			NodeId: testNode.String(),
+		})
 
-	s := NewHealthServer(testOrgName, hRepo, msgclientRepo, false)
-	resp, err := s.ListApps(context.TODO(), &pb.ListAppsRequest{})
+		assert.Nil(t, resp)
+		if assert.Error(t, err) {
+			assert.Equal(t, codes.InvalidArgument, status.Code(err))
+		}
+		hRepo.AssertExpectations(t)
+	})
 
-	assert.Nil(t, resp)
-	assert.Error(t, err)
+	t.Run("no_reports_returns_empty_switch_policy", func(t *testing.T) {
+		hRepo := &mocks.HealthRepo{}
+		hRepo.On("List", "", testCNode.String(), (*time.Time)(nil), ukama.FilterTimeframesTypeLatest).
+			Return([]*db.HealthReport{}, nil).Once()
 
-	hRepo.AssertExpectations(t)
-	msgclientRepo.AssertExpectations(t)
+		s := NewHealthServer(testOrgName, hRepo, false)
+		resp, err := s.ListInterfaces(context.Background(), &pb.ListInterfacesRequest{
+			NodeId: testCNode.String(),
+		})
+
+		assert.NoError(t, err)
+		if assert.NotNil(t, resp) && assert.NotNil(t, resp.Interfaces) {
+			assert.Nil(t, resp.Interfaces.Switch)
+		}
+		hRepo.AssertExpectations(t)
+	})
+
+	t.Run("maps_policy_and_ports_from_latest_report", func(t *testing.T) {
+		hRepo := &mocks.HealthRepo{}
+		reportID := uuid.NewV4()
+		reported := time.Date(2026, 1, 3, 10, 0, 0, 0, time.UTC)
+		received := reported.Add(time.Minute)
+
+		payload, err := json.Marshal(map[string]interface{}{
+			"interfaces": map[string]interface{}{
+				"switch": map[string]interface{}{
+					"state": "active",
+					"policy": map[string]interface{}{
+						"state":  "applied",
+						"hash":   "hash-123",
+						"source": "controller",
+						"error":  "",
+					},
+					"ports": []map[string]interface{}{
+						{
+							"id":         1,
+							"name":       "ge1",
+							"present":    true,
+							"adminState": "up",
+							"linkState":  "up",
+							"poeState":   "on",
+						},
+					},
+				},
+			},
+		})
+		assert.NoError(t, err)
+
+		report := &db.HealthReport{
+			ID:            reportID,
+			NodeID:        testCNode.String(),
+			NodeType:      ukama.NODE_TYPE_CNODE,
+			SchemaVersion: "1",
+			ReportedAt:    reported,
+			ReceivedAt:    received,
+			Payload:       json.RawMessage(payload),
+		}
+
+		hRepo.On("List", "", testCNode.String(), (*time.Time)(nil), ukama.FilterTimeframesTypeLatest).
+			Return([]*db.HealthReport{report}, nil).Once()
+
+		s := NewHealthServer(testOrgName, hRepo, false)
+		resp, err := s.ListInterfaces(context.Background(), &pb.ListInterfacesRequest{
+			NodeId: testCNode.String(),
+		})
+
+		assert.NoError(t, err)
+		if assert.NotNil(t, resp) && assert.NotNil(t, resp.Interfaces) && assert.NotNil(t, resp.Interfaces.Switch) {
+			assert.Equal(t, "active", resp.Interfaces.Switch.State)
+			assert.Equal(t, "hash-123", resp.Interfaces.Switch.Policy.Hash)
+			assert.Equal(t, "controller", resp.Interfaces.Switch.Policy.Source)
+			if assert.Len(t, resp.Interfaces.Switch.Ports, 1) {
+				p := resp.Interfaces.Switch.Ports[0]
+				assert.Equal(t, int64(1), p.Id)
+				assert.Equal(t, "ge1", p.Name)
+				assert.Equal(t, true, p.Present)
+				assert.Equal(t, "up", p.AdminState)
+				assert.Equal(t, "up", p.LinkState)
+				assert.Equal(t, "on", p.PoeState)
+			}
+		}
+		hRepo.AssertExpectations(t)
+	})
 }

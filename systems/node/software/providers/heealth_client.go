@@ -20,11 +20,11 @@ import (
 
 
 type HealthClientProvider interface {
-	GetClient() (pb.HealhtServiceClient, error)
+	GetClient() (pb.HealthServiceClient, error)
 }
 
 type healthClientProvider struct {
-	healthService pb.HealhtServiceClient
+	healthService pb.HealthServiceClient
 	healthHost    string
 }
 
@@ -32,7 +32,7 @@ func NewHealthClientProvider(healthHost string) HealthClientProvider {
 	return &healthClientProvider{healthHost: healthHost}
 }
 
-func (o *healthClientProvider) GetClient() (pb.HealhtServiceClient, error) {
+func (o *healthClientProvider) GetClient() (pb.HealthServiceClient, error) {
 	if o.healthService == nil {
 		var conn *grpc.ClientConn
 
@@ -46,7 +46,7 @@ func (o *healthClientProvider) GetClient() (pb.HealhtServiceClient, error) {
 			return nil, fmt.Errorf("failed to connect to remote health service: %w", err)
 		}
 
-		o.healthService = pb.NewHealhtServiceClient(conn)
+		o.healthService = pb.NewHealthServiceClient(conn)
 	}
 
 	return o.healthService, nil

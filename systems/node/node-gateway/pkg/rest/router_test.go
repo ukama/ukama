@@ -23,6 +23,7 @@ import (
 	"github.com/tj/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	ukamapb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/ukama"
@@ -61,9 +62,9 @@ func init() {
 func TestPingRoute(t *testing.T) {
 	// arrange
 	var n = &nmocks.NotifyServiceClient{}
-	var h = &hmocks.HealhtServiceClient{}
+	var h = &hmocks.HealthServiceClient{}
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/ping", nil)
+	req, _ := http.NewRequest("GET", "/v1/ping", nil)
 
 	r := NewRouter(&Clients{
 		Health: client.NewHealthFromClient(h),
@@ -75,7 +76,7 @@ func TestPingRoute(t *testing.T) {
 
 	// assert
 	assert.Equal(t, 200, w.Code)
-	assert.Contains(t, w.Body.String(), "pong")
+	assert.Contains(t, w.Body.String(), "is running")
 }
 
 var nodeId = ukama.NewVirtualHomeNodeId().String()
@@ -92,30 +93,32 @@ var nt = AddNotificationReq{
 func TestListHealthInfo(t *testing.T) {
 	// arrange
 	const testListNodeID = "uk-sa2602-tnode-v0-344c"
+	const reportID = "60420da4-364b-494d-92ce-4be280d78c9b"
+	reported := time.Unix(1776703063, 0).UTC()
+	reportedRFC := reported.Format(time.RFC3339)
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest(
 		"GET",
-		"/v1/health/list?id=60420da4-364b-494d-92ce-4be280d78c9b&node_id="+testListNodeID+"&timestamp=1776703063&timeframe=latest",
+		"/v1/health/reports?reportId="+reportID+"&nodeId="+testListNodeID+"&reportedAt="+reportedRFC+"&timeframe=latest",
 		nil,
 	)
-	c := &hmocks.HealhtServiceClient{}
-	listReq := &hpb.ListRequest{
-		Id:        "60420da4-364b-494d-92ce-4be280d78c9b",
-		NodeId:    testListNodeID,
-		Timestamp: "1776703063",
-		Timeframe:    ukamapb.FilterTimeframesType_LATEST,
+	c := &hmocks.HealthServiceClient{}
+	listReq := &hpb.ListReportsRequest{
+		ReportId:   reportID,
+		NodeId:     testListNodeID,
+		ReportedAt: timestamppb.New(reported),
+		Timeframe:  ukamapb.FilterTimeframesType_LATEST,
 	}
-	listResp := &hpb.ListResponse{
-		Healths: []*hpb.Health{
+	listResp := &hpb.ListReportsResponse{
+		Reports: []*hpb.HealthReport{
 			{
-				Id:        "60420da4-364b-494d-92ce-4be280d78c9b",
-				NodeId:    testListNodeID,
-				Timestamp: "1776703063",
+				Id:     reportID,
+				NodeId: testListNodeID,
 			},
 		},
 	}
-	c.On("List", mock.Anything, listReq).Return(listResp, nil).Once()
+	c.On("ListReports", mock.Anything, listReq).Return(listResp, nil).Once()
 
 	// Create a new router with the mock client.
 	r := NewRouter(&Clients{
@@ -131,71 +134,38 @@ func TestListHealthInfo(t *testing.T) {
 	c.AssertExpectations(t)
 }
 
-func Test_StoreRunningApps(t *testing.T) {
-	chealth := &hmocks.HealhtServiceClient{}
+func Test_StoreHealthReport(t *testing.T) {
+	chealth := &hmocks.HealthServiceClient{}
 
 	r := NewRouter(&Clients{
 		Health: client.NewHealthFromClient(chealth),
 	}, routerConfig).f.Engine()
 
-	t.Run("storeRunningApps", func(t *testing.T) {
+	t.Run("storeHealthReport", func(t *testing.T) {
+		n := ukama.NewVirtualNodeId("HomeNode")
+		pathID := n.String()
+		reported := time.Date(2023, 12, 12, 0, 0, 0, 0, time.UTC)
 
-		data := &hpb.StoreRunningAppsInfoRequest{
-			NodeId:    "60285a2a-fe1d-4261-a868-5be480075b8f",
-			Timestamp: "12-12-2023",
-			System: []*hpb.System{
-				{
-					Name:  "SystemName1",
-					Value: "SystemValue1",
-				},
-				{
-					Name:  "SystemName2",
-					Value: "SystemValue2",
-				},
-			},
-			Capps: []*hpb.Capps{
-				{
-					Name: "CappsName1",
-					Tag:  "CappsTag1",
-					Resources: []*hpb.Resource{
-						{
-							Name:  "ResourceName1",
-							Value: "ResourceValue1",
-						},
-						{
-							Name:  "ResourceName2",
-							Value: "ResourceValue2",
-						},
-					},
-				},
-				{
-					Name: "CappsName2",
-					Tag:  "CappsTag2",
-					Resources: []*hpb.Resource{
-						{
-							Name:  "ResourceName3",
-							Value: "ResourceValue3",
-						},
-						{
-							Name:  "ResourceName4",
-							Value: "ResourceValue4",
-						},
-					},
-				},
-			},
+		body := map[string]interface{}{
+			"nodeType":      string(ukama.NODE_TYPE_HOMENODE),
+			"schemaVersion": "1",
+			"reportedAt":    reported.Format(time.RFC3339),
+			"payload":       map[string]string{"k": "v"},
 		}
-		jdata, err := json.Marshal(&data)
+		jdata, err := json.Marshal(body)
 		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
-		req, err := http.NewRequest("POST", "/v1/health/nodes/60285a2a-fe1d-4261-a868-5be480075b8f/performance", bytes.NewReader(jdata))
+		req, err := http.NewRequest("POST", "/v1/health/nodes/"+pathID+"/performance", bytes.NewReader(jdata))
 		assert.NoError(t, err)
+		req.Header.Set("Content-Type", "application/json")
 
-		chealth.On("StoreRunningAppsInfo", mock.Anything, data).Return(&hpb.StoreRunningAppsInfoResponse{}, nil)
+		chealth.On("StoreHealthReport", mock.Anything, mock.MatchedBy(func(r *hpb.StoreHealthReportRequest) bool {
+			return r.NodeId == n.StringLowercase() && bytes.Equal(r.Payload, jdata)
+		})).Return(&hpb.StoreHealthReportResponse{ReportId: "new-report-id"}, nil)
 
 		r.ServeHTTP(w, req)
 
-		// assert
 		assert.Equal(t, http.StatusCreated, w.Code)
 		chealth.AssertExpectations(t)
 	})
