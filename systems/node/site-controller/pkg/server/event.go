@@ -10,11 +10,13 @@ package server
 
 import (
 	"context"
+	"fmt"
 
 	log "github.com/sirupsen/logrus"
 	evt "github.com/ukama/ukama/systems/common/events"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	pbhealth "github.com/ukama/ukama/systems/node/health/pb/gen"
 )
 
 type SiteControllerEventServer struct {
@@ -58,6 +60,27 @@ func (c *SiteControllerEventServer) EventNotification(ctx context.Context, e *ep
 
 func (s *SiteControllerEventServer) handleAddSite(ctx context.Context, msg *epb.EventAddSite) error {
 	log.Infof("Adding site %s with network %s", msg.SiteId, msg.NetworkId)
+	healthClient, err := s.s.healthClient.GetClient()
+	if err != nil {
+		return fmt.Errorf("failed to get health client: %w", err)
+	}
+
+	nodes, err := s.s.nodeClient.GetNodesBySite(msg.SiteId)
+	if err != nil {
+		return fmt.Errorf("failed to get nodes by site: %w", err)
+	}
+
+	interfacesMap := make(map[string]*pbhealth.Interface)
+
+	for _, node := range nodes.Nodes {
+		interfaces, err := healthClient.ListInterfaces(ctx, &pbhealth.ListInterfacesRequest{
+			NodeId: node.Id,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to list interfaces: %w", err)
+		}
+		interfacesMap[node.Type] = interfaces.Interfaces
+	}
 
 	return nil
 }
