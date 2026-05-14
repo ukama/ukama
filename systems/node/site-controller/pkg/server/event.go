@@ -3,7 +3,7 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at https://mozilla.org/MPL/2.0/.
 *
-* Copyright (c) 2023-present, Ukama Inc.
+* Copyright (c) 2026-present, Ukama Inc.
  */
 
 package server
@@ -58,6 +58,6 @@ func (c *SiteControllerEventServer) EventNotification(ctx context.Context, e *ep
 
 func (s *SiteControllerEventServer) handleAddSite(ctx context.Context, msg *epb.EventAddSite) error {
 	log.Infof("Adding site %s with network %s", msg.SiteId, msg.NetworkId)
-	
+
 	return nil
 }
