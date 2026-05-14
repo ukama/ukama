@@ -17,9 +17,11 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 
+	"github.com/ukama/ukama/systems/common/rest/client"
+	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/systems/common/rest/client"
 	"github.com/ukama/ukama/systems/node/site-controller/cmd/version"
 	pb "github.com/ukama/ukama/systems/node/site-controller/pb/gen"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg"
@@ -27,8 +29,7 @@ import (
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/db"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/reconciler"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/server"
-	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
-	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	"github.com/ukama/ukama/systems/node/site-controller/providers"
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 )
@@ -89,7 +90,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	nodeClient := creg.NewNodeClient(regUrl.String())
 
-	srv := server.NewSiteControllerServer(svcConf.OrgName, r, mbClient, nodeClient)
+	srv := server.NewSiteControllerServer(svcConf.OrgName, r, mbClient, nodeClient, providers.NewHealthClientProvider(svcConf.HealthHost))
 	eventServer := server.NewSiteControllerEventServer(svcConf.OrgName, srv)
 	
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {

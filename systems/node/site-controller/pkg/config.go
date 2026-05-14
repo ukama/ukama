@@ -15,15 +15,16 @@ import (
 )
 
 type Config struct {
-	uconf.BaseConfig `mapstructure:",squash"`
-	DB               *uconf.Database  `default:"{}"`
-	Grpc             *uconf.Grpc      `default:"{}"`
-	Queue            *uconf.Queue     `default:"{}"`
-	Timeout          time.Duration    `default:"20s"`
-	MsgClient        *uconf.MsgClient `default:"{}"`
-	Service          *uconf.Service
-	OrgName          string
-	Http             HttpServices
+	uconf.BaseConfig 	`mapstructure:",squash"`
+	DB               	*uconf.Database  `default:"{}"`
+	Grpc             	*uconf.Grpc      `default:"{}"`
+	Queue            	*uconf.Queue     `default:"{}"`
+	Timeout          	time.Duration    `default:"20s"`
+	MsgClient        	*uconf.MsgClient `default:"{}"`
+	HealthHost       	string 			 `default:"health:9090"`
+	OrgName          	string
+	Service          	*uconf.Service
+	Http             	HttpServices
 }
 type HttpServices struct {
 	InitClient    string `default:"api-gateway-init:8080"`

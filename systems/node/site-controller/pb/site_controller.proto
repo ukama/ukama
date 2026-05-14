@@ -13,7 +13,6 @@ package ukama.node.site_controller.v1;
 
 import "validator.proto";
 
-// SiteController drives site intent, static switch port map, switch.d policy, and derived site state.
 service SiteControllerService {
   rpc SetSite(SetSiteRequest) returns (SetSiteResponse);
   rpc SetService(SetServiceRequest) returns (SetServiceResponse);

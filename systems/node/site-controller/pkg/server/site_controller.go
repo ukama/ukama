@@ -19,6 +19,7 @@ import (
 	"github.com/ukama/ukama/systems/node/site-controller/pkg"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/db"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/reconciler"
+	"github.com/ukama/ukama/systems/node/site-controller/providers"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -29,11 +30,12 @@ type SiteControllerServer struct {
 	reconciler     *reconciler.Reconciler
 	msgbus         mb.MsgBusServiceClient
 	nodeClient     creg.NodeClient
+	healthClient   providers.HealthClientProvider
 	baseRoutingKey msgbus.RoutingKeyBuilder
 }
 
-func NewSiteControllerServer(orgName string, r *reconciler.Reconciler, mb mb.MsgBusServiceClient, nodeClient creg.NodeClient) *SiteControllerServer {
-	return &SiteControllerServer{reconciler: r, baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName), nodeClient: nodeClient}
+func NewSiteControllerServer(orgName string, r *reconciler.Reconciler, mb mb.MsgBusServiceClient, nodeClient creg.NodeClient, healthClient providers.HealthClientProvider) *SiteControllerServer {
+	return &SiteControllerServer{reconciler: r, baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName), nodeClient: nodeClient, healthClient: healthClient}
 }
 
 func (s *SiteControllerServer) SetSite(ctx context.Context, req *pb.SetSiteRequest) (*pb.SetSiteResponse, error) {
