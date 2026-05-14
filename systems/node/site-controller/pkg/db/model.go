@@ -1,8 +1,4 @@
-// Package db holds GORM models for site-controller.
-//
-// UUID "id" columns: required for SitePortMap rows (many per site). For Site and 1:1 tables (intent, state, component),
-// an extra UUID is optional — site_id alone is enough for PK and FK. Keep UUID ids only if APIs, audit trails, or
-// cross-system references need a stable surrogate distinct from operator-facing site_id.
+
 package db
 
 import (
@@ -28,11 +24,10 @@ func (s *Site) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
-// SiteIntent is 1:1 with Site — SiteID alone is sufficient as PK; ID is optional (see header comment below).
 type SiteIntent struct {
-	ID             uuid.UUID `gorm:"type:uuid;uniqueIndex;not null;column:id" json:"id"`
+	ID             uuid.UUID `gorm:"type:uuid;primaryKey;column:id" json:"id"`
 	Site           Site      `gorm:"foreignKey:SiteID;references:SiteID;constraint:OnUpdate:CASCADE"`
-	SiteID         string    `gorm:"primaryKey;column:site_id" json:"site_id"`
+	SiteID         string    `gorm:"column:site_id;not null;index:idx_site_intent_site_id" json:"site_id"`
 	DesiredSite    string    `gorm:"column:desired_site" json:"desired_site"`
 	DesiredService string    `gorm:"column:desired_service" json:"desired_service"`
 	DesiredRadio   string    `gorm:"column:desired_radio" json:"desired_radio"`
@@ -89,7 +84,6 @@ func (m *SiteComponent) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
-// SitePortMap has many rows per site — PK is ID (UUID). Uniqueness of a port within a site: (site_id, port).
 type SitePortMap struct {
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey;column:id" json:"id"`
 	Site      Site      `gorm:"foreignKey:SiteID;references:SiteID;constraint:OnUpdate:CASCADE"`

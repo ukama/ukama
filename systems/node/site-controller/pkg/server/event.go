@@ -58,6 +58,6 @@ func (c *SiteControllerEventServer) EventNotification(ctx context.Context, e *ep
 
 func (s *SiteControllerEventServer) handleAddSite(ctx context.Context, msg *epb.EventAddSite) error {
 	log.Infof("Adding site %s with network %s", msg.SiteId, msg.NetworkId)
-
+	
 	return nil
 }
