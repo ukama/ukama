@@ -20,6 +20,9 @@ func (r *portMapRepo) GetBySite(siteID string) ([]SitePortMap, error) {
 }
 func (r *portMapRepo) Upsert(siteID string, cnodeID string, ports []SitePortMap) error {
 	return r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		if err := ensureSite(tx, siteID); err != nil {
+			return err
+		}
 		if err := tx.Where("site_id = ?", siteID).Delete(&SitePortMap{}).Error; err != nil {
 			return err
 		}

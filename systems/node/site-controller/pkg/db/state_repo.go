@@ -26,6 +26,10 @@ func (r *stateRepo) Get(siteID string) (*SiteState, error) {
 	return &m, nil
 }
 func (r *stateRepo) Upsert(m *SiteState) error {
+	db := r.db.GetGormDb()
+	if err := ensureSite(db, m.SiteID); err != nil {
+		return err
+	}
 	m.UpdatedAt = time.Now().UTC()
-	return r.db.GetGormDb().Save(m).Error
+	return db.Save(m).Error
 }

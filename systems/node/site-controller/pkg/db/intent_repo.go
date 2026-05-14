@@ -26,10 +26,14 @@ func (r *intentRepo) Get(siteID string) (*SiteIntent, error) {
 	return &m, nil
 }
 func (r *intentRepo) Upsert(m *SiteIntent) error {
+	db := r.db.GetGormDb()
+	if err := ensureSite(db, m.SiteID); err != nil {
+		return err
+	}
 	now := time.Now().UTC()
 	m.UpdatedAt = now
 	if m.CreatedAt.IsZero() {
 		m.CreatedAt = now
 	}
-	return r.db.GetGormDb().Save(m).Error
+	return db.Save(m).Error
 }

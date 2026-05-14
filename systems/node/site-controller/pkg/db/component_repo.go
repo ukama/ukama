@@ -26,6 +26,10 @@ func (r *componentRepo) Get(siteID string) (*SiteComponent, error) {
 	return &m, nil
 }
 func (r *componentRepo) Upsert(m *SiteComponent) error {
+	db := r.db.GetGormDb()
+	if err := ensureSite(db, m.SiteID); err != nil {
+		return err
+	}
 	m.UpdatedAt = time.Now().UTC()
-	return r.db.GetGormDb().Save(m).Error
+	return db.Save(m).Error
 }
