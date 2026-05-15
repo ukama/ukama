@@ -63,7 +63,7 @@ const (
 	EventAccountingSync
 	EventInvoiceGenerate
 	EventInvoiceDelete
-	EventHealthCappStore
+	EventHealthReportStore
 	EventNotificationDelete
 	EventNotificationStore
 	EventPaymentSuccess
@@ -113,7 +113,7 @@ var EventRoutingKey = [...]string{
 	EventAccountingSync:     "event.cloud.local.{{ .Org}}.inventory.accounting.accounting.sync",
 	EventInvoiceGenerate:    "event.cloud.local.{{ .Org}}.billing.report.invoice.generate",
 	EventInvoiceDelete:      "event.cloud.local.{{ .Org}}.billing.invoice.invoice.delete",
-	EventHealthCappStore:    "event.cloud.local.{{ .Org}}.node.health.capps.store",
+	EventHealthReportStore:  "event.cloud.local.{{ .Org}}.node.health.report.store",
 	EventNotificationDelete: "event.cloud.local.{{ .Org}}.notification.notify.notification.delete",
 	EventNotificationStore:  "event.cloud.local.{{ .Org}}.notification.notify.notification.store",
 	EventPaymentSuccess:     "event.cloud.local.{{ .Org}}.payments.processor.payment.success",
@@ -458,11 +458,11 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
 	},
-	EventHealthCappStore: {
-		Key:         EventHealthCappStore,
-		Name:        "EventHealthCappStore",
-		Title:       "Health CAPP Store",
-		Description: "Health CAPP Store",
+	EventHealthReportStore: {
+		Key:         EventHealthReportStore,
+		Name:        "EventHealthReportStore",
+		Title:       "Health Report Stored",
+		Description: "Health Report Stored",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
 	},
