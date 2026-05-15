@@ -15,28 +15,36 @@ import (
 
 	"github.com/cloudflare/cfssl/log"
 	"github.com/ukama/ukama/systems/common/grpc"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/node/health/pb/gen"
+	"github.com/ukama/ukama/systems/node/health/pkg"
 	"github.com/ukama/ukama/systems/node/health/pkg/db"
 	"github.com/ukama/ukama/systems/node/health/pkg/parser"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
-
+ 
 type HealthServer struct {
 	pb.UnimplementedHealthServiceServer
-	sRepo   db.HealthRepo
-	debug   bool
-	orgName string
+	sRepo   		 db.HealthRepo
+	debug   		 bool
+	orgName 		 string
+	msgbus           mb.MsgBusServiceClient
+	healthRoutingKey msgbus.RoutingKeyBuilder
 }
 
-func NewHealthServer(orgName string, sRepo db.HealthRepo, debug bool) *HealthServer {
+func NewHealthServer(orgName string, sRepo db.HealthRepo, debug bool, msgBus mb.MsgBusServiceClient) *HealthServer {
 	return &HealthServer{
 		sRepo:   sRepo,
 		orgName: orgName,
 		debug:   debug,
+		msgbus:           msgBus,
+		healthRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
 }
 
@@ -81,6 +89,24 @@ func (h *HealthServer) StoreHealthReport(ctx context.Context, req *pb.StoreHealt
 		return nil, grpc.SqlErrorToGrpc(err, "health")
 	}
 
+	if h.msgbus != nil {
+		route := h.healthRoutingKey.SetAction("store").SetObject("capps").MustBuild()
+
+		evt := &epb.HealthReportEvent{
+			Id:        		report.ID.String(),
+			NodeId:    		report.NodeID,
+			Payload: 		report.Payload,
+			SchemaVersion:  report.SchemaVersion,
+			NodeType:  		report.NodeType.String(),
+			ReportedAt: 	report.ReportedAt.Format(time.RFC3339),
+		}
+		log.Infof("Publishing event %+v with key %+v", evt, route)
+		err = h.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		}
+	}
+
 	return &pb.StoreHealthReportResponse{ReportId: report.ID.String()}, nil
 }
 
@@ -114,7 +140,7 @@ func (h *HealthServer) ListReports(ctx context.Context, req *pb.ListReportsReque
 func (h *HealthServer) ListApps(ctx context.Context, req *pb.ListAppsRequest) (*pb.ListAppsResponse, error) {
 	log.Infof("ListApps: %v", req)
 
-	reports, err := h.sRepo.List("", req.GetNodeId(), nil, ukama.FilterTimeframesTypeLatest)
+	reports, err := h.sRepo.List(req.GetReportId(), req.GetNodeId(), nil, ukama.FilterTimeframesTypeLatest)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "health")
 	}
@@ -143,29 +169,13 @@ func (h *HealthServer) ListApps(ctx context.Context, req *pb.ListAppsRequest) (*
 func (h *HealthServer) ListInterfaces(ctx context.Context, req *pb.ListInterfacesRequest) (*pb.ListInterfacesResponse, error) {
 	log.Infof("ListInterfaces: %v", req)
 
-	_, err := ukama.ValidateNodeId(req.GetNodeId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of node id. Error %s", err.Error())
-	}
-
-	nodeType := ukama.GetNodeType(req.GetNodeId())
-	if nodeType == nil || *nodeType != ukama.NODE_ID_TYPE_CNODE {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"node type is not a cnode")
-	}
-
-	reports, err := h.sRepo.List("", req.GetNodeId(), nil, ukama.FilterTimeframesTypeLatest)
+	reports, err := h.sRepo.List(req.GetReportId(), req.GetNodeId(), nil, ukama.FilterTimeframesTypeLatest)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "health")
 	}
-
 	if len(reports) == 0 {
-		return &pb.ListInterfacesResponse{
-			Interfaces: &pb.Interface{},
-		}, nil
+		return &pb.ListInterfacesResponse{Interfaces: &pb.Interface{}}, nil
 	}
-
 	parsed, err := parser.ParseHealthPayload(reports[0].Payload)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "payload is invalid: %v", err)
