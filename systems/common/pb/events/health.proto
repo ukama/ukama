@@ -18,5 +18,5 @@ message HealthReportEvent {
     string nodeType = 3;
     string schemaVersion = 4;
     string reportedAt = 5;
-    string payload = 6;
+    bytes  payload = 6;
 }
