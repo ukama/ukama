@@ -10,6 +10,7 @@ package reconciler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/adapters"
@@ -46,8 +47,12 @@ func (r *Reconciler) GetSnapshot(ctx context.Context, siteID string) (*SiteSnaps
 	if err != nil {
 		return nil, err
 	}
-	if c != nil {
-		componentsJSON = c.Components
+	if c != nil && len(c.Components) > 0 {
+		b, err := json.Marshal(c.Components)
+		if err != nil {
+			return nil, err
+		}
+		componentsJSON = string(b)
 	}
 	return &SiteSnapshot{Intent: intent, DerivedState: st, ComponentsJSON: componentsJSON, Ports: ports}, nil
 }

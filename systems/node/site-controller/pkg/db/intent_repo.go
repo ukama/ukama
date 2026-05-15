@@ -55,5 +55,11 @@ func (r *intentRepo) Upsert(m *SiteIntent) error {
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
-	return gdb.Create(&row).Error
+	if err := gdb.Create(&row).Error; err != nil {
+		return err
+	}
+	m.ID = row.ID
+	m.CreatedAt = row.CreatedAt
+	m.UpdatedAt = row.UpdatedAt
+	return nil
 }

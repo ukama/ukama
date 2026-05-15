@@ -80,7 +80,14 @@ func runGrpcServer(gormdb sql.Db) {
 	if err != nil {
 		log.Fatalf("failed to connect controller: %v", err)
 	}
-	r := reconciler.New(db.NewIntentRepo(gormdb), db.NewStateRepo(gormdb), db.NewPortMapRepo(gormdb), db.NewComponentRepo(gormdb), adapters.NewTowerAdapter(cmdAdapter), adapters.NewAmplifierAdapter(cmdAdapter), adapters.NewCNodeAdapter(cmdAdapter))
+	intentRepo := db.NewIntentRepo(gormdb)
+	stateRepo := db.NewStateRepo(gormdb)
+	portMapRepo := db.NewPortMapRepo(gormdb)
+	componentRepo := db.NewComponentRepo(gormdb)
+	siteRepo := db.NewSiteRepo(gormdb)
+	flightRepo := db.NewIntentFlightRepo(gormdb)
+
+	r := reconciler.New(intentRepo, stateRepo, portMapRepo, componentRepo, adapters.NewTowerAdapter(cmdAdapter), adapters.NewAmplifierAdapter(cmdAdapter), adapters.NewCNodeAdapter(cmdAdapter))
 
 	regUrl, err := ic.GetHostUrl(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode)),
 		ic.CreateHostString(svcConf.OrgName, registrySystemName), &svcConf.OrgName)
@@ -91,7 +98,7 @@ func runGrpcServer(gormdb sql.Db) {
 	nodeClient := creg.NewNodeClient(regUrl.String())
 
 	srv := server.NewSiteControllerServer(svcConf.OrgName, r, mbClient, nodeClient, providers.NewHealthClientProvider(svcConf.HealthHost))
-	eventServer := server.NewSiteControllerEventServer(svcConf.OrgName, srv)
+	eventServer := server.NewSiteControllerEventServer(svcConf.OrgName, srv, siteRepo, intentRepo, flightRepo, stateRepo, componentRepo)
 	
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterSiteControllerServiceServer(s, srv)

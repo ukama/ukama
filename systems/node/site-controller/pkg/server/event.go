@@ -10,25 +10,65 @@ package server
 
 import (
 	"context"
-	"fmt"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	evt "github.com/ukama/ukama/systems/common/events"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	pbhealth "github.com/ukama/ukama/systems/node/health/pb/gen"
+	"github.com/ukama/ukama/systems/node/site-controller/pkg/db"
 )
 
+var defaultSiteIntent = db.SiteIntent{
+	DesiredService: "off",
+	DesiredRadio:   "off",
+	RequestedBy:    "system",
+}
+
+var defaultSiteIntentFlight = db.SiteIntentFlight{
+	IntentFlight: "pending",
+}
+
+var defaultSiteState = db.SiteState{
+	PowerState:   "unknown",
+	ServiceState: "unknown",
+	RadioState:   "unknown",
+	AccessState:  "unavailable",
+	Reason:       "site_created",
+}
+
+var defaultSiteComponent = db.SiteComponent{
+	Components: []string{"unknown"},
+}
+
 type SiteControllerEventServer struct {
-	s       *SiteControllerServer
-	orgName string
+	s          *SiteControllerServer
+	orgName    string
+	sites      db.SiteRepo
+	intents    db.IntentRepo
+	flights    db.IntentFlightRepo
+	states     db.StateRepo
+	components db.ComponentRepo
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewSiteControllerEventServer(orgName string, s *SiteControllerServer) *SiteControllerEventServer {
+func NewSiteControllerEventServer(
+	orgName string,
+	s *SiteControllerServer,
+	sites db.SiteRepo,
+	intents db.IntentRepo,
+	flights db.IntentFlightRepo,
+	states db.StateRepo,
+	components db.ComponentRepo,
+) *SiteControllerEventServer {
 	return &SiteControllerEventServer{
-		s:       s,
-		orgName: orgName,
+		s:          s,
+		orgName:    orgName,
+		sites:      sites,
+		intents:    intents,
+		flights:    flights,
+		states:     states,
+		components: components,
 	}
 }
 
@@ -68,29 +108,48 @@ func (c *SiteControllerEventServer) EventNotification(ctx context.Context, e *ep
 	return &epb.EventResponse{}, nil
 }
 
-func (s *SiteControllerEventServer) handleAddSite(ctx context.Context, msg *epb.EventAddSite) error {
+func (c *SiteControllerEventServer) handleAddSite(ctx context.Context, msg *epb.EventAddSite) error {
 	log.Infof("Adding site %s with network %s", msg.SiteId, msg.NetworkId)
-	healthClient, err := s.s.healthClient.GetClient()
-	if err != nil {
-		return fmt.Errorf("failed to get health client: %w", err)
+
+	if err := c.sites.Ensure(msg.SiteId); err != nil {
+		return err
 	}
 
-	nodes, err := s.s.nodeClient.GetNodesBySite(msg.SiteId)
-	if err != nil {
-		return fmt.Errorf("failed to get nodes by site: %w", err)
+	intent := &db.SiteIntent{
+		SiteID:         msg.SiteId,
+		DesiredService: defaultSiteIntent.DesiredService,
+		DesiredRadio:   defaultSiteIntent.DesiredRadio,
+		Reason:         "site_created",
+		RequestedBy:    defaultSiteIntent.RequestedBy,
+	}
+	if err := c.intents.Upsert(intent); err != nil {
+		return err
 	}
 
-	interfacesMap := make(map[string]*pbhealth.Interface)
-
-	for _, node := range nodes.Nodes {
-		interfaces, err := healthClient.ListInterfaces(ctx, &pbhealth.ListInterfacesRequest{
-			NodeId: node.Id,
-		})
-		if err != nil {
-			return fmt.Errorf("failed to list interfaces: %w", err)
-		}
-		interfacesMap[node.Type] = interfaces.Interfaces
+	flight := &db.SiteIntentFlight{
+		SiteIntentID: intent.ID,
+		IntentFlight: defaultSiteIntentFlight.IntentFlight,
+		ExpiresAt:    time.Now().UTC().Add(time.Hour),
+	}
+	if err := c.flights.Upsert(flight); err != nil {
+		return err
 	}
 
-	return nil
+	state := &db.SiteState{
+		SiteID:       msg.SiteId,
+		PowerState:   defaultSiteState.PowerState,
+		ServiceState: defaultSiteState.ServiceState,
+		RadioState:   defaultSiteState.RadioState,
+		AccessState:  defaultSiteState.AccessState,
+		Reason:       defaultSiteState.Reason,
+	}
+	if err := c.states.Upsert(state); err != nil {
+		return err
+	}
+
+	component := &db.SiteComponent{
+		SiteID:     msg.SiteId,
+		Components: defaultSiteComponent.Components,
+	}
+	return c.components.Upsert(component)
 }

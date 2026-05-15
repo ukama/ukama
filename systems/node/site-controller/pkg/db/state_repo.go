@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/systems/common/sql"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
 )
 
@@ -35,10 +36,33 @@ func (r *stateRepo) Get(siteID string) (*SiteState, error) {
 	return &m, nil
 }
 func (r *stateRepo) Upsert(m *SiteState) error {
-	db := r.db.GetGormDb()
-	if err := ensureSite(db, m.SiteID); err != nil {
+	if m == nil {
+		return errors.New("state is required")
+	}
+	gdb := r.db.GetGormDb()
+	if err := ensureSite(gdb, m.SiteID); err != nil {
 		return err
 	}
-	m.UpdatedAt = time.Now().UTC()
-	return db.Save(m).Error
+	now := time.Now().UTC()
+	m.UpdatedAt = now
+
+	var existing SiteState
+	err := gdb.First(&existing, "site_id = ?", m.SiteID).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		if m.ID == uuid.Nil {
+			m.ID = uuid.NewV4()
+		}
+		return gdb.Create(m).Error
+	}
+	if err != nil {
+		return err
+	}
+
+	existing.PowerState = m.PowerState
+	existing.ServiceState = m.ServiceState
+	existing.RadioState = m.RadioState
+	existing.AccessState = m.AccessState
+	existing.Reason = m.Reason
+	existing.UpdatedAt = now
+	return gdb.Save(&existing).Error
 }
