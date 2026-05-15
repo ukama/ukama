@@ -48,7 +48,6 @@ func (r *intentRepo) Upsert(m *SiteIntent) error {
 	now := time.Now().UTC()
 	row := SiteIntent{
 		SiteID:         m.SiteID,
-		DesiredSite:    m.DesiredSite,
 		DesiredService: m.DesiredService,
 		DesiredRadio:   m.DesiredRadio,
 		Reason:         m.Reason,

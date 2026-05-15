@@ -101,7 +101,6 @@ func (r *Reconciler) SetSite(ctx context.Context, siteID, state, reason, request
 	if err != nil {
 		return nil, err
 	}
-	intent.DesiredSite = state
 	intent.Reason = reason
 	if requestedBy != "" {
 		intent.RequestedBy = requestedBy
@@ -189,7 +188,7 @@ func (r *Reconciler) getIntent(siteID string) (*db.SiteIntent, error) {
 		return nil, err
 	}
 	if intent == nil {
-		intent = &db.SiteIntent{SiteID: siteID, DesiredSite: StateOff, DesiredService: StateOff, DesiredRadio: StateOff, Reason: "initial"}
+		intent = &db.SiteIntent{SiteID: siteID, DesiredService: StateOff, DesiredRadio: StateOff, Reason: "initial"}
 	}
 	return intent, nil
 }
@@ -197,7 +196,7 @@ func (r *Reconciler) reconcile(ctx context.Context, intent *db.SiteIntent) error
 	if err := r.ApplySwitchPolicy(ctx, intent.SiteID); err != nil {
 		return err
 	}
-	if intent.DesiredSite == StateOn {
+	if intent.DesiredService == StateOn {
 		if err := r.ensureCriticalPoe(ctx, intent.SiteID); err != nil {
 			return err
 		}

@@ -90,7 +90,7 @@ func (s *SiteControllerServer) UpsertPortMap(ctx context.Context, req *pb.Upsert
 			cn = req.CnodeId
 		}
 		ports = append(ports, db.SitePortMap{
-			Port: int(p.Port), Role: p.Role, NodeID: p.NodeId, Class: p.Class, Policy: p.Policy, CNodeID: cn,
+			Port: int(p.Port), Role: p.Role, NodeID: p.NodeId, Class: p.Class, Policy: p.Policy,
 		})
 	}
 	if err := s.reconciler.UpsertPortMap(ctx, req.SiteId, req.CnodeId, ports); err != nil {
@@ -107,7 +107,7 @@ func (s *SiteControllerServer) GetPortMap(ctx context.Context, req *pb.GetPortMa
 	out := make([]*pb.PortMapEntry, 0, len(ports))
 	for _, p := range ports {
 		out = append(out, &pb.PortMapEntry{
-			Port: int32(p.Port), Role: p.Role, NodeId: p.NodeID, Class: p.Class, Policy: p.Policy, CnodeId: p.CNodeID,
+			Port: int32(p.Port), Role: p.Role, NodeId: p.NodeID, Class: p.Class, Policy: p.Policy,
 		})
 	}
 	return &pb.GetPortMapResponse{Ports: out}, nil
@@ -138,7 +138,7 @@ func intentToPB(in *db.SiteIntent) *pb.SiteIntentMsg {
 		return nil
 	}
 	return &pb.SiteIntentMsg{
-		SiteId: in.SiteID, DesiredSite: in.DesiredSite, DesiredService: in.DesiredService,
+		SiteId: in.SiteID, DesiredService: in.DesiredService,
 		DesiredRadio: in.DesiredRadio, Reason: in.Reason, RequestedBy: in.RequestedBy,
 	}
 }
@@ -151,7 +151,6 @@ func derivedStateToPB(st *db.SiteState, intent *db.SiteIntent) *pb.DerivedStateM
 		SiteId: st.SiteID, Power: st.PowerState, Service: st.ServiceState, Radio: st.RadioState, Access: st.AccessState, Reason: st.Reason,
 	}
 	if intent != nil {
-		out.DesiredSite = intent.DesiredSite
 		out.DesiredService = intent.DesiredService
 		out.DesiredRadio = intent.DesiredRadio
 	}
@@ -165,7 +164,7 @@ func snapshotToPB(s *reconciler.SiteSnapshot) *pb.SiteSnapshot {
 	ports := make([]*pb.PortMapEntry, 0, len(s.Ports))
 	for _, p := range s.Ports {
 		ports = append(ports, &pb.PortMapEntry{
-			Port: int32(p.Port), Role: p.Role, NodeId: p.NodeID, Class: p.Class, Policy: p.Policy, CnodeId: p.CNodeID,
+			Port: int32(p.Port), Role: p.Role, NodeId: p.NodeID, Class: p.Class, Policy: p.Policy,
 		})
 	}
 	return &pb.SiteSnapshot{

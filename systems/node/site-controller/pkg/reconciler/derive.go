@@ -22,14 +22,12 @@ func derive(intent *db.SiteIntent) *db.SiteState {
 	} else {
 		state.RadioState = StateOff
 	}
-	if intent.DesiredSite == StateOn && intent.DesiredService == StateOn && intent.DesiredRadio == StateOn {
+	if intent.DesiredService == StateOn && intent.DesiredRadio == StateOn {
 		state.AccessState = StateAvailable
 	} else if intent.DesiredRadio == StateOff {
 		state.Reason = "radio_off"
 	} else if intent.DesiredService == StateOff {
 		state.Reason = "service_off"
-	} else if intent.DesiredSite == StateOff {
-		state.Reason = "site_off"
 	}
 	return state
 }
