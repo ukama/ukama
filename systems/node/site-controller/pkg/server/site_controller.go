@@ -12,7 +12,7 @@ import (
 	"context"
 	"strings"
 
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	pb "github.com/ukama/ukama/systems/node/site-controller/pb/gen"
@@ -28,14 +28,14 @@ type SiteControllerServer struct {
 	pb.UnimplementedSiteControllerServiceServer
 	orgName        string
 	reconciler     *reconciler.Reconciler
-	msgbus         mb.MsgBusServiceClient
+	msgBus         msgBusServiceClient.MsgBusServiceClient
 	nodeClient     creg.NodeClient
 	healthClient   providers.HealthClientProvider
 	baseRoutingKey msgbus.RoutingKeyBuilder
 }
 
-func NewSiteControllerServer(orgName string, r *reconciler.Reconciler, mb mb.MsgBusServiceClient, nodeClient creg.NodeClient, healthClient providers.HealthClientProvider) *SiteControllerServer {
-	return &SiteControllerServer{reconciler: r, baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName), nodeClient: nodeClient, healthClient: healthClient}
+func NewSiteControllerServer(orgName string, r *reconciler.Reconciler, mb msgBusServiceClient.MsgBusServiceClient, nodeClient creg.NodeClient, healthClient providers.HealthClientProvider) *SiteControllerServer {
+	return &SiteControllerServer{reconciler: r, msgBus: mb, baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName), nodeClient: nodeClient, healthClient: healthClient, orgName: orgName}
 }
 
 func (s *SiteControllerServer) SetSite(ctx context.Context, req *pb.SetSiteRequest) (*pb.SetSiteResponse, error) {
@@ -85,10 +85,10 @@ func (s *SiteControllerServer) GetSiteState(ctx context.Context, req *pb.GetSite
 func (s *SiteControllerServer) UpsertPortMap(ctx context.Context, req *pb.UpsertPortMapRequest) (*pb.UpsertPortMapResponse, error) {
 	ports := make([]db.SitePortMap, 0, len(req.Ports))
 	for _, p := range req.Ports {
-		cn := p.CnodeId
-		if cn == "" {
-			cn = req.CnodeId
-		}
+		// cn := p.CnodeId
+		// if cn == "" {
+		// 	cn = req.CnodeId
+		// }
 		ports = append(ports, db.SitePortMap{
 			Port: int(p.Port), Role: p.Role, NodeID: p.NodeId, Class: p.Class, Policy: p.Policy,
 		})

@@ -36,7 +36,17 @@ func (c *SiteControllerEventServer) EventNotification(ctx context.Context, e *ep
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 
 	switch e.RoutingKey {
-	
+	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.node.health.report.store"):
+		cfg := evt.EventToEventConfig[evt.EventHealthReportStore]
+		msg, err := epb.UnmarshalHealthReportEvent(e.Msg, cfg.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		log.Infof("Received a health report event %+v", msg)
+
+		return &epb.EventResponse{}, nil
+
 	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.registry.site.site.create"):
 		cfg := evt.EventToEventConfig[evt.EventSiteCreate]
 		msg, err := epb.UnmarshalEventAddSite(e.Msg, cfg.Name)

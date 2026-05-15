@@ -33,7 +33,6 @@ func (s *Site) BeforeCreate(tx *gorm.DB) error {
 
 type SiteIntent struct {
 	ID             uuid.UUID `gorm:"type:uuid;primaryKey;column:id" json:"id"`
-	Site           Site      `gorm:"foreignKey:SiteID;references:SiteID;constraint:OnUpdate:CASCADE"`
 	SiteID         string    `gorm:"column:site_id;not null;index:idx_site_intent_site_id" json:"site_id"`
 	DesiredService string    `gorm:"column:desired_service" json:"desired_service"`
 	DesiredRadio   string    `gorm:"column:desired_radio" json:"desired_radio"`
@@ -53,9 +52,8 @@ func (m *SiteIntent) BeforeCreate(tx *gorm.DB) error {
 }
 
 type SiteIntentFlight struct {
-	ID           uuid.UUID  `gorm:"type:uuid;primaryKey;column:id" json:"id"`
-	SiteIntent   SiteIntent `gorm:"foreignKey:SiteIntentID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	SiteIntentID uuid.UUID  `gorm:"column:site_intent_id;not null;uniqueIndex" json:"site_intent_id"`
+	ID           uuid.UUID `gorm:"type:uuid;primaryKey;column:id" json:"id"`
+	SiteIntentID uuid.UUID `gorm:"column:site_intent_id;not null;uniqueIndex" json:"site_intent_id"`
 	IntentFlight string     `gorm:"column:intent_flight" json:"intent_flight"`
 	CreatedAt    time.Time  `gorm:"column:created_at" json:"created_at"`
 	UpdatedAt    time.Time  `gorm:"column:updated_at" json:"updated_at"`
@@ -73,7 +71,6 @@ func (m *SiteIntentFlight) BeforeCreate(tx *gorm.DB) error {
 
 type SiteState struct {
 	ID           uuid.UUID `gorm:"type:uuid;uniqueIndex;not null;column:id" json:"id"`
-	Site         Site      `gorm:"foreignKey:SiteID;references:SiteID;constraint:OnUpdate:CASCADE"`
 	SiteID       string    `gorm:"primaryKey;column:site_id" json:"site_id"`
 	PowerState   string    `gorm:"column:power_state" json:"power_state"`
 	ServiceState string    `gorm:"column:service_state" json:"service_state"`//cellular
@@ -94,7 +91,6 @@ func (m *SiteState) BeforeCreate(tx *gorm.DB) error {
 
 type SiteComponent struct {
 	ID         uuid.UUID `gorm:"type:uuid;uniqueIndex;not null;column:id" json:"id"`
-	Site       Site      `gorm:"foreignKey:SiteID;references:SiteID;constraint:OnUpdate:CASCADE"`
 	SiteID     string    `gorm:"primaryKey;column:site_id" json:"site_id"`
 	Components string    `gorm:"column:components;type:text" json:"components"`
 	UpdatedAt  time.Time `gorm:"column:updated_at" json:"updated_at"`
@@ -111,7 +107,6 @@ func (m *SiteComponent) BeforeCreate(tx *gorm.DB) error {
 
 type SitePortMap struct {
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey;column:id" json:"id"`
-	Site      Site      `gorm:"foreignKey:SiteID;references:SiteID;constraint:OnUpdate:CASCADE"`
 	SiteID    string    `gorm:"column:site_id;index;not null;uniqueIndex:idx_site_port_map_port" json:"site_id"`
 	// CNodeID   string    `gorm:"column:cnode_id" json:"cnode_id"`
 	Port      int       `gorm:"column:port;uniqueIndex:idx_site_port_map_port" json:"port"`
