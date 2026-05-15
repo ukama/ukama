@@ -90,7 +90,7 @@ func (h *HealthServer) StoreHealthReport(ctx context.Context, req *pb.StoreHealt
 	}
 
 	if h.msgbus != nil {
-		route := h.healthRoutingKey.SetAction("store").SetObject("capps").MustBuild()
+		route := h.healthRoutingKey.SetAction("store").SetObject("report").MustBuild()
 
 		evt := &epb.HealthReportEvent{
 			Id:        		report.ID.String(),
