@@ -18,11 +18,13 @@ type ListHealthReportsRequest struct {
 }
 
 type ListAppsRequest struct {
+	ReportId   string `form:"reportId" json:"reportId" query:"reportId"`
 	NodeId string `form:"nodeId" json:"nodeId" query:"nodeId"`
 	AppName string `form:"appName" json:"appName" query:"appName"`
 }
 
 type ListInterfacesRequest struct {
+	ReportId   string `form:"reportId" json:"reportId" query:"reportId"`
 	NodeId string `form:"nodeId" json:"nodeId" query:"nodeId"`
 	InterfaceName string `form:"interfaceName" json:"interfaceName" query:"interfaceName"`
 }
