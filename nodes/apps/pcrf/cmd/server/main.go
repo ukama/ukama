@@ -13,16 +13,15 @@ import (
 	"os/signal"
 	"syscall"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/cmd/version"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/client"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/controller"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/rest"
+	"github.com/ukama/ukama/nodes/apps/pcrf/cmd/version"
+	"github.com/ukama/ukama/nodes/apps/pcrf/pkg"
+	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/client"
+	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/controller"
+	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/rest"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/metrics"
-	"github.com/ukama/ukama/systems/common/providers"
 
+	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 )
 
@@ -61,14 +60,9 @@ func main() {
 
 	go sigHandler(sigs, done, ctr)
 
-	ac, err := providers.NewAuthClient(svcConf.Auth.AuthServerUrl, svcConf.DebugMode)
-	if err != nil {
-		log.Errorf("Failed to create auth client: %v", err)
-	}
-
 	metrics.StartMetricsServer(&svcConf.Metrics)
 
-	r := rest.NewRouter(ctr, rest.NewRouterConfig(svcConf), NodeId, ac.AuthenticateUser)
+	r := rest.NewRouter(ctr, rest.NewRouterConfig(svcConf), NodeId)
 	go r.Run()
 
 	<-done

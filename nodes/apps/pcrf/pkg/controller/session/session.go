@@ -13,12 +13,12 @@ import (
 	"fmt"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/nodes/apps/pcrf/pkg"
+	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/client"
+	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/controller/store"
+	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/datapath"
 
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/client"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/controller/store"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/datapath"
+	log "github.com/sirupsen/logrus"
 )
 
 // type Cache struct {

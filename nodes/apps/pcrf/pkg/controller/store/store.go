@@ -16,9 +16,11 @@ import (
 
 	"github.com/mattn/go-sqlite3"
 	_ "github.com/mattn/go-sqlite3"
-	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/api"
+
+	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/api"
 	"github.com/ukama/ukama/systems/common/uuid"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const PCRFDB = "/etc/pcrf/pcrf.db"
@@ -59,7 +61,7 @@ func NewStore(name string) (*Store, error) {
 
 func (s *Store) createPolicyTable() error {
 	_, err := s.db.Exec(`
-		CREATE TABLE IF NOT EXISTS policies ( 
+		CREATE TABLE IF NOT EXISTS policies (
 			id BLOB PRIMARY KEY CHECK(length(id) = 16),
 			data INTEGER,
 			consumed INTEGER,
@@ -117,7 +119,7 @@ func (s *Store) createUsageTable() error {
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			subscriber_id INTEGER UNIQUE,
 			data INTEGER,
-			updatedat INTEGER, 
+			updatedat INTEGER,
 			FOREIGN KEY(subscriber_id) REFERENCES subscribers(id)
 		);
 	`)
@@ -184,7 +186,7 @@ func (s *Store) createSessionTable() error {
 			rxmeter_id INTEGER,
 			state INTEGER,
 			sync INTEGER,
-			updatedat INTEGER, 
+			updatedat INTEGER,
 			FOREIGN KEY(subscriber_id) REFERENCES subscribers(id),
 			FOREIGN KEY(policy_id) REFERENCES policies(id),
 			FOREIGN KEY(txmeter_id) REFERENCES meters(id),
@@ -294,15 +296,18 @@ func (s *Store) CreateReroute(r *api.ReRoute) (*ReRoute, error) {
 }
 
 /* Create a new meter */
-func (s *Store) CreateMeter(sub *Subscriber, p *Policy, typeM int) (*Meter, error) {
+func (s *Store) CreateMeter(sub *Subscriber, p *Policy, typeM PathType) (*Meter, error) {
 	var r sql.Result
 	var err error
-	if typeM == RX_PATH {
+
+	switch typeM {
+	case RX_PATH:
 		r, err = s.db.Exec(`
 			INSERT INTO meters (rate, type, burst)
 			VALUES (?, ?, ?);
 		`, p.Ulbr, typeM, p.Burst)
-	} else if typeM == TX_PATH {
+
+	case TX_PATH:
 		r, err = s.db.Exec(`
 			INSERT INTO meters (rate, type, burst)
 			VALUES (?, ?, ?);
@@ -333,7 +338,7 @@ func (s *Store) CreateMeter(sub *Subscriber, p *Policy, typeM int) (*Meter, erro
 func (s *Store) DeleteMeter(id uint32) error {
 
 	_, err := s.db.Exec(`
-		DELETE FROM meters 
+		DELETE FROM meters
 		WHERE id = ?;
 	`, id)
 	if err != nil {
@@ -348,7 +353,7 @@ func (s *Store) DeleteMeter(id uint32) error {
 func (s *Store) GetMeter(id uint32) (*Meter, error) {
 	var meter Meter
 	err := s.db.QueryRow(`
-		SELECT id,rate,type,burst FROM meters 
+		SELECT id,rate,type,burst FROM meters
 		WHERE id = ?;
 	`, id).Scan(&meter.ID, &meter.Rate, &meter.Type, &meter.Burst)
 	if err != nil {
@@ -404,7 +409,7 @@ func (s *Store) CreateFlow(m *Meter, r *ReRoute, ip string, table, priority uint
 func (s *Store) DeleteFlow(id uint32) error {
 
 	_, err := s.db.Exec(`
-		DELETE FROM flows 
+		DELETE FROM flows
 		WHERE id = ?;
 	`, id)
 	if err != nil {
@@ -419,7 +424,7 @@ func (s *Store) DeleteFlow(id uint32) error {
 func (s *Store) GetFlow(id int) (*Flow, error) {
 	var f Flow
 	err := s.db.QueryRow(`
-		SELECT id,cookie,tableid,priority,ueipaddr,meter_id,reroute_id FROM flows 
+		SELECT id,cookie,tableid,priority,ueipaddr,meter_id,reroute_id FROM flows
 		WHERE id = ?;
 	`, id).Scan(&f.ID, &f.Cookie, &f.Tableid, &f.Priority, &f.UeIpAddr, &f.MeterID.ID, &f.ReRouting.ID)
 	if err != nil {
@@ -448,7 +453,7 @@ func (s *Store) GetFlow(id int) (*Flow, error) {
 func (s *Store) CheckUniqueCookie(cookie uint64) (bool, error) {
 	var count int
 	err := s.db.QueryRow(`
-		SELECT COUNT(*) FROM flows 
+		SELECT COUNT(*) FROM flows
 		WHERE cookie = ?;
 	`, cookie).Scan(&count)
 	if err != nil {
@@ -951,7 +956,12 @@ func (s *Store) GetSessionsByImsi(imsi string) ([]Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Warnf("Failed to gracefuly close DB row object: %v", err)
+		}
+	}()
 
 	for rows.Next() {
 		session := new(Session)
@@ -987,7 +997,12 @@ func (s *Store) GetUnsyncSessionsByImsiAfterTime(imsi string, time uint64) ([]Se
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Warnf("Failed to gracefuly close DB row object: %v", err)
+		}
+	}()
 
 	for rows.Next() {
 		session := new(Session)
@@ -1073,7 +1088,12 @@ func (s *Store) GetAllActiveSessions() ([]Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Warnf("Failed to gracefuly close DB row object: %v", err)
+		}
+	}()
 
 	for rows.Next() {
 		session := new(Session)
@@ -1107,7 +1127,12 @@ func (s *Store) GetAllNonPublishedSessions() ([]Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Warnf("Failed to gracefuly close DB row object: %v", err)
+		}
+	}()
 
 	for rows.Next() {
 		session := new(Session)
@@ -1141,7 +1166,12 @@ func (s *Store) GetAllNonPublishedTerminatedSessions() ([]Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Warnf("Failed to gracefuly close DB row object: %v", err)
+		}
+	}()
 
 	for rows.Next() {
 		session := new(Session)
@@ -1250,7 +1280,7 @@ func (s *Store) GetReRouteByIP(ip string) (*ReRoute, error) {
 /* Delete a route */
 func (s *Store) DeleteReRoute(reRoute *ReRoute) error {
 	_, err := s.db.Exec(`
-		DELETE FROM reroutes 
+		DELETE FROM reroutes
 		WHERE ipaddr = ?; `, reRoute.IpAddr)
 	return err
 }
