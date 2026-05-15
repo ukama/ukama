@@ -178,6 +178,250 @@ int deserialize_hub_response(Artifact ***artifacts,
                              int *counter,
                              json_t *json) {
 
+    int i=0, j=0, k=0, count=0, formatsCount=0;
+    long parsedSize=0;
+    const char *sizeStr=NULL;
+    const char *keyStr=NULL;
+    const char *valueStr=NULL;
+
+    json_t *name=NULL;
+    json_t *jArray=NULL;
+    json_t *formatsArray=NULL;
+    json_t *elem=NULL;
+    json_t *url=NULL;
+    json_t *version=NULL;
+    json_t *createdAt=NULL;
+    json_t *size=NULL;
+    json_t *type=NULL;
+    json_t *extraInfo=NULL;
+    json_t *formatElem=NULL;
+    json_t *extraElem=NULL;
+    json_t *key=NULL;
+    json_t *value=NULL;
+
+    ArtifactFormat *formats = NULL;
+
+    if (!artifacts || !counter || !json) return USYS_FALSE;
+
+    *artifacts = NULL;
+    *counter = 0;
+
+    usys_log_debug("Deserializing hub response ...");
+    json_log(json);
+
+    name = json_object_get(json, JSON_NAME);
+    if (!name || !json_is_string(name)) {
+        return USYS_FALSE;
+    }
+
+    jArray = json_object_get(json, JSON_HUB_VERSIONS);
+    if (!jArray || !json_is_array(jArray)) {
+        return USYS_FALSE;
+    }
+
+    count = (int)json_array_size(jArray);
+    *counter = count;
+
+    if (count == 0) {
+        return USYS_TRUE;
+    }
+
+    *artifacts = (Artifact **)calloc(count, sizeof(Artifact *));
+    if (*artifacts == NULL) {
+        *counter = 0;
+        return USYS_FALSE;
+    }
+
+    for (i=0; i<count; i++) {
+
+        elem = json_array_get(jArray, i);
+        if (!elem || !json_is_object(elem)) {
+            goto failure;
+        }
+
+        (*artifacts)[i] = (Artifact *)calloc(1, sizeof(Artifact));
+        if ((*artifacts)[i] == NULL) {
+            goto failure;
+        }
+
+        (*artifacts)[i]->name = strdup(json_string_value(name));
+        if ((*artifacts)[i]->name == NULL) {
+            goto failure;
+        }
+
+        version = json_object_get(elem, JSON_VERSION);
+        if (!version || !json_is_string(version)) {
+            goto failure;
+        }
+
+        (*artifacts)[i]->version = strdup(json_string_value(version));
+        if ((*artifacts)[i]->version == NULL) {
+            goto failure;
+        }
+
+        formatsArray = json_object_get(elem, JSON_HUB_FORMAT_INFO);
+        if (!formatsArray || !json_is_array(formatsArray)) {
+            goto failure;
+        }
+
+        formatsCount = (int)json_array_size(formatsArray);
+        (*artifacts)[i]->formatsCount = formatsCount;
+
+        (*artifacts)[i]->formats = (ArtifactFormat **)
+            calloc(formatsCount, sizeof(ArtifactFormat *));
+        if ((*artifacts)[i]->formats == NULL) {
+            goto failure;
+        }
+
+        for (j=0; j<formatsCount; j++) {
+
+            formatElem = json_array_get(formatsArray, j);
+            if (!formatElem || !json_is_object(formatElem)) {
+                goto failure;
+            }
+
+            (*artifacts)[i]->formats[j] = (ArtifactFormat *)
+                calloc(1, sizeof(ArtifactFormat));
+            if ((*artifacts)[i]->formats[j] == NULL) {
+                goto failure;
+            }
+
+            formats = (*artifacts)[i]->formats[j];
+
+            type      = json_object_get(formatElem, JSON_HUB_TYPE);
+            url       = json_object_get(formatElem, JSON_HUB_URL);
+            createdAt = json_object_get(formatElem, JSON_HUB_CREATED_AT);
+            size      = json_object_get(formatElem, JSON_HUB_SIZE);
+            extraInfo = json_object_get(formatElem, JSON_HUB_EXTRA_INFO);
+
+            if (!type || !json_is_string(type) ||
+                !url || !json_is_string(url) ||
+                !createdAt || !json_is_string(createdAt)) {
+                goto failure;
+            }
+
+            formats->type = strdup(json_string_value(type));
+            formats->url = strdup(json_string_value(url));
+            formats->createdAt = strdup(json_string_value(createdAt));
+
+            if (!formats->type || !formats->url || !formats->createdAt) {
+                goto failure;
+            }
+
+            if (strcmp(formats->type, WIMC_METHOD_CHUNK_STR) == 0) {
+
+                formats->size = 0;
+
+                if (!extraInfo || !json_is_array(extraInfo)) {
+                    goto failure;
+                }
+
+                for (k=0; k<(int)json_array_size(extraInfo); k++) {
+
+                    extraElem = json_array_get(extraInfo, k);
+                    if (!extraElem || !json_is_object(extraElem)) {
+                        continue;
+                    }
+
+                    key = json_object_get(extraElem, JSON_HUB_KEY);
+                    value = json_object_get(extraElem, JSON_HUB_VALUE);
+
+                    if (!key || !json_is_string(key) ||
+                        !value || !json_is_string(value)) {
+                        continue;
+                    }
+
+                    keyStr = json_string_value(key);
+                    valueStr = json_string_value(value);
+
+                    if (keyStr && valueStr &&
+                        strcmp(keyStr, JSON_CHUNKS) == 0) {
+                        formats->extraInfo = strdup(valueStr);
+                        break;
+                    }
+                }
+
+                if (formats->extraInfo == NULL) {
+                    goto failure;
+                }
+
+            } else {
+
+                if (size == NULL) {
+                    goto failure;
+                }
+
+                if (json_is_integer(size)) {
+                    formats->size = (int)json_integer_value(size);
+                } else if (json_is_string(size)) {
+                    sizeStr = json_string_value(size);
+                    if (sizeStr == NULL) {
+                        goto failure;
+                    }
+
+                    parsedSize = strtol(sizeStr, NULL, 10);
+                    if (parsedSize < 0) {
+                        goto failure;
+                    }
+
+                    formats->size = (int)parsedSize;
+                } else {
+                    goto failure;
+                }
+            }
+        }
+    }
+
+    return USYS_TRUE;
+
+failure:
+    usys_log_error("Error deserializing the hub response");
+
+    if (*artifacts) {
+        for (i=0; i<count; i++) {
+
+            if ((*artifacts)[i] == NULL) {
+                continue;
+            }
+
+            usys_free((*artifacts)[i]->name);
+            usys_free((*artifacts)[i]->version);
+
+            if ((*artifacts)[i]->formats) {
+                for (j=0; j<(*artifacts)[i]->formatsCount; j++) {
+
+                    formats = (*artifacts)[i]->formats[j];
+                    if (formats == NULL) {
+                        continue;
+                    }
+
+                    usys_free(formats->type);
+                    usys_free(formats->url);
+                    usys_free(formats->createdAt);
+                    usys_free(formats->extraInfo);
+                    usys_free(formats);
+                }
+
+                usys_free((*artifacts)[i]->formats);
+            }
+
+            usys_free((*artifacts)[i]);
+        }
+
+        usys_free(*artifacts);
+    }
+
+    *artifacts = NULL;
+    *counter = 0;
+
+    return USYS_FALSE;
+}
+
+#if 0
+int deserialize_hub_response(Artifact ***artifacts,
+                             int *counter,
+                             json_t *json) {
+
     int i=0, j=0, count=0, formatsCount=0;
 
     json_t *name=NULL;
@@ -321,6 +565,7 @@ failure:
 
     return USYS_FALSE;
 }
+#endif
 
 int serialize_task(WTasks *task, json_t **json) {
 
