@@ -162,7 +162,7 @@ static int file_size_ok(const char *path) {
 
     return st.st_size > 0;
 }
-
+ 
 bool pkg_is_valid_identifier(const char *value) {
 
     size_t i;
