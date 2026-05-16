@@ -19,3 +19,6 @@
         autorestart="true"
         startretries=5
         group="service"
+
+[app-exec.env]
+	WIMC_METHOD_PRIORITY="tar.gz,chunk"
