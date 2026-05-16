@@ -583,3 +583,53 @@ int pkg_publish_from_dir(const char *name, const char *tag,
     return 0;
 }
 
+int pkg_publish_tar(const char *name,
+                    const char *tag,
+                    const char *tmpTar,
+                    char *publishedPath, size_t publishedPathLen,
+                    char *actualVersion, size_t actualVersionLen) {
+
+    char actualPath[WIMC_MAX_PATH_LEN];
+    PackageInfo info;
+
+    if (!pkg_is_valid_identifier(name) ||
+        !pkg_is_valid_identifier(tag) || tmpTar == NULL) {
+        return -1;
+    }
+
+    memset(&info, 0, sizeof(info));
+    if (!pkg_validate_tar(name, tag, tmpTar, &info)) {
+        usys_log_error("Downloaded package failed validation: %s",
+                       info.error[0] ? info.error : "unknown");
+        return -1;
+    }
+
+    if (pkg_path_for_tag(name, info.actualVersion,
+                         actualPath, sizeof(actualPath)) != 0) {
+        return -1;
+    }
+
+    if (rename(tmpTar, actualPath) != 0) {
+        usys_log_error("Failed to publish package %s: %s",
+                       actualPath, strerror(errno));
+        return -1;
+    }
+
+    if (publish_alias(name, tag, actualPath) != 0) {
+        return -1;
+    }
+
+    if (publishedPath != NULL && publishedPathLen > 0) {
+        if (pkg_is_alias_tag(tag)) {
+            pkg_path_for_tag(name, tag, publishedPath, publishedPathLen);
+        } else {
+            snprintf(publishedPath, publishedPathLen, "%s", actualPath);
+        }
+    }
+
+    if (actualVersion != NULL && actualVersionLen > 0) {
+        snprintf(actualVersion, actualVersionLen, "%s", info.actualVersion);
+    }
+
+    return 0;
+}

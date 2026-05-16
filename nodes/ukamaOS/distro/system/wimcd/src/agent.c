@@ -227,8 +227,8 @@ void create_wimc_request(WimcReq **request,
     content = NULL;
 
     *request = (WimcReq *)calloc(1, sizeof(WimcReq));
-    fetch = (WFetch *)calloc(1, sizeof(WFetch));
-    content = (WContent *)calloc(1, sizeof(WContent));
+    fetch    = (WFetch *)calloc(1, sizeof(WFetch));
+    content  = (WContent *)calloc(1, sizeof(WContent));
 
     if (*request == NULL || fetch == NULL || content == NULL) {
         usys_free(*request);
@@ -242,15 +242,17 @@ void create_wimc_request(WimcReq **request,
     uuid_generate(fetch->uuid);
     fetch->interval = interval;
 
-    content->name = name ? strdup(name) : NULL;
-    content->tag = tag ? strdup(tag) : NULL;
-    content->method = method ? strdup(method) : NULL;
-    content->indexURL = indexURL ? strdup(indexURL) : NULL;
+    content->name     = name ? strdup(name) : NULL;
+    content->tag      = tag ? strdup(tag) : NULL;
+    content->method   = method ? strdup(method) : NULL;
+    content->storeURL = storeURL ? strdup(storeURL) : strdup("");
     content->storeURL = storeURL ? strdup(storeURL) : NULL;
     content->expectedSizeBytes = 0;
 
-    if (content->name == NULL || content->tag == NULL ||
-        content->method == NULL || content->indexURL == NULL ||
+    if (content->name == NULL ||
+        content->tag == NULL ||
+        content->method == NULL ||
+        content->indexURL == NULL ||
         content->storeURL == NULL) {
         cleanup_wimc_request(*request);
         *request = NULL;

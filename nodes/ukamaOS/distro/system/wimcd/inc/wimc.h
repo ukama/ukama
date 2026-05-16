@@ -78,6 +78,7 @@
 #define WIMC_ACTION_CANCEL_STR "cancel"
 
 #define WIMC_METHOD_CHUNK_STR "chunk"
+#define WIMC_METHOD_TARGZ_STR "tar.gz"
 #define WIMC_METHOD_TEST_STR  "test"
 
 #define WIMC_REQ_TYPE_AGENT_STR    "agent"
@@ -85,6 +86,7 @@
 
 #define MAX_AGENTS       10
 #define DEFAULT_INTERVAL 10
+#define WIMC_METHOD_PRIORITY_ENV "WIMC_METHOD_PRIORITY"
 
 #define TRUE  1
 #define FALSE 0

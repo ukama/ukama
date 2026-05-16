@@ -26,6 +26,7 @@
 #include "agent/jserdes.h"
 #include "http_status.h"
 #include "package_cache.h"
+#include "http_status.h"
 #include "wimc.h"
 
 #include "usys_log.h"
@@ -33,14 +34,21 @@
 #include "usys_types.h"
 
 #define MAX_ARGS 10
-#define CASYNC_RETRIES 3
-#define CASYNC_TIMEOUT_SEC 900
+#define FETCH_RETRIES 3
+#define FETCH_TIMEOUT_SEC 900
 
 typedef struct AgentJob {
     char name[WIMC_MAX_NAME_LEN];
     char tag[WIMC_MAX_NAME_LEN];
     struct AgentJob *next;
 } AgentJob;
+
+typedef struct {
+    FILE      *fp;
+    long long written;
+    long long maxBytes;
+    int       tooLarge;
+} DownloadCtx;
 
 static AgentJob *gJobs = NULL;
 static pthread_mutex_t gJobsMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -244,19 +252,22 @@ static void copy_fetch_request(WFetch **dest, WFetch *src) {
         goto fail;
     }
 
-    content = df->content;
-    content->name = src->content->name ? strdup(src->content->name) : NULL;
-    content->tag = src->content->tag ? strdup(src->content->tag) : NULL;
-    content->method = src->content->method ?
+    content           = df->content;
+    content->name     = src->content->name ? strdup(src->content->name) : NULL;
+    content->tag      = src->content->tag ? strdup(src->content->tag) : NULL;
+    content->method   = src->content->method ?
                       strdup(src->content->method) : NULL;
     content->indexURL = src->content->indexURL ?
                         strdup(src->content->indexURL) : NULL;
     content->storeURL = src->content->storeURL ?
-                        strdup(src->content->storeURL) : NULL;
+                    strdup(src->content->storeURL) : strdup("");
     content->expectedSizeBytes = src->content->expectedSizeBytes;
 
-    if (df->cbURL == NULL || content->name == NULL || content->tag == NULL ||
-        content->method == NULL || content->indexURL == NULL ||
+    if (df->cbURL == NULL ||
+        content->name == NULL ||
+        content->tag == NULL ||
+        content->method == NULL ||
+        content->indexURL == NULL ||
         content->storeURL == NULL) {
         goto fail;
     }
@@ -273,6 +284,7 @@ static void copy_fetch_request(WFetch **dest, WFetch *src) {
         usys_free(df->content->storeURL);
         usys_free(df->content);
     }
+
     usys_free(df);
     *dest = NULL;
 }
@@ -451,7 +463,7 @@ static int run_casync(WFetch *fetch, const char *extractPath) {
         free(args[i]);
     }
 
-    return wait_for_child(pid, CASYNC_TIMEOUT_SEC);
+    return wait_for_child(pid, FETCH_TIMEOUT_SEC);
 
  fail:
     for (i = 0; args[i] != NULL; i++) {
@@ -460,20 +472,204 @@ static int run_casync(WFetch *fetch, const char *extractPath) {
     return -1;
 }
 
+static size_t download_write_callback(void *contents,
+                                      size_t size,
+                                      size_t nmemb,
+                                      void *userp) {
+
+    size_t realSize;
+    DownloadCtx *ctx;
+
+    realSize = size * nmemb;
+    ctx = (DownloadCtx *)userp;
+
+    if (ctx == NULL || ctx->fp == NULL) {
+        return 0;
+    }
+
+    if (ctx->maxBytes > 0 &&
+        ctx->written + (long long)realSize > ctx->maxBytes) {
+        ctx->tooLarge = 1;
+        return 0;
+    }
+
+    if (fwrite(contents, 1, realSize, ctx->fp) != realSize) {
+        return 0;
+    }
+
+    ctx->written += (long long)realSize;
+    return realSize;
+}
+
+static int download_file(const char *url,
+                         const char *path,
+                         long expectedBytes) {
+
+    CURL *curl;
+    CURLcode res;
+    DownloadCtx ctx;
+    long httpCode;
+
+    curl     = NULL;
+    res      = CURLE_OK;
+    httpCode = 0;
+    memset(&ctx, 0, sizeof(ctx));
+
+    if (url == NULL || *url == '\0' || path == NULL || *path == '\0') {
+        return -1;
+    }
+
+    ctx.fp = fopen(path, "wb");
+    if (ctx.fp == NULL) {
+        usys_log_error("Unable to open download path: %s", path);
+        return -1;
+    }
+
+    ctx.maxBytes = WIMC_MAX_PACKAGE_BYTES;
+    curl = curl_easy_init();
+    if (curl == NULL) {
+        fclose(ctx.fp);
+        unlink(path);
+        return -1;
+    }
+
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, download_write_callback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &ctx);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "wimc-agent/0.1");
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT,
+                     WIMC_HTTP_CONNECT_TIMEOUT_SEC);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, FETCH_TIMEOUT_SEC);
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_FAILONERROR, 0L);
+
+    res = curl_easy_perform(curl);
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
+
+    curl_easy_cleanup(curl);
+    fclose(ctx.fp);
+
+    if (res != CURLE_OK) {
+        usys_log_error("Download failed: %s", curl_easy_strerror(res));
+        unlink(path);
+        return -1;
+    }
+
+    if (ctx.tooLarge || ctx.written <= 0) {
+        usys_log_error("Downloaded package is invalid size");
+        unlink(path);
+        return -1;
+    }
+
+    if (httpCode < HttpStatus_OK || httpCode >= HttpStatus_MultipleChoices) {
+        usys_log_error("Download failed with HTTP status: %ld", httpCode);
+        unlink(path);
+        return -1;
+    }
+
+    if (expectedBytes > 0 && ctx.written != expectedBytes) {
+        usys_log_error("Downloaded size mismatch expected=%ld actual=%lld",
+                       expectedBytes, ctx.written);
+        unlink(path);
+        return -1;
+    }
+
+    return 0;
+}
+
+static int fetch_chunk_package(WFetch *fetch, const char *uuidStr,
+                               char *publishedPath,
+                               size_t publishedPathLen,
+                               char *actualVersion,
+                               size_t actualVersionLen) {
+
+    char extractPath[WIMC_MAX_PATH_LEN];
+    int attempt;
+    int ok;
+
+    memset(extractPath, 0, sizeof(extractPath));
+
+    if (pkg_extract_path(uuidStr, fetch->content->name, fetch->content->tag,
+                         extractPath, sizeof(extractPath)) != 0) {
+        return -1;
+    }
+
+    ok = 0;
+    for (attempt = 1; attempt <= FETCH_RETRIES; attempt++) {
+        rm_rf(extractPath);
+        usys_log_debug("casync attempt %d for %s:%s",
+                       attempt, fetch->content->name, fetch->content->tag);
+
+        if (run_casync(fetch, extractPath) == 0) {
+            ok = 1;
+            break;
+        }
+
+        sleep(attempt * 2);
+    }
+
+    if (!ok) {
+        return -1;
+    }
+
+    return pkg_publish_from_dir(fetch->content->name, fetch->content->tag,
+                                uuidStr, extractPath, publishedPath,
+                                publishedPathLen, actualVersion,
+                                actualVersionLen);
+}
+
+static int fetch_targz_package(WFetch *fetch, const char *uuidStr,
+                               char *publishedPath,
+                               size_t publishedPathLen,
+                               char *actualVersion,
+                               size_t actualVersionLen) {
+
+    char tmpTar[WIMC_MAX_PATH_LEN];
+    int attempt;
+    int ok;
+
+    memset(tmpTar, 0, sizeof(tmpTar));
+
+    if (pkg_tmp_tar_path(uuidStr, fetch->content->name, fetch->content->tag,
+                         tmpTar, sizeof(tmpTar)) != 0) {
+        return -1;
+    }
+
+    ok = 0;
+    for (attempt = 1; attempt <= FETCH_RETRIES; attempt++) {
+        unlink(tmpTar);
+        usys_log_debug("tar.gz download attempt %d for %s:%s",
+                       attempt, fetch->content->name, fetch->content->tag);
+
+        if (download_file(fetch->content->indexURL, tmpTar,
+                          fetch->content->expectedSizeBytes) == 0) {
+            ok = 1;
+            break;
+        }
+
+        sleep(attempt * 2);
+    }
+
+    if (!ok) {
+        return -1;
+    }
+
+    return pkg_publish_tar(fetch->content->name, fetch->content->tag,
+                           tmpTar, publishedPath, publishedPathLen,
+                           actualVersion, actualVersionLen);
+}
+
 static void *execute_agent(void *data) {
 
     WFetch *fetch;
     WContent *content;
     char uuidStr[36 + 1];
-    char extractPath[WIMC_MAX_PATH_LEN];
     char uuidTmpDir[WIMC_MAX_PATH_LEN];
     char publishedPath[WIMC_MAX_PATH_LEN];
     char actualVersion[WIMC_MAX_NAME_LEN];
-    int attempt;
-    int ok;
+    int ret;
 
-    memset(extractPath, 0, sizeof(extractPath));
-    memset(uuidTmpDir, 0, sizeof(uuidTmpDir));
+    memset(uuidTmpDir,    0, sizeof(uuidTmpDir));
     memset(publishedPath, 0, sizeof(publishedPath));
     memset(actualVersion, 0, sizeof(actualVersion));
 
@@ -496,16 +692,11 @@ static void *execute_agent(void *data) {
         goto done;
     }
 
-    if (snprintf(uuidTmpDir, sizeof(uuidTmpDir), "%s/.tmp/%s",
+    if (snprintf(uuidTmpDir,
+                 sizeof(uuidTmpDir), "%s/.tmp/%s",
                  DEFAULT_APPS_PKGS_PATH, uuidStr) >=
         (int)sizeof(uuidTmpDir)) {
         send_update_to_wimc(fetch, ERR, "tmp path too long");
-        goto done;
-    }
-
-    if (pkg_extract_path(uuidStr, content->name, content->tag,
-                         extractPath, sizeof(extractPath)) != 0) {
-        send_update_to_wimc(fetch, ERR, "extract path failure");
         goto done;
     }
 
@@ -517,45 +708,34 @@ static void *execute_agent(void *data) {
 
     send_update_to_wimc(fetch, FETCH, "");
 
-    ok = 0;
-    for (attempt = 1; attempt <= CASYNC_RETRIES; attempt++) {
-        rm_rf(extractPath);
-        usys_log_debug("casync attempt %d for %s:%s",
-                       attempt, content->name, content->tag);
-
-        if (run_casync(fetch, extractPath) == 0) {
-            ok = 1;
-            break;
-        }
-
-        sleep(attempt * 2);
+    if (strcmp(content->method, WIMC_METHOD_CHUNK_STR) == 0) {
+        ret = fetch_chunk_package(fetch, uuidStr, publishedPath,
+                                  sizeof(publishedPath), actualVersion,
+                                  sizeof(actualVersion));
+    } else if (strcmp(content->method, WIMC_METHOD_TARGZ_STR) == 0) {
+        ret = fetch_targz_package(fetch, uuidStr, publishedPath,
+                                  sizeof(publishedPath), actualVersion,
+                                  sizeof(actualVersion));
+    } else {
+        ret = -1;
     }
 
-    if (!ok) {
-        send_update_to_wimc(fetch, ERR, "casync failed");
-        goto done;
-    }
-
-    memset(publishedPath, 0, sizeof(publishedPath));
-    memset(actualVersion, 0, sizeof(actualVersion));
-
-    if (pkg_publish_from_dir(content->name, content->tag, uuidStr,
-                             extractPath, publishedPath,
-                             sizeof(publishedPath), actualVersion,
-                             sizeof(actualVersion)) != 0) {
-        send_update_to_wimc(fetch, ERR, "package publish failed");
+    if (ret != 0) {
+        send_update_to_wimc(fetch, ERR, "package fetch failed");
         goto done;
     }
 
     usys_log_debug("Published package %s:%s actual=%s path=%s",
                    content->name, content->tag, actualVersion,
                    publishedPath);
+
     send_update_to_wimc(fetch, DONE, publishedPath);
 
  done:
     if (uuidTmpDir[0] != '\0') {
         rm_rf(uuidTmpDir);
     }
+
     agent_job_remove(content->name, content->tag);
     free_fetch_request(fetch);
     pthread_exit(NULL);
