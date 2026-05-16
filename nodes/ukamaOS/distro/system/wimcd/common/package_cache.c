@@ -163,25 +163,6 @@ static int file_size_ok(const char *path) {
     return st.st_size > 0;
 }
 
-static int filename_has_suffix(const char *name, const char *suffix) {
-
-    size_t nameLen;
-    size_t suffixLen;
-
-    if (name == NULL || suffix == NULL) {
-        return 0;
-    }
-
-    nameLen = strlen(name);
-    suffixLen = strlen(suffix);
-
-    if (nameLen <= suffixLen) {
-        return 0;
-    }
-
-    return strcmp(name + nameLen - suffixLen, suffix) == 0;
-}
-
 bool pkg_is_valid_identifier(const char *value) {
 
     size_t i;
