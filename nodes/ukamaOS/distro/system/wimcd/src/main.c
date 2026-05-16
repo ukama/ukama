@@ -42,21 +42,6 @@
 #define AGENT_STOP_TIMEOUT_SEC 5
 #define AGENT_RESTART_LIMIT    3
 
-typedef struct {
-    char method[WIMC_MAX_NAME_LEN];
-    char service[WIMC_MAX_NAME_LEN];
-    char execPath[WIMC_MAX_PATH_LEN];
-    pid_t pid;
-    int port;
-    int running;
-    int restartCount;
-} ManagedAgent;
-
-typedef struct {
-    ManagedAgent agents[MAX_AGENTS];
-    int count;
-} AgentManager;
-
 static volatile sig_atomic_t gTerminate = 0;
 static volatile sig_atomic_t gChildEvent = 0;
 
@@ -271,6 +256,9 @@ static int agent_manager_add(AgentManager *mgr,
     ManagedAgent *agent;
     char service[WIMC_MAX_NAME_LEN];
     int port;
+    int ret;
+
+    ret = -1;
 
     if (mgr == NULL || method == NULL || execPath == NULL) {
         return -1;
@@ -278,15 +266,6 @@ static int agent_manager_add(AgentManager *mgr,
 
     if (!is_supported_method(method)) {
         usys_log_error("Unsupported WIMC agent method: %s", method);
-        return -1;
-    }
-
-    if (agent_manager_has_method(mgr, method)) {
-        return 0;
-    }
-
-    if (mgr->count >= MAX_AGENTS) {
-        usys_log_error("Too many managed WIMC agents");
         return -1;
     }
 
@@ -302,6 +281,18 @@ static int agent_manager_add(AgentManager *mgr,
         return -1;
     }
 
+    pthread_mutex_lock(&mgr->mutex);
+
+    if (agent_manager_has_method(mgr, method)) {
+        ret = 0;
+        goto done;
+    }
+
+    if (mgr->count >= MAX_AGENTS) {
+        usys_log_error("Too many managed WIMC agents");
+        goto done;
+    }
+
     agent = &mgr->agents[mgr->count];
     memset(agent, 0, sizeof(*agent));
 
@@ -314,7 +305,11 @@ static int agent_manager_add(AgentManager *mgr,
     agent->restartCount = 0;
 
     mgr->count++;
-    return 0;
+    ret = 0;
+
+done:
+    pthread_mutex_unlock(&mgr->mutex);
+    return ret;
 }
 
 static int agent_manager_load(AgentManager *mgr) {
@@ -411,11 +406,15 @@ static int agent_manager_start(AgentManager *mgr, char *logLevel) {
 
     started = 0;
 
+    pthread_mutex_lock(&mgr->mutex);
+
     for (i = 0; i < mgr->count; i++) {
         if (agent_manager_start_one(&mgr->agents[i], logLevel) == 0) {
             started++;
         }
     }
+
+    pthread_mutex_unlock(&mgr->mutex);
 
     if (started <= 0) {
         return -1;
@@ -458,8 +457,11 @@ static void agent_manager_reap(AgentManager *mgr, char *logLevel) {
             break;
         }
 
+        pthread_mutex_lock(&mgr->mutex);
+
         agent = agent_manager_find_by_pid(mgr, pid);
         if (agent == NULL) {
+            pthread_mutex_unlock(&mgr->mutex);
             continue;
         }
 
@@ -477,12 +479,14 @@ static void agent_manager_reap(AgentManager *mgr, char *logLevel) {
         }
 
         if (gTerminate) {
+            pthread_mutex_unlock(&mgr->mutex);
             continue;
         }
 
         if (agent->restartCount >= AGENT_RESTART_LIMIT) {
             usys_log_error("WIMC agent %s restart limit reached",
                            agent->method);
+            pthread_mutex_unlock(&mgr->mutex);
             continue;
         }
 
@@ -490,6 +494,8 @@ static void agent_manager_reap(AgentManager *mgr, char *logLevel) {
         usys_log_error("Restarting WIMC agent %s attempt %d",
                        agent->method, agent->restartCount);
         agent_manager_start_one(agent, logLevel);
+
+        pthread_mutex_unlock(&mgr->mutex);
     }
 
     gChildEvent = 0;
@@ -506,6 +512,8 @@ static void agent_manager_stop(AgentManager *mgr) {
         return;
     }
 
+    pthread_mutex_lock(&mgr->mutex);
+
     remaining = 0;
 
     for (i = 0; i < mgr->count; i++) {
@@ -515,9 +523,13 @@ static void agent_manager_stop(AgentManager *mgr) {
         }
     }
 
+    pthread_mutex_unlock(&mgr->mutex);
+
     elapsed = 0;
     while (remaining > 0 && elapsed < AGENT_STOP_TIMEOUT_SEC) {
         remaining = 0;
+
+        pthread_mutex_lock(&mgr->mutex);
 
         for (i = 0; i < mgr->count; i++) {
             if (!mgr->agents[i].running || mgr->agents[i].pid <= 0) {
@@ -533,11 +545,15 @@ static void agent_manager_stop(AgentManager *mgr) {
             }
         }
 
+        pthread_mutex_unlock(&mgr->mutex);
+
         if (remaining > 0) {
             sleep(1);
             elapsed++;
         }
     }
+
+    pthread_mutex_lock(&mgr->mutex);
 
     for (i = 0; i < mgr->count; i++) {
         if (mgr->agents[i].running && mgr->agents[i].pid > 0) {
@@ -549,6 +565,8 @@ static void agent_manager_stop(AgentManager *mgr) {
             mgr->agents[i].pid = -1;
         }
     }
+
+    pthread_mutex_unlock(&mgr->mutex);
 }
 
 int main(int argc, char **argv) {
@@ -561,6 +579,7 @@ int main(int argc, char **argv) {
     int curlInit;
     int webStarted;
     int agentsStarted;
+    int agentManagerMutexInit;
     int wimcPort;
     int ukamaPort;
     Agent *agents;
@@ -571,21 +590,28 @@ int main(int argc, char **argv) {
     Config serviceConfig;
     AgentManager agentManager;
 
-    rc = EXIT_FAILURE;
-    taskMutexInit = 0;
-    dbMutexInit = 0;
-    curlInit = 0;
-    webStarted = 0;
-    agentsStarted = 0;
-    agents = NULL;
-    tasks = NULL;
-    debug = DEF_LOG_LEVEL;
+    rc                    = EXIT_FAILURE;
+    taskMutexInit         = 0;
+    dbMutexInit           = 0;
+    curlInit              = 0;
+    webStarted            = 0;
+    agentsStarted         = 0;
+    agentManagerMutexInit = 0;
+    agents                = NULL;
+    tasks                 = NULL;
+    debug                 = DEF_LOG_LEVEL;
 
-    memset(hubURL, 0, sizeof(hubURL));
-    memset(&serviceInst, 0, sizeof(serviceInst));
+    memset(hubURL,         0, sizeof(hubURL));
+    memset(&serviceInst,   0, sizeof(serviceInst));
     memset(&serviceConfig, 0, sizeof(serviceConfig));
-    memset(&agentManager, 0, sizeof(agentManager));
+    memset(&agentManager,  0, sizeof(agentManager));
 
+    if (pthread_mutex_init(&agentManager.mutex, NULL) != 0) {
+        usys_log_error("agentManager mutex init failed");
+        goto cleanup;
+    }
+    agentManagerMutexInit = 1;
+    
     usys_log_set_service(SERVICE_NAME);
 //    usys_log_remote_init(SERVICE_NAME);
 
@@ -654,8 +680,8 @@ int main(int argc, char **argv) {
     }
 
     serviceConfig.servicePort = wimcPort;
-    serviceConfig.dbFile = strdup(WIMC_DB_PATH);
-    serviceConfig.hubURL = strdup(hubURL);
+    serviceConfig.dbFile      = strdup(WIMC_DB_PATH);
+    serviceConfig.hubURL      = strdup(hubURL);
 
     if (serviceConfig.dbFile == NULL || serviceConfig.hubURL == NULL) {
         usys_log_error("Memory allocation failure");
@@ -674,8 +700,9 @@ int main(int argc, char **argv) {
         goto cleanup;
     }
 
-    serviceConfig.agents = &agents;
-    serviceConfig.tasks = &tasks;
+    serviceConfig.agents       = &agents;
+    serviceConfig.tasks        = &tasks;
+    serviceConfig.agentManager = &agentManager;
 
     if (db_open_or_create(serviceConfig.dbFile, &serviceConfig.db) != 0) {
         usys_log_error("Unable to open/create DB file: %s",
@@ -756,6 +783,10 @@ cleanup:
         pthread_mutex_destroy(&serviceConfig.taskMutex);
     }
 
+    if (agentManagerMutexInit) {
+        pthread_mutex_destroy(&agentManager.mutex);
+    }
+    
     if (curlInit) {
         curl_global_cleanup();
     }

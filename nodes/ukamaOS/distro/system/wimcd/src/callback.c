@@ -604,19 +604,123 @@ int web_service_cb_put_app_stats_update(const struct _u_request *request,
     return U_CALLBACK_CONTINUE;
 }
 
+static json_t *agent_manager_status_json(AgentManager *mgr,
+                                         json_t **summaryOut) {
+
+    json_t *agents;
+    json_t *summary;
+    json_t *agentJson;
+    ManagedAgent *agent;
+    int configured;
+    int running;
+    int failed;
+    int i;
+
+    agents = json_array();
+    summary = json_object();
+
+    if (summaryOut != NULL) {
+        *summaryOut = summary;
+    }
+
+    if (agents == NULL || summary == NULL) {
+        if (agents != NULL) {
+            json_decref(agents);
+        }
+        if (summary != NULL) {
+            json_decref(summary);
+        }
+        return json_array();
+    }
+
+    configured = 0;
+    running = 0;
+    failed = 0;
+
+    if (mgr == NULL) {
+        json_object_set_new(summary, "configured", json_integer(0));
+        json_object_set_new(summary, "running", json_integer(0));
+        json_object_set_new(summary, "failed", json_integer(0));
+        return agents;
+    }
+
+    pthread_mutex_lock(&mgr->mutex);
+
+    configured = mgr->count;
+
+    for (i = 0; i < mgr->count; i++) {
+        agent = &mgr->agents[i];
+
+        if (agent->running) {
+            running++;
+        } else {
+            failed++;
+        }
+
+        agentJson = json_pack("{s:s, s:s, s:b, s:i, s:i, s:i, s:s}",
+                              "method", agent->method,
+                              "service", agent->service,
+                              "running", agent->running ? 1 : 0,
+                              "pid", (int)agent->pid,
+                              "port", agent->port,
+                              "restartCount", agent->restartCount,
+                              "execPath", agent->execPath);
+
+        if (agentJson != NULL) {
+            json_array_append_new(agents, agentJson);
+        }
+    }
+
+    pthread_mutex_unlock(&mgr->mutex);
+
+    json_object_set_new(summary, "configured", json_integer(configured));
+    json_object_set_new(summary, "running", json_integer(running));
+    json_object_set_new(summary, "failed", json_integer(failed));
+
+    return agents;
+}
+
 int web_service_cb_get_status(const URequest *request,
                               UResponse *response,
                               void *epConfig) {
 
     Config *config;
     json_t *json;
+    json_t *agents;
+    json_t *summary;
+
+    (void)request;
 
     config = (Config *)epConfig;
-    json = json_pack("{s:s, s:s, s:i, s:s}",
-                     "service", SERVICE_NAME,
-                     "status", "ok",
-                     "port", config ? config->servicePort : 0,
-                     "pkgDir", DEFAULT_APPS_PKGS_PATH);
+    summary = NULL;
+
+    json = json_object();
+    if (json == NULL) {
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_InternalServerError,
+                                        HttpStatusStr(
+                                        HttpStatus_InternalServerError));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    agents = agent_manager_status_json(config ? config->agentManager : NULL,
+                                       &summary);
+
+    json_object_set_new(json, "service", json_string(SERVICE_NAME));
+    json_object_set_new(json, "status", json_string("ok"));
+    json_object_set_new(json, "port",
+                        json_integer(config ? config->servicePort : 0));
+    json_object_set_new(json, "pkgDir",
+                        json_string(DEFAULT_APPS_PKGS_PATH));
+
+    if (summary != NULL) {
+        json_object_set_new(json, "agentsSummary", summary);
+    }
+
+    if (agents != NULL) {
+        json_object_set_new(json, "agents", agents);
+    }
+
     ulfius_set_json_body_response(response, HttpStatus_OK, json);
     json_decref(json);
 

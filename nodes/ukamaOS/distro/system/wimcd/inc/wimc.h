@@ -17,6 +17,7 @@
 #include <sqlite3.h>
 #include <ulfius.h>
 #include <uuid/uuid.h>
+#include <sys/types.h>
 
 #include "agent.h"
 #include "usys_services.h"
@@ -221,6 +222,22 @@ typedef struct tStats {
 } TStats;
 
 typedef struct {
+    char method[WIMC_MAX_NAME_LEN];
+    char service[WIMC_MAX_NAME_LEN];
+    char execPath[WIMC_MAX_PATH_LEN];
+    pid_t pid;
+    int port;
+    int running;
+    int restartCount;
+} ManagedAgent;
+
+typedef struct {
+    ManagedAgent agents[MAX_AGENTS];
+    int count;
+    pthread_mutex_t mutex;
+} AgentManager;
+
+typedef struct {
     int     servicePort;
     char    *dbFile;
     char    *hubURL;
@@ -228,6 +245,8 @@ typedef struct {
     int     maxAgents;
     Agent   **agents;
     WTasks  **tasks;
+
+    AgentManager    *agentManager;
     pthread_mutex_t taskMutex;
     pthread_mutex_t dbMutex;
 } Config;
