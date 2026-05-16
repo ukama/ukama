@@ -38,9 +38,9 @@
 
 #include "version.h"
 
-#define AGENT_EXEC_NAME "agent"
+#define AGENT_EXEC_NAME        WIMC_AGENT_EXEC_NAME
 #define AGENT_STOP_TIMEOUT_SEC 5
-#define AGENT_RESTART_LIMIT 3
+#define AGENT_RESTART_LIMIT    3
 
 typedef struct {
     char method[WIMC_MAX_NAME_LEN];

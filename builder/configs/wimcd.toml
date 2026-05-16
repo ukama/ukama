@@ -11,7 +11,7 @@
         bin_to="/sbin"
 
 [build-misc]
-        from="/nodes/ukamaOS/distro/system/wimcd/agent"
+        from="/nodes/ukamaOS/distro/system/wimcd/wimc-agent"
         to="/sbin"
 
 [capp-exec]

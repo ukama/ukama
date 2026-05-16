@@ -89,6 +89,7 @@
 
 #define WIMC_METHOD_PRIORITY_ENV "WIMC_METHOD_PRIORITY"
 #define WIMC_AGENT_PATH_ENV      "WIMC_AGENT_PATH"
+#define WIMC_AGENT_EXEC_NAME     "wimc-agent"
 
 #define TRUE  1
 #define FALSE 0

@@ -625,6 +625,7 @@ static int read_config_file(Config *config, char *fileName, char **error) {
     int ret = FALSE;
     FILE *fp = NULL;
 
+    toml_table_t *fileData = NULL;
     toml_table_t *buildFrom = NULL;
     toml_table_t *buildCompile = NULL;
     toml_table_t *buildRootfs = NULL;
