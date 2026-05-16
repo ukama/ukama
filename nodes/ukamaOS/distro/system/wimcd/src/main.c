@@ -149,6 +149,22 @@ static int is_supported_method(const char *method) {
     return USYS_FALSE;
 }
 
+static int build_agent_service_name(const char *method,
+                                    char *service,
+                                    size_t serviceLen) {
+
+    if (method == NULL || service == NULL || serviceLen == 0) {
+        return -1;
+    }
+
+    if (snprintf(service, serviceLen, "wimc-agent-%s", method) >=
+        (int)serviceLen) {
+        return -1;
+    }
+
+    return 0;
+}
+
 static int agent_manager_has_method(AgentManager *mgr,
                                     const char *method) {
 
@@ -167,57 +183,52 @@ static int agent_manager_has_method(AgentManager *mgr,
     return USYS_FALSE;
 }
 
-static int build_agent_service_name(const char *method,
-                                    char *service,
-                                    size_t serviceLen) {
+static int find_agent_from_env(char *execPath, size_t execPathLen) {
 
-    if (method == NULL || service == NULL || serviceLen == 0) {
+    const char *envPath;
+
+    envPath = getenv(WIMC_AGENT_PATH_ENV);
+    if (envPath == NULL || *envPath == '\0') {
         return -1;
     }
 
-    if (snprintf(service, serviceLen, "wimc-agent-%s", method) >=
-        (int)serviceLen) {
+    if (snprintf(execPath, execPathLen, "%s", envPath) >=
+        (int)execPathLen) {
         return -1;
     }
 
-    return 0;
+    if (access(execPath, X_OK) == 0) {
+        return 0;
+    }
+
+    usys_log_error("%s is set but not executable: %s",
+                   WIMC_AGENT_PATH_ENV, execPath);
+
+    return -1;
 }
 
-static int find_agent_exec(char *argv0,
-                           char *execPath,
-                           size_t execPathLen) {
+static int find_agent_from_self(char *execPath, size_t execPathLen) {
 
+    char selfPath[WIMC_MAX_PATH_LEN];
     char *slash;
-    char dir[WIMC_MAX_PATH_LEN];
+    ssize_t len;
 
-    if (execPath == NULL || execPathLen == 0) {
+    memset(selfPath, 0, sizeof(selfPath));
+
+    len = readlink("/proc/self/exe", selfPath, sizeof(selfPath) - 1);
+    if (len <= 0 || len >= (ssize_t)sizeof(selfPath)) {
+        return -1;
+    }
+    selfPath[len] = '\0';
+
+    slash = strrchr(selfPath, '/');
+    if (slash == NULL) {
         return -1;
     }
 
-    memset(dir, 0, sizeof(dir));
+    *(slash + 1) = '\0';
 
-    if (argv0 != NULL && strchr(argv0, '/') != NULL) {
-        if (snprintf(dir, sizeof(dir), "%s", argv0) >=
-            (int)sizeof(dir)) {
-            return -1;
-        }
-
-        slash = strrchr(dir, '/');
-        if (slash != NULL) {
-            *(slash + 1) = '\0';
-
-            if (snprintf(execPath, execPathLen, "%s%s", dir,
-                         AGENT_EXEC_NAME) >= (int)execPathLen) {
-                return -1;
-            }
-
-            if (access(execPath, X_OK) == 0) {
-                return 0;
-            }
-        }
-    }
-
-    if (snprintf(execPath, execPathLen, "/sbin/%s",
+    if (snprintf(execPath, execPathLen, "%s%s", selfPath,
                  AGENT_EXEC_NAME) >= (int)execPathLen) {
         return -1;
     }
@@ -226,12 +237,31 @@ static int find_agent_exec(char *argv0,
         return 0;
     }
 
-    if (snprintf(execPath, execPathLen, "%s",
-                 AGENT_EXEC_NAME) >= (int)execPathLen) {
+    return -1;
+}
+
+static int find_agent_exec(char *execPath, size_t execPathLen) {
+
+    if (execPath == NULL || execPathLen == 0) {
         return -1;
     }
 
-    return 0;
+    if (find_agent_from_env(execPath, execPathLen) == 0) {
+        return 0;
+    }
+
+    if (getenv(WIMC_AGENT_PATH_ENV) != NULL) {
+        return -1;
+    }
+
+    if (find_agent_from_self(execPath, execPathLen) == 0) {
+        return 0;
+    }
+
+    usys_log_error("Unable to find sibling WIMC agent. Set %s if needed",
+                   WIMC_AGENT_PATH_ENV);
+
+    return -1;
 }
 
 static int agent_manager_add(AgentManager *mgr,
@@ -287,7 +317,7 @@ static int agent_manager_add(AgentManager *mgr,
     return 0;
 }
 
-static int agent_manager_load(AgentManager *mgr, char *argv0) {
+static int agent_manager_load(AgentManager *mgr) {
 
     char priority[WIMC_MAX_ARGS_LEN];
     char execPath[WIMC_MAX_PATH_LEN];
@@ -304,8 +334,7 @@ static int agent_manager_load(AgentManager *mgr, char *argv0) {
     memset(priority, 0, sizeof(priority));
     memset(execPath, 0, sizeof(execPath));
 
-    if (find_agent_exec(argv0, execPath, sizeof(execPath)) != 0) {
-        usys_log_error("Unable to find WIMC agent executable");
+    if (find_agent_exec(execPath, sizeof(execPath)) != 0) {
         return -1;
     }
 
@@ -558,7 +587,7 @@ int main(int argc, char **argv) {
     memset(&agentManager, 0, sizeof(agentManager));
 
     usys_log_set_service(SERVICE_NAME);
-/*    usys_log_remote_init(SERVICE_NAME); */
+//    usys_log_remote_init(SERVICE_NAME);
 
     wimcPort = usys_find_service_port(SERVICE_NAME);
     if (wimcPort == 0) {
@@ -683,7 +712,7 @@ int main(int argc, char **argv) {
     }
     webStarted = 1;
 
-    if (agent_manager_load(&agentManager, argv[0]) != 0) {
+    if (agent_manager_load(&agentManager) != 0) {
         usys_log_error("Failed to load WIMC agent configuration");
         goto cleanup;
     }

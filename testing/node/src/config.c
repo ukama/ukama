@@ -29,7 +29,8 @@ static int read_build_config(Config *config, char *fileName,
                              toml_table_t *buildFrom,
                              toml_table_t *buildCompile,
                              toml_table_t *buildRootfs,
-                             toml_table_t *buildConf);
+                             toml_table_t *buildConf,
+                             toml_table_t *buildMisc);
 static int read_capp_config(Config *config, char *fileName,
                             toml_table_t *cappExec);
 static int add_to_configs(Configs **configs, Config *config, char *fileName,
@@ -362,6 +363,16 @@ static int read_build_table(toml_table_t *table, Config *config,
                         DATUM_STRING | DATUM_MANDATORY)) {
             return FALSE;
         }
+    } else if (strcmp(type, TABLE_BUILD_MISC)==0) {
+        if (!read_entry(table, KEY_FROM, &build->miscFrom, NULL,
+                        DATUM_STRING | DATUM_MANDATORY)) {
+            return FALSE;
+        }
+
+        if (!read_entry(table, KEY_TO, &build->miscTo, NULL,
+                        DATUM_STRING | DATUM_MANDATORY)) {
+            return FALSE;
+        }
     } else {
         return FALSE;
     }
@@ -386,7 +397,8 @@ static int read_build_config(Config *config, char *fileName,
                              toml_table_t *buildFrom,
                              toml_table_t *buildCompile,
                              toml_table_t *buildRootfs,
-                             toml_table_t *buildConf) {
+                             toml_table_t *buildConf,
+                             toml_table_t *buildMisc) {
 
     int ret = TRUE;
 
@@ -421,6 +433,16 @@ static int read_build_config(Config *config, char *fileName,
         if (ret == FALSE) {
             log_error("[%s] section parsing error in config file: %s\n",
                       TABLE_BUILD_CONF, fileName);
+            free_config(config, BUILD_ONLY);
+            goto done;
+        }
+    }
+
+    if (buildMisc) {
+        ret = read_build_table(buildMisc, config, TABLE_BUILD_MISC);
+        if (ret == FALSE) {
+            log_error("[%s] section parsing error in config file: %s\n",
+                      TABLE_BUILD_MISC, fileName);
             free_config(config, BUILD_ONLY);
             goto done;
         }
@@ -603,11 +625,11 @@ static int read_config_file(Config *config, char *fileName, char **error) {
     int ret = FALSE;
     FILE *fp = NULL;
 
-    toml_table_t *fileData = NULL;
     toml_table_t *buildFrom = NULL;
     toml_table_t *buildCompile = NULL;
     toml_table_t *buildRootfs = NULL;
     toml_table_t *buildConf = NULL;
+    toml_table_t *buildMisc = NULL;
     toml_table_t *cappExec = NULL;
 
     if (fileName == NULL || config == NULL) {
@@ -641,9 +663,10 @@ static int read_config_file(Config *config, char *fileName, char **error) {
 
     get_table(fileData, TABLE_BUILD_ROOTFS, &buildRootfs);
     get_table(fileData, TABLE_BUILD_CONF,   &buildConf);
+    get_table(fileData, TABLE_BUILD_MISC,   &buildMisc);
 
     ret = read_build_config(config, fileName, buildFrom, buildCompile,
-                            buildRootfs, buildConf);
+                            buildRootfs, buildConf, buildMisc);
     if (ret == FALSE) goto done;
 
     ret = read_capp_config(config, fileName, cappExec);
@@ -697,6 +720,8 @@ void free_config(Config *config, int flag) {
         if (build->mkdir)       free(build->mkdir);
         if (build->from)        free(build->from);
         if (build->to)          free(build->to);
+        if (build->miscFrom)    free(build->miscFrom);
+        if (build->miscTo)      free(build->miscTo);
 
         free(config->build);
     }
@@ -744,6 +769,10 @@ void log_config(Config *config) {
         log_debug("\t command: %s", build->cmd);
         log_debug("\t from:    %s", build->binFrom);
         log_debug("\t to:      %s", build->binTo);
+
+        log_debug("[MISC:]");
+        log_debug("\t from: %s", build->miscFrom);
+        log_debug("\t to:   %s", build->miscTo);
 
         log_debug("[ROOTFS:]");
         log_debug("\t mkdir: %s", build->mkdir);
