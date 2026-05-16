@@ -243,7 +243,6 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 }
 
 func (c *Controller) EndSession(ctx *gin.Context, req *api.EndSession) error {
-
 	sub, err := c.store.GetSubscriber(req.ImsiStr)
 	if err != nil {
 		log.Errorf("failed to get subscriber for imsi %s.Error: %v", req.ImsiStr, err)

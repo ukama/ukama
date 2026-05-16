@@ -25,15 +25,15 @@ Content-Type: application/json
 
 
 Some Rules:
-Subscrier is added with policy to store.
-policy defines ULBR , DLBR , start time, end time, burst and data cap.
+Subscriber is added with policy to store.
+Policy defines ULBR, DLBR, start time, end time, burst and data cap.
 
-If new policy is assigned make sure the policy adds the left over data to new policy or apply new policy only when data is over.
-In any case usage data will be reset to zero and will be be compared to new policy data cap  available.
+If new policy is assigned, make sure the policy adds the left over data to new policy or apply new policy only when data is over.
+In any case, usage data will be reset to zero and will be be compared to new policy data cap available.
 
 On UE connection to EPC a create session request will be recieved and similarly end session on disconnect.
-A go routine will monitor session data usage regularly from the ovs flows till the session is active.On session comleteion a CDR rport will be created 
-and pushed to cloud. COntroller regularly checks for unsynced CDR reports in DB and pushes tehm to cloud.
+A go routine will monitor session data usage regularly from the ovs flows till the session is active. On session completion, a CDR report will be created
+and pushed to cloud. Controller regularly checks for unsynced CDR reports in DB and pushes them to cloud.
 
-Currenlty we have problms with end session whic is missing some time. Need to fix that from EPC.
+Currenlty we have problems with end session which is missing some time. Need to fix that from EPC.
 

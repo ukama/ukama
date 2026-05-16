@@ -53,7 +53,8 @@ func main() {
 	}
 	log.Infof("PRCF running on node %s", NodeId)
 
-	ctr, err := controller.NewController(svcConf.DB, svcConf.Bridge, svcConf.HttpServices.Policy, svcConf.SyncPeriod, NodeId, svcConf.DebugMode)
+	ctr, err := controller.NewController(svcConf.DB, svcConf.Bridge, svcConf.HttpServices.Policy,
+		svcConf.SyncPeriod, NodeId, svcConf.DebugMode)
 	if err != nil {
 		log.Fatalf("Failed to create controller: %v", err)
 	}
