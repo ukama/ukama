@@ -7,12 +7,15 @@
  */
 
 #include <curl/curl.h>
+#include <errno.h>
 #include <getopt.h>
 #include <pthread.h>
 #include <signal.h>
 #include <sqlite3.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <ulfius.h>
 #include <unistd.h>
 
@@ -35,12 +38,38 @@
 
 #include "version.h"
 
+#define AGENT_EXEC_NAME "agent"
+#define AGENT_STOP_TIMEOUT_SEC 5
+#define AGENT_RESTART_LIMIT 3
+
+typedef struct {
+    char method[WIMC_MAX_NAME_LEN];
+    char service[WIMC_MAX_NAME_LEN];
+    char execPath[WIMC_MAX_PATH_LEN];
+    pid_t pid;
+    int port;
+    int running;
+    int restartCount;
+} ManagedAgent;
+
+typedef struct {
+    ManagedAgent agents[MAX_AGENTS];
+    int count;
+} AgentManager;
+
 static volatile sig_atomic_t gTerminate = 0;
+static volatile sig_atomic_t gChildEvent = 0;
 
 static void handle_signal(int signum) {
 
     (void)signum;
     gTerminate = 1;
+}
+
+static void handle_child_signal(int signum) {
+
+    (void)signum;
+    gChildEvent = 1;
 }
 
 static UsysOption longOptions[] = {
@@ -82,6 +111,417 @@ static void usage(void) {
     usys_puts("-v, --version                 Software version");
 }
 
+static char *trim_token(char *value) {
+
+    char *end;
+
+    if (value == NULL) {
+        return NULL;
+    }
+
+    while (*value == ' ' || *value == '\t' || *value == '\n' ||
+           *value == '\r') {
+        value++;
+    }
+
+    end = value + strlen(value);
+    while (end > value && (*(end - 1) == ' ' ||
+           *(end - 1) == '\t' || *(end - 1) == '\n' ||
+           *(end - 1) == '\r')) {
+        end--;
+    }
+
+    *end = '\0';
+    return value;
+}
+
+static int is_supported_method(const char *method) {
+
+    if (method == NULL || *method == '\0') {
+        return USYS_FALSE;
+    }
+
+    if (strcmp(method, WIMC_METHOD_CHUNK_STR) == 0 ||
+        strcmp(method, WIMC_METHOD_TARGZ_STR) == 0) {
+        return USYS_TRUE;
+    }
+
+    return USYS_FALSE;
+}
+
+static int agent_manager_has_method(AgentManager *mgr,
+                                    const char *method) {
+
+    int i;
+
+    if (mgr == NULL || method == NULL) {
+        return USYS_FALSE;
+    }
+
+    for (i = 0; i < mgr->count; i++) {
+        if (strcmp(mgr->agents[i].method, method) == 0) {
+            return USYS_TRUE;
+        }
+    }
+
+    return USYS_FALSE;
+}
+
+static int build_agent_service_name(const char *method,
+                                    char *service,
+                                    size_t serviceLen) {
+
+    if (method == NULL || service == NULL || serviceLen == 0) {
+        return -1;
+    }
+
+    if (snprintf(service, serviceLen, "wimc-agent-%s", method) >=
+        (int)serviceLen) {
+        return -1;
+    }
+
+    return 0;
+}
+
+static int find_agent_exec(char *argv0,
+                           char *execPath,
+                           size_t execPathLen) {
+
+    char *slash;
+    char dir[WIMC_MAX_PATH_LEN];
+
+    if (execPath == NULL || execPathLen == 0) {
+        return -1;
+    }
+
+    memset(dir, 0, sizeof(dir));
+
+    if (argv0 != NULL && strchr(argv0, '/') != NULL) {
+        if (snprintf(dir, sizeof(dir), "%s", argv0) >=
+            (int)sizeof(dir)) {
+            return -1;
+        }
+
+        slash = strrchr(dir, '/');
+        if (slash != NULL) {
+            *(slash + 1) = '\0';
+
+            if (snprintf(execPath, execPathLen, "%s%s", dir,
+                         AGENT_EXEC_NAME) >= (int)execPathLen) {
+                return -1;
+            }
+
+            if (access(execPath, X_OK) == 0) {
+                return 0;
+            }
+        }
+    }
+
+    if (snprintf(execPath, execPathLen, "/sbin/%s",
+                 AGENT_EXEC_NAME) >= (int)execPathLen) {
+        return -1;
+    }
+
+    if (access(execPath, X_OK) == 0) {
+        return 0;
+    }
+
+    if (snprintf(execPath, execPathLen, "%s",
+                 AGENT_EXEC_NAME) >= (int)execPathLen) {
+        return -1;
+    }
+
+    return 0;
+}
+
+static int agent_manager_add(AgentManager *mgr,
+                             const char *method,
+                             const char *execPath) {
+
+    ManagedAgent *agent;
+    char service[WIMC_MAX_NAME_LEN];
+    int port;
+
+    if (mgr == NULL || method == NULL || execPath == NULL) {
+        return -1;
+    }
+
+    if (!is_supported_method(method)) {
+        usys_log_error("Unsupported WIMC agent method: %s", method);
+        return -1;
+    }
+
+    if (agent_manager_has_method(mgr, method)) {
+        return 0;
+    }
+
+    if (mgr->count >= MAX_AGENTS) {
+        usys_log_error("Too many managed WIMC agents");
+        return -1;
+    }
+
+    if (build_agent_service_name(method, service, sizeof(service)) != 0) {
+        usys_log_error("Unable to build service name for method: %s",
+                       method);
+        return -1;
+    }
+
+    port = usys_find_service_port(service);
+    if (port <= 0) {
+        usys_log_error("Unable to find service port for %s", service);
+        return -1;
+    }
+
+    agent = &mgr->agents[mgr->count];
+    memset(agent, 0, sizeof(*agent));
+
+    snprintf(agent->method, sizeof(agent->method), "%s", method);
+    snprintf(agent->service, sizeof(agent->service), "%s", service);
+    snprintf(agent->execPath, sizeof(agent->execPath), "%s", execPath);
+    agent->port = port;
+    agent->pid = -1;
+    agent->running = USYS_FALSE;
+    agent->restartCount = 0;
+
+    mgr->count++;
+    return 0;
+}
+
+static int agent_manager_load(AgentManager *mgr, char *argv0) {
+
+    char priority[WIMC_MAX_ARGS_LEN];
+    char execPath[WIMC_MAX_PATH_LEN];
+    char *savePtr;
+    char *token;
+    char *method;
+    const char *env;
+
+    if (mgr == NULL) {
+        return -1;
+    }
+
+    memset(mgr, 0, sizeof(*mgr));
+    memset(priority, 0, sizeof(priority));
+    memset(execPath, 0, sizeof(execPath));
+
+    if (find_agent_exec(argv0, execPath, sizeof(execPath)) != 0) {
+        usys_log_error("Unable to find WIMC agent executable");
+        return -1;
+    }
+
+    env = getenv(WIMC_METHOD_PRIORITY_ENV);
+    if (env == NULL || *env == '\0') {
+        env = WIMC_METHOD_TARGZ_STR "," WIMC_METHOD_CHUNK_STR;
+    }
+
+    snprintf(priority, sizeof(priority), "%s", env);
+
+    savePtr = NULL;
+    token = strtok_r(priority, ",", &savePtr);
+    while (token != NULL) {
+        method = trim_token(token);
+
+        if (method != NULL && *method != '\0') {
+            if (agent_manager_add(mgr, method, execPath) != 0) {
+                usys_log_error("Skipping WIMC agent method: %s", method);
+            }
+        }
+
+        token = strtok_r(NULL, ",", &savePtr);
+    }
+
+    if (mgr->count <= 0) {
+        usys_log_error("No WIMC agents configured");
+        return -1;
+    }
+
+    return 0;
+}
+
+static int agent_manager_start_one(ManagedAgent *agent, char *logLevel) {
+
+    pid_t pid;
+
+    if (agent == NULL || agent->running) {
+        return 0;
+    }
+
+    pid = fork();
+    if (pid < 0) {
+        usys_log_error("Failed to fork WIMC agent %s: %s",
+                       agent->method, strerror(errno));
+        return -1;
+    }
+
+    if (pid == 0) {
+        execl(agent->execPath,
+              AGENT_EXEC_NAME,
+              "-m", agent->method,
+              "-l", logLevel ? logLevel : DEF_LOG_LEVEL,
+              NULL);
+        _exit(127);
+    }
+
+    agent->pid = pid;
+    agent->running = USYS_TRUE;
+
+    usys_log_debug("Started WIMC agent method=%s service=%s port=%d pid=%d",
+                   agent->method, agent->service, agent->port, pid);
+
+    return 0;
+}
+
+static int agent_manager_start(AgentManager *mgr, char *logLevel) {
+
+    int i;
+    int started;
+
+    if (mgr == NULL) {
+        return -1;
+    }
+
+    started = 0;
+
+    for (i = 0; i < mgr->count; i++) {
+        if (agent_manager_start_one(&mgr->agents[i], logLevel) == 0) {
+            started++;
+        }
+    }
+
+    if (started <= 0) {
+        return -1;
+    }
+
+    return 0;
+}
+
+static ManagedAgent *agent_manager_find_by_pid(AgentManager *mgr,
+                                               pid_t pid) {
+
+    int i;
+
+    if (mgr == NULL || pid <= 0) {
+        return NULL;
+    }
+
+    for (i = 0; i < mgr->count; i++) {
+        if (mgr->agents[i].pid == pid) {
+            return &mgr->agents[i];
+        }
+    }
+
+    return NULL;
+}
+
+static void agent_manager_reap(AgentManager *mgr, char *logLevel) {
+
+    ManagedAgent *agent;
+    int status;
+    pid_t pid;
+
+    if (mgr == NULL) {
+        return;
+    }
+
+    while (1) {
+        pid = waitpid(-1, &status, WNOHANG);
+        if (pid <= 0) {
+            break;
+        }
+
+        agent = agent_manager_find_by_pid(mgr, pid);
+        if (agent == NULL) {
+            continue;
+        }
+
+        agent->running = USYS_FALSE;
+        agent->pid = -1;
+
+        if (WIFEXITED(status)) {
+            usys_log_error("WIMC agent %s exited with code %d",
+                           agent->method, WEXITSTATUS(status));
+        } else if (WIFSIGNALED(status)) {
+            usys_log_error("WIMC agent %s killed by signal %d",
+                           agent->method, WTERMSIG(status));
+        } else {
+            usys_log_error("WIMC agent %s exited", agent->method);
+        }
+
+        if (gTerminate) {
+            continue;
+        }
+
+        if (agent->restartCount >= AGENT_RESTART_LIMIT) {
+            usys_log_error("WIMC agent %s restart limit reached",
+                           agent->method);
+            continue;
+        }
+
+        agent->restartCount++;
+        usys_log_error("Restarting WIMC agent %s attempt %d",
+                       agent->method, agent->restartCount);
+        agent_manager_start_one(agent, logLevel);
+    }
+
+    gChildEvent = 0;
+}
+
+static void agent_manager_stop(AgentManager *mgr) {
+
+    int i;
+    int status;
+    int elapsed;
+    int remaining;
+
+    if (mgr == NULL) {
+        return;
+    }
+
+    remaining = 0;
+
+    for (i = 0; i < mgr->count; i++) {
+        if (mgr->agents[i].running && mgr->agents[i].pid > 0) {
+            kill(mgr->agents[i].pid, SIGTERM);
+            remaining++;
+        }
+    }
+
+    elapsed = 0;
+    while (remaining > 0 && elapsed < AGENT_STOP_TIMEOUT_SEC) {
+        remaining = 0;
+
+        for (i = 0; i < mgr->count; i++) {
+            if (!mgr->agents[i].running || mgr->agents[i].pid <= 0) {
+                continue;
+            }
+
+            if (waitpid(mgr->agents[i].pid, &status, WNOHANG) ==
+                mgr->agents[i].pid) {
+                mgr->agents[i].running = USYS_FALSE;
+                mgr->agents[i].pid = -1;
+            } else {
+                remaining++;
+            }
+        }
+
+        if (remaining > 0) {
+            sleep(1);
+            elapsed++;
+        }
+    }
+
+    for (i = 0; i < mgr->count; i++) {
+        if (mgr->agents[i].running && mgr->agents[i].pid > 0) {
+            usys_log_error("Force killing WIMC agent %s pid=%d",
+                           mgr->agents[i].method, mgr->agents[i].pid);
+            kill(mgr->agents[i].pid, SIGKILL);
+            waitpid(mgr->agents[i].pid, &status, 0);
+            mgr->agents[i].running = USYS_FALSE;
+            mgr->agents[i].pid = -1;
+        }
+    }
+}
+
 int main(int argc, char **argv) {
 
     int opt;
@@ -91,6 +531,7 @@ int main(int argc, char **argv) {
     int dbMutexInit;
     int curlInit;
     int webStarted;
+    int agentsStarted;
     int wimcPort;
     int ukamaPort;
     Agent *agents;
@@ -99,12 +540,14 @@ int main(int argc, char **argv) {
     char hubURL[WIMC_MAX_URL_LEN];
     UInst serviceInst;
     Config serviceConfig;
+    AgentManager agentManager;
 
     rc = EXIT_FAILURE;
     taskMutexInit = 0;
     dbMutexInit = 0;
     curlInit = 0;
     webStarted = 0;
+    agentsStarted = 0;
     agents = NULL;
     tasks = NULL;
     debug = DEF_LOG_LEVEL;
@@ -112,9 +555,10 @@ int main(int argc, char **argv) {
     memset(hubURL, 0, sizeof(hubURL));
     memset(&serviceInst, 0, sizeof(serviceInst));
     memset(&serviceConfig, 0, sizeof(serviceConfig));
+    memset(&agentManager, 0, sizeof(agentManager));
 
     usys_log_set_service(SERVICE_NAME);
-    usys_log_remote_init(SERVICE_NAME);
+/*    usys_log_remote_init(SERVICE_NAME); */
 
     wimcPort = usys_find_service_port(SERVICE_NAME);
     if (wimcPort == 0) {
@@ -191,6 +635,7 @@ int main(int argc, char **argv) {
 
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
+    signal(SIGCHLD, handle_child_signal);
 
     usys_log_debug("Starting %s", SERVICE_NAME);
 
@@ -238,13 +683,32 @@ int main(int argc, char **argv) {
     }
     webStarted = 1;
 
+    if (agent_manager_load(&agentManager, argv[0]) != 0) {
+        usys_log_error("Failed to load WIMC agent configuration");
+        goto cleanup;
+    }
+
+    if (agent_manager_start(&agentManager, debug) != 0) {
+        usys_log_error("Failed to start WIMC agents");
+        goto cleanup;
+    }
+    agentsStarted = 1;
+
     while (!gTerminate) {
-        pause();
+        sleep(1);
+
+        if (gChildEvent) {
+            agent_manager_reap(&agentManager, debug);
+        }
     }
 
     rc = EXIT_SUCCESS;
 
 cleanup:
+    if (agentsStarted) {
+        agent_manager_stop(&agentManager);
+    }
+
     if (webStarted) {
         ulfius_stop_framework(&serviceInst);
         ulfius_clean_instance(&serviceInst);
