@@ -544,7 +544,7 @@ static bool update_app(Supervisor *s,
     }
 
     free(a->lastGoodTag);
-    a->lastGoodTag = strdup(tag);
+    a->lastGoodTag = strdup(a->tag);
 
     state_store_save(s->config, s->spaceList);
 

@@ -75,6 +75,40 @@ static bool wc_json_status_is(const char *body, const char *expected) {
     return ok;
 }
 
+static char *wc_json_dup_string(const char *body, const char *key) {
+
+    json_t *root;
+    json_t *value;
+    json_error_t error;
+    const char *s;
+    char *dup;
+
+    root = NULL;
+    value = NULL;
+    s = NULL;
+    dup = NULL;
+
+    if (body == NULL || key == NULL) {
+        return NULL;
+    }
+
+    root = json_loads(body, 0, &error);
+    if (root == NULL) {
+        return NULL;
+    }
+
+    value = json_object_get(root, key);
+    if (json_is_string(value)) {
+        s = json_string_value(value);
+        if (s != NULL && *s != '\0') {
+            dup = strdup(s);
+        }
+    }
+
+    json_decref(root);
+    return dup;
+}
+
 static URequest* wc_create_request(const char *url,
                                    const char *method,
                                    int timeoutSec) {
@@ -244,7 +278,9 @@ static bool wc_copy_file(const char *srcPath, const char *dstPath) {
 
 static bool wc_wait_for_available(Config *config,
                                   const char *appName,
-                                  const char *tag) {
+                                  const char *tag,
+                                  char **pathOut,
+                                  char **versionOut) {
 
     char url[512];
     char path[256];
@@ -300,6 +336,14 @@ static bool wc_wait_for_available(Config *config,
                 if (body) {
 
                     if (wc_json_status_is(body, "available")) {
+                        if (pathOut != NULL) {
+                            *pathOut = wc_json_dup_string(body, "path");
+                        }
+
+                        if (versionOut != NULL) {
+                            *versionOut = wc_json_dup_string(body, "actualVersion");
+                        }
+
                         free(body);
                         wc_clean(req, resp);
                         return true;
@@ -457,27 +501,43 @@ bool wc_fetch_package(Config *config,
     char path[256];
     char srcPath[512];
     const char *pkgsDir;
+    const char *pathTag;
     URequest *req;
     UResponse *resp;
     JsonObj *jreq;
+    JsonObj *jhub;
     char *body;
+    char *availablePath;
+    char *actualVersion;
+    bool ok;
+    int ret;
 
-    req  = NULL;
+    req = NULL;
     resp = NULL;
     jreq = NULL;
+    jhub = NULL;
     body = NULL;
+    availablePath = NULL;
+    actualVersion = NULL;
+    ok = false;
 
-    if (!config || !appName || !tag || !dstPath) {
+    if (config == NULL || appName == NULL || tag == NULL || dstPath == NULL) {
         return false;
     }
 
-    snprintf(path,
-             sizeof(path),
-             config->wimcPathTemplate ?
-                 config->wimcPathTemplate :
-                 "/v1/apps/%s/%s",
-             appName,
-             tag);
+    ret = snprintf(path,
+                   sizeof(path),
+                   config->wimcPathTemplate ?
+                       config->wimcPathTemplate :
+                       "/v1/apps/%s/%s",
+                   appName,
+                   tag);
+    if (ret < 0 || (size_t)ret >= sizeof(path)) {
+        usys_log_error("wimc: request path too long for %s:%s",
+                       appName,
+                       tag);
+        return false;
+    }
 
     if (!wc_build_url(url,
                       sizeof(url),
@@ -489,24 +549,36 @@ bool wc_fetch_package(Config *config,
     }
 
     req = wc_create_request(url, "POST", 30);
-    if (!req) {
-        return false;
+    if (req == NULL) {
+        usys_log_error("wimc: failed creating request %s", url);
+        goto done;
     }
 
-    if (hub && *hub) {
+    if (hub != NULL && *hub != '\0') {
         jreq = json_object();
-        if (!jreq) {
-            wc_clean(req, NULL);
-            return false;
+        if (jreq == NULL) {
+            usys_log_error("wimc: failed creating json request");
+            goto done;
         }
 
-        json_object_set_new(jreq, "hub", json_string(hub));
-        body = json_dumps(jreq, JSON_COMPACT);
-        json_decref(jreq);
+        jhub = json_string(hub);
+        if (jhub == NULL) {
+            usys_log_error("wimc: failed creating hub json string");
+            goto done;
+        }
 
-        if (!body) {
-            wc_clean(req, NULL);
-            return false;
+        if (json_object_set_new(jreq, "hub", jhub) != 0) {
+            usys_log_error("wimc: failed setting hub in json request");
+            json_decref(jhub);
+            jhub = NULL;
+            goto done;
+        }
+        jhub = NULL;
+
+        body = json_dumps(jreq, JSON_COMPACT);
+        if (body == NULL) {
+            usys_log_error("wimc: failed dumping json request");
+            goto done;
         }
 
         ulfius_set_string_body_request(req, body);
@@ -514,14 +586,14 @@ bool wc_fetch_package(Config *config,
     }
 
     if (!wc_send(req, &resp)) {
-        free(body);
-        wc_clean(req, NULL);
         usys_log_error("wimc: request failed %s", url);
-        return false;
+        goto done;
     }
 
-    free(body);
-    body = NULL;
+    if (resp == NULL) {
+        usys_log_error("wimc: empty response from %s", url);
+        goto done;
+    }
 
     if (resp->status != HttpStatus_OK &&
         resp->status != HttpStatus_Accepted &&
@@ -529,25 +601,54 @@ bool wc_fetch_package(Config *config,
         resp->status != HttpStatus_Conflict) {
 
         usys_log_error("wimc: unexpected response http=%d", resp->status);
-        wc_clean(req, resp);
-        return false;
+        goto done;
     }
 
     wc_clean(req, resp);
+    req = NULL;
+    resp = NULL;
 
-    if (!wc_wait_for_available(config, appName, tag)) {
-        usys_log_error("wimc: package not available %s:%s", appName, tag);
-        return false;
+    if (!wc_wait_for_available(config,
+                               appName,
+                               tag,
+                               &availablePath,
+                               &actualVersion)) {
+        usys_log_error("wimc: package not available %s:%s",
+                       appName,
+                       tag);
+        goto done;
     }
 
     pkgsDir = config->pkgsDir ? config->pkgsDir : "/ukama/apps/pkgs";
 
-    snprintf(srcPath,
-             sizeof(srcPath),
-             "%s/%s_%s.tar.gz",
-             pkgsDir,
-             appName,
-             tag);
+    if (availablePath != NULL && *availablePath != '\0') {
+        ret = snprintf(srcPath, sizeof(srcPath), "%s", availablePath);
+    } else {
+        /*
+         * If wimc/agent validated the package VERSION and returned the real
+         * version, prefer it for fallback path construction. This handles:
+         *
+         *   requested tag: 1.0.1-abcdefgh
+         *   actual tag:    v1.0.1-abcdefgh
+         *
+         * The normal contract should still be: use availablePath from wimc.
+         */
+        pathTag = actualVersion && *actualVersion ? actualVersion : tag;
+
+        ret = snprintf(srcPath,
+                       sizeof(srcPath),
+                       "%s/%s_%s.tar.gz",
+                       pkgsDir,
+                       appName,
+                       pathTag);
+    }
+
+    if (ret < 0 || (size_t)ret >= sizeof(srcPath)) {
+        usys_log_error("wimc: source package path too long %s:%s",
+                       appName,
+                       tag);
+        goto done;
+    }
 
     /*
      * In the normal starter/wimc contract both daemons share the same
@@ -556,24 +657,44 @@ bool wc_fetch_package(Config *config,
     if (strcmp(srcPath, dstPath) == 0) {
         if (!wc_file_exists_non_empty(dstPath)) {
             usys_log_error("wimc: package missing or empty %s", dstPath);
-            return false;
+            goto done;
         }
 
-        return true;
+        ok = true;
+        goto done;
     }
 
     if (!wc_copy_file(srcPath, dstPath)) {
         usys_log_error("wimc: failed copying package %s -> %s",
                        srcPath,
                        dstPath);
-        return false;
+        goto done;
     }
 
     if (!wc_file_exists_non_empty(dstPath)) {
         usys_log_error("wimc: copied package is missing or empty %s",
                        dstPath);
-        return false;
+        goto done;
     }
 
-    return true;
+    ok = true;
+
+done:
+    if (jhub != NULL) {
+        json_decref(jhub);
+    }
+
+    if (jreq != NULL) {
+        json_decref(jreq);
+    }
+
+    free(body);
+    free(availablePath);
+    free(actualVersion);
+
+    if (req != NULL || resp != NULL) {
+        wc_clean(req, resp);
+    }
+
+    return ok;
 }
