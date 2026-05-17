@@ -17,6 +17,7 @@
 #include <sqlite3.h>
 #include <ulfius.h>
 #include <uuid/uuid.h>
+#include <sys/types.h>
 
 #include "agent.h"
 #include "usys_services.h"
@@ -64,7 +65,7 @@
 #define WIMC_EP_PROVIDER "/content/containers"
 #define WIMC_EP_TASKS    "/content/tasks"
 
-#define WIMC_EP_HUB_APPS    "v1/hub/apps"
+#define WIMC_EP_HUB_APPS    "v1/hub/app"
 #define WIMC_EP_AGENT_UPDATE "v1/agents"
 
 #define WIMC_MAX_NAME_LEN   256
@@ -78,6 +79,7 @@
 #define WIMC_ACTION_CANCEL_STR "cancel"
 
 #define WIMC_METHOD_CHUNK_STR "chunk"
+#define WIMC_METHOD_TARGZ_STR "tar.gz"
 #define WIMC_METHOD_TEST_STR  "test"
 
 #define WIMC_REQ_TYPE_AGENT_STR    "agent"
@@ -85,6 +87,10 @@
 
 #define MAX_AGENTS       10
 #define DEFAULT_INTERVAL 10
+
+#define WIMC_METHOD_PRIORITY_ENV "WIMC_METHOD_PRIORITY"
+#define WIMC_AGENT_PATH_ENV      "WIMC_AGENT_PATH"
+#define WIMC_AGENT_EXEC_NAME     "wimc-agent"
 
 #define TRUE  1
 #define FALSE 0
@@ -216,6 +222,22 @@ typedef struct tStats {
 } TStats;
 
 typedef struct {
+    char method[WIMC_MAX_NAME_LEN];
+    char service[WIMC_MAX_NAME_LEN];
+    char execPath[WIMC_MAX_PATH_LEN];
+    pid_t pid;
+    int port;
+    int running;
+    int restartCount;
+} ManagedAgent;
+
+typedef struct {
+    ManagedAgent agents[MAX_AGENTS];
+    int count;
+    pthread_mutex_t mutex;
+} AgentManager;
+
+typedef struct {
     int     servicePort;
     char    *dbFile;
     char    *hubURL;
@@ -223,6 +245,8 @@ typedef struct {
     int     maxAgents;
     Agent   **agents;
     WTasks  **tasks;
+
+    AgentManager    *agentManager;
     pthread_mutex_t taskMutex;
     pthread_mutex_t dbMutex;
 } Config;

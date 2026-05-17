@@ -7,7 +7,7 @@
 include ../../../config.mk
 
 TARGET_EXEC  = wimc.d
-AGENT_EXEC   = agent
+AGENT_EXEC   = wimc-agent
 VERSION_FILE = version.h
 
 ARTIFACTS = $(TARGET_EXEC) $(AGENT_EXEC)

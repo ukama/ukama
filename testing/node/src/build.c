@@ -50,22 +50,26 @@ int build_capp(Config *config) {
 		if (system(runMe) < 0) return FALSE;
 	}
 
-	if (build->from) {
-		sprintf(runMe, "%s cp-config %s %s", SCRIPT, build->from, build->to);
-		if (system(runMe) < 0) return FALSE;
-	}
+    if (build->from) {
+        sprintf(runMe, "%s cp-config %s %s", SCRIPT, build->from, build->to);
+        if (system(runMe) < 0) return FALSE;
+    }
 
-	if (!build->staticFlag) {
-	    sprintf(runMe, "%s libs %s %s_%s", SCRIPT, build->binFrom,
-				capp->name, capp->version);
-		if (system(runMe) < 0) return FALSE;
-	}
+    if (build->miscFrom && build->miscTo) {
+        sprintf(runMe, "%s mkdir %s_%s/%s", SCRIPT, capp->name,
+                capp->version, build->miscTo);
+        if (system(runMe) < 0) return FALSE;
+
+        sprintf(runMe, "%s cp %s %s_%s/%s", SCRIPT, build->miscFrom,
+                capp->name, capp->version, build->miscTo);
+        if (system(runMe) < 0) return FALSE;
+    }
 
     if (!build->staticFlag) {
-		/* set rpath for the executable */
-		sprintf(runMe, "%s patchelf %s", SCRIPT, build->binFrom);
-		if (system(runMe) < 0 ) return FALSE;
-	}
+        sprintf(runMe, "%s libs %s %s_%s", SCRIPT, build->binFrom,
+                capp->name, capp->version);
+        if (system(runMe) < 0) return FALSE;
+    }
 
     return TRUE;
 }

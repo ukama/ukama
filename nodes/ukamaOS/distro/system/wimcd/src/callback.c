@@ -8,6 +8,7 @@
 
 #include <curl/curl.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "callback.h"
@@ -34,7 +35,7 @@ extern int process_agent_update_request(WTasks **tasks,
                                         AgentReq *req,
                                         sqlite3 *db);
 
-bool deserialize_agent_request_update(Update **update, json_t *json);
+extern bool deserialize_agent_request_update(Update **update, json_t *json);
 
 static bool is_absolute_url(const char *url) {
 
@@ -89,6 +90,20 @@ static void free_agent_request_update(AgentReq *req) {
     usys_free(req->update);
 }
 
+static void create_hub_url_for_agent(char *hubURL, char *srcURL,
+                                     char *destURL) {
+
+    if (hubURL == NULL || srcURL == NULL || destURL == NULL) {
+        return;
+    }
+
+    if (!is_absolute_url(srcURL)) {
+        snprintf(destURL, WIMC_MAX_URL_LEN, "%s%s", hubURL, srcURL);
+    } else {
+        snprintf(destURL, WIMC_MAX_URL_LEN, "%s", srcURL);
+    }
+}
+
 static void create_hub_urls_for_agent(char *hubURL,
                                       char *srcURL, char *destURL,
                                       char *srcExtraURL, char *destExtraURL) {
@@ -98,18 +113,104 @@ static void create_hub_urls_for_agent(char *hubURL,
         return;
     }
 
-    if (!is_absolute_url(srcURL)) {
-        snprintf(destURL, WIMC_MAX_URL_LEN, "%s%s", hubURL, srcURL);
-    } else {
-        snprintf(destURL, WIMC_MAX_URL_LEN, "%s", srcURL);
+    create_hub_url_for_agent(hubURL, srcURL, destURL);
+    create_hub_url_for_agent(hubURL, srcExtraURL, destExtraURL);
+}
+
+static char *trim_priority_token(char *value) {
+
+    char *end;
+
+    if (value == NULL) {
+        return NULL;
     }
 
-    if (!is_absolute_url(srcExtraURL)) {
-        snprintf(destExtraURL, WIMC_MAX_URL_LEN, "%s%s", hubURL,
-                 srcExtraURL);
-    } else {
-        snprintf(destExtraURL, WIMC_MAX_URL_LEN, "%s", srcExtraURL);
+    while (*value == ' ' || *value == '\t' || *value == '\n' ||
+           *value == '\r') {
+        value++;
     }
+
+    end = value + strlen(value);
+    while (end > value && (*(end - 1) == ' ' || *(end - 1) == '\t' ||
+           *(end - 1) == '\n' || *(end - 1) == '\r')) {
+        end--;
+    }
+    *end = '\0';
+
+    return value;
+}
+
+static ArtifactFormat *find_artifact_format(Artifact *artifact,
+                                            const char *method) {
+
+    int i;
+
+    if (artifact == NULL || method == NULL || *method == '\0') {
+        return NULL;
+    }
+
+    for (i = 0; i < artifact->formatsCount; i++) {
+        if (artifact->formats[i] == NULL ||
+            artifact->formats[i]->type == NULL) {
+            continue;
+        }
+
+        if (strcmp(artifact->formats[i]->type, method) == 0) {
+            return artifact->formats[i];
+        }
+    }
+
+    return NULL;
+}
+
+static ArtifactFormat *select_artifact_format(Artifact *artifact) {
+
+    char priority[WIMC_MAX_ARGS_LEN];
+    char *savePtr;
+    char *token;
+    char *method;
+    const char *env;
+    ArtifactFormat *format;
+    int i;
+
+    if (artifact == NULL) {
+        return NULL;
+    }
+
+    env = getenv(WIMC_METHOD_PRIORITY_ENV);
+    if (env != NULL && *env != '\0') {
+        snprintf(priority, sizeof(priority), "%s", env);
+        savePtr = NULL;
+        token = strtok_r(priority, ",", &savePtr);
+
+        while (token != NULL) {
+            method = trim_priority_token(token);
+            format = find_artifact_format(artifact, method);
+
+            if (format != NULL && get_agent_port_by_method(format->type)) {
+                usys_log_debug("Selected WIMC method from priority: %s",
+                               format->type);
+                return format;
+            }
+
+            token = strtok_r(NULL, ",", &savePtr);
+        }
+    }
+
+    for (i = 0; i < artifact->formatsCount; i++) {
+        if (artifact->formats[i] == NULL ||
+            artifact->formats[i]->type == NULL) {
+            continue;
+        }
+
+        if (get_agent_port_by_method(artifact->formats[i]->type)) {
+            usys_log_debug("Selected WIMC method from hub order: %s",
+                           artifact->formats[i]->type);
+            return artifact->formats[i];
+        }
+    }
+
+    return NULL;
 }
 
 static json_t *status_json(char *name, char *tag, char *status,
@@ -271,7 +372,6 @@ int web_service_cb_post_app(const URequest *request,
     WimcReq *wimcRequest = NULL;
     ArtifactFormat *artifactFormat = NULL;
     json_t *jResponse;
-    int i;
 
     memset(&artifact, 0, sizeof(artifact));
     config = (Config *)data;
@@ -344,13 +444,7 @@ int web_service_cb_post_app(const URequest *request,
         return U_CALLBACK_CONTINUE;
     }
 
-    for (i = 0; i < artifact.formatsCount; i++) {
-        if (get_agent_port_by_method(artifact.formats[i]->type)) {
-            artifactFormat = artifact.formats[i];
-            break;
-        }
-    }
-
+    artifactFormat = select_artifact_format(&artifact);
     if (artifactFormat == NULL) {
         pthread_mutex_lock(&config->dbMutex);
         db_update_package_status(config->db, name, tag, NULL,
@@ -371,6 +465,24 @@ int web_service_cb_post_app(const URequest *request,
         create_hub_urls_for_agent((char *)hubURL, artifactFormat->url,
                                   indexURL, artifactFormat->extraInfo,
                                   storeURL);
+    } else if (strcmp(artifactFormat->type, WIMC_METHOD_TARGZ_STR) == 0) {
+        create_hub_url_for_agent((char *)hubURL, artifactFormat->url,
+                                 indexURL);
+        storeURL[0] = '\0';
+    } else {
+        pthread_mutex_lock(&config->dbMutex);
+        db_update_package_status(config->db, name, tag, NULL,
+                                 WIMC_STATUS_FAILED, NULL,
+                                 "unsupported package method");
+        pthread_mutex_unlock(&config->dbMutex);
+
+        free_artifact(&artifact);
+        free(hubOverride);
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_ServiceUnavailable,
+                                        HttpStatusStr(
+                                        HttpStatus_ServiceUnavailable));
+        return U_CALLBACK_CONTINUE;
     }
 
     create_wimc_request(&wimcRequest, name, tag, indexURL, storeURL,
@@ -492,19 +604,123 @@ int web_service_cb_put_app_stats_update(const struct _u_request *request,
     return U_CALLBACK_CONTINUE;
 }
 
+static json_t *agent_manager_status_json(AgentManager *mgr,
+                                         json_t **summaryOut) {
+
+    json_t *agents;
+    json_t *summary;
+    json_t *agentJson;
+    ManagedAgent *agent;
+    int configured;
+    int running;
+    int failed;
+    int i;
+
+    agents = json_array();
+    summary = json_object();
+
+    if (summaryOut != NULL) {
+        *summaryOut = summary;
+    }
+
+    if (agents == NULL || summary == NULL) {
+        if (agents != NULL) {
+            json_decref(agents);
+        }
+        if (summary != NULL) {
+            json_decref(summary);
+        }
+        return json_array();
+    }
+
+    configured = 0;
+    running = 0;
+    failed = 0;
+
+    if (mgr == NULL) {
+        json_object_set_new(summary, "configured", json_integer(0));
+        json_object_set_new(summary, "running", json_integer(0));
+        json_object_set_new(summary, "failed", json_integer(0));
+        return agents;
+    }
+
+    pthread_mutex_lock(&mgr->mutex);
+
+    configured = mgr->count;
+
+    for (i = 0; i < mgr->count; i++) {
+        agent = &mgr->agents[i];
+
+        if (agent->running) {
+            running++;
+        } else {
+            failed++;
+        }
+
+        agentJson = json_pack("{s:s, s:s, s:b, s:i, s:i, s:i, s:s}",
+                              "method", agent->method,
+                              "service", agent->service,
+                              "running", agent->running ? 1 : 0,
+                              "pid", (int)agent->pid,
+                              "port", agent->port,
+                              "restartCount", agent->restartCount,
+                              "execPath", agent->execPath);
+
+        if (agentJson != NULL) {
+            json_array_append_new(agents, agentJson);
+        }
+    }
+
+    pthread_mutex_unlock(&mgr->mutex);
+
+    json_object_set_new(summary, "configured", json_integer(configured));
+    json_object_set_new(summary, "running", json_integer(running));
+    json_object_set_new(summary, "failed", json_integer(failed));
+
+    return agents;
+}
+
 int web_service_cb_get_status(const URequest *request,
                               UResponse *response,
                               void *epConfig) {
 
     Config *config;
     json_t *json;
+    json_t *agents;
+    json_t *summary;
+
+    (void)request;
 
     config = (Config *)epConfig;
-    json = json_pack("{s:s, s:s, s:i, s:s}",
-                     "service", SERVICE_NAME,
-                     "status", "ok",
-                     "port", config ? config->servicePort : 0,
-                     "pkgDir", DEFAULT_APPS_PKGS_PATH);
+    summary = NULL;
+
+    json = json_object();
+    if (json == NULL) {
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_InternalServerError,
+                                        HttpStatusStr(
+                                        HttpStatus_InternalServerError));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    agents = agent_manager_status_json(config ? config->agentManager : NULL,
+                                       &summary);
+
+    json_object_set_new(json, "service", json_string(SERVICE_NAME));
+    json_object_set_new(json, "status", json_string("ok"));
+    json_object_set_new(json, "port",
+                        json_integer(config ? config->servicePort : 0));
+    json_object_set_new(json, "pkgDir",
+                        json_string(DEFAULT_APPS_PKGS_PATH));
+
+    if (summary != NULL) {
+        json_object_set_new(json, "agentsSummary", summary);
+    }
+
+    if (agents != NULL) {
+        json_object_set_new(json, "agents", agents);
+    }
+
     ulfius_set_json_body_response(response, HttpStatus_OK, json);
     json_decref(json);
 

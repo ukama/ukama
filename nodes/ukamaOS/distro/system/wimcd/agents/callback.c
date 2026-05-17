@@ -51,15 +51,25 @@ static void log_json(json_t *json) {
 static int validate_post_request(WimcReq *req) {
 
     WFetch *fetch;
+    WContent *content;
 
     if (req == NULL || req->fetch == NULL || req->fetch->content == NULL) {
         return USYS_FALSE;
     }
 
-    fetch = req->fetch;
+    fetch   = req->fetch;
+    content = fetch->content;
+
     if (!validate_url(fetch->cbURL) ||
-        !validate_url(fetch->content->indexURL) ||
-        !validate_url(fetch->content->storeURL)) {
+        !validate_url(content->indexURL)) {
+        return USYS_FALSE;
+    }
+
+    if (strcmp(content->method, WIMC_METHOD_TARGZ_STR) == 0) {
+        return USYS_TRUE;
+    }
+
+    if (!validate_url(content->storeURL)) {
         return USYS_FALSE;
     }
 

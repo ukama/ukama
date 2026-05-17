@@ -67,6 +67,16 @@
 #define JSON_FORMATS      "formats"
 #define JSON_CHUNKS       "chunks"
 
+#define JSON_HUB_VERSIONS     "versions"
+#define JSON_HUB_FORMAT_INFO  "FormatInfo"
+#define JSON_HUB_TYPE         "Type"
+#define JSON_HUB_URL          "Url"
+#define JSON_HUB_SIZE         "Size"
+#define JSON_HUB_CREATED_AT   "createdAt"
+#define JSON_HUB_EXTRA_INFO   "ExtraInfo"
+#define JSON_HUB_KEY          "key"
+#define JSON_HUB_VALUE        "value"
+
 bool serialize_wimc_request(WimcReq *request, json_t **json);
 int deserialize_agent_request(AgentReq **request, json_t *json);
 int deserialize_provider_response(ServiceURL **urls, int *counter,

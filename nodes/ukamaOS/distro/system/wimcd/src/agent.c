@@ -227,8 +227,8 @@ void create_wimc_request(WimcReq **request,
     content = NULL;
 
     *request = (WimcReq *)calloc(1, sizeof(WimcReq));
-    fetch = (WFetch *)calloc(1, sizeof(WFetch));
-    content = (WContent *)calloc(1, sizeof(WContent));
+    fetch    = (WFetch *)calloc(1, sizeof(WFetch));
+    content  = (WContent *)calloc(1, sizeof(WContent));
 
     if (*request == NULL || fetch == NULL || content == NULL) {
         usys_free(*request);
@@ -242,22 +242,24 @@ void create_wimc_request(WimcReq **request,
     uuid_generate(fetch->uuid);
     fetch->interval = interval;
 
-    content->name = name ? strdup(name) : NULL;
-    content->tag = tag ? strdup(tag) : NULL;
-    content->method = method ? strdup(method) : NULL;
+    content->name     = name ? strdup(name) : NULL;
+    content->tag      = tag ? strdup(tag) : NULL;
+    content->method   = method ? strdup(method) : NULL;
     content->indexURL = indexURL ? strdup(indexURL) : NULL;
-    content->storeURL = storeURL ? strdup(storeURL) : NULL;
+    content->storeURL = storeURL ? strdup(storeURL) : strdup("");
     content->expectedSizeBytes = 0;
 
-    if (content->name == NULL || content->tag == NULL ||
-        content->method == NULL || content->indexURL == NULL ||
+    if (content->name     == NULL ||
+        content->tag      == NULL ||
+        content->method   == NULL ||
+        content->indexURL == NULL ||
         content->storeURL == NULL) {
         cleanup_wimc_request(*request);
         *request = NULL;
         return;
     }
 
-    fetch->content = content;
+    fetch->content    = content;
     (*request)->fetch = fetch;
 }
 
@@ -363,9 +365,11 @@ bool communicate_with_agent(WimcReq *request,
 
     json_t *json;
     long agentRetCode;
+    WTasks *task;
 
     json = NULL;
     agentRetCode = 0;
+    task = NULL;
 
     if (request == NULL || request->fetch == NULL || config == NULL) {
         return USYS_FALSE;
@@ -376,27 +380,41 @@ bool communicate_with_agent(WimcReq *request,
         return USYS_FALSE;
     }
 
+    /*
+     * Add task before contacting the agent.
+     *
+     * The agent can accept the request and immediately call back with FETCH.
+     * If the task is inserted only after send_request_to_agent() returns,
+     * the callback can arrive first and WIMC will reject the update because
+     * it cannot find the UUID.
+     */
+    pthread_mutex_lock(&config->taskMutex);
+    add_to_tasks(config->tasks, request);
+    pthread_mutex_unlock(&config->taskMutex);
+
     if (send_request_to_agent(request->fetch->content->name,
                               request->fetch->content->tag,
                               agentMethod, json, &agentRetCode)) {
         if (agentRetCode == HttpStatus_OK) {
-            pthread_mutex_lock(&config->taskMutex);
-            add_to_tasks(config->tasks, request);
-            pthread_mutex_unlock(&config->taskMutex);
             usys_log_debug("Agent initiated to fetch capp");
-        } else {
-            usys_log_error("Agent returned an error: %ld", agentRetCode);
             json_decref(json);
-            return USYS_FALSE;
+            return USYS_TRUE;
         }
+
+        usys_log_error("Agent returned an error: %ld", agentRetCode);
     } else {
         usys_log_error("Error communicating with Agent");
-        json_decref(json);
-        return USYS_FALSE;
     }
 
+    pthread_mutex_lock(&config->taskMutex);
+    task = find_task_by_uuid(*config->tasks, request->fetch->uuid);
+    if (task != NULL) {
+        delete_from_tasks(config->tasks, task);
+    }
+    pthread_mutex_unlock(&config->taskMutex);
+
     json_decref(json);
-    return USYS_TRUE;
+    return USYS_FALSE;
 }
 
 void clear_agents(Agent *agent) {
