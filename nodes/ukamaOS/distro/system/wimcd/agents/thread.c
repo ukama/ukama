@@ -543,6 +543,8 @@ static int download_file(const char *url,
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(curl, CURLOPT_FAILONERROR, 0L);
 
+    usys_log_debug("Downloading file from URL: %s", url);
+
     res = curl_easy_perform(curl);
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
 
@@ -653,6 +655,8 @@ static int fetch_targz_package(WFetch *fetch, const char *uuidStr,
     if (!ok) {
         return -1;
     }
+
+    usys_log_debug("Download complete!");
 
     return pkg_publish_tar(fetch->content->name, fetch->content->tag,
                            tmpTar, publishedPath, publishedPathLen,

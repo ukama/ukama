@@ -437,9 +437,37 @@ int pkg_read_version_from_tar(const char *path, char *version,
     return 0;
 }
 
-int pkg_validate_tar(const char *name, const char *tag, const char *path,
-                     PackageInfo *info) {
+static const char *pkg_version_without_v(const char *version)
+{
+    if (version == NULL) {
+        return NULL;
+    }
 
+    if (version[0] == 'v' || version[0] == 'V') {
+        return version + 1;
+    }
+
+    return version;
+}
+
+static bool pkg_versions_match(const char *expected, const char *actual)
+{
+    const char *expectedNorm;
+    const char *actualNorm;
+
+    if (expected == NULL || actual == NULL) {
+        return false;
+    }
+
+    expectedNorm = pkg_version_without_v(expected);
+    actualNorm   = pkg_version_without_v(actual);
+
+    return strcmp(expectedNorm, actualNorm) == 0;
+}
+
+int pkg_validate_tar(const char *name, const char *tag, const char *path,
+                     PackageInfo *info)
+{
     char actualVersion[WIMC_MAX_NAME_LEN];
 
     if (info != NULL) {
@@ -480,13 +508,17 @@ int pkg_validate_tar(const char *name, const char *tag, const char *path,
         return 0;
     }
 
-    if (!pkg_is_alias_tag(tag) && strcmp(actualVersion, tag) != 0) {
+    if (!pkg_is_alias_tag(tag) && !pkg_versions_match(tag, actualVersion)) {
         if (info != NULL) {
             snprintf(info->actualVersion, sizeof(info->actualVersion),
                      "%s", actualVersion);
             snprintf(info->error, sizeof(info->error),
                      "VERSION does not match requested tag");
         }
+
+        usys_log_error("Version mismatch: Expected: %s Got: %s",
+                       tag, actualVersion);
+
         return 0;
     }
 
