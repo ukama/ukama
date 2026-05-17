@@ -712,7 +712,7 @@ int pkg_publish_tar(const char *name,
         return -1;
     }
 
-    if (publish_alias(name, tag, version, actualPath) != 0) {
+    if (publish_alias(name, tag, info.actualVersion, actualPath) != 0) {
         return -1;
     }
 
