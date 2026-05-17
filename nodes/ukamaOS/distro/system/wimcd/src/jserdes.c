@@ -36,18 +36,37 @@ void json_log(json_t *json) {
 
 bool serialize_wimc_request(WimcReq *req, json_t **json) {
 
-    WFetch *fetch=NULL;
-    WContent *content=NULL;
+    WFetch *fetch;
+    WContent *content;
+    char idStr[36 + 1];
 
-    if (req == NULL || req->fetch == NULL) return USYS_FALSE;
+    fetch   = NULL;
+    content = NULL;
+    memset(idStr, 0, sizeof(idStr));
+
+    if (req == NULL || req->fetch == NULL || json == NULL) {
+        return USYS_FALSE;
+    }
 
     fetch   = req->fetch;
     content = fetch->content;
-    if (content == NULL) return USYS_FALSE;
+    if (content == NULL) {
+        return USYS_FALSE;
+    }
+
+    if (uuid_is_null(fetch->uuid)) {
+        usys_log_error("Cannot serialize WIMC request with null uuid");
+        return USYS_FALSE;
+    }
 
     *json = json_object();
-    if (*json == NULL) return USYS_FALSE;
+    if (*json == NULL) {
+        return USYS_FALSE;
+    }
 
+    uuid_unparse(fetch->uuid, idStr);
+
+    json_object_set_new(*json, JSON_ID, json_string(idStr));
     json_object_set_new(*json, JSON_UPDATE_INTERVAL,
                         json_integer(fetch->interval));
     json_object_set_new(*json, JSON_NAME,

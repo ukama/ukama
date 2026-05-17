@@ -332,13 +332,20 @@ int pkg_read_version_from_dir(const char *dir, char *version,
     return 0;
 }
 
+/* VERSION
+ * ./VERSION
+ * some-top-dir/VERSION
+ */
 int pkg_read_version_from_tar(const char *path, char *version,
                               size_t versionLen) {
 
     FILE *fp;
     char cmd[PATH_MAX * 2];
-    char line[WIMC_MAX_NAME_LEN];
+    char extractCmd[PATH_MAX * 2];
+    char line[PATH_MAX];
+    char entry[PATH_MAX];
     char *value;
+    size_t len;
 
     if (path == NULL || version == NULL || versionLen == 0) {
         return -1;
@@ -348,9 +355,16 @@ int pkg_read_version_from_tar(const char *path, char *version,
         return -1;
     }
 
+    memset(cmd, 0, sizeof(cmd));
+    memset(extractCmd, 0, sizeof(extractCmd));
+    memset(line, 0, sizeof(line));
+    memset(entry, 0, sizeof(entry));
+
+    usys_log_debug("Trying to read VERSION from tgz: %s", path);
+
     if (snprintf(cmd, sizeof(cmd),
-                 "tar -xO -zf '%s' ./VERSION VERSION 2>/dev/null | "
-                 "head -n 1", path) >= (int)sizeof(cmd)) {
+                 "tar -tzf '%s' 2>/dev/null", path) >=
+        (int)sizeof(cmd)) {
         return -1;
     }
 
@@ -359,6 +373,52 @@ int pkg_read_version_from_tar(const char *path, char *version,
         return -1;
     }
 
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        value = trim_line(line);
+        if (value == NULL || *value == '\0') {
+            continue;
+        }
+
+        if (strchr(value, '\'') != NULL ||
+            strstr(value, "..") != NULL) {
+            continue;
+        }
+
+        if (strcmp(value, VERSION_FILE) == 0 ||
+            strcmp(value, "./" VERSION_FILE) == 0) {
+            snprintf(entry, sizeof(entry), "%s", value);
+            break;
+        }
+
+        len = strlen(value);
+        if (len > strlen("/" VERSION_FILE) &&
+            strcmp(value + len - strlen("/" VERSION_FILE),
+                   "/" VERSION_FILE) == 0) {
+            snprintf(entry, sizeof(entry), "%s", value);
+            break;
+        }
+    }
+
+    if (pclose(fp) == -1) {
+        return -1;
+    }
+
+    if (entry[0] == '\0') {
+        return -1;
+    }
+
+    if (snprintf(extractCmd, sizeof(extractCmd),
+                 "tar -xO -zf '%s' '%s' 2>/dev/null | head -n 1",
+                 path, entry) >= (int)sizeof(extractCmd)) {
+        return -1;
+    }
+
+    fp = popen(extractCmd, "r");
+    if (fp == NULL) {
+        return -1;
+    }
+
+    memset(line, 0, sizeof(line));
     if (fgets(line, sizeof(line), fp) == NULL) {
         pclose(fp);
         return -1;

@@ -113,18 +113,44 @@ int serialize_agent_request(AgentReq *request, json_t **json) {
 
 bool deserialize_wimc_request(WimcReq **request, json_t *json) {
 
-    json_t *jInterval = NULL;
-    json_t *jName     = NULL;
-    json_t *jTag      = NULL;
-    json_t *jMethod   = NULL;
-    json_t *jIndexURL = NULL;
-    json_t *jStoreURL = NULL;
-    json_t *jExpected = NULL;
-
+    json_t *jUUID;
+    json_t *jInterval;
+    json_t *jName;
+    json_t *jTag;
+    json_t *jMethod;
+    json_t *jIndexURL;
+    json_t *jStoreURL;
+    json_t *jExpected;
     WFetch *fetch;
+    WContent *content;
+    const char *uuidStr;
+    uuid_t parsedUuid;
 
-    if (!json) return USYS_FALSE;
+    jUUID     = NULL;
+    jInterval = NULL;
+    jName     = NULL;
+    jTag      = NULL;
+    jMethod   = NULL;
+    jIndexURL = NULL;
+    jStoreURL = NULL;
+    jExpected = NULL;
+    fetch     = NULL;
+    content   = NULL;
+    uuidStr   = NULL;
+    uuid_clear(parsedUuid);
 
+    if (request == NULL || json == NULL) {
+        return USYS_FALSE;
+    }
+
+    if (*request == NULL) {
+        *request = (WimcReq *)calloc(1, sizeof(WimcReq));
+        if (*request == NULL) {
+            return USYS_FALSE;
+        }
+    }
+
+    jUUID     = json_object_get(json, JSON_ID);
     jInterval = json_object_get(json, JSON_UPDATE_INTERVAL);
     jName     = json_object_get(json, JSON_NAME);
     jTag      = json_object_get(json, JSON_TAG);
@@ -133,35 +159,62 @@ bool deserialize_wimc_request(WimcReq **request, json_t *json) {
     jStoreURL = json_object_get(json, JSON_STORE_URL);
     jExpected = json_object_get(json, JSON_EXPECTED_SIZE);
 
-    if (!jInterval || !jName || !jTag || !jMethod ||
+    if (!jUUID || !jInterval || !jName || !jTag || !jMethod ||
         !jIndexURL || !jStoreURL) {
-        usys_log_error("Invalid json recevied from WIMC");
+        usys_log_error("Invalid json received from WIMC");
         json_log(json);
-
         return USYS_FALSE;
     }
 
-    (*request)->fetch = (WFetch *)calloc(1, sizeof(WFetch));
-    if ((*request)->fetch == NULL) {
+    uuidStr = json_string_value(jUUID);
+    if (uuidStr == NULL ||
+        uuid_parse(uuidStr, parsedUuid) != 0 ||
+        uuid_is_null(parsedUuid)) {
+        usys_log_error("Invalid or null WIMC request uuid: %s",
+                       uuidStr ? uuidStr : "");
         return USYS_FALSE;
     }
 
-    (*request)->fetch->content = (WContent *)calloc(1, sizeof(WContent));
-    if ((*request)->fetch->content == NULL) {
-        usys_free((*request)->fetch);
+    fetch = (WFetch *)calloc(1, sizeof(WFetch));
+    if (fetch == NULL) {
         return USYS_FALSE;
     }
 
-    fetch = (*request)->fetch;
+    content = (WContent *)calloc(1, sizeof(WContent));
+    if (content == NULL) {
+        usys_free(fetch);
+        return USYS_FALSE;
+    }
 
-    fetch->interval          = json_integer_value(jInterval);
-    fetch->content->name     = strdup(json_string_value(jName));
-    fetch->content->tag      = strdup(json_string_value(jTag));
-    fetch->content->method   = strdup(json_string_value(jMethod));
-    fetch->content->indexURL = strdup(json_string_value(jIndexURL));
-    fetch->content->storeURL = strdup(json_string_value(jStoreURL));
-    fetch->content->expectedSizeBytes = jExpected ?
-                                        json_integer_value(jExpected) : 0;
+    uuid_copy(fetch->uuid, parsedUuid);
+    fetch->interval = json_integer_value(jInterval);
+    fetch->content = content;
+
+    content->name     = strdup(json_string_value(jName));
+    content->tag      = strdup(json_string_value(jTag));
+    content->method   = strdup(json_string_value(jMethod));
+    content->indexURL = strdup(json_string_value(jIndexURL));
+    content->storeURL = strdup(json_string_value(jStoreURL));
+    content->expectedSizeBytes = jExpected ?
+                                 json_integer_value(jExpected) : 0;
+
+    if (content->name == NULL ||
+        content->tag == NULL ||
+        content->method == NULL ||
+        content->indexURL == NULL ||
+        content->storeURL == NULL) {
+        usys_free(content->name);
+        usys_free(content->tag);
+        usys_free(content->method);
+        usys_free(content->indexURL);
+        usys_free(content->storeURL);
+        usys_free(content);
+        usys_free(fetch);
+        return USYS_FALSE;
+    }
+
+    (*request)->type = WREQ_FETCH;
+    (*request)->fetch = fetch;
 
     return USYS_TRUE;
 }
