@@ -539,18 +539,42 @@ static int make_immutable_package(const char *dir, const char *tmpTar) {
     return run_wait(argv);
 }
 
-static int publish_alias(const char *name, const char *tag,
+static int publish_alias(const char *name,
+                         const char *tag,
+                         const char *actualVersion,
                          const char *actualPath) {
 
     char aliasPath[WIMC_MAX_PATH_LEN];
     const char *base;
 
-    if (strcmp(tag, WIMC_ALIAS_LATEST) != 0) {
+    if (name == NULL || tag == NULL || actualVersion == NULL ||
+        actualPath == NULL) {
+        return -1;
+    }
+
+    /*
+     * Create alias for:
+     *   latest -> actual version
+     *   1.0.1-abcdefgh -> v1.0.1-abcdefgh
+     *
+     * Do not create alias when requested tag and actual version are identical.
+     */
+    if (strcmp(tag, WIMC_ALIAS_LATEST) != 0 &&
+        strcmp(tag, actualVersion) == 0) {
+        return 0;
+    }
+
+    if (strcmp(tag, WIMC_ALIAS_LATEST) != 0 &&
+        !pkg_versions_match(tag, actualVersion)) {
         return 0;
     }
 
     if (pkg_path_for_tag(name, tag, aliasPath, sizeof(aliasPath)) != 0) {
         return -1;
+    }
+
+    if (strcmp(aliasPath, actualPath) == 0) {
+        return 0;
     }
 
     base = strrchr(actualPath, '/');
@@ -637,7 +661,7 @@ int pkg_publish_from_dir(const char *name, const char *tag,
         return -1;
     }
 
-    if (publish_alias(name, tag, actualPath) != 0) {
+    if (publish_alias(name, tag, version, actualPath) != 0) {
         return -1;
     }
 
@@ -688,7 +712,7 @@ int pkg_publish_tar(const char *name,
         return -1;
     }
 
-    if (publish_alias(name, tag, actualPath) != 0) {
+    if (publish_alias(name, tag, version, actualPath) != 0) {
         return -1;
     }
 
