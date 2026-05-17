@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <jansson.h>
+#include <uuid/uuid.h>
 
 #include "jserdes.h"
 #include "common/utils.h"
@@ -85,49 +86,116 @@ bool serialize_wimc_request(WimcReq *req, json_t **json) {
     return USYS_TRUE;
 }
 
+/*
+{
+  "agent_request": {
+    "type": "update",
+    "type_update": {
+      "uuid": "...",
+      "transfer_state": "done",
+      "void": "/ukama/apps/pkgs/example_v1.0.1-abcdefgh.tar.gz"
+    }
+  }
+}
+*/
 bool deserialize_agent_request_update(Update **update, json_t *json) {
 
-    json_t *jupdate, *obj;
+    json_t *agentReq;
+    json_t *jupdate;
+    json_t *obj;
+    const char *uuidStr;
+    const char *stateStr;
+    const char *voidStr;
+    Update *tmp;
 
-    jupdate = json_object_get(json, JSON_TYPE_UPDATE);
+    agentReq = NULL;
+    jupdate = NULL;
+    obj = NULL;
+    uuidStr = NULL;
+    stateStr = NULL;
+    voidStr = NULL;
+    tmp = NULL;
 
-    if (jupdate == NULL) return USYS_FALSE;
-
-    *update = (Update *)calloc(sizeof(Update), 1);
-    if (*update == NULL) return USYS_FALSE;
-
-    /* All updates must have the ID. */
-    obj = json_object_get(jupdate, JSON_ID);
-    if (obj == NULL) {
+    if (update == NULL || json == NULL) {
         return USYS_FALSE;
-    } else {
-        uuid_parse(json_string_value(obj), (*update)->uuid);
     }
 
-    /* Total data to be transfered as part of this fetch (in KB) */
+    *update = NULL;
+
+    agentReq = json_object_get(json, JSON_AGENT_REQUEST);
+    if (agentReq == NULL || !json_is_object(agentReq)) {
+        usys_log_error("agent update missing %s", JSON_AGENT_REQUEST);
+        return USYS_FALSE;
+    }
+
+    jupdate = json_object_get(agentReq, JSON_TYPE_UPDATE);
+    if (jupdate == NULL || !json_is_object(jupdate)) {
+        usys_log_error("agent update missing %s", JSON_TYPE_UPDATE);
+        return USYS_FALSE;
+    }
+
+    tmp = (Update *)calloc(1, sizeof(Update));
+    if (tmp == NULL) {
+        return USYS_FALSE;
+    }
+
+    obj = json_object_get(jupdate, JSON_ID);
+    if (obj == NULL || !json_is_string(obj)) {
+        usys_log_error("agent update missing uuid");
+        goto error;
+    }
+
+    uuidStr = json_string_value(obj);
+    if (uuidStr == NULL || uuid_parse(uuidStr, tmp->uuid) != 0) {
+        usys_log_error("agent update invalid uuid");
+        goto error;
+    }
+
     obj = json_object_get(jupdate, JSON_TOTAL_KBYTES);
-    if (obj) {
-        (*update)->totalKB = json_integer_value(obj);
+    if (obj != NULL && json_is_integer(obj)) {
+        tmp->totalKB = (int)json_integer_value(obj);
     }
 
-    /* Activity so far. */
     obj = json_object_get(jupdate, JSON_TRANSFER_KBYTES);
-    if (obj) {
-        (*update)->transferKB = json_integer_value(obj);
+    if (obj != NULL && json_is_integer(obj)) {
+        tmp->transferKB = (int)json_integer_value(obj);
     }
 
-    /* Activity state. */
     obj = json_object_get(jupdate, JSON_TRANSFER_STATE);
-    if (obj) {
-        (*update)->transferState =
-            convert_str_to_tx_state(json_string_value(obj));
-        obj = json_object_get(jupdate, JSON_VOID_STR);
-        if (obj) {
-            (*update)->voidStr = strdup(json_string_value(obj));
+    if (obj == NULL || !json_is_string(obj)) {
+        usys_log_error("agent update missing transfer_state");
+        goto error;
+    }
+
+    stateStr = json_string_value(obj);
+    if (stateStr == NULL || *stateStr == '\0') {
+        usys_log_error("agent update empty transfer_state");
+        goto error;
+    }
+
+    tmp->transferState = convert_str_to_tx_state((char *)stateStr);
+
+    obj = json_object_get(jupdate, JSON_VOID_STR);
+    if (obj != NULL && json_is_string(obj)) {
+        voidStr = json_string_value(obj);
+        if (voidStr != NULL && *voidStr != '\0') {
+            tmp->voidStr = strdup(voidStr);
+            if (tmp->voidStr == NULL) {
+                goto error;
+            }
         }
     }
 
+    *update = tmp;
     return USYS_TRUE;
+
+error:
+    if (tmp != NULL) {
+        free(tmp->voidStr);
+        free(tmp);
+    }
+
+    return USYS_FALSE;
 }
 
 int deserialize_provider_response(ServiceURL **urls, int *counter,

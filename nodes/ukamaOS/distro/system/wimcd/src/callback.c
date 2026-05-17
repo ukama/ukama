@@ -35,7 +35,7 @@ extern int process_agent_update_request(WTasks **tasks,
                                         AgentReq *req,
                                         sqlite3 *db);
 
-bool deserialize_agent_request_update(Update **update, json_t *json);
+extern bool deserialize_agent_request_update(Update **update, json_t *json);
 
 static bool is_absolute_url(const char *url) {
 
