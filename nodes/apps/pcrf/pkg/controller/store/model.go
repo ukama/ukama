@@ -13,26 +13,26 @@ import "github.com/ukama/ukama/systems/common/uuid"
 type PathType int
 
 const (
-	NONE    PathType = iota
-	RX_PATH          = 1
-	TX_PATH          = 2
+	NONE PathType = iota
+	RX_PATH
+	TX_PATH
 )
 
 type SessionState int
 type SessionSync int
 
 const (
-	SessionUnknown    SessionState = iota
-	SessionActive                  = 1
-	SessionTerminated              = 2 /* Done by timeout if no changes in RX and Tx for 600 sec */
-	SessionCompleted               = 3
+	SessionUnknown SessionState = iota
+	SessionActive
+	SessionTerminated /* Done by timeout if no changes in RX and Tx for 600 sec */
+	SessionCompleted
 )
 
 const (
 	SessionSyncUnknown   SessionSync = iota
-	SessionSyncPending               = 1 /* Session in progress */
-	SessionSyncReady                 = 2 /* Session completed now ready for sync */
-	SessionSyncCompleted             = 3 /* Sync is compeleted */
+	SessionSyncPending               /* Session in progress */
+	SessionSyncReady                 /* Session completed now ready for sync */
+	SessionSyncCompleted             /* Sync is compeleted */
 )
 
 type Subscriber struct {

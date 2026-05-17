@@ -40,7 +40,7 @@ sleep 1
 
 ovs-vsctl add-br ${BRIF}
 
-ovs-vsctl show 
+ovs-vsctl show
 
 sleep 1
 
@@ -64,7 +64,7 @@ iptables -t filter -L -n -v
 
 sleep 2
 
-docker kill cont1 
+docker kill cont1
 
 sleep 2
 
