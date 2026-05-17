@@ -236,46 +236,6 @@ static int wc_get_probe_port(App *app) {
     return port;
 }
 
-static bool wc_copy_file(const char *srcPath, const char *dstPath) {
-
-    FILE *src;
-    FILE *dst;
-    char buf[8192];
-    size_t n;
-
-    src = NULL;
-    dst = NULL;
-
-    if (!srcPath || !dstPath) return false;
-
-    src = fopen(srcPath, "rb");
-    if (!src) return false;
-
-    dst = fopen(dstPath, "wb");
-    if (!dst) {
-        fclose(src);
-        return false;
-    }
-
-    while ((n = fread(buf, 1, sizeof(buf), src)) > 0) {
-        if (fwrite(buf, 1, n, dst) != n) {
-            fclose(src);
-            fclose(dst);
-            return false;
-        }
-    }
-
-    if (ferror(src)) {
-        fclose(src);
-        fclose(dst);
-        return false;
-    }
-
-    fclose(src);
-    fclose(dst);
-    return true;
-}
-
 static bool wc_wait_for_available(Config *config,
                                   const char *appName,
                                   const char *tag,
@@ -288,21 +248,36 @@ static bool wc_wait_for_available(Config *config,
     UResponse *resp;
     char *body;
     time_t start;
+    int ret;
 
-    req   = NULL;
-    resp  = NULL;
-    body  = NULL;
+    req = NULL;
+    resp = NULL;
+    body = NULL;
     start = 0;
 
-    if (!config || !appName || !tag) {
+    if (pathOut != NULL) {
+        *pathOut = NULL;
+    }
+
+    if (versionOut != NULL) {
+        *versionOut = NULL;
+    }
+
+    if (config == NULL || appName == NULL || tag == NULL) {
         return false;
     }
 
-    snprintf(path,
-             sizeof(path),
-             "/v1/apps/%s/%s/status",
-             appName,
-             tag);
+    ret = snprintf(path,
+                   sizeof(path),
+                   "/v1/apps/%s/%s/status",
+                   appName,
+                   tag);
+    if (ret < 0 || (size_t)ret >= sizeof(path)) {
+        usys_log_error("wimc: status path too long %s:%s",
+                       appName,
+                       tag);
+        return false;
+    }
 
     if (!wc_build_url(url,
                       sizeof(url),
@@ -316,9 +291,8 @@ static bool wc_wait_for_available(Config *config,
     start = time(NULL);
 
     while (true) {
-
         req = wc_create_request(url, "GET", config->pingTimeoutSec);
-        if (!req) {
+        if (req == NULL) {
             return false;
         }
 
@@ -326,22 +300,21 @@ static bool wc_wait_for_available(Config *config,
         body = NULL;
 
         if (wc_send(req, &resp)) {
-
-            if (resp &&
+            if (resp != NULL &&
                 resp->status == HttpStatus_OK &&
-                resp->binary_body &&
+                resp->binary_body != NULL &&
                 resp->binary_body_length > 0) {
 
                 body = wc_copy_response_body(resp);
-                if (body) {
-
+                if (body != NULL) {
                     if (wc_json_status_is(body, "available")) {
                         if (pathOut != NULL) {
                             *pathOut = wc_json_dup_string(body, "path");
                         }
 
                         if (versionOut != NULL) {
-                            *versionOut = wc_json_dup_string(body, "actualVersion");
+                            *versionOut = wc_json_dup_string(body,
+                                                             "actualVersion");
                         }
 
                         free(body);
@@ -363,11 +336,9 @@ static bool wc_wait_for_available(Config *config,
                     free(body);
                     body = NULL;
                 }
-
-            } else if (resp &&
+            } else if (resp != NULL &&
                        (resp->status == HttpStatus_NotFound ||
                         resp->status == HttpStatus_InternalServerError)) {
-
                 wc_clean(req, resp);
                 return false;
             }
@@ -495,13 +466,11 @@ bool wc_fetch_package(Config *config,
                       const char *appName,
                       const char *tag,
                       const char *hub,
-                      const char *dstPath) {
+                      char **pathOut,
+                      char **versionOut) {
 
     char url[512];
     char path[256];
-    char srcPath[512];
-    const char *pkgsDir;
-    const char *pathTag;
     URequest *req;
     UResponse *resp;
     JsonObj *jreq;
@@ -521,7 +490,15 @@ bool wc_fetch_package(Config *config,
     actualVersion = NULL;
     ok = false;
 
-    if (config == NULL || appName == NULL || tag == NULL || dstPath == NULL) {
+    if (pathOut != NULL) {
+        *pathOut = NULL;
+    }
+
+    if (versionOut != NULL) {
+        *versionOut = NULL;
+    }
+
+    if (config == NULL || appName == NULL || tag == NULL) {
         return false;
     }
 
@@ -533,7 +510,7 @@ bool wc_fetch_package(Config *config,
                    appName,
                    tag);
     if (ret < 0 || (size_t)ret >= sizeof(path)) {
-        usys_log_error("wimc: request path too long for %s:%s",
+        usys_log_error("wimc: request path too long %s:%s",
                        appName,
                        tag);
         return false;
@@ -568,9 +545,9 @@ bool wc_fetch_package(Config *config,
         }
 
         if (json_object_set_new(jreq, "hub", jhub) != 0) {
-            usys_log_error("wimc: failed setting hub in json request");
             json_decref(jhub);
             jhub = NULL;
+            usys_log_error("wimc: failed setting hub in json request");
             goto done;
         }
         jhub = NULL;
@@ -599,7 +576,6 @@ bool wc_fetch_package(Config *config,
         resp->status != HttpStatus_Accepted &&
         resp->status != HttpStatus_NotModified &&
         resp->status != HttpStatus_Conflict) {
-
         usys_log_error("wimc: unexpected response http=%d", resp->status);
         goto done;
     }
@@ -619,62 +595,26 @@ bool wc_fetch_package(Config *config,
         goto done;
     }
 
-    pkgsDir = config->pkgsDir ? config->pkgsDir : "/ukama/apps/pkgs";
-
-    if (availablePath != NULL && *availablePath != '\0') {
-        ret = snprintf(srcPath, sizeof(srcPath), "%s", availablePath);
-    } else {
-        /*
-         * If wimc/agent validated the package VERSION and returned the real
-         * version, prefer it for fallback path construction. This handles:
-         *
-         *   requested tag: 1.0.1-abcdefgh
-         *   actual tag:    v1.0.1-abcdefgh
-         *
-         * The normal contract should still be: use availablePath from wimc.
-         */
-        pathTag = actualVersion && *actualVersion ? actualVersion : tag;
-
-        ret = snprintf(srcPath,
-                       sizeof(srcPath),
-                       "%s/%s_%s.tar.gz",
-                       pkgsDir,
-                       appName,
-                       pathTag);
-    }
-
-    if (ret < 0 || (size_t)ret >= sizeof(srcPath)) {
-        usys_log_error("wimc: source package path too long %s:%s",
+    if (availablePath == NULL || *availablePath == '\0') {
+        usys_log_error("wimc: package available but path missing %s:%s",
                        appName,
                        tag);
         goto done;
     }
 
-    /*
-     * In the normal starter/wimc contract both daemons share the same
-     * package cache. Do not copy the package onto itself.
-     */
-    if (strcmp(srcPath, dstPath) == 0) {
-        if (!wc_file_exists_non_empty(dstPath)) {
-            usys_log_error("wimc: package missing or empty %s", dstPath);
-            goto done;
-        }
-
-        ok = true;
+    if (!wc_file_exists_non_empty(availablePath)) {
+        usys_log_error("wimc: package missing or empty %s", availablePath);
         goto done;
     }
 
-    if (!wc_copy_file(srcPath, dstPath)) {
-        usys_log_error("wimc: failed copying package %s -> %s",
-                       srcPath,
-                       dstPath);
-        goto done;
+    if (pathOut != NULL) {
+        *pathOut = availablePath;
+        availablePath = NULL;
     }
 
-    if (!wc_file_exists_non_empty(dstPath)) {
-        usys_log_error("wimc: copied package is missing or empty %s",
-                       dstPath);
-        goto done;
+    if (versionOut != NULL) {
+        *versionOut = actualVersion;
+        actualVersion = NULL;
     }
 
     ok = true;
