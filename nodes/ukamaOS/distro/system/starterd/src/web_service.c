@@ -144,10 +144,14 @@ static bool ws_parse_update(json_t *j,
                             char **hubOut) {
 
     json_t *v;
+    json_t *item;
     const char *space;
     const char *name;
     const char *tag;
     const char *hub;
+    char *hubPayload;
+    size_t i;
+    size_t count;
 
     if (spaceOut) *spaceOut = NULL;
     if (nameOut)  *nameOut  = NULL;
@@ -167,17 +171,80 @@ static bool ws_parse_update(json_t *j,
     v = json_object_get(j, "tag");
     tag = json_is_string(v) ? json_string_value(v) : NULL;
 
-    v = json_object_get(j, "hub");
-    hub = json_is_string(v) ? json_string_value(v) : NULL;
-
     if (!space || !name || !tag) {
         return false;
     }
 
-    if (spaceOut)                *spaceOut = strdup(space);
-    if (nameOut)                 *nameOut  = strdup(name);
-    if (tagOut)                  *tagOut   = strdup(tag);
-    if (hubOut && hub && *hub)   *hubOut   = strdup(hub);
+    hubPayload = NULL;
+
+    v = json_object_get(j, "hub");
+    if (json_is_string(v)) {
+        hub = json_string_value(v);
+        if (hub && *hub) {
+            hubPayload = strdup(hub);
+            if (!hubPayload) {
+                return false;
+            }
+        }
+    } else if (json_is_array(v)) {
+        count = json_array_size(v);
+
+        if (count == 0 || count > 8) {
+            return false;
+        }
+
+        json_array_foreach(v, i, item) {
+            hub = json_is_string(item) ? json_string_value(item) : NULL;
+            if (!hub || !*hub) {
+                return false;
+            }
+        }
+
+        hubPayload = json_dumps(v, JSON_COMPACT);
+        if (!hubPayload) {
+            return false;
+        }
+    } else if (v != NULL) {
+        return false;
+    }
+
+    if (spaceOut) {
+        *spaceOut = strdup(space);
+        if (!*spaceOut) {
+            free(hubPayload);
+            return false;
+        }
+    }
+
+    if (nameOut) {
+        *nameOut = strdup(name);
+        if (!*nameOut) {
+            free(hubPayload);
+            free(spaceOut ? *spaceOut : NULL);
+            if (spaceOut) *spaceOut = NULL;
+            return false;
+        }
+    }
+
+    if (tagOut) {
+        *tagOut = strdup(tag);
+        if (!*tagOut) {
+            free(hubPayload);
+            free(spaceOut ? *spaceOut : NULL);
+            free(nameOut ?  *nameOut : NULL);
+            
+            if (spaceOut) *spaceOut = NULL;
+            if (nameOut)  *nameOut  = NULL;
+
+            return false;
+        }
+    }
+
+    if (hubOut) {
+        *hubOut = hubPayload;
+    } else {
+        free(hubPayload);
+    }
 
     return true;
 }
