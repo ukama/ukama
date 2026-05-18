@@ -73,6 +73,7 @@
 #define WIMC_MAX_ARGS_LEN   1024
 #define WIMC_MAX_URL_LEN    1024
 #define WIMC_MAX_ERR_STR    1024
+#define WIMC_MAX_HUBS       8
 
 #define WIMC_ACTION_FETCH_STR  "fetch"
 #define WIMC_ACTION_UPDATE_STR "update"

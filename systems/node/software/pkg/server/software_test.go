@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 	"time"
@@ -18,6 +19,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/node/software/mocks"
@@ -40,6 +42,11 @@ const (
 	testTagVersion       = "1.2.0"
 	testCurrentVersion   = "1.0.0"
 	testDesiredVersion   = "1.2.0"
+	testNodeGwIP         = "192.168.0.1"
+	testHubURL           = "http://192.168.0.1:8080"
+	testStarterPath      = "/starter/v1/update"
+	testSoftwareRoute    = "request.cloud.local.test-org.node.software.nodefeeder.publish"
+	testTarget           = "test-org...uk-sa2156-hnode-a1-xxxx"
 )
 
 const errMsgDB = "db error"
@@ -57,7 +64,7 @@ var (
 // ========== Helpers to build server with mocks ==========
 
 func newTestServer(sRepo *mocks.SoftwareRepo, appRepo *mocks.AppRepo, nodeRepo *mocks.NodeRepo, msgBus *mbmocks.MsgBusServiceClient) *SoftwareServer {
-	return NewSoftwareServer(testOrgName, sRepo, appRepo, nodeRepo, nil, msgBus, false, []string{"192.168.0.1"})
+	return NewSoftwareServer(testOrgName, sRepo, appRepo, nodeRepo, nil, msgBus, false, []string{testNodeGwIP})
 }
 
 func dbAppFixture() db.App {
@@ -73,6 +80,7 @@ func dbAppFixture() db.App {
 func dbSoftwareFixture() *db.Software {
 	releaseDate := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
 	now := time.Now()
+
 	return &db.Software{
 		Id:             uuid.NewV4(),
 		NodeId:         testNodeId,
@@ -86,6 +94,70 @@ func dbSoftwareFixture() *db.Software {
 		UpdatedAt:      now,
 		Status:         ukama.UpdateAvailable,
 	}
+}
+
+func matchSoftwareRoute() interface{} {
+	return mock.MatchedBy(func(route string) bool {
+		return route == testSoftwareRoute
+	})
+}
+
+func matchStarterUpdateMessage(t *testing.T) interface{} {
+	return mock.MatchedBy(func(msg interface{}) bool {
+		m, ok := msg.(*epb.NodeFeederMessage)
+		if !ok {
+			t.Logf("unexpected msgbus message type: %T", msg)
+			return false
+		}
+
+		if m.Target != testTarget {
+			t.Logf("unexpected target: got=%s want=%s", m.Target, testTarget)
+			return false
+		}
+
+		if m.HttpMethod != "POST" {
+			t.Logf("unexpected method: got=%s want=POST", m.HttpMethod)
+			return false
+		}
+
+		if m.Path != testStarterPath {
+			t.Logf("unexpected path: got=%s want=%s", m.Path, testStarterPath)
+			return false
+		}
+
+		if m.NodeId != testNodeIdNormalized {
+			t.Logf("unexpected node id: got=%s want=%s", m.NodeId, testNodeIdNormalized)
+			return false
+		}
+
+		var body map[string]string
+		if err := json.Unmarshal(m.Msg, &body); err != nil {
+			t.Logf("failed to decode message body: %v", err)
+			return false
+		}
+
+		if body["name"] != testAppNameForUpdate {
+			t.Logf("unexpected body.name: got=%s want=%s", body["name"], testAppNameForUpdate)
+			return false
+		}
+
+		if body["tag"] != testTagVersion {
+			t.Logf("unexpected body.tag: got=%s want=%s", body["tag"], testTagVersion)
+			return false
+		}
+
+		if body["hub"] != testHubURL {
+			t.Logf("unexpected body.hub: got=%s want=%s", body["hub"], testHubURL)
+			return false
+		}
+
+		if _, ok := body["host"]; ok {
+			t.Logf("body must not contain deprecated host field")
+			return false
+		}
+
+		return true
+	})
 }
 
 // ========== CreateApp ==========
@@ -118,9 +190,11 @@ func TestCreateApp(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
+
 		st, ok := status.FromError(err)
 		require.True(t, ok)
 		assert.Equal(t, codes.Internal, st.Code())
+
 		appRepo.AssertExpectations(t)
 	})
 }
@@ -145,6 +219,7 @@ func TestGetAppList(t *testing.T) {
 		assert.Equal(t, testAppSpace, resp.Apps[0].Space)
 		assert.Equal(t, testAppNotes, resp.Apps[0].Notes)
 		assert.Equal(t, testMetricsKeys, resp.Apps[0].MetricsKeys)
+
 		appRepo.AssertExpectations(t)
 	})
 
@@ -158,6 +233,7 @@ func TestGetAppList(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		assert.Empty(t, resp.Apps)
+
 		appRepo.AssertExpectations(t)
 	})
 
@@ -170,9 +246,11 @@ func TestGetAppList(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
+
 		st, ok := status.FromError(err)
 		require.True(t, ok)
 		assert.Equal(t, codes.Internal, st.Code())
+
 		appRepo.AssertExpectations(t)
 	})
 }
@@ -199,6 +277,7 @@ func TestGetSoftwareList(t *testing.T) {
 		assert.Equal(t, testAppNameForUpdate, resp.Software[0].Name)
 		assert.Equal(t, testCurrentVersion, resp.Software[0].CurrentVersion)
 		assert.Equal(t, testDesiredVersion, resp.Software[0].DesiredVersion)
+
 		sRepo.AssertExpectations(t)
 	})
 
@@ -209,6 +288,7 @@ func TestGetSoftwareList(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
+
 		st, ok := status.FromError(err)
 		require.True(t, ok)
 		assert.Equal(t, codes.InvalidArgument, st.Code())
@@ -224,9 +304,11 @@ func TestGetSoftwareList(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
+
 		st, ok := status.FromError(err)
 		require.True(t, ok)
 		assert.Equal(t, codes.Internal, st.Code())
+
 		sRepo.AssertExpectations(t)
 	})
 }
@@ -241,11 +323,16 @@ func TestUpdateSoftware(t *testing.T) {
 		sRepo := mocks.NewSoftwareRepo(t)
 		sRepo.On("List", testNodeIdNormalized, ukama.UpdateAvailable, testAppNameForUpdate).Return([]*db.Software{sw}, nil)
 		sRepo.On("Update", mock.MatchedBy(func(s *db.Software) bool {
-			return s.CurrentVersion == testTagVersion && s.Status == ukama.UpToDate &&
+			return s.CurrentVersion == testTagVersion &&
+				s.Status == ukama.UpToDate &&
 				len(s.ChangeLogs) > 0
 		})).Return(nil)
+
 		msgBus := mbmocks.NewMsgBusServiceClient(t)
-		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil)
+		msgBus.On("PublishRequest",
+			matchSoftwareRoute(),
+			matchStarterUpdateMessage(t),
+		).Return(nil)
 
 		s := newTestServer(sRepo, mocks.NewAppRepo(t), mocks.NewNodeRepo(t), msgBus)
 		req := &pb.UpdateSoftwareRequest{NodeId: testNodeId, Name: testAppNameForUpdate, Tag: testTagVersion}
@@ -254,6 +341,7 @@ func TestUpdateSoftware(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		assert.Equal(t, successUpdateMsg, resp.Message)
+
 		sRepo.AssertExpectations(t)
 		msgBus.AssertExpectations(t)
 	})
@@ -265,6 +353,7 @@ func TestUpdateSoftware(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
+
 		st, ok := status.FromError(err)
 		require.True(t, ok)
 		assert.Equal(t, codes.InvalidArgument, st.Code())
@@ -282,6 +371,7 @@ func TestUpdateSoftware(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		assert.Equal(t, invalidVersionMsg, resp.Message)
+
 		sRepo.AssertExpectations(t)
 	})
 
@@ -295,15 +385,18 @@ func TestUpdateSoftware(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
+
 		st, ok := status.FromError(err)
 		require.True(t, ok)
 		assert.Equal(t, codes.NotFound, st.Code())
+
 		sRepo.AssertExpectations(t)
 	})
 
 	t.Run("version_mismatch", func(t *testing.T) {
 		sw := dbSoftwareFixture()
 		sw.DesiredVersion = "2.0.0"
+
 		sRepo := mocks.NewSoftwareRepo(t)
 		sRepo.On("List", testNodeIdNormalized, ukama.UpdateAvailable, testAppNameForUpdate).Return([]*db.Software{sw}, nil)
 
@@ -314,12 +407,14 @@ func TestUpdateSoftware(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		assert.Equal(t, invalidVersionMsg, resp.Message)
+
 		sRepo.AssertExpectations(t)
 	})
 
 	t.Run("already_up_to_date", func(t *testing.T) {
 		sw := dbSoftwareFixture()
 		sw.CurrentVersion = testTagVersion
+
 		sRepo := mocks.NewSoftwareRepo(t)
 		sRepo.On("List", testNodeIdNormalized, ukama.UpdateAvailable, testAppNameForUpdate).Return([]*db.Software{sw}, nil)
 
@@ -330,6 +425,7 @@ func TestUpdateSoftware(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		assert.Equal(t, alreadyUpToDateMsg, resp.Message)
+
 		sRepo.AssertExpectations(t)
 	})
 
@@ -337,8 +433,12 @@ func TestUpdateSoftware(t *testing.T) {
 		sw := dbSoftwareFixture()
 		sRepo := mocks.NewSoftwareRepo(t)
 		sRepo.On("List", testNodeIdNormalized, ukama.UpdateAvailable, testAppNameForUpdate).Return([]*db.Software{sw}, nil)
+
 		msgBus := mbmocks.NewMsgBusServiceClient(t)
-		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(errors.New("publish failed"))
+		msgBus.On("PublishRequest",
+			matchSoftwareRoute(),
+			matchStarterUpdateMessage(t),
+		).Return(errors.New("publish failed"))
 
 		s := newTestServer(sRepo, mocks.NewAppRepo(t), mocks.NewNodeRepo(t), msgBus)
 		req := &pb.UpdateSoftwareRequest{NodeId: testNodeId, Name: testAppNameForUpdate, Tag: testTagVersion}
@@ -346,9 +446,11 @@ func TestUpdateSoftware(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
+
 		st, ok := status.FromError(err)
 		require.True(t, ok)
 		assert.Equal(t, codes.Internal, st.Code())
+
 		sRepo.AssertExpectations(t)
 		msgBus.AssertExpectations(t)
 	})
@@ -358,8 +460,12 @@ func TestUpdateSoftware(t *testing.T) {
 		sRepo := mocks.NewSoftwareRepo(t)
 		sRepo.On("List", testNodeIdNormalized, ukama.UpdateAvailable, testAppNameForUpdate).Return([]*db.Software{sw}, nil)
 		sRepo.On("Update", mock.Anything).Return(errors.New("db update failed"))
+
 		msgBus := mbmocks.NewMsgBusServiceClient(t)
-		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil)
+		msgBus.On("PublishRequest",
+			matchSoftwareRoute(),
+			matchStarterUpdateMessage(t),
+		).Return(nil)
 
 		s := newTestServer(sRepo, mocks.NewAppRepo(t), mocks.NewNodeRepo(t), msgBus)
 		req := &pb.UpdateSoftwareRequest{NodeId: testNodeId, Name: testAppNameForUpdate, Tag: testTagVersion}
@@ -367,9 +473,11 @@ func TestUpdateSoftware(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
+
 		st, ok := status.FromError(err)
 		require.True(t, ok)
 		assert.Equal(t, codes.Internal, st.Code())
+
 		sRepo.AssertExpectations(t)
 		msgBus.AssertExpectations(t)
 	})

@@ -569,10 +569,27 @@ bool wc_fetch_package(Config *config,
             goto done;
         }
 
-        jhub = json_string(hub);
-        if (jhub == NULL) {
-            usys_log_error("wimc: failed creating hub json string");
-            goto done;
+        if (hub[0] == '[') {
+            json_error_t jerr;
+
+            memset(&jerr, 0, sizeof(jerr));
+
+            jhub = json_loads(hub, 0, &jerr);
+            if (jhub == NULL || !json_is_array(jhub)) {
+                if (jhub != NULL) {
+                    json_decref(jhub);
+                    jhub = NULL;
+                }
+
+                usys_log_error("wimc: invalid hub array payload");
+                goto done;
+            }
+        } else {
+            jhub = json_string(hub);
+            if (jhub == NULL) {
+                usys_log_error("wimc: failed creating hub json string");
+                goto done;
+            }
         }
 
         if (json_object_set_new(jreq, "hub", jhub) != 0) {
