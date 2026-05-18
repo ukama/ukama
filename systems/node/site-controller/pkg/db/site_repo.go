@@ -19,6 +19,7 @@ import (
 type SiteRepo interface {
 	Get(siteID string) (*Site, error)
 	Ensure(siteID string) error
+	List() ([]Site, error)
 }
 
 type siteRepo struct{ db sql.Db }
@@ -39,6 +40,12 @@ func (r *siteRepo) Get(siteID string) (*Site, error) {
 
 func (r *siteRepo) Ensure(siteID string) error {
 	return ensureSite(r.db.GetGormDb(), siteID)
+}
+
+func (r *siteRepo) List() ([]Site, error) {
+	var sites []Site
+	err := r.db.GetGormDb().Find(&sites).Error
+	return sites, err
 }
 
 // ensureSite ensures a registry row exists for siteID before inserting child rows.

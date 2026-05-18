@@ -21,10 +21,12 @@ type Config struct {
 	Queue            	*uconf.Queue     `default:"{}"`
 	Timeout          	time.Duration    `default:"20s"`
 	MsgClient        	*uconf.MsgClient `default:"{}"`
-	HealthHost       	string 			 `default:"health:9090"`
-	OrgName          	string
-	Service          	*uconf.Service
-	Http             	HttpServices
+	HealthHost          string        `default:"health:9090"`
+	OrgName             string
+	Service             *uconf.Service
+	Http                HttpServices
+	ReconcileInterval   time.Duration `default:"30s"`
+	ReconcileMaxRetries int           `default:"3"`
 }
 type HttpServices struct {
 	InitClient    string `default:"api-gateway-init:8080"`

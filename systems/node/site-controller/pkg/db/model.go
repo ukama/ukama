@@ -51,13 +51,31 @@ func (m *SiteIntent) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
+const (
+	IntentFlightStatusPending   = "pending"
+	IntentFlightStatusSucceeded = "succeeded"
+	IntentFlightStatusFailed    = "failed"
+	IntentFlightStatusTimeout   = "timeout"
+	IntentFlightStatusExpired   = "expired"
+)
+
 type SiteIntentFlight struct {
 	ID           uuid.UUID `gorm:"type:uuid;primaryKey;column:id" json:"id"`
 	SiteIntentID uuid.UUID `gorm:"column:site_intent_id;not null;uniqueIndex" json:"site_intent_id"`
-	IntentFlight string     `gorm:"column:intent_flight" json:"intent_flight"`
-	CreatedAt    time.Time  `gorm:"column:created_at" json:"created_at"`
-	UpdatedAt    time.Time  `gorm:"column:updated_at" json:"updated_at"`
-	ExpiresAt    time.Time  `gorm:"column:expires_at" json:"expires_at"`
+	Status       string    `gorm:"column:status;index:idx_site_intent_flight_status" json:"status" default:"pending"`
+	RetryCount   int       `gorm:"column:retry_count" json:"retry_count" default:"0"`
+	ExpiresAt    time.Time `gorm:"column:expires_at" json:"expires_at"`
+	CreatedAt    time.Time `gorm:"column:created_at" json:"created_at"`
+	UpdatedAt    time.Time `gorm:"column:updated_at" json:"updated_at"`
+}
+
+func (f *SiteIntentFlight) IsTerminal() bool {
+	switch f.Status {
+	case IntentFlightStatusSucceeded, IntentFlightStatusFailed, IntentFlightStatusTimeout, IntentFlightStatusExpired:
+		return true
+	default:
+		return false
+	}
 }
 
 func (SiteIntentFlight) TableName() string { return "site_intent_flights" }

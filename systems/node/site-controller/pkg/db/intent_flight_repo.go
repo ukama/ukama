@@ -49,6 +49,11 @@ func (r *intentFlightRepo) Upsert(m *SiteIntentFlight) error {
 	gdb := r.db.GetGormDb()
 	now := time.Now().UTC()
 
+	status := m.Status
+	if status == "" {
+		status = IntentFlightStatusPending
+	}
+
 	var existing SiteIntentFlight
 	err := gdb.Where("site_intent_id = ?", m.SiteIntentID).First(&existing).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -58,6 +63,7 @@ func (r *intentFlightRepo) Upsert(m *SiteIntentFlight) error {
 		if m.CreatedAt.IsZero() {
 			m.CreatedAt = now
 		}
+		m.Status = status
 		m.UpdatedAt = now
 		return gdb.Create(m).Error
 	}
@@ -65,8 +71,18 @@ func (r *intentFlightRepo) Upsert(m *SiteIntentFlight) error {
 		return err
 	}
 
-	existing.IntentFlight = m.IntentFlight
+	existing.Status = status
+	existing.RetryCount = m.RetryCount
 	existing.ExpiresAt = m.ExpiresAt
 	existing.UpdatedAt = now
-	return gdb.Save(&existing).Error
+	if err := gdb.Save(&existing).Error; err != nil {
+		return err
+	}
+	m.ID = existing.ID
+	m.Status = existing.Status
+	m.RetryCount = existing.RetryCount
+	m.ExpiresAt = existing.ExpiresAt
+	m.CreatedAt = existing.CreatedAt
+	m.UpdatedAt = existing.UpdatedAt
+	return nil
 }
