@@ -25,10 +25,6 @@ var defaultSiteIntent = db.SiteIntent{
 	RequestedBy:    "system",
 }
 
-var defaultSiteIntentFlight = db.SiteIntentFlight{
-	IntentFlight: "pending",
-}
-
 var defaultSiteState = db.SiteState{
 	PowerState:   "unknown",
 	ServiceState: "unknown",
@@ -115,6 +111,7 @@ func (c *SiteControllerEventServer) handleAddSite(ctx context.Context, msg *epb.
 		return err
 	}
 
+	expiresAt := time.Now().UTC().Add(time.Hour)
 	intent := &db.SiteIntent{
 		SiteID:         msg.SiteId,
 		DesiredService: defaultSiteIntent.DesiredService,
@@ -128,8 +125,9 @@ func (c *SiteControllerEventServer) handleAddSite(ctx context.Context, msg *epb.
 
 	flight := &db.SiteIntentFlight{
 		SiteIntentID: intent.ID,
-		IntentFlight: defaultSiteIntentFlight.IntentFlight,
-		ExpiresAt:    time.Now().UTC().Add(time.Hour),
+		Status:       db.IntentFlightStatusPending,
+		RetryCount:   0,
+		ExpiresAt:    expiresAt,
 	}
 	if err := c.flights.Upsert(flight); err != nil {
 		return err

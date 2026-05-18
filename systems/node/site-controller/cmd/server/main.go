@@ -8,6 +8,7 @@
 package main
 
 import (
+	"context"
 	"os"
 
 	"github.com/num30/config"
@@ -16,8 +17,8 @@ import (
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-
 	"github.com/ukama/ukama/systems/common/rest/client"
+
 	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/sql"
@@ -45,6 +46,7 @@ func main() {
 	runGrpcServer(gormdb)
 	waitForExit()
 }
+
 func initConfig() {
 	svcConf = pkg.NewConfig(pkg.ServiceName)
 	if err := config.NewConfReader(pkg.ServiceName).Read(svcConf); err != nil {
@@ -66,20 +68,23 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-	instanceId := os.Getenv("POD_NAME")
-	if instanceId == "" {
-		instanceId = uuid.NewV4().String()
+	instanceID := os.Getenv("POD_NAME")
+	if instanceID == "" {
+		instanceID = uuid.NewV4().String()
 	}
-	_ = instanceId
 
-	mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
-
-	log.Debugf("MessageBus Client is %+v", mbClient)
+	mbClient := mb.NewMsgBusClient(
+		svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName, pkg.ServiceName, instanceID,
+		svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange,
+		svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount,
+		svcConf.MsgClient.ListenerRoutes,
+	)
 
 	cmdAdapter, err := adapters.NewControllerAdapter(svcConf.Service.Host, svcConf.Timeout)
 	if err != nil {
 		log.Fatalf("failed to connect controller: %v", err)
 	}
+
 	intentRepo := db.NewIntentRepo(gormdb)
 	stateRepo := db.NewStateRepo(gormdb)
 	portMapRepo := db.NewPortMapRepo(gormdb)
@@ -87,7 +92,19 @@ func runGrpcServer(gormdb sql.Db) {
 	siteRepo := db.NewSiteRepo(gormdb)
 	flightRepo := db.NewIntentFlightRepo(gormdb)
 
-	r := reconciler.New(intentRepo, stateRepo, portMapRepo, componentRepo, adapters.NewTowerAdapter(cmdAdapter), adapters.NewAmplifierAdapter(cmdAdapter), adapters.NewCNodeAdapter(cmdAdapter))
+	r := reconciler.New(
+		intentRepo,
+		stateRepo,
+		flightRepo,
+		portMapRepo,
+		componentRepo,
+		adapters.NewTowerAdapter(cmdAdapter),
+		adapters.NewAmplifierAdapter(cmdAdapter),
+		adapters.NewCNodeAdapter(cmdAdapter),
+		svcConf.ReconcileInterval,
+		svcConf.ReconcileMaxRetries,
+	)
+	reconciler.NewWorker(r, siteRepo, svcConf.ReconcileInterval).Start(context.Background())
 
 	regUrl, err := ic.GetHostUrl(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode)),
 		ic.CreateHostString(svcConf.OrgName, registrySystemName), &svcConf.OrgName)

@@ -47,7 +47,7 @@ func (s *SiteControllerServer) SetSite(ctx context.Context, req *pb.SetSiteReque
 	if err != nil {
 		return nil, mapErr(err)
 	}
-	return &pb.SetSiteResponse{State: derivedStateToPB(st, intent)}, nil
+	return &pb.SetSiteResponse{State: siteStateToPB(st, intent)}, nil
 }
 
 func (s *SiteControllerServer) SetService(ctx context.Context, req *pb.SetServiceRequest) (*pb.SetServiceResponse, error) {
@@ -59,7 +59,7 @@ func (s *SiteControllerServer) SetService(ctx context.Context, req *pb.SetServic
 	if err != nil {
 		return nil, mapErr(err)
 	}
-	return &pb.SetServiceResponse{State: derivedStateToPB(st, intent)}, nil
+	return &pb.SetServiceResponse{State: siteStateToPB(st, intent)}, nil
 }
 
 func (s *SiteControllerServer) SetRadio(ctx context.Context, req *pb.SetRadioRequest) (*pb.SetRadioResponse, error) {
@@ -71,7 +71,7 @@ func (s *SiteControllerServer) SetRadio(ctx context.Context, req *pb.SetRadioReq
 	if err != nil {
 		return nil, mapErr(err)
 	}
-	return &pb.SetRadioResponse{State: derivedStateToPB(st, intent)}, nil
+	return &pb.SetRadioResponse{State: siteStateToPB(st, intent)}, nil
 }
 
 func (s *SiteControllerServer) GetSiteState(ctx context.Context, req *pb.GetSiteStateRequest) (*pb.GetSiteStateResponse, error) {
@@ -114,8 +114,7 @@ func (s *SiteControllerServer) GetPortMap(ctx context.Context, req *pb.GetPortMa
 }
 
 func (s *SiteControllerServer) ApplySwitchPolicy(ctx context.Context, req *pb.ApplySwitchPolicyRequest) (*pb.ApplySwitchPolicyResponse, error) {
-	err := s.reconciler.ApplySwitchPolicy(ctx, req.SiteId)
-	if err != nil {
+	if err := s.reconciler.ApplySwitchPolicy(ctx, req.SiteId); err != nil {
 		return nil, mapErr(err)
 	}
 	return &pb.ApplySwitchPolicyResponse{Applied: true}, nil
@@ -143,7 +142,7 @@ func intentToPB(in *db.SiteIntent) *pb.SiteIntentMsg {
 	}
 }
 
-func derivedStateToPB(st *db.SiteState, intent *db.SiteIntent) *pb.DerivedStateMsg {
+func siteStateToPB(st *db.SiteState, intent *db.SiteIntent) *pb.DerivedStateMsg {
 	if st == nil {
 		return nil
 	}
@@ -169,7 +168,7 @@ func snapshotToPB(s *reconciler.SiteSnapshot) *pb.SiteSnapshot {
 	}
 	return &pb.SiteSnapshot{
 		Intent:         intentToPB(s.Intent),
-		Derived:        derivedStateToPB(s.DerivedState, s.Intent),
+		Derived:        siteStateToPB(s.ObservedState, s.Intent),
 		ComponentsJson: s.ComponentsJSON,
 		Ports:          ports,
 	}

@@ -12,7 +12,7 @@ import (
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
-	pbhealth "github.com/ukama/ukama/systems/node/health/pb/gen"
+	pb "github.com/ukama/ukama/systems/node/health/pb/gen"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -20,11 +20,11 @@ import (
 
 
 type HealthClientProvider interface {
-	GetClient() (pbhealth.HealthServiceClient, error)
+	GetClient() (pb.HealthServiceClient, error)
 }
 
 type healthClientProvider struct {
-	healthService pbhealth.HealthServiceClient
+	healthService pb.HealthServiceClient
 	healthHost    string
 }
 
@@ -32,7 +32,7 @@ func NewHealthClientProvider(healthHost string) HealthClientProvider {
 	return &healthClientProvider{healthHost: healthHost}
 }
 
-func (o *healthClientProvider) GetClient() (pbhealth.HealthServiceClient, error) {
+func (o *healthClientProvider) GetClient() (pb.HealthServiceClient, error) {
 	if o.healthService == nil {
 		var conn *grpc.ClientConn
 
@@ -42,10 +42,11 @@ func (o *healthClientProvider) GetClient() (pbhealth.HealthServiceClient, error)
 			grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			log.Errorf("Failed to connect to Health service %s. Error: %v", o.healthHost, err)
+
 			return nil, fmt.Errorf("failed to connect to remote health service: %w", err)
 		}
 
-		o.healthService = pbhealth.NewHealthServiceClient(conn)
+		o.healthService = pb.NewHealthServiceClient(conn)
 	}
 
 	return o.healthService, nil

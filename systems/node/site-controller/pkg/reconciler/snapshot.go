@@ -12,10 +12,10 @@ import (
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/db"
 )
 
-// SiteSnapshot aggregates intent, derived state, component JSON, and static port map (API.md).
+// SiteSnapshot aggregates intent, observed site state, component JSON, and static port map.
 type SiteSnapshot struct {
-	Intent         *db.SiteIntent
-	DerivedState   *db.SiteState
-	ComponentsJSON string
-	Ports          []db.SitePortMap
+	Intent          *db.SiteIntent
+	ObservedState   *db.SiteState
+	ComponentsJSON  string
+	Ports           []db.SitePortMap
 }
