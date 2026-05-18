@@ -27,18 +27,19 @@ static const char* app_state_str(AppState st) {
 static const char* app_reason_str(AppReason reason) {
 
     switch (reason) {
-    case APP_REASON_NONE:           return "none";
-    case APP_REASON_STARTED:        return "started";
-    case APP_REASON_EXITED:         return "exited";
-    case APP_REASON_TERMINATED:     return "terminated";
-    case APP_REASON_KILLED:         return "killed";
-    case APP_REASON_CRASHED:        return "crashed";
-    case APP_REASON_UPDATE:         return "update";
-    case APP_REASON_RESTART:        return "restart";
-    case APP_REASON_START_FAILED:   return "start_failed";
-    case APP_REASON_RESTART_FAILED: return "restart_failed";
-    case APP_REASON_UNKNOWN:        return "unknown";
-    default:                        return "unknown";
+    case APP_REASON_NONE:            return "none";
+    case APP_REASON_STARTED:         return "started";
+    case APP_REASON_EXITED:          return "exited";
+    case APP_REASON_TERMINATED:      return "terminated";
+    case APP_REASON_KILLED:          return "killed";
+    case APP_REASON_CRASHED:         return "crashed";
+    case APP_REASON_UPDATE:          return "update";
+    case APP_REASON_RESTART:         return "restart";
+    case APP_REASON_START_FAILED:    return "start_failed";
+    case APP_REASON_RESTART_FAILED:  return "restart_failed";
+    case APP_REASON_PACKAGE_MISSING: return "package_missing";
+    case APP_REASON_UNKNOWN:         return "unknown";
+    default:                         return "unknown";
     }
 }
 
@@ -49,6 +50,7 @@ static const char* install_state_str(InstallState st) {
     case INSTALL_STATE_FETCHING: return "fetching";
     case INSTALL_STATE_STAGING:  return "staging";
     case INSTALL_STATE_SWITCHED: return "switched";
+    case INSTALL_STATE_PENDING:  return "pending";
     case INSTALL_STATE_FAILED:   return "failed";
     default:                     return "unknown";
     }

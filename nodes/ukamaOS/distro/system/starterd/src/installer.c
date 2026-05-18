@@ -198,6 +198,25 @@ static bool inst_path_exists(const char *p) {
     return stat(p, &st) == 0;
 }
 
+static bool inst_file_exists_non_empty(const char *p) {
+
+    struct stat st;
+
+    if (!p || !*p) {
+        return false;
+    }
+
+    if (stat(p, &st) != 0) {
+        return false;
+    }
+
+    if (!S_ISREG(st.st_mode)) {
+        return false;
+    }
+
+    return st.st_size > 0;
+}
+
 static char* inst_app_dir(Config *config, App *app) {
 
     char *p;
@@ -257,6 +276,253 @@ static bool inst_write_symlink_atomic(const char *linkPath, const char *target) 
     return true;
 }
 
+static bool inst_make_pkg_path(Config *config,
+                               App *app,
+                               const char *tag,
+                               char *path,
+                               size_t pathLen) {
+
+    int ret;
+
+    if (!config || !app || !tag || !path || pathLen == 0) {
+        return false;
+    }
+
+    ret = snprintf(path,
+                   pathLen,
+                   "%s/%s_%s.tar.gz",
+                   config->pkgsDir,
+                   app->name,
+                   tag);
+
+    return ret > 0 && (size_t)ret < pathLen;
+}
+
+static bool inst_try_local_pkg(Config *config,
+                               App *app,
+                               const char *tag,
+                               char **pathOut) {
+
+    char path[512];
+
+    if (!config || !app || !tag || !pathOut) {
+        return false;
+    }
+
+    if (!inst_make_pkg_path(config, app, tag, path, sizeof(path))) {
+        return false;
+    }
+
+    if (!inst_file_exists_non_empty(path)) {
+        return false;
+    }
+
+    *pathOut = strdup(path);
+    return *pathOut != NULL;
+}
+
+static bool inst_find_local_package(Config *config,
+                                    App *app,
+                                    const char *requestedTag,
+                                    char **pathOut) {
+
+    char altTag[256];
+
+    if (pathOut != NULL) {
+        *pathOut = NULL;
+    }
+
+    if (!config || !app || !requestedTag || !pathOut) {
+        return false;
+    }
+
+    /*
+     * Primary form:
+     *   /ukama/apps/pkgs/example_latest.tar.gz
+     *   /ukama/apps/pkgs/example_v1.0.0-abcdefgh.tar.gz
+     */
+    if (inst_try_local_pkg(config, app, requestedTag, pathOut)) {
+        return true;
+    }
+
+    /*
+     * Accept both v-prefixed and non-v-prefixed tags.
+     */
+    if (requestedTag[0] != 'v') {
+        snprintf(altTag, sizeof(altTag), "v%s", requestedTag);
+        if (inst_try_local_pkg(config, app, altTag, pathOut)) {
+            return true;
+        }
+    } else if (requestedTag[1] != '\0') {
+        snprintf(altTag, sizeof(altTag), "%s", requestedTag + 1);
+        if (inst_try_local_pkg(config, app, altTag, pathOut)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static bool inst_actual_version_installed(Config *config,
+                                          App *app,
+                                          const char *actualVersion) {
+
+    char *tagDir;
+    bool ok;
+
+    tagDir = NULL;
+    ok = false;
+
+    if (!config || !app || !actualVersion || !*actualVersion) {
+        return false;
+    }
+
+    tagDir = inst_tag_dir(config, app, actualVersion);
+    if (!tagDir) {
+        return false;
+    }
+
+    ok = inst_path_exists(tagDir);
+    free(tagDir);
+
+    return ok;
+}
+
+static bool inst_install_from_package(Config *config,
+                                      App *app,
+                                      const char *requestedTag,
+                                      const char *pkgPath) {
+
+    char *stageDir;
+    char *appDir;
+    char *payloadDir;
+    char *contentDir;
+    char *pkgVersion;
+    char *tagDir;
+    bool ok;
+
+    stageDir = NULL;
+    appDir = NULL;
+    payloadDir = NULL;
+    contentDir = NULL;
+    pkgVersion = NULL;
+    tagDir = NULL;
+    ok = false;
+
+    if (!config || !app || !requestedTag || !pkgPath || !*pkgPath) {
+        return false;
+    }
+
+    if (!inst_file_exists_non_empty(pkgPath)) {
+        app->installState = INSTALL_STATE_FAILED;
+        usys_log_error("install: package missing or empty %s", pkgPath);
+        return false;
+    }
+
+    appDir = inst_app_dir(config, app);
+    if (!appDir) {
+        app->installState = INSTALL_STATE_FAILED;
+        goto cleanup;
+    }
+
+    inst_mkdir_p(appDir);
+
+    stageDir = inst_stage_dir(config, app);
+    if (!stageDir) {
+        app->installState = INSTALL_STATE_FAILED;
+        goto cleanup;
+    }
+
+    inst_mkdir_p(stageDir);
+
+    app->installState = INSTALL_STATE_STAGING;
+
+    usys_log_info("install: unpacking local package %s for %s:%s",
+                  pkgPath,
+                  app->name,
+                  requestedTag);
+
+    if (!app_unpack_package(pkgPath, stageDir)) {
+        app->installState = INSTALL_STATE_FAILED;
+        usys_log_error("install: unpack failed %s", pkgPath);
+        goto cleanup;
+    }
+
+    payloadDir = inst_find_single_child_dir(stageDir);
+    contentDir = payloadDir ? payloadDir : stageDir;
+
+    pkgVersion = inst_read_version_file(contentDir);
+    if (pkgVersion == NULL || pkgVersion[0] == '\0' ||
+        strcmp(pkgVersion, "-") == 0) {
+        app->installState = INSTALL_STATE_FAILED;
+        usys_log_error("install: invalid VERSION in pkg %s", pkgPath);
+        goto cleanup;
+    }
+
+    if (!inst_set_app_tag(app, pkgVersion)) {
+        app->installState = INSTALL_STATE_FAILED;
+        goto cleanup;
+    }
+
+    tagDir = inst_tag_dir(config, app, app->tag);
+    if (!tagDir) {
+        app->installState = INSTALL_STATE_FAILED;
+        goto cleanup;
+    }
+
+    /*
+     * If another previous install already unpacked this VERSION, accept it.
+     */
+    if (inst_path_exists(tagDir)) {
+        app->installState = INSTALL_STATE_SWITCHED;
+        ok = true;
+        goto cleanup;
+    }
+
+    /*
+     * Flatten packages that unpack as:
+     *   <stageDir>/<name>_<version>/...
+     * into:
+     *   <tagDir>/...
+     */
+    if (payloadDir != NULL) {
+        if (rename(payloadDir, tagDir) != 0) {
+            app->installState = INSTALL_STATE_FAILED;
+            usys_log_error("install: rename failed %s -> %s",
+                           payloadDir,
+                           tagDir);
+            goto cleanup;
+        }
+
+        if (rmdir(stageDir) != 0) {
+            usys_log_warn("install: unable to remove stage dir %s",
+                          stageDir);
+        }
+    } else {
+        if (rename(stageDir, tagDir) != 0) {
+            app->installState = INSTALL_STATE_FAILED;
+            usys_log_error("install: rename failed %s -> %s",
+                           stageDir,
+                           tagDir);
+            goto cleanup;
+        }
+
+        stageDir = NULL;
+    }
+
+    app->installState = INSTALL_STATE_SWITCHED;
+    ok = true;
+
+cleanup:
+    free(pkgVersion);
+    free(payloadDir);
+    free(stageDir);
+    free(appDir);
+    free(tagDir);
+
+    return ok;
+}
+
 bool installer_switch_current(Config *config, App *app) {
 
     char *appDir;
@@ -314,22 +580,12 @@ bool installer_ensure_installed(Config *config, App *app, const char *hub) {
     char *requestedTag;
     char *tagDir;
     char *pkgPath;
-    char *stageDir;
-    char *appDir;
-    char *payloadDir;
-    char *contentDir;
-    char *pkgVersion;
     char *wimcVersion;
     bool ok;
 
     requestedTag = NULL;
     tagDir = NULL;
     pkgPath = NULL;
-    stageDir = NULL;
-    appDir = NULL;
-    payloadDir = NULL;
-    contentDir = NULL;
-    pkgVersion = NULL;
     wimcVersion = NULL;
     ok = false;
 
@@ -343,8 +599,7 @@ bool installer_ensure_installed(Config *config, App *app, const char *hub) {
     }
 
     /*
-     * If the requested tag is already installed locally, no fetch is needed.
-     * This is only a local install check. Package ownership remains with wimc.
+     * 1. Already installed exact requested tag.
      */
     tagDir = inst_tag_dir(config, app, requestedTag);
     if (tagDir == NULL) {
@@ -360,6 +615,33 @@ bool installer_ensure_installed(Config *config, App *app, const char *hub) {
     free(tagDir);
     tagDir = NULL;
 
+    /*
+     * 2. Local package cache.
+     *
+     * WIMC owns writes/fetches into /ukama/apps/pkgs.
+     * Starter is allowed to read and install from this cache.
+     *
+     * This solves first boot:
+     *   starter can install example_latest.tar.gz even when wimc.d
+     *   is not running yet.
+     */
+    if (inst_find_local_package(config, app, requestedTag, &pkgPath)) {
+        usys_log_info("install: local package found %s:%s path=%s",
+                      app->name,
+                      requestedTag,
+                      pkgPath);
+
+        ok = inst_install_from_package(config, app, requestedTag, pkgPath);
+        goto cleanup;
+    }
+
+    /*
+     * 3. Ask WIMC only when local tarball is missing.
+     *
+     * If WIMC is unavailable, this becomes pending rather than fatal.
+     * Boot supervisor decides whether pending should merely degrade boot
+     * or fail an explicit update operation.
+     */
     app->installState = INSTALL_STATE_FETCHING;
 
     if (!wc_fetch_package(config,
@@ -368,29 +650,22 @@ bool installer_ensure_installed(Config *config, App *app, const char *hub) {
                           hub,
                           &pkgPath,
                           &wimcVersion)) {
-        app->installState = INSTALL_STATE_FAILED;
-        usys_log_error("install: fetch failed %s:%s",
-                       app->name,
-                       requestedTag);
+        app->installState = INSTALL_STATE_PENDING;
+        app->state = APP_STATE_STOPPED;
+        app->reason = APP_REASON_PACKAGE_MISSING;
+
+        usys_log_warn("install: package pending %s:%s "
+                      "local package missing and wimc unavailable",
+                      app->name,
+                      requestedTag);
         goto cleanup;
     }
 
     /*
-     * wimc may resolve an alias/requested tag to an actual package VERSION,
-     * e.g.:
-     *
-     *   requested: 1.0.1-abcdefgh
-     *   actual:    v1.0.1-abcdefgh
-     *
-     * If that actual version is already installed, switch app->tag and return.
+     * WIMC may resolve alias/latest to the actual VERSION.
      */
     if (wimcVersion != NULL && *wimcVersion != '\0') {
-        tagDir = inst_tag_dir(config, app, wimcVersion);
-        if (tagDir == NULL) {
-            goto cleanup;
-        }
-
-        if (inst_path_exists(tagDir)) {
+        if (inst_actual_version_installed(config, app, wimcVersion)) {
             if (!inst_set_app_tag(app, wimcVersion)) {
                 app->installState = INSTALL_STATE_FAILED;
                 goto cleanup;
@@ -400,9 +675,6 @@ bool installer_ensure_installed(Config *config, App *app, const char *hub) {
             ok = true;
             goto cleanup;
         }
-
-        free(tagDir);
-        tagDir = NULL;
     }
 
     if (pkgPath == NULL || *pkgPath == '\0') {
@@ -413,108 +685,10 @@ bool installer_ensure_installed(Config *config, App *app, const char *hub) {
         goto cleanup;
     }
 
-    if (!inst_path_exists(pkgPath)) {
-        app->installState = INSTALL_STATE_FAILED;
-        usys_log_error("install: package path missing %s", pkgPath);
-        goto cleanup;
-    }
-
-    appDir = inst_app_dir(config, app);
-    if (appDir == NULL) {
-        goto cleanup;
-    }
-
-    inst_mkdir_p(appDir);
-
-    stageDir = inst_stage_dir(config, app);
-    if (stageDir == NULL) {
-        goto cleanup;
-    }
-
-    unlink(stageDir);
-    inst_mkdir_p(stageDir);
-
-    app->installState = INSTALL_STATE_STAGING;
-
-    if (!app_unpack_package(pkgPath, stageDir)) {
-        app->installState = INSTALL_STATE_FAILED;
-        usys_log_error("install: unpack failed %s", pkgPath);
-        goto cleanup;
-    }
-
-    payloadDir = inst_find_single_child_dir(stageDir);
-    contentDir = payloadDir ? payloadDir : stageDir;
-
-    pkgVersion = inst_read_version_file(contentDir);
-    if (pkgVersion == NULL || pkgVersion[0] == '\0' ||
-        strcmp(pkgVersion, "-") == 0) {
-        app->installState = INSTALL_STATE_FAILED;
-        usys_log_error("install: invalid VERSION in pkg %s", pkgPath);
-        goto cleanup;
-    }
-
-    if (!inst_set_app_tag(app, pkgVersion)) {
-        app->installState = INSTALL_STATE_FAILED;
-        goto cleanup;
-    }
-
-    tagDir = inst_tag_dir(config, app, app->tag);
-    if (tagDir == NULL) {
-        app->installState = INSTALL_STATE_FAILED;
-        goto cleanup;
-    }
-
-    if (inst_path_exists(tagDir)) {
-        app->installState = INSTALL_STATE_SWITCHED;
-        ok = true;
-        goto cleanup;
-    }
-
-    /*
-     * Flatten packages that unpack as:
-     *   <stageDir>/<name>_<version>/...
-     * into:
-     *   <tagDir>/...
-     */
-    if (payloadDir != NULL) {
-        if (rename(payloadDir, tagDir) != 0) {
-            app->installState = INSTALL_STATE_FAILED;
-            usys_log_error("install: rename failed %s -> %s",
-                           payloadDir,
-                           tagDir);
-            goto cleanup;
-        }
-
-        if (rmdir(stageDir) != 0) {
-            usys_log_warn("install: unable to remove stage dir %s",
-                          stageDir);
-        }
-    } else {
-        if (rename(stageDir, tagDir) != 0) {
-            app->installState = INSTALL_STATE_FAILED;
-            usys_log_error("install: rename failed %s -> %s",
-                           stageDir,
-                           tagDir);
-            goto cleanup;
-        }
-
-        stageDir = NULL;
-    }
-
-    app->installState = INSTALL_STATE_SWITCHED;
-    ok = true;
+    ok = inst_install_from_package(config, app, requestedTag, pkgPath);
 
 cleanup:
     free(wimcVersion);
-    free(pkgVersion);
-
-    if (contentDir != payloadDir) {
-        free(contentDir);
-    }
-
-    free(payloadDir);
-    free(stageDir);
-    free(appDir);
     free(pkgPath);
     free(tagDir);
     free(requestedTag);

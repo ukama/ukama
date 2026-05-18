@@ -375,7 +375,10 @@ bool wc_app_ping(Config *config, App *app) {
     probePort = wc_get_probe_port(app);
     if (probePort <= 0) return false;
 
-    if (!wc_build_url(url, sizeof(url), "127.0.0.1", probePort, "/v1/ping")) {
+    if (!wc_build_url(url, sizeof(url),
+                      "127.0.0.1",
+                      probePort,
+                      "/v1/ping")) {
         return false;
     }
 
@@ -395,31 +398,59 @@ bool wc_app_ping(Config *config, App *app) {
     return ok;
 }
 
+static const char *wc_strip_v_prefix(const char *s) {
+
+    if (s != NULL && s[0] == 'v' && s[1] != '\0') {
+        return s + 1;
+    }
+
+    return s;
+}
+
+static bool wc_versions_equal(const char *a, const char *b) {
+
+    if (a == NULL || b == NULL) {
+        return false;
+    }
+
+    if (strcmp(a, b) == 0) {
+        return true;
+    }
+
+    a = wc_strip_v_prefix(a);
+    b = wc_strip_v_prefix(b);
+
+    return strcmp(a, b) == 0;
+}
+
 bool wc_app_version_matches(Config *config,
                             App *app,
                             const char *tag) {
 
-    char url[256];
+    char url[512];
     URequest *req;
     UResponse *resp;
-    bool ok;
     char *copy;
     char *p;
     char *end;
     int probePort;
+    bool ok;
 
-    req       = NULL;
-    resp      = NULL;
-    ok        = false;
-    copy      = NULL;
-    probePort = -1;
+    req = NULL;
+    resp = NULL;
+    copy = NULL;
+    ok = false;
 
-    if (!config || !app || !tag) return false;
+    if (!config || !app || !tag) {
+        return false;
+    }
 
     probePort = wc_get_probe_port(app);
     if (probePort <= 0) return false;
 
-    if (!wc_build_url(url, sizeof(url), "127.0.0.1", probePort,
+    if (!wc_build_url(url, sizeof(url),
+                      "127.0.0.1",
+                      probePort,
                       "/v1/version")) {
         return false;
     }
@@ -450,7 +481,7 @@ bool wc_app_version_matches(Config *config,
             }
             *end = '\0';
 
-            if (strcmp(p, tag) == 0) {
+            if (wc_versions_equal(p, tag)) {
                 ok = true;
             }
         }
