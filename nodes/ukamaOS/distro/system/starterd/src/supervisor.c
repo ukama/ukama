@@ -474,11 +474,11 @@ static bool update_self(Supervisor *s,
     return true;
 }
 
-static bool update_app(Supervisor *s,
-                       const char *space,
-                       const char *name,
-                       const char *tag,
-                       const char *hub) {
+static bool update_one_app(Supervisor *s,
+                           const char *space,
+                           const char *name,
+                           const char *tag,
+                           const char *hub) {
 
     App *a;
     char *oldTag;
@@ -564,6 +564,46 @@ static bool update_app(Supervisor *s,
     free(oldTag);
     free(oldLastGood);
     return true;
+}
+
+static bool update_app(Supervisor *s,
+                       const char *space,
+                       const char *name,
+                       const char *tag,
+                       const char *hub) {
+
+    Space *sp =  NULL;
+    bool matched;
+    bool ok;
+
+    if (!s || !name || !tag) {
+        return false;
+    }
+
+    if (space) {
+        return update_one_app(s, space, name, tag, hub);
+    }
+
+    matched = false;
+    ok = true;
+
+    sp = s->spaceList;
+    while (sp) {
+        if (sp->name && app_find(s->spaceList, sp->name, name)) {
+            matched = true;
+            if (!update_one_app(s, sp->name, name, tag, hub)) {
+                ok = false;
+            }
+        }
+        sp = sp->next;
+    }
+
+    if (!matched) {
+        usys_log_error("update: app not found in any space: %s", name);
+        return false;
+    }
+
+    return ok;
 }
 
 static void* supervisor_thread(void *arg) {

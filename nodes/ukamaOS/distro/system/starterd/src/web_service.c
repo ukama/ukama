@@ -63,6 +63,32 @@ static bool ws_app_exists(StarterContext *ctx,
     return true;
 }
 
+static bool ws_update_target_exists(StarterContext *ctx,
+                                    const char *space,
+                                    const char *name) {
+
+    Space *sp = NULL;
+
+    if (!ctx || !ctx->spaceList || !name) {
+        return false;
+    }
+
+    if (space) {
+        return ws_app_exists(ctx, space, name);
+    }
+
+    sp = ctx->spaceList;
+    while (sp) {
+        if (sp->name && app_find(ctx->spaceList, sp->name, name)) {
+            return true;
+        }
+        sp = sp->next;
+    }
+
+    usys_log_error("web: app not found in any space: name=%s", name);
+    return false;
+}
+
 static int ws_ping_cb(const struct _u_request *req,
                       struct _u_response *resp,
                       void *userData) {
@@ -162,8 +188,17 @@ static bool ws_parse_update(json_t *j,
         return false;
     }
 
+    space = NULL;
+
     v = json_object_get(j, "space");
-    space = json_is_string(v) ? json_string_value(v) : NULL;
+    if (json_is_string(v)) {
+        space = json_string_value(v);
+        if (!space || !*space) {
+            return false;
+        }
+    } else if (v != NULL) {
+        return false;
+    }
 
     v = json_object_get(j, "name");
     name = json_is_string(v) ? json_string_value(v) : NULL;
@@ -171,7 +206,7 @@ static bool ws_parse_update(json_t *j,
     v = json_object_get(j, "tag");
     tag = json_is_string(v) ? json_string_value(v) : NULL;
 
-    if (!space || !name || !tag) {
+    if (!name || !*name || !tag || !*tag) {
         return false;
     }
 
@@ -208,7 +243,7 @@ static bool ws_parse_update(json_t *j,
         return false;
     }
 
-    if (spaceOut) {
+    if (spaceOut && space) {
         *spaceOut = strdup(space);
         if (!*spaceOut) {
             free(hubPayload);
@@ -232,7 +267,7 @@ static bool ws_parse_update(json_t *j,
             free(hubPayload);
             free(spaceOut ? *spaceOut : NULL);
             free(nameOut ?  *nameOut : NULL);
-            
+
             if (spaceOut) *spaceOut = NULL;
             if (nameOut)  *nameOut  = NULL;
 
@@ -304,7 +339,7 @@ static int ws_update_cb(const struct _u_request *req,
                              HttpStatusStr(HttpStatus_BadRequest));
     }
 
-    if (!ws_app_exists(ctx, space, name)) {
+    if (!ws_update_target_exists(ctx, space, name)) {
         json_decref(j);
         free(space);
         free(name);
