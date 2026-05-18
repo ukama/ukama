@@ -71,6 +71,8 @@ static void free_hub_list(HubList *list) {
 
 static bool hub_list_add(HubList *list, const char *hub) {
 
+    char normalized[WIMC_MAX_URL_LEN];
+
     if (list == NULL || hub == NULL || *hub == '\0') {
         return false;
     }
@@ -79,11 +81,19 @@ static bool hub_list_add(HubList *list, const char *hub) {
         return false;
     }
 
-    if (!is_absolute_url(hub)) {
+    memset(normalized, 0, sizeof(normalized));
+
+    if (is_absolute_url(hub)) {
+        snprintf(normalized, sizeof(normalized), "%s", hub);
+    } else {
+        snprintf(normalized, sizeof(normalized), "http://%s", hub);
+    }
+
+    if (!is_absolute_url(normalized)) {
         return false;
     }
 
-    list->items[list->count] = strdup(hub);
+    list->items[list->count] = strdup(normalized);
     if (list->items[list->count] == NULL) {
         return false;
     }
