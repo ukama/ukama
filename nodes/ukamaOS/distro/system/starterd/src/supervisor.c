@@ -340,9 +340,22 @@ static bool run_space(Config *config,
 
         ok = installer_ensure_installed(config, a, NULL);
         if (!ok) {
+            allOk = false;
+
+            if (a->installState == INSTALL_STATE_PENDING) {
+                a->state = APP_STATE_STOPPED;
+                a->reason = APP_REASON_PACKAGE_MISSING;
+
+                usys_log_warn("space: install pending %s/%s",
+                              a->space,
+                              a->name);
+
+                a = a->next;
+                continue;
+            }
+
             a->installState = INSTALL_STATE_FAILED;
             usys_log_error("space: install failed %s/%s", a->space, a->name);
-            allOk = false;
 
             if (gate) {
                 return false;
@@ -582,12 +595,19 @@ static void* supervisor_thread(void *arg) {
                            s->spaceList,
                            s->config->bootSpace,
                            true)) {
-                usys_log_error("boot: failed");
+                usys_log_warn("boot: degraded");
             } else {
-                s->bootDone = true;
-                ready_touch(s->config);
                 usys_log_info("boot: ready");
             }
+
+            /*
+             * starter.d is the node orchestrator. It must remain alive even when
+             * one managed app is missing or pending.
+             */
+            s->bootDone = true;
+            ready_touch(s->config);
+            state_store_save(s->config, s->spaceList);
+
         } else if (a->type == ACTION_RUN_ALL) {
             Space *sp;
 
