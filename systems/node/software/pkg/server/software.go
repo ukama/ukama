@@ -11,9 +11,7 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"net"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -143,12 +141,16 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 	path := fmt.Sprintf("/starter/v1/update/%s/%s", req.Name, req.Tag)
 	log.Infof("Publishing update for software %s to version %s on node %s", req.Name, req.Tag, nId.String())
 
-	nodeGwIP, err := s.getNodeGwIP()
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get node gw ip: %v", err)
+	log.Infof("Node gw ips: %v", s.nodeGwIPs)
+	if len(s.nodeGwIPs) == 0 {
+		return nil, status.Errorf(codes.Internal, "failed to get node gw ip: no node gw ip found")
 	}
-	log.Infof("Node gw ip: %s", nodeGwIP)
-	jsonBody := map[string]string{"host": fmt.Sprintf("http://%s:8080", nodeGwIP)}
+	hosts := make([]string, 0, len(s.nodeGwIPs))
+	for _, ip := range s.nodeGwIPs {
+		hosts = append(hosts, fmt.Sprintf("http://%s:8080", ip))
+	}
+	log.Infof("Node gw hosts: %v", hosts)
+	jsonBody := map[string][]string{"host": hosts}
 	data, err := json.Marshal(jsonBody)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get software: %v", err)
@@ -212,19 +214,4 @@ func (c *SoftwareServer) publishMessage(target string, method string, path strin
 	log.Infof("Published software update node %s on path %s on target %s ", nodeId, path, target)
 	err := c.msgbus.PublishRequest(route, msg)
 	return err
-}
-
-func (c *SoftwareServer) getNodeGwIP() (string, error) {
-	if len(c.nodeGwIPs) == 0 {
-		return "", errors.New("no node gw ip found")
-	}
-
-	for _, ip := range c.nodeGwIPs {
-		log.Infof("validating IP : %s", ip)
-		if net.ParseIP(ip) != nil {
-			return ip, nil
-		}
-	}
-	
-	return "", errors.New("no valid node gw ip found")
 }
