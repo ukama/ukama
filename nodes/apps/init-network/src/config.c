@@ -15,6 +15,8 @@
 #include "config.h"
 #include "usys_log.h"
 #include "usys_mem.h"
+#include "usys_file.h"
+#include "usys_services.h"
 
 static char *dup_or_default(const char *value, const char *defValue) {
 
@@ -93,6 +95,29 @@ static void load_tun_extra(Config *config, toml_table_t *tun) {
     }
 }
 
+static void resolve_service_port(Config *config, int fallbackPort) {
+
+    int port;
+
+    if (config == NULL || config->serviceName == NULL) {
+        return;
+    }
+
+    port = usys_find_service_port(config->serviceName);
+    if (port > 0) {
+        config->servicePort = port;
+        usys_log_debug("resolved service port from /etc/services: %s=%d",
+                       config->serviceName,
+                       config->servicePort);
+        return;
+    }
+
+    config->servicePort = fallbackPort;
+    usys_log_debug("service %s not found in /etc/services, using port %d",
+                   config->serviceName,
+                   config->servicePort);
+}
+
 void config_set_defaults(Config *config) {
 
     if (config == NULL) return;
@@ -150,12 +175,16 @@ bool config_load_from_file(Config *config, const char *path) {
     toml_table_t *epc;
     toml_table_t *routing;
     toml_table_t *gateway;
+    int fallbackPort;
 
     if (config == NULL || path == NULL) return false;
+
+    fallbackPort = config->servicePort;
 
     fp = fopen(path, "r");
     if (fp == NULL) {
         usys_log_debug("config file not found: %s, using defaults", path);
+        resolve_service_port(config, fallbackPort);
         return true;
     }
 
@@ -176,7 +205,7 @@ bool config_load_from_file(Config *config, const char *path) {
     routing = toml_table_in(root, "routing");
     gateway = toml_table_in(root, "gateway");
 
-    config->servicePort   = toml_int_or(server, "port", config->servicePort);
+    fallbackPort = toml_int_or(server, "port", config->servicePort);
     config->cmdTimeoutSec = toml_int_or(server, "cmd_timeout_sec",
                                         config->cmdTimeoutSec);
 
@@ -243,6 +272,8 @@ bool config_load_from_file(Config *config, const char *path) {
     config->gatewayAddr      = toml_string_or(gateway, "address",
                                               DEF_GATEWAY_ADDR);
     config->gatewayIp        = toml_string_or(gateway, "ip", DEF_GATEWAY_IP);
+
+    resolve_service_port(config, fallbackPort);
 
     toml_free(root);
     return true;
