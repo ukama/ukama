@@ -42,7 +42,15 @@ if [ ! -f "$BOARD_CONFIG" ]; then
 fi
 
 if [ "$(id -u)" -ne 0 ]; then
-    exec sudo -E env "FLASH_DIR=$FLASH_DIR" "$0" "$@"
+    forwarded=("FLASH_DIR=$FLASH_DIR")
+    while IFS='=' read -r name _; do
+        case "$name" in
+            BAND|TRX_*|UKAMA_*)
+                forwarded+=("$name=${!name}")
+                ;;
+        esac
+    done < <(env)
+    exec sudo -E env "${forwarded[@]}" "$0" "$@"
 fi
 
 source "${LIB_DIR}/config.sh"

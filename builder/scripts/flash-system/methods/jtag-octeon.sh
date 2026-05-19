@@ -94,7 +94,17 @@ method_validate() {
     fi
 
     if ! command -v sshpass >/dev/null 2>&1; then
-        echo "  [WARN] sshpass not installed (apt install sshpass)"
+        echo "  [..] installing sshpass..."
+        sudo apt-get update -qq
+        sudo apt-get install -y sshpass
+        if command -v sshpass >/dev/null 2>&1; then
+            echo "  [ OK ] sshpass installed"
+        else
+            echo "  [FAIL] could not install sshpass"
+            fail=1
+        fi
+    else
+        echo "  [ OK ] sshpass available"
     fi
 
     return $fail
@@ -204,9 +214,9 @@ _phase1_run() {
     echo "Enabling ethernet (mw64)..."
     uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 5
 
-    echo "Pinging host ${host_ip:-from yaml} from u-boot..."
     local host_ip
     host_ip=$(yq_read "$BOARD_CONFIG" network.host_ip)
+    echo "Pinging host ${host_ip} from u-boot..."
     uboot_send_and_wait "$serial_dev" "ping ${host_ip}" "$uboot_prompt" 15 || {
         echo "WARNING: ping failed — retrying mw64..."
         uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 5
