@@ -29,7 +29,9 @@ int web_service_cb_ping(const URequest *request,
     }
 
     if (status_is_ready(ctx->status)) {
-        ulfius_set_empty_body_response(response, HttpStatus_OK);
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_OK,
+                                        HttpStatusStr(HttpStatus_OK));
     } else {
         ulfius_set_string_body_response(response,
                                         HttpStatus_ServiceUnavailable,
