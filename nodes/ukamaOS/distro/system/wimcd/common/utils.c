@@ -6,10 +6,6 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
-/*
- * Misc utility functions
- */
-
 #include <stdio.h>
 #include <string.h>
 
@@ -110,4 +106,6 @@ TransferState convert_str_to_tx_state(char *state) {
   }  else if (strcmp(state, AGENT_TX_STATE_ERR_STR)==0) {
     return ERR;
   }
+
+  return ERR;
 }

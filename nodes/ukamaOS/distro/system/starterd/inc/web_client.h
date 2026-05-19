@@ -30,4 +30,5 @@ bool wc_fetch_package(Config *config,
                       const char *appName,
                       const char *tag,
                       const char *hub,
-                      const char *dstPath);
+                      char **pathOut,
+                      char **versionOut);

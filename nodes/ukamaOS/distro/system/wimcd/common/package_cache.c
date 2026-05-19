@@ -162,26 +162,7 @@ static int file_size_ok(const char *path) {
 
     return st.st_size > 0;
 }
-
-static int filename_has_suffix(const char *name, const char *suffix) {
-
-    size_t nameLen;
-    size_t suffixLen;
-
-    if (name == NULL || suffix == NULL) {
-        return 0;
-    }
-
-    nameLen = strlen(name);
-    suffixLen = strlen(suffix);
-
-    if (nameLen <= suffixLen) {
-        return 0;
-    }
-
-    return strcmp(name + nameLen - suffixLen, suffix) == 0;
-}
-
+ 
 bool pkg_is_valid_identifier(const char *value) {
 
     size_t i;
@@ -351,13 +332,20 @@ int pkg_read_version_from_dir(const char *dir, char *version,
     return 0;
 }
 
+/* VERSION
+ * ./VERSION
+ * some-top-dir/VERSION
+ */
 int pkg_read_version_from_tar(const char *path, char *version,
                               size_t versionLen) {
 
     FILE *fp;
     char cmd[PATH_MAX * 2];
-    char line[WIMC_MAX_NAME_LEN];
+    char extractCmd[PATH_MAX * 2];
+    char line[PATH_MAX];
+    char entry[PATH_MAX];
     char *value;
+    size_t len;
 
     if (path == NULL || version == NULL || versionLen == 0) {
         return -1;
@@ -367,9 +355,16 @@ int pkg_read_version_from_tar(const char *path, char *version,
         return -1;
     }
 
+    memset(cmd, 0, sizeof(cmd));
+    memset(extractCmd, 0, sizeof(extractCmd));
+    memset(line, 0, sizeof(line));
+    memset(entry, 0, sizeof(entry));
+
+    usys_log_debug("Trying to read VERSION from tgz: %s", path);
+
     if (snprintf(cmd, sizeof(cmd),
-                 "tar -xO -zf '%s' ./VERSION VERSION 2>/dev/null | "
-                 "head -n 1", path) >= (int)sizeof(cmd)) {
+                 "tar -tzf '%s' 2>/dev/null", path) >=
+        (int)sizeof(cmd)) {
         return -1;
     }
 
@@ -378,6 +373,52 @@ int pkg_read_version_from_tar(const char *path, char *version,
         return -1;
     }
 
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        value = trim_line(line);
+        if (value == NULL || *value == '\0') {
+            continue;
+        }
+
+        if (strchr(value, '\'') != NULL ||
+            strstr(value, "..") != NULL) {
+            continue;
+        }
+
+        if (strcmp(value, VERSION_FILE) == 0 ||
+            strcmp(value, "./" VERSION_FILE) == 0) {
+            snprintf(entry, sizeof(entry), "%s", value);
+            break;
+        }
+
+        len = strlen(value);
+        if (len > strlen("/" VERSION_FILE) &&
+            strcmp(value + len - strlen("/" VERSION_FILE),
+                   "/" VERSION_FILE) == 0) {
+            snprintf(entry, sizeof(entry), "%s", value);
+            break;
+        }
+    }
+
+    if (pclose(fp) == -1) {
+        return -1;
+    }
+
+    if (entry[0] == '\0') {
+        return -1;
+    }
+
+    if (snprintf(extractCmd, sizeof(extractCmd),
+                 "tar -xO -zf '%s' '%s' 2>/dev/null | head -n 1",
+                 path, entry) >= (int)sizeof(extractCmd)) {
+        return -1;
+    }
+
+    fp = popen(extractCmd, "r");
+    if (fp == NULL) {
+        return -1;
+    }
+
+    memset(line, 0, sizeof(line));
     if (fgets(line, sizeof(line), fp) == NULL) {
         pclose(fp);
         return -1;
@@ -396,9 +437,37 @@ int pkg_read_version_from_tar(const char *path, char *version,
     return 0;
 }
 
-int pkg_validate_tar(const char *name, const char *tag, const char *path,
-                     PackageInfo *info) {
+static const char *pkg_version_without_v(const char *version)
+{
+    if (version == NULL) {
+        return NULL;
+    }
 
+    if (version[0] == 'v' || version[0] == 'V') {
+        return version + 1;
+    }
+
+    return version;
+}
+
+static bool pkg_versions_match(const char *expected, const char *actual)
+{
+    const char *expectedNorm;
+    const char *actualNorm;
+
+    if (expected == NULL || actual == NULL) {
+        return false;
+    }
+
+    expectedNorm = pkg_version_without_v(expected);
+    actualNorm   = pkg_version_without_v(actual);
+
+    return strcmp(expectedNorm, actualNorm) == 0;
+}
+
+int pkg_validate_tar(const char *name, const char *tag, const char *path,
+                     PackageInfo *info)
+{
     char actualVersion[WIMC_MAX_NAME_LEN];
 
     if (info != NULL) {
@@ -439,13 +508,17 @@ int pkg_validate_tar(const char *name, const char *tag, const char *path,
         return 0;
     }
 
-    if (!pkg_is_alias_tag(tag) && strcmp(actualVersion, tag) != 0) {
+    if (!pkg_is_alias_tag(tag) && !pkg_versions_match(tag, actualVersion)) {
         if (info != NULL) {
             snprintf(info->actualVersion, sizeof(info->actualVersion),
                      "%s", actualVersion);
             snprintf(info->error, sizeof(info->error),
                      "VERSION does not match requested tag");
         }
+
+        usys_log_error("Version mismatch: Expected: %s Got: %s",
+                       tag, actualVersion);
+
         return 0;
     }
 
@@ -466,18 +539,42 @@ static int make_immutable_package(const char *dir, const char *tmpTar) {
     return run_wait(argv);
 }
 
-static int publish_alias(const char *name, const char *tag,
+static int publish_alias(const char *name,
+                         const char *tag,
+                         const char *actualVersion,
                          const char *actualPath) {
 
     char aliasPath[WIMC_MAX_PATH_LEN];
     const char *base;
 
-    if (strcmp(tag, WIMC_ALIAS_LATEST) != 0) {
+    if (name == NULL || tag == NULL || actualVersion == NULL ||
+        actualPath == NULL) {
+        return -1;
+    }
+
+    /*
+     * Create alias for:
+     *   latest -> actual version
+     *   1.0.1-abcdefgh -> v1.0.1-abcdefgh
+     *
+     * Do not create alias when requested tag and actual version are identical.
+     */
+    if (strcmp(tag, WIMC_ALIAS_LATEST) != 0 &&
+        strcmp(tag, actualVersion) == 0) {
+        return 0;
+    }
+
+    if (strcmp(tag, WIMC_ALIAS_LATEST) != 0 &&
+        !pkg_versions_match(tag, actualVersion)) {
         return 0;
     }
 
     if (pkg_path_for_tag(name, tag, aliasPath, sizeof(aliasPath)) != 0) {
         return -1;
+    }
+
+    if (strcmp(aliasPath, actualPath) == 0) {
+        return 0;
     }
 
     base = strrchr(actualPath, '/');
@@ -564,7 +661,7 @@ int pkg_publish_from_dir(const char *name, const char *tag,
         return -1;
     }
 
-    if (publish_alias(name, tag, actualPath) != 0) {
+    if (publish_alias(name, tag, version, actualPath) != 0) {
         return -1;
     }
 
@@ -583,3 +680,53 @@ int pkg_publish_from_dir(const char *name, const char *tag,
     return 0;
 }
 
+int pkg_publish_tar(const char *name,
+                    const char *tag,
+                    const char *tmpTar,
+                    char *publishedPath, size_t publishedPathLen,
+                    char *actualVersion, size_t actualVersionLen) {
+
+    char actualPath[WIMC_MAX_PATH_LEN];
+    PackageInfo info;
+
+    if (!pkg_is_valid_identifier(name) ||
+        !pkg_is_valid_identifier(tag) || tmpTar == NULL) {
+        return -1;
+    }
+
+    memset(&info, 0, sizeof(info));
+    if (!pkg_validate_tar(name, tag, tmpTar, &info)) {
+        usys_log_error("Downloaded package failed validation: %s",
+                       info.error[0] ? info.error : "unknown");
+        return -1;
+    }
+
+    if (pkg_path_for_tag(name, info.actualVersion,
+                         actualPath, sizeof(actualPath)) != 0) {
+        return -1;
+    }
+
+    if (rename(tmpTar, actualPath) != 0) {
+        usys_log_error("Failed to publish package %s: %s",
+                       actualPath, strerror(errno));
+        return -1;
+    }
+
+    if (publish_alias(name, tag, info.actualVersion, actualPath) != 0) {
+        return -1;
+    }
+
+    if (publishedPath != NULL && publishedPathLen > 0) {
+        if (pkg_is_alias_tag(tag)) {
+            pkg_path_for_tag(name, tag, publishedPath, publishedPathLen);
+        } else {
+            snprintf(publishedPath, publishedPathLen, "%s", actualPath);
+        }
+    }
+
+    if (actualVersion != NULL && actualVersionLen > 0) {
+        snprintf(actualVersion, actualVersionLen, "%s", info.actualVersion);
+    }
+
+    return 0;
+}

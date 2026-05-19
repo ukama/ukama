@@ -163,7 +163,7 @@ bool config_load(Config *config) {
     config->pkgsDir      = cfg_get_str("STARTERD_PKGS_DIR",  "/ukama/apps/pkgs");
     config->stateDir     = cfg_get_str("STARTERD_STATE_DIR", "/ukama/state/starterd");
 
-    config->httpAddr     = cfg_get_str("STARTERD_HTTP_ADDR", "0.0.0.0");
+    config->httpAddr     = cfg_get_str("STARTERD_HTTP_ADDR", "127.0.0.1");
 
     /* starter.d port from service registry */
     config->httpPort = usys_find_service_port(SERVICE_STARTER);
@@ -172,7 +172,7 @@ bool config_load(Config *config) {
         return false;
     }
 
-    config->wimcHost = cfg_get_str("STARTERD_WIMC_HOST", "0.0.0.0");
+    config->wimcHost = cfg_get_str("STARTERD_WIMC_HOST", "127.0.0.1");
     config->wimcPort = usys_find_service_port(SERVICE_WIMC);
     if (config->wimcPort <= 0) {
         usys_log_error("SERVICE_WIMC port not found in service registry");

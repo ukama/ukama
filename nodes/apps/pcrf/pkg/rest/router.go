@@ -18,13 +18,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/wI2L/fizz"
-
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/cmd/version"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/api"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/controller"
-	"github.com/ukama/ukama/systems/common/config"
 	"github.com/wI2L/fizz/openapi"
+
+	"github.com/ukama/ukama/nodes/apps/pcrf/cmd/version"
+	"github.com/ukama/ukama/nodes/apps/pcrf/pkg"
+	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/api"
+	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/controller"
+	"github.com/ukama/ukama/systems/common/config"
 
 	log "github.com/sirupsen/logrus"
 	crest "github.com/ukama/ukama/systems/common/rest"
@@ -45,7 +45,7 @@ type RouterConfig struct {
 	auth       *config.Auth
 }
 
-func NewRouter(ctr *controller.Controller, config *RouterConfig, nodeId string, authfunc func(*gin.Context, string) error) *Router {
+func NewRouter(ctr *controller.Controller, config *RouterConfig, nodeId string) *Router {
 	r := &Router{
 		controller: ctr,
 		config:     config,
@@ -56,7 +56,7 @@ func NewRouter(ctr *controller.Controller, config *RouterConfig, nodeId string, 
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	r.init(authfunc)
+	r.init()
 
 	return r
 }
@@ -78,7 +78,7 @@ func (rt *Router) Run() {
 	}
 }
 
-func (r *Router) init(f func(*gin.Context, string) error) {
+func (r *Router) init() {
 	r.f = crest.NewFizzRouter(r.config.serverConf, pkg.SystemName,
 		version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
 
@@ -90,13 +90,6 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 		s := fmt.Sprintf("%s, %s, %s", pkg.SystemName, ctx.Request.Method, ctx.Request.URL.Path)
 		ctx.Request.Header.Set("Meta", s)
-
-		err := f(ctx, r.config.auth.AuthServerUrl)
-		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
-
-			return
-		}
 
 	})
 

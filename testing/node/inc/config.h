@@ -18,6 +18,7 @@
 #define TABLE_BUILD_COMPILE "build-compile"
 #define TABLE_BUILD_ROOTFS  "build-rootfs"
 #define TABLE_BUILD_CONF    "build-conf"
+#define TABLE_BUILD_MISC    "build-misc"
 #define TABLE_CAPP_EXEC     "app-exec"
 
 /* Keys for various table */
@@ -88,6 +89,10 @@ typedef struct build_config_t {
     char *cmd;
     char *binFrom;
     char *binTo;
+
+    /* misc */
+    char *miscFrom;
+    char *miscTo;
 
     /* rootfs */
     char *mkdir;
