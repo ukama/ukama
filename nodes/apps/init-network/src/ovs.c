@@ -156,6 +156,8 @@ static bool start_ovs(Config *config, AppStatus *status) {
     char ovsdbPid[OVS_MAX_STR];
     char vswitchdPid[OVS_MAX_STR];
     char vswitchdDb[OVS_MAX_STR];
+    char ovsdbPidOpt[OVS_MAX_STR];
+    char vswitchdPidOpt[OVS_MAX_STR];
 
     status_set(status, InitStateStartOvs, "starting ovs");
 
@@ -169,23 +171,46 @@ static bool start_ovs(Config *config, AppStatus *status) {
         return false;
     }
 
-    if (!ensure_mgmt_dir(config, status)) return false;
+    if (!ensure_mgmt_dir(config, status)) {
+        return false;
+    }
 
     if (ovs_is_running(config)) {
-        usys_log_info("OVS is already running");
-        mark_bool(status, &status->ovsdbRunning, true);
-        mark_bool(status, &status->vswitchdRunning, true);
+        usys_log_debug("OVS is already running");
+
+        pthread_mutex_lock(&status->mutex);
+        status->ovsdbRunning = true;
+        status->vswitchdRunning = true;
+        pthread_mutex_unlock(&status->mutex);
+
         return true;
     }
 
     snprintf(dbPath, sizeof(dbPath), "%s/conf.db", config->dbDir);
     snprintf(dbSock, sizeof(dbSock), "punix:%s/db.sock", config->runDir);
-    snprintf(dbRemote, sizeof(dbRemote),
+    snprintf(dbRemote,
+             sizeof(dbRemote),
              "db:Open_vSwitch,Open_vSwitch,manager_options");
-    snprintf(ovsdbPid, sizeof(ovsdbPid), "%s/ovsdb-server.pid", config->runDir);
+
+    snprintf(ovsdbPid, sizeof(ovsdbPid), "%s/ovsdb-server.pid",
+             config->runDir);
     snprintf(vswitchdPid, sizeof(vswitchdPid), "%s/ovs-vswitchd.pid",
              config->runDir);
-    snprintf(vswitchdDb, sizeof(vswitchdDb), "unix:%s/db.sock", config->runDir);
+
+    snprintf(ovsdbPidOpt, sizeof(ovsdbPidOpt), "--pidfile=%s", ovsdbPid);
+    snprintf(vswitchdPidOpt, sizeof(vswitchdPidOpt), "--pidfile=%s",
+             vswitchdPid);
+
+    snprintf(vswitchdDb, sizeof(vswitchdDb), "unix:%s/db.sock",
+             config->runDir);
+
+    /*
+     * Stale pid files are common in containers after unclean shutdowns.
+     * OVS will refuse to use them as pidfile targets in some versions,
+     * so remove them before starting daemons.
+     */
+    unlink(ovsdbPid);
+    unlink(vswitchdPid);
 
     if (!path_exists(dbPath)) {
         if (!path_exists(config->schema)) {
@@ -211,15 +236,16 @@ static bool start_ovs(Config *config, AppStatus *status) {
                  dbSock,
                  "--remote",
                  dbRemote,
-                 "--pidfile",
-                 ovsdbPid,
+                 ovsdbPidOpt,
                  "--detach",
                  NULL) != 0) {
         status_fail(status, "failed to start ovsdb-server");
         return false;
     }
 
-    mark_bool(status, &status->ovsdbRunning, true);
+    pthread_mutex_lock(&status->mutex);
+    status->ovsdbRunning = true;
+    pthread_mutex_unlock(&status->mutex);
 
     if (exec_cmd(config->cmdTimeoutSec,
                  "ovs-vsctl",
@@ -233,15 +259,16 @@ static bool start_ovs(Config *config, AppStatus *status) {
     if (exec_cmd(config->cmdTimeoutSec,
                  "ovs-vswitchd",
                  vswitchdDb,
-                 "--pidfile",
-                 vswitchdPid,
+                 vswitchdPidOpt,
                  "--detach",
                  NULL) != 0) {
         status_fail(status, "failed to start ovs-vswitchd");
         return false;
     }
 
-    mark_bool(status, &status->vswitchdRunning, true);
+    pthread_mutex_lock(&status->mutex);
+    status->vswitchdRunning = true;
+    pthread_mutex_unlock(&status->mutex);
 
     if (!ovs_is_running(config)) {
         status_fail(status, "OVS did not become ready");
