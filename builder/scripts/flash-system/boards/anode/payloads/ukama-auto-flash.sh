@@ -91,5 +91,22 @@ done
 
 sync
 
+mkdir -p /var/lib
+touch /var/lib/ukama-autoflash-complete
+
+for num in 5 6; do
+    emmc_part=$(partition_path "$EMMC_DEV" "$num")
+    if [ -b "$emmc_part" ]; then
+        mnt=$(mktemp -d)
+        if mount "$emmc_part" "$mnt" 2>/dev/null; then
+            mkdir -p "$mnt/var/lib"
+            touch "$mnt/var/lib/ukama-autoflash-complete"
+            sync
+            umount "$mnt"
+        fi
+        rm -rf "$mnt"
+    fi
+done
+
 echo "Flash complete. Rebooting."
 reboot
