@@ -156,6 +156,9 @@ static bool start_ovs(Config *config, AppStatus *status) {
     char ovsdbPid[OVS_MAX_STR];
     char vswitchdPid[OVS_MAX_STR];
     char vswitchdDb[OVS_MAX_STR];
+    char ovsdbPidOpt[OVS_MAX_STR + 32];
+    char vswitchdPidOpt[OVS_MAX_STR + 32];
+    int rc;
 
     status_set(status, InitStateStartOvs, "starting ovs");
 
@@ -198,6 +201,24 @@ static bool start_ovs(Config *config, AppStatus *status) {
              "unix:%s/db.sock",
              config->runDir);
 
+    rc = snprintf(ovsdbPidOpt,
+                  sizeof(ovsdbPidOpt),
+                  "--pidfile=%s",
+                  ovsdbPid);
+    if (rc < 0 || (size_t)rc >= sizeof(ovsdbPidOpt)) {
+        status_fail(status, "ovsdb pidfile option too long");
+        return false;
+    }
+
+    rc = snprintf(vswitchdPidOpt,
+                  sizeof(vswitchdPidOpt),
+                  "--pidfile=%s",
+                  vswitchdPid);
+    if (rc < 0 || (size_t)rc >= sizeof(vswitchdPidOpt)) {
+        status_fail(status, "ovs-vswitchd pidfile option too long");
+        return false;
+    }
+
     if (!path_exists(dbPath)) {
         if (!path_exists(config->schema)) {
             status_fail(status, "OVS schema not found");
@@ -222,8 +243,7 @@ static bool start_ovs(Config *config, AppStatus *status) {
                  dbSock,
                  "--remote",
                  dbRemote,
-                 "--pidfile",
-                 ovsdbPid,
+                 ovsdbPidOpt,
                  "--detach",
                  NULL) != 0) {
         status_fail(status, "failed to start ovsdb-server");
@@ -244,8 +264,7 @@ static bool start_ovs(Config *config, AppStatus *status) {
     if (exec_cmd(config->cmdTimeoutSec,
                  "ovs-vswitchd",
                  vswitchdDb,
-                 "--pidfile",
-                 vswitchdPid,
+                 vswitchdPidOpt,
                  "--detach",
                  NULL) != 0) {
         status_fail(status, "failed to start ovs-vswitchd");
