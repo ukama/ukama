@@ -110,7 +110,7 @@ func (m *SiteState) BeforeCreate(tx *gorm.DB) error {
 type SiteComponent struct {
 	ID         uuid.UUID `gorm:"type:uuid;uniqueIndex;not null;column:id" json:"id"`
 	SiteID     string    `gorm:"primaryKey;column:site_id" json:"site_id"`
-	Components []string  `gorm:"column:components;type:text" json:"components"`
+	Components []string  `gorm:"column:components;type:text;serializer:json" json:"components"`
 	UpdatedAt  time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
 
@@ -142,4 +142,24 @@ func (m *SitePortMap) BeforeCreate(tx *gorm.DB) error {
 		m.ID = uuid.NewV4()
 	}
 	return nil
+}
+
+type DBStruct struct {
+	Site SiteRepo
+	SiteIntent IntentRepo
+	SiteIntentFlight IntentFlightRepo
+	SiteState StateRepo
+	SiteComponent ComponentRepo
+	SitePortMap PortMapRepo
+}
+
+func InitDBStruct(siteRepo SiteRepo, intentRepo IntentRepo, intentFlightRepo IntentFlightRepo, stateRepo StateRepo, componentRepo ComponentRepo, portMapRepo PortMapRepo) *DBStruct {
+	return &DBStruct{
+		Site: siteRepo,
+		SiteIntent: intentRepo,
+		SiteIntentFlight: intentFlightRepo,
+		SiteState: stateRepo,
+		SiteComponent: componentRepo,
+		SitePortMap: portMapRepo,
+	}
 }

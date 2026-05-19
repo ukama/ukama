@@ -25,8 +25,9 @@ type Config struct {
 	OrgName             string
 	Service             *uconf.Service
 	Http                HttpServices
-	ReconcileInterval   time.Duration `default:"30s"`
-	ReconcileMaxRetries int           `default:"3"`
+	ReconcileInterval    time.Duration `default:"30s"`
+	ReconcileMaxRetries  int           `default:"3"`
+	ComponentSyncDelay   time.Duration `default:"30s"`
 }
 type HttpServices struct {
 	InitClient    string `default:"api-gateway-init:8080"`

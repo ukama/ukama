@@ -92,6 +92,8 @@ func runGrpcServer(gormdb sql.Db) {
 	siteRepo := db.NewSiteRepo(gormdb)
 	flightRepo := db.NewIntentFlightRepo(gormdb)
 
+	dbStruct := db.InitDBStruct(siteRepo, intentRepo, flightRepo, stateRepo, componentRepo, portMapRepo)
+
 	r := reconciler.New(
 		intentRepo,
 		stateRepo,
@@ -113,9 +115,12 @@ func runGrpcServer(gormdb sql.Db) {
 	}
 
 	nodeClient := creg.NewNodeClient(regUrl.String())
-
-	srv := server.NewSiteControllerServer(svcConf.OrgName, r, mbClient, nodeClient, providers.NewHealthClientProvider(svcConf.HealthHost))
-	eventServer := server.NewSiteControllerEventServer(svcConf.OrgName, srv, siteRepo, intentRepo, flightRepo, stateRepo, componentRepo)
+	siteClient := creg.NewSiteClient(regUrl.String())
+	srv := server.NewSiteControllerServer(svcConf.OrgName, r, mbClient, nodeClient, siteClient, providers.NewHealthClientProvider(svcConf.HealthHost), dbStruct)
+	eventServer := server.NewSiteControllerEventServer(
+		srv, siteRepo, intentRepo, flightRepo, stateRepo, componentRepo,
+		svcConf,
+	)
 	
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterSiteControllerServiceServer(s, srv)

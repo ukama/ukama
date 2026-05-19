@@ -28,17 +28,19 @@ type SiteControllerServer struct {
 	pb.UnimplementedSiteControllerServiceServer
 	orgName        string
 	reconciler     *reconciler.Reconciler
+	dbStructs       *db.DBStruct
 	msgBus         msgBusServiceClient.MsgBusServiceClient
+	siteRegistry   creg.SiteClient
 	nodeClient     creg.NodeClient
 	healthClient   providers.HealthClientProvider
 	baseRoutingKey msgbus.RoutingKeyBuilder
 }
 
-func NewSiteControllerServer(orgName string, r *reconciler.Reconciler, mb msgBusServiceClient.MsgBusServiceClient, nodeClient creg.NodeClient, healthClient providers.HealthClientProvider) *SiteControllerServer {
-	return &SiteControllerServer{reconciler: r, msgBus: mb, baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName), nodeClient: nodeClient, healthClient: healthClient, orgName: orgName}
+func NewSiteControllerServer(orgName string, r *reconciler.Reconciler, mb msgBusServiceClient.MsgBusServiceClient, nodeClient creg.NodeClient, siteClient creg.SiteClient, healthClient providers.HealthClientProvider, dbStructs *db.DBStruct) *SiteControllerServer {
+	return &SiteControllerServer{reconciler: r, msgBus: mb, baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName), nodeClient: nodeClient, siteRegistry: siteClient, healthClient: healthClient, orgName: orgName, dbStructs: dbStructs}
 }
 
-func (s *SiteControllerServer) SetSite(ctx context.Context, req *pb.SetSiteRequest) (*pb.SetSiteResponse, error) {
+func (s *SiteControllerServer) SetSer(ctx context.Context, req *pb.SetSiteRequest) (*pb.SetSiteResponse, error) {
 	st, err := s.reconciler.SetSite(ctx, req.SiteId, req.State, req.Reason, req.RequestedBy)
 	if err != nil {
 		return nil, mapErr(err)
@@ -47,31 +49,30 @@ func (s *SiteControllerServer) SetSite(ctx context.Context, req *pb.SetSiteReque
 	if err != nil {
 		return nil, mapErr(err)
 	}
+	
 	return &pb.SetSiteResponse{State: siteStateToPB(st, intent)}, nil
 }
 
 func (s *SiteControllerServer) SetService(ctx context.Context, req *pb.SetServiceRequest) (*pb.SetServiceResponse, error) {
-	st, err := s.reconciler.SetService(ctx, req.SiteId, req.State, req.Reason, req.RequestedBy)
+	err :=s.dbStructs.SiteState.Upsert(&db.SiteState{
+		SiteID: req.SiteId,
+		ServiceState: req.State,
+	})
 	if err != nil {
 		return nil, mapErr(err)
 	}
-	intent, err := s.getIntent(ctx, req.SiteId)
-	if err != nil {
-		return nil, mapErr(err)
-	}
-	return &pb.SetServiceResponse{State: siteStateToPB(st, intent)}, nil
+	return &pb.SetServiceResponse{}, nil
 }
 
 func (s *SiteControllerServer) SetRadio(ctx context.Context, req *pb.SetRadioRequest) (*pb.SetRadioResponse, error) {
-	st, err := s.reconciler.SetRadio(ctx, req.SiteId, req.State, req.Reason, req.RequestedBy)
+	err := s.dbStructs.SiteState.Upsert(&db.SiteState{
+		SiteID: req.SiteId,
+		RadioState: req.State,
+	})
 	if err != nil {
 		return nil, mapErr(err)
 	}
-	intent, err := s.getIntent(ctx, req.SiteId)
-	if err != nil {
-		return nil, mapErr(err)
-	}
-	return &pb.SetRadioResponse{State: siteStateToPB(st, intent)}, nil
+	return &pb.SetRadioResponse{}, nil
 }
 
 func (s *SiteControllerServer) GetSiteState(ctx context.Context, req *pb.GetSiteStateRequest) (*pb.GetSiteStateResponse, error) {
