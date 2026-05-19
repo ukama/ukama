@@ -30,16 +30,16 @@ func (s *SiteController) SetSite(siteID, state, reason, requestedBy string) (*pb
 	return s.client.SetSite(ctx, &pb.SetSiteRequest{SiteId: siteID, State: state, Reason: reason, RequestedBy: requestedBy})
 }
 
-func (s *SiteController) SetService(siteID, state, reason, requestedBy string) (*pb.SetServiceResponse, error) {
+func (s *SiteController) SetService(siteID, state string) (*pb.SetServiceResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
-	return s.client.SetService(ctx, &pb.SetServiceRequest{SiteId: siteID, State: state, Reason: reason, RequestedBy: requestedBy})
+	return s.client.SetService(ctx, &pb.SetServiceRequest{SiteId: siteID, State: state})
 }
 
-func (s *SiteController) SetRadio(siteID, state, reason, requestedBy string) (*pb.SetRadioResponse, error) {
+func (s *SiteController) SetRadio(siteID, state string) (*pb.SetRadioResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
-	return s.client.SetRadio(ctx, &pb.SetRadioRequest{SiteId: siteID, State: state, Reason: reason, RequestedBy: requestedBy})
+	return s.client.SetRadio(ctx, &pb.SetRadioRequest{SiteId: siteID, State: state})
 }
 
 func (s *SiteController) GetSiteState(siteID string) (*pb.GetSiteStateResponse, error) {
