@@ -29,7 +29,7 @@ require (
 	github.com/ukama/ukama/systems/node/software v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/node/state v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.22.0
-	google.golang.org/grpc v1.81.0
+	google.golang.org/grpc v1.81.1
 )
 
 require (

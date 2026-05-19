@@ -20,10 +20,17 @@ import { mapApps, mapSoftwares, mapUpdateSoftware } from "./mapper";
 const SOFTWARE = "software";
 
 class SoftwareAPI extends RESTDataSource {
-  getApps = async (baseURL: string): Promise<Apps> => {
-    this.logger.info(`GetApps [GET]: ${baseURL}/${VERSION}/${SOFTWARE}/apps`);
+  getApps = async (baseURL: string, data: GetSoftwaresInput): Promise<Apps> => {
+    const queryParams = new URLSearchParams();
+    const { nodeId } = data;
+    if (nodeId) {
+      queryParams.append("node_id", nodeId);
+    }
+    this.logger.info(
+      `GetApps [GET]: ${baseURL}/${VERSION}/${SOFTWARE}?${queryParams.toString()}`
+    );
     this.baseURL = baseURL;
-    return this.get(`/${VERSION}/${SOFTWARE}/apps`)
+    return this.get(`/${VERSION}/${SOFTWARE}?${queryParams.toString()}`)
       .then(apps => {
         return mapApps(apps);
       })

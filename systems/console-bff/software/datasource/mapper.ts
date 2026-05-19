@@ -7,9 +7,15 @@
  */
 import { Apps, Softwares, StringResponse } from "../resolvers/types";
 
-export const mapApps = (res: Apps): Apps => {
+export const mapApps = (res: Softwares): Apps => {
+  const apps = res.software.map(software => ({
+    name: software.name,
+    space: software.space,
+    notes: software.notes,
+    metricsKeys: software.metricsKeys,
+  }));
   return {
-    apps: res.apps,
+    apps: apps,
   };
 };
 
