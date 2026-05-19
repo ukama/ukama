@@ -340,9 +340,22 @@ static bool run_space(Config *config,
 
         ok = installer_ensure_installed(config, a, NULL);
         if (!ok) {
+            allOk = false;
+
+            if (a->installState == INSTALL_STATE_PENDING) {
+                a->state = APP_STATE_STOPPED;
+                a->reason = APP_REASON_PACKAGE_MISSING;
+
+                usys_log_warn("space: install pending %s/%s",
+                              a->space,
+                              a->name);
+
+                a = a->next;
+                continue;
+            }
+
             a->installState = INSTALL_STATE_FAILED;
             usys_log_error("space: install failed %s/%s", a->space, a->name);
-            allOk = false;
 
             if (gate) {
                 return false;
@@ -461,11 +474,11 @@ static bool update_self(Supervisor *s,
     return true;
 }
 
-static bool update_app(Supervisor *s,
-                       const char *space,
-                       const char *name,
-                       const char *tag,
-                       const char *hub) {
+static bool update_one_app(Supervisor *s,
+                           const char *space,
+                           const char *name,
+                           const char *tag,
+                           const char *hub) {
 
     App *a;
     char *oldTag;
@@ -544,13 +557,53 @@ static bool update_app(Supervisor *s,
     }
 
     free(a->lastGoodTag);
-    a->lastGoodTag = strdup(tag);
+    a->lastGoodTag = strdup(a->tag);
 
     state_store_save(s->config, s->spaceList);
 
     free(oldTag);
     free(oldLastGood);
     return true;
+}
+
+static bool update_app(Supervisor *s,
+                       const char *space,
+                       const char *name,
+                       const char *tag,
+                       const char *hub) {
+
+    Space *sp =  NULL;
+    bool matched;
+    bool ok;
+
+    if (!s || !name || !tag) {
+        return false;
+    }
+
+    if (space) {
+        return update_one_app(s, space, name, tag, hub);
+    }
+
+    matched = false;
+    ok = true;
+
+    sp = s->spaceList;
+    while (sp) {
+        if (sp->name && app_find(s->spaceList, sp->name, name)) {
+            matched = true;
+            if (!update_one_app(s, sp->name, name, tag, hub)) {
+                ok = false;
+            }
+        }
+        sp = sp->next;
+    }
+
+    if (!matched) {
+        usys_log_error("update: app not found in any space: %s", name);
+        return false;
+    }
+
+    return ok;
 }
 
 static void* supervisor_thread(void *arg) {
@@ -582,12 +635,19 @@ static void* supervisor_thread(void *arg) {
                            s->spaceList,
                            s->config->bootSpace,
                            true)) {
-                usys_log_error("boot: failed");
+                usys_log_warn("boot: degraded");
             } else {
-                s->bootDone = true;
-                ready_touch(s->config);
                 usys_log_info("boot: ready");
             }
+
+            /*
+             * starter.d is the node orchestrator. It must remain alive even when
+             * one managed app is missing or pending.
+             */
+            s->bootDone = true;
+            ready_touch(s->config);
+            state_store_save(s->config, s->spaceList);
+
         } else if (a->type == ACTION_RUN_ALL) {
             Space *sp;
 

@@ -13,9 +13,10 @@ import (
 	"fmt"
 	"net/url"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/api"
+	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/api"
 	"github.com/ukama/ukama/systems/common/rest"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const ProfileEndpoint = "/v1/policy/imsi"

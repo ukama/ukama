@@ -18,14 +18,15 @@ import (
 	"antrea.io/libOpenflow/openflow15"
 	"antrea.io/libOpenflow/util"
 	"antrea.io/ofnet/ofctrl"
+
 	log "github.com/sirupsen/logrus"
 )
 
 type UeDataPath int
 
 const (
-	RX_PATH UeDataPath = 0
-	TX_PATH UeDataPath = 1
+	RX_PATH UeDataPath = iota
+	TX_PATH
 )
 
 // OvsSwitch represents on OVS bridge instance
@@ -89,7 +90,6 @@ func TryConnect(c *ofctrl.Controller, sock string) {
 
 // NewOvsSwitch Creates a new OVS switch instance
 func NewOvsSwitch(bridgeName, localIP, netType, mgmtPath string) (*OvsSwitch, error) {
-
 	sw := new(OvsSwitch)
 
 	//Create a controller
@@ -217,7 +217,6 @@ func (o *OvsSwitch) createRxFlow(ip *net.IP) (*ofctrl.Flow, error) {
 }
 
 func (o *OvsSwitch) updateFlowForUE(ipString string, rxMeter, txMeter uint32, rxCookie, txCookie uint64, oprationType int) error {
-
 	ip := net.ParseIP(ipString)
 	if ip == nil {
 		log.Errorf("Invalid IP address")
@@ -289,12 +288,17 @@ func (o *OvsSwitch) deleteFlowfromSwitch(ip net.IP, dp UeDataPath) error {
 	flow.Priority = 100
 	flow.Match = *openflow15.NewMatch()
 	flow.Command = openflow15.FC_DELETE
+
 	flow.Match.AddField(*openflow15.NewEthTypeField(0x800))
-	if dp == TX_PATH {
+
+	switch dp {
+	case TX_PATH:
 		flow.Match.AddField(*openflow15.NewIpv4SrcField(ip, nil))
-	} else if dp == RX_PATH {
+
+	case RX_PATH:
 		flow.Match.AddField(*openflow15.NewIpv4DstField(ip, nil))
 	}
+
 	err := o.ofActor.Switch.Send(flow)
 	if err != nil {
 		log.Errorf("failed to delete flow for UE %v. Error: %s", ip, err.Error())
@@ -304,17 +308,18 @@ func (o *OvsSwitch) deleteFlowfromSwitch(ip net.IP, dp UeDataPath) error {
 }
 
 func (o *OvsSwitch) deleteFlowFromTable(ip net.IP, dp UeDataPath) error {
-
 	// Delete flow from the table
 	f := new(ofctrl.Flow)
 	f.Table = o.ofActor.inputTable
-	if dp == TX_PATH {
+
+	switch dp {
+	case TX_PATH:
 		f.Match = ofctrl.FlowMatch{
 			Ethertype: 0x0800,
 			Priority:  100,
 			IpSa:      &ip,
 		}
-	} else if dp == RX_PATH {
+	case RX_PATH:
 		f.Match = ofctrl.FlowMatch{
 			Ethertype: 0x0800,
 			Priority:  100,
@@ -336,7 +341,6 @@ func (o *OvsSwitch) deleteFlowFromTable(ip net.IP, dp UeDataPath) error {
 }
 
 func (o *OvsSwitch) deleteFlowForTXPath(ip net.IP) error {
-
 	/* Delete flow from switch */
 	err := o.deleteFlowfromSwitch(ip, TX_PATH)
 	if err != nil {
@@ -356,7 +360,6 @@ func (o *OvsSwitch) deleteFlowForTXPath(ip net.IP) error {
 }
 
 func (o *OvsSwitch) deleteFlowForRXPath(ip net.IP) error {
-
 	/* Delete flow from switch */
 	err := o.deleteFlowfromSwitch(ip, RX_PATH)
 	if err != nil {
@@ -398,7 +401,6 @@ func (o *OvsSwitch) DeleteFlowForUE(ipString string) error {
 }
 
 func (o *OvsSwitch) AddUEDataPath(ipString string, rxMeter, txMeter, rxRate, txRate, burstSize uint32, rxCookie, txCookie uint64) error {
-
 	/* Create Meters */
 	err := o.CreateMetersForUE(rxMeter, txMeter, rxRate, txRate, burstSize)
 	if err != nil {
@@ -418,7 +420,6 @@ func (o *OvsSwitch) AddUEDataPath(ipString string, rxMeter, txMeter, rxRate, txR
 }
 
 func (o *OvsSwitch) DeleteUEDataPath(ipString string, rxMeter, txMeter uint32) error {
-
 	/* Delete Flows */
 	err := o.DeleteFlowForUE(ipString)
 	if err != nil {
@@ -493,7 +494,6 @@ func parseStats(s openflow15.Stats) (uint64, uint64, error) {
 }
 
 func (o *OvsSwitch) dataPathStats(cookieID uint64) (uint64, uint64, error) {
-
 	var bc uint64 = 0
 	var pc uint64 = 0
 	cookieMask := uint64(0xffffffffffffffff)
@@ -521,7 +521,6 @@ func (o *OvsSwitch) dataPathStats(cookieID uint64) (uint64, uint64, error) {
 }
 
 func (o *OvsSwitch) DataPathUEStats(rxCookieID, txCookieID uint64) (uint64, uint64, uint64, uint64, error) {
-
 	rxBC, rxPC, err := o.dataPathStats(rxCookieID)
 	if err != nil {
 		log.Errorf("Error getting RX path stats %s", err.Error())

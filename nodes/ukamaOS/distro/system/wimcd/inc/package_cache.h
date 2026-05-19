@@ -59,6 +59,10 @@ int pkg_publish_from_dir(const char *name, const char *tag,
                          char *publishedPath, size_t publishedPathLen,
                          char *actualVersion,
                          size_t actualVersionLen);
+int pkg_publish_tar(const char *name, const char *tag,
+                    const char *tmpTar,
+                    char *publishedPath, size_t publishedPathLen,
+                    char *actualVersion, size_t actualVersionLen);
 int pkg_reconcile_startup(sqlite3 *db, const char *pkgDir);
 
 #endif /* WIMC_PACKAGE_CACHE_H */

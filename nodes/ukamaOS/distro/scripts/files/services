@@ -1209,6 +1209,7 @@ switch          10310/tcp   switchd
 aggregator      18022/tcp   
 aggregator-admin 18023/tcp
 controlleremu    18024/tcp
+wimc-agent-tar.gz 18025/tcp
 switchemu       18088/tcp
 ukama		18100/tcp   ukama
 remote          18200/tcp   remote

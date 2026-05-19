@@ -13,12 +13,12 @@ import (
 	"fmt"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/nodes/apps/pcrf/pkg"
+	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/client"
+	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/controller/store"
+	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/datapath"
 
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/client"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/controller/store"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/datapath"
+	log "github.com/sirupsen/logrus"
 )
 
 // type Cache struct {
@@ -215,7 +215,6 @@ func (s *sessionManager) EndAllSessions() error {
 }
 
 func (s *sessionManager) EndSession(ctx context.Context, sub *store.Subscriber) error {
-
 	sc, ok := s.cache[sub.Imsi]
 	if !ok {
 		log.Errorf("failed to find session for Imsi %s", sub.Imsi)
@@ -238,7 +237,7 @@ func (s *sessionManager) EndSession(ctx context.Context, sub *store.Subscriber) 
 	if err != nil {
 		log.Errorf("Failed to delete data path for Imsi %s. Error: %s", sub.Imsi, err.Error())
 		/* TODO: Need to figure out way to stop traffic for UE
-		Another poin is the command to stop session comes from the EPC whihc means the connection is dropped
+		Another point is the command to stop session comes from the EPC whihc means the connection is dropped
 		so it might be ok. TBU based on the test result of this case */
 		return err
 	}
@@ -255,7 +254,6 @@ func (s *sessionManager) EndSession(ctx context.Context, sub *store.Subscriber) 
 	delete(s.cache, sub.Imsi)
 
 	return nil
-
 }
 
 func (s *sessionManager) SendCDR(imsi string) error {

@@ -1,0 +1,33 @@
+starter update request:
+  app=example
+  requestedTag=1.0.1-abcdefgh
+  hub=http://...
+
+starter -> wimc:
+  POST /v1/apps/example/1.0.1-abcdefgh
+
+wimc:
+  fetches package
+  validates VERSION
+  publishes package into /ukama/apps/pkgs
+  records:
+    requestedTag -> available, path, actualVersion
+    actualVersion -> available, path, actualVersion
+
+starter:
+  GET /v1/apps/example/1.0.1-abcdefgh/status
+  receives:
+    path=/ukama/apps/pkgs/example_v1.0.1-abcdefgh.tar.gz
+    actualVersion=v1.0.1-abcdefgh
+
+starter:
+  unpack path
+  read VERSION
+  set app->tag = VERSION
+  install into:
+    /ukama/apps/root/boot/example/v1.0.1-abcdefgh
+  switch current -> v1.0.1-abcdefgh
+  start app
+  verify /v1/ping and /v1/version
+  lastGoodTag = app->tag
+

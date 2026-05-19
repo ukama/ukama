@@ -8,6 +8,7 @@
 
 #include <curl/curl.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "callback.h"
@@ -34,7 +35,13 @@ extern int process_agent_update_request(WTasks **tasks,
                                         AgentReq *req,
                                         sqlite3 *db);
 
-bool deserialize_agent_request_update(Update **update, json_t *json);
+extern bool deserialize_agent_request_update(Update **update, json_t *json);
+
+typedef struct {
+
+    char *items[WIMC_MAX_HUBS];
+    int count;
+} HubList;
 
 static bool is_absolute_url(const char *url) {
 
@@ -46,37 +53,233 @@ static bool is_absolute_url(const char *url) {
            strncmp(url, "https://", 8) == 0;
 }
 
-static char *parse_hub_override(const URequest *request) {
+static void free_hub_list(HubList *list) {
+
+    int i;
+
+    if (list == NULL) {
+        return;
+    }
+
+    for (i = 0; i < list->count; i++) {
+        free(list->items[i]);
+        list->items[i] = NULL;
+    }
+
+    list->count = 0;
+}
+
+static bool hub_list_add(HubList *list, const char *hub) {
+
+    char normalized[WIMC_MAX_URL_LEN];
+
+    if (list == NULL || hub == NULL || *hub == '\0') {
+        return false;
+    }
+
+    if (list->count >= WIMC_MAX_HUBS) {
+        return false;
+    }
+
+    memset(normalized, 0, sizeof(normalized));
+
+    if (is_absolute_url(hub)) {
+        snprintf(normalized, sizeof(normalized), "%s", hub);
+    } else {
+        snprintf(normalized, sizeof(normalized), "http://%s", hub);
+    }
+
+    if (!is_absolute_url(normalized)) {
+        return false;
+    }
+
+    list->items[list->count] = strdup(normalized);
+    if (list->items[list->count] == NULL) {
+        return false;
+    }
+
+    list->count++;
+
+    return true;
+}
+
+static bool parse_hub_overrides(const URequest *request, HubList *list) {
 
     json_t *json;
     json_error_t jerr;
     json_t *jhub;
+    json_t *item;
     const char *hub;
-    char *ret;
+    size_t i;
+    bool ret;
 
     json = NULL;
     jhub = NULL;
+    item = NULL;
     hub = NULL;
-    ret = NULL;
+    ret = true;
 
-    if (!request || !request->binary_body || request->binary_body_length == 0) {
-        return NULL;
+    if (list == NULL) {
+        return false;
     }
 
+    memset(list, 0, sizeof(HubList));
+
+    if (request == NULL ||
+        request->binary_body == NULL ||
+        request->binary_body_length == 0) {
+        return true;
+    }
+
+    memset(&jerr, 0, sizeof(jerr));
+
     json = ulfius_get_json_body_request(request, &jerr);
-    if (!json) {
-        return NULL;
+    if (json == NULL) {
+        return true;
     }
 
     jhub = json_object_get(json, "hub");
-    hub = json_is_string(jhub) ? json_string_value(jhub) : NULL;
+    if (jhub == NULL) {
+        json_decref(json);
+        return true;
+    }
 
-    if (hub && *hub && is_absolute_url(hub)) {
-        ret = strdup(hub);
+    if (json_is_string(jhub)) {
+        hub = json_string_value(jhub);
+
+        if (hub != NULL && *hub != '\0') {
+            ret = hub_list_add(list, hub);
+        }
+
+        json_decref(json);
+        return ret;
+    }
+
+    if (json_is_array(jhub)) {
+        if (json_array_size(jhub) == 0 ||
+            json_array_size(jhub) > WIMC_MAX_HUBS) {
+            json_decref(json);
+            return false;
+        }
+
+        json_array_foreach(jhub, i, item) {
+            hub = json_is_string(item) ? json_string_value(item) : NULL;
+
+            if (hub == NULL || *hub == '\0') {
+                ret = false;
+                break;
+            }
+
+            if (!hub_list_add(list, hub)) {
+                ret = false;
+                break;
+            }
+        }
+
+        json_decref(json);
+        return ret;
     }
 
     json_decref(json);
-    return ret;
+
+    return false;
+}
+
+static bool get_artifacts_info_from_any_hub(Artifact *artifact,
+                                            Config *config,
+                                            HubList *hubList,
+                                            const char *defaultHubURL,
+                                            char *name,
+                                            char *tag,
+                                            char *selectedHub,
+                                            size_t selectedHubSize,
+                                            int *status) {
+
+    int i;
+    int httpStatus;
+    const char *hubURL;
+
+    if (artifact == NULL ||
+        config == NULL ||
+        name == NULL ||
+        tag == NULL ||
+        selectedHub == NULL ||
+        selectedHubSize == 0) {
+        if (status != NULL) {
+            *status = HttpStatus_InternalServerError;
+        }
+        return false;
+    }
+
+    selectedHub[0] = '\0';
+
+    if (status != NULL) {
+        *status = HttpStatus_InternalServerError;
+    }
+
+    if (hubList != NULL && hubList->count > 0) {
+        for (i = 0; i < hubList->count; i++) {
+            hubURL = hubList->items[i];
+
+            if (hubURL == NULL || *hubURL == '\0') {
+                continue;
+            }
+
+            httpStatus = 0;
+
+            usys_log_debug("Trying hub %s for %s:%s",
+                           hubURL, name, tag);
+
+            if (get_artifacts_info_from_hub(artifact, config, hubURL,
+                                            name, tag, &httpStatus)) {
+                snprintf(selectedHub, selectedHubSize, "%s", hubURL);
+
+                if (status != NULL) {
+                    *status = HttpStatus_OK;
+                }
+
+                usys_log_debug("Selected hub %s for %s:%s",
+                               selectedHub, name, tag);
+
+                return true;
+            }
+
+            usys_log_error("Hub failed %s for %s:%s http=%d",
+                           hubURL, name, tag, httpStatus);
+
+            if (status != NULL && httpStatus != 0) {
+                *status = httpStatus;
+            }
+        }
+
+        return false;
+    }
+
+    if (defaultHubURL == NULL || *defaultHubURL == '\0') {
+        if (status != NULL) {
+            *status = HttpStatus_BadRequest;
+        }
+        return false;
+    }
+
+    httpStatus = 0;
+
+    if (get_artifacts_info_from_hub(artifact, config, defaultHubURL,
+                                    name, tag, &httpStatus)) {
+        snprintf(selectedHub, selectedHubSize, "%s", defaultHubURL);
+
+        if (status != NULL) {
+            *status = HttpStatus_OK;
+        }
+
+        return true;
+    }
+
+    if (status != NULL) {
+        *status = httpStatus;
+    }
+
+    return false;
 }
 
 static void free_agent_request_update(AgentReq *req) {
@@ -89,6 +292,39 @@ static void free_agent_request_update(AgentReq *req) {
     usys_free(req->update);
 }
 
+static void create_hub_url_for_agent(char *hubURL, char *srcURL,
+                                     char *destURL) {
+
+    size_t hubLen;
+    bool hubSlash;
+    bool srcSlash;
+
+    if (hubURL == NULL || srcURL == NULL || destURL == NULL) {
+        return;
+    }
+
+    if (is_absolute_url(srcURL)) {
+        snprintf(destURL, WIMC_MAX_URL_LEN, "%s", srcURL);
+        return;
+    }
+
+    hubLen = strlen(hubURL);
+    if (hubLen == 0 || srcURL[0] == '\0') {
+        return;
+    }
+
+    hubSlash = hubURL[hubLen - 1] == '/';
+    srcSlash = srcURL[0] == '/';
+
+    if (hubSlash && srcSlash) {
+        snprintf(destURL, WIMC_MAX_URL_LEN, "%s%s", hubURL, srcURL + 1);
+    } else if (!hubSlash && !srcSlash) {
+        snprintf(destURL, WIMC_MAX_URL_LEN, "%s/%s", hubURL, srcURL);
+    } else {
+        snprintf(destURL, WIMC_MAX_URL_LEN, "%s%s", hubURL, srcURL);
+    }
+}
+
 static void create_hub_urls_for_agent(char *hubURL,
                                       char *srcURL, char *destURL,
                                       char *srcExtraURL, char *destExtraURL) {
@@ -98,18 +334,104 @@ static void create_hub_urls_for_agent(char *hubURL,
         return;
     }
 
-    if (!is_absolute_url(srcURL)) {
-        snprintf(destURL, WIMC_MAX_URL_LEN, "%s%s", hubURL, srcURL);
-    } else {
-        snprintf(destURL, WIMC_MAX_URL_LEN, "%s", srcURL);
+    create_hub_url_for_agent(hubURL, srcURL, destURL);
+    create_hub_url_for_agent(hubURL, srcExtraURL, destExtraURL);
+}
+
+static char *trim_priority_token(char *value) {
+
+    char *end;
+
+    if (value == NULL) {
+        return NULL;
     }
 
-    if (!is_absolute_url(srcExtraURL)) {
-        snprintf(destExtraURL, WIMC_MAX_URL_LEN, "%s%s", hubURL,
-                 srcExtraURL);
-    } else {
-        snprintf(destExtraURL, WIMC_MAX_URL_LEN, "%s", srcExtraURL);
+    while (*value == ' ' || *value == '\t' || *value == '\n' ||
+           *value == '\r') {
+        value++;
     }
+
+    end = value + strlen(value);
+    while (end > value && (*(end - 1) == ' ' || *(end - 1) == '\t' ||
+           *(end - 1) == '\n' || *(end - 1) == '\r')) {
+        end--;
+    }
+    *end = '\0';
+
+    return value;
+}
+
+static ArtifactFormat *find_artifact_format(Artifact *artifact,
+                                            const char *method) {
+
+    int i;
+
+    if (artifact == NULL || method == NULL || *method == '\0') {
+        return NULL;
+    }
+
+    for (i = 0; i < artifact->formatsCount; i++) {
+        if (artifact->formats[i] == NULL ||
+            artifact->formats[i]->type == NULL) {
+            continue;
+        }
+
+        if (strcmp(artifact->formats[i]->type, method) == 0) {
+            return artifact->formats[i];
+        }
+    }
+
+    return NULL;
+}
+
+static ArtifactFormat *select_artifact_format(Artifact *artifact) {
+
+    char priority[WIMC_MAX_ARGS_LEN];
+    char *savePtr;
+    char *token;
+    char *method;
+    const char *env;
+    ArtifactFormat *format;
+    int i;
+
+    if (artifact == NULL) {
+        return NULL;
+    }
+
+    env = getenv(WIMC_METHOD_PRIORITY_ENV);
+    if (env != NULL && *env != '\0') {
+        snprintf(priority, sizeof(priority), "%s", env);
+        savePtr = NULL;
+        token = strtok_r(priority, ",", &savePtr);
+
+        while (token != NULL) {
+            method = trim_priority_token(token);
+            format = find_artifact_format(artifact, method);
+
+            if (format != NULL && get_agent_port_by_method(format->type)) {
+                usys_log_debug("Selected WIMC method from priority: %s",
+                               format->type);
+                return format;
+            }
+
+            token = strtok_r(NULL, ",", &savePtr);
+        }
+    }
+
+    for (i = 0; i < artifact->formatsCount; i++) {
+        if (artifact->formats[i] == NULL ||
+            artifact->formats[i]->type == NULL) {
+            continue;
+        }
+
+        if (get_agent_port_by_method(artifact->formats[i]->type)) {
+            usys_log_debug("Selected WIMC method from hub order: %s",
+                           artifact->formats[i]->type);
+            return artifact->formats[i];
+        }
+    }
+
+    return NULL;
 }
 
 static json_t *status_json(char *name, char *tag, char *status,
@@ -255,44 +577,63 @@ int web_service_cb_post_app(const URequest *request,
                             UResponse *response,
                             void *data) {
 
-    int httpStatus = 0;
-    char indexURL[WIMC_MAX_URL_LEN] = {0};
-    char storeURL[WIMC_MAX_URL_LEN] = {0};
+    int httpStatus;
+    int responseStatus;
+    char indexURL[WIMC_MAX_URL_LEN];
+    char storeURL[WIMC_MAX_URL_LEN];
+    char selectedHub[WIMC_MAX_URL_LEN];
     char *name;
     char *tag;
-    char *status = NULL;
-    char *path = NULL;
-    char *actualVersion = NULL;
-    char *error = NULL;
-    char *hubOverride = NULL;
+    char *status;
+    char *path;
+    char *actualVersion;
+    char *error;
     const char *hubURL;
     Artifact artifact;
     Config *config;
-    WimcReq *wimcRequest = NULL;
-    ArtifactFormat *artifactFormat = NULL;
+    WimcReq *wimcRequest;
+    ArtifactFormat *artifactFormat;
     json_t *jResponse;
-    int i;
+    HubList hubList;
+    bool responseSet;
+    bool artifactLoaded;
 
+    httpStatus = 0;
+    responseStatus = HttpStatus_InternalServerError;
+    status = NULL;
+    path = NULL;
+    actualVersion = NULL;
+    error = NULL;
+    hubURL = NULL;
+    wimcRequest = NULL;
+    artifactFormat = NULL;
+    jResponse = NULL;
+    responseSet = false;
+    artifactLoaded = false;
+
+    memset(indexURL, 0, sizeof(indexURL));
+    memset(storeURL, 0, sizeof(storeURL));
+    memset(selectedHub, 0, sizeof(selectedHub));
     memset(&artifact, 0, sizeof(artifact));
+    memset(&hubList, 0, sizeof(hubList));
+
     config = (Config *)data;
     name = (char *)u_map_get(request->map_url, "name");
     tag  = (char *)u_map_get(request->map_url, "tag");
 
     if (!pkg_is_valid_identifier(name) || !pkg_is_valid_identifier(tag)) {
-        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
-                                        HttpStatusStr(HttpStatus_BadRequest));
-        return U_CALLBACK_CONTINUE;
+        responseStatus = HttpStatus_BadRequest;
+        goto done;
     }
 
     if (validate_cached_package(config, name, tag, &path, &actualVersion)) {
         jResponse = status_json(name, tag, WIMC_STATUS_AVAILABLE, path,
                                 actualVersion, NULL);
-        ulfius_set_json_body_response(response, HttpStatus_OK,
-                                      jResponse);
+        ulfius_set_json_body_response(response, HttpStatus_OK, jResponse);
         json_decref(jResponse);
-        free(path);
-        free(actualVersion);
-        return U_CALLBACK_CONTINUE;
+        jResponse = NULL;
+        responseSet = true;
+        goto done;
     }
 
     pthread_mutex_lock(&config->dbMutex);
@@ -306,12 +647,10 @@ int web_service_cb_post_app(const URequest *request,
             ulfius_set_json_body_response(response, HttpStatus_Conflict,
                                           jResponse);
             json_decref(jResponse);
-            free(status);
-            free(path);
-            free(actualVersion);
-            free(error);
+            jResponse = NULL;
+            responseSet = true;
             pthread_mutex_unlock(&config->dbMutex);
-            return U_CALLBACK_CONTINUE;
+            goto done;
         }
     }
 
@@ -324,33 +663,41 @@ int web_service_cb_post_app(const URequest *request,
     free(actualVersion);
     free(error);
 
-    hubOverride = parse_hub_override(request);
-    hubURL = (hubOverride && *hubOverride) ? hubOverride : config->hubURL;
+    status = NULL;
+    path = NULL;
+    actualVersion = NULL;
+    error = NULL;
 
-    if (!get_artifacts_info_from_hub(&artifact, config, hubURL,
-                                     name, tag, &httpStatus)) {
+    if (!parse_hub_overrides(request, &hubList)) {
+        pthread_mutex_lock(&config->dbMutex);
+        db_update_package_status(config->db, name, tag, NULL,
+                                 WIMC_STATUS_FAILED, NULL,
+                                 "invalid hub list");
+        pthread_mutex_unlock(&config->dbMutex);
+
+        responseStatus = HttpStatus_BadRequest;
+        goto done;
+    }
+
+    if (!get_artifacts_info_from_any_hub(&artifact, config, &hubList,
+                                         config->hubURL, name, tag,
+                                         selectedHub, sizeof(selectedHub),
+                                         &httpStatus)) {
         pthread_mutex_lock(&config->dbMutex);
         db_update_package_status(config->db, name, tag, NULL,
                                  WIMC_STATUS_FAILED, NULL,
                                  "hub lookup failed");
         pthread_mutex_unlock(&config->dbMutex);
 
-        ulfius_set_string_body_response(response,
-                                        httpStatus ? httpStatus :
-                                        HttpStatus_InternalServerError,
-                                        HttpStatusStr(httpStatus ? httpStatus :
-                                        HttpStatus_InternalServerError));
-        free(hubOverride);
-        return U_CALLBACK_CONTINUE;
+        responseStatus = httpStatus ? httpStatus :
+                         HttpStatus_InternalServerError;
+        goto done;
     }
 
-    for (i = 0; i < artifact.formatsCount; i++) {
-        if (get_agent_port_by_method(artifact.formats[i]->type)) {
-            artifactFormat = artifact.formats[i];
-            break;
-        }
-    }
+    artifactLoaded = true;
+    hubURL = selectedHub;
 
+    artifactFormat = select_artifact_format(&artifact);
     if (artifactFormat == NULL) {
         pthread_mutex_lock(&config->dbMutex);
         db_update_package_status(config->db, name, tag, NULL,
@@ -358,31 +705,34 @@ int web_service_cb_post_app(const URequest *request,
                                  "no matching agent");
         pthread_mutex_unlock(&config->dbMutex);
 
-        free_artifact(&artifact);
-        free(hubOverride);
-        ulfius_set_string_body_response(response,
-                                        HttpStatus_ServiceUnavailable,
-                                        HttpStatusStr(
-                                        HttpStatus_ServiceUnavailable));
-        return U_CALLBACK_CONTINUE;
+        responseStatus = HttpStatus_ServiceUnavailable;
+        goto done;
     }
 
     if (strcmp(artifactFormat->type, WIMC_METHOD_CHUNK_STR) == 0) {
         create_hub_urls_for_agent((char *)hubURL, artifactFormat->url,
                                   indexURL, artifactFormat->extraInfo,
                                   storeURL);
+    } else if (strcmp(artifactFormat->type, WIMC_METHOD_TARGZ_STR) == 0) {
+        create_hub_url_for_agent((char *)hubURL, artifactFormat->url,
+                                 indexURL);
+        storeURL[0] = '\0';
+    } else {
+        pthread_mutex_lock(&config->dbMutex);
+        db_update_package_status(config->db, name, tag, NULL,
+                                 WIMC_STATUS_FAILED, NULL,
+                                 "unsupported package method");
+        pthread_mutex_unlock(&config->dbMutex);
+
+        responseStatus = HttpStatus_ServiceUnavailable;
+        goto done;
     }
 
     create_wimc_request(&wimcRequest, name, tag, indexURL, storeURL,
                         artifactFormat->type, DEFAULT_INTERVAL);
     if (wimcRequest == NULL) {
-        free_artifact(&artifact);
-        free(hubOverride);
-        ulfius_set_string_body_response(response,
-                                        HttpStatus_InternalServerError,
-                                        HttpStatusStr(
-                                        HttpStatus_InternalServerError));
-        return U_CALLBACK_CONTINUE;
+        responseStatus = HttpStatus_InternalServerError;
+        goto done;
     }
 
     if (artifactFormat->size > 0) {
@@ -393,15 +743,10 @@ int web_service_cb_post_app(const URequest *request,
                                      "package too large");
             pthread_mutex_unlock(&config->dbMutex);
 
-            cleanup_wimc_request(wimcRequest);
-            free_artifact(&artifact);
-            free(hubOverride);
-            ulfius_set_string_body_response(response,
-                                            HttpStatus_BadRequest,
-                                            HttpStatusStr(
-                                            HttpStatus_BadRequest));
-            return U_CALLBACK_CONTINUE;
+            responseStatus = HttpStatus_BadRequest;
+            goto done;
         }
+
         wimcRequest->fetch->content->expectedSizeBytes =
             (long)artifactFormat->size;
     }
@@ -411,26 +756,47 @@ int web_service_cb_post_app(const URequest *request,
         db_update_package_status(config->db, name, tag, NULL,
                                  WIMC_STATUS_DOWNLOAD, NULL, NULL);
         pthread_mutex_unlock(&config->dbMutex);
+
         jResponse = status_json(name, tag, WIMC_STATUS_DOWNLOAD,
                                 NULL, NULL, NULL);
         ulfius_set_json_body_response(response, HttpStatus_Accepted,
                                       jResponse);
         json_decref(jResponse);
-    } else {
-        pthread_mutex_lock(&config->dbMutex);
-        db_update_package_status(config->db, name, tag, NULL,
-                                 WIMC_STATUS_FAILED, NULL,
-                                 "agent request failed");
-        pthread_mutex_unlock(&config->dbMutex);
-        ulfius_set_string_body_response(response,
-                                        HttpStatus_ServiceUnavailable,
-                                        HttpStatusStr(
-                                        HttpStatus_ServiceUnavailable));
+        jResponse = NULL;
+        responseSet = true;
+        goto done;
     }
 
-    cleanup_wimc_request(wimcRequest);
-    free_artifact(&artifact);
-    free(hubOverride);
+    pthread_mutex_lock(&config->dbMutex);
+    db_update_package_status(config->db, name, tag, NULL,
+                             WIMC_STATUS_FAILED, NULL,
+                             "agent request failed");
+    pthread_mutex_unlock(&config->dbMutex);
+
+    responseStatus = HttpStatus_ServiceUnavailable;
+
+done:
+    if (wimcRequest != NULL) {
+        cleanup_wimc_request(wimcRequest);
+        wimcRequest = NULL;
+    }
+
+    if (artifactLoaded) {
+        free_artifact(&artifact);
+    }
+
+    free_hub_list(&hubList);
+
+    free(status);
+    free(path);
+    free(actualVersion);
+    free(error);
+
+    if (!responseSet) {
+        ulfius_set_string_body_response(response,
+                                        responseStatus,
+                                        HttpStatusStr(responseStatus));
+    }
 
     return U_CALLBACK_CONTINUE;
 }
@@ -492,19 +858,123 @@ int web_service_cb_put_app_stats_update(const struct _u_request *request,
     return U_CALLBACK_CONTINUE;
 }
 
+static json_t *agent_manager_status_json(AgentManager *mgr,
+                                         json_t **summaryOut) {
+
+    json_t *agents;
+    json_t *summary;
+    json_t *agentJson;
+    ManagedAgent *agent;
+    int configured;
+    int running;
+    int failed;
+    int i;
+
+    agents = json_array();
+    summary = json_object();
+
+    if (summaryOut != NULL) {
+        *summaryOut = summary;
+    }
+
+    if (agents == NULL || summary == NULL) {
+        if (agents != NULL) {
+            json_decref(agents);
+        }
+        if (summary != NULL) {
+            json_decref(summary);
+        }
+        return json_array();
+    }
+
+    configured = 0;
+    running = 0;
+    failed = 0;
+
+    if (mgr == NULL) {
+        json_object_set_new(summary, "configured", json_integer(0));
+        json_object_set_new(summary, "running", json_integer(0));
+        json_object_set_new(summary, "failed", json_integer(0));
+        return agents;
+    }
+
+    pthread_mutex_lock(&mgr->mutex);
+
+    configured = mgr->count;
+
+    for (i = 0; i < mgr->count; i++) {
+        agent = &mgr->agents[i];
+
+        if (agent->running) {
+            running++;
+        } else {
+            failed++;
+        }
+
+        agentJson = json_pack("{s:s, s:s, s:b, s:i, s:i, s:i, s:s}",
+                              "method", agent->method,
+                              "service", agent->service,
+                              "running", agent->running ? 1 : 0,
+                              "pid", (int)agent->pid,
+                              "port", agent->port,
+                              "restartCount", agent->restartCount,
+                              "execPath", agent->execPath);
+
+        if (agentJson != NULL) {
+            json_array_append_new(agents, agentJson);
+        }
+    }
+
+    pthread_mutex_unlock(&mgr->mutex);
+
+    json_object_set_new(summary, "configured", json_integer(configured));
+    json_object_set_new(summary, "running", json_integer(running));
+    json_object_set_new(summary, "failed", json_integer(failed));
+
+    return agents;
+}
+
 int web_service_cb_get_status(const URequest *request,
                               UResponse *response,
                               void *epConfig) {
 
     Config *config;
     json_t *json;
+    json_t *agents;
+    json_t *summary;
+
+    (void)request;
 
     config = (Config *)epConfig;
-    json = json_pack("{s:s, s:s, s:i, s:s}",
-                     "service", SERVICE_NAME,
-                     "status", "ok",
-                     "port", config ? config->servicePort : 0,
-                     "pkgDir", DEFAULT_APPS_PKGS_PATH);
+    summary = NULL;
+
+    json = json_object();
+    if (json == NULL) {
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_InternalServerError,
+                                        HttpStatusStr(
+                                        HttpStatus_InternalServerError));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    agents = agent_manager_status_json(config ? config->agentManager : NULL,
+                                       &summary);
+
+    json_object_set_new(json, "service", json_string(SERVICE_NAME));
+    json_object_set_new(json, "status", json_string("ok"));
+    json_object_set_new(json, "port",
+                        json_integer(config ? config->servicePort : 0));
+    json_object_set_new(json, "pkgDir",
+                        json_string(DEFAULT_APPS_PKGS_PATH));
+
+    if (summary != NULL) {
+        json_object_set_new(json, "agentsSummary", summary);
+    }
+
+    if (agents != NULL) {
+        json_object_set_new(json, "agents", agents);
+    }
+
     ulfius_set_json_body_response(response, HttpStatus_OK, json);
     json_decref(json);
 

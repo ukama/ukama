@@ -51,13 +51,13 @@ static void handle_signal(int signum) {
 static void usage(void) {
 
     printf("Agent: WIMC agent for package fetches\n");
-    printf("Supported methods: test, chunk\n");
+    printf("Supported methods: test, chunk, tar.gz\n");
     printf("Usage: agent [options]\n");
     printf("Options:\n");
     printf("-h, --help                         Help menu\n");
-    printf("-m, --method <test|chunk>           Transfer method\n");
-    printf("-l, --logs <TRACE|DEBUG|INFO>       Log level\n");
-    printf("-v, --version                       Version\n");
+    printf("-m, --method <test|chunk|tar.gz>   Transfer method\n");
+    printf("-l, --logs <TRACE|DEBUG|INFO>      Log level\n");
+    printf("-v, --version                      Version\n");
 }
 
 static void set_log_level(char *slevel) {

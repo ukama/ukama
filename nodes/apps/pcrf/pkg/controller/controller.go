@@ -14,13 +14,15 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/api"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/client"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/controller/session"
-	"github.com/ukama/ukama/nodes/ukamaOS/distro/system/pcrf/pkg/controller/store"
+
+	"github.com/ukama/ukama/nodes/apps/pcrf/pkg"
+	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/api"
+	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/client"
+	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/controller/session"
+	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/controller/store"
 	"github.com/ukama/ukama/systems/common/uuid"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Controller struct {
@@ -241,7 +243,6 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 }
 
 func (c *Controller) EndSession(ctx *gin.Context, req *api.EndSession) error {
-
 	sub, err := c.store.GetSubscriber(req.ImsiStr)
 	if err != nil {
 		log.Errorf("failed to get subscriber for imsi %s.Error: %v", req.ImsiStr, err)
