@@ -156,8 +156,6 @@ static bool start_ovs(Config *config, AppStatus *status) {
     char ovsdbPid[OVS_MAX_STR];
     char vswitchdPid[OVS_MAX_STR];
     char vswitchdDb[OVS_MAX_STR];
-    char ovsdbPidOpt[OVS_MAX_STR];
-    char vswitchdPidOpt[OVS_MAX_STR];
 
     status_set(status, InitStateStartOvs, "starting ovs");
 
@@ -176,13 +174,9 @@ static bool start_ovs(Config *config, AppStatus *status) {
     }
 
     if (ovs_is_running(config)) {
-        usys_log_debug("OVS is already running");
-
-        pthread_mutex_lock(&status->mutex);
-        status->ovsdbRunning = true;
-        status->vswitchdRunning = true;
-        pthread_mutex_unlock(&status->mutex);
-
+        usys_log_info("OVS is already running");
+        mark_bool(status, &status->ovsdbRunning, true);
+        mark_bool(status, &status->vswitchdRunning, true);
         return true;
     }
 
@@ -191,26 +185,18 @@ static bool start_ovs(Config *config, AppStatus *status) {
     snprintf(dbRemote,
              sizeof(dbRemote),
              "db:Open_vSwitch,Open_vSwitch,manager_options");
-
-    snprintf(ovsdbPid, sizeof(ovsdbPid), "%s/ovsdb-server.pid",
+    snprintf(ovsdbPid,
+             sizeof(ovsdbPid),
+             "%s/ovsdb-server.pid",
              config->runDir);
-    snprintf(vswitchdPid, sizeof(vswitchdPid), "%s/ovs-vswitchd.pid",
+    snprintf(vswitchdPid,
+             sizeof(vswitchdPid),
+             "%s/ovs-vswitchd.pid",
              config->runDir);
-
-    snprintf(ovsdbPidOpt, sizeof(ovsdbPidOpt), "--pidfile=%s", ovsdbPid);
-    snprintf(vswitchdPidOpt, sizeof(vswitchdPidOpt), "--pidfile=%s",
-             vswitchdPid);
-
-    snprintf(vswitchdDb, sizeof(vswitchdDb), "unix:%s/db.sock",
+    snprintf(vswitchdDb,
+             sizeof(vswitchdDb),
+             "unix:%s/db.sock",
              config->runDir);
-
-    /*
-     * Stale pid files are common in containers after unclean shutdowns.
-     * OVS will refuse to use them as pidfile targets in some versions,
-     * so remove them before starting daemons.
-     */
-    unlink(ovsdbPid);
-    unlink(vswitchdPid);
 
     if (!path_exists(dbPath)) {
         if (!path_exists(config->schema)) {
@@ -236,16 +222,15 @@ static bool start_ovs(Config *config, AppStatus *status) {
                  dbSock,
                  "--remote",
                  dbRemote,
-                 ovsdbPidOpt,
+                 "--pidfile",
+                 ovsdbPid,
                  "--detach",
                  NULL) != 0) {
         status_fail(status, "failed to start ovsdb-server");
         return false;
     }
 
-    pthread_mutex_lock(&status->mutex);
-    status->ovsdbRunning = true;
-    pthread_mutex_unlock(&status->mutex);
+    mark_bool(status, &status->ovsdbRunning, true);
 
     if (exec_cmd(config->cmdTimeoutSec,
                  "ovs-vsctl",
@@ -259,16 +244,15 @@ static bool start_ovs(Config *config, AppStatus *status) {
     if (exec_cmd(config->cmdTimeoutSec,
                  "ovs-vswitchd",
                  vswitchdDb,
-                 vswitchdPidOpt,
+                 "--pidfile",
+                 vswitchdPid,
                  "--detach",
                  NULL) != 0) {
         status_fail(status, "failed to start ovs-vswitchd");
         return false;
     }
 
-    pthread_mutex_lock(&status->mutex);
-    status->vswitchdRunning = true;
-    pthread_mutex_unlock(&status->mutex);
+    mark_bool(status, &status->vswitchdRunning, true);
 
     if (!ovs_is_running(config)) {
         status_fail(status, "OVS did not become ready");
@@ -403,11 +387,9 @@ static bool setup_bridge(Config *config, AppStatus *status) {
     snprintf(controller, sizeof(controller), "punix:%s/%s.mgmt",
              config->mgmtDir, config->bridge);
 
-    exec_cmd(config->cmdTimeoutSec, "ovs-vsctl", "--if-exists", "del-br",
-             config->bridge, NULL);
-
     if (exec_cmd(config->cmdTimeoutSec,
                  "ovs-vsctl",
+                 "--may-exist",
                  "add-br",
                  config->bridge,
                  NULL) != 0) {
@@ -415,13 +397,16 @@ static bool setup_bridge(Config *config, AppStatus *status) {
         return false;
     }
 
-    exec_cmd(config->cmdTimeoutSec,
-             "ovs-vsctl",
-             "set",
-             "bridge",
-             config->bridge,
-             "protocols=OpenFlow15",
-             NULL);
+    if (exec_cmd(config->cmdTimeoutSec,
+                 "ovs-vsctl",
+                 "set",
+                 "bridge",
+                 config->bridge,
+                 "protocols=OpenFlow15",
+                 NULL) != 0) {
+        status_fail(status, "failed to set bridge OpenFlow version");
+        return false;
+    }
 
     if (exec_cmd(config->cmdTimeoutSec,
                  "ovs-vsctl",
@@ -433,20 +418,34 @@ static bool setup_bridge(Config *config, AppStatus *status) {
         return false;
     }
 
-    exec_cmd(config->cmdTimeoutSec,
-             "ovs-vsctl",
-             "set-fail-mode",
-             config->bridge,
-             "standalone",
-             NULL);
+    if (exec_cmd(config->cmdTimeoutSec,
+                 "ovs-vsctl",
+                 "set-fail-mode",
+                 config->bridge,
+                 "standalone",
+                 NULL) != 0) {
+        status_fail(status, "failed to set bridge fail-mode");
+        return false;
+    }
 
     if (exec_cmd(config->cmdTimeoutSec,
-                 "ifconfig",
+                 "ip",
+                 "link",
+                 "set",
                  config->bridge,
-                 config->bridgeAddr,
-                 "netmask",
-                 config->bridgeNetmask,
                  "up",
+                 NULL) != 0) {
+        status_fail(status, "failed to bring bridge up");
+        return false;
+    }
+
+    if (exec_cmd(config->cmdTimeoutSec,
+                 "ip",
+                 "addr",
+                 "replace",
+                 config->bridgeCidr,
+                 "dev",
+                 config->bridge,
                  NULL) != 0) {
         status_fail(status, "failed to configure bridge address");
         return false;
