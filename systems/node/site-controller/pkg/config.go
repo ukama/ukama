@@ -21,13 +21,14 @@ type Config struct {
 	Queue            	*uconf.Queue     `default:"{}"`
 	Timeout          	time.Duration    `default:"20s"`
 	MsgClient        	*uconf.MsgClient `default:"{}"`
-	HealthHost          string        `default:"health:9090"`
+	ReconcileInterval   time.Duration 	 `default:"30s"`
+	ComponentSyncDelay  time.Duration 	 `default:"30s"`
+	HealthHost          string        	 `default:"health:9090"`
+	NodeControllerHost  string        	 `default:"controller:8080"`
+	ReconcileMaxRetries int           	 `default:"3"`
 	OrgName             string
 	Service             *uconf.Service
 	Http                HttpServices
-	ReconcileInterval    time.Duration `default:"30s"`
-	ReconcileMaxRetries  int           `default:"3"`
-	ComponentSyncDelay   time.Duration `default:"30s"`
 }
 type HttpServices struct {
 	InitClient    string `default:"api-gateway-init:8080"`

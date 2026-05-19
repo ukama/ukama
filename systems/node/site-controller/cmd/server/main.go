@@ -100,6 +100,7 @@ func runGrpcServer(gormdb sql.Db) {
 		flightRepo,
 		portMapRepo,
 		componentRepo,
+		providers.NewControllerClientProvider(svcConf.NodeControllerHost),
 		adapters.NewTowerAdapter(cmdAdapter),
 		adapters.NewAmplifierAdapter(cmdAdapter),
 		adapters.NewCNodeAdapter(cmdAdapter),

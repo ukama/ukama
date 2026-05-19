@@ -18,6 +18,7 @@ import (
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/adapters"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/db"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/policy"
+	"github.com/ukama/ukama/systems/node/site-controller/providers"
 )
 
 type Reconciler struct {
@@ -26,6 +27,7 @@ type Reconciler struct {
 	flights            db.IntentFlightRepo
 	ports              db.PortMapRepo
 	components         db.ComponentRepo
+	controllerProvider providers.ControllerClientProvider
 	tower              *adapters.TowerAdapter
 	amplifier          *adapters.AmplifierAdapter
 	cnode              *adapters.CNodeAdapter
@@ -40,6 +42,7 @@ func New(
 	flights db.IntentFlightRepo,
 	ports db.PortMapRepo,
 	components db.ComponentRepo,
+	controllerProvider providers.ControllerClientProvider,
 	tower *adapters.TowerAdapter,
 	amp *adapters.AmplifierAdapter,
 	cnode *adapters.CNodeAdapter,
@@ -58,6 +61,7 @@ func New(
 		flights:           flights,
 		ports:             ports,
 		components:        components,
+		controllerProvider: controllerProvider,
 		tower:             tower,
 		amplifier:         amp,
 		cnode:             cnode,
@@ -264,31 +268,19 @@ func (r *Reconciler) ensureCriticalPoe(ctx context.Context, siteID string) error
 	return nil
 }
 func (r *Reconciler) applyService(ctx context.Context, siteID, state string) error {
-	ports, err := r.ports.GetBySite(siteID)
+	_, err := r.controllerProvider.GetClient()
 	if err != nil {
-		return err
+		return fmt.Errorf("get controller client: %w", err)
 	}
-	tower, err := policy.FindRole(ports, policy.RoleTower)
-	if err != nil {
-		return err
-	}
-	if tower.NodeID == "" {
-		return fmt.Errorf("tower node_id missing")
-	}
-	return r.tower.SetService(ctx, tower.NodeID, state)
+	// TODO: Implement controller service call
+	return fmt.Errorf("apply service: %w", err)
 }
 
 func (r *Reconciler) applyRadio(ctx context.Context, siteID, state string) error {
-	ports, err := r.ports.GetBySite(siteID)
+	_, err := r.controllerProvider.GetClient()
 	if err != nil {
-		return err
+		return fmt.Errorf("get controller client: %w", err)
 	}
-	amp, err := policy.FindRole(ports, policy.RoleAmplifier)
-	if err != nil {
-		return err
-	}
-	if amp.NodeID == "" {
-		return fmt.Errorf("amplifier node_id missing")
-	}
-	return r.amplifier.SetRadio(ctx, amp.NodeID, state)
+	// TODO: Implement controller radio call
+	return fmt.Errorf("apply radio: %w", err)
 }
