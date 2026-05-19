@@ -31,6 +31,10 @@ const testOrgName = "test-org"
 var testNode = ukama.NewVirtualNodeId("HomeNode")
 var testCNode = ukama.NewVirtualNodeId("ctrlnode")
 
+func newTestHealthServer(hRepo *mocks.HealthRepo) *HealthServer {
+	return NewHealthServer(testOrgName, hRepo, false, nil)
+}
+
 func TestHealthServerStoreHealthReport(t *testing.T) {
 	hRepo := &mocks.HealthRepo{}
 
@@ -58,7 +62,7 @@ func TestHealthServerStoreHealthReport(t *testing.T) {
 		return !ts.IsZero()
 	})).Return(nil).Once()
 
-	s := NewHealthServer(testOrgName, hRepo, false)
+	s := newTestHealthServer(hRepo)
 	resp, err := s.StoreHealthReport(context.Background(), req)
 
 	assert.NoError(t, err)
@@ -69,7 +73,7 @@ func TestHealthServerStoreHealthReport(t *testing.T) {
 
 func TestHealthServerStoreHealthReportInvalidNodeId(t *testing.T) {
 	hRepo := &mocks.HealthRepo{}
-	s := NewHealthServer(testOrgName, hRepo, false)
+	s := newTestHealthServer(hRepo)
 
 	reported := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 	payload, _ := json.Marshal(map[string]interface{}{
@@ -91,7 +95,7 @@ func TestHealthServerStoreHealthReportInvalidNodeId(t *testing.T) {
 
 func TestHealthServerStoreHealthReportMissingReportedAt(t *testing.T) {
 	hRepo := &mocks.HealthRepo{}
-	s := NewHealthServer(testOrgName, hRepo, false)
+	s := newTestHealthServer(hRepo)
 
 	payload, _ := json.Marshal(map[string]string{
 		"nodeType": string(ukama.NODE_TYPE_HOMENODE),
@@ -123,7 +127,7 @@ func TestHealthServerStoreHealthReportRepoError(t *testing.T) {
 
 	hRepo.On("StoreHealthReport", mock.Anything, mock.Anything).Return(assert.AnError).Once()
 
-	s := NewHealthServer(testOrgName, hRepo, false)
+	s := newTestHealthServer(hRepo)
 	resp, err := s.StoreHealthReport(context.Background(), req)
 
 	assert.Nil(t, resp)
@@ -149,7 +153,7 @@ func TestHealthServerListLatest(t *testing.T) {
 	}
 
 	hRepo.On("List", "", testNode.String(), (*time.Time)(nil), ukama.FilterTimeframesTypeLatest).Return([]*db.HealthReport{report}, nil).Once()
-	s := NewHealthServer(testOrgName, hRepo, false)
+	s := newTestHealthServer(hRepo)
 
 	resp, err := s.ListReports(context.Background(), &pb.ListReportsRequest{
 		NodeId:    testNode.String(),
@@ -178,7 +182,7 @@ func TestHealthServerListAll(t *testing.T) {
 	}
 
 	hRepo.On("List", "", testNode.String(), (*time.Time)(nil), ukama.FilterTimeframesTypeAll).Return(reports, nil).Once()
-	s := NewHealthServer(testOrgName, hRepo, false)
+	s := newTestHealthServer(hRepo)
 
 	resp, err := s.ListReports(context.Background(), &pb.ListReportsRequest{
 		NodeId:    testNode.String(),
@@ -195,7 +199,7 @@ func TestHealthServerListAll(t *testing.T) {
 
 func TestHealthServerListMissingIdAndNodeId(t *testing.T) {
 	hRepo := &mocks.HealthRepo{}
-	s := NewHealthServer(testOrgName, hRepo, false)
+	s := newTestHealthServer(hRepo)
 
 	resp, err := s.ListReports(context.Background(), &pb.ListReportsRequest{
 		Timeframe: ukamapb.FilterTimeframesType_LATEST,
@@ -212,7 +216,7 @@ func TestHealthServerListRepoError(t *testing.T) {
 	hRepo := &mocks.HealthRepo{}
 
 	hRepo.On("List", "", testNode.String(), (*time.Time)(nil), ukama.FilterTimeframesTypeLatest).Return(([]*db.HealthReport)(nil), assert.AnError).Once()
-	s := NewHealthServer(testOrgName, hRepo, false)
+	s := newTestHealthServer(hRepo)
 
 	resp, err := s.ListReports(context.Background(), &pb.ListReportsRequest{
 		NodeId:    testNode.String(),
@@ -253,7 +257,7 @@ func TestHealthServerListApps(t *testing.T) {
 	}
 
 	hRepo.On("List", "", testNode.String(), (*time.Time)(nil), ukama.FilterTimeframesTypeLatest).Return([]*db.HealthReport{report}, nil).Once()
-	s := NewHealthServer(testOrgName, hRepo, false)
+	s := newTestHealthServer(hRepo)
 
 	resp, err := s.ListApps(context.Background(), &pb.ListAppsRequest{
 		NodeId: testNode.String(),
@@ -270,10 +274,12 @@ func TestHealthServerListApps(t *testing.T) {
 }
 
 func TestHealthServerListInterfaces(t *testing.T) {
-	t.Run("invalid_node_type_returns_error", func(t *testing.T) {
+	t.Run("invalid_payload_returns_error", func(t *testing.T) {
 		hRepo := &mocks.HealthRepo{}
-		s := NewHealthServer(testOrgName, hRepo, false)
+		hRepo.On("List", "", testNode.String(), (*time.Time)(nil), ukama.FilterTimeframesTypeLatest).
+			Return([]*db.HealthReport{{Payload: json.RawMessage("not-json")}}, nil).Once()
 
+		s := newTestHealthServer(hRepo)
 		resp, err := s.ListInterfaces(context.Background(), &pb.ListInterfacesRequest{
 			NodeId: testNode.String(),
 		})
@@ -285,12 +291,12 @@ func TestHealthServerListInterfaces(t *testing.T) {
 		hRepo.AssertExpectations(t)
 	})
 
-	t.Run("no_reports_returns_empty_switch_policy", func(t *testing.T) {
+	t.Run("no_reports_returns_empty_interfaces", func(t *testing.T) {
 		hRepo := &mocks.HealthRepo{}
 		hRepo.On("List", "", testCNode.String(), (*time.Time)(nil), ukama.FilterTimeframesTypeLatest).
 			Return([]*db.HealthReport{}, nil).Once()
 
-		s := NewHealthServer(testOrgName, hRepo, false)
+		s := newTestHealthServer(hRepo)
 		resp, err := s.ListInterfaces(context.Background(), &pb.ListInterfacesRequest{
 			NodeId: testCNode.String(),
 		})
@@ -346,7 +352,7 @@ func TestHealthServerListInterfaces(t *testing.T) {
 		hRepo.On("List", "", testCNode.String(), (*time.Time)(nil), ukama.FilterTimeframesTypeLatest).
 			Return([]*db.HealthReport{report}, nil).Once()
 
-		s := NewHealthServer(testOrgName, hRepo, false)
+		s := newTestHealthServer(hRepo)
 		resp, err := s.ListInterfaces(context.Background(), &pb.ListInterfacesRequest{
 			NodeId: testCNode.String(),
 		})

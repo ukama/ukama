@@ -20,8 +20,9 @@ service HealthService {
 }
 
 message ListAppsRequest {
-    string nodeId = 1;
-    string appName = 2;
+    string reportId = 1;
+    string nodeId = 2;
+    string appName = 3;
 }
 
 message ListAppsResponse {
@@ -29,8 +30,9 @@ message ListAppsResponse {
 }
 
 message ListInterfacesRequest {
-    string nodeId = 1;
-    string interfaceName = 2;
+    string reportId = 1;
+    string nodeId = 2;
+    string interfaceName = 3;
 }
 
 message ListInterfacesResponse {

@@ -7,62 +7,62 @@
  */
 package events
  
- type NodeStateEventId int
- 
- type NodeStateEventsConfig struct {
-	 Key        NodeStateEventId
-	 Name       string
-	 RoutingKey string
- }
- 
- const (
-	 NodeStateEventInvalid NodeStateEventId = iota
-	 NodeStateEventAssign
-	 NodeStateEventRelease
-	 NodeStateEventOnline
-	 NodeStateEventOffline
-	 NodeStateTransition
-	 NodeAppChunkReady
- )
- 
- var NodeStateEventRoutingKey = map[NodeStateEventId]string{
-	 NodeStateEventAssign:  "event.cloud.local.{{ .Org}}.registry.node.node.assign",
-	 NodeStateEventRelease: "event.cloud.local.{{ .Org}}.registry.node.node.release",
-	 NodeStateEventOnline:  "event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
-	 NodeStateEventOffline: "event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
-	 NodeStateTransition: "event.cloud.local.{{ .Org}}.node.state.node.transition",
- }
- 
- var NodeEventToEventConfig = map[NodeStateEventId]NodeStateEventsConfig{
+type NodeStateEventId int
+
+type NodeStateEventsConfig struct {
+	Key        NodeStateEventId
+	Name       string
+	RoutingKey string
+}
+
+const (
+	NodeStateEventInvalid NodeStateEventId = iota
+	NodeStateEventAssign
+	NodeStateEventRelease
+	NodeStateEventOnline
+	NodeStateEventOffline
+	NodeStateTransition
+	NodeAppChunkReady
+)
+
+var NodeStateEventRoutingKey = map[NodeStateEventId]string{
+	NodeStateEventAssign:  "event.cloud.local.{{ .Org}}.registry.node.node.assign",
+	NodeStateEventRelease: "event.cloud.local.{{ .Org}}.registry.node.node.release",
+	NodeStateEventOnline:  "event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
+	NodeStateEventOffline: "event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
+	NodeStateTransition: "event.cloud.local.{{ .Org}}.node.state.node.transition",
+}
+
+var NodeEventToEventConfig = map[NodeStateEventId]NodeStateEventsConfig{
 	
-	 NodeStateEventAssign: {
-		 Key:        NodeStateEventAssign,
-		 Name:       "onboarding",
-		 RoutingKey: NodeStateEventRoutingKey[NodeStateEventAssign],
-	 },
-	 NodeStateEventRelease: {
-		 Key:        NodeStateEventRelease,
-		 Name:       "offboarding",
-		 RoutingKey: NodeStateEventRoutingKey[NodeStateEventRelease],
-	 },
-	 NodeStateEventOffline: {
-		 Key:        NodeStateEventOffline,
-		 Name:       "offline",
-		 RoutingKey: NodeStateEventRoutingKey[NodeStateEventOffline],
-	 },
-	 NodeStateEventOnline: {
-		 Key:        NodeStateEventOnline,
-		 Name:       "online",
-		 RoutingKey: NodeStateEventRoutingKey[NodeStateEventOnline],
-	 },
-	 NodeStateTransition: {
-		 Key:        NodeStateTransition,
-		 Name:       "transition",
-		 RoutingKey: NodeStateEventRoutingKey[NodeStateTransition],
-	 },
-	 NodeAppChunkReady: {
-		 Key:        NodeAppChunkReady,
-		 Name:       "chunk ready",
-		 RoutingKey: "event.cloud.global.{{ .Org}}.hub.distributor.app.chunkready",
-	 },
- }
+	NodeStateEventAssign: {
+		Key:        NodeStateEventAssign,
+		Name:       "onboarding",
+		RoutingKey: NodeStateEventRoutingKey[NodeStateEventAssign],
+	},
+	NodeStateEventRelease: {
+		Key:        NodeStateEventRelease,
+		Name:       "offboarding",
+		RoutingKey: NodeStateEventRoutingKey[NodeStateEventRelease],
+	},
+	NodeStateEventOffline: {
+		Key:        NodeStateEventOffline,
+		Name:       "offline",
+		RoutingKey: NodeStateEventRoutingKey[NodeStateEventOffline],
+	},
+	NodeStateEventOnline: {
+		Key:        NodeStateEventOnline,
+		Name:       "online",
+		RoutingKey: NodeStateEventRoutingKey[NodeStateEventOnline],
+	},
+	NodeStateTransition: {
+		Key:        NodeStateTransition,
+		Name:       "transition",
+		RoutingKey: NodeStateEventRoutingKey[NodeStateTransition],
+	},
+	NodeAppChunkReady: {
+		Key:        NodeAppChunkReady,
+		Name:       "chunk ready",
+		RoutingKey: "event.cloud.global.{{ .Org}}.hub.distributor.app.chunkready",
+	},
+}

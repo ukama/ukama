@@ -229,6 +229,7 @@ func (r *Router) listHealthReportsHandler(c *gin.Context, req *ListHealthReports
 
 func (r *Router) listAppsHandler(c *gin.Context, req *ListAppsRequest) (*healthPb.ListAppsResponse, error) {
 	return r.clients.Health.ListApps(&healthPb.ListAppsRequest{
+		ReportId: req.ReportId,
 		NodeId: req.NodeId,
 		AppName: req.AppName,
 	})
@@ -236,6 +237,7 @@ func (r *Router) listAppsHandler(c *gin.Context, req *ListAppsRequest) (*healthP
 
 func (r *Router) listInterfacesHandler(c *gin.Context, req *ListInterfacesRequest) (*healthPb.ListInterfacesResponse, error) {
 	return r.clients.Health.ListInterfaces(&healthPb.ListInterfacesRequest{
+		ReportId: req.ReportId,
 		NodeId: req.NodeId,
 		InterfaceName: req.InterfaceName,
 	})
