@@ -1131,6 +1131,11 @@ export type Query = {
 };
 
 
+export type QueryGetAppsArgs = {
+  data: GetSoftwaresInput;
+};
+
+
 export type QueryGetAppsChangeLogArgs = {
   data: NodeAppsChangeLogInput;
 };
@@ -2463,7 +2468,9 @@ export type GetDataUsagesQueryVariables = Exact<{
 
 export type GetDataUsagesQuery = { __typename?: 'Query', getDataUsages: { __typename?: 'SimDataUsages', usages: Array<{ __typename?: 'SimDataUsage', usage: string, simId: string }> } };
 
-export type GetAppsQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetAppsQueryVariables = Exact<{
+  data: GetSoftwaresInput;
+}>;
 
 
 export type GetAppsQuery = { __typename?: 'Query', getApps?: { __typename?: 'Apps', apps: Array<{ __typename?: 'App', name: string, space: string, notes: string, metricsKeys: Array<string> }> } | null };
@@ -5928,8 +5935,8 @@ export type GetDataUsagesLazyQueryHookResult = ReturnType<typeof useGetDataUsage
 export type GetDataUsagesSuspenseQueryHookResult = ReturnType<typeof useGetDataUsagesSuspenseQuery>;
 export type GetDataUsagesQueryResult = Apollo.QueryResult<GetDataUsagesQuery, GetDataUsagesQueryVariables>;
 export const GetAppsDocument = gql`
-    query GetApps {
-  getApps {
+    query GetApps($data: GetSoftwaresInput!) {
+  getApps(data: $data) {
     apps {
       name
       space
@@ -5952,10 +5959,11 @@ export const GetAppsDocument = gql`
  * @example
  * const { data, loading, error } = useGetAppsQuery({
  *   variables: {
+ *      data: // value for 'data'
  *   },
  * });
  */
-export function useGetAppsQuery(baseOptions?: Apollo.QueryHookOptions<GetAppsQuery, GetAppsQueryVariables>) {
+export function useGetAppsQuery(baseOptions: Apollo.QueryHookOptions<GetAppsQuery, GetAppsQueryVariables> & ({ variables: GetAppsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetAppsQuery, GetAppsQueryVariables>(GetAppsDocument, options);
       }
