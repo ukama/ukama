@@ -56,8 +56,8 @@ echo "SD size: $(numfmt --to=iec $SD_SIZE)"
 echo "eMMC size: $(numfmt --to=iec $EMMC_SIZE)"
 
 if [ "$EMMC_SIZE" -lt "$SD_SIZE" ]; then
-    echo "ERROR: eMMC smaller than SD"
-    exit 1
+    echo "WARNING: eMMC ($EMMC_SIZE bytes) smaller than SD ($SD_SIZE bytes)"
+    echo "WARNING: partitions that exceed eMMC will fail; continuing"
 fi
 
 echo "Zeroing eMMC start..."
