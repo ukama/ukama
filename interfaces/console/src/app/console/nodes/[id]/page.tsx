@@ -174,6 +174,13 @@ const Page: React.FC<INodePage> = ({ params }) => {
 
   const { loading: appsLoading } = useGetAppsQuery({
     fetchPolicy: 'cache-and-network',
+    variables: {
+      data: {
+        name: '',
+        nodeId: id,
+        status: SoftwareStatusEnum.Unknown,
+      },
+    },
   });
 
   const {
