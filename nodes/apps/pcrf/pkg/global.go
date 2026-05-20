@@ -11,4 +11,9 @@ package pkg
 const ServiceName = "pcrf"
 const SystemName = "node"
 
+const InitNetworkServiceName = "init-network"
+const NodedServiceName = "noded"
+
+const DefaultDBPath = "/ukama/apps/db/pcrf.db"
+
 var IsDebugMode bool = false

@@ -12,6 +12,14 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type Status struct {
+	Bridge           string `json:"bridge"`
+	ManagementSocket string `json:"managementSocket"`
+	Connected        bool   `json:"connected"`
+	ConnectedCount   int    `json:"connectedCount"`
+	UECount          uint32 `json:"ueCount"`
+}
+
 type dataPath struct {
 	ovs     *OvsSwitch
 	ueCount uint32
@@ -22,16 +30,20 @@ type DataPath interface {
 	DeleteDataPath(ip string, rxMeter, txMeter uint32) error
 	DataPathCount() uint32
 	DataPathStats(rxCookieID, txCookieID uint64) (uint64, uint64, uint64, uint64, error)
+	Status() Status
 }
 
 func InitDataPath(name, ip, netType, mgmt string) (*dataPath, error) {
 	var err error
+
 	d := &dataPath{ueCount: 0}
+
 	d.ovs, err = NewOvsSwitch(name, ip, netType, mgmt)
 	if err != nil {
-		log.Errorf("error connecting bridge %s at %s .Error: %v", name, ip, err)
+		log.Errorf("error connecting bridge %s at %s. Error: %v", name, ip, err)
 		return nil, err
 	}
+
 	return d, nil
 }
 
@@ -52,7 +64,11 @@ func (d *dataPath) DeleteDataPath(ip string, rxMeter, txMeter uint32) error {
 		log.Errorf("Failed to delete datapath for UE %s. Error: %v", ip, err.Error())
 		return err
 	}
-	d.ueCount--
+
+	if d.ueCount > 0 {
+		d.ueCount--
+	}
+
 	return nil
 }
 
@@ -66,5 +82,12 @@ func (d *dataPath) DataPathStats(rxCookieID, txCookieID uint64) (uint64, uint64,
 		log.Errorf("Error getting UE pathstats %s", err.Error())
 		return 0, 0, 0, 0, err
 	}
+
 	return rxBC, rxPC, txBC, txPC, nil
+}
+
+func (d *dataPath) Status() Status {
+	s := d.ovs.Status()
+	s.UECount = d.ueCount
+	return s
 }
