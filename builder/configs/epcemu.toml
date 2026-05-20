@@ -1,0 +1,20 @@
+[build-from]
+	rootfs="default"
+	contained="default"
+
+[build-compile]
+	version="0.1"
+	static="false"
+	source="/nodes/apps/epcemu"
+	cmd="make"
+	bin_from="/nodes/apps/epcemu/epcemu"
+	bin_to="/sbin"
+
+[capp-exec]
+	name="epcemu"
+	version="latest"
+	bin="epcemu"
+	path="/sbin"
+
+[capp-output]
+	format="tar.gz"
