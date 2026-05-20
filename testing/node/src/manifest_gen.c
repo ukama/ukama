@@ -39,8 +39,9 @@ static int is_boot_app(Config *config) {
         return TRUE;
     }
 
-    return streq(capp->name, "noded")     ||
-           streq(capp->name, "bootstrap") ||
+    return streq(capp->name, "init-network") ||
+           streq(capp->name, "noded")        ||
+           streq(capp->name, "bootstrap")    ||
            streq(capp->name, "meshd");
 }
 
@@ -220,6 +221,7 @@ static Config* find_app_config(Configs *configs, const char *name) {
 static int append_boot_apps_in_order(json_t *bootApps, Configs *configs) {
 
     static const char *bootOrder[] = {
+        "init-network",
         "noded",
         "bootstrap",
         "meshd"
@@ -254,8 +256,9 @@ static int append_boot_apps_in_order(json_t *bootApps, Configs *configs) {
             continue;
         }
 
-        if (streq(ptr->config->capp->name, "noded") ||
-            streq(ptr->config->capp->name, "bootstrap") ||
+        if (streq(ptr->config->capp->name, "init-network") ||
+            streq(ptr->config->capp->name, "noded")        ||
+            streq(ptr->config->capp->name, "bootstrap")    ||
             streq(ptr->config->capp->name, "meshd")) {
             continue;
         }
@@ -386,10 +389,7 @@ int create_manifest_config(Configs *configs) {
     if (fwrite(out, strlen(out), 1, fp) <= 0) {
         log_error("Unable to write manifest file: %s error: %s",
                   MANIFEST_FILENAME, strerror(errno));
-        fclose(fp);
-        free(out);
-        json_decref(root);
-        return FALSE;
+        goto fail;
     }
 
     fclose(fp);
@@ -408,6 +408,7 @@ fail:
     if (bootApps)   json_decref(bootApps);
     if (svcApps)    json_decref(svcApps);
     if (rebootApps) json_decref(rebootApps);
+
     return FALSE;
 }
 
