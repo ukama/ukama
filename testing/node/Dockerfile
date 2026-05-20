@@ -85,6 +85,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         fuse-overlayfs \
         uidmap \
         slirp4netns \
+	golang-go \
     && rm -rf /var/lib/apt/lists/*
 
 # Buildah/Podman storage placeholders
