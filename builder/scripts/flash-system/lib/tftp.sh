@@ -16,9 +16,13 @@ tftp_serve() {
         return 1
     fi
 
-    if ! command -v in.tftpd >/dev/null 2>&1; then
-        sudo apt-get update -qq
-        sudo apt-get install -y tftpd-hpa
+    if ! command -v in.tftpd >/dev/null 2>&1 && [ ! -x /usr/sbin/in.tftpd ]; then
+        sudo apt-get update -qq || true
+        if ! sudo apt-get install -y tftpd-hpa; then
+            echo "tftp_serve: failed to install tftpd-hpa." >&2
+            echo "  Please install manually: sudo apt-get install tftpd-hpa" >&2
+            return 1
+        fi
     fi
 
     TFTP_ROOT="$serve_dir"
