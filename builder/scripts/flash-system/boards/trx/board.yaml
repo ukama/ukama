@@ -54,6 +54,6 @@ phase2:
     uboot: { src: /usr/ukm/ukama/builder/scripts/build-system/trx/flash_uboot.img, dst: /dev/flash_uboot }
 
 band:
-  default: b3
+  default: startup_B1
   configs_dir: /usr/ukm/ukama/builder/scripts/build-system/trx/band_configs
   target_path: /etc/trx/band.cfg
