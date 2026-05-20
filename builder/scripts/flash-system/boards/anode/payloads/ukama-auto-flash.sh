@@ -97,6 +97,7 @@ touch /var/lib/ukama-autoflash-complete
 for num in 5 6; do
     emmc_part=$(partition_path "$EMMC_DEV" "$num")
     if [ -b "$emmc_part" ]; then
+        e2fsck -yf "$emmc_part" >/dev/null 2>&1 || true
         mnt=$(mktemp -d)
         if mount "$emmc_part" "$mnt" 2>/dev/null; then
             mkdir -p "$mnt/var/lib"
