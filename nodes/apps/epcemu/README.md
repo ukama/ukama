@@ -1,6 +1,6 @@
-# epcemu.d
+# epcemu
 
-Phase-1 EPC emulator for virtual tower-node PCRF testing.
+EPC emulator for virtual tower-node PCRF testing.
 
 This app is starter-managed and control-plane only. It does not generate or
 forward user-plane traffic yet.
@@ -51,20 +51,7 @@ curl -X DELETE localhost:18092/v1/ue/detach \
   -d '{"imsi":"001010000000001"}'
 ```
 
-## Manifest
-
-```json
-{
-  "name": "epcemu",
-  "tag": "latest",
-  "cmd": "sbin/epcemu.d",
-  "argv": [
-    "epcemu.d"
-  ]
-}
-```
-
-## Later phases
+## TODO
 
 - Add UE container runner
 - Add media container
