@@ -1,0 +1,21 @@
+[build-from]
+	base="alpine"
+	version="latest"
+
+[build-compile]
+	version="latest"
+	static="false"
+	source="/nodes/apps/pcrf"
+	cmd="make"
+	bin_from="/nodes/apps/pcrf/bin/pcrf"
+	bin_to="/sbin"
+
+[app-exec]
+	name="pcrf"
+	version="latest"
+	bin="pcrf"
+	path="/sbin"
+	autostart="false"
+	autorestart="true"
+	startretries=5
+        group="service"

@@ -101,3 +101,9 @@ func (r *nodedClient) GetNodeInfo() (*NodeInfo, error) {
 
 	return &node.NodeInfo, nil
 }
+
+type NodedClientAlias nodedClient
+
+func (r *NodedClientAlias) GetNodeId() (string, error) {
+	return (*nodedClient)(r).GetNodeId()
+}
