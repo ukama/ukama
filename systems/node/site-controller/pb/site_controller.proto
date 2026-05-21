@@ -1,3 +1,10 @@
+/*
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at https://mozilla.org/MPL/2.0/.
+*
+* Copyright (c) 2026-present, Ukama Inc.
+ */
 syntax = "proto3";
 
 option go_package = "github.com/ukama/ukama/systems/node/site-controller/pb/gen";
@@ -6,7 +13,6 @@ package ukama.node.site_controller.v1;
 
 import "validator.proto";
 
-// SiteController drives site intent, static switch port map, switch.d policy, and derived site state.
 service SiteControllerService {
   rpc SetSite(SetSiteRequest) returns (SetSiteResponse);
   rpc SetService(SetServiceRequest) returns (SetServiceResponse);
@@ -72,24 +78,16 @@ message SetSiteResponse {
 message SetServiceRequest {
   string site_id = 1 [(validator.field) = { string_not_empty: true }];
   string state = 2;
-  string reason = 3;
-  string requested_by = 4;
 }
 
-message SetServiceResponse {
-  DerivedStateMsg state = 1;
-}
+message SetServiceResponse {}
 
 message SetRadioRequest {
   string site_id = 1 [(validator.field) = { string_not_empty: true }];
   string state = 2;
-  string reason = 3;
-  string requested_by = 4;
 }
 
-message SetRadioResponse {
-  DerivedStateMsg state = 1;
-}
+message SetRadioResponse {}
 
 message GetSiteStateRequest {
   string site_id = 1 [(validator.field) = { string_not_empty: true }];

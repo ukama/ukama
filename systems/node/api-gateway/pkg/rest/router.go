@@ -72,8 +72,8 @@ type controller interface {
 
 type siteController interface {
 	SetSite(siteID, state, reason, requestedBy string) (*sitepb.SetSiteResponse, error)
-	SetService(siteID, state, reason, requestedBy string) (*sitepb.SetServiceResponse, error)
-	SetRadio(siteID, state, reason, requestedBy string) (*sitepb.SetRadioResponse, error)
+	SetService(siteID, state string) (*sitepb.SetServiceResponse, error)
+	SetRadio(siteID, state string) (*sitepb.SetRadioResponse, error)
 	GetSiteState(siteID string) (*sitepb.GetSiteStateResponse, error)
 	UpsertPortMap(siteID, cnodeID string, ports []*sitepb.PortMapEntry) (*sitepb.UpsertPortMapResponse, error)
 	GetPortMap(siteID string) (*sitepb.GetPortMapResponse, error)
@@ -295,11 +295,11 @@ func (r *Router) toggleSiteStateHandler(c *gin.Context, req *SiteActionRequest) 
 }
 
 func (r *Router) postToggleServiceHandler(c *gin.Context, req *SiteActionRequest) (*sitepb.SetServiceResponse, error) {
-	return r.clients.SiteController.SetService(req.SiteId, req.State, req.Reason, req.RequestedBy)
+	return r.clients.SiteController.SetService(req.SiteId, req.State)
 }
 
 func (r *Router) postToggleRadioHandler(c *gin.Context, req *SiteActionRequest) (*sitepb.SetRadioResponse, error) {
-	return r.clients.SiteController.SetRadio(req.SiteId, req.State, req.Reason, req.RequestedBy)
+	return r.clients.SiteController.SetRadio(req.SiteId, req.State)
 }
 
 func (r *Router) getSiteStateHandler(c *gin.Context, req *SiteStateRequest) (*sitepb.GetSiteStateResponse, error) {

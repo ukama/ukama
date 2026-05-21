@@ -66,11 +66,6 @@ func (this *SetServiceRequest) Validate() error {
 	return nil
 }
 func (this *SetServiceResponse) Validate() error {
-	if this.State != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.State); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("State", err)
-		}
-	}
 	return nil
 }
 func (this *SetRadioRequest) Validate() error {
@@ -80,11 +75,6 @@ func (this *SetRadioRequest) Validate() error {
 	return nil
 }
 func (this *SetRadioResponse) Validate() error {
-	if this.State != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.State); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("State", err)
-		}
-	}
 	return nil
 }
 func (this *GetSiteStateRequest) Validate() error {
