@@ -198,6 +198,16 @@ _phase1_run() {
         sudo cp "$bdi_config_src" "${TFTP_STAGE_DIR}/cnf71xx.cfg"
         sudo chmod 644 "${TFTP_STAGE_DIR}/cnf71xx.cfg"
         echo "Staged cnf71xx.cfg in TFTP root for BDI auto-load"
+
+        local bdi_config_dir
+        bdi_config_dir=$(dirname "$bdi_config_src")
+        local def_file
+        for def_file in "$bdi_config_dir"/*.def; do
+            [ -f "$def_file" ] || continue
+            sudo cp "$def_file" "${TFTP_STAGE_DIR}/$(basename "$def_file")"
+            sudo chmod 644 "${TFTP_STAGE_DIR}/$(basename "$def_file")"
+            echo "Staged $(basename "$def_file") in TFTP root for BDI auto-load"
+        done
     else
         echo "WARNING: bdi.config_file not found at $bdi_config_src"
     fi
