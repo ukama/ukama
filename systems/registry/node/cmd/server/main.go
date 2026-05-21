@@ -29,13 +29,17 @@ import (
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
+	"github.com/ukama/ukama/systems/common/rest/client"
+	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
 	cinvent "github.com/ukama/ukama/systems/common/rest/client/inventory"
+	node "github.com/ukama/ukama/systems/common/rest/client/node"
 	"github.com/ukama/ukama/systems/common/sql"
 	generated "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	"google.golang.org/grpc"
 )
 
 var serviceConfig *pkg.Config
+var NodeSystemName = "node"
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
@@ -82,6 +86,13 @@ func runGrpcServer(gormdb sql.Db) {
 	}
 
 	invClient := cinvent.NewComponentClient(serviceConfig.Http.InventoryClient)
+	nodeGwUrl, err := ic.GetNodeGwHostURL(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
+		ic.CreateHostString(serviceConfig.OrgName, NodeSystemName), &serviceConfig.OrgName)
+	if err != nil {
+		log.Fatalf("Failed to resolve node gw system address from initClient: %v", err)
+	}
+
+	healthClient := node.NewHealthClient(nodeGwUrl.String())
 
 	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
 		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
@@ -93,10 +104,8 @@ func runGrpcServer(gormdb sql.Db) {
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	srv := server.NewNodeServer(serviceConfig.OrgName, db.NewNodeRepo(gormdb), db.NewSiteRepo(gormdb), db.NewNodeStatusRepo(gormdb),
-		serviceConfig.PushGateway, mbClient,
-		providers.NewSiteClientProvider(serviceConfig.SiteHost),
-		orgId, invClient)
-
+		serviceConfig.PushGateway, mbClient, providers.NewSiteClientProvider(serviceConfig.SiteHost), orgId, invClient, healthClient,
+	)
 	nSrv := server.NewNodeEventServer(serviceConfig.OrgName, srv, invClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {

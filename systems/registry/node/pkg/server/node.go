@@ -34,6 +34,7 @@ import (
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	cinvent "github.com/ukama/ukama/systems/common/rest/client/inventory"
+	node "github.com/ukama/ukama/systems/common/rest/client/node"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	sitepb "github.com/ukama/ukama/systems/registry/site/pb/gen"
 )
@@ -51,6 +52,7 @@ type NodeServer struct {
 	nameGenerator   namegenerator.Generator
 	siteService     providers.SiteClientProvider
 	pushGateway     string
+	healthClient    node.HealthClient
 	msgbus          mb.MsgBusServiceClient
 	baseRoutingKey  msgbus.RoutingKeyBuilder
 	inventoryClient cinvent.ComponentClient
@@ -58,7 +60,7 @@ type NodeServer struct {
 }
 
 func NewNodeServer(orgName string, nodeRepo db.NodeRepo, siteRepo db.SiteRepo, nodeStatusRepo db.NodeStatusRepo,
-	pushGateway string, msgBus mb.MsgBusServiceClient, siteService providers.SiteClientProvider, org uuid.UUID, inventoryClientProvider cinvent.ComponentClient) *NodeServer {
+	pushGateway string, msgBus mb.MsgBusServiceClient, siteService providers.SiteClientProvider, org uuid.UUID, inventoryClientProvider cinvent.ComponentClient, healthClient node.HealthClient) *NodeServer {
 	seed := time.Now().UTC().UnixNano()
 
 	return &NodeServer{
@@ -71,6 +73,7 @@ func NewNodeServer(orgName string, nodeRepo db.NodeRepo, siteRepo db.SiteRepo, n
 		nameGenerator:   namegenerator.NewNameGenerator(seed),
 		pushGateway:     pushGateway,
 		msgbus:          msgBus,
+		healthClient:    healthClient,
 		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		inventoryClient: inventoryClientProvider,
 	}
