@@ -7,8 +7,12 @@
 
 bdi_require_expect() {
     if ! command -v expect >/dev/null 2>&1; then
-        sudo apt-get update -qq
-        sudo apt-get install -y expect
+        sudo apt-get update -qq || true
+        if ! sudo apt-get install -y expect; then
+            echo "bdi_require_expect: failed to install 'expect'." >&2
+            echo "  Please install manually: sudo apt-get install expect" >&2
+            return 1
+        fi
     fi
 }
 
