@@ -7,6 +7,7 @@
 
 TFTP_PID=""
 TFTP_ROOT=""
+TFTP_SYSTEMD_WAS_ACTIVE=0
 
 tftp_serve() {
     local serve_dir="$1"
@@ -25,6 +26,12 @@ tftp_serve() {
         fi
     fi
 
+    if systemctl is-active tftpd-hpa >/dev/null 2>&1; then
+        echo "tftp_serve: stopping system tftpd-hpa so our server can bind port 69"
+        sudo systemctl stop tftpd-hpa
+        TFTP_SYSTEMD_WAS_ACTIVE=1
+    fi
+
     TFTP_ROOT="$serve_dir"
     sudo /usr/sbin/in.tftpd -L --secure --user root "$serve_dir" &
     TFTP_PID=$!
@@ -35,6 +42,10 @@ tftp_stop() {
     if [ -n "$TFTP_PID" ]; then
         sudo kill "$TFTP_PID" 2>/dev/null || true
         TFTP_PID=""
+    fi
+    if [ "$TFTP_SYSTEMD_WAS_ACTIVE" -eq 1 ]; then
+        sudo systemctl start tftpd-hpa 2>/dev/null || true
+        TFTP_SYSTEMD_WAS_ACTIVE=0
     fi
 }
 
