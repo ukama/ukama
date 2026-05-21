@@ -192,8 +192,18 @@ _phase1_run() {
     echo "TFTP staging at $TFTP_STAGE_DIR"
     tftp_serve "$TFTP_STAGE_DIR"
 
-    echo "Telneting BDI at ${bdi_ip} and sending 'go 0x400000'..."
-    bdi_send_command "$bdi_ip" "$bdi_prompt" "go 0x400000" 30
+    local bdi_config_src
+    bdi_config_src=$(yq_read "$BOARD_CONFIG" bdi.config_file)
+    if [ -f "$bdi_config_src" ]; then
+        sudo cp "$bdi_config_src" "${TFTP_STAGE_DIR}/cnf71xx.cfg"
+        sudo chmod 644 "${TFTP_STAGE_DIR}/cnf71xx.cfg"
+        echo "Staged cnf71xx.cfg in TFTP root for BDI auto-load"
+    else
+        echo "WARNING: bdi.config_file not found at $bdi_config_src"
+    fi
+
+    echo "Telneting BDI at ${bdi_ip}, waiting for cnMIPS#0> after config load..."
+    bdi_send_command "$bdi_ip" "$bdi_prompt" "go 0x400000" 90
 
     echo "Running oct-remote-boot..."
     sudo "$oct_path" --board="$oct_board" --ddr_clock_hz="$oct_clock" >/tmp/oct-remote-boot.log 2>&1 &
