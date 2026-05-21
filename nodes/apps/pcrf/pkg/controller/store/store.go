@@ -12,6 +12,8 @@ import (
 	"database/sql"
 	"fmt"
 	"math/rand"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/mattn/go-sqlite3"
@@ -23,7 +25,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const PCRFDB = "/etc/pcrf/pcrf.db"
+const PCRFDB = "/ukama/apps/db/pcrf.db"
 
 type Store struct {
 	db *sql.DB
@@ -36,26 +38,39 @@ type Store struct {
 
 func NewStore(name string) (*Store, error) {
 	repo := &Store{}
+	dbPath := name
+
+	if dbPath == "" {
+		dbPath = PCRFDB
+	}
+
+	if err := os.MkdirAll(filepath.Dir(dbPath), 0755); err != nil {
+		log.Errorf("Error creating database directory %s. Error %s",
+			filepath.Dir(dbPath), err.Error())
+		return nil, err
+	}
+
 	sql.Register("sqlite3_with_extensions",
 		&sqlite3.SQLiteDriver{
 			Extensions: []string{
 				"libsqlite3_uuid",
 			},
 		})
-	// Open the SQLite database file
-	database, err := sql.Open("sqlite3", PCRFDB)
+
+	database, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
-		log.Errorf("Error opening database: %s. Error %s", name, err.Error())
+		log.Errorf("Error opening database: %s. Error %s", dbPath, err.Error())
 		return nil, err
 	}
+
 	repo.db = database
 
-	// Create tables if they don't exist
 	err = repo.CreateTables()
 	if err != nil {
 		log.Errorf("Error creating tables %s", err.Error())
 		return nil, err
 	}
+
 	return repo, nil
 }
 
@@ -1084,28 +1099,34 @@ func (s *Store) GetFlowForMeter(id int) (*Flow, error) {
 func (s *Store) GetAllActiveSessions() ([]Session, error) {
 	var sessions []Session
 
-	rows, err := s.db.Query("SELECT id, node_id, subscriber_id, policy_id, apnname, ueipaddr, starttime, endtime , txbytes , rxbytes , totalbytes , txmeter_id, rxmeter_id, state, sync, updatedat FROM sessions WHERE WHERE state = 1")
+	rows, err := s.db.Query("SELECT id, node_id, subscriber_id, policy_id, apnname, ueipaddr, starttime, endtime, txbytes, rxbytes, totalbytes, txmeter_id, rxmeter_id, state, sync, updatedat FROM sessions WHERE state = 1")
 	if err != nil {
 		return nil, err
 	}
 
 	defer func() {
 		if err := rows.Close(); err != nil {
-			log.Warnf("Failed to gracefuly close DB row object: %v", err)
+			log.Warnf("Failed to gracefully close DB row object: %v", err)
 		}
 	}()
 
 	for rows.Next() {
 		session := new(Session)
 		var bid []byte
-		err := rows.Scan(&session.ID, &session.NodeId, &session.SubscriberID.ID, &bid, &session.ApnName, &session.UeIpAddr, &session.StartTime, &session.EndTime, &session.TxBytes, &session.RxBytes, &session.TotalBytes, &session.TxMeterID.ID, &session.RxMeterID.ID, &session.State, &session.Sync, &session.UpdatedAt)
+
+		err := rows.Scan(&session.ID, &session.NodeId, &session.SubscriberID.ID,
+			&bid, &session.ApnName, &session.UeIpAddr, &session.StartTime,
+			&session.EndTime, &session.TxBytes, &session.RxBytes,
+			&session.TotalBytes, &session.TxMeterID.ID, &session.RxMeterID.ID,
+			&session.State, &session.Sync, &session.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}
 
 		session.PolicyID.ID, err = uuid.FromBytes(bid)
 		if err != nil {
-			log.Errorf("Failed to get poilicy id for session %d.Error: %v", session.ID, err)
+			log.Errorf("Failed to get policy id for session %d. Error: %v",
+				session.ID, err)
 			return nil, err
 		}
 

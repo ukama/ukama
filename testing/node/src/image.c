@@ -30,6 +30,46 @@ static int write_to_container_file(char *buffer, char *fileName, FILE *fp);
 static int create_container_file(char *target, Configs *config, Node *node,
                                  RuntimeType runtime);
 static int stage_starter_pkgs(Configs *configs);
+static int is_tower_node(Node *node);
+static int add_tower_network_pkgs(char *target, FILE *fp);
+
+static int is_tower_node(Node *node) {
+
+    if (node == NULL || node->nodeInfo == NULL || node->nodeInfo->type == NULL) {
+        return FALSE;
+    }
+
+    return strcmp(node->nodeInfo->type, NODE_TYPE_TNODE) == 0;
+}
+
+static int add_tower_network_pkgs(char *target, FILE *fp) {
+
+    char buffer[MAX_BUFFER] = {0};
+
+    if (target == NULL || fp == NULL) {
+        return FALSE;
+    }
+
+    if (strstr(target, TARGET_ALPINE) != NULL) {
+        sprintf(buffer, CF_RUN_APK, TOWER_OVS_PKGS_APK);
+    } else {
+        sprintf(buffer, CF_RUN_APT, TOWER_OVS_PKGS_APT);
+    }
+
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) {
+        return FALSE;
+    }
+
+    sprintf(buffer,
+            "RUN mkdir -p /var/run/openvswitch "
+            "/usr/local/var/run/openvswitch /etc/openvswitch\n");
+
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) {
+        return FALSE;
+    }
+
+    return TRUE;
+}
 
 static char *module_schema_file(char* nodeType, char *type) {
 
@@ -164,8 +204,11 @@ static int create_container_file(char *target,
 
     FILE *fp = NULL;
     char buffer[MAX_BUFFER] = {0};
+    int tower = FALSE;
 
     if (config == NULL) return FALSE;
+
+    tower = is_tower_node(node);
 
     fp = init_container_file(CONTAINER_FILE);
     if (!fp) {
@@ -175,6 +218,13 @@ static int create_container_file(char *target,
 
     sprintf(buffer, CF_FROM, target);
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    if (tower) {
+        if (!add_tower_network_pkgs(target, fp)) {
+            fclose(fp);
+            return FALSE;
+        }
+    }
 
     /* pkgs: alpine vs ubuntu/debian */
     if (strstr(target, TARGET_ALPINE) != NULL) {
