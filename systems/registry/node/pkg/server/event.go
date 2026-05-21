@@ -61,12 +61,12 @@ func (n *NodeEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 			return nil, err
 		}
 	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.node.health.capps.store"):
-		c := evt.EventToEventConfig[evt.EventHealthCappStore]
-		msg, err := epb.UnmarshalStoreRunningAppsInfoEvent(e.Msg, c.Name)
+		c := evt.EventToEventConfig[evt.EventHealthReportStore]
+		msg, err := epb.UnmarshalHealthReportEvent(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
-		err = n.handleStoreRunningAppsInfoEvent(ctx, e.RoutingKey, msg)
+		err = n.handleHealthReportEvent(ctx, e.RoutingKey, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -172,9 +172,9 @@ func (n *NodeEventServer) handleNodeOfflineEvent(ctx context.Context, key string
 	return nil
 }
 
-func (n *NodeEventServer) handleStoreRunningAppsInfoEvent(ctx context.Context, key string, msg *epb.StoreRunningAppsInfoEvent) error {
-	log.Infof("Processing store running apps info event: %s, nodeID: %s, timestamp: %s",
-		key, msg.NodeId, msg.Timestamp)
+func (n *NodeEventServer) handleHealthReportEvent(ctx context.Context, key string, msg *epb.HealthReportEvent) error {
+	log.Infof("Processing health report event: %s, nodeID: %s",
+		key, msg.NodeId)
 
 	node, err := n.s.GetNode(ctx, &pb.GetNodeRequest{NodeId: msg.NodeId})
 	if err != nil {
@@ -185,14 +185,20 @@ func (n *NodeEventServer) handleStoreRunningAppsInfoEvent(ctx context.Context, k
 		log.Errorf("Node not found")
 		return fmt.Errorf("node not found")
 	}
-	
-	coordinates := ""
-	for _, system := range msg.System {
-		if system.Name == "coordinates" {
-			coordinates = system.Value
-			break
-		}
+
+	if node.Node.Type != ukama.NODE_ID_TYPE_TOWERNODE {
+		log.Infof("Node %s is not a tower node", msg.NodeId)
+		return nil
 	}
+
+	interfaces, err := n.s.healthClient.GetInterfaces("", msg.NodeId, msg.Id)
+	if err != nil {
+		log.Errorf("Failed to get interfaces: %v", err)
+		return fmt.Errorf("failed to get interfaces: %w", err)
+	}
+
+	coordinates := interfaces.Gps.Coordinates
+	
 	if coordinates == "" {
 		log.Errorf("Coordinates not found")
 		return fmt.Errorf("coordinates not found")

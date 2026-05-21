@@ -11,8 +11,8 @@ package pkg
 import (
 	"time"
 
-	evt "github.com/ukama/ukama/systems/common/events"
 	uconf "github.com/ukama/ukama/systems/common/config"
+	evt "github.com/ukama/ukama/systems/common/events"
 	metric "github.com/ukama/ukama/systems/common/metrics"
 )
 
@@ -34,6 +34,7 @@ type Config struct {
 
 type HttpServices struct {
 	InventoryClient string `default:"http://api-gateway-inventory:8080"`
+	InitClient    string	`default:"http://api-gateway-init:8080"`
 }
 
 const (
