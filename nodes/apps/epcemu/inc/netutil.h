@@ -12,9 +12,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "jansson.h"
+
+typedef json_t JsonObj;
+
 int imsi_valid(const char *imsi);
 int ip_to_uint32(const char *ip, uint32_t *out);
 int ip_in_cidr(const char *ip, const char *cidr);
 JsonObj *imsi_to_json_array(const char *imsi);
 
 #endif /* NETUTIL_H_ */
+

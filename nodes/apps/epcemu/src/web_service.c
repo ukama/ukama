@@ -7,8 +7,10 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
+#include "data_plane.h"
 #include "epcemu.h"
 #include "http_status.h"
 #include "netutil.h"
@@ -16,6 +18,8 @@
 #include "ue.h"
 #include "web_service.h"
 #include "version.h"
+
+extern DataPlane gDataPlane;
 
 static void set_error(UResponse *response, int code, const char *message) {
 
@@ -47,6 +51,18 @@ static const char *json_string_default(JsonObj *obj,
     return defValue;
 }
 
+static int json_int_default(JsonObj *obj, const char *key, int defValue) {
+
+    JsonObj *value;
+
+    if (obj == NULL || key == NULL) return defValue;
+
+    value = json_object_get(obj, key);
+    if (json_is_integer(value)) return (int)json_integer_value(value);
+
+    return defValue;
+}
+
 static JsonObj *status_json(ServiceContext *ctx) {
 
     JsonObj *root;
@@ -71,8 +87,8 @@ static JsonObj *status_json(ServiceContext *ctx) {
 
     pcrf = json_object();
     initNetwork = json_object();
-    ues = json_object();
-    userPlane = json_object();
+    ues = ue_summary_json();
+    userPlane = data_plane_json(&gDataPlane, ctx->config);
 
     json_object_set_new(root, "ready",  json_boolean(ready));
     json_object_set_new(root, "state",  json_string(status_state_str(state)));
@@ -94,13 +110,13 @@ static JsonObj *status_json(ServiceContext *ctx) {
                         json_string(ctx->config->ueCidr));
     json_object_set_new(root, "initNetwork", initNetwork);
 
-    json_object_set_new(ues, "attached", json_integer(ue_count_attached()));
-    json_object_set_new(root, "ues",     ues);
+    if (ues != NULL) {
+        json_object_set_new(root, "ues", ues);
+    }
 
-    json_object_set_new(userPlane, "enabled", json_false());
-    json_object_set_new(userPlane, "mode",
-                        json_string("control-plane-only"));
-    json_object_set_new(root, "userPlane", userPlane);
+    if (userPlane != NULL) {
+        json_object_set_new(root, "userPlane", userPlane);
+    }
 
     return root;
 }
@@ -121,7 +137,9 @@ int web_service_cb_ping(const URequest *request,
         return U_CALLBACK_CONTINUE;
     }
 
-    ulfius_set_string_body_response(response, HttpStatus_OK, HttpStatusStr(HttpStatus_OK));
+    ulfius_set_string_body_response(response,
+                                    HttpStatus_OK,
+                                    HttpStatusStr(HttpStatus_OK));
     return U_CALLBACK_CONTINUE;
 }
 
@@ -165,9 +183,12 @@ int web_service_cb_attach(const URequest *request,
 
     ServiceContext *ctx;
     JsonObj *body;
+    JsonObj *reply;
     const char *imsi;
+    const char *iccid;
     const char *ip;
     const char *apn;
+    int userPlanePort;
     char reason[EPCEMU_MAX_REASON];
 
     ctx = (ServiceContext *)data;
@@ -185,8 +206,12 @@ int web_service_cb_attach(const URequest *request,
     }
 
     imsi = json_string_default(body, "imsi", NULL);
+    iccid = json_string_default(body, "iccid", "");
     ip   = json_string_default(body, "ip", NULL);
     apn  = json_string_default(body, "apn", EPCEMU_DEF_APN);
+    userPlanePort = json_int_default(body, "userPlanePort", 0);
+
+    (void)userPlanePort;
 
     if (!imsi_valid(imsi)) {
         json_decref(body);
@@ -194,14 +219,14 @@ int web_service_cb_attach(const URequest *request,
         return U_CALLBACK_CONTINUE;
     }
 
-    if (!ip_in_cidr(ip, ctx->config->ueCidr)) {
+    if (ip == NULL || !ip_in_cidr(ip, ctx->config->ueCidr)) {
         json_decref(body);
         set_error(response, HttpStatus_BadRequest,
                   "ue ip outside configured ue cidr");
         return U_CALLBACK_CONTINUE;
     }
 
-    if (!ue_attach_start(imsi, ip, apn, reason, sizeof(reason))) {
+    if (!ue_attach_start(imsi, iccid, ip, apn, reason, sizeof(reason))) {
         json_decref(body);
         set_error(response, HttpStatus_Conflict, reason);
         return U_CALLBACK_CONTINUE;
@@ -218,15 +243,15 @@ int web_service_cb_attach(const URequest *request,
     ue_attach_complete(imsi);
     json_decref(body);
 
-    body = ue_get_json(imsi);
-    if (body == NULL) {
+    reply = ue_get_json(imsi);
+    if (reply == NULL) {
         set_error(response, HttpStatus_InternalServerError,
                   "failed to read attached ue");
         return U_CALLBACK_CONTINUE;
     }
 
-    ulfius_set_json_body_response(response, HttpStatus_Created, body);
-    json_decref(body);
+    ulfius_set_json_body_response(response, HttpStatus_Created, reply);
+    json_decref(reply);
 
     return U_CALLBACK_CONTINUE;
 }
