@@ -12,6 +12,7 @@
 #include "epcemu.h"
 #include "services.h"
 
+#include "usys_file.h"
 #include "usys_services.h"
 
 static int resolve_port(const char *name, int *port) {
