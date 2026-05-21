@@ -1,0 +1,21 @@
+FROM alpine:3.20
+
+RUN apk add --no-cache \
+    bash \
+    build-base \
+    ca-certificates \
+    curl \
+    curl-dev \
+    iperf3 \
+    iproute2 \
+    iputils \
+    linux-headers
+
+WORKDIR /opt/ukama/ue-agent
+COPY ue-agent/ /opt/ukama/ue-agent/
+RUN make
+
+COPY ue/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
