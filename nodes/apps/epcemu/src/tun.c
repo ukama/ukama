@@ -8,8 +8,8 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <linux/if.h>
 #include <linux/if_tun.h>
+#include <net/if.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/ioctl.h>
@@ -25,7 +25,8 @@ static int exec_cmd(const char *cmd,
                     const char *a3,
                     const char *a4,
                     const char *a5,
-                    const char *a6) {
+                    const char *a6,
+                    const char *a7) {
 
     pid_t pid;
     int status;
@@ -37,12 +38,15 @@ static int exec_cmd(const char *cmd,
     }
 
     if (pid == 0) {
-        execlp(cmd, cmd, a1, a2, a3, a4, a5, a6, (char *)NULL);
+        execlp(cmd, cmd, a1, a2, a3, a4, a5, a6, a7, (char *)NULL);
         _exit(127);
     }
 
     while (waitpid(pid, &status, 0) < 0) {
-        if (errno == EINTR) continue;
+        if (errno == EINTR) {
+            continue;
+        }
+
         usys_log_error("waitpid failed for %s: %s", cmd, strerror(errno));
         return USYS_FALSE;
     }
@@ -62,7 +66,9 @@ int tun_create(const char *name) {
     struct ifreq ifr;
     int fd;
 
-    if (name == NULL || name[0] == '\0') return -1;
+    if (name == NULL || name[0] == '\0') {
+        return -1;
+    }
 
     fd = open("/dev/net/tun", O_RDWR);
     if (fd < 0) {
@@ -85,15 +91,19 @@ int tun_create(const char *name) {
 
 int tun_configure(const char *name, const char *addr) {
 
-    if (name == NULL || addr == NULL) return USYS_FALSE;
-
-    exec_cmd("ip", "link", "delete", name, NULL, NULL, NULL, NULL);
-
-    if (!exec_cmd("ip", "tuntap", "add", "dev", name, "mode", "tun")) {
+    if (name == NULL || addr == NULL) {
         return USYS_FALSE;
     }
 
-    if (!exec_cmd("ip", "addr", "replace", addr, "dev", name, NULL, NULL)) {
+    exec_cmd("ip", "link", "delete", name, NULL, NULL, NULL, NULL);
+
+    if (!exec_cmd("ip", "tuntap", "add", "dev", name, "mode", "tun",
+                  NULL)) {
+        return USYS_FALSE;
+    }
+
+    if (!exec_cmd("ip", "addr", "replace", addr, "dev", name, NULL,
+                  NULL)) {
         return USYS_FALSE;
     }
 
