@@ -165,6 +165,9 @@ as an external program.
 EOF
 }
 
+echo "*** casync build disabled ***"
+exit 0
+
 download_source
 verify_source
 extract_source

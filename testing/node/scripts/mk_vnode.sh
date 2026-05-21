@@ -523,7 +523,7 @@ build_image() {
           "${BUILD_DIR}/bin" \
           "${BUILD_DIR}/usr/bin"
 
-    build_casync_runtime
+#    build_casync_runtime
 
     shopt -s nullglob
     for d in "${BUILD_DIR}"/apps/*; do
