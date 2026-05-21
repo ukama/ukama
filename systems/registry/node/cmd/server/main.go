@@ -92,7 +92,7 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Fatalf("Failed to resolve node gw system address from initClient: %v", err)
 	}
 
-	healthClient := node.NewHealthClient(nodeGwUrl.String())
+	healthClient := node.NewNodeHealthClient(nodeGwUrl.String())
 
 	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
 		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,

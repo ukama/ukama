@@ -47,7 +47,7 @@ func TestHealthClient_GetInterfaces(t *testing.T) {
 			}
 		}
 
-		testHealthClient := node.NewHealthClient(baseURL)
+		testHealthClient := node.NewNodeHealthClient(baseURL)
 		testHealthClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		ifaces, err := testHealthClient.GetInterfaces(testInterfaceName, testNodeId, testReportId)
@@ -73,7 +73,7 @@ func TestHealthClient_GetInterfaces(t *testing.T) {
 			}
 		}
 
-		testHealthClient := node.NewHealthClient(baseURL)
+		testHealthClient := node.NewNodeHealthClient(baseURL)
 		testHealthClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		_, err := testHealthClient.GetInterfaces(testInterfaceName, testNodeId, testReportId)
@@ -90,7 +90,7 @@ func TestHealthClient_GetInterfaces(t *testing.T) {
 			}
 		}
 
-		testHealthClient := node.NewHealthClient(baseURL)
+		testHealthClient := node.NewNodeHealthClient(baseURL)
 		testHealthClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		_, err := testHealthClient.GetInterfaces(testInterfaceName, testNodeId, testReportId)
@@ -103,7 +103,7 @@ func TestHealthClient_GetInterfaces(t *testing.T) {
 			return nil
 		}
 
-		testHealthClient := node.NewHealthClient(baseURL)
+		testHealthClient := node.NewNodeHealthClient(baseURL)
 		testHealthClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		_, err := testHealthClient.GetInterfaces(testInterfaceName, testNodeId, testReportId)

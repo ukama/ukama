@@ -52,7 +52,7 @@ type NodeServer struct {
 	nameGenerator   namegenerator.Generator
 	siteService     providers.SiteClientProvider
 	pushGateway     string
-	healthClient    node.HealthClient
+	healthClient    node.NodeHealthClient
 	msgbus          mb.MsgBusServiceClient
 	baseRoutingKey  msgbus.RoutingKeyBuilder
 	inventoryClient cinvent.ComponentClient
@@ -60,7 +60,7 @@ type NodeServer struct {
 }
 
 func NewNodeServer(orgName string, nodeRepo db.NodeRepo, siteRepo db.SiteRepo, nodeStatusRepo db.NodeStatusRepo,
-	pushGateway string, msgBus mb.MsgBusServiceClient, siteService providers.SiteClientProvider, org uuid.UUID, inventoryClientProvider cinvent.ComponentClient, healthClient node.HealthClient) *NodeServer {
+	pushGateway string, msgBus mb.MsgBusServiceClient, siteService providers.SiteClientProvider, org uuid.UUID, inventoryClientProvider cinvent.ComponentClient, healthClient node.NodeHealthClient) *NodeServer {
 	seed := time.Now().UTC().UnixNano()
 
 	return &NodeServer{

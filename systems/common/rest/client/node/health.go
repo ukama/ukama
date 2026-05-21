@@ -139,29 +139,29 @@ type ControllerLoadMetricsInfo struct {
 	CurrentA float64 `json:"currentA,omitempty"`
 }
 
-type HealthClient interface {
+type NodeHealthClient interface {
 	GetInterfaces(interfaceName, nodeId, reportId string) (InterfaceInfo, error)
 }
 
-type healthClient struct {
+type nodeHealthClient struct {
 	u *url.URL
 	R *client.Resty
 }
 
-func NewHealthClient(h string, options ...client.Option) *healthClient {
+func NewNodeHealthClient(h string, options ...client.Option) *nodeHealthClient {
 	u, err := url.Parse(h)
 
 	if err != nil {
 		log.Fatalf("Can't parse %s url. Error: %v", h, err)
 	}
 
-	return &healthClient{
+	return &nodeHealthClient{
 		u: u,
 		R: client.NewResty(options...),
 	}
 }
 
-func (h *healthClient) GetInterfaces(interfaceName, nodeId, reportId string) (InterfaceInfo, error) {
+func (h *nodeHealthClient) GetInterfaces(interfaceName, nodeId, reportId string) (InterfaceInfo, error) {
 	log.Debugf("Getting interfaces: interfaceName=%q nodeId=%q reportId=%q", interfaceName, nodeId, reportId)
 
 	q := url.Values{}
