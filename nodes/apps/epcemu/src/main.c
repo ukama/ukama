@@ -14,6 +14,7 @@
 
 #include <curl/curl.h>
 
+#include "data_plane.h"
 #include "epcemu.h"
 #include "init_network.h"
 #include "pcrf.h"
@@ -27,6 +28,7 @@
 #include "version.h"
 
 static volatile bool gTerminate = false;
+DataPlane gDataPlane;
 
 static UsysOption longOptions[] = {
     { "logs",    required_argument, 0, 'l' },
@@ -76,7 +78,9 @@ static int detach_cb(const UeEntry *ue, void *arg) {
     config = (EpcemuConfig *)arg;
     if (ue == NULL || config == NULL) return USYS_FALSE;
 
-    usys_log_debug("detaching UE on shutdown imsi=%s ip=%s", ue->imsi, ue->ip);
+    usys_log_debug("detaching UE on shutdown imsi=%s ip=%s",
+                   ue->imsi,
+                   ue->ip);
 
     if (pcrf_delete_session(config, ue->imsi)) {
         ue_detach_complete(ue->imsi);
@@ -104,10 +108,15 @@ int main(int argc, char **argv) {
 
     debug = EPCEMU_DEF_LOG_LEVEL;
 
+    memset(&config,     0, sizeof(config));
+    memset(&status,     0, sizeof(status));
+    memset(&ctx,        0, sizeof(ctx));
+    memset(&gDataPlane, 0, sizeof(gDataPlane));
+
     usys_log_set_service(EPCEMU_SERVICE_NAME);
 
     while (true) {
-        opt = 0;
+        opt    = 0;
         optIdx = 0;
 
         opt = usys_getopt_long(argc, argv, "l:hv", longOptions, &optIdx);
@@ -134,35 +143,40 @@ int main(int argc, char **argv) {
 
     set_log_level(debug);
 
-    memset(&config, 0, sizeof(EpcemuConfig));
-    status_init(&status);
-    ue_store_init();
-    curl_global_init(CURL_GLOBAL_DEFAULT);
+    signal(SIGINT,  handle_sigint);
+    signal(SIGTERM, handle_sigint);
 
-    memset(&ctx, 0, sizeof(ServiceContext));
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    ue_store_init();
+    status_init(&status);
+
     ctx.config = &config;
     ctx.status = &status;
-
-    signal(SIGINT, handle_sigint);
-    signal(SIGTERM, handle_sigint);
 
     usys_log_debug("Starting %s", EPCEMU_SERVICE_NAME);
 
     if (!services_resolve(&config, &status)) {
-        status_fail(&status, "failed to resolve services");
-        goto cleanup;
+        goto failed;
+    }
+
+    if (!init_network_probe(&config, &status)) {
+        goto failed;
+    }
+
+    if (!pcrf_probe(&config, &status)) {
+        goto failed;
+    }
+
+    if (!data_plane_start(&gDataPlane, &config, &status)) {
+        goto failed;
     }
 
     if (start_web_service(&ctx, &serviceInst) != USYS_TRUE) {
-        usys_log_error("Webservice failed to start");
-        goto cleanup;
+        status_fail(&status, "failed to start web service");
+        goto failed;
     }
 
-    if (!init_network_probe(&config, &status) || !pcrf_probe(&config, &status)) {
-        usys_log_error("Dependency check failed");
-    } else {
-        status_set(&status, EpcemuStateReady, "none");
-    }
+    status_set(&status, EpcemuStateReady, "none");
 
     while (!gTerminate) {
         pause();
@@ -172,13 +186,21 @@ int main(int argc, char **argv) {
 
     ulfius_stop_framework(&serviceInst);
     ulfius_clean_instance(&serviceInst);
-
-cleanup:
-    curl_global_cleanup();
-    ue_store_destroy();
+    data_plane_stop(&gDataPlane);
     status_destroy(&status);
+    ue_store_destroy();
+    curl_global_cleanup();
 
     usys_log_debug("Exiting %s", EPCEMU_SERVICE_NAME);
-
     return 0;
+
+failed:
+    usys_log_error("%s failed to start", EPCEMU_SERVICE_NAME);
+
+    data_plane_stop(&gDataPlane);
+    status_destroy(&status);
+    ue_store_destroy();
+    curl_global_cleanup();
+
+    return 1;
 }

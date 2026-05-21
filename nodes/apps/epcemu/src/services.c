@@ -13,7 +13,6 @@
 #include "services.h"
 
 #include "usys_services.h"
-#include "usys_file.h"
 
 static int resolve_port(const char *name, int *port) {
 
@@ -43,6 +42,11 @@ int services_resolve(EpcemuConfig *config, EpcemuStatus *status) {
         return USYS_FALSE;
     }
 
+    if (!resolve_port(EPCEMU_DATA_SERVICE_NAME, &config->dataPort)) {
+        status_fail(status, "failed to resolve epcemu-data service port");
+        return USYS_FALSE;
+    }
+
     if (!resolve_port(EPCEMU_PCRF_SERVICE, &config->pcrfPort)) {
         status_fail(status, "failed to resolve pcrf service port");
         return USYS_FALSE;
@@ -59,8 +63,15 @@ int services_resolve(EpcemuConfig *config, EpcemuStatus *status) {
     snprintf(config->initNetworkUrl, sizeof(config->initNetworkUrl),
              "http://localhost:%d", config->initNetworkPort);
 
-    usys_log_debug("resolved services epcemu=%d pcrf=%d init-network=%d",
+    snprintf(config->tunName, sizeof(config->tunName), "%s",
+             EPCEMU_TUN_NAME);
+
+    snprintf(config->tunAddr, sizeof(config->tunAddr), "%s",
+             EPCEMU_TUN_ADDR);
+
+    usys_log_debug("resolved services epcemu=%d epcemu-data=%d pcrf=%d init-network=%d",
                    config->servicePort,
+                   config->dataPort,
                    config->pcrfPort,
                    config->initNetworkPort);
 

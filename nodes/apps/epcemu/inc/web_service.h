@@ -16,24 +16,31 @@ int start_web_service(ServiceContext *ctx, UInst *serviceInst);
 int web_service_cb_ping(const URequest *request,
                         UResponse *response,
                         void *data);
+
 int web_service_cb_version(const URequest *request,
                            UResponse *response,
                            void *data);
+
 int web_service_cb_status(const URequest *request,
                           UResponse *response,
                           void *data);
+
 int web_service_cb_attach(const URequest *request,
                           UResponse *response,
                           void *data);
+
 int web_service_cb_detach(const URequest *request,
                           UResponse *response,
                           void *data);
+
 int web_service_cb_get_ue(const URequest *request,
                           UResponse *response,
                           void *data);
+
 int web_service_cb_list_ues(const URequest *request,
                             UResponse *response,
                             void *data);
+
 int web_service_cb_default(const URequest *request,
                            UResponse *response,
                            void *data);
