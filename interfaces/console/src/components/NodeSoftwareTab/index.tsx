@@ -11,6 +11,7 @@ import { HorizontalContainerJustify } from '@/styles/global';
 import colors from '@/theme/colors';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import UpdateIcon from '@mui/icons-material/Update';
 import {
   Box,
   Button,
@@ -38,6 +39,20 @@ const NodeSoftwareTab = ({
   nodeApps,
   handleUpdateAvailable,
 }: INodeRadioTab) => {
+  const statausByTitle = (status: string) => {
+    switch (status) {
+      case 'update_available':
+        return 'Update Available';
+      case 'update_in_progress':
+        return 'Update In Progress';
+      case 'update_failed':
+        return 'Update Failed';
+      case 'up_to_date':
+        return 'Update Completed';
+      default:
+        return 'Unknown Status';
+    }
+  };
   return (
     <Grid2 container spacing={2} sx={{ overflowY: 'scroll' }}>
       {/* <Grid2 size={12} sx={{ gridRowStart: 1, gridRowEnd: 6 }}>
@@ -103,12 +118,19 @@ const NodeSoftwareTab = ({
                             <Tooltip
                               arrow
                               placement="right"
-                              title={`Update Available: ${
+                              title={`${statausByTitle(status)}: ${
                                 changeLog?.[changeLog?.length - 1] ?? ''
                               }`}
                             >
                               <IconButton
-                                color="info"
+                                color={
+                                  status == SoftwareStatusEnum.UpdateAvailable
+                                    ? 'info'
+                                    : status ==
+                                        SoftwareStatusEnum.UpdateInProgress
+                                      ? 'warning'
+                                      : 'error'
+                                }
                                 sx={{
                                   '&:hover svg path': {
                                     fill: 'inherit',
@@ -154,7 +176,13 @@ const NodeSoftwareTab = ({
                       <CardActions sx={{ pb: 2, pt: 0, px: 2 }}>
                         <HorizontalContainerJustify>
                           <Button sx={{ p: 0 }}>View More</Button>
-                          {status === SoftwareStatusEnum.UpdateAvailable && (
+                          {status == SoftwareStatusEnum.UpdateInProgress && (
+                            <UpdateIcon
+                              htmlColor={colors.yellow}
+                              sx={{ width: '24px', height: '24px' }}
+                            />
+                          )}
+                          {status == SoftwareStatusEnum.UpdateAvailable && (
                             <Button
                               sx={{ p: 0, color: colors.green }}
                               onClick={() =>
