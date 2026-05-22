@@ -43,10 +43,17 @@ uboot_spam_key() {
 
     (
         exec 3>"$dev"
-        for _ in $(seq 1 "$count"); do
-            printf '%s' "$key" >&3
-            sleep "$interval"
-        done
+        if [ "$count" -eq 0 ]; then
+            while true; do
+                printf '%s' "$key" >&3
+                sleep "$interval"
+            done
+        else
+            for _ in $(seq 1 "$count"); do
+                printf '%s' "$key" >&3
+                sleep "$interval"
+            done
+        fi
         exec 3>&-
     ) &
     echo $!

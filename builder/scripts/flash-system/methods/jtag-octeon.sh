@@ -290,24 +290,28 @@ _phase1_run() {
     echo "Opening serial console at $serial_dev ($baud)..."
     uboot_open "$serial_dev" "$baud" "${LOG_DIR}/uboot.log"
 
-    echo "Spamming SPACE to interrupt zero-second autoboot..."
-    SPAM_PID=$(uboot_spam_key "$serial_dev" " " 300 0.05)
+    echo "Spamming SPACE to interrupt zero-second autoboot (until prompt appears)..."
+    SPAM_PID=$(uboot_spam_key "$serial_dev" " " 0 0.05)
 
     echo "Waiting for u-boot prompt '${uboot_prompt}' (up to 120s)..."
     if ! uboot_wait_for "$uboot_prompt" 120; then
+        # Stop tail first so its output doesn't race with our diagnostics
+        kill "$OCT_TAIL_PID" 2>/dev/null || true
+        sleep 1
+
         echo "ERROR: u-boot prompt did not appear within 120s"
         echo "--- last 40 lines of oct-remote-boot output ---"
         tail -n 40 "$oct_log" 2>/dev/null || true
         echo "--- oct-remote-boot exit status ---"
         if kill -0 "$REMOTE_BOOT_PID" 2>/dev/null; then
             echo "  still running (PID $REMOTE_BOOT_PID) — did not error out, but no u-boot on serial"
+            sudo kill "$REMOTE_BOOT_PID" 2>/dev/null || true
         else
             wait "$REMOTE_BOOT_PID" 2>/dev/null
             echo "  exited with status $?"
         fi
         echo "--- last 40 lines of serial (uboot.log) ---"
         tail -n 40 "${LOG_DIR}/uboot.log" 2>/dev/null || true
-        kill "$OCT_TAIL_PID" 2>/dev/null || true
         return 1
     fi
 
