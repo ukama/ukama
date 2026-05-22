@@ -10,11 +10,16 @@ source "${LIB_DIR}/bdi.sh"
 source "${LIB_DIR}/uboot_serial.sh"
 
 REMOTE_BOOT_PID=""
+OCT_TAIL_PID=""
 TFTP_STAGE_DIR=""
 
 _jtag_octeon_cleanup() {
     uboot_close
     tftp_stop
+    if [ -n "$OCT_TAIL_PID" ]; then
+        kill "$OCT_TAIL_PID" 2>/dev/null || true
+        OCT_TAIL_PID=""
+    fi
     if [ -n "$REMOTE_BOOT_PID" ]; then
         sudo kill "$REMOTE_BOOT_PID" 2>/dev/null || true
         REMOTE_BOOT_PID=""
@@ -212,21 +217,40 @@ _phase1_run() {
         echo "WARNING: bdi.config_file not found at $bdi_config_src"
     fi
 
-    echo "Telneting BDI at ${bdi_ip}, waiting for cnMIPS#0> after config load..."
-    bdi_send_command "$bdi_ip" "$bdi_prompt" "go 0x400000" 90
+    echo "Telneting BDI at ${bdi_ip}: halting core, then go 0x400000..."
+    bdi_send_sequence "$bdi_ip" "$bdi_prompt" 90 "HALT" "go 0x400000"
 
-    echo "Running oct-remote-boot..."
-    sudo "$oct_path" --board="$oct_board" --ddr_clock_hz="$oct_clock" >/tmp/oct-remote-boot.log 2>&1 &
+    local oct_log="${LOG_DIR}/oct-remote-boot.log"
+    echo "Running oct-remote-boot:"
+    echo "  sudo $oct_path --board=$oct_board --ddr_clock_hz=$oct_clock"
+    echo "  log: $oct_log"
+    sudo "$oct_path" --board="$oct_board" --ddr_clock_hz="$oct_clock" >"$oct_log" 2>&1 &
     REMOTE_BOOT_PID=$!
+    echo "  oct-remote-boot started (PID $REMOTE_BOOT_PID)"
+
+    sudo tail -n +1 -F "$oct_log" 2>/dev/null &
+    OCT_TAIL_PID=$!
 
     echo "Opening serial console at $serial_dev ($baud)..."
     uboot_open "$serial_dev" "$baud" "${LOG_DIR}/uboot.log"
 
-    echo "Waiting for u-boot prompt '${uboot_prompt}'..."
-    uboot_wait_for "$uboot_prompt" 120 || {
+    echo "Waiting for u-boot prompt '${uboot_prompt}' (up to 120s)..."
+    if ! uboot_wait_for "$uboot_prompt" 120; then
         echo "ERROR: u-boot prompt did not appear within 120s"
+        echo "--- last 40 lines of oct-remote-boot output ---"
+        tail -n 40 "$oct_log" 2>/dev/null || true
+        echo "--- oct-remote-boot exit status ---"
+        if kill -0 "$REMOTE_BOOT_PID" 2>/dev/null; then
+            echo "  still running (PID $REMOTE_BOOT_PID) — did not error out, but no u-boot on serial"
+        else
+            wait "$REMOTE_BOOT_PID" 2>/dev/null
+            echo "  exited with status $?"
+        fi
+        kill "$OCT_TAIL_PID" 2>/dev/null || true
         return 1
-    }
+    fi
+
+    kill "$OCT_TAIL_PID" 2>/dev/null || true
 
     echo "Pushing u-boot environment variables..."
     _phase1_uboot_env "$serial_dev" "$uboot_prompt"

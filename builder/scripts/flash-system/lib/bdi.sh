@@ -55,3 +55,39 @@ expect {
 }
 EOF
 }
+
+bdi_send_sequence() {
+    local ip="$1"
+    local prompt="$2"
+    local timeout_secs="$3"
+    shift 3
+
+    bdi_require_expect
+
+    local script
+    script="set timeout ${timeout_secs}
+spawn telnet ${ip}
+expect {
+    \"${prompt}\" {}
+    timeout     { exit 1 }
+}
+"
+    local cmd
+    for cmd in "$@"; do
+        script="${script}
+puts \">>> sending: ${cmd}\"
+send \"${cmd}\r\"
+expect {
+    \"${prompt}\" {}
+    timeout     { exit 2 }
+}
+"
+    done
+
+    script="${script}
+send \"quit\r\"
+expect eof
+exit 0
+"
+    expect -c "$script"
+}
