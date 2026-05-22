@@ -161,7 +161,6 @@ _phase1_uboot_env() {
     uboot_send_and_wait "$dev" 'setenv bootcbytftp "tftp 0x21000000 lsm_os.gz; gunzip 0x21000000 0x20000000 0x1000000; tftp 0x30800000 lsm_rd.gz; bootoctlinux 0x20000000 coremask=0x7 endbootargs rd_name=initrd mem=512M;"' "$prompt" 5
     uboot_send_and_wait "$dev" 'setenv namedalloc "namedalloc dsp-dump 0x400000 0x7f4D0000; namedalloc cazac 0x630000 0x7f8D0000; namedalloc cpu-dsp-if 0x100000 0x7ff00000; namedalloc dsp-log-buf 0x4000000 0x80000000; namedalloc initrd 0x2800000 0x30800000;"' "$prompt" 5
     uboot_send_and_wait "$dev" "setenv mk_ubootenv 1" "$prompt" 5
-    uboot_send_and_wait "$dev" "saveenv" "$prompt" 15
 }
 
 _phase1_flash_artifact() {
@@ -290,8 +289,15 @@ _phase1_run() {
     echo "Opening serial console at $serial_dev ($baud)..."
     uboot_open "$serial_dev" "$baud" "${LOG_DIR}/uboot.log"
 
-    echo "Spamming SPACE to interrupt zero-second autoboot (until prompt appears)..."
-    SPAM_PID=$(uboot_spam_key "$serial_dev" " " 0 0.05)
+    echo "Spamming keys to interrupt zero-second autoboot (until prompt appears)..."
+    (
+        exec 3>"$serial_dev"
+        while true; do
+            printf ' \r\n' >&3
+            sleep 0.03
+        done
+    ) &
+    SPAM_PID=$!
 
     echo "Waiting for u-boot prompt '${uboot_prompt}' (up to 120s)..."
     if ! uboot_wait_for "$uboot_prompt" 120; then
@@ -324,14 +330,17 @@ _phase1_run() {
     echo "Pushing u-boot environment variables..."
     _phase1_uboot_env "$serial_dev" "$uboot_prompt"
 
-    echo "Enabling ethernet (mw64)..."
+    echo "Enabling ethernet (mw64 x2) and saving env..."
     uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 5
+    uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 5
+    uboot_send_and_wait "$serial_dev" "saveenv" "$uboot_prompt" 15
 
     local host_ip
     host_ip=$(yq_read "$BOARD_CONFIG" network.host_ip)
     echo "Pinging host ${host_ip} from u-boot..."
     uboot_send_and_wait "$serial_dev" "ping ${host_ip}" "$uboot_prompt" 15 || {
-        echo "WARNING: ping failed — retrying mw64..."
+        echo "WARNING: ping failed — retrying mw64 x2..."
+        uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 5
         uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 5
         uboot_send_and_wait "$serial_dev" "ping ${host_ip}" "$uboot_prompt" 15 || {
             echo "ERROR: TRX cannot reach host. Check cables."
