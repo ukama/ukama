@@ -35,6 +35,21 @@ uboot_close() {
     fi
 }
 
+uboot_spam_key() {
+    local dev="$1"
+    local key="${2:- }"
+    local count="${3:-300}"
+    local interval="${4:-0.05}"
+
+    (
+        for _ in $(seq 1 "$count"); do
+            printf '%s' "$key" | sudo tee "$dev" >/dev/null
+            sleep "$interval"
+        done
+    ) &
+    echo $!
+}
+
 uboot_wait_for() {
     local pattern="$1"
     local timeout_secs="${2:-30}"

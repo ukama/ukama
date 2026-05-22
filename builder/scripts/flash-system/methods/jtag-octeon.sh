@@ -11,6 +11,7 @@ source "${LIB_DIR}/uboot_serial.sh"
 
 REMOTE_BOOT_PID=""
 OCT_TAIL_PID=""
+SPAM_PID=""
 TFTP_STAGE_DIR=""
 
 _jtag_octeon_cleanup() {
@@ -23,6 +24,10 @@ _jtag_octeon_cleanup() {
     if [ -n "$REMOTE_BOOT_PID" ]; then
         sudo kill "$REMOTE_BOOT_PID" 2>/dev/null || true
         REMOTE_BOOT_PID=""
+    fi
+    if [ -n "$SPAM_PID" ]; then
+        kill "$SPAM_PID" 2>/dev/null || true
+        SPAM_PID=""
     fi
     [ -n "$TFTP_STAGE_DIR" ] && sudo rm -rf "$TFTP_STAGE_DIR"
 }
@@ -165,25 +170,35 @@ _phase1_flash_artifact() {
     local key="$3"
     local ddr_addr="$4"
 
-    local src flash_addr size name
+    local src flash_addr name
     src=$(yq_read "$BOARD_CONFIG" "phase1.artifacts.${key}.path")
     flash_addr=$(yq_read "$BOARD_CONFIG" "phase1.artifacts.${key}.flash_addr")
-    size=$(yq_read "$BOARD_CONFIG" "phase1.artifacts.${key}.size")
     name=$(tftp_stage_file "$src")
 
-    echo "  Flashing $key ($name) to ${flash_addr} (size ${size})..."
+    echo "  Flashing $key ($name) to ${flash_addr}..."
+
+    local marker_before
+    marker_before=$(wc -c < "$UBOOT_LOG" 2>/dev/null || echo 0)
+
     uboot_send_and_wait "$dev" "tftp ${ddr_addr} ${name}" "$prompt" 120
+
+    if ! tail -c +"$marker_before" "$UBOOT_LOG" 2>/dev/null | grep -q "Bytes transferred = "; then
+        echo "ERROR: tftp failed for $key — no 'Bytes transferred' seen in log"
+        return 1
+    fi
+
     uboot_send_and_wait "$dev" "protect off all" "$prompt" 10
-    uboot_send_and_wait "$dev" "erase ${flash_addr} +${size}" "$prompt" 60
-    uboot_send_and_wait "$dev" "cp.b ${ddr_addr} ${flash_addr} ${size}" "$prompt" 120
+    uboot_send_and_wait "$dev" "erase ${flash_addr} +\${filesize}" "$prompt" 60
+    uboot_send_and_wait "$dev" "cp.b ${ddr_addr} ${flash_addr} \${filesize}" "$prompt" 120
 }
 
 _phase1_run() {
     local bdi_ip bdi_prompt serial_dev baud uboot_prompt oct_path oct_board oct_clock
-    local ddr_os ddr_rd
+    local ddr_os ddr_rd gdb_port oct_env_root oct_env_protocol
 
     bdi_ip=$(yq_read "$BOARD_CONFIG" network.bdi_ip)
     bdi_prompt=$(yq_read "$BOARD_CONFIG" bdi.prompt)
+    gdb_port=$(yq_read "$BOARD_CONFIG" bdi.gdb_port)
     serial_dev=$(yq_read "$BOARD_CONFIG" serial.device)
     baud=$(yq_read "$BOARD_CONFIG" serial.baud)
     uboot_prompt=$(yq_read "$BOARD_CONFIG" serial.uboot_prompt)
@@ -192,6 +207,9 @@ _phase1_run() {
     oct_clock=$(yq_read "$BOARD_CONFIG" oct_remote_boot.ddr_clock_hz)
     ddr_os=$(yq_read "$BOARD_CONFIG" phase1.ddr_os_load_addr)
     ddr_rd=$(yq_read "$BOARD_CONFIG" phase1.ddr_rd_load_addr)
+
+    oct_env_root=$(dirname "$(dirname "$(dirname "$oct_path")")")
+    oct_env_protocol="GDB:${bdi_ip},${gdb_port}"
 
     TFTP_STAGE_DIR=$(mktemp -d /tmp/ukama-trx-tftp.XXXXXX)
     echo "TFTP staging at $TFTP_STAGE_DIR"
@@ -222,9 +240,12 @@ _phase1_run() {
 
     local oct_log="${LOG_DIR}/oct-remote-boot.log"
     echo "Running oct-remote-boot:"
+    echo "  OCTEON_ROOT=$oct_env_root"
+    echo "  OCTEON_REMOTE_PROTOCOL=$oct_env_protocol"
     echo "  sudo $oct_path --board=$oct_board --ddr_clock_hz=$oct_clock"
     echo "  log: $oct_log"
-    sudo "$oct_path" --board="$oct_board" --ddr_clock_hz="$oct_clock" >"$oct_log" 2>&1 &
+    sudo env OCTEON_ROOT="$oct_env_root" OCTEON_REMOTE_PROTOCOL="$oct_env_protocol" \
+        "$oct_path" --board="$oct_board" --ddr_clock_hz="$oct_clock" >"$oct_log" 2>&1 &
     REMOTE_BOOT_PID=$!
     echo "  oct-remote-boot started (PID $REMOTE_BOOT_PID)"
 
@@ -233,6 +254,9 @@ _phase1_run() {
 
     echo "Opening serial console at $serial_dev ($baud)..."
     uboot_open "$serial_dev" "$baud" "${LOG_DIR}/uboot.log"
+
+    echo "Spamming SPACE to interrupt zero-second autoboot..."
+    SPAM_PID=$(uboot_spam_key "$serial_dev" " " 300 0.05)
 
     echo "Waiting for u-boot prompt '${uboot_prompt}' (up to 120s)..."
     if ! uboot_wait_for "$uboot_prompt" 120; then
@@ -251,6 +275,10 @@ _phase1_run() {
     fi
 
     kill "$OCT_TAIL_PID" 2>/dev/null || true
+    if [ -n "$SPAM_PID" ]; then
+        kill "$SPAM_PID" 2>/dev/null || true
+        SPAM_PID=""
+    fi
 
     echo "Pushing u-boot environment variables..."
     _phase1_uboot_env "$serial_dev" "$uboot_prompt"

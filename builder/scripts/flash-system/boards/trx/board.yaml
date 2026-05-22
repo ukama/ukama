@@ -10,6 +10,7 @@ network:
 
 bdi:
   telnet_port: 23
+  gdb_port: 2001
   prompt: "cnMIPS#0>"
   config_file: /usr/ukm/ukama/builder/scripts/build-system/trx/CNF71XX.cfg
 
