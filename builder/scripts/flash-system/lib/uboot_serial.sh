@@ -42,10 +42,12 @@ uboot_spam_key() {
     local interval="${4:-0.05}"
 
     (
+        exec 3>"$dev"
         for _ in $(seq 1 "$count"); do
-            printf '%s' "$key" | sudo tee "$dev" >/dev/null
+            printf '%s' "$key" >&3
             sleep "$interval"
         done
+        exec 3>&-
     ) &
     echo $!
 }

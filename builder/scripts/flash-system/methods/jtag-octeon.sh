@@ -267,9 +267,9 @@ _phase1_run() {
         echo "  BDI config loaded successfully"
     fi
 
-    echo "Telneting BDI at ${bdi_ip}: halting core, then go 0x400000..."
-    if ! bdi_send_sequence "$bdi_ip" "$bdi_prompt" 90 "HALT" "go 0x400000"; then
-        echo "ERROR: BDI did not respond with '${bdi_prompt}' after HALT/go sequence"
+    echo "Telneting BDI at ${bdi_ip}: halting core..."
+    if ! bdi_send_sequence "$bdi_ip" "$bdi_prompt" 90 "HALT"; then
+        echo "ERROR: BDI did not respond with '${bdi_prompt}' after HALT"
         return 1
     fi
 
@@ -305,6 +305,8 @@ _phase1_run() {
             wait "$REMOTE_BOOT_PID" 2>/dev/null
             echo "  exited with status $?"
         fi
+        echo "--- last 40 lines of serial (uboot.log) ---"
+        tail -n 40 "${LOG_DIR}/uboot.log" 2>/dev/null || true
         kill "$OCT_TAIL_PID" 2>/dev/null || true
         return 1
     fi
