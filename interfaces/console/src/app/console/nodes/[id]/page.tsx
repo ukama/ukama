@@ -189,6 +189,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
     refetch: refetchSoftwares,
   } = useSoftwareQuery({
     fetchPolicy: 'network-only',
+    pollInterval: 30 * 1000,
     variables: {
       data: {
         name: '',
