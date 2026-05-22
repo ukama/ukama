@@ -20,7 +20,9 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/ukama"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/common/validation"
+	healthpb "github.com/ukama/ukama/systems/node/health/pb/gen"
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
 	"github.com/ukama/ukama/systems/node/software/pkg"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
@@ -28,6 +30,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+const DefaultUpdateWatchInterval = 32 * time.Second
+const DefaultUpdateWatchExpiry = 5 * time.Minute
 
 type SoftwareServer struct {
 	pb.UnimplementedSoftwareServiceServer
@@ -170,8 +175,8 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 	}
 
 	sw.CurrentVersion = req.Tag
-	sw.ChangeLogs = append(sw.ChangeLogs, "Software updated to version "+req.Tag)
-	sw.Status = ukama.SoftwareStatusType(ukama.UpToDate)
+	sw.ChangeLogs = append(sw.ChangeLogs, "Updating app "+req.Name+" to version "+req.Tag)
+	sw.Status = ukama.SoftwareStatusType(ukama.UpdateInProgress)
 
 	if err := s.sRepo.Update(sw); err != nil {
 		log.Errorf("Failed to persist software update: %v", err)
@@ -179,6 +184,9 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 	}
 
 	log.Infof("Software %s updated to %s for node %s", req.Name, req.Tag, nId.String())
+
+	expiry := time.Now().Add(DefaultUpdateWatchExpiry)
+	go s.watchSoftwareUpdate(sw.Id, nId.String(), req.Name, req.Tag, expiry, DefaultUpdateWatchInterval)
 
 	return &pb.UpdateSoftwareResponse{Message: "Software updated successfully"}, nil
 }
@@ -207,6 +215,76 @@ func dbAppToPbApp(app *db.App) *pb.App {
 		Space:       app.Space,
 		Notes:       app.Notes,
 		MetricsKeys: app.MetricsKeys,
+	}
+}
+
+// watchSoftwareUpdate polls the health service at every interval until the app on the node
+// reports the desiredVersion (success → UpToDate) or the expiry deadline is reached (failure →
+// UpdateFailed). It is intended to be launched as a goroutine.
+func (s *SoftwareServer) watchSoftwareUpdate(recordID uuid.UUID, nodeID, appName, desiredVersion string, expiry time.Time, interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	log.Infof("watchSoftwareUpdate: started for record=%s node=%s app=%s desiredVersion=%s expiry=%s",
+		recordID, nodeID, appName, desiredVersion, expiry.Format(time.RFC3339))
+
+	for {
+		<-ticker.C
+
+		if time.Now().After(expiry) {
+			log.Warnf("watchSoftwareUpdate: deadline reached for record=%s node=%s app=%s, marking update failed",
+				recordID, nodeID, appName)
+			s.persistSoftwareStatus(recordID, nodeID, appName, ukama.UpdateFailed,
+				fmt.Sprintf("Update timed out waiting for version %s", desiredVersion))
+			return
+		}
+
+		healthClient, err := s.healthClient.GetClient()
+		if err != nil {
+			log.Errorf("watchSoftwareUpdate: failed to get health client for node=%s: %v", nodeID, err)
+			continue
+		}
+
+		resp, err := healthClient.ListApps(context.Background(), &healthpb.ListAppsRequest{
+			NodeId:  nodeID,
+			AppName: appName,
+		})
+		if err != nil {
+			log.Errorf("watchSoftwareUpdate: ListApps failed for node=%s app=%s: %v", nodeID, appName, err)
+			continue
+		}
+
+		for _, app := range resp.GetApps() {
+			if app.GetName() == appName && !validation.IsVersionMismatch(app.GetTag(), desiredVersion) {
+				log.Infof("watchSoftwareUpdate: record=%s node=%s app=%s reached desired version %s, marking up-to-date",
+					recordID, nodeID, appName, desiredVersion)
+				s.persistSoftwareStatus(recordID, nodeID, appName, ukama.UpToDate,
+					fmt.Sprintf("Software successfully updated to version %s", desiredVersion))
+				return
+			}
+		}
+
+		log.Debugf("watchSoftwareUpdate: node=%s app=%s not yet at version %s, waiting %s",
+			nodeID, appName, desiredVersion, interval)
+	}
+}
+
+// persistSoftwareStatus fetches the software record by its primary key and writes the new
+// status and a changelog entry directly, avoiding an extra List query.
+func (s *SoftwareServer) persistSoftwareStatus(recordID uuid.UUID, nodeID, appName string, newStatus ukama.SoftwareStatusType, changeLog string) {
+	sw, err := s.sRepo.Get(recordID)
+	if err != nil {
+		log.Errorf("persistSoftwareStatus: failed to get record %s for node=%s app=%s: %v",
+			recordID, nodeID, appName, err)
+		return
+	}
+
+	sw.Status = newStatus
+	sw.ChangeLogs = append(sw.ChangeLogs, changeLog)
+
+	if err := s.sRepo.Update(&sw); err != nil {
+		log.Errorf("persistSoftwareStatus: failed to update status to %s for record=%s: %v",
+			newStatus, recordID, err)
 	}
 }
 
