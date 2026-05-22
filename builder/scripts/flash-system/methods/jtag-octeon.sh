@@ -235,8 +235,21 @@ _phase1_run() {
         echo "WARNING: bdi.config_file not found at $bdi_config_src"
     fi
 
+    local host_ip
+    host_ip=$(yq_read "$BOARD_CONFIG" network.host_ip)
+
+    echo "Checking BDI state..."
+    if ! bdi_send_sequence "$bdi_ip" "$bdi_prompt" 10 "HALT" >/dev/null 2>&1; then
+        echo "  BDI unconfigured (prompt is not '${bdi_prompt}') — loading cnf71xx.cfg via TFTP..."
+        bdi_send_sequence "$bdi_ip" "Core#0>" 30 "CONFIG cnf71xx.cfg ${host_ip}" >/dev/null 2>&1 || true
+        sleep 5
+    fi
+
     echo "Telneting BDI at ${bdi_ip}: halting core, then go 0x400000..."
-    bdi_send_sequence "$bdi_ip" "$bdi_prompt" 90 "HALT" "go 0x400000"
+    if ! bdi_send_sequence "$bdi_ip" "$bdi_prompt" 90 "HALT" "go 0x400000"; then
+        echo "ERROR: BDI did not respond with '${bdi_prompt}' after HALT/go sequence"
+        return 1
+    fi
 
     local oct_log="${LOG_DIR}/oct-remote-boot.log"
     echo "Running oct-remote-boot:"
