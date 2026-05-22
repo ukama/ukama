@@ -213,7 +213,14 @@ _phase1_run() {
 
     TFTP_STAGE_DIR=$(mktemp -d /tmp/ukama-trx-tftp.XXXXXX)
     echo "TFTP staging at $TFTP_STAGE_DIR"
+    sudo pkill -x in.tftpd 2>/dev/null || true
+    sleep 1
     tftp_serve "$TFTP_STAGE_DIR"
+    sleep 1
+    if ! ss -lnup | grep -q ':69 '; then
+        echo "ERROR: TFTP server failed to start on port 69"
+        return 1
+    fi
 
     local bdi_config_src
     bdi_config_src=$(yq_read "$BOARD_CONFIG" bdi.config_file)
@@ -238,11 +245,26 @@ _phase1_run() {
     local host_ip
     host_ip=$(yq_read "$BOARD_CONFIG" network.host_ip)
 
+    local host_ip
+    host_ip=$(yq_read "$BOARD_CONFIG" network.host_ip)
+
     echo "Checking BDI state..."
     if ! bdi_send_sequence "$bdi_ip" "$bdi_prompt" 10 "HALT" >/dev/null 2>&1; then
         echo "  BDI unconfigured (prompt is not '${bdi_prompt}') — loading cnf71xx.cfg via TFTP..."
-        bdi_send_sequence "$bdi_ip" "Core#0>" 30 "CONFIG cnf71xx.cfg ${host_ip}" >/dev/null 2>&1 || true
+        local bdi_load_log="${LOG_DIR}/bdi-config-load.log"
+
+        # Set TFTP host explicitly, then load config
+        bdi_send_command "$bdi_ip" "Core#0>" "HOST ${host_ip}" 15 >"$bdi_load_log" 2>&1 || true
+        bdi_send_command "$bdi_ip" "Core#0>" "CONFIG cnf71xx.cfg" 60 >>"$bdi_load_log" 2>&1 || true
         sleep 5
+
+        if ! bdi_send_sequence "$bdi_ip" "$bdi_prompt" 10 "HALT" >/dev/null 2>&1; then
+            echo "ERROR: BDI config still not loaded after CONFIG attempt"
+            echo "--- BDI config load output ---"
+            cat "$bdi_load_log" 2>/dev/null || true
+            return 1
+        fi
+        echo "  BDI config loaded successfully"
     fi
 
     echo "Telneting BDI at ${bdi_ip}: halting core, then go 0x400000..."
