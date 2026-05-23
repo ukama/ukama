@@ -273,8 +273,20 @@ _phase1_run() {
     fi
 
     echo "Telneting BDI at ${bdi_ip}: reset + halt core into debug mode..."
-    if ! bdi_send_sequence "$bdi_ip" "$bdi_prompt" 90 "RESET HALT"; then
+    local reset_log="${LOG_DIR}/bdi-reset.log"
+    if ! bdi_send_sequence "$bdi_ip" "$bdi_prompt" 90 "RESET HALT" >"$reset_log" 2>&1; then
         echo "ERROR: BDI did not respond with '${bdi_prompt}' after RESET HALT"
+        cat "$reset_log" 2>/dev/null || true
+        return 1
+    fi
+    if grep -qE "Communication test failed|resetting target failed|JTAG exists check failed|Bypass check output: F+$" "$reset_log"; then
+        echo "ERROR: BDI cannot talk to the TRX over JTAG — target not responding."
+        echo "  'Bypass check: FFFF...' / 'JTAG Communication test failed' means the chip"
+        echo "  is not electrically responding. Almost always one of:"
+        echo "    - TRX lost power (check PoE/DC)"
+        echo "    - JTAG ribbon cable loose"
+        echo "    - board stuck from a previous run — needs a physical power-cycle"
+        grep -E "Bypass check|JTAG|resetting target|Communication test" "$reset_log" | sed 's/^/    /'
         return 1
     fi
 
