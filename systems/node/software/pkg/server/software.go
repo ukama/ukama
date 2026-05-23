@@ -32,7 +32,7 @@ import (
 )
 
 const DefaultUpdateWatchInterval = 32 * time.Second
-const DefaultUpdateWatchExpiry = 5 * time.Minute
+const DefaultUpdateWatchExpiry = 10 * time.Minute
 
 type SoftwareServer struct {
 	pb.UnimplementedSoftwareServiceServer
@@ -218,9 +218,6 @@ func dbAppToPbApp(app *db.App) *pb.App {
 	}
 }
 
-// watchSoftwareUpdate polls the health service at every interval until the app on the node
-// reports the desiredVersion (success → UpToDate) or the expiry deadline is reached (failure →
-// UpdateFailed). It is intended to be launched as a goroutine.
 func (s *SoftwareServer) watchSoftwareUpdate(recordID uuid.UUID, nodeID, appName, desiredVersion string, expiry time.Time, interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
@@ -231,37 +228,36 @@ func (s *SoftwareServer) watchSoftwareUpdate(recordID uuid.UUID, nodeID, appName
 	for {
 		<-ticker.C
 
+		healthClient, err := s.healthClient.GetClient()
+		if err != nil {
+			log.Errorf("watchSoftwareUpdate: failed to get health client for node=%s: %v", nodeID, err)
+		} else {
+			resp, err := healthClient.ListApps(context.Background(), &healthpb.ListAppsRequest{
+				NodeId:  nodeID,
+				AppName: appName,
+			})
+			if err != nil {
+				log.Errorf("watchSoftwareUpdate: ListApps failed for node=%s app=%s: %v", nodeID, appName, err)
+			} else {
+				for _, app := range resp.GetApps() {
+					if app.GetName() == appName && !validation.IsVersionMismatch(app.GetTag(), desiredVersion) {
+						log.Infof("watchSoftwareUpdate: record=%s node=%s app=%s reached desired version %s, marking up-to-date",
+							recordID, nodeID, appName, desiredVersion)
+						s.persistSoftwareStatus(recordID, nodeID, appName, ukama.UpToDate,
+							fmt.Sprintf("Software successfully updated to version %s", desiredVersion))
+						return
+					}
+				}
+			}
+		}
+
+		// Version not confirmed yet — fail if the deadline has now passed.
 		if time.Now().After(expiry) {
 			log.Warnf("watchSoftwareUpdate: deadline reached for record=%s node=%s app=%s, marking update failed",
 				recordID, nodeID, appName)
 			s.persistSoftwareStatus(recordID, nodeID, appName, ukama.UpdateFailed,
 				fmt.Sprintf("Update timed out waiting for version %s", desiredVersion))
 			return
-		}
-
-		healthClient, err := s.healthClient.GetClient()
-		if err != nil {
-			log.Errorf("watchSoftwareUpdate: failed to get health client for node=%s: %v", nodeID, err)
-			continue
-		}
-
-		resp, err := healthClient.ListApps(context.Background(), &healthpb.ListAppsRequest{
-			NodeId:  nodeID,
-			AppName: appName,
-		})
-		if err != nil {
-			log.Errorf("watchSoftwareUpdate: ListApps failed for node=%s app=%s: %v", nodeID, appName, err)
-			continue
-		}
-
-		for _, app := range resp.GetApps() {
-			if app.GetName() == appName && !validation.IsVersionMismatch(app.GetTag(), desiredVersion) {
-				log.Infof("watchSoftwareUpdate: record=%s node=%s app=%s reached desired version %s, marking up-to-date",
-					recordID, nodeID, appName, desiredVersion)
-				s.persistSoftwareStatus(recordID, nodeID, appName, ukama.UpToDate,
-					fmt.Sprintf("Software successfully updated to version %s", desiredVersion))
-				return
-			}
 		}
 
 		log.Debugf("watchSoftwareUpdate: node=%s app=%s not yet at version %s, waiting %s",
