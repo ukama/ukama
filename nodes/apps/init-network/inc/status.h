@@ -28,7 +28,9 @@ typedef enum {
     InitStateSetupTun,
     InitStateSetupBridge,
     InitStateSetupForwarding,
+    InitStateSetupGateway,
     InitStateSetupFlows,
+    InitStateSetupPolicyRouting,
     InitStateReady,
     InitStateFailed
 } InitState;
@@ -45,7 +47,9 @@ typedef struct {
     bool tunReady;
     bool bridgeReady;
     bool forwardingReady;
+    bool gatewayReady;
     bool flowsReady;
+    bool policyRoutingReady;
 
     char reason[STATUS_REASON_LEN];
 

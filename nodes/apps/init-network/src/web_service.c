@@ -9,6 +9,7 @@
 #include "web_service.h"
 #include "http_status.h"
 #include "version.h"
+#include "ovs.h"
 
 #include "usys_log.h"
 
@@ -67,6 +68,52 @@ int web_service_cb_status(const URequest *request,
         ulfius_set_string_body_response(response,
                                         HttpStatus_ServiceUnavailable,
                                         HttpStatusStr(HttpStatus_ServiceUnavailable));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    json = status_to_json(ctx->status, ctx->config);
+    if (json == NULL) {
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_InternalServerError,
+                                        HttpStatusStr(HttpStatus_InternalServerError));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    ulfius_set_json_body_response(response, HttpStatus_OK, json);
+    json_decref(json);
+
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_reconcile(const URequest *request,
+                             UResponse *response,
+                             void *data) {
+
+    ServiceContext *ctx;
+    JsonObj *json;
+
+    (void)request;
+
+    ctx = (ServiceContext *)data;
+    if (ctx == NULL || ctx->config == NULL || ctx->status == NULL) {
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_ServiceUnavailable,
+                                        HttpStatusStr(HttpStatus_ServiceUnavailable));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    if (!ovs_reconcile(ctx->config, ctx->status)) {
+        json = status_to_json(ctx->status, ctx->config);
+        if (json != NULL) {
+            ulfius_set_json_body_response(response,
+                                         HttpStatus_ServiceUnavailable,
+                                         json);
+            json_decref(json);
+        } else {
+            ulfius_set_string_body_response(response,
+                                            HttpStatus_ServiceUnavailable,
+                                            HttpStatusStr(HttpStatus_ServiceUnavailable));
+        }
         return U_CALLBACK_CONTINUE;
     }
 

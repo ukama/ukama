@@ -39,19 +39,25 @@
 
 #define DEF_TUN_ENABLE                  false
 #define DEF_TUN_IF                      "tun3"
-#define DEF_TUN_PRIMARY_CIDR            "192.168.9.20/22"
+#define DEF_TUN_PRIMARY_CIDR            "192.168.8.1/22"
 
 #define DEF_EPC_ENABLE                  false
 #define DEF_EPC_SCTP_IF                 "enp60s0"
 #define DEF_EPC_SCTP_ADDR               "10.102.81.3"
 #define DEF_EPC_GTPU_ADDR               "10.102.81.75"
 
-#define DEF_EXT_IF                      "wlo1"
+#define DEF_EXT_IF                      "eth0"
 #define DEF_FORWARD_ENABLE              true
 #define DEF_NAT_ENABLE                  true
-#define DEF_POLICY_ROUTING_ENABLE       false
+#define DEF_POLICY_ROUTING_ENABLE       true
+#define DEF_TUN_TABLE                   2000
+#define DEF_BRIDGE_TABLE                1000
 
-#define DEF_GATEWAY_CONTAINER           "cont1"
+#define DEF_GATEWAY_ENABLE              true
+#define DEF_GATEWAY_MODE                "netns"
+#define DEF_GATEWAY_NAME                "ukama-gw"
+#define DEF_GATEWAY_BRIDGE_IF           "gw-br"
+#define DEF_GATEWAY_NS_IF               "gw0"
 #define DEF_GATEWAY_ADDR                "10.10.10.11/24"
 #define DEF_GATEWAY_IP                  "10.10.10.11"
 
@@ -96,8 +102,14 @@ typedef struct {
     bool enableIpForward;
     bool enableNat;
     bool enablePolicyRouting;
+    int  tunTable;
+    int  bridgeTable;
 
-    char *gatewayContainer;
+    bool gatewayEnable;
+    char *gatewayMode;
+    char *gatewayName;
+    char *gatewayBridgeIf;
+    char *gatewayNamespaceIf;
     char *gatewayAddr;
     char *gatewayIp;
 

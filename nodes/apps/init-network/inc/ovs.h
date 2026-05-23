@@ -15,5 +15,6 @@
 #include "status.h"
 
 bool ovs_setup(Config *config, AppStatus *status);
+bool ovs_reconcile(Config *config, AppStatus *status);
 
 #endif /* OVS_H_ */
