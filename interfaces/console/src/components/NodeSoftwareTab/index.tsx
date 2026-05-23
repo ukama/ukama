@@ -13,7 +13,6 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import UpdateIcon from '@mui/icons-material/Update';
 import {
-  Box,
   Button,
   Card,
   CardActions,
@@ -54,159 +53,135 @@ const NodeSoftwareTab = ({
     }
   };
   return (
-    <Grid2 container spacing={2} sx={{ overflowY: 'scroll' }}>
-      {/* <Grid2 size={12} sx={{ gridRowStart: 1, gridRowEnd: 6 }}>
-        <Paper
-          sx={{
-            p: 3,
-          }}
-        >
-          <Typography variant="h6" sx={{ marginBottom: 3 }}>
-            Change Logs
-          </Typography>
-          <Box sx={{ overflow: 'scroll', height: '100%', pb: 4, pr: 3 }}>
-            <SimpleDataTable
-              height={'400'}
-              dataset={nodeApps}
-              columns={NodeAppsColumns}
-            />
-          </Box>
-        </Paper>
-      </Grid2> */}
-
-      <Grid2 size={12}>
-        <Paper
-          sx={{
-            p: 3,
-          }}
-        >
-          <Typography variant="h6" sx={{ mb: 4 }}>
-            Node Apps
-          </Typography>
-          <Box sx={{ overflow: 'scroll', height: '100%', pb: 8, pr: 3 }}>
-            <Grid2 container spacing={3}>
-              {nodeApps?.map(
-                ({
-                  id,
-                  name,
-                  currentVersion,
-                  desiredVersion,
-                  nodeId,
-                  status,
-                  changeLog,
-                }: Software) => (
-                  <Grid2 size={3} key={id}>
-                    <Card variant="outlined">
-                      <CardContent>
-                        <Stack
-                          spacing={1}
-                          direction="row"
-                          sx={{ alignItems: 'center' }}
+    <Paper
+      sx={{
+        p: 3,
+        overflow: 'auto',
+        height: { xs: 'calc(100vh - 480px)', md: 'calc(100vh - 328px)' },
+      }}
+    >
+      <Typography variant="h6" sx={{ mb: 4 }}>
+        Node Apps
+      </Typography>
+      <Grid2 container spacing={3}>
+        {nodeApps?.map(
+          ({
+            id,
+            name,
+            currentVersion,
+            desiredVersion,
+            nodeId,
+            status,
+            changeLog,
+          }: Software) => (
+            <Grid2 size={3} key={id}>
+              <Card variant="outlined">
+                <CardContent>
+                  <Stack
+                    spacing={1}
+                    direction="row"
+                    sx={{ alignItems: 'center' }}
+                  >
+                    <CheckCircleIcon
+                      htmlColor={colors.green}
+                      fontSize="medium"
+                    />
+                    <Typography
+                      variant="h5"
+                      fontWeight={400}
+                      textTransform={'capitalize'}
+                    >
+                      {name}
+                    </Typography>
+                    {status == SoftwareStatusEnum.UpdateAvailable && (
+                      <Tooltip
+                        arrow
+                        placement="right"
+                        title={`${statausByTitle(status)}: ${
+                          changeLog?.[changeLog?.length - 1] ?? ''
+                        }`}
+                      >
+                        <IconButton
+                          color={
+                            status == SoftwareStatusEnum.UpdateAvailable
+                              ? 'info'
+                              : status == SoftwareStatusEnum.UpdateInProgress
+                                ? 'warning'
+                                : 'error'
+                          }
+                          sx={{
+                            '&:hover svg path': {
+                              fill: 'inherit',
+                            },
+                          }}
                         >
-                          <CheckCircleIcon
-                            htmlColor={colors.green}
-                            fontSize="medium"
+                          <InfoOutlinedIcon
+                            sx={{
+                              width: '16px',
+                              height: '16px',
+                            }}
                           />
-                          <Typography
-                            variant="h5"
-                            fontWeight={400}
-                            textTransform={'capitalize'}
-                          >
-                            {name}
-                          </Typography>
-                          {status == SoftwareStatusEnum.UpdateAvailable && (
-                            <Tooltip
-                              arrow
-                              placement="right"
-                              title={`${statausByTitle(status)}: ${
-                                changeLog?.[changeLog?.length - 1] ?? ''
-                              }`}
-                            >
-                              <IconButton
-                                color={
-                                  status == SoftwareStatusEnum.UpdateAvailable
-                                    ? 'info'
-                                    : status ==
-                                        SoftwareStatusEnum.UpdateInProgress
-                                      ? 'warning'
-                                      : 'error'
-                                }
-                                sx={{
-                                  '&:hover svg path': {
-                                    fill: 'inherit',
-                                  },
-                                }}
-                              >
-                                <InfoOutlinedIcon
-                                  sx={{
-                                    width: '16px',
-                                    height: '16px',
-                                  }}
-                                />
-                              </IconButton>
-                            </Tooltip>
-                          )}
-                        </Stack>
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          gutterBottom
-                        >
-                          Version: {currentVersion}
-                        </Typography>
-                        <Stack direction="row" spacing={1 / 2} mt={1.5}>
-                          <Typography variant="body2">CPU:</Typography>
-                          <Typography
-                            variant="body2"
-                            sx={{ color: colors.darkBlue }}
-                          >
-                            {12.2} %
-                          </Typography>
-                        </Stack>
-                        <Stack direction="row" spacing={1 / 2}>
-                          <Typography variant="body2">MEMORY:</Typography>
-                          <Typography
-                            variant="body2"
-                            sx={{ color: colors.darkBlue }}
-                          >
-                            {12.2} KB
-                          </Typography>
-                        </Stack>
-                      </CardContent>
-                      <CardActions sx={{ pb: 2, pt: 0, px: 2 }}>
-                        <HorizontalContainerJustify>
-                          <Button sx={{ p: 0 }}>View More</Button>
-                          {status == SoftwareStatusEnum.UpdateInProgress && (
-                            <UpdateIcon
-                              htmlColor={colors.yellow}
-                              sx={{ width: '24px', height: '24px' }}
-                            />
-                          )}
-                          {status == SoftwareStatusEnum.UpdateAvailable && (
-                            <Button
-                              sx={{ p: 0, color: colors.green }}
-                              onClick={() =>
-                                handleUpdateAvailable(
-                                  name,
-                                  desiredVersion,
-                                  nodeId,
-                                )
-                              }
-                            >
-                              Update Available
-                            </Button>
-                          )}
-                        </HorizontalContainerJustify>
-                      </CardActions>
-                    </Card>
-                  </Grid2>
-                ),
-              )}
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </Stack>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    Version: {currentVersion}
+                  </Typography>
+                  <Stack direction="row" spacing={1 / 2} mt={1.5}>
+                    <Typography variant="body2">CPU:</Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: colors.darkBlue }}
+                    >
+                      {12.2} %
+                    </Typography>
+                  </Stack>
+                  <Stack direction="row" spacing={1 / 2}>
+                    <Typography variant="body2">MEMORY:</Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: colors.darkBlue }}
+                    >
+                      {12.2} KB
+                    </Typography>
+                  </Stack>
+                </CardContent>
+                <CardActions sx={{ pb: 2, pt: 0, px: 2 }}>
+                  <HorizontalContainerJustify>
+                    <Button sx={{ p: 0 }}>View More</Button>
+                    {status == SoftwareStatusEnum.UpdateInProgress && (
+                      <UpdateIcon
+                        htmlColor={colors.yellow}
+                        sx={{ width: '24px', height: '24px' }}
+                      />
+                    )}
+                    {status == SoftwareStatusEnum.UpdateAvailable && (
+                      <Button
+                        sx={{ p: 0, color: colors.green }}
+                        onClick={() =>
+                          handleUpdateAvailable(
+                            name,
+                            desiredVersion,
+                            nodeId,
+                          )
+                        }
+                      >
+                        Update Available
+                      </Button>
+                    )}
+                  </HorizontalContainerJustify>
+                </CardActions>
+              </Card>
             </Grid2>
-          </Box>
-        </Paper>
+          ),
+        )}
       </Grid2>
-    </Grid2>
+    </Paper>
   );
 };
 
