@@ -333,6 +333,9 @@ _phase1_run() {
         SPAM_PID=""
     fi
 
+    echo "Draining residual serial output (spam backlog) before sending commands..."
+    uboot_drain 3
+
     echo "Pushing u-boot environment variables..."
     _phase1_uboot_env "$serial_dev" "$uboot_prompt"
 

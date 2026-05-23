@@ -59,6 +59,21 @@ uboot_spam_key() {
     echo $!
 }
 
+uboot_drain() {
+    local quiet_secs="${1:-3}"
+    local last="" cur stable=0
+    while [ "$stable" -lt "$quiet_secs" ]; do
+        cur=$(wc -c < "$UBOOT_LOG" 2>/dev/null || echo 0)
+        if [ "$cur" = "$last" ]; then
+            stable=$((stable + 1))
+        else
+            stable=0
+            last="$cur"
+        fi
+        sleep 1
+    done
+}
+
 uboot_wait_for() {
     local pattern="$1"
     local timeout_secs="${2:-30}"
