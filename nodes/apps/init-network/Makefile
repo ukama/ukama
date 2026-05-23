@@ -6,7 +6,7 @@
 
 include ../../ukamaOS/config.mk
 
-TARGET_EXEC = init-network.d
+TARGET_EXEC = init-network
 
 UKAMAOS_ROOT = $(NODES_DIR)/ukamaOS
 

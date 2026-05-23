@@ -15,10 +15,9 @@
 #include "usys_services.h"
 #include "usys_types.h"
 
-#define SERVICE_NAME              "example"
-
-#define DEF_LOG_LEVEL             "TRACE"
-#define DEF_SERVICE_PORT          18100
+#define SERVICE_NAME      SERVICE_EXAMPLE
+#define DEF_LOG_LEVEL     "TRACE"
+#define DEF_SERVICE_PORT  18888
 
 #define ENV_EXAMPLE_SERVICE_PORT  "EXAMPLE_SERVICE_PORT"
 

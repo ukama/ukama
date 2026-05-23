@@ -11,8 +11,10 @@
 
 #include <stdbool.h>
 
-#define INIT_NETWORK_SERVICE_NAME       "init-network"
-#define INIT_NETWORK_APP_NAME           "init-network.d"
+#include "usys_services.h"
+
+#define INIT_NETWORK_SERVICE_NAME       SERVICE_INIT_NETWORK
+#define INIT_NETWORK_APP_NAME           SERVICE_INIT_NETWORK
 
 #define INIT_NETWORK_MAX_STR            256
 #define INIT_NETWORK_MAX_EXTRA_IPS      16

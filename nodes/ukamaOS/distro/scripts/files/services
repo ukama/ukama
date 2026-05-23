@@ -1211,6 +1211,7 @@ aggregator-admin 18023/tcp
 controlleremu    18024/tcp
 wimc-agent-tar.gz 18025/tcp
 init-network    18026/tcp
+example		18027/tcp
 switchemu       18088/tcp
 ukama		18100/tcp   ukama
 remote          18200/tcp   remote
