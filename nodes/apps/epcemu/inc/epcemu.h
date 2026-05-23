@@ -56,6 +56,7 @@ typedef enum {
     EpcemuStateCheckingInitNetwork,
     EpcemuStateCheckingPcrf,
     EpcemuStateStartingDataPlane,
+    EpcemuStateReconcilingInitNetwork,
     EpcemuStateReady,
     EpcemuStateFailed
 } EpcemuState;
@@ -78,6 +79,7 @@ typedef struct {
 
     bool pcrfReady;
     bool initNetworkReady;
+    bool initNetworkRouted;
     bool dataPlaneReady;
 } EpcemuConfig;
 

@@ -85,6 +85,8 @@ static JsonObj *status_json(ServiceContext *ctx) {
     root = json_object();
     if (root == NULL) return NULL;
 
+    (void)pcrf_is_ready(ctx->config);
+
     pcrf = json_object();
     initNetwork = json_object();
     ues = ue_summary_json();
@@ -102,6 +104,8 @@ static JsonObj *status_json(ServiceContext *ctx) {
                         json_string(ctx->config->initNetworkUrl));
     json_object_set_new(initNetwork, "ready",
                         json_boolean(ctx->config->initNetworkReady));
+    json_object_set_new(initNetwork, "routed",
+                        json_boolean(ctx->config->initNetworkRouted));
     json_object_set_new(initNetwork, "bridge",
                         json_string(ctx->config->bridge));
     json_object_set_new(initNetwork, "bridgeCidr",
@@ -232,6 +236,14 @@ int web_service_cb_attach(const URequest *request,
         return U_CALLBACK_CONTINUE;
     }
 
+    if (!pcrf_is_ready(ctx->config)) {
+        ue_attach_fail(imsi, "pcrf not ready");
+        json_decref(body);
+        set_error(response, HttpStatus_ServiceUnavailable,
+                  "pcrf not ready");
+        return U_CALLBACK_CONTINUE;
+    }
+
     if (!pcrf_create_session(ctx->config, imsi, ip, apn)) {
         ue_attach_fail(imsi, "pcrf session create failed");
         json_decref(body);
@@ -292,10 +304,7 @@ int web_service_cb_detach(const URequest *request,
     }
 
     if (!pcrf_delete_session(ctx->config, imsi)) {
-        json_decref(body);
-        set_error(response, HttpStatus_ServiceUnavailable,
-                  "pcrf session delete failed");
-        return U_CALLBACK_CONTINUE;
+        usys_log_error("PCRF session delete failed imsi=%s", imsi);
     }
 
     ue_detach_complete(imsi);
