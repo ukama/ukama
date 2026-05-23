@@ -240,7 +240,8 @@ func (s *SoftwareServer) watchSoftwareUpdate(recordID uuid.UUID, nodeID, appName
 				log.Errorf("watchSoftwareUpdate: ListApps failed for node=%s app=%s: %v", nodeID, appName, err)
 			} else {
 				for _, app := range resp.GetApps() {
-					if app.GetName() == appName && !validation.IsVersionMismatch(app.GetTag(), desiredVersion) {
+					log.Infof("watchSoftwareUpdate: app=%s, version=%s, desiredVersion=%s, isMismatch=%v", app.GetName(), app.GetVersion(), desiredVersion, validation.IsVersionMismatch(app.GetVersion(), desiredVersion))
+					if app.GetName() == appName && !validation.IsVersionMismatch(app.GetVersion(), desiredVersion) {
 						log.Infof("watchSoftwareUpdate: record=%s node=%s app=%s reached desired version %s, marking up-to-date",
 							recordID, nodeID, appName, desiredVersion)
 						s.persistSoftwareStatus(recordID, nodeID, appName, ukama.UpToDate,
@@ -278,9 +279,11 @@ func (s *SoftwareServer) persistSoftwareStatus(recordID uuid.UUID, nodeID, appNa
 	sw.Status = newStatus
 	sw.ChangeLogs = append(sw.ChangeLogs, changeLog)
 
+	log.Infof("persistSoftwareStatus: node %s, current version %s, desired version %s, status %s",
+		nodeID, sw.CurrentVersion, sw.DesiredVersion, newStatus)
 	if err := s.sRepo.Update(&sw); err != nil {
-		log.Errorf("persistSoftwareStatus: failed to update status to %s for record=%s: %v",
-			newStatus, recordID, err)
+		log.Errorf("persistSoftwareStatus: failed to update status to %s for node=%s app=%s: %v",
+			newStatus, nodeID, appName, err)
 	}
 }
 
