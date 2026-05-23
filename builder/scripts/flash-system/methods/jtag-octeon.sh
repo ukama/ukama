@@ -266,9 +266,9 @@ _phase1_run() {
         echo "  BDI config loaded successfully"
     fi
 
-    echo "Telneting BDI at ${bdi_ip}: halting core..."
-    if ! bdi_send_sequence "$bdi_ip" "$bdi_prompt" 90 "HALT"; then
-        echo "ERROR: BDI did not respond with '${bdi_prompt}' after HALT"
+    echo "Telneting BDI at ${bdi_ip}: reset + halt core into debug mode..."
+    if ! bdi_send_sequence "$bdi_ip" "$bdi_prompt" 90 "RESET HALT"; then
+        echo "ERROR: BDI did not respond with '${bdi_prompt}' after RESET HALT"
         return 1
     fi
 
