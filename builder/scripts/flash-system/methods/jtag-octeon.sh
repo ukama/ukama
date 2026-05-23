@@ -25,6 +25,7 @@ _jtag_octeon_cleanup() {
         sudo kill "$REMOTE_BOOT_PID" 2>/dev/null || true
         REMOTE_BOOT_PID=""
     fi
+    sudo pkill -9 -f oct-remote-boot 2>/dev/null || true
     if [ -n "$SPAM_PID" ]; then
         kill "$SPAM_PID" 2>/dev/null || true
         SPAM_PID=""
@@ -276,6 +277,9 @@ _phase1_run() {
     local oct_log="${LOG_DIR}/oct-remote-boot.log"
     local oct_attempt=0 max_oct_attempts=5 clock_ok=0
 
+    sudo pkill -9 -f oct-remote-boot 2>/dev/null || true
+    sleep 1
+
     while [ "$oct_attempt" -lt "$max_oct_attempts" ]; do
         oct_attempt=$((oct_attempt + 1))
         echo "=== oct-remote-boot attempt ${oct_attempt}/${max_oct_attempts} ==="
@@ -323,6 +327,7 @@ _phase1_run() {
 
         echo "  DDR clock mislocked (not ~400 MHz) — killing oct-remote-boot and retrying..."
         sudo kill "$REMOTE_BOOT_PID" 2>/dev/null || true
+        sudo pkill -9 -f oct-remote-boot 2>/dev/null || true
         REMOTE_BOOT_PID=""
         sleep 3
     done
