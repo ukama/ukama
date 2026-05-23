@@ -278,7 +278,7 @@ _phase1_run() {
     echo "  OCTEON_REMOTE_PROTOCOL=$oct_env_protocol"
     echo "  sudo $oct_path --board=$oct_board --ddr_clock_hz=$oct_clock"
     echo "  log: $oct_log"
-    sudo env OCTEON_ROOT="$oct_env_root" OCTEON_REMOTE_PROTOCOL="$oct_env_protocol" \
+    sudo stdbuf -oL -eL env OCTEON_ROOT="$oct_env_root" OCTEON_REMOTE_PROTOCOL="$oct_env_protocol" \
         "$oct_path" --board="$oct_board" --ddr_clock_hz="$oct_clock" >"$oct_log" 2>&1 &
     REMOTE_BOOT_PID=$!
     echo "  oct-remote-boot started (PID $REMOTE_BOOT_PID)"
