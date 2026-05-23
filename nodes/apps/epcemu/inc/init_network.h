@@ -12,5 +12,6 @@
 #include "epcemu.h"
 
 int init_network_probe(EpcemuConfig *config, EpcemuStatus *status);
+int init_network_reconcile(EpcemuConfig *config, EpcemuStatus *status);
 
 #endif /* INIT_NETWORK_H_ */
