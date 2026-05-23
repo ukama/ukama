@@ -43,11 +43,6 @@ func (this *ListInterfacesResponse) Validate() error {
 	return nil
 }
 func (this *ListReportsRequest) Validate() error {
-	if this.ReportedAt != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.ReportedAt); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("ReportedAt", err)
-		}
-	}
 	return nil
 }
 func (this *ListReportsResponse) Validate() error {
@@ -70,11 +65,6 @@ func (this *StoreHealthReportResponse) Validate() error {
 	return nil
 }
 func (this *HealthReport) Validate() error {
-	if this.ReportedAt != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.ReportedAt); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("ReportedAt", err)
-		}
-	}
 	if this.ReceivedAt != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.ReceivedAt); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("ReceivedAt", err)
@@ -151,11 +141,6 @@ func (this *RadioInterface) Validate() error {
 	return nil
 }
 func (this *GPSInterface) Validate() error {
-	if this.Time != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Time); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("Time", err)
-		}
-	}
 	return nil
 }
 func (this *BackhaulInterface) Validate() error {

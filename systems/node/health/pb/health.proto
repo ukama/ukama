@@ -42,7 +42,7 @@ message ListInterfacesResponse {
 message ListReportsRequest {
     string reportId = 1;
     string nodeId = 2;
-    google.protobuf.Timestamp reportedAt = 3;
+    int64 reportedAt = 3;
     ukama.common.v1.FilterTimeframesType timeframe = 4;
 }
 
@@ -64,7 +64,7 @@ message HealthReport {
     string nodeId = 2;
     string nodeType = 3;
     string schemaVersion = 4;
-    google.protobuf.Timestamp reportedAt = 5;
+    int64 reportedAt = 5;
     google.protobuf.Timestamp receivedAt = 6;
     bytes payload = 7;
 }
@@ -129,7 +129,7 @@ message GPSInterface {
     bool available = 1;
     bool lock = 2;
     string coordinates = 3;
-    google.protobuf.Timestamp time = 4;
+    string time = 4;
 }
 
 message BackhaulInterface {
