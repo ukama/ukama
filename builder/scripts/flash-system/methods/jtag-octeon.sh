@@ -395,28 +395,30 @@ _phase1_run() {
     uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 8 || true
     uboot_send_and_wait "$serial_dev" "saveenv" "$uboot_prompt" 15 || true
 
-    local host_ip ping_marker
+    local host_ip ping_marker link_up=0 ping_attempt=0 max_ping_attempts=6
     host_ip=$(yq_read "$BOARD_CONFIG" network.host_ip)
-    echo "Pinging host ${host_ip} from u-boot..."
-    ping_marker=$(wc -c < "$UBOOT_LOG" 2>/dev/null || echo 0)
-    uboot_send_and_wait "$serial_dev" "ping ${host_ip}" "$uboot_prompt" 20 || true
-    if ! tail -c +"$ping_marker" "$UBOOT_LOG" 2>/dev/null | grep -q "is alive"; then
-        echo "  ping failed — re-enabling ethernet (mw64 x2) and retrying..."
-        uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 8 || true
-        uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 8 || true
-        sleep 3
+    echo "Bringing up ethernet link to ${host_ip} (mw64 + ping retries)..."
+    while [ "$ping_attempt" -lt "$max_ping_attempts" ]; do
+        ping_attempt=$((ping_attempt + 1))
         ping_marker=$(wc -c < "$UBOOT_LOG" 2>/dev/null || echo 0)
         uboot_send_and_wait "$serial_dev" "ping ${host_ip}" "$uboot_prompt" 20 || true
-        if ! tail -c +"$ping_marker" "$UBOOT_LOG" 2>/dev/null | grep -q "is alive"; then
-            echo "ERROR: TRX ethernet link is down (octeth0 Down) — cannot reach ${host_ip}."
-            grep -a "Measured DDR clock" "$oct_log" 2>/dev/null | tail -1 | sed 's/^/  oct-remote-boot: /' || true
-            echo "  If that clock is not ~400 MHz, the chip PLL mislocked and SGMII ethernet will not link."
-            echo "  Fix: fully power-cycle the TRX (cold boot, not just reset), confirm the ethernet cable,"
-            echo "  then re-run. The flash needs a working link to TFTP the OS/RD/uboot images."
-            return 1
+        if tail -c +"$ping_marker" "$UBOOT_LOG" 2>/dev/null | grep -q "is alive"; then
+            link_up=1
+            break
         fi
+        echo "  ping attempt ${ping_attempt}/${max_ping_attempts} failed — re-enabling ethernet (mw64) and retrying..."
+        uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 8 || true
+        sleep 2
+    done
+
+    if [ "$link_up" -ne 1 ]; then
+        echo "ERROR: TRX ethernet link did not come up after ${max_ping_attempts} attempts (octeth0 Down)."
+        echo "  mw64 ethernet-enable + ping kept failing. Usual cause is a mislocked DDR clock"
+        echo "  (SGMII reference clock off) — cold power-cycle the TRX and re-run; also check the cable."
+        grep -a "Measured DDR clock" "$oct_log" 2>/dev/null | tail -1 | sed 's/^/  oct-remote-boot: /' || true
+        return 1
     fi
-    echo "  host ${host_ip} is reachable"
+    echo "  host ${host_ip} is reachable — ethernet link up after ${ping_attempt} attempt(s)"
 
     _phase1_flash_artifact "$serial_dev" "$uboot_prompt" "os"    "$ddr_os"
     _phase1_flash_artifact "$serial_dev" "$uboot_prompt" "rd"    "$ddr_rd"
