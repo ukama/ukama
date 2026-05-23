@@ -43,7 +43,7 @@ func TestNodeServer_Add(t *testing.T) {
 	const nodeName = "node-A"
 	const nodeType = ukama.NODE_TYPE_HOMENODE
 
-	s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", msgbusClient, siteService, orgId, nil)
+	s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", msgbusClient, siteService, orgId, nil, nil)
 
 	node := &db.Node{
 		Id:   nodeId,
@@ -92,7 +92,7 @@ func TestNodeServer_Get(t *testing.T) {
 				Type: ukama.NODE_TYPE_HOMENODE,
 			}, nil).Once()
 
-		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil)
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil, nil)
 
 		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
 			NodeId: nodeId.StringLowercase()})
@@ -112,7 +112,7 @@ func TestNodeServer_Get(t *testing.T) {
 
 		nodeRepo.On("Get", nodeId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil)
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil, nil)
 
 		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
 			NodeId: nodeId.StringLowercase()})
@@ -127,7 +127,7 @@ func TestNodeServer_Get(t *testing.T) {
 
 		nodeRepo := &mocks.NodeRepo{}
 		nodeStatusRepo := &mocks.NodeStatusRepo{}
-		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil)
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil, nil)
 
 		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
 			NodeId: nodeId.String()})
@@ -174,7 +174,7 @@ func TestNodeServer_List(t *testing.T) {
 		nodeRepo.On("List", nodeId.StringLowercase(), siteId.String(), networkId.String(), ntype, &connectivityVal, &stateVal).
 			Return(nodes, nil).Once()
 
-		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil)
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil, nil)
 
 		// Act
 		resp, err := s.List(context.TODO(), &pb.ListRequest{
@@ -235,7 +235,7 @@ func TestNodeServer_List(t *testing.T) {
 		nodeRepo.On("List", nodeId.StringLowercase(), siteId.String(), networkId.String(), ntype, &connectivityVal, &stateVal).
 			Return(nodes, nil).Once()
 
-		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil)
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil, nil)
 
 		// Act
 		resp, err := s.List(context.TODO(), &pb.ListRequest{
@@ -281,7 +281,7 @@ func TestNodeServer_List(t *testing.T) {
 		nodeRepo.On("List", nodeId.StringLowercase(), "", "", "", &connectivityVal, &stateVal).
 			Return(nodes, nil).Once()
 
-		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil)
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil, nil)
 
 		// Act
 		resp, err := s.List(context.TODO(), &pb.ListRequest{
@@ -310,7 +310,7 @@ func TestNodeServer_List(t *testing.T) {
 		nodeRepo.On("List", "", "", "", "", &connectivityVal, &stateVal).
 			Return([]db.Node{}, nil).Once()
 
-		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil)
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil, nil)
 
 		// Act
 		resp, err := s.List(context.TODO(), &pb.ListRequest{})
@@ -333,7 +333,7 @@ func TestNodeServer_List(t *testing.T) {
 		nodeRepo.On("List", "", "", "", "", &connectivityVal, &stateVal).
 			Return(nil, gorm.ErrInvalidDB).Once()
 
-		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil)
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil, nil)
 
 		// Act
 		resp, err := s.List(context.TODO(), &pb.ListRequest{})

@@ -1,0 +1,26 @@
+[build-from]
+	base="alpine"
+	version="latest"
+
+[build-compile]
+	version="latest"
+	static="false"
+	source="/nodes/apps/init-network"
+	cmd="make"
+	bin_from="/nodes/apps/init-network/init-network.d"
+	bin_to="/sbin"
+
+[build-conf]
+	from="/nodes/apps/init-network/config/config.toml"
+	to="/ukama/configs/init-network"
+
+[app-exec]
+	name="init-network"
+	version="latest"
+	bin="init-network.d"
+	path="/sbin"
+	args="--config /ukama/configs/init-network/config.toml"
+	autostart="false"
+	autorestart="true"
+	startretries=5
+	group="on-boot"

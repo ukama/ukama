@@ -1,9 +1,9 @@
 /*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at https://mozilla.org/MPL/2.0/.
+*
+* Copyright (c) 2026-present, Ukama Inc.
  */
 
 package server
@@ -12,23 +12,35 @@ import (
 	"context"
 	"strings"
 
+	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	pb "github.com/ukama/ukama/systems/node/site-controller/pb/gen"
+	"github.com/ukama/ukama/systems/node/site-controller/pkg"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/db"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/reconciler"
+	"github.com/ukama/ukama/systems/node/site-controller/providers"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 type SiteControllerServer struct {
 	pb.UnimplementedSiteControllerServiceServer
-	reconciler *reconciler.Reconciler
+	orgName        string
+	reconciler     *reconciler.Reconciler
+	dbStructs       *db.DBStruct
+	msgBus         msgBusServiceClient.MsgBusServiceClient
+	siteRegistry   creg.SiteClient
+	nodeClient     creg.NodeClient
+	healthClient   providers.HealthClientProvider
+	baseRoutingKey msgbus.RoutingKeyBuilder
 }
 
-func NewSiteControllerServer(r *reconciler.Reconciler) *SiteControllerServer {
-	return &SiteControllerServer{reconciler: r}
+func NewSiteControllerServer(orgName string, r *reconciler.Reconciler, mb msgBusServiceClient.MsgBusServiceClient, nodeClient creg.NodeClient, siteClient creg.SiteClient, healthClient providers.HealthClientProvider, dbStructs *db.DBStruct) *SiteControllerServer {
+	return &SiteControllerServer{reconciler: r, msgBus: mb, baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName), nodeClient: nodeClient, siteRegistry: siteClient, healthClient: healthClient, orgName: orgName, dbStructs: dbStructs}
 }
 
-func (s *SiteControllerServer) SetSite(ctx context.Context, req *pb.SetSiteRequest) (*pb.SetSiteResponse, error) {
+func (s *SiteControllerServer) SetSer(ctx context.Context, req *pb.SetSiteRequest) (*pb.SetSiteResponse, error) {
 	st, err := s.reconciler.SetSite(ctx, req.SiteId, req.State, req.Reason, req.RequestedBy)
 	if err != nil {
 		return nil, mapErr(err)
@@ -37,31 +49,30 @@ func (s *SiteControllerServer) SetSite(ctx context.Context, req *pb.SetSiteReque
 	if err != nil {
 		return nil, mapErr(err)
 	}
-	return &pb.SetSiteResponse{State: derivedStateToPB(st, intent)}, nil
+	
+	return &pb.SetSiteResponse{State: siteStateToPB(st, intent)}, nil
 }
 
 func (s *SiteControllerServer) SetService(ctx context.Context, req *pb.SetServiceRequest) (*pb.SetServiceResponse, error) {
-	st, err := s.reconciler.SetService(ctx, req.SiteId, req.State, req.Reason, req.RequestedBy)
+	err :=s.dbStructs.SiteState.Upsert(&db.SiteState{
+		SiteID: req.SiteId,
+		ServiceState: req.State,
+	})
 	if err != nil {
 		return nil, mapErr(err)
 	}
-	intent, err := s.getIntent(ctx, req.SiteId)
-	if err != nil {
-		return nil, mapErr(err)
-	}
-	return &pb.SetServiceResponse{State: derivedStateToPB(st, intent)}, nil
+	return &pb.SetServiceResponse{}, nil
 }
 
 func (s *SiteControllerServer) SetRadio(ctx context.Context, req *pb.SetRadioRequest) (*pb.SetRadioResponse, error) {
-	st, err := s.reconciler.SetRadio(ctx, req.SiteId, req.State, req.Reason, req.RequestedBy)
+	err := s.dbStructs.SiteState.Upsert(&db.SiteState{
+		SiteID: req.SiteId,
+		RadioState: req.State,
+	})
 	if err != nil {
 		return nil, mapErr(err)
 	}
-	intent, err := s.getIntent(ctx, req.SiteId)
-	if err != nil {
-		return nil, mapErr(err)
-	}
-	return &pb.SetRadioResponse{State: derivedStateToPB(st, intent)}, nil
+	return &pb.SetRadioResponse{}, nil
 }
 
 func (s *SiteControllerServer) GetSiteState(ctx context.Context, req *pb.GetSiteStateRequest) (*pb.GetSiteStateResponse, error) {
@@ -75,12 +86,12 @@ func (s *SiteControllerServer) GetSiteState(ctx context.Context, req *pb.GetSite
 func (s *SiteControllerServer) UpsertPortMap(ctx context.Context, req *pb.UpsertPortMapRequest) (*pb.UpsertPortMapResponse, error) {
 	ports := make([]db.SitePortMap, 0, len(req.Ports))
 	for _, p := range req.Ports {
-		cn := p.CnodeId
-		if cn == "" {
-			cn = req.CnodeId
-		}
+		// cn := p.CnodeId
+		// if cn == "" {
+		// 	cn = req.CnodeId
+		// }
 		ports = append(ports, db.SitePortMap{
-			Port: int(p.Port), Role: p.Role, NodeID: p.NodeId, Class: p.Class, Policy: p.Policy, CNodeID: cn,
+			Port: int(p.Port), Role: p.Role, NodeID: p.NodeId, Class: p.Class, Policy: p.Policy,
 		})
 	}
 	if err := s.reconciler.UpsertPortMap(ctx, req.SiteId, req.CnodeId, ports); err != nil {
@@ -97,15 +108,14 @@ func (s *SiteControllerServer) GetPortMap(ctx context.Context, req *pb.GetPortMa
 	out := make([]*pb.PortMapEntry, 0, len(ports))
 	for _, p := range ports {
 		out = append(out, &pb.PortMapEntry{
-			Port: int32(p.Port), Role: p.Role, NodeId: p.NodeID, Class: p.Class, Policy: p.Policy, CnodeId: p.CNodeID,
+			Port: int32(p.Port), Role: p.Role, NodeId: p.NodeID, Class: p.Class, Policy: p.Policy,
 		})
 	}
 	return &pb.GetPortMapResponse{Ports: out}, nil
 }
 
 func (s *SiteControllerServer) ApplySwitchPolicy(ctx context.Context, req *pb.ApplySwitchPolicyRequest) (*pb.ApplySwitchPolicyResponse, error) {
-	err := s.reconciler.ApplySwitchPolicy(ctx, req.SiteId)
-	if err != nil {
+	if err := s.reconciler.ApplySwitchPolicy(ctx, req.SiteId); err != nil {
 		return nil, mapErr(err)
 	}
 	return &pb.ApplySwitchPolicyResponse{Applied: true}, nil
@@ -128,12 +138,12 @@ func intentToPB(in *db.SiteIntent) *pb.SiteIntentMsg {
 		return nil
 	}
 	return &pb.SiteIntentMsg{
-		SiteId: in.SiteID, DesiredSite: in.DesiredSite, DesiredService: in.DesiredService,
+		SiteId: in.SiteID, DesiredService: in.DesiredService,
 		DesiredRadio: in.DesiredRadio, Reason: in.Reason, RequestedBy: in.RequestedBy,
 	}
 }
 
-func derivedStateToPB(st *db.SiteState, intent *db.SiteIntent) *pb.DerivedStateMsg {
+func siteStateToPB(st *db.SiteState, intent *db.SiteIntent) *pb.DerivedStateMsg {
 	if st == nil {
 		return nil
 	}
@@ -141,7 +151,6 @@ func derivedStateToPB(st *db.SiteState, intent *db.SiteIntent) *pb.DerivedStateM
 		SiteId: st.SiteID, Power: st.PowerState, Service: st.ServiceState, Radio: st.RadioState, Access: st.AccessState, Reason: st.Reason,
 	}
 	if intent != nil {
-		out.DesiredSite = intent.DesiredSite
 		out.DesiredService = intent.DesiredService
 		out.DesiredRadio = intent.DesiredRadio
 	}
@@ -155,14 +164,14 @@ func snapshotToPB(s *reconciler.SiteSnapshot) *pb.SiteSnapshot {
 	ports := make([]*pb.PortMapEntry, 0, len(s.Ports))
 	for _, p := range s.Ports {
 		ports = append(ports, &pb.PortMapEntry{
-			Port: int32(p.Port), Role: p.Role, NodeId: p.NodeID, Class: p.Class, Policy: p.Policy, CnodeId: p.CNodeID,
+			Port: int32(p.Port), Role: p.Role, NodeId: p.NodeID, Class: p.Class, Policy: p.Policy,
 		})
 	}
 	return &pb.SiteSnapshot{
-		Intent:          intentToPB(s.Intent),
-		Derived:         derivedStateToPB(s.DerivedState, s.Intent),
+		Intent:         intentToPB(s.Intent),
+		Derived:        siteStateToPB(s.ObservedState, s.Intent),
 		ComponentsJson: s.ComponentsJSON,
-		Ports:           ports,
+		Ports:          ports,
 	}
 }
 

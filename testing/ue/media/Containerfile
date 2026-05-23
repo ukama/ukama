@@ -1,0 +1,16 @@
+FROM alpine:3.20
+
+RUN apk add --no-cache \
+    bash \
+    ca-certificates \
+    curl \
+    iperf3 \
+    iproute2 \
+    iputils \
+    python3
+
+COPY media/start.sh /start.sh
+RUN chmod +x /start.sh
+
+EXPOSE 8080/tcp 5201/tcp 5201/udp
+ENTRYPOINT ["/start.sh"]

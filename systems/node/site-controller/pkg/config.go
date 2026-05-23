@@ -1,29 +1,52 @@
+/*
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at https://mozilla.org/MPL/2.0/.
+*
+* Copyright (c) 2026-present, Ukama Inc.
+ */
+
 package pkg
 
 import (
 	"time"
 
-	"github.com/ukama/ukama/systems/common/config"
+	uconf "github.com/ukama/ukama/systems/common/config"
 )
 
 type Config struct {
-	config.BaseConfig `mapstructure:",squash"`
-	DB                *config.Database `mapstructure:"db"`
-	Grpc              *config.Grpc     `mapstructure:"grpc"`
-	Services          GrpcEndpoints    `mapstructure:"services"`
+	uconf.BaseConfig 	`mapstructure:",squash"`
+	DB               	*uconf.Database  `default:"{}"`
+	Grpc             	*uconf.Grpc      `default:"{}"`
+	Queue            	*uconf.Queue     `default:"{}"`
+	Timeout          	time.Duration    `default:"20s"`
+	MsgClient        	*uconf.MsgClient `default:"{}"`
+	ReconcileInterval   time.Duration 	 `default:"30s"`
+	ComponentSyncDelay  time.Duration 	 `default:"30s"`
+	HealthHost          string        	 `default:"health:9090"`
+	NodeControllerHost  string        	 `default:"controller:8080"`
+	ReconcileMaxRetries int           	 `default:"3"`
+	OrgName             string
+	Service             *uconf.Service
+	Http                HttpServices
 }
-
-type GrpcEndpoints struct {
-	Timeout    time.Duration `mapstructure:"timeout"`
-	Controller string        `mapstructure:"controller"`
+type HttpServices struct {
+	InitClient    string `default:"api-gateway-init:8080"`
 }
 
 func NewConfig(name string) *Config {
-	db := config.DefaultDatabaseName(name)
 	return &Config{
-		BaseConfig: config.BaseConfig{DebugMode: false},
-		DB:         &db,
-		Grpc:       &config.Grpc{},
-		Services:   GrpcEndpoints{Timeout: 3 * time.Second, Controller: "controller:9090"},
+		DB: &uconf.Database{
+			DbName: name,
+		},
+		Timeout: 3 * time.Second,
+		Service: uconf.LoadServiceHostConfig(name),
+		MsgClient: &uconf.MsgClient{
+			Timeout: 7 * time.Second,
+			ListenerRoutes: []string{
+				"event.cloud.local.{{ .Org}}.registry.site.site.create",
+				"event.cloud.local.ukama.node.health.report.store",
+			},
+		},
 	}
 }

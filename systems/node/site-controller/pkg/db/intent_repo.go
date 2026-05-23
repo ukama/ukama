@@ -1,22 +1,36 @@
+/*
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at https://mozilla.org/MPL/2.0/.
+*
+* Copyright (c) 2026-present, Ukama Inc.
+ */
+
 package db
 
 import (
 	"errors"
+	"time"
+
 	"github.com/ukama/ukama/systems/common/sql"
 	"gorm.io/gorm"
-	"time"
 )
 
 type IntentRepo interface {
 	Get(siteID string) (*SiteIntent, error)
 	Upsert(intent *SiteIntent) error
 }
+
 type intentRepo struct{ db sql.Db }
 
 func NewIntentRepo(db sql.Db) IntentRepo { return &intentRepo{db: db} }
+
 func (r *intentRepo) Get(siteID string) (*SiteIntent, error) {
 	var m SiteIntent
-	err := r.db.GetGormDb().First(&m, "site_id = ?", siteID).Error
+	err := r.db.GetGormDb().
+		Where("site_id = ?", siteID).
+		Order("updated_at DESC, id DESC").
+		First(&m).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -25,11 +39,27 @@ func (r *intentRepo) Get(siteID string) (*SiteIntent, error) {
 	}
 	return &m, nil
 }
+
 func (r *intentRepo) Upsert(m *SiteIntent) error {
-	now := time.Now().UTC()
-	m.UpdatedAt = now
-	if m.CreatedAt.IsZero() {
-		m.CreatedAt = now
+	gdb := r.db.GetGormDb()
+	if err := ensureSite(gdb, m.SiteID); err != nil {
+		return err
 	}
-	return r.db.GetGormDb().Save(m).Error
+	now := time.Now().UTC()
+	row := SiteIntent{
+		SiteID:         m.SiteID,
+		DesiredService: m.DesiredService,
+		DesiredRadio:   m.DesiredRadio,
+		Reason:         m.Reason,
+		RequestedBy:    m.RequestedBy,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+	if err := gdb.Create(&row).Error; err != nil {
+		return err
+	}
+	m.ID = row.ID
+	m.CreatedAt = row.CreatedAt
+	m.UpdatedAt = row.UpdatedAt
+	return nil
 }

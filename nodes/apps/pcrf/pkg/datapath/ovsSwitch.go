@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"sync"
 	"time"
 
 	"antrea.io/libOpenflow/openflow15"
@@ -29,7 +30,6 @@ const (
 	TX_PATH
 )
 
-// OvsSwitch represents on OVS bridge instance
 type OfActor struct {
 	Switch            *ofctrl.OFSwitch
 	isSwitchConnected bool
@@ -37,13 +37,15 @@ type OfActor struct {
 	connectedCount    int
 	tlvTableStatus    *ofctrl.TLVTableStatus
 	tlvMapCh          chan struct{}
+	mu                sync.RWMutex
 }
 
 type OvsSwitch struct {
-	bridgeName string
-	Ip         string
-	ofActor    *OfActor
-	ctrler     *ofctrl.Controller
+	bridgeName       string
+	Ip               string
+	managementSocket string
+	ofActor          *OfActor
+	ctrler           *ofctrl.Controller
 }
 
 func (o *OfActor) PacketRcvd(sw *ofctrl.OFSwitch, packet *ofctrl.PacketIn) {
@@ -53,11 +55,12 @@ func (o *OfActor) PacketRcvd(sw *ofctrl.OFSwitch, packet *ofctrl.PacketIn) {
 func (o *OfActor) SwitchConnected(sw *ofctrl.OFSwitch) {
 	log.Printf("OF: Switch connected: %v", sw.DPID())
 
-	// Store switch for later use
-	o.Switch = sw
+	o.mu.Lock()
+	defer o.mu.Unlock()
 
+	o.Switch = sw
 	o.isSwitchConnected = true
-	o.connectedCount += 1
+	o.connectedCount++
 }
 
 func (o *OfActor) MultipartReply(sw *ofctrl.OFSwitch, rep *openflow15.MultipartReply) {
@@ -65,14 +68,23 @@ func (o *OfActor) MultipartReply(sw *ofctrl.OFSwitch, rep *openflow15.MultipartR
 
 func (o *OfActor) SwitchDisconnected(sw *ofctrl.OFSwitch) {
 	log.Printf("OF: Switch disconnected: %v", sw.DPID())
+
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
 	o.isSwitchConnected = false
 }
 
 func (o *OfActor) TLVMapReplyRcvd(sw *ofctrl.OFSwitch, tlvTableStatus *ofctrl.TLVTableStatus) {
 	log.Printf("OF: Receive TLVMapTable reply: %s", tlvTableStatus)
+
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
 	o.tlvTableStatus = tlvTableStatus
 	if o.tlvMapCh != nil {
 		close(o.tlvMapCh)
+		o.tlvMapCh = nil
 	}
 }
 
@@ -84,119 +96,235 @@ func (o *OfActor) TLVMapEnabledOnSwitch() bool {
 	return true
 }
 
-func TryConnect(c *ofctrl.Controller, sock string) {
-	_ = c.Connect(sock)
+func (o *OfActor) connected() bool {
+	o.mu.RLock()
+	defer o.mu.RUnlock()
+
+	return o.isSwitchConnected
 }
 
-// NewOvsSwitch Creates a new OVS switch instance
-func NewOvsSwitch(bridgeName, localIP, netType, mgmtPath string) (*OvsSwitch, error) {
-	sw := new(OvsSwitch)
+func (o *OfActor) count() int {
+	o.mu.RLock()
+	defer o.mu.RUnlock()
 
-	//Create a controller
-	sw.ofActor = new(OfActor)
+	return o.connectedCount
+}
+
+func (o *OfActor) switchHandle() *ofctrl.OFSwitch {
+	o.mu.RLock()
+	defer o.mu.RUnlock()
+
+	return o.Switch
+}
+
+func (o *OfActor) tableHandle() *ofctrl.Table {
+	o.mu.RLock()
+	defer o.mu.RUnlock()
+
+	return o.inputTable
+}
+
+func (o *OfActor) setInputTable(t *ofctrl.Table) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	o.inputTable = t
+}
+
+func TryConnect(c *ofctrl.Controller, sock string) {
+	if err := c.Connect(sock); err != nil {
+		log.Errorf("Failed to connect OpenFlow controller socket %s: %v",
+			sock, err)
+	}
+}
+
+// NewOvsSwitch creates a new OVS switch instance.
+//
+// mgmtPath is the OVS management directory, not the full socket path.
+// Example:
+//
+//	bridgeName = br0
+//	mgmtPath   = /usr/local/var/run/openvswitch
+//	socket     = /usr/local/var/run/openvswitch/br0.mgmt
+func NewOvsSwitch(bridgeName, localIP, netType, mgmtPath string) (*OvsSwitch, error) {
+	var ofsw *ofctrl.OFSwitch
+
+	sw := &OvsSwitch{}
+
+	sw.ofActor = &OfActor{}
 	sw.ctrler = ofctrl.NewController(sw.ofActor)
 	sw.bridgeName = bridgeName
+	sw.Ip = localIP
+	sw.managementSocket = fmt.Sprintf("%s/%s.mgmt", mgmtPath, bridgeName)
 
-	mgmt := fmt.Sprintf("%s/%s.mgmt", mgmtPath, bridgeName)
+	go TryConnect(sw.ctrler, sw.managementSocket)
 
-	go TryConnect(sw.ctrler, mgmt)
-
-	//wait for 8sec and see if switch connects
-	time.Sleep(10 * time.Second)
-	if !sw.ofActor.isSwitchConnected {
-		log.Fatalf("%s switch did not connect within 10 sec", bridgeName)
+	deadline := time.Now().Add(10 * time.Second)
+	for time.Now().Before(deadline) {
+		if sw.ofActor.connected() {
+			break
+		}
+		time.Sleep(250 * time.Millisecond)
 	}
 
-	// Create initial tables
-	sw.ofActor.inputTable = sw.ofActor.Switch.DefaultTable()
-	if sw.ofActor.inputTable == nil {
-		log.Fatalf("Failed to get input Table")
-		return nil, fmt.Errorf("failed to get input Table for switch")
+	if !sw.ofActor.connected() {
+		return nil, fmt.Errorf("%s switch did not connect within 10 sec using %s",
+			bridgeName, sw.managementSocket)
 	}
 
-	// Enable monitoring
-	sw.ofActor.Switch.EnableMonitor()
-	log.Infof("Switch connected. Creating tables..")
+	ofsw = sw.ofActor.switchHandle()
+	if ofsw == nil {
+		return nil, fmt.Errorf("switch handle is nil after connect")
+	}
+
+	sw.ofActor.setInputTable(ofsw.DefaultTable())
+	if sw.ofActor.tableHandle() == nil {
+		return nil, fmt.Errorf("failed to get input table for switch")
+	}
+
+	ofsw.EnableMonitor()
+
+	log.Infof("Switch connected bridge=%s socket=%s",
+		sw.bridgeName, sw.managementSocket)
 
 	return sw, nil
 }
 
+func (o *OvsSwitch) Status() Status {
+	if o == nil || o.ofActor == nil {
+		return Status{}
+	}
+
+	return Status{
+		Bridge:           o.bridgeName,
+		ManagementSocket: o.managementSocket,
+		Connected:        o.ofActor.connected(),
+		ConnectedCount:   o.ofActor.count(),
+	}
+}
+
+func (o *OvsSwitch) switchHandle() (*ofctrl.OFSwitch, error) {
+	sw := o.ofActor.switchHandle()
+	if sw == nil || !o.ofActor.connected() {
+		return nil, fmt.Errorf("OVS switch is not connected")
+	}
+
+	return sw, nil
+}
+
+func (o *OvsSwitch) inputTable() (*ofctrl.Table, error) {
+	t := o.ofActor.tableHandle()
+	if t == nil || !o.ofActor.connected() {
+		return nil, fmt.Errorf("OVS input table is not ready")
+	}
+
+	return t, nil
+}
+
 func (o *OvsSwitch) DeleteMeter(id uint32) error {
+	var sw *ofctrl.OFSwitch
+	var err error
+
+	sw, err = o.switchHandle()
+	if err != nil {
+		return err
+	}
+
 	meterMod := openflow15.NewMeterMod()
 	meterMod.MeterId = id
 	meterMod.Command = openflow15.MC_DELETE
-	return o.ofActor.Switch.Send(meterMod)
+
+	return sw.Send(meterMod)
 }
 
 func (o *OvsSwitch) AddMeter(id, rate, burstSize uint32) error {
-	meter := ofctrl.NewMeter(id, ofctrl.MeterKbps, o.ofActor.Switch)
-
+	var sw *ofctrl.OFSwitch
+	var err error
 	var mb util.Message
+
+	sw, err = o.switchHandle()
+	if err != nil {
+		return err
+	}
+
+	meter := ofctrl.NewMeter(id, ofctrl.MeterKbps, sw)
 	mbDrop := new(openflow15.MeterBandDrop)
 	meterBandHeader := *openflow15.NewMeterBandHeader()
+
 	meterBandHeader.Type = uint16(ofctrl.MeterDrop)
 	meterBandHeader.Rate = rate
 	meterBandHeader.BurstSize = burstSize
+
 	mbDrop.MeterBandHeader = meterBandHeader
 	mb = mbDrop
 	meter.AddMeterBand(&mb)
 
-	err := meter.Install()
+	err = meter.Install()
 	if err != nil {
-		log.Errorf("failed to install.")
+		log.Errorf("failed to install meter id=%d rate=%d burst=%d: %v",
+			id, rate, burstSize, err)
 		return err
 	}
+
 	return nil
 }
 
 func (o *OvsSwitch) CreateMetersForUE(rxMeter, txMeter, rxRate, txRate, burstSize uint32) error {
 	err := o.AddMeter(rxMeter, rxRate, burstSize)
 	if err != nil {
-		log.Errorf("Failed to create RX meter.Error: %v", err)
+		log.Errorf("Failed to create RX meter. Error: %v", err)
 		return err
 	}
 
 	err = o.AddMeter(txMeter, txRate, burstSize)
 	if err != nil {
-		log.Errorf("Failed to create TX meter.Error: %v", err)
+		log.Errorf("Failed to create TX meter. Error: %v", err)
 		_ = o.DeleteMeter(rxMeter)
 		return err
 	}
+
 	return nil
 }
 
 func (o *OvsSwitch) DeleteMetersForUE(rxMeter, txMeter uint32) error {
 	err := o.DeleteMeter(rxMeter)
 	if err != nil {
-		log.Errorf("Failed to delete RX meter.Error: %v", err)
+		log.Errorf("Failed to delete RX meter. Error: %v", err)
 		return err
 	}
 
 	err = o.DeleteMeter(txMeter)
 	if err != nil {
-		log.Errorf("Failed to delete TX meter.Error: %v", err)
+		log.Errorf("Failed to delete TX meter. Error: %v", err)
 		return err
 	}
+
 	return nil
 }
 
 func addActionsToFlow(f *ofctrl.Flow, meter uint32) *ofctrl.Flow {
-	/* Add actions */
 	m := ofctrl.NewMeterAction(meter)
-	rNormalAction := ofctrl.NewOutputNormal()
+	normal := ofctrl.NewOutputNormal()
+
 	f.ApplyAction(m)
-	f.ApplyAction(rNormalAction)
+	f.ApplyAction(normal)
+
 	return f
 }
 
 func (o *OvsSwitch) createTxFlow(ip *net.IP) (*ofctrl.Flow, error) {
-	f, err := o.ofActor.inputTable.NewFlow(ofctrl.FlowMatch{
+	table, err := o.inputTable()
+	if err != nil {
+		return nil, err
+	}
+
+	f, err := table.NewFlow(ofctrl.FlowMatch{
 		Ethertype: 0x0800,
 		Priority:  100,
 		IpSa:      ip,
 	})
 	if err != nil {
-		log.Errorf("Failed creating flow for switch")
+		log.Errorf("Failed creating TX flow for switch: %v", err)
 		return nil, err
 	}
 
@@ -204,66 +332,77 @@ func (o *OvsSwitch) createTxFlow(ip *net.IP) (*ofctrl.Flow, error) {
 }
 
 func (o *OvsSwitch) createRxFlow(ip *net.IP) (*ofctrl.Flow, error) {
-	f, err := o.ofActor.inputTable.NewFlow(ofctrl.FlowMatch{
+	table, err := o.inputTable()
+	if err != nil {
+		return nil, err
+	}
+
+	f, err := table.NewFlow(ofctrl.FlowMatch{
 		Ethertype: 0x0800,
 		Priority:  100,
 		IpDa:      ip,
 	})
 	if err != nil {
-		log.Errorf("Failed creating flow for switch")
+		log.Errorf("Failed creating RX flow for switch: %v", err)
 		return nil, err
 	}
+
 	return f, nil
 }
 
-func (o *OvsSwitch) updateFlowForUE(ipString string, rxMeter, txMeter uint32, rxCookie, txCookie uint64, oprationType int) error {
+func (o *OvsSwitch) updateFlowForUE(ipString string, rxMeter, txMeter uint32, rxCookie, txCookie uint64, operationType int) error {
 	ip := net.ParseIP(ipString)
 	if ip == nil {
-		log.Errorf("Invalid IP address")
+		log.Errorf("Invalid IP address %s", ipString)
 		return fmt.Errorf("invalid ip %s", ipString)
 	}
 
-	/* Add RX flow */
 	rxF, err := o.createRxFlow(&ip)
 	if err != nil {
-		log.Errorf("Failed to create RX flow for the UE %s with meter id %d. Error %s", ipString, rxMeter, err.Error())
+		log.Errorf("Failed to create RX flow for UE %s with meter id %d. Error: %s",
+			ipString, rxMeter, err.Error())
 		return err
 	}
+
 	rxF.CookieID = rxCookie
 	rxF = addActionsToFlow(rxF, rxMeter)
 
-	/* Submit flow */
-	err = rxF.Send(oprationType)
+	err = rxF.Send(operationType)
 	if err != nil {
-		log.Errorf("Failed to submit RX flow for the UE %s with meter id %d. Error %s", ipString, rxMeter, err.Error())
+		log.Errorf("Failed to submit RX flow for UE %s with meter id %d. Error: %s",
+			ipString, rxMeter, err.Error())
 		return err
 	}
+
 	rxF.UpdateInstallStatus(true)
 
-	/* Add TX flow */
 	txF, err := o.createTxFlow(&ip)
 	if err != nil {
-		log.Errorf("Failed to create TX flow for the UE %s with meter id %d. Error %s", ipString, txMeter, err.Error())
+		log.Errorf("Failed to create TX flow for UE %s with meter id %d. Error: %s",
+			ipString, txMeter, err.Error())
 		return err
 	}
+
 	txF.CookieID = txCookie
-	/* Add actions */
 	txF = addActionsToFlow(txF, txMeter)
 
-	/* Submit flow */
-	err = txF.Send(oprationType)
+	err = txF.Send(operationType)
 	if err != nil {
-		log.Errorf("Failed to submit RX flow for the UE %s with meter id %d. Error %s", ipString, txMeter, err.Error())
+		log.Errorf("Failed to submit TX flow for UE %s with meter id %d. Error: %s",
+			ipString, txMeter, err.Error())
 		return err
 	}
-	rxF.UpdateInstallStatus(true)
+
+	txF.UpdateInstallStatus(true)
+
 	return nil
 }
 
 func (o *OvsSwitch) AddFlowForUE(ipString string, rxMeter, txMeter uint32, rxCookie, txCookie uint64) error {
 	err := o.updateFlowForUE(ipString, rxMeter, txMeter, rxCookie, txCookie, openflow15.FC_ADD)
 	if err != nil {
-		log.Errorf("failed to add flow for UE %s. Error: %s", ipString, err.Error())
+		log.Errorf("failed to add flow for UE %s. Error: %s",
+			ipString, err.Error())
 		return err
 	}
 
@@ -282,7 +421,11 @@ func getFlowKey(m ofctrl.FlowMatch) string {
 }
 
 func (o *OvsSwitch) deleteFlowfromSwitch(ip net.IP, dp UeDataPath) error {
-	// openflow15 protocol to delete flows from the switch
+	sw, err := o.switchHandle()
+	if err != nil {
+		return err
+	}
+
 	flow := openflow15.NewFlowMod()
 	flow.TableId = 0
 	flow.Priority = 100
@@ -299,18 +442,24 @@ func (o *OvsSwitch) deleteFlowfromSwitch(ip net.IP, dp UeDataPath) error {
 		flow.Match.AddField(*openflow15.NewIpv4DstField(ip, nil))
 	}
 
-	err := o.ofActor.Switch.Send(flow)
+	err = sw.Send(flow)
 	if err != nil {
-		log.Errorf("failed to delete flow for UE %v. Error: %s", ip, err.Error())
+		log.Errorf("failed to delete flow for UE %v. Error: %s",
+			ip, err.Error())
 		return err
 	}
+
 	return nil
 }
 
 func (o *OvsSwitch) deleteFlowFromTable(ip net.IP, dp UeDataPath) error {
-	// Delete flow from the table
+	table, err := o.inputTable()
+	if err != nil {
+		return err
+	}
+
 	f := new(ofctrl.Flow)
-	f.Table = o.ofActor.inputTable
+	f.Table = table
 
 	switch dp {
 	case TX_PATH:
@@ -319,6 +468,7 @@ func (o *OvsSwitch) deleteFlowFromTable(ip net.IP, dp UeDataPath) error {
 			Priority:  100,
 			IpSa:      &ip,
 		}
+
 	case RX_PATH:
 		f.Match = ofctrl.FlowMatch{
 			Ethertype: 0x0800,
@@ -330,10 +480,14 @@ func (o *OvsSwitch) deleteFlowFromTable(ip net.IP, dp UeDataPath) error {
 	f.UpdateInstallStatus(true)
 
 	flowKey := getFlowKey(f.Match)
+	if flowKey == "" {
+		return fmt.Errorf("empty flow key for UE %v", ip)
+	}
 
-	err := o.ofActor.inputTable.DeleteFlow(flowKey)
+	err = table.DeleteFlow(flowKey)
 	if err != nil {
-		log.Errorf("Failed to remove flow for UE %v from the table.Error: %s", ip, err.Error())
+		log.Errorf("Failed to remove flow for UE %v from the table. Error: %s",
+			ip, err.Error())
 		return err
 	}
 
@@ -341,36 +495,35 @@ func (o *OvsSwitch) deleteFlowFromTable(ip net.IP, dp UeDataPath) error {
 }
 
 func (o *OvsSwitch) deleteFlowForTXPath(ip net.IP) error {
-	/* Delete flow from switch */
 	err := o.deleteFlowfromSwitch(ip, TX_PATH)
 	if err != nil {
-		log.Errorf("Deleting TX Path for UE %v flow from switch failed.Error %s", ip, err.Error())
+		log.Errorf("Deleting TX path for UE %v flow from switch failed. Error: %s",
+			ip, err.Error())
 		return err
 	}
 
-	/* Delete flow from table */
 	err = o.deleteFlowFromTable(ip, TX_PATH)
 	if err != nil {
-		log.Errorf("Deleting TX Path for UE %v flow from switch failed.Error %s", ip, err.Error())
+		log.Errorf("Deleting TX path for UE %v flow from table failed. Error: %s",
+			ip, err.Error())
 		return err
 	}
 
 	return nil
-
 }
 
 func (o *OvsSwitch) deleteFlowForRXPath(ip net.IP) error {
-	/* Delete flow from switch */
 	err := o.deleteFlowfromSwitch(ip, RX_PATH)
 	if err != nil {
-		log.Errorf("Deleting RX Path for UE %v flow from switch failed.Error %s", ip, err.Error())
+		log.Errorf("Deleting RX path for UE %v flow from switch failed. Error: %s",
+			ip, err.Error())
 		return err
 	}
 
-	/* Delete flow from table */
 	err = o.deleteFlowFromTable(ip, RX_PATH)
 	if err != nil {
-		log.Errorf("Deleting RX Path for UE %v flow from switch failed.Error %s", ip, err.Error())
+		log.Errorf("Deleting RX path for UE %v flow from table failed. Error: %s",
+			ip, err.Error())
 		return err
 	}
 
@@ -401,17 +554,17 @@ func (o *OvsSwitch) DeleteFlowForUE(ipString string) error {
 }
 
 func (o *OvsSwitch) AddUEDataPath(ipString string, rxMeter, txMeter, rxRate, txRate, burstSize uint32, rxCookie, txCookie uint64) error {
-	/* Create Meters */
 	err := o.CreateMetersForUE(rxMeter, txMeter, rxRate, txRate, burstSize)
 	if err != nil {
-		log.Errorf("Failed to create meters for UE %s. Error: %v", ipString, err)
+		log.Errorf("Failed to create meters for UE %s. Error: %v",
+			ipString, err)
 		return err
 	}
 
-	/* Add Flows */
 	err = o.AddFlowForUE(ipString, rxMeter, txMeter, rxCookie, txCookie)
 	if err != nil {
-		log.Errorf("Failed to create flows for UE %s. Error: %v", ipString, err)
+		log.Errorf("Failed to create flows for UE %s. Error: %v",
+			ipString, err)
 		_ = o.DeleteMetersForUE(rxMeter, txMeter)
 		return err
 	}
@@ -420,18 +573,18 @@ func (o *OvsSwitch) AddUEDataPath(ipString string, rxMeter, txMeter, rxRate, txR
 }
 
 func (o *OvsSwitch) DeleteUEDataPath(ipString string, rxMeter, txMeter uint32) error {
-	/* Delete Flows */
 	err := o.DeleteFlowForUE(ipString)
 	if err != nil {
-		log.Errorf("Failed to delete flows for UE %s. Error: %v", ipString, err)
+		log.Errorf("Failed to delete flows for UE %s. Error: %v",
+			ipString, err)
 		_ = o.DeleteMetersForUE(rxMeter, txMeter)
 		return err
 	}
 
-	/* Delete Meters */
 	err = o.DeleteMetersForUE(rxMeter, txMeter)
 	if err != nil {
-		log.Errorf("Failed to delete meters for UE %s. Error: %v", ipString, err)
+		log.Errorf("Failed to delete meters for UE %s. Error: %v",
+			ipString, err)
 		return err
 	}
 
@@ -449,16 +602,26 @@ func parseStats(s openflow15.Stats) (uint64, uint64, error) {
 		return 0, 0, err
 	}
 
+	if len(data) < 4 {
+		return 0, 0, fmt.Errorf("invalid stats binary length %d", len(data))
+	}
+
 	s.Length = binary.BigEndian.Uint16(data[n:])
 	n += 2
-	//log.Infof("Stats Length %d", s.Length)
+
 	for n < int(s.Length) {
 		var f util.Message
 		var size uint16
-		//log.Infof("Stats Field value %v", data[n+2]>>1)
+
+		if n+2 >= len(data) {
+			break
+		}
+
 		switch data[n+2] >> 1 {
 		case openflow15.XST_OFB_DURATION:
-			fallthrough
+			f = new(openflow15.TimeStatField)
+			size = f.Len()
+
 		case openflow15.XST_OFB_IDLE_TIME:
 			f = new(openflow15.TimeStatField)
 			size = f.Len()
@@ -468,25 +631,32 @@ func parseStats(s openflow15.Stats) (uint64, uint64, error) {
 			size = f.Len()
 
 		case openflow15.XST_OFB_PACKET_COUNT:
-			//log.Infof("Received PBCountStatField offset %d", n)
 			err = pc.UnmarshalBinary(data[n:])
 			if err != nil {
-				log.Errorf("Failed to unmarshal Stats's Field data %+v", data[n:])
+				log.Errorf("Failed to unmarshal packet count stats field data %+v",
+					data[n:])
 				return 0, 0, err
 			}
 			size = pc.Len()
 
 		case openflow15.XST_OFB_BYTE_COUNT:
-			//log.Infof("Received PBCountStatField offset %d", n)
 			err = bc.UnmarshalBinary(data[n:])
 			if err != nil {
-				log.Errorf("Failed to unmarshal Stats's Field data %v", data[n:])
+				log.Errorf("Failed to unmarshal byte count stats field data %v",
+					data[n:])
 				return 0, 0, err
 			}
 			size = bc.Len()
+
 		default:
-			return 0, 0, fmt.Errorf("received unknown Stats field: %v", data[n+2]>>1)
+			return 0, 0, fmt.Errorf("received unknown stats field: %v",
+				data[n+2]>>1)
 		}
+
+		if size == 0 {
+			return 0, 0, fmt.Errorf("invalid zero-size stats field")
+		}
+
 		n += int(size)
 	}
 
@@ -494,27 +664,32 @@ func parseStats(s openflow15.Stats) (uint64, uint64, error) {
 }
 
 func (o *OvsSwitch) dataPathStats(cookieID uint64) (uint64, uint64, error) {
-	var bc uint64 = 0
-	var pc uint64 = 0
+	var stats []*openflow15.FlowDesc
+	var err error
+
 	cookieMask := uint64(0xffffffffffffffff)
 
-	stats, err := o.ofActor.Switch.DumpFlowStats(cookieID, &cookieMask, nil, nil)
+	sw, err := o.switchHandle()
 	if err != nil {
-		log.Errorf("Error getting  stats %s", err.Error())
 		return 0, 0, err
 	}
 
-	for _, stat := range stats {
-		if stat.Cookie == cookieID {
-			//log.Infof("found the flow stats for cookie 0x%x. Stats: %+v", cookieID, stat.Stats)
-			bc, pc, err = parseStats(stat.Stats)
-			if err != nil {
-				log.Errorf("Failed to get stats for flow %d (0x%x)", cookieID, cookieID)
-				return 0, 0, err
-			}
+	stats, err = sw.DumpFlowStats(cookieID, &cookieMask, nil, nil)
+	if err != nil {
+		log.Errorf("Error getting stats %s", err.Error())
+		return 0, 0, err
+	}
 
-		}
+	if len(stats) == 0 {
+		return 0, 0, fmt.Errorf("stats not found for cookie %d (0x%x)",
+			cookieID, cookieID)
+	}
 
+	bc, pc, err := parseStats(stats[0].Stats)
+	if err != nil {
+		log.Errorf("Failed to get stats for flow %d (0x%x)",
+			cookieID, cookieID)
+		return 0, 0, err
 	}
 
 	return bc, pc, nil
@@ -529,7 +704,7 @@ func (o *OvsSwitch) DataPathUEStats(rxCookieID, txCookieID uint64) (uint64, uint
 
 	txBC, txPC, err := o.dataPathStats(txCookieID)
 	if err != nil {
-		log.Errorf("Error getting tx pathstats %s", err.Error())
+		log.Errorf("Error getting TX path stats %s", err.Error())
 		return 0, 0, 0, 0, err
 	}
 

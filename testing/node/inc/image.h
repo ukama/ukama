@@ -40,6 +40,9 @@
 
 #define UPDATE_PKGS "python3 supervisor"
 
+#define TOWER_OVS_PKGS_APK "openvswitch iproute2 iptables bash net-tools openvpn"
+#define TOWER_OVS_PKGS_APT "openvswitch-switch iproute2 iptables kmod net-tools openvpn"
+
 #define NODE_LIBS	  "/usys/lib"
 #define SYSFS_DIR	  "/tmp/sys/"
 #define LIB_PATH	  "LD_LIBRARY_PATH"

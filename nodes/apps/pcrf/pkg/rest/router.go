@@ -32,11 +32,19 @@ import (
 
 var REDIRECT_URI = "https://0.0.0.0:8080/swagger/#/"
 
+type RuntimeStatus struct {
+	InitNetworkURL   string `json:"url"`
+	InitNetworkReady bool   `json:"ready"`
+	UECidr           string `json:"ueCidr"`
+	DBPath           string `json:"dbPath"`
+}
+
 type Router struct {
 	f          *fizz.Fizz
 	controller *controller.Controller
 	config     *RouterConfig
 	nodeId     string
+	runtime    RuntimeStatus
 }
 
 type RouterConfig struct {
@@ -45,11 +53,12 @@ type RouterConfig struct {
 	auth       *config.Auth
 }
 
-func NewRouter(ctr *controller.Controller, config *RouterConfig, nodeId string) *Router {
+func NewRouter(ctr *controller.Controller, config *RouterConfig, nodeId string, runtime RuntimeStatus) *Router {
 	r := &Router{
 		controller: ctr,
 		config:     config,
 		nodeId:     nodeId,
+		runtime:    runtime,
 	}
 
 	if !config.debugMode {
@@ -78,11 +87,52 @@ func (rt *Router) Run() {
 	}
 }
 
+func (r *Router) ping(c *gin.Context) {
+	status := r.controller.Status()
+	if !status.Ready {
+		c.String(http.StatusServiceUnavailable, "not ready")
+		return
+	}
+
+	c.String(http.StatusOK, "OK")
+}
+
+func (r *Router) version(c *gin.Context) {
+	c.String(http.StatusOK, version.Version)
+}
+
+func (r *Router) status(c *gin.Context) {
+	ctrStatus := r.controller.Status()
+
+	c.JSON(http.StatusOK, gin.H{
+		"ready":  ctrStatus.Ready,
+		"state":  ctrStatus.State,
+		"reason": ctrStatus.Reason,
+		"nodeId": r.nodeId,
+		"initNetwork": gin.H{
+			"url":   r.runtime.InitNetworkURL,
+			"ready": r.runtime.InitNetworkReady,
+		},
+		"datapath": ctrStatus.DataPath,
+		"ue": gin.H{
+			"cidr": r.runtime.UECidr,
+		},
+		"db": gin.H{
+			"path": r.runtime.DBPath,
+		},
+		"sessions": ctrStatus.Sessions,
+	})
+}
+
 func (r *Router) init() {
 	r.f = crest.NewFizzRouter(r.config.serverConf, pkg.SystemName,
 		version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
 
-	auth := r.f.Group("/pcrf", "PCRF for Node", "API system version v1", func(ctx *gin.Context) {
+	r.f.Engine().GET("/v1/ping", r.ping)
+	r.f.Engine().GET("/v1/version", r.version)
+	r.f.Engine().GET("/v1/status", r.status)
+
+	auth := r.f.Group("", "PCRF for Node", "API system version v1", func(ctx *gin.Context) {
 		if r.config.auth.BypassAuthMode {
 			log.Info("Bypassing auth")
 			return
@@ -90,37 +140,31 @@ func (r *Router) init() {
 
 		s := fmt.Sprintf("%s, %s, %s", pkg.SystemName, ctx.Request.Method, ctx.Request.URL.Path)
 		ctx.Request.Header.Set("Meta", s)
-
 	})
 
 	auth.Use()
 	{
-		// pcrf routes
-		pcrf := auth.Group("/v1", "PCRF", "pcrf")
+		v1 := auth.Group("/v1", "PCRF", "pcrf")
 
-		s := pcrf.Group("/session", "session", "session")
+		s := v1.Group("/session", "session", "session")
 		s.POST("", formatDoc("Create session", "Create a new session"), tonic.Handler(r.createSession, http.StatusAccepted))
 		s.DELETE("", formatDoc("End session", "End a session"), tonic.Handler(r.endSession, http.StatusAccepted))
 		s.GET("/:id", formatDoc("Get session", "Get a particular session"), tonic.Handler(r.getSessionByID, http.StatusOK))
 
-		// cdr
-		cdr := pcrf.Group("/cdr", "CDR", "cdr")
-		cdr.GET("/session/:id", formatDoc("Get a CDR", "Get CDR for sepcific session"), tonic.Handler(r.getCDRBySessionId, http.StatusOK))
-		cdr.GET("/imsi/:imsi", formatDoc("Get CDR's", "Get CDR's for imsi"), tonic.Handler(r.getCDRByImsi, http.StatusOK))
+		cdr := v1.Group("/cdr", "CDR", "cdr")
+		cdr.GET("/session/:id", formatDoc("Get a CDR", "Get CDR for specific session"), tonic.Handler(r.getCDRBySessionId, http.StatusOK))
+		cdr.GET("/imsi/:imsi", formatDoc("Get CDRs", "Get CDRs for imsi"), tonic.Handler(r.getCDRByImsi, http.StatusOK))
 
-		// policy
-		policy := pcrf.Group("/policy", "Policy", "policy")
+		policy := v1.Group("/policy", "Policy", "policy")
 		policy.POST("", formatDoc("Configure Policy", "Configure a new policy"), tonic.Handler(r.addPolicy, http.StatusCreated))
 		policy.GET("/imsi/:imsi", formatDoc("Get policy", "Get a policy for a specific sim"), tonic.Handler(r.getPolicyByImsi, http.StatusOK))
 		policy.GET("/id/:id", formatDoc("Get policy", "Get a policy by specific ID"), tonic.Handler(r.getPolicyByID, http.StatusOK))
 
-		// re-route
-		route := pcrf.Group("/reroute", "Reroute", "rerouting IP address")
+		route := v1.Group("/reroute", "Reroute", "rerouting IP address")
 		route.GET("/imsi/:imsi", formatDoc("reroute address", "Get a rerouting IP Address for Imsi"), tonic.Handler(r.getRerouteForImsi, http.StatusOK))
 		route.POST("/id/:id", formatDoc("Add or Update Node", "Update a rerouting IP Address"), tonic.Handler(r.updateReroute, http.StatusCreated))
 
-		// Subscriber
-		sub := pcrf.Group("/subscriber", "Subscriber", "subscriber")
+		sub := v1.Group("/subscriber", "Subscriber", "subscriber")
 		sub.GET("/imsi/:imsi", formatDoc("Get subscriber", "Get a subscriber"), tonic.Handler(r.getSubscriber, http.StatusOK))
 		sub.POST("/imsi/:imsi", formatDoc("Add subscriber", "Add subscriber"), tonic.Handler(r.addSubscriber, http.StatusCreated))
 		sub.GET("/imsi/:imsi/flow", formatDoc("Get flows", "Get a subscriber UE data path"), tonic.Handler(r.getSubscriberFlows, http.StatusOK))

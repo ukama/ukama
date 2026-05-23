@@ -23,6 +23,13 @@ const (
 	InitApiEndpoint = "/v1/orgs"
 )
 
+var (
+	HTTP_PROTOCOL = "http"
+	HTTPS_PROTOCOL = "https"
+	NODE_GW_INTERFACE = "node-gw"
+	API_GW_INTERFACE = "api-gw"
+)
+
 type SystemIPInfo struct {
 	SystemId    string `json:"systemId"`
 	SystemName  string `json:"systemName"`
@@ -115,20 +122,36 @@ func GetHostUrl(ic InitClient, host string, org *string) (*url.URL, error) {
 		return nil, fmt.Errorf("initclient GetSystem failure: %w", err)
 	}
 
-	return CreateHTTPURL(*sysIpInfo)
+	return CreateHTTPURL(*sysIpInfo, API_GW_INTERFACE)
 }
 
-func CreateHTTPURL(s SystemIPInfo) (*url.URL, error) {
-	return createURL(s, "http")
+func GetNodeGwHostURL(ic InitClient, host string, org *string) (*url.URL, error) {
+	log.Infof("Getting url from initclient matching host %s", host)
+
+	sysIpInfo, err := ic.GetSystemFromHost(host, org)
+	if err != nil {
+		log.Errorf("Initclient GetSystem failure. error: %s", err)
+
+		return nil, fmt.Errorf("initclient GetSystem failure: %w", err)
+	}
+
+	if sysIpInfo.NodeGwIp == "" {
+		return nil, fmt.Errorf("node gw ip is not found for host %s", host)
+	}
+
+	return CreateHTTPURL(*sysIpInfo, NODE_GW_INTERFACE)
 }
 
-func CreateHTTPSURL(s SystemIPInfo) (*url.URL, error) {
-	return createURL(s, "https")
+func CreateHTTPURL(s SystemIPInfo, interfaceType string) (*url.URL, error) {
+	if interfaceType == "node-gw" {
+		return createURL(s.SystemName, s.OrgName, s.NodeGwIp, HTTP_PROTOCOL, s.NodeGwPort)
+	}
+	return createURL(s.SystemName, s.OrgName, s.ApiGwIp, HTTP_PROTOCOL, s.ApiGwPort)
 }
 
-func createURL(s SystemIPInfo, protocol string) (*url.URL, error) {
+func createURL(name, org, ip, protocol string, port uint) (*url.URL, error) {
 	log.Infof("Creating %s url for system %s and org %s",
-		protocol, s.SystemName, s.OrgName)
+		protocol, name, org)
 
 	//we can add more protocol validation later
 	if protocol == "" {
@@ -136,7 +159,7 @@ func createURL(s SystemIPInfo, protocol string) (*url.URL, error) {
 			protocol)
 	}
 
-	return url.Parse(fmt.Sprintf("%s://%s:%d", protocol, s.ApiGwIp, s.ApiGwPort))
+	return url.Parse(fmt.Sprintf("%s://%s:%d", protocol, ip, port))
 }
 
 /* Host is expected to be orgname.systemname */
