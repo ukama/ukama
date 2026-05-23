@@ -306,13 +306,13 @@ _phase1_run() {
 
         local cwait=0 clk="" mhz=""
         while [ "$cwait" -lt 40 ]; do
-            clk=$(grep -a "Measured DDR clock" "$oct_log" 2>/dev/null | tail -1)
+            clk=$(grep -a "Measured DDR clock" "$oct_log" 2>/dev/null | tail -1 || true)
             [ -n "$clk" ] && break
             kill -0 "$REMOTE_BOOT_PID" 2>/dev/null || break
             sleep 1
             cwait=$((cwait + 1))
         done
-        mhz=$(printf '%s' "$clk" | grep -oE '[0-9]+' | head -1)
+        mhz=$(printf '%s' "$clk" | grep -oE '[0-9]+' | head -1 || true)
         echo "  ${clk:-no 'Measured DDR clock' line seen}"
 
         if [ -n "$mhz" ] && [ "$mhz" -ge 380 ] && [ "$mhz" -le 420 ]; then
@@ -404,7 +404,7 @@ _phase1_run() {
         uboot_send_and_wait "$serial_dev" "ping ${host_ip}" "$uboot_prompt" 20 || true
         if ! tail -c +"$ping_marker" "$UBOOT_LOG" 2>/dev/null | grep -q "is alive"; then
             echo "ERROR: TRX ethernet link is down (octeth0 Down) — cannot reach ${host_ip}."
-            grep -a "Measured DDR clock" "$oct_log" 2>/dev/null | tail -1 | sed 's/^/  oct-remote-boot: /'
+            grep -a "Measured DDR clock" "$oct_log" 2>/dev/null | tail -1 | sed 's/^/  oct-remote-boot: /' || true
             echo "  If that clock is not ~400 MHz, the chip PLL mislocked and SGMII ethernet will not link."
             echo "  Fix: fully power-cycle the TRX (cold boot, not just reset), confirm the ethernet cable,"
             echo "  then re-run. The flash needs a working link to TFTP the OS/RD/uboot images."
