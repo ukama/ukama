@@ -356,18 +356,28 @@ _phase1_run() {
     uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 8 || true
     uboot_send_and_wait "$serial_dev" "saveenv" "$uboot_prompt" 15 || true
 
-    local host_ip
+    local host_ip ping_marker
     host_ip=$(yq_read "$BOARD_CONFIG" network.host_ip)
     echo "Pinging host ${host_ip} from u-boot..."
-    uboot_send_and_wait "$serial_dev" "ping ${host_ip}" "$uboot_prompt" 15 || {
-        echo "WARNING: ping failed — retrying mw64 x2..."
-        uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 5
-        uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 5
-        uboot_send_and_wait "$serial_dev" "ping ${host_ip}" "$uboot_prompt" 15 || {
-            echo "ERROR: TRX cannot reach host. Check cables."
+    ping_marker=$(wc -c < "$UBOOT_LOG" 2>/dev/null || echo 0)
+    uboot_send_and_wait "$serial_dev" "ping ${host_ip}" "$uboot_prompt" 20 || true
+    if ! tail -c +"$ping_marker" "$UBOOT_LOG" 2>/dev/null | grep -q "is alive"; then
+        echo "  ping failed — re-enabling ethernet (mw64 x2) and retrying..."
+        uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 8 || true
+        uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 8 || true
+        sleep 3
+        ping_marker=$(wc -c < "$UBOOT_LOG" 2>/dev/null || echo 0)
+        uboot_send_and_wait "$serial_dev" "ping ${host_ip}" "$uboot_prompt" 20 || true
+        if ! tail -c +"$ping_marker" "$UBOOT_LOG" 2>/dev/null | grep -q "is alive"; then
+            echo "ERROR: TRX ethernet link is down (octeth0 Down) — cannot reach ${host_ip}."
+            grep -a "Measured DDR clock" "$oct_log" 2>/dev/null | tail -1 | sed 's/^/  oct-remote-boot: /'
+            echo "  If that clock is not ~400 MHz, the chip PLL mislocked and SGMII ethernet will not link."
+            echo "  Fix: fully power-cycle the TRX (cold boot, not just reset), confirm the ethernet cable,"
+            echo "  then re-run. The flash needs a working link to TFTP the OS/RD/uboot images."
             return 1
-        }
-    }
+        fi
+    fi
+    echo "  host ${host_ip} is reachable"
 
     _phase1_flash_artifact "$serial_dev" "$uboot_prompt" "os"    "$ddr_os"
     _phase1_flash_artifact "$serial_dev" "$uboot_prompt" "rd"    "$ddr_rd"
