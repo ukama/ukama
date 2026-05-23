@@ -149,18 +149,24 @@ _phase1_uboot_env() {
 
     local mac_dashed="${trx_mac//:/-}"
 
-    uboot_send_and_wait "$dev" "setenv ethaddr ${mac_dashed}" "$prompt" 5
-    uboot_send_and_wait "$dev" "setenv ipaddr ${trx_ip}" "$prompt" 5
-    uboot_send_and_wait "$dev" "setenv netmask ${netmask}" "$prompt" 5
-    uboot_send_and_wait "$dev" "setenv serverip ${host_ip}" "$prompt" 5
-    uboot_send_and_wait "$dev" "setenv bootby flash" "$prompt" 5
-    uboot_send_and_wait "$dev" "setenv cfgloadby flash" "$prompt" 5
-    uboot_send_and_wait "$dev" "setenv swloadby flash" "$prompt" 5
-    uboot_send_and_wait "$dev" 'setenv i2cinit "i2c dev 0; i2c probe; i2c dev 1; i2c probe"' "$prompt" 5
-    uboot_send_and_wait "$dev" 'setenv bootcmd "run i2cinit; run namedalloc; run bootcby${bootby}"' "$prompt" 5
-    uboot_send_and_wait "$dev" 'setenv bootcbytftp "tftp 0x21000000 lsm_os.gz; gunzip 0x21000000 0x20000000 0x1000000; tftp 0x30800000 lsm_rd.gz; bootoctlinux 0x20000000 coremask=0x7 endbootargs rd_name=initrd mem=512M;"' "$prompt" 5
-    uboot_send_and_wait "$dev" 'setenv namedalloc "namedalloc dsp-dump 0x400000 0x7f4D0000; namedalloc cazac 0x630000 0x7f8D0000; namedalloc cpu-dsp-if 0x100000 0x7ff00000; namedalloc dsp-log-buf 0x4000000 0x80000000; namedalloc initrd 0x2800000 0x30800000;"' "$prompt" 5
-    uboot_send_and_wait "$dev" "setenv mk_ubootenv 1" "$prompt" 5
+    local restore_errexit=0
+    case $- in *e*) restore_errexit=1; set +e ;; esac
+
+    uboot_send_and_wait "$dev" "setenv ethaddr ${mac_dashed}" "$prompt" 8
+    uboot_send_and_wait "$dev" "setenv ipaddr ${trx_ip}" "$prompt" 8
+    uboot_send_and_wait "$dev" "setenv netmask ${netmask}" "$prompt" 8
+    uboot_send_and_wait "$dev" "setenv serverip ${host_ip}" "$prompt" 8
+    uboot_send_and_wait "$dev" "setenv bootby flash" "$prompt" 8
+    uboot_send_and_wait "$dev" "setenv cfgloadby flash" "$prompt" 8
+    uboot_send_and_wait "$dev" "setenv swloadby flash" "$prompt" 8
+    uboot_send_and_wait "$dev" 'setenv i2cinit "i2c dev 0; i2c probe; i2c dev 1; i2c probe"' "$prompt" 8
+    uboot_send_and_wait "$dev" 'setenv bootcmd "run i2cinit; run namedalloc; run bootcby${bootby}"' "$prompt" 8
+    uboot_send_and_wait "$dev" 'setenv bootcbytftp "tftp 0x21000000 lsm_os.gz; gunzip 0x21000000 0x20000000 0x1000000; tftp 0x30800000 lsm_rd.gz; bootoctlinux 0x20000000 coremask=0x7 endbootargs rd_name=initrd mem=512M;"' "$prompt" 8
+    uboot_send_and_wait "$dev" 'setenv namedalloc "namedalloc dsp-dump 0x400000 0x7f4D0000; namedalloc cazac 0x630000 0x7f8D0000; namedalloc cpu-dsp-if 0x100000 0x7ff00000; namedalloc dsp-log-buf 0x4000000 0x80000000; namedalloc initrd 0x2800000 0x30800000;"' "$prompt" 8
+    uboot_send_and_wait "$dev" "setenv mk_ubootenv 1" "$prompt" 8
+
+    [ "$restore_errexit" = "1" ] && set -e
+    return 0
 }
 
 _phase1_flash_artifact() {
@@ -331,9 +337,9 @@ _phase1_run() {
     _phase1_uboot_env "$serial_dev" "$uboot_prompt"
 
     echo "Enabling ethernet (mw64 x2) and saving env..."
-    uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 5
-    uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 5
-    uboot_send_and_wait "$serial_dev" "saveenv" "$uboot_prompt" 15
+    uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 8 || true
+    uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 8 || true
+    uboot_send_and_wait "$serial_dev" "saveenv" "$uboot_prompt" 15 || true
 
     local host_ip
     host_ip=$(yq_read "$BOARD_CONFIG" network.host_ip)
