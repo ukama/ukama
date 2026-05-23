@@ -22,13 +22,6 @@
 
 #define IPV4_MIN_HEADER 20
 
-static uint16_t ipv4_total_len(const unsigned char *pkt, ssize_t len) {
-
-    if (pkt == NULL || len < IPV4_MIN_HEADER) return 0;
-
-    return ((uint16_t)pkt[2] << 8) | pkt[3];
-}
-
 static int ipv4_src_dst(const unsigned char *pkt,
                         ssize_t len,
                         char *src,
