@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"strconv"
 	"strings"
 	"time"
 
@@ -28,21 +29,21 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
- 
+
 type HealthServer struct {
 	pb.UnimplementedHealthServiceServer
-	sRepo   		 db.HealthRepo
-	debug   		 bool
-	orgName 		 string
+	sRepo            db.HealthRepo
+	debug            bool
+	orgName          string
 	msgbus           mb.MsgBusServiceClient
 	healthRoutingKey msgbus.RoutingKeyBuilder
 }
 
 func NewHealthServer(orgName string, sRepo db.HealthRepo, debug bool, msgBus mb.MsgBusServiceClient) *HealthServer {
 	return &HealthServer{
-		sRepo:   sRepo,
-		orgName: orgName,
-		debug:   debug,
+		sRepo:            sRepo,
+		orgName:          orgName,
+		debug:            debug,
 		msgbus:           msgBus,
 		healthRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
@@ -68,7 +69,7 @@ func (h *HealthServer) StoreHealthReport(ctx context.Context, req *pb.StoreHealt
 	if parsed.NodeType == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "nodeType is required in payload")
 	}
-	if parsed.ReportedAt.IsZero() {
+	if parsed.ReportedAt == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "reportedAt is required in payload")
 	}
 
@@ -80,7 +81,7 @@ func (h *HealthServer) StoreHealthReport(ctx context.Context, req *pb.StoreHealt
 		NodeID:        nID.StringLowercase(),
 		NodeType:      nodeType,
 		SchemaVersion: schemaVersion,
-		ReportedAt:    parsed.ReportedAt,
+		ReportedAt:    time.Unix(parsed.ReportedAt, 0).UTC(),
 		Payload:       raw,
 	}
 
@@ -93,12 +94,12 @@ func (h *HealthServer) StoreHealthReport(ctx context.Context, req *pb.StoreHealt
 		route := h.healthRoutingKey.SetAction("store").SetObject("report").MustBuild()
 
 		evt := &epb.HealthReportEvent{
-			Id:        		report.ID.String(),
-			NodeId:    		report.NodeID,
-			Payload: 		report.Payload,
-			SchemaVersion:  report.SchemaVersion,
-			NodeType:  		report.NodeType.String(),
-			ReportedAt: 	report.ReportedAt.Format(time.RFC3339),
+			Id:            report.ID.String(),
+			NodeId:        report.NodeID,
+			Payload:       report.Payload,
+			SchemaVersion: report.SchemaVersion,
+			NodeType:      report.NodeType.String(),
+			ReportedAt:    strconv.FormatInt(parsed.ReportedAt, 10),
 		}
 		log.Infof("Publishing event %+v with key %+v", evt, route)
 		err = h.msgbus.PublishRequest(route, evt)
@@ -118,8 +119,8 @@ func (h *HealthServer) ListReports(ctx context.Context, req *pb.ListReportsReque
 	}
 
 	var reportedAt *time.Time
-	if req.GetReportedAt() != nil {
-		t := req.GetReportedAt().AsTime()
+	if req.GetReportedAt() != 0 {
+		t := time.Unix(req.GetReportedAt(), 0).UTC()
 		reportedAt = &t
 	}
 
@@ -228,7 +229,7 @@ func parseGPSInterfaceToPb(g *parser.GPSInterface) *pb.GPSInterface {
 		Available:   g.Available,
 		Lock:        g.Lock,
 		Coordinates: g.Coordinates,
-		Time:        timestamppb.New(g.Time),
+		Time:        g.Time,
 	}
 }
 
@@ -239,7 +240,7 @@ func parseBackhaulInterfaceToPb(b *parser.BackhaulInterface) *pb.BackhaulInterfa
 	return &pb.BackhaulInterface{
 		Available:  b.Available,
 		State:      b.State,
-		LinkGuess: b.LinkGuess,
+		LinkGuess:  b.LinkGuess,
 		Confidence: b.Confidence,
 	}
 }
@@ -298,7 +299,7 @@ func parseFEMsToPb(f []*parser.FEMUnit) []*pb.FEMUnit {
 	fems := make([]*pb.FEMUnit, len(f))
 	for i, f := range f {
 		fems[i] = &pb.FEMUnit{
-			Unit: int32(f.Unit),
+			Unit:    int32(f.Unit),
 			Present: f.Present,
 		}
 	}
@@ -326,7 +327,7 @@ func parseControllerSolarMetricsToPb(s *parser.ControllerSolarMetrics) *pb.Contr
 	return &pb.ControllerSolarMetrics{
 		VoltageV: s.VoltageV,
 		CurrentA: s.CurrentA,
-		PowerW: s.PowerW,
+		PowerW:   s.PowerW,
 	}
 }
 
@@ -334,7 +335,7 @@ func parseControllerBatteryMetricsToPb(b *parser.ControllerBatteryMetrics) *pb.C
 	return &pb.ControllerBatteryMetrics{
 		VoltageV: b.VoltageV,
 		CurrentA: b.CurrentA,
-		SocPct: int32(b.SocPct),
+		SocPct:   int32(b.SocPct),
 	}
 }
 
@@ -347,14 +348,14 @@ func parseControllerLoadMetricsToPb(l *parser.ControllerLoadMetrics) *pb.Control
 
 func parseAppToPb(a *parser.HealthApp) *pb.App {
 	return &pb.App{
-		Name: a.Name,
+		Name:    a.Name,
 		Version: a.Version,
-		Tag: a.Tag,
-		Status: a.State,
+		Tag:     a.Tag,
+		Status:  a.State,
 		Resource: &pb.AppResource{
-			CpuPercent: float32(a.Resources.CPUPercent),
-			MemoryRssKb: float32(a.Resources.MemoryRssKb),
-			DiskReadBytes: float32(a.Resources.DiskReadBytes),
+			CpuPercent:     float32(a.Resources.CPUPercent),
+			MemoryRssKb:    float32(a.Resources.MemoryRssKb),
+			DiskReadBytes:  float32(a.Resources.DiskReadBytes),
 			DiskWriteBytes: float32(a.Resources.DiskWriteBytes),
 		},
 	}
@@ -369,7 +370,7 @@ func healthReportToPb(r *db.HealthReport) *pb.HealthReport {
 		NodeId:        r.NodeID,
 		NodeType:      string(r.NodeType),
 		SchemaVersion: r.SchemaVersion,
-		ReportedAt:    timestamppb.New(r.ReportedAt),
+		ReportedAt:    r.ReportedAt.Unix(),
 		ReceivedAt:    timestamppb.New(r.ReceivedAt),
 		Payload:       r.Payload,
 	}

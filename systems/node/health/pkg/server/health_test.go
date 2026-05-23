@@ -39,13 +39,39 @@ func TestHealthServerStoreHealthReport(t *testing.T) {
 	hRepo := &mocks.HealthRepo{}
 
 	reported := time.Date(2026, 4, 21, 10, 0, 0, 0, time.UTC)
-	inner := map[string]interface{}{
-		"k":             "v",
-		"nodeType":      string(ukama.NODE_TYPE_HOMENODE),
-		"schemaVersion": "1",
-		"reportedAt":    reported.Format(time.RFC3339),
+	reportedUnix := reported.Unix()
+	payload := []byte(`{"k":"v","nodeType":"hnode","schemaVersion":"1","reportedAt":"` + jsonNumber(reportedUnix) + `"}`)
+	req := &pb.StoreHealthReportRequest{
+		NodeId:  testNode.String(),
+		Payload: payload,
 	}
-	payload, _ := json.Marshal(inner)
+
+	hRepo.On("StoreHealthReport", mock.MatchedBy(func(r *db.HealthReport) bool {
+		return r != nil &&
+			r.NodeID == testNode.StringLowercase() &&
+			r.NodeType == ukama.NODE_TYPE_HOMENODE &&
+			r.SchemaVersion == "1" &&
+			r.ReportedAt.Equal(reported) &&
+			string(r.Payload) == string(payload)
+	}), mock.MatchedBy(func(ts time.Time) bool {
+		return !ts.IsZero()
+	})).Return(nil).Once()
+
+	s := newTestHealthServer(hRepo)
+	resp, err := s.StoreHealthReport(context.Background(), req)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, resp)
+	assert.NotEmpty(t, resp.GetReportId())
+	hRepo.AssertExpectations(t)
+}
+
+func TestHealthServerStoreHealthReportUnixReportedAt(t *testing.T) {
+	hRepo := &mocks.HealthRepo{}
+
+	const reportedUnix int64 = 1779534357
+	reported := time.Unix(reportedUnix, 0).UTC()
+	payload := []byte(`{"nodeType":"hnode","schemaVersion":"1","reportedAt":"1779534357"}`)
 	req := &pb.StoreHealthReportRequest{
 		NodeId:  testNode.String(),
 		Payload: payload,
@@ -75,12 +101,8 @@ func TestHealthServerStoreHealthReportInvalidNodeId(t *testing.T) {
 	hRepo := &mocks.HealthRepo{}
 	s := newTestHealthServer(hRepo)
 
-	reported := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
-	payload, _ := json.Marshal(map[string]interface{}{
-		"nodeType":      string(ukama.NODE_TYPE_HOMENODE),
-		"schemaVersion": "1",
-		"reportedAt":    reported.Format(time.RFC3339),
-	})
+	reportedUnix := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC).Unix()
+	payload := []byte(`{"nodeType":"hnode","schemaVersion":"1","reportedAt":"` + jsonNumber(reportedUnix) + `"}`)
 	resp, err := s.StoreHealthReport(context.Background(), &pb.StoreHealthReportRequest{
 		NodeId:  "invalid-node",
 		Payload: payload,
@@ -114,12 +136,8 @@ func TestHealthServerStoreHealthReportMissingReportedAt(t *testing.T) {
 
 func TestHealthServerStoreHealthReportRepoError(t *testing.T) {
 	hRepo := &mocks.HealthRepo{}
-	reported := time.Now().UTC()
-	payload, _ := json.Marshal(map[string]interface{}{
-		"nodeType":      string(ukama.NODE_TYPE_HOMENODE),
-		"schemaVersion": "1",
-		"reportedAt":    reported.Format(time.RFC3339),
-	})
+	reportedUnix := time.Now().UTC().Unix()
+	payload := []byte(`{"nodeType":"hnode","schemaVersion":"1","reportedAt":"` + jsonNumber(reportedUnix) + `"}`)
 	req := &pb.StoreHealthReportRequest{
 		NodeId:  testNode.String(),
 		Payload: payload,
@@ -166,6 +184,8 @@ func TestHealthServerListLatest(t *testing.T) {
 		assert.Equal(t, reportID.String(), r.Id)
 		assert.Equal(t, testNode.String(), r.NodeId)
 		assert.Equal(t, string(ukama.NODE_TYPE_HOMENODE), r.NodeType)
+		assert.Equal(t, reported.Unix(), r.ReportedAt)
+		assert.True(t, r.ReceivedAt.AsTime().Equal(received))
 	}
 	hRepo.AssertExpectations(t)
 }
@@ -191,8 +211,8 @@ func TestHealthServerListAll(t *testing.T) {
 
 	assert.NoError(t, err)
 	if assert.NotNil(t, resp) && assert.Len(t, resp.Reports, 2) {
-		assert.Equal(t, ts1.Unix(), resp.Reports[0].ReportedAt.AsTime().Unix())
-		assert.Equal(t, ts2.Unix(), resp.Reports[1].ReportedAt.AsTime().Unix())
+		assert.Equal(t, ts1.Unix(), resp.Reports[0].ReportedAt)
+		assert.Equal(t, ts2.Unix(), resp.Reports[1].ReportedAt)
 	}
 	hRepo.AssertExpectations(t)
 }
@@ -316,6 +336,12 @@ func TestHealthServerListInterfaces(t *testing.T) {
 
 		payload, err := json.Marshal(map[string]interface{}{
 			"interfaces": map[string]interface{}{
+				"gps": map[string]interface{}{
+					"available":   true,
+					"lock":        true,
+					"coordinates": "-114.0719,51.0447",
+					"time":        "2026-05-10T18:29:55Z",
+				},
 				"switch": map[string]interface{}{
 					"state": "active",
 					"policy": map[string]interface{}{
@@ -358,7 +384,11 @@ func TestHealthServerListInterfaces(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		if assert.NotNil(t, resp) && assert.NotNil(t, resp.Interfaces) && assert.NotNil(t, resp.Interfaces.Switch) {
+		if assert.NotNil(t, resp) && assert.NotNil(t, resp.Interfaces) {
+			if assert.NotNil(t, resp.Interfaces.Gps) {
+				assert.Equal(t, "2026-05-10T18:29:55Z", resp.Interfaces.Gps.Time)
+			}
+			if assert.NotNil(t, resp.Interfaces.Switch) {
 			assert.Equal(t, "active", resp.Interfaces.Switch.State)
 			assert.Equal(t, "hash-123", resp.Interfaces.Switch.Policy.Hash)
 			assert.Equal(t, "controller", resp.Interfaces.Switch.Policy.Source)
@@ -371,7 +401,13 @@ func TestHealthServerListInterfaces(t *testing.T) {
 				assert.Equal(t, "up", p.LinkState)
 				assert.Equal(t, "on", p.PoeState)
 			}
+			}
 		}
 		hRepo.AssertExpectations(t)
 	})
+}
+
+func jsonNumber(v int64) string {
+	b, _ := json.Marshal(v)
+	return string(b)
 }
