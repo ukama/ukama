@@ -272,34 +272,68 @@ _phase1_run() {
         echo "  BDI config loaded successfully"
     fi
 
-    echo "Telneting BDI at ${bdi_ip}: reset + halt core into debug mode..."
     local reset_log="${LOG_DIR}/bdi-reset.log"
-    if ! bdi_send_sequence "$bdi_ip" "$bdi_prompt" 90 "RESET HALT" >"$reset_log" 2>&1; then
-        echo "ERROR: BDI did not respond with '${bdi_prompt}' after RESET HALT"
-        cat "$reset_log" 2>/dev/null || true
-        return 1
-    fi
-    if grep -qE "Communication test failed|resetting target failed|JTAG exists check failed|Bypass check output: F+$" "$reset_log"; then
-        echo "ERROR: BDI cannot talk to the TRX over JTAG — target not responding."
-        echo "  'Bypass check: FFFF...' / 'JTAG Communication test failed' means the chip"
-        echo "  is not electrically responding. Almost always one of:"
-        echo "    - TRX lost power (check PoE/DC)"
-        echo "    - JTAG ribbon cable loose"
-        echo "    - board stuck from a previous run — needs a physical power-cycle"
-        grep -E "Bypass check|JTAG|resetting target|Communication test" "$reset_log" | sed 's/^/    /'
-        return 1
-    fi
-
     local oct_log="${LOG_DIR}/oct-remote-boot.log"
-    echo "Running oct-remote-boot:"
-    echo "  OCTEON_ROOT=$oct_env_root"
-    echo "  OCTEON_REMOTE_PROTOCOL=$oct_env_protocol"
-    echo "  sudo $oct_path --board=$oct_board --ddr_clock_hz=$oct_clock"
-    echo "  log: $oct_log"
-    sudo stdbuf -oL -eL env OCTEON_ROOT="$oct_env_root" OCTEON_REMOTE_PROTOCOL="$oct_env_protocol" \
-        "$oct_path" --board="$oct_board" --ddr_clock_hz="$oct_clock" >"$oct_log" 2>&1 &
-    REMOTE_BOOT_PID=$!
-    echo "  oct-remote-boot started (PID $REMOTE_BOOT_PID)"
+    local oct_attempt=0 max_oct_attempts=5 clock_ok=0
+
+    while [ "$oct_attempt" -lt "$max_oct_attempts" ]; do
+        oct_attempt=$((oct_attempt + 1))
+        echo "=== oct-remote-boot attempt ${oct_attempt}/${max_oct_attempts} ==="
+
+        echo "Telneting BDI at ${bdi_ip}: reset + halt core into debug mode..."
+        if ! bdi_send_sequence "$bdi_ip" "$bdi_prompt" 90 "RESET HALT" >"$reset_log" 2>&1; then
+            echo "ERROR: BDI did not respond with '${bdi_prompt}' after RESET HALT"
+            cat "$reset_log" 2>/dev/null || true
+            return 1
+        fi
+        if grep -qE "Communication test failed|resetting target failed|JTAG exists check failed|Bypass check output: F+$" "$reset_log"; then
+            echo "ERROR: BDI cannot talk to the TRX over JTAG — target not responding."
+            echo "  'Bypass check: FFFF...' / 'JTAG Communication test failed' means the chip"
+            echo "  is not electrically responding. Almost always one of:"
+            echo "    - TRX lost power (check PoE/DC)"
+            echo "    - JTAG ribbon cable loose"
+            echo "    - board stuck from a previous run — needs a physical power-cycle"
+            grep -E "Bypass check|JTAG|resetting target|Communication test" "$reset_log" | sed 's/^/    /'
+            return 1
+        fi
+
+        echo "Running oct-remote-boot (OCTEON_ROOT=$oct_env_root, $oct_env_protocol)..."
+        : > "$oct_log"
+        sudo stdbuf -oL -eL env OCTEON_ROOT="$oct_env_root" OCTEON_REMOTE_PROTOCOL="$oct_env_protocol" \
+            "$oct_path" --board="$oct_board" --ddr_clock_hz="$oct_clock" >"$oct_log" 2>&1 &
+        REMOTE_BOOT_PID=$!
+        echo "  oct-remote-boot started (PID $REMOTE_BOOT_PID)"
+
+        local cwait=0 clk="" mhz=""
+        while [ "$cwait" -lt 40 ]; do
+            clk=$(grep -a "Measured DDR clock" "$oct_log" 2>/dev/null | tail -1)
+            [ -n "$clk" ] && break
+            kill -0 "$REMOTE_BOOT_PID" 2>/dev/null || break
+            sleep 1
+            cwait=$((cwait + 1))
+        done
+        mhz=$(printf '%s' "$clk" | grep -oE '[0-9]+' | head -1)
+        echo "  ${clk:-no 'Measured DDR clock' line seen}"
+
+        if [ -n "$mhz" ] && [ "$mhz" -ge 380 ] && [ "$mhz" -le 420 ]; then
+            echo "  DDR clock locked at ~400 MHz — good, continuing."
+            clock_ok=1
+            break
+        fi
+
+        echo "  DDR clock mislocked (not ~400 MHz) — killing oct-remote-boot and retrying..."
+        sudo kill "$REMOTE_BOOT_PID" 2>/dev/null || true
+        REMOTE_BOOT_PID=""
+        sleep 3
+    done
+
+    if [ "$clock_ok" -ne 1 ]; then
+        echo "ERROR: DDR clock never locked ~400 MHz after ${max_oct_attempts} attempts."
+        echo "  The chip PLL keeps mislocking; SGMII ethernet will not link at the wrong clock,"
+        echo "  so the TFTP-based flash cannot run. A full COLD power-cycle of the TRX usually"
+        echo "  clears this. Power-cycle and re-run."
+        return 1
+    fi
 
     sudo tail -n +1 -F "$oct_log" 2>/dev/null &
     OCT_TAIL_PID=$!
