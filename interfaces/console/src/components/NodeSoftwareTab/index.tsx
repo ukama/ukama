@@ -24,6 +24,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import { useEffect, useState } from 'react';
 interface INodeRadioTab {
   loading: boolean;
   nodeApps: Software[];
@@ -38,6 +39,21 @@ const NodeSoftwareTab = ({
   nodeApps,
   handleUpdateAvailable,
 }: INodeRadioTab) => {
+  const [isUpdating, setIsUpdating] = useState<{
+    [key: string]: boolean;
+  }>({});
+
+  useEffect(() => {
+    nodeApps.forEach((app) => {
+      if (app.status == SoftwareStatusEnum.UpdateInProgress) {
+        setIsUpdating({
+          ...isUpdating,
+          [app.id]: true,
+        });
+      }
+    });
+  }, [nodeApps]);
+
   const statausByTitle = (status: string) => {
     switch (status) {
       case 'update_available':
@@ -105,7 +121,8 @@ const NodeSoftwareTab = ({
                           color={
                             status == SoftwareStatusEnum.UpdateAvailable
                               ? 'info'
-                              : status == SoftwareStatusEnum.UpdateInProgress
+                              : status == SoftwareStatusEnum.UpdateInProgress ||
+                                  isUpdating[id]
                                 ? 'warning'
                                 : 'error'
                           }
@@ -134,19 +151,13 @@ const NodeSoftwareTab = ({
                   </Typography>
                   <Stack direction="row" spacing={1 / 2} mt={1.5}>
                     <Typography variant="body2">CPU:</Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: colors.darkBlue }}
-                    >
+                    <Typography variant="body2" sx={{ color: colors.darkBlue }}>
                       {12.2} %
                     </Typography>
                   </Stack>
                   <Stack direction="row" spacing={1 / 2}>
                     <Typography variant="body2">MEMORY:</Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: colors.darkBlue }}
-                    >
+                    <Typography variant="body2" sx={{ color: colors.darkBlue }}>
                       {12.2} KB
                     </Typography>
                   </Stack>
@@ -154,7 +165,8 @@ const NodeSoftwareTab = ({
                 <CardActions sx={{ pb: 2, pt: 0, px: 2 }}>
                   <HorizontalContainerJustify>
                     <Button sx={{ p: 0 }}>View More</Button>
-                    {status == SoftwareStatusEnum.UpdateInProgress && (
+                    {(status == SoftwareStatusEnum.UpdateInProgress ||
+                      isUpdating[id]) && (
                       <UpdateIcon
                         htmlColor={colors.yellow}
                         sx={{ width: '24px', height: '24px' }}
@@ -163,13 +175,11 @@ const NodeSoftwareTab = ({
                     {status == SoftwareStatusEnum.UpdateAvailable && (
                       <Button
                         sx={{ p: 0, color: colors.green }}
-                        onClick={() =>
-                          handleUpdateAvailable(
-                            name,
-                            desiredVersion,
-                            nodeId,
-                          )
-                        }
+                        onClick={() => {
+                          setIsUpdating({ ...isUpdating, [id]: true });
+                          handleUpdateAvailable(name, desiredVersion, nodeId);
+                          setIsUpdating({ ...isUpdating, [id]: false });
+                        }}
                       >
                         Update Available
                       </Button>

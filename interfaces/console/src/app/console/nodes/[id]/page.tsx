@@ -206,7 +206,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
         refetchSoftwares();
         setSnackbarMessage({
           id: 'update-software-success-msg',
-          message: 'Software updated successfully.',
+          message: 'App is scheduled for update.',
           type: 'success',
           show: true,
         });
