@@ -106,22 +106,19 @@ uboot_send_and_wait() {
     local prompt="$3"
     local timeout_secs="${4:-30}"
 
-    local marker_before
-    marker_before=$(wc -c < "$UBOOT_LOG" 2>/dev/null || echo 0)
-
     uboot_send "$dev" "$command"
+    sleep 1
 
-    local elapsed=0
-    while [ "$elapsed" -lt "$timeout_secs" ]; do
-        local current
-        current=$(wc -c < "$UBOOT_LOG" 2>/dev/null || echo 0)
-        if [ "$current" -gt "$marker_before" ]; then
-            if tail -c +"$marker_before" "$UBOOT_LOG" 2>/dev/null | grep -qF -- "$prompt"; then
-                return 0
-            fi
+    local plen="${#prompt}"
+    local waited=1 last="" cur
+    while [ "$waited" -lt "$timeout_secs" ]; do
+        cur=$(wc -c < "$UBOOT_LOG" 2>/dev/null || echo 0)
+        if [ "$cur" = "$last" ] && tail -c "$plen" "$UBOOT_LOG" 2>/dev/null | grep -qF -- "$prompt"; then
+            return 0
         fi
+        last="$cur"
         sleep 1
-        elapsed=$((elapsed + 1))
+        waited=$((waited + 1))
     done
     return 1
 }

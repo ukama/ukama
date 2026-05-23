@@ -160,7 +160,7 @@ _phase1_uboot_env() {
     uboot_send_and_wait "$dev" "setenv cfgloadby flash" "$prompt" 8
     uboot_send_and_wait "$dev" "setenv swloadby flash" "$prompt" 8
     uboot_send_and_wait "$dev" 'setenv i2cinit "i2c dev 0; i2c probe; i2c dev 1; i2c probe"' "$prompt" 8
-    uboot_send_and_wait "$dev" 'setenv bootcmd "run i2cinit; run namedalloc; run bootcby\${bootby}"' "$prompt" 8
+    uboot_send_and_wait "$dev" 'setenv bootcmd "run i2cinit; run namedalloc; run bootcby${bootby}"' "$prompt" 8
     uboot_send_and_wait "$dev" 'setenv bootcbytftp "tftp 0x21000000 lsm_os.gz; gunzip 0x21000000 0x20000000 0x1000000; tftp 0x30800000 lsm_rd.gz; bootoctlinux 0x20000000 coremask=0x7 endbootargs rd_name=initrd mem=512M;"' "$prompt" 8
     uboot_send_and_wait "$dev" 'setenv namedalloc "namedalloc dsp-dump 0x400000 0x7f4D0000; namedalloc cazac 0x630000 0x7f8D0000; namedalloc cpu-dsp-if 0x100000 0x7ff00000; namedalloc dsp-log-buf 0x4000000 0x80000000; namedalloc initrd 0x2800000 0x30800000;"' "$prompt" 8
     uboot_send_and_wait "$dev" "setenv mk_ubootenv 1" "$prompt" 8
