@@ -178,7 +178,7 @@ bool state_store_save(Config *config, Space *spaceList) {
         s = s->next;
     }
 
-    if (json_dump_file(root, tmpPath, JSON_INDENT(2) | JSON_SORT_KEYS) != 0) {
+    if (json_dump_file(root, tmpPath, JSON_INDENT(2)) != 0) {
         usys_log_error("state: failed to write %s", tmpPath);
         json_decref(root);
         free(tmpPath);

@@ -25,4 +25,4 @@
         group="service"
 
 [app-exec.env]
-        WIMC_METHOD_PRIORITY="tar.gz,chunk"
+        WIMC_METHOD_PRIORITY="tar.gz"
