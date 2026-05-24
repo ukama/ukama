@@ -174,7 +174,6 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 		return nil, status.Errorf(codes.Internal, "failed to publish update message: %v", err)
 	}
 
-	sw.CurrentVersion = req.Tag
 	sw.ChangeLogs = append(sw.ChangeLogs, "Updating app "+req.Name+" to version "+req.Tag)
 	sw.Status = ukama.SoftwareStatusType(ukama.UpdateInProgress)
 
@@ -278,6 +277,9 @@ func (s *SoftwareServer) persistSoftwareStatus(recordID uuid.UUID, nodeID, appNa
 
 	sw.Status = newStatus
 	sw.ChangeLogs = append(sw.ChangeLogs, changeLog)
+	if newStatus == ukama.UpToDate {
+		sw.CurrentVersion = sw.DesiredVersion
+	}
 
 	log.Infof("persistSoftwareStatus: node %s, current version %s, desired version %s, status %s",
 		nodeID, sw.CurrentVersion, sw.DesiredVersion, newStatus)
