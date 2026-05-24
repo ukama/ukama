@@ -12,7 +12,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -158,10 +157,14 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 	log.Infof("Publishing update for software %s to version %s on node %s using hub %s",
 		req.Name, req.Tag, nId.String(), hosts)
 
-	jsonBody := map[string]string{
-		"name": req.Name,
-		"tag":  req.Tag,
-		"hub":  strings.Join(hosts, ","),
+	jsonBody := struct {
+		Name string   `json:"name"`
+		Tag  string   `json:"tag"`
+		Hub  []string `json:"hub"`
+	}{
+		Name: req.Name,
+		Tag:  req.Tag,
+		Hub:  hosts,
 	}
 
 	data, err := json.Marshal(jsonBody)
