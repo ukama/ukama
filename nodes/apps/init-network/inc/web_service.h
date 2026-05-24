@@ -23,6 +23,10 @@ int web_service_cb_status(const URequest *request,
                           UResponse *response,
                           void *config);
 
+int web_service_cb_reconcile(const URequest *request,
+                             UResponse *response,
+                             void *config);
+
 int web_service_cb_default(const URequest *request,
                            UResponse *response,
                            void *config);

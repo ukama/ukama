@@ -30,6 +30,9 @@ const char *status_state_str(EpcemuState state) {
     case EpcemuStateResolvingServices:   return "resolving-services";
     case EpcemuStateCheckingInitNetwork: return "checking-init-network";
     case EpcemuStateCheckingPcrf:        return "checking-pcrf";
+    case EpcemuStateStartingDataPlane:   return "starting-data-plane";
+    case EpcemuStateReconcilingInitNetwork:
+                                           return "reconciling-init-network";
     case EpcemuStateReady:               return "ready";
     case EpcemuStateFailed:              return "failed";
     default:                             return "unknown";

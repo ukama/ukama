@@ -26,17 +26,19 @@ static void copy_str(char *dst, size_t size, const char *src) {
 const char *status_state_str(InitState state) {
 
     switch (state) {
-    case InitStateStarting:        return "starting";
-    case InitStateCheckTools:      return "check-tools";
-    case InitStateStartOvs:        return "start-ovs";
-    case InitStateSetupEpcIf:      return "setup-epc-if";
-    case InitStateSetupTun:        return "setup-tun";
-    case InitStateSetupBridge:     return "setup-bridge";
-    case InitStateSetupForwarding: return "setup-forwarding";
-    case InitStateSetupFlows:      return "setup-flows";
-    case InitStateReady:           return "ready";
-    case InitStateFailed:          return "failed";
-    default:                       return "unknown";
+    case InitStateStarting:           return "starting";
+    case InitStateCheckTools:         return "check-tools";
+    case InitStateStartOvs:           return "start-ovs";
+    case InitStateSetupEpcIf:         return "setup-epc-if";
+    case InitStateSetupTun:           return "setup-tun";
+    case InitStateSetupBridge:        return "setup-bridge";
+    case InitStateSetupForwarding:    return "setup-forwarding";
+    case InitStateSetupGateway:       return "setup-gateway";
+    case InitStateSetupFlows:         return "setup-flows";
+    case InitStateSetupPolicyRouting: return "setup-policy-routing";
+    case InitStateReady:              return "ready";
+    case InitStateFailed:             return "failed";
+    default:                          return "unknown";
     }
 }
 
@@ -112,7 +114,9 @@ JsonObj *status_to_json(AppStatus *status, Config *config) {
     bool tunReady;
     bool bridgeReady;
     bool forwardingReady;
+    bool gatewayReady;
     bool flowsReady;
+    bool policyRoutingReady;
     char reason[STATUS_REASON_LEN];
     char mgmtSocket[INIT_NETWORK_MAX_STR * 2];
 
@@ -120,16 +124,18 @@ JsonObj *status_to_json(AppStatus *status, Config *config) {
 
     pthread_mutex_lock(&status->mutex);
 
-    state           = status->state;
-    ready           = status->ready;
-    toolsOk         = status->toolsOk;
-    ovsdbRunning    = status->ovsdbRunning;
-    vswitchdRunning = status->vswitchdRunning;
-    epcIfReady      = status->epcIfReady;
-    tunReady        = status->tunReady;
-    bridgeReady     = status->bridgeReady;
-    forwardingReady = status->forwardingReady;
-    flowsReady      = status->flowsReady;
+    state              = status->state;
+    ready              = status->ready;
+    toolsOk            = status->toolsOk;
+    ovsdbRunning       = status->ovsdbRunning;
+    vswitchdRunning    = status->vswitchdRunning;
+    epcIfReady         = status->epcIfReady;
+    tunReady           = status->tunReady;
+    bridgeReady        = status->bridgeReady;
+    forwardingReady    = status->forwardingReady;
+    gatewayReady       = status->gatewayReady;
+    flowsReady         = status->flowsReady;
+    policyRoutingReady = status->policyRoutingReady;
     copy_str(reason, sizeof(reason), status->reason);
 
     pthread_mutex_unlock(&status->mutex);
@@ -160,8 +166,10 @@ JsonObj *status_to_json(AppStatus *status, Config *config) {
     json_object_set_new(bridge, "openflow", json_string(config->openflow));
     json_object_set_new(root,   "bridge", bridge);
 
-    json_object_set_new(ovs, "ovsdb", json_string(ovsdbRunning ? "running" : "unknown"));
-    json_object_set_new(ovs, "vswitchd", json_string(vswitchdRunning ? "running" : "unknown"));
+    json_object_set_new(ovs, "ovsdb",
+                        json_string(ovsdbRunning ? "running" : "unknown"));
+    json_object_set_new(ovs, "vswitchd",
+                        json_string(vswitchdRunning ? "running" : "unknown"));
     json_object_set_new(ovs, "runDir", json_string(config->runDir));
     json_object_set_new(ovs, "dbDir", json_string(config->dbDir));
     json_object_set_new(root, "ovs", ovs);
@@ -172,28 +180,47 @@ JsonObj *status_to_json(AppStatus *status, Config *config) {
 
     json_object_set_new(tun,  "enabled", json_boolean(config->tunEnable));
     json_object_set_new(tun,  "interface", json_string(config->tunIf));
-    json_object_set_new(tun,  "primaryCidr", json_string(config->tunPrimaryCidr));
+    json_object_set_new(tun,  "primaryCidr",
+                        json_string(config->tunPrimaryCidr));
     json_object_set_new(root, "tun", tun);
 
-    json_object_set_new(routing, "externalIf", json_string(config->externalIf));
-    json_object_set_new(routing, "ipForward", json_boolean(config->enableIpForward));
+    json_object_set_new(routing, "externalIf",
+                        json_string(config->externalIf));
+    json_object_set_new(routing, "ipForward",
+                        json_boolean(config->enableIpForward));
     json_object_set_new(routing, "nat", json_boolean(config->enableNat));
-    json_object_set_new(routing, "policyRouting", json_boolean(config->enablePolicyRouting));
+    json_object_set_new(routing, "policyRouting",
+                        json_boolean(config->enablePolicyRouting));
+    json_object_set_new(routing, "tunTable", json_integer(config->tunTable));
+    json_object_set_new(routing, "bridgeTable",
+                        json_integer(config->bridgeTable));
     json_object_set_new(root,    "routing", routing);
 
-    json_object_set_new(gateway, "container", json_string(config->gatewayContainer));
+    json_object_set_new(gateway, "enabled",
+                        json_boolean(config->gatewayEnable));
+    json_object_set_new(gateway, "mode", json_string(config->gatewayMode));
+    json_object_set_new(gateway, "name", json_string(config->gatewayName));
+    json_object_set_new(gateway, "bridgeIf",
+                        json_string(config->gatewayBridgeIf));
+    json_object_set_new(gateway, "namespaceIf",
+                        json_string(config->gatewayNamespaceIf));
     json_object_set_new(gateway, "address", json_string(config->gatewayAddr));
     json_object_set_new(gateway, "ip", json_string(config->gatewayIp));
     json_object_set_new(root,    "gateway", gateway);
 
     json_object_set_new(steps, "toolsOk", json_boolean(toolsOk));
     json_object_set_new(steps, "ovsdbRunning", json_boolean(ovsdbRunning));
-    json_object_set_new(steps, "vswitchdRunning", json_boolean(vswitchdRunning));
+    json_object_set_new(steps, "vswitchdRunning",
+                        json_boolean(vswitchdRunning));
     json_object_set_new(steps, "epcIfReady", json_boolean(epcIfReady));
     json_object_set_new(steps, "tunReady", json_boolean(tunReady));
     json_object_set_new(steps, "bridgeReady", json_boolean(bridgeReady));
-    json_object_set_new(steps, "forwardingReady", json_boolean(forwardingReady));
+    json_object_set_new(steps, "forwardingReady",
+                        json_boolean(forwardingReady));
+    json_object_set_new(steps, "gatewayReady", json_boolean(gatewayReady));
     json_object_set_new(steps, "flowsReady", json_boolean(flowsReady));
+    json_object_set_new(steps, "policyRoutingReady",
+                        json_boolean(policyRoutingReady));
     json_object_set_new(root,  "steps", steps);
 
     return root;

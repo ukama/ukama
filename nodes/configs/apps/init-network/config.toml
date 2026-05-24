@@ -1,5 +1,5 @@
 # init-network.d reference config for virtual tower node.
-# Values are based on pcrf/script/setupBridge.sh.
+# North star: EPC TUN traffic must pass through OVS before Internet breakout.
 
 [server]
 port = 18091
@@ -23,25 +23,13 @@ subnet = "10.10.10.0/24"
 cidr = "192.168.8.0/22"
 default_drop = true
 
-# setupBridge.sh creates tun3 and assigns 192.168.9.20-28/22.
-# Disabled by default until EPC-emu owns the stable user-plane contract.
+# EPCEMU owns tun3. init-network only routes around tun3 after it exists.
 [tun]
 enable = false
 interface = "tun3"
-primary_cidr = "192.168.9.20/22"
-extra_cidrs = [
-  "192.168.9.21/22",
-  "192.168.9.22/22",
-  "192.168.9.23/22",
-  "192.168.9.24/22",
-  "192.168.9.25/22",
-  "192.168.9.26/22",
-  "192.168.9.27/22",
-  "192.168.9.28/22"
-]
+primary_cidr = "192.168.8.1/22"
+extra_cidrs = []
 
-# setupBridge.sh configures aliases on ETHIF=enp60s0.
-# For virtual-node this may be replaced by EPC-emu networking.
 [epc]
 enable = false
 interface = "enp60s0"
@@ -49,15 +37,20 @@ sctp_address = "10.102.81.3"
 gtpu_address = "10.102.81.75"
 
 [routing]
-external_if = "wlo1"
+external_if = "eth0"
 enable_ip_forward = true
 enable_nat = true
-enable_policy_routing = false
+enable_policy_routing = true
+tun_table = 2000
+bridge_table = 1000
 
-# setupBridge.sh used a docker gateway container cont1 at 10.10.10.11/24.
-# init-network.d does not start this container. This is recorded here for the
-# next step, when EPC/media interface wiring is finalized.
+# This is the br0-side Internet gateway/forwarder, not the media server.
+# Media stays outside the virtualnode/UE host.
 [gateway]
-container = "cont1"
+enable = true
+mode = "netns"
+name = "ukama-gw"
+bridge_if = "gw-br"
+namespace_if = "gw0"
 address = "10.10.10.11/24"
 ip = "10.10.10.11"

@@ -27,12 +27,11 @@ typedef struct _u_request URequest;
 typedef struct _u_response UResponse;
 typedef json_t JsonObj;
 
-#define EPCEMU_SERVICE_NAME        "epcemu"
-#define EPCEMU_DATA_SERVICE_NAME   "epcemu-data"
-#define EPCEMU_APP_NAME            "epcemu"
-
-#define EPCEMU_PCRF_SERVICE        "pcrf"
-#define EPCEMU_INITNET_SERVICE     "init-network"
+#define EPCEMU_SERVICE_NAME        SERVICE_EPCEMU
+#define EPCEMU_DATA_SERVICE_NAME   SERVICE_EPCEMU_DATA
+#define EPCEMU_APP_NAME            SERVICE_EPCEMU
+#define EPCEMU_PCRF_SERVICE        SERVICE_PCRF
+#define EPCEMU_INITNET_SERVICE     SERVICE_INIT_NETWORK
 
 #define EPCEMU_DEF_APN             "internet"
 #define EPCEMU_DEF_LOG_LEVEL       "TRACE"
@@ -56,6 +55,7 @@ typedef enum {
     EpcemuStateCheckingInitNetwork,
     EpcemuStateCheckingPcrf,
     EpcemuStateStartingDataPlane,
+    EpcemuStateReconcilingInitNetwork,
     EpcemuStateReady,
     EpcemuStateFailed
 } EpcemuState;
@@ -78,6 +78,7 @@ typedef struct {
 
     bool pcrfReady;
     bool initNetworkReady;
+    bool initNetworkRouted;
     bool dataPlaneReady;
 } EpcemuConfig;
 
