@@ -68,6 +68,7 @@ const NodeSoftwareTab = ({
         return 'Unknown Status';
     }
   };
+
   return (
     <Paper
       sx={{
@@ -109,7 +110,8 @@ const NodeSoftwareTab = ({
                     >
                       {name}
                     </Typography>
-                    {status == SoftwareStatusEnum.UpdateAvailable && (
+                    {(status == SoftwareStatusEnum.UpdateAvailable ||
+                      status == SoftwareStatusEnum.UpdateFailed) && (
                       <Tooltip
                         arrow
                         placement="right"
@@ -121,10 +123,9 @@ const NodeSoftwareTab = ({
                           color={
                             status == SoftwareStatusEnum.UpdateAvailable
                               ? 'info'
-                              : status == SoftwareStatusEnum.UpdateInProgress ||
-                                  isUpdating[id]
-                                ? 'warning'
-                                : 'error'
+                              : status == SoftwareStatusEnum.UpdateFailed
+                                ? 'error'
+                                : 'warning'
                           }
                           sx={{
                             '&:hover svg path': {
@@ -172,7 +173,8 @@ const NodeSoftwareTab = ({
                         sx={{ width: '24px', height: '24px' }}
                       />
                     )}
-                    {status == SoftwareStatusEnum.UpdateAvailable && (
+                    {(status == SoftwareStatusEnum.UpdateAvailable ||
+                      status == SoftwareStatusEnum.UpdateFailed) && (
                       <Button
                         sx={{ p: 0, color: colors.green }}
                         onClick={() => {
@@ -181,7 +183,9 @@ const NodeSoftwareTab = ({
                           setIsUpdating({ ...isUpdating, [id]: false });
                         }}
                       >
-                        Update Available
+                        {status == SoftwareStatusEnum.UpdateFailed
+                          ? 'Try Again'
+                          : 'Update Available'}
                       </Button>
                     )}
                   </HorizontalContainerJustify>
