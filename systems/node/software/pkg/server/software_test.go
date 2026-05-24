@@ -323,7 +323,7 @@ func TestUpdateSoftware(t *testing.T) {
 		sRepo := mocks.NewSoftwareRepo(t)
 		sRepo.On("List", testNodeIdNormalized, ukama.UpdateAvailable, testAppNameForUpdate).Return([]*db.Software{sw}, nil)
 		sRepo.On("Update", mock.MatchedBy(func(s *db.Software) bool {
-			return s.CurrentVersion == testTagVersion &&
+			return s.CurrentVersion == testCurrentVersion &&
 				s.Status == ukama.UpdateInProgress &&
 				len(s.ChangeLogs) > 0
 		})).Return(nil)
