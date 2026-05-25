@@ -21,7 +21,7 @@
 #include "ovs.h"
 #include "status.h"
 
-#define OVS_MAX_STR 1024
+#define OVS_MAX_STR             1024
 #define SHELL_CMD_TIMEOUT_EXTRA 5
 
 static bool path_exists(const char *path) {

@@ -124,12 +124,12 @@ static bool app_start(Config *config, App *app) {
 
     execPath = app_exec_path(config, app);
     if (!execPath) {
-        app->state = APP_STATE_FAILED;
+        app->state  = APP_STATE_FAILED;
         app->reason = APP_REASON_START_FAILED;
         return false;
     }
 
-    app->state = APP_STATE_STARTING;
+    app->state  = APP_STATE_STARTING;
     app->reason = APP_REASON_STARTED;
 
     now = time(NULL);
@@ -137,10 +137,10 @@ static bool app_start(Config *config, App *app) {
 
     ok = app_runtime_start(config, app, execPath);
     if (!ok) {
-        app->state = APP_STATE_FAILED;
+        app->state  = APP_STATE_FAILED;
         app->reason = APP_REASON_START_FAILED;
     } else {
-        app->state = APP_STATE_RUNNING;
+        app->state  = APP_STATE_RUNNING;
         app->reason = APP_REASON_NONE;
     }
 
