@@ -251,18 +251,6 @@ _phase1_run() {
     local host_ip
     host_ip=$(yq_read "$BOARD_CONFIG" network.host_ip)
 
-    echo "Waiting for BDI to auto-load its config and reach '${bdi_prompt}' (up to 90s)..."
-    echo "  (on a cold-booted TRX the BDI loads cnf71xx.cfg + the .def from TFTP and runs"
-    echo "   target reset + startup — that is what initializes the DDR cleanly)"
-    if ! bdi_send_sequence "$bdi_ip" "$bdi_prompt" 90 >/dev/null 2>&1; then
-        echo "ERROR: BDI did not reach '${bdi_prompt}' within 90s."
-        echo "  COLD power-cycle the TRX so the BDI re-runs its config auto-load (reset + startup),"
-        echo "  confirm TFTP is serving cnf71xx.cfg + cnf71xx-abatron-csrs.def, and that the BDI"
-        echo "  is reachable at ${bdi_ip}, then re-run."
-        return 1
-    fi
-    echo "  BDI configured (${bdi_prompt} present)."
-
     local reset_log="${LOG_DIR}/bdi-reset.log"
     local oct_log="${LOG_DIR}/oct-remote-boot.log"
     local oct_attempt=0 max_oct_attempts=1 clock_ok=0
@@ -274,9 +262,11 @@ _phase1_run() {
         oct_attempt=$((oct_attempt + 1))
         echo "=== oct-remote-boot attempt ${oct_attempt}/${max_oct_attempts} ==="
 
-        echo "Telneting BDI at ${bdi_ip}: setting PC to RAM start (go 0x400000)..."
-        if ! bdi_send_sequence "$bdi_ip" "$bdi_prompt" 90 "go 0x400000" >"$reset_log" 2>&1; then
-            echo "ERROR: BDI did not respond with '${bdi_prompt}' after go 0x400000"
+        echo "Telneting BDI at ${bdi_ip}: waiting for ${bdi_prompt} (config auto-load), then go 0x400000..."
+        if ! bdi_send_sequence "$bdi_ip" "$bdi_prompt" 120 "go 0x400000" >"$reset_log" 2>&1; then
+            echo "ERROR: BDI did not reach '${bdi_prompt}' / accept go 0x400000 within 120s."
+            echo "  COLD power-cycle the TRX so the BDI auto-loads its config (reset + startup),"
+            echo "  and confirm TFTP is serving cnf71xx.cfg + cnf71xx-abatron-csrs.def."
             cat "$reset_log" 2>/dev/null || true
             return 1
         fi
@@ -297,6 +287,9 @@ _phase1_run() {
             grep -E "Bypass check|JTAG|resetting target|Communication test" "$reset_log" | sed 's/^/    /'
             return 1
         fi
+
+        echo "Letting the core settle after go 0x400000..."
+        sleep 5
 
         echo "Running oct-remote-boot (OCTEON_ROOT=$oct_env_root, $oct_env_protocol)..."
         : > "$oct_log"
