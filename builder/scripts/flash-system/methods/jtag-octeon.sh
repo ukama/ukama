@@ -281,8 +281,7 @@ _phase1_run() {
             return 1
         fi
 
-        echo "Config auto-loaded, core halted at reset vector. Letting it settle..."
-        sleep 5
+        echo "Config auto-loaded, core halted at reset vector."
 
         echo "Running oct-remote-boot (OCTEON_ROOT=$oct_env_root, $oct_env_protocol)..."
         : > "$oct_log"
@@ -291,8 +290,39 @@ _phase1_run() {
         REMOTE_BOOT_PID=$!
         echo "  oct-remote-boot started (PID $REMOTE_BOOT_PID)"
 
+        echo "  Waiting for it to stage the bootloader at 0x400000 (octeon_ddr_initializing)..."
+        local lwait=0 loaded=0
+        while [ "$lwait" -lt 60 ]; do
+            if grep -qa "octeon_ddr_initializing" "$oct_log" 2>/dev/null; then
+                loaded=1
+                break
+            fi
+            kill -0 "$REMOTE_BOOT_PID" 2>/dev/null || break
+            sleep 1
+            lwait=$((lwait + 1))
+        done
+        if [ "$loaded" -ne 1 ]; then
+            echo "ERROR: oct-remote-boot never reached 'octeon_ddr_initializing' within 60s."
+            sed 's/^/    /' "$oct_log" 2>/dev/null || true
+            sudo kill "$REMOTE_BOOT_PID" 2>/dev/null || true
+            sudo pkill -9 -f oct-remote-boot 2>/dev/null || true
+            REMOTE_BOOT_PID=""
+            return 1
+        fi
+
+        echo "  Bootloader staged at 0x400000. Sending 'go 0x400000' on the BDI to start the core..."
+        sleep 2
+        bdi_send_command "$bdi_ip" "$bdi_prompt" "go 0x400000" 15 >>"$reset_log" 2>&1 || true
+        if grep -qE "Invalid parameter" "$reset_log"; then
+            echo "ERROR: 'go 0x400000' still rejected — 0x400000 not mapped when sent."
+            sudo kill "$REMOTE_BOOT_PID" 2>/dev/null || true
+            sudo pkill -9 -f oct-remote-boot 2>/dev/null || true
+            REMOTE_BOOT_PID=""
+            return 1
+        fi
+
         local cwait=0 clk="" mhz=""
-        while [ "$cwait" -lt 40 ]; do
+        while [ "$cwait" -lt 60 ]; do
             clk=$(grep -a "Measured DDR clock" "$oct_log" 2>/dev/null | tail -1 || true)
             [ -n "$clk" ] && break
             kill -0 "$REMOTE_BOOT_PID" 2>/dev/null || break
