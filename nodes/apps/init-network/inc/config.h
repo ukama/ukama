@@ -56,7 +56,7 @@
 #define DEF_BRIDGE_TABLE                1000
 
 #define DEF_GATEWAY_ENABLE              true
-#define DEF_GATEWAY_MODE                "netns"
+#define DEF_GATEWAY_MODE                "root"
 #define DEF_GATEWAY_NAME                "ukama-gw"
 #define DEF_GATEWAY_BRIDGE_IF           "gw-br"
 #define DEF_GATEWAY_NS_IF               "gw0"

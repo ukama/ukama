@@ -97,10 +97,13 @@ static bool shell_ok(Config *config, const char *reason, const char *fmt, ...) {
 
 static bool iface_exists(Config *config, const char *iface) {
 
+    char cmd[OVS_MAX_STR];
+
     if (config == NULL || iface == NULL || iface[0] == '\0') return false;
 
-    return exec_cmd(config->cmdTimeoutSec,
-                    "ip", "link", "show", iface, NULL) == 0;
+    snprintf(cmd, sizeof(cmd), "ip link show %s >/dev/null 2>&1", iface);
+
+    return shell_ok(config, NULL, "%s", cmd);
 }
 
 static bool ensure_mgmt_dir(Config *config, AppStatus *status) {
@@ -179,8 +182,10 @@ static bool check_tools(Config *config, AppStatus *status) {
 
 static bool ovs_is_running(Config *config) {
 
-    return exec_cmd(config->cmdTimeoutSec,
-                    "ovs-vsctl", "--timeout=2", "show", NULL) == 0;
+    if (config == NULL) return false;
+
+    return shell_ok(config, NULL,
+                    "ovs-vsctl show >/dev/null 2>&1");
 }
 
 static bool start_ovs(Config *config, AppStatus *status) {
@@ -446,6 +451,18 @@ static bool setup_forwarding(Config *config, AppStatus *status) {
             status_fail(status, "failed to enable ip_forward");
             return false;
         }
+
+        shell_ok(config, "failed to disable rp_filter",
+                 "sysctl -w net.ipv4.conf.all.rp_filter=0 >/dev/null 2>&1 "
+                 "|| true; "
+                 "sysctl -w net.ipv4.conf.default.rp_filter=0 "
+                 ">/dev/null 2>&1 || true; "
+                 "sysctl -w net.ipv4.conf.%s.rp_filter=0 "
+                 ">/dev/null 2>&1 || true; "
+                 "sysctl -w net.ipv4.conf.%s.rp_filter=0 "
+                 ">/dev/null 2>&1 || true",
+                 config->bridge,
+                 config->externalIf);
     }
 
     if (config->enableNat) {
@@ -456,18 +473,25 @@ static bool setup_forwarding(Config *config, AppStatus *status) {
             return false;
         }
 
+        snprintf(rule, sizeof(rule), "-s %s -o %s -j MASQUERADE",
+                 config->ueCidr, config->externalIf);
+        if (!ensure_iptables_rule(config, "nat", "POSTROUTING", rule)) {
+            status_fail(status, "failed to add UE NAT rule");
+            return false;
+        }
+
         snprintf(rule, sizeof(rule),
                  "-i %s -o %s -m state --state RELATED,ESTABLISHED -j ACCEPT",
                  config->externalIf, config->bridge);
         if (!ensure_iptables_rule(config, NULL, "FORWARD", rule)) {
-            status_fail(status, "failed to add inbound FORWARD rule");
+            status_fail(status, "failed to add bridge inbound FORWARD rule");
             return false;
         }
 
         snprintf(rule, sizeof(rule), "-i %s -o %s -j ACCEPT",
                  config->bridge, config->externalIf);
         if (!ensure_iptables_rule(config, NULL, "FORWARD", rule)) {
-            status_fail(status, "failed to add outbound FORWARD rule");
+            status_fail(status, "failed to add bridge outbound FORWARD rule");
             return false;
         }
     }
@@ -476,19 +500,83 @@ static bool setup_forwarding(Config *config, AppStatus *status) {
     return true;
 }
 
-static bool setup_gateway(Config *config, AppStatus *status) {
+static bool setup_gateway_root(Config *config, AppStatus *status) {
 
-    if (!config->gatewayEnable) {
-        mark_bool(status, &status->gatewayReady, true);
-        return true;
-    }
+    char rule[OVS_MAX_STR];
 
-    status_set(status, InitStateSetupGateway, "setting up gateway namespace");
+    status_set(status, InitStateSetupGateway, "setting up root gateway");
 
-    if (strcmp(config->gatewayMode, "netns") != 0) {
-        status_fail(status, "unsupported gateway mode");
+    if (!shell_ok(config, "failed to recreate gateway veth",
+                  "ovs-vsctl --if-exists del-port %s %s; "
+                  "ip link show %s >/dev/null 2>&1 && ip link del %s || true; "
+                  "ip link show %s >/dev/null 2>&1 && ip link del %s || true; "
+                  "ip link add %s type veth peer name %s",
+                  config->bridge, config->gatewayBridgeIf,
+                  config->gatewayBridgeIf, config->gatewayBridgeIf,
+                  config->gatewayNamespaceIf, config->gatewayNamespaceIf,
+                  config->gatewayBridgeIf, config->gatewayNamespaceIf)) {
+        status_fail(status, "failed to create gateway veth");
         return false;
     }
+
+    if (exec_cmd(config->cmdTimeoutSec,
+                 "ovs-vsctl", "--may-exist", "add-port", config->bridge,
+                 config->gatewayBridgeIf, NULL) != 0) {
+        status_fail(status, "failed to add gateway port to bridge");
+        return false;
+    }
+
+    if (!shell_ok(config, "failed to configure root gateway interface",
+                  "ip link set %s up && "
+                  "ip link set %s up && "
+                  "ip addr flush dev %s && "
+                  "ip addr replace %s/32 dev %s && "
+                  "ip route replace %s/32 dev %s && "
+                  "ip route replace %s via %s dev %s && "
+                  "(sysctl -w net.ipv4.conf.%s.rp_filter=0 "
+                  ">/dev/null 2>&1 || true)",
+                  config->gatewayBridgeIf,
+                  config->gatewayNamespaceIf,
+                  config->gatewayNamespaceIf,
+                  config->gatewayIp, config->gatewayNamespaceIf,
+                  config->bridgeAddr, config->gatewayNamespaceIf,
+                  config->ueCidr, config->bridgeAddr,
+                  config->gatewayNamespaceIf,
+                  config->gatewayNamespaceIf)) {
+        status_fail(status, "failed to configure root gateway interface");
+        return false;
+    }
+
+    if (config->enableNat) {
+        snprintf(rule, sizeof(rule), "-s %s -o %s -j MASQUERADE",
+                 config->ueCidr, config->externalIf);
+        if (!ensure_iptables_rule(config, "nat", "POSTROUTING", rule)) {
+            status_fail(status, "failed to add gateway UE NAT rule");
+            return false;
+        }
+
+        snprintf(rule, sizeof(rule),
+                 "-i %s -o %s -m state --state RELATED,ESTABLISHED -j ACCEPT",
+                 config->externalIf, config->gatewayNamespaceIf);
+        if (!ensure_iptables_rule(config, NULL, "FORWARD", rule)) {
+            status_fail(status, "failed to add gateway inbound FORWARD rule");
+            return false;
+        }
+
+        snprintf(rule, sizeof(rule), "-i %s -o %s -j ACCEPT",
+                 config->gatewayNamespaceIf, config->externalIf);
+        if (!ensure_iptables_rule(config, NULL, "FORWARD", rule)) {
+            status_fail(status, "failed to add gateway outbound FORWARD rule");
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static bool setup_gateway_netns(Config *config, AppStatus *status) {
+
+    status_set(status, InitStateSetupGateway, "setting up gateway namespace");
 
     if (!shell_ok(config, "failed to create netns directory",
                   "mkdir -p /var/run/netns")) {
@@ -505,10 +593,12 @@ static bool setup_gateway(Config *config, AppStatus *status) {
     }
 
     if (!shell_ok(config, "failed to recreate gateway veth",
+                  "ovs-vsctl --if-exists del-port %s %s; "
                   "ip link show %s >/dev/null 2>&1 && ip link del %s || true; "
                   "ip netns exec %s ip link show %s >/dev/null 2>&1 && "
                   "ip netns exec %s ip link del %s || true; "
                   "ip link add %s type veth peer name %s",
+                  config->bridge, config->gatewayBridgeIf,
                   config->gatewayBridgeIf, config->gatewayBridgeIf,
                   config->gatewayName, config->gatewayNamespaceIf,
                   config->gatewayName, config->gatewayNamespaceIf,
@@ -545,16 +635,22 @@ static bool setup_gateway(Config *config, AppStatus *status) {
         return false;
     }
 
-    if (!shell_ok(config, "failed to configure gateway NAT",
-                  "ip netns exec %s iptables -t nat -C POSTROUTING "
-                  "-s %s -o %s -j MASQUERADE 2>/dev/null || "
-                  "ip netns exec %s iptables -t nat -A POSTROUTING "
-                  "-s %s -o %s -j MASQUERADE",
-                  config->gatewayName, config->ueCidr,
-                  config->gatewayNamespaceIf,
-                  config->gatewayName, config->ueCidr,
-                  config->gatewayNamespaceIf)) {
-        status_fail(status, "failed to configure gateway NAT");
+    return true;
+}
+
+static bool setup_gateway(Config *config, AppStatus *status) {
+
+    if (!config->gatewayEnable) {
+        mark_bool(status, &status->gatewayReady, true);
+        return true;
+    }
+
+    if (strcmp(config->gatewayMode, "root") == 0) {
+        if (!setup_gateway_root(config, status)) return false;
+    } else if (strcmp(config->gatewayMode, "netns") == 0) {
+        if (!setup_gateway_netns(config, status)) return false;
+    } else {
+        status_fail(status, "unsupported gateway mode");
         return false;
     }
 
@@ -576,9 +672,12 @@ static bool setup_flows(Config *config, AppStatus *status) {
 
     status_set(status, InitStateSetupFlows, "setting up default OVS flows");
 
-    exec_cmd(config->cmdTimeoutSec,
-             "ovs-ofctl", "-O", config->openflow, "del-flows",
-             config->bridge, "priority=0", NULL);
+    if (exec_cmd(config->cmdTimeoutSec,
+                 "ovs-ofctl", "-O", config->openflow, "del-flows",
+                 config->bridge, NULL) != 0) {
+        status_fail(status, "failed to clear default OVS flows");
+        return false;
+    }
 
     if (!add_flow(config, "priority=0,actions=NORMAL")) {
         status_fail(status, "failed to add default NORMAL flow");
@@ -590,13 +689,6 @@ static bool setup_flows(Config *config, AppStatus *status) {
                  "priority=10,ip,nw_src=%s,actions=drop", config->ueCidr);
         snprintf(dstDrop, sizeof(dstDrop),
                  "priority=10,ip,nw_dst=%s,actions=drop", config->ueCidr);
-
-        exec_cmd(config->cmdTimeoutSec,
-                 "ovs-ofctl", "-O", config->openflow, "del-flows",
-                 config->bridge, srcDrop, NULL);
-        exec_cmd(config->cmdTimeoutSec,
-                 "ovs-ofctl", "-O", config->openflow, "del-flows",
-                 config->bridge, dstDrop, NULL);
 
         if (!add_flow(config, srcDrop)) {
             status_fail(status, "failed to add UE source drop flow");
@@ -624,9 +716,10 @@ static bool setup_policy_routing(Config *config, AppStatus *status) {
     }
 
     if (!iface_exists(config, config->tunIf)) {
-        status_fail(status, "tun interface not found for policy routing");
-        mark_bool(status, &status->policyRoutingReady, false);
-        return false;
+        status_set(status, InitStateSetupPolicyRouting,
+                   "tun interface not ready; policy routing deferred");
+        mark_bool(status, &status->policyRoutingReady, true);
+        return true;
     }
 
     if (!iface_exists(config, config->bridge)) {

@@ -48,9 +48,9 @@ bridge_table = 1000
 # Media stays outside the virtualnode/UE host.
 [gateway]
 enable = true
-mode = "netns"
+mode = "root"
 name = "ukama-gw"
 bridge_if = "gw-br"
 namespace_if = "gw0"
 address = "10.10.10.11/24"
-ip = "10.10.10.11"
+ip = "10.10.10.11"   
