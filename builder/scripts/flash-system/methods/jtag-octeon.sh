@@ -255,76 +255,37 @@ _phase1_run() {
     local oct_log="${LOG_DIR}/oct-remote-boot.log"
     local oct_attempt=0 max_oct_attempts=8 clock_ok=0
 
-    sudo pkill -9 -f oct-remote-boot 2>/dev/null || true
-    sleep 1
+    _oct_stop() {
+        sudo pkill -TERM -f oct-remote-boot 2>/dev/null || true
+        local kw=0
+        while [ "$kw" -lt 10 ] && pgrep -f oct-remote-boot >/dev/null 2>&1; do
+            sleep 1
+            kw=$((kw + 1))
+        done
+        sudo pkill -9 -f oct-remote-boot 2>/dev/null || true
+        REMOTE_BOOT_PID=""
+        sleep 2
+    }
+
+    _oct_stop
 
     while [ "$oct_attempt" -lt "$max_oct_attempts" ]; do
         oct_attempt=$((oct_attempt + 1))
         echo "=== oct-remote-boot attempt ${oct_attempt}/${max_oct_attempts} ==="
 
-        echo "Telneting BDI at ${bdi_ip}: waiting for ${bdi_prompt} (config auto-load halts the core)..."
-        if ! bdi_wait_prompt "$bdi_ip" "$bdi_prompt" 120 >"$reset_log" 2>&1; then
-            echo "ERROR: BDI did not reach '${bdi_prompt}' within 120s."
-            echo "  COLD power-cycle the TRX so the BDI auto-loads its config (reset + startup),"
-            echo "  and confirm TFTP is serving cnf71xx.cfg + cnf71xx-abatron-csrs.def."
-            cat "$reset_log" 2>/dev/null || true
-            return 1
-        fi
-        if grep -qE "Communication test failed|resetting target failed|JTAG exists check failed|Bypass check output: F+$" "$reset_log"; then
-            echo "ERROR: BDI cannot talk to the TRX over JTAG — target not responding."
-            echo "  'Bypass check: FFFF...' / 'JTAG Communication test failed' means the chip"
-            echo "  is not electrically responding. Almost always one of:"
-            echo "    - TRX lost power (check PoE/DC)"
-            echo "    - JTAG ribbon cable loose"
-            echo "    - board stuck from a previous run — needs a physical power-cycle"
-            grep -E "Bypass check|JTAG|resetting target|Communication test" "$reset_log" | sed 's/^/    /'
-            return 1
-        fi
-
-        echo "Config auto-loaded, core halted at reset vector."
-
-        echo "Running oct-remote-boot (OCTEON_ROOT=$oct_env_root, $oct_env_protocol)..."
+        echo "Running oct-remote-boot, no telnet (OCTEON_ROOT=$oct_env_root, $oct_env_protocol)..."
         : > "$oct_log"
         sudo stdbuf -oL -eL env OCTEON_ROOT="$oct_env_root" OCTEON_REMOTE_PROTOCOL="$oct_env_protocol" \
             "$oct_path" --board="$oct_board" --ddr_clock_hz="$oct_clock" >"$oct_log" 2>&1 &
         REMOTE_BOOT_PID=$!
         echo "  oct-remote-boot started (PID $REMOTE_BOOT_PID)"
 
-        echo "  Waiting for it to stage the bootloader at 0x400000 (octeon_ddr_initializing)..."
-        local lwait=0 loaded=0
-        while [ "$lwait" -lt 60 ]; do
-            if grep -qa "octeon_ddr_initializing" "$oct_log" 2>/dev/null; then
-                loaded=1
-                break
-            fi
-            kill -0 "$REMOTE_BOOT_PID" 2>/dev/null || break
-            sleep 1
-            lwait=$((lwait + 1))
-        done
-        if [ "$loaded" -ne 1 ]; then
-            echo "ERROR: oct-remote-boot never reached 'octeon_ddr_initializing' within 60s."
-            sed 's/^/    /' "$oct_log" 2>/dev/null || true
-            sudo kill "$REMOTE_BOOT_PID" 2>/dev/null || true
-            sudo pkill -9 -f oct-remote-boot 2>/dev/null || true
-            REMOTE_BOOT_PID=""
-            return 1
-        fi
-
-        echo "  Bootloader staged at 0x400000. Sending 'go 0x400000' on the BDI to start the core..."
-        sleep 2
-        bdi_send_command "$bdi_ip" "$bdi_prompt" "go 0x400000" 15 >>"$reset_log" 2>&1 || true
-        if grep -qE "Invalid parameter" "$reset_log"; then
-            echo "ERROR: 'go 0x400000' still rejected — 0x400000 not mapped when sent."
-            sudo kill "$REMOTE_BOOT_PID" 2>/dev/null || true
-            sudo pkill -9 -f oct-remote-boot 2>/dev/null || true
-            REMOTE_BOOT_PID=""
-            return 1
-        fi
-
-        local cwait=0 clk="" mhz="" ddr_bad=""
-        while [ "$cwait" -lt 60 ]; do
+        local cwait=0 clk="" mhz="" ddr_bad="" refused=""
+        while [ "$cwait" -lt 90 ]; do
             clk=$(grep -a "Measured DDR clock" "$oct_log" 2>/dev/null | tail -1 || true)
             [ -n "$clk" ] && break
+            refused=$(grep -a "Connection refused" "$oct_log" 2>/dev/null | head -1 || true)
+            [ -n "$refused" ] && break
             ddr_bad=$(grep -aE "exceeds DIMM specifications|GDB Reply Error" "$oct_log" 2>/dev/null | head -1 || true)
             [ -n "$ddr_bad" ] && break
             kill -0 "$REMOTE_BOOT_PID" 2>/dev/null || break
@@ -332,43 +293,47 @@ _phase1_run() {
             cwait=$((cwait + 1))
         done
         mhz=$(printf '%s' "$clk" | grep -oE '[0-9]+' | head -1 || true)
-        echo "  ${clk:-no 'Measured DDR clock' line seen}"
 
         if [ -n "$mhz" ] && [ "$mhz" -ge 380 ] && [ "$mhz" -le 420 ]; then
+            echo "  $clk"
             echo "  DDR clock locked at ~400 MHz — good, continuing."
             clock_ok=1
             break
         fi
 
+        _oct_stop
+
+        if [ -n "$refused" ]; then
+            echo "  BDI GDB port 2001 refused the connection — its single GDB slot was still held"
+            echo "  by a previous session. Letting it clear, then retrying (no power-cycle needed)..."
+            sleep 8
+            continue
+        fi
+
         if [ -n "$ddr_bad" ]; then
             echo "  DDR PLL mislocked — $ddr_bad"
+        elif [ -n "$clk" ]; then
+            echo "  DDR clock ${mhz} MHz — not ~400 (mislock)."
         else
-            echo "  DDR clock not ~400 MHz${mhz:+ (measured ${mhz} MHz)} (or DDR init hung)."
+            echo "  oct-remote-boot did not reach a DDR clock within 90s. Last lines:"
+            tail -n 20 "$oct_log" 2>/dev/null | sed 's/^/    /' || true
         fi
-        echo "  Stopping oct-remote-boot."
-        sudo kill "$REMOTE_BOOT_PID" 2>/dev/null || true
-        sudo pkill -9 -f oct-remote-boot 2>/dev/null || true
-        REMOTE_BOOT_PID=""
-        sleep 3
 
         if [ "$oct_attempt" -lt "$max_oct_attempts" ]; then
             echo ""
-            echo ">>> DDR PLL mislocked (this core is a cold-boot lottery for the DDR clock)."
-            echo ">>> COLD power-cycle the TRX now: full power OFF, wait ~5s, power back ON."
-            echo ">>> Leave the BDI/JTAG cable connected — the BDI reloads its config by itself."
-            printf ">>> Press Enter once the TRX is powered back on to retry (attempt %d/%d)... " "$((oct_attempt + 1))" "$max_oct_attempts"
+            echo ">>> DDR did not come up at ~400 MHz. If this keeps happening, COLD power-cycle the"
+            echo ">>> TRX now: full power OFF, wait ~5s, power back ON. Leave the JTAG cable connected."
+            printf ">>> Press Enter to retry (attempt %d/%d)... " "$((oct_attempt + 1))" "$max_oct_attempts"
             read -r _ </dev/tty || true
             echo ""
         fi
     done
 
     if [ "$clock_ok" -ne 1 ]; then
-        echo "ERROR: oct-remote-boot did not reach a good DDR clock (~400 MHz)."
-        echo "  The Octeon DDR PLL mislocked (596/599/796 MHz instead of 400). At the wrong clock"
-        echo "  the DRAM is misconfigured, so memory access fails ('GDB Reply Error' / 'Unexpected"
-        echo "  response length') and SGMII ethernet won't link — the flash cannot proceed."
-        echo "  This is a cold-boot lottery on this core: COLD power-cycle the TRX (full power"
-        echo "  off/on) so the PLL re-rolls, then re-run. Repeat until it locks at ~400 MHz."
+        echo "ERROR: oct-remote-boot did not bring DDR up at ~400 MHz after ${max_oct_attempts} attempts."
+        echo "  If the BDI GDB port kept refusing, a stale debugger session is wedged — close any"
+        echo "  other oct-remote-boot/telnet on the BDI, or power-cycle the BDI itself."
+        echo "  If DDR mislocked (596/599/796 MHz), COLD power-cycle the TRX and re-run."
         return 1
     fi
 
