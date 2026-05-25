@@ -97,10 +97,13 @@ static bool shell_ok(Config *config, const char *reason, const char *fmt, ...) {
 
 static bool iface_exists(Config *config, const char *iface) {
 
+    char cmd[OVS_MAX_STR];
+
     if (config == NULL || iface == NULL || iface[0] == '\0') return false;
 
-    return exec_cmd(config->cmdTimeoutSec,
-                    "ip", "link", "show", iface, NULL) == 0;
+    snprintf(cmd, sizeof(cmd), "ip link show %s >/dev/null 2>&1", iface);
+
+    return shell_ok(config, NULL, "%s", cmd);
 }
 
 static bool ensure_mgmt_dir(Config *config, AppStatus *status) {
@@ -179,8 +182,10 @@ static bool check_tools(Config *config, AppStatus *status) {
 
 static bool ovs_is_running(Config *config) {
 
-    return exec_cmd(config->cmdTimeoutSec,
-                    "ovs-vsctl", "--timeout=2", "show", NULL) == 0;
+    if (config == NULL) return false;
+
+    return shell_ok(config, NULL,
+                    "ovs-vsctl show >/dev/null 2>&1");
 }
 
 static bool start_ovs(Config *config, AppStatus *status) {
@@ -667,9 +672,12 @@ static bool setup_flows(Config *config, AppStatus *status) {
 
     status_set(status, InitStateSetupFlows, "setting up default OVS flows");
 
-    exec_cmd(config->cmdTimeoutSec,
-             "ovs-ofctl", "-O", config->openflow, "del-flows",
-             config->bridge, "priority=0", NULL);
+    if (exec_cmd(config->cmdTimeoutSec,
+                 "ovs-ofctl", "-O", config->openflow, "del-flows",
+                 config->bridge, NULL) != 0) {
+        status_fail(status, "failed to clear default OVS flows");
+        return false;
+    }
 
     if (!add_flow(config, "priority=0,actions=NORMAL")) {
         status_fail(status, "failed to add default NORMAL flow");
@@ -681,13 +689,6 @@ static bool setup_flows(Config *config, AppStatus *status) {
                  "priority=10,ip,nw_src=%s,actions=drop", config->ueCidr);
         snprintf(dstDrop, sizeof(dstDrop),
                  "priority=10,ip,nw_dst=%s,actions=drop", config->ueCidr);
-
-        exec_cmd(config->cmdTimeoutSec,
-                 "ovs-ofctl", "-O", config->openflow, "del-flows",
-                 config->bridge, srcDrop, NULL);
-        exec_cmd(config->cmdTimeoutSec,
-                 "ovs-ofctl", "-O", config->openflow, "del-flows",
-                 config->bridge, dstDrop, NULL);
 
         if (!add_flow(config, srcDrop)) {
             status_fail(status, "failed to add UE source drop flow");
@@ -715,9 +716,10 @@ static bool setup_policy_routing(Config *config, AppStatus *status) {
     }
 
     if (!iface_exists(config, config->tunIf)) {
-        status_fail(status, "tun interface not found for policy routing");
-        mark_bool(status, &status->policyRoutingReady, false);
-        return false;
+        status_set(status, InitStateSetupPolicyRouting,
+                   "tun interface not ready; policy routing deferred");
+        mark_bool(status, &status->policyRoutingReady, true);
+        return true;
     }
 
     if (!iface_exists(config, config->bridge)) {
