@@ -19,7 +19,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const NodeEndpoint = "/noded/v1/nodeinfo"
+const NodeEndpoint = "/v1/nodeinfo"
 
 type Version struct {
 	Major int `json:"major"`
