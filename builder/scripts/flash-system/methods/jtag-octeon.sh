@@ -464,7 +464,7 @@ _phase2_run() {
 
         echo "  [${key}] dd to ${dst}"
         sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" \
-            "dd if=${staging}/${name} of=${dst} bs=1 && rm -f ${staging}/${name}"
+            "dd if=${staging}/${name} of=${dst} bs=1M && rm -f ${staging}/${name}"
     done
 
     if yq_exists "$BOARD_CONFIG" phase2.rc_post_local; then
