@@ -275,7 +275,7 @@ _phase1_run() {
 
     local reset_log="${LOG_DIR}/bdi-reset.log"
     local oct_log="${LOG_DIR}/oct-remote-boot.log"
-    local oct_attempt=0 max_oct_attempts=5 clock_ok=0
+    local oct_attempt=0 max_oct_attempts=1 clock_ok=0
 
     sudo pkill -9 -f oct-remote-boot 2>/dev/null || true
     sleep 1
@@ -284,10 +284,17 @@ _phase1_run() {
         oct_attempt=$((oct_attempt + 1))
         echo "=== oct-remote-boot attempt ${oct_attempt}/${max_oct_attempts} ==="
 
-        echo "Telneting BDI at ${bdi_ip}: reset + halt core into debug mode..."
-        if ! bdi_send_sequence "$bdi_ip" "$bdi_prompt" 90 "RESET HALT" >"$reset_log" 2>&1; then
-            echo "ERROR: BDI did not respond with '${bdi_prompt}' after RESET HALT"
+        echo "Telneting BDI at ${bdi_ip}: setting PC to RAM start (go 0x400000)..."
+        if ! bdi_send_sequence "$bdi_ip" "$bdi_prompt" 90 "go 0x400000" >"$reset_log" 2>&1; then
+            echo "ERROR: BDI did not respond with '${bdi_prompt}' after go 0x400000"
             cat "$reset_log" 2>/dev/null || true
+            return 1
+        fi
+        if grep -qE "Invalid parameter" "$reset_log"; then
+            echo "ERROR: 'go 0x400000' was rejected (Invalid parameter)."
+            echo "  The core is not in a clean halted state — the BDI config must be freshly"
+            echo "  loaded (which halts the core at the reset vector) before 'go'."
+            echo "  Cold power-cycle the TRX so the BDI reloads CNF71XX.cfg, then re-run."
             return 1
         fi
         if grep -qE "Communication test failed|resetting target failed|JTAG exists check failed|Bypass check output: F+$" "$reset_log"; then
@@ -325,7 +332,7 @@ _phase1_run() {
             break
         fi
 
-        echo "  DDR clock mislocked (not ~400 MHz) — killing oct-remote-boot and retrying..."
+        echo "  DDR clock not ~400 MHz (or DDR init hung) — stopping."
         sudo kill "$REMOTE_BOOT_PID" 2>/dev/null || true
         sudo pkill -9 -f oct-remote-boot 2>/dev/null || true
         REMOTE_BOOT_PID=""
@@ -333,10 +340,11 @@ _phase1_run() {
     done
 
     if [ "$clock_ok" -ne 1 ]; then
-        echo "ERROR: DDR clock never locked ~400 MHz after ${max_oct_attempts} attempts."
-        echo "  The chip PLL keeps mislocking; SGMII ethernet will not link at the wrong clock,"
-        echo "  so the TFTP-based flash cannot run. A full COLD power-cycle of the TRX usually"
-        echo "  clears this. Power-cycle and re-run."
+        echo "ERROR: oct-remote-boot did not reach a good DDR clock (~400 MHz)."
+        echo "  Either DDR init hung (no 'Measured DDR clock' line) or it mislocked (596/796 MHz)."
+        echo "  At the wrong clock the SGMII ethernet won't link, so the TFTP flash can't run."
+        echo "  COLD power-cycle the TRX (full power off/on) so the BDI reloads its config and the"
+        echo "  core is freshly halted, then re-run."
         return 1
     fi
 
