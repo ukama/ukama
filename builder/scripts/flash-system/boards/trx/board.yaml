@@ -44,6 +44,7 @@ phase1:
 phase2:
   ssh_user: root
   ssh_staging_dir: /mnt/tmp
+  rc_post_local: /mnt/app/rc_post.local
   images:
     app0:  { src: /usr/ukm/ukama/builder/scripts/build-system/trx/flash_app0.img,  dst: /dev/flash_app0 }
     app1:  { src: /usr/ukm/ukama/builder/scripts/build-system/trx/flash_app1.img,  dst: /dev/flash_app1 }

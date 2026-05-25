@@ -473,6 +473,16 @@ _phase2_run() {
             "dd if=${staging}/${name} of=${dst} bs=1 && rm -f ${staging}/${name}"
     done
 
+    if yq_exists "$BOARD_CONFIG" phase2.rc_post_local; then
+        local rc_post_dst rc_post_src
+        rc_post_dst=$(yq_read "$BOARD_CONFIG" phase2.rc_post_local)
+        rc_post_src="${BOARD_DIR}/payloads/rc_post.local"
+        echo "Installing rc_post.local -> ${rc_post_dst} (re-enables SGMII ethernet each Linux boot)..."
+        sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "mkdir -p $(dirname "$rc_post_dst")"
+        sshpass "${sshpass_args[@]}" scp "${ssh_opts[@]}" "$rc_post_src" "${ssh_user}@${trx_ip}:${rc_post_dst}"
+        sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "chmod +x ${rc_post_dst}"
+    fi
+
     echo "Copying band config (${band}) to ${target_path}..."
     sshpass "${sshpass_args[@]}" scp "${ssh_opts[@]}" "$band_cfg" "${ssh_user}@${trx_ip}:${target_path}"
 }
