@@ -321,10 +321,12 @@ _phase1_run() {
             return 1
         fi
 
-        local cwait=0 clk="" mhz=""
+        local cwait=0 clk="" mhz="" ddr_bad=""
         while [ "$cwait" -lt 60 ]; do
             clk=$(grep -a "Measured DDR clock" "$oct_log" 2>/dev/null | tail -1 || true)
             [ -n "$clk" ] && break
+            ddr_bad=$(grep -aE "exceeds DIMM specifications|GDB Reply Error" "$oct_log" 2>/dev/null | head -1 || true)
+            [ -n "$ddr_bad" ] && break
             kill -0 "$REMOTE_BOOT_PID" 2>/dev/null || break
             sleep 1
             cwait=$((cwait + 1))
@@ -338,7 +340,12 @@ _phase1_run() {
             break
         fi
 
-        echo "  DDR clock not ~400 MHz (or DDR init hung) — stopping."
+        if [ -n "$ddr_bad" ]; then
+            echo "  DDR PLL mislocked — $ddr_bad"
+        else
+            echo "  DDR clock not ~400 MHz${mhz:+ (measured ${mhz} MHz)} (or DDR init hung)."
+        fi
+        echo "  Stopping oct-remote-boot."
         sudo kill "$REMOTE_BOOT_PID" 2>/dev/null || true
         sudo pkill -9 -f oct-remote-boot 2>/dev/null || true
         REMOTE_BOOT_PID=""
@@ -347,10 +354,11 @@ _phase1_run() {
 
     if [ "$clock_ok" -ne 1 ]; then
         echo "ERROR: oct-remote-boot did not reach a good DDR clock (~400 MHz)."
-        echo "  Either DDR init hung (no 'Measured DDR clock' line) or it mislocked (596/796 MHz)."
-        echo "  At the wrong clock the SGMII ethernet won't link, so the TFTP flash can't run."
-        echo "  COLD power-cycle the TRX (full power off/on) so the BDI reloads its config and the"
-        echo "  core is freshly halted, then re-run."
+        echo "  The Octeon DDR PLL mislocked (596/599/796 MHz instead of 400). At the wrong clock"
+        echo "  the DRAM is misconfigured, so memory access fails ('GDB Reply Error' / 'Unexpected"
+        echo "  response length') and SGMII ethernet won't link — the flash cannot proceed."
+        echo "  This is a cold-boot lottery on this core: COLD power-cycle the TRX (full power"
+        echo "  off/on) so the PLL re-rolls, then re-run. Repeat until it locks at ~400 MHz."
         return 1
     fi
 
