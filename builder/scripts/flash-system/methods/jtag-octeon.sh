@@ -251,27 +251,17 @@ _phase1_run() {
     local host_ip
     host_ip=$(yq_read "$BOARD_CONFIG" network.host_ip)
 
-    local host_ip
-    host_ip=$(yq_read "$BOARD_CONFIG" network.host_ip)
-
-    echo "Checking BDI state..."
-    if ! bdi_send_sequence "$bdi_ip" "$bdi_prompt" 10 "HALT" >/dev/null 2>&1; then
-        echo "  BDI unconfigured (prompt is not '${bdi_prompt}') — loading cnf71xx.cfg via TFTP..."
-        local bdi_load_log="${LOG_DIR}/bdi-config-load.log"
-
-        # Set TFTP host explicitly, then load config
-        bdi_send_command "$bdi_ip" "Core#0>" "HOST ${host_ip}" 15 >"$bdi_load_log" 2>&1 || true
-        bdi_send_command "$bdi_ip" "Core#0>" "CONFIG cnf71xx.cfg" 60 >>"$bdi_load_log" 2>&1 || true
-        sleep 5
-
-        if ! bdi_send_sequence "$bdi_ip" "$bdi_prompt" 10 "HALT" >/dev/null 2>&1; then
-            echo "ERROR: BDI config still not loaded after CONFIG attempt"
-            echo "--- BDI config load output ---"
-            cat "$bdi_load_log" 2>/dev/null || true
-            return 1
-        fi
-        echo "  BDI config loaded successfully"
+    echo "Waiting for BDI to auto-load its config and reach '${bdi_prompt}' (up to 90s)..."
+    echo "  (on a cold-booted TRX the BDI loads cnf71xx.cfg + the .def from TFTP and runs"
+    echo "   target reset + startup — that is what initializes the DDR cleanly)"
+    if ! bdi_send_sequence "$bdi_ip" "$bdi_prompt" 90 >/dev/null 2>&1; then
+        echo "ERROR: BDI did not reach '${bdi_prompt}' within 90s."
+        echo "  COLD power-cycle the TRX so the BDI re-runs its config auto-load (reset + startup),"
+        echo "  confirm TFTP is serving cnf71xx.cfg + cnf71xx-abatron-csrs.def, and that the BDI"
+        echo "  is reachable at ${bdi_ip}, then re-run."
+        return 1
     fi
+    echo "  BDI configured (${bdi_prompt} present)."
 
     local reset_log="${LOG_DIR}/bdi-reset.log"
     local oct_log="${LOG_DIR}/oct-remote-boot.log"
