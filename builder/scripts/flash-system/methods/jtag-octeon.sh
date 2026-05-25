@@ -253,7 +253,7 @@ _phase1_run() {
 
     local reset_log="${LOG_DIR}/bdi-reset.log"
     local oct_log="${LOG_DIR}/oct-remote-boot.log"
-    local oct_attempt=0 max_oct_attempts=1 clock_ok=0
+    local oct_attempt=0 max_oct_attempts=8 clock_ok=0
 
     sudo pkill -9 -f oct-remote-boot 2>/dev/null || true
     sleep 1
@@ -350,6 +350,16 @@ _phase1_run() {
         sudo pkill -9 -f oct-remote-boot 2>/dev/null || true
         REMOTE_BOOT_PID=""
         sleep 3
+
+        if [ "$oct_attempt" -lt "$max_oct_attempts" ]; then
+            echo ""
+            echo ">>> DDR PLL mislocked (this core is a cold-boot lottery for the DDR clock)."
+            echo ">>> COLD power-cycle the TRX now: full power OFF, wait ~5s, power back ON."
+            echo ">>> Leave the BDI/JTAG cable connected — the BDI reloads its config by itself."
+            printf ">>> Press Enter once the TRX is powered back on to retry (attempt %d/%d)... " "$((oct_attempt + 1))" "$max_oct_attempts"
+            read -r _ </dev/tty || true
+            echo ""
+        fi
     done
 
     if [ "$clock_ok" -ne 1 ]; then
