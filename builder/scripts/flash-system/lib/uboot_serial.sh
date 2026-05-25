@@ -35,30 +35,6 @@ uboot_close() {
     fi
 }
 
-uboot_spam_key() {
-    local dev="$1"
-    local key="${2:- }"
-    local count="${3:-300}"
-    local interval="${4:-0.05}"
-
-    (
-        exec 3>"$dev"
-        if [ "$count" -eq 0 ]; then
-            while true; do
-                printf '%s' "$key" >&3
-                sleep "$interval"
-            done
-        else
-            for _ in $(seq 1 "$count"); do
-                printf '%s' "$key" >&3
-                sleep "$interval"
-            done
-        fi
-        exec 3>&-
-    ) &
-    echo $!
-}
-
 uboot_drain() {
     local quiet_secs="${1:-3}"
     local last="" cur stable=0

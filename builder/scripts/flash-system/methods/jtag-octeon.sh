@@ -6,7 +6,6 @@
 # Copyright (c) 2025-present, Ukama Inc.
 
 source "${LIB_DIR}/tftp.sh"
-source "${LIB_DIR}/bdi.sh"
 source "${LIB_DIR}/uboot_serial.sh"
 
 REMOTE_BOOT_PID=""
@@ -199,11 +198,10 @@ _phase1_flash_artifact() {
 }
 
 _phase1_run() {
-    local bdi_ip bdi_prompt serial_dev baud uboot_prompt oct_path oct_board oct_clock
+    local bdi_ip serial_dev baud uboot_prompt oct_path oct_board oct_clock
     local ddr_os ddr_rd gdb_port oct_env_root oct_env_protocol
 
     bdi_ip=$(yq_read "$BOARD_CONFIG" network.bdi_ip)
-    bdi_prompt=$(yq_read "$BOARD_CONFIG" bdi.prompt)
     gdb_port=$(yq_read "$BOARD_CONFIG" bdi.gdb_port)
     serial_dev=$(yq_read "$BOARD_CONFIG" serial.device)
     baud=$(yq_read "$BOARD_CONFIG" serial.baud)
@@ -248,10 +246,6 @@ _phase1_run() {
         echo "WARNING: bdi.config_file not found at $bdi_config_src"
     fi
 
-    local host_ip
-    host_ip=$(yq_read "$BOARD_CONFIG" network.host_ip)
-
-    local reset_log="${LOG_DIR}/bdi-reset.log"
     local oct_log="${LOG_DIR}/oct-remote-boot.log"
     local oct_attempt=0 max_oct_attempts=8 clock_ok=0
 
@@ -484,6 +478,7 @@ _phase2_run() {
     fi
 
     echo "Copying band config (${band}) to ${target_path}..."
+    sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "mkdir -p $(dirname "$target_path")"
     sshpass "${sshpass_args[@]}" scp "${ssh_opts[@]}" "$band_cfg" "${ssh_user}@${trx_ip}:${target_path}"
 }
 
