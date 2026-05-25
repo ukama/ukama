@@ -97,7 +97,14 @@ uboot_wait_for() {
 uboot_send() {
     local dev="$1"
     local command="$2"
-    printf '%s\r\n' "$command" | sudo tee "$dev" >/dev/null
+    local i
+    exec 3>"$dev"
+    for (( i=0; i<${#command}; i++ )); do
+        printf '%s' "${command:$i:1}" >&3
+        sleep 0.02
+    done
+    printf '\r\n' >&3
+    exec 3>&-
 }
 
 uboot_send_and_wait() {
