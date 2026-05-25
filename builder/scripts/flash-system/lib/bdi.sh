@@ -75,7 +75,6 @@ expect {
     local cmd
     for cmd in "$@"; do
         script="${script}
-puts \">>> sending: ${cmd}\"
 send \"${cmd}\r\"
 expect {
     \"${prompt}\" {}
