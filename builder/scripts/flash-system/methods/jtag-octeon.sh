@@ -464,7 +464,7 @@ _phase2_run() {
 
         echo "  [${key}] dd to ${dst}"
         sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" \
-            "dd if=${staging}/${name} of=${dst} bs=1M && rm -f ${staging}/${name}"
+            "dd if=${staging}/${name} of=${dst} bs=1M && sync && rm -f ${staging}/${name}"
     done
 
     if yq_exists "$BOARD_CONFIG" phase2.rc_post_local; then
@@ -480,6 +480,9 @@ _phase2_run() {
     echo "Copying band config (${band}) to ${target_path}..."
     sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "mkdir -p $(dirname "$target_path")"
     sshpass "${sshpass_args[@]}" scp "${ssh_opts[@]}" "$band_cfg" "${ssh_user}@${trx_ip}:${target_path}"
+
+    echo "Syncing all writes to flash before power-cycle..."
+    sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "sync; sync"
 }
 
 method_apply() {
