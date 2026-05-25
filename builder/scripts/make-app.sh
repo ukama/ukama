@@ -22,9 +22,15 @@ build_app() {
     SRC=$1
     CMD=$2
 
-    cd "${SRC}" && \
-        BUILD_MODE=${BUILD_MODE:-debug} ${CMD} && \
-        cd "${CWD}"
+    cd "${SRC}"
+
+    if [ -f Makefile ] || [ -f makefile ]; then
+        BUILD_MODE=${BUILD_MODE:-debug} make clean
+    fi
+
+    BUILD_MODE=${BUILD_MODE:-debug} ${CMD}
+
+    cd "${CWD}"
 }
 
 # copy all the required lib to rootfs
@@ -63,26 +69,26 @@ case "$ACTION" in
         mkdir $2/conf
         ;;
     "build")
-	    build_app $3 "$4"
-	    ;;
+        build_app $3 "$4"
+        ;;
     "cp")
-	    cp $2 $3
-	    ;;
+        cp $2 $3
+        ;;
     "exec")
-	    $2
-	    ;;
+        $2
+        ;;
     "patchelf")
-	    patchelf --set-rpath /lib $2
-	    ;;
+        patchelf --set-rpath /lib $2
+        ;;
     "mkdir")
-	    mkdir -p $2
-	    ;;
+        mkdir -p $2
+        ;;
     "libs")
-	    copy_all_libs $2 $3
-	    ;;
+        copy_all_libs $2 $3
+        ;;
     "clean")
-	    rm -rf $2
-	    ;;
+        rm -rf $2
+        ;;
     "pack")
         mkdir -p "$2/build/pkgs/"
         tar -czf "$2/build/pkgs/$3" "$4" || exit 1
