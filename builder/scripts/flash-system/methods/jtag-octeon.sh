@@ -262,19 +262,12 @@ _phase1_run() {
         oct_attempt=$((oct_attempt + 1))
         echo "=== oct-remote-boot attempt ${oct_attempt}/${max_oct_attempts} ==="
 
-        echo "Telneting BDI at ${bdi_ip}: waiting for ${bdi_prompt} (config auto-load), then go 0x400000..."
-        if ! bdi_send_sequence "$bdi_ip" "$bdi_prompt" 120 "go 0x400000" >"$reset_log" 2>&1; then
-            echo "ERROR: BDI did not reach '${bdi_prompt}' / accept go 0x400000 within 120s."
+        echo "Telneting BDI at ${bdi_ip}: waiting for ${bdi_prompt} (config auto-load halts the core)..."
+        if ! bdi_wait_prompt "$bdi_ip" "$bdi_prompt" 120 >"$reset_log" 2>&1; then
+            echo "ERROR: BDI did not reach '${bdi_prompt}' within 120s."
             echo "  COLD power-cycle the TRX so the BDI auto-loads its config (reset + startup),"
             echo "  and confirm TFTP is serving cnf71xx.cfg + cnf71xx-abatron-csrs.def."
             cat "$reset_log" 2>/dev/null || true
-            return 1
-        fi
-        if grep -qE "Invalid parameter" "$reset_log"; then
-            echo "ERROR: 'go 0x400000' was rejected (Invalid parameter)."
-            echo "  The core is not in a clean halted state — the BDI config must be freshly"
-            echo "  loaded (which halts the core at the reset vector) before 'go'."
-            echo "  Cold power-cycle the TRX so the BDI reloads CNF71XX.cfg, then re-run."
             return 1
         fi
         if grep -qE "Communication test failed|resetting target failed|JTAG exists check failed|Bypass check output: F+$" "$reset_log"; then
@@ -288,7 +281,7 @@ _phase1_run() {
             return 1
         fi
 
-        echo "Letting the core settle after go 0x400000..."
+        echo "Config auto-loaded, core halted at reset vector. Letting it settle..."
         sleep 5
 
         echo "Running oct-remote-boot (OCTEON_ROOT=$oct_env_root, $oct_env_protocol)..."
