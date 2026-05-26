@@ -188,6 +188,15 @@ _phase1_uboot_env() {
 
     local mac_dashed="${trx_mac//:/-}"
 
+    # Compute actual file sizes for bootcbyflash so cp.b copies exactly the right amount.
+    local os_path rd_path os_size rd_size os_size_hex rd_size_hex
+    os_path=$(yq_read "$BOARD_CONFIG" phase1.artifacts.os.path)
+    rd_path=$(yq_read "$BOARD_CONFIG" phase1.artifacts.rd.path)
+    os_size=$(stat -c %s "$os_path" 2>/dev/null || yq_read "$BOARD_CONFIG" phase1.artifacts.os.size)
+    rd_size=$(stat -c %s "$rd_path" 2>/dev/null || yq_read "$BOARD_CONFIG" phase1.artifacts.rd.size)
+    os_size_hex=$(printf '0x%x' "$os_size")
+    rd_size_hex=$(printf '0x%x' "$rd_size")
+
     local restore_errexit=0
     case $- in *e*) restore_errexit=1; set +e ;; esac
 
@@ -199,8 +208,14 @@ _phase1_uboot_env() {
     uboot_send_and_wait "$dev" "setenv cfgloadby flash" "$prompt" 8
     uboot_send_and_wait "$dev" "setenv swloadby flash" "$prompt" 8
     uboot_send_and_wait "$dev" 'setenv i2cinit "i2c dev 0; i2c probe; i2c dev 1; i2c probe"' "$prompt" 8
-    uboot_send_and_wait "$dev" 'setenv bootcmd "run i2cinit; run namedalloc; run bootcby${bootby}"' "$prompt" 8
-    uboot_send_and_wait "$dev" 'setenv bootcbytftp "tftp 0x21000000 lsm_os.gz; gunzip 0x21000000 0x20000000 0x1000000; tftp 0x30800000 lsm_rd.gz; bootoctlinux 0x20000000 coremask=0x7 endbootargs rd_name=initrd mem=512M;"' "$prompt" 8
+    # Add mw64 to bootcmd as a fallback in case preboot doesn't run (e.g. bootdelay=0).
+    uboot_send_and_wait "$dev" 'setenv bootcmd "mw64 0x00011800B0001000 0x0140; run i2cinit; run namedalloc; run bootcby${bootby}"' "$prompt" 8
+    # bootcbytftp uses the actual staged filenames (lsm_os_trx.gz / lsm_rd_trx.gz).
+    uboot_send_and_wait "$dev" 'setenv bootcbytftp "tftp 0x21000000 lsm_os_trx.gz; gunzip 0x21000000 0x20000000 0x1000000; tftp 0x30800000 lsm_rd_trx.gz; bootoctlinux 0x20000000 coremask=0x7 endbootargs rd_name=initrd mem=512M;"' "$prompt" 8
+    # bootcbyflash: copy OS + RD from flash (where Phase 1 wrote them) and boot Linux.
+    local bootcbyflash_cmd
+    bootcbyflash_cmd="setenv bootcbyflash \"cp.b 0x17E20000 0x21000000 ${os_size_hex}; gunzip 0x21000000 0x20000000 0x1000000; cp.b 0x18320000 0x30800000 ${rd_size_hex}; bootoctlinux 0x20000000 coremask=0x7 endbootargs rd_name=initrd mem=512M;\""
+    uboot_send_and_wait "$dev" "$bootcbyflash_cmd" "$prompt" 8
     uboot_send_and_wait "$dev" 'setenv namedalloc "namedalloc dsp-dump 0x400000 0x7f4D0000; namedalloc cazac 0x630000 0x7f8D0000; namedalloc cpu-dsp-if 0x100000 0x7ff00000; namedalloc dsp-log-buf 0x4000000 0x80000000; namedalloc initrd 0x2800000 0x30800000;"' "$prompt" 8
     uboot_send_and_wait "$dev" "setenv mk_ubootenv 1" "$prompt" 8
     # SGMII autoneg must be enabled BEFORE Linux boots, otherwise octeth0 stays down.
