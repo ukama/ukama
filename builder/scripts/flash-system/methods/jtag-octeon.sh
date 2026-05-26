@@ -285,6 +285,32 @@ _phase1_run() {
         echo "WARNING: bdi.config_file not found at $bdi_config_src"
     fi
 
+    # If the BDI was power-cycled while no TFTP server was running, it lands at
+    # Core#0> with no config loaded (cnf71xx.cfg failed). We must push the config
+    # via telnet now that our TFTP server is up, otherwise GDB port 2001 stays
+    # closed and oct-remote-boot can never connect.
+    local host_ip
+    host_ip=$(yq_read "$BOARD_CONFIG" network.host_ip)
+    echo "Ensuring BDI config is loaded (telnet -> CONFIG cnf71xx.cfg $host_ip)..."
+    if ! expect -c "
+        set timeout 15
+        spawn telnet $bdi_ip
+        expect {
+            \"Core#0>\" {}
+            \"cnMIPS#0>\" { puts \"BDI already at cnMIPS#0> — config loaded.\"; exit 0 }
+            timeout { puts \"BDI telnet timeout\"; exit 1 }
+        }
+        send \"CONFIG cnf71xx.cfg $host_ip\r\"
+        expect {
+            \"cnMIPS#0>\" { puts \"BDI config loaded successfully.\"; exit 0 }
+            \"Core#0>\"   { puts \"BDI still at Core#0> after CONFIG.\"; exit 1 }
+            timeout       { puts \"BDI config load timeout\"; exit 1 }
+        }
+    " 2>/dev/null; then
+        echo "WARNING: Could not confirm BDI config loaded. Will retry via oct-remote-boot anyway."
+    fi
+    sleep 3
+
     local oct_log="${LOG_DIR}/oct-remote-boot.log"
     local oct_attempt=0 max_oct_attempts=8 clock_ok=0
 
