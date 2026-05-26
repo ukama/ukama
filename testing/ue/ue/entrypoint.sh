@@ -9,8 +9,13 @@
 set -euo pipefail
 
 mkdir -p /dev/net
+
 if [ ! -c /dev/net/tun ]; then
     mknod /dev/net/tun c 10 200
+fi
+
+if [ "$#" -gt 0 ]; then
+    exec "$@"
 fi
 
 exec /opt/ukama/ue-agent/ue-agent

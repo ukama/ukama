@@ -8,12 +8,12 @@
 
 set -euo pipefail
 
-: "${TOWER_IP:?TOWER_IP required}"
+TOWER_IP="${TOWER_IP:-127.0.0.1}"
 
-EPCEMU_PORT="${EPCEMU_PORT:-18092}"
-PCRF_PORT="${PCRF_PORT:-18090}"
-INITNET_PORT="${INITNET_PORT:-18091}"
-VNODE_NAME="${VNODE_NAME:-}"
+EPCEMU_PORT="${EPCEMU_PORT:-18028}"
+PCRF_PORT="${PCRF_PORT:-18030}"
+INITNET_PORT="${INITNET_PORT:-18026}"
+VNODE_NAME="${VNODE_NAME:-ukama-vnode}"
 
 json_or_raw() {
     if command -v jq >/dev/null 2>&1; then
