@@ -289,15 +289,51 @@ _phase1_run() {
     local oct_attempt=0 max_oct_attempts=8 clock_ok=0
 
     _oct_stop() {
+        # Graceful termination first
         sudo pkill -TERM -f oct-remote-boot 2>/dev/null || true
         local kw=0
         while [ "$kw" -lt 10 ] && pgrep -f oct-remote-boot >/dev/null 2>&1; do
             sleep 1
             kw=$((kw + 1))
         done
+        # Hard kill — also mop up any SDK children that hold resources
         sudo pkill -9 -f oct-remote-boot 2>/dev/null || true
+        sudo pkill -9 -f 'oct-remote-' 2>/dev/null || true
+        sudo pkill -9 -f 'oct-pci-' 2>/dev/null || true
         REMOTE_BOOT_PID=""
         sleep 2
+    }
+
+    _bdi_clear_gdb_slot() {
+        # The BDI has a single GDB slot. If a previous oct-remote-boot died
+        # uncleanly (SIGKILL) the BDI may not notice the TCP half-close and
+        # keeps refusing new connections. Try to nudge it by sending a GDB
+        # detach packet and/or connecting briefly to force a state change.
+        local host="$1"
+        local port="${2:-2001}"
+        # Send a raw GDB detach packet ($D#44) — best-effort
+        printf '+$D#44' | timeout 2 nc -N "$host" "$port" 2>/dev/null || true
+        sleep 1
+        # Quick connect/disconnect to provoke RST handling
+        timeout 1 bash -c "exec 3<>/dev/tcp/$host/$port; exec 3>&-" 2>/dev/null || true
+        sleep 1
+    }
+
+    _wait_for_bdi_gdb() {
+        local host="$1"
+        local port="${2:-2001}"
+        local w=0
+        echo "  Probing BDI GDB port ${host}:${port}..."
+        while [ "$w" -lt 60 ]; do
+            if nc -z "$host" "$port" 2>/dev/null; then
+                echo "  GDB port is open."
+                return 0
+            fi
+            sleep 1
+            w=$((w + 1))
+        done
+        echo "  GDB port still closed after 60s — BDI may still be booting or crashed."
+        return 1
     }
 
     _oct_stop
@@ -306,7 +342,14 @@ _phase1_run() {
         oct_attempt=$((oct_attempt + 1))
         echo "=== oct-remote-boot attempt ${oct_attempt}/${max_oct_attempts} ==="
 
-        echo "Running oct-remote-boot, no telnet (OCTEON_ROOT=$oct_env_root, $oct_env_protocol)..."
+        # Make sure the BDI GDB port is actually open before launching oct-remote-boot.
+        # If the BDI was power-cycled it can take ~30-60s to load its config and open 2001.
+        if ! _wait_for_bdi_gdb "$bdi_ip" "$gdb_port"; then
+            echo "  BDI GDB port not reachable. If the BDI was just power-cycled, wait longer."
+            echo "  If this persists, power-cycle the BDI box itself."
+        fi
+
+        echo "Running oct-remote-boot (OCTEON_ROOT=$oct_env_root, $oct_env_protocol)..."
         : > "$oct_log"
         sudo stdbuf -oL -eL env OCTEON_ROOT="$oct_env_root" OCTEON_REMOTE_PROTOCOL="$oct_env_protocol" \
             "$oct_path" --board="$oct_board" --ddr_clock_hz="$oct_clock" >"$oct_log" 2>&1 &
@@ -337,9 +380,11 @@ _phase1_run() {
         _oct_stop
 
         if [ -n "$refused" ]; then
-            echo "  BDI GDB port 2001 refused the connection — its single GDB slot was still held"
-            echo "  by a previous session. Letting it clear, then retrying (no power-cycle needed)..."
-            sleep 8
+            echo "  BDI GDB port 2001 refused — single slot held by stale session."
+            echo "  Trying to clear the slot (GDB detach + TCP probe)..."
+            _bdi_clear_gdb_slot "$bdi_ip" "$gdb_port"
+            echo "  Waiting 15s for BDI to settle before retry..."
+            sleep 15
             continue
         fi
 
