@@ -32,6 +32,33 @@ _jtag_octeon_cleanup() {
     [ -n "$TFTP_STAGE_DIR" ] && sudo rm -rf "$TFTP_STAGE_DIR"
 }
 
+# Send a single command to the BDI via telnet and wait for its prompt.
+# Usage: bdi_telnet_cmd <host> <command>
+bdi_telnet_cmd() {
+    local host="$1"
+    local cmd="$2"
+    if ! command -v expect >/dev/null 2>&1; then
+        echo "WARNING: expect not installed — cannot send BDI command '$cmd'" >&2
+        return 1
+    fi
+    expect -c "
+        set timeout 8
+        spawn telnet $host
+        expect {
+            \"Core#0>\" {}
+            \"cnMIPS#0>\" {}
+            timeout {
+                puts \"BDI telnet: timeout waiting for prompt\"
+                exit 1
+            }
+        }
+        send \"$cmd\r\"
+        sleep 1
+        send \"quit\r\"
+        expect eof
+    " 2>/dev/null
+}
+
 method_validate() {
     local fail=0
     local bdi_ip oct_path serial_dev band
@@ -346,6 +373,31 @@ _phase1_run() {
     sudo tail -n +1 -F "$oct_log" 2>/dev/null &
     OCT_TAIL_PID=$!
 
+    # oct-remote-boot with GDB protocol stages the bootloader but sometimes fails
+    # to start the core via GDB continue. The proven manual fix is to send
+    # 'go 0x400000' via BDI telnet once the bootloader stub is written.
+    echo "Waiting for oct-remote-boot to finish staging bootloader..."
+    local stub_wait=0
+    while [ "$stub_wait" -lt 30 ]; do
+        if grep -a "Done writing boot stub" "$oct_log" 2>/dev/null | head -1 >/dev/null; then
+            break
+        fi
+        if grep -a "Starting core 0" "$oct_log" 2>/dev/null | head -1 >/dev/null; then
+            break
+        fi
+        if ! kill -0 "$REMOTE_BOOT_PID" 2>/dev/null; then
+            break
+        fi
+        sleep 1
+        stub_wait=$((stub_wait + 1))
+    done
+
+    echo "Sending 'go 0x400000' via BDI telnet to start core..."
+    if ! bdi_telnet_cmd "$bdi_ip" "go 0x400000"; then
+        echo "WARNING: BDI telnet command failed — core may already be running, or BDI not at prompt."
+        echo "  Continuing anyway; if u-boot does not appear on serial, the BDI may need a reset."
+    fi
+
     echo "Opening serial console at $serial_dev ($baud)..."
     uboot_open "$serial_dev" "$baud" "${LOG_DIR}/uboot.log"
 
@@ -472,16 +524,18 @@ _phase2_run() {
         sshpass "${sshpass_args[@]}" scp "${ssh_opts[@]}" "$src" "${ssh_user}@${trx_ip}:${staging}/${name}"
 
         echo "  [${key}] dd to ${dst}"
+        # bs=1 is REQUIRED: the MTD CFI driver on the TRX Linux 3.4 kernel silently
+        # corrupts flash with large write() buffers (e.g. bs=1M). Proven manual baseline.
         sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" \
-            "dd if=${staging}/${name} of=${dst} bs=1M && sync && rm -f ${staging}/${name}"
+            "dd if=${staging}/${name} of=${dst} bs=1 && rm -f ${staging}/${name}"
     done
 
-    echo "Syncing all writes to flash before power-cycle..."
-    sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "sync; sync"
-
     echo ""
-    echo "All 8 images written. rc_post.local, init files and band config are baked into the"
-    echo "images, so nothing else is copied. Power-cycle the TRX to boot the new flash."
+    echo "All 8 images written. MTD char devices bypass the Linux page cache, so 'sync' is"
+    echo "irrelevant. Power-cycle the TRX to boot the new flash."
+    echo ""
+    echo "NOTE: If the board was previously bricked by a bs=1M run, this reflash with bs=1"
+    echo "will restore it. The power-cycle after dd is what commits the data to NOR."
 }
 
 method_apply() {
