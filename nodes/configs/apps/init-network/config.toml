@@ -8,7 +8,7 @@ cmd_timeout_sec = 10
 [ovs]
 bridge = "br0"
 openflow = "OpenFlow15"
-management_dir = "/usr/local/var/run/openvswitch"
+management_dir = "/var/run/openvswitch"
 run_dir = "/var/run/openvswitch"
 db_dir = "/etc/openvswitch"
 schema = "/usr/share/openvswitch/vswitch.ovsschema"

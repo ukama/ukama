@@ -13,6 +13,8 @@
 #include "http_client.h"
 #include "init_network.h"
 
+#define INIT_NETWORK_RECONCILE_TIMEOUT_SEC 30
+
 static int json_bool_path(JsonObj *root,
                           const char *parent,
                           const char *key,
@@ -87,6 +89,10 @@ int init_network_probe(EpcemuConfig *config, EpcemuStatus *status) {
         return USYS_FALSE;
     }
 
+    /*
+     * In this manifest, init-network runs in boot before EPCEMU.
+     * Therefore this should already be ready by the time EPCEMU starts.
+     */
     ready = json_object_get(root, "ready");
     if (!json_is_true(ready)) {
         json_decref(root);
@@ -148,7 +154,12 @@ int init_network_reconcile(EpcemuConfig *config, EpcemuStatus *status) {
 
     snprintf(url, sizeof(url), "%s/v1/reconcile", config->initNetworkUrl);
 
-    if (!http_send_json("POST", url, NULL, &root, &code)) {
+    if (!http_send_json_timeout("POST",
+                                url,
+                                NULL,
+                                &root,
+                                &code,
+                                INIT_NETWORK_RECONCILE_TIMEOUT_SEC)) {
         status_fail(status, "failed to call init-network reconcile");
         return USYS_FALSE;
     }
