@@ -33,6 +33,8 @@ tftp_serve() {
     fi
 
     TFTP_ROOT="$serve_dir"
+    # --secure requires the directory to be owned by root for chroot()
+    sudo chown root:root "$serve_dir"
     sudo /usr/sbin/in.tftpd -L --secure --user root "$serve_dir" &
     TFTP_PID=$!
     sleep 1
