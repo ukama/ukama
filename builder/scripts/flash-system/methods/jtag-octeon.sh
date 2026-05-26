@@ -60,6 +60,18 @@ method_validate() {
         fail=1
     else
         echo "  [ OK ] serial device: $serial_dev"
+        local serial_holder=""
+        if command -v lsof >/dev/null 2>&1; then
+            serial_holder=$(lsof -t "$serial_dev" 2>/dev/null | head -1 || true)
+        elif command -v fuser >/dev/null 2>&1; then
+            serial_holder=$(fuser "$serial_dev" 2>/dev/null | tr -cd '0-9' || true)
+        fi
+        if [ -n "$serial_holder" ]; then
+            echo "  [FAIL] $serial_dev is held by another process (PID ${serial_holder})."
+            echo "         Close any serial terminal (PuTTY / screen / minicom) on it before flashing."
+            echo "         Phase 1 needs exclusive serial access, or it cannot see the u-boot prompt."
+            fail=1
+        fi
     fi
 
     local key
