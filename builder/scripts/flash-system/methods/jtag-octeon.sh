@@ -291,24 +291,53 @@ _phase1_run() {
     # closed and oct-remote-boot can never connect.
     local host_ip
     host_ip=$(yq_read "$BOARD_CONFIG" network.host_ip)
-    echo "Ensuring BDI config is loaded (telnet -> CONFIG cnf71xx.cfg $host_ip)..."
-    if ! expect -c "
-        set timeout 15
-        spawn telnet $bdi_ip
-        expect {
-            \"Core#0>\" {}
-            \"cnMIPS#0>\" { puts \"BDI already at cnMIPS#0> — config loaded.\"; exit 0 }
-            timeout { puts \"BDI telnet timeout\"; exit 1 }
-        }
-        send \"CONFIG cnf71xx.cfg $host_ip\r\"
-        expect {
-            \"cnMIPS#0>\" { puts \"BDI config loaded successfully.\"; exit 0 }
-            \"Core#0>\"   { puts \"BDI still at Core#0> after CONFIG.\"; exit 1 }
-            timeout       { puts \"BDI config load timeout\"; exit 1 }
-        }
-    " 2>/dev/null; then
-        echo "WARNING: Could not confirm BDI config loaded. Will retry via oct-remote-boot anyway."
+
+    # Quick self-test: can we TFTP the config file from ourselves?
+    if command -v tftp >/dev/null 2>&1; then
+        if ! tftp "$host_ip" -c get cnf71xx.cfg /dev/null 2>/dev/null; then
+            echo "WARNING: Local TFTP self-test failed — BDI may also fail to download cnf71xx.cfg"
+            echo "  Check that in.tftpd is serving from $TFTP_STAGE_DIR"
+        fi
     fi
+
+    echo "Ensuring BDI config is loaded (telnet -> CONFIG cnf71xx.cfg $host_ip)..."
+    local bdi_cfg_ok=0 bdi_cfg_try=0
+    while [ "$bdi_cfg_try" -lt 4 ] && [ "$bdi_cfg_ok" -ne 1 ]; do
+        bdi_cfg_try=$((bdi_cfg_try + 1))
+        echo "  BDI config load attempt $bdi_cfg_try/4..."
+        if expect -c "
+            set timeout 25
+            spawn telnet $bdi_ip
+            expect {
+                \"Core#0>\" {}
+                \"cnMIPS#0>\" { puts \"BDI already at cnMIPS#0> — config loaded.\"; exit 0 }
+                timeout { puts \"BDI telnet timeout (is BDI powered on?)\"; exit 1 }
+            }
+            send \"CONFIG cnf71xx.cfg $host_ip\r\"
+            expect {
+                \"loading configuration passed\" { puts \"Config load succeeded.\"; exit 0 }
+                \"cannot open\" { puts \"Config load failed (file not found on TFTP).\"; exit 1 }
+                \"Core#0>\" { puts \"Config load failed (back at Core#0>).\"; exit 1 }
+                timeout { puts \"Config load timeout (TFTP slow or unreachable).\"; exit 1 }
+            }
+        " 2>/dev/null; then
+            bdi_cfg_ok=1
+            break
+        fi
+        echo "  BDI config load failed, waiting 5s before retry..."
+        sleep 5
+    done
+
+    if [ "$bdi_cfg_ok" -ne 1 ]; then
+        echo "ERROR: BDI config could not be loaded after $bdi_cfg_try attempts."
+        echo "  Common causes:"
+        echo "    1. TFTP server not reachable from BDI (firewall, wrong host IP)"
+        echo "    2. cnf71xx.cfg not staged in TFTP root ($TFTP_STAGE_DIR)"
+        echo "    3. BDI network settings wrong — try manual telnet and 'CONFIG cnf71xx.cfg $host_ip'"
+        echo "    4. BDI firmware needs a power-cycle with TFTP already running"
+        return 1
+    fi
+    echo "  BDI config loaded."
     sleep 3
 
     local oct_log="${LOG_DIR}/oct-remote-boot.log"
