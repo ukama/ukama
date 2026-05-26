@@ -323,8 +323,30 @@ _phase1_run() {
         echo "  Please manually telnet to the BDI and run: CONFIG cnf71xx.cfg $host_ip"
         return 1
     fi
-    echo "  BDI config loaded."
-    sleep 2
+    echo "  BDI config loaded. Waiting for BDI to reboot and reach cnMIPS#0>..."
+    local bdi_ready=0 bdi_wait=0
+    while [ "$bdi_wait" -lt 60 ]; do
+        if expect -c "
+            set timeout 5
+            spawn telnet $bdi_ip
+            expect {
+                \"cnMIPS#0>\" { puts \"BDI ready.\"; exit 0 }
+                \"Core#0>\"   { puts \"BDI at Core#0> — config lost on reboot.\"; exit 1 }
+                timeout       { exit 1 }
+            }
+        " 2>/dev/null; then
+            bdi_ready=1
+            break
+        fi
+        sleep 2
+        bdi_wait=$((bdi_wait + 2))
+    done
+
+    if [ "$bdi_ready" -ne 1 ]; then
+        echo "ERROR: BDI did not reach cnMIPS#0> within 60s after config load."
+        echo "  The BDI may have rebooted and failed to auto-load. Try power-cycling it."
+        return 1
+    fi
 
     # --- Phase 1 core bring-up loop ---
     # Supreeth's proven manual flow:
