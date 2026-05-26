@@ -203,6 +203,9 @@ _phase1_uboot_env() {
     uboot_send_and_wait "$dev" 'setenv bootcbytftp "tftp 0x21000000 lsm_os.gz; gunzip 0x21000000 0x20000000 0x1000000; tftp 0x30800000 lsm_rd.gz; bootoctlinux 0x20000000 coremask=0x7 endbootargs rd_name=initrd mem=512M;"' "$prompt" 8
     uboot_send_and_wait "$dev" 'setenv namedalloc "namedalloc dsp-dump 0x400000 0x7f4D0000; namedalloc cazac 0x630000 0x7f8D0000; namedalloc cpu-dsp-if 0x100000 0x7ff00000; namedalloc dsp-log-buf 0x4000000 0x80000000; namedalloc initrd 0x2800000 0x30800000;"' "$prompt" 8
     uboot_send_and_wait "$dev" "setenv mk_ubootenv 1" "$prompt" 8
+    # SGMII autoneg must be enabled BEFORE Linux boots, otherwise octeth0 stays down.
+    # u-boot's 'preboot' runs automatically before bootcmd.
+    uboot_send_and_wait "$dev" "setenv preboot 'mw64 0x00011800B0001000 0x0140'" "$prompt" 8
 
     [ "$restore_errexit" = "1" ] && set -e
     return 0
@@ -543,11 +546,66 @@ _phase2_run() {
     done
 
     echo ""
-    echo "All 8 images written. MTD char devices bypass the Linux page cache, so 'sync' is"
-    echo "irrelevant. Power-cycle the TRX to boot the new flash."
+    echo "All 8 images written. Next: power-cycle the TRX to boot from the new flash."
+}
+
+_phase3_run() {
+    local trx_ip ssh_user
+    trx_ip=$(yq_read "$BOARD_CONFIG" network.trx_ip)
+    ssh_user=$(yq_read "$BOARD_CONFIG" phase2.ssh_user)
+
+    local sshpass_args=(-p "$TRX_ROOT_PASSWORD")
+    local ssh_opts=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR)
+
+    echo "Waiting for TRX SSH at ${trx_ip} (after 2nd power-cycle)..."
+    local elapsed=0
+    while [ "$elapsed" -lt 120 ]; do
+        if sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" true 2>/dev/null; then
+            break
+        fi
+        sleep 2
+        elapsed=$((elapsed + 2))
+    done
+    if [ "$elapsed" -ge 120 ]; then
+        echo "ERROR: TRX not reachable via SSH within 120s"
+        return 1
+    fi
+    echo "SSH up."
+
+    # Copy band config
+    local band_default band_configs_dir band_cfg_src band_cfg_target
+    band_default=$(yq_read "$BOARD_CONFIG" band.default)
+    band_configs_dir=$(yq_read "$BOARD_CONFIG" band.configs_dir)
+    band_cfg_src="${band_configs_dir}/${band_default}.cfg"
+    band_cfg_target=$(yq_read "$BOARD_CONFIG" band.target_path)
+
+    if [ -f "$band_cfg_src" ]; then
+        echo "Installing band config (${band_cfg_src} -> ${band_cfg_target})..."
+        sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "mkdir -p $(dirname "$band_cfg_target")"
+        sshpass "${sshpass_args[@]}" scp "${ssh_opts[@]}" "$band_cfg_src" "${ssh_user}@${trx_ip}:${band_cfg_target}"
+    else
+        echo "WARNING: band config source not found at ${band_cfg_src}"
+    fi
+
+    # Create rc_post.local for ethernet persistence in Linux
+    local rc_post_target
+    rc_post_target=$(yq_read "$BOARD_CONFIG" phase2.rc_post_local)
+    echo "Installing rc_post.local (${rc_post_target}) for SGMII autoneg persistence..."
+    sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" \
+        "mkdir -p /mnt/app && cat > ${rc_post_target} << 'EOF'
+#!/bin/sh
+# Re-enable SGMII autoneg after Linux boot
+devmem 0x00011800B0001000 64 0x0140 2>/dev/null || true
+EOF
+chmod +x ${rc_post_target}"
+
     echo ""
-    echo "NOTE: If the board was previously bricked by a bs=1M run, this reflash with bs=1"
-    echo "will restore it. The power-cycle after dd is what commits the data to NOR."
+    echo "Phase 3 complete. Config files installed."
+    echo "  Band config : ${band_cfg_target}"
+    echo "  Ethernet fix: ${rc_post_target}"
+    echo ""
+    echo "The TRX should now boot with working ethernet and a valid band config."
+    echo "If you power-cycle again, both settings will persist."
 }
 
 method_apply() {
@@ -557,19 +615,30 @@ method_apply() {
     _phase1_run
 
     echo ""
-    echo "=== Manual pause ==="
+    echo "=== Manual pause 1 ==="
     echo "Please:"
     echo "  1. Power OFF the TRX"
     echo "  2. Disconnect the BDI / JTAG cable  (REQUIRED — while connected the BDI holds the"
     echo "     CPU in reset, so the board will NOT finish booting from flash)"
     echo "  3. Power ON the TRX"
-    echo "  4. Wait until it boots to Linux (should be reachable at $(yq_read "$BOARD_CONFIG" network.trx_ip))"
+    echo "  4. Wait until it boots to Linux (ethernet is auto-enabled by u-boot preboot)"
     echo ""
     read -rp "Press ENTER when ready: " _
 
     echo ""
     echo "=== Phase 2: SSH + dd image flash ==="
     _phase2_run
+
+    echo ""
+    echo "=== Manual pause 2 ==="
+    echo "Please power-cycle the TRX now to boot from the newly flashed images."
+    echo "After power-cycle, ethernet will come up automatically (preboot mw64)."
+    echo ""
+    read -rp "Press ENTER when ready: " _
+
+    echo ""
+    echo "=== Phase 3: SSH config copy ==="
+    _phase3_run
 }
 
 method_verify() {
