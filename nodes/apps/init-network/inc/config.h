@@ -48,27 +48,31 @@
 #define DEF_EPC_SCTP_ADDR               "10.102.81.3"
 #define DEF_EPC_GTPU_ADDR               "10.102.81.75"
 
-#define DEF_EXTERNAL_IF                 "eth0"
+#define DEF_EXT_IF                      "eth0"
+#define DEF_FORWARD_ENABLE              true
+#define DEF_NAT_ENABLE                  true
+#define DEF_POLICY_ROUTING_ENABLE       true
+#define DEF_TUN_TABLE                   2000
+#define DEF_BRIDGE_TABLE                1000
 
 #define DEF_GATEWAY_ENABLE              true
 #define DEF_GATEWAY_MODE                "root"
 #define DEF_GATEWAY_NAME                "ukama-gw"
 #define DEF_GATEWAY_BRIDGE_IF           "gw-br"
-#define DEF_GATEWAY_NAMESPACE_IF        "gw0"
+#define DEF_GATEWAY_NS_IF               "gw0"
 #define DEF_GATEWAY_ADDR                "10.10.10.11/24"
 #define DEF_GATEWAY_IP                  "10.10.10.11"
 
-#define DEF_TUN_TABLE                   2000
-#define DEF_BRIDGE_TABLE                1000
-#define DEF_DEFAULT_DROP                true
+#define EP_BS                           "/"
+#define REST_API_VERSION                "v1"
+#define URL_PREFIX                      EP_BS REST_API_VERSION
+#define API_RES_EP(RES)                 EP_BS RES
 
 typedef struct {
 
-    char *configFile;
-    char *logLevel;
-
-    int servicePort;
-    int cmdTimeoutSec;
+    char *serviceName;
+    int  servicePort;
+    int  cmdTimeoutSec;
 
     char *bridge;
     char *openflow;
@@ -83,19 +87,25 @@ typedef struct {
     char *bridgeSubnet;
 
     char *ueCidr;
+    bool defaultDrop;
 
     bool tunEnable;
     char *tunIf;
     char *tunPrimaryCidr;
     char *tunExtraCidrs[INIT_NETWORK_MAX_EXTRA_IPS];
-    int tunExtraCount;
+    int  tunExtraCount;
 
     bool epcEnable;
-    char *epcSctpIf;
+    char *epcIf;
     char *epcSctpAddr;
     char *epcGtpuAddr;
 
     char *externalIf;
+    bool enableIpForward;
+    bool enableNat;
+    bool enablePolicyRouting;
+    int  tunTable;
+    int  bridgeTable;
 
     bool gatewayEnable;
     char *gatewayMode;
@@ -105,15 +115,10 @@ typedef struct {
     char *gatewayAddr;
     char *gatewayIp;
 
-    int tunTable;
-    int bridgeTable;
-
-    bool defaultDrop;
-
 } Config;
 
-Config *config_init(void);
+void config_set_defaults(Config *config);
+bool config_load_from_file(Config *config, const char *path);
 void config_free(Config *config);
-bool config_load(Config *config, const char *path);
 
 #endif /* CONFIG_H_ */
