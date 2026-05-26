@@ -86,33 +86,6 @@ csv_field() {
     local row="$2"
     local field="$3"
 
-    printf '%s\n' "$row" | awk -F',' -v field="$field" '
-        function clean(s) {
-            gsub(/\r/, "", s)
-            return s
-        }
-
-        BEGIN {
-            n = split(field, f, "\034")
-        }
-
-        {
-            for (i = 1; i <= NF; i++) {
-                value[i] = clean($i)
-            }
-        }
-
-        END {
-            print value[1]
-        }
-    '
-}
-
-csv_field_by_name() {
-    local csv="$1"
-    local row="$2"
-    local field="$3"
-
     awk -F',' -v row="$row" -v field="$field" '
         function clean(s) {
             gsub(/\r/, "", s)

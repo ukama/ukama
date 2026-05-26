@@ -13,23 +13,54 @@ source "$SCRIPT_DIR/csv-lib.sh"
 
 CSV=""
 IMSI=""
-ALLOW_LOCAL_MEDIA="${ALLOW_LOCAL_MEDIA:-false}"
+
+UE_IMAGE="${UE_IMAGE:-ukama/ue:dev}"
+UE_NETWORK_MODE="${UE_NETWORK_MODE:-container}"
+VNODE_NAME="${VNODE_NAME:-ukama-vnode}"
+
+TOWER_IP="${TOWER_IP:-127.0.0.1}"
+MEDIA_IP="${MEDIA_IP:-127.0.0.1}"
+
+EPCEMU_PORT="${EPCEMU_PORT:-18028}"
+EPCEMU_DATA_PORT="${EPCEMU_DATA_PORT:-18029}"
+PCRF_PORT="${PCRF_PORT:-18030}"
+
+UE_DATA_HOST="${UE_DATA_HOST:-127.0.0.1}"
+UE_BASE_PORT="${UE_BASE_PORT:-41000}"
+UE_TUN="${UE_TUN:-tun0}"
+UE_DETACH_ON_EXIT="${UE_DETACH_ON_EXIT:-1}"
+
+ALLOW_LOCAL_MEDIA="${ALLOW_LOCAL_MEDIA:-true}"
 
 usage() {
     cat <<USAGE
 Usage: $0 --csv <csv-file> --imsi <imsi>
 
 Environment:
-  TOWER_IP          virtualnode/API IP or host-published address
-  MEDIA_IP          external media/sink server IP
-  UE_IMAGE          default: ukama/ue:dev
-  EPCEMU_PORT       default: 18092
-  EPCEMU_DATA_PORT  default: 18110
-  UE_DATA_HOST      host IP reachable by EPCEMU for UE UDP return path
-  UE_BASE_PORT      default: 41000
+  UE_IMAGE             UE image tag. Default: ukama/ue:dev
+  UE_NETWORK_MODE      container|podman. Default: container
+  VNODE_NAME           Virtual-node container name. Default: ukama-vnode
 
-MEDIA_IP must be external for real E2E. Localhost/private same-host media is
-blocked unless ALLOW_LOCAL_MEDIA=true is set for temporary lab testing.
+  TOWER_IP             Tower/API IP. Default: 127.0.0.1
+  MEDIA_IP             Media target IP. Default: 127.0.0.1
+
+  EPCEMU_PORT          Default: 18028
+  EPCEMU_DATA_PORT     Default: 18029
+  PCRF_PORT            Default: 18030
+
+  UE_DATA_HOST         UE UDP return host. Default: 127.0.0.1
+  UE_BASE_PORT         Default: 41000
+  UE_TUN               Default: tun0
+  UE_DETACH_ON_EXIT    Default: 1
+
+  ALLOW_LOCAL_MEDIA    Default: true for lab mode
+
+Examples:
+  $0 --csv testing/ue/csv/SimPool.with-imsi.csv --imsi 001010000000001
+
+  UE_IMAGE=localhost/ukama/ue:dev \\
+  VNODE_NAME=ukama-vnode \\
+  $0 --csv testing/ue/csv/SimPool.with-imsi.csv --imsi 001010000000001
 USAGE
 }
 
@@ -70,21 +101,12 @@ done
 
 : "${CSV:?--csv required}"
 : "${IMSI:?--imsi required}"
-: "${TOWER_IP:?TOWER_IP required}"
-: "${MEDIA_IP:?MEDIA_IP required}"
 
 if is_local_media_ip "$MEDIA_IP" && [[ "$ALLOW_LOCAL_MEDIA" != "true" ]]; then
     echo "MEDIA_IP=$MEDIA_IP is local; real E2E requires external media" >&2
     echo "set ALLOW_LOCAL_MEDIA=true only for temporary lab testing" >&2
     exit 1
 fi
-
-UE_IMAGE="${UE_IMAGE:-ukama/ue:dev}"
-EPCEMU_PORT="${EPCEMU_PORT:-18092}"
-EPCEMU_DATA_PORT="${EPCEMU_DATA_PORT:-18110}"
-UE_DATA_HOST="${UE_DATA_HOST:-$(hostname -I | awk '{print $1}') }"
-UE_DATA_HOST="${UE_DATA_HOST%% }"
-BASE_PORT="${UE_BASE_PORT:-41000}"
 
 row="$(csv_row_by_imsi "$CSV" "$IMSI")"
 if [[ -z "$row" ]]; then
@@ -95,25 +117,53 @@ fi
 ICCID="$(csv_field "$CSV" "$row" ICCID)"
 UE_IP="$(csv_field "$CSV" "$row" UE_IP)"
 APN="$(csv_field "$CSV" "$row" APN)"
+
 idx="${IMSI: -3}"
-UE_DATA_PORT=$((BASE_PORT + 10#$idx))
+UE_DATA_PORT=$((UE_BASE_PORT + 10#$idx))
 NAME="ue-${IMSI}"
 
 podman rm -f "$NAME" >/dev/null 2>&1 || true
-podman run -d --name "$NAME" \
-    --cap-add NET_ADMIN \
-    --device /dev/net/tun \
-    -p "${UE_DATA_PORT}:${UE_DATA_PORT}/udp" \
-    -e UE_IMSI="$IMSI" \
-    -e UE_ICCID="$ICCID" \
-    -e UE_IP="${UE_IP}/22" \
-    -e UE_APN="$APN" \
-    -e EPCEMU_URL="http://${TOWER_IP}:${EPCEMU_PORT}" \
-    -e EPCEMU_DATA_HOST="$TOWER_IP" \
-    -e EPCEMU_DATA_PORT="$EPCEMU_DATA_PORT" \
-    -e UE_DATA_HOST="$UE_DATA_HOST" \
-    -e UE_DATA_PORT="$UE_DATA_PORT" \
-    -e MEDIA_IP="$MEDIA_IP" \
-    "$UE_IMAGE"
 
-echo "$NAME $IMSI $ICCID $UE_IP $UE_DATA_HOST:$UE_DATA_PORT"
+if [[ "$UE_NETWORK_MODE" == "container" ]]; then
+    podman run -d \
+        --name "$NAME" \
+        --network "container:${VNODE_NAME}" \
+        --privileged \
+        --device /dev/net/tun \
+        -e UE_IMSI="$IMSI" \
+        -e UE_ICCID="$ICCID" \
+        -e UE_IP="${UE_IP}/22" \
+        -e UE_APN="$APN" \
+        -e UE_TUN="$UE_TUN" \
+        -e EPCEMU_URL="http://127.0.0.1:${EPCEMU_PORT}" \
+        -e EPCEMU_DATA_HOST="127.0.0.1" \
+        -e EPCEMU_DATA_PORT="$EPCEMU_DATA_PORT" \
+        -e UE_DATA_HOST="127.0.0.1" \
+        -e UE_DATA_PORT="$UE_DATA_PORT" \
+        -e PCRF_URL="http://127.0.0.1:${PCRF_PORT}" \
+        -e MEDIA_IP="$MEDIA_IP" \
+        -e UE_DETACH_ON_EXIT="$UE_DETACH_ON_EXIT" \
+        "$UE_IMAGE" /bin/sh -c '/opt/ukama/ue-agent/ue-agent || exit 1; tail -f /dev/null'
+else
+    podman run -d \
+        --name "$NAME" \
+        --cap-add NET_ADMIN \
+        --device /dev/net/tun \
+        -p "${UE_DATA_PORT}:${UE_DATA_PORT}/udp" \
+        -e UE_IMSI="$IMSI" \
+        -e UE_ICCID="$ICCID" \
+        -e UE_IP="${UE_IP}/22" \
+        -e UE_APN="$APN" \
+        -e UE_TUN="$UE_TUN" \
+        -e EPCEMU_URL="http://${TOWER_IP}:${EPCEMU_PORT}" \
+        -e EPCEMU_DATA_HOST="$TOWER_IP" \
+        -e EPCEMU_DATA_PORT="$EPCEMU_DATA_PORT" \
+        -e UE_DATA_HOST="$UE_DATA_HOST" \
+        -e UE_DATA_PORT="$UE_DATA_PORT" \
+        -e PCRF_URL="http://${TOWER_IP}:${PCRF_PORT}" \
+        -e MEDIA_IP="$MEDIA_IP" \
+        -e UE_DETACH_ON_EXIT="$UE_DETACH_ON_EXIT" \
+        "$UE_IMAGE" /bin/sh -c '/opt/ukama/ue-agent/ue-agent || exit 1; tail -f /dev/null'
+fi
+
+echo "$NAME $IMSI $ICCID $UE_IP port=$UE_DATA_PORT mode=$UE_NETWORK_MODE"

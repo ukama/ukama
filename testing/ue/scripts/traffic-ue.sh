@@ -8,11 +8,11 @@
 
 set -euo pipefail
 
-: "${MEDIA_IP:?MEDIA_IP required}"
+MEDIA_IP="${MEDIA_IP:-127.0.0.1}"
 
 IMSI=""
-MODE="ping"
-ALLOW_LOCAL_MEDIA="${ALLOW_LOCAL_MEDIA:-false}"
+MODE="http"
+ALLOW_LOCAL_MEDIA="${ALLOW_LOCAL_MEDIA:-true}"
 HTTP_PORT="${HTTP_PORT:-8080}"
 IPERF_PORT="${IPERF_PORT:-5201}"
 
@@ -21,10 +21,11 @@ usage() {
 Usage: $0 --imsi <imsi> [--mode ping|http|iperf]
 
 Environment:
-  MEDIA_IP      external media/sink server IP
-  HTTP_PORT     default: 8080
-  IPERF_PORT    default: 5201
-  IPERF_TIME    default: 10
+  MEDIA_IP            Default: 127.0.0.1
+  HTTP_PORT           Default: 8080
+  IPERF_PORT          Default: 5201
+  IPERF_TIME          Default: 10
+  ALLOW_LOCAL_MEDIA   Default: true for lab mode
 USAGE
 }
 
@@ -43,10 +44,23 @@ is_local_media_ip() {
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --imsi) IMSI="$2"; shift 2 ;;
-        --mode) MODE="$2"; shift 2 ;;
-        -h|--help) usage; exit 0 ;;
-        *) echo "unknown arg $1" >&2; usage >&2; exit 1 ;;
+        --imsi)
+            IMSI="$2"
+            shift 2
+            ;;
+        --mode)
+            MODE="$2"
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "unknown arg $1" >&2
+            usage >&2
+            exit 1
+            ;;
     esac
 done
 
@@ -63,7 +77,8 @@ case "$MODE" in
         podman exec "ue-${IMSI}" ping -c "${PING_COUNT:-5}" "$MEDIA_IP"
         ;;
     http)
-        podman exec "ue-${IMSI}" curl -fsS "http://${MEDIA_IP}:${HTTP_PORT}/"
+        podman exec "ue-${IMSI}" curl -fsS \
+            "http://${MEDIA_IP}:${HTTP_PORT}/"
         ;;
     iperf)
         podman exec "ue-${IMSI}" iperf3 -c "$MEDIA_IP" \
