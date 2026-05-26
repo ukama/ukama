@@ -21,4 +21,11 @@ int http_send_json(const char *method,
                    JsonObj **outJson,
                    long *httpCode);
 
+int http_send_json_timeout(const char *method,
+                           const char *url,
+                           JsonObj *body,
+                           JsonObj **outJson,
+                           long *httpCode,
+                           int timeoutSec);
+
 #endif /* HTTP_CLIENT_H_ */

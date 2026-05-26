@@ -64,8 +64,12 @@ static int parse_json_body(ResponseBuf *buf, JsonObj **outJson) {
     return USYS_TRUE;
 }
 
-int http_send_json(const char *method, const char *url, JsonObj *body,
-                   JsonObj **outJson, long *httpCode) {
+int http_send_json_timeout(const char *method,
+                           const char *url,
+                           JsonObj *body,
+                           JsonObj **outJson,
+                           long *httpCode,
+                           int timeoutSec) {
 
     CURL *curl;
     CURLcode res;
@@ -75,6 +79,10 @@ int http_send_json(const char *method, const char *url, JsonObj *body,
     int ret;
 
     if (method == NULL || url == NULL) return USYS_FALSE;
+
+    if (timeoutSec <= 0) {
+        timeoutSec = HTTP_TIMEOUT_SEC;
+    }
 
     response.data = NULL;
     response.size = 0;
@@ -97,7 +105,7 @@ int http_send_json(const char *method, const char *url, JsonObj *body,
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_cb);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, HTTP_TIMEOUT_SEC);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeoutSec);
 
     if (!strcmp(method, "POST")) {
         curl_easy_setopt(curl, CURLOPT_POST, 1L);
@@ -107,7 +115,8 @@ int http_send_json(const char *method, const char *url, JsonObj *body,
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload ? payload : "{}");
     } else if (strcmp(method, "GET")) {
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method);
-        if (payload != NULL) curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
+        if (payload != NULL) curl_easy_setopt(curl, CURLOPT_POSTFIELDS,
+                         payload);
     }
 
     res = curl_easy_perform(curl);
@@ -132,6 +141,20 @@ done:
     curl_easy_cleanup(curl);
 
     return ret;
+}
+
+int http_send_json(const char *method,
+                   const char *url,
+                   JsonObj *body,
+                   JsonObj **outJson,
+                   long *httpCode) {
+
+    return http_send_json_timeout(method,
+                                  url,
+                                  body,
+                                  outJson,
+                                  httpCode,
+                                  HTTP_TIMEOUT_SEC);
 }
 
 int http_get_json(const char *url, JsonObj **outJson, long *httpCode) {
