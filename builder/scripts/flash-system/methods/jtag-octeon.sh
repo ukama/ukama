@@ -290,7 +290,7 @@ _phase1_run() {
     fi
 
     # --- BDI config load ---
-    echo "Ensuring BDI config is loaded (telnet -> CONFIG cnf71xx.cfg $host_ip)..."
+    echo "Ensuring BDI config is loaded (telnet -> HOST $host_ip; CONFIG cnf71xx.cfg)..."
     local bdi_cfg_ok=0 bdi_cfg_try=0
     while [ "$bdi_cfg_try" -lt 4 ] && [ "$bdi_cfg_ok" -ne 1 ]; do
         bdi_cfg_try=$((bdi_cfg_try + 1))
@@ -303,9 +303,14 @@ _phase1_run() {
                 \"cnMIPS#0>\" { puts \"BDI already at cnMIPS#0> — config loaded.\"; exit 0 }
                 timeout { puts \"BDI telnet timeout (is BDI powered on?)\"; exit 1 }
             }
-            send \"CONFIG cnf71xx.cfg $host_ip\r\"
+            # Store the TFTP host IP permanently so auto-load after reboot works.
+            send \"HOST $host_ip\r\"
+            expect \"Core#0>\"
+            # Load config using the stored host IP.  After \"Updating configuration passed\"
+            # the BDI reboots and will auto-reload using the same stored IP.
+            send \"CONFIG cnf71xx.cfg\r\"
             expect {
-                \"loading configuration passed\" { puts \"Config load succeeded.\"; exit 0 }
+                \"configuration passed\" { puts \"Config load succeeded.\"; exit 0 }
                 \"cannot open\" { puts \"Config load failed (file not found on TFTP).\"; exit 1 }
                 \"Core#0>\" { puts \"Config load failed (back at Core#0>).\"; exit 1 }
                 timeout { puts \"Config load timeout (TFTP slow or unreachable).\"; exit 1 }
