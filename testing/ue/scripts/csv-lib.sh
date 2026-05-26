@@ -13,17 +13,25 @@ csv_row_by_imsi() {
     local imsi="$2"
 
     awk -F',' -v imsi="$imsi" '
-        NR==1 {
+        function clean(s) {
+            gsub(/\r/, "", s)
+            return s
+        }
+
+        NR == 1 {
             for (i = 1; i <= NF; i++) {
-                gsub(//, "", $i)
-                h[$i] = i
+                h[clean($i)] = i
             }
             next
         }
+
         {
-            for (i = 1; i <= NF; i++) gsub(//, "", $i)
+            line = clean($0)
+            if (clean($h["IMSI"]) == imsi) {
+                print line
+                exit
+            }
         }
-        $h["IMSI"] == imsi {print; exit}
     ' "$csv"
 }
 
@@ -32,11 +40,19 @@ csv_row_by_index() {
     local idx="$2"
 
     awk -F',' -v row="$idx" '
-        NR==1 {next}
-        {
-            for (i = 1; i <= NF; i++) gsub(//, "", $i)
+        function clean(s) {
+            gsub(/\r/, "", s)
+            return s
         }
-        NR == row + 1 {print; exit}
+
+        NR == 1 {
+            next
+        }
+
+        NR == row + 1 {
+            print clean($0)
+            exit
+        }
     ' "$csv"
 }
 
@@ -44,17 +60,24 @@ csv_enabled_imsi_list() {
     local csv="$1"
 
     awk -F',' '
-        NR==1 {
+        function clean(s) {
+            gsub(/\r/, "", s)
+            return s
+        }
+
+        NR == 1 {
             for (i = 1; i <= NF; i++) {
-                gsub(//, "", $i)
-                h[$i] = i
+                h[clean($i)] = i
             }
             next
         }
+
         {
-            for (i = 1; i <= NF; i++) gsub(//, "", $i)
+            enabled = clean($h["Enabled"])
+            if (enabled == "TRUE" || enabled == "true") {
+                print clean($h["IMSI"])
+            }
         }
-        $h["Enabled"] == "TRUE" || $h["Enabled"] == "true" {print $h["IMSI"]}
     ' "$csv"
 }
 
@@ -63,20 +86,50 @@ csv_field() {
     local row="$2"
     local field="$3"
 
-    awk -F',' -v row="$row" -v field="$field" '
-        NR==1 {
+    printf '%s\n' "$row" | awk -F',' -v field="$field" '
+        function clean(s) {
+            gsub(/\r/, "", s)
+            return s
+        }
+
+        BEGIN {
+            n = split(field, f, "\034")
+        }
+
+        {
             for (i = 1; i <= NF; i++) {
-                gsub(//, "", $i)
-                h[$i] = i
+                value[i] = clean($i)
+            }
+        }
+
+        END {
+            print value[1]
+        }
+    '
+}
+
+csv_field_by_name() {
+    local csv="$1"
+    local row="$2"
+    local field="$3"
+
+    awk -F',' -v row="$row" -v field="$field" '
+        function clean(s) {
+            gsub(/\r/, "", s)
+            return s
+        }
+
+        NR == 1 {
+            for (i = 1; i <= NF; i++) {
+                h[clean($i)] = i
             }
             next
         }
-        {
-            line = $0
-            gsub(//, "", line)
-            for (i = 1; i <= NF; i++) gsub(//, "", $i)
+
+        clean($0) == row {
+            print clean($h[field])
+            exit
         }
-        line == row {print $h[field]; exit}
     ' "$csv"
 }
 
@@ -84,17 +137,27 @@ csv_count_enabled() {
     local csv="$1"
 
     awk -F',' '
-        NR==1 {
+        function clean(s) {
+            gsub(/\r/, "", s)
+            return s
+        }
+
+        NR == 1 {
             for (i = 1; i <= NF; i++) {
-                gsub(//, "", $i)
-                h[$i] = i
+                h[clean($i)] = i
             }
             next
         }
+
         {
-            for (i = 1; i <= NF; i++) gsub(//, "", $i)
+            enabled = clean($h["Enabled"])
+            if (enabled == "TRUE" || enabled == "true") {
+                c++
+            }
         }
-        $h["Enabled"] == "TRUE" || $h["Enabled"] == "true" {c++}
-        END {print c + 0}
+
+        END {
+            print c + 0
+        }
     ' "$csv"
 }
