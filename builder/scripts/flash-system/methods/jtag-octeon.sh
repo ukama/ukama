@@ -348,6 +348,10 @@ _phase1_run() {
         fi
     fi
     echo "  GDB port is open."
+    # Freshly-rebooted BDI may need a few more seconds for its GDB stub to fully
+    # initialise before oct-remote-boot can connect reliably.
+    echo "  Giving BDI 10s to finish GDB init..."
+    sleep 10
 
     # --- Phase 1 core bring-up loop ---
     # Supreeth's proven manual flow:
@@ -373,7 +377,7 @@ _phase1_run() {
             sleep 3
             continue
         fi
-        sleep 1
+        sleep 3
 
         # Step 2: Start oct-remote-boot
         echo "Starting oct-remote-boot (OCTEON_ROOT=$oct_env_root, $oct_env_protocol)..."
@@ -381,6 +385,9 @@ _phase1_run() {
         sudo stdbuf -oL -eL env OCTEON_ROOT="$oct_env_root" OCTEON_REMOTE_PROTOCOL="$oct_env_protocol" \
             "$oct_path" --board="$oct_board" --ddr_clock_hz="$oct_clock" >"$oct_log" 2>&1 &
         REMOTE_BOOT_PID=$!
+        # Prevent bash from printing a scary "Segmentation fault" job-status message
+        # if oct-remote-boot crashes; we handle it ourselves below.
+        disown "$REMOTE_BOOT_PID" 2>/dev/null || true
         echo "  oct-remote-boot started (PID $REMOTE_BOOT_PID)"
 
         # Step 3: Open serial and start spamming keys immediately
@@ -399,7 +406,7 @@ _phase1_run() {
 
         # Step 4: Wait for u-boot prompt while monitoring oct-remote-boot log
         echo "Waiting for u-boot prompt '${uboot_prompt}' (up to 120s)..."
-        local elapsed=0 ddr_bad="" clk="" mhz=""
+        local elapsed=0 ddr_bad="" clk="" mhz="" oct_exit=0
         while [ "$elapsed" -lt 120 ]; do
             # Check for u-boot prompt
             if grep -qF -- "$uboot_prompt" "${LOG_DIR}/uboot.log" 2>/dev/null; then
@@ -434,7 +441,8 @@ _phase1_run() {
         if kill -0 "$REMOTE_BOOT_PID" 2>/dev/null; then
             sudo kill "$REMOTE_BOOT_PID" 2>/dev/null || true
         fi
-        wait "$REMOTE_BOOT_PID" 2>/dev/null || true
+        wait "$REMOTE_BOOT_PID" 2>/dev/null
+        oct_exit=$?
         REMOTE_BOOT_PID=""
 
         # Analyze why we failed
@@ -444,18 +452,34 @@ _phase1_run() {
 
         if [ -n "$ddr_bad" ]; then
             echo "  DDR PLL mislocked — $ddr_bad"
+        elif [ "$oct_exit" -eq 139 ]; then
+            echo "  oct-remote-boot crashed (SIGSEGV). This sometimes happens when the BDI"
+            echo "  GDB stub isn't fully ready after a reboot. A retry usually fixes it."
         elif [ -n "$clk" ]; then
             mhz=$(printf '%s' "$clk" | grep -oE '[0-9]+' | head -1 || true)
             echo "  DDR clock ${mhz} MHz — not ~400 (mislock)."
         else
             echo "  u-boot prompt did not appear within 120s."
-            echo "--- last 20 lines of oct-remote-boot output ---"
-            tail -n 20 "$oct_log" 2>/dev/null | sed 's/^/    /' || true
+        fi
+
+        # Always show relevant logs for debugging
+        echo "--- last 20 lines of oct-remote-boot output ---"
+        tail -n 20 "$oct_log" 2>/dev/null | sed 's/^/    /' || true
+        if [ "$prompt_seen" -ne 1 ]; then
             echo "--- last 20 lines of serial (uboot.log) ---"
             tail -n 20 "${LOG_DIR}/uboot.log" 2>/dev/null | sed 's/^/    /' || true
         fi
 
         if [ "$bringup_attempt" -lt "$max_bringup_attempts" ]; then
+            # Auto-retry on GDB Reply Error after the first attempt — this is extremely
+            # common after a fresh BDI reboot and almost always resolves on the next try.
+            if [ "$bringup_attempt" -eq 1 ] && [ -n "$ddr_bad" ] && echo "$ddr_bad" | grep -q "GDB Reply Error"; then
+                echo ""
+                echo "  First-attempt GDB error is normal after BDI reboot. Auto-retrying in 5s..."
+                sleep 5
+                continue
+            fi
+
             echo ""
             echo ">>> Bring-up failed. If DDR mislocked, COLD power-cycle the TRX now:"
             echo ">>>   full power OFF, wait ~5s, power back ON. Leave the JTAG cable connected."
