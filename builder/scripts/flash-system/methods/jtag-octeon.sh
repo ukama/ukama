@@ -323,30 +323,26 @@ _phase1_run() {
         echo "  Please manually telnet to the BDI and run: CONFIG cnf71xx.cfg $host_ip"
         return 1
     fi
-    echo "  BDI config loaded. Waiting for BDI to reboot and reach cnMIPS#0>..."
-    local bdi_ready=0 bdi_wait=0
-    while [ "$bdi_wait" -lt 60 ]; do
-        if expect -c "
-            set timeout 5
-            spawn telnet $bdi_ip
-            expect {
-                \"cnMIPS#0>\" { puts \"BDI ready.\"; exit 0 }
-                \"Core#0>\"   { puts \"BDI at Core#0> — config lost on reboot.\"; exit 1 }
-                timeout       { exit 1 }
-            }
-        " 2>/dev/null; then
-            bdi_ready=1
-            break
-        fi
-        sleep 2
-        bdi_wait=$((bdi_wait + 2))
-    done
+    # After CONFIG the BDI reboots itself ("Booting ....."). It needs ~20-40s to
+    # auto-reload the config from TFTP and open port 2001. A fixed wait is more
+    # reliable than rapid-fire telnet probes while the BDI is still booting.
+    echo "  BDI config loaded. Waiting 35s for BDI to reboot and auto-load config..."
+    sleep 35
 
-    if [ "$bdi_ready" -ne 1 ]; then
-        echo "ERROR: BDI did not reach cnMIPS#0> within 60s after config load."
-        echo "  The BDI may have rebooted and failed to auto-load. Try power-cycling it."
-        return 1
+    echo "  Probing BDI GDB port ${bdi_ip}:2001..."
+    if ! nc -z "$bdi_ip" 2001 2>/dev/null; then
+        echo "  GDB port not open yet, waiting another 25s..."
+        sleep 25
+        if ! nc -z "$bdi_ip" 2001 2>/dev/null; then
+            echo "ERROR: BDI GDB port still closed after 60s. The BDI may have failed to auto-load."
+            echo "  Try power-cycling the BDI with TFTP already running:"
+            echo "    sudo mkdir -p /tmp/bdi-tftp && sudo cp $bdi_config_src /tmp/bdi-tftp/cnf71xx.cfg"
+            echo "    sudo /usr/sbin/in.tftpd -L --secure /tmp/bdi-tftp &"
+            echo "    # then power-cycle BDI, wait 60s, and re-run this script"
+            return 1
+        fi
     fi
+    echo "  GDB port is open."
 
     # --- Phase 1 core bring-up loop ---
     # Supreeth's proven manual flow:
