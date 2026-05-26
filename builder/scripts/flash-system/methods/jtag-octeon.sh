@@ -238,7 +238,7 @@ _phase1_flash_artifact() {
 
 _phase1_run() {
     local bdi_ip serial_dev baud uboot_prompt oct_path oct_board oct_clock
-    local ddr_os ddr_rd gdb_port oct_env_root oct_env_protocol
+    local ddr_os ddr_rd gdb_port oct_env_root oct_env_protocol host_ip
 
     bdi_ip=$(yq_read "$BOARD_CONFIG" network.bdi_ip)
     gdb_port=$(yq_read "$BOARD_CONFIG" bdi.gdb_port)
@@ -250,6 +250,7 @@ _phase1_run() {
     oct_clock=$(yq_read "$BOARD_CONFIG" oct_remote_boot.ddr_clock_hz)
     ddr_os=$(yq_read "$BOARD_CONFIG" phase1.ddr_os_load_addr)
     ddr_rd=$(yq_read "$BOARD_CONFIG" phase1.ddr_rd_load_addr)
+    host_ip=$(yq_read "$BOARD_CONFIG" network.host_ip)
 
     oct_env_root=$(dirname "$(dirname "$(dirname "$oct_path")")")
     oct_env_protocol="GDB:${bdi_ip},${gdb_port}"
@@ -285,21 +286,7 @@ _phase1_run() {
         echo "WARNING: bdi.config_file not found at $bdi_config_src"
     fi
 
-    # If the BDI was power-cycled while no TFTP server was running, it lands at
-    # Core#0> with no config loaded (cnf71xx.cfg failed). We must push the config
-    # via telnet now that our TFTP server is up, otherwise GDB port 2001 stays
-    # closed and oct-remote-boot can never connect.
-    local host_ip
-    host_ip=$(yq_read "$BOARD_CONFIG" network.host_ip)
-
-    # Quick self-test: can we TFTP the config file from ourselves?
-    if command -v tftp >/dev/null 2>&1; then
-        if ! tftp "$host_ip" -c get cnf71xx.cfg /dev/null 2>/dev/null; then
-            echo "WARNING: Local TFTP self-test failed — BDI may also fail to download cnf71xx.cfg"
-            echo "  Check that in.tftpd is serving from $TFTP_STAGE_DIR"
-        fi
-    fi
-
+    # --- BDI config load ---
     echo "Ensuring BDI config is loaded (telnet -> CONFIG cnf71xx.cfg $host_ip)..."
     local bdi_cfg_ok=0 bdi_cfg_try=0
     while [ "$bdi_cfg_try" -lt 4 ] && [ "$bdi_cfg_ok" -ne 1 ]; do
@@ -330,215 +317,141 @@ _phase1_run() {
 
     if [ "$bdi_cfg_ok" -ne 1 ]; then
         echo "ERROR: BDI config could not be loaded after $bdi_cfg_try attempts."
-        echo "  Common causes:"
-        echo "    1. TFTP server not reachable from BDI (firewall, wrong host IP)"
-        echo "    2. cnf71xx.cfg not staged in TFTP root ($TFTP_STAGE_DIR)"
-        echo "    3. BDI network settings wrong — try manual telnet and 'CONFIG cnf71xx.cfg $host_ip'"
-        echo "    4. BDI firmware needs a power-cycle with TFTP already running"
+        echo "  Please manually telnet to the BDI and run: CONFIG cnf71xx.cfg $host_ip"
         return 1
     fi
     echo "  BDI config loaded."
-    sleep 3
+    sleep 2
 
+    # --- Phase 1 core bring-up loop ---
+    # Supreeth's proven manual flow:
+    #   1. go 0x400000          (via BDI telnet)
+    #   2. oct-remote-boot      (in another terminal)
+    #   3. watch serial         (in yet another terminal)
+    #   4. interrupt autoboot, flash via TFTP
+    # We automate the same sequence. If DDR mislocks, the user power-cycles TRX
+    # and we retry from step 1.
     local oct_log="${LOG_DIR}/oct-remote-boot.log"
-    local oct_attempt=0 max_oct_attempts=8 clock_ok=0
+    local bringup_attempt=0 max_bringup_attempts=4
+    local prompt_seen=0
 
-    _oct_stop() {
-        # Graceful termination first
-        sudo pkill -TERM -f oct-remote-boot 2>/dev/null || true
-        local kw=0
-        while [ "$kw" -lt 10 ] && pgrep -f oct-remote-boot >/dev/null 2>&1; do
-            sleep 1
-            kw=$((kw + 1))
-        done
-        # Hard kill — also mop up any SDK children that hold resources
-        sudo pkill -9 -f oct-remote-boot 2>/dev/null || true
-        sudo pkill -9 -f 'oct-remote-' 2>/dev/null || true
-        sudo pkill -9 -f 'oct-pci-' 2>/dev/null || true
-        REMOTE_BOOT_PID=""
-        sleep 2
-    }
+    while [ "$bringup_attempt" -lt "$max_bringup_attempts" ]; do
+        bringup_attempt=$((bringup_attempt + 1))
+        echo ""
+        echo "=== Phase 1 bring-up attempt ${bringup_attempt}/${max_bringup_attempts} ==="
 
-    _bdi_clear_gdb_slot() {
-        # The BDI has a single GDB slot. If a previous oct-remote-boot died
-        # uncleanly (SIGKILL) the BDI may not notice the TCP half-close and
-        # keeps refusing new connections. Try to nudge it by sending a GDB
-        # detach packet and/or connecting briefly to force a state change.
-        local host="$1"
-        local port="${2:-2001}"
-        # Send a raw GDB detach packet ($D#44) — best-effort
-        printf '+$D#44' | timeout 2 nc -N "$host" "$port" 2>/dev/null || true
-        sleep 1
-        # Quick connect/disconnect to provoke RST handling
-        timeout 1 bash -c "exec 3<>/dev/tcp/$host/$port; exec 3>&-" 2>/dev/null || true
-        sleep 1
-    }
-
-    _wait_for_bdi_gdb() {
-        local host="$1"
-        local port="${2:-2001}"
-        local w=0
-        echo "  Probing BDI GDB port ${host}:${port}..."
-        while [ "$w" -lt 60 ]; do
-            if nc -z "$host" "$port" 2>/dev/null; then
-                echo "  GDB port is open."
-                return 0
-            fi
-            sleep 1
-            w=$((w + 1))
-        done
-        echo "  GDB port still closed after 60s — BDI may still be booting or crashed."
-        return 1
-    }
-
-    _oct_stop
-
-    while [ "$oct_attempt" -lt "$max_oct_attempts" ]; do
-        oct_attempt=$((oct_attempt + 1))
-        echo "=== oct-remote-boot attempt ${oct_attempt}/${max_oct_attempts} ==="
-
-        # Make sure the BDI GDB port is actually open before launching oct-remote-boot.
-        # If the BDI was power-cycled it can take ~30-60s to load its config and open 2001.
-        if ! _wait_for_bdi_gdb "$bdi_ip" "$gdb_port"; then
-            echo "  BDI GDB port not reachable. If the BDI was just power-cycled, wait longer."
-            echo "  If this persists, power-cycle the BDI box itself."
+        # Step 1: Send go 0x400000 via BDI telnet
+        echo "Sending 'go 0x400000' via BDI telnet..."
+        if ! bdi_telnet_cmd "$bdi_ip" "go 0x400000"; then
+            echo "WARNING: BDI 'go' command failed — will retry."
+            sleep 3
+            continue
         fi
+        sleep 1
 
-        echo "Running oct-remote-boot (OCTEON_ROOT=$oct_env_root, $oct_env_protocol)..."
+        # Step 2: Start oct-remote-boot
+        echo "Starting oct-remote-boot (OCTEON_ROOT=$oct_env_root, $oct_env_protocol)..."
         : > "$oct_log"
         sudo stdbuf -oL -eL env OCTEON_ROOT="$oct_env_root" OCTEON_REMOTE_PROTOCOL="$oct_env_protocol" \
             "$oct_path" --board="$oct_board" --ddr_clock_hz="$oct_clock" >"$oct_log" 2>&1 &
         REMOTE_BOOT_PID=$!
         echo "  oct-remote-boot started (PID $REMOTE_BOOT_PID)"
 
-        local cwait=0 clk="" mhz="" ddr_bad="" refused=""
-        while [ "$cwait" -lt 90 ]; do
-            clk=$(grep -a "Measured DDR clock" "$oct_log" 2>/dev/null | tail -1 || true)
-            [ -n "$clk" ] && break
-            refused=$(grep -a "Connection refused" "$oct_log" 2>/dev/null | head -1 || true)
-            [ -n "$refused" ] && break
+        # Step 3: Open serial and start spamming keys immediately
+        echo "Opening serial console at $serial_dev ($baud)..."
+        uboot_open "$serial_dev" "$baud" "${LOG_DIR}/uboot.log"
+
+        echo "Spamming keys to interrupt zero-second autoboot (until prompt appears)..."
+        (
+            exec 3>"$serial_dev"
+            while true; do
+                printf ' \r\n' >&3
+                sleep 0.03
+            done
+        ) &
+        SPAM_PID=$!
+
+        # Step 4: Wait for u-boot prompt while monitoring oct-remote-boot log
+        echo "Waiting for u-boot prompt '${uboot_prompt}' (up to 120s)..."
+        local elapsed=0 ddr_bad="" clk="" mhz=""
+        while [ "$elapsed" -lt 120 ]; do
+            # Check for u-boot prompt
+            if grep -qF -- "$uboot_prompt" "${LOG_DIR}/uboot.log" 2>/dev/null; then
+                prompt_seen=1
+                break 2  # Break out of BOTH loops
+            fi
+
+            # Check for DDR mislock in oct-remote-boot log
             ddr_bad=$(grep -aE "exceeds DIMM specifications|GDB Reply Error" "$oct_log" 2>/dev/null | head -1 || true)
-            [ -n "$ddr_bad" ] && break
-            kill -0 "$REMOTE_BOOT_PID" 2>/dev/null || break
+            if [ -n "$ddr_bad" ]; then
+                break
+            fi
+
+            # Check for measured DDR clock (to report it)
+            clk=$(grep -a "Measured DDR clock" "$oct_log" 2>/dev/null | tail -1 || true)
+
+            # Check if oct-remote-boot died unexpectedly
+            if ! kill -0 "$REMOTE_BOOT_PID" 2>/dev/null; then
+                break
+            fi
+
             sleep 1
-            cwait=$((cwait + 1))
+            elapsed=$((elapsed + 1))
         done
-        mhz=$(printf '%s' "$clk" | grep -oE '[0-9]+' | head -1 || true)
 
-        if [ -n "$mhz" ] && [ "$mhz" -ge 380 ] && [ "$mhz" -le 420 ]; then
-            echo "  $clk"
-            echo "  DDR clock locked at ~400 MHz — good, continuing."
-            clock_ok=1
-            break
+        # Clean up this attempt's processes
+        if [ -n "$SPAM_PID" ]; then
+            kill "$SPAM_PID" 2>/dev/null || true
+            SPAM_PID=""
         fi
+        uboot_close
+        if kill -0 "$REMOTE_BOOT_PID" 2>/dev/null; then
+            sudo kill "$REMOTE_BOOT_PID" 2>/dev/null || true
+        fi
+        wait "$REMOTE_BOOT_PID" 2>/dev/null || true
+        REMOTE_BOOT_PID=""
 
-        _oct_stop
-
-        if [ -n "$refused" ]; then
-            echo "  BDI GDB port 2001 refused — single slot held by stale session."
-            echo "  Trying to clear the slot (GDB detach + TCP probe)..."
-            _bdi_clear_gdb_slot "$bdi_ip" "$gdb_port"
-            echo "  Waiting 15s for BDI to settle before retry..."
-            sleep 15
-            continue
+        # Analyze why we failed
+        if [ "$prompt_seen" -eq 1 ]; then
+            break  # Should have been caught by break 2 above, but safety net
         fi
 
         if [ -n "$ddr_bad" ]; then
             echo "  DDR PLL mislocked — $ddr_bad"
         elif [ -n "$clk" ]; then
+            mhz=$(printf '%s' "$clk" | grep -oE '[0-9]+' | head -1 || true)
             echo "  DDR clock ${mhz} MHz — not ~400 (mislock)."
         else
-            echo "  oct-remote-boot did not reach a DDR clock within 90s. Last lines:"
+            echo "  u-boot prompt did not appear within 120s."
+            echo "--- last 20 lines of oct-remote-boot output ---"
             tail -n 20 "$oct_log" 2>/dev/null | sed 's/^/    /' || true
+            echo "--- last 20 lines of serial (uboot.log) ---"
+            tail -n 20 "${LOG_DIR}/uboot.log" 2>/dev/null | sed 's/^/    /' || true
         fi
 
-        if [ "$oct_attempt" -lt "$max_oct_attempts" ]; then
+        if [ "$bringup_attempt" -lt "$max_bringup_attempts" ]; then
             echo ""
-            echo ">>> DDR did not come up at ~400 MHz. If this keeps happening, COLD power-cycle the"
-            echo ">>> TRX now: full power OFF, wait ~5s, power back ON. Leave the JTAG cable connected."
-            printf ">>> Press Enter to retry (attempt %d/%d)... " "$((oct_attempt + 1))" "$max_oct_attempts"
+            echo ">>> Bring-up failed. If DDR mislocked, COLD power-cycle the TRX now:"
+            echo ">>>   full power OFF, wait ~5s, power back ON. Leave the JTAG cable connected."
+            printf ">>> Press Enter to retry (attempt %d/%d)... " "$((bringup_attempt + 1))" "$max_bringup_attempts"
             read -r _ </dev/tty || true
             echo ""
         fi
     done
 
-    if [ "$clock_ok" -ne 1 ]; then
-        echo "ERROR: oct-remote-boot did not bring DDR up at ~400 MHz after ${max_oct_attempts} attempts."
-        echo "  If the BDI GDB port kept refusing, a stale debugger session is wedged — close any"
-        echo "  other oct-remote-boot/telnet on the BDI, or power-cycle the BDI itself."
-        echo "  If DDR mislocked (596/599/796 MHz), COLD power-cycle the TRX and re-run."
+    if [ "$prompt_seen" -ne 1 ]; then
+        echo "ERROR: Could not reach u-boot prompt after ${max_bringup_attempts} attempts."
+        echo "  Check serial cable, BDI cabling, and that no other process holds /dev/ttyUSB0."
         return 1
     fi
 
-    sudo tail -n +1 -F "$oct_log" 2>/dev/null &
-    OCT_TAIL_PID=$!
+    echo "  u-boot prompt detected after ${bringup_attempt} attempt(s)."
 
-    # oct-remote-boot with GDB protocol stages the bootloader but sometimes fails
-    # to start the core via GDB continue. The proven manual fix is to send
-    # 'go 0x400000' via BDI telnet once the bootloader stub is written.
-    echo "Waiting for oct-remote-boot to finish staging bootloader..."
-    local stub_wait=0
-    while [ "$stub_wait" -lt 30 ]; do
-        if grep -a "Done writing boot stub" "$oct_log" 2>/dev/null | head -1 >/dev/null; then
-            break
-        fi
-        if grep -a "Starting core 0" "$oct_log" 2>/dev/null | head -1 >/dev/null; then
-            break
-        fi
-        if ! kill -0 "$REMOTE_BOOT_PID" 2>/dev/null; then
-            break
-        fi
-        sleep 1
-        stub_wait=$((stub_wait + 1))
-    done
-
-    echo "Sending 'go 0x400000' via BDI telnet to start core..."
-    if ! bdi_telnet_cmd "$bdi_ip" "go 0x400000"; then
-        echo "WARNING: BDI telnet command failed — core may already be running, or BDI not at prompt."
-        echo "  Continuing anyway; if u-boot does not appear on serial, the BDI may need a reset."
-    fi
-
-    echo "Opening serial console at $serial_dev ($baud)..."
-    uboot_open "$serial_dev" "$baud" "${LOG_DIR}/uboot.log"
-
-    echo "Spamming keys to interrupt zero-second autoboot (until prompt appears)..."
-    (
-        exec 3>"$serial_dev"
-        while true; do
-            printf ' \r\n' >&3
-            sleep 0.03
-        done
-    ) &
-    SPAM_PID=$!
-
-    echo "Waiting for u-boot prompt '${uboot_prompt}' (up to 120s)..."
-    if ! uboot_wait_for "$uboot_prompt" 120; then
-        # Stop tail first so its output doesn't race with our diagnostics
-        kill "$OCT_TAIL_PID" 2>/dev/null || true
-        sleep 1
-
-        echo "ERROR: u-boot prompt did not appear within 120s"
-        echo "--- last 40 lines of oct-remote-boot output ---"
-        tail -n 40 "$oct_log" 2>/dev/null || true
-        echo "--- oct-remote-boot exit status ---"
-        if kill -0 "$REMOTE_BOOT_PID" 2>/dev/null; then
-            echo "  still running (PID $REMOTE_BOOT_PID) — did not error out, but no u-boot on serial"
-            sudo kill "$REMOTE_BOOT_PID" 2>/dev/null || true
-        else
-            wait "$REMOTE_BOOT_PID" 2>/dev/null
-            echo "  exited with status $?"
-        fi
-        echo "--- last 40 lines of serial (uboot.log) ---"
-        tail -n 40 "${LOG_DIR}/uboot.log" 2>/dev/null || true
-        return 1
-    fi
-
-    kill "$OCT_TAIL_PID" 2>/dev/null || true
+    # Stop spam and drain serial
     if [ -n "$SPAM_PID" ]; then
         kill "$SPAM_PID" 2>/dev/null || true
         SPAM_PID=""
     fi
-
     echo "Draining residual serial output (spam backlog) before sending commands..."
     uboot_drain 3
 
@@ -550,8 +463,7 @@ _phase1_run() {
     uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 8 || true
     uboot_send_and_wait "$serial_dev" "saveenv" "$uboot_prompt" 15 || true
 
-    local host_ip ping_marker link_up=0 ping_attempt=0 max_ping_attempts=6
-    host_ip=$(yq_read "$BOARD_CONFIG" network.host_ip)
+    local ping_marker link_up=0 ping_attempt=0 max_ping_attempts=6
     echo "Bringing up ethernet link to ${host_ip} (mw64 + ping retries)..."
     while [ "$ping_attempt" -lt "$max_ping_attempts" ]; do
         ping_attempt=$((ping_attempt + 1))
