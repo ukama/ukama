@@ -348,12 +348,37 @@ _phase1_run() {
     # reliable than rapid-fire telnet probes while the BDI is still booting.
     echo "  BDI config loaded. Probing GDB port ${bdi_ip}:2001..."
     if ! nc -z "$bdi_ip" 2001 2>/dev/null; then
-        # If the BDI was already at cnMIPS#0> it may not have rebooted, and the GDB
-        # stub may have timed out. Send BOOT to force a fresh reload.
-        echo "  GDB port closed — sending BOOT to reset BDI and reload config..."
-        bdi_telnet_cmd "$bdi_ip" "BOOT"
-        echo "  Waiting 35s for BDI to reboot and auto-load config..."
-        sleep 35
+        # The BDI may be at cnMIPS#0> from a prior session but its GDB stub has timed
+        # out.  BOOT does not re-fetch the config from TFTP; we must re-send CONFIG.
+        echo "  GDB port closed — forcing config reload via HOST + CONFIG..."
+        if expect -c "
+            set timeout 25
+            spawn telnet $bdi_ip
+            expect {
+                \"Core#0>\" {}
+                \"cnMIPS#0>\" {}
+                timeout { puts \"BDI telnet timeout\"; exit 1 }
+            }
+            send \"HOST $host_ip\r\"
+            expect {
+                \"Core#0>\" {}
+                \"cnMIPS#0>\" {}
+            }
+            send \"CONFIG cnf71xx.cfg\r\"
+            expect {
+                \"configuration passed\" { puts \"Config reload succeeded.\"; exit 0 }
+                \"cannot open\" { puts \"Config reload failed (file not found on TFTP).\"; exit 1 }
+                \"Core#0>\" { puts \"Config reload failed (back at Core#0>).\"; exit 1 }
+                \"cnMIPS#0>\" { puts \"Config reload failed (back at cnMIPS#0>).\"; exit 1 }
+                timeout { puts \"Config reload timeout (TFTP slow or unreachable).\"; exit 1 }
+            }
+        " 2>/dev/null; then
+            echo "  Config reloaded. Waiting 35s for BDI to reboot..."
+            sleep 35
+        else
+            echo "ERROR: BDI config reload failed."
+            return 1
+        fi
     fi
 
     echo "  Probing BDI GDB port ${bdi_ip}:2001..."
