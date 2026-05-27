@@ -346,8 +346,15 @@ _phase1_run() {
     # After CONFIG the BDI reboots itself ("Booting ....."). It needs ~20-40s to
     # auto-reload the config from TFTP and open port 2001. A fixed wait is more
     # reliable than rapid-fire telnet probes while the BDI is still booting.
-    echo "  BDI config loaded. Waiting 35s for BDI to reboot and auto-load config..."
-    sleep 35
+    echo "  BDI config loaded. Probing GDB port ${bdi_ip}:2001..."
+    if ! nc -z "$bdi_ip" 2001 2>/dev/null; then
+        # If the BDI was already at cnMIPS#0> it may not have rebooted, and the GDB
+        # stub may have timed out. Send BOOT to force a fresh reload.
+        echo "  GDB port closed — sending BOOT to reset BDI and reload config..."
+        bdi_telnet_cmd "$bdi_ip" "BOOT"
+        echo "  Waiting 35s for BDI to reboot and auto-load config..."
+        sleep 35
+    fi
 
     echo "  Probing BDI GDB port ${bdi_ip}:2001..."
     if ! nc -z "$bdi_ip" 2001 2>/dev/null; then
