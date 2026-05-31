@@ -1,0 +1,96 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+option go_package = "github.com/ukama/ukama/systems/operation/manager/pb/gen";
+package ukama.operation.manager.v1;
+
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+
+service OperationManagerService {
+    rpc StartOperation(StartOperationRequest) returns (StartOperationResponse);
+    rpc GetOperation(GetOperationRequest) returns (GetOperationResponse);
+    rpc GetByResource(GetByResourceRequest) returns (GetByResourceResponse);
+    rpc MarkRunning(MarkRunningRequest) returns (MarkRunningResponse);
+    rpc ForceUnlock(ForceUnlockRequest) returns (ForceUnlockResponse);
+}
+
+enum OperationStatus {
+    PENDING   = 0;
+    RUNNING   = 1;
+    SUCCESS   = 2;
+    FAILED    = 3;
+    TIMEOUT   = 4;
+    CANCELLED = 5;
+}
+
+message Operation {
+    string id = 1;
+    string type = 2;
+    string system = 3;
+    OperationStatus status = 4;
+    uint64 fencingToken = 5;
+    string requestedBy = 6;
+    string idempotencyKey = 7;
+    string resourceKey = 8;
+    google.protobuf.Timestamp leaseExpiresAt = 9;
+    string error = 10;
+    google.protobuf.Timestamp startedAt = 11;
+    google.protobuf.Timestamp terminalAt = 12;
+    google.protobuf.Timestamp createdAt = 13;
+}
+
+message StartOperationRequest {
+    string type = 1 [(validator.field) = {string_not_empty: true}];
+    string system = 2 [(validator.field) = {string_not_empty: true}];
+    string resourceKey = 3 [(validator.field) = {string_not_empty: true}];
+    string requestedBy = 4;
+    string idempotencyKey = 5;
+    uint32 leaseSeconds = 6;
+}
+
+message StartOperationResponse {
+    Operation operation = 1;
+    Operation conflictingOperation = 2;
+}
+
+message GetOperationRequest {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+}
+
+message GetOperationResponse {
+    Operation operation = 1;
+}
+
+message GetByResourceRequest {
+    string resourceKey = 1 [(validator.field) = {string_not_empty: true}];
+}
+
+message GetByResourceResponse {
+    Operation operation = 1;
+}
+
+message MarkRunningRequest {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    uint64 fencingToken = 2;
+}
+
+message MarkRunningResponse {
+    Operation operation = 1;
+}
+
+message ForceUnlockRequest {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string actor = 2 [(validator.field) = {string_not_empty: true}];
+    string reason = 3 [(validator.field) = {string_not_empty: true}];
+}
+
+message ForceUnlockResponse {
+    Operation operation = 1;
+}
