@@ -23,7 +23,7 @@ const activeSubscriptions = new Map<string, AbortController>();
 function parseEvent(eventStr: string) {
   if (!eventStr || eventStr.startsWith(':')) return null;
 
-  const event: any = {};
+  const event: { data?: string; id?: string; event?: string } = {};
   const lines = eventStr.split('\n');
 
   for (const line of lines) {
@@ -111,7 +111,7 @@ export default function MetricStatBySiteSubscription(
       const decoder = new TextDecoder('utf-8');
       let buffer = '';
 
-      let activityTimeout: any = null;
+      let activityTimeout: ReturnType<typeof setTimeout> | null = null;
       const resetActivityTimeout = () => {
         if (activityTimeout) clearTimeout(activityTimeout);
         activityTimeout = setTimeout(
@@ -152,8 +152,8 @@ export default function MetricStatBySiteSubscription(
           eventBoundary = buffer.indexOf('\n\n');
         }
       }
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
       } else {
         if (activeSubscriptions.has(key)) {
           setTimeout(() => {

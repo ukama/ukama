@@ -13,7 +13,7 @@ type TableHeaderProps = {
   title: string;
   buttonTitle?: string;
   showSecondaryButton: boolean;
-  handleButtonAction?: any;
+  handleButtonAction?: () => void;
 };
 
 const TableHeader = ({
@@ -31,7 +31,7 @@ const TableHeader = ({
         <Button
           variant="outlined"
           sx={{ width: '144px' }}
-          onClick={() => handleButtonAction()}
+          onClick={() => handleButtonAction?.()}
         >
           {buttonTitle}
         </Button>

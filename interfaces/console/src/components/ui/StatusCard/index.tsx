@@ -18,10 +18,10 @@ import {
   Typography,
   useMediaQuery,
 } from '@mui/material';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 type StatusCardProps = {
-  Icon: any;
+  Icon: React.ComponentType;
   topic: string;
   title: string;
   option: string;

@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+import React from 'react';
 import SearchBar from '@/components/ui/SearchBar';
 import { DarkTooltip } from '@/styles/global';
 import { colors } from '@/theme';
@@ -143,9 +144,9 @@ export const LeftOverlayUI = ({
 );
 
 interface IRightOverlayUI {
-  handleClick: (event: any) => void;
+  handleClick: (event: React.MouseEvent<HTMLElement>) => void;
   isCurrentDraft: boolean;
-  handlePowerInfo: (event: any) => void;
+  handlePowerInfo: (event: React.MouseEvent<HTMLElement>) => void;
   siteInfoId: string | undefined;
   powerInfoId: string | undefined;
 }
@@ -215,13 +216,19 @@ const PowerSummarySections = [
   },
 ];
 
-export const SiteSummary = ({ siteSummary }: any) => (
+interface SiteSummaryItem {
+  id: string;
+  name: string;
+  status: string;
+}
+
+export const SiteSummary = ({ siteSummary }: { siteSummary: SiteSummaryItem[] }) => (
   <Stack spacing={1}>
     <Typography variant="body2" sx={{ fontWeight: 500 }}>
       {`Site Summary (${siteSummary.length})`}
     </Typography>
     {siteSummary.length > 0 ? (
-      siteSummary.map(({ id, name, status }: any) => (
+      siteSummary.map(({ id, name, status }: SiteSummaryItem) => (
         <Stack key={id} direction="row" spacing={1} alignItems={'center'}>
           {status === 'unknown' ? (
             <DotIcon color={'disabled'} sx={{ fontSize: '18px' }} />
@@ -244,13 +251,30 @@ export const SiteSummary = ({ siteSummary }: any) => (
   </Stack>
 );
 
-export const PowerSummary = ({ powerSummary }: any) => (
+interface PowerSiteSummaryItem {
+  id: string;
+  name: string;
+  usage: number;
+  panels: number;
+  battries: number;
+}
+
+interface PowerSummaryData {
+  sites: PowerSiteSummaryItem[];
+}
+
+interface PowerSectionData {
+  total: number;
+  info: string;
+}
+
+export const PowerSummary = ({ powerSummary }: { powerSummary: PowerSummaryData }) => (
   <Stack spacing={1}>
     <Typography variant="body2" sx={{ fontWeight: 500 }}>
       Power Summary
     </Typography>
     {PowerSummarySections.map(({ id, title, unit }) => {
-      const d: any = {
+      const d: Record<string, PowerSectionData> = {
         'power-usage': {
           total: 0,
           info: '',
@@ -266,7 +290,7 @@ export const PowerSummary = ({ powerSummary }: any) => (
       };
 
       powerSummary.sites.forEach(
-        ({ id: _id, name, usage, panels, battries }: any, i: number) => {
+        ({ id: _id, name, usage, panels, battries }: PowerSiteSummaryItem, i: number) => {
           const isLastItem = powerSummary.sites.length === i + 1;
           d['power-usage'].total = d['power-usage'].total + usage;
           d['solar-panels'].total = d['solar-panels'].total + panels;
@@ -315,8 +339,14 @@ export const PowerSummary = ({ powerSummary }: any) => (
   </Stack>
 );
 
+interface PlanSiteForDetails {
+  name?: string;
+  height?: number;
+  location: { lat: string; lng: string };
+}
+
 interface ISiteDetails {
-  site: any;
+  site: PlanSiteForDetails;
 }
 const SiteDetails = ({ site }: ISiteDetails) => (
   <Stack spacing={2} py={3}>
@@ -360,7 +390,7 @@ const SiteDetails = ({ site }: ISiteDetails) => (
 );
 
 interface ISites {
-  sites: any[];
+  sites: PlanSiteForDetails[];
   handleDeleteLink: () => void;
 }
 
@@ -411,7 +441,12 @@ export const SiteLink = ({ sites, handleDeleteLink }: ISites) => (
   </Card>
 );
 
-export const LayerSwitch = ({ handleLayerSwitch, value }: any) => (
+interface ILayerSwitch {
+  value: string;
+  handleLayerSwitch: (event: React.MouseEvent<HTMLElement>, value: string) => void;
+}
+
+export const LayerSwitch = ({ handleLayerSwitch, value }: ILayerSwitch) => (
   <Box
     sx={{
       left: 24,

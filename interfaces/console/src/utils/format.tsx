@@ -3,14 +3,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2023-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 
 import { Invitation_Status, Role_Type } from '@/client/graphql/generated';
-import {
-  INSTALLATION_FLOW,
-  ONBOARDING_FLOW,
-} from '@/constants';
+import { INSTALLATION_FLOW, ONBOARDING_FLOW } from '@/constants';
 import colors from '@/theme/colors';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { Skeleton, Stack, Typography } from '@mui/material';
@@ -149,7 +146,10 @@ export const getSimValuefromSimType = (simType: string) => {
   }
 };
 
-export const getInvitationStatusColor = (status: string, isExpired: boolean) => {
+export const getInvitationStatusColor = (
+  status: string,
+  isExpired: boolean,
+) => {
   if (isExpired) {
     return (
       <Typography variant="body2" color={colors.red}>

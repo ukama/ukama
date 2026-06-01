@@ -138,7 +138,7 @@ export const useMetricSubscriptions = ({
     },
   });
 
-  const handleSiteStatSubscription = useCallback((_: any, data: string) => {
+  const handleSiteStatSubscription = useCallback((_: string, data: string) => {
     try {
       const parsedData: TMetricResDto = JSON.parse(data);
       if (parsedData?.data?.getSiteMetricStatSub) {

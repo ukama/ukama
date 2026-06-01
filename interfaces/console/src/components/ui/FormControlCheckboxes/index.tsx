@@ -17,7 +17,7 @@ import {
 import React from 'react';
 
 type FormControlCheckboxesProp = {
-  values: any;
+  values: Record<string, boolean>;
   handleChange: (name: string, checked: boolean) => void;
   checkboxList: StatsItemType[];
 };
@@ -36,7 +36,7 @@ const FormControlCheckboxes = ({
         alignItems: 'center',
         flexDirection: 'row',
       }}
-      onChange={(e: any) => handleChange(e.target.name, e.target.checked)}
+      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(e.target.name, e.target.checked)}
     >
       <FormLabel component="legend" sx={{ mr: '44px' }}>
         Server Down

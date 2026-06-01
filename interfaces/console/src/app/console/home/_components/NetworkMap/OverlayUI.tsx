@@ -7,6 +7,7 @@
  */
 
 import { NodeStateEnum } from '@/client/graphql/generated';
+import { TNodeSiteTree } from '@/types';
 import { ExpandLess, ExpandMore } from '@mui/icons-material';
 import TuneIcon from '@mui/icons-material/Tune';
 import {
@@ -48,7 +49,7 @@ export const LabelOverlayUI = ({ name }: { name: string }) => {
 };
 
 interface ISitesTree {
-  sites: any;
+  sites: TNodeSiteTree[];
 }
 
 export const SitesTree = ({ sites }: ISitesTree) => {
@@ -80,7 +81,7 @@ export const SitesTree = ({ sites }: ISitesTree) => {
             maxHeight: '400px',
           }}
         >
-          {sites?.map((site: any) => {
+          {sites?.map((site: TNodeSiteTree) => {
             return (
               <TreeItem key={site.id} itemId={site.id} label={site.name}>
                 <TreeItem

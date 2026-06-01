@@ -27,9 +27,9 @@ type AddNodeDialogProps = {
   title: string;
   isOpen: boolean;
   description: string;
-  handleCloseAction: any;
+  handleCloseAction: () => void;
   labelSuccessBtn?: string;
-  handleSuccessAction?: any;
+  handleSuccessAction?: () => void;
   labelNegativeBtn?: string;
   handleNodeCheck: (id: string, checked: boolean) => void;
   data: Record<string, string | boolean>[] | undefined;

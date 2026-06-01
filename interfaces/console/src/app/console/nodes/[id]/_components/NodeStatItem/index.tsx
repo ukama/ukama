@@ -105,14 +105,14 @@ const NodeStatItem = ({
   const [v, setV] = useState<string>('');
 
   useEffect(() => {
-    setV(format ? formatKPIValue(value, format) : value);
+    setV(String(format ? formatKPIValue(value, format) : value));
   }, [value, format]);
 
   useEffect(() => {
     if (id) {
       const token = PubSub.subscribe(`stat-${id}`, (_, data) => {
         if (data.length > 0) {
-          setV(format ? formatKPIValue(data[1], format) : data[1]);
+          setV(String(format ? formatKPIValue(String(data[1]), format) : data[1]));
         }
       });
       return () => {

@@ -3,19 +3,19 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2023-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 
 import colors from '@/theme/colors';
 import { SubscriberDetailsType } from '@/types';
 import styled from '@emotion/styled';
 import CloseIcon from '@mui/icons-material/Close';
-import { IconButton } from '@mui/material';
 import {
   Button,
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   Stack,
   TextField,
   Typography,
@@ -55,13 +55,22 @@ const SubscriberInfoStep: React.FC<SubscriberInfoStepProps> = ({
       </Typography>
       <Stack direction="column" spacing={2}>
         <Field name="name">
-          {({ field, meta }: { field: object; meta: { touched: boolean; error?: string } }) => (
+          {({
+            field,
+            meta,
+          }: {
+            field: object;
+            meta: { touched: boolean; error?: string };
+          }) => (
             <TextField
               {...field}
               required
               fullWidth
               label="Name"
-              sx={{ height: '48px', '& .MuiInputBase-root': { height: '100%' } }}
+              sx={{
+                height: '48px',
+                '& .MuiInputBase-root': { height: '100%' },
+              }}
               error={meta.touched && Boolean(meta.error)}
               helperText={meta.touched && meta.error}
               slotProps={{ inputLabel: { shrink: true } }}
@@ -69,13 +78,22 @@ const SubscriberInfoStep: React.FC<SubscriberInfoStepProps> = ({
           )}
         </Field>
         <Field name="email">
-          {({ field, meta }: { field: object; meta: { touched: boolean; error?: string } }) => (
+          {({
+            field,
+            meta,
+          }: {
+            field: object;
+            meta: { touched: boolean; error?: string };
+          }) => (
             <TextField
               {...field}
               required
               fullWidth
               label="Email"
-              sx={{ height: '48px', '& .MuiInputBase-root': { height: '100%' } }}
+              sx={{
+                height: '48px',
+                '& .MuiInputBase-root': { height: '100%' },
+              }}
               error={meta.touched && Boolean(meta.error)}
               helperText={meta.touched && meta.error}
               slotProps={{ inputLabel: { shrink: true } }}
@@ -89,7 +107,9 @@ const SubscriberInfoStep: React.FC<SubscriberInfoStepProps> = ({
       <Button onClick={onClose}>Cancel</Button>
       <Button
         onClick={onNext}
-        disabled={!formik.values.name || !formik.values.email || !formik.isValid}
+        disabled={
+          !formik.values.name || !formik.values.email || !formik.isValid
+        }
         variant="contained"
       >
         Next

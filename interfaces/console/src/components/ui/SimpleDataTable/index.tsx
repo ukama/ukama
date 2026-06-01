@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { NodeConnectivityEnum } from '@/client/graphql/generated';
+import { Invitation_Status, NodeConnectivityEnum, Role_Type } from '@/client/graphql/generated';
 import ChipDropdown from '@/components/ui/ChipDropDown';
 import colors from '@/theme/colors';
 import { ColumnsWithOptions } from '@/types';
@@ -38,25 +38,25 @@ import React, { useMemo, useState } from 'react';
 
 interface SimpleDataTableInterface {
   dataKey?: string;
-  dataset: any;
+  dataset: Record<string, string | number | boolean | null | undefined>[];
   height?: string;
   isIdHyperlink?: boolean;
   columns: ColumnsWithOptions[];
-  networkList?: any;
-  handleCreateNetwork?: any;
-  handleDeleteElement?: any;
+  networkList?: Array<{ id: string; name: string }>;
+  handleCreateNetwork?: () => void;
+  handleDeleteElement?: (id: string) => void;
   showActionButton?: boolean;
   hyperlinkPrefix?: string;
 }
 
 interface TableCellProps {
-  row: any;
+  row: Record<string, string | number | boolean | null | undefined>;
   isIdHyperlink?: boolean;
-  handleCreateNetwork: any;
+  handleCreateNetwork?: () => void;
   hyperlinkPrefix?: string;
   column: ColumnsWithOptions;
-  networkList: string[] | [] | undefined;
-  handleDeleteElement: (id: string) => void;
+  networkList: Array<{ id: string; name: string }> | undefined;
+  handleDeleteElement?: (id: string) => void;
 }
 
 interface TableHeaderProps {
@@ -111,28 +111,31 @@ const renderCellContent = ({
   handleDeleteElement,
   networkList,
 }: TableCellProps) => {
+  const val = row[column.id];
+  const strVal = String(val ?? '');
+
   const handleDeleteRow = () => {
-    handleDeleteElement(row.id);
+    handleDeleteElement?.(String(row.id ?? ''));
   };
   switch (column.id) {
     case 'id':
       return isIdHyperlink ? (
-        <Link href={`${hyperlinkPrefix}${row[column.id]}`} unselectable="on">
-          {row[column.id]}
+        <Link href={`${hyperlinkPrefix}${strVal}`} unselectable="on">
+          {strVal}
         </Link>
       ) : (
-        <Typography variant="body2">{row[column.id]}</Typography>
+        <Typography variant="body2">{strVal}</Typography>
       );
     case 'iccid':
       return isIdHyperlink && row['isAllocated'] ? (
         <Link
-          href={`${hyperlinkPrefix}iccid=${row[column.id]}`}
+          href={`${hyperlinkPrefix}iccid=${strVal}`}
           unselectable="on"
         >
-          {row[column.id]}
+          {strVal}
         </Link>
       ) : (
-        <Typography variant="body2">{row[column.id]}</Typography>
+        <Typography variant="body2">{strVal}</Typography>
       );
     case 'role':
       return (
@@ -140,13 +143,13 @@ const renderCellContent = ({
           <Chip
             color="info"
             sx={{ color: 'white' }}
-            label={roleEnumToString(row[column.id])}
+            label={roleEnumToString(strVal as Role_Type)}
           />
         </div>
       );
     case 'pdf':
       return (
-        <Link target="_blank" underline="hover" href={row[column.id]}>
+        <Link target="_blank" underline="hover" href={strVal}>
           View as PDF
         </Link>
       );
@@ -155,7 +158,7 @@ const renderCellContent = ({
         <ChipDropdown
           onCreateNetwork={handleCreateNetwork}
           menu={
-            (networkList && networkList.map((network: any) => network.name)) ??
+            (networkList && networkList.map((network) => network.name)) ??
             []
           }
         />
@@ -178,15 +181,15 @@ const renderCellContent = ({
           sx={{
             p: 1,
             color: 'black',
-            backgroundColor: provideStatusColor(row[column.id]),
+            backgroundColor: provideStatusColor(strVal as Invitation_Status),
           }}
-          label={inviteStatusEnumToString(row[column.id])}
+          label={inviteStatusEnumToString(strVal as Invitation_Status)}
         />
       );
     case 'simType':
       return (
         <Chip
-          label={getSimValuefromSimType(row[column.id])}
+          label={getSimValuefromSimType(strVal)}
           sx={{ color: 'white' }}
           color="info"
         />
@@ -194,7 +197,7 @@ const renderCellContent = ({
     case 'isPhysical':
       return (
         <Typography variant="body2" sx={{ padding: '8px' }}>
-          {row[column.id] === 'true' ? 'pSIM' : 'eSIM'}
+          {val === 'true' ? 'pSIM' : 'eSIM'}
         </Typography>
       );
     case 'connectivity':
@@ -204,11 +207,11 @@ const renderCellContent = ({
             p: 1,
             color: (theme) => theme.palette.text.primary,
             backgroundColor:
-              row[column.id] === NodeConnectivityEnum.Online
+              strVal === NodeConnectivityEnum.Online
                 ? colors.primaryLight
                 : colors.dullRed,
           }}
-          label={row[column.id]}
+          label={strVal}
         />
       );
     case 'state':
@@ -219,19 +222,19 @@ const renderCellContent = ({
             color: (theme) => theme.palette.text.primary,
             backgroundColor: colors.secondaryLight,
           }}
-          label={row[column.id]}
+          label={strVal}
         />
       );
     case 'isAllocated':
       return (
         <Typography variant="body2" sx={{ padding: '8px' }}>
-          {row[column.id] === true ? 'Assigned' : 'Unassigned'}
+          {val === true ? 'Assigned' : 'Unassigned'}
         </Typography>
       );
     default:
       return (
         <Typography variant="body2" sx={{ padding: '8px' }}>
-          {row[column.id]}
+          {strVal}
         </Typography>
       );
   }
@@ -310,8 +313,8 @@ const SimpleDataTable = React.memo(
             onSort={handleSort}
           />
           <TableBody>
-            {sortedData?.map((row: any) => (
-              <TableRow key={row[dataKey]}>
+            {sortedData?.map((row) => (
+              <TableRow key={String(row[dataKey] ?? '')}>
                 {columns?.map((column: ColumnsWithOptions, index: number) => (
                   <SimpleTableCell
                     row={row}

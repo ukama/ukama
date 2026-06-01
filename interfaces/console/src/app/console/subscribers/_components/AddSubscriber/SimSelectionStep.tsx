@@ -3,14 +3,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2023-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 
 import { SimPoolResDto } from '@/client/graphql/generated';
 import { SubscriberDetailsType } from '@/types';
 import styled from '@emotion/styled';
 import CloseIcon from '@mui/icons-material/Close';
-import { IconButton } from '@mui/material';
 import {
   Autocomplete,
   Box,
@@ -18,6 +17,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   TextField,
   Typography,
 } from '@mui/material';
@@ -62,7 +62,13 @@ const SimSelectionStep: React.FC<SimSelectionStepProps> = ({
         is correct, because this cannot be undone.
       </Typography>
       <Field name="simIccid">
-        {({ field, form }: { field: { value: string }; form: FormikProps<SubscriberDetailsType> }) => (
+        {({
+          field,
+          form,
+        }: {
+          field: { value: string };
+          form: FormikProps<SubscriberDetailsType>;
+        }) => (
           <Autocomplete
             freeSolo
             value={field.value}

@@ -30,7 +30,7 @@ const Sims = () => {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const { env, setSnackbarMessage } = useAppContext();
-  const [file, setFile] = useState<any>();
+  const [file, setFile] = useState<File | undefined>();
   const { acceptedFiles, getRootProps, getInputProps } = useDropzone({
     accept: {
       'text/html': ['.csv'],
@@ -90,7 +90,7 @@ const Sims = () => {
       acceptedFiles.length > 0 &&
       env.SIM_TYPE !== Sim_Types.Unknown
     ) {
-      const file: any = acceptedFiles[0];
+      const file = acceptedFiles[0] as File;
       fileToBase64(file)
         .then((base64String) => {
           handleUploadSimsAction('success', base64String);
@@ -147,7 +147,7 @@ const Sims = () => {
             <Typography variant="body1">{acceptedFiles[0].name}</Typography>
             <IconButton
               onClick={() => {
-                setFile(null);
+                setFile(undefined);
                 // acceptedFiles?.pop();
               }}
               size="small"

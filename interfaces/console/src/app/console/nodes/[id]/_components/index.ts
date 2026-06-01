@@ -3,9 +3,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2023-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 
+export { default as EditNode } from './EditNode';
 export { NodeActionUI } from './NodeActionUI';
 export { default as NodeDetailsCard } from './NodeDetailsCard';
 export { default as NodeNetworkTab } from './NodeNetworkTab';
@@ -17,4 +18,3 @@ export { default as NodeSoftwareTab } from './NodeSoftwareTab';
 export { default as NodeStatItem } from './NodeStatItem';
 export { default as NodeStatsContainer } from './NodeStatsContainer';
 export { default as NodeStatusDisplay } from './NodeStatusDisplay';
-export { default as EditNode } from './EditNode';

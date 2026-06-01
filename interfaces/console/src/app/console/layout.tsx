@@ -28,7 +28,7 @@ import ServerNotificationSubscription from '@/features/subscriptions/Notificatio
 import '@/styles/console.css';
 import { TNotificationResDto } from '@/types';
 import ErrorBoundary from '@/wrappers/errorBoundary';
-import { ApolloClient, useApolloClient } from '@apollo/client';
+import { ApolloClient, NormalizedCacheObject, useApolloClient } from '@apollo/client';
 import { Box } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import PubSub from 'pubsub-js';
@@ -203,7 +203,7 @@ export default function ConosleLayout({
     });
 
     if (eventKey === 'EventNodeOnline' || eventKey === 'EventNodeOffline') {
-      (client as ApolloClient<any>).cache.updateQuery<GetNodesQuery>(
+      (client as ApolloClient<NormalizedCacheObject>).cache.updateQuery<GetNodesQuery>(
         { query: GetNodesDocument },
         (data: GetNodesQuery | null) => {
           if (!data?.getNodes?.nodes) return data;

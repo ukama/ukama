@@ -10,7 +10,7 @@ import { Stack, Typography } from '@mui/material';
 import { ElementType } from 'react';
 
 interface IEmptyView {
-  icon: ElementType;
+  icon?: ElementType;
   title: string;
   description?: string;
   size?: 'small' | 'medium' | 'large';
@@ -34,7 +34,7 @@ const EmptyView = ({
         justifyContent: 'center',
       }}
     >
-      <Icon fontSize={size} color="textPrimary" style={{ opacity: 0.6 }} />
+      {Icon && <Icon fontSize={size} color="textPrimary" style={{ opacity: 0.6 }} />}
       <Typography variant="body1" fontWeight={500}>
         {title}
       </Typography>

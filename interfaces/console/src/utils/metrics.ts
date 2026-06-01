@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2023-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 
 import {
@@ -13,7 +13,7 @@ import {
 } from '@/client/graphql/generated/subscriptions';
 import { KPI_PLACEHOLDER_VALUE } from '@/constants';
 import colors from '@/theme/colors';
-import { DashStyleValue } from 'highcharts';
+import Highcharts, { DashStyleValue } from 'highcharts';
 
 export const getGraphFilterByType = (type: string) => {
   switch (type) {
@@ -35,7 +35,7 @@ export const getGraphFilterByType = (type: string) => {
   }
 };
 
-export const extractMetricValue = (value: any): number | null => {
+export const extractMetricValue = (value: unknown): number | null => {
   if (Array.isArray(value) && value.length > 1) {
     return typeof value[1] === 'number' ? value[1] : null;
   }
@@ -62,10 +62,10 @@ export const getKPIStatValue = (
   return stat?.value?.toString() ?? KPI_PLACEHOLDER_VALUE;
 };
 
-export const findNullZones = (data: any) => {
-  const zones = [];
+export const findNullZones = (data: [number, number | null][]) => {
+  const zones: Highcharts.SeriesZonesOptionsObject[] = [];
   let inNullZone = false;
-  let start = null;
+  let start: number | null = null;
 
   for (let i = 0; i < data.length; i++) {
     const [x, y] = data[i];
@@ -76,7 +76,7 @@ export const findNullZones = (data: any) => {
         inNullZone = true;
       }
     } else {
-      if (inNullZone) {
+      if (inNullZone && start !== null) {
         zones.push({ value: start });
         zones.push({
           value: data[i - 1][0],
@@ -88,7 +88,7 @@ export const findNullZones = (data: any) => {
     }
   }
 
-  if (inNullZone) {
+  if (inNullZone && start !== null) {
     zones.push({ value: start });
     zones.push({
       value: data[data.length - 1][0],
@@ -100,7 +100,9 @@ export const findNullZones = (data: any) => {
   return zones;
 };
 
-export const generatePlotLines = (values: number[] | undefined): any[] => {
+export const generatePlotLines = (
+  values: number[] | undefined,
+): Highcharts.XAxisPlotLinesOptions[] => {
   if (!values || values.length === 0) {
     return [];
   }
@@ -125,7 +127,10 @@ export const generatePlotLines = (values: number[] | undefined): any[] => {
   }));
 };
 
-export const formatKPIValue = (value: string, type: string): any => {
+export const formatKPIValue = (
+  value: string,
+  type: string,
+): string | number => {
   switch (type) {
     case 'number':
       return Math.floor(parseFloat(value));

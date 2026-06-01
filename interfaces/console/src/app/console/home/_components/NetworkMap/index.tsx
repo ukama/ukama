@@ -7,6 +7,7 @@
  */
 
 import { Nodes } from '@/client/graphql/generated';
+import React from 'react';
 import styles from '@/styles/Map.module.css';
 import Leaflet from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
@@ -26,7 +27,7 @@ const ICON = {
 interface IMap {
   id: string;
   zoom: number;
-  children: any;
+  children: (rl: typeof import('react-leaflet'), l: typeof Leaflet) => React.ReactNode;
   className?: string;
   markersData: Nodes | undefined;
 }

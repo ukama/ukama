@@ -10,8 +10,14 @@ import LoadingWrapper from '@/components/ui/LoadingWrapper';
 import { Box, Card, Grid, Paper, Stack, Typography } from '@mui/material';
 import Image from 'next/image';
 
+interface SchematicSpec {
+  id: string;
+  title: string;
+  readingTime: string;
+}
+
 type ISchematicsProps = {
-  schematicsSpecsData?: any;
+  schematicsSpecsData?: SchematicSpec[];
   getSearchValue: (value: string) => void;
   nodeTitle: string | undefined;
   loading: boolean;
@@ -65,7 +71,7 @@ const NodeSchematicTab = ({
                   handleSearchChange={getSearchValue}
                 />
               </Grid>
-              {schematicsSpecsData.map(({ id, title, readingTime }: any) => (
+              {schematicsSpecsData?.map(({ id, title, readingTime }) => (
                 <Grid item key={id} xs md lg={4}>
                   <Card
                     variant="outlined"

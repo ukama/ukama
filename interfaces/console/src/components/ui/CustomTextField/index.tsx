@@ -12,7 +12,7 @@ import React from 'react';
 interface CustomTextFieldProps {
   label: string;
   name: string;
-  onChange?: (event: any) => void;
+  onChange?: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
 }
 
 const CustomTextField: React.FC<CustomTextFieldProps> = ({

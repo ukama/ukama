@@ -17,6 +17,7 @@ import {
   styled,
 } from '@mui/material';
 import { LatLngLiteral } from 'leaflet';
+import React from 'react';
 import useOnclickOutside from 'react-cool-onclickoutside';
 
 import usePlacesAutocomplete, {
@@ -56,12 +57,16 @@ const SearchBar = ({
     clearSuggestions();
   });
 
-  const handleInput = (e: any) => {
+  const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setValue(e.target.value);
   };
 
+  interface PlaceSuggestion {
+    description: string;
+  }
+
   const handleSelect =
-    ({ description }: any) =>
+    ({ description }: PlaceSuggestion) =>
       () => {
         setValue(description, false);
         clearSuggestions();

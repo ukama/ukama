@@ -12,7 +12,7 @@ import { Button, Grid, Stack, Typography } from '@mui/material';
 import InputBase from '@mui/material/InputBase';
 import { styled } from '@mui/material/styles';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 type ContainerHeaderProps = {
   title?: string;
   stats?: string;
@@ -106,7 +106,7 @@ const ContainerHeader = ({
         <StyledInputBase
           placeholder="Search…"
           value={currentSearchValue}
-          onChange={(e: any) => setCurrentSearchValue(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentSearchValue(e.target.value)}
           sx={{
             height: '42px',
             borderRadius: 2,

@@ -5,7 +5,9 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import { SubscriberSimDto } from '@/client/graphql/generated';
 import { colors } from '@/theme';
+import { TSubscriberDetails } from '@/types';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -33,7 +35,7 @@ import DataPlanComponent from './dataPlanInfo';
 interface SubscriberProps {
   ishowSubscriberDetails: boolean;
   handleClose: () => void;
-  subscriberInfo: any;
+  subscriberInfo: TSubscriberDetails | null;
   handleSimActionOption: (
     action: string,
     simId: string,
@@ -65,7 +67,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
   const [isEditingName, setIsEditingName] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [localSubscriberInfo, setLocalSubscriberInfo] =
-    useState<any>(subscriberInfo);
+    useState<TSubscriberDetails | null>(subscriberInfo);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -78,7 +80,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
   const handleMenuItemClick = useCallback(
     (action: string) => {
       handleCloseItem();
-      handleDeleteSubscriber(action, subscriberInfo.uuid);
+      handleDeleteSubscriber(action, subscriberInfo?.uuid ?? '');
     },
     [subscriberInfo, handleCloseItem, handleDeleteSubscriber],
   );
@@ -95,8 +97,8 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
   const handleSaveSubscriber = useCallback(() => {
     if (hasChanges) {
       const updates: { name?: string } = {};
-      if (name !== subscriberInfo.name) updates.name = name;
-      handleUpdateSubscriber(subscriberInfo.uuid, updates);
+      if (name !== subscriberInfo?.name) updates.name = name;
+      handleUpdateSubscriber(subscriberInfo?.uuid ?? '', updates);
     }
     handleClose();
   }, [
@@ -114,7 +116,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
 
   const handleSimAction = (action: string, iccid: string) => {
     if (action === 'deactivateSim' || action === 'activateSim') {
-      handleSimActionOption(action, iccid, subscriberInfo.uuid);
+      handleSimActionOption(action, iccid, subscriberInfo?.uuid ?? '');
       handleCloseItem();
     }
   };
@@ -267,7 +269,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
           {selectedsTab === 2 && (
             <Box>
               <SimTable
-                simData={subscriberInfo?.sim}
+                simData={(subscriberInfo?.sim as SubscriberSimDto[] | undefined) ?? []}
                 onSimAction={handleSimAction}
                 simLoading={simStatusLoading}
               />
