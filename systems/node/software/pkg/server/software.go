@@ -22,9 +22,12 @@ import (
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/validation"
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
+	opmonpb "github.com/ukama/ukama/systems/node/operation-monitor/pb/gen"
 	"github.com/ukama/ukama/systems/node/software/pkg"
+	swclient "github.com/ukama/ukama/systems/node/software/pkg/client"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
 	"github.com/ukama/ukama/systems/node/software/providers"
+	opmgrpb "github.com/ukama/ukama/systems/operation/manager/pb/gen"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -39,10 +42,14 @@ type SoftwareServer struct {
 	healthClient         providers.HealthClientProvider
 	debug                bool
 	orgName              string
-	nodeGwIPs             []string
+	nodeGwIPs            []string
+	opManager            swclient.OperationManager
+	opMonitor            swclient.OperationMonitor
+	opLeaseSecs          uint32
+	opDeadlineSecs       uint32
 }
 
-func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, appRepo db.AppRepo, nodeRepo db.NodeRepo, healthClient providers.HealthClientProvider, msgBus mb.MsgBusServiceClient, debug bool, nodeGwIP []string) *SoftwareServer {
+func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, appRepo db.AppRepo, nodeRepo db.NodeRepo, healthClient providers.HealthClientProvider, msgBus mb.MsgBusServiceClient, debug bool, nodeGwIP []string, opMgr swclient.OperationManager, opMon swclient.OperationMonitor, leaseSecs, deadlineSecs uint32) *SoftwareServer {
 	return &SoftwareServer{
 		sRepo:                sRepo,
 		debug:                debug,
@@ -53,6 +60,43 @@ func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, appRepo db.AppRepo
 		orgName:              orgName,
 		nodeGwIPs:            nodeGwIP,
 		nodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		opManager:            opMgr,
+		opMonitor:            opMon,
+		opLeaseSecs:          leaseSecs,
+		opDeadlineSecs:       deadlineSecs,
+	}
+}
+
+func (s *SoftwareServer) acquireAndRegister(actionType, resourceKey string) (*opmgrpb.Operation, error) {
+	startResp, err := s.opManager.Start(&opmgrpb.StartOperationRequest{
+		Type:         actionType,
+		System:       "node",
+		ResourceKey:  resourceKey,
+		RequestedBy:  pkg.ServiceName,
+		LeaseSeconds: s.opLeaseSecs,
+	})
+	if err != nil {
+		log.Warnf("%s lock acquire for %s rejected: %v", actionType, resourceKey, err)
+		return nil, err
+	}
+	op := startResp.Operation
+	if _, err := s.opMonitor.Register(&opmonpb.RegisterIntentRequest{
+		OperationId:     op.Id,
+		ResourceKey:     resourceKey,
+		ActionType:      actionType,
+		FencingToken:    op.FencingToken,
+		DeadlineSeconds: s.opDeadlineSecs,
+	}); err != nil {
+		log.Errorf("%s register intent for op %s failed: %v", actionType, op.Id, err)
+		return nil, status.Errorf(codes.Internal, "register intent: %v", err)
+	}
+	log.Infof("%s acquired lock op=%s token=%d for %s", actionType, op.Id, op.FencingToken, resourceKey)
+	return op, nil
+}
+
+func (s *SoftwareServer) markRunning(op *opmgrpb.Operation, actionType string) {
+	if _, err := s.opManager.MarkRunning(op.Id, op.FencingToken); err != nil {
+		log.Warnf("%s mark running failed for op %s: %v", actionType, op.Id, err)
 	}
 }
 
@@ -164,10 +208,15 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 		return nil, status.Errorf(codes.Internal, "failed to marshal update request: %v", err)
 	}
 
+	op, err := s.acquireAndRegister("UpdateSoftware", fmt.Sprintf("node:%s:app:%s", nId.String(), req.Name))
+	if err != nil {
+		return nil, err
+	}
 	if err := s.publishMessage(target, "POST", path, nId.String(), data); err != nil {
 		log.Errorf("Failed to publish update message: %v", err)
 		return nil, status.Errorf(codes.Internal, "failed to publish update message: %v", err)
 	}
+	s.markRunning(op, "UpdateSoftware")
 
 	sw.CurrentVersion = req.Tag
 	sw.ChangeLogs = append(sw.ChangeLogs, "Software updated to version "+req.Tag)

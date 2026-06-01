@@ -91,6 +91,10 @@ services:
    - ORGNAME=${ORGNAME}
    - WIMSI_HOST=http://${LOCAL_HOST_IP}:8080
    - NODEGWIPS='["123", "1.1.1.1"]'
+   - OPERATION_MANAGERHOST=manager:9090
+   - OPERATION_MONITORHOST=operation-monitor:9090
+   - OPERATION_LEASESECS=1800
+   - OPERATION_DEADLINESECS=1800
   restart: always
   networks:
    - ukama-net
