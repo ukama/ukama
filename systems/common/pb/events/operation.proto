@@ -1,0 +1,30 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2026-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
+
+package ukama.events.v1;
+
+import "google/protobuf/timestamp.proto";
+
+message OperationCompletedEvent {
+  string operationId = 1;
+  uint64 fencingToken = 2;
+  string resourceKey = 3;
+  google.protobuf.Timestamp completedAt = 4;
+}
+
+message OperationFailedEvent {
+  string operationId = 1;
+  uint64 fencingToken = 2;
+  string resourceKey = 3;
+  string reason = 4;
+  google.protobuf.Timestamp failedAt = 5;
+}
