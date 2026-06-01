@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
-import SiteMapComponent from '@/components/SiteMapComponent';
+import SiteMapComponent from '@/app/console/sites/[id]/_components/SiteMapComponent';
 import { LField } from '@/components/Welcome';
 import { SiteNameSchemaValidation } from '@/helpers/formValidators';
 import colors from '@/theme/colors';

@@ -11,9 +11,9 @@ import {
   useGetNodesLazyQuery,
   useGetSitesQuery,
 } from '@/client/graphql/generated';
-import DataTableWithOptions from '@/components/DataTableWithOptions';
-import LoadingWrapper from '@/components/LoadingWrapper';
-import PageContainerHeader from '@/components/PageContainerHeader';
+import DataTableWithOptions from '@/components/ui/DataTableWithOptions';
+import LoadingWrapper from '@/components/ui/LoadingWrapper';
+import PageContainerHeader from '@/components/ui/PageContainerHeader';
 import {
   NODE_ACTIONS_ENUM,
   NODE_TABLE_COLUMNS,

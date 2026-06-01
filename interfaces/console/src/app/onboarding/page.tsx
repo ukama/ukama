@@ -11,8 +11,8 @@ import {
   useGetInvitationsByEmailQuery,
   useUpdateInvitationMutation,
 } from '@/client/graphql/generated';
-import DataTableWithOptions from '@/components/DataTableWithOptions';
-import DataTableSkelton from '@/components/DataTableWithOptions/skelton';
+import DataTableWithOptions from '@/components/ui/DataTableWithOptions';
+import DataTableSkelton from '@/components/ui/DataTableWithOptions/skelton';
 import { INVITATION_TABLE_COLUMN, INVITATION_TABLE_MENU } from '@/constants';
 import { useAppContext } from '@/context';
 import '@/styles/console.css';

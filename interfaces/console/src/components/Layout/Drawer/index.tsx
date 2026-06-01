@@ -24,7 +24,7 @@ import SwipeableDrawer from '@mui/material/SwipeableDrawer';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import * as React from 'react';
-const BasicDropdown = dynamic(() => import('@/components/BasicDropdown'), {
+const BasicDropdown = dynamic(() => import('@/components/ui/BasicDropdown'), {
   ssr: false,
   loading: () => <Skeleton variant="rectangular" width={'100%'} height={29} />,
 });

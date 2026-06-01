@@ -74,7 +74,7 @@ func NewConfig(name string) *Config {
 			ListenerRoutes: []string{
 				evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline],
 				evt.NodeStateEventRoutingKey[evt.NodeStateEventOffline],
-				"event.cloud.local.{{ .Org}}.node.health.capps.store",
+				"event.cloud.local.{{ .Org}}.node.health.report.store",
 				"event.cloud.local.{{ .Org}}.node.state.node.transition",
 				"event.cloud.local.{{ .Org}}.registry.site.site.create",
 				"event.cloud.local.{{ .Org}}.inventory.component.node.added",

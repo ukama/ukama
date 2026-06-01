@@ -20,11 +20,11 @@ import {
   NotificationsRes,
   useGetNotificationsLazyQuery,
 } from '@/client/graphql/generated/subscriptions';
-import AddNetworkDialog from '@/components/AddNetworkDialog';
+import AddNetworkDialog from '@/app/console/_components/AddNetworkDialog';
 import AppSnackbar from '@/components/AppSnackbar/page';
 import AppLayout from '@/components/Layout';
 import { useAppContext } from '@/context';
-import ServerNotificationSubscription from '@/lib/NotificationSubscription';
+import ServerNotificationSubscription from '@/features/subscriptions/NotificationSubscription';
 import '@/styles/console.css';
 import { TNotificationResDto } from '@/types';
 import ErrorBoundary from '@/wrappers/errorBoundary';
@@ -159,7 +159,7 @@ export default function ConosleLayout({
     }
   }, [user.id, network.id]);
 
-  const handleNotification = (_: any, data: string) => {
+  const handleNotification = (_: unknown, data: string) => {
     const parsedData: TNotificationResDto = JSON.parse(data);
     const {
       id,
@@ -249,14 +249,14 @@ export default function ConosleLayout({
 
   const handleAddNetworkAction = () => setShowAddNetwork(true);
 
-  const handleAddNetwork = (values: any) => {
+  const handleAddNetwork = (values: { name: string; budget: number; networks: { id: string; name: string; isDefault: boolean }[]; countries: { name: string; code: string }[]; isDefault: boolean }) => {
     addNetwork({
       variables: {
         data: {
           name: values.name,
           budget: values.budget,
-          networks: values.networks,
-          countries: values.countries,
+          networks: values.networks.map((n) => n.name),
+          countries: values.countries.map((c) => c.code),
         },
       },
     })

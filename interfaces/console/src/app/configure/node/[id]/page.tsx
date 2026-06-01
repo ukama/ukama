@@ -7,7 +7,7 @@
  */
 'use client';
 import { useGetNetworksQuery } from '@/client/graphql/generated';
-import SiteMapComponent from '@/components/SiteMapComponent';
+import SiteMapComponent from '@/app/console/sites/[id]/_components/SiteMapComponent';
 import { LField } from '@/components/Welcome';
 import { INSTALLATION_FLOW, ONBOARDING_FLOW } from '@/constants';
 import { useAppContext } from '@/context';
@@ -20,7 +20,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import LoadingSkelton from './skelton';
 
-const BasicDropdown = dynamic(() => import('@/components/BasicDropdown'), {
+const BasicDropdown = dynamic(() => import('@/components/ui/BasicDropdown'), {
   ssr: false,
   loading: () => <Skeleton variant="rectangular" width={'100%'} height={29} />,
 });

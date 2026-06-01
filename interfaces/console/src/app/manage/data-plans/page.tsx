@@ -14,11 +14,11 @@ import {
   useGetPackagesQuery,
   useUpdatePacakgeMutation,
 } from '@/client/graphql/generated';
-import DataPlanDialog from '@/components/DataPlanDialog';
-import EmptyView from '@/components/EmptyView';
-import LoadingWrapper from '@/components/LoadingWrapper';
-import PageContainerHeader from '@/components/PageContainerHeader';
-import PlanCard from '@/components/PlanCard';
+import DataPlanDialog from '@/app/manage/data-plans/_components/DataPlanDialog';
+import EmptyView from '@/components/ui/EmptyView';
+import LoadingWrapper from '@/components/ui/LoadingWrapper';
+import PageContainerHeader from '@/components/ui/PageContainerHeader';
+import PlanCard from '@/app/manage/data-plans/_components/PlanCard';
 import { useAppContext } from '@/context';
 import { colors } from '@/theme';
 import { CreatePlanType, DataUnitType } from '@/types';

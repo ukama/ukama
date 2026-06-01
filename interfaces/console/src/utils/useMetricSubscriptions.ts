@@ -13,7 +13,7 @@ import {
   useGetSiteStatLazyQuery,
 } from '@/client/graphql/generated/subscriptions';
 import { METRIC_RANGE_10800, STAT_STEP_29 } from '@/constants';
-import MetricStatBySiteSubscription from '@/lib/MetricStatBySiteSubscription';
+import MetricStatBySiteSubscription from '@/features/subscriptions/MetricStatBySiteSubscription';
 import { TMetricResDto } from '@/types';
 import { getUnixTime } from '@/utils';
 import { ApolloClient, NormalizedCacheObject } from '@apollo/client';

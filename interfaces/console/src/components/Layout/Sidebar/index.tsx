@@ -15,7 +15,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-const BasicDropdown = dynamic(() => import('@/components/BasicDropdown'), {
+const BasicDropdown = dynamic(() => import('@/components/ui/BasicDropdown'), {
   ssr: false,
   loading: () => <Skeleton variant="rectangular" width={'100%'} height={29} />,
 });

@@ -8,7 +8,7 @@
 'use client';
 import { useGetNetworksQuery } from '@/client/graphql/generated';
 import AppSnackbar from '@/components/AppSnackbar/page';
-import BackButton from '@/components/BackButton';
+import BackButton from '@/components/ui/BackButton';
 import { useAppContext } from '@/context';
 import { MANAGE_MENU_LIST } from '@/routes';
 import '@/styles/console.css';

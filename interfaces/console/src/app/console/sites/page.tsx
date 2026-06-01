@@ -19,12 +19,12 @@ import {
   Stats_Type,
   useGetSiteStatLazyQuery,
 } from '@/client/graphql/generated/subscriptions';
-import EditSiteDialog from '@/components/EditSiteDialog';
-import LoadingWrapper from '@/components/LoadingWrapper';
-import SitesWrapper from '@/components/SitesWrapper';
+import EditSiteDialog from '@/app/console/sites/[id]/_components/EditSiteDialog';
+import LoadingWrapper from '@/components/ui/LoadingWrapper';
+import SitesWrapper from '@/app/console/sites/_components/SitesWrapper';
 import { STAT_STEP_29 } from '@/constants';
 import { useAppContext } from '@/context';
-import MetricStatBySiteSubscription from '@/lib/MetricStatBySiteSubscription';
+import MetricStatBySiteSubscription from '@/features/subscriptions/MetricStatBySiteSubscription';
 import colors from '@/theme/colors';
 import { getUnixTime } from '@/utils';
 import { AlertColor, Box, Paper, Stack, Typography } from '@mui/material';
