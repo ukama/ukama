@@ -18,7 +18,7 @@ import { getKPIStatValue, getMetricValue, isMetricValue } from '@/utils';
 import { Paper, Stack } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { useState } from 'react';
-import LineChart from '@/components/ui/LineChart';
+import LineChart from '@/components/ui/LineChart/LazyLineChart';
 import NodeStatItem from '@/app/console/nodes/[id]/_components/NodeStatItem';
 import NodeStatsContainer from '@/app/console/nodes/[id]/_components/NodeStatsContainer';
 

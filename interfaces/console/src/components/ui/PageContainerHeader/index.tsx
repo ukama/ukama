@@ -8,7 +8,7 @@
 
 import { HorizontalContainerJustify } from '@/styles/global';
 import { colors } from '@/theme';
-import { Search } from '@mui/icons-material';
+import Search from '@mui/icons-material/Search';
 import { Button, Grid, TextField, Typography } from '@mui/material';
 
 interface IPageContainerHeader {

@@ -30,7 +30,7 @@ import {
 import { useUIContext } from '@/context';
 import colors from '@/theme/colors';
 import { TObject } from '@/types';
-import { Search } from '@mui/icons-material';
+import Search from '@mui/icons-material/Search';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import {
   AlertColor,

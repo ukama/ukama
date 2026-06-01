@@ -11,7 +11,7 @@ import { MetricsRes } from '@/client/graphql/generated/subscriptions';
 import { SectionData, SITE_KPI_TYPES, SiteKpiConfig } from '@/constants';
 import { getMetricValue, isMetricValue } from '@/utils';
 // getMetricValue / isMetricValue are still used for non-SWITCH metric charts below
-import LineChart from '@/components/ui/LineChart';
+import LineChart from '@/components/ui/LineChart/LazyLineChart';
 import { Box, Paper, Stack, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import React, { useEffect, useState } from 'react';
