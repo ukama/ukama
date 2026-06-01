@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
+import AddNetworkDialog from '@/app/console/_components/AddNetworkDialog';
 import {
   GetNodesDocument,
   GetNodesQuery,
@@ -20,7 +21,6 @@ import {
   NotificationsRes,
   useGetNotificationsLazyQuery,
 } from '@/client/graphql/generated/subscriptions';
-import AddNetworkDialog from '@/app/console/_components/AddNetworkDialog';
 import AppSnackbar from '@/components/AppSnackbar/page';
 import AppLayout from '@/components/Layout';
 import { useAppContext } from '@/context';
@@ -30,6 +30,7 @@ import { TNotificationResDto } from '@/types';
 import ErrorBoundary from '@/wrappers/errorBoundary';
 import { ApolloClient, useApolloClient } from '@apollo/client';
 import { Box } from '@mui/material';
+import { useRouter } from 'next/navigation';
 import PubSub from 'pubsub-js';
 import { useEffect, useState } from 'react';
 
@@ -47,6 +48,7 @@ export default function ConosleLayout({
     setSnackbarMessage,
     subscriptionClient,
   } = useAppContext();
+  const router = useRouter();
   const client = useApolloClient();
   const [notifications, setNotifications] = useState<NotificationsRes>({
     notifications: [],
@@ -121,9 +123,9 @@ export default function ConosleLayout({
 
   useEffect(() => {
     if (user.role === Role_Type.RoleInvalid) {
-      window.location.reload();
+      router.replace('/unauthorized');
     }
-  }, []);
+  }, [user.role, router]);
 
   useEffect(() => {
     if (user.id && network.id && user.orgId && user.orgName) {
@@ -249,7 +251,13 @@ export default function ConosleLayout({
 
   const handleAddNetworkAction = () => setShowAddNetwork(true);
 
-  const handleAddNetwork = (values: { name: string; budget: number; networks: { id: string; name: string; isDefault: boolean }[]; countries: { name: string; code: string }[]; isDefault: boolean }) => {
+  const handleAddNetwork = (values: {
+    name: string;
+    budget: number;
+    networks: { id: string; name: string; isDefault: boolean }[];
+    countries: { name: string; code: string }[];
+    isDefault: boolean;
+  }) => {
     addNetwork({
       variables: {
         data: {

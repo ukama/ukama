@@ -39,7 +39,7 @@ const BillingSettingsPage: React.FC = () => {
           : `data:application/pdf;base64,${report.downloadUrl}`;
 
         const blob = base64ToBlob(base64Data, 'application/pdf');
-        const url = window.URL.createObjectURL(blob);
+        const url = URL.createObjectURL(blob);
 
         const link = document.createElement('a');
         link.href = url;
@@ -48,7 +48,7 @@ const BillingSettingsPage: React.FC = () => {
         link.click();
 
         link.remove();
-        window.URL.revokeObjectURL(url);
+        URL.revokeObjectURL(url);
       } catch (error) {
         setSnackbarMessage({
           id: 'pdf-download-error',
