@@ -11,7 +11,8 @@ import { findNullZones, formatKPIValue, generatePlotLines } from '@/utils';
 import { Box } from '@mui/material';
 import HighchartsReact from 'highcharts-react-official';
 import Highcharts from 'highcharts/highstock';
-import { forwardRef, useMemo, useRef, useState } from 'react';
+import PubSub from 'pubsub-js';
+import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import GraphTitleWrapper from '@/components/ui/GraphTitleWrapper';
 import './linechart.css';
 
@@ -86,6 +87,23 @@ const LineChart = ({
     return uniq.length >= 2 ? uniq : undefined;
   }, [tickPositions]);
 
+  useEffect(() => {
+    const token = PubSub.subscribe(`stat-${topic}`, (_, data: number[]) => {
+      const chart = chartRef.current?.chart;
+      if (chart && data.length > 0) {
+        chart.series[0]?.addPoint(
+          [data[0], formatKPIValue(String(data[1]), format)],
+          true,
+          true,
+          true,
+        );
+      }
+    });
+    return () => {
+      PubSub.unsubscribe(token);
+    };
+  }, [topic, format]);
+
   const chartOptions = useMemo<Highcharts.Options>(
     () => ({
       title: {
@@ -96,28 +114,6 @@ const LineChart = ({
         type: 'spline',
         zooming: {
           mouseWheel: false,
-        },
-
-        events: {
-          load: function () {
-            PubSub.subscribe(`stat-${topic}`, (_, data) => {
-              const chart: any =
-                Highcharts.charts.length > 0
-                  ? Highcharts.charts.find(
-                    (c: any) => c?.title?.textStr === topic,
-                  )
-                  : null;
-              if (chart && data.length > 0) {
-                const series = chart.series[0];
-                series.addPoint(
-                  [data[0], formatKPIValue(data[1], format)],
-                  true,
-                  true,
-                  true,
-                );
-              }
-            });
-          },
         },
       },
 

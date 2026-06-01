@@ -129,6 +129,7 @@ export default function ConosleLayout({
 
   useEffect(() => {
     if (user.id && network.id && user.orgId && user.orgName) {
+      const notificationTopic = `notification-${user.orgId}-${user.id}-${user.role}-${network.id}`;
       const startTimeStamp = new Date().getTime().toString();
       getNotifications({
         client: subscriptionClient,
@@ -144,7 +145,7 @@ export default function ConosleLayout({
       }).then(() => {
         ServerNotificationSubscription(
           env.METRIC_URL,
-          `notification-${user.orgId}-${user.id}-${user.role}-${network.id}`,
+          notificationTopic,
           user.role,
           user.orgId,
           user.id,
@@ -154,10 +155,11 @@ export default function ConosleLayout({
         );
       });
 
-      PubSub.subscribe(
-        `notification-${user.orgId}-${user.id}-${user.role}-${network.id}`,
-        handleNotification,
-      );
+      const token = PubSub.subscribe(notificationTopic, handleNotification);
+
+      return () => {
+        PubSub.unsubscribe(token);
+      };
     }
   }, [user.id, network.id]);
 
