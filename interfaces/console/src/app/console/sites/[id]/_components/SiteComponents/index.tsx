@@ -5,26 +5,18 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import NodeStatusDisplay from '@/app/console/nodes/[id]/_components/NodeStatusDisplay';
 import { Node } from '@/client/graphql/generated';
 import { MetricsRes } from '@/client/graphql/generated/subscriptions';
 import { SectionData, SITE_KPI_TYPES, SiteKpiConfig } from '@/constants';
 import { getMetricValue, isMetricValue } from '@/utils';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Box,
-  Paper,
-  Stack,
-  Switch,
-  Typography,
-} from '@mui/material';
+// getMetricValue / isMetricValue are still used for non-SWITCH metric charts below
+import LineChart from '@/components/ui/LineChart';
+import { Box, Paper, Stack, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import React, { useEffect, useState } from 'react';
 import SiteFlowDiagram from '../../../../../../../public/svg/sitecomps';
-import LineChart from '@/components/ui/LineChart';
-import NodeStatusDisplay from '@/app/console/nodes/[id]/_components/NodeStatusDisplay';
+import SwitchPortItem, { PortGroup } from './SwitchPortItem';
 interface SiteComponentsProps {
   siteId: string;
   metrics: MetricsRes;
@@ -177,128 +169,15 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
       .sort((a, b) => a.portNumber - b.portNumber);
   };
 
-  const renderPortItem = (portGroup: any) => {
-    const isExpanded = expandedPorts[portGroup.id] || false;
-    const portTitle = portGroup.description
-      ? `Port ${portGroup.portNumber} (${portGroup.description})`
-      : `Port ${portGroup.portNumber}`;
-
-    const statusMetric = portGroup.metrics.find((m: any) =>
-      m.id.includes('switch_port_status'),
-    );
-
-    const isOn = localSwitchStatus[portGroup.id] ?? false;
-    const isDisabled = disabledSwitches[portGroup.id] || false;
-
-    const handleToggle = () => {
-      if (onSwitchChange) {
-        setLocalSwitchStatus((prev) => ({
-          ...prev,
-          [portGroup.id]: !isOn,
-        }));
-
-        setDisabledSwitches((prev) => ({
-          ...prev,
-          [portGroup.id]: true,
-        }));
-
-        onSwitchChange(portGroup.portNumber, isOn);
-
-        setTimeout(() => {
-          setDisabledSwitches((prev) => ({
-            ...prev,
-            [portGroup.id]: false,
-          }));
-        }, 5000);
-      }
-    };
-
-    return (
-      <Box
-        key={portGroup.id}
-        sx={{ borderBottom: '1px solid rgba(0, 0, 0, 0.12)', py: 2 }}
-        data-testid={`port-${portGroup.id}-container`}
-      >
-        <Accordion
-          expanded={isExpanded}
-          onChange={() => togglePortExpand(portGroup.id)}
-          sx={{ boxShadow: 'none' }}
-          data-testid={`accordion-${portGroup.id}`}
-        >
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            sx={{ display: 'flex', alignItems: 'center', p: 0 }}
-            data-testid={`accordion-summary-${portGroup.id}`}
-          >
-            <Typography
-              variant="subtitle1"
-              fontWeight="medium"
-              sx={{ flexGrow: 1 }}
-              data-testid={`accordion-title-${portGroup.id}`}
-            >
-              {portTitle}
-            </Typography>
-          </AccordionSummary>
-
-          <AccordionDetails
-            sx={{ mt: 2, ml: 2, p: 0 }}
-            data-testid={`accordion-details-${portGroup.id}`}
-          >
-            {statusMetric && (
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  mb: 3,
-                  pb: 2,
-                  borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
-                }}
-                data-testid={`status-metric-${portGroup.id}`}
-              >
-                <Typography variant="body1">{statusMetric.name}</Typography>
-                <Box display="flex" alignItems="center">
-                  <Typography variant="body2" sx={{ mr: 1 }}>
-                    {isOn ? 'On' : 'Off'}
-                  </Typography>
-                  <Switch
-                    checked={isOn}
-                    onChange={handleToggle}
-                    disabled={isDisabled}
-                    color="primary"
-                    data-testid={`toggle-switch-${portGroup.id}`}
-                  />
-                </Box>
-              </Box>
-            )}
-
-            <Stack spacing={3}>
-              {portGroup.metrics
-                .filter((m: any) => !m.id.includes('switch_port_status'))
-                .map((metric: any, _: number) => (
-                  <Box key={metric.id} data-testid={`metric-item-${metric.id}`}>
-                    <Typography variant="body1" sx={{ mb: 1 }}>
-                      {metric.name}
-                    </Typography>
-                    <LineChart
-                      from={metricFrom}
-                      topic={metric.id}
-                      yunit={metric.unit}
-                      loading={metricsLoading}
-                      tickInterval={metric.tickInterval}
-                      tickPositions={metric.tickPositions}
-                      hasData={isMetricValue(metric.id, metrics)}
-                      initData={getMetricValue(metric.id, metrics)}
-                      format={metric.format}
-                      data-testid={`line-chart-${metric.id}`}
-                    />
-                  </Box>
-                ))}
-            </Stack>
-          </AccordionDetails>
-        </Accordion>
-      </Box>
-    );
+  const handlePortToggleSwitch = (portNumber: number, currentIsOn: boolean) => {
+    if (!onSwitchChange) return;
+    const portId = `port-${portNumber}`;
+    setLocalSwitchStatus((prev) => ({ ...prev, [portId]: !currentIsOn }));
+    setDisabledSwitches((prev) => ({ ...prev, [portId]: true }));
+    onSwitchChange(portNumber, currentIsOn);
+    setTimeout(() => {
+      setDisabledSwitches((prev) => ({ ...prev, [portId]: false }));
+    }, 5000);
   };
 
   return (
@@ -362,9 +241,20 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
                     })()}
                   </Typography>
 
-                  {getPortMetrics().map((portGroup) =>
-                    renderPortItem(portGroup),
-                  )}
+                  {getPortMetrics().map((portGroup: PortGroup) => (
+                    <SwitchPortItem
+                      key={portGroup.id}
+                      portGroup={portGroup}
+                      metrics={metrics}
+                      metricFrom={metricFrom}
+                      metricsLoading={metricsLoading}
+                      isExpanded={expandedPorts[portGroup.id] ?? false}
+                      isOn={localSwitchStatus[portGroup.id] ?? false}
+                      isDisabled={disabledSwitches[portGroup.id] ?? false}
+                      onToggleExpand={togglePortExpand}
+                      onToggleSwitch={handlePortToggleSwitch}
+                    />
+                  ))}
                 </Box>
               )}
 

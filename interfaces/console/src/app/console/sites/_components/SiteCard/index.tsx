@@ -8,6 +8,13 @@
 import { MetricsStateRes } from '@/client/graphql/generated/subscriptions';
 import { SITE_KPI_TYPES } from '@/constants';
 import colors from '@/theme/colors';
+import {
+  extractMetricFromPubSubPayload,
+  extractMetricValue,
+  getSiteActiveSubscribers,
+  getSiteMetricValue,
+  truncateText,
+} from './utils';
 import { getStatusStyles } from '@/utils';
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -24,31 +31,16 @@ import {
   Skeleton,
   Typography,
 } from '@mui/material';
+import { useRouter } from 'next/navigation';
 import PubSub from 'pubsub-js';
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 
-type MetricValuePayload = number | [unknown, number] | unknown[];
-type PubSubPayload = MetricValuePayload | [unknown, MetricValuePayload];
+type PubSubPayload = number | [unknown, number] | unknown[] | [unknown, number | [unknown, number] | unknown[]];
 type SubscriptionMap = {
   uptime?: string;
   battery?: string;
   backhaul?: string;
   subscribers?: string;
-};
-
-const extractMetricValue = (value: unknown): number | null => {
-  if (Array.isArray(value) && value.length > 1) {
-    return typeof value[1] === 'number' ? value[1] : null;
-  }
-  return typeof value === 'number' ? value : null;
-};
-
-const extractMetricFromPubSubPayload = (payload: unknown): number | null => {
-  if (payload === null || payload === undefined) return null;
-  if (Array.isArray(payload) && payload.length > 1) {
-    return extractMetricValue(payload[1]);
-  }
-  return extractMetricValue(payload);
 };
 
 interface SiteCardProps {
@@ -62,48 +54,6 @@ interface SiteCardProps {
   metricsData?: MetricsStateRes;
 }
 
-const truncateText = (text: string, maxLength: number): string => {
-  if (!text || typeof text !== 'string') return '';
-  if (text.length <= maxLength) return text;
-  return `${text.substring(0, maxLength)}...`;
-};
-
-const getSiteMetricValue = (
-  metricId: string,
-  metricsData?: MetricsStateRes,
-  siteId?: string,
-): number | null => {
-  if (!metricsData || !metricsData.metrics || !siteId) return null;
-
-  const metric = metricsData.metrics.find(
-    (m) => m.type === metricId && m.success === true && m.siteId === siteId,
-  );
-
-  return metric ? extractMetricValue(metric.value) : null;
-};
-
-const getSiteActiveSubscribers = (
-  metricsData?: MetricsStateRes,
-  siteId?: string,
-): number | null => {
-  if (!metricsData || !metricsData.metrics || !siteId) return null;
-
-  const subscriberMetrics = metricsData.metrics.filter(
-    (m) =>
-      m.type === SITE_KPI_TYPES.ACTIVE_SUBSCRIBERS &&
-      m.success === true &&
-      m.siteId === siteId,
-  );
-
-  if (subscriberMetrics.length === 0) return null;
-
-  const totalSubscribers = subscriberMetrics.reduce((total, metric) => {
-    const value = extractMetricValue(metric.value);
-    return total + (value || 0);
-  }, 0);
-
-  return totalSubscribers;
-};
 
 const SiteCard: React.FC<SiteCardProps> = memo(
   ({
@@ -115,6 +65,7 @@ const SiteCard: React.FC<SiteCardProps> = memo(
     maxAddressLength = 49,
     metricsData,
   }) => {
+    const router = useRouter();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
     const [uptimeValue, setUptimeValue] = useState<number | null>(null);
@@ -225,8 +176,11 @@ const SiteCard: React.FC<SiteCardProps> = memo(
     }, [handleSiteNameUpdate, siteId, name, handleClose]);
 
     const navigateToDetails = useCallback(() => {
-      window.location.href = `/console/sites/${siteId}`;
-    }, [siteId]);
+      // Use Next.js router.push instead of window.location.href so that
+      // client-side navigation is preserved (no full-page reload, back button
+      // works correctly, prefetch kicks in).
+      router.push(`/console/sites/${siteId}`);
+    }, [router, siteId]);
 
     const connectionStyles =
       uptimeValue !== null
