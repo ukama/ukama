@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
+import { SitesTree } from '@/app/console/home/_components/NetworkMap/OverlayUI';
 import {
   useGetCurrencySymbolQuery,
   useGetNodesQuery,
@@ -17,7 +18,6 @@ import {
 } from '@/client/graphql/generated/subscriptions';
 import EmptyView from '@/components/ui/EmptyView';
 import LoadingWrapper from '@/components/ui/LoadingWrapper';
-import { SitesTree } from '@/app/console/home/_components/NetworkMap/OverlayUI';
 import { MONTH_FILTER, NODE_KPIS, TIME_FILTER } from '@/constants';
 import { useAppContext } from '@/context';
 import MetricStatSubscription from '@/features/subscriptions/MetricStatSubscription';
@@ -75,7 +75,7 @@ export default function Page() {
 
   const { data: sitesRes, loading: sitesLoading } = useGetSitesQuery({
     skip: !network?.id,
-    fetchPolicy: 'no-cache',
+    fetchPolicy: 'cache-and-network',
     variables: {
       data: {
         networkId: network.id,

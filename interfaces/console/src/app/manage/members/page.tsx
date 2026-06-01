@@ -7,6 +7,8 @@
  */
 'use client';
 import {
+  GetInvitationsDocument,
+  GetMembersDocument,
   Invitation_Status,
   Role_Type,
   useCreateInvitationMutation,
@@ -57,7 +59,6 @@ const Page = () => {
   const {
     data: membersData,
     loading: membersLoading,
-    refetch: refetchMembers,
   } = useGetMembersQuery({
     fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
@@ -77,9 +78,7 @@ const Page = () => {
   });
 
   const [deleteMember] = useRemoveMemberMutation({
-    onCompleted: () => {
-      refetchMembers();
-    },
+    refetchQueries: [{ query: GetMembersDocument }],
     onError: (error) => {
       setSnackbarMessage({
         id: 'delete-members',
@@ -91,9 +90,7 @@ const Page = () => {
   });
 
   const [updateMember] = useUpdateMemberMutation({
-    onCompleted: () => {
-      refetchMembers();
-    },
+    refetchQueries: [{ query: GetMembersDocument }],
     onError: (error) => {
       setSnackbarMessage({
         id: 'update-members',
@@ -107,7 +104,6 @@ const Page = () => {
   const {
     data: invitationsData,
     loading: invitationsLoading,
-    refetch: refetchInvitations,
   } = useGetInvitationsQuery({
     fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
@@ -131,9 +127,7 @@ const Page = () => {
 
   const [deleteInvite, { loading: deleteInviteLoading }] =
     useDeleteInvitationMutation({
-      onCompleted: () => {
-        refetchInvitations();
-      },
+      refetchQueries: [{ query: GetInvitationsDocument }],
       onError: (error) => {
         setSnackbarMessage({
           id: 'delete-invitation',
@@ -146,9 +140,11 @@ const Page = () => {
 
   const [sendInvitation, { loading: sendInvitationLoading }] =
     useCreateInvitationMutation({
+      refetchQueries: [
+        { query: GetMembersDocument },
+        { query: GetInvitationsDocument },
+      ],
       onCompleted: () => {
-        refetchMembers();
-        refetchInvitations();
 
         setSnackbarMessage({
           id: 'invitation-success',
