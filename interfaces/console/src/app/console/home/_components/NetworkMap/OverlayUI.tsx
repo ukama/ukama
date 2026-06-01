@@ -8,7 +8,8 @@
 
 import { NodeStateEnum } from '@/client/graphql/generated';
 import { TNodeSiteTree } from '@/types';
-import { ExpandLess, ExpandMore } from '@mui/icons-material';
+import ExpandLess from '@mui/icons-material/ExpandLess';
+import ExpandMore from '@mui/icons-material/ExpandMore';
 import TuneIcon from '@mui/icons-material/Tune';
 import {
   Box,

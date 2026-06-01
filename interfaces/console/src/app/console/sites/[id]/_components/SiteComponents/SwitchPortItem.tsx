@@ -7,7 +7,7 @@
  */
 
 import { MetricsRes } from '@/client/graphql/generated/subscriptions';
-import LineChart from '@/components/ui/LineChart';
+import LineChart from '@/components/ui/LineChart/LazyLineChart';
 import { SiteKpiConfig } from '@/constants';
 import { getMetricValue, isMetricValue } from '@/utils';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';

@@ -7,7 +7,8 @@
  */
 
 import { colors } from '@/theme';
-import { Add, FiberManualRecord } from '@mui/icons-material';
+import Add from '@mui/icons-material/Add';
+import FiberManualRecord from '@mui/icons-material/FiberManualRecord';
 import {
   Button,
   Divider,

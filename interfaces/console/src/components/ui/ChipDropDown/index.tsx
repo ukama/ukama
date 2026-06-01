@@ -7,7 +7,7 @@
  */
 
 import { colors } from '@/theme';
-import { ArrowDropDown } from '@mui/icons-material';
+import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
 import AddIcon from '@mui/icons-material/Add';
 import { Chip, Menu, MenuItem } from '@mui/material';
 import React, { useState } from 'react';

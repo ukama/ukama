@@ -1,7 +1,7 @@
 import { Notification_Type } from '@/client/graphql/generated';
 import { NotificationsRes } from '@/client/graphql/generated/subscriptions';
 import { colors } from '@/theme';
-import { MoreHoriz } from '@mui/icons-material';
+import MoreHoriz from '@mui/icons-material/MoreHoriz';
 import ErrorIcon from '@mui/icons-material/ErrorOutline';
 import InfoIcon from '@mui/icons-material/Info';
 import CriticalIcon from '@mui/icons-material/ReportGmailerrorred';

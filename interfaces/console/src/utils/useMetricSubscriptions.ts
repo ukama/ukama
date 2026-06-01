@@ -87,7 +87,7 @@ export const useMetricSubscriptions = ({
         },
       },
     });
-  }, [siteId, userId, orgName, metricFrom, activeGraphType, getMetricBySite]);
+  }, [siteId, userId, orgName, metricFrom, activeGraphType, getMetricBySite, nodeIds]);
 
   useEffect(() => {
     if (
@@ -206,10 +206,14 @@ export const useMetricSubscriptions = ({
       },
     });
 
+    const currentSubscriptions = subscriptionsRef.current;
     return () => {
       PubSub.unsubscribe(sKey);
-      delete subscriptionsRef.current[sKey];
+      delete currentSubscriptions[sKey];
     };
+    // nodeIds intentionally omitted — changing nodeIds during site stat subscription
+    // would cause unnecessary re-subscriptions; handled by the fetchMetrics flow
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [siteId, nodesFetched, userId, orgName, getSiteMetricStat]);
 
   const resetMetrics = useCallback(() => {
