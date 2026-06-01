@@ -8,13 +8,6 @@
 import { MetricsStateRes } from '@/client/graphql/generated/subscriptions';
 import { SITE_KPI_TYPES } from '@/constants';
 import colors from '@/theme/colors';
-import {
-  extractMetricFromPubSubPayload,
-  extractMetricValue,
-  getSiteActiveSubscribers,
-  getSiteMetricValue,
-  truncateText,
-} from './utils';
 import { getStatusStyles } from '@/utils';
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -34,6 +27,12 @@ import {
 import { useRouter } from 'next/navigation';
 import PubSub from 'pubsub-js';
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  extractMetricFromPubSubPayload,
+  getSiteActiveSubscribers,
+  getSiteMetricValue,
+  truncateText,
+} from './utils';
 
 type PubSubPayload = number | [unknown, number] | unknown[] | [unknown, number | [unknown, number] | unknown[]];
 type SubscriptionMap = {

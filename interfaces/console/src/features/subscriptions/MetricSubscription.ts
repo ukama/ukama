@@ -18,8 +18,22 @@ interface IMetricSubscription {
   type: Graphs_Type;
 }
 
-function parseEvent(eventStr: any) {
-  const event: any = {};
+interface SSEEvent {
+  data?: string;
+  id?: string;
+  event?: string;
+}
+
+const activeSubscriptions = new Map<string, AbortController>();
+
+const RETRY_DELAY_MS = 2000;
+const ACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
+const MAX_BUFFER_SIZE = 25000;
+
+function parseEvent(eventStr: string): SSEEvent | null {
+  if (!eventStr || eventStr.startsWith(':')) return null;
+
+  const event: SSEEvent = {};
   const lines = eventStr.split('\n');
 
   for (const line of lines) {
@@ -32,10 +46,10 @@ function parseEvent(eventStr: any) {
     }
   }
 
-  return event;
+  return event.data || event.id || event.event ? event : null;
 }
 
-export default async function MetricSubscription({
+export default function MetricSubscription({
   url,
   key,
   from,
@@ -44,49 +58,116 @@ export default async function MetricSubscription({
   nodeId,
   orgName,
 }: IMetricSubscription) {
-  const myHeaders = new Headers();
-  myHeaders.append('Cache-Control', 'no-cache');
-  myHeaders.append('Connection', 'keep-alive');
-  myHeaders.append('Pragma', 'no-cache');
-  myHeaders.append('Sec-Fetch-Dest', 'empty');
-  myHeaders.append('Sec-Fetch-Mode', 'cors');
-  myHeaders.append('Sec-Fetch-Site', 'same-origin');
-  myHeaders.append('accept', 'text/event-stream');
+  if (activeSubscriptions.has(key)) {
+    activeSubscriptions.get(key)!.abort();
+    activeSubscriptions.delete(key);
+  }
 
-  const requestOptions = {
-    method: 'GET',
-    headers: myHeaders,
-  };
+  const queryParams = new URLSearchParams({
+    query:
+      'subscription GetMetricByTabSub($data:SubMetricByTabInput!){getMetricByTabSub(data:$data){msg nodeId success type value}}',
+    variables: JSON.stringify({
+      data: { nodeId, orgName, type, userId, from },
+    }),
+    operationName: 'GetMetricByTabSub',
+    extensions: '{}',
+  });
 
-  const res = await fetch(
-    `${url}/graphql?query=subscription+GetMetricByTabSub%28%24data%3ASubMetricByTabInput%21%29%7BgetMetricByTabSub%28data%3A%24data%29%7Bmsg+nodeId+success+type+value%7D%7D&variables=%7B%22data%22%3A%7B%22nodeId%22%3A%22${nodeId}%22%2C%22orgName%22%3A%22${orgName}%22%2C%22type%22%3A%22${type}%22%2C%22userId%22%3A%22${userId}%22%2C%22from%22%3A${from}%7D%7D&operationName=GetMetricByTabSub&extensions=%7B%7D`,
-    requestOptions,
-  );
+  const fullUrl = `${url}/graphql?${queryParams.toString()}`;
 
-  const reader = res?.body?.getReader();
-  const decoder = new TextDecoder('utf-8');
-  let buffer = '';
+  const controller = new AbortController();
+  activeSubscriptions.set(key, controller);
 
-  while (true) {
-    const { value, done } = (await reader?.read()) || {};
+  const myHeaders = new Headers({
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive',
+    Pragma: 'no-cache',
+    'Sec-Fetch-Dest': 'empty',
+    'Sec-Fetch-Mode': 'cors',
+    'Sec-Fetch-Site': 'same-origin',
+    accept: 'text/event-stream',
+  });
 
-    if (done) {
-      console.log('Stream complete');
-      break;
+  const handleBeforeUnload = () => {
+    if (activeSubscriptions.has(key)) {
+      activeSubscriptions.get(key)!.abort();
+      activeSubscriptions.delete(key);
     }
+  };
+  window.addEventListener('beforeunload', handleBeforeUnload);
 
-    buffer += decoder.decode(value, { stream: true });
+  async function startSSE() {
+    try {
+      const response = await fetch(fullUrl, {
+        method: 'GET',
+        headers: myHeaders,
+        signal: controller.signal,
+      });
 
-    let eventBoundary = buffer.indexOf('\n\n');
-
-    while (eventBoundary !== -1) {
-      const eventStr = buffer.slice(0, eventBoundary).trim();
-      buffer = buffer.slice(eventBoundary + 2);
-      const pevent = parseEvent(eventStr);
-      if (pevent.data) {
-        PubSub.publish(key, pevent.data);
+      if (!response.ok || !response.body) {
+        throw new Error(`HTTP Error ${response.status}`);
       }
-      eventBoundary = buffer.indexOf('\n\n');
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+
+      let activityTimeout: ReturnType<typeof setTimeout> | null = null;
+      const resetActivityTimeout = () => {
+        if (activityTimeout) clearTimeout(activityTimeout);
+        activityTimeout = setTimeout(() => {
+          controller.abort();
+          activeSubscriptions.delete(key);
+        }, ACTIVITY_TIMEOUT_MS);
+      };
+      resetActivityTimeout();
+
+      while (true) {
+        if (controller.signal.aborted) break;
+
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        resetActivityTimeout();
+
+        const chunk = decoder.decode(value, { stream: true });
+        if (buffer.length + chunk.length > MAX_BUFFER_SIZE) {
+          buffer = buffer.slice(-MAX_BUFFER_SIZE / 2);
+        }
+        buffer += chunk;
+
+        let eventBoundary = buffer.indexOf('\n\n');
+        while (eventBoundary !== -1) {
+          const eventStr = buffer.slice(0, eventBoundary).trim();
+          buffer = buffer.slice(eventBoundary + 2);
+
+          const parsedEvent = parseEvent(eventStr);
+          if (parsedEvent?.data) {
+            PubSub.publish(key, parsedEvent.data);
+          }
+
+          eventBoundary = buffer.indexOf('\n\n');
+        }
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return;
+      if (activeSubscriptions.has(key)) {
+        setTimeout(startSSE, RETRY_DELAY_MS);
+      }
+    } finally {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     }
   }
+
+  startSSE();
+
+  return {
+    cancel: () => {
+      if (activeSubscriptions.has(key)) {
+        activeSubscriptions.get(key)!.abort();
+        activeSubscriptions.delete(key);
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+      }
+    },
+  };
 }

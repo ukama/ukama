@@ -60,7 +60,7 @@ export default function Page() {
   const { env, user, network, setSnackbarMessage, subscriptionClient } =
     useAppContext();
   const subscriptionKeyRef = useRef<string | null>(null);
-  const subscriptionControllerRef = useRef<AbortController | null>(null);
+  const subscriptionControllerRef = useRef<{ cancel: () => void } | null>(null);
 
   const cleanupSubscription = useCallback(() => {
     if (subscriptionKeyRef.current) {
@@ -68,7 +68,7 @@ export default function Page() {
       subscriptionKeyRef.current = null;
     }
     if (subscriptionControllerRef.current) {
-      subscriptionControllerRef.current.abort();
+      subscriptionControllerRef.current.cancel();
       subscriptionControllerRef.current = null;
     }
   }, []);
@@ -124,14 +124,14 @@ export default function Page() {
     useGetMetricsStatLazyQuery({
       client: subscriptionClient,
       fetchPolicy: 'network-only',
-      onCompleted: async (data) => {
+      onCompleted: (data) => {
         if (data.getMetricsStat.metrics.length > 0) {
           const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Home}-${statVar?.data.from ?? 0}`;
           cleanupSubscription();
           subscriptionKeyRef.current = sKey;
 
           if (statVar?.data.withSubscription) {
-            const controller = await MetricStatSubscription({
+            const controller = MetricStatSubscription({
               key: sKey,
               userId: user.id,
               url: env.METRIC_URL,

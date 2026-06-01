@@ -19,8 +19,22 @@ interface IMetricStatSubscription {
   networkId?: string;
 }
 
-function parseEvent(eventStr: any) {
-  const event: any = {};
+interface SSEEvent {
+  data?: string;
+  id?: string;
+  event?: string;
+}
+
+const activeSubscriptions = new Map<string, AbortController>();
+
+const RETRY_DELAY_MS = 2000;
+const ACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
+const MAX_BUFFER_SIZE = 25000;
+
+function parseEvent(eventStr: string): SSEEvent | null {
+  if (!eventStr || eventStr.startsWith(':')) return null;
+
+  const event: SSEEvent = {};
   const lines = eventStr.split('\n');
 
   for (const line of lines) {
@@ -33,134 +47,139 @@ function parseEvent(eventStr: any) {
     }
   }
 
-  return event;
+  return event.data || event.id || event.event ? event : null;
 }
 
-export default async function MetricStatSubscription({
+export default function MetricStatSubscription({
   url,
   key,
   from,
   type,
   userId,
   orgName,
-  nodeId = undefined,
-  networkId = undefined,
+  nodeId,
+  networkId,
 }: IMetricStatSubscription) {
-  const myHeaders = new Headers();
-  myHeaders.append('Cache-Control', 'no-cache');
-  myHeaders.append('Connection', 'keep-alive');
-  myHeaders.append('Pragma', 'no-cache');
-  myHeaders.append('Sec-Fetch-Dest', 'empty');
-  myHeaders.append('Sec-Fetch-Mode', 'cors');
-  myHeaders.append('Sec-Fetch-Site', 'same-origin');
-  myHeaders.append('accept', 'text/event-stream');
+  if (activeSubscriptions.has(key)) {
+    activeSubscriptions.get(key)!.abort();
+    activeSubscriptions.delete(key);
+  }
 
-  const requestOptions = {
-    method: 'GET',
-    headers: myHeaders,
-  };
-
-  const controller = new AbortController();
-  const signal = controller.signal;
-
-  let fullUrl = '';
   const baseParams: {
-    nodeId?: string;
     orgName: string;
     type: Stats_Type;
     userId: string;
     from: number;
-    siteId?: string;
+    nodeId?: string;
     networkId?: string;
-  } = {
-    orgName,
-    type,
-    userId,
-    from,
-  };
+  } = { orgName, type, userId, from };
 
-  if (nodeId) {
-    baseParams.nodeId = nodeId;
-  }
-  if (networkId) {
-    baseParams.networkId = networkId;
-  }
+  if (nodeId) baseParams.nodeId = nodeId;
+  if (networkId) baseParams.networkId = networkId;
 
   const queryParams = new URLSearchParams({
-    query: 'subscription MetricStatSub($data:SubMetricsStatInput!){getMetricStatSub(data:$data){msg nodeId success type value networkId packageId dataPlanId}}',
+    query:
+      'subscription MetricStatSub($data:SubMetricsStatInput!){getMetricStatSub(data:$data){msg nodeId success type value networkId packageId dataPlanId}}',
+    variables: JSON.stringify({ data: baseParams }),
     operationName: 'MetricStatSub',
     extensions: '{}',
   });
 
-  const variables = { data: baseParams };
+  const fullUrl = `${url}/graphql?${queryParams.toString()}`;
 
-  queryParams.append('variables', JSON.stringify(variables));
+  const controller = new AbortController();
+  activeSubscriptions.set(key, controller);
 
-  fullUrl = `${url}/graphql?${queryParams.toString()}`;
+  const myHeaders = new Headers({
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive',
+    Pragma: 'no-cache',
+    'Sec-Fetch-Dest': 'empty',
+    'Sec-Fetch-Mode': 'cors',
+    'Sec-Fetch-Site': 'same-origin',
+    accept: 'text/event-stream',
+  });
 
-  const res = await fetch(fullUrl, { ...requestOptions, signal }).catch(
-    (error) => {
-      if (error.name === 'AbortError') {
-        console.log('Fetch aborted');
-      } else {
-        console.error('Fetch error:', error);
-      }
-    },
-  );
+  const handleBeforeUnload = () => {
+    if (activeSubscriptions.has(key)) {
+      activeSubscriptions.get(key)!.abort();
+      activeSubscriptions.delete(key);
+    }
+  };
+  window.addEventListener('beforeunload', handleBeforeUnload);
 
-  if (!res || !res.ok) {
-    console.error('Network response was not ok');
-    return controller;
-  }
-
-  const reader = res?.body?.getReader();
-  const decoder = new TextDecoder('utf-8');
-  let buffer = '';
-
-  const processStream = async () => {
+  async function startSSE() {
     try {
+      const response = await fetch(fullUrl, {
+        method: 'GET',
+        headers: myHeaders,
+        signal: controller.signal,
+      });
+
+      if (!response.ok || !response.body) {
+        throw new Error(`HTTP Error ${response.status}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+
+      let activityTimeout: ReturnType<typeof setTimeout> | null = null;
+      const resetActivityTimeout = () => {
+        if (activityTimeout) clearTimeout(activityTimeout);
+        activityTimeout = setTimeout(() => {
+          controller.abort();
+          activeSubscriptions.delete(key);
+        }, ACTIVITY_TIMEOUT_MS);
+      };
+      resetActivityTimeout();
+
       while (true) {
-        const { value, done } = (await reader?.read()) || {};
+        if (controller.signal.aborted) break;
 
-        if (done) {
-          break;
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        resetActivityTimeout();
+
+        const chunk = decoder.decode(value, { stream: true });
+        if (buffer.length + chunk.length > MAX_BUFFER_SIZE) {
+          buffer = buffer.slice(-MAX_BUFFER_SIZE / 2);
         }
-
-        buffer += decoder.decode(value, { stream: true });
+        buffer += chunk;
 
         let eventBoundary = buffer.indexOf('\n\n');
-
         while (eventBoundary !== -1) {
           const eventStr = buffer.slice(0, eventBoundary).trim();
           buffer = buffer.slice(eventBoundary + 2);
-          const pevent = parseEvent(eventStr);
-          if (pevent.data) {
-            PubSub.publish(key, pevent.data);
+
+          const parsedEvent = parseEvent(eventStr);
+          if (parsedEvent?.data) {
+            PubSub.publish(key, parsedEvent.data);
           }
+
           eventBoundary = buffer.indexOf('\n\n');
         }
       }
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
-      } else {
-        console.error('Stream error:', error);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return;
+      if (activeSubscriptions.has(key)) {
+        setTimeout(startSSE, RETRY_DELAY_MS);
       }
     } finally {
-      try {
-        if (reader && !reader.closed) {
-          await reader.cancel();
-        }
-      } catch (error: any) {
-        if (error.name !== 'AbortError') {
-          console.error('Error canceling reader:', error);
-        }
-      }
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     }
+  }
+
+  startSSE();
+
+  return {
+    cancel: () => {
+      if (activeSubscriptions.has(key)) {
+        activeSubscriptions.get(key)!.abort();
+        activeSubscriptions.delete(key);
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+      }
+    },
   };
-
-  processStream().catch((error) => {
-    console.error('Error in processStream:', error);
-  });
-
-  return controller;
 }
