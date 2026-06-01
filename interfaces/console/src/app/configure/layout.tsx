@@ -15,6 +15,7 @@ import {
 import AppSnackbar from '@/components/AppSnackbar/page';
 import { ONBOARDING_FLOW } from '@/constants';
 import { useAppContext } from '@/context';
+import ErrorBoundary from '@/wrappers/errorBoundary';
 import { CenterContainer, GradiantBarNoRadius } from '@/styles/global';
 import colors from '@/theme/colors';
 import { ConfigureStep } from '@/utils';
@@ -148,6 +149,7 @@ const ConfigureLayout = ({
   };
 
   return (
+    <ErrorBoundary>
     <Box width="100%" height="100%" overflow="hidden">
       <Grid container height={'100%'}>
         <Grid size={12}>
@@ -217,6 +219,7 @@ const ConfigureLayout = ({
       </Grid>
       <AppSnackbar />
     </Box>
+    </ErrorBoundary>
   );
 };
 

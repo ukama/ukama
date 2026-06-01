@@ -10,6 +10,7 @@ import { useGetNetworksQuery } from '@/client/graphql/generated';
 import AppSnackbar from '@/components/AppSnackbar/page';
 import BackButton from '@/components/ui/BackButton';
 import { useAppContext } from '@/context';
+import ErrorBoundary from '@/wrappers/errorBoundary';
 import { MANAGE_MENU_LIST } from '@/routes';
 import '@/styles/console.css';
 import colors from '@/theme/colors';
@@ -159,6 +160,7 @@ const ManageLayout: React.FC<ManageLayoutProps> = ({ children }) => {
   });
 
   return (
+    <ErrorBoundary>
     <Container maxWidth={'xl'} sx={{ my: { xs: 2, md: 8 } }}>
       <Stack direction={'column'} spacing={{ xs: 2, md: 4 }}>
         <Stack direction="row" spacing={14} alignItems="center">
@@ -212,6 +214,7 @@ const ManageLayout: React.FC<ManageLayoutProps> = ({ children }) => {
         </Stack>
       </Stack>
     </Container>
+    </ErrorBoundary>
   );
 };
 
