@@ -27,8 +27,11 @@ import (
 	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	cclient "github.com/ukama/ukama/systems/node/controller/pkg/client"
 	"github.com/ukama/ukama/systems/node/controller/pkg"
 	"github.com/ukama/ukama/systems/node/controller/pkg/db"
+	opmonpb "github.com/ukama/ukama/systems/node/operation-monitor/pb/gen"
+	opmgrpb "github.com/ukama/ukama/systems/operation/manager/pb/gen"
 )
 
 var actions = map[string]struct {
@@ -50,11 +53,15 @@ type ControllerServer struct {
 	networkClient        creg.NetworkClient
 	siteClient           creg.SiteClient
 	nodeClient           creg.NodeClient
+	opManager            cclient.OperationManager
+	opMonitor            cclient.OperationMonitor
+	opLeaseSecs          uint32
+	opDeadlineSecs       uint32
 	debug                bool
 	orgName              string
 }
 
-func NewControllerServer(orgName string, nRepo db.NodeLogRepo, msgBus mb.MsgBusServiceClient, cnet creg.NetworkClient, csite creg.SiteClient, cnode creg.NodeClient, debug bool) *ControllerServer {
+func NewControllerServer(orgName string, nRepo db.NodeLogRepo, msgBus mb.MsgBusServiceClient, cnet creg.NetworkClient, csite creg.SiteClient, cnode creg.NodeClient, opMgr cclient.OperationManager, opMon cclient.OperationMonitor, leaseSecs, deadlineSecs uint32, debug bool) *ControllerServer {
 	return &ControllerServer{
 		nRepo:                nRepo,
 		orgName:              orgName,
@@ -64,6 +71,10 @@ func NewControllerServer(orgName string, nRepo db.NodeLogRepo, msgBus mb.MsgBusS
 		networkClient:        cnet,
 		siteClient:           csite,
 		nodeClient:           cnode,
+		opManager:            opMgr,
+		opMonitor:            opMon,
+		opLeaseSecs:          leaseSecs,
+		opDeadlineSecs:       deadlineSecs,
 	}
 }
 
@@ -140,11 +151,39 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 		return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
 	}
 
-	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), actions["RESTART"].method, actions["RESTART"].path, nId.String(), []byte(""))
+	resourceKey := "node:" + nId.String()
+	startResp, err := c.opManager.Start(&opmgrpb.StartOperationRequest{
+		Type:         "RestartNode",
+		System:       "node",
+		ResourceKey:  resourceKey,
+		RequestedBy:  pkg.ServiceName,
+		LeaseSeconds: c.opLeaseSecs,
+	})
 	if err != nil {
-		log.Errorf("Failed to publish message. Errors %s", err.Error())
-		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
+		log.Warnf("RestartNode lock acquire for %s rejected: %v", resourceKey, err)
+		return nil, err
+	}
+	op := startResp.Operation
+	log.Infof("RestartNode acquired lock op=%s token=%d for %s", op.Id, op.FencingToken, resourceKey)
 
+	if _, err := c.opMonitor.Register(&opmonpb.RegisterIntentRequest{
+		OperationId:     op.Id,
+		ResourceKey:     resourceKey,
+		ActionType:      "RestartNode",
+		FencingToken:    op.FencingToken,
+		DeadlineSeconds: c.opDeadlineSecs,
+	}); err != nil {
+		log.Errorf("RestartNode register intent for op %s failed: %v", op.Id, err)
+		return nil, status.Errorf(codes.Internal, "register intent: %v", err)
+	}
+
+	if err := c.publishMessage(c.orgName+"..."+nId.String(), actions["RESTART"].method, actions["RESTART"].path, nId.String(), []byte("")); err != nil {
+		log.Errorf("RestartNode publish failed for op %s: %v", op.Id, err)
+		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
+	}
+
+	if _, err := c.opManager.MarkRunning(op.Id, op.FencingToken); err != nil {
+		log.Warnf("RestartNode mark running failed for op %s: %v", op.Id, err)
 	}
 	return &pb.RestartNodeResponse{}, nil
 }
