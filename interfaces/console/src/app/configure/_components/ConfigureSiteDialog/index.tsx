@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { NetworkDto } from '@/client/graphql/generated';
-import { useAppContext } from '@/context';
+import { useUIContext } from '@/context';
 import { TSiteForm } from '@/types';
 import { useFetchAddress } from '@/utils/useFetchAddress';
 import CloseIcon from '@mui/icons-material/Close';
@@ -66,7 +66,7 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
   addSiteLoading = false,
   handleSiteConfiguration,
 }) => {
-  const { setSnackbarMessage } = useAppContext();
+  const { setSnackbarMessage } = useUIContext();
   const [activeStep, setActiveStep] = useState(0);
   const [formValues, setFormValues] = useState<TSiteForm>(site);
   const [currentAddress, setCurrentAddress] = useState('');

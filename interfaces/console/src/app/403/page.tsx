@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
-import { useAppContext } from '@/context';
+import { useEnvContext } from '@/context';
 import '@/styles/console.css';
 import { CenterContainer } from '@/styles/global';
 import { colors } from '@/theme';
@@ -15,7 +15,7 @@ import Link from 'next/link';
 import { Forbidden } from '../../../public/svg/403';
 
 const Page = () => {
-  const { env } = useAppContext();
+  const { env } = useEnvContext();
   return (
     <Container maxWidth="md" sx={{ height: '100vh' }}>
       <CenterContainer>

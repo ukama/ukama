@@ -8,7 +8,7 @@
 
 import { Role_Type } from '@/client/graphql/generated';
 import { NotificationsRes } from '@/client/graphql/generated/subscriptions';
-import { useAppContext } from '@/context';
+import { useUserContext } from '@/context';
 import { HorizontalContainerJustify, IconStyle } from '@/styles/global';
 import colors from '@/theme/colors';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
@@ -78,7 +78,7 @@ const Header = ({
   handleAction,
 }: IHeaderProps) => {
   const theme = useTheme();
-  const { user } = useAppContext();
+  const { user } = useUserContext();
   const isManager = user.role === Role_Type.RoleOwner;
   const matches = useMediaQuery(theme.breakpoints.up('sm'));
 

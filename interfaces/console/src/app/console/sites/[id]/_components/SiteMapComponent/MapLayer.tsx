@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { useAppContext } from '@/context';
+import { useEnvContext } from '@/context';
 import colors from '@/theme/colors';
 import Leaflet from 'leaflet';
 import { useEffect } from 'react';
@@ -17,7 +17,7 @@ interface IMapLayer {
 
 const MapLayer = ({ posix }: IMapLayer) => {
   const map = ReactLeaflet.useMap();
-  const { env } = useAppContext();
+  const { env } = useEnvContext();
 
   useEffect(() => {
     map.setMaxBounds([

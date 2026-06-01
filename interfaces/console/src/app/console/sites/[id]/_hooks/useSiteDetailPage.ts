@@ -28,7 +28,7 @@ import {
   SITE_KPIS,
 } from '@/constants';
 import { SectionData } from '@/constants/index';
-import { useAppContext } from '@/context';
+import { useEnvContext, useUserContext, useNetworkContext, useUIContext } from '@/context';
 import { ActiveView, KPIType, TSiteActionToggle, TStatusBarObj } from '@/types';
 import {
   extractMetricValue,
@@ -140,13 +140,10 @@ export function useSiteDetailPage(id: string) {
 
   const subscribersSubscriptionRef = useRef<string | null>(null);
 
-  const {
-    setSnackbarMessage,
-    setSelectedDefaultSite,
-    user,
-    env,
-    subscriptionClient,
-  } = useAppContext();
+  const { env, subscriptionClient } = useEnvContext();
+  const { user } = useUserContext();
+  const { setSelectedDefaultSite } = useNetworkContext();
+  const { setSnackbarMessage } = useUIContext();
 
   const notify = (msgId: string, message: string, type: string | AlertColor) =>
     setSnackbarMessage({ id: msgId, message, type, show: true });

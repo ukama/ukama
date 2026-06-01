@@ -19,7 +19,7 @@ import {
   NODE_TABLE_COLUMNS,
   NODE_TABLE_MENU,
 } from '@/constants';
-import { useAppContext } from '@/context';
+import { useUIContext, useNetworkContext } from '@/context';
 import { PageContainer } from '@/styles/global';
 import { NodeEnumToString } from '@/utils';
 import RouterIcon from '@mui/icons-material/Router';
@@ -29,7 +29,8 @@ import { useEffect, useMemo, useState } from 'react';
 
 export default function Page() {
   const [search, setSearch] = useState<string>('');
-  const { setSnackbarMessage, network } = useAppContext();
+  const { network } = useNetworkContext();
+  const { setSnackbarMessage } = useUIContext();
 
   const { data: sitesData, loading: sitesLoading } = useGetSitesQuery({
     skip: !network.id,

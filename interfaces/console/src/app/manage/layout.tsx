@@ -9,7 +9,7 @@
 import { useGetNetworksQuery } from '@/client/graphql/generated';
 import AppSnackbar from '@/components/AppSnackbar/page';
 import BackButton from '@/components/ui/BackButton';
-import { useAppContext } from '@/context';
+import { useUIContext, useNetworkContext } from '@/context';
 import ErrorBoundary from '@/wrappers/errorBoundary';
 import { MANAGE_MENU_LIST } from '@/routes';
 import '@/styles/console.css';
@@ -145,7 +145,8 @@ const ManageLayout: React.FC<ManageLayoutProps> = ({ children }) => {
   const theme = useTheme();
   const pathname = usePathname();
   const isCompactView = useMediaQuery(theme.breakpoints.down('md'));
-  const { isDarkMode, network, setNetwork } = useAppContext();
+  const { isDarkMode } = useUIContext();
+  const { network, setNetwork } = useNetworkContext();
 
   useGetNetworksQuery({
     fetchPolicy: 'network-only',

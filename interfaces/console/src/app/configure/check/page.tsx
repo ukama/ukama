@@ -23,7 +23,7 @@ import {
   NETWORK_FLOW,
   ONBOARDING_FLOW,
 } from '@/constants';
-import { useAppContext } from '@/context';
+import { useUIContext, useNetworkContext } from '@/context';
 import { HorizontalContainerJustify } from '@/styles/global';
 import { setQueryParam } from '@/utils';
 import { Button, Stack } from '@mui/material';
@@ -35,7 +35,7 @@ const DURATION = 5;
 const Check = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const { network } = useAppContext();
+  const { network } = useNetworkContext();
   const searchParams = useSearchParams();
   const [node, setNode] = useState<Node | undefined>(undefined);
   const nodeId = searchParams.get('nid') ?? '';
@@ -53,7 +53,7 @@ const Check = () => {
     flow === NETWORK_FLOW ? 'Loading up your network...' : '',
   );
   const [description, setDescription] = useState('');
-  const { setSnackbarMessage } = useAppContext();
+  const { setSnackbarMessage } = useUIContext();
 
   useGetNetworksQuery({
     skip: !!network.id,

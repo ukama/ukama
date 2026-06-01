@@ -24,7 +24,7 @@ import EditSiteDialog from '@/app/console/sites/[id]/_components/EditSiteDialog'
 import LoadingWrapper from '@/components/ui/LoadingWrapper';
 import SitesWrapper from '@/app/console/sites/_components/SitesWrapper';
 import { STAT_STEP_29 } from '@/constants';
-import { useAppContext } from '@/context';
+import { useEnvContext, useNetworkContext, useUIContext, useUserContext } from '@/context';
 import MetricStatBySiteSubscription from '@/features/subscriptions/MetricStatBySiteSubscription';
 import colors from '@/theme/colors';
 import { getUnixTime } from '@/utils';
@@ -36,8 +36,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 export default function Page() {
   const router = useRouter();
   const [sitesList, setSitesList] = useState<SiteDto[]>([]);
-  const { setSnackbarMessage, network, user, env, subscriptionClient } =
-    useAppContext();
+  const { env, subscriptionClient } = useEnvContext();
+  const { user } = useUserContext();
+  const { network } = useNetworkContext();
+  const { setSnackbarMessage } = useUIContext();
   const [editSitedialogOpen, setEditSitedialogOpen] = useState(false);
   const [unassignedNodes, setUnassignedNodes] = useState<Node[]>([]);
 

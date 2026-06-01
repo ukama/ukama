@@ -26,7 +26,7 @@ import {
   useToggleSimStatusMutation,
   useUpdateSubscriberMutation,
 } from '@/client/graphql/generated';
-import { useAppContext } from '@/context';
+import { useEnvContext, useUserContext, useNetworkContext, useUIContext } from '@/context';
 import {
   SubscriberDetailsType,
   TSubscriberDetails,
@@ -40,7 +40,10 @@ import { useCallback, useRef, useState } from 'react';
 export function useSubscribersPage() {
   const query = useSearchParams();
   const [search, setSearch] = useState<string>('');
-  const { setSnackbarMessage, network, env, user } = useAppContext();
+  const { env } = useEnvContext();
+  const { user } = useUserContext();
+  const { network } = useNetworkContext();
+  const { setSnackbarMessage } = useUIContext();
   const [openAddSubscriber, setOpenAddSubscriber] = useState(false);
   const [isTopupData, setIsTopupData] = useState<boolean>(false);
   const [subscriberDetails, setSubscriberDetails] =

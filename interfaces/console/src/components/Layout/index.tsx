@@ -8,7 +8,7 @@
 
 import { NetworkDto } from '@/client/graphql/generated';
 import { NotificationsRes } from '@/client/graphql/generated/subscriptions';
-import { useAppContext } from '@/context';
+import { useNetworkContext } from '@/context';
 import { getTitleFromPath } from '@/utils';
 import { Divider, Stack, Typography, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
@@ -50,7 +50,7 @@ const AppLayout = ({
   const id = isHaveId(pathname) ? pathname.split('/')[3] : '';
   const theme = useTheme();
   const router = useRouter();
-  const { selectedDefaultSite } = useAppContext();
+  const { selectedDefaultSite } = useNetworkContext();
 
   const [open, setOpen] = React.useState(true);
   const matches = useMediaQuery(theme.breakpoints.down('md'));

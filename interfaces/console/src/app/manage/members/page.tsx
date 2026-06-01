@@ -27,7 +27,7 @@ import {
   MEMBER_TABLE_COLUMN,
   MEMBER_TABLE_MENU,
 } from '@/constants';
-import { useAppContext } from '@/context';
+import { useUIContext } from '@/context';
 import colors from '@/theme/colors';
 import { TObject } from '@/types';
 import { Search } from '@mui/icons-material';
@@ -48,7 +48,7 @@ import React, { useEffect, useState } from 'react';
 
 const Page = () => {
   const [tabIndex, setTabIndex] = useState(0);
-  const { setSnackbarMessage } = useAppContext();
+  const { setSnackbarMessage } = useUIContext();
   const [search, setSearch] = useState<string>('');
   const [isInviteMember, setIsInviteMember] = useState<boolean>(false);
   const [data, setData] = useState<{

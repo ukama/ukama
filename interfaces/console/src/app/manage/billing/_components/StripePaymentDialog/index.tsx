@@ -23,7 +23,7 @@ import {
   useStripe,
   useElements,
 } from '@stripe/react-stripe-js';
-import { useAppContext } from '@/context';
+import { useEnvContext } from '@/context';
 import { ReportDto } from '@/client/graphql/generated';
 import colors from '@/theme/colors';
 import { format } from 'date-fns';
@@ -107,7 +107,7 @@ const StripePaymentDialog: React.FC<{
   onPaymentError?: (error: Error | unknown) => void;
   bill?: ReportDto;
 }> = ({ open, onClose, extraKey, onPaymentSuccess, onPaymentError, bill }) => {
-  const { env } = useAppContext();
+  const { env } = useEnvContext();
   const stripePromise = loadStripe(env.STRIPE_PK!);
 
   return (

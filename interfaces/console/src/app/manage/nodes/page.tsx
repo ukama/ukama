@@ -12,7 +12,7 @@ import LoadingWrapper from '@/components/ui/LoadingWrapper';
 import PageContainerHeader from '@/components/ui/PageContainerHeader';
 import SimpleDataTable from '@/components/ui/SimpleDataTable';
 import { MANAGE_NODE_POOL_COLUMN } from '@/constants';
-import { useAppContext } from '@/context';
+import { useUIContext, useNetworkContext } from '@/context';
 import { NodeEnumToString } from '@/utils';
 import RouterIcon from '@mui/icons-material/Router';
 import { Paper, Stack } from '@mui/material';
@@ -20,7 +20,8 @@ import { format } from 'date-fns';
 import { useCallback, useMemo, useState } from 'react';
 
 const Page = () => {
-  const { network, setSnackbarMessage } = useAppContext();
+  const { network } = useNetworkContext();
+  const { setSnackbarMessage } = useUIContext();
   const [search, setSearch] = useState('');
 
   const { data: nodes, loading } = useGetNodesQuery({

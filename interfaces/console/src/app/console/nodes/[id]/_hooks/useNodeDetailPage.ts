@@ -33,7 +33,7 @@ import {
   NODE_KPIS,
   STAT_STEP_29,
 } from '@/constants';
-import { useAppContext } from '@/context';
+import { useEnvContext, useUserContext, useUIContext } from '@/context';
 import MetricStatSubscription from '@/features/subscriptions/MetricStatSubscription';
 import { TMetricResDto, TNodeActionState, TStatusBarObj } from '@/types';
 import {
@@ -68,7 +68,9 @@ export function useNodeDetailPage(id: string) {
   const [selectedTab, setSelectedTab] = useState<number>(0);
   const [metrics, setMetrics] = useState<MetricsRes>({ metrics: [] });
 
-  const { user, setSnackbarMessage, env, subscriptionClient } = useAppContext();
+  const { env, subscriptionClient } = useEnvContext();
+  const { user } = useUserContext();
+  const { setSnackbarMessage } = useUIContext();
   const subscriptionKeyRef = useRef<string | null>(null);
   const subscriptionControllerRef = useRef<{ cancel: () => void } | null>(null);
 

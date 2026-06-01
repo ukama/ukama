@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { useAppContext } from '@/context';
+import { useEnvContext } from '@/context';
 import { IconStyle } from '@/styles/global';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import {
@@ -20,7 +20,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 const AccountPopover = () => {
-  const { env } = useAppContext();
+  const { env } = useEnvContext();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {

@@ -37,6 +37,20 @@ const USER_INIT = {
   role: Role_Type.RoleInvalid,
 };
 
+const tokenCache = new Map<string, User>();
+const MAX_CACHE_SIZE = 500;
+
+const getCachedToken = (rawToken: string): User | null =>
+  tokenCache.get(rawToken) ?? null;
+
+const setCachedToken = (rawToken: string, decoded: User): void => {
+  if (tokenCache.size >= MAX_CACHE_SIZE) {
+    const firstKey = tokenCache.keys().next().value;
+    if (firstKey !== undefined) tokenCache.delete(firstKey);
+  }
+  tokenCache.set(rawToken, decoded);
+};
+
 const whoami = async (session: string) => {
   return await fetch(`${process.env.NEXT_PUBLIC_API_GW_4SS}/get-user`, {
     method: 'GET',
@@ -83,6 +97,9 @@ function decodeBase64Token(token: string): string {
 }
 
 function getUserFromToken(token: string): User {
+  const cached = getCachedToken(token);
+  if (cached) return cached;
+
   try {
     const parseToken = decodeBase64Token(token);
     const parts = parseToken.split(';');
@@ -103,7 +120,7 @@ function getUserFromToken(token: string): User {
       country,
       currency,
     ] = parts;
-    return {
+    const decoded: User = {
       id,
       role,
       name,
@@ -116,6 +133,8 @@ function getUserFromToken(token: string): User {
       isShowWelcome: isShowWelcome.includes('true'),
       isEmailVerified: isEmailVerified.includes('true'),
     };
+    setCachedToken(token, decoded);
+    return decoded;
   } catch (error) {
     console.error('Error getting user from token:', error);
     return USER_INIT;
@@ -207,7 +226,7 @@ const middleware = async (request: NextRequest) => {
     response.cookies.set('token', userObj.token, {
       path: '/',
       name: 'token',
-      secure: false,
+      secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
       sameSite: 'lax',
       value: userObj.token,

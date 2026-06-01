@@ -12,7 +12,7 @@ import {
   useGetNetworksQuery,
 } from '@/client/graphql/generated';
 import { CHECK_SITE_FLOW, NETWORK_FLOW } from '@/constants';
-import { useAppContext } from '@/context';
+import { useUIContext, useNetworkContext } from '@/context';
 import { setQueryParam } from '@/utils';
 import { Button, Stack, TextField, Typography } from '@mui/material';
 import { Formik } from 'formik';
@@ -55,7 +55,8 @@ const Network = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
-  const { setSnackbarMessage, setNetwork } = useAppContext();
+  const { setSnackbarMessage } = useUIContext();
+  const { setNetwork } = useNetworkContext();
 
   useGetNetworksQuery({
     fetchPolicy: 'cache-and-network',

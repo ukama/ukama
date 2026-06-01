@@ -20,14 +20,15 @@ import LoadingWrapper from '@/components/ui/LoadingWrapper';
 import PageContainerHeader from '@/components/ui/PageContainerHeader';
 import SimpleDataTable from '@/components/ui/SimpleDataTable';
 import { MANAGE_SIM_POOL_COLUMN } from '@/constants';
-import { useAppContext } from '@/context';
+import { useEnvContext, useUIContext } from '@/context';
 import SimCardIcon from '@mui/icons-material/SimCard';
 import { AlertColor, Box, Paper } from '@mui/material';
 import { useState } from 'react';
 
 const Page = () => {
   const [data, setData] = useState<SimPoolResDto[]>([]);
-  const { setSnackbarMessage, env } = useAppContext();
+  const { env } = useEnvContext();
+  const { setSnackbarMessage } = useUIContext();
   const [isUploadSims, setIsUploadSims] = useState<boolean>(false);
 
   const { loading: simsLoading } =

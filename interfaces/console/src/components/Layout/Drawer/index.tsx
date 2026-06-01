@@ -7,7 +7,7 @@
  */
 
 import { NetworkDto, Role_Type } from '@/client/graphql/generated';
-import { useAppContext } from '@/context';
+import { useUserContext, useUIContext, useNetworkContext } from '@/context';
 import { NavList } from '@/routes';
 import { colors } from '@/theme';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -44,7 +44,9 @@ export default function UDrawer({
 }: IUDrawer) {
   const pathname = usePathname();
   const [anchor, setAnchor] = React.useState(false);
-  const { user, isDarkMode, network } = useAppContext();
+  const { user } = useUserContext();
+  const { isDarkMode } = useUIContext();
+  const { network } = useNetworkContext();
   const isOwner =
     user.role === Role_Type.RoleOwner || user.role === Role_Type.RoleAdmin;
 

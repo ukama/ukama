@@ -14,7 +14,7 @@ import {
 import DataTableWithOptions from '@/components/ui/DataTableWithOptions';
 import DataTableSkelton from '@/components/ui/DataTableWithOptions/skelton';
 import { INVITATION_TABLE_COLUMN, INVITATION_TABLE_MENU } from '@/constants';
-import { useAppContext } from '@/context';
+import { useUserContext } from '@/context';
 import '@/styles/console.css';
 import { CenterContainer } from '@/styles/global';
 import { colors } from '@/theme';
@@ -23,7 +23,7 @@ import { Box, Container, Paper, Stack, Typography } from '@mui/material';
 import { useRouter } from 'next/navigation';
 
 const Page = () => {
-  const { user } = useAppContext();
+  const { user } = useUserContext();
   const router = useRouter();
   const { data: invitationsData, loading: invitationLoading } =
     useGetInvitationsByEmailQuery({
