@@ -14,7 +14,7 @@ import {
 } from '@/client/graphql/generated';
 import AppSnackbar from '@/components/AppSnackbar/page';
 import { ONBOARDING_FLOW } from '@/constants';
-import { useAppContext } from '@/context';
+import { useUserContext, useUIContext } from '@/context';
 import ErrorBoundary from '@/wrappers/errorBoundary';
 import { CenterContainer, GradiantBarNoRadius } from '@/styles/global';
 import colors from '@/theme/colors';
@@ -52,7 +52,8 @@ const ConfigureLayout = ({
     id: '',
     name: '',
   });
-  const { user, setSnackbarMessage } = useAppContext();
+  const { user } = useUserContext();
+  const { setSnackbarMessage } = useUIContext();
   const [parts, setParts] = useState({
     switchId: '',
     powerName: '',

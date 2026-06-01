@@ -19,7 +19,7 @@ import {
 import EmptyView from '@/components/ui/EmptyView';
 import LoadingWrapper from '@/components/ui/LoadingWrapper';
 import { MONTH_FILTER, NODE_KPIS, TIME_FILTER } from '@/constants';
-import { useAppContext } from '@/context';
+import { useEnvContext, useNetworkContext, useUIContext, useUserContext } from '@/context';
 import MetricStatSubscription from '@/features/subscriptions/MetricStatSubscription';
 import { colors } from '@/theme';
 import { TMetricResDto } from '@/types';
@@ -57,8 +57,10 @@ const StatusCard = dynamic(() => import('@/components/ui/StatusCard'), {
 
 export default function Page() {
   const kpiConfig = NODE_KPIS.HOME.stats;
-  const { env, user, network, setSnackbarMessage, subscriptionClient } =
-    useAppContext();
+  const { env, subscriptionClient } = useEnvContext();
+  const { user } = useUserContext();
+  const { network } = useNetworkContext();
+  const { setSnackbarMessage } = useUIContext();
   const subscriptionKeyRef = useRef<string | null>(null);
   const subscriptionControllerRef = useRef<{ cancel: () => void } | null>(null);
 
@@ -179,7 +181,7 @@ export default function Page() {
         },
       });
     }
-  }, [network.id, user.id, user.orgName, cleanupSubscription]);
+  }, [network.id, user.id, user.orgName, cleanupSubscription, getMetricStat]);
 
   const handleStatSubscription = (_: unknown, data: string) => {
     const parsedData: TMetricResDto = JSON.parse(data);

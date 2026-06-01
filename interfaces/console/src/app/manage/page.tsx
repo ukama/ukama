@@ -7,14 +7,14 @@
  */
 'use client';
 import { Role_Type } from '@/client/graphql/generated';
-import { useAppContext } from '@/context';
+import { useUserContext } from '@/context';
 import { Skeleton } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 const Page = () => {
   const router = useRouter();
-  const { user } = useAppContext();
+  const { user } = useUserContext();
 
   useEffect(() => {
     if (user.role === Role_Type.RoleOwner) {

@@ -11,7 +11,7 @@ import {
   PackageDto,
   SimPoolResDto,
 } from '@/client/graphql/generated';
-import { useAppContext } from '@/context';
+import { useUIContext } from '@/context';
 import { SubscriberDetailsType } from '@/types';
 import {
   Box,
@@ -83,7 +83,7 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
   isLoading,
   currencySymbol,
 }) => {
-  const { setSnackbarMessage } = useAppContext();
+  const { setSnackbarMessage } = useUIContext();
   const [activeStep, setActiveStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [submissionData, setSubmissionData] = useState<AllocateSimApiDto | null>(null);

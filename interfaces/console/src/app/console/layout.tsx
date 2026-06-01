@@ -23,7 +23,7 @@ import {
 } from '@/client/graphql/generated/subscriptions';
 import AppSnackbar from '@/components/AppSnackbar/page';
 import AppLayout from '@/components/Layout';
-import { useAppContext } from '@/context';
+import { useEnvContext, useUserContext, useNetworkContext, useUIContext } from '@/context';
 import ServerNotificationSubscription from '@/features/subscriptions/NotificationSubscription';
 import '@/styles/console.css';
 import { TNotificationResDto } from '@/types';
@@ -39,15 +39,10 @@ export default function ConosleLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const {
-    env,
-    user,
-    network,
-    isDarkMode,
-    setNetwork,
-    setSnackbarMessage,
-    subscriptionClient,
-  } = useAppContext();
+  const { env, subscriptionClient } = useEnvContext();
+  const { user } = useUserContext();
+  const { network, setNetwork } = useNetworkContext();
+  const { isDarkMode, setSnackbarMessage } = useUIContext();
   const router = useRouter();
   const client = useApolloClient();
   const [notifications, setNotifications] = useState<NotificationsRes>({

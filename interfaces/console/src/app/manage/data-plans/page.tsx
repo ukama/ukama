@@ -20,7 +20,7 @@ import EmptyView from '@/components/ui/EmptyView';
 import LoadingWrapper from '@/components/ui/LoadingWrapper';
 import PageContainerHeader from '@/components/ui/PageContainerHeader';
 import PlanCard from '@/app/manage/data-plans/_components/PlanCard';
-import { useAppContext } from '@/context';
+import { useUIContext, useNetworkContext, useUserContext } from '@/context';
 import { colors } from '@/theme';
 import { CreatePlanType, DataUnitType } from '@/types';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
@@ -45,7 +45,9 @@ const INIT_DATAPLAN: CreatePlanType = {
 };
 
 const useDataPlans = () => {
-  const { network, user, setSnackbarMessage } = useAppContext();
+  const { network } = useNetworkContext();
+  const { user } = useUserContext();
+  const { setSnackbarMessage } = useUIContext();
 
   const [getCurrencySymbol, { data: currencyData }] =
     useGetCurrencySymbolLazyQuery({
@@ -127,7 +129,7 @@ const DataPlansPage = () => {
     updatePackage,
     user,
   } = useDataPlans();
-  const { setSnackbarMessage } = useAppContext();
+  const { setSnackbarMessage } = useUIContext();
   const [dialogState, setDialogState] = useState<DialogState>({
     isOpen: false,
     mode: 'create',

@@ -8,14 +8,15 @@
 'use client';
 import { Role_Type, useGetNetworksQuery } from '@/client/graphql/generated';
 import Welcome from '@/components/Welcome';
-import { useAppContext } from '@/context';
+import { useEnvContext, useUserContext } from '@/context';
 import { CenterContainer } from '@/styles/global';
 import { roleEnumToString } from '@/utils';
 import GradientWrapper from '@/wrappers/gradiantWrapper';
 import { useRouter } from 'next/navigation';
 
 const Page = () => {
-  const { env, user } = useAppContext();
+  const { env } = useEnvContext();
+  const { user } = useUserContext();
   const router = useRouter();
   const { data: networkData, loading } = useGetNetworksQuery();
   return (

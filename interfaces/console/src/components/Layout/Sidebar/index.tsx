@@ -7,7 +7,7 @@
  */
 
 import { NetworkDto, Role_Type } from '@/client/graphql/generated';
-import { useAppContext } from '@/context';
+import { useUserContext, useNetworkContext } from '@/context';
 import { NavList } from '@/routes';
 import colors from '@/theme/colors';
 import { Box, Divider, Skeleton, Stack, Typography } from '@mui/material';
@@ -39,7 +39,8 @@ const Sidebar = ({
   handleNetworkChange,
 }: ISidebarProps) => {
   const pathname = usePathname();
-  const { network, user } = useAppContext();
+  const { user } = useUserContext();
+  const { network } = useNetworkContext();
   const isOwner =
     user.role === Role_Type.RoleOwner || user.role === Role_Type.RoleAdmin;
   const getDropDownData = () =>

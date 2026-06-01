@@ -7,7 +7,7 @@
  */
 
 import { Nodes } from '@/client/graphql/generated';
-import { useAppContext } from '@/context';
+import { useEnvContext } from '@/context';
 import { colors } from '@/theme';
 import Leaflet from 'leaflet';
 import { useEffect } from 'react';
@@ -18,7 +18,7 @@ interface IMapLayer {
 
 const MapLayer = ({ data }: IMapLayer) => {
   const map = ReactLeaflet.useMap();
-  const { env } = useAppContext();
+  const { env } = useEnvContext();
 
   useEffect(() => {
     map.setMaxBounds([

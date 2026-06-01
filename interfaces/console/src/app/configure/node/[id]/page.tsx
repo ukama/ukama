@@ -10,7 +10,7 @@ import { useGetNetworksQuery } from '@/client/graphql/generated';
 import SiteMapComponent from '@/app/console/sites/[id]/_components/SiteMapComponent';
 import { LField } from '@/components/Welcome';
 import { INSTALLATION_FLOW, ONBOARDING_FLOW } from '@/constants';
-import { useAppContext } from '@/context';
+import { useUIContext, useNetworkContext } from '@/context';
 import colors from '@/theme/colors';
 import { setQueryParam } from '@/utils';
 import { useFetchAddress } from '@/utils/useFetchAddress';
@@ -42,7 +42,8 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
   const flow = searchParams.get('flow') ?? ONBOARDING_FLOW;
   const [networkSelected, setNetworkSelected] = useState<string>(networkId);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const { setSnackbarMessage, setNetwork } = useAppContext();
+  const { setSnackbarMessage } = useUIContext();
+  const { setNetwork } = useNetworkContext();
   // const [latlng] = useState<[string, string]>([
   //   parseFloat(qpLat),
   //   parseFloat(qpLng),

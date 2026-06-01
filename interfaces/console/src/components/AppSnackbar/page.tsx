@@ -5,13 +5,13 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { useAppContext } from '@/context';
+import { useUIContext } from '@/context';
 import { Alert, AlertColor, Snackbar } from '@mui/material';
 
 const SNACKBAR_TIMEOUT = 5000;
 
 const AppSnackbar = () => {
-  const { snackbarMessage, setSnackbarMessage } = useAppContext();
+  const { snackbarMessage, setSnackbarMessage } = useUIContext();
 
   const handleSnackbarClose = () =>
     setSnackbarMessage({ ...snackbarMessage, show: false });

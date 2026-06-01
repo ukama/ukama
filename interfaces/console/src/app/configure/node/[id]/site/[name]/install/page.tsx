@@ -13,7 +13,7 @@ import {
   useGetComponentsByUserIdQuery,
 } from '@/client/graphql/generated';
 import { ONBOARDING_FLOW } from '@/constants';
-import { useAppContext } from '@/context';
+import { useUIContext } from '@/context';
 import { SiteConfigureSchema } from '@/helpers/formValidators';
 import colors from '@/theme/colors';
 import { setQueryParam } from '@/utils';
@@ -53,7 +53,7 @@ const SiteConfigure = ({ params }: IPage) => {
   const qpAddress = searchParams.get('address') ?? '';
   const networkId = searchParams.get('networkid') ?? '';
   const qpbackhaul = searchParams.get('backhaul') ?? '';
-  const { setSnackbarMessage } = useAppContext();
+  const { setSnackbarMessage } = useUIContext();
 
   const formik = useFormik({
     initialValues: {

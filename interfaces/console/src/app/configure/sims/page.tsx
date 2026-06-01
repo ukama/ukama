@@ -7,7 +7,7 @@
  */
 'use client';
 import { Sim_Types, useUploadSimsMutation } from '@/client/graphql/generated';
-import { useAppContext } from '@/context';
+import { useEnvContext, useUIContext } from '@/context';
 import colors from '@/theme/colors';
 import { fileToBase64, setQueryParam } from '@/utils';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
@@ -29,7 +29,8 @@ const Sims = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
-  const { env, setSnackbarMessage } = useAppContext();
+  const { env } = useEnvContext();
+  const { setSnackbarMessage } = useUIContext();
   const [file, setFile] = useState<File | undefined>();
   const { acceptedFiles, getRootProps, getInputProps } = useDropzone({
     accept: {

@@ -7,14 +7,14 @@
  */
 'use client';
 
-import { useAppContext } from '@/context';
+import { useEnvContext } from '@/context';
 import { CenterContainer } from '@/styles/global';
 import { CircularProgress } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 const Page = () => {
-  const { env } = useAppContext();
+  const { env } = useEnvContext();
   const router = useRouter();
 
   useEffect(() => {
