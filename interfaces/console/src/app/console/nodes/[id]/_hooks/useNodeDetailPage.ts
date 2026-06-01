@@ -66,7 +66,7 @@ export function useNodeDetailPage(id: string) {
 
   const { user, setSnackbarMessage, env, subscriptionClient } = useAppContext();
   const subscriptionKeyRef = useRef<string | null>(null);
-  const subscriptionControllerRef = useRef<AbortController | null>(null);
+  const subscriptionControllerRef = useRef<{ cancel: () => void } | null>(null);
 
   const notify = (msgId: string, message: string, type: string) =>
     setSnackbarMessage({ id: msgId, message, type, show: true });
@@ -77,7 +77,7 @@ export function useNodeDetailPage(id: string) {
       subscriptionKeyRef.current = null;
     }
     if (subscriptionControllerRef.current) {
-      subscriptionControllerRef.current.abort();
+      subscriptionControllerRef.current.cancel();
       subscriptionControllerRef.current = null;
     }
   }, []);
@@ -142,7 +142,7 @@ export function useNodeDetailPage(id: string) {
     useGetMetricsStatLazyQuery({
       client: subscriptionClient,
       fetchPolicy: 'network-only',
-      onCompleted: async (data) => {
+      onCompleted: (data) => {
         if (data.getMetricsStat.metrics.length > 0) {
           data.getMetricsStat.metrics.forEach((m) => {
             if (m.type === NODE_KPIS.NODE_UPTIME[nodeType][0].id) {
@@ -154,7 +154,7 @@ export function useNodeDetailPage(id: string) {
           cleanupSubscription();
           subscriptionKeyRef.current = sKey;
 
-          const controller = await MetricStatSubscription({
+          const controller = MetricStatSubscription({
             key: sKey,
             nodeId: id,
             userId: user.id,
