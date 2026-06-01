@@ -84,54 +84,42 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 	if req.SiteId == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "site name cannot be empty")
 	}
-
 	if req.NetworkId == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "network cannot be empty")
 	}
-
 	netId, err := uuid.FromString(req.GetNetworkId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid network ID format: %s", err.Error())
 	}
-
-	_, err = c.siteClient.Get(req.GetSiteId())
-
-	if err != nil {
+	if _, err = c.siteClient.Get(req.GetSiteId()); err != nil {
 		return nil, fmt.Errorf("failed to validate site %s and network %s. Error %s", req.GetSiteId(), netId.String(), err.Error())
 	}
-
-	_, err = c.networkClient.Get(netId.String())
-
-	if err != nil {
+	if _, err = c.networkClient.Get(netId.String()); err != nil {
 		return nil, fmt.Errorf("failed to validate network with network %s. Error %s", netId.String(), err.Error())
 	}
-
 	nodes, err := c.nodeClient.GetNodesBySite(req.SiteId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get nodes with site %s and network %s. Error %s", req.GetSiteId(), netId.String(), err.Error())
-
 	}
-	for _, node := range nodes.Nodes {
 
+	for _, node := range nodes.Nodes {
 		nId, err := ukama.ValidateNodeId(node.Id)
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument,
-				"invalid format of node id. Error %s", err.Error())
+			return nil, status.Errorf(codes.InvalidArgument, "invalid format of node id. Error %s", err.Error())
 		}
-
-		_, err = c.nRepo.Get(nId.String())
-		if err != nil {
+		if _, err = c.nRepo.Get(nId.String()); err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
 		}
 
-		err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), actions["RESTART"].method, actions["RESTART"].path, nId.String(), []byte(""))
+		op, err := c.acquireAndRegister("RestartSite", "node:"+nId.String())
 		if err != nil {
-			log.Errorf("Failed to publish message. Errors %s", err.Error())
-			return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
-
+			return nil, err
 		}
+		if err := c.publishMessage(c.orgName+"..."+nId.String(), actions["RESTART"].method, actions["RESTART"].path, nId.String(), []byte("")); err != nil {
+			return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
+		}
+		c.markRunning(op, "RestartSite")
 	}
-
 	return &pb.RestartSiteResponse{}, nil
 }
 
@@ -139,52 +127,22 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 	if req.NodeId == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "node ID cannot be empty")
 	}
-
 	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of node id. Error %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of node id. Error %s", err.Error())
 	}
-
-	_, err = c.nRepo.Get(nId.String())
-	if err != nil {
+	if _, err = c.nRepo.Get(nId.String()); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
 	}
 
-	resourceKey := "node:" + nId.String()
-	startResp, err := c.opManager.Start(&opmgrpb.StartOperationRequest{
-		Type:         "RestartNode",
-		System:       "node",
-		ResourceKey:  resourceKey,
-		RequestedBy:  pkg.ServiceName,
-		LeaseSeconds: c.opLeaseSecs,
-	})
+	op, err := c.acquireAndRegister("RestartNode", "node:"+nId.String())
 	if err != nil {
-		log.Warnf("RestartNode lock acquire for %s rejected: %v", resourceKey, err)
 		return nil, err
 	}
-	op := startResp.Operation
-	log.Infof("RestartNode acquired lock op=%s token=%d for %s", op.Id, op.FencingToken, resourceKey)
-
-	if _, err := c.opMonitor.Register(&opmonpb.RegisterIntentRequest{
-		OperationId:     op.Id,
-		ResourceKey:     resourceKey,
-		ActionType:      "RestartNode",
-		FencingToken:    op.FencingToken,
-		DeadlineSeconds: c.opDeadlineSecs,
-	}); err != nil {
-		log.Errorf("RestartNode register intent for op %s failed: %v", op.Id, err)
-		return nil, status.Errorf(codes.Internal, "register intent: %v", err)
-	}
-
 	if err := c.publishMessage(c.orgName+"..."+nId.String(), actions["RESTART"].method, actions["RESTART"].path, nId.String(), []byte("")); err != nil {
-		log.Errorf("RestartNode publish failed for op %s: %v", op.Id, err)
 		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
 	}
-
-	if _, err := c.opManager.MarkRunning(op.Id, op.FencingToken); err != nil {
-		log.Warnf("RestartNode mark running failed for op %s: %v", op.Id, err)
-	}
+	c.markRunning(op, "RestartNode")
 	return &pb.RestartNodeResponse{}, nil
 }
 
@@ -215,35 +173,29 @@ func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNode
 	}
 
 	for _, nodeId := range req.NodeIds {
-		nId, err := ukama.ValidateNodeId(string(nodeId))
+		nId, err := ukama.ValidateNodeId(nodeId)
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument,
-				"invalid format of node id. Error %s", err.Error())
+			return nil, status.Errorf(codes.InvalidArgument, "invalid format of node id. Error %s", err.Error())
 		}
-
-		_, err = c.nRepo.Get(nId.String())
-		if err != nil {
+		if _, err = c.nRepo.Get(nId.String()); err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
 		}
-		msg := &pb.RestartNodeRequest{
-			NodeId: string(nodeId),
-		}
-		data, err := proto.Marshal(msg)
+
+		data, err := proto.Marshal(&pb.RestartNodeRequest{NodeId: nodeId})
 		if err != nil {
 			return nil, err
 		}
 
-		err = c.publishMessage(c.orgName+"."+"."+"."+nodeId, actions["RESTART"].method, actions["RESTART"].path, nodeId, data)
-
+		op, err := c.acquireAndRegister("RestartNodes", "node:"+nId.String())
 		if err != nil {
-			log.Errorf("Failed to publish message . Errors %s", err.Error())
-			return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
-
+			return nil, err
 		}
+		if err := c.publishMessage(c.orgName+"..."+nodeId, actions["RESTART"].method, actions["RESTART"].path, nodeId, data); err != nil {
+			return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
+		}
+		c.markRunning(op, "RestartNodes")
 	}
-
 	return &pb.RestartNodesResponse{}, nil
-
 }
 func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.ToggleInternetSwitchRequest) (*pb.ToggleInternetSwitchResponse, error) {
 	log.Infof("Toggling internet switch for site %v, port %v to %v", req.SiteId, req.Port, req.Status)
@@ -255,28 +207,27 @@ func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.Tog
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid site ID format: %s", err.Error())
 	}
-
-	_, err = c.siteClient.Get(req.SiteId)
-
-	if err != nil {
+	if _, err = c.siteClient.Get(req.SiteId); err != nil {
 		return nil, fmt.Errorf("failed to validate site %s. Error %s", req.SiteId, err.Error())
 	}
 
-	msg := &pb.ToggleInternetSwitchRequest{
+	data, err := proto.Marshal(&pb.ToggleInternetSwitchRequest{
 		SiteId: siteId.String(),
 		Status: req.Status,
 		Port:   req.Port,
-	}
-	data, err := proto.Marshal(msg)
+	})
 	if err != nil {
 		return nil, err
 	}
-	err = c.publishMessage(c.orgName+"."+"."+"."+siteId.String(), actions["SWITCH"].method, actions["SWITCH"].path, siteId.String(), data)
 
+	op, err := c.acquireAndRegister("ToggleInternetSwitch", fmt.Sprintf("site:%s:port:%d", siteId.String(), req.Port))
 	if err != nil {
-		log.Errorf("Failed to publish switch port reboot message. Errors: %s", err.Error())
+		return nil, err
+	}
+	if err := c.publishMessage(c.orgName+"..."+siteId.String(), actions["SWITCH"].method, actions["SWITCH"].path, siteId.String(), data); err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to publish switch port reboot message: %s", err.Error())
 	}
+	c.markRunning(op, "ToggleInternetSwitch")
 	return &pb.ToggleInternetSwitchResponse{}, nil
 }
 
@@ -285,27 +236,26 @@ func (c *ControllerServer) ToggleRfSwitch(ctx context.Context, req *pb.ToggleRfS
 	// TODO: RF toggle will send command to Tnode and Anode both
 	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of node id. Error %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of node id. Error %s", err.Error())
 	}
-
 	ntype := ukama.GetNodeType(nId.String())
-
 	if *ntype != ukama.NODE_ID_TYPE_AMPNODE {
 		return nil, status.Errorf(codes.InvalidArgument, "node is not an amplifier node")
 	}
 
-	jsonBody := map[string]string{"state": req.State}
-	data, err := json.Marshal(jsonBody)
+	data, err := json.Marshal(map[string]string{"state": req.State})
 	if err != nil {
 		return nil, err
 	}
 
-	err = c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), actions["RADIO"].method, actions["RADIO"].path, nId.String(), data)
+	op, err := c.acquireAndRegister("ToggleRfSwitch", "node:"+nId.String())
 	if err != nil {
-		log.Errorf("Failed to publish RADIO switch message. Errors: %s", err.Error())
+		return nil, err
+	}
+	if err := c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), actions["RADIO"].method, actions["RADIO"].path, nId.String(), data); err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to publish RADIO switch message: %s", err.Error())
 	}
+	c.markRunning(op, "ToggleRfSwitch")
 	return &pb.ToggleRfSwitchResponse{}, nil
 }
 
@@ -314,27 +264,60 @@ func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.Toggle
 
 	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of node id. Error %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of node id. Error %s", err.Error())
 	}
-
 	ntype := ukama.GetNodeType(nId.String())
 	if *ntype != ukama.NODE_ID_TYPE_TOWERNODE {
 		return nil, status.Errorf(codes.InvalidArgument, "node is not a tower node")
 	}
 
-	jsonBody := map[string]string{"state": req.State}
-	data, err := json.Marshal(jsonBody)
+	data, err := json.Marshal(map[string]string{"state": req.State})
 	if err != nil {
 		return nil, err
 	}
 
-	err = c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), actions["SERVICE"].method, actions["SERVICE"].path, nId.String(), data)
+	op, err := c.acquireAndRegister("ToggleNodeService", "node:"+nId.String())
 	if err != nil {
-		log.Errorf("Failed to publish Node SERVICE switch message. Errors: %s", err.Error())
+		return nil, err
+	}
+	if err := c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), actions["SERVICE"].method, actions["SERVICE"].path, nId.String(), data); err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to publish Node SERVICE switch message: %s", err.Error())
 	}
+	c.markRunning(op, "ToggleNodeService")
 	return &pb.ToggleNodeServiceResponse{}, nil
+}
+
+func (c *ControllerServer) acquireAndRegister(actionType, resourceKey string) (*opmgrpb.Operation, error) {
+	startResp, err := c.opManager.Start(&opmgrpb.StartOperationRequest{
+		Type:         actionType,
+		System:       "node",
+		ResourceKey:  resourceKey,
+		RequestedBy:  pkg.ServiceName,
+		LeaseSeconds: c.opLeaseSecs,
+	})
+	if err != nil {
+		log.Warnf("%s lock acquire for %s rejected: %v", actionType, resourceKey, err)
+		return nil, err
+	}
+	op := startResp.Operation
+	if _, err := c.opMonitor.Register(&opmonpb.RegisterIntentRequest{
+		OperationId:     op.Id,
+		ResourceKey:     resourceKey,
+		ActionType:      actionType,
+		FencingToken:    op.FencingToken,
+		DeadlineSeconds: c.opDeadlineSecs,
+	}); err != nil {
+		log.Errorf("%s register intent for op %s failed: %v", actionType, op.Id, err)
+		return nil, status.Errorf(codes.Internal, "register intent: %v", err)
+	}
+	log.Infof("%s acquired lock op=%s token=%d for %s", actionType, op.Id, op.FencingToken, resourceKey)
+	return op, nil
+}
+
+func (c *ControllerServer) markRunning(op *opmgrpb.Operation, actionType string) {
+	if _, err := c.opManager.MarkRunning(op.Id, op.FencingToken); err != nil {
+		log.Warnf("%s mark running failed for op %s: %v", actionType, op.Id, err)
+	}
 }
 
 func (c *ControllerServer) publishMessage(target string, method string, path string, nodeId string, anyMsg []byte) error {

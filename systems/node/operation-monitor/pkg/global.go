@@ -25,6 +25,7 @@ const (
 var DefaultCompletionRule = map[string]string{
 	"RestartNode":          "state=Operational",
 	"RestartSite":          "state=Operational",
+	"RestartNodes":         "state=Operational",
 	"ToggleRfSwitch":       "state=Operational",
 	"ToggleInternetSwitch": "state=Operational",
 	"ToggleNodeService":    "state=Operational",
