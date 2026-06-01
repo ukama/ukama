@@ -7,6 +7,7 @@
  */
 'use client';
 import {
+  GetPackagesDocument,
   PackageDto,
   useAddPackageMutation,
   useGetCurrencySymbolLazyQuery,
@@ -71,7 +72,6 @@ const useDataPlans = () => {
   const {
     data: packagesData,
     loading: packagesLoading,
-    refetch: getDataPlans,
   } = useGetPackagesQuery({
     fetchPolicy: 'network-only',
     onError: (error) => {
@@ -85,8 +85,8 @@ const useDataPlans = () => {
   });
 
   const [addDataPlan, { loading: addLoading }] = useAddPackageMutation({
+    refetchQueries: [{ query: GetPackagesDocument }],
     onCompleted: () => {
-      getDataPlans();
       setSnackbarMessage({
         id: 'add-data-plan',
         message: 'Data plan added successfully',
@@ -97,8 +97,8 @@ const useDataPlans = () => {
   });
 
   const [updatePackage, { loading: updateLoading }] = useUpdatePacakgeMutation({
+    refetchQueries: [{ query: GetPackagesDocument }],
     onCompleted: () => {
-      getDataPlans();
       setSnackbarMessage({
         id: 'update-data-plan',
         message: 'Data plan updated successfully',

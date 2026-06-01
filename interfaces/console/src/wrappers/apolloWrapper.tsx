@@ -85,7 +85,7 @@ function makeClient(baseUrl: string) {
         refetchWritePolicy: 'merge',
       },
       query: {
-        fetchPolicy: 'network-only',
+        fetchPolicy: 'cache-first',
         errorPolicy: 'all',
       },
     },

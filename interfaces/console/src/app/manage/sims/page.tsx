@@ -7,6 +7,7 @@
  */
 'use client';
 import {
+  GetSimsFromPoolDocument,
   SimPoolResDto,
   Sim_Status,
   Sim_Types,
@@ -29,7 +30,7 @@ const Page = () => {
   const { setSnackbarMessage, env } = useAppContext();
   const [isUploadSims, setIsUploadSims] = useState<boolean>(false);
 
-  const { loading: simsLoading, refetch: refetchSims } =
+  const { loading: simsLoading } =
     useGetSimsFromPoolQuery({
       fetchPolicy: 'cache-and-network',
       skip: false,
@@ -54,8 +55,8 @@ const Page = () => {
 
   const [uploadSimPool, { loading: uploadSimsLoading }] = useUploadSimsMutation(
     {
+      refetchQueries: [GetSimsFromPoolDocument],
       onCompleted: () => {
-        refetchSims();
         setSnackbarMessage({
           id: 'sim-pool-uploaded',
           message: 'Sims uploaded successfully',
