@@ -8,6 +8,7 @@
 'use client';
 import {
   Component_Type,
+  ComponentDto,
   useAddSiteMutation,
   useGetComponentsByUserIdQuery,
 } from '@/client/graphql/generated';
@@ -24,6 +25,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import React from 'react';
 import { formatISO } from 'date-fns';
 import { FormikProvider, useFormik } from 'formik';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -313,7 +315,7 @@ const SiteConfigure = ({ params }: IPage) => {
                   (comp) => comp.id === formik.values.switch,
                 ) || null
               }
-              onChange={(_, v: any) => {
+              onChange={(_: React.SyntheticEvent, v: ComponentDto | null) => {
                 setQueryParam(
                   Component_Type.Switch,
                   v?.id || '',
@@ -351,7 +353,7 @@ const SiteConfigure = ({ params }: IPage) => {
                   (comp) => comp.id === formik.values.power,
                 ) || null
               }
-              onChange={(_, v: any) => {
+              onChange={(_: React.SyntheticEvent, v: ComponentDto | null) => {
                 setQueryParam(
                   'power',
                   v?.id || '',
@@ -389,7 +391,7 @@ const SiteConfigure = ({ params }: IPage) => {
                   (comp) => comp.id === formik.values.backhaul,
                 ) || null
               }
-              onChange={(_, v: any) => {
+              onChange={(_: React.SyntheticEvent, v: ComponentDto | null) => {
                 setQueryParam(
                   'backhaul',
                   v?.id || '',

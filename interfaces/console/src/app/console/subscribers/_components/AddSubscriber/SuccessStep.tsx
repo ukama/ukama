@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2023-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 
 import { AllocateSimApiDto, SimPoolResDto } from '@/client/graphql/generated';
@@ -11,7 +11,6 @@ import colors from '@/theme/colors';
 import styled from '@emotion/styled';
 import CloseIcon from '@mui/icons-material/Close';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { IconButton } from '@mui/material';
 import {
   Accordion,
   AccordionDetails,
@@ -21,6 +20,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   Typography,
 } from '@mui/material';
 import QRCode from 'qrcode.react';
@@ -60,7 +60,11 @@ const SuccessStep: React.FC<SuccessStepProps> = ({
       <DialogContent>
         {submissionData.is_physical ? (
           <>
-            <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 3 }}>
+            <Typography
+              variant="subtitle1"
+              color="text.secondary"
+              sx={{ mb: 3 }}
+            >
               You have successfully added {subscriberName} as a subscriber to
               your network, and a unique ID has been generated for them, which
               must be used to create a Ukama subscriber app.
@@ -76,7 +80,11 @@ const SuccessStep: React.FC<SuccessStepProps> = ({
           </>
         ) : (
           <>
-            <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 3 }}>
+            <Typography
+              variant="subtitle1"
+              color="text.secondary"
+              sx={{ mb: 3 }}
+            >
               You have successfully added {subscriberName} as a subscriber to
               your network, and an eSIM installation invitation has been sent
               out to them. If they would rather install their eSIM now, have
@@ -95,11 +103,17 @@ const SuccessStep: React.FC<SuccessStepProps> = ({
                   '& .MuiAccordionSummary-content': { flexGrow: 0.02 },
                 }}
               >
-                <Typography fontWeight={500} variant="caption" color={colors.primaryMain}>
+                <Typography
+                  fontWeight={500}
+                  variant="caption"
+                  color={colors.primaryMain}
+                >
                   {showQrCode ? 'HIDE QR CODE' : 'SHOW QR CODE'}
                 </Typography>
               </AccordionSummary>
-              <AccordionDetails sx={{ p: 2, display: 'flex', justifyContent: 'center' }}>
+              <AccordionDetails
+                sx={{ p: 2, display: 'flex', justifyContent: 'center' }}
+              >
                 <QRCode
                   id="qrCodeId"
                   value={selectedSim?.qrCode || ''}

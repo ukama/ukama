@@ -7,6 +7,8 @@
  */
 
 import { Node, SiteDto as Site } from '@/client/graphql/generated';
+import { ToggleOption, ToggleValue } from '@/components/ui/ToggleButtonsMenu';
+import { SplitButtonOption } from '@/components/ui/SplitButton';
 import { Button } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { styled } from '@mui/material/styles';
@@ -21,13 +23,13 @@ const StyledBtn = styled(Button)({
 });
 
 interface INodeStatus {
-  objs: any;
+  objs: Node[] | Site[] | [];
   uptime: number;
   loading?: boolean;
-  actionOptions: any[];
+  actionOptions: ToggleOption[] | SplitButtonOption[];
   actionLoading?: boolean;
   type: 'split' | 'toggle';
-  actionOptionValues?: any[];
+  actionOptionValues?: ToggleValue[];
   handleSelected: (obj: Node | Site) => void;
   handleEditClick?: (obj: Node | Site) => void;
   selected: Node | Site | undefined;
@@ -49,7 +51,7 @@ const StatusBar = ({
 }: INodeStatus) => {
   const handleUpdateNode = () =>
     handleEditClick?.(
-      objs.find((item: any) => item.id === selected) as Node | Site,
+      (objs as (Node | Site)[]).find((item) => item.id === selected?.id) as Node | Site,
     );
 
   return (

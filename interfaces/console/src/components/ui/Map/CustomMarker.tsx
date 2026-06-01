@@ -7,6 +7,7 @@
  */
 
 import { colors } from '@/theme';
+import { MapSite, MapSiteLink, MapLinkSites } from './Map';
 import Leaflet, { LatLngLiteral, LatLngTuple, Layer, Polyline } from 'leaflet';
 import {
   Dispatch,
@@ -19,21 +20,21 @@ import { Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import SitePopup from '@/app/console/sites/[id]/_components/SitePopup';
 
 interface ICustomMarker {
-  data: any[];
+  data: MapSite[];
   layer: string;
-  links: any[];
-  linkSites: any;
+  links: MapSiteLink[];
+  linkSites: MapLinkSites;
   zoom?: number;
   isAddLink: boolean;
   coverageLoading: boolean;
   center: LatLngLiteral | null;
-  handleAction: (a: any) => void;
+  handleAction: (a: MapSite) => void;
   selectedLink: string | undefined;
   handleLinkClick: (a: string) => void;
   handleDeleteSite: (a: string) => void;
   setZoom: Dispatch<SetStateAction<number>>;
   handleAddLinkToSite: (id: string) => void;
-  handleGenerateAction: (a: string, b: any) => void;
+  handleGenerateAction: (a: string, b: MapSite) => void;
   handleAddMarker: (l: LatLngLiteral, b: string) => void;
   handleDragMarker: (l: LatLngLiteral, id: string) => void;
 }
@@ -49,7 +50,7 @@ interface ILink {
   latlng: LatLngTuple[];
 }
 
-const getLatLng = (sites: any[], links: any[]): ILink[] => {
+const getLatLng = (sites: MapSite[], links: MapSiteLink[]): ILink[] => {
   const data: ILink[] = [];
   if (sites && sites.length > 0) {
     for (let i = 0; i < links.length; i++) {
@@ -71,7 +72,7 @@ const getLatLng = (sites: any[], links: any[]): ILink[] => {
   return data.length > 0 ? data : [];
 };
 
-const addRasterData = async (url: string, _: any, __: string) => {
+const addRasterData = async (url: string, _: unknown, __: string) => {
   await fetch(url).then((response) => response.arrayBuffer());
 };
 
@@ -132,7 +133,7 @@ const CustomMarker = ({
     if (!map) return;
 
     polylines?.forEach((p) => p.removeFrom(map));
-    const layers: any = [];
+    const layers: Polyline[] = [];
     const latlngs = getLatLng(data, links);
     latlngs.forEach(({ id, latlng }) => {
       const p = Leaflet.polyline(latlng, {
@@ -151,7 +152,7 @@ const CustomMarker = ({
     });
     setPolylines(layers);
 
-    const m: any = [];
+    const m: IMarker[] = [];
     data.map((item) => {
       m.push({
         id: item.location.id,
@@ -243,7 +244,7 @@ const CustomMarker = ({
               attribution={item.id}
               opacity={m?.lat === 0 ? 0 : 1}
               eventHandlers={{
-                moveend: (event: any) => {
+                moveend: (event: { target: { getLatLng: () => { lat: number; lng: number } } }) => {
                   setMarkers([
                     ...markers.filter((m) => m.id !== item.location.id),
                     {

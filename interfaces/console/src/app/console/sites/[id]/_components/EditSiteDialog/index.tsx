@@ -17,7 +17,7 @@ import {
   DialogTitle,
   IconButton,
 } from '@mui/material';
-import { ErrorMessage, Field, Form, Formik } from 'formik';
+import { ErrorMessage, Field, FieldProps, Form, Formik } from 'formik';
 import React from 'react';
 
 interface EditSiteDialogProps {
@@ -79,7 +79,7 @@ const EditSiteDialog: React.FC<EditSiteDialogProps> = ({
           <Form>
             <DialogContent>
               <Field name="siteName">
-                {({ field }: { field: any }) => (
+                {({ field }: FieldProps) => (
                   <GlobalInput
                     {...field}
                     autoFocus

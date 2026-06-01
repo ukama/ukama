@@ -23,10 +23,10 @@ interface NodeDto {
   name: string;
   type: string;
   status: NodeStatus;
-  site: any | null;
-  attached: any[];
-  latitude?: number;
-  longitude?: number;
+  site: { nodeId?: string | null; siteId?: string | null } | null;
+  attached?: NodeDto[];
+  latitude?: string | number;
+  longitude?: string | number;
 }
 
 interface SitesWrapperProps {

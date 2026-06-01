@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2023-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 
 import {
@@ -204,7 +204,10 @@ export const getSignalStyles = (signalStrength: string) => {
   }
 };
 
-export const getStatusStyles = (type: StatusType, value: number): StyleOutput => {
+export const getStatusStyles = (
+  type: StatusType,
+  value: number,
+): StyleOutput => {
   if (type === 'uptime') {
     return value <= 0
       ? { color: colors.red, icon: <RouterIcon sx={{ color: colors.red }} /> }

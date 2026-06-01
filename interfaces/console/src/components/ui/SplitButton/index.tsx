@@ -18,8 +18,14 @@ import Popper from '@mui/material/Popper';
 import * as React from 'react';
 import BasicDialog from '@/components/ui/BasicDialog';
 
+export interface SplitButtonOption {
+  id: string;
+  name: string;
+  consent?: string;
+}
+
 type splitButtonProps = {
-  options: any[];
+  options: SplitButtonOption[];
   handleSplitActionClick: (id: string) => void;
 };
 const SplitButton = ({ options, handleSplitActionClick }: splitButtonProps) => {
@@ -66,7 +72,7 @@ const SplitButton = ({ options, handleSplitActionClick }: splitButtonProps) => {
         }}
       >
         <Button fullWidth onClick={() => setConsentDialog(true)}>
-          {options.find((i) => i.id === selectedIndex).name}
+          {options.find((i) => i.id === selectedIndex)?.name}
         </Button>
         {isHaveOptions && (
           <Button
@@ -120,13 +126,13 @@ const SplitButton = ({ options, handleSplitActionClick }: splitButtonProps) => {
         isOpen={consentDialog}
         labelSuccessBtn={'Confirm'}
         labelNegativeBtn={'Cancel'}
-        title={options.find((i) => i.id === selectedIndex).name}
-        description={options.find((i) => i.id === selectedIndex).consent}
+        title={options.find((i) => i.id === selectedIndex)?.name ?? ''}
+        description={options.find((i) => i.id === selectedIndex)?.consent ?? ''}
         handleCloseAction={() => setConsentDialog(false)}
         handleSuccessAction={() => {
           setConsentDialog(false);
           handleSplitActionClick(
-            options.find((i) => i.id === selectedIndex).id,
+            options.find((i) => i.id === selectedIndex)?.id ?? selectedIndex,
           );
         }}
       ></BasicDialog>

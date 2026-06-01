@@ -3,13 +3,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2023-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 
 import { MetricsRes } from '@/client/graphql/generated/subscriptions';
+import LineChart from '@/components/ui/LineChart';
 import { SiteKpiConfig } from '@/constants';
 import { getMetricValue, isMetricValue } from '@/utils';
-import LineChart from '@/components/ui/LineChart';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
   Accordion,

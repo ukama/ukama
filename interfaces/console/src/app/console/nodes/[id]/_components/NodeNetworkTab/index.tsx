@@ -13,6 +13,7 @@ import {
   MetricsStateRes,
 } from '@/client/graphql/generated/subscriptions';
 import { NODE_KPIS } from '@/constants';
+import { KpiConfig } from '@/types';
 import { getKPIStatValue, getMetricValue, isMetricValue } from '@/utils';
 import { Paper, Stack } from '@mui/material';
 import Grid from '@mui/material/Grid2';
@@ -22,12 +23,12 @@ import NodeStatItem from '@/app/console/nodes/[id]/_components/NodeStatItem';
 import NodeStatsContainer from '@/app/console/nodes/[id]/_components/NodeStatsContainer';
 
 const withApiDisplayMeta = (
-  config: any,
+  config: KpiConfig,
   statsData: MetricsStateRes,
   metrics: MetricsRes,
 ) => {
-  const statMeta = statsData?.metrics?.find((m: any) => m.type === config.id);
-  const rangeMeta = metrics?.metrics?.find((m: any) => m.type === config.id);
+  const statMeta = statsData?.metrics?.find((m) => m.type === config.id);
+  const rangeMeta = metrics?.metrics?.find((m) => m.type === config.id);
   const meta = statMeta ?? rangeMeta;
 
   return {

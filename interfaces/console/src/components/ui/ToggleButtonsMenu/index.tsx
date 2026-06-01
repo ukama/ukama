@@ -21,10 +21,21 @@ import {
 import React from 'react';
 import BasicDialog from '@/components/ui/BasicDialog';
 
+export interface ToggleOption {
+  id: string;
+  name: string;
+  consent?: string;
+}
+
+export interface ToggleValue {
+  id: string;
+  value: boolean;
+}
+
 interface IToggleButtonsMenu {
   title: string;
-  values: any[];
-  options: any[];
+  values: ToggleValue[];
+  options: ToggleOption[];
   isLoading: boolean;
   handleToggle: (id: string, value: boolean) => void;
 }
@@ -116,7 +127,7 @@ const ToggleButtonsMenu = ({
                       name={id}
                       size="small"
                       onChange={(e) => handleToggle(id, e.target.checked)}
-                      checked={values.find((j: any) => j.id === id)?.value}
+                      checked={values.find((j) => j.id === id)?.value}
                     />
                   )}
                 </Stack>
@@ -131,13 +142,13 @@ const ToggleButtonsMenu = ({
         labelNegativeBtn={'Cancel'}
         title={
           options.find(
-            (i) => i.id === values.find((j: any) => j.id === i.id)?.id,
-          )?.name
+            (i) => i.id === values.find((j) => j.id === i.id)?.id,
+          )?.name ?? ''
         }
         description={
           options.find(
-            (i) => i.id === values.find((j: any) => j.id === i.id)?.id,
-          )?.consent
+            (i) => i.id === values.find((j) => j.id === i.id)?.id,
+          )?.consent ?? ''
         }
         handleCloseAction={() => setConsentDialog(false)}
         handleSuccessAction={() => {

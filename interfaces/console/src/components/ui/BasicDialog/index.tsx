@@ -22,9 +22,9 @@ type BasicDialogProps = {
   title: string;
   isOpen: boolean;
   description: string;
-  handleCloseAction: any;
+  handleCloseAction: () => void;
   labelSuccessBtn?: string;
-  handleSuccessAction?: any;
+  handleSuccessAction?: () => void;
   labelNegativeBtn?: string;
 };
 

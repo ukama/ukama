@@ -14,7 +14,7 @@ import React, { useState } from 'react';
 
 interface ChipComponentProps {
   menu: string[] | [] | undefined;
-  onCreateNetwork: () => void | undefined;
+  onCreateNetwork?: () => void;
 }
 
 const ChipDropdown: React.FC<ChipComponentProps> = ({

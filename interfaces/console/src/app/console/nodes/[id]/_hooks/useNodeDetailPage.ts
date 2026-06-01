@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2023-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 'use client';
 
@@ -52,14 +52,18 @@ export function useNodeDetailPage(id: string) {
 
   const [metricFrom, setMetricFrom] = useState<number>(0);
   const [isEditNode, setIsEditNode] = useState<boolean>(false);
-  const [nodeAction, setNodeAction] = useState<TNodeActionState & { currentAction: string; actionInitiated: string }>({
+  const [nodeAction, setNodeAction] = useState<
+    TNodeActionState & { currentAction: string; actionInitiated: string }
+  >({
     progress: 0,
     currentAction: '',
     actionInitiated: NODE_ACTIONS_ENUM.NODE_LOADING,
     action: NODE_ACTIONS_ENUM.NODE_LOADING,
     isActive: false,
   });
-  const [graphType, setGraphType] = useState<Graphs_Type>(Graphs_Type.NodeHealth);
+  const [graphType, setGraphType] = useState<Graphs_Type>(
+    Graphs_Type.NodeHealth,
+  );
   const [nodeUptime, setNodeUptime] = useState<number>(0);
   const [selectedTab, setSelectedTab] = useState<number>(0);
   const [metrics, setMetrics] = useState<MetricsRes>({ metrics: [] });
@@ -94,7 +98,12 @@ export function useNodeDetailPage(id: string) {
   const currentNode = nodesData?.getNodes.nodes.find((n) => n.id === id);
 
   const [updateNode, { loading: updateNodeLoading }] = useUpdateNodeMutation({
-    onCompleted: () => notify('update-node-success-msg', 'Node updated successfully.', 'success'),
+    onCompleted: () =>
+      notify(
+        'update-node-success-msg',
+        'Node updated successfully.',
+        'success',
+      ),
     onError: (err) => notify('update-node-err-msg', err.message, 'error'),
     refetchQueries: ['GetNodes'],
   });
@@ -102,16 +111,28 @@ export function useNodeDetailPage(id: string) {
   const [restartNode] = useRestartNodeMutation({
     fetchPolicy: 'network-only',
     onCompleted: () => {
-      setNodeAction((prev) => ({ ...prev, progress: prev.progress + 25, currentAction: 'loading' }));
+      setNodeAction((prev) => ({
+        ...prev,
+        progress: prev.progress + 25,
+        currentAction: 'loading',
+      }));
       notify('restart-node-success-msg', 'Node restart initiated.', 'success');
     },
     onError: () => {
-      setNodeAction({ progress: 0, currentAction: '', actionInitiated: '', action: '', isActive: false });
+      setNodeAction({
+        progress: 0,
+        currentAction: '',
+        actionInitiated: '',
+        action: '',
+        isActive: false,
+      });
       notify('restart-node-err-msg', "Couldn't restart node.", 'error');
     },
   });
 
-  const { loading: appsLoading } = useGetAppsQuery({ fetchPolicy: 'cache-and-network' });
+  const { loading: appsLoading } = useGetAppsQuery({
+    fetchPolicy: 'cache-and-network',
+  });
 
   const {
     loading: softwaresLoading,
@@ -119,60 +140,78 @@ export function useNodeDetailPage(id: string) {
     refetch: refetchSoftwares,
   } = useSoftwareQuery({
     fetchPolicy: 'network-only',
-    variables: { data: { name: '', nodeId: id, status: SoftwareStatusEnum.Unknown } },
-  });
-
-  const [updateSoftware, { loading: updateSoftwareLoading }] = useUpdateSoftwareMutation({
-    fetchPolicy: 'network-only',
-    onCompleted: () => {
-      refetchSoftwares();
-      notify('update-software-success-msg', 'Software updated successfully.', 'success');
+    variables: {
+      data: { name: '', nodeId: id, status: SoftwareStatusEnum.Unknown },
     },
-    onError: (err) => notify('update-software-error-msg', err.message, 'error'),
   });
 
-  const [getNodeMetricByTab, { loading: nodeMetricsLoading, variables: nodeMetricsVariables }] =
-    useGetMetricByTabLazyQuery({
-      client: subscriptionClient,
+  const [updateSoftware, { loading: updateSoftwareLoading }] =
+    useUpdateSoftwareMutation({
       fetchPolicy: 'network-only',
-      onCompleted: (data) => setMetrics(data.getMetricByTab),
-    });
-
-  const [getMetricStat, { data: statData, loading: statLoading, variables: statVar }] =
-    useGetMetricsStatLazyQuery({
-      client: subscriptionClient,
-      fetchPolicy: 'network-only',
-      onCompleted: (data) => {
-        if (data.getMetricsStat.metrics.length > 0) {
-          data.getMetricsStat.metrics.forEach((m) => {
-            if (m.type === NODE_KPIS.NODE_UPTIME[nodeType][0].id) {
-              setNodeUptime(m.value);
-            }
-          });
-
-          const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.AllNode}-${statVar?.data.from ?? 0}`;
-          cleanupSubscription();
-          subscriptionKeyRef.current = sKey;
-
-          const controller = MetricStatSubscription({
-            key: sKey,
-            nodeId: id,
-            userId: user.id,
-            url: env.METRIC_URL,
-            orgName: user.orgName,
-            type: Stats_Type.AllNode,
-            from: statVar?.data.from ?? 0,
-          });
-
-          subscriptionControllerRef.current = controller;
-          PubSub.subscribe(sKey, handleStatSubscription);
-        }
+      onCompleted: () => {
+        refetchSoftwares();
+        notify(
+          'update-software-success-msg',
+          'Software updated successfully.',
+          'success',
+        );
       },
+      onError: (err) =>
+        notify('update-software-error-msg', err.message, 'error'),
     });
+
+  const [
+    getNodeMetricByTab,
+    { loading: nodeMetricsLoading, variables: nodeMetricsVariables },
+  ] = useGetMetricByTabLazyQuery({
+    client: subscriptionClient,
+    fetchPolicy: 'network-only',
+    onCompleted: (data) => setMetrics(data.getMetricByTab),
+  });
+
+  const [
+    getMetricStat,
+    { data: statData, loading: statLoading, variables: statVar },
+  ] = useGetMetricsStatLazyQuery({
+    client: subscriptionClient,
+    fetchPolicy: 'network-only',
+    onCompleted: (data) => {
+      if (data.getMetricsStat.metrics.length > 0) {
+        data.getMetricsStat.metrics.forEach((m) => {
+          if (m.type === NODE_KPIS.NODE_UPTIME[nodeType][0].id) {
+            setNodeUptime(m.value);
+          }
+        });
+
+        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.AllNode}-${statVar?.data.from ?? 0}`;
+        cleanupSubscription();
+        subscriptionKeyRef.current = sKey;
+
+        const controller = MetricStatSubscription({
+          key: sKey,
+          nodeId: id,
+          userId: user.id,
+          url: env.METRIC_URL,
+          orgName: user.orgName,
+          type: Stats_Type.AllNode,
+          from: statVar?.data.from ?? 0,
+        });
+
+        subscriptionControllerRef.current = controller;
+        PubSub.subscribe(sKey, handleStatSubscription);
+      }
+    },
+  });
 
   useEffect(() => {
     if (currentNode?.status.connectivity === NodeConnectivityEnum.Online) {
-      setNodeAction({ progress: 0, currentAction: '', actionInitiated: '', action: '', isActive: false });
+      setNodeAction({
+        progress: 0,
+        currentAction: '',
+        actionInitiated: '',
+        action: '',
+        isActive: false,
+      });
     }
   }, [currentNode]);
 
@@ -227,11 +266,13 @@ export function useNodeDetailPage(id: string) {
 
           intervalId = setInterval(() => {
             setNodeAction((prev) => {
-              const newProgress = prev.progress === 100 ? 0 : prev.progress + 25;
+              const newProgress =
+                prev.progress === 100 ? 0 : prev.progress + 25;
               return {
                 ...prev,
                 progress: newProgress,
-                currentAction: newProgress === 0 ? '' : s.status.connectivity.toString(),
+                currentAction:
+                  newProgress === 0 ? '' : s.status.connectivity.toString(),
                 actionInitiated: newProgress === 0 ? '' : prev.actionInitiated,
                 action: newProgress === 0 ? '' : prev.actionInitiated,
                 isActive: newProgress !== 0,
@@ -244,7 +285,13 @@ export function useNodeDetailPage(id: string) {
 
     return () => {
       if (intervalId) {
-        setNodeAction({ progress: 0, currentAction: '', actionInitiated: '', action: '', isActive: false });
+        setNodeAction({
+          progress: 0,
+          currentAction: '',
+          actionInitiated: '',
+          action: '',
+          isActive: false,
+        });
         clearInterval(intervalId);
       }
     };
@@ -268,7 +315,12 @@ export function useNodeDetailPage(id: string) {
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [metricFrom, nodeMetricsVariables?.data?.from, getNodeMetricByTab, graphType]);
+  }, [
+    metricFrom,
+    nodeMetricsVariables?.data?.from,
+    getNodeMetricByTab,
+    graphType,
+  ]);
 
   const handleStatSubscription = (_: unknown, data: string) => {
     const parsedData: TMetricResDto = JSON.parse(data);
@@ -314,13 +366,21 @@ export function useNodeDetailPage(id: string) {
     }
   };
 
-  const handleUpdateAvailable = (name: string, desiredVersion: string, nodeId: string) => {
-    updateSoftware({ variables: { data: { name, nodeId, tag: desiredVersion } } });
+  const handleUpdateAvailable = (
+    name: string,
+    desiredVersion: string,
+    nodeId: string,
+  ) => {
+    updateSoftware({
+      variables: { data: { name, nodeId, tag: desiredVersion } },
+    });
   };
 
   const nodeActionDescription = getNodeActionDescriptionByProgress(
     nodeAction.progress,
-    nodeAction.actionInitiated || currentNode?.status?.connectivity?.toString() || '',
+    nodeAction.actionInitiated ||
+      currentNode?.status?.connectivity?.toString() ||
+      '',
   );
 
   return {
@@ -355,4 +415,3 @@ export function useNodeDetailPage(id: string) {
     handleUpdateAvailable,
   };
 }
-

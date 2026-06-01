@@ -8,6 +8,7 @@
 'use client';
 
 import {
+  Node,
   NodeConnectivityEnum,
   NodeStateEnum,
   SiteDto,
@@ -38,10 +39,10 @@ export default function Page() {
   const { setSnackbarMessage, network, user, env, subscriptionClient } =
     useAppContext();
   const [editSitedialogOpen, setEditSitedialogOpen] = useState(false);
-  const [unassignedNodes, setUnassignedNodes] = useState<any[]>([]);
+  const [unassignedNodes, setUnassignedNodes] = useState<Node[]>([]);
 
   const subscriptionsRef = useRef<Record<string, boolean>>({});
-  const activeSubscriptionRef = useRef<any>(null);
+  const activeSubscriptionRef = useRef<{ cancel: () => void } | null>(null);
 
   const [currentSite, setCurrentSite] = useState({
     siteName: '',
@@ -167,7 +168,7 @@ export default function Page() {
       },
     });
 
-  const handleStatSubscription = useCallback((_: any, data: string) => {
+  const handleStatSubscription = useCallback((_: string, data: string) => {
     try {
       const parsedData = JSON.parse(data);
       const { value, type, success, siteId } =

@@ -3,14 +3,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2023-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 
 import { PackageDto } from '@/client/graphql/generated';
 import { SubscriberDetailsType } from '@/types';
 import styled from '@emotion/styled';
 import CloseIcon from '@mui/icons-material/Close';
-import { IconButton, Select } from '@mui/material';
 import {
   Box,
   Button,
@@ -19,15 +18,21 @@ import {
   DialogTitle,
   FormControl,
   FormHelperText,
+  IconButton,
   InputLabel,
   MenuItem,
   OutlinedInput,
+  Select,
   Typography,
 } from '@mui/material';
 import { Field, FormikProps } from 'formik';
 
 const SelectStyle = styled(Select)({ width: '100%', height: '48px' });
-const CloseButtonStyle = styled(IconButton)({ position: 'absolute', right: 10, top: 14 });
+const CloseButtonStyle = styled(IconButton)({
+  position: 'absolute',
+  right: 10,
+  top: 14,
+});
 
 const NoItemMessage = ({ message }: { message: string }) => (
   <MenuItem disabled value="" sx={{ m: 0, p: '6px 16px' }}>
@@ -66,7 +71,13 @@ const PlanSelectionStep: React.FC<PlanSelectionStepProps> = ({
         Select the purchased data plan
       </Typography>
       <Field name="plan" id="add-subscriber-plan-select">
-        {({ field, meta }: { field: object; meta: { touched: boolean; error?: string } }) => (
+        {({
+          field,
+          meta,
+        }: {
+          field: object;
+          meta: { touched: boolean; error?: string };
+        }) => (
           <FormControl fullWidth error={meta.touched && Boolean(meta.error)}>
             <InputLabel htmlFor="outlined-plan" shrink>
               DATA PLAN
@@ -74,7 +85,9 @@ const PlanSelectionStep: React.FC<PlanSelectionStepProps> = ({
             <SelectStyle
               {...field}
               label="DATA PLAN"
-              input={<OutlinedInput notched label="DATA PLAN" id="outlined-plan" />}
+              input={
+                <OutlinedInput notched label="DATA PLAN" id="outlined-plan" />
+              }
             >
               {packages.length === 0 ? (
                 <NoItemMessage message="No packages available. Please add packages first." />

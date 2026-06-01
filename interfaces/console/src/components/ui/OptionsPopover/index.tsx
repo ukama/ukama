@@ -18,8 +18,10 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 
+import React from 'react';
+
 type ItemProps = {
-  Icon: any;
+  Icon: React.ElementType | null | undefined;
   type: string;
   title: string;
   titleColor?: string;
@@ -73,7 +75,7 @@ type OptionsPopoverProps = {
   isShowUpdate?: boolean;
   menuOptions: MenuItemType[];
   handleItemClick: (type: string) => void;
-  style?: any;
+  style?: React.CSSProperties;
 };
 
 const OptionsPopover = ({
@@ -83,9 +85,9 @@ const OptionsPopover = ({
   handleItemClick,
   style,
 }: OptionsPopoverProps) => {
-  const [anchorEl, setAnchorEl] = useState(null);
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const handlePopoverClose = () => setAnchorEl(null);
-  const handlePopoverOpen = (event: any) => setAnchorEl(event.currentTarget);
+  const handlePopoverOpen = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
 
   const open = Boolean(anchorEl);
   const id = open ? cid : undefined;
@@ -127,7 +129,7 @@ const OptionsPopover = ({
           horizontal: 'right',
         }}
       >
-        {menuOptions.map(({ id: optId, Icon, title, color, route }: any) => (
+        {menuOptions.map(({ id: optId, Icon, title, color, route }) => (
           <OptionItem
             Icon={Icon}
             type={route}

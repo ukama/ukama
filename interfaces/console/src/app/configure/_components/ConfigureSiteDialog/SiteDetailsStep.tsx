@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2023-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 
 import { NetworkDto } from '@/client/graphql/generated';
@@ -81,7 +81,10 @@ const SiteDetailsStep: React.FC<SiteDetailsStepProps> = ({
           <Stack spacing={2}>
             {currentAddress && (
               <SiteMapComponent
-                posix={[values.latitude.toString(), values.longitude.toString()]}
+                posix={[
+                  values.latitude.toString(),
+                  values.longitude.toString(),
+                ]}
                 address={currentAddress}
                 height="200px"
                 id="configure-site-map-dialog"
@@ -194,7 +197,9 @@ const SiteDetailsStep: React.FC<SiteDetailsStepProps> = ({
               type="submit"
               variant="contained"
               color="primary"
-              disabled={!isValid || addSiteLoading || isAddressLoading || !address}
+              disabled={
+                !isValid || addSiteLoading || isAddressLoading || !address
+              }
             >
               Submit
             </Button>

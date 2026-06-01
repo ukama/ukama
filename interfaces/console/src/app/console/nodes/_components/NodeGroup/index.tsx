@@ -6,10 +6,11 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+import { Node } from '@/client/graphql/generated';
 import { Grid, Link, Typography } from '@mui/material';
 import LoadingWrapper from '@/components/ui/LoadingWrapper';
 interface INodeGroup {
-  nodes: any;
+  nodes: Node[];
   loading: boolean;
   handleNodeAction: (id: string) => void;
 }
@@ -25,14 +26,14 @@ const NodeGroup = ({ nodes, loading, handleNodeAction }: INodeGroup) => {
       <Grid item xs={7}>
         <LoadingWrapper isLoading={loading} height={24} radius="small">
           {nodes.length > 0 ? (
-            nodes.map((item: any) => (
+            nodes.map((item) => (
               <Link
                 variant="body2"
                 fontWeight={500}
-                key={item.nodeId}
+                key={item.id}
                 underline="always"
                 sx={{ textTransform: 'capitalize' }}
-                onClick={() => handleNodeAction(item.nodeId)}
+                onClick={() => handleNodeAction(item.id)}
               >
                 {item.name}
               </Link>

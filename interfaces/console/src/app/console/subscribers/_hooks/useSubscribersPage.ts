@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2023-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 'use client';
 
@@ -94,7 +94,9 @@ export function useSubscribersPage() {
     variables: { networkId: network.id },
     fetchPolicy: 'network-only',
     onCompleted: (data) => {
-      setSubscriber({ subscribers: [...data.getSubscribersByNetwork.subscribers] });
+      setSubscriber({
+        subscribers: [...data.getSubscribersByNetwork.subscribers],
+      });
       if (query.size > 0) setSearch(query.get('iccid') ?? '');
       getDataUsages({
         variables: {
@@ -108,7 +110,11 @@ export function useSubscribersPage() {
   const [toggleSimStatus, { loading: toggleSimStatusLoading }] =
     useToggleSimStatusMutation({
       onCompleted: () => {
-        notify('sim-activated-success', 'Sim state updated successfully!', 'success');
+        notify(
+          'sim-activated-success',
+          'Sim state updated successfully!',
+          'success',
+        );
         refetchSubscribers();
       },
       onError: (e) => notify('sim-activated-error', e.message, 'error'),
@@ -117,23 +123,39 @@ export function useSubscribersPage() {
   const [addPackagesToSim, { loading: addPackagesToSimLoading }] =
     useAddPackagesToSimMutation({
       onCompleted: () =>
-        notify('packages-added-success', 'Packages added successfully!', 'success'),
+        notify(
+          'packages-added-success',
+          'Packages added successfully!',
+          'success',
+        ),
       onError: (e) => notify('packages-added-error', e.message, 'error'),
     });
 
-  const [allocateSim, { loading: allocateSimLoading }] = useAllocateSimMutation({
-    onCompleted: () =>
-      notify('allocate-sim-success', 'SIM allocated successfully!', 'success'),
-    onError: (e) => notify('allocate-sim-error', e.message, 'error'),
-  });
+  const [allocateSim, { loading: allocateSimLoading }] = useAllocateSimMutation(
+    {
+      onCompleted: () =>
+        notify(
+          'allocate-sim-success',
+          'SIM allocated successfully!',
+          'success',
+        ),
+      onError: (e) => notify('allocate-sim-error', e.message, 'error'),
+    },
+  );
 
   const [addSubscriber, { loading: addSubscriberLoading }] =
     useAddSubscriberMutation({
       onCompleted: () => {
         refetchSubscribers().then((res) =>
-          setSubscriber({ subscribers: [...res.data.getSubscribersByNetwork.subscribers] }),
+          setSubscriber({
+            subscribers: [...res.data.getSubscribersByNetwork.subscribers],
+          }),
         );
-        notify('add-subscriber-success', 'Subscriber added successfully!', 'success');
+        notify(
+          'add-subscriber-success',
+          'Subscriber added successfully!',
+          'success',
+        );
         refetchSims();
       },
       onError: (e) => notify('add-subscriber-error', e.message, 'error'),
@@ -143,7 +165,11 @@ export function useSubscribersPage() {
     useDeleteSubscriberMutation({
       onCompleted: () => {
         refetchSubscribers();
-        notify('delete-subscriber-success', 'Subscriber deleted successfully!', 'success');
+        notify(
+          'delete-subscriber-success',
+          'Subscriber deleted successfully!',
+          'success',
+        );
         setIsConfirmationOpen(false);
       },
       onError: (e) => notify('delete-subscriber-error', e.message, 'error'),
@@ -153,9 +179,15 @@ export function useSubscribersPage() {
     useUpdateSubscriberMutation({
       onCompleted: () => {
         refetchSubscribers().then((res) =>
-          setSubscriber({ subscribers: [...res.data.getSubscribersByNetwork.subscribers] }),
+          setSubscriber({
+            subscribers: [...res.data.getSubscribersByNetwork.subscribers],
+          }),
         );
-        notify('update-subscriber-success', 'Subscriber updated successfully!', 'success');
+        notify(
+          'update-subscriber-success',
+          'Subscriber updated successfully!',
+          'success',
+        );
       },
       onError: (e) => notify('update-subscriber-error', e.message, 'error'),
     });
@@ -199,7 +231,11 @@ export function useSubscribersPage() {
         };
       });
     },
-    [packagesData?.getPackages.packages, dataUsageData?.getDataUsages.usages, network],
+    [
+      packagesData?.getPackages.packages,
+      dataUsageData?.getDataUsages.usages,
+      network,
+    ],
   );
 
   const handleOpenSubscriberDetails = useCallback(
@@ -283,7 +319,9 @@ export function useSubscribersPage() {
       package_id: planId,
       start_date: new Date(Date.now() + 60000).toISOString(),
     }));
-    await addPackagesToSim({ variables: { data: { sim_id: simId, packages } } });
+    await addPackagesToSim({
+      variables: { data: { sim_id: simId, packages } },
+    });
     setIsTopupData(false);
   };
 
@@ -367,7 +405,10 @@ export function useSubscribersPage() {
     addPackagesToSimLoading,
     subscriberCount: data?.getSubscribersByNetwork.subscribers.length ?? 0,
     buildTableRows,
-    handleAddSubscriberModal: () => { setOpenAddSubscriber(true); refetchSims(); },
+    handleAddSubscriberModal: () => {
+      setOpenAddSubscriber(true);
+      refetchSims();
+    },
     handleCloseAddSubscriber: () => setOpenAddSubscriber(false),
     handleCloseSubscriberDetails: () => setIsSubscriberDetailsOpen(false),
     handleCancel: () => setIsConfirmationOpen(false),
@@ -382,4 +423,3 @@ export function useSubscribersPage() {
     scroll,
   };
 }
-

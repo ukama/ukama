@@ -23,9 +23,9 @@ type EditNodeProps = {
   title: string;
   isOpen: boolean;
   nodeName: string;
-  handleCloseAction: any;
+  handleCloseAction: () => void;
   labelSuccessBtn?: string;
-  handleSuccessAction?: any;
+  handleSuccessAction?: (value: string) => void;
   labelNegativeBtn?: string;
 };
 
@@ -69,7 +69,7 @@ const EditNode = ({
               shrink: true,
             },
           }}
-          onChange={(e: any) => setValue(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setValue(e.target.value)}
         />
       </DialogContent>
 
@@ -88,7 +88,7 @@ const EditNode = ({
             <Button
               variant="contained"
               disabled={!value}
-              onClick={() => handleSuccessAction(value)}
+              onClick={() => handleSuccessAction?.(value)}
             >
               {labelSuccessBtn}
             </Button>

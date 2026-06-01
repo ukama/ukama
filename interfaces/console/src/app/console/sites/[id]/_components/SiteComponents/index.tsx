@@ -90,7 +90,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
       const newSwitchStatus: Record<string, boolean> = {};
 
       portGroups.forEach((portGroup) => {
-        const statusMetric = portGroup.metrics.find((m: any) =>
+        const statusMetric = portGroup.metrics.find((m: SiteKpiConfig) =>
           m.id.includes('switch_port_status'),
         );
 

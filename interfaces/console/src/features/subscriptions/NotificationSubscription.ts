@@ -6,8 +6,15 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import PubSub from 'pubsub-js';
-function parseEvent(eventStr: any) {
-  const event: any = {};
+
+interface SSEEvent {
+  data?: string;
+  id?: string;
+  event?: string;
+}
+
+function parseEvent(eventStr: string): SSEEvent {
+  const event: SSEEvent = {};
   const lines = eventStr.split('\n');
 
   for (const line of lines) {
@@ -60,7 +67,6 @@ export default async function ServerNotificationSubscription(
     const { value, done } = (await reader?.read()) || {};
 
     if (done) {
-      console.log('Stream complete');
       break;
     }
 

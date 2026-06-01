@@ -8,10 +8,11 @@
 
 import styles from '@/styles/Map.module.css';
 import Leaflet, { LatLngLiteral } from 'leaflet';
+import { MapSite, MapSiteLink, MapLinkSites } from './Map';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
-import { Dispatch, SetStateAction, useEffect } from 'react';
+import React, { Dispatch, SetStateAction, useEffect } from 'react';
 import * as ReactLeaflet from 'react-leaflet';
 import CustomMarker from './CustomMarker';
 
@@ -23,25 +24,25 @@ const ICON = {
   shadowUrl: markerShadow.src,
 };
 interface IMap {
-  data: any[];
+  data: MapSite[];
   id: string;
-  cursor: any;
+  cursor: boolean;
   layer: string;
-  links?: any[];
-  children: any;
-  linkSites: any;
+  links?: MapSiteLink[];
+  children: (rl: typeof import('react-leaflet'), l: typeof Leaflet) => React.ReactNode;
+  linkSites: MapLinkSites;
   className?: string;
   isAddLink: boolean;
   center: LatLngLiteral;
   coverageLoading: boolean;
   zoom?: number | undefined;
-  handleAction: (a: any) => void;
+  handleAction: (a: MapSite) => void;
   selectedLink: string | undefined;
   handleLinkClick: (a: string) => void;
   handleDeleteSite: (a: string) => void;
   handleAddLinkToSite: (id: string) => void;
   setZoom: Dispatch<SetStateAction<number>>;
-  handleGenerateAction: (a: string, b: any) => void;
+  handleGenerateAction: (a: string, b: MapSite) => void;
   handleDragMarker: (l: LatLngLiteral, id: string) => void;
   handleAddMarker: (l: LatLngLiteral, b: string) => void;
 }

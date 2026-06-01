@@ -8,7 +8,7 @@
 
 import { LatLngLiteral } from 'leaflet';
 import dynamic from 'next/dynamic';
-import { Dispatch, SetStateAction } from 'react';
+import React, { Dispatch, SetStateAction } from 'react';
 
 const DynamicMap = dynamic(() => import('./DynamicMap'), {
   ssr: false,
@@ -17,28 +17,58 @@ const DynamicMap = dynamic(() => import('./DynamicMap'), {
 const DEFAULT_WIDTH = 600;
 const DEFAULT_HEIGHT = 600;
 
+export interface MapSiteLocation {
+  id: string;
+  lat: string;
+  lng: string;
+  address?: string;
+}
+
+export interface MapSite {
+  id: string;
+  name: string;
+  height: number;
+  apOption: string;
+  solarUptime: number;
+  isSetlite: boolean;
+  location: MapSiteLocation;
+  url?: string;
+  populationCovered?: number;
+}
+
+export interface MapSiteLink {
+  id: string;
+  siteA: string;
+  siteB: string;
+}
+
+export interface MapLinkSites {
+  siteA?: string;
+  siteB?: string;
+}
+
 interface IMap {
   id: string;
-  data: any[];
-  children: any;
+  data: MapSite[];
+  children: (rl: typeof import('react-leaflet'), l: typeof import('leaflet')) => React.ReactNode;
   layer: string;
   width?: number;
   height?: number;
-  links?: any[];
-  linkSites: any;
+  links?: MapSiteLink[];
+  linkSites: MapLinkSites;
   isAddLink: boolean;
   isAddSite: boolean;
   className?: string;
   center: LatLngLiteral;
   coverageLoading: boolean;
   zoom?: number | undefined;
-  handleAction: (a: any) => void;
+  handleAction: (a: MapSite) => void;
   selectedLink: string | undefined;
   handleLinkClick: (a: string) => void;
   handleDeleteSite: (a: string) => void;
   handleAddLinkToSite: (id: string) => void;
   setZoom: Dispatch<SetStateAction<number>>;
-  handleGenerateAction: (a: string, b: any) => void;
+  handleGenerateAction: (a: string, b: MapSite) => void;
   handleAddMarker: (l: LatLngLiteral, b: string) => void;
   handleDragMarker: (l: LatLngLiteral, id: string) => void;
 }

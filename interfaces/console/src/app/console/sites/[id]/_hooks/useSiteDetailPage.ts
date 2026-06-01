@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2023-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 'use client';
 
@@ -95,7 +95,11 @@ function getInitialNodeUptimesFromMetrics(
   if (!metrics?.length) return {};
 
   return metrics.reduce<Record<string, number>>((acc, metric) => {
-    if (metric.type === SITE_KPI_TYPES.NODE_UPTIME && metric.nodeId && metric.success) {
+    if (
+      metric.type === SITE_KPI_TYPES.NODE_UPTIME &&
+      metric.nodeId &&
+      metric.success
+    ) {
       acc[metric.nodeId] = typeof metric.value === 'number' ? metric.value : 0;
     }
     return acc;
@@ -109,7 +113,9 @@ function getSiteUptimeFromMetrics(
   if (!metrics?.length || !siteId) return 0;
 
   const siteMetrics = metrics.filter((m) => m.siteId === siteId && m.success);
-  const uptimeMetric = siteMetrics.find((m) => m.type === SITE_KPI_TYPES.SITE_UPTIME);
+  const uptimeMetric = siteMetrics.find(
+    (m) => m.type === SITE_KPI_TYPES.SITE_UPTIME,
+  );
 
   if (uptimeMetric?.value !== undefined) {
     const v = uptimeMetric.value;
@@ -134,8 +140,13 @@ export function useSiteDetailPage(id: string) {
 
   const subscribersSubscriptionRef = useRef<string | null>(null);
 
-  const { setSnackbarMessage, setSelectedDefaultSite, user, env, subscriptionClient } =
-    useAppContext();
+  const {
+    setSnackbarMessage,
+    setSelectedDefaultSite,
+    user,
+    env,
+    subscriptionClient,
+  } = useAppContext();
 
   const notify = (msgId: string, message: string, type: string | AlertColor) =>
     setSnackbarMessage({ id: msgId, message, type, show: true });
@@ -178,7 +189,8 @@ export function useSiteDetailPage(id: string) {
   );
 
   const getSectionName = useCallback(
-    (graphType: Graphs_Type): string => graphTypeToSection[graphType] || 'SOLAR',
+    (graphType: Graphs_Type): string =>
+      graphTypeToSection[graphType] || 'SOLAR',
     [],
   );
 
@@ -205,7 +217,10 @@ export function useSiteDetailPage(id: string) {
     }
 
     const topic = `stat-${SITE_KPI_TYPES.ACTIVE_SUBSCRIBERS}-${id}`;
-    subscribersSubscriptionRef.current = PubSub.subscribe(topic, handleSubscribersUpdate);
+    subscribersSubscriptionRef.current = PubSub.subscribe(
+      topic,
+      handleSubscribersUpdate,
+    );
 
     return () => {
       if (subscribersSubscriptionRef.current) {
@@ -238,7 +253,10 @@ export function useSiteDetailPage(id: string) {
 
   const handleViewChange = useCallback(
     (kpiType: string): void => {
-      setActiveView({ graphType: kpiToGraphType[kpiType] || Graphs_Type.Solar, kpi: kpiType as KPIType });
+      setActiveView({
+        graphType: kpiToGraphType[kpiType] || Graphs_Type.Solar,
+        kpi: kpiType as KPIType,
+      });
       resetMetrics();
     },
     [resetMetrics],
@@ -249,7 +267,9 @@ export function useSiteDetailPage(id: string) {
       const newStatus = !currentStatus;
       try {
         const result = await updateSwitchPort({
-          variables: { data: { port: portNumber, siteId: id, status: newStatus } },
+          variables: {
+            data: { port: portNumber, siteId: id, status: newStatus },
+          },
         });
         if (result.data?.toggleInternetSwitch?.success) {
           notify(
@@ -259,7 +279,11 @@ export function useSiteDetailPage(id: string) {
           );
         }
       } catch (err) {
-        notify('update-site-error', err instanceof Error ? err.message : 'Unknown error', 'error');
+        notify(
+          'update-site-error',
+          err instanceof Error ? err.message : 'Unknown error',
+          'error',
+        );
       }
     },
     [id, updateSwitchPort, setSnackbarMessage],
@@ -268,7 +292,8 @@ export function useSiteDetailPage(id: string) {
   const { data: siteData } = useGetSitesQuery({
     fetchPolicy: 'cache-and-network',
     variables: { data: {} },
-    onError: (err) => notify('fetching-sites-msg', err.message, 'error' as AlertColor),
+    onError: (err) =>
+      notify('fetching-sites-msg', err.message, 'error' as AlertColor),
   });
 
   const [fetchNodesForSite] = useGetNodesForSiteLazyQuery({
@@ -284,41 +309,43 @@ export function useSiteDetailPage(id: string) {
     },
   });
 
-  const [toggleRFStatus, { loading: toggleRFStatusLoading }] = useToggleRfStatusMutation({
-    fetchPolicy: 'network-only',
-    onCompleted: (_, ctx) => {
-      notify(
-        'toggle-rf-status-success-msg',
-        `RF status turned ${ctx?.variables?.data?.status ? 'On' : 'Off'} successfully.`,
-        'success',
-      );
-    },
-    onError: (_, ctx) => {
-      notify(
-        'toggle-rf-status-error-msg',
-        `Failed to turn RF status ${ctx?.variables?.data?.status ? 'On' : 'Off'}.`,
-        'error',
-      );
-    },
-  });
+  const [toggleRFStatus, { loading: toggleRFStatusLoading }] =
+    useToggleRfStatusMutation({
+      fetchPolicy: 'network-only',
+      onCompleted: (_, ctx) => {
+        notify(
+          'toggle-rf-status-success-msg',
+          `RF status turned ${ctx?.variables?.data?.status ? 'On' : 'Off'} successfully.`,
+          'success',
+        );
+      },
+      onError: (_, ctx) => {
+        notify(
+          'toggle-rf-status-error-msg',
+          `Failed to turn RF status ${ctx?.variables?.data?.status ? 'On' : 'Off'}.`,
+          'error',
+        );
+      },
+    });
 
-  const [toggleService, { loading: toggleServiceLoading }] = useToggleServiceMutation({
-    fetchPolicy: 'network-only',
-    onCompleted: (_, ctx) => {
-      notify(
-        'toggle-service-status-success-msg',
-        `Service status turned ${ctx?.variables?.data?.status ? 'On' : 'Off'} successfully.`,
-        'success',
-      );
-    },
-    onError: (_, ctx) => {
-      notify(
-        'toggle-service-status-error-msg',
-        `Failed to turn service status ${ctx?.variables?.data?.status ? 'On' : 'Off'}.`,
-        'error',
-      );
-    },
-  });
+  const [toggleService, { loading: toggleServiceLoading }] =
+    useToggleServiceMutation({
+      fetchPolicy: 'network-only',
+      onCompleted: (_, ctx) => {
+        notify(
+          'toggle-service-status-success-msg',
+          `Service status turned ${ctx?.variables?.data?.status ? 'On' : 'Off'} successfully.`,
+          'success',
+        );
+      },
+      onError: (_, ctx) => {
+        notify(
+          'toggle-service-status-error-msg',
+          `Failed to turn service status ${ctx?.variables?.data?.status ? 'On' : 'Off'}.`,
+          'error',
+        );
+      },
+    });
 
   const { loading: healthLoading } = useGetHealthReportQuery({
     variables: {
@@ -326,7 +353,8 @@ export function useSiteDetailPage(id: string) {
         id: '',
         timestamp: '',
         timeframe: Timeframe_Filter.Latest,
-        nodeId: nodes.find((node) => node.id.includes(NodeTypeEnum.Tnode))?.id || '',
+        nodeId:
+          nodes.find((node) => node.id.includes(NodeTypeEnum.Tnode))?.id || '',
       },
     },
     onCompleted: (data) => {
@@ -334,16 +362,25 @@ export function useSiteDetailPage(id: string) {
         const actions: TSiteActionToggle[] = [];
         data.getHealthReport.system.forEach((system) => {
           if (system.name === 'radio') {
-            actions.push({ id: NODE_ACTIONS_ENUM.TOGGLE_RADIO, key: 'radio', value: stringToBoolean(system.value) });
+            actions.push({
+              id: NODE_ACTIONS_ENUM.TOGGLE_RADIO,
+              key: 'radio',
+              value: stringToBoolean(system.value),
+            });
           }
           if (system.name === 'service') {
-            actions.push({ id: NODE_ACTIONS_ENUM.TOGGLE_SERVICE, key: 'service', value: stringToBoolean(system.value) });
+            actions.push({
+              id: NODE_ACTIONS_ENUM.TOGGLE_SERVICE,
+              key: 'service',
+              value: stringToBoolean(system.value),
+            });
           }
         });
         setSiteActionData(actions);
       }
     },
-    onError: (err) => notify('fetching-health-report-msg', err.message, 'error'),
+    onError: (err) =>
+      notify('fetching-health-report-msg', err.message, 'error'),
   });
 
   const checkDataReadiness = useCallback(() => {
@@ -381,14 +418,20 @@ export function useSiteDetailPage(id: string) {
     }
   }, [id, siteData, router]);
 
-  const handleSiteChange = useCallback((newSiteId: string) => {
-    router.push('/console/sites/' + newSiteId);
-  }, [router]);
+  const handleSiteChange = useCallback(
+    (newSiteId: string) => {
+      router.push('/console/sites/' + newSiteId);
+    },
+    [router],
+  );
 
   useEffect(() => {
     const handleFetchAddress = async () => {
       if (activeSite.latitude && activeSite.longitude) {
-        await fetchAddress(activeSite.latitude.toString(), activeSite.longitude.toString());
+        await fetchAddress(
+          activeSite.latitude.toString(),
+          activeSite.longitude.toString(),
+        );
       }
     };
     setSelectedDefaultSite(activeSite.name);
@@ -399,7 +442,11 @@ export function useSiteDetailPage(id: string) {
 
   useEffect(() => {
     if (addressError) {
-      notify('error-fetching-address', 'Error fetching address from coordinates', 'error');
+      notify(
+        'error-fetching-address',
+        'Error fetching address from coordinates',
+        'error',
+      );
     }
   }, [addressError]);
 
@@ -412,13 +459,18 @@ export function useSiteDetailPage(id: string) {
 
   const handleActionClick = useCallback(
     (actionId: string, value: boolean) => {
-      const tnodeId = nodes.find((node) => node.id.includes(NodeTypeEnum.Tnode))?.id ?? '';
+      const tnodeId =
+        nodes.find((node) => node.id.includes(NodeTypeEnum.Tnode))?.id ?? '';
       switch (actionId) {
         case NODE_ACTIONS_ENUM.TOGGLE_RADIO:
-          toggleRFStatus({ variables: { data: { nodeId: tnodeId, status: value } } });
+          toggleRFStatus({
+            variables: { data: { nodeId: tnodeId, status: value } },
+          });
           break;
         case NODE_ACTIONS_ENUM.TOGGLE_SERVICE:
-          toggleService({ variables: { data: { nodeId: tnodeId, status: value } } });
+          toggleService({
+            variables: { data: { nodeId: tnodeId, status: value } },
+          });
           break;
       }
       setSiteActionData((prev) =>
@@ -428,7 +480,9 @@ export function useSiteDetailPage(id: string) {
     [nodes, siteActionData, toggleRFStatus, toggleService],
   );
 
-  const siteMetrics = statData?.getSiteStat?.metrics as SiteMetric[] | undefined;
+  const siteMetrics = statData?.getSiteStat?.metrics as
+    | SiteMetric[]
+    | undefined;
   const initialNodeUptimes = getInitialNodeUptimesFromMetrics(siteMetrics);
   const siteUptime = getSiteUptimeFromMetrics(siteMetrics, activeSite.id);
 

@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2023-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 
 import { AddSiteValidationSchema } from '@/helpers/formValidators';
@@ -158,8 +158,20 @@ const ComponentSelectionStep: React.FC<ComponentSelectionStepProps> = ({
           justifyContent="flex-end"
           sx={{ mt: 1 }}
         >
-          <Button onClick={() => { handleReset(); onCancel(); }}>Cancel</Button>
-          <Button type="submit" variant="contained" color="primary" disabled={!isValid}>
+          <Button
+            onClick={() => {
+              handleReset();
+              onCancel();
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            disabled={!isValid}
+          >
             Next
           </Button>
         </Stack>

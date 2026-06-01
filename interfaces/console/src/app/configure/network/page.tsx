@@ -104,7 +104,7 @@ const Network = () => {
     },
   });
 
-  const handleAddNetwork = (values: any) => {
+  const handleAddNetwork = (values: AddNetworkForm) => {
     setLoading(true);
     addNetwork({
       variables: {
@@ -112,8 +112,8 @@ const Network = () => {
           isDefault: true,
           name: values.name,
           budget: values.budget,
-          networks: values.networks,
-          countries: values.countries,
+          networks: values.networks.map((n) => n.name),
+          countries: values.countries.map((c) => c.code),
         },
       },
     });

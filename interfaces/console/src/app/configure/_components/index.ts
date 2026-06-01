@@ -3,9 +3,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2023-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 
 export { default as ConfigureSiteDialog } from './ConfigureSiteDialog';
-export { default as InstallSiteLoading } from './InstallSiteLoading';
 export { default as DeviceModalView } from './DeviceModalView';
+export { default as InstallSiteLoading } from './InstallSiteLoading';

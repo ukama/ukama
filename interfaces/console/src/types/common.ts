@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2023-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 
 import {
@@ -12,6 +12,7 @@ import {
 } from '@/client/graphql/generated';
 import { EmotionCache } from '@emotion/react';
 import { AppProps } from 'next/app';
+import React from 'react';
 
 export type StatusType = 'uptime' | 'battery' | 'signal';
 
@@ -21,7 +22,7 @@ export interface StyleOutput {
 }
 
 export type MenuItemType = {
-  Icon?: any;
+  Icon?: React.ElementType | null;
   id: number;
   title: string;
   route: string;
@@ -65,7 +66,7 @@ export type StatsPeriodItemType = {
 
 export type HeaderMenuItemType = {
   id: string;
-  Icon: any;
+  Icon: React.ElementType;
   title: string;
 };
 
@@ -118,7 +119,7 @@ export type SettingsMenuTypes = {
 };
 
 export type ColumnsWithOptions = {
-  id: any;
+  id: string;
   label: string;
   minWidth?: number;
   align?: 'right';
@@ -301,6 +302,18 @@ export enum DurationType {
   Day = 1,
   Month = 30,
 }
+
+export type KpiConfig = {
+  id: string;
+  name: string;
+  unit: string;
+  show?: boolean;
+  format: string;
+  description: string;
+  threshold: { max: number; min: number; normal: number } | null;
+  tickInterval?: number;
+  tickPositions?: number[];
+};
 
 export type CreatePlanType = {
   id: string;

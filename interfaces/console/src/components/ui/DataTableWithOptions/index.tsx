@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+import React from 'react';
 import { ColumnsWithOptions, MenuItemType } from '@/types';
 import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
 import {
@@ -31,6 +32,7 @@ import {
   Invitation_Status,
   NetworkDto,
   NodeConnectivityEnum,
+  Role_Type,
 } from '@/client/graphql/generated';
 import colors from '@/theme/colors';
 import { getInvitationStatusColor, roleEnumToString } from '@/utils';
@@ -38,8 +40,8 @@ import EmptyView from '@/components/ui/EmptyView';
 import OptionsPopover from '@/components/ui/OptionsPopover';
 
 interface DataTableWithOptionsInterface {
-  icon?: any;
-  dataset: any;
+  icon?: React.ElementType;
+  dataset: Record<string, string | number | boolean | null | undefined>[];
   withStatusColumn?: boolean;
   isRowClickable?: boolean;
   emptyViewLabel?: string;
@@ -52,7 +54,7 @@ interface DataTableWithOptionsInterface {
 }
 
 type CellValueByTypeProps = {
-  row: any;
+  row: Record<string, string | number | boolean | null | undefined>;
   type: string;
   isRowClickable: boolean;
   withStatusColumn: boolean;
@@ -68,27 +70,30 @@ const CellValueByType = ({
   onMenuItemClick,
   withStatusColumn,
 }: CellValueByTypeProps) => {
+  const val = row[type];
+  const strVal = String(val ?? '');
+
   switch (type) {
     case 'id':
       return isRowClickable ? (
-        <Link href={`nodes/${row[type]}`} unselectable="on">
-          {row[type]}
+        <Link href={`nodes/${strVal}`} unselectable="on">
+          {strVal}
         </Link>
       ) : (
-        <Typography variant="body2">{row[type]}</Typography>
+        <Typography variant="body2">{strVal}</Typography>
       );
     case 'role':
       return (
         <Chip
-          label={roleEnumToString(row[type])}
+          label={roleEnumToString(strVal as Role_Type)}
           sx={{ color: 'white' }}
           color={'info'}
         />
       );
     case 'status':
       return getInvitationStatusColor(
-        row[type],
-        new Date(row['expireAt']) < new Date(),
+        strVal as Invitation_Status,
+        new Date(String(row['expireAt'] ?? '')) < new Date(),
       );
     case 'connectivity':
       return (
@@ -96,12 +101,12 @@ const CellValueByType = ({
           sx={{
             p: 1,
             backgroundColor:
-              row[type] === NodeConnectivityEnum.Online
+              strVal === NodeConnectivityEnum.Online
                 ? colors.primaryLight
                 : colors.dullRed,
             color: (theme) => theme.palette.text.primary,
           }}
-          label={row[type]}
+          label={strVal}
         />
       );
     case 'actions':
@@ -109,7 +114,7 @@ const CellValueByType = ({
         (withStatusColumn &&
           row['status'] === Invitation_Status.InviteAccepted) ||
         row['status'] === Invitation_Status.InviteDeclined ||
-        new Date(row['expireAt']) < new Date()
+        new Date(String(row['expireAt'] ?? '')) < new Date()
       ) {
         return <div>-</div>;
       } else
@@ -122,7 +127,7 @@ const CellValueByType = ({
         );
 
     default:
-      return <Typography variant="body2">{row[type]}</Typography>;
+      return <Typography variant="body2">{strVal}</Typography>;
   }
 };
 
@@ -139,10 +144,10 @@ const DataTableWithOptions = ({
   isRowClickable = true,
   withStatusColumn = false,
 }: DataTableWithOptionsInterface) => {
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedNetwork, setSelectedNetwork] = useState<any>();
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const [selectedNetwork, setSelectedNetwork] = useState<string | undefined>();
 
-  const handleOpenMenu = (event: any) => {
+  const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
 
@@ -228,7 +233,7 @@ const DataTableWithOptions = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {dataset?.map((row: any, id: number) => (
+              {dataset?.map((row, id: number) => (
                 <TableRow role="row" tabIndex={-1} key={`tr-${id}`}>
                   {columns.map((column: ColumnsWithOptions, index: number) => (
                     <TableCell
@@ -246,7 +251,7 @@ const DataTableWithOptions = ({
                         isRowClickable={isRowClickable}
                         withStatusColumn={withStatusColumn}
                         onMenuItemClick={(type: string) =>
-                          onMenuItemClick(row.id, type)
+                          onMenuItemClick(String(row.id ?? ''), type)
                         }
                       />
                     </TableCell>

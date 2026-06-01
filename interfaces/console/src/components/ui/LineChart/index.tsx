@@ -16,14 +16,13 @@ import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import GraphTitleWrapper from '@/components/ui/GraphTitleWrapper';
 import './linechart.css';
 
-const initDataFixes = (data: any) => {
-  return data.map((point: any) => {
+type ChartPoint = [number, number | null];
+
+const initDataFixes = (data: number[][]): ChartPoint[] => {
+  return data.map((point) => {
     // If the y-value is -1, it indicates missing or invalid data, so we nullify it.
-    let y = point[1];
-    if (point.length > 0 && y === -1) {
-      y = null;
-    }
-    return [point[0], y];
+    const y = point[1] === -1 ? null : (point[1] ?? null);
+    return [point[0], y] as ChartPoint;
   });
 };
 interface ChartProps {
@@ -43,7 +42,7 @@ const Chart = forwardRef<HighchartsReact.RefObject, ChartProps>(
 Chart.displayName = 'Chart';
 interface ILineChart {
   topic: string;
-  initData: any;
+  initData: number[][];
   title?: string;
   from: number;
   hasData?: boolean;
@@ -173,8 +172,8 @@ const LineChart = ({
             : undefined,
         labels: {
           y: 5,
-          formatter: function (v: any) {
-            return `${v.value}${yunit}`;
+          formatter: function (this: Highcharts.AxisLabelsFormatterContextObject) {
+            return `${this.value}${yunit}`;
           },
         },
 

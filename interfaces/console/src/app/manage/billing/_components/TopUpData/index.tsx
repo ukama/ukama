@@ -28,7 +28,7 @@ import {
   Typography,
   styled,
 } from '@mui/material';
-import { Field, FieldArray, Form, Formik, FormikErrors } from 'formik';
+import { Field, FieldArray, FieldProps, Form, Formik, FormikErrors } from 'formik';
 import React from 'react';
 import * as Yup from 'yup';
 
@@ -203,7 +203,7 @@ const TopUpData: React.FC<TopUpProps> = ({
               <Form>
                 <FormContainer>
                   <Field name="simIccid">
-                    {({ field, form }: any) => (
+                    {({ field, form }: FieldProps) => (
                       <Autocomplete
                         className="w-full"
                         options={sims}
@@ -255,7 +255,7 @@ const TopUpData: React.FC<TopUpProps> = ({
                                   DATA PLAN {index + 1}
                                 </InputLabel>
                                 <Field name={`plans.${index}.planId`}>
-                                  {({ field }: any) => (
+                                  {({ field }: FieldProps) => (
                                     <Select
                                       {...field}
                                       input={

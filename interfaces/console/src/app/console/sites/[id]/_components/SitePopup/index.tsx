@@ -24,12 +24,31 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 
+interface PlanSiteLocation {
+  id: string;
+  lat: string;
+  lng: string;
+  address?: string;
+}
+
+interface PlanSite {
+  id: string;
+  name: string;
+  height: number;
+  apOption: string;
+  solarUptime: number;
+  isSetlite: boolean;
+  location: PlanSiteLocation;
+  url?: string;
+  populationCovered?: number;
+}
+
 interface ISitePopup {
-  site: any;
+  site: PlanSite;
   coverageLoading: boolean;
-  handleAction: (a: any) => void;
+  handleAction: (a: PlanSite) => void;
   handleDeleteSite: (i: string) => void;
-  handleGenerateAction: (a: string, b: any) => void;
+  handleGenerateAction: (a: string, b: PlanSite) => void;
 }
 
 const SitePopup = ({
@@ -39,7 +58,7 @@ const SitePopup = ({
   handleDeleteSite,
   handleGenerateAction,
 }: ISitePopup) => {
-  const [data, setData] = useState<any>(site);
+  const [data, setData] = useState<PlanSite>(site);
   return (
     <Paper elevation={0} sx={{ boxShadow: 'none', cursor: 'default' }}>
       <Stack spacing={1.2}>

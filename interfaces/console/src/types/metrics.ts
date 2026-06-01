@@ -3,13 +3,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2023-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 
-import {
-  Node,
-  SiteDto as Site,
-} from '@/client/graphql/generated';
+import { Node, SiteDto as Site } from '@/client/graphql/generated';
 import {
   Graphs_Type,
   LatestMetricSubRes,

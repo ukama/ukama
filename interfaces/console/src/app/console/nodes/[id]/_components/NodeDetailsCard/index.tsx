@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+import { NodeTypeEnum } from '@/client/graphql/generated';
 import { NODE_IMAGES } from '@/constants';
 import { colors } from '@/theme';
 import { Chip, Link, Paper, Stack, Typography } from '@mui/material';
@@ -16,7 +17,7 @@ import LoadingWrapper from '@/components/ui/LoadingWrapper';
 interface INodeDetailsCard {
   loading: boolean;
   nodeTitle: string;
-  nodeType?: any;
+  nodeType?: NodeTypeEnum | string;
   isUpdateAvailable: boolean;
   handleUpdateNode: () => void;
   getNodeUpdateInfos: () => void;
