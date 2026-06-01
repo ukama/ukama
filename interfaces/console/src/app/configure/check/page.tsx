@@ -16,7 +16,7 @@ import {
   useGetNodesLazyQuery,
   useGetNodeStateLazyQuery,
 } from '@/client/graphql/generated';
-import InstallSiteLoading from '@/components/InstallSiteLoading';
+import InstallSiteLoading from '@/app/configure/_components/InstallSiteLoading';
 import {
   CHECK_SITE_FLOW,
   INSTALLATION_FLOW,

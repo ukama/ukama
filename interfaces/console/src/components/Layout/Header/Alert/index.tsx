@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { NotificationsRes } from '@/client/graphql/generated/subscriptions';
-import { Notifications } from '@/components/NotificationsUI';
+import { Notifications } from '@/features/notifications/NotificationsUI';
 import { IconStyle } from '@/styles/global';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import { Badge, IconButton, Popover } from '@mui/material';

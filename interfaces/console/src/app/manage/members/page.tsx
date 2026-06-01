@@ -16,10 +16,10 @@ import {
   useRemoveMemberMutation,
   useUpdateMemberMutation,
 } from '@/client/graphql/generated';
-import DataTableWithOptions from '@/components/DataTableWithOptions';
-import InviteMemberDialog from '@/components/InviteMemberDialog';
-import LoadingWrapper from '@/components/LoadingWrapper';
-import SimpleDataTable from '@/components/SimpleDataTable';
+import DataTableWithOptions from '@/components/ui/DataTableWithOptions';
+import InviteMemberDialog from '@/app/manage/members/_components/InviteMemberDialog';
+import LoadingWrapper from '@/components/ui/LoadingWrapper';
+import SimpleDataTable from '@/components/ui/SimpleDataTable';
 import {
   INVITATION_TABLE_COLUMN,
   MEMBER_TABLE_COLUMN,
@@ -49,7 +49,10 @@ const Page = () => {
   const { setSnackbarMessage } = useAppContext();
   const [search, setSearch] = useState<string>('');
   const [isInviteMember, setIsInviteMember] = useState<boolean>(false);
-  const [data, setData] = useState({ members: [], invites: [] });
+  const [data, setData] = useState<{
+    members: { name: string; email: string; role: string; userId: string; isDeactivated: boolean; memberSince?: string | null; id: string }[];
+    invites: { email: string; expireAt: string; id: string; name: string; role: string; link: string; userId: string; status: Invitation_Status }[];
+  }>({ members: [], invites: [] });
 
   const {
     data: membersData,
@@ -58,7 +61,7 @@ const Page = () => {
   } = useGetMembersQuery({
     fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
-      setData((prev: any) => ({
+      setData((prev) => ({
         ...prev,
         members: data?.getMembers.members ?? [],
       }));
@@ -108,7 +111,7 @@ const Page = () => {
   } = useGetInvitationsQuery({
     fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
-      setData((prev: any) => ({
+      setData((prev) => ({
         ...prev,
         invites:
           data?.getInvitations.invitations.filter(
@@ -177,17 +180,17 @@ const Page = () => {
           if (invite.name.toLowerCase().includes(s)) return invite;
         },
       );
-      setData((prev: any) => ({
+      setData((prev) => ({
         ...prev,
-        members: _members,
-        invitations: _invitations,
+        members: _members ?? prev.members,
+        invites: _invitations ?? prev.invites,
       }));
     } else if (
       data.members.length === 0 &&
       data.members.length !== membersData?.getMembers.members.length &&
       data.invites.length !== invitationsData?.getInvitations.invitations.length
     ) {
-      setData((prev: any) => ({
+      setData((prev) => ({
         ...prev,
         members: membersData?.getMembers.members ?? [],
         invites: invitationsData?.getInvitations.invitations ?? [],

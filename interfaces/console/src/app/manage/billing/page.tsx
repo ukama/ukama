@@ -8,7 +8,7 @@
 'use client';
 import React, { useState, useCallback } from 'react';
 import { Box, Grid } from '@mui/material';
-import LoadingWrapper from '@/components/LoadingWrapper';
+import LoadingWrapper from '@/components/ui/LoadingWrapper';
 import {
   useGetReportsQuery,
   useGetPaymentsQuery,
@@ -17,11 +17,11 @@ import {
   useGetGeneratedPdfReportLazyQuery,
 } from '@/client/graphql/generated';
 import { useAppContext } from '@/context';
-import StripePaymentDialog from '@/components/StripePaymentDialog';
-import CurrentBillCard from '@/components/CurrentBillCard';
-import BillingOwnerDetailsCard from '@/components/BillingOwnerDetailsCard';
-import OutStandingBillCard from '@/components/OutStandingBillCard';
-import BillingHistoryTable from '@/components/BillingHistory';
+import StripePaymentDialog from '@/app/manage/billing/_components/StripePaymentDialog';
+import CurrentBillCard from '@/app/manage/billing/_components/CurrentBillCard';
+import BillingOwnerDetailsCard from '@/app/manage/billing/_components/BillingOwnerDetailsCard';
+import OutStandingBillCard from '@/app/manage/billing/_components/OutStandingBillCard';
+import BillingHistoryTable from '@/app/manage/billing/_components/BillingHistory';
 import { base64ToBlob } from '@/utils';
 
 const BillingSettingsPage: React.FC = () => {

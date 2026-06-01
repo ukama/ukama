@@ -15,12 +15,12 @@ import {
   Stats_Type,
   useGetMetricsStatLazyQuery,
 } from '@/client/graphql/generated/subscriptions';
-import EmptyView from '@/components/EmptyView';
-import LoadingWrapper from '@/components/LoadingWrapper';
-import { SitesTree } from '@/components/NetworkMap/OverlayUI';
+import EmptyView from '@/components/ui/EmptyView';
+import LoadingWrapper from '@/components/ui/LoadingWrapper';
+import { SitesTree } from '@/app/console/home/_components/NetworkMap/OverlayUI';
 import { MONTH_FILTER, NODE_KPIS, TIME_FILTER } from '@/constants';
 import { useAppContext } from '@/context';
-import MetricStatSubscription from '@/lib/MetricStatSubscription';
+import MetricStatSubscription from '@/features/subscriptions/MetricStatSubscription';
 import { colors } from '@/theme';
 import { TMetricResDto } from '@/types';
 import { formatBytesToGB, getUnixTime, structureNodeSiteDate } from '@/utils';
@@ -32,7 +32,7 @@ import { AlertColor, Paper, Skeleton, Stack } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef } from 'react';
-const NetworkMap = dynamic(() => import('@/components/NetworkMap'), {
+const NetworkMap = dynamic(() => import('@/app/console/home/_components/NetworkMap'), {
   ssr: false,
   loading: () => (
     <Skeleton
@@ -45,7 +45,7 @@ const NetworkMap = dynamic(() => import('@/components/NetworkMap'), {
     />
   ),
 });
-const StatusCard = dynamic(() => import('@/components/StatusCard'), {
+const StatusCard = dynamic(() => import('@/components/ui/StatusCard'), {
   ssr: false,
   loading: () => (
     <Skeleton
@@ -181,7 +181,7 @@ export default function Page() {
     }
   }, [network.id, user.id, user.orgName, cleanupSubscription]);
 
-  const handleStatSubscription = (_: any, data: string) => {
+  const handleStatSubscription = (_: unknown, data: string) => {
     const parsedData: TMetricResDto = JSON.parse(data);
     const { value, type, success } = parsedData.data.getMetricStatSub;
     if (success && value.length === 2) {

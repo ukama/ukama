@@ -7,475 +7,47 @@
  */
 'use client';
 
-import {
-  NodeConnectivityEnum,
-  NodeStateEnum,
-  NodeTypeEnum,
-  SoftwareStatusEnum,
-  useGetAppsQuery,
-  useGetNodesQuery,
-  useRestartNodeMutation,
-  useSoftwareQuery,
-  useUpdateNodeMutation,
-  useUpdateSoftwareMutation,
-} from '@/client/graphql/generated';
-import {
-  Graphs_Type,
-  MetricsRes,
-  Stats_Type,
-  useGetMetricByTabLazyQuery,
-  useGetMetricsStatLazyQuery,
-} from '@/client/graphql/generated/subscriptions';
-import EditNode from '@/components/EditNode';
-import LoadingWrapper from '@/components/LoadingWrapper';
-import { NodeActionUI } from '@/components/NodeActionUI';
-import NodeNetworkTab from '@/components/NodeNetworkTab';
-import NodeOverviewTab from '@/components/NodeOverviewTab';
-import NodeRadioTab from '@/components/NodeRadioTab';
-import NodeResourcesTab from '@/components/NodeResourcesTab';
-import NodeSoftwareTab from '@/components/NodeSoftwareTab';
-import StatusBar from '@/components/StatusBar';
-import TabPanel from '@/components/TabPanel';
-import {
-  METRIC_RANGE_10800,
-  NODE_ACTIONS_BUTTONS,
-  NODE_ACTIONS_ENUM,
-  NODE_KPIS,
-  NodePageTabs,
-  STAT_STEP_29,
-} from '@/constants';
-import { useAppContext } from '@/context';
-import MetricStatSubscription from '@/lib/MetricStatSubscription';
+import { NodeConnectivityEnum, NodeTypeEnum } from '@/client/graphql/generated';
+import EditNode from '@/app/console/nodes/[id]/_components/EditNode';
+import { NodeActionUI } from '@/app/console/nodes/[id]/_components/NodeActionUI';
+import NodeNetworkTab from '@/app/console/nodes/[id]/_components/NodeNetworkTab';
+import NodeOverviewTab from '@/app/console/nodes/[id]/_components/NodeOverviewTab';
+import NodeRadioTab from '@/app/console/nodes/[id]/_components/NodeRadioTab';
+import NodeResourcesTab from '@/app/console/nodes/[id]/_components/NodeResourcesTab';
+import NodeSoftwareTab from '@/app/console/nodes/[id]/_components/NodeSoftwareTab';
+import { useNodeDetailPage } from '@/app/console/nodes/[id]/_hooks/useNodeDetailPage';
+import StatusBar from '@/app/console/_components/StatusBar';
+import LoadingWrapper from '@/components/ui/LoadingWrapper';
+import TabPanel from '@/components/ui/TabPanel';
+import { NodePageTabs } from '@/constants';
 import { colors } from '@/theme';
-import { TMetricResDto, TStatusBarObj } from '@/types';
-import {
-  getNodeActionDescriptionByProgress,
-  getNodeTabTypeByIndex,
-  getNodeTypeFromId,
-  getUnixTime,
-  nodeTypeEnumToString,
-} from '@/utils';
 import { Stack, Tab, Tabs } from '@mui/material';
-import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+
 interface INodePage {
-  params: {
-    id: string;
-  };
+  params: { id: string };
 }
 
 const Page: React.FC<INodePage> = ({ params }) => {
-  const { id } = params;
-  const nodeType = nodeTypeEnumToString(getNodeTypeFromId(id) as NodeTypeEnum);
-  const router = useRouter();
-  const [metricFrom, setMetricFrom] = useState<number>(0);
-  const [isEditNode, setIsEditNode] = useState<boolean>(false);
-  const [nodeAction, setNodeAction] = useState({
-    progress: 0,
-    currentAction: '',
-    actionInitiated: NODE_ACTIONS_ENUM.NODE_LOADING,
-  });
-  const [graphType, setGraphType] = useState<Graphs_Type>(
-    Graphs_Type.NodeHealth,
-  );
-  const [nodeUptime, setNodeUptime] = useState<number>(0);
-  const [selectedTab, setSelectedTab] = useState<number>(0);
-  const [metrics, setMetrics] = useState<MetricsRes>({ metrics: [] });
-  const { user, setSnackbarMessage, env, subscriptionClient } = useAppContext();
-  const subscriptionKeyRef = useRef<string | null>(null);
-  const subscriptionControllerRef = useRef<AbortController | null>(null);
-
-  const cleanupSubscription = useCallback(() => {
-    if (subscriptionKeyRef.current) {
-      PubSub.unsubscribe(subscriptionKeyRef.current);
-      subscriptionKeyRef.current = null;
-    }
-    if (subscriptionControllerRef.current) {
-      subscriptionControllerRef.current.abort();
-      subscriptionControllerRef.current = null;
-    }
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      cleanupSubscription();
-    };
-  }, [cleanupSubscription]);
-
-  const { data: nodesData, loading: nodesLoading } = useGetNodesQuery({
-    skip: !id,
-    fetchPolicy: 'network-only',
-    variables: {
-      data: {
-        state: NodeStateEnum.Configured,
-      },
-    },
-    onError: (err) => {
-      setSnackbarMessage({
-        id: 'node-msg',
-        message: err.message,
-        type: 'error',
-        show: true,
-      });
-    },
-  });
-
-  const currentNode = nodesData?.getNodes.nodes.find((n) => n.id === id);
-
-  const [updateNode, { loading: updateNodeLoading }] = useUpdateNodeMutation({
-    onCompleted: () => {
-      setSnackbarMessage({
-        id: 'update-node-success-msg',
-        message: 'Node updated successfully.',
-        type: 'success',
-        show: true,
-      });
-    },
-    onError: (err) => {
-      setSnackbarMessage({
-        id: 'update-node-err-msg',
-        message: err.message,
-        type: 'error',
-        show: true,
-      });
-    },
-    refetchQueries: ['GetNodes'],
-  });
-
-  const [restartNode] = useRestartNodeMutation({
-    fetchPolicy: 'network-only',
-    onCompleted: () => {
-      setNodeAction((prev) => ({
-        ...prev,
-        progress: prev.progress + 25,
-        currentAction: 'loading',
-      }));
-      setSnackbarMessage({
-        id: 'restart-node-success-msg',
-        message: 'Node restart initiated.',
-        type: 'success',
-        show: true,
-      });
-    },
-    onError: () => {
-      setNodeAction({
-        progress: 0,
-        currentAction: '',
-        actionInitiated: '',
-      });
-      setSnackbarMessage({
-        id: 'restart-node-err-msg',
-        message: "Couldn't restart node.",
-        type: 'error',
-        show: true,
-      });
-    },
-  });
-
-  const { loading: appsLoading } = useGetAppsQuery({
-    fetchPolicy: 'cache-and-network',
-  });
-
-  const {
-    loading: softwaresLoading,
-    data: softwaresData,
-    refetch: refetchSoftwares,
-  } = useSoftwareQuery({
-    fetchPolicy: 'network-only',
-    variables: {
-      data: {
-        name: '',
-        nodeId: id,
-        status: SoftwareStatusEnum.Unknown,
-      },
-    },
-  });
-
-  const [updateSoftware, { loading: updateSoftwareLoading }] =
-    useUpdateSoftwareMutation({
-      fetchPolicy: 'network-only',
-      onCompleted: () => {
-        refetchSoftwares();
-        setSnackbarMessage({
-          id: 'update-software-success-msg',
-          message: 'Software updated successfully.',
-          type: 'success',
-          show: true,
-        });
-      },
-      onError: (error) => {
-        setSnackbarMessage({
-          id: 'update-software-error-msg',
-          message: error.message,
-          type: 'error',
-          show: true,
-        });
-      },
-    });
-
-  const [
-    getNodeMetricByTab,
-    { loading: nodeMetricsLoading, variables: nodeMetricsVariables },
-  ] = useGetMetricByTabLazyQuery({
-    client: subscriptionClient,
-    fetchPolicy: 'network-only',
-    onCompleted: (data) => {
-      setMetrics(data.getMetricByTab);
-    },
-  });
-
-  const [
-    getMetricStat,
-    { data: statData, loading: statLoading, variables: statVar },
-  ] = useGetMetricsStatLazyQuery({
-    client: subscriptionClient,
-    fetchPolicy: 'network-only',
-    onCompleted: async (data) => {
-      if (data.getMetricsStat.metrics.length > 0) {
-        data.getMetricsStat.metrics.forEach((m) => {
-          if (m.type === NODE_KPIS.NODE_UPTIME[nodeType][0].id) {
-            setNodeUptime(m.value);
-          }
-        });
-
-        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.AllNode}-${statVar?.data.from ?? 0}`;
-        cleanupSubscription();
-        subscriptionKeyRef.current = sKey;
-
-        const controller = await MetricStatSubscription({
-          key: sKey,
-          nodeId: id,
-          userId: user.id,
-          url: env.METRIC_URL,
-          orgName: user.orgName,
-          type: Stats_Type.AllNode,
-          from: statVar?.data.from ?? 0,
-        });
-
-        subscriptionControllerRef.current = controller;
-        PubSub.subscribe(sKey, handleStatSubscription);
-      }
-    },
-  });
-
-  useEffect(() => {
-    if (currentNode?.status.connectivity === NodeConnectivityEnum.Online) {
-      setNodeAction({
-        progress: 0,
-        currentAction: '',
-        actionInitiated: '',
-      });
-    }
-  }, [currentNode]);
-
-  useEffect(() => {
-    const to = getUnixTime();
-    const from = to - STAT_STEP_29;
-    if (!id) {
-      setSnackbarMessage({
-        id: 'node-not-found-msg',
-        message: 'Node not found.',
-        type: 'error',
-        show: true,
-      });
-      router.back();
-    } else if (id) {
-      cleanupSubscription();
-
-      getMetricStat({
-        variables: {
-          data: {
-            to: to,
-            nodeId: id,
-            from: from,
-            userId: user.id,
-            step: STAT_STEP_29,
-            orgName: user.orgName,
-            withSubscription: true,
-            type: Stats_Type.AllNode,
-          },
-        },
-      });
-    }
-  }, [id, user.id, user.orgName, cleanupSubscription]);
-
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout | null = null;
-
-    if (
-      nodesData &&
-      nodesData?.getNodes.nodes.length > 0 &&
-      nodeAction.actionInitiated !== ''
-    ) {
-      const s = nodesData?.getNodes.nodes.find((n) => n.id === id);
-      if (s && s?.status.connectivity !== nodeAction.currentAction) {
-        if (nodeAction.actionInitiated === NODE_ACTIONS_ENUM.NODE_RESTART) {
-          switch (s.status.connectivity) {
-            case NodeConnectivityEnum.Offline:
-              setNodeAction((prev) => ({
-                ...prev,
-                progress: prev.progress + 25,
-                currentAction: s?.status.connectivity.toString() || '',
-              }));
-              return;
-            case NodeConnectivityEnum.Online:
-              setNodeAction((prev) => ({
-                ...prev,
-                progress: prev.progress + 25,
-                currentAction: s?.status.connectivity.toString() || '',
-              }));
-              break;
-          }
-
-          intervalId = setInterval(() => {
-            setNodeAction((prev) => {
-              const newProgress =
-                prev.progress === 100 ? 0 : prev.progress + 25;
-              return {
-                ...prev,
-                progress: newProgress,
-                currentAction:
-                  newProgress === 0 ? '' : s.status.connectivity.toString(),
-                actionInitiated: newProgress === 0 ? '' : prev.actionInitiated,
-              };
-            });
-          }, 5000);
-        }
-      }
-    }
-
-    return () => {
-      if (intervalId) {
-        setNodeAction({
-          progress: 0,
-          currentAction: '',
-          actionInitiated: '',
-        });
-        clearInterval(intervalId);
-      }
-    };
-  }, [nodesData]);
-
-  useEffect(() => {
-    if (metricFrom > 0 && nodeMetricsVariables?.data?.from !== metricFrom) {
-      getNodeMetricByTab({
-        variables: {
-          data: {
-            step: 30,
-            nodeId: id,
-            userId: user.id,
-            type: graphType,
-            from: metricFrom,
-            orgName: user.orgName,
-            withSubscription: false,
-            to: metricFrom + METRIC_RANGE_10800,
-          },
-        },
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    metricFrom,
-    nodeMetricsVariables?.data?.from,
-    getNodeMetricByTab,
-    graphType,
-  ]);
-
-  const handleStatSubscription = (_: any, data: string) => {
-    const parsedData: TMetricResDto = JSON.parse(data);
-    const { value, type, success } = parsedData.data.getMetricStatSub;
-    if (success) {
-      if (type === NODE_KPIS.NODE_UPTIME[nodeType][0].id) {
-        setNodeUptime(Math.floor(value[1]));
-      }
-      PubSub.publish(`stat-${type}`, value);
-    }
-  };
-
-  const handleNodeSelected = (obj: TStatusBarObj) => {
-    router.push(`/console/nodes/${obj.id}`);
-  };
-
-  const handleEditNode = (str: string) => {
-    setIsEditNode(false);
-    updateNode({
-      variables: {
-        data: {
-          id: currentNode?.id ?? '',
-          name: str,
-        },
-      },
-    });
-  };
-
-  const handleOverviewSectionChange = (type: Graphs_Type) => {
-    setGraphType(type);
-    setMetricFrom(() => getUnixTime() - METRIC_RANGE_10800);
-  };
-
-  const handleNetworkSectionChange = (type: Graphs_Type) => {
-    setGraphType(type);
-    setMetricFrom(() => getUnixTime() - METRIC_RANGE_10800);
-  };
-
-  const onTabSelected = (_: any, value: number) => {
-    setSelectedTab(value);
-    setGraphType(getNodeTabTypeByIndex(value));
-    setMetricFrom(() => getUnixTime() - METRIC_RANGE_10800);
-  };
-
-  const handleNodeActionClick = (action: string, _: boolean) => {
-    if (action === NODE_ACTIONS_ENUM.NODE_RESTART) {
-      setNodeAction({
-        progress: 0,
-        currentAction: NODE_ACTIONS_ENUM.NODE_RESTART,
-        actionInitiated: NODE_ACTIONS_ENUM.NODE_RESTART,
-      });
-      restartNode({
-        variables: {
-          data: {
-            nodeId: currentNode?.id ?? '',
-          },
-        },
-      });
-    }
-  };
-
-  const handleUpdateAvailable = (
-    name: string,
-    desiredVersion: string,
-    nodeId: string,
-  ) => {
-    updateSoftware({
-      variables: {
-        data: {
-          name: name,
-          nodeId: nodeId,
-          tag: desiredVersion,
-        },
-      },
-    });
-  };
+  const vm = useNodeDetailPage(params.id);
 
   return (
     <Stack width={'100%'} height={'100%'} mt={1} spacing={1}>
       <StatusBar
         type="split"
-        uptime={nodeUptime}
-        selected={currentNode}
-        handleEditClick={() => {
-          setIsEditNode(true);
-        }}
-        handleSelected={handleNodeSelected}
-        objs={nodesData?.getNodes.nodes ?? []}
-        actionOptions={NODE_ACTIONS_BUTTONS}
-        handleActionClick={handleNodeActionClick}
-        loading={nodesLoading || updateNodeLoading || statLoading}
+        uptime={vm.nodeUptime}
+        selected={vm.currentNode}
+        handleEditClick={vm.onOpenEditNode}
+        handleSelected={vm.handleNodeSelected}
+        objs={vm.nodesData?.getNodes.nodes ?? []}
+        actionOptions={vm.actionOptions}
+        handleActionClick={vm.handleNodeActionClick}
+        loading={vm.nodesLoading || vm.updateNodeLoading || vm.statLoading}
       />
-      {currentNode?.status.connectivity === NodeConnectivityEnum.Online &&
-      !nodeAction.actionInitiated ? (
+
+      {vm.currentNode?.status.connectivity === NodeConnectivityEnum.Online &&
+      !vm.nodeAction.actionInitiated ? (
         <div>
-          <Tabs value={selectedTab} onChange={onTabSelected} sx={{ pb: 2 }}>
+          <Tabs value={vm.selectedTab} onChange={vm.onTabSelected} sx={{ pb: 2 }}>
             {NodePageTabs.map(({ id, label, value }) => (
               <Tab
                 key={id}
@@ -483,12 +55,12 @@ const Page: React.FC<INodePage> = ({ params }) => {
                 id={`node-tab-${value}`}
                 sx={{
                   display:
-                    ((currentNode?.type === NodeTypeEnum.Cnode ||
-                      currentNode?.type === NodeTypeEnum.Hnode) &&
+                    ((vm.currentNode?.type === NodeTypeEnum.Cnode ||
+                      vm.currentNode?.type === NodeTypeEnum.Hnode) &&
                       label === 'Radio') ||
-                    ((currentNode?.type === NodeTypeEnum.Anode ||
-                      currentNode?.type === NodeTypeEnum.Cnode ||
-                      currentNode?.type === NodeTypeEnum.Hnode) &&
+                    ((vm.currentNode?.type === NodeTypeEnum.Anode ||
+                      vm.currentNode?.type === NodeTypeEnum.Cnode ||
+                      vm.currentNode?.type === NodeTypeEnum.Hnode) &&
                       label === 'Network')
                       ? 'none'
                       : 'block',
@@ -496,116 +68,95 @@ const Page: React.FC<INodePage> = ({ params }) => {
               />
             ))}
           </Tabs>
+
           <LoadingWrapper
             radius="small"
             width={'100%'}
-            isLoading={nodesLoading || updateNodeLoading}
-            cstyle={{
-              backgroundColor: false ? colors.white : 'transparent',
-            }}
+            isLoading={vm.nodesLoading || vm.updateNodeLoading}
+            cstyle={{ backgroundColor: false ? colors.white : 'transparent' }}
           >
-            <TabPanel id={'node-overview-tab'} value={selectedTab} index={0}>
+            <TabPanel id={'node-overview-tab'} value={vm.selectedTab} index={0}>
               <NodeOverviewTab
-                nodeId={id}
-                metrics={metrics}
+                nodeId={vm.id}
+                metrics={vm.metrics}
                 connectedUsers={'0'}
-                metricFrom={metricFrom}
-                statLoading={statLoading}
+                metricFrom={vm.metricFrom}
+                statLoading={vm.statLoading}
                 isUpdateAvailable={false}
                 onNodeSelected={() => {}}
                 handleUpdateNode={() => {}}
-                selectedNode={currentNode}
-                metricsLoading={nodeMetricsLoading}
+                selectedNode={vm.currentNode}
+                metricsLoading={vm.nodeMetricsLoading}
                 getNodeSoftwareUpdateInfos={() => {}}
-                handleOverviewSectionChange={handleOverviewSectionChange}
-                nodeMetricsStatData={
-                  statData?.getMetricsStat ?? { metrics: [] }
-                }
-              />
-            </TabPanel>
-            <TabPanel id={'node-network-tab'} value={selectedTab} index={1}>
-              <NodeNetworkTab
-                metrics={metrics}
-                metricFrom={metricFrom}
-                statLoading={statLoading}
-                selectedNode={currentNode}
-                loading={nodeMetricsLoading || statLoading}
-                handleSectionChange={handleNetworkSectionChange}
-                nodeMetricsStatData={
-                  statData?.getMetricsStat ?? { metrics: [] }
-                }
-              />
-            </TabPanel>
-            <TabPanel id={'node-resources-tab'} value={selectedTab} index={2}>
-              <NodeResourcesTab
-                metrics={metrics}
-                metricFrom={metricFrom}
-                statLoading={statLoading}
-                selectedNode={currentNode}
-                loading={nodeMetricsLoading || statLoading}
-                nodeMetricsStatData={
-                  statData?.getMetricsStat ?? { metrics: [] }
-                }
-              />
-            </TabPanel>
-            <TabPanel id={'node-radio-tab'} value={selectedTab} index={3}>
-              <NodeRadioTab
-                metrics={metrics}
-                metricFrom={metricFrom}
-                statLoading={statLoading}
-                selectedNode={currentNode}
-                loading={nodeMetricsLoading || statLoading}
-                nodeMetricsStatData={
-                  statData?.getMetricsStat ?? { metrics: [] }
-                }
+                handleOverviewSectionChange={vm.handleSectionChange}
+                nodeMetricsStatData={vm.statData?.getMetricsStat ?? { metrics: [] }}
               />
             </TabPanel>
 
-            <TabPanel id={'node-software-tab'} value={selectedTab} index={4}>
-              <NodeSoftwareTab
-                loading={
-                  softwaresLoading || updateSoftwareLoading || appsLoading
-                }
-                nodeApps={softwaresData?.getSoftwares.software ?? []}
-                handleUpdateAvailable={handleUpdateAvailable}
+            <TabPanel id={'node-network-tab'} value={vm.selectedTab} index={1}>
+              <NodeNetworkTab
+                metrics={vm.metrics}
+                metricFrom={vm.metricFrom}
+                statLoading={vm.statLoading}
+                selectedNode={vm.currentNode}
+                loading={vm.nodeMetricsLoading || vm.statLoading}
+                handleSectionChange={vm.handleSectionChange}
+                nodeMetricsStatData={vm.statData?.getMetricsStat ?? { metrics: [] }}
               />
             </TabPanel>
-            {/* <TabPanel id={'node-schematic-tab'} value={selectedTab} index={5}>
-          <NodeSchematicTab
-            getSearchValue={() => {}}
-            schematicsSpecsData={SPEC_DATA}
-            nodeTitle={selectedNode?.name ?? 'Node'}
-            loading={false}
-          />
-        </TabPanel> */}
+
+            <TabPanel id={'node-resources-tab'} value={vm.selectedTab} index={2}>
+              <NodeResourcesTab
+                metrics={vm.metrics}
+                metricFrom={vm.metricFrom}
+                statLoading={vm.statLoading}
+                selectedNode={vm.currentNode}
+                loading={vm.nodeMetricsLoading || vm.statLoading}
+                nodeMetricsStatData={vm.statData?.getMetricsStat ?? { metrics: [] }}
+              />
+            </TabPanel>
+
+            <TabPanel id={'node-radio-tab'} value={vm.selectedTab} index={3}>
+              <NodeRadioTab
+                metrics={vm.metrics}
+                metricFrom={vm.metricFrom}
+                statLoading={vm.statLoading}
+                selectedNode={vm.currentNode}
+                loading={vm.nodeMetricsLoading || vm.statLoading}
+                nodeMetricsStatData={vm.statData?.getMetricsStat ?? { metrics: [] }}
+              />
+            </TabPanel>
+
+            <TabPanel id={'node-software-tab'} value={vm.selectedTab} index={4}>
+              <NodeSoftwareTab
+                loading={vm.softwaresLoading || vm.updateSoftwareLoading || vm.appsLoading}
+                nodeApps={vm.softwaresData?.getSoftwares.software ?? []}
+                handleUpdateAvailable={vm.handleUpdateAvailable}
+              />
+            </TabPanel>
           </LoadingWrapper>
         </div>
       ) : (
         <NodeActionUI
-          value={nodeAction.progress}
-          nodeType={currentNode?.type}
-          action={nodeAction.actionInitiated || NODE_ACTIONS_ENUM.NODE_RESTART}
+          value={vm.nodeAction.progress}
+          nodeType={vm.currentNode?.type}
+          action={vm.nodeAction.actionInitiated || ''}
           connectivity={
-            (currentNode?.status?.connectivity as NodeConnectivityEnum) ||
-            undefined
+            (vm.currentNode?.status?.connectivity as NodeConnectivityEnum) || undefined
           }
-          description={getNodeActionDescriptionByProgress(
-            nodeAction.progress,
-            nodeAction.actionInitiated ||
-              currentNode?.status?.connectivity?.toString() ||
-              '',
-          )}
+          description={vm.nodeActionDescription}
         />
       )}
-      {isEditNode && (
+
+      {vm.isEditNode && (
         <EditNode
           title="Edit Node"
-          isOpen={isEditNode}
+          isOpen={vm.isEditNode}
           labelSuccessBtn="Save"
           labelNegativeBtn="Cancel"
-          nodeName={currentNode?.name ?? ''}
-          handleSuccessAction={handleEditNode}
-          handleCloseAction={() => setIsEditNode(false)}
+          nodeName={vm.currentNode?.name ?? ''}
+          handleSuccessAction={vm.handleEditNode}
+          handleCloseAction={vm.onCloseEditNode}
         />
       )}
     </Stack>
@@ -613,3 +164,4 @@ const Page: React.FC<INodePage> = ({ params }) => {
 };
 
 export default Page;
+

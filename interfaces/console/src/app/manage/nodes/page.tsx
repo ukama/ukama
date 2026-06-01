@@ -7,10 +7,10 @@
  */
 'use client';
 import { useGetNodesQuery, useGetSitesQuery } from '@/client/graphql/generated';
-import EmptyView from '@/components/EmptyView';
-import LoadingWrapper from '@/components/LoadingWrapper';
-import PageContainerHeader from '@/components/PageContainerHeader';
-import SimpleDataTable from '@/components/SimpleDataTable';
+import EmptyView from '@/components/ui/EmptyView';
+import LoadingWrapper from '@/components/ui/LoadingWrapper';
+import PageContainerHeader from '@/components/ui/PageContainerHeader';
+import SimpleDataTable from '@/components/ui/SimpleDataTable';
 import { MANAGE_NODE_POOL_COLUMN } from '@/constants';
 import { useAppContext } from '@/context';
 import { NodeEnumToString } from '@/utils';

@@ -13,11 +13,11 @@ import {
   useGetSimsFromPoolQuery,
   useUploadSimsMutation,
 } from '@/client/graphql/generated';
-import EmptyView from '@/components/EmptyView';
-import FileDropBoxDialog from '@/components/FileDropBoxDialog';
-import LoadingWrapper from '@/components/LoadingWrapper';
-import PageContainerHeader from '@/components/PageContainerHeader';
-import SimpleDataTable from '@/components/SimpleDataTable';
+import EmptyView from '@/components/ui/EmptyView';
+import FileDropBoxDialog from '@/app/manage/sims/_components/FileDropBoxDialog';
+import LoadingWrapper from '@/components/ui/LoadingWrapper';
+import PageContainerHeader from '@/components/ui/PageContainerHeader';
+import SimpleDataTable from '@/components/ui/SimpleDataTable';
 import { MANAGE_SIM_POOL_COLUMN } from '@/constants';
 import { useAppContext } from '@/context';
 import SimCardIcon from '@mui/icons-material/SimCard';
@@ -75,11 +75,11 @@ const Page = () => {
     },
   );
 
-  const handleUploadSimsAction = (action: string, value: string) => {
+  const handleUploadSimsAction = (action: 'success' | 'error', value: string | Error) => {
     if (action === 'error') {
       setSnackbarMessage({
         id: 'sim-pool-parsing-error',
-        message: value,
+        message: value instanceof Error ? value.message : String(value),
         type: 'error' as AlertColor,
         show: true,
       });
@@ -87,7 +87,7 @@ const Page = () => {
       uploadSimPool({
         variables: {
           data: {
-            data: value,
+            data: value as string,
             simType: env.SIM_TYPE as Sim_Types,
           },
         },
