@@ -13,12 +13,16 @@ import (
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/node/configurator/pkg"
+	cfgclient "github.com/ukama/ukama/systems/node/configurator/pkg/client"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/db"
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	pb "github.com/ukama/ukama/systems/node/configurator/pb/gen"
 	configstore "github.com/ukama/ukama/systems/node/configurator/pkg/configStore"
+	opmgrpb "github.com/ukama/ukama/systems/operation/manager/pb/gen"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type ConfiguratorServer struct {
@@ -30,9 +34,11 @@ type ConfiguratorServer struct {
 	configStore            configstore.ConfigStoreProvider
 	commitRepo             db.CommitRepo
 	configRepo             db.ConfigRepo
+	opManager              cfgclient.OperationManager
+	opLeaseSecs            uint32
 }
 
-func NewConfiguratorServer(msgBus mb.MsgBusServiceClient, cfgDb db.ConfigRepo, cmtDb db.CommitRepo, configStore configstore.ConfigStoreProvider, orgName string, debug bool) *ConfiguratorServer {
+func NewConfiguratorServer(msgBus mb.MsgBusServiceClient, cfgDb db.ConfigRepo, cmtDb db.CommitRepo, configStore configstore.ConfigStoreProvider, orgName string, debug bool, opMgr cfgclient.OperationManager, leaseSecs uint32) *ConfiguratorServer {
 
 	log.Infof("Config store created: %+v", configStore)
 	return &ConfiguratorServer{
@@ -43,6 +49,8 @@ func NewConfiguratorServer(msgBus mb.MsgBusServiceClient, cfgDb db.ConfigRepo, c
 		configStore:            configStore,
 		commitRepo:             cmtDb,
 		configRepo:             cfgDb,
+		opManager:              opMgr,
+		opLeaseSecs:            leaseSecs,
 	}
 }
 
@@ -57,11 +65,29 @@ func (c *ConfiguratorServer) ConfigEvent(ctx context.Context, req *pb.ConfigStor
 
 func (c *ConfiguratorServer) ApplyConfig(ctx context.Context, req *pb.ApplyConfigRequest) (*pb.ApplyConfigResponse, error) {
 	log.Infof("Received a request to apply config  %v", req)
-	err := c.configStore.HandleConfigCommitReq(ctx, req.Hash)
+
+	startResp, err := c.opManager.Start(&opmgrpb.StartOperationRequest{
+		Type:         "ApplyConfig",
+		System:       "node",
+		ResourceKey:  "config:apply",
+		RequestedBy:  pkg.ServiceName,
+		LeaseSeconds: c.opLeaseSecs,
+	})
 	if err != nil {
-		log.Errorf("Error while handling apply config req commit %s.Error: %s", req.Hash, err.Error())
+		log.Warnf("ApplyConfig lock acquire rejected: %v", err)
+		return nil, err
 	}
-	return &pb.ApplyConfigResponse{}, err
+	op := startResp.Operation
+	log.Infof("ApplyConfig acquired lock op=%s token=%d", op.Id, op.FencingToken)
+
+	if err := c.configStore.HandleConfigCommitReq(ctx, req.Hash); err != nil {
+		log.Errorf("Error while handling apply config req commit %s.Error: %s", req.Hash, err.Error())
+		return &pb.ApplyConfigResponse{}, status.Errorf(codes.Internal, "%v", err)
+	}
+	if _, err := c.opManager.MarkRunning(op.Id, op.FencingToken); err != nil {
+		log.Warnf("ApplyConfig mark running failed for op %s: %v", op.Id, err)
+	}
+	return &pb.ApplyConfigResponse{}, nil
 }
 
 func (c *ConfiguratorServer) GetConfigVersion(ctx context.Context, req *pb.ConfigVersionRequest) (*pb.ConfigVersionResponse, error) {

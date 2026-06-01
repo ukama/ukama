@@ -245,6 +245,8 @@ services:
    - STOREUSER=root
    - ACCESSTOKEN=${ACCESSTOKEN}
    - HTTP_INITCLIENT=http://api-gateway-init:8080
+   - OPERATION_MANAGERHOST=manager:9090
+   - OPERATION_LEASESECS=1800
   restart: always
   networks:
    - ukama-net

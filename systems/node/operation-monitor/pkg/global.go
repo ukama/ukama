@@ -29,7 +29,6 @@ var DefaultCompletionRule = map[string]string{
 	"ToggleRfSwitch":       "state=Operational",
 	"ToggleInternetSwitch": "state=Operational",
 	"ToggleNodeService":    "state=Operational",
-	"ApplyConfig":          "state=Operational",
 	"UpdateSoftware":       "state=Operational",
 }
 
