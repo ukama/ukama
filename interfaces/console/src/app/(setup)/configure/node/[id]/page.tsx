@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
+import { use } from 'react';
 import { useGetNetworksQuery } from '@/client/graphql/generated';
 import SiteMapComponent from '@/app/(main)/console/sites/[id]/_components/SiteMapComponent';
 import { LField } from '@/components/Welcome';
@@ -26,13 +27,13 @@ const BasicDropdown = dynamic(() => import('@/components/ui/BasicDropdown'), {
 });
 
 interface INodeConfigure {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
-  const { id } = params;
+  const { id } = use(params);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
