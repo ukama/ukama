@@ -33,6 +33,7 @@ export const PLANNING_TOOL_DB = process.env.PLANNING_TOOL_DB ?? "";
 export const AUTH_URL = process.env.AUTH_URL ?? "";
 export const STORAGE_KEY = process.env.STORAGE_KEY ?? "UKAMA_STORAGE_KEY";
 export const STRIP_SK = process.env.STRIP_SK ?? "";
+export const JWT_SECRET = process.env.JWT_SECRET ?? "change-me-in-production";
 
 // PORTS
 export const GATEWAY_PORT = parseInt(process.env.GATEWAY_PORT ?? "8080");

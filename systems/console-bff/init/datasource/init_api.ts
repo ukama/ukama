@@ -8,8 +8,10 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
 import { RootDatabase } from "lmdb";
 
+import jwt from "jsonwebtoken";
+
 import { whoami } from "../../common/auth/authCalls";
-import { INIT_API_GW, VERSION } from "../../common/configs";
+import { INIT_API_GW, JWT_SECRET, VERSION } from "../../common/configs";
 import COUNTRIES from "../../common/data/countries";
 import { ROLE_TYPE } from "../../common/enums";
 import { logger } from "../../common/logger";
@@ -136,10 +138,23 @@ class InitAPI extends RESTDataSource {
         }
       }
     }
-    const cookie = `${orgId};${orgName};${userId};${name};${email};${role};${
-      whoamiRes?.data?.identity?.verifiable_addresses[0]?.verified || false
-    };${isWelcomeEligible};${country};${currency}`;
-    const base64Cookie = Buffer.from(cookie).toString("base64");
+    const jwtToken = jwt.sign(
+      {
+        orgId,
+        orgName,
+        userId,
+        name,
+        email,
+        role,
+        isEmailVerified:
+          whoamiRes?.data?.identity?.verifiable_addresses[0]?.verified || false,
+        isShowWelcome: isWelcomeEligible,
+        country,
+        currency,
+      },
+      JWT_SECRET,
+      { expiresIn: "24h" }
+    );
 
     return {
       orgId,
@@ -149,7 +164,7 @@ class InitAPI extends RESTDataSource {
       email: email,
       userId: userId,
       currency: currency,
-      token: base64Cookie,
+      token: jwtToken,
       country: COUNTRIES.find(c => c.code === country)?.name || country,
       isEmailVerified:
         whoamiRes?.data?.identity?.verifiable_addresses[0]?.verified || false,

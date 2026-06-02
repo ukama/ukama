@@ -7,11 +7,12 @@
  */
 import { exec } from "child_process";
 import { readFile } from "fs";
+import jwt from "jsonwebtoken";
 import { RootDatabase } from "lmdb";
 
 import InitAPI from "../../init/datasource/init_api";
 import { MetricRes, MetricsRes } from "../../subscriptions/resolvers/types";
-import { SUB_GRAPHS } from "../configs";
+import { JWT_SECRET, SUB_GRAPHS } from "../configs";
 import {
   GRAPHS_TYPE,
   NODE_TYPE,
@@ -67,26 +68,19 @@ const parseHeaders = (reqHeader: any): THeaders => {
 };
 
 const parseToken = (token: string, get: "orgId" | "orgName" | "userId") => {
-  const headers: THeaders = {
-    auth: {
-      Authorization: "",
-      Cookie: "",
-    },
-    token: "",
-    orgId: "",
-    userId: "",
-    orgName: "",
-  };
-
-  if (token) {
-    const decoded = Buffer.from(token, "base64").toString("utf-8");
-    const headersStr = decoded.split(";");
-    if (headersStr.length < 3) throw new HTTP401Error(Messages.HEADER_ERR_AUTH);
-    headers.orgId = headersStr[0];
-    headers.orgName = headersStr[1];
-    headers.userId = headersStr[2];
-    headers.token = token;
+  if (!token) return undefined;
+  try {
+    const payload = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload;
+    const headers: THeaders = {
+      auth: { Authorization: "", Cookie: "" },
+      token,
+      orgId: payload.orgId ?? "",
+      userId: payload.userId ?? "",
+      orgName: payload.orgName ?? "",
+    };
     return headers[get];
+  } catch {
+    throw new HTTP401Error(Messages.HEADER_ERR_AUTH);
   }
 };
 

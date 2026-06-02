@@ -56,6 +56,9 @@ importers:
       highcharts-react-official:
         specifier: ^3.2.3
         version: 3.2.3(highcharts@12.2.0)(react@19.2.7)
+      jose:
+        specifier: ^6.2.3
+        version: 6.2.3
       leaflet:
         specifier: ^1.9.4
         version: 1.9.4
@@ -2542,6 +2545,9 @@ packages:
   jiti@2.4.2:
     resolution: {integrity: sha512-rg9zJN+G4n2nfJl5MW3BMygZX56zKPNVEYYqq7adpmMh4Jn2QNEwhvQlFy6jPVdcod7txZtKHWnyZiA3a0zP7A==}
     hasBin: true
+
+  jose@6.2.3:
+    resolution: {integrity: sha512-YYVDInQKFJfR/xa3ojUTl8c2KoTwiL1R5Wg9YCydwH0x0B9grbzlg5HC7mMjCtUJjbQ/YnGEZIhI5tCgfTb4Hw==}
 
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
@@ -6228,6 +6234,8 @@ snapshots:
       set-function-name: 2.0.2
 
   jiti@2.4.2: {}
+
+  jose@6.2.3: {}
 
   js-tokens@4.0.0: {}
 
