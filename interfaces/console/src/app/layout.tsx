@@ -10,15 +10,16 @@ import AppContextWrapper from '@/context';
 import '@/styles/global.css';
 import AppThemeProvider from '@/theme/AppThemeProvider';
 import { ApolloWrapper } from '@/wrappers/apolloWrapper';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { cookies, headers } from 'next/headers';
+import { WebVitals } from './_components/WebVitals';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'Ukama Console',
-  description: 'Ukama Conosle app to manage your network',
+  description: 'Ukama Console — manage your private cellular network',
   icons: {
     icon: [
       {
@@ -26,6 +27,12 @@ export const metadata: Metadata = {
       },
     ],
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#2190F6',
 };
 
 export default function RootLayout({
@@ -57,6 +64,7 @@ export default function RootLayout({
         <link rel="icon" type="image/svg+xml" href="/ulogo.svg" />
       </head>
       <body className={inter.className}>
+        <WebVitals />
         <ApolloWrapper baseUrl={process.env.NEXT_PUBLIC_API_GW ?? ''}>
           <AppContextWrapper
             token={tokenStr.value}
