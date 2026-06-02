@@ -6,7 +6,9 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-export const Logo = (props: any) => (
+import { SVGType } from '@/types';
+
+export const Logo = (props: SVGType & { [key: string]: unknown }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     fill="none"

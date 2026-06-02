@@ -152,6 +152,7 @@ export function useNodeDetailPage(id: string) {
   // Reset nodeAction when node comes back online
   useEffect(() => {
     if (currentNode?.status.connectivity === NodeConnectivityEnum.Online) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setNodeAction({
         progress: 0,
         currentAction: '',
@@ -201,6 +202,7 @@ export function useNodeDetailPage(id: string) {
         if (nodeAction.actionInitiated === NODE_ACTIONS_ENUM.NODE_RESTART) {
           switch (s.status.connectivity) {
             case NodeConnectivityEnum.Offline:
+              // eslint-disable-next-line react-hooks/set-state-in-effect
               setNodeAction((prev) => ({
                 ...prev,
                 progress: prev.progress + 25,
@@ -208,6 +210,7 @@ export function useNodeDetailPage(id: string) {
               }));
               return;
             case NodeConnectivityEnum.Online:
+               
               setNodeAction((prev) => ({
                 ...prev,
                 progress: prev.progress + 25,

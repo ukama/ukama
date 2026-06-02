@@ -8,7 +8,7 @@
 
 import { SVGType } from '@/types';
 
-export const Forbidden = ({ width = '48', height = '48' }: SVGType) => (
+export const Forbidden = ({ width: _width = '48', height: _height = '48' }: SVGType) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
     <g id="freepik--background-complete--inject-346">
       <rect

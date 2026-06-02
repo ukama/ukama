@@ -99,9 +99,10 @@ const CustomMarker = ({
   const [markers, setMarkers] = useState<IMarker[]>([]);
   const [polylines, setPolylines] = useState<Polyline[]>();
 
-  const memoizedHandleLinkClick = useCallback(handleLinkClick, [
-    handleLinkClick,
-  ]);
+  const memoizedHandleLinkClick = useCallback(
+    (id: string) => handleLinkClick(id),
+    [handleLinkClick],
+  );
 
   useEffect(() => {
     if (!map) return;
@@ -150,6 +151,7 @@ const CustomMarker = ({
         .addTo(map);
       layers.push(p);
     });
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPolylines(layers);
 
     const m: IMarker[] = [];

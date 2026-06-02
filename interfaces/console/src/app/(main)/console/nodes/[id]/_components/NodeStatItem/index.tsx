@@ -105,6 +105,7 @@ const NodeStatItem = ({
   const [v, setV] = useState<string>('');
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setV(String(format ? formatKPIValue(value, format) : value));
   }, [value, format]);
 

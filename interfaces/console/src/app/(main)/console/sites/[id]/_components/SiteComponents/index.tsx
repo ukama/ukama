@@ -63,6 +63,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
   const [nodeUptimes, setNodeUptimes] = useState<Record<string, number>>({});
   useEffect(() => {
     if (initialNodeUptimes && Object.keys(initialNodeUptimes).length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setNodeUptimes(initialNodeUptimes);
     }
   }, [initialNodeUptimes]);
@@ -156,6 +157,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
       });
 
       if (Object.keys(newSwitchStatus).length > 0) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLocalSwitchStatus((prev) => ({
           ...prev,
           ...newSwitchStatus,

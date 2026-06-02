@@ -114,6 +114,7 @@ export default function Page() {
 
   useEffect(() => {
     if (sitesData?.getSites?.sites) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSitesList(sitesData.getSites.sites);
     }
   }, [sitesData]);
@@ -121,7 +122,9 @@ export default function Page() {
   useEffect(() => {
     if (!network.id) return;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSitesList([]);
+     
     setUnassignedNodes([]);
     cleanupSubscriptions();
 

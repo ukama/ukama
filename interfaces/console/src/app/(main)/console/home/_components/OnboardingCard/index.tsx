@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -32,13 +32,9 @@ const OnboardingCard: React.FC<OnboardingCardProps> = ({
   onStepClick,
   status,
 }) => {
-  const [activeStep, setActiveStep] = useState(0);
-
-  useEffect(() => {
+  const activeStep = useMemo(() => {
     const nextIncompleteStep = status.findIndex((stepStatus) => !stepStatus);
-    setActiveStep(
-      nextIncompleteStep === -1 ? status.length : nextIncompleteStep,
-    );
+    return nextIncompleteStep === -1 ? status.length : nextIncompleteStep;
   }, [status]);
 
   const handleStepClick = (step: number) => {

@@ -53,6 +53,7 @@ const FileDropBoxDialog = ({
 
   useEffect(() => {
     if (acceptedFiles.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFile(acceptedFiles[0]);
     }
   }, [acceptedFiles]);

@@ -204,6 +204,7 @@ const SiteConfigure = ({ params }: IPage) => {
   }, [formik.values]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (addSiteLoading) setLoading(true);
   }, [addSiteLoading]);
 

@@ -97,6 +97,7 @@ const ToggleButtonsMenu = ({
         open={open}
         role={undefined}
         placement="bottom-end"
+        // eslint-disable-next-line react-hooks/refs
         anchorEl={anchorRef.current}
         sx={{
           zIndex: 1000,
