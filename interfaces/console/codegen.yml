@@ -5,7 +5,7 @@ schema:
         introspection: 'true'
 documents: './src/client/graphql/index.graphql'
 generates:
-  ./schema-types.ts:
+  ./src/client/graphql/generated/schema-types.ts:
     plugins:
       - 'typescript'
   ./src/client/graphql/generated/operations.ts:

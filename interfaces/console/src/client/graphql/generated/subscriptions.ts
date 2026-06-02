@@ -1,2 +1,2 @@
-export * from '../../../../subscription-schema-types';
+export * from './subscription-schema-types';
 export * from './subscriptions-operations';
