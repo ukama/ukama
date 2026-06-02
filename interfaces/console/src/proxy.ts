@@ -61,7 +61,7 @@ const setCachedToken = (rawToken: string, decoded: User): void => {
 };
 
 const whoami = async (session: string) => {
-  return await fetch(`${process.env.NEXT_PUBLIC_API_GW_4SS}/get-user`, {
+  return await fetch(`${process.env.API_GW_4SS}/get-user`, {
     method: 'GET',
     cache: 'no-store',
     credentials: 'include',

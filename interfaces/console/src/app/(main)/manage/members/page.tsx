@@ -42,29 +42,19 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 const Page = () => {
   const [tabIndex, setTabIndex] = useState(0);
   const { setSnackbarMessage } = useUIContext();
   const [search, setSearch] = useState<string>('');
   const [isInviteMember, setIsInviteMember] = useState<boolean>(false);
-  const [data, setData] = useState<{
-    members: { name: string; email: string; role: string; userId: string; isDeactivated: boolean; memberSince?: string | null; id: string }[];
-    invites: { email: string; expireAt: string; id: string; name: string; role: string; link: string; userId: string; status: Invitation_Status }[];
-  }>({ members: [], invites: [] });
 
   const {
     data: membersData,
     loading: membersLoading,
   } = useGetMembersQuery({
     fetchPolicy: 'cache-and-network',
-    onCompleted: (data) => {
-      setData((prev) => ({
-        ...prev,
-        members: data?.getMembers.members ?? [],
-      }));
-    },
     onError: (error) => {
       setSnackbarMessage({
         id: 'org-members',
@@ -129,15 +119,6 @@ const Page = () => {
     loading: invitationsLoading,
   } = useGetInvitationsQuery({
     fetchPolicy: 'cache-and-network',
-    onCompleted: (data) => {
-      setData((prev) => ({
-        ...prev,
-        invites:
-          data?.getInvitations.invitations.filter(
-            (i) => i.status != Invitation_Status.InviteAccepted,
-          ) ?? [],
-      }));
-    },
     onError: (error) => {
       setSnackbarMessage({
         id: 'invitations',
@@ -218,36 +199,17 @@ const Page = () => {
       },
     });
 
-  useEffect(() => {
-    if (data.members.length > 2) {
-      const _members = membersData?.getMembers.members.filter((member) => {
-        const s = search.toLowerCase();
-        if (member.name.toLowerCase().includes(s)) return member;
-      });
-      const _invitations = invitationsData?.getInvitations.invitations.filter(
-        (invite) => {
-          const s = search.toLowerCase();
-          if (invite.name.toLowerCase().includes(s)) return invite;
-        },
-      );
-      setData((prev) => ({
-        ...prev,
-        members: _members ?? prev.members,
-        invites: _invitations ?? prev.invites,
-      }));
-    } else if (
-      data.members.length === 0 &&
-      data.members.length !== membersData?.getMembers.members.length &&
-      data.invites.length !== invitationsData?.getInvitations.invitations.length
-    ) {
-      setData((prev) => ({
-        ...prev,
-        members: membersData?.getMembers.members ?? [],
-        invites: invitationsData?.getInvitations.invitations ?? [],
-      }));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search]);
+  const data = useMemo(() => {
+    const s = search.toLowerCase();
+    const allMembers = membersData?.getMembers.members ?? [];
+    const allInvites = (invitationsData?.getInvitations.invitations ?? []).filter(
+      (i) => i.status !== Invitation_Status.InviteAccepted,
+    );
+    return {
+      members: s ? allMembers.filter((m) => m.name.toLowerCase().includes(s)) : allMembers,
+      invites: s ? allInvites.filter((i) => i.name.toLowerCase().includes(s)) : allInvites,
+    };
+  }, [search, membersData, invitationsData]);
 
   const handleAddMemberAction = (member: TObject) => {
     sendInvitation({
