@@ -234,7 +234,7 @@ const DataTableWithOptions = ({
             </TableHead>
             <TableBody>
               {dataset?.map((row, id: number) => (
-                <TableRow role="row" tabIndex={-1} key={`tr-${id}`}>
+                <TableRow role="row" tabIndex={isRowClickable ? 0 : undefined} key={`tr-${id}`}>
                   {columns.map((column: ColumnsWithOptions, index: number) => (
                     <TableCell
                       key={`cell-${index}`}

@@ -69,7 +69,25 @@ export const EnvContextProvider: React.FC<EnvContextProviderProps> = ({
   const initialMetaInfo = useMemo(() => {
     if (typeof window === 'undefined') return defaultMetaInfo;
     const storedInfo = localStorage.getItem('metaInfo');
-    return storedInfo ? (JSON.parse(storedInfo) as MetaInfo) : defaultMetaInfo;
+    if (!storedInfo) return defaultMetaInfo;
+    try {
+      const parsed = JSON.parse(storedInfo);
+      // Validate required shape — stale/schema-drifted values fall back to default
+      if (
+        parsed &&
+        typeof parsed === 'object' &&
+        typeof parsed.ip === 'string' &&
+        typeof parsed.lat === 'number' &&
+        typeof parsed.lng === 'number' &&
+        typeof parsed.country_code === 'string'
+      ) {
+        return { ...defaultMetaInfo, ...parsed } as MetaInfo;
+      }
+    } catch {
+      // corrupted entry — clear it so it doesn't keep failing
+      localStorage.removeItem('metaInfo');
+    }
+    return defaultMetaInfo;
   }, []);
 
   const [env, setEnv] = useState<TEnv>(initEnv);

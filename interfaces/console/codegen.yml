@@ -1,8 +1,7 @@
 overwrite: true
 schema:
-  - 'http://localhost:8080/graphql':
-      headers:
-        introspection: 'true'
+  # Use local SDL snapshot for CI reliability. Run `pnpm codegen:introspect` to refresh from server.
+  - './schema.graphql'
 documents: './src/client/graphql/index.graphql'
 generates:
   ./src/client/graphql/generated/index.ts:
@@ -12,3 +11,4 @@ generates:
       - 'typescript-react-apollo'
     config:
       withHooks: true
+      addTypename: true

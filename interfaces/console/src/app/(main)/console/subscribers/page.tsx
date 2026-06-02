@@ -135,7 +135,7 @@ const Page = () => {
             icon={SubscriberIcon}
             isRowClickable={false}
             columns={SUBSCRIBER_TABLE_COLUMNS}
-            dataset={vm.buildTableRows(vm.subscriber)}
+            dataset={vm.tableRows}
             menuOptions={SUBSCRIBER_TABLE_MENU}
             onMenuItemClick={vm.handleTableMenuAction}
             emptyViewLabel={'No subscribers yet!'}

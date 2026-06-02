@@ -54,7 +54,7 @@ export function useSiteActions({
   const { setSnackbarMessage } = useUIContext();
 
   const notify = useCallback(
-    (msgId: string, message: string, type: string) =>
+    (msgId: string, message: string, type: 'success' | 'error' | 'warning' | 'info') =>
       setSnackbarMessage({ id: msgId, message, type, show: true }),
     [setSnackbarMessage],
   );

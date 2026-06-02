@@ -38,7 +38,7 @@ const Alerts = ({ notifications, handleAction }: IAlertsProps) => {
 
   return (
     <>
-      <IconButton sx={{ ...IconStyle }} onClick={handleClick}>
+      <IconButton aria-label="Notifications" sx={{ ...IconStyle }} onClick={handleClick}>
         <Badge badgeContent={unreadCount} color="secondary">
           <NotificationsIcon />
         </Badge>

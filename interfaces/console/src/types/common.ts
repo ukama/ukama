@@ -9,6 +9,7 @@
 import {
   Notification_Scope,
   Notification_Type,
+  Role_Type,
 } from '@/client/graphql/generated';
 import { EmotionCache } from '@emotion/react';
 import { AppProps } from 'next/app';
@@ -161,12 +162,8 @@ export type Record = {
   [key: string]: string;
 };
 
-export type TSnackMessage = {
-  id: string;
-  message: string;
-  type: string;
-  show: boolean;
-};
+/** @deprecated Use TSnackbarMessage instead */
+export type TSnackMessage = TSnackbarMessage;
 
 export interface MyAppProps extends AppProps {
   emotionCache?: EmotionCache;
@@ -224,7 +221,7 @@ export type TUser = {
   id: string;
   name: string;
   email: string;
-  role: string;
+  role: Role_Type | string;
   orgId: string;
   orgName: string;
   country: string;
@@ -234,7 +231,7 @@ export type TUser = {
 export type TSnackbarMessage = {
   id: string;
   message: string;
-  type: string;
+  type: 'success' | 'error' | 'warning' | 'info';
   show: boolean;
 };
 

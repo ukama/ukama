@@ -414,6 +414,7 @@ export function useSubscribersPage() {
     addPackagesToSimLoading,
     subscriberCount: data?.getSubscribersByNetwork.subscribers.length ?? 0,
     buildTableRows,
+    tableRows: buildTableRows(subscriber),
     handleAddSubscriberModal: () => {
       setOpenAddSubscriber(true);
       refetchSims();

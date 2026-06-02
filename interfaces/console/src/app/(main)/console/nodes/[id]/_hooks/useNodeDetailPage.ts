@@ -59,7 +59,7 @@ export function useNodeDetailPage(id: string) {
   const subscriptionKeyRef = useRef<string | null>(null);
   const subscriptionControllerRef = useRef<{ cancel: () => void } | null>(null);
 
-  const notify = (msgId: string, message: string, type: string) =>
+  const notify = (msgId: string, message: string, type: 'success' | 'error' | 'warning' | 'info') =>
     setSnackbarMessage({ id: msgId, message, type, show: true });
 
   const cleanupSubscription = useCallback(() => {

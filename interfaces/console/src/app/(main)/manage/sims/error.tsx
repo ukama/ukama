@@ -6,6 +6,7 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 'use client';
+import { logger } from '@/lib/logger';
 
 import { useEffect } from 'react';
 import { Button, Stack, Typography } from '@mui/material';
@@ -17,7 +18,7 @@ interface ErrorProps {
 
 export default function Error({ error, reset }: ErrorProps) {
   useEffect(() => {
-    console.error(error);
+    logger.error('Route error', error);
   }, [error]);
 
   return (

@@ -15,9 +15,8 @@ import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
 import { useEffect } from 'react';
 import * as ReactLeaflet from 'react-leaflet';
+import { MapContainer, ZoomControl } from 'react-leaflet';
 import { MapLayer } from './MapLayer';
-
-const { MapContainer } = ReactLeaflet;
 
 const ICON = {
   iconUrl: markerIcon.src,
@@ -56,7 +55,7 @@ const NetworkMap = ({ id, zoom, markersData, children }: IMap) => {
       className={`${mapClassName} ${mapContainer}`}
     >
       {children(ReactLeaflet, Leaflet)}
-      <ReactLeaflet.ZoomControl position="bottomright" />
+      <ZoomControl position="bottomright" />
       <MapLayer
         data={{
           nodes:
