@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
+import { jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { Role_Type } from './client/graphql/generated';
@@ -101,58 +102,41 @@ function isValidRole(role: string) {
   );
 }
 
-function decodeBase64Token(token: string): string {
-  return Buffer.from(token, 'base64').toString('utf8');
-}
+const getJwtSecret = (): Uint8Array => {
+  const secret = process.env.JWT_SECRET ?? 'change-me-in-production';
+  return new TextEncoder().encode(secret);
+};
 
-function getUserFromToken(token: string): User {
+async function getUserFromToken(token: string): Promise<User> {
   const cached = getCachedToken(token);
   if (cached) return cached;
 
   try {
-    const parseToken = decodeBase64Token(token);
-    const parts = parseToken.split(';');
-
-    if (parts.length < 10) {
-      return USER_INIT;
-    }
-
-    const [
-      orgId,
-      orgName,
-      id,
-      name,
-      email,
-      role,
-      isEmailVerified,
-      isShowWelcome,
-      country,
-      currency,
-    ] = parts;
+    const { payload } = await jwtVerify(token, getJwtSecret());
     const decoded: User = {
-      id,
-      role,
-      name,
-      email,
-      orgId,
+      id: (payload.userId as string) ?? '',
+      role: (payload.role as string) ?? '',
+      name: (payload.name as string) ?? '',
+      email: (payload.email as string) ?? '',
+      orgId: (payload.orgId as string) ?? '',
       token,
-      orgName,
-      country,
-      currency,
-      isShowWelcome: isShowWelcome.includes('true'),
-      isEmailVerified: isEmailVerified.includes('true'),
+      orgName: (payload.orgName as string) ?? '',
+      country: (payload.country as string) ?? '',
+      currency: (payload.currency as string) ?? '',
+      isShowWelcome: Boolean(payload.isShowWelcome),
+      isEmailVerified: Boolean(payload.isEmailVerified),
     };
     setCachedToken(token, decoded);
     return decoded;
   } catch (error) {
-    console.error('Error getting user from token:', error);
+    console.error('JWT verification failed:', error);
     return USER_INIT;
   }
 }
 
 const getUserObject = async (session: string, cookieToken: string) => {
   if (cookieToken) {
-    return getUserFromToken(cookieToken);
+    return await getUserFromToken(cookieToken);
   } else {
     const res = await whoami(`ukama_session=${session}`);
     if (!res.ok) {
