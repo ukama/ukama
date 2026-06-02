@@ -14,11 +14,11 @@ import {
 } from '@/client/graphql/generated';
 import AppSnackbar from '@/components/AppSnackbar/page';
 import { ONBOARDING_FLOW } from '@/constants';
-import { useUserContext, useUIContext } from '@/context';
-import ErrorBoundary from '@/wrappers/errorBoundary';
+import { useUIContext, useUserContext } from '@/context';
 import { CenterContainer, GradiantBarNoRadius } from '@/styles/global';
 import colors from '@/theme/colors';
 import { ConfigureStep } from '@/utils';
+import ErrorBoundary from '@/wrappers/errorBoundary';
 import { AlertColor, Box, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import {
@@ -150,75 +150,81 @@ const ConfigureLayout = ({
 
   return (
     <ErrorBoundary>
-    <Box width="100%" height="100%" overflow="hidden">
-      <Grid container height={'100%'}>
-        <Grid size={12}>
-          <GradiantBarNoRadius />
-        </Grid>
-        <Grid container height={'100%'} size={12}>
-          <Grid
-            container
-            spacing={1}
-            height={'fit-content'}
-            size={{ xs: 12, md: 6 }}
-            p={{ xs: 4, md: 12 }}
-          >
-            <Grid container size={12} rowSpacing={6} height={'fit-content'}>
-              <Grid size={12}>
-                {Logo({ color: colors.primaryMain, width: 120, height: 37 })}
+      <Box width="100%" height="100%" overflow="hidden">
+        <Grid container height={'100%'}>
+          <Grid size={12}>
+            <GradiantBarNoRadius />
+          </Grid>
+          <Grid container height={'100%'} size={12}>
+            <Grid
+              container
+              spacing={1}
+              height={'fit-content'}
+              size={{ xs: 12, md: 6 }}
+              p={{ xs: 4, md: 12 }}
+            >
+              <Grid container size={12} rowSpacing={6} height={'fit-content'}>
+                <Grid size={12}>
+                  {Logo({
+                    color: colors.primaryMain,
+                    width: '120px',
+                    height: '37px',
+                  })}
+                </Grid>
+                <Grid size={12}>
+                  <Typography
+                    fontWeight={600}
+                    variant="caption"
+                    lineHeight={'18px'}
+                    letterSpacing={'1.5px'}
+                    color={colors.tertiary}
+                    visibility={
+                      path.includes('complete') ? 'hidden' : 'visible'
+                    }
+                  >
+                    STEP {`${currentStep}/${totalStep}`}
+                  </Typography>
+                </Grid>
               </Grid>
-              <Grid size={12}>
-                <Typography
-                  fontWeight={600}
-                  variant="caption"
-                  lineHeight={'18px'}
-                  letterSpacing={'1.5px'}
-                  color={colors.tertiary}
-                  visibility={path.includes('complete') ? 'hidden' : 'visible'}
-                >
-                  STEP {`${currentStep}/${totalStep}`}
-                </Typography>
+              <Grid size={12} height={'100%'}>
+                {children}
               </Grid>
             </Grid>
-            <Grid size={12} height={'100%'}>
-              {children}
+            <Grid
+              size={{ xs: 0, md: 6 }}
+              bgcolor={colors.solitude}
+              display={{ xs: 'none', md: 'flex' }}
+            >
+              <CenterContainer>
+                <Box py={20} px={6} height={'100%'}>
+                  {OnBoardingDynamic({
+                    textColor: colors.black,
+                    selectedColor: colors.primaryMain,
+                    isShowSimpool: isSimsPath || pool === 'true',
+                    isShowSite: params.id ? true : accessId ? true : false,
+                    isShowComponents: params.name || siteName ? true : false,
+                    siteName:
+                      params.name || siteName
+                        ? (params.name ?? siteName)
+                        : 'Site Name',
+                    networkName: network.name || 'Network Name',
+                    orgName: user.orgName ? user.orgName : 'Organization',
+                    backhaulName: parts.backhaulName
+                      ? parts.backhaulName
+                      : 'Backhaul',
+                    powerName: parts.powerName ? parts.powerName : 'Power',
+                    switchName: parts.switchId ? parts.switchId : 'Switch',
+                    nodeName: params.id ?? accessId,
+                    simPoolIconColor:
+                      pool === 'true' ? colors.primaryMain : undefined,
+                  })}
+                </Box>
+              </CenterContainer>
             </Grid>
           </Grid>
-          <Grid
-            size={{ xs: 0, md: 6 }}
-            bgcolor={colors.solitude}
-            display={{ xs: 'none', md: 'flex' }}
-          >
-            <CenterContainer>
-              <Box py={20} px={6} height={'100%'}>
-                {OnBoardingDynamic({
-                  textColor: colors.black,
-                  selectedColor: colors.primaryMain,
-                  isShowSimpool: isSimsPath || pool === 'true',
-                  isShowSite: params.id ? true : accessId ? true : false,
-                  isShowComponents: params.name || siteName ? true : false,
-                  siteName:
-                    params.name || siteName
-                      ? (params.name ?? siteName)
-                      : 'Site Name',
-                  networkName: network.name || 'Network Name',
-                  orgName: user.orgName ? user.orgName : 'Organization',
-                  backhaulName: parts.backhaulName
-                    ? parts.backhaulName
-                    : 'Backhaul',
-                  powerName: parts.powerName ? parts.powerName : 'Power',
-                  switchName: parts.switchId ? parts.switchId : 'Switch',
-                  nodeName: params.id ?? accessId,
-                  simPoolIconColor:
-                    pool === 'true' ? colors.primaryMain : undefined,
-                })}
-              </Box>
-            </CenterContainer>
-          </Grid>
         </Grid>
-      </Grid>
-      <AppSnackbar />
-    </Box>
+        <AppSnackbar />
+      </Box>
     </ErrorBoundary>
   );
 };
