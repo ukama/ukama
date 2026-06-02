@@ -209,22 +209,19 @@ const proxy = async (request: NextRequest) => {
     );
   }
 
-  // if (request.url.includes('logout')) {
-  // response.cookies.set('token', '', {
-  //   path: '/',
-  //   name: 'token',
-  //   secure: false,
-  //   httpOnly: true,
-  //   sameSite: 'lax',
-  //   value: '',
-  //   domain: process.env.NEXT_PUBLIC_APP_DOMAIN,
-  //   expires: new Date(Date.now()),
-  // });
-  // return response;
-  //   return NextResponse.redirect(
-  //     new URL(`/user/logout`, process.env.NEXT_PUBLIC_AUTH_APP_URL),
-  //   );
-  // }
+  if (pathname.includes('/logout')) {
+    response.cookies.set('token', '', {
+      path: '/',
+      name: 'token',
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      sameSite: 'lax',
+      value: '',
+      domain: process.env.NEXT_PUBLIC_APP_DOMAIN,
+      expires: new Date(0),
+    });
+    return response;
+  }
 
   if (pathname.includes('/refresh')) {
     response.cookies.delete('token');
@@ -265,14 +262,12 @@ const proxy = async (request: NextRequest) => {
       pathname.includes('/configure') ||
       pathname.includes('/welcome'))
   ) {
-    console.log("Redirecting to '/403' ");
     return NextResponse.redirect(
       new URL('/403', process.env.NEXT_PUBLIC_APP_URL),
     );
   }
 
   if (userObj.isShowWelcome) {
-    console.log("Redirecting to '/welcome'");
     return NextResponse.redirect(
       new URL('/welcome', process.env.NEXT_PUBLIC_APP_URL),
     );
@@ -282,19 +277,16 @@ const proxy = async (request: NextRequest) => {
     (pathname.includes('/console') || pathname === '/') &&
     !isUserHaveOrg(userObj)
   ) {
-    console.log("Redirecting to '/onboarding' ");
     return NextResponse.redirect(
       new URL('/onboarding', process.env.NEXT_PUBLIC_APP_URL),
     );
   }
 
   if (pathname.includes('/welcome') && userObj.role !== Role_Type.RoleOwner) {
-    console.log("Redirecting to '/' ");
     return NextResponse.redirect(new URL('/', process.env.NEXT_PUBLIC_APP_URL));
   }
 
   if (pathname.includes('/manage') && userObj.role !== Role_Type.RoleOwner) {
-    console.log("Redirecting to '/unauthorized' ");
     return NextResponse.redirect(
       new URL('/unauthorized', process.env.NEXT_PUBLIC_APP_URL),
     );
@@ -306,7 +298,6 @@ const proxy = async (request: NextRequest) => {
     userObj.role !== Role_Type.RoleOwner &&
     userObj.role !== Role_Type.RoleAdmin
   ) {
-    console.log("Redirecting to '/unauthorized' ");
     return NextResponse.redirect(
       new URL('/unauthorized', process.env.NEXT_PUBLIC_APP_URL),
     );
@@ -318,7 +309,6 @@ const proxy = async (request: NextRequest) => {
     isValidUser(userObj) &&
     isValidRole(userObj.role)
   ) {
-    console.log("Redirecting to '/console/home'");
     return NextResponse.redirect(
       new URL('/console/home', process.env.NEXT_PUBLIC_APP_URL),
     );

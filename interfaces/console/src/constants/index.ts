@@ -19,8 +19,6 @@ import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 export const DRAWER_WIDTH = 200;
 export const APP_VERSION = 'v0.0.1';
 export const COPY_RIGHTS = 'Copyright © Ukama Inc.';
-export const IPFY_URL = 'https://api.ipify.org/?format=json';
-export const IP_API_BASE_URL = 'https://ipapi.co';
 export const REFRESH_INTERVAL = 30000;
 export const KPI_PLACEHOLDER_VALUE = '-';
 

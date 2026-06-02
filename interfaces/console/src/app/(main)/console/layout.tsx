@@ -173,11 +173,12 @@ export default function ConosleLayout({
         },
       };
 
-      setNotifications((prev) => ({
-        notifications: [newNotification, ...prev.notifications].filter(
-          (v, i, a) => a.findIndex((t) => t.id === v.id) === i,
-        ),
-      }));
+      setNotifications((prev) => {
+        if (prev.notifications.some((n) => n.id === newNotification.id)) {
+          return prev;
+        }
+        return { notifications: [newNotification, ...prev.notifications] };
+      });
 
       if (eventKey === 'EventNodeOnline' || eventKey === 'EventNodeOffline') {
         (client as ApolloClient<NormalizedCacheObject>).cache.updateQuery<GetNodesQuery>(
