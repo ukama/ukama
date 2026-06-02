@@ -2,10 +2,13 @@ overwrite: true
 schema: http://localhost:8081/graphql
 documents: './src/client/graphql/subscriptions.graphql'
 generates:
-  './src/client/graphql/generated/subscriptions.ts':
+  ./subscription-schema-types.ts:
     plugins:
       - 'typescript'
+  ./src/client/graphql/generated/subscriptions-operations.ts:
+    plugins:
       - 'typescript-operations'
       - 'typescript-react-apollo'
     config:
       withHooks: true
+      importSchemaTypesFrom: './subscription-schema-types.ts'
