@@ -357,13 +357,6 @@ query getPackage($packageId: String!) {
   }
 }
 
-query getPackages {
-  getPackages {
-    packages {
-      ...Package
-    }
-  }
-}
 query getSimsBySubscriber($data: GetSimBySubscriberInputDto!) {
   getSimsBySubscriber(data: $data) {
     ...SubscriberSims

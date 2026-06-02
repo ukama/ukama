@@ -37,18 +37,27 @@ const USER_INIT = {
   role: Role_Type.RoleInvalid,
 };
 
-const tokenCache = new Map<string, User>();
+const TOKEN_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes — revoked tokens expire within this window
 const MAX_CACHE_SIZE = 500;
 
-const getCachedToken = (rawToken: string): User | null =>
-  tokenCache.get(rawToken) ?? null;
+const tokenCache = new Map<string, { user: User; expiresAt: number }>();
+
+const getCachedToken = (rawToken: string): User | null => {
+  const entry = tokenCache.get(rawToken);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    tokenCache.delete(rawToken);
+    return null;
+  }
+  return entry.user;
+};
 
 const setCachedToken = (rawToken: string, decoded: User): void => {
   if (tokenCache.size >= MAX_CACHE_SIZE) {
     const firstKey = tokenCache.keys().next().value;
     if (firstKey !== undefined) tokenCache.delete(firstKey);
   }
-  tokenCache.set(rawToken, decoded);
+  tokenCache.set(rawToken, { user: decoded, expiresAt: Date.now() + TOKEN_CACHE_TTL_MS });
 };
 
 const whoami = async (session: string) => {
@@ -171,7 +180,7 @@ const proxy = async (request: NextRequest) => {
   const cookieStore = await cookies();
   const { pathname } = request.nextUrl;
 
-  if (pathname.includes('/ping')) {
+  if (pathname === '/ping') {
     return response;
   }
 

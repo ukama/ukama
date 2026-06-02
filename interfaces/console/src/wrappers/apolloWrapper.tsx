@@ -8,6 +8,8 @@
 'use client';
 
 import { ApolloLink, HttpLink } from '@apollo/client';
+import { onError } from '@apollo/client/link/error';
+import { RetryLink } from '@apollo/client/link/retry';
 import {
   ApolloClient,
   ApolloNextAppProvider,
@@ -19,6 +21,29 @@ function makeClient(baseUrl: string) {
   const httpLink = new HttpLink({
     uri: `${baseUrl}/graphql`,
     credentials: 'include',
+  });
+
+  const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
+    if (graphQLErrors) {
+      graphQLErrors.forEach(({ message, locations, path }) => {
+        console.error(
+          `[GraphQL error] op=${operation.operationName} message=${message} path=${path} locations=${JSON.stringify(locations)}`,
+        );
+      });
+    }
+    if (networkError) {
+      console.error(`[Network error] op=${operation.operationName}:`, networkError);
+      if ('statusCode' in networkError && networkError.statusCode === 401) {
+        if (typeof window !== 'undefined') {
+          window.location.href = `${process.env.NEXT_PUBLIC_AUTH_APP_URL}/auth/login`;
+        }
+      }
+    }
+  });
+
+  const retryLink = new RetryLink({
+    delay: { initial: 300, max: 3000, jitter: true },
+    attempts: { max: 3, retryIf: (error) => !!error && error?.statusCode !== 401 },
   });
 
   const cache = new InMemoryCache({
@@ -98,18 +123,19 @@ function makeClient(baseUrl: string) {
     },
   });
 
+  const clientLink = ApolloLink.from([errorLink, retryLink, httpLink]);
+
   return new ApolloClient({
     cache,
     connectToDevTools: process.env.NODE_ENV === 'development',
     link:
       typeof window === 'undefined'
         ? ApolloLink.from([
-            new SSRMultipartLink({
-              stripDefer: true,
-            }),
+            new SSRMultipartLink({ stripDefer: true }),
+            errorLink,
             httpLink,
           ])
-        : httpLink,
+        : clientLink,
     defaultOptions: {
       watchQuery: {
         fetchPolicy: 'cache-and-network',

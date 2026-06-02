@@ -39,6 +39,7 @@ export default async function ServerNotificationSubscription(
   orgName: string,
   networkId: string,
   startTimestamp: string,
+  signal?: AbortSignal,
 ) {
   const myHeaders = new Headers();
   myHeaders.append('Cache-Control', 'no-cache');
@@ -49,39 +50,52 @@ export default async function ServerNotificationSubscription(
   myHeaders.append('Sec-Fetch-Site', 'same-origin');
   myHeaders.append('accept', 'text/event-stream');
 
-  const requestOptions = {
-    method: 'GET',
-    headers: myHeaders,
-  };
-
-  const res = await fetch(
-    `${url}/graphql?query=subscription+NotificationSubscription%7BnotificationSubscription%28networkId%3A%22${networkId}%22+orgId%3A%22${orgId}%22+orgName%3A%22${orgName}%22+role%3A%22${role}%22+startTimestamp%3A%22${startTimestamp}%22+subscriberId%3A%22%22+userId%3A%22${userId}%22%29%7Bid+title+description+createdAt+isRead+scope+type+eventKey+resourceId+redirect%7Baction+title%7D%7D%7D&operationName=NotificationSubscription&extensions=%7B%7D`,
-    requestOptions,
-  );
+  let res: Response;
+  try {
+    res = await fetch(
+      `${url}/graphql?query=subscription+NotificationSubscription%7BnotificationSubscription%28networkId%3A%22${networkId}%22+orgId%3A%22${orgId}%22+orgName%3A%22${orgName}%22+role%3A%22${role}%22+startTimestamp%3A%22${startTimestamp}%22+subscriberId%3A%22%22+userId%3A%22${userId}%22%29%7Bid+title+description+createdAt+isRead+scope+type+eventKey+resourceId+redirect%7Baction+title%7D%7D%7D&operationName=NotificationSubscription&extensions=%7B%7D`,
+      { method: 'GET', headers: myHeaders, signal },
+    );
+  } catch (err) {
+    if ((err as Error).name !== 'AbortError') {
+      console.error('[NotificationSubscription] fetch error:', err);
+    }
+    return;
+  }
 
   const reader = res?.body?.getReader();
+  if (!reader) return;
+
   const decoder = new TextDecoder('utf-8');
   let buffer = '';
 
-  while (true) {
-    const { value, done } = (await reader?.read()) || {};
+  try {
+    while (true) {
+      if (signal?.aborted) break;
 
-    if (done) {
-      break;
-    }
+      const { value, done } = await reader.read();
 
-    buffer += decoder.decode(value, { stream: true });
+      if (done) break;
 
-    let eventBoundary = buffer.indexOf('\n\n');
+      buffer += decoder.decode(value, { stream: true });
 
-    while (eventBoundary !== -1) {
-      const eventStr = buffer.slice(0, eventBoundary).trim();
-      buffer = buffer.slice(eventBoundary + 2);
-      const pevent = parseEvent(eventStr);
-      if (pevent.data) {
-        PubSub.publish(key, pevent.data);
+      let eventBoundary = buffer.indexOf('\n\n');
+
+      while (eventBoundary !== -1) {
+        const eventStr = buffer.slice(0, eventBoundary).trim();
+        buffer = buffer.slice(eventBoundary + 2);
+        const pevent = parseEvent(eventStr);
+        if (pevent.data) {
+          PubSub.publish(key, pevent.data);
+        }
+        eventBoundary = buffer.indexOf('\n\n');
       }
-      eventBoundary = buffer.indexOf('\n\n');
     }
+  } catch (err) {
+    if ((err as Error).name !== 'AbortError') {
+      console.error('[NotificationSubscription] stream error:', err);
+    }
+  } finally {
+    reader.cancel();
   }
 }
