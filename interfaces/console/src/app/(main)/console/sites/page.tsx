@@ -71,7 +71,7 @@ export default function Page() {
     refetch: refetchSites,
     loading: sitesLoading,
   } = useGetSitesQuery({
-    fetchPolicy: 'network-only',
+    fetchPolicy: 'cache-and-network',
     skip: !network.id,
     variables: {
       data: { networkId: network.id },
@@ -88,7 +88,7 @@ export default function Page() {
   });
 
   const [getNodes, { loading: nodesLoading }] = useGetNodesLazyQuery({
-    fetchPolicy: 'network-only',
+    fetchPolicy: 'cache-and-network',
     onCompleted: (res) => {
       const allNodes = res.getNodes.nodes;
       const unknownNodes = allNodes.filter((node) => {

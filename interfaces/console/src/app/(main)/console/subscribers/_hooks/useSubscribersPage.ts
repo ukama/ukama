@@ -76,7 +76,7 @@ export function useSubscribersPage() {
         type: env.SIM_TYPE as Sim_Types,
       },
     },
-    fetchPolicy: 'network-only',
+    fetchPolicy: 'cache-and-network',
     onError: (e) => notify('sims-error-msg', e.message, 'error'),
   });
 
@@ -95,7 +95,7 @@ export function useSubscribersPage() {
   } = useGetSubscribersByNetworkQuery({
     skip: !network.id,
     variables: { networkId: network.id },
-    fetchPolicy: 'network-only',
+    fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
       setSubscriber({
         subscribers: [...data.getSubscribersByNetwork.subscribers],

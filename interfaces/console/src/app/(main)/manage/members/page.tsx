@@ -7,8 +7,6 @@
  */
 'use client';
 import {
-  GetInvitationsDocument,
-  GetMembersDocument,
   Invitation_Status,
   Role_Type,
   useCreateInvitationMutation,
@@ -78,7 +76,23 @@ const Page = () => {
   });
 
   const [deleteMember] = useRemoveMemberMutation({
-    refetchQueries: [{ query: GetMembersDocument }],
+    update(cache, { data }, { variables }) {
+      if (!data?.removeMember?.success) return;
+      const removedId = variables?.memberId;
+      if (!removedId) return;
+      cache.modify({
+        fields: {
+          getMembers(existingData: any, { readField }) {
+            return {
+              ...existingData,
+              members: (existingData.members ?? []).filter(
+                (ref: any) => readField('memberId', ref) !== removedId,
+              ),
+            };
+          },
+        },
+      });
+    },
     onError: (error) => {
       setSnackbarMessage({
         id: 'delete-members',
@@ -90,7 +104,16 @@ const Page = () => {
   });
 
   const [updateMember] = useUpdateMemberMutation({
-    refetchQueries: [{ query: GetMembersDocument }],
+    update(cache, { data }, { variables }) {
+      if (!data?.updateMember?.success || !variables) return;
+      cache.modify({
+        id: cache.identify({ __typename: 'MemberDto', memberId: variables.memberId }),
+        fields: {
+          isDeactivated: () => variables.data.isDeactivated,
+          role: () => variables.data.role,
+        },
+      });
+    },
     onError: (error) => {
       setSnackbarMessage({
         id: 'update-members',
@@ -127,7 +150,28 @@ const Page = () => {
 
   const [deleteInvite, { loading: deleteInviteLoading }] =
     useDeleteInvitationMutation({
-      refetchQueries: [{ query: GetInvitationsDocument }],
+      optimisticResponse: (vars) => ({
+        deleteInvitation: {
+          __typename: 'DeleteInvitationResDto' as const,
+          id: vars.deleteInvitationId,
+        },
+      }),
+      update(cache, { data }) {
+        const deletedId = data?.deleteInvitation?.id;
+        if (!deletedId) return;
+        cache.modify({
+          fields: {
+            getInvitations(existingData: any, { readField }) {
+              return {
+                ...existingData,
+                invitations: (existingData.invitations ?? []).filter(
+                  (ref: any) => readField('id', ref) !== deletedId,
+                ),
+              };
+            },
+          },
+        });
+      },
       onError: (error) => {
         setSnackbarMessage({
           id: 'delete-invitation',
@@ -140,12 +184,22 @@ const Page = () => {
 
   const [sendInvitation, { loading: sendInvitationLoading }] =
     useCreateInvitationMutation({
-      refetchQueries: [
-        { query: GetMembersDocument },
-        { query: GetInvitationsDocument },
-      ],
+      update(cache, { data }) {
+        const newInvitation = data?.createInvitation;
+        if (!newInvitation) return;
+        cache.modify({
+          fields: {
+            getInvitations(existingData: any, { toReference }) {
+              const ref = toReference(newInvitation);
+              return {
+                ...existingData,
+                invitations: [...(existingData.invitations ?? []), ref],
+              };
+            },
+          },
+        });
+      },
       onCompleted: () => {
-
         setSnackbarMessage({
           id: 'invitation-success',
           message: 'Invitation sent successfully',

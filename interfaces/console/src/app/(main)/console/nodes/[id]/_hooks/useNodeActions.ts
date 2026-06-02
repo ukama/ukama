@@ -7,6 +7,7 @@
  */
 'use client';
 
+import { activeGraphTypeVar, activeNodeTabVar } from '@/client/vars';
 import { Graphs_Type } from '@/client/graphql/generated/subscriptions';
 import { METRIC_RANGE_10800, NODE_ACTIONS_ENUM } from '@/constants';
 import { TNodeActionState, TStatusBarObj } from '@/types';
@@ -22,9 +23,7 @@ interface UseNodeActionsParams {
       TNodeActionState & { currentAction: string; actionInitiated: string }
     >
   >;
-  setGraphType: React.Dispatch<React.SetStateAction<Graphs_Type>>;
   setMetricFrom: React.Dispatch<React.SetStateAction<number>>;
-  setSelectedTab: React.Dispatch<React.SetStateAction<number>>;
   handleEditNode: (name: string) => void;
   handleRestartNode: () => void;
 }
@@ -32,9 +31,7 @@ interface UseNodeActionsParams {
 export function useNodeActions({
   setIsEditNode,
   setNodeAction,
-  setGraphType,
   setMetricFrom,
-  setSelectedTab,
   handleEditNode: doEditNode,
   handleRestartNode: doRestartNode,
 }: UseNodeActionsParams) {
@@ -50,13 +47,13 @@ export function useNodeActions({
   };
 
   const handleSectionChange = (type: Graphs_Type) => {
-    setGraphType(type);
+    activeGraphTypeVar(type);
     setMetricFrom(() => getUnixTime() - METRIC_RANGE_10800);
   };
 
   const onTabSelected = (_: unknown, value: number) => {
-    setSelectedTab(value);
-    setGraphType(getNodeTabTypeByIndex(value));
+    activeNodeTabVar(value);
+    activeGraphTypeVar(getNodeTabTypeByIndex(value));
     setMetricFrom(() => getUnixTime() - METRIC_RANGE_10800);
   };
 

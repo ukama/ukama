@@ -59,7 +59,7 @@ export function useNodeData({
 
   const { data: nodesData, loading: nodesLoading } = useGetNodesQuery({
     skip: !id,
-    fetchPolicy: 'network-only',
+    fetchPolicy: 'cache-and-network',
     variables: { data: { state: NodeStateEnum.Configured } },
     onError: (err) => notify('node-msg', err.message, 'error'),
   });
@@ -73,7 +73,6 @@ export function useNodeData({
     onCompleted: () =>
       notify('update-node-success-msg', 'Node updated successfully.', 'success'),
     onError: (err) => notify('update-node-err-msg', err.message, 'error'),
-    refetchQueries: ['GetNodes'],
   });
 
   const [restartNode] = useRestartNodeMutation({
@@ -107,7 +106,7 @@ export function useNodeData({
     data: softwaresData,
     refetch: refetchSoftwares,
   } = useSoftwareQuery({
-    fetchPolicy: 'network-only',
+    fetchPolicy: 'cache-and-network',
     variables: {
       data: { name: '', nodeId: id, status: SoftwareStatusEnum.Unknown },
     },
