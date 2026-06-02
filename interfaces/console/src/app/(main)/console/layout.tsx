@@ -32,7 +32,7 @@ import { ApolloClient, NormalizedCacheObject, useApolloClient } from '@apollo/cl
 import { Box } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import PubSub from 'pubsub-js';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export default function ConosleLayout({
   children,
@@ -97,11 +97,17 @@ export default function ConosleLayout({
     fetchPolicy: 'network-only',
   });
 
+  const sseAbortRef = useRef<AbortController | null>(null);
+
   const [updateNotificationCall] = useUpdateNotificationMutation({
     onCompleted: () => {
-      refetchNotifications().then((res) => {
-        setNotifications(res.data?.getNotifications);
-      });
+      refetchNotifications()
+        .then((res) => {
+          setNotifications(res.data?.getNotifications);
+        })
+        .catch((err) => {
+          console.error('[layout] refetchNotifications error:', err);
+        });
     },
   });
 
@@ -113,7 +119,9 @@ export default function ConosleLayout({
           setNotifications(data.getNotifications);
         }
       },
-      onError: () => {},
+      onError: (err) => {
+        console.warn('[layout] getNotifications error:', err.message);
+      },
     });
 
   useEffect(() => {
@@ -122,10 +130,97 @@ export default function ConosleLayout({
     }
   }, [user.role, router]);
 
+  const handleNotification = useCallback(
+    (_: unknown, data: string) => {
+      let parsedData: TNotificationResDto;
+      try {
+        parsedData = JSON.parse(data);
+      } catch {
+        console.warn('[layout] malformed notification SSE message');
+        return;
+      }
+
+      const notification = parsedData?.data?.notificationSubscription;
+      if (!notification) return;
+
+      const {
+        id,
+        type,
+        scope,
+        title,
+        isRead,
+        eventKey,
+        createdAt,
+        resourceId,
+        description,
+        redirect,
+      } = notification;
+
+      const newNotification = {
+        id,
+        type,
+        scope,
+        title,
+        isRead,
+        eventKey,
+        createdAt,
+        resourceId,
+        description,
+        redirect: {
+          action: redirect?.action ?? '',
+          title: redirect?.title ?? '',
+        },
+      };
+
+      setNotifications((prev) => ({
+        notifications: [newNotification, ...prev.notifications].filter(
+          (v, i, a) => a.findIndex((t) => t.id === v.id) === i,
+        ),
+      }));
+
+      if (eventKey === 'EventNodeOnline' || eventKey === 'EventNodeOffline') {
+        (client as ApolloClient<NormalizedCacheObject>).cache.updateQuery<GetNodesQuery>(
+          { query: GetNodesDocument },
+          (data: GetNodesQuery | null) => {
+            if (!data?.getNodes?.nodes) return data;
+
+            const updatedNodes = data.getNodes.nodes.map(
+              (node: GetNodesQuery['getNodes']['nodes'][0]) => {
+                if (node.id === resourceId) {
+                  return {
+                    ...node,
+                    status: {
+                      ...node.status,
+                      connectivity:
+                        eventKey === 'EventNodeOnline'
+                          ? NodeConnectivityEnum.Online
+                          : NodeConnectivityEnum.Offline,
+                    },
+                  };
+                }
+                return node;
+              },
+            );
+
+            return {
+              ...data,
+              getNodes: { ...data.getNodes, nodes: updatedNodes },
+            };
+          },
+        );
+      }
+    },
+    [client],
+  );
+
   useEffect(() => {
     if (user.id && network.id && user.orgId && user.orgName) {
       const notificationTopic = `notification-${user.orgId}-${user.id}-${user.role}-${network.id}`;
       const startTimeStamp = new Date().getTime().toString();
+
+      const abortController = new AbortController();
+      sseAbortRef.current = abortController;
+
       getNotifications({
         client: subscriptionClient,
         variables: {
@@ -138,101 +233,30 @@ export default function ConosleLayout({
           startTimestamp: startTimeStamp,
         },
       }).then(() => {
-        ServerNotificationSubscription(
-          env.METRIC_URL,
-          notificationTopic,
-          user.role,
-          user.orgId,
-          user.id,
-          user.orgName,
-          network.id,
-          startTimeStamp,
-        );
+        if (!abortController.signal.aborted) {
+          ServerNotificationSubscription(
+            env.METRIC_URL,
+            notificationTopic,
+            user.role,
+            user.orgId,
+            user.id,
+            user.orgName,
+            network.id,
+            startTimeStamp,
+            abortController.signal,
+          );
+        }
       });
 
       const token = PubSub.subscribe(notificationTopic, handleNotification);
 
       return () => {
+        abortController.abort();
+        sseAbortRef.current = null;
         PubSub.unsubscribe(token);
       };
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user.id, network.id]);
-
-  const handleNotification = (_: unknown, data: string) => {
-    const parsedData: TNotificationResDto = JSON.parse(data);
-    const {
-      id,
-      type,
-      scope,
-      title,
-      isRead,
-      eventKey,
-      createdAt,
-      resourceId,
-      description,
-      redirect: { action, title: redirectTitle },
-    } = parsedData.data.notificationSubscription;
-
-    const newNotification = {
-      id,
-      type,
-      scope,
-      title,
-      isRead,
-      eventKey,
-      createdAt,
-      resourceId,
-      description,
-      redirect: {
-        action,
-        title: redirectTitle,
-      },
-    };
-
-    setNotifications((prev) => {
-      return {
-        notifications: [newNotification, ...prev.notifications].filter(
-          (v, i, a) => a.findIndex((t) => t.id === v.id) === i,
-        ),
-      };
-    });
-
-    if (eventKey === 'EventNodeOnline' || eventKey === 'EventNodeOffline') {
-      (client as ApolloClient<NormalizedCacheObject>).cache.updateQuery<GetNodesQuery>(
-        { query: GetNodesDocument },
-        (data: GetNodesQuery | null) => {
-          if (!data?.getNodes?.nodes) return data;
-
-          const updatedNodes = data.getNodes.nodes.map(
-            (node: GetNodesQuery['getNodes']['nodes'][0]) => {
-              if (node.id === resourceId) {
-                return {
-                  ...node,
-                  status: {
-                    ...node.status,
-                    connectivity:
-                      eventKey === 'EventNodeOnline'
-                        ? NodeConnectivityEnum.Online
-                        : NodeConnectivityEnum.Offline,
-                  },
-                };
-              }
-              return node;
-            },
-          );
-
-          return {
-            ...data,
-            getNodes: {
-              ...data.getNodes,
-              nodes: updatedNodes,
-            },
-          };
-        },
-      );
-    }
-  };
+  }, [user.id, user.role, user.orgId, user.orgName, network.id, env.METRIC_URL, subscriptionClient, getNotifications, handleNotification]);
 
   const handleNotificationAction = (action: string, id: string) => {
     switch (action) {

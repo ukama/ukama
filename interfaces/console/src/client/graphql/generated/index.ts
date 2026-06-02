@@ -1,12 +1,11 @@
+/** Internal type. DO NOT USE DIRECTLY. */
+type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
+/** Internal type. DO NOT USE DIRECTLY. */
+export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
-export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
-export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
-export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
-export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
-export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 const defaultOptions = {} as const;
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
@@ -1882,605 +1881,929 @@ export type WhoamiDto = {
   user: UserResDto;
 };
 
-export type NodeFragment = { __typename?: 'Node', id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } };
+export type AddMemberInputDto = {
+  role: string;
+  userId: string;
+};
+
+export type AddNetworkInputDto = {
+  budget?: number | null | undefined;
+  countries?: Array<string> | null | undefined;
+  isDefault?: boolean;
+  name: string;
+  networks?: Array<string> | null | undefined;
+};
+
+export type AddNodeInput = {
+  id: string;
+  name: string;
+};
+
+export type AddNodeToSiteInput = {
+  networkId: string;
+  nodeId: string;
+  siteId: string;
+};
+
+export type AddPackageInputDto = {
+  amount: number;
+  country: string;
+  currency: string;
+  dataUnit: string;
+  dataVolume: number;
+  duration: number;
+  name: string;
+};
+
+export type AddPackagesToSimInputDto = {
+  packages: Array<PackagesToSimInputDto>;
+  sim_id: string;
+};
+
+export type AddSiteInputDto = {
+  access_id: string;
+  backhaul_id: string;
+  install_date: string;
+  latitude: string;
+  location: string;
+  longitude: string;
+  name: string;
+  network_id: string;
+  power_id: string;
+  spectrum_id: string;
+  switch_id: string;
+};
+
+export type AllocateSimInputDto = {
+  iccid?: string | null | undefined;
+  network_id: string;
+  package_id: string;
+  sim_type: string;
+  subscriber_id: string;
+  traffic_policy: number;
+};
+
+export type AttachNodeInput = {
+  anodel: string;
+  anoder: string;
+  parentNode: string;
+};
+
+export type Component_Type =
+  | 'access'
+  | 'all'
+  | 'backhaul'
+  | 'power'
+  | 'spectrum'
+  | 'switch';
+
+export type ComponentTypeInputDto = {
+  category: Component_Type;
+};
+
+export type CreateInvitationInputDto = {
+  email: string;
+  name: string;
+  role: Role_Type;
+};
+
+export type DeleteSimInputDto = {
+  simId: string;
+};
+
+export type GetHealthReportInputDto = {
+  id: string;
+  nodeId: string;
+  timeframe: Timeframe_Filter;
+  timestamp: string;
+};
+
+export type GetPackagesForSimInputDto = {
+  sim_id: string;
+};
+
+export type GetPaymentsInputDto = {
+  paymentMethod?: string | null | undefined;
+  status?: string | null | undefined;
+  type?: string | null | undefined;
+};
+
+export type GetReportsInputDto = {
+  count?: number | null | undefined;
+  isPaid?: boolean | null | undefined;
+  networkId?: string | null | undefined;
+  ownerId?: string | null | undefined;
+  ownerType: string;
+  report_type: string;
+  sort?: boolean | null | undefined;
+};
+
+export type GetSimBySubscriberInputDto = {
+  subscriberId: string;
+};
+
+export type GetSimInputDto = {
+  simId: string;
+};
+
+export type GetSimsInput = {
+  status: Sim_Status;
+  type: Sim_Types;
+};
+
+export type GetSoftwaresInput = {
+  name: string;
+  nodeId: string;
+  status: SoftwareStatusEnum;
+};
+
+export type Invitation_Status =
+  | 'INVITE_ACCEPTED'
+  | 'INVITE_DECLINED'
+  | 'INVITE_PENDING';
+
+export type ListSimsInput = {
+  networkId: string;
+  status: string;
+};
+
+export type NodeAppsChangeLogInput = {
+  type: NodeTypeEnum;
+};
+
+export type NodeInput = {
+  id: string;
+};
+
+/** Node state enums */
+export type NodeStateEnum =
+  | 'Configured'
+  | 'Faulty'
+  | 'Operational'
+  | 'Unknown';
+
+/** Node type enums */
+export type NodeTypeEnum =
+  | 'anode'
+  | 'cnode'
+  | 'hnode'
+  | 'tnode';
+
+export type NodesFilterInput = {
+  connectivity?: string | null | undefined;
+  id?: string | null | undefined;
+  networkId?: string | null | undefined;
+  siteId?: string | null | undefined;
+  state?: string | null | undefined;
+  type?: string | null | undefined;
+};
+
+export type PackagesToSimInputDto = {
+  package_id: string;
+  start_date: string;
+};
+
+export type ProcessPaymentInputDto = {
+  correspondent?: string | null | undefined;
+  id: string;
+  token: string;
+};
+
+export type Role_Type =
+  | 'ROLE_ADMIN'
+  | 'ROLE_INVALID'
+  | 'ROLE_NETWORK_OWNER'
+  | 'ROLE_OWNER'
+  | 'ROLE_USER'
+  | 'ROLE_VENDOR';
+
+export type RemovePackageFormSimInputDto = {
+  packageId: string;
+  simId: string;
+};
+
+export type RestartNodeInputDto = {
+  nodeId: string;
+};
+
+export type Sim_Status =
+  | 'ALL'
+  | 'ASSIGNED'
+  | 'UNASSIGNED';
+
+export type Sim_Types =
+  | 'operator_data'
+  | 'test'
+  | 'ukama_data'
+  | 'unknown';
+
+export type SetDefaultNetworkInputDto = {
+  id: string;
+};
+
+export type SimUsagesInputDto = {
+  networkId: string;
+  type: string;
+};
+
+export type SitesInputDto = {
+  networkId?: string | null | undefined;
+};
+
+/** Software status enums */
+export type SoftwareStatusEnum =
+  | 'unknown'
+  | 'up_to_date'
+  | 'update_available'
+  | 'update_failed'
+  | 'update_in_progress';
+
+export type SubscriberInputDto = {
+  email: string;
+  name: string;
+  network_id: string;
+  phone?: string | null | undefined;
+};
+
+export type Timeframe_Filter =
+  | 'ALL'
+  | 'LATEST'
+  | 'UNKNOWN';
+
+export type ToggleInternetSwitchInputDto = {
+  port: number;
+  siteId: string;
+  status: boolean;
+};
+
+export type ToggleRfStatusInputDto = {
+  nodeId: string;
+  status: boolean;
+};
+
+export type ToggleSimStatusInputDto = {
+  sim_id: string;
+  status: string;
+};
+
+export type UpateInvitationInputDto = {
+  email: string;
+  id: string;
+  status: Invitation_Status;
+};
+
+export type UpdateMemberInputDto = {
+  isDeactivated: boolean;
+  role: string;
+};
+
+export type UpdateNodeInput = {
+  id: string;
+  name: string;
+};
+
+export type UpdateNodeStateInput = {
+  id: string;
+  state: NodeStateEnum;
+};
+
+export type UpdatePackageInputDto = {
+  active: boolean;
+  name: string;
+};
+
+export type UpdatePaymentInputDto = {
+  country?: string | null | undefined;
+  currency?: string | null | undefined;
+  id: string;
+  payerEmail?: string | null | undefined;
+  payerName?: string | null | undefined;
+  paymentMethod?: string | null | undefined;
+};
+
+export type UpdateSiteInputDto = {
+  name: string;
+};
+
+export type UpdateSoftwareInputDto = {
+  name: string;
+  nodeId: string;
+  tag: string;
+};
+
+export type UpdateSubscriberInputDto = {
+  address?: string | null | undefined;
+  email?: string | null | undefined;
+  id_serial?: string | null | undefined;
+  name?: string | null | undefined;
+  phone?: string | null | undefined;
+  proof_of_identification?: string | null | undefined;
+};
+
+export type UploadSimsInputDto = {
+  data: string;
+  simType: Sim_Types;
+};
+
+export type NodeFragment = { id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, attached: Array<{ id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, site: { nodeId: string | null, siteId: string | null, networkId: string | null, addedAt: string | null }, status: { connectivity: string, state: string } }>, site: { nodeId: string | null, siteId: string | null, networkId: string | null, addedAt: string | null }, status: { connectivity: string, state: string } };
 
 export type GetNodeQueryVariables = Exact<{
   data: NodeInput;
 }>;
 
 
-export type GetNodeQuery = { __typename?: 'Query', getNode: { __typename?: 'Node', id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
+export type GetNodeQuery = { getNode: { id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, attached: Array<{ id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, site: { nodeId: string | null, siteId: string | null, networkId: string | null, addedAt: string | null }, status: { connectivity: string, state: string } }>, site: { nodeId: string | null, siteId: string | null, networkId: string | null, addedAt: string | null }, status: { connectivity: string, state: string } } };
 
 export type GetNodesQueryVariables = Exact<{
   data: NodesFilterInput;
 }>;
 
 
-export type GetNodesQuery = { __typename?: 'Query', getNodes: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
+export type GetNodesQuery = { getNodes: { nodes: Array<{ id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, attached: Array<{ id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, site: { nodeId: string | null, siteId: string | null, networkId: string | null, addedAt: string | null }, status: { connectivity: string, state: string } }>, site: { nodeId: string | null, siteId: string | null, networkId: string | null, addedAt: string | null }, status: { connectivity: string, state: string } }> } };
 
 export type DeleteNodeMutationVariables = Exact<{
   data: NodeInput;
 }>;
 
 
-export type DeleteNodeMutation = { __typename?: 'Mutation', deleteNodeFromOrg: { __typename?: 'DeleteNode', id: string } };
+export type DeleteNodeMutation = { deleteNodeFromOrg: { id: string } };
 
 export type AttachNodeMutationVariables = Exact<{
   data: AttachNodeInput;
 }>;
 
 
-export type AttachNodeMutation = { __typename?: 'Mutation', attachNode: { __typename?: 'CBooleanResponse', success: boolean } };
+export type AttachNodeMutation = { attachNode: { success: boolean } };
 
 export type DetachhNodeMutationVariables = Exact<{
   data: NodeInput;
 }>;
 
 
-export type DetachhNodeMutation = { __typename?: 'Mutation', detachhNode: { __typename?: 'CBooleanResponse', success: boolean } };
+export type DetachhNodeMutation = { detachhNode: { success: boolean } };
 
 export type AddNodeMutationVariables = Exact<{
   data: AddNodeInput;
 }>;
 
 
-export type AddNodeMutation = { __typename?: 'Mutation', addNode: { __typename?: 'Node', id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
+export type AddNodeMutation = { addNode: { id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, attached: Array<{ id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, site: { nodeId: string | null, siteId: string | null, networkId: string | null, addedAt: string | null }, status: { connectivity: string, state: string } }>, site: { nodeId: string | null, siteId: string | null, networkId: string | null, addedAt: string | null }, status: { connectivity: string, state: string } } };
 
 export type ReleaseNodeFromSiteMutationVariables = Exact<{
   data: NodeInput;
 }>;
 
 
-export type ReleaseNodeFromSiteMutation = { __typename?: 'Mutation', releaseNodeFromSite: { __typename?: 'CBooleanResponse', success: boolean } };
+export type ReleaseNodeFromSiteMutation = { releaseNodeFromSite: { success: boolean } };
 
 export type AddNodeToSiteMutationVariables = Exact<{
   data: AddNodeToSiteInput;
 }>;
 
 
-export type AddNodeToSiteMutation = { __typename?: 'Mutation', addNodeToSite: { __typename?: 'CBooleanResponse', success: boolean } };
+export type AddNodeToSiteMutation = { addNodeToSite: { success: boolean } };
 
 export type UpdateNodeStateMutationVariables = Exact<{
   data: UpdateNodeStateInput;
 }>;
 
 
-export type UpdateNodeStateMutation = { __typename?: 'Mutation', updateNodeState: { __typename?: 'Node', id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
+export type UpdateNodeStateMutation = { updateNodeState: { id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, attached: Array<{ id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, site: { nodeId: string | null, siteId: string | null, networkId: string | null, addedAt: string | null }, status: { connectivity: string, state: string } }>, site: { nodeId: string | null, siteId: string | null, networkId: string | null, addedAt: string | null }, status: { connectivity: string, state: string } } };
 
 export type GetNodesForSiteQueryVariables = Exact<{
-  siteId: Scalars['String']['input'];
+  siteId: string;
 }>;
 
 
-export type GetNodesForSiteQuery = { __typename?: 'Query', getNodesForSite: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
+export type GetNodesForSiteQuery = { getNodesForSite: { nodes: Array<{ id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, attached: Array<{ id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, site: { nodeId: string | null, siteId: string | null, networkId: string | null, addedAt: string | null }, status: { connectivity: string, state: string } }>, site: { nodeId: string | null, siteId: string | null, networkId: string | null, addedAt: string | null }, status: { connectivity: string, state: string } }> } };
 
 export type UpdateNodeMutationVariables = Exact<{
   data: UpdateNodeInput;
 }>;
 
 
-export type UpdateNodeMutation = { __typename?: 'Mutation', updateNode: { __typename?: 'Node', id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
+export type UpdateNodeMutation = { updateNode: { id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, attached: Array<{ id: string, name: string, latitude: string, longitude: string, type: NodeTypeEnum, site: { nodeId: string | null, siteId: string | null, networkId: string | null, addedAt: string | null }, status: { connectivity: string, state: string } }>, site: { nodeId: string | null, siteId: string | null, networkId: string | null, addedAt: string | null }, status: { connectivity: string, state: string } } };
 
 export type GetNodeAppsQueryVariables = Exact<{
   data: NodeAppsChangeLogInput;
 }>;
 
 
-export type GetNodeAppsQuery = { __typename?: 'Query', getNodeApps: { __typename?: 'NodeApps', type: NodeTypeEnum, apps: Array<{ __typename?: 'NodeApp', name: string, date: number, version: string, cpu: string, memory: string, notes: string }> } };
+export type GetNodeAppsQuery = { getNodeApps: { type: NodeTypeEnum, apps: Array<{ name: string, date: number, version: string, cpu: string, memory: string, notes: string }> } };
 
 export type GetNodeStateQueryVariables = Exact<{
-  getNodeStateId: Scalars['String']['input'];
+  getNodeStateId: string;
 }>;
 
 
-export type GetNodeStateQuery = { __typename?: 'Query', getNodeState: { __typename?: 'NodeStateRes', id: string, nodeId: string, previousStateId?: string | null, previousState?: NodeStateEnum | null, currentState: NodeStateEnum, createdAt: string } };
+export type GetNodeStateQuery = { getNodeState: { id: string, nodeId: string, previousStateId: string | null, previousState: NodeStateEnum | null, currentState: NodeStateEnum, createdAt: string } };
 
 export type RestartNodeMutationVariables = Exact<{
   data: RestartNodeInputDto;
 }>;
 
 
-export type RestartNodeMutation = { __typename?: 'Mutation', restartNode: { __typename?: 'CBooleanResponse', success: boolean } };
+export type RestartNodeMutation = { restartNode: { success: boolean } };
 
 export type ToggleInternetSwitchMutationVariables = Exact<{
   data: ToggleInternetSwitchInputDto;
 }>;
 
 
-export type ToggleInternetSwitchMutation = { __typename?: 'Mutation', toggleInternetSwitch: { __typename?: 'CBooleanResponse', success: boolean } };
+export type ToggleInternetSwitchMutation = { toggleInternetSwitch: { success: boolean } };
 
 export type ToggleRfStatusMutationVariables = Exact<{
   data: ToggleRfStatusInputDto;
 }>;
 
 
-export type ToggleRfStatusMutation = { __typename?: 'Mutation', toggleRFStatus: { __typename?: 'CBooleanResponse', success: boolean } };
+export type ToggleRfStatusMutation = { toggleRFStatus: { success: boolean } };
 
 export type ToggleServiceMutationVariables = Exact<{
   data: ToggleRfStatusInputDto;
 }>;
 
 
-export type ToggleServiceMutation = { __typename?: 'Mutation', toggleService: { __typename?: 'CBooleanResponse', success: boolean } };
+export type ToggleServiceMutation = { toggleService: { success: boolean } };
 
 export type GetHealthReportQueryVariables = Exact<{
   data: GetHealthReportInputDto;
 }>;
 
 
-export type GetHealthReportQuery = { __typename?: 'Query', getHealthReport: { __typename?: 'HealthInfo', id: string, nodeId: string, timestamp: string, system: Array<{ __typename?: 'HealthSystemInfo', id: string, healthId: string, name: string, value: string }>, capps: Array<{ __typename?: 'HealthCappInfo', id: string, space: string, name: string, tag: string, status: string, resources: Array<{ __typename?: 'HealthResourceInfo', id: string, cappId: string, name: string, value: string }> }> } };
+export type GetHealthReportQuery = { getHealthReport: { id: string, nodeId: string, timestamp: string, system: Array<{ id: string, healthId: string, name: string, value: string }>, capps: Array<{ id: string, space: string, name: string, tag: string, status: string, resources: Array<{ id: string, cappId: string, name: string, value: string }> }> } };
 
-export type MemberFragment = { __typename?: 'MemberDto', role: string, userId: string, isDeactivated: boolean, memberSince?: string | null, id: string };
+export type MemberFragment = { role: string, userId: string, isDeactivated: boolean, memberSince: string | null, id: string };
 
 export type GetMembersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetMembersQuery = { __typename?: 'Query', getMembers: { __typename?: 'MembersResDto', members: Array<{ __typename?: 'MemberDto', name: string, email: string, role: string, userId: string, isDeactivated: boolean, memberSince?: string | null, id: string }> } };
+export type GetMembersQuery = { getMembers: { members: Array<{ name: string, email: string, role: string, userId: string, isDeactivated: boolean, memberSince: string | null, id: string }> } };
 
 export type GetMemberQueryVariables = Exact<{
-  memberId: Scalars['String']['input'];
+  memberId: string;
 }>;
 
 
-export type GetMemberQuery = { __typename?: 'Query', getMember: { __typename?: 'MemberDto', role: string, userId: string, isDeactivated: boolean, memberSince?: string | null, id: string } };
+export type GetMemberQuery = { getMember: { role: string, userId: string, isDeactivated: boolean, memberSince: string | null, id: string } };
 
 export type AddMemberMutationVariables = Exact<{
   data: AddMemberInputDto;
 }>;
 
 
-export type AddMemberMutation = { __typename?: 'Mutation', addMember: { __typename?: 'MemberDto', role: string, userId: string, isDeactivated: boolean, memberSince?: string | null, id: string } };
+export type AddMemberMutation = { addMember: { role: string, userId: string, isDeactivated: boolean, memberSince: string | null, id: string } };
 
 export type RemoveMemberMutationVariables = Exact<{
-  memberId: Scalars['String']['input'];
+  memberId: string;
 }>;
 
 
-export type RemoveMemberMutation = { __typename?: 'Mutation', removeMember: { __typename?: 'CBooleanResponse', success: boolean } };
+export type RemoveMemberMutation = { removeMember: { success: boolean } };
 
 export type UpdateMemberMutationVariables = Exact<{
-  memberId: Scalars['String']['input'];
+  memberId: string;
   data: UpdateMemberInputDto;
 }>;
 
 
-export type UpdateMemberMutation = { __typename?: 'Mutation', updateMember: { __typename?: 'CBooleanResponse', success: boolean } };
+export type UpdateMemberMutation = { updateMember: { success: boolean } };
 
 export type GetMemberByUserIdQueryVariables = Exact<{
-  userId: Scalars['String']['input'];
+  userId: string;
 }>;
 
 
-export type GetMemberByUserIdQuery = { __typename?: 'Query', getMemberByUserId: { __typename?: 'MemberDto', userId: string, name: string, email: string, memberId: string, isDeactivated: boolean, role: string, memberSince?: string | null } };
+export type GetMemberByUserIdQuery = { getMemberByUserId: { userId: string, name: string, email: string, memberId: string, isDeactivated: boolean, role: string, memberSince: string | null } };
 
-export type OrgFragment = { __typename?: 'OrgDto', id: string, name: string, owner: string, country: string, currency: string, createdAt: string, certificate: string, isDeactivated: boolean };
+export type OrgFragment = { id: string, name: string, owner: string, country: string, currency: string, createdAt: string, certificate: string, isDeactivated: boolean };
 
 export type GetOrgsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetOrgsQuery = { __typename?: 'Query', getOrgs: { __typename?: 'OrgsResDto', user: string, ownerOf: Array<{ __typename?: 'OrgDto', id: string, name: string, owner: string, country: string, currency: string, createdAt: string, certificate: string, isDeactivated: boolean }>, memberOf: Array<{ __typename?: 'OrgDto', id: string, name: string, owner: string, country: string, currency: string, createdAt: string, certificate: string, isDeactivated: boolean }> } };
+export type GetOrgsQuery = { getOrgs: { user: string, ownerOf: Array<{ id: string, name: string, owner: string, country: string, currency: string, createdAt: string, certificate: string, isDeactivated: boolean }>, memberOf: Array<{ id: string, name: string, owner: string, country: string, currency: string, createdAt: string, certificate: string, isDeactivated: boolean }> } };
 
 export type GetOrgQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetOrgQuery = { __typename?: 'Query', getOrg: { __typename?: 'OrgDto', id: string, name: string, owner: string, country: string, currency: string, createdAt: string, certificate: string, isDeactivated: boolean } };
+export type GetOrgQuery = { getOrg: { id: string, name: string, owner: string, country: string, currency: string, createdAt: string, certificate: string, isDeactivated: boolean } };
 
-export type PackageRateFragment = { __typename?: 'PackageDto', rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number } };
+export type PackageRateFragment = { rate: { sms_mo: string, sms_mt: number, data: number, amount: number } };
 
-export type PackageMarkupFragment = { __typename?: 'PackageDto', markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } };
+export type PackageMarkupFragment = { markup: { baserate: string, markup: number } };
 
-export type SimPackagesFragment = { __typename?: 'SimToPackagesDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean };
+export type SimPackagesFragment = { id: string, package_id: string, start_date: string, end_date: string, is_active: boolean };
 
-export type SubscriberSimsFragment = { __typename?: 'SubscriberToSimsDto', subscriberId: string, sims: Array<{ __typename?: 'SubscriberSimsDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, isPhysical: boolean }> };
+export type SubscriberSimsFragment = { subscriberId: string, sims: Array<{ id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, isPhysical: boolean }> };
 
-export type PackageFragment = { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } };
+export type PackageFragment = { uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { baserate: string, markup: number } };
 
 export type GetPackagesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetPackagesQuery = { __typename?: 'Query', getPackages: { __typename?: 'PackagesResDto', packages: Array<{ __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } }> } };
+export type GetPackagesQuery = { getPackages: { packages: Array<{ uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { baserate: string, markup: number } }> } };
 
 export type GetPackageQueryVariables = Exact<{
-  packageId: Scalars['String']['input'];
+  packageId: string;
 }>;
 
 
-export type GetPackageQuery = { __typename?: 'Query', getPackage: { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
+export type GetPackageQuery = { getPackage: { uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { baserate: string, markup: number } } };
 
 export type GetSimsBySubscriberQueryVariables = Exact<{
   data: GetSimBySubscriberInputDto;
 }>;
 
 
-export type GetSimsBySubscriberQuery = { __typename?: 'Query', getSimsBySubscriber: { __typename?: 'SubscriberToSimsDto', subscriberId: string, sims: Array<{ __typename?: 'SubscriberSimsDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, isPhysical: boolean }> } };
+export type GetSimsBySubscriberQuery = { getSimsBySubscriber: { subscriberId: string, sims: Array<{ id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, isPhysical: boolean }> } };
 
 export type AddPackageMutationVariables = Exact<{
   data: AddPackageInputDto;
 }>;
 
 
-export type AddPackageMutation = { __typename?: 'Mutation', addPackage: { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
+export type AddPackageMutation = { addPackage: { uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { baserate: string, markup: number } } };
 
 export type RemovePackageForSimMutationVariables = Exact<{
   data: RemovePackageFormSimInputDto;
 }>;
 
 
-export type RemovePackageForSimMutation = { __typename?: 'Mutation', removePackageForSim: { __typename?: 'RemovePackageFromSimResDto', packageId?: string | null } };
+export type RemovePackageForSimMutation = { removePackageForSim: { packageId: string | null } };
 
 export type DeletePackageMutationVariables = Exact<{
-  packageId: Scalars['String']['input'];
+  packageId: string;
 }>;
 
 
-export type DeletePackageMutation = { __typename?: 'Mutation', deletePackage: { __typename?: 'IdResponse', uuid: string } };
+export type DeletePackageMutation = { deletePackage: { uuid: string } };
 
 export type GetPackagesForSimQueryVariables = Exact<{
   data: GetPackagesForSimInputDto;
 }>;
 
 
-export type GetPackagesForSimQuery = { __typename?: 'Query', getPackagesForSim: { __typename?: 'GetSimPackagesDtoAPI', sim_id: string, packages: Array<{ __typename?: 'SimToPackagesDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean }> } };
+export type GetPackagesForSimQuery = { getPackagesForSim: { sim_id: string, packages: Array<{ id: string, package_id: string, start_date: string, end_date: string, is_active: boolean }> } };
 
 export type AddPackagesToSimMutationVariables = Exact<{
   data: AddPackagesToSimInputDto;
 }>;
 
 
-export type AddPackagesToSimMutation = { __typename?: 'Mutation', addPackagesToSim: { __typename?: 'AddPackagesSimResDto', packages: Array<{ __typename?: 'AddPackagSimResDto', packageId?: string | null }> } };
+export type AddPackagesToSimMutation = { addPackagesToSim: { packages: Array<{ packageId: string | null }> } };
 
 export type DeleteSimMutationVariables = Exact<{
   data: DeleteSimInputDto;
 }>;
 
 
-export type DeleteSimMutation = { __typename?: 'Mutation', deleteSim: { __typename?: 'DeleteSimResDto', simId?: string | null } };
+export type DeleteSimMutation = { deleteSim: { simId: string | null } };
 
 export type UpdatePacakgeMutationVariables = Exact<{
-  packageId: Scalars['String']['input'];
+  packageId: string;
   data: UpdatePackageInputDto;
 }>;
 
 
-export type UpdatePacakgeMutation = { __typename?: 'Mutation', updatePackage: { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
+export type UpdatePacakgeMutation = { updatePackage: { uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { baserate: string, markup: number } } };
 
-export type PaymentFragment = { __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, extra: string, createdAt: string };
+export type PaymentFragment = { id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, extra: string, createdAt: string };
 
 export type UpdatePaymentMutationVariables = Exact<{
   data: UpdatePaymentInputDto;
 }>;
 
 
-export type UpdatePaymentMutation = { __typename?: 'Mutation', updatePayment: { __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, createdAt: string } };
+export type UpdatePaymentMutation = { updatePayment: { id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, createdAt: string } };
 
 export type ProcessPaymentMutationVariables = Exact<{
   data: ProcessPaymentInputDto;
 }>;
 
 
-export type ProcessPaymentMutation = { __typename?: 'Mutation', processPayment: { __typename?: 'ProcessPaymentDto', payment: { __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, createdAt: string } } };
+export type ProcessPaymentMutation = { processPayment: { payment: { id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, createdAt: string } } };
 
 export type GetPaymentQueryVariables = Exact<{
-  paymentId: Scalars['String']['input'];
+  paymentId: string;
 }>;
 
 
-export type GetPaymentQuery = { __typename?: 'Query', getPayment: { __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, extra: string, createdAt: string } };
+export type GetPaymentQuery = { getPayment: { id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, extra: string, createdAt: string } };
 
 export type GetPaymentsQueryVariables = Exact<{
   data: GetPaymentsInputDto;
 }>;
 
 
-export type GetPaymentsQuery = { __typename?: 'Query', getPayments: { __typename?: 'PaymentsDto', payments: Array<{ __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, extra: string, createdAt: string }> } };
+export type GetPaymentsQuery = { getPayments: { payments: Array<{ id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, extra: string, createdAt: string }> } };
 
-export type CustomerFragment = { __typename?: 'CustomerDto', externalId: string, name: string, email?: string | null, addressLine1?: string | null, legalName?: string | null, legalNumber?: string | null, phone?: string | null, currency: string, timezone?: string | null, vatRate: number, createdAt: string };
+export type CustomerFragment = { externalId: string, name: string, email: string | null, addressLine1: string | null, legalName: string | null, legalNumber: string | null, phone: string | null, currency: string, timezone: string | null, vatRate: number, createdAt: string };
 
-export type SubscriptionFragment = { __typename?: 'SubscriptionDto', externalCustomerId: string, externalId: string, planCode: string, name?: string | null, status: string, createdAt: string, startedAt: string, canceledAt?: string | null, terminatedAt?: string | null };
+export type SubscriptionFragment = { externalCustomerId: string, externalId: string, planCode: string, name: string | null, status: string, createdAt: string, startedAt: string, canceledAt: string | null, terminatedAt: string | null };
 
-export type FeeFragment = { __typename?: 'FeeDto', taxesAmountCents: string, taxesPreciseAmount: string, totalAmountCents: string, totalAmountCurrency: string, eventsCount: string, units: number, item: { __typename?: 'ItemResDto', type: string, code: string, name: string } };
+export type FeeFragment = { taxesAmountCents: string, taxesPreciseAmount: string, totalAmountCents: string, totalAmountCurrency: string, eventsCount: string, units: number, item: { type: string, code: string, name: string } };
 
-export type RawReportFragment = { __typename?: 'RawReportDto', issuingDate: string, paymentDueDate: string, paymentOverdue: boolean, invoiceType: string, status: string, paymentStatus: string, feesAmountCents: string, taxesAmountCents: string, subTotalExcludingTaxesAmountCents: string, subTotalIncludingTaxesAmountCents: string, vatAmountCents: string, vatAmountCurrency?: string | null, totalAmountCents: string, currency: string, fileUrl: string, customer: { __typename?: 'CustomerDto', externalId: string, name: string, email?: string | null, addressLine1?: string | null, legalName?: string | null, legalNumber?: string | null, phone?: string | null, currency: string, timezone?: string | null, vatRate: number, createdAt: string }, subscriptions: Array<{ __typename?: 'SubscriptionDto', externalCustomerId: string, externalId: string, planCode: string, name?: string | null, status: string, createdAt: string, startedAt: string, canceledAt?: string | null, terminatedAt?: string | null }>, fees: Array<{ __typename?: 'FeeDto', taxesAmountCents: string, taxesPreciseAmount: string, totalAmountCents: string, totalAmountCurrency: string, eventsCount: string, units: number, item: { __typename?: 'ItemResDto', type: string, code: string, name: string } }> };
+export type RawReportFragment = { issuingDate: string, paymentDueDate: string, paymentOverdue: boolean, invoiceType: string, status: string, paymentStatus: string, feesAmountCents: string, taxesAmountCents: string, subTotalExcludingTaxesAmountCents: string, subTotalIncludingTaxesAmountCents: string, vatAmountCents: string, vatAmountCurrency: string | null, totalAmountCents: string, currency: string, fileUrl: string, customer: { externalId: string, name: string, email: string | null, addressLine1: string | null, legalName: string | null, legalNumber: string | null, phone: string | null, currency: string, timezone: string | null, vatRate: number, createdAt: string }, subscriptions: Array<{ externalCustomerId: string, externalId: string, planCode: string, name: string | null, status: string, createdAt: string, startedAt: string, canceledAt: string | null, terminatedAt: string | null }>, fees: Array<{ taxesAmountCents: string, taxesPreciseAmount: string, totalAmountCents: string, totalAmountCurrency: string, eventsCount: string, units: number, item: { type: string, code: string, name: string } }> };
 
 export type GetReportsQueryVariables = Exact<{
   data: GetReportsInputDto;
 }>;
 
 
-export type GetReportsQuery = { __typename?: 'Query', getReports: { __typename?: 'GetReportsDto', reports: Array<{ __typename?: 'ReportDto', id: string, ownerId: string, ownerType: string, networkId: string, period: string, type: string, isPaid: boolean, createdAt: string, rawReport: { __typename?: 'RawReportDto', issuingDate: string, paymentDueDate: string, paymentOverdue: boolean, invoiceType: string, status: string, paymentStatus: string, feesAmountCents: string, taxesAmountCents: string, subTotalExcludingTaxesAmountCents: string, subTotalIncludingTaxesAmountCents: string, vatAmountCents: string, vatAmountCurrency?: string | null, totalAmountCents: string, currency: string, fileUrl: string, customer: { __typename?: 'CustomerDto', externalId: string, name: string, email?: string | null, addressLine1?: string | null, legalName?: string | null, legalNumber?: string | null, phone?: string | null, currency: string, timezone?: string | null, vatRate: number, createdAt: string }, subscriptions: Array<{ __typename?: 'SubscriptionDto', externalCustomerId: string, externalId: string, planCode: string, name?: string | null, status: string, createdAt: string, startedAt: string, canceledAt?: string | null, terminatedAt?: string | null }>, fees: Array<{ __typename?: 'FeeDto', taxesAmountCents: string, taxesPreciseAmount: string, totalAmountCents: string, totalAmountCurrency: string, eventsCount: string, units: number, item: { __typename?: 'ItemResDto', type: string, code: string, name: string } }> } }> } };
+export type GetReportsQuery = { getReports: { reports: Array<{ id: string, ownerId: string, ownerType: string, networkId: string, period: string, type: string, isPaid: boolean, createdAt: string, rawReport: { issuingDate: string, paymentDueDate: string, paymentOverdue: boolean, invoiceType: string, status: string, paymentStatus: string, feesAmountCents: string, taxesAmountCents: string, subTotalExcludingTaxesAmountCents: string, subTotalIncludingTaxesAmountCents: string, vatAmountCents: string, vatAmountCurrency: string | null, totalAmountCents: string, currency: string, fileUrl: string, customer: { externalId: string, name: string, email: string | null, addressLine1: string | null, legalName: string | null, legalNumber: string | null, phone: string | null, currency: string, timezone: string | null, vatRate: number, createdAt: string }, subscriptions: Array<{ externalCustomerId: string, externalId: string, planCode: string, name: string | null, status: string, createdAt: string, startedAt: string, canceledAt: string | null, terminatedAt: string | null }>, fees: Array<{ taxesAmountCents: string, taxesPreciseAmount: string, totalAmountCents: string, totalAmountCurrency: string, eventsCount: string, units: number, item: { type: string, code: string, name: string } }> } }> } };
 
 export type GetReportQueryVariables = Exact<{
-  id: Scalars['String']['input'];
+  id: string;
 }>;
 
 
-export type GetReportQuery = { __typename?: 'Query', getReport: { __typename?: 'GetReportDto', report: { __typename?: 'ReportDto', id: string, ownerId: string, ownerType: string, networkId: string, period: string, type: string, isPaid: boolean, createdAt: string, rawReport: { __typename?: 'RawReportDto', issuingDate: string, paymentDueDate: string, paymentOverdue: boolean, invoiceType: string, status: string, paymentStatus: string, feesAmountCents: string, taxesAmountCents: string, subTotalExcludingTaxesAmountCents: string, subTotalIncludingTaxesAmountCents: string, vatAmountCents: string, vatAmountCurrency?: string | null, totalAmountCents: string, currency: string, fileUrl: string, customer: { __typename?: 'CustomerDto', externalId: string, name: string, email?: string | null, addressLine1?: string | null, legalName?: string | null, legalNumber?: string | null, phone?: string | null, currency: string, timezone?: string | null, vatRate: number, createdAt: string }, subscriptions: Array<{ __typename?: 'SubscriptionDto', externalCustomerId: string, externalId: string, planCode: string, name?: string | null, status: string, createdAt: string, startedAt: string, canceledAt?: string | null, terminatedAt?: string | null }>, fees: Array<{ __typename?: 'FeeDto', taxesAmountCents: string, taxesPreciseAmount: string, totalAmountCents: string, totalAmountCurrency: string, eventsCount: string, units: number, item: { __typename?: 'ItemResDto', type: string, code: string, name: string } }> } } } };
+export type GetReportQuery = { getReport: { report: { id: string, ownerId: string, ownerType: string, networkId: string, period: string, type: string, isPaid: boolean, createdAt: string, rawReport: { issuingDate: string, paymentDueDate: string, paymentOverdue: boolean, invoiceType: string, status: string, paymentStatus: string, feesAmountCents: string, taxesAmountCents: string, subTotalExcludingTaxesAmountCents: string, subTotalIncludingTaxesAmountCents: string, vatAmountCents: string, vatAmountCurrency: string | null, totalAmountCents: string, currency: string, fileUrl: string, customer: { externalId: string, name: string, email: string | null, addressLine1: string | null, legalName: string | null, legalNumber: string | null, phone: string | null, currency: string, timezone: string | null, vatRate: number, createdAt: string }, subscriptions: Array<{ externalCustomerId: string, externalId: string, planCode: string, name: string | null, status: string, createdAt: string, startedAt: string, canceledAt: string | null, terminatedAt: string | null }>, fees: Array<{ taxesAmountCents: string, taxesPreciseAmount: string, totalAmountCents: string, totalAmountCurrency: string, eventsCount: string, units: number, item: { type: string, code: string, name: string } }> } } } };
 
 export type GetSimPoolStatsQueryVariables = Exact<{
   data: GetSimsInput;
 }>;
 
 
-export type GetSimPoolStatsQuery = { __typename?: 'Query', getSimPoolStats: { __typename?: 'SimPoolStatsDto', total: number, available: number, consumed: number, failed: number, esim: number, physical: number } };
+export type GetSimPoolStatsQuery = { getSimPoolStats: { total: number, available: number, consumed: number, failed: number, esim: number, physical: number } };
 
 export type GetSimsFromPoolQueryVariables = Exact<{
   data: GetSimsInput;
 }>;
 
 
-export type GetSimsFromPoolQuery = { __typename?: 'Query', getSimsFromPool: { __typename?: 'SimsPoolResDto', sims: Array<{ __typename?: 'SimPoolResDto', id: string, qrCode: string, iccid: string, msisdn: string, isAllocated: boolean, isFailed: boolean, simType: string, smApAddress: string, activationCode: string, createdAt: string, deletedAt: string, updatedAt: string, isPhysical: boolean }> } };
+export type GetSimsFromPoolQuery = { getSimsFromPool: { sims: Array<{ id: string, qrCode: string, iccid: string, msisdn: string, isAllocated: boolean, isFailed: boolean, simType: string, smApAddress: string, activationCode: string, createdAt: string, deletedAt: string, updatedAt: string, isPhysical: boolean }> } };
 
 export type UploadSimsMutationVariables = Exact<{
   data: UploadSimsInputDto;
 }>;
 
 
-export type UploadSimsMutation = { __typename?: 'Mutation', uploadSims: { __typename?: 'UploadSimsResDto', iccid: Array<string> } };
+export type UploadSimsMutation = { uploadSims: { iccid: Array<string> } };
 
-export type SimPackageFragment = { __typename?: 'SimPackage', id: string, packageId: string, startDate: string, endDate: string, defaultDuration: string, isActive: boolean, asExpired: boolean };
+export type SimPackageFragment = { id: string, packageId: string, startDate: string, endDate: string, defaultDuration: string, isActive: boolean, asExpired: boolean };
 
-export type SimFragment = { __typename?: 'SimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, isPhysical: boolean, trafficPolicy: number, firstActivatedOn: string, lastActivatedOn: string, activationsCount: string, deactivationsCount: string, allocatedAt: string, syncStatus: string, package?: { __typename?: 'SimPackage', id: string, packageId: string, startDate: string, endDate: string, defaultDuration: string, isActive: boolean, asExpired: boolean } | null };
+export type SimFragment = { id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, isPhysical: boolean, trafficPolicy: number, firstActivatedOn: string, lastActivatedOn: string, activationsCount: string, deactivationsCount: string, allocatedAt: string, syncStatus: string, package: { id: string, packageId: string, startDate: string, endDate: string, defaultDuration: string, isActive: boolean, asExpired: boolean } | null };
 
-export type SimAllocationPackageFragment = { __typename?: 'SimAllocatePackageDto', id?: string | null, packageId?: string | null, startDate?: string | null, endDate?: string | null, isActive?: boolean | null };
+export type SimAllocationPackageFragment = { id: string | null, packageId: string | null, startDate: string | null, endDate: string | null, isActive: boolean | null };
 
-export type SimAllocationFragment = { __typename?: 'AllocateSimAPIDto', id: string, subscriber_id: string, network_id: string, iccid: string, msisdn: string, imsi?: string | null, type: string, status: string, is_physical: boolean, traffic_policy: number, allocated_at: string, sync_status: string, package: { __typename?: 'SimAllocatePackageDto', id?: string | null, packageId?: string | null, startDate?: string | null, endDate?: string | null, isActive?: boolean | null } };
+export type SimAllocationFragment = { id: string, subscriber_id: string, network_id: string, iccid: string, msisdn: string, imsi: string | null, type: string, status: string, is_physical: boolean, traffic_policy: number, allocated_at: string, sync_status: string, package: { id: string | null, packageId: string | null, startDate: string | null, endDate: string | null, isActive: boolean | null } };
 
 export type AllocateSimMutationVariables = Exact<{
   data: AllocateSimInputDto;
 }>;
 
 
-export type AllocateSimMutation = { __typename?: 'Mutation', allocateSim: { __typename?: 'AllocateSimAPIDto', id: string, subscriber_id: string, network_id: string, iccid: string, msisdn: string, imsi?: string | null, type: string, status: string, is_physical: boolean, traffic_policy: number, allocated_at: string, sync_status: string, package: { __typename?: 'SimAllocatePackageDto', id?: string | null, packageId?: string | null, startDate?: string | null, endDate?: string | null, isActive?: boolean | null } } };
+export type AllocateSimMutation = { allocateSim: { id: string, subscriber_id: string, network_id: string, iccid: string, msisdn: string, imsi: string | null, type: string, status: string, is_physical: boolean, traffic_policy: number, allocated_at: string, sync_status: string, package: { id: string | null, packageId: string | null, startDate: string | null, endDate: string | null, isActive: boolean | null } } };
 
 export type ToggleSimStatusMutationVariables = Exact<{
   data: ToggleSimStatusInputDto;
 }>;
 
 
-export type ToggleSimStatusMutation = { __typename?: 'Mutation', toggleSimStatus: { __typename?: 'SimStatusResDto', simId?: string | null } };
+export type ToggleSimStatusMutation = { toggleSimStatus: { simId: string | null } };
 
 export type GetSimQueryVariables = Exact<{
   data: GetSimInputDto;
 }>;
 
 
-export type GetSimQuery = { __typename?: 'Query', getSim: { __typename?: 'SimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, isPhysical: boolean, trafficPolicy: number, firstActivatedOn: string, lastActivatedOn: string, activationsCount: string, deactivationsCount: string, allocatedAt: string, syncStatus: string, package?: { __typename?: 'SimPackage', id: string, packageId: string, startDate: string, endDate: string, defaultDuration: string, isActive: boolean, asExpired: boolean } | null } };
+export type GetSimQuery = { getSim: { id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, isPhysical: boolean, trafficPolicy: number, firstActivatedOn: string, lastActivatedOn: string, activationsCount: string, deactivationsCount: string, allocatedAt: string, syncStatus: string, package: { id: string, packageId: string, startDate: string, endDate: string, defaultDuration: string, isActive: boolean, asExpired: boolean } | null } };
 
 export type GetSimsQueryVariables = Exact<{
   data: ListSimsInput;
 }>;
 
 
-export type GetSimsQuery = { __typename?: 'Query', getSims: { __typename?: 'SimsResDto', sims: Array<{ __typename?: 'SimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, isPhysical: boolean, trafficPolicy: number, firstActivatedOn: string, lastActivatedOn: string, activationsCount: string, deactivationsCount: string, allocatedAt: string, syncStatus: string, package?: { __typename?: 'SimPackage', id: string, packageId: string, startDate: string, endDate: string, defaultDuration: string, isActive: boolean, asExpired: boolean } | null }> } };
+export type GetSimsQuery = { getSims: { sims: Array<{ id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, isPhysical: boolean, trafficPolicy: number, firstActivatedOn: string, lastActivatedOn: string, activationsCount: string, deactivationsCount: string, allocatedAt: string, syncStatus: string, package: { id: string, packageId: string, startDate: string, endDate: string, defaultDuration: string, isActive: boolean, asExpired: boolean } | null }> } };
 
-export type SubscriberSimFragment = { __typename?: 'SubscriberDto', sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status?: string | null, isPhysical?: boolean | null, package?: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } | null }> | null };
+export type SubscriberSimFragment = { sim: Array<{ id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status: string | null, isPhysical: boolean | null, package: { id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } | null }> | null };
 
-export type SubscriberFragment = { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status?: string | null, isPhysical?: boolean | null, package?: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } | null }> | null };
+export type SubscriberFragment = { uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim: Array<{ id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status: string | null, isPhysical: boolean | null, package: { id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } | null }> | null };
 
 export type AddSubscriberMutationVariables = Exact<{
   data: SubscriberInputDto;
 }>;
 
 
-export type AddSubscriberMutation = { __typename?: 'Mutation', addSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status?: string | null, isPhysical?: boolean | null, package?: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } | null }> | null } };
+export type AddSubscriberMutation = { addSubscriber: { uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim: Array<{ id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status: string | null, isPhysical: boolean | null, package: { id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } | null }> | null } };
 
 export type GetSubscriberQueryVariables = Exact<{
-  subscriberId: Scalars['String']['input'];
+  subscriberId: string;
 }>;
 
 
-export type GetSubscriberQuery = { __typename?: 'Query', getSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status?: string | null, isPhysical?: boolean | null, package?: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } | null }> | null } };
+export type GetSubscriberQuery = { getSubscriber: { uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim: Array<{ id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status: string | null, isPhysical: boolean | null, package: { id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } | null }> | null } };
 
 export type UpdateSubscriberMutationVariables = Exact<{
-  subscriberId: Scalars['String']['input'];
+  subscriberId: string;
   data: UpdateSubscriberInputDto;
 }>;
 
 
-export type UpdateSubscriberMutation = { __typename?: 'Mutation', updateSubscriber: { __typename?: 'CBooleanResponse', success: boolean } };
+export type UpdateSubscriberMutation = { updateSubscriber: { success: boolean } };
 
 export type DeleteSubscriberMutationVariables = Exact<{
-  subscriberId: Scalars['String']['input'];
+  subscriberId: string;
 }>;
 
 
-export type DeleteSubscriberMutation = { __typename?: 'Mutation', deleteSubscriber: { __typename?: 'CBooleanResponse', success: boolean } };
+export type DeleteSubscriberMutation = { deleteSubscriber: { success: boolean } };
 
 export type GetSubscribersByNetworkQueryVariables = Exact<{
-  networkId: Scalars['String']['input'];
+  networkId: string;
 }>;
 
 
-export type GetSubscribersByNetworkQuery = { __typename?: 'Query', getSubscribersByNetwork: { __typename?: 'SubscribersResDto', subscribers: Array<{ __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status?: string | null, isPhysical?: boolean | null, package?: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } | null }> | null }> } };
+export type GetSubscribersByNetworkQuery = { getSubscribersByNetwork: { subscribers: Array<{ uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim: Array<{ id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status: string | null, isPhysical: boolean | null, package: { id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } | null }> | null }> } };
 
 export type GetSubscriberMetricsByNetworkQueryVariables = Exact<{
-  networkId: Scalars['String']['input'];
+  networkId: string;
 }>;
 
 
-export type GetSubscriberMetricsByNetworkQuery = { __typename?: 'Query', getSubscriberMetricsByNetwork: { __typename?: 'SubscriberMetricsByNetworkDto', total: number, active: number, inactive: number, terminated: number } };
+export type GetSubscriberMetricsByNetworkQuery = { getSubscriberMetricsByNetwork: { total: number, active: number, inactive: number, terminated: number } };
 
 export type GetGeneratedPdfReportQueryVariables = Exact<{
-  Id: Scalars['String']['input'];
+  Id: string;
 }>;
 
 
-export type GetGeneratedPdfReportQuery = { __typename?: 'Query', getGeneratedPdfReport: { __typename?: 'GetPdfReportUrlDto', contentType: string, filename: string, downloadUrl: string } };
+export type GetGeneratedPdfReportQuery = { getGeneratedPdfReport: { contentType: string, filename: string, downloadUrl: string } };
 
-export type UserFragment = { __typename?: 'UserResDto', name: string, uuid: string, email: string, phone: string, authId: string, isDeactivated: boolean, registeredSince: string };
+export type UserFragment = { name: string, uuid: string, email: string, phone: string, authId: string, isDeactivated: boolean, registeredSince: string };
 
 export type WhoamiQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type WhoamiQuery = { __typename?: 'Query', whoami: { __typename?: 'WhoamiDto', user: { __typename?: 'UserResDto', name: string, uuid: string, email: string, phone: string, authId: string, isDeactivated: boolean, registeredSince: string }, ownerOf: Array<{ __typename?: 'OrgDto', id: string, name: string, owner: string, country: string, currency: string, createdAt: string, certificate: string, isDeactivated: boolean }>, memberOf: Array<{ __typename?: 'OrgDto', id: string, name: string, owner: string, country: string, currency: string, createdAt: string, certificate: string, isDeactivated: boolean }> } };
+export type WhoamiQuery = { whoami: { user: { name: string, uuid: string, email: string, phone: string, authId: string, isDeactivated: boolean, registeredSince: string }, ownerOf: Array<{ id: string, name: string, owner: string, country: string, currency: string, createdAt: string, certificate: string, isDeactivated: boolean }>, memberOf: Array<{ id: string, name: string, owner: string, country: string, currency: string, createdAt: string, certificate: string, isDeactivated: boolean }> } };
 
 export type GetUserQueryVariables = Exact<{
-  userId: Scalars['String']['input'];
+  userId: string;
 }>;
 
 
-export type GetUserQuery = { __typename?: 'Query', getUser: { __typename?: 'UserResDto', name: string, uuid: string, email: string, phone: string, authId: string, isDeactivated: boolean, registeredSince: string } };
+export type GetUserQuery = { getUser: { name: string, uuid: string, email: string, phone: string, authId: string, isDeactivated: boolean, registeredSince: string } };
 
-export type UNetworkFragment = { __typename?: 'NetworkDto', id: string, name: string, isDefault: boolean, budget: number, overdraft: number, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> };
+export type UNetworkFragment = { id: string, name: string, isDefault: boolean, budget: number, overdraft: number, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> };
 
 export type GetNetworksQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetNetworksQuery = { __typename?: 'Query', getNetworks: { __typename?: 'NetworksResDto', networks: Array<{ __typename?: 'NetworkDto', id: string, name: string, isDefault: boolean, budget: number, overdraft: number, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> }> } };
+export type GetNetworksQuery = { getNetworks: { networks: Array<{ id: string, name: string, isDefault: boolean, budget: number, overdraft: number, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> }> } };
 
 export type GetNetworkQueryVariables = Exact<{
-  networkId: Scalars['String']['input'];
+  networkId: string;
 }>;
 
 
-export type GetNetworkQuery = { __typename?: 'Query', getNetwork: { __typename?: 'NetworkDto', id: string, name: string, isDefault: boolean, budget: number, overdraft: number, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> } };
+export type GetNetworkQuery = { getNetwork: { id: string, name: string, isDefault: boolean, budget: number, overdraft: number, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> } };
 
 export type AddNetworkMutationVariables = Exact<{
   data: AddNetworkInputDto;
 }>;
 
 
-export type AddNetworkMutation = { __typename?: 'Mutation', addNetwork: { __typename?: 'NetworkDto', id: string, name: string, isDefault: boolean, budget: number, overdraft: number, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> } };
+export type AddNetworkMutation = { addNetwork: { id: string, name: string, isDefault: boolean, budget: number, overdraft: number, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> } };
 
 export type SetDefaultNetworkMutationVariables = Exact<{
   data: SetDefaultNetworkInputDto;
 }>;
 
 
-export type SetDefaultNetworkMutation = { __typename?: 'Mutation', setDefaultNetwork: { __typename?: 'CBooleanResponse', success: boolean } };
+export type SetDefaultNetworkMutation = { setDefaultNetwork: { success: boolean } };
 
-export type USiteFragment = { __typename?: 'SiteDto', id: string, name: string, networkId: string, backhaulId: string, powerId: string, accessId: string, spectrumId: string, switchId: string, isDeactivated: boolean, latitude: string, longitude: string, installDate: string, createdAt: string, location: string };
+export type USiteFragment = { id: string, name: string, networkId: string, backhaulId: string, powerId: string, accessId: string, spectrumId: string, switchId: string, isDeactivated: boolean, latitude: string, longitude: string, installDate: string, createdAt: string, location: string };
 
 export type GetSiteQueryVariables = Exact<{
-  siteId: Scalars['String']['input'];
+  siteId: string;
 }>;
 
 
-export type GetSiteQuery = { __typename?: 'Query', getSite: { __typename?: 'SiteDto', id: string, name: string, networkId: string, backhaulId: string, powerId: string, accessId: string, spectrumId: string, switchId: string, isDeactivated: boolean, latitude: string, longitude: string, installDate: string, createdAt: string, location: string } };
+export type GetSiteQuery = { getSite: { id: string, name: string, networkId: string, backhaulId: string, powerId: string, accessId: string, spectrumId: string, switchId: string, isDeactivated: boolean, latitude: string, longitude: string, installDate: string, createdAt: string, location: string } };
 
 export type AddSiteMutationVariables = Exact<{
   data: AddSiteInputDto;
 }>;
 
 
-export type AddSiteMutation = { __typename?: 'Mutation', addSite: { __typename?: 'SiteDto', id: string, name: string, networkId: string, backhaulId: string, powerId: string, accessId: string, spectrumId: string, switchId: string, isDeactivated: boolean, latitude: string, longitude: string, installDate: string, createdAt: string, location: string } };
+export type AddSiteMutation = { addSite: { id: string, name: string, networkId: string, backhaulId: string, powerId: string, accessId: string, spectrumId: string, switchId: string, isDeactivated: boolean, latitude: string, longitude: string, installDate: string, createdAt: string, location: string } };
 
 export type GetSitesQueryVariables = Exact<{
   data: SitesInputDto;
 }>;
 
 
-export type GetSitesQuery = { __typename?: 'Query', getSites: { __typename?: 'SitesResDto', sites: Array<{ __typename?: 'SiteDto', id: string, name: string, networkId: string, backhaulId: string, powerId: string, accessId: string, spectrumId: string, switchId: string, isDeactivated: boolean, latitude: string, longitude: string, installDate: string, createdAt: string, location: string }> } };
+export type GetSitesQuery = { getSites: { sites: Array<{ id: string, name: string, networkId: string, backhaulId: string, powerId: string, accessId: string, spectrumId: string, switchId: string, isDeactivated: boolean, latitude: string, longitude: string, installDate: string, createdAt: string, location: string }> } };
 
 export type UpdateSiteMutationVariables = Exact<{
-  siteId: Scalars['String']['input'];
+  siteId: string;
   data: UpdateSiteInputDto;
 }>;
 
 
-export type UpdateSiteMutation = { __typename?: 'Mutation', updateSite: { __typename?: 'SiteDto', name: string } };
+export type UpdateSiteMutation = { updateSite: { name: string } };
 
-export type UComponentFragment = { __typename?: 'ComponentDto', id: string, inventoryId: string, type: string, userId: string, description: string, category: string, datasheetUrl: string, imageUrl: string, partNumber: string, manufacturer: string, managed: string, warranty: number, specification: string };
+export type UComponentFragment = { id: string, inventoryId: string, type: string, userId: string, description: string, category: string, datasheetUrl: string, imageUrl: string, partNumber: string, manufacturer: string, managed: string, warranty: number, specification: string };
 
 export type GetComponentByIdQueryVariables = Exact<{
-  componentId: Scalars['String']['input'];
+  componentId: string;
 }>;
 
 
-export type GetComponentByIdQuery = { __typename?: 'Query', getComponentById: { __typename?: 'ComponentDto', id: string, inventoryId: string, type: string, userId: string, description: string, category: string, datasheetUrl: string, imageUrl: string, partNumber: string, manufacturer: string, managed: string, warranty: number, specification: string } };
+export type GetComponentByIdQuery = { getComponentById: { id: string, inventoryId: string, type: string, userId: string, description: string, category: string, datasheetUrl: string, imageUrl: string, partNumber: string, manufacturer: string, managed: string, warranty: number, specification: string } };
 
 export type GetComponentsByUserIdQueryVariables = Exact<{
   data: ComponentTypeInputDto;
 }>;
 
 
-export type GetComponentsByUserIdQuery = { __typename?: 'Query', getComponentsByUserId: { __typename?: 'ComponentsResDto', components: Array<{ __typename?: 'ComponentDto', id: string, inventoryId: string, type: string, userId: string, description: string, category: string, datasheetUrl: string, imageUrl: string, partNumber: string, manufacturer: string, managed: string, warranty: number, specification: string }> } };
+export type GetComponentsByUserIdQuery = { getComponentsByUserId: { components: Array<{ id: string, inventoryId: string, type: string, userId: string, description: string, category: string, datasheetUrl: string, imageUrl: string, partNumber: string, manufacturer: string, managed: string, warranty: number, specification: string }> } };
 
-export type InvitationFragment = { __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status };
+export type InvitationFragment = { email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status };
 
 export type CreateInvitationMutationVariables = Exact<{
   data: CreateInvitationInputDto;
 }>;
 
 
-export type CreateInvitationMutation = { __typename?: 'Mutation', createInvitation: { __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status } };
+export type CreateInvitationMutation = { createInvitation: { email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status } };
 
 export type GetInvitationsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetInvitationsQuery = { __typename?: 'Query', getInvitations: { __typename?: 'InvitationsResDto', invitations: Array<{ __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status }> } };
+export type GetInvitationsQuery = { getInvitations: { invitations: Array<{ email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status }> } };
 
 export type DeleteInvitationMutationVariables = Exact<{
-  deleteInvitationId: Scalars['String']['input'];
+  deleteInvitationId: string;
 }>;
 
 
-export type DeleteInvitationMutation = { __typename?: 'Mutation', deleteInvitation: { __typename?: 'DeleteInvitationResDto', id: string } };
+export type DeleteInvitationMutation = { deleteInvitation: { id: string } };
 
 export type UpdateInvitationMutationVariables = Exact<{
   data: UpateInvitationInputDto;
 }>;
 
 
-export type UpdateInvitationMutation = { __typename?: 'Mutation', updateInvitation: { __typename?: 'UpdateInvitationResDto', id: string } };
+export type UpdateInvitationMutation = { updateInvitation: { id: string } };
 
 export type GetInvitationsByEmailQueryVariables = Exact<{
-  email: Scalars['String']['input'];
+  email: string;
 }>;
 
 
-export type GetInvitationsByEmailQuery = { __typename?: 'Query', getInvitationsByEmail: { __typename?: 'InvitationsResDto', invitations: Array<{ __typename?: 'InvitationDto', email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status }> } };
+export type GetInvitationsByEmailQuery = { getInvitationsByEmail: { invitations: Array<{ email: string, expireAt: string, id: string, name: string, role: string, link: string, userId: string, status: Invitation_Status }> } };
 
 export type GetCountriesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetCountriesQuery = { __typename?: 'Query', getCountries: { __typename?: 'CountriesRes', countries: Array<{ __typename?: 'CountryDto', name: string, code: string }> } };
+export type GetCountriesQuery = { getCountries: { countries: Array<{ name: string, code: string }> } };
 
 export type GetCurrencySymbolQueryVariables = Exact<{
-  code: Scalars['String']['input'];
+  code: string;
 }>;
 
 
-export type GetCurrencySymbolQuery = { __typename?: 'Query', getCurrencySymbol: { __typename?: 'CurrencyRes', code: string, symbol: string, image: string } };
+export type GetCurrencySymbolQuery = { getCurrencySymbol: { code: string, symbol: string, image: string } };
 
 export type GetTimezonesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetTimezonesQuery = { __typename?: 'Query', getTimezones: { __typename?: 'TimezoneRes', timezones: Array<{ __typename?: 'TimezoneDto', value: string, abbr: string, offset: number, isdst: boolean, text: string, utc: Array<string> }> } };
+export type GetTimezonesQuery = { getTimezones: { timezones: Array<{ value: string, abbr: string, offset: number, isdst: boolean, text: string, utc: Array<string> }> } };
 
 export type UpdateNotificationMutationVariables = Exact<{
-  isRead: Scalars['Boolean']['input'];
-  updateNotificationId: Scalars['String']['input'];
+  isRead: boolean;
+  updateNotificationId: string;
 }>;
 
 
-export type UpdateNotificationMutation = { __typename?: 'Mutation', updateNotification: { __typename?: 'UpdateNotificationResDto', id: string } };
+export type UpdateNotificationMutation = { updateNotification: { id: string } };
 
 export type GetDataUsagesQueryVariables = Exact<{
   data: SimUsagesInputDto;
 }>;
 
 
-export type GetDataUsagesQuery = { __typename?: 'Query', getDataUsages: { __typename?: 'SimDataUsages', usages: Array<{ __typename?: 'SimDataUsage', usage: string, simId: string }> } };
+export type GetDataUsagesQuery = { getDataUsages: { usages: Array<{ usage: string, simId: string }> } };
 
 export type GetAppsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetAppsQuery = { __typename?: 'Query', getApps?: { __typename?: 'Apps', apps: Array<{ __typename?: 'App', name: string, space: string, notes: string, metricsKeys: Array<string> }> } | null };
+export type GetAppsQuery = { getApps: { apps: Array<{ name: string, space: string, notes: string, metricsKeys: Array<string> }> } | null };
 
 export type SoftwareQueryVariables = Exact<{
   data: GetSoftwaresInput;
 }>;
 
 
-export type SoftwareQuery = { __typename?: 'Query', getSoftwares: { __typename?: 'Softwares', software: Array<{ __typename?: 'Software', id: string, releaseDate: string, nodeId: string, status: SoftwareStatusEnum, changeLog: Array<string>, currentVersion: string, desiredVersion: string, name: string, space: string, notes: string, metricsKeys: Array<string>, createdAt: string, updatedAt: string }> } };
+export type SoftwareQuery = { getSoftwares: { software: Array<{ id: string, releaseDate: string, nodeId: string, status: SoftwareStatusEnum, changeLog: Array<string>, currentVersion: string, desiredVersion: string, name: string, space: string, notes: string, metricsKeys: Array<string>, createdAt: string, updatedAt: string }> } };
 
 export type UpdateSoftwareMutationVariables = Exact<{
   data: UpdateSoftwareInputDto;
 }>;
 
 
-export type UpdateSoftwareMutation = { __typename?: 'Mutation', updateSoftware: { __typename?: 'StringResponse', message: string } };
+export type UpdateSoftwareMutation = { updateSoftware: { message: string } };
 
 export const NodeFragmentDoc = gql`
     fragment node on Node {
@@ -2919,6 +3242,9 @@ export function useGetNodeLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Ge
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetNodeQuery, GetNodeQueryVariables>(GetNodeDocument, options);
         }
+// @ts-ignore
+export function useGetNodeSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetNodeQuery, GetNodeQueryVariables>): Apollo.UseSuspenseQueryResult<GetNodeQuery, GetNodeQueryVariables>;
+export function useGetNodeSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNodeQuery, GetNodeQueryVariables>): Apollo.UseSuspenseQueryResult<GetNodeQuery | undefined, GetNodeQueryVariables>;
 export function useGetNodeSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNodeQuery, GetNodeQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetNodeQuery, GetNodeQueryVariables>(GetNodeDocument, options);
@@ -2961,6 +3287,9 @@ export function useGetNodesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<G
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetNodesQuery, GetNodesQueryVariables>(GetNodesDocument, options);
         }
+// @ts-ignore
+export function useGetNodesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetNodesQuery, GetNodesQueryVariables>): Apollo.UseSuspenseQueryResult<GetNodesQuery, GetNodesQueryVariables>;
+export function useGetNodesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNodesQuery, GetNodesQueryVariables>): Apollo.UseSuspenseQueryResult<GetNodesQuery | undefined, GetNodesQueryVariables>;
 export function useGetNodesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNodesQuery, GetNodesQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetNodesQuery, GetNodesQueryVariables>(GetNodesDocument, options);
@@ -3234,6 +3563,9 @@ export function useGetNodesForSiteLazyQuery(baseOptions?: Apollo.LazyQueryHookOp
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetNodesForSiteQuery, GetNodesForSiteQueryVariables>(GetNodesForSiteDocument, options);
         }
+// @ts-ignore
+export function useGetNodesForSiteSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetNodesForSiteQuery, GetNodesForSiteQueryVariables>): Apollo.UseSuspenseQueryResult<GetNodesForSiteQuery, GetNodesForSiteQueryVariables>;
+export function useGetNodesForSiteSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNodesForSiteQuery, GetNodesForSiteQueryVariables>): Apollo.UseSuspenseQueryResult<GetNodesForSiteQuery | undefined, GetNodesForSiteQueryVariables>;
 export function useGetNodesForSiteSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNodesForSiteQuery, GetNodesForSiteQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetNodesForSiteQuery, GetNodesForSiteQueryVariables>(GetNodesForSiteDocument, options);
@@ -3315,6 +3647,9 @@ export function useGetNodeAppsLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetNodeAppsQuery, GetNodeAppsQueryVariables>(GetNodeAppsDocument, options);
         }
+// @ts-ignore
+export function useGetNodeAppsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetNodeAppsQuery, GetNodeAppsQueryVariables>): Apollo.UseSuspenseQueryResult<GetNodeAppsQuery, GetNodeAppsQueryVariables>;
+export function useGetNodeAppsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNodeAppsQuery, GetNodeAppsQueryVariables>): Apollo.UseSuspenseQueryResult<GetNodeAppsQuery | undefined, GetNodeAppsQueryVariables>;
 export function useGetNodeAppsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNodeAppsQuery, GetNodeAppsQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetNodeAppsQuery, GetNodeAppsQueryVariables>(GetNodeAppsDocument, options);
@@ -3360,6 +3695,9 @@ export function useGetNodeStateLazyQuery(baseOptions?: Apollo.LazyQueryHookOptio
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetNodeStateQuery, GetNodeStateQueryVariables>(GetNodeStateDocument, options);
         }
+// @ts-ignore
+export function useGetNodeStateSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetNodeStateQuery, GetNodeStateQueryVariables>): Apollo.UseSuspenseQueryResult<GetNodeStateQuery, GetNodeStateQueryVariables>;
+export function useGetNodeStateSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNodeStateQuery, GetNodeStateQueryVariables>): Apollo.UseSuspenseQueryResult<GetNodeStateQuery | undefined, GetNodeStateQueryVariables>;
 export function useGetNodeStateSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNodeStateQuery, GetNodeStateQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetNodeStateQuery, GetNodeStateQueryVariables>(GetNodeStateDocument, options);
@@ -3553,6 +3891,9 @@ export function useGetHealthReportLazyQuery(baseOptions?: Apollo.LazyQueryHookOp
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetHealthReportQuery, GetHealthReportQueryVariables>(GetHealthReportDocument, options);
         }
+// @ts-ignore
+export function useGetHealthReportSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetHealthReportQuery, GetHealthReportQueryVariables>): Apollo.UseSuspenseQueryResult<GetHealthReportQuery, GetHealthReportQueryVariables>;
+export function useGetHealthReportSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetHealthReportQuery, GetHealthReportQueryVariables>): Apollo.UseSuspenseQueryResult<GetHealthReportQuery | undefined, GetHealthReportQueryVariables>;
 export function useGetHealthReportSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetHealthReportQuery, GetHealthReportQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetHealthReportQuery, GetHealthReportQueryVariables>(GetHealthReportDocument, options);
@@ -3596,6 +3937,9 @@ export function useGetMembersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetMembersQuery, GetMembersQueryVariables>(GetMembersDocument, options);
         }
+// @ts-ignore
+export function useGetMembersSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetMembersQuery, GetMembersQueryVariables>): Apollo.UseSuspenseQueryResult<GetMembersQuery, GetMembersQueryVariables>;
+export function useGetMembersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMembersQuery, GetMembersQueryVariables>): Apollo.UseSuspenseQueryResult<GetMembersQuery | undefined, GetMembersQueryVariables>;
 export function useGetMembersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMembersQuery, GetMembersQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetMembersQuery, GetMembersQueryVariables>(GetMembersDocument, options);
@@ -3636,6 +3980,9 @@ export function useGetMemberLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetMemberQuery, GetMemberQueryVariables>(GetMemberDocument, options);
         }
+// @ts-ignore
+export function useGetMemberSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetMemberQuery, GetMemberQueryVariables>): Apollo.UseSuspenseQueryResult<GetMemberQuery, GetMemberQueryVariables>;
+export function useGetMemberSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMemberQuery, GetMemberQueryVariables>): Apollo.UseSuspenseQueryResult<GetMemberQuery | undefined, GetMemberQueryVariables>;
 export function useGetMemberSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMemberQuery, GetMemberQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetMemberQuery, GetMemberQueryVariables>(GetMemberDocument, options);
@@ -3782,6 +4129,9 @@ export function useGetMemberByUserIdLazyQuery(baseOptions?: Apollo.LazyQueryHook
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetMemberByUserIdQuery, GetMemberByUserIdQueryVariables>(GetMemberByUserIdDocument, options);
         }
+// @ts-ignore
+export function useGetMemberByUserIdSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetMemberByUserIdQuery, GetMemberByUserIdQueryVariables>): Apollo.UseSuspenseQueryResult<GetMemberByUserIdQuery, GetMemberByUserIdQueryVariables>;
+export function useGetMemberByUserIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMemberByUserIdQuery, GetMemberByUserIdQueryVariables>): Apollo.UseSuspenseQueryResult<GetMemberByUserIdQuery | undefined, GetMemberByUserIdQueryVariables>;
 export function useGetMemberByUserIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMemberByUserIdQuery, GetMemberByUserIdQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetMemberByUserIdQuery, GetMemberByUserIdQueryVariables>(GetMemberByUserIdDocument, options);
@@ -3827,6 +4177,9 @@ export function useGetOrgsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Ge
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetOrgsQuery, GetOrgsQueryVariables>(GetOrgsDocument, options);
         }
+// @ts-ignore
+export function useGetOrgsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetOrgsQuery, GetOrgsQueryVariables>): Apollo.UseSuspenseQueryResult<GetOrgsQuery, GetOrgsQueryVariables>;
+export function useGetOrgsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetOrgsQuery, GetOrgsQueryVariables>): Apollo.UseSuspenseQueryResult<GetOrgsQuery | undefined, GetOrgsQueryVariables>;
 export function useGetOrgsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetOrgsQuery, GetOrgsQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetOrgsQuery, GetOrgsQueryVariables>(GetOrgsDocument, options);
@@ -3866,6 +4219,9 @@ export function useGetOrgLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Get
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetOrgQuery, GetOrgQueryVariables>(GetOrgDocument, options);
         }
+// @ts-ignore
+export function useGetOrgSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetOrgQuery, GetOrgQueryVariables>): Apollo.UseSuspenseQueryResult<GetOrgQuery, GetOrgQueryVariables>;
+export function useGetOrgSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetOrgQuery, GetOrgQueryVariables>): Apollo.UseSuspenseQueryResult<GetOrgQuery | undefined, GetOrgQueryVariables>;
 export function useGetOrgSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetOrgQuery, GetOrgQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetOrgQuery, GetOrgQueryVariables>(GetOrgDocument, options);
@@ -3907,6 +4263,9 @@ export function useGetPackagesLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetPackagesQuery, GetPackagesQueryVariables>(GetPackagesDocument, options);
         }
+// @ts-ignore
+export function useGetPackagesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetPackagesQuery, GetPackagesQueryVariables>): Apollo.UseSuspenseQueryResult<GetPackagesQuery, GetPackagesQueryVariables>;
+export function useGetPackagesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPackagesQuery, GetPackagesQueryVariables>): Apollo.UseSuspenseQueryResult<GetPackagesQuery | undefined, GetPackagesQueryVariables>;
 export function useGetPackagesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPackagesQuery, GetPackagesQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetPackagesQuery, GetPackagesQueryVariables>(GetPackagesDocument, options);
@@ -3947,6 +4306,9 @@ export function useGetPackageLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetPackageQuery, GetPackageQueryVariables>(GetPackageDocument, options);
         }
+// @ts-ignore
+export function useGetPackageSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetPackageQuery, GetPackageQueryVariables>): Apollo.UseSuspenseQueryResult<GetPackageQuery, GetPackageQueryVariables>;
+export function useGetPackageSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPackageQuery, GetPackageQueryVariables>): Apollo.UseSuspenseQueryResult<GetPackageQuery | undefined, GetPackageQueryVariables>;
 export function useGetPackageSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPackageQuery, GetPackageQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetPackageQuery, GetPackageQueryVariables>(GetPackageDocument, options);
@@ -3987,6 +4349,9 @@ export function useGetSimsBySubscriberLazyQuery(baseOptions?: Apollo.LazyQueryHo
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetSimsBySubscriberQuery, GetSimsBySubscriberQueryVariables>(GetSimsBySubscriberDocument, options);
         }
+// @ts-ignore
+export function useGetSimsBySubscriberSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSimsBySubscriberQuery, GetSimsBySubscriberQueryVariables>): Apollo.UseSuspenseQueryResult<GetSimsBySubscriberQuery, GetSimsBySubscriberQueryVariables>;
+export function useGetSimsBySubscriberSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSimsBySubscriberQuery, GetSimsBySubscriberQueryVariables>): Apollo.UseSuspenseQueryResult<GetSimsBySubscriberQuery | undefined, GetSimsBySubscriberQueryVariables>;
 export function useGetSimsBySubscriberSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSimsBySubscriberQuery, GetSimsBySubscriberQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetSimsBySubscriberQuery, GetSimsBySubscriberQueryVariables>(GetSimsBySubscriberDocument, options);
@@ -4129,6 +4494,9 @@ export function useGetPackagesForSimLazyQuery(baseOptions?: Apollo.LazyQueryHook
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetPackagesForSimQuery, GetPackagesForSimQueryVariables>(GetPackagesForSimDocument, options);
         }
+// @ts-ignore
+export function useGetPackagesForSimSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetPackagesForSimQuery, GetPackagesForSimQueryVariables>): Apollo.UseSuspenseQueryResult<GetPackagesForSimQuery, GetPackagesForSimQueryVariables>;
+export function useGetPackagesForSimSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPackagesForSimQuery, GetPackagesForSimQueryVariables>): Apollo.UseSuspenseQueryResult<GetPackagesForSimQuery | undefined, GetPackagesForSimQueryVariables>;
 export function useGetPackagesForSimSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPackagesForSimQuery, GetPackagesForSimQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetPackagesForSimQuery, GetPackagesForSimQueryVariables>(GetPackagesForSimDocument, options);
@@ -4371,6 +4739,9 @@ export function useGetPaymentLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetPaymentQuery, GetPaymentQueryVariables>(GetPaymentDocument, options);
         }
+// @ts-ignore
+export function useGetPaymentSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetPaymentQuery, GetPaymentQueryVariables>): Apollo.UseSuspenseQueryResult<GetPaymentQuery, GetPaymentQueryVariables>;
+export function useGetPaymentSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPaymentQuery, GetPaymentQueryVariables>): Apollo.UseSuspenseQueryResult<GetPaymentQuery | undefined, GetPaymentQueryVariables>;
 export function useGetPaymentSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPaymentQuery, GetPaymentQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetPaymentQuery, GetPaymentQueryVariables>(GetPaymentDocument, options);
@@ -4413,6 +4784,9 @@ export function useGetPaymentsLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetPaymentsQuery, GetPaymentsQueryVariables>(GetPaymentsDocument, options);
         }
+// @ts-ignore
+export function useGetPaymentsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetPaymentsQuery, GetPaymentsQueryVariables>): Apollo.UseSuspenseQueryResult<GetPaymentsQuery, GetPaymentsQueryVariables>;
+export function useGetPaymentsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPaymentsQuery, GetPaymentsQueryVariables>): Apollo.UseSuspenseQueryResult<GetPaymentsQuery | undefined, GetPaymentsQueryVariables>;
 export function useGetPaymentsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPaymentsQuery, GetPaymentsQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetPaymentsQuery, GetPaymentsQueryVariables>(GetPaymentsDocument, options);
@@ -4465,6 +4839,9 @@ export function useGetReportsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetReportsQuery, GetReportsQueryVariables>(GetReportsDocument, options);
         }
+// @ts-ignore
+export function useGetReportsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetReportsQuery, GetReportsQueryVariables>): Apollo.UseSuspenseQueryResult<GetReportsQuery, GetReportsQueryVariables>;
+export function useGetReportsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetReportsQuery, GetReportsQueryVariables>): Apollo.UseSuspenseQueryResult<GetReportsQuery | undefined, GetReportsQueryVariables>;
 export function useGetReportsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetReportsQuery, GetReportsQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetReportsQuery, GetReportsQueryVariables>(GetReportsDocument, options);
@@ -4517,6 +4894,9 @@ export function useGetReportLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetReportQuery, GetReportQueryVariables>(GetReportDocument, options);
         }
+// @ts-ignore
+export function useGetReportSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetReportQuery, GetReportQueryVariables>): Apollo.UseSuspenseQueryResult<GetReportQuery, GetReportQueryVariables>;
+export function useGetReportSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetReportQuery, GetReportQueryVariables>): Apollo.UseSuspenseQueryResult<GetReportQuery | undefined, GetReportQueryVariables>;
 export function useGetReportSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetReportQuery, GetReportQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetReportQuery, GetReportQueryVariables>(GetReportDocument, options);
@@ -4562,6 +4942,9 @@ export function useGetSimPoolStatsLazyQuery(baseOptions?: Apollo.LazyQueryHookOp
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetSimPoolStatsQuery, GetSimPoolStatsQueryVariables>(GetSimPoolStatsDocument, options);
         }
+// @ts-ignore
+export function useGetSimPoolStatsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSimPoolStatsQuery, GetSimPoolStatsQueryVariables>): Apollo.UseSuspenseQueryResult<GetSimPoolStatsQuery, GetSimPoolStatsQueryVariables>;
+export function useGetSimPoolStatsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSimPoolStatsQuery, GetSimPoolStatsQueryVariables>): Apollo.UseSuspenseQueryResult<GetSimPoolStatsQuery | undefined, GetSimPoolStatsQueryVariables>;
 export function useGetSimPoolStatsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSimPoolStatsQuery, GetSimPoolStatsQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetSimPoolStatsQuery, GetSimPoolStatsQueryVariables>(GetSimPoolStatsDocument, options);
@@ -4616,6 +4999,9 @@ export function useGetSimsFromPoolLazyQuery(baseOptions?: Apollo.LazyQueryHookOp
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetSimsFromPoolQuery, GetSimsFromPoolQueryVariables>(GetSimsFromPoolDocument, options);
         }
+// @ts-ignore
+export function useGetSimsFromPoolSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSimsFromPoolQuery, GetSimsFromPoolQueryVariables>): Apollo.UseSuspenseQueryResult<GetSimsFromPoolQuery, GetSimsFromPoolQueryVariables>;
+export function useGetSimsFromPoolSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSimsFromPoolQuery, GetSimsFromPoolQueryVariables>): Apollo.UseSuspenseQueryResult<GetSimsFromPoolQuery | undefined, GetSimsFromPoolQueryVariables>;
 export function useGetSimsFromPoolSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSimsFromPoolQuery, GetSimsFromPoolQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetSimsFromPoolQuery, GetSimsFromPoolQueryVariables>(GetSimsFromPoolDocument, options);
@@ -4755,6 +5141,9 @@ export function useGetSimLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Get
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetSimQuery, GetSimQueryVariables>(GetSimDocument, options);
         }
+// @ts-ignore
+export function useGetSimSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSimQuery, GetSimQueryVariables>): Apollo.UseSuspenseQueryResult<GetSimQuery, GetSimQueryVariables>;
+export function useGetSimSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSimQuery, GetSimQueryVariables>): Apollo.UseSuspenseQueryResult<GetSimQuery | undefined, GetSimQueryVariables>;
 export function useGetSimSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSimQuery, GetSimQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetSimQuery, GetSimQueryVariables>(GetSimDocument, options);
@@ -4797,6 +5186,9 @@ export function useGetSimsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Ge
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetSimsQuery, GetSimsQueryVariables>(GetSimsDocument, options);
         }
+// @ts-ignore
+export function useGetSimsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSimsQuery, GetSimsQueryVariables>): Apollo.UseSuspenseQueryResult<GetSimsQuery, GetSimsQueryVariables>;
+export function useGetSimsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSimsQuery, GetSimsQueryVariables>): Apollo.UseSuspenseQueryResult<GetSimsQuery | undefined, GetSimsQueryVariables>;
 export function useGetSimsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSimsQuery, GetSimsQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetSimsQuery, GetSimsQueryVariables>(GetSimsDocument, options);
@@ -4870,6 +5262,9 @@ export function useGetSubscriberLazyQuery(baseOptions?: Apollo.LazyQueryHookOpti
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetSubscriberQuery, GetSubscriberQueryVariables>(GetSubscriberDocument, options);
         }
+// @ts-ignore
+export function useGetSubscriberSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSubscriberQuery, GetSubscriberQueryVariables>): Apollo.UseSuspenseQueryResult<GetSubscriberQuery, GetSubscriberQueryVariables>;
+export function useGetSubscriberSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSubscriberQuery, GetSubscriberQueryVariables>): Apollo.UseSuspenseQueryResult<GetSubscriberQuery | undefined, GetSubscriberQueryVariables>;
 export function useGetSubscriberSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSubscriberQuery, GetSubscriberQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetSubscriberQuery, GetSubscriberQueryVariables>(GetSubscriberDocument, options);
@@ -4979,6 +5374,9 @@ export function useGetSubscribersByNetworkLazyQuery(baseOptions?: Apollo.LazyQue
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetSubscribersByNetworkQuery, GetSubscribersByNetworkQueryVariables>(GetSubscribersByNetworkDocument, options);
         }
+// @ts-ignore
+export function useGetSubscribersByNetworkSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSubscribersByNetworkQuery, GetSubscribersByNetworkQueryVariables>): Apollo.UseSuspenseQueryResult<GetSubscribersByNetworkQuery, GetSubscribersByNetworkQueryVariables>;
+export function useGetSubscribersByNetworkSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSubscribersByNetworkQuery, GetSubscribersByNetworkQueryVariables>): Apollo.UseSuspenseQueryResult<GetSubscribersByNetworkQuery | undefined, GetSubscribersByNetworkQueryVariables>;
 export function useGetSubscribersByNetworkSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSubscribersByNetworkQuery, GetSubscribersByNetworkQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetSubscribersByNetworkQuery, GetSubscribersByNetworkQueryVariables>(GetSubscribersByNetworkDocument, options);
@@ -5022,6 +5420,9 @@ export function useGetSubscriberMetricsByNetworkLazyQuery(baseOptions?: Apollo.L
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetSubscriberMetricsByNetworkQuery, GetSubscriberMetricsByNetworkQueryVariables>(GetSubscriberMetricsByNetworkDocument, options);
         }
+// @ts-ignore
+export function useGetSubscriberMetricsByNetworkSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSubscriberMetricsByNetworkQuery, GetSubscriberMetricsByNetworkQueryVariables>): Apollo.UseSuspenseQueryResult<GetSubscriberMetricsByNetworkQuery, GetSubscriberMetricsByNetworkQueryVariables>;
+export function useGetSubscriberMetricsByNetworkSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSubscriberMetricsByNetworkQuery, GetSubscriberMetricsByNetworkQueryVariables>): Apollo.UseSuspenseQueryResult<GetSubscriberMetricsByNetworkQuery | undefined, GetSubscriberMetricsByNetworkQueryVariables>;
 export function useGetSubscriberMetricsByNetworkSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSubscriberMetricsByNetworkQuery, GetSubscriberMetricsByNetworkQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetSubscriberMetricsByNetworkQuery, GetSubscriberMetricsByNetworkQueryVariables>(GetSubscriberMetricsByNetworkDocument, options);
@@ -5064,6 +5465,9 @@ export function useGetGeneratedPdfReportLazyQuery(baseOptions?: Apollo.LazyQuery
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetGeneratedPdfReportQuery, GetGeneratedPdfReportQueryVariables>(GetGeneratedPdfReportDocument, options);
         }
+// @ts-ignore
+export function useGetGeneratedPdfReportSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetGeneratedPdfReportQuery, GetGeneratedPdfReportQueryVariables>): Apollo.UseSuspenseQueryResult<GetGeneratedPdfReportQuery, GetGeneratedPdfReportQueryVariables>;
+export function useGetGeneratedPdfReportSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetGeneratedPdfReportQuery, GetGeneratedPdfReportQueryVariables>): Apollo.UseSuspenseQueryResult<GetGeneratedPdfReportQuery | undefined, GetGeneratedPdfReportQueryVariables>;
 export function useGetGeneratedPdfReportSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetGeneratedPdfReportQuery, GetGeneratedPdfReportQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetGeneratedPdfReportQuery, GetGeneratedPdfReportQueryVariables>(GetGeneratedPdfReportDocument, options);
@@ -5112,6 +5516,9 @@ export function useWhoamiLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Who
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<WhoamiQuery, WhoamiQueryVariables>(WhoamiDocument, options);
         }
+// @ts-ignore
+export function useWhoamiSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<WhoamiQuery, WhoamiQueryVariables>): Apollo.UseSuspenseQueryResult<WhoamiQuery, WhoamiQueryVariables>;
+export function useWhoamiSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<WhoamiQuery, WhoamiQueryVariables>): Apollo.UseSuspenseQueryResult<WhoamiQuery | undefined, WhoamiQueryVariables>;
 export function useWhoamiSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<WhoamiQuery, WhoamiQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<WhoamiQuery, WhoamiQueryVariables>(WhoamiDocument, options);
@@ -5152,6 +5559,9 @@ export function useGetUserLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Ge
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetUserQuery, GetUserQueryVariables>(GetUserDocument, options);
         }
+// @ts-ignore
+export function useGetUserSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetUserQuery, GetUserQueryVariables>): Apollo.UseSuspenseQueryResult<GetUserQuery, GetUserQueryVariables>;
+export function useGetUserSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetUserQuery, GetUserQueryVariables>): Apollo.UseSuspenseQueryResult<GetUserQuery | undefined, GetUserQueryVariables>;
 export function useGetUserSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetUserQuery, GetUserQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetUserQuery, GetUserQueryVariables>(GetUserDocument, options);
@@ -5193,6 +5603,9 @@ export function useGetNetworksLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetNetworksQuery, GetNetworksQueryVariables>(GetNetworksDocument, options);
         }
+// @ts-ignore
+export function useGetNetworksSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetNetworksQuery, GetNetworksQueryVariables>): Apollo.UseSuspenseQueryResult<GetNetworksQuery, GetNetworksQueryVariables>;
+export function useGetNetworksSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNetworksQuery, GetNetworksQueryVariables>): Apollo.UseSuspenseQueryResult<GetNetworksQuery | undefined, GetNetworksQueryVariables>;
 export function useGetNetworksSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNetworksQuery, GetNetworksQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetNetworksQuery, GetNetworksQueryVariables>(GetNetworksDocument, options);
@@ -5233,6 +5646,9 @@ export function useGetNetworkLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetNetworkQuery, GetNetworkQueryVariables>(GetNetworkDocument, options);
         }
+// @ts-ignore
+export function useGetNetworkSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetNetworkQuery, GetNetworkQueryVariables>): Apollo.UseSuspenseQueryResult<GetNetworkQuery, GetNetworkQueryVariables>;
+export function useGetNetworkSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNetworkQuery, GetNetworkQueryVariables>): Apollo.UseSuspenseQueryResult<GetNetworkQuery | undefined, GetNetworkQueryVariables>;
 export function useGetNetworkSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNetworkQuery, GetNetworkQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetNetworkQuery, GetNetworkQueryVariables>(GetNetworkDocument, options);
@@ -5339,6 +5755,9 @@ export function useGetSiteLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Ge
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetSiteQuery, GetSiteQueryVariables>(GetSiteDocument, options);
         }
+// @ts-ignore
+export function useGetSiteSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSiteQuery, GetSiteQueryVariables>): Apollo.UseSuspenseQueryResult<GetSiteQuery, GetSiteQueryVariables>;
+export function useGetSiteSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSiteQuery, GetSiteQueryVariables>): Apollo.UseSuspenseQueryResult<GetSiteQuery | undefined, GetSiteQueryVariables>;
 export function useGetSiteSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSiteQuery, GetSiteQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetSiteQuery, GetSiteQueryVariables>(GetSiteDocument, options);
@@ -5414,6 +5833,9 @@ export function useGetSitesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<G
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetSitesQuery, GetSitesQueryVariables>(GetSitesDocument, options);
         }
+// @ts-ignore
+export function useGetSitesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSitesQuery, GetSitesQueryVariables>): Apollo.UseSuspenseQueryResult<GetSitesQuery, GetSitesQueryVariables>;
+export function useGetSitesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSitesQuery, GetSitesQueryVariables>): Apollo.UseSuspenseQueryResult<GetSitesQuery | undefined, GetSitesQueryVariables>;
 export function useGetSitesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSitesQuery, GetSitesQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetSitesQuery, GetSitesQueryVariables>(GetSitesDocument, options);
@@ -5488,6 +5910,9 @@ export function useGetComponentByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookO
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetComponentByIdQuery, GetComponentByIdQueryVariables>(GetComponentByIdDocument, options);
         }
+// @ts-ignore
+export function useGetComponentByIdSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetComponentByIdQuery, GetComponentByIdQueryVariables>): Apollo.UseSuspenseQueryResult<GetComponentByIdQuery, GetComponentByIdQueryVariables>;
+export function useGetComponentByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetComponentByIdQuery, GetComponentByIdQueryVariables>): Apollo.UseSuspenseQueryResult<GetComponentByIdQuery | undefined, GetComponentByIdQueryVariables>;
 export function useGetComponentByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetComponentByIdQuery, GetComponentByIdQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetComponentByIdQuery, GetComponentByIdQueryVariables>(GetComponentByIdDocument, options);
@@ -5530,6 +5955,9 @@ export function useGetComponentsByUserIdLazyQuery(baseOptions?: Apollo.LazyQuery
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetComponentsByUserIdQuery, GetComponentsByUserIdQueryVariables>(GetComponentsByUserIdDocument, options);
         }
+// @ts-ignore
+export function useGetComponentsByUserIdSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetComponentsByUserIdQuery, GetComponentsByUserIdQueryVariables>): Apollo.UseSuspenseQueryResult<GetComponentsByUserIdQuery, GetComponentsByUserIdQueryVariables>;
+export function useGetComponentsByUserIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetComponentsByUserIdQuery, GetComponentsByUserIdQueryVariables>): Apollo.UseSuspenseQueryResult<GetComponentsByUserIdQuery | undefined, GetComponentsByUserIdQueryVariables>;
 export function useGetComponentsByUserIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetComponentsByUserIdQuery, GetComponentsByUserIdQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetComponentsByUserIdQuery, GetComponentsByUserIdQueryVariables>(GetComponentsByUserIdDocument, options);
@@ -5604,6 +6032,9 @@ export function useGetInvitationsLazyQuery(baseOptions?: Apollo.LazyQueryHookOpt
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetInvitationsQuery, GetInvitationsQueryVariables>(GetInvitationsDocument, options);
         }
+// @ts-ignore
+export function useGetInvitationsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetInvitationsQuery, GetInvitationsQueryVariables>): Apollo.UseSuspenseQueryResult<GetInvitationsQuery, GetInvitationsQueryVariables>;
+export function useGetInvitationsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetInvitationsQuery, GetInvitationsQueryVariables>): Apollo.UseSuspenseQueryResult<GetInvitationsQuery | undefined, GetInvitationsQueryVariables>;
 export function useGetInvitationsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetInvitationsQuery, GetInvitationsQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetInvitationsQuery, GetInvitationsQueryVariables>(GetInvitationsDocument, options);
@@ -5712,6 +6143,9 @@ export function useGetInvitationsByEmailLazyQuery(baseOptions?: Apollo.LazyQuery
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetInvitationsByEmailQuery, GetInvitationsByEmailQueryVariables>(GetInvitationsByEmailDocument, options);
         }
+// @ts-ignore
+export function useGetInvitationsByEmailSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetInvitationsByEmailQuery, GetInvitationsByEmailQueryVariables>): Apollo.UseSuspenseQueryResult<GetInvitationsByEmailQuery, GetInvitationsByEmailQueryVariables>;
+export function useGetInvitationsByEmailSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetInvitationsByEmailQuery, GetInvitationsByEmailQueryVariables>): Apollo.UseSuspenseQueryResult<GetInvitationsByEmailQuery | undefined, GetInvitationsByEmailQueryVariables>;
 export function useGetInvitationsByEmailSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetInvitationsByEmailQuery, GetInvitationsByEmailQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetInvitationsByEmailQuery, GetInvitationsByEmailQueryVariables>(GetInvitationsByEmailDocument, options);
@@ -5754,6 +6188,9 @@ export function useGetCountriesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptio
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetCountriesQuery, GetCountriesQueryVariables>(GetCountriesDocument, options);
         }
+// @ts-ignore
+export function useGetCountriesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetCountriesQuery, GetCountriesQueryVariables>): Apollo.UseSuspenseQueryResult<GetCountriesQuery, GetCountriesQueryVariables>;
+export function useGetCountriesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCountriesQuery, GetCountriesQueryVariables>): Apollo.UseSuspenseQueryResult<GetCountriesQuery | undefined, GetCountriesQueryVariables>;
 export function useGetCountriesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCountriesQuery, GetCountriesQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetCountriesQuery, GetCountriesQueryVariables>(GetCountriesDocument, options);
@@ -5796,6 +6233,9 @@ export function useGetCurrencySymbolLazyQuery(baseOptions?: Apollo.LazyQueryHook
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetCurrencySymbolQuery, GetCurrencySymbolQueryVariables>(GetCurrencySymbolDocument, options);
         }
+// @ts-ignore
+export function useGetCurrencySymbolSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetCurrencySymbolQuery, GetCurrencySymbolQueryVariables>): Apollo.UseSuspenseQueryResult<GetCurrencySymbolQuery, GetCurrencySymbolQueryVariables>;
+export function useGetCurrencySymbolSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCurrencySymbolQuery, GetCurrencySymbolQueryVariables>): Apollo.UseSuspenseQueryResult<GetCurrencySymbolQuery | undefined, GetCurrencySymbolQueryVariables>;
 export function useGetCurrencySymbolSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCurrencySymbolQuery, GetCurrencySymbolQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetCurrencySymbolQuery, GetCurrencySymbolQueryVariables>(GetCurrencySymbolDocument, options);
@@ -5842,6 +6282,9 @@ export function useGetTimezonesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptio
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetTimezonesQuery, GetTimezonesQueryVariables>(GetTimezonesDocument, options);
         }
+// @ts-ignore
+export function useGetTimezonesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetTimezonesQuery, GetTimezonesQueryVariables>): Apollo.UseSuspenseQueryResult<GetTimezonesQuery, GetTimezonesQueryVariables>;
+export function useGetTimezonesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTimezonesQuery, GetTimezonesQueryVariables>): Apollo.UseSuspenseQueryResult<GetTimezonesQuery | undefined, GetTimezonesQueryVariables>;
 export function useGetTimezonesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTimezonesQuery, GetTimezonesQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetTimezonesQuery, GetTimezonesQueryVariables>(GetTimezonesDocument, options);
@@ -5919,6 +6362,9 @@ export function useGetDataUsagesLazyQuery(baseOptions?: Apollo.LazyQueryHookOpti
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetDataUsagesQuery, GetDataUsagesQueryVariables>(GetDataUsagesDocument, options);
         }
+// @ts-ignore
+export function useGetDataUsagesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetDataUsagesQuery, GetDataUsagesQueryVariables>): Apollo.UseSuspenseQueryResult<GetDataUsagesQuery, GetDataUsagesQueryVariables>;
+export function useGetDataUsagesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetDataUsagesQuery, GetDataUsagesQueryVariables>): Apollo.UseSuspenseQueryResult<GetDataUsagesQuery | undefined, GetDataUsagesQueryVariables>;
 export function useGetDataUsagesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetDataUsagesQuery, GetDataUsagesQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetDataUsagesQuery, GetDataUsagesQueryVariables>(GetDataUsagesDocument, options);
@@ -5963,6 +6409,9 @@ export function useGetAppsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Ge
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetAppsQuery, GetAppsQueryVariables>(GetAppsDocument, options);
         }
+// @ts-ignore
+export function useGetAppsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetAppsQuery, GetAppsQueryVariables>): Apollo.UseSuspenseQueryResult<GetAppsQuery, GetAppsQueryVariables>;
+export function useGetAppsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAppsQuery, GetAppsQueryVariables>): Apollo.UseSuspenseQueryResult<GetAppsQuery | undefined, GetAppsQueryVariables>;
 export function useGetAppsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAppsQuery, GetAppsQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetAppsQuery, GetAppsQueryVariables>(GetAppsDocument, options);
@@ -6017,6 +6466,9 @@ export function useSoftwareLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<S
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<SoftwareQuery, SoftwareQueryVariables>(SoftwareDocument, options);
         }
+// @ts-ignore
+export function useSoftwareSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<SoftwareQuery, SoftwareQueryVariables>): Apollo.UseSuspenseQueryResult<SoftwareQuery, SoftwareQueryVariables>;
+export function useSoftwareSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SoftwareQuery, SoftwareQueryVariables>): Apollo.UseSuspenseQueryResult<SoftwareQuery | undefined, SoftwareQueryVariables>;
 export function useSoftwareSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SoftwareQuery, SoftwareQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<SoftwareQuery, SoftwareQueryVariables>(SoftwareDocument, options);

@@ -1,12 +1,11 @@
+/** Internal type. DO NOT USE DIRECTLY. */
+type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
+/** Internal type. DO NOT USE DIRECTLY. */
+export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
-export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
-export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
-export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
-export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
-export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 const defaultOptions = {} as const;
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
@@ -322,73 +321,196 @@ export type SubscriptionNotificationSubscriptionArgs = {
   userId: Scalars['String']['input'];
 };
 
+export type Graphs_Type =
+  | 'BATTERY'
+  | 'CONTROLLER'
+  | 'DATA_USAGE'
+  | 'HOME'
+  | 'MAIN_BACKHAUL'
+  | 'NETWORK_BACKHAUL'
+  | 'NETWORK_CELLULAR'
+  | 'NODE_HEALTH'
+  | 'RADIO'
+  | 'RESOURCES'
+  | 'SITE'
+  | 'SOLAR'
+  | 'SUBSCRIBERS'
+  | 'SWITCH';
+
+export type GetMetricBySiteInput = {
+  from: number;
+  nodeIds?: Array<string> | null | undefined;
+  orgName: string;
+  siteId: string;
+  step?: number;
+  to: number;
+  type: Graphs_Type;
+  userId: string;
+  withSubscription?: boolean;
+};
+
+export type GetMetricByTabInput = {
+  from: number;
+  networkId?: string | null | undefined;
+  nodeId?: string | null | undefined;
+  orgName: string;
+  siteId?: string | null | undefined;
+  step?: number;
+  to: number;
+  type: Graphs_Type;
+  userId: string;
+  withSubscription?: boolean;
+};
+
+export type GetMetricsSiteStatInput = {
+  from: number;
+  nodeIds?: Array<string> | null | undefined;
+  operation?: string | null | undefined;
+  orgName: string;
+  siteIds?: Array<string> | null | undefined;
+  step?: number;
+  to: number;
+  type: Stats_Type;
+  userId?: string | null | undefined;
+  withSubscription?: boolean;
+};
+
+export type GetMetricsStatInput = {
+  from: number;
+  networkId?: string | null | undefined;
+  nodeId?: string | null | undefined;
+  operation?: string | null | undefined;
+  orgName: string;
+  siteId?: string | null | undefined;
+  step?: number;
+  to?: number | null | undefined;
+  type: Stats_Type;
+  userId?: string | null | undefined;
+  withSubscription?: boolean;
+};
+
+export type Notification_Scope =
+  | 'SCOPE_INVALID'
+  | 'SCOPE_NETWORK'
+  | 'SCOPE_NETWORKS'
+  | 'SCOPE_NODE'
+  | 'SCOPE_ORG'
+  | 'SCOPE_OWNER'
+  | 'SCOPE_SITE'
+  | 'SCOPE_SITES'
+  | 'SCOPE_SUBSCRIBER'
+  | 'SCOPE_SUBSCRIBERS'
+  | 'SCOPE_USER'
+  | 'SCOPE_USERS';
+
+export type Notification_Type =
+  | 'TYPE_ACTIONABLE_CRITICAL'
+  | 'TYPE_ACTIONABLE_ERROR'
+  | 'TYPE_ACTIONABLE_INFO'
+  | 'TYPE_ACTIONABLE_WARNING'
+  | 'TYPE_CRITICAL'
+  | 'TYPE_ERROR'
+  | 'TYPE_INFO'
+  | 'TYPE_INVALID'
+  | 'TYPE_WARNING';
+
+export type Stats_Type =
+  | 'ALL_NODE'
+  | 'BATTERY'
+  | 'DATA_USAGE'
+  | 'HOME'
+  | 'MAIN_BACKHAUL'
+  | 'NETWORK'
+  | 'OVERVIEW'
+  | 'RADIO'
+  | 'RESOURCES'
+  | 'SITE';
+
+export type SubMetricsStatInput = {
+  from: number;
+  networkId?: string | null | undefined;
+  nodeId?: string | null | undefined;
+  orgName: string;
+  type: Stats_Type;
+  userId: string;
+};
+
+export type SubSiteMetricsStatInput = {
+  from: number;
+  nodeIds?: Array<string> | null | undefined;
+  orgName: string;
+  siteIds?: Array<string> | null | undefined;
+  type: Stats_Type;
+  userId: string;
+};
+
 export type GetNotificationsQueryVariables = Exact<{
-  networkId: Scalars['String']['input'];
-  orgId: Scalars['String']['input'];
-  orgName: Scalars['String']['input'];
-  role: Scalars['String']['input'];
-  startTimestamp: Scalars['String']['input'];
-  subscriberId: Scalars['String']['input'];
-  userId: Scalars['String']['input'];
+  networkId: string;
+  orgId: string;
+  orgName: string;
+  role: string;
+  startTimestamp: string;
+  subscriberId: string;
+  userId: string;
 }>;
 
 
-export type GetNotificationsQuery = { __typename?: 'Query', getNotifications: { __typename?: 'NotificationsRes', notifications: Array<{ __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, eventKey: string, createdAt: string, resourceId: string, description: string, redirect: { __typename?: 'NotificationRedirect', action: string, title: string } }> } };
+export type GetNotificationsQuery = { getNotifications: { notifications: Array<{ id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, eventKey: string, createdAt: string, resourceId: string, description: string, redirect: { action: string, title: string } }> } };
 
 export type NotificationSubscriptionSubscriptionVariables = Exact<{
-  networkId: Scalars['String']['input'];
-  orgId: Scalars['String']['input'];
-  orgName: Scalars['String']['input'];
-  role: Scalars['String']['input'];
-  startTimestamp: Scalars['String']['input'];
-  subscriberId: Scalars['String']['input'];
-  userId: Scalars['String']['input'];
+  networkId: string;
+  orgId: string;
+  orgName: string;
+  role: string;
+  startTimestamp: string;
+  subscriberId: string;
+  userId: string;
 }>;
 
 
-export type NotificationSubscriptionSubscription = { __typename?: 'Subscription', notificationSubscription: { __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, eventKey: string, createdAt: string, resourceId: string, description: string, redirect: { __typename?: 'NotificationRedirect', action: string, title: string } } };
+export type NotificationSubscriptionSubscription = { notificationSubscription: { id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, eventKey: string, createdAt: string, resourceId: string, description: string, redirect: { action: string, title: string } } };
 
 export type GetMetricByTabQueryVariables = Exact<{
   data: GetMetricByTabInput;
 }>;
 
 
-export type GetMetricByTabQuery = { __typename?: 'Query', getMetricByTab: { __typename?: 'MetricsRes', metrics: Array<{ __typename?: 'MetricRes', dataPlanId?: string | null, format?: string | null, msg: string, networkId?: string | null, nodeId?: string | null, siteId?: string | null, packageId?: string | null, success: boolean, tickInterval?: number | null, tickPositions?: Array<number> | null, type: string, unit?: string | null, values: Array<Array<number>>, threshold?: { __typename?: 'MetricThreshold', max: number, min: number, normal: number } | null }> } };
+export type GetMetricByTabQuery = { getMetricByTab: { metrics: Array<{ dataPlanId: string | null, format: string | null, msg: string, networkId: string | null, nodeId: string | null, siteId: string | null, packageId: string | null, success: boolean, tickInterval: number | null, tickPositions: Array<number> | null, type: string, unit: string | null, values: Array<Array<number>>, threshold: { max: number, min: number, normal: number } | null }> } };
 
 export type GetMetricsStatQueryVariables = Exact<{
   data: GetMetricsStatInput;
 }>;
 
 
-export type GetMetricsStatQuery = { __typename?: 'Query', getMetricsStat: { __typename?: 'MetricsStateRes', metrics: Array<{ __typename?: 'MetricStateRes', dataPlanId?: string | null, format?: string | null, msg: string, networkId?: string | null, nodeId: string, packageId?: string | null, siteId?: string | null, success: boolean, tickInterval?: number | null, tickPositions?: Array<number> | null, type: string, unit?: string | null, value: number, threshold?: { __typename?: 'MetricThreshold', max: number, min: number, normal: number } | null }> } };
+export type GetMetricsStatQuery = { getMetricsStat: { metrics: Array<{ dataPlanId: string | null, format: string | null, msg: string, networkId: string | null, nodeId: string, packageId: string | null, siteId: string | null, success: boolean, tickInterval: number | null, tickPositions: Array<number> | null, type: string, unit: string | null, value: number, threshold: { max: number, min: number, normal: number } | null }> } };
 
 export type GetSiteStatQueryVariables = Exact<{
   data: GetMetricsSiteStatInput;
 }>;
 
 
-export type GetSiteStatQuery = { __typename?: 'Query', getSiteStat: { __typename?: 'MetricsStateRes', metrics: Array<{ __typename?: 'MetricStateRes', dataPlanId?: string | null, format?: string | null, msg: string, networkId?: string | null, nodeId: string, siteId?: string | null, packageId?: string | null, success: boolean, tickInterval?: number | null, tickPositions?: Array<number> | null, type: string, unit?: string | null, value: number, threshold?: { __typename?: 'MetricThreshold', max: number, min: number, normal: number } | null }> } };
+export type GetSiteStatQuery = { getSiteStat: { metrics: Array<{ dataPlanId: string | null, format: string | null, msg: string, networkId: string | null, nodeId: string, siteId: string | null, packageId: string | null, success: boolean, tickInterval: number | null, tickPositions: Array<number> | null, type: string, unit: string | null, value: number, threshold: { max: number, min: number, normal: number } | null }> } };
 
 export type GetMetricBySiteQueryVariables = Exact<{
   data: GetMetricBySiteInput;
 }>;
 
 
-export type GetMetricBySiteQuery = { __typename?: 'Query', getMetricBySite: { __typename?: 'MetricsRes', metrics: Array<{ __typename?: 'MetricRes', dataPlanId?: string | null, format?: string | null, msg: string, networkId?: string | null, nodeId?: string | null, siteId?: string | null, packageId?: string | null, success: boolean, tickInterval?: number | null, tickPositions?: Array<number> | null, type: string, unit?: string | null, values: Array<Array<number>>, threshold?: { __typename?: 'MetricThreshold', max: number, min: number, normal: number } | null }> } };
+export type GetMetricBySiteQuery = { getMetricBySite: { metrics: Array<{ dataPlanId: string | null, format: string | null, msg: string, networkId: string | null, nodeId: string | null, siteId: string | null, packageId: string | null, success: boolean, tickInterval: number | null, tickPositions: Array<number> | null, type: string, unit: string | null, values: Array<Array<number>>, threshold: { max: number, min: number, normal: number } | null }> } };
 
 export type GetMetricsStatSubSubscriptionVariables = Exact<{
   data: SubMetricsStatInput;
 }>;
 
 
-export type GetMetricsStatSubSubscription = { __typename?: 'Subscription', getMetricStatSub: { __typename?: 'LatestMetricSubRes', msg: string, nodeId: string, success: boolean, type: string, value: Array<number>, networkId?: string | null, siteId: string, packageId?: string | null, dataPlanId?: string | null } };
+export type GetMetricsStatSubSubscription = { getMetricStatSub: { msg: string, nodeId: string, success: boolean, type: string, value: Array<number>, networkId: string | null, siteId: string, packageId: string | null, dataPlanId: string | null } };
 
 export type GetSiteMetricStatSubSubscriptionVariables = Exact<{
   data: SubSiteMetricsStatInput;
 }>;
 
 
-export type GetSiteMetricStatSubSubscription = { __typename?: 'Subscription', getSiteMetricStatSub: { __typename?: 'LatestMetricSubRes', msg: string, siteId: string, nodeId: string, success: boolean, type: string, value: Array<number> } };
+export type GetSiteMetricStatSubSubscription = { getSiteMetricStatSub: { msg: string, siteId: string, nodeId: string, success: boolean, type: string, value: Array<number> } };
 
 
 export const GetNotificationsDocument = gql`
@@ -451,6 +573,9 @@ export function useGetNotificationsLazyQuery(baseOptions?: Apollo.LazyQueryHookO
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetNotificationsQuery, GetNotificationsQueryVariables>(GetNotificationsDocument, options);
         }
+// @ts-ignore
+export function useGetNotificationsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetNotificationsQuery, GetNotificationsQueryVariables>): Apollo.UseSuspenseQueryResult<GetNotificationsQuery, GetNotificationsQueryVariables>;
+export function useGetNotificationsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNotificationsQuery, GetNotificationsQueryVariables>): Apollo.UseSuspenseQueryResult<GetNotificationsQuery | undefined, GetNotificationsQueryVariables>;
 export function useGetNotificationsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNotificationsQuery, GetNotificationsQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetNotificationsQuery, GetNotificationsQueryVariables>(GetNotificationsDocument, options);
@@ -566,6 +691,9 @@ export function useGetMetricByTabLazyQuery(baseOptions?: Apollo.LazyQueryHookOpt
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetMetricByTabQuery, GetMetricByTabQueryVariables>(GetMetricByTabDocument, options);
         }
+// @ts-ignore
+export function useGetMetricByTabSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetMetricByTabQuery, GetMetricByTabQueryVariables>): Apollo.UseSuspenseQueryResult<GetMetricByTabQuery, GetMetricByTabQueryVariables>;
+export function useGetMetricByTabSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMetricByTabQuery, GetMetricByTabQueryVariables>): Apollo.UseSuspenseQueryResult<GetMetricByTabQuery | undefined, GetMetricByTabQueryVariables>;
 export function useGetMetricByTabSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMetricByTabQuery, GetMetricByTabQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetMetricByTabQuery, GetMetricByTabQueryVariables>(GetMetricByTabDocument, options);
@@ -625,6 +753,9 @@ export function useGetMetricsStatLazyQuery(baseOptions?: Apollo.LazyQueryHookOpt
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetMetricsStatQuery, GetMetricsStatQueryVariables>(GetMetricsStatDocument, options);
         }
+// @ts-ignore
+export function useGetMetricsStatSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetMetricsStatQuery, GetMetricsStatQueryVariables>): Apollo.UseSuspenseQueryResult<GetMetricsStatQuery, GetMetricsStatQueryVariables>;
+export function useGetMetricsStatSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMetricsStatQuery, GetMetricsStatQueryVariables>): Apollo.UseSuspenseQueryResult<GetMetricsStatQuery | undefined, GetMetricsStatQueryVariables>;
 export function useGetMetricsStatSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMetricsStatQuery, GetMetricsStatQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetMetricsStatQuery, GetMetricsStatQueryVariables>(GetMetricsStatDocument, options);
@@ -684,6 +815,9 @@ export function useGetSiteStatLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetSiteStatQuery, GetSiteStatQueryVariables>(GetSiteStatDocument, options);
         }
+// @ts-ignore
+export function useGetSiteStatSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSiteStatQuery, GetSiteStatQueryVariables>): Apollo.UseSuspenseQueryResult<GetSiteStatQuery, GetSiteStatQueryVariables>;
+export function useGetSiteStatSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSiteStatQuery, GetSiteStatQueryVariables>): Apollo.UseSuspenseQueryResult<GetSiteStatQuery | undefined, GetSiteStatQueryVariables>;
 export function useGetSiteStatSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSiteStatQuery, GetSiteStatQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetSiteStatQuery, GetSiteStatQueryVariables>(GetSiteStatDocument, options);
@@ -743,6 +877,9 @@ export function useGetMetricBySiteLazyQuery(baseOptions?: Apollo.LazyQueryHookOp
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetMetricBySiteQuery, GetMetricBySiteQueryVariables>(GetMetricBySiteDocument, options);
         }
+// @ts-ignore
+export function useGetMetricBySiteSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetMetricBySiteQuery, GetMetricBySiteQueryVariables>): Apollo.UseSuspenseQueryResult<GetMetricBySiteQuery, GetMetricBySiteQueryVariables>;
+export function useGetMetricBySiteSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMetricBySiteQuery, GetMetricBySiteQueryVariables>): Apollo.UseSuspenseQueryResult<GetMetricBySiteQuery | undefined, GetMetricBySiteQueryVariables>;
 export function useGetMetricBySiteSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMetricBySiteQuery, GetMetricBySiteQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetMetricBySiteQuery, GetMetricBySiteQueryVariables>(GetMetricBySiteDocument, options);
