@@ -113,6 +113,7 @@ export default function ConosleLayout({
 
   const [getNotifications, { refetch: refetchNotifications }] =
     useGetNotificationsLazyQuery({
+      client: subscriptionClient,
       fetchPolicy: 'network-only',
       onCompleted: (data) => {
         if (data.getNotifications.notifications.length > 0) {
@@ -222,7 +223,6 @@ export default function ConosleLayout({
       sseAbortRef.current = abortController;
 
       getNotifications({
-        client: subscriptionClient,
         variables: {
           userId: user.id,
           subscriberId: '',
