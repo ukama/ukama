@@ -17,7 +17,7 @@ import {
   useState,
 } from 'react';
 import { Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
-import SitePopup from '@/app/console/sites/[id]/_components/SitePopup';
+import SitePopup from '@/app/(main)/console/sites/[id]/_components/SitePopup';
 
 interface ICustomMarker {
   data: MapSite[];
