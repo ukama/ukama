@@ -6,9 +6,8 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
-import { RootDatabase } from "lmdb";
-
 import jwt from "jsonwebtoken";
+import { RootDatabase } from "lmdb";
 
 import { whoami } from "../../common/auth/authCalls";
 import { INIT_API_GW, JWT_SECRET, VERSION } from "../../common/configs";

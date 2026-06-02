@@ -15,12 +15,12 @@
  *
  * Output: prints the new JWT — paste it as TOKEN=<jwt> in your .env
  */
-
 import "dotenv/config";
 import jwt from "jsonwebtoken";
 
 const legacyToken = process.env.TOKEN ?? "";
-const secret = process.env.JWT_SECRET ?? "change-me-in-production-use-32-bytes!";
+const secret =
+  process.env.JWT_SECRET ?? "change-me-in-production-use-32-bytes!";
 
 if (!legacyToken) {
   console.error("Error: TOKEN env var is required (the old base64 token)");
@@ -46,14 +46,32 @@ try {
   isShowWelcome = parts[7] === "true";
   country = parts[8] ?? "";
   currency = parts[9] ?? "";
-  console.error("Decoded legacy token fields:", { orgId, orgName, userId, name, email, role });
+  console.error("Decoded legacy token fields:", {
+    orgId,
+    orgName,
+    userId,
+    name,
+    email,
+    role,
+  });
 } catch {
   console.error("Error: TOKEN is not a valid base64-encoded legacy token");
   process.exit(1);
 }
 
 const token = jwt.sign(
-  { orgId, orgName, userId, name, email, role, isEmailVerified, isShowWelcome, country, currency },
+  {
+    orgId,
+    orgName,
+    userId,
+    name,
+    email,
+    role,
+    isEmailVerified,
+    isShowWelcome,
+    country,
+    currency,
+  },
   secret,
   { expiresIn: "365d" }
 );

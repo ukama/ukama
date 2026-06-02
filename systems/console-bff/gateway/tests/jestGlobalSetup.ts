@@ -11,7 +11,6 @@
  * any test file is loaded. If TOKEN is already a JWT it is used as-is;
  * if it looks like a legacy base64 token it is migrated on-the-fly.
  */
-
 import "dotenv/config";
 import jwt from "jsonwebtoken";
 
