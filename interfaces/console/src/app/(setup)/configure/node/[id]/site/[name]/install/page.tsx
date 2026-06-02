@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
+import { use } from 'react';
 import {
   Component_Type,
   ComponentDto,
@@ -33,14 +34,14 @@ import { useEffect, useState } from 'react';
 import LoadingSkeleton from './skelton';
 
 interface IPage {
-  params: {
+  params: Promise<{
     id: string;
     name: string;
-  };
+  }>;
 }
 
 const SiteConfigure = ({ params }: IPage) => {
-  const { id, name } = params;
+  const { id, name } = use(params);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();

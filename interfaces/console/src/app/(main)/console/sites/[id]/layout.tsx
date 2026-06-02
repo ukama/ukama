@@ -8,14 +8,15 @@
 import type { Metadata } from 'next';
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
   children: React.ReactNode;
 }
 
-export function generateMetadata({ params }: Props): Metadata {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
   return {
-    title: `Site ${params.id} — Ukama Console`,
-    description: `Monitor and manage site ${params.id}`,
+    title: `Site ${id} — Ukama Console`,
+    description: `Monitor and manage site ${id}`,
   };
 }
 

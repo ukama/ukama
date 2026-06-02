@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
+import { use } from 'react';
 import SiteMapComponent from '@/app/(main)/console/sites/[id]/_components/SiteMapComponent';
 import { LField } from '@/components/Welcome';
 import { SiteNameSchemaValidation } from '@/helpers/formValidators';
@@ -15,13 +16,13 @@ import { FormikProvider, FormikValues, useFormik } from 'formik';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 interface ISiteName {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 const SiteName = ({ params }: ISiteName) => {
-  const { id } = params;
+  const { id } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
   const qpLat = searchParams.get('lat') ?? '';

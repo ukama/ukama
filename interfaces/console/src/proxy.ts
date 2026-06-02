@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2023-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
@@ -166,9 +166,9 @@ const getUserObject = async (session: string, cookieToken: string) => {
   }
 };
 
-const middleware = async (request: NextRequest) => {
+const proxy = async (request: NextRequest) => {
   const response = NextResponse.next();
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const { pathname } = request.nextUrl;
 
   if (pathname.includes('/ping')) {
@@ -328,4 +328,4 @@ const middleware = async (request: NextRequest) => {
   return response;
 };
 
-export { middleware };
+export { proxy };

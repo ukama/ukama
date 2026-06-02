@@ -7,6 +7,7 @@
  */
 'use client';
 
+import { use } from 'react';
 import { NodeConnectivityEnum, NodeTypeEnum } from '@/client/graphql/generated';
 import EditNode from '@/app/(main)/console/nodes/[id]/_components/EditNode';
 import { NodeActionUI } from '@/app/(main)/console/nodes/[id]/_components/NodeActionUI';
@@ -24,11 +25,12 @@ import { colors } from '@/theme';
 import { Stack, Tab, Tabs } from '@mui/material';
 
 interface INodePage {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 const Page: React.FC<INodePage> = ({ params }) => {
-  const vm = useNodeDetailPage(params.id);
+  const { id } = use(params);
+  const vm = useNodeDetailPage(id);
 
   return (
     <Stack width={'100%'} height={'100%'} mt={1} spacing={1}>

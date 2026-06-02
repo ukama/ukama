@@ -35,13 +35,13 @@ export const viewport: Viewport = {
   themeColor: '#2190F6',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const headersList = headers();
-  const cookieStore = cookies();
+  const headersList = await headers();
+  const cookieStore = await cookies();
   const cookieTheme = cookieStore.get('theme') ?? {
     name: 'theme',
     value: 'light',

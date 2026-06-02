@@ -18,7 +18,7 @@ export type StatusType = 'uptime' | 'battery' | 'signal';
 
 export interface StyleOutput {
   color: string;
-  icon: JSX.Element;
+  icon: React.JSX.Element;
 }
 
 export type MenuItemType = {

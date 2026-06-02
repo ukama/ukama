@@ -14,7 +14,7 @@ import { useSiteDetailPage } from '@/app/(main)/console/sites/[id]/_hooks/useSit
 import StatusBar from '@/app/(main)/console/_components/StatusBar';
 import { Box, Grid2, Skeleton } from '@mui/material';
 import dynamic from 'next/dynamic';
-import React from 'react';
+import React, { use } from 'react';
 
 const SiteMapComponent = dynamic(
   () => import('@/app/(main)/console/sites/[id]/_components/SiteMapComponent'),
@@ -22,11 +22,12 @@ const SiteMapComponent = dynamic(
 );
 
 interface SiteDetailsProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 const Page: React.FC<SiteDetailsProps> = ({ params }) => {
-  const vm = useSiteDetailPage(params.id);
+  const { id } = use(params);
+  const vm = useSiteDetailPage(id);
 
   if (!vm.isDataReady) {
     return (
