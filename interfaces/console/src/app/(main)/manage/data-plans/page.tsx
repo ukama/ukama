@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
+import { Reference, isReference } from '@apollo/client';
 import {
   PackageDto,
   useAddPackageMutation,
@@ -91,7 +92,8 @@ const useDataPlans = () => {
       if (!newPackage) return;
       cache.modify({
         fields: {
-          getPackages(existing: any, { toReference }) {
+          getPackages(existing: Reference | { packages?: (Reference | undefined)[]; __typename?: string }, { toReference }) {
+            if (isReference(existing)) return existing;
             const ref = toReference(newPackage);
             return {
               ...existing,

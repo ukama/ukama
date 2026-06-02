@@ -27,12 +27,7 @@ export const useFetchAddress = (): UseFetchAddressResult => {
     try {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
-        {
-          cache: 'force-cache',
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-          },
-        },
+        { cache: 'force-cache' },
       );
 
       if (!response.ok) {

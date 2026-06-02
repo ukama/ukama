@@ -32,7 +32,7 @@ import SalesIcon from '@mui/icons-material/MonetizationOn';
 import { AlertColor, Paper, Skeleton, Stack } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import dynamic from 'next/dynamic';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 const NetworkMap = dynamic(() => import('@/app/(main)/console/home/_components/NetworkMap'), {
   ssr: false,
   loading: () => (
@@ -189,7 +189,7 @@ export default function Page() {
     }
   }, [network.id, user.id, user.orgName, cleanupSubscription, getMetricStat]);
 
-  const handleStatSubscription = (_: unknown, data: string) => {
+  const handleStatSubscription = useCallback((_: unknown, data: string) => {
     let parsedData: TMetricResDto;
     try {
       parsedData = JSON.parse(data);
@@ -206,7 +206,20 @@ export default function Page() {
         type === kpiConfig[2].id ? formatBytesToGB(value[1]) : value[1],
       );
     }
-  };
+  }, [network.id, kpiConfig]);
+
+  const nodesForMap = sitesRes && sitesRes.getSites.sites.length > 0
+    ? nodesData?.getNodes.nodes ?? []
+    : [];
+
+  const structuredSiteData = useMemo(
+    () => structureNodeSiteDate(
+      { nodes: nodesForMap },
+      { sites: sitesRes?.getSites.sites ?? [] },
+    ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [nodesData, sitesRes],
+  );
 
   return (
     <Grid container rowSpacing={2} columnSpacing={2}>
@@ -279,26 +292,11 @@ export default function Page() {
                 id="network-map"
                 zoom={10}
                 className="network-map"
-                markersData={{
-                  nodes:
-                    sitesRes && sitesRes?.getSites.sites.length > 0
-                      ? nodesData?.getNodes.nodes || []
-                      : [],
-                }}
+                markersData={{ nodes: nodesForMap }}
               >
                 {() => (
                   <>
-                    <SitesTree
-                      sites={structureNodeSiteDate(
-                        {
-                          nodes:
-                            sitesRes && sitesRes?.getSites.sites.length > 0
-                              ? nodesData?.getNodes.nodes || []
-                              : [],
-                        },
-                        { sites: sitesRes?.getSites.sites || [] },
-                      )}
-                    />
+                    <SitesTree sites={structuredSiteData} />
                     {/* <SitesSelection
                       filterState={filterState}
                       handleFilterState={(value) => setFilterState(value)}

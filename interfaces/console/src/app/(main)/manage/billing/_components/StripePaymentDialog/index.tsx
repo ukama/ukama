@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -108,7 +108,7 @@ const StripePaymentDialog: React.FC<{
   bill?: ReportDto;
 }> = ({ open, onClose, extraKey, onPaymentSuccess, onPaymentError, bill }) => {
   const { env } = useEnvContext();
-  const stripePromise = loadStripe(env.STRIPE_PK!);
+  const stripePromise = useMemo(() => loadStripe(env.STRIPE_PK ?? ''), [env.STRIPE_PK]);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>

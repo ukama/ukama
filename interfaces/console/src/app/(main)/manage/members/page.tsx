@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
+import { Reference, isReference } from '@apollo/client';
 import {
   Invitation_Status,
   Role_Type,
@@ -72,11 +73,12 @@ const Page = () => {
       if (!removedId) return;
       cache.modify({
         fields: {
-          getMembers(existingData: any, { readField }) {
+          getMembers(existingData: Reference | { members?: (Reference | undefined)[]; __typename?: string }, { readField }) {
+            if (isReference(existingData)) return existingData;
             return {
               ...existingData,
               members: (existingData.members ?? []).filter(
-                (ref: any) => readField('memberId', ref) !== removedId,
+                (ref): ref is Reference => !!ref && readField('memberId', ref) !== removedId,
               ),
             };
           },
@@ -142,11 +144,12 @@ const Page = () => {
         if (!deletedId) return;
         cache.modify({
           fields: {
-            getInvitations(existingData: any, { readField }) {
+            getInvitations(existingData: Reference | { invitations?: (Reference | undefined)[]; __typename?: string }, { readField }) {
+              if (isReference(existingData)) return existingData;
               return {
                 ...existingData,
                 invitations: (existingData.invitations ?? []).filter(
-                  (ref: any) => readField('id', ref) !== deletedId,
+                  (ref): ref is Reference => !!ref && readField('id', ref) !== deletedId,
                 ),
               };
             },
@@ -170,7 +173,8 @@ const Page = () => {
         if (!newInvitation) return;
         cache.modify({
           fields: {
-            getInvitations(existingData: any, { toReference }) {
+            getInvitations(existingData: Reference | { invitations?: (Reference | undefined)[]; __typename?: string }, { toReference }) {
+              if (isReference(existingData)) return existingData;
               const ref = toReference(newInvitation);
               return {
                 ...existingData,
