@@ -21,6 +21,7 @@ import LoadingWrapper from '@/components/ui/LoadingWrapper';
 import { MONTH_FILTER, NODE_KPIS, TIME_FILTER } from '@/constants';
 import { useEnvContext, useNetworkContext, useUIContext, useUserContext } from '@/context';
 import MetricStatSubscription from '@/features/subscriptions/MetricStatSubscription';
+import { useSubscriptionManager } from '@/features/subscriptions/useSubscriptionManager';
 import { colors } from '@/theme';
 import { TMetricResDto } from '@/types';
 import { formatBytesToGB, getUnixTime, structureNodeSiteDate } from '@/utils';
@@ -61,19 +62,19 @@ export default function Page() {
   const { user } = useUserContext();
   const { network } = useNetworkContext();
   const { setSnackbarMessage } = useUIContext();
-  const subscriptionKeyRef = useRef<string | null>(null);
   const subscriptionControllerRef = useRef<{ cancel: () => void } | null>(null);
+  const currentKeyRef = useRef<string | null>(null);
+  const { subscribe, unsubscribe } = useSubscriptionManager();
 
-  const cleanupSubscription = useCallback(() => {
-    if (subscriptionKeyRef.current) {
-      PubSub.unsubscribe(subscriptionKeyRef.current);
-      subscriptionKeyRef.current = null;
-    }
+  const cleanupSubscription = useCallback((sKey?: string) => {
+    const keyToClean = sKey ?? currentKeyRef.current;
+    if (keyToClean) unsubscribe(keyToClean);
+    currentKeyRef.current = null;
     if (subscriptionControllerRef.current) {
       subscriptionControllerRef.current.cancel();
       subscriptionControllerRef.current = null;
     }
-  }, []);
+  }, [unsubscribe]);
 
   const { data: sitesRes, loading: sitesLoading } = useGetSitesQuery({
     skip: !network?.id,
@@ -130,7 +131,7 @@ export default function Page() {
         if (data.getMetricsStat.metrics.length > 0) {
           const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Home}-${statVar?.data.from ?? 0}`;
           cleanupSubscription();
-          subscriptionKeyRef.current = sKey;
+          currentKeyRef.current = sKey;
 
           if (statVar?.data.withSubscription) {
             const controller = MetricStatSubscription({
@@ -153,7 +154,12 @@ export default function Page() {
             });
 
             subscriptionControllerRef.current = controller;
-            PubSub.subscribe(sKey, handleStatSubscription);
+            const token = PubSub.subscribe(sKey, handleStatSubscription);
+            subscribe(sKey, () => {
+              PubSub.unsubscribe(token);
+              subscriptionControllerRef.current?.cancel();
+              subscriptionControllerRef.current = null;
+            });
           }
         }
       },

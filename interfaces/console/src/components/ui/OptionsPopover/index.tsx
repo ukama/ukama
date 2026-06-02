@@ -148,4 +148,4 @@ const OptionsPopover = ({
   );
 };
 
-export default OptionsPopover;
+export default React.memo(OptionsPopover);

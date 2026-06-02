@@ -9,48 +9,38 @@
 
 import {
   NodeConnectivityEnum,
-  NodeStateEnum,
   NodeTypeEnum,
-  SoftwareStatusEnum,
-  useGetAppsQuery,
-  useGetNodesQuery,
-  useRestartNodeMutation,
-  useSoftwareQuery,
-  useUpdateNodeMutation,
-  useUpdateSoftwareMutation,
 } from '@/client/graphql/generated';
+import { GetMetricsStatQuery, MetricsRes, Stats_Type } from '@/client/graphql/generated/subscriptions';
 import {
-  Graphs_Type,
-  MetricsRes,
-  Stats_Type,
-  useGetMetricByTabLazyQuery,
-  useGetMetricsStatLazyQuery,
-} from '@/client/graphql/generated/subscriptions';
-import {
-  METRIC_RANGE_10800,
   NODE_ACTIONS_BUTTONS,
   NODE_ACTIONS_ENUM,
   NODE_KPIS,
   STAT_STEP_29,
 } from '@/constants';
 import { useEnvContext, useUserContext, useUIContext } from '@/context';
-import MetricStatSubscription from '@/features/subscriptions/MetricStatSubscription';
-import { TMetricResDto, TNodeActionState, TStatusBarObj } from '@/types';
+import { TNodeActionState } from '@/types';
 import {
   getNodeActionDescriptionByProgress,
-  getNodeTabTypeByIndex,
   getNodeTypeFromId,
   getUnixTime,
   nodeTypeEnumToString,
 } from '@/utils';
-import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNodeActions } from './useNodeActions';
+import { useNodeData } from './useNodeData';
+import { useNodeMetrics } from './useNodeMetrics';
+import { useRouter } from 'next/navigation';
 
 export function useNodeDetailPage(id: string) {
   const nodeType = nodeTypeEnumToString(getNodeTypeFromId(id) as NodeTypeEnum);
   const router = useRouter();
 
-  const [metricFrom, setMetricFrom] = useState<number>(0);
+  const { subscriptionClient } = useEnvContext();
+  const { user } = useUserContext();
+  const { setSnackbarMessage } = useUIContext();
+
+  // Shared state that is used across hooks
   const [isEditNode, setIsEditNode] = useState<boolean>(false);
   const [nodeAction, setNodeAction] = useState<
     TNodeActionState & { currentAction: string; actionInitiated: string }
@@ -61,16 +51,7 @@ export function useNodeDetailPage(id: string) {
     action: NODE_ACTIONS_ENUM.NODE_LOADING,
     isActive: false,
   });
-  const [graphType, setGraphType] = useState<Graphs_Type>(
-    Graphs_Type.NodeHealth,
-  );
-  const [nodeUptime, setNodeUptime] = useState<number>(0);
-  const [selectedTab, setSelectedTab] = useState<number>(0);
-  const [metrics, setMetrics] = useState<MetricsRes>({ metrics: [] });
 
-  const { env, subscriptionClient } = useEnvContext();
-  const { user } = useUserContext();
-  const { setSnackbarMessage } = useUIContext();
   const subscriptionKeyRef = useRef<string | null>(null);
   const subscriptionControllerRef = useRef<{ cancel: () => void } | null>(null);
 
@@ -90,121 +71,87 @@ export function useNodeDetailPage(id: string) {
 
   useEffect(() => () => cleanupSubscription(), [cleanupSubscription]);
 
-  const { data: nodesData, loading: nodesLoading } = useGetNodesQuery({
-    skip: !id,
-    fetchPolicy: 'network-only',
-    variables: { data: { state: NodeStateEnum.Configured } },
-    onError: (err) => notify('node-msg', err.message, 'error'),
-  });
-
-  const currentNode = nodesData?.getNodes.nodes.find((n) => n.id === id);
-
-  const [updateNode, { loading: updateNodeLoading }] = useUpdateNodeMutation({
-    onCompleted: () =>
-      notify(
-        'update-node-success-msg',
-        'Node updated successfully.',
-        'success',
-      ),
-    onError: (err) => notify('update-node-err-msg', err.message, 'error'),
-    refetchQueries: ['GetNodes'],
-  });
-
-  const [restartNode] = useRestartNodeMutation({
-    fetchPolicy: 'network-only',
-    onCompleted: () => {
-      setNodeAction((prev) => ({
-        ...prev,
-        progress: prev.progress + 25,
-        currentAction: 'loading',
-      }));
-      notify('restart-node-success-msg', 'Node restart initiated.', 'success');
-    },
-    onError: () => {
-      setNodeAction({
-        progress: 0,
-        currentAction: '',
-        actionInitiated: '',
-        action: '',
-        isActive: false,
-      });
-      notify('restart-node-err-msg', "Couldn't restart node.", 'error');
-    },
-  });
-
-  const { loading: appsLoading } = useGetAppsQuery({
-    fetchPolicy: 'cache-and-network',
-  });
-
+  // Metrics hook — provides metric state and subscription helpers
   const {
-    loading: softwaresLoading,
-    data: softwaresData,
-    refetch: refetchSoftwares,
-  } = useSoftwareQuery({
-    fetchPolicy: 'network-only',
-    variables: {
-      data: { name: '', nodeId: id, status: SoftwareStatusEnum.Unknown },
-    },
-  });
+    metricFrom,
+    setMetricFrom,
+    graphType,
+    setGraphType,
+    nodeUptime,
+    setNodeUptime,
+    selectedTab,
+    setSelectedTab,
+    metrics,
+    setMetrics,
+    handleStatSubscription,
+    startStatSubscription,
+  } = useNodeMetrics({ id, nodeType, getMetricStat: () => {}, cleanupSubscription });
 
-  const [updateSoftware, { loading: updateSoftwareLoading }] =
-    useUpdateSoftwareMutation({
-      fetchPolicy: 'network-only',
-      onCompleted: () => {
-        refetchSoftwares();
-        notify(
-          'update-software-success-msg',
-          'Software updated successfully.',
-          'success',
-        );
-      },
-      onError: (err) =>
-        notify('update-software-error-msg', err.message, 'error'),
-    });
-
-  const [
-    getNodeMetricByTab,
-    { loading: nodeMetricsLoading, variables: nodeMetricsVariables },
-  ] = useGetMetricByTabLazyQuery({
-    client: subscriptionClient,
-    fetchPolicy: 'network-only',
-    onCompleted: (data) => setMetrics(data.getMetricByTab),
-  });
-
-  const [
+  // Data hook — GraphQL queries/mutations
+  const {
+    nodesData,
+    nodesLoading,
+    currentNode,
+    updateNodeLoading,
+    appsLoading,
+    softwaresLoading,
+    softwaresData,
+    updateSoftwareLoading,
+    statData,
+    statLoading,
+    statVar,
+    nodeMetricsLoading,
     getMetricStat,
-    { data: statData, loading: statLoading, variables: statVar },
-  ] = useGetMetricsStatLazyQuery({
-    client: subscriptionClient,
-    fetchPolicy: 'network-only',
-    onCompleted: (data) => {
-      if (data.getMetricsStat.metrics.length > 0) {
-        data.getMetricsStat.metrics.forEach((m) => {
+    fetchMetricByTab,
+    handleUpdateAvailable,
+    handleEditNode: doEditNode,
+    handleRestartNode,
+  } = useNodeData({
+    id,
+    graphType,
+    metricFrom,
+    subscriptionClient,
+    onMetricsFetched: (data: MetricsRes) => setMetrics(data),
+    onStatFetched: (data) => {
+      if (!data) return;
+      const metrics = (data as GetMetricsStatQuery).getMetricsStat?.metrics ?? [];
+      if (metrics.length > 0) {
+        metrics.forEach((m: { type: string; value: number }) => {
           if (m.type === NODE_KPIS.NODE_UPTIME[nodeType][0].id) {
             setNodeUptime(m.value);
           }
         });
-
-        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.AllNode}-${statVar?.data.from ?? 0}`;
-        cleanupSubscription();
-        subscriptionKeyRef.current = sKey;
-
-        const controller = MetricStatSubscription({
-          key: sKey,
-          nodeId: id,
-          userId: user.id,
-          url: env.METRIC_URL,
-          orgName: user.orgName,
-          type: Stats_Type.AllNode,
-          from: statVar?.data.from ?? 0,
-        });
-
-        subscriptionControllerRef.current = controller;
-        PubSub.subscribe(sKey, handleStatSubscription);
+        const from = statVar?.data.from ?? 0;
+        startStatSubscription(from, from, subscriptionKeyRef, subscriptionControllerRef);
+        PubSub.subscribe(
+          `stat-${user.orgName}-${user.id}-${Stats_Type.AllNode}-${from}`,
+          handleStatSubscription,
+        );
       }
     },
+    setNodeUptime,
+    setNodeAction,
   });
 
+  // Actions hook — event handlers for UI interactions
+  const {
+    handleNodeSelected,
+    handleEditNode,
+    handleSectionChange,
+    onTabSelected,
+    handleNodeActionClick,
+  } = useNodeActions({
+    currentNodeId: currentNode?.id,
+    setIsEditNode,
+    setNodeAction,
+    setGraphType,
+    setMetricFrom,
+    setSelectedTab,
+    handleEditNode: doEditNode,
+    handleRestartNode,
+  });
+
+  // Reset nodeAction when node comes back online
   useEffect(() => {
     if (currentNode?.status.connectivity === NodeConnectivityEnum.Online) {
       setNodeAction({
@@ -217,6 +164,7 @@ export function useNodeDetailPage(id: string) {
     }
   }, [currentNode]);
 
+  // Initial stat fetch on mount / id change
   useEffect(() => {
     const to = getUnixTime();
     const from = to - STAT_STEP_29;
@@ -240,8 +188,10 @@ export function useNodeDetailPage(id: string) {
         },
       });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, user.id, user.orgName, cleanupSubscription]);
 
+  // Track node restart progress via connectivity transitions
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null;
 
@@ -297,86 +247,14 @@ export function useNodeDetailPage(id: string) {
         clearInterval(intervalId);
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodesData]);
 
+  // Refetch metrics when metricFrom or graphType changes
   useEffect(() => {
-    if (metricFrom > 0 && nodeMetricsVariables?.data?.from !== metricFrom) {
-      getNodeMetricByTab({
-        variables: {
-          data: {
-            step: 30,
-            nodeId: id,
-            userId: user.id,
-            type: graphType,
-            from: metricFrom,
-            orgName: user.orgName,
-            withSubscription: false,
-            to: metricFrom + METRIC_RANGE_10800,
-          },
-        },
-      });
-    }
+    fetchMetricByTab();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    metricFrom,
-    nodeMetricsVariables?.data?.from,
-    getNodeMetricByTab,
-    graphType,
-  ]);
-
-  const handleStatSubscription = (_: unknown, data: string) => {
-    const parsedData: TMetricResDto = JSON.parse(data);
-    const { value, type, success } = parsedData.data.getMetricStatSub;
-    if (success) {
-      if (type === NODE_KPIS.NODE_UPTIME[nodeType][0].id) {
-        setNodeUptime(Math.floor(value[1]));
-      }
-      PubSub.publish(`stat-${type}`, value);
-    }
-  };
-
-  const handleNodeSelected = (obj: TStatusBarObj) => {
-    router.push(`/console/nodes/${obj.id}`);
-  };
-
-  const handleEditNode = (name: string) => {
-    setIsEditNode(false);
-    updateNode({ variables: { data: { id: currentNode?.id ?? '', name } } });
-  };
-
-  const handleSectionChange = (type: Graphs_Type) => {
-    setGraphType(type);
-    setMetricFrom(() => getUnixTime() - METRIC_RANGE_10800);
-  };
-
-  const onTabSelected = (_: unknown, value: number) => {
-    setSelectedTab(value);
-    setGraphType(getNodeTabTypeByIndex(value));
-    setMetricFrom(() => getUnixTime() - METRIC_RANGE_10800);
-  };
-
-  const handleNodeActionClick = (action: string, _: boolean) => {
-    if (action === NODE_ACTIONS_ENUM.NODE_RESTART) {
-      setNodeAction({
-        progress: 0,
-        currentAction: NODE_ACTIONS_ENUM.NODE_RESTART,
-        actionInitiated: NODE_ACTIONS_ENUM.NODE_RESTART,
-        action: NODE_ACTIONS_ENUM.NODE_RESTART,
-        isActive: true,
-      });
-      restartNode({ variables: { data: { nodeId: currentNode?.id ?? '' } } });
-    }
-  };
-
-  const handleUpdateAvailable = (
-    name: string,
-    desiredVersion: string,
-    nodeId: string,
-  ) => {
-    updateSoftware({
-      variables: { data: { name, nodeId, tag: desiredVersion } },
-    });
-  };
+  }, [metricFrom, graphType]);
 
   const nodeActionDescription = getNodeActionDescriptionByProgress(
     nodeAction.progress,

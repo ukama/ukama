@@ -11,13 +11,14 @@ import LayoutSkelton from '@/components/Layout/skelton';
 import { Box } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { REFRESH_REDIRECT_MS } from '@/constants/timing';
 
 const Page = () => {
   const router = useRouter();
   useEffect(() => {
     setTimeout(() => {
       router.push('/');
-    }, 3000);
+    }, REFRESH_REDIRECT_MS);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

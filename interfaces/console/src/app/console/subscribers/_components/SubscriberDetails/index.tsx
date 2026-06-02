@@ -73,9 +73,9 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
     setAnchorEl(event.currentTarget);
   };
 
-  const handleCloseItem = () => {
+  const handleCloseItem = useCallback(() => {
     setAnchorEl(null);
-  };
+  }, []);
 
   const handleMenuItemClick = useCallback(
     (action: string) => {
@@ -103,7 +103,6 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
     handleClose();
   }, [
     name,
-    email,
     hasChanges,
     handleUpdateSubscriber,
     subscriberInfo,

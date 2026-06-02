@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { useCallback, useState } from 'react';
+import { logger } from '@/lib/logger';
 
 interface UseFetchAddressResult {
   address: string;
@@ -41,7 +42,7 @@ export const useFetchAddress = (): UseFetchAddressResult => {
       const data = await response.json();
       setAddress(data.display_name || 'Location not found');
     } catch (error) {
-      console.error('Error fetching address:', error);
+      logger.error('Error fetching address:', error);
       setError('Error fetching address');
       setAddress('Location not found');
     } finally {

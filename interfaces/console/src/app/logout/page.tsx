@@ -12,6 +12,7 @@ import { CenterContainer } from '@/styles/global';
 import { CircularProgress } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { LOGOUT_REDIRECT_MS } from '@/constants/timing';
 
 const Page = () => {
   const { env } = useEnvContext();
@@ -20,7 +21,8 @@ const Page = () => {
   useEffect(() => {
     setTimeout(() => {
       router.push(`${env.AUTH_APP_URL}/user/logout`);
-    }, 1000);
+    }, LOGOUT_REDIRECT_MS);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

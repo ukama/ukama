@@ -7,49 +7,19 @@
  */
 'use client';
 
-import {
-  Node,
-  NodeStateEnum,
-  NodeTypeEnum,
-  SiteDto,
-  Timeframe_Filter,
-  useGetHealthReportQuery,
-  useGetNodesForSiteLazyQuery,
-  useGetSitesQuery,
-  useToggleInternetSwitchMutation,
-  useToggleRfStatusMutation,
-  useToggleServiceMutation,
-} from '@/client/graphql/generated';
+import { Node, SiteDto } from '@/client/graphql/generated';
 import { Graphs_Type } from '@/client/graphql/generated/subscriptions';
-import {
-  NODE_ACTIONS_ENUM,
-  SITE_ACTIONS_BUTTONS,
-  SITE_KPI_TYPES,
-  SITE_KPIS,
-} from '@/constants';
+import { SITE_ACTIONS_BUTTONS, SITE_KPIS } from '@/constants';
 import { SectionData } from '@/constants/index';
-import { useEnvContext, useUserContext, useNetworkContext, useUIContext } from '@/context';
-import { ActiveView, KPIType, TSiteActionToggle, TStatusBarObj } from '@/types';
-import {
-  extractMetricValue,
-  graphTypeToSection,
-  kpiToGraphType,
-  stringToBoolean,
-} from '@/utils';
+import { useNetworkContext } from '@/context';
+import { ActiveView, TSiteActionToggle, TStatusBarObj } from '@/types';
+import { graphTypeToSection } from '@/utils';
 import { useFetchAddress } from '@/utils/useFetchAddress';
-import { useMetricSubscriptions } from '@/utils/useMetricSubscriptions';
-import { AlertColor } from '@mui/material';
 import { useRouter } from 'next/navigation';
-import PubSub from 'pubsub-js';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
-type SiteMetric = {
-  type: string;
-  success: boolean;
-  siteId?: string;
-  nodeId?: string;
-  value: number | number[];
-};
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSiteActions } from './useSiteActions';
+import { useSiteData } from './useSiteData';
+import { useSiteMetrics } from './useSiteMetrics';
 
 const defaultSite: SiteDto = {
   id: '',
@@ -68,105 +38,23 @@ const defaultSite: SiteDto = {
   switchId: '',
 };
 
-function getSiteActiveSubscribers(
-  metricsData: { metrics?: SiteMetric[] } | null | undefined,
-  siteId: string,
-): number | null {
-  if (!metricsData?.metrics || !siteId) return null;
-
-  const subscriberMetrics = metricsData.metrics.filter(
-    (m) =>
-      m.type === SITE_KPI_TYPES.ACTIVE_SUBSCRIBERS &&
-      m.success === true &&
-      m.siteId === siteId,
-  );
-
-  if (subscriberMetrics.length === 0) return null;
-
-  return subscriberMetrics.reduce((total, metric) => {
-    const value = extractMetricValue(metric.value);
-    return total + (value || 0);
-  }, 0);
-}
-
-function getInitialNodeUptimesFromMetrics(
-  metrics: SiteMetric[] | undefined,
-): Record<string, number> {
-  if (!metrics?.length) return {};
-
-  return metrics.reduce<Record<string, number>>((acc, metric) => {
-    if (
-      metric.type === SITE_KPI_TYPES.NODE_UPTIME &&
-      metric.nodeId &&
-      metric.success
-    ) {
-      acc[metric.nodeId] = typeof metric.value === 'number' ? metric.value : 0;
-    }
-    return acc;
-  }, {});
-}
-
-function getSiteUptimeFromMetrics(
-  metrics: SiteMetric[] | undefined,
-  siteId: string,
-): number {
-  if (!metrics?.length || !siteId) return 0;
-
-  const siteMetrics = metrics.filter((m) => m.siteId === siteId && m.success);
-  const uptimeMetric = siteMetrics.find(
-    (m) => m.type === SITE_KPI_TYPES.SITE_UPTIME,
-  );
-
-  if (uptimeMetric?.value !== undefined) {
-    const v = uptimeMetric.value;
-    const num = typeof v === 'number' ? v : parseFloat(String(v));
-    return Math.floor(num);
-  }
-  return 0;
-}
-
 export function useSiteDetailPage(id: string) {
   const router = useRouter();
+
+  // Shared state that is used across multiple hooks
   const [activeSite, setActiveSite] = useState<SiteDto>(defaultSite);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [nodesFetched, setNodesFetched] = useState(false);
   const [isDataReady, setIsDataReady] = useState(false);
-  const [activeSubscribers, setActiveSubscribers] = useState<number>(0);
   const [siteActionData, setSiteActionData] = useState<TSiteActionToggle[]>([]);
   const [activeView, setActiveView] = useState<ActiveView>({
     graphType: Graphs_Type.Solar,
     kpi: 'node',
   });
 
-  const subscribersSubscriptionRef = useRef<string | null>(null);
-
-  const { env, subscriptionClient } = useEnvContext();
-  const { user } = useUserContext();
   const { setSelectedDefaultSite } = useNetworkContext();
-  const { setSnackbarMessage } = useUIContext();
 
-  const notify = (msgId: string, message: string, type: string | AlertColor) =>
-    setSnackbarMessage({ id: msgId, message, type, show: true });
-
-  const {
-    metrics,
-    metricFrom,
-    metricsLoading,
-    statData,
-    statLoading,
-    resetMetrics,
-    cleanupSubscriptions,
-  } = useMetricSubscriptions({
-    siteId: id,
-    userId: user.id,
-    orgName: user.orgName,
-    metricUrl: env.METRIC_URL,
-    subscriptionClient: subscriptionClient!,
-    activeGraphType: activeView.graphType,
-    nodeIds: nodes.map((node) => node.id),
-    nodesFetched,
-  });
-
+  // Address lookup
   const {
     address: currentSiteAddress,
     isLoading: currentSiteAddressLoading,
@@ -174,6 +62,58 @@ export function useSiteDetailPage(id: string) {
     fetchAddress,
   } = useFetchAddress();
 
+  // GraphQL queries / mutations
+  const {
+    siteData,
+    fetchNodesForSite,
+    toggleRFStatus,
+    toggleRFStatusLoading,
+    toggleService,
+    toggleServiceLoading,
+    updateSwitchPort,
+    healthLoading,
+    notify,
+  } = useSiteData(
+    id,
+    activeSite,
+    nodes,
+    setNodes,
+    setNodesFetched,
+    setSiteActionData,
+  );
+
+  // Metric subscriptions and derived values
+  const {
+    metrics,
+    metricFrom,
+    metricsLoading,
+    statData,
+    statLoading,
+    resetMetrics,
+    activeSubscribers,
+    initialNodeUptimes,
+    siteUptime,
+  } = useSiteMetrics(id, activeSite, nodes, nodesFetched, activeView);
+
+  // Event handlers
+  const {
+    handleViewChange,
+    handleSwitchChange,
+    handleSiteChange,
+    handleActionClick,
+    handleSelected,
+  } = useSiteActions({
+    id,
+    nodes,
+    setSiteActionData,
+    setActiveView,
+    resetMetrics,
+    toggleRFStatus,
+    toggleService,
+    updateSwitchPort,
+  });
+
+  // Static section map
   const sections: SectionData = useMemo(
     () => ({
       SOLAR: SITE_KPIS.SOLAR.metrics,
@@ -191,195 +131,7 @@ export function useSiteDetailPage(id: string) {
     [],
   );
 
-  const [updateSwitchPort] = useToggleInternetSwitchMutation({
-    onError: (err) => notify('update-node-err-msg', err.message, 'error'),
-  });
-
-  const handleSubscribersUpdate = useCallback((_: unknown, data: unknown) => {
-    if (data !== null && data !== undefined) {
-      const value =
-        Array.isArray(data) && data.length > 1
-          ? extractMetricValue(data[1])
-          : extractMetricValue(data);
-      if (value !== null) setActiveSubscribers(value);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!id || !activeSite.id) return;
-
-    if (subscribersSubscriptionRef.current) {
-      PubSub.unsubscribe(subscribersSubscriptionRef.current);
-      subscribersSubscriptionRef.current = null;
-    }
-
-    const topic = `stat-${SITE_KPI_TYPES.ACTIVE_SUBSCRIBERS}-${id}`;
-    subscribersSubscriptionRef.current = PubSub.subscribe(
-      topic,
-      handleSubscribersUpdate,
-    );
-
-    return () => {
-      if (subscribersSubscriptionRef.current) {
-        PubSub.unsubscribe(subscribersSubscriptionRef.current);
-        subscribersSubscriptionRef.current = null;
-      }
-    };
-  }, [id, activeSite.id, handleSubscribersUpdate]);
-
-  useEffect(() => {
-    if (statData?.getSiteStat && activeSite.id) {
-      const count = getSiteActiveSubscribers(
-        statData.getSiteStat as { metrics?: SiteMetric[] },
-        activeSite.id,
-      );
-      if (count !== null) setActiveSubscribers(count);
-    }
-  }, [statData, activeSite.id]);
-
-  useEffect(
-    () => () => {
-      cleanupSubscriptions();
-      if (subscribersSubscriptionRef.current) {
-        PubSub.unsubscribe(subscribersSubscriptionRef.current);
-        subscribersSubscriptionRef.current = null;
-      }
-    },
-    [cleanupSubscriptions],
-  );
-
-  const handleViewChange = useCallback(
-    (kpiType: string): void => {
-      setActiveView({
-        graphType: kpiToGraphType[kpiType] || Graphs_Type.Solar,
-        kpi: kpiType as KPIType,
-      });
-      resetMetrics();
-    },
-    [resetMetrics],
-  );
-
-  const handleSwitchChange = useCallback(
-    async (portNumber: number, currentStatus: boolean) => {
-      const newStatus = !currentStatus;
-      try {
-        const result = await updateSwitchPort({
-          variables: {
-            data: { port: portNumber, siteId: id, status: newStatus },
-          },
-        });
-        if (result.data?.toggleInternetSwitch?.success) {
-          notify(
-            'update-switch-success',
-            `Port ${portNumber} status updated to ${newStatus ? 'On' : 'Off'}`,
-            'success',
-          );
-        }
-      } catch (err) {
-        notify(
-          'update-site-error',
-          err instanceof Error ? err.message : 'Unknown error',
-          'error',
-        );
-      }
-    },
-    [id, updateSwitchPort, setSnackbarMessage],
-  );
-
-  const { data: siteData } = useGetSitesQuery({
-    fetchPolicy: 'cache-and-network',
-    variables: { data: {} },
-    onError: (err) =>
-      notify('fetching-sites-msg', err.message, 'error' as AlertColor),
-  });
-
-  const [fetchNodesForSite] = useGetNodesForSiteLazyQuery({
-    fetchPolicy: 'cache-first',
-    onCompleted: (data) => {
-      const filtered = data.getNodesForSite.nodes.filter(
-        (node) =>
-          node.site.siteId === activeSite.id &&
-          node.status.state === NodeStateEnum.Configured,
-      ) as Node[];
-      setNodes(filtered);
-      setNodesFetched(true);
-    },
-  });
-
-  const [toggleRFStatus, { loading: toggleRFStatusLoading }] =
-    useToggleRfStatusMutation({
-      fetchPolicy: 'network-only',
-      onCompleted: (_, ctx) => {
-        notify(
-          'toggle-rf-status-success-msg',
-          `RF status turned ${ctx?.variables?.data?.status ? 'On' : 'Off'} successfully.`,
-          'success',
-        );
-      },
-      onError: (_, ctx) => {
-        notify(
-          'toggle-rf-status-error-msg',
-          `Failed to turn RF status ${ctx?.variables?.data?.status ? 'On' : 'Off'}.`,
-          'error',
-        );
-      },
-    });
-
-  const [toggleService, { loading: toggleServiceLoading }] =
-    useToggleServiceMutation({
-      fetchPolicy: 'network-only',
-      onCompleted: (_, ctx) => {
-        notify(
-          'toggle-service-status-success-msg',
-          `Service status turned ${ctx?.variables?.data?.status ? 'On' : 'Off'} successfully.`,
-          'success',
-        );
-      },
-      onError: (_, ctx) => {
-        notify(
-          'toggle-service-status-error-msg',
-          `Failed to turn service status ${ctx?.variables?.data?.status ? 'On' : 'Off'}.`,
-          'error',
-        );
-      },
-    });
-
-  const { loading: healthLoading } = useGetHealthReportQuery({
-    variables: {
-      data: {
-        id: '',
-        timestamp: '',
-        timeframe: Timeframe_Filter.Latest,
-        nodeId:
-          nodes.find((node) => node.id.includes(NodeTypeEnum.Tnode))?.id || '',
-      },
-    },
-    onCompleted: (data) => {
-      if (data.getHealthReport.system.length > 0) {
-        const actions: TSiteActionToggle[] = [];
-        data.getHealthReport.system.forEach((system) => {
-          if (system.name === 'radio') {
-            actions.push({
-              id: NODE_ACTIONS_ENUM.TOGGLE_RADIO,
-              key: 'radio',
-              value: stringToBoolean(system.value),
-            });
-          }
-          if (system.name === 'service') {
-            actions.push({
-              id: NODE_ACTIONS_ENUM.TOGGLE_SERVICE,
-              key: 'service',
-              value: stringToBoolean(system.value),
-            });
-          }
-        });
-        setSiteActionData(actions);
-      }
-    },
-    onError: (err) =>
-      notify('fetching-health-report-msg', err.message, 'error'),
-  });
-
+  // Data-readiness check
   const checkDataReadiness = useCallback(() => {
     if (activeSite.id && currentSiteAddress && !currentSiteAddressLoading) {
       setIsDataReady(true);
@@ -398,11 +150,11 @@ export function useSiteDetailPage(id: string) {
   );
 
   useEffect(() => {
-    if (id && user.id && user.orgName) {
+    if (id) {
       filterActiveSite(id);
       setActiveView({ graphType: Graphs_Type.NodeHealth, kpi: 'node' });
     }
-  }, [id, user.id, user.orgName, filterActiveSite]);
+  }, [id, filterActiveSite]);
 
   useEffect(() => {
     if (siteData?.getSites?.sites) {
@@ -414,13 +166,6 @@ export function useSiteDetailPage(id: string) {
       }
     }
   }, [id, siteData, router]);
-
-  const handleSiteChange = useCallback(
-    (newSiteId: string) => {
-      router.push('/console/sites/' + newSiteId);
-    },
-    [router],
-  );
 
   useEffect(() => {
     const handleFetchAddress = async () => {
@@ -445,7 +190,7 @@ export function useSiteDetailPage(id: string) {
         'error',
       );
     }
-  }, [addressError]);
+  }, [addressError, notify]);
 
   useEffect(() => {
     if (activeSite.id) {
@@ -453,35 +198,6 @@ export function useSiteDetailPage(id: string) {
       fetchNodesForSite({ variables: { siteId: activeSite.id } });
     }
   }, [activeSite.id, fetchNodesForSite]);
-
-  const handleActionClick = useCallback(
-    (actionId: string, value: boolean) => {
-      const tnodeId =
-        nodes.find((node) => node.id.includes(NodeTypeEnum.Tnode))?.id ?? '';
-      switch (actionId) {
-        case NODE_ACTIONS_ENUM.TOGGLE_RADIO:
-          toggleRFStatus({
-            variables: { data: { nodeId: tnodeId, status: value } },
-          });
-          break;
-        case NODE_ACTIONS_ENUM.TOGGLE_SERVICE:
-          toggleService({
-            variables: { data: { nodeId: tnodeId, status: value } },
-          });
-          break;
-      }
-      setSiteActionData((prev) =>
-        prev.map((item) => (item.id === actionId ? { ...item, value } : item)),
-      );
-    },
-    [nodes, siteActionData, toggleRFStatus, toggleService],
-  );
-
-  const siteMetrics = statData?.getSiteStat?.metrics as
-    | SiteMetric[]
-    | undefined;
-  const initialNodeUptimes = getInitialNodeUptimesFromMetrics(siteMetrics);
-  const siteUptime = getSiteUptimeFromMetrics(siteMetrics, activeSite.id);
 
   return {
     id,
@@ -510,6 +226,6 @@ export function useSiteDetailPage(id: string) {
     handleSwitchChange,
     handleSiteChange,
     handleActionClick,
-    handleSelected: (obj: TStatusBarObj) => handleSiteChange(obj.id),
+    handleSelected: (obj: TStatusBarObj) => handleSelected(obj),
   };
 }

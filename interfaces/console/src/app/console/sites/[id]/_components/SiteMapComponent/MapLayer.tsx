@@ -35,6 +35,7 @@ const MapLayer = ({ posix }: IMapLayer) => {
         attribution: '&copy; <a href="https://www.mapbox.com">Mapbox</a> ',
       },
     ).addTo(map);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map]);
 
   useEffect(() => {

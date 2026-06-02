@@ -273,4 +273,4 @@ const DataTableWithOptions = ({
   );
 };
 
-export default DataTableWithOptions;
+export default React.memo(DataTableWithOptions);
