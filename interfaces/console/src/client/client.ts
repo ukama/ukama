@@ -11,6 +11,18 @@ import { ApolloClient, HttpLink, InMemoryCache } from '@apollo/client';
 export const getMetricsClient = (baseUrl: string) => {
   return new ApolloClient({
     link: new HttpLink({ uri: `${baseUrl}/graphql`, credentials: 'include' }),
-    cache: new InMemoryCache(),
+    cache: new InMemoryCache({
+      typePolicies: {
+        Query: {
+          fields: {
+            getMetricsStat: { merge: false },
+            getMetricByTab: { merge: false },
+            getMetricBySite: { merge: false },
+            getSiteStat: { merge: false },
+            getNotifications: { merge: false },
+          },
+        },
+      },
+    }),
   });
 };

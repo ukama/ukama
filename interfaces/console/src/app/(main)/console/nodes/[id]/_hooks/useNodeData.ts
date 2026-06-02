@@ -54,7 +54,7 @@ export function useNodeData({
   const { setSnackbarMessage } = useUIContext();
   const { user } = useUserContext();
 
-  const notify = (msgId: string, message: string, type: string) =>
+  const notify = (msgId: string, message: string, type: 'success' | 'error' | 'warning' | 'info') =>
     setSnackbarMessage({ id: msgId, message, type, show: true });
 
   const { data: nodesData, loading: nodesLoading } = useGetNodesQuery({

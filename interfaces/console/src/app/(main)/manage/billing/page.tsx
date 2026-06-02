@@ -91,7 +91,7 @@ const BillingSettingsPage: React.FC = () => {
     variables: {
       data: {
         report_type: 'invoice',
-        count: 100,
+        count: 20,
         networkId: '',
         ownerId: '',
         ownerType: '',
@@ -267,7 +267,7 @@ const BillingSettingsPage: React.FC = () => {
         )
         .join(', '),
       payment: report.isPaid ? 'Paid' : 'Unpaid',
-      description: report.rawReport?.fees[0].item.name,
+      description: report.rawReport?.fees?.[0]?.item?.name ?? '',
       pdf: report.rawReport?.fileUrl,
     }),
   );

@@ -37,6 +37,7 @@ const AccountPopover = () => {
   return (
     <>
       <IconButton
+        aria-label="Account settings"
         data-testid="account-settings-btn"
         sx={{
           ...IconStyle,

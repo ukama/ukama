@@ -8,6 +8,8 @@
 'use client';
 
 import {
+  GetSitesDocument,
+  GetSitesQuery,
   Node,
   NodeStateEnum,
   NodeTypeEnum,
@@ -15,7 +17,6 @@ import {
   Timeframe_Filter,
   useGetHealthReportQuery,
   useGetNodesForSiteLazyQuery,
-  useGetSitesQuery,
   useToggleInternetSwitchMutation,
   useToggleRfStatusMutation,
   useToggleServiceMutation,
@@ -24,6 +25,7 @@ import { NODE_ACTIONS_ENUM } from '@/constants';
 import { useUIContext } from '@/context';
 import { TSiteActionToggle } from '@/types';
 import { stringToBoolean } from '@/utils';
+import { useApolloClient } from '@apollo/client';
 import { AlertColor } from '@mui/material';
 import { Dispatch, SetStateAction, useCallback } from 'react';
 
@@ -36,18 +38,18 @@ export function useSiteData(
   setSiteActionData: Dispatch<SetStateAction<TSiteActionToggle[]>>,
 ) {
   const { setSnackbarMessage } = useUIContext();
+  const apolloClient = useApolloClient();
 
   const notify = useCallback(
-    (msgId: string, message: string, type: string | AlertColor) =>
+    (msgId: string, message: string, type: 'success' | 'error' | 'warning' | 'info') =>
       setSnackbarMessage({ id: msgId, message, type, show: true }),
     [setSnackbarMessage],
   );
 
-  const { data: siteData } = useGetSitesQuery({
-    fetchPolicy: 'cache-and-network',
+  // Read sites from Apollo cache — the parent page already fetched them
+  const siteData = apolloClient.readQuery<GetSitesQuery>({
+    query: GetSitesDocument,
     variables: { data: {} },
-    onError: (err) =>
-      notify('fetching-sites-msg', err.message, 'error' as AlertColor),
   });
 
   const [fetchNodesForSite] = useGetNodesForSiteLazyQuery({
