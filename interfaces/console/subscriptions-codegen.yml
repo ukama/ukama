@@ -2,7 +2,7 @@ overwrite: true
 schema: http://localhost:8081/graphql
 documents: './src/client/graphql/subscriptions.graphql'
 generates:
-  ./subscription-schema-types.ts:
+  ./src/client/graphql/generated/subscription-schema-types.ts:
     plugins:
       - 'typescript'
   ./src/client/graphql/generated/subscriptions-operations.ts:
