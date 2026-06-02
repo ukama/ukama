@@ -119,7 +119,7 @@ const NodeStatItem = ({
         PubSub.unsubscribe(token);
       };
     }
-  }, [id, unit]);
+  }, [id, unit, format]);
 
   const isAlert = (): boolean => {
     if (id && threshold && parseFloat(v) > threshold.normal) {

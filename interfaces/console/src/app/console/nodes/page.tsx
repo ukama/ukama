@@ -25,7 +25,7 @@ import { NodeEnumToString } from '@/utils';
 import RouterIcon from '@mui/icons-material/Router';
 import { Stack } from '@mui/material';
 import { format } from 'date-fns';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export default function Page() {
   const [search, setSearch] = useState<string>('');
@@ -67,11 +67,11 @@ export default function Page() {
     }
   }, [sitesData, getNodes]);
 
-  const getSiteName = (siteId: string | undefined | null) => {
+  const getSiteName = useCallback((siteId: string | undefined | null) => {
     if (siteId === undefined || siteId === null) return '-';
-    const site = sitesData?.getSites.sites.find((site) => site.id === siteId);
+    const site = sitesData?.getSites.sites.find((s) => s.id === siteId);
     return site ? site.name : '-';
-  };
+  }, [sitesData?.getSites.sites]);
 
   const nodes = useMemo(() => {
     if (!nodesData?.getNodes.nodes) return [];
@@ -88,7 +88,7 @@ export default function Page() {
           ? format(new Date(node.site.addedAt), 'MM/dd/yyyy hha')
           : '-',
       }));
-  }, [nodesData?.getNodes.nodes, network.id, sitesData?.getSites.sites]);
+  }, [nodesData?.getNodes.nodes, network.id, getSiteName]);
 
   const filteredNodes = useMemo(() => {
     if (search.length <= 3) return nodes;

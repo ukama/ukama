@@ -9,7 +9,7 @@ import { SiteDto } from '@/client/graphql/generated';
 import { MetricsStateRes } from '@/client/graphql/generated/subscriptions';
 import LoadingWrapper from '@/components/ui/LoadingWrapper';
 import SiteCard from '@/app/console/sites/_components/SiteCard';
-import UnassignedNodeCard from '@/app/console/nodes/_components/UnassingedNodecard';
+import UnassignedNodeCard from '@/app/console/nodes/_components/UnassignedNodeCard';
 import { Box, Divider, Grid, Typography } from '@mui/material';
 import React from 'react';
 

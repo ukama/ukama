@@ -19,6 +19,7 @@ import { getUnixTime } from '@/utils';
 import { ApolloClient, NormalizedCacheObject } from '@apollo/client';
 import PubSub from 'pubsub-js';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { logger } from '@/lib/logger';
 
 interface MetricSubscriptionsProps {
   siteId: string;
@@ -153,7 +154,7 @@ export const useMetricSubscriptions = ({
         }
       }
     } catch (error) {
-      console.error('Error in handleSiteStatSubscription:', error);
+      logger.error('Error in handleSiteStatSubscription:', error);
     }
   }, []);
 

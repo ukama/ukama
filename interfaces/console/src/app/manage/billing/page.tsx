@@ -222,7 +222,8 @@ const BillingSettingsPage: React.FC = () => {
       updatePayment,
       refetchPayments,
       setSnackbarMessage,
-      refetchReports,
+      user?.email,
+      user?.name,
     ],
   );
 

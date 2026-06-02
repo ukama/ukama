@@ -29,7 +29,7 @@ const SiteSuccess = () => {
       <Typography variant="body1">
         {flow === ONBOARDING_FLOW
           ? 'To get connected to the network, you still need to create a custom data plan, and add subscribers to your network.'
-          : 'SOME TEXT HERE FOR NON ONBOARDING FLOW'}
+          : 'Your site has been added to the network. You can now manage it from the console.'}
       </Typography>
       <br />
       <Button

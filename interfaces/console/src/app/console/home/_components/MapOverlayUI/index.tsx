@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import React from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import SearchBar from '@/components/ui/SearchBar';
 import { DarkTooltip } from '@/styles/global';
 import { colors } from '@/theme';
@@ -80,68 +80,81 @@ interface ILeftOverlayUI {
   handleLocationSelected: (loc: LatLngLiteral) => void;
 }
 
-export const LeftOverlayUI = ({
+export const LeftOverlayUI = memo(({
   isAddSite,
   isAddLink,
   handleAddLink,
   handleAddSite,
   isCurrentDraft,
   handleLocationSelected,
-}: ILeftOverlayUI) => (
-  <Box
-    sx={{
-      top: 24,
-      left: 24,
-      width: '100%',
-      display: 'flex',
-      position: 'absolute',
-    }}
-  >
-    <Stack spacing={1.5} width={'400px'} alignItems={'flex-start'}>
-      <SearchBar
-        key={'searchbox'}
-        handleLocationSelected={handleLocationSelected}
-        placeholderText="Search for a location, address, or coordinates"
-      />
-      {isCurrentDraft && (
-        <DarkTooltip title="Place site" placement="right-end">
-          <IconButton
-            sx={{
-              ...LeftIconButtonStyle,
-              backgroundColor: isAddSite
-                ? colors.primaryMain
-                : colors.primaryDark,
-            }}
-            onClick={(e) => {
-              e.bubbles = false;
-              handleAddSite();
-            }}
-          >
-            <AddLocationIcon htmlColor="white" />
-          </IconButton>
-        </DarkTooltip>
-      )}
-      {isCurrentDraft && (
-        <DarkTooltip title="Add Link" placement="right-end">
-          <IconButton
-            sx={{
-              ...LeftIconButtonStyle,
-              backgroundColor: isAddLink
-                ? colors.primaryMain
-                : colors.primaryDark,
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleAddLink();
-            }}
-          >
-            <RouteOutlinedIcon htmlColor="white" />
-          </IconButton>
-        </DarkTooltip>
-      )}
-    </Stack>
-  </Box>
-);
+}: ILeftOverlayUI) => {
+  const handleAddSiteClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.bubbles = false;
+      handleAddSite();
+    },
+    [handleAddSite],
+  );
+
+  const handleAddLinkClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+      handleAddLink();
+    },
+    [handleAddLink],
+  );
+
+  const addSiteButtonSx = useMemo(
+    () => ({
+      ...LeftIconButtonStyle,
+      backgroundColor: isAddSite ? colors.primaryMain : colors.primaryDark,
+    }),
+    [isAddSite],
+  );
+
+  const addLinkButtonSx = useMemo(
+    () => ({
+      ...LeftIconButtonStyle,
+      backgroundColor: isAddLink ? colors.primaryMain : colors.primaryDark,
+    }),
+    [isAddLink],
+  );
+
+  return (
+    <Box
+      sx={{
+        top: 24,
+        left: 24,
+        width: '100%',
+        display: 'flex',
+        position: 'absolute',
+      }}
+    >
+      <Stack spacing={1.5} width={'400px'} alignItems={'flex-start'}>
+        <SearchBar
+          key={'searchbox'}
+          handleLocationSelected={handleLocationSelected}
+          placeholderText="Search for a location, address, or coordinates"
+        />
+        {isCurrentDraft && (
+          <DarkTooltip title="Place site" placement="right-end">
+            <IconButton sx={addSiteButtonSx} onClick={handleAddSiteClick}>
+              <AddLocationIcon htmlColor="white" />
+            </IconButton>
+          </DarkTooltip>
+        )}
+        {isCurrentDraft && (
+          <DarkTooltip title="Add Link" placement="right-end">
+            <IconButton sx={addLinkButtonSx} onClick={handleAddLinkClick}>
+              <RouteOutlinedIcon htmlColor="white" />
+            </IconButton>
+          </DarkTooltip>
+        )}
+      </Stack>
+    </Box>
+  );
+});
+LeftOverlayUI.displayName = 'LeftOverlayUI';
 
 interface IRightOverlayUI {
   handleClick: (event: React.MouseEvent<HTMLElement>) => void;
@@ -151,52 +164,68 @@ interface IRightOverlayUI {
   powerInfoId: string | undefined;
 }
 
-export const RightOverlayUI = ({
+export const RightOverlayUI = memo(({
   siteInfoId,
   powerInfoId,
   handleClick,
   isCurrentDraft,
   handlePowerInfo,
-}: IRightOverlayUI) => (
-  <Box
-    sx={{
+}: IRightOverlayUI) => {
+  const handlePowerInfoClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+      handlePowerInfo(e);
+    },
+    [handlePowerInfo],
+  );
+
+  const handleSiteInfoClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+      handleClick(e);
+    },
+    [handleClick],
+  );
+
+  const containerSx = useMemo(
+    () => ({
       top: 24,
       right: 24,
       position: 'absolute',
       display: isCurrentDraft ? 'flex' : 'none',
-    }}
-  >
-    <Stack direction={'row'} spacing={1} alignItems={'flex-end'}>
-      <Tooltip title="Power Info">
-        <IconButton
-          aria-describedby={powerInfoId}
-          sx={RightIconButtonStyle}
-          onClick={(e) => {
-            e.stopPropagation();
-            handlePowerInfo(e);
-          }}
-        >
-          <BatteryOutlinedIcon
-            htmlColor={colors.vulcan}
-            sx={{ transform: 'rotate(90deg)' }}
-          />
-        </IconButton>
-      </Tooltip>
-      <Tooltip title="Site Info">
-        <IconButton
-          aria-describedby={siteInfoId}
-          sx={RightIconButtonStyle}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleClick(e);
-          }}
-        >
-          <LocationOnOutlinedIcon htmlColor={colors.vulcan} />
-        </IconButton>
-      </Tooltip>
-    </Stack>
-  </Box>
-);
+    }),
+    [isCurrentDraft],
+  );
+
+  return (
+    <Box sx={containerSx}>
+      <Stack direction={'row'} spacing={1} alignItems={'flex-end'}>
+        <Tooltip title="Power Info">
+          <IconButton
+            aria-describedby={powerInfoId}
+            sx={RightIconButtonStyle}
+            onClick={handlePowerInfoClick}
+          >
+            <BatteryOutlinedIcon
+              htmlColor={colors.vulcan}
+              sx={{ transform: 'rotate(90deg)' }}
+            />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Site Info">
+          <IconButton
+            aria-describedby={siteInfoId}
+            sx={RightIconButtonStyle}
+            onClick={handleSiteInfoClick}
+          >
+            <LocationOnOutlinedIcon htmlColor={colors.vulcan} />
+          </IconButton>
+        </Tooltip>
+      </Stack>
+    </Box>
+  );
+});
+RightOverlayUI.displayName = 'RightOverlayUI';
 
 const PowerSummarySections = [
   {
@@ -222,7 +251,7 @@ interface SiteSummaryItem {
   status: string;
 }
 
-export const SiteSummary = ({ siteSummary }: { siteSummary: SiteSummaryItem[] }) => (
+export const SiteSummary = memo(({ siteSummary }: { siteSummary: SiteSummaryItem[] }) => (
   <Stack spacing={1}>
     <Typography variant="body2" sx={{ fontWeight: 500 }}>
       {`Site Summary (${siteSummary.length})`}
@@ -249,7 +278,8 @@ export const SiteSummary = ({ siteSummary }: { siteSummary: SiteSummaryItem[] })
       </Typography>
     )}
   </Stack>
-);
+));
+SiteSummary.displayName = 'SiteSummary';
 
 interface PowerSiteSummaryItem {
   id: string;
@@ -268,49 +298,36 @@ interface PowerSectionData {
   info: string;
 }
 
-export const PowerSummary = ({ powerSummary }: { powerSummary: PowerSummaryData }) => (
-  <Stack spacing={1}>
-    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-      Power Summary
-    </Typography>
-    {PowerSummarySections.map(({ id, title, unit }) => {
-      const d: Record<string, PowerSectionData> = {
-        'power-usage': {
-          total: 0,
-          info: '',
-        },
-        'solar-panels': {
-          total: 0,
-          info: '',
-        },
-        batteries: {
-          total: 0,
-          info: '',
-        },
-      };
+export const PowerSummary = memo(({ powerSummary }: { powerSummary: PowerSummaryData }) => {
+  const aggregated = useMemo<Record<string, PowerSectionData>>(() => {
+    const d: Record<string, PowerSectionData> = {
+      'power-usage': { total: 0, info: '' },
+      'solar-panels': { total: 0, info: '' },
+      batteries: { total: 0, info: '' },
+    };
 
-      powerSummary.sites.forEach(
-        ({ id: _id, name, usage, panels, battries }: PowerSiteSummaryItem, i: number) => {
-          const isLastItem = powerSummary.sites.length === i + 1;
-          d['power-usage'].total = d['power-usage'].total + usage;
-          d['solar-panels'].total = d['solar-panels'].total + panels;
-          d['batteries'].total = d['batteries'].total + battries;
-          d['power-usage'].info =
-            d['power-usage'].info +
-            `${name} (${usage})` +
-            (isLastItem ? '' : ' + ');
-          d['solar-panels'].info =
-            d['solar-panels'].info +
-            `${name} (${panels})` +
-            (isLastItem ? '' : ' + ');
-          d['batteries'].info =
-            d['batteries'].info +
-            `${name} (${battries})` +
-            (isLastItem ? '' : ' + ');
-        },
-      );
+    powerSummary.sites.forEach(
+      ({ name, usage, panels, battries }: PowerSiteSummaryItem, i: number) => {
+        const isLastItem = powerSummary.sites.length === i + 1;
+        const separator = isLastItem ? '' : ' + ';
+        d['power-usage'].total += usage;
+        d['solar-panels'].total += panels;
+        d['batteries'].total += battries;
+        d['power-usage'].info += `${name} (${usage})${separator}`;
+        d['solar-panels'].info += `${name} (${panels})${separator}`;
+        d['batteries'].info += `${name} (${battries})${separator}`;
+      },
+    );
 
-      return (
+    return d;
+  }, [powerSummary.sites]);
+
+  return (
+    <Stack spacing={1}>
+      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+        Power Summary
+      </Typography>
+      {PowerSummarySections.map(({ id, title, unit }) => (
         <Stack
           key={id}
           direction="column"
@@ -327,17 +344,18 @@ export const PowerSummary = ({ powerSummary }: { powerSummary: PowerSummaryData 
               {title}
             </Typography>
             <Typography variant="body2" sx={{ fontSize: 14, fontWeight: 500 }}>
-              {d[id].total} {unit}
+              {aggregated[id].total} {unit}
             </Typography>
           </Stack>
           <Typography variant="body2" sx={{ fontSize: 14, fontWeight: 300 }}>
-            {d[id].info ? d[id].info : 'No data available!'}
+            {aggregated[id].info ? aggregated[id].info : 'No data available!'}
           </Typography>
         </Stack>
-      );
-    })}
-  </Stack>
-);
+      ))}
+    </Stack>
+  );
+});
+PowerSummary.displayName = 'PowerSummary';
 
 interface PlanSiteForDetails {
   name?: string;
@@ -348,7 +366,8 @@ interface PlanSiteForDetails {
 interface ISiteDetails {
   site: PlanSiteForDetails;
 }
-const SiteDetails = ({ site }: ISiteDetails) => (
+
+const SiteDetails = memo(({ site }: ISiteDetails) => (
   <Stack spacing={2} py={3}>
     <Stack direction={'row'} spacing={1} alignItems={'center'}>
       <LocationOnIcon fontSize="small" />
@@ -387,134 +406,154 @@ const SiteDetails = ({ site }: ISiteDetails) => (
       onChange={() => {}}
     />
   </Stack>
-);
+));
+SiteDetails.displayName = 'SiteDetails';
 
 interface ISites {
   sites: PlanSiteForDetails[];
   handleDeleteLink: () => void;
 }
 
-export const SiteLink = ({ sites, handleDeleteLink }: ISites) => (
-  <Card sx={{ boxShadow: 'none' }}>
-    <Grid container height="100%" columnSpacing={3}>
-      <Grid item xs={3.5}>
-        <SiteDetails site={sites[0]} />
-      </Grid>
-      <Grid item xs={5}>
-        <Stack height={'100%'} sx={{ border: '0.5px solid grey' }}>
-          <Stack
-            height={'56px'}
-            direction={'row'}
-            alignItems={'center'}
-            justifyContent={'space-around'}
-          >
-            <Stack direction={'row'} spacing={1} alignItems={'center'}>
-              <SignalIcon fontSize="small" color="success" />
-              <Typography variant="body2">-45 dBm</Typography>
-            </Stack>
-            <Stack direction={'row'} spacing={1} alignItems={'center'}>
-              <SpeedIcon fontSize="small" color="success" />
-              <Typography variant="body2">100 Mbps</Typography>
-            </Stack>
-            <Button
-              size="small"
-              color="error"
-              variant="outlined"
-              sx={{ height: 'fit-content', fontSize: '12px' }}
-              onClick={() => handleDeleteLink()}
+export const SiteLink = memo(({ sites, handleDeleteLink }: ISites) => {
+  const onDeleteLink = useCallback(() => {
+    handleDeleteLink();
+  }, [handleDeleteLink]);
+
+  return (
+    <Card sx={{ boxShadow: 'none' }}>
+      <Grid container height="100%" columnSpacing={3}>
+        <Grid item xs={3.5}>
+          <SiteDetails site={sites[0]} />
+        </Grid>
+        <Grid item xs={5}>
+          <Stack height={'100%'} sx={{ border: '0.5px solid grey' }}>
+            <Stack
+              height={'56px'}
+              direction={'row'}
+              alignItems={'center'}
+              justifyContent={'space-around'}
             >
-              Delete Link
-            </Button>
+              <Stack direction={'row'} spacing={1} alignItems={'center'}>
+                <SignalIcon fontSize="small" color="success" />
+                <Typography variant="body2">-45 dBm</Typography>
+              </Stack>
+              <Stack direction={'row'} spacing={1} alignItems={'center'}>
+                <SpeedIcon fontSize="small" color="success" />
+                <Typography variant="body2">100 Mbps</Typography>
+              </Stack>
+              <Button
+                size="small"
+                color="error"
+                variant="outlined"
+                sx={{ height: 'fit-content', fontSize: '12px' }}
+                onClick={onDeleteLink}
+              >
+                Delete Link
+              </Button>
+            </Stack>
+            <Image
+              width={502}
+              height={170}
+              src="/temp_link.png"
+              alt="ukama-sites-link"
+            />
           </Stack>
-          <Image
-            width={502}
-            height={170}
-            src="/temp_link.png"
-            alt="ukama-sites-link"
-          />
-        </Stack>
+        </Grid>
+        <Grid item xs={3.5}>
+          <SiteDetails site={sites[1]} />
+        </Grid>
       </Grid>
-      <Grid item xs={3.5}>
-        <SiteDetails site={sites[1]} />
-      </Grid>
-    </Grid>
-  </Card>
-);
+    </Card>
+  );
+});
+SiteLink.displayName = 'SiteLink';
 
 interface ILayerSwitch {
   value: string;
   handleLayerSwitch: (event: React.MouseEvent<HTMLElement>, value: string) => void;
 }
 
-export const LayerSwitch = ({ handleLayerSwitch, value }: ILayerSwitch) => (
-  <Box
-    sx={{
-      left: 24,
-      bottom: 24,
-      zIndex: 400,
+export const LayerSwitch = memo(({ handleLayerSwitch, value }: ILayerSwitch) => {
+  const satelliteButtonSx = useMemo(
+    () => ({
+      border: 0,
+      borderRadius: '4px',
+      backgroundColor: `${value === 'satellite' ? colors.primaryMain02 : 'transparent'} !important`,
+    }),
+    [value],
+  );
 
-      position: 'absolute',
-    }}
-  >
-    <Card variant="elevation" sx={{ p: 0.8, width: 'fit-content' }}>
-      <ToggleButtonGroup
-        value={value}
-        exclusive
-        onChange={handleLayerSwitch}
-        aria-label="text alignment"
-        sx={{ height: '36px' }}
-      >
-        <ToggleButton
-          value="satellite"
-          aria-label="left aligned"
-          sx={{
-            border: 0,
-            borderRadius: '4px',
-            backgroundColor: `${
-              value === 'satellite' ? colors.primaryMain02 : 'transparent'
-            } !important`,
-          }}
+  const terrainButtonSx = useMemo(
+    () => ({
+      border: 0,
+      borderRadius: '4px',
+      backgroundColor: `${value === 'terrain' ? colors.primaryMain02 : 'transparent'} !important`,
+    }),
+    [value],
+  );
+
+  const satelliteLabelSx = useMemo(
+    () => ({
+      fontSize: 12,
+      textTransform: 'capitalize' as const,
+      fontWeight: value === 'satellite' ? 600 : 300,
+    }),
+    [value],
+  );
+
+  const terrainLabelSx = useMemo(
+    () => ({
+      fontSize: 12,
+      textTransform: 'capitalize' as const,
+      fontWeight: value === 'terrain' ? 600 : 300,
+    }),
+    [value],
+  );
+
+  return (
+    <Box
+      sx={{
+        left: 24,
+        bottom: 24,
+        zIndex: 400,
+        position: 'absolute',
+      }}
+    >
+      <Card variant="elevation" sx={{ p: 0.8, width: 'fit-content' }}>
+        <ToggleButtonGroup
+          value={value}
+          exclusive
+          onChange={handleLayerSwitch}
+          aria-label="text alignment"
+          sx={{ height: '36px' }}
         >
-          <Stack direction={'row'} alignItems={'center'} spacing={0.8}>
-            <SatelliteIcon fontSize="small" />
-            <Typography
-              variant="caption"
-              sx={{
-                fontSize: 12,
-                textTransform: 'capitalize',
-                fontWeight: value === 'satellite' ? 600 : 300,
-              }}
-            >
-              Satellite
-            </Typography>
-          </Stack>
-        </ToggleButton>
-        <ToggleButton
-          value="terrain"
-          aria-label="centered"
-          sx={{
-            border: 0,
-            borderRadius: '4px',
-            backgroundColor: `${
-              value === 'terrain' ? colors.primaryMain02 : 'transparent'
-            } !important`,
-          }}
-        >
-          <Stack direction={'row'} alignItems={'center'} spacing={0.8}>
-            <TerrainIcon fontSize="small" />
-            <Typography
-              variant="caption"
-              sx={{
-                fontSize: 12,
-                textTransform: 'capitalize',
-                fontWeight: value === 'terrain' ? 600 : 300,
-              }}
-            >
-              Terrain
-            </Typography>
-          </Stack>
-        </ToggleButton>
-      </ToggleButtonGroup>
-    </Card>
-  </Box>
-);
+          <ToggleButton
+            value="satellite"
+            aria-label="left aligned"
+            sx={satelliteButtonSx}
+          >
+            <Stack direction={'row'} alignItems={'center'} spacing={0.8}>
+              <SatelliteIcon fontSize="small" />
+              <Typography variant="caption" sx={satelliteLabelSx}>
+                Satellite
+              </Typography>
+            </Stack>
+          </ToggleButton>
+          <ToggleButton
+            value="terrain"
+            aria-label="centered"
+            sx={terrainButtonSx}
+          >
+            <Stack direction={'row'} alignItems={'center'} spacing={0.8}>
+              <TerrainIcon fontSize="small" />
+              <Typography variant="caption" sx={terrainLabelSx}>
+                Terrain
+              </Typography>
+            </Stack>
+          </ToggleButton>
+        </ToggleButtonGroup>
+      </Card>
+    </Box>
+  );
+});
+LayerSwitch.displayName = 'LayerSwitch';

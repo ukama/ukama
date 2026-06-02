@@ -9,4 +9,4 @@
 export { default as AddNode } from './AddNode';
 export { default as NodeDropDown } from './NodeDropDown';
 export { default as NodeGroup } from './NodeGroup';
-export { default as UnassingedNodecard } from './UnassingedNodecard';
+export { default as UnassignedNodeCard } from './UnassignedNodeCard';

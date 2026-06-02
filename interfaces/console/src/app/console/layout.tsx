@@ -156,6 +156,7 @@ export default function ConosleLayout({
         PubSub.unsubscribe(token);
       };
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id, network.id]);
 
   const handleNotification = (_: unknown, data: string) => {

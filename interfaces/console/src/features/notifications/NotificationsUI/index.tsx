@@ -19,14 +19,14 @@ import {
   Typography,
 } from '@mui/material';
 import { format } from 'date-fns';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 interface INotifications {
   notifications: NotificationsRes;
   handleAction: (action: string, id: string) => void;
 }
 
-export const Notifications = ({
+const NotificationsBase = ({
   notifications,
   handleAction,
 }: INotifications) => {
@@ -103,6 +103,8 @@ export const Notifications = ({
   );
 };
 
+export const Notifications = React.memo(NotificationsBase);
+
 interface INotification {
   id: string;
   title: string;
@@ -115,7 +117,7 @@ interface INotification {
   handleMenuItemClick: (action: string, id: string) => void;
 }
 
-export const Notification = ({
+const NotificationBase = ({
   id: nid,
   type,
   title,
@@ -210,6 +212,8 @@ export const Notification = ({
     </Stack>
   );
 };
+
+export const Notification = React.memo(NotificationBase);
 
 interface INotificationAction {
   link: string;

@@ -20,7 +20,7 @@ const Page = () => {
     if (user.role === Role_Type.RoleOwner) {
       router.push('/manage/members');
     }
-  }, [user.role]);
+  }, [user.role, router]);
 
   return (
     <Skeleton

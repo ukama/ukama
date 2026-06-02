@@ -32,6 +32,7 @@ import { AlertColor, Box, Paper, Stack, Typography } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import PubSub from 'pubsub-js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { logger } from '@/lib/logger';
 
 export default function Page() {
   const router = useRouter();
@@ -179,7 +180,7 @@ export default function Page() {
 
       PubSub.publish(`stat-${type}-${siteId}`, value);
     } catch (error) {
-      console.error('Error handling subscription data:', error);
+      logger.error('Error handling subscription data:', error);
     }
   }, []);
 

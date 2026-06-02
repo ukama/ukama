@@ -12,9 +12,10 @@ import { SectionData, SITE_KPI_TYPES, SiteKpiConfig } from '@/constants';
 import { getMetricValue, isMetricValue } from '@/utils';
 // getMetricValue / isMetricValue are still used for non-SWITCH metric charts below
 import LineChart from '@/components/ui/LineChart/LazyLineChart';
+import { SWITCH_REENABLE_MS } from '@/constants/timing';
 import { Box, Paper, Stack, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import SiteFlowDiagram from '../../../../../../../public/svg/sitecomps';
 import SwitchPortItem, { PortGroup } from './SwitchPortItem';
 interface SiteComponentsProps {
@@ -83,6 +84,49 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
     };
   }, [siteId, nodes]);
 
+  const SWITCH_PORT_DESCRIPTIONS: Record<number, string> = {
+    1: 'Tower node',
+    2: 'Amplifier node',
+    3: 'Controller node',
+    9: 'Backhaul node',
+  };
+
+  const resolveSwitchPortNumber = (metric: SiteKpiConfig): number | null => {
+    if (typeof metric.port === 'number' && !Number.isNaN(metric.port)) {
+      return metric.port;
+    }
+    const m = /^switch_port_(\d+)_/.exec(metric.id);
+    if (m) return Number.parseInt(m[1], 10);
+    return null;
+  };
+
+  const getPortMetrics = useCallback(() => {
+    const switchMetrics = sections[activeSection] || [];
+
+    const byPort: Record<number, SiteKpiConfig[]> = {};
+
+    switchMetrics.forEach((metric) => {
+      const portNum = resolveSwitchPortNumber(metric);
+      if (portNum == null) return;
+      if (!byPort[portNum]) byPort[portNum] = [];
+      byPort[portNum].push(metric);
+    });
+
+    return Object.entries(byPort)
+      .map(([portStr, portMetrics]) => {
+        const portNumber = Number.parseInt(portStr, 10);
+        const description = SWITCH_PORT_DESCRIPTIONS[portNumber] ?? '';
+        return {
+          id: `port-${portNumber}`,
+          portNumber,
+          description,
+          metrics: portMetrics,
+        };
+      })
+      .sort((a, b) => a.portNumber - b.portNumber);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sections, activeSection]);
+
   useEffect(() => {
     if (hasMetricsData && activeSection === 'SWITCH') {
       const portGroups = getPortMetrics();
@@ -118,55 +162,13 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
         }));
       }
     }
-  }, [metrics, activeSection, hasMetricsData, sections]);
+  }, [metrics, activeSection, hasMetricsData, sections, getPortMetrics]);
 
   const togglePortExpand = (portId: string) => {
     setExpandedPorts((prev) => ({
       ...prev,
       [portId]: !prev[portId],
     }));
-  };
-
-  const SWITCH_PORT_DESCRIPTIONS: Record<number, string> = {
-    1: 'Tower node',
-    2: 'Amplifier node',
-    3: 'Controller node',
-    9: 'Backhaul node',
-  };
-
-  const resolveSwitchPortNumber = (metric: SiteKpiConfig): number | null => {
-    if (typeof metric.port === 'number' && !Number.isNaN(metric.port)) {
-      return metric.port;
-    }
-    const m = /^switch_port_(\d+)_/.exec(metric.id);
-    if (m) return Number.parseInt(m[1], 10);
-    return null;
-  };
-
-  const getPortMetrics = () => {
-    const switchMetrics = sections[activeSection] || [];
-
-    const byPort: Record<number, SiteKpiConfig[]> = {};
-
-    switchMetrics.forEach((metric) => {
-      const portNum = resolveSwitchPortNumber(metric);
-      if (portNum == null) return;
-      if (!byPort[portNum]) byPort[portNum] = [];
-      byPort[portNum].push(metric);
-    });
-
-    return Object.entries(byPort)
-      .map(([portStr, portMetrics]) => {
-        const portNumber = Number.parseInt(portStr, 10);
-        const description = SWITCH_PORT_DESCRIPTIONS[portNumber] ?? '';
-        return {
-          id: `port-${portNumber}`,
-          portNumber,
-          description,
-          metrics: portMetrics,
-        };
-      })
-      .sort((a, b) => a.portNumber - b.portNumber);
   };
 
   const handlePortToggleSwitch = (portNumber: number, currentIsOn: boolean) => {
@@ -177,7 +179,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
     onSwitchChange(portNumber, currentIsOn);
     setTimeout(() => {
       setDisabledSwitches((prev) => ({ ...prev, [portId]: false }));
-    }, 5000);
+    }, SWITCH_REENABLE_MS);
   };
 
   return (
