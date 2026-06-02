@@ -8,13 +8,15 @@
 'use client';
 
 import { Node, SiteDto } from '@/client/graphql/generated';
+import { activeGraphTypeVar, siteActiveSubscribersVar } from '@/client/vars';
 import { SITE_KPI_TYPES } from '@/constants';
 import { useEnvContext, useUserContext } from '@/context';
 import { ActiveView } from '@/types';
 import { extractMetricValue } from '@/utils';
 import { useSubscriptionManager } from '@/features/subscriptions/useSubscriptionManager';
 import { useMetricSubscriptions } from '@/utils/useMetricSubscriptions';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useReactiveVar } from '@apollo/client';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import PubSub from 'pubsub-js';
 
 type SiteMetric = {
@@ -93,8 +95,14 @@ export function useSiteMetrics(
   const { user } = useUserContext();
   const { subscribe } = useSubscriptionManager();
 
-  const [activeSubscribers, setActiveSubscribers] = useState<number>(0);
+  // Reactive var — no useState/prop needed, any component can read this directly
+  const activeSubscribers = useReactiveVar(siteActiveSubscribersVar);
   const subscribersSubscriptionRef = useRef<string | null>(null);
+
+  // Sync activeView.graphType into the reactive var so other consumers stay in sync
+  useEffect(() => {
+    activeGraphTypeVar(activeView.graphType);
+  }, [activeView.graphType]);
 
   const {
     metrics,
@@ -121,12 +129,15 @@ export function useSiteMetrics(
         Array.isArray(data) && data.length > 1
           ? extractMetricValue(data[1])
           : extractMetricValue(data);
-      if (value !== null) setActiveSubscribers(value);
+      if (value !== null) siteActiveSubscribersVar(value);
     }
   }, []);
 
   useEffect(() => {
     if (!id || !activeSite.id) return;
+
+    // Reset stale count when site changes
+    siteActiveSubscribersVar(0);
 
     if (subscribersSubscriptionRef.current) {
       PubSub.unsubscribe(subscribersSubscriptionRef.current);
@@ -152,7 +163,7 @@ export function useSiteMetrics(
         statData.getSiteStat as { metrics?: SiteMetric[] },
         activeSite.id,
       );
-      if (count !== null) setActiveSubscribers(count);
+      if (count !== null) siteActiveSubscribersVar(count);
     }
   }, [statData, activeSite.id]);
 

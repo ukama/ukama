@@ -149,7 +149,7 @@ const ManageLayout: React.FC<ManageLayoutProps> = ({ children }) => {
   const { network, setNetwork } = useNetworkContext();
 
   useGetNetworksQuery({
-    fetchPolicy: 'network-only',
+    fetchPolicy: 'cache-and-network',
     skip: !!network.id,
     onCompleted: (data) => {
       if (data.getNetworks.networks.length > 0)

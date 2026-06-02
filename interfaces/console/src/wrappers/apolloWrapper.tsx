@@ -43,6 +43,30 @@ function makeClient(baseUrl: string) {
               return incoming;
             },
           },
+          getSubscribers: {
+            keyArgs: ['data', ['orgName', 'networkId']],
+            merge(_existing, incoming) {
+              return incoming;
+            },
+          },
+          getMembers: {
+            keyArgs: ['data', ['orgName']],
+            merge(_existing, incoming) {
+              return incoming;
+            },
+          },
+          getInvitations: {
+            keyArgs: ['data', ['orgName']],
+            merge(_existing, incoming) {
+              return incoming;
+            },
+          },
+          getPackages: {
+            keyArgs: ['data', ['orgName']],
+            merge(_existing, incoming) {
+              return incoming;
+            },
+          },
         },
       },
       Site: {
@@ -64,11 +88,19 @@ function makeClient(baseUrl: string) {
           },
         },
       },
+      SubscriberDto: { keyFields: ['uuid'] },
+      PackageDto: { keyFields: ['uuid'] },
+      MemberDto: { keyFields: ['memberId'] },
+      InvitationDto: { keyFields: ['id'] },
+      SimDto: { keyFields: ['iccid'] },
+      NetworkDto: { keyFields: ['id'] },
+      UserResDto: { keyFields: ['uuid'] },
     },
   });
 
   return new ApolloClient({
     cache,
+    connectToDevTools: process.env.NODE_ENV === 'development',
     link:
       typeof window === 'undefined'
         ? ApolloLink.from([

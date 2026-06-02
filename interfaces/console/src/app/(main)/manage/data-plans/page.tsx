@@ -7,7 +7,6 @@
  */
 'use client';
 import {
-  GetPackagesDocument,
   PackageDto,
   useAddPackageMutation,
   useGetCurrencySymbolLazyQuery,
@@ -75,7 +74,7 @@ const useDataPlans = () => {
     data: packagesData,
     loading: packagesLoading,
   } = useGetPackagesQuery({
-    fetchPolicy: 'network-only',
+    fetchPolicy: 'cache-and-network',
     onError: (error) => {
       setSnackbarMessage({
         id: 'packages',
@@ -87,7 +86,21 @@ const useDataPlans = () => {
   });
 
   const [addDataPlan, { loading: addLoading }] = useAddPackageMutation({
-    refetchQueries: [{ query: GetPackagesDocument }],
+    update(cache, { data }) {
+      const newPackage = data?.addPackage;
+      if (!newPackage) return;
+      cache.modify({
+        fields: {
+          getPackages(existing: any, { toReference }) {
+            const ref = toReference(newPackage);
+            return {
+              ...existing,
+              packages: [...(existing.packages ?? []), ref],
+            };
+          },
+        },
+      });
+    },
     onCompleted: () => {
       setSnackbarMessage({
         id: 'add-data-plan',
@@ -99,7 +112,17 @@ const useDataPlans = () => {
   });
 
   const [updatePackage, { loading: updateLoading }] = useUpdatePacakgeMutation({
-    refetchQueries: [{ query: GetPackagesDocument }],
+    update(cache, { data }) {
+      const updated = data?.updatePackage;
+      if (!updated) return;
+      cache.modify({
+        id: cache.identify({ __typename: 'PackageDto', uuid: updated.uuid }),
+        fields: {
+          name: () => updated.name,
+          active: () => updated.active,
+        },
+      });
+    },
     onCompleted: () => {
       setSnackbarMessage({
         id: 'update-data-plan',

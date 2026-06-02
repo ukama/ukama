@@ -12,6 +12,7 @@ import {
   NodeTypeEnum,
 } from '@/client/graphql/generated';
 import { GetMetricsStatQuery, MetricsRes, Stats_Type } from '@/client/graphql/generated/subscriptions';
+import { nodeMetricsVar } from '@/client/vars';
 import {
   NODE_ACTIONS_BUTTONS,
   NODE_ACTIONS_ENUM,
@@ -79,13 +80,10 @@ export function useNodeDetailPage(id: string) {
     metricFrom,
     setMetricFrom,
     graphType,
-    setGraphType,
     nodeUptime,
     setNodeUptime,
     selectedTab,
-    setSelectedTab,
     metrics,
-    setMetrics,
     handleStatSubscription,
     startStatSubscription,
   } = useNodeMetrics({ id, nodeType, getMetricStat: () => {}, cleanupSubscription, subscribe });
@@ -114,7 +112,7 @@ export function useNodeDetailPage(id: string) {
     graphType,
     metricFrom,
     subscriptionClient,
-    onMetricsFetched: (data: MetricsRes) => setMetrics(data),
+    onMetricsFetched: (data: MetricsRes) => nodeMetricsVar(data),
     onStatFetched: (data) => {
       if (!data) return;
       const metrics = (data as GetMetricsStatQuery).getMetricsStat?.metrics ?? [];
@@ -146,9 +144,7 @@ export function useNodeDetailPage(id: string) {
     currentNodeId: currentNode?.id,
     setIsEditNode,
     setNodeAction,
-    setGraphType,
     setMetricFrom,
-    setSelectedTab,
     handleEditNode: doEditNode,
     handleRestartNode,
   });
@@ -174,6 +170,8 @@ export function useNodeDetailPage(id: string) {
       notify('node-not-found-msg', 'Node not found.', 'error');
       router.back();
     } else {
+      // Reset stale metrics when node changes
+      nodeMetricsVar({ metrics: [] });
       cleanupSubscription();
       getMetricStat({
         variables: {

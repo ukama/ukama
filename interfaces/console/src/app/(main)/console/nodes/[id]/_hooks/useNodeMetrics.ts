@@ -9,13 +9,18 @@
 
 import {
   Graphs_Type,
-  MetricsRes,
   Stats_Type,
 } from '@/client/graphql/generated/subscriptions';
+import {
+  activeGraphTypeVar,
+  activeNodeTabVar,
+  nodeMetricsVar,
+} from '@/client/vars';
 import { NODE_KPIS } from '@/constants';
 import { useEnvContext, useUserContext } from '@/context';
 import MetricStatSubscription from '@/features/subscriptions/MetricStatSubscription';
 import { TMetricResDto } from '@/types';
+import { useReactiveVar } from '@apollo/client';
 import { useCallback, useState } from 'react';
 
 interface UseNodeMetricsParams {
@@ -34,10 +39,12 @@ export function useNodeMetrics({
   subscribe,
 }: UseNodeMetricsParams) {
   const [metricFrom, setMetricFrom] = useState<number>(0);
-  const [graphType, setGraphType] = useState<Graphs_Type>(Graphs_Type.NodeHealth);
   const [nodeUptime, setNodeUptime] = useState<number>(0);
-  const [selectedTab, setSelectedTab] = useState<number>(0);
-  const [metrics, setMetrics] = useState<MetricsRes>({ metrics: [] });
+
+  // Reactive vars — shared state, no prop drilling needed
+  const graphType = useReactiveVar(activeGraphTypeVar);
+  const selectedTab = useReactiveVar(activeNodeTabVar);
+  const metrics = useReactiveVar(nodeMetricsVar);
 
   const { env } = useEnvContext();
   const { user } = useUserContext();
@@ -83,13 +90,13 @@ export function useNodeMetrics({
     metricFrom,
     setMetricFrom,
     graphType,
-    setGraphType,
+    setGraphType: (type: Graphs_Type) => activeGraphTypeVar(type),
     nodeUptime,
     setNodeUptime,
     selectedTab,
-    setSelectedTab,
+    setSelectedTab: (tab: number) => activeNodeTabVar(tab),
     metrics,
-    setMetrics,
+    setMetrics: (data: { metrics: unknown[] }) => nodeMetricsVar(data as Parameters<typeof nodeMetricsVar>[0]),
     handleStatSubscription,
     startStatSubscription,
   };
