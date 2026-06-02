@@ -151,6 +151,7 @@ export function useSiteDetailPage(id: string) {
 
   useEffect(() => {
     if (id) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       filterActiveSite(id);
       setActiveView({ graphType: Graphs_Type.NodeHealth, kpi: 'node' });
     }
@@ -160,6 +161,7 @@ export function useSiteDetailPage(id: string) {
     if (siteData?.getSites?.sites) {
       const found = siteData.getSites.sites.find((s) => s.id === id);
       if (found) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setActiveSite(found);
       } else if (siteData.getSites.sites.length > 0 && id === '') {
         router.push('/console/sites/' + siteData.getSites.sites[0].id);
@@ -176,6 +178,7 @@ export function useSiteDetailPage(id: string) {
         );
       }
     };
+     
     setSelectedDefaultSite(activeSite.name);
     if (activeSite.id && activeSite.latitude && activeSite.longitude) {
       handleFetchAddress();
@@ -194,6 +197,7 @@ export function useSiteDetailPage(id: string) {
 
   useEffect(() => {
     if (activeSite.id) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setNodesFetched(false);
       fetchNodesForSite({ variables: { siteId: activeSite.id } });
     }

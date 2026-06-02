@@ -78,6 +78,21 @@ const ConfigureLayout = ({
     },
   });
 
+  const mapComponents = (comps: ComponentsResDto) => {
+    const p = searchParams.get(Component_Type.Power) ?? '';
+    const s = searchParams.get(Component_Type.Switch) ?? '';
+    const b = searchParams.get(Component_Type.Backhaul) ?? '';
+    const switchRecords = comps.components.find((comp) => comp.id === s);
+    const powerRecords = comps.components.find((comp) => comp.id === p);
+    const backhaulRecords = comps.components.find((comp) => comp.id === b);
+
+    setParts({
+      switchId: switchRecords?.description ?? '',
+      powerName: powerRecords?.description ?? '',
+      backhaulName: backhaulRecords?.description ?? '',
+    });
+  };
+
   const { data: components } = useGetComponentsByUserIdQuery({
     fetchPolicy: 'cache-first',
     variables: {
@@ -120,6 +135,7 @@ const ConfigureLayout = ({
   useEffect(() => {
     const p = searchParams.get('networkid') ?? '';
     if (p) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setNetwork({
         id: p,
         name:
@@ -131,23 +147,6 @@ const ConfigureLayout = ({
       mapComponents(components.getComponentsByUserId);
     }
   }, [searchParams, components]);
-
-  const mapComponents = (components: ComponentsResDto) => {
-    const p = searchParams.get(Component_Type.Power) ?? '';
-    const s = searchParams.get(Component_Type.Switch) ?? '';
-    const b = searchParams.get(Component_Type.Backhaul) ?? '';
-    const switchRecords = components.components.find((comp) => comp.id === s);
-
-    const powerRecords = components.components.find((comp) => comp.id === p);
-
-    const backhaulRecords = components.components.find((comp) => comp.id === b);
-
-    setParts({
-      switchId: switchRecords?.description ?? '',
-      powerName: powerRecords?.description ?? '',
-      backhaulName: backhaulRecords?.description ?? '',
-    });
-  };
 
   return (
     <ErrorBoundary>

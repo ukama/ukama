@@ -26,7 +26,6 @@ import { useUIContext } from '@/context';
 import { TSiteActionToggle } from '@/types';
 import { stringToBoolean } from '@/utils';
 import { useApolloClient } from '@apollo/client';
-import { AlertColor } from '@mui/material';
 import { Dispatch, SetStateAction, useCallback } from 'react';
 
 export function useSiteData(

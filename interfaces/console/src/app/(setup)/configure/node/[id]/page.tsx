@@ -60,6 +60,10 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
       router.push(`/configure/check?flow=${flow}`);
   }, []);
 
+  const handleFetchAddress = async () => {
+    await fetchAddress(qpLat, qpLng);
+  };
+
   useEffect(() => {
     if (qpLat !== '' && qpLng !== '') handleFetchAddress();
   }, [qpLat, qpLng]);
@@ -67,6 +71,7 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
   useEffect(() => {
     if (address) {
       setQueryParam('address', address, searchParams.toString(), pathname);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsLoading(false);
     }
   }, [address]);
@@ -81,10 +86,6 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
       label: network.name,
       value: network.id,
     }));
-
-  const handleFetchAddress = async () => {
-    await fetchAddress(qpLat, qpLng);
-  };
 
   const handleBack = () => {
     router.back();

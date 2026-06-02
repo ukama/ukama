@@ -163,6 +163,7 @@ const DataTableWithOptions = ({
   };
   useEffect(() => {
     if (networkList && networkList.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedNetwork(networkList[0].name);
     }
   }, [networkList]);

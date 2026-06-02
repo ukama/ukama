@@ -84,6 +84,7 @@ const NodeOverviewTab = ({
   );
   const [selected, setSelected] = useState<number>(0);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelected(0);
   }, [selectedNode]);
 

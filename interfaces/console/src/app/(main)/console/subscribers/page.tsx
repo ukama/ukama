@@ -33,7 +33,7 @@ import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import { Box, Paper, Stack, Typography } from '@mui/material';
 
 const Page = () => {
-  const vm = useSubscribersPage();
+  const { scrollContainerRef, ...vm } = useSubscribersPage();
 
   return (
     <Stack
@@ -75,7 +75,7 @@ const Page = () => {
             </Box>
 
             <ScrollContainer>
-              <ScrollableContent ref={vm.scrollContainerRef}>
+              <ScrollableContent ref={scrollContainerRef}>
                 {!(vm.packagesData?.getPackages.packages?.length) ? (
                   <DataPlanEmptyView>
                     <UpdateIcon sx={{ fontSize: 40, mb: 1 }} />

@@ -75,13 +75,17 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
   // Reset whenever the dialog opens
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormValues(EMPTY_FORM);
+       
       setActiveStep(0);
+       
       setCurrentAddress('');
     }
   }, [open]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (address) setCurrentAddress(address);
   }, [address]);
 

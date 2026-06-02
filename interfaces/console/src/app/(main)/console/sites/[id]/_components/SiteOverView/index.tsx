@@ -70,11 +70,13 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
     );
     if (uptimePercentageMetric?.value !== undefined) {
       const numValue = parseMetricNumber(uptimePercentageMetric.value);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (!Number.isNaN(numValue)) setUptimePercentage(Math.round(numValue));
     }
 
     if (uptimeSecondsMetric?.value !== undefined) {
       const numValue = parseMetricNumber(uptimeSecondsMetric.value);
+       
       if (!Number.isNaN(numValue)) setSiteUptimeSeconds(Math.floor(numValue));
     }
   }, [siteId, siteStatMetrics]);

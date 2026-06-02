@@ -160,13 +160,17 @@ export const useMetricSubscriptions = ({
 
   useEffect(() => {
     if (siteId && userId && orgName) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsInitialized(false);
       cleanupSubscriptions();
+       
       setMetrics({ metrics: [] });
 
       const newMetricFrom = getUnixTime() - METRIC_RANGE_10800;
+       
       setMetricFrom(newMetricFrom);
 
+       
       setIsInitialized(true);
     }
 

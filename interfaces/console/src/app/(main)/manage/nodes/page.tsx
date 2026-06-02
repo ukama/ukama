@@ -83,7 +83,7 @@ const Page = () => {
         ? format(new Date(node.site.addedAt), 'MM/dd/yyyy hh:mm a')
         : '-',
     }));
-  }, [nodes?.getNodes.nodes, sites?.getSites.sites, getSiteName]);
+  }, [nodes, sites, getSiteName]);
 
   const filteredData = useMemo(() => {
     if (search.length > 3) {

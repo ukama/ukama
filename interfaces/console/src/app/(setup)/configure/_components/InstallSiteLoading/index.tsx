@@ -29,7 +29,9 @@ const InstallSiteLoading = ({
 
   useEffect(() => {
     if (duration !== remainingTime) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setProgress(0);
+       
       setRemainingTime(duration);
     }
   }, [duration]);

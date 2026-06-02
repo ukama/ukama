@@ -88,7 +88,7 @@ export default function Page() {
           ? format(new Date(node.site.addedAt), 'MM/dd/yyyy hha')
           : '-',
       }));
-  }, [nodesData?.getNodes.nodes, network.id, getSiteName]);
+  }, [nodesData, network.id, getSiteName]);
 
   const filteredNodes = useMemo(() => {
     if (search.length <= 3) return nodes;

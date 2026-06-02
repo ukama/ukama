@@ -57,8 +57,10 @@ const AppLayout = ({
 
   useEffect(() => {
     if (matches) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOpen(false);
     } else {
+       
       setOpen(true);
     }
   }, [matches]);

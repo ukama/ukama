@@ -10,7 +10,6 @@
 import { ThemeProvider, createTheme, useMediaQuery } from '@mui/material';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v13-appRouter';
 import { Rubik, Work_Sans } from 'next/font/google';
-import { useEffect, useState } from 'react';
 import { colors } from '.';
 
 const rubik = Rubik({
@@ -29,13 +28,7 @@ export default function AppThemeProvider({
   children: React.ReactNode;
   themeCookie: string;
 }>) {
-  const prefersMode = useMediaQuery(`(prefers-color-scheme: ${themeCookie})`);
-
-  const [mode, setMode] = useState(prefersMode);
-
-  useEffect(() => {
-    setMode(prefersMode);
-  }, [prefersMode]);
+  const mode = useMediaQuery(`(prefers-color-scheme: ${themeCookie})`);
 
   const textColor = mode ? colors.white : colors.black;
 

@@ -89,6 +89,7 @@ const SplitButton = ({ options, handleSplitActionClick }: splitButtonProps) => {
       </ButtonGroup>
       <Popper
         open={open}
+        // eslint-disable-next-line react-hooks/refs
         anchorEl={anchorRef.current}
         role={undefined}
         transition

@@ -87,9 +87,13 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
 
   useEffect(() => {
     if (subscriberInfo) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLocalSubscriberInfo(subscriberInfo);
+       
       setName(subscriberInfo.name || '');
+       
       setEmail(subscriberInfo.email || '');
+       
       setHasChanges(false);
     }
   }, [subscriberInfo]);

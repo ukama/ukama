@@ -6,7 +6,9 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-export const ULogo = (props: any) => (
+import { SVGType } from '@/types';
+
+export const ULogo = (props: SVGType & { [key: string]: unknown }) => (
   <svg
     {...props}
     viewBox="0 0 28 48"
