@@ -6,23 +6,23 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
-import React, { useState, useCallback } from 'react';
-import { Box, Grid } from '@mui/material';
-import LoadingWrapper from '@/components/ui/LoadingWrapper';
+import BillingHistoryTable from '@/app/(main)/manage/billing/_components/BillingHistory';
+import BillingOwnerDetailsCard from '@/app/(main)/manage/billing/_components/BillingOwnerDetailsCard';
+import CurrentBillCard from '@/app/(main)/manage/billing/_components/CurrentBillCard';
+import OutStandingBillCard from '@/app/(main)/manage/billing/_components/OutStandingBillCard';
+import StripePaymentDialog from '@/app/(main)/manage/billing/_components/StripePaymentDialog';
 import {
-  useGetReportsQuery,
-  useGetPaymentsQuery,
-  useUpdatePaymentMutation,
   ReportDto,
   useGetGeneratedPdfReportLazyQuery,
+  useGetPaymentsQuery,
+  useGetReportsQuery,
+  useUpdatePaymentMutation,
 } from '@/client/graphql/generated';
+import LoadingWrapper from '@/components/ui/LoadingWrapper';
 import { useUIContext, useUserContext } from '@/context';
-import StripePaymentDialog from '@/app/(main)/manage/billing/_components/StripePaymentDialog';
-import CurrentBillCard from '@/app/(main)/manage/billing/_components/CurrentBillCard';
-import BillingOwnerDetailsCard from '@/app/(main)/manage/billing/_components/BillingOwnerDetailsCard';
-import OutStandingBillCard from '@/app/(main)/manage/billing/_components/OutStandingBillCard';
-import BillingHistoryTable from '@/app/(main)/manage/billing/_components/BillingHistory';
 import { base64ToBlob } from '@/utils';
+import { Box, Grid } from '@mui/material';
+import React, { useCallback, useState } from 'react';
 
 const BillingSettingsPage: React.FC = () => {
   const { setSnackbarMessage } = useUIContext();
@@ -64,7 +64,7 @@ const BillingSettingsPage: React.FC = () => {
   );
   const [getPdf] = useGetGeneratedPdfReportLazyQuery({
     onCompleted: (data) => {
-      if (data.getGeneratedPdfReport && data.getGeneratedPdfReport.__typename) {
+      if (data.getGeneratedPdfReport?.filename) {
         handlePdfDownload({
           ...data.getGeneratedPdfReport,
           filename: data.getGeneratedPdfReport.filename,
