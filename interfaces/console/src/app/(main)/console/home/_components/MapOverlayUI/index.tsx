@@ -422,10 +422,10 @@ export const SiteLink = memo(({ sites, handleDeleteLink }: ISites) => {
   return (
     <Card sx={{ boxShadow: 'none' }}>
       <Grid container height="100%" columnSpacing={3}>
-        <Grid item xs={3.5}>
+        <Grid size={3.5}>
           <SiteDetails site={sites[0]} />
         </Grid>
-        <Grid item xs={5}>
+        <Grid size={5}>
           <Stack height={'100%'} sx={{ border: '0.5px solid grey' }}>
             <Stack
               height={'56px'}
@@ -459,7 +459,7 @@ export const SiteLink = memo(({ sites, handleDeleteLink }: ISites) => {
             />
           </Stack>
         </Grid>
-        <Grid item xs={3.5}>
+        <Grid size={3.5}>
           <SiteDetails site={sites[1]} />
         </Grid>
       </Grid>

@@ -6,12 +6,11 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { ApolloClient, InMemoryCache } from '@apollo/client';
+import { ApolloClient, HttpLink, InMemoryCache } from '@apollo/client';
 
 export const getMetricsClient = (baseUrl: string) => {
   return new ApolloClient({
-    uri: `${baseUrl}/graphql`,
+    link: new HttpLink({ uri: `${baseUrl}/graphql`, credentials: 'include' }),
     cache: new InMemoryCache(),
-    credentials: 'include',
   });
 };

@@ -40,10 +40,10 @@ const NodeSchematicTab = ({
         >
           <Paper sx={{ p: 2, height: '100%' }}>
             <Grid container>
-              <Grid item xs={12} container justifyContent="flex-start">
+              <Grid size={12} container justifyContent="flex-start">
                 <Typography variant="h6">{nodeTitle}</Typography>
               </Grid>
-              <Grid item xs={12} container justifyContent="center">
+              <Grid size={12} container justifyContent="center">
                 <Image
                   src="https://ukama-site-assets.s3.amazonaws.com/images/schematic.png"
                   alt="trx_schematic"
@@ -63,7 +63,7 @@ const NodeSchematicTab = ({
         <Paper sx={{ p: 2 }}>
           <Grid container>
             <Grid container spacing={2}>
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <ContainerHeader
                   title="Resources"
                   showButton={false}
@@ -72,7 +72,7 @@ const NodeSchematicTab = ({
                 />
               </Grid>
               {schematicsSpecsData?.map(({ id, title, readingTime }) => (
-                <Grid item key={id} xs md lg={4}>
+                <Grid size={{ xs: 'auto', md: 'auto', lg: 4 }} key={id}>
                   <Card
                     variant="outlined"
                     sx={{

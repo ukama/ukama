@@ -8,8 +8,8 @@
 
 import BarChartIcon from '@mui/icons-material/BarChart';
 import { Typography } from '@mui/material';
-import Grid from '@mui/material/Grid2';
-import { Variant } from '@mui/material/styles/createTypography';
+import Grid from '@mui/material/Grid';
+import type { TypographyVariant as Variant } from '@mui/material/styles';
 import React from 'react';
 import EmptyView from '@/components/ui/EmptyView';
 import GraphLoading from '@/components/ui/GraphLoading';

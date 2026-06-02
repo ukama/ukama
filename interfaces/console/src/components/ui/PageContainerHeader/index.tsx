@@ -35,22 +35,20 @@ const PageContainerHeader = ({
   return (
     <HorizontalContainerJustify>
       <Grid container justifyContent={'space-between'} spacing={1}>
-        <Grid container item xs={12} md="auto" alignItems={'center'}>
-          <Grid item xs={'auto'}>
+        <Grid container size={{ xs: 12, md: 'auto' }} alignItems={'center'}>
+          <Grid size="auto">
             <Typography variant="h6" mr={1}>
               {title}
             </Typography>
           </Grid>
           {subtitle && (
-            <Grid item xs={'auto'}>
+            <Grid size="auto">
               <Typography variant="subtitle2">({subtitle})</Typography>
             </Grid>
           )}
           {showSearch && (
             <Grid
-              item
-              xs={12}
-              md={'auto'}
+              size={{ xs: 12, md: 'auto' }}
               ml={{ xs: 0, md: 1.4 }}
               mt={{ xs: 1, md: 0 }}
             >
@@ -75,7 +73,7 @@ const PageContainerHeader = ({
           )}
         </Grid>
         {buttonTitle && (
-          <Grid item xs={12} md={'auto'}>
+          <Grid size={{ xs: 12, md: 'auto' }}>
             <Button
               id={buttonId}
               variant="contained"

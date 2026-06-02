@@ -10,7 +10,7 @@ import { Node, SiteDto as Site } from '@/client/graphql/generated';
 import { ToggleOption, ToggleValue } from '@/components/ui/ToggleButtonsMenu';
 import { SplitButtonOption } from '@/components/ui/SplitButton';
 import { Button } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import { styled } from '@mui/material/styles';
 import LoadingWrapper from '@/components/ui/LoadingWrapper';
 import NodeDropDown from '@/app/(main)/console/nodes/_components/NodeDropDown';

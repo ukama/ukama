@@ -237,7 +237,7 @@ const DataPlansPage = () => {
           ) : (
             <Grid container rowSpacing={2} columnSpacing={2}>
               {packages.map((pkg: PackageDto) => (
-                <Grid item xs={12} sm={6} md={4} key={pkg.uuid}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={pkg.uuid}>
                   <PlanCard
                     {...pkg}
                     currency={currencySymbol}

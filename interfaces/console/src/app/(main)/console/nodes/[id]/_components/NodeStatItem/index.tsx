@@ -11,7 +11,7 @@ import { TVariant } from '@/types';
 import { formatKPIValue } from '@/utils';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { IconButton, Tooltip, Typography } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import Zoom from '@mui/material/Zoom';
 import { useEffect, useState } from 'react';
 

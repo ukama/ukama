@@ -280,7 +280,7 @@ const BillingSettingsPage: React.FC = () => {
     >
       <Box sx={{ width: '100%' }}>
         <Grid container spacing={2}>
-          <Grid item xs={12}>
+          <Grid size={12}>
             <CurrentBillCard
               bills={reportsData?.getReports?.reports.filter(
                 (report) => !report.isPaid,
@@ -290,7 +290,7 @@ const BillingSettingsPage: React.FC = () => {
               key={reportsData?.getReports?.reports?.length}
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid size={12}>
             <OutStandingBillCard
               reports={reportsData?.getReports?.reports.filter(
                 (report) => !report.isPaid,
@@ -298,10 +298,10 @@ const BillingSettingsPage: React.FC = () => {
               onPaySingle={handleAddPayment}
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid size={12}>
             <BillingOwnerDetailsCard email={user?.email} />
           </Grid>
-          <Grid item xs={12}>
+          <Grid size={12}>
             {billingHistoryDataset && (
               <BillingHistoryTable
                 data={billingHistoryDataset}
