@@ -7,7 +7,7 @@ const withBundleAnalyzer = bundleAnalyzer({
 // Collect backend origins from env so CSP connect-src stays accurate across environments.
 const backendOrigins = [
   process.env.NEXT_PUBLIC_API_GW,
-  process.env.NEXT_PUBLIC_API_GW_4SS,
+  process.env.API_GW_4SS,
   process.env.NEXT_PUBLIC_METRIC_URL,
   process.env.NEXT_PUBLIC_METRIC_WEBSOCKET_URL,
 ]

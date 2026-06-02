@@ -16,12 +16,23 @@ interface LogEvent {
 }
 
 const log = (event: LogEvent): void => {
+  const { level, message, context, error } = event;
+
   if (process.env.NODE_ENV === 'development') {
-    const { level, message, context, error } = event;
     const fn = console[level] ?? console.log;
     fn(`[${level.toUpperCase()}] ${message}`, context ?? '', error ?? '');
+    return;
   }
-  // Future: send to Sentry / LogRocket here
+
+  // In production: always surface errors and warnings; suppress info
+  if (level === 'error') {
+    console.error(`[ERROR] ${message}`, error ?? '', context ?? '');
+    // TODO: forward to Sentry once integrated:
+    // Sentry.captureException(error instanceof Error ? error : new Error(message), { extra: context })
+  } else if (level === 'warn') {
+    console.warn(`[WARN] ${message}`, context ?? '');
+    // TODO: Sentry.captureMessage(message, 'warning')
+  }
 };
 
 export const logger = {

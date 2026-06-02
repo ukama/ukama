@@ -51,9 +51,17 @@ export function useNodeMetrics({
 
   const handleStatSubscription = useCallback(
     (_: unknown, data: string) => {
-      const parsedData: TMetricResDto = JSON.parse(data);
-      const { value, type, success } = parsedData.data.getMetricStatSub;
-      if (success) {
+      let parsedData: TMetricResDto;
+      try {
+        parsedData = JSON.parse(data);
+      } catch {
+        console.warn('[useNodeMetrics] malformed metric SSE message');
+        return;
+      }
+      const sub = parsedData?.data?.getMetricStatSub;
+      if (!sub) return;
+      const { value, type, success } = sub;
+      if (success && Array.isArray(value) && value.length >= 2) {
         if (type === (NODE_KPIS.NODE_UPTIME as Record<string, { id: string }[]>)[nodeType]?.[0]?.id) {
           setNodeUptime(Math.floor(value[1]));
         }

@@ -190,9 +190,17 @@ export default function Page() {
   }, [network.id, user.id, user.orgName, cleanupSubscription, getMetricStat]);
 
   const handleStatSubscription = (_: unknown, data: string) => {
-    const parsedData: TMetricResDto = JSON.parse(data);
-    const { value, type, success } = parsedData.data.getMetricStatSub;
-    if (success && value.length === 2) {
+    let parsedData: TMetricResDto;
+    try {
+      parsedData = JSON.parse(data);
+    } catch {
+      console.warn('[home] malformed metric SSE message');
+      return;
+    }
+    const sub = parsedData?.data?.getMetricStatSub;
+    if (!sub) return;
+    const { value, type, success } = sub;
+    if (success && Array.isArray(value) && value.length === 2) {
       PubSub.publish(
         `${type}-${network.id}`,
         type === kpiConfig[2].id ? formatBytesToGB(value[1]) : value[1],

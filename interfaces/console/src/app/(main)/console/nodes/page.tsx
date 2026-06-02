@@ -106,14 +106,16 @@ export default function Page() {
       case 'edit-node':
         break;
       case NODE_ACTIONS_ENUM.NODE_RESTART:
-        break;
       case NODE_ACTIONS_ENUM.NODE_RADIO_ON:
-        break;
       case NODE_ACTIONS_ENUM.NODE_RADIO_OFF:
-        break;
       case NODE_ACTIONS_ENUM.NODE_SERVICE_ON:
-        break;
       case NODE_ACTIONS_ENUM.NODE_SERVICE_OFF:
+        setSnackbarMessage({
+          id: 'node-action-unavailable',
+          message: 'This action is not yet available.',
+          type: 'warning',
+          show: true,
+        });
         break;
     }
   };

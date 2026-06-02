@@ -35,7 +35,7 @@ import {
 import { formatBytesToGB } from '@/utils';
 import { AlertColor } from '@mui/material';
 import { useSearchParams } from 'next/navigation';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export function useSubscribersPage() {
   const query = useSearchParams();
@@ -202,7 +202,7 @@ export function useSubscribersPage() {
     onError: (e) => notify('currency-info-error', e.message, 'error'),
   });
 
-  const [getDataUsages, { data: dataUsageData, loading: dataUsageLoading }] =
+  const [getDataUsages, { data: dataUsageData, loading: dataUsageLoading, stopPolling: stopDataUsagePolling }] =
     useGetDataUsagesLazyQuery({
       pollInterval: 30000,
       fetchPolicy: 'network-only',
@@ -210,6 +210,12 @@ export function useSubscribersPage() {
         data: { type: Sim_Types.UkamaData, networkId: network.id },
       },
     });
+
+  useEffect(() => {
+    return () => {
+      stopDataUsagePolling();
+    };
+  }, [stopDataUsagePolling]);
 
   const buildTableRows = useCallback(
     (data: SubscribersResDto): TSubscriberTableRow[] => {
