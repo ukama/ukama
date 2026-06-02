@@ -58,7 +58,7 @@ const ContainerHeader = ({
       alignItems={'center'}
       justifyContent="space-between"
     >
-      <Grid item xs={6} md={showSearchBox ? 7 : 9}>
+      <Grid size={{ xs: 6, md: showSearchBox ? 7 : 9 }}>
         <Stack direction="row" alignItems="center" spacing={{ xs: 1 }}>
           <Typography variant="h6">{title}</Typography>
           {stats && (
@@ -74,9 +74,7 @@ const ContainerHeader = ({
       </Grid>
 
       <Grid
-        item
-        xs={6}
-        md={0}
+        size={{ xs: 6, md: 0 }}
         justifyContent="flex-end"
         display={{
           xs: showButton ? 'flex' : 'none',
@@ -97,9 +95,7 @@ const ContainerHeader = ({
       </Grid>
 
       <Grid
-        item
-        xs={12}
-        md={3}
+        size={{ xs: 12, md: 3 }}
         justifyContent={'flex-end'}
         display={showSearchBox ? 'flex' : 'none'}
       >
@@ -119,9 +115,7 @@ const ContainerHeader = ({
       </Grid>
 
       <Grid
-        item
-        xs={0}
-        md={showSearchBox ? 2 : 3}
+        size={{ xs: 0, md: showSearchBox ? 2 : 3 }}
         justifyContent="flex-end"
         display={{
           xs: 'none',

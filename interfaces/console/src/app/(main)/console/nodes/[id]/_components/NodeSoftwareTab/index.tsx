@@ -17,7 +17,7 @@ import {
   Card,
   CardActions,
   CardContent,
-  Grid2,
+  Grid,
   IconButton,
   Paper,
   Stack,
@@ -39,8 +39,8 @@ const NodeSoftwareTab = ({
   handleUpdateAvailable,
 }: INodeRadioTab) => {
   return (
-    <Grid2 container spacing={2} sx={{ overflowY: 'scroll' }}>
-      {/* <Grid2 size={12} sx={{ gridRowStart: 1, gridRowEnd: 6 }}>
+    <Grid container spacing={2} sx={{ overflowY: 'scroll' }}>
+      {/* <Grid size={12} sx={{ gridRowStart: 1, gridRowEnd: 6 }}>
         <Paper
           sx={{
             p: 3,
@@ -57,9 +57,9 @@ const NodeSoftwareTab = ({
             />
           </Box>
         </Paper>
-      </Grid2> */}
+      </Grid> */}
 
-      <Grid2 size={12}>
+      <Grid size={12}>
         <Paper
           sx={{
             p: 3,
@@ -69,7 +69,7 @@ const NodeSoftwareTab = ({
             Node Apps
           </Typography>
           <Box sx={{ overflow: 'scroll', height: '100%', pb: 8, pr: 3 }}>
-            <Grid2 container spacing={3}>
+            <Grid container spacing={3}>
               {nodeApps?.map(
                 ({
                   id,
@@ -80,7 +80,7 @@ const NodeSoftwareTab = ({
                   status,
                   changeLog,
                 }: Software) => (
-                  <Grid2 size={3} key={id}>
+                  <Grid size={3} key={id}>
                     <Card variant="outlined">
                       <CardContent>
                         <Stack
@@ -171,14 +171,14 @@ const NodeSoftwareTab = ({
                         </HorizontalContainerJustify>
                       </CardActions>
                     </Card>
-                  </Grid2>
+                  </Grid>
                 ),
               )}
-            </Grid2>
+            </Grid>
           </Box>
         </Paper>
-      </Grid2>
-    </Grid2>
+      </Grid>
+    </Grid>
   );
 };
 

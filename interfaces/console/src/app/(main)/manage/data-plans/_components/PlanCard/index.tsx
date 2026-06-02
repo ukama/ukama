@@ -46,8 +46,8 @@ const PlanCard = ({
       }}
     >
       <Stack spacing={1} width={'100%'}>
-        <Grid xs={12} container direction={'row'} textAlign={'center'}>
-          <Grid item xs={11} pl={3}>
+        <Grid size={12} container direction={'row'} textAlign={'center'}>
+          <Grid size={11} pl={3}>
             <Typography
               variant="h5"
               sx={{
@@ -60,7 +60,7 @@ const PlanCard = ({
               {name}
             </Typography>
           </Grid>
-          <Grid item xs={1}>
+          <Grid size={1}>
             {isOptions && (
               <OptionsPopover
                 cid={'data-table-action-popover'}

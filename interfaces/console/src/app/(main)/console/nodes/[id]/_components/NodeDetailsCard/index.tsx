@@ -10,7 +10,7 @@ import { NodeTypeEnum } from '@/client/graphql/generated';
 import { NODE_IMAGES } from '@/constants';
 import { colors } from '@/theme';
 import { Chip, Link, Paper, Stack, Typography } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import DeviceModalView from '@/app/(setup)/configure/_components/DeviceModalView';
 import LoadingWrapper from '@/components/ui/LoadingWrapper';
 

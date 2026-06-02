@@ -293,7 +293,7 @@ const Page = () => {
           {tabIndex === 0 && (
             <Box sx={{ width: '100%', mt: { xs: 2, md: 4 } }}>
               <Grid container spacing={2}>
-                <Grid item xs={6}>
+                <Grid size={6}>
                   <TextField
                     id="subscriber-search"
                     variant="outlined"
@@ -310,7 +310,7 @@ const Page = () => {
                     }}
                   />
                 </Grid>
-                <Grid item xs={6} container justifyContent="flex-end">
+                <Grid size={6} container justifyContent="flex-end">
                   <Button
                     variant="contained"
                     color="primary"

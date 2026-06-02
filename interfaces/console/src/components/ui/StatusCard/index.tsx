@@ -65,7 +65,7 @@ const StatusCard = ({
           }}
         >
           <Grid container alignItems="center">
-            <Grid container xs={12} alignItems="center">
+            <Grid container size={12} alignItems="center">
               <Stack direction="row" alignItems="center" spacing={1.5}>
                 <Box
                   sx={{
@@ -81,7 +81,7 @@ const StatusCard = ({
                 <Typography variant="body1">{subtitle1}</Typography>
               </Stack>
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={12}>
               <Typography variant="caption">{title}</Typography>
             </Grid>
           </Grid>
@@ -89,7 +89,7 @@ const StatusCard = ({
       ) : (
         <RoundedCard>
           <Grid spacing={2} container direction="row" justifyContent="center">
-            <Grid item xs={2} display="flex" alignItems="center">
+            <Grid size={2} display="flex" alignItems="center">
               <Box
                 sx={{
                   svg: {
@@ -102,22 +102,21 @@ const StatusCard = ({
                 <Icon />
               </Box>
             </Grid>
-            <Grid xs={10} item sm container direction="column">
+            <Grid size={{ xs: 10, sm: 'auto' }} container direction="column">
               <Grid
-                sm
-                item
+                size={{ sm: 'auto' }}
                 container
                 spacing={2}
                 display="flex"
                 direction="row"
                 alignItems="center"
               >
-                <Grid item xs={12} mb={{ xs: 0.6, sm: 0 }}>
+                <Grid size={12} mb={{ xs: 0.6, sm: 0 }}>
                   <Typography variant="subtitle2">{title}</Typography>
                 </Grid>
               </Grid>
-              <Grid item container alignItems="baseline">
-                <Grid item>
+              <Grid container alignItems="baseline">
+                <Grid>
                   <Typography variant="h5" paddingRight="6px">
                     {loading ? (
                       <Skeleton variant="text" width={64} />
@@ -126,7 +125,7 @@ const StatusCard = ({
                     )}
                   </Typography>
                 </Grid>
-                <Grid item>
+                <Grid>
                   <Typography variant="body1" color="textSecondary">
                     {loading ? (
                       <Skeleton variant="text" width={64} />

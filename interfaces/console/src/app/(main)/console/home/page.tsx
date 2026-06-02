@@ -30,7 +30,7 @@ import GroupPeople from '@mui/icons-material/Group';
 import NetworkIcon from '@mui/icons-material/Hub';
 import SalesIcon from '@mui/icons-material/MonetizationOn';
 import { AlertColor, Paper, Skeleton, Stack } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef } from 'react';
 const NetworkMap = dynamic(() => import('@/app/(main)/console/home/_components/NetworkMap'), {

@@ -93,7 +93,7 @@ const CurrentBillCard: React.FC<CurrentBillCardProps> = ({
   return (
     <Grid container spacing={2}>
       {hasMultipleUnpaidBills && (
-        <Grid item xs={12}>
+        <Grid size={12}>
           <Alert severity="error">
             <Typography variant="body2" sx={{ color: colors.vulcan }}>
               Service will be paused unless you pay your outstanding bills.
@@ -102,7 +102,7 @@ const CurrentBillCard: React.FC<CurrentBillCardProps> = ({
         </Grid>
       )}
 
-      <Grid item xs={12}>
+      <Grid size={12}>
         <Paper
           elevation={3}
           sx={{

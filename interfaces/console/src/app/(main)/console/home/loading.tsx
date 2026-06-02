@@ -6,7 +6,7 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 import { Skeleton, Stack } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 
 export default function Loading() {
   return (

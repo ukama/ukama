@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
+'use client';
 import { Button, Stack, Typography } from '@mui/material';
 import Link from 'next/link';
 

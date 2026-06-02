@@ -9,7 +9,7 @@
 import colors from '@/theme/colors';
 import { SelectItemType } from '@/types';
 import Add from '@mui/icons-material/Add';
-import { Button, Divider, FormControl, MenuItem, Select } from '@mui/material';
+import { Divider, FormControl, MenuItem, Select } from '@mui/material';
 
 interface IBasicDropdown {
   id: string;
@@ -75,46 +75,30 @@ const BasicDropdown = ({
             No network found!
           </MenuItem>
         )}
+        {isShowAddOption && <Divider component="li" />}
         {isShowAddOption && (
-          <>
-            <Divider sx={{ width: '100%', height: '1px' }} />
-            <Button
-              id={`${id}-add`}
-              data-testid={`${id}-add-button`}
-              disabled={isDisableAddOption}
-              startIcon={
-                <Add
-                  sx={{
-                    color: isDisableAddOption ? colors.silver : colors.black70,
-                  }}
-                />
-              }
-              sx={{
-                px: 2,
-                py: 1,
-                color: 'textPrimary',
-                typography: 'body1',
-                fontWeight: 400,
-                display: 'flex',
-                cursor: 'pointer',
-                textTransform: 'none',
-                alignItems: 'center',
-                justifyContent: 'center',
-                ':hover': {
-                  backgroundColor: colors.primaryMain02,
-                },
-                ':hover .MuiSvgIcon-root': {
-                  fill: colors.primaryMain,
-                },
-              }}
-              onClick={(e) => {
-                handleAddNetwork();
-                e.stopPropagation();
-              }}
-            >
-              Add new network
-            </Button>
-          </>
+          <MenuItem
+            id={`${id}-add`}
+            data-testid={`${id}-add-button`}
+            disabled={isDisableAddOption}
+            onClick={(e) => {
+              handleAddNetwork();
+              e.stopPropagation();
+            }}
+            sx={{
+              gap: 1,
+              color: 'textPrimary',
+              typography: 'body1',
+              fontWeight: 400,
+              ':hover .MuiSvgIcon-root': { fill: colors.primaryMain },
+            }}
+          >
+            <Add
+              fontSize="small"
+              sx={{ color: isDisableAddOption ? colors.silver : colors.black70 }}
+            />
+            Add new network
+          </MenuItem>
         )}
       </Select>
     </FormControl>

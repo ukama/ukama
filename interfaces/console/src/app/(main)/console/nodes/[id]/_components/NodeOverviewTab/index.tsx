@@ -21,7 +21,7 @@ import {
   NodeEnumToString,
 } from '@/utils';
 import { Paper, Stack } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import { useEffect, useState } from 'react';
 import LineChart from '@/components/ui/LineChart/LazyLineChart';
 import NodeDetailsCard from '@/app/(main)/console/nodes/[id]/_components/NodeDetailsCard';

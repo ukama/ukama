@@ -93,7 +93,7 @@ const SitesWrapper: React.FC<SitesWrapperProps> = ({
           <Box sx={{ padding: '10px' }}>
             <Grid container spacing={2}>
               {sites.map((site) => (
-                <Grid item xs={12} md={4} lg={4} key={site.id}>
+                <Grid size={{ xs: 12, md: 4, lg: 4 }} key={site.id}>
                   <SiteCard
                     siteId={site.id}
                     name={site.name}
@@ -123,7 +123,7 @@ const SitesWrapper: React.FC<SitesWrapperProps> = ({
               </Typography>
               <Grid container spacing={2}>
                 {unassignedNodes.map((node) => (
-                  <Grid item xs={12} md={4} lg={4} key={node.id}>
+                  <Grid size={{ xs: 12, md: 4, lg: 4 }} key={node.id}>
                     <UnassignedNodeCard
                       id={node.id}
                       name={node.name || `Node-${node.id.substring(0, 8)}`}

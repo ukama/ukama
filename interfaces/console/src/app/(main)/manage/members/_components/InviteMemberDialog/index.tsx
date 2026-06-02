@@ -79,7 +79,7 @@ const InviteMemberDialog = ({
           justifyContent={'center'}
           spacing={2}
         >
-          <Grid item xs={6}>
+          <Grid size={6}>
             <TextField
               fullWidth
               required
@@ -92,7 +92,7 @@ const InviteMemberDialog = ({
               onChange={(e) => setMember({ ...member, name: e.target.value })}
             />
           </Grid>
-          <Grid item xs={6}>
+          <Grid size={6}>
             <TextField
               fullWidth
               required
@@ -106,7 +106,7 @@ const InviteMemberDialog = ({
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={12}>
             <FormControl fullWidth>
               <InputLabel id={'invite-member-role-label'} shrink>
                 Role

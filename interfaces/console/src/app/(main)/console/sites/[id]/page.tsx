@@ -12,7 +12,7 @@ import SiteInfo from '@/app/(main)/console/sites/[id]/_components/SiteInfos';
 import SiteOverview from '@/app/(main)/console/sites/[id]/_components/SiteOverView';
 import { useSiteDetailPage } from '@/app/(main)/console/sites/[id]/_hooks/useSiteDetailPage';
 import StatusBar from '@/app/(main)/console/_components/StatusBar';
-import { Box, Grid2, Skeleton } from '@mui/material';
+import { Box, Grid, Skeleton } from '@mui/material';
 import dynamic from 'next/dynamic';
 import React, { use } from 'react';
 
@@ -31,19 +31,19 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
 
   if (!vm.isDataReady) {
     return (
-      <Grid2 container columnSpacing={2} rowSpacing={2}>
-        <Grid2 size={12}>
+      <Grid container columnSpacing={2} rowSpacing={2}>
+        <Grid size={12}>
           <Skeleton height={64} width={'100%'} variant="rectangular" sx={{ borderRadius: '5px' }} />
-        </Grid2>
+        </Grid>
         {[1, 2, 3].map((item) => (
-          <Grid2 size={4} key={item}>
+          <Grid size={4} key={item}>
             <Skeleton height={164} width={'100%'} variant="rectangular" sx={{ borderRadius: '5px' }} />
-          </Grid2>
+          </Grid>
         ))}
-        <Grid2 size={12}>
+        <Grid size={12}>
           <Skeleton height={300} width={'100%'} variant="rectangular" sx={{ borderRadius: '5px' }} />
-        </Grid2>
-      </Grid2>
+        </Grid>
+      </Grid>
     );
   }
 
@@ -57,8 +57,8 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         height: 'calc(100vh - 164px)',
       }}
     >
-      <Grid2 container spacing={2} alignItems="stretch" sx={{ mt: 1, height: 'max-content' }}>
-        <Grid2 size={12}>
+      <Grid container spacing={2} alignItems="stretch" sx={{ mt: 1, height: 'max-content' }}>
+        <Grid size={12}>
           <StatusBar
             type="toggle"
             selected={vm.activeSite}
@@ -70,26 +70,26 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
             handleSelected={vm.handleSelected}
             actionOptionValues={vm.siteActionData}
           />
-        </Grid2>
+        </Grid>
 
-        <Grid2 size={{ xs: 12, sm: 6, md: 4 }} sx={{ height: 'auto', display: 'flex' }}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }} sx={{ height: 'auto', display: 'flex' }}>
           <SiteInfo
             selectedSite={vm.activeSite}
             address={vm.currentSiteAddress}
             nodeIds={vm.nodes.map((node) => node.id)}
           />
-        </Grid2>
+        </Grid>
 
-        <Grid2 size={{ xs: 12, sm: 6, md: 5 }} sx={{ height: '100%', display: 'flex' }}>
+        <Grid size={{ xs: 12, sm: 6, md: 5 }} sx={{ height: '100%', display: 'flex' }}>
           <SiteOverview
             installationDate={new Date(vm.activeSite.installDate)}
             isLoading={vm.statLoading}
             siteId={vm.activeSite.id}
             siteStatMetrics={vm.statData?.getSiteStat ?? { metrics: [] }}
           />
-        </Grid2>
+        </Grid>
 
-        <Grid2 size={{ xs: 12, sm: 6, md: 3 }} sx={{ height: 'auto', display: 'flex', minHeight: 200 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ height: 'auto', display: 'flex', minHeight: 200 }}>
           <SiteMapComponent
             id="site-map"
             zoom={15}
@@ -100,9 +100,9 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
             showUserCount={true}
             userCount={vm.activeSubscribers}
           />
-        </Grid2>
+        </Grid>
 
-        <Grid2 size={12}>
+        <Grid size={12}>
           <SiteComponents
             key={`${vm.activeView.kpi}-${vm.metricFrom}`}
             siteId={vm.activeSite.id}
@@ -117,8 +117,8 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
             nodes={vm.nodes}
             initialNodeUptimes={vm.initialNodeUptimes}
           />
-        </Grid2>
-      </Grid2>
+        </Grid>
+      </Grid>
     </Box>
   );
 };

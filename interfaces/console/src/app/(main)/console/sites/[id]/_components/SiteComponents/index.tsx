@@ -14,7 +14,7 @@ import { getMetricValue, isMetricValue } from '@/utils';
 import LineChart from '@/components/ui/LineChart/LazyLineChart';
 import { SWITCH_REENABLE_MS } from '@/constants/timing';
 import { Box, Paper, Stack, Typography } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import React, { useCallback, useEffect, useState } from 'react';
 import SiteFlowDiagram from '../../../../../../../../public/svg/sitecomps';
 import SwitchPortItem, { PortGroup } from './SwitchPortItem';

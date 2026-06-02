@@ -23,7 +23,7 @@ import {
   IconButton,
   Typography,
 } from '@mui/material';
-import QRCode from 'qrcode.react';
+import { QRCodeCanvas as QRCode } from 'qrcode.react';
 import { useState } from 'react';
 
 const CloseButtonStyle = styled(IconButton)({

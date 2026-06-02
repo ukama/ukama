@@ -24,7 +24,7 @@ import {
   Stack,
   TextField,
 } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import { Formik } from 'formik';
 import { Dispatch, SetStateAction } from 'react';
 

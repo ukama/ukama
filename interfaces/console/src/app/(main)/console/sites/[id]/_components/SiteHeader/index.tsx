@@ -19,6 +19,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+// Button is used by RESTART SITE button below; Divider used as <Divider component="li">
 import * as React from 'react';
 
 type Site = {
@@ -60,7 +61,7 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
   return (
     <>
       <Grid container spacing={2}>
-        <Grid item xs={6}>
+        <Grid size={6}>
           <Stack direction="row" spacing={2} alignItems={'center'}>
             <Select
               disableUnderline
@@ -88,40 +89,32 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
                     m: 0,
                     p: '6px 16px',
                     justifyContent: 'space-between',
-                    backgroundColor: `${'inherit'} !important`,
+                    backgroundColor: 'inherit !important',
                     ':hover': {
-                      backgroundColor: `
-                      colors.secondaryLight,
-                      0.25,
-                    )} !important`,
+                      backgroundColor: `${colors.secondaryLight}25 !important`,
                     },
                   }}
                 >
                   <Stack direction={'row'} alignItems={'center'} spacing={1}>
-                    {health === 'online' ? (
-                      <FiberManualRecord
-                        htmlColor={colors.green}
-                        fontSize="small"
-                      />
-                    ) : (
-                      <FiberManualRecord
-                        htmlColor={colors.red}
-                        fontSize="small"
-                      />
-                    )}
+                    <FiberManualRecord
+                      htmlColor={health === 'online' ? colors.green : colors.red}
+                      fontSize="small"
+                    />
                     <Typography variant="body1">{name}</Typography>
                   </Stack>
                 </MenuItem>
               ))}
-              <Divider />
-
-              <Button
-                variant="text"
-                startIcon={<Add />}
-                onClick={addSiteAction}
+              <Divider component="li" />
+              <MenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  addSiteAction();
+                }}
+                sx={{ gap: 1 }}
               >
+                <Add fontSize="small" />
                 Add site
-              </Button>
+              </MenuItem>
             </Select>
             <Typography variant="body1">
               {`is ${siteHealth} for ${
@@ -131,7 +124,7 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
           </Stack>
         </Grid>
 
-        <Grid item xs={6} container justifyContent={'flex-end'}>
+        <Grid size={6} container justifyContent={'flex-end'}>
           <Button
             variant="contained"
             color="primary"

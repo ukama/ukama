@@ -12,7 +12,7 @@ import { NODE_KPIS } from '@/constants';
 import { KpiConfig } from '@/types';
 import { getKPIStatValue, getMetricValue, isMetricValue } from '@/utils';
 import { Paper, Stack } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import LineChart from '@/components/ui/LineChart/LazyLineChart';
 import NodeStatItem from '@/app/(main)/console/nodes/[id]/_components/NodeStatItem';
 import NodeStatsContainer from '@/app/(main)/console/nodes/[id]/_components/NodeStatsContainer';
