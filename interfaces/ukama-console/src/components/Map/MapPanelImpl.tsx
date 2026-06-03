@@ -25,6 +25,7 @@ import {
 } from 'react-simple-maps';
 import type { Site } from '@/data';
 import { ZAMBIA_GEO } from '@/data/reference/regions';
+import { useElementSize } from './useElementSize';
 
 const PIN_COLOR: Record<Site['status'], string> = {
   online: 'var(--uk-success-bright)',
@@ -55,6 +56,7 @@ export default function MapPanelImpl({
   compact?: boolean;
 }) {
   const [zoom, setZoom] = useState(compact ? 5 : 1);
+  const [sizeRef, { width: w, height: h }] = useElementSize();
 
   const center = useMemo<[number, number]>(() => {
     if (sites.length === 0) return [27.8, -14.8];
@@ -64,6 +66,7 @@ export default function MapPanelImpl({
 
   return (
     <div
+      ref={sizeRef}
       style={{
         position: 'relative',
         width: '100%',
@@ -73,12 +76,13 @@ export default function MapPanelImpl({
         background: 'var(--uk-map-water)',
       }}
     >
+      {w > 0 && h > 0 && (
       <ComposableMap
         projection="geoMercator"
-        projectionConfig={{ center, scale: 2300 }}
-        width={800}
-        height={520}
-        style={{ width: '100%', height: '100%' }}
+        projectionConfig={{ center, scale: Math.min(w * 2.5, h * 4.8) }}
+        width={w}
+        height={h}
+        style={{ width: '100%', height: '100%', display: 'block' }}
       >
         <ZoomableGroup
           center={center}
@@ -86,6 +90,8 @@ export default function MapPanelImpl({
           minZoom={0.8}
           maxZoom={12}
           onMoveEnd={({ zoom: z }) => setZoom(z)}
+          // zoom only via the overlay buttons — no wheel / pinch / dblclick
+          filterZoomEvent={(e) => e?.type !== 'wheel' && e?.type !== 'dblclick'}
         >
           <Geographies geography={ZAMBIA_GEO}>
             {({ geographies }) =>
@@ -98,7 +104,7 @@ export default function MapPanelImpl({
             const col = PIN_COLOR[s.status];
             const sel = selected === s.id;
             const showLabel = !compact && (sel || s.status !== 'online');
-            const r = (sel ? 8 : 6.5) / Math.sqrt(zoom);
+            const r = (sel ? 6.5 : 5) / Math.sqrt(zoom);
             return (
               <Marker
                 key={s.id}
@@ -108,35 +114,35 @@ export default function MapPanelImpl({
               >
                 {sel && (
                   <circle
-                    r={r + 5 / Math.sqrt(zoom)}
+                    r={r + 4 / Math.sqrt(zoom)}
                     fill="none"
                     stroke={col}
                     strokeOpacity={0.35}
-                    strokeWidth={4 / Math.sqrt(zoom)}
+                    strokeWidth={3 / Math.sqrt(zoom)}
                   />
                 )}
                 <circle
                   r={r}
                   fill={col}
                   stroke="#fff"
-                  strokeWidth={2.5 / Math.sqrt(zoom)}
+                  strokeWidth={1.8 / Math.sqrt(zoom)}
                 />
                 {showLabel && (
                   <g transform={`scale(${1 / Math.sqrt(zoom)})`}>
                     <rect
-                      x={-(s.name.length * 3.4 + 8)}
-                      y={-32}
-                      width={s.name.length * 6.8 + 16}
-                      height={20}
+                      x={-(s.name.length * 3 + 8)}
+                      y={-28}
+                      width={s.name.length * 6 + 16}
+                      height={18}
                       rx={6}
                       fill="#15181F"
                     />
                     <text
                       textAnchor="middle"
-                      y={-18}
+                      y={-15}
                       style={{
                         fontFamily: 'var(--font-body)',
-                        fontSize: 11.5,
+                        fontSize: 11,
                         fontWeight: 600,
                         fill: '#fff',
                       }}
@@ -150,6 +156,7 @@ export default function MapPanelImpl({
           })}
         </ZoomableGroup>
       </ComposableMap>
+      )}
 
       {!compact && (
         <>
@@ -163,7 +170,7 @@ export default function MapPanelImpl({
               borderRadius: 8,
               overflow: 'hidden',
               boxShadow: 'var(--uk-shadow)',
-              background: '#fff',
+              background: 'var(--uk-panel)',
             }}
           >
             <button

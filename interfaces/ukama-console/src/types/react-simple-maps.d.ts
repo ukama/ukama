@@ -68,6 +68,8 @@ declare module 'react-simple-maps' {
     minZoom?: number;
     maxZoom?: number;
     onMoveEnd?: (position: { coordinates: [number, number]; zoom: number }) => void;
+    /** Return false to ignore a d3-zoom source event (e.g. wheel). */
+    filterZoomEvent?: (event: { type?: string }) => boolean;
     children?: React.ReactNode;
   }
   export const ZoomableGroup: React.FC<ZoomableGroupProps>;
