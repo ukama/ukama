@@ -1,0 +1,47 @@
+{
+  "name": "ukama-console-reborn",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=20.9"
+  },
+  "scripts": {
+    "preinstall": "npx only-allow pnpm",
+    "dev": "next dev",
+    "dev:review": "mkdir -p .logs && concurrently -k -n next,tsc,lint -c blue,yellow,magenta \"next dev 2>&1 | tee .logs/dev.log\" \"tsc --noEmit --watch --preserveWatchOutput --pretty false > .logs/tsc.log 2>&1\" \"node scripts/lint-watch.mjs\"",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "lint:log": "mkdir -p .logs && eslint . > .logs/lint.log 2>&1 || true",
+    "typecheck": "tsc --noEmit",
+    "typecheck:watch": "tsc --noEmit --watch --preserveWatchOutput --pretty false",
+    "prettier": "prettier --write --ignore-unknown .",
+    "check:headers": "node scripts/check-headers.mjs"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^7.3.11",
+    "@mui/material-nextjs": "^7.3.10",
+    "next": "^16",
+    "react": "^19",
+    "react-dom": "^19",
+    "zod": "^3.24.1",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@typescript-eslint/eslint-plugin": "^8.60.1",
+    "@typescript-eslint/parser": "^8.60.1",
+    "concurrently": "^9.1.0",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.7",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "prettier": "^3.3.2",
+    "typescript": "^5"
+  }
+}

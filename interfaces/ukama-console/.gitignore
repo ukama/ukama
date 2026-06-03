@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+
+# next.js
+.next/
+out/
+next-env.d.ts
+
+# builds
+build/
+*.tsbuildinfo
+
+# dev review logs (Claude reads these; never commit)
+.logs/*
+!.logs/.gitkeep
+
+# env
+.env
+.env*.local
+
+# local planning doc (kept out of version control)
+ukama-console-BUILD-PLAN.md
+
+# misc
+.DS_Store
+*.pem
+npm-debug.log*
+pnpm-debug.log*

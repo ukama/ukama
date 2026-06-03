@@ -1,0 +1,143 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2026-present, Ukama Inc.
+ */
+
+/* ============================================================
+   Ukama custom tokens (--uk-*) — light defaults.
+   MUI palette vars (--mui-*) are emitted by the theme; the
+   accent/density attributes below override both families.
+   ============================================================ */
+:root {
+  /* density (comfortable) */
+  --uk-gap: 16px;
+  --uk-card-pad: 22px;
+  --uk-row-h: 52px;
+  --uk-sec-gap: 18px;
+
+  /* radii */
+  --uk-r-sm: 6px;
+  --uk-r-md: 10px;
+  --uk-r-lg: 14px;
+
+  /* ink / lines / surfaces (light) */
+  --uk-ink: #1c1e22;
+  --uk-ink-2: #5a5e66;
+  --uk-ink-3: #898d95;
+  --uk-line: #e7e9ee;
+  --uk-line-soft: #eef0f4;
+  --uk-page: #f4f5f8;
+  --uk-panel: #ffffff;
+  --uk-hover: #f2f4f7;
+  --uk-shadow: 0 1px 2px rgba(20, 22, 30, 0.04), 0 4px 16px rgba(20, 22, 30, 0.05);
+  --uk-shadow-lg: 0 8px 30px rgba(20, 22, 30, 0.12);
+
+  /* status (mode-independent hues) */
+  --uk-success-bright: #1dcd9f;
+  --uk-success: #03744b;
+  --uk-warning: #fbc34d;
+  --uk-error: #f50533;
+  --uk-orange: #e27429;
+  --uk-cyan: #00d3eb;
+
+  /* accent (blue default) */
+  --uk-ac: #2190f6;
+  --uk-ac-dark: #006ac3;
+  --uk-ac-light: #8fcdf9;
+  --uk-ac-soft: #ebf5ff;
+}
+
+/* ---- dark scheme (MUI toggles the `dark` class on <html>) ---- */
+.dark {
+  --uk-ink: #e9ebef;
+  --uk-ink-2: #a6abb4;
+  --uk-ink-3: #6c727c;
+  --uk-line: #2a2e37;
+  --uk-line-soft: #21242b;
+  --uk-page: #0e1015;
+  --uk-panel: #171a21;
+  --uk-hover: #21252e;
+  --uk-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.4);
+  --uk-shadow-lg: 0 16px 44px rgba(0, 0, 0, 0.55);
+  --uk-ac-soft: rgba(33, 144, 246, 0.18);
+  --uk-ac-dark: #5fb0ff;
+}
+
+/* ============================================================
+   Accent switching — overrides both --uk-ac* and the MUI
+   primary palette vars (incl. channel triplets for alpha use).
+   `:root[...]` outranks the `.light`/`.dark` class selectors.
+   ============================================================ */
+:root[data-accent='indigo'] {
+  --uk-ac: #6974f8;
+  --uk-ac-dark: #284ac4;
+  --uk-ac-light: #a0a4ff;
+  --uk-ac-soft: #eef0ff;
+  --mui-palette-primary-main: #6974f8;
+  --mui-palette-primary-dark: #284ac4;
+  --mui-palette-primary-light: #a0a4ff;
+  --mui-palette-primary-mainChannel: 105 116 248;
+}
+:root[data-accent='indigo'].dark {
+  --uk-ac-dark: #9aa2ff;
+  --uk-ac-soft: rgba(105, 116, 248, 0.18);
+  --mui-palette-primary-dark: #9aa2ff;
+}
+
+:root[data-accent='teal'] {
+  --uk-ac: #0fb5c9;
+  --uk-ac-dark: #087e8f;
+  --uk-ac-light: #7fe3f0;
+  --uk-ac-soft: #e5fafd;
+  --mui-palette-primary-main: #0fb5c9;
+  --mui-palette-primary-dark: #087e8f;
+  --mui-palette-primary-light: #7fe3f0;
+  --mui-palette-primary-mainChannel: 15 181 201;
+}
+:root[data-accent='teal'].dark {
+  --uk-ac-dark: #39cfe0;
+  --uk-ac-soft: rgba(15, 181, 201, 0.18);
+  --mui-palette-primary-dark: #39cfe0;
+}
+
+/* ---- density ---- */
+:root[data-density='compact'] {
+  --uk-gap: 12px;
+  --uk-card-pad: 16px;
+  --uk-row-h: 44px;
+  --uk-sec-gap: 14px;
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-body), Roboto, sans-serif;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* tabular numerals for figures (KPI values, table numbers) */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* a11y focus ring (from the design's a11y findings) */
+:focus-visible {
+  outline: 2px solid var(--uk-ac);
+  outline-offset: 2px;
+  border-radius: 4px;
+}

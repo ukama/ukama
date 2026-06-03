@@ -1,0 +1,6 @@
+.next
+node_modules
+.logs
+pnpm-lock.yaml
+next-env.d.ts
+src/fonts/*.ttf
