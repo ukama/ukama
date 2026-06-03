@@ -44,9 +44,9 @@ func NewConfig() *Config {
 
 		Services: GrpcEndpoints{
 			Timeout:   20 * time.Second,
-			Business:  "business:9090",
-			Customer:  "customer:9090",
-			Network:   "network:9090",
+			Business:  "analytics:9090",
+			Customer:  "analytics:9090",
+			Network:   "analytics:9090",
 			Collector: "collector:9090",
 		},
 

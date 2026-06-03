@@ -19,62 +19,26 @@ services:
   volumes:
    - postgress-data:/var/lib/postgresql
 
- business:
-  build: ./business
+ analytics:
+  build: ./analytics
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-analytics
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-   - MSGCLIENT_HOST=msgclient-analytics:9095
-   - BUSINESS_SERVICE_HOST=business
-   - BUSINESS_SERVICE_PORT=9090
+   - ANALYTICS_SERVICE_HOST=analytics
+   - ANALYTICS_SERVICE_PORT=9090
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
+   - SIM_LOW_STOCK_THRESHOLD=50
+   - NETWORK_LATENCY_THRESHOLD_MS=100
+   - BATTERY_CRITICAL_PERCENT=20
+   - TELEMETRY_FRESH_SECONDS=600
   restart: always
   networks:
    - ukama-net
   depends_on:
-   - msgclient-analytics
-
- customer:
-  build: ./customer
-  environment:
-   - DEBUGMODE=true
-   - DB_HOST=postgresd-analytics
-   - DB_PASSWORD=Pass2020!
-   - DB_USER=postgres
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-   - MSGCLIENT_HOST=msgclient-analytics:9095
-   - CUSTOMER_SERVICE_HOST=customer
-   - CUSTOMER_SERVICE_PORT=9090
-   - ORGNAME=${ORGNAME}
-   - ORGID=${ORGID}
-  restart: always
-  networks:
-   - ukama-net
-  depends_on:
-   - msgclient-analytics
-
- network:
-  build: ./network
-  environment:
-   - DEBUGMODE=true
-   - DB_HOST=postgresd-analytics
-   - DB_PASSWORD=Pass2020!
-   - DB_USER=postgres
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-   - MSGCLIENT_HOST=msgclient-analytics:9095
-   - NETWORK_SERVICE_HOST=network
-   - NETWORK_SERVICE_PORT=9090
-   - ORGNAME=${ORGNAME}
-   - ORGID=${ORGID}
-  restart: always
-  networks:
-   - ukama-net
-  depends_on:
-   - msgclient-analytics
+   - postgresd-analytics
 
  collector:
   build: ./collector
@@ -89,6 +53,8 @@ services:
    - COLLECTOR_SERVICE_PORT=9090
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
+   - ROLLUP_SCHEDULER_ENABLED=true
+   - ROLLUP_SCHEDULER_INTERVAL=5m
    - HTTP_REGISTRYCLIENT=http://api-gateway-registry:8080
    - HTTP_SUBSCRIBERCLIENT=http://api-gateway-subscriber:8080
    - HTTP_DATAPLANCLIENT=http://api-gateway-dataplan:8080
@@ -113,10 +79,12 @@ services:
   environment:
    - DEBUGMODE=true
    - BYPASS_AUTH_MODE=true
+   - BUSINESS=analytics:9090
+   - CUSTOMER=analytics:9090
+   - NETWORK=analytics:9090
+   - COLLECTOR=collector:9090
   depends_on:
-   - business
-   - customer
-   - network
+   - analytics
    - collector
 
  msgclient-analytics:

@@ -4,11 +4,14 @@ go 1.25.0
 
 replace github.com/ukama/ukama/systems/common => ../../common
 
+replace github.com/ukama/ukama/systems/analytics/schema => ../schema
+
 replace github.com/ukama/ukama/systems/analytics/customer => ./
 
 replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgClient
 
 require (
+	github.com/ukama/ukama/systems/analytics/schema v0.0.0-00010101000000-000000000000
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/golang/protobuf v1.5.4
 	github.com/mwitkow/go-proto-validators v0.3.2

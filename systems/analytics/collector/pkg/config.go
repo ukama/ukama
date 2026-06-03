@@ -26,6 +26,13 @@ type Config struct {
 	Http             HttpServices
 	OrgName          string
 	OrgId            string
+	RollupScheduler  RollupScheduler
+}
+
+type RollupScheduler struct {
+	Enabled      bool          `default:"true"`
+	Interval     time.Duration `default:"5m"`
+	LookbackDays int           `default:"30"`
 }
 
 type HttpServices struct {

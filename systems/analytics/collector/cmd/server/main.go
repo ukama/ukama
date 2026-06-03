@@ -9,6 +9,7 @@
 package main
 
 import (
+	"context"
 	"os"
 
 	"github.com/num30/config"
@@ -128,6 +129,13 @@ func runGrpcServer(gormdb sql.Db) {
 
 	collectorEventServer := server.NewCollectorEventServer(serviceConfig.OrgName,
 		eventRepo, stateRepo, snapshotRepo, factRepo)
+
+	scheduler := server.NewRollupScheduler(stateRepo, rollupRepo, server.RollupSchedulerConfig{
+		Enabled:      serviceConfig.RollupScheduler.Enabled,
+		Interval:     serviceConfig.RollupScheduler.Interval,
+		LookbackDays: serviceConfig.RollupScheduler.LookbackDays,
+	})
+	scheduler.Start(context.Background())
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
