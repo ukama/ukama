@@ -5,8 +5,8 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import SupportScreen from '@/features/support/SupportScreen';
 
 export default function BizSupportPage() {
-  return <PageStub title="Support" phase="4" sub="Find a customer and resolve the issue quickly." />;
+  return <SupportScreen mode="biz" />;
 }

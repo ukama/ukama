@@ -5,8 +5,8 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import MembersScreen from '../_components/MembersScreen';
 
 export default function BizMembersPage() {
-  return <PageStub title="Members" phase="4" sub="People with access to this organization." />;
+  return <MembersScreen />;
 }

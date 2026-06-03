@@ -5,8 +5,8 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import BizHomeScreen from './_components/BizHomeScreen';
 
 export default function BizHomePage() {
-  return <PageStub title="Home" phase="4" />;
+  return <BizHomeScreen />;
 }

@@ -5,8 +5,8 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import SimPoolScreen from '@/features/sims/SimPoolScreen';
 
 export default function BizSimPoolPage() {
-  return <PageStub title="SIM pool" phase="4" crumb={["Manage","SIM pool"]} sub="Inventory of SIMs available to assign to customers." />;
+  return <SimPoolScreen canAct />;
 }

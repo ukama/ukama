@@ -361,16 +361,5 @@ export function MiniSpark({
   );
 }
 
-/* ---- series helper (fabricates a plausible series, from data.jsx) ---- */
-export const series = (base: number, n = 14, jitter = 0.12, trend = 0): number[] =>
-  Array.from({ length: n }, (_, i) =>
-    Math.max(
-      0,
-      Math.round(
-        (base +
-          base * trend * (i / n) +
-          base * jitter * (Math.sin(i * 1.7) + Math.cos(i * 0.9))) *
-          10,
-      ) / 10,
-    ),
-  );
+/* ---- series helper (re-export; pure source lives in lib) ---- */
+export { series } from '@/lib/series';

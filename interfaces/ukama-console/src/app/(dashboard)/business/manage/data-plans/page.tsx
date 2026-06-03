@@ -5,8 +5,8 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import PlansScreen from '../_components/PlansScreen';
 
 export default function BizPlansPage() {
-  return <PageStub title="Data plans" phase="4" crumb={["Manage","Data plans"]} sub="Plans you can assign to customers." />;
+  return <PlansScreen />;
 }

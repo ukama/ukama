@@ -5,8 +5,8 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import BizPackagesScreen from '../_components/BizPackagesScreen';
 
 export default function BizPackagesPage() {
-  return <PageStub title="Packages" phase="4" sub="How your data packages are selling and performing." />;
+  return <BizPackagesScreen />;
 }

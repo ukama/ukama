@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import BizSiteDetailScreen from '../../_components/BizSiteDetailScreen';
 
 export default async function BizSiteDetailPage({
   params,
@@ -13,7 +13,5 @@ export default async function BizSiteDetailPage({
   params: Promise<{ siteId: string }>;
 }) {
   const { siteId } = await params;
-  return (
-    <PageStub title={decodeURIComponent(siteId)} crumb={['Sites']} phase="4" />
-  );
+  return <BizSiteDetailScreen siteId={decodeURIComponent(siteId)} />;
 }

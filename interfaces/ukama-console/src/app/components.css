@@ -449,6 +449,15 @@ th.sortable:hover {
   gap: 6px;
 }
 
+/* ---- admin launcher hover ---- */
+.admin-launch:hover {
+  background: var(--uk-hover) !important;
+  border-color: #d7dbe2 !important;
+}
+.dark .admin-launch:hover {
+  border-color: #3a3f49 !important;
+}
+
 /* ---- map zoom chrome ---- */
 .map-zoom {
   width: 34px;

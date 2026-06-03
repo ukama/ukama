@@ -5,8 +5,8 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import BillingScreen from '../_components/BillingScreen';
 
 export default function BizBillingPage() {
-  return <PageStub title="Billing" phase="4" sub="What you owe Ukama for running this network." />;
+  return <BillingScreen />;
 }
