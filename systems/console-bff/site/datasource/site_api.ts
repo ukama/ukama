@@ -5,9 +5,8 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { RESTDataSource } from "@apollo/datasource-rest";
-
 import { VERSION } from "../../common/configs";
+import { BaseRESTDataSource } from "../../common/datasource";
 import {
   AddSiteInputDto,
   SiteDto,
@@ -19,7 +18,7 @@ import { dtoToSiteDto, dtoToSitesDto } from "./mapper";
 
 const SITES = "sites";
 
-class SiteApi extends RESTDataSource {
+class SiteApi extends BaseRESTDataSource {
   getSites = async (
     baseURL: string,
     args: SitesInputDto

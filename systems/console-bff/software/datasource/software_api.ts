@@ -5,9 +5,8 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { RESTDataSource } from "@apollo/datasource-rest";
-
 import { VERSION } from "../../common/configs";
+import { BaseRESTDataSource } from "../../common/datasource";
 import {
   Apps,
   GetSoftwaresInput,
@@ -19,7 +18,7 @@ import { mapApps, mapSoftwares, mapUpdateSoftware } from "./mapper";
 
 const SOFTWARE = "software";
 
-class SoftwareAPI extends RESTDataSource {
+class SoftwareAPI extends BaseRESTDataSource {
   getApps = async (baseURL: string): Promise<Apps> => {
     this.logger.info(`GetApps [GET]: ${baseURL}/${VERSION}/${SOFTWARE}/apps`);
     this.baseURL = baseURL;

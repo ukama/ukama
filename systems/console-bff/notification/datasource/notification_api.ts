@@ -5,9 +5,8 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { RESTDataSource } from "@apollo/datasource-rest";
-
 import { VERSION } from "../../common/configs";
+import { BaseRESTDataSource } from "../../common/datasource";
 import {
   NotificationResDto,
   NotificationsResDto,
@@ -19,7 +18,7 @@ import {
   dtoToUpdateNotificationDto,
 } from "./mapper";
 
-class NotificationApi extends RESTDataSource {
+class NotificationApi extends BaseRESTDataSource {
   getNotifications = async (
     baseURL: string,
     orgId: string,

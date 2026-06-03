@@ -12,6 +12,7 @@ import { HTTP401Error } from "./http401.error";
 import { HTTP404Error } from "./http404.error";
 import { HTTP500Error } from "./http500.error";
 import Messages from "./messages";
+import { UnauthenticatedError } from "./unauthenticated.error";
 
 export {
   HTTP400Error,
@@ -20,6 +21,7 @@ export {
   HTTP500Error,
   HttpStatusCode,
   Messages,
+  UnauthenticatedError,
 };
 
 export const axiosErrorHandler = (error: any): ErrorType => {

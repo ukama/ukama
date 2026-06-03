@@ -11,6 +11,29 @@ export const VERSION = process.env.VERSION ?? "v1";
 
 export const METRICS_INTERVAL = 30;
 
+export const IS_PRODUCTION = process.env.NODE_ENV === "production";
+
+// Hard timeout for every upstream HTTP call made by the BFF.
+export const HTTP_TIMEOUT_MS = parseInt(process.env.HTTP_TIMEOUT_MS ?? "15000");
+
+/**
+ * Secret used to HMAC-sign the session token issued by /get-user.
+ * Must be set in production; a dev-only fallback is used otherwise.
+ */
+const DEV_TOKEN_SECRET = "dev-only-insecure-token-secret";
+export const TOKEN_SECRET: string = (() => {
+  const secret = process.env.JWT_SECRET ?? "";
+  if (!secret || secret.startsWith("change-me")) {
+    if (IS_PRODUCTION) {
+      throw new Error(
+        "JWT_SECRET env var must be set to a strong secret in production"
+      );
+    }
+    return DEV_TOKEN_SECRET;
+  }
+  return secret;
+})();
+
 // API GWs
 export const PLANNING_API_URL = process.env.PLANNING_API_URL;
 export const NUCLEUS_API_GW = process.env.NUCLEUS_API_GW ?? "";

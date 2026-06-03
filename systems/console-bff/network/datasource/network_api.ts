@@ -5,9 +5,8 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { RESTDataSource } from "@apollo/datasource-rest";
-
 import { VERSION } from "../../common/configs";
+import { BaseRESTDataSource } from "../../common/datasource";
 import { TBooleanResponse } from "../../common/types";
 import {
   AddNetworkInputDto,
@@ -16,7 +15,7 @@ import {
 } from "../resolvers/types";
 import { dtoToNetworkDto, dtoToNetworksDto } from "./mapper";
 
-class NetworkApi extends RESTDataSource {
+class NetworkApi extends BaseRESTDataSource {
   getNetworks = async (baseURL: string): Promise<NetworksResDto> => {
     this.logger.info(`GetNetworks [GET]: ${baseURL}/${VERSION}/networks`);
     this.baseURL = baseURL;
@@ -73,7 +72,8 @@ class NetworkApi extends RESTDataSource {
       .then(() => {
         return { success: true };
       })
-      .catch(() => {
+      .catch(error => {
+        this.logger.error(`Request failed: ${error}`);
         return { success: false };
       });
   };

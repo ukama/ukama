@@ -31,25 +31,19 @@ import { HTTP401Error, HTTP500Error, Messages } from "../common/errors";
 import { logger } from "../common/logger";
 import { openStore } from "../common/storage";
 import { THeaders } from "../common/types";
-import { parseHeaders } from "../common/utils";
+import { parseExpressHeaders } from "../common/utils";
 import InitAPI from "../init/datasource/init_api";
 import { configureExpress } from "./configureExpress";
 
 const COOKIE_EXPIRY_TIME = 3017874138705;
 
-function delay(time: any) {
+interface GatewayContext {
+  headers: THeaders;
+}
+
+function delay(time: number) {
   return new Promise(resolve => setTimeout(resolve, time));
 }
-let headers: THeaders = {
-  auth: {
-    Authorization: "",
-    Cookie: "",
-  },
-  token: "",
-  orgId: "",
-  userId: "",
-  orgName: "",
-};
 
 const app = configureExpress(logger);
 const httpServer = createServer(app);
@@ -67,17 +61,20 @@ const loadServers = async () => {
       },
     }),
     buildService({ url }) {
-      return new RemoteGraphQLDataSource({
+      return new RemoteGraphQLDataSource<GatewayContext>({
         url,
-        willSendRequest({ request }: any) {
-          if (request.http.headers.get("introspection") !== "true") {
-            request.http.headers.set(
-              "x-session-token",
-              headers.auth.Authorization
-            );
-            request.http.headers.set("cookie", headers.auth.Cookie);
-            request.http.headers.set("token", headers.token);
-          }
+        willSendRequest({ request, context }) {
+          // Auth headers are read from the per-request context so
+          // concurrent requests can never leak each other's identity.
+          if (request.http?.headers.get("introspection") === "true") return;
+          const requestHeaders = context?.headers;
+          if (!requestHeaders) return;
+          request.http?.headers.set(
+            "x-session-token",
+            requestHeaders.auth.Authorization
+          );
+          request.http?.headers.set("cookie", requestHeaders.auth.Cookie);
+          request.http?.headers.set("token", requestHeaders.token);
         },
       });
     },
@@ -89,17 +86,12 @@ const startServer = async () => {
   await delay(10000);
   const store = openStore();
   const gateway = await loadServers();
-  const server = new ApolloServer({
+  const server = new ApolloServer<GatewayContext>({
     gateway,
     csrfPrevention: true,
     plugins: [
       ApolloServerPluginInlineTrace({}),
       ApolloServerPluginDrainHttpServer({ httpServer }),
-      {
-        async requestDidStart(requestContext: any) {
-          headers = parseHeaders(requestContext?.request.http.headers);
-        },
-      },
     ],
   });
 
@@ -112,7 +104,11 @@ const startServer = async () => {
       credentials: true,
     }),
     json(),
-    expressMiddleware(server)
+    expressMiddleware(server, {
+      context: async ({ req }) => ({
+        headers: parseExpressHeaders(req.headers),
+      }),
+    })
   );
 
   await new Promise((resolve: any) =>
@@ -145,18 +141,35 @@ const startServer = async () => {
 
   app.get("/get-user", async (req, res) => {
     const cookies = req.headers["cookie"];
-    const initAPI = new InitAPI();
-    if (cookies) {
+    if (!cookies) {
+      return res.status(401).send(new HTTP401Error(Messages.HEADER_ERR_USER));
+    }
+    try {
+      const initAPI = new InitAPI();
       const sessionRes = await initAPI.validateSession(store, cookies);
       res.setHeader("Content-Type", "application/json");
-      // res.setHeader("cache-control", "max-age=3600");
       return res.send(sessionRes);
-    } else {
-      res.send(new HTTP401Error(Messages.HEADER_ERR_USER));
+    } catch (err) {
+      logger.error(`get-user failed: ${err}`);
+      return res
+        .status(500)
+        .send(new HTTP500Error("Failed to validate session"));
     }
   });
 
   logger.info(`🚀 Server ready at http://localhost:${GATEWAY_PORT}/graphql`);
 };
 
-startServer();
+process.on("unhandledRejection", reason => {
+  logger.error(`Unhandled promise rejection: ${reason}`);
+});
+
+process.on("uncaughtException", err => {
+  logger.error(`Uncaught exception: ${err.stack ?? err}`);
+  process.exit(1);
+});
+
+startServer().catch(err => {
+  logger.error(`Gateway failed to start: ${err.stack ?? err}`);
+  process.exit(1);
+});

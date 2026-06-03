@@ -5,9 +5,8 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { RESTDataSource } from "@apollo/datasource-rest";
-
 import { ENCRYPTION_KEY } from "../../common/configs";
+import { BaseRESTDataSource } from "../../common/datasource";
 import { logger } from "../../common/logger";
 import generateTokenFromIccid from "../../common/utils/generateSimToken";
 import {
@@ -48,7 +47,7 @@ const VERSION = "v1";
 const SIMPOOL = "simpool";
 const SIM = "sim";
 
-class SimApi extends RESTDataSource {
+class SimApi extends BaseRESTDataSource {
   uploadSims = async (
     baseURL: string,
     req: UploadSimsInputDto

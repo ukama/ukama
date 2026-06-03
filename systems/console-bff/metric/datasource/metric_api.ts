@@ -5,8 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { RESTDataSource } from "@apollo/datasource-rest";
-
+import { BaseRESTDataSource } from "../../common/datasource";
 import {
   GetNodeLatestMetricInput,
   GetSiteLatestMetricInput,
@@ -18,7 +17,7 @@ import { parseNodeLatestMetricRes, parseSiteLatestMetricRes } from "./mapper";
 const VERSION = "v1";
 const METRICS = "metrics";
 
-class MetricAPI extends RESTDataSource {
+class MetricAPI extends BaseRESTDataSource {
   getNodeLatestMetric = async (
     baseURL: string,
     args: GetNodeLatestMetricInput

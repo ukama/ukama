@@ -5,9 +5,9 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { RESTDataSource } from "@apollo/datasource-rest";
+import { BaseRESTDataSource } from "../../common/datasource";
 
-class ReportAPI extends RESTDataSource {
+class ReportAPI extends BaseRESTDataSource {
   async getGeneratedPdfReport(
     baseURL: string,
     id: string

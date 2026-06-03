@@ -5,9 +5,8 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { RESTDataSource } from "@apollo/datasource-rest";
-
 import { VERSION } from "../../common/configs";
+import { BaseRESTDataSource } from "../../common/datasource";
 import { INVITATION_STATUS } from "../../common/enums";
 import { logger } from "../../common/logger";
 import { addInStore, getFromStore, openStore } from "../../common/storage";
@@ -26,7 +25,7 @@ import { dtoToInvitationsResDto, inviteResToInvitationDto } from "./mapper";
 
 const INVITATIONS = "invitations";
 
-class InvitationApi extends RESTDataSource {
+class InvitationApi extends BaseRESTDataSource {
   sendInvitation = async (
     baseURL: string,
     req: CreateInvitationInputDto

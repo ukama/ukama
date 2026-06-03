@@ -5,12 +5,13 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { RESTDataSource } from "@apollo/datasource-rest";
 import { RootDatabase } from "lmdb";
 
 import { whoami } from "../../common/auth/authCalls";
+import { signToken } from "../../common/auth/token";
 import { INIT_API_GW, VERSION } from "../../common/configs";
 import COUNTRIES from "../../common/data/countries";
+import { BaseRESTDataSource } from "../../common/datasource";
 import { ROLE_TYPE } from "../../common/enums";
 import { logger } from "../../common/logger";
 import { addInStore, getFromStore } from "../../common/storage";
@@ -25,7 +26,7 @@ import {
 } from "../resolver/types";
 import { dtoToOrgsNameResDto, dtoToSystenResDto } from "./mapper";
 
-class InitAPI extends RESTDataSource {
+class InitAPI extends BaseRESTDataSource {
   baseURL = INIT_API_GW;
 
   getOrgs = async (): Promise<OrgsNameRes> => {
@@ -96,17 +97,19 @@ class InitAPI extends RESTDataSource {
       } else if (userWhoami.memberOf.length > 0) {
         orgId = userWhoami.memberOf[0].id;
         orgName = userWhoami.memberOf[0].name;
-        country = userWhoami.ownerOf[0].country;
-        currency = userWhoami.ownerOf[0].currency.toUpperCase();
+        country = userWhoami.memberOf[0].country.toUpperCase();
+        currency = userWhoami.memberOf[0].currency;
       }
 
       if (orgId && orgName) {
         const baseURL = await getBaseURL("member", orgName, store);
         if (baseURL.status === 200) {
-          const member = await memberAPI.getMemberByUserId(
-            baseURL.message,
-            userWhoami.user.uuid
-          );
+          const member = await memberAPI
+            .getMemberByUserId(baseURL.message, userWhoami.user.uuid)
+            .catch(err => {
+              logger.error(`Failed to fetch member by user id: ${err}`);
+              return null;
+            });
 
           if (member && member.memberId) {
             role = member.role as ROLE_TYPE;
@@ -139,7 +142,7 @@ class InitAPI extends RESTDataSource {
     const cookie = `${orgId};${orgName};${userId};${name};${email};${role};${
       whoamiRes?.data?.identity?.verifiable_addresses[0]?.verified || false
     };${isWelcomeEligible};${country};${currency}`;
-    const base64Cookie = Buffer.from(cookie).toString("base64");
+    const base64Cookie = signToken(Buffer.from(cookie).toString("base64"));
 
     return {
       orgId,
