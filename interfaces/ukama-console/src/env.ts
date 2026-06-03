@@ -26,10 +26,14 @@ const envSchema = z.object({
   NEXT_PUBLIC_AUTH_APP_URL: z.string().url().default('http://localhost:4455'),
 });
 
+/** Docker/CI pass unset build args through as empty strings — zod
+ *  defaults only apply to `undefined`, so blank means "use default". */
+const blank = (v: string | undefined) => (v === '' ? undefined : v);
+
 export const env = envSchema.parse({
   NODE_ENV: process.env.NODE_ENV,
-  NEXT_PUBLIC_API_GW: process.env.NEXT_PUBLIC_API_GW,
-  NEXT_PUBLIC_METRIC_URL: process.env.NEXT_PUBLIC_METRIC_URL,
-  NEXT_PUBLIC_API_GW_4SS: process.env.NEXT_PUBLIC_API_GW_4SS,
-  NEXT_PUBLIC_AUTH_APP_URL: process.env.NEXT_PUBLIC_AUTH_APP_URL,
+  NEXT_PUBLIC_API_GW: blank(process.env.NEXT_PUBLIC_API_GW),
+  NEXT_PUBLIC_METRIC_URL: blank(process.env.NEXT_PUBLIC_METRIC_URL),
+  NEXT_PUBLIC_API_GW_4SS: blank(process.env.NEXT_PUBLIC_API_GW_4SS),
+  NEXT_PUBLIC_AUTH_APP_URL: blank(process.env.NEXT_PUBLIC_AUTH_APP_URL),
 });
