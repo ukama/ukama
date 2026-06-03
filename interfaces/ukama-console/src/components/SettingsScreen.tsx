@@ -6,6 +6,10 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 'use client';
+import TextField from '@mui/material/TextField';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import Switch from '@mui/material/Switch';
 
 /**
  * Settings — account / organization / notifications / appearance / billing
@@ -23,25 +27,14 @@ function Labeled({ label, value }: { label: string; value: string }) {
   return (
     <div className="card card-pad">
       <label className="flabel">{label}</label>
-      <div className="field" style={{ background: 'var(--uk-page)', border: 'none' }}>
-        <input defaultValue={value} />
-      </div>
+      <TextField fullWidth defaultValue={value} />
     </div>
   );
 }
 
 function Toggle({ on: initial }: { on: boolean }) {
   const [on, setOn] = useState(initial);
-  return (
-    <button
-      type="button"
-      className={`tgl${on ? ' on' : ''}`}
-      onClick={() => setOn((o) => !o)}
-      aria-pressed={on}
-    >
-      <span className="tgl-knob" />
-    </button>
-  );
+  return <Switch checked={on} onChange={() => setOn((o) => !o)} />;
 }
 
 const TABS = [
@@ -67,18 +60,11 @@ export default function SettingsScreen() {
   return (
     <div className="page">
       <PageHeader title="Settings" sub="Manage your account, organization and billing." />
-      <div className="tabs">
+      <Tabs value={tab} onChange={(_, v: string) => setTab(v)}>
         {TABS.map(([k, l]) => (
-          <button
-            key={k}
-            type="button"
-            className={`tab${tab === k ? ' on' : ''}`}
-            onClick={() => setTab(k)}
-          >
-            {l}
-          </button>
+          <Tab key={k} value={k} label={l} />
         ))}
-      </div>
+      </Tabs>
 
       {tab === 'account' && (
         <div className="tile-grid" style={{ gridTemplateColumns: '1fr 1fr', maxWidth: 760 }}>

@@ -6,6 +6,8 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 'use client';
+import InputAdornment from '@mui/material/InputAdornment';
+import TextField from '@mui/material/TextField';
 
 /**
  * First-run network setup — progressive-disclosure stepper:
@@ -156,43 +158,17 @@ export default function OnboardingFlow({ onClose }: { onClose: () => void }) {
             {stage === 0 && (
               <div className="ob-field-grid">
                 <ObField label="Network name" hint="The name operators and subscribers will see.">
-                  <div className="field">
-                    <HubRounded sx={{ fontSize: 19, color: 'var(--uk-ink-3)' }} />
-                    <input
-                      autoFocus
-                      value={net.name}
-                      onChange={(e) => setNet({ ...net, name: e.target.value })}
-                      placeholder="e.g. Kafue Valley Mobile"
-                    />
-                  </div>
+                  <TextField fullWidth autoFocus value={net.name} onChange={(e) => setNet({ ...net, name: e.target.value })} placeholder="e.g. Kafue Valley Mobile" slotProps={{ input: { startAdornment: (<InputAdornment position="start"><HubRounded sx={{ fontSize: 19, color: 'var(--uk-ink-3)' }} /></InputAdornment>) } }} />
                 </ObField>
                 <ObField label="Country / region">
-                  <div className="field">
-                    <LocationOnRounded sx={{ fontSize: 19, color: 'var(--uk-ink-3)' }} />
-                    <select
-                      value={net.country}
-                      onChange={(e) => setNet({ ...net, country: e.target.value })}
-                    >
-                      {OB_COUNTRIES.map((c) => (
-                        <option key={c}>{c}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <TextField fullWidth select value={net.country} onChange={(e) => setNet({ ...net, country: e.target.value })} slotProps={{ select: { native: true }, input: { startAdornment: (<InputAdornment position="start"><LocationOnRounded sx={{ fontSize: 19, color: 'var(--uk-ink-3)' }} /></InputAdornment>) } }}>{OB_COUNTRIES.map((c) => (<option key={c}>{c}</option>))}</TextField>
                 </ObField>
               </div>
             )}
             {stage === 1 && (
               <div className="ob-field-grid">
                 <ObField label="Node serial" hint="Find this on the label or scan the QR code on the unit.">
-                  <div className="field">
-                    <QrCodeScannerRounded sx={{ fontSize: 19, color: 'var(--uk-ink-3)' }} />
-                    <input
-                      autoFocus
-                      value={node.serial}
-                      onChange={(e) => setNode({ ...node, serial: e.target.value })}
-                      placeholder="uk-tnode-a06-0000"
-                    />
-                  </div>
+                  <TextField fullWidth autoFocus value={node.serial} onChange={(e) => setNode({ ...node, serial: e.target.value })} placeholder="uk-tnode-a06-0000" slotProps={{ input: { startAdornment: (<InputAdornment position="start"><QrCodeScannerRounded sx={{ fontSize: 19, color: 'var(--uk-ink-3)' }} /></InputAdornment>) } }} />
                 </ObField>
                 <ObField label="Node type">
                   <div className="ob-segrow">
@@ -222,17 +198,7 @@ export default function OnboardingFlow({ onClose }: { onClose: () => void }) {
                   label="SIMs to allocate"
                   hint="You can upload more SIM batches at any time from the SIM pool."
                 >
-                  <div className="field">
-                    <SimCardRounded sx={{ fontSize: 19, color: 'var(--uk-ink-3)' }} />
-                    <input
-                      autoFocus
-                      type="number"
-                      min={0}
-                      value={sims.count}
-                      onChange={(e) => setSims({ ...sims, count: e.target.value })}
-                      placeholder="500"
-                    />
-                  </div>
+                  <TextField fullWidth autoFocus type="number" value={sims.count} onChange={(e) => setSims({ ...sims, count: e.target.value })} placeholder="500" slotProps={{ input: { startAdornment: (<InputAdornment position="start"><SimCardRounded sx={{ fontSize: 19, color: 'var(--uk-ink-3)' }} /></InputAdornment>) } }} />
                 </ObField>
                 <ObField label="Default data plan">
                   <div className="ob-segrow ob-segrow-wrap">

@@ -8,14 +8,21 @@
 'use client';
 
 /**
- * Generic data table — TanStack Table (headless) rendered with the
- * prototype's `.tbl` markup. Supports sortable headers, column-header
- * dropdown filters, optional row selection and row click, with built-in
- * loading / empty / error states (BUILD-PLAN §3, design finding #9).
+ * Generic data table — TanStack Table (headless) rendered with MUI Table
+ * primitives, themed to the design (§7.2 C). Sortable headers, column
+ * dropdown filters, optional row selection / row click, and built-in
+ * loading / empty / error states (design finding #9).
  */
 import { useState } from 'react';
+import Box from '@mui/material/Box';
+import Checkbox from '@mui/material/Checkbox';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
 import ArrowDownwardRounded from '@mui/icons-material/ArrowDownwardRounded';
 import ArrowUpwardRounded from '@mui/icons-material/ArrowUpwardRounded';
 import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded';
@@ -60,6 +67,24 @@ export interface DataTableEmptyProps {
   onCta?: () => void;
 }
 
+const COLFILTER_SX = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '2px',
+  font: 'inherit',
+  fontSize: 11.5,
+  fontWeight: 600,
+  letterSpacing: '.04em',
+  textTransform: 'uppercase',
+  color: 'var(--uk-ink-3)',
+  background: 'none',
+  border: 'none',
+  cursor: 'pointer',
+  p: 0,
+  '&:hover': { color: 'var(--uk-ink-2)' },
+  '&.on': { color: 'var(--uk-ac-dark)' },
+} as const;
+
 function FilterTh<T>({
   header,
   options,
@@ -73,15 +98,17 @@ function FilterTh<T>({
   const meta = col.columnDef.meta;
 
   return (
-    <th className={meta?.num ? 'num' : undefined}>
-      <button
+    <TableCell align={meta?.num ? 'right' : 'left'}>
+      <Box
+        component="button"
         type="button"
-        className={`colfilter${value !== 'all' ? ' on' : ''}`}
-        onClick={(e) => setAnchor(e.currentTarget)}
+        className={value !== 'all' ? 'on' : ''}
+        sx={COLFILTER_SX}
+        onClick={(e: React.MouseEvent<HTMLElement>) => setAnchor(e.currentTarget)}
       >
         {flexRender(col.columnDef.header, header.getContext())}
         <ExpandMoreRounded sx={{ fontSize: 16 }} />
-      </button>
+      </Box>
       <Menu
         anchorEl={anchor}
         open={!!anchor}
@@ -111,7 +138,7 @@ function FilterTh<T>({
           </MenuItem>
         ))}
       </Menu>
-    </th>
+    </TableCell>
   );
 }
 
@@ -187,10 +214,10 @@ export default function DataTable<T>({
   }
 
   return (
-    <table className="tbl">
-      <thead>
+    <Table>
+      <TableHead>
         {table.getHeaderGroups().map((hg) => (
-          <tr key={hg.id} className="static">
+          <TableRow key={hg.id}>
             {hg.headers.map((h) => {
               const col = h.column;
               const meta = col.columnDef.meta;
@@ -201,51 +228,45 @@ export default function DataTable<T>({
               }
               const sortable = col.getCanSort();
               const sorted = col.getIsSorted();
-              const width =
-                col.columnDef.size != null ? col.getSize() : undefined;
               return (
-                <th
+                <TableCell
                   key={h.id}
-                  className={
-                    [sortable ? 'sortable' : '', meta?.num ? 'num' : '']
-                      .filter(Boolean)
-                      .join(' ') || undefined
-                  }
-                  style={width != null ? { width } : undefined}
-                  onClick={
-                    sortable ? col.getToggleSortingHandler() : undefined
-                  }
+                  align={meta?.num ? 'right' : 'left'}
+                  sx={{
+                    ...(meta?.width != null && { width: meta.width }),
+                    ...(sortable && {
+                      cursor: 'pointer',
+                      userSelect: 'none',
+                      '&:hover': { color: 'var(--uk-ink-2)' },
+                    }),
+                  }}
+                  onClick={sortable ? col.getToggleSortingHandler() : undefined}
                 >
-                  <span
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}
-                  >
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                     {h.isPlaceholder
                       ? null
                       : flexRender(col.columnDef.header, h.getContext())}
-                    {sorted === 'asc' && (
-                      <ArrowUpwardRounded sx={{ fontSize: 14 }} />
-                    )}
-                    {sorted === 'desc' && (
-                      <ArrowDownwardRounded sx={{ fontSize: 14 }} />
-                    )}
+                    {sorted === 'asc' && <ArrowUpwardRounded sx={{ fontSize: 14 }} />}
+                    {sorted === 'desc' && <ArrowDownwardRounded sx={{ fontSize: 14 }} />}
                   </span>
-                </th>
+                </TableCell>
               );
             })}
-          </tr>
+          </TableRow>
         ))}
-      </thead>
-      <tbody>
+      </TableHead>
+      <TableBody>
         {rows.map((row) => {
           const clickable = !!onRowClick;
           return (
-            <tr
+            <TableRow
               key={row.id}
-              className={clickable ? undefined : 'static'}
+              hover={clickable}
               {...(clickable
                 ? {
                     role: 'button',
                     tabIndex: 0,
+                    sx: { cursor: 'pointer' },
                     onClick: () => onRowClick(row.original),
                     onKeyDown: (e: React.KeyboardEvent) => {
                       if (
@@ -262,16 +283,20 @@ export default function DataTable<T>({
               {row.getVisibleCells().map((cell) => {
                 const meta = cell.column.columnDef.meta;
                 return (
-                  <td key={cell.id} className={meta?.num ? 'num' : undefined}>
+                  <TableCell
+                    key={cell.id}
+                    align={meta?.num ? 'right' : 'left'}
+                    className={meta?.num ? 'tnum' : undefined}
+                  >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
+                  </TableCell>
                 );
               })}
-            </tr>
+            </TableRow>
           );
         })}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   );
 }
 
@@ -279,19 +304,22 @@ export default function DataTable<T>({
 export function selectionColumn<T>(): ColumnDef<T, unknown> {
   return {
     id: 'select',
-    size: 34,
+    meta: { width: 44 },
     header: ({ table }) => (
-      <input
-        type="checkbox"
-        aria-label="Select all rows"
+      <Checkbox
+        size="small"
+        sx={{ p: 0 }}
+        inputProps={{ 'aria-label': 'Select all rows' }}
         checked={table.getIsAllRowsSelected()}
+        indeterminate={table.getIsSomeRowsSelected()}
         onChange={table.getToggleAllRowsSelectedHandler()}
       />
     ),
     cell: ({ row }) => (
-      <input
-        type="checkbox"
-        aria-label="Select row"
+      <Checkbox
+        size="small"
+        sx={{ p: 0 }}
+        inputProps={{ 'aria-label': 'Select row' }}
         checked={row.getIsSelected()}
         onChange={row.getToggleSelectedHandler()}
         onClick={(e) => e.stopPropagation()}

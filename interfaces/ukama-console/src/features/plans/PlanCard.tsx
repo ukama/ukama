@@ -6,6 +6,7 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 'use client';
+import Meter from '@/components/Meter';
 
 /**
  * Plan card — color top-bar, price, revenue share (screens-manage.jsx).
@@ -124,9 +125,7 @@ export default function PlanCard({
                   ${rev.toLocaleString()}
                 </span>
               </div>
-              <div className="meter" style={{ marginTop: 2 }}>
-                <span style={{ width: share + '%', background: plan.color }} />
-              </div>
+              <Meter value={share} color={plan.color} sx={{ mt: '2px' }} />
               <div style={{ fontSize: 11, color: 'var(--uk-ink-3)' }}>
                 {share}% of plan revenue
               </div>

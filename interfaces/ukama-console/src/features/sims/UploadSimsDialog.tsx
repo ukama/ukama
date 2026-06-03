@@ -6,6 +6,7 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 'use client';
+import Meter from '@/components/Meter';
 
 /** Upload SIMs — dropzone → file chip → progress → toast (form-dialogs.jsx). */
 import { useEffect, useRef, useState } from 'react';
@@ -92,9 +93,7 @@ export default function UploadSimsDialog({ onClose }: { onClose: () => void }) {
       {stage === 'uploading' ? (
         <div style={{ padding: '8px 0 4px' }}>
           <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Uploading file…</div>
-          <div className="meter" style={{ height: 8 }}>
-            <span style={{ width: pct + '%', transition: 'width .15s' }} />
-          </div>
+          <Meter value={pct} height={8} />
           <div style={{ fontSize: 12, color: 'var(--uk-ink-3)', marginTop: 6 }}>{file?.name}</div>
         </div>
       ) : file ? (

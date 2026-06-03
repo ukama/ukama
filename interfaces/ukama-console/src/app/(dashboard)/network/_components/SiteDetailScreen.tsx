@@ -6,6 +6,8 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 'use client';
+import TextField from '@mui/material/TextField';
+import Switch from '@mui/material/Switch';
 
 /**
  * Site detail — info / overview chart / map row + interactive site
@@ -129,14 +131,11 @@ function PortRow({
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span style={{ fontSize: 13.5, fontWeight: 600 }}>Port {idx}</span>
-        <button
-          type="button"
-          className={`tgl${on ? ' on' : ''}`}
-          onClick={onToggle}
-          aria-label={`Port ${idx} power`}
-        >
-          <span className="tgl-knob" />
-        </button>
+        <Switch
+          checked={on}
+          onChange={onToggle}
+          inputProps={{ 'aria-label': `Port ${idx} power` }}
+        />
       </div>
       {on && (
         <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 9 }}>
@@ -343,14 +342,13 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
             Restarting this site will take it down for about 10 minutes. Type the site name{' '}
             <b style={{ color: 'var(--uk-ink)' }}>{s.name}</b> to confirm.
           </p>
-          <div className="field">
-            <input
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              placeholder={s.name}
-              autoFocus
-            />
-          </div>
+          <TextField
+            fullWidth
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            placeholder={s.name}
+            autoFocus
+          />
         </AppModal>
       )}
     </div>

@@ -10,6 +10,11 @@
 /** Node pool — hardware in inventory, ready to install (screens-manage.jsx). */
 import { useState } from 'react';
 import Divider from '@mui/material/Divider';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
@@ -113,36 +118,36 @@ export default function NodePoolScreen() {
           {loading ? (
             <SkeletonTable cols={6} rows={5} />
           ) : (
-            <table className="tbl">
-              <thead>
-                <tr className="static">
-                  <th>Serial</th>
-                  <th>Type</th>
-                  <th>Status</th>
-                  <th>Assigned to</th>
-                  <th>Added</th>
-                  <th style={{ width: 44 }} />
-                </tr>
-              </thead>
-              <tbody>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Serial</TableCell>
+                  <TableCell>Type</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Assigned to</TableCell>
+                  <TableCell>Added</TableCell>
+                  <TableCell sx={{ width: 44 }} />
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {NODE_POOL.map((n) => (
-                  <tr key={n.id} className="static">
-                    <td className="tnum" style={{ fontWeight: 600 }}>
+                  <TableRow key={n.id}>
+                    <TableCell className="tnum" style={{ fontWeight: 600 }}>
                       {n.serial}
-                    </td>
-                    <td>{n.type}</td>
-                    <td>
+                    </TableCell>
+                    <TableCell>{n.type}</TableCell>
+                    <TableCell>
                       <StatusBadge status={n.status}>{NP_LABEL[n.status]}</StatusBadge>
-                    </td>
-                    <td className="muted">{n.site ?? '—'}</td>
-                    <td className="muted">{n.added}</td>
-                    <td>
+                    </TableCell>
+                    <TableCell className="muted">{n.site ?? '—'}</TableCell>
+                    <TableCell className="muted">{n.added}</TableCell>
+                    <TableCell>
                       <PoolMenu item={n} />
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
         </div>
         {!loading && <TableFooter count={NODE_POOL.length} noun="nodes" />}
