@@ -248,7 +248,7 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
         </SectionCard>
 
         <div className="card" style={{ padding: 0, overflow: 'hidden', position: 'relative', minHeight: 200 }}>
-          <MapPanel sites={[{ ...s, x: 50, y: 50 }]} selected={s.id} compact />
+          <MapPanel sites={[s]} selected={s.id} compact />
           <div
             style={{
               position: 'absolute',
