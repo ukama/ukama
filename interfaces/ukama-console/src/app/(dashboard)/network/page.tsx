@@ -5,8 +5,8 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import NetworkHomeScreen from './_components/NetworkHomeScreen';
 
 export default function NetworkHomePage() {
-  return <PageStub title="Home" phase="5" />;
+  return <NetworkHomeScreen />;
 }

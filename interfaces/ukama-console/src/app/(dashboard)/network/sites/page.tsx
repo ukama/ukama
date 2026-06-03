@@ -5,8 +5,8 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import SitesScreen from '../_components/SitesScreen';
 
 export default function NetworkSitesPage() {
-  return <PageStub title="Sites" phase="5" count={6} sub="Physical locations where your network is installed." />;
+  return <SitesScreen />;
 }

@@ -15,6 +15,10 @@ import AccountTreeRounded from '@mui/icons-material/AccountTreeRounded';
 import AppsRounded from '@mui/icons-material/AppsRounded';
 import BadgeRounded from '@mui/icons-material/BadgeRounded';
 import BatteryAlertRounded from '@mui/icons-material/BatteryAlertRounded';
+import BatteryChargingFullRounded from '@mui/icons-material/BatteryChargingFullRounded';
+import BoltRounded from '@mui/icons-material/BoltRounded';
+import LightModeRounded from '@mui/icons-material/LightModeRounded';
+import SettingsInputAntennaRounded from '@mui/icons-material/SettingsInputAntennaRounded';
 import CellTowerRounded from '@mui/icons-material/CellTowerRounded';
 import DonutSmallRounded from '@mui/icons-material/DonutSmallRounded';
 import ErrorRounded from '@mui/icons-material/ErrorRounded';
@@ -58,6 +62,10 @@ const REGISTRY: Record<string, React.ComponentType<SvgIconProps>> = {
   person: PersonRounded,
   cell_tower: CellTowerRounded,
   battery_alert: BatteryAlertRounded,
+  battery_charging_full: BatteryChargingFullRounded,
+  bolt: BoltRounded,
+  light_mode: LightModeRounded,
+  settings_input_antenna: SettingsInputAntennaRounded,
   network_check: NetworkCheckRounded,
   sync: SyncRounded,
   error: ErrorRounded,

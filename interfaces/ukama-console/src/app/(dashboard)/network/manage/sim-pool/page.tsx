@@ -5,8 +5,8 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import SimPoolScreen from '@/features/sims/SimPoolScreen';
 
 export default function NetworkSimPoolPage() {
-  return <PageStub title="SIM pool" phase="5" crumb={["Manage","SIM pool"]} sub="SIM batches uploaded for this network (view-only)." />;
+  return <SimPoolScreen canAct={false} />;
 }

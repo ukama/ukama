@@ -449,6 +449,156 @@ th.sortable:hover {
   gap: 6px;
 }
 
+/* ---- detail pages (site / node) ---- */
+.detail-subrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: -8px 0 18px;
+  flex-wrap: wrap;
+}
+.detail-picker {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--uk-panel);
+  border: 1px solid var(--uk-line);
+  border-radius: 8px;
+  padding: 6px 11px;
+  cursor: pointer;
+  color: var(--uk-ac-dark);
+  font-weight: 600;
+  font-size: 13.5px;
+  font-family: inherit;
+}
+.detail-picker:hover {
+  background: var(--uk-hover);
+}
+.detail-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: var(--uk-gap);
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.site-top {
+  grid-template-columns: 1fr 1.5fr 0.9fr;
+}
+@media (max-width: 1080px) {
+  .site-top {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 760px) {
+  .site-top {
+    grid-template-columns: 1fr;
+  }
+}
+.site-comp {
+  grid-template-columns: 1fr 1fr;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .site-comp {
+    grid-template-columns: 1fr;
+  }
+}
+.cnt-pill {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--uk-ink-2);
+  background: var(--uk-page);
+  border-radius: 20px;
+  padding: 2px 9px;
+}
+
+/* site component diagram */
+.sc-diag-wrap {
+  overflow-x: auto;
+}
+.sc-diag {
+  position: relative;
+  margin: 0 auto;
+}
+.sc-tile {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 96px;
+  font-family: inherit;
+}
+.sc-ic {
+  width: 52px;
+  height: 52px;
+  border-radius: 13px;
+  background: var(--uk-ac-soft);
+  color: var(--uk-ac-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid transparent;
+  transition:
+    border-color 0.14s,
+    transform 0.14s;
+}
+.sc-tile:hover .sc-ic {
+  transform: translateY(-2px);
+}
+.sc-tile.on .sc-ic {
+  border-color: var(--uk-ac);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--uk-ac) 15%, transparent);
+}
+.sc-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--uk-ink-2);
+  white-space: nowrap;
+}
+.sc-tile.on .sc-label {
+  color: var(--uk-ink);
+}
+
+/* toggle switch */
+.tgl {
+  width: 40px;
+  height: 22px;
+  border-radius: 20px;
+  background: var(--uk-line);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+  transition: background 0.16s;
+  flex: none;
+}
+.tgl.on {
+  background: var(--uk-ac);
+}
+.tgl-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: left 0.16s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+.tgl.on .tgl-knob {
+  left: 20px;
+}
+
 /* ---- admin launcher hover ---- */
 .admin-launch:hover {
   background: var(--uk-hover) !important;

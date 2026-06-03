@@ -5,8 +5,8 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import NodePoolScreen from '../../_components/NodePoolScreen';
 
 export default function NodePoolPage() {
-  return <PageStub title="Node pool" phase="5" crumb={["Manage","Node pool"]} sub="Hardware in inventory, ready to install at a site." />;
+  return <NodePoolScreen />;
 }

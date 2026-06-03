@@ -5,8 +5,8 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import NodesScreen from '../_components/NodesScreen';
 
 export default function NetworkNodesPage() {
-  return <PageStub title="Nodes" phase="5" count={8} sub="Radio hardware deployed across your sites." />;
+  return <NodesScreen />;
 }

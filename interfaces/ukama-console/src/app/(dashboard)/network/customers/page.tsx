@@ -5,8 +5,8 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import SubscribersScreen from '@/features/customers/SubscribersScreen';
 
 export default function NetworkCustomersPage() {
-  return <PageStub title="Customers" phase="5" count="1,284" sub="Everyone connected to your network." />;
+  return <SubscribersScreen mode="network" />;
 }
