@@ -32,3 +32,4 @@ src/client/**/*.generated.ts
 src/client/graphql/types.ts
 src/client/graphql/metrics-types.ts
 ukama-console-API-PLAN.md
+ukama-console-CONTEXT.md
