@@ -9,7 +9,7 @@ import nextConfig from 'eslint-config-next/core-web-vitals';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 
-export default [
+const config = [
   ...nextConfig,
   {
     files: ['**/*.ts', '**/*.tsx'],
@@ -38,3 +38,5 @@ export default [
     ignores: ['.next/**', 'node_modules/**', '.logs/**', 'next-env.d.ts'],
   },
 ];
+
+export default config;
