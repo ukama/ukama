@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package ukama.analytics.customers;
+
+option go_package = "github.com/ukama/ukama/systems/analytics/customers/pb/gen";
+
+service CustomersService {
+  rpc Health(HealthRequest) returns (HealthResponse);
+}
+
+message HealthRequest {}
+message HealthResponse { string status = 1; }

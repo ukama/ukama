@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package ukama.analytics.collector;
+
+option go_package = "github.com/ukama/ukama/systems/analytics/collector/pb/gen";
+
+service CollectorService {
+  rpc Health(HealthRequest) returns (HealthResponse);
+}
+
+message HealthRequest {}
+message HealthResponse { string status = 1; }

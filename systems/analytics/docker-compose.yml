@@ -1,0 +1,191 @@
+version: '3.9'
+
+services:
+ postgresd-analytics:
+  image: postgres:13.3
+  ports:
+   - 5415:5432
+  environment:
+   - POSTGRES_USER=postgres
+   - POSTGRES_PASSWORD=Pass2020!
+   - POSTGRES_DB=msgclient
+  networks:
+   - ukama-net
+  volumes:
+   - postgress-data:/var/lib/postgresql
+
+ business:
+  build: ./business
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-analytics
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-analytics:9095
+   - BUSINESS_SERVICE_HOST=business
+   - BUSINESS_SERVICE_PORT=9090
+   - ORGID=${ORGID}
+   - ORGNAME=${ORGNAME}
+   - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9091
+   - HTTP_INITCLIENT=http://api-gateway-init:8080
+   - HTTP_REGISTRYCLIENT=http://api-gateway-registry:8080
+   - HTTP_SUBSCRIBERCLIENT=http://api-gateway-subscriber:8080
+   - HTTP_DATAPLANCLIENT=http://api-gateway-dataplan:8080
+   - HTTP_METRICSCLIENT=http://api-gateway-metrics:8080
+   - HTTP_INVENTORYCLIENT=http://api-gateway-inventory:8080
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - postgresd-analytics
+   - msgclient-analytics
+
+ network:
+  build: ./network
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-analytics
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-analytics:9095
+   - NETWORK_SERVICE_HOST=network
+   - NETWORK_SERVICE_PORT=9090
+   - ORGID=${ORGID}
+   - ORGNAME=${ORGNAME}
+   - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9091
+   - HTTP_INITCLIENT=http://api-gateway-init:8080
+   - HTTP_REGISTRYCLIENT=http://api-gateway-registry:8080
+   - HTTP_METRICSCLIENT=http://api-gateway-metrics:8080
+   - HTTP_INVENTORYCLIENT=http://api-gateway-inventory:8080
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - postgresd-analytics
+   - msgclient-analytics
+
+ customers:
+  build: ./customers
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-analytics
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-analytics:9095
+   - CUSTOMERS_SERVICE_HOST=customers
+   - CUSTOMERS_SERVICE_PORT=9090
+   - ORGID=${ORGID}
+   - ORGNAME=${ORGNAME}
+   - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9091
+   - HTTP_INITCLIENT=http://api-gateway-init:8080
+   - HTTP_REGISTRYCLIENT=http://api-gateway-registry:8080
+   - HTTP_SUBSCRIBERCLIENT=http://api-gateway-subscriber:8080
+   - HTTP_DATAPLANCLIENT=http://api-gateway-dataplan:8080
+   - HTTP_METRICSCLIENT=http://api-gateway-metrics:8080
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - postgresd-analytics
+   - msgclient-analytics
+
+ collector:
+  build: ./collector
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-analytics
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-analytics:9095
+   - COLLECTOR_SERVICE_HOST=collector
+   - COLLECTOR_SERVICE_PORT=9090
+   - ORGID=${ORGID}
+   - ORGNAME=${ORGNAME}
+   - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9091
+   - HTTP_INITCLIENT=http://api-gateway-init:8080
+   - HTTP_REGISTRYCLIENT=http://api-gateway-registry:8080
+   - HTTP_SUBSCRIBERCLIENT=http://api-gateway-subscriber:8080
+   - HTTP_DATAPLANCLIENT=http://api-gateway-dataplan:8080
+   - HTTP_METRICSCLIENT=http://api-gateway-metrics:8080
+   - HTTP_INVENTORYCLIENT=http://api-gateway-inventory:8080
+   - HTTP_PAYMENTSCLIENT=http://api-gateway-payments:8080
+   - REFRESH_INTERVAL=5m
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - postgresd-analytics
+   - msgclient-analytics
+
+ api-gateway-analytics:
+  build: ./api-gateway
+  restart: always
+  ports:
+   - 8066:8080
+  networks:
+   - ukama-net
+  environment:
+   - DEBUGMODE=true
+   - BYPASS_AUTH_MODE=true
+   - BUSINESS_SERVICE_HOST=business
+   - BUSINESS_SERVICE_PORT=9090
+   - NETWORK_SERVICE_HOST=network
+   - NETWORK_SERVICE_PORT=9090
+   - CUSTOMERS_SERVICE_HOST=customers
+   - CUSTOMERS_SERVICE_PORT=9090
+   - COLLECTOR_SERVICE_HOST=collector
+   - COLLECTOR_SERVICE_PORT=9090
+  depends_on:
+   - business
+   - network
+   - customers
+   - collector
+
+ msgclient-analytics:
+  build: ../services/msgClient
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-analytics
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - GRPC_PORT=9095
+   - SYSTEM=analytics
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - postgresd-analytics
+
+ initclient-analytics:
+  build: ../services/initClient
+  environment:
+   - ENV_SYSTEM_ORG=${ORGNAME}
+   - ENV_SYSTEM_NAME=analytics
+   - ENV_DNS_REFRESH_TIME_PERIOD=30
+   - ENV_SYSTEM_DNS=api-gateway-analytics
+   - ENV_DNS_SERVER=false
+   - ENV_SYSTEM_PORT=8080
+   - ENV_SYSTEM_CERT=This-is-a-certificate
+   - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+   - ENV_INIT_SYSTEM_PORT=8071
+   - ENV_INIT_CLIENT_ADDR=initclient-analytics
+   - ENV_INIT_CLIENT_PORT=8080
+   - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - api-gateway-analytics
+
+networks:
+ ukama-net:
+  external: true
+  name: services_ukama-net
+
+volumes:
+ postgress-data:

@@ -1,0 +1,28 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026-present, Ukama Inc.
+
+CURMAKE := $(abspath $(lastword $(MAKEFILE_LIST)))
+CURPATH := $(dir $(CURMAKE))
+SYSTEMDIR := $(CURRPATH)
+
+SYSSUBDIRS = $(shell find ./*/ -maxdepth 1 -type f -name 'Makefile' -printf '%h'| awk -F './' '{ for (i=1; i<=NF; i++) printf $$i" " }')
+
+.PHONY: subdirs $(SYSSUBDIRS) clean info test build
+
+subdirs: $(SYSSUBDIRS)
+$(SYSSUBDIRS):
+	$(MAKE) -C $@
+
+build: subdirs
+
+test:
+	@for dir in $(SYSSUBDIRS); do 		echo "Testing $$dir"; 		$(MAKE) -C $$dir test; 	done
+
+clean:
+	@for dir in $(SYSSUBDIRS); do 		echo "Cleaning $$dir"; 		$(MAKE) -C $$dir clean; 	done
+
+info:
+	@echo $(SYSSUBDIRS)

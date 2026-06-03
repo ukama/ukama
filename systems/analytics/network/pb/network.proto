@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package ukama.analytics.network;
+
+option go_package = "github.com/ukama/ukama/systems/analytics/network/pb/gen";
+
+service NetworkService {
+  rpc Health(HealthRequest) returns (HealthResponse);
+}
+
+message HealthRequest {}
+message HealthResponse { string status = 1; }
