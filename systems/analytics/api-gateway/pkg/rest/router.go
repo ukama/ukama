@@ -157,7 +157,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		business.GET("/home", formatDoc("Business Home", "KPIs, sites, top packages and recent activity for the home dashboard"), tonic.Handler(r.getBusinessHomeHandler, http.StatusOK))
 		business.GET("/sales/overview", formatDoc("Sales Overview", "Sales KPIs, revenue trend and breakdowns"), tonic.Handler(r.getSalesOverviewHandler, http.StatusOK))
 		business.GET("/sales/packages", formatDoc("Package Performance", "Per-package sales performance"), tonic.Handler(r.getPackagePerformanceHandler, http.StatusOK))
-		business.GET("/packages", formatDoc("Package Performance", "Per-package sales performance (alias)"), tonic.Handler(r.getPackagePerformanceHandler, http.StatusOK))
+		business.GET("/packages", append(formatDoc("Package Performance", "Per-package sales performance (alias)"), fizz.ID("getBusinessPackagesHandler")), tonic.Handler(r.getPackagePerformanceHandler, http.StatusOK))
 		business.GET("/billing", formatDoc("Billing Summary", "Billing KPIs and invoices"), tonic.Handler(r.getBillingSummaryHandler, http.StatusOK))
 		business.GET("/sites", formatDoc("Business Sites", "Per-site business metrics"), tonic.Handler(r.getBusinessSitesHandler, http.StatusOK))
 		business.GET("/sites/:site_id", formatDoc("Business Site", "Business metrics for a single site"), tonic.Handler(r.getBusinessSiteHandler, http.StatusOK))

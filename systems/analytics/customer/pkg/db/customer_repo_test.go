@@ -9,7 +9,6 @@
 package db_test
 
 import (
-	extsql "database/sql"
 	"log"
 	"regexp"
 	"testing"
@@ -53,7 +52,7 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 	return nil
 }
 
-func setupMockDb(t *testing.T) (*extsql.DB, sqlmock.Sqlmock, *gorm.DB) {
+func setupMockDb(t *testing.T) (sqlmock.Sqlmock, *gorm.DB) {
 	t.Helper()
 
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
@@ -69,13 +68,16 @@ func setupMockDb(t *testing.T) (*extsql.DB, sqlmock.Sqlmock, *gorm.DB) {
 	gdb, err := gorm.Open(dialector, &gorm.Config{})
 	assert.NoError(t, err)
 
-	return db, mock, gdb
+	t.Cleanup(func() {
+		_ = db.Close()
+	})
+
+	return mock, gdb
 }
 
 func TestCustomerRepo_Get(t *testing.T) {
 	t.Run("CustomerFound", func(t *testing.T) {
-		db, mock, gdb := setupMockDb(t)
-		defer db.Close()
+		mock, gdb := setupMockDb(t)
 
 		customerId := uuid.NewV4()
 
@@ -98,8 +100,7 @@ func TestCustomerRepo_Get(t *testing.T) {
 	})
 
 	t.Run("CustomerNotFound", func(t *testing.T) {
-		db, mock, gdb := setupMockDb(t)
-		defer db.Close()
+		mock, gdb := setupMockDb(t)
 
 		customerId := uuid.NewV4()
 
@@ -118,8 +119,7 @@ func TestCustomerRepo_Get(t *testing.T) {
 
 func TestCustomerRepo_Counts(t *testing.T) {
 	t.Run("CountsWithoutNetworkFilter", func(t *testing.T) {
-		db, mock, gdb := setupMockDb(t)
-		defer db.Close()
+		mock, gdb := setupMockDb(t)
 
 		from := time.Date(2026, 6, 3, 0, 0, 0, 0, time.UTC)
 		to := from.AddDate(0, 0, 1)
@@ -168,8 +168,7 @@ func TestCustomerRepo_Counts(t *testing.T) {
 
 func TestCustomerRepo_List(t *testing.T) {
 	t.Run("ListByStatus", func(t *testing.T) {
-		db, mock, gdb := setupMockDb(t)
-		defer db.Close()
+		mock, gdb := setupMockDb(t)
 
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "analytics_customer_snapshots" WHERE status = $1`)).
 			WithArgs("active").
@@ -179,7 +178,7 @@ func TestCustomerRepo_List(t *testing.T) {
 			AddRow(uuid.NewV4(), "Jane Doe", "jane@example.com", "active")
 
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "analytics_customer_snapshots" WHERE status = $1`)).
-			WithArgs("active").
+			WithArgs("active", 20).
 			WillReturnRows(rows)
 
 		r := cust_db.NewCustomerRepo(&UkamaDbMock{GormDb: gdb})

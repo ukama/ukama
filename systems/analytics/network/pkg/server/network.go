@@ -216,9 +216,10 @@ func (n *NetworkServer) siteRow(s *db.SiteSnapshot, w TimeWindow) *pb.SiteRow {
 		}
 	}
 
-	if s.Status == "offline" {
+	switch s.Status {
+	case "offline":
 		issues = append(issues, "site offline")
-	} else if s.Status == "degraded" {
+	case "degraded":
 		issues = append(issues, "site degraded")
 	}
 

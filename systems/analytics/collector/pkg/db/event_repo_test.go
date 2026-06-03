@@ -78,7 +78,7 @@ func Test_EventRepo_LogEvent(t *testing.T) {
 
 		mock.ExpectBegin()
 		mock.ExpectQuery(`^INSERT INTO "analytics_event_logs".*ON CONFLICT.*DO NOTHING.*`).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(),
 				sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 		mock.ExpectCommit()
@@ -105,7 +105,7 @@ func Test_EventRepo_LogEvent(t *testing.T) {
 
 		mock.ExpectBegin()
 		mock.ExpectQuery(`^INSERT INTO "analytics_event_logs".*ON CONFLICT.*DO NOTHING.*`).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(),
 				sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}))
 		mock.ExpectCommit()
@@ -134,8 +134,7 @@ func Test_EventRepo_RecordError(t *testing.T) {
 
 		mock.ExpectBegin()
 		mock.ExpectQuery(`^INSERT INTO "analytics_event_errors".*`).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
-				sqlmock.AnyArg()).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 		mock.ExpectCommit()
 

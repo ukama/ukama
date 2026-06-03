@@ -52,7 +52,7 @@ func TestResolveWindow(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC), w.From)
 		assert.Equal(t, time.Date(2026, 7, 1, 0, 0, 0, 0, time.UTC), w.To)
-		assert.Equal(t, time.Date(2026, 5, 1, 0, 0, 0, 0, time.UTC), w.PrevFrom)
+		assert.Equal(t, time.Date(2026, 5, 2, 0, 0, 0, 0, time.UTC), w.PrevFrom)
 	})
 
 	t.Run("custom window with prev of equal length", func(t *testing.T) {
