@@ -7,6 +7,6 @@
  */
 import PageStub from '@/components/PageStub';
 
-export default function BizHomePage() {
-  return <PageStub title="Home" phase="4" />;
+export default function NetworkNodesPage() {
+  return <PageStub title="Nodes" phase="5" count={8} sub="Radio hardware deployed across your sites." />;
 }

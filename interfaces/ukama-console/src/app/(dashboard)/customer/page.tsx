@@ -5,8 +5,9 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import { redirect } from 'next/navigation';
 
-export default function BizHomePage() {
-  return <PageStub title="Home" phase="4" />;
+/** The agent lens lands on Customers (BUILD-PLAN §2). */
+export default function CustomerRootPage() {
+  redirect('/customer/customers');
 }

@@ -16,11 +16,17 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Accent, Density } from '@/theme/tokens';
 
+export type Rail = 'full' | 'icon';
+
 interface UiPrefsState {
   accent: Accent;
   density: Density;
+  rail: Rail;
+  networkId: string;
   setAccent: (accent: Accent) => void;
   setDensity: (density: Density) => void;
+  toggleRail: () => void;
+  setNetworkId: (networkId: string) => void;
 }
 
 export const useUiPrefs = create<UiPrefsState>()(
@@ -28,8 +34,13 @@ export const useUiPrefs = create<UiPrefsState>()(
     (set) => ({
       accent: 'blue',
       density: 'comfortable',
+      rail: 'full',
+      networkId: 'kwacha',
       setAccent: (accent) => set({ accent }),
       setDensity: (density) => set({ density }),
+      toggleRail: () =>
+        set((s) => ({ rail: s.rail === 'full' ? 'icon' : 'full' })),
+      setNetworkId: (networkId) => set({ networkId }),
     }),
     { name: 'uk-ui-prefs' },
   ),

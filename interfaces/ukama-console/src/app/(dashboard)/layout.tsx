@@ -5,13 +5,12 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
+import DashboardShell from './_components/DashboardShell';
+import './shell.css';
 
-/**
- * Dashboard shell — Phase 2 brings the top bar, sidebars, lens switch and
- * command palette here. Phase 1: pass-through.
- */
+/** Dashboard shell: brand cell + top bar + per-lens sidebar + ⌘K palette. */
 export default function DashboardLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  return <>{children}</>;
+  return <DashboardShell>{children}</DashboardShell>;
 }

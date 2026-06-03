@@ -7,6 +7,6 @@
  */
 import PageStub from '@/components/PageStub';
 
-export default function BizHomePage() {
-  return <PageStub title="Home" phase="4" />;
+export default function BizBillingPage() {
+  return <PageStub title="Billing" phase="4" sub="What you owe Ukama for running this network." />;
 }

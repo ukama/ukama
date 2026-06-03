@@ -27,8 +27,9 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    ".next/types/**/*.ts"
   ],
+  // .next/dev/types is intentionally excluded: dev route types are generated
+  // on-demand per visited route, so they false-fail tsc for unvisited pages.
   "exclude": ["node_modules"]
 }

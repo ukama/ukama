@@ -8,8 +8,12 @@
 
 /**
  * Single source of truth for static/seed data (BUILD-PLAN §13.5).
- * Entity datasets are added here as screens are built (sites, nodes, plans,
- * subscribers, members, sims, billing, business…).
+ * Entity datasets are added here as screens are built (plans, members,
+ * sims, billing, business…).
  */
 export * from './networks';
+export * from './sites';
+export * from './nodes';
+export * from './subscribers';
+export * from './alerts';
 export * from './reference/statuses';

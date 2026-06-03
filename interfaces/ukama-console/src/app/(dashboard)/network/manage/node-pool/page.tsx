@@ -7,6 +7,6 @@
  */
 import PageStub from '@/components/PageStub';
 
-export default function BizHomePage() {
-  return <PageStub title="Home" phase="4" />;
+export default function NodePoolPage() {
+  return <PageStub title="Node pool" phase="5" crumb={["Manage","Node pool"]} sub="Hardware in inventory, ready to install at a site." />;
 }

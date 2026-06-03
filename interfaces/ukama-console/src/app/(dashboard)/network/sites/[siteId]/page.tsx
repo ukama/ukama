@@ -7,6 +7,13 @@
  */
 import PageStub from '@/components/PageStub';
 
-export default function BizHomePage() {
-  return <PageStub title="Home" phase="4" />;
+export default async function SiteDetailPage({
+  params,
+}: {
+  params: Promise<{ siteId: string }>;
+}) {
+  const { siteId } = await params;
+  return (
+    <PageStub title={decodeURIComponent(siteId)} crumb={['Sites']} phase="5" />
+  );
 }

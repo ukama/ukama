@@ -7,6 +7,6 @@
  */
 import PageStub from '@/components/PageStub';
 
-export default function BizHomePage() {
-  return <PageStub title="Home" phase="4" />;
+export default function AgentPlansPage() {
+  return <PageStub title="Data plans" phase="6" sub="Browse plans to assign, top up or change for your customers." />;
 }
