@@ -6,7 +6,10 @@
 
 include ../../config.mk
 
-.PHONY: integration.test test build lint deps gen clean
+GOPATH ?= $(shell go env GOPATH)
+PROTO_FILE := $(shell find ./pb -maxdepth 1 -name '*.proto' -printf '%f\n' | head -n 1)
+
+.PHONY: integration.test test build lint deps gen clean mocks
 
 build: integration.build
 	@echo Building version: \"$(BIN_VER)\"
@@ -24,10 +27,17 @@ deps:
 			google.golang.org/grpc/cmd/protoc-gen-go-grpc
 
 gen:
-	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep --go_out=$(GOPATH)/src --go-grpc_out=$(GOPATH)/src --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=$(GOPATH)/src \
- 			  customer.proto
+	@test -n "$(PROTO_FILE)" || (echo "missing proto file under ./pb"; exit 1)
+	@mkdir -p $(GOPATH)/src
+	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep \
+		--go_out=$(GOPATH)/src \
+		--go-grpc_out=$(GOPATH)/src \
+		--go-grpc_opt=require_unimplemented_servers=true \
+		--govalidators_out=$(GOPATH)/src \
+		$(PROTO_FILE)
+
+mocks:
 	mockery --all --recursive --dir ./pkg
-	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 
 clean:
 	rm -rf bin/

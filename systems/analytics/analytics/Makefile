@@ -6,26 +6,36 @@
 
 include ../../config.mk
 
-.PHONY: integration.test test build lint deps clean
+TARGET_EXEC := analytics
+BIN_DIR := bin
+CMD_DIR := cmd/server
+VERSION_PKG := github.com/ukama/ukama/systems/analytics/analytics/cmd/version
 
-build: integration.build
-	@echo Building version: \"$(BIN_VER)\"
-	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/analytics/analytics/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/analytics cmd/server/main.go
+GOOS ?= linux
+GOARCH ?= amd64
+CGO_ENABLED ?= 0
 
-test:
-	go test -v ./...
+.PHONY: all deps build test tidy clean
 
-lint:
-	golangci-lint run
+all: build
 
 deps:
-	go get github.com/vektra/mockery/v2/.../
+	go mod download
+
+tidy:
+	go mod tidy
+
+build: deps
+	@mkdir -p $(BIN_DIR)
+	@echo Building version: \"$(VERSION)\"
+	env CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) \
+		go build \
+		-ldflags='-X $(VERSION_PKG).Version=$(VERSION) -extldflags=-static' \
+		-o $(BIN_DIR)/$(TARGET_EXEC) \
+		$(CMD_DIR)/main.go
+
+test: deps
+	env CGO_ENABLED=$(CGO_ENABLED) go test ./... -v
 
 clean:
-	rm -rf bin/
-
-integration.test:
-	go test ./test/integration -tags integration -v -count=1
-
-integration.build:
-	env CGO_ENABLED=0 go test ./... -run TestNonExistent -v -c -o bin/integration || true
+	rm -rf $(BIN_DIR)
