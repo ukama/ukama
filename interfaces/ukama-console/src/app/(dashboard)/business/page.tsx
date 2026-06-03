@@ -11,7 +11,7 @@
  * Phase-1 smoke screen — verifies theme (light/dark/accent/density), fonts,
  * tokens and the data layer end-to-end. Replaced by BizHome in Phase 4.
  */
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -34,12 +34,20 @@ const TONE_COLOR: Record<StatusTone, string> = {
   neutral: 'var(--uk-ink-3)',
 };
 
+const emptySubscribe = () => () => {};
+
+/** Hydration-safe mounted check (false on server/hydration, true after). */
+function useMounted() {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
+}
+
 function ModeToggle() {
   const { mode, setMode } = useColorScheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useMounted();
   if (!mounted) return null;
 
   return (
