@@ -1,0 +1,15 @@
+node_modules
+.next
+.logs
+.git
+.gitignore
+.dockerignore
+Dockerfile
+.env*
+*.md
+.prettierignore
+eslint.config.mjs
+prettier.config.js
+codegen.ts
+scripts
+docker-compose.yml
