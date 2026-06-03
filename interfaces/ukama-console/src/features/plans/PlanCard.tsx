@@ -120,7 +120,7 @@ export default function PlanCard({
           {!readOnly && (
             <>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 12.5, color: 'var(--uk-ink-3)' }}>Revenue / mo</span>
+                <span style={{ fontSize: 12.5, color: 'var(--uk-ink-3)' }}>Revenue</span>
                 <span className="tnum" style={{ fontSize: 14, fontWeight: 600 }}>
                   ${rev.toLocaleString()}
                 </span>

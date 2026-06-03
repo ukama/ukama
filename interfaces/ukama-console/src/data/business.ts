@@ -52,7 +52,7 @@ export const BIZ_SITES: BizSite[] = [
 
 export const BIZ_HOME = {
   kpis: [
-    { label: 'Revenue today', value: '$126.40', delta: '18% vs yesterday', dir: 'up' },
+    { label: 'Revenue', value: '$126.40', delta: '18% vs yesterday', dir: 'up' },
     { label: 'Active customers', value: '142', delta: '+18 today', dir: 'up' },
     { label: 'Data sold', value: '87 GB', sub: '1.8 TB this month' },
     { label: 'Network uptime', value: '96.8%', sub: '6/7 sites online' },

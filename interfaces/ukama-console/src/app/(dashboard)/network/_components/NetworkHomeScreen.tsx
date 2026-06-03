@@ -11,6 +11,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@mui/material/Button';
+import DateChip from '@/components/DateChip';
 import { KpiRow } from '@/components/Kpi';
 import MapPanel from '@/components/Map/MapPanel';
 import PageHeader from '@/components/PageHeader';
@@ -28,7 +29,7 @@ export default function NetworkHomeScreen() {
 
   return (
     <div className="page">
-      <PageHeader title="Home" />
+      <PageHeader title="Home" actions={<DateChip />} />
       <KpiRow
         cols={4}
         items={[
@@ -81,7 +82,7 @@ export default function NetworkHomeScreen() {
           className="sec-head"
           style={{ padding: '16px 20px 12px', margin: 0, borderBottom: '1px solid var(--uk-line-soft)' }}
         >
-          <div className="sec-title">Network map</div>
+          <div className="sec-title">Network</div>
         </div>
         <div style={{ flex: 1, position: 'relative', minHeight: 300, padding: '16px 20px' }}>
           <MapPanel sites={SITES} selected={sel} onSelect={(s) => setSel(s.id)} />

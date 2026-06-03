@@ -53,6 +53,8 @@ declare module '@tanstack/react-table' {
     num?: boolean;
     /** renders a column-header dropdown filter with these options */
     filterOptions?: string[];
+    /** fixed column width in px (otherwise columns share width equally) */
+    width?: number;
   }
 }
 /* eslint-enable @typescript-eslint/no-unused-vars */

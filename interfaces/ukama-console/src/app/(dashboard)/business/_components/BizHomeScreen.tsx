@@ -76,7 +76,7 @@ export default function BizHomeScreen() {
       <div style={{ flex: 1, minHeight: 420, display: 'flex', flexDirection: 'column' }}>
         <SiteMap
           sites={BIZ_SITES}
-          title="Sites map"
+          title="Sites"
           fill
           action={
             <Button

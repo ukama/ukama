@@ -26,6 +26,7 @@ import { BIZ_HOME, BIZ_PACKAGES, PLANS } from '@/data';
 export default function BizPackagesScreen() {
   const b = BIZ_PACKAGES;
   const total = PLANS.reduce((s, p) => s + p.subs, 0);
+  const sold = b.rows.reduce((s, r) => s + r.sold, 0);
   const mrr = PLANS.reduce((s, p) => s + p.subs * p.price, 0);
   const arpu = mrr / total;
   const byRev = [...PLANS]
@@ -68,11 +69,11 @@ export default function BizPackagesScreen() {
             sub: `${topShare}% of revenue`,
           },
           {
-            icon: 'group',
+            icon: 'sell',
             color: 'var(--uk-secondary)',
-            label: 'Customers on a plan',
-            value: total.toLocaleString(),
-            sub: `across ${PLANS.length} plans`,
+            label: 'Packages sold',
+            value: sold.toLocaleString(),
+            sub: `across ${b.rows.length} packages`,
           },
         ]}
       />

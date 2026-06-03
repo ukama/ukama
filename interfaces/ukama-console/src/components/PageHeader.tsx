@@ -8,7 +8,7 @@
 'use client';
 
 /**
- * Page header — crumb · title (+count) · sub · "Last fetched HH:MM" · actions.
+ * Page header — crumb · title (+count) · sub · "Last update: time · date" · actions.
  * Ported from the prototype's PageHead (shell.jsx); shared by every screen.
  */
 import { useState } from 'react';
@@ -31,10 +31,10 @@ export default function PageHeader({
   actions,
 }: PageHeaderProps) {
   const [fetchedAt] = useState(() => new Date());
-  const t = fetchedAt.toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const t =
+    fetchedAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) +
+    ' \u00b7 ' +
+    fetchedAt.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 
   return (
     <div className="pagehead">
@@ -58,7 +58,7 @@ export default function PageHeader({
       <div className="pagehead-right">
         <span className="page-fetched" suppressHydrationWarning>
           <ScheduleRounded sx={{ fontSize: 15 }} />
-          Last fetched {t}
+          Last update: {t}
         </span>
         {actions && <div className="head-actions">{actions}</div>}
       </div>

@@ -112,6 +112,12 @@
 /* ---- table layout helpers (markup is MUI Table; see theme) ---- */
 .tbl-wrap {
   min-height: 186px;
+  overflow-x: auto; /* tables scroll within their card, never the page */
+}
+@media (max-width: 767px) {
+  .tbl-wrap table {
+    min-width: 560px;
+  }
 }
 .tbl-foot {
   display: flex;
