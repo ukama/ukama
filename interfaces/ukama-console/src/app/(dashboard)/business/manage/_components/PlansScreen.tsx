@@ -8,18 +8,19 @@
 'use client';
 
 /** Data plans — PlanCard grid + create (screens-manage.jsx PlansScreen). */
+import { useState } from 'react';
 import Button from '@mui/material/Button';
 import AddRounded from '@mui/icons-material/AddRounded';
 import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
 import PageHeader from '@/components/PageHeader';
-import { useToast } from '@/components/ToastProvider';
 import { PLANS } from '@/data';
+import CreatePlanDialog from '@/features/plans/CreatePlanDialog';
 import PlanCard from '@/features/plans/PlanCard';
 
 export default function PlansScreen() {
-  const toast = useToast();
+  const [showCreate, setShowCreate] = useState(false);
   const mrr = PLANS.reduce((s, p) => s + p.subs * p.price, 0);
-  const create = () => toast('Create plan — dialog lands in the overlays phase');
+  const create = () => setShowCreate(true);
 
   return (
     <div className="page">
@@ -66,6 +67,7 @@ export default function PlansScreen() {
           Create a plan
         </button>
       </div>
+      {showCreate && <CreatePlanDialog onClose={() => setShowCreate(false)} />}
     </div>
   );
 }

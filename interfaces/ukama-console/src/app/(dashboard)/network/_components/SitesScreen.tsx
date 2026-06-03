@@ -18,7 +18,9 @@ import PageHeader from '@/components/PageHeader';
 import SearchField from '@/components/SearchField';
 import StatusBadge from '@/components/StatusBadge';
 import { SITES } from '@/data';
-import type { Site } from '@/data';
+import type { Site, UkamaNode } from '@/data';
+import NodeDrawer from './NodeDrawer';
+import SiteDrawer from './SiteDrawer';
 
 function SiteCard({ s, onOpen }: { s: Site; onOpen: (s: Site) => void }) {
   const issueColor = s.status === 'offline' ? 'var(--uk-error-deep, #cf121b)' : '#b5591b';
@@ -99,6 +101,8 @@ export default function SitesScreen() {
   const router = useRouter();
   const [filter, setFilter] = useState('all');
   const [q, setQ] = useState('');
+  const [drawerSite, setDrawerSite] = useState<Site | null>(null);
+  const [drawerNode, setDrawerNode] = useState<UkamaNode | null>(null);
   const counts = {
     all: SITES.length,
     online: SITES.filter((s) => s.status === 'online').length,
@@ -110,7 +114,7 @@ export default function SitesScreen() {
       (filter === 'all' || s.status === filter) &&
       s.name.toLowerCase().includes(q.toLowerCase()),
   );
-  const open = (s: Site) => router.push(`/network/sites/${s.id}`);
+  const open = (s: Site) => setDrawerSite(s);
 
   return (
     <div className="page">
@@ -141,6 +145,30 @@ export default function SitesScreen() {
         <div className="card">
           <EmptyState art="search" title="No matching sites" sub="Try a different filter or search term." />
         </div>
+      )}
+      {drawerSite && (
+        <SiteDrawer
+          site={drawerSite}
+          onClose={() => setDrawerSite(null)}
+          onManage={(s) => {
+            setDrawerSite(null);
+            router.push(`/network/sites/${s.id}`);
+          }}
+          onOpenNode={(n) => {
+            setDrawerSite(null);
+            setDrawerNode(n);
+          }}
+        />
+      )}
+      {drawerNode && (
+        <NodeDrawer
+          node={drawerNode}
+          onClose={() => setDrawerNode(null)}
+          onOpenDetail={(n) => {
+            setDrawerNode(null);
+            router.push(`/network/nodes/${n.id}`);
+          }}
+        />
       )}
     </div>
   );

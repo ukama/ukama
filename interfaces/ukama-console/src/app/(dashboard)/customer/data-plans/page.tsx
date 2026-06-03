@@ -5,8 +5,8 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import AgentPlansScreen from '../_components/AgentPlansScreen';
 
 export default function AgentPlansPage() {
-  return <PageStub title="Data plans" phase="6" sub="Browse plans to assign, top up or change for your customers." />;
+  return <AgentPlansScreen />;
 }

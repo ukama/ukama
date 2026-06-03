@@ -21,6 +21,7 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import AddCardRounded from '@mui/icons-material/AddCardRounded';
 import CloseRounded from '@mui/icons-material/CloseRounded';
+import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded';
 import MoreVertRounded from '@mui/icons-material/MoreVertRounded';
 import PersonAddRounded from '@mui/icons-material/PersonAddRounded';
 import SwapHorizRounded from '@mui/icons-material/SwapHorizRounded';
@@ -37,6 +38,8 @@ import { PLANS, SUBSCRIBERS } from '@/data';
 import type { Subscriber } from '@/data';
 import { parseSeen } from '@/lib/parsers';
 import { useFirstLoad } from '@/lib/useFirstLoad';
+import AddCustomerDialog from './AddCustomerDialog';
+import DeleteCustomerDialog from './DeleteCustomerDialog';
 import SubscriberDrawer from './SubscriberDrawer';
 
 export type CustomersMode = 'biz' | 'network' | 'agent';
@@ -47,7 +50,15 @@ const SUBS = {
   agent: 'Manage your customers’ packages and top-ups.',
 } as const;
 
-function RowMenu({ sub, onView }: { sub: Subscriber; onView: () => void }) {
+function RowMenu({
+  sub,
+  onView,
+  onDelete,
+}: {
+  sub: Subscriber;
+  onView: () => void;
+  onDelete: () => void;
+}) {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const toast = useToast();
   return (
@@ -91,6 +102,15 @@ function RowMenu({ sub, onView }: { sub: Subscriber; onView: () => void }) {
         >
           <SwapHorizRounded sx={{ fontSize: 18 }} /> Change plan
         </MenuItem>
+        <MenuItem
+          sx={{ fontSize: 13.5, gap: 1.25, color: 'var(--uk-error)' }}
+          onClick={() => {
+            setAnchor(null);
+            onDelete();
+          }}
+        >
+          <DeleteOutlineRounded sx={{ fontSize: 18 }} /> Delete customer
+        </MenuItem>
       </Menu>
     </>
   );
@@ -106,6 +126,8 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
   const [q, setQ] = useState('');
   const [selection, setSelection] = useState<RowSelectionState>({});
   const [openSub, setOpenSub] = useState<Subscriber | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [deleteSub, setDeleteSub] = useState<Subscriber | null>(null);
 
   const planNames = useMemo(
     () => [...PLANS.map((p) => p.name), 'No plan'],
@@ -224,7 +246,11 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
         size: 40,
         header: '',
         cell: ({ row }) => (
-          <RowMenu sub={row.original} onView={() => setOpenSub(row.original)} />
+          <RowMenu
+            sub={row.original}
+            onView={() => setOpenSub(row.original)}
+            onDelete={() => setDeleteSub(row.original)}
+          />
         ),
       });
     }
@@ -244,7 +270,7 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
             <Button
               variant="contained"
               startIcon={<PersonAddRounded />}
-              onClick={() => toast('Add customer — form dialog lands in the overlays phase')}
+              onClick={() => setShowAdd(true)}
             >
               Add customer
             </Button>
@@ -358,6 +384,10 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
           onClose={() => setOpenSub(null)}
           readOnly={mode === 'biz'}
         />
+      )}
+      {showAdd && <AddCustomerDialog onClose={() => setShowAdd(false)} />}
+      {deleteSub && (
+        <DeleteCustomerDialog sub={deleteSub} onClose={() => setDeleteSub(null)} />
       )}
     </div>
   );

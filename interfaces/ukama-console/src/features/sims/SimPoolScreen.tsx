@@ -30,6 +30,7 @@ import { useToast } from '@/components/ToastProvider';
 import { SIM_BATCHES, SIMS_SUMMARY } from '@/data';
 import type { SimBatch } from '@/data';
 import { useFirstLoad } from '@/lib/useFirstLoad';
+import UploadSimsDialog from './UploadSimsDialog';
 
 function BatchMenu({ batch }: { batch: SimBatch }) {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
@@ -72,6 +73,7 @@ export default function SimPoolScreen({ canAct }: { canAct: boolean }) {
   const s = SIMS_SUMMARY;
   const loading = useFirstLoad('simpool');
   const toast = useToast();
+  const [showUpload, setShowUpload] = useState(false);
 
   return (
     <div className="page">
@@ -97,7 +99,7 @@ export default function SimPoolScreen({ canAct }: { canAct: boolean }) {
               <Button
                 variant="contained"
                 startIcon={<UploadFileRounded />}
-                onClick={() => toast('Upload SIMs — dialog lands in the overlays phase')}
+                onClick={() => setShowUpload(true)}
               >
                 Upload SIMs
               </Button>
@@ -201,6 +203,7 @@ export default function SimPoolScreen({ canAct }: { canAct: boolean }) {
         </div>
         {!loading && <TableFooter count={SIM_BATCHES.length} noun="batches" />}
       </div>
+      {showUpload && <UploadSimsDialog onClose={() => setShowUpload(false)} />}
     </div>
   );
 }

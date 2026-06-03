@@ -18,6 +18,7 @@ import PageHeader from '@/components/PageHeader';
 import StatusBadge from '@/components/StatusBadge';
 import { NODES } from '@/data';
 import type { UkamaNode } from '@/data';
+import NodeDrawer from './NodeDrawer';
 
 function NodeCard({ n, onOpen }: { n: UkamaNode; onOpen: (n: UkamaNode) => void }) {
   const off = n.status === 'offline';
@@ -81,6 +82,7 @@ function NodeCard({ n, onOpen }: { n: UkamaNode; onOpen: (n: UkamaNode) => void 
 export default function NodesScreen() {
   const router = useRouter();
   const [filter, setFilter] = useState('all');
+  const [drawerNode, setDrawerNode] = useState<UkamaNode | null>(null);
   const counts = {
     all: NODES.length,
     online: NODES.filter((n) => n.status === 'online').length,
@@ -111,9 +113,19 @@ export default function NodesScreen() {
       </div>
       <div className="tile-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
         {list.map((n) => (
-          <NodeCard key={n.id} n={n} onOpen={(node) => router.push(`/network/nodes/${node.id}`)} />
+          <NodeCard key={n.id} n={n} onOpen={(node) => setDrawerNode(node)} />
         ))}
       </div>
+      {drawerNode && (
+        <NodeDrawer
+          node={drawerNode}
+          onClose={() => setDrawerNode(null)}
+          onOpenDetail={(n) => {
+            setDrawerNode(null);
+            router.push(`/network/nodes/${n.id}`);
+          }}
+        />
+      )}
     </div>
   );
 }

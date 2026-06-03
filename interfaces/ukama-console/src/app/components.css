@@ -449,6 +449,353 @@ th.sortable:hover {
   gap: 6px;
 }
 
+/* ---- form dialogs ---- */
+.ff {
+  display: block;
+  margin-bottom: 14px;
+}
+.ff-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--uk-ink-2);
+  margin-bottom: 6px;
+}
+.ff-hint {
+  font-size: 11.5px;
+  color: var(--uk-ink-3);
+  margin-top: 5px;
+}
+.ff-err {
+  font-size: 11.5px;
+  color: var(--uk-error);
+  margin-top: 5px;
+}
+.ff-grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.field.invalid {
+  border-color: var(--uk-error);
+}
+.field select {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--uk-ink);
+  appearance: none;
+  cursor: pointer;
+}
+.flabel {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--uk-ink-2);
+  margin-bottom: 6px;
+  display: block;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 32px 16px;
+  border: 1.5px dashed var(--uk-line);
+  border-radius: 12px;
+  background: var(--uk-page);
+  cursor: pointer;
+  transition:
+    border-color 0.14s,
+    background 0.14s;
+  font-family: inherit;
+}
+.dropzone:hover,
+.dropzone.drag {
+  border-color: var(--uk-ac);
+  background: var(--uk-ac-soft);
+}
+.sim-file {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--uk-line);
+  border-radius: 10px;
+}
+
+/* ---- alert dialog rows ---- */
+.alert-row {
+  display: flex;
+  gap: 13px;
+  align-items: flex-start;
+}
+.alert-ic {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.sev-critical .alert-ic {
+  background: var(--uk-error-fill);
+  color: var(--uk-error-deep, #cf121b);
+}
+.sev-warning .alert-ic {
+  background: rgba(226, 116, 41, 0.16);
+  color: #b5591b;
+}
+.sev-info .alert-ic {
+  background: var(--uk-ac-soft);
+  color: var(--uk-ac-dark);
+}
+
+/* ---- big segmented (agent plans sort) ---- */
+.seg {
+  display: inline-flex;
+  background: var(--uk-page);
+  border: 1px solid var(--uk-line);
+  border-radius: 9px;
+  padding: 3px;
+  gap: 2px;
+}
+.seg button {
+  border: none;
+  background: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--uk-ink-2);
+  cursor: pointer;
+  font-family: inherit;
+}
+.seg button.on {
+  background: var(--uk-panel);
+  color: var(--uk-ac-dark);
+  box-shadow: var(--uk-shadow);
+}
+
+/* ---- onboarding wizard ---- */
+.ob-grad {
+  height: 12px;
+  background: linear-gradient(
+    90deg,
+    #00d3eb 0%,
+    #2190f6 14.06%,
+    #6974f8 44.27%,
+    #6974f8 58.85%,
+    #271452 100%
+  );
+}
+.ob-welcome {
+  padding: 36px 32px 30px;
+  text-align: center;
+}
+.ob-mark {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  background: var(--uk-ac-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+.ob-mark svg {
+  width: 24px;
+  height: 42px;
+  color: var(--uk-ac);
+}
+.ob-title {
+  font-family: var(--font-display), 'Work Sans', sans-serif;
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--uk-ink);
+}
+.ob-sub {
+  font-size: 13.5px;
+  color: var(--uk-ink-2);
+  text-wrap: pretty;
+}
+.ob-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 340px;
+  margin: 24px auto 0;
+  text-align: left;
+}
+.ob-check {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--uk-ink);
+}
+.ob-check-ic {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--uk-ac-soft);
+  color: var(--uk-ac);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.ob-head {
+  padding: 22px 28px 0;
+}
+.ob-steps {
+  display: flex;
+  padding: 18px 28px 6px;
+}
+.ob-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  position: relative;
+}
+.ob-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 15px;
+  left: calc(50% + 19px);
+  right: calc(-50% + 19px);
+  height: 2px;
+  background: var(--uk-line);
+}
+.ob-step.done:not(:last-child)::after {
+  background: var(--uk-ac);
+}
+.ob-dot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--uk-panel);
+  color: var(--uk-ink-3);
+  border: 2px solid var(--uk-line);
+  z-index: 1;
+  transition: 0.15s;
+}
+.ob-step.active .ob-dot,
+.ob-step.done .ob-dot {
+  background: var(--uk-ac);
+  color: #fff;
+  border-color: var(--uk-ac);
+}
+.ob-step-label {
+  font-size: 12px;
+  color: var(--uk-ink-3);
+  font-weight: 500;
+}
+.ob-step.active .ob-step-label {
+  color: var(--uk-ink);
+  font-weight: 600;
+}
+.ob-body {
+  padding: 24px 28px;
+  min-height: 208px;
+}
+.ob-field-grid {
+  display: grid;
+  gap: 16px;
+}
+.ob-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 16px 28px 22px;
+  border-top: 1px solid var(--uk-line-soft);
+}
+.ob-segrow {
+  display: flex;
+  gap: 10px;
+}
+.ob-segrow-wrap {
+  flex-wrap: wrap;
+}
+.ob-seg {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  height: 42px;
+  border-radius: 9px;
+  border: 1px solid var(--uk-line);
+  background: var(--uk-panel);
+  color: var(--uk-ink-2);
+  font-size: 13.5px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: 0.12s;
+}
+.ob-seg:hover {
+  border-color: #cfd4dd;
+  background: var(--uk-hover);
+}
+.ob-seg.on {
+  border-color: var(--uk-ac);
+  color: var(--uk-ac-dark);
+  background: var(--uk-ac-soft);
+}
+.ob-plan-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  flex: none;
+}
+.ob-plan-price {
+  color: var(--uk-ink-3);
+  font-size: 12.5px;
+}
+.ob-review-row {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--uk-line-soft);
+}
+.ob-review-row:last-child {
+  border-bottom: 0;
+}
+.ob-review-ic {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--uk-ac-soft);
+  color: var(--uk-ac);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.ob-success {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--uk-success-fill);
+  color: var(--uk-success-bright);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 6px auto 16px;
+}
+
 /* ---- detail pages (site / node) ---- */
 .detail-subrow {
   display: flex;

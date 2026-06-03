@@ -11,6 +11,7 @@ import { useSyncExternalStore } from 'react';
 import { useColorScheme } from '@mui/material/styles';
 import DarkModeRounded from '@mui/icons-material/DarkModeRounded';
 import LightModeRounded from '@mui/icons-material/LightModeRounded';
+import MenuRounded from '@mui/icons-material/MenuRounded';
 import LensSegment from './LensSegment';
 import NetSwitch from './NetSwitch';
 import NotificationsMenu from './NotificationsMenu';
@@ -44,9 +45,17 @@ function ThemeToggle() {
   );
 }
 
-export default function TopBar() {
+export default function TopBar({ onMenu }: { onMenu: () => void }) {
   return (
     <header className="topbar">
+      <button
+        type="button"
+        className="topbar-icon menu-btn"
+        aria-label="Open navigation"
+        onClick={onMenu}
+      >
+        <MenuRounded sx={{ fontSize: 22 }} />
+      </button>
       <NetSwitch />
       <LensSegment />
       <div className="spacer" />

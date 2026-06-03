@@ -27,6 +27,7 @@ import { useToast } from '@/components/ToastProvider';
 import { MEMBERS, ROLE_DESC } from '@/data';
 import type { Member } from '@/data';
 import { useFirstLoad } from '@/lib/useFirstLoad';
+import InviteMemberDialog from './InviteMemberDialog';
 
 function MemberMenu({ m }: { m: Member }) {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
@@ -79,7 +80,7 @@ function MemberMenu({ m }: { m: Member }) {
 
 export default function MembersScreen() {
   const loading = useFirstLoad('members');
-  const toast = useToast();
+  const [showInvite, setShowInvite] = useState(false);
 
   return (
     <div className="page">
@@ -91,7 +92,7 @@ export default function MembersScreen() {
           <Button
             variant="contained"
             startIcon={<PersonAddRounded />}
-            onClick={() => toast('Invite member — dialog lands in the overlays phase')}
+            onClick={() => setShowInvite(true)}
           >
             Invite member
           </Button>
@@ -154,6 +155,7 @@ export default function MembersScreen() {
         </div>
         {!loading && <TableFooter count={MEMBERS.length} noun="members" />}
       </div>
+      {showInvite && <InviteMemberDialog onClose={() => setShowInvite(false)} />}
     </div>
   );
 }

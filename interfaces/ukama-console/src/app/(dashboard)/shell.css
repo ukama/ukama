@@ -413,18 +413,60 @@
   align-items: center;
 }
 
-/* ---- responsive: hide rail on small screens (mobile drawer in Phase 7) ---- */
+/* ---- mobile: rail collapses into a drawer ---- */
+.menu-btn {
+  display: none;
+}
+.mobile-nav {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.mobile-nav .sidebar {
+  display: flex !important;
+  flex: 1;
+  border-right: none;
+}
+.drawer-lens {
+  display: flex;
+  gap: 6px;
+  padding: 14px 12px 6px;
+}
+.drawer-lens button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--uk-line);
+  background: var(--uk-panel);
+  color: var(--uk-ink-2);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 8px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.drawer-lens button.on {
+  border-color: var(--uk-ac);
+  color: var(--uk-ac-dark);
+  background: var(--uk-ac-soft);
+}
 @media (max-width: 900px) {
   .app {
     grid-template-columns: 0 1fr;
   }
-  .sidebar {
+  .app > .sidebar {
     display: none;
   }
   .brandcell {
     display: none;
   }
-  .viewseg button .vlabel {
+  .viewseg {
     display: none;
+  }
+  .menu-btn {
+    display: flex;
   }
 }

@@ -18,6 +18,7 @@ import CheckRounded from '@mui/icons-material/CheckRounded';
 import UnfoldMoreRounded from '@mui/icons-material/UnfoldMoreRounded';
 import { NETWORKS } from '@/data';
 import { useUiPrefs } from '@/lib/store';
+import OnboardingFlow from './OnboardingFlow';
 
 const STATUS_DOT: Record<string, string> = {
   online: 'var(--uk-success-bright)',
@@ -27,6 +28,7 @@ const STATUS_DOT: Record<string, string> = {
 
 export default function NetSwitch() {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const { networkId, setNetworkId } = useUiPrefs();
   const net = NETWORKS.find((n) => n.id === networkId) ?? NETWORKS[0];
 
@@ -98,13 +100,20 @@ export default function NetSwitch() {
             )}
           </MenuItem>
         ))}
-        <MenuItem onClick={() => setAnchor(null)} sx={{ mt: 0.5 }}>
+        <MenuItem
+          onClick={() => {
+            setAnchor(null);
+            setShowOnboarding(true);
+          }}
+          sx={{ mt: 0.5 }}
+        >
           <ListItemIcon>
             <AddRounded fontSize="small" />
           </ListItemIcon>
           Add network
         </MenuItem>
       </Menu>
+      {showOnboarding && <OnboardingFlow onClose={() => setShowOnboarding(false)} />}
     </>
   );
 }
