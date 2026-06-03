@@ -11,6 +11,7 @@ import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import { roboto, workSans } from '@/fonts';
 import Providers from './providers';
 import './globals.css';
+import './components.css';
 
 export const metadata: Metadata = {
   title: 'Ukama Console',

@@ -24,6 +24,7 @@
     "@mui/icons-material": "^7.3.11",
     "@mui/material": "^7.3.11",
     "@mui/material-nextjs": "^7.3.10",
+    "@tanstack/react-table": "^8.21.3",
     "next": "^16",
     "react": "^19",
     "react-dom": "^19",
