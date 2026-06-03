@@ -7,6 +7,6 @@
  */
 import PageStub from '@/components/PageStub';
 
-export default function BizHomePage() {
-  return <PageStub title="Home" phase="4" />;
+export default function NetworkSimPoolPage() {
+  return <PageStub title="SIM pool" phase="5" crumb={["Manage","SIM pool"]} sub="SIM batches uploaded for this network (view-only)." />;
 }

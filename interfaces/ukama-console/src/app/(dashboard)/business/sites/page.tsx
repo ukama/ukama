@@ -7,6 +7,6 @@
  */
 import PageStub from '@/components/PageStub';
 
-export default function BizHomePage() {
-  return <PageStub title="Home" phase="4" />;
+export default function BizSitesPage() {
+  return <PageStub title="Sites" phase="4" sub="Which sites are performing well as businesses?" />;
 }

@@ -5,8 +5,8 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import SettingsStub from '@/components/SettingsStub';
 
-export default function BizHomePage() {
-  return <PageStub title="Home" phase="4" />;
+export default function SettingsPage() {
+  return <SettingsStub />;
 }

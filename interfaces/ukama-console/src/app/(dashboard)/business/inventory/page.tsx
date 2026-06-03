@@ -7,6 +7,6 @@
  */
 import PageStub from '@/components/PageStub';
 
-export default function BizHomePage() {
-  return <PageStub title="Home" phase="4" />;
+export default function BizInventoryPage() {
+  return <PageStub title="Inventory" phase="4" sub="Do I have enough SIMs and nodes to operate and grow?" />;
 }

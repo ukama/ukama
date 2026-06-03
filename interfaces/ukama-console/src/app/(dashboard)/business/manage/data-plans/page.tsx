@@ -7,6 +7,6 @@
  */
 import PageStub from '@/components/PageStub';
 
-export default function BizHomePage() {
-  return <PageStub title="Home" phase="4" />;
+export default function BizPlansPage() {
+  return <PageStub title="Data plans" phase="4" crumb={["Manage","Data plans"]} sub="Plans you can assign to customers." />;
 }
