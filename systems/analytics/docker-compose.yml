@@ -1,0 +1,163 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026-present, Ukama Inc.
+
+version: '3.9'
+
+services:
+ postgresd-analytics:
+  image: postgres:13.3
+  ports:
+   - 5410:5432
+  environment:
+   - POSTGRES_USER=postgres
+   - POSTGRES_PASSWORD=Pass2020!
+  networks:
+   - ukama-net
+  volumes:
+   - postgress-data:/var/lib/postgresql
+
+ business:
+  build: ./business
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-analytics
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-analytics:9095
+   - BUSINESS_SERVICE_HOST=business
+   - BUSINESS_SERVICE_PORT=9090
+   - ORGNAME=${ORGNAME}
+   - ORGID=${ORGID}
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - msgclient-analytics
+
+ customer:
+  build: ./customer
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-analytics
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-analytics:9095
+   - CUSTOMER_SERVICE_HOST=customer
+   - CUSTOMER_SERVICE_PORT=9090
+   - ORGNAME=${ORGNAME}
+   - ORGID=${ORGID}
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - msgclient-analytics
+
+ network:
+  build: ./network
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-analytics
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-analytics:9095
+   - NETWORK_SERVICE_HOST=network
+   - NETWORK_SERVICE_PORT=9090
+   - ORGNAME=${ORGNAME}
+   - ORGID=${ORGID}
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - msgclient-analytics
+
+ collector:
+  build: ./collector
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-analytics
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-analytics:9095
+   - COLLECTOR_SERVICE_HOST=collector
+   - COLLECTOR_SERVICE_PORT=9090
+   - ORGNAME=${ORGNAME}
+   - ORGID=${ORGID}
+   - HTTP_REGISTRYCLIENT=http://api-gateway-registry:8080
+   - HTTP_SUBSCRIBERCLIENT=http://api-gateway-subscriber:8080
+   - HTTP_DATAPLANCLIENT=http://api-gateway-dataplan:8080
+   - HTTP_METRICSCLIENT=http://api-gateway-metrics:8080
+   - HTTP_NODECLIENT=http://api-gateway-node:8080
+   - HTTP_INVENTORYCLIENT=http://api-gateway-inventory:8080
+   - HTTP_BILLINGCLIENT=http://api-gateway-billing:8080
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - msgclient-analytics
+   - postgresd-analytics
+
+ api-gateway-analytics:
+  build: ./api-gateway
+  restart: always
+  ports:
+   - 8085:8080
+  networks:
+   - ukama-net
+  environment:
+   - DEBUGMODE=true
+   - BYPASS_AUTH_MODE=true
+  depends_on:
+   - business
+   - customer
+   - network
+   - collector
+
+ msgclient-analytics:
+  build: ../services/msgClient
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-analytics
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - GRPC_PORT=9095
+   - SYSTEM=analytics
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - postgresd-analytics
+
+ initclient-analytics:
+  build: ../services/initClient
+  environment:
+   - ENV_SYSTEM_ORG=${ORGNAME}
+   - ENV_SYSTEM_NAME=analytics
+   - ENV_DNS_REFRESH_TIME_PERIOD=30
+   - ENV_SYSTEM_DNS=api-gateway-analytics
+   - ENV_DNS_SERVER=false
+   - ENV_SYSTEM_PORT=8080
+   - ENV_SYSTEM_CERT=This-is-a-certificate
+   - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+   - ENV_INIT_SYSTEM_PORT=8071
+   - ENV_INIT_CLIENT_ADDR=initclient-analytics
+   - ENV_INIT_CLIENT_PORT=8080
+   - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
+  restart: always
+  networks:
+   - ukama-net
+
+networks:
+ ukama-net:
+  external: true
+  name: services_ukama-net
+
+volumes:
+ postgress-data:
