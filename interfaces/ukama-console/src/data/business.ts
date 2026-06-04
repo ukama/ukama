@@ -38,21 +38,21 @@ export interface BizSite {
   uptime: number;
   top: string;
   issue: string | null;
-  x: number;
-  y: number;
+  lat: number;
+  lng: number;
 }
 
 export const BIZ_SITES: BizSite[] = [
-  { id: 'clinicA', name: 'Clinic A', status: 'online', revenue: 920, revToday: 42, customers: 83, custToday: 83, data: '410 GB', uptime: 99.1, top: '1GB / 7d', issue: null, x: 30, y: 42 },
-  { id: 'marketB', name: 'Market B', status: 'warning', revenue: 740, revToday: 31, customers: 91, custToday: 41, data: '360 GB', uptime: 94.8, top: '5GB / 30d', issue: 'Backhaul', x: 50, y: 25 },
-  { id: 'schoolC', name: 'School C', status: 'online', revenue: 410, revToday: 18, customers: 42, custToday: 22, data: '190 GB', uptime: 99.8, top: '1GB / 7d', issue: null, x: 40, y: 60 },
-  { id: 'clinicD', name: 'Clinic D', status: 'offline', revenue: 0, revToday: 0, customers: 83, custToday: 83, data: '0 GB', uptime: 82.2, top: '—', issue: 'Node down', x: 58, y: 48 },
-  { id: 'villageE', name: 'Village E', status: 'online', revenue: 280, revToday: 12, customers: 17, custToday: 17, data: '90 GB', uptime: 98.9, top: 'Night', issue: null, x: 52, y: 68 },
+  { id: 'clinicA', name: 'Clinic A', status: 'online', revenue: 920, revToday: 42, customers: 83, custToday: 83, data: '410 GB', uptime: 99.1, top: '1GB / 7d', issue: null, lat: -4.32, lng: 15.31 },
+  { id: 'marketB', name: 'Market B', status: 'warning', revenue: 740, revToday: 31, customers: 91, custToday: 41, data: '360 GB', uptime: 94.8, top: '5GB / 30d', issue: 'Backhaul', lat: -2.52, lng: 23.62 },
+  { id: 'schoolC', name: 'School C', status: 'online', revenue: 410, revToday: 18, customers: 42, custToday: 22, data: '190 GB', uptime: 99.8, top: '1GB / 7d', issue: null, lat: -1.68, lng: 27.48 },
+  { id: 'clinicD', name: 'Clinic D', status: 'offline', revenue: 0, revToday: 0, customers: 83, custToday: 83, data: '0 GB', uptime: 82.2, top: '—', issue: 'Node down', lat: -6.12, lng: 25.21 },
+  { id: 'villageE', name: 'Village E', status: 'online', revenue: 280, revToday: 12, customers: 17, custToday: 17, data: '90 GB', uptime: 98.9, top: 'Night', issue: null, lat: -3.02, lng: 19.18 },
 ];
 
 export const BIZ_HOME = {
   kpis: [
-    { label: 'Revenue today', value: '$126.40', delta: '18% vs yesterday', dir: 'up' },
+    { label: 'Revenue', value: '$126.40', delta: '18% vs yesterday', dir: 'up' },
     { label: 'Active customers', value: '142', delta: '+18 today', dir: 'up' },
     { label: 'Data sold', value: '87 GB', sub: '1.8 TB this month' },
     { label: 'Network uptime', value: '96.8%', sub: '6/7 sites online' },

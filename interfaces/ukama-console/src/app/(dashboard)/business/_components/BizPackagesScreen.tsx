@@ -7,6 +7,13 @@
  */
 'use client';
 
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Meter from '@/components/Meter';
+
 /** Packages — how the data packages sell and perform (biz-home.jsx). */
 import BarList from '@/components/BarList';
 import DateChip from '@/components/DateChip';
@@ -19,6 +26,7 @@ import { BIZ_HOME, BIZ_PACKAGES, PLANS } from '@/data';
 export default function BizPackagesScreen() {
   const b = BIZ_PACKAGES;
   const total = PLANS.reduce((s, p) => s + p.subs, 0);
+  const sold = b.rows.reduce((s, r) => s + r.sold, 0);
   const mrr = PLANS.reduce((s, p) => s + p.subs * p.price, 0);
   const arpu = mrr / total;
   const byRev = [...PLANS]
@@ -61,11 +69,11 @@ export default function BizPackagesScreen() {
             sub: `${topShare}% of revenue`,
           },
           {
-            icon: 'group',
+            icon: 'sell',
             color: 'var(--uk-secondary)',
-            label: 'Customers on a plan',
-            value: total.toLocaleString(),
-            sub: `across ${PLANS.length} plans`,
+            label: 'Packages sold',
+            value: sold.toLocaleString(),
+            sub: `across ${b.rows.length} packages`,
           },
         ]}
       />
@@ -75,36 +83,36 @@ export default function BizPackagesScreen() {
           <div className="sec-title">Package performance</div>
         </div>
         <div className="tbl-wrap">
-          <table className="tbl">
-            <thead>
-              <tr className="static">
-                <th>Package</th>
-                <th className="num">Price</th>
-                <th>Validity</th>
-                <th className="num">Sold</th>
-                <th className="num">Revenue</th>
-                <th className="num">Data used</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Package</TableCell>
+                <TableCell align="right">Price</TableCell>
+                <TableCell>Validity</TableCell>
+                <TableCell align="right">Sold</TableCell>
+                <TableCell align="right">Revenue</TableCell>
+                <TableCell align="right">Data used</TableCell>
+                <TableCell>Status</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {b.rows.map((r) => (
-                <tr key={r.pkg} className="static">
-                  <td style={{ fontWeight: 600 }}>{r.pkg}</td>
-                  <td className="num tnum">{r.price}</td>
-                  <td className="muted">{r.validity}</td>
-                  <td className="num tnum">{r.sold}</td>
-                  <td className="num tnum" style={{ fontWeight: 600 }}>
+                <TableRow key={r.pkg}>
+                  <TableCell style={{ fontWeight: 600 }}>{r.pkg}</TableCell>
+                  <TableCell align="right" className="tnum">{r.price}</TableCell>
+                  <TableCell className="muted">{r.validity}</TableCell>
+                  <TableCell align="right" className="tnum">{r.sold}</TableCell>
+                  <TableCell align="right" className="tnum" style={{ fontWeight: 600 }}>
                     {r.revenue}
-                  </td>
-                  <td className="num tnum muted">{r.data}</td>
-                  <td>
+                  </TableCell>
+                  <TableCell align="right" className="tnum muted">{r.data}</TableCell>
+                  <TableCell>
                     <StatusBadge status={r.status} variant="pill" />
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </div>
 
@@ -161,14 +169,7 @@ export default function BizPackagesScreen() {
                       {p.sold} sold
                     </span>
                   </div>
-                  <div className="meter">
-                    <span
-                      style={{
-                        width: Math.round((p.sold / maxSold) * 100) + '%',
-                        background: p.color,
-                      }}
-                    />
-                  </div>
+                  <Meter value={Math.round((p.sold / maxSold) * 100)} color={p.color} />
                 </div>
               </div>
             ))}

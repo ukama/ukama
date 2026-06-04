@@ -8,11 +8,10 @@
 'use client';
 
 /** Revenue — the single most important number (biz-home.jsx BizSales). */
-import ArrowUpwardRounded from '@mui/icons-material/ArrowUpwardRounded';
 import BarList from '@/components/BarList';
 import { LineChart } from '@/components/charts';
 import DateChip from '@/components/DateChip';
-import { KpiRow } from '@/components/Kpi';
+import { Delta, KpiRow } from '@/components/Kpi';
 import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
 import { BIZ_SALES } from '@/data';
@@ -44,10 +43,7 @@ export default function BizSalesScreen() {
             >
               $48,210
             </span>
-            <span className="stat-delta up" style={{ fontSize: 14 }}>
-              <ArrowUpwardRounded sx={{ fontSize: 16 }} />
-              +22% YoY
-            </span>
+            <Delta fontSize={14}>+22% YoY</Delta>
           </div>
           <div style={{ flex: 1, minWidth: 20 }} />
           <div style={{ display: 'flex', gap: 30, flexWrap: 'wrap' }}>

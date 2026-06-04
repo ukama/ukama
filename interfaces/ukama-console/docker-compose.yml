@@ -1,0 +1,30 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026-present, Ukama Inc.
+#
+# Mirrors the legacy console compose setup (same external ukama-net network,
+# same host port 3000 -> container 8080). Override the endpoints via shell
+# env or an .env file next to this compose file.
+
+services:
+  ukama-console:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+      args:
+        # Build-time public env — must match what src/env.ts validates
+        - NEXT_PUBLIC_API_GW=${NEXT_PUBLIC_API_GW:-http://localhost:8080}
+        - NEXT_PUBLIC_METRIC_URL=${NEXT_PUBLIC_METRIC_URL:-http://localhost:8081}
+        - NEXT_PUBLIC_API_GW_4SS=${NEXT_PUBLIC_API_GW_4SS:-http://bff:8080}
+        - NEXT_PUBLIC_AUTH_APP_URL=${NEXT_PUBLIC_AUTH_APP_URL:-http://localhost:4455}
+    ports:
+      - '3000:8080'
+    networks:
+      - ukama-net
+
+networks:
+  ukama-net:
+    external: true
+    name: services_ukama-net

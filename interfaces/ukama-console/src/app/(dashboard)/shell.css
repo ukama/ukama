@@ -156,6 +156,30 @@
   color: #1c1e22;
 }
 
+/* mobile lens dropdown — top of the nav drawer (<=900px only) */
+.lens-mobile-wrap {
+  padding: 14px 12px 4px;
+}
+.lens-mobile {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 9px;
+  border: 1px solid var(--uk-line);
+  background: var(--uk-panel);
+  color: var(--uk-ink);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 10px 12px;
+  border-radius: 9px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.lens-mobile:hover {
+  background: var(--uk-hover);
+}
+
 .topbar .spacer {
   flex: 1;
 }
@@ -352,7 +376,8 @@
 }
 .page {
   padding: 24px 28px 34px;
-  max-width: 1240px;
+  /* fluid up to 1680px — avoids dead gutters on wide screens (user feedback) */
+  max-width: 1680px;
   width: 100%;
   margin: 0 auto;
   flex: 1;
@@ -413,18 +438,86 @@
   align-items: center;
 }
 
-/* ---- responsive: hide rail on small screens (mobile drawer in Phase 7) ---- */
+/* ---- mobile: rail collapses into a drawer ---- */
+.menu-btn {
+  display: none;
+}
+.mobile-nav {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.mobile-nav .sidebar {
+  display: flex !important;
+  flex: 1;
+  border-right: none;
+}
 @media (max-width: 900px) {
   .app {
     grid-template-columns: 0 1fr;
   }
-  .sidebar {
+  .app > .sidebar {
     display: none;
   }
   .brandcell {
     display: none;
   }
-  .viewseg button .vlabel {
+  .viewseg {
+    display: none;
+  }
+  .menu-btn {
+    display: flex;
+  }
+  .topbar {
+    min-width: 0;
+  }
+  .netswitch {
+    min-width: 0;
+  }
+  .railtoggle {
+    display: none;
+  }
+  /* stack grids — inline grid-template-columns need the !important */
+  .tile-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .kpi-row {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* ---- mobile ---- */
+@media (max-width: 767px) {
+  .page {
+    padding: 18px 15px 54px;
+  }
+  .pagetitle {
+    font-size: 23px;
+  }
+  .pagehead {
+    gap: 12px;
+  }
+}
+@media (max-width: 560px) {
+  .topbar {
+    gap: 8px;
+    padding: 0 12px;
+  }
+  .netswitch {
+    padding: 6px 8px;
+  }
+  .netswitch .nm {
+    max-width: 84px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+@media (max-width: 420px) {
+  .kpi-row {
+    grid-template-columns: 1fr !important;
+  }
+  .netswitch .nm {
     display: none;
   }
 }

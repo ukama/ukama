@@ -7,6 +7,12 @@
  */
 'use client';
 
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+
 /** Business Sites — which sites perform well as businesses (biz-customers.jsx). */
 import { useRouter } from 'next/navigation';
 import TableFooter from '@/components/data-table/TableFooter';
@@ -44,22 +50,24 @@ export default function BizSitesScreen() {
           {loading ? (
             <SkeletonTable cols={8} rows={6} />
           ) : (
-            <table className="tbl">
-              <thead>
-                <tr className="static">
-                  <th>Site</th>
-                  <th>Status</th>
-                  <th className="num">Revenue</th>
-                  <th className="num">Customers</th>
-                  <th className="num">Data sold</th>
-                  <th className="num">Uptime</th>
-                  <th>Top package</th>
-                  <th>Issue</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Site</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell align="right">Revenue</TableCell>
+                  <TableCell align="right">Customers</TableCell>
+                  <TableCell align="right">Data sold</TableCell>
+                  <TableCell align="right">Uptime</TableCell>
+                  <TableCell>Top package</TableCell>
+                  <TableCell>Issue</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {BIZ_SITES.map((s) => (
-                  <tr
+                  <TableRow
+                    hover
+                    sx={{ cursor: 'pointer' }}
                     key={s.id}
                     role="button"
                     tabIndex={0}
@@ -68,28 +76,28 @@ export default function BizSitesScreen() {
                       if (e.key === 'Enter') go(s.id);
                     }}
                   >
-                    <td style={{ fontWeight: 600 }}>{s.name}</td>
-                    <td>
+                    <TableCell style={{ fontWeight: 600 }}>{s.name}</TableCell>
+                    <TableCell>
                       <StatusBadge status={s.status} variant="pill" />
-                    </td>
-                    <td className="num tnum" style={{ fontWeight: 600 }}>
+                    </TableCell>
+                    <TableCell align="right" className="tnum" style={{ fontWeight: 600 }}>
                       ${s.revenue.toLocaleString()}
-                    </td>
-                    <td className="num tnum">{s.customers}</td>
-                    <td className="num tnum muted">{s.data}</td>
-                    <td className="num tnum">{s.uptime}%</td>
-                    <td className="muted">{s.top}</td>
-                    <td
+                    </TableCell>
+                    <TableCell align="right" className="tnum">{s.customers}</TableCell>
+                    <TableCell align="right" className="tnum muted">{s.data}</TableCell>
+                    <TableCell align="right" className="tnum">{s.uptime}%</TableCell>
+                    <TableCell className="muted">{s.top}</TableCell>
+                    <TableCell
                       style={{
                         color: s.issue ? 'var(--uk-error-deep, #cf121b)' : 'var(--uk-ink-3)',
                       }}
                     >
                       {s.issue ?? '—'}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
         </div>
         {!loading && <TableFooter count={BIZ_SITES.length} noun="sites" />}

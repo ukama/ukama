@@ -1,0 +1,146 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026-present, Ukama Inc.
+#
+# Operations lifted verbatim from interfaces/console (the legacy console)
+# as the Phase-2 API reference. Trim to what each screen needs as screens
+# are wired; run `pnpm codegen` to (re)generate types/hooks.
+
+### Sim Start ###
+query GetSimPoolStats($data: GetSimsInput!) {
+  getSimPoolStats(data: $data) {
+    total
+    available
+    consumed
+    failed
+    esim
+    physical
+  }
+}
+
+query GetSimsFromPool($data: GetSimsInput!) {
+  getSimsFromPool(data: $data) {
+    sims {
+      id
+      qrCode
+      iccid
+      msisdn
+      isAllocated
+      isFailed
+      simType
+      smApAddress
+      activationCode
+      createdAt
+      deletedAt
+      updatedAt
+      isPhysical
+    }
+  }
+}
+
+mutation uploadSims($data: UploadSimsInputDto!) {
+  uploadSims(data: $data) {
+    iccid
+  }
+}
+
+fragment SimPackage on SimPackage {
+  id
+  packageId
+  startDate
+  endDate
+  defaultDuration
+  isActive
+  asExpired
+}
+
+fragment Sim on SimDto {
+  id
+  subscriberId
+  networkId
+  iccid
+  msisdn
+  imsi
+  type
+  status
+  isPhysical
+  trafficPolicy
+  firstActivatedOn
+  lastActivatedOn
+  activationsCount
+  deactivationsCount
+  allocatedAt
+  syncStatus
+  package {
+    ...SimPackage
+  }
+}
+fragment SimAllocationPackage on SimAllocatePackageDto {
+  id
+  packageId
+  startDate
+  endDate
+  isActive
+}
+
+fragment SimAllocation on AllocateSimAPIDto {
+  id
+  subscriber_id
+  network_id
+  package {
+    ...SimAllocationPackage
+  }
+  iccid
+  msisdn
+  imsi
+  type
+  status
+  is_physical
+  traffic_policy
+  allocated_at
+  sync_status
+}
+mutation allocateSim($data: AllocateSimInputDto!) {
+  allocateSim(data: $data) {
+    ...SimAllocation
+  }
+}
+
+mutation toggleSimStatus($data: ToggleSimStatusInputDto!) {
+  toggleSimStatus(data: $data) {
+    simId
+  }
+}
+
+query getSim($data: GetSimInputDto!) {
+  getSim(data: $data) {
+    ...Sim
+  }
+}
+
+query GetSims($data: ListSimsInput!) {
+  getSims(data: $data) {
+    sims {
+      ...Sim
+    }
+  }
+}
+
+### Sim End ###
+
+### Subscriber Start ###
+
+query GetDataUsages($data: SimUsagesInputDto!) {
+  getDataUsages(data: $data) {
+    usages {
+      usage
+      simId
+    }
+  }
+}
+
+##
+
+### Software Start ###

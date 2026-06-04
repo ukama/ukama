@@ -1,0 +1,198 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026-present, Ukama Inc.
+#
+# Operations lifted verbatim from interfaces/console (the legacy console)
+# as the Phase-2 API reference. Trim to what each screen needs as screens
+# are wired; run `pnpm codegen` to (re)generate types/hooks.
+
+# NODE GRAPH
+
+fragment node on Node {
+  id
+  name
+  latitude
+  longitude
+  type
+  attached {
+    id
+    name
+    latitude
+    longitude
+    type
+    site {
+      nodeId
+      siteId
+      networkId
+      addedAt
+    }
+    status {
+      connectivity
+      state
+    }
+  }
+  site {
+    nodeId
+    siteId
+    networkId
+    addedAt
+  }
+  status {
+    connectivity
+    state
+  }
+}
+
+query GetNode($data: NodeInput!) {
+  getNode(data: $data) {
+    ...node
+  }
+}
+
+query GetNodes($data: NodesFilterInput!) {
+  getNodes(data: $data) {
+    nodes {
+      ...node
+    }
+  }
+}
+
+mutation deleteNode($data: NodeInput!) {
+  deleteNodeFromOrg(data: $data) {
+    id
+  }
+}
+
+mutation attachNode($data: AttachNodeInput!) {
+  attachNode(data: $data) {
+    success
+  }
+}
+
+mutation detachhNode($data: NodeInput!) {
+  detachhNode(data: $data) {
+    success
+  }
+}
+
+mutation addNode($data: AddNodeInput!) {
+  addNode(data: $data) {
+    ...node
+  }
+}
+
+mutation releaseNodeFromSite($data: NodeInput!) {
+  releaseNodeFromSite(data: $data) {
+    success
+  }
+}
+
+mutation addNodeToSite($data: AddNodeToSiteInput!) {
+  addNodeToSite(data: $data) {
+    success
+  }
+}
+
+mutation updateNodeState($data: UpdateNodeStateInput!) {
+  updateNodeState(data: $data) {
+    ...node
+  }
+}
+
+query getNodesForSite($siteId: String!) {
+  getNodesForSite(siteId: $siteId) {
+    nodes {
+      ...node
+    }
+  }
+}
+
+mutation UpdateNode($data: UpdateNodeInput!) {
+  updateNode(data: $data) {
+    ...node
+  }
+}
+
+query getNodeApps($data: NodeAppsChangeLogInput!) {
+  getNodeApps(data: $data) {
+    apps {
+      name
+      date
+      version
+      cpu
+      memory
+      notes
+    }
+    type
+  }
+}
+
+query GetNodeState($getNodeStateId: String!) {
+  getNodeState(id: $getNodeStateId) {
+    id
+    nodeId
+    previousStateId
+    previousState
+    currentState
+    createdAt
+  }
+}
+
+mutation RestartNode($data: RestartNodeInputDto!) {
+  restartNode(data: $data) {
+    success
+  }
+}
+
+mutation ToggleInternetSwitch($data: ToggleInternetSwitchInputDto!) {
+  toggleInternetSwitch(data: $data) {
+    success
+  }
+}
+
+mutation ToggleRFStatus($data: ToggleRFStatusInputDto!) {
+  toggleRFStatus(data: $data) {
+    success
+  }
+}
+
+mutation ToggleService($data: ToggleRFStatusInputDto!) {
+  toggleService(data: $data) {
+    success
+  }
+}
+
+### End Node ###
+
+### Health Start ###
+query GetHealthReport($data: GetHealthReportInputDto!) {
+  getHealthReport(data: $data) {
+    id
+    nodeId
+    timestamp
+    system {
+      id
+      healthId
+      name
+      value
+    }
+    capps {
+      id
+      space
+      name
+      tag
+      status
+      resources {
+        id
+        cappId
+        name
+        value
+      }
+    }
+  }
+}
+### Health End ###
+
+### Member Start ###

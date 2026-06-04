@@ -5,16 +5,24 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
+'use client';
 
-/**
- * Filter chip row — status filters with optional counts (chip-filter /
- * PillFilter in the prototype; one component for both lenses).
- */
+/** Filter chip row — clickable MUI Chips with the chipFilter variant. */
+import Chip from '@mui/material/Chip';
+import Stack from '@mui/material/Stack';
+
 export interface FilterChipOption {
   value: string;
   label: string;
   count?: number;
 }
+
+const ACTIVE_SX = {
+  borderColor: 'var(--uk-ac)',
+  color: 'var(--uk-ac-dark)',
+  background: 'var(--uk-ac-soft)',
+  '&:hover': { background: 'var(--uk-ac-soft)' },
+} as const;
 
 export default function FilterChips({
   options,
@@ -26,22 +34,26 @@ export default function FilterChips({
   onChange: (value: string) => void;
 }) {
   return (
-    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+    <Stack direction="row" gap={1} flexWrap="wrap">
       {options.map((o) => (
-        <button
+        <Chip
           key={o.value}
-          type="button"
-          className={`chip-filter${o.value === value ? ' on' : ''}`}
+          variant="chipFilter"
+          clickable
           onClick={() => onChange(o.value)}
-        >
-          {o.label}
-          {o.count != null && (
-            <span className="tnum" style={{ opacity: 0.6 }}>
-              {o.count}
-            </span>
-          )}
-        </button>
+          sx={o.value === value ? ACTIVE_SX : undefined}
+          label={
+            <>
+              {o.label}
+              {o.count != null && (
+                <span className="tnum" style={{ opacity: 0.6 }}>
+                  {o.count}
+                </span>
+              )}
+            </>
+          }
+        />
       ))}
-    </div>
+    </Stack>
   );
 }

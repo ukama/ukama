@@ -10,6 +10,11 @@
 /** Members — people with access to this organization (screens-manage.jsx). */
 import { useState } from 'react';
 import Button from '@mui/material/Button';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
 import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
@@ -27,6 +32,7 @@ import { useToast } from '@/components/ToastProvider';
 import { MEMBERS, ROLE_DESC } from '@/data';
 import type { Member } from '@/data';
 import { useFirstLoad } from '@/lib/useFirstLoad';
+import InviteMemberDialog from './InviteMemberDialog';
 
 function MemberMenu({ m }: { m: Member }) {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
@@ -79,7 +85,7 @@ function MemberMenu({ m }: { m: Member }) {
 
 export default function MembersScreen() {
   const loading = useFirstLoad('members');
-  const toast = useToast();
+  const [showInvite, setShowInvite] = useState(false);
 
   return (
     <div className="page">
@@ -91,7 +97,7 @@ export default function MembersScreen() {
           <Button
             variant="contained"
             startIcon={<PersonAddRounded />}
-            onClick={() => toast('Invite member — dialog lands in the overlays phase')}
+            onClick={() => setShowInvite(true)}
           >
             Invite member
           </Button>
@@ -102,20 +108,20 @@ export default function MembersScreen() {
           {loading ? (
             <SkeletonTable cols={5} rows={5} lead />
           ) : (
-            <table className="tbl">
-              <thead>
-                <tr className="static">
-                  <th>Member</th>
-                  <th>Role</th>
-                  <th>Last active</th>
-                  <th>Status</th>
-                  <th style={{ width: 40 }} />
-                </tr>
-              </thead>
-              <tbody>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Member</TableCell>
+                  <TableCell>Role</TableCell>
+                  <TableCell>Last active</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell sx={{ width: 44 }} />
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {MEMBERS.map((m) => (
-                  <tr key={m.id} className="static">
-                    <td>
+                  <TableRow key={m.id}>
+                    <TableCell>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
                         <span className="av-sm">
                           {m.name
@@ -130,30 +136,31 @@ export default function MembersScreen() {
                           </div>
                         </div>
                       </div>
-                    </td>
-                    <td>
+                    </TableCell>
+                    <TableCell>
                       <div style={{ fontWeight: 600 }}>{m.role}</div>
                       <div className="muted" style={{ fontSize: 12 }}>
                         {ROLE_DESC[m.role]}
                       </div>
-                    </td>
-                    <td className="muted">{m.last}</td>
-                    <td>
+                    </TableCell>
+                    <TableCell className="muted">{m.last}</TableCell>
+                    <TableCell>
                       <StatusBadge status={m.status === 'active' ? 'active' : 'pending'}>
                         {m.status === 'active' ? 'Active' : 'Pending'}
                       </StatusBadge>
-                    </td>
-                    <td>
+                    </TableCell>
+                    <TableCell>
                       <MemberMenu m={m} />
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
         </div>
         {!loading && <TableFooter count={MEMBERS.length} noun="members" />}
       </div>
+      {showInvite && <InviteMemberDialog onClose={() => setShowInvite(false)} />}
     </div>
   );
 }
