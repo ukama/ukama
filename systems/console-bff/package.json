@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "packageManager": "pnpm@9.15.9",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "scripts": {
     "preinstall": "npx only-allow pnpm",
@@ -23,8 +23,9 @@
   },
   "dependencies": {
     "@apollo/datasource-rest": "^6.3.0",
-    "@apollo/server": "^4",
+    "@apollo/server": "^5",
     "@apollo/utils.fetcher": "^2.0.1",
+    "@as-integrations/express4": "^1.0.0",
     "@faker-js/faker": "^8.4.1",
     "@graphql-tools/schema": "^10.0.4",
     "@graphql-yoga/node": "^3.9.1",

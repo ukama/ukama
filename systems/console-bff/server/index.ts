@@ -13,8 +13,9 @@
  * on API_PORT (8090) alongside the legacy gateway; becomes :8080 at cutover.
  */
 import { ApolloServer } from "@apollo/server";
-import { expressMiddleware } from "@apollo/server/express4";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
+// Apollo Server v5: the Express integration lives in its own package.
+import { expressMiddleware } from "@as-integrations/express4";
 import cors from "cors";
 import express from "express";
 import { createServer } from "http";

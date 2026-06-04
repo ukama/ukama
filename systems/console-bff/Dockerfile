@@ -2,7 +2,8 @@
 # One image, two containers: the API server (server/) and the subscriptions
 # service (subscriptions/) run as separate containers (see docker-compose),
 # each with its own command. No supervisord.
-FROM node:18-alpine
+# Node 20+ required by Apollo Server v5.
+FROM node:20-alpine
 
 WORKDIR /app
 
