@@ -5,14 +5,14 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import type { Metadata } from 'next';
-import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
-import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import { roboto, workSans } from '@/fonts';
 import { getCurrentUser } from '@/lib/auth/server';
-import Providers from './providers';
-import './globals.css';
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
+import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
+import type { Metadata } from 'next';
 import './components.css';
+import './globals.css';
+import Providers from './providers';
 
 export const metadata: Metadata = {
   title: 'Ukama Console',

@@ -1,0 +1,77 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2026-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/analytics/collector/pb/gen";
+
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+
+package ukama.analytics.collector.v1;
+
+service CollectorService {
+    rpc Refresh(RefreshRequest) returns (RefreshResponse);
+    rpc GetRefreshState(GetRefreshStateRequest) returns (GetRefreshStateResponse);
+    rpc RebuildRollups(RebuildRollupsRequest) returns (RebuildRollupsResponse);
+    rpc SeedDemo(SeedDemoRequest) returns (SeedDemoResponse);
+}
+
+/* Refresh: source one of registry|subscriber|dataplan|metrics|node|inventory|billing|all */
+message RefreshRequest {
+    string source = 1 [(validator.field) = { string_not_empty: true }];
+}
+
+message RefreshResponse {
+    repeated SourceState states = 1;
+}
+
+message GetRefreshStateRequest {
+}
+
+message SourceState {
+    string source = 1;
+    string status = 2;               /* ok|running|failed|stale */
+    string detail = 3;
+    google.protobuf.Timestamp last_run_at = 4;
+    google.protobuf.Timestamp last_success_at = 5;
+}
+
+message GetRefreshStateResponse {
+    repeated SourceState states = 1;
+    repeated RollupState rollups = 2;
+}
+
+message RollupState {
+    string rollup = 1;               /* e.g. business_sales_daily */
+    google.protobuf.Timestamp watermark = 2;
+    bool dirty = 3;
+}
+
+/* RebuildRollups: family one of business|customer|network|all */
+message RebuildRollupsRequest {
+    string family = 1 [(validator.field) = { string_not_empty: true }];
+    google.protobuf.Timestamp from = 2;
+    google.protobuf.Timestamp to = 3;
+}
+
+message RebuildRollupsResponse {
+    repeated RollupState rollups = 1;
+}
+
+/* SeedDemo: only available in debug mode */
+message SeedDemoRequest {
+    uint32 sites = 1;
+    uint32 nodes = 2;
+    uint32 customers = 3;
+    uint32 days = 4;
+}
+
+message SeedDemoResponse {
+    string detail = 1;
+}
