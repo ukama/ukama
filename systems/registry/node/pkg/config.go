@@ -1,9 +1,9 @@
 /*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at https://mozilla.org/MPL/2.0/.
+*
+* Copyright (c) 2023-present, Ukama Inc.
  */
 
 package pkg
@@ -74,7 +74,7 @@ func NewConfig(name string) *Config {
 			ListenerRoutes: []string{
 				evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline],
 				evt.NodeStateEventRoutingKey[evt.NodeStateEventOffline],
-				"event.cloud.local.{{ .Org}}.node.health.capps.store",
+				"event.cloud.local.{{ .Org}}.node.health.report.store",
 				"event.cloud.local.{{ .Org}}.node.state.node.transition",
 				"event.cloud.local.{{ .Org}}.registry.site.site.create",
 				"event.cloud.local.{{ .Org}}.inventory.component.node.added",
@@ -82,3 +82,4 @@ func NewConfig(name string) *Config {
 		},
 	}
 }
+ 
