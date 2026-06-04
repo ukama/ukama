@@ -5,12 +5,16 @@ type Query {
   getComponentById(componentId: String!): ComponentDto!
   getComponentsByUserId(data: ComponentTypeInputDto!): ComponentsResDto!
   example: String
+  commerceView(networkId: String): CommerceView!
+  inventoryView: InventoryView!
+  membersView: MembersView!
   networkOverview(networkId: String!): NetworkOverview!
   nodesView(networkId: String): NodesView!
   nodeView(nodeId: String!): NodeView!
   simPoolView(simType: String!): SimPoolView!
   sitesView(networkId: String!): SitesView!
   siteView(siteId: String!): SiteView!
+  subscriberView(subscriberId: String!): SubscriberView!
   subscribersView(networkId: String!): SubscribersView!
   getHealthReport(data: GetHealthReportInputDto!): HealthInfo!
   getCountries: CountriesRes!
@@ -194,19 +198,21 @@ enum COMPONENT_TYPE {
   spectrum
 }
 
-type NetworkOverview {
-  networkId: String!
-  network: NetworkSection!
-  nodeStats: NodeStatsSection!
-  siteStats: SitesSection!
-  subscriberStats: SubscriberStatsSection!
-  latestAlerts(limit: Int! = 5): AlertsSection!
-  kpis: GapSection!
+type CommerceView {
+  networkId: String
+  revenue: RevenueSection!
+  plans: PlanStatsSection!
+  invoices(limit: Int! = 20): InvoicesSection!
+  balance: BalanceSection!
 }
 
-type NetworkSection {
+type RevenueSection {
   error: SectionError
-  network: NetworkDto
+  totalPaid: Float
+  totalPending: Float
+  monthPaid: Float
+  prevMonthPaid: Float
+  momPct: Int
 }
 
 """
@@ -228,6 +234,146 @@ enum SectionErrorCode {
   FORBIDDEN
   INTERNAL
   NOT_IMPLEMENTED
+}
+
+type PlanStatsSection {
+  error: SectionError
+  mrr: Float
+  arpu: Float
+  plans: [PlanStatsDto!]
+}
+
+type PlanStatsDto {
+  packageId: String!
+  name: String!
+  amount: Float!
+  currency: String!
+  active: Boolean!
+  attachCount: Int
+  revenue: Float!
+  revenueSharePct: Int!
+}
+
+type InvoicesSection {
+  error: SectionError
+  reports: [ReportDto!]
+}
+
+type BalanceSection {
+  error: SectionError
+  outstandingCount: Int
+  latestUnpaidPeriod: String
+}
+
+type InventoryView {
+  orgName: String!
+  components: ComponentStatsSection!
+  unassignedNodes: NodesSection!
+  simStock: SimPoolStatsSection!
+}
+
+type ComponentStatsSection {
+  error: SectionError
+  total: Int
+  byCategory: [CategoryCountDto!]
+}
+
+type CategoryCountDto {
+  category: String!
+  count: Int!
+}
+
+type NodesSection {
+  error: SectionError
+  nodes: [Node!]
+}
+
+type Node {
+  id: String!
+  name: String!
+  latitude: String!
+  longitude: String!
+  type: NodeTypeEnum!
+  attached: [AttachedNodes!]!
+  site: NodeSite!
+  status: NodeStatus!
+}
+
+"""Node type enums"""
+enum NodeTypeEnum {
+  tnode
+  anode
+  hnode
+  cnode
+}
+
+type AttachedNodes {
+  id: String!
+  name: String!
+  latitude: String!
+  longitude: String!
+  type: NodeTypeEnum!
+  site: NodeSite!
+  status: NodeStatus!
+}
+
+type NodeSite {
+  nodeId: String
+  siteId: String
+  networkId: String
+  addedAt: String
+}
+
+type NodeStatus {
+  connectivity: String!
+  state: String!
+}
+
+type SimPoolStatsSection {
+  error: SectionError
+  total: Int
+  available: Int
+  consumed: Int
+  failed: Int
+  esim: Int
+  physical: Int
+  pctAssigned: Int
+  lowStock: Boolean
+}
+
+type MembersView {
+  orgName: String!
+  team: TeamSection!
+}
+
+type TeamSection {
+  error: SectionError
+  rows: [TeamMemberDto!]
+}
+
+type TeamMemberDto {
+  id: String!
+  name: String
+  email: String
+  role: String!
+  status: String!
+  memberSince: String
+  inviteExpiresAt: String
+}
+
+type NetworkOverview {
+  networkId: String!
+  network: NetworkSection!
+  nodeStats: NodeStatsSection!
+  siteStats: SitesSection!
+  subscriberStats: SubscriberStatsSection!
+  latestAlerts(limit: Int! = 5): AlertsSection!
+  kpis: GapSection!
+}
+
+type NetworkSection {
+  error: SectionError
+  network: NetworkDto
 }
 
 type NetworkDto {
@@ -338,52 +484,6 @@ type NodesView {
   networkId: String
   nodes: NodesSection!
   health: GapSection!
-}
-
-type NodesSection {
-  error: SectionError
-  nodes: [Node!]
-}
-
-type Node {
-  id: String!
-  name: String!
-  latitude: String!
-  longitude: String!
-  type: NodeTypeEnum!
-  attached: [AttachedNodes!]!
-  site: NodeSite!
-  status: NodeStatus!
-}
-
-"""Node type enums"""
-enum NodeTypeEnum {
-  tnode
-  anode
-  hnode
-  cnode
-}
-
-type AttachedNodes {
-  id: String!
-  name: String!
-  latitude: String!
-  longitude: String!
-  type: NodeTypeEnum!
-  site: NodeSite!
-  status: NodeStatus!
-}
-
-type NodeSite {
-  nodeId: String
-  siteId: String
-  networkId: String
-  addedAt: String
-}
-
-type NodeStatus {
-  connectivity: String!
-  state: String!
 }
 
 type NodeView {
@@ -499,18 +599,6 @@ type SimPoolView {
   sims(limit: Int! = 20): PoolSimsSection!
 }
 
-type SimPoolStatsSection {
-  error: SectionError
-  total: Int
-  available: Int
-  consumed: Int
-  failed: Int
-  esim: Int
-  physical: Int
-  pctAssigned: Int
-  lowStock: Boolean
-}
-
 type PoolSimsSection {
   error: SectionError
   sims: [SimPoolResDto!]
@@ -578,16 +666,17 @@ type SiteComponentDto {
   componentName: String
 }
 
-type SubscribersView {
-  networkId: String!
-  subscribers: SubscribersSection!
-  plans: PlansSection!
+type SubscriberView {
+  subscriberId: String!
+  subscriber: SubscriberSection!
+  plans: SubscriberPlansSection!
+  billing: SubscriberBillingSection!
   usage: GapSection!
 }
 
-type SubscribersSection {
+type SubscriberSection {
   error: SectionError
-  subscribers: [SubscriberDto!]
+  subscriber: SubscriberDto
 }
 
 type SubscriberDto {
@@ -629,7 +718,7 @@ type SimPackageDto {
   updated_at: String!
 }
 
-type PlansSection {
+type SubscriberPlansSection {
   error: SectionError
   plans: [PlanNameDto!]
 }
@@ -637,6 +726,49 @@ type PlansSection {
 type PlanNameDto {
   packageId: String!
   name: String!
+}
+
+type SubscriberBillingSection {
+  error: SectionError
+  payments: [PaymentDto!]
+}
+
+type PaymentDto {
+  id: String!
+  itemId: String!
+  itemType: String!
+  amount: String!
+  currency: String!
+  paymentMethod: String!
+  depositedAmount: String!
+  paidAt: String!
+  payerName: String!
+  payerEmail: String!
+  payerPhone: String!
+  correspondent: String!
+  country: String!
+  description: String!
+  status: String!
+  extra: String!
+  failureReason: String!
+  createdAt: String!
+}
+
+type SubscribersView {
+  networkId: String!
+  subscribers: SubscribersSection!
+  plans: PlansSection!
+  usage: GapSection!
+}
+
+type SubscribersSection {
+  error: SectionError
+  subscribers: [SubscriberDto!]
+}
+
+type PlansSection {
+  error: SectionError
+  plans: [PlanNameDto!]
 }
 
 input GetHealthReportInputDto {
@@ -940,27 +1072,6 @@ type PackageMarkupAPIDto {
 
 type PackagesResDto {
   packages: [PackageDto!]!
-}
-
-type PaymentDto {
-  id: String!
-  itemId: String!
-  itemType: String!
-  amount: String!
-  currency: String!
-  paymentMethod: String!
-  depositedAmount: String!
-  paidAt: String!
-  payerName: String!
-  payerEmail: String!
-  payerPhone: String!
-  correspondent: String!
-  country: String!
-  description: String!
-  status: String!
-  extra: String!
-  failureReason: String!
-  createdAt: String!
 }
 
 type PaymentsDto {

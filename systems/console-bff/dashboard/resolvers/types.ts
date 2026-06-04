@@ -20,10 +20,12 @@
  */
 import { Field, Int, ObjectType } from "type-graphql";
 
+import { ReportDto } from "../../billing/resolvers/types";
 import { HealthInfo } from "../../health/resolvers/types";
 import { NetworkDto } from "../../network/resolvers/types";
 import { Node, NodeStateRes } from "../../node/resolvers/types";
 import { NotificationsDto } from "../../notification/resolvers/types";
+import { PaymentDto } from "../../payment/resolver/types";
 import { SimPoolResDto } from "../../sim/resolver/types";
 import { SiteDto } from "../../site/resolvers/types";
 import { Softwares } from "../../software/resolvers/types";
@@ -352,4 +354,218 @@ export class SimPoolView {
 
   stats?: SimPoolStatsSection;
   sims?: PoolSimsSection;
+}
+
+/* ------------------------- commerceView (Phase 3) ------------------------- */
+
+@ObjectType()
+export class RevenueSection {
+  @Field(() => SectionError, { nullable: true })
+  error?: SectionError | null;
+
+  @Field(() => Number, { nullable: true })
+  totalPaid?: number | null;
+
+  @Field(() => Number, { nullable: true })
+  totalPending?: number | null;
+
+  @Field(() => Number, { nullable: true })
+  monthPaid?: number | null;
+
+  @Field(() => Number, { nullable: true })
+  prevMonthPaid?: number | null;
+
+  @Field(() => Int, { nullable: true })
+  momPct?: number | null;
+}
+
+@ObjectType()
+export class PlanStatsDto {
+  @Field()
+  packageId: string;
+
+  @Field()
+  name: string;
+
+  @Field(() => Number)
+  amount: number;
+
+  @Field()
+  currency: string;
+
+  @Field(() => Boolean)
+  active: boolean;
+
+  @Field(() => Int, { nullable: true })
+  attachCount?: number | null;
+
+  @Field(() => Number)
+  revenue: number;
+
+  @Field(() => Int)
+  revenueSharePct: number;
+}
+
+@ObjectType()
+export class PlanStatsSection {
+  @Field(() => SectionError, { nullable: true })
+  error?: SectionError | null;
+
+  @Field(() => Number, { nullable: true })
+  mrr?: number | null;
+
+  @Field(() => Number, { nullable: true })
+  arpu?: number | null;
+
+  @Field(() => [PlanStatsDto], { nullable: true })
+  plans?: PlanStatsDto[] | null;
+}
+
+@ObjectType()
+export class InvoicesSection {
+  @Field(() => SectionError, { nullable: true })
+  error?: SectionError | null;
+
+  @Field(() => [ReportDto], { nullable: true })
+  reports?: ReportDto[] | null;
+}
+
+@ObjectType()
+export class BalanceSection {
+  @Field(() => SectionError, { nullable: true })
+  error?: SectionError | null;
+
+  @Field(() => Int, { nullable: true })
+  outstandingCount?: number | null;
+
+  @Field(() => String, { nullable: true })
+  latestUnpaidPeriod?: string | null;
+}
+
+@ObjectType()
+export class CommerceView {
+  @Field({ nullable: true })
+  networkId?: string;
+
+  revenue?: RevenueSection;
+  plans?: PlanStatsSection;
+  invoices?: InvoicesSection;
+  balance?: BalanceSection;
+}
+
+/* -------------------------- membersView (Phase 3) ------------------------- */
+
+@ObjectType()
+export class TeamMemberDto {
+  @Field()
+  id: string;
+
+  @Field({ nullable: true })
+  name?: string;
+
+  @Field({ nullable: true })
+  email?: string;
+
+  @Field()
+  role: string;
+
+  /** Active | Deactivated | Invited */
+  @Field()
+  status: string;
+
+  @Field({ nullable: true })
+  memberSince?: string;
+
+  @Field({ nullable: true })
+  inviteExpiresAt?: string;
+}
+
+@ObjectType()
+export class TeamSection {
+  @Field(() => SectionError, { nullable: true })
+  error?: SectionError | null;
+
+  @Field(() => [TeamMemberDto], { nullable: true })
+  rows?: TeamMemberDto[] | null;
+}
+
+@ObjectType()
+export class MembersView {
+  @Field()
+  orgName: string;
+
+  team?: TeamSection;
+}
+
+/* ------------------------- inventoryView (Phase 3) ------------------------ */
+
+@ObjectType()
+export class CategoryCountDto {
+  @Field()
+  category: string;
+
+  @Field(() => Int)
+  count: number;
+}
+
+@ObjectType()
+export class ComponentStatsSection {
+  @Field(() => SectionError, { nullable: true })
+  error?: SectionError | null;
+
+  @Field(() => Int, { nullable: true })
+  total?: number | null;
+
+  @Field(() => [CategoryCountDto], { nullable: true })
+  byCategory?: CategoryCountDto[] | null;
+}
+
+@ObjectType()
+export class InventoryView {
+  @Field()
+  orgName: string;
+
+  components?: ComponentStatsSection;
+  unassignedNodes?: NodesSection;
+  simStock?: SimPoolStatsSection;
+}
+
+/* ------------------------- subscriberView (Phase 3) ----------------------- */
+
+@ObjectType()
+export class SubscriberSection {
+  @Field(() => SectionError, { nullable: true })
+  error?: SectionError | null;
+
+  @Field(() => SubscriberDto, { nullable: true })
+  subscriber?: SubscriberDto | null;
+}
+
+@ObjectType()
+export class SubscriberPlansSection {
+  @Field(() => SectionError, { nullable: true })
+  error?: SectionError | null;
+
+  @Field(() => [PlanNameDto], { nullable: true })
+  plans?: PlanNameDto[] | null;
+}
+
+@ObjectType()
+export class SubscriberBillingSection {
+  @Field(() => SectionError, { nullable: true })
+  error?: SectionError | null;
+
+  @Field(() => [PaymentDto], { nullable: true })
+  payments?: PaymentDto[] | null;
+}
+
+@ObjectType()
+export class SubscriberView {
+  @Field()
+  subscriberId: string;
+
+  subscriber?: SubscriberSection;
+  plans?: SubscriberPlansSection;
+  billing?: SubscriberBillingSection;
+  usage?: GapSection;
 }

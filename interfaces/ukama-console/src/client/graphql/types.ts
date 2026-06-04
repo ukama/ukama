@@ -153,6 +153,13 @@ export type AttachedNodes = {
   type: NodeTypeEnum;
 };
 
+export type BalanceSection = {
+  __typename?: 'BalanceSection';
+  error?: Maybe<SectionError>;
+  latestUnpaidPeriod?: Maybe<Scalars['String']['output']>;
+  outstandingCount?: Maybe<Scalars['Int']['output']>;
+};
+
 export type CBooleanResponse = {
   __typename?: 'CBooleanResponse';
   success: Scalars['Boolean']['output'];
@@ -166,6 +173,26 @@ export enum Component_Type {
   Spectrum = 'spectrum',
   Switch = 'switch'
 }
+
+export type CategoryCountDto = {
+  __typename?: 'CategoryCountDto';
+  category: Scalars['String']['output'];
+  count: Scalars['Int']['output'];
+};
+
+export type CommerceView = {
+  __typename?: 'CommerceView';
+  balance: BalanceSection;
+  invoices: InvoicesSection;
+  networkId?: Maybe<Scalars['String']['output']>;
+  plans: PlanStatsSection;
+  revenue: RevenueSection;
+};
+
+
+export type CommerceViewInvoicesArgs = {
+  limit?: Scalars['Int']['input'];
+};
 
 export type Component = {
   __typename?: 'Component';
@@ -189,6 +216,13 @@ export type ComponentDto = {
   type: Scalars['String']['output'];
   userId: Scalars['String']['output'];
   warranty: Scalars['Float']['output'];
+};
+
+export type ComponentStatsSection = {
+  __typename?: 'ComponentStatsSection';
+  byCategory?: Maybe<Array<CategoryCountDto>>;
+  error?: Maybe<SectionError>;
+  total?: Maybe<Scalars['Int']['output']>;
 };
 
 export type ComponentTypeInputDto = {
@@ -434,6 +468,14 @@ export type IdResponse = {
   uuid: Scalars['String']['output'];
 };
 
+export type InventoryView = {
+  __typename?: 'InventoryView';
+  components: ComponentStatsSection;
+  orgName: Scalars['String']['output'];
+  simStock: SimPoolStatsSection;
+  unassignedNodes: NodesSection;
+};
+
 export type InvitationDto = {
   __typename?: 'InvitationDto';
   email: Scalars['String']['output'];
@@ -449,6 +491,12 @@ export type InvitationDto = {
 export type InvitationsResDto = {
   __typename?: 'InvitationsResDto';
   invitations: Array<InvitationDto>;
+};
+
+export type InvoicesSection = {
+  __typename?: 'InvoicesSection';
+  error?: Maybe<SectionError>;
+  reports?: Maybe<Array<ReportDto>>;
 };
 
 export type ItemResDto = {
@@ -484,6 +532,12 @@ export type Members = {
 export type MembersResDto = {
   __typename?: 'MembersResDto';
   members: Array<MemberDto>;
+};
+
+export type MembersView = {
+  __typename?: 'MembersView';
+  orgName: Scalars['String']['output'];
+  team: TeamSection;
 };
 
 export type Mutation = {
@@ -1152,6 +1206,26 @@ export type PlanNameDto = {
   packageId: Scalars['String']['output'];
 };
 
+export type PlanStatsDto = {
+  __typename?: 'PlanStatsDto';
+  active: Scalars['Boolean']['output'];
+  amount: Scalars['Float']['output'];
+  attachCount?: Maybe<Scalars['Int']['output']>;
+  currency: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  packageId: Scalars['String']['output'];
+  revenue: Scalars['Float']['output'];
+  revenueSharePct: Scalars['Int']['output'];
+};
+
+export type PlanStatsSection = {
+  __typename?: 'PlanStatsSection';
+  arpu?: Maybe<Scalars['Float']['output']>;
+  error?: Maybe<SectionError>;
+  mrr?: Maybe<Scalars['Float']['output']>;
+  plans?: Maybe<Array<PlanStatsDto>>;
+};
+
 export type PlansSection = {
   __typename?: 'PlansSection';
   error?: Maybe<SectionError>;
@@ -1177,6 +1251,7 @@ export type ProcessPaymentInputDto = {
 
 export type Query = {
   __typename?: 'Query';
+  commerceView: CommerceView;
   example?: Maybe<Scalars['String']['output']>;
   getApps?: Maybe<Apps>;
   getAppsChangeLog: AppChangeLogs;
@@ -1236,14 +1311,22 @@ export type Query = {
   getTimezones: TimezoneRes;
   getToken: TokenResDto;
   getUser: UserResDto;
+  inventoryView: InventoryView;
+  membersView: MembersView;
   networkOverview: NetworkOverview;
   nodeView: NodeView;
   nodesView: NodesView;
   simPoolView: SimPoolView;
   siteView: SiteView;
   sitesView: SitesView;
+  subscriberView: SubscriberView;
   subscribersView: SubscribersView;
   whoami: WhoamiDto;
+};
+
+
+export type QueryCommerceViewArgs = {
+  networkId?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -1497,6 +1580,11 @@ export type QuerySitesViewArgs = {
 };
 
 
+export type QuerySubscriberViewArgs = {
+  subscriberId: Scalars['String']['input'];
+};
+
+
 export type QuerySubscribersViewArgs = {
   networkId: Scalars['String']['input'];
 };
@@ -1567,6 +1655,16 @@ export type RestartNodesInputDto = {
 export type RestartSiteInputDto = {
   networkId: Scalars['String']['input'];
   siteId: Scalars['String']['input'];
+};
+
+export type RevenueSection = {
+  __typename?: 'RevenueSection';
+  error?: Maybe<SectionError>;
+  momPct?: Maybe<Scalars['Int']['output']>;
+  monthPaid?: Maybe<Scalars['Float']['output']>;
+  prevMonthPaid?: Maybe<Scalars['Float']['output']>;
+  totalPaid?: Maybe<Scalars['Float']['output']>;
+  totalPending?: Maybe<Scalars['Float']['output']>;
 };
 
 export enum Sim_Status {
@@ -1897,6 +1995,12 @@ export type StringResponse = {
   message: Scalars['String']['output'];
 };
 
+export type SubscriberBillingSection = {
+  __typename?: 'SubscriberBillingSection';
+  error?: Maybe<SectionError>;
+  payments?: Maybe<Array<PaymentDto>>;
+};
+
 export type SubscriberDto = {
   __typename?: 'SubscriberDto';
   address: Scalars['String']['output'];
@@ -1925,6 +2029,18 @@ export type SubscriberMetricsByNetworkDto = {
   inactive: Scalars['Float']['output'];
   terminated: Scalars['Float']['output'];
   total: Scalars['Float']['output'];
+};
+
+export type SubscriberPlansSection = {
+  __typename?: 'SubscriberPlansSection';
+  error?: Maybe<SectionError>;
+  plans?: Maybe<Array<PlanNameDto>>;
+};
+
+export type SubscriberSection = {
+  __typename?: 'SubscriberSection';
+  error?: Maybe<SectionError>;
+  subscriber?: Maybe<SubscriberDto>;
 };
 
 export type SubscriberSimDto = {
@@ -1978,6 +2094,15 @@ export type SubscriberToSimsDto = {
   subscriberId: Scalars['String']['output'];
 };
 
+export type SubscriberView = {
+  __typename?: 'SubscriberView';
+  billing: SubscriberBillingSection;
+  plans: SubscriberPlansSection;
+  subscriber: SubscriberSection;
+  subscriberId: Scalars['String']['output'];
+  usage: GapSection;
+};
+
 export type Subscribers = {
   __typename?: 'Subscribers';
   activeSubscribers: Scalars['String']['output'];
@@ -2022,6 +2147,23 @@ export enum Timeframe_Filter {
   Latest = 'LATEST',
   Unknown = 'UNKNOWN'
 }
+
+export type TeamMemberDto = {
+  __typename?: 'TeamMemberDto';
+  email?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  inviteExpiresAt?: Maybe<Scalars['String']['output']>;
+  memberSince?: Maybe<Scalars['String']['output']>;
+  name?: Maybe<Scalars['String']['output']>;
+  role: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+};
+
+export type TeamSection = {
+  __typename?: 'TeamSection';
+  error?: Maybe<SectionError>;
+  rows?: Maybe<Array<TeamMemberDto>>;
+};
 
 export type TimezoneDto = {
   __typename?: 'TimezoneDto';

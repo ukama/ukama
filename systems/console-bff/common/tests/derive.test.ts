@@ -8,11 +8,14 @@
 import "reflect-metadata";
 
 import {
+  countByCategory,
   countNodes,
+  derivePlanStats,
   deriveSimPool,
   groupBy,
   groupNodeCountsBySite,
   subscriberActivity,
+  summarizeRevenue,
 } from "../../dashboard/derive";
 import { notImplementedSection, runSection } from "../../dashboard/section";
 import { SectionErrorCode } from "../../dashboard/types";
@@ -72,6 +75,103 @@ describe("derive helpers", () => {
     );
     expect(groups.get("a")).toHaveLength(2);
     expect(groups.size).toBe(1);
+  });
+});
+
+describe("commerce derivations (Phase 3)", () => {
+  const pay = (
+    amount: string,
+    status: string,
+    paidAt: string,
+    itemType = "invoice",
+    itemId = "x"
+  ) => ({ amount, status, paidAt, itemType, itemId });
+
+  it("summarizeRevenue splits paid/pending and computes MoM", () => {
+    const now = new Date("2026-06-04T00:00:00Z");
+    const summary = summarizeRevenue(
+      [
+        pay("100", "success", "2026-06-01"),
+        pay("50", "paid", "2026-05-20"),
+        pay("25", "pending", "2026-06-02"),
+        pay("10", "completed", "2026-04-01"),
+      ],
+      now
+    );
+    expect(summary).toEqual({
+      totalPaid: 160,
+      totalPending: 25,
+      monthPaid: 100,
+      prevMonthPaid: 50,
+      momPct: 100,
+    });
+  });
+
+  it("summarizeRevenue returns null MoM without a base month", () => {
+    const now = new Date("2026-06-04T00:00:00Z");
+    expect(
+      summarizeRevenue([pay("100", "success", "2026-06-01")], now).momPct
+    ).toBeNull();
+  });
+
+  it("derivePlanStats attributes package revenue and attach counts", () => {
+    const plans = [
+      {
+        uuid: "p1",
+        name: "Standard",
+        active: true,
+        amount: 10,
+        currency: "USD",
+      },
+      { uuid: "p2", name: "Starter", active: true, amount: 5, currency: "USD" },
+    ];
+    const payments = [
+      pay("30", "success", "2026-06-01", "package", "p1"),
+      pay("10", "success", "2026-06-01", "package", "p2"),
+      pay("99", "pending", "2026-06-01", "package", "p1"), // unpaid: excluded
+      pay("70", "success", "2026-06-01", "invoice", "p1"), // not a package
+    ];
+    const sims = [
+      { packageId: "p1", isActive: true },
+      { packageId: "p1", isActive: true },
+      { packageId: "p2", isActive: false },
+    ];
+    const stats = derivePlanStats(plans, payments, sims);
+    expect(stats[0]).toMatchObject({
+      packageId: "p1",
+      attachCount: 2,
+      revenue: 30,
+      revenueSharePct: 75,
+    });
+    expect(stats[1]).toMatchObject({
+      packageId: "p2",
+      attachCount: 0,
+      revenue: 10,
+      revenueSharePct: 25,
+    });
+  });
+
+  it("derivePlanStats keeps attachCount null without network scope", () => {
+    const stats = derivePlanStats(
+      [{ uuid: "p1", name: "S", active: true, amount: 1, currency: "USD" }],
+      [],
+      null
+    );
+    expect(stats[0].attachCount).toBeNull();
+    expect(stats[0].revenueSharePct).toBe(0);
+  });
+
+  it("countByCategory groups components", () => {
+    expect(
+      countByCategory([
+        { category: "ACCESS" },
+        { category: "ACCESS" },
+        { category: undefined },
+      ])
+    ).toEqual([
+      { category: "ACCESS", count: 2 },
+      { category: "uncategorized", count: 1 },
+    ]);
   });
 });
 
