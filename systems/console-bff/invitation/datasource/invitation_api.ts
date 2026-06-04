@@ -104,7 +104,14 @@ class InvitationApi extends BaseRESTDataSource {
             );
             logger.info(`Invitations res: ${JSON.stringify(res)}`);
             if (res && res.status !== INVITATION_STATUS.INVITE_ACCEPTED) {
-              await addInStore(store, `${email}/${res.id}`, baseURL.message);
+              // Cache the org→system base URL with a 1h TTL so a moved/
+              // re-provisioned system isn't pinned to a stale address.
+              await addInStore(
+                store,
+                `${email}/${res.id}`,
+                baseURL.message,
+                3600
+              );
               invitations.invitations.push({
                 id: res.id,
                 name: res.name,

@@ -23,6 +23,7 @@ import {
 } from "../enums";
 import { Messages, UnauthenticatedError } from "../errors";
 import { logger } from "../logger";
+import { setRequestId } from "../logger/requestContext";
 import { Meta, ResponseObj, THeaders } from "../types";
 import { RoleToNotificationScopes } from "../utils/roleToNotificationScope";
 
@@ -77,6 +78,10 @@ const parseToken = (
 };
 
 const parseGatewayHeaders = (reqHeader: any): THeaders => {
+  // Bind the gateway-forwarded correlation id to this request's async context
+  // so subgraph resolver/datasource logs carry it (no middleware available on
+  // the standalone Apollo servers).
+  setRequestId(reqHeader["x-request-id"] ?? "");
   return {
     auth: {
       Authorization: reqHeader["x-session-token"] ?? "",

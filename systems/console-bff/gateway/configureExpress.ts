@@ -5,9 +5,11 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import express from "express";
+import express, { type Request } from "express";
 import expressWinston from "express-winston";
 
+import { runWithRequestId } from "../common/logger/requestContext";
+import { REQUEST_ID_HEADER, requestId } from "../common/middleware/requestId";
 import { rateLimit, securityHeaders } from "../common/middleware/security";
 
 function configureExpress(logger: any) {
@@ -16,9 +18,22 @@ function configureExpress(logger: any) {
   app.set("trust proxy", 1);
   app.disable("x-powered-by");
 
+  app.use(requestId());
+  // Bind the correlation id to the async context for the whole request so
+  // every downstream log line (resolvers, datasources) carries it.
+  app.use((req, _res, next) =>
+    runWithRequestId(req.headers[REQUEST_ID_HEADER] as string, () => next())
+  );
   app.use(securityHeaders());
   app.use(rateLimit());
-  app.use(expressWinston.logger({ winstonInstance: logger }));
+  app.use(
+    expressWinston.logger({
+      winstonInstance: logger,
+      dynamicMeta: (req: Request) => ({
+        requestId: req.headers[REQUEST_ID_HEADER],
+      }),
+    })
+  );
   return app;
 }
 

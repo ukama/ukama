@@ -51,6 +51,7 @@ const COMPOSE_MAX_DELAY_MS = 30_000;
 
 interface GatewayContext {
   headers: THeaders;
+  requestId: string;
 }
 
 /** Readiness flag flipped true once the gateway has composed and is listening. */
@@ -82,6 +83,10 @@ const loadServers = async () => {
           // Auth headers are read from the per-request context so
           // concurrent requests can never leak each other's identity.
           if (request.http?.headers.get("introspection") === "true") return;
+          // Propagate the correlation id to the subgraph for tracing.
+          if (context?.requestId) {
+            request.http?.headers.set("x-request-id", context.requestId);
+          }
           const requestHeaders = context?.headers;
           if (!requestHeaders) return;
           request.http?.headers.set(
@@ -202,6 +207,7 @@ const startServer = async () => {
     expressMiddleware(server, {
       context: async ({ req }) => ({
         headers: parseExpressHeaders(req.headers),
+        requestId: (req.headers["x-request-id"] as string) ?? "",
       }),
     })
   );
