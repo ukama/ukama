@@ -1,0 +1,41 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026-present, Ukama Inc.
+#
+# Operations lifted verbatim from interfaces/console (the legacy console)
+# as the Phase-2 API reference. Trim to what each screen needs as screens
+# are wired; run `pnpm codegen` to (re)generate types/hooks.
+
+fragment Org on OrgDto {
+  id
+  name
+  owner
+  country
+  currency
+  createdAt
+  certificate
+  isDeactivated
+}
+
+query getOrgs {
+  getOrgs {
+    user
+    ownerOf {
+      ...Org
+    }
+    memberOf {
+      ...Org
+    }
+  }
+}
+
+query getOrg {
+  getOrg {
+    ...Org
+  }
+}
+### Org End ###
+
+### Package Start ###

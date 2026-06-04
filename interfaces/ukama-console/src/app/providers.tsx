@@ -9,6 +9,7 @@
 
 import { useEffect } from 'react';
 import CssBaseline from '@mui/material/CssBaseline';
+import ApolloClientProvider from '@/client/ApolloClientProvider';
 import { ThemeProvider } from '@mui/material/styles';
 import ToastProvider from '@/components/ToastProvider';
 import { useUiPrefs } from '@/lib/store';
@@ -33,7 +34,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <ThemeProvider theme={theme} defaultMode="light">
       <CssBaseline enableColorScheme />
       <ThemeAttributes />
-      <ToastProvider>{children}</ToastProvider>
+      <ApolloClientProvider>
+        <ToastProvider>{children}</ToastProvider>
+      </ApolloClientProvider>
     </ThemeProvider>
   );
 }
