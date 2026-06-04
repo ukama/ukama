@@ -20,72 +20,72 @@ mutation UpdateNotification($isRead: Boolean!, $updateNotificationId: String!) {
 
 # Subscriptions
 
-query GetNotifications(
-  $networkId: String!
-  $orgId: String!
-  $orgName: String!
-  $role: String!
-  $startTimestamp: String!
-  $subscriberId: String!
-  $userId: String!
-) {
-  getNotifications(
-    networkId: $networkId
-    orgId: $orgId
-    orgName: $orgName
-    startTimestamp: $startTimestamp
-    subscriberId: $subscriberId
-    userId: $userId
-    role: $role
-  ) {
-    notifications {
-      id
-      type
-      scope
-      title
-      isRead
-      eventKey
-      createdAt
-      resourceId
-      description
-      redirect {
-        action
-        title
-      }
-    }
-  }
-}
+# query GetNotifications(
+#   $networkId: String!
+#   $orgId: String!
+#   $orgName: String!
+#   $role: String!
+#   $startTimestamp: String!
+#   $subscriberId: String!
+#   $userId: String!
+# ) {
+#   getNotifications(
+#     networkId: $networkId
+#     orgId: $orgId
+#     orgName: $orgName
+#     startTimestamp: $startTimestamp
+#     subscriberId: $subscriberId
+#     userId: $userId
+#     role: $role
+#   ) {
+#     notifications {
+#       id
+#       type
+#       scope
+#       title
+#       isRead
+#       eventKey
+#       createdAt
+#       resourceId
+#       description
+#       redirect {
+#         action
+#         title
+#       }
+#     }
+#   }
+# }
 
-subscription NotificationSubscription(
-  $networkId: String!
-  $orgId: String!
-  $orgName: String!
-  $role: String!
-  $startTimestamp: String!
-  $subscriberId: String!
-  $userId: String!
-) {
-  notificationSubscription(
-    networkId: $networkId
-    orgId: $orgId
-    orgName: $orgName
-    startTimestamp: $startTimestamp
-    subscriberId: $subscriberId
-    userId: $userId
-    role: $role
-  ) {
-    id
-    type
-    scope
-    title
-    isRead
-    eventKey
-    createdAt
-    resourceId
-    description
-    redirect {
-      action
-      title
-    }
-  }
-}
+# subscription NotificationSubscription(
+#   $networkId: String!
+#   $orgId: String!
+#   $orgName: String!
+#   $role: String!
+#   $startTimestamp: String!
+#   $subscriberId: String!
+#   $userId: String!
+# ) {
+#   notificationSubscription(
+#     networkId: $networkId
+#     orgId: $orgId
+#     orgName: $orgName
+#     startTimestamp: $startTimestamp
+#     subscriberId: $subscriberId
+#     userId: $userId
+#     role: $role
+#   ) {
+#     id
+#     type
+#     scope
+#     title
+#     isRead
+#     eventKey
+#     createdAt
+#     resourceId
+#     description
+#     redirect {
+#       action
+#       title
+#     }
+#   }
+# }

@@ -21,6 +21,18 @@ import type { CodegenConfig } from '@graphql-codegen/cli';
 
 const GW = process.env.NEXT_PUBLIC_API_GW ?? 'http://localhost:8080';
 
+/**
+ * Schema endpoint for introspection. The preflight header satisfies Apollo
+ * Server's CSRF prevention (same header the Apollo Sandbox sends); no auth is
+ * needed because the gateway lets introspection past the auth gate when
+ * ENABLE_INTROSPECTION is set.
+ */
+const schema = {
+  [`${GW}/graphql`]: {
+    headers: { 'apollo-require-preflight': 'true' },
+  },
+};
+
 const hooksConfig = {
   withHooks: true,
   // ergonomic generated names: useGetSitesQuery etc.
@@ -31,11 +43,11 @@ const config: CodegenConfig = {
   generates: {
     // ---- API gateway ----
     'src/client/graphql/types.ts': {
-      schema: `${GW}/graphql`,
+      schema,
       plugins: ['typescript'],
     },
     'src/client/': {
-      schema: `${GW}/graphql`,
+      schema,
       documents: ['src/client/graphql/!(metrics).graphql'],
       preset: 'near-operation-file',
       presetConfig: {

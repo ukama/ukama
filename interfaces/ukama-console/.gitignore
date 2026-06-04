@@ -28,7 +28,6 @@ npm-debug.log*
 pnpm-debug.log*
 
 # graphql codegen output
-src/client/**/*.generated.ts
 src/client/graphql/types.ts
 src/client/graphql/metrics-types.ts
 ukama-console-API-PLAN.md
