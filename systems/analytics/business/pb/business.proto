@@ -1,0 +1,204 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2026-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/analytics/business/pb/gen";
+
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+
+package ukama.analytics.business.v1;
+
+service BusinessService {
+    rpc GetHome(GetHomeRequest) returns (GetHomeResponse);
+    rpc GetSalesOverview(GetSalesOverviewRequest) returns (GetSalesOverviewResponse);
+    rpc GetPackagePerformance(GetPackagePerformanceRequest) returns (GetPackagePerformanceResponse);
+    rpc GetBillingSummary(GetBillingSummaryRequest) returns (GetBillingSummaryResponse);
+    rpc GetSites(GetSitesRequest) returns (GetSitesResponse);
+    rpc GetSite(GetSiteRequest) returns (GetSiteResponse);
+    rpc GetInventoryReadiness(GetInventoryReadinessRequest) returns (GetInventoryReadinessResponse);
+}
+
+/* Shared query window. period: today|week|month|custom */
+message Window {
+    string period = 1;
+    google.protobuf.Timestamp from = 2;
+    google.protobuf.Timestamp to = 3;
+    string timezone = 4;
+}
+
+message Kpi {
+    string key = 1;
+    double value = 2;
+    string formatted = 3;
+    double delta = 4;
+    string delta_period = 5;
+    bool stale = 6;
+    google.protobuf.Timestamp as_of = 7;
+}
+
+message Point {
+    google.protobuf.Timestamp time = 1;
+    double value = 2;
+}
+
+message TimeSeries {
+    string key = 1;
+    repeated Point points = 2;
+}
+
+message NamedValue {
+    string name = 1;
+    string id = 2;
+    double value = 3;
+}
+
+message Meta {
+    uint32 count = 1;
+    uint32 page = 2;
+    uint32 size = 3;
+    uint32 pages = 4;
+}
+
+/* GetHome */
+message GetHomeRequest {
+    string network_id = 1;
+    Window window = 2;
+}
+
+message GetHomeResponse {
+    repeated Kpi kpis = 1;                  /* revenue_today, active_customers, data_sold, network_uptime */
+    repeated SiteSummary sites = 2;
+    repeated NamedValue top_packages = 3;
+    repeated ActivityItem recent_activity = 4;
+}
+
+message SiteSummary {
+    string site_id = 1;
+    string name = 2;
+    string status = 3;
+    double revenue = 4;
+    uint32 customers = 5;
+}
+
+message ActivityItem {
+    string routing_key = 1;
+    string description = 2;
+    google.protobuf.Timestamp occurred_at = 3;
+}
+
+/* GetSalesOverview */
+message GetSalesOverviewRequest {
+    string network_id = 1;
+    Window window = 2;
+}
+
+message GetSalesOverviewResponse {
+    repeated Kpi kpis = 1;                  /* revenue, purchases, avg_purchase, paid_customers (+deltas) */
+    TimeSeries revenue_trend = 2;
+    repeated NamedValue revenue_by_site = 3;
+    repeated NamedValue revenue_by_package = 4;
+}
+
+/* GetPackagePerformance */
+message GetPackagePerformanceRequest {
+    string network_id = 1;
+    Window window = 2;
+    uint32 page = 3;
+    uint32 page_size = 4;
+}
+
+message PackageRow {
+    string package_id = 1 [(validator.field) = { string_not_empty: true }];
+    string name = 2;
+    double price = 3;
+    string validity = 4;
+    string data_quota = 5;
+    string status = 6;
+    uint32 sold_count = 7;
+    double revenue = 8;
+    double data_used = 9;
+    uint32 active_subscribers = 10;
+}
+
+message GetPackagePerformanceResponse {
+    repeated Kpi kpis = 1;                  /* mrr, arpu, top_plan_revenue, top_plan_share */
+    repeated PackageRow packages = 2;
+    repeated NamedValue revenue_mix = 3;
+    Meta meta = 4;
+}
+
+/* GetBillingSummary */
+message GetBillingSummaryRequest {
+    Window window = 1;
+    uint32 page = 2;
+    uint32 page_size = 3;
+}
+
+message InvoiceRow {
+    string invoice_id = 1;
+    double amount = 2;
+    string status = 3;
+    google.protobuf.Timestamp generated_at = 4;
+}
+
+message GetBillingSummaryResponse {
+    repeated Kpi kpis = 1;                  /* current_balance, last_invoice_amount */
+    repeated InvoiceRow invoices = 2;
+    google.protobuf.Timestamp last_invoice_date = 3;
+    Meta meta = 4;
+}
+
+/* GetSites / GetSite */
+message GetSitesRequest {
+    string network_id = 1;
+    Window window = 2;
+    uint32 page = 3;
+    uint32 page_size = 4;
+}
+
+message BusinessSiteRow {
+    string site_id = 1;
+    string name = 2;
+    string status = 3;
+    double revenue = 4;
+    double revenue_today = 5;
+    uint32 customers = 6;
+    double data_used = 7;
+    double uptime = 8;
+    string top_package = 9;
+    string issue = 10;
+    double latitude = 11;
+    double longitude = 12;
+}
+
+message GetSitesResponse {
+    repeated BusinessSiteRow sites = 1;
+    Meta meta = 2;
+}
+
+message GetSiteRequest {
+    string site_id = 1 [(validator.field) = { string_not_empty: true }];
+    Window window = 2;
+}
+
+message GetSiteResponse {
+    BusinessSiteRow site = 1;
+    repeated Kpi kpis = 2;
+    TimeSeries revenue_trend = 3;
+}
+
+/* GetInventoryReadiness */
+message GetInventoryReadinessRequest {
+    string network_id = 1;
+}
+
+message GetInventoryReadinessResponse {
+    repeated Kpi kpis = 1;                  /* available_sims, active_sims, available_nodes, deployed_nodes */
+}

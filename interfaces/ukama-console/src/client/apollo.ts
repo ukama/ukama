@@ -19,10 +19,10 @@
  *  - auth: cookies (`credentials: 'include'`) against the API gateway,
  *    same as the legacy console; session/role headers via proxy.ts later
  */
+import { env } from '@/env';
 import { ApolloClient, HttpLink, from } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { InvalidationPolicyCache } from '@nerdwallet/apollo-cache-policies';
-import { env } from '@/env';
 
 const MINUTE = 60 * 1000;
 

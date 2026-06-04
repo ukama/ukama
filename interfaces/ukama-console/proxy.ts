@@ -20,7 +20,6 @@
  * link bounces through /api/auth/refresh, and the next navigation re-mints
  * from the still-valid session. No background polling.
  */
-import { NextResponse, type NextRequest } from 'next/server';
 import { env } from '@/env';
 import { decodeUserFromToken, fetchSession } from '@/lib/auth/token';
 import {
@@ -30,6 +29,7 @@ import {
   USER_HEADER,
   type AuthUser,
 } from '@/lib/auth/types';
+import { NextResponse, type NextRequest } from 'next/server';
 
 const encodeUser = (user: AuthUser): string =>
   Buffer.from(JSON.stringify(user), 'utf8').toString('base64');
