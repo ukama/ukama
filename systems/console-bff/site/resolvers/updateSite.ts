@@ -19,6 +19,6 @@ export class UpdateSiteResolver {
     @Ctx() ctx: Context
   ): Promise<SiteDto> {
     const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.updateSite(baseURL, siteId, data);
+    return dataSources.site.updateSite(baseURL, siteId, data);
   }
 }

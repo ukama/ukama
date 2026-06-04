@@ -11,7 +11,7 @@ import NetworkAPI from "../datasource/network_api";
 export interface Context {
   baseURL: string;
   dataSources: {
-    dataSource: NetworkAPI;
+    network: NetworkAPI;
   };
   headers: THeaders;
 }

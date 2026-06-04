@@ -11,7 +11,7 @@ import NodeAPI from "../dataSource/node-api";
 export interface Context {
   baseURL: string;
   dataSources: {
-    dataSource: NodeAPI;
+    node: NodeAPI;
   };
   headers: THeaders;
 }

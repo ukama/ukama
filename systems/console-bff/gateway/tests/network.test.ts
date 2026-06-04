@@ -59,7 +59,7 @@ const createContextValue = async () => {
   const baseURL = await getBaseURL(SUB_GRAPHS.network.name, orgName, store);
   return {
     dataSources: {
-      dataSource: networkApi,
+      network: networkApi,
     },
     baseURL: baseURL.message,
     headers: parsedHeaders,
@@ -69,7 +69,7 @@ const createContextValue = async () => {
 describe("Network API integration test", () => {
   let server: ApolloServer<Context>;
   let contextValue: {
-    dataSources: { dataSource: NetworkApi };
+    dataSources: { network: NetworkApi };
     baseURL: string;
     headers: THeaders;
   };

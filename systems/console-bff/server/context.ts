@@ -17,14 +17,26 @@ import type { IncomingHttpHeaders } from "http";
 
 import { THeaders } from "../common/types";
 import { parseExpressHeaders, parseToken } from "../common/utils";
+import InvitationAPI from "../invitation/datasource/invitation_api";
+import MemberAPI from "../member/datasource/member_api";
+import NetworkAPI from "../network/datasource/network_api";
+import NodeAPI from "../node/dataSource/node-api";
 import OrgAPI from "../org/datasource/org_api";
+import SiteAPI from "../site/datasource/site_api";
+import UserAPI from "../user/datasource/user_api";
 
 export interface AppContext {
   headers: THeaders;
   requestId: string;
   dataSources: {
     org: OrgAPI;
-    // …one key per module, extended per Phase B batch (user, network, …)
+    user: UserAPI;
+    network: NetworkAPI;
+    site: SiteAPI;
+    member: MemberAPI;
+    invitation: InvitationAPI;
+    node: NodeAPI;
+    // …one key per module, extended per Phase B batch
   };
 }
 
@@ -46,4 +58,10 @@ export const buildHeaders = (reqHeaders: IncomingHttpHeaders): THeaders => {
 /** Per-request datasource instances (same lifecycle as the old subgraphs). */
 export const buildDataSources = (): AppContext["dataSources"] => ({
   org: new OrgAPI(),
+  user: new UserAPI(),
+  network: new NetworkAPI(),
+  site: new SiteAPI(),
+  member: new MemberAPI(),
+  invitation: new InvitationAPI(),
+  node: new NodeAPI(),
 });

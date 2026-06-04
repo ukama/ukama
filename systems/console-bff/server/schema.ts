@@ -16,11 +16,23 @@ import { GraphQLScalarType, GraphQLSchema } from "graphql";
 import { DateTimeResolver } from "graphql-scalars";
 import * as tq from "type-graphql";
 
+import invitationResolvers from "../invitation/resolver";
+import memberResolvers from "../member/resolver";
+import networkResolvers from "../network/resolvers";
+import nodeResolvers from "../node/resolvers";
 import orgResolvers from "../org/resolver";
+import siteResolvers from "../site/resolvers";
+import userResolvers from "../user/resolver";
 
 const ALL_RESOLVERS = [
   ...orgResolvers,
-  // …appended per Phase B batch (user, network, site, member, …)
+  ...userResolvers,
+  ...networkResolvers,
+  ...siteResolvers,
+  ...memberResolvers,
+  ...invitationResolvers,
+  ...nodeResolvers,
+  // …appended per Phase B batch
 ] as tq.NonEmptyArray<CallableFunction>;
 
 export const buildAppSchema = async (): Promise<GraphQLSchema> => {

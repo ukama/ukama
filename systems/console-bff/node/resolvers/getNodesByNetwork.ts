@@ -18,6 +18,6 @@ export class GetNodesByNetworkResolver {
     @Ctx() context: Context
   ) {
     const { dataSources, baseURL } = context;
-    return await dataSources.dataSource.getNodesByNetwork(baseURL, networkId);
+    return await dataSources.node.getNodesByNetwork(baseURL, networkId);
   }
 }

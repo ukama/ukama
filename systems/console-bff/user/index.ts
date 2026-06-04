@@ -24,7 +24,7 @@ const runServer = async () => {
       return {
         headers: hedares,
         dataSources: {
-          dataSource: new UserAPI(),
+          user: new UserAPI(),
         },
       };
     },

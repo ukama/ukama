@@ -18,6 +18,6 @@ export class GetNetworkResolver {
     @Ctx() ctx: Context
   ): Promise<NetworkDto> {
     const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.getNetwork(baseURL, networkId);
+    return dataSources.network.getNetwork(baseURL, networkId);
   }
 }

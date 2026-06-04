@@ -19,6 +19,6 @@ export class GetSiteResolver {
   ): Promise<SiteDto> {
     const { dataSources, baseURL } = ctx;
 
-    return dataSources.dataSource.getSite(baseURL, siteId);
+    return dataSources.site.getSite(baseURL, siteId);
   }
 }

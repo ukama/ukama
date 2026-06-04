@@ -20,6 +20,6 @@ export class UpdateMemberResolver {
     @Ctx() ctx: Context
   ): Promise<CBooleanResponse> {
     const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.updateMember(baseURL, memberId, data);
+    return dataSources.member.updateMember(baseURL, memberId, data);
   }
 }

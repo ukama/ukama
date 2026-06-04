@@ -19,10 +19,7 @@ export class SetDefaultNetworkResolver {
     @Ctx() ctx: Context
   ): Promise<CBooleanResponse> {
     const { dataSources, baseURL } = ctx;
-    const res = await dataSources.dataSource.setDefaultNetwork(
-      baseURL,
-      data.id
-    );
+    const res = await dataSources.network.setDefaultNetwork(baseURL, data.id);
     return {
       success: res.success,
     };

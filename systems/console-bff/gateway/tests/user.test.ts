@@ -38,12 +38,12 @@ async function startServer() {
 
 describe("USER API integration test", () => {
   let server: ApolloServer<Context>;
-  let contextValue: { dataSources: { dataSource: UserApi }; headers: THeaders };
+  let contextValue: { dataSources: { user: UserApi }; headers: THeaders };
   beforeAll(async () => {
     server = await startServer();
     contextValue = {
       dataSources: {
-        dataSource: userApi,
+        user: userApi,
       },
       headers: parsedHeaders,
     };

@@ -18,7 +18,7 @@ export class DeleteNodeFromOrgResolver {
     @Ctx() context: Context
   ) {
     const { dataSources, baseURL } = context;
-    return await dataSources.dataSource.deleteNodeFromOrg(baseURL, {
+    return await dataSources.node.deleteNodeFromOrg(baseURL, {
       id: data.id,
     });
   }

@@ -15,6 +15,6 @@ export class GetNetworksResolver {
   @Query(() => NetworksResDto)
   async getNetworks(@Ctx() ctx: Context): Promise<NetworksResDto> {
     const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.getNetworks(baseURL);
+    return dataSources.network.getNetworks(baseURL);
   }
 }

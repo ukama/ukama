@@ -18,6 +18,6 @@ export class GetNodesByStateResolver {
     @Ctx() context: Context
   ) {
     const { dataSources, baseURL } = context;
-    return await dataSources.dataSource.getNodesByState(baseURL, data);
+    return await dataSources.node.getNodesByState(baseURL, data);
   }
 }

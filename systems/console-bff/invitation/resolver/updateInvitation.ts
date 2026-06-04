@@ -18,6 +18,6 @@ export class UpdateInvitationResolver {
     @Ctx() ctx: Context
   ): Promise<UpdateInvitationResDto> {
     const { dataSources } = ctx;
-    return await dataSources.dataSource.updateInvitation(data);
+    return await dataSources.invitation.updateInvitation(data);
   }
 }

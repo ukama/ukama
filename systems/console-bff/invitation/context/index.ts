@@ -11,7 +11,7 @@ import InvitationAPI from "../datasource/invitation_api";
 export interface Context {
   baseURL: string;
   dataSources: {
-    dataSource: InvitationAPI;
+    invitation: InvitationAPI;
   };
   headers: THeaders;
 }

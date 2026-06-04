@@ -15,7 +15,7 @@ export class AddNodeResolver {
   @Mutation(() => Node)
   async addNode(@Arg("data") data: AddNodeInput, @Ctx() context: Context) {
     const { dataSources, baseURL } = context;
-    return await dataSources.dataSource.addNode(baseURL, {
+    return await dataSources.node.addNode(baseURL, {
       id: data.id,
       name: data.name,
     });
