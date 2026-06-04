@@ -40,7 +40,9 @@ export type AddNodeToSiteInput = {
 
 export type AddPackagSimResDto = {
   __typename?: 'AddPackagSimResDto';
+  error?: Maybe<Scalars['String']['output']>;
   packageId?: Maybe<Scalars['String']['output']>;
+  success?: Maybe<Scalars['Boolean']['output']>;
 };
 
 export type AddPackageInputDto = {
@@ -75,6 +77,12 @@ export type AddSiteInputDto = {
   power_id: Scalars['String']['input'];
   spectrum_id: Scalars['String']['input'];
   switch_id: Scalars['String']['input'];
+};
+
+export type AlertsSection = {
+  __typename?: 'AlertsSection';
+  error?: Maybe<SectionError>;
+  notifications?: Maybe<Array<NotificationsDto>>;
 };
 
 export type AllocateSimApiDto = {
@@ -289,6 +297,11 @@ export type FeeDto = {
   units: Scalars['Float']['output'];
 };
 
+export type GapSection = {
+  __typename?: 'GapSection';
+  error?: Maybe<SectionError>;
+};
+
 export type GetHealthReportInputDto = {
   id: Scalars['String']['input'];
   nodeId: Scalars['String']['input'];
@@ -396,6 +409,12 @@ export type HealthResourceInfo = {
   value: Scalars['String']['output'];
 };
 
+export type HealthSection = {
+  __typename?: 'HealthSection';
+  error?: Maybe<SectionError>;
+  health?: Maybe<HealthInfo>;
+};
+
 export type HealthSystemInfo = {
   __typename?: 'HealthSystemInfo';
   healthId: Scalars['String']['output'];
@@ -499,7 +518,7 @@ export type Mutation = {
   toggleRFStatus: CBooleanResponse;
   toggleService: CBooleanResponse;
   toggleSimStatus: SimStatusResDto;
-  updateFirstVisit: UserFistVisitResDto;
+  updateFirstVisit: UserFirstVisitResDto;
   updateInvitation: UpdateInvitationResDto;
   updateMember: CBooleanResponse;
   updateNode: Node;
@@ -665,12 +684,12 @@ export type MutationToggleSimStatusArgs = {
 
 
 export type MutationUpdateFirstVisitArgs = {
-  data: UserFistVisitInputDto;
+  data: UserFirstVisitInputDto;
 };
 
 
 export type MutationUpdateInvitationArgs = {
-  data: UpateInvitationInputDto;
+  data: UpdateInvitationInputDto;
 };
 
 
@@ -779,6 +798,28 @@ export type NetworkDto = {
   trafficPolicy: Scalars['Float']['output'];
 };
 
+export type NetworkOverview = {
+  __typename?: 'NetworkOverview';
+  kpis: GapSection;
+  latestAlerts: AlertsSection;
+  network: NetworkSection;
+  networkId: Scalars['String']['output'];
+  nodeStats: NodeStatsSection;
+  siteStats: SitesSection;
+  subscriberStats: SubscriberStatsSection;
+};
+
+
+export type NetworkOverviewLatestAlertsArgs = {
+  limit?: Scalars['Int']['input'];
+};
+
+export type NetworkSection = {
+  __typename?: 'NetworkSection';
+  error?: Maybe<SectionError>;
+  network?: Maybe<NetworkDto>;
+};
+
 export type NetworkStats = {
   __typename?: 'NetworkStats';
   activeSubscriber: Scalars['Float']['output'];
@@ -844,6 +885,12 @@ export type NodeLatestMetric = {
   value: Array<Scalars['Float']['output']>;
 };
 
+export type NodeSection = {
+  __typename?: 'NodeSection';
+  error?: Maybe<SectionError>;
+  node?: Maybe<Node>;
+};
+
 export type NodeSite = {
   __typename?: 'NodeSite';
   addedAt?: Maybe<Scalars['String']['output']>;
@@ -870,6 +917,20 @@ export type NodeStateRes = {
   previousStateId?: Maybe<Scalars['String']['output']>;
 };
 
+export type NodeStateSection = {
+  __typename?: 'NodeStateSection';
+  error?: Maybe<SectionError>;
+  stateHistory?: Maybe<NodeStateRes>;
+};
+
+export type NodeStatsSection = {
+  __typename?: 'NodeStatsSection';
+  error?: Maybe<SectionError>;
+  offline?: Maybe<Scalars['Int']['output']>;
+  online?: Maybe<Scalars['Int']['output']>;
+  total?: Maybe<Scalars['Int']['output']>;
+};
+
 export type NodeStatus = {
   __typename?: 'NodeStatus';
   connectivity: Scalars['String']['output'];
@@ -884,6 +945,17 @@ export enum NodeTypeEnum {
   Tnode = 'tnode'
 }
 
+export type NodeView = {
+  __typename?: 'NodeView';
+  health: HealthSection;
+  kpis: GapSection;
+  node: NodeSection;
+  nodeId: Scalars['String']['output'];
+  radioStatus: GapSection;
+  software: SoftwareSection;
+  stateHistory: NodeStateSection;
+};
+
 export type Nodes = {
   __typename?: 'Nodes';
   nodes: Array<Node>;
@@ -896,6 +968,25 @@ export type NodesFilterInput = {
   siteId?: InputMaybe<Scalars['String']['input']>;
   state?: InputMaybe<Scalars['String']['input']>;
   type?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type NodesSection = {
+  __typename?: 'NodesSection';
+  error?: Maybe<SectionError>;
+  nodes?: Maybe<Array<Node>>;
+};
+
+export type NodesView = {
+  __typename?: 'NodesView';
+  health: GapSection;
+  networkId?: Maybe<Scalars['String']['output']>;
+  nodes: NodesSection;
+};
+
+export type NotificationRedirectDto = {
+  __typename?: 'NotificationRedirectDto';
+  action: Scalars['String']['output'];
+  title: Scalars['String']['output'];
 };
 
 export type NotificationResDto = {
@@ -917,8 +1008,11 @@ export type NotificationsDto = {
   __typename?: 'NotificationsDto';
   createdAt: Scalars['String']['output'];
   description: Scalars['String']['output'];
+  eventKey: Scalars['String']['output'];
   id: Scalars['String']['output'];
   isRead: Scalars['Boolean']['output'];
+  redirect?: Maybe<NotificationRedirectDto>;
+  resourceId: Scalars['String']['output'];
   scope: Notification_Scope;
   title: Scalars['String']['output'];
   type: Notification_Type;
@@ -1052,6 +1146,24 @@ export type PaymentsDto = {
   payments: Array<PaymentDto>;
 };
 
+export type PlanNameDto = {
+  __typename?: 'PlanNameDto';
+  name: Scalars['String']['output'];
+  packageId: Scalars['String']['output'];
+};
+
+export type PlansSection = {
+  __typename?: 'PlansSection';
+  error?: Maybe<SectionError>;
+  plans?: Maybe<Array<PlanNameDto>>;
+};
+
+export type PoolSimsSection = {
+  __typename?: 'PoolSimsSection';
+  error?: Maybe<SectionError>;
+  sims?: Maybe<Array<SimPoolResDto>>;
+};
+
 export type ProcessPaymentDto = {
   __typename?: 'ProcessPaymentDto';
   payment: PaymentDto;
@@ -1124,6 +1236,13 @@ export type Query = {
   getTimezones: TimezoneRes;
   getToken: TokenResDto;
   getUser: UserResDto;
+  networkOverview: NetworkOverview;
+  nodeView: NodeView;
+  nodesView: NodesView;
+  simPoolView: SimPoolView;
+  siteView: SiteView;
+  sitesView: SitesView;
+  subscribersView: SubscribersView;
   whoami: WhoamiDto;
 };
 
@@ -1347,6 +1466,41 @@ export type QueryGetUserArgs = {
   userId: Scalars['String']['input'];
 };
 
+
+export type QueryNetworkOverviewArgs = {
+  networkId: Scalars['String']['input'];
+};
+
+
+export type QueryNodeViewArgs = {
+  nodeId: Scalars['String']['input'];
+};
+
+
+export type QueryNodesViewArgs = {
+  networkId?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QuerySimPoolViewArgs = {
+  simType: Scalars['String']['input'];
+};
+
+
+export type QuerySiteViewArgs = {
+  siteId: Scalars['String']['input'];
+};
+
+
+export type QuerySitesViewArgs = {
+  networkId: Scalars['String']['input'];
+};
+
+
+export type QuerySubscribersViewArgs = {
+  networkId: Scalars['String']['input'];
+};
+
 export enum Role_Type {
   RoleAdmin = 'ROLE_ADMIN',
   RoleInvalid = 'ROLE_INVALID',
@@ -1426,6 +1580,24 @@ export enum Sim_Types {
   Test = 'test',
   UkamaData = 'ukama_data',
   Unknown = 'unknown'
+}
+
+/** Typed failure of one section of a composite query. The section's data field resolves to null and a SectionError describes why, so the UI can distinguish 'failed' from 'genuinely empty'. */
+export type SectionError = {
+  __typename?: 'SectionError';
+  code: SectionErrorCode;
+  message: Scalars['String']['output'];
+  section: Scalars['String']['output'];
+};
+
+/** Machine-readable failure code for a composite query section. UI branches on this code; `message` is for display/logs only. */
+export enum SectionErrorCode {
+  Forbidden = 'FORBIDDEN',
+  Internal = 'INTERNAL',
+  NotFound = 'NOT_FOUND',
+  NotImplemented = 'NOT_IMPLEMENTED',
+  UpstreamError = 'UPSTREAM_ERROR',
+  UpstreamTimeout = 'UPSTREAM_TIMEOUT'
 }
 
 export type SetDefaultNetworkInputDto = {
@@ -1522,6 +1694,31 @@ export type SimPoolStatsDto = {
   total: Scalars['Float']['output'];
 };
 
+export type SimPoolStatsSection = {
+  __typename?: 'SimPoolStatsSection';
+  available?: Maybe<Scalars['Int']['output']>;
+  consumed?: Maybe<Scalars['Int']['output']>;
+  error?: Maybe<SectionError>;
+  esim?: Maybe<Scalars['Int']['output']>;
+  failed?: Maybe<Scalars['Int']['output']>;
+  lowStock?: Maybe<Scalars['Boolean']['output']>;
+  pctAssigned?: Maybe<Scalars['Int']['output']>;
+  physical?: Maybe<Scalars['Int']['output']>;
+  total?: Maybe<Scalars['Int']['output']>;
+};
+
+export type SimPoolView = {
+  __typename?: 'SimPoolView';
+  simType: Scalars['String']['output'];
+  sims: PoolSimsSection;
+  stats: SimPoolStatsSection;
+};
+
+
+export type SimPoolViewSimsArgs = {
+  limit?: Scalars['Int']['input'];
+};
+
 export type SimStatusResDto = {
   __typename?: 'SimStatusResDto';
   simId?: Maybe<Scalars['String']['output']>;
@@ -1572,6 +1769,19 @@ export type Site = {
   siteName: Scalars['String']['output'];
 };
 
+export type SiteComponentDto = {
+  __typename?: 'SiteComponentDto';
+  componentId?: Maybe<Scalars['String']['output']>;
+  componentName?: Maybe<Scalars['String']['output']>;
+  elementType: Scalars['String']['output'];
+};
+
+export type SiteComponentsSection = {
+  __typename?: 'SiteComponentsSection';
+  components?: Maybe<Array<SiteComponentDto>>;
+  error?: Maybe<SectionError>;
+};
+
 export type SiteDto = {
   __typename?: 'SiteDto';
   accessId: Scalars['String']['output'];
@@ -1590,6 +1800,37 @@ export type SiteDto = {
   switchId: Scalars['String']['output'];
 };
 
+export type SiteNodeCountDto = {
+  __typename?: 'SiteNodeCountDto';
+  offline: Scalars['Int']['output'];
+  online: Scalars['Int']['output'];
+  siteId: Scalars['String']['output'];
+  total: Scalars['Int']['output'];
+};
+
+export type SiteNodeCountsSection = {
+  __typename?: 'SiteNodeCountsSection';
+  counts?: Maybe<Array<SiteNodeCountDto>>;
+  error?: Maybe<SectionError>;
+};
+
+export type SiteSection = {
+  __typename?: 'SiteSection';
+  error?: Maybe<SectionError>;
+  site?: Maybe<SiteDto>;
+};
+
+export type SiteView = {
+  __typename?: 'SiteView';
+  components: SiteComponentsSection;
+  financials: GapSection;
+  kpis: GapSection;
+  nodes: NodesSection;
+  power: GapSection;
+  site: SiteSection;
+  siteId: Scalars['String']['output'];
+};
+
 export type SitesInputDto = {
   networkId?: InputMaybe<Scalars['String']['input']>;
 };
@@ -1597,6 +1838,21 @@ export type SitesInputDto = {
 export type SitesResDto = {
   __typename?: 'SitesResDto';
   sites: Array<SiteDto>;
+};
+
+export type SitesSection = {
+  __typename?: 'SitesSection';
+  error?: Maybe<SectionError>;
+  sites?: Maybe<Array<SiteDto>>;
+};
+
+export type SitesView = {
+  __typename?: 'SitesView';
+  financials: GapSection;
+  kpis: GapSection;
+  networkId: Scalars['String']['output'];
+  nodeCounts: SiteNodeCountsSection;
+  sites: SitesSection;
 };
 
 export type Software = {
@@ -1614,6 +1870,12 @@ export type Software = {
   space: Scalars['String']['output'];
   status: SoftwareStatusEnum;
   updatedAt: Scalars['String']['output'];
+};
+
+export type SoftwareSection = {
+  __typename?: 'SoftwareSection';
+  error?: Maybe<SectionError>;
+  softwares?: Maybe<Softwares>;
 };
 
 /** Software status enums */
@@ -1702,6 +1964,14 @@ export type SubscriberSimsResDto = {
   sims: Array<SubscriberSimDto>;
 };
 
+export type SubscriberStatsSection = {
+  __typename?: 'SubscriberStatsSection';
+  active?: Maybe<Scalars['Int']['output']>;
+  error?: Maybe<SectionError>;
+  inactive?: Maybe<Scalars['Int']['output']>;
+  total?: Maybe<Scalars['Int']['output']>;
+};
+
 export type SubscriberToSimsDto = {
   __typename?: 'SubscriberToSimsDto';
   sims: Array<SubscriberSimsDto>;
@@ -1718,6 +1988,20 @@ export type Subscribers = {
 export type SubscribersResDto = {
   __typename?: 'SubscribersResDto';
   subscribers: Array<SubscriberDto>;
+};
+
+export type SubscribersSection = {
+  __typename?: 'SubscribersSection';
+  error?: Maybe<SectionError>;
+  subscribers?: Maybe<Array<SubscriberDto>>;
+};
+
+export type SubscribersView = {
+  __typename?: 'SubscribersView';
+  networkId: Scalars['String']['output'];
+  plans: PlansSection;
+  subscribers: SubscribersSection;
+  usage: GapSection;
 };
 
 export type SubscriptionDto = {
@@ -1775,7 +2059,7 @@ export type TokenResDto = {
   token: Scalars['String']['output'];
 };
 
-export type UpateInvitationInputDto = {
+export type UpdateInvitationInputDto = {
   email: Scalars['String']['input'];
   id: Scalars['String']['input'];
   status: Invitation_Status;
@@ -1849,15 +2133,15 @@ export type UploadSimsResDto = {
   iccid: Array<Scalars['String']['output']>;
 };
 
-export type UserFistVisitInputDto = {
+export type UserFirstVisitInputDto = {
   email: Scalars['String']['input'];
   firstVisit: Scalars['Boolean']['input'];
   name: Scalars['String']['input'];
   userId: Scalars['String']['input'];
 };
 
-export type UserFistVisitResDto = {
-  __typename?: 'UserFistVisitResDto';
+export type UserFirstVisitResDto = {
+  __typename?: 'UserFirstVisitResDto';
   firstVisit: Scalars['Boolean']['output'];
 };
 

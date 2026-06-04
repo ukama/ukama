@@ -7,18 +7,22 @@
  */
 'use client';
 
-/** Sites — card grid with status count chips (screens-console.jsx). */
-import { useState } from 'react';
+/** Sites — card grid with status count chips, wired to `sitesView`. */
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import CellTowerRounded from '@mui/icons-material/CellTowerRounded';
 import ErrorOutlineRounded from '@mui/icons-material/ErrorOutlineRounded';
+import Skeleton from '@mui/material/Skeleton';
+
+import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
 import { EmptyState } from '@/components/EmptyState';
 import FilterChips from '@/components/FilterChips';
 import PageHeader from '@/components/PageHeader';
 import SearchField from '@/components/SearchField';
 import StatusBadge from '@/components/StatusBadge';
-import { SITES } from '@/data';
 import type { Site, UkamaNode } from '@/data';
+import { useUiPrefs } from '@/lib/store';
+import { toSite } from '@/lib/mappers/sites';
 import NodeDrawer from './NodeDrawer';
 import SiteDrawer from './SiteDrawer';
 
@@ -99,17 +103,36 @@ function SiteCard({ s, onOpen }: { s: Site; onOpen: (s: Site) => void }) {
 
 export default function SitesScreen() {
   const router = useRouter();
+  const networkId = useUiPrefs((s) => s.networkId);
   const [filter, setFilter] = useState('all');
   const [q, setQ] = useState('');
   const [drawerSite, setDrawerSite] = useState<Site | null>(null);
   const [drawerNode, setDrawerNode] = useState<UkamaNode | null>(null);
+
+  const { data, loading, refetch } = useSitesListQuery({
+    variables: { networkId },
+    skip: !networkId,
+  });
+  const sitesSection = data?.sitesView.sites;
+  const sites: Site[] = useMemo(() => {
+    const countsBySite = new Map(
+      (data?.sitesView.nodeCounts.counts ?? []).map((c) => [
+        c.siteId,
+        { total: c.total, online: c.online },
+      ])
+    );
+    return (sitesSection?.sites ?? []).map((s) =>
+      toSite(s, countsBySite.get(s.id))
+    );
+  }, [sitesSection?.sites, data?.sitesView.nodeCounts.counts]);
+
   const counts = {
-    all: SITES.length,
-    online: SITES.filter((s) => s.status === 'online').length,
-    degraded: SITES.filter((s) => s.status === 'degraded').length,
-    offline: SITES.filter((s) => s.status === 'offline').length,
+    all: sites.length,
+    online: sites.filter((s) => s.status === 'online').length,
+    degraded: sites.filter((s) => s.status === 'degraded').length,
+    offline: sites.filter((s) => s.status === 'offline').length,
   };
-  const list = SITES.filter(
+  const list = sites.filter(
     (s) =>
       (filter === 'all' || s.status === filter) &&
       s.name.toLowerCase().includes(q.toLowerCase()),
@@ -120,7 +143,7 @@ export default function SitesScreen() {
     <div className="page">
       <PageHeader
         title="Sites"
-        count={SITES.length}
+        count={sites.length}
         sub="Physical locations where your network is installed."
       />
       <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -136,15 +159,35 @@ export default function SitesScreen() {
           ]}
         />
       </div>
-      <div className="tile-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))' }}>
-        {list.map((s) => (
-          <SiteCard key={s.id} s={s} onOpen={open} />
-        ))}
-      </div>
-      {list.length === 0 && (
-        <div className="card">
-          <EmptyState art="search" title="No matching sites" sub="Try a different filter or search term." />
+      {loading ? (
+        <div className="tile-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))' }}>
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} variant="rounded" sx={{ height: 150 }} />
+          ))}
         </div>
+      ) : sitesSection?.error ? (
+        <div className="card">
+          <EmptyState
+            art="error"
+            title="Couldn't load sites"
+            sub={sitesSection.error.message}
+            cta="Try again"
+            onCta={() => refetch()}
+          />
+        </div>
+      ) : (
+        <>
+          <div className="tile-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))' }}>
+            {list.map((s) => (
+              <SiteCard key={s.id} s={s} onOpen={open} />
+            ))}
+          </div>
+          {list.length === 0 && (
+            <div className="card">
+              <EmptyState art="search" title="No matching sites" sub="Try a different filter or search term." />
+            </div>
+          )}
+        </>
       )}
       {drawerSite && (
         <SiteDrawer

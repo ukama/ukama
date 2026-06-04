@@ -1,0 +1,73 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026-present, Ukama Inc.
+
+# Node detail screen — one query over the nodeView composite.
+
+query NodeDetail($nodeId: String!) {
+  nodeView(nodeId: $nodeId) {
+    nodeId
+    node {
+      error {
+        ...SectionErrorFields
+      }
+      node {
+        ...ViewNode
+        latitude
+        longitude
+        attached {
+          id
+          name
+        }
+      }
+    }
+    health {
+      error {
+        ...SectionErrorFields
+      }
+      health {
+        timestamp
+        system {
+          name
+          value
+        }
+      }
+    }
+    software {
+      error {
+        ...SectionErrorFields
+      }
+      softwares {
+        software {
+          name
+          status
+          currentVersion
+          desiredVersion
+          releaseDate
+        }
+      }
+    }
+    stateHistory {
+      error {
+        ...SectionErrorFields
+      }
+      stateHistory {
+        currentState
+        previousState
+        createdAt
+      }
+    }
+    kpis {
+      error {
+        ...SectionErrorFields
+      }
+    }
+    radioStatus {
+      error {
+        ...SectionErrorFields
+      }
+    }
+  }
+}

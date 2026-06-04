@@ -7,17 +7,22 @@
  */
 'use client';
 
-/** Nodes — radio hardware card grid (screens-console.jsx). */
+/** Nodes — radio hardware card grid, wired to the `nodesView` composite. */
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import PlaceRounded from '@mui/icons-material/PlaceRounded';
 import RouterRounded from '@mui/icons-material/RouterRounded';
 import SettingsInputAntennaRounded from '@mui/icons-material/SettingsInputAntennaRounded';
+import Skeleton from '@mui/material/Skeleton';
+
+import { useNodesListQuery } from '@/client/graphql/nodes-list.generated';
+import { EmptyState } from '@/components/EmptyState';
 import FilterChips from '@/components/FilterChips';
 import PageHeader from '@/components/PageHeader';
 import StatusBadge from '@/components/StatusBadge';
-import { NODES } from '@/data';
 import type { UkamaNode } from '@/data';
+import { useUiPrefs } from '@/lib/store';
+import { toUkamaNode } from '@/lib/mappers/nodes';
 import NodeDrawer from './NodeDrawer';
 
 function NodeCard({ n, onOpen }: { n: UkamaNode; onOpen: (n: UkamaNode) => void }) {
@@ -81,15 +86,27 @@ function NodeCard({ n, onOpen }: { n: UkamaNode; onOpen: (n: UkamaNode) => void 
 
 export default function NodesScreen() {
   const router = useRouter();
+  const networkId = useUiPrefs((s) => s.networkId);
   const [filter, setFilter] = useState('all');
   const [drawerNode, setDrawerNode] = useState<UkamaNode | null>(null);
+
+  const { data, loading, refetch } = useNodesListQuery({
+    variables: { networkId },
+    skip: !networkId,
+  });
+  const nodesSection = data?.nodesView.nodes;
+  const nodes: UkamaNode[] = useMemo(
+    () => (nodesSection?.nodes ?? []).map((n) => toUkamaNode(n)),
+    [nodesSection?.nodes]
+  );
+
   const counts = {
-    all: NODES.length,
-    online: NODES.filter((n) => n.status === 'online').length,
-    degraded: NODES.filter((n) => n.status === 'degraded' || n.status === 'configuring').length,
-    offline: NODES.filter((n) => n.status === 'offline').length,
+    all: nodes.length,
+    online: nodes.filter((n) => n.status === 'online').length,
+    degraded: nodes.filter((n) => n.status === 'degraded' || n.status === 'configuring').length,
+    offline: nodes.filter((n) => n.status === 'offline').length,
   };
-  const list = NODES.filter(
+  const list = nodes.filter(
     (n) =>
       filter === 'all' ||
       n.status === filter ||
@@ -98,7 +115,7 @@ export default function NodesScreen() {
 
   return (
     <div className="page">
-      <PageHeader title="Nodes" count={NODES.length} sub="Radio hardware deployed across your sites." />
+      <PageHeader title="Nodes" count={nodes.length} sub="Radio hardware deployed across your sites." />
       <div style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
         <FilterChips
           value={filter}
@@ -111,11 +128,29 @@ export default function NodesScreen() {
           ]}
         />
       </div>
-      <div className="tile-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
-        {list.map((n) => (
-          <NodeCard key={n.id} n={n} onOpen={(node) => setDrawerNode(node)} />
-        ))}
-      </div>
+      {loading ? (
+        <div className="tile-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} variant="rounded" sx={{ height: 132 }} />
+          ))}
+        </div>
+      ) : nodesSection?.error ? (
+        <EmptyState
+          art="error"
+          title="Couldn't load nodes"
+          sub={nodesSection.error.message}
+          cta="Try again"
+          onCta={() => refetch()}
+        />
+      ) : list.length === 0 ? (
+        <EmptyState art="node" title="No nodes" sub="No nodes match this filter." />
+      ) : (
+        <div className="tile-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+          {list.map((n) => (
+            <NodeCard key={n.id} n={n} onOpen={(node) => setDrawerNode(node)} />
+          ))}
+        </div>
+      )}
       {drawerNode && (
         <NodeDrawer
           node={drawerNode}

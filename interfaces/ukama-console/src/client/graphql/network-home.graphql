@@ -1,0 +1,65 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026-present, Ukama Inc.
+
+# Network home screen — one query over the networkOverview composite.
+
+query NetworkHome($networkId: String!, $alertLimit: Int! = 5) {
+  networkOverview(networkId: $networkId) {
+    networkId
+    network {
+      error {
+        ...SectionErrorFields
+      }
+      network {
+        id
+        name
+        isDefault
+      }
+    }
+    nodeStats {
+      error {
+        ...SectionErrorFields
+      }
+      total
+      online
+      offline
+    }
+    siteStats {
+      error {
+        ...SectionErrorFields
+      }
+      sites {
+        ...ViewSite
+      }
+    }
+    subscriberStats {
+      error {
+        ...SectionErrorFields
+      }
+      total
+      active
+      inactive
+    }
+    latestAlerts(limit: $alertLimit) {
+      error {
+        ...SectionErrorFields
+      }
+      notifications {
+        id
+        title
+        description
+        type
+        isRead
+        createdAt
+      }
+    }
+    kpis {
+      error {
+        ...SectionErrorFields
+      }
+    }
+  }
+}

@@ -27,11 +27,16 @@ const GW = process.env.NEXT_PUBLIC_API_GW ?? 'http://localhost:8080';
  * needed because the gateway lets introspection past the auth gate when
  * ENABLE_INTROSPECTION is set.
  */
-const schema = {
-  [`${GW}/graphql`]: {
-    headers: { 'apollo-require-preflight': 'true' },
-  },
-};
+const schema = process.env.SCHEMA_PATH
+  ? // Offline mode: SDL file exported from the BFF (SCHEMA_PATH=schema.graphql
+    // pnpm codegen) — used by CI's contract check and when the gateway isn't
+    // running locally.
+    process.env.SCHEMA_PATH
+  : {
+      [`${GW}/graphql`]: {
+        headers: { 'apollo-require-preflight': 'true' },
+      },
+    };
 
 const hooksConfig = {
   withHooks: true,

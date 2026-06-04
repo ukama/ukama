@@ -1,0 +1,50 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2026-present, Ukama Inc.
+ */
+
+/**
+ * Maps BFF composite Node data onto the existing UkamaNode view-model so the
+ * card/drawer/table components stay unchanged. cpu/mem/temp/fw/up are
+ * metrics-phase data (backend gaps #6) — zero/null placeholders until then;
+ * the screens render them as "—" via the §4.5 contract.
+ */
+import type { ViewNodeFragment } from '@/client/graphql/views-shared.generated';
+import type { UkamaNode } from '@/data';
+
+const NODE_TYPE_LABEL: Record<string, UkamaNode['type']> = {
+  tnode: 'Tower node',
+  anode: 'Amplifier node',
+  hnode: 'Tower node',
+  cnode: 'Tower node',
+};
+
+export const toNodeStatus = (node: ViewNodeFragment): UkamaNode['status'] => {
+  const connectivity = node.status.connectivity.toLowerCase();
+  const state = node.status.state.toLowerCase();
+  if (connectivity !== 'online') return 'offline';
+  if (state === 'faulty') return 'degraded';
+  if (state === 'configured' || state === 'unknown') return 'configuring';
+  return 'online';
+};
+
+export const toUkamaNode = (
+  node: ViewNodeFragment,
+  siteName?: string
+): UkamaNode => ({
+  id: node.id,
+  serial: node.id,
+  type: NODE_TYPE_LABEL[node.type] ?? 'Tower node',
+  site: siteName ?? node.site?.siteId ?? '—',
+  status: toNodeStatus(node),
+  // TODO(metrics-phase): cpu/mem/temp/fw/up come from nodeView.kpis —
+  // backend gap #6 (docs in systems/console-bff/docs/backend-gaps.md)
+  cpu: 0,
+  mem: 0,
+  temp: null,
+  fw: '—',
+  up: '—',
+});

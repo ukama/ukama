@@ -1,0 +1,42 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026-present, Ukama Inc.
+
+# SIM pool screen (network + business manage) — one query over the
+# simPoolView composite; both screens use this document.
+
+query SimPoolOverview($simType: String!, $limit: Int! = 20) {
+  simPoolView(simType: $simType) {
+    simType
+    stats {
+      error {
+        ...SectionErrorFields
+      }
+      total
+      available
+      consumed
+      failed
+      esim
+      physical
+      pctAssigned
+      lowStock
+    }
+    sims(limit: $limit) {
+      error {
+        ...SectionErrorFields
+      }
+      sims {
+        id
+        iccid
+        msisdn
+        isAllocated
+        isFailed
+        simType
+        isPhysical
+        createdAt
+      }
+    }
+  }
+}
