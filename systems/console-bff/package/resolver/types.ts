@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import { IsBoolean, IsInt, IsNotEmpty, IsNumber, Min } from "class-validator";
 import { Field, Float, InputType, Int, ObjectType } from "type-graphql";
 
 @ObjectType()
@@ -247,32 +248,44 @@ export class PackagesResDto {
 @InputType()
 export class AddPackageInputDto {
   @Field()
+  @IsNotEmpty()
   name: string;
 
   @Field(() => Int)
+  @IsInt()
+  @Min(1)
   duration: number;
 
   @Field()
+  @IsNotEmpty()
   dataUnit: string;
 
   @Field(() => Float)
+  @IsNumber()
+  @Min(0)
   amount: number;
 
   @Field(() => Int)
+  @IsInt()
+  @Min(0)
   dataVolume: number;
 
   @Field()
+  @IsNotEmpty()
   country: string;
 
   @Field()
+  @IsNotEmpty()
   currency: string;
 }
 
 @InputType()
 export class UpdatePackageInputDto {
   @Field()
+  @IsNotEmpty()
   name: string;
 
   @Field()
+  @IsBoolean()
   active: boolean;
 }

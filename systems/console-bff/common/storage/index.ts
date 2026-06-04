@@ -36,4 +36,9 @@ const removeFromStore = async (
   return await store.remove(key);
 };
 
-export { addInStore, getFromStore, openStore, removeFromStore };
+/** Flushes and closes the LMDB environment (used during graceful shutdown). */
+const closeStore = async (store: RootDatabase): Promise<void> => {
+  await store.close();
+};
+
+export { addInStore, closeStore, getFromStore, openStore, removeFromStore };

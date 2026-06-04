@@ -5,6 +5,13 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import {
+  IsArray,
+  IsBoolean,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+} from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
 
 import { NETWORK_STATUS } from "../../common/enums";
@@ -123,18 +130,27 @@ export class NetworksResDto {
 @InputType()
 export class AddNetworkInputDto {
   @Field()
+  @IsNotEmpty()
   name: string;
 
   @Field({ defaultValue: false })
+  @IsOptional()
+  @IsBoolean()
   isDefault?: boolean;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsNumber()
   budget?: number;
 
   @Field(() => [String], { nullable: true })
+  @IsOptional()
+  @IsArray()
   countries?: string[];
 
   @Field(() => [String], { nullable: true })
+  @IsOptional()
+  @IsArray()
   networks?: string[];
 }
 

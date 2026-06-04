@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import { IsEnum, IsInt, IsOptional, IsUUID } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
 
 import { SIM_STATUS, SIM_TYPES } from "../../common/enums";
@@ -12,21 +13,27 @@ import { SIM_STATUS, SIM_TYPES } from "../../common/enums";
 @InputType()
 export class AllocateSimInputDto {
   @Field()
+  @IsUUID()
   network_id: string;
 
   @Field()
+  @IsUUID()
   package_id: string;
 
   @Field({ nullable: true })
+  @IsOptional()
   iccid?: string;
 
   @Field()
+  @IsEnum(SIM_TYPES)
   sim_type: SIM_TYPES;
 
   @Field()
+  @IsUUID()
   subscriber_id: string;
 
   @Field()
+  @IsInt()
   traffic_policy: number;
 }
 

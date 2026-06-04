@@ -17,19 +17,22 @@ import { ApolloServerPluginInlineTrace } from "@apollo/server/plugin/inlineTrace
 import { json } from "body-parser";
 import cors from "cors";
 import { createServer } from "http";
+import { RootDatabase } from "lmdb";
 
 import {
   AUTH_APP_URL,
   BASE_DOMAIN,
   CONSOLE_APP_URL,
   GATEWAY_PORT,
+  IS_PRODUCTION,
   PLAYGROUND_URL,
   SUBSCRIPTIONS_PORT,
   SUB_GRAPH_LIST,
 } from "../common/configs";
+import { validateEnv } from "../common/configs/validateEnv";
 import { HTTP401Error, HTTP500Error, Messages } from "../common/errors";
 import { logger } from "../common/logger";
-import { openStore } from "../common/storage";
+import { closeStore, openStore } from "../common/storage";
 import { THeaders } from "../common/types";
 import { parseExpressHeaders } from "../common/utils";
 import InitAPI from "../init/datasource/init_api";
@@ -37,9 +40,21 @@ import { configureExpress } from "./configureExpress";
 
 const COOKIE_EXPIRY_TIME = 3017874138705;
 
+// Request body cap — GraphQL operations are small; this blocks payload DoS.
+const JSON_BODY_LIMIT = "1mb";
+
+// Gateway composition retry/backoff so a subgraph that is briefly down at
+// boot doesn't permanently fail startup.
+const COMPOSE_MAX_RETRIES = 30;
+const COMPOSE_BASE_DELAY_MS = 2000;
+const COMPOSE_MAX_DELAY_MS = 30_000;
+
 interface GatewayContext {
   headers: THeaders;
 }
+
+/** Readiness flag flipped true once the gateway has composed and is listening. */
+let isReady = false;
 
 function delay(time: number) {
   return new Promise(resolve => setTimeout(resolve, time));
@@ -82,20 +97,100 @@ const loadServers = async () => {
   return gateway;
 };
 
+/**
+ * Installs SIGTERM/SIGINT handlers that stop accepting new work, drain
+ * in-flight requests, and close the Apollo server, HTTP server and LMDB
+ * store before exiting — so rolling restarts don't drop requests.
+ */
+const registerShutdown = (
+  server: ApolloServer<GatewayContext>,
+  store: RootDatabase
+): void => {
+  let shuttingDown = false;
+  const shutdown = async (signal: string) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    isReady = false; // fail readiness so traffic drains away
+    logger.info(`Received ${signal}, shutting down gracefully...`);
+    try {
+      await server.stop(); // drains via ApolloServerPluginDrainHttpServer
+      await new Promise<void>(resolve => httpServer.close(() => resolve()));
+      await closeStore(store);
+      logger.info("Shutdown complete");
+      process.exit(0);
+    } catch (err) {
+      logger.error(`Error during shutdown: ${err}`);
+      process.exit(1);
+    }
+  };
+  process.on("SIGTERM", () => void shutdown("SIGTERM"));
+  process.on("SIGINT", () => void shutdown("SIGINT"));
+};
+
+/**
+ * Composes the federated gateway and starts the Apollo server, retrying with
+ * exponential backoff so a subgraph that is briefly unavailable at boot does
+ * not permanently fail startup.
+ */
+const startApolloWithRetry = async (): Promise<
+  ApolloServer<GatewayContext>
+> => {
+  let attempt = 0;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    attempt += 1;
+    try {
+      const gateway = await loadServers();
+      const server = new ApolloServer<GatewayContext>({
+        gateway,
+        csrfPrevention: true,
+        // Public introspection is disabled in production; subgraphs are still
+        // introspected internally by the gateway via the introspection header.
+        introspection: !IS_PRODUCTION,
+        plugins: [
+          ApolloServerPluginInlineTrace({}),
+          ApolloServerPluginDrainHttpServer({ httpServer }),
+        ],
+      });
+      await server.start();
+      logger.info(`Gateway composed on attempt ${attempt}`);
+      return server;
+    } catch (err) {
+      if (attempt >= COMPOSE_MAX_RETRIES) {
+        throw new Error(
+          `Gateway composition failed after ${attempt} attempts: ${err}`
+        );
+      }
+      const backoff = Math.min(
+        COMPOSE_BASE_DELAY_MS * 2 ** (attempt - 1),
+        COMPOSE_MAX_DELAY_MS
+      );
+      logger.warn(
+        `Gateway composition attempt ${attempt} failed (a subgraph may be down); retrying in ${backoff}ms: ${err}`
+      );
+      await delay(backoff);
+    }
+  }
+};
+
 const startServer = async () => {
-  await delay(10000);
+  validateEnv();
   const store = openStore();
-  const gateway = await loadServers();
-  const server = new ApolloServer<GatewayContext>({
-    gateway,
-    csrfPrevention: true,
-    plugins: [
-      ApolloServerPluginInlineTrace({}),
-      ApolloServerPluginDrainHttpServer({ httpServer }),
-    ],
+
+  // Liveness: the process is up. Registered before composition so the
+  // container is reported alive while subgraphs are still coming online.
+  app.get("/healthz", (_, res) => {
+    res.status(200).json({ status: "ok" });
   });
 
-  await server.start();
+  // Readiness: only 200 once the gateway has composed and is listening.
+  app.get("/readyz", (_, res) => {
+    if (isReady) res.status(200).json({ status: "ready" });
+    else res.status(503).json({ status: "not-ready" });
+  });
+
+  await delay(10000);
+  const server = await startApolloWithRetry();
 
   app.use(
     "/graphql",
@@ -103,7 +198,7 @@ const startServer = async () => {
       origin: [AUTH_APP_URL, PLAYGROUND_URL, CONSOLE_APP_URL],
       credentials: true,
     }),
-    json(),
+    json({ limit: JSON_BODY_LIMIT }),
     expressMiddleware(server, {
       context: async ({ req }) => ({
         headers: parseExpressHeaders(req.headers),
@@ -114,6 +209,9 @@ const startServer = async () => {
   await new Promise((resolve: any) =>
     httpServer.listen({ port: GATEWAY_PORT }, resolve)
   );
+  isReady = true;
+
+  registerShutdown(server, store);
 
   app.get("/ping", (_, res) => {
     fetch(`localhost:${SUBSCRIPTIONS_PORT}/ping`)
