@@ -11,7 +11,7 @@ import BillingAPI from "../datasource/billing_api";
 export interface Context {
   baseURL: string;
   dataSources: {
-    dataSource: BillingAPI;
+    billing: BillingAPI;
   };
   headers: THeaders;
 }

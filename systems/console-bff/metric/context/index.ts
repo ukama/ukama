@@ -11,7 +11,7 @@ import SubscriberAPI from "../datasource/metric_api";
 export interface Context {
   baseURL: string;
   dataSources: {
-    dataSource: SubscriberAPI;
+    metric: SubscriberAPI;
   };
   headers: THeaders;
 }

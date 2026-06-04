@@ -19,6 +19,6 @@ export class ToggleServiceResolver {
     @Ctx() ctx: Context
   ): Promise<CBooleanResponse> {
     const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.toggleService(baseURL, data);
+    return dataSources.controller.toggleService(baseURL, data);
   }
 }

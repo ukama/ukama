@@ -18,6 +18,6 @@ export class GetTokenResolver {
     @Ctx() ctx: Context
   ): Promise<TokenResDto> {
     const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.getToken(baseURL, paymentId);
+    return dataSources.payment.getToken(baseURL, paymentId);
   }
 }

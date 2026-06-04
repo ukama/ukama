@@ -19,6 +19,6 @@ export class UpdatePackageResolver {
     @Ctx() ctx: Context
   ): Promise<PackageDto> {
     const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.updatePackage(baseURL, packageId, data);
+    return dataSources.package.updatePackage(baseURL, packageId, data);
   }
 }

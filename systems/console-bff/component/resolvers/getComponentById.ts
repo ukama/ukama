@@ -18,6 +18,6 @@ export class GetComponentByIdResolver {
     @Ctx() ctx: Context
   ): Promise<ComponentDto> {
     const { dataSources } = ctx;
-    return dataSources.dataSource.getComponentById(componentId);
+    return dataSources.component.getComponentById(componentId);
   }
 }

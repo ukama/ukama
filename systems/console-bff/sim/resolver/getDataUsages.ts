@@ -20,7 +20,7 @@ export class GetDataUsagesResolver {
   ): Promise<SimDataUsages> {
     const { dataSources, baseURL } = ctx;
 
-    const sims = await dataSources.dataSource.list(baseURL, {
+    const sims = await dataSources.sim.list(baseURL, {
       networkId: data.networkId,
       status: "active",
     });
@@ -44,7 +44,7 @@ export class GetDataUsagesResolver {
 
     const usages = await Promise.all(
       simUsages.map((item: any) =>
-        dataSources.dataSource.getDataUsage(baseURL, {
+        dataSources.sim.getDataUsage(baseURL, {
           type: data.type,
           iccid: item.iccid,
           simId: item.simId,

@@ -32,7 +32,7 @@ const runServer = async () => {
         headers: headers,
         baseURL: baseURL.message,
         dataSources: {
-          dataSource: new NotificationAPI(),
+          notification: new NotificationAPI(),
         },
       };
     },

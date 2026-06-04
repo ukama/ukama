@@ -10,7 +10,7 @@ import componentAPI from "../datasource/component_api";
 
 export interface Context {
   dataSources: {
-    dataSource: componentAPI;
+    component: componentAPI;
   };
   headers: THeaders;
 }

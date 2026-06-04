@@ -18,6 +18,6 @@ export class ToggleSimStatusResolver {
     @Ctx() ctx: Context
   ): Promise<SimStatusResDto> {
     const { dataSources, baseURL } = ctx;
-    return await dataSources.dataSource.toggleSimStatus(baseURL, data);
+    return await dataSources.sim.toggleSimStatus(baseURL, data);
   }
 }

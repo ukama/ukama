@@ -18,6 +18,6 @@ export class AllocateSimResolver {
     @Ctx() ctx: Context
   ): Promise<AllocateSimAPIDto> {
     const { dataSources, baseURL } = ctx;
-    return await dataSources.dataSource.allocateSim(baseURL, data);
+    return await dataSources.sim.allocateSim(baseURL, data);
   }
 }

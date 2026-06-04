@@ -18,6 +18,6 @@ export class GetSubscriberResolver {
     @Ctx() ctx: Context
   ): Promise<SubscriberDto> {
     const { dataSources, baseURL } = ctx;
-    return await dataSources.dataSource.getSubscriber(baseURL, subscriberId);
+    return await dataSources.subscriber.getSubscriber(baseURL, subscriberId);
   }
 }

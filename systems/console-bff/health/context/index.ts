@@ -11,7 +11,7 @@ import HealthApi from "../datasource/health_api";
 export interface Context {
   baseURL: string;
   dataSources: {
-    dataSource: HealthApi;
+    health: HealthApi;
   };
   headers: THeaders;
 }

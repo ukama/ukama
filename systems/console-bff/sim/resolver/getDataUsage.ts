@@ -18,6 +18,6 @@ export class GetDataUsageResolver {
     @Ctx() ctx: Context
   ): Promise<SimDataUsage> {
     const { dataSources, baseURL } = ctx;
-    return await dataSources.dataSource.getDataUsage(baseURL, data);
+    return await dataSources.sim.getDataUsage(baseURL, data);
   }
 }

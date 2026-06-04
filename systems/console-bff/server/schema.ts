@@ -9,19 +9,33 @@
 /**
  * Single merged schema for the consolidated API server — plain type-graphql,
  * no federation (the modules share no entity references; see
- * CONSOLIDATION-DESIGN §2). Module resolver arrays are appended here as each
- * Phase B batch migrates.
+ * CONSOLIDATION-DESIGN §2). Every module's resolvers, plus the planning-tool
+ * (Prisma) resolvers, are composed here.
  */
 import { GraphQLScalarType, GraphQLSchema } from "graphql";
 import { DateTimeResolver } from "graphql-scalars";
 import * as tq from "type-graphql";
 
+import billingResolvers from "../billing/resolvers";
+import componentResolvers from "../component/resolvers";
+import controllerResolvers from "../controller/resolvers";
+import healthResolvers from "../health/resolvers";
+import initResolvers from "../init/resolver";
 import invitationResolvers from "../invitation/resolver";
 import memberResolvers from "../member/resolver";
+import metricResolvers from "../metric/resolver";
 import networkResolvers from "../network/resolvers";
 import nodeResolvers from "../node/resolvers";
+import notificationResolvers from "../notification/resolvers";
 import orgResolvers from "../org/resolver";
+import packageResolvers from "../package/resolver";
+import paymentResolvers from "../payment/resolver";
+import rateResolvers from "../rate/resolver";
+import reportResolvers from "../report/resolvers";
+import simResolvers from "../sim/resolver";
 import siteResolvers from "../site/resolvers";
+import softwareResolvers from "../software/resolvers";
+import subscriberResolvers from "../subscriber/resolver";
 import userResolvers from "../user/resolver";
 
 const ALL_RESOLVERS = [
@@ -32,7 +46,23 @@ const ALL_RESOLVERS = [
   ...memberResolvers,
   ...invitationResolvers,
   ...nodeResolvers,
-  // …appended per Phase B batch
+  ...packageResolvers,
+  ...rateResolvers,
+  ...simResolvers,
+  ...subscriberResolvers,
+  ...controllerResolvers,
+  ...healthResolvers,
+  ...softwareResolvers,
+  ...componentResolvers,
+  ...billingResolvers,
+  ...paymentResolvers,
+  ...reportResolvers,
+  ...metricResolvers,
+  ...notificationResolvers,
+  ...initResolvers,
+  // planning-tool is intentionally EXCLUDED for phase 1 (its Prisma client
+  // needs a configured PLANNING_TOOL_DB + `prisma generate`). See README
+  // "Re-enabling planning-tool" before adding planningResolvers back.
 ] as tq.NonEmptyArray<CallableFunction>;
 
 export const buildAppSchema = async (): Promise<GraphQLSchema> => {

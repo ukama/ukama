@@ -22,7 +22,7 @@ const runServer = async () => {
       return {
         headers: parseGatewayHeaders(req.headers),
         dataSources: {
-          dataSource: new ComponentAPI(),
+          component: new ComponentAPI(),
         },
       };
     },

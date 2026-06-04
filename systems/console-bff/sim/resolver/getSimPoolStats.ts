@@ -18,6 +18,6 @@ export class GetSimPoolStatsResolver {
     @Ctx() ctx: Context
   ): Promise<SimPoolStatsDto> {
     const { dataSources, baseURL } = ctx;
-    return await dataSources.dataSource.getSimPoolStats(baseURL, data.type);
+    return await dataSources.sim.getSimPoolStats(baseURL, data.type);
   }
 }

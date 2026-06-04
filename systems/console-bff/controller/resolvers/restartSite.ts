@@ -19,6 +19,6 @@ export class RestartSiteResolver {
     @Ctx() ctx: Context
   ): Promise<CBooleanResponse> {
     const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.restartSite(baseURL, data);
+    return dataSources.controller.restartSite(baseURL, data);
   }
 }

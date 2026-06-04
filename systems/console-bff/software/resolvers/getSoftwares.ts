@@ -18,6 +18,6 @@ export class GetSoftwares {
     @Arg("data") data: GetSoftwaresInput
   ): Promise<Softwares> {
     const { dataSources, baseURL } = ctx;
-    return await dataSources.dataSource.getSoftwares(baseURL, data);
+    return await dataSources.software.getSoftwares(baseURL, data);
   }
 }

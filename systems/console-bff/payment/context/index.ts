@@ -11,7 +11,7 @@ import PaymentAPI from "../datasource/payment_api";
 export interface Context {
   baseURL: string;
   dataSources: {
-    dataSource: PaymentAPI;
+    payment: PaymentAPI;
   };
   headers: THeaders;
 }

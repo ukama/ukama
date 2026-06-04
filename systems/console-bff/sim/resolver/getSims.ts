@@ -18,6 +18,6 @@ export class GetSimsResolver {
     @Ctx() ctx: Context
   ): Promise<SimsResDto> {
     const { dataSources, baseURL } = ctx;
-    return await dataSources.dataSource.list(baseURL, data);
+    return await dataSources.sim.list(baseURL, data);
   }
 }

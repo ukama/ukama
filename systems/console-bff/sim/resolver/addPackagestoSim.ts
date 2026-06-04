@@ -26,7 +26,7 @@ export class AddPackagesToSimResolver {
     const pacakgesId: AddPackagSimResDto[] = [];
     for (const packageInfo of data.packages) {
       try {
-        await dataSources.dataSource.addPackageToSim(
+        await dataSources.sim.addPackageToSim(
           baseURL,
           data.sim_id,
           packageInfo.package_id,

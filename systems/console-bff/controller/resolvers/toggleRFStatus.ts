@@ -19,6 +19,6 @@ export class ToggleRFStatusResolver {
     @Ctx() ctx: Context
   ): Promise<CBooleanResponse> {
     const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.toggleRFStatus(baseURL, data);
+    return dataSources.controller.toggleRFStatus(baseURL, data);
   }
 }

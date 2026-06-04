@@ -22,7 +22,7 @@ import {
   Draft,
   LinkInput,
   LocationInput,
-  Site,
+  PlanningSite,
   SiteInput,
   Event as TEvent,
   Location as TLocation,
@@ -73,7 +73,7 @@ export class DraftResolver {
   }
 
   @Mutation(() => Draft)
-  async updateSite(
+  async updateDraftSite(
     @Arg("data") data: SiteInput,
     @Arg("siteId") siteId: string,
     @Arg("draftId") draftId: string,
@@ -114,7 +114,7 @@ export class DraftResolver {
   }
 
   @Mutation(() => Draft)
-  async addSite(
+  async addDraftSite(
     @Arg("draftId") draftId: string,
     @Arg("data") data: SiteInput,
     @Ctx() ctx: PrismaContext
@@ -284,14 +284,14 @@ export class DraftResolver {
   }
 
   @Mutation(() => DeleteSiteRes)
-  async deleteSite(@Arg("id") id: string, @Ctx() ctx: PrismaContext) {
+  async deleteDraftSite(@Arg("id") id: string, @Ctx() ctx: PrismaContext) {
     await ctx.prisma.site.delete({
       where: { id: id },
     });
     return { id: id };
   }
 
-  @Mutation(() => Site)
+  @Mutation(() => PlanningSite)
   async coverage(
     @Arg("data") data: CoverageInput,
     @Arg("siteId") siteId: string,

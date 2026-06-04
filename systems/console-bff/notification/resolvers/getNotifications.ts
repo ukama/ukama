@@ -15,7 +15,7 @@ export class GetNotificationsResolver {
   @Query(() => NotificationsResDto)
   async getNotifications(@Ctx() ctx: Context): Promise<NotificationsResDto> {
     const { dataSources, baseURL, headers } = ctx;
-    return dataSources.dataSource.getNotifications(
+    return dataSources.notification.getNotifications(
       baseURL,
       headers.orgId,
       headers.userId

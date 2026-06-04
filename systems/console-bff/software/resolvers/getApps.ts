@@ -15,6 +15,6 @@ export class GetApps {
   @Query(() => Apps, { nullable: true })
   async getApps(@Ctx() ctx: Context): Promise<Apps> {
     const { dataSources, baseURL } = ctx;
-    return await dataSources.dataSource.getApps(baseURL);
+    return await dataSources.software.getApps(baseURL);
   }
 }

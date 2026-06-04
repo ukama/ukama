@@ -33,7 +33,7 @@ const runServer = async () => {
         headers: headers,
         baseURL: baseURL.message,
         dataSources: {
-          dataSource: new PaymentAPI(),
+          payment: new PaymentAPI(),
         },
       };
     },

@@ -24,10 +24,10 @@ export class GetSubscribersByNetworkResolver {
     const { dataSources, baseURL } = ctx;
     const networkSub: SubscriberDto[] = [];
     const sims: SubscriberSimsResDto =
-      await dataSources.dataSource.getSimsByNetwork(baseURL, networkId);
+      await dataSources.subscriber.getSimsByNetwork(baseURL, networkId);
 
     const subs: SubscribersResDto =
-      await dataSources.dataSource.getSubscribersByNetwork(baseURL, networkId);
+      await dataSources.subscriber.getSubscribersByNetwork(baseURL, networkId);
 
     for (const sub of subs.subscribers) {
       sub.sim = sims.sims.filter(sim => sim.subscriberId === sub.uuid);
