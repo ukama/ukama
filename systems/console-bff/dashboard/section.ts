@@ -32,6 +32,45 @@ export class SectionErrorCollector {
 }
 
 /**
+ * Result of one composite section: the value (null on failure) plus the
+ * typed error (null on success). Sections embed `error` in their own GraphQL
+ * type rather than a composite-level errors list because GraphQL executes
+ * sibling field resolvers concurrently — a top-level `errors` field would
+ * resolve before the sections it reports on.
+ */
+export interface SectionResult<T> {
+  value: T | null;
+  error: SectionError | null;
+}
+
+/**
+ * Like `withSection`, but returns the error alongside the value so section
+ * field resolvers can embed it in their section type (the composite-query
+ * pattern). Same timeout + logging behavior.
+ */
+export async function runSection<T>(
+  section: string,
+  fn: () => Promise<T>,
+  timeoutMs: number = SECTION_TIMEOUT_MS
+): Promise<SectionResult<T>> {
+  const collector = new SectionErrorCollector();
+  const value = await withSection(collector, section, fn, timeoutMs);
+  return { value, error: collector.list()[0] ?? null };
+}
+
+/** `SectionResult` for a backend gap (§3.5): null value + NOT_IMPLEMENTED. */
+export const notImplementedSection = <T>(
+  section: string
+): SectionResult<T> => ({
+  value: null,
+  error: {
+    section,
+    code: SectionErrorCode.NOT_IMPLEMENTED,
+    message: `${section} is not available yet`,
+  },
+});
+
+/**
  * Marks a section whose backend endpoint/property doesn't exist yet
  * (docs/bff-screen-api-plan.md §3.5). Call from the section resolver next to
  * its `TODO(backend-gap)` comment and return null. Never fabricate data for
