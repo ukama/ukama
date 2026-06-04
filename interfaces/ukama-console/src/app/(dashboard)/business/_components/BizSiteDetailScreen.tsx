@@ -11,9 +11,15 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@mui/material/Button';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
 import ArrowBackRounded from '@mui/icons-material/ArrowBackRounded';
-import ArrowUpwardRounded from '@mui/icons-material/ArrowUpwardRounded';
 import DashboardCustomizeRounded from '@mui/icons-material/DashboardCustomizeRounded';
+import AppTabs from '@/components/AppTabs';
+import { Delta } from '@/components/Kpi';
 import SiteMap from '@/components/Map/SiteMap';
 import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
@@ -48,10 +54,7 @@ function SiteKpiTile({
         {value}
       </div>
       {delta != null ? (
-        <span className={`stat-delta ${dir === 'down' ? 'down' : 'up'}`}>
-          <ArrowUpwardRounded sx={{ fontSize: 12 }} />
-          {delta}
-        </span>
+        <Delta dir={dir ?? 'up'}>{delta}</Delta>
       ) : (
         <span style={{ fontSize: 12, color: 'var(--uk-ink-3)' }}>{sub}</span>
       )}
@@ -111,52 +114,41 @@ export default function BizSiteDetailScreen({ siteId }: { siteId: string }) {
         </div>
       </div>
 
-      <div className="tabs">
-        {d.tabs.map((t) => (
-          <button
-            key={t}
-            type="button"
-            className={`tab${tab === t ? ' on' : ''}`}
-            onClick={() => setTab(t)}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
+      <AppTabs tabs={d.tabs} value={tab} onChange={setTab} />
 
       {tab === 'Overview' ? (
         <div className="tile-grid" style={{ gridTemplateColumns: '1fr 1.1fr', alignItems: 'stretch' }}>
           <SiteMap sites={BIZ_SITES} title="Coverage / site map" height={330} selected={s.id} />
           <SectionCard title="Resources">
-            <table className="tbl">
-              <thead>
-                <tr className="static">
-                  <th>Resource</th>
-                  <th>Status</th>
-                  <th>Last seen</th>
-                  <th>Issue</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Resource</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Last seen</TableCell>
+                  <TableCell>Issue</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {d.resources.map((r) => (
-                  <tr key={r.res} className="static">
-                    <td style={{ fontWeight: 600 }}>{r.res}</td>
-                    <td>
+                  <TableRow key={r.res}>
+                    <TableCell style={{ fontWeight: 600 }}>{r.res}</TableCell>
+                    <TableCell>
                       <StatusBadge status={r.status} variant="pill" />
-                    </td>
-                    <td className="muted">{r.seen}</td>
-                    <td
+                    </TableCell>
+                    <TableCell className="muted">{r.seen}</TableCell>
+                    <TableCell
                       style={{
                         color:
                           r.issue !== '—' ? 'var(--uk-error-deep, #cf121b)' : 'var(--uk-ink-3)',
                       }}
                     >
                       {r.issue}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </SectionCard>
         </div>
       ) : (

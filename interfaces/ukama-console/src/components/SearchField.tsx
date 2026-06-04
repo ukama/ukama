@@ -5,8 +5,11 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
+'use client';
 
-/** Search/text field matching the prototype `.field` look. */
+/** Search field — MUI TextField themed to the design `.field` look. */
+import InputAdornment from '@mui/material/InputAdornment';
+import TextField from '@mui/material/TextField';
 import SearchRounded from '@mui/icons-material/SearchRounded';
 
 export default function SearchField({
@@ -21,13 +24,20 @@ export default function SearchField({
   width?: number | string;
 }) {
   return (
-    <div className="field" style={{ width }}>
-      <SearchRounded sx={{ fontSize: 19, color: 'var(--uk-ink-3)' }} />
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-      />
-    </div>
+    <TextField
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      sx={{ width }}
+      slotProps={{
+        input: {
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchRounded sx={{ fontSize: 19, color: 'var(--uk-ink-3)' }} />
+            </InputAdornment>
+          ),
+        },
+      }}
+    />
   );
 }

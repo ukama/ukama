@@ -6,6 +6,7 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 'use client';
+import Meter from '@/components/Meter';
 
 /**
  * Customer detail drawer (findings.jsx SubscriberDrawer) — the same record
@@ -81,14 +82,7 @@ export default function SubscriberDrawer({
           </div>
           {sub.cap ? (
             <>
-              <div className="meter">
-                <span
-                  style={{
-                    width: pct + '%',
-                    background: pct > 90 ? 'var(--uk-orange)' : 'var(--uk-ac)',
-                  }}
-                />
-              </div>
+              <Meter value={pct} color={pct > 90 ? 'var(--uk-orange)' : undefined} />
               <div className="tnum" style={{ fontSize: 12.5, color: 'var(--uk-ink-2)', marginTop: 7 }}>
                 {sub.usage} of {sub.cap} GB used this cycle
               </div>

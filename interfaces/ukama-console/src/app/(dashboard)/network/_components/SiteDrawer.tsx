@@ -6,6 +6,7 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 'use client';
+import Meter from '@/components/Meter';
 
 /** Site drawer — reveal-on-demand site summary (detail.jsx SiteDrawer). */
 import Button from '@mui/material/Button';
@@ -109,9 +110,7 @@ export default function SiteDrawer({
             <span>Battery · {site.plan}</span>
             <span className="tnum">{site.battery}%</span>
           </div>
-          <div className="meter">
-            <span style={{ width: site.battery + '%', background: battColor }} />
-          </div>
+          <Meter value={site.battery} color={battColor} />
         </div>
         <div style={{ marginTop: 14 }}>
           <DetailRow k="Signal strength" v={site.signal ? site.signal + ' dBm' : '—'} />

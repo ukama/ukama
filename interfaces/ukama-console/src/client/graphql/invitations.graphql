@@ -1,0 +1,58 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026-present, Ukama Inc.
+#
+# Operations lifted verbatim from interfaces/console (the legacy console)
+# as the Phase-2 API reference. Trim to what each screen needs as screens
+# are wired; run `pnpm codegen` to (re)generate types/hooks.
+
+fragment Invitation on InvitationDto {
+  email
+  expireAt
+  id
+  name
+  role
+  link
+  userId
+  status
+}
+
+mutation CreateInvitation($data: CreateInvitationInputDto!) {
+  createInvitation(data: $data) {
+    ...Invitation
+  }
+}
+
+query GetInvitations {
+  getInvitations {
+    invitations {
+      ...Invitation
+    }
+  }
+}
+
+mutation DeleteInvitation($deleteInvitationId: String!) {
+  deleteInvitation(id: $deleteInvitationId) {
+    id
+  }
+}
+
+mutation UpdateInvitation($data: UpateInvitationInputDto!) {
+  updateInvitation(data: $data) {
+    id
+  }
+}
+
+query GetInvitationsByEmail($email: String!) {
+  getInvitationsByEmail(email: $email) {
+    invitations {
+      ...Invitation
+    }
+  }
+}
+
+### End Invitation ###
+
+### Common Data ###

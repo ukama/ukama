@@ -23,6 +23,7 @@ import PowerSettingsNewRounded from '@mui/icons-material/PowerSettingsNewRounded
 import RestartAltRounded from '@mui/icons-material/RestartAltRounded';
 import SyncRounded from '@mui/icons-material/SyncRounded';
 import WifiOffRounded from '@mui/icons-material/WifiOffRounded';
+import AppTabs from '@/components/AppTabs';
 import { LineChart } from '@/components/charts';
 import DetailPicker from '@/components/DetailPicker';
 import KV from '@/components/KV';
@@ -180,18 +181,7 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
         </span>
       </div>
 
-      <div className="tabs scroll-x">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            type="button"
-            className={`tab${tab === t ? ' on' : ''}`}
-            onClick={() => setTab(t)}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
+      <AppTabs tabs={TABS} value={tab} onChange={setTab} scrollable />
 
       <div className="detail-grid">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--uk-gap)' }}>

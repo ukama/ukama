@@ -7,6 +7,12 @@
  */
 'use client';
 
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+
 /** Inventory — SIMs / Nodes / Hardware pill tabs (biz-ops.jsx BizInventory). */
 import { useState } from 'react';
 import MemoryRounded from '@mui/icons-material/MemoryRounded';
@@ -43,68 +49,68 @@ export default function BizInventoryScreen() {
 
       <div className="card card-pad">
         {tab === 'SIMs' && (
-          <table className="tbl">
-            <thead>
-              <tr className="static">
-                <th>SIM / ICCID</th>
-                <th>Status</th>
-                <th>Assigned customer</th>
-                <th>Site / network</th>
-                <th>Activation date</th>
-                <th>Issue</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>SIM / ICCID</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Assigned customer</TableCell>
+                <TableCell>Site / network</TableCell>
+                <TableCell>Activation date</TableCell>
+                <TableCell>Issue</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {b.sims.map((r) => (
-                <tr key={r.iccid} className="static">
-                  <td className="tnum" style={{ fontWeight: 600 }}>
+                <TableRow key={r.iccid}>
+                  <TableCell className="tnum" style={{ fontWeight: 600 }}>
                     {r.iccid}
-                  </td>
-                  <td>
+                  </TableCell>
+                  <TableCell>
                     <StatusBadge status={r.status} variant="pill" />
-                  </td>
-                  <td className="tnum">{r.cust}</td>
-                  <td className="muted">{r.site}</td>
-                  <td className="muted">{r.date}</td>
-                  <td
+                  </TableCell>
+                  <TableCell className="tnum">{r.cust}</TableCell>
+                  <TableCell className="muted">{r.site}</TableCell>
+                  <TableCell className="muted">{r.date}</TableCell>
+                  <TableCell
                     style={{
                       color: r.issue !== '—' ? 'var(--uk-error-deep, #cf121b)' : 'var(--uk-ink-3)',
                     }}
                   >
                     {r.issue}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         )}
         {tab === 'Nodes' && (
-          <table className="tbl">
-            <thead>
-              <tr className="static">
-                <th>Serial</th>
-                <th>Type</th>
-                <th>Status</th>
-                <th>Site</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Serial</TableCell>
+                <TableCell>Type</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Site</TableCell>
+                <TableCell>Date</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {b.nodes.map((r) => (
-                <tr key={r.serial} className="static">
-                  <td className="tnum" style={{ fontWeight: 600 }}>
+                <TableRow key={r.serial}>
+                  <TableCell className="tnum" style={{ fontWeight: 600 }}>
                     {r.serial}
-                  </td>
-                  <td className="muted">{r.type}</td>
-                  <td>
+                  </TableCell>
+                  <TableCell className="muted">{r.type}</TableCell>
+                  <TableCell>
                     <StatusBadge status={r.status} variant="pill" />
-                  </td>
-                  <td>{r.site}</td>
-                  <td className="muted">{r.date}</td>
-                </tr>
+                  </TableCell>
+                  <TableCell>{r.site}</TableCell>
+                  <TableCell className="muted">{r.date}</TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         )}
         {tab === 'Hardware' && (
           <div style={{ textAlign: 'center', padding: 48, color: 'var(--uk-ink-3)' }}>

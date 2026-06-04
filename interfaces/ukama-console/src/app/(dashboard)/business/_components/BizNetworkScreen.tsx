@@ -7,6 +7,12 @@
  */
 'use client';
 
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+
 /** Network health framed by business impact (biz-ops.jsx BizNetwork). */
 import DateChip from '@/components/DateChip';
 import FeedRow from '@/components/FeedRow';
@@ -28,40 +34,40 @@ export default function BizNetworkScreen() {
       />
       <KpiRow items={b.kpis} />
       <div className="card card-pad" style={{ marginBottom: 'var(--uk-gap)' }}>
-        <table className="tbl">
-          <thead>
-            <tr className="static">
-              <th>Resource</th>
-              <th>Type</th>
-              <th>Status</th>
-              <th>Site</th>
-              <th className="num">Customers affected</th>
-              <th>Revenue context</th>
-              <th>Last updated</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Resource</TableCell>
+              <TableCell>Type</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Site</TableCell>
+              <TableCell align="right">Customers affected</TableCell>
+              <TableCell>Revenue context</TableCell>
+              <TableCell>Last updated</TableCell>
+              <TableCell>Action</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
             {b.rows.map((r) => (
-              <tr key={r.res} className="static">
-                <td style={{ fontWeight: 600 }}>{r.res}</td>
-                <td className="muted">{r.type}</td>
-                <td>
+              <TableRow key={r.res}>
+                <TableCell style={{ fontWeight: 600 }}>{r.res}</TableCell>
+                <TableCell className="muted">{r.type}</TableCell>
+                <TableCell>
                   <StatusBadge status={r.status} variant="pill" />
-                </td>
-                <td>{r.site}</td>
-                <td className="num tnum">{r.affected}</td>
-                <td className="muted">{r.context}</td>
-                <td className="muted">{r.updated}</td>
-                <td>
+                </TableCell>
+                <TableCell>{r.site}</TableCell>
+                <TableCell align="right" className="tnum">{r.affected}</TableCell>
+                <TableCell className="muted">{r.context}</TableCell>
+                <TableCell className="muted">{r.updated}</TableCell>
+                <TableCell>
                   <button type="button" className="link">
                     Open
                   </button>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
       <div className="tile-grid" style={{ gridTemplateColumns: '1.4fr 1fr', alignItems: 'stretch' }}>
         <SiteMap sites={BIZ_SITES} title="Network health map" height={300} />

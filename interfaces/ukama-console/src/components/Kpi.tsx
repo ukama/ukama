@@ -9,7 +9,10 @@
 /**
  * Unified KPI / stat card — single anatomy across every screen (ds.jsx):
  * label (optional tinted icon) · big value (+unit) · trend delta OR sub note.
+ * MUI Card + sx (§7.2 C).
  */
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
 import ArrowDownwardRounded from '@mui/icons-material/ArrowDownwardRounded';
 import ArrowUpwardRounded from '@mui/icons-material/ArrowUpwardRounded';
 import { Ic } from '@/app/(dashboard)/_components/icons';
@@ -26,6 +29,41 @@ export interface KpiProps {
   danger?: boolean;
 }
 
+/** Trend delta — green up / red down (stat-delta). */
+export function Delta({
+  dir = 'up',
+  children,
+  fontSize = 12,
+}: {
+  dir?: 'up' | 'down';
+  children: React.ReactNode;
+  fontSize?: number;
+}) {
+  return (
+    <Box
+      component="span"
+      sx={(t) => ({
+        fontSize,
+        fontWeight: 600,
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '2px',
+        color: dir === 'down' ? 'var(--uk-error-deep, #cf121b)' : 'var(--uk-success)',
+        ...t.applyStyles('dark', {
+          color: dir === 'down' ? '#ff8a8a' : 'var(--uk-success-bright)',
+        }),
+      })}
+    >
+      {dir === 'down' ? (
+        <ArrowDownwardRounded sx={{ fontSize: fontSize + 1 }} />
+      ) : (
+        <ArrowUpwardRounded sx={{ fontSize: fontSize + 1 }} />
+      )}
+      {children}
+    </Box>
+  );
+}
+
 export function Kpi({
   icon,
   color,
@@ -38,30 +76,57 @@ export function Kpi({
   danger,
 }: KpiProps) {
   return (
-    <div className="card stat">
-      <div className="stat-label">
+    <Card sx={{ p: '16px 18px', display: 'flex', flexDirection: 'column', gap: '9px' }}>
+      <Box
+        sx={{
+          fontSize: 13,
+          color: 'var(--uk-ink-2)',
+          fontWeight: 500,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+        }}
+      >
         {icon && (
           <Ic name={icon} sx={{ fontSize: 18, color: color ?? 'var(--uk-ac)' }} />
         )}
         <span>{label}</span>
-      </div>
-      <div className="stat-figure">
-        <span className="stat-val tnum">{value}</span>
-        {unit && <span className="stat-unit">{unit}</span>}
-      </div>
+      </Box>
+      <Box sx={{ display: 'flex', alignItems: 'baseline', gap: '6px', whiteSpace: 'nowrap' }}>
+        <Box
+          component="span"
+          className="tnum"
+          sx={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 26,
+            fontWeight: 500,
+            lineHeight: 1,
+          }}
+        >
+          {value}
+        </Box>
+        {unit && (
+          <Box component="span" sx={{ fontSize: 14, color: 'var(--uk-ink-3)' }}>
+            {unit}
+          </Box>
+        )}
+      </Box>
       {delta != null ? (
-        <span className={`stat-delta ${dir === 'down' ? 'down' : 'up'}`}>
-          {dir === 'down' ? (
-            <ArrowDownwardRounded sx={{ fontSize: 13 }} />
-          ) : (
-            <ArrowUpwardRounded sx={{ fontSize: 13 }} />
-          )}
-          {delta}
-        </span>
+        <Delta dir={dir ?? 'up'}>{delta}</Delta>
       ) : sub != null ? (
-        <span className={`stat-sub${danger ? ' danger' : ''}`}>{sub}</span>
+        <Box
+          component="span"
+          sx={(t) => ({
+            fontSize: 12.5,
+            fontWeight: 500,
+            color: danger ? 'var(--uk-error-deep, #cf121b)' : 'var(--uk-ink-3)',
+            ...(danger ? t.applyStyles('dark', { color: '#ff8a8a' }) : {}),
+          })}
+        >
+          {sub}
+        </Box>
       ) : null}
-    </div>
+    </Card>
   );
 }
 

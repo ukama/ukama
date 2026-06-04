@@ -6,6 +6,7 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 'use client';
+import Meter from '@/components/Meter';
 
 /**
  * THE canonical shared record component (BUILD-PLAN §2): one customers
@@ -189,15 +190,8 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
         const pct = s.cap ? Math.min(100, (s.usage / s.cap) * 100) : 60;
         const over = !!s.cap && s.usage / s.cap > 0.9;
         return (
-          <div className="usebar" style={{ width: 150 }}>
-            <div className="meter">
-              <span
-                style={{
-                  width: pct + '%',
-                  background: over ? 'var(--uk-orange)' : 'var(--uk-ac)',
-                }}
-              />
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: 150 }}>
+            <Meter value={pct} color={over ? 'var(--uk-orange)' : undefined} sx={{ flex: 1, minWidth: 60 }} />
             <span
               className="tnum"
               style={{ fontSize: 12, color: 'var(--uk-ink-2)', whiteSpace: 'nowrap' }}

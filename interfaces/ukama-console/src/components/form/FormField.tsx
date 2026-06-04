@@ -8,11 +8,15 @@
 'use client';
 
 /**
- * Form primitives matching the prototype's dialog fields (form-dialogs.jsx),
- * designed for react-hook-form `register` spreading (BUILD-PLAN §3 forms).
+ * Form primitives — MUI TextField/Select themed to the design dialog
+ * fields, ready for react-hook-form `register` spreading (BUILD-PLAN §3).
  */
 import { forwardRef } from 'react';
-import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded';
+import InputAdornment from '@mui/material/InputAdornment';
+import type { InputBaseComponentProps } from '@mui/material/InputBase';
+import MenuItem from '@mui/material/MenuItem';
+import TextField from '@mui/material/TextField';
+import type { TextFieldProps } from '@mui/material/TextField';
 
 export function Field({
   label,
@@ -45,16 +49,24 @@ export function Field({
 
 export const TextInput = forwardRef<
   HTMLInputElement,
-  React.InputHTMLAttributes<HTMLInputElement> & {
-    prefix?: string;
-    invalid?: boolean;
-  }
+  Omit<TextFieldProps, 'variant'> & { prefix?: string; invalid?: boolean }
 >(function TextInput({ prefix, invalid, ...props }, ref) {
   return (
-    <div className={`field${invalid ? ' invalid' : ''}`}>
-      {prefix && <span style={{ color: 'var(--uk-ink-3)', fontSize: 14 }}>{prefix}</span>}
-      <input ref={ref} {...props} />
-    </div>
+    <TextField
+      inputRef={ref}
+      fullWidth
+      error={invalid}
+      slotProps={{
+        input: {
+          startAdornment: prefix ? (
+            <InputAdornment position="start">
+              <span style={{ color: 'var(--uk-ink-3)', fontSize: 14 }}>{prefix}</span>
+            </InputAdornment>
+          ) : undefined,
+        },
+      }}
+      {...props}
+    />
   );
 });
 
@@ -65,18 +77,29 @@ export const SelectInput = forwardRef<
     placeholder?: string;
     options: { value: string; label: string }[];
   }
->(function SelectInput({ invalid, placeholder, options, ...props }, ref) {
+>(function SelectInput({ invalid, placeholder, options, className: _c, style: _s, ...props }, ref) {
   return (
-    <div className={`field${invalid ? ' invalid' : ''}`}>
-      <select ref={ref} {...props}>
-        {placeholder && <option value="">{placeholder}</option>}
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-      <ExpandMoreRounded sx={{ fontSize: 19, color: 'var(--uk-ink-3)', pointerEvents: 'none' }} />
-    </div>
+    <TextField
+      fullWidth
+      select
+      error={invalid}
+      defaultValue=""
+      slotProps={{
+        select: {
+          native: true,
+          inputRef: ref,
+          inputProps: props as InputBaseComponentProps,
+        },
+      }}
+    >
+      {placeholder && <option value="">{placeholder}</option>}
+      {options.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
+    </TextField>
   );
 });
+
+export { MenuItem };

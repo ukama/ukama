@@ -9,6 +9,11 @@
 
 /** Billing — what you owe Ukama for running this network (screens-manage.jsx). */
 import Button from '@mui/material/Button';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
 import BoltRounded from '@mui/icons-material/BoltRounded';
 import CreditCardRounded from '@mui/icons-material/CreditCardRounded';
 import DownloadRounded from '@mui/icons-material/DownloadRounded';
@@ -121,28 +126,28 @@ export default function BillingScreen({ embed }: { embed?: boolean }) {
           {invLoading ? (
             <SkeletonTable cols={5} rows={4} />
           ) : (
-            <table className="tbl">
-              <thead>
-                <tr className="static">
-                  <th>Invoice</th>
-                  <th>Period</th>
-                  <th className="num">Amount</th>
-                  <th>Status</th>
-                  <th style={{ width: 60 }} />
-                </tr>
-              </thead>
-              <tbody>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Invoice</TableCell>
+                  <TableCell>Period</TableCell>
+                  <TableCell align="right">Amount</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell sx={{ width: 44 }} />
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {b.invoices.map((inv) => (
-                  <tr key={inv.id} className="static">
-                    <td className="tnum" style={{ fontWeight: 600 }}>
+                  <TableRow key={inv.id}>
+                    <TableCell className="tnum" style={{ fontWeight: 600 }}>
                       {inv.id}
-                    </td>
-                    <td>{inv.period}</td>
-                    <td className="num tnum">${inv.amt.toFixed(2)}</td>
-                    <td>
+                    </TableCell>
+                    <TableCell>{inv.period}</TableCell>
+                    <TableCell align="right" className="tnum">${inv.amt.toFixed(2)}</TableCell>
+                    <TableCell>
                       <StatusBadge status="paid" variant="pill" />
-                    </td>
-                    <td>
+                    </TableCell>
+                    <TableCell>
                       <Button
                         size="small"
                         startIcon={<DownloadRounded />}
@@ -151,11 +156,11 @@ export default function BillingScreen({ embed }: { embed?: boolean }) {
                       >
                         PDF
                       </Button>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
         </div>
         {!invLoading && <TableFooter count={b.invoices.length} noun="invoices" />}

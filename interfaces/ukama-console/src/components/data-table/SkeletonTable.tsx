@@ -6,7 +6,13 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
-/** Skeleton rows mirroring a table's column count (table-kit.jsx). */
+/** Skeleton rows mirroring a table's column count — MUI Table + Skeleton. */
+import Skeleton from '@mui/material/Skeleton';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableRow from '@mui/material/TableRow';
+
 export default function SkeletonTable({
   cols = 5,
   rows = 6,
@@ -17,30 +23,32 @@ export default function SkeletonTable({
   lead?: boolean;
 }) {
   return (
-    <table className="tbl skeleton-tbl">
-      <tbody>
+    <Table>
+      <TableBody>
         {Array.from({ length: rows }).map((_, r) => (
-          <tr key={r} className="static">
+          <TableRow key={r}>
             {Array.from({ length: cols }).map((_, c) => (
-              <td key={c}>
+              <TableCell key={c}>
                 {lead && c === 0 ? (
                   <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span className="sk-dot" />
-                    <span className="sk-bar" style={{ width: '58%' }} />
+                    <Skeleton variant="circular" width={28} height={28} />
+                    <Skeleton variant="rounded" height={11} sx={{ width: '58%', borderRadius: 1.5 }} />
                   </span>
                 ) : (
-                  <span
-                    className="sk-bar"
-                    style={{
+                  <Skeleton
+                    variant="rounded"
+                    height={11}
+                    sx={{
+                      borderRadius: 1.5,
                       width: c === 0 ? '62%' : c === cols - 1 ? '38%' : '74%',
                     }}
                   />
                 )}
-              </td>
+              </TableCell>
             ))}
-          </tr>
+          </TableRow>
         ))}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   );
 }

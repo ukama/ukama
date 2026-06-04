@@ -6,6 +6,7 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 'use client';
+import Meter from '@/components/Meter';
 
 /**
  * SIM pool — inventory cockpit with stock levels and proactive low-stock
@@ -13,6 +14,11 @@
  */
 import { useState } from 'react';
 import Button from '@mui/material/Button';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
@@ -154,32 +160,30 @@ export default function SimPoolScreen({ canAct }: { canAct: boolean }) {
           {loading ? (
             <SkeletonTable cols={6} rows={4} />
           ) : (
-            <table className="tbl">
-              <thead>
-                <tr className="static">
-                  <th>Batch</th>
-                  <th>Type</th>
-                  <th className="num">Quantity</th>
-                  <th>Assigned</th>
-                  <th>Uploaded</th>
-                  {canAct && <th style={{ width: 40 }} />}
-                </tr>
-              </thead>
-              <tbody>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Batch</TableCell>
+                  <TableCell>Type</TableCell>
+                  <TableCell align="right">Quantity</TableCell>
+                  <TableCell>Assigned</TableCell>
+                  <TableCell>Uploaded</TableCell>
+                  {canAct && <TableCell sx={{ width: 44 }} />}
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {SIM_BATCHES.map((b) => {
                   const pct = Math.round((b.assigned / b.qty) * 100);
                   return (
-                    <tr key={b.id} className="static">
-                      <td className="tnum" style={{ fontWeight: 600 }}>
+                    <TableRow key={b.id}>
+                      <TableCell className="tnum" style={{ fontWeight: 600 }}>
                         {b.batch}
-                      </td>
-                      <td>{b.type}</td>
-                      <td className="num tnum">{b.qty.toLocaleString()}</td>
-                      <td>
-                        <div className="usebar" style={{ width: 184 }}>
-                          <div className="meter">
-                            <span style={{ width: pct + '%' }} />
-                          </div>
+                      </TableCell>
+                      <TableCell>{b.type}</TableCell>
+                      <TableCell align="right" className="tnum">{b.qty.toLocaleString()}</TableCell>
+                      <TableCell>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: 184 }}>
+                          <Meter value={pct} sx={{ flex: 1, minWidth: 60 }} />
                           <span
                             className="tnum"
                             style={{ fontSize: 12, color: 'var(--uk-ink-2)', whiteSpace: 'nowrap' }}
@@ -187,18 +191,18 @@ export default function SimPoolScreen({ canAct }: { canAct: boolean }) {
                             {b.assigned} · {pct}%
                           </span>
                         </div>
-                      </td>
-                      <td className="muted">{b.uploaded}</td>
+                      </TableCell>
+                      <TableCell className="muted">{b.uploaded}</TableCell>
                       {canAct && (
-                        <td>
+                        <TableCell>
                           <BatchMenu batch={b} />
-                        </td>
+                        </TableCell>
                       )}
-                    </tr>
+                    </TableRow>
                   );
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
         </div>
         {!loading && <TableFooter count={SIM_BATCHES.length} noun="batches" />}

@@ -8,13 +8,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
 import Drawer from '@mui/material/Drawer';
 import UMark from '@/components/UMark';
 import { useUiPrefs } from '@/lib/store';
-import { LENSES, lensFromPath } from '../_config/nav';
 import CommandPalette from './CommandPalette';
-import { Ic } from './icons';
+import { LensDropdown } from './LensSegment';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 
@@ -26,9 +24,6 @@ export default function DashboardShell({
   const rail = useUiPrefs((s) => s.rail);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
-  const pathname = usePathname();
-  const router = useRouter();
-  const lens = lensFromPath(pathname);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -64,21 +59,8 @@ export default function DashboardShell({
             if ((e.target as HTMLElement).closest('a')) setMobileNav(false);
           }}
         >
-          <div className="drawer-lens">
-            {LENSES.map((l) => (
-              <button
-                key={l.id}
-                type="button"
-                className={lens === l.id ? 'on' : ''}
-                onClick={() => {
-                  setMobileNav(false);
-                  router.push(l.href);
-                }}
-              >
-                <Ic name={l.icon} sx={{ fontSize: 17 }} />
-                {l.label}
-              </button>
-            ))}
+          <div className="lens-mobile-wrap">
+            <LensDropdown onNavigate={() => setMobileNav(false)} />
           </div>
           <Sidebar />
         </div>

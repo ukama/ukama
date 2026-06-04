@@ -6,6 +6,7 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 'use client';
+import Meter from '@/components/Meter';
 
 /** Node drawer — quick health summary (detail.jsx NodeDrawer). */
 import Button from '@mui/material/Button';
@@ -33,9 +34,7 @@ function MeterCard({ label, value }: { label: string; value: number | null }) {
         <span>{label}</span>
         <span className="tnum">{value == null ? '—' : v + '%'}</span>
       </div>
-      <div className="meter">
-        <span style={{ width: v + '%', background: color }} />
-      </div>
+      <Meter value={v} color={color} />
     </div>
   );
 }

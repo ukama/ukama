@@ -6,6 +6,7 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 'use client';
+import TextField from '@mui/material/TextField';
 
 /**
  * Type-to-confirm delete — friction scaled to risk (findings.jsx
@@ -64,14 +65,13 @@ export default function DeleteCustomerDialog({
         <label className="flabel">
           Type <b style={{ color: 'var(--uk-ink)' }}>{sub.name}</b> to confirm
         </label>
-        <div className="field">
-          <input
-            value={val}
-            onChange={(e) => setVal(e.target.value)}
-            placeholder={sub.name}
-            autoFocus
-          />
-        </div>
+        <TextField
+          fullWidth
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+          placeholder={sub.name}
+          autoFocus
+        />
       </div>
     </AppModal>
   );

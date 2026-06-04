@@ -29,6 +29,7 @@ import InfoRounded from '@mui/icons-material/InfoRounded';
 import InsightsRounded from '@mui/icons-material/InsightsRounded';
 import LocationOnRounded from '@mui/icons-material/LocationOnRounded';
 import ManageAccountsRounded from '@mui/icons-material/ManageAccountsRounded';
+import SellRounded from '@mui/icons-material/SellRounded';
 import MonetizationOnRounded from '@mui/icons-material/MonetizationOnRounded';
 import NetworkCheckRounded from '@mui/icons-material/NetworkCheckRounded';
 import NotificationsRounded from '@mui/icons-material/NotificationsRounded';
@@ -48,6 +49,7 @@ const REGISTRY: Record<string, React.ComponentType<SvgIconProps>> = {
   donut_small: DonutSmallRounded,
   apps: AppsRounded,
   monetization_on: MonetizationOnRounded,
+  sell: SellRounded,
   manage_accounts: ManageAccountsRounded,
   sim_card: SimCardRounded,
   location_on: LocationOnRounded,

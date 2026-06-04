@@ -9,6 +9,7 @@
 
 /** "Today" date-range filter chip with dropdown (biz-common.jsx). */
 import { useState } from 'react';
+import Chip from '@mui/material/Chip';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import CalendarTodayRounded from '@mui/icons-material/CalendarTodayRounded';
@@ -32,16 +33,19 @@ export default function DateChip({
 
   return (
     <>
-      <button
-        type="button"
-        className="chip-filter"
-        style={{ height: 36 }}
+      <Chip
+        variant="chipFilter"
+        clickable
+        icon={<CalendarTodayRounded sx={{ fontSize: 16 }} />}
         onClick={(e) => setAnchor(e.currentTarget)}
-      >
-        <CalendarTodayRounded sx={{ fontSize: 16 }} />
-        {value}
-        <ExpandMoreRounded sx={{ fontSize: 18, color: 'var(--uk-ink-3)' }} />
-      </button>
+        sx={{ height: 36 }}
+        label={
+          <>
+            {value}
+            <ExpandMoreRounded sx={{ fontSize: 18, color: 'var(--uk-ink-3)' }} />
+          </>
+        }
+      />
       <Menu
         anchorEl={anchor}
         open={!!anchor}
