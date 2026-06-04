@@ -20,7 +20,7 @@ export class UpdateSubscriberResolver {
     @Ctx() ctx: Context
   ): Promise<CBooleanResponse> {
     const { dataSources, baseURL } = ctx;
-    return await dataSources.dataSource.updateSubscriber(
+    return await dataSources.subscriber.updateSubscriber(
       baseURL,
       subscriberId,
       data

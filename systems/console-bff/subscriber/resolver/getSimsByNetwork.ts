@@ -18,6 +18,6 @@ export class GetSimsByNetworkResolver {
     @Ctx() ctx: Context
   ): Promise<SubscriberSimsResDto> {
     const { dataSources, baseURL } = ctx;
-    return await dataSources.dataSource.getSimsByNetwork(baseURL, networkId);
+    return await dataSources.subscriber.getSimsByNetwork(baseURL, networkId);
   }
 }

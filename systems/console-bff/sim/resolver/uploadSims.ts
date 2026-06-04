@@ -18,6 +18,6 @@ export class UploadSimsResolver {
     @Ctx() ctx: Context
   ): Promise<UploadSimsResDto> {
     const { dataSources, baseURL } = ctx;
-    return await dataSources.dataSource.uploadSims(baseURL, data);
+    return await dataSources.sim.uploadSims(baseURL, data);
   }
 }

@@ -9,11 +9,11 @@ import {
   GetSubscriberAPIResDto,
   SimPackageAPIDto,
   SimPackageDto,
-  SimsAPIResDto,
   SubSimAPIDto,
   SubscriberAPIResDto,
   SubscriberDto,
   SubscriberSimDto,
+  SubscriberSimsAPIResDto,
   SubscriberSimsResDto,
   SubscribersAPIResDto,
   SubscribersResDto,
@@ -115,7 +115,9 @@ export const dtoToSimDto = (res: SubSimAPIDto): SubscriberSimDto => {
   };
 };
 
-export const dtoToSimsResDto = (res: SimsAPIResDto): SubscriberSimsResDto => {
+export const dtoToSimsResDto = (
+  res: SubscriberSimsAPIResDto
+): SubscriberSimsResDto => {
   const subSims: SubscriberSimDto[] = [];
   for (const sim of res.sims) {
     const s = dtoToSimDto(sim);

@@ -35,7 +35,7 @@ export class Link {
 }
 
 @ObjectType()
-export class Site {
+export class PlanningSite {
   @Field()
   id: string;
 
@@ -120,8 +120,8 @@ export class Draft {
   @Field(() => [Link], { nullable: false })
   links: Link[];
 
-  @Field(() => [Site], { nullable: false })
-  sites: Site[];
+  @Field(() => [PlanningSite], { nullable: false })
+  sites: PlanningSite[];
 
   @Field(() => [Event], { nullable: false })
   events: Event[];

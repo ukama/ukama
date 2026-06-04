@@ -71,6 +71,9 @@ export const STRIP_SK = process.env.STRIP_SK ?? "";
 
 // PORTS
 export const GATEWAY_PORT = parseInt(process.env.GATEWAY_PORT ?? "8080");
+// Consolidated API server (server/). Defaults to 8090 while it runs alongside
+// the legacy gateway; set API_PORT=8080 at cutover (CONSOLIDATION-DESIGN §6).
+export const API_PORT = parseInt(process.env.API_PORT ?? "8090");
 export const SUBSCRIPTIONS_PORT = parseInt(
   process.env.SUBSCRIPTIONS_PORT ?? "8081"
 );

@@ -19,6 +19,6 @@ export class DefaultMarkupResolver {
     @Ctx() ctx: Context
   ): Promise<CBooleanResponse> {
     const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.defaultMarkup(baseURL, data);
+    return dataSources.rate.defaultMarkup(baseURL, data);
   }
 }

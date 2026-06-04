@@ -18,6 +18,6 @@ export class DeletePackageResolver {
     @Ctx() ctx: Context
   ): Promise<IdResponse> {
     const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.deletePackage(baseURL, packageId);
+    return dataSources.package.deletePackage(baseURL, packageId);
   }
 }

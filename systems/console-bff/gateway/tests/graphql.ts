@@ -76,7 +76,7 @@ export const GET_EMAIL_INVITATIONS = `query GetInvitations($email: String!) {
   }
 }`;
 
-export const UPDATE_INVITATION = `mutation UpdateInvitation($data: UpateInvitationInputDto!) {
+export const UPDATE_INVITATION = `mutation UpdateInvitation($data: UpdateInvitationInputDto!) {
   updateInvitation(data: $data) {
     id
   }

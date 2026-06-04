@@ -53,7 +53,7 @@ const createContextValue = async () => {
   const store = openStore();
   const baseURL = await getBaseURL(SUB_GRAPHS.package.name, orgName, store);
   return {
-    dataSources: { dataSource: packageApi },
+    dataSources: { package: packageApi },
     baseURL: baseURL.message,
     headers: parsedHeaders,
   };
@@ -64,7 +64,7 @@ let packageId = "";
 describe("Package API integration test", () => {
   let server: ApolloServer<Context>;
   let contextValue: {
-    dataSources: { dataSource: PackageApi };
+    dataSources: { package: PackageApi };
     baseURL: string;
     headers: THeaders;
   };

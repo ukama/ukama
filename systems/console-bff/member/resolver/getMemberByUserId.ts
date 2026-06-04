@@ -21,7 +21,7 @@ export class GetMemberByUserIdResolver {
     @Ctx() ctx: Context
   ): Promise<MemberDto> {
     const { dataSources, baseURL } = ctx;
-    const member = await dataSources.dataSource.getMemberByUserId(baseURL, id);
+    const member = await dataSources.member.getMemberByUserId(baseURL, id);
 
     const user = await axios
       .get(`${NUCLEUS_API_GW}/v1/users/${member.userId}`)

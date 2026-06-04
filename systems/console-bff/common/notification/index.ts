@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { NotificationsResDto } from "../../subscriptions/resolvers/types";
 import { CONSOLE_APP_URL } from "./../configs/index";
 
 type TEventKeyToAction = {
@@ -13,9 +12,16 @@ type TEventKeyToAction = {
   action: string;
 };
 
+/** Minimal structural input so any notification shape can derive a redirect
+ *  (decouples this shared helper from the subscriptions module's types). */
+interface NotificationLike {
+  title?: string;
+  resourceId?: string;
+}
+
 export const eventKeyToAction = (
   key: string,
-  data: NotificationsResDto
+  data: NotificationLike
 ): TEventKeyToAction => {
   switch (key) {
     case "EventNodeStateTransition":

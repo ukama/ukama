@@ -18,7 +18,7 @@ import {
   InvitationDto,
   InvitationsDto,
   InvitationsResDto,
-  UpateInvitationInputDto,
+  UpdateInvitationInputDto,
   UpdateInvitationResDto,
 } from "../resolver/types";
 import { dtoToInvitationsResDto, inviteResToInvitationDto } from "./mapper";
@@ -53,7 +53,7 @@ class InvitationApi extends BaseRESTDataSource {
   };
 
   updateInvitation = async (
-    req: UpateInvitationInputDto
+    req: UpdateInvitationInputDto
   ): Promise<UpdateInvitationResDto> => {
     const store = openStore();
     const baseURL = await getFromStore(store, `${req.email}/${req.id}`);

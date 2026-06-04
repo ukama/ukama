@@ -19,7 +19,7 @@ export class ReleaseNodeFromSiteResolver {
     @Ctx() context: Context
   ) {
     const { dataSources, baseURL } = context;
-    return await dataSources.dataSource.releaseNodeFromSite(baseURL, {
+    return await dataSources.node.releaseNodeFromSite(baseURL, {
       id: data.id,
     });
   }

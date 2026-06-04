@@ -19,7 +19,7 @@ export class AddNodeToSiteResolver {
     @Ctx() context: Context
   ) {
     const { dataSources, baseURL } = context;
-    return dataSources.dataSource.addNodeToSite(baseURL, {
+    return dataSources.node.addNodeToSite(baseURL, {
       nodeId: data.nodeId,
       networkId: data.networkId,
       siteId: data.siteId,

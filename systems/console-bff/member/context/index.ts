@@ -11,7 +11,7 @@ import MemberAPI from "../datasource/member_api";
 export interface Context {
   baseURL: string;
   dataSources: {
-    dataSource: MemberAPI;
+    member: MemberAPI;
   };
   headers: THeaders;
 }

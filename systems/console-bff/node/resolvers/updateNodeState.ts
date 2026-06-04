@@ -18,7 +18,7 @@ export class UpdateNodeStateResolver {
     @Ctx() context: Context
   ) {
     const { dataSources, baseURL } = context;
-    return await dataSources.dataSource.updateNodeState(baseURL, {
+    return await dataSources.node.updateNodeState(baseURL, {
       id: data.id,
       state: data.state,
     });

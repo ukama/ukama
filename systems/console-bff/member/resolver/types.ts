@@ -8,6 +8,15 @@
 import { IsBoolean, IsNotEmpty, IsUUID } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
 
+// User types are owned by the user module. Re-exported here so member's
+// datasource/mapper keep their existing imports while these types are defined
+// exactly once (avoids a duplicate-type clash when the schema is consolidated).
+export {
+  UserAPIObj,
+  UserAPIResDto,
+  UserResDto,
+} from "../../user/resolver/types";
+
 @ObjectType()
 export class MemberAPIDto {
   @Field()
@@ -93,62 +102,8 @@ export class UpdateMemberInputDto {
   role: string;
 }
 
-@InputType()
-export class MemberInputDto {
-  @Field()
-  memberId: boolean;
-}
+// (Removed dead MemberInputDto — unused, and its memberId field was
+// mistyped as boolean.)
 
-@ObjectType()
-export class UserResDto {
-  @Field()
-  name: string;
-
-  @Field()
-  email: string;
-
-  @Field()
-  uuid: string;
-
-  @Field()
-  phone: string;
-
-  @Field()
-  isDeactivated: boolean;
-
-  @Field()
-  authId: string;
-
-  @Field()
-  registeredSince: string;
-}
-
-@ObjectType()
-export class UserAPIObj {
-  @Field()
-  name: string;
-
-  @Field()
-  email: string;
-
-  @Field()
-  id: string;
-
-  @Field()
-  phone: string;
-
-  @Field()
-  is_deactivated: boolean;
-
-  @Field()
-  auth_id: string;
-
-  @Field()
-  registered_since: string;
-}
-
-@ObjectType()
-export class UserAPIResDto {
-  @Field(() => [UserAPIObj])
-  user: UserAPIObj;
-}
+// UserResDto / UserAPIObj / UserAPIResDto now come from the user module
+// (re-exported above) — definitions removed to avoid duplicate GraphQL types.

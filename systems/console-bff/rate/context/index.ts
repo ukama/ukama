@@ -11,7 +11,7 @@ import RateAPI from "../datasource/rate_api";
 export interface Context {
   baseURL: string;
   dataSources: {
-    dataSource: RateAPI;
+    rate: RateAPI;
   };
   headers: THeaders;
 }

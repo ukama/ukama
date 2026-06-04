@@ -15,6 +15,6 @@ export class WhoamiResolver {
   @Query(() => WhoamiDto)
   async whoami(@Ctx() ctx: Context): Promise<WhoamiDto> {
     const { dataSources, headers } = ctx;
-    return await dataSources.dataSource.whoami(headers.userId);
+    return await dataSources.user.whoami(headers.userId);
   }
 }

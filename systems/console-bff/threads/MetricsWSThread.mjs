@@ -5,8 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
-/* eslint-disable @typescript-eslint/no-var-requires */
 import { open } from "lmdb";
 import { isMainThread, parentPort, workerData } from "worker_threads";
 import WebSocket from "ws";

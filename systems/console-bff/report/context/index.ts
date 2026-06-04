@@ -11,7 +11,7 @@ import ReportAPI from "../datasource/report_api";
 export interface Context {
   baseURL: string;
   dataSources: {
-    dataSource: ReportAPI;
+    report: ReportAPI;
   };
   headers: THeaders;
 }

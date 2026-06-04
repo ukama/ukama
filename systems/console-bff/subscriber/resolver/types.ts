@@ -111,7 +111,7 @@ export class SubscriberAPIDto {
 }
 
 @ObjectType()
-export class SimsAPIResDto {
+export class SubscriberSimsAPIResDto {
   @Field(() => [SubSimAPIDto])
   sims: SubSimAPIDto[];
 }

@@ -11,7 +11,7 @@ import SimAPI from "../datasource/sim_api";
 export interface Context {
   baseURL: string;
   dataSources: {
-    dataSource: SimAPI;
+    sim: SimAPI;
   };
   headers: THeaders;
 }

@@ -11,7 +11,7 @@ import SoftwareAPI from "../datasource/software_api";
 export interface Context {
   baseURL: string;
   dataSources: {
-    dataSource: SoftwareAPI;
+    software: SoftwareAPI;
   };
   headers: THeaders;
 }

@@ -17,7 +17,7 @@ export class GetMembersResolver {
   async getMembers(@Ctx() ctx: Context): Promise<MembersResDto> {
     const { dataSources, baseURL } = ctx;
     const members: MemberDto[] = [];
-    const res = await dataSources.dataSource.getMembers(baseURL);
+    const res = await dataSources.member.getMembers(baseURL);
     const userAPI = new UserApi();
     for (const member of res.members) {
       const user = await userAPI.getUser(member.userId);

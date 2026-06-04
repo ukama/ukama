@@ -21,6 +21,6 @@ export class RemovePackageForSimResolver {
     @Ctx() ctx: Context
   ): Promise<RemovePackageFromSimResDto> {
     const { dataSources, baseURL } = ctx;
-    return await dataSources.dataSource.removePackageFromSim(baseURL, data);
+    return await dataSources.sim.removePackageFromSim(baseURL, data);
   }
 }

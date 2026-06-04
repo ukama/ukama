@@ -18,6 +18,6 @@ export class CreateInvitationResolver {
     @Ctx() ctx: Context
   ): Promise<InvitationDto> {
     const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.sendInvitation(baseURL, data);
+    return dataSources.invitation.sendInvitation(baseURL, data);
   }
 }

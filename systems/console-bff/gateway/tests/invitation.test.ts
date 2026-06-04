@@ -69,7 +69,7 @@ const createContextValue = async () => {
   const baseURL = await getBaseURL(SUB_GRAPHS.invitation.name, orgName, store);
   return {
     dataSources: {
-      dataSource: invitationAPi,
+      invitation: invitationAPi,
     },
     baseURL: baseURL.message,
     headers: parsedHeaders,
@@ -79,7 +79,7 @@ const createContextValue = async () => {
 describe("Invitation API integration test", () => {
   let server: ApolloServer<Context>;
   let contextValue: {
-    dataSources: { dataSource: InvitationApi };
+    dataSources: { invitation: InvitationApi };
     baseURL: string;
     headers: THeaders;
   };

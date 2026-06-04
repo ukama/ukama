@@ -11,7 +11,7 @@ import ControllerAPI from "../datasource/controller_api";
 export interface Context {
   baseURL: string;
   dataSources: {
-    dataSource: ControllerAPI;
+    controller: ControllerAPI;
   };
   headers: THeaders;
 }

@@ -84,7 +84,7 @@ const createContextValue = async () => {
   const baseURL = await getBaseURL(SUB_GRAPHS.sim.name, orgName, store);
 
   return {
-    dataSources: { dataSource: simApi },
+    dataSources: { sim: simApi },
     baseURL: baseURL.message,
     headers: parsedHeaders,
   };
@@ -93,7 +93,7 @@ const createContextValue = async () => {
 describe("Sim API integration tests", () => {
   let server: ApolloServer<Context>;
   let contextValue: {
-    dataSources: { dataSource: SimApi };
+    dataSources: { sim: SimApi };
     baseURL: string;
     headers: THeaders;
   };

@@ -18,6 +18,6 @@ export class ProcessPaymentResolver {
     @Ctx() ctx: Context
   ): Promise<ProcessPaymentDto> {
     const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.processPayment(baseURL, data);
+    return dataSources.payment.processPayment(baseURL, data);
   }
 }

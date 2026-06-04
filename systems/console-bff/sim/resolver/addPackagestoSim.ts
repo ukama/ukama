@@ -26,7 +26,7 @@ export class AddPackagesToSimResolver {
     const pacakgesId: AddPackagSimResDto[] = [];
     for (const packageInfo of data.packages) {
       try {
-        await dataSources.dataSource.addPackageToSim(
+        await dataSources.sim.addPackageToSim(
           baseURL,
           data.sim_id,
           packageInfo.package_id,
@@ -36,7 +36,9 @@ export class AddPackagesToSimResolver {
           packageId: packageInfo.package_id,
         });
       } catch (error) {
-        logger.error(`Error adding package to sim: ${packageInfo.package_id} `);
+        logger.error(
+          `Error adding package to sim: ${packageInfo.package_id}: ${error}`
+        );
         throw new Error("Failed to add package to sim");
       }
     }

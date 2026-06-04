@@ -47,7 +47,7 @@ export class WhoamiDto {
 }
 
 @InputType()
-export class UserFistVisitInputDto {
+export class UserFirstVisitInputDto {
   @Field()
   @IsUUID()
   userId: string;
@@ -66,7 +66,7 @@ export class UserFistVisitInputDto {
 }
 
 @ObjectType()
-export class UserFistVisitResDto {
+export class UserFirstVisitResDto {
   @Field()
   firstVisit: boolean;
 }

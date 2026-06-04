@@ -18,6 +18,6 @@ export class AddSiteResolver {
     @Ctx() ctx: Context
   ): Promise<SiteDto> {
     const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.addSite(baseURL, data);
+    return dataSources.site.addSite(baseURL, data);
   }
 }

@@ -18,6 +18,6 @@ export class DeleteSubscriberResolver {
     @Ctx() ctx: Context
   ): Promise<CBooleanResponse> {
     const { dataSources, baseURL } = ctx;
-    return await dataSources.dataSource.deleteSubscriber(baseURL, subscriberId);
+    return await dataSources.subscriber.deleteSubscriber(baseURL, subscriberId);
   }
 }

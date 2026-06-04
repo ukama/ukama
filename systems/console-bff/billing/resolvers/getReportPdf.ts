@@ -18,6 +18,6 @@ export class GetReportPdfResolver {
     @Ctx() ctx: Context
   ): Promise<GetReportDto> {
     const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.getReport(baseURL, id);
+    return dataSources.billing.getReport(baseURL, id);
   }
 }

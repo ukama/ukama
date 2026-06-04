@@ -24,7 +24,7 @@ export class UpdatePaymentResolver {
     logger.info(`Updating payment for bill: ${data.id}`);
 
     try {
-      const updatedPaymentRes = await dataSources.dataSource.updatePayment(
+      const updatedPaymentRes = await dataSources.payment.updatePayment(
         baseURL,
         data
       );
@@ -33,7 +33,7 @@ export class UpdatePaymentResolver {
         logger.info("Payment updated successfully");
 
         try {
-          const tokenRes = await dataSources.dataSource.getToken(
+          const tokenRes = await dataSources.payment.getToken(
             baseURL,
             updatedPaymentRes.id
           );
@@ -43,7 +43,7 @@ export class UpdatePaymentResolver {
 
             try {
               const processPaymentRes =
-                await dataSources.dataSource.processPayment(baseURL, {
+                await dataSources.payment.processPayment(baseURL, {
                   id: updatedPaymentRes.id,
                   token: tokenRes.token,
                   correspondent: "test",

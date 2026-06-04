@@ -5,11 +5,8 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
-/* eslint-disable @typescript-eslint/no-var-requires */
-const { workerData, isMainThread, parentPort } = require("worker_threads");
-/* eslint-disable @typescript-eslint/no-var-requires */
-const axios = require("axios");
+import axios from "axios";
+import { isMainThread, parentPort, workerData } from "worker_threads";
 
 const runWorker = async () => {
   if (!isMainThread) {

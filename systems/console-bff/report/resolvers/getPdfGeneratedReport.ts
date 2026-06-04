@@ -20,7 +20,7 @@ export class GetPdfGeneratedReportResolver {
     const { dataSources, baseURL } = ctx;
 
     try {
-      const buffer = await dataSources.dataSource.getGeneratedPdfReport(
+      const buffer = await dataSources.report.getGeneratedPdfReport(
         baseURL,
         id
       );
