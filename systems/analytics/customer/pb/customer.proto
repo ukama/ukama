@@ -1,0 +1,187 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2026-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/analytics/customer/pb/gen";
+
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+
+package ukama.analytics.customer.v1;
+
+service CustomerService {
+    rpc GetOverview(GetOverviewRequest) returns (GetOverviewResponse);
+    rpc List(ListRequest) returns (ListResponse);
+    rpc Search(SearchRequest) returns (SearchResponse);
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc GetSupport(GetSupportRequest) returns (GetSupportResponse);
+    rpc GetSims(GetSimsRequest) returns (GetSimsResponse);
+    rpc GetSimPool(GetSimPoolRequest) returns (GetSimPoolResponse);
+}
+
+message Window {
+    string period = 1;
+    google.protobuf.Timestamp from = 2;
+    google.protobuf.Timestamp to = 3;
+    string timezone = 4;
+}
+
+message Kpi {
+    string key = 1;
+    double value = 2;
+    string formatted = 3;
+    double delta = 4;
+    string delta_period = 5;
+    bool stale = 6;
+    google.protobuf.Timestamp as_of = 7;
+}
+
+message Meta {
+    uint32 count = 1;
+    uint32 page = 2;
+    uint32 size = 3;
+    uint32 pages = 4;
+}
+
+/* GetOverview */
+message GetOverviewRequest {
+    string network_id = 1;
+    Window window = 2;
+}
+
+message GetOverviewResponse {
+    repeated Kpi kpis = 1;   /* total, active, new, expired, failed_activations */
+}
+
+/* List / Search */
+message ListRequest {
+    string network_id = 1;
+    string site_id = 2;
+    string status = 3;       /* active|inactive|expired */
+    uint32 page = 4;
+    uint32 page_size = 5;
+}
+
+message CustomerRow {
+    string customer_id = 1;
+    string name = 2;
+    string email = 3;
+    string status = 4;
+    string package_name = 5;
+    string package_status = 6;
+    double data_usage = 7;
+    google.protobuf.Timestamp last_seen = 8;
+    string site_id = 9;
+    string site_name = 10;
+    string sim_iccid = 11;
+    string sim_status = 12;
+}
+
+message ListResponse {
+    repeated CustomerRow customers = 1;
+    Meta meta = 2;
+}
+
+message SearchRequest {
+    string query = 1 [(validator.field) = { string_not_empty: true }];
+    string network_id = 2;
+    uint32 page = 3;
+    uint32 page_size = 4;
+}
+
+message SearchResponse {
+    repeated CustomerRow customers = 1;
+    Meta meta = 2;
+}
+
+/* Get */
+message GetRequest {
+    string customer_id = 1 [(validator.field) = { uuid_ver: 4, string_not_empty: true }];
+    Window window = 2;
+}
+
+message GetResponse {
+    CustomerRow customer = 1;
+    repeated Kpi kpis = 2;   /* data_usage, package_usage_percent, last_seen_minutes */
+    repeated PackageInterval package_history = 3;
+}
+
+message PackageInterval {
+    string package_id = 1;
+    string package_name = 2;
+    google.protobuf.Timestamp start_at = 3;
+    google.protobuf.Timestamp end_at = 4;
+    string state = 5;
+}
+
+/* GetSupport */
+message GetSupportRequest {
+    string customer_id = 1 [(validator.field) = { uuid_ver: 4, string_not_empty: true }];
+}
+
+message GetSupportResponse {
+    CustomerRow customer = 1;
+    string likely_issue = 2;
+    string recommended_action = 3;
+    bool escalation_needed = 4;
+    repeated SupportSignal signals = 5;
+    repeated ActivityItem recent_activity = 6;
+}
+
+message SupportSignal {
+    string key = 1;          /* sim_state, package_state, site_health, usage, last_seen */
+    string state = 2;        /* ok|warning|critical|unknown */
+    string detail = 3;
+}
+
+message ActivityItem {
+    string routing_key = 1;
+    string description = 2;
+    google.protobuf.Timestamp occurred_at = 3;
+}
+
+/* GetSims */
+message GetSimsRequest {
+    string network_id = 1;
+    string status = 2;
+    uint32 page = 3;
+    uint32 page_size = 4;
+}
+
+message SimRow {
+    string sim_id = 1;
+    string iccid = 2;
+    string status = 3;
+    string customer_id = 4;
+    string batch_id = 5;
+    google.protobuf.Timestamp allocated_at = 6;
+}
+
+message GetSimsResponse {
+    repeated SimRow sims = 1;
+    Meta meta = 2;
+}
+
+/* GetSimPool */
+message GetSimPoolRequest {
+    string network_id = 1;
+}
+
+message SimBatch {
+    string batch_id = 1;
+    uint32 quantity = 2;
+    uint32 assigned = 3;
+    double assigned_percent = 4;
+    google.protobuf.Timestamp uploaded_at = 5;
+}
+
+message GetSimPoolResponse {
+    repeated Kpi kpis = 1;   /* total, available, active, assigned, suspended, faulty, low_stock */
+    repeated SimBatch batches = 2;
+}
