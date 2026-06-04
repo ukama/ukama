@@ -11,16 +11,14 @@
     "lint": "eslint --ext .ts .",
     "prettier": "prettier --write --config .prettierrc './**/**'",
     "clear-cache": "rm -rf .cache/*",
-    "seed": "prisma db seed",
-    "migrate": "prisma migrate dev",
     "prisma-pre-build": "prisma generate --schema=./planning-tool/prisma/schema.prisma && prisma db push --schema=./planning-tool/prisma/schema.prisma",
-    "test": "TOKEN=ZmJjMmE4MGQtMzM5ZS00ZDNjLWFjYWEtMzI5ZGQzZDFiMjIxO3VrYW1hLXRlc3Qtb3JnO2QyYmZhNTU5LTZjMjMtNDZmYi1hMmI4LWE0M2U2MmMxNWU0YztTYWxtYW47c2FsbWFuQHVrYW1hLmNvbTtST0xFX09XTkVSO3RydWU=.zfUEjFCvqmNXsZu6id49Q6yJKHQ2VLBWN2ZZYJ0tXWo jest --no-cache"
+    "test": "TOKEN=ZmJjMmE4MGQtMzM5ZS00ZDNjLWFjYWEtMzI5ZGQzZDFiMjIxO3VrYW1hLXRlc3Qtb3JnO2QyYmZhNTU5LTZjMjMtNDZmYi1hMmI4LWE0M2U2MmMxNWU0YztTYWxtYW47c2FsbWFuQHVrYW1hLmNvbTtST0xFX09XTkVSO3RydWU=.zfUEjFCvqmNXsZu6id49Q6yJKHQ2VLBWN2ZZYJ0tXWo jest --no-cache",
+    "test:unit": "jest -c jest.unit.config.ts --ci --watchAll=false",
+    "audit:ci": "yarn audit --level critical --groups dependencies"
   },
   "dependencies": {
     "@apollo/datasource-rest": "^6.3.0",
-    "@apollo/gateway": "^2.8.3",
-    "@apollo/server": "^4.10.4",
-    "@apollo/subgraph": "^2.8.3",
+    "@apollo/server": "^4",
     "@faker-js/faker": "^8.4.1",
     "@graphql-tools/schema": "^10.0.4",
     "@graphql-yoga/node": "^3.9.1",
@@ -32,7 +30,7 @@
     "cors": "^2.8.5",
     "dayjs": "^1.11.12",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2",
+    "express": "^4",
     "express-rate-limit": "^8.5.2",
     "express-winston": "^4.2.0",
     "graphql": "^16.9.0",
@@ -47,7 +45,7 @@
     "reflect-metadata": "^0.2.2",
     "stripe": "^12.16.0",
     "tsc": "^2.0.4",
-    "type-graphql": "2.0.0-rc.2",
+    "type-graphql": "^2.0.0-rc.2",
     "typedi": "^0.10.0",
     "winston": "^3.13.1",
     "ws": "^8.18.0"

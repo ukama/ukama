@@ -1,2 +1,6 @@
 node_modules
 build
+dist
+coverage
+# parked — excluded from build/lint/run (see README "Re-enabling planning-tool")
+planning-tool

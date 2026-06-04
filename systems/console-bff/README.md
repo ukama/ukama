@@ -1,9 +1,12 @@
 # Console-BFF
 
 GraphQL backend-for-frontend for the Ukama Console. It authenticates console
-sessions (Kratos), and proxies/aggregates the distributed backend systems
+sessions (Kratos) and proxies/aggregates the distributed backend systems
 (nucleus, registry, dataplan, subscriber, node, …) behind a single `/graphql`
 endpoint.
+
+It runs as **two processes**: the consolidated API server (`server/`, port
+8080) and the real-time subscriptions service (`subscriptions/`, port 8081).
 
 ## How to run
 
@@ -12,97 +15,62 @@ it uses the host-mapped backend ports; `.env.dev.example` uses docker-network
 hostnames and only works inside the compose network).
 
 ```bash
-# Consolidated API server (recommended) — one process, port 8090 by default
-API_PORT=8090 ENABLE_INTROSPECTION=true yarn api-dev
+# API server (one process, all modules) — port 8090 by default in dev
+API_PORT=8090 ENABLE_INTROSPECTION=true yarn dev
 
-# Legacy multi-process stack (federation gateway + 22 subgraphs)
-yarn dev
+# Subscriptions service (real-time metrics/notifications)
+yarn subscriptions-dev
 ```
 
-Docker: `docker compose up -d --build bff` (runs the legacy stack until the
-Phase C cutover — see below).
-
-## Consolidation (2026-06) — what changed and what's left
-
-The BFF historically ran as **23 processes**: an Apollo Federation gateway
-(`gateway/`, port 8080) composing 22 per-module subgraph servers (ports
-5042–5063) under supervisord. The modules share **no federation entity
-references** (`@key`/`@external`), so the federation was pure namespacing.
-It is being collapsed into **one Apollo server** (`server/`, `API_PORT`).
-Full design + decision log: `CONSOLIDATION-DESIGN.md`.
-
-### Current state
-
-- `server/index.ts` — consolidated API server: shared express middleware
-  (request-id, AsyncLocalStorage logging, helmet, rate-limit), one merged
-  type-graphql schema (no federation), `/healthz` `/readyz` `/ping`
-  `/get-user` `/set-theme`, graceful shutdown, introspection gated by
-  `ENABLE_INTROSPECTION` (off in production by default).
-- `server/context.ts` — unified `AppContext`: verified session token claims
-  (`headers.orgId/userId/orgName`) + **named datasource slots**
-  (`ctx.dataSources.org`, `.network`, …) instead of the old per-subgraph
-  `ctx.dataSources.dataSource`.
-- `server/schema.ts` — composes every module's resolvers into one schema.
-- **All 22 modules are migrated.** Each module's `context/` and `index.ts`
-  (subgraph bootstrap) were updated to the named key, so the legacy gateway
-  stack still works during the transition.
-- Naming fixes made for the merge (single schema = single namespace):
-  `member` re-exports the `User*` types from `user`; subscriber's
-  `SimsAPIResDto` → `SubscriberSimsAPIResDto`; planning-tool's `Site` →
-  `PlanningSite` and `addSite/updateSite/deleteSite` → `addDraftSite/
-  updateDraftSite/deleteDraftSite`.
-
-### Planning-tool: parked (NOT in the merged schema)
-
-`planning-tool/` (Prisma/PostgreSQL) is **intentionally excluded** from
-`server/schema.ts` for phase 1 — instantiating its Prisma client crashes the
-server when `PLANNING_TOOL_DB` isn't configured / `prisma generate` hasn't
-run. The code is kept and its schema names are already collision-free.
-
-**Re-enabling planning-tool** (when needed):
-1. Configure `PLANNING_TOOL_DB` and run
-   `yarn prisma-pre-build` (generates the Prisma client + pushes schema; move
-   to `prisma migrate deploy` for production).
-2. `server/schema.ts`: import `planningResolvers from "../planning-tool/modules"`
-   and append `...planningResolvers` to `ALL_RESOLVERS`.
-3. `server/context.ts`: add `prisma` to `AppContext` and pass it in the
-   context built in `server/index.ts` (the singleton lives in
-   `common/prisma`, exported as `prisma`).
-4. Consider lazy-initializing the Prisma client so a missing DB degrades the
-   planning queries instead of failing boot.
-
-### Phase C — cutover (DONE, deployment)
-
-- `Dockerfile` builds at image time (`yarn build`) and the default `CMD` runs
-  `dist/server/index.js`; **supervisord removed**.
-- `docker-compose.yml` runs **two containers from one image**: `api` (8080,
-  consolidated server) and `subscriptions` (8081), shared env via a YAML
-  anchor, `API_PORT=8080`.
-- `package.json` scripts trimmed: `start` runs the consolidated server,
-  `dev`→`api-dev`; removed the 22 `*-dev` scripts + `all-dev`/`all-start`.
-
-Deploy: `docker compose up -d --build --remove-orphans` (the `--remove-orphans`
-clears the old `bff` container).
-
-### Phase C — remaining cleanup (run on host; build already ignores this code)
-
-The image still compiles the legacy federation source (harmless — `CMD` runs
-only `server/`). Remove it when convenient:
+Docker (two containers from one image — `api`:8080 and `subscriptions`:8081):
 
 ```bash
-rm -f gateway/index.ts gateway/configureExpress.ts supervisord.conf
-rm -rf common/apollo
-# the 22 subgraph bootstraps (KEEP each module's context/ resolver(s)/ datasource/):
-for m in org user init network site member invitation node package rate \
-  subscriber sim controller health software component billing payment \
-  report metric notification; do rm -f "$m/index.ts"; done
+docker compose up -d --build --remove-orphans
 ```
 
-Keep `gateway/tests/`, `subscriptions/`, and `planning-tool/` (parked).
-Optionally prune the 5042–5063 `*_PORT` consts in `common/configs`. Then
-regenerate `ukama-console` codegen against the consolidated endpoint.
+## Architecture (post-consolidation, 2026-06)
 
-## Auth model (post-hardening)
+The BFF historically ran as **23 processes**: an Apollo Federation gateway
+composing 22 per-module subgraph servers (ports 5042–5063) under supervisord.
+The modules shared **no federation entity references**, so the federation was
+pure namespacing — it has been collapsed into **one Apollo server**. Design +
+decision log: `CONSOLIDATION-DESIGN.md`.
+
+- `server/index.ts` — the API server: shared express middleware (request-id,
+  AsyncLocalStorage logging, helmet, rate-limit), one merged type-graphql
+  schema (no federation), `/healthz` `/readyz` `/ping` `/get-user`
+  `/set-theme`, graceful shutdown, introspection gated by
+  `ENABLE_INTROSPECTION` (off in production by default).
+- `server/context.ts` — unified `AppContext`: verified session-token claims
+  (`headers.orgId/userId/orgName`) + **named datasource slots**
+  (`ctx.dataSources.org`, `.network`, …), instantiated per request.
+- `server/schema.ts` — composes every module's resolvers into one schema.
+- Each module keeps its `resolver(s)/`, `datasource/` and `context/`; the old
+  per-module bootstraps, the federation gateway, supervisord and the
+  `@apollo/gateway`/`@apollo/subgraph` deps have been removed.
+
+## Planning-tool: parked
+
+`planning-tool/` (Prisma/PostgreSQL) is excluded from the schema **and from
+build/lint** (`tsconfig.json` include list, `.eslintignore`) — its Prisma
+client requires a configured `PLANNING_TOOL_DB`. The code is kept and its
+schema names are already de-conflicted (`PlanningSite`, `*DraftSite`).
+
+**Re-enabling planning-tool:**
+1. Configure `PLANNING_TOOL_DB`; run `yarn prisma-pre-build` (use
+   `prisma migrate deploy` in production).
+2. Add `"planning-tool"` back to the `include` list in `tsconfig.json` and
+   remove it from `.eslintignore`. The standalone `planning-tool/index.ts`
+   bootstrap is dead (it predates consolidation and imports the removed
+   `@apollo/subgraph`) — delete it or leave it excluded.
+3. `server/schema.ts`: import `planningResolvers from "../planning-tool/modules"`
+   and append `...planningResolvers` to `ALL_RESOLVERS`.
+4. `server/context.ts`: add `prisma` to `AppContext` and pass it from
+   `server/index.ts` (singleton exported from `common/prisma`). Consider
+   lazy-initializing the client so a missing DB degrades planning queries
+   instead of failing boot.
+
+## Auth model
 
 - `/get-user` validates the Kratos `ukama_session`, resolves the user's
   org/role, and issues an HMAC-signed token (`JWT_SECRET`) with an `exp`
@@ -119,3 +87,27 @@ regenerate `ukama-console` codegen against the consolidated endpoint.
 | `/healthz` / `/readyz` | liveness / readiness probes |
 | `/get-user` | session → signed token exchange |
 | `/ping` | legacy alias (also checks subscriptions service) |
+
+## Testing & CI
+
+- `yarn test:unit` — dependency-free unit suite (`common/tests`: token,
+  storage TTL, env validation, request context) with a coverage gate
+  (`jest.unit.config.ts`, ≥60% on the security-critical helpers). Runs in CI
+  (`.github/workflows/bff.yaml`) and needs no backend systems.
+- `yarn test` — the integration suite (`gateway/tests`); requires live backend
+  systems + a `TOKEN`, so it's run locally/in an integrated env, not plain CI.
+- `yarn audit:ci` — fails CI on **critical** dependency advisories.
+- `load/load-test.js` — k6 load/SLO test. Run:
+  `BASE_URL=http://localhost:8080 UKAMA_SESSION=<c> TOKEN=<c> k6 run load/load-test.js`
+  (health probes run without creds; the GraphQL query is skipped if creds are
+  absent). Thresholds are starting SLOs — tune to observed baselines.
+
+## Dependencies & TypeScript notes
+
+- `type-graphql` remains on `2.0.0-rc.2` — upgrade to a stable 2.x once
+  published/verified (`yarn upgrade type-graphql@<version>` + `yarn build` +
+  `yarn test:unit`).
+- `skipLibCheck` is on: newer transitive deps ship `.d.ts` files targeting
+  newer TS lib types; our own code is still fully checked.
+- `strictPropertyInitialization` is intentionally **off**: type-graphql DTOs
+  declare `@Field() x: string;` without initializers by design.
