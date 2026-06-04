@@ -9,22 +9,17 @@ include ../../config.mk
 GOPATH ?= $(shell go env GOPATH)
 PROTO_FILE := $(shell find ./pb -maxdepth 1 -name '*.proto' -printf '%f\n' | head -n 1)
 
-.PHONY: integration.test test build lint deps gen clean mocks
-
-build: integration.build
-	@echo Building version: \"$(BIN_VER)\"
-	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/analytics/customer/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/customer cmd/server/main.go
+.PHONY: test lint deps gen mocks clean info
 
 test:
-	go test -v ./...
+	go test -v ./pkg/...
 
-# Go lint
 lint:
-	golangci-lint run
+	golangci-lint run ./pkg/...
 
 deps:
 	go get google.golang.org/protobuf/cmd/protoc-gen-go \
-			google.golang.org/grpc/cmd/protoc-gen-go-grpc
+		google.golang.org/grpc/cmd/protoc-gen-go-grpc
 
 gen:
 	@test -n "$(PROTO_FILE)" || (echo "missing proto file under ./pb"; exit 1)
@@ -42,10 +37,6 @@ mocks:
 clean:
 	rm -rf bin/
 
-# integration tests
-
-integration.test:
-	go test ./test/integration -tags integration  -v -count=1
-
-integration.build:
-	env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+info:
+	@echo "customer is a domain module only."
+	@echo "Runtime service is analytics."
