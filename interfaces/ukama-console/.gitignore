@@ -27,8 +27,8 @@ ukama-console-BUILD-PLAN.md
 npm-debug.log*
 pnpm-debug.log*
 
-# graphql codegen output
-src/client/graphql/types.ts
-src/client/graphql/metrics-types.ts
+# graphql codegen output is committed (CI has no BFF to introspect): the
+# *.generated.ts operation files import ./types, so types.ts must be tracked
+# too. Keep all codegen output in sync via `pnpm codegen` before committing.
 ukama-console-API-PLAN.md
 ukama-console-CONTEXT.md
