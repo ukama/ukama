@@ -18,6 +18,10 @@ service OperationManagerService {
     rpc GetOperation(GetOperationRequest) returns (GetOperationResponse);
     rpc GetByResource(GetByResourceRequest) returns (GetByResourceResponse);
     rpc MarkRunning(MarkRunningRequest) returns (MarkRunningResponse);
+    // TODO: replace ForceUnlockRequest/Response with dedicated CompleteOperationRequest/Response
+    // carrying fencingToken/status/reason after protobuf regeneration is available.
+    rpc CompleteOperation(ForceUnlockRequest) returns (ForceUnlockResponse);
+    rpc FailOperation(ForceUnlockRequest) returns (ForceUnlockResponse);
     rpc ForceUnlock(ForceUnlockRequest) returns (ForceUnlockResponse);
 }
 

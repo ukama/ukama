@@ -121,7 +121,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		ops.GET("", formatDoc("Get operation by resource", "Returns the operation currently locking the given resource_key, or empty if free."), tonic.Handler(r.getByResourceHandler, http.StatusOK))
 		ops.GET("/:id", formatDoc("Get operation by id", "Returns the current state of an operation."), tonic.Handler(r.getOperationHandler, http.StatusOK))
 		ops.POST("/:id/run", formatDoc("Mark operation running", "Transitions a pending operation to running. Caller must pass the fencing token."), tonic.Handler(r.postMarkRunningHandler, http.StatusOK))
-		ops.DELETE("/:id", formatDoc("Force-unlock an operation", "Privileged. Cancels the operation and releases its lock with audit reason."), tonic.Handler(r.deleteForceUnlockHandler, http.StatusOK))
+		ops.POST("/:id/force-unlock", formatDoc("Force-unlock an operation", "Privileged. Cancels the operation and releases its lock with audit reason."), tonic.Handler(r.postForceUnlockHandler, http.StatusOK))
 	}
 }
 
@@ -148,7 +148,7 @@ func (r *Router) postMarkRunningHandler(c *gin.Context, req *MarkRunningRequest)
 	return r.clients.Manager.MarkRunning(req.Id, req.FencingToken)
 }
 
-func (r *Router) deleteForceUnlockHandler(c *gin.Context, req *ForceUnlockRequest) (*pb.ForceUnlockResponse, error) {
+func (r *Router) postForceUnlockHandler(c *gin.Context, req *ForceUnlockRequest) (*pb.ForceUnlockResponse, error) {
 	resp, err := r.clients.Member.GetByUserId(req.UserId)
 	if err != nil {
 		log.Errorf("ForceUnlock: failed to resolve member for user %s: %v", req.UserId, err)

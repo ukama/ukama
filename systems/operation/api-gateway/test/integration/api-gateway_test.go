@@ -10,5 +10,5 @@ package integration
 
 // TODO: add integration tests for the REST surface:
 // POST /v1/operations, GET /v1/operations/{id}, GET /v1/operations?resource_key=,
-// POST /v1/operations/{id}/run, DELETE /v1/operations/{id}.
+// POST /v1/operations/{id}/run, POST /v1/operations/{id}/force-unlock.
 // Follow the pattern in systems/node/api-gateway/test/integration.

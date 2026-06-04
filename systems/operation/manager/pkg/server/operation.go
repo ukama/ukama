@@ -136,6 +136,58 @@ func (s *OperationServer) MarkRunning(ctx context.Context, req *pb.MarkRunningRe
 	return &pb.MarkRunningResponse{Operation: toPb(op)}, nil
 }
 
+func (s *OperationServer) CompleteOperation(ctx context.Context, req *pb.ForceUnlockRequest) (*pb.ForceUnlockResponse, error) {
+	id, err := uuid.FromString(req.Id)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid id: %v", err)
+	}
+	current, err := s.repo.Get(id)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, status.Error(codes.NotFound, "operation not found")
+	}
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "get operation: %v", err)
+	}
+
+	op, err := s.repo.Terminate(id, current.FencingToken, db.OperationSuccess, db.OperationAudit{
+		Event:  "completed",
+		Actor:  req.Actor,
+		Reason: req.Reason,
+	}, "")
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "complete operation: %v", err)
+	}
+
+	log.Infof("operation %s completed by %s: %s", op.Id, req.Actor, req.Reason)
+	return &pb.ForceUnlockResponse{Operation: toPb(op)}, nil
+}
+
+func (s *OperationServer) FailOperation(ctx context.Context, req *pb.ForceUnlockRequest) (*pb.ForceUnlockResponse, error) {
+	id, err := uuid.FromString(req.Id)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid id: %v", err)
+	}
+	current, err := s.repo.Get(id)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, status.Error(codes.NotFound, "operation not found")
+	}
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "get operation: %v", err)
+	}
+
+	op, err := s.repo.Terminate(id, current.FencingToken, db.OperationFailed, db.OperationAudit{
+		Event:  "failed",
+		Actor:  req.Actor,
+		Reason: req.Reason,
+	}, req.Reason)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "fail operation: %v", err)
+	}
+
+	log.Warnf("operation %s failed by %s: %s", op.Id, req.Actor, req.Reason)
+	return &pb.ForceUnlockResponse{Operation: toPb(op)}, nil
+}
+
 func (s *OperationServer) ForceUnlock(ctx context.Context, req *pb.ForceUnlockRequest) (*pb.ForceUnlockResponse, error) {
 	id, err := uuid.FromString(req.Id)
 	if err != nil {

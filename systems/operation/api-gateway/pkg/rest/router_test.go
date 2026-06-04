@@ -71,7 +71,7 @@ func TestForceUnlockAuthorization(t *testing.T) {
 
 	t.Run("OwnerAllowed", func(t *testing.T) {
 		r, mgr := newTestRouter("ROLE_OWNER", nil)
-		resp, err := r.deleteForceUnlockHandler(&gin.Context{}, req)
+		resp, err := r.postForceUnlockHandler(&gin.Context{}, req)
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.True(t, mgr.forceUnlockCalled)
@@ -79,14 +79,14 @@ func TestForceUnlockAuthorization(t *testing.T) {
 
 	t.Run("AdminAllowed", func(t *testing.T) {
 		r, mgr := newTestRouter("ROLE_ADMIN", nil)
-		_, err := r.deleteForceUnlockHandler(&gin.Context{}, req)
+		_, err := r.postForceUnlockHandler(&gin.Context{}, req)
 		assert.NoError(t, err)
 		assert.True(t, mgr.forceUnlockCalled)
 	})
 
 	t.Run("UserDenied", func(t *testing.T) {
 		r, mgr := newTestRouter("ROLE_USER", nil)
-		_, err := r.deleteForceUnlockHandler(&gin.Context{}, req)
+		_, err := r.postForceUnlockHandler(&gin.Context{}, req)
 		assert.Error(t, err)
 		he, ok := err.(crest.HttpError)
 		assert.True(t, ok)
@@ -96,7 +96,7 @@ func TestForceUnlockAuthorization(t *testing.T) {
 
 	t.Run("MemberLookupFailureDenied", func(t *testing.T) {
 		r, mgr := newTestRouter("", errors.New("registry down"))
-		_, err := r.deleteForceUnlockHandler(&gin.Context{}, req)
+		_, err := r.postForceUnlockHandler(&gin.Context{}, req)
 		assert.Error(t, err)
 		he, ok := err.(crest.HttpError)
 		assert.True(t, ok)

@@ -22,6 +22,7 @@ import (
 type OperationManager interface {
 	Start(req *pb.StartOperationRequest) (*pb.StartOperationResponse, error)
 	MarkRunning(id string, fencingToken uint64) (*pb.MarkRunningResponse, error)
+	FailOperation(id, actor, reason string) (*pb.ForceUnlockResponse, error)
 	Close()
 }
 
@@ -53,6 +54,12 @@ func (m *operationManager) MarkRunning(id string, fencingToken uint64) (*pb.Mark
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 	return m.client.MarkRunning(ctx, &pb.MarkRunningRequest{Id: id, FencingToken: fencingToken})
+}
+
+func (m *operationManager) FailOperation(id, actor, reason string) (*pb.ForceUnlockResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
+	defer cancel()
+	return m.client.FailOperation(ctx, &pb.ForceUnlockRequest{Id: id, Actor: actor, Reason: reason})
 }
 
 func (m *operationManager) Close() {

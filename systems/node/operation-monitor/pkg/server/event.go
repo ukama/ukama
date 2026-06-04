@@ -100,14 +100,13 @@ func (e *EventServer) publishCompleted(intent *db.MonitoredIntent) error {
 }
 
 // ruleMatches evaluates a key=value,key2=value2 rule against the transition map.
-// All k=v pairs must match. Empty rule matches anything (defensive — RegisterIntent
-// rejects empty rules so this should never happen in practice).
+// All k=v pairs must match. Empty rule must not match success.
 //
 // TODO: replace with a real expression parser if we ever need OR / NOT / globs.
 func ruleMatches(rule string, transition map[string]string) bool {
 	rule = strings.TrimSpace(rule)
 	if rule == "" {
-		return true
+		return false
 	}
 	for _, pair := range strings.Split(rule, ",") {
 		kv := strings.SplitN(strings.TrimSpace(pair), "=", 2)

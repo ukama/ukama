@@ -21,8 +21,8 @@ import (
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/validation"
-	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
 	opmonpb "github.com/ukama/ukama/systems/node/operation-monitor/pb/gen"
+	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
 	"github.com/ukama/ukama/systems/node/software/pkg"
 	swclient "github.com/ukama/ukama/systems/node/software/pkg/client"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
@@ -88,24 +88,36 @@ func (s *SoftwareServer) acquireAndRegister(actionType, resourceKey string) (*op
 		DeadlineSeconds: s.opDeadlineSecs,
 	}); err != nil {
 		log.Errorf("%s register intent for op %s failed: %v", actionType, op.Id, err)
+		s.failOperation(op, actionType, fmt.Sprintf("register intent failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "register intent: %v", err)
 	}
 	log.Infof("%s acquired lock op=%s token=%d for %s", actionType, op.Id, op.FencingToken, resourceKey)
 	return op, nil
 }
 
-func (s *SoftwareServer) markRunning(op *opmgrpb.Operation, actionType string) {
+func (s *SoftwareServer) markRunning(op *opmgrpb.Operation, actionType string) error {
 	if _, err := s.opManager.MarkRunning(op.Id, op.FencingToken); err != nil {
 		log.Warnf("%s mark running failed for op %s: %v", actionType, op.Id, err)
+		return err
+	}
+	return nil
+}
+
+func (s *SoftwareServer) failOperation(op *opmgrpb.Operation, actionType, reason string) {
+	if op == nil {
+		return
+	}
+	if _, err := s.opManager.FailOperation(op.Id, pkg.ServiceName, reason); err != nil {
+		log.Errorf("%s failed to mark operation %s failed: %v", actionType, op.Id, err)
 	}
 }
 
 func (s *SoftwareServer) CreateApp(ctx context.Context, req *pb.CreateAppRequest) (*pb.CreateAppResponse, error) {
 	log.Infof("Creating app with name: %s, space: %s, notes: %s, metricsKeys: %v", req.Name, req.Space, req.Notes, req.MetricsKeys)
 	app := db.App{
-		Name: req.Name,
-		Space: req.Space,
-		Notes: req.Notes,
+		Name:        req.Name,
+		Space:       req.Space,
+		Notes:       req.Notes,
 		MetricsKeys: req.MetricsKeys,
 	}
 	err := s.appRepo.Create(app)
@@ -208,16 +220,22 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 		return nil, status.Errorf(codes.Internal, "failed to marshal update request: %v", err)
 	}
 
-	op, err := s.acquireAndRegister("UpdateSoftware", fmt.Sprintf("node:%s:app:%s", nId.String(), req.Name))
+	op, err := s.acquireAndRegister("UpdateSoftware", "node:"+nId.String())
 	if err != nil {
 		return nil, err
 	}
+	if err := s.markRunning(op, "UpdateSoftware"); err != nil {
+		s.failOperation(op, "UpdateSoftware", fmt.Sprintf("mark running failed: %v", err))
+		return nil, status.Errorf(codes.Internal, "mark running: %v", err)
+	}
 	if err := s.publishMessage(target, "POST", path, nId.String(), data); err != nil {
 		log.Errorf("Failed to publish update message: %v", err)
+		s.failOperation(op, "UpdateSoftware", fmt.Sprintf("publish failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to publish update message: %v", err)
 	}
-	s.markRunning(op, "UpdateSoftware")
 
+	// TODO(item 9/10): keep this legacy synchronous software status update for now.
+	// Replace with async completion once operation-monitor verifies target version.
 	sw.CurrentVersion = req.Tag
 	sw.ChangeLogs = append(sw.ChangeLogs, "Software updated to version "+req.Tag)
 	sw.Status = ukama.SoftwareStatusType(ukama.UpToDate)
@@ -229,7 +247,7 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 
 	log.Infof("Software %s updated to %s for node %s", req.Name, req.Tag, nId.String())
 
-	return &pb.UpdateSoftwareResponse{Message: "Software updated successfully"}, nil
+	return &pb.UpdateSoftwareResponse{Message: "Software updated successfully", OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
 }
 
 func dbSoftwareToPbSoftware(software *db.Software) *pb.Software {
