@@ -16,5 +16,11 @@ subdirs: $(SYSSUBDIRS)
 $(SYSSUBDIRS):
 	$(MAKE) -C $@
 
+clean:
+	@for dir in $(SYSSUBDIRS); do \
+		echo "Cleaning $$dir"; \
+		$(MAKE) -C $$dir clean; \
+	done
+
 info:
 	@echo $(SYSSUBDIRS)
