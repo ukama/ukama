@@ -6,12 +6,15 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-COPY package*.json yarn.lock ./
-# Install before NODE_ENV=production so yarn keeps devDeps (tsc) for the build.
-RUN yarn install --frozen-lockfile --ignore-scripts
+# pnpm, pinned via the package.json "packageManager" field (corepack).
+RUN corepack enable
+
+COPY package.json pnpm-lock.yaml ./
+# Install before NODE_ENV=production so pnpm keeps devDeps (tsc) for the build.
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 COPY . .
-RUN yarn build
+RUN pnpm build
 
 ENV NODE_ENV=production
 EXPOSE 8080 8081

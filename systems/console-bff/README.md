@@ -16,10 +16,10 @@ hostnames and only works inside the compose network).
 
 ```bash
 # API server (one process, all modules) — port 8090 by default in dev
-API_PORT=8090 ENABLE_INTROSPECTION=true yarn dev
+API_PORT=8090 ENABLE_INTROSPECTION=true pnpm dev
 
 # Subscriptions service (real-time metrics/notifications)
-yarn subscriptions-dev
+pnpm subscriptions-dev
 ```
 
 Docker (two containers from one image — `api`:8080 and `subscriptions`:8081):
@@ -57,7 +57,7 @@ client requires a configured `PLANNING_TOOL_DB`. The code is kept and its
 schema names are already de-conflicted (`PlanningSite`, `*DraftSite`).
 
 **Re-enabling planning-tool:**
-1. Configure `PLANNING_TOOL_DB`; run `yarn prisma-pre-build` (use
+1. Configure `PLANNING_TOOL_DB`; run `pnpm prisma-pre-build` (use
    `prisma migrate deploy` in production).
 2. Add `"planning-tool"` back to the `include` list in `tsconfig.json` and
    remove it from `.eslintignore`. The standalone `planning-tool/index.ts`
@@ -90,13 +90,13 @@ schema names are already de-conflicted (`PlanningSite`, `*DraftSite`).
 
 ## Testing & CI
 
-- `yarn test:unit` — dependency-free unit suite (`common/tests`: token,
+- `pnpm test:unit` — dependency-free unit suite (`common/tests`: token,
   storage TTL, env validation, request context) with a coverage gate
   (`jest.unit.config.ts`, ≥60% on the security-critical helpers). Runs in CI
   (`.github/workflows/bff.yaml`) and needs no backend systems.
-- `yarn test` — the integration suite (`gateway/tests`); requires live backend
+- `pnpm test` — the integration suite (`gateway/tests`); requires live backend
   systems + a `TOKEN`, so it's run locally/in an integrated env, not plain CI.
-- `yarn audit:ci` — fails CI on **critical** dependency advisories.
+- `pnpm audit:ci` — fails CI on **critical** dependency advisories.
 - `load/load-test.js` — k6 load/SLO test. Run:
   `BASE_URL=http://localhost:8080 UKAMA_SESSION=<c> TOKEN=<c> k6 run load/load-test.js`
   (health probes run without creds; the GraphQL query is skipped if creds are
@@ -105,8 +105,8 @@ schema names are already de-conflicted (`PlanningSite`, `*DraftSite`).
 ## Dependencies & TypeScript notes
 
 - `type-graphql` remains on `2.0.0-rc.2` — upgrade to a stable 2.x once
-  published/verified (`yarn upgrade type-graphql@<version>` + `yarn build` +
-  `yarn test:unit`).
+  published/verified (`pnpm add type-graphql@<version>` + `pnpm build` +
+  `pnpm test:unit`).
 - `skipLibCheck` is on: newer transitive deps ship `.d.ts` files targeting
   newer TS lib types; our own code is still fully checked.
 - `strictPropertyInitialization` is intentionally **off**: type-graphql DTOs
