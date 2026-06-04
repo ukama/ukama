@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import NodeDetailScreen from '../../_components/NodeDetailScreen';
 
 export default async function NodeDetailPage({
   params,
@@ -13,7 +13,5 @@ export default async function NodeDetailPage({
   params: Promise<{ nodeId: string }>;
 }) {
   const { nodeId } = await params;
-  return (
-    <PageStub title={decodeURIComponent(nodeId)} crumb={['Nodes']} phase="5" />
-  );
+  return <NodeDetailScreen nodeId={decodeURIComponent(nodeId)} />;
 }

@@ -5,8 +5,8 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import BizSalesScreen from '../_components/BizSalesScreen';
 
 export default function BizRevenuePage() {
-  return <PageStub title="Revenue" phase="4" sub="Revenue collected across your network — your single most important number." />;
+  return <BizSalesScreen />;
 }

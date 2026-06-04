@@ -42,12 +42,20 @@
   --uk-error: #f50533;
   --uk-orange: #e27429;
   --uk-cyan: #00d3eb;
+  --uk-secondary: #6974f8;
+  --uk-beige: #d3b683;
 
   /* accent (blue default) */
   --uk-ac: #2190f6;
   --uk-ac-dark: #006ac3;
   --uk-ac-light: #8fcdf9;
   --uk-ac-soft: #ebf5ff;
+
+  /* regional maps */
+  --uk-map-water: #e9f1f8;
+  --uk-map-land: #dfe9f0;
+  --uk-map-border: #bfd6f2;
+  --uk-map-chip: #ffffff;
 }
 
 /* ---- dark scheme (MUI toggles the `dark` class on <html>) ---- */
@@ -64,6 +72,10 @@
   --uk-shadow-lg: 0 16px 44px rgba(0, 0, 0, 0.55);
   --uk-ac-soft: rgba(33, 144, 246, 0.18);
   --uk-ac-dark: #5fb0ff;
+  --uk-map-water: #12151c;
+  --uk-map-land: #1d2230;
+  --uk-map-border: #2e3850;
+  --uk-map-chip: #21252e;
 }
 
 /* ============================================================

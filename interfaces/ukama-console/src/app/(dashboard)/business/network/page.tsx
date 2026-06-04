@@ -5,8 +5,8 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import BizNetworkScreen from '../_components/BizNetworkScreen';
 
 export default function BizNetworkPage() {
-  return <PageStub title="Network health" phase="4" sub="Is the network healthy, and what is the business impact?" />;
+  return <BizNetworkScreen />;
 }

@@ -5,8 +5,8 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import SubscribersScreen from '@/features/customers/SubscribersScreen';
 
 export default function AgentCustomersPage() {
-  return <PageStub title="Customers" phase="6" count="1,284" sub="Manage your customers’ packages and top-ups." />;
+  return <SubscribersScreen mode="agent" />;
 }

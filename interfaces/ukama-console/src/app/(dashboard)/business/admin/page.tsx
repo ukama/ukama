@@ -5,8 +5,8 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import BizAdminScreen from '../_components/BizAdminScreen';
 
 export default function BizAdminPage() {
-  return <PageStub title="Admin" phase="4" sub="Detailed technical and resource management." />;
+  return <BizAdminScreen />;
 }

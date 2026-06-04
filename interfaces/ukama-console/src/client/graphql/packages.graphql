@@ -1,0 +1,146 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026-present, Ukama Inc.
+#
+# Operations lifted verbatim from interfaces/console (the legacy console)
+# as the Phase-2 API reference. Trim to what each screen needs as screens
+# are wired; run `pnpm codegen` to (re)generate types/hooks.
+
+fragment PackageRate on PackageDto {
+  rate {
+    sms_mo
+    sms_mt
+    data
+    amount
+  }
+}
+fragment PackageMarkup on PackageDto {
+  markup {
+    baserate
+    markup
+  }
+}
+
+fragment SimPackages on SimToPackagesDto {
+  id
+  package_id
+  start_date
+  end_date
+  is_active
+}
+fragment SubscriberSims on SubscriberToSimsDto {
+  subscriberId
+  sims {
+    id
+    subscriberId
+    networkId
+    iccid
+    msisdn
+    imsi
+    type
+    status
+    allocatedAt
+    isPhysical
+  }
+}
+
+fragment Package on PackageDto {
+  uuid
+  name
+  active
+  duration
+  simType
+  createdAt
+  deletedAt
+  updatedAt
+  smsVolume
+  dataVolume
+  voiceVolume
+  ulbr
+  dlbr
+  type
+  dataUnit
+  voiceUnit
+  messageUnit
+  flatrate
+  currency
+  from
+  to
+  country
+  provider
+  apn
+  ownerId
+  amount
+  ...PackageRate
+  ...PackageMarkup
+}
+query getPackages {
+  getPackages {
+    packages {
+      ...Package
+    }
+  }
+}
+query getPackage($packageId: String!) {
+  getPackage(packageId: $packageId) {
+    ...Package
+  }
+}
+
+query getSimsBySubscriber($data: GetSimBySubscriberInputDto!) {
+  getSimsBySubscriber(data: $data) {
+    ...SubscriberSims
+  }
+}
+
+mutation addPackage($data: AddPackageInputDto!) {
+  addPackage(data: $data) {
+    ...Package
+  }
+}
+
+mutation removePackageForSim($data: RemovePackageFormSimInputDto!) {
+  removePackageForSim(data: $data) {
+    packageId
+  }
+}
+
+mutation deletePackage($packageId: String!) {
+  deletePackage(packageId: $packageId) {
+    uuid
+  }
+}
+query getPackagesForSim($data: GetPackagesForSimInputDto!) {
+  getPackagesForSim(data: $data) {
+    sim_id
+    packages {
+      ...SimPackages
+    }
+  }
+}
+
+mutation addPackagesToSim($data: AddPackagesToSimInputDto!) {
+  addPackagesToSim(data: $data) {
+    packages {
+      packageId
+    }
+  }
+}
+
+mutation deleteSim($data: DeleteSimInputDto!) {
+  deleteSim(data: $data) {
+    simId
+  }
+}
+
+# NOTE: operation name typo is in the gateway schema field name's caller; keep until schema fixed
+mutation updatePacakge($packageId: String!, $data: UpdatePackageInputDto!) {
+  updatePackage(packageId: $packageId, data: $data) {
+    ...Package
+  }
+}
+
+### Package End ###
+### Payment start ###

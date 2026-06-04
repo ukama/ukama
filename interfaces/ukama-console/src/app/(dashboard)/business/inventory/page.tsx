@@ -5,8 +5,8 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import BizInventoryScreen from '../_components/BizInventoryScreen';
 
 export default function BizInventoryPage() {
-  return <PageStub title="Inventory" phase="4" sub="Do I have enough SIMs and nodes to operate and grow?" />;
+  return <BizInventoryScreen />;
 }

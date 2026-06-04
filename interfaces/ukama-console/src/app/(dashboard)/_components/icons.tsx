@@ -15,6 +15,10 @@ import AccountTreeRounded from '@mui/icons-material/AccountTreeRounded';
 import AppsRounded from '@mui/icons-material/AppsRounded';
 import BadgeRounded from '@mui/icons-material/BadgeRounded';
 import BatteryAlertRounded from '@mui/icons-material/BatteryAlertRounded';
+import BatteryChargingFullRounded from '@mui/icons-material/BatteryChargingFullRounded';
+import BoltRounded from '@mui/icons-material/BoltRounded';
+import LightModeRounded from '@mui/icons-material/LightModeRounded';
+import SettingsInputAntennaRounded from '@mui/icons-material/SettingsInputAntennaRounded';
 import CellTowerRounded from '@mui/icons-material/CellTowerRounded';
 import DonutSmallRounded from '@mui/icons-material/DonutSmallRounded';
 import ErrorRounded from '@mui/icons-material/ErrorRounded';
@@ -25,6 +29,7 @@ import InfoRounded from '@mui/icons-material/InfoRounded';
 import InsightsRounded from '@mui/icons-material/InsightsRounded';
 import LocationOnRounded from '@mui/icons-material/LocationOnRounded';
 import ManageAccountsRounded from '@mui/icons-material/ManageAccountsRounded';
+import SellRounded from '@mui/icons-material/SellRounded';
 import MonetizationOnRounded from '@mui/icons-material/MonetizationOnRounded';
 import NetworkCheckRounded from '@mui/icons-material/NetworkCheckRounded';
 import NotificationsRounded from '@mui/icons-material/NotificationsRounded';
@@ -44,6 +49,7 @@ const REGISTRY: Record<string, React.ComponentType<SvgIconProps>> = {
   donut_small: DonutSmallRounded,
   apps: AppsRounded,
   monetization_on: MonetizationOnRounded,
+  sell: SellRounded,
   manage_accounts: ManageAccountsRounded,
   sim_card: SimCardRounded,
   location_on: LocationOnRounded,
@@ -58,6 +64,10 @@ const REGISTRY: Record<string, React.ComponentType<SvgIconProps>> = {
   person: PersonRounded,
   cell_tower: CellTowerRounded,
   battery_alert: BatteryAlertRounded,
+  battery_charging_full: BatteryChargingFullRounded,
+  bolt: BoltRounded,
+  light_mode: LightModeRounded,
+  settings_input_antenna: SettingsInputAntennaRounded,
   network_check: NetworkCheckRounded,
   sync: SyncRounded,
   error: ErrorRounded,

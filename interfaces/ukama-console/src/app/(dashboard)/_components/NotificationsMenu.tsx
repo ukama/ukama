@@ -8,13 +8,16 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Menu from '@mui/material/Menu';
 import Typography from '@mui/material/Typography';
 import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
 import NotificationsRounded from '@mui/icons-material/NotificationsRounded';
-import { ALERTS } from '@/data';
+import { useToast } from '@/components/ToastProvider';
+import { ALERTS, NODES, SITES } from '@/data';
 import type { Alert } from '@/data';
+import AlertDialog from './AlertDialog';
 import { Ic } from './icons';
 
 const SEV_ICON: Record<Alert['sev'], string> = {
@@ -30,7 +33,23 @@ const SEV_COLOR: Record<Alert['sev'], string> = {
 
 export default function NotificationsMenu() {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const [openAlert, setOpenAlert] = useState<Alert | null>(null);
+  const router = useRouter();
+  const toast = useToast();
   const unread = ALERTS.filter((a) => a.sev !== 'info').length;
+
+  const runAction = (a: Alert) => {
+    setOpenAlert(null);
+    const site = a.site ? SITES.find((s) => s.name === a.site) : undefined;
+    if (a.action === 'View node') {
+      const node = NODES.find((n) => a.detail.includes(n.serial.slice(-4)));
+      router.push(`/network/nodes/${node ? node.id : ''}`);
+    } else if (site && (a.action === 'View site' || a.action === 'Diagnose')) {
+      router.push(`/network/sites/${site.id}`);
+    } else {
+      toast(`${a.action} — done`);
+    }
+  };
 
   return (
     <>
@@ -72,7 +91,10 @@ export default function NotificationsMenu() {
             key={a.id}
             component="button"
             type="button"
-            onClick={() => setAnchor(null)} /* TODO Phase 7: open AlertDialog */
+            onClick={() => {
+              setAnchor(null);
+              setOpenAlert(a);
+            }}
             sx={{
               display: 'flex',
               gap: 1.5,
@@ -114,6 +136,9 @@ export default function NotificationsMenu() {
           </Box>
         ))}
       </Menu>
+      {openAlert && (
+        <AlertDialog alert={openAlert} onClose={() => setOpenAlert(null)} onAction={runAction} />
+      )}
     </>
   );
 }

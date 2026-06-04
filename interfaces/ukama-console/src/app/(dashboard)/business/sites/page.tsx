@@ -5,8 +5,8 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import BizSitesScreen from '../_components/BizSitesScreen';
 
 export default function BizSitesPage() {
-  return <PageStub title="Sites" phase="4" sub="Which sites are performing well as businesses?" />;
+  return <BizSitesScreen />;
 }

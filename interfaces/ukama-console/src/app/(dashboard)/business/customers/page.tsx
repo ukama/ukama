@@ -5,8 +5,8 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import SubscribersScreen from '@/features/customers/SubscribersScreen';
 
 export default function BizCustomersPage() {
-  return <PageStub title="Customers" phase="4" count="1,284" sub="Who are my customers and what state are they in?" />;
+  return <SubscribersScreen mode="biz" />;
 }

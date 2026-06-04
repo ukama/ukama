@@ -5,8 +5,8 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import PageStub from '@/components/PageStub';
+import SupportScreen from '@/features/support/SupportScreen';
 
 export default function NetworkSupportPage() {
-  return <PageStub title="Support" phase="5" sub="Find a site or node and resolve the issue quickly." />;
+  return <SupportScreen mode="network" />;
 }
