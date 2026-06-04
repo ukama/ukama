@@ -25,10 +25,14 @@ const fetchWithTimeout: Fetcher = async (
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), HTTP_TIMEOUT_MS);
   try {
-    return await fetch(url, {
+    const response = await fetch(url, {
       ...(init ?? {}),
       signal: controller.signal,
     } as RequestInit);
+    // Node's fetch Response satisfies FetcherResponse at runtime; the cast is
+    // needed because tsconfig's "dom" lib (without "dom.iterable") types
+    // Headers without its iterator methods, which trips ts-node's checker.
+    return response as unknown as FetcherResponse;
   } finally {
     clearTimeout(timer);
   }

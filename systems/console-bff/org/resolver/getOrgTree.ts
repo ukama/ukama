@@ -132,7 +132,7 @@ export class GetOrgTreeResolver {
     const res: Org = DEFAULT_ORG_TREE;
     const nr: Network = DEFAULT_ORG_TREE.networks[0];
 
-    const orgRes = await dataSources.dataSource.getOrg(headers.orgName);
+    const orgRes = await dataSources.org.getOrg(headers.orgName);
     const userRes = await userAPI.getUser(orgRes.owner);
     res.orgName = headers.orgName;
     res.orgId = headers.orgId;

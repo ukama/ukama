@@ -36,7 +36,8 @@
     "lib": [
       "esnext.asynciterable",
       "ES2016",
-      "dom"
+      "dom",
+      "dom.iterable"
     ] /* Specify library files to be included in the compilation. */,
     "outDir": "dist" /* Redirect output structure to the directory. */,
     "strict": true /* Enable all strict type-checking options. */,

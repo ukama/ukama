@@ -42,7 +42,7 @@ const createContextValue = async () => {
   const baseURL = await getBaseURL(SUB_GRAPHS.org.name, orgName, store);
 
   return {
-    dataSources: { dataSource: orgApi },
+    dataSources: { org: orgApi },
     baseURL: baseURL.message,
     headers: parsedHeaders,
   };
@@ -51,7 +51,7 @@ const createContextValue = async () => {
 describe("Org API integration test", () => {
   let server: ApolloServer<Context>;
   let contextValue: {
-    dataSources: { dataSource: OrgApi };
+    dataSources: { org: OrgApi };
     baseURL: string;
     headers: THeaders;
   };

@@ -4,6 +4,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "yarn all-dev",
+    "api-dev": "nodemon --watch \"server/**\" --watch \"common/**\" --ext \"ts,json,graphql\" --exec \"ts-node server/index.ts\"",
+    "api-start": "yarn build && node dist/server/index.js",
     "seed": "prisma db seed",
     "lint": "eslint --ext .ts .",
     "migrate": "prisma migrate dev",
