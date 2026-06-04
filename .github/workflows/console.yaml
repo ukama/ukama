@@ -2,7 +2,7 @@ name: console
 on:
  push:
   paths:
-   - 'interfaces/console/**'
+   - 'interfaces/ukama-console/**'
    - '.github/workflows/console.yaml'
 
  workflow_dispatch:
@@ -10,7 +10,7 @@ on:
 jobs:
  build:
   env:
-   working-directory: interfaces/console
+   working-directory: interfaces/ukama-console
 
   name: build and test
   runs-on: ubuntu-latest
@@ -32,13 +32,13 @@ jobs:
      with:
       node-version: 24
       cache: 'pnpm'
-      cache-dependency-path: 'interfaces/console/pnpm-lock.yaml'
+      cache-dependency-path: 'interfaces/ukama-console/pnpm-lock.yaml'
 
    - name: Setup pnpm cache
      uses: actions/cache@v3
      with:
       path: ~/.pnpm-store
-      key: ${{ runner.os }}-pnpm-store-${{ hashFiles('interfaces/console/pnpm-lock.yaml') }}
+      key: ${{ runner.os }}-pnpm-store-${{ hashFiles('interfaces/ukama-console/pnpm-lock.yaml') }}
       restore-keys: |
        ${{ runner.os }}-pnpm-store-
 
@@ -96,7 +96,7 @@ jobs:
   name: lint
   runs-on: ubuntu-latest
   env:
-   working-directory: interfaces/console
+   working-directory: interfaces/ukama-console
   steps:
    - name: Check out Git repository
      uses: actions/checkout@v2
@@ -112,7 +112,7 @@ jobs:
      with:
       node-version: 24
       cache: 'pnpm'
-      cache-dependency-path: 'interfaces/console/pnpm-lock.yaml'
+      cache-dependency-path: 'interfaces/ukama-console/pnpm-lock.yaml'
 
    # ESLint and Prettier must be in `package.json`
    - name: Install Node.js dependencies
@@ -129,7 +129,7 @@ jobs:
   if: github.ref == 'refs/heads/main'
   runs-on: ubuntu-latest
   env:
-   working-directory: interfaces/console
+   working-directory: interfaces/ukama-console
   steps:
    # init vars required for tag generation
    - uses: actions/checkout@v3

@@ -1,0 +1,205 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026-present, Ukama Inc.
+#
+# Operations lifted verbatim from interfaces/console (the legacy console)
+# as the Phase-2 API reference. Trim to what each screen needs as screens
+# are wired; run `pnpm codegen` to (re)generate types/hooks.
+
+fragment payment on PaymentDto {
+  id
+  itemId
+  itemType
+  amount
+  currency
+  paymentMethod
+  depositedAmount
+  paidAt
+  payerName
+  payerEmail
+  payerPhone
+  correspondent
+  country
+  description
+  status
+  failureReason
+  extra
+  createdAt
+}
+
+mutation UpdatePayment($data: UpdatePaymentInputDto!) {
+  updatePayment(data: $data) {
+    id
+    itemId
+    itemType
+    amount
+    currency
+    paymentMethod
+    depositedAmount
+    paidAt
+    payerName
+    payerEmail
+    payerPhone
+    correspondent
+    country
+    description
+    status
+    failureReason
+    createdAt
+  }
+}
+mutation ProcessPayment($data: ProcessPaymentInputDto!) {
+  processPayment(data: $data) {
+    payment {
+      id
+      itemId
+      itemType
+      amount
+      currency
+      paymentMethod
+      depositedAmount
+      paidAt
+      payerName
+      payerEmail
+      payerPhone
+      correspondent
+      country
+      description
+      status
+      failureReason
+      createdAt
+    }
+  }
+}
+query GetPayment($paymentId: String!) {
+  getPayment(paymentId: $paymentId) {
+    ...payment
+  }
+}
+
+query GetPayments($data: GetPaymentsInputDto!) {
+  getPayments(data: $data) {
+    payments {
+      ...payment
+    }
+  }
+}
+
+### Payment end ###
+### Billing start ###
+# Fragments for reusable parts
+fragment customer on CustomerDto {
+  externalId
+  name
+  email
+  addressLine1
+  legalName
+  legalNumber
+  phone
+  currency
+  timezone
+  vatRate
+  createdAt
+}
+
+fragment subscription on SubscriptionDto {
+  externalCustomerId
+  externalId
+  planCode
+  name
+  status
+  createdAt
+  startedAt
+  canceledAt
+  terminatedAt
+}
+
+fragment fee on FeeDto {
+  taxesAmountCents
+  taxesPreciseAmount
+  totalAmountCents
+  totalAmountCurrency
+  eventsCount
+  units
+  item {
+    type
+    code
+    name
+  }
+}
+
+fragment rawReport on RawReportDto {
+  issuingDate
+  paymentDueDate
+  paymentOverdue
+  invoiceType
+  status
+  paymentStatus
+  feesAmountCents
+  taxesAmountCents
+  subTotalExcludingTaxesAmountCents
+  subTotalIncludingTaxesAmountCents
+  vatAmountCents
+  vatAmountCurrency
+  totalAmountCents
+  currency
+  fileUrl
+  customer {
+    ...customer
+  }
+  subscriptions {
+    ...subscription
+  }
+  fees {
+    ...fee
+  }
+}
+
+query GetReports($data: GetReportsInputDto!) {
+  getReports(data: $data) {
+    reports {
+      id
+      ownerId
+      ownerType
+      networkId
+      period
+      type
+      rawReport {
+        ...rawReport
+      }
+      isPaid
+      createdAt
+    }
+  }
+}
+
+query GetReport($id: String!) {
+  getReport(id: $id) {
+    report {
+      id
+      ownerId
+      ownerType
+      networkId
+      period
+      type
+      rawReport {
+        ...rawReport
+      }
+      isPaid
+      createdAt
+    }
+  }
+}
+### Billing end ###
+
+query getGeneratedPdfReport($Id: String!) {
+  getGeneratedPdfReport(id: $Id) {
+    contentType
+    filename
+    downloadUrl
+  }
+}
+
+### User Start ###

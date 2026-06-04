@@ -1,0 +1,43 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026-present, Ukama Inc.
+#
+# Operations lifted verbatim from interfaces/console (the legacy console)
+# as the Phase-2 API reference. Trim to what each screen needs as screens
+# are wired; run `pnpm codegen` to (re)generate types/hooks.
+
+query GetCountries {
+  getCountries {
+    countries {
+      name
+      code
+    }
+  }
+}
+
+query GetCurrencySymbol($code: String!) {
+  getCurrencySymbol(code: $code) {
+    code
+    symbol
+    image
+  }
+}
+
+query GetTimezones {
+  getTimezones {
+    timezones {
+      value
+      abbr
+      offset
+      isdst
+      text
+      utc
+    }
+  }
+}
+
+### End Common Data ###
+
+# Notifications

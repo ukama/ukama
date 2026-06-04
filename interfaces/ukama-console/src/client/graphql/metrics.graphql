@@ -1,0 +1,133 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026-present, Ukama Inc.
+#
+# Operations lifted verbatim from interfaces/console (the legacy console)
+# as the Phase-2 API reference.
+# Served by the METRICS endpoint (NEXT_PUBLIC_METRIC_URL), separate codegen target. Trim to what each screen needs as screens
+# are wired; run `pnpm codegen` to (re)generate types/hooks.
+
+query GetMetricByTab($data: GetMetricByTabInput!) {
+  getMetricByTab(data: $data) {
+    metrics {
+      dataPlanId
+      format
+      msg
+      networkId
+      nodeId
+      siteId
+      packageId
+      success
+      tickInterval
+      threshold {
+        max
+        min
+        normal
+      }
+      tickPositions
+      type
+      unit
+      values
+    }
+  }
+}
+
+query GetMetricsStat($data: GetMetricsStatInput!) {
+  getMetricsStat(data: $data) {
+    metrics {
+      dataPlanId
+      format
+      msg
+      networkId
+      nodeId
+      packageId
+      siteId
+      success
+      threshold {
+        max
+        min
+        normal
+      }
+      tickInterval
+      tickPositions
+      type
+      unit
+      value
+    }
+  }
+}
+query GetSiteStat($data: GetMetricsSiteStatInput!) {
+  getSiteStat(data: $data) {
+    metrics {
+      dataPlanId
+      format
+      msg
+      networkId
+      nodeId
+      siteId
+      packageId
+      success
+      tickInterval
+      threshold {
+        max
+        min
+        normal
+      }
+      tickPositions
+      type
+      unit
+      value
+    }
+  }
+}
+query GetMetricBySite($data: GetMetricBySiteInput!) {
+  getMetricBySite(data: $data) {
+    metrics {
+      dataPlanId
+      format
+      msg
+      networkId
+      nodeId
+      siteId
+      packageId
+      success
+      tickInterval
+      threshold {
+        max
+        min
+        normal
+      }
+      tickPositions
+      type
+      unit
+      values
+    }
+  }
+}
+
+subscription GetMetricsStatSub($data: SubMetricsStatInput!) {
+  getMetricStatSub(data: $data) {
+    msg
+    nodeId
+    success
+    type
+    value
+    networkId
+    siteId
+    packageId
+    dataPlanId
+  }
+}
+
+subscription GetSiteMetricStatSub($data: SubSiteMetricsStatInput!) {
+  getSiteMetricStatSub(data: $data) {
+    msg
+    siteId
+    nodeId
+    success
+    type
+    value
+  }
+}
