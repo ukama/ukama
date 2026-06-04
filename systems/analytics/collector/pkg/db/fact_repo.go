@@ -39,12 +39,18 @@ type FactRepo interface {
 }
 
 type factRepo struct {
-	Db sql.Db
+	Db gormHandle
 }
 
 func NewFactRepo(db sql.Db) FactRepo {
 	return &factRepo{
 		Db: db,
+	}
+}
+
+func NewFactRepoWithGorm(db *gorm.DB) FactRepo {
+	return &factRepo{
+		Db: gormOnly{db: db},
 	}
 }
 

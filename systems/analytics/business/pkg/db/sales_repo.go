@@ -51,7 +51,7 @@ func (s salesRepo) RevenueBetween(networkId string, from, to time.Time) (float64
 	var revenue float64
 
 	q := s.Db.GetGormDb().Model(&PaymentEvent{}).
-		Select("COALESCE(SUM(amount), 0)").
+		Select("COALESCE(SUM(amount_cents), 0) / 100.0").
 		Where("status = ?", "success").
 		Where("paid_at >= ? AND paid_at < ?", from, to)
 
@@ -110,7 +110,7 @@ func (s salesRepo) RevenueTrendDaily(networkId string, from, to time.Time) ([]Da
 	var trend []DayValue
 
 	q := s.Db.GetGormDb().Model(&BusinessSalesRollupDaily{}).
-		Select("day AS day, COALESCE(SUM(revenue), 0) AS value").
+		Select("day AS day, COALESCE(SUM(revenue_cents), 0) / 100.0 AS value").
 		Where("day >= ? AND day < ?", from, to).
 		Group("day").
 		Order("day ASC")
@@ -131,10 +131,10 @@ func (s salesRepo) RevenueBySite(networkId string, from, to time.Time) ([]NamedA
 	var rows []NamedAmount
 
 	q := s.Db.GetGormDb().Model(&BusinessSalesRollupDaily{}).
-		Select("analytics_business_sales_rollup_daily.site_id AS id, " +
-			"COALESCE(analytics_site_snapshots.name, '') AS name, " +
-			"COALESCE(SUM(analytics_business_sales_rollup_daily.revenue), 0) AS value").
-		Joins("LEFT JOIN analytics_site_snapshots ON " +
+		Select("analytics_business_sales_rollup_daily.site_id AS id, "+
+			"COALESCE(analytics_site_snapshots.name, '') AS name, "+
+			"COALESCE(SUM(analytics_business_sales_rollup_daily.revenue_cents), 0) / 100.0 AS value").
+		Joins("LEFT JOIN analytics_site_snapshots ON "+
 			"analytics_site_snapshots.site_id = analytics_business_sales_rollup_daily.site_id").
 		Where("analytics_business_sales_rollup_daily.day >= ? AND "+
 			"analytics_business_sales_rollup_daily.day < ?", from, to).
@@ -161,10 +161,10 @@ func (s salesRepo) RevenueByPackage(networkId string, from, to time.Time) ([]Nam
 	_ = networkId
 
 	q := s.Db.GetGormDb().Model(&BusinessPackageRollupDaily{}).
-		Select("analytics_business_package_rollup_daily.package_id AS id, " +
-			"COALESCE(analytics_package_snapshots.name, '') AS name, " +
-			"COALESCE(SUM(analytics_business_package_rollup_daily.revenue), 0) AS value").
-		Joins("LEFT JOIN analytics_package_snapshots ON " +
+		Select("analytics_business_package_rollup_daily.package_id AS id, "+
+			"COALESCE(analytics_package_snapshots.name, '') AS name, "+
+			"COALESCE(SUM(analytics_business_package_rollup_daily.revenue_cents), 0) / 100.0 AS value").
+		Joins("LEFT JOIN analytics_package_snapshots ON "+
 			"analytics_package_snapshots.package_id = analytics_business_package_rollup_daily.package_id").
 		Where("analytics_business_package_rollup_daily.day >= ? AND "+
 			"analytics_business_package_rollup_daily.day < ?", from, to).

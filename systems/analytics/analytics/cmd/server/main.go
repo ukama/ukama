@@ -81,9 +81,6 @@ func runGrpcServer(gormdb sql.Db) {
 		businessdb.NewBillingRepo(gormdb),
 		businessdb.NewInventoryRepo(gormdb),
 		businessdb.NewActivityRepo(gormdb),
-		nil,
-		serviceConfig.PushGateway,
-		serviceConfig.OrgId,
 	)
 
 	customerServer := customerserver.NewCustomerServer(
@@ -91,7 +88,6 @@ func runGrpcServer(gormdb sql.Db) {
 		customerdb.NewCustomerRepo(gormdb),
 		customerdb.NewSimRepo(gormdb),
 		customerdb.NewSupportRepo(gormdb),
-		nil,
 		serviceConfig.SimLowStockThreshold,
 	)
 
@@ -103,9 +99,6 @@ func runGrpcServer(gormdb sql.Db) {
 		networkdb.NewMetricRepo(gormdb),
 		networkdb.NewEventRepo(gormdb),
 		networkdb.NewHealthRepo(gormdb),
-		nil,
-		serviceConfig.PushGateway,
-		serviceConfig.OrgId,
 		serviceConfig.NetworkLatencyThresholdMs,
 		serviceConfig.BatteryCriticalPercent,
 		serviceConfig.TelemetryFreshSeconds,
@@ -124,6 +117,7 @@ func runGrpcServer(gormdb sql.Db) {
 func waitForExit() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	defer signal.Stop(sigs)
 
 	sig := <-sigs
 	log.Infof("received signal %s", sig.String())

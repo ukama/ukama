@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/ukama/ukama/systems/analytics/collector/pkg/db"
@@ -121,7 +122,6 @@ func (s *RollupScheduler) rebuild(name string, from, to time.Time) error {
 		// business_site_daily, business_inventory_daily,
 		// network_health_hourly, site_health_hourly, node_health_hourly,
 		// radio_hourly, backhaul_hourly and power_hourly.
-		log.Warnf("rollup %s is dirty but has no rebuild implementation", name)
-		return nil
+		return fmt.Errorf("rollup %s has no rebuild implementation", name)
 	}
 }

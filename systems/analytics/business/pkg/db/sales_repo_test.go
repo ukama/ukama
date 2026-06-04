@@ -88,7 +88,7 @@ func Test_SalesRepo_RevenueBetween(t *testing.T) {
 
 		rows := sqlmock.NewRows([]string{"coalesce"}).AddRow(150.5)
 
-		mock.ExpectQuery(`SELECT COALESCE\(SUM\(amount\), 0\) FROM "analytics_payment_events"`).
+		mock.ExpectQuery(`SELECT COALESCE\(SUM\(amount_cents\), 0\) / 100.0 FROM "analytics_payment_events"`).
 			WithArgs("success", from, to, networkId).
 			WillReturnRows(rows)
 
@@ -107,7 +107,7 @@ func Test_SalesRepo_RevenueBetween(t *testing.T) {
 
 		rows := sqlmock.NewRows([]string{"coalesce"}).AddRow(0.0)
 
-		mock.ExpectQuery(`SELECT COALESCE\(SUM\(amount\), 0\) FROM "analytics_payment_events"`).
+		mock.ExpectQuery(`SELECT COALESCE\(SUM\(amount_cents\), 0\) / 100.0 FROM "analytics_payment_events"`).
 			WithArgs("success", from, to).
 			WillReturnRows(rows)
 
@@ -124,7 +124,7 @@ func Test_SalesRepo_RevenueBetween(t *testing.T) {
 		// Arrange
 		mock, repo := setupMockDB(t)
 
-		mock.ExpectQuery(`SELECT COALESCE\(SUM\(amount\), 0\) FROM "analytics_payment_events"`).
+		mock.ExpectQuery(`SELECT COALESCE\(SUM\(amount_cents\), 0\) / 100.0 FROM "analytics_payment_events"`).
 			WillReturnError(gorm.ErrInvalidDB)
 
 		// Act

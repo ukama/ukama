@@ -17,15 +17,12 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/ukama/ukama/systems/analytics/customer/pkg"
 	"github.com/ukama/ukama/systems/analytics/customer/pkg/db"
 	"github.com/ukama/ukama/systems/common/grpc"
-	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/analytics/customer/pb/gen"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 )
 
 const uuidParsingError = "Error parsing UUID"
@@ -36,26 +33,25 @@ type CustomerServer struct {
 	customerRepo         db.CustomerRepo
 	simRepo              db.SimRepo
 	supportRepo          db.SupportRepo
-	msgbus               mb.MsgBusServiceClient
-	baseRoutingKey       msgbus.RoutingKeyBuilder
 	simLowStockThreshold uint32
 }
 
 func NewCustomerServer(orgName string, customerRepo db.CustomerRepo, simRepo db.SimRepo,
-	supportRepo db.SupportRepo, msgBus mb.MsgBusServiceClient, simLowStockThreshold uint32) *CustomerServer {
+	supportRepo db.SupportRepo, simLowStockThreshold uint32) *CustomerServer {
 	return &CustomerServer{
 		orgName:              orgName,
 		customerRepo:         customerRepo,
 		simRepo:              simRepo,
 		supportRepo:          supportRepo,
-		msgbus:               msgBus,
-		baseRoutingKey:       msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		simLowStockThreshold: simLowStockThreshold,
 	}
 }
 
-/* GetOverview returns customer base KPIs for the requested window with
-deltas against the previous window of equal length. */
+/*
+	GetOverview returns customer base KPIs for the requested window with
+
+deltas against the previous window of equal length.
+*/
 func (c *CustomerServer) GetOverview(ctx context.Context, req *pb.GetOverviewRequest) (*pb.GetOverviewResponse, error) {
 	log.Infof("GetOverview: %v", req)
 
@@ -253,8 +249,11 @@ func (c *CustomerServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRe
 	}, nil
 }
 
-/* GetSupport returns the support diagnosis for a customer: derived signals,
-likely issue, recommended action and recent activity. */
+/*
+	GetSupport returns the support diagnosis for a customer: derived signals,
+
+likely issue, recommended action and recent activity.
+*/
 func (c *CustomerServer) GetSupport(ctx context.Context, req *pb.GetSupportRequest) (*pb.GetSupportResponse, error) {
 	log.Infof("GetSupport: %v", req)
 

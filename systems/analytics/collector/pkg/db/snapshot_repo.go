@@ -13,6 +13,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/sql"
 
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -34,12 +35,18 @@ type SnapshotRepo interface {
 }
 
 type snapshotRepo struct {
-	Db sql.Db
+	Db gormHandle
 }
 
 func NewSnapshotRepo(db sql.Db) SnapshotRepo {
 	return &snapshotRepo{
 		Db: db,
+	}
+}
+
+func NewSnapshotRepoWithGorm(db *gorm.DB) SnapshotRepo {
+	return &snapshotRepo{
+		Db: gormOnly{db: db},
 	}
 }
 

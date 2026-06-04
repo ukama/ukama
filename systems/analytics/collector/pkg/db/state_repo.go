@@ -13,6 +13,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/sql"
 
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -25,12 +26,18 @@ type StateRepo interface {
 }
 
 type stateRepo struct {
-	Db sql.Db
+	Db gormHandle
 }
 
 func NewStateRepo(db sql.Db) StateRepo {
 	return &stateRepo{
 		Db: db,
+	}
+}
+
+func NewStateRepoWithGorm(db *gorm.DB) StateRepo {
+	return &stateRepo{
+		Db: gormOnly{db: db},
 	}
 }
 

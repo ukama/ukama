@@ -164,7 +164,7 @@ func (r *alarmRepo) OpenImpact(networkId string) (int64, float64, error) {
 	var res row
 
 	q := r.scoped(networkId, "").
-		Select("coalesce(sum(customers_affected), 0) as customers, coalesce(sum(revenue_at_risk), 0) as revenue").
+		Select("coalesce(sum(customers_affected), 0) as customers, coalesce(sum(revenue_at_risk_cents), 0) / 100.0 as revenue").
 		Where("state = ?", "open")
 
 	if err := q.Find(&res).Error; err != nil {

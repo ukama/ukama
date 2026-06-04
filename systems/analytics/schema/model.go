@@ -13,11 +13,133 @@
 package schema
 
 import (
+	"math"
 	"time"
 
 	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
 )
+
+func dollarsToCents(v float64) int64 {
+	return int64(math.Round(v * 100))
+}
+
+func centsToDollars(v int64) float64 {
+	return float64(v) / 100.0
+}
+
+func (p *PackageSnapshot) BeforeSave(tx *gorm.DB) error {
+	if p.Price != 0 {
+		p.PriceCents = dollarsToCents(p.Price)
+	}
+
+	return nil
+}
+
+func (p *PackageSnapshot) AfterFind(tx *gorm.DB) error {
+	p.Price = centsToDollars(p.PriceCents)
+
+	return nil
+}
+
+func (b *BillingSnapshot) BeforeSave(tx *gorm.DB) error {
+	if b.Balance != 0 {
+		b.BalanceCents = dollarsToCents(b.Balance)
+	}
+
+	return nil
+}
+
+func (b *BillingSnapshot) AfterFind(tx *gorm.DB) error {
+	b.Balance = centsToDollars(b.BalanceCents)
+
+	return nil
+}
+
+func (p *PaymentEvent) BeforeSave(tx *gorm.DB) error {
+	if p.Amount != 0 {
+		p.AmountCents = dollarsToCents(p.Amount)
+	}
+
+	return nil
+}
+
+func (p *PaymentEvent) AfterFind(tx *gorm.DB) error {
+	p.Amount = centsToDollars(p.AmountCents)
+
+	return nil
+}
+
+func (a *AlarmEvent) BeforeSave(tx *gorm.DB) error {
+	if a.RevenueAtRisk != 0 {
+		a.RevenueAtRiskCents = dollarsToCents(a.RevenueAtRisk)
+	}
+
+	return nil
+}
+
+func (a *AlarmEvent) AfterFind(tx *gorm.DB) error {
+	a.RevenueAtRisk = centsToDollars(a.RevenueAtRiskCents)
+
+	return nil
+}
+
+func (r *BusinessSalesRollupDaily) BeforeSave(tx *gorm.DB) error {
+	if r.Revenue != 0 {
+		r.RevenueCents = dollarsToCents(r.Revenue)
+	}
+
+	return nil
+}
+
+func (r *BusinessSalesRollupDaily) AfterFind(tx *gorm.DB) error {
+	r.Revenue = centsToDollars(r.RevenueCents)
+
+	return nil
+}
+
+func (r *BusinessPackageRollupDaily) BeforeSave(tx *gorm.DB) error {
+	if r.Revenue != 0 {
+		r.RevenueCents = dollarsToCents(r.Revenue)
+	}
+
+	return nil
+}
+
+func (r *BusinessPackageRollupDaily) AfterFind(tx *gorm.DB) error {
+	r.Revenue = centsToDollars(r.RevenueCents)
+
+	return nil
+}
+
+func (r *BusinessSiteRollupDaily) BeforeSave(tx *gorm.DB) error {
+	if r.Revenue != 0 {
+		r.RevenueCents = dollarsToCents(r.Revenue)
+	}
+
+	return nil
+}
+
+func (r *BusinessSiteRollupDaily) AfterFind(tx *gorm.DB) error {
+	r.Revenue = centsToDollars(r.RevenueCents)
+
+	return nil
+}
+
+func (r *BusinessBillingRollupDaily) BeforeSave(tx *gorm.DB) error {
+	if r.InvoicedAmount != 0 {
+		r.InvoicedAmountCents = dollarsToCents(r.InvoicedAmount)
+	}
+
+	return nil
+}
+
+func (r *BusinessBillingRollupDaily) AfterFind(tx *gorm.DB) error {
+	r.InvoicedAmount = centsToDollars(r.InvoicedAmountCents)
+
+	return nil
+}
 
 /* Foundation (collector-only) */
 
@@ -102,8 +224,8 @@ type CustomerSnapshot struct {
 	CustomerId      uuid.UUID `gorm:"primaryKey;type:uuid"`
 	NetworkId       uuid.UUID `gorm:"index;type:uuid"`
 	Name            string
-	Email           string `gorm:"index"`
-	Status          string /* active/inactive/expired */
+	Email           string    `gorm:"index"`
+	Status          string    /* active/inactive/expired */
 	PackageId       uuid.UUID `gorm:"type:uuid"`
 	PackageName     string
 	PackageStatus   string
@@ -118,8 +240,8 @@ type CustomerSnapshot struct {
 func (CustomerSnapshot) TableName() string { return "analytics_customer_snapshots" }
 
 type SimSnapshot struct {
-	SimId       string `gorm:"primaryKey"`
-	Iccid       string `gorm:"index"`
+	SimId       string    `gorm:"primaryKey"`
+	Iccid       string    `gorm:"index"`
 	Status      string    /* available/assigned/active/suspended/faulty */
 	CustomerId  uuid.UUID `gorm:"index;type:uuid"`
 	BatchId     string    `gorm:"index"`
@@ -142,7 +264,8 @@ func (SimBatchSnapshot) TableName() string { return "analytics_sim_batch_snapsho
 type PackageSnapshot struct {
 	PackageId         uuid.UUID `gorm:"primaryKey;type:uuid"`
 	Name              string
-	Price             float64
+	Price             float64 `gorm:"-"`
+	PriceCents        int64
 	Currency          string
 	DurationDays      uint32
 	DataQuotaMb       float64
@@ -164,8 +287,9 @@ type InventorySnapshot struct {
 func (InventorySnapshot) TableName() string { return "analytics_inventory_snapshots" }
 
 type BillingSnapshot struct {
-	Id                  uint32 `gorm:"primaryKey"` /* always 1, org-level */
-	Balance             float64
+	Id                  uint32  `gorm:"primaryKey"` /* always 1, org-level */
+	Balance             float64 `gorm:"-"`
+	BalanceCents        int64
 	PaymentMethodStatus string
 	LastInvoiceAt       *time.Time
 	UpdatedAt           time.Time
@@ -185,17 +309,18 @@ func (HealthReportSnapshot) TableName() string { return "analytics_health_report
 /* Facts (append-only; written by collector event handlers) */
 
 type PaymentEvent struct {
-	Id         uint64    `gorm:"primaryKey;autoIncrement"`
-	ExternalId string    `gorm:"uniqueIndex"`
-	CustomerId uuid.UUID `gorm:"index;type:uuid"`
-	PackageId  uuid.UUID `gorm:"index;type:uuid"`
-	SiteId     uuid.UUID `gorm:"index;type:uuid"`
-	NetworkId  uuid.UUID `gorm:"index;type:uuid"`
-	Amount     float64
-	Currency   string
-	Status     string    /* success/failed */
-	PaidAt     time.Time `gorm:"index"`
-	CreatedAt  time.Time
+	Id          uint64    `gorm:"primaryKey;autoIncrement"`
+	ExternalId  string    `gorm:"uniqueIndex"`
+	CustomerId  uuid.UUID `gorm:"index;type:uuid"`
+	PackageId   uuid.UUID `gorm:"index;type:uuid"`
+	SiteId      uuid.UUID `gorm:"index;type:uuid"`
+	NetworkId   uuid.UUID `gorm:"index;type:uuid"`
+	Amount      float64   `gorm:"-"`
+	AmountCents int64
+	Currency    string
+	Status      string    /* success/failed */
+	PaidAt      time.Time `gorm:"index"`
+	CreatedAt   time.Time
 }
 
 func (PaymentEvent) TableName() string { return "analytics_payment_events" }
@@ -225,18 +350,19 @@ type MetricSample struct {
 func (MetricSample) TableName() string { return "analytics_metric_samples" }
 
 type AlarmEvent struct {
-	Id                uint64 `gorm:"primaryKey;autoIncrement"`
-	AlarmId           string `gorm:"uniqueIndex"`
-	Severity          string /* critical/warning */
-	State             string /* open/closed */
-	ResourceType      string /* site/node/backhaul/power/radio */
-	ResourceId        string `gorm:"index"`
-	Description       string
-	CustomersAffected uint32
-	RevenueAtRisk     float64
-	RecommendedAction string
-	OpenedAt          time.Time `gorm:"index"`
-	ClosedAt          *time.Time
+	Id                 uint64 `gorm:"primaryKey;autoIncrement"`
+	AlarmId            string `gorm:"uniqueIndex"`
+	Severity           string /* critical/warning */
+	State              string /* open/closed */
+	ResourceType       string /* site/node/backhaul/power/radio */
+	ResourceId         string `gorm:"index"`
+	Description        string
+	CustomersAffected  uint32
+	RevenueAtRisk      float64 `gorm:"-"`
+	RevenueAtRiskCents int64
+	RecommendedAction  string
+	OpenedAt           time.Time `gorm:"index"`
+	ClosedAt           *time.Time
 }
 
 func (AlarmEvent) TableName() string { return "analytics_alarm_events" }
@@ -269,9 +395,9 @@ type CustomerEvent struct {
 func (CustomerEvent) TableName() string { return "analytics_customer_events" }
 
 type SimEvent struct {
-	Id         uint64 `gorm:"primaryKey;autoIncrement"`
-	SimId      string `gorm:"index"`
-	Kind       string /* allocate/activate/add_package/active_package/remove_package/delete/upload */
+	Id         uint64    `gorm:"primaryKey;autoIncrement"`
+	SimId      string    `gorm:"index"`
+	Kind       string    /* allocate/activate/add_package/active_package/remove_package/delete/upload */
 	OccurredAt time.Time `gorm:"index"`
 }
 
@@ -287,9 +413,9 @@ type PackageEvent struct {
 func (PackageEvent) TableName() string { return "analytics_package_events" }
 
 type InventoryEvent struct {
-	Id          uint64 `gorm:"primaryKey;autoIncrement"`
-	ComponentId string `gorm:"index"`
-	Kind        string /* sync */
+	Id          uint64    `gorm:"primaryKey;autoIncrement"`
+	ComponentId string    `gorm:"index"`
+	Kind        string    /* sync */
 	OccurredAt  time.Time `gorm:"index"`
 }
 
@@ -360,7 +486,8 @@ type BusinessSalesRollupDaily struct {
 	Day           time.Time `gorm:"index;uniqueIndex:uniq_sales_day_net_site"`
 	NetworkId     uuid.UUID `gorm:"type:uuid;uniqueIndex:uniq_sales_day_net_site"`
 	SiteId        uuid.UUID `gorm:"type:uuid;uniqueIndex:uniq_sales_day_net_site"`
-	Revenue       float64
+	Revenue       float64   `gorm:"-"`
+	RevenueCents  int64
 	Purchases     uint32
 	PaidCustomers uint32
 	DataSoldMb    float64
@@ -369,12 +496,13 @@ type BusinessSalesRollupDaily struct {
 func (BusinessSalesRollupDaily) TableName() string { return "analytics_business_sales_rollup_daily" }
 
 type BusinessPackageRollupDaily struct {
-	Id         uint64    `gorm:"primaryKey;autoIncrement"`
-	Day        time.Time `gorm:"index;uniqueIndex:uniq_pkg_day_pkg"`
-	PackageId  uuid.UUID `gorm:"type:uuid;uniqueIndex:uniq_pkg_day_pkg"`
-	SoldCount  uint32
-	Revenue    float64
-	DataUsedMb float64
+	Id           uint64    `gorm:"primaryKey;autoIncrement"`
+	Day          time.Time `gorm:"index;uniqueIndex:uniq_pkg_day_pkg"`
+	PackageId    uuid.UUID `gorm:"type:uuid;uniqueIndex:uniq_pkg_day_pkg"`
+	SoldCount    uint32
+	Revenue      float64 `gorm:"-"`
+	RevenueCents int64
+	DataUsedMb   float64
 }
 
 func (BusinessPackageRollupDaily) TableName() string {
@@ -385,7 +513,8 @@ type BusinessSiteRollupDaily struct {
 	Id            uint64    `gorm:"primaryKey;autoIncrement"`
 	Day           time.Time `gorm:"index;uniqueIndex:uniq_bsite_day_site"`
 	SiteId        uuid.UUID `gorm:"type:uuid;uniqueIndex:uniq_bsite_day_site"`
-	Revenue       float64
+	Revenue       float64   `gorm:"-"`
+	RevenueCents  int64
 	Customers     uint32
 	DataUsedMb    float64
 	UptimePercent float64
@@ -407,10 +536,11 @@ func (BusinessInventoryRollupDaily) TableName() string {
 }
 
 type BusinessBillingRollupDaily struct {
-	Id             uint64    `gorm:"primaryKey;autoIncrement"`
-	Day            time.Time `gorm:"uniqueIndex"`
-	InvoicedAmount float64
-	InvoiceCount   uint32
+	Id                  uint64    `gorm:"primaryKey;autoIncrement"`
+	Day                 time.Time `gorm:"uniqueIndex"`
+	InvoicedAmount      float64   `gorm:"-"`
+	InvoicedAmountCents int64
+	InvoiceCount        uint32
 }
 
 func (BusinessBillingRollupDaily) TableName() string {

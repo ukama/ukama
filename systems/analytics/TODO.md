@@ -55,22 +55,12 @@ functions. Add rebuild functions for the remaining rollups:
 - backhaul_hourly
 - power_hourly
 
-## Event processing hardening
+## Event retry/DLQ hardening
 
-The next correctness pass should make event handling fully transactional:
+Event processing is now transaction-scoped in the collector: event log insert,
+snapshot/fact/interval writes and dirty rollup marks commit or roll back as one
+unit. Malformed events are ACKed and recorded in `analytics_event_errors`.
 
-```text
-receive event
-validate payload
-BEGIN
-  insert analytics_event_logs idempotency row
-  if duplicate: COMMIT and ACK
-  update snapshots/facts/intervals
-  mark dependent rollups dirty
-COMMIT
-ACK
-```
-
-Malformed events should be ACKed and recorded in `analytics_event_errors`.
-Processing failures should not be silently ACKed; they should retry or go to a
-DLQ/quarantine path.
+Next pass: wire explicit retry/dead-letter/quarantine behavior at the message
+bus layer for processing failures after the gRPC/event handler returns an
+error.

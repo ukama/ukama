@@ -13,6 +13,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/sql"
 
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -44,12 +45,18 @@ type RollupRepo interface {
 }
 
 type rollupRepo struct {
-	Db sql.Db
+	Db gormHandle
 }
 
 func NewRollupRepo(db sql.Db) RollupRepo {
 	return &rollupRepo{
 		Db: db,
+	}
+}
+
+func NewRollupRepoWithGorm(db *gorm.DB) RollupRepo {
+	return &rollupRepo{
+		Db: gormOnly{db: db},
 	}
 }
 
@@ -132,11 +139,11 @@ func (r *rollupRepo) UpsertPowerHourly(v *PowerRollupHourly) error {
 func (r *rollupRepo) RebuildSalesDaily(from, to time.Time) error {
 	return r.Db.GetGormDb().Exec(`
 		INSERT INTO analytics_business_sales_rollup_daily
-			(day, network_id, site_id, revenue, purchases, paid_customers, data_sold_mb)
+			(day, network_id, site_id, revenue_cents, purchases, paid_customers, data_sold_mb)
 		SELECT date_trunc('day', paid_at) AS day,
 			network_id,
 			site_id,
-			COALESCE(SUM(amount), 0) AS revenue,
+			COALESCE(SUM(amount_cents), 0) AS revenue_cents,
 			COUNT(*) AS purchases,
 			COUNT(DISTINCT customer_id) AS paid_customers,
 			0 AS data_sold_mb
@@ -144,7 +151,7 @@ func (r *rollupRepo) RebuildSalesDaily(from, to time.Time) error {
 		WHERE status = 'success' AND paid_at >= ? AND paid_at < ?
 		GROUP BY 1, 2, 3
 		ON CONFLICT (day, network_id, site_id) DO UPDATE SET
-			revenue = EXCLUDED.revenue,
+			revenue_cents = EXCLUDED.revenue_cents,
 			purchases = EXCLUDED.purchases,
 			paid_customers = EXCLUDED.paid_customers`,
 		from, to).Error
@@ -155,18 +162,18 @@ func (r *rollupRepo) RebuildSalesDaily(from, to time.Time) error {
 func (r *rollupRepo) RebuildPackageDaily(from, to time.Time) error {
 	return r.Db.GetGormDb().Exec(`
 		INSERT INTO analytics_business_package_rollup_daily
-			(day, package_id, sold_count, revenue, data_used_mb)
+			(day, package_id, sold_count, revenue_cents, data_used_mb)
 		SELECT date_trunc('day', paid_at) AS day,
 			package_id,
 			COUNT(*) AS sold_count,
-			COALESCE(SUM(amount), 0) AS revenue,
+			COALESCE(SUM(amount_cents), 0) AS revenue_cents,
 			0 AS data_used_mb
 		FROM analytics_payment_events
 		WHERE status = 'success' AND paid_at >= ? AND paid_at < ?
 		GROUP BY 1, 2
 		ON CONFLICT (day, package_id) DO UPDATE SET
 			sold_count = EXCLUDED.sold_count,
-			revenue = EXCLUDED.revenue`,
+			revenue_cents = EXCLUDED.revenue_cents`,
 		from, to).Error
 }
 
@@ -175,15 +182,15 @@ func (r *rollupRepo) RebuildPackageDaily(from, to time.Time) error {
 func (r *rollupRepo) RebuildBillingDaily(from, to time.Time) error {
 	return r.Db.GetGormDb().Exec(`
 		INSERT INTO analytics_business_billing_rollup_daily
-			(day, invoiced_amount, invoice_count)
+			(day, invoiced_amount_cents, invoice_count)
 		SELECT date_trunc('day', paid_at) AS day,
-			COALESCE(SUM(amount), 0) AS invoiced_amount,
+			COALESCE(SUM(amount_cents), 0) AS invoiced_amount_cents,
 			COUNT(*) AS invoice_count
 		FROM analytics_payment_events
 		WHERE status = 'success' AND paid_at >= ? AND paid_at < ?
 		GROUP BY 1
 		ON CONFLICT (day) DO UPDATE SET
-			invoiced_amount = EXCLUDED.invoiced_amount,
+			invoiced_amount_cents = EXCLUDED.invoiced_amount_cents,
 			invoice_count = EXCLUDED.invoice_count`,
 		from, to).Error
 }

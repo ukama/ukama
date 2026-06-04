@@ -95,7 +95,7 @@ func TestGetSalesOverview_KpisAndDeltas(t *testing.T) {
 		prevPaid:      4,
 	}
 
-	s := NewBusinessServer("test-org", sales, nil, nil, nil, nil, nil, nil, "", "org-id")
+	s := NewBusinessServer("test-org", sales, nil, nil, nil, nil, nil)
 
 	resp, err := s.GetSalesOverview(context.TODO(), &pb.GetSalesOverviewRequest{
 		Window: &pb.Window{Period: PeriodToday},
@@ -132,7 +132,7 @@ func TestGetSalesOverview_KpisAndDeltas(t *testing.T) {
 }
 
 func TestGetSalesOverview_InvalidWindow(t *testing.T) {
-	s := NewBusinessServer("test-org", &stubSalesRepo{}, nil, nil, nil, nil, nil, nil, "", "org-id")
+	s := NewBusinessServer("test-org", &stubSalesRepo{}, nil, nil, nil, nil, nil)
 
 	_, err := s.GetSalesOverview(context.TODO(), &pb.GetSalesOverviewRequest{
 		Window: &pb.Window{Period: "fortnight"},

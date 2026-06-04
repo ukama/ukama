@@ -11,6 +11,7 @@ package db
 import (
 	"github.com/ukama/ukama/systems/common/sql"
 
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -24,13 +25,30 @@ type EventRepo interface {
 }
 
 type eventRepo struct {
-	Db sql.Db
+	Db gormHandle
 }
 
 func NewEventRepo(db sql.Db) EventRepo {
 	return &eventRepo{
 		Db: db,
 	}
+}
+
+func NewEventRepoWithGorm(db *gorm.DB) EventRepo {
+	return &eventRepo{
+		Db: gormOnly{db: db},
+	}
+}
+
+func (r *eventRepo) InTransaction(fn func(EventRepo, StateRepo, SnapshotRepo, FactRepo) error) error {
+	return r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		return fn(
+			NewEventRepoWithGorm(tx),
+			NewStateRepoWithGorm(tx),
+			NewSnapshotRepoWithGorm(tx),
+			NewFactRepoWithGorm(tx),
+		)
+	})
 }
 
 func (r *eventRepo) LogEvent(log *EventLog) (bool, error) {

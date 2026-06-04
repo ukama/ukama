@@ -22,11 +22,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	"github.com/ukama/ukama/systems/common/msgbus"
 
 	pb "github.com/ukama/ukama/systems/analytics/network/pb/gen"
-	"github.com/ukama/ukama/systems/analytics/network/pkg"
 	"github.com/ukama/ukama/systems/analytics/network/pkg/db"
 )
 
@@ -38,18 +35,13 @@ const (
 
 type NetworkServer struct {
 	pb.UnimplementedNetworkServiceServer
-	orgName        string
-	siteRepo       db.SiteRepo
-	nodeRepo       db.NodeRepo
-	alarmRepo      db.AlarmRepo
-	metricRepo     db.MetricRepo
-	eventRepo      db.EventRepo
-	healthRepo     db.HealthRepo
-	msgbus         mb.MsgBusServiceClient
-	baseRoutingKey msgbus.RoutingKeyBuilder
-	pushGateway    string
-	orgId          string
-
+	orgName                string
+	siteRepo               db.SiteRepo
+	nodeRepo               db.NodeRepo
+	alarmRepo              db.AlarmRepo
+	metricRepo             db.MetricRepo
+	eventRepo              db.EventRepo
+	healthRepo             db.HealthRepo
 	latencyThresholdMs     float64
 	batteryCriticalPercent float64
 	telemetryFreshSeconds  int64
@@ -57,20 +49,16 @@ type NetworkServer struct {
 
 func NewNetworkServer(orgName string, siteRepo db.SiteRepo, nodeRepo db.NodeRepo,
 	alarmRepo db.AlarmRepo, metricRepo db.MetricRepo, eventRepo db.EventRepo,
-	healthRepo db.HealthRepo, msgBus mb.MsgBusServiceClient, pushGateway, orgId string,
+	healthRepo db.HealthRepo,
 	latencyThresholdMs, batteryCriticalPercent float64, telemetryFreshSeconds int64) *NetworkServer {
 	return &NetworkServer{
-		orgName:        orgName,
-		siteRepo:       siteRepo,
-		nodeRepo:       nodeRepo,
-		alarmRepo:      alarmRepo,
-		metricRepo:     metricRepo,
-		eventRepo:      eventRepo,
-		healthRepo:     healthRepo,
-		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
-		pushGateway:    pushGateway,
-		orgId:          orgId,
+		orgName:    orgName,
+		siteRepo:   siteRepo,
+		nodeRepo:   nodeRepo,
+		alarmRepo:  alarmRepo,
+		metricRepo: metricRepo,
+		eventRepo:  eventRepo,
+		healthRepo: healthRepo,
 
 		latencyThresholdMs:     latencyThresholdMs,
 		batteryCriticalPercent: batteryCriticalPercent,

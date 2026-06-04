@@ -53,9 +53,46 @@ func NewCollectorEventServer(orgName string, eventRepo db.EventRepo, stateRepo d
 	}
 }
 
+type eventTransactionRunner interface {
+	InTransaction(fn func(db.EventRepo, db.StateRepo, db.SnapshotRepo, db.FactRepo) error) error
+}
+
 func (es *CollectorEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v.", e.RoutingKey, e.Msg)
 
+	runner, ok := es.eventRepo.(eventTransactionRunner)
+	if !ok {
+		return es.dispatchEvent(ctx, e)
+	}
+
+	var resp *epb.EventResponse
+	err := runner.InTransaction(func(eventRepo db.EventRepo, stateRepo db.StateRepo,
+		snapshotRepo db.SnapshotRepo, factRepo db.FactRepo) error {
+		txServer := *es
+		txServer.eventRepo = eventRepo
+		txServer.stateRepo = stateRepo
+		txServer.snapshotRepo = snapshotRepo
+		txServer.factRepo = factRepo
+
+		r, err := txServer.dispatchEvent(ctx, e)
+		if err != nil {
+			return err
+		}
+
+		resp = r
+
+		return nil
+	})
+	if err != nil {
+		es.recordProcessingError(e.RoutingKey, e.Msg, err)
+
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (es *CollectorEventServer) dispatchEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	switch e.RoutingKey {
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventPaymentSuccess]):
@@ -322,8 +359,11 @@ func (es *CollectorEventServer) recordMalformed(routingKey string, cause error) 
 	return &epb.EventResponse{}, nil
 }
 
-// recordFailure records a processing failure and ACKs the event.
-func (es *CollectorEventServer) recordFailure(routingKey string, msg interface{}, cause error) (*epb.EventResponse, error) {
+// recordProcessingError records a processing failure outside the event
+// transaction. The original event processing error is still returned to the
+// message bus caller so the delivery can be retried or dead-lettered by the
+// platform.
+func (es *CollectorEventServer) recordProcessingError(routingKey string, msg interface{}, cause error) {
 	log.Errorf("Failed to process message for %s. Error %+v", routingKey, cause)
 
 	payload, err := json.Marshal(msg)
@@ -338,8 +378,15 @@ func (es *CollectorEventServer) recordFailure(routingKey string, msg interface{}
 	}); err != nil {
 		log.Errorf("failed to record event error: %v", err)
 	}
+}
 
-	return &epb.EventResponse{}, nil
+// recordFailure returns the processing error to the caller. EventNotification
+// wraps handlers in one DB transaction, so returning the error rolls back the
+// event log, snapshot/fact writes and dirty rollup marks as one unit.
+func (es *CollectorEventServer) recordFailure(routingKey string, msg interface{}, cause error) (*epb.EventResponse, error) {
+	log.Errorf("Failed to process message for %s. Error %+v", routingKey, cause)
+
+	return nil, cause
 }
 
 func (es *CollectorEventServer) handlePayment(routingKey string, msg *epb.Payment, outcome string) (*epb.EventResponse, error) {
@@ -362,11 +409,12 @@ func (es *CollectorEventServer) handlePayment(routingKey string, msg *epb.Paymen
 	}
 
 	pe := &db.PaymentEvent{
-		ExternalId: msg.Id,
-		Amount:     float64(msg.AmountCents) / 100.0,
-		Currency:   msg.Currency,
-		Status:     outcome,
-		PaidAt:     paidAt,
+		ExternalId:  msg.Id,
+		Amount:      float64(msg.AmountCents) / 100.0,
+		AmountCents: int64(msg.AmountCents),
+		Currency:    msg.Currency,
+		Status:      outcome,
+		PaidAt:      paidAt,
 	}
 
 	/* Payment metadata may carry the target ids. */

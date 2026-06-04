@@ -18,13 +18,10 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/ukama/ukama/systems/common/grpc"
-	"github.com/ukama/ukama/systems/common/msgbus"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/analytics/business/pb/gen"
-	"github.com/ukama/ukama/systems/analytics/business/pkg"
 	"github.com/ukama/ukama/systems/analytics/business/pkg/db"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 )
 
 const defaultPageSize = 20
@@ -34,34 +31,26 @@ const defaultPageSize = 20
 // by the collector service).
 type BusinessServer struct {
 	pb.UnimplementedBusinessServiceServer
-	orgName        string
-	salesRepo      db.SalesRepo
-	packageRepo    db.PackageRepo
-	siteRepo       db.SiteRepo
-	billingRepo    db.BillingRepo
-	inventoryRepo  db.InventoryRepo
-	activityRepo   db.ActivityRepo
-	msgbus         mb.MsgBusServiceClient
-	baseRoutingKey msgbus.RoutingKeyBuilder
-	pushGateway    string
-	orgId          string
+	orgName       string
+	salesRepo     db.SalesRepo
+	packageRepo   db.PackageRepo
+	siteRepo      db.SiteRepo
+	billingRepo   db.BillingRepo
+	inventoryRepo db.InventoryRepo
+	activityRepo  db.ActivityRepo
 }
 
 func NewBusinessServer(orgName string, salesRepo db.SalesRepo, packageRepo db.PackageRepo,
 	siteRepo db.SiteRepo, billingRepo db.BillingRepo, inventoryRepo db.InventoryRepo,
-	activityRepo db.ActivityRepo, msgBus mb.MsgBusServiceClient, pushGateway, orgId string) *BusinessServer {
+	activityRepo db.ActivityRepo) *BusinessServer {
 	return &BusinessServer{
-		orgName:        orgName,
-		salesRepo:      salesRepo,
-		packageRepo:    packageRepo,
-		siteRepo:       siteRepo,
-		billingRepo:    billingRepo,
-		inventoryRepo:  inventoryRepo,
-		activityRepo:   activityRepo,
-		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
-		pushGateway:    pushGateway,
-		orgId:          orgId,
+		orgName:       orgName,
+		salesRepo:     salesRepo,
+		packageRepo:   packageRepo,
+		siteRepo:      siteRepo,
+		billingRepo:   billingRepo,
+		inventoryRepo: inventoryRepo,
+		activityRepo:  activityRepo,
 	}
 }
 
