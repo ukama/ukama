@@ -125,7 +125,7 @@ export class DeleteInvitationResDto {
 }
 
 @InputType()
-export class UpateInvitationInputDto {
+export class UpdateInvitationInputDto {
   @Field()
   @IsUUID()
   id: string;

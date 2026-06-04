@@ -31,6 +31,12 @@ export class NotificationsAPIDto {
 
   @Field()
   created_at: string;
+
+  @Field({ nullable: true })
+  event_key?: string;
+
+  @Field({ nullable: true })
+  resource_id?: string;
 }
 
 @ObjectType()
@@ -117,6 +123,15 @@ export class NotificationResDto {
 }
 
 @ObjectType()
+export class NotificationRedirectDto {
+  @Field()
+  title: string;
+
+  @Field()
+  action: string;
+}
+
+@ObjectType()
 export class NotificationsDto {
   @Field()
   id: string;
@@ -138,6 +153,16 @@ export class NotificationsDto {
 
   @Field()
   createdAt: string;
+
+  @Field()
+  eventKey: string;
+
+  @Field()
+  resourceId: string;
+
+  /** Deep-link action derived from eventKey (see common/notification). */
+  @Field(() => NotificationRedirectDto, { nullable: true })
+  redirect?: NotificationRedirectDto;
 }
 
 @ObjectType()
