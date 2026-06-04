@@ -23,6 +23,9 @@ jobs:
 
    - name: Setup pnpm
      uses: pnpm/action-setup@v4
+     with:
+      # monorepo: read the pnpm version from the nested package.json
+      package_json_file: systems/console-bff/package.json
 
    - name: Setup Node.js (with pnpm cache)
      uses: actions/setup-node@v4
@@ -122,6 +125,9 @@ jobs:
 
    - name: Setup pnpm
      uses: pnpm/action-setup@v4
+     with:
+      # monorepo: read the pnpm version from the nested package.json
+      package_json_file: systems/console-bff/package.json
 
    - name: Set up Node.js
      uses: actions/setup-node@v4
