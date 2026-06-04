@@ -15,8 +15,8 @@
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
-import { json } from "body-parser";
 import cors from "cors";
+import express from "express";
 import { createServer } from "http";
 import { RootDatabase } from "lmdb";
 
@@ -120,7 +120,7 @@ const startServer = async () => {
       origin: [AUTH_APP_URL, PLAYGROUND_URL, CONSOLE_APP_URL],
       credentials: true,
     }),
-    json({ limit: JSON_BODY_LIMIT }),
+    express.json({ limit: JSON_BODY_LIMIT }),
     expressMiddleware(server, {
       context: async ({ req }): Promise<AppContext> => {
         const requestId = (req.headers["x-request-id"] as string) ?? "";
