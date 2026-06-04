@@ -25,10 +25,10 @@ RUN pnpm config set fetch-retry-mintimeout 20000 && \
     pnpm config set fetch-timeout 300000 && \
     pnpm install --frozen-lockfile --ignore-scripts
 
-# Copy source files (proxy.ts is the Next 16 request interceptor)
+# Copy source files (src/proxy.ts is the Next 16 request interceptor)
 COPY src ./src
 COPY public ./public
-COPY next.config.mjs tsconfig.json proxy.ts ./
+COPY next.config.mjs tsconfig.json ./
 
 # Build-time public env (NEXT_PUBLIC_* is inlined into the client bundle).
 # Only the vars src/env.ts validates — extend both together.

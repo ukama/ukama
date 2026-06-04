@@ -14,6 +14,10 @@
  */
 import { ApolloServer } from "@apollo/server";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
+import {
+  ApolloServerPluginLandingPageLocalDefault,
+  ApolloServerPluginLandingPageProductionDefault,
+} from "@apollo/server/plugin/landingPage/default";
 // Apollo Server v5: the Express integration lives in its own package.
 import { expressMiddleware } from "@as-integrations/express4";
 import cors from "cors";
@@ -108,11 +112,20 @@ const startServer = async () => {
   });
 
   const schema = await buildAppSchema();
+  // NODE_ENV=production (Docker) selects Apollo's minimal landing page by
+  // default even when introspection is on. Use Sandbox when introspection is
+  // explicitly enabled (local docker-compose / codegen).
+  const landingPagePlugin = INTROSPECTION_ENABLED
+    ? ApolloServerPluginLandingPageLocalDefault({ embed: true })
+    : ApolloServerPluginLandingPageProductionDefault();
   const server = new ApolloServer<AppContext>({
     schema,
     csrfPrevention: true,
     introspection: INTROSPECTION_ENABLED,
-    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+    plugins: [
+      landingPagePlugin,
+      ApolloServerPluginDrainHttpServer({ httpServer }),
+    ],
   });
   await server.start();
 
@@ -186,7 +199,7 @@ const startServer = async () => {
   });
 
   logger.info(
-    `🚀 Console-BFF API ready at http://localhost:${API_PORT}/graphql`
+    `🚀 Console-BFF API ready at http://localhost:${API_PORT}/graphql (introspection: ${INTROSPECTION_ENABLED})`
   );
 };
 

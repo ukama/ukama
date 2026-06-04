@@ -74,13 +74,19 @@ export default async function proxy(
 
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   if (freshToken) {
-    response.cookies.set(TOKEN_COOKIE, freshToken, {
-      path: '/',
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: env.NODE_ENV === 'production',
-      maxAge: TOKEN_MAX_AGE_SECONDS,
-    });
+    // Write the Set-Cookie header raw: response.cookies.set() percent-encodes
+    // the value (+ / = in the base64 payload), and the gateway verifies the
+    // HMAC over the exact payload bytes — an encoded token fails with 401.
+    // Raw is safe here: base64 + base64url contain no ';' or whitespace.
+    const parts = [
+      `${TOKEN_COOKIE}=${freshToken}`,
+      'Path=/',
+      'HttpOnly',
+      'SameSite=Lax',
+      `Max-Age=${TOKEN_MAX_AGE_SECONDS}`,
+    ];
+    if (env.NODE_ENV === 'production') parts.push('Secure');
+    response.headers.append('set-cookie', parts.join('; '));
   }
   return response;
 }
