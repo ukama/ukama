@@ -17,7 +17,7 @@ import * as tq from "type-graphql";
 
 import { PLANNING_SERVICE_PORT } from "../common/configs";
 import { logger } from "../common/logger";
-import { PrismaContext, context } from "../common/prisma";
+import { PrismaContext, context } from "./prisma-client";
 import resolvers from "./modules";
 
 const app = async () => {

@@ -11,7 +11,7 @@ import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
 import { asyncRestCall } from "../../../common/axiosClient";
 import { PLANNING_API_URL } from "../../../common/configs";
 import { API_METHOD_TYPE } from "../../../common/enums";
-import { PrismaContext } from "../../../common/prisma";
+import { PrismaContext } from "../../prisma-client";
 import {
   AddDraftInput,
   CoverageInput,

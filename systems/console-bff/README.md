@@ -60,13 +60,15 @@ schema names are already de-conflicted (`PlanningSite`, `*DraftSite`).
 1. Configure `PLANNING_TOOL_DB`; run `pnpm prisma-pre-build` (use
    `prisma migrate deploy` in production).
 2. Add `"planning-tool"` back to the `include` list in `tsconfig.json` and
-   remove it from `.eslintignore`. The standalone `planning-tool/index.ts`
-   bootstrap is dead (it predates consolidation and imports the removed
-   `@apollo/subgraph`) — delete it or leave it excluded.
+   remove it from the ignores in `eslint.config.mjs`. The standalone
+   `planning-tool/index.ts` bootstrap is dead (it predates consolidation and
+   imports the removed `@apollo/subgraph`) — delete it or leave it excluded.
 3. `server/schema.ts`: import `planningResolvers from "../planning-tool/modules"`
    and append `...planningResolvers` to `ALL_RESOLVERS`.
 4. `server/context.ts`: add `prisma` to `AppContext` and pass it from
-   `server/index.ts` (singleton exported from `common/prisma`). Consider
+   `server/index.ts` (singleton exported from `planning-tool/prisma-client`;
+   it lives there so the main build never depends on a generated Prisma
+   client). Consider
    lazy-initializing the client so a missing DB degrades planning queries
    instead of failing boot.
 
