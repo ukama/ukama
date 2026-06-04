@@ -36,7 +36,9 @@ export class AddPackagesToSimResolver {
           packageId: packageInfo.package_id,
         });
       } catch (error) {
-        logger.error(`Error adding package to sim: ${packageInfo.package_id} `);
+        logger.error(
+          `Error adding package to sim: ${packageInfo.package_id}: ${error}`
+        );
         throw new Error("Failed to add package to sim");
       }
     }

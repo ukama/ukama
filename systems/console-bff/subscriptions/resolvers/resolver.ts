@@ -60,7 +60,7 @@ const getErrorRes = (msg: string) =>
     nodeId: "",
     values: [],
     success: false,
-  } as MetricRes);
+  }) as MetricRes;
 
 const processMetricResult = (metric: any) => ({
   msg: metric.msg,

@@ -30,7 +30,7 @@ describe("validateEnv", () => {
   });
 
   const load = () =>
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     require("../configs/validateEnv").validateEnv as () => void;
 
   it("passes when all required URLs are set", () => {
