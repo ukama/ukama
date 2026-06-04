@@ -11,12 +11,14 @@ package rest
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
 	log "github.com/sirupsen/logrus"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
@@ -118,15 +120,15 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	{
 		ops := auth.Group("/operations", "Operations", "Lock + operation lifecycle")
 		ops.POST("", formatDoc("Start an operation", "Acquires a lock and creates an operation in pending state. Returns 409 if the resource is already locked."), tonic.Handler(r.postStartHandler, http.StatusCreated))
-		ops.GET("", formatDoc("Get operation by resource", "Returns the operation currently locking the given resource_key, or empty if free."), tonic.Handler(r.getByResourceHandler, http.StatusOK))
+		ops.GET("", formatDoc("Get operation by resource", "Returns explicit lock state for resource_key. When free: locked=false and operation=null. When locked: locked=true and operation is populated."), tonic.Handler(r.getByResourceHandler, http.StatusOK))
 		ops.GET("/:id", formatDoc("Get operation by id", "Returns the current state of an operation."), tonic.Handler(r.getOperationHandler, http.StatusOK))
 		ops.POST("/:id/run", formatDoc("Mark operation running", "Transitions a pending operation to running. Caller must pass the fencing token."), tonic.Handler(r.postMarkRunningHandler, http.StatusOK))
 		ops.POST("/:id/force-unlock", formatDoc("Force-unlock an operation", "Privileged. Cancels the operation and releases its lock with audit reason."), tonic.Handler(r.postForceUnlockHandler, http.StatusOK))
 	}
 }
 
-func (r *Router) postStartHandler(c *gin.Context, req *StartOperationRequest) (*pb.StartOperationResponse, error) {
-	return r.clients.Manager.Start(&pb.StartOperationRequest{
+func (r *Router) postStartHandler(c *gin.Context, req *StartOperationRequest) (*StartOperationResponse, error) {
+	resp, err := r.clients.Manager.Start(&pb.StartOperationRequest{
 		Type:           req.Type,
 		System:         req.System,
 		ResourceKey:    req.ResourceKey,
@@ -134,31 +136,102 @@ func (r *Router) postStartHandler(c *gin.Context, req *StartOperationRequest) (*
 		IdempotencyKey: req.IdempotencyKey,
 		LeaseSeconds:   req.LeaseSeconds,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &StartOperationResponse{
+		Operation:            operationFromProto(resp.Operation),
+		ConflictingOperation: operationFromProto(resp.ConflictingOperation),
+	}, nil
 }
 
-func (r *Router) getOperationHandler(c *gin.Context, req *GetOperationRequest) (*pb.GetOperationResponse, error) {
-	return r.clients.Manager.Get(req.Id)
+func (r *Router) getOperationHandler(c *gin.Context, req *GetOperationRequest) (*GetOperationResponse, error) {
+	resp, err := r.clients.Manager.Get(req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &GetOperationResponse{
+		Operation: operationFromProto(resp.Operation),
+	}, nil
 }
 
-func (r *Router) getByResourceHandler(c *gin.Context, req *GetByResourceRequest) (*pb.GetByResourceResponse, error) {
-	return r.clients.Manager.GetByResource(req.ResourceKey)
+func (r *Router) getByResourceHandler(c *gin.Context, req *GetByResourceRequest) (*GetByResourceResponse, error) {
+	resp, err := r.clients.Manager.GetByResource(req.ResourceKey)
+	if err != nil {
+		return nil, err
+	}
+
+	op := operationFromProto(resp.Operation)
+
+	return &GetByResourceResponse{
+		Locked:    op != nil,
+		Operation: op,
+	}, nil
 }
 
-func (r *Router) postMarkRunningHandler(c *gin.Context, req *MarkRunningRequest) (*pb.MarkRunningResponse, error) {
-	return r.clients.Manager.MarkRunning(req.Id, req.FencingToken)
+func (r *Router) postMarkRunningHandler(c *gin.Context, req *MarkRunningRequest) (*MarkRunningResponse, error) {
+	resp, err := r.clients.Manager.MarkRunning(req.Id, req.FencingToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return &MarkRunningResponse{
+		Operation: operationFromProto(resp.Operation),
+	}, nil
 }
 
-func (r *Router) postForceUnlockHandler(c *gin.Context, req *ForceUnlockRequest) (*pb.ForceUnlockResponse, error) {
-	resp, err := r.clients.Member.GetByUserId(req.UserId)
+func (r *Router) postForceUnlockHandler(c *gin.Context, req *ForceUnlockRequest) (*ForceUnlockResponse, error) {
+	memberResp, err := r.clients.Member.GetByUserId(req.UserId)
 	if err != nil {
 		log.Errorf("ForceUnlock: failed to resolve member for user %s: %v", req.UserId, err)
 		return nil, rest.HttpError{HttpCode: http.StatusForbidden, Message: "could not verify caller role"}
 	}
-	if !forceUnlockRoles[resp.Member.Role] {
-		log.Warnf("ForceUnlock denied: user %s has role %s (owner/admin required)", req.UserId, resp.Member.Role)
+	if !forceUnlockRoles[memberResp.Member.Role] {
+		log.Warnf("ForceUnlock denied: user %s has role %s (owner/admin required)", req.UserId, memberResp.Member.Role)
 		return nil, rest.HttpError{HttpCode: http.StatusForbidden, Message: "only org owner or admin may force-unlock"}
 	}
-	return r.clients.Manager.ForceUnlock(req.Id, req.UserId, req.Reason)
+
+	resp, err := r.clients.Manager.ForceUnlock(req.Id, req.UserId, req.Reason)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ForceUnlockResponse{
+		Operation: operationFromProto(resp.Operation),
+	}, nil
+}
+
+func operationFromProto(op *pb.Operation) *Operation {
+	if op == nil {
+		return nil
+	}
+
+	return &Operation{
+		Id:             op.Id,
+		Type:           op.Type,
+		System:         op.System,
+		Status:         op.Status.String(),
+		FencingToken:   op.FencingToken,
+		RequestedBy:    op.RequestedBy,
+		IdempotencyKey: op.IdempotencyKey,
+		ResourceKey:    op.ResourceKey,
+		LeaseExpiresAt: timestampAsTime(op.LeaseExpiresAt),
+		Error:          op.Error,
+		StartedAt:      timestampAsTime(op.StartedAt),
+		TerminalAt:     timestampAsTime(op.TerminalAt),
+		CreatedAt:      timestampAsTime(op.CreatedAt),
+	}
+}
+
+func timestampAsTime(ts *timestamppb.Timestamp) *time.Time {
+	if ts == nil || !ts.IsValid() {
+		return nil
+	}
+
+	t := ts.AsTime()
+	return &t
 }
 
 func formatDoc(summary, description string) []fizz.OperationOption {
