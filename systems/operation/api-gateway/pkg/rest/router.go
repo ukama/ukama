@@ -20,6 +20,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 
 	"github.com/ukama/ukama/systems/operation/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/operation/api-gateway/pkg"
@@ -27,6 +28,13 @@ import (
 
 	pb "github.com/ukama/ukama/systems/operation/manager/pb/gen"
 )
+
+// roles permitted to force-unlock an operation. Matches the role-gating pattern
+// used by notification/distributor and event-notify (member lookup, not Keto).
+var forceUnlockRoles = map[string]bool{
+	"ROLE_OWNER": true,
+	"ROLE_ADMIN": true,
+}
 
 type Router struct {
 	f       *fizz.Fizz
@@ -44,6 +52,7 @@ type RouterConfig struct {
 
 type Clients struct {
 	Manager manager
+	Member  member
 }
 
 type manager interface {
@@ -54,9 +63,14 @@ type manager interface {
 	ForceUnlock(id, actor, reason string) (*pb.ForceUnlockResponse, error)
 }
 
-func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
+type member interface {
+	GetByUserId(id string) (*creg.MemberInfoResponse, error)
+}
+
+func NewClientsSet(endpoints *pkg.GrpcEndpoints, registryHost string) *Clients {
 	return &Clients{
 		Manager: client.NewManager(endpoints.Manager, endpoints.Timeout),
+		Member:  creg.NewMemberClient(registryHost),
 	}
 }
 
@@ -135,7 +149,16 @@ func (r *Router) postMarkRunningHandler(c *gin.Context, req *MarkRunningRequest)
 }
 
 func (r *Router) deleteForceUnlockHandler(c *gin.Context, req *ForceUnlockRequest) (*pb.ForceUnlockResponse, error) {
-	return r.clients.Manager.ForceUnlock(req.Id, req.Actor, req.Reason)
+	resp, err := r.clients.Member.GetByUserId(req.UserId)
+	if err != nil {
+		log.Errorf("ForceUnlock: failed to resolve member for user %s: %v", req.UserId, err)
+		return nil, rest.HttpError{HttpCode: http.StatusForbidden, Message: "could not verify caller role"}
+	}
+	if !forceUnlockRoles[resp.Member.Role] {
+		log.Warnf("ForceUnlock denied: user %s has role %s (owner/admin required)", req.UserId, resp.Member.Role)
+		return nil, rest.HttpError{HttpCode: http.StatusForbidden, Message: "only org owner or admin may force-unlock"}
+	}
+	return r.clients.Manager.ForceUnlock(req.Id, req.UserId, req.Reason)
 }
 
 func formatDoc(summary, description string) []fizz.OperationOption {

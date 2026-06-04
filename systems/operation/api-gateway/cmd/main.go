@@ -28,7 +28,7 @@ func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
 
-	clientSet := rest.NewClientsSet(&svcConf.Services)
+	clientSet := rest.NewClientsSet(&svcConf.Services, svcConf.HttpServices.RegistryHost)
 	metrics.StartMetricsServer(&svcConf.Metrics)
 
 	r := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf),

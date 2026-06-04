@@ -32,6 +32,6 @@ type MarkRunningRequest struct {
 
 type ForceUnlockRequest struct {
 	Id     string `json:"id" path:"id" validate:"required,uuid"`
-	Actor  string `json:"actor" validate:"required"`
+	UserId string `json:"user_id" validate:"required,uuid"`
 	Reason string `json:"reason" validate:"required"`
 }

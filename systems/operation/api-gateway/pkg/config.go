@@ -31,7 +31,8 @@ type GrpcEndpoints struct {
 }
 
 type HttpEndpoints struct {
-	Timeout time.Duration
+	Timeout      time.Duration
+	RegistryHost string
 }
 
 func NewConfig() *Config {
@@ -48,7 +49,8 @@ func NewConfig() *Config {
 			Manager: "manager:9090",
 		},
 		HttpServices: HttpEndpoints{
-			Timeout: 3 * time.Second,
+			Timeout:      3 * time.Second,
+			RegistryHost: "http://api-gateway-registry:8080",
 		},
 		Server: rest.HttpConfig{
 			Port: 8080,
