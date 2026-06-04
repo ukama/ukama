@@ -34,6 +34,17 @@ query RevenueOverview($networkId: String) {
       prevMonthPaid
       momPct
     }
+    plans {
+      error {
+        ...SectionErrorFields
+      }
+      plans {
+        packageId
+        name
+        revenue
+        revenueSharePct
+      }
+    }
     invoices(limit: 10) {
       error {
         ...SectionErrorFields
@@ -44,6 +55,29 @@ query RevenueOverview($networkId: String) {
         type
         isPaid
         networkId
+      }
+    }
+  }
+}
+
+# Business home: subscriber/site stats over networkOverview (lean selection —
+# pairs with BizHomeRevenue on the same screen).
+query BizHomeNetwork($networkId: String!) {
+  networkOverview(networkId: $networkId) {
+    networkId
+    subscriberStats {
+      error {
+        ...SectionErrorFields
+      }
+      total
+      active
+    }
+    siteStats {
+      error {
+        ...SectionErrorFields
+      }
+      sites {
+        ...ViewSite
       }
     }
   }

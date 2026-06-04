@@ -24,17 +24,28 @@ import MailRounded from '@mui/icons-material/MailRounded';
 import MoreVertRounded from '@mui/icons-material/MoreVertRounded';
 import PersonAddRounded from '@mui/icons-material/PersonAddRounded';
 import PersonRemoveRounded from '@mui/icons-material/PersonRemoveRounded';
+import { useTeamListQuery } from '@/client/graphql/team.generated';
+import { EmptyState } from '@/components/EmptyState';
 import SkeletonTable from '@/components/data-table/SkeletonTable';
 import TableFooter from '@/components/data-table/TableFooter';
 import PageHeader from '@/components/PageHeader';
 import StatusBadge from '@/components/StatusBadge';
 import { useToast } from '@/components/ToastProvider';
-import { MEMBERS, ROLE_DESC } from '@/data';
-import type { Member } from '@/data';
-import { useFirstLoad } from '@/lib/useFirstLoad';
+import { ROLE_DESC } from '@/data';
 import InviteMemberDialog from './InviteMemberDialog';
 
-function MemberMenu({ m }: { m: Member }) {
+/** Team row view-model from the membersView composite (members +
+ *  invitations merged server-side; status: Active | Deactivated | Invited). */
+interface TeamRow {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  role: string;
+  status: string;
+  memberSince?: string | null;
+}
+
+function MemberMenu({ m }: { m: TeamRow }) {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const toast = useToast();
   return (
@@ -84,14 +95,16 @@ function MemberMenu({ m }: { m: Member }) {
 }
 
 export default function MembersScreen() {
-  const loading = useFirstLoad('members');
   const [showInvite, setShowInvite] = useState(false);
+  const { data, loading, refetch } = useTeamListQuery();
+  const teamSection = data?.membersView.team;
+  const rows: TeamRow[] = teamSection?.rows ?? [];
 
   return (
     <div className="page">
       <PageHeader
         title="Members"
-        count={MEMBERS.length}
+        count={rows.length}
         sub="People with access to this organization."
         actions={
           <Button
@@ -107,6 +120,20 @@ export default function MembersScreen() {
         <div className="tbl-wrap">
           {loading ? (
             <SkeletonTable cols={5} rows={5} lead />
+          ) : teamSection?.error ? (
+            <EmptyState
+              art="error"
+              title="Couldn't load members"
+              sub={teamSection.error.message}
+              cta="Try again"
+              onCta={() => refetch()}
+            />
+          ) : rows.length === 0 ? (
+            <EmptyState
+              art="people"
+              title="No members yet"
+              sub="Invite teammates to give them access."
+            />
           ) : (
             <Table>
               <TableHead>
@@ -119,20 +146,20 @@ export default function MembersScreen() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {MEMBERS.map((m) => (
+                {rows.map((m) => (
                   <TableRow key={m.id}>
                     <TableCell>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
                         <span className="av-sm">
-                          {m.name
+                          {(m.name ?? m.email ?? '?')
                             .split(' ')
                             .map((x) => x[0])
                             .join('')}
                         </span>
                         <div>
-                          <div style={{ fontWeight: 600 }}>{m.name}</div>
+                          <div style={{ fontWeight: 600 }}>{m.name ?? '—'}</div>
                           <div className="muted" style={{ fontSize: 12 }}>
-                            {m.email}
+                            {m.email ?? '—'}
                           </div>
                         </div>
                       </div>
@@ -140,13 +167,21 @@ export default function MembersScreen() {
                     <TableCell>
                       <div style={{ fontWeight: 600 }}>{m.role}</div>
                       <div className="muted" style={{ fontSize: 12 }}>
-                        {ROLE_DESC[m.role]}
+                        {(ROLE_DESC as Record<string, string>)[m.role] ?? ''}
                       </div>
                     </TableCell>
-                    <TableCell className="muted">{m.last}</TableCell>
+                    <TableCell className="muted">{m.memberSince ?? '—'}</TableCell>
                     <TableCell>
-                      <StatusBadge status={m.status === 'active' ? 'active' : 'pending'}>
-                        {m.status === 'active' ? 'Active' : 'Pending'}
+                      <StatusBadge
+                        status={
+                          m.status === 'Active'
+                            ? 'active'
+                            : m.status === 'Invited'
+                              ? 'pending'
+                              : 'inactive'
+                        }
+                      >
+                        {m.status}
                       </StatusBadge>
                     </TableCell>
                     <TableCell>
@@ -158,7 +193,9 @@ export default function MembersScreen() {
             </Table>
           )}
         </div>
-        {!loading && <TableFooter count={MEMBERS.length} noun="members" />}
+        {!loading && !teamSection?.error && (
+          <TableFooter count={rows.length} noun="members" />
+        )}
       </div>
       {showInvite && <InviteMemberDialog onClose={() => setShowInvite(false)} />}
     </div>

@@ -1,7 +1,7 @@
 import * as Types from './types';
 
 import { gql } from '@apollo/client';
-import { SectionErrorFieldsFragmentDoc } from './views-shared.generated';
+import { ViewSiteFragmentDoc, SectionErrorFieldsFragmentDoc } from './views-shared.generated';
 import * as Apollo from '@apollo/client';
 const defaultOptions = {} as const;
 export type BizHomeRevenueQueryVariables = Types.Exact<{
@@ -16,7 +16,14 @@ export type RevenueOverviewQueryVariables = Types.Exact<{
 }>;
 
 
-export type RevenueOverviewQuery = { __typename?: 'Query', commerceView: { __typename?: 'CommerceView', networkId?: string | null, revenue: { __typename?: 'RevenueSection', totalPaid?: number | null, totalPending?: number | null, monthPaid?: number | null, prevMonthPaid?: number | null, momPct?: number | null, error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null }, invoices: { __typename?: 'InvoicesSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, reports?: Array<{ __typename?: 'ReportDto', id: string, period: string, type: string, isPaid: boolean, networkId: string }> | null } } };
+export type RevenueOverviewQuery = { __typename?: 'Query', commerceView: { __typename?: 'CommerceView', networkId?: string | null, revenue: { __typename?: 'RevenueSection', totalPaid?: number | null, totalPending?: number | null, monthPaid?: number | null, prevMonthPaid?: number | null, momPct?: number | null, error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null }, plans: { __typename?: 'PlanStatsSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, plans?: Array<{ __typename?: 'PlanStatsDto', packageId: string, name: string, revenue: number, revenueSharePct: number }> | null }, invoices: { __typename?: 'InvoicesSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, reports?: Array<{ __typename?: 'ReportDto', id: string, period: string, type: string, isPaid: boolean, networkId: string }> | null } } };
+
+export type BizHomeNetworkQueryVariables = Types.Exact<{
+  networkId: Types.Scalars['String']['input'];
+}>;
+
+
+export type BizHomeNetworkQuery = { __typename?: 'Query', networkOverview: { __typename?: 'NetworkOverview', networkId: string, subscriberStats: { __typename?: 'SubscriberStatsSection', total?: number | null, active?: number | null, error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null }, siteStats: { __typename?: 'SitesSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, sites?: Array<{ __typename?: 'SiteDto', id: string, name: string, networkId: string, latitude: string, longitude: string, location: string, isDeactivated: boolean, installDate: string, createdAt: string }> | null } } };
 
 export type PackagesDashboardQueryVariables = Types.Exact<{
   networkId?: Types.InputMaybe<Types.Scalars['String']['input']>;
@@ -99,6 +106,17 @@ export const RevenueOverviewDocument = gql`
       prevMonthPaid
       momPct
     }
+    plans {
+      error {
+        ...SectionErrorFields
+      }
+      plans {
+        packageId
+        name
+        revenue
+        revenueSharePct
+      }
+    }
     invoices(limit: 10) {
       error {
         ...SectionErrorFields
@@ -150,6 +168,65 @@ export type RevenueOverviewQueryHookResult = ReturnType<typeof useRevenueOvervie
 export type RevenueOverviewLazyQueryHookResult = ReturnType<typeof useRevenueOverviewLazyQuery>;
 export type RevenueOverviewSuspenseQueryHookResult = ReturnType<typeof useRevenueOverviewSuspenseQuery>;
 export type RevenueOverviewQueryResult = Apollo.QueryResult<RevenueOverviewQuery, RevenueOverviewQueryVariables>;
+export const BizHomeNetworkDocument = gql`
+    query BizHomeNetwork($networkId: String!) {
+  networkOverview(networkId: $networkId) {
+    networkId
+    subscriberStats {
+      error {
+        ...SectionErrorFields
+      }
+      total
+      active
+    }
+    siteStats {
+      error {
+        ...SectionErrorFields
+      }
+      sites {
+        ...ViewSite
+      }
+    }
+  }
+}
+    ${SectionErrorFieldsFragmentDoc}
+${ViewSiteFragmentDoc}`;
+
+/**
+ * __useBizHomeNetworkQuery__
+ *
+ * To run a query within a React component, call `useBizHomeNetworkQuery` and pass it any options that fit your needs.
+ * When your component renders, `useBizHomeNetworkQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useBizHomeNetworkQuery({
+ *   variables: {
+ *      networkId: // value for 'networkId'
+ *   },
+ * });
+ */
+export function useBizHomeNetworkQuery(baseOptions: Apollo.QueryHookOptions<BizHomeNetworkQuery, BizHomeNetworkQueryVariables> & ({ variables: BizHomeNetworkQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<BizHomeNetworkQuery, BizHomeNetworkQueryVariables>(BizHomeNetworkDocument, options);
+      }
+export function useBizHomeNetworkLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<BizHomeNetworkQuery, BizHomeNetworkQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<BizHomeNetworkQuery, BizHomeNetworkQueryVariables>(BizHomeNetworkDocument, options);
+        }
+// @ts-ignore
+export function useBizHomeNetworkSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<BizHomeNetworkQuery, BizHomeNetworkQueryVariables>): Apollo.UseSuspenseQueryResult<BizHomeNetworkQuery, BizHomeNetworkQueryVariables>;
+export function useBizHomeNetworkSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<BizHomeNetworkQuery, BizHomeNetworkQueryVariables>): Apollo.UseSuspenseQueryResult<BizHomeNetworkQuery | undefined, BizHomeNetworkQueryVariables>;
+export function useBizHomeNetworkSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<BizHomeNetworkQuery, BizHomeNetworkQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<BizHomeNetworkQuery, BizHomeNetworkQueryVariables>(BizHomeNetworkDocument, options);
+        }
+export type BizHomeNetworkQueryHookResult = ReturnType<typeof useBizHomeNetworkQuery>;
+export type BizHomeNetworkLazyQueryHookResult = ReturnType<typeof useBizHomeNetworkLazyQuery>;
+export type BizHomeNetworkSuspenseQueryHookResult = ReturnType<typeof useBizHomeNetworkSuspenseQuery>;
+export type BizHomeNetworkQueryResult = Apollo.QueryResult<BizHomeNetworkQuery, BizHomeNetworkQueryVariables>;
 export const PackagesDashboardDocument = gql`
     query PackagesDashboard($networkId: String) {
   commerceView(networkId: $networkId) {
