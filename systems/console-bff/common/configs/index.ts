@@ -11,6 +11,41 @@ export const VERSION = process.env.VERSION ?? "v1";
 
 export const METRICS_INTERVAL = 30;
 
+export const IS_PRODUCTION = process.env.NODE_ENV === "production";
+
+// GraphQL introspection: always on outside production; in production it can be
+// switched on explicitly (e.g. to run `pnpm codegen` against this instance)
+// without flipping NODE_ENV. Introspection exposes only the schema, never data.
+export const INTROSPECTION_ENABLED =
+  !IS_PRODUCTION || process.env.ENABLE_INTROSPECTION === "true";
+
+// Hard timeout for every upstream HTTP call made by the BFF.
+export const HTTP_TIMEOUT_MS = parseInt(process.env.HTTP_TIMEOUT_MS ?? "15000");
+
+// Lifetime of an issued session token. The token carries its own `exp`
+// claim so staleness is self-describing (clients re-mint without guessing).
+export const TOKEN_TTL_SECONDS = parseInt(
+  process.env.TOKEN_TTL_SECONDS ?? "86400"
+);
+
+/**
+ * Secret used to HMAC-sign the session token issued by /get-user.
+ * Must be set in production; a dev-only fallback is used otherwise.
+ */
+const DEV_TOKEN_SECRET = "dev-only-insecure-token-secret";
+export const TOKEN_SECRET: string = (() => {
+  const secret = process.env.JWT_SECRET ?? "";
+  if (!secret || secret.startsWith("change-me")) {
+    if (IS_PRODUCTION) {
+      throw new Error(
+        "JWT_SECRET env var must be set to a strong secret in production"
+      );
+    }
+    return DEV_TOKEN_SECRET;
+  }
+  return secret;
+})();
+
 // API GWs
 export const PLANNING_API_URL = process.env.PLANNING_API_URL;
 export const NUCLEUS_API_GW = process.env.NUCLEUS_API_GW ?? "";

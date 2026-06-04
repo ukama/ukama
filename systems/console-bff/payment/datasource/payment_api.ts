@@ -5,9 +5,8 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { RESTDataSource } from "@apollo/datasource-rest";
-
 import { VERSION } from "../../common/configs";
+import { BaseRESTDataSource } from "../../common/datasource";
 import { logger } from "../../common/logger";
 import {
   GetPaymentsInputDto,
@@ -24,7 +23,7 @@ import {
   dtoToProcessPaymentsDto,
 } from "./mapper";
 
-class PaymentAPI extends RESTDataSource {
+class PaymentAPI extends BaseRESTDataSource {
   updatePayment: any = async (
     baseURL: string,
     req: UpdatePaymentInputDto

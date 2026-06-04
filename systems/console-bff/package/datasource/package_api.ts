@@ -5,10 +5,10 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { RESTDataSource } from "@apollo/datasource-rest";
 import dayjs from "dayjs";
 
 import { SIM_TYPE } from "../../common/configs";
+import { BaseRESTDataSource } from "../../common/datasource";
 import { IdResponse, THeaders } from "../../common/types";
 import {
   AddPackageInputDto,
@@ -21,7 +21,7 @@ import { dtoToPackageDto, dtoToPackagesDto } from "./mapper";
 const VERSION = "v1";
 const PACKAGES = "packages";
 
-class PackageApi extends RESTDataSource {
+class PackageApi extends BaseRESTDataSource {
   getPackage = async (
     baseURL: string,
     packageId: string

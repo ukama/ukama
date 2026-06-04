@@ -8,7 +8,7 @@
 import { MiddlewareInterface, NextFn, ResolverData } from "type-graphql";
 import { Service } from "typedi";
 
-import { HTTP401Error, Messages } from "../errors";
+import { Messages, UnauthenticatedError } from "../errors";
 
 @Service()
 export class Authentication implements MiddlewareInterface<any> {
@@ -22,7 +22,7 @@ export class Authentication implements MiddlewareInterface<any> {
           : "";
 
       if (!cookie && !token) {
-        throw new HTTP401Error(Messages.REQUEST_AUTHENTICATION_FAILED);
+        throw new UnauthenticatedError(Messages.REQUEST_AUTHENTICATION_FAILED);
       }
       context.authType = token ? "token" : "cookie";
     }

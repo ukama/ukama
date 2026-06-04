@@ -5,15 +5,14 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import { RESTDataSource } from "@apollo/datasource-rest";
-
 import { VERSION } from "../../common/configs";
+import { BaseRESTDataSource } from "../../common/datasource";
 import { GetHealthReportInputDto, HealthInfo } from "../resolvers/types";
 import { dtoToHealthInfo } from "./mapper";
 
 const HEALTH = "health";
 
-class HealthApi extends RESTDataSource {
+class HealthApi extends BaseRESTDataSource {
   list = async (
     baseURL: string,
     req: GetHealthReportInputDto

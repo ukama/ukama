@@ -5,9 +5,8 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { RESTDataSource } from "@apollo/datasource-rest";
-
 import { VERSION } from "../../common/configs";
+import { BaseRESTDataSource } from "../../common/datasource";
 import { logger } from "../../common/logger";
 import { CBooleanResponse } from "../../common/types";
 import {
@@ -18,7 +17,7 @@ import {
 } from "../resolver/types";
 import { dtoToMemberResDto, dtoToMembersResDto } from "./mapper";
 
-class MemberApi extends RESTDataSource {
+class MemberApi extends BaseRESTDataSource {
   getMembers = async (baseURL: string): Promise<MembersResDto> => {
     this.logger.info(`GetMembers [GET]: ${baseURL}/${VERSION}/members`);
     this.baseURL = baseURL;
@@ -41,26 +40,11 @@ class MemberApi extends RESTDataSource {
       `GetMemberByUserId [GET]: ${baseURL}/${VERSION}/members/user/${userId}`
     );
     this.baseURL = baseURL;
-    logger.info(`Request Url: ${baseURL}/${VERSION}/members/user/${userId}`);
     return this.get(`/${VERSION}/members/user/${userId}`)
-      .then(res => {
-        return dtoToMemberResDto(res);
-      })
+      .then(res => dtoToMemberResDto(res))
       .catch(err => {
-        logger.error(`Error: ${err}`);
-        return {
-          id: "",
-          userId: "",
-          role: "",
-          isDeactivated: false,
-          orgId: "",
-          createdAt: "",
-          updatedAt: "",
-          memberId: "",
-          memberSince: "",
-          email: "",
-          name: "",
-        };
+        logger.error(`GetMemberByUserId failed for user ${userId}: ${err}`);
+        throw err;
       });
   };
 

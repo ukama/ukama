@@ -1,0 +1,39 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2026-present, Ukama Inc.
+ */
+
+/**
+ * Client-side auth helpers: browser-state cleanup and the logout flow.
+ * Safe to import from client components only.
+ */
+import { env } from '@/env';
+
+/** localStorage keys owned by the app (cleared on logout). */
+const PERSISTED_KEYS = ['uk-ui-prefs'];
+
+/** Removes app-owned browser state. Apollo's in-memory cache dies on reload. */
+export function clearClientData(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    for (const key of PERSISTED_KEYS) localStorage.removeItem(key);
+    sessionStorage.clear();
+  } catch {
+    /* storage may be unavailable (private mode) — ignore */
+  }
+}
+
+/** Full logout: clear token cookie + browser state, then go to the auth app. */
+export async function logout(): Promise<void> {
+  if (typeof window === 'undefined') return;
+  try {
+    await fetch('/api/auth/logout', { method: 'POST' });
+  } catch {
+    /* best-effort — proceed with client cleanup regardless */
+  }
+  clearClientData();
+  window.location.assign(`${env.NEXT_PUBLIC_AUTH_APP_URL}/auth/login`);
+}

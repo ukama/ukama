@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import { IsBoolean, IsEmail, IsNotEmpty, IsUUID } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
 
 import { OrgAPIDto, OrgDto } from "../../org/resolver/types";
@@ -48,15 +49,19 @@ export class WhoamiDto {
 @InputType()
 export class UserFistVisitInputDto {
   @Field()
+  @IsUUID()
   userId: string;
 
   @Field()
+  @IsNotEmpty()
   name: string;
 
   @Field()
+  @IsEmail()
   email: string;
 
   @Field()
+  @IsBoolean()
   firstVisit: boolean;
 }
 

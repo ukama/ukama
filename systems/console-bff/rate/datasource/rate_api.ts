@@ -5,8 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { RESTDataSource } from "@apollo/datasource-rest";
-
+import { BaseRESTDataSource } from "../../common/datasource";
 import { CBooleanResponse } from "../../common/types";
 import {
   DefaultMarkupHistoryResDto,
@@ -18,7 +17,7 @@ import { dtoToDefaultMarkupDto, dtoToDefaultMarkupHistoryDto } from "./mapper";
 const VERSION = "v1";
 const MARKUP = "markup";
 
-class RateApi extends RESTDataSource {
+class RateApi extends BaseRESTDataSource {
   defaultMarkup = async (
     baseURL: string,
     req: DefaultMarkupInputDto

@@ -1,3 +1,4 @@
+import { IsNotEmpty, IsOptional, IsUUID } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
 
 @ObjectType()
@@ -114,36 +115,47 @@ export class SiteAPIResDto {
 @InputType()
 export class AddSiteInputDto {
   @Field()
+  @IsNotEmpty()
   name: string;
 
   @Field()
+  @IsUUID()
   network_id: string;
 
   @Field()
+  @IsNotEmpty()
   backhaul_id: string;
 
   @Field()
+  @IsNotEmpty()
   power_id: string;
 
   @Field()
+  @IsNotEmpty()
   access_id: string;
 
   @Field()
+  @IsNotEmpty()
   spectrum_id: string;
 
   @Field()
+  @IsNotEmpty()
   switch_id: string;
 
   @Field()
+  @IsNotEmpty()
   latitude: string;
 
   @Field()
+  @IsNotEmpty()
   longitude: string;
 
   @Field()
+  @IsNotEmpty()
   install_date: string;
 
   @Field()
+  @IsNotEmpty()
   location: string;
 }
 
@@ -156,5 +168,7 @@ export class UpdateSiteInputDto {
 @InputType()
 export class SitesInputDto {
   @Field({ nullable: true })
+  @IsOptional()
+  @IsUUID()
   networkId?: string;
 }

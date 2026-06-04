@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import { IsBoolean, IsNotEmpty, IsUUID } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
 
 @ObjectType()
@@ -73,18 +74,22 @@ export class MembersResDto {
 @InputType()
 export class AddMemberInputDto {
   @Field()
+  @IsUUID()
   userId: string;
 
   @Field()
+  @IsNotEmpty()
   role: string;
 }
 
 @InputType()
 export class UpdateMemberInputDto {
   @Field()
+  @IsBoolean()
   isDeactivated: boolean;
 
   @Field()
+  @IsNotEmpty()
   role: string;
 }
 

@@ -19,10 +19,10 @@
  *  - auth: cookies (`credentials: 'include'`) against the API gateway,
  *    same as the legacy console; session/role headers via proxy.ts later
  */
+import { env } from '@/env';
 import { ApolloClient, HttpLink, from } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { InvalidationPolicyCache } from '@nerdwallet/apollo-cache-policies';
-import { env } from '@/env';
 
 const MINUTE = 60 * 1000;
 
@@ -65,11 +65,24 @@ function makeCache() {
   });
 }
 
+/** Guards against repeated redirects if a refresh still returns 401. */
+let isRecovering = false;
+
 export function makeApolloClient() {
   const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
     if (graphQLErrors) {
       for (const err of graphQLErrors) {
         console.error(`[gql] ${operation.operationName}: ${err.message}`);
+        // Gateway rejected the token (expired/rotated): drop the cached token
+        // cookie and let proxy.ts mint a fresh one from the still-valid session.
+        if (
+          err.extensions?.code === 'UNAUTHENTICATED' &&
+          typeof window !== 'undefined' &&
+          !isRecovering
+        ) {
+          isRecovering = true;
+          window.location.assign('/api/auth/refresh');
+        }
       }
     }
     if (networkError) {

@@ -5,13 +5,14 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import type { Metadata } from 'next';
-import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
-import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import { roboto, workSans } from '@/fonts';
-import Providers from './providers';
-import './globals.css';
+import { getCurrentUser } from '@/lib/auth/server';
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
+import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
+import type { Metadata } from 'next';
 import './components.css';
+import './globals.css';
+import Providers from './providers';
 
 export const metadata: Metadata = {
   title: 'Ukama Console',
@@ -19,9 +20,11 @@ export const metadata: Metadata = {
     'Ukama network operator console — Business, Network and Customer lenses.',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const user = await getCurrentUser();
+
   return (
     <html
       lang="en"
@@ -31,7 +34,7 @@ export default function RootLayout({
       <body>
         <InitColorSchemeScript attribute="class" defaultMode="light" />
         <AppRouterCacheProvider>
-          <Providers>{children}</Providers>
+          <Providers user={user}>{children}</Providers>
         </AppRouterCacheProvider>
       </body>
     </html>

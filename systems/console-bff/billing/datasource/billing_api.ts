@@ -5,9 +5,8 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { RESTDataSource } from "@apollo/datasource-rest";
-
 import { VERSION } from "../../common/configs";
+import { BaseRESTDataSource } from "../../common/datasource";
 import {
   GetReportDto,
   GetReportsDto,
@@ -15,7 +14,7 @@ import {
 } from "../resolvers/types";
 import { dtoToReportDto, dtoToReportsDto } from "./mapper";
 
-class BillingAPI extends RESTDataSource {
+class BillingAPI extends BaseRESTDataSource {
   getReports = async (
     baseURL: string,
     req: GetReportsInputDto
