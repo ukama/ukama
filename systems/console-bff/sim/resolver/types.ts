@@ -140,6 +140,12 @@ export class RemovePackageFromSimResDto {
 export class AddPackagSimResDto {
   @Field(() => String, { nullable: true })
   packageId: string;
+
+  @Field(() => Boolean, { nullable: true })
+  success?: boolean;
+
+  @Field(() => String, { nullable: true })
+  error?: string;
 }
 
 @ObjectType()

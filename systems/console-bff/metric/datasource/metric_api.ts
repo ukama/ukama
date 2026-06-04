@@ -43,6 +43,28 @@ class MetricAPI extends BaseRESTDataSource {
       parseSiteLatestMetricRes(res, args)
     );
   };
+
+  /**
+   * Generic latest-value read for one metric key (org-scoped, no entity
+   * stamping). Used by the dashboard KPI sections (plan Phase 4 — polled,
+   * no subscriptions in v1).
+   */
+  getLatestMetric = async (
+    baseURL: string,
+    type: string
+  ): Promise<{ type: string; value: [number, number]; success: boolean }> => {
+    this.logger.info(
+      `GetLatestMetric [GET]: ${baseURL}/${VERSION}/${METRICS}/${type}`
+    );
+    this.baseURL = baseURL;
+    return this.get(`/${VERSION}/${METRICS}/${type}`).then(res => {
+      const data = res?.data?.result?.[0];
+      if (data?.value?.length > 0) {
+        return { type, value: data.value as [number, number], success: true };
+      }
+      return { type, value: [0, 0] as [number, number], success: false };
+    });
+  };
 }
 
 export default MetricAPI;

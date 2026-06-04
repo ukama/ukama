@@ -35,10 +35,11 @@ import PageHeader from '@/components/PageHeader';
 import SearchField from '@/components/SearchField';
 import StatusBadge from '@/components/StatusBadge';
 import { useToast } from '@/components/ToastProvider';
-import { PLANS, SUBSCRIBERS } from '@/data';
+import { useNetworkCustomersQuery } from '@/client/graphql/network-customers.generated';
 import type { Subscriber } from '@/data';
 import { parseSeen } from '@/lib/parsers';
-import { useFirstLoad } from '@/lib/useFirstLoad';
+import { useUiPrefs } from '@/lib/store';
+import { toSubscriber } from '@/lib/mappers/subscribers';
 import AddCustomerDialog from './AddCustomerDialog';
 import DeleteCustomerDialog from './DeleteCustomerDialog';
 import SubscriberDrawer from './SubscriberDrawer';
@@ -121,7 +122,7 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
   const agent = mode === 'agent';
   const showSite = mode === 'network';
   const clickRow = mode !== 'network';
-  const loading = useFirstLoad('subscribers');
+  const networkId = useUiPrefs((s) => s.networkId);
   const toast = useToast();
 
   const [q, setQ] = useState('');
@@ -130,9 +131,25 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
   const [showAdd, setShowAdd] = useState(false);
   const [deleteSub, setDeleteSub] = useState<Subscriber | null>(null);
 
+  const { data, loading } = useNetworkCustomersQuery({
+    variables: { networkId },
+    skip: !networkId,
+  });
+  const subsSection = data?.subscribersView.subscribers;
+  const plansSection = data?.subscribersView.plans;
+
+  const subscribers: Subscriber[] = useMemo(() => {
+    const plansById = new Map(
+      (plansSection?.plans ?? []).map((p) => [p.packageId, p])
+    );
+    return (subsSection?.subscribers ?? []).map((s) =>
+      toSubscriber(s, plansById)
+    );
+  }, [subsSection?.subscribers, plansSection?.plans]);
+
   const planNames = useMemo(
-    () => [...PLANS.map((p) => p.name), 'No plan'],
-    [],
+    () => [...(plansSection?.plans ?? []).map((p) => p.name), 'No plan'],
+    [plansSection?.plans],
   );
 
   const columns = useMemo<ColumnDef<Subscriber, unknown>[]>(() => {
@@ -186,7 +203,9 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
       enableSorting: true,
       cell: ({ row }) => {
         const s = row.original;
-        if (s.plan === 'No plan') return <span className="muted">—</span>;
+        // usage < 0 = unknown (subscribersView.usage backend gap) → "—"
+        if (s.plan === 'No plan' || s.usage < 0)
+          return <span className="muted">—</span>;
         const pct = s.cap ? Math.min(100, (s.usage / s.cap) * 100) : 60;
         const over = !!s.cap && s.usage / s.cap > 0.9;
         return (
@@ -257,7 +276,7 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
     <div className="page">
       <PageHeader
         title="Customers"
-        count="1,284"
+        count={subscribers.length.toLocaleString()}
         sub={SUBS[mode]}
         actions={
           agent ? (
@@ -285,7 +304,7 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
         >
           <SearchField value={q} onChange={setQ} placeholder="Search name or phone" />
           <div style={{ marginLeft: 'auto', fontSize: 13, color: 'var(--uk-ink-3)' }}>
-            {SUBSCRIBERS.length} of {SUBSCRIBERS.length}
+            {subscribers.length} of {subscribers.length}
           </div>
         </div>
 
@@ -333,13 +352,15 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
         <div className="tbl-wrap" style={{ overflowX: 'auto' }}>
           <DataTable<Subscriber>
             columns={columns}
-            data={SUBSCRIBERS}
-            status={loading ? 'loading' : 'ready'}
+            data={subscribers}
+            status={loading ? 'loading' : subsSection?.error ? 'error' : 'ready'}
             skeleton={{ cols: agent ? 7 : 5, rows: 6, lead: true }}
             empty={{
               art: 'search',
-              title: 'No customers match',
-              sub: 'Try a different filter or search term.',
+              title: subsSection?.error ? "Couldn't load customers" : 'No customers match',
+              sub: subsSection?.error
+                ? subsSection.error.message
+                : 'Try a different filter or search term.',
             }}
             globalFilter={q}
             initialSorting={[{ id: 'name', desc: false }]}
@@ -352,23 +373,7 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
         </div>
 
         {!loading && (
-          <TableFooter showing={SUBSCRIBERS.length} total={1284}>
-            <Button size="small" disabled sx={{ minWidth: 34 }}>
-              ‹
-            </Button>
-            <Button size="small" variant="outlined" sx={{ minWidth: 34 }}>
-              1
-            </Button>
-            <Button size="small" sx={{ minWidth: 34, color: 'var(--uk-ink-3)' }}>
-              2
-            </Button>
-            <Button size="small" sx={{ minWidth: 34, color: 'var(--uk-ink-3)' }}>
-              …
-            </Button>
-            <Button size="small" sx={{ minWidth: 34 }}>
-              ›
-            </Button>
-          </TableFooter>
+          <TableFooter showing={subscribers.length} total={subscribers.length} />
         )}
       </div>
 

@@ -1,0 +1,81 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2026-present, Ukama Inc.
+ */
+
+/**
+ * Polled range metrics in the consolidated schema (plan Phase 4). This is
+ * the query-only port of the subscriptions service's range fetch: same
+ * upstream endpoint (`/v1/range/metrics/{key}`), same response mapping, but
+ * NO WebSocket workers and NO GraphQL subscriptions — the console polls
+ * (BUILD-PLAN §5.1·4). The standalone subscriptions service stays parked.
+ */
+import { Arg, Ctx, Field, InputType, Int, Query, Resolver } from "type-graphql";
+
+import { STATS_TYPE } from "../../common/enums";
+import { mapWithConcurrency } from "../../common/utils/concurrency";
+import type { AppContext } from "../../server/context";
+import { getNodeMetricRange } from "../../subscriptions/datasource/subscriptions-api";
+import type {
+  GetMetricsStatInput,
+  MetricsRes,
+} from "../../subscriptions/resolvers/types";
+import { MetricsRes as MetricsResType } from "../../subscriptions/resolvers/types";
+import { ServiceUrlResolver } from "../baseUrls";
+
+const MAX_KEYS = 10;
+
+@InputType()
+export class MetricsRangeInput {
+  /** Metric keys, e.g. ["uptime", "cpu_temperature"]. Max 10 per request. */
+  @Field(() => [String])
+  keys: string[];
+
+  /** Epoch seconds (must be > 0). */
+  @Field(() => Int)
+  from: number;
+
+  @Field(() => Int, { nullable: true })
+  to?: number;
+
+  @Field({ nullable: true })
+  nodeId?: string;
+
+  /** Prometheus aggregation, default "avg". */
+  @Field({ nullable: true })
+  operation?: string;
+}
+
+@Resolver()
+export class MetricsRangeResolver {
+  @Query(() => MetricsResType)
+  async metricsRange(
+    @Arg("data") data: MetricsRangeInput,
+    @Ctx() ctx: AppContext
+  ): Promise<MetricsRes> {
+    if (data.from <= 0) {
+      throw new Error("Argument 'from' must be a positive epoch timestamp.");
+    }
+    const keys = data.keys.slice(0, MAX_KEYS);
+    const urls = new ServiceUrlResolver(ctx.headers.orgName);
+    const baseURL = await urls.url("metrics");
+    const args = {
+      from: data.from,
+      to: data.to ?? Math.floor(Date.now() / 1000),
+      nodeId: data.nodeId,
+      operation: data.operation ?? "avg",
+      orgName: ctx.headers.orgName,
+      userId: ctx.headers.userId,
+      type: STATS_TYPE.HOME,
+      withSubscription: false,
+    } as GetMetricsStatInput;
+
+    const results = await mapWithConcurrency(keys, key =>
+      getNodeMetricRange(baseURL, key, args)
+    );
+    return { metrics: results.flatMap(res => res.metrics) };
+  }
+}

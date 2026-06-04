@@ -23,15 +23,21 @@ import PowerSettingsNewRounded from '@mui/icons-material/PowerSettingsNewRounded
 import RestartAltRounded from '@mui/icons-material/RestartAltRounded';
 import SyncRounded from '@mui/icons-material/SyncRounded';
 import WifiOffRounded from '@mui/icons-material/WifiOffRounded';
+import Skeleton from '@mui/material/Skeleton';
+
+import { useNodeDetailQuery } from '@/client/graphql/node-detail.generated';
 import AppTabs from '@/components/AppTabs';
 import { LineChart } from '@/components/charts';
 import DetailPicker from '@/components/DetailPicker';
+import { EmptyState } from '@/components/EmptyState';
 import KV from '@/components/KV';
 import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
+import { sectionValue } from '@/components/SectionFallback';
 import StatusBadge from '@/components/StatusBadge';
 import { useToast } from '@/components/ToastProvider';
-import { NODES } from '@/data';
+import { toUkamaNode } from '@/lib/mappers/nodes';
+import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
 import { series } from '@/lib/series';
 
 const NODE_TEMP = series(46, 22, 0.18, 0.12);
@@ -141,14 +147,54 @@ function PowerMenu({ serial }: { serial: string }) {
 export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
   const router = useRouter();
   const toast = useToast();
-  const n = NODES.find((x) => x.id === nodeId) ?? NODES[0];
   const [tab, setTab] = useState('Overview');
-  if (!n) return null;
 
+  const { data, loading, refetch } = useNodeDetailQuery({
+    variables: { nodeId },
+    ...visiblePoll(POLL_LIVE_MS),
+  });
+  const view = data?.nodeView;
+  const nodeSection = view?.node;
+  const healthSection = view?.health;
+  const softwareSection = view?.software;
+  const kpisGap = view?.kpis.error ?? null;
+  const kpiByKey = new Map(
+    (view?.kpis.metrics ?? [])
+      .filter((m) => m.success)
+      .map((m) => [m.key, Math.round(m.value * 100) / 100])
+  );
+
+  if (loading) {
+    return (
+      <div className="page">
+        <PageHeader crumb={['Nodes', nodeId]} title={`Node ${nodeId}`} />
+        <Skeleton variant="rounded" sx={{ height: 42, mb: 2 }} />
+        <Skeleton variant="rounded" sx={{ height: 420 }} />
+      </div>
+    );
+  }
+  if (!nodeSection?.node) {
+    return (
+      <div className="page">
+        <PageHeader crumb={['Nodes', nodeId]} title={`Node ${nodeId}`} />
+        <div className="card">
+          <EmptyState
+            art="error"
+            title="Couldn't load node"
+            sub={nodeSection?.error?.message ?? 'Node not found.'}
+            cta="Try again"
+            onCta={() => refetch()}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  const n = toUkamaNode(nodeSection.node);
   const off = n.status === 'offline';
-  const hot = (n.temp ?? 0) > 55;
-  const tempTrx = off ? null : n.temp;
-  const tempCom = off || n.temp == null ? null : n.temp + 3;
+  const healthRows = healthSection?.health?.system?.slice(0, 4) ?? [];
+  const firstSoftware = softwareSection?.softwares?.software?.[0];
+  const updateAvailable = firstSoftware?.status === 'update_available';
 
   return (
     <div className="page">
@@ -172,7 +218,7 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
       <div className="detail-subrow">
         <DetailPicker
           value={{ id: n.id, label: n.serial, status: n.status }}
-          items={NODES.map((x) => ({ id: x.id, label: x.serial, status: x.status }))}
+          items={[{ id: n.id, label: n.serial, status: n.status }]}
           onPick={(it) => router.push(`/network/nodes/${it.id}`)}
         />
         <StatusBadge status={n.status} />
@@ -188,28 +234,40 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
           <SectionCard title="Node information">
             <KV k="Model type" v={n.type} />
             <KV k="Serial #" v={n.serial} />
-            <KV k="Firmware" v={n.fw} />
-            <KV k="Node group" v="Default group" />
+            <KV
+              k="Firmware"
+              v={firstSoftware?.currentVersion ?? '—'}
+            />
+            <KV k="Site" v={n.site} />
           </SectionCard>
           <SectionCard title="Node health">
-            <KV
-              k="Temp. (TRX)"
-              v={tempTrx != null ? tempTrx + ' °C' : '—'}
-              warn={hot}
-              vColor={hot ? 'var(--uk-orange)' : null}
-            />
-            <KV
-              k="Temp. (COM)"
-              v={tempCom != null ? tempCom + ' °C' : '—'}
-              warn={hot}
-              vColor={hot ? 'var(--uk-orange)' : null}
-            />
-            <KV k="CPU load" v={off ? '—' : n.cpu + '%'} />
-            <KV k="Memory" v={off ? '—' : n.mem + '%'} />
+            {healthRows.length > 0 && !healthSection?.error ? (
+              healthRows.map((row) => <KV key={row.name} k={row.name} v={row.value} />)
+            ) : kpiByKey.size > 0 ? (
+              // Polled node KPIs from the metric service (Phase 4)
+              <>
+                <KV k="Uptime" v={kpiByKey.has('uptime') ? `${kpiByKey.get('uptime')}` : '—'} />
+                <KV
+                  k="Temp. (CPU)"
+                  v={kpiByKey.has('cpu_temperature') ? `${kpiByKey.get('cpu_temperature')} °C` : '—'}
+                />
+                <KV
+                  k="Memory"
+                  v={kpiByKey.has('memory') ? `${kpiByKey.get('memory')}%` : '—'}
+                />
+              </>
+            ) : (
+              <>
+                <KV k="Uptime" v="—" />
+                <KV k="Temp. (CPU)" v="—" />
+                <KV k="Memory" v="—" />
+              </>
+            )}
           </SectionCard>
           <SectionCard title="Customers">
-            <KV k="Attached" v={off ? '0' : '100'} />
-            <KV k="Active" v={off ? '0' : '86'} />
+            {/* attach counts not in metric keys yet — renders "—" */}
+            <KV k="Attached" v={sectionValue(null, kpisGap)} />
+            <KV k="Active" v={sectionValue(null, kpisGap)} />
           </SectionCard>
         </div>
 
@@ -242,14 +300,22 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
           )}
           {tab === 'Software' && (
             <SectionCard title="Software & firmware">
-              <KV k="Firmware version" v={n.fw} />
-              <KV k="Channel" v="Stable" />
-              <KV k="Last update" v="12 Oct 2025" />
-              <KV
-                k="Update available"
-                v={n.fw === '13.2.1' ? 'Up to date' : '13.2.1'}
-                vColor={n.fw === '13.2.1' ? 'var(--uk-success)' : 'var(--uk-ac-dark)'}
-              />
+              {softwareSection?.error ? (
+                <>
+                  <KV k="Firmware version" v="—" />
+                  <KV k="Update available" v="—" />
+                </>
+              ) : (
+                <>
+                  <KV k="Firmware version" v={firstSoftware?.currentVersion ?? '—'} />
+                  <KV k="Release date" v={firstSoftware?.releaseDate ?? '—'} />
+                  <KV
+                    k="Update available"
+                    v={updateAvailable ? (firstSoftware?.desiredVersion ?? 'Yes') : 'Up to date'}
+                    vColor={updateAvailable ? 'var(--uk-ac-dark)' : 'var(--uk-success)'}
+                  />
+                </>
+              )}
               <div style={{ marginTop: 16 }}>
                 <Button
                   variant="outlined"

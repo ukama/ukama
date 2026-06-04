@@ -1,0 +1,1694 @@
+type Query {
+  getReport(id: String!): GetReportDto!
+  getReportPdf(id: String!): GetReportDto!
+  getReports(data: GetReportsInputDto!): GetReportsDto!
+  getComponentById(componentId: String!): ComponentDto!
+  getComponentsByUserId(data: ComponentTypeInputDto!): ComponentsResDto!
+  example: String
+  commerceView(networkId: String): CommerceView!
+  inventoryView: InventoryView!
+  membersView: MembersView!
+  metricsRange(data: MetricsRangeInput!): MetricsRes!
+  networkOverview(networkId: String!): NetworkOverview!
+  nodesView(networkId: String): NodesView!
+  nodeView(nodeId: String!): NodeView!
+  simPoolView(simType: String!): SimPoolView!
+  sitesView(networkId: String!): SitesView!
+  siteView(siteId: String!): SiteView!
+  subscriberView(subscriberId: String!): SubscriberView!
+  subscribersView(networkId: String!): SubscribersView!
+  getHealthReport(data: GetHealthReportInputDto!): HealthInfo!
+  getCountries: CountriesRes!
+  getCurrencySymbol(code: String!): CurrencyRes!
+  getTimezones: TimezoneRes!
+  getInvitation(id: String!): InvitationDto!
+  getInvitations: InvitationsResDto!
+  getInvitationsByEmail(email: String!): InvitationsResDto!
+  getMember(id: String!): MemberDto!
+  getMemberByUserId(userId: String!): MemberDto!
+  getMembers: MembersResDto!
+  getNetworkStats(networkId: String!): NetworkStats!
+  getNodeLatestMetric(data: GetNodeLatestMetricInput!): NodeLatestMetric!
+  getNetwork(networkId: String!): NetworkDto!
+  getNetworks: NetworksResDto!
+  getAppsChangeLog(data: NodeAppsChangeLogInput!): AppChangeLogs!
+  getNode(data: NodeInput!): Node!
+  getNodeApps(data: NodeAppsChangeLogInput!): NodeApps!
+  getNodeState(id: String!): NodeStateRes!
+  getNodes(data: NodesFilterInput!): Nodes!
+  getNodesByNetwork(networkId: String!): Nodes!
+  getNodesByState(data: GetNodesByStateInput!): Nodes!
+  getNodesForSite(siteId: String!): Nodes!
+  getNodesLocation: Nodes!
+  getNotification(id: String!): NotificationResDto!
+  getNotifications: NotificationsResDto!
+  getOrg: OrgDto!
+  getOrgTree: OrgTreeRes!
+  getOrgs: OrgsResDto!
+  getPackage(packageId: String!): PackageDto!
+  getPackages: PackagesResDto!
+  getPayment(paymentId: String!): PaymentDto!
+  getPayments(data: GetPaymentsInputDto!): PaymentsDto!
+  getToken(paymentId: String!): TokenResDto!
+  getDefaultMarkup: DefaultMarkupResDto!
+  getDefaultMarkupHistory: DefaultMarkupHistoryResDto!
+  getGeneratedPdfReport(id: String!): GetPdfReportUrlDto!
+  getDataUsage(data: SimUsageInputDto!): SimDataUsage!
+  getDataUsages(data: SimUsagesInputDto!): SimDataUsages!
+  getPackagesForSim(data: GetPackagesForSimInputDto!): GetSimPackagesDtoAPI!
+  getSim(data: GetSimInputDto!): SimDto!
+  getSimPoolStats(data: GetSimsInput!): SimPoolStatsDto!
+  getSims(data: ListSimsInput!): SimsResDto!
+  getSimsBySubscriber(data: GetSimBySubscriberInputDto!): SubscriberToSimsDto!
+  getSimsFromPool(data: GetSimsInput!): SimsPoolResDto!
+  getSite(siteId: String!): SiteDto!
+  getSites(data: SitesInputDto!): SitesResDto!
+  getApps: Apps
+  getSoftwares(data: GetSoftwaresInput!): Softwares!
+  getSimsByNetwork(networkId: String!): SubscriberSimsResDto!
+  getSubscriber(subscriberId: String!): SubscriberDto!
+  getSubscriberMetricsByNetwork(networkId: String!): SubscriberMetricsByNetworkDto!
+  getSubscribersByNetwork(networkId: String!): SubscribersResDto!
+  getUser(userId: String!): UserResDto!
+  whoami: WhoamiDto!
+}
+
+type GetReportDto {
+  report: ReportDto!
+}
+
+type ReportDto {
+  id: String!
+  ownerId: String!
+  ownerType: String!
+  networkId: String!
+  period: String!
+  type: String!
+  rawReport: RawReportDto!
+  isPaid: Boolean!
+  createdAt: String!
+}
+
+type RawReportDto {
+  issuingDate: String!
+  paymentDueDate: String!
+  paymentOverdue: Boolean!
+  invoiceType: String!
+  status: String!
+  paymentStatus: String!
+  feesAmountCents: String!
+  taxesAmountCents: String!
+  subTotalExcludingTaxesAmountCents: String!
+  subTotalIncludingTaxesAmountCents: String!
+  vatAmountCents: String!
+  vatAmountCurrency: String
+  totalAmountCents: String!
+  currency: String!
+  fileUrl: String!
+  customer: CustomerDto!
+  subscriptions: [SubscriptionDto!]!
+  fees: [FeeDto!]!
+}
+
+type CustomerDto {
+  externalId: String!
+  name: String!
+  email: String
+  addressLine1: String
+  legalName: String
+  legalNumber: String
+  phone: String
+  currency: String!
+  timezone: String
+  vatRate: Float!
+  createdAt: String!
+}
+
+type SubscriptionDto {
+  externalCustomerId: String!
+  externalId: String!
+  planCode: String!
+  name: String
+  status: String!
+  createdAt: String!
+  startedAt: String!
+  canceledAt: String
+  terminatedAt: String
+}
+
+type FeeDto {
+  taxesAmountCents: String!
+  taxesPreciseAmount: String!
+  totalAmountCents: String!
+  totalAmountCurrency: String!
+  eventsCount: String!
+  units: Float!
+  item: ItemResDto!
+}
+
+type ItemResDto {
+  type: String!
+  code: String!
+  name: String!
+}
+
+type GetReportsDto {
+  reports: [ReportDto!]!
+}
+
+input GetReportsInputDto {
+  networkId: String
+  ownerId: String
+  ownerType: String!
+  report_type: String!
+  isPaid: Boolean
+  sort: Boolean
+  count: Float
+}
+
+type ComponentDto {
+  id: String!
+  inventoryId: String!
+  category: String!
+  type: String!
+  userId: String!
+  description: String!
+  datasheetUrl: String!
+  imageUrl: String!
+  partNumber: String!
+  manufacturer: String!
+  managed: String!
+  warranty: Float!
+  specification: String!
+}
+
+type ComponentsResDto {
+  components: [ComponentDto!]!
+}
+
+input ComponentTypeInputDto {
+  category: COMPONENT_TYPE!
+}
+
+enum COMPONENT_TYPE {
+  all
+  access
+  backhaul
+  power
+  switch
+  spectrum
+}
+
+type CommerceView {
+  networkId: String
+  revenue: RevenueSection!
+  plans: PlanStatsSection!
+  invoices(limit: Int! = 20): InvoicesSection!
+  balance: BalanceSection!
+}
+
+type RevenueSection {
+  error: SectionError
+  totalPaid: Float
+  totalPending: Float
+  monthPaid: Float
+  prevMonthPaid: Float
+  momPct: Int
+}
+
+"""
+Typed failure of one section of a composite query. The section's data field resolves to null and a SectionError describes why, so the UI can distinguish 'failed' from 'genuinely empty'.
+"""
+type SectionError {
+  section: String!
+  code: SectionErrorCode!
+  message: String!
+}
+
+"""
+Machine-readable failure code for a composite query section. UI branches on this code; `message` is for display/logs only.
+"""
+enum SectionErrorCode {
+  UPSTREAM_TIMEOUT
+  UPSTREAM_ERROR
+  NOT_FOUND
+  FORBIDDEN
+  INTERNAL
+  NOT_IMPLEMENTED
+}
+
+type PlanStatsSection {
+  error: SectionError
+  mrr: Float
+  arpu: Float
+  plans: [PlanStatsDto!]
+}
+
+type PlanStatsDto {
+  packageId: String!
+  name: String!
+  amount: Float!
+  currency: String!
+  active: Boolean!
+  attachCount: Int
+  revenue: Float!
+  revenueSharePct: Int!
+}
+
+type InvoicesSection {
+  error: SectionError
+  reports: [ReportDto!]
+}
+
+type BalanceSection {
+  error: SectionError
+  outstandingCount: Int
+  latestUnpaidPeriod: String
+}
+
+type InventoryView {
+  orgName: String!
+  components: ComponentStatsSection!
+  unassignedNodes: NodesSection!
+  simStock: SimPoolStatsSection!
+}
+
+type ComponentStatsSection {
+  error: SectionError
+  total: Int
+  byCategory: [CategoryCountDto!]
+}
+
+type CategoryCountDto {
+  category: String!
+  count: Int!
+}
+
+type NodesSection {
+  error: SectionError
+  nodes: [Node!]
+}
+
+type Node {
+  id: String!
+  name: String!
+  latitude: String!
+  longitude: String!
+  type: NodeTypeEnum!
+  attached: [AttachedNodes!]!
+  site: NodeSite!
+  status: NodeStatus!
+}
+
+"""Node type enums"""
+enum NodeTypeEnum {
+  tnode
+  anode
+  hnode
+  cnode
+}
+
+type AttachedNodes {
+  id: String!
+  name: String!
+  latitude: String!
+  longitude: String!
+  type: NodeTypeEnum!
+  site: NodeSite!
+  status: NodeStatus!
+}
+
+type NodeSite {
+  nodeId: String
+  siteId: String
+  networkId: String
+  addedAt: String
+}
+
+type NodeStatus {
+  connectivity: String!
+  state: String!
+}
+
+type SimPoolStatsSection {
+  error: SectionError
+  total: Int
+  available: Int
+  consumed: Int
+  failed: Int
+  esim: Int
+  physical: Int
+  pctAssigned: Int
+  lowStock: Boolean
+}
+
+type MembersView {
+  orgName: String!
+  team: TeamSection!
+}
+
+type TeamSection {
+  error: SectionError
+  rows: [TeamMemberDto!]
+}
+
+type TeamMemberDto {
+  id: String!
+  name: String
+  email: String
+  role: String!
+  status: String!
+  memberSince: String
+  inviteExpiresAt: String
+}
+
+type MetricsRes {
+  metrics: [MetricRes!]!
+}
+
+type MetricRes {
+  success: Boolean!
+  msg: String!
+  nodeId: String
+  networkId: String
+  packageId: String
+  dataPlanId: String
+  siteId: String
+  type: String!
+  values: [[Float!]!]!
+  unit: String
+  format: String
+  tickInterval: Float
+  tickPositions: [Float!]
+  threshold: MetricThreshold
+}
+
+type MetricThreshold {
+  min: Float!
+  normal: Float!
+  max: Float!
+}
+
+input MetricsRangeInput {
+  keys: [String!]!
+  from: Int!
+  to: Int
+  nodeId: String
+  operation: String
+}
+
+type NetworkOverview {
+  networkId: String!
+  network: NetworkSection!
+  nodeStats: NodeStatsSection!
+  siteStats: SitesSection!
+  subscriberStats: SubscriberStatsSection!
+  latestAlerts(limit: Int! = 5): AlertsSection!
+  kpis: KpisSection!
+}
+
+type NetworkSection {
+  error: SectionError
+  network: NetworkDto
+}
+
+type NetworkDto {
+  id: String!
+  name: String!
+  isDefault: Boolean!
+  budget: Float!
+  overdraft: Float!
+  trafficPolicy: Float!
+  isDeactivated: Boolean!
+  paymentLinks: Boolean!
+  createdAt: String!
+  countries: [String!]!
+  networks: [String!]!
+}
+
+type NodeStatsSection {
+  error: SectionError
+  total: Int
+  online: Int
+  offline: Int
+}
+
+type SitesSection {
+  error: SectionError
+  sites: [SiteDto!]
+}
+
+type SiteDto {
+  id: String!
+  name: String!
+  networkId: String!
+  backhaulId: String!
+  powerId: String!
+  accessId: String!
+  spectrumId: String!
+  switchId: String!
+  isDeactivated: Boolean!
+  latitude: String!
+  longitude: String!
+  installDate: String!
+  createdAt: String!
+  location: String!
+}
+
+type SubscriberStatsSection {
+  error: SectionError
+  total: Int
+  active: Int
+  inactive: Int
+}
+
+type AlertsSection {
+  error: SectionError
+  notifications: [NotificationsDto!]
+}
+
+type NotificationsDto {
+  id: String!
+  title: String!
+  description: String!
+  type: NOTIFICATION_TYPE!
+  scope: NOTIFICATION_SCOPE!
+  isRead: Boolean!
+  createdAt: String!
+  eventKey: String!
+  resourceId: String!
+  redirect: NotificationRedirectDto
+}
+
+enum NOTIFICATION_TYPE {
+  TYPE_INVALID
+  TYPE_INFO
+  TYPE_WARNING
+  TYPE_ERROR
+  TYPE_CRITICAL
+  TYPE_ACTIONABLE_INFO
+  TYPE_ACTIONABLE_WARNING
+  TYPE_ACTIONABLE_ERROR
+  TYPE_ACTIONABLE_CRITICAL
+}
+
+enum NOTIFICATION_SCOPE {
+  SCOPE_INVALID
+  SCOPE_OWNER
+  SCOPE_ORG
+  SCOPE_NETWORKS
+  SCOPE_NETWORK
+  SCOPE_SITES
+  SCOPE_SITE
+  SCOPE_SUBSCRIBERS
+  SCOPE_SUBSCRIBER
+  SCOPE_USERS
+  SCOPE_USER
+  SCOPE_NODE
+}
+
+type NotificationRedirectDto {
+  title: String!
+  action: String!
+}
+
+type KpisSection {
+  error: SectionError
+  metrics: [KpiEntryDto!]
+}
+
+type KpiEntryDto {
+  key: String!
+  value: Float!
+  timestamp: Float!
+  success: Boolean!
+}
+
+type NodesView {
+  networkId: String
+  nodes: NodesSection!
+  health: GapSection!
+}
+
+type GapSection {
+  error: SectionError
+}
+
+type NodeView {
+  nodeId: String!
+  node: NodeSection!
+  health: HealthSection!
+  software: SoftwareSection!
+  stateHistory: NodeStateSection!
+  kpis: KpisSection!
+  radioStatus: GapSection!
+}
+
+type NodeSection {
+  error: SectionError
+  node: Node
+}
+
+type HealthSection {
+  error: SectionError
+  health: HealthInfo
+}
+
+type HealthInfo {
+  id: String!
+  nodeId: String!
+  timestamp: String!
+  system: [HealthSystemInfo!]!
+  capps: [HealthCappInfo!]!
+}
+
+type HealthSystemInfo {
+  id: String!
+  healthId: String!
+  name: String!
+  value: String!
+}
+
+type HealthCappInfo {
+  id: String!
+  space: String!
+  name: String!
+  tag: String!
+  status: String!
+  resources: [HealthResourceInfo!]!
+}
+
+type HealthResourceInfo {
+  id: String!
+  cappId: String!
+  name: String!
+  value: String!
+}
+
+type SoftwareSection {
+  error: SectionError
+  softwares: Softwares
+}
+
+type Softwares {
+  software: [Software!]!
+}
+
+type Software {
+  id: String!
+  releaseDate: String!
+  nodeId: String!
+  status: SoftwareStatusEnum!
+  changeLog: [String!]!
+  currentVersion: String!
+  desiredVersion: String!
+  name: String!
+  space: String!
+  notes: String!
+  metricsKeys: [String!]!
+  createdAt: String!
+  updatedAt: String!
+}
+
+"""Software status enums"""
+enum SoftwareStatusEnum {
+  unknown
+  up_to_date
+  update_available
+  update_in_progress
+  update_failed
+}
+
+type NodeStateSection {
+  error: SectionError
+  stateHistory: NodeStateRes
+}
+
+type NodeStateRes {
+  id: String!
+  nodeId: String!
+  previousStateId: String
+  previousState: NodeStateEnum
+  currentState: NodeStateEnum!
+  createdAt: String!
+}
+
+"""Node state enums"""
+enum NodeStateEnum {
+  Unknown
+  Configured
+  Operational
+  Faulty
+}
+
+type SimPoolView {
+  simType: String!
+  stats: SimPoolStatsSection!
+  sims(limit: Int! = 20): PoolSimsSection!
+}
+
+type PoolSimsSection {
+  error: SectionError
+  sims: [SimPoolResDto!]
+}
+
+type SimPoolResDto {
+  id: String!
+  qrCode: String!
+  iccid: String!
+  msisdn: String!
+  isAllocated: Boolean!
+  isFailed: Boolean!
+  simType: String!
+  smApAddress: String!
+  activationCode: String!
+  createdAt: String!
+  deletedAt: String!
+  updatedAt: String!
+  isPhysical: Boolean!
+}
+
+type SitesView {
+  networkId: String!
+  sites: SitesSection!
+  nodeCounts: SiteNodeCountsSection!
+  kpis: GapSection!
+  financials: GapSection!
+}
+
+type SiteNodeCountsSection {
+  error: SectionError
+  counts: [SiteNodeCountDto!]
+}
+
+type SiteNodeCountDto {
+  siteId: String!
+  total: Int!
+  online: Int!
+  offline: Int!
+}
+
+type SiteView {
+  siteId: String!
+  site: SiteSection!
+  nodes: NodesSection!
+  components: SiteComponentsSection!
+  power: KpisSection!
+  kpis: KpisSection!
+  financials: GapSection!
+}
+
+type SiteSection {
+  error: SectionError
+  site: SiteDto
+}
+
+type SiteComponentsSection {
+  error: SectionError
+  components: [SiteComponentDto!]
+}
+
+type SiteComponentDto {
+  elementType: String!
+  componentId: String
+  componentName: String
+}
+
+type SubscriberView {
+  subscriberId: String!
+  subscriber: SubscriberSection!
+  plans: SubscriberPlansSection!
+  billing: SubscriberBillingSection!
+  usage: GapSection!
+}
+
+type SubscriberSection {
+  error: SectionError
+  subscriber: SubscriberDto
+}
+
+type SubscriberDto {
+  uuid: String!
+  address: String!
+  dob: String!
+  email: String!
+  name: String!
+  gender: String!
+  idSerial: String!
+  networkId: String!
+  phone: String!
+  proofOfIdentification: String!
+  sim: [SubscriberSimDto!]
+}
+
+type SubscriberSimDto {
+  id: String!
+  subscriberId: String!
+  networkId: String!
+  iccid: String!
+  msisdn: String!
+  imsi: String!
+  type: String!
+  status: String!
+  allocatedAt: String!
+  sync_status: String
+  isPhysical: Boolean
+  package: SimPackageDto
+}
+
+type SimPackageDto {
+  id: String!
+  package_id: String!
+  start_date: String!
+  end_date: String!
+  is_active: Boolean!
+  created_at: String!
+  updated_at: String!
+}
+
+type SubscriberPlansSection {
+  error: SectionError
+  plans: [PlanNameDto!]
+}
+
+type PlanNameDto {
+  packageId: String!
+  name: String!
+}
+
+type SubscriberBillingSection {
+  error: SectionError
+  payments: [PaymentDto!]
+}
+
+type PaymentDto {
+  id: String!
+  itemId: String!
+  itemType: String!
+  amount: String!
+  currency: String!
+  paymentMethod: String!
+  depositedAmount: String!
+  paidAt: String!
+  payerName: String!
+  payerEmail: String!
+  payerPhone: String!
+  correspondent: String!
+  country: String!
+  description: String!
+  status: String!
+  extra: String!
+  failureReason: String!
+  createdAt: String!
+}
+
+type SubscribersView {
+  networkId: String!
+  subscribers: SubscribersSection!
+  plans: PlansSection!
+  usage: GapSection!
+}
+
+type SubscribersSection {
+  error: SectionError
+  subscribers: [SubscriberDto!]
+}
+
+type PlansSection {
+  error: SectionError
+  plans: [PlanNameDto!]
+}
+
+input GetHealthReportInputDto {
+  id: String!
+  timestamp: String!
+  timeframe: TIMEFRAME_FILTER!
+  nodeId: String!
+}
+
+enum TIMEFRAME_FILTER {
+  UNKNOWN
+  ALL
+  LATEST
+}
+
+type CountriesRes {
+  countries: [CountryDto!]!
+}
+
+type CountryDto {
+  name: String!
+  code: String!
+}
+
+type CurrencyRes {
+  code: String!
+  symbol: String!
+  image: String!
+}
+
+type TimezoneRes {
+  timezones: [TimezoneDto!]!
+}
+
+type TimezoneDto {
+  value: String!
+  abbr: String!
+  offset: Float!
+  isdst: Boolean!
+  text: String!
+  utc: [String!]!
+}
+
+type InvitationDto {
+  email: String!
+  expireAt: String!
+  id: String!
+  name: String!
+  role: String!
+  link: String!
+  userId: String!
+  status: INVITATION_STATUS!
+}
+
+enum INVITATION_STATUS {
+  INVITE_PENDING
+  INVITE_ACCEPTED
+  INVITE_DECLINED
+}
+
+type InvitationsResDto {
+  invitations: [InvitationDto!]!
+}
+
+type MemberDto {
+  userId: String!
+  name: String!
+  email: String!
+  memberId: String!
+  isDeactivated: Boolean!
+  role: String!
+  memberSince: String
+}
+
+type MembersResDto {
+  members: [MemberDto!]!
+}
+
+type NetworkStats {
+  activeSubscriber: Float!
+  averageSignalStrength: Float!
+  averageThroughput: Float!
+}
+
+type NodeLatestMetric {
+  success: Boolean!
+  msg: String!
+  orgId: String!
+  nodeId: String!
+  type: String!
+  value: [Float!]!
+}
+
+input GetNodeLatestMetricInput {
+  nodeId: String!
+  type: String!
+}
+
+type NetworksResDto {
+  networks: [NetworkDto!]!
+}
+
+type AppChangeLogs {
+  logs: [AppChangeLog!]!
+  type: NodeTypeEnum!
+}
+
+type AppChangeLog {
+  version: String!
+  date: Float!
+}
+
+input NodeAppsChangeLogInput {
+  type: NodeTypeEnum!
+}
+
+input NodeInput {
+  id: String!
+}
+
+type NodeApps {
+  apps: [NodeApp!]!
+  type: NodeTypeEnum!
+}
+
+type NodeApp {
+  name: String!
+  date: Float!
+  version: String!
+  cpu: String!
+  memory: String!
+  notes: String!
+}
+
+type Nodes {
+  nodes: [Node!]!
+}
+
+input NodesFilterInput {
+  id: String
+  siteId: String
+  networkId: String
+  type: String
+  state: String
+  connectivity: String
+}
+
+input GetNodesByStateInput {
+  connectivity: NodeConnectivityEnum!
+  state: NodeStateEnum!
+}
+
+"""Node connectivity enums"""
+enum NodeConnectivityEnum {
+  Unknown
+  Offline
+  Online
+}
+
+type NotificationResDto {
+  id: String!
+  title: String!
+  description: String!
+  type: NOTIFICATION_TYPE!
+  scope: NOTIFICATION_SCOPE!
+  orgId: String!
+  userId: String!
+  subscriberId: String!
+  networkId: String!
+  createdAt: String!
+  resourceId: String!
+}
+
+type NotificationsResDto {
+  notifications: [NotificationsDto!]!
+}
+
+type OrgDto {
+  id: String!
+  name: String!
+  owner: String!
+  country: String!
+  currency: String!
+  certificate: String!
+  isDeactivated: Boolean!
+  createdAt: String!
+}
+
+type OrgTreeRes {
+  org: Org!
+}
+
+type Org {
+  orgId: String!
+  orgName: String!
+  country: String!
+  currency: String!
+  ownerName: String!
+  ownerEmail: String!
+  ownerId: String!
+  elementType: String!
+  networks: [Network!]!
+  dataplans: [DataPlan!]!
+  sims: Sims
+  members: Members
+}
+
+type Network {
+  networkId: String!
+  networkName: String!
+  elementType: String!
+  sites: [Site!]!
+  subscribers: Subscribers
+}
+
+type Site {
+  siteId: String!
+  siteName: String!
+  elementType: String!
+  components: [Component!]!
+}
+
+type Component {
+  componentId: String
+  componentName: String
+  elementType: String!
+}
+
+type Subscribers {
+  totalSubscribers: String!
+  activeSubscribers: String!
+  inactiveSubscribers: String!
+}
+
+type DataPlan {
+  planId: String!
+  planName: String!
+  elementType: String!
+}
+
+type Sims {
+  availableSims: String!
+  consumed: String!
+  totalSims: String!
+}
+
+type Members {
+  totalMembers: String!
+  activeMembers: String!
+  inactiveMembers: String!
+}
+
+type OrgsResDto {
+  user: String!
+  ownerOf: [OrgDto!]!
+  memberOf: [OrgDto!]!
+}
+
+type PackageDto {
+  uuid: String!
+  name: String!
+  active: Boolean!
+  duration: Float!
+  simType: String!
+  createdAt: String!
+  deletedAt: String!
+  updatedAt: String!
+  smsVolume: Float!
+  dataVolume: Float!
+  voiceVolume: Float!
+  ulbr: String!
+  dlbr: String!
+  type: String!
+  dataUnit: String!
+  voiceUnit: String!
+  messageUnit: String!
+  flatrate: Boolean!
+  currency: String!
+  from: String!
+  to: String!
+  country: String!
+  provider: String!
+  apn: String!
+  ownerId: String!
+  amount: Float!
+  rate: PackageRateAPIDto!
+  markup: PackageMarkupAPIDto!
+}
+
+type PackageRateAPIDto {
+  sms_mo: String!
+  sms_mt: Float!
+  data: Float!
+  amount: Float!
+}
+
+type PackageMarkupAPIDto {
+  baserate: String!
+  markup: Float!
+}
+
+type PackagesResDto {
+  packages: [PackageDto!]!
+}
+
+type PaymentsDto {
+  payments: [PaymentDto!]!
+}
+
+input GetPaymentsInputDto {
+  type: String
+  paymentMethod: String
+  status: String
+}
+
+type TokenResDto {
+  token: String!
+}
+
+type DefaultMarkupResDto {
+  markup: Float!
+}
+
+type DefaultMarkupHistoryResDto {
+  markupRates: [DefaultMarkupHistoryDto!]
+}
+
+type DefaultMarkupHistoryDto {
+  createdAt: String!
+  deletedAt: String!
+  Markup: Float!
+}
+
+type GetPdfReportUrlDto {
+  id: String!
+  filename: String!
+  contentType: String!
+  downloadUrl: String!
+}
+
+type SimDataUsage {
+  usage: String!
+  simId: String!
+}
+
+input SimUsageInputDto {
+  iccid: String!
+  simId: String!
+  type: String!
+}
+
+type SimDataUsages {
+  usages: [SimDataUsage!]!
+}
+
+input SimUsagesInputDto {
+  networkId: String!
+  type: String!
+}
+
+type GetSimPackagesDtoAPI {
+  sim_id: String!
+  packages: [SimToPackagesDto!]!
+}
+
+type SimToPackagesDto {
+  id: String!
+  package_id: String!
+  start_date: String!
+  end_date: String!
+  is_active: Boolean!
+}
+
+input GetPackagesForSimInputDto {
+  sim_id: String!
+}
+
+type SimDto {
+  id: String!
+  subscriberId: String!
+  networkId: String!
+  package: SimPackage
+  iccid: String!
+  msisdn: String!
+  imsi: String!
+  type: String!
+  status: String!
+  isPhysical: Boolean!
+  trafficPolicy: Float!
+  firstActivatedOn: String!
+  lastActivatedOn: String!
+  activationsCount: String!
+  deactivationsCount: String!
+  allocatedAt: String!
+  syncStatus: String!
+}
+
+type SimPackage {
+  id: String!
+  packageId: String!
+  startDate: String!
+  endDate: String!
+  defaultDuration: String!
+  isActive: Boolean!
+  asExpired: Boolean!
+}
+
+input GetSimInputDto {
+  simId: String!
+}
+
+type SimPoolStatsDto {
+  total: Float!
+  available: Float!
+  consumed: Float!
+  failed: Float!
+  esim: Float!
+  physical: Float!
+}
+
+input GetSimsInput {
+  type: SIM_TYPES!
+  status: SIM_STATUS!
+}
+
+enum SIM_TYPES {
+  unknown
+  test
+  operator_data
+  ukama_data
+}
+
+enum SIM_STATUS {
+  ALL
+  ASSIGNED
+  UNASSIGNED
+}
+
+type SimsResDto {
+  sims: [SimDto!]!
+}
+
+input ListSimsInput {
+  status: String!
+  networkId: String!
+}
+
+type SubscriberToSimsDto {
+  subscriberId: String!
+  sims: [SubscriberSimsDto!]!
+}
+
+type SubscriberSimsDto {
+  id: String!
+  subscriberId: String!
+  networkId: String!
+  syncStatus: String!
+  iccid: String!
+  msisdn: String!
+  imsi: String!
+  type: String!
+  status: String!
+  isPhysical: Boolean!
+  trafficPolicy: Float!
+  allocatedAt: String!
+}
+
+input GetSimBySubscriberInputDto {
+  subscriberId: String!
+}
+
+type SimsPoolResDto {
+  sims: [SimPoolResDto!]!
+}
+
+type SitesResDto {
+  sites: [SiteDto!]!
+}
+
+input SitesInputDto {
+  networkId: String
+}
+
+type Apps {
+  apps: [App!]!
+}
+
+type App {
+  name: String!
+  space: String!
+  notes: String!
+  metricsKeys: [String!]!
+}
+
+input GetSoftwaresInput {
+  name: String!
+  nodeId: String!
+  status: SoftwareStatusEnum!
+}
+
+type SubscriberSimsResDto {
+  sims: [SubscriberSimDto!]!
+}
+
+type SubscriberMetricsByNetworkDto {
+  total: Float!
+  active: Float!
+  inactive: Float!
+  terminated: Float!
+}
+
+type SubscribersResDto {
+  subscribers: [SubscriberDto!]!
+}
+
+type UserResDto {
+  name: String!
+  email: String!
+  uuid: String!
+  phone: String!
+  isDeactivated: Boolean!
+  authId: String!
+  registeredSince: String!
+}
+
+type WhoamiDto {
+  user: UserResDto!
+  ownerOf: [OrgDto!]!
+  memberOf: [OrgDto!]!
+}
+
+type Mutation {
+  restartNode(data: RestartNodeInputDto!): CBooleanResponse!
+  restartNodes(data: RestartNodesInputDto!): CBooleanResponse!
+  restartSite(data: RestartSiteInputDto!): CBooleanResponse!
+  toggleInternetSwitch(data: ToggleInternetSwitchInputDto!): CBooleanResponse!
+  toggleRFStatus(data: ToggleRFStatusInputDto!): CBooleanResponse!
+  toggleService(data: ToggleRFStatusInputDto!): CBooleanResponse!
+  createInvitation(data: CreateInvitationInputDto!): InvitationDto!
+  deleteInvitation(id: String!): DeleteInvitationResDto!
+  updateInvitation(data: UpdateInvitationInputDto!): UpdateInvitationResDto!
+  addMember(data: AddMemberInputDto!): MemberDto!
+  removeMember(id: String!): CBooleanResponse!
+  updateMember(data: UpdateMemberInputDto!, memberId: String!): CBooleanResponse!
+  addNetwork(data: AddNetworkInputDto!): NetworkDto!
+  setDefaultNetwork(data: SetDefaultNetworkInputDto!): CBooleanResponse!
+  addNode(data: AddNodeInput!): Node!
+  addNodeToSite(data: AddNodeToSiteInput!): CBooleanResponse!
+  attachNode(data: AttachNodeInput!): CBooleanResponse!
+  deleteNodeFromOrg(data: NodeInput!): DeleteNode!
+  detachhNode(data: NodeInput!): CBooleanResponse!
+  releaseNodeFromSite(data: NodeInput!): CBooleanResponse!
+  updateNode(data: UpdateNodeInput!): Node!
+  updateNodeState(data: UpdateNodeStateInput!): Node!
+  updateNotification(isRead: Boolean!, id: String!): UpdateNotificationResDto!
+  addPackage(data: AddPackageInputDto!): PackageDto!
+  deletePackage(packageId: String!): IdResponse!
+  updatePackage(data: UpdatePackageInputDto!, packageId: String!): PackageDto!
+  processPayment(data: ProcessPaymentInputDto!): ProcessPaymentDto!
+  updatePayment(data: UpdatePaymentInputDto!): PaymentDto!
+  defaultMarkup(data: DefaultMarkupInputDto!): CBooleanResponse!
+  addPackagesToSim(data: AddPackagesToSimInputDto!): AddPackagesSimResDto!
+  allocateSim(data: AllocateSimInputDto!): AllocateSimAPIDto!
+  deleteSim(data: DeleteSimInputDto!): DeleteSimResDto!
+  removePackageForSim(data: RemovePackageFormSimInputDto!): RemovePackageFromSimResDto!
+  toggleSimStatus(data: ToggleSimStatusInputDto!): SimStatusResDto!
+  uploadSims(data: UploadSimsInputDto!): UploadSimsResDto!
+  addSite(data: AddSiteInputDto!): SiteDto!
+  updateSite(data: UpdateSiteInputDto!, siteId: String!): SiteDto!
+  updateSoftware(data: UpdateSoftwareInputDto!): StringResponse!
+  addSubscriber(data: SubscriberInputDto!): SubscriberDto!
+  deleteSubscriber(subscriberId: String!): CBooleanResponse!
+  updateSubscriber(data: UpdateSubscriberInputDto!, subscriberId: String!): CBooleanResponse!
+  updateFirstVisit(data: UserFirstVisitInputDto!): UserFirstVisitResDto!
+}
+
+type CBooleanResponse {
+  success: Boolean!
+}
+
+input RestartNodeInputDto {
+  nodeId: String!
+}
+
+input RestartNodesInputDto {
+  networkId: String!
+  nodeIds: [String!]!
+}
+
+input RestartSiteInputDto {
+  siteId: String!
+  networkId: String!
+}
+
+input ToggleInternetSwitchInputDto {
+  siteId: String!
+  port: Float!
+  status: Boolean!
+}
+
+input ToggleRFStatusInputDto {
+  nodeId: String!
+  status: Boolean!
+}
+
+input CreateInvitationInputDto {
+  name: String!
+  email: String!
+  role: ROLE_TYPE!
+}
+
+enum ROLE_TYPE {
+  ROLE_INVALID
+  ROLE_OWNER
+  ROLE_ADMIN
+  ROLE_NETWORK_OWNER
+  ROLE_VENDOR
+  ROLE_USER
+}
+
+type DeleteInvitationResDto {
+  id: String!
+}
+
+type UpdateInvitationResDto {
+  id: String!
+}
+
+input UpdateInvitationInputDto {
+  id: String!
+  email: String!
+  status: INVITATION_STATUS!
+}
+
+input AddMemberInputDto {
+  userId: String!
+  role: String!
+}
+
+input UpdateMemberInputDto {
+  isDeactivated: Boolean!
+  role: String!
+}
+
+input AddNetworkInputDto {
+  name: String!
+  isDefault: Boolean! = false
+  budget: Float
+  countries: [String!]
+  networks: [String!]
+}
+
+input SetDefaultNetworkInputDto {
+  id: String!
+}
+
+input AddNodeInput {
+  name: String!
+  id: String!
+}
+
+input AddNodeToSiteInput {
+  nodeId: String!
+  networkId: String!
+  siteId: String!
+}
+
+input AttachNodeInput {
+  anodel: String!
+  anoder: String!
+  parentNode: String!
+}
+
+type DeleteNode {
+  id: String!
+}
+
+input UpdateNodeInput {
+  id: String!
+  name: String!
+}
+
+input UpdateNodeStateInput {
+  id: String!
+  state: NodeStateEnum!
+}
+
+type UpdateNotificationResDto {
+  id: String!
+}
+
+input AddPackageInputDto {
+  name: String!
+  duration: Int!
+  dataUnit: String!
+  amount: Float!
+  dataVolume: Int!
+  country: String!
+  currency: String!
+}
+
+type IdResponse {
+  uuid: String!
+}
+
+input UpdatePackageInputDto {
+  name: String!
+  active: Boolean!
+}
+
+type ProcessPaymentDto {
+  payment: PaymentDto!
+}
+
+input ProcessPaymentInputDto {
+  id: String!
+  correspondent: String
+  token: String!
+}
+
+input UpdatePaymentInputDto {
+  id: String!
+  country: String
+  currency: String
+  payerEmail: String
+  payerName: String
+  paymentMethod: String
+}
+
+input DefaultMarkupInputDto {
+  markup: Float!
+}
+
+type AddPackagesSimResDto {
+  packages: [AddPackagSimResDto!]!
+}
+
+type AddPackagSimResDto {
+  packageId: String
+  success: Boolean
+  error: String
+}
+
+input AddPackagesToSimInputDto {
+  sim_id: String!
+  packages: [PackagesToSimInputDto!]!
+}
+
+input PackagesToSimInputDto {
+  package_id: String!
+  start_date: String!
+}
+
+type AllocateSimAPIDto {
+  id: String!
+  subscriber_id: String!
+  network_id: String!
+  package: SimAllocatePackageDto!
+  iccid: String!
+  msisdn: String!
+  imsi: String
+  type: String!
+  status: String!
+  is_physical: Boolean!
+  traffic_policy: Float!
+  allocated_at: String!
+  sync_status: String!
+}
+
+type SimAllocatePackageDto {
+  id: String
+  packageId: String
+  startDate: String
+  endDate: String
+  isActive: Boolean
+}
+
+input AllocateSimInputDto {
+  network_id: String!
+  package_id: String!
+  iccid: String
+  sim_type: String!
+  subscriber_id: String!
+  traffic_policy: Float!
+}
+
+type DeleteSimResDto {
+  simId: String
+}
+
+input DeleteSimInputDto {
+  simId: String!
+}
+
+type RemovePackageFromSimResDto {
+  packageId: String
+}
+
+input RemovePackageFormSimInputDto {
+  simId: String!
+  packageId: String!
+}
+
+type SimStatusResDto {
+  simId: String
+}
+
+input ToggleSimStatusInputDto {
+  sim_id: String!
+  status: String!
+}
+
+type UploadSimsResDto {
+  iccid: [String!]!
+}
+
+input UploadSimsInputDto {
+  data: String!
+  simType: SIM_TYPES!
+}
+
+input AddSiteInputDto {
+  name: String!
+  network_id: String!
+  backhaul_id: String!
+  power_id: String!
+  access_id: String!
+  spectrum_id: String!
+  switch_id: String!
+  latitude: String!
+  longitude: String!
+  install_date: String!
+  location: String!
+}
+
+input UpdateSiteInputDto {
+  name: String!
+}
+
+type StringResponse {
+  message: String!
+}
+
+input UpdateSoftwareInputDto {
+  name: String!
+  nodeId: String!
+  tag: String!
+}
+
+input SubscriberInputDto {
+  email: String!
+  name: String!
+  network_id: String!
+  phone: String
+}
+
+input UpdateSubscriberInputDto {
+  address: String
+  email: String
+  id_serial: String
+  name: String
+  phone: String
+  proof_of_identification: String
+}
+
+type UserFirstVisitResDto {
+  firstVisit: Boolean!
+}
+
+input UserFirstVisitInputDto {
+  userId: String!
+  name: String!
+  email: String!
+  firstVisit: Boolean!
+}

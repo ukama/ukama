@@ -7,8 +7,9 @@
  */
 'use client';
 
-/** Node pool — hardware in inventory, ready to install (screens-manage.jsx). */
-import { useState } from 'react';
+/** Node pool — hardware inventory, wired to the `nodesView` composite
+ *  (NodePool operation: nodes without a site are available to install). */
+import { useMemo, useState } from 'react';
 import Divider from '@mui/material/Divider';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -22,15 +23,16 @@ import AddLocationAltRounded from '@mui/icons-material/AddLocationAltRounded';
 import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded';
 import InfoRounded from '@mui/icons-material/InfoRounded';
 import MoreVertRounded from '@mui/icons-material/MoreVertRounded';
+import { useNodePoolQuery } from '@/client/graphql/nodes-list.generated';
+import { EmptyState } from '@/components/EmptyState';
 import SkeletonTable from '@/components/data-table/SkeletonTable';
 import TableFooter from '@/components/data-table/TableFooter';
 import { KpiRow } from '@/components/Kpi';
 import PageHeader from '@/components/PageHeader';
 import StatusBadge from '@/components/StatusBadge';
 import { useToast } from '@/components/ToastProvider';
-import { NODE_POOL, NODES } from '@/data';
 import type { NodePoolItem } from '@/data';
-import { useFirstLoad } from '@/lib/useFirstLoad';
+import { toUkamaNode } from '@/lib/mappers/nodes';
 
 const NP_LABEL: Record<NodePoolItem['status'], string> = {
   available: 'Available',
@@ -90,15 +92,36 @@ function PoolMenu({ item }: { item: NodePoolItem }) {
 }
 
 export default function NodePoolScreen() {
-  const avail = NODE_POOL.filter((n) => n.status === 'available').length;
-  const loading = useFirstLoad('nodepool');
+  const { data, loading, refetch } = useNodePoolQuery();
+  const nodesSection = data?.nodesView.nodes;
+
+  // Pool view-model: a node without a site is available to install.
+  const pool: NodePoolItem[] = useMemo(
+    () =>
+      (nodesSection?.nodes ?? []).map((n) => {
+        const mapped = toUkamaNode(n);
+        const assigned = !!n.site?.siteId;
+        return {
+          id: n.id,
+          serial: mapped.serial,
+          type: mapped.type,
+          status: assigned ? ('assigned' as const) : ('available' as const),
+          site: n.site?.siteId ?? undefined,
+          added: '—',
+        };
+      }),
+    [nodesSection?.nodes]
+  );
+
+  const avail = pool.filter((n) => n.status === 'available').length;
+  const deployed = pool.length - avail;
 
   return (
     <div className="page">
       <PageHeader
         crumb={['Manage', 'Node pool']}
         title="Node pool"
-        count={NODE_POOL.length}
+        count={pool.length}
         sub="Hardware in inventory, ready to install at a site."
       />
       <KpiRow
@@ -109,14 +132,24 @@ export default function NodePoolScreen() {
             value: avail,
             color: 'var(--uk-success-bright)',
           },
-          { icon: 'cell_tower', label: 'Deployed (live)', value: NODES.length, color: 'var(--uk-ac)' },
-          { icon: 'account_tree', label: 'In inventory', value: NODE_POOL.length },
+          { icon: 'cell_tower', label: 'Deployed (live)', value: deployed, color: 'var(--uk-ac)' },
+          { icon: 'account_tree', label: 'In inventory', value: pool.length },
         ]}
       />
       <div className="card card-pad">
         <div className="tbl-wrap">
           {loading ? (
             <SkeletonTable cols={6} rows={5} />
+          ) : nodesSection?.error ? (
+            <EmptyState
+              art="error"
+              title="Couldn't load node pool"
+              sub={nodesSection.error.message}
+              cta="Try again"
+              onCta={() => refetch()}
+            />
+          ) : pool.length === 0 ? (
+            <EmptyState art="node" title="No nodes in inventory" sub="Registered nodes appear here." />
           ) : (
             <Table>
               <TableHead>
@@ -130,7 +163,7 @@ export default function NodePoolScreen() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {NODE_POOL.map((n) => (
+                {pool.map((n) => (
                   <TableRow key={n.id}>
                     <TableCell className="tnum" style={{ fontWeight: 600 }}>
                       {n.serial}
@@ -150,7 +183,7 @@ export default function NodePoolScreen() {
             </Table>
           )}
         </div>
-        {!loading && <TableFooter count={NODE_POOL.length} noun="nodes" />}
+        {!loading && !nodesSection?.error && <TableFooter count={pool.length} noun="nodes" />}
       </div>
     </div>
   );

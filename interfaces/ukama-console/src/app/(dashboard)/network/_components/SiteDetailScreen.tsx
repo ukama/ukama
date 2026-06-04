@@ -20,15 +20,21 @@ import Button from '@mui/material/Button';
 import ArrowBackRounded from '@mui/icons-material/ArrowBackRounded';
 import GroupRounded from '@mui/icons-material/GroupRounded';
 import RestartAltRounded from '@mui/icons-material/RestartAltRounded';
+import Skeleton from '@mui/material/Skeleton';
+
+import { useNetworkSiteDetailQuery } from '@/client/graphql/site-detail.generated';
 import AppModal from '@/components/AppModal';
 import { ComboChart, MiniSpark } from '@/components/charts';
 import DetailPicker from '@/components/DetailPicker';
+import { EmptyState } from '@/components/EmptyState';
 import MapPanel from '@/components/Map/MapPanel';
 import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
 import StatusBadge from '@/components/StatusBadge';
 import { useToast } from '@/components/ToastProvider';
-import { NODES, SITES } from '@/data';
+import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
+import { toUkamaNode } from '@/lib/mappers/nodes';
+import { toSite } from '@/lib/mappers/sites';
 import { series } from '@/lib/series';
 import { Ic } from '../../_components/icons';
 
@@ -160,20 +166,58 @@ function PortRow({
 export default function SiteDetailScreen({ siteId }: { siteId: string }) {
   const router = useRouter();
   const toast = useToast();
-  const s = SITES.find((x) => x.id === siteId) ?? SITES[0];
   const [restart, setRestart] = useState(false);
   const [confirm, setConfirm] = useState('');
   const [selComp, setSelComp] = useState('switch');
   const [ports, setPorts] = useState<Record<number, boolean>>({ 1: true, 2: false, 3: false });
-  if (!s) return null;
 
-  const node = NODES.find((nn) => nn.site === s.name);
+  const { data, loading, refetch } = useNetworkSiteDetailQuery({
+    variables: { siteId },
+    ...visiblePoll(POLL_LIVE_MS),
+  });
+  const view = data?.siteView;
+  const siteSection = view?.site;
+  const nodesSection = view?.nodes;
+
+  if (loading) {
+    return (
+      <div className="page">
+        <PageHeader crumb={['Sites', siteId]} title="Site" />
+        <Skeleton variant="rounded" sx={{ height: 42, mb: 2 }} />
+        <Skeleton variant="rounded" sx={{ height: 420 }} />
+      </div>
+    );
+  }
+  if (!siteSection?.site) {
+    return (
+      <div className="page">
+        <PageHeader crumb={['Sites', siteId]} title="Site" />
+        <div className="card">
+          <EmptyState
+            art="error"
+            title="Couldn't load site"
+            sub={siteSection?.error?.message ?? 'Site not found.'}
+            cta="Try again"
+            onCta={() => refetch()}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  const siteNodes = (nodesSection?.nodes ?? []).map((n) => toUkamaNode(n));
+  const s = toSite(siteSection.site, {
+    total: siteNodes.length,
+    online: siteNodes.filter((n) => n.status === 'online').length,
+  });
+  const node = siteNodes[0];
+  const installDate = siteSection.site.installDate || '—';
   const statusText =
     s.status === 'offline'
-      ? 'has been offline for 2h 14m'
+      ? 'is offline'
       : s.status === 'degraded'
         ? 'is online with warnings'
-        : 'is online for 3 days';
+        : 'is online';
 
   return (
     <div className="page">
@@ -206,7 +250,7 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
       <div className="detail-subrow">
         <DetailPicker
           value={{ id: s.id, label: s.name, status: s.status }}
-          items={SITES.map((x) => ({ id: x.id, label: x.name, status: x.status }))}
+          items={[{ id: s.id, label: s.name, status: s.status }]}
           onPick={(it) => router.push(`/network/sites/${it.id}`)}
         />
         <StatusBadge status={s.status} />
@@ -218,9 +262,9 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
           <div style={{ display: 'grid', gap: 13, marginTop: 2 }}>
             {(
               [
-                ['Date created', '13 Jul 2023'],
+                ['Installed', installDate],
                 ['Location', s.area],
-                ['Power plan', s.plan],
+                ['Nodes', `${siteNodes.length}`],
                 ['Node', node ? node.serial : '—'],
               ] as const
             ).map(([k, v]) => (
@@ -266,7 +310,8 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
             }}
           >
             <GroupRounded sx={{ fontSize: 16, color: 'var(--uk-ac)' }} />
-            {s.subs}
+            {/* per-site subscriber count: metrics-phase (siteView.kpis gap) */}
+            —
           </div>
         </div>
       </div>

@@ -19,6 +19,7 @@ import * as tq from "type-graphql";
 import billingResolvers from "../billing/resolvers";
 import componentResolvers from "../component/resolvers";
 import controllerResolvers from "../controller/resolvers";
+import dashboardResolvers from "../dashboard/resolvers";
 import healthResolvers from "../health/resolvers";
 import initResolvers from "../init/resolver";
 import invitationResolvers from "../invitation/resolver";
@@ -42,6 +43,7 @@ import userResolvers from "../user/resolver";
 // inferring a combined literal type (a 21-array spread otherwise produces a
 // "union type too complex to represent" error under ts-node).
 const ALL_RESOLVERS: CallableFunction[] = [
+  ...dashboardResolvers,
   ...orgResolvers,
   ...userResolvers,
   ...networkResolvers,

@@ -173,9 +173,13 @@ export default function DataTable<T>({
   initialSorting?: SortingState;
   skeleton?: { cols?: number; rows?: number; lead?: boolean };
 }) {
+  'use no memo';
+
   const [sorting, setSorting] = useState<SortingState>(initialSorting ?? []);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
+  // TanStack Table uses interior mutability; opt this component out of React Compiler memoization.
+  // eslint-disable-next-line react-hooks/incompatible-library -- useReactTable is intentionally incompatible
   const table = useReactTable({
     data,
     columns,

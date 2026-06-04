@@ -1,0 +1,42 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026-present, Ukama Inc.
+
+# Shared fragments for the view-domain composite queries (plan §3).
+# Every section embeds `error` — UI branches on `code` (§4.5 contract):
+# data null + error set = failed; code NOT_IMPLEMENTED = backend gap ("—",
+# no retry); data null + error null = genuinely empty.
+
+fragment SectionErrorFields on SectionError {
+  section
+  code
+  message
+}
+
+fragment ViewNode on Node {
+  id
+  name
+  type
+  site {
+    siteId
+    networkId
+  }
+  status {
+    connectivity
+    state
+  }
+}
+
+fragment ViewSite on SiteDto {
+  id
+  name
+  networkId
+  latitude
+  longitude
+  location
+  isDeactivated
+  installDate
+  createdAt
+}
