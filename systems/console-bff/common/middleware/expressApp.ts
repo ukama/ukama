@@ -15,6 +15,7 @@ import express, { type Request } from "express";
 import expressWinston from "express-winston";
 
 import { runWithRequestId } from "../logger/requestContext";
+import { compression } from "./compression";
 import { REQUEST_ID_HEADER, requestId } from "./requestId";
 import { rateLimit, securityHeaders } from "./security";
 
@@ -32,6 +33,8 @@ function configureExpress(logger: any) {
   );
   app.use(securityHeaders());
   app.use(rateLimit());
+  // Gzip buffered JSON responses (GraphQL payloads) above the size threshold.
+  app.use(compression());
   app.use(
     expressWinston.logger({
       winstonInstance: logger,

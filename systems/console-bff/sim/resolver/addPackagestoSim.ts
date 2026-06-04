@@ -8,6 +8,7 @@
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
 import { logger } from "../../common/logger";
+import { mapWithConcurrencySettled } from "../../common/utils/concurrency";
 import { Context } from "../context";
 import {
   AddPackagSimResDto,
@@ -23,27 +24,37 @@ export class AddPackagesToSimResolver {
     @Ctx() ctx: Context
   ): Promise<AddPackagesSimResDto> {
     const { dataSources, baseURL } = ctx;
-    const pacakgesId: AddPackagSimResDto[] = [];
-    for (const packageInfo of data.packages) {
-      try {
-        await dataSources.sim.addPackageToSim(
+
+    // Parallel with bounded concurrency; report per-package outcome instead
+    // of failing the whole mutation on the first error.
+    const results = await mapWithConcurrencySettled(
+      data.packages,
+      packageInfo =>
+        dataSources.sim.addPackageToSim(
           baseURL,
           data.sim_id,
           packageInfo.package_id,
           packageInfo.start_date
-        );
-        pacakgesId.push({
-          packageId: packageInfo.package_id,
-        });
-      } catch (error) {
+        )
+    );
+
+    const packages: AddPackagSimResDto[] = results.map((result, i) => {
+      const packageId = data.packages[i].package_id;
+      if (result.status === "rejected") {
         logger.error(
-          `Error adding package to sim: ${packageInfo.package_id}: ${error}`
+          `Error adding package to sim: ${packageId}: ${result.reason}`
         );
-        throw new Error("Failed to add package to sim");
+        return {
+          packageId,
+          success: false,
+          error: "Failed to add package to sim",
+        };
       }
-    }
+      return { packageId, success: true };
+    });
+
     return {
-      packages: pacakgesId,
+      packages,
     };
   }
 }

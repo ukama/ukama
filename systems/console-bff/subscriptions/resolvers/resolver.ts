@@ -28,6 +28,7 @@ import {
   transformMetricsArray,
   wsUrlResolver,
 } from "../../common/utils";
+import { mapWithConcurrency } from "../../common/utils/concurrency";
 import {
   getNodeMetricRange,
   getNotifications,
@@ -493,17 +494,25 @@ class SubscriptionsResolvers {
         const sites = siteIds && siteIds.length > 0 ? siteIds : [""];
         const nodes = nodeIds && nodeIds.length > 0 ? nodeIds : [""];
 
+        // Fetch site/node combinations in parallel (bounded) instead of
+        // awaiting each combination sequentially.
+        const combos: { siteId: string; nodeId: string }[] = [];
         for (const siteId of sites) {
           for (const nodeId of nodes) {
-            const processedMetrics = await fetchMetricsForSiteNodeCombination(
-              baseURL,
-              metricsKey,
-              siteId,
-              nodeId,
-              data
-            );
-            metrics.metrics.push(...processedMetrics);
+            combos.push({ siteId, nodeId });
           }
+        }
+        const results = await mapWithConcurrency(combos, combo =>
+          fetchMetricsForSiteNodeCombination(
+            baseURL,
+            metricsKey,
+            combo.siteId,
+            combo.nodeId,
+            data
+          )
+        );
+        for (const processedMetrics of results) {
+          metrics.metrics.push(...processedMetrics);
         }
       }
 

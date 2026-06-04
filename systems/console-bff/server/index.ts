@@ -34,6 +34,7 @@ import { validateEnv } from "../common/configs/validateEnv";
 import { HTTP401Error, HTTP500Error, Messages } from "../common/errors";
 import { logger } from "../common/logger";
 import { configureExpress } from "../common/middleware/expressApp";
+import { persistedOperations } from "../common/middleware/persistedOperations";
 import { closeStore, openStore } from "../common/storage";
 import { THeaders } from "../common/types";
 import InitAPI from "../init/datasource/init_api";
@@ -122,6 +123,9 @@ const startServer = async () => {
       credentials: true,
     }),
     express.json({ limit: JSON_BODY_LIMIT }),
+    // Production allowlist: only operations shipped by the console are
+    // accepted when PERSISTED_OPS_ENFORCED=true (no-op otherwise).
+    persistedOperations({ allowIntrospection: INTROSPECTION_ENABLED }),
     expressMiddleware(server, {
       context: async ({ req }): Promise<AppContext> => {
         const requestId = (req.headers["x-request-id"] as string) ?? "";
