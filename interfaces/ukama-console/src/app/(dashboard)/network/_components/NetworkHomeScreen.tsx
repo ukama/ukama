@@ -25,6 +25,7 @@ import PageHeader from '@/components/PageHeader';
 import { sectionValue } from '@/components/SectionFallback';
 import StatusBadge from '@/components/StatusBadge';
 import type { Site } from '@/data';
+import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
 import { useUiPrefs } from '@/lib/store';
 
 export default function NetworkHomeScreen() {
@@ -35,8 +36,17 @@ export default function NetworkHomeScreen() {
   const { data, loading, refetch } = useNetworkHomeQuery({
     variables: { networkId },
     skip: !networkId,
+    ...visiblePoll(POLL_OVERVIEW_MS),
   });
   const overview = data?.networkOverview;
+  const kpiByKey = new Map(
+    (overview?.kpis.metrics ?? []).map((m) => [m.key, m])
+  );
+  const kpiValue = (key: string, unit = ''): string => {
+    const entry = kpiByKey.get(key);
+    if (!entry || !entry.success) return '—';
+    return `${Math.round(entry.value * 100) / 100}${unit}`;
+  };
 
   // Map SiteDto → the map's Site view-model. Per-site uptime/subscriber
   // figures are metrics-phase data (kpis backend gap) — placeholders until
@@ -79,10 +89,9 @@ export default function NetworkHomeScreen() {
             {
               icon: 'network_check',
               color: 'var(--uk-success-bright)',
-              // TODO(metrics-phase): networkOverview.kpis (backend gap #5)
               label: 'Network uptime',
-              value: sectionValue(null, kpisGap),
-              sub: 'last 30 days',
+              value: kpisGap ? '—' : kpiValue('network_uptime', '%'),
+              sub: 'latest reading',
             },
             {
               icon: 'group',
@@ -93,9 +102,8 @@ export default function NetworkHomeScreen() {
             {
               icon: 'donut_small',
               color: 'var(--uk-beige)',
-              // TODO(metrics-phase): networkOverview.kpis (backend gap #5)
               label: 'Data volume',
-              value: sectionValue(null, kpisGap),
+              value: kpisGap ? '—' : kpiValue('data_usage'),
               unit: 'GB',
             },
             {

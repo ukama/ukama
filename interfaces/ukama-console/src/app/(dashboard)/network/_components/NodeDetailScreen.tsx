@@ -37,6 +37,7 @@ import { sectionValue } from '@/components/SectionFallback';
 import StatusBadge from '@/components/StatusBadge';
 import { useToast } from '@/components/ToastProvider';
 import { toUkamaNode } from '@/lib/mappers/nodes';
+import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
 import { series } from '@/lib/series';
 
 const NODE_TEMP = series(46, 22, 0.18, 0.12);
@@ -150,12 +151,18 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
 
   const { data, loading, refetch } = useNodeDetailQuery({
     variables: { nodeId },
+    ...visiblePoll(POLL_LIVE_MS),
   });
   const view = data?.nodeView;
   const nodeSection = view?.node;
   const healthSection = view?.health;
   const softwareSection = view?.software;
   const kpisGap = view?.kpis.error ?? null;
+  const kpiByKey = new Map(
+    (view?.kpis.metrics ?? [])
+      .filter((m) => m.success)
+      .map((m) => [m.key, Math.round(m.value * 100) / 100])
+  );
 
   if (loading) {
     return (
@@ -234,19 +241,31 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
             <KV k="Site" v={n.site} />
           </SectionCard>
           <SectionCard title="Node health">
-            {healthSection?.error || healthRows.length === 0 ? (
+            {healthRows.length > 0 && !healthSection?.error ? (
+              healthRows.map((row) => <KV key={row.name} k={row.name} v={row.value} />)
+            ) : kpiByKey.size > 0 ? (
+              // Polled node KPIs from the metric service (Phase 4)
               <>
-                <KV k="Temp. (TRX)" v="—" />
-                <KV k="Temp. (COM)" v="—" />
-                <KV k="CPU load" v="—" />
-                <KV k="Memory" v="—" />
+                <KV k="Uptime" v={kpiByKey.has('uptime') ? `${kpiByKey.get('uptime')}` : '—'} />
+                <KV
+                  k="Temp. (CPU)"
+                  v={kpiByKey.has('cpu_temperature') ? `${kpiByKey.get('cpu_temperature')} °C` : '—'}
+                />
+                <KV
+                  k="Memory"
+                  v={kpiByKey.has('memory') ? `${kpiByKey.get('memory')}%` : '—'}
+                />
               </>
             ) : (
-              healthRows.map((row) => <KV key={row.name} k={row.name} v={row.value} />)
+              <>
+                <KV k="Uptime" v="—" />
+                <KV k="Temp. (CPU)" v="—" />
+                <KV k="Memory" v="—" />
+              </>
             )}
           </SectionCard>
           <SectionCard title="Customers">
-            {/* nodeView.kpis backend gap (#6) — attach counts land with metrics */}
+            {/* attach counts not in metric keys yet — renders "—" */}
             <KV k="Attached" v={sectionValue(null, kpisGap)} />
             <KV k="Active" v={sectionValue(null, kpisGap)} />
           </SectionCard>

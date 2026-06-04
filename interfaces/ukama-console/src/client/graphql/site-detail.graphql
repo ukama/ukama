@@ -40,10 +40,22 @@ query NetworkSiteDetail($siteId: String!) {
       error {
         ...SectionErrorFields
       }
+      metrics {
+        key
+        value
+        timestamp
+        success
+      }
     }
     kpis {
       error {
         ...SectionErrorFields
+      }
+      metrics {
+        key
+        value
+        timestamp
+        success
       }
     }
   }

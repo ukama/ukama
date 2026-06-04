@@ -38,6 +38,7 @@ import StatusBadge from '@/components/StatusBadge';
 import SkeletonTable from '@/components/data-table/SkeletonTable';
 import TableFooter from '@/components/data-table/TableFooter';
 import { useToast } from '@/components/ToastProvider';
+import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
 import UploadSimsDialog from './UploadSimsDialog';
 
 const SIM_TYPE = 'ukama_data';
@@ -92,6 +93,7 @@ export default function SimPoolScreen({ canAct }: { canAct: boolean }) {
 
   const { data, loading, refetch } = useSimPoolOverviewQuery({
     variables: { simType: SIM_TYPE, limit: LIST_LIMIT },
+    ...visiblePoll(POLL_OVERVIEW_MS),
   });
   const stats = data?.simPoolView.stats;
   const simsSection = data?.simPoolView.sims;

@@ -32,6 +32,7 @@ import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
 import StatusBadge from '@/components/StatusBadge';
 import { useToast } from '@/components/ToastProvider';
+import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
 import { toUkamaNode } from '@/lib/mappers/nodes';
 import { toSite } from '@/lib/mappers/sites';
 import { series } from '@/lib/series';
@@ -172,6 +173,7 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
 
   const { data, loading, refetch } = useNetworkSiteDetailQuery({
     variables: { siteId },
+    ...visiblePoll(POLL_LIVE_MS),
   });
   const view = data?.siteView;
   const siteSection = view?.site;

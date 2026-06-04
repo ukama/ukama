@@ -9,7 +9,7 @@ export type NodeDetailQueryVariables = Types.Exact<{
 }>;
 
 
-export type NodeDetailQuery = { __typename?: 'Query', nodeView: { __typename?: 'NodeView', nodeId: string, node: { __typename?: 'NodeSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, node?: { __typename?: 'Node', latitude: string, longitude: string, id: string, name: string, type: Types.NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string }>, site: { __typename?: 'NodeSite', siteId?: string | null, networkId?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } | null }, health: { __typename?: 'HealthSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, health?: { __typename?: 'HealthInfo', timestamp: string, system: Array<{ __typename?: 'HealthSystemInfo', name: string, value: string }> } | null }, software: { __typename?: 'SoftwareSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, softwares?: { __typename?: 'Softwares', software: Array<{ __typename?: 'Software', name: string, status: Types.SoftwareStatusEnum, currentVersion: string, desiredVersion: string, releaseDate: string }> } | null }, stateHistory: { __typename?: 'NodeStateSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, stateHistory?: { __typename?: 'NodeStateRes', currentState: Types.NodeStateEnum, previousState?: Types.NodeStateEnum | null, createdAt: string } | null }, kpis: { __typename?: 'GapSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null }, radioStatus: { __typename?: 'GapSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null } } };
+export type NodeDetailQuery = { __typename?: 'Query', nodeView: { __typename?: 'NodeView', nodeId: string, node: { __typename?: 'NodeSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, node?: { __typename?: 'Node', latitude: string, longitude: string, id: string, name: string, type: Types.NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string }>, site: { __typename?: 'NodeSite', siteId?: string | null, networkId?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } | null }, health: { __typename?: 'HealthSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, health?: { __typename?: 'HealthInfo', timestamp: string, system: Array<{ __typename?: 'HealthSystemInfo', name: string, value: string }> } | null }, software: { __typename?: 'SoftwareSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, softwares?: { __typename?: 'Softwares', software: Array<{ __typename?: 'Software', name: string, status: Types.SoftwareStatusEnum, currentVersion: string, desiredVersion: string, releaseDate: string }> } | null }, stateHistory: { __typename?: 'NodeStateSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, stateHistory?: { __typename?: 'NodeStateRes', currentState: Types.NodeStateEnum, previousState?: Types.NodeStateEnum | null, createdAt: string } | null }, kpis: { __typename?: 'KpisSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, metrics?: Array<{ __typename?: 'KpiEntryDto', key: string, value: number, timestamp: number, success: boolean }> | null }, radioStatus: { __typename?: 'GapSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null } } };
 
 
 export const NodeDetailDocument = gql`
@@ -69,6 +69,12 @@ export const NodeDetailDocument = gql`
     kpis {
       error {
         ...SectionErrorFields
+      }
+      metrics {
+        key
+        value
+        timestamp
+        success
       }
     }
     radioStatus {

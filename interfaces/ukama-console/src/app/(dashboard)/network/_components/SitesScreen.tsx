@@ -21,6 +21,7 @@ import PageHeader from '@/components/PageHeader';
 import SearchField from '@/components/SearchField';
 import StatusBadge from '@/components/StatusBadge';
 import type { Site, UkamaNode } from '@/data';
+import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
 import { useUiPrefs } from '@/lib/store';
 import { toSite } from '@/lib/mappers/sites';
 import NodeDrawer from './NodeDrawer';
@@ -112,6 +113,7 @@ export default function SitesScreen() {
   const { data, loading, refetch } = useSitesListQuery({
     variables: { networkId },
     skip: !networkId,
+    ...visiblePoll(POLL_OVERVIEW_MS),
   });
   const sitesSection = data?.sitesView.sites;
   const sites: Site[] = useMemo(() => {

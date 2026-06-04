@@ -9,7 +9,7 @@ export type NetworkSiteDetailQueryVariables = Types.Exact<{
 }>;
 
 
-export type NetworkSiteDetailQuery = { __typename?: 'Query', siteView: { __typename?: 'SiteView', siteId: string, site: { __typename?: 'SiteSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, site?: { __typename?: 'SiteDto', id: string, name: string, networkId: string, latitude: string, longitude: string, location: string, isDeactivated: boolean, installDate: string, createdAt: string } | null }, nodes: { __typename?: 'NodesSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, nodes?: Array<{ __typename?: 'Node', id: string, name: string, type: Types.NodeTypeEnum, site: { __typename?: 'NodeSite', siteId?: string | null, networkId?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> | null }, components: { __typename?: 'SiteComponentsSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, components?: Array<{ __typename?: 'SiteComponentDto', elementType: string, componentId?: string | null, componentName?: string | null }> | null }, power: { __typename?: 'GapSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null }, kpis: { __typename?: 'GapSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null } } };
+export type NetworkSiteDetailQuery = { __typename?: 'Query', siteView: { __typename?: 'SiteView', siteId: string, site: { __typename?: 'SiteSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, site?: { __typename?: 'SiteDto', id: string, name: string, networkId: string, latitude: string, longitude: string, location: string, isDeactivated: boolean, installDate: string, createdAt: string } | null }, nodes: { __typename?: 'NodesSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, nodes?: Array<{ __typename?: 'Node', id: string, name: string, type: Types.NodeTypeEnum, site: { __typename?: 'NodeSite', siteId?: string | null, networkId?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> | null }, components: { __typename?: 'SiteComponentsSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, components?: Array<{ __typename?: 'SiteComponentDto', elementType: string, componentId?: string | null, componentName?: string | null }> | null }, power: { __typename?: 'KpisSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, metrics?: Array<{ __typename?: 'KpiEntryDto', key: string, value: number, timestamp: number, success: boolean }> | null }, kpis: { __typename?: 'KpisSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, metrics?: Array<{ __typename?: 'KpiEntryDto', key: string, value: number, timestamp: number, success: boolean }> | null } } };
 
 
 export const NetworkSiteDetailDocument = gql`
@@ -46,10 +46,22 @@ export const NetworkSiteDetailDocument = gql`
       error {
         ...SectionErrorFields
       }
+      metrics {
+        key
+        value
+        timestamp
+        success
+      }
     }
     kpis {
       error {
         ...SectionErrorFields
+      }
+      metrics {
+        key
+        value
+        timestamp
+        success
       }
     }
   }

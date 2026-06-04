@@ -8,6 +8,7 @@ type Query {
   commerceView(networkId: String): CommerceView!
   inventoryView: InventoryView!
   membersView: MembersView!
+  metricsRange(data: MetricsRangeInput!): MetricsRes!
   networkOverview(networkId: String!): NetworkOverview!
   nodesView(networkId: String): NodesView!
   nodeView(nodeId: String!): NodeView!
@@ -361,6 +362,41 @@ type TeamMemberDto {
   inviteExpiresAt: String
 }
 
+type MetricsRes {
+  metrics: [MetricRes!]!
+}
+
+type MetricRes {
+  success: Boolean!
+  msg: String!
+  nodeId: String
+  networkId: String
+  packageId: String
+  dataPlanId: String
+  siteId: String
+  type: String!
+  values: [[Float!]!]!
+  unit: String
+  format: String
+  tickInterval: Float
+  tickPositions: [Float!]
+  threshold: MetricThreshold
+}
+
+type MetricThreshold {
+  min: Float!
+  normal: Float!
+  max: Float!
+}
+
+input MetricsRangeInput {
+  keys: [String!]!
+  from: Int!
+  to: Int
+  nodeId: String
+  operation: String
+}
+
 type NetworkOverview {
   networkId: String!
   network: NetworkSection!
@@ -368,7 +404,7 @@ type NetworkOverview {
   siteStats: SitesSection!
   subscriberStats: SubscriberStatsSection!
   latestAlerts(limit: Int! = 5): AlertsSection!
-  kpis: GapSection!
+  kpis: KpisSection!
 }
 
 type NetworkSection {
@@ -476,8 +512,16 @@ type NotificationRedirectDto {
   action: String!
 }
 
-type GapSection {
+type KpisSection {
   error: SectionError
+  metrics: [KpiEntryDto!]
+}
+
+type KpiEntryDto {
+  key: String!
+  value: Float!
+  timestamp: Float!
+  success: Boolean!
 }
 
 type NodesView {
@@ -486,13 +530,17 @@ type NodesView {
   health: GapSection!
 }
 
+type GapSection {
+  error: SectionError
+}
+
 type NodeView {
   nodeId: String!
   node: NodeSection!
   health: HealthSection!
   software: SoftwareSection!
   stateHistory: NodeStateSection!
-  kpis: GapSection!
+  kpis: KpisSection!
   radioStatus: GapSection!
 }
 
@@ -645,8 +693,8 @@ type SiteView {
   site: SiteSection!
   nodes: NodesSection!
   components: SiteComponentsSection!
-  power: GapSection!
-  kpis: GapSection!
+  power: KpisSection!
+  kpis: KpisSection!
   financials: GapSection!
 }
 

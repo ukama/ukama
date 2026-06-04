@@ -8,6 +8,7 @@
 import { CommerceViewResolver } from "./commerceView";
 import { InventoryViewResolver } from "./inventoryView";
 import { MembersViewResolver } from "./membersView";
+import { MetricsRangeResolver } from "./metricsRange";
 import { NetworkOverviewResolver } from "./networkOverview";
 import { NodeViewResolver, NodesViewResolver } from "./nodeViews";
 import { SimPoolViewResolver } from "./simPoolView";
@@ -18,6 +19,7 @@ import { SubscribersViewResolver } from "./subscribersView";
 /** View-domain composite resolvers (plan §3) — Phase 2 (network lens) +
  *  Phase 3 (business/customer lens). */
 const dashboardResolvers = [
+  MetricsRangeResolver,
   CommerceViewResolver,
   MembersViewResolver,
   InventoryViewResolver,

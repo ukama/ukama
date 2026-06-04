@@ -98,6 +98,31 @@ export class GapSection {
   error?: SectionError | null;
 }
 
+/** One latest-value KPI from the metric service (polled — Phase 4). */
+@ObjectType()
+export class KpiEntryDto {
+  @Field()
+  key: string;
+
+  @Field(() => Number)
+  value: number;
+
+  @Field(() => Number)
+  timestamp: number;
+
+  @Field(() => Boolean)
+  success: boolean;
+}
+
+@ObjectType()
+export class KpisSection {
+  @Field(() => SectionError, { nullable: true })
+  error?: SectionError | null;
+
+  @Field(() => [KpiEntryDto], { nullable: true })
+  metrics?: KpiEntryDto[] | null;
+}
+
 /* ----------------------------- networkOverview ---------------------------- */
 
 @ObjectType()
@@ -120,7 +145,7 @@ export class NetworkOverview {
   siteStats?: SitesSection;
   subscriberStats?: SubscriberStatsSection;
   latestAlerts?: AlertsSection;
-  kpis?: GapSection;
+  kpis?: KpisSection;
 }
 
 /* -------------------------------- nodesView ------------------------------- */
@@ -181,7 +206,7 @@ export class NodeView {
   health?: HealthSection;
   software?: SoftwareSection;
   stateHistory?: NodeStateSection;
-  kpis?: GapSection;
+  kpis?: KpisSection;
   radioStatus?: GapSection;
 }
 
@@ -262,8 +287,8 @@ export class SiteView {
   site?: SiteSection;
   nodes?: NodesSection;
   components?: SiteComponentsSection;
-  power?: GapSection;
-  kpis?: GapSection;
+  power?: KpisSection;
+  kpis?: KpisSection;
   financials?: GapSection;
 }
 

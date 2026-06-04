@@ -8,17 +8,36 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Menu from '@mui/material/Menu';
 import Typography from '@mui/material/Typography';
 import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
 import NotificationsRounded from '@mui/icons-material/NotificationsRounded';
+import { useTopBarAlertsQuery } from '@/client/graphql/network-home.generated';
 import { useToast } from '@/components/ToastProvider';
-import { ALERTS, NODES, SITES } from '@/data';
 import type { Alert } from '@/data';
+import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
+import { useUiPrefs } from '@/lib/store';
 import AlertDialog from './AlertDialog';
 import { Ic } from './icons';
+
+/** NotificationsDto.type → alert severity. */
+const sevFromType = (type: string): Alert['sev'] => {
+  const t = type.toUpperCase();
+  if (t.includes('CRITICAL') || t.includes('ERROR')) return 'critical';
+  if (t.includes('WARNING')) return 'warning';
+  return 'info';
+};
+
+const relativeAge = (iso: string): string => {
+  const ms = Date.now() - new Date(iso).getTime();
+  if (!Number.isFinite(ms) || ms < 0) return '';
+  const mins = Math.floor(ms / 60_000);
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  return `${Math.floor(hours / 24)}d`;
+};
 
 const SEV_ICON: Record<Alert['sev'], string> = {
   critical: 'error',
@@ -34,21 +53,32 @@ const SEV_COLOR: Record<Alert['sev'], string> = {
 export default function NotificationsMenu() {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [openAlert, setOpenAlert] = useState<Alert | null>(null);
-  const router = useRouter();
   const toast = useToast();
-  const unread = ALERTS.filter((a) => a.sev !== 'info').length;
+  const networkId = useUiPrefs((s) => s.networkId);
+
+  // Polled notifications (v1: no subscriptions — BUILD-PLAN §5.1·4); shares
+  // the networkOverview cache entry with the home screen.
+  const { data } = useTopBarAlertsQuery({
+    variables: { networkId },
+    skip: !networkId,
+    ...visiblePoll(POLL_OVERVIEW_MS),
+  });
+  const alerts: Alert[] = (
+    data?.networkOverview.latestAlerts.notifications ?? []
+  ).map((n) => ({
+    id: n.id,
+    sev: sevFromType(n.type),
+    icon: 'info',
+    title: n.title,
+    detail: n.description,
+    action: 'View',
+    age: relativeAge(n.createdAt),
+  }));
+  const unread = alerts.filter((a) => a.sev !== 'info').length;
 
   const runAction = (a: Alert) => {
     setOpenAlert(null);
-    const site = a.site ? SITES.find((s) => s.name === a.site) : undefined;
-    if (a.action === 'View node') {
-      const node = NODES.find((n) => a.detail.includes(n.serial.slice(-4)));
-      router.push(`/network/nodes/${node ? node.id : ''}`);
-    } else if (site && (a.action === 'View site' || a.action === 'Diagnose')) {
-      router.push(`/network/sites/${site.id}`);
-    } else {
-      toast(`${a.action} — done`);
-    }
+    toast(`${a.action} — done`);
   };
 
   return (
@@ -86,7 +116,12 @@ export default function NotificationsMenu() {
             </Typography>
           )}
         </Box>
-        {ALERTS.map((a) => (
+        {alerts.length === 0 && (
+          <Box sx={{ px: 2, py: 2, fontSize: 13, color: 'text.secondary' }}>
+            No notifications.
+          </Box>
+        )}
+        {alerts.map((a) => (
           <Box
             key={a.id}
             component="button"

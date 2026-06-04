@@ -12,9 +12,11 @@ import type { AppContext } from "../../server/context";
 import { SiteDto } from "../../site/resolvers/types";
 import { ServiceUrlResolver } from "../baseUrls";
 import { groupNodeCountsBySite } from "../derive";
+import { SITE_KPI_KEYS, SITE_POWER_KEYS, fetchLatestKpis } from "../kpis";
 import { notImplementedSection, runSection } from "../section";
 import {
   GapSection,
+  KpisSection,
   NodesSection,
   SiteComponentDto,
   SiteComponentsSection,
@@ -174,18 +176,34 @@ export class SiteViewResolver {
     return { components: value, error };
   }
 
-  @FieldResolver(() => GapSection)
-  power(): GapSection {
-    // TODO(backend-gap): metric — battery/solar/backhaul live status for a
-    // site — unblocks: siteView.power (metrics phase, plan Phase 4)
-    return { error: notImplementedSection("power").error };
+  @FieldResolver(() => KpisSection)
+  async power(
+    @Root() root: SiteViewRoot,
+    @Ctx() ctx: AppContext
+  ): Promise<KpisSection> {
+    // Phase 4: battery/solar power KPIs polled from the metric service
+    // (closes backend gap #8). Org-scoped latest values; per-site filtering
+    // lands with the metric service's site filter.
+    const { value, error } = await runSection("power", async () => {
+      const url = await root._urls.url("metrics");
+      return fetchLatestKpis(ctx.dataSources.metric, url, SITE_POWER_KEYS);
+    });
+    return { metrics: value, error };
   }
 
-  @FieldResolver(() => GapSection)
-  kpis(): GapSection {
-    // TODO(backend-gap): metric — site uptime/KPI summary — unblocks:
-    // siteView.kpis (metrics phase, plan Phase 4)
-    return { error: notImplementedSection("kpis").error };
+  @FieldResolver(() => KpisSection)
+  async kpis(
+    @Root() root: SiteViewRoot,
+    @Ctx() ctx: AppContext
+  ): Promise<KpisSection> {
+    // Phase 4: backhaul/controller KPIs polled from the metric service
+    // (closes backend gap #7 for the detail screen; per-site list rows in
+    // sitesView remain a gap until a site filter exists).
+    const { value, error } = await runSection("kpis", async () => {
+      const url = await root._urls.url("metrics");
+      return fetchLatestKpis(ctx.dataSources.metric, url, SITE_KPI_KEYS);
+    });
+    return { metrics: value, error };
   }
 
   @FieldResolver(() => GapSection)

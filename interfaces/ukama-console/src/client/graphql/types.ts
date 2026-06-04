@@ -506,6 +506,20 @@ export type ItemResDto = {
   type: Scalars['String']['output'];
 };
 
+export type KpiEntryDto = {
+  __typename?: 'KpiEntryDto';
+  key: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
+  timestamp: Scalars['Float']['output'];
+  value: Scalars['Float']['output'];
+};
+
+export type KpisSection = {
+  __typename?: 'KpisSection';
+  error?: Maybe<SectionError>;
+  metrics?: Maybe<Array<KpiEntryDto>>;
+};
+
 export type ListSimsInput = {
   networkId: Scalars['String']['input'];
   status: Scalars['String']['input'];
@@ -538,6 +552,44 @@ export type MembersView = {
   __typename?: 'MembersView';
   orgName: Scalars['String']['output'];
   team: TeamSection;
+};
+
+export type MetricRes = {
+  __typename?: 'MetricRes';
+  dataPlanId?: Maybe<Scalars['String']['output']>;
+  format?: Maybe<Scalars['String']['output']>;
+  msg: Scalars['String']['output'];
+  networkId?: Maybe<Scalars['String']['output']>;
+  nodeId?: Maybe<Scalars['String']['output']>;
+  packageId?: Maybe<Scalars['String']['output']>;
+  siteId?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+  threshold?: Maybe<MetricThreshold>;
+  tickInterval?: Maybe<Scalars['Float']['output']>;
+  tickPositions?: Maybe<Array<Scalars['Float']['output']>>;
+  type: Scalars['String']['output'];
+  unit?: Maybe<Scalars['String']['output']>;
+  values: Array<Array<Scalars['Float']['output']>>;
+};
+
+export type MetricThreshold = {
+  __typename?: 'MetricThreshold';
+  max: Scalars['Float']['output'];
+  min: Scalars['Float']['output'];
+  normal: Scalars['Float']['output'];
+};
+
+export type MetricsRangeInput = {
+  from: Scalars['Int']['input'];
+  keys: Array<Scalars['String']['input']>;
+  nodeId?: InputMaybe<Scalars['String']['input']>;
+  operation?: InputMaybe<Scalars['String']['input']>;
+  to?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type MetricsRes = {
+  __typename?: 'MetricsRes';
+  metrics: Array<MetricRes>;
 };
 
 export type Mutation = {
@@ -854,7 +906,7 @@ export type NetworkDto = {
 
 export type NetworkOverview = {
   __typename?: 'NetworkOverview';
-  kpis: GapSection;
+  kpis: KpisSection;
   latestAlerts: AlertsSection;
   network: NetworkSection;
   networkId: Scalars['String']['output'];
@@ -1002,7 +1054,7 @@ export enum NodeTypeEnum {
 export type NodeView = {
   __typename?: 'NodeView';
   health: HealthSection;
-  kpis: GapSection;
+  kpis: KpisSection;
   node: NodeSection;
   nodeId: Scalars['String']['output'];
   radioStatus: GapSection;
@@ -1313,6 +1365,7 @@ export type Query = {
   getUser: UserResDto;
   inventoryView: InventoryView;
   membersView: MembersView;
+  metricsRange: MetricsRes;
   networkOverview: NetworkOverview;
   nodeView: NodeView;
   nodesView: NodesView;
@@ -1547,6 +1600,11 @@ export type QueryGetTokenArgs = {
 
 export type QueryGetUserArgs = {
   userId: Scalars['String']['input'];
+};
+
+
+export type QueryMetricsRangeArgs = {
+  data: MetricsRangeInput;
 };
 
 
@@ -1922,9 +1980,9 @@ export type SiteView = {
   __typename?: 'SiteView';
   components: SiteComponentsSection;
   financials: GapSection;
-  kpis: GapSection;
+  kpis: KpisSection;
   nodes: NodesSection;
-  power: GapSection;
+  power: KpisSection;
   site: SiteSection;
   siteId: Scalars['String']['output'];
 };

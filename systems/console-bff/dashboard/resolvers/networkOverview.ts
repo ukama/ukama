@@ -18,10 +18,11 @@ import {
 import type { AppContext } from "../../server/context";
 import { ServiceUrlResolver } from "../baseUrls";
 import { countNodes, subscriberActivity } from "../derive";
-import { notImplementedSection, runSection } from "../section";
+import { NETWORK_KPI_KEYS, fetchLatestKpis } from "../kpis";
+import { runSection } from "../section";
 import {
   AlertsSection,
-  GapSection,
+  KpisSection,
   NetworkOverview,
   NetworkSection,
   NodeStatsSection,
@@ -133,10 +134,19 @@ export class NetworkOverviewResolver {
     return { notifications: value, error };
   }
 
-  @FieldResolver(() => GapSection)
-  kpis(): GapSection {
-    // TODO(backend-gap): metric — network-level KPI summary endpoint —
-    // unblocks: networkOverview.kpis (metrics phase, plan Phase 4)
-    return { error: notImplementedSection("kpis").error };
+  @FieldResolver(() => KpisSection)
+  async kpis(
+    @Root() root: OverviewRoot,
+    @Ctx() ctx: AppContext
+  ): Promise<KpisSection> {
+    // Phase 4: latest network KPIs polled from the metric service (closes
+    // backend gap #5). Console polls this selection — no subscriptions in v1.
+    const { value, error } = await runSection("kpis", async () => {
+      // NB: the metric system's service-discovery name is "metrics"
+      // (getSystemNameByService), not SUB_GRAPHS' "metric".
+      const url = await root._urls.url("metrics");
+      return fetchLatestKpis(ctx.dataSources.metric, url, NETWORK_KPI_KEYS);
+    });
+    return { metrics: value, error };
   }
 }

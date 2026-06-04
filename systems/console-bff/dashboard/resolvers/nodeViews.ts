@@ -7,15 +7,18 @@
  */
 import { Arg, Ctx, FieldResolver, Query, Resolver, Root } from "type-graphql";
 
-import { TIMEFRAME_FILTER } from "../../common/enums";
+import { GRAPHS_TYPE, TIMEFRAME_FILTER } from "../../common/enums";
+import { getGraphsKeyByType, getNodeTypeFromId } from "../../common/utils";
 import { GetHealthReportInputDto } from "../../health/resolvers/types";
 import type { AppContext } from "../../server/context";
 import { GetSoftwaresInput } from "../../software/resolvers/types";
 import { ServiceUrlResolver } from "../baseUrls";
+import { fetchLatestKpis } from "../kpis";
 import { notImplementedSection, runSection } from "../section";
 import {
   GapSection,
   HealthSection,
+  KpisSection,
   NodeSection,
   NodeStateSection,
   NodeView,
@@ -134,11 +137,24 @@ export class NodeViewResolver {
     return { stateHistory: value, error };
   }
 
-  @FieldResolver(() => GapSection)
-  kpis(): GapSection {
-    // TODO(backend-gap): metric — per-node latest KPI snapshot for detail
-    // header — unblocks: nodeView.kpis (metrics phase, plan Phase 4)
-    return { error: notImplementedSection("kpis").error };
+  @FieldResolver(() => KpisSection)
+  async kpis(
+    @Root() root: NodeViewRoot,
+    @Ctx() ctx: AppContext
+  ): Promise<KpisSection> {
+    // Phase 4: node-health KPIs (uptime/temps/memory by node type) polled
+    // from the metric service (closes backend gap #6). The latest-metric
+    // endpoint is org-scoped — node-level filtering lands with the metric
+    // service's node filter (same behavior as the legacy getNodeLatestMetric).
+    const { value, error } = await runSection("kpis", async () => {
+      const url = await root._urls.url("metrics");
+      const keys = getGraphsKeyByType(
+        GRAPHS_TYPE.NODE_HEALTH,
+        getNodeTypeFromId(root.nodeId)
+      );
+      return fetchLatestKpis(ctx.dataSources.metric, url, keys);
+    });
+    return { metrics: value, error };
   }
 
   @FieldResolver(() => GapSection)

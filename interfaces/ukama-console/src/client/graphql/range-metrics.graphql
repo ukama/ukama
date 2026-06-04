@@ -1,0 +1,22 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026-present, Ukama Inc.
+
+# Polled range metrics for charts (plan Phase 4 — polling only, no
+# subscriptions in v1). Poll with a screen-scoped, visibility-gated interval.
+
+query MetricsRange($data: MetricsRangeInput!) {
+  metricsRange(data: $data) {
+    metrics {
+      type
+      success
+      nodeId
+      siteId
+      values
+      unit
+      format
+    }
+  }
+}

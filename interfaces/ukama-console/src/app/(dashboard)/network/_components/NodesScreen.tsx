@@ -21,6 +21,7 @@ import FilterChips from '@/components/FilterChips';
 import PageHeader from '@/components/PageHeader';
 import StatusBadge from '@/components/StatusBadge';
 import type { UkamaNode } from '@/data';
+import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
 import { useUiPrefs } from '@/lib/store';
 import { toUkamaNode } from '@/lib/mappers/nodes';
 import NodeDrawer from './NodeDrawer';
@@ -93,6 +94,7 @@ export default function NodesScreen() {
   const { data, loading, refetch } = useNodesListQuery({
     variables: { networkId },
     skip: !networkId,
+    ...visiblePoll(POLL_OVERVIEW_MS),
   });
   const nodesSection = data?.nodesView.nodes;
   const nodes: UkamaNode[] = useMemo(

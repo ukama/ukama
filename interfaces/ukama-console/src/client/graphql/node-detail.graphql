@@ -63,6 +63,12 @@ query NodeDetail($nodeId: String!) {
       error {
         ...SectionErrorFields
       }
+      metrics {
+        key
+        value
+        timestamp
+        success
+      }
     }
     radioStatus {
       error {
