@@ -13,6 +13,12 @@ export const METRICS_INTERVAL = 30;
 
 export const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
+// GraphQL introspection: always on outside production; in production it can be
+// switched on explicitly (e.g. to run `pnpm codegen` against this instance)
+// without flipping NODE_ENV. Introspection exposes only the schema, never data.
+export const INTROSPECTION_ENABLED =
+  !IS_PRODUCTION || process.env.ENABLE_INTROSPECTION === "true";
+
 // Hard timeout for every upstream HTTP call made by the BFF.
 export const HTTP_TIMEOUT_MS = parseInt(process.env.HTTP_TIMEOUT_MS ?? "15000");
 

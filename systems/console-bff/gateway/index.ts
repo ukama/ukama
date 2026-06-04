@@ -24,7 +24,7 @@ import {
   BASE_DOMAIN,
   CONSOLE_APP_URL,
   GATEWAY_PORT,
-  IS_PRODUCTION,
+  INTROSPECTION_ENABLED,
   PLAYGROUND_URL,
   SUBSCRIPTIONS_PORT,
   SUB_GRAPH_LIST,
@@ -56,6 +56,31 @@ interface GatewayContext {
 
 /** Readiness flag flipped true once the gateway has composed and is listening. */
 let isReady = false;
+
+const EMPTY_HEADERS: THeaders = {
+  auth: { Authorization: "", Cookie: "" },
+  token: "",
+  orgId: "",
+  userId: "",
+  orgName: "",
+};
+
+/**
+ * True if the parsed request body is a GraphQL introspection query. Used to
+ * let schema-only tooling (codegen) through without a session. Matches the
+ * standard introspection operation name or the `__schema` meta-field.
+ */
+const isIntrospectionRequest = (body: unknown): boolean => {
+  if (!body || typeof body !== "object") return false;
+  const ops = Array.isArray(body) ? body : [body];
+  return ops.some(op => {
+    const o = op as { operationName?: string; query?: string };
+    return (
+      o?.operationName === "IntrospectionQuery" ||
+      (typeof o?.query === "string" && o.query.includes("__schema"))
+    );
+  });
+};
 
 function delay(time: number) {
   return new Promise(resolve => setTimeout(resolve, time));
@@ -149,9 +174,8 @@ const startApolloWithRetry = async (): Promise<
       const server = new ApolloServer<GatewayContext>({
         gateway,
         csrfPrevention: true,
-        // Public introspection is disabled in production; subgraphs are still
-        // introspected internally by the gateway via the introspection header.
-        introspection: !IS_PRODUCTION,
+        // Off in production unless ENABLE_INTROSPECTION=true (e.g. for codegen).
+        introspection: INTROSPECTION_ENABLED,
         plugins: [
           ApolloServerPluginInlineTrace({}),
           ApolloServerPluginDrainHttpServer({ httpServer }),
@@ -205,10 +229,19 @@ const startServer = async () => {
     }),
     json({ limit: JSON_BODY_LIMIT }),
     expressMiddleware(server, {
-      context: async ({ req }) => ({
-        headers: parseExpressHeaders(req.headers),
-        requestId: (req.headers["x-request-id"] as string) ?? "",
-      }),
+      context: async ({ req }) => {
+        const requestId = (req.headers["x-request-id"] as string) ?? "";
+        // Schema introspection (e.g. codegen) carries no session. Allow it
+        // past the auth gate when introspection is enabled — it reveals only
+        // the schema, never data — so tooling can read the schema.
+        if (INTROSPECTION_ENABLED && isIntrospectionRequest(req.body)) {
+          return { headers: EMPTY_HEADERS, requestId };
+        }
+        return {
+          headers: parseExpressHeaders(req.headers),
+          requestId,
+        };
+      },
     })
   );
 
