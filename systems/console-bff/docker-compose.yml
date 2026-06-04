@@ -1,30 +1,50 @@
 version: "3.7"
 
+# Consolidated console-bff (CONSOLIDATION-DESIGN Phase C): two containers from
+# one image — the API server and the subscriptions service — replacing the old
+# supervisord-managed gateway + 22 subgraph processes.
+
+x-bff-env: &bff-env
+  AUTH_URL: http://kratos:4433
+  NUCLEUS_API_GW: http://api-gateway-nucleus:8080
+  INIT_API_GW: http://api-gateway-init:8080
+  INVENTORY_API_GW: http://api-gateway-inventory:8080
+  ENCRYPTION_KEY: the-key-has-to-be-32-bytes-long!
+  JWT_SECRET: H2as2xtF/chrTxVbffKpZBvmEwkmBF1nG5MAbXC4bmQ=
+  # Local stack only — lets `pnpm codegen` introspect the schema.
+  # Keep OFF (omit) in real production deployments.
+  ENABLE_INTROSPECTION: "true"
+  STORAGE_KEY: bff-store
+  AUTH_APP_URL: http://localhost:4455
+  PLAYGROUND_URL: http://localhost:8080
+  CONSOLE_APP_URL: http://localhost:3000
+  SIM_TYPE: ukama_data
+
 services:
-  bff:
+  # Consolidated GraphQL API (one merged schema, all modules).
+  api:
     build: .
+    image: console-bff-app
+    command: ["node", "dist/server/index.js"]
     ports:
       - 8080:8080
+    environment:
+      <<: *bff-env
+      API_PORT: "8080"
+    networks:
+      - ukama-net
+
+  # Real-time metrics/notifications (graphql-ws), unchanged.
+  subscriptions:
+    image: console-bff-app
+    command: ["node", "dist/subscriptions/index.js"]
+    depends_on:
+      - api
+    ports:
       - 8081:8081
     environment:
-      - AUTH_URL=http://kratos:4433
-      - NUCLEUS_API_GW=http://api-gateway-nucleus:8080
-      - INIT_API_GW=http://api-gateway-init:8080
-      - INVENTORY_API_GW=http://api-gateway-inventory:8080
-      - ENCRYPTION_KEY=the-key-has-to-be-32-bytes-long!
-      - JWT_SECRET=H2as2xtF/chrTxVbffKpZBvmEwkmBF1nG5MAbXC4bmQ=
-      # Local stack only — lets `pnpm codegen` introspect the schema.
-      # Keep OFF (omit) in real production deployments.
-      - ENABLE_INTROSPECTION=true
-      - STORAGE_KEY=bff-store
-      - CONSOLE_APP_URL=http://console:3000
-      - AUTH_APP_URL=http://app:4455
-      - GATEWAY_PORT=8080
-      - SUBSCRIPTIONS_PORT=8081
-      - AUTH_APP_URL=http://localhost:4455
-      - PLAYGROUND_URL=http://localhost:8080
-      - CONSOLE_APP_URL=http://localhost:3000
-      - SIM_TYPE=ukama_data
+      <<: *bff-env
+      SUBSCRIPTIONS_PORT: "8081"
     networks:
       - ukama-net
 

@@ -38,7 +38,10 @@ import softwareResolvers from "../software/resolvers";
 import subscriberResolvers from "../subscriber/resolver";
 import userResolvers from "../user/resolver";
 
-const ALL_RESOLVERS = [
+// Explicitly typed so TS contextually checks each element instead of
+// inferring a combined literal type (a 21-array spread otherwise produces a
+// "union type too complex to represent" error under ts-node).
+const ALL_RESOLVERS: CallableFunction[] = [
   ...orgResolvers,
   ...userResolvers,
   ...networkResolvers,
@@ -63,11 +66,11 @@ const ALL_RESOLVERS = [
   // planning-tool is intentionally EXCLUDED for phase 1 (its Prisma client
   // needs a configured PLANNING_TOOL_DB + `prisma generate`). See README
   // "Re-enabling planning-tool" before adding planningResolvers back.
-] as tq.NonEmptyArray<CallableFunction>;
+];
 
 export const buildAppSchema = async (): Promise<GraphQLSchema> => {
   return tq.buildSchema({
-    resolvers: ALL_RESOLVERS,
+    resolvers: ALL_RESOLVERS as tq.NonEmptyArray<CallableFunction>,
     scalarsMap: [{ type: GraphQLScalarType, scalar: DateTimeResolver }],
     validate: { forbidUnknownValues: false },
   });

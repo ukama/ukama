@@ -71,18 +71,36 @@ run. The code is kept and its schema names are already collision-free.
 4. Consider lazy-initializing the Prisma client so a missing DB degrades the
    planning queries instead of failing boot.
 
-### Phase C — cutover (remaining work)
+### Phase C — cutover (DONE, deployment)
 
-Gate: smoke-test the consolidated server against the full stack first.
-1. Set `API_PORT=8080`; point the container CMD at `dist/server/index.js`
-   (+ the separate subscriptions process, port 8081).
-2. Two images (decided): API server and subscriptions as separate containers;
-   wire `/healthz`→liveness, `/readyz`→readiness; drop supervisord.
-3. Delete `gateway/`, the 22 per-module `index.ts` bootstraps,
-   `common/apollo` (subgraph builder), the `*_PORT` (5042–5063) config, and
-   the `all-dev`/`all-start` script fan-out.
-4. Frontend: regenerate `ukama-console` codegen against the consolidated
-   endpoint and commit the generated files.
+- `Dockerfile` builds at image time (`yarn build`) and the default `CMD` runs
+  `dist/server/index.js`; **supervisord removed**.
+- `docker-compose.yml` runs **two containers from one image**: `api` (8080,
+  consolidated server) and `subscriptions` (8081), shared env via a YAML
+  anchor, `API_PORT=8080`.
+- `package.json` scripts trimmed: `start` runs the consolidated server,
+  `dev`→`api-dev`; removed the 22 `*-dev` scripts + `all-dev`/`all-start`.
+
+Deploy: `docker compose up -d --build --remove-orphans` (the `--remove-orphans`
+clears the old `bff` container).
+
+### Phase C — remaining cleanup (run on host; build already ignores this code)
+
+The image still compiles the legacy federation source (harmless — `CMD` runs
+only `server/`). Remove it when convenient:
+
+```bash
+rm -f gateway/index.ts gateway/configureExpress.ts supervisord.conf
+rm -rf common/apollo
+# the 22 subgraph bootstraps (KEEP each module's context/ resolver(s)/ datasource/):
+for m in org user init network site member invitation node package rate \
+  subscriber sim controller health software component billing payment \
+  report metric notification; do rm -f "$m/index.ts"; done
+```
+
+Keep `gateway/tests/`, `subscriptions/`, and `planning-tool/` (parked).
+Optionally prune the 5042–5063 `*_PORT` consts in `common/configs`. Then
+regenerate `ukama-console` codegen against the consolidated endpoint.
 
 ## Auth model (post-hardening)
 

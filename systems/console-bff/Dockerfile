@@ -1,18 +1,21 @@
+# Consolidated console-bff image (CONSOLIDATION-DESIGN Phase C).
+# One image, two containers: the API server (server/) and the subscriptions
+# service (subscriptions/) run as separate containers (see docker-compose),
+# each with its own command. No supervisord.
 FROM node:18-alpine
 
-WORKDIR /
+WORKDIR /app
 
-RUN apk update && apk add --no-cache supervisor
 COPY package*.json yarn.lock ./
-
-ENV NODE_ENV production
-ENV NODE_ENV PLANNING_TOOL_DB $PLANNING_TOOL_DB
+# Install before NODE_ENV=production so yarn keeps devDeps (tsc) for the build.
 RUN yarn install --frozen-lockfile --ignore-scripts
 
 COPY . .
+RUN yarn build
 
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY supervisord.conf /etc/supervisor/supervisord.conf
-RUN mkdir -p /var/log/
+ENV NODE_ENV=production
 EXPOSE 8080 8081
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
+
+# Default command: the consolidated API server. The subscriptions container
+# overrides this with `node dist/subscriptions/index.js` (see compose).
+CMD ["node", "dist/server/index.js"]
