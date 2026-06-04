@@ -8,16 +8,81 @@
 
 /**
  * Next 16 request interceptor (replaces middleware.ts; Node runtime).
- * Phase-1 skeleton: pass-through. Phase 2 adds (BUILD-PLAN §13.6, §15.5):
- *  - ukama_session cookie → jose JWT verify (whoami fallback) + token cache
- *  - httpOnly token cookie + role/org headers
- *  - lens↔role route gating (/business, /network, /customer, /*\/manage)
- *  - per-request nonce + strict CSP (script-src/style-src) in production
+ *
+ * Standard reactive auth gate, evaluated per navigation:
+ *  - no ukama_session         → logout: clear token cookie, go to auth app
+ *  - session, no usable token → mint a signed token via /get-user and cache
+ *                               it in an httpOnly cookie; if the session is
+ *                               invalid/unreachable, redirect to the auth app
+ *  - session + token          → forward decoded user to RSC; refresh cookie
+ *
+ * Stale tokens are handled lazily: the gateway returns 401, the Apollo error
+ * link bounces through /api/auth/refresh, and the next navigation re-mints
+ * from the still-valid session. No background polling.
  */
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
+import { env } from '@/env';
+import { decodeUserFromToken, fetchSession } from '@/lib/auth/token';
+import {
+  SESSION_COOKIE,
+  TOKEN_COOKIE,
+  TOKEN_MAX_AGE_SECONDS,
+  USER_HEADER,
+  type AuthUser,
+} from '@/lib/auth/types';
 
-export default function proxy() {
-  return NextResponse.next();
+const encodeUser = (user: AuthUser): string =>
+  Buffer.from(JSON.stringify(user), 'utf8').toString('base64');
+
+/** Clears the token cookie and sends the user to the auth app (logout). */
+const logoutRedirect = (): NextResponse => {
+  const res = NextResponse.redirect(
+    new URL('/auth/login', env.NEXT_PUBLIC_AUTH_APP_URL),
+  );
+  res.cookies.delete(TOKEN_COOKIE);
+  return res;
+};
+
+export default async function proxy(
+  request: NextRequest,
+): Promise<NextResponse> {
+  // Auth API routes must run even when the token cookie is missing/stale.
+  if (request.nextUrl.pathname.startsWith('/api/auth')) {
+    return NextResponse.next();
+  }
+
+  // No session → logout flow.
+  const session = request.cookies.get(SESSION_COOKIE)?.value;
+  if (!session) return logoutRedirect();
+
+  // Resolve the user: reuse the cached token, else mint one from the session.
+  const cachedToken = request.cookies.get(TOKEN_COOKIE)?.value ?? '';
+  let user = cachedToken ? decodeUserFromToken(cachedToken) : null;
+  let freshToken: string | null = null;
+
+  if (!user) {
+    const result = await fetchSession(request.headers.get('cookie') ?? '');
+    // Session no longer resolves to a user (expired/invalid) → re-auth.
+    if (!result) return logoutRedirect();
+    user = result.user;
+    freshToken = result.token;
+  }
+
+  // Forward the user to server components (getCurrentUser) via a header.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(USER_HEADER, encodeUser(user));
+
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  if (freshToken) {
+    response.cookies.set(TOKEN_COOKIE, freshToken, {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: env.NODE_ENV === 'production',
+      maxAge: TOKEN_MAX_AGE_SECONDS,
+    });
+  }
+  return response;
 }
 
 export const config = {

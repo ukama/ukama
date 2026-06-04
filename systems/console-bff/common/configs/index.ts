@@ -16,6 +16,12 @@ export const IS_PRODUCTION = process.env.NODE_ENV === "production";
 // Hard timeout for every upstream HTTP call made by the BFF.
 export const HTTP_TIMEOUT_MS = parseInt(process.env.HTTP_TIMEOUT_MS ?? "15000");
 
+// Lifetime of an issued session token. The token carries its own `exp`
+// claim so staleness is self-describing (clients re-mint without guessing).
+export const TOKEN_TTL_SECONDS = parseInt(
+  process.env.TOKEN_TTL_SECONDS ?? "86400"
+);
+
 /**
  * Secret used to HMAC-sign the session token issued by /get-user.
  * Must be set in production; a dev-only fallback is used otherwise.

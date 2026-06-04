@@ -12,6 +12,8 @@ import CssBaseline from '@mui/material/CssBaseline';
 import ApolloClientProvider from '@/client/ApolloClientProvider';
 import { ThemeProvider } from '@mui/material/styles';
 import ToastProvider from '@/components/ToastProvider';
+import { AuthProvider } from '@/lib/auth/context';
+import type { AuthUser } from '@/lib/auth/types';
 import { useUiPrefs } from '@/lib/store';
 import { theme } from '@/theme/theme';
 
@@ -29,14 +31,22 @@ function ThemeAttributes() {
   return null;
 }
 
-export default function Providers({ children }: { children: React.ReactNode }) {
+export default function Providers({
+  user,
+  children,
+}: {
+  user: AuthUser | null;
+  children: React.ReactNode;
+}) {
   return (
     <ThemeProvider theme={theme} defaultMode="light">
       <CssBaseline enableColorScheme />
       <ThemeAttributes />
-      <ApolloClientProvider>
-        <ToastProvider>{children}</ToastProvider>
-      </ApolloClientProvider>
+      <AuthProvider user={user}>
+        <ApolloClientProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </ApolloClientProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

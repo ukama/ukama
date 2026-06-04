@@ -29,21 +29,42 @@ import { RoleToNotificationScopes } from "../utils/roleToNotificationScope";
 const getTimestampCount = (count: string) =>
   parseInt((Date.now() / 1000).toString()) + "-" + count;
 
+// Index of the optional `exp` (epoch seconds) claim within a token.
+const TOKEN_EXP_INDEX = 10;
+
+/**
+ * Verifies a token's HMAC signature and (if present) its expiry, returning
+ * the decoded claim segments. Returns null for a missing/forged signature,
+ * a malformed payload, or an expired token. Tokens issued before the `exp`
+ * claim existed (fewer segments) remain valid for backward compatibility.
+ */
+const verifyTokenClaims = (token: string): string[] | null => {
+  const payload = verifyToken(token);
+  if (!payload) return null;
+
+  const claims = Buffer.from(payload, "base64").toString("utf-8").split(";");
+  if (claims.length < 3) return null;
+
+  const expRaw = claims[TOKEN_EXP_INDEX];
+  if (expRaw) {
+    const exp = parseInt(expRaw, 10);
+    if (!Number.isNaN(exp) && Math.floor(Date.now() / 1000) >= exp) {
+      return null; // expired
+    }
+  }
+  return claims;
+};
+
 const parseToken = (
   token: string,
   get: "orgId" | "orgName" | "userId"
 ): string | undefined => {
   if (!token) return undefined;
 
-  // Reject tokens whose HMAC signature is missing or invalid so
-  // clients cannot forge org/user claims.
-  const payload = verifyToken(token);
-  if (!payload) throw new UnauthenticatedError(Messages.HEADER_ERR_AUTH);
-
-  const decoded = Buffer.from(payload, "base64").toString("utf-8");
-  const claims = decoded.split(";");
-  if (claims.length < 3)
-    throw new UnauthenticatedError(Messages.HEADER_ERR_AUTH);
+  // Reject tokens whose signature is missing/invalid or that have expired,
+  // so clients cannot forge or replay org/user claims.
+  const claims = verifyTokenClaims(token);
+  if (!claims) throw new UnauthenticatedError(Messages.HEADER_ERR_AUTH);
 
   switch (get) {
     case "orgId":
@@ -111,9 +132,9 @@ const parseExpressHeaders = (reqHeader: IncomingHttpHeaders): THeaders => {
   }
 
   const token = tokenCookie.replace("token=", "");
-  // Verify the token signature at the gateway entry point so forged or
-  // tampered tokens are rejected with a clean 401 before any subgraph runs.
-  if (!verifyToken(token)) {
+  // Verify signature + expiry at the gateway entry point so forged, tampered,
+  // or expired tokens are rejected with a clean 401 before any subgraph runs.
+  if (!verifyTokenClaims(token)) {
     throw new UnauthenticatedError(Messages.HEADER_ERR_AUTH);
   }
   headers.token = token;

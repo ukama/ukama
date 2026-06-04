@@ -9,7 +9,7 @@ import { RootDatabase } from "lmdb";
 
 import { whoami } from "../../common/auth/authCalls";
 import { signToken } from "../../common/auth/token";
-import { INIT_API_GW, VERSION } from "../../common/configs";
+import { INIT_API_GW, TOKEN_TTL_SECONDS, VERSION } from "../../common/configs";
 import COUNTRIES from "../../common/data/countries";
 import { BaseRESTDataSource } from "../../common/datasource";
 import { ROLE_TYPE } from "../../common/enums";
@@ -139,9 +139,10 @@ class InitAPI extends BaseRESTDataSource {
         }
       }
     }
+    const exp = Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS;
     const cookie = `${orgId};${orgName};${userId};${name};${email};${role};${
       whoamiRes?.data?.identity?.verifiable_addresses[0]?.verified || false
-    };${isWelcomeEligible};${country};${currency}`;
+    };${isWelcomeEligible};${country};${currency};${exp}`;
     const base64Cookie = signToken(Buffer.from(cookie).toString("base64"));
 
     return {
