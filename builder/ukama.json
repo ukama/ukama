@@ -12,7 +12,7 @@
       "nodes-id-filename" : "nodes_id_build.json"
     },
     "systems": {
-      "list": "ukama-auth,services,init,nucleus,"
+      "list": "ukama-auth,services,init,nucleus,operation,"
     },
     "interfaces": {
       "list": "console"
@@ -32,7 +32,7 @@
         "masterorgname" : "ukama"
     },
     "nodes-id-filename" : "nodes_id_deploy.json",
-    "systems": "ukama-auth,services,init,nucleus,",
+    "systems": "ukama-auth,services,init,nucleus,operation,",
     "nodes": "all"
   }
 }

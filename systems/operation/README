@@ -1,0 +1,41 @@
+resource X is busy with operation Y
+operation Y is running
+operation Y completed/failed/timed out/cancelled
+release lock when terminal
+
+
+A domain gets an operation-monitor only when it has async operations whose success cannot be known at request time.
+
+one node, one active mutating operation
+Site lock all the nodes therein
+If anything fails after acquiring lock but before dispatch, immediately mark operation FAILED/CANCELLED and release lock.
+If dispatch succeeds but mark-running fails, operation must still be recoverable by monitor or sweeper.
+
+
+Rules:
+
+Rule 1: no quueing by default ever.
+Rule 2: UI block, backend enforces
+Rule 3: every mutating action must acquire lock first (full node lock - no hierarchy in v1)
+Rule 4: if resource is blocked, request is rejected
+Rule 5: read-only actions remained allowed
+
+Operation lifecycle - properly define:
+PENDING   = operation created, lock acquired, dispatch in progress
+RUNNING   = command dispatched / accepted
+SUCCESS   = domain monitor verified success
+FAILED    = domain monitor or controller verified failure
+TIMEOUT   = manager lease expired
+CANCELLED = admin/system force stopped operation
+
+The operation manager is the only authority for resource locks.
+Every mutating domain command must acquire an operation lock before dispatch.
+The UI may block actions, but backend lock acquisition is the source of truth.
+If lock acquisition fails, return RESOURCE_BUSY and do not queue.
+Domain monitors do not own locks; they only report completion/failure evidence.
+The operation manager verifies fencing token and releases lock only on terminal state.
+Use coarse node-level locks for V1.
+Do not allow software update, RF toggle, or service commands while restart/update is active.
+
+One resource, one active mutation, one operation lifecycle, one authority for lock release.
+

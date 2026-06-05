@@ -25,12 +25,17 @@ services:
    - CONTROLLER_SERVICE_PORT=9090
    - ORGNAME=${ORGNAME}
    - HTTP_INITCLIENT=http://api-gateway-init:8080
+   - OPERATION_MANAGERHOST=manager:9090
+   - OPERATION_MONITORHOST=operation-monitor:9090
+   - OPERATION_LEASESECS=600
+   - OPERATION_DEADLINESECS=600
   restart: always
   networks:
    - ukama-net
   depends_on:
    - msgclient-node
    - postgresd-node
+   - operation-monitor
 
 
  site-controller:
@@ -86,6 +91,10 @@ services:
    - ORGNAME=${ORGNAME}
    - WIMSI_HOST=http://${LOCAL_HOST_IP}:8080
    - NODEGWIPS='["123", "1.1.1.1"]'
+   - OPERATION_MANAGERHOST=manager:9090
+   - OPERATION_MONITORHOST=operation-monitor:9090
+   - OPERATION_LEASESECS=1800
+   - OPERATION_DEADLINESECS=1800
   restart: always
   networks:
    - ukama-net
@@ -128,6 +137,26 @@ services:
   networks:
    - ukama-net
   depends_on:
+   - postgresd-node
+
+ operation-monitor:
+  build: ./operation-monitor
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-node
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-node:9095
+   - OPERATION_MONITOR_SERVICE_HOST=operation-monitor
+   - OPERATION_MONITOR_SERVICE_PORT=9090
+   - ORGNAME=${ORGNAME}
+   - ORGID=${ORGID}
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - msgclient-node
    - postgresd-node
 
  node-gateway-node:
@@ -178,7 +207,7 @@ services:
    - postgresd-node
 
  initclient-node:
-  build: ../services/initClient
+  image: main-init
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_DNS_REFRESH_TIME_PERIOD=30
@@ -216,6 +245,8 @@ services:
    - STOREUSER=root
    - ACCESSTOKEN=${ACCESSTOKEN}
    - HTTP_INITCLIENT=http://api-gateway-init:8080
+   - OPERATION_MANAGERHOST=manager:9090
+   - OPERATION_LEASESECS=1800
   restart: always
   networks:
    - ukama-net
