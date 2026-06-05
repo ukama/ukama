@@ -13,6 +13,7 @@ import UMark from '@/components/UMark';
 import { useUiPrefs } from '@/lib/store';
 import CommandPalette from './CommandPalette';
 import { LensDropdown } from './LensSegment';
+import SetupAlertBar from './SetupAlertBar';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 
@@ -37,7 +38,9 @@ export default function DashboardShell({
   }, []);
 
   return (
-    <div className="app" data-rail={rail}>
+    <div className="shell-wrap">
+      <SetupAlertBar />
+      <div className="app" data-rail={rail}>
       <div className="brandcell">
         <UMark className="umark" />
         <span className="word">ukama</span>
@@ -64,7 +67,8 @@ export default function DashboardShell({
           </div>
           <Sidebar />
         </div>
-      </Drawer>
+        </Drawer>
+      </div>
     </div>
   );
 }

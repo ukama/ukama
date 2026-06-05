@@ -11,6 +11,7 @@ import { MembersViewResolver } from "./membersView";
 import { MetricsRangeResolver } from "./metricsRange";
 import { NetworkOverviewResolver } from "./networkOverview";
 import { NodeViewResolver, NodesViewResolver } from "./nodeViews";
+import { OnboardingStatusResolver } from "./onboardingStatus";
 import { SimPoolViewResolver } from "./simPoolView";
 import { SiteViewResolver, SitesViewResolver } from "./siteViews";
 import { SubscriberViewResolver } from "./subscriberView";
@@ -31,6 +32,7 @@ const dashboardResolvers = [
   SiteViewResolver,
   SubscribersViewResolver,
   SimPoolViewResolver,
+  OnboardingStatusResolver,
 ];
 
 export default dashboardResolvers;

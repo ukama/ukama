@@ -7,14 +7,14 @@
  */
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { Nodes, NodesFilterInput } from "./types";
 
 @Resolver()
 export class GetNodesResolver {
   @Query(() => Nodes)
-  async getNodes(@Arg("data") data: NodesFilterInput, @Ctx() context: Context) {
-    const { dataSources, baseURL } = context;
-    return await dataSources.node.getNodes(baseURL, data);
+  async getNodes(@Arg("data") data: NodesFilterInput, @Ctx() ctx: AppContext) {
+    const baseURL = await ctx.urls.url("node");
+    return await ctx.dataSources.node.getNodes(baseURL, data);
   }
 }

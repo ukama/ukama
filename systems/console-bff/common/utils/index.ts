@@ -13,7 +13,7 @@ import { RootDatabase } from "lmdb";
 import InitAPI from "../../init/datasource/init_api";
 import { MetricRes, MetricsRes } from "../../subscriptions/resolvers/types";
 import { verifyToken } from "../auth/token";
-import { INIT_API_GW, SUB_GRAPHS } from "../configs";
+import { INIT_API_GW, IS_PRODUCTION, SUB_GRAPHS } from "../configs";
 import {
   GRAPHS_TYPE,
   NODE_TYPE,
@@ -463,12 +463,24 @@ const getBaseURL = async (
         message: `http://${intRes.nodeGwIp}:${intRes.nodeGwPort}`,
       };
     }
-    return {
-      status: 200,
-      message: intRes.apiGwUrl
-        ? intRes.apiGwUrl
-        : `http://${intRes.apiGwIp}:${intRes.apiGwPort}`,
-    };
+    // Production resolves systems by in-cluster address (apiGwIp:apiGwPort);
+    // apiGwUrl is the developer-facing address (e.g. http://localhost:8058)
+    // and is only trusted outside production. Either path falls back to the
+    // other when its fields are missing, with a diagnosable failure if both
+    // are absent.
+    const ipUrl =
+      intRes.apiGwIp && intRes.apiGwPort
+        ? `http://${intRes.apiGwIp}:${intRes.apiGwPort}`
+        : "";
+    const baseURL = IS_PRODUCTION
+      ? ipUrl || intRes.apiGwUrl
+      : intRes.apiGwUrl || ipUrl;
+    if (!baseURL) {
+      const message = `init returned no usable address for ${orgName}/${sysName}: apiGwUrl='${intRes.apiGwUrl}', apiGwIp='${intRes.apiGwIp}', apiGwPort='${intRes.apiGwPort}'`;
+      logger.error(message);
+      return { status: 500, message };
+    }
+    return { status: 200, message: baseURL };
   } catch (e) {
     const errCause = (e as { cause?: unknown })?.cause;
     const cause =

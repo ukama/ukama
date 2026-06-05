@@ -1,0 +1,300 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2026-present, Ukama Inc.
+ */
+
+/**
+ * Site setup: detect an installed node, name the site, confirm the
+ * inventory components (auto-selected when unambiguous), create the site.
+ * Self-guards: no network → back to the network step; no node detected →
+ * friendly retry/skip state (the physical install may still be in flight).
+ */
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import Button from '@mui/material/Button';
+import Skeleton from '@mui/material/Skeleton';
+
+import { Component_Type } from '@/client/graphql/types';
+import { useGetComponentsByUserIdQuery } from '@/client/graphql/components.generated';
+import { useGetNetworksQuery } from '@/client/graphql/networks.generated';
+import { useGetNodesQuery } from '@/client/graphql/nodes.generated';
+import { OnboardingStatusDocument } from '@/client/graphql/onboarding-status.generated';
+import { useAddSiteMutation } from '@/client/graphql/sites.generated';
+import { Field, SelectInput, TextInput } from '@/components/form/FormField';
+import { EmptyState } from '@/components/EmptyState';
+import ConfigureActions from '../_components/ConfigureActions';
+import { stepUrl, useConfigureParams } from '../_components/state';
+
+const schema = z.object({
+  name: z
+    .string()
+    .min(3, 'At least 3 characters')
+    .max(40, 'At most 40 characters')
+    .regex(
+      /^[a-z0-9-]+$/,
+      'Lowercase letters, numbers, and "-" only (no spaces).',
+    ),
+  location: z.string().min(3, 'Location is required'),
+  nodeId: z.string().min(1, 'Select the installed node'),
+  powerId: z.string().min(1, 'Select a power component'),
+  backhaulId: z.string().min(1, 'Select a backhaul component'),
+  switchId: z.string().min(1, 'Select a switch component'),
+});
+
+type FormValues = z.infer<typeof schema>;
+
+function StepSkeleton() {
+  return (
+    <>
+      <Skeleton width="60%" height={42} />
+      <Skeleton width="100%" height={28} />
+      <Skeleton width="100%" height={56} sx={{ mt: 2 }} />
+      <Skeleton width="100%" height={56} />
+    </>
+  );
+}
+
+export default function ConfigureSitePage() {
+  const router = useRouter();
+  const params = useConfigureParams();
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // --- network guard: resolve a networkid or send back to the network step.
+  const { data: netData, loading: netLoading } = useGetNetworksQuery({
+    skip: Boolean(params.networkid),
+  });
+  const fallbackNet =
+    netData?.getNetworks.networks.find((n) => n.isDefault) ??
+    netData?.getNetworks.networks[0];
+  const networkId = params.networkid || (fallbackNet?.id ?? '');
+
+  useEffect(() => {
+    if (!params.networkid && !netLoading && netData && !fallbackNet) {
+      router.replace(stepUrl('/configure/network', { flow: params.flow }));
+    }
+  }, [params.networkid, params.flow, netLoading, netData, fallbackNet, router]);
+
+  // --- node detection (legacy parity: unassigned nodes are candidates).
+  const {
+    data: nodesData,
+    loading: nodesLoading,
+    refetch: refetchNodes,
+  } = useGetNodesQuery({
+    variables: { data: {} },
+    fetchPolicy: 'network-only',
+  });
+  const candidates = useMemo(() => {
+    const nodes = nodesData?.getNodes.nodes ?? [];
+    const unassigned = nodes.filter((n) => !n.site?.siteId);
+    return params.nid
+      ? unassigned.filter((n) => n.id === params.nid)
+      : unassigned;
+  }, [nodesData, params.nid]);
+
+  // --- inventory components.
+  const { data: compData, loading: compLoading } =
+    useGetComponentsByUserIdQuery({
+      variables: { data: { category: Component_Type.All } },
+    });
+  const components = useMemo(
+    () => compData?.getComponentsByUserId.components ?? [],
+    [compData],
+  );
+  const byCategory = (cat: Component_Type) =>
+    components.filter((c) => c.category === cat);
+  const power = byCategory(Component_Type.Power);
+  const backhaul = byCategory(Component_Type.Backhaul);
+  const switches = byCategory(Component_Type.Switch);
+  const spectrum = byCategory(Component_Type.Spectrum);
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      name: '',
+      location: '',
+      nodeId: '',
+      powerId: '',
+      backhaulId: '',
+      switchId: '',
+    },
+  });
+
+  // Auto-select unambiguous choices (legacy parity).
+  useEffect(() => {
+    const first = candidates[0];
+    if (first) setValue('nodeId', first.id);
+    if (power.length === 1 && power[0]) setValue('powerId', power[0].id);
+    if (backhaul.length === 1 && backhaul[0])
+      setValue('backhaulId', backhaul[0].id);
+    if (switches.length === 1 && switches[0])
+      setValue('switchId', switches[0].id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [candidates.length, components.length]);
+
+  const [addSite, { loading: saving }] = useAddSiteMutation({
+    refetchQueries: [{ query: OnboardingStatusDocument }],
+    onCompleted: () => {
+      router.push(stepUrl('/configure/sims', { flow: params.flow })); // networkid no longer needed
+    },
+    onError: (err) => setSubmitError(err.message),
+  });
+
+  const onSubmit = (values: FormValues) => {
+    setSubmitError(null);
+    const node = candidates.find((n) => n.id === values.nodeId);
+    // access = inventory component whose partNumber is the node id (legacy).
+    const access = components.find(
+      (c) =>
+        c.category === Component_Type.Access &&
+        c.partNumber === values.nodeId,
+    );
+    if (!access) {
+      setSubmitError(
+        'The selected node was not found in your inventory (no access component). Please contact support.',
+      );
+      return;
+    }
+    const spectrumId = spectrum[0]?.id;
+    if (!spectrumId) {
+      setSubmitError(
+        'No spectrum component found in your inventory. Please contact support.',
+      );
+      return;
+    }
+    void addSite({
+      variables: {
+        data: {
+          name: values.name,
+          network_id: networkId,
+          access_id: access.id,
+          power_id: values.powerId,
+          backhaul_id: values.backhaulId,
+          switch_id: values.switchId,
+          spectrum_id: spectrumId,
+          location: values.location,
+          latitude: String(node?.latitude ?? '0'),
+          longitude: String(node?.longitude ?? '0'),
+          install_date: new Date().toISOString(),
+        },
+      },
+    });
+  };
+
+  if (netLoading || nodesLoading || compLoading) return <StepSkeleton />;
+
+  if (candidates.length === 0) {
+    return (
+      <>
+        <h1 className="cfg-title">Looking for your site…</h1>
+        <p className="cfg-copy">
+          We couldn&apos;t detect an installed node yet. Make sure your node
+          is powered on and connected to backhaul — it can take a few minutes
+          to come online. You can also skip and finish this later.
+        </p>
+        <EmptyState
+          art="site"
+          title="No site detected yet"
+          sub="Retry once your node is powered and connected."
+        />
+        <div style={{ marginTop: 16 }}>
+          <Button variant="outlined" onClick={() => void refetchNodes()}>
+            Check again
+          </Button>
+        </div>
+        <ConfigureActions
+          nextLabel="Next"
+          nextDisabled
+          onNext={() => undefined}
+        />
+      </>
+    );
+  }
+
+  const nodeOptions = candidates.map((n) => ({
+    value: n.id,
+    label: n.name ? `${n.name} (${n.id})` : n.id,
+  }));
+  const toOptions = (list: typeof power) =>
+    list.map((c) => ({ value: c.id, label: c.description || c.partNumber }));
+
+  return (
+    <>
+      <h1 className="cfg-title">Name your site</h1>
+      <p className="cfg-copy">
+        We found your installed hardware. Confirm the details below to create
+        your first site.
+      </p>
+      <form
+        onSubmit={(e) => void handleSubmit(onSubmit)(e)}
+        className="cfg-fields"
+        style={{ display: 'flex', flexDirection: 'column', flex: 1 }}
+      >
+        <Field label="Site name" required error={errors.name?.message}>
+          <TextInput
+            placeholder="site-name"
+            invalid={Boolean(errors.name)}
+            autoFocus
+            {...register('name')}
+          />
+        </Field>
+        <Field label="Location" required error={errors.location?.message}>
+          <TextInput
+            placeholder="Street, city, country"
+            invalid={Boolean(errors.location)}
+            {...register('location')}
+          />
+        </Field>
+        <Field label="Node" required error={errors.nodeId?.message}>
+          <SelectInput
+            options={nodeOptions}
+            invalid={Boolean(errors.nodeId)}
+            {...register('nodeId')}
+          />
+        </Field>
+        <Field label="Power" required error={errors.powerId?.message}>
+          <SelectInput
+            placeholder="Select power component"
+            options={toOptions(power)}
+            invalid={Boolean(errors.powerId)}
+            {...register('powerId')}
+          />
+        </Field>
+        <Field label="Backhaul" required error={errors.backhaulId?.message}>
+          <SelectInput
+            placeholder="Select backhaul component"
+            options={toOptions(backhaul)}
+            invalid={Boolean(errors.backhaulId)}
+            {...register('backhaulId')}
+          />
+        </Field>
+        <Field label="Switch" required error={errors.switchId?.message}>
+          <SelectInput
+            placeholder="Select switch component"
+            options={toOptions(switches)}
+            invalid={Boolean(errors.switchId)}
+            {...register('switchId')}
+          />
+        </Field>
+        {submitError && <p className="cfg-error">{submitError}</p>}
+        <ConfigureActions
+          nextLabel="Create site"
+          onNext={() => void handleSubmit(onSubmit)()}
+          busy={saving}
+        />
+      </form>
+    </>
+  );
+}

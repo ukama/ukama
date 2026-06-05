@@ -1129,6 +1129,15 @@ export type NotificationsResDto = {
   notifications: Array<NotificationsDto>;
 };
 
+export type OnboardingStatusDto = {
+  __typename?: 'OnboardingStatusDto';
+  hasNetwork: Scalars['Boolean']['output'];
+  hasNode: Scalars['Boolean']['output'];
+  hasSite: Scalars['Boolean']['output'];
+  networkId?: Maybe<Scalars['String']['output']>;
+  networkName?: Maybe<Scalars['String']['output']>;
+};
+
 export type Org = {
   __typename?: 'Org';
   country: Scalars['String']['output'];
@@ -1369,6 +1378,7 @@ export type Query = {
   networkOverview: NetworkOverview;
   nodeView: NodeView;
   nodesView: NodesView;
+  onboardingStatus: OnboardingStatusDto;
   simPoolView: SimPoolView;
   siteView: SiteView;
   sitesView: SitesView;

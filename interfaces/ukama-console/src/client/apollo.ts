@@ -33,6 +33,8 @@ export const DEFAULT_TTL = 5 * MINUTE;
 const TYPE_TTLS: Record<string, number> = {
   // ops status changes quickly
   NodeDto: 1 * MINUTE,
+  // activation state must react quickly to setup progress (alert bar/guards)
+  OnboardingStatusDto: 0.5 * MINUTE,
   SiteDto: 2 * MINUTE,
   NotificationsResDto: 1 * MINUTE,
   // money/people move slower

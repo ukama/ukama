@@ -22,6 +22,37 @@
   );
 }
 
+/* ---- shell wrapper: optional setup alert bar above the app grid ---- */
+.shell-wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+.shell-wrap .app {
+  height: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.setup-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: var(--uk-ac-soft);
+  color: var(--uk-ink);
+  border-bottom: 1px solid var(--uk-line);
+  font-size: 13.5px;
+}
+.setup-bar > svg:first-child {
+  color: var(--uk-ac);
+  flex: none;
+}
+.setup-bar-text {
+  flex: 1;
+  min-width: 0;
+}
+
 .app {
   display: grid;
   grid-template-columns: var(--rail-w, 240px) 1fr;

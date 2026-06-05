@@ -23,7 +23,9 @@ import ApartmentRounded from '@mui/icons-material/ApartmentRounded';
 import PersonRounded from '@mui/icons-material/PersonRounded';
 
 import UMark from '@/components/UMark';
+import { resolveResumeUrl, useActivation } from '@/lib/activation';
 import type { AuthUser } from '@/lib/auth/types';
+import { useUiPrefs } from '@/lib/store';
 
 /** Token roles (ROLE_*) → display labels used across the console. */
 const ROLE_LABELS: Record<string, string> = {
@@ -88,6 +90,10 @@ function TreeNode({
 export default function WelcomeScreen({ user }: { user: AuthUser }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Pre-fetches activation state while the user reads the page, so Continue
+  // can land first-time admins directly in /configure (unknown state → '/').
+  const { status, needsSetup } = useActivation();
+  const lastConfigureUrl = useUiPrefs((s) => s.lastConfigureUrl);
 
   const onContinue = async () => {
     setBusy(true);
@@ -97,7 +103,9 @@ export default function WelcomeScreen({ user }: { user: AuthUser }) {
       if (!res.ok) throw new Error(`acknowledge failed (${res.status})`);
       // Full navigation (not router.push) so proxy.ts re-mints the session
       // token — the fresh token carries isShowWelcome=false.
-      window.location.assign('/');
+      window.location.assign(
+        needsSetup ? resolveResumeUrl(status, lastConfigureUrl) : '/',
+      );
     } catch {
       setError("Couldn't save your confirmation. Please try again.");
       setBusy(false);

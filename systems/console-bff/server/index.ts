@@ -42,6 +42,7 @@ import { persistedOperations } from "../common/middleware/persistedOperations";
 import { addInStore, closeStore, openStore } from "../common/storage";
 import { THeaders } from "../common/types";
 import { parseExpressHeaders, parseToken } from "../common/utils";
+import { ServiceUrlResolver } from "../dashboard/baseUrls";
 import InitAPI, {
   SessionValidationError,
   getWelcomeStoreKey,
@@ -150,9 +151,20 @@ const startServer = async () => {
         // Introspection (codegen) carries no session: allow it past the auth
         // gate when introspection is enabled (schema only, never data).
         if (INTROSPECTION_ENABLED && isIntrospectionRequest(req.body)) {
-          return { headers: EMPTY_HEADERS, requestId, dataSources };
+          return {
+            headers: EMPTY_HEADERS,
+            requestId,
+            dataSources,
+            urls: new ServiceUrlResolver(""),
+          };
         }
-        return { headers: buildHeaders(req.headers), requestId, dataSources };
+        const headers = buildHeaders(req.headers);
+        return {
+          headers,
+          requestId,
+          dataSources,
+          urls: new ServiceUrlResolver(headers.orgName),
+        };
       },
     })
   );
