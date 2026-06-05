@@ -21,6 +21,7 @@ import { z } from 'zod';
 import Skeleton from '@mui/material/Skeleton';
 
 import {
+  GetNetworksDocument,
   useAddNetworkMutation,
   useGetNetworksQuery,
 } from '@/client/graphql/networks.generated';
@@ -55,16 +56,20 @@ export default function ConfigureNetworkPage() {
     formState: { errors },
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
-  // Self-guard: a network already exists → this step is done, forward.
-  // network-only: a stale cached empty list must not re-show creation.
+  // Self-guard (onboarding only): a network already exists → this step is
+  // done, forward. flow=add-network intentionally creates additional
+  // networks, so the guard must not apply there. network-only: a stale
+  // cached empty list must not re-show creation.
+  const isAddFlow = flow === 'add-network';
   const { data, loading } = useGetNetworksQuery({
     fetchPolicy: 'network-only',
   });
   const networks = data?.getNetworks.networks ?? [];
   const existing = networks.find((n) => n.isDefault) ?? networks[0];
+  const guarded = !isAddFlow && Boolean(existing);
 
   useEffect(() => {
-    if (existing) {
+    if (!isAddFlow && existing) {
       // Keep the dashboard's selected network in sync (replaces the seed
       // default) so screens never query a non-existent network id.
       setNetworkId(existing.id);
@@ -72,10 +77,13 @@ export default function ConfigureNetworkPage() {
         stepUrl('/configure/install', { flow, networkid: existing.id }),
       );
     }
-  }, [existing, flow, router, setNetworkId]);
+  }, [isAddFlow, existing, flow, router, setNetworkId]);
 
   const [addNetwork, { loading: saving }] = useAddNetworkMutation({
-    refetchQueries: [{ query: OnboardingStatusDocument }],
+    refetchQueries: [
+      { query: OnboardingStatusDocument },
+      { query: GetNetworksDocument },
+    ],
     onCompleted: (res) => {
       setNetworkId(res.addNetwork.id);
       router.push(
@@ -88,11 +96,14 @@ export default function ConfigureNetworkPage() {
   const onSubmit = (values: FormValues) => {
     setSubmitError(null);
     void addNetwork({
-      variables: { data: { name: values.name, isDefault: true } },
+      // First network becomes the default; additional ones don't steal it.
+      variables: {
+        data: { name: values.name, isDefault: networks.length === 0 },
+      },
     });
   };
 
-  if (loading || existing) {
+  if (loading || guarded) {
     return (
       <>
         <Skeleton width="60%" height={42} />

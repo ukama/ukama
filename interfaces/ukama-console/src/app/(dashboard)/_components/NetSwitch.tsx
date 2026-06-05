@@ -7,7 +7,14 @@
  */
 'use client';
 
-import { useState } from 'react';
+/**
+ * Network switcher (top bar) — live getNetworks data. The selected id lives
+ * in useUiPrefs; if it doesn't resolve to a real network (deleted, or the
+ * old seed default) it self-heals to the default/first network. "Add
+ * network" enters /configure with flow=add-network (no onboarding guard).
+ */
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Menu from '@mui/material/Menu';
@@ -16,21 +23,26 @@ import Typography from '@mui/material/Typography';
 import AddRounded from '@mui/icons-material/AddRounded';
 import CheckRounded from '@mui/icons-material/CheckRounded';
 import UnfoldMoreRounded from '@mui/icons-material/UnfoldMoreRounded';
-import { NETWORKS } from '@/data';
-import { useUiPrefs } from '@/lib/store';
-import OnboardingFlow from './OnboardingFlow';
 
-const STATUS_DOT: Record<string, string> = {
-  online: 'var(--uk-success-bright)',
-  degraded: 'var(--uk-warning)',
-  offline: 'var(--uk-error)',
-};
+import { useGetNetworksQuery } from '@/client/graphql/networks.generated';
+import { useUiPrefs } from '@/lib/store';
 
 export default function NetSwitch() {
+  const router = useRouter();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
-  const [showOnboarding, setShowOnboarding] = useState(false);
   const { networkId, setNetworkId } = useUiPrefs();
-  const net = NETWORKS.find((n) => n.id === networkId) ?? NETWORKS[0];
+
+  const { data, loading } = useGetNetworksQuery();
+  const networks = data?.getNetworks.networks ?? [];
+  const selected = networks.find((n) => n.id === networkId);
+  const fallback = networks.find((n) => n.isDefault) ?? networks[0];
+
+  // Self-heal a stale selection (seed default / deleted network).
+  useEffect(() => {
+    if (!loading && !selected && fallback) setNetworkId(fallback.id);
+  }, [loading, selected, fallback, setNetworkId]);
+
+  const current = selected ?? fallback;
 
   return (
     <>
@@ -41,7 +53,9 @@ export default function NetSwitch() {
         aria-haspopup="menu"
       >
         <span className="dot" />
-        <span className="nm">{net ? net.name : 'Network'}</span>
+        <span className="nm">
+          {current ? current.name : loading ? '…' : 'No network'}
+        </span>
         <UnfoldMoreRounded
           sx={{ fontSize: 18, color: 'rgba(255,255,255,.55)' }}
         />
@@ -66,10 +80,17 @@ export default function NetSwitch() {
         >
           Networks
         </Typography>
-        {NETWORKS.map((n) => (
+        {networks.length === 0 && (
+          <Typography
+            sx={{ px: 1.5, py: 1, fontSize: 13, color: 'text.disabled' }}
+          >
+            {loading ? 'Loading networks…' : 'No networks yet'}
+          </Typography>
+        )}
+        {networks.map((n) => (
           <MenuItem
             key={n.id}
-            selected={n.id === networkId}
+            selected={n.id === current?.id}
             onClick={() => {
               setNetworkId(n.id);
               setAnchor(null);
@@ -84,7 +105,9 @@ export default function NetSwitch() {
                 mt: '6px',
                 mr: 1.25,
                 flex: 'none',
-                bgcolor: STATUS_DOT[n.status],
+                bgcolor: n.isDeactivated
+                  ? 'var(--uk-error)'
+                  : 'var(--uk-success-bright)',
               }}
             />
             <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -92,18 +115,20 @@ export default function NetSwitch() {
                 {n.name}
               </Typography>
               <Typography sx={{ fontSize: 12, color: 'text.disabled' }}>
-                {n.region}
+                {n.isDefault ? 'Default network' : ' '}
               </Typography>
             </Box>
-            {n.id === networkId && (
-              <CheckRounded sx={{ fontSize: 18, color: 'primary.main', mt: '4px' }} />
+            {n.id === current?.id && (
+              <CheckRounded
+                sx={{ fontSize: 18, color: 'primary.main', mt: '4px' }}
+              />
             )}
           </MenuItem>
         ))}
         <MenuItem
           onClick={() => {
             setAnchor(null);
-            setShowOnboarding(true);
+            router.push('/configure/network?flow=add-network');
           }}
           sx={{ mt: 0.5 }}
         >
@@ -113,7 +138,6 @@ export default function NetSwitch() {
           Add network
         </MenuItem>
       </Menu>
-      {showOnboarding && <OnboardingFlow onClose={() => setShowOnboarding(false)} />}
     </>
   );
 }
