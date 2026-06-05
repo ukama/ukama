@@ -12,6 +12,8 @@ import { useColorScheme } from '@mui/material/styles';
 import DarkModeRounded from '@mui/icons-material/DarkModeRounded';
 import LightModeRounded from '@mui/icons-material/LightModeRounded';
 import MenuRounded from '@mui/icons-material/MenuRounded';
+
+import { useAuth } from '@/lib/auth/context';
 import LensSegment from './LensSegment';
 import NetSwitch from './NetSwitch';
 import NotificationsMenu from './NotificationsMenu';
@@ -45,7 +47,37 @@ function ThemeToggle() {
   );
 }
 
+/** Authenticated user's org name — plain label, bold, theme accent color. */
+function OrgLabel() {
+  const user = useAuth();
+  if (!user?.orgName) return null;
+  return (
+    <span
+      title={`Organization: ${user.orgName}`}
+      style={{
+        fontFamily: 'var(--font-display)',
+        fontSize: 14,
+        fontWeight: 700,
+        color: 'var(--uk-ac)',
+        whiteSpace: 'nowrap',
+        marginRight: 4,
+      }}
+    >
+      {user.orgName}
+    </span>
+  );
+}
+
+const initials = (name?: string): string =>
+  (name ?? '')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part[0]?.toUpperCase())
+    .join('') || '?';
+
 export default function TopBar({ onMenu }: { onMenu: () => void }) {
+  const user = useAuth();
   return (
     <header className="topbar">
       <button
@@ -59,10 +91,11 @@ export default function TopBar({ onMenu }: { onMenu: () => void }) {
       <NetSwitch />
       <LensSegment />
       <div className="spacer" />
+      <OrgLabel />
       <ThemeToggle />
       <NotificationsMenu />
-      <button type="button" className="avatar" title="Account">
-        JM
+      <button type="button" className="avatar" title={user?.name ?? 'Account'}>
+        {initials(user?.name)}
       </button>
     </header>
   );

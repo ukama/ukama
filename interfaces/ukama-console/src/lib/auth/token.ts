@@ -90,7 +90,19 @@ export async function fetchSession(
         'content-type': 'application/json',
       },
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      // The BFF 401 body names the failing validation step
+      // (KRATOS_WHOAMI | USER_LOOKUP | ORG_MEMBERSHIP | MEMBER_ROLE | CLAIMS)
+      // — log it server-side so the Next console says why auth failed.
+      const body = (await res.json().catch(() => null)) as {
+        step?: string;
+        error?: string;
+      } | null;
+      console.error(
+        `[auth] /get-user failed (${res.status})${body?.step ? ` at ${body.step}` : ''}: ${body?.error ?? 'no detail'}`,
+      );
+      return null;
+    }
 
     const data = (await res.json()) as BffSessionResponse;
     if (!data?.token) return null;

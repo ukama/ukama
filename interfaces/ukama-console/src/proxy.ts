@@ -46,8 +46,11 @@ const logoutRedirect = (): NextResponse => {
 export default async function proxy(
   request: NextRequest,
 ): Promise<NextResponse> {
-  // Auth API routes must run even when the token cookie is missing/stale.
-  if (request.nextUrl.pathname.startsWith('/api/auth')) {
+  const { pathname } = request.nextUrl;
+  // Auth API routes must run even when the token cookie is missing/stale;
+  // /unauthorized must render without a resolvable user (it's the landing
+  // page for exactly that case).
+  if (pathname.startsWith('/api/auth') || pathname === '/unauthorized') {
     return NextResponse.next();
   }
 
@@ -62,8 +65,16 @@ export default async function proxy(
 
   if (!user) {
     const result = await fetchSession(request.headers.get('cookie') ?? '');
-    // Session no longer resolves to a user (expired/invalid) → re-auth.
-    if (!result) return logoutRedirect();
+    // Session exists but doesn't resolve to a complete console identity
+    // (no ukama user / no org / no role / incomplete claims — the BFF
+    // returned 401 with the failing step). Don't bounce to the auth app
+    // (the Kratos session is valid — that would loop); land on
+    // /unauthorized, where the user can only log out or contact support.
+    if (!result) {
+      const res = NextResponse.redirect(new URL('/unauthorized', request.url));
+      res.cookies.delete(TOKEN_COOKIE);
+      return res;
+    }
     user = result.user;
     freshToken = result.token;
   }

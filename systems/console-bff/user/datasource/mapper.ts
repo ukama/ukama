@@ -28,7 +28,17 @@ export const dtoToUserResDto = (res: UserAPIResDto): UserResDto => {
 export const dtoToWhoamiResDto = (res: WhoamiAPIDto): WhoamiDto => {
   const ownerOfOrgs: OrgDto[] = [];
   const memberOfOrgs: OrgDto[] = [];
-  res.ownerOf.forEach(org => {
+  // Nucleus responds in snake_case (owner_of/member_of), consistent with its
+  // other fields; tolerate both shapes so a missing list never throws.
+  const raw = res as unknown as {
+    ownerOf?: WhoamiAPIDto["ownerOf"];
+    owner_of?: WhoamiAPIDto["ownerOf"];
+    memberOf?: WhoamiAPIDto["memberOf"];
+    member_of?: WhoamiAPIDto["memberOf"];
+  };
+  const ownerOf = raw.ownerOf ?? raw.owner_of ?? [];
+  const memberOf = raw.memberOf ?? raw.member_of ?? [];
+  ownerOf.forEach(org => {
     ownerOfOrgs.push({
       id: org.id,
       name: org.name,
@@ -40,7 +50,7 @@ export const dtoToWhoamiResDto = (res: WhoamiAPIDto): WhoamiDto => {
       createdAt: org.created_at,
     });
   });
-  res.memberOf.forEach(org => {
+  memberOf.forEach(org => {
     if (org.name !== COMMUNITY_ORG_NAME) {
       memberOfOrgs.push({
         id: org.id,

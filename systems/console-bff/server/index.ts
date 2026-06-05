@@ -41,7 +41,7 @@ import { configureExpress } from "../common/middleware/expressApp";
 import { persistedOperations } from "../common/middleware/persistedOperations";
 import { closeStore, openStore } from "../common/storage";
 import { THeaders } from "../common/types";
-import InitAPI from "../init/datasource/init_api";
+import InitAPI, { SessionValidationError } from "../init/datasource/init_api";
 import { AppContext, buildDataSources, buildHeaders } from "./context";
 import { buildAppSchema } from "./schema";
 
@@ -191,10 +191,13 @@ const startServer = async () => {
       res.setHeader("Content-Type", "application/json");
       return res.send(sessionRes);
     } catch (err) {
-      logger.error(`get-user failed: ${err}`);
-      return res
-        .status(500)
-        .send(new HTTP500Error("Failed to validate session"));
+      const reason = err instanceof Error ? err.message : String(err);
+      const step = err instanceof SessionValidationError ? err.step : "UNKNOWN";
+      logger.error(`get-user failed at ${step}: ${reason}`);
+      // 401 (not 500): the session/user mapping is invalid — clients should
+      // re-authenticate or land on /unauthorized. Step + reason included so
+      // both the console and the logs say which hop broke.
+      return res.status(401).json({ step, error: reason });
     }
   });
 
