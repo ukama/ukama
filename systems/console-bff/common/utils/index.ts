@@ -13,7 +13,7 @@ import { RootDatabase } from "lmdb";
 import InitAPI from "../../init/datasource/init_api";
 import { MetricRes, MetricsRes } from "../../subscriptions/resolvers/types";
 import { verifyToken } from "../auth/token";
-import { SUB_GRAPHS } from "../configs";
+import { INIT_API_GW, SUB_GRAPHS } from "../configs";
 import {
   GRAPHS_TYPE,
   NODE_TYPE,
@@ -121,6 +121,13 @@ const parseExpressHeaders = (reqHeader: IncomingHttpHeaders): THeaders => {
 
   if (sessionToken) {
     headers.auth.Authorization = sessionToken;
+    // The header carries the signed token itself — verify and keep it so
+    // org/user claims can be decoded (previously returned with token unset,
+    // leaving orgId/orgName/userId empty for header-based clients).
+    if (!verifyTokenClaims(sessionToken)) {
+      throw new UnauthenticatedError(Messages.HEADER_ERR_AUTH);
+    }
+    headers.token = sessionToken;
     return headers;
   }
 
@@ -433,33 +440,45 @@ const getBaseURL = async (
 ): Promise<ResponseObj> => {
   const isForNodeGw = SUB_GRAPHS[serviceName]?.isForNodeGw ?? false;
   const sysName = getSystemNameByService(serviceName);
-  logger.info(`${store?.get("org")}`);
+  if (store) logger.debug(`store org: ${store.get("org")}`);
+
+  // Diagnosable failures: say exactly WHY the lookup can't happen.
+  if (!orgName) {
+    const message = `Base URL lookup skipped for service '${serviceName}': orgName is empty (token claims missing?)`;
+    logger.error(message);
+    return { status: 500, message };
+  }
+  if (!sysName) {
+    const message = `Base URL lookup skipped: no system mapping for service '${serviceName}' (getSystemNameByService)`;
+    logger.error(message);
+    return { status: 500, message };
+  }
 
   const initAPI = new InitAPI();
-  if (orgName && sysName) {
-    try {
-      const intRes = await initAPI.getSystem(orgName, sysName);
-      if (isForNodeGw) {
-        return {
-          status: 200,
-          message: `http://${intRes.nodeGwIp}:${intRes.nodeGwPort}`,
-        };
-      } else {
-        return {
-          status: 200,
-          message: intRes.apiGwUrl
-            ? intRes.apiGwUrl
-            : `http://${intRes.apiGwIp}:${intRes.apiGwPort}`,
-        };
-      }
-    } catch (e) {
-      logger.error(`Error getting base URL for ${orgName}-${sysName}: ${e}`);
+  try {
+    const intRes = await initAPI.getSystem(orgName, sysName);
+    if (isForNodeGw) {
+      return {
+        status: 200,
+        message: `http://${intRes.nodeGwIp}:${intRes.nodeGwPort}`,
+      };
     }
+    return {
+      status: 200,
+      message: intRes.apiGwUrl
+        ? intRes.apiGwUrl
+        : `http://${intRes.apiGwIp}:${intRes.apiGwPort}`,
+    };
+  } catch (e) {
+    const errCause = (e as { cause?: unknown })?.cause;
+    const cause =
+      e instanceof Error
+        ? `${e.message}${errCause ? ` (${errCause})` : ""}`
+        : e;
+    const message = `init lookup failed for ${orgName}/${sysName} via ${INIT_API_GW}: ${cause}`;
+    logger.error(message);
+    return { status: 500, message };
   }
-  return {
-    status: 500,
-    message: "Unable to reach system",
-  };
 };
 
 const csvToBase64 = (filePath: string) => {
