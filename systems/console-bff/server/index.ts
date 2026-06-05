@@ -39,9 +39,13 @@ import { HTTP401Error, HTTP500Error, Messages } from "../common/errors";
 import { logger } from "../common/logger";
 import { configureExpress } from "../common/middleware/expressApp";
 import { persistedOperations } from "../common/middleware/persistedOperations";
-import { closeStore, openStore } from "../common/storage";
+import { addInStore, closeStore, openStore } from "../common/storage";
 import { THeaders } from "../common/types";
-import InitAPI, { SessionValidationError } from "../init/datasource/init_api";
+import { parseExpressHeaders, parseToken } from "../common/utils";
+import InitAPI, {
+  SessionValidationError,
+  getWelcomeStoreKey,
+} from "../init/datasource/init_api";
 import { AppContext, buildDataSources, buildHeaders } from "./context";
 import { buildAppSchema } from "./schema";
 
@@ -179,6 +183,35 @@ const startServer = async () => {
     });
     res.send("Theme set successfully");
   });
+
+  // Marks the welcome page as acknowledged for the authenticated user.
+  // Auth: same signed-token verification as /graphql (cookie or
+  // x-session-token). Once recorded, /get-user mints subsequent tokens with
+  // isShowWelcome=false, so the console stops routing the user to /welcome.
+  app.post(
+    "/welcome-seen",
+    cors({
+      origin: [AUTH_APP_URL, PLAYGROUND_URL, CONSOLE_APP_URL],
+      credentials: true,
+    }),
+    async (req, res) => {
+      try {
+        const headers = parseExpressHeaders(req.headers);
+        const userId = parseToken(headers.token, "userId");
+        if (!userId) {
+          return res
+            .status(401)
+            .send(new HTTP401Error(Messages.HEADER_ERR_USER));
+        }
+        await addInStore(store, getWelcomeStoreKey(userId), true);
+        return res.status(200).json({ ok: true });
+      } catch (err) {
+        const reason = err instanceof Error ? err.message : String(err);
+        logger.error(`welcome-seen failed: ${reason}`);
+        return res.status(401).send(new HTTP401Error(Messages.HEADER_ERR_AUTH));
+      }
+    }
+  );
 
   app.get("/get-user", async (req, res) => {
     const cookies = req.headers["cookie"];

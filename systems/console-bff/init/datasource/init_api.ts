@@ -13,7 +13,7 @@ import { INIT_API_GW, TOKEN_TTL_SECONDS, VERSION } from "../../common/configs";
 import COUNTRIES from "../../common/data/countries";
 import { BaseRESTDataSource } from "../../common/datasource";
 import { ROLE_TYPE } from "../../common/enums";
-import { addInStore, getFromStore } from "../../common/storage";
+import { getFromStore } from "../../common/storage";
 import { getBaseURL } from "../../common/utils";
 import MemberApi from "../../member/datasource/member_api";
 import UserApi from "../../user/datasource/user_api";
@@ -40,6 +40,10 @@ export type SessionStep =
   | "ORG_MEMBERSHIP"
   | "MEMBER_ROLE"
   | "CLAIMS";
+
+/** LMDB key recording that a user has acknowledged the welcome page. */
+export const getWelcomeStoreKey = (userId: string): string =>
+  `${userId}-welcome`;
 
 export class SessionValidationError extends Error {
   constructor(
@@ -177,9 +181,15 @@ class InitAPI extends BaseRESTDataSource {
       role === ROLE_TYPE.ROLE_ADMIN ||
       role === ROLE_TYPE.ROLE_NETWORK_OWNER
     ) {
-      const isAlreadyWelcomed = await getFromStore(store, `${userId}-welcome`);
+      // Eligible until the user explicitly acknowledges the welcome page
+      // (POST /welcome-seen). Marking at mint time would hide the page for
+      // users who logged in but never reached the console, and a re-minted
+      // token mid-session would keep showing it for the token's lifetime.
+      const isAlreadyWelcomed = await getFromStore(
+        store,
+        getWelcomeStoreKey(userId)
+      );
       if (typeof isAlreadyWelcomed !== "boolean") {
-        await addInStore(store, `${userId}-welcome`, true);
         isWelcomeEligible = true;
       }
     }

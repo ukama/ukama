@@ -79,16 +79,12 @@ export default async function proxy(
     freshToken = result.token;
   }
 
-  // Forward the user to server components (getCurrentUser) via a header.
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set(USER_HEADER, encodeUser(user));
-
-  const response = NextResponse.next({ request: { headers: requestHeaders } });
-  if (freshToken) {
-    // Write the Set-Cookie header raw: response.cookies.set() percent-encodes
-    // the value (+ / = in the base64 payload), and the gateway verifies the
-    // HMAC over the exact payload bytes — an encoded token fails with 401.
-    // Raw is safe here: base64 + base64url contain no ';' or whitespace.
+  // Write the Set-Cookie header raw: response.cookies.set() percent-encodes
+  // the value (+ / = in the base64 payload), and the gateway verifies the
+  // HMAC over the exact payload bytes — an encoded token fails with 401.
+  // Raw is safe here: base64 + base64url contain no ';' or whitespace.
+  const attachFreshToken = (res: NextResponse): NextResponse => {
+    if (!freshToken) return res;
     const parts = [
       `${TOKEN_COOKIE}=${freshToken}`,
       'Path=/',
@@ -97,9 +93,30 @@ export default async function proxy(
       `Max-Age=${TOKEN_MAX_AGE_SECONDS}`,
     ];
     if (env.NODE_ENV === 'production') parts.push('Secure');
-    response.headers.append('set-cookie', parts.join('; '));
+    res.headers.append('set-cookie', parts.join('; '));
+    return res;
+  };
+
+  // First-visit welcome gate (page navigations only): eligible users land on
+  // /welcome until they acknowledge it; everyone else is kept out of it.
+  if (!pathname.startsWith('/api')) {
+    const onWelcome = pathname === '/welcome';
+    if (user.isShowWelcome && !onWelcome) {
+      return attachFreshToken(
+        NextResponse.redirect(new URL('/welcome', request.url)),
+      );
+    }
+    if (!user.isShowWelcome && onWelcome) {
+      return attachFreshToken(NextResponse.redirect(new URL('/', request.url)));
+    }
   }
-  return response;
+
+  // Forward the user to server components (getCurrentUser) via a header.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(USER_HEADER, encodeUser(user));
+
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  return attachFreshToken(response);
 }
 
 export const config = {
