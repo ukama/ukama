@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/uuid"
@@ -22,10 +23,25 @@ import (
 	"github.com/ukama/ukama/systems/node/controller/mocks"
 	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	"github.com/ukama/ukama/systems/node/controller/pkg"
+	opmonpb "github.com/ukama/ukama/systems/node/operation-monitor/pb/gen"
+	opmgrpb "github.com/ukama/ukama/systems/operation/manager/pb/gen"
 	"google.golang.org/protobuf/proto"
 )
 
 const testOrgName = "test-org"
+
+// opMocks returns operation-manager + monitor mocks pre-wired for the happy
+// path (lock acquired, intent registered, marked running).
+func opMocks() (*mocks.OperationManager, *mocks.OperationMonitor) {
+	opMgr := &mocks.OperationManager{}
+	opMon := &mocks.OperationMonitor{}
+	opMgr.On("Start", mock.Anything).Return(&opmgrpb.StartOperationResponse{
+		Operation: &opmgrpb.Operation{Id: uuid.NewV4().String(), FencingToken: 1},
+	}, nil)
+	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil)
+	opMgr.On("MarkRunning", mock.Anything, mock.Anything).Return(&opmgrpb.MarkRunningResponse{}, nil)
+	return opMgr, opMon
+}
 
 // TODO: Commenting this test as it is failing and not making sense to me, need to revisit this with @Brackleycassinga
 // func TestControllerServer_RestartSite(t *testing.T) {
@@ -71,7 +87,8 @@ func TestControllerServer_RestartNode(t *testing.T) {
 	conRepo := &mocks.NodeLogRepo{}
 
 	nodeId := "uk-983794-hnode-78-7830"
-	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
+	opMgr, opMon := opMocks()
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, opMgr, opMon, 600, 600, pkg.IsDebugMode)
 
 	NodeLog := db.NodeLog{
 		NodeId: nodeId,
@@ -100,7 +117,8 @@ func TestControllerServer_RestartNodes(t *testing.T) {
 	conRepo := &mocks.NodeLogRepo{}
 	netId := uuid.NewV4()
 	nodeId := "uk-983794-hnode-78-7830"
-	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
+	opMgr, opMon := opMocks()
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, opMgr, opMon, 600, 600, pkg.IsDebugMode)
 
 	msg := &pb.RestartNodeRequest{
 		NodeId: nodeId,
@@ -138,7 +156,8 @@ func TestControllerServer_ToggleRf(t *testing.T) {
 	conRepo := &mocks.NodeLogRepo{}
 
 	nodeId := "uk-983794-anode-78-7830"
-	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
+	opMgr, opMon := opMocks()
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, opMgr, opMon, 600, 600, pkg.IsDebugMode)
 
 	jsonBody := map[string]string{"state": "on"}
 	data, err := json.Marshal(jsonBody)
@@ -167,7 +186,8 @@ func TestControllerServer_ToggleNodeService(t *testing.T) {
 	conRepo := &mocks.NodeLogRepo{}
 
 	nodeId := "uk-983794-tnode-78-7830"
-	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
+	opMgr, opMon := opMocks()
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, opMgr, opMon, 600, 600, pkg.IsDebugMode)
 
 	jsonBody := map[string]string{"state": "on"}
 	data, err := json.Marshal(jsonBody)
@@ -195,7 +215,8 @@ func TestControllerServer_ToggleNodeService_InvalidNodeId(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 	conRepo := &mocks.NodeLogRepo{}
 
-	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
+	opMgr, opMon := opMocks()
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, opMgr, opMon, 600, 600, pkg.IsDebugMode)
 
 	_, err := s.ToggleNodeService(context.TODO(), &pb.ToggleNodeServiceRequest{
 		NodeId: "uk-983794-anode-78-7830",

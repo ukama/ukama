@@ -12,7 +12,7 @@ import "time"
 
 const (
 	SystemName  = "node"
-	ServiceName = "operation-monitor"
+	ServiceName = "operationmonitor"
 )
 
 const (
