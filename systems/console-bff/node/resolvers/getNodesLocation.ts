@@ -7,14 +7,15 @@
  */
 import { Ctx, Query, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { Nodes } from "./types";
 
 @Resolver()
 export class GetNodesLocationResolver {
   @Query(() => Nodes)
-  async getNodesLocation(@Ctx() context: Context) {
-    const { dataSources, baseURL } = context;
+  async getNodesLocation(@Ctx() context: AppContext) {
+    const { dataSources } = context;
+    const baseURL = await context.urls.url("node");
     const res = await dataSources.node.getNodes(baseURL, {});
     const nodes: Nodes = { nodes: [] };
 

@@ -8,7 +8,7 @@
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
 import { CBooleanResponse } from "../../common/types";
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { SetDefaultNetworkInputDto } from "./types";
 
 @Resolver()
@@ -16,9 +16,10 @@ export class SetDefaultNetworkResolver {
   @Mutation(() => CBooleanResponse)
   async setDefaultNetwork(
     @Arg("data") data: SetDefaultNetworkInputDto,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<CBooleanResponse> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("network");
     const res = await dataSources.network.setDefaultNetwork(baseURL, data.id);
     return {
       success: res.success,

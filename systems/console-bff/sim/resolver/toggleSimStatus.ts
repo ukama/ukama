@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { SimStatusResDto, ToggleSimStatusInputDto } from "./types";
 
 @Resolver()
@@ -15,9 +15,10 @@ export class ToggleSimStatusResolver {
   @Mutation(() => SimStatusResDto)
   async toggleSimStatus(
     @Arg("data") data: ToggleSimStatusInputDto,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<SimStatusResDto> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("sim");
     return await dataSources.sim.toggleSimStatus(baseURL, data);
   }
 }

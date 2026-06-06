@@ -8,7 +8,7 @@
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
 import { logger } from "../../common/logger";
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { PaymentDto, UpdatePaymentInputDto } from "./types";
 
 @Resolver()
@@ -16,9 +16,10 @@ export class UpdatePaymentResolver {
   @Mutation(() => PaymentDto)
   async updatePayment(
     @Arg("data") data: UpdatePaymentInputDto,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<PaymentDto> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("payments");
     let payment: PaymentDto | undefined = undefined;
 
     logger.info(`Updating payment for bill: ${data.id}`);

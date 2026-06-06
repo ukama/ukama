@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { SiteDto } from "./types";
 
 @Resolver()
@@ -15,9 +15,10 @@ export class GetSiteResolver {
   @Query(() => SiteDto)
   async getSite(
     @Arg("siteId") siteId: string,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<SiteDto> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("site");
 
     return dataSources.site.getSite(baseURL, siteId);
   }

@@ -8,14 +8,15 @@
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
 import { CBooleanResponse } from "../../common/types";
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { NodeInput } from "./types";
 
 @Resolver()
 export class DetachNodeResolver {
   @Mutation(() => CBooleanResponse)
-  async detachhNode(@Arg("data") data: NodeInput, @Ctx() context: Context) {
-    const { dataSources, baseURL } = context;
+  async detachhNode(@Arg("data") data: NodeInput, @Ctx() context: AppContext) {
+    const { dataSources } = context;
+    const baseURL = await context.urls.url("node");
     return await dataSources.node.detachhNode(baseURL, {
       id: data.id,
     });

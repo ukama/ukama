@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { PackageDto, UpdatePackageInputDto } from "./types";
 
 @Resolver()
@@ -16,9 +16,10 @@ export class UpdatePackageResolver {
   async updatePackage(
     @Arg("packageId") packageId: string,
     @Arg("data") data: UpdatePackageInputDto,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<PackageDto> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("package");
     return dataSources.package.updatePackage(baseURL, packageId, data);
   }
 }

@@ -7,23 +7,16 @@
  */
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
-import { SUB_GRAPHS } from "../../common/configs";
-import { openStore } from "../../common/storage";
-import { getBaseURL } from "../../common/utils";
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { NodeStateRes } from "./types";
 
 @Resolver()
 export class GetNodeStateResolver {
   @Query(() => NodeStateRes)
-  async getNodeState(@Arg("id") id: string, @Ctx() context: Context) {
-    const { dataSources, headers } = context;
-    const store = openStore();
-    const baseURL = await getBaseURL(
-      SUB_GRAPHS.state.name,
-      headers.orgName,
-      store
-    );
-    return await dataSources.node.getNodeState(baseURL.message, id);
+  async getNodeState(@Arg("id") id: string, @Ctx() context: AppContext) {
+    const { dataSources } = context;
+    // Node state lives behind the "state" service (mapped to the node system).
+    const baseURL = await context.urls.url("state");
+    return await dataSources.node.getNodeState(baseURL, id);
   }
 }

@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { TokenResDto } from "./types";
 
 @Resolver()
@@ -15,9 +15,10 @@ export class GetTokenResolver {
   @Query(() => TokenResDto)
   async getToken(
     @Arg("paymentId") paymentId: string,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<TokenResDto> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("payments");
     return dataSources.payment.getToken(baseURL, paymentId);
   }
 }

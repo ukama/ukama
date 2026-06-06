@@ -164,6 +164,15 @@
   grid-template-columns: 1fr 1fr;
   gap: 14px;
 }
+.ff-readonly {
+  font-size: 14px;
+  color: var(--uk-ink-2);
+  padding: 10px 12px;
+  border-radius: var(--uk-r-sm);
+  background: var(--uk-hover);
+  border: 1px solid var(--uk-line);
+  overflow-wrap: anywhere;
+}
 .flabel {
   font-size: 12.5px;
   font-weight: 600;

@@ -417,13 +417,13 @@
 }
 
 /* ---- page head ---- */
+/* Two-column grid so the right column aligns row-by-row with the left:
+   timestamp ↔ breadcrumb (top row), actions ↔ title (title row). */
 .pagehead {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 18px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 18px;
   margin-bottom: 18px;
-  flex-wrap: wrap;
 }
 .pagehead .crumb {
   display: flex;
@@ -431,7 +431,7 @@
   gap: 4px;
   font-size: 12.5px;
   color: var(--uk-ink-3);
-  margin-bottom: 4px;
+  margin-bottom: 12px;
 }
 .pagehead .pagetitle {
   font-family: var(--font-display), 'Work Sans', sans-serif;
@@ -448,13 +448,53 @@
 .pagehead .pagesub {
   font-size: 13.5px;
   color: var(--uk-ink-2);
-  margin-top: 5px;
+  margin-top: 2px;
 }
-.pagehead-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 10px;
+
+/* --- no breadcrumb: title at top-left; timestamp + actions stacked right --- */
+.pagehead .pagetitle {
+  grid-column: 1;
+  grid-row: 1;
+}
+.pagehead .page-fetched {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  align-self: center;
+}
+.pagehead .head-actions {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: end;
+  align-self: start;
+  margin-top: 10px;
+}
+.pagehead .pagesub {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+/* --- with breadcrumb: crumb↔timestamp (row 1), title↔actions (row 2) --- */
+.pagehead.has-crumb .crumb {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: start;
+}
+/* Top-align with the breadcrumb (whose margin-bottom makes its cell taller). */
+.pagehead.has-crumb .page-fetched {
+  grid-row: 1;
+  align-self: start;
+}
+.pagehead.has-crumb .pagetitle {
+  grid-row: 2;
+}
+.pagehead.has-crumb .head-actions {
+  grid-row: 2;
+  align-self: center;
+  margin-top: 0;
+}
+.pagehead.has-crumb .pagesub {
+  grid-row: 3;
 }
 .page-fetched {
   display: inline-flex;

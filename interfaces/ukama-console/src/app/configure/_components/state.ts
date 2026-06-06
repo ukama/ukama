@@ -23,6 +23,9 @@ const paramsSchema = z.object({
   flow: z.enum(FLOWS).catch('onboarding'),
   networkid: z.string().catch(''),
   nid: z.string().catch(''),
+  /** Carried from the name step into the settings step. */
+  sitename: z.string().catch(''),
+  location: z.string().catch(''),
 });
 
 export type ConfigureParams = z.infer<typeof paramsSchema>;
@@ -33,6 +36,8 @@ export function useConfigureParams(): ConfigureParams {
     flow: sp.get('flow') ?? undefined,
     networkid: sp.get('networkid') ?? undefined,
     nid: sp.get('nid') ?? undefined,
+    sitename: sp.get('sitename') ?? undefined,
+    location: sp.get('location') ?? undefined,
   });
 }
 
@@ -45,6 +50,8 @@ export function stepUrl(
   if (params.flow && params.flow !== 'onboarding') q.set('flow', params.flow);
   if (params.networkid) q.set('networkid', params.networkid);
   if (params.nid) q.set('nid', params.nid);
+  if (params.sitename) q.set('sitename', params.sitename);
+  if (params.location) q.set('location', params.location);
   const qs = q.toString();
   return qs ? `${path}?${qs}` : path;
 }

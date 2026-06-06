@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { AddMemberInputDto, MemberDto } from "./types";
 
 @Resolver()
@@ -15,9 +15,10 @@ export class AddMemberResolver {
   @Mutation(() => MemberDto)
   async addMember(
     @Arg("data") data: AddMemberInputDto,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<MemberDto> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("member");
     return dataSources.member.addMember(baseURL, data);
   }
 }

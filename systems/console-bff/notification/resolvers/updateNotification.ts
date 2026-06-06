@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { UpdateNotificationResDto } from "./types";
 
 @Resolver()
@@ -16,9 +16,10 @@ export class UpdateNotificationResolver {
   async updateNotification(
     @Arg("id") id: string,
     @Arg("isRead") isRead: boolean,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<UpdateNotificationResDto> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("notification");
     return dataSources.notification.updateNotification(baseURL, id, isRead);
   }
 }

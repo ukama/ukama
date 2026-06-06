@@ -7,14 +7,15 @@
  */
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { AddNodeInput, Node } from "./types";
 
 @Resolver()
 export class AddNodeResolver {
   @Mutation(() => Node)
-  async addNode(@Arg("data") data: AddNodeInput, @Ctx() context: Context) {
-    const { dataSources, baseURL } = context;
+  async addNode(@Arg("data") data: AddNodeInput, @Ctx() context: AppContext) {
+    const { dataSources } = context;
+    const baseURL = await context.urls.url("node");
     return await dataSources.node.addNode(baseURL, {
       id: data.id,
       name: data.name,

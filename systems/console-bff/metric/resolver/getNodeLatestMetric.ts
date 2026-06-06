@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { GetNodeLatestMetricInput, NodeLatestMetric } from "./types";
 
 @Resolver()
@@ -15,9 +15,10 @@ export class GetNodeLatestMetricResolver {
   @Query(() => NodeLatestMetric)
   async getNodeLatestMetric(
     @Arg("data") data: GetNodeLatestMetricInput,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<NodeLatestMetric> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("metrics");
     return await dataSources.metric.getNodeLatestMetric(baseURL, data);
   }
 }

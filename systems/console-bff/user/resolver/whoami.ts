@@ -7,13 +7,13 @@
  */
 import { Ctx, Query, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { WhoamiDto } from "./types";
 
 @Resolver()
 export class WhoamiResolver {
   @Query(() => WhoamiDto)
-  async whoami(@Ctx() ctx: Context): Promise<WhoamiDto> {
+  async whoami(@Ctx() ctx: AppContext): Promise<WhoamiDto> {
     const { dataSources, headers } = ctx;
     return await dataSources.user.whoami(headers.userId);
   }

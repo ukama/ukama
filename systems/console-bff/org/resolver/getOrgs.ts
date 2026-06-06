@@ -7,13 +7,13 @@
  */
 import { Ctx, Query, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { OrgsResDto } from "./types";
 
 @Resolver()
 export class GetOrgsResolver {
   @Query(() => OrgsResDto)
-  async getOrgs(@Ctx() ctx: Context): Promise<OrgsResDto> {
+  async getOrgs(@Ctx() ctx: AppContext): Promise<OrgsResDto> {
     const { dataSources, headers } = ctx;
     return dataSources.org.getOrgs(headers.userId);
   }

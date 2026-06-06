@@ -8,7 +8,7 @@
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
 import { CBooleanResponse } from "../../common/types";
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { ToggleInternetSwitchInputDto } from "./types";
 
 @Resolver()
@@ -16,9 +16,10 @@ export class ToggleInternetSwitchResolver {
   @Mutation(() => CBooleanResponse)
   async toggleInternetSwitch(
     @Arg("data") data: ToggleInternetSwitchInputDto,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<CBooleanResponse> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("controller");
     return dataSources.controller.toggleInternetSwitch(baseURL, data);
   }
 }

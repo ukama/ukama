@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { UserResDto } from "./types";
 
 @Resolver()
@@ -15,7 +15,7 @@ export class GetUserResolver {
   @Query(() => UserResDto)
   async getUser(
     @Arg("userId") userId: string,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<UserResDto | null> {
     const { dataSources } = ctx;
     return dataSources.user.getUser(userId);

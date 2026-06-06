@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { ComponentDto } from "./types";
 
 @Resolver()
@@ -15,7 +15,7 @@ export class GetComponentByIdResolver {
   @Query(() => ComponentDto)
   async getComponentById(
     @Arg("componentId") componentId: string,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<ComponentDto> {
     const { dataSources } = ctx;
     return dataSources.component.getComponentById(componentId);

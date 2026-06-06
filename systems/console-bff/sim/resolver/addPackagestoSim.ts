@@ -9,7 +9,7 @@ import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
 import { logger } from "../../common/logger";
 import { mapWithConcurrencySettled } from "../../common/utils/concurrency";
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import {
   AddPackagSimResDto,
   AddPackagesSimResDto,
@@ -21,9 +21,10 @@ export class AddPackagesToSimResolver {
   @Mutation(() => AddPackagesSimResDto)
   async addPackagesToSim(
     @Arg("data") data: AddPackagesToSimInputDto,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<AddPackagesSimResDto> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("sim");
 
     // Parallel with bounded concurrency; report per-package outcome instead
     // of failing the whole mutation on the first error.

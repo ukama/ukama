@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { GetReportDto } from "./types";
 
 @Resolver()
@@ -15,9 +15,10 @@ export class GetReportResolver {
   @Query(() => GetReportDto)
   async getReport(
     @Arg("id") id: string,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<GetReportDto> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("billing");
     return dataSources.billing.getReport(baseURL, id);
   }
 }

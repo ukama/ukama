@@ -31,8 +31,16 @@ const STEPS = [
   '/configure/network',
   '/configure/install',
   '/configure/site',
+  '/configure/site/settings',
   '/configure/sims',
 ] as const;
+
+/** Index of the active step — exact match, longest path wins (site vs site/settings). */
+const stepIndexFor = (pathname: string): number =>
+  STEPS.reduce(
+    (best, step, i) => (pathname === step ? i : best),
+    -1,
+  );
 
 function TreeNode({
   icon,
@@ -65,7 +73,7 @@ export default function ConfigureShell({
   const user = useAuth();
   const orgName = user?.orgName ?? 'Organization';
 
-  const stepIndex = STEPS.findIndex((s) => pathname.startsWith(s));
+  const stepIndex = stepIndexFor(pathname);
   const isComplete = pathname.startsWith('/configure/complete');
 
   // Persist the resume point on every step change; clear it on completion.
@@ -113,7 +121,7 @@ export default function ConfigureShell({
           <TreeNode
             icon={<SimCardRounded sx={{ fontSize: 24 }} />}
             label="SIMs"
-            active={stepIndex >= 3 || isComplete}
+            active={stepIndex >= 4 || isComplete}
             last
           />
         </div>

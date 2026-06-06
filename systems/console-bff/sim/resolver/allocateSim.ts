@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { AllocateSimAPIDto, AllocateSimInputDto } from "./types";
 
 @Resolver()
@@ -15,9 +15,10 @@ export class AllocateSimResolver {
   @Mutation(() => AllocateSimAPIDto)
   async allocateSim(
     @Arg("data") data: AllocateSimInputDto,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<AllocateSimAPIDto> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("sim");
     return await dataSources.sim.allocateSim(baseURL, data);
   }
 }

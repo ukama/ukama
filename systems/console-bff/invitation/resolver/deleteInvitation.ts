@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { DeleteInvitationResDto } from "./types";
 
 @Resolver()
@@ -15,9 +15,10 @@ export class DeleteInvitationResolver {
   @Mutation(() => DeleteInvitationResDto)
   async deleteInvitation(
     @Arg("id") id: string,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<DeleteInvitationResDto> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("invitation");
     return await dataSources.invitation.deleteInvitation(baseURL, id);
   }
 }

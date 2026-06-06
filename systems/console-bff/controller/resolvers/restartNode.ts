@@ -8,7 +8,7 @@
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
 import { CBooleanResponse } from "../../common/types";
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { RestartNodeInputDto } from "./types";
 
 @Resolver()
@@ -16,9 +16,10 @@ export class RestartNodeResolver {
   @Mutation(() => CBooleanResponse)
   async restartNode(
     @Arg("data") data: RestartNodeInputDto,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<CBooleanResponse> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("controller");
     return dataSources.controller.restartNode(baseURL, data);
   }
 }

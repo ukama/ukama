@@ -33,13 +33,6 @@ import type { GetNodesQuery } from '@/client/graphql/nodes.generated';
 
 export type DetectedNode = GetNodesQuery['getNodes']['nodes'][number];
 
-export interface ReadySite {
-  /** Tower node — the one carrying the site's coordinates. */
-  tower: DetectedNode;
-  amplifier: DetectedNode;
-  controller: DetectedNode;
-}
-
 /** Online and not yet configured (status the BFF reports for fresh nodes). */
 const isPoweredAndUnconfigured = (n: DetectedNode): boolean =>
   n.status.connectivity === NodeConnectivityEnum.Online &&
@@ -50,38 +43,6 @@ const hasCoordinates = (n: DetectedNode): boolean => {
   const lng = n.longitude?.trim();
   return Boolean(lat) && Boolean(lng);
 };
-
-/** Swap the node-type token in an id, e.g. tnode → anode. */
-const withType = (towerId: string, type: 'anode' | 'cnode'): string =>
-  towerId.replace('tnode', type);
-
-/**
- * Returns every fully-ready site trio found in the nodes list. A node that is
- * already assigned to a site is ignored (it's not a fresh install).
- */
-export function detectReadySites(nodes: DetectedNode[]): ReadySite[] {
-  const available = nodes.filter((n) => !n.site?.siteId);
-  const byId = new Map(available.map((n) => [n.id, n]));
-
-  const sites: ReadySite[] = [];
-  for (const tower of available) {
-    if (tower.type !== NodeTypeEnum.Tnode) continue;
-    if (!isPoweredAndUnconfigured(tower) || !hasCoordinates(tower)) continue;
-
-    const amplifier = byId.get(withType(tower.id, 'anode'));
-    const controller = byId.get(withType(tower.id, 'cnode'));
-    if (!amplifier || !controller) continue;
-    if (
-      !isPoweredAndUnconfigured(amplifier) ||
-      !isPoweredAndUnconfigured(controller)
-    ) {
-      continue;
-    }
-
-    sites.push({ tower, amplifier, controller });
-  }
-  return sites;
-}
 
 /** Strips the node-type token so the three units of one site share a key. */
 const baseKey = (id: string): string =>

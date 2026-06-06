@@ -7,27 +7,40 @@
  */
 'use client';
 
-/** Data plans — PlanCard grid + create (screens-manage.jsx PlansScreen). */
-import { useState } from 'react';
+/** Data plans — PlanCard grid + create, wired to getPackages. */
+import { useMemo, useState } from 'react';
 import Button from '@mui/material/Button';
+import Skeleton from '@mui/material/Skeleton';
 import AddRounded from '@mui/icons-material/AddRounded';
-import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
+import {
+  useGetPackagesQuery,
+  type PackageFragment,
+} from '@/client/graphql/packages.generated';
+import { EmptyState } from '@/components/EmptyState';
 import PageHeader from '@/components/PageHeader';
-import { PLANS } from '@/data';
 import CreatePlanDialog from '@/features/plans/CreatePlanDialog';
 import PlanCard from '@/features/plans/PlanCard';
+import { packageToPlan } from '@/features/plans/mapPackage';
 
 export default function PlansScreen() {
-  const [showCreate, setShowCreate] = useState(false);
-  const mrr = PLANS.reduce((s, p) => s + p.subs * p.price, 0);
-  const create = () => setShowCreate(true);
+  // null = closed; { pkg: null } = create; { pkg } = edit.
+  const [dialog, setDialog] = useState<{ pkg: PackageFragment | null } | null>(
+    null,
+  );
+  const create = () => setDialog({ pkg: null });
+
+  const { data, loading, error } = useGetPackagesQuery();
+  const packages = useMemo(
+    () => data?.getPackages.packages ?? [],
+    [data],
+  );
 
   return (
     <div className="page">
       <PageHeader
         crumb={['Manage', 'Data plans']}
         title="Data plans"
-        count={PLANS.length}
+        count={loading ? undefined : packages.length}
         sub="Plans you can assign to customers."
         actions={
           <Button variant="contained" startIcon={<AddRounded />} onClick={create}>
@@ -35,39 +48,50 @@ export default function PlansScreen() {
           </Button>
         }
       />
-      <div
-        className="tile-grid"
-        style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}
-      >
-        {PLANS.map((p) => (
-          <PlanCard key={p.id} plan={p} mrr={mrr} onEdit={create} />
-        ))}
-        <button
-          type="button"
-          className="card"
-          onClick={create}
-          style={{
-            border: '1.5px dashed var(--uk-line)',
-            background: 'transparent',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            color: 'var(--uk-ink-3)',
-            cursor: 'pointer',
-            minHeight: 200,
-            fontSize: 14,
-            fontWeight: 600,
-            fontFamily: 'inherit',
-            boxShadow: 'none',
-          }}
+      {loading ? (
+        <div
+          className="tile-grid"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}
         >
-          <AddCircleOutlineRounded sx={{ fontSize: 30 }} />
-          Create a plan
-        </button>
-      </div>
-      {showCreate && <CreatePlanDialog onClose={() => setShowCreate(false)} />}
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} variant="rounded" height={220} />
+          ))}
+        </div>
+      ) : error ? (
+        <div className="card">
+          <EmptyState
+            art="error"
+            title="Couldn't load data plans"
+            sub="Please try again in a moment."
+          />
+        </div>
+      ) : packages.length === 0 ? (
+        <div className="card">
+          <EmptyState
+            art="invoice"
+            title="No data plans yet"
+            sub="Create your first data plan to start assigning it to customers."
+            cta="Create plan"
+            onCta={create}
+          />
+        </div>
+      ) : (
+        <div
+          className="tile-grid"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}
+        >
+          {packages.map((pkg, i) => (
+            <PlanCard
+              key={pkg.uuid}
+              plan={packageToPlan(pkg, i)}
+              onEdit={() => setDialog({ pkg })}
+            />
+          ))}
+        </div>
+      )}
+      {dialog && (
+        <CreatePlanDialog pkg={dialog.pkg} onClose={() => setDialog(null)} />
+      )}
     </div>
   );
 }

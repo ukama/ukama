@@ -7,13 +7,15 @@
  */
 'use client';
 
-/** Agent data plans — read-only browse with search + sort (screens-manage.jsx). */
-import { useState } from 'react';
+/** Agent data plans — read-only browse with search + sort, wired to getPackages. */
+import { useMemo, useState } from 'react';
+import Skeleton from '@mui/material/Skeleton';
+import { useGetPackagesQuery } from '@/client/graphql/packages.generated';
 import { EmptyState } from '@/components/EmptyState';
 import PageHeader from '@/components/PageHeader';
 import SearchField from '@/components/SearchField';
-import { PLANS } from '@/data';
 import PlanCard from '@/features/plans/PlanCard';
+import { packageToPlan } from '@/features/plans/mapPackage';
 
 type Sort = 'price-asc' | 'price-desc' | 'data-desc';
 
@@ -23,7 +25,13 @@ export default function AgentPlansScreen() {
   const vol = (data: string) =>
     /unlim/i.test(data) ? Infinity : parseFloat(data) || 0;
 
-  let list = PLANS.filter((p) => p.name.toLowerCase().includes(q.toLowerCase()));
+  const { data, loading, error } = useGetPackagesQuery();
+  const plans = useMemo(
+    () => (data?.getPackages.packages ?? []).map(packageToPlan),
+    [data],
+  );
+
+  let list = plans.filter((p) => p.name.toLowerCase().includes(q.toLowerCase()));
   list = [...list].sort((a, b) =>
     sort === 'price-asc'
       ? a.price - b.price
@@ -36,7 +44,7 @@ export default function AgentPlansScreen() {
     <div className="page">
       <PageHeader
         title="Data plans"
-        count={PLANS.length}
+        count={loading ? undefined : plans.length}
         sub="Browse plans to assign, top up or change for your customers."
       />
       <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -60,12 +68,30 @@ export default function AgentPlansScreen() {
           ))}
         </div>
         <div style={{ marginLeft: 'auto', fontSize: 13, color: 'var(--uk-ink-3)' }}>
-          {list.length} of {PLANS.length}
+          {list.length} of {plans.length}
         </div>
       </div>
-      {list.length === 0 ? (
+      {loading ? (
+        <div className="tile-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} variant="rounded" height={220} />
+          ))}
+        </div>
+      ) : error ? (
         <div className="card">
-          <EmptyState art="search" title="No plans match" sub="Try a different search term." />
+          <EmptyState art="error" title="Couldn't load data plans" sub="Please try again in a moment." />
+        </div>
+      ) : list.length === 0 ? (
+        <div className="card">
+          <EmptyState
+            art="search"
+            title={plans.length === 0 ? 'No data plans yet' : 'No plans match'}
+            sub={
+              plans.length === 0
+                ? 'Plans created in the business console will appear here.'
+                : 'Try a different search term.'
+            }
+          />
         </div>
       ) : (
         <div className="tile-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>

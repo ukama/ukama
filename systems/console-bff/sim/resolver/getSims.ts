@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { ListSimsInput, SimsResDto } from "./types";
 
 @Resolver()
@@ -15,9 +15,10 @@ export class GetSimsResolver {
   @Query(() => SimsResDto)
   async getSims(
     @Arg("data") data: ListSimsInput,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<SimsResDto> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("sim");
     return await dataSources.sim.list(baseURL, data);
   }
 }

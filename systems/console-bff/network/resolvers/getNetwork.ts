@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { NetworkDto } from "./types";
 
 @Resolver()
@@ -15,9 +15,10 @@ export class GetNetworkResolver {
   @Query(() => NetworkDto)
   async getNetwork(
     @Arg("networkId") networkId: string,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<NetworkDto> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("network");
     return dataSources.network.getNetwork(baseURL, networkId);
   }
 }

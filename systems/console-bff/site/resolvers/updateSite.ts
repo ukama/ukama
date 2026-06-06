@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { SiteDto, UpdateSiteInputDto } from "./types";
 
 @Resolver()
@@ -16,9 +16,10 @@ export class UpdateSiteResolver {
   async updateSite(
     @Arg("siteId") siteId: string,
     @Arg("data") data: UpdateSiteInputDto,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<SiteDto> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("site");
     return dataSources.site.updateSite(baseURL, siteId, data);
   }
 }

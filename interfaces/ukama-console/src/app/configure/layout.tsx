@@ -16,9 +16,12 @@ export default function ConfigureLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    // useSearchParams in the shell requires a Suspense boundary at build time.
-    <Suspense>
-      <ConfigureShell>{children}</ConfigureShell>
-    </Suspense>
+    <div className="cfg-page">
+      <div className="cfg-gradient" />
+      {/* useSearchParams in the shell requires a Suspense boundary at build time. */}
+      <Suspense>
+        <ConfigureShell>{children}</ConfigureShell>
+      </Suspense>
+    </div>
   );
 }

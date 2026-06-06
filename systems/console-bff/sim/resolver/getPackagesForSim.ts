@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { GetPackagesForSimInputDto, GetSimPackagesDtoAPI } from "./types";
 
 @Resolver()
@@ -15,9 +15,10 @@ export class GetPackagesForSimResolver {
   @Query(() => GetSimPackagesDtoAPI)
   async getPackagesForSim(
     @Arg("data") data: GetPackagesForSimInputDto,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<GetSimPackagesDtoAPI> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("sim");
     return await dataSources.sim.getPackagesForSim(baseURL, data);
   }
 }

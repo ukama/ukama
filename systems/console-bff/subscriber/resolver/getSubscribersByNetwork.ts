@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import {
   SubscriberDto,
   SubscriberSimDto,
@@ -20,9 +20,10 @@ export class GetSubscribersByNetworkResolver {
   @Query(() => SubscribersResDto)
   async getSubscribersByNetwork(
     @Arg("networkId") networkId: string,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<SubscribersResDto> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("subscriber");
     const networkSub: SubscriberDto[] = [];
 
     // Independent upstream calls — fetch in parallel.

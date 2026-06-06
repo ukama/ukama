@@ -9,8 +9,27 @@
 /* /configure onboarding flow — split panel (content | progress rail),
    same family as the welcome page; stacked single-column on mobile. */
 
-.cfg-root {
+.cfg-page {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
+}
+
+.cfg-gradient {
+  height: 12px;
+  flex: none;
+  background: linear-gradient(
+    90deg,
+    #00d3eb 0%,
+    #2190f6 14.06%,
+    #6974f8 44.27%,
+    #6974f8 58.85%,
+    #271452 100%
+  );
+}
+
+.cfg-root {
+  flex: 1;
   display: flex;
   align-items: stretch;
   background: var(--uk-page);
@@ -75,6 +94,16 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+
+.cfg-readonly {
+  font-size: 14px;
+  color: var(--uk-ink);
+  padding: 10px 12px;
+  border-radius: var(--uk-r-sm);
+  background: var(--uk-hover);
+  border: 1px solid var(--uk-line);
+  overflow-wrap: anywhere;
 }
 
 .cfg-actions {

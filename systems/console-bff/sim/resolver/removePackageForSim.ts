@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import {
   RemovePackageFormSimInputDto,
   RemovePackageFromSimResDto,
@@ -18,9 +18,10 @@ export class RemovePackageForSimResolver {
   @Mutation(() => RemovePackageFromSimResDto)
   async removePackageForSim(
     @Arg("data") data: RemovePackageFormSimInputDto,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<RemovePackageFromSimResDto> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("sim");
     return await dataSources.sim.removePackageFromSim(baseURL, data);
   }
 }

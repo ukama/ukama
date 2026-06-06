@@ -45,6 +45,7 @@ const TYPE_TTLS: Record<string, number> = {
   // reference data barely changes
   CountryDto: 24 * 60 * MINUTE,
   TimezoneDto: 24 * 60 * MINUTE,
+  CurrencyRes: 24 * 60 * MINUTE,
 };
 
 function makeCache() {

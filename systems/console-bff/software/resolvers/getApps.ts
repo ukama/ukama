@@ -7,14 +7,15 @@
  */
 import { Ctx, Query, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { Apps } from "./types";
 
 @Resolver()
 export class GetApps {
   @Query(() => Apps, { nullable: true })
-  async getApps(@Ctx() ctx: Context): Promise<Apps> {
-    const { dataSources, baseURL } = ctx;
+  async getApps(@Ctx() ctx: AppContext): Promise<Apps> {
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("software");
     return await dataSources.software.getApps(baseURL);
   }
 }
