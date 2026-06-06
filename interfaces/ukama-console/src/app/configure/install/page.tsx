@@ -26,13 +26,14 @@ export default function ConfigureInstallPage() {
     <>
       <h1 className="cfg-title">Install your site</h1>
       <p className="cfg-copy">
-        To install your full site, please install your node(s), power, and
-        backhaul components at their intended location(s). These three
-        elements form a site — a full connection point to the network.
+        A site is a full connection point to your network, made up of three
+        Ukama units installed together along with their power and backhaul.
         <br />
         <br />
-        If you&apos;d like to install your site later, skip this step — you
-        can pick up where you left off anytime.
+        Install all the units at their location, then switch them on and connect
+        them to the internet. Once every unit is powered on and online, we&apos;ll
+        detect your site automatically on the next step. If you&apos;d like to do
+        this later, skip — you can pick up where you left off anytime.
       </p>
       <FormControlLabel
         sx={{ alignSelf: 'baseline' }}
@@ -43,7 +44,7 @@ export default function ConfigureInstallPage() {
             sx={{ p: 0, pr: 1.5 }}
           />
         }
-        label="I have installed my site"
+        label="I've installed and powered on all my units"
       />
       <ConfigureActions
         nextLabel="Next"

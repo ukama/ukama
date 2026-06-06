@@ -137,6 +137,104 @@
   margin: 8px 0;
 }
 
+/* ---- site readiness checklist ---- */
+.cfg-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 4px;
+}
+
+.cfg-checklist-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.cfg-checklist-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--uk-line);
+  overflow: hidden;
+}
+.cfg-checklist-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--uk-success-bright);
+  transition: width 0.4s ease;
+}
+.cfg-checklist-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--uk-ink-2);
+  white-space: nowrap;
+}
+
+.cfg-checklist-sync {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: -8px;
+  font-size: 12px;
+  color: var(--uk-ink-3);
+}
+
+@keyframes cfg-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.cfg-steps-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cfg-step-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--uk-r-md);
+  border: 1px solid transparent;
+}
+.cfg-step-item[data-state='active'] {
+  background: var(--uk-ac-soft);
+  border-color: var(--uk-line);
+}
+.cfg-step-ic {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  margin-top: 1px;
+}
+.cfg-step-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.cfg-step-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--uk-ink);
+}
+.cfg-step-item[data-state='pending'] .cfg-step-title {
+  color: var(--uk-ink-2);
+}
+.cfg-step-hint {
+  font-size: 12.5px;
+  color: var(--uk-ink-3);
+  line-height: 1.5;
+}
+
 @media (max-width: 720px) {
   .cfg-root {
     flex-direction: column;
