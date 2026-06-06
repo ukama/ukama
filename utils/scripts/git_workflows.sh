@@ -22,6 +22,28 @@ check_auth() {
     fi
 }
 
+parse_ignore() {
+    IGNORE_JOBS=""
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --ignore)
+                IGNORE_JOBS="$2"
+                shift 2
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+}
+
+is_ignored_job() {
+    local job=$1
+
+    echo ",$IGNORE_JOBS," | grep -q ",$job,"
+}
+
 get_workflows() {
     gh workflow list --repo "$REPO" --limit 300 --all | grep "^build-" | awk '{print $1}'
 }
@@ -48,26 +70,49 @@ get_run_status() {
         --jq 'if .conclusion == null then .status else .conclusion end'
 }
 
-get_run_jobs() {
+get_run_jobs_raw() {
     local run_id=$1
 
     gh run view "$run_id" \
         --repo "$REPO" \
         --json jobs \
-        --jq '
-            .jobs
-            | map(
-                .name + "=" +
-                (
-                    if .conclusion == null then
-                        .status
-                    else
-                        .conclusion
-                    end
-                )
-              )
-            | join(", ")
-        '
+        --jq '.jobs[] | [.name, (if .conclusion == null then .status else .conclusion end)] | @tsv'
+}
+
+get_run_jobs_display_and_effective_status() {
+    local run_id=$1
+    local real_status=$2
+
+    EFFECTIVE_STATUS="$real_status"
+    JOBS_DISPLAY=""
+
+    while IFS=$'\t' read -r job_name job_status; do
+        display_status="$job_status"
+
+        if [ "$job_status" = "failure" ] && is_ignored_job "$job_name"; then
+            display_status="ignored"
+        fi
+
+        if [ -z "$JOBS_DISPLAY" ]; then
+            JOBS_DISPLAY="$job_name=$display_status"
+        else
+            JOBS_DISPLAY="$JOBS_DISPLAY, $job_name=$display_status"
+        fi
+    done < <(get_run_jobs_raw "$run_id")
+
+    # If workflow failed, check whether all failed jobs were ignored.
+    if [ "$real_status" = "failure" ]; then
+        EFFECTIVE_STATUS="success"
+
+        while IFS=$'\t' read -r job_name job_status; do
+            if [ "$job_status" = "failure" ]; then
+                if ! is_ignored_job "$job_name"; then
+                    EFFECTIVE_STATUS="failure"
+                    break
+                fi
+            fi
+        done < <(get_run_jobs_raw "$run_id")
+    fi
 }
 
 print_status_line() {
@@ -86,7 +131,9 @@ print_status_line() {
 
 show_status() {
     local branch=${1:-main}
+    shift || true
 
+    parse_ignore "$@"
     check_auth
 
     workflows=$(get_workflows)
@@ -94,6 +141,11 @@ show_status() {
     if [ -z "$workflows" ]; then
         echo "No build-* workflows found."
         exit 1
+    fi
+
+    if [ -n "$IGNORE_JOBS" ]; then
+        echo "Ignoring failed jobs: $IGNORE_JOBS"
+        echo
     fi
 
     printf "\n%-45s %-15s %s\n" "Workflow Name" "Status" "Jobs"
@@ -107,16 +159,18 @@ show_status() {
             continue
         fi
 
-        status=$(get_run_status "$run_id")
-        jobs=$(get_run_jobs "$run_id")
+        real_status=$(get_run_status "$run_id")
+        get_run_jobs_display_and_effective_status "$run_id" "$real_status"
 
-        print_status_line "$workflow_name" "$status" "$jobs"
+        print_status_line "$workflow_name" "$EFFECTIVE_STATUS" "$JOBS_DISPLAY"
     done
 }
 
 run_workflows() {
     local branch=${1:-main}
+    shift || true
 
+    parse_ignore "$@"
     check_auth
 
     workflows=$(get_workflows)
@@ -129,6 +183,11 @@ run_workflows() {
     declare -A workflow_runs
 
     echo "Triggering build-* workflows on branch: $branch"
+
+    if [ -n "$IGNORE_JOBS" ]; then
+        echo "Ignoring failed jobs: $IGNORE_JOBS"
+    fi
+
     echo
 
     for workflow_name in $workflows; do
@@ -191,28 +250,42 @@ run_workflows() {
     printf "%-45s %-15s %s\n" "Workflow Name" "Status" "Jobs"
     printf "%-45s %-15s %s\n" "-------------" "------" "----"
 
+    exit_code=0
+
     for workflow_name in "${!workflow_runs[@]}"; do
         run_id=${workflow_runs[$workflow_name]}
-        status=$(get_run_status "$run_id")
-        jobs=$(get_run_jobs "$run_id")
+        real_status=$(get_run_status "$run_id")
 
-        print_status_line "$workflow_name" "$status" "$jobs"
+        get_run_jobs_display_and_effective_status "$run_id" "$real_status"
+
+        print_status_line "$workflow_name" "$EFFECTIVE_STATUS" "$JOBS_DISPLAY"
+
+        if [ "$EFFECTIVE_STATUS" = "failure" ]; then
+            exit_code=1
+        fi
     done
+
+    exit "$exit_code"
 }
 
 if [ "$1" = "run" ]; then
-    run_workflows "$2"
+    shift
+    run_workflows "$@"
 
 elif [ "$1" = "status" ]; then
-    show_status "$2"
+    shift
+    show_status "$@"
 
 else
     echo "Usage:"
-    echo "  $0 run [branch]"
-    echo "  $0 status [branch]"
+    echo "  $0 run [branch] [--ignore job1,job2]"
+    echo "  $0 status [branch] [--ignore job1,job2]"
     echo
     echo "Examples:"
     echo "  $0 run main"
     echo "  $0 status main"
+    echo "  $0 status main --ignore release"
+    echo "  $0 status main --ignore release,sonar-scan"
+    echo "  $0 run main --ignore release"
     exit 1
 fi
