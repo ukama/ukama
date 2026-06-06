@@ -1,20 +1,20 @@
 # THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-ukamaos-workflow.sh 
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE ukamaos-workflow-template.yaml.templ FOR MAKING CHANGES IN WORKFLOWS
-name: build-node-ukamaos-starterd
+name: build-node-ukamaos-aggregator
 
 on:
   push:
     paths:
-      - "nodes/ukamaOS/distro/system/starterd/**"
-      - ".github/workflows/nodes-ukamaOS-distro-system-starterd.yaml"
+      - "nodes/ukamaOS/distro/system/aggregator/**"
+      - ".github/workflows/nodes-ukamaOS-distro-system-aggregator.yaml"
 
   workflow_dispatch:
 
 jobs:
   build:
     env:
-      working-directory: nodes/ukamaOS/distro/system/starterd
+      working-directory: nodes/ukamaOS/distro/system/aggregator
 
     name: Build UkamaOS, vendor lib and app
     runs-on: ubuntu-latest
@@ -118,7 +118,7 @@ jobs:
       run: make TARGET=linux
 
     - name: Build app
-      working-directory: nodes/ukamaOS/distro/system/starterd
+      working-directory: nodes/ukamaOS/distro/system/aggregator
       run: make
 
     - name: Build the builder
