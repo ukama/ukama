@@ -28,6 +28,7 @@ import { useAddSiteMutation } from '@/client/graphql/sites.generated';
 import { Component_Type } from '@/client/graphql/types';
 import { Field, SelectInput } from '@/components/form/FormField';
 import ConfigureActions from '../../_components/ConfigureActions';
+import { parseCoords } from '../../_components/coords';
 import { stepUrl, useConfigureParams } from '../../_components/state';
 
 const schema = z.object({
@@ -132,6 +133,9 @@ export default function ConfigureSiteSettingsPage() {
       );
       return;
     }
+    // Normalize possibly-swapped coordinates before persisting (same rule the
+    // name step uses for the map/address).
+    const coords = parseCoords(tower?.latitude, tower?.longitude);
     void addSite({
       variables: {
         data: {
@@ -143,8 +147,8 @@ export default function ConfigureSiteSettingsPage() {
           switch_id: values.switchId,
           spectrum_id: spectrumId,
           location: params.location,
-          latitude: String(tower?.latitude ?? '0'),
-          longitude: String(tower?.longitude ?? '0'),
+          latitude: String(coords?.lat ?? tower?.latitude ?? '0'),
+          longitude: String(coords?.lng ?? tower?.longitude ?? '0'),
           install_date: new Date().toISOString(),
         },
       },

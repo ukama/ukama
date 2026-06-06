@@ -79,23 +79,6 @@ export default function PlanCard({
         <div style={{ fontSize: 13.5, color: 'var(--uk-ink-2)' }}>
           {plan.data} data · {plan.days === 1 ? '1 day' : plan.days + ' days'} validity
         </div>
-        <hr className="divider" style={{ margin: '14px 0' }} />
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'baseline',
-            justifyContent: 'space-between',
-            marginTop: 'auto',
-          }}
-        >
-          <span style={{ fontSize: 12.5, color: 'var(--uk-ink-3)' }}>Customers</span>
-          <span
-            className="tnum"
-            style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 500 }}
-          >
-            {plan.subs}
-          </span>
-        </div>
       </div>
     </div>
   );

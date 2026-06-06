@@ -27,6 +27,8 @@ export function parseCoords(
   const a = Number(latStr);
   const b = Number(lngStr);
   if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+  // 0,0 (null island) is what unset coordinates report — treat as no location.
+  if (a === 0 && b === 0) return null;
   if (inLat(a) && inLng(b)) return { lat: a, lng: b };
   // Stored the other way round — swap so the latitude is the in-range value.
   if (inLat(b) && inLng(a)) return { lat: b, lng: a };

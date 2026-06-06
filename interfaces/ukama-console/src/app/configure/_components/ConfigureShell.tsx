@@ -35,12 +35,9 @@ const STEPS = [
   '/configure/sims',
 ] as const;
 
-/** Index of the active step — exact match, longest path wins (site vs site/settings). */
+/** Index of the active step by exact path match (-1 if not a numbered step). */
 const stepIndexFor = (pathname: string): number =>
-  STEPS.reduce(
-    (best, step, i) => (pathname === step ? i : best),
-    -1,
-  );
+  STEPS.reduce((best, step, i) => (pathname === step ? i : best), -1);
 
 function TreeNode({
   icon,

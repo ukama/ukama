@@ -27,7 +27,7 @@ export default function AgentPlansScreen() {
 
   const { data, loading, error } = useGetPackagesQuery();
   const plans = useMemo(
-    () => (data?.getPackages.packages ?? []).map(packageToPlan),
+    () => (data?.getPackages.packages ?? []).map((p, i) => packageToPlan(p, i)),
     [data],
   );
 

@@ -30,6 +30,7 @@ import {
   NodeTypeEnum,
 } from '@/client/graphql/types';
 import type { GetNodesQuery } from '@/client/graphql/nodes.generated';
+import { parseCoords } from './coords';
 
 export type DetectedNode = GetNodesQuery['getNodes']['nodes'][number];
 
@@ -38,11 +39,10 @@ const isPoweredAndUnconfigured = (n: DetectedNode): boolean =>
   n.status.connectivity === NodeConnectivityEnum.Online &&
   n.status.state === NodeStateEnum.Unknown;
 
-const hasCoordinates = (n: DetectedNode): boolean => {
-  const lat = n.latitude?.trim();
-  const lng = n.longitude?.trim();
-  return Boolean(lat) && Boolean(lng);
-};
+// Valid, locatable coordinates — rejects empty, zeroed, or out-of-range
+// values so the "located" step only completes when the map/address will work.
+const hasCoordinates = (n: DetectedNode): boolean =>
+  parseCoords(n.latitude, n.longitude) !== null;
 
 /** Strips the node-type token so the three units of one site share a key. */
 const baseKey = (id: string): string =>
