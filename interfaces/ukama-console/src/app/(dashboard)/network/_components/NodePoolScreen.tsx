@@ -10,7 +10,7 @@
 /** Node pool — hardware inventory, wired to the `nodesView` composite
  *  (NodePool operation: nodes without a site are available to install). */
 import { useMemo, useState } from 'react';
-import Divider from '@mui/material/Divider';
+import { useRouter } from 'next/navigation';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -20,10 +20,10 @@ import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import AddLocationAltRounded from '@mui/icons-material/AddLocationAltRounded';
-import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded';
 import InfoRounded from '@mui/icons-material/InfoRounded';
 import MoreVertRounded from '@mui/icons-material/MoreVertRounded';
 import { useNodePoolQuery } from '@/client/graphql/nodes-list.generated';
+import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
 import { EmptyState } from '@/components/EmptyState';
 import SkeletonTable from '@/components/data-table/SkeletonTable';
 import TableFooter from '@/components/data-table/TableFooter';
@@ -31,17 +31,36 @@ import { KpiRow } from '@/components/Kpi';
 import PageHeader from '@/components/PageHeader';
 import StatusBadge from '@/components/StatusBadge';
 import { useToast } from '@/components/ToastProvider';
-import type { NodePoolItem } from '@/data';
+import { useUiPrefs } from '@/lib/store';
 import { toUkamaNode } from '@/lib/mappers/nodes';
 
-const NP_LABEL: Record<NodePoolItem['status'], string> = {
+type PoolStatus = 'available' | 'assigned';
+
+interface PoolRow {
+  id: string;
+  serial: string;
+  type: string;
+  status: PoolStatus;
+  site: string;
+  connectivity: string;
+}
+
+const NP_LABEL: Record<PoolStatus, string> = {
   available: 'Available',
   assigned: 'Assigned',
-  rma: 'RMA',
 };
 
-function PoolMenu({ item }: { item: NodePoolItem }) {
+/** Maps a node's raw connectivity to a status badge + label. */
+function connectivity(raw: string): { kind: string; label: string } {
+  const c = raw.toLowerCase();
+  if (c === 'online') return { kind: 'online', label: 'Online' };
+  if (c === 'offline') return { kind: 'offline', label: 'Offline' };
+  return { kind: 'configuring', label: 'Unknown' };
+}
+
+function PoolMenu({ item }: { item: PoolRow }) {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const router = useRouter();
   const toast = useToast();
   return (
     <>
@@ -69,22 +88,10 @@ function PoolMenu({ item }: { item: NodePoolItem }) {
           sx={{ fontSize: 13.5, gap: 1.25 }}
           onClick={() => {
             setAnchor(null);
-            toast(`${item.serial} · ${item.type}`);
+            router.push(`/network/nodes/${item.id}`);
           }}
         >
           <InfoRounded sx={{ fontSize: 18 }} /> Details
-        </MenuItem>
-        <Divider />
-        <MenuItem
-          sx={{ fontSize: 13.5, gap: 1.25, color: 'var(--uk-error)' }}
-          onClick={() => {
-            setAnchor(null);
-            toast(`${item.serial} removed`, {
-              action: { label: 'Undo', fn: () => toast(`${item.serial} restored`) },
-            });
-          }}
-        >
-          <DeleteOutlineRounded sx={{ fontSize: 18 }} /> Remove
         </MenuItem>
       </Menu>
     </>
@@ -95,22 +102,35 @@ export default function NodePoolScreen() {
   const { data, loading, refetch } = useNodePoolQuery();
   const nodesSection = data?.nodesView.nodes;
 
+  // Resolve siteId → site name for the Site column. NodePool isn't scoped to
+  // a network, so use the currently-selected network for the site lookup.
+  const networkId = useUiPrefs((s) => s.networkId);
+  const { data: sitesData } = useSitesListQuery({
+    variables: { networkId },
+    skip: !networkId,
+  });
+  const siteNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const s of sitesData?.sitesView.sites.sites ?? []) map.set(s.id, s.name);
+    return map;
+  }, [sitesData]);
+
   // Pool view-model: a node without a site is available to install.
-  const pool: NodePoolItem[] = useMemo(
+  const pool: PoolRow[] = useMemo(
     () =>
       (nodesSection?.nodes ?? []).map((n) => {
         const mapped = toUkamaNode(n);
-        const assigned = !!n.site?.siteId;
+        const siteId = n.site?.siteId ?? '';
         return {
           id: n.id,
           serial: mapped.serial,
           type: mapped.type,
-          status: assigned ? ('assigned' as const) : ('available' as const),
-          site: n.site?.siteId ?? undefined,
-          added: '—',
+          status: siteId ? ('assigned' as const) : ('available' as const),
+          site: siteId ? (siteNameById.get(siteId) ?? siteId) : '—',
+          connectivity: n.status.connectivity,
         };
       }),
-    [nodesSection?.nodes]
+    [nodesSection?.nodes, siteNameById]
   );
 
   const avail = pool.filter((n) => n.status === 'available').length;
@@ -154,31 +174,36 @@ export default function NodePoolScreen() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Serial</TableCell>
+                  <TableCell>Node ID</TableCell>
                   <TableCell>Type</TableCell>
+                  <TableCell>Connectivity</TableCell>
                   <TableCell>Status</TableCell>
-                  <TableCell>Assigned to</TableCell>
-                  <TableCell>Added</TableCell>
+                  <TableCell>Site</TableCell>
                   <TableCell sx={{ width: 44 }} />
                 </TableRow>
               </TableHead>
               <TableBody>
-                {pool.map((n) => (
-                  <TableRow key={n.id}>
-                    <TableCell className="tnum" style={{ fontWeight: 600 }}>
-                      {n.serial}
-                    </TableCell>
-                    <TableCell>{n.type}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={n.status}>{NP_LABEL[n.status]}</StatusBadge>
-                    </TableCell>
-                    <TableCell className="muted">{n.site ?? '—'}</TableCell>
-                    <TableCell className="muted">{n.added}</TableCell>
-                    <TableCell>
-                      <PoolMenu item={n} />
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {pool.map((n) => {
+                  const conn = connectivity(n.connectivity);
+                  return (
+                    <TableRow key={n.id}>
+                      <TableCell className="tnum" style={{ fontWeight: 600 }}>
+                        {n.serial}
+                      </TableCell>
+                      <TableCell>{n.type}</TableCell>
+                      <TableCell>
+                        <StatusBadge status={conn.kind}>{conn.label}</StatusBadge>
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={n.status}>{NP_LABEL[n.status]}</StatusBadge>
+                      </TableCell>
+                      <TableCell className="muted">{n.site}</TableCell>
+                      <TableCell>
+                        <PoolMenu item={n} />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
