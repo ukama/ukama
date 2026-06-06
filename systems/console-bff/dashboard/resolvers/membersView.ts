@@ -43,14 +43,24 @@ export class MembersViewResolver {
         ctx.dataSources.member.getMembers(memberUrl),
         ctx.dataSources.invitation.getInvitations(invitationUrl),
       ]);
-      const rows: TeamMemberDto[] = members.members.map(member => ({
-        id: member.memberId,
-        name: member.name,
-        email: member.email,
-        role: member.role,
-        status: member.isDeactivated ? "Deactivated" : "Active",
-        memberSince: member.memberSince,
-      }));
+      // The registry member list carries only userId+role; enrich each row
+      // with the user's name/email (nucleus). allSettled so one failed
+      // lookup leaves that row name-less rather than breaking the section.
+      const users = await Promise.allSettled(
+        members.members.map(m => ctx.dataSources.user.getUser(m.userId))
+      );
+      const rows: TeamMemberDto[] = members.members.map((member, i) => {
+        const u = users[i];
+        const user = u?.status === "fulfilled" ? u.value : undefined;
+        return {
+          id: member.memberId,
+          name: user?.name ?? member.name,
+          email: user?.email ?? member.email,
+          role: member.role,
+          status: member.isDeactivated ? "Deactivated" : "Active",
+          memberSince: member.memberSince,
+        };
+      });
       for (const invitation of invitations.invitations) {
         rows.push({
           id: invitation.id,

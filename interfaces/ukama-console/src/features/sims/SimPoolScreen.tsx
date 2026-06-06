@@ -12,25 +12,25 @@
  * (incl. pctAssigned / lowStock) are derived server-side; the table lists
  * pool SIMs. Business can act; Network is view-only.
  */
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Button from '@mui/material/Button';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import TableSortLabel from '@mui/material/TableSortLabel';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import DownloadRounded from '@mui/icons-material/DownloadRounded';
-import InfoRounded from '@mui/icons-material/InfoRounded';
 import MoreVertRounded from '@mui/icons-material/MoreVertRounded';
-import ShoppingCartRounded from '@mui/icons-material/ShoppingCartRounded';
 import UploadFileRounded from '@mui/icons-material/UploadFileRounded';
 import VisibilityRounded from '@mui/icons-material/VisibilityRounded';
 
 import { useSimPoolOverviewQuery } from '@/client/graphql/sim-pool.generated';
 import { EmptyState } from '@/components/EmptyState';
+import FilterChips from '@/components/FilterChips';
 import { KpiRow } from '@/components/Kpi';
 import PageHeader from '@/components/PageHeader';
 import { sectionValue } from '@/components/SectionFallback';
@@ -38,11 +38,22 @@ import StatusBadge from '@/components/StatusBadge';
 import SkeletonTable from '@/components/data-table/SkeletonTable';
 import TableFooter from '@/components/data-table/TableFooter';
 import { useToast } from '@/components/ToastProvider';
+import { formatDate, parseTimestamp } from '@/lib/parsers';
 import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
 import UploadSimsDialog from './UploadSimsDialog';
 
+type SimRow = { isAllocated: boolean; isFailed: boolean; isPhysical: boolean };
+type TypeFilter = 'all' | 'physical' | 'esim';
+type StatusFilter = 'all' | 'available' | 'assigned' | 'faulty';
+type SortKey = 'type' | 'status' | 'added';
+type SortDir = 'asc' | 'desc';
+
+const statusKey = (s: SimRow): StatusFilter =>
+  s.isFailed ? 'faulty' : s.isAllocated ? 'assigned' : 'available';
+
 const SIM_TYPE = 'ukama_data';
-const LIST_LIMIT = 50;
+// Matches the BFF cap (MAX_POOL_SIMS) so the table can show the full pool.
+const LIST_LIMIT = 100;
 
 function SimMenu({ iccid }: { iccid: string }) {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
@@ -90,6 +101,10 @@ const simStatusLabel = (sim: { isAllocated: boolean; isFailed: boolean }) =>
 export default function SimPoolScreen({ canAct }: { canAct: boolean }) {
   const toast = useToast();
   const [showUpload, setShowUpload] = useState(false);
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [sortKey, setSortKey] = useState<SortKey>('added');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
 
   const { data, loading, refetch } = useSimPoolOverviewQuery({
     variables: { simType: SIM_TYPE, limit: LIST_LIMIT },
@@ -97,7 +112,38 @@ export default function SimPoolScreen({ canAct }: { canAct: boolean }) {
   });
   const stats = data?.simPoolView.stats;
   const simsSection = data?.simPoolView.sims;
-  const sims = simsSection?.sims ?? [];
+  const allSims = useMemo(() => simsSection?.sims ?? [], [simsSection]);
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const sims = useMemo(() => {
+    const filtered = allSims.filter((s) => {
+      if (typeFilter !== 'all') {
+        if (typeFilter === 'physical' && !s.isPhysical) return false;
+        if (typeFilter === 'esim' && s.isPhysical) return false;
+      }
+      if (statusFilter !== 'all' && statusKey(s) !== statusFilter) return false;
+      return true;
+    });
+    const dir = sortDir === 'asc' ? 1 : -1;
+    return [...filtered].sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === 'type') {
+        cmp = Number(a.isPhysical) - Number(b.isPhysical);
+      } else if (sortKey === 'status') {
+        cmp = statusKey(a).localeCompare(statusKey(b));
+      } else {
+        cmp = (parseTimestamp(a.createdAt) || 0) - (parseTimestamp(b.createdAt) || 0);
+      }
+      return cmp * dir;
+    });
+  }, [allSims, typeFilter, statusFilter, sortKey, sortDir]);
 
   return (
     <div className="page">
@@ -162,41 +208,35 @@ export default function SimPoolScreen({ canAct }: { canAct: boolean }) {
           },
         ]}
       />
-      {stats?.lowStock && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 11,
-            background: 'rgba(226,116,41,.09)',
-            border: '1px solid rgba(226,116,41,.22)',
-            borderRadius: 10,
-            padding: '12px 16px',
-            marginBottom: 'var(--uk-gap)',
-          }}
-        >
-          <InfoRounded sx={{ color: '#b5591b', fontSize: 20 }} />
-          <span style={{ fontSize: 13, color: 'var(--uk-ink-2)', flex: 1 }}>
-            <b style={{ color: 'var(--uk-ink)' }}>Stock is getting low.</b>{' '}
-            {stats.available} SIMs available — below the reorder threshold.
-          </span>
-          {canAct && (
-            <Button
-              size="small"
-              variant="outlined"
-              startIcon={<ShoppingCartRounded />}
-              onClick={() => toast('Order placed with Ukama supply')}
-            >
-              Order SIMs
-            </Button>
-          )}
-        </div>
-      )}
 
       <div className="card card-pad">
-        <div className="sec-head">
+        <div
+          className="sec-head"
+          style={{ flexWrap: 'wrap', gap: 12, rowGap: 12 }}
+        >
           <div className="sec-title">
             SIMs <span className="cnt tnum">{sims.length}</span>
+          </div>
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+            <FilterChips
+              value={typeFilter}
+              onChange={(v) => setTypeFilter(v as TypeFilter)}
+              options={[
+                { value: 'all', label: 'All types' },
+                { value: 'physical', label: 'Physical' },
+                { value: 'esim', label: 'eSIM' },
+              ]}
+            />
+            <FilterChips
+              value={statusFilter}
+              onChange={(v) => setStatusFilter(v as StatusFilter)}
+              options={[
+                { value: 'all', label: 'All statuses' },
+                { value: 'available', label: 'Available' },
+                { value: 'assigned', label: 'Assigned' },
+                { value: 'faulty', label: 'Faulty' },
+              ]}
+            />
           </div>
         </div>
         <div className="tbl-wrap">
@@ -210,16 +250,46 @@ export default function SimPoolScreen({ canAct }: { canAct: boolean }) {
               cta="Try again"
               onCta={() => refetch()}
             />
-          ) : sims.length === 0 ? (
+          ) : allSims.length === 0 ? (
             <EmptyState art="sim" title="No SIMs" sub="Upload a SIM batch to get started." />
+          ) : sims.length === 0 ? (
+            <EmptyState
+              art="search"
+              title="No SIMs match"
+              sub="Try a different type or status filter."
+            />
           ) : (
             <Table>
               <TableHead>
                 <TableRow>
                   <TableCell>ICCID</TableCell>
-                  <TableCell>Type</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Added</TableCell>
+                  <TableCell sortDirection={sortKey === 'type' ? sortDir : false}>
+                    <TableSortLabel
+                      active={sortKey === 'type'}
+                      direction={sortKey === 'type' ? sortDir : 'asc'}
+                      onClick={() => toggleSort('type')}
+                    >
+                      Type
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sortDirection={sortKey === 'status' ? sortDir : false}>
+                    <TableSortLabel
+                      active={sortKey === 'status'}
+                      direction={sortKey === 'status' ? sortDir : 'asc'}
+                      onClick={() => toggleSort('status')}
+                    >
+                      Status
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sortDirection={sortKey === 'added' ? sortDir : false}>
+                    <TableSortLabel
+                      active={sortKey === 'added'}
+                      direction={sortKey === 'added' ? sortDir : 'asc'}
+                      onClick={() => toggleSort('added')}
+                    >
+                      Added
+                    </TableSortLabel>
+                  </TableCell>
                   {canAct && <TableCell sx={{ width: 44 }} />}
                 </TableRow>
               </TableHead>
@@ -233,7 +303,7 @@ export default function SimPoolScreen({ canAct }: { canAct: boolean }) {
                     <TableCell>
                       <StatusBadge status={simStatus(sim)}>{simStatusLabel(sim)}</StatusBadge>
                     </TableCell>
-                    <TableCell className="muted">{sim.createdAt}</TableCell>
+                    <TableCell className="muted">{formatDate(sim.createdAt)}</TableCell>
                     {canAct && (
                       <TableCell>
                         <SimMenu iccid={sim.iccid} />
@@ -246,10 +316,25 @@ export default function SimPoolScreen({ canAct }: { canAct: boolean }) {
           )}
         </div>
         {!loading && !simsSection?.error && (
-          <TableFooter count={sims.length} noun="SIMs" />
+          (() => {
+            // When the pool is larger than what the list returns, show
+            // "Showing N of M" so the cap is clear vs. the stats total.
+            const total = stats?.error ? undefined : stats?.total;
+            const noFilter = typeFilter === 'all' && statusFilter === 'all';
+            return noFilter && total != null && total > allSims.length ? (
+              <TableFooter showing={allSims.length} total={total} />
+            ) : (
+              <TableFooter count={sims.length} noun="SIMs" />
+            );
+          })()
         )}
       </div>
-      {showUpload && <UploadSimsDialog onClose={() => setShowUpload(false)} />}
+      {showUpload && (
+        <UploadSimsDialog
+          onClose={() => setShowUpload(false)}
+          onUploaded={() => void refetch()}
+        />
+      )}
     </div>
   );
 }

@@ -36,7 +36,7 @@ export const useUiPrefs = create<UiPrefsState>()(
   persist(
     (set) => ({
       accent: 'blue',
-      density: 'comfortable',
+      density: 'compact',
       rail: 'full',
       networkId: 'kwacha',
       lastConfigureUrl: null,

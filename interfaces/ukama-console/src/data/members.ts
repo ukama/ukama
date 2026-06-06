@@ -31,6 +31,6 @@ export const MEMBERS: Member[] = [
 export const ROLE_DESC: Record<Member['role'], string> = {
   Owner: 'Full access · billing',
   Admin: 'Manage network & members',
-  'Network owner': 'Operate a single network',
+  'Network owner': 'Manages network operation',
   Vendor: 'Install & maintain hardware',
 };
