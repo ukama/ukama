@@ -13,13 +13,18 @@
  * redirect. If the session is also gone, proxy.ts redirects to login.
  */
 import { TOKEN_COOKIE } from '@/lib/auth/types';
-import { publicUrl } from '@/lib/request-url';
+import { cookieDomain, publicHost, publicUrl } from '@/lib/request-url';
 import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
 export function GET(request: Request) {
   const res = NextResponse.redirect(publicUrl(request, '/'));
-  res.cookies.delete(TOKEN_COOKIE);
+  // Delete with the same Domain the cookie was set with, or it won't clear.
+  res.cookies.delete({
+    name: TOKEN_COOKIE,
+    path: '/',
+    domain: cookieDomain(publicHost(request)),
+  });
   return res;
 }

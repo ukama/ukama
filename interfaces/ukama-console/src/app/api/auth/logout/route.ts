@@ -13,16 +13,22 @@
  * state is cleared client-side (see lib/auth/client logout()).
  */
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { TOKEN_COOKIE } from '@/lib/auth/types';
 import { readServerEnv } from '@/lib/runtime-env';
+import { cookieDomain, publicHost } from '@/lib/request-url';
 
 export const runtime = 'nodejs';
 
-export async function POST() {
-  (await cookies()).delete(TOKEN_COOKIE);
-  return NextResponse.json(
+export function POST(request: Request) {
+  const res = NextResponse.json(
     { ok: true, redirect: `${readServerEnv().authAppUrl}/auth/login` },
     { headers: { 'cache-control': 'no-store' } },
   );
+  // Clear with the same Domain it was set with so it actually goes away.
+  res.cookies.delete({
+    name: TOKEN_COOKIE,
+    path: '/',
+    domain: cookieDomain(publicHost(request)),
+  });
+  return res;
 }

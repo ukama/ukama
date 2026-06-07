@@ -22,7 +22,7 @@
  */
 import { env } from '@/env';
 import { readServerEnv } from '@/lib/runtime-env';
-import { publicUrl } from '@/lib/request-url';
+import { cookieDomain, publicHost, publicUrl } from '@/lib/request-url';
 import { decodeUserFromToken, fetchSession } from '@/lib/auth/token';
 import {
   SESSION_COOKIE,
@@ -36,12 +36,21 @@ import { NextResponse, type NextRequest } from 'next/server';
 const encodeUser = (user: AuthUser): string =>
   Buffer.from(JSON.stringify(user), 'utf8').toString('base64');
 
+/** Clears the token cookie (domain-aware) so the domained cookie is removed. */
+const clearTokenCookie = (res: NextResponse, host: string): void => {
+  res.cookies.delete({
+    name: TOKEN_COOKIE,
+    path: '/',
+    domain: cookieDomain(host),
+  });
+};
+
 /** Clears the token cookie and sends the user to the auth app (logout). */
-const logoutRedirect = (): NextResponse => {
+const logoutRedirect = (request: NextRequest): NextResponse => {
   const res = NextResponse.redirect(
     new URL('/auth/login', readServerEnv().authAppUrl),
   );
-  res.cookies.delete(TOKEN_COOKIE);
+  clearTokenCookie(res, publicHost(request));
   return res;
 };
 
@@ -58,7 +67,9 @@ export default async function proxy(
 
   // No session → logout flow.
   const session = request.cookies.get(SESSION_COOKIE)?.value;
-  if (!session) return logoutRedirect();
+  if (!session) return logoutRedirect(request);
+
+  const host = publicHost(request);
 
   // Resolve the user: reuse the cached token, else mint one from the session.
   const cachedToken = request.cookies.get(TOKEN_COOKIE)?.value ?? '';
@@ -74,7 +85,7 @@ export default async function proxy(
     // /unauthorized, where the user can only log out or contact support.
     if (!result) {
       const res = NextResponse.redirect(publicUrl(request, '/unauthorized'));
-      res.cookies.delete(TOKEN_COOKIE);
+      clearTokenCookie(res, host);
       return res;
     }
     user = result.user;
@@ -85,6 +96,7 @@ export default async function proxy(
   // the value (+ / = in the base64 payload), and the gateway verifies the
   // HMAC over the exact payload bytes — an encoded token fails with 401.
   // Raw is safe here: base64 + base64url contain no ';' or whitespace.
+  const domain = cookieDomain(host);
   const attachFreshToken = (res: NextResponse): NextResponse => {
     if (!freshToken) return res;
     const parts = [
@@ -94,6 +106,9 @@ export default async function proxy(
       'SameSite=Lax',
       `Max-Age=${TOKEN_MAX_AGE_SECONDS}`,
     ];
+    // Share the cookie with the BFF subdomain (app.* and bff.*); without this
+    // the host-only cookie never reaches the BFF and every /graphql call 401s.
+    if (domain) parts.push(`Domain=${domain}`);
     if (env.NODE_ENV === 'production') parts.push('Secure');
     res.headers.append('set-cookie', parts.join('; '));
     return res;
