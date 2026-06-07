@@ -6,15 +6,10 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
-/**
- * Acknowledges the first-visit welcome page. Forwards the request (with the
- * signed token cookie) to the gateway's /welcome-seen, which records the
- * acknowledgment per user. On success the cached token cookie is cleared so
- * the next navigation re-mints a token with isShowWelcome=false.
- */
-import { NextResponse } from 'next/server';
-import { readServerEnv } from '@/lib/runtime-env';
 import { TOKEN_COOKIE } from '@/lib/auth/types';
+import { cookieDomain, publicHost } from '@/lib/request-url';
+import { readServerEnv } from '@/lib/runtime-env';
+import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
@@ -41,6 +36,10 @@ export async function POST(request: Request) {
     { ok: true },
     { headers: { 'cache-control': 'no-store' } },
   );
-  response.cookies.delete(TOKEN_COOKIE);
+  response.cookies.delete({
+    name: TOKEN_COOKIE,
+    path: '/',
+    domain: cookieDomain(publicHost(request)),
+  });
   return response;
 }
