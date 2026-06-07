@@ -17,31 +17,21 @@ import Meter from '@/components/Meter';
  */
 import { useMemo, useState } from 'react';
 import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import AddCardRounded from '@mui/icons-material/AddCardRounded';
-import CloseRounded from '@mui/icons-material/CloseRounded';
-import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded';
-import MoreVertRounded from '@mui/icons-material/MoreVertRounded';
+import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
 import PersonAddRounded from '@mui/icons-material/PersonAddRounded';
-import SwapHorizRounded from '@mui/icons-material/SwapHorizRounded';
-import VisibilityRounded from '@mui/icons-material/VisibilityRounded';
-import type { ColumnDef, RowSelectionState } from '@tanstack/react-table';
-import DataTable, { selectionColumn } from '@/components/data-table/DataTable';
+import type { ColumnDef } from '@tanstack/react-table';
+import DataTable from '@/components/data-table/DataTable';
 import TableFooter from '@/components/data-table/TableFooter';
 import DateChip from '@/components/DateChip';
 import PageHeader from '@/components/PageHeader';
 import SearchField from '@/components/SearchField';
 import StatusBadge from '@/components/StatusBadge';
-import { useToast } from '@/components/ToastProvider';
 import { useNetworkCustomersQuery } from '@/client/graphql/network-customers.generated';
 import type { Subscriber } from '@/data';
 import { parseSeen } from '@/lib/parsers';
 import { useUiPrefs } from '@/lib/store';
 import { toSubscriber } from '@/lib/mappers/subscribers';
 import AddCustomerDialog from './AddCustomerDialog';
-import DeleteCustomerDialog from './DeleteCustomerDialog';
 import SubscriberDrawer from './SubscriberDrawer';
 
 export type CustomersMode = 'biz' | 'network' | 'agent';
@@ -52,86 +42,18 @@ const SUBS = {
   agent: 'Manage your customers’ packages and top-ups.',
 } as const;
 
-function RowMenu({
-  sub,
-  onView,
-  onDelete,
-}: {
-  sub: Subscriber;
-  onView: () => void;
-  onDelete: () => void;
-}) {
-  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
-  const toast = useToast();
-  return (
-    <>
-      <IconButton
-        size="small"
-        aria-label="More actions"
-        sx={{ color: 'var(--uk-ink-3)' }}
-        onClick={(e) => {
-          e.stopPropagation();
-          setAnchor(e.currentTarget);
-        }}
-      >
-        <MoreVertRounded sx={{ fontSize: 20 }} />
-      </IconButton>
-      <Menu anchorEl={anchor} open={!!anchor} onClose={() => setAnchor(null)}>
-        <MenuItem
-          sx={{ fontSize: 13.5, gap: 1.25 }}
-          onClick={() => {
-            setAnchor(null);
-            onView();
-          }}
-        >
-          <VisibilityRounded sx={{ fontSize: 18 }} /> View details
-        </MenuItem>
-        <MenuItem
-          sx={{ fontSize: 13.5, gap: 1.25 }}
-          onClick={() => {
-            setAnchor(null);
-            toast(`Top up ${sub.name} — flow lands with the form dialogs`);
-          }}
-        >
-          <AddCardRounded sx={{ fontSize: 18 }} /> Top up data
-        </MenuItem>
-        <MenuItem
-          sx={{ fontSize: 13.5, gap: 1.25 }}
-          onClick={() => {
-            setAnchor(null);
-            toast(`Change plan for ${sub.name} — flow lands with the form dialogs`);
-          }}
-        >
-          <SwapHorizRounded sx={{ fontSize: 18 }} /> Change plan
-        </MenuItem>
-        <MenuItem
-          sx={{ fontSize: 13.5, gap: 1.25, color: 'var(--uk-error)' }}
-          onClick={() => {
-            setAnchor(null);
-            onDelete();
-          }}
-        >
-          <DeleteOutlineRounded sx={{ fontSize: 18 }} /> Delete customer
-        </MenuItem>
-      </Menu>
-    </>
-  );
-}
 
 export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
   const agent = mode === 'agent';
   const showSite = mode === 'network';
   const clickRow = mode !== 'network';
   const networkId = useUiPrefs((s) => s.networkId);
-  const toast = useToast();
 
   const [q, setQ] = useState('');
-  const [selection, setSelection] = useState<RowSelectionState>({});
   const [openSub, setOpenSub] = useState<Subscriber | null>(null);
   const [showAdd, setShowAdd] = useState(false);
-  const [deleteSub, setDeleteSub] = useState<Subscriber | null>(null);
 
-  const { data, loading } = useNetworkCustomersQuery({
+  const { data, loading, refetch } = useNetworkCustomersQuery({
     variables: { networkId },
     skip: !networkId,
   });
@@ -154,7 +76,6 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
 
   const columns = useMemo<ColumnDef<Subscriber, unknown>[]>(() => {
     const cols: ColumnDef<Subscriber, unknown>[] = [];
-    if (agent) cols.push(selectionColumn<Subscriber>());
 
     cols.push({
       id: 'name',
@@ -253,24 +174,21 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
       ),
     });
 
-    if (agent) {
+    // Chevron affordance hints the row opens a detail drawer.
+    if (clickRow) {
       cols.push({
-        id: 'actions',
+        id: 'chevron',
         size: 40,
         header: '',
-        cell: ({ row }) => (
-          <RowMenu
-            sub={row.original}
-            onView={() => setOpenSub(row.original)}
-            onDelete={() => setDeleteSub(row.original)}
+        cell: () => (
+          <ChevronRightRounded
+            sx={{ fontSize: 20, color: 'var(--uk-ink-3)', display: 'block' }}
           />
         ),
       });
     }
     return cols;
-  }, [agent, showSite, planNames]);
-
-  const selectedCount = Object.keys(selection).length;
+  }, [clickRow, showSite, planNames]);
 
   return (
     <div className="page">
@@ -308,53 +226,12 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
           </div>
         </div>
 
-        {agent && selectedCount > 0 && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 14,
-              background: 'var(--uk-ac-soft)',
-              borderRadius: 10,
-              padding: '9px 14px',
-              marginBottom: 12,
-            }}
-          >
-            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--uk-ac-dark)' }}>
-              {selectedCount} selected
-            </span>
-            <Button
-              size="small"
-              startIcon={<SwapHorizRounded />}
-              onClick={() => toast(`Change plan for ${selectedCount} customers`)}
-            >
-              Change plan
-            </Button>
-            <Button
-              size="small"
-              startIcon={<AddCardRounded />}
-              onClick={() => toast(`Top up ${selectedCount} customers`)}
-            >
-              Top up
-            </Button>
-            <Button
-              size="small"
-              color="inherit"
-              startIcon={<CloseRounded />}
-              sx={{ ml: 'auto', color: 'var(--uk-ink-3)' }}
-              onClick={() => setSelection({})}
-            >
-              Clear
-            </Button>
-          </div>
-        )}
-
         <div className="tbl-wrap" style={{ overflowX: 'auto' }}>
           <DataTable<Subscriber>
             columns={columns}
             data={subscribers}
             status={loading ? 'loading' : subsSection?.error ? 'error' : 'ready'}
-            skeleton={{ cols: agent ? 7 : 5, rows: 6, lead: true }}
+            skeleton={{ cols: clickRow ? 6 : 5, rows: 6, lead: true }}
             empty={{
               art: 'search',
               title: subsSection?.error ? "Couldn't load customers" : 'No customers match',
@@ -364,9 +241,6 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
             }}
             globalFilter={q}
             initialSorting={[{ id: 'name', desc: false }]}
-            enableRowSelection={agent}
-            rowSelection={selection}
-            onRowSelectionChange={setSelection}
             getRowId={(s) => s.id}
             {...(clickRow ? { onRowClick: (s: Subscriber) => setOpenSub(s) } : {})}
           />
@@ -384,9 +258,11 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
           readOnly={mode === 'biz'}
         />
       )}
-      {showAdd && <AddCustomerDialog onClose={() => setShowAdd(false)} />}
-      {deleteSub && (
-        <DeleteCustomerDialog sub={deleteSub} onClose={() => setDeleteSub(null)} />
+      {showAdd && (
+        <AddCustomerDialog
+          onClose={() => setShowAdd(false)}
+          onAdded={() => void refetch()}
+        />
       )}
     </div>
   );
