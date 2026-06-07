@@ -66,27 +66,41 @@ func (c *ConfiguratorServer) ConfigEvent(ctx context.Context, req *pb.ConfigStor
 func (c *ConfiguratorServer) ApplyConfig(ctx context.Context, req *pb.ApplyConfigRequest) (*pb.ApplyConfigResponse, error) {
 	log.Infof("Received a request to apply config  %v", req)
 
-	startResp, err := c.opManager.Start(&opmgrpb.StartOperationRequest{
-		Type:         "ApplyConfig",
-		System:       "node",
-		ResourceKey:  "config:apply",
-		RequestedBy:  pkg.ServiceName,
-		LeaseSeconds: c.opLeaseSecs,
-	})
-	if err != nil {
-		log.Warnf("ApplyConfig lock acquire rejected: %v", err)
-		return nil, err
+	var op *opmgrpb.Operation
+
+	if c.opManager != nil {
+		startResp, err := c.opManager.Start(&opmgrpb.StartOperationRequest{
+			Type:         "ApplyConfig",
+			System:       "node",
+			ResourceKey:  "config:apply",
+			RequestedBy:  pkg.ServiceName,
+			LeaseSeconds: c.opLeaseSecs,
+		})
+		if err != nil {
+			log.Warnf("ApplyConfig lock acquire rejected: %v", err)
+			return nil, err
+		}
+		if startResp == nil || startResp.Operation == nil {
+			return nil, status.Errorf(codes.Internal, "ApplyConfig lock acquire returned empty operation")
+		}
+
+		op = startResp.Operation
+		log.Infof("ApplyConfig acquired lock op=%s token=%d", op.Id, op.FencingToken)
+	} else {
+		log.Warnf("ApplyConfig running without operation manager")
 	}
-	op := startResp.Operation
-	log.Infof("ApplyConfig acquired lock op=%s token=%d", op.Id, op.FencingToken)
 
 	if err := c.configStore.HandleConfigCommitReq(ctx, req.Hash); err != nil {
 		log.Errorf("Error while handling apply config req commit %s.Error: %s", req.Hash, err.Error())
 		return &pb.ApplyConfigResponse{}, status.Errorf(codes.Internal, "%v", err)
 	}
-	if _, err := c.opManager.MarkRunning(op.Id, op.FencingToken); err != nil {
-		log.Warnf("ApplyConfig mark running failed for op %s: %v", op.Id, err)
+
+	if c.opManager != nil && op != nil && op.Id != "" {
+		if _, err := c.opManager.MarkRunning(op.Id, op.FencingToken); err != nil {
+			log.Warnf("ApplyConfig mark running failed for op %s: %v", op.Id, err)
+		}
 	}
+
 	return &pb.ApplyConfigResponse{}, nil
 }
 
