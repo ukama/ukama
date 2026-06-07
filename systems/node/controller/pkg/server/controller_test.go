@@ -35,7 +35,6 @@ const testOrgName = "test-org"
 
 // 	netId := uuid.NewV4()
 
-// 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
 // 	nodeId := "uk-983794-hnode-78-7830"
 // 	nodeLog := &db.NodeLog{
 // 		NodeId: nodeId,
@@ -71,7 +70,19 @@ func TestControllerServer_RestartNode(t *testing.T) {
 	conRepo := &mocks.NodeLogRepo{}
 
 	nodeId := "uk-983794-hnode-78-7830"
-	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
+	s := NewControllerServer(
+		testOrgName,
+		conRepo,
+		msgclientRepo,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		0,
+		0,
+		pkg.IsDebugMode,
+	)
 
 	NodeLog := db.NodeLog{
 		NodeId: nodeId,
@@ -100,7 +111,19 @@ func TestControllerServer_RestartNodes(t *testing.T) {
 	conRepo := &mocks.NodeLogRepo{}
 	netId := uuid.NewV4()
 	nodeId := "uk-983794-hnode-78-7830"
-	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
+	s := NewControllerServer(
+		testOrgName,
+		conRepo,
+		msgclientRepo,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		0,
+		0,
+		pkg.IsDebugMode,
+	)
 
 	msg := &pb.RestartNodeRequest{
 		NodeId: nodeId,
@@ -138,7 +161,19 @@ func TestControllerServer_ToggleRf(t *testing.T) {
 	conRepo := &mocks.NodeLogRepo{}
 
 	nodeId := "uk-983794-anode-78-7830"
-	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
+	s := NewControllerServer(
+		testOrgName,
+		conRepo,
+		msgclientRepo,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		0,
+		0,
+		pkg.IsDebugMode,
+	)
 
 	jsonBody := map[string]string{"state": "on"}
 	data, err := json.Marshal(jsonBody)
@@ -167,7 +202,19 @@ func TestControllerServer_ToggleNodeService(t *testing.T) {
 	conRepo := &mocks.NodeLogRepo{}
 
 	nodeId := "uk-983794-tnode-78-7830"
-	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
+	s := NewControllerServer(
+		testOrgName,
+		conRepo,
+		msgclientRepo,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		0,
+		0,
+		pkg.IsDebugMode,
+	)
 
 	jsonBody := map[string]string{"state": "on"}
 	data, err := json.Marshal(jsonBody)
@@ -195,7 +242,19 @@ func TestControllerServer_ToggleNodeService_InvalidNodeId(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 	conRepo := &mocks.NodeLogRepo{}
 
-	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
+	s := NewControllerServer(
+		testOrgName,
+		conRepo,
+		msgclientRepo,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		0,
+		0,
+		pkg.IsDebugMode,
+	)
 
 	_, err := s.ToggleNodeService(context.TODO(), &pb.ToggleNodeServiceRequest{
 		NodeId: "uk-983794-anode-78-7830",

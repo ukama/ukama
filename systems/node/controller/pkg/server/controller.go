@@ -340,6 +340,14 @@ func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.Toggle
 }
 
 func (c *ControllerServer) acquireAndRegister(actionType, resourceKey string) (*opmgrpb.Operation, error) {
+	if c.opManager == nil || c.opMonitor == nil {
+		log.Warnf("%s running without operation manager/monitor for %s", actionType, resourceKey)
+		return &opmgrpb.Operation{
+			Id:          "",
+			ResourceKey: resourceKey,
+		}, nil
+	}
+
 	startResp, err := c.opManager.Start(&opmgrpb.StartOperationRequest{
 		Type:         actionType,
 		System:       "node",
@@ -368,6 +376,10 @@ func (c *ControllerServer) acquireAndRegister(actionType, resourceKey string) (*
 }
 
 func (c *ControllerServer) markRunning(op *opmgrpb.Operation, actionType string) error {
+	if c.opManager == nil || op == nil || op.Id == "" {
+		return nil
+	}
+
 	if _, err := c.opManager.MarkRunning(op.Id, op.FencingToken); err != nil {
 		log.Warnf("%s mark running failed for op %s: %v", actionType, op.Id, err)
 		return err
@@ -376,7 +388,7 @@ func (c *ControllerServer) markRunning(op *opmgrpb.Operation, actionType string)
 }
 
 func (c *ControllerServer) failOperation(op *opmgrpb.Operation, actionType, reason string) {
-	if op == nil {
+	if c.opManager == nil || op == nil || op.Id == "" {
 		return
 	}
 	if _, err := c.opManager.FailOperation(op.Id, pkg.ServiceName, reason); err != nil {
