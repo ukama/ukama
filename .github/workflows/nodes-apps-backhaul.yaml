@@ -1,0 +1,111 @@
+# THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-node-app-workflows.sh
+# DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
+# USE node-app-workflow-template.yaml.templ FOR MAKING CHANGES IN WORKFLOWS
+
+name: build-node-apps-backhaul
+
+on:
+  push:
+    paths:
+      - "nodes/apps/backhaul/**"
+      - ".github/workflows/nodes-apps-backhaul.yaml"
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    env:
+      working-directory: nodes/apps/backhaul
+
+    name: Build UkamaOS, vendor lib and app
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+
+    - name: Installing Ubuntu packages
+      run: |
+        sudo apt-get update
+        sudo add-apt-repository universe
+        sudo apt-get update
+        sudo apt-get install -y \
+          software-properties-common \
+          build-essential \
+          git \
+          wget \
+          autoconf \
+          automake \
+          libtool \
+          pkg-config \
+          libssl-dev \
+          texinfo \
+          cmake \
+          tcl \
+          zlib1g-dev \
+          texlive \
+          texlive-latex-extra \
+          ghostscript \
+          gperf \
+          gtk-doc-tools \
+          libev-dev \
+          bison \
+          jq \
+          qemu-system \
+          virt-manager \
+          virt-viewer \
+          libvirt-daemon-system \
+          libvirt-clients \
+          bridge-utils \
+          debootstrap \
+          kpartx \
+          fdisk \
+          util-linux \
+          protobuf-compiler \
+          iproute2 \
+          libcap-dev \
+          libidn2-0-dev \
+          libmicrohttpd-dev \
+          gnutls-dev \
+          linux-headers-generic \
+          sqlite3 \
+          libsqlite3-dev \
+          dhcpcd5 \
+          libgmp-dev \
+          gnutls-bin \
+          iptables \
+          libjansson-dev \
+          libunistring-dev \
+          libmbedtls-dev \
+          nettle-dev \
+          openssl \
+          p11-kit \
+          libprotobuf-c-dev \
+          libpsl-dev \
+          procps \
+          libcurl4-openssl-dev
+
+    - name: Init vars
+      id: vars_step
+      uses: ./.github/actions/git-vars
+
+    - name: Granting private modules access
+      run: git config --global url."https://none:${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}@github.com/ukama".insteadOf "https://github.com/ukama"
+
+    - name: Checkout submodules
+      run: git submodule update --init --recursive
+
+    - name: Build vendor libraries
+      working-directory: ./nodes/ukamaOS/distro/vendor
+      run: make TARGET=linux
+
+    - name: Build platform library
+      working-directory: ./nodes/ukamaOS/distro/platform
+      run: make TARGET=linux
+
+    - name: Build node app
+      working-directory: nodes/apps/backhaul
+      run: make

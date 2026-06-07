@@ -81,16 +81,18 @@ func NewAuthManagerFromClient() *AuthManager {
 }
 
 func (am *AuthManager) ValidateSession(ss string, t string) (*ory.Session, error) {
-	if t == "cookie" {
+	switch t {
+	case "cookie":
 		urlObj, _ := url.Parse(am.client.GetConfig().Servers[0].URL)
 		cookie := &http.Cookie{
 			Name:  SESSION_KEY,
 			Value: ss,
 		}
 		am.client.GetConfig().HTTPClient.Jar.SetCookies(urlObj, []*http.Cookie{cookie})
-	} else if t == "header" {
+	case "header":
 		am.client.GetConfig().AddDefaultHeader("X-Session-Token", ss)
 	}
+
 	resp, r, err := am.client.FrontendAPI.ToSession(context.Background()).Execute()
 	if err != nil {
 		return nil, err
@@ -138,14 +140,15 @@ func (am *AuthManager) LoginUser(email string, password string) (*ory.Successful
 }
 
 func (am *AuthManager) UpdateRole(ss, t, orgId, role string, user *pkg.UserTraits) error {
-	if t == "cookie" {
+	switch t {
+	case "cookie":
 		urlObj, _ := url.Parse(am.client.GetConfig().Servers[0].URL)
 		cookie := &http.Cookie{
 			Name:  SESSION_KEY,
 			Value: ss,
 		}
 		am.client.GetConfig().HTTPClient.Jar.SetCookies(urlObj, []*http.Cookie{cookie})
-	} else if t == "header" {
+	case "header":
 		am.client.GetConfig().AddDefaultHeader("X-Session-Token", ss)
 	}
 
@@ -182,16 +185,18 @@ func (am *AuthManager) UpdateRole(ss, t, orgId, role string, user *pkg.UserTrait
 }
 
 func (am *AuthManager) AuthorizeUser(ss, t, orgId, role, relation, object string) (*ory.Session, error) {
-	if t == "cookie" {
+	switch t {
+	case "cookie":
 		urlObj, _ := url.Parse(am.client.GetConfig().Servers[0].URL)
 		cookie := &http.Cookie{
 			Name:  SESSION_KEY,
 			Value: ss,
 		}
 		am.client.GetConfig().HTTPClient.Jar.SetCookies(urlObj, []*http.Cookie{cookie})
-	} else if t == "header" {
+	case "header":
 		am.client.GetConfig().AddDefaultHeader("X-Session-Token", ss)
 	}
+
 	resp, r, err := am.client.FrontendAPI.ToSession(context.Background()).Execute()
 
 	if err != nil {

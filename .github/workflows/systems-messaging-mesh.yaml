@@ -19,7 +19,10 @@ jobs:
     name: build and test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Installing Ubuntu packages
         run: |
@@ -151,7 +154,7 @@ jobs:
   release:
     name: release
     needs: build
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && vars.ENABLE_GITOPS_RELEASE == 'true'
     runs-on: ubuntu-latest
     env:
       working-directory: systems/messaging/mesh

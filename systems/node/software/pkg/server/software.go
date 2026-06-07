@@ -68,6 +68,14 @@ func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, appRepo db.AppRepo
 }
 
 func (s *SoftwareServer) acquireAndRegister(actionType, resourceKey string) (*opmgrpb.Operation, error) {
+	if s.opManager == nil || s.opMonitor == nil {
+		log.Warnf("%s running without operation manager/monitor for %s", actionType, resourceKey)
+		return &opmgrpb.Operation{
+			Id:          "",
+			ResourceKey: resourceKey,
+		}, nil
+	}
+
 	startResp, err := s.opManager.Start(&opmgrpb.StartOperationRequest{
 		Type:         actionType,
 		System:       "node",
@@ -96,6 +104,10 @@ func (s *SoftwareServer) acquireAndRegister(actionType, resourceKey string) (*op
 }
 
 func (s *SoftwareServer) markRunning(op *opmgrpb.Operation, actionType string) error {
+	if s.opManager == nil || op == nil || op.Id == "" {
+		return nil
+	}
+
 	if _, err := s.opManager.MarkRunning(op.Id, op.FencingToken); err != nil {
 		log.Warnf("%s mark running failed for op %s: %v", actionType, op.Id, err)
 		return err
@@ -104,7 +116,7 @@ func (s *SoftwareServer) markRunning(op *opmgrpb.Operation, actionType string) e
 }
 
 func (s *SoftwareServer) failOperation(op *opmgrpb.Operation, actionType, reason string) {
-	if op == nil {
+	if s.opManager == nil || op == nil || op.Id == "" {
 		return
 	}
 	if _, err := s.opManager.FailOperation(op.Id, pkg.ServiceName, reason); err != nil {

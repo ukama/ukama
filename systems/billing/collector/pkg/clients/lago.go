@@ -178,7 +178,7 @@ func (l *lagoClient) GetCustomer(ctx context.Context, custId string) (string, er
 }
 
 func (l *lagoClient) CreateCustomer(ctx context.Context, cust Customer) (string, error) {
-	var customerType lago.CustomerType = lago.IndividualCustomerType
+	customerType := lago.IndividualCustomerType
 
 	if cust.Type == CompanyCustomerType {
 		customerType = lago.CompanyCustomerType
@@ -276,7 +276,7 @@ func (l *lagoClient) TerminateSubscription(ctx context.Context, subscriptionId s
 }
 
 func (l *lagoClient) CreateWebhook(ctx context.Context, wh WebhookEndpoint) (string, error) {
-	var signatureAlgoType lago.SignatureAlgo = lago.JWT
+	signatureAlgoType := lago.JWT
 
 	if wh.SignatureAlgo == HmacSignatureAlgoType {
 		signatureAlgoType = lago.HMac
