@@ -17,9 +17,10 @@ import CloudUploadRounded from '@mui/icons-material/CloudUploadRounded';
 import DescriptionRounded from '@mui/icons-material/DescriptionRounded';
 import UploadFileRounded from '@mui/icons-material/UploadFileRounded';
 import { useUploadSimsMutation } from '@/client/graphql/sims.generated';
-import { Sim_Types } from '@/client/graphql/types';
+import type { Sim_Types } from '@/client/graphql/types';
 import AppModal from '@/components/AppModal';
 import { useToast } from '@/components/ToastProvider';
+import { publicEnv } from '@/lib/runtime-env';
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 
@@ -81,7 +82,9 @@ export default function UploadSimsDialog({
     try {
       const data = await fileToBase64(file);
       void uploadSims({
-        variables: { data: { data, simType: Sim_Types.UkamaData } },
+        variables: {
+          data: { data, simType: publicEnv().simType as Sim_Types },
+        },
       });
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Could not read the file');

@@ -22,16 +22,15 @@ import { useGetPackagesQuery } from '@/client/graphql/packages.generated';
 import { useGetSimsFromPoolQuery } from '@/client/graphql/sims.generated';
 import { useAddSubscriberMutation } from '@/client/graphql/subscribers.generated';
 import { useAllocateSimMutation } from '@/client/graphql/sims.generated';
-import { Sim_Status, Sim_Types } from '@/client/graphql/types';
+import { Sim_Status, type Sim_Types } from '@/client/graphql/types';
 import AppModal from '@/components/AppModal';
 import { Field, SelectInput, TextInput } from '@/components/form/FormField';
 import { useToast } from '@/components/ToastProvider';
 import { useCurrency } from '@/lib/currency';
+import { publicEnv } from '@/lib/runtime-env';
 import { useUiPrefs } from '@/lib/store';
 import { addCustomerSchema } from './schemas';
 import type { AddCustomerValues } from './schemas';
-
-const SIM_TYPE = Sim_Types.UkamaData;
 
 export default function AddCustomerDialog({
   onClose,
@@ -66,7 +65,9 @@ export default function AddCustomerDialog({
   );
 
   const { data: simData } = useGetSimsFromPoolQuery({
-    variables: { data: { type: SIM_TYPE, status: Sim_Status.All } },
+    variables: {
+      data: { type: publicEnv().simType as Sim_Types, status: Sim_Status.All },
+    },
   });
   const simOptions = useMemo(
     () => [
@@ -104,7 +105,7 @@ export default function AddCustomerDialog({
               subscriber_id: sub.uuid,
               network_id: networkId,
               package_id: v.planId,
-              sim_type: SIM_TYPE,
+              sim_type: publicEnv().simType,
               iccid: v.sim || undefined,
               traffic_policy: 0,
             },

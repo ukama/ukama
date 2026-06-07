@@ -40,6 +40,7 @@ import TableFooter from '@/components/data-table/TableFooter';
 import { useToast } from '@/components/ToastProvider';
 import { formatDate, parseTimestamp } from '@/lib/parsers';
 import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
+import { publicEnv } from '@/lib/runtime-env';
 import UploadSimsDialog from './UploadSimsDialog';
 
 type SimRow = { isAllocated: boolean; isFailed: boolean; isPhysical: boolean };
@@ -51,7 +52,6 @@ type SortDir = 'asc' | 'desc';
 const statusKey = (s: SimRow): StatusFilter =>
   s.isFailed ? 'faulty' : s.isAllocated ? 'assigned' : 'available';
 
-const SIM_TYPE = 'ukama_data';
 // Matches the BFF cap (MAX_POOL_SIMS) so the table can show the full pool.
 const LIST_LIMIT = 100;
 
@@ -107,7 +107,7 @@ export default function SimPoolScreen({ canAct }: { canAct: boolean }) {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
 
   const { data, loading, refetch } = useSimPoolOverviewQuery({
-    variables: { simType: SIM_TYPE, limit: LIST_LIMIT },
+    variables: { simType: publicEnv().simType, limit: LIST_LIMIT },
     ...visiblePoll(POLL_OVERVIEW_MS),
   });
   const stats = data?.simPoolView.stats;

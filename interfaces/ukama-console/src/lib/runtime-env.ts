@@ -30,6 +30,8 @@ export interface PublicEnv {
   apiGw4ss: string;
   /** Auth app (login redirect target). */
   authAppUrl: string;
+  /** SIM type used for pool/allocation (e.g. ukama_data, test). */
+  simType: string;
 }
 
 /** Local-dev fallbacks (mirror src/env.ts defaults). */
@@ -38,6 +40,7 @@ const DEFAULTS: PublicEnv = {
   metricUrl: 'http://localhost:8081',
   apiGw4ss: 'http://localhost:8080',
   authAppUrl: 'http://localhost:4455',
+  simType: 'test',
 };
 
 /** Global key the server injects and the client reads. */
@@ -58,6 +61,7 @@ export function readServerEnv(): PublicEnv {
     metricUrl: pick('NEXT_PUBLIC_METRIC_URL', DEFAULTS.metricUrl),
     apiGw4ss: pick('NEXT_PUBLIC_API_GW_4SS', DEFAULTS.apiGw4ss),
     authAppUrl: pick('NEXT_PUBLIC_AUTH_APP_URL', DEFAULTS.authAppUrl),
+    simType: pick('NEXT_PUBLIC_SIM_TYPE', DEFAULTS.simType),
   };
 }
 
