@@ -22,7 +22,6 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	"github.com/ukama/ukama/systems/billing/collector/pkg/clients"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/ukama"
 
@@ -64,7 +63,7 @@ func NewCollectorEventServer(orgName, orgId, webhookUrl string, client client.Bi
 
 	bm, err := initBillingDefaults(client, DefaultBillableMetricCode, orgName, orgId, webhookUrl)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to initialize billable metric: %w", err)
+		return nil, fmt.Errorf("failed to initialize billable metric: %w", err)
 	}
 
 	bMetric := BillableMetric{
@@ -490,7 +489,7 @@ func handleSimManagerSetActivePackageForSimEvent(key string, sim *epb.EventSimAc
 
 	subscriptionId, err := b.client.TerminateSubscription(ctx, sim.Id)
 	if err != nil {
-		var e *clients.Error
+		var e *client.Error
 		if !errors.As(err, &e) || (errors.As(err, &e) && e.Code != http.StatusNotFound) {
 			return fmt.Errorf("fail to terminate subscriber's current subscripton: %w",
 				err)
