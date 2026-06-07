@@ -22,6 +22,7 @@
  */
 import { env } from '@/env';
 import { readServerEnv } from '@/lib/runtime-env';
+import { publicUrl } from '@/lib/request-url';
 import { decodeUserFromToken, fetchSession } from '@/lib/auth/token';
 import {
   SESSION_COOKIE,
@@ -72,7 +73,7 @@ export default async function proxy(
     // (the Kratos session is valid — that would loop); land on
     // /unauthorized, where the user can only log out or contact support.
     if (!result) {
-      const res = NextResponse.redirect(new URL('/unauthorized', request.url));
+      const res = NextResponse.redirect(publicUrl(request, '/unauthorized'));
       res.cookies.delete(TOKEN_COOKIE);
       return res;
     }
@@ -104,11 +105,11 @@ export default async function proxy(
     const onWelcome = pathname === '/welcome';
     if (user.isShowWelcome && !onWelcome) {
       return attachFreshToken(
-        NextResponse.redirect(new URL('/welcome', request.url)),
+        NextResponse.redirect(publicUrl(request, '/welcome')),
       );
     }
     if (!user.isShowWelcome && onWelcome) {
-      return attachFreshToken(NextResponse.redirect(new URL('/', request.url)));
+      return attachFreshToken(NextResponse.redirect(publicUrl(request, '/')));
     }
   }
 
