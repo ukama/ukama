@@ -15,14 +15,14 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { TOKEN_COOKIE } from '@/lib/auth/types';
-import { env } from '@/env';
+import { readServerEnv } from '@/lib/runtime-env';
 
 export const runtime = 'nodejs';
 
 export async function POST() {
   (await cookies()).delete(TOKEN_COOKIE);
   return NextResponse.json(
-    { ok: true, redirect: `${env.NEXT_PUBLIC_AUTH_APP_URL}/auth/login` },
+    { ok: true, redirect: `${readServerEnv().authAppUrl}/auth/login` },
     { headers: { 'cache-control': 'no-store' } },
   );
 }

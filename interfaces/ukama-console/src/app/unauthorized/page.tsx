@@ -12,16 +12,21 @@
  * membership, no role, or incomplete claims — see BFF SessionValidationError
  * steps). The only ways out are logging out or contacting support.
  */
-import Button from '@mui/material/Button';
 import LogoutRounded from '@mui/icons-material/LogoutRounded';
 import SupportAgentRounded from '@mui/icons-material/SupportAgentRounded';
+import Button from '@mui/material/Button';
 
-import { env } from '@/env';
+import { readServerEnv } from '@/lib/runtime-env';
+
+export const dynamic = 'force-dynamic';
 
 const SUPPORT_EMAIL = 'support@ukama.com';
 
 export default function UnauthorizedPage() {
-  const logoutUrl = new URL('/auth/logout', env.NEXT_PUBLIC_AUTH_APP_URL).toString();
+  const logoutUrl = new URL(
+    '/auth/logout',
+    readServerEnv().authAppUrl,
+  ).toString();
   return (
     <main
       style={{

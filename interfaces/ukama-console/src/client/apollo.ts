@@ -19,7 +19,7 @@
  *  - auth: cookies (`credentials: 'include'`) against the API gateway,
  *    same as the legacy console; session/role headers via proxy.ts later
  */
-import { env } from '@/env';
+import { publicEnv } from '@/lib/runtime-env';
 import { ApolloClient, HttpLink, from } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { InvalidationPolicyCache } from '@nerdwallet/apollo-cache-policies';
@@ -94,7 +94,7 @@ export function makeApolloClient() {
   });
 
   const httpLink = new HttpLink({
-    uri: `${env.NEXT_PUBLIC_API_GW}/graphql`,
+    uri: `${publicEnv().apiGw}/graphql`,
     credentials: 'include',
   });
 

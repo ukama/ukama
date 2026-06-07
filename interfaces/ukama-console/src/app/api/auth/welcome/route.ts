@@ -13,7 +13,7 @@
  * the next navigation re-mints a token with isShowWelcome=false.
  */
 import { NextResponse } from 'next/server';
-import { env } from '@/env';
+import { readServerEnv } from '@/lib/runtime-env';
 import { TOKEN_COOKIE } from '@/lib/auth/types';
 
 export const runtime = 'nodejs';
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false }, { status: 401 });
   }
 
-  const res = await fetch(`${env.NEXT_PUBLIC_API_GW_4SS}/welcome-seen`, {
+  const res = await fetch(`${readServerEnv().apiGw4ss}/welcome-seen`, {
     method: 'POST',
     cache: 'no-store',
     headers: { cookie: cookieHeader },

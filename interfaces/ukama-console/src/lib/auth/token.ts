@@ -15,7 +15,7 @@
  * every request, so here we only decode the claims for UI/routing. We never
  * trust these claims for authorization decisions the gateway doesn't enforce.
  */
-import { env } from '@/env';
+import { readServerEnv } from '@/lib/runtime-env';
 import type { AuthUser } from './types';
 
 /** Shape returned by the gateway `/get-user` endpoint. */
@@ -82,7 +82,7 @@ export async function fetchSession(
   cookieHeader: string,
 ): Promise<{ user: AuthUser; token: string } | null> {
   try {
-    const res = await fetch(`${env.NEXT_PUBLIC_API_GW_4SS}/get-user`, {
+    const res = await fetch(`${readServerEnv().apiGw4ss}/get-user`, {
       method: 'GET',
       cache: 'no-store',
       headers: {

@@ -21,6 +21,7 @@
  * from the still-valid session. No background polling.
  */
 import { env } from '@/env';
+import { readServerEnv } from '@/lib/runtime-env';
 import { decodeUserFromToken, fetchSession } from '@/lib/auth/token';
 import {
   SESSION_COOKIE,
@@ -37,7 +38,7 @@ const encodeUser = (user: AuthUser): string =>
 /** Clears the token cookie and sends the user to the auth app (logout). */
 const logoutRedirect = (): NextResponse => {
   const res = NextResponse.redirect(
-    new URL('/auth/login', env.NEXT_PUBLIC_AUTH_APP_URL),
+    new URL('/auth/login', readServerEnv().authAppUrl),
   );
   res.cookies.delete(TOKEN_COOKIE);
   return res;
