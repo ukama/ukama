@@ -15,18 +15,15 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Button from '@mui/material/Button';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded';
-import PowerSettingsNewRounded from '@mui/icons-material/PowerSettingsNewRounded';
 import RestartAltRounded from '@mui/icons-material/RestartAltRounded';
 import SyncRounded from '@mui/icons-material/SyncRounded';
 import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
-import WifiOffRounded from '@mui/icons-material/WifiOffRounded';
 import Skeleton from '@mui/material/Skeleton';
 
 import { useNodeDetailQuery } from '@/client/graphql/node-detail.generated';
 import { useNodeKpisQuery } from '@/client/graphql/node-kpis.generated';
+import { useRestartNodeMutation } from '@/client/graphql/controller.generated';
+import AppModal from '@/components/AppModal';
 import AppTabs from '@/components/AppTabs';
 import { LineChart } from '@/components/charts';
 import DetailPicker from '@/components/DetailPicker';
@@ -37,7 +34,7 @@ import SectionCard from '@/components/SectionCard';
 import { useToast } from '@/components/ToastProvider';
 import { toUkamaNode } from '@/lib/mappers/nodes';
 import { series } from '@/lib/series';
-import { StateChip } from './nodeStatus';
+import { ConnectivityDot, StateChip } from './nodeStatus';
 
 const TABS = ['Overview', 'Network', 'Resources', 'Radio', 'Software'];
 
@@ -245,52 +242,67 @@ function MetricChartCard({ chart, off }: { chart: ChartDef; off: boolean }) {
   );
 }
 
-function PowerMenu({ serial }: { serial: string }) {
-  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+/** Restart node — single action, confirmation dialog, then mutation. */
+function RestartAction({ nodeId, name }: { nodeId: string; name: string }) {
+  const [open, setOpen] = useState(false);
   const toast = useToast();
+  const [restart, { loading }] = useRestartNodeMutation({
+    onCompleted: (d) => {
+      setOpen(false);
+      toast(
+        d.restartNode.success ? `Restarting ${name}…` : `Couldn't restart ${name}`,
+      );
+    },
+    onError: () => {
+      setOpen(false);
+      toast(`Couldn't restart ${name}`);
+    },
+  });
   return (
     <>
       <Button
         variant="contained"
-        startIcon={<PowerSettingsNewRounded />}
-        endIcon={<ExpandMoreRounded />}
-        sx={{
-          bgcolor: '#1C1E22',
-          '&:hover': { bgcolor: '#2c2f36' },
-        }}
-        onClick={(e) => setAnchor(e.currentTarget)}
+        startIcon={<RestartAltRounded />}
+        sx={{ bgcolor: '#1C1E22', '&:hover': { bgcolor: '#2c2f36' } }}
+        onClick={() => setOpen(true)}
       >
-        Turn node off
+        Restart node
       </Button>
-      <Menu anchorEl={anchor} open={!!anchor} onClose={() => setAnchor(null)}>
-        <MenuItem
-          sx={{ fontSize: 13.5, gap: 1.25 }}
-          onClick={() => {
-            setAnchor(null);
-            toast(`${serial} powered off`);
+      {open && (
+        <AppModal
+          title="Restart node"
+          width={440}
+          onClose={() => {
+            if (!loading) setOpen(false);
           }}
+          footer={
+            <>
+              <Button
+                color="inherit"
+                sx={{ color: 'var(--uk-ink-3)' }}
+                disabled={loading}
+                onClick={() => setOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<RestartAltRounded />}
+                disabled={loading}
+                onClick={() => restart({ variables: { data: { nodeId } } })}
+              >
+                {loading ? 'Restarting…' : 'Restart node'}
+              </Button>
+            </>
+          }
         >
-          <PowerSettingsNewRounded sx={{ fontSize: 18 }} /> Turn node off
-        </MenuItem>
-        <MenuItem
-          sx={{ fontSize: 13.5, gap: 1.25 }}
-          onClick={() => {
-            setAnchor(null);
-            toast(`Restarting ${serial}…`);
-          }}
-        >
-          <RestartAltRounded sx={{ fontSize: 18 }} /> Restart node
-        </MenuItem>
-        <MenuItem
-          sx={{ fontSize: 13.5, gap: 1.25 }}
-          onClick={() => {
-            setAnchor(null);
-            toast('RF disabled');
-          }}
-        >
-          <WifiOffRounded sx={{ fontSize: 18 }} /> Turn RF off
-        </MenuItem>
-      </Menu>
+          <div style={{ fontSize: 14, color: 'var(--uk-ink-2)', lineHeight: 1.55 }}>
+            This will reboot <b style={{ color: 'var(--uk-ink)' }}>{name}</b>. The node
+            will be briefly offline while it restarts, and active sessions may be
+            interrupted.
+          </div>
+        </AppModal>
+      )}
     </>
   );
 }
@@ -413,9 +425,14 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
     <div className="page">
       <PageHeader
         crumb={['Nodes', n.serial]}
-        title={nodeName}
+        title={
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+            <ConnectivityDot connectivity={n.connectivity} />
+            {nodeName}
+          </span>
+        }
         onBack={() => router.push('/network/nodes')}
-        actions={<PowerMenu serial={n.serial} />}
+        actions={<RestartAction nodeId={n.id} name={nodeName} />}
       />
 
       <div className="detail-subrow">
