@@ -19,6 +19,8 @@ export const SubscriberSchema = z.object({
   cap: z.number().nullable(),
   sim: z.enum(['active', 'inactive', 'suspended']),
   iccid: z.string(),
+  /** SIM record id (for SIM-scoped actions like top-up); undefined in mocks. */
+  simId: z.string().optional(),
   seen: z.string(),
 });
 

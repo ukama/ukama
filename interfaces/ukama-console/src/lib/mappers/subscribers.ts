@@ -52,6 +52,7 @@ export const toSubscriber = (
     cap: null,
     sim: toSimStatus(firstSim?.status),
     iccid: firstSim?.iccid ?? '—',
+    simId: firstSim?.id,
     seen: '—',
   };
 };

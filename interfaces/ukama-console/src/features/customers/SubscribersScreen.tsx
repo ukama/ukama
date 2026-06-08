@@ -6,31 +6,23 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 'use client';
-import Meter from '@/components/Meter';
-
-/**
- * THE canonical shared record component (BUILD-PLAN §2): one customers
- * table serving all three lenses through a `mode` prop — never forked.
- *  - biz:     read-only rows → drawer (readOnly)
- *  - network: read-only list, shows site column, no row click
- *  - agent:   multi-select + bulk bar, kebab actions, add CTA, drawer
- */
-import { useMemo, useState } from 'react';
-import Button from '@mui/material/Button';
-import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
-import PersonAddRounded from '@mui/icons-material/PersonAddRounded';
-import type { ColumnDef } from '@tanstack/react-table';
+import { useNetworkCustomersQuery } from '@/client/graphql/network-customers.generated';
 import DataTable from '@/components/data-table/DataTable';
 import TableFooter from '@/components/data-table/TableFooter';
 import DateChip from '@/components/DateChip';
+import Meter from '@/components/Meter';
 import PageHeader from '@/components/PageHeader';
 import SearchField from '@/components/SearchField';
 import StatusBadge from '@/components/StatusBadge';
-import { useNetworkCustomersQuery } from '@/client/graphql/network-customers.generated';
 import type { Subscriber } from '@/data';
+import { toSubscriber } from '@/lib/mappers/subscribers';
 import { parseSeen } from '@/lib/parsers';
 import { useUiPrefs } from '@/lib/store';
-import { toSubscriber } from '@/lib/mappers/subscribers';
+import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
+import PersonAddRounded from '@mui/icons-material/PersonAddRounded';
+import Button from '@mui/material/Button';
+import type { ColumnDef } from '@tanstack/react-table';
+import { useMemo, useState } from 'react';
 import AddCustomerDialog from './AddCustomerDialog';
 import SubscriberDrawer from './SubscriberDrawer';
 
@@ -41,7 +33,6 @@ const SUBS = {
   network: 'Everyone connected to your network.',
   agent: 'Manage your customers’ packages and top-ups.',
 } as const;
-
 
 export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
   const agent = mode === 'agent';
@@ -62,10 +53,10 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
 
   const subscribers: Subscriber[] = useMemo(() => {
     const plansById = new Map(
-      (plansSection?.plans ?? []).map((p) => [p.packageId, p])
+      (plansSection?.plans ?? []).map((p) => [p.packageId, p]),
     );
     return (subsSection?.subscribers ?? []).map((s) =>
-      toSubscriber(s, plansById)
+      toSubscriber(s, plansById),
     );
   }, [subsSection?.subscribers, plansSection?.plans]);
 
@@ -124,17 +115,31 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
       enableSorting: true,
       cell: ({ row }) => {
         const s = row.original;
-        // usage < 0 = unknown (subscribersView.usage backend gap) → "—"
         if (s.plan === 'No plan' || s.usage < 0)
           return <span className="muted">—</span>;
         const pct = s.cap ? Math.min(100, (s.usage / s.cap) * 100) : 60;
         const over = !!s.cap && s.usage / s.cap > 0.9;
         return (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: 150 }}>
-            <Meter value={pct} color={over ? 'var(--uk-orange)' : undefined} sx={{ flex: 1, minWidth: 60 }} />
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              width: 150,
+            }}
+          >
+            <Meter
+              value={pct}
+              color={over ? 'var(--uk-orange)' : undefined}
+              sx={{ flex: 1, minWidth: 60 }}
+            />
             <span
               className="tnum"
-              style={{ fontSize: 12, color: 'var(--uk-ink-2)', whiteSpace: 'nowrap' }}
+              style={{
+                fontSize: 12,
+                color: 'var(--uk-ink-2)',
+                whiteSpace: 'nowrap',
+              }}
             >
               {s.usage}
               {s.cap ? '/' + s.cap : ''} GB
@@ -220,8 +225,18 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
             alignItems: 'center',
           }}
         >
-          <SearchField value={q} onChange={setQ} placeholder="Search name or phone" />
-          <div style={{ marginLeft: 'auto', fontSize: 13, color: 'var(--uk-ink-3)' }}>
+          <SearchField
+            value={q}
+            onChange={setQ}
+            placeholder="Search name or phone"
+          />
+          <div
+            style={{
+              marginLeft: 'auto',
+              fontSize: 13,
+              color: 'var(--uk-ink-3)',
+            }}
+          >
             {subscribers.length} of {subscribers.length}
           </div>
         </div>
@@ -230,11 +245,15 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
           <DataTable<Subscriber>
             columns={columns}
             data={subscribers}
-            status={loading ? 'loading' : subsSection?.error ? 'error' : 'ready'}
+            status={
+              loading ? 'loading' : subsSection?.error ? 'error' : 'ready'
+            }
             skeleton={{ cols: clickRow ? 6 : 5, rows: 6, lead: true }}
             empty={{
               art: 'search',
-              title: subsSection?.error ? "Couldn't load customers" : 'No customers match',
+              title: subsSection?.error
+                ? "Couldn't load customers"
+                : 'No customers match',
               sub: subsSection?.error
                 ? subsSection.error.message
                 : 'Try a different filter or search term.',
@@ -242,12 +261,17 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
             globalFilter={q}
             initialSorting={[{ id: 'name', desc: false }]}
             getRowId={(s) => s.id}
-            {...(clickRow ? { onRowClick: (s: Subscriber) => setOpenSub(s) } : {})}
+            {...(clickRow
+              ? { onRowClick: (s: Subscriber) => setOpenSub(s) }
+              : {})}
           />
         </div>
 
         {!loading && (
-          <TableFooter showing={subscribers.length} total={subscribers.length} />
+          <TableFooter
+            showing={subscribers.length}
+            total={subscribers.length}
+          />
         )}
       </div>
 
@@ -256,6 +280,7 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
           sub={openSub}
           onClose={() => setOpenSub(null)}
           readOnly={mode === 'biz'}
+          onChanged={() => void refetch()}
         />
       )}
       {showAdd && (
