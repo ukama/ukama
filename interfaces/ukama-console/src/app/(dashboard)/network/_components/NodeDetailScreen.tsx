@@ -25,6 +25,7 @@ import WifiOffRounded from '@mui/icons-material/WifiOffRounded';
 import Skeleton from '@mui/material/Skeleton';
 
 import { useNodeDetailQuery } from '@/client/graphql/node-detail.generated';
+import { useNodesListQuery } from '@/client/graphql/nodes-list.generated';
 import AppTabs from '@/components/AppTabs';
 import { LineChart } from '@/components/charts';
 import DetailPicker from '@/components/DetailPicker';
@@ -36,6 +37,7 @@ import { sectionValue } from '@/components/SectionFallback';
 import { useToast } from '@/components/ToastProvider';
 import { toUkamaNode } from '@/lib/mappers/nodes';
 import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
+import { useUiPrefs } from '@/lib/store';
 import { series } from '@/lib/series';
 import { StateChip } from './nodeStatus';
 
@@ -139,12 +141,24 @@ function PowerMenu({ serial }: { serial: string }) {
 export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
   const router = useRouter();
   const toast = useToast();
+  const networkId = useUiPrefs((s) => s.networkId);
   const [tab, setTab] = useState('Overview');
 
   const { data, loading, refetch } = useNodeDetailQuery({
     variables: { nodeId },
     ...visiblePoll(POLL_LIVE_MS),
   });
+
+  // All nodes in the network → the picker lets the user switch between them.
+  const { data: nodesData } = useNodesListQuery({
+    variables: { networkId },
+    skip: !networkId,
+  });
+  const pickerItems = (nodesData?.nodesView.nodes.nodes ?? []).map((nd) => ({
+    id: nd.id,
+    label: `${nd.name || nd.id} (${nd.id})`,
+    status: '',
+  }));
   const view = data?.nodeView;
   const nodeSection = view?.node;
   const healthSection = view?.health;
@@ -194,13 +208,18 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
       <PageHeader
         crumb={['Nodes', n.serial]}
         title={nodeName}
+        onBack={() => router.push('/network/nodes')}
         actions={<PowerMenu serial={n.serial} />}
       />
 
       <div className="detail-subrow">
         <DetailPicker
           value={{ id: n.id, label: `${nodeName} (${n.id})`, status: n.status }}
-          items={[{ id: n.id, label: `${nodeName} (${n.id})`, status: n.status }]}
+          items={
+            pickerItems.length > 0
+              ? pickerItems
+              : [{ id: n.id, label: `${nodeName} (${n.id})`, status: n.status }]
+          }
           onPick={(it) => router.push(`/network/nodes/${it.id}`)}
         />
         <StateChip state={n.state} />

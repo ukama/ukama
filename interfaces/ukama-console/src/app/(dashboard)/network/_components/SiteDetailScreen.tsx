@@ -17,12 +17,12 @@ import Switch from '@mui/material/Switch';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@mui/material/Button';
-import ArrowBackRounded from '@mui/icons-material/ArrowBackRounded';
 import GroupRounded from '@mui/icons-material/GroupRounded';
 import RestartAltRounded from '@mui/icons-material/RestartAltRounded';
 import Skeleton from '@mui/material/Skeleton';
 
 import { useNetworkSiteDetailQuery } from '@/client/graphql/site-detail.generated';
+import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
 import AppModal from '@/components/AppModal';
 import { ComboChart, MiniSpark } from '@/components/charts';
 import DetailPicker from '@/components/DetailPicker';
@@ -33,6 +33,7 @@ import SectionCard from '@/components/SectionCard';
 import StatusBadge from '@/components/StatusBadge';
 import { useToast } from '@/components/ToastProvider';
 import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
+import { useUiPrefs } from '@/lib/store';
 import { toUkamaNode } from '@/lib/mappers/nodes';
 import { toSite } from '@/lib/mappers/sites';
 import { series } from '@/lib/series';
@@ -171,6 +172,8 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
   const [selComp, setSelComp] = useState('switch');
   const [ports, setPorts] = useState<Record<number, boolean>>({ 1: true, 2: false, 3: false });
 
+  const networkId = useUiPrefs((s) => s.networkId);
+
   const { data, loading, refetch } = useNetworkSiteDetailQuery({
     variables: { siteId },
     ...visiblePoll(POLL_LIVE_MS),
@@ -178,6 +181,17 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
   const view = data?.siteView;
   const siteSection = view?.site;
   const nodesSection = view?.nodes;
+
+  // All sites in the network → the picker lets the user switch between them.
+  const { data: sitesData } = useSitesListQuery({
+    variables: { networkId },
+    skip: !networkId,
+  });
+  const pickerItems = (sitesData?.sitesView.sites.sites ?? []).map((si) => ({
+    id: si.id,
+    label: si.name,
+    status: '',
+  }));
 
   if (loading) {
     return (
@@ -224,33 +238,29 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
       <PageHeader
         crumb={['Sites', s.name]}
         title={s.name}
+        onBack={() => router.push('/network/sites')}
         actions={
-          <>
-            <Button
-              variant="outlined"
-              startIcon={<ArrowBackRounded />}
-              onClick={() => router.push('/network/sites')}
-            >
-              Back
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<RestartAltRounded />}
-              onClick={() => {
-                setRestart(true);
-                setConfirm('');
-              }}
-            >
-              Restart site
-            </Button>
-          </>
+          <Button
+            variant="contained"
+            startIcon={<RestartAltRounded />}
+            onClick={() => {
+              setRestart(true);
+              setConfirm('');
+            }}
+          >
+            Restart site
+          </Button>
         }
       />
 
       <div className="detail-subrow">
         <DetailPicker
           value={{ id: s.id, label: s.name, status: s.status }}
-          items={[{ id: s.id, label: s.name, status: s.status }]}
+          items={
+            pickerItems.length > 0
+              ? pickerItems
+              : [{ id: s.id, label: s.name, status: s.status }]
+          }
           onPick={(it) => router.push(`/network/sites/${it.id}`)}
         />
         <StatusBadge status={s.status} />

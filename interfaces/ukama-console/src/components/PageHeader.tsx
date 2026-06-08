@@ -12,6 +12,7 @@
  * Ported from the prototype's PageHead (shell.jsx); shared by every screen.
  */
 import { useEffect, useState } from 'react';
+import ArrowBackRounded from '@mui/icons-material/ArrowBackRounded';
 import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
 import ScheduleRounded from '@mui/icons-material/ScheduleRounded';
 
@@ -33,6 +34,8 @@ export interface PageHeaderProps {
   count?: string | number;
   sub?: string;
   actions?: React.ReactNode;
+  /** When set, a back arrow is shown left of the breadcrumb (nested pages). */
+  onBack?: () => void;
 }
 
 export default function PageHeader({
@@ -41,6 +44,7 @@ export default function PageHeader({
   count,
   sub,
   actions,
+  onBack,
 }: PageHeaderProps) {
   const [fetchedAt] = useState(() => new Date());
   const [now, setNow] = useState(fetchedAt);
@@ -65,6 +69,16 @@ export default function PageHeader({
     <div className={`pagehead${crumb ? ' has-crumb' : ''}`}>
       {crumb && (
         <div className="crumb">
+          {onBack && (
+            <button
+              type="button"
+              className="crumb-back"
+              aria-label="Back"
+              onClick={onBack}
+            >
+              <ArrowBackRounded sx={{ fontSize: 16 }} />
+            </button>
+          )}
           {crumb.map((c, i) => (
             <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
               {i > 0 && <ChevronRightRounded sx={{ fontSize: 15 }} />}
