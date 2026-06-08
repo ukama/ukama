@@ -15,7 +15,7 @@ import (
 )
 
 func TestRuntimeLayoutMatchesArchitecture(t *testing.T) {
-	root := filepath.Clean("../..")
+	root := filepath.Clean("../../..")
 
 	mustExist := []string{
 		"analytics/cmd/server/main.go",
