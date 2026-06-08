@@ -24,7 +24,7 @@ const SUPPORT_EMAIL = 'support@ukama.com';
 
 export default function UnauthorizedPage() {
   const logoutUrl = new URL(
-    '/auth/logout',
+    '/user/logout',
     readServerEnv().authAppUrl,
   ).toString();
   return (

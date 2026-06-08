@@ -29,6 +29,12 @@ query SitesList($networkId: String!) {
         offline
       }
     }
+    customers {
+      error {
+        ...SectionErrorFields
+      }
+      count
+    }
     kpis {
       error {
         ...SectionErrorFields

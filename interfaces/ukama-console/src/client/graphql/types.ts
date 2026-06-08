@@ -1948,6 +1948,12 @@ export type SiteComponentsSection = {
   error?: Maybe<SectionError>;
 };
 
+export type SiteCustomersSection = {
+  __typename?: 'SiteCustomersSection';
+  count?: Maybe<Scalars['Int']['output']>;
+  error?: Maybe<SectionError>;
+};
+
 export type SiteDto = {
   __typename?: 'SiteDto';
   accessId: Scalars['String']['output'];
@@ -2014,6 +2020,7 @@ export type SitesSection = {
 
 export type SitesView = {
   __typename?: 'SitesView';
+  customers: SiteCustomersSection;
   financials: GapSection;
   kpis: GapSection;
   networkId: Scalars['String']['output'];

@@ -20,6 +20,7 @@ import {
   NodesSection,
   SiteComponentDto,
   SiteComponentsSection,
+  SiteCustomersSection,
   SiteNodeCountsSection,
   SiteSection,
   SiteView,
@@ -89,6 +90,23 @@ export class SitesViewResolver {
       return groupNodeCountsBySite(res.nodes);
     });
     return { counts: value, error };
+  }
+
+  @FieldResolver(() => SiteCustomersSection)
+  async customers(
+    @Root() root: SitesViewRoot,
+    @Ctx() ctx: AppContext
+  ): Promise<SiteCustomersSection> {
+    const { value, error } = await runSection("customers", async () => {
+      const url = await root._urls.url("subscriber");
+      const res = await ctx.dataSources.subscriber.getSubscribersByNetwork(
+        url,
+        root.networkId
+      );
+      // Network-wide count; subscribers aren't site-scoped (see types.ts).
+      return res.subscribers.length;
+    });
+    return { count: value, error };
   }
 
   @FieldResolver(() => GapSection)

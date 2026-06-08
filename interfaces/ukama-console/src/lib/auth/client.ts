@@ -26,7 +26,12 @@ export function clearClientData(): void {
   }
 }
 
-/** Full logout: clear token cookie + browser state, then go to the auth app. */
+/**
+ * Full logout: clear the token cookie + browser state, then hand off to the
+ * auth app's logout route. `/user/logout` destroys the Kratos session
+ * (ukama_session) — redirecting to /auth/login instead would leave the
+ * session valid and bounce the user straight back into the console.
+ */
 export async function logout(): Promise<void> {
   if (typeof window === 'undefined') return;
   try {
@@ -35,5 +40,5 @@ export async function logout(): Promise<void> {
     /* best-effort — proceed with client cleanup regardless */
   }
   clearClientData();
-  window.location.assign(`${publicEnv().authAppUrl}/auth/login`);
+  window.location.assign(`${publicEnv().authAppUrl}/user/logout`);
 }

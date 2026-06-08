@@ -237,12 +237,24 @@ export class SiteNodeCountsSection {
 }
 
 @ObjectType()
+export class SiteCustomersSection {
+  @Field(() => SectionError, { nullable: true })
+  error?: SectionError | null;
+
+  @Field(() => Int, { nullable: true })
+  count?: number | null;
+}
+
+@ObjectType()
 export class SitesView {
   @Field()
   networkId: string;
 
   sites?: SitesSection;
   nodeCounts?: SiteNodeCountsSection;
+  // Network-wide subscriber count (subscribers aren't site-scoped in the
+  // registry; per-site attribution is a metrics-phase gap).
+  customers?: SiteCustomersSection;
   kpis?: GapSection;
   financials?: GapSection;
 }

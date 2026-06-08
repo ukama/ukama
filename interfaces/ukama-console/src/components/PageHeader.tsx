@@ -29,7 +29,7 @@ function timeAgo(from: Date, now: Date): string {
 
 export interface PageHeaderProps {
   crumb?: string[];
-  title: string;
+  title: React.ReactNode;
   count?: string | number;
   sub?: string;
   actions?: React.ReactNode;

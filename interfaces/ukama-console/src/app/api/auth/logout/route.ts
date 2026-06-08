@@ -21,7 +21,7 @@ export const runtime = 'nodejs';
 
 export function POST(request: Request) {
   const res = NextResponse.json(
-    { ok: true, redirect: `${readServerEnv().authAppUrl}/auth/login` },
+    { ok: true, redirect: `${readServerEnv().authAppUrl}/user/logout` },
     { headers: { 'cache-control': 'no-store' } },
   );
   // Clear with the same Domain it was set with so it actually goes away.

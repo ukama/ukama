@@ -17,7 +17,6 @@ import { useRouter } from 'next/navigation';
 import Button from '@mui/material/Button';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import ArrowBackRounded from '@mui/icons-material/ArrowBackRounded';
 import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded';
 import PowerSettingsNewRounded from '@mui/icons-material/PowerSettingsNewRounded';
 import RestartAltRounded from '@mui/icons-material/RestartAltRounded';
@@ -34,11 +33,11 @@ import KV from '@/components/KV';
 import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
 import { sectionValue } from '@/components/SectionFallback';
-import StatusBadge from '@/components/StatusBadge';
 import { useToast } from '@/components/ToastProvider';
 import { toUkamaNode } from '@/lib/mappers/nodes';
 import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
 import { series } from '@/lib/series';
+import { StateChip } from './nodeStatus';
 
 const NODE_TEMP = series(46, 22, 0.18, 0.12);
 const NODE_LOAD = series(52, 22, 0.14, 0.18);
@@ -85,13 +84,6 @@ function HealthChartCard({
       </div>
     </SectionCard>
   );
-}
-
-function nodeStatusText(status: string, up: string) {
-  if (status === 'online') return `is online and well for ${up}`;
-  if (status === 'configuring') return 'is configuring · ~4 min remaining';
-  if (status === 'degraded') return 'is online with warnings';
-  return 'has been offline for 2h 14m';
 }
 
 function PowerMenu({ serial }: { serial: string }) {
@@ -191,6 +183,7 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
   }
 
   const n = toUkamaNode(nodeSection.node);
+  const nodeName = n.name ?? n.serial;
   const off = n.status === 'offline';
   const healthRows = healthSection?.health?.system?.slice(0, 4) ?? [];
   const firstSoftware = softwareSection?.softwares?.software?.[0];
@@ -200,31 +193,17 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
     <div className="page">
       <PageHeader
         crumb={['Nodes', n.serial]}
-        title={`Node ${n.serial}`}
-        actions={
-          <>
-            <Button
-              variant="outlined"
-              startIcon={<ArrowBackRounded />}
-              onClick={() => router.push('/network/nodes')}
-            >
-              Back
-            </Button>
-            <PowerMenu serial={n.serial} />
-          </>
-        }
+        title={nodeName}
+        actions={<PowerMenu serial={n.serial} />}
       />
 
       <div className="detail-subrow">
         <DetailPicker
-          value={{ id: n.id, label: n.serial, status: n.status }}
-          items={[{ id: n.id, label: n.serial, status: n.status }]}
+          value={{ id: n.id, label: `${nodeName} (${n.id})`, status: n.status }}
+          items={[{ id: n.id, label: `${nodeName} (${n.id})`, status: n.status }]}
           onPick={(it) => router.push(`/network/nodes/${it.id}`)}
         />
-        <StatusBadge status={n.status} />
-        <span style={{ fontSize: 13.5, color: 'var(--uk-ink-2)' }}>
-          {nodeStatusText(n.status, n.up)}
-        </span>
+        <StateChip state={n.state} />
       </div>
 
       <AppTabs tabs={TABS} value={tab} onChange={setTab} scrollable />

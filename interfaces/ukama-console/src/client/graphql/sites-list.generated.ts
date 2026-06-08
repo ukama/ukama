@@ -9,7 +9,7 @@ export type SitesListQueryVariables = Types.Exact<{
 }>;
 
 
-export type SitesListQuery = { __typename?: 'Query', sitesView: { __typename?: 'SitesView', networkId: string, sites: { __typename?: 'SitesSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, sites?: Array<{ __typename?: 'SiteDto', id: string, name: string, networkId: string, latitude: string, longitude: string, location: string, isDeactivated: boolean, installDate: string, createdAt: string }> | null }, nodeCounts: { __typename?: 'SiteNodeCountsSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, counts?: Array<{ __typename?: 'SiteNodeCountDto', siteId: string, total: number, online: number, offline: number }> | null }, kpis: { __typename?: 'GapSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null } } };
+export type SitesListQuery = { __typename?: 'Query', sitesView: { __typename?: 'SitesView', networkId: string, sites: { __typename?: 'SitesSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, sites?: Array<{ __typename?: 'SiteDto', id: string, name: string, networkId: string, latitude: string, longitude: string, location: string, isDeactivated: boolean, installDate: string, createdAt: string }> | null }, nodeCounts: { __typename?: 'SiteNodeCountsSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, counts?: Array<{ __typename?: 'SiteNodeCountDto', siteId: string, total: number, online: number, offline: number }> | null }, customers: { __typename?: 'SiteCustomersSection', count?: number | null, error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null }, kpis: { __typename?: 'GapSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null } } };
 
 
 export const SitesListDocument = gql`
@@ -34,6 +34,12 @@ export const SitesListDocument = gql`
         online
         offline
       }
+    }
+    customers {
+      error {
+        ...SectionErrorFields
+      }
+      count
     }
     kpis {
       error {

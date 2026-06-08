@@ -14,6 +14,7 @@ import LightModeRounded from '@mui/icons-material/LightModeRounded';
 import MenuRounded from '@mui/icons-material/MenuRounded';
 
 import { useAuth } from '@/lib/auth/context';
+import AccountMenu from './AccountMenu';
 import LensSegment from './LensSegment';
 import NetSwitch from './NetSwitch';
 import NotificationsMenu from './NotificationsMenu';
@@ -68,16 +69,7 @@ function OrgLabel() {
   );
 }
 
-const initials = (name?: string): string =>
-  (name ?? '')
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(part => part[0]?.toUpperCase())
-    .join('') || '?';
-
 export default function TopBar({ onMenu }: { onMenu: () => void }) {
-  const user = useAuth();
   return (
     <header className="topbar">
       <button
@@ -94,9 +86,7 @@ export default function TopBar({ onMenu }: { onMenu: () => void }) {
       <OrgLabel />
       <ThemeToggle />
       <NotificationsMenu />
-      <button type="button" className="avatar" title={user?.name ?? 'Account'}>
-        {initials(user?.name)}
-      </button>
+      <AccountMenu />
     </header>
   );
 }

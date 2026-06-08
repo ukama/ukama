@@ -20,12 +20,10 @@ import FilterChips from '@/components/FilterChips';
 import PageHeader from '@/components/PageHeader';
 import SearchField from '@/components/SearchField';
 import StatusBadge from '@/components/StatusBadge';
-import type { Site, UkamaNode } from '@/data';
+import type { Site } from '@/data';
 import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
 import { useUiPrefs } from '@/lib/store';
 import { toSite } from '@/lib/mappers/sites';
-import NodeDrawer from './NodeDrawer';
-import SiteDrawer from './SiteDrawer';
 
 function SiteCard({ s, onOpen }: { s: Site; onOpen: (s: Site) => void }) {
   const issueColor = s.status === 'offline' ? 'var(--uk-error-deep, #cf121b)' : '#b5591b';
@@ -107,8 +105,6 @@ export default function SitesScreen() {
   const networkId = useUiPrefs((s) => s.networkId);
   const [filter, setFilter] = useState('all');
   const [q, setQ] = useState('');
-  const [drawerSite, setDrawerSite] = useState<Site | null>(null);
-  const [drawerNode, setDrawerNode] = useState<UkamaNode | null>(null);
 
   const { data, loading, refetch } = useSitesListQuery({
     variables: { networkId },
@@ -123,10 +119,15 @@ export default function SitesScreen() {
         { total: c.total, online: c.online },
       ])
     );
+    const customerCount = data?.sitesView.customers.count ?? 0;
     return (sitesSection?.sites ?? []).map((s) =>
-      toSite(s, countsBySite.get(s.id))
+      toSite(s, countsBySite.get(s.id), customerCount)
     );
-  }, [sitesSection?.sites, data?.sitesView.nodeCounts.counts]);
+  }, [
+    sitesSection?.sites,
+    data?.sitesView.nodeCounts.counts,
+    data?.sitesView.customers.count,
+  ]);
 
   const counts = {
     all: sites.length,
@@ -139,7 +140,7 @@ export default function SitesScreen() {
       (filter === 'all' || s.status === filter) &&
       s.name.toLowerCase().includes(q.toLowerCase()),
   );
-  const open = (s: Site) => setDrawerSite(s);
+  const open = (s: Site) => router.push(`/network/sites/${s.id}`);
 
   return (
     <div className="page">
@@ -190,30 +191,6 @@ export default function SitesScreen() {
             </div>
           )}
         </>
-      )}
-      {drawerSite && (
-        <SiteDrawer
-          site={drawerSite}
-          onClose={() => setDrawerSite(null)}
-          onManage={(s) => {
-            setDrawerSite(null);
-            router.push(`/network/sites/${s.id}`);
-          }}
-          onOpenNode={(n) => {
-            setDrawerSite(null);
-            setDrawerNode(n);
-          }}
-        />
-      )}
-      {drawerNode && (
-        <NodeDrawer
-          node={drawerNode}
-          onClose={() => setDrawerNode(null)}
-          onOpenDetail={(n) => {
-            setDrawerNode(null);
-            router.push(`/network/nodes/${n.id}`);
-          }}
-        />
       )}
     </div>
   );
