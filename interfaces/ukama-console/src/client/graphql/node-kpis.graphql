@@ -1,0 +1,25 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026-present, Ukama Inc.
+
+# Node health KPIs — split from NodeDetail so it can poll independently
+# (metric service is polling-only; NodeDetail stays a one-shot composite).
+
+query NodeKpis($nodeId: String!) {
+  nodeView(nodeId: $nodeId) {
+    nodeId
+    kpis {
+      error {
+        ...SectionErrorFields
+      }
+      metrics {
+        key
+        value
+        timestamp
+        success
+      }
+    }
+  }
+}

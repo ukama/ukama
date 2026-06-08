@@ -7,9 +7,10 @@
  */
 import { Arg, Ctx, FieldResolver, Query, Resolver, Root } from "type-graphql";
 
-import { GRAPHS_TYPE, TIMEFRAME_FILTER } from "../../common/enums";
+import { GRAPHS_TYPE, SOFTWARE_STATUS, TIMEFRAME_FILTER } from "../../common/enums";
 import { getGraphsKeyByType, getNodeTypeFromId } from "../../common/utils";
 import { GetHealthReportInputDto } from "../../health/resolvers/types";
+import { Node } from "../../node/resolvers/types";
 import type { AppContext } from "../../server/context";
 import { GetSoftwaresInput } from "../../software/resolvers/types";
 import { ServiceUrlResolver } from "../baseUrls";
@@ -24,11 +25,16 @@ import {
   NodeView,
   NodesSection,
   NodesView,
+  SiteSection,
   SoftwareSection,
 } from "./types";
 
 type NodesViewRoot = NodesView & { _urls: ServiceUrlResolver };
-type NodeViewRoot = NodeView & { _urls: ServiceUrlResolver };
+type NodeViewRoot = NodeView & {
+  _urls: ServiceUrlResolver;
+  /** node core memo so `site`/`siblings` reuse the same fetch. */
+  _node?: Promise<Node>;
+};
 
 /**
  * Nodes list composite (plan §3.1). Serves: Nodes list, Node pool (skips
@@ -84,16 +90,57 @@ export class NodeViewResolver {
     });
   }
 
+  /** Memoized node fetch shared by `node`, `site` and `siblings`. */
+  private fetchNode(root: NodeViewRoot, ctx: AppContext): Promise<Node> {
+    if (!root._node) {
+      root._node = root._urls
+        .url("node")
+        .then(url => ctx.dataSources.node.getNode(url, { id: root.nodeId }));
+    }
+    return root._node;
+  }
+
   @FieldResolver(() => NodeSection)
   async node(
     @Root() root: NodeViewRoot,
     @Ctx() ctx: AppContext
   ): Promise<NodeSection> {
-    const { value, error } = await runSection("node", async () => {
-      const url = await root._urls.url("node");
-      return ctx.dataSources.node.getNode(url, { id: root.nodeId });
-    });
+    const { value, error } = await runSection("node", () =>
+      this.fetchNode(root, ctx)
+    );
     return { node: value, error };
+  }
+
+  @FieldResolver(() => SiteSection)
+  async site(
+    @Root() root: NodeViewRoot,
+    @Ctx() ctx: AppContext
+  ): Promise<SiteSection> {
+    const { value, error } = await runSection("site", async () => {
+      const node = await this.fetchNode(root, ctx);
+      const siteId = node.site?.siteId;
+      if (!siteId) return null;
+      const url = await root._urls.url("site");
+      return ctx.dataSources.site.getSite(url, siteId);
+    });
+    return { site: value, error };
+  }
+
+  @FieldResolver(() => NodesSection)
+  async siblings(
+    @Root() root: NodeViewRoot,
+    @Ctx() ctx: AppContext
+  ): Promise<NodesSection> {
+    const { value, error } = await runSection("siblings", async () => {
+      const node = await this.fetchNode(root, ctx);
+      const networkId = node.site?.networkId;
+      const url = await root._urls.url("node");
+      const res = networkId
+        ? await ctx.dataSources.node.getNodesByNetwork(url, networkId)
+        : await ctx.dataSources.node.getNodes(url, {});
+      return res.nodes;
+    });
+    return { nodes: value, error };
   }
 
   @FieldResolver(() => HealthSection)
@@ -118,8 +165,12 @@ export class NodeViewResolver {
   ): Promise<SoftwareSection> {
     const { value, error } = await runSection("software", async () => {
       const url = await root._urls.url("software");
+      // The software service requires a status filter (legacy console sent
+      // `unknown`); omitting it returns 400.
       return ctx.dataSources.software.getSoftwares(url, {
+        name: "",
         nodeId: root.nodeId,
+        status: SOFTWARE_STATUS.unknown,
       } as GetSoftwaresInput);
     });
     return { softwares: value, error };

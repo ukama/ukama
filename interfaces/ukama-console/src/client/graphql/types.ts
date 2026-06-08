@@ -1058,6 +1058,8 @@ export type NodeView = {
   node: NodeSection;
   nodeId: Scalars['String']['output'];
   radioStatus: GapSection;
+  siblings: NodesSection;
+  site: SiteSection;
   software: SoftwareSection;
   stateHistory: NodeStateSection;
 };

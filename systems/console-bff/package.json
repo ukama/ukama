@@ -10,7 +10,7 @@
     "build": "tsc",
     "dev": "pnpm api-dev",
     "introspection": "ENABLE_INTROSPECTION=true pnpm api-dev",
-    "api-dev": "nodemon --watch \"server/**\" --watch \"common/**\" --ext \"ts,json,graphql\" --exec \"ts-node server/index.ts\"",
+    "api-dev": "nodemon --ext \"ts,json,graphql\" --ignore \".cache/**\" --ignore \"dist/**\" --exec \"ts-node server/index.ts\"",
     "start": "pnpm build && node dist/server/index.js",
     "subscriptions-dev": "pnpm clear-cache && nodemon --watch \"subscriptions/**\" --ext \"ts,json,graphql\" --exec \"ts-node subscriptions/index.ts\"",
     "subscriptions-start": "pnpm build && pnpm clear-cache && node dist/subscriptions/index.js",

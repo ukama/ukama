@@ -203,6 +203,12 @@ export class NodeView {
   nodeId: string;
 
   node?: NodeSection;
+  // The node's site, resolved from its siteId — lets the detail page show the
+  // site name without a separate sitesView round trip.
+  site?: SiteSection;
+  // Other nodes in the same network — powers the node-switcher dropdown
+  // without a separate nodesView round trip.
+  siblings?: NodesSection;
   health?: HealthSection;
   software?: SoftwareSection;
   stateHistory?: NodeStateSection;

@@ -6,7 +6,9 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
-/** Card with display-font section title + right slot (biz-common.jsx). */
+/** Card with display-font section title + right slot (biz-common.jsx).
+ *  When `selectable`, the card reads as a button with a left accent bar that
+ *  turns blue while `active` — used by the node detail rail to pick a section. */
 export default function SectionCard({
   title,
   count,
@@ -14,6 +16,9 @@ export default function SectionCard({
   children,
   style,
   bodyStyle,
+  selectable,
+  active,
+  onClick,
 }: {
   title?: React.ReactNode;
   count?: React.ReactNode;
@@ -21,9 +26,37 @@ export default function SectionCard({
   children: React.ReactNode;
   style?: React.CSSProperties;
   bodyStyle?: React.CSSProperties;
+  selectable?: boolean;
+  active?: boolean;
+  onClick?: () => void;
 }) {
+  const cls = [
+    'card',
+    'card-pad',
+    selectable ? 'card-selectable' : '',
+    selectable && active ? 'is-active' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
   return (
-    <div className="card card-pad" style={style}>
+    <div
+      className={cls}
+      style={style}
+      role={selectable ? 'button' : undefined}
+      tabIndex={selectable ? 0 : undefined}
+      aria-pressed={selectable ? !!active : undefined}
+      onClick={onClick}
+      onKeyDown={
+        selectable && onClick
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
+    >
       {(title || right) && (
         <div className="sec-head">
           {title ? (

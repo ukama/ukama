@@ -397,6 +397,100 @@
   margin: 8px 4px;
 }
 
+/* Selectable section cards (node detail rail): left accent + active state. */
+.card-selectable {
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+}
+/* Left accent: always-visible gray indicator, blue when selected. */
+.card-selectable::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--uk-ink-3);
+  transition: background 0.12s ease;
+}
+.card-selectable:hover::before {
+  background: var(--uk-ink-2);
+}
+.card-selectable.is-active::before {
+  background: var(--uk-ac);
+}
+.card-selectable:focus-visible {
+  outline: 2px solid var(--uk-ac);
+  outline-offset: 2px;
+}
+
+/* Software tab — node apps card grid. */
+.apps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--uk-gap);
+}
+.app-card {
+  border: 1px solid var(--uk-line);
+  border-radius: var(--uk-r-sm);
+  padding: 14px;
+  background: var(--uk-card);
+}
+
+/* Range toggle (Day / Week / Month) on metric chart cards. */
+.range-toggle {
+  display: inline-flex;
+  border: 1px solid var(--uk-line);
+  border-radius: var(--uk-r-sm);
+  overflow: hidden;
+}
+.range-toggle button {
+  border: none;
+  background: transparent;
+  color: var(--uk-ink-2);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 5px 11px;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.range-toggle button + button {
+  border-left: 1px solid var(--uk-line);
+}
+.range-toggle button:hover {
+  color: var(--uk-ink);
+}
+.range-toggle button.is-active {
+  background: var(--uk-ac);
+  color: #fff;
+}
+
+/* KV rows: divider between items only, not after the last one. */
+.kv-row {
+  border-bottom: 1px solid var(--uk-line-soft);
+}
+.kv-row:last-child {
+  border-bottom: none;
+}
+/* Clickable KV rows: hover hint + chevron nudge so they read as interactive. */
+.kv-row[role='button'] {
+  transition: background 0.12s ease;
+}
+.kv-row[role='button']:hover {
+  background: var(--uk-ac-soft);
+}
+.kv-row[role='button']:hover .kv-chev,
+.kv-row[role='button']:focus-visible .kv-chev {
+  color: var(--uk-ac) !important;
+  transform: translateX(2px);
+}
+.kv-chev {
+  transition: transform 0.12s ease, color 0.12s ease;
+}
+
 /* ---- main ---- */
 .main {
   grid-area: main;
