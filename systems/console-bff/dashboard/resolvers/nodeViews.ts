@@ -7,7 +7,11 @@
  */
 import { Arg, Ctx, FieldResolver, Query, Resolver, Root } from "type-graphql";
 
-import { GRAPHS_TYPE, SOFTWARE_STATUS, TIMEFRAME_FILTER } from "../../common/enums";
+import {
+  GRAPHS_TYPE,
+  SOFTWARE_STATUS,
+  TIMEFRAME_FILTER,
+} from "../../common/enums";
 import { getGraphsKeyByType, getNodeTypeFromId } from "../../common/utils";
 import { GetHealthReportInputDto } from "../../health/resolvers/types";
 import { Node } from "../../node/resolvers/types";
