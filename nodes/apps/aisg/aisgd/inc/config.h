@@ -16,11 +16,11 @@
 #define AISGD_SERVICE_NAME     SERVICE_AISG
 #define AISGD_APP_NAME         SERVICE_AISG
 #define AISGD_MAX_STR          256
-#define DEF_CONFIG_FILE        "/ukama/configs/aisgd/config.toml"
+#define DEF_CONFIG_FILE        "/ukama/configs/aisg/config.toml"
 #define DEF_LOG_LEVEL          "TRACE"
 #define DEF_CTRL_SOCKET        "/var/run/aisg-ctrl.sock"
 #define DEF_CTRL_TIMEOUT_MS    3000
-#define DEF_STATE_FILE         "/ukama/apps/data/aisgd/state.json"
+#define DEF_STATE_FILE         "/ukama/state/aisg/state.json"
 #define EP_BS                  "/"
 #define REST_API_VERSION       "v1"
 #define URL_PREFIX             EP_BS REST_API_VERSION
