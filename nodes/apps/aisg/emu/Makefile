@@ -53,6 +53,7 @@ ULFIUS_LIB+=-lnettle
 ULFIUS_LIB+=-lhogweed
 ULFIUS_LIB+=-lp11-kit
 ULFIUS_LIB+=-lz
+ULFIUS_LIB+=-lyder
 
 LIBS = $(ULFIUS_LIB) $(CURL_LIB)
 LIBS+=-ltoml
