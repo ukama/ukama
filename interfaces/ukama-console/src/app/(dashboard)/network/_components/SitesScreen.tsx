@@ -16,7 +16,6 @@ import Skeleton from '@mui/material/Skeleton';
 
 import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
 import { EmptyState } from '@/components/EmptyState';
-import FilterChips from '@/components/FilterChips';
 import PageHeader from '@/components/PageHeader';
 import SearchField from '@/components/SearchField';
 import StatusBadge from '@/components/StatusBadge';
@@ -94,7 +93,6 @@ function SiteCard({ s, onOpen }: { s: Site; onOpen: (s: Site) => void }) {
         <span>
           {s.subs} customers · {s.nodes} nodes
         </span>
-        <span className="tnum">{s.uptime}% uptime</span>
       </div>
     </div>
   );
@@ -103,7 +101,6 @@ function SiteCard({ s, onOpen }: { s: Site; onOpen: (s: Site) => void }) {
 export default function SitesScreen() {
   const router = useRouter();
   const networkId = useUiPrefs((s) => s.networkId);
-  const [filter, setFilter] = useState('all');
   const [q, setQ] = useState('');
 
   const { data, loading, refetch } = useSitesListQuery({
@@ -129,16 +126,8 @@ export default function SitesScreen() {
     data?.sitesView.customers.count,
   ]);
 
-  const counts = {
-    all: sites.length,
-    online: sites.filter((s) => s.status === 'online').length,
-    degraded: sites.filter((s) => s.status === 'degraded').length,
-    offline: sites.filter((s) => s.status === 'offline').length,
-  };
-  const list = sites.filter(
-    (s) =>
-      (filter === 'all' || s.status === filter) &&
-      s.name.toLowerCase().includes(q.toLowerCase()),
+  const list = sites.filter((s) =>
+    s.name.toLowerCase().includes(q.toLowerCase()),
   );
   const open = (s: Site) => router.push(`/network/sites/${s.id}`);
 
@@ -151,16 +140,6 @@ export default function SitesScreen() {
       />
       <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap', alignItems: 'center' }}>
         <SearchField value={q} onChange={setQ} placeholder="Search sites" width={260} />
-        <FilterChips
-          value={filter}
-          onChange={setFilter}
-          options={[
-            { value: 'all', label: 'All', count: counts.all },
-            { value: 'online', label: 'Online', count: counts.online },
-            { value: 'degraded', label: 'Degraded', count: counts.degraded },
-            { value: 'offline', label: 'Offline', count: counts.offline },
-          ]}
-        />
       </div>
       {loading ? (
         <div className="tile-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))' }}>
