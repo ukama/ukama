@@ -1,0 +1,5 @@
+[service]
+socket = "/var/run/aisg-ctrl.sock"
+
+[scenario]
+name = "normal"

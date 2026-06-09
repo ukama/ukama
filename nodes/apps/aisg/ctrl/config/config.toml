@@ -1,0 +1,13 @@
+[service]
+socket = "/var/run/aisg-ctrl.sock"
+
+[backend]
+type = "raw-rs485"
+
+[raw_rs485]
+device = "/dev/ttyUSB0"
+baud = 9600
+
+[stm_uart]
+device = "/dev/ttyAMA1"
+baud = 115200
