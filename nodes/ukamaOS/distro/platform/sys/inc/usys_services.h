@@ -46,7 +46,8 @@ extern "C" {
 #define SERVICE_INIT_NETWORK     "init-network"
 #define SERVICE_EXAMPLE          "example"
 #define SERVICE_AISG             "aisg"
-#define SERVICE_AISG_EMU         "aisg-emu"	
+#define SERVICE_AISG_EMU         "aisg-emu"
+#define SERVICE_AISG_CTRL        "aisg-ctrl"
 
 #ifdef __cplusplus
 }
