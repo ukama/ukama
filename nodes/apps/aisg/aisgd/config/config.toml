@@ -1,0 +1,10 @@
+[controller]
+path = "/var/run/aisg-ctrl.sock"
+timeout_ms = 3000
+
+[policy]
+require_config_before_calibrate = true
+require_calibrate_before_set_tilt = true
+
+[files]
+state = "/ukama/apps/data/aisgd/state.json"
