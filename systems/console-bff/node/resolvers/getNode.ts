@@ -15,6 +15,6 @@ export class GetNodeResolver {
   @Query(() => Node)
   async getNode(@Arg("data") data: NodeInput, @Ctx() context: Context) {
     const { dataSources, baseURL } = context;
-    return await dataSources.dataSource.getNode(baseURL, { id: data.id });
+    return await dataSources.node.getNode(baseURL, { id: data.id });
   }
 }

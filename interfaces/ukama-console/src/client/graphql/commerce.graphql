@@ -1,0 +1,133 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026-present, Ukama Inc.
+
+# Business-lens commerce documents — four screens, one composite, four
+# selections (plan §3.1: breathing space via field selection).
+
+query BizHomeRevenue($networkId: String) {
+  commerceView(networkId: $networkId) {
+    networkId
+    revenue {
+      error {
+        ...SectionErrorFields
+      }
+      totalPaid
+      monthPaid
+      momPct
+    }
+  }
+}
+
+query RevenueOverview($networkId: String) {
+  commerceView(networkId: $networkId) {
+    networkId
+    revenue {
+      error {
+        ...SectionErrorFields
+      }
+      totalPaid
+      totalPending
+      monthPaid
+      prevMonthPaid
+      momPct
+    }
+    plans {
+      error {
+        ...SectionErrorFields
+      }
+      plans {
+        packageId
+        name
+        revenue
+        revenueSharePct
+      }
+    }
+    invoices(limit: 10) {
+      error {
+        ...SectionErrorFields
+      }
+      reports {
+        id
+        period
+        type
+        isPaid
+        networkId
+      }
+    }
+  }
+}
+
+# Business home: subscriber/site stats over networkOverview (lean selection —
+# pairs with BizHomeRevenue on the same screen).
+query BizHomeNetwork($networkId: String!) {
+  networkOverview(networkId: $networkId) {
+    networkId
+    subscriberStats {
+      error {
+        ...SectionErrorFields
+      }
+      total
+      active
+    }
+    siteStats {
+      error {
+        ...SectionErrorFields
+      }
+      sites {
+        ...ViewSite
+      }
+    }
+  }
+}
+
+query PackagesDashboard($networkId: String) {
+  commerceView(networkId: $networkId) {
+    networkId
+    plans {
+      error {
+        ...SectionErrorFields
+      }
+      mrr
+      arpu
+      plans {
+        packageId
+        name
+        amount
+        currency
+        active
+        attachCount
+        revenue
+        revenueSharePct
+      }
+    }
+  }
+}
+
+query BillingOverview($networkId: String, $invoiceLimit: Int! = 20) {
+  commerceView(networkId: $networkId) {
+    networkId
+    invoices(limit: $invoiceLimit) {
+      error {
+        ...SectionErrorFields
+      }
+      reports {
+        id
+        period
+        type
+        isPaid
+        networkId
+        createdAt
+      }
+    }
+    balance {
+      error {
+        ...SectionErrorFields
+      }
+      outstandingCount
+      latestUnpaidPeriod
+    }
+  }
+}

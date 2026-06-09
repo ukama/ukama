@@ -18,6 +18,6 @@ export class AddPackageResolver {
     @Ctx() ctx: Context
   ): Promise<PackageDto> {
     const { dataSources, headers, baseURL } = ctx;
-    return dataSources.dataSource.addPackage(baseURL, data, headers);
+    return dataSources.package.addPackage(baseURL, data, headers);
   }
 }

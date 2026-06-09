@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { IsEmail } from "class-validator";
+import { IsEmail, IsEnum, IsNotEmpty, IsUUID } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
 
 import { INVITATION_STATUS, ROLE_TYPE } from "../../common/enums";
@@ -13,6 +13,7 @@ import { INVITATION_STATUS, ROLE_TYPE } from "../../common/enums";
 @InputType()
 export class CreateInvitationInputDto {
   @Field()
+  @IsNotEmpty()
   name: string;
 
   @Field()
@@ -20,6 +21,7 @@ export class CreateInvitationInputDto {
   email: string;
 
   @Field(() => ROLE_TYPE)
+  @IsEnum(ROLE_TYPE)
   role: ROLE_TYPE;
 }
 
@@ -103,6 +105,7 @@ export class InvitationsResDto {
 @InputType()
 export class GetInvitationInputDto {
   @Field()
+  @IsUUID()
   id: string;
 }
 
@@ -122,13 +125,16 @@ export class DeleteInvitationResDto {
 }
 
 @InputType()
-export class UpateInvitationInputDto {
+export class UpdateInvitationInputDto {
   @Field()
+  @IsUUID()
   id: string;
 
   @Field()
+  @IsEmail()
   email: string;
 
   @Field(() => INVITATION_STATUS)
+  @IsEnum(INVITATION_STATUS)
   status: INVITATION_STATUS;
 }

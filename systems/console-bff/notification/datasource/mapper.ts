@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import { eventKeyToAction } from "../../common/notification";
 import {
   NotificationAPIRes,
   NotificationResDto,
@@ -35,15 +36,25 @@ export const dtoToNotificationsDto = (
   res: NotificationsAPIRes
 ): NotificationsResDto => {
   return {
-    notifications: res.notifications.map(notification => ({
-      id: notification.id,
-      title: notification.title,
-      description: notification.description,
-      type: notification.type,
-      scope: notification.scope,
-      isRead: notification.is_read,
-      createdAt: notification.created_at,
-    })),
+    notifications: res.notifications.map(notification => {
+      const mapped = {
+        id: notification.id,
+        title: notification.title,
+        description: notification.description,
+        type: notification.type,
+        scope: notification.scope,
+        isRead: notification.is_read,
+        createdAt: notification.created_at,
+        eventKey: notification.event_key ?? "",
+        resourceId: notification.resource_id ?? "",
+      };
+      return {
+        ...mapped,
+        redirect: mapped.eventKey
+          ? eventKeyToAction(mapped.eventKey, mapped)
+          : undefined,
+      };
+    }),
   };
 };
 

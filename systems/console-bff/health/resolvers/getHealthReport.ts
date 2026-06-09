@@ -18,6 +18,6 @@ export class GetHealthReportResolver {
     @Ctx() ctx: Context
   ): Promise<HealthInfo> {
     const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.list(baseURL, data);
+    return dataSources.health.list(baseURL, data);
   }
 }

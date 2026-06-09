@@ -5,9 +5,8 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { RESTDataSource } from "@apollo/datasource-rest";
-
 import { VERSION } from "../../common/configs";
+import { BaseRESTDataSource } from "../../common/datasource";
 import { CBooleanResponse } from "../../common/types";
 import {
   AddNodeInput,
@@ -26,7 +25,7 @@ import { AttachNodeInput } from "./../resolvers/types";
 import { getNodeState, parseNodeRes, parseNodesRes } from "./mapper";
 
 const NODES = "nodes";
-class NodeAPI extends RESTDataSource {
+class NodeAPI extends BaseRESTDataSource {
   async getNode(baseURL: string, args: NodeInput): Promise<Node> {
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/${NODES}/${args.id}`).then(res =>

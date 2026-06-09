@@ -5,19 +5,28 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import axios from "axios";
+import axios, { AxiosInstance, AxiosResponse } from "axios";
 
+import { HTTP_TIMEOUT_MS } from "../configs";
 import { ApiMethodDataDto } from "../types";
 
 class ApiMethods {
+  private readonly client: AxiosInstance;
+
   constructor() {
-    axios.create({
-      timeout: 10000,
+    this.client = axios.create({
+      timeout: HTTP_TIMEOUT_MS,
     });
   }
-  fetch = async (req: ApiMethodDataDto) => {
-    return axios(req as any).catch(err => {
-      throw err;
+
+  fetch = async (req: ApiMethodDataDto): Promise<AxiosResponse> => {
+    return this.client.request({
+      method: req.method,
+      url: req.url,
+      data: req.body,
+      params: req.params,
+      headers: req.headers,
+      httpsAgent: req.httpsAgent,
     });
   };
 }

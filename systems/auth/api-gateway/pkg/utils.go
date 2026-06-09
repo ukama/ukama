@@ -62,7 +62,7 @@ func GetUserTraitsFromSession(orgId string, s *ory.Session) (*UserTraits, error)
 	if err := json.Unmarshal(rdata, &roles); err != nil {
 		return nil, err
 	}
-	var role string = ""
+	var role string
 	for _, r := range roles {
 		if r.OrganizationId == orgId {
 			role = r.Name
@@ -132,13 +132,13 @@ func GetSessionFromToken(w http.ResponseWriter, t string, k string) (*Session, e
 	})
 
 	if token == nil {
-		fmt.Fprintf(w, "invalid token")
+		_, _ = w.Write([]byte("invalid token"))
 		return nil, errors.New("token error")
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		fmt.Fprintf(w, "couldn't parse token")
+		_, _ = w.Write([]byte("couldn't parse token"))
 		return nil, errors.New("token error")
 	}
 

@@ -15,6 +15,6 @@ export class GetOrgsResolver {
   @Query(() => OrgsResDto)
   async getOrgs(@Ctx() ctx: Context): Promise<OrgsResDto> {
     const { dataSources, headers } = ctx;
-    return dataSources.dataSource.getOrgs(headers.userId);
+    return dataSources.org.getOrgs(headers.userId);
   }
 }

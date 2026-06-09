@@ -18,6 +18,6 @@ export class GetNodesForSiteResolver {
     @Ctx() context: Context
   ) {
     const { dataSources, baseURL } = context;
-    return await dataSources.dataSource.getNodesForSite(baseURL, siteId);
+    return await dataSources.node.getNodesForSite(baseURL, siteId);
   }
 }

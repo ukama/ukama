@@ -176,14 +176,14 @@ func (s *sessionManager) CreateSesssion(ctx context.Context, sub *store.Subscrib
 	}
 	sc.InitUsage = u.Data
 
-	err = s.d.AddNewDataPath(sc.s.UeIpAddr,
-		uint32(sc.s.RxMeterID.ID),
-		uint32(sc.s.TxMeterID.ID),
-		uint32(sc.s.TxMeterID.Rate),
-		uint32(sc.s.RxMeterID.Rate),
-		uint32(sc.s.RxMeterID.Burst),
-		sc.rxCookie,
-		sc.txCookie)
+    err = s.d.AddNewDataPath(sc.s.UeIpAddr,
+	    uint32(sc.s.RxMeterID.ID),
+    	uint32(sc.s.TxMeterID.ID),
+	    uint32(sc.s.RxMeterID.Rate),
+    	uint32(sc.s.TxMeterID.Rate),
+	    uint32(sc.s.RxMeterID.Burst),
+    	sc.rxCookie,
+	    sc.txCookie)
 	if err != nil {
 		log.Errorf("Failed to add data path for Imsi %s. Error: %s", sub.Imsi, err.Error())
 		return err

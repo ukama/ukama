@@ -7,10 +7,12 @@
  */
 import { exec } from "child_process";
 import { readFile } from "fs";
+import { IncomingHttpHeaders } from "http";
 import { RootDatabase } from "lmdb";
 
 import InitAPI from "../../init/datasource/init_api";
 import { MetricRes, MetricsRes } from "../../subscriptions/resolvers/types";
+import { verifyToken } from "../auth/token";
 import { SUB_GRAPHS } from "../configs";
 import {
   GRAPHS_TYPE,
@@ -19,78 +21,67 @@ import {
   ROLE_TYPE,
   STATS_TYPE,
 } from "../enums";
-import { HTTP401Error, Messages } from "../errors";
+import { Messages, UnauthenticatedError } from "../errors";
 import { logger } from "../logger";
+import { setRequestId } from "../logger/requestContext";
 import { Meta, ResponseObj, THeaders } from "../types";
 import { RoleToNotificationScopes } from "../utils/roleToNotificationScope";
 
 const getTimestampCount = (count: string) =>
   parseInt((Date.now() / 1000).toString()) + "-" + count;
 
-const parseHeaders = (reqHeader: any): THeaders => {
-  const headers: THeaders = {
-    auth: {
-      Authorization: "",
-      Cookie: "",
-    },
-    token: "",
-    orgId: "",
-    userId: "",
-    orgName: "",
-  };
-  if (reqHeader.get("introspection") === "true") return headers;
-  if (reqHeader.get("x-session-token") ?? reqHeader.get("cookie")) {
-    if (reqHeader.get("x-session-token")) {
-      headers.auth.Authorization = reqHeader["x-session-token"] as string;
-    } else {
-      const cookie: string = reqHeader.get("cookie");
-      const cookies = cookie.split(";");
-      const session: string =
-        cookies.find(item => (item.includes("ukama_session") ? item : "")) ??
-        "";
-      headers.auth.Cookie = session;
-      const t =
-        cookies.find(item =>
-          !item.includes("csrf_token") && item.includes("token") ? item : ""
-        ) ?? "";
+// Index of the optional `exp` (epoch seconds) claim within a token.
+const TOKEN_EXP_INDEX = 10;
 
-      if (t !== "") {
-        headers.token = t.replace("token=", "");
-      } else {
-        throw new HTTP401Error(Messages.TOKEN_HEADER_NOT_FOUND);
-      }
+/**
+ * Verifies a token's HMAC signature and (if present) its expiry, returning
+ * the decoded claim segments. Returns null for a missing/forged signature,
+ * a malformed payload, or an expired token. Tokens issued before the `exp`
+ * claim existed (fewer segments) remain valid for backward compatibility.
+ */
+const verifyTokenClaims = (token: string): string[] | null => {
+  const payload = verifyToken(token);
+  if (!payload) return null;
+
+  const claims = Buffer.from(payload, "base64").toString("utf-8").split(";");
+  if (claims.length < 3) return null;
+
+  const expRaw = claims[TOKEN_EXP_INDEX];
+  if (expRaw) {
+    const exp = parseInt(expRaw, 10);
+    if (!Number.isNaN(exp) && Math.floor(Date.now() / 1000) >= exp) {
+      return null; // expired
     }
-  } else {
-    throw new HTTP401Error(Messages.HEADER_ERR_AUTH);
   }
-  return headers;
+  return claims;
 };
 
-const parseToken = (token: string, get: "orgId" | "orgName" | "userId") => {
-  const headers: THeaders = {
-    auth: {
-      Authorization: "",
-      Cookie: "",
-    },
-    token: "",
-    orgId: "",
-    userId: "",
-    orgName: "",
-  };
+const parseToken = (
+  token: string,
+  get: "orgId" | "orgName" | "userId"
+): string | undefined => {
+  if (!token) return undefined;
 
-  if (token) {
-    const decoded = Buffer.from(token, "base64").toString("utf-8");
-    const headersStr = decoded.split(";");
-    if (headersStr.length < 3) throw new HTTP401Error(Messages.HEADER_ERR_AUTH);
-    headers.orgId = headersStr[0];
-    headers.orgName = headersStr[1];
-    headers.userId = headersStr[2];
-    headers.token = token;
-    return headers[get];
+  // Reject tokens whose signature is missing/invalid or that have expired,
+  // so clients cannot forge or replay org/user claims.
+  const claims = verifyTokenClaims(token);
+  if (!claims) throw new UnauthenticatedError(Messages.HEADER_ERR_AUTH);
+
+  switch (get) {
+    case "orgId":
+      return claims[0];
+    case "orgName":
+      return claims[1];
+    case "userId":
+      return claims[2];
   }
 };
 
 const parseGatewayHeaders = (reqHeader: any): THeaders => {
+  // Bind the gateway-forwarded correlation id to this request's async context
+  // so subgraph resolver/datasource logs carry it (no middleware available on
+  // the standalone Apollo servers).
+  setRequestId(reqHeader["x-request-id"] ?? "");
   return {
     auth: {
       Authorization: reqHeader["x-session-token"] ?? "",
@@ -103,10 +94,56 @@ const parseGatewayHeaders = (reqHeader: any): THeaders => {
   };
 };
 
-const getStripeIdByUserId = (uid: string): string => {
-  return uid === "d0a36c51-6a66-4187-b786-72a9e09bf7a4"
-    ? "cus_MFTZKUVOGtI2fU"
-    : "";
+/**
+ * Parses auth headers from a plain Express request headers object
+ * (used by the gateway's per-request context). Extracts the session
+ * cookie and the signed token, throwing 401 when neither a session
+ * token header nor a session cookie is present.
+ */
+const parseExpressHeaders = (reqHeader: IncomingHttpHeaders): THeaders => {
+  const headers: THeaders = {
+    auth: {
+      Authorization: "",
+      Cookie: "",
+    },
+    token: "",
+    orgId: "",
+    userId: "",
+    orgName: "",
+  };
+
+  const sessionToken = (reqHeader["x-session-token"] as string) ?? "";
+  const cookieHeader = reqHeader["cookie"] ?? "";
+
+  if (!sessionToken && !cookieHeader) {
+    throw new UnauthenticatedError(Messages.HEADER_ERR_AUTH);
+  }
+
+  if (sessionToken) {
+    headers.auth.Authorization = sessionToken;
+    return headers;
+  }
+
+  const cookies = cookieHeader.split(";").map(c => c.trim());
+  headers.auth.Cookie =
+    cookies.find(item => item.includes("ukama_session")) ?? "";
+
+  const tokenCookie =
+    cookies.find(
+      item => !item.includes("csrf_token") && item.startsWith("token=")
+    ) ?? "";
+  if (!tokenCookie) {
+    throw new UnauthenticatedError(Messages.TOKEN_HEADER_NOT_FOUND);
+  }
+
+  const token = tokenCookie.replace("token=", "");
+  // Verify signature + expiry at the gateway entry point so forged, tampered,
+  // or expired tokens are rejected with a clean 401 before any subgraph runs.
+  if (!verifyTokenClaims(token)) {
+    throw new UnauthenticatedError(Messages.HEADER_ERR_AUTH);
+  }
+  headers.token = token;
+  return headers;
 };
 
 const getPaginatedOutput = (
@@ -556,13 +593,12 @@ export {
   getNodeTypeFromId,
   getPaginatedOutput,
   getScopesByRole,
-  getStripeIdByUserId,
   getSystemNameByService,
   getTimestampCount,
   handleMetricWSMessage,
   isMetricNetworkCheckFailed,
   killProcess,
+  parseExpressHeaders,
   parseGatewayHeaders,
-  parseHeaders,
   parseToken,
 };

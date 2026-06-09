@@ -10,6 +10,7 @@ import { Arg, Ctx, Query, Resolver } from "type-graphql";
 import { Context } from "../context";
 import {
   SubscriberDto,
+  SubscriberSimDto,
   SubscriberSimsResDto,
   SubscribersResDto,
 } from "./types";
@@ -23,14 +24,28 @@ export class GetSubscribersByNetworkResolver {
   ): Promise<SubscribersResDto> {
     const { dataSources, baseURL } = ctx;
     const networkSub: SubscriberDto[] = [];
-    const sims: SubscriberSimsResDto =
-      await dataSources.dataSource.getSimsByNetwork(baseURL, networkId);
 
-    const subs: SubscribersResDto =
-      await dataSources.dataSource.getSubscribersByNetwork(baseURL, networkId);
+    // Independent upstream calls — fetch in parallel.
+    const [sims, subs]: [SubscriberSimsResDto, SubscribersResDto] =
+      await Promise.all([
+        dataSources.subscriber.getSimsByNetwork(baseURL, networkId),
+        dataSources.subscriber.getSubscribersByNetwork(baseURL, networkId),
+      ]);
+
+    // Group sims by subscriber once (O(n + m)) instead of filtering the
+    // whole sims array per subscriber (O(n * m)).
+    const simsBySubscriber = new Map<string, SubscriberSimDto[]>();
+    for (const sim of sims.sims) {
+      const group = simsBySubscriber.get(sim.subscriberId);
+      if (group) {
+        group.push(sim);
+      } else {
+        simsBySubscriber.set(sim.subscriberId, [sim]);
+      }
+    }
 
     for (const sub of subs.subscribers) {
-      sub.sim = sims.sims.filter(sim => sim.subscriberId === sub.uuid);
+      sub.sim = simsBySubscriber.get(sub.uuid) ?? [];
       networkSub.push({
         dob: sub.dob,
         uuid: sub.uuid,

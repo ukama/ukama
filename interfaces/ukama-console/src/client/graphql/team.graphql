@@ -1,0 +1,116 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026-present, Ukama Inc.
+
+# Members & admin screen — members + pending invitations as one merged team
+# list (membersView composite).
+
+query TeamList {
+  membersView {
+    orgName
+    team {
+      error {
+        ...SectionErrorFields
+      }
+      rows {
+        id
+        name
+        email
+        role
+        status
+        memberSince
+        inviteExpiresAt
+      }
+    }
+  }
+}
+
+# Business inventory screen — inventoryView composite.
+query InventoryOverview {
+  inventoryView {
+    orgName
+    components {
+      error {
+        ...SectionErrorFields
+      }
+      total
+      byCategory {
+        category
+        count
+      }
+    }
+    unassignedNodes {
+      error {
+        ...SectionErrorFields
+      }
+      nodes {
+        ...ViewNode
+      }
+    }
+    simStock {
+      error {
+        ...SectionErrorFields
+      }
+      total
+      available
+      consumed
+      pctAssigned
+      lowStock
+    }
+  }
+}
+
+# Customer home / subscriber drawer — subscriberView composite.
+query SubscriberDetail($subscriberId: String!) {
+  subscriberView(subscriberId: $subscriberId) {
+    subscriberId
+    subscriber {
+      error {
+        ...SectionErrorFields
+      }
+      subscriber {
+        uuid
+        name
+        email
+        phone
+        networkId
+        sim {
+          id
+          iccid
+          msisdn
+          status
+          type
+        }
+      }
+    }
+    plans {
+      error {
+        ...SectionErrorFields
+      }
+      plans {
+        packageId
+        name
+      }
+    }
+    billing {
+      error {
+        ...SectionErrorFields
+      }
+      payments {
+        id
+        amount
+        currency
+        status
+        paidAt
+        paymentMethod
+      }
+    }
+    usage {
+      error {
+        ...SectionErrorFields
+      }
+    }
+  }
+}

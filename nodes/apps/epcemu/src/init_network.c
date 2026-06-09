@@ -13,6 +13,51 @@
 #include "http_client.h"
 #include "init_network.h"
 
+#define INIT_NETWORK_RECONCILE_TIMEOUT_SEC 30
+
+static int json_bool_path(JsonObj *root,
+                          const char *parent,
+                          const char *key,
+                          int *value) {
+
+    JsonObj *obj;
+    JsonObj *leaf;
+
+    if (root == NULL || parent == NULL || key == NULL || value == NULL) {
+        return USYS_FALSE;
+    }
+
+    obj = json_object_get(root, parent);
+    if (!json_is_object(obj)) return USYS_FALSE;
+
+    leaf = json_object_get(obj, key);
+    if (json_is_boolean(leaf)) {
+        *value = json_is_true(leaf) ? USYS_TRUE : USYS_FALSE;
+        return USYS_TRUE;
+    }
+
+    return USYS_FALSE;
+}
+
+static int reconcile_response_ok(JsonObj *root) {
+
+    int value;
+
+    if (root == NULL) return USYS_FALSE;
+
+    value = USYS_FALSE;
+    if (json_bool_path(root, "steps", "policyRoutingReady", &value)) {
+        return value;
+    }
+
+    value = USYS_FALSE;
+    if (json_bool_path(root, "routing", "policyRouting", &value)) {
+        return value;
+    }
+
+    return json_is_true(json_object_get(root, "ready"));
+}
+
 int init_network_probe(EpcemuConfig *config, EpcemuStatus *status) {
 
     char url[EPCEMU_MAX_STR * 2];
@@ -44,6 +89,10 @@ int init_network_probe(EpcemuConfig *config, EpcemuStatus *status) {
         return USYS_FALSE;
     }
 
+    /*
+     * In this manifest, init-network runs in boot before EPCEMU.
+     * Therefore this should already be ready by the time EPCEMU starts.
+     */
     ready = json_object_get(root, "ready");
     if (!json_is_true(ready)) {
         json_decref(root);
@@ -85,6 +134,55 @@ int init_network_probe(EpcemuConfig *config, EpcemuStatus *status) {
 
     config->initNetworkReady = true;
     json_decref(root);
+
+    return USYS_TRUE;
+}
+
+int init_network_reconcile(EpcemuConfig *config, EpcemuStatus *status) {
+
+    char url[EPCEMU_MAX_STR * 2];
+    JsonObj *root;
+    long code;
+
+    if (config == NULL || status == NULL) return USYS_FALSE;
+
+    root = NULL;
+    code = 0;
+
+    status_set(status, EpcemuStateReconcilingInitNetwork,
+               "reconciling EPC tun routing through OVS");
+
+    snprintf(url, sizeof(url), "%s/v1/reconcile", config->initNetworkUrl);
+
+    if (!http_send_json_timeout("POST",
+                                url,
+                                NULL,
+                                &root,
+                                &code,
+                                INIT_NETWORK_RECONCILE_TIMEOUT_SEC)) {
+        status_fail(status, "failed to call init-network reconcile");
+        return USYS_FALSE;
+    }
+
+    if (code != 200 || root == NULL) {
+        if (root != NULL) json_decref(root);
+        status_fail(status, "init-network reconcile failed");
+        return USYS_FALSE;
+    }
+
+    if (!reconcile_response_ok(root)) {
+        json_decref(root);
+        status_fail(status, "init-network policy routing is not ready");
+        return USYS_FALSE;
+    }
+
+    config->initNetworkRouted = true;
+    json_decref(root);
+
+    usys_log_info("init-network reconciled tun=%s bridge=%s ue=%s",
+                  config->tunName,
+                  config->bridge,
+                  config->ueCidr);
 
     return USYS_TRUE;
 }

@@ -113,23 +113,25 @@ func (p *Router) getUserInfo(c *gin.Context, req *OptReqHeader) (*GetUserInfo, e
 	if err != nil {
 		return nil, err
 	}
-	var ss string
 
-	if st == "cookie" {
+	var ss string
+	switch st {
+	case "cookie":
 		ss = pkg.GetCookieStr(c, SESSION_KEY)
-	} else if st == "header" {
+	case "header":
 		ss = pkg.GetTokenStr(c)
 		err := pkg.ValidateToken(c.Writer, ss, p.config.k)
-		if err == nil {
-			t, e := pkg.GetSessionFromToken(c.Writer, ss, p.config.k)
-			if e != nil {
-				return nil, e
-			}
-			ss = t.Session
-		} else {
+		if err != nil {
 			return nil, err
 		}
+
+		t, err := pkg.GetSessionFromToken(c.Writer, ss, p.config.k)
+		if err != nil {
+			return nil, err
+		}
+		ss = t.Session
 	}
+
 	res, err := p.client.au.ValidateSession(ss, st)
 	if err != nil {
 		return nil, err
@@ -153,25 +155,27 @@ func (p *Router) authenticate(c *gin.Context, req *OptReqHeader) error {
 	if err != nil {
 		return err
 	}
+
 	var ss string
 	var orgId string
-	if st == "cookie" {
+	switch st {
+	case "cookie":
 		ss = pkg.GetCookieStr(c, SESSION_KEY)
-	} else if st == "header" {
+	case "header":
 		_, orgId = pkg.GetMemberDetails(c)
 		ss = pkg.GetTokenStr(c)
 		err := pkg.ValidateToken(c.Writer, ss, p.config.k)
-
-		if err == nil {
-			t, e := pkg.GetSessionFromToken(c.Writer, ss, p.config.k)
-			if e != nil {
-				return e
-			}
-			ss = t.Session
-		} else {
+		if err != nil {
 			return err
 		}
+
+		t, err := pkg.GetSessionFromToken(c.Writer, ss, p.config.k)
+		if err != nil {
+			return err
+		}
+		ss = t.Session
 	}
+
 	meta := c.Request.Header.Get("meta")
 	_, method, path, err := pkg.GetMetaHeaderValues(meta)
 	if err != nil {
@@ -218,27 +222,27 @@ func (p *Router) login(c *gin.Context, req *LoginReq) (*LoginRes, error) {
 }
 
 func (p *Router) updateRole(c *gin.Context, req *UpdateRoleReq) error {
-
 	st, err := pkg.SessionType(c, SESSION_KEY)
 	if err != nil {
 		return err
 	}
+
 	var ss string
-	if st == "cookie" {
+	switch st {
+	case "cookie":
 		ss = pkg.GetCookieStr(c, SESSION_KEY)
-	} else if st == "header" {
+	case "header":
 		ss = pkg.GetTokenStr(c)
 		err := pkg.ValidateToken(c.Writer, ss, p.config.k)
-
-		if err == nil {
-			t, e := pkg.GetSessionFromToken(c.Writer, ss, p.config.k)
-			if e != nil {
-				return e
-			}
-			ss = t.Session
-		} else {
+		if err != nil {
 			return err
 		}
+
+		t, err := pkg.GetSessionFromToken(c.Writer, ss, p.config.k)
+		if err != nil {
+			return err
+		}
+		ss = t.Session
 	}
 
 	logrus.Infof("fetch user session %s %s", ss, st)

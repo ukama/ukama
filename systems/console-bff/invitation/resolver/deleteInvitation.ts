@@ -18,6 +18,6 @@ export class DeleteInvitationResolver {
     @Ctx() ctx: Context
   ): Promise<DeleteInvitationResDto> {
     const { dataSources, baseURL } = ctx;
-    return await dataSources.dataSource.deleteInvitation(baseURL, id);
+    return await dataSources.invitation.deleteInvitation(baseURL, id);
   }
 }

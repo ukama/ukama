@@ -87,7 +87,7 @@ const createContextValue = async () => {
   const store = openStore();
   const baseURL = await getBaseURL(SUB_GRAPHS.node.name, orgName, store);
   return {
-    dataSources: { dataSource: nodeApi },
+    dataSources: { node: nodeApi },
     baseURL: baseURL.message,
     headers: parsedHeaders,
   };

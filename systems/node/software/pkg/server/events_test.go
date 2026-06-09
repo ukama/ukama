@@ -40,13 +40,23 @@ func newEventServerWithMocks(t *testing.T, sRepo *mocks.SoftwareRepo, appRepo *m
 	nodeRepo := mocks.NewNodeRepo(t)
 	nodeRepo.On("Create", mock.Anything).Return(nil).Maybe()
 	nodeRepo.On("List").Return([]db.Node{}, nil).Maybe()
-	swServer := NewSoftwareServer(testOrgName, sRepo, appRepo, nodeRepo, nil, mbmocks.NewMsgBusServiceClient(t), false, []string{"192.168.0.1"})
+	swServer := NewSoftwareServer(testOrgName, sRepo, appRepo, nodeRepo, nil, mbmocks.NewMsgBusServiceClient(t), false, []string{"192.168.0.1"},
+		nil,
+		nil,
+		0,
+		0,
+	)
 	return NewSoftwareEventServer(testOrgName, swServer)
 }
 
 func newEventServerWithAllMocks(t *testing.T, sRepo *mocks.SoftwareRepo, appRepo *mocks.AppRepo, nodeRepo *mocks.NodeRepo, healthProvider providers.HealthClientProvider) *SoftwareUpdateEventServer {
 	t.Helper()
-	swServer := NewSoftwareServer(testOrgName, sRepo, appRepo, nodeRepo, healthProvider, mbmocks.NewMsgBusServiceClient(t), false, []string{"192.168.0.1"})
+	swServer := NewSoftwareServer(testOrgName, sRepo, appRepo, nodeRepo, healthProvider, mbmocks.NewMsgBusServiceClient(t), false, []string{"192.168.0.1"},
+		nil,
+		nil,
+		0,
+		0,
+	)
 	return NewSoftwareEventServer(testOrgName, swServer)
 }
 

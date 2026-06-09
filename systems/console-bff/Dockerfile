@@ -1,18 +1,25 @@
-FROM node:18-alpine
+# Consolidated console-bff image (CONSOLIDATION-DESIGN Phase C).
+# One image, two containers: the API server (server/) and the subscriptions
+# service (subscriptions/) run as separate containers (see docker-compose),
+# each with its own command. No supervisord.
+# Node 20+ required by Apollo Server v5.
+FROM node:20-alpine
 
-WORKDIR /
+WORKDIR /app
 
-RUN apk update && apk add --no-cache supervisor
-COPY package*.json yarn.lock ./
+# pnpm, pinned via the package.json "packageManager" field (corepack).
+RUN corepack enable
 
-ENV NODE_ENV production
-ENV NODE_ENV PLANNING_TOOL_DB $PLANNING_TOOL_DB
-RUN yarn install --frozen-lockfile --ignore-scripts
+COPY package.json pnpm-lock.yaml ./
+# Install before NODE_ENV=production so pnpm keeps devDeps (tsc) for the build.
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 COPY . .
+RUN pnpm build
 
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY supervisord.conf /etc/supervisor/supervisord.conf
-RUN mkdir -p /var/log/
+ENV NODE_ENV=production
 EXPOSE 8080 8081
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
+
+# Default command: the consolidated API server. The subscriptions container
+# overrides this with `node dist/subscriptions/index.js` (see compose).
+CMD ["node", "dist/server/index.js"]

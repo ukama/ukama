@@ -1,0 +1,330 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2026-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/analytics/network/pb/gen";
+
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+
+package ukama.analytics.network.v1;
+
+service NetworkService {
+    rpc GetOverview(GetOverviewRequest) returns (GetOverviewResponse);
+    rpc GetTopology(GetTopologyRequest) returns (GetTopologyResponse);
+    rpc GetSites(GetSitesRequest) returns (GetSitesResponse);
+    rpc GetSite(GetSiteRequest) returns (GetSiteResponse);
+    rpc GetNodes(GetNodesRequest) returns (GetNodesResponse);
+    rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
+    rpc GetNodePool(GetNodePoolRequest) returns (GetNodePoolResponse);
+    rpc GetRadio(GetRadioRequest) returns (GetRadioResponse);
+    rpc GetBackhaul(GetBackhaulRequest) returns (GetBackhaulResponse);
+    rpc GetPower(GetPowerRequest) returns (GetPowerResponse);
+    rpc GetAlarms(GetAlarmsRequest) returns (GetAlarmsResponse);
+    rpc GetMetrics(GetMetricsRequest) returns (GetMetricsResponse);
+    rpc GetEvents(GetEventsRequest) returns (GetEventsResponse);
+    rpc SupportSearch(SupportSearchRequest) returns (SupportSearchResponse);
+}
+
+message Window {
+    string period = 1;
+    google.protobuf.Timestamp from = 2;
+    google.protobuf.Timestamp to = 3;
+    string timezone = 4;
+}
+
+message Kpi {
+    string key = 1;
+    double value = 2;
+    string formatted = 3;
+    double delta = 4;
+    string delta_period = 5;
+    bool stale = 6;
+    google.protobuf.Timestamp as_of = 7;
+}
+
+message Point {
+    google.protobuf.Timestamp time = 1;
+    double value = 2;
+}
+
+message TimeSeries {
+    string key = 1;
+    repeated Point points = 2;
+}
+
+message Meta {
+    uint32 count = 1;
+    uint32 page = 2;
+    uint32 size = 3;
+    uint32 pages = 4;
+}
+
+/* GetOverview */
+message GetOverviewRequest {
+    string network_id = 1;
+    Window window = 2;
+}
+
+message GetOverviewResponse {
+    string network_status = 1;       /* healthy|degraded|critical */
+    repeated Kpi kpis = 2;           /* sites_online, nodes_online, active_ues, open_alarms, critical_alarms, customers_affected, revenue_at_risk */
+    repeated EventRow recent_events = 3;
+}
+
+/* GetTopology */
+message GetTopologyRequest {
+    string network_id = 1;
+}
+
+message TopologySite {
+    string site_id = 1;
+    string name = 2;
+    string status = 3;
+    double latitude = 4;
+    double longitude = 5;
+    repeated TopologyNode nodes = 6;
+}
+
+message TopologyNode {
+    string node_id = 1;
+    string name = 2;
+    string type = 3;
+    string status = 4;
+}
+
+message GetTopologyResponse {
+    repeated TopologySite sites = 1;
+}
+
+/* GetSites / GetSite */
+message GetSitesRequest {
+    string network_id = 1;
+    string status = 2;
+    Window window = 3;
+    uint32 page = 4;
+    uint32 page_size = 5;
+}
+
+message SiteRow {
+    string site_id = 1;
+    string name = 2;
+    string status = 3;               /* online|degraded|offline */
+    uint32 node_count = 4;
+    uint32 customers = 5;
+    double uptime = 6;
+    string issue_summary = 7;
+    bool backhaul_latency_high = 8;
+    bool battery_critical = 9;
+    double offline_duration_seconds = 10;
+    double latitude = 11;
+    double longitude = 12;
+}
+
+message GetSitesResponse {
+    repeated Kpi kpis = 1;           /* total, online, degraded, offline */
+    repeated SiteRow sites = 2;
+    Meta meta = 3;
+}
+
+message GetSiteRequest {
+    string site_id = 1 [(validator.field) = { string_not_empty: true }];
+    Window window = 2;
+}
+
+message GetSiteResponse {
+    SiteRow site = 1;
+    repeated Kpi kpis = 2;
+    repeated TimeSeries series = 3;  /* uptime, backhaul_latency, battery */
+    repeated AlarmRow alarms = 4;
+}
+
+/* GetNodes / GetNode / GetNodePool */
+message GetNodesRequest {
+    string network_id = 1;
+    string site_id = 2;
+    string status = 3;
+    uint32 page = 4;
+    uint32 page_size = 5;
+}
+
+message NodeRow {
+    string node_id = 1;
+    string name = 2;
+    string type = 3;
+    string status = 4;               /* online|offline|configuring|needs_attention */
+    string site_id = 5;
+    string site_name = 6;
+    double uptime = 7;
+    google.protobuf.Timestamp last_telemetry = 8;
+    bool no_telemetry_warning = 9;
+    double configuring_duration_seconds = 10;
+}
+
+message GetNodesResponse {
+    repeated Kpi kpis = 1;           /* total, online, offline, needs_attention */
+    repeated NodeRow nodes = 2;
+    Meta meta = 3;
+}
+
+message GetNodeRequest {
+    string node_id = 1 [(validator.field) = { string_not_empty: true }];
+    Window window = 2;
+}
+
+message GetNodeResponse {
+    NodeRow node = 1;
+    repeated Kpi kpis = 2;
+    repeated TimeSeries series = 3;
+    repeated EventRow recent_events = 4;
+}
+
+message GetNodePoolRequest {
+    string network_id = 1;
+}
+
+message GetNodePoolResponse {
+    repeated Kpi kpis = 1;           /* available_to_install, deployed, in_inventory, rma */
+    repeated NodeRow nodes = 2;
+}
+
+/* GetRadio / GetBackhaul / GetPower */
+message GetRadioRequest {
+    string network_id = 1;
+    string site_id = 2;
+    string node_id = 3;
+    Window window = 4;
+}
+
+message GetRadioResponse {
+    repeated Kpi kpis = 1;           /* active_ues, attach_failures, dl_throughput, ul_throughput, signal_quality */
+    repeated TimeSeries series = 2;
+    repeated AlarmRow alarms = 3;
+}
+
+message GetBackhaulRequest {
+    string network_id = 1;
+    string site_id = 2;
+    Window window = 3;
+}
+
+message GetBackhaulResponse {
+    repeated Kpi kpis = 1;           /* latency, dl_throughput, ul_throughput, packet_loss, recent_failures */
+    repeated TimeSeries series = 2;
+    repeated AlarmRow alarms = 3;
+}
+
+message GetPowerRequest {
+    string network_id = 1;
+    string site_id = 2;
+    Window window = 3;
+}
+
+message GetPowerResponse {
+    repeated Kpi kpis = 1;           /* battery_percent, battery_voltage, load_watts, solar_watts, temperature, runtime_estimate */
+    repeated TimeSeries series = 2;
+    repeated AlarmRow alarms = 3;
+}
+
+/* GetAlarms */
+message GetAlarmsRequest {
+    string network_id = 1;
+    string site_id = 2;
+    string severity = 3;             /* critical|warning */
+    string state = 4;                /* open|closed */
+    uint32 page = 5;
+    uint32 page_size = 6;
+}
+
+message AlarmRow {
+    string alarm_id = 1;
+    string severity = 2;
+    string state = 3;
+    string resource_type = 4;        /* site|node|backhaul|power|radio */
+    string resource_id = 5;
+    string description = 6;
+    uint32 customers_affected = 7;
+    double revenue_at_risk = 8;
+    string recommended_action = 9;
+    google.protobuf.Timestamp opened_at = 10;
+    google.protobuf.Timestamp closed_at = 11;
+}
+
+message GetAlarmsResponse {
+    repeated Kpi kpis = 1;           /* open, critical, warning */
+    repeated AlarmRow alarms = 2;
+    Meta meta = 3;
+}
+
+/* GetMetrics */
+message GetMetricsRequest {
+    string network_id = 1;
+    string site_id = 2;
+    string node_id = 3;
+    string metric = 4;
+    Window window = 5;
+}
+
+message MetricInfo {
+    string name = 1;
+    string unit = 2;
+    google.protobuf.Timestamp last_sample_at = 3;
+    bool stale = 4;
+}
+
+message GetMetricsResponse {
+    repeated MetricInfo metrics = 1;
+    repeated TimeSeries series = 2;
+}
+
+/* GetEvents */
+message GetEventsRequest {
+    string network_id = 1;
+    string site_id = 2;
+    string node_id = 3;
+    Window window = 4;
+    uint32 page = 5;
+    uint32 page_size = 6;
+}
+
+message EventRow {
+    string routing_key = 1;
+    string resource_type = 2;
+    string resource_id = 3;
+    string description = 4;
+    google.protobuf.Timestamp occurred_at = 5;
+}
+
+message GetEventsResponse {
+    repeated EventRow events = 1;
+    Meta meta = 2;
+}
+
+/* SupportSearch */
+message SupportSearchRequest {
+    string query = 1 [(validator.field) = { string_not_empty: true }];
+    string network_id = 2;
+}
+
+message SupportResult {
+    string resource_type = 1;        /* site|node */
+    string resource_id = 2;
+    string name = 3;
+    string status = 4;
+    uint32 customers = 5;
+    double uptime_30d = 6;
+    double battery_percent = 7;
+    double signal_dbm = 8;
+    string status_summary = 9;
+    string recommendation = 10;      /* restart|escalate|none */
+}
+
+message SupportSearchResponse {
+    repeated SupportResult results = 1;
+}

@@ -5,9 +5,8 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { RESTDataSource } from "@apollo/datasource-rest";
-
 import { VERSION } from "../../common/configs";
+import { BaseRESTDataSource } from "../../common/datasource";
 import {
   GetReportDto,
   GetReportsDto,
@@ -15,33 +14,33 @@ import {
 } from "../resolvers/types";
 import { dtoToReportDto, dtoToReportsDto } from "./mapper";
 
-class BillingAPI extends RESTDataSource {
+class BillingAPI extends BaseRESTDataSource {
   getReports = async (
     baseURL: string,
     req: GetReportsInputDto
   ): Promise<GetReportsDto> => {
     this.logger.info(`GetReports [GET] ${baseURL}/${VERSION}/reports`);
     this.baseURL = baseURL;
-    const params = "sort=true";
+    const params = new URLSearchParams({ sort: "true" });
     if (req.networkId) {
-      params.concat(`&network_id=${req.networkId}`);
+      params.append("network_id", req.networkId);
     }
     if (req.ownerId) {
-      params.concat(`&owner_id=${req.ownerId}`);
+      params.append("owner_id", req.ownerId);
     }
     if (req.ownerType) {
-      params.concat(`&owner_type=${req.ownerType}`);
+      params.append("owner_type", req.ownerType);
     }
     if (req.report_type) {
-      params.concat(`&report_type=${req.report_type}`);
+      params.append("report_type", req.report_type);
     }
     if (req.count) {
-      params.concat(`&count=${req.count}`);
+      params.append("count", `${req.count}`);
     }
-    if (req.isPaid) {
-      params.concat(`&is_paid=${req.isPaid}`);
+    if (req.isPaid !== undefined && req.isPaid !== null) {
+      params.append("is_paid", `${req.isPaid}`);
     }
-    return this.get(`/${VERSION}/reports?${params}`).then(res =>
+    return this.get(`/${VERSION}/reports?${params.toString()}`).then(res =>
       dtoToReportsDto(res)
     );
   };

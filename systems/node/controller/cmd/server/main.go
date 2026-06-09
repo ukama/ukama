@@ -20,6 +20,7 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/node/controller/cmd/version"
 	"github.com/ukama/ukama/systems/node/controller/pkg"
+	cclient "github.com/ukama/ukama/systems/node/controller/pkg/client"
 	"github.com/ukama/ukama/systems/node/controller/pkg/db"
 	"github.com/ukama/ukama/systems/node/controller/pkg/server"
 
@@ -92,8 +93,14 @@ func runGrpcServer(gormdb sql.Db) {
 	mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
+
+	opMgr := cclient.NewOperationManager(svcConf.Operation.ManagerHost, svcConf.Operation.Timeout)
+	opMon := cclient.NewOperationMonitor(svcConf.Operation.MonitorHost, svcConf.Operation.Timeout)
+
 	contServer := server.NewControllerServer(svcConf.OrgName, db.NewNodeLogRepo(gormdb),
-		mbClient, cnet, csite, cnode, svcConf.DebugMode)
+		mbClient, cnet, csite, cnode,
+		opMgr, opMon, svcConf.Operation.LeaseSecs, svcConf.Operation.DeadlineSecs,
+		svcConf.DebugMode)
 	controllerEventServer := server.NewControllerEventServer(svcConf.OrgName, contServer)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {

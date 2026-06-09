@@ -8,16 +8,16 @@
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
 import { Context } from "../context";
-import { UpateInvitationInputDto, UpdateInvitationResDto } from "./types";
+import { UpdateInvitationInputDto, UpdateInvitationResDto } from "./types";
 
 @Resolver()
 export class UpdateInvitationResolver {
   @Mutation(() => UpdateInvitationResDto)
   async updateInvitation(
-    @Arg("data") data: UpateInvitationInputDto,
+    @Arg("data") data: UpdateInvitationInputDto,
     @Ctx() ctx: Context
   ): Promise<UpdateInvitationResDto> {
     const { dataSources } = ctx;
-    return await dataSources.dataSource.updateInvitation(data);
+    return await dataSources.invitation.updateInvitation(data);
   }
 }

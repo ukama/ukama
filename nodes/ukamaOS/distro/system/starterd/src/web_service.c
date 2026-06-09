@@ -151,7 +151,7 @@ static int ws_status_cb(const struct _u_request *req,
         json_object_set_new(j, "starterd", meta);
     }
 
-    body = json_dumps(j, JSON_INDENT(2) | JSON_SORT_KEYS);
+    body = json_dumps(j, JSON_INDENT(2));
     json_decref(j);
 
     ulfius_add_header_to_response(resp, "Content-Type", "application/json");

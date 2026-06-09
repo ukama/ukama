@@ -68,7 +68,7 @@ const createContextValue = async () => {
   const store = openStore();
   const baseURL = await getBaseURL(SUB_GRAPHS.member.name, orgName, store);
   return {
-    dataSources: { dataSource: memberApi },
+    dataSources: { member: memberApi },
     baseURL: baseURL.message,
     headers: parsedHeaders,
   };
@@ -77,7 +77,7 @@ const createContextValue = async () => {
 describe("Member API integration test", () => {
   let server: ApolloServer<Context>;
   let contextValue: {
-    dataSources: { dataSource: MemberApi };
+    dataSources: { member: MemberApi };
     baseURL: string;
     headers: THeaders;
   };

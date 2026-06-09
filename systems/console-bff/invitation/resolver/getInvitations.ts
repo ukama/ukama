@@ -15,6 +15,6 @@ export class GetInvitationsResolver {
   @Query(() => InvitationsResDto)
   async getInvitations(@Ctx() ctx: Context): Promise<InvitationsResDto> {
     const { dataSources, baseURL } = ctx;
-    return await dataSources.dataSource.getInvitations(baseURL);
+    return await dataSources.invitation.getInvitations(baseURL);
   }
 }

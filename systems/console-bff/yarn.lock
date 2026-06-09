@@ -3403,6 +3403,13 @@ expect@^29.0.0:
     jest-message-util "^29.7.0"
     jest-util "^29.7.0"
 
+express-rate-limit@^8.5.2:
+  version "8.5.2"
+  resolved "https://registry.npmjs.org/express-rate-limit/-/express-rate-limit-8.5.2.tgz#5922dbf76df2124611cea955d93432b37514b2f3"
+  integrity sha512-5Kb34ipNX694DH48vN9irak1Qx30nb0PLYHXfJgw4YEjiC3ZEmZJhwOp+VfiCYwFzvFTdB9QkArYS5kXa2cx2A==
+  dependencies:
+    ip-address "^10.2.0"
+
 express-winston@^4.2.0:
   version "4.2.0"
   resolved "https://registry.yarnpkg.com/express-winston/-/express-winston-4.2.0.tgz#e9d535d52aa4c125a54a29cce132ae2e3633f4fa"
@@ -3898,6 +3905,11 @@ hasown@^2.0.0, hasown@^2.0.2:
   dependencies:
     function-bind "^1.1.2"
 
+helmet@^8.2.0:
+  version "8.2.0"
+  resolved "https://registry.npmjs.org/helmet/-/helmet-8.2.0.tgz#61cb43244de24255a288c2fddb36086074eb1812"
+  integrity sha512-DRgTIUgnWcJ62KyarxxziuqYxKGnR6Rgg19BlbucN/dpmJbl1XOit6qvoOX0ZT+HhWe5OUVhU/a1zpGyc1xA0Q==
+
 html-escaper@^2.0.0:
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/html-escaper/-/html-escaper-2.0.2.tgz#dfd60027da36a36dfcbe236262c00a5822681453"
@@ -4024,6 +4036,11 @@ internal-slot@^1.0.4:
     es-errors "^1.3.0"
     hasown "^2.0.0"
     side-channel "^1.0.4"
+
+ip-address@^10.2.0:
+  version "10.2.0"
+  resolved "https://registry.npmjs.org/ip-address/-/ip-address-10.2.0.tgz#805fc178b20c518bd4c8548b24fe30892d7f3206"
+  integrity sha512-/+S6j4E9AHvW9SWMSEY9Xfy66O5PWvVEJ08O0y5JGyEKQpojb0K0GKpz/v5HJ/G0vi3D2sjGK78119oXZeE0qA==
 
 ip-address@^9.0.5:
   version "9.0.5"

@@ -5,9 +5,8 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { RESTDataSource } from "@apollo/datasource-rest";
-
 import { VERSION } from "../../common/configs";
+import { BaseRESTDataSource } from "../../common/datasource";
 import { TBooleanResponse } from "../../common/types";
 import {
   RestartNodeInputDto,
@@ -19,7 +18,7 @@ import {
 
 const CONTROLLER = "controller";
 
-class ControllerApi extends RESTDataSource {
+class ControllerApi extends BaseRESTDataSource {
   restartNode = async (
     baseURL: string,
     req: RestartNodeInputDto
@@ -32,7 +31,8 @@ class ControllerApi extends RESTDataSource {
       .then(() => {
         return { success: true };
       })
-      .catch(() => {
+      .catch(error => {
+        this.logger.error(`Request failed: ${error}`);
         return { success: false };
       });
   };
@@ -51,7 +51,8 @@ class ControllerApi extends RESTDataSource {
       .then(() => {
         return { success: true };
       })
-      .catch(() => {
+      .catch(error => {
+        this.logger.error(`Request failed: ${error}`);
         return { success: false };
       });
   };
@@ -70,7 +71,8 @@ class ControllerApi extends RESTDataSource {
       .then(() => {
         return { success: true };
       })
-      .catch(() => {
+      .catch(error => {
+        this.logger.error(`Request failed: ${error}`);
         return { success: false };
       });
   };
@@ -96,7 +98,8 @@ class ControllerApi extends RESTDataSource {
       .then(() => {
         return { success: true };
       })
-      .catch(() => {
+      .catch(error => {
+        this.logger.error(`Request failed: ${error}`);
         return { success: false };
       });
   };
@@ -126,7 +129,8 @@ class ControllerApi extends RESTDataSource {
       .then(() => {
         return { success: true };
       })
-      .catch(() => {
+      .catch(error => {
+        this.logger.error(`Request failed: ${error}`);
         return { success: false };
       });
   };
@@ -150,7 +154,8 @@ class ControllerApi extends RESTDataSource {
       .then(() => {
         return { success: true };
       })
-      .catch(() => {
+      .catch(error => {
+        this.logger.error(`Request failed: ${error}`);
         return { success: false };
       });
   };

@@ -11,7 +11,7 @@ import SiteAPI from "../datasource/site_api";
 export interface Context {
   baseURL: string;
   dataSources: {
-    dataSource: SiteAPI;
+    site: SiteAPI;
   };
   headers: THeaders;
 }

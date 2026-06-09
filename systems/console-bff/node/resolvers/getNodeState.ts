@@ -24,6 +24,6 @@ export class GetNodeStateResolver {
       headers.orgName,
       store
     );
-    return await dataSources.dataSource.getNodeState(baseURL.message, id);
+    return await dataSources.node.getNodeState(baseURL.message, id);
   }
 }

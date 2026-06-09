@@ -18,6 +18,6 @@ export class UpdateSoftwareResolver {
     @Ctx() ctx: Context
   ): Promise<StringResponse> {
     const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.updateSoftware(baseURL, data);
+    return dataSources.software.updateSoftware(baseURL, data);
   }
 }

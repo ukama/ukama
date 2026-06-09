@@ -18,6 +18,6 @@ export class GetUserResolver {
     @Ctx() ctx: Context
   ): Promise<UserResDto | null> {
     const { dataSources } = ctx;
-    return dataSources.dataSource.getUser(userId);
+    return dataSources.user.getUser(userId);
   }
 }

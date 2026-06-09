@@ -5,9 +5,8 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { RESTDataSource } from "@apollo/datasource-rest";
-
 import { VERSION } from "../../common/configs";
+import { BaseRESTDataSource } from "../../common/datasource";
 import { INVITATION_STATUS } from "../../common/enums";
 import { logger } from "../../common/logger";
 import { addInStore, getFromStore, openStore } from "../../common/storage";
@@ -19,14 +18,14 @@ import {
   InvitationDto,
   InvitationsDto,
   InvitationsResDto,
-  UpateInvitationInputDto,
+  UpdateInvitationInputDto,
   UpdateInvitationResDto,
 } from "../resolver/types";
 import { dtoToInvitationsResDto, inviteResToInvitationDto } from "./mapper";
 
 const INVITATIONS = "invitations";
 
-class InvitationApi extends RESTDataSource {
+class InvitationApi extends BaseRESTDataSource {
   sendInvitation = async (
     baseURL: string,
     req: CreateInvitationInputDto
@@ -54,7 +53,7 @@ class InvitationApi extends RESTDataSource {
   };
 
   updateInvitation = async (
-    req: UpateInvitationInputDto
+    req: UpdateInvitationInputDto
   ): Promise<UpdateInvitationResDto> => {
     const store = openStore();
     const baseURL = await getFromStore(store, `${req.email}/${req.id}`);
@@ -105,7 +104,14 @@ class InvitationApi extends RESTDataSource {
             );
             logger.info(`Invitations res: ${JSON.stringify(res)}`);
             if (res && res.status !== INVITATION_STATUS.INVITE_ACCEPTED) {
-              await addInStore(store, `${email}/${res.id}`, baseURL.message);
+              // Cache the org→system base URL with a 1h TTL so a moved/
+              // re-provisioned system isn't pinned to a stale address.
+              await addInStore(
+                store,
+                `${email}/${res.id}`,
+                baseURL.message,
+                3600
+              );
               invitations.invitations.push({
                 id: res.id,
                 name: res.name,

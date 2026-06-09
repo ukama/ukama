@@ -82,6 +82,12 @@ static void setup_webservice_endpoints(ServiceContext *ctx, UInst *instance) {
     setup_unsupported_methods(instance, "GET", URL_PREFIX,
                               API_RES_EP("status"));
 
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("reconcile"), 0,
+                               &web_service_cb_reconcile, ctx);
+    setup_unsupported_methods(instance, "POST", URL_PREFIX,
+                              API_RES_EP("reconcile"));
+
     ulfius_set_default_endpoint(instance, &web_service_cb_default, ctx);
 }
 

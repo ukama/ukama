@@ -145,8 +145,3 @@ ping/http/iperf traffic succeeds
 PCRF or OVS counters increase for that UE
 no traffic bypasses the PCRF datapath
 ```
-
-The last point is important. A successful ping alone is not enough; the test is
-only meaningful if PCRF/OVS counters prove that traffic crossed the intended
-node datapath.
-

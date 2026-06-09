@@ -1,0 +1,91 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026-present, Ukama Inc.
+#
+# Operations lifted verbatim from interfaces/console (the legacy console)
+# as the Phase-2 API reference. Trim to what each screen needs as screens
+# are wired; run `pnpm codegen` to (re)generate types/hooks.
+
+mutation UpdateNotification($isRead: Boolean!, $updateNotificationId: String!) {
+  updateNotification(isRead: $isRead, id: $updateNotificationId) {
+    id
+  }
+}
+
+### End Notifications ###
+
+# Sims usage
+
+# Subscriptions
+
+# query GetNotifications(
+#   $networkId: String!
+#   $orgId: String!
+#   $orgName: String!
+#   $role: String!
+#   $startTimestamp: String!
+#   $subscriberId: String!
+#   $userId: String!
+# ) {
+#   getNotifications(
+#     networkId: $networkId
+#     orgId: $orgId
+#     orgName: $orgName
+#     startTimestamp: $startTimestamp
+#     subscriberId: $subscriberId
+#     userId: $userId
+#     role: $role
+#   ) {
+#     notifications {
+#       id
+#       type
+#       scope
+#       title
+#       isRead
+#       eventKey
+#       createdAt
+#       resourceId
+#       description
+#       redirect {
+#         action
+#         title
+#       }
+#     }
+#   }
+# }
+
+# subscription NotificationSubscription(
+#   $networkId: String!
+#   $orgId: String!
+#   $orgName: String!
+#   $role: String!
+#   $startTimestamp: String!
+#   $subscriberId: String!
+#   $userId: String!
+# ) {
+#   notificationSubscription(
+#     networkId: $networkId
+#     orgId: $orgId
+#     orgName: $orgName
+#     startTimestamp: $startTimestamp
+#     subscriberId: $subscriberId
+#     userId: $userId
+#     role: $role
+#   ) {
+#     id
+#     type
+#     scope
+#     title
+#     isRead
+#     eventKey
+#     createdAt
+#     resourceId
+#     description
+#     redirect {
+#       action
+#       title
+#     }
+#   }
+# }

@@ -4,9 +4,11 @@
 #
 # Copyright (c) 2023-present, Ukama Inc.
 
-.PHONY: all test clean build
+.PHONY: all test test-unit clean build
 
 build:
-	yarn install  --frozen-lockfile && yarn build
+	pnpm install --frozen-lockfile && pnpm build
 test:
-	yarn test --ci  --coverage --watchAll=false
+	pnpm test --ci --coverage --watchAll=false
+test-unit:
+	pnpm test:unit

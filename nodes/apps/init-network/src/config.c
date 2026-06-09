@@ -156,8 +156,14 @@ void config_set_defaults(Config *config) {
     config->enableIpForward     = DEF_FORWARD_ENABLE;
     config->enableNat           = DEF_NAT_ENABLE;
     config->enablePolicyRouting = DEF_POLICY_ROUTING_ENABLE;
+    config->tunTable            = DEF_TUN_TABLE;
+    config->bridgeTable         = DEF_BRIDGE_TABLE;
 
-    config->gatewayContainer    = strdup(DEF_GATEWAY_CONTAINER);
+    config->gatewayEnable       = DEF_GATEWAY_ENABLE;
+    config->gatewayMode         = strdup(DEF_GATEWAY_MODE);
+    config->gatewayName         = strdup(DEF_GATEWAY_NAME);
+    config->gatewayBridgeIf     = strdup(DEF_GATEWAY_BRIDGE_IF);
+    config->gatewayNamespaceIf  = strdup(DEF_GATEWAY_NS_IF);
     config->gatewayAddr         = strdup(DEF_GATEWAY_ADDR);
     config->gatewayIp           = strdup(DEF_GATEWAY_IP);
 }
@@ -264,14 +270,24 @@ bool config_load_from_file(Config *config, const char *path) {
     config->enablePolicyRouting = toml_bool_or(routing, "enable_policy_routing",
                                                DEF_POLICY_ROUTING_ENABLE);
 
-    usys_free(config->gatewayContainer);
+    config->tunTable = toml_int_or(routing, "tun_table", DEF_TUN_TABLE);
+    config->bridgeTable = toml_int_or(routing, "bridge_table", DEF_BRIDGE_TABLE);
+
+    usys_free(config->gatewayMode);
+    usys_free(config->gatewayName);
+    usys_free(config->gatewayBridgeIf);
+    usys_free(config->gatewayNamespaceIf);
     usys_free(config->gatewayAddr);
     usys_free(config->gatewayIp);
-    config->gatewayContainer = toml_string_or(gateway, "container",
-                                              DEF_GATEWAY_CONTAINER);
-    config->gatewayAddr      = toml_string_or(gateway, "address",
-                                              DEF_GATEWAY_ADDR);
-    config->gatewayIp        = toml_string_or(gateway, "ip", DEF_GATEWAY_IP);
+    config->gatewayEnable = toml_bool_or(gateway, "enable", DEF_GATEWAY_ENABLE);
+    config->gatewayMode = toml_string_or(gateway, "mode", DEF_GATEWAY_MODE);
+    config->gatewayName = toml_string_or(gateway, "name", DEF_GATEWAY_NAME);
+    config->gatewayBridgeIf = toml_string_or(gateway, "bridge_if",
+                                             DEF_GATEWAY_BRIDGE_IF);
+    config->gatewayNamespaceIf = toml_string_or(gateway, "namespace_if",
+                                                DEF_GATEWAY_NS_IF);
+    config->gatewayAddr = toml_string_or(gateway, "address", DEF_GATEWAY_ADDR);
+    config->gatewayIp = toml_string_or(gateway, "ip", DEF_GATEWAY_IP);
 
     resolve_service_port(config, fallbackPort);
 
@@ -303,7 +319,10 @@ void config_free(Config *config) {
     usys_free(config->epcSctpAddr);
     usys_free(config->epcGtpuAddr);
     usys_free(config->externalIf);
-    usys_free(config->gatewayContainer);
+    usys_free(config->gatewayMode);
+    usys_free(config->gatewayName);
+    usys_free(config->gatewayBridgeIf);
+    usys_free(config->gatewayNamespaceIf);
     usys_free(config->gatewayAddr);
     usys_free(config->gatewayIp);
 

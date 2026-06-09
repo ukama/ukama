@@ -5,13 +5,12 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { RESTDataSource } from "@apollo/datasource-rest";
-
 import { NUCLEUS_API_GW, VERSION } from "../../common/configs";
+import { BaseRESTDataSource } from "../../common/datasource";
 import { OrgDto, OrgsResDto } from "../resolver/types";
 import { dtoToOrgResDto, dtoToOrgsResDto } from "./mapper";
 
-class OrgApi extends RESTDataSource {
+class OrgApi extends BaseRESTDataSource {
   baseURL = NUCLEUS_API_GW;
 
   getOrgs = async (userId: string): Promise<OrgsResDto> => {

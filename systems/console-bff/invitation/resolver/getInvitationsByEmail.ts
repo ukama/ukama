@@ -19,7 +19,7 @@ export class GetInVitationsByEmailResolver {
     @Ctx() ctx: Context
   ): Promise<InvitationsResDto> {
     const { dataSources } = ctx;
-    const res = await dataSources.dataSource.getAllInvitationsByEmail(email);
+    const res = await dataSources.invitation.getAllInvitationsByEmail(email);
     const Invitations: InvitationDto[] = [];
     for (const invitation of res.invitations) {
       if (invitation.status !== INVITATION_STATUS.INVITE_ACCEPTED) {

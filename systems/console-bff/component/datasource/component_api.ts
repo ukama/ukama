@@ -5,9 +5,8 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { RESTDataSource } from "@apollo/datasource-rest";
-
 import { INVENTORY_API_GW, VERSION } from "../../common/configs";
+import { BaseRESTDataSource } from "../../common/datasource";
 import { THeaders } from "../../common/types";
 import {
   ComponentAPIDto,
@@ -17,7 +16,7 @@ import {
 } from "../resolvers/types";
 import { dtoToComponentDto, dtoToComponentsDto } from "./mapper";
 
-class ComponentApi extends RESTDataSource {
+class ComponentApi extends BaseRESTDataSource {
   baseURL = INVENTORY_API_GW;
 
   getComponentsByUserId = async (

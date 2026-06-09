@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { IsEmail } from "class-validator";
+import { IsEmail, IsNotEmpty, IsOptional, IsUUID } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
 
 @ObjectType()
@@ -111,7 +111,7 @@ export class SubscriberAPIDto {
 }
 
 @ObjectType()
-export class SimsAPIResDto {
+export class SubscriberSimsAPIResDto {
   @Field(() => [SubSimAPIDto])
   sims: SubSimAPIDto[];
 }
@@ -140,12 +140,15 @@ export class SubscriberInputDto {
   email: string;
 
   @Field()
+  @IsNotEmpty()
   name: string;
 
   @Field()
+  @IsUUID()
   network_id: string;
 
   @Field({ nullable: true })
+  @IsOptional()
   phone?: string;
 }
 
@@ -265,6 +268,7 @@ export class UpdateSubscriberInputDto {
   address: string;
 
   @Field({ nullable: true })
+  @IsOptional()
   @IsEmail()
   email: string;
 

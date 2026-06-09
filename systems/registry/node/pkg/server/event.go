@@ -1,9 +1,9 @@
 /*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at https://mozilla.org/MPL/2.0/.
+*
+* Copyright (c) 2023-present, Ukama Inc.
  */
 
 package server
@@ -60,7 +60,7 @@ func (n *NodeEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 		if err != nil {
 			return nil, err
 		}
-	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.node.health.capps.store"):
+	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.node.health.report.store"):
 		c := evt.EventToEventConfig[evt.EventHealthReportStore]
 		msg, err := epb.UnmarshalHealthReportEvent(e.Msg, c.Name)
 		if err != nil {

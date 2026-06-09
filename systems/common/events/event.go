@@ -69,6 +69,8 @@ const (
 	EventPaymentSuccess
 	EventPaymentFailed
 	EventNodeStateTransition
+	EventOperationCompleted
+	EventOperationFailed
 )
 
 var EventRoutingKey = [...]string{
@@ -119,6 +121,8 @@ var EventRoutingKey = [...]string{
 	EventPaymentSuccess:     "event.cloud.local.{{ .Org}}.payments.processor.payment.success",
 	EventPaymentFailed:      "event.cloud.local.{{ .Org}}.payments.processor.payment.failed",
 	EventNodeStateTransition: "event.cloud.local.{{ .Org}}.node.state.node.transition",
+	EventOperationCompleted:  "event.cloud.global.{{ .Org}}.operation.manager.operation.completed",
+	EventOperationFailed:     "event.cloud.global.{{ .Org}}.operation.manager.operation.failed",
 }
 
 var EventToEventConfig = map[EventId]EventConfig{
@@ -496,6 +500,22 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Title:       "Payment Failed",
 		Description: "Payment Failed",
 		Scope:       notif.SCOPE_SUBSCRIBER,
+		Type:        notif.TYPE_ERROR,
+	},
+	EventOperationCompleted: {
+		Key:         EventOperationCompleted,
+		Name:        "EventOperationCompleted",
+		Title:       "Operation Completed",
+		Description: "An operation reached its expected final state",
+		Scope:       notif.SCOPE_ORG,
+		Type:        notif.TYPE_INFO,
+	},
+	EventOperationFailed: {
+		Key:         EventOperationFailed,
+		Name:        "EventOperationFailed",
+		Title:       "Operation Failed",
+		Description: "An operation did not reach its expected final state",
+		Scope:       notif.SCOPE_ORG,
 		Type:        notif.TYPE_ERROR,
 	},
 }

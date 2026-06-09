@@ -18,6 +18,6 @@ export class GetReportsResolver {
     @Ctx() ctx: Context
   ): Promise<GetReportsDto> {
     const { dataSources, baseURL } = ctx;
-    return await dataSources.dataSource.getReports(baseURL, data);
+    return await dataSources.billing.getReports(baseURL, data);
   }
 }

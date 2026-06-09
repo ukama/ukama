@@ -11,7 +11,7 @@ import NotificationAPI from "../datasource/notification_api";
 export interface Context {
   baseURL: string;
   dataSources: {
-    dataSource: NotificationAPI;
+    notification: NotificationAPI;
   };
   headers: THeaders;
 }

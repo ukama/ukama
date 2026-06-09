@@ -11,6 +11,6 @@ export class GetSimsBySubscriberResolver {
     @Ctx() ctx: Context
   ): Promise<SubscriberToSimsDto> {
     const { dataSources, baseURL } = ctx;
-    return await dataSources.dataSource.getSimsBySubscriberId(baseURL, data);
+    return await dataSources.sim.getSimsBySubscriberId(baseURL, data);
   }
 }

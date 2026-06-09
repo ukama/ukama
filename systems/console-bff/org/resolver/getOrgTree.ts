@@ -11,15 +11,8 @@ import { SUB_GRAPHS } from "../../common/configs";
 import { SIM_STATUS, SIM_TYPES } from "../../common/enums";
 import { openStore } from "../../common/storage";
 import { getBaseURL } from "../../common/utils";
-import ComponentApi from "../../component/datasource/component_api";
-import MemberApi from "../../member/datasource/member_api";
-import NetworkApi from "../../network/datasource/network_api";
-import PackageApi from "../../package/datasource/package_api";
-import SimApi from "../../sim/datasource/sim_api";
-import SiteApi from "../../site/datasource/site_api";
-import SubscriberApi from "../../subscriber/datasource/subscriber_api";
-import UserApi from "../../user/datasource/user_api";
-import { Context } from "../context";
+import { ComponentDto } from "../../component/resolvers/types";
+import type { AppContext } from "../../server/context";
 import {
   Component,
   DataPlan,
@@ -99,41 +92,46 @@ const DEFAULT_ORG_TREE = {
   },
 };
 
+const toComponent = (
+  elementType: string,
+  component?: ComponentDto
+): Component => ({
+  componentId: component?.partNumber ? component.partNumber : undefined,
+  componentName: component?.partNumber ? component.description : undefined,
+  elementType,
+});
+
 @Resolver()
 export class GetOrgTreeResolver {
   @Query(() => OrgTreeRes)
-  async getOrgTree(@Ctx() ctx: Context): Promise<OrgTreeRes> {
+  async getOrgTree(@Ctx() ctx: AppContext): Promise<OrgTreeRes> {
+    // Uses ctx.dataSources (per-request instances) so RESTDataSource GET
+    // deduplication applies — do not instantiate datasources inline.
     const { dataSources, headers } = ctx;
     const store = openStore();
-    const registryUrl = await getBaseURL(
-      SUB_GRAPHS.network.name,
-      headers.orgName,
-      store
-    );
-    const dataPlanUrl = await getBaseURL(
-      SUB_GRAPHS.package.name,
-      headers.orgName,
-      store
-    );
-    const subscriberUrl = await getBaseURL(
-      SUB_GRAPHS.sim.name,
-      headers.orgName,
-      store
-    );
-    const userAPI = new UserApi();
-    const siteAPI = new SiteApi();
-    const memberAPI = new MemberApi();
-    const simsAPI = new SimApi();
-    const networkAPI = new NetworkApi();
-    const packageAPI = new PackageApi();
-    const subscriberAPI = new SubscriberApi();
-    const componentAPI = new ComponentApi();
+    const [registryUrl, dataPlanUrl, subscriberUrl] = await Promise.all([
+      getBaseURL(SUB_GRAPHS.network.name, headers.orgName, store),
+      getBaseURL(SUB_GRAPHS.package.name, headers.orgName, store),
+      getBaseURL(SUB_GRAPHS.sim.name, headers.orgName, store),
+    ]);
 
     const res: Org = DEFAULT_ORG_TREE;
     const nr: Network = DEFAULT_ORG_TREE.networks[0];
 
-    const orgRes = await dataSources.dataSource.getOrg(headers.orgName);
-    const userRes = await userAPI.getUser(orgRes.owner);
+    // Independent root fetches — run in parallel.
+    const [orgRes, networksRes, plansRes, simsRes, membersRes] =
+      await Promise.all([
+        dataSources.org.getOrg(headers.orgName),
+        dataSources.network.getNetworks(registryUrl.message),
+        dataSources.package.getPackages(dataPlanUrl.message),
+        dataSources.sim.getSimsFromPool(subscriberUrl.message, {
+          type: SIM_TYPES.ukama_data,
+          status: SIM_STATUS.ALL,
+        }),
+        dataSources.member.getMembers(registryUrl.message),
+      ]);
+
+    const userRes = await dataSources.user.getUser(orgRes.owner);
     res.orgName = headers.orgName;
     res.orgId = headers.orgId;
     res.ownerId = orgRes.owner;
@@ -143,108 +141,46 @@ export class GetOrgTreeResolver {
     res.currency = orgRes.currency;
     res.elementType = "ORG";
 
-    const networksRes = await networkAPI.getNetworks(registryUrl.message);
     if (networksRes.networks.length > 0) {
-      nr.networkId = networksRes.networks[0].id;
+      const networkId = networksRes.networks[0].id;
+      nr.networkId = networkId;
       nr.networkName = networksRes.networks[0].name;
       nr.elementType = "NETWORK";
-      res.networks = [nr];
 
-      const siteRes = await siteAPI.getSites(registryUrl.message, {
-        networkId: networksRes.networks[0].id,
-      });
-      const sr: Site[] = [];
+      // Sites + subscribers for the network are independent of each other.
+      const [siteRes, subscriberRes] = await Promise.all([
+        dataSources.site.getSites(registryUrl.message, { networkId }),
+        dataSources.subscriber.getSubscribersByNetwork(
+          subscriberUrl.message,
+          networkId
+        ),
+      ]);
+
       if (siteRes.sites.length > 0) {
-        const compRes = await componentAPI.getComponentsByUserId(
+        const compRes = await dataSources.component.getComponentsByUserId(
           headers,
           "ALL"
         );
-        for (const site of siteRes.sites) {
-          const cr: Component[] = [];
-          const accessRes = compRes.components.find(
-            comp => comp.id === site.accessId
-          );
-          if (accessRes?.partNumber) {
-            cr.push({
-              componentId: accessRes.partNumber,
-              componentName: accessRes.description,
-              elementType: "ACCESS",
-            });
-          } else {
-            cr.push({
-              componentId: undefined,
-              componentName: undefined,
-              elementType: "ACCESS",
-            });
-          }
-
-          const powerRes = compRes.components.find(
-            comp => comp.id === site.powerId
-          );
-          if (powerRes?.partNumber) {
-            cr.push({
-              componentId: powerRes.partNumber,
-              componentName: powerRes.description,
-              elementType: "POWER",
-            });
-          } else {
-            cr.push({
-              componentId: undefined,
-              componentName: undefined,
-              elementType: "POWER",
-            });
-          }
-
-          const backhaulRes = compRes.components.find(
-            comp => comp.id === site.backhaulId
-          );
-          if (backhaulRes?.partNumber) {
-            cr.push({
-              componentId: backhaulRes.partNumber,
-              componentName: backhaulRes.description,
-              elementType: "BACKHAUL",
-            });
-          } else {
-            cr.push({
-              componentId: undefined,
-              componentName: undefined,
-              elementType: "BACKHAUL",
-            });
-          }
-
-          const switchRes = compRes.components.find(
-            comp => comp.id === site.switchId
-          );
-          if (switchRes?.partNumber) {
-            cr.push({
-              componentId: switchRes.partNumber,
-              componentName: switchRes.description,
-              elementType: "SWITCH",
-            });
-          } else {
-            cr.push({
-              componentId: undefined,
-              componentName: undefined,
-              elementType: "SWITCH",
-            });
-          }
-
-          sr.push({
+        // Index components once (O(n)) instead of find() 4x per site.
+        const componentsById = new Map<string, ComponentDto>(
+          compRes.components.map(comp => [comp.id, comp])
+        );
+        nr.sites = siteRes.sites.map(
+          (site): Site => ({
             siteId: site.id,
             siteName: site.name,
             elementType: "SITE",
-            components: cr,
-          });
-        }
-        nr.sites = sr;
+            components: [
+              toComponent("ACCESS", componentsById.get(site.accessId)),
+              toComponent("POWER", componentsById.get(site.powerId)),
+              toComponent("BACKHAUL", componentsById.get(site.backhaulId)),
+              toComponent("SWITCH", componentsById.get(site.switchId)),
+            ],
+          })
+        );
       } else {
         nr.sites = [];
       }
-
-      const subscriberRes = await subscriberAPI.getSubscribersByNetwork(
-        subscriberUrl.message,
-        networksRes.networks[0].id
-      );
 
       if (subscriberRes.subscribers.length > 0) {
         const ssr: Subscribers = DEFAULT_ORG_TREE.networks[0].subscribers;
@@ -269,25 +205,18 @@ export class GetOrgTreeResolver {
       res.networks = [];
     }
 
-    const plansRes = await packageAPI.getPackages(dataPlanUrl.message);
     if (plansRes.packages.length > 0) {
-      const dr: DataPlan[] = [];
-      plansRes.packages.forEach(plan => {
-        dr.push({
+      res.dataplans = plansRes.packages.map(
+        (plan): DataPlan => ({
           planId: plan.uuid,
           planName: plan.name,
           elementType: "DATAPLAN",
-        });
-      });
-      res.dataplans = dr;
+        })
+      );
     } else {
       res.dataplans = [];
     }
 
-    const simsRes = await simsAPI.getSimsFromPool(subscriberUrl.message, {
-      type: SIM_TYPES.ukama_data,
-      status: SIM_STATUS.ALL,
-    });
     if (simsRes.sims.length > 0) {
       const simr = DEFAULT_ORG_TREE.sims;
       simr.totalSims = simsRes.sims.length.toString();
@@ -299,7 +228,6 @@ export class GetOrgTreeResolver {
       res.sims = undefined;
     }
 
-    const membersRes = await memberAPI.getMembers(registryUrl.message);
     if (membersRes.members.length > 0) {
       const mr = DEFAULT_ORG_TREE.members;
       mr.totalMembers = membersRes.members.length.toString();

@@ -18,6 +18,6 @@ export class GetMemberResolver {
     @Ctx() ctx: Context
   ): Promise<MemberDto> {
     const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.getMember(baseURL, id);
+    return dataSources.member.getMember(baseURL, id);
   }
 }

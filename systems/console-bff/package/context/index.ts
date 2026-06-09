@@ -11,7 +11,7 @@ import PackagesAPI from "../datasource/package_api";
 export interface Context {
   baseURL: string;
   dataSources: {
-    dataSource: PackagesAPI;
+    package: PackagesAPI;
   };
   headers: THeaders;
 }

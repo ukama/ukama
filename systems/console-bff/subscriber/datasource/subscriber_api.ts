@@ -5,9 +5,9 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { RESTDataSource } from "@apollo/datasource-rest";
 import dayjs from "dayjs";
 
+import { BaseRESTDataSource } from "../../common/datasource";
 import {
   SubscriberDto,
   SubscriberInputDto,
@@ -27,7 +27,7 @@ import {
 const VERSION = "v1";
 const SUBSCRIBER = "subscriber";
 
-class SubscriberApi extends RESTDataSource {
+class SubscriberApi extends BaseRESTDataSource {
   addSubscriber = async (
     baseURL: string,
     req: SubscriberInputDto

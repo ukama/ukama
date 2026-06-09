@@ -18,6 +18,6 @@ export class GetSiteLatestMetricResolver {
     @Ctx() ctx: Context
   ): Promise<SiteLatestMetric> {
     const { dataSources, baseURL } = ctx;
-    return await dataSources.dataSource.getSiteLatestMetric(baseURL, data);
+    return await dataSources.metric.getSiteLatestMetric(baseURL, data);
   }
 }

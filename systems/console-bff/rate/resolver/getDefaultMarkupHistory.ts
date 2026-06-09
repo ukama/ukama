@@ -17,6 +17,6 @@ export class GetDefaultMarkupHistoryResolver {
     @Ctx() ctx: Context
   ): Promise<DefaultMarkupHistoryResDto> {
     const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.getDefaultMarkupHistory(baseURL);
+    return dataSources.rate.getDefaultMarkupHistory(baseURL);
   }
 }

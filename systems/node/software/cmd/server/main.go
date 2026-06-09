@@ -27,6 +27,7 @@ import (
 	"github.com/ukama/ukama/systems/node/software/cmd/version"
 
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
+	swclient "github.com/ukama/ukama/systems/node/software/pkg/client"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
 
 	log "github.com/sirupsen/logrus"
@@ -110,8 +111,13 @@ func runGrpcServer(gormdb sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
+	opMgr := swclient.NewOperationManager(svcConf.Operation.ManagerHost, svcConf.Operation.Timeout)
+	opMon := swclient.NewOperationMonitor(svcConf.Operation.MonitorHost, svcConf.Operation.Timeout)
+
 	softServer := server.NewSoftwareServer(svcConf.OrgName, db.NewSoftwareRepo(gormdb),
-		db.NewAppRepo(gormdb), db.NewNodeRepo(gormdb), providers.NewHealthClientProvider(svcConf.Health), mbClient, svcConf.DebugMode, svcConf.NodeGwIPs)
+		db.NewAppRepo(gormdb), db.NewNodeRepo(gormdb), providers.NewHealthClientProvider(svcConf.Health),
+		mbClient, svcConf.DebugMode, svcConf.NodeGwIPs,
+		opMgr, opMon, svcConf.Operation.LeaseSecs, svcConf.Operation.DeadlineSecs)
 	eventServer := server.NewSoftwareEventServer(svcConf.OrgName, softServer)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {

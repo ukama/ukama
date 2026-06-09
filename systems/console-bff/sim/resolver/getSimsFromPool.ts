@@ -19,7 +19,7 @@ export class GetSimsFromPoolResolver {
     @Ctx() ctx: Context
   ): Promise<SimsPoolResDto> {
     const { dataSources, baseURL } = ctx;
-    const sims = await dataSources.dataSource.getSimsFromPool(baseURL, data);
+    const sims = await dataSources.sim.getSimsFromPool(baseURL, data);
     if (data.status === SIM_STATUS.ASSIGNED) {
       return { sims: sims.sims.filter(sim => sim.isAllocated === true) };
     } else if (data.status === SIM_STATUS.UNASSIGNED) {

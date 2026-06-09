@@ -82,10 +82,12 @@ static int detach_cb(const UeEntry *ue, void *arg) {
                    ue->imsi,
                    ue->ip);
 
-    if (pcrf_delete_session(config, ue->imsi)) {
-        ue_detach_complete(ue->imsi);
+    if (!pcrf_delete_session(config, ue->imsi)) {
+        usys_log_error("PCRF session delete failed during shutdown imsi=%s",
+                       ue->imsi);
     }
 
+    ue_detach_complete(ue->imsi);
     return USYS_TRUE;
 }
 
@@ -163,11 +165,13 @@ int main(int argc, char **argv) {
         goto failed;
     }
 
-    if (!pcrf_probe(&config, &status)) {
+    (void)pcrf_probe(&config, &status);
+
+    if (!data_plane_start(&gDataPlane, &config, &status)) {
         goto failed;
     }
 
-    if (!data_plane_start(&gDataPlane, &config, &status)) {
+    if (!init_network_reconcile(&config, &status)) {
         goto failed;
     }
 

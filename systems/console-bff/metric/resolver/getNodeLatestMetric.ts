@@ -18,6 +18,6 @@ export class GetNodeLatestMetricResolver {
     @Ctx() ctx: Context
   ): Promise<NodeLatestMetric> {
     const { dataSources, baseURL } = ctx;
-    return await dataSources.dataSource.getNodeLatestMetric(baseURL, data);
+    return await dataSources.metric.getNodeLatestMetric(baseURL, data);
   }
 }

@@ -18,6 +18,6 @@ export class GetComponentsByUserResolver {
     @Ctx() ctx: Context
   ): Promise<ComponentsResDto> {
     const { dataSources, headers } = ctx;
-    return dataSources.dataSource.getComponentsByUserId(headers, data.category);
+    return dataSources.component.getComponentsByUserId(headers, data.category);
   }
 }

@@ -7,7 +7,7 @@
 	static="false"
 	source="/nodes/apps/init-network"
 	cmd="make"
-	bin_from="/nodes/apps/init-network/init-network.d"
+	bin_from="/nodes/apps/init-network/init-network"
 	bin_to="/sbin"
 
 [build-rootfs]
@@ -20,7 +20,7 @@
 [capp-exec]
 	name="init-network"
 	version="latest"
-	bin="init-network.d"
+	bin="init-network"
 	path="/sbin"
 	args="--config /ukama/configs/init-network/config.toml"
 

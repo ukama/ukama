@@ -85,6 +85,8 @@ static JsonObj *status_json(ServiceContext *ctx) {
     root = json_object();
     if (root == NULL) return NULL;
 
+    (void)pcrf_is_ready(ctx->config);
+
     pcrf = json_object();
     initNetwork = json_object();
     ues = ue_summary_json();
@@ -102,6 +104,8 @@ static JsonObj *status_json(ServiceContext *ctx) {
                         json_string(ctx->config->initNetworkUrl));
     json_object_set_new(initNetwork, "ready",
                         json_boolean(ctx->config->initNetworkReady));
+    json_object_set_new(initNetwork, "routed",
+                        json_boolean(ctx->config->initNetworkRouted));
     json_object_set_new(initNetwork, "bridge",
                         json_string(ctx->config->bridge));
     json_object_set_new(initNetwork, "bridgeCidr",
@@ -189,10 +193,23 @@ int web_service_cb_attach(const URequest *request,
     const char *ip;
     const char *apn;
     int userPlanePort;
+    char imsiBuf[UE_IMSI_LEN];
+    char iccidBuf[UE_ICCID_LEN];
+    char ipBuf[UE_IP_LEN];
+    char apnBuf[UE_APN_LEN];
     char reason[EPCEMU_MAX_REASON];
+    UeEntry existing;
 
     ctx = (ServiceContext *)data;
+    body = NULL;
+    reply = NULL;
+
     memset(reason, 0, sizeof(reason));
+    memset(imsiBuf, 0, sizeof(imsiBuf));
+    memset(iccidBuf, 0, sizeof(iccidBuf));
+    memset(ipBuf, 0, sizeof(ipBuf));
+    memset(apnBuf, 0, sizeof(apnBuf));
+    memset(&existing, 0, sizeof(existing));
 
     if (ctx == NULL || ctx->config == NULL || !status_is_ready(ctx->status)) {
         set_error(response, HttpStatus_ServiceUnavailable, "epcemu not ready");
@@ -207,8 +224,8 @@ int web_service_cb_attach(const URequest *request,
 
     imsi = json_string_default(body, "imsi", NULL);
     iccid = json_string_default(body, "iccid", "");
-    ip   = json_string_default(body, "ip", NULL);
-    apn  = json_string_default(body, "apn", EPCEMU_DEF_APN);
+    ip = json_string_default(body, "ip", NULL);
+    apn = json_string_default(body, "apn", EPCEMU_DEF_APN);
     userPlanePort = json_int_default(body, "userPlanePort", 0);
 
     (void)userPlanePort;
@@ -226,24 +243,68 @@ int web_service_cb_attach(const URequest *request,
         return U_CALLBACK_CONTINUE;
     }
 
-    if (!ue_attach_start(imsi, iccid, ip, apn, reason, sizeof(reason))) {
-        json_decref(body);
+    snprintf(imsiBuf, sizeof(imsiBuf), "%s", imsi);
+    snprintf(iccidBuf, sizeof(iccidBuf), "%s", iccid ? iccid : "");
+    snprintf(ipBuf, sizeof(ipBuf), "%s", ip);
+    snprintf(apnBuf, sizeof(apnBuf), "%s", apn ? apn : EPCEMU_DEF_APN);
+
+    json_decref(body);
+    body = NULL;
+
+    /*
+     * Attach is idempotent for the same IMSI/IP pair.
+     *
+     * This is important for lab scripts because the UE agent/container may
+     * retry after a previous request committed UE/PCRF state but failed while
+     * building the HTTP response.
+     */
+    if (ue_get(imsiBuf, &existing)) {
+        if (existing.state == UeStateAttached &&
+            strcmp(existing.ip, ipBuf) == 0) {
+
+            reply = ue_get_json(imsiBuf);
+            if (reply == NULL) {
+                set_error(response, HttpStatus_InternalServerError,
+                          "failed to read attached ue");
+                return U_CALLBACK_CONTINUE;
+            }
+
+            ulfius_set_json_body_response(response, HttpStatus_OK, reply);
+            json_decref(reply);
+            return U_CALLBACK_CONTINUE;
+        }
+
+        set_error(response, HttpStatus_Conflict, "imsi already attached");
+        return U_CALLBACK_CONTINUE;
+    }
+
+    if (!ue_attach_start(imsiBuf,
+                         iccidBuf,
+                         ipBuf,
+                         apnBuf,
+                         reason,
+                         sizeof(reason))) {
         set_error(response, HttpStatus_Conflict, reason);
         return U_CALLBACK_CONTINUE;
     }
 
-    if (!pcrf_create_session(ctx->config, imsi, ip, apn)) {
-        ue_attach_fail(imsi, "pcrf session create failed");
-        json_decref(body);
+    if (!pcrf_is_ready(ctx->config)) {
+        ue_attach_fail(imsiBuf, "pcrf not ready");
+        set_error(response, HttpStatus_ServiceUnavailable,
+                  "pcrf not ready");
+        return U_CALLBACK_CONTINUE;
+    }
+
+    if (!pcrf_create_session(ctx->config, imsiBuf, ipBuf, apnBuf)) {
+        ue_attach_fail(imsiBuf, "pcrf session create failed");
         set_error(response, HttpStatus_ServiceUnavailable,
                   "pcrf session create failed");
         return U_CALLBACK_CONTINUE;
     }
 
-    ue_attach_complete(imsi);
-    json_decref(body);
+    ue_attach_complete(imsiBuf);
 
-    reply = ue_get_json(imsi);
+    reply = ue_get_json(imsiBuf);
     if (reply == NULL) {
         set_error(response, HttpStatus_InternalServerError,
                   "failed to read attached ue");
@@ -292,10 +353,7 @@ int web_service_cb_detach(const URequest *request,
     }
 
     if (!pcrf_delete_session(ctx->config, imsi)) {
-        json_decref(body);
-        set_error(response, HttpStatus_ServiceUnavailable,
-                  "pcrf session delete failed");
-        return U_CALLBACK_CONTINUE;
+        usys_log_error("PCRF session delete failed imsi=%s", imsi);
     }
 
     ue_detach_complete(imsi);

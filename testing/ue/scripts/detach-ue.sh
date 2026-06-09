@@ -8,9 +8,8 @@
 
 set -euo pipefail
 
-: "${TOWER_IP:?TOWER_IP required}"
-
-EPCEMU_PORT="${EPCEMU_PORT:-18092}"
+TOWER_IP="${TOWER_IP:-127.0.0.1}"
+EPCEMU_PORT="${EPCEMU_PORT:-18028}"
 IMSI=""
 
 while [[ $# -gt 0 ]]; do
@@ -18,6 +17,10 @@ while [[ $# -gt 0 ]]; do
         --imsi)
             IMSI="$2"
             shift 2
+            ;;
+        -h|--help)
+            echo "Usage: $0 --imsi <imsi>"
+            exit 0
             ;;
         *)
             echo "unknown arg $1" >&2
@@ -31,5 +34,19 @@ done
 curl -fsS -X DELETE "http://${TOWER_IP}:${EPCEMU_PORT}/v1/ue/detach" \
     -H 'Content-Type: application/json' \
     -d "{\"imsi\":\"${IMSI}\"}"
+
+for i in $(seq 1 20); do
+    epcAttached="$(curl -fsS "http://${TOWER_IP}:${EPCEMU_PORT}/v1/status" |
+        jq -r '.ues.attached')"
+
+    pcrfActive="$(curl -fsS "http://${TOWER_IP}:${PCRF_PORT:-18030}/v1/status" |
+        jq -r '.sessions.active')"
+
+    if [[ "$epcAttached" == "0" && "$pcrfActive" == "0" ]]; then
+        break
+    fi
+
+    sleep 1
+done
 
 podman rm -f "ue-${IMSI}" >/dev/null 2>&1 || true

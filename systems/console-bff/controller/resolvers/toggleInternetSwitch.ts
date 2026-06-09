@@ -19,6 +19,6 @@ export class ToggleInternetSwitchResolver {
     @Ctx() ctx: Context
   ): Promise<CBooleanResponse> {
     const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.toggleInternetSwitch(baseURL, data);
+    return dataSources.controller.toggleInternetSwitch(baseURL, data);
   }
 }

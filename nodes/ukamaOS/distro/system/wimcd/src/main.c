@@ -42,6 +42,11 @@
 #define AGENT_STOP_TIMEOUT_SEC 5
 #define AGENT_RESTART_LIMIT    3
 
+#define UKAMA_APP_ROOT_ENV     "UKAMA_APP_ROOT"
+#define RUNTIME_LOADER_REL     "lib64/ld-linux-x86-64.so.2"
+#define RUNTIME_LIB_REL_1      "lib"
+#define RUNTIME_LIB_REL_2      "lib/x86_64-linux-gnu"
+
 static volatile sig_atomic_t gTerminate = 0;
 static volatile sig_atomic_t gChildEvent = 0;
 
@@ -132,6 +137,89 @@ static int is_supported_method(const char *method) {
     }
 
     return USYS_FALSE;
+}
+
+static int path_join2(char *out,
+                      size_t outLen,
+                      const char *a,
+                      const char *b) {
+
+    if (out == NULL || outLen == 0 || a == NULL || b == NULL) {
+        return -1;
+    }
+
+    if (snprintf(out, outLen, "%s/%s", a, b) >= (int)outLen) {
+        return -1;
+    }
+
+    return 0;
+}
+
+static int path_join3(char *out,
+                      size_t outLen,
+                      const char *a,
+                      const char *b,
+                      const char *c) {
+
+    if (out == NULL || outLen == 0 || a == NULL || b == NULL ||
+        c == NULL) {
+        return -1;
+    }
+
+    if (snprintf(out, outLen, "%s/%s/%s", a, b, c) >= (int)outLen) {
+        return -1;
+    }
+
+    return 0;
+}
+
+static int find_agent_under_root(const char *root,
+                                 char *execPath,
+                                 size_t execPathLen) {
+
+    if (root == NULL || *root == '\0' || execPath == NULL ||
+        execPathLen == 0) {
+        return -1;
+    }
+
+    if (path_join3(execPath, execPathLen, root, "sbin",
+                   AGENT_EXEC_NAME) == 0 &&
+        access(execPath, X_OK) == 0) {
+        return 0;
+    }
+
+    if (path_join3(execPath, execPathLen, root, "bin",
+                   AGENT_EXEC_NAME) == 0 &&
+        access(execPath, X_OK) == 0) {
+        return 0;
+    }
+
+    return -1;
+}
+
+static int find_agent_from_app_root(char *execPath, size_t execPathLen) {
+
+    const char *root;
+
+    root = getenv(UKAMA_APP_ROOT_ENV);
+    if (root == NULL || *root == '\0') {
+        return -1;
+    }
+
+    return find_agent_under_root(root, execPath, execPathLen);
+}
+
+static int find_agent_from_cwd(char *execPath, size_t execPathLen) {
+
+    char cwd[WIMC_MAX_PATH_LEN];
+
+    memset(cwd, 0, sizeof(cwd));
+
+    if (getcwd(cwd, sizeof(cwd)) == NULL) {
+        return -1;
+    }
+
+    return find_agent_under_root(cwd, execPath, execPathLen);
 }
 
 static int build_agent_service_name(const char *method,
@@ -237,6 +325,14 @@ static int find_agent_exec(char *execPath, size_t execPathLen) {
 
     if (getenv(WIMC_AGENT_PATH_ENV) != NULL) {
         return -1;
+    }
+
+    if (find_agent_from_app_root(execPath, execPathLen) == 0) {
+        return 0;
+    }
+
+    if (find_agent_from_cwd(execPath, execPathLen) == 0) {
+        return 0;
     }
 
     if (find_agent_from_self(execPath, execPathLen) == 0) {
@@ -362,6 +458,102 @@ static int agent_manager_load(AgentManager *mgr) {
     return 0;
 }
 
+static int agent_root_from_exec(const char *execPath,
+                                char *root,
+                                size_t rootLen) {
+
+    const char *suffix;
+    size_t execLen;
+    size_t suffixLen;
+    size_t len;
+
+    suffix = "/sbin/" AGENT_EXEC_NAME;
+
+    if (execPath == NULL || root == NULL || rootLen == 0) {
+        return -1;
+    }
+
+    execLen = strlen(execPath);
+    suffixLen = strlen(suffix);
+
+    if (execLen <= suffixLen) {
+        return -1;
+    }
+
+    if (strcmp(execPath + execLen - suffixLen, suffix) != 0) {
+        return -1;
+    }
+
+    len = execLen - suffixLen;
+    if (len == 0 || len >= rootLen) {
+        return -1;
+    }
+
+    memcpy(root, execPath, len);
+    root[len] = '\0';
+
+    return 0;
+}
+
+static int build_loader_path(const char *root,
+                             char *loader,
+                             size_t loaderLen) {
+
+    return path_join2(loader, loaderLen, root, RUNTIME_LOADER_REL);
+}
+
+static int build_library_path(const char *root,
+                              char *libraryPath,
+                              size_t libraryPathLen) {
+
+    if (root == NULL || libraryPath == NULL || libraryPathLen == 0) {
+        return -1;
+    }
+
+    if (snprintf(libraryPath, libraryPathLen, "%s/%s:%s/%s",
+                 root, RUNTIME_LIB_REL_1,
+                 root, RUNTIME_LIB_REL_2) >= (int)libraryPathLen) {
+        return -1;
+    }
+
+    return 0;
+}
+
+static void exec_agent_contained(ManagedAgent *agent, char *logLevel) {
+
+    char root[WIMC_MAX_PATH_LEN];
+    char loader[WIMC_MAX_PATH_LEN];
+    char libraryPath[WIMC_MAX_PATH_LEN * 2];
+
+    memset(root, 0, sizeof(root));
+    memset(loader, 0, sizeof(loader));
+    memset(libraryPath, 0, sizeof(libraryPath));
+
+    if (agent_root_from_exec(agent->execPath, root, sizeof(root)) != 0 ||
+        build_loader_path(root, loader, sizeof(loader)) != 0 ||
+        build_library_path(root, libraryPath, sizeof(libraryPath)) != 0 ||
+        access(loader, X_OK) != 0) {
+
+        execl(agent->execPath,
+              AGENT_EXEC_NAME,
+              "-m", agent->method,
+              "-l", logLevel ? logLevel : DEF_LOG_LEVEL,
+              NULL);
+        _exit(127);
+    }
+
+    execl(loader,
+          loader,
+          "--library-path",
+          libraryPath,
+          agent->execPath,
+          "-m", agent->method,
+          "-l", logLevel ? logLevel : DEF_LOG_LEVEL,
+          NULL);
+
+    _exit(127);
+}
+
 static int agent_manager_start_one(ManagedAgent *agent, char *logLevel) {
 
     pid_t pid;
@@ -378,12 +570,7 @@ static int agent_manager_start_one(ManagedAgent *agent, char *logLevel) {
     }
 
     if (pid == 0) {
-        execl(agent->execPath,
-              AGENT_EXEC_NAME,
-              "-m", agent->method,
-              "-l", logLevel ? logLevel : DEF_LOG_LEVEL,
-              NULL);
-        _exit(127);
+        exec_agent_contained(agent, logLevel);
     }
 
     agent->pid = pid;

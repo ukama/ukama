@@ -1,0 +1,62 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026-present, Ukama Inc.
+
+# Network site detail screen — one query over the siteView composite
+# (network lens selection: skips `financials`).
+
+query NetworkSiteDetail($siteId: String!) {
+  siteView(siteId: $siteId) {
+    siteId
+    site {
+      error {
+        ...SectionErrorFields
+      }
+      site {
+        ...ViewSite
+      }
+    }
+    nodes {
+      error {
+        ...SectionErrorFields
+      }
+      nodes {
+        ...ViewNode
+      }
+    }
+    components {
+      error {
+        ...SectionErrorFields
+      }
+      components {
+        elementType
+        componentId
+        componentName
+      }
+    }
+    power {
+      error {
+        ...SectionErrorFields
+      }
+      metrics {
+        key
+        value
+        timestamp
+        success
+      }
+    }
+    kpis {
+      error {
+        ...SectionErrorFields
+      }
+      metrics {
+        key
+        value
+        timestamp
+        success
+      }
+    }
+  }
+}
