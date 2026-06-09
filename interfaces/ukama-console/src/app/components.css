@@ -323,15 +323,6 @@
     grid-template-columns: 1fr;
   }
 }
-.cnt-pill {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--uk-ink-2);
-  background: var(--uk-page);
-  border-radius: 20px;
-  padding: 2px 9px;
-}
-
 /* component tile icon (site component tree) */
 .sc-ic {
   width: 52px;
