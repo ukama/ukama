@@ -26,10 +26,10 @@ class SoftwareAPI extends BaseRESTDataSource {
       queryParams.append("node_id", nodeId);
     }
     this.logger.info(
-      `GetApps [GET]: ${baseURL}/${VERSION}/${SOFTWARE}?${queryParams.toString()}`
+      `GetApps [GET]: ${baseURL}/${VERSION}/${SOFTWARE}/apps?${queryParams.toString()}`
     );
     this.baseURL = baseURL;
-    return this.get(`/${VERSION}/${SOFTWARE}?${queryParams.toString()}`)
+    return this.get(`/${VERSION}/${SOFTWARE}/apps?${queryParams.toString()}`)
       .then(apps => {
         return mapApps(apps);
       })
