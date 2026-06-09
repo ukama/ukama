@@ -202,6 +202,10 @@ export class NodeViewResolver {
     // all populate from one section. Mocked until the metric service lands
     // (backend gap #6); see dashboard/metrics/catalog.ts.
     const { value, error } = await runSection("kpis", async () => {
+      // Offline/unknown nodes report no telemetry — return no KPIs so the
+      // console renders "—" rather than fabricated values.
+      const node = await this.fetchNode(root, ctx);
+      if (node.status?.connectivity?.toLowerCase() !== "online") return [];
       const url = await root._urls.url("metrics");
       const nodeType = getNodeTypeFromId(root.nodeId);
       const groups = [

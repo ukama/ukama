@@ -29,6 +29,21 @@ import { ServiceUrlResolver } from "../baseUrls";
 import { isMockKey, metricMeta } from "../metrics/catalog";
 import { mockRangeValues } from "../metrics/mock";
 
+/** True when the node isn't online (offline/unknown) — no telemetry expected. */
+const isNodeOffline = async (
+  ctx: AppContext,
+  nodeId: string
+): Promise<boolean> => {
+  try {
+    const urls = new ServiceUrlResolver(ctx.headers.orgName);
+    const url = await urls.url("node");
+    const node = await ctx.dataSources.node.getNode(url, { id: nodeId });
+    return node.status?.connectivity?.toLowerCase() !== "online";
+  } catch {
+    return false;
+  }
+};
+
 /** Backfill the presentation metadata the upstream omits (label always; unit/
  *  format/threshold only when missing) so the console renders from data. */
 const enrich = (m: MetricRes): MetricRes => {
@@ -81,6 +96,12 @@ export class MetricsRangeResolver {
     const step = Math.max(60, Math.floor((to - data.from) / 48));
     const scope = data.nodeId ?? ctx.headers.orgName;
 
+    // An offline/unknown node reports no telemetry — return empty series so
+    // the console shows a "no data" state instead of a fabricated chart.
+    const nodeOffline = data.nodeId
+      ? await isNodeOffline(ctx, data.nodeId)
+      : false;
+
     const liveKeys = keys.filter(k => !isMockKey(k));
     const mockKeys = keys.filter(k => isMockKey(k));
 
@@ -91,7 +112,9 @@ export class MetricsRangeResolver {
         msg: "mock",
         type: key,
         nodeId: data.nodeId,
-        values: mockRangeValues(key, scope, data.from, to, step),
+        values: nodeOffline
+          ? []
+          : mockRangeValues(key, scope, data.from, to, step),
       } as MetricRes)
     );
 
