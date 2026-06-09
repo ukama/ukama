@@ -56,7 +56,7 @@ var (
 	testCreateAppReq   = &pb.CreateAppRequest{Name: testAppName, Space: testAppSpace, Notes: testAppNotes, MetricsKeys: testMetricsKeys}
 	testGetAppListReq  = &pb.GetAppListRequest{}
 	successCreateMsg   = "App created successfully"
-	successUpdateMsg   = "Software updated successfully"
+	successUpdateMsg   = "Software updated dipatched successfully"
 	invalidVersionMsg  = "Invalid software version provided"
 	alreadyUpToDateMsg = "Software is already up to date"
 )
