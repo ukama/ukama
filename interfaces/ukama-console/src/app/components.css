@@ -316,7 +316,7 @@
 }
 .site-comp {
   grid-template-columns: 1fr 1fr;
-  align-items: start;
+  align-items: stretch;
 }
 @media (max-width: 900px) {
   .site-comp {
@@ -332,27 +332,7 @@
   padding: 2px 9px;
 }
 
-/* site component diagram */
-.sc-diag-wrap {
-  overflow-x: auto;
-}
-.sc-diag {
-  position: relative;
-  margin: 0 auto;
-}
-.sc-tile {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 7px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  width: 96px;
-  font-family: inherit;
-}
+/* component tile icon (site component tree) */
 .sc-ic {
   width: 52px;
   height: 52px;
@@ -363,27 +343,93 @@
   align-items: center;
   justify-content: center;
   border: 1.5px solid transparent;
-  transition:
-    border-color 0.14s,
-    transform 0.14s;
-}
-.sc-tile:hover .sc-ic {
-  transform: translateY(-2px);
-}
-.sc-tile.on .sc-ic {
-  border-color: var(--uk-ac);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--uk-ac) 15%, transparent);
-}
-.sc-label {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--uk-ink-2);
-  white-space: nowrap;
-}
-.sc-tile.on .sc-label {
-  color: var(--uk-ink);
 }
 
+/* ---- site component tree (card tiles) ---- */
+.comp-tree {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 6px 0;
+}
+.comp-level {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.comp-conn {
+  width: 2px;
+  height: 22px;
+  background: var(--uk-line);
+}
+.comp-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 184px;
+  border: 1px solid var(--uk-line);
+  border-radius: var(--uk-r-sm);
+  padding: 12px 14px;
+  background: var(--uk-card);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+.comp-tile:hover {
+  border-color: var(--uk-ink-3);
+}
+.comp-tile.on {
+  border-color: var(--uk-ac);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--uk-ac) 14%, transparent);
+}
+.comp-tile-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.comp-health {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--uk-success);
+}
+.comp-tile-label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--uk-ink);
+}
+.comp-tile-sub {
+  font-size: 12px;
+  color: var(--uk-ink-3);
+}
+
+/* ---- uptime bars (site overview) ---- */
+.uptime-row {
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+  height: 34px;
+}
+.uptime-bar {
+  flex: 1;
+  border-radius: 3px;
+  min-width: 3px;
+}
+.uptime-caption {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: var(--uk-ink-3);
+  margin: 4px 0 2px;
+}
 
 /* ---- admin launcher hover ---- */
 .admin-launch:hover {

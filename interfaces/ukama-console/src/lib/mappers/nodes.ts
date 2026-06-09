@@ -18,8 +18,8 @@ import type { UkamaNode } from '@/data';
 const NODE_TYPE_LABEL: Record<string, UkamaNode['type']> = {
   tnode: 'Tower node',
   anode: 'Amplifier node',
-  hnode: 'Tower node',
-  cnode: 'Tower node',
+  cnode: 'Controller node',
+  hnode: 'Home node',
 };
 
 export const toNodeStatus = (node: ViewNodeFragment): UkamaNode['status'] => {

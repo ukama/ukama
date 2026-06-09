@@ -132,16 +132,21 @@ export default function NodesScreen() {
   }, [sitesData]);
 
   const nodesSection = data?.nodesView.nodes;
-  const nodes: UkamaNode[] = useMemo(
-    () =>
-      (nodesSection?.nodes ?? []).map((n) =>
+  const nodes: UkamaNode[] = useMemo(() => {
+    // Order by type: tower → amplifier → controller → home.
+    const rank = (id: string) =>
+      ['tnode', 'anode', 'cnode', 'hnode'].findIndex((t) =>
+        id.toLowerCase().includes(t),
+      );
+    return (nodesSection?.nodes ?? [])
+      .map((n) =>
         toUkamaNode(
           n,
           n.site?.siteId ? siteNameById.get(n.site.siteId) : undefined,
         ),
-      ),
-    [nodesSection?.nodes, siteNameById]
-  );
+      )
+      .sort((a, b) => (rank(a.id) < 0 ? 99 : rank(a.id)) - (rank(b.id) < 0 ? 99 : rank(b.id)));
+  }, [nodesSection?.nodes, siteNameById]);
 
   return (
     <div className="page">

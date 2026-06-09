@@ -8,7 +8,7 @@
 'use client';
 
 /**
- * Node detail — six tabs, left health rail, node-board imagery and the
+ * Node detail — per-type tabs, left KPI rail, node product imagery and the
  * "Turn node off" power menu (node-site-detail.jsx NodeDetail).
  */
 import { useState } from 'react';

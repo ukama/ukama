@@ -18,7 +18,7 @@ export const NodeSchema = z.object({
   connectivity: z.string().optional(),
   /** Raw operational state (Operational/Configured/Faulty/Unknown). */
   state: z.string().optional(),
-  type: z.enum(['Tower node', 'Amplifier node']),
+  type: z.enum(['Tower node', 'Amplifier node', 'Controller node', 'Home node']),
   site: z.string(),
   status: z.enum(['online', 'degraded', 'offline', 'configuring']),
   cpu: z.number(),

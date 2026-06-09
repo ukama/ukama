@@ -38,7 +38,7 @@ export interface MetricLineChartProps {
   unit?: string | null;
   format?: string | null;
   threshold?: MetricThreshold | null;
-  height?: number;
+  height?: number | string;
 }
 
 const fmtTime = (ms: number) =>
