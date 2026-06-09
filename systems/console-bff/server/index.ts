@@ -14,6 +14,10 @@
  */
 import { ApolloServer } from "@apollo/server";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
+import {
+  ApolloServerPluginLandingPageLocalDefault,
+  ApolloServerPluginLandingPageProductionDefault,
+} from "@apollo/server/plugin/landingPage/default";
 // Apollo Server v5: the Express integration lives in its own package.
 import { expressMiddleware } from "@as-integrations/express4";
 import cors from "cors";
@@ -35,9 +39,14 @@ import { HTTP401Error, HTTP500Error, Messages } from "../common/errors";
 import { logger } from "../common/logger";
 import { configureExpress } from "../common/middleware/expressApp";
 import { persistedOperations } from "../common/middleware/persistedOperations";
-import { closeStore, openStore } from "../common/storage";
+import { addInStore, closeStore, openStore } from "../common/storage";
 import { THeaders } from "../common/types";
-import InitAPI from "../init/datasource/init_api";
+import { parseExpressHeaders, parseToken } from "../common/utils";
+import { ServiceUrlResolver } from "../dashboard/baseUrls";
+import InitAPI, {
+  SessionValidationError,
+  getWelcomeStoreKey,
+} from "../init/datasource/init_api";
 import { AppContext, buildDataSources, buildHeaders } from "./context";
 import { buildAppSchema } from "./schema";
 
@@ -108,11 +117,20 @@ const startServer = async () => {
   });
 
   const schema = await buildAppSchema();
+  // NODE_ENV=production (Docker) selects Apollo's minimal landing page by
+  // default even when introspection is on. Use Sandbox when introspection is
+  // explicitly enabled (local docker-compose / codegen).
+  const landingPagePlugin = INTROSPECTION_ENABLED
+    ? ApolloServerPluginLandingPageLocalDefault({ embed: true })
+    : ApolloServerPluginLandingPageProductionDefault();
   const server = new ApolloServer<AppContext>({
     schema,
     csrfPrevention: true,
     introspection: INTROSPECTION_ENABLED,
-    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+    plugins: [
+      landingPagePlugin,
+      ApolloServerPluginDrainHttpServer({ httpServer }),
+    ],
   });
   await server.start();
 
@@ -133,9 +151,20 @@ const startServer = async () => {
         // Introspection (codegen) carries no session: allow it past the auth
         // gate when introspection is enabled (schema only, never data).
         if (INTROSPECTION_ENABLED && isIntrospectionRequest(req.body)) {
-          return { headers: EMPTY_HEADERS, requestId, dataSources };
+          return {
+            headers: EMPTY_HEADERS,
+            requestId,
+            dataSources,
+            urls: new ServiceUrlResolver(""),
+          };
         }
-        return { headers: buildHeaders(req.headers), requestId, dataSources };
+        const headers = buildHeaders(req.headers);
+        return {
+          headers,
+          requestId,
+          dataSources,
+          urls: new ServiceUrlResolver(headers.orgName),
+        };
       },
     })
   );
@@ -167,6 +196,35 @@ const startServer = async () => {
     res.send("Theme set successfully");
   });
 
+  // Marks the welcome page as acknowledged for the authenticated user.
+  // Auth: same signed-token verification as /graphql (cookie or
+  // x-session-token). Once recorded, /get-user mints subsequent tokens with
+  // isShowWelcome=false, so the console stops routing the user to /welcome.
+  app.post(
+    "/welcome-seen",
+    cors({
+      origin: [AUTH_APP_URL, PLAYGROUND_URL, CONSOLE_APP_URL],
+      credentials: true,
+    }),
+    async (req, res) => {
+      try {
+        const headers = parseExpressHeaders(req.headers);
+        const userId = parseToken(headers.token, "userId");
+        if (!userId) {
+          return res
+            .status(401)
+            .send(new HTTP401Error(Messages.HEADER_ERR_USER));
+        }
+        await addInStore(store, getWelcomeStoreKey(userId), true);
+        return res.status(200).json({ ok: true });
+      } catch (err) {
+        const reason = err instanceof Error ? err.message : String(err);
+        logger.error(`welcome-seen failed: ${reason}`);
+        return res.status(401).send(new HTTP401Error(Messages.HEADER_ERR_AUTH));
+      }
+    }
+  );
+
   app.get("/get-user", async (req, res) => {
     const cookies = req.headers["cookie"];
     if (!cookies) {
@@ -178,15 +236,18 @@ const startServer = async () => {
       res.setHeader("Content-Type", "application/json");
       return res.send(sessionRes);
     } catch (err) {
-      logger.error(`get-user failed: ${err}`);
-      return res
-        .status(500)
-        .send(new HTTP500Error("Failed to validate session"));
+      const reason = err instanceof Error ? err.message : String(err);
+      const step = err instanceof SessionValidationError ? err.step : "UNKNOWN";
+      logger.error(`get-user failed at ${step}: ${reason}`);
+      // 401 (not 500): the session/user mapping is invalid — clients should
+      // re-authenticate or land on /unauthorized. Step + reason included so
+      // both the console and the logs say which hop broke.
+      return res.status(401).json({ step, error: reason });
     }
   });
 
   logger.info(
-    `🚀 Console-BFF API ready at http://localhost:${API_PORT}/graphql`
+    `🚀 Console-BFF API ready at http://localhost:${API_PORT}/graphql (introspection: ${INTROSPECTION_ENABLED})`
   );
 };
 

@@ -8,7 +8,7 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import { SIM_STATUS } from "../../common/enums";
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { GetSimsInput, SimsPoolResDto } from "./types";
 
 @Resolver()
@@ -16,9 +16,10 @@ export class GetSimsFromPoolResolver {
   @Query(() => SimsPoolResDto)
   async getSimsFromPool(
     @Arg("data") data: GetSimsInput,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<SimsPoolResDto> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("sim");
     const sims = await dataSources.sim.getSimsFromPool(baseURL, data);
     if (data.status === SIM_STATUS.ASSIGNED) {
       return { sims: sims.sims.filter(sim => sim.isAllocated === true) };

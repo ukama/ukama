@@ -22,6 +22,37 @@
   );
 }
 
+/* ---- shell wrapper: optional setup alert bar above the app grid ---- */
+.shell-wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+.shell-wrap .app {
+  height: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.setup-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: var(--uk-ac-soft);
+  color: var(--uk-ink);
+  border-bottom: 1px solid var(--uk-line);
+  font-size: 13.5px;
+}
+.setup-bar > svg:first-child {
+  color: var(--uk-ac);
+  flex: none;
+}
+.setup-bar-text {
+  flex: 1;
+  min-width: 0;
+}
+
 .app {
   display: grid;
   grid-template-columns: var(--rail-w, 240px) 1fr;
@@ -73,7 +104,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 0 20px 0 16px;
+  padding: 0 20px 0 28px;
   position: relative;
   z-index: 2;
 }
@@ -366,6 +397,100 @@
   margin: 8px 4px;
 }
 
+/* Selectable section cards (node detail rail): left accent + active state. */
+.card-selectable {
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+}
+/* Left accent: always-visible gray indicator, blue when selected. */
+.card-selectable::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--uk-ink-3);
+  transition: background 0.12s ease;
+}
+.card-selectable:hover::before {
+  background: var(--uk-ink-2);
+}
+.card-selectable.is-active::before {
+  background: var(--uk-ac);
+}
+.card-selectable:focus-visible {
+  outline: 2px solid var(--uk-ac);
+  outline-offset: 2px;
+}
+
+/* Software tab — node apps card grid. */
+.apps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--uk-gap);
+}
+.app-card {
+  border: 1px solid var(--uk-line);
+  border-radius: var(--uk-r-sm);
+  padding: 14px;
+  background: var(--uk-card);
+}
+
+/* Range toggle (Day / Week / Month) on metric chart cards. */
+.range-toggle {
+  display: inline-flex;
+  border: 1px solid var(--uk-line);
+  border-radius: var(--uk-r-sm);
+  overflow: hidden;
+}
+.range-toggle button {
+  border: none;
+  background: transparent;
+  color: var(--uk-ink-2);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 5px 11px;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.range-toggle button + button {
+  border-left: 1px solid var(--uk-line);
+}
+.range-toggle button:hover {
+  color: var(--uk-ink);
+}
+.range-toggle button.is-active {
+  background: var(--uk-ac);
+  color: #fff;
+}
+
+/* KV rows: divider between items only, not after the last one. */
+.kv-row {
+  border-bottom: 1px solid var(--uk-line-soft);
+}
+.kv-row:last-child {
+  border-bottom: none;
+}
+/* Clickable KV rows: hover hint + chevron nudge so they read as interactive. */
+.kv-row[role='button'] {
+  transition: background 0.12s ease;
+}
+.kv-row[role='button']:hover {
+  background: var(--uk-ac-soft);
+}
+.kv-row[role='button']:hover .kv-chev,
+.kv-row[role='button']:focus-visible .kv-chev {
+  color: var(--uk-ac) !important;
+  transform: translateX(2px);
+}
+.kv-chev {
+  transition: transform 0.12s ease, color 0.12s ease;
+}
+
 /* ---- main ---- */
 .main {
   grid-area: main;
@@ -386,13 +511,13 @@
 }
 
 /* ---- page head ---- */
+/* Two-column grid so the right column aligns row-by-row with the left:
+   timestamp ↔ breadcrumb (top row), actions ↔ title (title row). */
 .pagehead {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 18px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 18px;
   margin-bottom: 18px;
-  flex-wrap: wrap;
 }
 .pagehead .crumb {
   display: flex;
@@ -400,7 +525,24 @@
   gap: 4px;
   font-size: 12.5px;
   color: var(--uk-ink-3);
-  margin-bottom: 4px;
+  margin-bottom: 12px;
+}
+.pagehead .crumb-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 4px;
+  border: 1px solid var(--uk-line);
+  border-radius: var(--uk-r-sm);
+  background: var(--uk-panel);
+  color: var(--uk-ink-2);
+  cursor: pointer;
+}
+.pagehead .crumb-back:hover {
+  background: var(--uk-hover);
+  color: var(--uk-ink);
 }
 .pagehead .pagetitle {
   font-family: var(--font-display), 'Work Sans', sans-serif;
@@ -417,13 +559,53 @@
 .pagehead .pagesub {
   font-size: 13.5px;
   color: var(--uk-ink-2);
-  margin-top: 5px;
+  margin-top: 2px;
 }
-.pagehead-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 10px;
+
+/* --- no breadcrumb: title at top-left; timestamp + actions stacked right --- */
+.pagehead .pagetitle {
+  grid-column: 1;
+  grid-row: 1;
+}
+.pagehead .page-fetched {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  align-self: center;
+}
+.pagehead .head-actions {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: end;
+  align-self: start;
+  margin-top: 10px;
+}
+.pagehead .pagesub {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+/* --- with breadcrumb: crumb↔timestamp (row 1), title↔actions (row 2) --- */
+.pagehead.has-crumb .crumb {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: start;
+}
+/* Top-align with the breadcrumb (whose margin-bottom makes its cell taller). */
+.pagehead.has-crumb .page-fetched {
+  grid-row: 1;
+  align-self: start;
+}
+.pagehead.has-crumb .pagetitle {
+  grid-row: 2;
+}
+.pagehead.has-crumb .head-actions {
+  grid-row: 2;
+  align-self: center;
+  margin-top: 0;
+}
+.pagehead.has-crumb .pagesub {
+  grid-row: 3;
 }
 .page-fetched {
   display: inline-flex;

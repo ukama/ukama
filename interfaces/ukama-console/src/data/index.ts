@@ -11,7 +11,6 @@
  * Entity datasets are added here as screens are built (plans, members,
  * sims, billing, business…).
  */
-export * from './networks';
 export * from './sites';
 export * from './nodes';
 export * from './subscribers';

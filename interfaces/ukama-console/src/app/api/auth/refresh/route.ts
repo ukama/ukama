@@ -12,14 +12,19 @@
  * session cookie is still valid, so proxy.ts mints a fresh token on the
  * redirect. If the session is also gone, proxy.ts redirects to login.
  */
-import { NextResponse } from 'next/server';
 import { TOKEN_COOKIE } from '@/lib/auth/types';
+import { cookieDomain, publicHost, publicUrl } from '@/lib/request-url';
+import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
 export function GET(request: Request) {
-  const redirectTo = new URL('/', request.url);
-  const res = NextResponse.redirect(redirectTo);
-  res.cookies.delete(TOKEN_COOKIE);
+  const res = NextResponse.redirect(publicUrl(request, '/'));
+  // Delete with the same Domain the cookie was set with, or it won't clear.
+  res.cookies.delete({
+    name: TOKEN_COOKIE,
+    path: '/',
+    domain: cookieDomain(publicHost(request)),
+  });
   return res;
 }

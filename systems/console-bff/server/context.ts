@@ -20,6 +20,7 @@ import { THeaders } from "../common/types";
 import { parseExpressHeaders, parseToken } from "../common/utils";
 import ComponentAPI from "../component/datasource/component_api";
 import ControllerAPI from "../controller/datasource/controller_api";
+import { ServiceUrlResolver } from "../dashboard/baseUrls";
 import HealthAPI from "../health/datasource/health_api";
 import InvitationAPI from "../invitation/datasource/invitation_api";
 import MemberAPI from "../member/datasource/member_api";
@@ -65,6 +66,12 @@ export interface AppContext {
   headers: THeaders;
   requestId: string;
   dataSources: AppDataSources;
+  /**
+   * Per-request, memoized service base-URL lookup (init system mapping).
+   * Module resolvers must use `await ctx.urls.url("<service>")` — the legacy
+   * per-subgraph `ctx.baseURL` does not exist on the consolidated server.
+   */
+  urls: ServiceUrlResolver;
   // NOTE: when planning-tool is re-enabled, add `prisma` here (see README
   // "Re-enabling planning-tool").
 }

@@ -8,52 +8,144 @@
 'use client';
 
 /**
- * Node detail — six tabs, left health rail, node-board imagery and the
+ * Node detail — per-type tabs, left KPI rail, node product imagery and the
  * "Turn node off" power menu (node-site-detail.jsx NodeDetail).
  */
 import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Button from '@mui/material/Button';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import ArrowBackRounded from '@mui/icons-material/ArrowBackRounded';
-import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded';
-import PowerSettingsNewRounded from '@mui/icons-material/PowerSettingsNewRounded';
 import RestartAltRounded from '@mui/icons-material/RestartAltRounded';
-import SyncRounded from '@mui/icons-material/SyncRounded';
-import WifiOffRounded from '@mui/icons-material/WifiOffRounded';
+import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
 import Skeleton from '@mui/material/Skeleton';
 
 import { useNodeDetailQuery } from '@/client/graphql/node-detail.generated';
+import { useNodeKpisQuery } from '@/client/graphql/node-kpis.generated';
+import type { MetricsRangeQuery } from '@/client/graphql/range-metrics.generated';
+import { useMetricsRangeQuery } from '@/client/graphql/range-metrics.generated';
+import { useRestartNodeMutation } from '@/client/graphql/controller.generated';
+import AppModal from '@/components/AppModal';
 import AppTabs from '@/components/AppTabs';
-import { LineChart } from '@/components/charts';
+import MetricLineChart, { ChartMessage, thresholdLegendRows } from '@/components/MetricLineChart';
 import DetailPicker from '@/components/DetailPicker';
 import { EmptyState } from '@/components/EmptyState';
 import KV from '@/components/KV';
 import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
-import { sectionValue } from '@/components/SectionFallback';
-import StatusBadge from '@/components/StatusBadge';
 import { useToast } from '@/components/ToastProvider';
 import { toUkamaNode } from '@/lib/mappers/nodes';
-import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
-import { series } from '@/lib/series';
+import { ConnectivityDot, StateChip } from './nodeStatus';
 
-const NODE_TEMP = series(46, 22, 0.18, 0.12);
-const NODE_LOAD = series(52, 22, 0.14, 0.18);
-const TABS = ['Overview', 'Network', 'Resources', 'Radio', 'Software', 'Schematic'];
+const TABS = ['Overview', 'Network', 'Resources', 'Radio', 'Software'];
 
-const TEMP_LEGEND = [
-  { color: 'var(--uk-ac)', label: 'Below 50° normal' },
-  { color: 'var(--uk-orange)', label: '51–60° high' },
-  { color: 'var(--uk-error)', label: 'Above 60° critical' },
-];
-const LOAD_LEGEND = [
-  { color: 'var(--uk-ac)', label: 'Below 70% normal' },
-  { color: 'var(--uk-orange)', label: '71–90% high' },
-  { color: 'var(--uk-error)', label: 'Above 90% critical' },
-];
+/** Product imagery keyed by raw node type (tnode/anode/cnode/hnode). */
+const NODE_IMAGE_BASE = 'https://ukama-site-assets.s3.amazonaws.com/images';
+const NODE_IMAGES: Record<string, string> = {
+  tnode: `${NODE_IMAGE_BASE}/ukama_tower_node.png`,
+  anode: `${NODE_IMAGE_BASE}/ukama_amplifier_node.png`,
+  cnode: `${NODE_IMAGE_BASE}/ukama_home_node.png`,
+  hnode: `${NODE_IMAGE_BASE}/ukama_home_node.png`,
+};
+const NODE_IMAGE_FALLBACK = `${NODE_IMAGE_BASE}/ukama_tower_node.png`;
+const nodeImage = (type: string): string =>
+  NODE_IMAGES[type.toLowerCase()] ?? NODE_IMAGE_FALLBACK;
+
+type Range = 'Day' | 'Week' | 'Month';
+const RANGES: Range[] = ['Day', 'Week', 'Month'];
+
+/** Window length per range, in seconds (drives the metricsRange from/to). */
+const RANGE_SECONDS: Record<Range, number> = {
+  Day: 86_400,
+  Week: 604_800,
+  Month: 2_592_000,
+};
+
+/* -------------------------------------------------------------------------- *
+ * Per-node-type metric key lists (which KPIs/graphs exist for a node type),
+ * mirrored from console-bff getGraphsKeyByType. Labels, units, thresholds and
+ * values all come from the BFF (nodeView.kpis / metricsRange) — the console
+ * owns none of that; it only decides which keys to ask for.
+ * -------------------------------------------------------------------------- */
+type NodeKind = 'tnode' | 'anode' | 'cnode' | 'hnode';
+const nodeKind = (raw: string): NodeKind => {
+  const t = raw.toLowerCase();
+  if (t.includes('anode')) return 'anode';
+  if (t.includes('cnode')) return 'cnode';
+  if (t.includes('hnode')) return 'hnode';
+  return 'tnode';
+};
+
+type MetricGroup =
+  | 'health'
+  | 'customers'
+  | 'cellular'
+  | 'backhaul'
+  | 'resources'
+  | 'radio';
+const GROUP_KEYS: Record<MetricGroup, Record<NodeKind, string[]>> = {
+  // Uptime is shown as a value in Node information, not as a graph.
+  health: {
+    tnode: ['cpu_temperature', 'memory'],
+    anode: ['fem1_temperature', 'fem2_temperature'],
+    cnode: ['memory'],
+    hnode: [],
+  },
+  customers: {
+    tnode: ['subscribers_active'],
+    anode: [],
+    cnode: [],
+    hnode: [],
+  },
+  cellular: {
+    tnode: ['cellular_uplink', 'cellular_downlink'],
+    anode: [],
+    cnode: [],
+    hnode: [],
+  },
+  backhaul: {
+    tnode: ['backhaul_uplink', 'backhaul_downlink', 'backhaul_latency'],
+    anode: [],
+    cnode: [],
+    hnode: [],
+  },
+  resources: {
+    tnode: ['cpu', 'memory', 'disk'],
+    anode: ['cpu', 'memory', 'disk'],
+    cnode: ['cpu', 'memory', 'disk'],
+    hnode: [],
+  },
+  radio: {
+    tnode: ['power'],
+    anode: ['pa_power', 'rx_power', 'tx_power'],
+    cnode: [],
+    hnode: [],
+  },
+};
+
+const groupKeys = (group: MetricGroup, kind: NodeKind): string[] =>
+  GROUP_KEYS[group][kind] ?? [];
+
+/* Left-rail sections per tab. The 'info' card shows the node board; every
+ * other card lists its group's KPIs and drives the right-side charts. Mirrors
+ * the legacy console, where the left rail changes with the active tab. */
+interface SectionDef {
+  key: string;
+  title: string;
+  group?: MetricGroup;
+}
+const TAB_SECTIONS: Record<string, SectionDef[]> = {
+  Overview: [
+    { key: 'info', title: 'Node information' },
+    { key: 'health', title: 'Node health', group: 'health' },
+    { key: 'customers', title: 'Customers', group: 'customers' },
+  ],
+  Network: [
+    { key: 'cellular', title: 'Cellular', group: 'cellular' },
+    { key: 'backhaul', title: 'Backhaul', group: 'backhaul' },
+  ],
+  Resources: [{ key: 'resources', title: 'Resources', group: 'resources' }],
+  Radio: [{ key: 'radio', title: 'Radio', group: 'radio' }],
+};
 
 function LegendDot({ color, label }: { color: string; label: string }) {
   return (
@@ -64,104 +156,206 @@ function LegendDot({ color, label }: { color: string; label: string }) {
   );
 }
 
-function HealthChartCard({
-  title,
-  unit,
-  data,
-  legend,
-}: {
-  title: string;
-  unit: string;
-  data: number[];
-  legend: { color: string; label: string }[];
-}) {
+function RangeToggle({ value, onChange }: { value: Range; onChange: (r: Range) => void }) {
   return (
-    <SectionCard title={title} right={<span style={{ fontSize: 12, color: 'var(--uk-ink-3)' }}>{unit}</span>}>
-      <LineChart data={data} height={188} />
-      <div style={{ display: 'flex', gap: 18, justifyContent: 'center', marginTop: 10 }}>
-        {legend.map((l) => (
-          <LegendDot key={l.label} {...l} />
-        ))}
-      </div>
+    <div className="range-toggle" role="group" aria-label="Time range">
+      {RANGES.map((r) => (
+        <button
+          key={r}
+          type="button"
+          className={r === value ? 'is-active' : ''}
+          aria-pressed={r === value}
+          onClick={() => onChange(r)}
+        >
+          {r}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** One metric series straight from the BFF (metricsRange). */
+type MetricSeries = MetricsRangeQuery['metricsRange']['metrics'][number];
+
+/** One metric chart with its own range filter — self-fetches its series so
+ *  every graph filters independently. Rendered with Recharts. */
+function MetricChart({
+  nodeId,
+  metricKey,
+  off,
+}: {
+  nodeId: string;
+  metricKey: string;
+  off: boolean;
+}) {
+  const [range, setRange] = useState<Range>('Day');
+  const [nowSec] = useState(() => Math.floor(Date.now() / 1000));
+  const to = nowSec;
+  const from = nowSec - RANGE_SECONDS[range];
+  const { data, loading, error } = useMetricsRangeQuery({
+    variables: { data: { keys: [metricKey], nodeId, from, to } },
+  });
+
+  const m: MetricSeries | undefined = data?.metricsRange.metrics?.[0];
+  const hasData = !!m && m.values.length > 0 && m.success !== false;
+  const values: [number, number][] = hasData
+    ? off
+      ? m!.values.map((v) => [v[0] ?? 0, 0])
+      : m!.values.map((v) => [v[0] ?? 0, v[1] ?? 0])
+    : [];
+  const legend = thresholdLegendRows(m?.threshold ?? null, m?.unit);
+  const title = m?.label || metricKey;
+  return (
+    <SectionCard title={title} right={<RangeToggle value={range} onChange={setRange} />}>
+      {error ? (
+        <ChartMessage kind="error" message={error.message} height={300} />
+      ) : loading && !m ? (
+        <Skeleton variant="rounded" sx={{ height: 300 }} />
+      ) : !hasData ? (
+        <ChartMessage kind="empty" height={300} />
+      ) : (
+        <>
+          <MetricLineChart
+            values={values}
+            title={title}
+            unit={m?.unit}
+            format={m?.format}
+            threshold={m?.threshold ?? null}
+            height={300}
+          />
+          <div style={{ display: 'flex', gap: 18, justifyContent: 'center', marginTop: 10, flexWrap: 'wrap' }}>
+            {legend.map((l) => (
+              <LegendDot key={l.label} {...l} />
+            ))}
+          </div>
+        </>
+      )}
     </SectionCard>
   );
 }
 
-function nodeStatusText(status: string, up: string) {
-  if (status === 'online') return `is online and well for ${up}`;
-  if (status === 'configuring') return 'is configuring · ~4 min remaining';
-  if (status === 'degraded') return 'is online with warnings';
-  return 'has been offline for 2h 14m';
+/** Right-panel charts for a metric group — one self-filtering chart per key. */
+function GroupCharts({
+  nodeId,
+  keys,
+  off,
+}: {
+  nodeId: string;
+  keys: string[];
+  off: boolean;
+}) {
+  if (keys.length === 0) {
+    return (
+      <SectionCard title="Metrics">
+        <EmptyState
+          art="search"
+          title="No metrics for this node type"
+          sub="This node type doesn't report metrics in this category."
+        />
+      </SectionCard>
+    );
+  }
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--uk-gap)' }}>
+      {keys.map((k) => (
+        <MetricChart key={k} nodeId={nodeId} metricKey={k} off={off} />
+      ))}
+    </div>
+  );
 }
 
-function PowerMenu({ serial }: { serial: string }) {
-  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+/** Restart node — single action, confirmation dialog, then mutation. */
+function RestartAction({ nodeId, name }: { nodeId: string; name: string }) {
+  const [open, setOpen] = useState(false);
   const toast = useToast();
+  const [restart, { loading }] = useRestartNodeMutation({
+    onCompleted: (d) => {
+      setOpen(false);
+      toast(
+        d.restartNode.success ? `Restarting ${name}…` : `Couldn't restart ${name}`,
+      );
+    },
+    onError: () => {
+      setOpen(false);
+      toast(`Couldn't restart ${name}`);
+    },
+  });
   return (
     <>
       <Button
         variant="contained"
-        startIcon={<PowerSettingsNewRounded />}
-        endIcon={<ExpandMoreRounded />}
-        sx={{
-          bgcolor: '#1C1E22',
-          '&:hover': { bgcolor: '#2c2f36' },
-        }}
-        onClick={(e) => setAnchor(e.currentTarget)}
+        startIcon={<RestartAltRounded />}
+        sx={{ bgcolor: '#1C1E22', '&:hover': { bgcolor: '#2c2f36' } }}
+        onClick={() => setOpen(true)}
       >
-        Turn node off
+        Restart node
       </Button>
-      <Menu anchorEl={anchor} open={!!anchor} onClose={() => setAnchor(null)}>
-        <MenuItem
-          sx={{ fontSize: 13.5, gap: 1.25 }}
-          onClick={() => {
-            setAnchor(null);
-            toast(`${serial} powered off`);
+      {open && (
+        <AppModal
+          title="Restart node"
+          width={440}
+          onClose={() => {
+            if (!loading) setOpen(false);
           }}
+          footer={
+            <>
+              <Button
+                color="inherit"
+                sx={{ color: 'var(--uk-ink-3)' }}
+                disabled={loading}
+                onClick={() => setOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<RestartAltRounded />}
+                disabled={loading}
+                onClick={() => restart({ variables: { data: { nodeId } } })}
+              >
+                {loading ? 'Restarting…' : 'Restart node'}
+              </Button>
+            </>
+          }
         >
-          <PowerSettingsNewRounded sx={{ fontSize: 18 }} /> Turn node off
-        </MenuItem>
-        <MenuItem
-          sx={{ fontSize: 13.5, gap: 1.25 }}
-          onClick={() => {
-            setAnchor(null);
-            toast(`Restarting ${serial}…`);
-          }}
-        >
-          <RestartAltRounded sx={{ fontSize: 18 }} /> Restart node
-        </MenuItem>
-        <MenuItem
-          sx={{ fontSize: 13.5, gap: 1.25 }}
-          onClick={() => {
-            setAnchor(null);
-            toast('RF disabled');
-          }}
-        >
-          <WifiOffRounded sx={{ fontSize: 18 }} /> Turn RF off
-        </MenuItem>
-      </Menu>
+          <div style={{ fontSize: 14, color: 'var(--uk-ink-2)', lineHeight: 1.55 }}>
+            This will reboot <b style={{ color: 'var(--uk-ink)' }}>{name}</b>. The node
+            will be briefly offline while it restarts, and active sessions may be
+            interrupted.
+          </div>
+        </AppModal>
+      )}
     </>
   );
 }
 
 export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
   const router = useRouter();
-  const toast = useToast();
   const [tab, setTab] = useState('Overview');
+  // Which left-rail section is selected (key from TAB_SECTIONS for the tab).
+  const [section, setSection] = useState<string>('info');
 
+  // Structural data — node core, site name and sibling nodes — as one
+  // composite query (one-shot; no polling).
   const { data, loading, refetch } = useNodeDetailQuery({
     variables: { nodeId },
-    ...visiblePoll(POLL_LIVE_MS),
   });
+  // Node health KPIs live in their own query so they can poll independently
+  // once the metric service is wired (backend gap #6); plain fetch for now.
+  const { data: kpisData } = useNodeKpisQuery({ variables: { nodeId } });
+
   const view = data?.nodeView;
   const nodeSection = view?.node;
-  const healthSection = view?.health;
   const softwareSection = view?.software;
-  const kpisGap = view?.kpis.error ?? null;
+  // Sibling nodes power the switcher dropdown.
+  const pickerItems = (view?.siblings.nodes ?? []).map((nd) => ({
+    id: nd.id,
+    label: `${nd.name || nd.id} (${nd.id})`,
+    status: '',
+  }));
+  // Latest KPI entries keyed by metric key — carry label/unit/value from BFF.
   const kpiByKey = new Map(
-    (view?.kpis.metrics ?? [])
-      .filter((m) => m.success)
-      .map((m) => [m.key, Math.round(m.value * 100) / 100])
+    (kpisData?.nodeView.kpis.metrics ?? []).map((m) => [m.key, m]),
   );
 
   if (loading) {
@@ -190,161 +384,216 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
     );
   }
 
-  const n = toUkamaNode(nodeSection.node);
+  const n = toUkamaNode(nodeSection.node, view?.site.site?.name ?? undefined);
+  const nodeName = n.name ?? n.serial;
   const off = n.status === 'offline';
-  const healthRows = healthSection?.health?.system?.slice(0, 4) ?? [];
-  const firstSoftware = softwareSection?.softwares?.software?.[0];
-  const updateAvailable = firstSoftware?.status === 'update_available';
+  const apps = softwareSection?.softwares?.software ?? [];
+
+  // KPIs are node-type specific (legacy console parity, backend gap #6).
+  const kind = nodeKind(nodeSection.node.type);
+  // Render straight from BFF-provided metadata: label, unit, value.
+  const labelFor = (key: string) => kpiByKey.get(key)?.label || key;
+  const fmtKpi = (key: string): string => {
+    const e = kpiByKey.get(key);
+    if (!e || !e.success) return '—';
+    const v = e.format === 'decimal' ? e.value.toFixed(2) : Math.round(e.value);
+    const unit = e.unit ?? '';
+    if (!unit) return `${v}`;
+    return unit === '%' ? `${v}%` : `${v} ${unit}`;
+  };
+  // Uptime is reported in seconds — show a human-readable "Nd Nh" / "Nh Nm".
+  const fmtUptime = (): string => {
+    const e = kpiByKey.get('uptime');
+    if (!e || !e.success) return '—';
+    let s = Math.max(0, Math.round(e.value));
+    const d = Math.floor(s / 86400);
+    s -= d * 86400;
+    const h = Math.floor(s / 3600);
+    s -= h * 3600;
+    const m = Math.floor(s / 60);
+    if (d) return `${d}d ${h}h`;
+    if (h) return `${h}h ${m}m`;
+    return `${m}m`;
+  };
+  // KV rows for a metric group (one per node-type key, value or "—").
+  const groupRows = (group: MetricGroup) => {
+    const keys = groupKeys(group, kind);
+    if (keys.length === 0) return <KV k="Metrics" v="—" />;
+    return keys.map((k) => <KV key={k} k={labelFor(k)} v={fmtKpi(k)} />);
+  };
+
+  // Hide tabs that have no KPIs for this node type. Overview always shows
+  // (node info), Software always shows (apps aren't KPI-gated).
+  const tabHasKpis = (t: string) =>
+    (TAB_SECTIONS[t] ?? []).some(
+      (s) => s.group && groupKeys(s.group, kind).length > 0,
+    );
+  const visibleTabs = TABS.filter(
+    (t) => t === 'Overview' || t === 'Software' || tabHasKpis(t),
+  );
+  const activeTab = visibleTabs.includes(tab) ? tab : 'Overview';
+
+  // The left rail (and its selection) changes with the active tab. Drop any
+  // section whose group has no KPIs for this node type (e.g. Customers on
+  // controller/amplifier nodes); 'info' has no group and always shows.
+  const sections = (TAB_SECTIONS[activeTab] ?? []).filter(
+    (s) => !s.group || groupKeys(s.group, kind).length > 0,
+  );
+  const activeKey = sections.some((s) => s.key === section)
+    ? section
+    : (sections[0]?.key ?? 'info');
+  const activeGroup = sections.find((s) => s.key === activeKey)?.group;
 
   return (
     <div className="page">
       <PageHeader
         crumb={['Nodes', n.serial]}
-        title={`Node ${n.serial}`}
-        actions={
-          <>
-            <Button
-              variant="outlined"
-              startIcon={<ArrowBackRounded />}
-              onClick={() => router.push('/network/nodes')}
-            >
-              Back
-            </Button>
-            <PowerMenu serial={n.serial} />
-          </>
+        title={
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+            <ConnectivityDot connectivity={n.connectivity} />
+            {nodeName}
+          </span>
         }
+        onBack={() => router.push('/network/nodes')}
+        actions={<RestartAction nodeId={n.id} name={nodeName} />}
       />
 
       <div className="detail-subrow">
         <DetailPicker
-          value={{ id: n.id, label: n.serial, status: n.status }}
-          items={[{ id: n.id, label: n.serial, status: n.status }]}
+          value={{ id: n.id, label: `${nodeName} (${n.id})`, status: n.status }}
+          items={
+            pickerItems.length > 0
+              ? pickerItems
+              : [{ id: n.id, label: `${nodeName} (${n.id})`, status: n.status }]
+          }
           onPick={(it) => router.push(`/network/nodes/${it.id}`)}
         />
-        <StatusBadge status={n.status} />
-        <span style={{ fontSize: 13.5, color: 'var(--uk-ink-2)' }}>
-          {nodeStatusText(n.status, n.up)}
-        </span>
+        <StateChip state={n.state} />
       </div>
 
-      <AppTabs tabs={TABS} value={tab} onChange={setTab} scrollable />
+      <AppTabs tabs={visibleTabs} value={activeTab} onChange={setTab} scrollable />
 
-      <div className="detail-grid">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--uk-gap)' }}>
-          <SectionCard title="Node information">
-            <KV k="Model type" v={n.type} />
-            <KV k="Serial #" v={n.serial} />
-            <KV
-              k="Firmware"
-              v={firstSoftware?.currentVersion ?? '—'}
-            />
-            <KV k="Site" v={n.site} />
-          </SectionCard>
-          <SectionCard title="Node health">
-            {healthRows.length > 0 && !healthSection?.error ? (
-              healthRows.map((row) => <KV key={row.name} k={row.name} v={row.value} />)
-            ) : kpiByKey.size > 0 ? (
-              // Polled node KPIs from the metric service (Phase 4)
-              <>
-                <KV k="Uptime" v={kpiByKey.has('uptime') ? `${kpiByKey.get('uptime')}` : '—'} />
-                <KV
-                  k="Temp. (CPU)"
-                  v={kpiByKey.has('cpu_temperature') ? `${kpiByKey.get('cpu_temperature')} °C` : '—'}
-                />
-                <KV
-                  k="Memory"
-                  v={kpiByKey.has('memory') ? `${kpiByKey.get('memory')}%` : '—'}
-                />
-              </>
-            ) : (
-              <>
-                <KV k="Uptime" v="—" />
-                <KV k="Temp. (CPU)" v="—" />
-                <KV k="Memory" v="—" />
-              </>
-            )}
-          </SectionCard>
-          <SectionCard title="Customers">
-            {/* attach counts not in metric keys yet — renders "—" */}
-            <KV k="Attached" v={sectionValue(null, kpisGap)} />
-            <KV k="Active" v={sectionValue(null, kpisGap)} />
-          </SectionCard>
-        </div>
+      {activeTab === 'Software' ? (
+        <NodeApps apps={apps} error={!!softwareSection?.error} />
+      ) : (
+        <div className="detail-grid">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--uk-gap)' }}>
+            {sections.map((s) => (
+              <SectionCard
+                key={s.key}
+                title={s.title}
+                selectable
+                active={activeKey === s.key}
+                onClick={() => setSection(s.key)}
+              >
+                {s.key === 'info' ? (
+                  <>
+                    <KV k="Model type" v={n.type} />
+                    <KV k="Serial #" v={n.serial} />
+                    <KV k="Site" v={n.site} />
+                    <KV k={labelFor('uptime')} v={fmtUptime()} />
+                  </>
+                ) : (
+                  groupRows(s.group as MetricGroup)
+                )}
+              </SectionCard>
+            ))}
+          </div>
 
-        <div style={{ minWidth: 0 }}>
-          {tab === 'Overview' && (
-            <SectionCard
-              title="Node hardware"
-              right={<span style={{ fontSize: 12, color: 'var(--uk-ink-3)' }}>{n.type}</span>}
-            >
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0' }}>
-                <Image src="/node-board.png" alt="Node board" width={300} height={420} style={{ height: 'auto' }} />
-              </div>
-            </SectionCard>
-          )}
-          {(tab === 'Network' || tab === 'Resources' || tab === 'Radio') && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--uk-gap)' }}>
-              <HealthChartCard
-                title="Temperature"
-                unit="°C · last 6h"
-                data={off ? NODE_TEMP.map(() => 0) : NODE_TEMP}
-                legend={TEMP_LEGEND}
-              />
-              <HealthChartCard
-                title="Load index"
-                unit="% · last 6h"
-                data={off ? NODE_LOAD.map(() => 0) : NODE_LOAD}
-                legend={LOAD_LEGEND}
-              />
-            </div>
-          )}
-          {tab === 'Software' && (
-            <SectionCard title="Software & firmware">
-              {softwareSection?.error ? (
-                <>
-                  <KV k="Firmware version" v="—" />
-                  <KV k="Update available" v="—" />
-                </>
-              ) : (
-                <>
-                  <KV k="Firmware version" v={firstSoftware?.currentVersion ?? '—'} />
-                  <KV k="Release date" v={firstSoftware?.releaseDate ?? '—'} />
-                  <KV
-                    k="Update available"
-                    v={updateAvailable ? (firstSoftware?.desiredVersion ?? 'Yes') : 'Up to date'}
-                    vColor={updateAvailable ? 'var(--uk-ac-dark)' : 'var(--uk-success)'}
-                  />
-                </>
-              )}
-              <div style={{ marginTop: 16 }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<SyncRounded />}
-                  onClick={() => toast('Checking for updates…')}
+          <div style={{ minWidth: 0 }}>
+            {activeKey === 'info' ? (
+              <SectionCard
+                title="Node hardware"
+                right={<span style={{ fontSize: 12, color: 'var(--uk-ink-3)' }}>{n.type}</span>}
+              >
+                <div
+                  style={{
+                    position: 'relative',
+                    height: 440,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '12px 0',
+                  }}
                 >
-                  Check for updates
-                </Button>
-              </div>
-            </SectionCard>
-          )}
-          {tab === 'Schematic' && (
-            <SectionCard
-              title="Schematic"
-              right={<span style={{ fontSize: 12, color: 'var(--uk-ink-3)' }}>Port layout</span>}
-            >
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0' }}>
-                <Image
-                  src="/node-board.png"
-                  alt="Node schematic"
-                  width={300}
-                  height={420}
-                  style={{ height: 'auto' }}
-                />
-              </div>
-            </SectionCard>
-          )}
+                  <Image
+                    src={nodeImage(nodeSection.node.type)}
+                    alt={n.type}
+                    fill
+                    priority
+                    sizes="(max-width: 900px) 100vw, 420px"
+                    style={{ objectFit: 'contain' }}
+                  />
+                </div>
+              </SectionCard>
+            ) : (
+              <GroupCharts
+                nodeId={n.id}
+                keys={activeGroup ? groupKeys(activeGroup, kind) : []}
+                off={off}
+              />
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
+  );
+}
+
+/** Software tab — node apps as a card grid (legacy NodeSoftwareTab). */
+function NodeApps({
+  apps,
+  error,
+}: {
+  apps: { name: string; status: string; currentVersion: string; desiredVersion: string; releaseDate: string }[];
+  error: boolean;
+}) {
+  if (error) {
+    return (
+      <div className="card">
+        <EmptyState art="error" title="Couldn't load apps" sub="The software service didn't respond." />
+      </div>
+    );
+  }
+  if (apps.length === 0) {
+    return (
+      <div className="card">
+        <EmptyState art="search" title="No apps" sub="This node isn't reporting any installed apps." />
+      </div>
+    );
+  }
+  return (
+    <SectionCard title="Node apps" count={apps.length}>
+      <div className="apps-grid">
+        {apps.map((app) => {
+          const update = app.status === 'update_available';
+          return (
+            <div key={app.name} className="app-card">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <CheckCircleRounded sx={{ fontSize: 18, color: update ? 'var(--uk-ac)' : 'var(--uk-success)' }} />
+                <span style={{ fontWeight: 600, textTransform: 'capitalize' }}>{app.name}</span>
+              </div>
+              <div style={{ fontSize: 12.5, color: 'var(--uk-ink-2)' }}>
+                Version: <span className="tnum">{app.currentVersion || '—'}</span>
+              </div>
+              {app.releaseDate && (
+                <div style={{ fontSize: 12, color: 'var(--uk-ink-3)', marginTop: 2 }}>
+                  Released {app.releaseDate}
+                </div>
+              )}
+              <div style={{ marginTop: 10 }}>
+                {update ? (
+                  <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--uk-ac-dark)' }}>
+                    Update available{app.desiredVersion ? ` → ${app.desiredVersion}` : ''}
+                  </span>
+                ) : (
+                  <span style={{ fontSize: 12.5, color: 'var(--uk-success)' }}>Up to date</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </SectionCard>
   );
 }

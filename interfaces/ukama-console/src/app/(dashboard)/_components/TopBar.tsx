@@ -7,11 +7,14 @@
  */
 'use client';
 
-import { useSyncExternalStore } from 'react';
-import { useColorScheme } from '@mui/material/styles';
 import DarkModeRounded from '@mui/icons-material/DarkModeRounded';
 import LightModeRounded from '@mui/icons-material/LightModeRounded';
 import MenuRounded from '@mui/icons-material/MenuRounded';
+import { useColorScheme } from '@mui/material/styles';
+import { useSyncExternalStore } from 'react';
+
+import { useAuth } from '@/lib/auth/context';
+import AccountMenu from './AccountMenu';
 import LensSegment from './LensSegment';
 import NetSwitch from './NetSwitch';
 import NotificationsMenu from './NotificationsMenu';
@@ -45,6 +48,27 @@ function ThemeToggle() {
   );
 }
 
+/** Authenticated user's org name — plain label, bold, theme accent color. */
+function OrgLabel() {
+  const user = useAuth();
+  if (!user?.orgName) return null;
+  return (
+    <span
+      title={`Organization: ${user.orgName}`}
+      style={{
+        fontFamily: 'var(--font-display)',
+        fontSize: 14,
+        fontWeight: 700,
+        color: 'var(--uk-ac)',
+        whiteSpace: 'nowrap',
+        marginRight: 4,
+      }}
+    >
+      {user.orgName}
+    </span>
+  );
+}
+
 export default function TopBar({ onMenu }: { onMenu: () => void }) {
   return (
     <header className="topbar">
@@ -59,11 +83,10 @@ export default function TopBar({ onMenu }: { onMenu: () => void }) {
       <NetSwitch />
       <LensSegment />
       <div className="spacer" />
+      <OrgLabel />
       <ThemeToggle />
       <NotificationsMenu />
-      <button type="button" className="avatar" title="Account">
-        JM
-      </button>
+      <AccountMenu />
     </header>
   );
 }

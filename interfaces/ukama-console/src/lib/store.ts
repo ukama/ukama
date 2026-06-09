@@ -23,24 +23,29 @@ interface UiPrefsState {
   density: Density;
   rail: Rail;
   networkId: string;
+  /** Last /configure URL (path+query) — onboarding resume point. */
+  lastConfigureUrl: string | null;
   setAccent: (accent: Accent) => void;
   setDensity: (density: Density) => void;
   toggleRail: () => void;
   setNetworkId: (networkId: string) => void;
+  setLastConfigureUrl: (url: string | null) => void;
 }
 
 export const useUiPrefs = create<UiPrefsState>()(
   persist(
     (set) => ({
       accent: 'blue',
-      density: 'comfortable',
+      density: 'compact',
       rail: 'full',
       networkId: 'kwacha',
+      lastConfigureUrl: null,
       setAccent: (accent) => set({ accent }),
       setDensity: (density) => set({ density }),
       toggleRail: () =>
         set((s) => ({ rail: s.rail === 'full' ? 'icon' : 'full' })),
       setNetworkId: (networkId) => set({ networkId }),
+      setLastConfigureUrl: (lastConfigureUrl) => set({ lastConfigureUrl }),
     }),
     { name: 'uk-ui-prefs' },
   ),

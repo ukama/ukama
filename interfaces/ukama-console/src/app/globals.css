@@ -153,3 +153,10 @@ body {
   outline-offset: 2px;
   border-radius: 4px;
 }
+
+/* The dialog paper grabs focus on open; don't ring the whole modal. Keyboard
+   focus rings on the controls inside it are preserved. */
+.MuiDialog-paper:focus-visible,
+.MuiDialog-paper:focus {
+  outline: none;
+}

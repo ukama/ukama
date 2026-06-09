@@ -9,7 +9,7 @@ import axios from "axios";
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import { NUCLEUS_API_GW } from "../../common/configs";
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { dtoToUserResDto } from "../datasource/mapper";
 import { MemberDto } from "./types";
 
@@ -18,9 +18,10 @@ export class GetMemberByUserIdResolver {
   @Query(() => MemberDto)
   async getMemberByUserId(
     @Arg("userId") id: string,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<MemberDto> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("member");
     const member = await dataSources.member.getMemberByUserId(baseURL, id);
 
     const user = await axios

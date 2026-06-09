@@ -54,6 +54,9 @@ export class MetricRes {
   @Field()
   type: string;
 
+  @Field({ nullable: true })
+  label?: string;
+
   @Field(() => [[Number, Number]])
   values: [number, number][];
 

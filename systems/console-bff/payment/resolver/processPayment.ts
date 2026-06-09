@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { ProcessPaymentDto, ProcessPaymentInputDto } from "./types";
 
 @Resolver()
@@ -15,9 +15,10 @@ export class ProcessPaymentResolver {
   @Mutation(() => ProcessPaymentDto)
   async processPayment(
     @Arg("data") data: ProcessPaymentInputDto,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<ProcessPaymentDto> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("payments");
     return dataSources.payment.processPayment(baseURL, data);
   }
 }

@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { Nodes } from "./types";
 
 @Resolver()
@@ -15,9 +15,10 @@ export class GetNodesForSiteResolver {
   @Query(() => Nodes)
   async getNodesForSite(
     @Arg("siteId") siteId: string,
-    @Ctx() context: Context
+    @Ctx() context: AppContext
   ) {
-    const { dataSources, baseURL } = context;
+    const { dataSources } = context;
+    const baseURL = await context.urls.url("node");
     return await dataSources.node.getNodesForSite(baseURL, siteId);
   }
 }

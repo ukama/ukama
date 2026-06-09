@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { UploadSimsInputDto, UploadSimsResDto } from "./types";
 
 @Resolver()
@@ -15,9 +15,10 @@ export class UploadSimsResolver {
   @Mutation(() => UploadSimsResDto)
   async uploadSims(
     @Arg("data") data: UploadSimsInputDto,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<UploadSimsResDto> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("sim");
     return await dataSources.sim.uploadSims(baseURL, data);
   }
 }

@@ -18,8 +18,8 @@ import type { UkamaNode } from '@/data';
 const NODE_TYPE_LABEL: Record<string, UkamaNode['type']> = {
   tnode: 'Tower node',
   anode: 'Amplifier node',
-  hnode: 'Tower node',
-  cnode: 'Tower node',
+  cnode: 'Controller node',
+  hnode: 'Home node',
 };
 
 export const toNodeStatus = (node: ViewNodeFragment): UkamaNode['status'] => {
@@ -37,8 +37,12 @@ export const toUkamaNode = (
 ): UkamaNode => ({
   id: node.id,
   serial: node.id,
+  name: node.name || undefined,
+  connectivity: node.status.connectivity,
+  state: node.status.state,
   type: NODE_TYPE_LABEL[node.type] ?? 'Tower node',
-  site: siteName ?? node.site?.siteId ?? '—',
+  // Only show a resolved site name; never the raw siteId.
+  site: siteName ?? '—',
   status: toNodeStatus(node),
   // TODO(metrics-phase): cpu/mem/temp/fw/up come from nodeView.kpis —
   // backend gap #6 (docs in systems/console-bff/docs/backend-gaps.md)

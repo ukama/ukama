@@ -30,7 +30,11 @@ export class ServiceUrlResolver {
     if (!cached) {
       cached = getBaseURL(service, this.orgName).then(res => {
         if (res.status !== 200 || !res.message) {
-          throw new Error(`Base URL lookup failed for service '${service}'`);
+          // getBaseURL's message now carries the diagnosis (empty orgName,
+          // missing system mapping, or the init fetch error + target URL).
+          throw new Error(
+            `Base URL lookup failed for service '${service}': ${res.message}`
+          );
         }
         return res.message;
       });

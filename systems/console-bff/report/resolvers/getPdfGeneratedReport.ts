@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { GetPdfReportUrlDto } from "./types";
 
 @Resolver()
@@ -15,9 +15,10 @@ export class GetPdfGeneratedReportResolver {
   @Query(() => GetPdfReportUrlDto)
   async getGeneratedPdfReport(
     @Arg("id") id: string,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<GetPdfReportUrlDto> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("report");
 
     try {
       const buffer = await dataSources.report.getGeneratedPdfReport(

@@ -6,57 +6,89 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 'use client';
-import Meter from '@/components/Meter';
 
-/** Upload SIMs — dropzone → file chip → progress → toast (form-dialogs.jsx). */
-import { useEffect, useRef, useState } from 'react';
+/** Upload SIMs — pick/drop a CSV, base64-encode it, and call uploadSims. */
+import { useRef, useState } from 'react';
 import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
 import IconButton from '@mui/material/IconButton';
 import CloseRounded from '@mui/icons-material/CloseRounded';
 import CloudUploadRounded from '@mui/icons-material/CloudUploadRounded';
 import DescriptionRounded from '@mui/icons-material/DescriptionRounded';
 import UploadFileRounded from '@mui/icons-material/UploadFileRounded';
+import { useUploadSimsMutation } from '@/client/graphql/sims.generated';
+import type { Sim_Types } from '@/client/graphql/types';
 import AppModal from '@/components/AppModal';
 import { useToast } from '@/components/ToastProvider';
+import { publicEnv } from '@/lib/runtime-env';
 
-type Stage = 'idle' | 'ready' | 'uploading';
+const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 
-export default function UploadSimsDialog({ onClose }: { onClose: () => void }) {
+const formatSize = (bytes: number): string =>
+  bytes < 1024
+    ? `${bytes} B`
+    : bytes < 1024 * 1024
+      ? `${(bytes / 1024).toFixed(0)} KB`
+      : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+
+/** Reads a file as base64 (without the data-URL prefix), matching the BFF. */
+const fileToBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      resolve(result.split(',')[1] ?? '');
+    };
+    reader.onerror = () => reject(new Error('Could not read the file'));
+    reader.readAsDataURL(file);
+  });
+
+export default function UploadSimsDialog({
+  onClose,
+  onUploaded,
+}: {
+  onClose: () => void;
+  onUploaded?: () => void;
+}) {
   const toast = useToast();
-  const [file, setFile] = useState<{ name: string; size: string } | null>(null);
-  const [stage, setStage] = useState<Stage>('idle');
-  const [pct, setPct] = useState(0);
+  const [file, setFile] = useState<File | null>(null);
   const [drag, setDrag] = useState(false);
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(
-    () => () => {
-      if (timer.current) clearInterval(timer.current);
+  const [uploadSims, { loading: uploading }] = useUploadSimsMutation({
+    onCompleted: (res) => {
+      toast(`${res.uploadSims.iccid.length} SIMs uploaded successfully!`);
+      onUploaded?.();
+      onClose();
     },
-    [],
-  );
+    onError: (err) => toast(err.message),
+  });
 
-  const pick = () => {
-    setFile({ name: 'kwacha-sims-2026.csv', size: '248 SIMs' });
-    setStage('ready');
+  const accept = (f: File | undefined) => {
+    if (!f) return;
+    if (!f.name.toLowerCase().endsWith('.csv')) {
+      toast('Please choose a .csv file.');
+      return;
+    }
+    if (f.size > MAX_BYTES) {
+      toast('File is too large (max 10 MB).');
+      return;
+    }
+    setFile(f);
   };
 
-  const start = () => {
-    setStage('uploading');
-    setPct(8);
-    timer.current = setInterval(() => {
-      setPct((p) => {
-        if (p >= 100) {
-          if (timer.current) clearInterval(timer.current);
-          setTimeout(() => {
-            onClose();
-            toast('SIMs uploaded successfully!');
-          }, 350);
-          return 100;
-        }
-        return p + 11;
+  const start = async () => {
+    if (!file) return;
+    try {
+      const data = await fileToBase64(file);
+      void uploadSims({
+        variables: {
+          data: { data, simType: publicEnv().simType as Sim_Types },
+        },
       });
-    }, 160);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not read the file');
+    }
   };
 
   return (
@@ -65,52 +97,63 @@ export default function UploadSimsDialog({ onClose }: { onClose: () => void }) {
       width={520}
       onClose={onClose}
       footer={
-        stage === 'uploading' ? (
-          <Button color="inherit" sx={{ color: 'var(--uk-ink-3)' }} onClick={onClose}>
+        <>
+          <Button
+            color="inherit"
+            sx={{ color: 'var(--uk-ink-3)' }}
+            onClick={onClose}
+            disabled={uploading}
+          >
             Cancel
           </Button>
-        ) : (
-          <>
-            <Button color="inherit" sx={{ color: 'var(--uk-ink-3)' }} onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<UploadFileRounded />}
-              disabled={!file}
-              onClick={start}
-            >
-              Upload
-            </Button>
-          </>
-        )
+          <Button
+            variant="contained"
+            startIcon={
+              uploading ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <UploadFileRounded />
+              )
+            }
+            disabled={!file || uploading}
+            onClick={() => void start()}
+          >
+            {uploading ? 'Uploading…' : 'Upload'}
+          </Button>
+        </>
       }
     >
       <p style={{ fontSize: 13.5, color: 'var(--uk-ink-2)', lineHeight: 1.6, margin: '0 0 16px', textWrap: 'pretty' }}>
         Upload the SIM CSV file you received so that you can digitally assign SIMs to your
         customers, and authorize them to use your network.
       </p>
-      {stage === 'uploading' ? (
-        <div style={{ padding: '8px 0 4px' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Uploading file…</div>
-          <Meter value={pct} height={8} />
-          <div style={{ fontSize: 12, color: 'var(--uk-ink-3)', marginTop: 6 }}>{file?.name}</div>
-        </div>
-      ) : file ? (
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".csv,text/csv"
+        hidden
+        onChange={(e) => {
+          accept(e.target.files?.[0]);
+          e.target.value = '';
+        }}
+      />
+
+      {file ? (
         <div className="sim-file">
           <DescriptionRounded sx={{ fontSize: 22, color: 'var(--uk-ac)' }} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 13.5, fontWeight: 600 }}>{file.name}</div>
-            <div style={{ fontSize: 12, color: 'var(--uk-ink-3)' }}>{file.size}</div>
+            <div style={{ fontSize: 12, color: 'var(--uk-ink-3)' }}>
+              {formatSize(file.size)}
+            </div>
           </div>
           <IconButton
             size="small"
             aria-label="Remove file"
             sx={{ color: 'var(--uk-ink-3)' }}
-            onClick={() => {
-              setFile(null);
-              setStage('idle');
-            }}
+            disabled={uploading}
+            onClick={() => setFile(null)}
           >
             <CloseRounded sx={{ fontSize: 18 }} />
           </IconButton>
@@ -119,7 +162,7 @@ export default function UploadSimsDialog({ onClose }: { onClose: () => void }) {
         <button
           type="button"
           className={`dropzone${drag ? ' drag' : ''}`}
-          onClick={pick}
+          onClick={() => inputRef.current?.click()}
           onDragOver={(e) => {
             e.preventDefault();
             setDrag(true);
@@ -128,7 +171,7 @@ export default function UploadSimsDialog({ onClose }: { onClose: () => void }) {
           onDrop={(e) => {
             e.preventDefault();
             setDrag(false);
-            pick();
+            accept(e.dataTransfer.files?.[0]);
           }}
         >
           <CloudUploadRounded sx={{ fontSize: 34, color: 'var(--uk-ink-3)' }} />

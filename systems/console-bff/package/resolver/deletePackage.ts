@@ -8,16 +8,17 @@
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
 import { IdResponse } from "../../common/types";
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 
 @Resolver()
 export class DeletePackageResolver {
   @Mutation(() => IdResponse)
   async deletePackage(
     @Arg("packageId") packageId: string,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<IdResponse> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("package");
     return dataSources.package.deletePackage(baseURL, packageId);
   }
 }

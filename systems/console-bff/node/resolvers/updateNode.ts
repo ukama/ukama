@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { Node, UpdateNodeInput } from "./types";
 
 @Resolver()
@@ -15,9 +15,10 @@ export class UpdateNodeResolver {
   @Mutation(() => Node)
   async updateNode(
     @Arg("data") data: UpdateNodeInput,
-    @Ctx() context: Context
+    @Ctx() context: AppContext
   ) {
-    const { dataSources, baseURL } = context;
+    const { dataSources } = context;
+    const baseURL = await context.urls.url("node");
     return await dataSources.node.updateNode(baseURL, {
       id: data.id,
       name: data.name,

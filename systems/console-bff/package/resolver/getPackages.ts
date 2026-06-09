@@ -7,14 +7,14 @@
  */
 import { Ctx, Query, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { PackagesResDto } from "./types";
 
 @Resolver()
 export class GetPackagesResolver {
   @Query(() => PackagesResDto)
-  async getPackages(@Ctx() ctx: Context): Promise<PackagesResDto> {
-    const { dataSources, baseURL } = ctx;
-    return dataSources.package.getPackages(baseURL);
+  async getPackages(@Ctx() ctx: AppContext): Promise<PackagesResDto> {
+    const baseURL = await ctx.urls.url("package");
+    return ctx.dataSources.package.getPackages(baseURL);
   }
 }

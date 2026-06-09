@@ -23,6 +23,24 @@ query NodeDetail($nodeId: String!) {
         }
       }
     }
+    site {
+      error {
+        ...SectionErrorFields
+      }
+      site {
+        id
+        name
+      }
+    }
+    siblings {
+      error {
+        ...SectionErrorFields
+      }
+      nodes {
+        id
+        name
+      }
+    }
     health {
       error {
         ...SectionErrorFields
@@ -57,17 +75,6 @@ query NodeDetail($nodeId: String!) {
         currentState
         previousState
         createdAt
-      }
-    }
-    kpis {
-      error {
-        ...SectionErrorFields
-      }
-      metrics {
-        key
-        value
-        timestamp
-        success
       }
     }
     radioStatus {

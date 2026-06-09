@@ -508,9 +508,13 @@ export type ItemResDto = {
 
 export type KpiEntryDto = {
   __typename?: 'KpiEntryDto';
+  format?: Maybe<Scalars['String']['output']>;
   key: Scalars['String']['output'];
+  label?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
+  threshold?: Maybe<MetricThreshold>;
   timestamp: Scalars['Float']['output'];
+  unit?: Maybe<Scalars['String']['output']>;
   value: Scalars['Float']['output'];
 };
 
@@ -558,6 +562,7 @@ export type MetricRes = {
   __typename?: 'MetricRes';
   dataPlanId?: Maybe<Scalars['String']['output']>;
   format?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
   msg: Scalars['String']['output'];
   networkId?: Maybe<Scalars['String']['output']>;
   nodeId?: Maybe<Scalars['String']['output']>;
@@ -1058,6 +1063,8 @@ export type NodeView = {
   node: NodeSection;
   nodeId: Scalars['String']['output'];
   radioStatus: GapSection;
+  siblings: NodesSection;
+  site: SiteSection;
   software: SoftwareSection;
   stateHistory: NodeStateSection;
 };
@@ -1127,6 +1134,15 @@ export type NotificationsDto = {
 export type NotificationsResDto = {
   __typename?: 'NotificationsResDto';
   notifications: Array<NotificationsDto>;
+};
+
+export type OnboardingStatusDto = {
+  __typename?: 'OnboardingStatusDto';
+  hasNetwork: Scalars['Boolean']['output'];
+  hasNode: Scalars['Boolean']['output'];
+  hasSite: Scalars['Boolean']['output'];
+  networkId?: Maybe<Scalars['String']['output']>;
+  networkName?: Maybe<Scalars['String']['output']>;
 };
 
 export type Org = {
@@ -1369,6 +1385,7 @@ export type Query = {
   networkOverview: NetworkOverview;
   nodeView: NodeView;
   nodesView: NodesView;
+  onboardingStatus: OnboardingStatusDto;
   simPoolView: SimPoolView;
   siteView: SiteView;
   sitesView: SitesView;
@@ -1938,6 +1955,12 @@ export type SiteComponentsSection = {
   error?: Maybe<SectionError>;
 };
 
+export type SiteCustomersSection = {
+  __typename?: 'SiteCustomersSection';
+  count?: Maybe<Scalars['Int']['output']>;
+  error?: Maybe<SectionError>;
+};
+
 export type SiteDto = {
   __typename?: 'SiteDto';
   accessId: Scalars['String']['output'];
@@ -2004,6 +2027,7 @@ export type SitesSection = {
 
 export type SitesView = {
   __typename?: 'SitesView';
+  customers: SiteCustomersSection;
   financials: GapSection;
   kpis: GapSection;
   networkId: Scalars['String']['output'];

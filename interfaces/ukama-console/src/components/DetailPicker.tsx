@@ -12,7 +12,6 @@ import { useState } from 'react';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import UnfoldMoreRounded from '@mui/icons-material/UnfoldMoreRounded';
-import StatusBadge from '@/components/StatusBadge';
 
 export interface PickerItem {
   id: string;
@@ -41,20 +40,32 @@ export default function DetailPicker({
         anchorEl={anchor}
         open={!!anchor}
         onClose={() => setAnchor(null)}
-        slotProps={{ paper: { sx: { width: 250, mt: 0.5 } } }}
+        slotProps={{
+          paper: {
+            sx: { mt: 0.5, minWidth: anchor?.offsetWidth, maxWidth: 420 },
+          },
+        }}
       >
         {items.map((it) => (
           <MenuItem
             key={it.id}
             selected={it.id === value.id}
-            sx={{ fontSize: 13, justifyContent: 'space-between', gap: 1.5 }}
+            sx={{ fontSize: 13 }}
             onClick={() => {
               onPick(it);
               setAnchor(null);
             }}
           >
-            <span className="tnum">{it.label}</span>
-            <StatusBadge status={it.status} />
+            <span
+              className="tnum"
+              style={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {it.label}
+            </span>
           </MenuItem>
         ))}
       </Menu>

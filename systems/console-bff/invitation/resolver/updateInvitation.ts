@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { UpdateInvitationInputDto, UpdateInvitationResDto } from "./types";
 
 @Resolver()
@@ -15,7 +15,7 @@ export class UpdateInvitationResolver {
   @Mutation(() => UpdateInvitationResDto)
   async updateInvitation(
     @Arg("data") data: UpdateInvitationInputDto,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<UpdateInvitationResDto> {
     const { dataSources } = ctx;
     return await dataSources.invitation.updateInvitation(data);

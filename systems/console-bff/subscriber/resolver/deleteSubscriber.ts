@@ -8,16 +8,17 @@
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
 import { CBooleanResponse } from "../../common/types";
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 
 @Resolver()
 export class DeleteSubscriberResolver {
   @Mutation(() => CBooleanResponse)
   async deleteSubscriber(
     @Arg("subscriberId") subscriberId: string,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<CBooleanResponse> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("subscriber");
     return await dataSources.subscriber.deleteSubscriber(baseURL, subscriberId);
   }
 }

@@ -14,6 +14,7 @@ import { ThemeProvider } from '@mui/material/styles';
 import ToastProvider from '@/components/ToastProvider';
 import { AuthProvider } from '@/lib/auth/context';
 import type { AuthUser } from '@/lib/auth/types';
+import { CurrencyProvider } from '@/lib/currency';
 import { useUiPrefs } from '@/lib/store';
 import { theme } from '@/theme/theme';
 
@@ -44,7 +45,9 @@ export default function Providers({
       <ThemeAttributes />
       <AuthProvider user={user}>
         <ApolloClientProvider>
-          <ToastProvider>{children}</ToastProvider>
+          <CurrencyProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </CurrencyProvider>
         </ApolloClientProvider>
       </AuthProvider>
     </ThemeProvider>

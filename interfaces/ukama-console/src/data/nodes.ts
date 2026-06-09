@@ -12,7 +12,13 @@ import { z } from 'zod';
 export const NodeSchema = z.object({
   id: z.string(),
   serial: z.string(),
-  type: z.enum(['Tower node', 'Amplifier node']),
+  /** Human-friendly node name from the registry; undefined in mocks. */
+  name: z.string().optional(),
+  /** Raw connectivity (Online/Offline/Unknown) for the status dot. */
+  connectivity: z.string().optional(),
+  /** Raw operational state (Operational/Configured/Faulty/Unknown). */
+  state: z.string().optional(),
+  type: z.enum(['Tower node', 'Amplifier node', 'Controller node', 'Home node']),
   site: z.string(),
   status: z.enum(['online', 'degraded', 'offline', 'configuring']),
   cpu: z.number(),

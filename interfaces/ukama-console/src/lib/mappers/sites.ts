@@ -32,13 +32,15 @@ export const toSiteStatus = (
 
 export const toSite = (
   dto: ViewSiteFragment,
-  counts?: SiteNodeCounts
+  counts?: SiteNodeCounts,
+  subs = 0
 ): Site => ({
   id: dto.id,
   name: dto.name,
   area: dto.location || '—',
   status: toSiteStatus(dto, counts),
-  subs: 0,
+  // Network-wide subscriber count (per-site attribution is a backend gap).
+  subs,
   nodes: counts?.total ?? 0,
   // TODO(metrics-phase): uptime/battery/signal/data from siteView.kpis and
   // siteView.power — backend gaps #7/#8

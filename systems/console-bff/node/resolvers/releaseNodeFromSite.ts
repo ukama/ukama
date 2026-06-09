@@ -8,7 +8,7 @@
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
 import { CBooleanResponse } from "../../common/types";
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { NodeInput } from "./types";
 
 @Resolver()
@@ -16,9 +16,10 @@ export class ReleaseNodeFromSiteResolver {
   @Mutation(() => CBooleanResponse)
   async releaseNodeFromSite(
     @Arg("data") data: NodeInput,
-    @Ctx() context: Context
+    @Ctx() context: AppContext
   ) {
-    const { dataSources, baseURL } = context;
+    const { dataSources } = context;
+    const baseURL = await context.urls.url("node");
     return await dataSources.node.releaseNodeFromSite(baseURL, {
       id: data.id,
     });

@@ -9,7 +9,7 @@ import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import { logger } from "../../common/logger";
 import { mapWithConcurrency } from "../../common/utils/concurrency";
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { SimDataUsages, SimDto, SimUsagesInputDto } from "./types";
 
 @Resolver()
@@ -17,9 +17,10 @@ export class GetDataUsagesResolver {
   @Query(() => SimDataUsages)
   async getDataUsages(
     @Arg("data") data: SimUsagesInputDto,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<SimDataUsages> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("sim");
 
     const sims = await dataSources.sim.list(baseURL, {
       networkId: data.networkId,

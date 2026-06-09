@@ -19,7 +19,7 @@
  *  - auth: cookies (`credentials: 'include'`) against the API gateway,
  *    same as the legacy console; session/role headers via proxy.ts later
  */
-import { env } from '@/env';
+import { publicEnv } from '@/lib/runtime-env';
 import { ApolloClient, HttpLink, from } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { InvalidationPolicyCache } from '@nerdwallet/apollo-cache-policies';
@@ -33,6 +33,8 @@ export const DEFAULT_TTL = 5 * MINUTE;
 const TYPE_TTLS: Record<string, number> = {
   // ops status changes quickly
   NodeDto: 1 * MINUTE,
+  // activation state must react quickly to setup progress (alert bar/guards)
+  OnboardingStatusDto: 0.5 * MINUTE,
   SiteDto: 2 * MINUTE,
   NotificationsResDto: 1 * MINUTE,
   // money/people move slower
@@ -43,6 +45,7 @@ const TYPE_TTLS: Record<string, number> = {
   // reference data barely changes
   CountryDto: 24 * 60 * MINUTE,
   TimezoneDto: 24 * 60 * MINUTE,
+  CurrencyRes: 24 * 60 * MINUTE,
 };
 
 function makeCache() {
@@ -91,7 +94,7 @@ export function makeApolloClient() {
   });
 
   const httpLink = new HttpLink({
-    uri: `${env.NEXT_PUBLIC_API_GW}/graphql`,
+    uri: `${publicEnv().apiGw}/graphql`,
     credentials: 'include',
   });
 

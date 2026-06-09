@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { PackageDto } from "./types";
 
 @Resolver()
@@ -15,9 +15,10 @@ export class GetPackageResolver {
   @Query(() => PackageDto)
   async getPackage(
     @Arg("packageId") packageId: string,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<PackageDto> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("package");
     return dataSources.package.getPackage(baseURL, packageId);
   }
 }

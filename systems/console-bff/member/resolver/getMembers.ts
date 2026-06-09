@@ -7,15 +7,16 @@
  */
 import { Ctx, Query, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import UserApi from "../datasource/user_api";
 import { MemberDto, MembersResDto } from "./types";
 
 @Resolver()
 export class GetMembersResolver {
   @Query(() => MembersResDto)
-  async getMembers(@Ctx() ctx: Context): Promise<MembersResDto> {
-    const { dataSources, baseURL } = ctx;
+  async getMembers(@Ctx() ctx: AppContext): Promise<MembersResDto> {
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("member");
     const members: MemberDto[] = [];
     const res = await dataSources.member.getMembers(baseURL);
     const userAPI = new UserApi();

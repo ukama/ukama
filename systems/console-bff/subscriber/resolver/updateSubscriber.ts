@@ -8,7 +8,7 @@
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
 import { CBooleanResponse } from "../../common/types";
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { UpdateSubscriberInputDto } from "./types";
 
 @Resolver()
@@ -17,9 +17,10 @@ export class UpdateSubscriberResolver {
   async updateSubscriber(
     @Arg("subscriberId") subscriberId: string,
     @Arg("data") data: UpdateSubscriberInputDto,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<CBooleanResponse> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("subscriber");
     return await dataSources.subscriber.updateSubscriber(
       baseURL,
       subscriberId,

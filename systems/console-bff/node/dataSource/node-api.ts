@@ -34,7 +34,6 @@ class NodeAPI extends BaseRESTDataSource {
   }
   async getNodes(baseURL: string, args: NodesFilterInput): Promise<Nodes> {
     this.baseURL = baseURL;
-    this.logger.info(`Getting nodes with args: ${JSON.stringify(args)}`);
     const query = new URLSearchParams();
     if (args.id) query.set("id", args.id);
     if (args.siteId) query.set("siteId", args.siteId);
@@ -43,6 +42,9 @@ class NodeAPI extends BaseRESTDataSource {
     if (args.state) query.set("state", args.state.toLowerCase());
     if (args.connectivity)
       query.set("connectivity", args.connectivity.toLowerCase());
+    this.logger.info(
+      `Getting nodes with args: ${baseURL}/${VERSION}/${NODES}/list?${query.toString()}}`
+    );
     return this.get(`/${VERSION}/${NODES}/list?${query.toString()}`).then(res =>
       parseNodesRes(res)
     );

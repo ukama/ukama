@@ -30,6 +30,7 @@ import { SimPoolResDto } from "../../sim/resolver/types";
 import { SiteDto } from "../../site/resolvers/types";
 import { Softwares } from "../../software/resolvers/types";
 import { SubscriberDto } from "../../subscriber/resolver/types";
+import { MetricThreshold } from "../../subscriptions/resolvers/types";
 import { SectionError } from "../types";
 
 /* ----------------------------- shared sections ---------------------------- */
@@ -98,7 +99,9 @@ export class GapSection {
   error?: SectionError | null;
 }
 
-/** One latest-value KPI from the metric service (polled — Phase 4). */
+/** One latest-value KPI from the metric service (polled — Phase 4). Carries
+ *  the same presentation metadata as MetricRes so the console renders it
+ *  directly (label/unit/format/threshold) without any client-side catalog. */
 @ObjectType()
 export class KpiEntryDto {
   @Field()
@@ -112,6 +115,18 @@ export class KpiEntryDto {
 
   @Field(() => Boolean)
   success: boolean;
+
+  @Field({ nullable: true })
+  label?: string;
+
+  @Field({ nullable: true })
+  unit?: string;
+
+  @Field({ nullable: true })
+  format?: string;
+
+  @Field(() => MetricThreshold, { nullable: true })
+  threshold?: MetricThreshold | null;
 }
 
 @ObjectType()
@@ -203,6 +218,12 @@ export class NodeView {
   nodeId: string;
 
   node?: NodeSection;
+  // The node's site, resolved from its siteId — lets the detail page show the
+  // site name without a separate sitesView round trip.
+  site?: SiteSection;
+  // Other nodes in the same network — powers the node-switcher dropdown
+  // without a separate nodesView round trip.
+  siblings?: NodesSection;
   health?: HealthSection;
   software?: SoftwareSection;
   stateHistory?: NodeStateSection;
@@ -237,12 +258,24 @@ export class SiteNodeCountsSection {
 }
 
 @ObjectType()
+export class SiteCustomersSection {
+  @Field(() => SectionError, { nullable: true })
+  error?: SectionError | null;
+
+  @Field(() => Int, { nullable: true })
+  count?: number | null;
+}
+
+@ObjectType()
 export class SitesView {
   @Field()
   networkId: string;
 
   sites?: SitesSection;
   nodeCounts?: SiteNodeCountsSection;
+  // Network-wide subscriber count (subscribers aren't site-scoped in the
+  // registry; per-site attribution is a metrics-phase gap).
+  customers?: SiteCustomersSection;
   kpis?: GapSection;
   financials?: GapSection;
 }

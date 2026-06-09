@@ -26,3 +26,4 @@ ukama-console-BUILD-PLAN.md
 *.pem
 npm-debug.log*
 pnpm-debug.log*
+/pkg

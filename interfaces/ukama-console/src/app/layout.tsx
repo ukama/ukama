@@ -7,6 +7,7 @@
  */
 import { roboto, workSans } from '@/fonts';
 import { getCurrentUser } from '@/lib/auth/server';
+import { runtimeEnvScript } from '@/lib/runtime-env';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
 import type { Metadata } from 'next';
@@ -31,6 +32,9 @@ export default async function RootLayout({
       className={`${workSans.variable} ${roboto.variable}`}
       suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: runtimeEnvScript() }} />
+      </head>
       <body>
         <InitColorSchemeScript attribute="class" defaultMode="light" />
         <AppRouterCacheProvider>

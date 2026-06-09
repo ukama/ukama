@@ -12,10 +12,6 @@ import { z } from 'zod';
 export const addCustomerSchema = z.object({
   first: z.string().min(1, 'First name is required'),
   last: z.string().optional(),
-  mobile: z
-    .string()
-    .min(7, 'Enter a valid mobile number')
-    .regex(/^[+0-9 ()-]+$/, 'Digits, spaces and + only'),
   email: z.string().email('Enter a valid email').optional().or(z.literal('')),
   planId: z.string().optional(),
   sim: z.string().optional(),

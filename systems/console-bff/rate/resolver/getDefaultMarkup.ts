@@ -7,14 +7,15 @@
  */
 import { Ctx, Query, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { DefaultMarkupResDto } from "./types";
 
 @Resolver()
 export class GetDefaultMarkupResolver {
   @Query(() => DefaultMarkupResDto)
-  async getDefaultMarkup(@Ctx() ctx: Context): Promise<DefaultMarkupResDto> {
-    const { dataSources, baseURL } = ctx;
+  async getDefaultMarkup(@Ctx() ctx: AppContext): Promise<DefaultMarkupResDto> {
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("rate");
     return dataSources.rate.getDefaultMarkup(baseURL);
   }
 }

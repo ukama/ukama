@@ -374,6 +374,7 @@ if [ "$IS_INCLUDE_BFF" = false ]; then
     SYS_QUERY_12="UPDATE PUBLIC.systems SET api_gw_url = 'http://localhost:8086' WHERE systems."name" = 'dummy'";
     SYS_QUERY_13="UPDATE PUBLIC.systems SET api_gw_url = 'http://localhost:8079' WHERE systems."name" = 'messaging'";
     SYS_QUERY_14="UPDATE PUBLIC.systems SET api_gw_url = 'http://localhost:8000' WHERE systems."name" = 'hub'";
+    SYS_QUERY_14="UPDATE PUBLIC.systems SET api_gw_url = 'http://localhost:8070' WHERE systems."name" = 'factory'";
     SYS_QUERY_15="UPDATE PUBLIC.systems SET api_gw_url = 'http://localhost:8098' WHERE systems."name" = 'operation'";
 fi
 

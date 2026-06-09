@@ -7,14 +7,15 @@
  */
 import { Ctx, Query, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { NotificationsResDto } from "./types";
 
 @Resolver()
 export class GetNotificationsResolver {
   @Query(() => NotificationsResDto)
-  async getNotifications(@Ctx() ctx: Context): Promise<NotificationsResDto> {
-    const { dataSources, baseURL, headers } = ctx;
+  async getNotifications(@Ctx() ctx: AppContext): Promise<NotificationsResDto> {
+    const { dataSources, headers } = ctx;
+    const baseURL = await ctx.urls.url("notification");
     return dataSources.notification.getNotifications(
       baseURL,
       headers.orgId,

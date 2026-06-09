@@ -8,7 +8,7 @@ export type MetricsRangeQueryVariables = Types.Exact<{
 }>;
 
 
-export type MetricsRangeQuery = { __typename?: 'Query', metricsRange: { __typename?: 'MetricsRes', metrics: Array<{ __typename?: 'MetricRes', type: string, success: boolean, nodeId?: string | null, siteId?: string | null, values: Array<Array<number>>, unit?: string | null, format?: string | null }> } };
+export type MetricsRangeQuery = { __typename?: 'Query', metricsRange: { __typename?: 'MetricsRes', metrics: Array<{ __typename?: 'MetricRes', type: string, label?: string | null, success: boolean, nodeId?: string | null, siteId?: string | null, values: Array<Array<number>>, unit?: string | null, format?: string | null, tickInterval?: number | null, tickPositions?: Array<number> | null, threshold?: { __typename?: 'MetricThreshold', min: number, normal: number, max: number } | null }> } };
 
 
 export const MetricsRangeDocument = gql`
@@ -16,12 +16,20 @@ export const MetricsRangeDocument = gql`
   metricsRange(data: $data) {
     metrics {
       type
+      label
       success
       nodeId
       siteId
       values
       unit
       format
+      tickInterval
+      tickPositions
+      threshold {
+        min
+        normal
+        max
+      }
     }
   }
 }

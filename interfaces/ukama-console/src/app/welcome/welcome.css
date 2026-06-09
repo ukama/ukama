@@ -1,0 +1,152 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2026-present, Ukama Inc.
+ */
+
+/* First-visit welcome page — desktop split panel, stacked on mobile. */
+
+.welcome-root {
+  min-height: 100vh;
+  display: flex;
+  align-items: stretch;
+  background: var(--uk-page);
+}
+
+.welcome-main {
+  flex: 1 1 60%;
+  background: var(--uk-panel);
+  display: flex;
+  flex-direction: column;
+  padding: clamp(24px, 6vw, 80px);
+}
+
+.welcome-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--uk-ac);
+}
+
+.welcome-brand-name {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.welcome-body {
+  max-width: 560px;
+  margin-top: clamp(28px, 8vh, 72px);
+}
+
+.welcome-title {
+  font-family: var(--font-display);
+  font-size: clamp(26px, 5vw, 32px);
+  font-weight: 600;
+  color: var(--uk-ink);
+  margin: 0 0 14px;
+}
+
+.welcome-copy {
+  font-size: 14px;
+  color: var(--uk-ink-2);
+  line-height: 1.65;
+  margin: 0 0 28px;
+  text-wrap: pretty;
+}
+
+.welcome-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.welcome-field-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--uk-ink-3);
+  margin-bottom: 4px;
+}
+
+.welcome-field-value {
+  font-size: 15px;
+  color: var(--uk-ink);
+}
+
+.welcome-actions {
+  margin-top: auto;
+  padding-top: 40px;
+}
+
+.welcome-error {
+  font-size: 13px;
+  color: var(--uk-error);
+  margin: 0 0 12px;
+}
+
+.welcome-aside {
+  flex: 1 1 40%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-left: 1px solid var(--uk-line-soft);
+  padding: 32px;
+}
+
+.welcome-tree-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.welcome-tree-icon {
+  color: var(--uk-ink-2);
+  display: flex;
+}
+
+.welcome-tree-label {
+  font-size: 13.5px;
+  color: var(--uk-ink);
+  margin-top: 6px;
+  text-align: center;
+}
+
+.welcome-tree-connector {
+  width: 1px;
+  height: 28px;
+  background: var(--uk-line);
+  margin: 10px 0;
+}
+
+/* Mobile: single column — the hierarchy aside duplicates the fields, so it
+   is hidden; the action sticks to the flow and the button spans full width. */
+@media (max-width: 720px) {
+  .welcome-root {
+    flex-direction: column;
+  }
+
+  .welcome-main {
+    flex: 1 1 auto;
+  }
+
+  .welcome-aside {
+    display: none;
+  }
+
+  .welcome-body {
+    max-width: none;
+    margin-top: 28px;
+  }
+
+  .welcome-actions {
+    padding-top: 32px;
+  }
+
+  .welcome-actions .MuiButton-root {
+    width: 100%;
+  }
+}

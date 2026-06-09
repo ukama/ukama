@@ -7,20 +7,42 @@
  */
 'use client';
 
-/** Add customer dialog (form-dialogs.jsx) — react-hook-form + zod. */
+/**
+ * Add customer dialog — creates a subscriber, then allocates a SIM with the
+ * chosen data plan. Data plans come from getPackages; the SIM dropdown lists
+ * unallocated pool SIMs (blank = auto-assign from the pool).
+ */
+import { useMemo } from 'react';
 import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
 import PersonAddRounded from '@mui/icons-material/PersonAddRounded';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import { useGetPackagesQuery } from '@/client/graphql/packages.generated';
+import { useGetSimsFromPoolQuery } from '@/client/graphql/sims.generated';
+import { useAddSubscriberMutation } from '@/client/graphql/subscribers.generated';
+import { useAllocateSimMutation } from '@/client/graphql/sims.generated';
+import { Sim_Status, type Sim_Types } from '@/client/graphql/types';
 import AppModal from '@/components/AppModal';
 import { Field, SelectInput, TextInput } from '@/components/form/FormField';
 import { useToast } from '@/components/ToastProvider';
-import { PLANS } from '@/data';
+import { useCurrency } from '@/lib/currency';
+import { publicEnv } from '@/lib/runtime-env';
+import { useUiPrefs } from '@/lib/store';
 import { addCustomerSchema } from './schemas';
 import type { AddCustomerValues } from './schemas';
 
-export default function AddCustomerDialog({ onClose }: { onClose: () => void }) {
+export default function AddCustomerDialog({
+  onClose,
+  onAdded,
+}: {
+  onClose: () => void;
+  onAdded?: () => void;
+}) {
   const toast = useToast();
+  const { symbol } = useCurrency();
+  const networkId = useUiPrefs((s) => s.networkId);
+
   const {
     register,
     handleSubmit,
@@ -28,12 +50,74 @@ export default function AddCustomerDialog({ onClose }: { onClose: () => void }) 
   } = useForm<AddCustomerValues>({
     resolver: zodResolver(addCustomerSchema),
     mode: 'onChange',
-    defaultValues: { first: '', last: '', mobile: '', email: '', planId: '', sim: '' },
+    defaultValues: { first: '', last: '', email: '', planId: '', sim: '' },
   });
 
-  const submit = handleSubmit((v) => {
-    onClose();
-    toast(`${v.first}${v.last ? ' ' + v.last : ''} added successfully!`);
+  // Data plans + unallocated pool SIMs for the dropdowns.
+  const { data: pkgData } = useGetPackagesQuery();
+  const planOptions = useMemo(
+    () =>
+      (pkgData?.getPackages.packages ?? []).map((p) => ({
+        value: p.uuid,
+        label: `${p.name} · ${symbol}${p.amount}/${p.duration === 1 ? 'day' : 'mo'}`,
+      })),
+    [pkgData, symbol],
+  );
+
+  const { data: simData } = useGetSimsFromPoolQuery({
+    variables: {
+      data: { type: publicEnv().simType as Sim_Types, status: Sim_Status.All },
+    },
+  });
+  const simOptions = useMemo(
+    () => [
+      { value: '', label: 'Auto-assign from pool' },
+      ...(simData?.getSimsFromPool.sims ?? [])
+        .filter((s) => !s.isAllocated && !s.isFailed)
+        .map((s) => ({ value: s.iccid, label: s.iccid })),
+    ],
+    [simData],
+  );
+
+  const [addSubscriber, { loading: adding }] = useAddSubscriberMutation();
+  const [allocateSim, { loading: allocating }] = useAllocateSimMutation();
+  const saving = adding || allocating;
+
+  const submit = handleSubmit(async (v) => {
+    if (!networkId) {
+      toast('No network selected. Please select a network first.');
+      return;
+    }
+    const name = `${v.first}${v.last ? ' ' + v.last : ''}`;
+    try {
+      const res = await addSubscriber({
+        variables: {
+          data: { name, email: v.email ?? '', network_id: networkId },
+        },
+      });
+      const sub = res.data?.addSubscriber;
+      if (!sub) throw new Error('Could not add customer');
+      // Assign a SIM + data plan when a plan was selected.
+      if (v.planId) {
+        await allocateSim({
+          variables: {
+            data: {
+              subscriber_id: sub.uuid,
+              network_id: networkId,
+              package_id: v.planId,
+              sim_type: publicEnv().simType,
+              iccid: v.sim || undefined,
+              traffic_policy: 0,
+            },
+          },
+        });
+      }
+      toast(`${name} added successfully!`);
+      onAdded?.();
+      onClose();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not add customer');
+    }
   });
 
   return (
@@ -43,16 +127,27 @@ export default function AddCustomerDialog({ onClose }: { onClose: () => void }) 
       onClose={onClose}
       footer={
         <>
-          <Button color="inherit" sx={{ color: 'var(--uk-ink-3)' }} onClick={onClose}>
+          <Button
+            color="inherit"
+            sx={{ color: 'var(--uk-ink-3)' }}
+            onClick={onClose}
+            disabled={saving}
+          >
             Cancel
           </Button>
           <Button
             variant="contained"
-            startIcon={<PersonAddRounded />}
-            disabled={!isValid}
-            onClick={submit}
+            startIcon={
+              saving ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <PersonAddRounded />
+              )
+            }
+            disabled={!isValid || saving}
+            onClick={() => void submit()}
           >
-            Add customer
+            {saving ? 'Adding…' : 'Add customer'}
           </Button>
         </>
       }
@@ -68,26 +163,18 @@ export default function AddCustomerDialog({ onClose }: { onClose: () => void }) 
           <TextInput placeholder="Doe" {...register('last')} />
         </Field>
       </div>
-      <div className="ff-grid2">
-        <Field label="Mobile number" required error={errors.mobile?.message}>
-          <TextInput placeholder="+260 97 000 0000" invalid={!!errors.mobile} {...register('mobile')} />
-        </Field>
-        <Field label="Email" error={errors.email?.message}>
-          <TextInput placeholder="name@email.com" type="email" invalid={!!errors.email} {...register('email')} />
-        </Field>
-      </div>
+      <Field label="Email" error={errors.email?.message}>
+        <TextInput placeholder="name@email.com" type="email" invalid={!!errors.email} {...register('email')} />
+      </Field>
       <Field label="Data plan">
         <SelectInput
           placeholder="Select a plan"
-          options={PLANS.map((p) => ({
-            value: p.id,
-            label: `${p.name} · $${p.price}/${p.days === 1 ? 'day' : 'mo'}`,
-          }))}
+          options={planOptions}
           {...register('planId')}
         />
       </Field>
-      <Field label="SIM ICCID" hint="Leave blank to assign automatically from the pool">
-        <TextInput placeholder="8926 0010 0000 0000" {...register('sim')} />
+      <Field label="SIM" hint="Leave on auto-assign to take the next SIM from the pool">
+        <SelectInput options={simOptions} {...register('sim')} />
       </Field>
     </AppModal>
   );

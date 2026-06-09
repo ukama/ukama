@@ -8,7 +8,7 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import { INVITATION_STATUS } from "../../common/enums";
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { InvitationDto, InvitationsResDto } from "./types";
 
 @Resolver()
@@ -16,7 +16,7 @@ export class GetInVitationsByEmailResolver {
   @Query(() => InvitationsResDto)
   async getInvitationsByEmail(
     @Arg("email") email: string,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<InvitationsResDto> {
     const { dataSources } = ctx;
     const res = await dataSources.invitation.getAllInvitationsByEmail(email);

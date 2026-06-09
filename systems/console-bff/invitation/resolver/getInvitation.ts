@@ -7,7 +7,7 @@
  */
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
-import { Context } from "../context";
+import type { AppContext } from "../../server/context";
 import { InvitationDto } from "./types";
 
 @Resolver()
@@ -15,9 +15,10 @@ export class GetInvitationResolver {
   @Query(() => InvitationDto)
   async getInvitation(
     @Arg("id") id: string,
-    @Ctx() ctx: Context
+    @Ctx() ctx: AppContext
   ): Promise<InvitationDto> {
-    const { dataSources, baseURL } = ctx;
+    const { dataSources } = ctx;
+    const baseURL = await ctx.urls.url("invitation");
     return await dataSources.invitation.getInvitation(baseURL, id);
   }
 }

@@ -21,6 +21,18 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'ukama-site-assets.s3.amazonaws.com',
+        pathname: '/images/**',
+      },
+    ],
+    // Node product imagery is static — cache the optimized variants for 30 days
+    // so they render instantly on repeat views instead of re-fetching from S3.
+    minimumCacheTTL: 60 * 60 * 24 * 30,
+  },
   async headers() {
     return [
       {

@@ -12,11 +12,11 @@
  * (revenue) and `networkOverview` (customers + sites). Per-site revenue is
  * backend gap #10 and renders as "—" until it lands.
  */
-import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import ListAltRounded from '@mui/icons-material/ListAltRounded';
 import Button from '@mui/material/Button';
 import Skeleton from '@mui/material/Skeleton';
-import ListAltRounded from '@mui/icons-material/ListAltRounded';
+import { useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
 
 import {
   useBizHomeNetworkQuery,
@@ -32,7 +32,9 @@ import type { BizSite } from '@/data';
 import { useUiPrefs } from '@/lib/store';
 
 const money = (value?: number | null): string =>
-  value == null ? '—' : `$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  value == null
+    ? '—'
+    : `$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 
 function SiteSummaryList({
   sites,
@@ -58,7 +60,8 @@ function SiteSummaryList({
             gap: 11,
             padding: '13px 0',
             cursor: 'pointer',
-            borderBottom: i < sites.length - 1 ? '1px solid var(--uk-line-soft)' : 'none',
+            borderBottom:
+              i < sites.length - 1 ? '1px solid var(--uk-line-soft)' : 'none',
           }}
         >
           <span style={{ marginTop: 4, display: 'inline-flex' }}>
@@ -66,7 +69,9 @@ function SiteSummaryList({
           </span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 13.5, fontWeight: 600 }}>{s.name}</div>
-            <div style={{ fontSize: 12.5, color: 'var(--uk-ink-2)', marginTop: 1 }}>
+            <div
+              style={{ fontSize: 12.5, color: 'var(--uk-ink-2)', marginTop: 1 }}
+            >
               {/* per-site revenue/customers: backend gap #10 */}
               {s.status === 'offline' ? 'Offline' : 'Online'} · revenue —
             </div>
@@ -82,13 +87,17 @@ export default function BizHomeScreen() {
   const networkId = useUiPrefs((s) => s.networkId);
   const [showSummary, setShowSummary] = useState(false);
 
-  const { data: revenueData, loading: revenueLoading } = useBizHomeRevenueQuery({
-    variables: { networkId },
-  });
-  const { data: networkData, loading: networkLoading } = useBizHomeNetworkQuery({
-    variables: { networkId },
-    skip: !networkId,
-  });
+  const { data: revenueData, loading: revenueLoading } = useBizHomeRevenueQuery(
+    {
+      variables: { networkId },
+    },
+  );
+  const { data: networkData, loading: networkLoading } = useBizHomeNetworkQuery(
+    {
+      variables: { networkId },
+      skip: !networkId,
+    },
+  );
   const revenue = revenueData?.commerceView.revenue;
   const subStats = networkData?.networkOverview.subscriberStats;
   const siteStats = networkData?.networkOverview.siteStats;
@@ -112,7 +121,7 @@ export default function BizHomeScreen() {
         lat: parseFloat(s.latitude) || 0,
         lng: parseFloat(s.longitude) || 0,
       })),
-    [siteStats?.sites]
+    [siteStats?.sites],
   );
   const online = sites.filter((s) => s.status === 'online').length;
   const goSite = (id: string) => router.push(`/business/sites/${id}`);
@@ -164,9 +173,16 @@ export default function BizHomeScreen() {
         />
       )}
 
-      <div style={{ flex: 1, minHeight: 420, display: 'flex', flexDirection: 'column' }}>
+      <div
+        style={{
+          flex: 1,
+          minHeight: 420,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
         {networkLoading ? (
-          <Skeleton variant="rounded" sx={{ flex: 1, minHeight: 380 }} />
+          <Skeleton variant="rounded" sx={{ flex: 1, minHeight: 380, mt: 1 }} />
         ) : (
           <SiteMap
             sites={sites}
@@ -197,7 +213,13 @@ export default function BizHomeScreen() {
             </Button>
           }
         >
-          <div style={{ fontSize: 12.5, color: 'var(--uk-ink-3)', marginBottom: 4 }}>
+          <div
+            style={{
+              fontSize: 12.5,
+              color: 'var(--uk-ink-3)',
+              marginBottom: 4,
+            }}
+          >
             {online} of {sites.length} sites online
           </div>
           <SiteSummaryList
