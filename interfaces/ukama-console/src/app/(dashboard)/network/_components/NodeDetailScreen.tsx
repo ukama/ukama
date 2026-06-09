@@ -27,7 +27,7 @@ import { useMetricsRangeQuery } from '@/client/graphql/range-metrics.generated';
 import { useRestartNodeMutation } from '@/client/graphql/controller.generated';
 import AppModal from '@/components/AppModal';
 import AppTabs from '@/components/AppTabs';
-import { LineChart } from '@/components/charts';
+import MetricLineChart, { thresholdLegendRows } from '@/components/MetricLineChart';
 import DetailPicker from '@/components/DetailPicker';
 import { EmptyState } from '@/components/EmptyState';
 import KV from '@/components/KV';
@@ -177,22 +177,8 @@ function RangeToggle({ value, onChange }: { value: Range; onChange: (r: Range) =
 /** One metric series straight from the BFF (metricsRange). */
 type MetricSeries = MetricsRangeQuery['metricsRange']['metrics'][number];
 
-/** Legend bands derived from the metric's threshold (BFF-provided). */
-function thresholdLegend(
-  threshold: MetricSeries['threshold'],
-  unit?: string | null,
-): { color: string; label: string }[] {
-  if (!threshold) return [{ color: 'var(--uk-ac)', label: 'Trend' }];
-  const u = unit ? ` ${unit}` : '';
-  return [
-    { color: 'var(--uk-ac)', label: `Below ${threshold.normal}${u} normal` },
-    { color: 'var(--uk-orange)', label: `${threshold.normal}–${threshold.max}${u} high` },
-    { color: 'var(--uk-error)', label: `Above ${threshold.max}${u} critical` },
-  ];
-}
-
 /** One metric chart with its own range filter — self-fetches its series so
- *  every graph filters independently. */
+ *  every graph filters independently. Rendered with Recharts. */
 function MetricChart({
   nodeId,
   metricKey,
@@ -211,17 +197,26 @@ function MetricChart({
   });
 
   const m: MetricSeries | undefined = data?.metricsRange.metrics?.[0];
-  const values = m ? (off ? m.values.map(() => 0) : m.values.map((v) => v[1] ?? 0)) : [];
-  const legend = thresholdLegend(m?.threshold, m?.unit);
+  const values: [number, number][] = m
+    ? off
+      ? m.values.map((v) => [v[0] ?? 0, 0])
+      : m.values.map((v) => [v[0] ?? 0, v[1] ?? 0])
+    : [];
+  const legend = thresholdLegendRows(m?.threshold ?? null, m?.unit);
+  const title = m?.label || metricKey;
   return (
-    <SectionCard
-      title={m?.label || metricKey}
-      right={<RangeToggle value={range} onChange={setRange} />}
-    >
+    <SectionCard title={title} right={<RangeToggle value={range} onChange={setRange} />}>
       {loading && !m ? (
-        <Skeleton variant="rounded" sx={{ height: 188 }} />
+        <Skeleton variant="rounded" sx={{ height: 300 }} />
       ) : (
-        <LineChart data={values} height={188} />
+        <MetricLineChart
+          values={values}
+          title={title}
+          unit={m?.unit}
+          format={m?.format}
+          threshold={m?.threshold ?? null}
+          height={300}
+        />
       )}
       <div style={{ display: 'flex', gap: 18, justifyContent: 'center', marginTop: 10, flexWrap: 'wrap' }}>
         {legend.map((l) => (
@@ -459,7 +454,7 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
       <AppTabs tabs={visibleTabs} value={activeTab} onChange={setTab} scrollable />
 
       {activeTab === 'Software' ? (
-        <NodeApps apps={apps} error={!!softwareSection?.error} onCheck={() => toast('Checking for updates…')} />
+        <NodeApps apps={apps} error={!!softwareSection?.error} />
       ) : (
         <div className="detail-grid">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--uk-gap)' }}>
@@ -528,11 +523,9 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
 function NodeApps({
   apps,
   error,
-  onCheck,
 }: {
   apps: { name: string; status: string; currentVersion: string; desiredVersion: string; releaseDate: string }[];
   error: boolean;
-  onCheck: () => void;
 }) {
   if (error) {
     return (
@@ -549,15 +542,7 @@ function NodeApps({
     );
   }
   return (
-    <SectionCard
-      title="Node apps"
-      count={apps.length}
-      right={
-        <Button variant="outlined" size="small" startIcon={<SyncRounded />} onClick={onCheck}>
-          Check for updates
-        </Button>
-      }
-    >
+    <SectionCard title="Node apps" count={apps.length}>
       <div className="apps-grid">
         {apps.map((app) => {
           const update = app.status === 'update_available';
