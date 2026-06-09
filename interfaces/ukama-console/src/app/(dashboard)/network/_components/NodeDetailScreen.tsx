@@ -26,7 +26,7 @@ import { useMetricsRangeQuery } from '@/client/graphql/range-metrics.generated';
 import { useRestartNodeMutation } from '@/client/graphql/controller.generated';
 import AppModal from '@/components/AppModal';
 import AppTabs from '@/components/AppTabs';
-import MetricLineChart, { thresholdLegendRows } from '@/components/MetricLineChart';
+import MetricLineChart, { ChartMessage, thresholdLegendRows } from '@/components/MetricLineChart';
 import DetailPicker from '@/components/DetailPicker';
 import { EmptyState } from '@/components/EmptyState';
 import KV from '@/components/KV';
@@ -192,37 +192,44 @@ function MetricChart({
   const [nowSec] = useState(() => Math.floor(Date.now() / 1000));
   const to = nowSec;
   const from = nowSec - RANGE_SECONDS[range];
-  const { data, loading } = useMetricsRangeQuery({
+  const { data, loading, error } = useMetricsRangeQuery({
     variables: { data: { keys: [metricKey], nodeId, from, to } },
   });
 
   const m: MetricSeries | undefined = data?.metricsRange.metrics?.[0];
-  const values: [number, number][] = m
+  const hasData = !!m && m.values.length > 0 && m.success !== false;
+  const values: [number, number][] = hasData
     ? off
-      ? m.values.map((v) => [v[0] ?? 0, 0])
-      : m.values.map((v) => [v[0] ?? 0, v[1] ?? 0])
+      ? m!.values.map((v) => [v[0] ?? 0, 0])
+      : m!.values.map((v) => [v[0] ?? 0, v[1] ?? 0])
     : [];
   const legend = thresholdLegendRows(m?.threshold ?? null, m?.unit);
   const title = m?.label || metricKey;
   return (
     <SectionCard title={title} right={<RangeToggle value={range} onChange={setRange} />}>
-      {loading && !m ? (
+      {error ? (
+        <ChartMessage kind="error" message={error.message} height={300} />
+      ) : loading && !m ? (
         <Skeleton variant="rounded" sx={{ height: 300 }} />
+      ) : !hasData ? (
+        <ChartMessage kind="empty" height={300} />
       ) : (
-        <MetricLineChart
-          values={values}
-          title={title}
-          unit={m?.unit}
-          format={m?.format}
-          threshold={m?.threshold ?? null}
-          height={300}
-        />
+        <>
+          <MetricLineChart
+            values={values}
+            title={title}
+            unit={m?.unit}
+            format={m?.format}
+            threshold={m?.threshold ?? null}
+            height={300}
+          />
+          <div style={{ display: 'flex', gap: 18, justifyContent: 'center', marginTop: 10, flexWrap: 'wrap' }}>
+            {legend.map((l) => (
+              <LegendDot key={l.label} {...l} />
+            ))}
+          </div>
+        </>
       )}
-      <div style={{ display: 'flex', gap: 18, justifyContent: 'center', marginTop: 10, flexWrap: 'wrap' }}>
-        {legend.map((l) => (
-          <LegendDot key={l.label} {...l} />
-        ))}
-      </div>
     </SectionCard>
   );
 }

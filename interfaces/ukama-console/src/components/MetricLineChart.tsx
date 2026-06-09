@@ -24,10 +24,38 @@ import {
   YAxis,
 } from 'recharts';
 
+import { EmptyState } from './EmptyState';
+
 export interface MetricThreshold {
   min: number;
   normal: number;
   max: number;
+}
+
+/** Centered fallback shown inside a chart card instead of an empty plot. */
+export function ChartMessage({
+  kind,
+  message,
+  height = 300,
+}: {
+  kind: 'error' | 'empty';
+  message?: string;
+  height?: number | string;
+}) {
+  return (
+    <div style={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <EmptyState
+        art={kind === 'error' ? 'error' : 'search'}
+        title={kind === 'error' ? "Couldn't load metric" : 'No data'}
+        sub={
+          message ??
+          (kind === 'error'
+            ? 'The metric service didn’t respond.'
+            : 'No data for the selected period.')
+        }
+      />
+    </div>
+  );
 }
 
 export interface MetricLineChartProps {

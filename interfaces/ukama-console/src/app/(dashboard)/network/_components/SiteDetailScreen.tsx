@@ -29,7 +29,7 @@ import AppModal from '@/components/AppModal';
 import DetailPicker from '@/components/DetailPicker';
 import { EmptyState } from '@/components/EmptyState';
 import MapPanel from '@/components/Map/MapPanel';
-import MetricLineChart, { thresholdLegendRows } from '@/components/MetricLineChart';
+import MetricLineChart, { ChartMessage, thresholdLegendRows } from '@/components/MetricLineChart';
 import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
 import StatusBadge from '@/components/StatusBadge';
@@ -198,11 +198,12 @@ function ComponentChart({ comp }: { comp: CompDef }) {
   const [nowSec] = useState(() => Math.floor(Date.now() / 1000));
   const to = nowSec;
   const from = nowSec - RANGE_SECONDS[range];
-  const { data, loading } = useMetricsRangeQuery({
+  const { data, loading, error } = useMetricsRangeQuery({
     variables: { data: { keys: comp.metric ? [comp.metric] : [], from, to } },
     skip: !comp.metric,
   });
   const m = data?.metricsRange.metrics?.[0];
+  const hasData = !!m && m.values.length > 0 && m.success !== false;
 
   if (!comp.metric) {
     return (
@@ -220,8 +221,8 @@ function ComponentChart({ comp }: { comp: CompDef }) {
     );
   }
 
-  const values: [number, number][] = m
-    ? m.values.map((v) => [v[0] ?? 0, v[1] ?? 0])
+  const values: [number, number][] = hasData
+    ? m!.values.map((v) => [v[0] ?? 0, v[1] ?? 0])
     : [];
   const legend = thresholdLegendRows(m?.threshold ?? null, m?.unit);
   return (
@@ -231,28 +232,34 @@ function ComponentChart({ comp }: { comp: CompDef }) {
       style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
       bodyStyle={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
     >
-      <div style={{ fontSize: 12.5, color: 'var(--uk-ink-3)', marginBottom: 8 }}>
-        {m?.label ?? '—'}
-      </div>
-      <div style={{ flex: 1, minHeight: 260 }}>
-        {loading && !m ? (
-          <Skeleton variant="rounded" sx={{ height: '100%' }} />
-        ) : (
-          <MetricLineChart
-            values={values}
-            title={m?.label || comp.label}
-            unit={m?.unit}
-            format={m?.format}
-            threshold={m?.threshold ?? null}
-            height="100%"
-          />
-        )}
-      </div>
-      <div style={{ display: 'flex', gap: 18, justifyContent: 'center', marginTop: 10, flexWrap: 'wrap' }}>
-        {legend.map((l) => (
-          <LegendDot key={l.label} {...l} />
-        ))}
-      </div>
+      {error ? (
+        <ChartMessage kind="error" message={error.message} height="100%" />
+      ) : loading && !m ? (
+        <Skeleton variant="rounded" sx={{ flex: 1, minHeight: 260 }} />
+      ) : !hasData ? (
+        <ChartMessage kind="empty" height="100%" />
+      ) : (
+        <>
+          <div style={{ fontSize: 12.5, color: 'var(--uk-ink-3)', marginBottom: 8 }}>
+            {m?.label ?? '—'}
+          </div>
+          <div style={{ flex: 1, minHeight: 260 }}>
+            <MetricLineChart
+              values={values}
+              title={m?.label || comp.label}
+              unit={m?.unit}
+              format={m?.format}
+              threshold={m?.threshold ?? null}
+              height="100%"
+            />
+          </div>
+          <div style={{ display: 'flex', gap: 18, justifyContent: 'center', marginTop: 10, flexWrap: 'wrap' }}>
+            {legend.map((l) => (
+              <LegendDot key={l.label} {...l} />
+            ))}
+          </div>
+        </>
+      )}
     </SectionCard>
   );
 }
