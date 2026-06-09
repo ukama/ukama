@@ -26,7 +26,6 @@ import { toUkamaNode } from '@/lib/mappers/nodes';
 import { ConnectivityDot, StateChip } from './nodeStatus';
 
 function NodeCard({ n, onOpen }: { n: UkamaNode; onOpen: (n: UkamaNode) => void }) {
-  const off = n.status === 'offline';
   const Icon = n.type.startsWith('Amp') ? SettingsInputAntennaRounded : RouterRounded;
   return (
     <div
@@ -105,9 +104,6 @@ function NodeCard({ n, onOpen }: { n: UkamaNode; onOpen: (n: UkamaNode) => void 
       >
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
           <PlaceRounded sx={{ fontSize: 14 }} /> {n.site}
-        </span>
-        <span className="tnum" style={{ color: 'var(--uk-ink-3)' }}>
-          {off ? 'No telemetry' : 'Up ' + n.up}
         </span>
       </div>
     </div>

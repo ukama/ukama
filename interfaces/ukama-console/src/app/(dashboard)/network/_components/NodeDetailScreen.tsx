@@ -16,7 +16,6 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Button from '@mui/material/Button';
 import RestartAltRounded from '@mui/icons-material/RestartAltRounded';
-import SyncRounded from '@mui/icons-material/SyncRounded';
 import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
 import Skeleton from '@mui/material/Skeleton';
 
@@ -84,10 +83,11 @@ type MetricGroup =
   | 'resources'
   | 'radio';
 const GROUP_KEYS: Record<MetricGroup, Record<NodeKind, string[]>> = {
+  // Uptime is shown as a value in Node information, not as a graph.
   health: {
-    tnode: ['uptime', 'cpu_temperature', 'memory'],
-    anode: ['uptime', 'fem1_temperature', 'fem2_temperature'],
-    cnode: ['uptime', 'memory'],
+    tnode: ['cpu_temperature', 'memory'],
+    anode: ['fem1_temperature', 'fem2_temperature'],
+    cnode: ['memory'],
     hnode: [],
   },
   customers: {
@@ -324,7 +324,6 @@ function RestartAction({ nodeId, name }: { nodeId: string; name: string }) {
 
 export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
   const router = useRouter();
-  const toast = useToast();
   const [tab, setTab] = useState('Overview');
   // Which left-rail section is selected (key from TAB_SECTIONS for the tab).
   const [section, setSection] = useState<string>('info');
@@ -394,6 +393,20 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
     const unit = e.unit ?? '';
     if (!unit) return `${v}`;
     return unit === '%' ? `${v}%` : `${v} ${unit}`;
+  };
+  // Uptime is reported in seconds — show a human-readable "Nd Nh" / "Nh Nm".
+  const fmtUptime = (): string => {
+    const e = kpiByKey.get('uptime');
+    if (!e || !e.success) return '—';
+    let s = Math.max(0, Math.round(e.value));
+    const d = Math.floor(s / 86400);
+    s -= d * 86400;
+    const h = Math.floor(s / 3600);
+    s -= h * 3600;
+    const m = Math.floor(s / 60);
+    if (d) return `${d}d ${h}h`;
+    if (h) return `${h}h ${m}m`;
+    return `${m}m`;
   };
   // KV rows for a metric group (one per node-type key, value or "—").
   const groupRows = (group: MetricGroup) => {
@@ -471,6 +484,7 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
                     <KV k="Model type" v={n.type} />
                     <KV k="Serial #" v={n.serial} />
                     <KV k="Site" v={n.site} />
+                    <KV k={labelFor('uptime')} v={fmtUptime()} />
                   </>
                 ) : (
                   groupRows(s.group as MetricGroup)
