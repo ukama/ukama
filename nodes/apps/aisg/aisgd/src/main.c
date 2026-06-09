@@ -93,7 +93,10 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    if (!config_load_from_file(&config, configFile)) return 1;
+    if (!config_load_from_file(&config, configFile)) {
+        config_free(&config);
+        return 1;
+    }
 
     status_init(&status);
     memset(&ctx, 0, sizeof(ctx));
