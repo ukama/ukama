@@ -37,9 +37,9 @@ void status_init(AppStatus *status) {
     memset(status, 0, sizeof(AppStatus));
     pthread_mutex_init(&status->mutex, NULL);
     status->state = AisgdStateStarting;
-    copy_str(status->reason, sizeof(status->reason), "starting");
+    copy_str(status->reason,  sizeof(status->reason),  "starting");
     copy_str(status->backend, sizeof(status->backend), "unknown");
-    copy_str(status->mode, sizeof(status->mode), "unknown");
+    copy_str(status->mode,    sizeof(status->mode),    "unknown");
 }
 
 void status_destroy(AppStatus *status) {
@@ -63,7 +63,7 @@ void status_set_operation(AppStatus *status, const char *type, const char *id) {
     pthread_mutex_lock(&status->mutex);
     status->operationActive = true;
     copy_str(status->operationType, sizeof(status->operationType), type);
-    copy_str(status->operationId, sizeof(status->operationId), id);
+    copy_str(status->operationId,   sizeof(status->operationId),   id);
     status->state = AisgdStateOperationRunning;
     status->ready = false;
     pthread_mutex_unlock(&status->mutex);
@@ -73,9 +73,9 @@ void status_clear_operation(AppStatus *status) {
     if (status == NULL) return;
 
     pthread_mutex_lock(&status->mutex);
-    status->operationActive = false;
+    status->operationActive  = false;
     status->operationType[0] = '\0';
-    status->operationId[0] = '\0';
+    status->operationId[0]   = '\0';
     pthread_mutex_unlock(&status->mutex);
 }
 
@@ -101,19 +101,24 @@ void status_update_from_controller(AppStatus *status, JsonObj *payload) {
     }
 
     value = json_object_get(payload, "powerManaged");
-    if (json_is_boolean(value)) status->powerManaged = json_is_true(value);
+    if (json_is_boolean(value))
+        status->powerManaged = json_is_true(value);
 
     value = json_object_get(payload, "present");
-    if (json_is_boolean(value)) status->devicePresent = json_is_true(value);
+    if (json_is_boolean(value))
+        status->devicePresent = json_is_true(value);
 
     value = json_object_get(payload, "configured");
-    if (json_is_boolean(value)) status->configured = json_is_true(value);
+    if (json_is_boolean(value))
+        status->configured = json_is_true(value);
 
     value = json_object_get(payload, "calibrated");
-    if (json_is_boolean(value)) status->calibrated = json_is_true(value);
+    if (json_is_boolean(value))
+        status->calibrated = json_is_true(value);
 
     value = json_object_get(payload, "busy");
-    if (json_is_boolean(value)) status->busy = json_is_true(value);
+    if (json_is_boolean(value))
+        status->busy = json_is_true(value);
 
     value = json_object_get(payload, "model");
     if (json_is_string(value)) {
@@ -143,13 +148,16 @@ JsonObj *status_to_json(AppStatus *status) {
     JsonObj *controller;
     JsonObj *device;
     JsonObj *operation;
+
     char reason[STATUS_REASON_LEN];
     char backend[STATUS_MAX_STR];
     char mode[STATUS_MAX_STR];
     char model[STATUS_MAX_STR];
     char opType[STATUS_MAX_STR];
     char opId[STATUS_MAX_STR];
+
     AisgdState state;
+
     bool ready;
     bool connected;
     bool powerManaged;
@@ -162,27 +170,29 @@ JsonObj *status_to_json(AppStatus *status) {
     if (status == NULL) return NULL;
 
     pthread_mutex_lock(&status->mutex);
-    state = status->state;
-    ready = status->ready;
-    connected = status->controllerConnected;
+
+    state        = status->state;
+    ready        = status->ready;
+    connected    = status->controllerConnected;
     powerManaged = status->powerManaged;
-    present = status->devicePresent;
-    configured = status->configured;
-    calibrated = status->calibrated;
-    busy = status->busy;
-    opActive = status->operationActive;
-    copy_str(reason, sizeof(reason), status->reason);
+    present      = status->devicePresent;
+    configured   = status->configured;
+    calibrated   = status->calibrated;
+    busy         = status->busy;
+    opActive     = status->operationActive;
+    copy_str(reason,  sizeof(reason),  status->reason);
     copy_str(backend, sizeof(backend), status->backend);
-    copy_str(mode, sizeof(mode), status->mode);
-    copy_str(model, sizeof(model), status->model);
-    copy_str(opType, sizeof(opType), status->operationType);
-    copy_str(opId, sizeof(opId), status->operationId);
+    copy_str(mode,    sizeof(mode),    status->mode);
+    copy_str(model,   sizeof(model),   status->model);
+    copy_str(opType,  sizeof(opType),  status->operationType);
+    copy_str(opId,    sizeof(opId),    status->operationId);
+
     pthread_mutex_unlock(&status->mutex);
 
-    root = json_object();
+    root       = json_object();
     controller = json_object();
-    device = json_object();
-    operation = json_object();
+    device     = json_object();
+    operation  = json_object();
 
     json_object_set_new(root, "state", json_string(state_str(state)));
     json_object_set_new(root, "ready", json_boolean(ready));

@@ -20,7 +20,6 @@
 #define JSON_FIELD_PROF   "profile"
 #define JSON_FIELD_CFG    "configPath"
 
-
 typedef bool (*AisgdSimpleOp)(AisgdContext *ctx, JsonObj **response);
 
 typedef struct {
@@ -31,8 +30,8 @@ typedef struct {
 
 static void set_json_response(UResponse *response,
                               int status,
-                              JsonObj *json)
-{
+                              JsonObj *json) {
+
     if (json == NULL) {
         ulfius_set_string_body_response(
             response,
@@ -47,8 +46,8 @@ static void set_json_response(UResponse *response,
 
 static void set_error_response(UResponse *response,
                                int status,
-                               const char *message)
-{
+                               const char *message) {
+
     JsonObj *json = NULL;
 
     json = json_object();
@@ -66,8 +65,8 @@ static void set_error_response(UResponse *response,
     set_json_response(response, status, json);
 }
 
-static bool parse_json_body(const URequest *request, JsonObj **json)
-{
+static bool parse_json_body(const URequest *request, JsonObj **json) {
+
     if (json == NULL) {
         return false;
     }
@@ -82,8 +81,8 @@ static bool parse_json_body(const URequest *request, JsonObj **json)
     return *json != NULL;
 }
 
-static const char *json_get_string(JsonObj *json, const char *key)
-{
+static const char *json_get_string(JsonObj *json, const char *key) {
+
     JsonObj *value = NULL;
 
     value = json_object_get(json, key);
@@ -96,8 +95,8 @@ static const char *json_get_string(JsonObj *json, const char *key)
 
 static int run_simple_op(UResponse *response,
                          AisgdContext *ctx,
-                         AisgdSimpleOp op)
-{
+                         AisgdSimpleOp op) {
+
     JsonObj *json = NULL;
 
     if (ctx == NULL || op == NULL) {
@@ -121,8 +120,8 @@ static int run_simple_op(UResponse *response,
 
 static bool add_endpoint(UInst *instance,
                          const AisgdEndpoint *endpoint,
-                         AisgdContext *ctx)
-{
+                         AisgdContext *ctx) {
+
     int ret;
 
     ret = ulfius_add_endpoint_by_val(instance,
@@ -138,8 +137,8 @@ static bool add_endpoint(UInst *instance,
 
 int web_service_cb_ping(const URequest *request,
                         UResponse *response,
-                        void *data)
-{
+                        void *data) {
+
     AisgdContext *ctx = NULL;
 
     (void)request;
@@ -166,8 +165,7 @@ int web_service_cb_ping(const URequest *request,
 
 int web_service_cb_version(const URequest *request,
                            UResponse *response,
-                           void *data)
-{
+                           void *data) {
     (void)request;
     (void)data;
 
@@ -178,8 +176,8 @@ int web_service_cb_version(const URequest *request,
 
 int web_service_cb_status(const URequest *request,
                           UResponse *response,
-                          void *data)
-{
+                          void *data) {
+
     AisgdContext *ctx = NULL;
 
     (void)request;
@@ -199,8 +197,8 @@ int web_service_cb_status(const URequest *request,
 
 int web_service_cb_reconcile(const URequest *request,
                              UResponse *response,
-                             void *data)
-{
+                             void *data) {
+
     JsonObj *json = NULL;
 
     (void)request;
@@ -219,8 +217,7 @@ int web_service_cb_reconcile(const URequest *request,
 
 int web_service_cb_scan(const URequest *request,
                         UResponse *response,
-                        void *data)
-{
+                        void *data) {
     (void)request;
 
     return run_simple_op(response, data, aisgd_ops_scan);
@@ -228,8 +225,7 @@ int web_service_cb_scan(const URequest *request,
 
 int web_service_cb_device(const URequest *request,
                           UResponse *response,
-                          void *data)
-{
+                          void *data) {
     (void)request;
 
     return run_simple_op(response, data, aisgd_ops_get_device);
@@ -237,8 +233,7 @@ int web_service_cb_device(const URequest *request,
 
 int web_service_cb_info(const URequest *request,
                         UResponse *response,
-                        void *data)
-{
+                        void *data) {
     (void)request;
 
     return run_simple_op(response, data, aisgd_ops_get_info);
@@ -246,8 +241,7 @@ int web_service_cb_info(const URequest *request,
 
 int web_service_cb_alarms(const URequest *request,
                           UResponse *response,
-                          void *data)
-{
+                          void *data) {
     (void)request;
 
     return run_simple_op(response, data, aisgd_ops_get_alarms);
@@ -255,8 +249,7 @@ int web_service_cb_alarms(const URequest *request,
 
 int web_service_cb_clear_alarms(const URequest *request,
                                 UResponse *response,
-                                void *data)
-{
+                                void *data) {
     (void)request;
 
     return run_simple_op(response, data, aisgd_ops_clear_alarms);
@@ -264,8 +257,7 @@ int web_service_cb_clear_alarms(const URequest *request,
 
 int web_service_cb_subscribe_alarms(const URequest *request,
                                     UResponse *response,
-                                    void *data)
-{
+                                    void *data) {
     (void)request;
 
     return run_simple_op(response, data, aisgd_ops_subscribe_alarms);
@@ -273,8 +265,7 @@ int web_service_cb_subscribe_alarms(const URequest *request,
 
 int web_service_cb_self_test(const URequest *request,
                              UResponse *response,
-                             void *data)
-{
+                             void *data) {
     (void)request;
 
     return run_simple_op(response, data, aisgd_ops_self_test);
@@ -282,8 +273,7 @@ int web_service_cb_self_test(const URequest *request,
 
 int web_service_cb_calibrate(const URequest *request,
                              UResponse *response,
-                             void *data)
-{
+                             void *data) {
     (void)request;
 
     return run_simple_op(response, data, aisgd_ops_calibrate);
@@ -291,8 +281,7 @@ int web_service_cb_calibrate(const URequest *request,
 
 int web_service_cb_get_tilt(const URequest *request,
                             UResponse *response,
-                            void *data)
-{
+                            void *data) {
     (void)request;
 
     return run_simple_op(response, data, aisgd_ops_get_tilt);
@@ -300,8 +289,7 @@ int web_service_cb_get_tilt(const URequest *request,
 
 int web_service_cb_reset(const URequest *request,
                          UResponse *response,
-                         void *data)
-{
+                         void *data) {
     (void)request;
 
     return run_simple_op(response, data, aisgd_ops_reset);
@@ -309,8 +297,8 @@ int web_service_cb_reset(const URequest *request,
 
 int web_service_cb_configure(const URequest *request,
                              UResponse *response,
-                             void *data)
-{
+                             void *data) {
+
     JsonObj *body       = NULL;
     JsonObj *json       = NULL;
     const char *profile = NULL;
@@ -342,8 +330,8 @@ int web_service_cb_configure(const URequest *request,
 
 int web_service_cb_set_tilt(const URequest *request,
                             UResponse *response,
-                            void *data)
-{
+                            void *data) {
+
     JsonObj *body  = NULL;
     JsonObj *json  = NULL;
     JsonObj *value = NULL;
@@ -382,8 +370,8 @@ int web_service_cb_set_tilt(const URequest *request,
 
 int web_service_cb_get_device_data(const URequest *request,
                                    UResponse *response,
-                                   void *data)
-{
+                                   void *data) {
+
     JsonObj *json     = NULL;
     const char *field = NULL;
 
@@ -409,8 +397,8 @@ int web_service_cb_get_device_data(const URequest *request,
 
 int web_service_cb_default(const URequest *request,
                            UResponse *response,
-                           void *data)
-{
+                           void *data) {
+
     (void)request;
     (void)data;
 
@@ -419,8 +407,8 @@ int web_service_cb_default(const URequest *request,
     return U_CALLBACK_CONTINUE;
 }
 
-int start_web_service(AisgdContext *ctx, UInst *serviceInst)
-{
+int start_web_service(AisgdContext *ctx, UInst *serviceInst) {
+
     size_t i;
 
     static const AisgdEndpoint endpoints[] = {

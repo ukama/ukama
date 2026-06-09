@@ -49,23 +49,38 @@ static bool read_line(int fd, char *buf, size_t size) {
 }
 
 static int open_socket(ControllerClient *client) {
-    int fd;
+    int                fd;
+    size_t             pathLen;
     struct sockaddr_un addr;
-    struct timeval tv;
+
+    if (client == NULL) {
+        return -1;
+    }
+
+    pathLen = strlen(client->path);
+
+    if (pathLen >= sizeof(addr.sun_path)) {
+        usys_log_error("Controller socket path too long: %s",
+                       client->path);
+        return -1;
+    }
 
     fd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (fd < 0) return -1;
-
-    tv.tv_sec = client->timeoutMs / 1000;
-    tv.tv_usec = (client->timeoutMs % 1000) * 1000;
-    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-    setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+    if (fd < 0) {
+        usys_log_error("Failed to create controller socket");
+        return -1;
+    }
 
     memset(&addr, 0, sizeof(addr));
-    addr.sun_family = AF_UNIX;
-    snprintf(addr.sun_path, sizeof(addr.sun_path), "%s", client->path);
 
-    if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+    addr.sun_family = AF_UNIX;
+    memcpy(addr.sun_path, client->path, pathLen + 1);
+
+    if (connect(fd,
+                (struct sockaddr *)&addr,
+                sizeof(addr)) < 0) {
+        usys_log_error("Failed to connect to controller socket: %s",
+                       client->path);
         close(fd);
         return -1;
     }

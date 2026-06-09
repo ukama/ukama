@@ -89,6 +89,7 @@ int main(int argc, char **argv) {
         config.servicePort = port;
     } else {
         usys_log_error("Unable to setup service port");
+        config_free(&config);
         return 1;
     }
 
