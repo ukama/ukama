@@ -7,11 +7,11 @@
  */
 'use client';
 
-import { useSyncExternalStore } from 'react';
-import { useColorScheme } from '@mui/material/styles';
 import DarkModeRounded from '@mui/icons-material/DarkModeRounded';
 import LightModeRounded from '@mui/icons-material/LightModeRounded';
 import MenuRounded from '@mui/icons-material/MenuRounded';
+import { useColorScheme } from '@mui/material/styles';
+import { useSyncExternalStore } from 'react';
 
 import { useAuth } from '@/lib/auth/context';
 import AccountMenu from './AccountMenu';

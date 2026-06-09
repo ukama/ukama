@@ -104,7 +104,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 0 20px 0 16px;
+  padding: 0 20px 0 28px;
   position: relative;
   z-index: 2;
 }

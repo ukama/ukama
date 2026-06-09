@@ -176,6 +176,16 @@ export const METRIC_CATALOG: Record<string, MetricMeta> = {
     threshold: { min: 0, normal: 800, max: 1000 },
   },
   // --- site power / infrastructure ---
+  site_uptime_percentage: {
+    label: "Uptime",
+    unit: "%",
+    format: "number",
+    base: 96,
+    min: 80,
+    max: 100,
+    jitter: 0.03,
+    trend: 0.01,
+  },
   battery_charge: {
     label: "Available power",
     unit: "%",

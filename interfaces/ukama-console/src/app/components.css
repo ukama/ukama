@@ -367,14 +367,15 @@
 .comp-tile {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 6px;
   width: 184px;
   border: 1px solid var(--uk-line);
   border-radius: var(--uk-r-sm);
-  padding: 12px 14px;
+  padding: 14px;
   background: var(--uk-card);
   cursor: pointer;
-  text-align: left;
+  text-align: center;
   font-family: inherit;
   transition:
     border-color 0.12s ease,
@@ -390,16 +391,8 @@
 .comp-tile-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 8px;
-}
-.comp-health {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--uk-success);
 }
 .comp-tile-label {
   font-size: 13.5px;
@@ -415,8 +408,9 @@
 .uptime-row {
   display: flex;
   gap: 3px;
-  align-items: flex-end;
-  height: 34px;
+  align-items: stretch;
+  flex: 1;
+  min-height: 48px;
 }
 .uptime-bar {
   flex: 1;

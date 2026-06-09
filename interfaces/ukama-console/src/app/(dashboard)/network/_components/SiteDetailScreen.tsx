@@ -18,7 +18,6 @@ import { useRouter } from 'next/navigation';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Skeleton from '@mui/material/Skeleton';
-import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
 import GroupRounded from '@mui/icons-material/GroupRounded';
 import RestartAltRounded from '@mui/icons-material/RestartAltRounded';
 
@@ -47,17 +46,6 @@ const RANGE_SECONDS: Record<Range, number> = {
   Week: 604_800,
   Month: 2_592_000,
 };
-
-const hash = (s: string): number => {
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-};
-/** Mock component health % (gap until the metric service exposes it). */
-const healthPct = (seed: string) => 60 + (hash(seed) % 41);
 
 /** ISO timestamp → "Jun 6, 2026"; passes through non-dates unchanged. */
 const fmtDate = (raw?: string | null): string => {
@@ -123,10 +111,8 @@ function LegendDot({ color, label }: { color: string; label: string }) {
   );
 }
 
-/** Two rows of daily uptime bars over ~90 days (mock — gap #7). */
-function UptimeBars({ seed }: { seed: string }) {
-  const row = (n: number) =>
-    Array.from({ length: 30 }, (_, i) => 88 + (hash(`${seed}:${n}:${i}`) % 13));
+/** Two rows of daily uptime bars from the site_uptime_percentage series. */
+function UptimeBars({ values }: { values: number[] }) {
   const bars = (vals: number[]) => (
     <div className="uptime-row">
       {vals.map((v, i) => (
@@ -134,26 +120,28 @@ function UptimeBars({ seed }: { seed: string }) {
           key={i}
           className="uptime-bar"
           style={{
-            height: `${v}%`,
-            background:
-              v >= 95 ? 'var(--uk-success-bright)' : 'var(--uk-orange)',
-            opacity: 0.55,
+            background: v >= 95 ? 'var(--uk-success-bright)' : 'var(--uk-orange)',
+            opacity: 0.6,
           }}
         />
       ))}
     </div>
   );
+  const mid = Math.ceil(values.length / 2);
+  // First row = most recent half (… → today); second = older half.
+  const recent = values.slice(mid);
+  const older = values.slice(0, mid);
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 6 }}>
-      <div>
-        {bars(row(0))}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 12, flex: 1, minHeight: 0 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        {bars(recent)}
         <div className="uptime-caption">
           <span>30 days ago</span>
           <span>Today</span>
         </div>
       </div>
-      <div>
-        {bars(row(1))}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        {bars(older)}
         <div className="uptime-caption">
           <span>60 days ago</span>
           <span>31 days ago</span>
@@ -166,13 +154,11 @@ function UptimeBars({ seed }: { seed: string }) {
 function CompTile({
   comp,
   subtitle,
-  pct,
   active,
   onClick,
 }: {
   comp: CompDef;
   subtitle: string;
-  pct: number;
   active: boolean;
   onClick: () => void;
 }) {
@@ -182,12 +168,9 @@ function CompTile({
         <span className="sc-ic" style={{ width: 34, height: 34, borderRadius: 9 }}>
           <Ic name={comp.icon} sx={{ fontSize: 18 }} />
         </span>
-        <span className="comp-health">
-          <CheckCircleRounded sx={{ fontSize: 14 }} /> {pct}%
-        </span>
       </div>
       <div className="comp-tile-label">{comp.label}</div>
-      <div className="comp-tile-sub">{subtitle}</div>
+      {subtitle && <div className="comp-tile-sub">{subtitle}</div>}
     </button>
   );
 }
@@ -264,12 +247,75 @@ function ComponentChart({ comp }: { comp: CompDef }) {
   );
 }
 
+type SiteNode = ReturnType<typeof toUkamaNode>;
+const STATUS_PHRASE: Record<string, string> = {
+  online: 'is online and well',
+  configuring: 'is configured',
+  degraded: 'is online with warnings',
+  offline: 'is offline',
+};
+const statusColor = (st: string) =>
+  st === 'offline'
+    ? 'var(--uk-error)'
+    : st === 'degraded'
+      ? 'var(--uk-orange)'
+      : 'var(--uk-success)';
+
+/** Node component selected → list the site's nodes as cards. */
+function SiteNodesPanel({
+  nodes,
+  onOpen,
+}: {
+  nodes: SiteNode[];
+  onOpen: (id: string) => void;
+}) {
+  return (
+    <SectionCard
+      title="Nodes"
+      count={nodes.length}
+      style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+      bodyStyle={{ flex: 1, minHeight: 0 }}
+    >
+      {nodes.length === 0 ? (
+        <EmptyState art="node" title="No nodes" sub="This site has no nodes installed." />
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--uk-gap)' }}>
+          {nodes.map((n) => (
+            <div key={n.id} className="app-card">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span
+                  style={{
+                    width: 9,
+                    height: 9,
+                    borderRadius: '50%',
+                    background: statusColor(n.status),
+                    flex: 'none',
+                  }}
+                />
+                <span style={{ fontWeight: 600 }}>{n.name ?? n.serial}</span>
+                <span style={{ fontSize: 13, color: 'var(--uk-ink-2)' }}>
+                  {STATUS_PHRASE[n.status] ?? ''}
+                </span>
+              </div>
+              <div style={{ marginTop: 10 }}>
+                <Button size="small" sx={{ p: 0, minWidth: 0 }} onClick={() => onOpen(n.id)}>
+                  View node
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </SectionCard>
+  );
+}
+
 export default function SiteDetailScreen({ siteId }: { siteId: string }) {
   const router = useRouter();
   const toast = useToast();
   const [restart, setRestart] = useState(false);
   const [confirm, setConfirm] = useState('');
-  const [selComp, setSelComp] = useState('batt');
+  const [selComp, setSelComp] = useState('node');
 
   const networkId = useUiPrefs((s) => s.networkId);
 
@@ -281,6 +327,18 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
   const siteSection = view?.site;
   const nodesSection = view?.nodes;
   const components = view?.components.components ?? [];
+
+  // 90-day daily uptime series for the Site overview card.
+  const [uNow] = useState(() => Math.floor(Date.now() / 1000));
+  const { data: uptimeData, loading: uptimeLoading } = useMetricsRangeQuery({
+    variables: { data: { keys: ['site_uptime_percentage'], from: uNow - 90 * 86_400, to: uNow } },
+  });
+  const uptimeVals = (uptimeData?.metricsRange.metrics?.[0]?.values ?? []).map(
+    (v) => v[1] ?? 0,
+  );
+  const uptimePct = uptimeVals.length
+    ? Math.round(uptimeVals.reduce((a, b) => a + b, 0) / uptimeVals.length)
+    : null;
 
   const { data: sitesData } = useSitesListQuery({
     variables: { networkId },
@@ -328,9 +386,12 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
       const rb = typeRank(b.id);
       return (ra < 0 ? 99 : ra) - (rb < 0 ? 99 : rb);
     });
+  // A node counts as "up" when it's reachable (connectivity online) — a
+  // configured/operational node, not just status === 'online'. Mirrors the
+  // BFF's connectivity-based site node counts.
   const s = toSite(siteSection.site, {
     total: siteNodes.length,
-    online: siteNodes.filter((n) => n.status === 'online').length,
+    online: siteNodes.filter((n) => (n.connectivity ?? '').toLowerCase() === 'online').length,
   });
   const dto = siteSection.site;
   const installDate = fmtDate(dto.installDate || dto.createdAt);
@@ -350,7 +411,7 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
   const subtitleFor = (c: CompDef): string => {
     const name = compName(c.element);
     if (name) return name;
-    if (c.id === 'node') return siteNodes[0]?.serial ?? '—';
+    if (c.id === 'node') return '';
     return c.label;
   };
 
@@ -427,15 +488,23 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
         <SectionCard
           title="Site overview"
           style={{ display: 'flex', flexDirection: 'column' }}
-          bodyStyle={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
+          bodyStyle={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
         >
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
             <span style={{ fontSize: 30, fontWeight: 600, fontFamily: 'var(--font-display)' }}>
-              {90 + (hash(s.id) % 9)}%
+              {uptimePct != null ? `${uptimePct}%` : '—'}
             </span>
             <span style={{ fontSize: 13, color: 'var(--uk-ink-3)' }}>uptime over 90 days</span>
           </div>
-          <UptimeBars seed={s.id} />
+          {uptimeLoading && uptimeVals.length === 0 ? (
+            <Skeleton variant="rounded" sx={{ height: 88, mt: 1 }} />
+          ) : uptimeVals.length === 0 ? (
+            <div style={{ fontSize: 13, color: 'var(--uk-ink-3)', marginTop: 8 }}>
+              No uptime data available.
+            </div>
+          ) : (
+            <UptimeBars values={uptimeVals} />
+          )}
         </SectionCard>
 
         <div className="card" style={{ padding: 0, overflow: 'hidden', position: 'relative', minHeight: 200 }}>
@@ -477,7 +546,6 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
                       key={c.id}
                       comp={c}
                       subtitle={subtitleFor(c)}
-                      pct={healthPct(`${s.id}:${c.id}`)}
                       active={selComp === c.id}
                       onClick={() => setSelComp(c.id)}
                     />
@@ -487,7 +555,14 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
             ))}
           </div>
         </SectionCard>
-        <ComponentChart comp={selected} />
+        {selected.id === 'node' ? (
+          <SiteNodesPanel
+            nodes={siteNodes}
+            onOpen={(id) => router.push(`/network/nodes/${id}`)}
+          />
+        ) : (
+          <ComponentChart comp={selected} />
+        )}
       </div>
 
       {restart && (
