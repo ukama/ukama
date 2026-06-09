@@ -103,6 +103,7 @@ int main(int argc, char **argv)
 
     emu_model_init(&model);
     usys_log_set_level(LOG_INFO);
+    usys_log_set_service(AISG_EMU_SERVICE_NAME);
 
     while ((opt = getopt(argc, argv, "c:l:hv")) != -1) {
         switch (opt) {
