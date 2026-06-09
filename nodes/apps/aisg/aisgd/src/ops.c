@@ -30,16 +30,15 @@
 #define OP_SET_TILT           "set-tilt"
 #define OP_SELF_TEST          "self-test"
 
-static JsonObj *empty_payload(void)
-{
+static JsonObj *empty_payload(void) {
     return json_object();
 }
 
 static bool call_controller(AisgdContext *ctx,
                             const char *type,
                             JsonObj *payload,
-                            JsonObj **response)
-{
+                            JsonObj **response) {
+
     CtrlResponse ctrlResp;
 
     if (ctx == NULL || type == NULL || response == NULL) {
@@ -48,9 +47,7 @@ static bool call_controller(AisgdContext *ctx,
     }
 
     if (!controller_client_call(&ctx->controller, type, payload, &ctrlResp)) {
-        status_set(ctx->status,
-                   AisgdStateDegraded,
-                   "controller request failed");
+        status_mark_controller_down(ctx->status, "controller unavailable");
         return false;
     }
 
@@ -66,8 +63,8 @@ static bool call_controller(AisgdContext *ctx,
     return true;
 }
 
-static bool controller_get_status(AisgdContext *ctx)
-{
+static bool controller_get_status(AisgdContext *ctx) {
+
     JsonObj *payload = NULL;
 
     status_set(ctx->status,
@@ -210,8 +207,28 @@ static JsonObj *build_device_data_payload(int field)
     return payload;
 }
 
-bool aisgd_ops_reconcile(AisgdContext *ctx, JsonObj **response)
-{
+bool aisgd_ops_refresh_status(AisgdContext *ctx) {
+
+    JsonObj *payload = NULL;
+
+    if (ctx == NULL) {
+        return false;
+    }
+
+    if (!call_controller(ctx, CTRL_GET_STATUS, empty_payload(), &payload)) {
+        return false;
+    }
+
+    status_update_from_controller(ctx->status, payload);
+    json_decref(payload);
+
+    status_set_ready_if_idle(ctx->status, "ready");
+
+    return true;
+}
+
+bool aisgd_ops_reconcile(AisgdContext *ctx, JsonObj **response) {
+
     if (ctx == NULL || response == NULL) {
         return false;
     }
@@ -260,35 +277,47 @@ bool aisgd_ops_get_device(AisgdContext *ctx, JsonObj **response)
     return *response != NULL;
 }
 
-bool aisgd_ops_get_info(AisgdContext *ctx, JsonObj **response)
-{
-    return call_controller(ctx, CTRL_GET_INFO, empty_payload(), response);
+bool aisgd_ops_get_info(AisgdContext *ctx, JsonObj **response) {
+
+    return call_controller(ctx,
+                           CTRL_GET_INFO,
+                           empty_payload(),
+                           response);
 }
 
-bool aisgd_ops_get_alarms(AisgdContext *ctx, JsonObj **response)
-{
-    return call_controller(ctx, CTRL_GET_ALARMS, empty_payload(), response);
+bool aisgd_ops_get_alarms(AisgdContext *ctx, JsonObj **response) {
+
+    return call_controller(ctx,
+                           CTRL_GET_ALARMS,
+                           empty_payload(),
+                           response);
 }
 
-bool aisgd_ops_clear_alarms(AisgdContext *ctx, JsonObj **response)
-{
-    return call_controller(ctx, CTRL_CLEAR_ALARMS, empty_payload(), response);
+bool aisgd_ops_clear_alarms(AisgdContext *ctx, JsonObj **response) {
+
+    return call_controller(ctx,
+                           CTRL_CLEAR_ALARMS,
+                           empty_payload(),
+                           response);
 }
 
-bool aisgd_ops_subscribe_alarms(AisgdContext *ctx, JsonObj **response)
-{
+bool aisgd_ops_subscribe_alarms(AisgdContext *ctx, JsonObj **response) {
+
     return call_controller(ctx,
                            CTRL_SUBSCRIBE_ALARMS,
                            empty_payload(),
                            response);
 }
 
-bool aisgd_ops_self_test(AisgdContext *ctx, JsonObj **response)
-{
+bool aisgd_ops_self_test(AisgdContext *ctx, JsonObj **response) {
+
     bool ok;
 
     status_set_operation(ctx->status, OP_SELF_TEST, "op-selftest-001");
-    ok = call_controller(ctx, CTRL_SELF_TEST, empty_payload(), response);
+    ok = call_controller(ctx,
+                         CTRL_SELF_TEST,
+                         empty_payload(),
+                         response);
 
     if (!ok) {
         status_clear_operation(ctx->status);
@@ -300,8 +329,8 @@ bool aisgd_ops_self_test(AisgdContext *ctx, JsonObj **response)
 bool aisgd_ops_configure(AisgdContext *ctx,
                          const char *profile,
                          const char *configPath,
-                         JsonObj **response)
-{
+                         JsonObj **response) {
+
     JsonObj *payload = NULL;
     bool ok;
 
@@ -320,8 +349,8 @@ bool aisgd_ops_configure(AisgdContext *ctx,
     return ok;
 }
 
-bool aisgd_ops_calibrate(AisgdContext *ctx, JsonObj **response)
-{
+bool aisgd_ops_calibrate(AisgdContext *ctx, JsonObj **response) {
+
     bool ok;
 
     if (ctx->config->requireConfigBeforeCalibrate && !ctx->status->configured) {
@@ -341,15 +370,18 @@ bool aisgd_ops_calibrate(AisgdContext *ctx, JsonObj **response)
     return ok;
 }
 
-bool aisgd_ops_get_tilt(AisgdContext *ctx, JsonObj **response)
-{
-    return call_controller(ctx, CTRL_GET_TILT, empty_payload(), response);
+bool aisgd_ops_get_tilt(AisgdContext *ctx, JsonObj **response) {
+
+    return call_controller(ctx,
+                           CTRL_GET_TILT,
+                           empty_payload(),
+                           response);
 }
 
 bool aisgd_ops_set_tilt(AisgdContext *ctx,
                         double targetTiltDeg,
-                        JsonObj **response)
-{
+                        JsonObj **response) {
+
     JsonObj *payload = NULL;
     bool ok;
 
@@ -378,8 +410,8 @@ bool aisgd_ops_set_tilt(AisgdContext *ctx,
 
 bool aisgd_ops_get_device_data(AisgdContext *ctx,
                                int field,
-                               JsonObj **response)
-{
+                               JsonObj **response) {
+
     JsonObj *payload = NULL;
 
     payload = build_device_data_payload(field);
@@ -387,10 +419,16 @@ bool aisgd_ops_get_device_data(AisgdContext *ctx,
         return false;
     }
 
-    return call_controller(ctx, CTRL_GET_DEVICE_DATA, payload, response);
+    return call_controller(ctx,
+                           CTRL_GET_DEVICE_DATA,
+                           payload,
+                           response);
 }
 
-bool aisgd_ops_reset(AisgdContext *ctx, JsonObj **response)
-{
-    return call_controller(ctx, CTRL_RESET_SOFTWARE, empty_payload(), response);
+bool aisgd_ops_reset(AisgdContext *ctx, JsonObj **response) {
+
+    return call_controller(ctx,
+                           CTRL_RESET_SOFTWARE,
+                           empty_payload(),
+                           response);
 }

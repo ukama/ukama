@@ -131,7 +131,64 @@ void status_update_from_controller(AppStatus *status, JsonObj *payload) {
     pthread_mutex_unlock(&status->mutex);
 }
 
+void status_mark_controller_down(AppStatus *status, const char *reason) {
+
+    if (status == NULL) {
+        return;
+    }
+
+    pthread_mutex_lock(&status->mutex);
+
+    status->state = AisgdStateDegraded;
+    status->ready = false;
+
+    copy_str(status->reason,
+             sizeof(status->reason),
+             reason ? reason : "controller unavailable");
+
+    status->controllerConnected = false;
+
+    /*
+     * Clear stale controller/device state. Once the controller is gone,
+     * we should not report the last known device as still present.
+     */
+    status->powerManaged  = false;
+    status->devicePresent = false;
+    status->configured    = false;
+    status->calibrated    = false;
+    status->busy          = false;
+
+    copy_str(status->mode,  sizeof(status->mode), "unknown");
+    copy_str(status->model, sizeof(status->model), "");
+
+    status->operationActive = false;
+    status->operationType[0] = '\0';
+    status->operationId[0] = '\0';
+
+    pthread_mutex_unlock(&status->mutex);
+}
+
+void status_set_ready_if_idle(AppStatus *status, const char *reason) {
+
+    if (status == NULL) {
+        return;
+    }
+
+    pthread_mutex_lock(&status->mutex);
+
+    if (!status->operationActive) {
+        status->state = AisgdStateReady;
+        status->ready = true;
+        copy_str(status->reason,
+                 sizeof(status->reason),
+                 reason ? reason : "ready");
+    }
+
+    pthread_mutex_unlock(&status->mutex);
+}
+
 bool status_is_ready(AppStatus *status) {
+
     bool ready;
 
     if (status == NULL) return false;

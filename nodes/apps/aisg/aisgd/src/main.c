@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include "aisgd.h"
 #include "ops.h"
@@ -22,8 +23,14 @@
 #include "usys_services.h"
 #include "usys_file.h"
 
-
 #include "version.h"
+
+#define AISGD_HEALTH_INTERVAL_SEC 5
+
+typedef struct {
+    AisgdContext  *ctx;
+    volatile bool *terminate;
+} HealthThreadArg;
 
 static volatile bool gTerminate = false;
 
@@ -49,7 +56,35 @@ static void set_log_level(char *slevel) {
     usys_log_set_level(ilevel);
 }
 
+static void *health_thread(void *arg) {
+
+    HealthThreadArg *health = NULL;
+    int i;
+
+    health = (HealthThreadArg *)arg;
+    if (health == NULL ||
+        health->ctx == NULL ||
+        health->terminate == NULL) {
+        return NULL;
+    }
+
+    while (!*health->terminate) {
+        aisgd_ops_refresh_status(health->ctx);
+
+        for (i = 0; i < AISGD_HEALTH_INTERVAL_SEC; i++) {
+            if (*health->terminate) {
+                break;
+            }
+
+            sleep(1);
+        }
+    }
+
+    return NULL;
+}
+
 int main(int argc, char **argv) {
+
     int opt;
     int optIdx;
     int port;
@@ -60,6 +95,9 @@ int main(int argc, char **argv) {
     AppStatus status;
     AisgdContext ctx;
     JsonObj *json = NULL;
+    pthread_t healthTid;
+    HealthThreadArg healthArg;
+    bool healthStarted = false;
 
     usys_log_set_service(AISGD_SERVICE_NAME);
 
@@ -110,12 +148,33 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    if (aisgd_ops_reconcile(&ctx, &json)) json_decref(json);
+    if (aisgd_ops_reconcile(&ctx, &json)) {
+        json_decref(json);
+        json = NULL;
+    }
 
-    while (!gTerminate) pause();
+    healthArg.ctx = &ctx;
+    healthArg.terminate = &gTerminate;
+
+    if (pthread_create(&healthTid, NULL, health_thread, &healthArg) == 0) {
+        healthStarted = true;
+    } else {
+        usys_log_error("failed to start aisgd health thread");
+    }
+
+    while (!gTerminate) {
+        pause();
+    }
+
+    usys_log_info("stopping aisgd");
+
+    if (healthStarted) {
+        pthread_join(healthTid, NULL);
+    }
 
     ulfius_stop_framework(&serviceInst);
     ulfius_clean_instance(&serviceInst);
+
     status_destroy(&status);
     config_free(&config);
 

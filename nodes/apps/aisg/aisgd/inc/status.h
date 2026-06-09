@@ -56,6 +56,8 @@ void status_set(AppStatus *status, AisgdState state, const char *reason);
 void status_set_operation(AppStatus *status, const char *type, const char *id);
 void status_clear_operation(AppStatus *status);
 void status_update_from_controller(AppStatus *status, JsonObj *payload);
+void status_mark_controller_down(AppStatus *status, const char *reason);
+void status_set_ready_if_idle(AppStatus *status, const char *reason);
 bool status_is_ready(AppStatus *status);
 JsonObj *status_to_json(AppStatus *status);
 
