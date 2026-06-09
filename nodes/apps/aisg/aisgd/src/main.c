@@ -16,8 +16,13 @@
 #include "aisgd.h"
 #include "ops.h"
 #include "web_service.h"
+
 #include "usys_getopt.h"
 #include "usys_log.h"
+#include "usys_services.h"
+#include "usys_file.h"
+
+
 #include "version.h"
 
 static volatile bool gTerminate = false;
@@ -47,6 +52,7 @@ static void set_log_level(char *slevel) {
 int main(int argc, char **argv) {
     int opt;
     int optIdx;
+    int port;
     char *debug = DEF_LOG_LEVEL;
     char *configFile = DEF_CONFIG_FILE;
     UInst serviceInst;
@@ -74,10 +80,18 @@ int main(int argc, char **argv) {
     }
 
     set_log_level(debug);
-    signal(SIGINT, handle_signal);
+    signal(SIGINT,  handle_signal);
     signal(SIGTERM, handle_signal);
 
     config_set_defaults(&config);
+    port = usys_find_service_port(config.serviceName);
+    if (port) {
+        config.servicePort = port;
+    } else {
+        usys_log_error("Unable to setup service port");
+        return 1;
+    }
+
     if (!config_load_from_file(&config, configFile)) return 1;
 
     status_init(&status);

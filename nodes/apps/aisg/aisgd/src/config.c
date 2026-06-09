@@ -51,26 +51,16 @@ static bool toml_bool_or(toml_table_t *table,
     return datum.ok ? datum.u.b : defValue;
 }
 
-static void resolve_service_port(Config *config, int fallbackPort) {
-    int port;
-
-    if (config == NULL || config->serviceName == NULL) return;
-
-    port = usys_find_service_port(config->serviceName);
-    config->servicePort = port > 0 ? port : fallbackPort;
-}
-
 void config_set_defaults(Config *config) {
     if (config == NULL) return;
 
     memset(config, 0, sizeof(Config));
-    config->serviceName = strdup(AISGD_SERVICE_NAME);
-    config->servicePort = DEF_SERVICE_PORT;
-    config->controllerPath = strdup(DEF_CTRL_SOCKET);
-    config->controllerTimeoutMs = DEF_CTRL_TIMEOUT_MS;
-    config->requireConfigBeforeCalibrate = true;
+    config->serviceName                   = strdup(AISGD_SERVICE_NAME);
+    config->controllerPath                = strdup(DEF_CTRL_SOCKET);
+    config->controllerTimeoutMs           = DEF_CTRL_TIMEOUT_MS;
+    config->requireConfigBeforeCalibrate  = true;
     config->requireCalibrateBeforeSetTilt = true;
-    config->stateFile = strdup(DEF_STATE_FILE);
+    config->stateFile                     = strdup(DEF_STATE_FILE);
 }
 
 bool config_load_from_file(Config *config, const char *path) {
@@ -80,15 +70,13 @@ bool config_load_from_file(Config *config, const char *path) {
     toml_table_t *controller;
     toml_table_t *policy;
     toml_table_t *files;
-    int fallbackPort;
 
     if (config == NULL || path == NULL) return false;
 
-    fallbackPort = config->servicePort;
     fp = fopen(path, "r");
     if (fp == NULL) {
-        resolve_service_port(config, fallbackPort);
-        return true;
+        usys_log_error("Unable to open config file: %s", path);
+        return false;
     }
 
     root = toml_parse_file(fp, errbuf, sizeof(errbuf));
@@ -104,11 +92,11 @@ bool config_load_from_file(Config *config, const char *path) {
 
     usys_free(config->controllerPath);
     config->controllerPath = toml_string_or(controller,
-                                             "path",
-                                             DEF_CTRL_SOCKET);
+                                            "path",
+                                            DEF_CTRL_SOCKET);
     config->controllerTimeoutMs = toml_int_or(controller,
-                                             "timeout_ms",
-                                             DEF_CTRL_TIMEOUT_MS);
+                                              "timeout_ms",
+                                              DEF_CTRL_TIMEOUT_MS);
 
     config->requireConfigBeforeCalibrate =
         toml_bool_or(policy, "require_config_before_calibrate", true);
@@ -118,7 +106,6 @@ bool config_load_from_file(Config *config, const char *path) {
     usys_free(config->stateFile);
     config->stateFile = toml_string_or(files, "state", DEF_STATE_FILE);
 
-    resolve_service_port(config, fallbackPort);
     toml_free(root);
 
     return true;
