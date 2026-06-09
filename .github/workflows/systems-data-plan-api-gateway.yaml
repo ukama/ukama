@@ -64,7 +64,7 @@ jobs:
   release:
       name: release
       needs: [build, lint]
-      if: github.ref == 'refs/heads/main'
+      if: github.ref == 'refs/heads/main' && vars.ENABLE_GITOPS_RELEASE == 'true'
       runs-on: ubuntu-latest
       env:
         working-directory: systems/data-plan/api-gateway

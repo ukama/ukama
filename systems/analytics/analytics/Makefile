@@ -15,7 +15,7 @@ GOOS ?= linux
 GOARCH ?= amd64
 CGO_ENABLED ?= 0
 
-.PHONY: all deps build test tidy clean
+.PHONY: all deps build integration.build test tidy clean
 
 all: build
 
@@ -25,7 +25,11 @@ deps:
 tidy:
 	go mod tidy
 
-build: deps
+integration.build:
+	@mkdir -p $(BIN_DIR)
+	env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o $(BIN_DIR)/integration
+
+build: deps integration.build
 	@mkdir -p $(BIN_DIR)
 	@echo Building version: \"$(VERSION)\"
 	env CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) \

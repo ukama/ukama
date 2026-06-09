@@ -18,18 +18,25 @@ import BoltRounded from '@mui/icons-material/BoltRounded';
 import CreditCardRounded from '@mui/icons-material/CreditCardRounded';
 import DownloadRounded from '@mui/icons-material/DownloadRounded';
 import ReceiptLongRounded from '@mui/icons-material/ReceiptLongRounded';
+import { useBillingOverviewQuery } from '@/client/graphql/commerce.generated';
+import { EmptyState } from '@/components/EmptyState';
 import SkeletonTable from '@/components/data-table/SkeletonTable';
 import TableFooter from '@/components/data-table/TableFooter';
 import PageHeader from '@/components/PageHeader';
+import { sectionValue } from '@/components/SectionFallback';
 import StatusBadge from '@/components/StatusBadge';
 import { useToast } from '@/components/ToastProvider';
-import { BILLING } from '@/data';
-import { useFirstLoad } from '@/lib/useFirstLoad';
+import { useUiPrefs } from '@/lib/store';
 
 export default function BillingScreen({ embed }: { embed?: boolean }) {
-  const b = BILLING;
-  const invLoading = useFirstLoad('billing-invoices');
   const toast = useToast();
+  const networkId = useUiPrefs((s) => s.networkId);
+  const { data, loading: invLoading, refetch } = useBillingOverviewQuery({
+    variables: { networkId },
+  });
+  const invoicesSection = data?.commerceView.invoices;
+  const balanceSection = data?.commerceView.balance;
+  const invoices = invoicesSection?.reports ?? [];
 
   const body = (
     <>
@@ -39,7 +46,7 @@ export default function BillingScreen({ embed }: { embed?: boolean }) {
       >
         <div className="card card-pad" style={{ display: 'flex', flexDirection: 'column' }}>
           <div style={{ fontSize: 13, color: 'var(--uk-ink-2)' }}>
-            Current balance · {b.cycle}
+            Current balance
           </div>
           <div
             className="tnum"
@@ -50,24 +57,20 @@ export default function BillingScreen({ embed }: { embed?: boolean }) {
               margin: '6px 0 2px',
             }}
           >
-            ${b.current.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {/* TODO(backend-gap #11): outstanding amount needs an invoice
+                amount field on the reports list */}
+            {sectionValue(null, balanceSection?.error ?? null)}
           </div>
           <div style={{ fontSize: 13, color: 'var(--uk-ink-2)' }}>
-            Due {b.due} · {b.method}
-          </div>
-          <hr className="divider" style={{ margin: '16px 0' }} />
-          <div style={{ display: 'grid', gap: 10 }}>
-            {b.breakdown.map((r) => (
-              <div
-                key={r.label}
-                style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13.5 }}
-              >
-                <span style={{ color: 'var(--uk-ink-2)' }}>{r.label}</span>
-                <span className="tnum" style={{ fontWeight: 600 }}>
-                  ${r.amt.toFixed(2)}
-                </span>
-              </div>
-            ))}
+            {balanceSection?.error
+              ? '—'
+              : `${balanceSection?.outstandingCount ?? 0} unpaid invoice${
+                  (balanceSection?.outstandingCount ?? 0) === 1 ? '' : 's'
+                }${
+                  balanceSection?.latestUnpaidPeriod
+                    ? ` · latest ${balanceSection.latestUnpaidPeriod}`
+                    : ''
+                }`}
           </div>
           <div style={{ marginTop: 'auto', paddingTop: 16 }}>
             <Button
@@ -88,10 +91,9 @@ export default function BillingScreen({ embed }: { embed?: boolean }) {
           <div style={{ display: 'grid', gap: 14 }}>
             {(
               [
-                ['Plan', b.plan],
-                ['Payment method', b.method],
-                ['Billing cycle', b.cycle],
-                ['Next invoice due', b.due],
+                ['Billing cycle', 'Monthly'],
+                ['Unpaid invoices', sectionValue(balanceSection?.outstandingCount, balanceSection?.error)],
+                ['Latest unpaid period', balanceSection?.latestUnpaidPeriod ?? '—'],
               ] as const
             ).map(([k, v]) => (
               <div key={k}>
@@ -125,6 +127,16 @@ export default function BillingScreen({ embed }: { embed?: boolean }) {
         <div className="tbl-wrap">
           {invLoading ? (
             <SkeletonTable cols={5} rows={4} />
+          ) : invoicesSection?.error ? (
+            <EmptyState
+              art="error"
+              title="Couldn't load invoices"
+              sub={invoicesSection.error.message}
+              cta="Try again"
+              onCta={() => refetch()}
+            />
+          ) : invoices.length === 0 ? (
+            <EmptyState art="invoice" title="No invoices yet" sub="Invoices appear here each cycle." />
           ) : (
             <Table>
               <TableHead>
@@ -137,15 +149,16 @@ export default function BillingScreen({ embed }: { embed?: boolean }) {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {b.invoices.map((inv) => (
+                {invoices.map((inv) => (
                   <TableRow key={inv.id}>
                     <TableCell className="tnum" style={{ fontWeight: 600 }}>
-                      {inv.id}
+                      {inv.id.slice(0, 8)}
                     </TableCell>
                     <TableCell>{inv.period}</TableCell>
-                    <TableCell align="right" className="tnum">${inv.amt.toFixed(2)}</TableCell>
+                    {/* TODO(backend-gap #11): invoice amount field */}
+                    <TableCell align="right" className="tnum">—</TableCell>
                     <TableCell>
-                      <StatusBadge status="paid" variant="pill" />
+                      <StatusBadge status={inv.isPaid ? 'paid' : 'pending'} variant="pill" />
                     </TableCell>
                     <TableCell>
                       <Button
@@ -163,7 +176,9 @@ export default function BillingScreen({ embed }: { embed?: boolean }) {
             </Table>
           )}
         </div>
-        {!invLoading && <TableFooter count={b.invoices.length} noun="invoices" />}
+        {!invLoading && !invoicesSection?.error && (
+          <TableFooter count={invoices.length} noun="invoices" />
+        )}
       </div>
     </>
   );

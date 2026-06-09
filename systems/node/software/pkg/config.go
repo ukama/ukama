@@ -27,6 +27,15 @@ type Config struct {
 	Health           string           `default:"health:9090"`
 	NodeGwIPs        []string         `default:"[]"`
 	Service          *uconf.Service
+	Operation        OperationServices
+}
+
+type OperationServices struct {
+	ManagerHost  string        `default:"manager:9090"`
+	MonitorHost  string        `default:"operation-monitor:9090"`
+	Timeout      time.Duration `default:"5s"`
+	LeaseSecs    uint32        `default:"1800"`
+	DeadlineSecs uint32        `default:"1800"`
 }
 
 func NewConfig(name string) *Config {

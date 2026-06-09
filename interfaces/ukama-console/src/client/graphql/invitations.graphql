@@ -39,7 +39,7 @@ mutation DeleteInvitation($deleteInvitationId: String!) {
   }
 }
 
-mutation UpdateInvitation($data: UpateInvitationInputDto!) {
+mutation UpdateInvitation($data: UpdateInvitationInputDto!) {
   updateInvitation(data: $data) {
     id
   }

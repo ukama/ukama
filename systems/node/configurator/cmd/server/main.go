@@ -34,6 +34,7 @@ import (
 	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	pb "github.com/ukama/ukama/systems/node/configurator/pb/gen"
+	cfgclient "github.com/ukama/ukama/systems/node/configurator/pkg/client"
 	configstore "github.com/ukama/ukama/systems/node/configurator/pkg/configStore"
 )
 
@@ -106,8 +107,10 @@ func runGrpcServer(gormdb sql.Db) {
 	configStore := configstore.NewConfigStore(mbClient, cnet, csite, cnode, db.NewConfigRepo(gormdb),
 		db.NewCommitRepo(gormdb), serviceConfig.OrgName, s, serviceConfig.Timeout)
 
+	opMgr := cfgclient.NewOperationManager(serviceConfig.Operation.ManagerHost, serviceConfig.Operation.Timeout)
+
 	configuratorServer := server.NewConfiguratorServer(mbClient, db.NewConfigRepo(gormdb), db.NewCommitRepo(gormdb), configStore,
-		serviceConfig.OrgName, pkg.IsDebugMode)
+		serviceConfig.OrgName, pkg.IsDebugMode, opMgr, serviceConfig.Operation.LeaseSecs)
 
 	configuratorEventServer := server.NewConfiguratorEventServer(serviceConfig.OrgName, configuratorServer)
 

@@ -25,11 +25,13 @@ generate(){
     done
 }
 
-generate "nodes/ukamaOS/distro/system/bootstrap" \
+generate "nodes/ukamaOS/distro/system/aggregator" \
+	 "nodes/ukamaOS/distro/system/bootstrap" \
          "nodes/ukamaOS/distro/system/configd" \
          "nodes/ukamaOS/distro/system/deviced" \
          "nodes/ukamaOS/distro/system/example" \
          "nodes/ukamaOS/distro/system/init" \
+         "nodes/ukamaOS/distro/system/init-starterd" \
          "nodes/ukamaOS/distro/system/lookoutd" \
          "nodes/ukamaOS/distro/system/meshd" \
          "nodes/ukamaOS/distro/system/metricsd" \
@@ -38,4 +40,3 @@ generate "nodes/ukamaOS/distro/system/bootstrap" \
          "nodes/ukamaOS/distro/system/rlog" \
          "nodes/ukamaOS/distro/system/starterd" \
          "nodes/ukamaOS/distro/system/wimcd"
-

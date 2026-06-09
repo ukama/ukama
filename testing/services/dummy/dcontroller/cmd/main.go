@@ -17,7 +17,6 @@ import (
 
 	"github.com/num30/config"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
@@ -71,7 +70,7 @@ import (
 		 instanceId = inst.String()
 	 }
 	 
-	 mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
+	 mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
 		 serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
 		 serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 		 serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,

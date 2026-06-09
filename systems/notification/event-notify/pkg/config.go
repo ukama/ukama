@@ -87,6 +87,8 @@ func NewConfig(name string) *Config {
 				evt.EventRoutingKey[evt.EventPaymentSuccess],
 				evt.EventRoutingKey[evt.EventPaymentFailed],
 				evt.EventRoutingKey[evt.EventNodeStateTransition],
+				evt.EventRoutingKey[evt.EventOperationCompleted],
+				evt.EventRoutingKey[evt.EventOperationFailed],
 			}},
 	}
 }

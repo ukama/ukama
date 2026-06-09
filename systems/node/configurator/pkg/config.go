@@ -28,10 +28,17 @@ type Config struct {
 	StoreUrl         string
 	AccessToken      string
 	Http             HttpServices
+	Operation        OperationServices
 }
 
 type HttpServices struct {
 	InitClient string `default:"api-gateway-init:8080"`
+}
+
+type OperationServices struct {
+	ManagerHost string        `default:"manager:9090"`
+	Timeout     time.Duration `default:"5s"`
+	LeaseSecs   uint32        `default:"1800"`
 }
 
 func NewConfig(name string) *Config {

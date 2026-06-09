@@ -8,6 +8,7 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import { logger } from "../../common/logger";
+import { mapWithConcurrency } from "../../common/utils/concurrency";
 import { Context } from "../context";
 import { SimDataUsages, SimDto, SimUsagesInputDto } from "./types";
 
@@ -42,14 +43,13 @@ export class GetDataUsagesResolver {
 
     logger.info(`SimUsages: ${JSON.stringify(simUsages)}`);
 
-    const usages = await Promise.all(
-      simUsages.map((item: any) =>
-        dataSources.sim.getDataUsage(baseURL, {
-          type: data.type,
-          iccid: item.iccid,
-          simId: item.simId,
-        })
-      )
+    // Bounded fan-out: one upstream call per sim, max 10 in flight.
+    const usages = await mapWithConcurrency(simUsages, (item: any) =>
+      dataSources.sim.getDataUsage(baseURL, {
+        type: data.type,
+        iccid: item.iccid,
+        simId: item.simId,
+      })
     );
 
     return {

@@ -25,7 +25,7 @@ export type DeleteInvitationMutationVariables = Types.Exact<{
 export type DeleteInvitationMutation = { __typename?: 'Mutation', deleteInvitation: { __typename?: 'DeleteInvitationResDto', id: string } };
 
 export type UpdateInvitationMutationVariables = Types.Exact<{
-  data: Types.UpateInvitationInputDto;
+  data: Types.UpdateInvitationInputDto;
 }>;
 
 
@@ -161,7 +161,7 @@ export type DeleteInvitationMutationHookResult = ReturnType<typeof useDeleteInvi
 export type DeleteInvitationMutationResult = Apollo.MutationResult<DeleteInvitationMutation>;
 export type DeleteInvitationMutationOptions = Apollo.BaseMutationOptions<DeleteInvitationMutation, DeleteInvitationMutationVariables>;
 export const UpdateInvitationDocument = gql`
-    mutation UpdateInvitation($data: UpateInvitationInputDto!) {
+    mutation UpdateInvitation($data: UpdateInvitationInputDto!) {
   updateInvitation(data: $data) {
     id
   }
