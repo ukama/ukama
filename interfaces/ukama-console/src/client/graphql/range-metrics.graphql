@@ -11,12 +11,20 @@ query MetricsRange($data: MetricsRangeInput!) {
   metricsRange(data: $data) {
     metrics {
       type
+      label
       success
       nodeId
       siteId
       values
       unit
       format
+      tickInterval
+      tickPositions
+      threshold {
+        min
+        normal
+        max
+      }
     }
   }
 }

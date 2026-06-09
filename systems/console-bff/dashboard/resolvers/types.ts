@@ -30,6 +30,7 @@ import { SimPoolResDto } from "../../sim/resolver/types";
 import { SiteDto } from "../../site/resolvers/types";
 import { Softwares } from "../../software/resolvers/types";
 import { SubscriberDto } from "../../subscriber/resolver/types";
+import { MetricThreshold } from "../../subscriptions/resolvers/types";
 import { SectionError } from "../types";
 
 /* ----------------------------- shared sections ---------------------------- */
@@ -98,7 +99,9 @@ export class GapSection {
   error?: SectionError | null;
 }
 
-/** One latest-value KPI from the metric service (polled — Phase 4). */
+/** One latest-value KPI from the metric service (polled — Phase 4). Carries
+ *  the same presentation metadata as MetricRes so the console renders it
+ *  directly (label/unit/format/threshold) without any client-side catalog. */
 @ObjectType()
 export class KpiEntryDto {
   @Field()
@@ -112,6 +115,18 @@ export class KpiEntryDto {
 
   @Field(() => Boolean)
   success: boolean;
+
+  @Field({ nullable: true })
+  label?: string;
+
+  @Field({ nullable: true })
+  unit?: string;
+
+  @Field({ nullable: true })
+  format?: string;
+
+  @Field(() => MetricThreshold, { nullable: true })
+  threshold?: MetricThreshold | null;
 }
 
 @ObjectType()

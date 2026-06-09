@@ -9,7 +9,7 @@ export type NodeKpisQueryVariables = Types.Exact<{
 }>;
 
 
-export type NodeKpisQuery = { __typename?: 'Query', nodeView: { __typename?: 'NodeView', nodeId: string, kpis: { __typename?: 'KpisSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, metrics?: Array<{ __typename?: 'KpiEntryDto', key: string, value: number, timestamp: number, success: boolean }> | null } } };
+export type NodeKpisQuery = { __typename?: 'Query', nodeView: { __typename?: 'NodeView', nodeId: string, kpis: { __typename?: 'KpisSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, metrics?: Array<{ __typename?: 'KpiEntryDto', key: string, value: number, timestamp: number, success: boolean, label?: string | null, unit?: string | null, format?: string | null, threshold?: { __typename?: 'MetricThreshold', min: number, normal: number, max: number } | null }> | null } } };
 
 
 export const NodeKpisDocument = gql`
@@ -25,6 +25,14 @@ export const NodeKpisDocument = gql`
         value
         timestamp
         success
+        label
+        unit
+        format
+        threshold {
+          min
+          normal
+          max
+        }
       }
     }
   }

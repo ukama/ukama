@@ -19,6 +19,14 @@ query NodeKpis($nodeId: String!) {
         value
         timestamp
         success
+        label
+        unit
+        format
+        threshold {
+          min
+          normal
+          max
+        }
       }
     }
   }

@@ -22,6 +22,8 @@ import Skeleton from '@mui/material/Skeleton';
 
 import { useNodeDetailQuery } from '@/client/graphql/node-detail.generated';
 import { useNodeKpisQuery } from '@/client/graphql/node-kpis.generated';
+import type { MetricsRangeQuery } from '@/client/graphql/range-metrics.generated';
+import { useMetricsRangeQuery } from '@/client/graphql/range-metrics.generated';
 import { useRestartNodeMutation } from '@/client/graphql/controller.generated';
 import AppModal from '@/components/AppModal';
 import AppTabs from '@/components/AppTabs';
@@ -33,7 +35,6 @@ import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
 import { useToast } from '@/components/ToastProvider';
 import { toUkamaNode } from '@/lib/mappers/nodes';
-import { series } from '@/lib/series';
 import { ConnectivityDot, StateChip } from './nodeStatus';
 
 const TABS = ['Overview', 'Network', 'Resources', 'Radio', 'Software'];
@@ -50,39 +51,21 @@ const NODE_IMAGE_FALLBACK = `${NODE_IMAGE_BASE}/ukama_tower_node.png`;
 const nodeImage = (type: string): string =>
   NODE_IMAGES[type.toLowerCase()] ?? NODE_IMAGE_FALLBACK;
 
-const GENERIC_LEGEND = [{ color: 'var(--uk-ac)', label: 'Trend' }];
-
 type Range = 'Day' | 'Week' | 'Month';
 const RANGES: Range[] = ['Day', 'Week', 'Month'];
-const WINDOW_LABEL: Record<Range, string> = {
-  Day: 'last 24h',
-  Week: 'last 7d',
-  Month: 'last 30d',
+
+/** Window length per range, in seconds (drives the metricsRange from/to). */
+const RANGE_SECONDS: Record<Range, number> = {
+  Day: 86_400,
+  Week: 604_800,
+  Month: 2_592_000,
 };
 
-interface ChartDef {
-  key: string;
-  title: string;
-  unit: string;
-  legend: { color: string; label: string }[];
-  data: Record<Range, number[]>;
-}
-
-/** Three placeholder series (one per range) for a metric — until the metric
- *  service is wired (backend gap #6). */
-function ranged(base: number, a: number, b: number): Record<Range, number[]> {
-  return {
-    Day: series(base, 24, a, b),
-    Week: series(base, 28, a, b * 1.3),
-    Month: series(base, 30, a, b * 1.7),
-  };
-}
-
 /* -------------------------------------------------------------------------- *
- * Node KPI catalog — labels, units and per-node-type key lists mirrored from
- * the legacy console (constants NODE KPI config) and console-bff
- * getGraphsKeyByType(GRAPHS_TYPE.*, nodeType). Values come from the NodeKpis
- * query once the metric service is wired (backend gap #6).
+ * Per-node-type metric key lists (which KPIs/graphs exist for a node type),
+ * mirrored from console-bff getGraphsKeyByType. Labels, units, thresholds and
+ * values all come from the BFF (nodeView.kpis / metricsRange) — the console
+ * owns none of that; it only decides which keys to ask for.
  * -------------------------------------------------------------------------- */
 type NodeKind = 'tnode' | 'anode' | 'cnode' | 'hnode';
 const nodeKind = (raw: string): NodeKind => {
@@ -91,26 +74,6 @@ const nodeKind = (raw: string): NodeKind => {
   if (t.includes('cnode')) return 'cnode';
   if (t.includes('hnode')) return 'hnode';
   return 'tnode';
-};
-
-const METRIC_META: Record<string, { label: string; unit: string; base: number }> = {
-  uptime: { label: 'Uptime', unit: 's', base: 86 },
-  cpu_temperature: { label: 'Temp. (CPU)', unit: '°C', base: 46 },
-  fem1_temperature: { label: 'FEM 1 temp.', unit: '°C', base: 44 },
-  fem2_temperature: { label: 'FEM 2 temp.', unit: '°C', base: 48 },
-  memory: { label: 'Memory', unit: '%', base: 52 },
-  cpu: { label: 'CPU', unit: '%', base: 38 },
-  disk: { label: 'Disk', unit: 'MB', base: 60 },
-  subscribers_active: { label: 'Active subscribers', unit: '', base: 30 },
-  cellular_uplink: { label: 'Cellular uplink', unit: 'Mbps', base: 18 },
-  cellular_downlink: { label: 'Cellular downlink', unit: 'Mbps', base: 64 },
-  backhaul_uplink: { label: 'Backhaul uplink', unit: 'Mbps', base: 22 },
-  backhaul_downlink: { label: 'Backhaul downlink', unit: 'Mbps', base: 70 },
-  backhaul_latency: { label: 'Backhaul latency', unit: 'ms', base: 35 },
-  power: { label: 'TX power', unit: 'dBm', base: 31 },
-  pa_power: { label: 'PA power', unit: 'dBm', base: 30 },
-  rx_power: { label: 'RX power', unit: 'dBm', base: 28 },
-  tx_power: { label: 'TX power', unit: 'dBm', base: 31 },
 };
 
 type MetricGroup =
@@ -162,19 +125,6 @@ const GROUP_KEYS: Record<MetricGroup, Record<NodeKind, string[]>> = {
 const groupKeys = (group: MetricGroup, kind: NodeKind): string[] =>
   GROUP_KEYS[group][kind] ?? [];
 
-const chartFor = (key: string): ChartDef => {
-  const m = METRIC_META[key] ?? { label: key, unit: '', base: 40 };
-  return {
-    key,
-    title: m.label,
-    unit: m.unit,
-    legend: GENERIC_LEGEND,
-    data: ranged(m.base, 0.12, 0.14),
-  };
-};
-const chartsFor = (group: MetricGroup, kind: NodeKind): ChartDef[] =>
-  groupKeys(group, kind).map(chartFor);
-
 /* Left-rail sections per tab. The 'info' card shows the node board; every
  * other card lists its group's KPIs and drives the right-side charts. Mirrors
  * the legacy console, where the left rail changes with the active tab. */
@@ -224,21 +174,91 @@ function RangeToggle({ value, onChange }: { value: Range; onChange: (r: Range) =
   );
 }
 
-function MetricChartCard({ chart, off }: { chart: ChartDef; off: boolean }) {
+/** One metric series straight from the BFF (metricsRange). */
+type MetricSeries = MetricsRangeQuery['metricsRange']['metrics'][number];
+
+/** Legend bands derived from the metric's threshold (BFF-provided). */
+function thresholdLegend(
+  threshold: MetricSeries['threshold'],
+  unit?: string | null,
+): { color: string; label: string }[] {
+  if (!threshold) return [{ color: 'var(--uk-ac)', label: 'Trend' }];
+  const u = unit ? ` ${unit}` : '';
+  return [
+    { color: 'var(--uk-ac)', label: `Below ${threshold.normal}${u} normal` },
+    { color: 'var(--uk-orange)', label: `${threshold.normal}–${threshold.max}${u} high` },
+    { color: 'var(--uk-error)', label: `Above ${threshold.max}${u} critical` },
+  ];
+}
+
+/** One metric chart with its own range filter — self-fetches its series so
+ *  every graph filters independently. */
+function MetricChart({
+  nodeId,
+  metricKey,
+  off,
+}: {
+  nodeId: string;
+  metricKey: string;
+  off: boolean;
+}) {
   const [range, setRange] = useState<Range>('Day');
-  const data = off ? chart.data[range].map(() => 0) : chart.data[range];
+  const [nowSec] = useState(() => Math.floor(Date.now() / 1000));
+  const to = nowSec;
+  const from = nowSec - RANGE_SECONDS[range];
+  const { data, loading } = useMetricsRangeQuery({
+    variables: { data: { keys: [metricKey], nodeId, from, to } },
+  });
+
+  const m: MetricSeries | undefined = data?.metricsRange.metrics?.[0];
+  const values = m ? (off ? m.values.map(() => 0) : m.values.map((v) => v[1] ?? 0)) : [];
+  const legend = thresholdLegend(m?.threshold, m?.unit);
   return (
-    <SectionCard title={chart.title} right={<RangeToggle value={range} onChange={setRange} />}>
-      <div style={{ fontSize: 12, color: 'var(--uk-ink-3)', marginTop: -2, marginBottom: 10 }}>
-        {chart.unit} · {WINDOW_LABEL[range]}
-      </div>
-      <LineChart data={data} height={188} />
-      <div style={{ display: 'flex', gap: 18, justifyContent: 'center', marginTop: 10 }}>
-        {chart.legend.map((l) => (
+    <SectionCard
+      title={m?.label || metricKey}
+      right={<RangeToggle value={range} onChange={setRange} />}
+    >
+      {loading && !m ? (
+        <Skeleton variant="rounded" sx={{ height: 188 }} />
+      ) : (
+        <LineChart data={values} height={188} />
+      )}
+      <div style={{ display: 'flex', gap: 18, justifyContent: 'center', marginTop: 10, flexWrap: 'wrap' }}>
+        {legend.map((l) => (
           <LegendDot key={l.label} {...l} />
         ))}
       </div>
     </SectionCard>
+  );
+}
+
+/** Right-panel charts for a metric group — one self-filtering chart per key. */
+function GroupCharts({
+  nodeId,
+  keys,
+  off,
+}: {
+  nodeId: string;
+  keys: string[];
+  off: boolean;
+}) {
+  if (keys.length === 0) {
+    return (
+      <SectionCard title="Metrics">
+        <EmptyState
+          art="search"
+          title="No metrics for this node type"
+          sub="This node type doesn't report metrics in this category."
+        />
+      </SectionCard>
+    );
+  }
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--uk-gap)' }}>
+      {keys.map((k) => (
+        <MetricChart key={k} nodeId={nodeId} metricKey={k} off={off} />
+      ))}
+    </div>
   );
 }
 
@@ -332,10 +352,9 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
     label: `${nd.name || nd.id} (${nd.id})`,
     status: '',
   }));
+  // Latest KPI entries keyed by metric key — carry label/unit/value from BFF.
   const kpiByKey = new Map(
-    (kpisData?.nodeView.kpis.metrics ?? [])
-      .filter((m) => m.success)
-      .map((m) => [m.key, Math.round(m.value * 100) / 100])
+    (kpisData?.nodeView.kpis.metrics ?? []).map((m) => [m.key, m]),
   );
 
   if (loading) {
@@ -371,10 +390,13 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
 
   // KPIs are node-type specific (legacy console parity, backend gap #6).
   const kind = nodeKind(nodeSection.node.type);
+  // Render straight from BFF-provided metadata: label, unit, value.
+  const labelFor = (key: string) => kpiByKey.get(key)?.label || key;
   const fmtKpi = (key: string): string => {
-    if (!kpiByKey.has(key)) return '—';
-    const v = kpiByKey.get(key);
-    const unit = METRIC_META[key]?.unit ?? '';
+    const e = kpiByKey.get(key);
+    if (!e || !e.success) return '—';
+    const v = e.format === 'decimal' ? e.value.toFixed(2) : Math.round(e.value);
+    const unit = e.unit ?? '';
     if (!unit) return `${v}`;
     return unit === '%' ? `${v}%` : `${v} ${unit}`;
   };
@@ -382,9 +404,7 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
   const groupRows = (group: MetricGroup) => {
     const keys = groupKeys(group, kind);
     if (keys.length === 0) return <KV k="Metrics" v="—" />;
-    return keys.map((k) => (
-      <KV key={k} k={METRIC_META[k]?.label ?? k} v={fmtKpi(k)} />
-    ));
+    return keys.map((k) => <KV key={k} k={labelFor(k)} v={fmtKpi(k)} />);
   };
 
   // Hide tabs that have no KPIs for this node type. Overview always shows
@@ -398,28 +418,16 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
   );
   const activeTab = visibleTabs.includes(tab) ? tab : 'Overview';
 
-  // The left rail (and its selection) changes with the active tab.
-  const sections = TAB_SECTIONS[activeTab] ?? [];
+  // The left rail (and its selection) changes with the active tab. Drop any
+  // section whose group has no KPIs for this node type (e.g. Customers on
+  // controller/amplifier nodes); 'info' has no group and always shows.
+  const sections = (TAB_SECTIONS[activeTab] ?? []).filter(
+    (s) => !s.group || groupKeys(s.group, kind).length > 0,
+  );
   const activeKey = sections.some((s) => s.key === section)
     ? section
     : (sections[0]?.key ?? 'info');
   const activeGroup = sections.find((s) => s.key === activeKey)?.group;
-  const renderCharts = (charts: ChartDef[]) =>
-    charts.length > 0 ? (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--uk-gap)' }}>
-        {charts.map((c) => (
-          <MetricChartCard key={c.key} chart={c} off={off} />
-        ))}
-      </div>
-    ) : (
-      <SectionCard title="Metrics">
-        <EmptyState
-          art="search"
-          title="No metrics for this node type"
-          sub="This node type doesn't report metrics in this category."
-        />
-      </SectionCard>
-    );
 
   return (
     <div className="page">
@@ -503,7 +511,11 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
                 </div>
               </SectionCard>
             ) : (
-              renderCharts(activeGroup ? chartsFor(activeGroup, kind) : [])
+              <GroupCharts
+                nodeId={n.id}
+                keys={activeGroup ? groupKeys(activeGroup, kind) : []}
+                off={off}
+              />
             )}
           </div>
         </div>

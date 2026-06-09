@@ -197,16 +197,24 @@ export class NodeViewResolver {
     @Root() root: NodeViewRoot,
     @Ctx() ctx: AppContext
   ): Promise<KpisSection> {
-    // Phase 4: node-health KPIs (uptime/temps/memory by node type) polled
-    // from the metric service (closes backend gap #6). The latest-metric
-    // endpoint is org-scoped — node-level filtering lands with the metric
-    // service's node filter (same behavior as the legacy getNodeLatestMetric).
+    // Phase 4: latest KPIs for every metric group the node exposes (health,
+    // customers, network, resources, radio) so the console's per-tab rails
+    // all populate from one section. Mocked until the metric service lands
+    // (backend gap #6); see dashboard/metrics/catalog.ts.
     const { value, error } = await runSection("kpis", async () => {
       const url = await root._urls.url("metrics");
-      const keys = getGraphsKeyByType(
+      const nodeType = getNodeTypeFromId(root.nodeId);
+      const groups = [
         GRAPHS_TYPE.NODE_HEALTH,
-        getNodeTypeFromId(root.nodeId)
-      );
+        GRAPHS_TYPE.SUBSCRIBERS,
+        GRAPHS_TYPE.NETWORK_CELLULAR,
+        GRAPHS_TYPE.NETWORK_BACKHAUL,
+        GRAPHS_TYPE.RESOURCES,
+        GRAPHS_TYPE.RADIO,
+      ];
+      const keys = [
+        ...new Set(groups.flatMap(g => getGraphsKeyByType(g, nodeType))),
+      ];
       return fetchLatestKpis(ctx.dataSources.metric, url, keys);
     });
     return { metrics: value, error };

@@ -508,9 +508,13 @@ export type ItemResDto = {
 
 export type KpiEntryDto = {
   __typename?: 'KpiEntryDto';
+  format?: Maybe<Scalars['String']['output']>;
   key: Scalars['String']['output'];
+  label?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
+  threshold?: Maybe<MetricThreshold>;
   timestamp: Scalars['Float']['output'];
+  unit?: Maybe<Scalars['String']['output']>;
   value: Scalars['Float']['output'];
 };
 
@@ -558,6 +562,7 @@ export type MetricRes = {
   __typename?: 'MetricRes';
   dataPlanId?: Maybe<Scalars['String']['output']>;
   format?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
   msg: Scalars['String']['output'];
   networkId?: Maybe<Scalars['String']['output']>;
   nodeId?: Maybe<Scalars['String']['output']>;
