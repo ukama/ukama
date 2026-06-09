@@ -33,12 +33,19 @@ message ToggleInternetSwitchRequest {
   int32 port = 3;  // New field to specify the port number
 }
 message ToggleInternetSwitchResponse {
+  string operationId = 1 [json_name = "operation_id"];
+  string resourceKey = 2 [json_name = "resource_key"];
+  string status = 3;
 }
 
 message RestartNodesResponse {
+  repeated string operationIds = 1 [json_name = "operation_ids"];
+  string status = 2;
 }
 
 message RestartSiteResponse {
+  repeated string operationIds = 1 [json_name = "operation_ids"];
+  string status = 2;
 }
 
 message ToggleRfSwitchRequest {
@@ -47,6 +54,9 @@ message ToggleRfSwitchRequest {
 }
 
 message ToggleRfSwitchResponse {
+  string operationId = 1 [json_name = "operation_id"];
+  string resourceKey = 2 [json_name = "resource_key"];
+  string status = 3;
 }
 
 message RestartNodeRequest {
@@ -60,6 +70,9 @@ message RestartSiteRequest {
 }
 
 message RestartNodeResponse {
+  string operationId = 1 [json_name = "operation_id"];
+  string resourceKey = 2 [json_name = "resource_key"];
+  string status = 3;
 }
 
 message ToggleNodeServiceRequest {
@@ -68,6 +81,9 @@ message ToggleNodeServiceRequest {
 }
 
 message ToggleNodeServiceResponse {
+  string operationId = 1 [json_name = "operation_id"];
+  string resourceKey = 2 [json_name = "resource_key"];
+  string status = 3;
 }
 
 message PublishMsgRequest {

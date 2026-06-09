@@ -10,6 +10,10 @@ replace github.com/ukama/ukama/systems/node/health => ../../node/health
 
 replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgClient
 
+replace github.com/ukama/ukama/systems/operation/manager => ../../operation/manager
+
+replace github.com/ukama/ukama/systems/node/operation-monitor => ../operation-monitor
+
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/golang/protobuf v1.5.4
@@ -19,6 +23,8 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/node/health v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/node/operation-monitor v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/operation/manager v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.81.1
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v3 v3.0.1

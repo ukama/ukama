@@ -46,7 +46,7 @@ filter_make_sys() {
                 PATHS+=("node/configurator" "billing/report" "billing/api-gateway" "billing/collector" )
                 ;;
             "init")
-                PATHS+=("init/lookup" "init/api-gateway" "init/node-gateway" "init/bootstrap")
+                PATHS+=("init/lookup" "init/api-gateway" "init/node-gateway" "init/bootstrap", "init/reflector")
                 ;;
             "inventory")
                 PATHS+=("inventory/accounting" "inventory/component" "inventory/api-gateway")
@@ -67,7 +67,7 @@ filter_make_sys() {
                 PATHS+=("ukama-agent/api-gateway" "ukama-agent/cdr" "ukama-agent/asr" "ukama-agent/node-gateway")
                 ;;
             "hub")
-                PATHS+=("hub/api-gateway" "hub/artifactmanager" "hub/distributor" "hub/node-gateway")
+                PATHS+=("hub/api-gateway" "hub/artifactManager" "hub/distributor" "hub/node-gateway")
                 ;;
         esac
     done

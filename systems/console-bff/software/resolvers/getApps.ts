@@ -5,17 +5,19 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Ctx, Query, Resolver } from "type-graphql";
+import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
-import type { AppContext } from "../../server/context";
-import { Apps } from "./types";
+import { Context } from "../context";
+import { Apps, GetSoftwaresInput } from "./types";
 
 @Resolver()
 export class GetApps {
   @Query(() => Apps, { nullable: true })
-  async getApps(@Ctx() ctx: AppContext): Promise<Apps> {
-    const { dataSources } = ctx;
-    const baseURL = await ctx.urls.url("software");
-    return await dataSources.software.getApps(baseURL);
+  async getApps(
+    @Ctx() ctx: Context,
+    @Arg("data") data: GetSoftwaresInput
+  ): Promise<Apps> {
+    const { dataSources, baseURL } = ctx;
+    return await dataSources.software.getApps(baseURL, data);
   }
 }

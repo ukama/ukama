@@ -1,37 +1,17 @@
-# Analytics System
+# Ukama System of systems
 
-Analytics owns every KPI formula consumed by the console. It ingests events from other systems via `msgclient-analytics`, backfills snapshots from source system API gateways, and serves pre-computed KPIs over REST (`/v1/analytics/*`) through its api-gateway. The console-bff is the first consumer; the UI and BFF never calculate KPIs.
+# Dependencies
 
-See [`../../analytics-kpi-plan.md`](../../analytics-kpi-plan.md) for the full design and [`docs/schema.md`](docs/schema.md) for the DB contract.
+In order to work on cloud services you will need below tools:
+- go 1.18
+- [Protoc](https://grpc.io/docs/protoc-installation/)
+- [Protoc_gen_go](https://grpc.io/docs/languages/go/quickstart/)
+- [Go-proto-validators](https://github.com/mwitkow/go-proto-validators)
+- [Mockery](https://github.com/vektra/mockery)
 
-## Services
-
-| Service | Role |
-|---|---|
-| `api-gateway` | REST frontend (`/v1/analytics/business|customers|network/*`, collector admin routes). gRPC client to internal services. No KPI logic. |
-| `business` | Business/operator KPIs: home, sales overview, package performance, billing summary, business sites, inventory readiness. Read-only DB access. |
-| `customer` | Customer lifecycle & support: overview, list/search/detail, support diagnosis, SIMs, SIM pool. Read-only DB access. |
-| `network` | Network ops: overview, topology, sites, nodes, node pool, radio, backhaul, power, alarms, metrics, events, support search. Read-only DB access. |
-| `collector` | The only DB writer. Consumes events (idempotent), refreshes snapshots from source gateways, rebuilds rollups, owns migrations, demo seed. |
-
-## Build
-
-Each service:
-
+Make sure that go/bin directory is part of the PATH:
 ```
-make gen     # protoc + mockery (requires protoc, protoc-gen-go, protoc-gen-go-grpc, govalidators, mockery)
-go mod tidy
-make         # builds bin/<service>
-make test
+export PATH=${PATH}:${GOPATH}/bin
 ```
 
-System: `make` at this level builds all services (subdirs pattern). `docker-compose build && docker-compose up` to run (requires services_ukama-net network, RabbitMQ, and the init system, same as other Ukama systems).
-
-## Smoke test
-
-```
-curl http://localhost:8085/v1/analytics/business/home
-curl http://localhost:8085/v1/analytics/customers/overview
-curl http://localhost:8085/v1/analytics/network/overview
-curl http://localhost:8085/v1/analytics/collector/state
-```
+You can install all tools by running `make go-install` in the services directory

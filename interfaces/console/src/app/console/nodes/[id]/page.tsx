@@ -174,6 +174,13 @@ const Page: React.FC<INodePage> = ({ params }) => {
 
   const { loading: appsLoading } = useGetAppsQuery({
     fetchPolicy: 'cache-and-network',
+    variables: {
+      data: {
+        name: '',
+        nodeId: id,
+        status: SoftwareStatusEnum.Unknown,
+      },
+    },
   });
 
   const {
@@ -182,6 +189,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
     refetch: refetchSoftwares,
   } = useSoftwareQuery({
     fetchPolicy: 'network-only',
+    pollInterval: 30 * 1000,
     variables: {
       data: {
         name: '',
@@ -198,7 +206,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
         refetchSoftwares();
         setSnackbarMessage({
           id: 'update-software-success-msg',
-          message: 'Software updated successfully.',
+          message: 'App is scheduled for update.',
           type: 'success',
           show: true,
         });

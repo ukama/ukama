@@ -1217,8 +1217,8 @@ query GetDataUsages($data: SimUsagesInputDto!) {
 ##
 
 ### Software Start ###
-query GetApps {
-  getApps {
+query GetApps($data: GetSoftwaresInput!) {
+  getApps(data: $data) {
     apps {
       name
       space

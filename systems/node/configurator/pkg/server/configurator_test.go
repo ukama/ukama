@@ -32,7 +32,10 @@ func TestConfiguratorServer_ConfigEvent(t *testing.T) {
 	configRepo := &mocks.ConfigRepo{}
 	configStore := &mocks.ConfigStoreProvider{}
 
-	s := NewConfiguratorServer(msgbusClient, configRepo, commitRepo, configStore, testOrgName, pkg.IsDebugMode)
+	s := NewConfiguratorServer(msgbusClient, configRepo, commitRepo, configStore, testOrgName, pkg.IsDebugMode,
+		nil,
+		0,
+	)
 
 	configStore.On("HandleConfigStoreEvent", mock.Anything, mock.Anything).Return(nil).Once()
 
@@ -51,7 +54,10 @@ func TestConfiguratorServer_GetConfigVersion(t *testing.T) {
 	configRepo := &mocks.ConfigRepo{}
 	configStore := &mocks.ConfigStoreProvider{}
 
-	s := NewConfiguratorServer(msgbusClient, configRepo, commitRepo, configStore, testOrgName, pkg.IsDebugMode)
+	s := NewConfiguratorServer(msgbusClient, configRepo, commitRepo, configStore, testOrgName, pkg.IsDebugMode,
+		nil,
+		0,
+	)
 
 	configRepo.On("Get", mock.AnythingOfType("string")).Return(&db.Configuration{
 		NodeId:          "node-id",
@@ -74,7 +80,10 @@ func TestConfiguratorServer_ApplyConfig(t *testing.T) {
 	configRepo := &mocks.ConfigRepo{}
 	configStore := &mocks.ConfigStoreProvider{}
 
-	s := NewConfiguratorServer(msgbusClient, configRepo, commitRepo, configStore, testOrgName, pkg.IsDebugMode)
+	s := NewConfiguratorServer(msgbusClient, configRepo, commitRepo, configStore, testOrgName, pkg.IsDebugMode,
+		nil,
+		0,
+	)
 	req := &pb.ApplyConfigRequest{Hash: "4f6e609"}
 	configStore.On("HandleConfigCommitReq", mock.Anything, req.Hash).Return(nil).Once()
 

@@ -10,14 +10,16 @@ package parser
 
 import (
 	"encoding/json"
-	"time"
+	"fmt"
+	"strconv"
+	"strings"
 )
 
 type HealthPayload struct {
 	SchemaVersion string            `json:"schemaVersion"`
 	NodeID        string            `json:"nodeId"`
 	NodeType      string            `json:"nodeType"`
-	ReportedAt    time.Time         `json:"reportedAt"`
+	ReportedAt    int64             `json:"reportedAt"`
 	Capabilities  []string          `json:"capabilities"`
 	System        HealthSystem      `json:"system"`
 	Interfaces    HealthInterfaces  `json:"interfaces"`
@@ -29,11 +31,74 @@ func ParseHealthPayload(raw json.RawMessage) (*HealthPayload, error) {
 	if len(raw) == 0 {
 		raw = []byte("{}")
 	}
-	var p HealthPayload
-	if err := json.Unmarshal(raw, &p); err != nil {
+
+	var reportedAt json.RawMessage
+	var envelope struct {
+		SchemaVersion string            `json:"schemaVersion"`
+		NodeID        string            `json:"nodeId"`
+		NodeType      string            `json:"nodeType"`
+		ReportedAt    json.RawMessage   `json:"reportedAt"`
+		Capabilities  []string          `json:"capabilities"`
+		System        HealthSystem      `json:"system"`
+		Interfaces    HealthInterfaces  `json:"interfaces"`
+		Apps          []HealthApp       `json:"apps"`
+		Events        []json.RawMessage `json:"events"`
+	}
+	if err := json.Unmarshal(raw, &envelope); err != nil {
 		return nil, err
 	}
-	return &p, nil
+	reportedAt = envelope.ReportedAt
+
+	reportedSec, err := parseUnixTimestamp(reportedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	return &HealthPayload{
+		SchemaVersion: envelope.SchemaVersion,
+		NodeID:        envelope.NodeID,
+		NodeType:      envelope.NodeType,
+		ReportedAt:    reportedSec,
+		Capabilities:  envelope.Capabilities,
+		System:        envelope.System,
+		Interfaces:    envelope.Interfaces,
+		Apps:          envelope.Apps,
+		Events:        envelope.Events,
+	}, nil
+}
+
+func parseUnixTimestamp(raw json.RawMessage) (int64, error) {
+	if len(raw) == 0 || string(raw) == "null" {
+		return 0, nil
+	}
+
+	var n json.Number
+	if err := json.Unmarshal(raw, &n); err == nil {
+		sec, err := n.Int64()
+		if err != nil {
+			f, err := n.Float64()
+			if err != nil {
+				return 0, err
+			}
+			sec = int64(f)
+		}
+		return sec, nil
+	}
+
+	var s string
+	if err := json.Unmarshal(raw, &s); err != nil {
+		return 0, err
+	}
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return 0, nil
+	}
+
+	sec, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("reportedAt must be unix seconds: %w", err)
+	}
+	return sec, nil
 }
 
 type HealthSystem struct {
@@ -81,10 +146,10 @@ type RadioInterface struct {
 }
 
 type GPSInterface struct {
-	Available   bool      `json:"available"`
-	Lock        bool      `json:"lock"`
-	Coordinates string    `json:"coordinates"`
-	Time        time.Time `json:"time"`
+	Available   bool   `json:"available"`
+	Lock        bool   `json:"lock"`
+	Coordinates string `json:"coordinates"`
+	Time        string `json:"time"`
 }
 
 type BackhaulInterface struct {
@@ -95,7 +160,7 @@ type BackhaulInterface struct {
 }
 
 type FEMInterface struct {
-	Available bool      `json:"available"`
+	Available bool       `json:"available"`
 	FEMs      []*FEMUnit `json:"fems"`
 }
 
@@ -186,7 +251,7 @@ type HealthApp struct {
 
 type AppResources struct {
 	CPUPercent     float64 `json:"cpuPercent"`
-	MemoryRssKb    float64   `json:"memoryRssKb"`
-	DiskReadBytes  float64   `json:"diskReadBytes"`
-	DiskWriteBytes float64   `json:"diskWriteBytes"`
+	MemoryRssKb    float64 `json:"memoryRssKb"`
+	DiskReadBytes  float64 `json:"diskReadBytes"`
+	DiskWriteBytes float64 `json:"diskWriteBytes"`
 }

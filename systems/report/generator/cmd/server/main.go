@@ -17,7 +17,6 @@ import (
 	"github.com/ukama/ukama/systems/report/generator/cmd/version"
 	"github.com/ukama/ukama/systems/report/generator/internal"
 	"github.com/ukama/ukama/systems/report/generator/internal/pdf/engine"
-	"github.com/ukama/ukama/systems/report/generator/internal/server"
 
 	"github.com/num30/config"
 	"google.golang.org/grpc"
@@ -90,7 +89,7 @@ func runGrpcServer() {
 	}
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		eSrv := server.NewGeneratorEventServer(serviceConfig.OrgName, pdfEngine, mbClient)
+		eSrv := fs.NewGeneratorEventServer(serviceConfig.OrgName, pdfEngine, mbClient)
 		egenerated.RegisterEventNotificationServiceServer(s, eSrv)
 	})
 

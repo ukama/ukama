@@ -103,5 +103,10 @@
   "key": "ukamaagent",
   "name": "Ukama Agent system",
   "path": "./ukama-agent"
+ },
+ "operation": {
+  "key": "operation",
+  "name": "Ukama Operation system",
+  "path": "./operation"
  }
 }

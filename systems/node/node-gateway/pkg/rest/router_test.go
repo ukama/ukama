@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
 
@@ -23,7 +24,6 @@ import (
 	"github.com/tj/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	ukamapb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/ukama"
@@ -95,19 +95,19 @@ func TestListHealthInfo(t *testing.T) {
 	const testListNodeID = "uk-sa2602-tnode-v0-344c"
 	const reportID = "60420da4-364b-494d-92ce-4be280d78c9b"
 	reported := time.Unix(1776703063, 0).UTC()
-	reportedRFC := reported.Format(time.RFC3339)
+	reportedUnix := strconv.FormatInt(reported.Unix(), 10)
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest(
 		"GET",
-		"/v1/health/reports?reportId="+reportID+"&nodeId="+testListNodeID+"&reportedAt="+reportedRFC+"&timeframe=latest",
+		"/v1/health/reports?reportId="+reportID+"&nodeId="+testListNodeID+"&reportedAt="+reportedUnix+"&timeframe=latest",
 		nil,
 	)
 	c := &hmocks.HealthServiceClient{}
 	listReq := &hpb.ListReportsRequest{
 		ReportId:   reportID,
 		NodeId:     testListNodeID,
-		ReportedAt: timestamppb.New(reported),
+		ReportedAt: reported.Unix(),
 		Timeframe:  ukamapb.FilterTimeframesType_LATEST,
 	}
 	listResp := &hpb.ListReportsResponse{
@@ -144,12 +144,12 @@ func Test_StoreHealthReport(t *testing.T) {
 	t.Run("storeHealthReport", func(t *testing.T) {
 		n := ukama.NewVirtualNodeId("HomeNode")
 		pathID := n.String()
-		reported := time.Date(2023, 12, 12, 0, 0, 0, 0, time.UTC)
+		reported := time.Date(2023, 12, 12, 0, 0, 0, 0, time.UTC).Unix()
 
 		body := map[string]interface{}{
 			"nodeType":      string(ukama.NODE_TYPE_HOMENODE),
 			"schemaVersion": "1",
-			"reportedAt":    reported.Format(time.RFC3339),
+			"reportedAt":    strconv.FormatInt(reported, 10),
 			"payload":       map[string]string{"k": "v"},
 		}
 		jdata, err := json.Marshal(body)

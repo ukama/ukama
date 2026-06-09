@@ -153,6 +153,9 @@ sort_systems_by_dependency() {
             "inventory")
                 SYSTEMS+=("5 $key")
                 ;;
+            "operation")
+                SYSTEMS+=("5 $key")
+                ;;
             "registry")
                 SYSTEMS+=("6 $key")
                 ;;
@@ -354,6 +357,7 @@ if [ "$IS_INCLUDE_BFF" = true ]; then
     SYS_QUERY_12="UPDATE PUBLIC.systems SET api_gw_url = 'http://api-gateway-dummy:8080' WHERE systems."name" = 'dummy'";
     SYS_QUERY_13="UPDATE PUBLIC.systems SET api_gw_url = 'http://api-gateway-messaging:8080' WHERE systems."name" = 'messaging'";
     SYS_QUERY_14="UPDATE PUBLIC.systems SET api_gw_url = 'http://api-gateway-hub:8080' WHERE systems."name" = 'hub'";
+    SYS_QUERY_15="UPDATE PUBLIC.systems SET api_gw_url = 'http://api-gateway-operation:8080' WHERE systems."name" = 'operation'";
 fi
 if [ "$IS_INCLUDE_BFF" = false ]; then
     SYS_QUERY_1="UPDATE PUBLIC.systems SET api_gw_url = 'http://localhost:8075' WHERE systems."name" = 'registry'";
@@ -371,6 +375,7 @@ if [ "$IS_INCLUDE_BFF" = false ]; then
     SYS_QUERY_13="UPDATE PUBLIC.systems SET api_gw_url = 'http://localhost:8079' WHERE systems."name" = 'messaging'";
     SYS_QUERY_14="UPDATE PUBLIC.systems SET api_gw_url = 'http://localhost:8000' WHERE systems."name" = 'hub'";
     SYS_QUERY_14="UPDATE PUBLIC.systems SET api_gw_url = 'http://localhost:8070' WHERE systems."name" = 'factory'";
+    SYS_QUERY_15="UPDATE PUBLIC.systems SET api_gw_url = 'http://localhost:8098' WHERE systems."name" = 'operation'";
 fi
 
 echo "$TAG Registering systems URL in lookup db..."
@@ -389,6 +394,7 @@ psql $DB_URI -c "$SYS_QUERY_11"
 psql $DB_URI -c "$SYS_QUERY_12"
 psql $DB_URI -c "$SYS_QUERY_13"
 psql $DB_URI -c "$SYS_QUERY_14"
+psql $DB_URI -c "$SYS_QUERY_15"
 
 cleanup
 

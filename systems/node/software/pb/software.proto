@@ -51,7 +51,10 @@ message UpdateSoftwareRequest {
     string name = 3;
 }
 message UpdateSoftwareResponse {
-    string message =1;
+    string message = 1;
+    string operationId = 2 [json_name = "operation_id"];
+    string resourceKey = 3 [json_name = "resource_key"];
+    string status = 4;
 }
 
 message Software {

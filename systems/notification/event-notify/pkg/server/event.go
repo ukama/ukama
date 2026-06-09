@@ -359,6 +359,22 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		}
 		return handleEventPaymentFailed(es, msg, &c)
 
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventOperationCompleted]):
+		c := evt.EventToEventConfig[evt.EventOperationCompleted]
+		msg, err := epb.UnmarshalOperationCompletedEvent(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+		return handleEventOperationCompleted(es, msg, &c)
+
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventOperationFailed]):
+		c := evt.EventToEventConfig[evt.EventOperationFailed]
+		msg, err := epb.UnmarshalOperationFailedEvent(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+		return handleEventOperationFailed(es, msg, &c)
+
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventInvoiceGenerate]):
 		c := evt.EventToEventConfig[evt.EventInvoiceGenerate]
 		msg, err := epb.UnmarshalReport(e.Msg, c.Name)
@@ -804,6 +820,24 @@ func handleEventPaymentSuccess(es *EventToNotifyEventServer, msg *epb.Payment, c
 	}
 
 	return es.processEvent(c, es.orgId, "", "", targetId, targetId, jmsg, msg.Id)
+}
+
+func handleEventOperationCompleted(es *EventToNotifyEventServer, msg *epb.OperationCompletedEvent, c *evt.EventConfig) (*epb.EventResponse, error) {
+	jmsg, err := json.Marshal(msg)
+	if err != nil {
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return nil, err
+	}
+	return es.processEvent(c, es.orgId, "", "", "", "", jmsg, msg.OperationId)
+}
+
+func handleEventOperationFailed(es *EventToNotifyEventServer, msg *epb.OperationFailedEvent, c *evt.EventConfig) (*epb.EventResponse, error) {
+	jmsg, err := json.Marshal(msg)
+	if err != nil {
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return nil, err
+	}
+	return es.processEvent(c, es.orgId, "", "", "", "", jmsg, msg.OperationId)
 }
 
 func handleEventPaymentFailed(es *EventToNotifyEventServer, msg *epb.Payment, c *evt.EventConfig) (*epb.EventResponse, error) {

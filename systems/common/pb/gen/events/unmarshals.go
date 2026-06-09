@@ -743,6 +743,26 @@ func UnmarshalNotificationDeletedEvent(msg *anypb.Any, emsg string) (*Notificati
 	return p, nil
 }
 
+func UnmarshalOperationCompletedEvent(msg *anypb.Any, emsg string) (*OperationCompletedEvent, error) {
+	p := &OperationCompletedEvent{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
+		return nil, err
+	}
+	return p, nil
+}
+
+func UnmarshalOperationFailedEvent(msg *anypb.Any, emsg string) (*OperationFailedEvent, error) {
+	p := &OperationFailedEvent{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
+		return nil, err
+	}
+	return p, nil
+}
+
 func UnmarshalOrgIPUpdateEvent(msg *anypb.Any, emsg string) (*OrgIPUpdateEvent, error) {
 	p := &OrgIPUpdateEvent{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
