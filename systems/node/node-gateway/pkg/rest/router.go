@@ -24,7 +24,6 @@ import (
 	"github.com/wI2L/fizz/openapi"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/ukama/ukama/systems/common/config"
 	ukamaPb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
@@ -119,7 +118,7 @@ func (r *Router) init() {
 
 	health := endpoint.Group("/health", "Health", "Health service for the node")
 	health.POST("/nodes/:node_id/performance",
-		append(formatDoc("Store health report", "Path: node id. Body: full health JSON (nodeType, reportedAt RFC3339, schemaVersion, capabilities, system, interfaces, apps, events, etc.)."),
+		append(formatDoc("Store health report", "Path: node id. Body: full health JSON (nodeType, reportedAt unix seconds, schemaVersion, capabilities, system, interfaces, apps, events, etc.)."),
 			fizz.InputModel(&StoreHealthReportOpenAPIInput{}),
 		),
 		tonic.Handler(r.postHealthReportHandler, http.StatusCreated),
@@ -210,19 +209,19 @@ func (r *Router) postHealthReportHandler(c *gin.Context, req *StoreHealthReportR
 }
 
 func (r *Router) listHealthReportsHandler(c *gin.Context, req *ListHealthReportsRequest) (*healthPb.ListReportsResponse, error) {
-	var reportedAtPb *timestamppb.Timestamp
+	var reportedAt int64
 	if req.ReportedAt != "" {
-		t, err := time.Parse(time.RFC3339, req.ReportedAt)
+		v, err := strconv.ParseInt(req.ReportedAt, 10, 64)
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "reportedAt must be RFC3339: %v", err)
+			return nil, status.Errorf(codes.InvalidArgument, "reportedAt must be unix seconds: %v", err)
 		}
-		reportedAtPb = timestamppb.New(t)
+		reportedAt = v
 	}
 
 	return r.clients.Health.ListReports(&healthPb.ListReportsRequest{
 		ReportId:   req.ReportId,
 		NodeId:     req.NodeId,
-		ReportedAt: reportedAtPb,
+		ReportedAt: reportedAt,
 		Timeframe:  ukamaPb.FilterTimeframesType(ukama.ReturnFilterTimeframesType(ukama.ParseFilterTimeframesType(req.Timeframe))),
 	})
 }

@@ -81,7 +81,7 @@ type StoreHealthReportOpenAPIInput struct {
 	SchemaVersion string                   `json:"schemaVersion" example:"1"`
 	NodeID        string                   `json:"nodeId,omitempty"`
 	NodeType      string                   `json:"nodeType" example:"HomeNode"`
-	ReportedAt    string                   `json:"reportedAt" example:"2023-12-12T00:00:00Z"`
+	ReportedAt    string                   `json:"reportedAt" example:"1779534357"`
 	Capabilities  []string                 `json:"capabilities,omitempty"`
 	System        map[string]interface{}   `json:"system,omitempty"`
 	Interfaces    map[string]interface{}   `json:"interfaces,omitempty"`

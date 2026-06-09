@@ -56,7 +56,7 @@ var (
 	testCreateAppReq   = &pb.CreateAppRequest{Name: testAppName, Space: testAppSpace, Notes: testAppNotes, MetricsKeys: testMetricsKeys}
 	testGetAppListReq  = &pb.GetAppListRequest{}
 	successCreateMsg   = "App created successfully"
-	successUpdateMsg   = "Software updated successfully"
+	successUpdateMsg   = "Software updated dipatched successfully"
 	invalidVersionMsg  = "Invalid software version provided"
 	alreadyUpToDateMsg = "Software is already up to date"
 )
@@ -135,28 +135,37 @@ func matchStarterUpdateMessage(t *testing.T) interface{} {
 			return false
 		}
 
-		var body map[string]string
+		var body struct {
+			Name string   `json:"name"`
+			Tag  string   `json:"tag"`
+			Hub  []string `json:"hub"`
+		}
 		if err := json.Unmarshal(m.Msg, &body); err != nil {
 			t.Logf("failed to decode message body: %v", err)
 			return false
 		}
 
-		if body["name"] != testAppNameForUpdate {
-			t.Logf("unexpected body.name: got=%s want=%s", body["name"], testAppNameForUpdate)
+		if body.Name != testAppNameForUpdate {
+			t.Logf("unexpected body.name: got=%s want=%s", body.Name, testAppNameForUpdate)
 			return false
 		}
 
-		if body["tag"] != testTagVersion {
-			t.Logf("unexpected body.tag: got=%s want=%s", body["tag"], testTagVersion)
+		if body.Tag != testTagVersion {
+			t.Logf("unexpected body.tag: got=%s want=%s", body.Tag, testTagVersion)
 			return false
 		}
 
-		if body["hub"] != testHubURL {
-			t.Logf("unexpected body.hub: got=%s want=%s", body["hub"], testHubURL)
+		if len(body.Hub) != 1 || body.Hub[0] != testHubURL {
+			t.Logf("unexpected body.hub: got=%v want=[%s]", body.Hub, testHubURL)
 			return false
 		}
 
-		if _, ok := body["host"]; ok {
+		var raw map[string]json.RawMessage
+		if err := json.Unmarshal(m.Msg, &raw); err != nil {
+			t.Logf("failed to decode raw message body: %v", err)
+			return false
+		}
+		if _, ok := raw["host"]; ok {
 			t.Logf("body must not contain deprecated host field")
 			return false
 		}
@@ -328,8 +337,8 @@ func TestUpdateSoftware(t *testing.T) {
 		sRepo := mocks.NewSoftwareRepo(t)
 		sRepo.On("List", testNodeIdNormalized, ukama.UpdateAvailable, testAppNameForUpdate).Return([]*db.Software{sw}, nil)
 		sRepo.On("Update", mock.MatchedBy(func(s *db.Software) bool {
-			return s.CurrentVersion == testTagVersion &&
-				s.Status == ukama.UpToDate &&
+			return s.CurrentVersion == testCurrentVersion &&
+				s.Status == ukama.UpdateInProgress &&
 				len(s.ChangeLogs) > 0
 		})).Return(nil)
 
