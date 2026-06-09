@@ -25,10 +25,12 @@ import {
 import AppModal from '@/components/AppModal';
 import DateChip from '@/components/DateChip';
 import { KpiRow } from '@/components/Kpi';
-import SiteMap, { StatusDot } from '@/components/Map/SiteMap';
+import { StatusDot } from '@/components/Map/SiteMap';
+import UkamaMap, { HOME_MAP_ZOOM } from '@/components/Map/UkamaMap';
 import PageHeader from '@/components/PageHeader';
 import { sectionValue } from '@/components/SectionFallback';
 import type { BizSite } from '@/data';
+import { normalizeCoords } from '@/lib/geo';
 import { useUiPrefs } from '@/lib/store';
 
 const money = (value?: number | null): string =>
@@ -118,13 +120,29 @@ export default function BizHomeScreen() {
         uptime: 0,
         top: '—',
         issue: null,
-        lat: parseFloat(s.latitude) || 0,
-        lng: parseFloat(s.longitude) || 0,
+        lat: normalizeCoords(s.latitude, s.longitude)?.lat ?? 0,
+        lng: normalizeCoords(s.latitude, s.longitude)?.lng ?? 0,
       })),
     [siteStats?.sites],
   );
   const online = sites.filter((s) => s.status === 'online').length;
   const goSite = (id: string) => router.push(`/business/sites/${id}`);
+
+  const BIZ_PIN: Record<string, string> = {
+    online: 'var(--uk-success-bright)',
+    warning: 'var(--uk-warning)',
+    degraded: 'var(--uk-warning)',
+    offline: 'var(--uk-error)',
+  };
+  const bizMarkers = sites
+    .filter((s) => s.lat !== 0 || s.lng !== 0)
+    .map((s) => ({
+      id: s.id,
+      lat: s.lat,
+      lng: s.lng,
+      color: BIZ_PIN[s.status] ?? 'var(--uk-ac)',
+      popup: <div style={{ fontWeight: 600 }}>{s.name}</div>,
+    }));
 
   return (
     <div className="page">
@@ -184,21 +202,30 @@ export default function BizHomeScreen() {
         {networkLoading ? (
           <Skeleton variant="rounded" sx={{ flex: 1, minHeight: 380, mt: 1 }} />
         ) : (
-          <SiteMap
-            sites={sites}
-            title="Sites"
-            fill
-            action={
-              <Button
-                variant="text"
-                startIcon={<ListAltRounded />}
-                onClick={() => setShowSummary(true)}
-              >
+          <div
+            className="card"
+            style={{ padding: 0, overflow: 'hidden', flex: 1, minHeight: 380, display: 'flex', flexDirection: 'column' }}
+          >
+            <div
+              className="sec-head"
+              style={{
+                padding: '16px 20px 12px',
+                margin: 0,
+                borderBottom: '1px solid var(--uk-line-soft)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div className="sec-title">Sites</div>
+              <Button variant="text" startIcon={<ListAltRounded />} onClick={() => setShowSummary(true)}>
                 View summary
               </Button>
-            }
-            onSelect={(s) => goSite(s.id)}
-          />
+            </div>
+            <div style={{ flex: 1, minHeight: 300 }}>
+              <UkamaMap markers={bizMarkers} onSelect={goSite} zoom={HOME_MAP_ZOOM} height="100%" />
+            </div>
+          </div>
         )}
       </div>
 

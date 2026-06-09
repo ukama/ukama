@@ -27,7 +27,7 @@ import { useMetricsRangeQuery } from '@/client/graphql/range-metrics.generated';
 import AppModal from '@/components/AppModal';
 import DetailPicker from '@/components/DetailPicker';
 import { EmptyState } from '@/components/EmptyState';
-import MapPanel from '@/components/Map/MapPanel';
+import UkamaMap from '@/components/Map/UkamaMap';
 import MetricLineChart, { ChartMessage, thresholdLegendRows } from '@/components/MetricLineChart';
 import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
@@ -35,6 +35,7 @@ import StatusBadge from '@/components/StatusBadge';
 import { useToast } from '@/components/ToastProvider';
 import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
 import { useUiPrefs } from '@/lib/store';
+import { normalizeCoords } from '@/lib/geo';
 import { toUkamaNode } from '@/lib/mappers/nodes';
 import { toSite } from '@/lib/mappers/sites';
 import { Ic } from '../../_components/icons';
@@ -395,8 +396,11 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
   });
   const dto = siteSection.site;
   const installDate = fmtDate(dto.installDate || dto.createdAt);
-  const coords =
-    dto.latitude && dto.longitude ? `${dto.latitude}, ${dto.longitude}` : null;
+  const geo = normalizeCoords(dto.latitude, dto.longitude);
+  const coords = geo ? `${geo.lat}, ${geo.lng}` : null;
+  const mapMarkers = geo
+    ? [{ id: s.id, lat: geo.lat, lng: geo.lng, color: statusColor(s.status) }]
+    : [];
   const statusText =
     s.status === 'offline'
       ? 'is offline'
@@ -507,8 +511,13 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
           )}
         </SectionCard>
 
-        <div className="card" style={{ padding: 0, overflow: 'hidden', position: 'relative', minHeight: 200 }}>
-          <MapPanel sites={[s]} selected={s.id} compact />
+        <div
+          className="card"
+          style={{ padding: 0, overflow: 'hidden', position: 'relative', minHeight: 200, display: 'flex' }}
+        >
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <UkamaMap markers={mapMarkers} zoom={12} fitToMarkers={false} height="100%" />
+          </div>
           <div
             style={{
               position: 'absolute',
