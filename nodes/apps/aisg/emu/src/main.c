@@ -19,19 +19,21 @@
 #include "usys_log.h"
 #include "version.h"
 
-static volatile bool gRunning = true;
+static volatile sig_atomic_t gRunning = 1;
 
 typedef struct {
     EmuConfig *config;
     EmuModel *model;
 } ServerThreadArg;
 
-static void handle_signal(int sig) {
+static void handle_signal(int sig)
+{
     (void)sig;
-    gRunning = false;
+    gRunning = 0;
 }
 
-static void *server_thread(void *arg) {
+static void *server_thread(void *arg)
+{
     ServerThreadArg *threadArg;
 
     threadArg = arg;
@@ -40,6 +42,24 @@ static void *server_thread(void *arg) {
     return NULL;
 }
 
+static bool install_signal_handlers(void)
+{
+    struct sigaction sa;
+
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = handle_signal;
+    sigemptyset(&sa.sa_mask);
+
+    if (sigaction(SIGINT, &sa, NULL) < 0) {
+        return false;
+    }
+
+    if (sigaction(SIGTERM, &sa, NULL) < 0) {
+        return false;
+    }
+
+    return true;
+}
 
 static void set_log_level(const char *level)
 {
@@ -60,12 +80,13 @@ static void set_log_level(const char *level)
     usys_log_set_level(logLevel);
 }
 
-static void usage(const char *prog) {
+static void usage(const char *prog)
+{
     fprintf(stderr, "Usage: %s [-c config] [-l log-level]\n", prog);
 }
 
-int main(int argc, char **argv) {
-
+int main(int argc, char **argv)
+{
     EmuConfig config;
     EmuModel model;
     UInst web;
@@ -75,9 +96,11 @@ int main(int argc, char **argv) {
     int opt;
 
     configFile = AISG_EMU_CONFIG_FILE;
+
     if (!emu_config_init(&config)) {
         return 1;
     }
+
     emu_model_init(&model);
     usys_log_set_level(LOG_INFO);
 
@@ -91,10 +114,14 @@ int main(int argc, char **argv) {
             break;
         case 'v':
             printf("%s\n", VERSION);
+            emu_model_free(&model);
+            emu_config_free(&config);
             return 0;
         case 'h':
         default:
             usage(argv[0]);
+            emu_model_free(&model);
+            emu_config_free(&config);
             return 1;
         }
     }
@@ -105,24 +132,34 @@ int main(int argc, char **argv) {
 
     emu_model_load_scenario(&model, config.scenario);
 
-    signal(SIGINT,  handle_signal);
-    signal(SIGTERM, handle_signal);
+    if (!install_signal_handlers()) {
+        usys_log_error("failed to install signal handlers");
+        emu_model_free(&model);
+        emu_config_free(&config);
+        return 1;
+    }
 
     threadArg.config = &config;
     threadArg.model  = &model;
+
     if (pthread_create(&tid, NULL, server_thread, &threadArg) != 0) {
         usys_log_error("failed to create emulator socket thread");
         emu_model_free(&model);
+        emu_config_free(&config);
         return 1;
     }
 
     start_web_service(&web, &config, &model);
+
     while (gRunning) {
         pause();
     }
 
+    usys_log_info("stopping aisg-emu");
+
     stop_web_service(&web);
     pthread_join(tid, NULL);
+
     emu_model_free(&model);
     emu_config_free(&config);
 

@@ -9,9 +9,13 @@
 #ifndef AISG_EMU_SERVER_H_
 #define AISG_EMU_SERVER_H_
 
+#include <signal.h>
+
 #include "config.h"
 #include "model.h"
 
-bool emu_server_run(EmuConfig *config, EmuModel *model, volatile bool *running);
+bool emu_server_run(EmuConfig *config,
+                    EmuModel *model,
+                    volatile sig_atomic_t *running);
 
 #endif /* AISG_EMU_SERVER_H_ */

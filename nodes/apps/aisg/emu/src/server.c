@@ -7,6 +7,7 @@
  */
 
 #include <errno.h>
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,6 +23,7 @@
 
 #define EMU_SERVER_READ_BUF 8192
 #define EMU_SERVER_BACKLOG  8
+#define EMU_SERVER_POLL_MS  250
 
 static bool read_line(int fd, char *buf, size_t size)
 {
@@ -63,6 +65,10 @@ static bool write_all(int fd, const char *data, size_t len)
     while (off < len) {
         n = write(fd, data + off, len - off);
         if (n <= 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+
             return false;
         }
 
@@ -143,11 +149,15 @@ static void handle_client(int fd, EmuModel *model)
 
     if (!read_line(fd, line, sizeof(line))) {
         handle_invalid_request(fd, "failed to read request");
+        emu_response_free(&response);
+        emu_request_free(&request);
         return;
     }
 
     if (!parse_request_line(line, &request)) {
         handle_invalid_request(fd, "invalid request envelope");
+        emu_response_free(&response);
+        emu_request_free(&request);
         return;
     }
 
@@ -172,6 +182,12 @@ static bool bind_server_socket(int serverFd, const char *socketPath)
 
     memset(&addr, 0, sizeof(addr));
     addr.sun_family = AF_UNIX;
+
+    if (strlen(socketPath) >= sizeof(addr.sun_path)) {
+        usys_log_error("socket path too long: %s", socketPath);
+        return false;
+    }
+
     snprintf(addr.sun_path, sizeof(addr.sun_path), "%s", socketPath);
 
     if (bind(serverFd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
@@ -182,7 +198,39 @@ static bool bind_server_socket(int serverFd, const char *socketPath)
     return true;
 }
 
-bool emu_server_run(EmuConfig *config, EmuModel *model, volatile bool *running)
+static bool wait_for_client(int serverFd, volatile sig_atomic_t *running)
+{
+    struct pollfd pfd;
+    int rc;
+
+    memset(&pfd, 0, sizeof(pfd));
+    pfd.fd = serverFd;
+    pfd.events = POLLIN;
+
+    while (*running) {
+        rc = poll(&pfd, 1, EMU_SERVER_POLL_MS);
+        if (rc > 0) {
+            return true;
+        }
+
+        if (rc == 0) {
+            continue;
+        }
+
+        if (errno == EINTR) {
+            continue;
+        }
+
+        usys_log_error("poll failed: %s", strerror(errno));
+        return false;
+    }
+
+    return false;
+}
+
+bool emu_server_run(EmuConfig *config,
+                    EmuModel *model,
+                    volatile sig_atomic_t *running)
 {
     int serverFd;
     int clientFd;
@@ -209,12 +257,21 @@ bool emu_server_run(EmuConfig *config, EmuModel *model, volatile bool *running)
                        config->socketPath,
                        strerror(errno));
         close(serverFd);
+        unlink(config->socketPath);
         return false;
     }
 
     usys_log_info("aisg-emu listening on %s", config->socketPath);
 
     while (*running) {
+        if (!wait_for_client(serverFd, running)) {
+            break;
+        }
+
+        if (!*running) {
+            break;
+        }
+
         clientFd = accept(serverFd, NULL, NULL);
         if (clientFd < 0) {
             if (errno == EINTR) {
@@ -231,6 +288,8 @@ bool emu_server_run(EmuConfig *config, EmuModel *model, volatile bool *running)
 
     close(serverFd);
     unlink(config->socketPath);
+
+    usys_log_info("aisg-emu socket server stopped");
 
     return true;
 }
