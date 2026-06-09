@@ -65,6 +65,7 @@ static void usage(const char *prog) {
 }
 
 int main(int argc, char **argv) {
+
     EmuConfig config;
     EmuModel model;
     UInst web;
@@ -74,7 +75,9 @@ int main(int argc, char **argv) {
     int opt;
 
     configFile = AISG_EMU_CONFIG_FILE;
-    emu_config_init(&config);
+    if (!emu_config_init(&config)) {
+        return 1;
+    }
     emu_model_init(&model);
     usys_log_set_level(LOG_INFO);
 
@@ -101,11 +104,12 @@ int main(int argc, char **argv) {
     }
 
     emu_model_load_scenario(&model, config.scenario);
-    signal(SIGINT, handle_signal);
+
+    signal(SIGINT,  handle_signal);
     signal(SIGTERM, handle_signal);
 
     threadArg.config = &config;
-    threadArg.model = &model;
+    threadArg.model  = &model;
     if (pthread_create(&tid, NULL, server_thread, &threadArg) != 0) {
         usys_log_error("failed to create emulator socket thread");
         emu_model_free(&model);

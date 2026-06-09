@@ -104,13 +104,20 @@ JsonObj *emu_model_status(EmuModel *model)
         return NULL;
     }
 
-    json_object_set_new(json, "mode", json_string("operating"));
-    json_object_set_new(json, "busy", json_boolean(model->busy));
-    json_object_set_new(json, "present", json_boolean(model->present));
-    json_object_set_new(json, "configured", json_boolean(model->configured));
-    json_object_set_new(json, "calibrated", json_boolean(model->calibrated));
-    json_object_set_new(json, "powerManaged", json_boolean(false));
-    json_object_set_new(json, "transport", json_string("emu"));
+    json_object_set_new(json, "mode",
+                        json_string("operating"));
+    json_object_set_new(json, "busy",
+                        json_boolean(model->busy));
+    json_object_set_new(json, "present",
+                        json_boolean(model->present));
+    json_object_set_new(json, "configured",
+                        json_boolean(model->configured));
+    json_object_set_new(json, "calibrated",
+                        json_boolean(model->calibrated));
+    json_object_set_new(json, "powerManaged",
+                        json_boolean(false));
+    json_object_set_new(json, "transport",
+                        json_string("emu"));
 
     return json;
 }

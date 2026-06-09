@@ -22,9 +22,10 @@ static void copy_str(char *dst, size_t size, const char *src) {
     snprintf(dst, size, "%s", src ? src : "");
 }
 
-void emu_config_init(EmuConfig *config) {
+bool emu_config_init(EmuConfig *config) {
+
     if (config == NULL) {
-        return;
+        return false;
     }
 
     memset(config, 0, sizeof(EmuConfig));
@@ -34,11 +35,15 @@ void emu_config_init(EmuConfig *config) {
     copy_str(config->scenario, sizeof(config->scenario), "normal");
     config->servicePort = usys_find_service_port(AISG_EMU_SERVICE_NAME);
     if (config->servicePort <= 0) {
-        config->servicePort = AISG_EMU_DEFAULT_PORT;
+        usys_log_error("Unable to find service port");
+        return false;
     }
+
+    return true;
 }
 
 bool emu_config_load(EmuConfig *config, const char *file) {
+
     FILE *fp;
     char errbuf[256];
     toml_table_t *root;
@@ -52,6 +57,7 @@ bool emu_config_load(EmuConfig *config, const char *file) {
 
     fp = fopen(file, "r");
     if (fp == NULL) {
+        usys_log_error("Unable to open config file: %s", file);
         return false;
     }
 

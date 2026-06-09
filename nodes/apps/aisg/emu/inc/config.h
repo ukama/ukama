@@ -11,18 +11,19 @@
 
 #include "emu.h"
 
-#define AISG_EMU_CONFIG_FILE "config/config.toml"
-#define AISG_EMU_SOCKET_PATH "/var/run/aisg-ctrl.sock"
-#define AISG_EMU_SERVICE_NAME "aisg-emu"
-#define AISG_EMU_DEFAULT_PORT 18112
+#include "usys_services.h"
+
+#define AISG_EMU_CONFIG_FILE  "/ukama/configs/aisg-emu/config.toml"
+#define AISG_EMU_SOCKET_PATH  "/var/run/aisg-ctrl.sock"
+#define AISG_EMU_SERVICE_NAME SERVICE_AISG_EMU
 
 typedef struct {
     char socketPath[128];
     char scenario[64];
-    int servicePort;
+    int  servicePort;
 } EmuConfig;
 
-void emu_config_init(EmuConfig *config);
+bool emu_config_init(EmuConfig *config);
 bool emu_config_load(EmuConfig *config, const char *file);
 void emu_config_free(EmuConfig *config);
 

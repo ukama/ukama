@@ -45,6 +45,8 @@ extern "C" {
 #define SERVICE_PCRF             "pcrf"
 #define SERVICE_INIT_NETWORK     "init-network"
 #define SERVICE_EXAMPLE          "example"
+#define SERVICE_AISG             "aisg"
+#define SERVICE_AISG_EMU         "aisg-emu"	
 
 #ifdef __cplusplus
 }
