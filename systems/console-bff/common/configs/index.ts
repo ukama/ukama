@@ -105,6 +105,7 @@ const PAYMENT_PORT = parseInt(process.env.PAYMENT_PORT ?? "5061");
 const REPORT_PORT = parseInt(process.env.REPORT_PORT ?? "5062");
 const SOFTWARE_PORT = parseInt(process.env.SOFTWARE_PORT ?? "5063");
 const OPERATION_PORT = parseInt(process.env.OPERATION_PORT ?? "5064");
+const ANALYTICS_PORT = parseInt(process.env.ANALYTICS_PORT ?? "5065");
 
 const SkipSubGraphs = ["state"] as const;
 const skipSubGraphsSet = new Set<string>(SkipSubGraphs);
@@ -260,6 +261,12 @@ export const SUB_GRAPHS: Record<
     name: "operation",
     port: OPERATION_PORT,
     url: `http://localhost:${OPERATION_PORT}`,
+    isPingedSuccess: false,
+  },
+  analytics: {
+    name: "analytics",
+    port: ANALYTICS_PORT,
+    url: `http://localhost:${ANALYTICS_PORT}`,
     isPingedSuccess: false,
   },
 };

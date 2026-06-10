@@ -15,6 +15,7 @@
  */
 import type { IncomingHttpHeaders } from "http";
 
+import AnalyticsAPI from "../analytics/datasource/analytics_api";
 import BillingAPI from "../billing/datasource/billing_api";
 import { THeaders } from "../common/types";
 import { parseExpressHeaders, parseToken } from "../common/utils";
@@ -62,6 +63,7 @@ export interface AppDataSources {
   metric: MetricAPI;
   notification: NotificationAPI;
   operation: OperationAPI;
+  analytics: AnalyticsAPI;
 }
 
 export interface AppContext {
@@ -116,4 +118,5 @@ export const buildDataSources = (): AppDataSources => ({
   metric: new MetricAPI(),
   notification: new NotificationAPI(),
   operation: new OperationAPI(),
+  analytics: new AnalyticsAPI(),
 });
