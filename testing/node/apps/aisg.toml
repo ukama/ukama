@@ -1,0 +1,23 @@
+[build-from]
+	base="alpine"
+	version="latest"
+
+[build-compile]
+	version="0.1"
+	static="false"
+	source="/nodes/apps/aisg/aisgd"
+	cmd="make"
+	bin_from="/nodes/apps/aisg/aisgd/aisgd"
+	bin_to="/sbin"
+
+[app-exec]
+	name="aisg"
+	version="latest"
+	bin="aisgd"
+	path="/sbin"
+	autostart="false"
+	autorestart="true"
+	startretries=5
+	group="service"
+
+[app-exec.env]
