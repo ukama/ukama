@@ -5,11 +5,7 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import {
-  OperationDto,
-  ResourceLockDto,
-  StartOperationResponseDto,
-} from "../resolvers/types";
+import { OperationDto, ResourceLockDto } from "../resolvers/types";
 
 /* The operation gateway emits snake_case JSON at the REST boundary. */
 interface OperationRest {
@@ -48,14 +44,6 @@ const mapOperation = (op?: OperationRest | null): OperationDto | undefined => {
     createdAt: op.created_at,
   };
 };
-
-export const mapStartOperation = (res: {
-  operation?: OperationRest;
-  conflicting_operation?: OperationRest;
-}): StartOperationResponseDto => ({
-  operation: mapOperation(res.operation),
-  conflictingOperation: mapOperation(res.conflicting_operation),
-});
 
 export const mapGetOperation = (res: {
   operation?: OperationRest;

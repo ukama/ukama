@@ -8,7 +8,7 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import type { AppContext } from "../../server/context";
-import { AnalyticsNodeInput, NetworkNodeDto } from "./network.types";
+import { AnalyticsNodeInput, NetworkNodeDto } from "./types/network";
 
 @Resolver()
 export class GetNetworkNodeResolver {

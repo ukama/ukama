@@ -7,18 +7,12 @@
  */
 import { NonEmptyArray } from "type-graphql";
 
-import { ForceUnlockResolver } from "./forceUnlock";
 import { GetOperationResolver } from "./getOperation";
 import { GetResourceLockResolver } from "./getResourceLock";
-import { MarkOperationRunningResolver } from "./markOperationRunning";
-import { StartOperationResolver } from "./startOperation";
 
 const resolvers: NonEmptyArray<any> = [
-  StartOperationResolver,
   GetOperationResolver,
   GetResourceLockResolver,
-  MarkOperationRunningResolver,
-  ForceUnlockResolver,
 ];
 
 export default resolvers;

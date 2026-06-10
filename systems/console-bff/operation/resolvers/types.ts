@@ -5,13 +5,13 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import { Field, Float, InputType, Int, ObjectType } from "type-graphql";
+import { Field, Float, InputType, ObjectType } from "type-graphql";
 
 /**
  * An operation row from the operation system. `status` is the operation
  * lifecycle state as returned by the gateway (PENDING/RUNNING/SUCCESS/
  * FAILED/TIMEOUT/CANCELLED) and `fencingToken` is the monotonic guard token
- * the caller must echo back on markRunning.
+ * for the operation's lease.
  */
 @ObjectType()
 export class OperationDto {
@@ -56,42 +56,12 @@ export class OperationDto {
 }
 
 @ObjectType()
-export class StartOperationResponseDto {
-  @Field(() => OperationDto, { nullable: true })
-  operation?: OperationDto;
-
-  @Field(() => OperationDto, { nullable: true })
-  conflictingOperation?: OperationDto;
-}
-
-@ObjectType()
 export class ResourceLockDto {
   @Field()
   locked: boolean;
 
   @Field(() => OperationDto, { nullable: true })
   operation?: OperationDto;
-}
-
-@InputType()
-export class StartOperationInputDto {
-  @Field()
-  type: string;
-
-  @Field()
-  system: string;
-
-  @Field()
-  resourceKey: string;
-
-  @Field({ nullable: true })
-  requestedBy?: string;
-
-  @Field({ nullable: true })
-  idempotencyKey?: string;
-
-  @Field(() => Int, { nullable: true })
-  leaseSeconds?: number;
 }
 
 @InputType()
@@ -104,22 +74,4 @@ export class GetOperationInputDto {
 export class GetResourceLockInputDto {
   @Field()
   resourceKey: string;
-}
-
-@InputType()
-export class MarkOperationRunningInputDto {
-  @Field()
-  id: string;
-
-  @Field(() => Float)
-  fencingToken: number;
-}
-
-@InputType()
-export class ForceUnlockInputDto {
-  @Field()
-  id: string;
-
-  @Field()
-  reason: string;
 }

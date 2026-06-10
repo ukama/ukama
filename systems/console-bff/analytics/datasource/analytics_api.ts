@@ -16,14 +16,14 @@ import {
   InventoryReadinessDto,
   PackagePerformanceDto,
   SalesOverviewDto,
-} from "../resolvers/business.types";
+} from "../resolvers/types/business";
 import {
   RebuildRollupsInput,
   RebuildRollupsResultDto,
   RefreshInput,
   RefreshResultDto,
   RefreshStateDto,
-} from "../resolvers/collector.types";
+} from "../resolvers/types/collector";
 import {
   CustomerByIdInput,
   CustomerDetailDto,
@@ -32,7 +32,7 @@ import {
   CustomerSimsDto,
   CustomerSupportDto,
   SimPoolDto,
-} from "../resolvers/customer.types";
+} from "../resolvers/types/customer";
 import {
   AnalyticsNodeInput,
   MetricPanelDto,
@@ -47,8 +47,8 @@ import {
   NetworkSupportSearchDto,
   NetworkTopologyDto,
   NodePoolDto,
-} from "../resolvers/network.types";
-import { AnalyticsWindowInput } from "../resolvers/shared";
+} from "../resolvers/types/network";
+import { AnalyticsWindowInput } from "../resolvers/types/shared";
 import { mapAnalytics } from "./mapper";
 
 const ANALYTICS = "analytics";

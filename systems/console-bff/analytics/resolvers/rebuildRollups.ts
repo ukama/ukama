@@ -11,7 +11,7 @@ import type { AppContext } from "../../server/context";
 import {
   RebuildRollupsInput,
   RebuildRollupsResultDto,
-} from "./collector.types";
+} from "./types/collector";
 
 @Resolver()
 export class RebuildRollupsResolver {

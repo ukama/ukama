@@ -8,8 +8,8 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import type { AppContext } from "../../server/context";
-import { SimPoolDto } from "./customer.types";
-import { AnalyticsWindowInput } from "./shared";
+import { SimPoolDto } from "./types/customer";
+import { AnalyticsWindowInput } from "./types/shared";
 
 @Resolver()
 export class GetSimPoolResolver {

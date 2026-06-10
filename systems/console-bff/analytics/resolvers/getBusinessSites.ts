@@ -8,8 +8,8 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import type { AppContext } from "../../server/context";
-import { BusinessSitesDto } from "./business.types";
-import { AnalyticsWindowInput } from "./shared";
+import { BusinessSitesDto } from "./types/business";
+import { AnalyticsWindowInput } from "./types/shared";
 
 @Resolver()
 export class GetBusinessSitesResolver {

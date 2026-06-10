@@ -8,8 +8,8 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import type { AppContext } from "../../server/context";
-import { NetworkAlarmsDto } from "./network.types";
-import { AnalyticsWindowInput } from "./shared";
+import { NetworkAlarmsDto } from "./types/network";
+import { AnalyticsWindowInput } from "./types/shared";
 
 @Resolver()
 export class GetAlarmsResolver {

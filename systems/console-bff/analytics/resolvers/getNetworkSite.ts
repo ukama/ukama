@@ -8,8 +8,8 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import type { AppContext } from "../../server/context";
-import { AnalyticsSiteInput } from "./business.types";
-import { NetworkSiteDto } from "./network.types";
+import { AnalyticsSiteInput } from "./types/business";
+import { NetworkSiteDto } from "./types/network";
 
 @Resolver()
 export class GetNetworkSiteResolver {

@@ -8,8 +8,8 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import type { AppContext } from "../../server/context";
-import { NetworkOverviewDto } from "./network.types";
-import { AnalyticsWindowInput } from "./shared";
+import { NetworkOverviewDto } from "./types/network";
+import { AnalyticsWindowInput } from "./types/shared";
 
 @Resolver()
 export class GetNetworkOverviewResolver {

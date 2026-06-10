@@ -8,7 +8,7 @@
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
 import type { AppContext } from "../../server/context";
-import { RefreshInput, RefreshResultDto } from "./collector.types";
+import { RefreshInput, RefreshResultDto } from "./types/collector";
 
 @Resolver()
 export class RefreshAnalyticsResolver {

@@ -8,7 +8,7 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import type { AppContext } from "../../server/context";
-import { CustomerByIdInput, CustomerDetailDto } from "./customer.types";
+import { CustomerByIdInput, CustomerDetailDto } from "./types/customer";
 
 @Resolver()
 export class GetCustomerResolver {

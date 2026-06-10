@@ -8,7 +8,7 @@
 import { Ctx, Query, Resolver } from "type-graphql";
 
 import type { AppContext } from "../../server/context";
-import { RefreshStateDto } from "./collector.types";
+import { RefreshStateDto } from "./types/collector";
 
 @Resolver()
 export class GetRefreshStateResolver {

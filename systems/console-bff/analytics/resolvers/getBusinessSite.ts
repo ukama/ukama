@@ -8,7 +8,7 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import type { AppContext } from "../../server/context";
-import { AnalyticsSiteInput, BusinessSiteDto } from "./business.types";
+import { AnalyticsSiteInput, BusinessSiteDto } from "./types/business";
 
 @Resolver()
 export class GetBusinessSiteResolver {

@@ -8,8 +8,8 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import type { AppContext } from "../../server/context";
-import { CustomerOverviewDto } from "./customer.types";
-import { AnalyticsWindowInput } from "./shared";
+import { CustomerOverviewDto } from "./types/customer";
+import { AnalyticsWindowInput } from "./types/shared";
 
 @Resolver()
 export class GetCustomerOverviewResolver {
