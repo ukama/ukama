@@ -1,0 +1,23 @@
+[build-from]
+	base="alpine"
+	version="latest"
+
+[build-compile]
+	version="0.1"
+	static="false"
+	source="/nodes/apps/aisg/emu"
+	cmd="make"
+	bin_from="/nodes/apps/aisg/emu/aisg-emu"
+	bin_to="/sbin"
+
+[app-exec]
+	name="aisg-emu"
+	version="latest"
+	bin="aisg-emu"
+	path="/sbin"
+	autostart="false"
+	autorestart="true"
+	startretries=5
+	group="on-boot"
+
+[app-exec.env]
