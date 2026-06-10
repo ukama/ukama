@@ -53,4 +53,5 @@ generate \
     "nodes/apps/init-network" \
     "nodes/apps/pcrf" \
     "nodes/apps/power" \
-    "nodes/apps/switchd"
+    "nodes/apps/switchd" \
+    "nodes/apps/aisg"
