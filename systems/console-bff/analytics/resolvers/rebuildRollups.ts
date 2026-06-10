@@ -8,7 +8,10 @@
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
 import type { AppContext } from "../../server/context";
-import { RebuildRollupsInput, RebuildRollupsResultDto } from "./collector.types";
+import {
+  RebuildRollupsInput,
+  RebuildRollupsResultDto,
+} from "./collector.types";
 
 @Resolver()
 export class RebuildRollupsResolver {

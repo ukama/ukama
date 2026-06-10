@@ -15,11 +15,7 @@ import {
   StartOperationInputDto,
   StartOperationResponseDto,
 } from "../resolvers/types";
-import {
-  mapGetOperation,
-  mapResourceLock,
-  mapStartOperation,
-} from "./mapper";
+import { mapGetOperation, mapResourceLock, mapStartOperation } from "./mapper";
 
 const OPERATIONS = "operations";
 
@@ -28,7 +24,9 @@ class OperationAPI extends BaseRESTDataSource {
     baseURL: string,
     data: StartOperationInputDto
   ): Promise<StartOperationResponseDto> => {
-    this.logger.info(`StartOperation [POST]: ${baseURL}/${VERSION}/${OPERATIONS}`);
+    this.logger.info(
+      `StartOperation [POST]: ${baseURL}/${VERSION}/${OPERATIONS}`
+    );
     this.baseURL = baseURL;
     return this.post(`/${VERSION}/${OPERATIONS}`, {
       body: {

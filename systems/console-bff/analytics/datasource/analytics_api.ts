@@ -35,6 +35,7 @@ import {
 } from "../resolvers/customer.types";
 import {
   AnalyticsNodeInput,
+  MetricPanelDto,
   NetworkAlarmsDto,
   NetworkEventsDto,
   NetworkMetricsDto,
@@ -46,7 +47,6 @@ import {
   NetworkSupportSearchDto,
   NetworkTopologyDto,
   NodePoolDto,
-  MetricPanelDto,
 } from "../resolvers/network.types";
 import { AnalyticsWindowInput } from "../resolvers/shared";
 import { mapAnalytics } from "./mapper";
@@ -300,7 +300,9 @@ class AnalyticsAPI extends BaseRESTDataSource {
     data: AnalyticsWindowInput
   ): Promise<MetricPanelDto> => {
     this.baseURL = baseURL;
-    return this.callGet<MetricPanelDto>(`network/backhaul?${windowQuery(data)}`);
+    return this.callGet<MetricPanelDto>(
+      `network/backhaul?${windowQuery(data)}`
+    );
   };
 
   getPower = async (
@@ -316,7 +318,9 @@ class AnalyticsAPI extends BaseRESTDataSource {
     data: AnalyticsWindowInput
   ): Promise<NetworkAlarmsDto> => {
     this.baseURL = baseURL;
-    return this.callGet<NetworkAlarmsDto>(`network/alarms?${windowQuery(data)}`);
+    return this.callGet<NetworkAlarmsDto>(
+      `network/alarms?${windowQuery(data)}`
+    );
   };
 
   getMetrics = async (
@@ -334,7 +338,9 @@ class AnalyticsAPI extends BaseRESTDataSource {
     data: AnalyticsWindowInput
   ): Promise<NetworkEventsDto> => {
     this.baseURL = baseURL;
-    return this.callGet<NetworkEventsDto>(`network/events?${windowQuery(data)}`);
+    return this.callGet<NetworkEventsDto>(
+      `network/events?${windowQuery(data)}`
+    );
   };
 
   supportSearch = async (
@@ -384,7 +390,9 @@ class AnalyticsAPI extends BaseRESTDataSource {
     return this.get(url)
       .then(res => mapAnalytics<T>(res))
       .catch(error => {
-        this.logger.error(`Error fetching analytics ${label ?? path}: ${error}`);
+        this.logger.error(
+          `Error fetching analytics ${label ?? path}: ${error}`
+        );
         throw error;
       });
   };

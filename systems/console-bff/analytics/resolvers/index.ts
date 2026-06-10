@@ -7,6 +7,8 @@
  */
 import { NonEmptyArray } from "type-graphql";
 
+import { GetAlarmsResolver } from "./getAlarms";
+import { GetBackhaulResolver } from "./getBackhaul";
 import { GetBillingSummaryResolver } from "./getBillingSummary";
 import { GetBusinessHomeResolver } from "./getBusinessHome";
 import { GetBusinessSiteResolver } from "./getBusinessSite";
@@ -15,8 +17,6 @@ import { GetCustomerResolver } from "./getCustomer";
 import { GetCustomerOverviewResolver } from "./getCustomerOverview";
 import { GetCustomerSimsResolver } from "./getCustomerSims";
 import { GetCustomerSupportResolver } from "./getCustomerSupport";
-import { GetAlarmsResolver } from "./getAlarms";
-import { GetBackhaulResolver } from "./getBackhaul";
 import { GetEventsResolver } from "./getEvents";
 import { GetInventoryReadinessResolver } from "./getInventoryReadiness";
 import { GetMetricsResolver } from "./getMetrics";
