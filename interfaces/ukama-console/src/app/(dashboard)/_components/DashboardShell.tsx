@@ -16,6 +16,7 @@ import { LensDropdown } from './LensSegment';
 import SetupAlertBar from './SetupAlertBar';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
+import UnconfiguredNodeBar from './UnconfiguredNodeBar';
 
 export default function DashboardShell({
   children,
@@ -40,6 +41,7 @@ export default function DashboardShell({
   return (
     <div className="shell-wrap">
       <SetupAlertBar />
+      <UnconfiguredNodeBar />
       <div className="app" data-rail={rail}>
       <div className="brandcell">
         <UMark className="umark" />

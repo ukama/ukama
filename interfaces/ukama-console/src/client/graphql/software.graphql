@@ -8,17 +8,6 @@
 # as the Phase-2 API reference. Trim to what each screen needs as screens
 # are wired; run `pnpm codegen` to (re)generate types/hooks.
 
-query GetApps {
-  getApps {
-    apps {
-      name
-      space
-      notes
-      metricsKeys
-    }
-  }
-}
-
 query Software($data: GetSoftwaresInput!) {
   getSoftwares(data: $data) {
     software {

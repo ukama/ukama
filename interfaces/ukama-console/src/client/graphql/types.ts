@@ -1400,6 +1400,11 @@ export type QueryCommerceViewArgs = {
 };
 
 
+export type QueryGetAppsArgs = {
+  data: GetSoftwaresInput;
+};
+
+
 export type QueryGetAppsChangeLogArgs = {
   data: NodeAppsChangeLogInput;
 };

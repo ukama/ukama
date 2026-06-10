@@ -3,11 +3,6 @@ import * as Types from './types';
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 const defaultOptions = {} as const;
-export type GetAppsQueryVariables = Types.Exact<{ [key: string]: never; }>;
-
-
-export type GetAppsQuery = { __typename?: 'Query', getApps?: { __typename?: 'Apps', apps: Array<{ __typename?: 'App', name: string, space: string, notes: string, metricsKeys: Array<string> }> } | null };
-
 export type SoftwareQueryVariables = Types.Exact<{
   data: Types.GetSoftwaresInput;
 }>;
@@ -23,53 +18,6 @@ export type UpdateSoftwareMutationVariables = Types.Exact<{
 export type UpdateSoftwareMutation = { __typename?: 'Mutation', updateSoftware: { __typename?: 'StringResponse', message: string } };
 
 
-export const GetAppsDocument = gql`
-    query GetApps {
-  getApps {
-    apps {
-      name
-      space
-      notes
-      metricsKeys
-    }
-  }
-}
-    `;
-
-/**
- * __useGetAppsQuery__
- *
- * To run a query within a React component, call `useGetAppsQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetAppsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetAppsQuery({
- *   variables: {
- *   },
- * });
- */
-export function useGetAppsQuery(baseOptions?: Apollo.QueryHookOptions<GetAppsQuery, GetAppsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetAppsQuery, GetAppsQueryVariables>(GetAppsDocument, options);
-      }
-export function useGetAppsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAppsQuery, GetAppsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetAppsQuery, GetAppsQueryVariables>(GetAppsDocument, options);
-        }
-// @ts-ignore
-export function useGetAppsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetAppsQuery, GetAppsQueryVariables>): Apollo.UseSuspenseQueryResult<GetAppsQuery, GetAppsQueryVariables>;
-export function useGetAppsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAppsQuery, GetAppsQueryVariables>): Apollo.UseSuspenseQueryResult<GetAppsQuery | undefined, GetAppsQueryVariables>;
-export function useGetAppsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAppsQuery, GetAppsQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetAppsQuery, GetAppsQueryVariables>(GetAppsDocument, options);
-        }
-export type GetAppsQueryHookResult = ReturnType<typeof useGetAppsQuery>;
-export type GetAppsLazyQueryHookResult = ReturnType<typeof useGetAppsLazyQuery>;
-export type GetAppsSuspenseQueryHookResult = ReturnType<typeof useGetAppsSuspenseQuery>;
-export type GetAppsQueryResult = Apollo.QueryResult<GetAppsQuery, GetAppsQueryVariables>;
 export const SoftwareDocument = gql`
     query Software($data: GetSoftwaresInput!) {
   getSoftwares(data: $data) {
