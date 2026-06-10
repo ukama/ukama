@@ -39,7 +39,8 @@
   align-items: center;
   gap: 12px;
   padding: 8px 16px;
-  background: var(--uk-ac-soft);
+  /* Translucent accent tint that reads blue in both light and dark modes. */
+  background: color-mix(in srgb, var(--uk-ac) 18%, transparent);
   color: var(--uk-ink);
   border-bottom: 1px solid var(--uk-line);
   font-size: 13.5px;
