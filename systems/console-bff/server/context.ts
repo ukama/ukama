@@ -15,6 +15,7 @@
  */
 import type { IncomingHttpHeaders } from "http";
 
+import AnalyticsAPI from "../analytics/datasource/analytics_api";
 import BillingAPI from "../billing/datasource/billing_api";
 import { THeaders } from "../common/types";
 import { parseExpressHeaders, parseToken } from "../common/utils";
@@ -28,6 +29,7 @@ import MetricAPI from "../metric/datasource/metric_api";
 import NetworkAPI from "../network/datasource/network_api";
 import NodeAPI from "../node/dataSource/node-api";
 import NotificationAPI from "../notification/datasource/notification_api";
+import OperationAPI from "../operation/datasource/operation_api";
 import OrgAPI from "../org/datasource/org_api";
 import PackageAPI from "../package/datasource/package_api";
 import PaymentAPI from "../payment/datasource/payment_api";
@@ -60,6 +62,8 @@ export interface AppDataSources {
   report: ReportAPI;
   metric: MetricAPI;
   notification: NotificationAPI;
+  operation: OperationAPI;
+  analytics: AnalyticsAPI;
 }
 
 export interface AppContext {
@@ -113,4 +117,6 @@ export const buildDataSources = (): AppDataSources => ({
   report: new ReportAPI(),
   metric: new MetricAPI(),
   notification: new NotificationAPI(),
+  operation: new OperationAPI(),
+  analytics: new AnalyticsAPI(),
 });

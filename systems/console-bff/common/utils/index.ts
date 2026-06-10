@@ -411,6 +411,10 @@ const getSystemNameByService = (service: string): string => {
       return "subscriber";
     case "notification":
       return "notification";
+    case "operation":
+      return "operation";
+    case "analytics":
+      return "analytics";
     case "init":
       return "init";
     case "billing":

@@ -16,6 +16,7 @@ import { GraphQLScalarType, GraphQLSchema } from "graphql";
 import { DateTimeResolver } from "graphql-scalars";
 import * as tq from "type-graphql";
 
+import analyticsResolvers from "../analytics/resolvers";
 import billingResolvers from "../billing/resolvers";
 import componentResolvers from "../component/resolvers";
 import controllerResolvers from "../controller/resolvers";
@@ -28,6 +29,7 @@ import metricResolvers from "../metric/resolver";
 import networkResolvers from "../network/resolvers";
 import nodeResolvers from "../node/resolvers";
 import notificationResolvers from "../notification/resolvers";
+import operationResolvers from "../operation/resolvers";
 import orgResolvers from "../org/resolver";
 import packageResolvers from "../package/resolver";
 import paymentResolvers from "../payment/resolver";
@@ -64,6 +66,8 @@ const ALL_RESOLVERS: CallableFunction[] = [
   ...reportResolvers,
   ...metricResolvers,
   ...notificationResolvers,
+  ...operationResolvers,
+  ...analyticsResolvers,
   ...initResolvers,
   // planning-tool is intentionally EXCLUDED for phase 1 (its Prisma client
   // needs a configured PLANNING_TOOL_DB + `prisma generate`). See README
