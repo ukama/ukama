@@ -34,9 +34,12 @@ export default function UnconfiguredNodeBar() {
       sessionStorage.getItem(DISMISS_KEY) === '1',
   );
 
-  // A node in the "unknown" state hasn't been configured yet.
+  // Online + "unknown" state = reachable but not configured yet. Offline
+  // nodes can't be configured, so they don't prompt.
   const pending = (data?.nodesView.nodes.nodes ?? []).filter(
-    (n) => n.status.state?.toLowerCase() === 'unknown',
+    (n) =>
+      n.status.connectivity?.toLowerCase() === 'online' &&
+      n.status.state?.toLowerCase() === 'unknown',
   );
   if (dismissed || pending.length === 0) return null;
 
