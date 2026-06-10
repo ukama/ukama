@@ -1215,6 +1215,8 @@ switchemu       18027/tcp
 epcemu          18028/tcp
 epcemu-data     18029/tcp
 pcrf            18030/tcp
-ukama		18100/tcp   ukama
+aisg		    18031/tcp
+aisg-emu        18032/tcp
+ukama		    18100/tcp   ukama
 remote          18200/tcp   remote
 example         18888/tcp
