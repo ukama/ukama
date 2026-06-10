@@ -17,6 +17,10 @@ import { useRouter } from 'next/navigation';
 import Button from '@mui/material/Button';
 import RestartAltRounded from '@mui/icons-material/RestartAltRounded';
 import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
+import SystemUpdateAltRounded from '@mui/icons-material/SystemUpdateAltRounded';
+import ErrorRounded from '@mui/icons-material/ErrorRounded';
+import HelpRounded from '@mui/icons-material/HelpRounded';
+import CircularProgress from '@mui/material/CircularProgress';
 import Skeleton from '@mui/material/Skeleton';
 
 import { useNodeDetailQuery } from '@/client/graphql/node-detail.generated';
@@ -24,6 +28,7 @@ import { useNodeKpisQuery } from '@/client/graphql/node-kpis.generated';
 import type { MetricsRangeQuery } from '@/client/graphql/range-metrics.generated';
 import { useMetricsRangeQuery } from '@/client/graphql/range-metrics.generated';
 import { useRestartNodeMutation } from '@/client/graphql/controller.generated';
+import { useUpdateSoftwareMutation } from '@/client/graphql/software.generated';
 import AppModal from '@/components/AppModal';
 import AppTabs from '@/components/AppTabs';
 import MetricLineChart, { ChartMessage, thresholdLegendRows } from '@/components/MetricLineChart';
@@ -34,6 +39,7 @@ import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
 import { useToast } from '@/components/ToastProvider';
 import { toUkamaNode } from '@/lib/mappers/nodes';
+import { formatDate } from '@/lib/parsers';
 import { ConnectivityDot, StateChip } from './nodeStatus';
 
 const TABS = ['Overview', 'Network', 'Resources', 'Radio', 'Software'];
@@ -474,7 +480,7 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
       <AppTabs tabs={visibleTabs} value={activeTab} onChange={setTab} scrollable />
 
       {activeTab === 'Software' ? (
-        <NodeApps apps={apps} error={!!softwareSection?.error} />
+        <NodeApps apps={apps} error={!!softwareSection?.error} nodeId={nodeId} />
       ) : (
         <div className="detail-grid">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--uk-gap)' }}>
@@ -541,13 +547,69 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
 }
 
 /** Software tab — node apps as a card grid (legacy NodeSoftwareTab). */
+/** Presentable label + colour for each backend SoftwareStatusType. */
+type SoftwareStatus =
+  | 'up_to_date'
+  | 'update_available'
+  | 'update_in_progress'
+  | 'update_failed'
+  | 'unknown';
+
+const SOFTWARE_STATUS_META: Record<SoftwareStatus, { label: string; color: string }> = {
+  up_to_date: { label: 'Up to date', color: 'var(--uk-success)' },
+  update_available: { label: 'Update available', color: 'var(--uk-ac-dark)' },
+  update_in_progress: { label: 'Updating…', color: 'var(--uk-ac-dark)' },
+  update_failed: { label: 'Update failed', color: 'var(--uk-error)' },
+  unknown: { label: 'Status unknown', color: 'var(--uk-ink-3)' },
+};
+
+const softwareStatusMeta = (status: string) =>
+  SOFTWARE_STATUS_META[status as SoftwareStatus] ?? SOFTWARE_STATUS_META.unknown;
+
+function SoftwareStatusIcon({ status }: { status: string }) {
+  const sx = { fontSize: 18, color: softwareStatusMeta(status).color };
+  switch (status) {
+    case 'up_to_date':
+      return <CheckCircleRounded sx={sx} />;
+    case 'update_available':
+      return <SystemUpdateAltRounded sx={sx} />;
+    case 'update_in_progress':
+      return <CircularProgress size={15} sx={{ color: 'var(--uk-ac-dark)' }} />;
+    case 'update_failed':
+      return <ErrorRounded sx={sx} />;
+    default:
+      return <HelpRounded sx={sx} />;
+  }
+}
+
 function NodeApps({
   apps,
   error,
+  nodeId,
 }: {
   apps: { name: string; status: string; currentVersion: string; desiredVersion: string; releaseDate: string }[];
   error: boolean;
+  nodeId: string;
 }) {
+  const toast = useToast();
+  const [updatingName, setUpdatingName] = useState<string | null>(null);
+  const [updateSoftware] = useUpdateSoftwareMutation({
+    refetchQueries: ['NodeDetail'],
+    awaitRefetchQueries: true,
+  });
+
+  const runUpdate = async (name: string, tag: string) => {
+    setUpdatingName(name);
+    try {
+      await updateSoftware({ variables: { data: { name, nodeId, tag } } });
+      toast(`Updating ${name} → ${tag}`);
+    } catch {
+      toast(`Couldn't update ${name}`);
+    } finally {
+      setUpdatingName(null);
+    }
+  };
+
   if (error) {
     return (
       <div className="card">
@@ -566,11 +628,18 @@ function NodeApps({
     <SectionCard title="Node apps" count={apps.length}>
       <div className="apps-grid">
         {apps.map((app) => {
-          const update = app.status === 'update_available';
+          const meta = softwareStatusMeta(app.status);
+          // In-flight either optimistically (this card was just clicked) or per
+          // the freshly-fetched backend status.
+          const inProgress = app.status === 'update_in_progress' || updatingName === app.name;
+          const canUpdate =
+            !inProgress && (app.status === 'update_available' || app.status === 'update_failed');
+          const showTarget =
+            (app.status === 'update_available' || app.status === 'update_failed') && !!app.desiredVersion;
           return (
             <div key={app.name} className="app-card">
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                <CheckCircleRounded sx={{ fontSize: 18, color: update ? 'var(--uk-ac)' : 'var(--uk-success)' }} />
+                <SoftwareStatusIcon status={inProgress ? 'update_in_progress' : app.status} />
                 <span style={{ fontWeight: 600, textTransform: 'capitalize' }}>{app.name}</span>
               </div>
               <div style={{ fontSize: 12.5, color: 'var(--uk-ink-2)' }}>
@@ -578,16 +647,37 @@ function NodeApps({
               </div>
               {app.releaseDate && (
                 <div style={{ fontSize: 12, color: 'var(--uk-ink-3)', marginTop: 2 }}>
-                  Released {app.releaseDate}
+                  Released {formatDate(app.releaseDate)}
                 </div>
               )}
-              <div style={{ marginTop: 10 }}>
-                {update ? (
-                  <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--uk-ac-dark)' }}>
-                    Update available{app.desiredVersion ? ` → ${app.desiredVersion}` : ''}
-                  </span>
-                ) : (
-                  <span style={{ fontSize: 12.5, color: 'var(--uk-success)' }}>Up to date</span>
+              <div
+                style={{
+                  marginTop: 10,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  gap: 8,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 12.5,
+                    fontWeight: app.status === 'up_to_date' ? 400 : 600,
+                    color: inProgress ? 'var(--uk-ac-dark)' : meta.color,
+                  }}
+                >
+                  {inProgress ? 'Updating…' : meta.label}
+                  {showTarget ? ` → ${app.desiredVersion}` : ''}
+                </span>
+                {canUpdate && (
+                  <Button
+                    size="small"
+                    variant="contained"
+                    disabled={updatingName !== null}
+                    onClick={() => runUpdate(app.name, app.desiredVersion)}
+                  >
+                    {app.status === 'update_failed' ? 'Retry update' : 'Update Now'}
+                  </Button>
                 )}
               </div>
             </div>

@@ -426,11 +426,27 @@
   outline-offset: 2px;
 }
 
-/* Software tab — node apps card grid. */
+/* Software tab — node apps card grid. Cap at 4 wider cards per row, then
+   step down on narrower viewports. */
 .apps-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--uk-gap);
+}
+@media (max-width: 1200px) {
+  .apps-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 820px) {
+  .apps-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 540px) {
+  .apps-grid {
+    grid-template-columns: 1fr;
+  }
 }
 .app-card {
   border: 1px solid var(--uk-line);
