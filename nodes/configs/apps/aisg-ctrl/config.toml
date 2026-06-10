@@ -1,5 +1,5 @@
 [service]
-socket = "/var/run/aisg-ctrl.sock"
+socket = "/tmp/aisg-ctrl.sock"
 
 [backend]
 type = "raw-rs485"

@@ -11,7 +11,7 @@
 	bin_to="/sbin"
 
 [app-exec]
-	name="aisg-emu"
+	name="aisgemu"
 	version="latest"
 	bin="aisg-emu"
 	path="/sbin"

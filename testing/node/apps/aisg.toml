@@ -5,9 +5,9 @@
 [build-compile]
 	version="0.1"
 	static="false"
-	source="/nodes/apps/aisg"
+	source="/nodes/apps/aisg/aisgd"
 	cmd="make"
-	bin_from="/nodes/apps/aisg/aisgd"
+	bin_from="/nodes/apps/aisg/aisgd/aisgd"
 	bin_to="/sbin"
 
 [app-exec]
