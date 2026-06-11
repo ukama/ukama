@@ -94,7 +94,6 @@ services:
   networks:
    ukama-net:
     ipv4_address: 10.1.0.100
-
   depends_on:
    - msgclient-messaging
 
@@ -162,6 +161,8 @@ services:
   restart: always
   networks:
    - ukama-net
+  depends_on:
+   - api-gateway-messaging
 
 networks:
  ukama-net:
