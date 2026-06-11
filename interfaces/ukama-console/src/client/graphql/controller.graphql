@@ -11,3 +11,23 @@ mutation RestartNode($data: RestartNodeInputDto!) {
     success
   }
 }
+
+# Site controller actions (restart, RF/service toggles).
+
+mutation RestartSite($data: RestartSiteInputDto!) {
+  restartSite(data: $data) {
+    success
+  }
+}
+
+mutation ToggleRFStatus($data: ToggleRFStatusInputDto!) {
+  toggleRFStatus(data: $data) {
+    success
+  }
+}
+
+mutation ToggleService($data: ToggleRFStatusInputDto!) {
+  toggleService(data: $data) {
+    success
+  }
+}

@@ -16,11 +16,24 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@mui/material/Button';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Switch from '@mui/material/Switch';
+import Divider from '@mui/material/Divider';
 import TextField from '@mui/material/TextField';
 import Skeleton from '@mui/material/Skeleton';
 import GroupRounded from '@mui/icons-material/GroupRounded';
 import RestartAltRounded from '@mui/icons-material/RestartAltRounded';
+import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded';
+import SettingsRounded from '@mui/icons-material/SettingsRounded';
 
+import {
+  useRestartSiteMutation,
+  useToggleRfStatusMutation,
+  useToggleServiceMutation,
+} from '@/client/graphql/controller.generated';
 import { useNetworkSiteDetailQuery } from '@/client/graphql/site-detail.generated';
 import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
 import { useMetricsRangeQuery } from '@/client/graphql/range-metrics.generated';
@@ -28,7 +41,10 @@ import AppModal from '@/components/AppModal';
 import DetailPicker from '@/components/DetailPicker';
 import { EmptyState } from '@/components/EmptyState';
 import UkamaMap from '@/components/Map/UkamaMap';
-import MetricLineChart, { ChartMessage, thresholdLegendRows } from '@/components/MetricLineChart';
+import MetricLineChart, {
+  ChartMessage,
+  thresholdLegendRows,
+} from '@/components/MetricLineChart';
 import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
 import StatusBadge from '@/components/StatusBadge';
@@ -53,7 +69,11 @@ const fmtDate = (raw?: string | null): string => {
   if (!raw) return '—';
   const d = new Date(raw);
   if (Number.isNaN(d.getTime())) return raw;
-  return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString('en-US', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 };
 
 interface CompDef {
@@ -69,12 +89,34 @@ const TREE: CompDef[][] = [
   [{ id: 'node', icon: 'router', label: 'Node' }],
   [{ id: 'switch', icon: 'account_tree', label: 'Switch', element: 'SWITCH' }],
   [
-    { id: 'charge', icon: 'bolt', label: 'Charge controller', element: 'POWER', metric: 'controller_temperature' },
-    { id: 'back', icon: 'settings_input_antenna', label: 'Backhaul', element: 'BACKHAUL', metric: 'backhaul_downlink' },
+    {
+      id: 'charge',
+      icon: 'bolt',
+      label: 'Charge controller',
+      element: 'POWER',
+      metric: 'controller_temperature',
+    },
+    {
+      id: 'back',
+      icon: 'settings_input_antenna',
+      label: 'Backhaul',
+      element: 'BACKHAUL',
+      metric: 'backhaul_downlink',
+    },
   ],
   [
-    { id: 'solar', icon: 'light_mode', label: 'Solar panels', metric: 'solar_panel_power' },
-    { id: 'batt', icon: 'battery_charging_full', label: 'Batteries', metric: 'battery_charge' },
+    {
+      id: 'solar',
+      icon: 'light_mode',
+      label: 'Solar panels',
+      metric: 'solar_panel_power',
+    },
+    {
+      id: 'batt',
+      icon: 'battery_charging_full',
+      label: 'Batteries',
+      metric: 'battery_charge',
+    },
   ],
 ];
 const COMP_BY_ID = new Map(TREE.flat().map((c) => [c.id, c]));
@@ -85,7 +127,13 @@ const DEFAULT_COMP: CompDef = {
   metric: 'battery_charge',
 };
 
-function RangeToggle({ value, onChange }: { value: Range; onChange: (r: Range) => void }) {
+function RangeToggle({
+  value,
+  onChange,
+}: {
+  value: Range;
+  onChange: (r: Range) => void;
+}) {
   return (
     <div className="range-toggle" role="group" aria-label="Time range">
       {RANGES.map((r) => (
@@ -105,8 +153,18 @@ function RangeToggle({ value, onChange }: { value: Range; onChange: (r: Range) =
 
 function LegendDot({ color, label }: { color: string; label: string }) {
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--uk-ink-2)' }}>
-      <span style={{ width: 9, height: 9, borderRadius: 3, background: color }} />
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        fontSize: 12,
+        color: 'var(--uk-ink-2)',
+      }}
+    >
+      <span
+        style={{ width: 9, height: 9, borderRadius: 3, background: color }}
+      />
       {label}
     </span>
   );
@@ -121,7 +179,8 @@ function UptimeBars({ values }: { values: number[] }) {
           key={i}
           className="uptime-bar"
           style={{
-            background: v >= 95 ? 'var(--uk-success-bright)' : 'var(--uk-orange)',
+            background:
+              v >= 95 ? 'var(--uk-success-bright)' : 'var(--uk-orange)',
             opacity: 0.6,
           }}
         />
@@ -133,15 +192,38 @@ function UptimeBars({ values }: { values: number[] }) {
   const recent = values.slice(mid);
   const older = values.slice(0, mid);
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 12, flex: 1, minHeight: 0 }}>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16,
+        marginTop: 12,
+        flex: 1,
+        minHeight: 0,
+      }}
+    >
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+        }}
+      >
         {bars(recent)}
         <div className="uptime-caption">
           <span>30 days ago</span>
           <span>Today</span>
         </div>
       </div>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+        }}
+      >
         {bars(older)}
         <div className="uptime-caption">
           <span>60 days ago</span>
@@ -164,9 +246,16 @@ function CompTile({
   onClick: () => void;
 }) {
   return (
-    <button type="button" className={`comp-tile${active ? ' on' : ''}`} onClick={onClick}>
+    <button
+      type="button"
+      className={`comp-tile${active ? ' on' : ''}`}
+      onClick={onClick}
+    >
       <div className="comp-tile-head">
-        <span className="sc-ic" style={{ width: 34, height: 34, borderRadius: 9 }}>
+        <span
+          className="sc-ic"
+          style={{ width: 34, height: 34, borderRadius: 9 }}
+        >
           <Ic name={comp.icon} sx={{ fontSize: 18 }} />
         </span>
       </div>
@@ -194,7 +283,12 @@ function ComponentChart({ comp }: { comp: CompDef }) {
       <SectionCard
         title={comp.label}
         style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
-        bodyStyle={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        bodyStyle={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
       >
         <EmptyState
           art="search"
@@ -214,7 +308,12 @@ function ComponentChart({ comp }: { comp: CompDef }) {
       title={comp.label}
       right={<RangeToggle value={range} onChange={setRange} />}
       style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
-      bodyStyle={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
+      bodyStyle={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+      }}
     >
       {error ? (
         <ChartMessage kind="error" message={error.message} height="100%" />
@@ -224,7 +323,13 @@ function ComponentChart({ comp }: { comp: CompDef }) {
         <ChartMessage kind="empty" height="100%" />
       ) : (
         <>
-          <div style={{ fontSize: 12.5, color: 'var(--uk-ink-3)', marginBottom: 8 }}>
+          <div
+            style={{
+              fontSize: 12.5,
+              color: 'var(--uk-ink-3)',
+              marginBottom: 8,
+            }}
+          >
             {m?.label ?? '—'}
           </div>
           <div style={{ flex: 1, minHeight: 260 }}>
@@ -237,7 +342,15 @@ function ComponentChart({ comp }: { comp: CompDef }) {
               height="100%"
             />
           </div>
-          <div style={{ display: 'flex', gap: 18, justifyContent: 'center', marginTop: 10, flexWrap: 'wrap' }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: 18,
+              justifyContent: 'center',
+              marginTop: 10,
+              flexWrap: 'wrap',
+            }}
+          >
             {legend.map((l) => (
               <LegendDot key={l.label} {...l} />
             ))}
@@ -278,9 +391,19 @@ function SiteNodesPanel({
       bodyStyle={{ flex: 1, minHeight: 0 }}
     >
       {nodes.length === 0 ? (
-        <EmptyState art="node" title="No nodes" sub="This site has no nodes installed." />
+        <EmptyState
+          art="node"
+          title="No nodes"
+          sub="This site has no nodes installed."
+        />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--uk-gap)' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--uk-gap)',
+          }}
+        >
           {nodes.map((n) => (
             <div key={n.id} className="app-card">
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -299,7 +422,11 @@ function SiteNodesPanel({
                 </span>
               </div>
               <div style={{ marginTop: 10 }}>
-                <Button size="small" sx={{ p: 0, minWidth: 0 }} onClick={() => onOpen(n.id)}>
+                <Button
+                  size="small"
+                  sx={{ p: 0, minWidth: 0 }}
+                  onClick={() => onOpen(n.id)}
+                >
                   View node
                 </Button>
               </div>
@@ -311,11 +438,223 @@ function SiteNodesPanel({
   );
 }
 
-export default function SiteDetailScreen({ siteId }: { siteId: string }) {
-  const router = useRouter();
+/** Small On/Off state label shown next to a toggle switch. */
+function ToggleState({ on }: { on: boolean }) {
+  return (
+    <span
+      style={{
+        fontSize: 12,
+        fontWeight: 600,
+        minWidth: 24,
+        textAlign: 'right',
+        marginRight: 8,
+        color: on ? 'var(--uk-success)' : 'var(--uk-ink-3)',
+      }}
+    >
+      {on ? 'On' : 'Off'}
+    </span>
+  );
+}
+
+/**
+ * Site actions dropdown — restart the site, plus RF / service radio toggles.
+ * Restart is site-scoped; the RF/service toggles act on the site's tower node
+ * (the controller maps RF to its amplifier internally), so they're disabled
+ * when the site has no reachable tower node.
+ */
+function SiteActions({
+  siteId,
+  networkId,
+  siteName,
+  tnodeId,
+}: {
+  siteId: string;
+  networkId: string;
+  siteName: string;
+  tnodeId: string | null;
+}) {
   const toast = useToast();
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [restart, setRestart] = useState(false);
   const [confirm, setConfirm] = useState('');
+  const [rfOn, setRfOn] = useState(true);
+  const [serviceOn, setServiceOn] = useState(true);
+  const open = Boolean(anchorEl);
+
+  const [restartSite, { loading: restarting }] = useRestartSiteMutation({
+    onCompleted: (d) => {
+      setRestart(false);
+      toast(
+        d.restartSite.success
+          ? `Restarting ${siteName}…`
+          : `Couldn't restart ${siteName}`,
+      );
+    },
+    onError: () => {
+      setRestart(false);
+      toast(`Couldn't restart ${siteName}`);
+    },
+  });
+
+  const [toggleRF, { loading: rfLoading }] = useToggleRfStatusMutation({
+    fetchPolicy: 'network-only',
+  });
+  const [toggleService, { loading: serviceLoading }] = useToggleServiceMutation(
+    {
+      fetchPolicy: 'network-only',
+    },
+  );
+
+  const onToggleRf = async () => {
+    if (!tnodeId) return;
+    const next = !rfOn;
+    setRfOn(next); // optimistic
+    try {
+      await toggleRF({
+        variables: { data: { nodeId: tnodeId, status: next } },
+      });
+      toast(`RF turned ${next ? 'on' : 'off'}`);
+    } catch {
+      setRfOn(!next); // revert
+      toast(`Couldn't turn RF ${next ? 'on' : 'off'}`);
+    }
+  };
+
+  const onToggleService = async () => {
+    if (!tnodeId) return;
+    const next = !serviceOn;
+    setServiceOn(next); // optimistic
+    try {
+      await toggleService({
+        variables: { data: { nodeId: tnodeId, status: next } },
+      });
+      toast(`Service turned ${next ? 'on' : 'off'}`);
+    } catch {
+      setServiceOn(!next); // revert
+      toast(`Couldn't turn service ${next ? 'on' : 'off'}`);
+    }
+  };
+
+  const togglesDisabled = !tnodeId || rfLoading || serviceLoading;
+
+  return (
+    <>
+      <Button
+        variant="contained"
+        startIcon={<SettingsRounded />}
+        endIcon={<KeyboardArrowDownRounded />}
+        onClick={(e) => setAnchorEl(e.currentTarget)}
+        aria-haspopup="true"
+        aria-expanded={open ? 'true' : undefined}
+      >
+        Site actions
+      </Button>
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={() => setAnchorEl(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        slotProps={{ paper: { sx: { minWidth: 248 } } }}
+      >
+        <MenuItem
+          onClick={() => {
+            setAnchorEl(null);
+            setConfirm('');
+            setRestart(true);
+          }}
+        >
+          <ListItemIcon>
+            <RestartAltRounded fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Restart site</ListItemText>
+        </MenuItem>
+        <Divider />
+        <MenuItem disabled={togglesDisabled} onClick={onToggleRf}>
+          <ListItemText
+            primary="RF"
+            secondary={tnodeId ? undefined : 'No tower node on this site'}
+          />
+          <ToggleState on={rfOn} />
+          <Switch
+            edge="end"
+            checked={rfOn}
+            disabled={togglesDisabled}
+            tabIndex={-1}
+          />
+        </MenuItem>
+        <MenuItem disabled={togglesDisabled} onClick={onToggleService}>
+          <ListItemText
+            primary="Service"
+            secondary={tnodeId ? undefined : 'No tower node on this site'}
+          />
+          <ToggleState on={serviceOn} />
+          <Switch
+            edge="end"
+            checked={serviceOn}
+            disabled={togglesDisabled}
+            tabIndex={-1}
+          />
+        </MenuItem>
+      </Menu>
+
+      {restart && (
+        <AppModal
+          title="Restart site"
+          width={460}
+          onClose={() => {
+            if (!restarting) setRestart(false);
+          }}
+          footer={
+            <>
+              <Button
+                color="inherit"
+                sx={{ color: 'var(--uk-ink-3)' }}
+                disabled={restarting}
+                onClick={() => setRestart(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                disabled={confirm !== siteName || restarting}
+                onClick={() =>
+                  restartSite({ variables: { data: { siteId, networkId } } })
+                }
+              >
+                {restarting ? 'Restarting…' : 'Restart'}
+              </Button>
+            </>
+          }
+        >
+          <p
+            style={{
+              fontSize: 13.5,
+              color: 'var(--uk-ink-2)',
+              lineHeight: 1.6,
+              margin: '0 0 16px',
+              textWrap: 'pretty',
+            }}
+          >
+            Restarting this site will take it down for about 10 minutes. Type
+            the site name <b style={{ color: 'var(--uk-ink)' }}>{siteName}</b>{' '}
+            to confirm.
+          </p>
+          <TextField
+            fullWidth
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            placeholder={siteName}
+            autoFocus
+          />
+        </AppModal>
+      )}
+    </>
+  );
+}
+
+export default function SiteDetailScreen({ siteId }: { siteId: string }) {
+  const router = useRouter();
   const [selComp, setSelComp] = useState('node');
 
   const networkId = useUiPrefs((s) => s.networkId);
@@ -332,7 +671,13 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
   // 90-day daily uptime series for the Site overview card.
   const [uNow] = useState(() => Math.floor(Date.now() / 1000));
   const { data: uptimeData, loading: uptimeLoading } = useMetricsRangeQuery({
-    variables: { data: { keys: ['site_uptime_percentage'], from: uNow - 90 * 86_400, to: uNow } },
+    variables: {
+      data: {
+        keys: ['site_uptime_percentage'],
+        from: uNow - 90 * 86_400,
+        to: uNow,
+      },
+    },
   });
   const uptimeVals = (uptimeData?.metricsRange.metrics?.[0]?.values ?? []).map(
     (v) => v[1] ?? 0,
@@ -379,7 +724,9 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
 
   // Order nodes by type: tower → amplifier → controller → home.
   const typeRank = (id: string) =>
-    ['tnode', 'anode', 'cnode', 'hnode'].findIndex((t) => id.toLowerCase().includes(t));
+    ['tnode', 'anode', 'cnode', 'hnode'].findIndex((t) =>
+      id.toLowerCase().includes(t),
+    );
   const siteNodes = (nodesSection?.nodes ?? [])
     .map((n) => toUkamaNode(n))
     .sort((a, b) => {
@@ -387,12 +734,18 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
       const rb = typeRank(b.id);
       return (ra < 0 ? 99 : ra) - (rb < 0 ? 99 : rb);
     });
+  // RF / service toggles act on the site's tower node (the controller maps RF
+  // to the amplifier internally); null when the site has no tower node.
+  const tnodeId =
+    siteNodes.find((n) => n.id.toLowerCase().includes('tnode'))?.id ?? null;
   // A node counts as "up" when it's reachable (connectivity online) — a
   // configured/operational node, not just status === 'online'. Mirrors the
   // BFF's connectivity-based site node counts.
   const s = toSite(siteSection.site, {
     total: siteNodes.length,
-    online: siteNodes.filter((n) => (n.connectivity ?? '').toLowerCase() === 'online').length,
+    online: siteNodes.filter(
+      (n) => (n.connectivity ?? '').toLowerCase() === 'online',
+    ).length,
   });
   const dto = siteSection.site;
   const installDate = fmtDate(dto.installDate || dto.createdAt);
@@ -410,7 +763,8 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
 
   const compName = (element?: string) =>
     element
-      ? (components.find((c) => c.elementType === element)?.componentName ?? null)
+      ? (components.find((c) => c.elementType === element)?.componentName ??
+        null)
       : null;
   const subtitleFor = (c: CompDef): string => {
     const name = compName(c.element);
@@ -428,60 +782,94 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
         title={s.name}
         onBack={() => router.push('/network/sites')}
         actions={
-          <Button
-            variant="contained"
-            startIcon={<RestartAltRounded />}
-            onClick={() => {
-              setRestart(true);
-              setConfirm('');
-            }}
-          >
-            Restart site
-          </Button>
+          <SiteActions
+            siteId={s.id}
+            networkId={networkId}
+            siteName={s.name}
+            tnodeId={tnodeId}
+          />
         }
       />
 
       <div className="detail-subrow">
         <DetailPicker
           value={{ id: s.id, label: s.name, status: s.status }}
-          items={pickerItems.length > 0 ? pickerItems : [{ id: s.id, label: s.name, status: s.status }]}
+          items={
+            pickerItems.length > 0
+              ? pickerItems
+              : [{ id: s.id, label: s.name, status: s.status }]
+          }
           onPick={(it) => router.push(`/network/sites/${it.id}`)}
         />
         <StatusBadge status={s.status} />
-        <span style={{ fontSize: 13.5, color: 'var(--uk-ink-2)' }}>{statusText}</span>
+        <span style={{ fontSize: 13.5, color: 'var(--uk-ink-2)' }}>
+          {statusText}
+        </span>
       </div>
 
-      <div className="tile-grid site-top" style={{ marginBottom: 'var(--uk-gap)' }}>
+      <div
+        className="tile-grid site-top"
+        style={{ marginBottom: 'var(--uk-gap)' }}
+      >
         <SectionCard title="Site information">
           <div style={{ display: 'grid', gap: 14, marginTop: 2 }}>
             <div>
-              <div style={{ fontSize: 12, color: 'var(--uk-ink-3)' }}>Nodes</div>
+              <div style={{ fontSize: 12, color: 'var(--uk-ink-3)' }}>
+                Nodes
+              </div>
               {siteNodes.length > 0 ? (
                 siteNodes.map((n) => (
                   <div key={n.id} style={{ marginTop: 4 }}>
-                    <span className="tnum" style={{ fontSize: 13.5, fontWeight: 600 }}>
+                    <span
+                      className="tnum"
+                      style={{ fontSize: 13.5, fontWeight: 600 }}
+                    >
                       {n.serial}
                     </span>
-                    <span style={{ fontSize: 12, color: 'var(--uk-ink-3)', marginLeft: 6 }}>
+                    <span
+                      style={{
+                        fontSize: 12,
+                        color: 'var(--uk-ink-3)',
+                        marginLeft: 6,
+                      }}
+                    >
                       · {n.type}
                     </span>
                   </div>
                 ))
               ) : (
-                <div style={{ fontSize: 13.5, fontWeight: 600, marginTop: 2 }}>—</div>
+                <div style={{ fontSize: 13.5, fontWeight: 600, marginTop: 2 }}>
+                  —
+                </div>
               )}
             </div>
             <div>
-              <div style={{ fontSize: 12, color: 'var(--uk-ink-3)' }}>Date created</div>
-              <div className="tnum" style={{ fontSize: 13.5, fontWeight: 600, marginTop: 2 }}>
+              <div style={{ fontSize: 12, color: 'var(--uk-ink-3)' }}>
+                Date created
+              </div>
+              <div
+                className="tnum"
+                style={{ fontSize: 13.5, fontWeight: 600, marginTop: 2 }}
+              >
                 {installDate}
               </div>
             </div>
             <div>
-              <div style={{ fontSize: 12, color: 'var(--uk-ink-3)' }}>Location</div>
-              <div style={{ fontSize: 13.5, fontWeight: 600, marginTop: 2 }}>{s.area}</div>
+              <div style={{ fontSize: 12, color: 'var(--uk-ink-3)' }}>
+                Location
+              </div>
+              <div style={{ fontSize: 13.5, fontWeight: 600, marginTop: 2 }}>
+                {s.area}
+              </div>
               {coords && (
-                <div className="tnum" style={{ fontSize: 12, color: 'var(--uk-ink-3)', marginTop: 2 }}>
+                <div
+                  className="tnum"
+                  style={{
+                    fontSize: 12,
+                    color: 'var(--uk-ink-3)',
+                    marginTop: 2,
+                  }}
+                >
                   {coords}
                 </div>
               )}
@@ -492,18 +880,33 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
         <SectionCard
           title="Site overview"
           style={{ display: 'flex', flexDirection: 'column' }}
-          bodyStyle={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
+          bodyStyle={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+          }}
         >
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-            <span style={{ fontSize: 30, fontWeight: 600, fontFamily: 'var(--font-display)' }}>
+            <span
+              style={{
+                fontSize: 30,
+                fontWeight: 600,
+                fontFamily: 'var(--font-display)',
+              }}
+            >
               {uptimePct != null ? `${uptimePct}%` : '—'}
             </span>
-            <span style={{ fontSize: 13, color: 'var(--uk-ink-3)' }}>uptime over 90 days</span>
+            <span style={{ fontSize: 13, color: 'var(--uk-ink-3)' }}>
+              uptime over 90 days
+            </span>
           </div>
           {uptimeLoading && uptimeVals.length === 0 ? (
             <Skeleton variant="rounded" sx={{ height: 88, mt: 1 }} />
           ) : uptimeVals.length === 0 ? (
-            <div style={{ fontSize: 13, color: 'var(--uk-ink-3)', marginTop: 8 }}>
+            <div
+              style={{ fontSize: 13, color: 'var(--uk-ink-3)', marginTop: 8 }}
+            >
               No uptime data available.
             </div>
           ) : (
@@ -513,10 +916,21 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
 
         <div
           className="card"
-          style={{ padding: 0, overflow: 'hidden', position: 'relative', minHeight: 200, display: 'flex' }}
+          style={{
+            padding: 0,
+            overflow: 'hidden',
+            position: 'relative',
+            minHeight: 200,
+            display: 'flex',
+          }}
         >
           <div style={{ flex: 1, minHeight: 0 }}>
-            <UkamaMap markers={mapMarkers} zoom={12} fitToMarkers={false} height="100%" />
+            <UkamaMap
+              markers={mapMarkers}
+              zoom={12}
+              fitToMarkers={false}
+              height="100%"
+            />
           </div>
           <div
             style={{
@@ -573,51 +987,6 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
           <ComponentChart comp={selected} />
         )}
       </div>
-
-      {restart && (
-        <AppModal
-          title="Restart site"
-          width={460}
-          onClose={() => setRestart(false)}
-          footer={
-            <>
-              <Button color="inherit" sx={{ color: 'var(--uk-ink-3)' }} onClick={() => setRestart(false)}>
-                Cancel
-              </Button>
-              <Button
-                variant="contained"
-                disabled={confirm !== s.name}
-                onClick={() => {
-                  setRestart(false);
-                  toast(`Restarting ${s.name}…`);
-                }}
-              >
-                Restart
-              </Button>
-            </>
-          }
-        >
-          <p
-            style={{
-              fontSize: 13.5,
-              color: 'var(--uk-ink-2)',
-              lineHeight: 1.6,
-              margin: '0 0 16px',
-              textWrap: 'pretty',
-            }}
-          >
-            Restarting this site will take it down for about 10 minutes. Type the site name{' '}
-            <b style={{ color: 'var(--uk-ink)' }}>{s.name}</b> to confirm.
-          </p>
-          <TextField
-            fullWidth
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-            placeholder={s.name}
-            autoFocus
-          />
-        </AppModal>
-      )}
     </div>
   );
 }
