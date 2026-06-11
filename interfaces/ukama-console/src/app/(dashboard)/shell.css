@@ -454,6 +454,24 @@
   padding: 14px;
   background: var(--uk-card);
 }
+.app-card-clickable {
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.app-card-clickable:hover {
+  border-color: var(--uk-ac);
+  background: var(--uk-card-hover, var(--uk-elev-1, var(--uk-card)));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+.app-card-clickable:focus-visible {
+  outline: 2px solid var(--uk-ac);
+  outline-offset: 2px;
+}
 
 /* Range toggle (Day / Week / Month) on metric chart cards. */
 .range-toggle {

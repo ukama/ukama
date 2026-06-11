@@ -33,4 +33,23 @@ mutation UpdateSoftware($data: UpdateSoftwareInputDto!) {
     message
   }
 }
+
+# Per-app runtime health/resource usage for a node. nodeId required; appName
+# narrows to a single app (used by the node Software tab's app detail dialog).
+query GetApps($data: GetAppsInputDto!) {
+  getApps(data: $data) {
+    apps {
+      name
+      version
+      tag
+      status
+      resource {
+        cpuPercent
+        memoryRssKb
+        diskReadBytes
+        diskWriteBytes
+      }
+    }
+  }
+}
 ### Software End ###

@@ -5,7 +5,39 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import { HealthInfo } from "../resolvers/types";
+import { Apps, HealthInfo } from "../resolvers/types";
+
+/* The node app-health endpoint emits camelCase JSON at the REST boundary. */
+interface AppResourceRest {
+  cpuPercent: number;
+  memoryRssKb: number;
+  diskReadBytes: number;
+  diskWriteBytes: number;
+}
+interface AppRest {
+  name: string;
+  version: string;
+  tag: string;
+  status: string;
+  resource?: AppResourceRest | null;
+}
+
+export const mapApps = (res: { apps?: AppRest[] | null }): Apps => ({
+  apps: (res.apps ?? []).map(app => ({
+    name: app.name,
+    version: app.version,
+    tag: app.tag,
+    status: app.status,
+    resource: app.resource
+      ? {
+          cpuPercent: app.resource.cpuPercent,
+          memoryRssKb: app.resource.memoryRssKb,
+          diskReadBytes: app.resource.diskReadBytes,
+          diskWriteBytes: app.resource.diskWriteBytes,
+        }
+      : undefined,
+  })),
+});
 
 export const dtoToHealthInfo = (res: any): HealthInfo => {
   const health = res?.healths?.[0] ?? {};

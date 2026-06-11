@@ -168,10 +168,11 @@ export type AnalyticsWindowInput = {
 
 export type App = {
   __typename?: 'App';
-  metricsKeys: Array<Scalars['String']['output']>;
   name: Scalars['String']['output'];
-  notes: Scalars['String']['output'];
-  space: Scalars['String']['output'];
+  resource?: Maybe<AppResource>;
+  status: Scalars['String']['output'];
+  tag: Scalars['String']['output'];
+  version: Scalars['String']['output'];
 };
 
 export type AppChangeLog = {
@@ -184,6 +185,14 @@ export type AppChangeLogs = {
   __typename?: 'AppChangeLogs';
   logs: Array<AppChangeLog>;
   type: NodeTypeEnum;
+};
+
+export type AppResource = {
+  __typename?: 'AppResource';
+  cpuPercent: Scalars['Float']['output'];
+  diskReadBytes: Scalars['Float']['output'];
+  diskWriteBytes: Scalars['Float']['output'];
+  memoryRssKb: Scalars['Float']['output'];
 };
 
 export type Apps = {
@@ -501,6 +510,11 @@ export type FeeDto = {
 export type GapSection = {
   __typename?: 'GapSection';
   error?: Maybe<SectionError>;
+};
+
+export type GetAppsInputDto = {
+  appName?: InputMaybe<Scalars['String']['input']>;
+  nodeId: Scalars['String']['input'];
 };
 
 export type GetHealthReportInputDto = {
@@ -1595,7 +1609,6 @@ export type PackageRateApiDto = {
 export type PackageRowDto = {
   __typename?: 'PackageRowDto';
   activeSubscribers: Scalars['Int']['output'];
-  currency?: Maybe<Scalars['String']['output']>;
   dataQuota?: Maybe<Scalars['String']['output']>;
   dataUsed: Scalars['Float']['output'];
   name?: Maybe<Scalars['String']['output']>;
@@ -1820,7 +1833,7 @@ export type QueryGetAlarmsArgs = {
 
 
 export type QueryGetAppsArgs = {
-  data: GetSoftwaresInput;
+  data: GetAppsInputDto;
 };
 
 

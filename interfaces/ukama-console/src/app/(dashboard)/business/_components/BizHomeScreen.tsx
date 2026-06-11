@@ -31,7 +31,8 @@ import { StatusDot } from '@/components/Map/SiteMap';
 import UkamaMap, { HOME_MAP_ZOOM } from '@/components/Map/UkamaMap';
 import PageHeader from '@/components/PageHeader';
 import type { BizSite } from '@/data';
-import { kpiByKey, kpiText, kpiValue } from '@/lib/kpis';
+import { useCurrency } from '@/lib/currency';
+import { kpiAmount, kpiByKey, kpiText, kpiValue } from '@/lib/kpis';
 import { useUiPrefs } from '@/lib/store';
 
 // KPI keys this screen reads — see docs/analytics-backend-gaps.md.
@@ -41,11 +42,6 @@ const KEY = {
   activeCustomers: 'active_customers',
   customersTotal: 'customers_total',
 } as const;
-
-const money = (value?: number | null): string =>
-  value == null
-    ? '—'
-    : `$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 
 /** Map a backend status string onto the BizSite status union. */
 const normStatus = (status?: string | null): BizSite['status'] => {
@@ -62,6 +58,9 @@ function SiteSummaryList({
   sites: BizSite[];
   onSite: (s: BizSite) => void;
 }) {
+  const { symbol } = useCurrency();
+  const money = (value: number): string =>
+    `${symbol}${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
       {sites.map((s, i) => (
@@ -104,6 +103,12 @@ export default function BizHomeScreen() {
   const router = useRouter();
   const networkId = useUiPrefs((s) => s.networkId);
   const [showSummary, setShowSummary] = useState(false);
+  // Org currency symbol from getCurrencySymbol (shared via CurrencyProvider).
+  const { symbol } = useCurrency();
+  const money = (value?: number | null): string =>
+    value == null
+      ? '—'
+      : `${symbol}${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 
   const { data: homeData, loading: homeLoading } = useGetBusinessHomeQuery({
     variables: { data: { networkId } },
@@ -171,7 +176,7 @@ export default function BizHomeScreen() {
               icon: 'monetization_on',
               color: 'var(--uk-beige)',
               label: 'Revenue this month',
-              value: kpiText(kpis, KEY.revenueMonth, money),
+              value: kpiAmount(kpis, KEY.revenueMonth, money),
               sub:
                 monthDelta != null
                   ? `${monthDelta >= 0 ? '+' : ''}${monthDelta}% vs last month`
@@ -189,7 +194,7 @@ export default function BizHomeScreen() {
               icon: 'donut_small',
               color: 'var(--uk-ac)',
               label: 'Collected to date',
-              value: kpiText(kpis, KEY.revenueCollected, money),
+              value: kpiAmount(kpis, KEY.revenueCollected, money),
             },
             {
               icon: 'cell_tower',

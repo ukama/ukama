@@ -52,3 +52,18 @@ export const kpiValue = (
   kpis: readonly Kpi[] | undefined,
   key: string,
 ): number | undefined => kpiByKey(kpis, key)?.value;
+
+/**
+ * Money KPI display: formats the KPI's raw numeric value with the caller's
+ * formatter (org currency symbol), deliberately IGNORING the backend's
+ * pre-formatted string — that string hardcodes a "$", so it must not be used
+ * for currency. Returns "—" when the KPI is absent.
+ */
+export const kpiAmount = (
+  kpis: readonly Kpi[] | undefined,
+  key: string,
+  formatMoney: (value: number) => string,
+): string => {
+  const k = kpiByKey(kpis, key);
+  return k ? formatMoney(k.value) : '—';
+};

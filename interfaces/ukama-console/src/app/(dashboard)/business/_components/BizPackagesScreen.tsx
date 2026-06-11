@@ -28,7 +28,8 @@ import SectionCard from '@/components/SectionCard';
 import { sectionValue } from '@/components/SectionFallback';
 import SkeletonTable from '@/components/data-table/SkeletonTable';
 import StatusBadge from '@/components/StatusBadge';
-import { kpiText } from '@/lib/kpis';
+import { useCurrency } from '@/lib/currency';
+import { kpiAmount } from '@/lib/kpis';
 import { useUiPrefs } from '@/lib/store';
 
 const BAR_COLORS = [
@@ -39,16 +40,17 @@ const BAR_COLORS = [
   'var(--uk-orange)',
 ];
 
-const money = (value?: number | null): string =>
-  value == null
-    ? '—'
-    : `$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
-
 const isActive = (status?: string | null): boolean =>
   (status ?? '').toLowerCase() === 'active';
 
 export default function BizPackagesScreen() {
   const networkId = useUiPrefs((s) => s.networkId);
+  // Org currency symbol comes from getCurrencySymbol (shared via CurrencyProvider).
+  const { symbol } = useCurrency();
+  const money = (value?: number | null): string =>
+    value == null
+      ? '—'
+      : `${symbol}${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
   const { data, loading, error, refetch } = useGetPackagePerformanceQuery({
     variables: { data: { networkId } },
   });
@@ -87,14 +89,14 @@ export default function BizPackagesScreen() {
             icon: 'monetization_on',
             color: 'var(--uk-beige)',
             label: 'Monthly recurring revenue',
-            value: error ? '—' : kpiText(kpis, 'mrr', money),
+            value: error ? '—' : kpiAmount(kpis, 'mrr', money),
             sub: 'paid this month',
           },
           {
             icon: 'payments',
             color: 'var(--uk-ac)',
             label: 'ARPU',
-            value: error ? '—' : kpiText(kpis, 'arpu', money),
+            value: error ? '—' : kpiAmount(kpis, 'arpu', money),
             sub: 'avg revenue / active SIM',
           },
           {
@@ -161,7 +163,7 @@ export default function BizPackagesScreen() {
                       {p.name ?? '—'}
                     </TableCell>
                     <TableCell align="right" className="tnum">
-                      {p.price} {p.currency ?? ''}
+                      {money(p.price)}
                     </TableCell>
                     <TableCell align="right" className="tnum">
                       {p.activeSubscribers ?? '—'}

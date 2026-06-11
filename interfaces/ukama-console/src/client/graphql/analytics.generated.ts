@@ -33,7 +33,7 @@ export type GetPackagePerformanceQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetPackagePerformanceQuery = { __typename?: 'Query', getPackagePerformance: { __typename?: 'PackagePerformanceDto', kpis: Array<{ __typename?: 'KpiDto', key: string, value: number, formatted?: string | null, delta?: number | null, deltaPeriod?: string | null, stale?: boolean | null, asOf?: string | null }>, packages: Array<{ __typename?: 'PackageRowDto', packageId: string, name?: string | null, price: number, currency?: string | null, validity?: string | null, dataQuota?: string | null, status?: string | null, soldCount: number, revenue: number, revenueSharePct?: number | null, dataUsed: number, activeSubscribers: number }>, revenueMix: Array<{ __typename?: 'NamedValueDto', id?: string | null, name?: string | null, value: number }>, meta?: { __typename?: 'MetaDto', count: number } | null } };
+export type GetPackagePerformanceQuery = { __typename?: 'Query', getPackagePerformance: { __typename?: 'PackagePerformanceDto', kpis: Array<{ __typename?: 'KpiDto', key: string, value: number, formatted?: string | null, delta?: number | null, deltaPeriod?: string | null, stale?: boolean | null, asOf?: string | null }>, packages: Array<{ __typename?: 'PackageRowDto', packageId: string, name?: string | null, price: number, validity?: string | null, dataQuota?: string | null, status?: string | null, soldCount: number, revenue: number, revenueSharePct?: number | null, dataUsed: number, activeSubscribers: number }>, revenueMix: Array<{ __typename?: 'NamedValueDto', id?: string | null, name?: string | null, value: number }>, meta?: { __typename?: 'MetaDto', count: number } | null } };
 
 export const KpiFieldsFragmentDoc = gql`
     fragment KpiFields on KpiDto {
@@ -242,7 +242,6 @@ export const GetPackagePerformanceDocument = gql`
       packageId
       name
       price
-      currency
       validity
       dataQuota
       status

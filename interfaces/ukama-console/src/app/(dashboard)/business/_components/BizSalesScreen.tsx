@@ -19,7 +19,8 @@ import DateChip from '@/components/DateChip';
 import { Delta, KpiRow } from '@/components/Kpi';
 import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
-import { kpiByKey, kpiText } from '@/lib/kpis';
+import { useCurrency } from '@/lib/currency';
+import { kpiAmount, kpiByKey } from '@/lib/kpis';
 import { useUiPrefs } from '@/lib/store';
 
 // KPI keys this screen reads. Centralised so a backend rename is a one-line
@@ -30,11 +31,6 @@ const KEY = {
   prevMonth: 'revenue_prev_month',
   pending: 'revenue_pending',
 } as const;
-
-const money = (value?: number | null): string =>
-  value == null
-    ? '—'
-    : `$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 
 const BAR_COLORS = [
   'var(--uk-ac)',
@@ -56,6 +52,12 @@ const toBars = (rows: { name?: string | null; value: number }[]) =>
 
 export default function BizSalesScreen() {
   const networkId = useUiPrefs((s) => s.networkId);
+  // Org currency symbol from getCurrencySymbol (shared via CurrencyProvider).
+  const { symbol } = useCurrency();
+  const money = (value?: number | null): string =>
+    value == null
+      ? '—'
+      : `${symbol}${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
   const { data, loading, error } = useGetSalesOverviewQuery({
     variables: { data: { networkId } },
   });
@@ -99,7 +101,7 @@ export default function BizSalesScreen() {
                   lineHeight: 1,
                 }}
               >
-                {error ? '—' : kpiText(kpis, KEY.collected, money)}
+                {error ? '—' : kpiAmount(kpis, KEY.collected, money)}
               </span>
               {monthDelta != null && (
                 <Delta fontSize={14}>
@@ -112,12 +114,18 @@ export default function BizSalesScreen() {
             <div style={{ display: 'flex', gap: 30, flexWrap: 'wrap' }}>
               {(
                 [
-                  ['This month', error ? '—' : kpiText(kpis, KEY.month, money)],
+                  [
+                    'This month',
+                    error ? '—' : kpiAmount(kpis, KEY.month, money),
+                  ],
                   [
                     'Last month',
-                    error ? '—' : kpiText(kpis, KEY.prevMonth, money),
+                    error ? '—' : kpiAmount(kpis, KEY.prevMonth, money),
                   ],
-                  ['Pending', error ? '—' : kpiText(kpis, KEY.pending, money)],
+                  [
+                    'Pending',
+                    error ? '—' : kpiAmount(kpis, KEY.pending, money),
+                  ],
                 ] as const
               ).map(([k, v]) => (
                 <div key={k}>
@@ -151,7 +159,7 @@ export default function BizSalesScreen() {
             icon: 'monetization_on',
             color: 'var(--uk-beige)',
             label: 'Revenue this month',
-            value: error ? '—' : kpiText(kpis, KEY.month, money),
+            value: error ? '—' : kpiAmount(kpis, KEY.month, money),
             sub:
               monthDelta != null
                 ? `${monthDelta >= 0 ? '+' : ''}${monthDelta}% vs last month`
@@ -161,13 +169,13 @@ export default function BizSalesScreen() {
             icon: 'payments',
             color: 'var(--uk-ac)',
             label: 'Pending payments',
-            value: error ? '—' : kpiText(kpis, KEY.pending, money),
+            value: error ? '—' : kpiAmount(kpis, KEY.pending, money),
           },
           {
             icon: 'donut_small',
             color: 'var(--uk-success-bright)',
             label: 'Collected to date',
-            value: error ? '—' : kpiText(kpis, KEY.collected, money),
+            value: error ? '—' : kpiAmount(kpis, KEY.collected, money),
           },
           {
             icon: 'sell',

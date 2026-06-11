@@ -101,7 +101,6 @@ query GetPackagePerformance($data: AnalyticsWindowInput!) {
       packageId
       name
       price
-      currency
       validity
       dataQuota
       status

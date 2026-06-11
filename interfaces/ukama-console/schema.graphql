@@ -63,7 +63,7 @@ type Query {
   getSimsFromPool(data: GetSimsInput!): SimsPoolResDto!
   getSite(siteId: String!): SiteDto!
   getSites(data: SitesInputDto!): SitesResDto!
-  getApps: Apps
+  getApps(data: GetAppsInputDto!): Apps
   getSoftwares(data: GetSoftwaresInput!): Softwares!
   getSimsByNetwork(networkId: String!): SubscriberSimsResDto!
   getSubscriber(subscriberId: String!): SubscriberDto!
@@ -1304,11 +1304,24 @@ type Apps {
   apps: [App!]!
 }
 
+type AppResource {
+  cpuPercent: Float!
+  memoryRssKb: Float!
+  diskReadBytes: Float!
+  diskWriteBytes: Float!
+}
+
 type App {
   name: String!
-  space: String!
-  notes: String!
-  metricsKeys: [String!]!
+  version: String!
+  tag: String!
+  status: String!
+  resource: AppResource
+}
+
+input GetAppsInputDto {
+  nodeId: String!
+  appName: String
 }
 
 input GetSoftwaresInput {
@@ -1793,7 +1806,6 @@ type PackageRowDto {
   validity: String
   dataQuota: String
   status: String
-  currency: String
   soldCount: Int!
   revenue: Float!
   revenueSharePct: Float

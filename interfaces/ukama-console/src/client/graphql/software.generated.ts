@@ -17,6 +17,13 @@ export type UpdateSoftwareMutationVariables = Types.Exact<{
 
 export type UpdateSoftwareMutation = { __typename?: 'Mutation', updateSoftware: { __typename?: 'StringResponse', message: string } };
 
+export type GetAppsQueryVariables = Types.Exact<{
+  data: Types.GetAppsInputDto;
+}>;
+
+
+export type GetAppsQuery = { __typename?: 'Query', getApps?: { __typename?: 'Apps', apps: Array<{ __typename?: 'App', name: string, version: string, tag: string, status: string, resource?: { __typename?: 'AppResource', cpuPercent: number, memoryRssKb: number, diskReadBytes: number, diskWriteBytes: number } | null }> } | null };
+
 
 export const SoftwareDocument = gql`
     query Software($data: GetSoftwaresInput!) {
@@ -108,3 +115,57 @@ export function useUpdateSoftwareMutation(baseOptions?: Apollo.MutationHookOptio
 export type UpdateSoftwareMutationHookResult = ReturnType<typeof useUpdateSoftwareMutation>;
 export type UpdateSoftwareMutationResult = Apollo.MutationResult<UpdateSoftwareMutation>;
 export type UpdateSoftwareMutationOptions = Apollo.BaseMutationOptions<UpdateSoftwareMutation, UpdateSoftwareMutationVariables>;
+export const GetAppsDocument = gql`
+    query GetApps($data: GetAppsInputDto!) {
+  getApps(data: $data) {
+    apps {
+      name
+      version
+      tag
+      status
+      resource {
+        cpuPercent
+        memoryRssKb
+        diskReadBytes
+        diskWriteBytes
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetAppsQuery__
+ *
+ * To run a query within a React component, call `useGetAppsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetAppsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetAppsQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetAppsQuery(baseOptions: Apollo.QueryHookOptions<GetAppsQuery, GetAppsQueryVariables> & ({ variables: GetAppsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetAppsQuery, GetAppsQueryVariables>(GetAppsDocument, options);
+      }
+export function useGetAppsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAppsQuery, GetAppsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetAppsQuery, GetAppsQueryVariables>(GetAppsDocument, options);
+        }
+// @ts-ignore
+export function useGetAppsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetAppsQuery, GetAppsQueryVariables>): Apollo.UseSuspenseQueryResult<GetAppsQuery, GetAppsQueryVariables>;
+export function useGetAppsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAppsQuery, GetAppsQueryVariables>): Apollo.UseSuspenseQueryResult<GetAppsQuery | undefined, GetAppsQueryVariables>;
+export function useGetAppsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAppsQuery, GetAppsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetAppsQuery, GetAppsQueryVariables>(GetAppsDocument, options);
+        }
+export type GetAppsQueryHookResult = ReturnType<typeof useGetAppsQuery>;
+export type GetAppsLazyQueryHookResult = ReturnType<typeof useGetAppsLazyQuery>;
+export type GetAppsSuspenseQueryHookResult = ReturnType<typeof useGetAppsSuspenseQuery>;
+export type GetAppsQueryResult = Apollo.QueryResult<GetAppsQuery, GetAppsQueryVariables>;
