@@ -7,43 +7,64 @@
  */
 'use client';
 
-/** Revenue — the single most important number, wired to `commerceView`. */
+/** Revenue — the single most important number, wired to the analytics service
+ *  (`getSalesOverview`). Headline figures come from the keyed `kpis` array;
+ *  the by-package / by-site breakdowns from `revenueByPackage` / `revenueBySite`.
+ *  KPI keys are listed in docs/analytics-backend-gaps.md and degrade to "—". */
 import Skeleton from '@mui/material/Skeleton';
 
-import { useRevenueOverviewQuery } from '@/client/graphql/commerce.generated';
+import { useGetSalesOverviewQuery } from '@/client/graphql/analytics.generated';
 import BarList from '@/components/BarList';
 import DateChip from '@/components/DateChip';
 import { Delta, KpiRow } from '@/components/Kpi';
 import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
-import { sectionValue } from '@/components/SectionFallback';
+import { kpiByKey, kpiText } from '@/lib/kpis';
 import { useUiPrefs } from '@/lib/store';
 
+// KPI keys this screen reads. Centralised so a backend rename is a one-line
+// change here, never in the JSX. See docs/analytics-backend-gaps.md.
+const KEY = {
+  collected: 'revenue_collected',
+  month: 'revenue_month',
+  prevMonth: 'revenue_prev_month',
+  pending: 'revenue_pending',
+} as const;
+
 const money = (value?: number | null): string =>
-  value == null ? '—' : `$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  value == null
+    ? '—'
+    : `$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+
+const BAR_COLORS = [
+  'var(--uk-ac)',
+  'var(--uk-secondary)',
+  'var(--uk-success-bright)',
+  'var(--uk-beige)',
+  'var(--uk-orange)',
+];
+
+const toBars = (rows: { name?: string | null; value: number }[]) =>
+  rows
+    .filter((r) => r.value > 0)
+    .sort((a, z) => z.value - a.value)
+    .map((r, i) => ({
+      name: r.name ?? '—',
+      value: r.value,
+      color: BAR_COLORS[i % BAR_COLORS.length] ?? 'var(--uk-ac)',
+    }));
 
 export default function BizSalesScreen() {
   const networkId = useUiPrefs((s) => s.networkId);
-  const { data, loading } = useRevenueOverviewQuery({
-    variables: { networkId },
+  const { data, loading, error } = useGetSalesOverviewQuery({
+    variables: { data: { networkId } },
   });
-  const revenue = data?.commerceView.revenue;
-  const plansSection = data?.commerceView.plans;
-  const BAR_COLORS = [
-    'var(--uk-ac)',
-    'var(--uk-secondary)',
-    'var(--uk-success-bright)',
-    'var(--uk-beige)',
-    'var(--uk-orange)',
-  ];
-  const byPackage = (plansSection?.plans ?? [])
-    .filter((p) => p.revenue > 0)
-    .sort((a, z) => z.revenue - a.revenue)
-    .map((p, i) => ({
-      name: p.name,
-      value: p.revenue,
-      color: BAR_COLORS[i % BAR_COLORS.length] ?? 'var(--uk-ac)',
-    }));
+  const overview = data?.getSalesOverview;
+  const kpis = overview?.kpis;
+  const monthDelta = kpiByKey(kpis, KEY.month)?.delta;
+
+  const byPackage = toBars(overview?.revenueByPackage ?? []);
+  const bySite = toBars(overview?.revenueBySite ?? []);
 
   return (
     <div className="page">
@@ -60,7 +81,14 @@ export default function BizSalesScreen() {
         {loading ? (
           <Skeleton variant="rounded" sx={{ height: 72 }} />
         ) : (
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 20, flexWrap: 'wrap' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-end',
+              gap: 20,
+              flexWrap: 'wrap',
+            }}
+          >
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
               <span
                 className="tnum"
@@ -71,12 +99,12 @@ export default function BizSalesScreen() {
                   lineHeight: 1,
                 }}
               >
-                {revenue?.error ? '—' : money(revenue?.totalPaid)}
+                {error ? '—' : kpiText(kpis, KEY.collected, money)}
               </span>
-              {revenue?.momPct != null && (
+              {monthDelta != null && (
                 <Delta fontSize={14}>
-                  {revenue.momPct >= 0 ? '+' : ''}
-                  {revenue.momPct}% MoM
+                  {monthDelta >= 0 ? '+' : ''}
+                  {monthDelta}% MoM
                 </Delta>
               )}
             </div>
@@ -84,13 +112,18 @@ export default function BizSalesScreen() {
             <div style={{ display: 'flex', gap: 30, flexWrap: 'wrap' }}>
               {(
                 [
-                  ['This month', revenue?.error ? '—' : money(revenue?.monthPaid)],
-                  ['Last month', revenue?.error ? '—' : money(revenue?.prevMonthPaid)],
-                  ['Pending', revenue?.error ? '—' : money(revenue?.totalPending)],
+                  ['This month', error ? '—' : kpiText(kpis, KEY.month, money)],
+                  [
+                    'Last month',
+                    error ? '—' : kpiText(kpis, KEY.prevMonth, money),
+                  ],
+                  ['Pending', error ? '—' : kpiText(kpis, KEY.pending, money)],
                 ] as const
               ).map(([k, v]) => (
                 <div key={k}>
-                  <div style={{ fontSize: 12, color: 'var(--uk-ink-3)' }}>{k}</div>
+                  <div style={{ fontSize: 12, color: 'var(--uk-ink-3)' }}>
+                    {k}
+                  </div>
                   <div
                     className="tnum"
                     style={{
@@ -118,48 +151,55 @@ export default function BizSalesScreen() {
             icon: 'monetization_on',
             color: 'var(--uk-beige)',
             label: 'Revenue this month',
-            value: revenue?.error ? '—' : money(revenue?.monthPaid),
+            value: error ? '—' : kpiText(kpis, KEY.month, money),
             sub:
-              revenue?.momPct != null
-                ? `${revenue.momPct >= 0 ? '+' : ''}${revenue.momPct}% vs last month`
+              monthDelta != null
+                ? `${monthDelta >= 0 ? '+' : ''}${monthDelta}% vs last month`
                 : undefined,
           },
           {
             icon: 'payments',
             color: 'var(--uk-ac)',
             label: 'Pending payments',
-            value: revenue?.error ? '—' : money(revenue?.totalPending),
+            value: error ? '—' : kpiText(kpis, KEY.pending, money),
           },
           {
             icon: 'donut_small',
             color: 'var(--uk-success-bright)',
             label: 'Collected to date',
-            value: revenue?.error ? '—' : money(revenue?.totalPaid),
+            value: error ? '—' : kpiText(kpis, KEY.collected, money),
           },
           {
             icon: 'sell',
             color: 'var(--uk-secondary)',
             label: 'Plans earning revenue',
-            value: sectionValue(byPackage.length || null, plansSection?.error),
+            value: error ? '—' : String(byPackage.length),
           },
         ]}
       />
 
       <div className="tile-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
         <SectionCard title="Revenue by package">
-          {plansSection?.error || byPackage.length === 0 ? (
-            <div style={{ padding: 24, fontSize: 13, color: 'var(--uk-ink-3)' }}>
-              {plansSection?.error ? '—' : 'No package revenue yet.'}
+          {error || byPackage.length === 0 ? (
+            <div
+              style={{ padding: 24, fontSize: 13, color: 'var(--uk-ink-3)' }}
+            >
+              {error ? '—' : 'No package revenue yet.'}
             </div>
           ) : (
             <BarList rows={byPackage} />
           )}
         </SectionCard>
         <SectionCard title="Revenue by site">
-          {/* TODO(backend-gap #10): per-site revenue rollup */}
-          <div style={{ padding: 24, fontSize: 13, color: 'var(--uk-ink-3)' }}>
-            Per-site revenue is not available yet.
-          </div>
+          {error || bySite.length === 0 ? (
+            <div
+              style={{ padding: 24, fontSize: 13, color: 'var(--uk-ink-3)' }}
+            >
+              {error ? '—' : 'No site revenue yet.'}
+            </div>
+          ) : (
+            <BarList rows={bySite} />
+          )}
         </SectionCard>
       </div>
     </div>

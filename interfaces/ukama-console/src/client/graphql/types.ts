@@ -1595,12 +1595,14 @@ export type PackageRateApiDto = {
 export type PackageRowDto = {
   __typename?: 'PackageRowDto';
   activeSubscribers: Scalars['Int']['output'];
+  currency?: Maybe<Scalars['String']['output']>;
   dataQuota?: Maybe<Scalars['String']['output']>;
   dataUsed: Scalars['Float']['output'];
   name?: Maybe<Scalars['String']['output']>;
   packageId: Scalars['String']['output'];
   price: Scalars['Float']['output'];
   revenue: Scalars['Float']['output'];
+  revenueSharePct?: Maybe<Scalars['Float']['output']>;
   soldCount: Scalars['Int']['output'];
   status?: Maybe<Scalars['String']['output']>;
   validity?: Maybe<Scalars['String']['output']>;

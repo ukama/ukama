@@ -7,8 +7,10 @@
  */
 'use client';
 
-/** Packages — selling & performance, wired to `commerceView.plans`
- *  (MRR/ARPU/revenue share computed server-side). */
+/** Packages — selling & performance, wired to the analytics service
+ *  (`getPackagePerformance`). KPIs come from the keyed `kpis` array; per-plan
+ *  rows from `packages`. Some fields/keys are exposed ahead of backend support
+ *  (see docs/analytics-backend-gaps.md) and degrade to "—". */
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -16,7 +18,7 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Meter from '@/components/Meter';
 
-import { usePackagesDashboardQuery } from '@/client/graphql/commerce.generated';
+import { useGetPackagePerformanceQuery } from '@/client/graphql/analytics.generated';
 import BarList from '@/components/BarList';
 import DateChip from '@/components/DateChip';
 import { EmptyState } from '@/components/EmptyState';
@@ -26,6 +28,7 @@ import SectionCard from '@/components/SectionCard';
 import { sectionValue } from '@/components/SectionFallback';
 import SkeletonTable from '@/components/data-table/SkeletonTable';
 import StatusBadge from '@/components/StatusBadge';
+import { kpiText } from '@/lib/kpis';
 import { useUiPrefs } from '@/lib/store';
 
 const BAR_COLORS = [
@@ -37,24 +40,36 @@ const BAR_COLORS = [
 ];
 
 const money = (value?: number | null): string =>
-  value == null ? '—' : `$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  value == null
+    ? '—'
+    : `$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+
+const isActive = (status?: string | null): boolean =>
+  (status ?? '').toLowerCase() === 'active';
 
 export default function BizPackagesScreen() {
   const networkId = useUiPrefs((s) => s.networkId);
-  const { data, loading, refetch } = usePackagesDashboardQuery({
-    variables: { networkId },
+  const { data, loading, error, refetch } = useGetPackagePerformanceQuery({
+    variables: { data: { networkId } },
   });
-  const section = data?.commerceView.plans;
-  const plans = section?.plans ?? [];
+  const perf = data?.getPackagePerformance;
+  const kpis = perf?.kpis;
+  const plans = perf?.packages ?? [];
+  const totalRevenue = plans.reduce((sum, p) => sum + (p.revenue ?? 0), 0);
+  // revenueSharePct is a backend gap — derive from total until it lands.
+  const sharePct = (p: (typeof plans)[number]): number =>
+    p.revenueSharePct ??
+    (totalRevenue > 0 ? Math.round((p.revenue / totalRevenue) * 100) : 0);
+
   const byRevenue = [...plans].sort((a, z) => z.revenue - a.revenue);
   const top = byRevenue[0];
   const topPkgs = byRevenue.slice(0, 3);
   const maxRevenue = Math.max(...topPkgs.map((p) => p.revenue), 1);
-  const mix = byRevenue
-    .filter((p) => p.revenue > 0)
-    .map((p, i) => ({
-      name: p.name,
-      value: p.revenue,
+  const mix = (perf?.revenueMix ?? [])
+    .filter((m) => m.value > 0)
+    .map((m, i) => ({
+      name: m.name ?? '—',
+      value: m.value,
       color: BAR_COLORS[i % BAR_COLORS.length] ?? 'var(--uk-ac)',
     }));
 
@@ -72,31 +87,35 @@ export default function BizPackagesScreen() {
             icon: 'monetization_on',
             color: 'var(--uk-beige)',
             label: 'Monthly recurring revenue',
-            value: section?.error ? '—' : money(section?.mrr),
+            value: error ? '—' : kpiText(kpis, 'mrr', money),
             sub: 'paid this month',
           },
           {
             icon: 'payments',
             color: 'var(--uk-ac)',
             label: 'ARPU',
-            value: section?.error ? '—' : money(section?.arpu),
+            value: error ? '—' : kpiText(kpis, 'arpu', money),
             sub: 'avg revenue / active SIM',
           },
           {
             icon: 'donut_small',
             color: 'var(--uk-success-bright)',
             label: 'Top plan by revenue',
-            value: top && top.revenue > 0 ? top.name : '—',
-            sub: top && top.revenue > 0 ? `${top.revenueSharePct}% of revenue` : undefined,
+            value: top && top.revenue > 0 ? (top.name ?? '—') : '—',
+            sub:
+              top && top.revenue > 0
+                ? `${sharePct(top)}% of revenue`
+                : undefined,
           },
           {
             icon: 'sell',
             color: 'var(--uk-secondary)',
             label: 'Active plans',
-            value: sectionValue(
-              plans.filter((p) => p.active).length || null,
-              section?.error
-            ),
+            value: error
+              ? '—'
+              : sectionValue(
+                  plans.filter((p) => isActive(p.status)).length || null,
+                ),
             sub: `across ${plans.length} packages`,
           },
         ]}
@@ -109,16 +128,20 @@ export default function BizPackagesScreen() {
         <div className="tbl-wrap">
           {loading ? (
             <SkeletonTable cols={6} rows={4} />
-          ) : section?.error ? (
+          ) : error ? (
             <EmptyState
               art="error"
               title="Couldn't load packages"
-              sub={section.error.message}
+              sub={error.message}
               cta="Try again"
               onCta={() => refetch()}
             />
           ) : plans.length === 0 ? (
-            <EmptyState art="invoice" title="No packages" sub="Create a data plan to get started." />
+            <EmptyState
+              art="invoice"
+              title="No packages"
+              sub="Create a data plan to get started."
+            />
           ) : (
             <Table>
               <TableHead>
@@ -134,21 +157,30 @@ export default function BizPackagesScreen() {
               <TableBody>
                 {byRevenue.map((p) => (
                   <TableRow key={p.packageId}>
-                    <TableCell style={{ fontWeight: 600 }}>{p.name}</TableCell>
-                    <TableCell align="right" className="tnum">
-                      {p.amount} {p.currency}
+                    <TableCell style={{ fontWeight: 600 }}>
+                      {p.name ?? '—'}
                     </TableCell>
                     <TableCell align="right" className="tnum">
-                      {p.attachCount ?? '—'}
+                      {p.price} {p.currency ?? ''}
                     </TableCell>
-                    <TableCell align="right" className="tnum" style={{ fontWeight: 600 }}>
+                    <TableCell align="right" className="tnum">
+                      {p.activeSubscribers ?? '—'}
+                    </TableCell>
+                    <TableCell
+                      align="right"
+                      className="tnum"
+                      style={{ fontWeight: 600 }}
+                    >
                       {money(p.revenue)}
                     </TableCell>
                     <TableCell align="right" className="tnum muted">
-                      {p.revenueSharePct}%
+                      {sharePct(p)}%
                     </TableCell>
                     <TableCell>
-                      <StatusBadge status={p.active ? 'active' : 'inactive'} variant="pill" />
+                      <StatusBadge
+                        status={isActive(p.status) ? 'active' : 'inactive'}
+                        variant="pill"
+                      />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -167,8 +199,10 @@ export default function BizPackagesScreen() {
             </span>
           }
         >
-          {topPkgs.length === 0 || section?.error ? (
-            <div style={{ padding: 24, fontSize: 13, color: 'var(--uk-ink-3)' }}>
+          {topPkgs.length === 0 || error ? (
+            <div
+              style={{ padding: 24, fontSize: 13, color: 'var(--uk-ink-3)' }}
+            >
               No package revenue yet.
             </div>
           ) : (
@@ -182,7 +216,9 @@ export default function BizPackagesScreen() {
                     gap: 14,
                     padding: '13px 0',
                     borderBottom:
-                      i < topPkgs.length - 1 ? '1px solid var(--uk-line-soft)' : 'none',
+                      i < topPkgs.length - 1
+                        ? '1px solid var(--uk-line-soft)'
+                        : 'none',
                   }}
                 >
                   <span
@@ -207,13 +243,23 @@ export default function BizPackagesScreen() {
                         marginBottom: 6,
                       }}
                     >
-                      <span style={{ fontSize: 13.5, fontWeight: 600 }}>{p.name}</span>
+                      <span style={{ fontSize: 13.5, fontWeight: 600 }}>
+                        {p.name ?? '—'}
+                      </span>
                       <span
                         className="tnum"
-                        style={{ fontSize: 13, color: 'var(--uk-ink-2)', whiteSpace: 'nowrap' }}
+                        style={{
+                          fontSize: 13,
+                          color: 'var(--uk-ink-2)',
+                          whiteSpace: 'nowrap',
+                        }}
                       >
-                        <b style={{ color: 'var(--uk-ink)' }}>{money(p.revenue)}</b>
-                        {p.attachCount != null ? ` · ${p.attachCount} active` : ''}
+                        <b style={{ color: 'var(--uk-ink)' }}>
+                          {money(p.revenue)}
+                        </b>
+                        {p.activeSubscribers != null
+                          ? ` · ${p.activeSubscribers} active`
+                          : ''}
                       </span>
                     </div>
                     <Meter
@@ -227,8 +273,10 @@ export default function BizPackagesScreen() {
           )}
         </SectionCard>
         <SectionCard title="Package revenue mix">
-          {mix.length === 0 || section?.error ? (
-            <div style={{ padding: 24, fontSize: 13, color: 'var(--uk-ink-3)' }}>
+          {mix.length === 0 || error ? (
+            <div
+              style={{ padding: 24, fontSize: 13, color: 'var(--uk-ink-3)' }}
+            >
               No package revenue yet.
             </div>
           ) : (
