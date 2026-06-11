@@ -1,0 +1,72 @@
+version: 1
+name: node-restart
+seed: 91
+
+world:
+  networks: 1
+  sites_per_network: 2
+  nodes_per_site:
+    tower: 1
+    access: 1
+    home: 1
+  ues_per_site: 5
+
+packages:
+  - ref: daily_1gb
+    name: Daily 1GB
+    data_mb: 1024
+    duration_hours: 24
+    amount: 1.00
+    assign_percent: 100
+
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+
+runtime:
+  start: [nodes, ues]
+  wait: [nodes_ready, ues_attached]
+
+phases:
+  - name: before_restart
+    events:
+      - type: traffic
+        ues: all
+        amount_mb: 100
+    checks:
+      - type: usage_sample
+        sample_per_site: 2
+        expected: from_model
+        tolerance_percent: 2
+
+  - name: restart_access
+    events:
+      - type: restart_nodes
+        type_selector: access
+        count_per_network: 1
+      - type: wait_nodes_ready
+        nodes: all
+    checks:
+      - type: node_ready
+        nodes: all
+
+  - name: after_restart
+    events:
+      - type: traffic
+        ues: all
+        amount_mb: 50
+    checks:
+      - type: usage_sample
+        sample_per_site: 2
+        expected: from_model
+        tolerance_percent: 5
+
+final_checks:
+  - type: balance_non_negative
+    ues: all
