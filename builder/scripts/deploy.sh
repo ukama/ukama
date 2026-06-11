@@ -376,6 +376,7 @@ if [ "$IS_INCLUDE_BFF" = false ]; then
     SYS_QUERY_14="UPDATE PUBLIC.systems SET api_gw_url = 'http://localhost:8000' WHERE systems."name" = 'hub'";
     SYS_QUERY_14="UPDATE PUBLIC.systems SET api_gw_url = 'http://localhost:8070' WHERE systems."name" = 'factory'";
     SYS_QUERY_15="UPDATE PUBLIC.systems SET api_gw_url = 'http://localhost:8098' WHERE systems."name" = 'operation'";
+    SYS_QUERY_16="UPDATE PUBLIC.systems SET api_gw_url = 'http://localhost:8085' WHERE systems."name" = 'analytics'";
 fi
 
 echo "$TAG Registering systems URL in lookup db..."
@@ -395,6 +396,7 @@ psql $DB_URI -c "$SYS_QUERY_12"
 psql $DB_URI -c "$SYS_QUERY_13"
 psql $DB_URI -c "$SYS_QUERY_14"
 psql $DB_URI -c "$SYS_QUERY_15"
+psql $DB_URI -c "$SYS_QUERY_16"
 
 cleanup
 

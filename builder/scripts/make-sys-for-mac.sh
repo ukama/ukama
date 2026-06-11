@@ -40,13 +40,13 @@ filter_make_sys() {
                 PATHS+=("notification/distributor" "notification/event-notify" "notification/mailer" "notification/api-gateway")
                 ;;
             "node")
-                PATHS+=("node/configurator" "node/controller" "node/health" "node/node-gateway" "node/software" "node/api-gateway" "node/notify" "node/state")
+                PATHS+=("node/configurator" "node/controller" "node/health" "node/node-gateway" "node/software" "node/api-gateway" "node/notify" "node/state" "node/operation-monitor")
                 ;;
             "billing")
                 PATHS+=("node/configurator" "billing/report" "billing/api-gateway" "billing/collector" )
                 ;;
             "init")
-                PATHS+=("init/lookup" "init/api-gateway" "init/node-gateway" "init/bootstrap", "init/reflector")
+                PATHS+=("init/lookup" "init/api-gateway" "init/node-gateway" "init/bootstrap" "init/reflector")
                 ;;
             "inventory")
                 PATHS+=("inventory/accounting" "inventory/component" "inventory/api-gateway")
@@ -68,6 +68,12 @@ filter_make_sys() {
                 ;;
             "hub")
                 PATHS+=("hub/api-gateway" "hub/artifactManager" "hub/distributor" "hub/node-gateway")
+                ;;
+            "operation")
+                PATHS+=("operation/api-gateway" "operation/manager")
+                ;;
+            "analytics")
+                PATHS+=("analytics/api-gateway" "analytics/analytics" "analytics/business" "analytics/collector" "analytics/network")
                 ;;
         esac
     done
