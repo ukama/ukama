@@ -108,5 +108,10 @@
   "key": "operation",
   "name": "Ukama Operation system",
   "path": "./operation"
+ },
+ "analytics": {
+  "key": "analytics",
+  "name": "Ukama Analytics system",
+  "path": "./analytics"
  }
 }
