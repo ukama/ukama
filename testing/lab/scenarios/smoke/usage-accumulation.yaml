@@ -7,8 +7,8 @@ world:
   sites_per_network: 1
   nodes_per_site:
     tower: 1
-    access: 1
-    home: 1
+    amplifier: 1
+    controller: 1
   ues_per_site: 1
 
 packages:
