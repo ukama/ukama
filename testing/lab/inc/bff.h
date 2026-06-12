@@ -12,9 +12,15 @@
 #include <stdio.h>
 
 #include "world.h"
+#include "ulab.h"
 
 typedef struct {
-    char url[ULAB_MAX_PATH];
+    char url[ULAB_MAX_URL];
+    char pauth_url[ULAB_MAX_URL];
+    char bff_base_url[ULAB_MAX_URL];
+    char session_token[ULAB_MAX_TOKEN];
+    char token[ULAB_MAX_TOKEN];
+    int  authenticated;
     FILE *logf;
 } bff_client_t;
 
@@ -26,6 +32,11 @@ typedef struct {
 int bff_init(bff_client_t *c,
              const char *url,
              const char *run_dir);
+
+int bff_login(bff_client_t *c,
+              const char *identifier,
+              const char *password,
+              ulab_error_t *err);
 
 void bff_close(bff_client_t *c);
 
