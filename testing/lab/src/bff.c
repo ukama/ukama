@@ -545,6 +545,7 @@ int bff_login(bff_client_t *c,
 }
 
 int bff_init(bff_client_t *c, const char *url, const char *run_dir) {
+
     char path[ULAB_MAX_PATH];
     const char *identifier;
     const char *password;
@@ -615,7 +616,8 @@ void bff_close(bff_client_t *c) {
 }
 
 int bff_add_network(bff_client_t *c, network_t *n, ulab_error_t *err) {
-    char vars[4096];
+
+    char vars[ULAB_MAX_QUERY];
     json_t *root;
     json_t *obj;
 
@@ -641,19 +643,28 @@ int bff_add_network(bff_client_t *c, network_t *n, ulab_error_t *err) {
     return ULAB_OK;
 }
 
-int bff_add_site(bff_client_t *c, site_t *s, const network_t *n,
+int bff_add_site(bff_client_t *c,
+                 site_t *s,
+                 const network_t *n,
                  ulab_error_t *err) {
-    char vars[4096];
+
+    char vars[ULAB_MAX_QUERY];
     json_t *root;
     json_t *obj;
 
+    /* These are lab placeholders, not real inventory references. */
     snprintf(vars, sizeof(vars),
              "{\"data\":{\"name\":\"%s\",\"network_id\":\"%s\","
-             "\"latitude\":\"37.7749\",\"longitude\":\"-122.4194\","
-             "\"location\":\"Lab\",\"access_id\":\"\","
-             "\"backhaul_id\":\"\",\"install_date\":\"\","
-             "\"power_id\":\"\",\"spectrum_id\":\"\","
-             "\"switch_id\":\"\"}}", s->name, n->bff_id);
+             "\"backhaul_id\":\"lab-backhaul\","
+             "\"power_id\":\"lab-power\","
+             "\"access_id\":\"lab-access\","
+             "\"spectrum_id\":\"lab-spectrum\","
+             "\"switch_id\":\"lab-switch\","
+             "\"latitude\":\"37.7749\","
+             "\"longitude\":\"-122.4194\","
+             "\"install_date\":\"2026-01-01\","
+             "\"location\":\"Lab\"}}",
+             s->name, n->bff_id);
 
     if (bff_call(c, "addSite", BFF_ADD_SITE, vars, &root, err)) {
         return ULAB_ERR;
@@ -673,13 +684,14 @@ int bff_add_site(bff_client_t *c, site_t *s, const network_t *n,
 }
 
 int bff_add_node(bff_client_t *c, node_t *n, ulab_error_t *err) {
-    char vars[4096];
+
+    char vars[ULAB_MAX_QUERY];
     json_t *root;
     json_t *obj;
 
     snprintf(vars, sizeof(vars),
-             "{\"data\":{\"id\":\"%s\",\"name\":\"%s\","
-             "\"type\":\"%s\"}}", n->id, n->name, n->type);
+             "{\"data\":{\"id\":\"%s\",\"name\":\"%s\"}}",
+             n->id, n->name);
 
     if (bff_call(c, "addNode", BFF_ADD_NODE, vars, &root, err)) {
         return ULAB_ERR;
@@ -701,7 +713,8 @@ int bff_add_node(bff_client_t *c, node_t *n, ulab_error_t *err) {
 int bff_add_node_to_site(bff_client_t *c, const node_t *n,
                          const site_t *s, const network_t *net,
                          ulab_error_t *err) {
-    char vars[4096];
+
+    char vars[ULAB_MAX_QUERY];
     json_t *root;
 
     snprintf(vars, sizeof(vars),
@@ -722,13 +735,19 @@ int bff_add_package(bff_client_t *c, package_t *p, ulab_error_t *err) {
     char vars[4096];
     json_t *root;
     json_t *obj;
+    uint32_t duration;
+
+    duration = p->duration_hours;
+    if (duration == 0) {
+        duration = 1;
+    }
 
     snprintf(vars, sizeof(vars),
              "{\"data\":{\"name\":\"%s\",\"amount\":%.2f,"
              "\"dataUnit\":\"MB\",\"dataVolume\":%llu,"
              "\"duration\":%u,\"currency\":\"USD\","
              "\"country\":\"USA\"}}", p->name, p->amount,
-             (unsigned long long)p->data_mb, p->duration_hours);
+             (unsigned long long)p->data_mb, duration);
 
     if (bff_call(c, "addPackage", BFF_ADD_PACKAGE, vars, &root, err)) {
         return ULAB_ERR;
@@ -749,14 +768,17 @@ int bff_add_package(bff_client_t *c, package_t *p, ulab_error_t *err) {
 
 int bff_add_subscriber(bff_client_t *c, subscriber_t *sub,
                        const network_t *net, ulab_error_t *err) {
-    char vars[4096];
+
+    char vars[ULAB_MAX_QUERY];
     json_t *root;
     json_t *obj;
 
     snprintf(vars, sizeof(vars),
-             "{\"data\":{\"email\":\"%s\",\"first_name\":\"Lab\","
-             "\"last_name\":\"User\",\"network_id\":\"%s\","
-             "\"phone\":\"%s\"}}", sub->email, net->bff_id, sub->phone);
+             "{\"data\":{\"email\":\"%s\","
+             "\"name\":\"%s\","
+             "\"network_id\":\"%s\","
+             "\"phone\":\"%s\"}}",
+             sub->email, sub->name, net->bff_id, sub->phone);
 
     if (bff_call(c, "addSubscriber", BFF_ADD_SUBSCRIBER, vars, &root,
         err)) {
@@ -779,7 +801,8 @@ int bff_add_subscriber(bff_client_t *c, subscriber_t *sub,
 int bff_allocate_sim(bff_client_t *c, ue_t *ue, const subscriber_t *sub,
                      const network_t *net, const package_t *pkg,
                      ulab_error_t *err) {
-    char vars[4096];
+
+    char vars[ULAB_MAX_QUERY];
     json_t *root;
     json_t *obj;
 
@@ -806,9 +829,12 @@ int bff_allocate_sim(bff_client_t *c, ue_t *ue, const subscriber_t *sub,
     return ULAB_OK;
 }
 
-int bff_get_sim_usage(bff_client_t *c, const ue_t *ue, uint64_t *used_mb,
+int bff_get_sim_usage(bff_client_t *c,
+                      const ue_t *ue,
+                      uint64_t *used_mb,
                       ulab_error_t *err) {
-    char vars[4096];
+
+    char vars[ULAB_MAX_QUERY];
     json_t *root;
     json_t *obj;
     json_t *u;
@@ -839,7 +865,8 @@ int bff_get_sim_usage(bff_client_t *c, const ue_t *ue, uint64_t *used_mb,
 int bff_get_packages_for_sim(bff_client_t *c, const ue_t *ue,
                              const char *package_id, int *active,
                              ulab_error_t *err) {
-    char vars[4096];
+
+    char vars[ULAB_MAX_QUERY];
     json_t *root;
     json_t *obj;
     json_t *arr;
@@ -887,7 +914,8 @@ int bff_get_packages_for_sim(bff_client_t *c, const ue_t *ue,
 
 int bff_get_node_state(bff_client_t *c, const node_t *node,
                        bff_node_state_t *state, ulab_error_t *err) {
-    char vars[4096];
+
+    char vars[ULAB_MAX_QUERY];
     json_t *root;
     json_t *obj;
 
@@ -916,7 +944,8 @@ int bff_get_node_state(bff_client_t *c, const node_t *node,
 
 int bff_network_overview_loads(bff_client_t *c, const network_t *net,
                                ulab_error_t *err) {
-    char vars[4096];
+
+    char vars[ULAB_MAX_QUERY];
     json_t *root;
 
     snprintf(vars, sizeof(vars), "{\"networkId\":\"%s\"}", net->bff_id);
@@ -933,7 +962,8 @@ int bff_network_overview_loads(bff_client_t *c, const network_t *net,
 
 int bff_site_view_loads(bff_client_t *c, const site_t *site,
                         ulab_error_t *err) {
-    char vars[4096];
+
+    char vars[ULAB_MAX_QUERY];
     json_t *root;
 
     snprintf(vars, sizeof(vars), "{\"siteId\":\"%s\"}", site->bff_id);
@@ -949,6 +979,7 @@ int bff_site_view_loads(bff_client_t *c, const site_t *site,
 
 int bff_query_count(bff_client_t *c, const char *target, const world_t *w,
                     size_t *count, ulab_error_t *err) {
+
     (void)c;
     (void)err;
 

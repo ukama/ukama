@@ -25,6 +25,7 @@
 #define ULAB_MAX_URL       1024
 #define ULAB_MAX_ARGS      4096
 #define ULAB_MAX_TOKEN     4096
+#define ULAB_MAX_QUERY     4096
 #define ULAB_MAX_LINE      512
 
 #define ULAB_OK            0
