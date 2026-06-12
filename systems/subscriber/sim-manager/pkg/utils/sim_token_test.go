@@ -25,9 +25,9 @@ const (
 
 func Test_IccidTokenConversion(t *testing.T) {
 	t.Run("IccidRetrieved", func(t *testing.T) {
-		token, err := GenerateTokenFromIccid(testIccid, testKey2)
+		token, err := GenerateTokenFromIccid(testIccid, testKey1)
 		assert.NoError(t, err)
-		res, err := GetIccidFromToken(token, testKey2)
+		res, err := GetIccidFromToken(token, testKey1)
 		assert.NoError(t, err)
 		assert.Equal(t, testIccid, res)
 	})

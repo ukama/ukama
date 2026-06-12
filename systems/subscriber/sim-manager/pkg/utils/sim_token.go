@@ -27,7 +27,7 @@ func GetIccidFromToken(simToken string, key string) (string, error) {
 	}
 
 	var iccidEnvelope struct {
-		ICCID string `json:"iccid"`
+		ICCID string `json:"iccid,string"`
 	}
 
 	err = json.Unmarshal([]byte(str), &iccidEnvelope)
@@ -40,7 +40,7 @@ func GetIccidFromToken(simToken string, key string) (string, error) {
 
 func GenerateTokenFromIccid(iccid string, key string) (string, error) {
 	iccidEnvelope := struct {
-		ICCID string `json:"iccid"`
+		ICCID string `json:"iccid,string"`
 	}{
 		ICCID: iccid,
 	}
