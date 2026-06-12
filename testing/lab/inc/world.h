@@ -76,6 +76,7 @@ typedef struct {
 
 typedef struct {
     char         run_id[ULAB_MAX_ID];
+    uint32_t     seed;
     network_t    *networks;
     size_t       network_count;
     site_t       *sites;

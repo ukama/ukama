@@ -48,15 +48,28 @@ static int alloc_world(const scenario_t *s, world_t *w) {
     return ULAB_OK;
 }
 
+static uint32_t seeded_u32(const scenario_t *s,
+                           const char *scope,
+                           size_t a,
+                           size_t b,
+                           size_t c) {
+    char key[ULAB_MAX_LINE];
+
+    snprintf(key, sizeof(key), "%s:%zu:%zu:%zu", scope, a, b, c);
+    return ulab_hash32(key, s->seed);
+}
+
 static const char *pick_package(const scenario_t *s, size_t ue_idx) {
 
-    uint32_t mod = (uint32_t)(ue_idx % 100);
+    uint32_t roll;
     uint32_t acc = 0;
     size_t i;
 
+    roll = seeded_u32(s, "package", ue_idx, 0, 0) % 100u;
+
     for (i = 0; i < s->package_count; i++) {
         acc += s->packages[i].assign_percent;
-        if (mod < acc) {
+        if (roll < acc) {
             return s->packages[i].ref;
         }
     }
@@ -70,7 +83,8 @@ static void add_node(world_t *w, size_t *idx, const char *type,
 
     snprintf(node->ref, sizeof(node->ref), "%.32s-%.64s-%03zu", type,
              site->ref, n);
-    snprintf(node->id, sizeof(node->id), "%.240s-%.120s", w->run_id, node->ref);
+    snprintf(node->id, sizeof(node->id), "%.240s-%.120s", w->run_id,
+             node->ref);
     snprintf(node->name, sizeof(node->name), "%.255s", node->id);
     snprintf(node->type, sizeof(node->type), "%s", type);
     snprintf(node->site_ref, sizeof(node->site_ref), "%s", site->ref);
@@ -94,6 +108,7 @@ int world_generate(const scenario_t *s,
         return ULAB_ERR;
     }
     ulab_copy(w->run_id, sizeof(w->run_id), run_id);
+    w->seed = s->seed;
 
     for (i = 0; i < s->package_count; i++) {
         package_t *p = &w->packages[i];
@@ -107,7 +122,8 @@ int world_generate(const scenario_t *s,
     for (i = 0; i < w->network_count; i++) {
         network_t *net = &w->networks[i];
         snprintf(net->ref,  sizeof(net->ref),  "net-%03zu", i + 1);
-        snprintf(net->id,   sizeof(net->id),   "%.240s-%.120s", run_id, net->ref);
+        snprintf(net->id,   sizeof(net->id),   "%.240s-%.120s", run_id,
+                 net->ref);
         snprintf(net->name, sizeof(net->name), "%.255s", net->id);
 
         for (j = 0; j < s->world.sites_per_network; j++) {
@@ -135,6 +151,8 @@ int world_generate(const scenario_t *s,
                 subscriber_t *sub = &w->subscribers[ue_idx];
                 ue_t *ue = &w->ues[ue_idx];
                 size_t num = ue_idx + 1;
+                uint32_t phone = seeded_u32(s, "phone", ue_idx, i, j) %
+                    10000000u;
 
                 snprintf(sub->ref, sizeof(sub->ref), "sub-%06zu", num);
                 snprintf(sub->id, sizeof(sub->id), "%.240s-%.120s", run_id,
@@ -143,7 +161,7 @@ int world_generate(const scenario_t *s,
                          num);
                 snprintf(sub->email, sizeof(sub->email),
                          "lab-user-%06zu@ukama.test", num);
-                snprintf(sub->phone, sizeof(sub->phone), "+1555%07zu", num);
+                snprintf(sub->phone, sizeof(sub->phone), "+1555%07u", phone);
                 snprintf(sub->network_ref, sizeof(sub->network_ref), "%s",
                          net->ref);
                 snprintf(sub->site_ref, sizeof(sub->site_ref), "%s",
@@ -243,6 +261,7 @@ int world_write_json(const world_t *w, const char *path) {
 
     fprintf(f, "{\n");
     fprintf(f, "  \"run_id\": \"%s\",\n",   w->run_id);
+    fprintf(f, "  \"seed\": %u,\n",          w->seed);
     fprintf(f, "  \"networks\": %zu,\n",    w->network_count);
     fprintf(f, "  \"sites\": %zu,\n",       w->site_count);
     fprintf(f, "  \"nodes\": %zu,\n",       w->node_count);
@@ -262,6 +281,7 @@ void world_print(const world_t *w) {
     }
 
     printf("World:\n");
+    printf("  seed:        %u\n", w->seed);
     printf("  networks:    %zu\n", w->network_count);
     printf("  sites:       %zu\n", w->site_count);
     printf("  nodes:       %zu\n", w->node_count);

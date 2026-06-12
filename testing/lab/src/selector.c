@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdint.h>
 
 static int add_idx(selector_result_t *r, size_t idx) {
     size_t *n = realloc(r->idx, (r->count + 1) * sizeof(size_t));
@@ -25,6 +26,17 @@ static void init(selector_result_t *r) {
     r->count = 0;
 }
 
+static int has_idx(const selector_result_t *r, size_t idx) {
+    size_t i;
+
+    for (i = 0; i < r->count; i++) {
+        if (r->idx[i] == idx) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void selector_result_free(selector_result_t *r) {
     if (r == NULL) return;
     free(r->idx);
@@ -36,23 +48,49 @@ int selector_resolve_ues(const world_t *w, const selector_t *sel,
                          selector_result_t *out, ulab_error_t *err) {
     size_t i;
     init(out);
+
     if (sel->kind == SEL_NONE || sel->kind == SEL_ALL) {
         for (i = 0; i < w->ue_count; i++) if (add_idx(out, i)) return ULAB_ERR;
         return ULAB_OK;
     }
+
     if (sel->kind == SEL_SAMPLE_PER_SITE) {
         size_t s;
+        uint32_t pick;
+
         for (s = 0; s < w->site_count; s++) {
-            uint32_t c = 0;
-            for (i = 0; i < w->ue_count && c < sel->count; i++) {
-                if (ulab_streq(w->ues[i].site_ref, w->sites[s].ref)) {
-                    if (add_idx(out, i)) return ULAB_ERR;
-                    c++;
+            for (pick = 0; pick < sel->count; pick++) {
+                size_t best = w->ue_count;
+                uint32_t best_score = UINT32_MAX;
+
+                for (i = 0; i < w->ue_count; i++) {
+                    uint32_t score;
+
+                    if (!ulab_streq(w->ues[i].site_ref, w->sites[s].ref)) {
+                        continue;
+                    }
+                    if (has_idx(out, i)) {
+                        continue;
+                    }
+
+                    score = ulab_hash32(w->ues[i].ref, w->seed ^ pick);
+                    if (score < best_score) {
+                        best_score = score;
+                        best = i;
+                    }
+                }
+
+                if (best == w->ue_count) {
+                    break;
+                }
+                if (add_idx(out, best)) {
+                    return ULAB_ERR;
                 }
             }
         }
         return ULAB_OK;
     }
+
     snprintf(err->msg, sizeof(err->msg), "unsupported UE selector");
     return ULAB_ERR;
 }

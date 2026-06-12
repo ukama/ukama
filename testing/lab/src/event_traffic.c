@@ -9,6 +9,7 @@
 #include "event.h"
 #include "selector.h"
 #include "util.h"
+#include <stdio.h>
 #include <string.h>
 
 static const profile_spec_t *find_profile(const scenario_t *s,
@@ -20,10 +21,17 @@ static const profile_spec_t *find_profile(const scenario_t *s,
     return NULL;
 }
 
-static uint64_t profile_amount(const profile_spec_t *p, size_t idx) {
-    uint32_t bucket = (uint32_t)(idx % 100);
+static uint64_t profile_amount(const profile_spec_t *p,
+                               uint32_t seed,
+                               const char *profile_name,
+                               const char *ue_ref) {
+    char key[ULAB_MAX_LINE];
+    uint32_t bucket;
     uint32_t acc = 0;
     size_t i;
+
+    snprintf(key, sizeof(key), "traffic_profile:%s:%s", profile_name, ue_ref);
+    bucket = ulab_hash32(key, seed) % 100u;
 
     for (i = 0; i < p->bucket_count; i++) {
         acc += p->buckets[i].percent;
@@ -60,7 +68,9 @@ int event_traffic(event_ctx_t *ctx, const event_spec_t *event,
         }
         for (i = 0; i < ues.count; i++) {
             selector_result_t one = {0};
-            uint64_t mb = profile_amount(p, i);
+            ue_t *ue = &ctx->world->ues[ues.idx[i]];
+            uint64_t mb = profile_amount(p, ctx->scenario->seed,
+                                         event->profile, ue->ref);
             one.idx = &ues.idx[i];
             one.count = 1;
             if (runtime_generate_traffic(ctx->runtime, ctx->world, &one,
@@ -68,7 +78,7 @@ int event_traffic(event_ctx_t *ctx, const event_spec_t *event,
                 selector_result_free(&ues);
                 return ULAB_ERR;
             }
-            model_add_usage(ctx->model, ctx->world->ues[ues.idx[i]].ref, mb);
+            model_add_usage(ctx->model, ue->ref, mb);
         }
     }
     selector_result_free(&ues);
