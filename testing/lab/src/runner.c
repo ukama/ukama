@@ -136,58 +136,71 @@ static int setup_bff(bff_client_t *bff,
     return ULAB_OK;
 }
 
-static int start_runtime(const scenario_t *scenario,
+static int start_runtime(const char *repo,
+                         const scenario_t *scenario,
                          world_t *world,
                          runtime_t *runtime,
                          ulab_error_t *err) {
 
     selector_result_t result;
     selector_t selector;
-
+    
     memset(&selector, 0, sizeof(selector));
     selector.kind = SEL_ALL;
 
     if (scenario->runtime.start_nodes) {
+
         if (selector_resolve_nodes(world, &selector, &result, err)) {
             return ULAB_ERUNTIME;
         }
-        if (runtime_start_nodes(runtime, world, &result, err)) {
+
+        if (runtime_build_and_start_nodes(repo,runtime, world, &result, err)) {
             selector_result_free(&result);
             return ULAB_ERUNTIME;
         }
+
         selector_result_free(&result);
     }
 
     if (scenario->runtime.wait_nodes_ready) {
+
         if (selector_resolve_nodes(world, &selector, &result, err)) {
             return ULAB_ERUNTIME;
         }
+
         if (runtime_wait_nodes_ready(runtime, world, &result, err)) {
             selector_result_free(&result);
             return ULAB_ERUNTIME;
         }
+
         selector_result_free(&result);
     }
 
     if (scenario->runtime.start_ues) {
+
         if (selector_resolve_ues(world, &selector, &result, err)) {
             return ULAB_ERUNTIME;
         }
-        if (runtime_start_ues(runtime, world, &result, err)) {
+
+        if (runtime_build_and_start_ues(repo, runtime, world, &result, err)) {
             selector_result_free(&result);
             return ULAB_ERUNTIME;
         }
+
         selector_result_free(&result);
     }
 
     if (scenario->runtime.wait_ues_attached) {
+
         if (selector_resolve_ues(world, &selector, &result, err)) {
             return ULAB_ERUNTIME;
         }
+
         if (runtime_wait_ues_attached(runtime, world, &result, err)) {
             selector_result_free(&result);
             return ULAB_ERUNTIME;
         }
+
         selector_result_free(&result);
     }
 
@@ -362,7 +375,11 @@ int runner_validate(const runner_opts_t *opts) {
     model_sync_world(&model, &world);
     if (!opts->setup_only) {
         ulab_status("RUNTIME", "starting real nodes and UEs");
-        rc = start_runtime(scenario, &world, &runtime, &err);
+        rc = start_runtime(opts->repo,
+                           scenario,
+                           &world,
+                           &runtime,
+                           &err);
         if (rc != ULAB_OK) {
             goto done;
         }

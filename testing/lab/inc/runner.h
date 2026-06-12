@@ -16,7 +16,8 @@ typedef struct {
     char bff_url[ULAB_MAX_PATH];
     char out_dir[ULAB_MAX_PATH];
     char script_dir[ULAB_MAX_PATH];
-
+    char repo[ULAB_MAX_PATH];
+    
     uint32_t seed_override;
 
     int has_seed_override;

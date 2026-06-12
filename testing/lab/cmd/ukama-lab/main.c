@@ -25,6 +25,7 @@ static void usage(void) {
     printf("  ukama-lab list-events\n");
     printf("  ukama-lab version\n");
     printf("options:\n");
+    printf("  --repo <dir>     ukama repo root path (MUST)\n");
     printf("  --seed <n>       override scenario seed\n");
     printf("  --bff <url>      BFF GraphQL endpoint\n");
     printf("  --out <dir>      output directory\n");
@@ -42,6 +43,8 @@ static void opts_init(runner_opts_t *o) {
                                   "http://localhost:8080/graphql"));
     ulab_copy(o->out_dir, sizeof(o->out_dir),
               ulab_getenv_default("UKAMA_LAB_OUT", "runs"));
+    ulab_copy(o->script_dir, sizeof(o->script_dir),
+              ulab_getenv_default("UKAMA_LAB_SCRIPTS", "scripts"));
     ulab_copy(o->script_dir, sizeof(o->script_dir),
               ulab_getenv_default("UKAMA_LAB_SCRIPTS", "scripts"));
     o->keep = 1;
@@ -62,6 +65,8 @@ static int parse_opts(int argc, char **argv, int start, runner_opts_t *o) {
             ulab_copy(o->out_dir, sizeof(o->out_dir), argv[++i]);
         } else if (ulab_streq(argv[i], "--scripts") && i + 1 < argc) {
             ulab_copy(o->script_dir, sizeof(o->script_dir), argv[++i]);
+        } else if (ulab_streq(argv[i], "--repo") && i + 1 < argc) {
+            ulab_copy(o->repo, sizeof(o->repo), argv[++i]);
         } else if (ulab_streq(argv[i], "--setup-only")) {
             o->setup_only = 1;
         } else if (ulab_streq(argv[i], "--print-world")) {
@@ -82,6 +87,7 @@ static int parse_opts(int argc, char **argv, int start, runner_opts_t *o) {
             return ULAB_EUSAGE;
         }
     }
+
     return ULAB_OK;
 }
 
@@ -124,6 +130,13 @@ int main(int argc, char **argv) {
         return rc;
     }
 
+    /* repo path is must else we wont know how to build virtual node/ue */
+    if (strtok(opts.repo, "ukama") == NULL) {
+        printf("Missing --repo. Ukama repo root is MUST\n");
+        usage();
+        return rc;
+    }
+               
     ulab_log_set_quiet(opts.quiet);
     ulab_log_set_verbose(opts.verbose);
 

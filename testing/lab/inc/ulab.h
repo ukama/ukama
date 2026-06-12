@@ -22,6 +22,7 @@
 #define ULAB_MAX_REF       128
 #define ULAB_MAX_PATH      1024
 #define ULAB_MAX_ERR       1024
+#define ULAB_MAX_ARGS      4096
 #define ULAB_MAX_LINE      512
 
 #define ULAB_OK            0
