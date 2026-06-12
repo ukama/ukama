@@ -45,14 +45,22 @@ const getIdentity = async (userId: string, cookie: string) => {
   });
 };
 
-const whoami = async (cookie: string) => {
+/**
+ * Resolve a Kratos session. Accepts either a browser session cookie or a
+ * Kratos session/API token. When a token is supplied it is sent via the
+ * `X-Session-Token` header (Kratos's auth header for native/API clients);
+ * otherwise the cookie is used. The token path lets non-browser callers (no
+ * cookie) validate against the same /sessions/whoami endpoint.
+ */
+const whoami = async (auth: { cookie?: string; token?: string }) => {
   logger.info(`Whoami GET: ${AUTH_URL}/sessions/whoami`);
+  const headers = auth.token
+    ? { "X-Session-Token": auth.token }
+    : { cookie: auth.cookie ?? "" };
   return await asyncRestCall({
     method: API_METHOD_TYPE.GET,
     url: `${AUTH_URL}/sessions/whoami`,
-    headers: {
-      cookie: cookie,
-    },
+    headers,
   });
 };
 

@@ -227,12 +227,24 @@ const startServer = async () => {
 
   app.get("/get-user", async (req, res) => {
     const cookies = req.headers["cookie"];
-    if (!cookies) {
+    // Browser clients send the Kratos session cookie. Non-browser callers (no
+    // cookie) may instead present a Kratos session/API token via either the
+    // `x-session-token` header or `Authorization: Bearer <token>`.
+    const authHeader = req.headers["authorization"];
+    const bearer =
+      typeof authHeader === "string" && authHeader.startsWith("Bearer ")
+        ? authHeader.slice(7).trim()
+        : undefined;
+    const token = (req.headers["x-session-token"] as string) || bearer;
+    if (!cookies && !token) {
       return res.status(401).send(new HTTP401Error(Messages.HEADER_ERR_USER));
     }
     try {
       const initAPI = new InitAPI();
-      const sessionRes = await initAPI.validateSession(store, cookies);
+      const sessionRes = await initAPI.validateSession(store, {
+        cookie: cookies,
+        token,
+      });
       res.setHeader("Content-Type", "application/json");
       return res.send(sessionRes);
     } catch (err) {
