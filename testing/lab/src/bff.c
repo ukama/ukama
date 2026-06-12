@@ -239,6 +239,53 @@ static void derive_bff_base_url(const char *graphql_url,
     out[n] = '\0';
 }
 
+static void shell_quote(FILE *f, const char *s) {
+    const char *p;
+
+    fputc('\'', f);
+    for (p = s; p != NULL && *p != '\0'; p++) {
+        if (*p == '\'') {
+            fprintf(f, "'\\''");
+        } else {
+            fputc(*p, f);
+        }
+    }
+    fputc('\'', f);
+}
+
+static void bff_dump_curl(bff_client_t *c,
+                          const char *op,
+                          const char *body) {
+    const char *dump;
+
+    dump = getenv("UKAMA_LAB_DUMP_BFF_CURL");
+    if (dump == NULL || dump[0] == '\0' || ulab_streq(dump, "0")) {
+        return;
+    }
+
+    if (c == NULL || c->logf == NULL) {
+        return;
+    }
+
+    fprintf(c->logf, "--- %s curl ---\n", op);
+    fprintf(c->logf, "curl --location ");
+    shell_quote(c->logf, c->url);
+    fprintf(c->logf, " \\\n");
+    fprintf(c->logf, "  -H 'Content-Type: application/json'");
+
+    if (c->authenticated) {
+        fprintf(c->logf, " \\\n");
+        fprintf(c->logf, "  -H ");
+        fprintf(c->logf, "'X-Session-Token: %s'", c->token);
+    }
+
+    fprintf(c->logf, " \\\n");
+    fprintf(c->logf, "  --data-raw ");
+    shell_quote(c->logf, body);
+    fprintf(c->logf, "\n");
+    fflush(c->logf);
+}
+
 static int bff_call(bff_client_t *c, const char *op, const char *query,
                     const char *vars, json_t **out, ulab_error_t *err) {
     CURL *curl;
@@ -277,16 +324,15 @@ static int bff_call(bff_client_t *c, const char *op, const char *query,
     hdr = curl_slist_append(hdr, "Content-Type: application/json");
 
     if (c->authenticated) {
-        char session_hdr[8192];
-        char cookie_hdr[8192];
+        char token_hdr[8192];
+        /*
+         * Console-BFF GraphQL expects X-Session-Token to contain the signed
+         * BFF token returned by /gateway/get-user, not the Ory/Kratos token.
+         */
+        snprintf(token_hdr, sizeof(token_hdr),
+                 "X-Session-Token: %s", c->token);
 
-        snprintf(session_hdr, sizeof(session_hdr),
-                 "X-Session-Token: %s", c->session_token);
-        snprintf(cookie_hdr, sizeof(cookie_hdr),
-                 "Cookie: token=%s", c->token);
-
-        hdr = curl_slist_append(hdr, session_hdr);
-        hdr = curl_slist_append(hdr, cookie_hdr);
+        hdr = curl_slist_append(hdr, token_hdr);
     }
 
     curl_easy_setopt(curl, CURLOPT_URL, c->url);
@@ -295,6 +341,8 @@ static int bff_call(bff_client_t *c, const char *op, const char *query,
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_cb);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &resp);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
+
+    bff_dump_curl(c, op, body);
 
     ret = curl_easy_perform(curl);
     if (ret != CURLE_OK) {
@@ -458,9 +506,8 @@ int bff_login(bff_client_t *c,
     root = NULL;
 
     snprintf(session_hdr, sizeof(session_hdr),
-             "X-Session-Token: %s", session_token);
+             "Cookie: ukama_session=%s", session_token);
     hdrs = curl_slist_append(hdrs, session_hdr);
-
     if (build_url(url, sizeof(url),
                   c->bff_base_url,
                   "/gateway/get-user",
