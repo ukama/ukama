@@ -506,7 +506,7 @@ int bff_login(bff_client_t *c,
     root = NULL;
 
     snprintf(session_hdr, sizeof(session_hdr),
-             "Cookie: ukama_session=%s", session_token);
+             "X-Session-Token: %s", session_token);
     hdrs = curl_slist_append(hdrs, session_hdr);
     if (build_url(url, sizeof(url),
                   c->bff_base_url,
