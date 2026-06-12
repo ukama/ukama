@@ -424,7 +424,7 @@ _phase1_run() {
             sleep 3
             continue
         fi
-        sleep 3
+        sleep 5
 
         # Step 2: Start oct-remote-boot
         echo "Starting oct-remote-boot (OCTEON_ROOT=$oct_env_root, $oct_env_protocol)..."
