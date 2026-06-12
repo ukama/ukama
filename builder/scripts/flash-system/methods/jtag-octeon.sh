@@ -417,14 +417,20 @@ _phase1_run() {
         echo ""
         echo "=== Phase 1 bring-up attempt ${bringup_attempt}/${max_bringup_attempts} ==="
 
-        # Step 1: Send go 0x400000 via BDI telnet
-        echo "Sending 'go 0x400000' via BDI telnet..."
-        if ! bdi_telnet_cmd "$bdi_ip" "go 0x400000"; then
-            echo "WARNING: BDI 'go' command failed — will retry."
-            sleep 3
-            continue
+        # Step 1: Send go 0x400000 via BDI telnet (odd attempts).
+        # Even attempts skip the go and let oct-remote-boot start the core itself
+        # ("Starting core 0!") — the configuration that completed Phase 1 on 2026-05-26.
+        if [ $((bringup_attempt % 2)) -eq 1 ]; then
+            echo "Sending 'go 0x400000' via BDI telnet..."
+            if ! bdi_telnet_cmd "$bdi_ip" "go 0x400000"; then
+                echo "WARNING: BDI 'go' command failed — will retry."
+                sleep 3
+                continue
+            fi
+            sleep 5
+        else
+            echo "Skipping 'go' this attempt — oct-remote-boot will start the core itself."
         fi
-        sleep 5
 
         # Step 2: Start oct-remote-boot
         echo "Starting oct-remote-boot (OCTEON_ROOT=$oct_env_root, $oct_env_protocol)..."
