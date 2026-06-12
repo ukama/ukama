@@ -111,7 +111,7 @@ int runtime_build_and_start_nodes(const char *repo,
 
         ulab_status("NODE", "build/start %s type=%s", n->id, n->type);
 
-        if (run_script(rt, "start-node.sh", args, err)) {
+        if (run_script(rt, "build-and-start-node.sh", args, err)) {
             return ULAB_ERR;
         }
     }
