@@ -304,101 +304,79 @@ _phase1_run() {
         echo "WARNING: bdi.config_file not found at $bdi_config_src"
     fi
 
-    # --- BDI config load ---
-    echo "Ensuring BDI config is loaded (telnet -> HOST $host_ip; CONFIG cnf71xx.cfg)..."
-    local bdi_cfg_ok=0 bdi_cfg_try=0
-    while [ "$bdi_cfg_try" -lt 4 ] && [ "$bdi_cfg_ok" -ne 1 ]; do
-        bdi_cfg_try=$((bdi_cfg_try + 1))
-        echo "  BDI config load attempt $bdi_cfg_try/4..."
-        if expect -c "
+    # --- BDI state check ---
+    # The bench procedure never reloads CONFIG on an already-configured BDI: at
+    # cnMIPS#0> the operator goes straight to go + oct-remote-boot. Every bring-up
+    # attempted right after a CONFIG reload (= BDI reboot) has hung in DDR init,
+    # so CONFIG is sent only when the BDI is actually bare (Core#0>), and after
+    # that the TRX must be cold power-cycled before bring-up.
+    echo "Checking BDI state at ${bdi_ip} (cnMIPS#0> = configured, Core#0> = bare)..."
+    local bdi_state
+    bdi_state=$(expect -c "
+        set timeout 20
+        log_user 0
+        spawn telnet $bdi_ip
+        expect {
+            \"cnMIPS#0>\" { puts BDI_READY }
+            \"Core#0>\"   { puts BDI_BARE }
+            timeout       { puts BDI_DOWN }
+        }
+        catch { send \"quit\r\"; expect eof }
+    " 2>/dev/null | grep -oE 'BDI_READY|BDI_BARE|BDI_DOWN' | tail -1)
+
+    if [ "$bdi_state" = "BDI_READY" ]; then
+        echo "  BDI already configured — skipping CONFIG reload (matches the manual flow)."
+    elif [ "$bdi_state" = "BDI_BARE" ]; then
+        echo "  BDI is unconfigured — sending HOST + CONFIG (the BDI will reboot and auto-load)..."
+        if ! expect -c "
             set timeout 25
             spawn telnet $bdi_ip
             expect {
                 \"Core#0>\" {}
-                \"cnMIPS#0>\" { puts \"BDI already at cnMIPS#0> — config loaded.\"; exit 0 }
-                timeout { puts \"BDI telnet timeout (is BDI powered on?)\"; exit 1 }
+                timeout { puts \"BDI telnet timeout\"; exit 1 }
             }
-            # Store the TFTP host IP permanently so auto-load after reboot works.
             send \"HOST $host_ip\r\"
             expect \"Core#0>\"
-            # Load config using the stored host IP.  After \"Updating configuration passed\"
-            # the BDI reboots and will auto-reload using the same stored IP.
             send \"CONFIG cnf71xx.cfg\r\"
             expect {
                 \"configuration passed\" { puts \"Config load succeeded.\"; exit 0 }
                 \"cannot open\" { puts \"Config load failed (file not found on TFTP).\"; exit 1 }
-                \"Core#0>\" { puts \"Config load failed (back at Core#0>).\"; exit 1 }
                 timeout { puts \"Config load timeout (TFTP slow or unreachable).\"; exit 1 }
             }
         " 2>/dev/null; then
-            bdi_cfg_ok=1
-            break
-        fi
-        echo "  BDI config load failed, waiting 5s before retry..."
-        sleep 5
-    done
-
-    if [ "$bdi_cfg_ok" -ne 1 ]; then
-        echo "ERROR: BDI config could not be loaded after $bdi_cfg_try attempts."
-        echo "  Please manually telnet to the BDI and run: CONFIG cnf71xx.cfg $host_ip"
-        return 1
-    fi
-    # After CONFIG the BDI reboots itself ("Booting ....."). It needs ~20-40s to
-    # auto-reload the config from TFTP and open port 2001. A fixed wait is more
-    # reliable than rapid-fire telnet probes while the BDI is still booting.
-    echo "  BDI config loaded. Probing GDB port ${bdi_ip}:2001..."
-    if ! nc -z "$bdi_ip" 2001 2>/dev/null; then
-        # The BDI may be at cnMIPS#0> from a prior session but its GDB stub has timed
-        # out.  BOOT does not re-fetch the config from TFTP; we must re-send CONFIG.
-        echo "  GDB port closed — forcing config reload via HOST + CONFIG..."
-        if expect -c "
-            set timeout 25
-            spawn telnet $bdi_ip
-            expect {
-                \"Core#0>\" {}
-                \"cnMIPS#0>\" {}
-                timeout { puts \"BDI telnet timeout\"; exit 1 }
-            }
-            send \"HOST $host_ip\r\"
-            expect {
-                \"Core#0>\" {}
-                \"cnMIPS#0>\" {}
-            }
-            send \"CONFIG cnf71xx.cfg\r\"
-            expect {
-                \"configuration passed\" { puts \"Config reload succeeded.\"; exit 0 }
-                \"cannot open\" { puts \"Config reload failed (file not found on TFTP).\"; exit 1 }
-                \"Core#0>\" { puts \"Config reload failed (back at Core#0>).\"; exit 1 }
-                \"cnMIPS#0>\" { puts \"Config reload failed (back at cnMIPS#0>).\"; exit 1 }
-                timeout { puts \"Config reload timeout (TFTP slow or unreachable).\"; exit 1 }
-            }
-        " 2>/dev/null; then
-            echo "  Config reloaded. Waiting 35s for BDI to reboot..."
-            sleep 35
-        else
-            echo "ERROR: BDI config reload failed."
+            echo "ERROR: BDI config load failed."
+            echo "  Please manually telnet to the BDI and run: HOST $host_ip then CONFIG cnf71xx.cfg"
             return 1
         fi
+        echo "  Config sent — BDI is rebooting and auto-loading it. Waiting 45s to settle..."
+        sleep 45
+        echo ""
+        echo ">>> The BDI was just configured (it rebooted)."
+        echo ">>> COLD power-cycle the TRX now (power OFF, ~5s, ON — JTAG cable stays connected)"
+        echo ">>> so the BDI halts the core fresh, matching the manual bench order."
+        printf ">>> Press Enter when the TRX is back on... "
+        read -r _ </dev/tty || true
+        echo ""
+        sleep 5
+    else
+        echo "ERROR: could not reach the BDI telnet prompt at ${bdi_ip}."
+        echo "  Check BDI power and network, then re-run."
+        return 1
     fi
 
     echo "  Probing BDI GDB port ${bdi_ip}:2001..."
-    if ! nc -z "$bdi_ip" 2001 2>/dev/null; then
-        echo "  GDB port not open yet, waiting another 25s..."
-        sleep 25
-        if ! nc -z "$bdi_ip" 2001 2>/dev/null; then
-            echo "ERROR: BDI GDB port still closed after 60s. The BDI may have failed to auto-load."
-            echo "  Try power-cycling the BDI with TFTP already running:"
-            echo "    sudo mkdir -p /tmp/bdi-tftp && sudo cp $bdi_config_src /tmp/bdi-tftp/cnf71xx.cfg"
-            echo "    sudo /usr/sbin/in.tftpd -L --secure /tmp/bdi-tftp &"
-            echo "    # then power-cycle BDI, wait 60s, and re-run this script"
+    local gdb_wait=0
+    while ! nc -z "$bdi_ip" 2001 2>/dev/null; do
+        gdb_wait=$((gdb_wait + 5))
+        if [ "$gdb_wait" -ge 60 ]; then
+            echo "ERROR: BDI GDB port still closed after 60s — the BDI may not have auto-loaded"
+            echo "  its config (TFTP must be running when the BDI boots)."
+            echo "  Power-cycle the BDI now (TFTP is still being served) and re-run this script."
             return 1
         fi
-    fi
+        sleep 5
+    done
     echo "  GDB port is open."
-    # Freshly-rebooted BDI may need a few more seconds for its GDB stub to fully
-    # initialise before oct-remote-boot can connect reliably.
-    echo "  Giving BDI 10s to finish GDB init..."
-    sleep 10
 
     # --- Phase 1 core bring-up loop ---
     # Supreeth's proven manual flow:
