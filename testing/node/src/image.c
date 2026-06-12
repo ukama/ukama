@@ -27,7 +27,9 @@ static char *module_schema_file(char* nodeType, char *type);
 static void set_schema_args(Node *node, char **buffer);
 static FILE* init_container_file(char *fileName);
 static int write_to_container_file(char *buffer, char *fileName, FILE *fp);
-static int create_container_file(char *target, Configs *config, Node *node,
+static int create_container_file(char *target,
+                                 Configs *config,
+                                 Node *node,
                                  RuntimeType runtime);
 static int stage_starter_pkgs(Configs *configs);
 static int is_tower_node(Node *node);
@@ -234,19 +236,27 @@ static int create_container_file(char *target,
     }
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-    /* install curl (kickstart readiness probe) */
+    /* install curl for kickstart/readiness probes */
     if (strstr(target, TARGET_ALPINE) != NULL) {
         sprintf(buffer, "RUN apk add --no-cache curl ca-certificates\n");
     } else {
-	sprintf(buffer, "RUN rm -rf /var/lib/apt/lists/* && apt-get clean && for i in 1 2 3 4 5; do apt-get update -o Acquire::Retries=5 && apt-get install -y --no-install-recommends curl ca-certificates && rm -rf /var/lib/apt/lists/* && break; echo \"apt failed, retrying...\"; sleep 10; done\n");
+        sprintf(buffer,
+                "RUN rm -rf /var/lib/apt/lists/* && "
+                "apt-get clean && "
+                "for i in 1 2 3 4 5; do "
+                "apt-get update -o Acquire::Retries=5 && "
+                "apt-get install -y --no-install-recommends curl ca-certificates && "
+                "rm -rf /var/lib/apt/lists/* && "
+                "break; "
+                "echo \"apt failed, retrying...\"; "
+                "sleep 10; "
+                "done\n");
     }
-
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
     sprintf(buffer, CF_MKDIR, NODE_LIBS);
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-    /* Make sure /tmp exists */
     sprintf(buffer, CF_MKDIR, "/tmp");
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
@@ -280,7 +290,15 @@ static int create_container_file(char *target,
     sprintf(buffer, CF_COPY, "./build/ukama/etc", "/etc");
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-    /* mock sysfs tarball -> /ukama/mocksysfs/sys/... */
+    /*
+     * Make runtime linker paths available before the container starts.
+     */
+    sprintf(buffer, CF_ENV, LIB_PATH, NODE_LIBS);
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    /*
+     * Mock sysfs tarball -> /ukama/mocksysfs/sys/...
+     */
     sprintf(buffer, CF_MKDIR, "/ukama/mocksysfs");
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
@@ -288,7 +306,7 @@ static int create_container_file(char *target,
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
     /*
-     * Make /tmp/sys point to /ukama/mocksysfs/sys
+     * Make /tmp/sys point to /ukama/mocksysfs/sys.
      */
     sprintf(buffer, CF_SYMLINK, "/ukama/mocksysfs/sys", "/tmp/sys");
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
@@ -301,16 +319,6 @@ static int create_container_file(char *target,
         if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
     }
 
-    if (runtime == RUNTIME_STARTER) {
-        sprintf(buffer, CF_CMD, STARTER_CMD);
-    } else {
-        sprintf(buffer, CF_CMD, SUPERVISOR_CMD);
-    }
-    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
-
-    sprintf(buffer, CF_ENV, LIB_PATH, NODE_LIBS);
-    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
-
     sprintf(buffer, CF_COPY, "./build/usr", "/usr");
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
@@ -318,6 +326,20 @@ static int create_container_file(char *target,
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
     sprintf(buffer, CF_COPY, "./build/lib64", "/lib64");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    /*
+     * Use ENTRYPOINT instead of CMD so podman run IMAGE starts the runtime
+     * by default. A command passed after the image replaces CMD, but not
+     * ENTRYPOINT. For debugging, use:
+     *
+     *   podman run --entrypoint /bin/bash -it IMAGE
+     */
+    if (runtime == RUNTIME_STARTER) {
+        sprintf(buffer, CF_ENTRYPOINT, STARTER_CMD);
+    } else {
+        sprintf(buffer, CF_ENTRYPOINT, SUPERVISOR_CMD);
+    }
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
     fclose(fp);

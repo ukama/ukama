@@ -196,14 +196,32 @@ fi
 
 echo "podman: starting $CONTAINER_NAME from $IMAGE"
 
-# shellcheck disable=SC2086
-podman run -d \
-    --name "$CONTAINER_NAME" \
-    --privileged \
-    --device /dev/net/tun \
-    $PUBLISH_ARGS \
-    "$IMAGE" \
-    ${ULAB_NODE_CMD:-}
+echo "podman: starting $CONTAINER_NAME from $IMAGE"
+
+if [ -n "${ULAB_NODE_ENTRYPOINT:-}" ]; then
+    # Debug/override mode, for example:
+    #   ULAB_NODE_ENTRYPOINT=/bin/bash ./ulab ...
+    # or:
+    #   ULAB_NODE_ENTRYPOINT=/bin/bash ULAB_NODE_CMD="-lc 'env && sleep infinity'" ./ulab ...
+    # shellcheck disable=SC2086
+    podman run -d \
+        --name "$CONTAINER_NAME" \
+        --privileged \
+        --device /dev/net/tun \
+        --entrypoint "$ULAB_NODE_ENTRYPOINT" \
+        $PUBLISH_ARGS \
+        "$IMAGE" \
+        ${ULAB_NODE_CMD:-}
+else
+    # Normal mode: image ENTRYPOINT starts /sbin/starter.d automatically.
+    # shellcheck disable=SC2086
+    podman run -d \
+        --name "$CONTAINER_NAME" \
+        --privileged \
+        --device /dev/net/tun \
+        $PUBLISH_ARGS \
+        "$IMAGE"
+fi
 
 write_state
 
