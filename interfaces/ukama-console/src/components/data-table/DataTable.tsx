@@ -62,7 +62,8 @@ declare module '@tanstack/react-table' {
 export type TableStatus = 'loading' | 'error' | 'ready';
 
 export interface DataTableEmptyProps {
-  art?: EmptyArtName;
+  /** Pass `null` to render no icon. */
+  art?: EmptyArtName | null;
   title: string;
   sub?: string;
   cta?: string;
@@ -106,7 +107,9 @@ function FilterTh<T>({
         type="button"
         className={value !== 'all' ? 'on' : ''}
         sx={COLFILTER_SX}
-        onClick={(e: React.MouseEvent<HTMLElement>) => setAnchor(e.currentTarget)}
+        onClick={(e: React.MouseEvent<HTMLElement>) =>
+          setAnchor(e.currentTarget)
+        }
       >
         {flexRender(col.columnDef.header, header.getContext())}
         <ExpandMoreRounded sx={{ fontSize: 16 }} />
@@ -229,7 +232,11 @@ export default function DataTable<T>({
               const meta = col.columnDef.meta;
               if (meta?.filterOptions) {
                 return (
-                  <FilterTh key={h.id} header={h} options={meta.filterOptions} />
+                  <FilterTh
+                    key={h.id}
+                    header={h}
+                    options={meta.filterOptions}
+                  />
                 );
               }
               const sortable = col.getCanSort();
@@ -248,12 +255,22 @@ export default function DataTable<T>({
                   }}
                   onClick={sortable ? col.getToggleSortingHandler() : undefined}
                 >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 3,
+                    }}
+                  >
                     {h.isPlaceholder
                       ? null
                       : flexRender(col.columnDef.header, h.getContext())}
-                    {sorted === 'asc' && <ArrowUpwardRounded sx={{ fontSize: 14 }} />}
-                    {sorted === 'desc' && <ArrowDownwardRounded sx={{ fontSize: 14 }} />}
+                    {sorted === 'asc' && (
+                      <ArrowUpwardRounded sx={{ fontSize: 14 }} />
+                    )}
+                    {sorted === 'desc' && (
+                      <ArrowDownwardRounded sx={{ fontSize: 14 }} />
+                    )}
                   </span>
                 </TableCell>
               );

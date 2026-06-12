@@ -33,6 +33,7 @@ import {
   CustomerSupportDto,
   SimPoolDto,
 } from "../resolvers/types/customer";
+import { HomeKpis, HomeLens, HomeViewInput } from "../resolvers/types/home";
 import {
   AnalyticsNodeInput,
   MetricPanelDto,
@@ -48,7 +49,7 @@ import {
   NetworkTopologyDto,
   NodePoolDto,
 } from "../resolvers/types/network";
-import { AnalyticsWindowInput } from "../resolvers/types/shared";
+import { AnalyticsWindowInput, KpiDto } from "../resolvers/types/shared";
 import { mapAnalytics } from "./mapper";
 
 const ANALYTICS = "analytics";
@@ -85,6 +86,23 @@ const detailQuery = (data: {
 };
 
 class AnalyticsAPI extends BaseRESTDataSource {
+  /* ---------------- Home (shared business / network) ---------------- */
+
+  // KPI strip for either home screen. Routes by lens to the lens's overview
+  // endpoint and returns just its `kpis` (both lenses emit [KpiDto]).
+  getHomeKpis = async (
+    baseURL: string,
+    data: HomeViewInput
+  ): Promise<HomeKpis> => {
+    this.baseURL = baseURL;
+    const path =
+      data.lens === HomeLens.NETWORK ? "network/overview" : "business/home";
+    const res = await this.callGet<{ kpis?: KpiDto[] }>(
+      `${path}?${windowQuery(data)}`
+    );
+    return { kpis: res.kpis ?? [] };
+  };
+
   /* ---------------- Business ---------------- */
 
   getBusinessHome = async (

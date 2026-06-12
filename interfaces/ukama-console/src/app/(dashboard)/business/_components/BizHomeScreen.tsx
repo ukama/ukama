@@ -20,10 +20,9 @@ import Skeleton from '@mui/material/Skeleton';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
-import {
-  useGetBusinessHomeQuery,
-  useGetBusinessSitesQuery,
-} from '@/client/graphql/analytics.generated';
+import { useGetHomeKpisQuery } from '@/client/graphql/analytics.generated';
+import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
+import { HomeLens } from '@/client/graphql/types';
 import AppModal from '@/components/AppModal';
 import DateChip from '@/components/DateChip';
 import { KpiRow } from '@/components/Kpi';
@@ -32,6 +31,7 @@ import UkamaMap, { HOME_MAP_ZOOM } from '@/components/Map/UkamaMap';
 import PageHeader from '@/components/PageHeader';
 import type { BizSite } from '@/data';
 import { useCurrency } from '@/lib/currency';
+import { normalizeCoords } from '@/lib/geo';
 import { kpiAmount, kpiByKey, kpiText, kpiValue } from '@/lib/kpis';
 import { useUiPrefs } from '@/lib/store';
 
@@ -43,14 +43,6 @@ const KEY = {
   customersTotal: 'customers_total',
 } as const;
 
-/** Map a backend status string onto the BizSite status union. */
-const normStatus = (status?: string | null): BizSite['status'] => {
-  const s = (status ?? '').toLowerCase();
-  if (s === 'offline' || s === 'down' || s === 'deactivated') return 'offline';
-  if (s === 'warning' || s === 'degraded') return 'warning';
-  return 'online';
-};
-
 function SiteSummaryList({
   sites,
   onSite,
@@ -58,9 +50,6 @@ function SiteSummaryList({
   sites: BizSite[];
   onSite: (s: BizSite) => void;
 }) {
-  const { symbol } = useCurrency();
-  const money = (value: number): string =>
-    `${symbol}${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
       {sites.map((s, i) => (
@@ -90,7 +79,7 @@ function SiteSummaryList({
             <div
               style={{ fontSize: 12.5, color: 'var(--uk-ink-2)', marginTop: 1 }}
             >
-              {money(s.revenue)} · {s.customers} customers
+              {s.status === 'offline' ? 'Offline' : 'Online'}
             </div>
           </div>
         </div>
@@ -110,39 +99,46 @@ export default function BizHomeScreen() {
       ? '—'
       : `${symbol}${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 
-  const { data: homeData, loading: homeLoading } = useGetBusinessHomeQuery({
-    variables: { data: { networkId } },
+  // KPIs come from the analytics rollup; sites come live from the registry
+  // (sitesView) so the map doesn't depend on the analytics collector.
+  const { data: homeData, loading: homeLoading } = useGetHomeKpisQuery({
+    variables: { data: { lens: HomeLens.Business, networkId } },
   });
-  const { data: sitesData, loading: sitesLoading } = useGetBusinessSitesQuery({
-    variables: { data: { networkId } },
+  const { data: sitesData, loading: sitesLoading } = useSitesListQuery({
+    variables: { networkId },
     skip: !networkId,
   });
-  const kpis = homeData?.getBusinessHome.kpis;
+  const kpis = homeData?.getHomeKpis.kpis;
   const monthDelta = kpiByKey(kpis, KEY.revenueMonth)?.delta;
   const totalCustomers = kpiValue(kpis, KEY.customersTotal);
   const loading = homeLoading || sitesLoading;
 
   const sites: BizSite[] = useMemo(
     () =>
-      (sitesData?.getBusinessSites.sites ?? []).map((s) => ({
-        id: s.siteId,
-        name: s.name ?? s.siteId,
-        status: normStatus(s.status),
-        revenue: s.revenue,
-        revToday: s.revenueToday,
-        customers: s.customers,
-        custToday: 0,
-        data: '—',
-        uptime: s.uptime,
-        top: s.topPackage ?? '—',
-        issue: s.issue ?? null,
-        lat: s.latitude,
-        lng: s.longitude,
-      })),
-    [sitesData?.getBusinessSites.sites],
+      (sitesData?.sitesView.sites.sites ?? []).map((s) => {
+        const geo = normalizeCoords(s.latitude, s.longitude);
+        return {
+          id: s.id,
+          name: s.name,
+          status: s.isDeactivated ? 'offline' : 'online',
+          revenue: 0,
+          revToday: 0,
+          customers: 0,
+          custToday: 0,
+          data: '—',
+          uptime: 0,
+          top: '—',
+          issue: null,
+          lat: geo?.lat ?? 0,
+          lng: geo?.lng ?? 0,
+        };
+      }),
+    [sitesData?.sitesView.sites.sites],
   );
   const online = sites.filter((s) => s.status !== 'offline').length;
-  const goSite = (id: string) => router.push(`/business/sites/${id}`);
+  // The business site-detail page was removed; drill into the canonical
+  // Network site detail instead.
+  const goSite = (id: string) => router.push(`/network/sites/${id}`);
 
   const BIZ_PIN: Record<string, string> = {
     online: 'var(--uk-success-bright)',

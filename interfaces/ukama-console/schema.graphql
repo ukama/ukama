@@ -1839,3 +1839,27 @@ type BusinessSitesDto {
   sites: [BusinessSiteRowDto!]!
   meta: MetaDto
 }
+
+# Shared home queries (Business + Network), parameterised by lens.
+
+enum HomeLens {
+  BUSINESS
+  NETWORK
+}
+
+input HomeViewInput {
+  lens: HomeLens!
+  networkId: String
+  period: String
+  from: String
+  to: String
+  timezone: String
+}
+
+type HomeKpis {
+  kpis: [KpiDto!]!
+}
+
+extend type Query {
+  getHomeKpis(data: HomeViewInput!): HomeKpis!
+}

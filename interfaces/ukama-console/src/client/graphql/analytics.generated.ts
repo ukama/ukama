@@ -7,6 +7,13 @@ export type KpiFieldsFragment = { __typename?: 'KpiDto', key: string, value: num
 
 export type NamedValueFieldsFragment = { __typename?: 'NamedValueDto', id?: string | null, name?: string | null, value: number };
 
+export type GetHomeKpisQueryVariables = Types.Exact<{
+  data: Types.HomeViewInput;
+}>;
+
+
+export type GetHomeKpisQuery = { __typename?: 'Query', getHomeKpis: { __typename?: 'HomeKpis', kpis: Array<{ __typename?: 'KpiDto', key: string, value: number, formatted?: string | null, delta?: number | null, deltaPeriod?: string | null, stale?: boolean | null, asOf?: string | null }> } };
+
 export type GetBusinessHomeQueryVariables = Types.Exact<{
   data: Types.AnalyticsWindowInput;
 }>;
@@ -53,6 +60,51 @@ export const NamedValueFieldsFragmentDoc = gql`
   value
 }
     `;
+export const GetHomeKpisDocument = gql`
+    query GetHomeKpis($data: HomeViewInput!) {
+  getHomeKpis(data: $data) {
+    kpis {
+      ...KpiFields
+    }
+  }
+}
+    ${KpiFieldsFragmentDoc}`;
+
+/**
+ * __useGetHomeKpisQuery__
+ *
+ * To run a query within a React component, call `useGetHomeKpisQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetHomeKpisQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetHomeKpisQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetHomeKpisQuery(baseOptions: Apollo.QueryHookOptions<GetHomeKpisQuery, GetHomeKpisQueryVariables> & ({ variables: GetHomeKpisQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetHomeKpisQuery, GetHomeKpisQueryVariables>(GetHomeKpisDocument, options);
+      }
+export function useGetHomeKpisLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetHomeKpisQuery, GetHomeKpisQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetHomeKpisQuery, GetHomeKpisQueryVariables>(GetHomeKpisDocument, options);
+        }
+// @ts-ignore
+export function useGetHomeKpisSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetHomeKpisQuery, GetHomeKpisQueryVariables>): Apollo.UseSuspenseQueryResult<GetHomeKpisQuery, GetHomeKpisQueryVariables>;
+export function useGetHomeKpisSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetHomeKpisQuery, GetHomeKpisQueryVariables>): Apollo.UseSuspenseQueryResult<GetHomeKpisQuery | undefined, GetHomeKpisQueryVariables>;
+export function useGetHomeKpisSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetHomeKpisQuery, GetHomeKpisQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetHomeKpisQuery, GetHomeKpisQueryVariables>(GetHomeKpisDocument, options);
+        }
+export type GetHomeKpisQueryHookResult = ReturnType<typeof useGetHomeKpisQuery>;
+export type GetHomeKpisLazyQueryHookResult = ReturnType<typeof useGetHomeKpisLazyQuery>;
+export type GetHomeKpisSuspenseQueryHookResult = ReturnType<typeof useGetHomeKpisSuspenseQuery>;
+export type GetHomeKpisQueryResult = Apollo.QueryResult<GetHomeKpisQuery, GetHomeKpisQueryVariables>;
 export const GetBusinessHomeDocument = gql`
     query GetBusinessHome($data: AnalyticsWindowInput!) {
   getBusinessHome(data: $data) {

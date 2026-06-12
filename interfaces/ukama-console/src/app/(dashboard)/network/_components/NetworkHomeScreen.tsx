@@ -8,58 +8,71 @@
 'use client';
 
 /**
- * Ops Home — KPIs + live network map, wired to the `networkOverview`
- * composite (NetworkHome query). Section data follows the §4.5 contract:
- * loading → skeleton, failed/not-implemented → "—", empty → empty state.
+ * Ops Home — KPIs + live network map, wired to the shared analytics home
+ * queries (`getHomeKpis` / `getHomeSites`, lens = NETWORK). KPI keys live in
+ * docs/analytics-backend-gaps.md and degrade to "—".
  */
 import Button from '@mui/material/Button';
 import Skeleton from '@mui/material/Skeleton';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
-import { useNetworkHomeQuery } from '@/client/graphql/network-home.generated';
+import { useGetHomeKpisQuery } from '@/client/graphql/analytics.generated';
+import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
+import { HomeLens } from '@/client/graphql/types';
 import DateChip from '@/components/DateChip';
 import { KpiRow } from '@/components/Kpi';
 import UkamaMap, { HOME_MAP_ZOOM } from '@/components/Map/UkamaMap';
 import PageHeader from '@/components/PageHeader';
-import { sectionValue } from '@/components/SectionFallback';
 import StatusBadge from '@/components/StatusBadge';
 import type { Site } from '@/data';
 import { normalizeCoords } from '@/lib/geo';
+import { kpiText } from '@/lib/kpis';
 import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
 import { useUiPrefs } from '@/lib/store';
+
+// KPI keys this screen reads — see docs/analytics-backend-gaps.md.
+const KEY = {
+  uptime: 'network_uptime',
+  activeCustomers: 'active_customers',
+  dataUsage: 'data_usage',
+} as const;
 
 export default function NetworkHomeScreen() {
   const router = useRouter();
   const networkId = useUiPrefs((s) => s.networkId);
   const [sel, setSel] = useState<string | null>(null);
 
-  const { data, loading, refetch } = useNetworkHomeQuery({
+  // KPIs come from the analytics rollup; sites come live from the registry
+  // (sitesView) so the map doesn't depend on the analytics collector.
+  const { data: kpiData, loading: kpiLoading } = useGetHomeKpisQuery({
+    variables: { data: { lens: HomeLens.Network, networkId } },
+    skip: !networkId,
+    ...visiblePoll(POLL_OVERVIEW_MS),
+  });
+  const {
+    data: sitesData,
+    loading: sitesLoading,
+    error: sitesError,
+    refetch,
+  } = useSitesListQuery({
     variables: { networkId },
     skip: !networkId,
     ...visiblePoll(POLL_OVERVIEW_MS),
   });
-  const overview = data?.networkOverview;
-  const kpiByKey = new Map(
-    (overview?.kpis.metrics ?? []).map((m) => [m.key, m]),
-  );
-  const kpiValue = (key: string, unit = ''): string => {
-    const entry = kpiByKey.get(key);
-    if (!entry || !entry.success) return '—';
-    return `${Math.round(entry.value * 100) / 100}${unit}`;
-  };
+  const kpis = kpiData?.getHomeKpis.kpis;
+  const loading = kpiLoading || sitesLoading;
 
-  // Map SiteDto → the map's Site view-model. Per-site uptime/subscriber
-  // figures are metrics-phase data (kpis backend gap) — placeholders until
-  // then; status derives from isDeactivated (honest, if coarse).
+  // Per-site node/battery/signal figures aren't on the registry site shape;
+  // home only needs the map + name/status/coords, so the rest are placeholders.
   const mapSites: Site[] = useMemo(
     () =>
-      (overview?.siteStats.sites ?? []).map((s) => {
+      (sitesData?.sitesView.sites.sites ?? []).map((s) => {
         const geo = normalizeCoords(s.latitude, s.longitude);
         return {
           id: s.id,
           name: s.name,
-          area: s.location,
+          area: s.location ?? '',
           status: s.isDeactivated ? 'offline' : 'online',
           subs: 0,
           nodes: 0,
@@ -72,7 +85,7 @@ export default function NetworkHomeScreen() {
           plan: '',
         };
       }),
-    [overview?.siteStats.sites],
+    [sitesData?.sitesView.sites.sites],
   );
 
   const SITE_PIN: Record<string, string> = {
@@ -98,8 +111,6 @@ export default function NetworkHomeScreen() {
   const site = mapSites.find((s) => s.id === sel);
   const sitesTotal = mapSites.length;
   const sitesOnline = mapSites.filter((s) => s.status === 'online').length;
-  const subStats = overview?.subscriberStats;
-  const kpisGap = overview?.kpis.error ?? null;
 
   return (
     <div className="page">
@@ -114,29 +125,26 @@ export default function NetworkHomeScreen() {
               icon: 'network_check',
               color: 'var(--uk-success-bright)',
               label: 'Network uptime',
-              value: kpisGap ? '—' : kpiValue('network_uptime', '%'),
+              value: kpiText(kpis, KEY.uptime, (v) => `${v}%`),
               sub: 'latest reading',
             },
             {
               icon: 'group',
               color: 'var(--uk-secondary)',
               label: 'Active customers',
-              value: sectionValue(subStats?.active, subStats?.error),
+              value: kpiText(kpis, KEY.activeCustomers),
             },
             {
               icon: 'donut_small',
               color: 'var(--uk-beige)',
               label: 'Data volume',
-              value: kpisGap ? '—' : kpiValue('data_usage'),
-              unit: 'GB',
+              value: kpiText(kpis, KEY.dataUsage, (v) => `${v} GB`),
             },
             {
               icon: 'cell_tower',
               color: 'var(--uk-ac)',
               label: 'Sites online',
-              value: overview?.siteStats.error
-                ? '—'
-                : `${sitesOnline}/${sitesTotal}`,
+              value: sitesError ? '—' : `${sitesOnline}/${sitesTotal}`,
               sub:
                 sitesOnline < sitesTotal
                   ? `${sitesTotal - sitesOnline} need attention`
@@ -188,7 +196,7 @@ export default function NetworkHomeScreen() {
                 minHeight: 300,
               }}
             >
-              {overview?.siteStats.error ? (
+              {sitesError ? (
                 <div
                   style={{
                     padding: 24,

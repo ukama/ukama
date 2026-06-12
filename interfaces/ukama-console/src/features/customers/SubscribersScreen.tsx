@@ -8,10 +8,10 @@
 'use client';
 import { useNetworkCustomersQuery } from '@/client/graphql/network-customers.generated';
 import DataTable from '@/components/data-table/DataTable';
-import TableFooter from '@/components/data-table/TableFooter';
 import DateChip from '@/components/DateChip';
 import Meter from '@/components/Meter';
 import PageHeader from '@/components/PageHeader';
+import PageWatermark from '@/components/PageWatermark';
 import SearchField from '@/components/SearchField';
 import StatusBadge from '@/components/StatusBadge';
 import type { Subscriber } from '@/data';
@@ -19,9 +19,11 @@ import { toSubscriber } from '@/lib/mappers/subscribers';
 import { parseSeen } from '@/lib/parsers';
 import { useUiPrefs } from '@/lib/store';
 import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
+import GroupRounded from '@mui/icons-material/GroupRounded';
 import PersonAddRounded from '@mui/icons-material/PersonAddRounded';
 import Button from '@mui/material/Button';
 import type { ColumnDef } from '@tanstack/react-table';
+import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import AddCustomerDialog from './AddCustomerDialog';
 import SubscriberDrawer from './SubscriberDrawer';
@@ -35,6 +37,7 @@ const SUBS = {
 } as const;
 
 export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
+  const router = useRouter();
   const agent = mode === 'agent';
   const showSite = mode === 'network';
   const clickRow = mode !== 'network';
@@ -196,10 +199,16 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
   }, [clickRow, showSite, planNames]);
 
   return (
-    <div className="page">
+    <div
+      className="page"
+      style={{ position: 'relative', overflow: 'hidden', isolation: 'isolate' }}
+    >
+      <PageWatermark icon={GroupRounded} />
       <PageHeader
         title="Customers"
-        count={subscribers.length.toLocaleString()}
+        count={
+          subscribers.length ? subscribers.length.toLocaleString() : undefined
+        }
         sub={SUBS[mode]}
         actions={
           agent ? (
@@ -215,7 +224,7 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
           ) : undefined
         }
       />
-      <div className="card card-pad" style={{ paddingTop: 18 }}>
+      <div style={{ marginTop: 4 }}>
         <div
           style={{
             display: 'flex',
@@ -230,15 +239,6 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
             onChange={setQ}
             placeholder="Search name or phone"
           />
-          <div
-            style={{
-              marginLeft: 'auto',
-              fontSize: 13,
-              color: 'var(--uk-ink-3)',
-            }}
-          >
-            {subscribers.length} of {subscribers.length}
-          </div>
         </div>
 
         <div className="tbl-wrap" style={{ overflowX: 'auto' }}>
@@ -249,15 +249,34 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
               loading ? 'loading' : subsSection?.error ? 'error' : 'ready'
             }
             skeleton={{ cols: clickRow ? 6 : 5, rows: 6, lead: true }}
-            empty={{
-              art: 'search',
-              title: subsSection?.error
-                ? "Couldn't load customers"
-                : 'No customers match',
-              sub: subsSection?.error
-                ? subsSection.error.message
-                : 'Try a different filter or search term.',
-            }}
+            empty={
+              subsSection?.error
+                ? {
+                    art: 'error',
+                    title: "Couldn't load customers",
+                    sub: subsSection.error.message,
+                  }
+                : subscribers.length === 0
+                  ? {
+                      // Genuinely no customers yet — encourage setup rather
+                      // than implying a filter hid them. No icon (the page
+                      // watermark already carries the visual).
+                      art: null,
+                      title: 'No customers yet',
+                      sub: agent
+                        ? 'Add your first customer to start managing their packages and top-ups.'
+                        : 'Set up your network and add customers to start serving them.',
+                      cta: agent ? 'Add customer' : 'Set up network',
+                      onCta: agent
+                        ? () => setShowAdd(true)
+                        : () => router.push('/configure'),
+                    }
+                  : {
+                      art: 'search',
+                      title: 'No customers match',
+                      sub: 'Try a different filter or search term.',
+                    }
+            }
             globalFilter={q}
             initialSorting={[{ id: 'name', desc: false }]}
             getRowId={(s) => s.id}
@@ -266,13 +285,6 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
               : {})}
           />
         </div>
-
-        {!loading && (
-          <TableFooter
-            showing={subscribers.length}
-            total={subscribers.length}
-          />
-        )}
       </div>
 
       {openSub && (

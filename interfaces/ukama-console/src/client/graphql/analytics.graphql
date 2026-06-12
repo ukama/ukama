@@ -26,6 +26,18 @@ fragment NamedValueFields on NamedValueDto {
   value
 }
 
+# Shared home KPI strip for both Business and Network home screens,
+# parameterised by `lens` (BUSINESS | NETWORK). Sites are fetched separately
+# from the registry via `sitesView` (no analytics-collector dependency).
+
+query GetHomeKpis($data: HomeViewInput!) {
+  getHomeKpis(data: $data) {
+    kpis {
+      ...KpiFields
+    }
+  }
+}
+
 query GetBusinessHome($data: AnalyticsWindowInput!) {
   getBusinessHome(data: $data) {
     kpis {

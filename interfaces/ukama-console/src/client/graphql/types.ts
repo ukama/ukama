@@ -646,6 +646,26 @@ export type HealthSystemInfo = {
   value: Scalars['String']['output'];
 };
 
+export type HomeKpis = {
+  __typename?: 'HomeKpis';
+  kpis: Array<KpiDto>;
+};
+
+/** Which lens's home data to fetch. */
+export enum HomeLens {
+  Business = 'BUSINESS',
+  Network = 'NETWORK'
+}
+
+export type HomeViewInput = {
+  from?: InputMaybe<Scalars['String']['input']>;
+  lens: HomeLens;
+  networkId?: InputMaybe<Scalars['String']['input']>;
+  period?: InputMaybe<Scalars['String']['input']>;
+  timezone?: InputMaybe<Scalars['String']['input']>;
+  to?: InputMaybe<Scalars['String']['input']>;
+};
+
 export enum Invitation_Status {
   InviteAccepted = 'INVITE_ACCEPTED',
   InviteDeclined = 'INVITE_DECLINED',
@@ -1740,6 +1760,7 @@ export type Query = {
   getEvents: NetworkEventsDto;
   getGeneratedPdfReport: GetPdfReportUrlDto;
   getHealthReport: HealthInfo;
+  getHomeKpis: HomeKpis;
   getInventoryReadiness: InventoryReadinessDto;
   getInvitation: InvitationDto;
   getInvitations: InvitationsResDto;
@@ -1924,6 +1945,11 @@ export type QueryGetGeneratedPdfReportArgs = {
 
 export type QueryGetHealthReportArgs = {
   data: GetHealthReportInputDto;
+};
+
+
+export type QueryGetHomeKpisArgs = {
+  data: HomeViewInput;
 };
 
 

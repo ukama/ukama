@@ -16,9 +16,11 @@ import StatusBadge from '@/components/StatusBadge';
 import type { Subscriber } from '@/data';
 import { formatDate, parseTimestamp } from '@/lib/parsers';
 import AddCardRounded from '@mui/icons-material/AddCardRounded';
+import SimCardRounded from '@mui/icons-material/SimCardRounded';
 import Button from '@mui/material/Button';
 import Skeleton from '@mui/material/Skeleton';
 import { useMemo, useState } from 'react';
+import AllocateSimDialog from './AllocateSimDialog';
 import TopUpDialog from './TopUpDialog';
 
 type SimPackage = {
@@ -62,6 +64,8 @@ export default function SubscriberDrawer({
   onChanged?: () => void;
 }) {
   const [showTopUp, setShowTopUp] = useState(false);
+  const [showAllocate, setShowAllocate] = useState(false);
+  const hasSim = !!sub.simId;
   const pct = sub.cap ? Math.min(100, (sub.usage / sub.cap) * 100) : 50;
   const initials = sub.name
     .split(' ')
@@ -274,14 +278,25 @@ export default function SubscriberDrawer({
             gap: 10,
           }}
         >
-          <Button
-            variant="contained"
-            startIcon={<AddCardRounded />}
-            sx={{ flex: 1 }}
-            onClick={() => setShowTopUp(true)}
-          >
-            Top up
-          </Button>
+          {hasSim ? (
+            <Button
+              variant="contained"
+              startIcon={<AddCardRounded />}
+              sx={{ flex: 1 }}
+              onClick={() => setShowTopUp(true)}
+            >
+              Top up
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              startIcon={<SimCardRounded />}
+              sx={{ flex: 1 }}
+              onClick={() => setShowAllocate(true)}
+            >
+              Allocate a SIM
+            </Button>
+          )}
         </div>
       )}
 
@@ -289,6 +304,17 @@ export default function SubscriberDrawer({
         <TopUpDialog
           sub={sub}
           onClose={() => setShowTopUp(false)}
+          onDone={() => {
+            void refetchPkgs();
+            onChanged?.();
+          }}
+        />
+      )}
+
+      {showAllocate && (
+        <AllocateSimDialog
+          sub={sub}
+          onClose={() => setShowAllocate(false)}
           onDone={() => {
             void refetchPkgs();
             onChanged?.();

@@ -17,6 +17,7 @@ import Skeleton from '@mui/material/Skeleton';
 import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
 import { EmptyState } from '@/components/EmptyState';
 import PageHeader from '@/components/PageHeader';
+import PageWatermark from '@/components/PageWatermark';
 import SearchField from '@/components/SearchField';
 import StatusBadge from '@/components/StatusBadge';
 import type { Site } from '@/data';
@@ -25,7 +26,8 @@ import { useUiPrefs } from '@/lib/store';
 import { toSite } from '@/lib/mappers/sites';
 
 function SiteCard({ s, onOpen }: { s: Site; onOpen: (s: Site) => void }) {
-  const issueColor = s.status === 'offline' ? 'var(--uk-error-deep, #cf121b)' : '#b5591b';
+  const issueColor =
+    s.status === 'offline' ? 'var(--uk-error-deep, #cf121b)' : '#b5591b';
   return (
     <div
       className="card ecard"
@@ -36,7 +38,14 @@ function SiteCard({ s, onOpen }: { s: Site; onOpen: (s: Site) => void }) {
         if (e.key === 'Enter') onOpen(s);
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: 10,
+        }}
+      >
         <div style={{ display: 'flex', gap: 12, minWidth: 0 }}>
           <div
             style={{
@@ -53,7 +62,13 @@ function SiteCard({ s, onOpen }: { s: Site; onOpen: (s: Site) => void }) {
             <CellTowerRounded sx={{ fontSize: 22, color: 'var(--uk-ac)' }} />
           </div>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 500 }}>
+            <div
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: 16,
+                fontWeight: 500,
+              }}
+            >
               {s.name}
             </div>
             <div
@@ -89,7 +104,14 @@ function SiteCard({ s, onOpen }: { s: Site; onOpen: (s: Site) => void }) {
         </div>
       )}
       <hr className="divider" style={{ margin: '14px 0' }} />
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, color: 'var(--uk-ink-2)' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          fontSize: 12.5,
+          color: 'var(--uk-ink-2)',
+        }}
+      >
         <span>
           {s.subs} customers · {s.nodes} nodes
         </span>
@@ -114,11 +136,11 @@ export default function SitesScreen() {
       (data?.sitesView.nodeCounts.counts ?? []).map((c) => [
         c.siteId,
         { total: c.total, online: c.online },
-      ])
+      ]),
     );
     const customerCount = data?.sitesView.customers.count ?? 0;
     return (sitesSection?.sites ?? []).map((s) =>
-      toSite(s, countsBySite.get(s.id), customerCount)
+      toSite(s, countsBySite.get(s.id), customerCount),
     );
   }, [
     sitesSection?.sites,
@@ -132,17 +154,39 @@ export default function SitesScreen() {
   const open = (s: Site) => router.push(`/network/sites/${s.id}`);
 
   return (
-    <div className="page">
+    <div
+      className="page"
+      style={{ position: 'relative', overflow: 'hidden', isolation: 'isolate' }}
+    >
+      <PageWatermark icon={CellTowerRounded} />
       <PageHeader
         title="Sites"
         count={sites.length}
         sub="Physical locations where your network is installed."
       />
-      <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap', alignItems: 'center' }}>
-        <SearchField value={q} onChange={setQ} placeholder="Search sites" width={260} />
+      <div
+        style={{
+          display: 'flex',
+          gap: 10,
+          marginBottom: 18,
+          flexWrap: 'wrap',
+          alignItems: 'center',
+        }}
+      >
+        <SearchField
+          value={q}
+          onChange={setQ}
+          placeholder="Search sites"
+          width={260}
+        />
       </div>
       {loading ? (
-        <div className="tile-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))' }}>
+        <div
+          className="tile-grid"
+          style={{
+            gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))',
+          }}
+        >
           {[0, 1, 2].map((i) => (
             <Skeleton key={i} variant="rounded" sx={{ height: 150 }} />
           ))}
@@ -159,14 +203,33 @@ export default function SitesScreen() {
         </div>
       ) : (
         <>
-          <div className="tile-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))' }}>
+          <div
+            className="tile-grid"
+            style={{
+              gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))',
+            }}
+          >
             {list.map((s) => (
               <SiteCard key={s.id} s={s} onOpen={open} />
             ))}
           </div>
           {list.length === 0 && (
             <div className="card">
-              <EmptyState art="search" title="No matching sites" sub="Try a different filter or search term." />
+              {sites.length === 0 ? (
+                <EmptyState
+                  art="site"
+                  title="No sites yet"
+                  sub="Set up your first site to start deploying your network."
+                  cta="Set up a site"
+                  onCta={() => router.push('/configure')}
+                />
+              ) : (
+                <EmptyState
+                  art="search"
+                  title="No matching sites"
+                  sub="Try a different filter or search term."
+                />
+              )}
             </div>
           )}
         </>
