@@ -14,9 +14,16 @@ import PageHeader from '@/components/PageHeader';
 import PageWatermark from '@/components/PageWatermark';
 import SearchField from '@/components/SearchField';
 import StatusBadge from '@/components/StatusBadge';
+import { useToast } from '@/components/ToastProvider';
 import type { Subscriber } from '@/data';
 import { toSubscriber } from '@/lib/mappers/subscribers';
 import { parseSeen } from '@/lib/parsers';
+import {
+  NO_DATA_PLANS_MESSAGE,
+  NO_POOL_SIMS_MESSAGE,
+  useAvailableDataPlans,
+  useAvailablePoolSims,
+} from '@/lib/sim-pool';
 import { useUiPrefs } from '@/lib/store';
 import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
 import GroupRounded from '@mui/icons-material/GroupRounded';
@@ -38,6 +45,7 @@ const SUBS = {
 
 export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
   const router = useRouter();
+  const toast = useToast();
   const agent = mode === 'agent';
   const showSite = mode === 'network';
   const clickRow = mode !== 'network';
@@ -46,6 +54,22 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
   const [q, setQ] = useState('');
   const [openSub, setOpenSub] = useState<Subscriber | null>(null);
   const [showAdd, setShowAdd] = useState(false);
+
+  // Adding a customer assigns them a SIM + data plan, so a missing pool SIM or
+  // data plan blocks the flow (guide the user to set the prerequisite up).
+  const { available: poolSims } = useAvailablePoolSims();
+  const { available: dataPlans } = useAvailableDataPlans();
+  const openAddCustomer = () => {
+    if (poolSims === 0) {
+      toast(NO_POOL_SIMS_MESSAGE);
+      return;
+    }
+    if (dataPlans === 0) {
+      toast(NO_DATA_PLANS_MESSAGE);
+      return;
+    }
+    setShowAdd(true);
+  };
 
   const { data, loading, refetch } = useNetworkCustomersQuery({
     variables: { networkId },
@@ -215,7 +239,7 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
             <Button
               variant="contained"
               startIcon={<PersonAddRounded />}
-              onClick={() => setShowAdd(true)}
+              onClick={openAddCustomer}
             >
               Add customer
             </Button>
@@ -268,7 +292,7 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
                         : 'Set up your network and add customers to start serving them.',
                       cta: agent ? 'Add customer' : 'Set up network',
                       onCta: agent
-                        ? () => setShowAdd(true)
+                        ? openAddCustomer
                         : () => router.push('/configure'),
                     }
                   : {

@@ -13,8 +13,15 @@ import {
 import AppDrawer, { DetailRow } from '@/components/AppDrawer';
 import Meter from '@/components/Meter';
 import StatusBadge from '@/components/StatusBadge';
+import { useToast } from '@/components/ToastProvider';
 import type { Subscriber } from '@/data';
 import { formatDate, parseTimestamp } from '@/lib/parsers';
+import {
+  NO_DATA_PLANS_MESSAGE,
+  NO_POOL_SIMS_MESSAGE,
+  useAvailableDataPlans,
+  useAvailablePoolSims,
+} from '@/lib/sim-pool';
 import AddCardRounded from '@mui/icons-material/AddCardRounded';
 import SimCardRounded from '@mui/icons-material/SimCardRounded';
 import Button from '@mui/material/Button';
@@ -63,9 +70,26 @@ export default function SubscriberDrawer({
   readOnly?: boolean;
   onChanged?: () => void;
 }) {
+  const toast = useToast();
   const [showTopUp, setShowTopUp] = useState(false);
   const [showAllocate, setShowAllocate] = useState(false);
   const hasSim = !!sub.simId;
+
+  // Allocating needs an available pool SIM and a data plan — guide the user to
+  // set up whichever is missing instead of opening an unusable dialog.
+  const { available: poolSims } = useAvailablePoolSims();
+  const { available: dataPlans } = useAvailableDataPlans();
+  const openAllocate = () => {
+    if (poolSims === 0) {
+      toast(NO_POOL_SIMS_MESSAGE);
+      return;
+    }
+    if (dataPlans === 0) {
+      toast(NO_DATA_PLANS_MESSAGE);
+      return;
+    }
+    setShowAllocate(true);
+  };
   // usage is -1 when unknown/none — clamp so we never render "-1 GB".
   const usage = Math.max(0, sub.usage);
   const pct = sub.cap ? Math.min(100, (usage / sub.cap) * 100) : 50;
@@ -294,7 +318,7 @@ export default function SubscriberDrawer({
               variant="contained"
               startIcon={<SimCardRounded />}
               sx={{ flex: 1 }}
-              onClick={() => setShowAllocate(true)}
+              onClick={openAllocate}
             >
               Allocate a SIM
             </Button>
