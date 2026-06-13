@@ -11,10 +11,9 @@
  * Network switcher (top bar) — live getNetworks data. The selected id lives
  * in useUiPrefs; if it doesn't resolve to a real network (deleted, or the
  * old seed default) it self-heals to the default/first network. "Add
- * network" enters /configure with flow=add-network (no onboarding guard).
+ * network" opens an inline dialog that creates + selects the new network.
  */
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Menu from '@mui/material/Menu';
@@ -26,10 +25,11 @@ import UnfoldMoreRounded from '@mui/icons-material/UnfoldMoreRounded';
 
 import { useGetNetworksQuery } from '@/client/graphql/networks.generated';
 import { useUiPrefs } from '@/lib/store';
+import AddNetworkDialog from './AddNetworkDialog';
 
 export default function NetSwitch() {
-  const router = useRouter();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
   const { networkId, setNetworkId } = useUiPrefs();
 
   const { data, loading } = useGetNetworksQuery();
@@ -128,7 +128,7 @@ export default function NetSwitch() {
         <MenuItem
           onClick={() => {
             setAnchor(null);
-            router.push('/configure/network?flow=add-network');
+            setShowAdd(true);
           }}
           sx={{ mt: 0.5 }}
         >
@@ -138,6 +138,7 @@ export default function NetSwitch() {
           Add network
         </MenuItem>
       </Menu>
+      {showAdd && <AddNetworkDialog onClose={() => setShowAdd(false)} />}
     </>
   );
 }
