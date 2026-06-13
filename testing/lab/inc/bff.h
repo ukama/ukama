@@ -18,9 +18,17 @@ typedef struct {
     char url[ULAB_MAX_URL];
     char pauth_url[ULAB_MAX_URL];
     char bff_base_url[ULAB_MAX_URL];
-    char session_token[ULAB_MAX_TOKEN];
-    char token[ULAB_MAX_TOKEN];
+    char session_token[4096];
+    char token[4096];
     int  authenticated;
+
+    char access_id[ULAB_MAX_ID];
+    char backhaul_id[ULAB_MAX_ID];
+    char power_id[ULAB_MAX_ID];
+    char spectrum_id[ULAB_MAX_ID];
+    char switch_id[ULAB_MAX_ID];
+    int  components_loaded;
+
     FILE *logf;
 } bff_client_t;
 

@@ -68,3 +68,8 @@ const char *BFF_GET_SITES =
 const char *BFF_GET_NODES_FOR_SITE =
 "query GetNodesForSite($siteId: String!) { getNodesForSite(siteId: $siteId) {"
 " nodes { id name type } } }";
+
+const char *BFF_GET_COMPONENTS_BY_USER_ID =
+"query GetComponentsByUserId($data: ComponentTypeInputDto!) {"
+" getComponentsByUserId(data: $data) {"
+" components { id category type description partNumber } } }";

@@ -31,6 +31,7 @@ extern const char *BFF_SITE_VIEW;
 extern const char *BFF_GET_NETWORKS;
 extern const char *BFF_GET_SITES;
 extern const char *BFF_GET_NODES_FOR_SITE;
+extern const char *BFF_GET_COMPONENTS_BY_USER_ID;
 
 typedef struct {
     char *buf;
@@ -616,14 +617,15 @@ void bff_close(bff_client_t *c) {
 }
 
 int bff_add_network(bff_client_t *c, network_t *n, ulab_error_t *err) {
-
-    char vars[ULAB_MAX_QUERY];
+    char vars[4096];
     json_t *root;
     json_t *obj;
 
     snprintf(vars, sizeof(vars),
-             "{\"data\":{\"name\":\"%s\",\"budget\":0,"
-             "\"countries\":[\"USA\"],\"networks\":[\"A3\"]}}",
+             "{\"data\":{\"name\":\"%s\","
+             "\"budget\":0,"
+             "\"countries\":[\"USA\"],"
+             "\"networks\":[\"A3\"]}}",
              n->name);
 
     if (bff_call(c, "addNetwork", BFF_ADD_NETWORK, vars, &root, err)) {
@@ -643,28 +645,145 @@ int bff_add_network(bff_client_t *c, network_t *n, ulab_error_t *err) {
     return ULAB_OK;
 }
 
-int bff_add_site(bff_client_t *c,
-                 site_t *s,
-                 const network_t *n,
-                 ulab_error_t *err) {
+static int bff_get_component_id(bff_client_t *c,
+                                const char *category,
+                                char *out,
+                                size_t out_len,
+                                ulab_error_t *err) {
+    char vars[512];
+    json_t *root;
+    json_t *obj;
+    json_t *arr;
+    json_t *it;
+    json_t *idv;
+    const char *id;
 
-    char vars[ULAB_MAX_QUERY];
+    root = NULL;
+    obj = NULL;
+    arr = NULL;
+    it = NULL;
+    idv = NULL;
+    id = NULL;
+
+    snprintf(vars, sizeof(vars),
+             "{\"data\":{\"category\":\"%s\"}}", category);
+
+    if (bff_call(c, "getComponentsByUserId",
+        BFF_GET_COMPONENTS_BY_USER_ID, vars, &root, err)) {
+        return ULAB_ERR;
+    }
+
+    obj = dig(root, "data", "getComponentsByUserId");
+    arr = obj ? json_object_get(obj, "components") : NULL;
+
+    if (arr == NULL || !json_is_array(arr) || json_array_size(arr) == 0) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "no inventory component found for category=%s", category);
+        json_decref(root);
+        return ULAB_ERR;
+    }
+
+    it = json_array_get(arr, 0);
+    if (it == NULL || !json_is_object(it)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "invalid component result for category=%s", category);
+        json_decref(root);
+        return ULAB_ERR;
+    }
+
+    idv = json_object_get(it, "id");
+    if (idv == NULL || !json_is_string(idv)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "component missing id for category=%s", category);
+        json_decref(root);
+        return ULAB_ERR;
+    }
+
+    id = json_string_value(idv);
+    if (id == NULL || id[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "empty component id for category=%s", category);
+        json_decref(root);
+        return ULAB_ERR;
+    }
+
+    ulab_copy(out, out_len, id);
+    json_decref(root);
+
+    return ULAB_OK;
+}
+
+static int bff_load_site_components(bff_client_t *c, ulab_error_t *err) {
+
+    if (c->components_loaded) {
+        return ULAB_OK;
+    }
+
+    if (bff_get_component_id(c, "access",
+        c->access_id, sizeof(c->access_id), err)) {
+        return ULAB_ERR;
+    }
+
+    if (bff_get_component_id(c, "backhaul",
+        c->backhaul_id, sizeof(c->backhaul_id), err)) {
+        return ULAB_ERR;
+    }
+
+    if (bff_get_component_id(c, "power",
+        c->power_id, sizeof(c->power_id), err)) {
+        return ULAB_ERR;
+    }
+
+    if (bff_get_component_id(c, "spectrum",
+        c->spectrum_id, sizeof(c->spectrum_id), err)) {
+        return ULAB_ERR;
+    }
+
+    if (bff_get_component_id(c, "switch",
+        c->switch_id, sizeof(c->switch_id), err)) {
+        return ULAB_ERR;
+    }
+
+    c->components_loaded = 1;
+
+    return ULAB_OK;
+}
+
+int bff_add_site(bff_client_t *c, site_t *s, const network_t *n,
+                 ulab_error_t *err) {
+    char vars[4096];
     json_t *root;
     json_t *obj;
 
-    /* These are lab placeholders, not real inventory references. */
+    /*
+     * Site creation requires:
+     *
+     *   network_id     BFF UUID returned by addNetwork
+     *   *_id fields    real component UUIDs visible to this user
+     *   install_date   RFC3339
+     */
+    if (bff_load_site_components(c, err)) {
+        return ULAB_ERR;
+    }
+
     snprintf(vars, sizeof(vars),
              "{\"data\":{\"name\":\"%s\",\"network_id\":\"%s\","
-             "\"backhaul_id\":\"lab-backhaul\","
-             "\"power_id\":\"lab-power\","
-             "\"access_id\":\"lab-access\","
-             "\"spectrum_id\":\"lab-spectrum\","
-             "\"switch_id\":\"lab-switch\","
+             "\"backhaul_id\":\"%s\","
+             "\"power_id\":\"%s\","
+             "\"access_id\":\"%s\","
+             "\"spectrum_id\":\"%s\","
+             "\"switch_id\":\"%s\","
              "\"latitude\":\"37.7749\","
              "\"longitude\":\"-122.4194\","
-             "\"install_date\":\"2026-01-01\","
+             "\"install_date\":\"2026-01-01T00:00:00Z\","
              "\"location\":\"Lab\"}}",
-             s->name, n->bff_id);
+             s->name,
+             n->bff_id,
+             c->backhaul_id,
+             c->power_id,
+             c->access_id,
+             c->spectrum_id,
+             c->switch_id);
 
     if (bff_call(c, "addSite", BFF_ADD_SITE, vars, &root, err)) {
         return ULAB_ERR;
@@ -684,8 +803,7 @@ int bff_add_site(bff_client_t *c,
 }
 
 int bff_add_node(bff_client_t *c, node_t *n, ulab_error_t *err) {
-
-    char vars[ULAB_MAX_QUERY];
+    char vars[4096];
     json_t *root;
     json_t *obj;
 
@@ -768,8 +886,7 @@ int bff_add_package(bff_client_t *c, package_t *p, ulab_error_t *err) {
 
 int bff_add_subscriber(bff_client_t *c, subscriber_t *sub,
                        const network_t *net, ulab_error_t *err) {
-
-    char vars[ULAB_MAX_QUERY];
+    char vars[4096];
     json_t *root;
     json_t *obj;
 
