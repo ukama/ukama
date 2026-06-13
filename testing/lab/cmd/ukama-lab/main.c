@@ -45,8 +45,6 @@ static void opts_init(runner_opts_t *o) {
               ulab_getenv_default("UKAMA_LAB_OUT", "runs"));
     ulab_copy(o->script_dir, sizeof(o->script_dir),
               ulab_getenv_default("UKAMA_LAB_SCRIPTS", "scripts"));
-    ulab_copy(o->script_dir, sizeof(o->script_dir),
-              ulab_getenv_default("UKAMA_LAB_SCRIPTS", "scripts"));
     o->keep = 1;
 }
 
@@ -131,10 +129,11 @@ int main(int argc, char **argv) {
     }
 
     /* repo path is must else we wont know how to build virtual node/ue */
-    if (strtok(opts.repo, "ukama") == NULL) {
+    /* repo path is must else we wont know how to build virtual node/ue */
+    if (opts.repo[0] == '\0' || strstr(opts.repo, "ukama") == NULL) {
         printf("Missing --repo. Ukama repo root is MUST\n");
         usage();
-        return rc;
+        return ULAB_EUSAGE;
     }
                
     ulab_log_set_quiet(opts.quiet);
