@@ -115,7 +115,7 @@ int world_generate(const scenario_t *s,
         ulab_copy(p->ref,  sizeof(p->ref),  s->packages[i].ref);
         ulab_copy(p->name, sizeof(p->name), s->packages[i].name);
         p->data_mb        = s->packages[i].data_mb;
-        p->duration_hours = s->packages[i].duration_hours;
+        p->duration_days  = s->packages[i].duration_days;
         p->amount         = s->packages[i].amount;
     }
 

@@ -38,7 +38,7 @@ typedef struct {
     char     ref[ULAB_MAX_REF];
     char     name[ULAB_MAX_NAME];
     uint64_t data_mb;
-    uint32_t duration_hours;
+    uint32_t duration_days;
     double   amount;
     uint32_t assign_percent;
 } package_spec_t;

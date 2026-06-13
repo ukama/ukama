@@ -406,8 +406,8 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
                     if (ulab_copy(pkg->name, sizeof(pkg->name), val)) goto bad;
                 } else if (ulab_streq(key, "data_mb")) {
                     if (ulab_parse_u64(val, &pkg->data_mb)) goto bad;
-                } else if (ulab_streq(key, "duration_hours")) {
-                    if (ulab_parse_u32(val, &pkg->duration_hours)) goto bad;
+                } else if (ulab_streq(key, "duration_days")) {
+                    if (ulab_parse_u32(val, &pkg->duration_days)) goto bad;
                 } else if (ulab_streq(key, "amount")) {
                     if (ulab_parse_double(val, &pkg->amount)) goto bad;
                 } else if (ulab_streq(key, "assign_percent")) {

@@ -998,9 +998,9 @@ int bff_add_package(bff_client_t *c, package_t *p, ulab_error_t *err) {
     json_t *obj;
     uint32_t duration;
 
-    duration = p->duration_hours;
+    duration = p->duration_days;
     if (duration == 0) {
-        duration = 1;
+        duration = 1; /* min is 1-day package */
     }
 
     snprintf(vars, sizeof(vars),

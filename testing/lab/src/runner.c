@@ -73,7 +73,7 @@ static int setup_bff(bff_client_t *bff,
                      ulab_error_t *err) {
 
     network_t *network;
-    site_t *site;
+    //    site_t *site;
     package_t *package;
     subscriber_t *subscriber;
     size_t i;
@@ -91,6 +91,7 @@ static int setup_bff(bff_client_t *bff,
         }
     }
 
+#if 0
     for (i = 0; i < world->node_count; i++) {
         site = world_site_by_ref(world, world->nodes[i].site_ref);
         network = world_network_by_ref(world, world->nodes[i].network_ref);
@@ -114,6 +115,7 @@ static int setup_bff(bff_client_t *bff,
             return ULAB_EBFF;
         }
     }
+#endif
 
     for (i = 0; i < world->package_count; i++) {
         if (bff_add_package(bff, &world->packages[i], err)) {

@@ -15,7 +15,7 @@ packages:
   - ref: daily_1gb
     name: Daily 1GB
     data_mb: 1024
-    duration_hours: 24
+    duration_days: 1
     amount: 1.00
     assign_percent: 100
 

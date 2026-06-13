@@ -51,8 +51,8 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
             return fail(err, "package ref/name is required");
         }
 
-        if (p->data_mb == 0 || p->duration_hours == 0) {
-            return fail(err, "package data_mb/duration_hours invalid");
+        if (p->data_mb == 0 || p->duration_days == 0) {
+            return fail(err, "package data_mb/duration_days invalid");
         }
 
         pct += p->assign_percent;
