@@ -92,14 +92,22 @@ static int setup_bff(bff_client_t *bff,
     }
 
     for (i = 0; i < world->node_count; i++) {
-        if (bff_add_node(bff, &world->nodes[i], err)) {
-            return ULAB_EBFF;
-        }
-    }
-
-    for (i = 0; i < world->node_count; i++) {
         site = world_site_by_ref(world, world->nodes[i].site_ref);
         network = world_network_by_ref(world, world->nodes[i].network_ref);
+
+        if (site == NULL || network == NULL) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "node %s has invalid site/network ref", world->nodes[i].ref);
+            return ULAB_EBFF;
+        }
+
+        /*
+         * Pick a real node from the org node pool. Do not create a new/random
+         * node in BFF.
+         */
+        if (bff_select_node_from_pool(bff, &world->nodes[i], err)) {
+            return ULAB_EBFF;
+        }
 
         if (bff_add_node_to_site(bff, &world->nodes[i], site,
                                  network, err)) {

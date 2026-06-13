@@ -32,6 +32,7 @@ extern const char *BFF_GET_NETWORKS;
 extern const char *BFF_GET_SITES;
 extern const char *BFF_GET_NODES_FOR_SITE;
 extern const char *BFF_GET_COMPONENTS_BY_USER_ID;
+extern const char *BFF_GET_NODES;
 
 typedef struct {
     char *buf;
@@ -801,6 +802,148 @@ int bff_add_site(bff_client_t *c, site_t *s, const network_t *n,
 
     return ULAB_OK;
 }
+
+static const char *bff_node_type_for_lab_type(const char *type) {
+
+    if (ulab_streq(type, ULAB_NODE_TOWER)) {
+        return "tnode";
+    }
+
+    if (ulab_streq(type, ULAB_NODE_CONTROLLER)) {
+        return "cnode";
+    }
+
+    if (ulab_streq(type, ULAB_NODE_AMPLIFIER)) {
+        return "anode";
+    }
+
+    return type;
+}
+
+static int node_has_no_site(json_t *node) {
+    json_t *site;
+    json_t *site_id;
+    const char *s;
+
+    site = json_object_get(node, "site");
+    if (site == NULL || !json_is_object(site)) {
+        return 1;
+    }
+
+    site_id = json_object_get(site, "siteId");
+    if (site_id == NULL || json_is_null(site_id)) {
+        return 1;
+    }
+
+    if (!json_is_string(site_id)) {
+        return 0;
+    }
+
+    s = json_string_value(site_id);
+    if (s == NULL || s[0] == '\0') {
+        return 1;
+    }
+
+    return 0;
+}
+
+int bff_select_node_from_pool(bff_client_t *c,
+                              node_t *n,
+                              ulab_error_t *err) {
+    char vars[512];
+    json_t *root;
+    json_t *obj;
+    json_t *arr;
+    json_t *it;
+    json_t *idv;
+    json_t *typev;
+    const char *want_type;
+    const char *id;
+    const char *type;
+    size_t i;
+
+    root = NULL;
+    obj = NULL;
+    arr = NULL;
+    it = NULL;
+    idv = NULL;
+    typev = NULL;
+    want_type = bff_node_type_for_lab_type(n->type);
+    id = NULL;
+    type = NULL;
+
+    /*
+     * Do not create nodes here.
+     *
+     * Nodes already exist in the org node pool. We query by real BFF node
+     * type and pick the first node that has no site assignment.
+     */
+    snprintf(vars, sizeof(vars),
+             "{\"data\":{\"type\":\"%s\"}}",
+             want_type);
+
+    if (bff_call(c, "getNodes", BFF_GET_NODES, vars, &root, err)) {
+        return ULAB_ERR;
+    }
+
+    obj = dig(root, "data", "getNodes");
+    arr = obj ? json_object_get(obj, "nodes") : NULL;
+
+    if (arr == NULL || !json_is_array(arr)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getNodes missing nodes for type=%s", want_type);
+        json_decref(root);
+        return ULAB_ERR;
+    }
+
+    for (i = 0; i < json_array_size(arr); i++) {
+        it = json_array_get(arr, i);
+        if (it == NULL || !json_is_object(it)) {
+            continue;
+        }
+
+        typev = json_object_get(it, "type");
+        if (typev == NULL || !json_is_string(typev)) {
+            continue;
+        }
+
+        type = json_string_value(typev);
+        if (type == NULL || !ulab_streq(type, want_type)) {
+            continue;
+        }
+
+        if (!node_has_no_site(it)) {
+            continue;
+        }
+
+        idv = json_object_get(it, "id");
+        if (idv == NULL || !json_is_string(idv)) {
+            continue;
+        }
+
+        id = json_string_value(idv);
+        if (id == NULL || id[0] == '\0') {
+            continue;
+        }
+
+        /*
+         * bff_id is the real node-pool node id. This is what addNodeToSite
+         * must use.
+         */
+        ulab_copy(n->bff_id, sizeof(n->bff_id), id);
+
+        json_decref(root);
+        return ULAB_OK;
+    }
+
+    snprintf(err->msg, sizeof(err->msg),
+             "no available unassigned node found in BFF node pool for type=%s",
+             want_type);
+
+    json_decref(root);
+    return ULAB_ERR;
+}
+
 
 int bff_add_node(bff_client_t *c, node_t *n, ulab_error_t *err) {
     char vars[4096];

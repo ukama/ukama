@@ -73,3 +73,9 @@ const char *BFF_GET_COMPONENTS_BY_USER_ID =
 "query GetComponentsByUserId($data: ComponentTypeInputDto!) {"
 " getComponentsByUserId(data: $data) {"
 " components { id category type description partNumber } } }";
+
+const char *BFF_GET_NODES =
+"query GetNodes($data: NodesFilterInput!) {"
+" getNodes(data: $data) { nodes { id name type "
+" site { nodeId siteId networkId addedAt } "
+" status { state connectivity } } } }";

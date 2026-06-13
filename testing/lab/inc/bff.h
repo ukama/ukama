@@ -57,9 +57,9 @@ int bff_add_site(bff_client_t *c,
                  const network_t *n,
                  ulab_error_t *err);
 
-int bff_add_node(bff_client_t *c,
-                 node_t *n,
-                 ulab_error_t *err);
+int bff_select_node_from_pool(bff_client_t *c,
+                              node_t *n,
+                              ulab_error_t *err);
 
 int bff_add_node_to_site(bff_client_t *c,
                          const node_t *n,
