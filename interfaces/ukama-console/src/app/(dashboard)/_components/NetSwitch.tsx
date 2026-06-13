@@ -57,7 +57,7 @@ export default function NetSwitch() {
           {current ? current.name : loading ? '…' : 'No network'}
         </span>
         <UnfoldMoreRounded
-          sx={{ fontSize: 18, color: 'rgba(255,255,255,.55)' }}
+          sx={{ fontSize: 18, color: 'rgba(255,255,255,.55)', flexShrink: 0 }}
         />
       </button>
       <Menu
@@ -111,7 +111,16 @@ export default function NetSwitch() {
               }}
             />
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography sx={{ fontWeight: 600, fontSize: 13.5 }}>
+              <Typography
+                sx={{
+                  fontWeight: 600,
+                  fontSize: 13.5,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+                title={n.name}
+              >
                 {n.name}
               </Typography>
               <Typography sx={{ fontSize: 12, color: 'text.disabled' }}>

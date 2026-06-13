@@ -29,8 +29,10 @@ import {
 
 /** Free, no-key basemaps. Street follows the app theme (CARTO dark in dark
  *  mode); satellite/terrain are naturally dark and stay the same. */
-const STREET_LIGHT = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png';
-const STREET_DARK = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png';
+const STREET_LIGHT =
+  'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png';
+const STREET_DARK =
+  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png';
 
 export interface UkamaMapMarker {
   id: string;
@@ -70,6 +72,10 @@ const siteIcon = (color: string) =>
     popupAnchor: [0, -15],
   });
 
+/** A whole-world view used when there's nothing to show yet (no sites). */
+const WORLD_CENTER: [number, number] = [25, 0];
+const WORLD_ZOOM = 2;
+
 /** Keep the view in sync with markers/center, and re-measure the container
  *  (Leaflet paints partial tiles when its size isn't final at init). */
 function ViewSync({
@@ -94,6 +100,9 @@ function ViewSync({
       map.setView([markers[0]!.lat, markers[0]!.lng], zoom);
     } else if (center) {
       map.setView(center, zoom);
+    } else {
+      // No sites and no explicit center → show the zoomed-out world.
+      map.setView(WORLD_CENTER, WORLD_ZOOM);
     }
   }, [map, markers, center, zoom, fitToMarkers]);
 
@@ -125,13 +134,19 @@ export default function UkamaMapImpl({
   const dark = (mode === 'system' ? systemMode : mode) === 'dark';
   const streetUrl = dark ? STREET_DARK : STREET_LIGHT;
 
-  const start: [number, number] =
-    center ?? (markers[0] ? [markers[0].lat, markers[0].lng] : DEFAULT_CENTER);
+  // With no sites and no explicit center, open on the whole-world view so the
+  // first paint isn't an empty ocean at a tight zoom.
+  const emptyWorld = markers.length === 0 && !center;
+  const start: [number, number] = emptyWorld
+    ? WORLD_CENTER
+    : (center ??
+      (markers[0] ? [markers[0].lat, markers[0].lng] : DEFAULT_CENTER));
+  const startZoom = emptyWorld ? WORLD_ZOOM : zoom;
 
   return (
     <MapContainer
       center={start}
-      zoom={zoom}
+      zoom={startZoom}
       style={{ height, width: '100%' }}
       scrollWheelZoom={interactive}
       dragging={interactive}
@@ -162,7 +177,12 @@ export default function UkamaMapImpl({
         </Marker>
       ))}
 
-      <ViewSync markers={markers} center={center} zoom={zoom} fitToMarkers={fitToMarkers} />
+      <ViewSync
+        markers={markers}
+        center={center}
+        zoom={zoom}
+        fitToMarkers={fitToMarkers}
+      />
     </MapContainer>
   );
 }
