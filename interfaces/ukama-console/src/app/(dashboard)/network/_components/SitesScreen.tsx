@@ -214,7 +214,15 @@ export default function SitesScreen() {
             ))}
           </div>
           {list.length === 0 && (
-            <div className="card">
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '52vh',
+              }}
+            >
               {sites.length === 0 ? (
                 <EmptyState
                   art="site"
