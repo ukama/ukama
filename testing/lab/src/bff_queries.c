@@ -28,8 +28,7 @@ const char *BFF_ADD_PACKAGE =
 
 const char *BFF_ADD_SUBSCRIBER =
 "mutation AddSubscriber($data: SubscriberInputDto!) {"
-" addSubscriber(data: $data) { uuid email firstName lastName "
-" networkId phone } }";
+" addSubscriber(data: $data) { uuid email name networkId phone } }";
 
 const char *BFF_ALLOCATE_SIM =
 "mutation AllocateSim($data: AllocateSimInputDto!) {"
