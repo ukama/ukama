@@ -15,6 +15,10 @@
 #define ULAB_NODE_AMPLIFIER  "amplifier"
 #define ULAB_NODE_CONTROLLER "controller"
 
+#define ULAB_NODE_KIND_TOWER      "tnode"
+#define ULAB_NODE_KIND_AMPLIFIER  "anode"
+#define ULAB_NODE_KIND_CONTROLLER "cnode"
+
 typedef struct {
     char ref[ULAB_MAX_REF];
     char id[ULAB_MAX_ID];
@@ -27,6 +31,8 @@ typedef struct {
     char id[ULAB_MAX_ID];
     char name[ULAB_MAX_NAME];
     char network_ref[ULAB_MAX_REF];
+    char latitude[ULAB_MAX_REF];
+    char longitude[ULAB_MAX_REF];
     char bff_id[ULAB_MAX_ID];
 } site_t;
 
@@ -37,6 +43,13 @@ typedef struct {
     char type[ULAB_MAX_REF];
     char site_ref[ULAB_MAX_REF];
     char network_ref[ULAB_MAX_REF];
+    /*
+     * Real NodeID selected by factory and used by runtime/BFF node registry,
+     * e.g. uk-sa2602-tnode-v0-344c. id/ref remain logical lab identifiers.
+     */
+    char runtime_id[ULAB_MAX_ID];
+    char latitude[ULAB_MAX_REF];
+    char longitude[ULAB_MAX_REF];
     char bff_id[ULAB_MAX_ID];
 } node_t;
 

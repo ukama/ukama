@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "bff.h"
 #include "log.h"
@@ -18,8 +19,6 @@
 
 extern const char *BFF_ADD_NETWORK;
 extern const char *BFF_ADD_SITE;
-extern const char *BFF_ADD_NODE;
-extern const char *BFF_ADD_NODE_TO_SITE;
 extern const char *BFF_ADD_PACKAGE;
 extern const char *BFF_ADD_SUBSCRIBER;
 extern const char *BFF_ALLOCATE_SIM;
@@ -28,9 +27,6 @@ extern const char *BFF_GET_SIM_PACKAGES;
 extern const char *BFF_GET_NODE_STATE;
 extern const char *BFF_NETWORK_OVERVIEW;
 extern const char *BFF_SITE_VIEW;
-extern const char *BFF_GET_NETWORKS;
-extern const char *BFF_GET_SITES;
-extern const char *BFF_GET_NODES_FOR_SITE;
 extern const char *BFF_GET_COMPONENTS_BY_USER_ID;
 extern const char *BFF_GET_NODES;
 
@@ -78,6 +74,33 @@ static int json_get_str(json_t *obj, const char *key, char *out,
     return ulab_copy(out, out_len, s);
 }
 
+static int json_get_nested_str(json_t *obj,
+                               const char *a,
+                               const char *b,
+                               char *out,
+                               size_t out_len) {
+    json_t *x;
+    json_t *y;
+    const char *v;
+
+    x = json_object_get(obj, a);
+    if (x == NULL) {
+        return ULAB_ERR;
+    }
+
+    y = b == NULL ? x : json_object_get(x, b);
+    if (y == NULL || !json_is_string(y)) {
+        return ULAB_ERR;
+    }
+
+    v = json_string_value(y);
+    if (v == NULL || v[0] == '\0') {
+        return ULAB_ERR;
+    }
+
+    return ulab_copy(out, out_len, v);
+}
+
 static json_t *dig(json_t *root, const char *a, const char *b) {
     json_t *x;
     json_t *y;
@@ -108,6 +131,28 @@ static const char *env_or_default(const char *name, const char *def) {
     }
 
     return def;
+}
+
+static int build_url(char *out,
+                     size_t out_len,
+                     const char *base,
+                     const char *path,
+                     ulab_error_t *err) {
+    int n;
+
+    if (out == NULL || base == NULL || path == NULL) {
+        snprintf(err->msg, sizeof(err->msg), "invalid URL argument");
+        return ULAB_ERR;
+    }
+
+    n = snprintf(out, out_len, "%s%s", base, path);
+    if (n < 0 || (size_t)n >= out_len) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "URL too long: base=%s path=%s", base, path);
+        return ULAB_ERR;
+    }
+
+    return ULAB_OK;
 }
 
 static int http_json_request(const char *op,
@@ -327,6 +372,7 @@ static int bff_call(bff_client_t *c, const char *op, const char *query,
 
     if (c->authenticated) {
         char token_hdr[8192];
+
         /*
          * Console-BFF GraphQL expects X-Session-Token to contain the signed
          * BFF token returned by /gateway/get-user, not the Ory/Kratos token.
@@ -398,28 +444,6 @@ static int bff_call(bff_client_t *c, const char *op, const char *query,
     return ULAB_OK;
 }
 
-static int build_url(char *out,
-                     size_t out_len,
-                     const char *base,
-                     const char *path,
-                     ulab_error_t *err) {
-    int n;
-
-    if (out == NULL || base == NULL || path == NULL) {
-        snprintf(err->msg, sizeof(err->msg), "invalid URL argument");
-        return ULAB_ERR;
-    }
-
-    n = snprintf(out, out_len, "%s%s", base, path);
-    if (n < 0 || (size_t)n >= out_len) {
-        snprintf(err->msg, sizeof(err->msg),
-                 "URL too long: base=%s path=%s", base, path);
-        return ULAB_ERR;
-    }
-
-    return ULAB_OK;
-}
-
 int bff_login(bff_client_t *c,
               const char *identifier,
               const char *password,
@@ -476,7 +500,7 @@ int bff_login(bff_client_t *c,
              "\"identifier\":\"%s\"}",
              password, identifier);
 
-    { /* login */
+    {
         char path[2048];
         int n;
 
@@ -510,6 +534,7 @@ int bff_login(bff_client_t *c,
     snprintf(session_hdr, sizeof(session_hdr),
              "X-Session-Token: %s", session_token);
     hdrs = curl_slist_append(hdrs, session_hdr);
+
     if (build_url(url, sizeof(url),
                   c->bff_base_url,
                   "/gateway/get-user",
@@ -590,7 +615,7 @@ int bff_init(bff_client_t *c, const char *url, const char *run_dir) {
     }
 
     identifier = getenv("UKAMA_IDENTIFIER");
-    password   = getenv("UKAMA_PASSWORD");
+    password = getenv("UKAMA_PASSWORD");
 
     if (identifier != NULL &&
         identifier[0] != '\0' &&
@@ -646,12 +671,41 @@ int bff_add_network(bff_client_t *c, network_t *n, ulab_error_t *err) {
     return ULAB_OK;
 }
 
-static int bff_get_component_id(bff_client_t *c,
-                                const char *category,
-                                char *out,
-                                size_t out_len,
-                                ulab_error_t *err) {
+static const char *bff_node_type_for_lab_type(const char *type) {
+
+    if (ulab_streq(type, ULAB_NODE_TOWER)) {
+        return ULAB_NODE_KIND_TOWER;
+    }
+
+    if (ulab_streq(type, ULAB_NODE_CONTROLLER)) {
+        return ULAB_NODE_KIND_CONTROLLER;
+    }
+
+    if (ulab_streq(type, ULAB_NODE_AMPLIFIER)) {
+        return ULAB_NODE_KIND_AMPLIFIER;
+    }
+
+    return type;
+}
+
+static int bff_component_query(bff_client_t *c,
+                               const char *category,
+                               json_t **out,
+                               ulab_error_t *err) {
     char vars[512];
+
+    snprintf(vars, sizeof(vars),
+             "{\"data\":{\"category\":\"%s\"}}", category);
+
+    return bff_call(c, "getComponentsByUserId",
+                    BFF_GET_COMPONENTS_BY_USER_ID, vars, out, err);
+}
+
+static int bff_pick_first_component(bff_client_t *c,
+                                    const char *category,
+                                    char *out,
+                                    size_t out_len,
+                                    ulab_error_t *err) {
     json_t *root;
     json_t *obj;
     json_t *arr;
@@ -666,11 +720,7 @@ static int bff_get_component_id(bff_client_t *c,
     idv = NULL;
     id = NULL;
 
-    snprintf(vars, sizeof(vars),
-             "{\"data\":{\"category\":\"%s\"}}", category);
-
-    if (bff_call(c, "getComponentsByUserId",
-        BFF_GET_COMPONENTS_BY_USER_ID, vars, &root, err)) {
+    if (bff_component_query(c, category, &root, err)) {
         return ULAB_ERR;
     }
 
@@ -685,14 +735,7 @@ static int bff_get_component_id(bff_client_t *c,
     }
 
     it = json_array_get(arr, 0);
-    if (it == NULL || !json_is_object(it)) {
-        snprintf(err->msg, sizeof(err->msg),
-                 "invalid component result for category=%s", category);
-        json_decref(root);
-        return ULAB_ERR;
-    }
-
-    idv = json_object_get(it, "id");
+    idv = it ? json_object_get(it, "id") : NULL;
     if (idv == NULL || !json_is_string(idv)) {
         snprintf(err->msg, sizeof(err->msg),
                  "component missing id for category=%s", category);
@@ -714,58 +757,252 @@ static int bff_get_component_id(bff_client_t *c,
     return ULAB_OK;
 }
 
-static int bff_load_site_components(bff_client_t *c, ulab_error_t *err) {
+static int bff_pick_access_component_for_node(bff_client_t *c,
+                                              const node_t *access_node,
+                                              ulab_error_t *err) {
+    json_t *root;
+    json_t *obj;
+    json_t *arr;
+    json_t *it;
+    json_t *idv;
+    json_t *pnv;
+    const char *id;
+    const char *part;
+    size_t i;
 
-    if (c->components_loaded) {
-        return ULAB_OK;
-    }
+    root = NULL;
+    obj = NULL;
+    arr = NULL;
+    it = NULL;
+    idv = NULL;
+    pnv = NULL;
+    id = NULL;
+    part = NULL;
 
-    if (bff_get_component_id(c, "access",
-        c->access_id, sizeof(c->access_id), err)) {
+    if (access_node == NULL || access_node->runtime_id[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "access node has no factory runtime id");
         return ULAB_ERR;
     }
 
-    if (bff_get_component_id(c, "backhaul",
+    if (bff_component_query(c, "access", &root, err)) {
+        return ULAB_ERR;
+    }
+
+    obj = dig(root, "data", "getComponentsByUserId");
+    arr = obj ? json_object_get(obj, "components") : NULL;
+
+    if (arr == NULL || !json_is_array(arr)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getComponentsByUserId missing access components");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+
+    for (i = 0; i < json_array_size(arr); i++) {
+        it = json_array_get(arr, i);
+        if (it == NULL || !json_is_object(it)) {
+            continue;
+        }
+
+        pnv = json_object_get(it, "partNumber");
+        if (pnv == NULL || !json_is_string(pnv)) {
+            continue;
+        }
+
+        part = json_string_value(pnv);
+        if (part == NULL || !ulab_streq(part, access_node->runtime_id)) {
+            continue;
+        }
+
+        idv = json_object_get(it, "id");
+        if (idv == NULL || !json_is_string(idv)) {
+            continue;
+        }
+
+        id = json_string_value(idv);
+        if (id == NULL || id[0] == '\0') {
+            continue;
+        }
+
+        ulab_copy(c->access_id, sizeof(c->access_id), id);
+        json_decref(root);
+        return ULAB_OK;
+    }
+
+    snprintf(err->msg, sizeof(err->msg),
+             "no access component found for node partNumber=%s",
+             access_node->runtime_id);
+    json_decref(root);
+    return ULAB_ERR;
+}
+
+static int bff_load_site_components(bff_client_t *c,
+                                    const node_t *access_node,
+                                    ulab_error_t *err) {
+
+    if (bff_pick_access_component_for_node(c, access_node, err)) {
+        return ULAB_ERR;
+    }
+
+    if (bff_pick_first_component(c, "backhaul",
         c->backhaul_id, sizeof(c->backhaul_id), err)) {
         return ULAB_ERR;
     }
 
-    if (bff_get_component_id(c, "power",
+    if (bff_pick_first_component(c, "power",
         c->power_id, sizeof(c->power_id), err)) {
         return ULAB_ERR;
     }
 
-    if (bff_get_component_id(c, "spectrum",
+    if (bff_pick_first_component(c, "spectrum",
         c->spectrum_id, sizeof(c->spectrum_id), err)) {
         return ULAB_ERR;
     }
 
-    if (bff_get_component_id(c, "switch",
+    if (bff_pick_first_component(c, "switch",
         c->switch_id, sizeof(c->switch_id), err)) {
         return ULAB_ERR;
     }
 
-    c->components_loaded = 1;
-
     return ULAB_OK;
 }
 
-int bff_add_site(bff_client_t *c, site_t *s, const network_t *n,
+int bff_wait_node_online(bff_client_t *c,
+                         node_t *node,
+                         ulab_error_t *err) {
+    const char *timeout_env;
+    const char *sleep_env;
+    unsigned int timeout_sec;
+    unsigned int sleep_sec;
+    unsigned int elapsed;
+    char vars[1024];
+    json_t *root;
+    json_t *obj;
+    json_t *arr;
+    json_t *it;
+    json_t *idv;
+    char state[ULAB_MAX_REF];
+    char connectivity[ULAB_MAX_REF];
+    const char *kind;
+    const char *id;
+    size_t i;
+    int found;
+
+    if (node == NULL || node->runtime_id[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "cannot wait for node without runtime id");
+        return ULAB_ERR;
+    }
+
+    timeout_env = getenv("ULAB_BFF_NODE_ONLINE_TIMEOUT_SEC");
+    sleep_env = getenv("ULAB_BFF_NODE_ONLINE_SLEEP_SEC");
+    timeout_sec = timeout_env ? (unsigned int)strtoul(timeout_env, NULL, 10) :
+        180u;
+    sleep_sec = sleep_env ? (unsigned int)strtoul(sleep_env, NULL, 10) : 5u;
+    if (timeout_sec == 0) timeout_sec = 180u;
+    if (sleep_sec == 0) sleep_sec = 5u;
+
+    elapsed = 0;
+    kind = bff_node_type_for_lab_type(node->type);
+
+    while (elapsed <= timeout_sec) {
+        snprintf(vars, sizeof(vars),
+                 "{\"data\":{\"type\":\"%s\"}}", kind);
+
+        root = NULL;
+        if (bff_call(c, "getNodes", BFF_GET_NODES, vars, &root, err)) {
+            return ULAB_ERR;
+        }
+
+        obj = dig(root, "data", "getNodes");
+        arr = obj ? json_object_get(obj, "nodes") : NULL;
+        found = 0;
+
+        if (arr != NULL && json_is_array(arr)) {
+            for (i = 0; i < json_array_size(arr); i++) {
+                it = json_array_get(arr, i);
+                idv = it ? json_object_get(it, "id") : NULL;
+                id = idv && json_is_string(idv) ? json_string_value(idv) :
+                    NULL;
+
+                if (id == NULL || !ulab_streq(id, node->runtime_id)) {
+                    continue;
+                }
+
+                found = 1;
+                state[0] = '\0';
+                connectivity[0] = '\0';
+
+                json_get_nested_str(it, "status", "state", state,
+                                    sizeof(state));
+                json_get_nested_str(it, "status", "connectivity",
+                                    connectivity, sizeof(connectivity));
+                json_get_nested_str(it, "latitude", NULL, node->latitude,
+                                    sizeof(node->latitude));
+                json_get_nested_str(it, "longitude", NULL, node->longitude,
+                                    sizeof(node->longitude));
+
+                if (ulab_streq(connectivity, "Online") &&
+                    ulab_streq(state, "Unknown") &&
+                    node->latitude[0] != '\0' &&
+                    node->longitude[0] != '\0') {
+                    json_decref(root);
+                    ulab_status("BFF", "node online %s lat=%s lng=%s",
+                                node->runtime_id, node->latitude,
+                                node->longitude);
+                    return ULAB_OK;
+                }
+            }
+        }
+
+        json_decref(root);
+
+        if (found) {
+            ulab_status("BFF", "waiting node %s online/location",
+                        node->runtime_id);
+        } else {
+            ulab_status("BFF", "waiting node %s in registry",
+                        node->runtime_id);
+        }
+
+        sleep(sleep_sec);
+        elapsed += sleep_sec;
+    }
+
+    snprintf(err->msg, sizeof(err->msg),
+             "node %s did not become Online/Unknown with lat/lng within %us",
+             node->runtime_id, timeout_sec);
+    return ULAB_ERR;
+}
+
+int bff_add_site(bff_client_t *c,
+                 site_t *s,
+                 const network_t *n,
+                 const node_t *access_node,
                  ulab_error_t *err) {
     char vars[4096];
     json_t *root;
     json_t *obj;
 
-    /*
-     * Site creation requires:
-     *
-     *   network_id     BFF UUID returned by addNetwork
-     *   *_id fields    real component UUIDs visible to this user
-     *   install_date   RFC3339
-     */
-    if (bff_load_site_components(c, err)) {
+    if (access_node == NULL) {
+        snprintf(err->msg, sizeof(err->msg), "site has no access node");
         return ULAB_ERR;
     }
+
+    if (access_node->latitude[0] == '\0' ||
+        access_node->longitude[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "access node %s missing lat/lng", access_node->runtime_id);
+        return ULAB_ERR;
+    }
+
+    if (bff_load_site_components(c, access_node, err)) {
+        return ULAB_ERR;
+    }
+
+    ulab_copy(s->latitude, sizeof(s->latitude), access_node->latitude);
+    ulab_copy(s->longitude, sizeof(s->longitude), access_node->longitude);
 
     snprintf(vars, sizeof(vars),
              "{\"data\":{\"name\":\"%s\",\"network_id\":\"%s\","
@@ -774,8 +1011,8 @@ int bff_add_site(bff_client_t *c, site_t *s, const network_t *n,
              "\"access_id\":\"%s\","
              "\"spectrum_id\":\"%s\","
              "\"switch_id\":\"%s\","
-             "\"latitude\":\"37.7749\","
-             "\"longitude\":\"-122.4194\","
+             "\"latitude\":\"%s\","
+             "\"longitude\":\"%s\","
              "\"install_date\":\"2026-01-01T00:00:00Z\","
              "\"location\":\"Lab\"}}",
              s->name,
@@ -784,7 +1021,9 @@ int bff_add_site(bff_client_t *c, site_t *s, const network_t *n,
              c->power_id,
              c->access_id,
              c->spectrum_id,
-             c->switch_id);
+             c->switch_id,
+             s->latitude,
+             s->longitude);
 
     if (bff_call(c, "addSite", BFF_ADD_SITE, vars, &root, err)) {
         return ULAB_ERR;
@@ -803,195 +1042,6 @@ int bff_add_site(bff_client_t *c, site_t *s, const network_t *n,
     return ULAB_OK;
 }
 
-static const char *bff_node_type_for_lab_type(const char *type) {
-
-    if (ulab_streq(type, ULAB_NODE_TOWER)) {
-        return "tnode";
-    }
-
-    if (ulab_streq(type, ULAB_NODE_CONTROLLER)) {
-        return "cnode";
-    }
-
-    if (ulab_streq(type, ULAB_NODE_AMPLIFIER)) {
-        return "anode";
-    }
-
-    return type;
-}
-
-static int node_has_no_site(json_t *node) {
-    json_t *site;
-    json_t *site_id;
-    const char *s;
-
-    site = json_object_get(node, "site");
-    if (site == NULL || !json_is_object(site)) {
-        return 1;
-    }
-
-    site_id = json_object_get(site, "siteId");
-    if (site_id == NULL || json_is_null(site_id)) {
-        return 1;
-    }
-
-    if (!json_is_string(site_id)) {
-        return 0;
-    }
-
-    s = json_string_value(site_id);
-    if (s == NULL || s[0] == '\0') {
-        return 1;
-    }
-
-    return 0;
-}
-
-int bff_select_node_from_pool(bff_client_t *c,
-                              node_t *n,
-                              ulab_error_t *err) {
-    char vars[512];
-    json_t *root;
-    json_t *obj;
-    json_t *arr;
-    json_t *it;
-    json_t *idv;
-    json_t *typev;
-    const char *want_type;
-    const char *id;
-    const char *type;
-    size_t i;
-
-    root = NULL;
-    obj = NULL;
-    arr = NULL;
-    it = NULL;
-    idv = NULL;
-    typev = NULL;
-    want_type = bff_node_type_for_lab_type(n->type);
-    id = NULL;
-    type = NULL;
-
-    /*
-     * Do not create nodes here.
-     *
-     * Nodes already exist in the org node pool. We query by real BFF node
-     * type and pick the first node that has no site assignment.
-     */
-    snprintf(vars, sizeof(vars),
-             "{\"data\":{\"type\":\"%s\"}}",
-             want_type);
-
-    if (bff_call(c, "getNodes", BFF_GET_NODES, vars, &root, err)) {
-        return ULAB_ERR;
-    }
-
-    obj = dig(root, "data", "getNodes");
-    arr = obj ? json_object_get(obj, "nodes") : NULL;
-
-    if (arr == NULL || !json_is_array(arr)) {
-        snprintf(err->msg, sizeof(err->msg),
-                 "getNodes missing nodes for type=%s", want_type);
-        json_decref(root);
-        return ULAB_ERR;
-    }
-
-    for (i = 0; i < json_array_size(arr); i++) {
-        it = json_array_get(arr, i);
-        if (it == NULL || !json_is_object(it)) {
-            continue;
-        }
-
-        typev = json_object_get(it, "type");
-        if (typev == NULL || !json_is_string(typev)) {
-            continue;
-        }
-
-        type = json_string_value(typev);
-        if (type == NULL || !ulab_streq(type, want_type)) {
-            continue;
-        }
-
-        if (!node_has_no_site(it)) {
-            continue;
-        }
-
-        idv = json_object_get(it, "id");
-        if (idv == NULL || !json_is_string(idv)) {
-            continue;
-        }
-
-        id = json_string_value(idv);
-        if (id == NULL || id[0] == '\0') {
-            continue;
-        }
-
-        /*
-         * bff_id is the real node-pool node id. This is what addNodeToSite
-         * must use.
-         */
-        ulab_copy(n->bff_id, sizeof(n->bff_id), id);
-
-        json_decref(root);
-        return ULAB_OK;
-    }
-
-    snprintf(err->msg, sizeof(err->msg),
-             "no available unassigned node found in BFF node pool for type=%s",
-             want_type);
-
-    json_decref(root);
-    return ULAB_ERR;
-}
-
-
-int bff_add_node(bff_client_t *c, node_t *n, ulab_error_t *err) {
-    char vars[4096];
-    json_t *root;
-    json_t *obj;
-
-    snprintf(vars, sizeof(vars),
-             "{\"data\":{\"id\":\"%s\",\"name\":\"%s\"}}",
-             n->id, n->name);
-
-    if (bff_call(c, "addNode", BFF_ADD_NODE, vars, &root, err)) {
-        return ULAB_ERR;
-    }
-
-    obj = dig(root, "data", "addNode");
-    if (obj == NULL || json_get_str(obj, "id", n->bff_id,
-        sizeof(n->bff_id))) {
-        snprintf(err->msg, sizeof(err->msg), "addNode missing id");
-        json_decref(root);
-        return ULAB_ERR;
-    }
-
-    json_decref(root);
-
-    return ULAB_OK;
-}
-
-int bff_add_node_to_site(bff_client_t *c, const node_t *n,
-                         const site_t *s, const network_t *net,
-                         ulab_error_t *err) {
-
-    char vars[ULAB_MAX_QUERY];
-    json_t *root;
-
-    snprintf(vars, sizeof(vars),
-             "{\"data\":{\"networkId\":\"%s\",\"nodeId\":\"%s\","
-             "\"siteId\":\"%s\"}}", net->bff_id, n->bff_id, s->bff_id);
-
-    if (bff_call(c, "addNodeToSite", BFF_ADD_NODE_TO_SITE, vars, &root,
-        err)) {
-        return ULAB_ERR;
-    }
-
-    json_decref(root);
-
-    return ULAB_OK;
-}
-
 int bff_add_package(bff_client_t *c, package_t *p, ulab_error_t *err) {
     char vars[4096];
     json_t *root;
@@ -1000,7 +1050,7 @@ int bff_add_package(bff_client_t *c, package_t *p, ulab_error_t *err) {
 
     duration = p->duration_days;
     if (duration == 0) {
-        duration = 1; /* min is 1-day package */
+        duration = 1;
     }
 
     snprintf(vars, sizeof(vars),

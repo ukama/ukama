@@ -10,6 +10,7 @@
 #define ULAB_BFF_H_
 
 #include <stdio.h>
+#include <stdint.h>
 
 #include "world.h"
 #include "ulab.h"
@@ -22,12 +23,21 @@ typedef struct {
     char token[4096];
     int  authenticated;
 
+    /*
+     * Component UUIDs used by AddSite.
+     *
+     * access_id is selected by matching:
+     *
+     *   component.category   == "access"
+     *   component.partNumber == node.runtime_id
+     *
+     * The other components are selected from inventory by category.
+     */
     char access_id[ULAB_MAX_ID];
     char backhaul_id[ULAB_MAX_ID];
     char power_id[ULAB_MAX_ID];
     char spectrum_id[ULAB_MAX_ID];
     char switch_id[ULAB_MAX_ID];
-    int  components_loaded;
 
     FILE *logf;
 } bff_client_t;
@@ -52,20 +62,15 @@ int bff_add_network(bff_client_t *c,
                     network_t *n,
                     ulab_error_t *err);
 
+int bff_wait_node_online(bff_client_t *c,
+                         node_t *node,
+                         ulab_error_t *err);
+
 int bff_add_site(bff_client_t *c,
                  site_t *s,
                  const network_t *n,
+                 const node_t *access_node,
                  ulab_error_t *err);
-
-int bff_select_node_from_pool(bff_client_t *c,
-                              node_t *n,
-                              ulab_error_t *err);
-
-int bff_add_node_to_site(bff_client_t *c,
-                         const node_t *n,
-                         const site_t *s,
-                         const network_t *net,
-                         ulab_error_t *err);
 
 int bff_add_package(bff_client_t *c,
                     package_t *p,

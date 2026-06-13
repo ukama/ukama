@@ -6,6 +6,7 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -54,6 +55,100 @@ static int run_script(runtime_t *rt,
     return ULAB_OK;
 }
 
+static void safe_name(const char *in, char *out, size_t out_len) {
+    size_t i;
+    size_t j;
+    unsigned char ch;
+
+    if (out_len == 0) {
+        return;
+    }
+
+    j = 0;
+    for (i = 0; in != NULL && in[i] != '\0' && j + 1 < out_len; i++) {
+        ch = (unsigned char)in[i];
+        if (isalnum(ch) || ch == '_' || ch == '.' || ch == '-') {
+            out[j++] = (char)ch;
+        } else {
+            out[j++] = '-';
+        }
+    }
+    out[j] = '\0';
+}
+
+static int read_state_value(const char *path,
+                            const char *key,
+                            char *out,
+                            size_t out_len) {
+    FILE *f;
+    char line[ULAB_MAX_LINE];
+    size_t key_len;
+    char *v;
+
+    f = fopen(path, "r");
+    if (f == NULL) {
+        return ULAB_ERR;
+    }
+
+    key_len = strlen(key);
+    while (fgets(line, sizeof(line), f) != NULL) {
+        if (strncmp(line, key, key_len) != 0 || line[key_len] != '=') {
+            continue;
+        }
+
+        v = ulab_trim(line + key_len + 1);
+        if (ulab_copy(out, out_len, v)) {
+            fclose(f);
+            return ULAB_ERR;
+        }
+
+        fclose(f);
+        return ULAB_OK;
+    }
+
+    fclose(f);
+    return ULAB_ERR;
+}
+
+static int load_runtime_node_state(runtime_t *rt,
+                                   node_t *node,
+                                   ulab_error_t *err) {
+    char safe[ULAB_MAX_ID];
+    char path[ULAB_MAX_PATH];
+    int rc;
+
+    safe_name(node->id, safe, sizeof(safe));
+
+    rc = snprintf(path, sizeof(path), "%s/runtime-nodes/%s.env",
+                  rt->run_dir, safe);
+    if (rc < 0 || (size_t)rc >= sizeof(path)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "runtime state path too long");
+        return ULAB_ERR;
+    }
+
+    if (read_state_value(path, "FACTORY_NODE_ID", node->runtime_id,
+        sizeof(node->runtime_id))) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "FACTORY_NODE_ID missing for node %s", node->id);
+        return ULAB_ERR;
+    }
+
+    if (ulab_copy(node->bff_id, sizeof(node->bff_id), node->runtime_id)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "factory node id too long for node %s", node->id);
+        return ULAB_ERR;
+    }
+
+    if (rt->logf) {
+        fprintf(rt->logf, "runtime-node logical=%s factory=%s state=%s\n",
+                node->id, node->runtime_id, path);
+        fflush(rt->logf);
+    }
+
+    return ULAB_OK;
+}
+
 int runtime_init(runtime_t *rt,
                  const char *script_dir,
                  const char *run_dir) {
@@ -79,12 +174,12 @@ void runtime_close(runtime_t *rt) {
 
 int runtime_build_and_start_nodes(const char *repo,
                                   runtime_t *rt,
-                                  const world_t *w,
+                                  world_t *w,
                                   const selector_result_t *nodes,
                                   ulab_error_t *err) {
 
     size_t i;
-    const node_t *n;
+    node_t *n;
     char args[ULAB_MAX_ARGS];
     int rc;
 
@@ -109,11 +204,24 @@ int runtime_build_and_start_nodes(const char *repo,
             return ULAB_ERR;
         }
 
-        ulab_status("NODE", "build/start %s type=%s", n->id, n->type);
+        ulab_status("NODE", "factory/build/start %s type=%s",
+                    n->id, n->type);
 
         if (run_script(rt, "build-and-start-node.sh", args, err)) {
             return ULAB_ERR;
         }
+
+        /*
+         * build-and-start-node.sh is still the factory client.
+         * It writes FACTORY_NODE_ID into runtime-nodes/<logical>.env.
+         * Pull that real NodeID back into C.
+         */
+        if (load_runtime_node_state(rt, n, err)) {
+            return ULAB_ERR;
+        }
+
+        ulab_status("NODE", "logical=%s factory=%s", n->id,
+                    n->runtime_id);
     }
 
     return ULAB_OK;
@@ -139,7 +247,8 @@ int runtime_wait_nodes_ready(runtime_t *rt,
             return ULAB_ERR;
         }
 
-        ulab_status("NODE", "wait ready %s", n->id);
+        ulab_status("NODE", "wait ready %s factory=%s", n->id,
+                    n->runtime_id[0] ? n->runtime_id : "unknown");
 
         if (run_script(rt, "wait-nodes-ready.sh", args, err)) {
             return ULAB_ERR;

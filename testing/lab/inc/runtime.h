@@ -24,7 +24,7 @@ int runtime_init(runtime_t *rt, const char *script_dir,
 void runtime_close(runtime_t *rt);
 int runtime_build_and_start_nodes(const char *repo,
                                   runtime_t *rt,
-                                  const world_t *w,
+                                  world_t *w,
                                   const selector_result_t *nodes,
                                   ulab_error_t *err);
 int runtime_wait_nodes_ready(runtime_t *rt, const world_t *w,

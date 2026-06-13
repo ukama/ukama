@@ -12,11 +12,13 @@ const char *BFF_ADD_NETWORK =
 
 const char *BFF_ADD_SITE =
 "mutation AddSite($data: AddSiteInputDto!) {"
-" addSite(data: $data) { id name networkId latitude longitude } }";
+" addSite(data: $data) { id name networkId backhaulId powerId "
+" accessId spectrumId switchId isDeactivated latitude longitude "
+" installDate createdAt location } }";
 
 const char *BFF_ADD_NODE =
 "mutation AddNode($data: AddNodeInput!) {"
-" addNode(data: $data) { id name orgId type status { state connectivity } } }";
+" addNode(data: $data) { id name } }";
 
 const char *BFF_ADD_NODE_TO_SITE =
 "mutation AddNodeToSite($data: AddNodeToSiteInput!) {"
@@ -75,6 +77,6 @@ const char *BFF_GET_COMPONENTS_BY_USER_ID =
 
 const char *BFF_GET_NODES =
 "query GetNodes($data: NodesFilterInput!) {"
-" getNodes(data: $data) { nodes { id name type "
+" getNodes(data: $data) { nodes { id name type latitude longitude "
 " site { nodeId siteId networkId addedAt } "
 " status { state connectivity } } } }";

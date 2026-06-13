@@ -196,8 +196,6 @@ fi
 
 echo "podman: starting $CONTAINER_NAME from $IMAGE"
 
-echo "podman: starting $CONTAINER_NAME from $IMAGE"
-
 if [ -n "${ULAB_NODE_ENTRYPOINT:-}" ]; then
     # Debug/override mode, for example:
     #   ULAB_NODE_ENTRYPOINT=/bin/bash ./ulab ...
