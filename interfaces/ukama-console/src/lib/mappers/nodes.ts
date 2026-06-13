@@ -27,13 +27,15 @@ export const toNodeStatus = (node: ViewNodeFragment): UkamaNode['status'] => {
   const state = node.status.state.toLowerCase();
   if (connectivity !== 'online') return 'offline';
   if (state === 'faulty') return 'degraded';
-  if (state === 'configured' || state === 'unknown') return 'configuring';
+  // 'configured' is a completed, healthy state — only an unknown/pending state
+  // is still "configuring".
+  if (state === 'unknown') return 'configuring';
   return 'online';
 };
 
 export const toUkamaNode = (
   node: ViewNodeFragment,
-  siteName?: string
+  siteName?: string,
 ): UkamaNode => ({
   id: node.id,
   serial: node.id,

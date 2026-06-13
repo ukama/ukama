@@ -15,9 +15,12 @@
  */
 import type { NetworkCustomersQuery } from '@/client/graphql/network-customers.generated';
 import type { Subscriber } from '@/data';
+import { formatDate } from '@/lib/parsers';
 
 type QuerySubscriber = NonNullable<
-  NonNullable<NetworkCustomersQuery['subscribersView']['subscribers']['subscribers']>
+  NonNullable<
+    NetworkCustomersQuery['subscribersView']['subscribers']['subscribers']
+  >
 >[number];
 type QueryPlan = NonNullable<
   NonNullable<NetworkCustomersQuery['subscribersView']['plans']['plans']>
@@ -32,7 +35,7 @@ const toSimStatus = (status?: string): Subscriber['sim'] => {
 
 export const toSubscriber = (
   sub: QuerySubscriber,
-  plansById: Map<string, QueryPlan>
+  plansById: Map<string, QueryPlan>,
 ): Subscriber => {
   const firstSim = sub.sim?.[0];
   const activePackage = sub.sim
@@ -44,6 +47,7 @@ export const toSubscriber = (
   return {
     id: sub.uuid,
     name: sub.name,
+    email: sub.email || undefined,
     phone: sub.phone || (firstSim?.msisdn ?? '—'),
     site: '—',
     plan: planName,
@@ -53,6 +57,10 @@ export const toSubscriber = (
     sim: toSimStatus(firstSim?.status),
     iccid: firstSim?.iccid ?? '—',
     simId: firstSim?.id,
-    seen: '—',
+    // Last seen ≈ when the active package was last updated (subscriber has no
+    // dedicated last-seen field yet).
+    seen: activePackage?.updated_at
+      ? formatDate(activePackage.updated_at)
+      : '—',
   };
 };

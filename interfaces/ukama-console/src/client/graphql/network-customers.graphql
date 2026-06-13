@@ -29,6 +29,7 @@ query NetworkCustomers($networkId: String!) {
           package {
             package_id
             is_active
+            updated_at
           }
         }
       }

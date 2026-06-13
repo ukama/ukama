@@ -66,7 +66,9 @@ export default function SubscriberDrawer({
   const [showTopUp, setShowTopUp] = useState(false);
   const [showAllocate, setShowAllocate] = useState(false);
   const hasSim = !!sub.simId;
-  const pct = sub.cap ? Math.min(100, (sub.usage / sub.cap) * 100) : 50;
+  // usage is -1 when unknown/none — clamp so we never render "-1 GB".
+  const usage = Math.max(0, sub.usage);
+  const pct = sub.cap ? Math.min(100, (usage / sub.cap) * 100) : 50;
   const initials = sub.name
     .split(' ')
     .map((x) => x[0])
@@ -185,7 +187,7 @@ export default function SubscriberDrawer({
                   marginTop: 7,
                 }}
               >
-                {sub.usage} of {sub.cap} GB used this cycle
+                {usage} of {sub.cap} GB used this cycle
               </div>
             </>
           ) : (
@@ -193,7 +195,7 @@ export default function SubscriberDrawer({
               className="tnum"
               style={{ fontSize: 12.5, color: 'var(--uk-ink-2)' }}
             >
-              {sub.usage} GB used · unlimited
+              {usage} GB used · unlimited
             </div>
           )}
         </div>
