@@ -9,6 +9,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "runtime.h"
 #include "log.h"
@@ -16,40 +17,64 @@
 #include "ulab.h"
 
 static int run_script(runtime_t *rt,
-                      const char *script,
+                      const char *name,
                       const char *args,
                       ulab_error_t *err) {
-    char cmd[8192];
-    char out[4096];
+ 
+    char cmd[ULAB_MAX_QUERY];
+    char script[ULAB_MAX_PATH];
+    char log_path[ULAB_MAX_PATH];
+    int rc;
     int n;
 
-    n = snprintf(cmd, sizeof(cmd), "%s/%s %s",
-                 rt->script_dir, script, args);
+    n = snprintf(script, sizeof(script), "%s/%s", rt->script_dir, name);
+    if (n < 0 || (size_t)n >= sizeof(script)) {
+        snprintf(err->msg, sizeof(err->msg), "script path too long");
+        return ULAB_ERR;
+    }
+
+    n = snprintf(log_path, sizeof(log_path), "%s/%s.log",
+                 rt->run_dir, name);
+    if (n < 0 || (size_t)n >= sizeof(log_path)) {
+        snprintf(err->msg, sizeof(err->msg), "script log path too long");
+        return ULAB_ERR;
+    }
+
+    /*
+     * Do not pipe script output back into C.
+     * Build scripts can produce a lot of output, so write directly to log.
+     */
+    n = snprintf(cmd, sizeof(cmd),
+                 "mkdir -p '%s' >/dev/null 2>&1; "
+                 "'%s' %s >> '%s' 2>&1",
+                 rt->run_dir,
+                 script,
+                 args ? args : "",
+                 log_path);
     if (n < 0 || (size_t)n >= sizeof(cmd)) {
-        snprintf(err->msg, sizeof(err->msg),
-                 "runtime command too long: %s", script);
+        snprintf(err->msg, sizeof(err->msg), "script command too long");
         return ULAB_ERR;
     }
 
     if (rt->logf) {
-        fprintf(rt->logf, "$ %s\n", cmd);
+        fprintf(rt->logf, "--- script %s ---\n", name);
+        fprintf(rt->logf, "%s\n", cmd);
+        fprintf(rt->logf, "log=%s\n", log_path);
         fflush(rt->logf);
     }
 
-    memset(out, 0, sizeof(out));
-    if (ulab_run_cmd(cmd, out, sizeof(out)) != ULAB_OK) {
+    rc = system(cmd);
+    if (rc != 0) {
         snprintf(err->msg, sizeof(err->msg),
-                 "script failed: %s", script);
+                 "script failed: %s; see runtime log", name);
+
         if (rt->logf) {
-            fprintf(rt->logf, "FAILED: %s\n", out);
+            fprintf(rt->logf, "script failed: %s\n", name);
+            fprintf(rt->logf, "script log: %s\n", log_path);
             fflush(rt->logf);
         }
-        return ULAB_ERR;
-    }
 
-    if (rt->logf) {
-        fprintf(rt->logf, "%s\n", out);
-        fflush(rt->logf);
+        return ULAB_ERR;
     }
 
     return ULAB_OK;
