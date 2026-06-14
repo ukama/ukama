@@ -35,7 +35,7 @@ need_cmd() {
 }
 
 safe_name() {
-    echo "$1" | tr -c 'A-Za-z0-9_.-' '-'
+    printf "%s" "$1" | tr -c 'A-Za-z0-9_.-' '-'
 }
 
 pick_tnode() {
