@@ -68,31 +68,11 @@ static int prepare_run(const runner_opts_t *opts,
     return ULAB_OK;
 }
 
-static node_t *site_access_node(world_t *world, const site_t *site) {
-    size_t i;
-
-    for (i = 0; i < world->node_count; i++) {
-        node_t *n = &world->nodes[i];
-
-        if (!ulab_streq(n->site_ref, site->ref)) {
-            continue;
-        }
-
-        if (ulab_streq(n->type, ULAB_NODE_TOWER) ||
-            ulab_streq(n->type, ULAB_NODE_KIND_TOWER)) {
-            return n;
-        }
-    }
-
-    return NULL;
-}
-
 static int setup_bff_network_sites(bff_client_t *bff,
                                    world_t *world,
                                    ulab_error_t *err) {
 
     network_t *network;
-    node_t *access;
     size_t i;
 
     for (i = 0; i < world->network_count; i++) {
@@ -103,25 +83,18 @@ static int setup_bff_network_sites(bff_client_t *bff,
 
     for (i = 0; i < world->site_count; i++) {
         network = world_network_by_ref(world, world->sites[i].network_ref);
-        access = site_access_node(world, &world->sites[i]);
-
         if (network == NULL) {
             snprintf(err->msg, sizeof(err->msg),
-                     "site %s has invalid network ref", world->sites[i].ref);
+                     "site %s has invalid network ref",
+                     world->sites[i].ref);
             return ULAB_EBFF;
         }
 
-        if (access == NULL) {
-            snprintf(err->msg, sizeof(err->msg),
-                     "site %s has no tower/access node", world->sites[i].ref);
+        if (bff_wait_site_anchor_online(bff, &world->sites[i], err)) {
             return ULAB_EBFF;
         }
 
-        if (bff_wait_node_online(bff, access, err)) {
-            return ULAB_EBFF;
-        }
-
-        if (bff_add_site(bff, &world->sites[i], network, access, err)) {
+        if (bff_add_site(bff, &world->sites[i], network, err)) {
             return ULAB_EBFF;
         }
     }
@@ -129,116 +102,18 @@ static int setup_bff_network_sites(bff_client_t *bff,
     return ULAB_OK;
 }
 
-static int start_runtime_nodes(const char *repo,
+static int start_runtime_sites(const char *repo,
                                const scenario_t *scenario,
                                world_t *world,
                                runtime_t *runtime,
                                ulab_error_t *err) {
 
-    selector_result_t result;
-    selector_t selector;
-
-    memset(&selector, 0, sizeof(selector));
-    selector.kind = SEL_ALL;
-
-    if (scenario->runtime.start_nodes) {
-        if (selector_resolve_nodes(world, &selector, &result, err)) {
-            return ULAB_ERUNTIME;
-        }
-
-        if (runtime_build_and_start_nodes(repo, runtime, world, &result, err)) {
-            selector_result_free(&result);
-            return ULAB_ERUNTIME;
-        }
-
-        selector_result_free(&result);
+    if (!scenario->runtime.start_nodes) {
+        return ULAB_OK;
     }
 
-    if (scenario->runtime.wait_nodes_ready) {
-        if (selector_resolve_nodes(world, &selector, &result, err)) {
-            return ULAB_ERUNTIME;
-        }
-
-        if (runtime_wait_nodes_ready(runtime, world, &result, err)) {
-            selector_result_free(&result);
-            return ULAB_ERUNTIME;
-        }
-
-        selector_result_free(&result);
-    }
-
-    return ULAB_OK;
-}
-
-static int start_runtime(const char *repo,
-                         const scenario_t *scenario,
-                         world_t *world,
-                         runtime_t *runtime,
-                         ulab_error_t *err) {
-
-    selector_result_t result;
-    selector_t selector;
-    
-    memset(&selector, 0, sizeof(selector));
-    selector.kind = SEL_ALL;
-
-    if (scenario->runtime.start_nodes) {
-
-        if (selector_resolve_nodes(world, &selector, &result, err)) {
-            return ULAB_ERUNTIME;
-        }
-
-        if (runtime_build_and_start_nodes(repo,runtime, world, &result, err)) {
-            selector_result_free(&result);
-            return ULAB_ERUNTIME;
-        }
-
-        selector_result_free(&result);
-    }
-
-    if (scenario->runtime.wait_nodes_ready) {
-
-        if (selector_resolve_nodes(world, &selector, &result, err)) {
-            return ULAB_ERUNTIME;
-        }
-
-        if (runtime_wait_nodes_ready(runtime, world, &result, err)) {
-            selector_result_free(&result);
-            return ULAB_ERUNTIME;
-        }
-
-        selector_result_free(&result);
-    }
-
-    if (scenario->runtime.start_ues) {
-
-        if (selector_resolve_ues(world, &selector, &result, err)) {
-            return ULAB_ERUNTIME;
-        }
-
-        if (runtime_build_and_start_ues(repo, runtime, world, &result, err)) {
-            selector_result_free(&result);
-            return ULAB_ERUNTIME;
-        }
-
-        selector_result_free(&result);
-    }
-
-    if (scenario->runtime.wait_ues_attached) {
-
-        if (selector_resolve_ues(world, &selector, &result, err)) {
-            return ULAB_ERUNTIME;
-        }
-
-        if (runtime_wait_ues_attached(runtime, world, &result, err)) {
-            selector_result_free(&result);
-            return ULAB_ERUNTIME;
-        }
-
-        selector_result_free(&result);
-    }
-
-    return ULAB_OK;
+    return runtime_build_and_start_sites(repo, runtime, world, err) ?
+        ULAB_ERUNTIME : ULAB_OK;
 }
 
 static int run_checks(check_ctx_t *ctx,
@@ -388,12 +263,6 @@ int runner_validate(const runner_opts_t *opts) {
     report_world(&world);
     write_world_artifact(&world, runDir);
 
-    rc = bff_init(&bff, opts->bff_url, runDir);
-    if (rc != ULAB_OK) {
-        rc = ULAB_EBFF;
-        goto done;
-    }
-
     rc = runtime_init(&runtime, opts->script_dir, runDir);
     if (rc != ULAB_OK) {
         rc = ULAB_ERUNTIME;
@@ -401,8 +270,9 @@ int runner_validate(const runner_opts_t *opts) {
     }
 
     if (!opts->setup_only) {
-        ulab_status("RUNTIME", "factory/build/start real nodes");
-        rc = start_runtime_nodes(opts->repo, scenario, &world, &runtime, &err);
+        ulab_status("RUNTIME", "factory/build/start site node bundles");
+        rc = start_runtime_sites(opts->repo, scenario, &world, &runtime,
+                                 &err);
         if (rc != ULAB_OK) {
             goto done;
         }
@@ -414,7 +284,7 @@ int runner_validate(const runner_opts_t *opts) {
         goto done;
     }
 
-    ulab_status("SETUP", "creating network/site via BFF");
+    ulab_status("SETUP", "creating networks and sites via BFF");
     rc = setup_bff_network_sites(&bff, &world, &err);
     if (rc != ULAB_OK) {
         goto done;
@@ -424,16 +294,6 @@ int runner_validate(const runner_opts_t *opts) {
     write_world_artifact(&world, runDir);
 
     if (!opts->setup_only) {
-        ulab_status("RUNTIME", "starting real nodes and UEs");
-        rc = start_runtime(opts->repo,
-                           scenario,
-                           &world,
-                           &runtime,
-                           &err);
-        if (rc != ULAB_OK) {
-            goto done;
-        }
-
         for (i = 0; i < scenario->phase_count; i++) {
             rc = run_phase(scenario, &world, &model, &bff, &runtime,
                            &report, &scenario->phases[i], &err);

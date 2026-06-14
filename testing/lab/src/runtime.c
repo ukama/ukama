@@ -73,6 +73,7 @@ static void safe_name(const char *in, char *out, size_t out_len) {
             out[j++] = '-';
         }
     }
+
     out[j] = '\0';
 }
 
@@ -110,39 +111,49 @@ static int read_state_value(const char *path,
     return ULAB_ERR;
 }
 
-static int load_runtime_node_state(runtime_t *rt,
-                                   node_t *node,
+static int load_runtime_site_state(runtime_t *rt,
+                                   site_t *site,
                                    ulab_error_t *err) {
-    char safe[ULAB_MAX_ID];
+    char safe[ULAB_MAX_REF];
     char path[ULAB_MAX_PATH];
     int rc;
 
-    safe_name(node->id, safe, sizeof(safe));
+    safe_name(site->ref, safe, sizeof(safe));
 
-    rc = snprintf(path, sizeof(path), "%s/runtime-nodes/%s.env",
+    rc = snprintf(path, sizeof(path), "%s/runtime-sites/%s.env",
                   rt->run_dir, safe);
     if (rc < 0 || (size_t)rc >= sizeof(path)) {
         snprintf(err->msg, sizeof(err->msg),
-                 "runtime state path too long");
+                 "runtime site state path too long");
         return ULAB_ERR;
     }
 
-    if (read_state_value(path, "FACTORY_NODE_ID", node->runtime_id,
-        sizeof(node->runtime_id))) {
+    if (read_state_value(path, "TNODE_ID", site->tnode_id,
+        sizeof(site->tnode_id))) {
         snprintf(err->msg, sizeof(err->msg),
-                 "FACTORY_NODE_ID missing for node %s", node->id);
+                 "TNODE_ID missing for site %s", site->ref);
         return ULAB_ERR;
     }
 
-    if (ulab_copy(node->bff_id, sizeof(node->bff_id), node->runtime_id)) {
+    if (read_state_value(path, "CNODE_ID", site->cnode_id,
+        sizeof(site->cnode_id))) {
         snprintf(err->msg, sizeof(err->msg),
-                 "factory node id too long for node %s", node->id);
+                 "CNODE_ID missing for site %s", site->ref);
+        return ULAB_ERR;
+    }
+
+    if (read_state_value(path, "ANODE_ID", site->anode_id,
+        sizeof(site->anode_id))) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "ANODE_ID missing for site %s", site->ref);
         return ULAB_ERR;
     }
 
     if (rt->logf) {
-        fprintf(rt->logf, "runtime-node logical=%s factory=%s state=%s\n",
-                node->id, node->runtime_id, path);
+        fprintf(rt->logf,
+                "runtime-site site=%s tnode=%s cnode=%s anode=%s state=%s\n",
+                site->ref, site->tnode_id, site->cnode_id,
+                site->anode_id, path);
         fflush(rt->logf);
     }
 
@@ -172,56 +183,44 @@ void runtime_close(runtime_t *rt) {
     }
 }
 
-int runtime_build_and_start_nodes(const char *repo,
+int runtime_build_and_start_sites(const char *repo,
                                   runtime_t *rt,
                                   world_t *w,
-                                  const selector_result_t *nodes,
                                   ulab_error_t *err) {
-
     size_t i;
-    node_t *n;
+    site_t *site;
     char args[ULAB_MAX_ARGS];
     int rc;
 
-    for (i = 0; i < nodes->count; i++) {
-        n = &w->nodes[nodes->idx[i]];
+    for (i = 0; i < w->site_count; i++) {
+        site = &w->sites[i];
 
         memset(args, 0, sizeof(args));
-        rc = snprintf(args,
-                      sizeof(args),
-                      "%s %s %s %s %s %s %llu",
+        rc = snprintf(args, sizeof(args), "%s %s %s %s %llu",
                       repo,
-                      n->id,
-                      n->type,
-                      n->site_ref,
-                      n->network_ref,
+                      site->ref,
+                      site->network_ref,
                       rt->run_dir,
                       (unsigned long long)i);
-
         if (rc < 0 || (size_t)rc >= sizeof(args)) {
             snprintf(err->msg, sizeof(err->msg),
-                     "start-node args too long for node %s", n->id);
+                     "start-site args too long for site %s", site->ref);
             return ULAB_ERR;
         }
 
-        ulab_status("NODE", "factory/build/start %s type=%s",
-                    n->id, n->type);
+        ulab_status("SITE", "factory/build/start %s", site->ref);
 
-        if (run_script(rt, "build-and-start-node.sh", args, err)) {
+        if (run_script(rt, "build-and-start-site.sh", args, err)) {
             return ULAB_ERR;
         }
 
-        /*
-         * build-and-start-node.sh is still the factory client.
-         * It writes FACTORY_NODE_ID into runtime-nodes/<logical>.env.
-         * Pull that real NodeID back into C.
-         */
-        if (load_runtime_node_state(rt, n, err)) {
+        if (load_runtime_site_state(rt, site, err)) {
             return ULAB_ERR;
         }
 
-        ulab_status("NODE", "logical=%s factory=%s", n->id,
-                    n->runtime_id);
+        ulab_status("SITE", "%s tnode=%s cnode=%s anode=%s",
+                    site->ref, site->tnode_id, site->cnode_id,
+                    site->anode_id);
     }
 
     return ULAB_OK;
@@ -247,8 +246,7 @@ int runtime_wait_nodes_ready(runtime_t *rt,
             return ULAB_ERR;
         }
 
-        ulab_status("NODE", "wait ready %s factory=%s", n->id,
-                    n->runtime_id[0] ? n->runtime_id : "unknown");
+        ulab_status("NODE", "wait ready %s", n->id);
 
         if (run_script(rt, "wait-nodes-ready.sh", args, err)) {
             return ULAB_ERR;

@@ -31,8 +31,18 @@ typedef struct {
     char id[ULAB_MAX_ID];
     char name[ULAB_MAX_NAME];
     char network_ref[ULAB_MAX_REF];
+
+    /*
+     * Runtime/factory node bundle for this site.
+     * A site always has exactly one tower/controller/amplifier triplet.
+     * The tower node is the BFF/AddSite access anchor.
+     */
+    char tnode_id[ULAB_MAX_ID];
+    char cnode_id[ULAB_MAX_ID];
+    char anode_id[ULAB_MAX_ID];
     char latitude[ULAB_MAX_REF];
     char longitude[ULAB_MAX_REF];
+
     char bff_id[ULAB_MAX_ID];
 } site_t;
 
@@ -43,13 +53,6 @@ typedef struct {
     char type[ULAB_MAX_REF];
     char site_ref[ULAB_MAX_REF];
     char network_ref[ULAB_MAX_REF];
-    /*
-     * Real NodeID selected by factory and used by runtime/BFF node registry,
-     * e.g. uk-sa2602-tnode-v0-344c. id/ref remain logical lab identifiers.
-     */
-    char runtime_id[ULAB_MAX_ID];
-    char latitude[ULAB_MAX_REF];
-    char longitude[ULAB_MAX_REF];
     char bff_id[ULAB_MAX_ID];
 } node_t;
 

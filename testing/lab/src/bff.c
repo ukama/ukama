@@ -373,10 +373,6 @@ static int bff_call(bff_client_t *c, const char *op, const char *query,
     if (c->authenticated) {
         char token_hdr[8192];
 
-        /*
-         * Console-BFF GraphQL expects X-Session-Token to contain the signed
-         * BFF token returned by /gateway/get-user, not the Ory/Kratos token.
-         */
         snprintf(token_hdr, sizeof(token_hdr),
                  "X-Session-Token: %s", c->token);
 
@@ -474,10 +470,8 @@ int bff_login(bff_client_t *c,
         return ULAB_ERR;
     }
 
-    if (build_url(url, sizeof(url),
-                  c->pauth_url,
-                  "/.api/self-service/login/api?refresh=false",
-                  err)) {
+    if (build_url(url, sizeof(url), c->pauth_url,
+                  "/.api/self-service/login/api?refresh=false", err)) {
         return ULAB_ERR;
     }
 
@@ -535,10 +529,8 @@ int bff_login(bff_client_t *c,
              "X-Session-Token: %s", session_token);
     hdrs = curl_slist_append(hdrs, session_hdr);
 
-    if (build_url(url, sizeof(url),
-                  c->bff_base_url,
-                  "/gateway/get-user",
-                  err)) {
+    if (build_url(url, sizeof(url), c->bff_base_url,
+                  "/gateway/get-user", err)) {
         curl_slist_free_all(hdrs);
         return ULAB_ERR;
     }
@@ -581,16 +573,13 @@ int bff_init(bff_client_t *c, const char *url, const char *run_dir) {
     memset(c, 0, sizeof(*c));
     ulab_copy(c->url, sizeof(c->url), url);
 
-    ulab_copy(c->pauth_url,
-              sizeof(c->pauth_url),
-              env_or_default("PAUTH_URL",
-                             "https://pauth.udev.ukama.com"));
+    ulab_copy(c->pauth_url, sizeof(c->pauth_url),
+              env_or_default("PAUTH_URL", "https://pauth.udev.ukama.com"));
 
     derive_bff_base_url(url, c->bff_base_url, sizeof(c->bff_base_url));
 
     if (getenv("BFF_BASE_URL") != NULL && getenv("BFF_BASE_URL")[0] != '\0') {
-        ulab_copy(c->bff_base_url,
-                  sizeof(c->bff_base_url),
+        ulab_copy(c->bff_base_url, sizeof(c->bff_base_url),
                   getenv("BFF_BASE_URL"));
     }
 
@@ -603,12 +592,9 @@ int bff_init(bff_client_t *c, const char *url, const char *run_dir) {
         getenv("UKAMA_BFF_TOKEN") != NULL &&
         getenv("UKAMA_SESSION_TOKEN")[0] != '\0' &&
         getenv("UKAMA_BFF_TOKEN")[0] != '\0') {
-        ulab_copy(c->session_token,
-                  sizeof(c->session_token),
+        ulab_copy(c->session_token, sizeof(c->session_token),
                   getenv("UKAMA_SESSION_TOKEN"));
-        ulab_copy(c->token,
-                  sizeof(c->token),
-                  getenv("UKAMA_BFF_TOKEN"));
+        ulab_copy(c->token, sizeof(c->token), getenv("UKAMA_BFF_TOKEN"));
         c->authenticated = ULAB_TRUE;
 
         return ULAB_OK;
@@ -617,10 +603,8 @@ int bff_init(bff_client_t *c, const char *url, const char *run_dir) {
     identifier = getenv("UKAMA_IDENTIFIER");
     password = getenv("UKAMA_PASSWORD");
 
-    if (identifier != NULL &&
-        identifier[0] != '\0' &&
-        password != NULL &&
-        password[0] != '\0') {
+    if (identifier != NULL && identifier[0] != '\0' &&
+        password != NULL && password[0] != '\0') {
         memset(&err, 0, sizeof(err));
         if (bff_login(c, identifier, password, &err)) {
             if (c->logf) {
@@ -669,23 +653,6 @@ int bff_add_network(bff_client_t *c, network_t *n, ulab_error_t *err) {
     json_decref(root);
 
     return ULAB_OK;
-}
-
-static const char *bff_node_type_for_lab_type(const char *type) {
-
-    if (ulab_streq(type, ULAB_NODE_TOWER)) {
-        return ULAB_NODE_KIND_TOWER;
-    }
-
-    if (ulab_streq(type, ULAB_NODE_CONTROLLER)) {
-        return ULAB_NODE_KIND_CONTROLLER;
-    }
-
-    if (ulab_streq(type, ULAB_NODE_AMPLIFIER)) {
-        return ULAB_NODE_KIND_AMPLIFIER;
-    }
-
-    return type;
 }
 
 static int bff_component_query(bff_client_t *c,
@@ -757,8 +724,8 @@ static int bff_pick_first_component(bff_client_t *c,
     return ULAB_OK;
 }
 
-static int bff_pick_access_component_for_node(bff_client_t *c,
-                                              const node_t *access_node,
+static int bff_pick_access_component_for_site(bff_client_t *c,
+                                              const site_t *site,
                                               ulab_error_t *err) {
     json_t *root;
     json_t *obj;
@@ -779,9 +746,9 @@ static int bff_pick_access_component_for_node(bff_client_t *c,
     id = NULL;
     part = NULL;
 
-    if (access_node == NULL || access_node->runtime_id[0] == '\0') {
+    if (site == NULL || site->tnode_id[0] == '\0') {
         snprintf(err->msg, sizeof(err->msg),
-                 "access node has no factory runtime id");
+                 "site has no tower node id");
         return ULAB_ERR;
     }
 
@@ -811,7 +778,7 @@ static int bff_pick_access_component_for_node(bff_client_t *c,
         }
 
         part = json_string_value(pnv);
-        if (part == NULL || !ulab_streq(part, access_node->runtime_id)) {
+        if (part == NULL || !ulab_streq(part, site->tnode_id)) {
             continue;
         }
 
@@ -831,17 +798,17 @@ static int bff_pick_access_component_for_node(bff_client_t *c,
     }
 
     snprintf(err->msg, sizeof(err->msg),
-             "no access component found for node partNumber=%s",
-             access_node->runtime_id);
+             "no access component found for partNumber=%s",
+             site->tnode_id);
     json_decref(root);
     return ULAB_ERR;
 }
 
 static int bff_load_site_components(bff_client_t *c,
-                                    const node_t *access_node,
+                                    const site_t *site,
                                     ulab_error_t *err) {
 
-    if (bff_pick_access_component_for_node(c, access_node, err)) {
+    if (bff_pick_access_component_for_site(c, site, err)) {
         return ULAB_ERR;
     }
 
@@ -868,9 +835,9 @@ static int bff_load_site_components(bff_client_t *c,
     return ULAB_OK;
 }
 
-int bff_wait_node_online(bff_client_t *c,
-                         node_t *node,
-                         ulab_error_t *err) {
+int bff_wait_site_anchor_online(bff_client_t *c,
+                                site_t *site,
+                                ulab_error_t *err) {
     const char *timeout_env;
     const char *sleep_env;
     unsigned int timeout_sec;
@@ -884,14 +851,13 @@ int bff_wait_node_online(bff_client_t *c,
     json_t *idv;
     char state[ULAB_MAX_REF];
     char connectivity[ULAB_MAX_REF];
-    const char *kind;
     const char *id;
     size_t i;
     int found;
 
-    if (node == NULL || node->runtime_id[0] == '\0') {
+    if (site == NULL || site->tnode_id[0] == '\0') {
         snprintf(err->msg, sizeof(err->msg),
-                 "cannot wait for node without runtime id");
+                 "cannot wait for site without tower node id");
         return ULAB_ERR;
     }
 
@@ -904,11 +870,11 @@ int bff_wait_node_online(bff_client_t *c,
     if (sleep_sec == 0) sleep_sec = 5u;
 
     elapsed = 0;
-    kind = bff_node_type_for_lab_type(node->type);
 
     while (elapsed <= timeout_sec) {
         snprintf(vars, sizeof(vars),
-                 "{\"data\":{\"type\":\"%s\"}}", kind);
+                 "{\"data\":{\"type\":\"%s\"}}",
+                 ULAB_NODE_KIND_TOWER);
 
         root = NULL;
         if (bff_call(c, "getNodes", BFF_GET_NODES, vars, &root, err)) {
@@ -926,7 +892,7 @@ int bff_wait_node_online(bff_client_t *c,
                 id = idv && json_is_string(idv) ? json_string_value(idv) :
                     NULL;
 
-                if (id == NULL || !ulab_streq(id, node->runtime_id)) {
+                if (id == NULL || !ulab_streq(id, site->tnode_id)) {
                     continue;
                 }
 
@@ -938,19 +904,19 @@ int bff_wait_node_online(bff_client_t *c,
                                     sizeof(state));
                 json_get_nested_str(it, "status", "connectivity",
                                     connectivity, sizeof(connectivity));
-                json_get_nested_str(it, "latitude", NULL, node->latitude,
-                                    sizeof(node->latitude));
-                json_get_nested_str(it, "longitude", NULL, node->longitude,
-                                    sizeof(node->longitude));
+                json_get_nested_str(it, "latitude", NULL, site->latitude,
+                                    sizeof(site->latitude));
+                json_get_nested_str(it, "longitude", NULL, site->longitude,
+                                    sizeof(site->longitude));
 
                 if (ulab_streq(connectivity, "Online") &&
                     ulab_streq(state, "Unknown") &&
-                    node->latitude[0] != '\0' &&
-                    node->longitude[0] != '\0') {
+                    site->latitude[0] != '\0' &&
+                    site->longitude[0] != '\0') {
                     json_decref(root);
-                    ulab_status("BFF", "node online %s lat=%s lng=%s",
-                                node->runtime_id, node->latitude,
-                                node->longitude);
+                    ulab_status("BFF", "site %s anchor online %s lat=%s lng=%s",
+                                site->ref, site->tnode_id, site->latitude,
+                                site->longitude);
                     return ULAB_OK;
                 }
             }
@@ -959,11 +925,11 @@ int bff_wait_node_online(bff_client_t *c,
         json_decref(root);
 
         if (found) {
-            ulab_status("BFF", "waiting node %s online/location",
-                        node->runtime_id);
+            ulab_status("BFF", "waiting site %s anchor online/location",
+                        site->ref);
         } else {
-            ulab_status("BFF", "waiting node %s in registry",
-                        node->runtime_id);
+            ulab_status("BFF", "waiting site %s anchor in registry",
+                        site->ref);
         }
 
         sleep(sleep_sec);
@@ -971,38 +937,33 @@ int bff_wait_node_online(bff_client_t *c,
     }
 
     snprintf(err->msg, sizeof(err->msg),
-             "node %s did not become Online/Unknown with lat/lng within %us",
-             node->runtime_id, timeout_sec);
+             "site %s tnode %s did not become Online/Unknown with lat/lng",
+             site->ref, site->tnode_id);
     return ULAB_ERR;
 }
 
 int bff_add_site(bff_client_t *c,
                  site_t *s,
                  const network_t *n,
-                 const node_t *access_node,
                  ulab_error_t *err) {
     char vars[4096];
     json_t *root;
     json_t *obj;
 
-    if (access_node == NULL) {
-        snprintf(err->msg, sizeof(err->msg), "site has no access node");
+    if (s == NULL || s->tnode_id[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg), "site has no tower node id");
         return ULAB_ERR;
     }
 
-    if (access_node->latitude[0] == '\0' ||
-        access_node->longitude[0] == '\0') {
+    if (s->latitude[0] == '\0' || s->longitude[0] == '\0') {
         snprintf(err->msg, sizeof(err->msg),
-                 "access node %s missing lat/lng", access_node->runtime_id);
+                 "site %s missing anchor lat/lng", s->ref);
         return ULAB_ERR;
     }
 
-    if (bff_load_site_components(c, access_node, err)) {
+    if (bff_load_site_components(c, s, err)) {
         return ULAB_ERR;
     }
-
-    ulab_copy(s->latitude, sizeof(s->latitude), access_node->latitude);
-    ulab_copy(s->longitude, sizeof(s->longitude), access_node->longitude);
 
     snprintf(vars, sizeof(vars),
              "{\"data\":{\"name\":\"%s\",\"network_id\":\"%s\","

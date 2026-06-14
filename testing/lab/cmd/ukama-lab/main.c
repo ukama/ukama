@@ -129,7 +129,6 @@ int main(int argc, char **argv) {
     }
 
     /* repo path is must else we wont know how to build virtual node/ue */
-    /* repo path is must else we wont know how to build virtual node/ue */
     if (opts.repo[0] == '\0' || strstr(opts.repo, "ukama") == NULL) {
         printf("Missing --repo. Ukama repo root is MUST\n");
         usage();

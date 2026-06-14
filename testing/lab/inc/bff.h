@@ -9,8 +9,8 @@
 #ifndef ULAB_BFF_H_
 #define ULAB_BFF_H_
 
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include "world.h"
 #include "ulab.h"
@@ -23,16 +23,6 @@ typedef struct {
     char token[4096];
     int  authenticated;
 
-    /*
-     * Component UUIDs used by AddSite.
-     *
-     * access_id is selected by matching:
-     *
-     *   component.category   == "access"
-     *   component.partNumber == node.runtime_id
-     *
-     * The other components are selected from inventory by category.
-     */
     char access_id[ULAB_MAX_ID];
     char backhaul_id[ULAB_MAX_ID];
     char power_id[ULAB_MAX_ID];
@@ -62,14 +52,13 @@ int bff_add_network(bff_client_t *c,
                     network_t *n,
                     ulab_error_t *err);
 
-int bff_wait_node_online(bff_client_t *c,
-                         node_t *node,
-                         ulab_error_t *err);
+int bff_wait_site_anchor_online(bff_client_t *c,
+                                site_t *site,
+                                ulab_error_t *err);
 
 int bff_add_site(bff_client_t *c,
                  site_t *s,
                  const network_t *n,
-                 const node_t *access_node,
                  ulab_error_t *err);
 
 int bff_add_package(bff_client_t *c,

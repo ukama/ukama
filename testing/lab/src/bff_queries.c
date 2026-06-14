@@ -18,7 +18,7 @@ const char *BFF_ADD_SITE =
 
 const char *BFF_ADD_NODE =
 "mutation AddNode($data: AddNodeInput!) {"
-" addNode(data: $data) { id name } }";
+" addNode(data: $data) { id name orgId type status { state connectivity } } }";
 
 const char *BFF_ADD_NODE_TO_SITE =
 "mutation AddNodeToSite($data: AddNodeToSiteInput!) {"
