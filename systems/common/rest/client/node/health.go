@@ -48,7 +48,7 @@ type RadioInterfaceInfo struct {
 type GPSInterfaceInfo struct {
 	Available   bool      `json:"available,omitempty"`
 	Lock        bool      `json:"lock,omitempty"`
-	Coordinates string    `json:"coordinates,omitempty"`
+	Coordinates string    `json:"coordinates"`
 	Time        time.Time `json:"time,omitempty"`
 }
 

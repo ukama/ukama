@@ -60,6 +60,29 @@ func TestHealthClient_GetInterfaces(t *testing.T) {
 		assert.Equal(tt, "controller", ifaces.Switch.Policy.Source)
 	})
 
+	t.Run("GPSWithNotAvailableTime", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			body := `{"interfaces":{"gps":{"available":true,"lock":true,"coordinates":"0.000000,-90.000000","time":"not-available"}}}`
+
+			return &http.Response{
+				StatusCode: 200,
+				Status:     "200 OK",
+				Header:     make(http.Header),
+				Body:       io.NopCloser(bytes.NewBufferString(body)),
+			}
+		}
+
+		testHealthClient := node.NewNodeHealthClient(baseURL)
+		testHealthClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		ifaces, err := testHealthClient.GetInterfaces("", testNodeId, testReportId)
+
+		assert.NoError(tt, err)
+		assert.NotNil(tt, ifaces.Gps)
+		assert.Equal(tt, "0.000000,-90.000000", ifaces.Gps.Coordinates)
+		assert.Equal(tt, "not-available", ifaces.Gps.Time)
+	})
+
 	t.Run("InvalidResponse", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Contains(tt, req.URL.String(), baseURL+node.HealthEndpoint+"/interfaces?")
