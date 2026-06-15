@@ -84,6 +84,8 @@ interface CompDef {
   element?: string;
   /** Metric key driving the right-side graph (undefined = no graph). */
   metric?: string;
+  /** Multiple metric keys → one chart per key (takes precedence over metric). */
+  metrics?: string[];
 }
 const TREE: CompDef[][] = [
   [{ id: 'node', icon: 'router', label: 'Node' }],
@@ -110,6 +112,11 @@ const TREE: CompDef[][] = [
       icon: 'light_mode',
       label: 'Solar panels',
       metric: 'solar_panel_power',
+      metrics: [
+        'solar_panel_power',
+        'solar_panel_voltage',
+        'solar_panel_current',
+      ],
     },
     {
       id: 'batt',
@@ -265,39 +272,39 @@ function CompTile({
   );
 }
 
-/** Right-side graph for the selected component (its metric, range-filtered). */
-function ComponentChart({ comp }: { comp: CompDef }) {
+/** Right-side graph for the selected component (its metric, range-filtered).
+ *  Component metrics are cnode-scoped, so the chart queries with the site's
+ *  controller (cnode) id — the gateway resolves the node type from it. */
+const COMP_CHART_HEIGHT = 300;
+function ComponentChart({
+  metricKey,
+  fallbackLabel,
+  cnodeId,
+  titleOverride,
+}: {
+  metricKey: string;
+  fallbackLabel: string;
+  cnodeId: string | null;
+  /** Force the card title (ignores the series label) — e.g. "Speed (MBPS)". */
+  titleOverride?: string;
+}) {
   const [range, setRange] = useState<Range>('Day');
   const [nowSec] = useState(() => Math.floor(Date.now() / 1000));
   const to = nowSec;
   const from = nowSec - RANGE_SECONDS[range];
   const { data, loading, error } = useMetricsRangeQuery({
-    variables: { data: { keys: comp.metric ? [comp.metric] : [], from, to } },
-    skip: !comp.metric,
+    variables: {
+      data: {
+        keys: [metricKey],
+        from,
+        to,
+        ...(cnodeId ? { nodeId: cnodeId } : {}),
+      },
+    },
   });
   const m = data?.metricsRange.metrics?.[0];
   const hasData = !!m && m.values.length > 0 && m.success !== false;
-
-  if (!comp.metric) {
-    return (
-      <SectionCard
-        title={comp.label}
-        style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
-        bodyStyle={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <EmptyState
-          art="search"
-          title="No metric for this component"
-          sub="This component doesn't report a time-series metric yet."
-        />
-      </SectionCard>
-    );
-  }
+  const title = titleOverride ?? (m?.label || fallbackLabel);
 
   const values: [number, number][] = hasData
     ? m!.values.map((v) => [v[0] ?? 0, v[1] ?? 0])
@@ -305,43 +312,29 @@ function ComponentChart({ comp }: { comp: CompDef }) {
   const legend = thresholdLegendRows(m?.threshold ?? null, m?.unit);
   return (
     <SectionCard
-      title={comp.label}
+      title={title}
       right={<RangeToggle value={range} onChange={setRange} />}
-      style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
-      bodyStyle={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: 0,
-      }}
     >
       {error ? (
-        <ChartMessage kind="error" message={error.message} height="100%" />
+        <ChartMessage
+          kind="error"
+          message={error.message}
+          height={COMP_CHART_HEIGHT}
+        />
       ) : loading && !m ? (
-        <Skeleton variant="rounded" sx={{ flex: 1, minHeight: 260 }} />
+        <Skeleton variant="rounded" sx={{ height: COMP_CHART_HEIGHT }} />
       ) : !hasData ? (
-        <ChartMessage kind="empty" height="100%" />
+        <ChartMessage kind="empty" height={COMP_CHART_HEIGHT} />
       ) : (
         <>
-          <div
-            style={{
-              fontSize: 12.5,
-              color: 'var(--uk-ink-3)',
-              marginBottom: 8,
-            }}
-          >
-            {m?.label ?? '—'}
-          </div>
-          <div style={{ flex: 1, minHeight: 260 }}>
-            <MetricLineChart
-              values={values}
-              title={m?.label || comp.label}
-              unit={m?.unit}
-              format={m?.format}
-              threshold={m?.threshold ?? null}
-              height="100%"
-            />
-          </div>
+          <MetricLineChart
+            values={values}
+            title={title}
+            unit={m?.unit}
+            format={m?.format}
+            threshold={m?.threshold ?? null}
+            height={COMP_CHART_HEIGHT}
+          />
           <div
             style={{
               display: 'flex',
@@ -357,6 +350,172 @@ function ComponentChart({ comp }: { comp: CompDef }) {
           </div>
         </>
       )}
+    </SectionCard>
+  );
+}
+
+/** Right panel for the selected component: a no-metric notice, one filling
+ *  chart for a single metric, or a stack of charts when it has several. */
+function ComponentPanel({
+  comp,
+  cnodeId,
+}: {
+  comp: CompDef;
+  cnodeId: string | null;
+}) {
+  const keys = comp.metrics ?? (comp.metric ? [comp.metric] : []);
+  if (keys.length === 0) {
+    return (
+      <SectionCard
+        title={comp.label}
+        bodyStyle={{
+          minHeight: COMP_CHART_HEIGHT,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <EmptyState
+          art="search"
+          title="No metric for this component"
+          sub="This component doesn't report a time-series metric yet."
+        />
+      </SectionCard>
+    );
+  }
+  return (
+    <div
+      style={{ display: 'flex', flexDirection: 'column', gap: 'var(--uk-gap)' }}
+    >
+      {keys.map((k) => (
+        <ComponentChart
+          key={k}
+          metricKey={k}
+          fallbackLabel={comp.label}
+          cnodeId={cnodeId}
+        />
+      ))}
+    </div>
+  );
+}
+
+/** Switch ports shown on the site page — each with live Speed/Power KPIs.
+ *  Port n maps to switch_port_n_{speed,power} (cnode series). */
+const SWITCH_PORTS: { n: number; name: string }[] = [
+  { n: 1, name: 'Tnode PoE' },
+  { n: 2, name: 'Cnode PoE' },
+  { n: 3, name: 'Anode PoE' },
+  { n: 9, name: 'Uplink SFP' },
+];
+
+/** One expandable port row: header + reveal of its Speed and Power charts. */
+function SwitchPortRow({
+  port,
+  cnodeId,
+}: {
+  port: { n: number; name: string };
+  cnodeId: string | null;
+}) {
+  const [open, setOpen] = useState(false);
+  const [enabled, setEnabled] = useState(true);
+  return (
+    <div style={{ borderTop: '1px solid var(--uk-line)', padding: '14px 0' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+        }}
+      >
+        <div style={{ fontWeight: 600 }}>
+          Port {port.n}: {port.name}
+        </div>
+        <label
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            cursor: 'pointer',
+          }}
+        >
+          <ToggleState on={enabled} />
+          <Switch
+            edge="end"
+            checked={enabled}
+            onChange={(e) => setEnabled(e.target.checked)}
+          />
+        </label>
+      </div>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 4,
+          marginTop: 8,
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          cursor: 'pointer',
+          color: 'var(--uk-ac)',
+          fontWeight: 600,
+          fontSize: 12.5,
+          letterSpacing: 0.4,
+        }}
+      >
+        {open ? 'VIEW LESS' : 'VIEW MORE'}
+        <KeyboardArrowDownRounded
+          sx={{
+            fontSize: 18,
+            transition: 'transform 0.15s',
+            transform: open ? 'rotate(180deg)' : 'none',
+          }}
+        />
+      </button>
+      {open &&
+        (enabled ? (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--uk-gap)',
+              marginTop: 12,
+            }}
+          >
+            <ComponentChart
+              metricKey={`switch_port_${port.n}_speed`}
+              fallbackLabel="Speed (MBPS)"
+              titleOverride="Speed (MBPS)"
+              cnodeId={cnodeId}
+            />
+            <ComponentChart
+              metricKey={`switch_port_${port.n}_power`}
+              fallbackLabel="Power (watts)"
+              titleOverride="Power (watts)"
+              cnodeId={cnodeId}
+            />
+          </div>
+        ) : (
+          <div style={{ marginTop: 12 }}>
+            <EmptyState
+              art="search"
+              title="Port is off"
+              sub="Turn this port on to view its speed and power metrics."
+            />
+          </div>
+        ))}
+    </div>
+  );
+}
+
+/** Right panel when the Switch component is selected: its ports + KPIs. */
+function SwitchPortsPanel({ cnodeId }: { cnodeId: string | null }) {
+  return (
+    <SectionCard title={`Switch ports (${SWITCH_PORTS.length})`}>
+      {SWITCH_PORTS.map((p) => (
+        <SwitchPortRow key={p.n} port={p} cnodeId={cnodeId} />
+      ))}
     </SectionCard>
   );
 }
@@ -738,6 +897,10 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
   // to the amplifier internally); null when the site has no tower node.
   const tnodeId =
     siteNodes.find((n) => n.id.toLowerCase().includes('tnode'))?.id ?? null;
+  // Component metrics (power/solar/battery/controller/backhaul) are reported by
+  // the site's controller node — query them with its cnode id.
+  const cnodeId =
+    siteNodes.find((n) => n.id.toLowerCase().includes('cnode'))?.id ?? null;
   // A node counts as "up" when it's reachable (connectivity online) — a
   // configured/operational node, not just status === 'online'. Mirrors the
   // BFF's connectivity-based site node counts.
@@ -978,14 +1141,26 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
             ))}
           </div>
         </SectionCard>
-        {selected.id === 'node' ? (
-          <SiteNodesPanel
-            nodes={siteNodes}
-            onOpen={(id) => router.push(`/network/nodes/${id}`)}
-          />
-        ) : (
-          <ComponentChart comp={selected} />
-        )}
+        {/* Right column scrolls within the row so a tall multi-chart panel
+            (e.g. solar power/voltage/current) doesn't stretch the left tree. */}
+        <div
+          style={{
+            maxHeight: 'calc(100vh - 220px)',
+            overflowY: 'auto',
+            minHeight: 0,
+          }}
+        >
+          {selected.id === 'node' ? (
+            <SiteNodesPanel
+              nodes={siteNodes}
+              onOpen={(id) => router.push(`/network/nodes/${id}`)}
+            />
+          ) : selected.id === 'switch' ? (
+            <SwitchPortsPanel cnodeId={cnodeId} />
+          ) : (
+            <ComponentPanel comp={selected} cnodeId={cnodeId} />
+          )}
+        </div>
       </div>
     </div>
   );

@@ -102,7 +102,7 @@ const GROUP_KEYS: Record<MetricGroup, Record<NodeKind, string[]>> = {
     hnode: [],
   },
   customers: {
-    tnode: ['subscribers_active'],
+    tnode: ['lte_active_ue'],
     anode: [],
     cnode: [],
     hnode: [],

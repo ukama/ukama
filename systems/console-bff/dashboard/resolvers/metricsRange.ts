@@ -44,19 +44,45 @@ const isNodeOffline = async (
   }
 };
 
-/** Backfill the presentation metadata the upstream omits (label always; unit/
- *  format/threshold only when missing) so the console renders from data. */
-const enrich = (m: MetricRes): MetricRes => {
-  const meta = metricMeta(m.type);
+/** Normalize raw units to console-friendly ones (applied to every series so
+ *  it's consistent everywhere). bps → Mbps: scale values + threshold by 1e6,
+ *  preserving the -1 gap-fill sentinel. */
+const UNIT_SCALE: Record<string, { unit: string; div: number }> = {
+  bps: { unit: "Mbps", div: 1e6 },
+};
+const normalizeUnits = (m: MetricRes): MetricRes => {
+  const rule = m.unit ? UNIT_SCALE[m.unit] : undefined;
+  if (!rule) return m;
+  const scale = (v: number) => (v === -1 ? -1 : v / rule.div);
   return {
     ...m,
-    label: m.label ?? (meta.label || m.type),
-    unit: m.unit ?? meta.unit,
-    format: m.format ?? meta.format,
-    threshold:
-      m.threshold ?? (meta.threshold ? { ...meta.threshold } : undefined),
+    unit: rule.unit,
+    values: (m.values ?? []).map(([t, v]) => [t, scale(v)]),
+    threshold: m.threshold
+      ? {
+          min: m.threshold.min / rule.div,
+          normal: m.threshold.normal / rule.div,
+          max: m.threshold.max / rule.div,
+        }
+      : m.threshold,
   };
 };
+
+/** Backfill the presentation metadata the upstream omits (label always; unit/
+ *  format/threshold only when missing) so the console renders from data, then
+ *  normalize units. */
+const enrich = (m: MetricRes): MetricRes =>
+  normalizeUnits({
+    ...m,
+    label: m.label ?? (metricMeta(m.type).label || m.type),
+    unit: m.unit ?? metricMeta(m.type).unit,
+    format: m.format ?? metricMeta(m.type).format,
+    threshold:
+      m.threshold ??
+      (metricMeta(m.type).threshold
+        ? { ...metricMeta(m.type).threshold! }
+        : undefined),
+  });
 
 const MAX_KEYS = 10;
 
@@ -168,6 +194,19 @@ export class MetricsRangeResolver {
       live = results.flatMap(res => res.metrics).map(enrich);
     }
 
-    return { metrics: [...mocked, ...live] };
+    // One series per (key, node/site). The gateway's `avg(...) without(job,
+    // instance,receive,tenant_id)` keeps stray labels (e.g. the dummy's
+    // `metric` label, exported_* from multi-path ingestion), so a single key
+    // can come back as multiple groups that we then stamp with the same
+    // nodeId — collapse them so each chart key yields one line.
+    const seen = new Set<string>();
+    const metrics = [...mocked, ...live].filter(m => {
+      const k = `${m.type}|${m.nodeId ?? ""}|${m.siteId ?? ""}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+
+    return { metrics };
   }
 }

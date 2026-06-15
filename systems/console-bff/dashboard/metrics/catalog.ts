@@ -118,6 +118,19 @@ export const METRIC_CATALOG: Record<string, MetricMeta> = {
     jitter: 0.18,
     trend: 0.12,
   },
+  // tnode active UEs — real series (trx_lte_core_active_ue); used as the node
+  // "customers" KPI instead of system-scoped subscribers_active.
+  lte_active_ue: {
+    label: "Active subscribers",
+    unit: "",
+    format: "number",
+    base: 32,
+    min: 0,
+    max: 1000,
+    jitter: 0.18,
+    trend: 0.12,
+    threshold: { min: 0, normal: 100, max: 1000 },
+  },
   // --- network: cellular ---
   cellular_uplink: {
     label: "Cellular uplink",
@@ -206,6 +219,28 @@ export const METRIC_CATALOG: Record<string, MetricMeta> = {
     jitter: 0.18,
     trend: 0.1,
   },
+  solar_panel_voltage: {
+    label: "Solar voltage",
+    unit: "V",
+    format: "number",
+    base: 60,
+    min: 0,
+    max: 100,
+    jitter: 0.12,
+    trend: 0.06,
+    threshold: { min: 0, normal: 75, max: 100 },
+  },
+  solar_panel_current: {
+    label: "Solar current",
+    unit: "A",
+    format: "number",
+    base: 4,
+    min: 0,
+    max: 12,
+    jitter: 0.16,
+    trend: 0.08,
+    threshold: { min: 0, normal: 5, max: 12 },
+  },
   controller_temperature: {
     label: "Controller temp.",
     unit: "°C",
@@ -253,13 +288,10 @@ export const metricMeta = (key: string): MetricMeta =>
  * so the gateway resolves the node type from the id). Each generic key below
  * exists under tnode/anode/cnode in default-metrics.yaml.
  *
- * Still mocked, pending more than a gate flip:
- *  - subscribers_active: node "customers" asks at tnode scope, but the key only
- *    exists under `system` (tnode has lte_active_ue / lte_subscribers).
+ * Still mocked:
+ *  - subscribers_active: replaced on the node by lte_active_ue (real tnode
+ *    series); kept only for any system-scoped consumer.
  *  - site_uptime_percentage: no backing series in default-metrics.yaml.
- *  - battery_charge, solar_panel_power, controller_temperature, load_current:
- *    cnode metrics consumed by the Site screen without a nodeId (resolves to
- *    `system` → 404). Needs site→controller-node-id wiring first.
  */
 export const LIVE_METRIC_KEYS = new Set<string>([
   // health / resources (all node types)
@@ -268,6 +300,8 @@ export const LIVE_METRIC_KEYS = new Set<string>([
   "memory",
   "disk",
   "cpu_temperature",
+  // tnode customers (active UEs)
+  "lte_active_ue",
   // tnode cellular
   "cellular_uplink",
   "cellular_downlink",
@@ -284,6 +318,22 @@ export const LIVE_METRIC_KEYS = new Set<string>([
   // anode FEM health
   "fem1_temperature",
   "fem2_temperature",
+  // cnode site power/health (fetched with the site's cnode id)
+  "battery_charge",
+  "solar_panel_power",
+  "solar_panel_voltage",
+  "solar_panel_current",
+  "controller_temperature",
+  "load_current",
+  // cnode switch ports (1,2,3,9) — speed + power per port
+  "switch_port_1_speed",
+  "switch_port_1_power",
+  "switch_port_2_speed",
+  "switch_port_2_power",
+  "switch_port_3_speed",
+  "switch_port_3_power",
+  "switch_port_9_speed",
+  "switch_port_9_power",
 ]);
 
 /** Mock unless explicitly disabled; never mock a key that has a live endpoint. */
