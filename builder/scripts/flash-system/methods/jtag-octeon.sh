@@ -418,8 +418,13 @@ _phase1_run() {
     ) &
     SPAM_PID=$!
 
-    local oct_try=0 max_oct_tries=4
-    local elapsed clk mhz oct_exit
+    # The Octeon DDR PLL is a cold-boot lottery: each oct-remote-boot run re-rolls the
+    # measured DDR clock (seen 267 / 400 / 201 MHz across re-runs). Only ~400 MHz works —
+    # at the wrong clock the SGMII ref clock is off and ethernet never links. So we
+    # accept an attempt ONLY if u-boot comes up AND the clock is ~400; otherwise we
+    # re-run oct-remote-boot (no re-go, no power-cycle) to re-roll the DDR clock.
+    local oct_try=0 max_oct_tries=8
+    local elapsed clk mhz oct_exit ddr_mislock prompt_this
     while [ "$oct_try" -lt "$max_oct_tries" ]; do
         oct_try=$((oct_try + 1))
         echo ""
@@ -437,23 +442,29 @@ _phase1_run() {
         disown "$REMOTE_BOOT_PID" 2>/dev/null || true
         echo "  oct-remote-boot started (PID $REMOTE_BOOT_PID)"
 
-        # Give oct-remote-boot time to finish: it must reach "Starting core 0!" (which
-        # launches u-boot) before the prompt can appear — that takes well over a minute.
-        # Do NOT kill it on a short timer; only re-run if it EXITS (the segfault case).
-        echo "Waiting for u-boot prompt '${uboot_prompt}' (oct-remote-boot runs up to 180s)..."
-        elapsed=0; clk=""
+        # Match the u-boot prompt broadly — it may be "Octeon zen(ram)=>" or
+        # "Octeon zen(Failsafe)=>" depending on board/flash state (per Supreeth).
+        echo "Waiting for u-boot prompt 'Octeon zen…=>' with DDR ~400 MHz (up to 180s)..."
+        elapsed=0; clk=""; mhz=""; ddr_mislock=0; prompt_this=0
         while [ "$elapsed" -lt 180 ]; do
-            if grep -qF -- "$uboot_prompt" "${LOG_DIR}/uboot.log" 2>/dev/null; then
-                prompt_seen=1
+            # Once a DDR clock is measured, reject a bad lock immediately (no point
+            # waiting for u-boot on a clock that won't link ethernet).
+            clk=$(grep -a "Measured DDR clock" "$oct_log" 2>/dev/null | tail -1 || true)
+            mhz=$(printf '%s' "$clk" | grep -oE '[0-9]+' | head -1 || true)
+            if [ -n "$mhz" ] && { [ "$mhz" -lt 380 ] || [ "$mhz" -gt 420 ]; }; then
+                ddr_mislock=1
                 break
             fi
-            # If oct-remote-boot exited, u-boot may still be printing to serial — give a
-            # short grace window for the prompt before deciding to re-run.
+            if grep -qE "Octeon zen.*=>" "${LOG_DIR}/uboot.log" 2>/dev/null; then
+                prompt_this=1
+                break
+            fi
+            # If oct-remote-boot exited, u-boot may still be printing — short grace window.
             if ! kill -0 "$REMOTE_BOOT_PID" 2>/dev/null; then
                 local grace=0
                 while [ "$grace" -lt 15 ]; do
-                    if grep -qF -- "$uboot_prompt" "${LOG_DIR}/uboot.log" 2>/dev/null; then
-                        prompt_seen=1
+                    if grep -qE "Octeon zen.*=>" "${LOG_DIR}/uboot.log" 2>/dev/null; then
+                        prompt_this=1
                         break
                     fi
                     sleep 1
@@ -461,34 +472,35 @@ _phase1_run() {
                 done
                 break
             fi
-            clk=$(grep -a "Measured DDR clock" "$oct_log" 2>/dev/null | tail -1 || true)
             sleep 1
             elapsed=$((elapsed + 1))
         done
 
-        if [ "$prompt_seen" -eq 1 ]; then
+        if [ "$prompt_this" -eq 1 ] && [ -n "$mhz" ] && [ "$mhz" -ge 380 ] && [ "$mhz" -le 420 ]; then
             # Leave oct-remote-boot running — it hosts u-boot in DDR over GDB while we
             # flash. REMOTE_BOOT_PID stays set and is reaped by the cleanup after flashing.
-            echo "  u-boot prompt detected on oct-remote-boot attempt ${oct_try}."
+            prompt_seen=1
+            echo "  u-boot prompt + good DDR clock (${mhz} MHz) on attempt ${oct_try}."
             break
         fi
 
         # Failed attempt: stop oct-remote-boot if still alive, report why, then re-run.
         if kill -0 "$REMOTE_BOOT_PID" 2>/dev/null; then
             sudo kill "$REMOTE_BOOT_PID" 2>/dev/null || true
-            wait "$REMOTE_BOOT_PID" 2>/dev/null
-            oct_exit=$?
-            echo "  oct-remote-boot still running at 180s but no u-boot prompt — killed, re-running."
-        else
-            wait "$REMOTE_BOOT_PID" 2>/dev/null
-            oct_exit=$?
-            if [ "$oct_exit" -eq 139 ] || grep -qaE "Segmentation fault|GDB Reply Error|in reset, told to continue" "$oct_log" 2>/dev/null; then
-                echo "  oct-remote-boot exited (GDB error / segfault) — re-running it (normal recovery)."
-            else
-                echo "  oct-remote-boot exited without reaching the u-boot prompt — re-running."
-            fi
         fi
+        wait "$REMOTE_BOOT_PID" 2>/dev/null
+        oct_exit=$?
         REMOTE_BOOT_PID=""
+
+        if [ "$ddr_mislock" -eq 1 ]; then
+            echo "  DDR mislocked at ${mhz} MHz (need ~400) — re-running to re-roll the DDR clock."
+        elif [ "$prompt_this" -eq 1 ]; then
+            echo "  u-boot came up but DDR clock unknown/!~400 — re-running."
+        elif [ "$oct_exit" -eq 139 ] || grep -qaE "Segmentation fault|GDB Reply Error|in reset, told to continue" "$oct_log" 2>/dev/null; then
+            echo "  oct-remote-boot exited (GDB error / segfault) — re-running it (normal recovery)."
+        else
+            echo "  no u-boot prompt within 180s — re-running."
+        fi
         echo "--- last 15 lines of oct-remote-boot output ---"
         tail -n 15 "$oct_log" 2>/dev/null | sed 's/^/    /' || true
         sleep 2
