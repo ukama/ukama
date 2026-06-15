@@ -556,6 +556,59 @@ _phase1_run() {
     REMOTE_BOOT_PID=""
 }
 
+# On a freshly-erased board the post_config script (rc_post.local) that enables SGMII
+# autoneg isn't on the board yet (it arrives with the Phase 2 app images), so Linux
+# boots with ethernet down and SSH can't connect. Bootstrap it the way it's done by
+# hand: log in over serial and run "devmem 0x00011800B0001000 64 0x0140" twice.
+# Best-effort — needs exclusive /dev/ttyUSB0; if it can't, we fall back to SSH wait.
+_phase2_enable_ethernet_over_serial() {
+    local serial_dev baud
+    serial_dev=$(yq_read "$BOARD_CONFIG" serial.device)
+    baud=$(yq_read "$BOARD_CONFIG" serial.baud)
+
+    local holder=""
+    if command -v lsof >/dev/null 2>&1; then
+        holder=$(lsof -t "$serial_dev" 2>/dev/null | head -1 || true)
+    fi
+    if [ -n "$holder" ]; then
+        echo "  NOTE: $serial_dev is held by another process (PID $holder) — skipping auto"
+        echo "        ethernet-enable. Close PuTTY/screen, or on the console run twice:"
+        echo "          devmem 0x00011800B0001000 64 0x0140"
+        return 0
+    fi
+
+    echo "Enabling TRX ethernet over serial (login as root, devmem x2)..."
+    uboot_open "$serial_dev" "$baud" "${LOG_DIR}/phase2-serial.log" || return 0
+
+    uboot_send "$serial_dev" ""
+    sleep 2
+    if ! uboot_wait_for "~#" 5; then
+        uboot_send "$serial_dev" ""
+        if uboot_wait_for "login:" 90; then
+            uboot_send "$serial_dev" "root"
+            uboot_wait_for "assword" 15 || true
+            uboot_send "$serial_dev" "cavium.lte"
+            if ! uboot_wait_for "~#" 30; then
+                echo "  WARNING: serial login didn't reach a shell prompt; relying on SSH wait."
+                uboot_close
+                return 0
+            fi
+        else
+            echo "  WARNING: no serial login prompt (still booting?); relying on SSH wait."
+            uboot_close
+            return 0
+        fi
+    fi
+
+    uboot_send "$serial_dev" "devmem 0x00011800B0001000 64 0x0140"
+    sleep 1
+    uboot_send "$serial_dev" "devmem 0x00011800B0001000 64 0x0140"
+    sleep 1
+    echo "  ethernet-enable (devmem x2) sent over serial."
+    uboot_close
+    return 0
+}
+
 _phase2_run() {
     local trx_ip ssh_user staging
     trx_ip=$(yq_read "$BOARD_CONFIG" network.trx_ip)
@@ -564,6 +617,8 @@ _phase2_run() {
 
     local sshpass_args=(-p "$TRX_ROOT_PASSWORD")
     local ssh_opts=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR)
+
+    _phase2_enable_ethernet_over_serial
 
     echo "Waiting for TRX SSH at ${trx_ip}..."
     local elapsed=0
@@ -575,7 +630,9 @@ _phase2_run() {
         elapsed=$((elapsed + 2))
     done
     if [ "$elapsed" -ge 120 ]; then
-        echo "ERROR: TRX not reachable via SSH within 120s"
+        echo "ERROR: TRX not reachable via SSH within 120s."
+        echo "  Ethernet likely still down. On the TRX serial console (root / cavium.lte) run"
+        echo "  twice:  devmem 0x00011800B0001000 64 0x0140   then re-run the flash."
         return 1
     fi
     echo "SSH up."
@@ -680,15 +737,15 @@ method_apply() {
     echo "  2. Disconnect the BDI / JTAG cable  (REQUIRED — while connected the BDI holds the"
     echo "     CPU in reset, so the board will NOT finish booting from flash)"
     echo "  3. Power ON the TRX"
-    echo "  4. Wait until it boots to Linux and shows a login prompt on the serial console"
-    echo "  5. On the serial console, log in (root / cavium.lte) and ENABLE ETHERNET:"
-    echo "         devmem 0x00011800B0001000 64 0x0140"
-    echo "     (the post_config script that normally does this isn't on the board yet — it"
-    echo "      arrives with the Phase 2 images — so ethernet must be enabled by hand here,"
-    echo "      otherwise Phase 2 can't SSH in.)"
-    echo "  6. Confirm reachability from this host:  ping ${trx_ip}"
+    echo "  4. Wait until it boots to Linux and shows the 'LSM login:' prompt on serial"
+    echo "  5. CLOSE PuTTY/screen on /dev/ttyUSB0 (the script needs the serial port to log in"
+    echo "     and enable ethernet for you — post_config isn't on the board yet)"
     echo ""
-    read -rp "Press ENTER once ethernet is up (ping works): " _
+    echo "When you press ENTER, the script logs in over serial (root), runs the devmem"
+    echo "ethernet-enable, then SSHes in for Phase 2. (If it can't use the serial, it'll tell"
+    echo "you to run 'devmem 0x00011800B0001000 64 0x0140' twice on the console yourself.)"
+    echo ""
+    read -rp "Press ENTER once Linux has booted and PuTTY is closed: " _
 
     echo ""
     echo "=== Phase 2: SSH + dd image flash ==="
