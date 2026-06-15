@@ -160,8 +160,7 @@ export class SiteViewResolver {
         .url("node")
         .then(url => ctx.dataSources.node.getNodesForSite(url, root.siteId))
         .then(
-          res =>
-            res.nodes.find(n => n.id?.toLowerCase().includes("cnode"))?.id
+          res => res.nodes.find(n => n.id?.toLowerCase().includes("cnode"))?.id
         )
         .catch(() => undefined);
     }
