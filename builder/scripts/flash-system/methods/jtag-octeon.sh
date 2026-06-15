@@ -358,13 +358,13 @@ _phase1_run() {
         echo "  Config sent — BDI is rebooting and auto-loading it. Waiting 45s to settle..."
         sleep 45
         echo ""
-        echo ">>> The BDI was just configured (it rebooted)."
-        echo ">>> COLD power-cycle the TRX now (power OFF, ~5s, ON — JTAG cable stays connected)"
-        echo ">>> so the BDI halts the core fresh, matching the manual bench order."
-        printf ">>> Press Enter when the TRX is back on... "
-        read -r _ </dev/tty || true
-        echo ""
-        sleep 5
+        echo ">>> The BDI was just configured and is now warm at cnMIPS#0>."
+        echo ">>> Do this, then RE-RUN the script (no keypress needed here):"
+        echo ">>>   1. COLD power-cycle the TRX (power OFF, ~5s, ON — JTAG cable stays connected)"
+        echo ">>>   2. Re-run:  sudo -E ./flash trx"
+        echo ">>> The re-run will see the warm BDI, skip CONFIG, and go straight to"
+        echo ">>> go 0x400000 + oct-remote-boot — the path that brings up u-boot."
+        return 1
     else
         echo "ERROR: could not reach the BDI telnet prompt at ${bdi_ip}."
         echo "  Check BDI power and network, then re-run."
