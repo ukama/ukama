@@ -25,40 +25,9 @@ import PersonRounded from '@mui/icons-material/PersonRounded';
 import UMark from '@/components/UMark';
 import { resolveResumeUrl, useActivation } from '@/lib/activation';
 import type { AuthUser } from '@/lib/auth/types';
+import { countryLabel } from '@/lib/format';
+import { roleLabel } from '@/lib/roles';
 import { useUiPrefs } from '@/lib/store';
-
-/** Token roles (ROLE_*) → display labels used across the console. */
-const ROLE_LABELS: Record<string, string> = {
-  ROLE_OWNER: 'Owner',
-  ROLE_ADMIN: 'Administrator',
-  ROLE_NETWORK_OWNER: 'Network owner',
-  ROLE_VENDOR: 'Vendor',
-  ROLE_USER: 'Member',
-};
-
-function roleLabel(role: string): string {
-  if (ROLE_LABELS[role]) return ROLE_LABELS[role];
-  const cleaned = role.replace(/^ROLE_/, '').replace(/_/g, ' ').toLowerCase();
-  return cleaned ? cleaned[0]?.toUpperCase() + cleaned.slice(1) : role;
-}
-
-/**
- * The token carries an ISO country code while a fresh /get-user response
- * carries the full name — resolve codes via Intl and pass names through.
- */
-function countryLabel(country: string): string {
-  if (/^[A-Z]{2}$/.test(country)) {
-    try {
-      return (
-        new Intl.DisplayNames(['en'], { type: 'region' }).of(country) ??
-        country
-      );
-    } catch {
-      return country;
-    }
-  }
-  return country;
-}
 
 function Field({ label, value }: { label: string; value: string }) {
   return (

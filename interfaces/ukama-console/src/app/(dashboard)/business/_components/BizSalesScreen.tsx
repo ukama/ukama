@@ -19,18 +19,10 @@ import DateChip from '@/components/DateChip';
 import { KpiRow } from '@/components/Kpi';
 import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
+import { BAR_COLORS } from '@/lib/charts';
 import { useCurrency } from '@/lib/currency';
 import { KPI_KEYS, kpiAmount } from '@/lib/kpis';
 import { useUiPrefs } from '@/lib/store';
-
-// KPI keys this screen reads. Centralised so a backend rename is a one-line
-const BAR_COLORS = [
-  'var(--uk-ac)',
-  'var(--uk-secondary)',
-  'var(--uk-success-bright)',
-  'var(--uk-beige)',
-  'var(--uk-orange)',
-];
 
 const toBars = (rows: { name?: string | null; value: number }[]) =>
   rows
@@ -45,11 +37,7 @@ const toBars = (rows: { name?: string | null; value: number }[]) =>
 export default function BizSalesScreen() {
   const networkId = useUiPrefs((s) => s.networkId);
   // Org currency symbol from getCurrencySymbol (shared via CurrencyProvider).
-  const { symbol } = useCurrency();
-  const money = (value?: number | null): string =>
-    value == null
-      ? '—'
-      : `${symbol}${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  const { money } = useCurrency();
   const { data, loading, error } = useGetSalesOverviewQuery({
     variables: { data: { networkId } },
   });

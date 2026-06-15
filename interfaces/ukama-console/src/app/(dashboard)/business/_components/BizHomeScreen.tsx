@@ -85,11 +85,7 @@ export default function BizHomeScreen() {
   const networkId = useUiPrefs((s) => s.networkId);
   const [showSummary, setShowSummary] = useState(false);
   // Org currency symbol from getCurrencySymbol (shared via CurrencyProvider).
-  const { symbol } = useCurrency();
-  const money = (value?: number | null): string =>
-    value == null
-      ? '—'
-      : `${symbol}${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  const { money } = useCurrency();
 
   // KPIs come from the analytics rollup; sites come live from the registry
   // (sitesView) so the map doesn't depend on the analytics collector.

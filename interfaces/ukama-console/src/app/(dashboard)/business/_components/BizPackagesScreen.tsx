@@ -28,17 +28,10 @@ import SectionCard from '@/components/SectionCard';
 import { sectionValue } from '@/components/SectionFallback';
 import SkeletonTable from '@/components/data-table/SkeletonTable';
 import StatusBadge from '@/components/StatusBadge';
+import { BAR_COLORS } from '@/lib/charts';
 import { useCurrency } from '@/lib/currency';
 import { kpiAmount } from '@/lib/kpis';
 import { useUiPrefs } from '@/lib/store';
-
-const BAR_COLORS = [
-  'var(--uk-ac)',
-  'var(--uk-secondary)',
-  'var(--uk-success-bright)',
-  'var(--uk-beige)',
-  'var(--uk-orange)',
-];
 
 const isActive = (status?: string | null): boolean =>
   (status ?? '').toLowerCase() === 'active';
@@ -46,11 +39,7 @@ const isActive = (status?: string | null): boolean =>
 export default function BizPackagesScreen() {
   const networkId = useUiPrefs((s) => s.networkId);
   // Org currency symbol comes from getCurrencySymbol (shared via CurrencyProvider).
-  const { symbol } = useCurrency();
-  const money = (value?: number | null): string =>
-    value == null
-      ? '—'
-      : `${symbol}${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  const { money } = useCurrency();
   const { data, loading, error, refetch } = useGetPackagePerformanceQuery({
     variables: { data: { networkId } },
   });
