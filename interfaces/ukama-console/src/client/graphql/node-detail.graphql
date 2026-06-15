@@ -41,18 +41,6 @@ query NodeDetail($nodeId: String!) {
         name
       }
     }
-    health {
-      error {
-        ...SectionErrorFields
-      }
-      health {
-        timestamp
-        system {
-          name
-          value
-        }
-      }
-    }
     software {
       error {
         ...SectionErrorFields
@@ -65,21 +53,6 @@ query NodeDetail($nodeId: String!) {
           desiredVersion
           releaseDate
         }
-      }
-    }
-    stateHistory {
-      error {
-        ...SectionErrorFields
-      }
-      stateHistory {
-        currentState
-        previousState
-        createdAt
-      }
-    }
-    radioStatus {
-      error {
-        ...SectionErrorFields
       }
     }
   }

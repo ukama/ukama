@@ -11,7 +11,7 @@
  * Node detail — per-type tabs, left KPI rail, node product imagery and the
  * "Turn node off" power menu (node-site-detail.jsx NodeDetail).
  */
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Button from '@mui/material/Button';
@@ -24,7 +24,6 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Skeleton from '@mui/material/Skeleton';
 
 import { useNodeDetailQuery } from '@/client/graphql/node-detail.generated';
-import { useNodeKpisQuery } from '@/client/graphql/node-kpis.generated';
 import type { MetricsRangeQuery } from '@/client/graphql/range-metrics.generated';
 import { useMetricsRangeQuery } from '@/client/graphql/range-metrics.generated';
 import { useRestartNodeMutation } from '@/client/graphql/controller.generated';
@@ -205,16 +204,76 @@ function RangeToggle({
 /** One metric series straight from the BFF (metricsRange). */
 type MetricSeries = MetricsRangeQuery['metricsRange']['metrics'][number];
 
+/** Latest value + presentation metadata for one rail KPI, derived from a
+ *  metricsRange series (its last real sample) — no separate latest fetch. */
+type LatestEntry = {
+  value: number;
+  success: boolean;
+  label?: string | null;
+  unit?: string | null;
+  format?: string | null;
+};
+
+/** Collapse a series to its latest KPI value: the most recent sample that
+ *  isn't a gap-fill placeholder (-1). The chart's last point IS the latest. */
+const seriesLatest = (m: MetricSeries): LatestEntry => {
+  const vals = m.values ?? [];
+  let last: number | null = null;
+  for (let i = vals.length - 1; i >= 0; i--) {
+    const v = vals[i]?.[1];
+    if (v != null && v !== -1) {
+      last = v;
+      break;
+    }
+  }
+  return {
+    value: last ?? 0,
+    success: m.success !== false && last != null,
+    label: m.label,
+    unit: m.unit,
+    format: m.format,
+  };
+};
+
+/** Hidden fetcher: one batched metricsRange (Day window) for rail KPIs whose
+ *  chart isn't currently shown, so every left-rail value still has a source
+ *  without a separate latest query. Reports each series' latest upward. */
+function RailLatest({
+  nodeId,
+  keys,
+  onLatest,
+}: {
+  nodeId: string;
+  keys: string[];
+  onLatest: (key: string, entry: LatestEntry) => void;
+}) {
+  const [nowSec] = useState(() => Math.floor(Date.now() / 1000));
+  const { data } = useMetricsRangeQuery({
+    variables: {
+      data: { keys, nodeId, from: nowSec - RANGE_SECONDS.Day, to: nowSec },
+    },
+    skip: keys.length === 0,
+  });
+  useEffect(() => {
+    for (const m of data?.metricsRange.metrics ?? []) {
+      onLatest(m.type, seriesLatest(m));
+    }
+  }, [data, onLatest]);
+  return null;
+}
+
 /** One metric chart with its own range filter — self-fetches its series so
  *  every graph filters independently. Rendered with Recharts. */
 function MetricChart({
   nodeId,
   metricKey,
   off,
+  onLatest,
 }: {
   nodeId: string;
   metricKey: string;
   off: boolean;
+  onLatest?: (key: string, entry: LatestEntry) => void;
 }) {
   const [range, setRange] = useState<Range>('Day');
   const [nowSec] = useState(() => Math.floor(Date.now() / 1000));
@@ -225,6 +284,11 @@ function MetricChart({
   });
 
   const m: MetricSeries | undefined = data?.metricsRange.metrics?.[0];
+  // The chart already holds the series — feed its latest sample to the rail so
+  // the same metric isn't fetched twice (chart + a separate latest query).
+  useEffect(() => {
+    if (m && onLatest) onLatest(metricKey, seriesLatest(m));
+  }, [m, metricKey, onLatest]);
   const hasData = !!m && m.values.length > 0 && m.success !== false;
   const values: [number, number][] = hasData
     ? off
@@ -278,10 +342,12 @@ function GroupCharts({
   nodeId,
   keys,
   off,
+  onLatest,
 }: {
   nodeId: string;
   keys: string[];
   off: boolean;
+  onLatest?: (key: string, entry: LatestEntry) => void;
 }) {
   if (keys.length === 0) {
     return (
@@ -299,7 +365,13 @@ function GroupCharts({
       style={{ display: 'flex', flexDirection: 'column', gap: 'var(--uk-gap)' }}
     >
       {keys.map((k) => (
-        <MetricChart key={k} nodeId={nodeId} metricKey={k} off={off} />
+        <MetricChart
+          key={k}
+          nodeId={nodeId}
+          metricKey={k}
+          off={off}
+          onLatest={onLatest}
+        />
       ))}
     </div>
   );
@@ -385,9 +457,21 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
   const { data, loading, refetch } = useNodeDetailQuery({
     variables: { nodeId },
   });
-  // Node health KPIs live in their own query so they can poll independently
-  // once the metric service is wired (backend gap #6); plain fetch for now.
-  const { data: kpisData } = useNodeKpisQuery({ variables: { nodeId } });
+  // Latest rail KPI values keyed by metric key. Single source of truth is the
+  // metricsRange series (chart for charted keys, a batched Day fetch for the
+  // rest) — no separate latest query, so a metric is never fetched twice.
+  const [latestByKey, setLatestByKey] = useState<Record<string, LatestEntry>>(
+    {},
+  );
+  const reportLatest = useCallback((key: string, entry: LatestEntry) => {
+    setLatestByKey((prev) => {
+      const cur = prev[key];
+      if (cur && cur.value === entry.value && cur.success === entry.success) {
+        return prev; // unchanged — skip to avoid a render loop
+      }
+      return { ...prev, [key]: entry };
+    });
+  }, []);
 
   const view = data?.nodeView;
   const nodeSection = view?.node;
@@ -398,11 +482,6 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
     label: `${nd.name || nd.id} (${nd.id})`,
     status: '',
   }));
-  // Latest KPI entries keyed by metric key — carry label/unit/value from BFF.
-  const kpiByKey = new Map(
-    (kpisData?.nodeView.kpis.metrics ?? []).map((m) => [m.key, m]),
-  );
-
   if (loading) {
     return (
       <div className="page">
@@ -436,19 +515,20 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
 
   // KPIs are node-type specific (legacy console parity, backend gap #6).
   const kind = nodeKind(nodeSection.node.type);
-  // Render straight from BFF-provided metadata: label, unit, value.
-  const labelFor = (key: string) => kpiByKey.get(key)?.label || key;
+  // Render straight from series-derived metadata: label, unit, value.
+  const labelFor = (key: string) => latestByKey[key]?.label || key;
   const fmtKpi = (key: string): string => {
-    const e = kpiByKey.get(key);
+    const e = latestByKey[key];
     if (!e || !e.success) return '—';
     const v = e.format === 'decimal' ? e.value.toFixed(2) : Math.round(e.value);
     const unit = e.unit ?? '';
     if (!unit) return `${v}`;
     return unit === '%' ? `${v}%` : `${v} ${unit}`;
   };
-  // Uptime is reported in seconds — show a human-readable "Nd Nh" / "Nh Nm".
+  // Uptime is reported in seconds — show a human-readable "Nd Nh" / "Nh Nm" /
+  // "Nm" / "Ns". Sub-minute uptime renders as seconds (not a misleading "0m").
   const fmtUptime = (): string => {
-    const e = kpiByKey.get('uptime');
+    const e = latestByKey['uptime'];
     if (!e || !e.success) return '—';
     let s = Math.max(0, Math.round(e.value));
     const d = Math.floor(s / 86400);
@@ -456,9 +536,11 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
     const h = Math.floor(s / 3600);
     s -= h * 3600;
     const m = Math.floor(s / 60);
+    s -= m * 60;
     if (d) return `${d}d ${h}h`;
     if (h) return `${h}h ${m}m`;
-    return `${m}m`;
+    if (m) return `${m}m`;
+    return `${s}s`;
   };
   // KV rows for a metric group (one per node-type key, value or "—").
   const groupRows = (group: MetricGroup) => {
@@ -489,8 +571,26 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
     : (sections[0]?.key ?? 'info');
   const activeGroup = sections.find((s) => s.key === activeKey)?.group;
 
+  // Charted keys (active group) get their latest from the chart series; every
+  // other rail key (other cards + uptime) is fetched once by the batched
+  // RailLatest below. Union by key so nothing is fetched twice.
+  const chartedKeys = activeGroup ? groupKeys(activeGroup, kind) : [];
+  const showsUptime = sections.some((s) => s.key === 'info');
+  const railKeys = Array.from(
+    new Set([
+      ...sections.flatMap((s) => (s.group ? groupKeys(s.group, kind) : [])),
+      ...(showsUptime ? ['uptime'] : []),
+    ]),
+  );
+  const nonChartedKeys = railKeys.filter((k) => !chartedKeys.includes(k));
+
   return (
     <div className="page">
+      <RailLatest
+        nodeId={n.id}
+        keys={nonChartedKeys}
+        onLatest={reportLatest}
+      />
       <PageHeader
         crumb={['Nodes', n.serial]}
         title={
@@ -597,6 +697,7 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
                 nodeId={n.id}
                 keys={activeGroup ? groupKeys(activeGroup, kind) : []}
                 off={off}
+                onLatest={reportLatest}
               />
             )}
           </div>

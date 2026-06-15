@@ -845,6 +845,7 @@ export type MetricsRangeInput = {
   keys: Array<Scalars['String']['input']>;
   nodeId?: InputMaybe<Scalars['String']['input']>;
   operation?: InputMaybe<Scalars['String']['input']>;
+  step?: InputMaybe<Scalars['Int']['input']>;
   to?: InputMaybe<Scalars['Int']['input']>;
 };
 

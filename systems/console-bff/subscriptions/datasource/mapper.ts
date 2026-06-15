@@ -99,7 +99,9 @@ export const parseMetricsResponse = (
       dataPlanId: item.metric?.dataplan ?? "",
       values: fixTimestampInMetricData(
         item.values,
-        1,
+        // Must equal the step sent upstream (subscriptions-api) so Prometheus'
+        // step-aligned buckets line up with the synthesized timeline.
+        args.step && args.step > 0 ? args.step : 60,
         args.to ?? Math.floor(Date.now() / 1000),
         args.from,
         type

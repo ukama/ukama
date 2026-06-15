@@ -60,6 +60,28 @@ const enrich = (m: MetricRes): MetricRes => {
 
 const MAX_KEYS = 10;
 
+/**
+ * Resolution control for range charts. The console's Day/Week/Month filter
+ * sets the from/to window; we derive a Prometheus `step` from the span so the
+ * series is a bounded ~TARGET_POINTS samples regardless of range, instead of
+ * the old hardcoded 1s (which pulled 86 400 points for a single Day).
+ *   Day   (86 400s)  → step 720s  (12 min)  → ~120 points
+ *   Week  (604 800s) → step 5 040s (84 min) → ~120 points
+ *   Month (2 592 000s) → step 21 600s (6 h) → ~120 points
+ * MIN_STEP keeps us at/above Prometheus' 15s scrape interval so we never
+ * oversample. MAX_STEP caps very wide windows.
+ */
+const TARGET_POINTS = 120;
+const MIN_STEP = 60;
+const MAX_STEP = 86_400;
+
+/** Bucketing step (seconds) for a [from,to] window, clamped to sane bounds. */
+const deriveStep = (from: number, to: number): number => {
+  const span = Math.max(0, to - from);
+  const step = Math.ceil(span / TARGET_POINTS);
+  return Math.min(MAX_STEP, Math.max(MIN_STEP, step));
+};
+
 @InputType()
 export class MetricsRangeInput {
   /** Metric keys, e.g. ["uptime", "cpu_temperature"]. Max 10 per request. */
@@ -79,6 +101,11 @@ export class MetricsRangeInput {
   /** Prometheus aggregation, default "avg". */
   @Field({ nullable: true })
   operation?: string;
+
+  /** Optional resolution override (seconds). Omit to auto-derive from the
+   *  [from,to] window — the console's Day/Week/Month filter drives that. */
+  @Field(() => Int, { nullable: true })
+  step?: number;
 }
 
 @Resolver()
@@ -93,7 +120,8 @@ export class MetricsRangeResolver {
     }
     const keys = data.keys.slice(0, MAX_KEYS);
     const to = data.to ?? Math.floor(Date.now() / 1000);
-    const step = Math.max(60, Math.floor((to - data.from) / 48));
+    const step =
+      data.step && data.step > 0 ? data.step : deriveStep(data.from, to);
     const scope = data.nodeId ?? ctx.headers.orgName;
 
     // An offline/unknown node reports no telemetry — return empty series so
@@ -126,6 +154,7 @@ export class MetricsRangeResolver {
       const args = {
         from: data.from,
         to,
+        step,
         nodeId: data.nodeId,
         operation: data.operation ?? "avg",
         orgName: ctx.headers.orgName,

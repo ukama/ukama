@@ -22,7 +22,11 @@ const getNodeMetricRange = async (
   args: GetMetricsStatInput
 ): Promise<MetricsRes> => {
   const { to, from, nodeId, operation = "avg" } = args;
-  let params = `from=${from}&to=${to}&step=1&operation=${operation}`;
+  // Step is derived from the requested window by the caller (Day/Week/Month);
+  // fall back to 60s. Must match the gap-fill step in parseMetricsResponse so
+  // the returned buckets align with the synthesized timeline.
+  const step = args.step && args.step > 0 ? args.step : 60;
+  let params = `from=${from}&to=${to}&step=${step}&operation=${operation}`;
   if (nodeId) {
     params = params + `&node=${nodeId}`;
   }

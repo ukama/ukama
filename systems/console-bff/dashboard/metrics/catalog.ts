@@ -248,9 +248,43 @@ const FALLBACK: MetricMeta = {
 export const metricMeta = (key: string): MetricMeta =>
   METRIC_CATALOG[key] ?? { ...FALLBACK, label: key };
 
-/** Keys backed by a real metric endpoint. Empty for now — everything mocks.
- *  Move a key here as its upstream lands. */
-export const LIVE_METRIC_KEYS = new Set<string>();
+/**
+ * Keys backed by a real metric endpoint (node-scoped: requested with a nodeId
+ * so the gateway resolves the node type from the id). Each generic key below
+ * exists under tnode/anode/cnode in default-metrics.yaml.
+ *
+ * Still mocked, pending more than a gate flip:
+ *  - subscribers_active: node "customers" asks at tnode scope, but the key only
+ *    exists under `system` (tnode has lte_active_ue / lte_subscribers).
+ *  - site_uptime_percentage: no backing series in default-metrics.yaml.
+ *  - battery_charge, solar_panel_power, controller_temperature, load_current:
+ *    cnode metrics consumed by the Site screen without a nodeId (resolves to
+ *    `system` → 404). Needs site→controller-node-id wiring first.
+ */
+export const LIVE_METRIC_KEYS = new Set<string>([
+  // health / resources (all node types)
+  "uptime",
+  "cpu",
+  "memory",
+  "disk",
+  "cpu_temperature",
+  // tnode cellular
+  "cellular_uplink",
+  "cellular_downlink",
+  // tnode / cnode backhaul
+  "backhaul_uplink",
+  "backhaul_downlink",
+  "backhaul_latency",
+  // tnode / cnode power
+  "power",
+  // anode radio
+  "pa_power",
+  "rx_power",
+  "tx_power",
+  // anode FEM health
+  "fem1_temperature",
+  "fem2_temperature",
+]);
 
 /** Mock unless explicitly disabled; never mock a key that has a live endpoint. */
 const MOCK_ENABLED = process.env.MOCK_METRICS !== "false";
