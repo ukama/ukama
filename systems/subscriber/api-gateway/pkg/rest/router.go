@@ -154,45 +154,51 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	})
 	auth.Use()
 	{
+		const (
+			iccidKey        = "/:iccid"
+			simIdKey        = "/:sim_id"
+			simTypeKey      = "/:sim_type"
+			subscriberIdKey = "/:subscriber_id"
+		)
+
 		/* These two API will be available based on RBAC */
 		auth.GET("/subscribers/networks/:network_id", formatDoc("List all subscribers for a Network", ""), tonic.Handler(r.getSubscriberByNetwork, http.StatusOK))
 		auth.GET("/sims/networks/:network_id", formatDoc("List all sims for a Network", ""), tonic.Handler(r.getSimsByNetwork, http.StatusOK))
 
-		pool := auth.Group("/simpool", "SIM Pool", "SIM store for Org")
-		pool.GET("/sim/:iccid", formatDoc("Get SIM by Iccid", ""), tonic.Handler(r.getSimByIccid, http.StatusOK))
-		pool.GET("/sims/:sim_type", formatDoc("Get SIMs by type", ""), tonic.Handler(r.getSims, http.StatusOK))
-		pool.GET("/stats/:sim_type", formatDoc("Get SIM Pool stats", ""), tonic.Handler(r.getSimPoolStats, http.StatusOK))
+		pool := auth.Group("/simpool", "Sim Pool", "SIM store for Org")
+		pool.GET("/sim"+iccidKey, formatDoc("Get SIM by Iccid", ""), tonic.Handler(r.getSimByIccid, http.StatusOK))
+		pool.GET("/sims"+simTypeKey, formatDoc("Get SIMs by type", ""), tonic.Handler(r.getSims, http.StatusOK))
+		pool.GET("/stats"+simTypeKey, formatDoc("Get SIM Pool stats", ""), tonic.Handler(r.getSimPoolStats, http.StatusOK))
 		pool.PUT("", formatDoc("Add new SIM to SIM pool", ""), tonic.Handler(r.addSimsToSimPool, http.StatusCreated))
 		pool.PUT("/upload", formatDoc("Upload CSV file to add new sim to SIM Pool", ""), tonic.Handler(r.uploadSimsToSimPool, http.StatusCreated))
-		pool.DELETE("/sim/:sim_id", formatDoc("Remove SIM from SIM Pool", ""), tonic.Handler(r.deleteSimFromSimPool, http.StatusOK))
+		pool.DELETE("/sim"+simIdKey, formatDoc("Remove SIM from SIM Pool", ""), tonic.Handler(r.deleteSimFromSimPool, http.StatusOK))
 
 		subscriber := auth.Group("/subscriber", "Subscriber", "Orgs Subscriber database")
-		subscriber.GET("/:subscriber_id", formatDoc("Get subscriber by id", ""), tonic.Handler(r.getSubscriber, http.StatusOK))
+		subscriber.GET(subscriberIdKey, formatDoc("Get subscriber by id", ""), tonic.Handler(r.getSubscriber, http.StatusOK))
 		subscriber.GET("/email/:subscriber_email", formatDoc("Get subscriber by email", ""), tonic.Handler(r.getSubscriberByEmail, http.StatusOK))
 		subscriber.PUT("", formatDoc("Add a new subscriber", ""), tonic.Handler(r.putSubscriber, http.StatusCreated))
-		subscriber.DELETE("/:subscriber_id", formatDoc("Delete a subscriber", ""), tonic.Handler(r.deleteSubscriber, http.StatusOK))
-		subscriber.PATCH("/:subscriber_id", formatDoc("Update a subscriber", ""), tonic.Handler(r.updateSubscriber, http.StatusOK))
+		subscriber.DELETE(subscriberIdKey, formatDoc("Delete a subscriber", ""), tonic.Handler(r.deleteSubscriber, http.StatusOK))
+		subscriber.PATCH(subscriberIdKey, formatDoc("Update a subscriber", ""), tonic.Handler(r.updateSubscriber, http.StatusOK))
 
-		sim := auth.Group("/sim", "SIM", "Orgs SIM data base")
+		sim := auth.Group("/sim", "Sim", "Orgs SIM data base")
 		sim.GET("", formatDoc("List SIMs with various query params as filters", ""), tonic.Handler(r.listSims, http.StatusOK))
-		sim.GET("/:sim_id", formatDoc("Get SIM by Id", ""), tonic.Handler(r.getSim, http.StatusOK))
+		sim.GET(simIdKey, formatDoc("Get SIM by Id", ""), tonic.Handler(r.getSim, http.StatusOK))
 		sim.POST("/", formatDoc("Allocate a new SIM to given subscriber", ""), tonic.Handler(r.allocateSim, http.StatusCreated))
-		sim.PATCH("/:sim_id", formatDoc("Activate/Deactivate a given SIM", ""), tonic.Handler(r.updateSimStatus, http.StatusOK))
-		sim.DELETE("/:sim_id", formatDoc("Terminate a given SIM", ""), tonic.Handler(r.terminateSim, http.StatusOK))
-		sim.GET("/:sim_id/package", formatDoc("Get packages for a given SIM", ""), tonic.Handler(r.listPackagesForSim, http.StatusOK))
-		sim.POST("/:sim_id/package", formatDoc("Add a new package to the given SIM", ""), tonic.Handler(r.addPackageForSim, http.StatusCreated))
-		sim.PATCH("/:sim_id/package/:package_id", formatDoc("Set active package for a given SIM", ""), tonic.Handler(r.setActivePackageForSim, http.StatusOK))
-		sim.DELETE("/:sim_id/package/:package_id", formatDoc("Delete a package from a given SIM", ""), tonic.Handler(r.removePkgForSim, http.StatusOK))
+		sim.PATCH(simIdKey, formatDoc("Activate/Deactivate a given SIM", ""), tonic.Handler(r.updateSimStatus, http.StatusOK))
+		sim.DELETE(simIdKey, formatDoc("Terminate a given SIM", ""), tonic.Handler(r.terminateSim, http.StatusOK))
+		sim.GET(simIdKey+"/package", formatDoc("Get packages for a given SIM", ""), tonic.Handler(r.listPackagesForSim, http.StatusOK))
+		sim.POST(simIdKey+"/package", formatDoc("Add a new package to the given SIM", ""), tonic.Handler(r.addPackageForSim, http.StatusCreated))
+		sim.PATCH(simIdKey+"/package/:package_id", formatDoc("Set active package for a given SIM", ""), tonic.Handler(r.setActivePackageForSim, http.StatusOK))
+		sim.DELETE(simIdKey+"/package/:package_id", formatDoc("Delete a package from a given SIM", ""), tonic.Handler(r.removePkgForSim, http.StatusOK))
 		// Deprecated: Use GET /v1/sim with subscriberId as query param instead.
-		sim.GET("/subscriber/:subscriber_id", formatDoc("Get the list of SIMs for a given subscriber", ""), tonic.Handler(r.getSimsBySub, http.StatusOK))
+		sim.GET("/subscriber"+subscriberIdKey, formatDoc("Get the list of SIMs for a given subscriber", ""), tonic.Handler(r.getSimsBySub, http.StatusOK))
 		// Deprecated: Use GET /v1/sim/:sim_id/package with query params  for filtering instead.
-		sim.GET("/packages/:sim_id", formatDoc("Get packages for a given SIM", ""), tonic.Handler(r.getPackagesForSim, http.StatusOK))
+		sim.GET("/packages"+simIdKey, formatDoc("Get packages for a given SIM", ""), tonic.Handler(r.getPackagesForSim, http.StatusOK))
 		// Deprecated: Use POST /v1/sim/:sim_id/package instead.
 		sim.POST("/package", formatDoc("Add a new package to the given subscriber's SIM", ""), tonic.Handler(r.postPkgForSim, http.StatusCreated))
 
 		// Sim token routes
 
-		const iccidKey = "/:iccid"
 		simToken := auth.Group("/tokens", "Sim Tokens", "Operations on Sim Tokens")
 		simToken.GET(iccidKey, formatDoc("Generate Sim Token", "Generate token for a given sim"), tonic.Handler(r.getSimToken, http.StatusOK))
 
