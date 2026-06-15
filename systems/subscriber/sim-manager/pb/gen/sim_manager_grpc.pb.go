@@ -39,6 +39,7 @@ const (
 	SimManagerService_SetActivePackageForSim_FullMethodName = "/ukama.subscriber.sim_manager.v1.SimManagerService/SetActivePackageForSim"
 	SimManagerService_TerminatePackageForSim_FullMethodName = "/ukama.subscriber.sim_manager.v1.SimManagerService/TerminatePackageForSim"
 	SimManagerService_RemovePackageForSim_FullMethodName    = "/ukama.subscriber.sim_manager.v1.SimManagerService/RemovePackageForSim"
+	SimManagerService_GenerateSimToken_FullMethodName       = "/ukama.subscriber.sim_manager.v1.SimManagerService/GenerateSimToken"
 	SimManagerService_GetUsages_FullMethodName              = "/ukama.subscriber.sim_manager.v1.SimManagerService/GetUsages"
 )
 
@@ -64,6 +65,8 @@ type SimManagerServiceClient interface {
 	SetActivePackageForSim(ctx context.Context, in *SetActivePackageRequest, opts ...grpc.CallOption) (*SetActivePackageResponse, error)
 	TerminatePackageForSim(ctx context.Context, in *TerminatePackageRequest, opts ...grpc.CallOption) (*TerminatePackageResponse, error)
 	RemovePackageForSim(ctx context.Context, in *RemovePackageRequest, opts ...grpc.CallOption) (*RemovePackageResponse, error)
+	// Sim token
+	GenerateSimToken(ctx context.Context, in *SimTokenRequest, opts ...grpc.CallOption) (*SimTokenResponse, error)
 	// Usage
 	GetUsages(ctx context.Context, in *UsageRequest, opts ...grpc.CallOption) (*UsageResponse, error)
 }
@@ -206,6 +209,16 @@ func (c *simManagerServiceClient) RemovePackageForSim(ctx context.Context, in *R
 	return out, nil
 }
 
+func (c *simManagerServiceClient) GenerateSimToken(ctx context.Context, in *SimTokenRequest, opts ...grpc.CallOption) (*SimTokenResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SimTokenResponse)
+	err := c.cc.Invoke(ctx, SimManagerService_GenerateSimToken_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *simManagerServiceClient) GetUsages(ctx context.Context, in *UsageRequest, opts ...grpc.CallOption) (*UsageResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UsageResponse)
@@ -238,6 +251,8 @@ type SimManagerServiceServer interface {
 	SetActivePackageForSim(context.Context, *SetActivePackageRequest) (*SetActivePackageResponse, error)
 	TerminatePackageForSim(context.Context, *TerminatePackageRequest) (*TerminatePackageResponse, error)
 	RemovePackageForSim(context.Context, *RemovePackageRequest) (*RemovePackageResponse, error)
+	// Sim token
+	GenerateSimToken(context.Context, *SimTokenRequest) (*SimTokenResponse, error)
 	// Usage
 	GetUsages(context.Context, *UsageRequest) (*UsageResponse, error)
 	mustEmbedUnimplementedSimManagerServiceServer()
@@ -288,6 +303,9 @@ func (UnimplementedSimManagerServiceServer) TerminatePackageForSim(context.Conte
 }
 func (UnimplementedSimManagerServiceServer) RemovePackageForSim(context.Context, *RemovePackageRequest) (*RemovePackageResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RemovePackageForSim not implemented")
+}
+func (UnimplementedSimManagerServiceServer) GenerateSimToken(context.Context, *SimTokenRequest) (*SimTokenResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GenerateSimToken not implemented")
 }
 func (UnimplementedSimManagerServiceServer) GetUsages(context.Context, *UsageRequest) (*UsageResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetUsages not implemented")
@@ -547,6 +565,24 @@ func _SimManagerService_RemovePackageForSim_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SimManagerService_GenerateSimToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SimTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SimManagerServiceServer).GenerateSimToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SimManagerService_GenerateSimToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SimManagerServiceServer).GenerateSimToken(ctx, req.(*SimTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _SimManagerService_GetUsages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UsageRequest)
 	if err := dec(in); err != nil {
@@ -623,6 +659,10 @@ var SimManagerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemovePackageForSim",
 			Handler:    _SimManagerService_RemovePackageForSim_Handler,
+		},
+		{
+			MethodName: "GenerateSimToken",
+			Handler:    _SimManagerService_GenerateSimToken_Handler,
 		},
 		{
 			MethodName: "GetUsages",

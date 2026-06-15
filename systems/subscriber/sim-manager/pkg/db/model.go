@@ -22,7 +22,7 @@ type Sim struct {
 	SubscriberId       uuid.UUID `gorm:"not null;type:uuid"`
 	NetworkId          uuid.UUID `gorm:"not null;type:uuid"`
 	Package            Package
-	Iccid              string `gorm:"index:idx_iccid,unique"`
+	Iccid              string `gorm:"index:idx_iccid,unique,where:deleted_at is null;not null;size:22"`
 	Msisdn             string
 	Imsi               string
 	Type               ukama.SimType
