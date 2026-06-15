@@ -437,16 +437,28 @@ _phase1_run() {
         disown "$REMOTE_BOOT_PID" 2>/dev/null || true
         echo "  oct-remote-boot started (PID $REMOTE_BOOT_PID)"
 
-        echo "Waiting for u-boot prompt '${uboot_prompt}' (up to 60s)..."
+        # Give oct-remote-boot time to finish: it must reach "Starting core 0!" (which
+        # launches u-boot) before the prompt can appear — that takes well over a minute.
+        # Do NOT kill it on a short timer; only re-run if it EXITS (the segfault case).
+        echo "Waiting for u-boot prompt '${uboot_prompt}' (oct-remote-boot runs up to 180s)..."
         elapsed=0; clk=""
-        while [ "$elapsed" -lt 60 ]; do
+        while [ "$elapsed" -lt 180 ]; do
             if grep -qF -- "$uboot_prompt" "${LOG_DIR}/uboot.log" 2>/dev/null; then
                 prompt_seen=1
                 break
             fi
-            # oct-remote-boot exiting (segfault is the usual first-run failure) means
-            # stop waiting and re-run it.
+            # If oct-remote-boot exited, u-boot may still be printing to serial — give a
+            # short grace window for the prompt before deciding to re-run.
             if ! kill -0 "$REMOTE_BOOT_PID" 2>/dev/null; then
+                local grace=0
+                while [ "$grace" -lt 15 ]; do
+                    if grep -qF -- "$uboot_prompt" "${LOG_DIR}/uboot.log" 2>/dev/null; then
+                        prompt_seen=1
+                        break
+                    fi
+                    sleep 1
+                    grace=$((grace + 1))
+                done
                 break
             fi
             clk=$(grep -a "Measured DDR clock" "$oct_log" 2>/dev/null | tail -1 || true)
@@ -461,22 +473,22 @@ _phase1_run() {
             break
         fi
 
-        # Failed attempt: stop oct-remote-boot, report why, then re-run it (no re-go).
+        # Failed attempt: stop oct-remote-boot if still alive, report why, then re-run.
         if kill -0 "$REMOTE_BOOT_PID" 2>/dev/null; then
             sudo kill "$REMOTE_BOOT_PID" 2>/dev/null || true
-        fi
-        wait "$REMOTE_BOOT_PID" 2>/dev/null
-        oct_exit=$?
-        REMOTE_BOOT_PID=""
-
-        if [ "$oct_exit" -eq 139 ] || grep -qaE "Segmentation fault|GDB Reply Error|in reset, told to continue" "$oct_log" 2>/dev/null; then
-            echo "  oct-remote-boot failed (GDB error / segfault) — re-running it (normal recovery)."
-        elif [ -n "$clk" ]; then
-            mhz=$(printf '%s' "$clk" | grep -oE '[0-9]+' | head -1 || true)
-            echo "  oct-remote-boot reached DDR (${mhz} MHz) but no u-boot prompt in 60s — re-running."
+            wait "$REMOTE_BOOT_PID" 2>/dev/null
+            oct_exit=$?
+            echo "  oct-remote-boot still running at 180s but no u-boot prompt — killed, re-running."
         else
-            echo "  oct-remote-boot did not reach the u-boot prompt in 60s — re-running."
+            wait "$REMOTE_BOOT_PID" 2>/dev/null
+            oct_exit=$?
+            if [ "$oct_exit" -eq 139 ] || grep -qaE "Segmentation fault|GDB Reply Error|in reset, told to continue" "$oct_log" 2>/dev/null; then
+                echo "  oct-remote-boot exited (GDB error / segfault) — re-running it (normal recovery)."
+            else
+                echo "  oct-remote-boot exited without reaching the u-boot prompt — re-running."
+            fi
         fi
+        REMOTE_BOOT_PID=""
         echo "--- last 15 lines of oct-remote-boot output ---"
         tail -n 15 "$oct_log" 2>/dev/null | sed 's/^/    /' || true
         sleep 2
