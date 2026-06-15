@@ -117,7 +117,123 @@ class AnalyticsAPI extends BaseRESTDataSource {
     const res = await this.callGet<{ kpis?: KpiDto[] }>(
       `${path}?${windowQuery(data)}`
     );
-    return { kpis: res.kpis ?? [] };
+    // TODO(analytics-backend): drop once the lens overview endpoints emit the
+    // home KPIs the console reads (revenue_month/collected, customers_total,
+    // network_uptime, data_usage). See docs/analytics-backend-gaps.md.
+    return { kpis: await this.enrichHomeKpis(res.kpis ?? [], data) };
+  };
+
+  /** Fetch just the `kpis` array of an analytics endpoint, swallowing errors. */
+  private safeKpis = async (path: string): Promise<KpiDto[]> => {
+    try {
+      const r = await this.callGet<{ kpis?: KpiDto[] }>(path);
+      return r.kpis ?? [];
+    } catch {
+      return [];
+    }
+  };
+
+  /**
+   * TODO(analytics-backend): the Home screens read KPI keys the lens overview
+   * endpoints don't all emit:
+   *   Business: revenue_month, revenue_collected, customers_total
+   *   Network:  network_uptime, active_customers, data_usage
+   * We backfill them from REAL analytics data — windowed sales `revenue`
+   * (this month / all-time) and the business/home strip (active_customers /
+   * network_uptime / data_sold) — so they match the analytics DB. Only
+   * `customers_total` has no source yet and mirrors active_customers (mock).
+   * Remove once the backend emits these. Tracking: docs/analytics-backend-gaps.md
+   */
+  private enrichHomeKpis = async (
+    base: KpiDto[],
+    data: HomeViewInput
+  ): Promise<KpiDto[]> => {
+    const have = new Set(base.map(k => k.key));
+    const NEEDED = [
+      "revenue_month",
+      "revenue_collected",
+      "customers_total",
+      "active_customers",
+      "network_uptime",
+      "data_usage",
+    ];
+    if (NEEDED.every(k => have.has(k))) return base;
+
+    const networkId = data.networkId;
+    const now = new Date();
+    const sales = (extra: Partial<AnalyticsWindowInput>): string =>
+      `business/sales/overview?${windowQuery({ networkId, ...extra })}`;
+
+    const isBusiness = data.lens !== HomeLens.NETWORK;
+    const [homeKpis, monthKpis, allKpis] = await Promise.all([
+      // business/home carries active_customers, network_uptime, data_sold.
+      isBusiness
+        ? Promise.resolve(base)
+        : this.safeKpis(`business/home?${windowQuery({ networkId })}`),
+      this.safeKpis(sales({ period: "month" })),
+      this.safeKpis(
+        sales({
+          period: "custom",
+          from: "2000-01-01T00:00:00Z",
+          to: now.toISOString(),
+        })
+      ),
+    ]);
+
+    const find = (arr: KpiDto[], key: string): KpiDto | undefined =>
+      arr.find(k => k.key === key);
+    const num = (arr: KpiDto[], key: string): number | undefined =>
+      find(arr, key)?.value;
+
+    const mk = (
+      key: string,
+      value: number,
+      opts: { formatted?: string; delta?: number; stale?: boolean } = {}
+    ): KpiDto => ({
+      key,
+      value: Math.round(value * 100) / 100,
+      formatted: opts.formatted,
+      delta: opts.delta,
+      deltaPeriod: opts.delta != null ? "month" : undefined,
+      stale: opts.stale,
+    });
+
+    const money = (v: number): string =>
+      `$${(Math.round(v * 100) / 100).toLocaleString()}`;
+
+    const activeCustomers = num(homeKpis, "active_customers") ?? 0;
+    const uptime = num(homeKpis, "network_uptime");
+    const dataSold = num(homeKpis, "data_sold");
+    const monthRev = find(monthKpis, "revenue");
+    const allRev = num(allKpis, "revenue");
+
+    const candidates: KpiDto[] = [
+      mk("revenue_month", monthRev?.value ?? 0, {
+        formatted: money(monthRev?.value ?? 0),
+        delta: monthRev?.delta,
+      }),
+      mk("revenue_collected", allRev ?? 0, { formatted: money(allRev ?? 0) }),
+      mk("active_customers", activeCustomers, {
+        formatted: String(activeCustomers),
+      }),
+      // No dedicated total-customers source yet → mirror active (mock).
+      mk("customers_total", activeCustomers, {
+        formatted: String(activeCustomers),
+        stale: true,
+      }),
+    ];
+    if (uptime != null)
+      candidates.push(
+        mk("network_uptime", uptime, { formatted: `${uptime}%` })
+      );
+    if (dataSold != null)
+      candidates.push(
+        mk("data_usage", dataSold, { formatted: `${dataSold} MB` })
+      );
+
+    const merged = [...base];
+    for (const c of candidates) if (!have.has(c.key)) merged.push(c);
+    return merged;
   };
 
   /* ---------------- Business ---------------- */
