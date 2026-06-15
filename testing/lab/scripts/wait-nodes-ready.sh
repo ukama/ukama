@@ -18,6 +18,7 @@ RUN_DIR="$2"
 STATE_DIR="$RUN_DIR/runtime-nodes"
 TIMEOUT_SEC="${ULAB_NODE_READY_TIMEOUT_SEC:-180}"
 SLEEP_SEC="${ULAB_NODE_READY_SLEEP_SEC:-3}"
+STARTER_PORT="${ULAB_STARTER_PORT:-18001}"
 
 safe_name() {
     echo "$1" | tr -c 'A-Za-z0-9_.-' '-'
@@ -44,74 +45,146 @@ load_state() {
 }
 
 container_running() {
-    podman inspect -f '{{.State.Running}}' "$CONTAINER_NAME" 2>/dev/null | grep -q '^true$'
+    podman inspect -f '{{.State.Running}}' "$CONTAINER_NAME" 2>/dev/null |
+        grep -q '^true$'
 }
 
 container_logs_tail() {
     podman logs --tail 80 "$CONTAINER_NAME" 2>/dev/null || true
 }
 
-http_ready() {
-    port="$1"
-    path="$2"
-
+starter_status() {
     podman exec "$CONTAINER_NAME" sh -lc \
-        "curl -fsS --max-time 2 http://127.0.0.1:$port$path" \
-        >/tmp/ukama-node-ready.$$ 2>/dev/null || return 1
-
-    if grep -q '"ready"[[:space:]]*:[[:space:]]*true' /tmp/ukama-node-ready.$$; then
-        rm -f /tmp/ukama-node-ready.$$
-        return 0
-    fi
-
-    if grep -q '"state"[[:space:]]*:[[:space:]]*"ready"' /tmp/ukama-node-ready.$$; then
-        rm -f /tmp/ukama-node-ready.$$
-        return 0
-    fi
-
-    rm -f /tmp/ukama-node-ready.$$
-    return 1
+        "curl -fsS --max-time 2 http://127.0.0.1:${STARTER_PORT}/v1/status" \
+        2>/dev/null
 }
 
-service_reachable() {
-    port="$1"
-    path="$2"
+starter_apps_running() {
+    tmp_file="/tmp/ukama-starter-status.$$"
 
-    podman exec "$CONTAINER_NAME" sh -lc \
-        "curl -fsS --max-time 2 http://127.0.0.1:$port$path" \
-        >/dev/null 2>&1
+    if ! starter_status > "$tmp_file"; then
+        rm -f "$tmp_file"
+        return 1
+    fi
+
+    python3 - "$tmp_file" <<'PY'
+import json
+import sys
+
+path = sys.argv[1]
+
+try:
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+except Exception as exc:
+    print(f"invalid starter.d JSON: {exc}", file=sys.stderr)
+    sys.exit(1)
+
+apps = data.get("apps")
+
+if apps is None:
+    apps = data.get("data", {}).get("apps")
+
+if apps is None:
+    apps = data.get("services")
+
+if not isinstance(apps, list) or len(apps) == 0:
+    print("starter.d status has no apps list", file=sys.stderr)
+    sys.exit(1)
+
+bad = []
+
+for app in apps:
+    name = str(app.get("name") or app.get("tag") or "unknown")
+    state = str(app.get("state") or app.get("status") or "").strip()
+    normalized = state.lower()
+
+    if normalized not in ("running", "active"):
+        bad.append((name, state))
+
+if bad:
+    for name, state in bad:
+        print(f"{name}: {state}", file=sys.stderr)
+    sys.exit(1)
+
+sys.exit(0)
+PY
+
+    rc="$?"
+    rm -f "$tmp_file"
+
+    return "$rc"
+}
+
+print_starter_debug() {
+    tmp_file="/tmp/ukama-starter-status-debug.$$"
+
+    echo "---- starter.d /v1/status ----" >&2
+
+    if starter_status > "$tmp_file"; then
+        cat "$tmp_file" >&2
+        echo >&2
+
+        echo "---- starter.d non-running apps ----" >&2
+
+        python3 - "$tmp_file" <<'PY' >&2 || true
+import json
+import sys
+
+path = sys.argv[1]
+
+try:
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+except Exception:
+    sys.exit(0)
+
+apps = data.get("apps")
+
+if apps is None:
+    apps = data.get("data", {}).get("apps")
+
+if apps is None:
+    apps = data.get("services")
+
+if not isinstance(apps, list):
+    sys.exit(0)
+
+found = False
+
+for app in apps:
+    name = str(app.get("name") or app.get("tag") or "unknown")
+    state = str(app.get("state") or app.get("status") or "").strip()
+    normalized = state.lower()
+
+    if normalized not in ("running", "active"):
+        found = True
+        print(f"{name}: {state}")
+
+if not found:
+    print("none")
+PY
+    else
+        echo "starter.d not reachable on port ${STARTER_PORT}" >&2
+    fi
+
+    rm -f "$tmp_file"
 }
 
 node_ready() {
     container_running || return 1
 
     #
-    # Strong readiness: known Ukama runtime services report ready.
-    # Some virtual node images may not run every service for every node type,
-    # so this checks the core services first and treats starter as useful-but-not-fatal.
+    # Node is ready only when starter.d is reachable and every app reported by
+    # /v1/status is Running/Active.
     #
-    http_ready 18026 /v1/status || return 1
-
-    if ! service_reachable 18001 /v1/status; then
-        service_reachable 18001 /v1/ping || true
-    fi
-
-    #
-    # EPC/PCRF is tower-focused. If present, they must be ready.
-    # If not present yet for cnode/anode images, do not block forever on them.
-    #
-    if service_reachable 18028 /v1/status; then
-        http_ready 18028 /v1/status || return 1
-    fi
-
-    if service_reachable 18030 /v1/status; then
-        http_ready 18030 /v1/status || return 1
-    fi
+    starter_apps_running || return 1
 
     return 0
 }
 
 need_cmd podman
+need_cmd python3
 load_state
 
 echo "wait-node: logical=$LOGICAL_NODE_ID factory=$FACTORY_NODE_ID container=$CONTAINER_NAME timeout=${TIMEOUT_SEC}s"
@@ -129,10 +202,15 @@ while :; do
 
     if [ "$elapsed" -ge "$TIMEOUT_SEC" ]; then
         echo "node not ready after ${TIMEOUT_SEC}s: logical=$LOGICAL_NODE_ID factory=$FACTORY_NODE_ID container=$CONTAINER_NAME" >&2
+
         echo "---- podman ps ----" >&2
         podman ps -a --filter "name=$CONTAINER_NAME" >&2 || true
+
+        print_starter_debug
+
         echo "---- container logs ----" >&2
         container_logs_tail >&2
+
         exit 1
     fi
 

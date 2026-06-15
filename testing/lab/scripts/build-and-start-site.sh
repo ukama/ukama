@@ -156,7 +156,6 @@ curl -fsS -X GET \
     "$FACTORY_URL/v1/nodefactory/nodes?isProvisioned=false" \
     -H "accept: application/json" \
     > "$FACTORY_JSON"
-
 TNODE_ID="$(pick_tnode "$FACTORY_JSON")"
 
 if [ -z "$TNODE_ID" ]; then
