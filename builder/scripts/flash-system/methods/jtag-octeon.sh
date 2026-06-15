@@ -378,97 +378,83 @@ _phase1_run() {
     done
     echo "  GDB port is open."
 
-    # --- Phase 1 core bring-up loop ---
-    # Supreeth's proven manual flow:
-    #   1. go 0x400000          (via BDI telnet)
-    #   2. oct-remote-boot      (in another terminal)
-    #   3. watch serial         (in yet another terminal)
-    #   4. interrupt autoboot, flash via TFTP
-    # We automate the same sequence. If DDR mislocks, the user power-cycles TRX
-    # and we retry from step 1.
+    # --- Phase 1 core bring-up ---
+    # The bench procedure (confirmed with Supreeth):
+    #   1. go 0x400000   ONCE, via BDI telnet.
+    #   2. oct-remote-boot. If it segfaults / GDB-errors ("Core 0, in reset, told to
+    #      continue / Segmentation fault"), just RUN OCT-REMOTE-BOOT AGAIN — no
+    #      power-cycle, no re-sending go. It succeeds on the 1st run, rarely the 2nd.
+    #   3. watch serial, interrupt autoboot, flash via TFTP.
+    # We automate exactly that: send go once, keep the serial open, and retry only
+    # oct-remote-boot until the u-boot prompt appears.
     local oct_log="${LOG_DIR}/oct-remote-boot.log"
-    local bringup_attempt=0 max_bringup_attempts=4
     local prompt_seen=0
 
-    while [ "$bringup_attempt" -lt "$max_bringup_attempts" ]; do
-        bringup_attempt=$((bringup_attempt + 1))
+    echo "Sending 'go 0x400000' via BDI telnet (once)..."
+    if ! bdi_telnet_cmd "$bdi_ip" "go 0x400000"; then
+        echo "ERROR: BDI 'go 0x400000' failed (is the BDI at cnMIPS#0>?)."
+        return 1
+    fi
+    sleep 5
+
+    # Open the serial console and start interrupting autoboot. Kept open across all
+    # oct-remote-boot retries so the u-boot prompt is caught whenever it appears.
+    echo "Opening serial console at $serial_dev ($baud)..."
+    uboot_open "$serial_dev" "$baud" "${LOG_DIR}/uboot.log"
+    echo "Spamming keys to interrupt zero-second autoboot (until prompt appears)..."
+    (
+        exec 3>"$serial_dev"
+        while true; do
+            printf ' \r\n' >&3
+            sleep 0.03
+        done
+    ) &
+    SPAM_PID=$!
+
+    local oct_try=0 max_oct_tries=4
+    local elapsed clk mhz oct_exit
+    while [ "$oct_try" -lt "$max_oct_tries" ]; do
+        oct_try=$((oct_try + 1))
         echo ""
-        echo "=== Phase 1 bring-up attempt ${bringup_attempt}/${max_bringup_attempts} ==="
+        echo "=== oct-remote-boot attempt ${oct_try}/${max_oct_tries} (no re-go, no power-cycle) ==="
 
-        # Step 1: Send go 0x400000 via BDI telnet (odd attempts).
-        # Even attempts skip the go and let oct-remote-boot start the core itself
-        # ("Starting core 0!") — the configuration that completed Phase 1 on 2026-05-26.
-        if [ $((bringup_attempt % 2)) -eq 1 ]; then
-            echo "Sending 'go 0x400000' via BDI telnet..."
-            if ! bdi_telnet_cmd "$bdi_ip" "go 0x400000"; then
-                echo "WARNING: BDI 'go' command failed — will retry."
-                sleep 3
-                continue
-            fi
-            sleep 5
-        else
-            echo "Skipping 'go' this attempt — oct-remote-boot will start the core itself."
-        fi
+        # Clear any stale oct-remote-boot still holding the BDI GDB port.
+        sudo pkill -9 -f oct-remote-boot 2>/dev/null || true
+        sleep 1
 
-        # Step 2: Start oct-remote-boot
         echo "Starting oct-remote-boot (OCTEON_ROOT=$oct_env_root, $oct_env_protocol)..."
         : > "$oct_log"
         sudo stdbuf -oL -eL env OCTEON_ROOT="$oct_env_root" OCTEON_REMOTE_PROTOCOL="$oct_env_protocol" \
             "$oct_path" --board="$oct_board" --ddr_clock_hz="$oct_clock" >"$oct_log" 2>&1 &
         REMOTE_BOOT_PID=$!
-        # Prevent bash from printing a scary "Segmentation fault" job-status message
-        # if oct-remote-boot crashes; we handle it ourselves below.
         disown "$REMOTE_BOOT_PID" 2>/dev/null || true
         echo "  oct-remote-boot started (PID $REMOTE_BOOT_PID)"
 
-        # Step 3: Open serial and start spamming keys immediately
-        echo "Opening serial console at $serial_dev ($baud)..."
-        uboot_open "$serial_dev" "$baud" "${LOG_DIR}/uboot.log"
-
-        echo "Spamming keys to interrupt zero-second autoboot (until prompt appears)..."
-        (
-            exec 3>"$serial_dev"
-            while true; do
-                printf ' \r\n' >&3
-                sleep 0.03
-            done
-        ) &
-        SPAM_PID=$!
-
-        # Step 4: Wait for u-boot prompt while monitoring oct-remote-boot log
-        echo "Waiting for u-boot prompt '${uboot_prompt}' (up to 120s)..."
-        local elapsed=0 ddr_bad="" clk="" mhz="" oct_exit=0
-        while [ "$elapsed" -lt 120 ]; do
-            # Check for u-boot prompt
+        echo "Waiting for u-boot prompt '${uboot_prompt}' (up to 60s)..."
+        elapsed=0; clk=""
+        while [ "$elapsed" -lt 60 ]; do
             if grep -qF -- "$uboot_prompt" "${LOG_DIR}/uboot.log" 2>/dev/null; then
                 prompt_seen=1
-                break 2  # Break out of BOTH loops
-            fi
-
-            # Check for DDR mislock in oct-remote-boot log
-            ddr_bad=$(grep -aE "exceeds DIMM specifications|GDB Reply Error" "$oct_log" 2>/dev/null | head -1 || true)
-            if [ -n "$ddr_bad" ]; then
                 break
             fi
-
-            # Check for measured DDR clock (to report it)
-            clk=$(grep -a "Measured DDR clock" "$oct_log" 2>/dev/null | tail -1 || true)
-
-            # Check if oct-remote-boot died unexpectedly
+            # oct-remote-boot exiting (segfault is the usual first-run failure) means
+            # stop waiting and re-run it.
             if ! kill -0 "$REMOTE_BOOT_PID" 2>/dev/null; then
                 break
             fi
-
+            clk=$(grep -a "Measured DDR clock" "$oct_log" 2>/dev/null | tail -1 || true)
             sleep 1
             elapsed=$((elapsed + 1))
         done
 
-        # Clean up this attempt's processes
-        if [ -n "$SPAM_PID" ]; then
-            kill "$SPAM_PID" 2>/dev/null || true
-            SPAM_PID=""
+        if [ "$prompt_seen" -eq 1 ]; then
+            # Leave oct-remote-boot running — it hosts u-boot in DDR over GDB while we
+            # flash. REMOTE_BOOT_PID stays set and is reaped by the cleanup after flashing.
+            echo "  u-boot prompt detected on oct-remote-boot attempt ${oct_try}."
+            break
         fi
-        uboot_close
+
+        # Failed attempt: stop oct-remote-boot, report why, then re-run it (no re-go).
         if kill -0 "$REMOTE_BOOT_PID" 2>/dev/null; then
             sudo kill "$REMOTE_BOOT_PID" 2>/dev/null || true
         fi
@@ -476,63 +462,36 @@ _phase1_run() {
         oct_exit=$?
         REMOTE_BOOT_PID=""
 
-        # Analyze why we failed
-        if [ "$prompt_seen" -eq 1 ]; then
-            break  # Should have been caught by break 2 above, but safety net
-        fi
-
-        if [ -n "$ddr_bad" ]; then
-            echo "  DDR PLL mislocked — $ddr_bad"
-        elif [ "$oct_exit" -eq 139 ]; then
-            echo "  oct-remote-boot crashed (SIGSEGV). This sometimes happens when the BDI"
-            echo "  GDB stub isn't fully ready after a reboot. A retry usually fixes it."
+        if [ "$oct_exit" -eq 139 ] || grep -qaE "Segmentation fault|GDB Reply Error|in reset, told to continue" "$oct_log" 2>/dev/null; then
+            echo "  oct-remote-boot failed (GDB error / segfault) — re-running it (normal recovery)."
         elif [ -n "$clk" ]; then
             mhz=$(printf '%s' "$clk" | grep -oE '[0-9]+' | head -1 || true)
-            echo "  DDR clock ${mhz} MHz — not ~400 (mislock)."
+            echo "  oct-remote-boot reached DDR (${mhz} MHz) but no u-boot prompt in 60s — re-running."
         else
-            echo "  u-boot prompt did not appear within 120s."
+            echo "  oct-remote-boot did not reach the u-boot prompt in 60s — re-running."
         fi
-
-        # Always show relevant logs for debugging
-        echo "--- last 20 lines of oct-remote-boot output ---"
-        tail -n 20 "$oct_log" 2>/dev/null | sed 's/^/    /' || true
-        if [ "$prompt_seen" -ne 1 ]; then
-            echo "--- last 20 lines of serial (uboot.log) ---"
-            tail -n 20 "${LOG_DIR}/uboot.log" 2>/dev/null | sed 's/^/    /' || true
-        fi
-
-        if [ "$bringup_attempt" -lt "$max_bringup_attempts" ]; then
-            # Auto-retry on GDB Reply Error after the first attempt — this is extremely
-            # common after a fresh BDI reboot and almost always resolves on the next try.
-            if [ "$bringup_attempt" -eq 1 ] && [ -n "$ddr_bad" ] && echo "$ddr_bad" | grep -q "GDB Reply Error"; then
-                echo ""
-                echo "  First-attempt GDB error is normal after BDI reboot. Auto-retrying in 5s..."
-                sleep 5
-                continue
-            fi
-
-            echo ""
-            echo ">>> Bring-up failed. If DDR mislocked, COLD power-cycle the TRX now:"
-            echo ">>>   full power OFF, wait ~5s, power back ON. Leave the JTAG cable connected."
-            printf ">>> Press Enter to retry (attempt %d/%d)... " "$((bringup_attempt + 1))" "$max_bringup_attempts"
-            read -r _ </dev/tty || true
-            echo ""
-        fi
+        echo "--- last 15 lines of oct-remote-boot output ---"
+        tail -n 15 "$oct_log" 2>/dev/null | sed 's/^/    /' || true
+        sleep 2
     done
 
-    if [ "$prompt_seen" -ne 1 ]; then
-        echo "ERROR: Could not reach u-boot prompt after ${max_bringup_attempts} attempts."
-        echo "  Check serial cable, BDI cabling, and that no other process holds /dev/ttyUSB0."
-        return 1
-    fi
-
-    echo "  u-boot prompt detected after ${bringup_attempt} attempt(s)."
-
-    # Stop spam and drain serial
+    # Stop the autoboot spammer regardless of outcome.
     if [ -n "$SPAM_PID" ]; then
         kill "$SPAM_PID" 2>/dev/null || true
         SPAM_PID=""
     fi
+
+    if [ "$prompt_seen" -ne 1 ]; then
+        uboot_close
+        echo "ERROR: u-boot prompt did not appear after ${max_oct_tries} oct-remote-boot attempts."
+        echo "  If oct-remote-boot kept segfaulting, the BDI GDB stub may be wedged: cold"
+        echo "  power-cycle BOTH the TRX and the BDI, let the BDI settle, then re-run."
+        echo "--- last 20 lines of serial (uboot.log) ---"
+        tail -n 20 "${LOG_DIR}/uboot.log" 2>/dev/null | sed 's/^/    /' || true
+        return 1
+    fi
+
+    echo "  u-boot prompt reached."
     echo "Draining residual serial output (spam backlog) before sending commands..."
     uboot_drain 3
 
