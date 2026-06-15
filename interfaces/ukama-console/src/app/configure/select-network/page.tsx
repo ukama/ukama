@@ -81,7 +81,17 @@ export default function ConfigureSelectNetworkPage() {
         <div
           role="radiogroup"
           aria-label="Network"
-          style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10,
+            // Scroll the list itself (capped to the viewport) so a long list
+            // doesn't push the Continue button off the bottom of the page.
+            overflowY: 'auto',
+            minHeight: 0,
+            maxHeight: 'calc(100vh - 340px)',
+            paddingRight: 4,
+          }}
         >
           {networks.map((n) => {
             const active = selected === n.id;

@@ -9,13 +9,14 @@
 
 /** Node pool — hardware inventory, wired to the `nodesView` composite
  *  (NodePool operation: nodes without a site are available to install). */
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import TableSortLabel from '@mui/material/TableSortLabel';
 import Button from '@mui/material/Button';
 import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
 import { useNodePoolQuery } from '@/client/graphql/nodes-list.generated';
@@ -44,6 +45,14 @@ interface PoolRow {
 const NP_LABEL: Record<PoolStatus, string> = {
   available: 'Available',
   assigned: 'Assigned',
+};
+
+/** Sortable columns and the value each row sorts by. */
+type SortKey = 'type' | 'connectivity' | 'status';
+const sortValue = (n: PoolRow, by: SortKey): string => {
+  if (by === 'type') return n.type;
+  if (by === 'connectivity') return connectivity(n.connectivity).label;
+  return NP_LABEL[n.status];
 };
 
 /** Maps a node's raw connectivity to a status badge + label. */
@@ -135,6 +144,26 @@ export default function NodePoolScreen() {
   const avail = pool.filter((n) => n.status === 'available').length;
   const deployed = pool.length - avail;
 
+  // Click-to-sort on Type / Connectivity / Status (toggles asc → desc → off).
+  const [sort, setSort] = useState<{ by: SortKey; dir: 'asc' | 'desc' } | null>(
+    null,
+  );
+  const toggleSort = (by: SortKey) =>
+    setSort((cur) =>
+      cur?.by !== by
+        ? { by, dir: 'asc' }
+        : cur.dir === 'asc'
+          ? { by, dir: 'desc' }
+          : null,
+    );
+  const sortedPool = useMemo(() => {
+    if (!sort) return pool;
+    return [...pool].sort((a, b) => {
+      const r = sortValue(a, sort.by).localeCompare(sortValue(b, sort.by));
+      return sort.dir === 'asc' ? r : -r;
+    });
+  }, [pool, sort]);
+
   return (
     <div className="page">
       <PageHeader
@@ -183,15 +212,32 @@ export default function NodePoolScreen() {
               <TableHead>
                 <TableRow>
                   <TableCell>Node ID</TableCell>
-                  <TableCell>Type</TableCell>
-                  <TableCell>Connectivity</TableCell>
-                  <TableCell>Status</TableCell>
+                  {(
+                    [
+                      ['type', 'Type'],
+                      ['connectivity', 'Connectivity'],
+                      ['status', 'Status'],
+                    ] as [SortKey, string][]
+                  ).map(([key, label]) => (
+                    <TableCell
+                      key={key}
+                      sortDirection={sort?.by === key ? sort.dir : false}
+                    >
+                      <TableSortLabel
+                        active={sort?.by === key}
+                        direction={sort?.by === key ? sort.dir : 'asc'}
+                        onClick={() => toggleSort(key)}
+                      >
+                        {label}
+                      </TableSortLabel>
+                    </TableCell>
+                  ))}
                   <TableCell>Site</TableCell>
                   <TableCell align="right" sx={{ width: 130 }} />
                 </TableRow>
               </TableHead>
               <TableBody>
-                {pool.map((n) => {
+                {sortedPool.map((n) => {
                   const conn = connectivity(n.connectivity);
                   return (
                     <TableRow key={n.id}>

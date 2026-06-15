@@ -54,6 +54,8 @@ export interface UkamaMapProps {
   fitToMarkers?: boolean;
   /** Disable pan/zoom interactions (e.g. small onboarding preview). */
   interactive?: boolean;
+  /** Zoom on mouse-wheel scroll. Off by default so page scroll isn't trapped. */
+  scrollWheelZoom?: boolean;
   /** Marker click handler (e.g. select a site on the home map). */
   onSelect?: (id: string) => void;
 }
@@ -128,6 +130,7 @@ export default function UkamaMapImpl({
   height = 300,
   fitToMarkers = true,
   interactive = true,
+  scrollWheelZoom = false,
   onSelect,
 }: UkamaMapProps) {
   const { mode, systemMode } = useColorScheme();
@@ -148,7 +151,7 @@ export default function UkamaMapImpl({
       center={start}
       zoom={startZoom}
       style={{ height, width: '100%' }}
-      scrollWheelZoom={interactive}
+      scrollWheelZoom={interactive && scrollWheelZoom}
       dragging={interactive}
       zoomControl={interactive}
       doubleClickZoom={interactive}
