@@ -49,6 +49,7 @@ import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
 import StatusBadge from '@/components/StatusBadge';
 import { useToast } from '@/components/ToastProvider';
+import { metricLabel } from '@/lib/labels';
 import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
 import { useUiPrefs } from '@/lib/store';
 import { normalizeCoords } from '@/lib/geo';
@@ -304,7 +305,7 @@ function ComponentChart({
   });
   const m = data?.metricsRange.metrics?.[0];
   const hasData = !!m && m.values.length > 0 && m.success !== false;
-  const title = titleOverride ?? (m?.label || fallbackLabel);
+  const title = titleOverride ?? metricLabel(m?.label, metricKey, fallbackLabel);
 
   const values: [number, number][] = hasData
     ? m!.values.map((v) => [v[0] ?? 0, v[1] ?? 0])

@@ -43,6 +43,7 @@ import KV from '@/components/KV';
 import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
 import { useToast } from '@/components/ToastProvider';
+import { metricLabel } from '@/lib/labels';
 import { toUkamaNode } from '@/lib/mappers/nodes';
 import { formatDate } from '@/lib/parsers';
 import { ConnectivityDot, StateChip } from './nodeStatus';
@@ -102,7 +103,7 @@ const GROUP_KEYS: Record<MetricGroup, Record<NodeKind, string[]>> = {
     hnode: [],
   },
   customers: {
-    tnode: ['lte_active_ue'],
+    tnode: ['subscribers_active'],
     anode: [],
     cnode: [],
     hnode: [],
@@ -515,8 +516,9 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
 
   // KPIs are node-type specific (legacy console parity, backend gap #6).
   const kind = nodeKind(nodeSection.node.type);
-  // Render straight from series-derived metadata: label, unit, value.
-  const labelFor = (key: string) => latestByKey[key]?.label || key;
+  // Render straight from series-derived metadata: label, unit, value. Never
+  // shows a raw snake_case key — falls back to a humanized key.
+  const labelFor = (key: string) => metricLabel(latestByKey[key]?.label, key);
   const fmtKpi = (key: string): string => {
     const e = latestByKey[key];
     if (!e || !e.success) return '—';

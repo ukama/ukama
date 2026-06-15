@@ -201,7 +201,7 @@ const TYPE_NODE_KEYS_GROUPS: {
   {
     types: [GRAPHS_TYPE.SUBSCRIBERS],
     nodeKeys: {
-      [NODE_TYPE.tnode]: ["lte_active_ue"],
+      [NODE_TYPE.tnode]: ["subscribers_active"],
     },
   },
   {
@@ -211,7 +211,7 @@ const TYPE_NODE_KEYS_GROUPS: {
         "uptime",
         "cpu_temperature",
         "memory",
-        "lte_active_ue",
+        "subscribers_active",
       ],
       [NODE_TYPE.anode]: ["uptime", "fem1_temperature", "fem2_temperature"],
       [NODE_TYPE.cnode]: ["uptime", "memory"],
@@ -258,7 +258,7 @@ const TYPE_NODE_KEYS_GROUPS: {
       [NODE_TYPE.tnode]: [
         "uptime",
         "cpu_temperature",
-        "lte_active_ue",
+        "subscribers_active",
         "cellular_uplink",
         "cellular_downlink",
         "backhaul_uplink",
@@ -538,7 +538,6 @@ export const formatKPIValue = (type: string, value: any) => {
       return Math.floor(Number(value || 0));
     case "subscribers_active":
     case "node_active_subscribers":
-    case "lte_active_ue":
       return Math.floor(parseFloat(value || "0"));
     default:
       return parseFloat(Number(value || 0).toFixed(2));

@@ -108,19 +108,8 @@ export const METRIC_CATALOG: Record<string, MetricMeta> = {
     threshold: { min: 0, normal: 12000, max: 16000 },
   },
   // --- customers ---
+  // tnode active subscribers — real series (trx_lte_core_active_ue).
   subscribers_active: {
-    label: "Active subscribers",
-    unit: "",
-    format: "number",
-    base: 32,
-    min: 0,
-    max: 200,
-    jitter: 0.18,
-    trend: 0.12,
-  },
-  // tnode active UEs — real series (trx_lte_core_active_ue); used as the node
-  // "customers" KPI instead of system-scoped subscribers_active.
-  lte_active_ue: {
     label: "Active subscribers",
     unit: "",
     format: "number",
@@ -289,8 +278,6 @@ export const metricMeta = (key: string): MetricMeta =>
  * exists under tnode/anode/cnode in default-metrics.yaml.
  *
  * Still mocked:
- *  - subscribers_active: replaced on the node by lte_active_ue (real tnode
- *    series); kept only for any system-scoped consumer.
  *  - site_uptime_percentage: no backing series in default-metrics.yaml.
  */
 export const LIVE_METRIC_KEYS = new Set<string>([
@@ -300,8 +287,8 @@ export const LIVE_METRIC_KEYS = new Set<string>([
   "memory",
   "disk",
   "cpu_temperature",
-  // tnode customers (active UEs)
-  "lte_active_ue",
+  // tnode customers (active subscribers)
+  "subscribers_active",
   // tnode cellular
   "cellular_uplink",
   "cellular_downlink",

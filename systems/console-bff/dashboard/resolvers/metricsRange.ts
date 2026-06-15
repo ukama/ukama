@@ -191,7 +191,23 @@ export class MetricsRangeResolver {
       const results = await mapWithConcurrency(liveKeys, key =>
         getNodeMetricRange(baseURL, key, args)
       );
-      live = results.flatMap(res => res.metrics).map(enrich);
+      // Always emit one entry per requested key: when the upstream returns no
+      // series (e.g. the gateway has no mapping/data for it yet), fall back to
+      // an empty, enriched placeholder so the console still gets the catalog
+      // label/unit (no raw key shown) and renders a "no data" state.
+      live = liveKeys.flatMap((key, i) => {
+        const found = results[i]?.metrics ?? [];
+        if (found.length > 0) return found.map(enrich);
+        return [
+          enrich({
+            success: false,
+            msg: "no-data",
+            type: key,
+            nodeId: data.nodeId,
+            values: [],
+          } as MetricRes),
+        ];
+      });
     }
 
     // One series per (key, node/site). The gateway's `avg(...) without(job,
