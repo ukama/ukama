@@ -198,7 +198,7 @@ func (n *NodeEventServer) handleHealthReportEvent(ctx context.Context, key strin
 	}
 
 	if interfaces.Gps == nil || !interfaces.Gps.Available {
-		log.Errorf("GPS not found")
+		log.Errorf("GPS not found/available: %+v", interfaces.Gps)
 		return fmt.Errorf("GPS not found: %+v", interfaces.Gps)
 	}
 	coordinates := interfaces.Gps.Coordinates
