@@ -68,17 +68,37 @@ static int prepare_run(const runner_opts_t *opts,
     return ULAB_OK;
 }
 
-static int setup_bff_network_sites(bff_client_t *bff,
-                                   world_t *world,
-                                   ulab_error_t *err) {
+static int setup_bff_networks(bff_client_t *bff,
+                              const scenario_t *scenario,
+                              world_t *world,
+                              ulab_error_t *err) {
+
+    size_t i;
+
+    if (!scenario->setup.create_networks) {
+        return ULAB_OK;
+    }
+
+    for (i = 0; i < world->network_count; i++) {
+        ulab_status("BFF", "add network %s", world->networks[i].ref);
+        if (bff_add_network(bff, &world->networks[i], err)) {
+            return ULAB_EBFF;
+        }
+    }
+
+    return ULAB_OK;
+}
+
+static int setup_bff_sites(bff_client_t *bff,
+                           const scenario_t *scenario,
+                           world_t *world,
+                           ulab_error_t *err) {
 
     network_t *network;
     size_t i;
 
-    for (i = 0; i < world->network_count; i++) {
-        if (bff_add_network(bff, &world->networks[i], err)) {
-            return ULAB_EBFF;
-        }
+    if (!scenario->setup.create_sites) {
+        return ULAB_OK;
     }
 
     for (i = 0; i < world->site_count; i++) {
@@ -94,9 +114,154 @@ static int setup_bff_network_sites(bff_client_t *bff,
             return ULAB_EBFF;
         }
 
+        ulab_status("BFF", "add site %s", world->sites[i].ref);
         if (bff_add_site(bff, &world->sites[i], network, err)) {
             return ULAB_EBFF;
         }
+    }
+
+    return ULAB_OK;
+}
+
+static int setup_bff_packages(bff_client_t *bff,
+                              const scenario_t *scenario,
+                              world_t *world,
+                              ulab_error_t *err) {
+
+    size_t i;
+
+    if (!scenario->setup.create_packages) {
+        return ULAB_OK;
+    }
+
+    for (i = 0; i < world->package_count; i++) {
+        ulab_status("BFF", "add package %s", world->packages[i].ref);
+        if (bff_add_package(bff, &world->packages[i], err)) {
+            return ULAB_EBFF;
+        }
+    }
+
+    return ULAB_OK;
+}
+
+static int setup_bff_subscribers(bff_client_t *bff,
+                                 const scenario_t *scenario,
+                                 world_t *world,
+                                 ulab_error_t *err) {
+
+    network_t *network;
+    subscriber_t *sub;
+    size_t i;
+
+    if (!scenario->setup.create_subscribers) {
+        return ULAB_OK;
+    }
+
+    for (i = 0; i < world->subscriber_count; i++) {
+        sub = &world->subscribers[i];
+        network = world_network_by_ref(world, sub->network_ref);
+        if (network == NULL) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "subscriber %s has invalid network ref",
+                     sub->ref);
+            return ULAB_EBFF;
+        }
+
+        ulab_status("BFF", "add subscriber %s", sub->ref);
+        if (bff_add_subscriber(bff, sub, network, err)) {
+            return ULAB_EBFF;
+        }
+    }
+
+    return ULAB_OK;
+}
+
+static subscriber_t *find_subscriber(world_t *world,
+                                   const char *ref) {
+
+    size_t i;
+
+    for (i = 0; i < world->subscriber_count; i++) {
+        if (ulab_streq(world->subscribers[i].ref, ref)) {
+            return &world->subscribers[i];
+        }
+    }
+
+    return NULL;
+}
+
+static int setup_bff_sims(bff_client_t *bff,
+                          const scenario_t *scenario,
+                          world_t *world,
+                          ulab_error_t *err) {
+
+    subscriber_t *sub;
+    network_t *network;
+    package_t *package;
+    ue_t *ue;
+    size_t i;
+
+    if (!scenario->setup.create_sims) {
+        return ULAB_OK;
+    }
+
+    for (i = 0; i < world->ue_count; i++) {
+        ue = &world->ues[i];
+        sub = find_subscriber(world, ue->subscriber_ref);
+        network = world_network_by_ref(world, ue->network_ref);
+        package = world_package_by_ref(world, ue->package_ref);
+
+        if (sub == NULL ||
+            !ulab_streq(sub->ref, ue->subscriber_ref)) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "ue %s has invalid subscriber ref", ue->ref);
+            return ULAB_EBFF;
+        }
+
+        if (network == NULL) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "ue %s has invalid network ref", ue->ref);
+            return ULAB_EBFF;
+        }
+
+        if (package == NULL) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "ue %s has invalid package ref", ue->ref);
+            return ULAB_EBFF;
+        }
+
+        ulab_status("BFF", "allocate sim %s", ue->ref);
+        if (bff_allocate_sim(bff, ue, sub, network, package, err)) {
+            return ULAB_EBFF;
+        }
+    }
+
+    return ULAB_OK;
+}
+
+static int setup_bff_world(bff_client_t *bff,
+                           const scenario_t *scenario,
+                           world_t *world,
+                           ulab_error_t *err) {
+
+    if (setup_bff_networks(bff, scenario, world, err)) {
+        return ULAB_EBFF;
+    }
+
+    if (setup_bff_sites(bff, scenario, world, err)) {
+        return ULAB_EBFF;
+    }
+
+    if (setup_bff_packages(bff, scenario, world, err)) {
+        return ULAB_EBFF;
+    }
+
+    if (setup_bff_subscribers(bff, scenario, world, err)) {
+        return ULAB_EBFF;
+    }
+
+    if (setup_bff_sims(bff, scenario, world, err)) {
+        return ULAB_EBFF;
     }
 
     return ULAB_OK;
@@ -114,6 +279,52 @@ static int start_runtime_sites(const char *repo,
 
     return runtime_build_and_start_sites(repo, runtime, world, err) ?
         ULAB_ERUNTIME : ULAB_OK;
+}
+
+static int runtime_all_ues(const scenario_t *scenario,
+                           world_t *world,
+                           runtime_t *runtime,
+                           ulab_error_t *err) {
+
+    selector_t all;
+    selector_result_t ues;
+    int rc;
+
+    memset(&all, 0, sizeof(all));
+    memset(&ues, 0, sizeof(ues));
+    all.kind = SEL_ALL;
+
+    if (!scenario->runtime.start_ues &&
+        !scenario->runtime.wait_ues_attached) {
+        return ULAB_OK;
+    }
+
+    rc = selector_resolve_ues(world, &all, &ues, err);
+    if (rc != ULAB_OK) {
+        return ULAB_ERUNTIME;
+    }
+
+    if (scenario->runtime.start_ues) {
+        ulab_status("RUNTIME", "start ues");
+        rc = runtime_build_and_start_ues(NULL, runtime, world, &ues, err);
+        if (rc != ULAB_OK) {
+            selector_result_free(&ues);
+            return ULAB_ERUNTIME;
+        }
+    }
+
+    if (scenario->runtime.wait_ues_attached) {
+        ulab_status("RUNTIME", "wait ues attached");
+        rc = runtime_wait_ues_attached(runtime, world, &ues, err);
+        if (rc != ULAB_OK) {
+            selector_result_free(&ues);
+            return ULAB_ERUNTIME;
+        }
+    }
+
+    selector_result_free(&ues);
+
+    return ULAB_OK;
 }
 
 static int run_checks(check_ctx_t *ctx,
@@ -284,8 +495,8 @@ int runner_validate(const runner_opts_t *opts) {
         goto done;
     }
 
-    ulab_status("SETUP", "creating networks and sites via BFF");
-    rc = setup_bff_network_sites(&bff, &world, &err);
+    ulab_status("SETUP", "creating BFF world resources");
+    rc = setup_bff_world(&bff, scenario, &world, &err);
     if (rc != ULAB_OK) {
         goto done;
     }
@@ -294,6 +505,11 @@ int runner_validate(const runner_opts_t *opts) {
     write_world_artifact(&world, runDir);
 
     if (!opts->setup_only) {
+        rc = runtime_all_ues(scenario, &world, &runtime, &err);
+        if (rc != ULAB_OK) {
+            goto done;
+        }
+
         for (i = 0; i < scenario->phase_count; i++) {
             rc = run_phase(scenario, &world, &model, &bff, &runtime,
                            &report, &scenario->phases[i], &err);
