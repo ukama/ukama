@@ -190,3 +190,13 @@ func (sm *SimManager) GetUsages(simId, simType, cdrType, from, to, region string
 
 	return resp, nil
 }
+
+func (sm *SimManager) GetSimToken(iccid string) (*pb.SimTokenResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
+	defer cancel()
+
+	return sm.client.GenerateSimToken(ctx,
+		&pb.SimTokenRequest{
+			Iccid: iccid,
+		})
+}

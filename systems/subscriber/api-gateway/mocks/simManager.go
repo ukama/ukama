@@ -132,6 +132,36 @@ func (_m *simManager) GetSim(simId string) (*gen.GetSimResponse, error) {
 	return r0, r1
 }
 
+// GetSimToken provides a mock function with given fields: iccid
+func (_m *simManager) GetSimToken(iccid string) (*gen.SimTokenResponse, error) {
+	ret := _m.Called(iccid)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetSimToken")
+	}
+
+	var r0 *gen.SimTokenResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (*gen.SimTokenResponse, error)); ok {
+		return rf(iccid)
+	}
+	if rf, ok := ret.Get(0).(func(string) *gen.SimTokenResponse); ok {
+		r0 = rf(iccid)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.SimTokenResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(iccid)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetSimsByNetwork provides a mock function with given fields: networkId
 func (_m *simManager) GetSimsByNetwork(networkId string) (*gen.GetSimsByNetworkResponse, error) {
 	ret := _m.Called(networkId)

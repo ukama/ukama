@@ -84,6 +84,7 @@ type simManager interface {
 	GetSimsByNetwork(networkId string) (*simMangPb.GetSimsByNetworkResponse, error)
 	// Deprecated: Use pkg.client.SimManager.ListPackagesForSim with simId as filtering param instead.
 	GetPackagesForSim(simId string) (*simMangPb.GetPackagesForSimResponse, error)
+	GetSimToken(iccid string) (*simMangPb.SimTokenResponse, error)
 }
 
 type subscriber interface {
@@ -189,6 +190,12 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		// Deprecated: Use POST /v1/sim/:sim_id/package instead.
 		sim.POST("/package", formatDoc("Add a new package to the given subscriber's SIM", ""), tonic.Handler(r.postPkgForSim, http.StatusCreated))
 
+		// Sim token routes
+
+		const iccidKey = "/:iccid"
+		simToken := auth.Group("/tokens", "Sim Tokens", "Operations on Sim Tokens")
+		simToken.GET(iccidKey, formatDoc("Generate Sim Token", "Generate token for a given sim"), tonic.Handler(r.getSimToken, http.StatusOK))
+
 		usage := auth.Group("usages", "Usages", "Operator sims usages endpoints")
 		usage.GET("", formatDoc("Get Usages", "Get sim usages with filters"), tonic.Handler(r.getUsages, http.StatusOK))
 	}
@@ -200,6 +207,8 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 		info.Description = description
 	}}
 }
+
+// Sim pool
 
 func (r *Router) getSimByIccid(c *gin.Context, req *SimByIccidReq) (*simPoolPb.GetByIccidResponse, error) {
 	return r.clients.sp.Get(req.Iccid)
@@ -238,6 +247,32 @@ func (r *Router) uploadSimsToSimPool(c *gin.Context, req *SimPoolUploadSimReq) (
 func (r *Router) deleteSimFromSimPool(c *gin.Context, req *SimPoolRemoveSimReq) (*simPoolPb.DeleteResponse, error) {
 	return r.clients.sp.DeleteSimFromSimPool(req.Id)
 }
+
+func addReqToAddSimReqPb(req *SimPoolAddSimReq) (*simPoolPb.AddRequest, error) {
+	if req == nil {
+		return nil, fmt.Errorf("invalid add request")
+	}
+
+	list := make([]*simPoolPb.AddSim, len(req.SimInfo))
+	for i, iter := range req.SimInfo {
+		list[i] = &simPoolPb.AddSim{
+			Iccid:          iter.Iccid,
+			Msisdn:         iter.Msisdn,
+			ActivationCode: iter.ActivationCode,
+			IsPhysical:     iter.IsPhysicalSim,
+			QrCode:         iter.QrCode,
+			SmDpAddress:    iter.SmDpAddress,
+			SimType:        iter.SimType,
+		}
+	}
+	pbReq := &simPoolPb.AddRequest{
+		Sim: list,
+	}
+
+	return pbReq, nil
+}
+
+// Subscribers
 
 func (r *Router) getSubscriberByEmail(c *gin.Context, req *SubscriberGetReqByEmail) (*subRegPb.GetSubscriberByEmailResponse, error) {
 	return r.clients.sub.GetSubscriberByEmail(strings.ToLower(req.Email))
@@ -282,6 +317,8 @@ func (r *Router) updateSubscriber(c *gin.Context, req *SubscriberUpdateReq) (*su
 func (r *Router) getSubscriberByNetwork(c *gin.Context, req *SubscriberByNetworkReq) (*subRegPb.GetByNetworkResponse, error) {
 	return r.clients.sub.GetByNetwork(req.NetworkId)
 }
+
+// Sim manager
 
 func (r *Router) allocateSim(c *gin.Context, req *AllocateSimReq) (*simMangPb.AllocateSimResponse, error) {
 	simReq := simMangPb.AllocateSimRequest{
@@ -374,6 +411,13 @@ func (r *Router) removePkgForSim(c *gin.Context, req *RemovePkgFromSimReq) (*sim
 	return r.clients.sm.RemovePackageForSim(&payload)
 }
 
+// Sim tokens
+func (r *Router) getSimToken(c *gin.Context, req *GetSimTokenReq) (*simMangPb.SimTokenResponse, error) {
+	return r.clients.sm.GetSimToken(req.Iccid)
+}
+
+// Usages
+
 func (r *Router) getUsages(c *gin.Context, req *GetUsagesReq) (*simMangPb.UsageResponse, error) {
 	cdrType, ok := c.GetQuery("cdr_type")
 	if !ok {
@@ -383,28 +427,4 @@ func (r *Router) getUsages(c *gin.Context, req *GetUsagesReq) (*simMangPb.UsageR
 
 	return r.clients.sm.GetUsages(req.SimId, req.SimType, cdrType, req.From, req.To, req.Region)
 
-}
-
-func addReqToAddSimReqPb(req *SimPoolAddSimReq) (*simPoolPb.AddRequest, error) {
-	if req == nil {
-		return nil, fmt.Errorf("invalid add request")
-	}
-
-	list := make([]*simPoolPb.AddSim, len(req.SimInfo))
-	for i, iter := range req.SimInfo {
-		list[i] = &simPoolPb.AddSim{
-			Iccid:          iter.Iccid,
-			Msisdn:         iter.Msisdn,
-			ActivationCode: iter.ActivationCode,
-			IsPhysical:     iter.IsPhysicalSim,
-			QrCode:         iter.QrCode,
-			SmDpAddress:    iter.SmDpAddress,
-			SimType:        iter.SimType,
-		}
-	}
-	pbReq := &simPoolPb.AddRequest{
-		Sim: list,
-	}
-
-	return pbReq, nil
 }
