@@ -31,6 +31,8 @@ static void usage(void) {
     printf("  --out <dir>      output directory\n");
     printf("  --scripts <dir>  runtime script directory\n");
     printf("  --setup-only     create BFF world and skip runtime\n");
+    printf("  --subscriber     create package/subscriber/SIM only\n");
+    printf("  --network-id <id> existing BFF network id for --subscriber\n");
     printf("  --print-world    dry-run: print generated world sample\n");
     printf("  --quiet          summary only\n");
     printf("  --verbose        debug logs\n");
@@ -45,6 +47,9 @@ static void opts_init(runner_opts_t *o) {
               ulab_getenv_default("UKAMA_LAB_OUT", "runs"));
     ulab_copy(o->script_dir, sizeof(o->script_dir),
               ulab_getenv_default("UKAMA_LAB_SCRIPTS", "scripts"));
+    ulab_copy(o->subscriber_network_id,
+              sizeof(o->subscriber_network_id),
+              ulab_getenv_default("UKAMA_LAB_NETWORK_ID", ""));
     o->keep = 1;
 }
 
@@ -67,6 +72,12 @@ static int parse_opts(int argc, char **argv, int start, runner_opts_t *o) {
             ulab_copy(o->repo, sizeof(o->repo), argv[++i]);
         } else if (ulab_streq(argv[i], "--setup-only")) {
             o->setup_only = 1;
+        } else if (ulab_streq(argv[i], "--subscriber")) {
+            o->subscriber_only = 1;
+            o->setup_only = 1;
+        } else if (ulab_streq(argv[i], "--network-id") && i + 1 < argc) {
+            ulab_copy(o->subscriber_network_id,
+                      sizeof(o->subscriber_network_id), argv[++i]);
         } else if (ulab_streq(argv[i], "--print-world")) {
             o->print_world = 1;
         } else if (ulab_streq(argv[i], "--print-plan")) {
@@ -129,7 +140,8 @@ int main(int argc, char **argv) {
     }
 
     /* repo path is must else we wont know how to build virtual node/ue */
-    if (opts.repo[0] == '\0' || strstr(opts.repo, "ukama") == NULL) {
+    if (!opts.subscriber_only &&
+        (opts.repo[0] == '\0' || strstr(opts.repo, "ukama") == NULL)) {
         printf("Missing --repo. Ukama repo root is MUST\n");
         usage();
         return ULAB_EUSAGE;

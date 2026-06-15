@@ -160,9 +160,9 @@ static int setup_bff_subscribers(bff_client_t *bff,
     for (i = 0; i < world->subscriber_count; i++) {
         sub = &world->subscribers[i];
         network = world_network_by_ref(world, sub->network_ref);
-        if (network == NULL) {
+        if (network == NULL || network->bff_id[0] == '\0') {
             snprintf(err->msg, sizeof(err->msg),
-                     "subscriber %s has invalid network ref",
+                     "subscriber %s has invalid network id",
                      sub->ref);
             return ULAB_EBFF;
         }
@@ -177,7 +177,7 @@ static int setup_bff_subscribers(bff_client_t *bff,
 }
 
 static subscriber_t *find_subscriber(world_t *world,
-                                   const char *ref) {
+                                     const char *ref) {
 
     size_t i;
 
@@ -211,22 +211,21 @@ static int setup_bff_sims(bff_client_t *bff,
         network = world_network_by_ref(world, ue->network_ref);
         package = world_package_by_ref(world, ue->package_ref);
 
-        if (sub == NULL ||
-            !ulab_streq(sub->ref, ue->subscriber_ref)) {
+        if (sub == NULL || !ulab_streq(sub->ref, ue->subscriber_ref)) {
             snprintf(err->msg, sizeof(err->msg),
                      "ue %s has invalid subscriber ref", ue->ref);
             return ULAB_EBFF;
         }
 
-        if (network == NULL) {
+        if (network == NULL || network->bff_id[0] == '\0') {
             snprintf(err->msg, sizeof(err->msg),
-                     "ue %s has invalid network ref", ue->ref);
+                     "ue %s has invalid network id", ue->ref);
             return ULAB_EBFF;
         }
 
-        if (package == NULL) {
+        if (package == NULL || package->bff_id[0] == '\0') {
             snprintf(err->msg, sizeof(err->msg),
-                     "ue %s has invalid package ref", ue->ref);
+                     "ue %s has invalid package id", ue->ref);
             return ULAB_EBFF;
         }
 
@@ -250,6 +249,57 @@ static int setup_bff_world(bff_client_t *bff,
 
     if (setup_bff_sites(bff, scenario, world, err)) {
         return ULAB_EBFF;
+    }
+
+    if (setup_bff_packages(bff, scenario, world, err)) {
+        return ULAB_EBFF;
+    }
+
+    if (setup_bff_subscribers(bff, scenario, world, err)) {
+        return ULAB_EBFF;
+    }
+
+    if (setup_bff_sims(bff, scenario, world, err)) {
+        return ULAB_EBFF;
+    }
+
+    return ULAB_OK;
+}
+
+static int set_subscriber_network_id(world_t *world,
+                                     const char *network_id,
+                                     ulab_error_t *err) {
+
+    if (network_id == NULL || network_id[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "--subscriber requires --network-id or "
+                 "UKAMA_LAB_NETWORK_ID");
+        return ULAB_EUSAGE;
+    }
+
+    if (world->network_count != 1) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "--subscriber currently supports exactly one network");
+        return ULAB_EUSAGE;
+    }
+
+    ulab_copy(world->networks[0].bff_id,
+              sizeof(world->networks[0].bff_id), network_id);
+
+    return ULAB_OK;
+}
+
+static int setup_bff_subscriber_only(bff_client_t *bff,
+                                     const scenario_t *scenario,
+                                     world_t *world,
+                                     const runner_opts_t *opts,
+                                     ulab_error_t *err) {
+
+    int rc;
+
+    rc = set_subscriber_network_id(world, opts->subscriber_network_id, err);
+    if (rc != ULAB_OK) {
+        return rc;
     }
 
     if (setup_bff_packages(bff, scenario, world, err)) {
@@ -495,8 +545,14 @@ int runner_validate(const runner_opts_t *opts) {
         goto done;
     }
 
-    ulab_status("SETUP", "creating BFF world resources");
-    rc = setup_bff_world(&bff, scenario, &world, &err);
+    if (opts->subscriber_only) {
+        ulab_status("SETUP", "creating package/subscriber/SIM only");
+        rc = setup_bff_subscriber_only(&bff, scenario, &world, opts,
+                                       &err);
+    } else {
+        ulab_status("SETUP", "creating BFF world resources");
+        rc = setup_bff_world(&bff, scenario, &world, &err);
+    }
     if (rc != ULAB_OK) {
         goto done;
     }

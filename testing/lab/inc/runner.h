@@ -17,12 +17,14 @@ typedef struct {
     char out_dir[ULAB_MAX_PATH];
     char script_dir[ULAB_MAX_PATH];
     char repo[ULAB_MAX_PATH];
+    char subscriber_network_id[ULAB_MAX_ID];
     
     uint32_t seed_override;
 
     int has_seed_override;
     int dry_run;
     int setup_only;
+    int subscriber_only;
     int print_world;
     int print_plan;
     int cleanup;
