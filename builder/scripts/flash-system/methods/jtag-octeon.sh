@@ -667,6 +667,9 @@ chmod +x ${rc_post_target}"
 method_apply() {
     trap _jtag_octeon_cleanup EXIT
 
+    local trx_ip
+    trx_ip=$(yq_read "$BOARD_CONFIG" network.trx_ip)
+
     echo "=== Phase 1: JTAG bringup ==="
     _phase1_run
 
@@ -677,9 +680,15 @@ method_apply() {
     echo "  2. Disconnect the BDI / JTAG cable  (REQUIRED — while connected the BDI holds the"
     echo "     CPU in reset, so the board will NOT finish booting from flash)"
     echo "  3. Power ON the TRX"
-    echo "  4. Wait until it boots to Linux (ethernet is auto-enabled by u-boot preboot)"
+    echo "  4. Wait until it boots to Linux and shows a login prompt on the serial console"
+    echo "  5. On the serial console, log in (root / cavium.lte) and ENABLE ETHERNET:"
+    echo "         devmem 0x00011800B0001000 64 0x0140"
+    echo "     (the post_config script that normally does this isn't on the board yet — it"
+    echo "      arrives with the Phase 2 images — so ethernet must be enabled by hand here,"
+    echo "      otherwise Phase 2 can't SSH in.)"
+    echo "  6. Confirm reachability from this host:  ping ${trx_ip}"
     echo ""
-    read -rp "Press ENTER when ready: " _
+    read -rp "Press ENTER once ethernet is up (ping works): " _
 
     echo ""
     echo "=== Phase 2: SSH + dd image flash ==="
