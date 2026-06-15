@@ -54,6 +54,23 @@ import { mapAnalytics } from "./mapper";
 
 const ANALYTICS = "analytics";
 
+/**
+ * Revenue KPI keys the console Revenue screen reads that the business
+ * `GetSalesOverview` does not yet emit (it only emits `revenue`, `purchases`,
+ * `avg_purchase`, `paid_customers`). See deriveRevenueKpis below.
+ */
+const REVENUE_SHIM_KEYS = [
+  "revenue_collected",
+  "revenue_month",
+  "revenue_prev_month",
+  "revenue_pending",
+] as const;
+
+const kpiValue = (
+  o: SalesOverviewDto | undefined,
+  key: string
+): KpiDto | undefined => o?.kpis?.find(k => k.key === key);
+
 /** Build a snake_case query string from a windowed/filtered/paginated input. */
 const windowQuery = (data: AnalyticsWindowInput): string => {
   const q = new URLSearchParams();
@@ -118,9 +135,105 @@ class AnalyticsAPI extends BaseRESTDataSource {
     data: AnalyticsWindowInput
   ): Promise<SalesOverviewDto> => {
     this.baseURL = baseURL;
-    return this.callGet<SalesOverviewDto>(
+    const overview = await this.callGet<SalesOverviewDto>(
       `business/sales/overview?${windowQuery(data)}`
     );
+    // TODO(analytics-backend): drop once the backend emits the revenue_* KPIs.
+    return this.deriveRevenueKpis(overview, data);
+  };
+
+  /**
+   * TODO(analytics-backend): the business `GetSalesOverview` only emits
+   * `revenue`/`purchases`/`avg_purchase`/`paid_customers`, but the console
+   * Revenue screen also needs `revenue_collected`, `revenue_month`,
+   * `revenue_prev_month` and `revenue_pending`. Until the business service emits
+   * these, we derive them from REAL payment data by re-querying the overview
+   * endpoint for the relevant windows (this month / last month / all-time) and
+   * reading each window's `revenue` KPI — so the values always match the data in
+   * the analytics DB. `revenue_pending` has no backend source yet, so it stays 0.
+   * Remove this shim once the backend provides these keys.
+   * Tracking: systems/console-bff/docs/analytics-backend-gaps.md
+   */
+  private deriveRevenueKpis = async (
+    overview: SalesOverviewDto,
+    data: AnalyticsWindowInput
+  ): Promise<SalesOverviewDto> => {
+    const have = new Set((overview.kpis ?? []).map(k => k.key));
+    if (REVENUE_SHIM_KEYS.every(k => have.has(k))) return overview;
+
+    const now = new Date();
+    const startOfMonth = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)
+    ).toISOString();
+    const startOfPrevMonth = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)
+    ).toISOString();
+
+    const q = (extra: Partial<AnalyticsWindowInput>): string =>
+      `business/sales/overview?${windowQuery({ networkId: data.networkId, ...extra })}`;
+
+    // Each window's `revenue` KPI is computed by the backend from real payment
+    // events, so these reflect exactly what's in the analytics DB.
+    const safe = async (
+      path: string
+    ): Promise<SalesOverviewDto | undefined> => {
+      try {
+        return await this.callGet<SalesOverviewDto>(path);
+      } catch {
+        return undefined;
+      }
+    };
+
+    const [monthRes, prevRes, allRes] = await Promise.all([
+      safe(q({ period: "month" })),
+      safe(q({ period: "custom", from: startOfPrevMonth, to: startOfMonth })),
+      safe(
+        q({
+          period: "custom",
+          from: "2000-01-01T00:00:00Z",
+          to: now.toISOString(),
+        })
+      ),
+    ]);
+
+    const monthRev = kpiValue(monthRes, "revenue");
+    const prevRev = kpiValue(prevRes, "revenue");
+    const allRev = kpiValue(allRes, "revenue");
+
+    const fmt = (v: number): string =>
+      `$${(Math.round(v * 100) / 100).toLocaleString()}`;
+    const kpi = (
+      key: string,
+      value: number,
+      delta?: number,
+      stale = false
+    ): KpiDto => ({
+      key,
+      value: Math.round(value * 100) / 100,
+      formatted: fmt(value),
+      delta,
+      deltaPeriod: delta != null ? "month" : undefined,
+      stale,
+    });
+
+    const derived: Record<string, KpiDto> = {
+      revenue_collected: kpi("revenue_collected", allRev?.value ?? 0),
+      revenue_month: kpi(
+        "revenue_month",
+        monthRev?.value ?? 0,
+        monthRev?.delta
+      ),
+      revenue_prev_month: kpi("revenue_prev_month", prevRev?.value ?? 0),
+      // No pending-payment source in analytics yet → 0, flagged as mock.
+      revenue_pending: kpi("revenue_pending", 0, undefined, true),
+    };
+
+    const merged = [...(overview.kpis ?? [])];
+    for (const key of REVENUE_SHIM_KEYS) {
+      if (!have.has(key)) merged.push(derived[key]);
+    }
+
+    return { ...overview, kpis: merged };
   };
 
   getPackagePerformance = async (
