@@ -24,7 +24,6 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Skeleton from '@mui/material/Skeleton';
 
 import { useNodeDetailQuery } from '@/client/graphql/node-detail.generated';
-import type { MetricsRangeQuery } from '@/client/graphql/range-metrics.generated';
 import { useMetricsRangeQuery } from '@/client/graphql/range-metrics.generated';
 import { useRestartNodeMutation } from '@/client/graphql/controller.generated';
 import {
@@ -33,21 +32,18 @@ import {
 } from '@/client/graphql/software.generated';
 import AppModal from '@/components/AppModal';
 import AppTabs from '@/components/AppTabs';
-import MetricLineChart, {
-  ChartMessage,
-  thresholdLegendRows,
-} from '@/components/MetricLineChart';
+import MetricChartCard from '@/components/MetricChartCard';
 import DetailPicker from '@/components/DetailPicker';
 import { EmptyState } from '@/components/EmptyState';
 import KV from '@/components/KV';
 import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
 import { useToast } from '@/components/ToastProvider';
-import RangeToggle from '@/components/RangeToggle';
 import { metricLabel } from '@/lib/labels';
 import { toUkamaNode } from '@/lib/mappers/nodes';
+import { type LatestEntry, seriesLatest } from '@/lib/metrics';
 import { formatDate } from '@/lib/parsers';
-import { RANGE_SECONDS, type Range } from '@/lib/ranges';
+import { RANGE_SECONDS } from '@/lib/ranges';
 import { ConnectivityDot, StateChip } from './nodeStatus';
 
 const TABS = ['Overview', 'Network', 'Resources', 'Radio', 'Software'];
@@ -151,59 +147,6 @@ const TAB_SECTIONS: Record<string, SectionDef[]> = {
   Radio: [{ key: 'radio', title: 'Radio', group: 'radio' }],
 };
 
-function LegendDot({ color, label }: { color: string; label: string }) {
-  return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 6,
-        fontSize: 12,
-        color: 'var(--uk-ink-2)',
-      }}
-    >
-      <span
-        style={{ width: 9, height: 9, borderRadius: 3, background: color }}
-      />
-      {label}
-    </span>
-  );
-}
-
-/** One metric series straight from the BFF (metricsRange). */
-type MetricSeries = MetricsRangeQuery['metricsRange']['metrics'][number];
-
-/** Latest value + presentation metadata for one rail KPI, derived from a
- *  metricsRange series (its last real sample) — no separate latest fetch. */
-type LatestEntry = {
-  value: number;
-  success: boolean;
-  label?: string | null;
-  unit?: string | null;
-  format?: string | null;
-};
-
-/** Collapse a series to its latest KPI value: the most recent sample that
- *  isn't a gap-fill placeholder (-1). The chart's last point IS the latest. */
-const seriesLatest = (m: MetricSeries): LatestEntry => {
-  const vals = m.values ?? [];
-  let last: number | null = null;
-  for (let i = vals.length - 1; i >= 0; i--) {
-    const v = vals[i]?.[1];
-    if (v != null && v !== -1) {
-      last = v;
-      break;
-    }
-  }
-  return {
-    value: last ?? 0,
-    success: m.success !== false && last != null,
-    label: m.label,
-    unit: m.unit,
-    format: m.format,
-  };
-};
-
 /** Hidden fetcher: one batched metricsRange (Day window) for rail KPIs whose
  *  chart isn't currently shown, so every left-rail value still has a source
  *  without a separate latest query. Reports each series' latest upward. */
@@ -229,81 +172,6 @@ function RailLatest({
     }
   }, [data, onLatest]);
   return null;
-}
-
-/** One metric chart with its own range filter — self-fetches its series so
- *  every graph filters independently. Rendered with Recharts. */
-function MetricChart({
-  nodeId,
-  metricKey,
-  off,
-  onLatest,
-}: {
-  nodeId: string;
-  metricKey: string;
-  off: boolean;
-  onLatest?: (key: string, entry: LatestEntry) => void;
-}) {
-  const [range, setRange] = useState<Range>('Day');
-  const [nowSec] = useState(() => Math.floor(Date.now() / 1000));
-  const to = nowSec;
-  const from = nowSec - RANGE_SECONDS[range];
-  const { data, loading, error } = useMetricsRangeQuery({
-    variables: { data: { keys: [metricKey], nodeId, from, to } },
-  });
-
-  const m: MetricSeries | undefined = data?.metricsRange.metrics?.[0];
-  // The chart already holds the series — feed its latest sample to the rail so
-  // the same metric isn't fetched twice (chart + a separate latest query).
-  useEffect(() => {
-    if (m && onLatest) onLatest(metricKey, seriesLatest(m));
-  }, [m, metricKey, onLatest]);
-  const hasData = !!m && m.values.length > 0 && m.success !== false;
-  const values: [number, number][] = hasData
-    ? off
-      ? m!.values.map((v) => [v[0] ?? 0, 0])
-      : m!.values.map((v) => [v[0] ?? 0, v[1] ?? 0])
-    : [];
-  const legend = thresholdLegendRows(m?.threshold ?? null, m?.unit);
-  const title = m?.label || metricKey;
-  return (
-    <SectionCard
-      title={title}
-      right={<RangeToggle value={range} onChange={setRange} />}
-    >
-      {error ? (
-        <ChartMessage kind="error" message={error.message} height={300} />
-      ) : loading && !m ? (
-        <Skeleton variant="rounded" sx={{ height: 300 }} />
-      ) : !hasData ? (
-        <ChartMessage kind="empty" height={300} />
-      ) : (
-        <>
-          <MetricLineChart
-            values={values}
-            title={title}
-            unit={m?.unit}
-            format={m?.format}
-            threshold={m?.threshold ?? null}
-            height={300}
-          />
-          <div
-            style={{
-              display: 'flex',
-              gap: 18,
-              justifyContent: 'center',
-              marginTop: 10,
-              flexWrap: 'wrap',
-            }}
-          >
-            {legend.map((l) => (
-              <LegendDot key={l.label} {...l} />
-            ))}
-          </div>
-        </>
-      )}
-    </SectionCard>
-  );
 }
 
 /** Right-panel charts for a metric group — one self-filtering chart per key. */
@@ -334,7 +202,7 @@ function GroupCharts({
       style={{ display: 'flex', flexDirection: 'column', gap: 'var(--uk-gap)' }}
     >
       {keys.map((k) => (
-        <MetricChart
+        <MetricChartCard
           key={k}
           nodeId={nodeId}
           metricKey={k}

@@ -20,18 +20,10 @@ import { KpiRow } from '@/components/Kpi';
 import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
 import { useCurrency } from '@/lib/currency';
-import { kpiAmount } from '@/lib/kpis';
+import { KPI_KEYS, kpiAmount } from '@/lib/kpis';
 import { useUiPrefs } from '@/lib/store';
 
 // KPI keys this screen reads. Centralised so a backend rename is a one-line
-// change here, never in the JSX. See docs/analytics-backend-gaps.md.
-const KEY = {
-  collected: 'revenue_collected',
-  month: 'revenue_month',
-  prevMonth: 'revenue_prev_month',
-  pending: 'revenue_pending',
-} as const;
-
 const BAR_COLORS = [
   'var(--uk-ac)',
   'var(--uk-secondary)',
@@ -100,7 +92,7 @@ export default function BizSalesScreen() {
                   lineHeight: 1,
                 }}
               >
-                {error ? '—' : kpiAmount(kpis, KEY.collected, money)}
+                {error ? '—' : kpiAmount(kpis, KPI_KEYS.revenueCollected, money)}
               </span>
               {/* MoM delta hidden until the backend provides a reliable
                   previous-period revenue (current value is unreliable). */}
@@ -111,15 +103,15 @@ export default function BizSalesScreen() {
                 [
                   [
                     'This month',
-                    error ? '—' : kpiAmount(kpis, KEY.month, money),
+                    error ? '—' : kpiAmount(kpis, KPI_KEYS.revenueMonth, money),
                   ],
                   [
                     'Last month',
-                    error ? '—' : kpiAmount(kpis, KEY.prevMonth, money),
+                    error ? '—' : kpiAmount(kpis, KPI_KEYS.revenuePrevMonth, money),
                   ],
                   [
                     'Pending',
-                    error ? '—' : kpiAmount(kpis, KEY.pending, money),
+                    error ? '—' : kpiAmount(kpis, KPI_KEYS.revenuePending, money),
                   ],
                 ] as const
               ).map(([k, v]) => (
@@ -154,19 +146,19 @@ export default function BizSalesScreen() {
             icon: 'monetization_on',
             color: 'var(--uk-beige)',
             label: 'Revenue this month',
-            value: error ? '—' : kpiAmount(kpis, KEY.month, money),
+            value: error ? '—' : kpiAmount(kpis, KPI_KEYS.revenueMonth, money),
           },
           {
             icon: 'payments',
             color: 'var(--uk-ac)',
             label: 'Pending payments',
-            value: error ? '—' : kpiAmount(kpis, KEY.pending, money),
+            value: error ? '—' : kpiAmount(kpis, KPI_KEYS.revenuePending, money),
           },
           {
             icon: 'donut_small',
             color: 'var(--uk-success-bright)',
             label: 'Collected to date',
-            value: error ? '—' : kpiAmount(kpis, KEY.collected, money),
+            value: error ? '—' : kpiAmount(kpis, KPI_KEYS.revenueCollected, money),
           },
           {
             icon: 'sell',

@@ -25,19 +25,11 @@ import { KpiRow } from '@/components/Kpi';
 import UkamaMap, { HOME_MAP_ZOOM } from '@/components/Map/UkamaMap';
 import PageHeader from '@/components/PageHeader';
 import StatusBadge from '@/components/StatusBadge';
-import type { Site } from '@/data';
-import { normalizeCoords } from '@/lib/geo';
-import { kpiText } from '@/lib/kpis';
+import { KPI_KEYS, kpiText } from '@/lib/kpis';
+import { toMapSites } from '@/lib/mappers/sites';
 import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
 import { pinColor } from '@/lib/status';
 import { useUiPrefs } from '@/lib/store';
-
-// KPI keys this screen reads — see docs/analytics-backend-gaps.md.
-const KEY = {
-  uptime: 'network_uptime',
-  activeCustomers: 'active_customers',
-  dataUsage: 'data_usage',
-} as const;
 
 export default function NetworkHomeScreen() {
   const router = useRouter();
@@ -64,24 +56,9 @@ export default function NetworkHomeScreen() {
   const kpis = kpiData?.getHomeKpis.kpis;
   const loading = kpiLoading || sitesLoading;
 
-  // The home map only needs each site's name, status and coordinates — the
-  // per-site metric figures aren't on the registry site shape and aren't shown.
-  const mapSites: Pick<
-    Site,
-    'id' | 'name' | 'area' | 'status' | 'lat' | 'lng'
-  >[] = useMemo(
-    () =>
-      (sitesData?.sitesView.sites.sites ?? []).map((s) => {
-        const geo = normalizeCoords(s.latitude, s.longitude);
-        return {
-          id: s.id,
-          name: s.name,
-          area: s.location ?? '',
-          status: (s.isDeactivated ? 'offline' : 'online') as Site['status'],
-          lat: geo?.lat ?? 0,
-          lng: geo?.lng ?? 0,
-        };
-      }),
+  // The home map only needs each site's name, status and coordinates.
+  const mapSites = useMemo(
+    () => toMapSites(sitesData?.sitesView.sites.sites ?? []),
     [sitesData?.sitesView.sites.sites],
   );
 
@@ -117,20 +94,20 @@ export default function NetworkHomeScreen() {
               icon: 'network_check',
               color: 'var(--uk-success-bright)',
               label: 'Network uptime',
-              value: kpiText(kpis, KEY.uptime, (v) => `${v}%`),
+              value: kpiText(kpis, KPI_KEYS.networkUptime, (v) => `${v}%`),
               sub: 'latest reading',
             },
             {
               icon: 'group',
               color: 'var(--uk-secondary)',
               label: 'Active customers',
-              value: kpiText(kpis, KEY.activeCustomers),
+              value: kpiText(kpis, KPI_KEYS.activeCustomers),
             },
             {
               icon: 'donut_small',
               color: 'var(--uk-beige)',
               label: 'Data volume',
-              value: kpiText(kpis, KEY.dataUsage, (v) => `${v} GB`),
+              value: kpiText(kpis, KPI_KEYS.dataUsage, (v) => `${v} GB`),
             },
             {
               icon: 'cell_tower',

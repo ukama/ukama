@@ -15,6 +15,21 @@
  * each screen expects.
  */
 
+/**
+ * Central registry of analytics KPI keys the console reads, so the key strings
+ * live in one place (no per-screen duplication). See docs/analytics-backend-gaps.md.
+ */
+export const KPI_KEYS = {
+  networkUptime: 'network_uptime',
+  activeCustomers: 'active_customers',
+  customersTotal: 'customers_total',
+  dataUsage: 'data_usage',
+  revenueMonth: 'revenue_month',
+  revenueCollected: 'revenue_collected',
+  revenuePrevMonth: 'revenue_prev_month',
+  revenuePending: 'revenue_pending',
+} as const;
+
 export interface Kpi {
   key: string;
   value: number;

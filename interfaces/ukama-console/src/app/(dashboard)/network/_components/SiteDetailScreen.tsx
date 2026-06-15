@@ -41,19 +41,13 @@ import AppModal from '@/components/AppModal';
 import DetailPicker from '@/components/DetailPicker';
 import { EmptyState } from '@/components/EmptyState';
 import UkamaMap from '@/components/Map/UkamaMap';
-import MetricLineChart, {
-  ChartMessage,
-  thresholdLegendRows,
-} from '@/components/MetricLineChart';
+import MetricChartCard from '@/components/MetricChartCard';
 import PageHeader from '@/components/PageHeader';
-import RangeToggle from '@/components/RangeToggle';
 import SectionCard from '@/components/SectionCard';
 import StatusBadge from '@/components/StatusBadge';
 import { useToast } from '@/components/ToastProvider';
-import { metricLabel } from '@/lib/labels';
 import { formatDate } from '@/lib/parsers';
 import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
-import { RANGE_SECONDS, type Range } from '@/lib/ranges';
 import { useUiPrefs } from '@/lib/store';
 import { normalizeCoords } from '@/lib/geo';
 import { toUkamaNode } from '@/lib/mappers/nodes';
@@ -117,25 +111,6 @@ const DEFAULT_COMP: CompDef = {
   label: 'Batteries',
   metric: 'battery_charge',
 };
-
-function LegendDot({ color, label }: { color: string; label: string }) {
-  return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 6,
-        fontSize: 12,
-        color: 'var(--uk-ink-2)',
-      }}
-    >
-      <span
-        style={{ width: 9, height: 9, borderRadius: 3, background: color }}
-      />
-      {label}
-    </span>
-  );
-}
 
 /** Two rows of daily uptime bars from the site_uptime_percentage series. */
 function UptimeBars({ values }: { values: number[] }) {
@@ -232,87 +207,7 @@ function CompTile({
   );
 }
 
-/** Right-side graph for the selected component (its metric, range-filtered).
- *  Component metrics are cnode-scoped, so the chart queries with the site's
- *  controller (cnode) id — the gateway resolves the node type from it. */
 const COMP_CHART_HEIGHT = 300;
-function ComponentChart({
-  metricKey,
-  fallbackLabel,
-  cnodeId,
-  titleOverride,
-}: {
-  metricKey: string;
-  fallbackLabel: string;
-  cnodeId: string | null;
-  /** Force the card title (ignores the series label) — e.g. "Speed (MBPS)". */
-  titleOverride?: string;
-}) {
-  const [range, setRange] = useState<Range>('Day');
-  const [nowSec] = useState(() => Math.floor(Date.now() / 1000));
-  const to = nowSec;
-  const from = nowSec - RANGE_SECONDS[range];
-  const { data, loading, error } = useMetricsRangeQuery({
-    variables: {
-      data: {
-        keys: [metricKey],
-        from,
-        to,
-        ...(cnodeId ? { nodeId: cnodeId } : {}),
-      },
-    },
-  });
-  const m = data?.metricsRange.metrics?.[0];
-  const hasData = !!m && m.values.length > 0 && m.success !== false;
-  const title = titleOverride ?? metricLabel(m?.label, metricKey, fallbackLabel);
-
-  const values: [number, number][] = hasData
-    ? m!.values.map((v) => [v[0] ?? 0, v[1] ?? 0])
-    : [];
-  const legend = thresholdLegendRows(m?.threshold ?? null, m?.unit);
-  return (
-    <SectionCard
-      title={title}
-      right={<RangeToggle value={range} onChange={setRange} />}
-    >
-      {error ? (
-        <ChartMessage
-          kind="error"
-          message={error.message}
-          height={COMP_CHART_HEIGHT}
-        />
-      ) : loading && !m ? (
-        <Skeleton variant="rounded" sx={{ height: COMP_CHART_HEIGHT }} />
-      ) : !hasData ? (
-        <ChartMessage kind="empty" height={COMP_CHART_HEIGHT} />
-      ) : (
-        <>
-          <MetricLineChart
-            values={values}
-            title={title}
-            unit={m?.unit}
-            format={m?.format}
-            threshold={m?.threshold ?? null}
-            height={COMP_CHART_HEIGHT}
-          />
-          <div
-            style={{
-              display: 'flex',
-              gap: 18,
-              justifyContent: 'center',
-              marginTop: 10,
-              flexWrap: 'wrap',
-            }}
-          >
-            {legend.map((l) => (
-              <LegendDot key={l.label} {...l} />
-            ))}
-          </div>
-        </>
-      )}
-    </SectionCard>
-  );
-}
 
 /** Right panel for the selected component: a no-metric notice, one filling
  *  chart for a single metric, or a stack of charts when it has several. */
@@ -348,11 +243,11 @@ function ComponentPanel({
       style={{ display: 'flex', flexDirection: 'column', gap: 'var(--uk-gap)' }}
     >
       {keys.map((k) => (
-        <ComponentChart
+        <MetricChartCard
           key={k}
           metricKey={k}
           fallbackLabel={comp.label}
-          cnodeId={cnodeId}
+          nodeId={cnodeId}
         />
       ))}
     </div>
@@ -443,17 +338,17 @@ function SwitchPortRow({
               marginTop: 12,
             }}
           >
-            <ComponentChart
+            <MetricChartCard
               metricKey={`switch_port_${port.n}_speed`}
               fallbackLabel="Speed (MBPS)"
               titleOverride="Speed (MBPS)"
-              cnodeId={cnodeId}
+              nodeId={cnodeId}
             />
-            <ComponentChart
+            <MetricChartCard
               metricKey={`switch_port_${port.n}_power`}
               fallbackLabel="Power (watts)"
               titleOverride="Power (watts)"
-              cnodeId={cnodeId}
+              nodeId={cnodeId}
             />
           </div>
         ) : (

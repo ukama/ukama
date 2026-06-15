@@ -13,11 +13,45 @@
  */
 import type { ViewSiteFragment } from '@/client/graphql/views-shared.generated';
 import type { Site } from '@/data';
+import { normalizeCoords } from '@/lib/geo';
 
 export interface SiteNodeCounts {
   total: number;
   online: number;
 }
+
+/** Minimal site shape the home map/list needs (markers + name/area/status). */
+export interface MapSite {
+  id: string;
+  name: string;
+  area: string;
+  status: 'online' | 'offline';
+  lat: number;
+  lng: number;
+}
+
+type RawMapSite = {
+  id: string;
+  name: string;
+  location?: string | null;
+  latitude?: string | number | null;
+  longitude?: string | number | null;
+  isDeactivated: boolean;
+};
+
+/** Map raw registry sites to the home map/list shape (no metric figures). */
+export const toMapSites = (sites: readonly RawMapSite[]): MapSite[] =>
+  sites.map((s) => {
+    const geo = normalizeCoords(s.latitude, s.longitude);
+    return {
+      id: s.id,
+      name: s.name,
+      area: s.location ?? '',
+      status: s.isDeactivated ? 'offline' : 'online',
+      lat: geo?.lat ?? 0,
+      lng: geo?.lng ?? 0,
+    };
+  });
 
 export const toSiteStatus = (
   site: Pick<ViewSiteFragment, 'isDeactivated'>,

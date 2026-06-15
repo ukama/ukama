@@ -29,30 +29,18 @@ import { KpiRow } from '@/components/Kpi';
 import { StatusDot } from '@/components/Map/SiteMap';
 import UkamaMap, { HOME_MAP_ZOOM } from '@/components/Map/UkamaMap';
 import PageHeader from '@/components/PageHeader';
-import type { BizSite } from '@/data';
 import { useCurrency } from '@/lib/currency';
-import { normalizeCoords } from '@/lib/geo';
-import { kpiAmount, kpiByKey, kpiText, kpiValue } from '@/lib/kpis';
+import { KPI_KEYS, kpiAmount, kpiByKey, kpiText, kpiValue } from '@/lib/kpis';
+import { type MapSite, toMapSites } from '@/lib/mappers/sites';
 import { pinColor } from '@/lib/status';
 import { useUiPrefs } from '@/lib/store';
-
-// KPI keys this screen reads — see docs/analytics-backend-gaps.md.
-const KEY = {
-  revenueMonth: 'revenue_month',
-  revenueCollected: 'revenue_collected',
-  activeCustomers: 'active_customers',
-  customersTotal: 'customers_total',
-} as const;
-
-/** The home map/list only needs each site's id, name, status and coordinates. */
-type MapBizSite = Pick<BizSite, 'id' | 'name' | 'status' | 'lat' | 'lng'>;
 
 function SiteSummaryList({
   sites,
   onSite,
 }: {
-  sites: MapBizSite[];
-  onSite: (s: MapBizSite) => void;
+  sites: MapSite[];
+  onSite: (s: MapSite) => void;
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -113,22 +101,12 @@ export default function BizHomeScreen() {
     skip: !networkId,
   });
   const kpis = homeData?.getHomeKpis.kpis;
-  const monthDelta = kpiByKey(kpis, KEY.revenueMonth)?.delta;
-  const totalCustomers = kpiValue(kpis, KEY.customersTotal);
+  const monthDelta = kpiByKey(kpis, KPI_KEYS.revenueMonth)?.delta;
+  const totalCustomers = kpiValue(kpis, KPI_KEYS.customersTotal);
   const loading = homeLoading || sitesLoading;
 
-  const sites: MapBizSite[] = useMemo(
-    () =>
-      (sitesData?.sitesView.sites.sites ?? []).map((s) => {
-        const geo = normalizeCoords(s.latitude, s.longitude);
-        return {
-          id: s.id,
-          name: s.name,
-          status: (s.isDeactivated ? 'offline' : 'online') as BizSite['status'],
-          lat: geo?.lat ?? 0,
-          lng: geo?.lng ?? 0,
-        };
-      }),
+  const sites = useMemo(
+    () => toMapSites(sitesData?.sitesView.sites.sites ?? []),
     [sitesData?.sitesView.sites.sites],
   );
   const online = sites.filter((s) => s.status !== 'offline').length;
@@ -162,7 +140,7 @@ export default function BizHomeScreen() {
               icon: 'monetization_on',
               color: 'var(--uk-beige)',
               label: 'Revenue this month',
-              value: kpiAmount(kpis, KEY.revenueMonth, money),
+              value: kpiAmount(kpis, KPI_KEYS.revenueMonth, money),
               sub:
                 monthDelta != null
                   ? `${monthDelta >= 0 ? '+' : ''}${monthDelta}% vs last month`
@@ -172,7 +150,7 @@ export default function BizHomeScreen() {
               icon: 'group',
               color: 'var(--uk-secondary)',
               label: 'Active customers',
-              value: kpiText(kpis, KEY.activeCustomers),
+              value: kpiText(kpis, KPI_KEYS.activeCustomers),
               sub:
                 totalCustomers != null ? `${totalCustomers} total` : undefined,
             },
@@ -180,7 +158,7 @@ export default function BizHomeScreen() {
               icon: 'donut_small',
               color: 'var(--uk-ac)',
               label: 'Collected to date',
-              value: kpiAmount(kpis, KEY.revenueCollected, money),
+              value: kpiAmount(kpis, KPI_KEYS.revenueCollected, money),
             },
             {
               icon: 'cell_tower',
