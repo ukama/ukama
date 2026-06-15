@@ -29,6 +29,7 @@ import type { Site } from '@/data';
 import { normalizeCoords } from '@/lib/geo';
 import { kpiText } from '@/lib/kpis';
 import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
+import { pinColor } from '@/lib/status';
 import { useUiPrefs } from '@/lib/store';
 
 // KPI keys this screen reads — see docs/analytics-backend-gaps.md.
@@ -84,18 +85,13 @@ export default function NetworkHomeScreen() {
     [sitesData?.sitesView.sites.sites],
   );
 
-  const SITE_PIN: Record<string, string> = {
-    online: 'var(--uk-success-bright)',
-    degraded: 'var(--uk-warning)',
-    offline: 'var(--uk-error)',
-  };
   const mapMarkers = mapSites
     .filter((s) => s.lat !== 0 || s.lng !== 0)
     .map((s) => ({
       id: s.id,
       lat: s.lat,
       lng: s.lng,
-      color: SITE_PIN[s.status] ?? 'var(--uk-ac)',
+      color: pinColor(s.status),
       popup: (
         <div style={{ minWidth: 120 }}>
           <div style={{ fontWeight: 600, marginBottom: 2 }}>{s.name}</div>

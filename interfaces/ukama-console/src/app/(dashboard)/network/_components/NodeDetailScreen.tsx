@@ -43,9 +43,11 @@ import KV from '@/components/KV';
 import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
 import { useToast } from '@/components/ToastProvider';
+import RangeToggle from '@/components/RangeToggle';
 import { metricLabel } from '@/lib/labels';
 import { toUkamaNode } from '@/lib/mappers/nodes';
 import { formatDate } from '@/lib/parsers';
+import { RANGE_SECONDS, type Range } from '@/lib/ranges';
 import { ConnectivityDot, StateChip } from './nodeStatus';
 
 const TABS = ['Overview', 'Network', 'Resources', 'Radio', 'Software'];
@@ -61,16 +63,6 @@ const NODE_IMAGES: Record<string, string> = {
 const NODE_IMAGE_FALLBACK = `${NODE_IMAGE_BASE}/ukama_tower_node.png`;
 const nodeImage = (type: string): string =>
   NODE_IMAGES[type.toLowerCase()] ?? NODE_IMAGE_FALLBACK;
-
-type Range = 'Day' | 'Week' | 'Month';
-const RANGES: Range[] = ['Day', 'Week', 'Month'];
-
-/** Window length per range, in seconds (drives the metricsRange from/to). */
-const RANGE_SECONDS: Record<Range, number> = {
-  Day: 86_400,
-  Week: 604_800,
-  Month: 2_592_000,
-};
 
 /* -------------------------------------------------------------------------- *
  * Per-node-type metric key lists (which KPIs/graphs exist for a node type),
@@ -175,30 +167,6 @@ function LegendDot({ color, label }: { color: string; label: string }) {
       />
       {label}
     </span>
-  );
-}
-
-function RangeToggle({
-  value,
-  onChange,
-}: {
-  value: Range;
-  onChange: (r: Range) => void;
-}) {
-  return (
-    <div className="range-toggle" role="group" aria-label="Time range">
-      {RANGES.map((r) => (
-        <button
-          key={r}
-          type="button"
-          className={r === value ? 'is-active' : ''}
-          aria-pressed={r === value}
-          onClick={() => onChange(r)}
-        >
-          {r}
-        </button>
-      ))}
-    </div>
   );
 }
 

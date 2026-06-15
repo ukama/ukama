@@ -46,36 +46,19 @@ import MetricLineChart, {
   thresholdLegendRows,
 } from '@/components/MetricLineChart';
 import PageHeader from '@/components/PageHeader';
+import RangeToggle from '@/components/RangeToggle';
 import SectionCard from '@/components/SectionCard';
 import StatusBadge from '@/components/StatusBadge';
 import { useToast } from '@/components/ToastProvider';
 import { metricLabel } from '@/lib/labels';
+import { formatDate } from '@/lib/parsers';
 import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
+import { RANGE_SECONDS, type Range } from '@/lib/ranges';
 import { useUiPrefs } from '@/lib/store';
 import { normalizeCoords } from '@/lib/geo';
 import { toUkamaNode } from '@/lib/mappers/nodes';
 import { toSite } from '@/lib/mappers/sites';
 import { Ic } from '../../_components/icons';
-
-type Range = 'Day' | 'Week' | 'Month';
-const RANGES: Range[] = ['Day', 'Week', 'Month'];
-const RANGE_SECONDS: Record<Range, number> = {
-  Day: 86_400,
-  Week: 604_800,
-  Month: 2_592_000,
-};
-
-/** ISO timestamp → "Jun 6, 2026"; passes through non-dates unchanged. */
-const fmtDate = (raw?: string | null): string => {
-  if (!raw) return '—';
-  const d = new Date(raw);
-  if (Number.isNaN(d.getTime())) return raw;
-  return d.toLocaleDateString('en-US', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
-};
 
 interface CompDef {
   id: string;
@@ -134,30 +117,6 @@ const DEFAULT_COMP: CompDef = {
   label: 'Batteries',
   metric: 'battery_charge',
 };
-
-function RangeToggle({
-  value,
-  onChange,
-}: {
-  value: Range;
-  onChange: (r: Range) => void;
-}) {
-  return (
-    <div className="range-toggle" role="group" aria-label="Time range">
-      {RANGES.map((r) => (
-        <button
-          key={r}
-          type="button"
-          className={r === value ? 'is-active' : ''}
-          aria-pressed={r === value}
-          onClick={() => onChange(r)}
-        >
-          {r}
-        </button>
-      ))}
-    </div>
-  );
-}
 
 function LegendDot({ color, label }: { color: string; label: string }) {
   return (
@@ -912,7 +871,7 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
     ).length,
   });
   const dto = siteSection.site;
-  const installDate = fmtDate(dto.installDate || dto.createdAt);
+  const installDate = formatDate(dto.installDate || dto.createdAt);
   const geo = normalizeCoords(dto.latitude, dto.longitude);
   const coords = geo ? `${geo.lat}, ${geo.lng}` : null;
   const mapMarkers = geo

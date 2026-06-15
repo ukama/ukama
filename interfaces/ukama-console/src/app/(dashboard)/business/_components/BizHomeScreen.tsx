@@ -33,6 +33,7 @@ import type { BizSite } from '@/data';
 import { useCurrency } from '@/lib/currency';
 import { normalizeCoords } from '@/lib/geo';
 import { kpiAmount, kpiByKey, kpiText, kpiValue } from '@/lib/kpis';
+import { pinColor } from '@/lib/status';
 import { useUiPrefs } from '@/lib/store';
 
 // KPI keys this screen reads — see docs/analytics-backend-gaps.md.
@@ -135,19 +136,13 @@ export default function BizHomeScreen() {
   // Network site detail instead.
   const goSite = (id: string) => router.push(`/network/sites/${id}`);
 
-  const BIZ_PIN: Record<string, string> = {
-    online: 'var(--uk-success-bright)',
-    warning: 'var(--uk-warning)',
-    degraded: 'var(--uk-warning)',
-    offline: 'var(--uk-error)',
-  };
   const bizMarkers = sites
     .filter((s) => s.lat !== 0 || s.lng !== 0)
     .map((s) => ({
       id: s.id,
       lat: s.lat,
       lng: s.lng,
-      color: BIZ_PIN[s.status] ?? 'var(--uk-ac)',
+      color: pinColor(s.status),
       popup: <div style={{ fontWeight: 600 }}>{s.name}</div>,
     }));
 
