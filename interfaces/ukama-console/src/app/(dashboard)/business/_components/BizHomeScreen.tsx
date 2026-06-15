@@ -43,12 +43,15 @@ const KEY = {
   customersTotal: 'customers_total',
 } as const;
 
+/** The home map/list only needs each site's id, name, status and coordinates. */
+type MapBizSite = Pick<BizSite, 'id' | 'name' | 'status' | 'lat' | 'lng'>;
+
 function SiteSummaryList({
   sites,
   onSite,
 }: {
-  sites: BizSite[];
-  onSite: (s: BizSite) => void;
+  sites: MapBizSite[];
+  onSite: (s: MapBizSite) => void;
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -113,22 +116,14 @@ export default function BizHomeScreen() {
   const totalCustomers = kpiValue(kpis, KEY.customersTotal);
   const loading = homeLoading || sitesLoading;
 
-  const sites: BizSite[] = useMemo(
+  const sites: MapBizSite[] = useMemo(
     () =>
       (sitesData?.sitesView.sites.sites ?? []).map((s) => {
         const geo = normalizeCoords(s.latitude, s.longitude);
         return {
           id: s.id,
           name: s.name,
-          status: s.isDeactivated ? 'offline' : 'online',
-          revenue: 0,
-          revToday: 0,
-          customers: 0,
-          custToday: 0,
-          data: '—',
-          uptime: 0,
-          top: '—',
-          issue: null,
+          status: (s.isDeactivated ? 'offline' : 'online') as BizSite['status'],
           lat: geo?.lat ?? 0,
           lng: geo?.lng ?? 0,
         };

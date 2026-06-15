@@ -15,17 +15,8 @@ import Divider from '@mui/material/Divider';
 import InputBase from '@mui/material/InputBase';
 import Typography from '@mui/material/Typography';
 import SearchRounded from '@mui/icons-material/SearchRounded';
-import { NODES, SITES, SUBSCRIBERS } from '@/data';
 import { NAV_BY_LENS, bottomNav, lensFromPath } from '../_config/nav';
 import { Ic } from './icons';
-
-interface EntityHit {
-  kind: 'Site' | 'Node' | 'Subscriber';
-  href: string;
-  label: string;
-  icon: string;
-  meta: string;
-}
 
 /**
  * Inner content holds the query state and is mounted fresh on every open
@@ -42,39 +33,8 @@ function PaletteContent({ onClose }: { onClose: () => void }) {
     return [...items, ...bottomNav(lens)];
   }, [lens]);
 
-  const entities: EntityHit[] = useMemo(
-    () => [
-      ...SITES.map((s) => ({
-        kind: 'Site' as const,
-        href: '/network/sites',
-        label: s.name,
-        icon: 'location_on',
-        meta: s.area,
-      })),
-      ...NODES.slice(0, 4).map((n) => ({
-        kind: 'Node' as const,
-        href: '/network/nodes',
-        label: n.serial,
-        icon: 'router',
-        meta: n.site,
-      })),
-      ...SUBSCRIBERS.slice(0, 4).map((s) => ({
-        kind: 'Subscriber' as const,
-        href: lens === 'customer' ? '/customer/customers' : `/${lens}/customers`,
-        label: s.name,
-        icon: 'person',
-        meta: s.phone,
-      })),
-    ],
-    [lens],
-  );
-
   const ql = q.toLowerCase();
   const fp = pages.filter((p) => p.label.toLowerCase().includes(ql));
-  const fe = entities.filter(
-    (e) =>
-      e.label.toLowerCase().includes(ql) || e.meta.toLowerCase().includes(ql),
-  );
 
   const go = (href: string) => {
     router.push(href);
@@ -106,7 +66,7 @@ function PaletteContent({ onClose }: { onClose: () => void }) {
           fullWidth
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Jump to a page, site, node or subscriber…"
+          placeholder="Jump to a page…"
           sx={{ fontSize: 16 }}
         />
         <Typography
@@ -147,35 +107,7 @@ function PaletteContent({ onClose }: { onClose: () => void }) {
             <Typography sx={{ fontSize: 13.5 }}>{p.label}</Typography>
           </Box>
         ))}
-        {fe.length > 0 && (
-          <Typography
-            sx={{
-              px: 1.5,
-              pt: 1,
-              pb: 0.5,
-              fontSize: 11,
-              fontWeight: 600,
-              letterSpacing: '.06em',
-              textTransform: 'uppercase',
-              color: 'text.disabled',
-            }}
-          >
-            Results
-          </Typography>
-        )}
-        {fe.map((e, i) => (
-          <Box key={i} component="button" type="button" sx={rowSx} onClick={() => go(e.href)}>
-            <Ic name={e.icon} sx={{ fontSize: 20, color: 'text.disabled' }} />
-            <Typography sx={{ fontSize: 13.5, flex: 1 }}>
-              {e.label}{' '}
-              <Typography component="span" sx={{ color: 'text.disabled', fontSize: 12 }}>
-                · {e.meta}
-              </Typography>
-            </Typography>
-            <Typography sx={{ fontSize: 11, color: 'text.disabled' }}>{e.kind}</Typography>
-          </Box>
-        ))}
-        {fp.length === 0 && fe.length === 0 && (
+        {fp.length === 0 && (
           <Typography sx={{ p: 3.5, textAlign: 'center', color: 'text.disabled' }}>
             No matches for “{q}”.
           </Typography>

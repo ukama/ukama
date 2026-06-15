@@ -18,6 +18,31 @@ export class GetHomeKpisResolver {
     @Ctx() ctx: AppContext
   ): Promise<HomeKpis> {
     const baseURL = await ctx.urls.url("analytics");
-    return ctx.dataSources.analytics.getHomeKpis(baseURL, data);
+    const result = await ctx.dataSources.analytics.getHomeKpis(baseURL, data);
+
+    // "Active customers" = the real active-subscriber count from the metric
+    // service (system-scoped `subscribers_active`). Same source for both Home
+    // lenses; overrides the analytics value so the figure is consistent.
+    try {
+      const metricsURL = await ctx.urls.url("metrics");
+      const m = await ctx.dataSources.metric.getLatestMetric(
+        metricsURL,
+        "subscribers_active"
+      );
+      if (m.success) {
+        const value = Math.round(Number(m.value?.[1] ?? 0));
+        const kpis = [...result.kpis];
+        const i = kpis.findIndex(k => k.key === "active_customers");
+        if (i >= 0) {
+          kpis[i] = { ...kpis[i], value, formatted: String(value), stale: false };
+        } else {
+          kpis.push({ key: "active_customers", value, formatted: String(value) });
+        }
+        return { ...result, kpis };
+      }
+    } catch {
+      // Metric service unavailable — keep the analytics value.
+    }
+    return result;
   }
 }

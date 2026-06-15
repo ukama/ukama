@@ -63,9 +63,12 @@ export default function NetworkHomeScreen() {
   const kpis = kpiData?.getHomeKpis.kpis;
   const loading = kpiLoading || sitesLoading;
 
-  // Per-site node/battery/signal figures aren't on the registry site shape;
-  // home only needs the map + name/status/coords, so the rest are placeholders.
-  const mapSites: Site[] = useMemo(
+  // The home map only needs each site's name, status and coordinates — the
+  // per-site metric figures aren't on the registry site shape and aren't shown.
+  const mapSites: Pick<
+    Site,
+    'id' | 'name' | 'area' | 'status' | 'lat' | 'lng'
+  >[] = useMemo(
     () =>
       (sitesData?.sitesView.sites.sites ?? []).map((s) => {
         const geo = normalizeCoords(s.latitude, s.longitude);
@@ -73,16 +76,9 @@ export default function NetworkHomeScreen() {
           id: s.id,
           name: s.name,
           area: s.location ?? '',
-          status: s.isDeactivated ? 'offline' : 'online',
-          subs: 0,
-          nodes: 0,
-          uptime: 0,
-          battery: 0,
-          signal: null,
-          data: '',
+          status: (s.isDeactivated ? 'offline' : 'online') as Site['status'],
           lat: geo?.lat ?? 0,
           lng: geo?.lng ?? 0,
-          plan: '',
         };
       }),
     [sitesData?.sitesView.sites.sites],

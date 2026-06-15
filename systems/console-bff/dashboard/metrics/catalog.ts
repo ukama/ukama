@@ -110,7 +110,7 @@ export const METRIC_CATALOG: Record<string, MetricMeta> = {
   // --- customers ---
   // tnode active subscribers — real series (trx_lte_core_active_ue).
   subscribers_active: {
-    label: "Active subscribers",
+    label: "Active customers",
     unit: "",
     format: "number",
     base: 32,
