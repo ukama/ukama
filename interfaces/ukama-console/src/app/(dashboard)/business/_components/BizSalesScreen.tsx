@@ -16,11 +16,11 @@ import Skeleton from '@mui/material/Skeleton';
 import { useGetSalesOverviewQuery } from '@/client/graphql/analytics.generated';
 import BarList from '@/components/BarList';
 import DateChip from '@/components/DateChip';
-import { Delta, KpiRow } from '@/components/Kpi';
+import { KpiRow } from '@/components/Kpi';
 import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
 import { useCurrency } from '@/lib/currency';
-import { kpiAmount, kpiByKey } from '@/lib/kpis';
+import { kpiAmount } from '@/lib/kpis';
 import { useUiPrefs } from '@/lib/store';
 
 // KPI keys this screen reads. Centralised so a backend rename is a one-line
@@ -63,7 +63,6 @@ export default function BizSalesScreen() {
   });
   const overview = data?.getSalesOverview;
   const kpis = overview?.kpis;
-  const monthDelta = kpiByKey(kpis, KEY.month)?.delta;
 
   const byPackage = toBars(overview?.revenueByPackage ?? []);
   const bySite = toBars(overview?.revenueBySite ?? []);
@@ -103,12 +102,8 @@ export default function BizSalesScreen() {
               >
                 {error ? '—' : kpiAmount(kpis, KEY.collected, money)}
               </span>
-              {monthDelta != null && (
-                <Delta fontSize={14}>
-                  {monthDelta >= 0 ? '+' : ''}
-                  {monthDelta}% MoM
-                </Delta>
-              )}
+              {/* MoM delta hidden until the backend provides a reliable
+                  previous-period revenue (current value is unreliable). */}
             </div>
             <div style={{ flex: 1, minWidth: 20 }} />
             <div style={{ display: 'flex', gap: 30, flexWrap: 'wrap' }}>
@@ -160,10 +155,6 @@ export default function BizSalesScreen() {
             color: 'var(--uk-beige)',
             label: 'Revenue this month',
             value: error ? '—' : kpiAmount(kpis, KEY.month, money),
-            sub:
-              monthDelta != null
-                ? `${monthDelta >= 0 ? '+' : ''}${monthDelta}% vs last month`
-                : undefined,
           },
           {
             icon: 'payments',

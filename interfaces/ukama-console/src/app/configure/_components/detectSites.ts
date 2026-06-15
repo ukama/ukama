@@ -85,7 +85,11 @@ export function computeSiteReadiness(
   nodes: DetectedNode[],
   pinnedTowerId?: string,
 ): SiteReadiness {
-  const available = nodes.filter((n) => !n.site?.siteId);
+  // "Available to configure" = not yet attached to a site. The real attachment
+  // signal is site.nodeId; a node can carry a placeholder siteId while its
+  // nodeId is still null (pre-assigned but not configured) — those must remain
+  // available so the readiness checklist can detect them.
+  const available = nodes.filter((n) => !n.site?.nodeId);
 
   // Group the units of each prospective site together.
   const groups = new Map<string, DetectedNode[]>();

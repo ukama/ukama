@@ -54,6 +54,32 @@ import { mapAnalytics } from "./mapper";
 
 const ANALYTICS = "analytics";
 
+/**
+ * TODO(analytics-backend / demo): the revenue + home KPI shims below only apply
+ * to the seeded demo network. For any other network we return the backend
+ * response untouched (missing KPIs stay empty in the UI) so real networks are
+ * never shown synthesised values. Remove this gate together with the shims once
+ * the backend emits these KPIs.
+ */
+const DEMO_NETWORK_ID = "d15c8976-704d-41f9-8de5-afde7585e994";
+
+/**
+ * Revenue KPI keys the console Revenue screen reads that the business
+ * `GetSalesOverview` does not yet emit (it only emits `revenue`, `purchases`,
+ * `avg_purchase`, `paid_customers`). See deriveRevenueKpis below.
+ */
+const REVENUE_SHIM_KEYS = [
+  "revenue_collected",
+  "revenue_month",
+  "revenue_prev_month",
+  "revenue_pending",
+] as const;
+
+const kpiValue = (
+  o: SalesOverviewDto | undefined,
+  key: string
+): KpiDto | undefined => o?.kpis?.find(k => k.key === key);
+
 /** Build a snake_case query string from a windowed/filtered/paginated input. */
 const windowQuery = (data: AnalyticsWindowInput): string => {
   const q = new URLSearchParams();
@@ -100,7 +126,126 @@ class AnalyticsAPI extends BaseRESTDataSource {
     const res = await this.callGet<{ kpis?: KpiDto[] }>(
       `${path}?${windowQuery(data)}`
     );
-    return { kpis: res.kpis ?? [] };
+    // TODO(analytics-backend): drop once the lens overview endpoints emit the
+    // home KPIs the console reads (revenue_month/collected, customers_total,
+    // network_uptime, data_usage). See docs/analytics-backend-gaps.md.
+    return { kpis: await this.enrichHomeKpis(res.kpis ?? [], data) };
+  };
+
+  /** Fetch just the `kpis` array of an analytics endpoint, swallowing errors. */
+  private safeKpis = async (path: string): Promise<KpiDto[]> => {
+    try {
+      const r = await this.callGet<{ kpis?: KpiDto[] }>(path);
+      return r.kpis ?? [];
+    } catch {
+      return [];
+    }
+  };
+
+  /**
+   * TODO(analytics-backend): the Home screens read KPI keys the lens overview
+   * endpoints don't all emit:
+   *   Business: revenue_month, revenue_collected, customers_total
+   *   Network:  network_uptime, active_customers, data_usage
+   * We backfill them from REAL analytics data — windowed sales `revenue`
+   * (this month / all-time) and the business/home strip (active_customers /
+   * network_uptime / data_sold) — so they match the analytics DB. Only
+   * `customers_total` has no source yet and mirrors active_customers (mock).
+   * Remove once the backend emits these. Tracking: docs/analytics-backend-gaps.md
+   */
+  private enrichHomeKpis = async (
+    base: KpiDto[],
+    data: HomeViewInput
+  ): Promise<KpiDto[]> => {
+    // Demo-only: never synthesise KPIs for non-demo networks.
+    if (data.networkId !== DEMO_NETWORK_ID) return base;
+
+    const have = new Set(base.map(k => k.key));
+    const NEEDED = [
+      "revenue_month",
+      "revenue_collected",
+      "customers_total",
+      "active_customers",
+      "network_uptime",
+      "data_usage",
+    ];
+    if (NEEDED.every(k => have.has(k))) return base;
+
+    const networkId = data.networkId;
+    const now = new Date();
+    const sales = (extra: Partial<AnalyticsWindowInput>): string =>
+      `business/sales/overview?${windowQuery({ networkId, ...extra })}`;
+
+    const isBusiness = data.lens !== HomeLens.NETWORK;
+    const [homeKpis, monthKpis, allKpis] = await Promise.all([
+      // business/home carries active_customers, network_uptime, data_sold.
+      isBusiness
+        ? Promise.resolve(base)
+        : this.safeKpis(`business/home?${windowQuery({ networkId })}`),
+      this.safeKpis(sales({ period: "month" })),
+      this.safeKpis(
+        sales({
+          period: "custom",
+          from: "2000-01-01T00:00:00Z",
+          to: now.toISOString(),
+        })
+      ),
+    ]);
+
+    const find = (arr: KpiDto[], key: string): KpiDto | undefined =>
+      arr.find(k => k.key === key);
+    const num = (arr: KpiDto[], key: string): number | undefined =>
+      find(arr, key)?.value;
+
+    const mk = (
+      key: string,
+      value: number,
+      opts: { formatted?: string; delta?: number; stale?: boolean } = {}
+    ): KpiDto => ({
+      key,
+      value: Math.round(value * 100) / 100,
+      formatted: opts.formatted,
+      delta: opts.delta,
+      deltaPeriod: opts.delta != null ? "month" : undefined,
+      stale: opts.stale,
+    });
+
+    const money = (v: number): string =>
+      `$${(Math.round(v * 100) / 100).toLocaleString()}`;
+
+    const activeCustomers = num(homeKpis, "active_customers") ?? 0;
+    const uptime = num(homeKpis, "network_uptime");
+    const dataSold = num(homeKpis, "data_sold");
+    const monthRev = find(monthKpis, "revenue");
+    const allRev = num(allKpis, "revenue");
+
+    const candidates: KpiDto[] = [
+      mk("revenue_month", monthRev?.value ?? 0, {
+        formatted: money(monthRev?.value ?? 0),
+        delta: monthRev?.delta,
+      }),
+      mk("revenue_collected", allRev ?? 0, { formatted: money(allRev ?? 0) }),
+      mk("active_customers", activeCustomers, {
+        formatted: String(activeCustomers),
+      }),
+      // No dedicated total-customers source yet → mirror active (mock).
+      mk("customers_total", activeCustomers, {
+        formatted: String(activeCustomers),
+        stale: true,
+      }),
+    ];
+    if (uptime != null)
+      candidates.push(
+        mk("network_uptime", uptime, { formatted: `${uptime}%` })
+      );
+    if (dataSold != null)
+      candidates.push(
+        mk("data_usage", dataSold, { formatted: `${dataSold} MB` })
+      );
+
+    const merged = [...base];
+    for (const c of candidates) if (!have.has(c.key)) merged.push(c);
+    return merged;
   };
 
   /* ---------------- Business ---------------- */
@@ -118,9 +263,108 @@ class AnalyticsAPI extends BaseRESTDataSource {
     data: AnalyticsWindowInput
   ): Promise<SalesOverviewDto> => {
     this.baseURL = baseURL;
-    return this.callGet<SalesOverviewDto>(
+    const overview = await this.callGet<SalesOverviewDto>(
       `business/sales/overview?${windowQuery(data)}`
     );
+    // TODO(analytics-backend): drop once the backend emits the revenue_* KPIs.
+    return this.deriveRevenueKpis(overview, data);
+  };
+
+  /**
+   * TODO(analytics-backend): the business `GetSalesOverview` only emits
+   * `revenue`/`purchases`/`avg_purchase`/`paid_customers`, but the console
+   * Revenue screen also needs `revenue_collected`, `revenue_month`,
+   * `revenue_prev_month` and `revenue_pending`. Until the business service emits
+   * these, we derive them from REAL payment data by re-querying the overview
+   * endpoint for the relevant windows (this month / last month / all-time) and
+   * reading each window's `revenue` KPI — so the values always match the data in
+   * the analytics DB. `revenue_pending` has no backend source yet, so it stays 0.
+   * Remove this shim once the backend provides these keys.
+   * Tracking: systems/console-bff/docs/analytics-backend-gaps.md
+   */
+  private deriveRevenueKpis = async (
+    overview: SalesOverviewDto,
+    data: AnalyticsWindowInput
+  ): Promise<SalesOverviewDto> => {
+    // Demo-only: never synthesise KPIs for non-demo networks.
+    if (data.networkId !== DEMO_NETWORK_ID) return overview;
+
+    const have = new Set((overview.kpis ?? []).map(k => k.key));
+    if (REVENUE_SHIM_KEYS.every(k => have.has(k))) return overview;
+
+    const now = new Date();
+    const startOfMonth = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)
+    ).toISOString();
+    const startOfPrevMonth = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)
+    ).toISOString();
+
+    const q = (extra: Partial<AnalyticsWindowInput>): string =>
+      `business/sales/overview?${windowQuery({ networkId: data.networkId, ...extra })}`;
+
+    // Each window's `revenue` KPI is computed by the backend from real payment
+    // events, so these reflect exactly what's in the analytics DB.
+    const safe = async (
+      path: string
+    ): Promise<SalesOverviewDto | undefined> => {
+      try {
+        return await this.callGet<SalesOverviewDto>(path);
+      } catch {
+        return undefined;
+      }
+    };
+
+    const [monthRes, prevRes, allRes] = await Promise.all([
+      safe(q({ period: "month" })),
+      safe(q({ period: "custom", from: startOfPrevMonth, to: startOfMonth })),
+      safe(
+        q({
+          period: "custom",
+          from: "2000-01-01T00:00:00Z",
+          to: now.toISOString(),
+        })
+      ),
+    ]);
+
+    const monthRev = kpiValue(monthRes, "revenue");
+    const prevRev = kpiValue(prevRes, "revenue");
+    const allRev = kpiValue(allRes, "revenue");
+
+    const fmt = (v: number): string =>
+      `$${(Math.round(v * 100) / 100).toLocaleString()}`;
+    const kpi = (
+      key: string,
+      value: number,
+      delta?: number,
+      stale = false
+    ): KpiDto => ({
+      key,
+      value: Math.round(value * 100) / 100,
+      formatted: fmt(value),
+      delta,
+      deltaPeriod: delta != null ? "month" : undefined,
+      stale,
+    });
+
+    const derived: Record<string, KpiDto> = {
+      revenue_collected: kpi("revenue_collected", allRev?.value ?? 0),
+      revenue_month: kpi(
+        "revenue_month",
+        monthRev?.value ?? 0,
+        monthRev?.delta
+      ),
+      revenue_prev_month: kpi("revenue_prev_month", prevRev?.value ?? 0),
+      // No pending-payment source in analytics yet → 0, flagged as mock.
+      revenue_pending: kpi("revenue_pending", 0, undefined, true),
+    };
+
+    const merged = [...(overview.kpis ?? [])];
+    for (const key of REVENUE_SHIM_KEYS) {
+      if (!have.has(key)) merged.push(derived[key]);
+    }
+
+    return { ...overview, kpis: merged };
   };
 
   getPackagePerformance = async (
