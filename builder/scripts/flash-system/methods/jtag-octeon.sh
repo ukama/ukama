@@ -53,7 +53,14 @@ bdi_telnet_cmd() {
             }
         }
         send \"$cmd\r\"
-        sleep 1
+        # Wait for the BDI prompt to come back before quitting. Without this the
+        # quit can merge onto the command line (\"go 0x400000quit\" -> syntax error)
+        # and the command never executes.
+        expect {
+            \"cnMIPS#0>\" {}
+            \"Core#0>\"   {}
+            timeout      {}
+        }
         send \"quit\r\"
         expect eof
     " 2>/dev/null
