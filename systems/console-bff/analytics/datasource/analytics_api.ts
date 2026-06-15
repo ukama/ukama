@@ -55,6 +55,15 @@ import { mapAnalytics } from "./mapper";
 const ANALYTICS = "analytics";
 
 /**
+ * TODO(analytics-backend / demo): the revenue + home KPI shims below only apply
+ * to the seeded demo network. For any other network we return the backend
+ * response untouched (missing KPIs stay empty in the UI) so real networks are
+ * never shown synthesised values. Remove this gate together with the shims once
+ * the backend emits these KPIs.
+ */
+const DEMO_NETWORK_ID = "d15c8976-704d-41f9-8de5-afde7585e994";
+
+/**
  * Revenue KPI keys the console Revenue screen reads that the business
  * `GetSalesOverview` does not yet emit (it only emits `revenue`, `purchases`,
  * `avg_purchase`, `paid_customers`). See deriveRevenueKpis below.
@@ -148,6 +157,9 @@ class AnalyticsAPI extends BaseRESTDataSource {
     base: KpiDto[],
     data: HomeViewInput
   ): Promise<KpiDto[]> => {
+    // Demo-only: never synthesise KPIs for non-demo networks.
+    if (data.networkId !== DEMO_NETWORK_ID) return base;
+
     const have = new Set(base.map(k => k.key));
     const NEEDED = [
       "revenue_month",
@@ -274,6 +286,9 @@ class AnalyticsAPI extends BaseRESTDataSource {
     overview: SalesOverviewDto,
     data: AnalyticsWindowInput
   ): Promise<SalesOverviewDto> => {
+    // Demo-only: never synthesise KPIs for non-demo networks.
+    if (data.networkId !== DEMO_NETWORK_ID) return overview;
+
     const have = new Set((overview.kpis ?? []).map(k => k.key));
     if (REVENUE_SHIM_KEYS.every(k => have.has(k))) return overview;
 
