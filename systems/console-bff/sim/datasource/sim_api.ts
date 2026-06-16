@@ -5,10 +5,8 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { ENCRYPTION_KEY } from "../../common/configs";
 import { BaseRESTDataSource } from "../../common/datasource";
 import { logger } from "../../common/logger";
-import generateTokenFromIccid from "../../common/utils/generateSimToken";
 import {
   AllocateSimAPIDto,
   AllocateSimInputDto,
@@ -77,23 +75,25 @@ class SimApi extends BaseRESTDataSource {
     });
   };
 
+  getTokenByIccid = async (baseURL: string, iccid: string): Promise<string> => {
+    this.baseURL = baseURL;
+    this.logger.info(
+      `GetTokenByIccid [GET]: ${this.baseURL}/${VERSION}/tokens/${iccid}`
+    );
+    const res = await this.get(`/${VERSION}/tokens/${iccid}`);
+    return res.token;
+  };
+
   allocateSim = async (
     baseURL: string,
-    req: AllocateSimInputDto
+    req: AllocateSimInputDto,
+    simToken?: string
   ): Promise<AllocateSimAPIDto> => {
     this.logger.info(`AllocateSim [POST]: ${baseURL}/${VERSION}/${SIM}`);
     this.baseURL = baseURL;
-    const getToken = (): string | null => {
-      if (req.iccid) {
-        const token = generateTokenFromIccid(req.iccid, ENCRYPTION_KEY ?? "");
-        return token;
-      }
-
-      return null;
-    };
     const requestBody = {
       ...req,
-      ...(req.iccid ? { sim_token: getToken() } : {}),
+      ...(simToken ? { sim_token: simToken } : {}),
     };
 
     const simRes = await this.post(`/${VERSION}/${SIM}`, {

@@ -19,6 +19,12 @@ export class AllocateSimResolver {
   ): Promise<AllocateSimAPIDto> {
     const { dataSources } = ctx;
     const baseURL = await ctx.urls.url("sim");
-    return await dataSources.sim.allocateSim(baseURL, data);
+
+    let simToken: string | undefined;
+    if (data.iccid) {
+      simToken = await dataSources.sim.getTokenByIccid(baseURL, data.iccid);
+    }
+
+    return await dataSources.sim.allocateSim(baseURL, data, simToken);
   }
 }
