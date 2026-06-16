@@ -410,6 +410,37 @@ static int sim_graphql_call(bff_client_t *c,
         char *err_json;
 
         err_json = json_dumps(errors, JSON_COMPACT);
+
+        /*
+         * SIM CSV upload is idempotent for lab runs.
+         * If the SIMs are already in the pool, continue and let the next
+         * step fetch UNASSIGNED SIMs from the pool.
+         */
+        if (ulab_streq(op, "uploadSims") &&
+            err_json != NULL &&
+            (strstr(err_json, "duplicate key value") != NULL ||
+             strstr(err_json, "idx_iccid") != NULL)) {
+
+            if (c->logf) {
+                fprintf(c->logf,
+                        "--- uploadSims duplicate ignored ---\n%s\n",
+                        err_json);
+                fflush(c->logf);
+            }
+
+            free(err_json);
+            json_decref(root);
+
+            *out = json_object();
+            if (*out == NULL) {
+                snprintf(err->msg, sizeof(err->msg),
+                         "%s: failed to allocate empty JSON response", op);
+                return ULAB_ERR;
+            }
+
+            return ULAB_OK;
+        }
+
         snprintf(err->msg, sizeof(err->msg), "%s: GraphQL error: %s", op,
                  err_json ? err_json : "unknown");
         free(err_json);
@@ -519,7 +550,7 @@ int bff_upload_sims_from_csv(bff_client_t *c,
 
     n = snprintf(query, query_len,
                  "mutation { uploadSims(data:{data:\"%s\","
-                 "simType:\"%s\"}) { iccid } }",
+                 "simType:%s}) { iccid } }",
                  b64_esc, type_esc);
     free(b64_esc);
     free(type_esc);
@@ -575,7 +606,7 @@ int bff_get_sims_from_pool(bff_client_t *c,
 
     ulab_json_escape(sim_type, type_esc, sizeof(type_esc));
     snprintf(query, sizeof(query),
-             "query { getSimsFromPool(data:{type:\"%s\","
+             "query { getSimsFromPool(data:{type:%s,"
              "status:UNASSIGNED}) { sims { iccid } } }",
              type_esc);
 
@@ -662,7 +693,7 @@ int bff_allocate_sim_from_pool(bff_client_t *c,
 
     snprintf(query, sizeof(query),
              "mutation { allocateSim(data:{iccid:\"%s\","
-             "network_id:\"%s\",sim_type:\"%s\","
+             "network_id:\"%s\",sim_type:%s,"
              "package_id:\"%s\",subscriber_id:\"%s\","
              "traffic_policy:0}) { id subscriber_id network_id iccid imsi "
              "status package { packageId isActive startDate endDate } } }",

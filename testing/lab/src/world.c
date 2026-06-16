@@ -160,7 +160,7 @@ int world_generate(const scenario_t *s,
                 snprintf(sub->name, sizeof(sub->name), "Lab User %zu",
                          num);
                 snprintf(sub->email, sizeof(sub->email),
-                         "lab-user-%06zu@ukama.test", num);
+                         "%.180s-%06zu@ukama.test", run_id, num);
                 snprintf(sub->phone, sizeof(sub->phone), "+1555%07u", phone);
                 snprintf(sub->network_ref, sizeof(sub->network_ref), "%s",
                          net->ref);
