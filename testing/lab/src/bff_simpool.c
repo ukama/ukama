@@ -184,6 +184,50 @@ static char *sim_base64_encode(const unsigned char *src,
     return out;
 }
 
+
+static void sim_shell_quote(FILE *f, const char *s) {
+    const char *p;
+
+    fputc('\'', f);
+    for (p = s; p != NULL && *p != '\0'; p++) {
+        if (*p == '\'') {
+            fprintf(f, "'\\''");
+        } else {
+            fputc(*p, f);
+        }
+    }
+    fputc('\'', f);
+}
+
+static void sim_dump_curl(bff_client_t *c,
+                          const char *op,
+                          const char *body) {
+    const char *dump;
+
+    dump = getenv("UKAMA_LAB_DUMP_BFF_CURL");
+    if (dump == NULL || dump[0] == '\0' || ulab_streq(dump, "0")) {
+        return;
+    }
+
+    if (c == NULL || c->logf == NULL) {
+        return;
+    }
+
+    fprintf(c->logf, "--- %s curl ---\n", op);
+    fprintf(c->logf, "curl --location ");
+    sim_shell_quote(c->logf, c->url);
+    fprintf(c->logf, " \\\n");
+    fprintf(c->logf, "  -H 'Content-Type: application/json'");
+    fprintf(c->logf, " \\\n");
+    fprintf(c->logf, "  -H ");
+    fprintf(c->logf, "'X-Session-Token: %s'", c->token);
+    fprintf(c->logf, " \\\n");
+    fprintf(c->logf, "  --data-raw ");
+    sim_shell_quote(c->logf, body);
+    fprintf(c->logf, "\n");
+    fflush(c->logf);
+}
+
 static char *sim_make_graphql_body(const char *query,
                                    ulab_error_t *err) {
     char *qesc;
@@ -220,6 +264,47 @@ static char *sim_make_graphql_body(const char *query,
     return body;
 }
 
+
+static int sim_ensure_authenticated(bff_client_t *c,
+                                    ulab_error_t *err) {
+    const char *session;
+    const char *token;
+    const char *identifier;
+    const char *password;
+
+    if (c == NULL) {
+        snprintf(err->msg, sizeof(err->msg), "BFF client is not initialized");
+        return ULAB_ERR;
+    }
+
+    if (c->authenticated && c->token[0] != '\0') {
+        return ULAB_OK;
+    }
+
+    session = getenv("UKAMA_SESSION_TOKEN");
+    token = getenv("UKAMA_BFF_TOKEN");
+    if (session != NULL && session[0] != '\0' &&
+        token != NULL && token[0] != '\0') {
+        ulab_copy(c->session_token, sizeof(c->session_token), session);
+        ulab_copy(c->token, sizeof(c->token), token);
+        c->authenticated = ULAB_TRUE;
+        return ULAB_OK;
+    }
+
+    identifier = getenv("UKAMA_IDENTIFIER");
+    password = getenv("UKAMA_PASSWORD");
+    if (identifier != NULL && identifier[0] != '\0' &&
+        password != NULL && password[0] != '\0') {
+        return bff_login(c, identifier, password, err);
+    }
+
+    snprintf(err->msg, sizeof(err->msg),
+             "BFF auth missing: set UKAMA_IDENTIFIER/UKAMA_PASSWORD or "
+             "UKAMA_SESSION_TOKEN/UKAMA_BFF_TOKEN");
+
+    return ULAB_ERR;
+}
+
 static int sim_graphql_call(bff_client_t *c,
                             const char *op,
                             const char *query,
@@ -243,6 +328,10 @@ static int sim_graphql_call(bff_client_t *c,
     code = 0;
     resp.buf = NULL;
     resp.len = 0;
+
+    if (sim_ensure_authenticated(c, err)) {
+        return ULAB_ERR;
+    }
 
     body = sim_make_graphql_body(query, err);
     if (body == NULL) {
@@ -275,6 +364,8 @@ static int sim_graphql_call(bff_client_t *c,
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, sim_write_cb);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &resp);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, SIMPOOL_HTTP_TIMEOUT_SEC);
+
+    sim_dump_curl(c, op, body);
 
     ret = curl_easy_perform(curl);
     if (ret != CURLE_OK) {
@@ -427,7 +518,7 @@ int bff_upload_sims_from_csv(bff_client_t *c,
     }
 
     n = snprintf(query, query_len,
-                 "mutation { uploadsSims(data:{data:\"%s\","
+                 "mutation { uploadSims(data:{data:\"%s\","
                  "simType:\"%s\"}) { iccid } }",
                  b64_esc, type_esc);
     free(b64_esc);
@@ -439,7 +530,7 @@ int bff_upload_sims_from_csv(bff_client_t *c,
         return ULAB_ERR;
     }
 
-    if (sim_graphql_call(c, "uploadsSims", query, &root, err)) {
+    if (sim_graphql_call(c, "uploadSims", query, &root, err)) {
         free(query);
         return ULAB_ERR;
     }
