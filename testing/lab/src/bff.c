@@ -1071,6 +1071,7 @@ int bff_add_subscriber(bff_client_t *c, subscriber_t *sub,
 
 int bff_allocate_sim(bff_client_t *c, ue_t *ue, const subscriber_t *sub,
                      const network_t *net, const package_t *pkg,
+                     const char *sim_type,
                      ulab_error_t *err) {
 
     char vars[ULAB_MAX_QUERY];
@@ -1078,10 +1079,11 @@ int bff_allocate_sim(bff_client_t *c, ue_t *ue, const subscriber_t *sub,
     json_t *obj;
 
     snprintf(vars, sizeof(vars),
-             "{\"data\":{\"iccid\":\"%s\",\"network_id\":\"%s\","
-             "\"sim_type\":\"test\",\"package_id\":\"%s\","
-             "\"subscriber_id\":\"%s\",\"traffic_policy\":1}}",
-             ue->iccid, net->bff_id, pkg->bff_id, sub->bff_id);
+         "{\"data\":{\"iccid\":\"%s\",\"network_id\":\"%s\","
+         "\"sim_type\":\"%s\",\"package_id\":\"%s\","
+         "\"subscriber_id\":\"%s\",\"traffic_policy\":1}}",
+         ue->iccid, net->bff_id, sim_type,
+         pkg->bff_id, sub->bff_id);
 
     if (bff_call(c, "allocateSim", BFF_ALLOCATE_SIM, vars, &root, err)) {
         return ULAB_ERR;

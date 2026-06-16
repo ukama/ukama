@@ -693,7 +693,7 @@ int bff_allocate_sim_from_pool(bff_client_t *c,
 
     snprintf(query, sizeof(query),
              "mutation { allocateSim(data:{iccid:\"%s\","
-             "network_id:\"%s\",sim_type:%s,"
+             "network_id:\"%s\",sim_type:\"%s\","
              "package_id:\"%s\",subscriber_id:\"%s\","
              "traffic_policy:0}) { id subscriber_id network_id iccid imsi "
              "status package { packageId isActive startDate endDate } } }",

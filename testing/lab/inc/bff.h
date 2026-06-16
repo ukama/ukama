@@ -95,6 +95,7 @@ int bff_allocate_sim(bff_client_t *c,
                      const subscriber_t *sub,
                      const network_t *net,
                      const package_t *pkg,
+                     const char *sim_type,
                      ulab_error_t *err);
 
 int bff_get_sim_usage(bff_client_t *c,
