@@ -32,16 +32,16 @@ const errFailedUpdateNodeStatusFmt = "failed to update node status: %v"
 const errNodeNotFoundFmt = "node %s not found"
 
 type NodeEventServer struct {
-	s       *NodeServer
-	orgName string
+	s         *NodeServer
+	orgName   string
 	invClient cinvent.ComponentClient
 	epb.UnimplementedEventNotificationServiceServer
 }
 
 func NewNodeEventServer(orgName string, s *NodeServer, invClient cinvent.ComponentClient) *NodeEventServer {
 	return &NodeEventServer{
-		s:       s,
-		orgName: orgName,
+		s:         s,
+		orgName:   orgName,
 		invClient: invClient,
 	}
 }
@@ -132,7 +132,7 @@ func (n *NodeEventServer) handleNodeOnlineEvent(ctx context.Context, key string,
 	if node == nil || node.Node == nil {
 		log.Errorf(errNodeNotFoundFmt, msg.NodeId)
 		return fmt.Errorf(errNodeNotFoundFmt, msg.NodeId)
-	}	
+	}
 
 	_, err = n.s.UpdateNodeStatus(ctx, &pb.UpdateNodeStateRequest{
 		NodeId:       msg.NodeId,
@@ -197,8 +197,12 @@ func (n *NodeEventServer) handleHealthReportEvent(ctx context.Context, key strin
 		return fmt.Errorf("failed to get interfaces: %w", err)
 	}
 
+	if interfaces.Gps == nil || !interfaces.Gps.Available {
+		log.Errorf("GPS not found/available: %+v", interfaces.Gps)
+		return fmt.Errorf("GPS not found: %+v", interfaces.Gps)
+	}
 	coordinates := interfaces.Gps.Coordinates
-	
+
 	if coordinates == "" {
 		log.Errorf("Coordinates not found")
 		return fmt.Errorf("coordinates not found")
@@ -290,8 +294,8 @@ func (n *NodeEventServer) handleAddNode(ctx context.Context, key string, msg *ep
 	}
 
 	_, err = n.s.AddNode(ctx, &pb.AddNodeRequest{
-		NodeId:    nodeID.StringLowercase(),
-		Name:      ukama.GetPlaceholderNameByType(nodeID.GetNodeType()),
+		NodeId: nodeID.StringLowercase(),
+		Name:   ukama.GetPlaceholderNameByType(nodeID.GetNodeType()),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to add node: %w", err)
@@ -327,9 +331,9 @@ func (n *NodeEventServer) handleAddNodeToSite(ctx context.Context, accessId stri
 		return fmt.Errorf("failed to get component: %w", err)
 	}
 	nodeID := component.PartNumber
-	
+
 	log.Infof("Node ID is: %s", nodeID)
-	
+
 	aId, err := ukama.GetANodeIdFromTNodeId(nodeID)
 	if err != nil {
 		return fmt.Errorf("failed to get A Node ID: %w", err)
@@ -339,7 +343,7 @@ func (n *NodeEventServer) handleAddNodeToSite(ctx context.Context, accessId stri
 	if err != nil {
 		return fmt.Errorf("failed to validate A Node ID: %w", err)
 	}
-	
+
 	cId, err := ukama.GetCNodeIdFromTNodeId(nodeID)
 	if err != nil {
 		return fmt.Errorf("failed to get C Node ID: %w", err)

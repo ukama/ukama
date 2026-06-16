@@ -12,7 +12,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"time"
 
 	"github.com/ukama/ukama/systems/common/rest/client"
 
@@ -46,10 +45,10 @@ type RadioInterfaceInfo struct {
 }
 
 type GPSInterfaceInfo struct {
-	Available   bool      `json:"available,omitempty"`
-	Lock        bool      `json:"lock,omitempty"`
-	Coordinates string    `json:"coordinates,omitempty"`
-	Time        time.Time `json:"time,omitempty"`
+	Available   bool   `json:"available,omitempty"`
+	Lock        bool   `json:"lock,omitempty"`
+	Coordinates string `json:"coordinates"`
+	Time        string `json:"time,omitempty"`
 }
 
 type BackhaulInterfaceInfo struct {
