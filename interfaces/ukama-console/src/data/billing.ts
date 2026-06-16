@@ -7,8 +7,6 @@
  */
 
 /** Billing — ported from the design prototype (`data.jsx`). */
-import { series } from '@/lib/series';
-
 export interface Invoice {
   id: string;
   period: string;

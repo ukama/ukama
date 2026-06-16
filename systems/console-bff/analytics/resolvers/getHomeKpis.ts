@@ -34,9 +34,18 @@ export class GetHomeKpisResolver {
         const kpis = [...result.kpis];
         const i = kpis.findIndex(k => k.key === "active_customers");
         if (i >= 0) {
-          kpis[i] = { ...kpis[i], value, formatted: String(value), stale: false };
+          kpis[i] = {
+            ...kpis[i],
+            value,
+            formatted: String(value),
+            stale: false,
+          };
         } else {
-          kpis.push({ key: "active_customers", value, formatted: String(value) });
+          kpis.push({
+            key: "active_customers",
+            value,
+            formatted: String(value),
+          });
         }
         return { ...result, kpis };
       }
