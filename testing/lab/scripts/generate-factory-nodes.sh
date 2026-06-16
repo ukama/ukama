@@ -10,11 +10,11 @@
 # No direct DB access is used.
 #
 # Usage:
-#   FACTORY_URL=http://localhost:8070 ./generate_factory_nodes.sh <count> [org_name]
+#   FACTORY_URL=http://localhost:8070 ./generate-factory-nodes.sh <count> [org_name]
 #
 # Examples:
-#   ./generate_factory_nodes.sh 100
-#   ./generate_factory_nodes.sh 100 ukama
+#   ./generate-factory-nodes.sh 100
+#   ./generate-factory-nodes.sh 100 ukama
 #
 # Env:
 #   FACTORY_URL          Base URL for factory API gateway. Default: http://localhost:8070
