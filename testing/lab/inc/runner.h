@@ -18,7 +18,9 @@ typedef struct {
     char script_dir[ULAB_MAX_PATH];
     char repo[ULAB_MAX_PATH];
     char subscriber_network_id[ULAB_MAX_ID];
-    
+    char sim_csv_path[ULAB_MAX_PATH];
+    char sim_type[ULAB_MAX_REF];
+
     uint32_t seed_override;
 
     int has_seed_override;

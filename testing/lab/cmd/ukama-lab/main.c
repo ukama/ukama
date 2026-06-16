@@ -33,6 +33,8 @@ static void usage(void) {
     printf("  --setup-only     create BFF world and skip runtime\n");
     printf("  --subscriber     create package/subscriber/SIM only\n");
     printf("  --network-id <id> existing BFF network id for --subscriber\n");
+    printf("  --sim-csv <file> upload SIM CSV before allocation\n");
+    printf("  --sim-type <type> SIM pool type; default: test\n");
     printf("  --print-world    dry-run: print generated world sample\n");
     printf("  --quiet          summary only\n");
     printf("  --verbose        debug logs\n");
@@ -50,6 +52,10 @@ static void opts_init(runner_opts_t *o) {
     ulab_copy(o->subscriber_network_id,
               sizeof(o->subscriber_network_id),
               ulab_getenv_default("UKAMA_LAB_NETWORK_ID", ""));
+    ulab_copy(o->sim_csv_path, sizeof(o->sim_csv_path),
+              ulab_getenv_default("UKAMA_LAB_SIM_CSV", ""));
+    ulab_copy(o->sim_type, sizeof(o->sim_type),
+              ulab_getenv_default("UKAMA_LAB_SIM_TYPE", "test"));
     o->keep = 1;
 }
 
@@ -78,6 +84,10 @@ static int parse_opts(int argc, char **argv, int start, runner_opts_t *o) {
         } else if (ulab_streq(argv[i], "--network-id") && i + 1 < argc) {
             ulab_copy(o->subscriber_network_id,
                       sizeof(o->subscriber_network_id), argv[++i]);
+        } else if (ulab_streq(argv[i], "--sim-csv") && i + 1 < argc) {
+            ulab_copy(o->sim_csv_path, sizeof(o->sim_csv_path), argv[++i]);
+        } else if (ulab_streq(argv[i], "--sim-type") && i + 1 < argc) {
+            ulab_copy(o->sim_type, sizeof(o->sim_type), argv[++i]);
         } else if (ulab_streq(argv[i], "--print-world")) {
             o->print_world = 1;
         } else if (ulab_streq(argv[i], "--print-plan")) {
@@ -146,7 +156,7 @@ int main(int argc, char **argv) {
         usage();
         return ULAB_EUSAGE;
     }
-               
+
     ulab_log_set_quiet(opts.quiet);
     ulab_log_set_verbose(opts.verbose);
 

@@ -70,6 +70,26 @@ int bff_add_subscriber(bff_client_t *c,
                        const network_t *net,
                        ulab_error_t *err);
 
+int bff_upload_sims_from_csv(bff_client_t *c,
+                             const char *csv_path,
+                             const char *sim_type,
+                             ulab_error_t *err);
+
+int bff_get_sims_from_pool(bff_client_t *c,
+                           const char *sim_type,
+                           char iccids[][ULAB_MAX_ID],
+                           size_t max_iccids,
+                           size_t *iccid_count,
+                           ulab_error_t *err);
+
+int bff_allocate_sim_from_pool(bff_client_t *c,
+                               ue_t *ue,
+                               const subscriber_t *sub,
+                               const network_t *net,
+                               const package_t *pkg,
+                               const char *sim_type,
+                               ulab_error_t *err);
+
 int bff_allocate_sim(bff_client_t *c,
                      ue_t *ue,
                      const subscriber_t *sub,

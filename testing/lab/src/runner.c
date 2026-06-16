@@ -190,9 +190,67 @@ static subscriber_t *find_subscriber(world_t *world,
     return NULL;
 }
 
+static int setup_bff_sim_pool(bff_client_t *bff,
+                              world_t *world,
+                              const runner_opts_t *opts,
+                              ulab_error_t *err) {
+
+    char (*iccids)[ULAB_MAX_ID];
+    size_t count;
+    size_t i;
+
+    if (world->ue_count == 0) {
+        return ULAB_OK;
+    }
+
+    if (opts->sim_csv_path[0] != '\0') {
+        ulab_status("SIMPOOL", "upload %s type=%s",
+                    opts->sim_csv_path, opts->sim_type);
+        if (bff_upload_sims_from_csv(bff, opts->sim_csv_path,
+                                     opts->sim_type, err)) {
+            return ULAB_EBFF;
+        }
+    }
+
+    iccids = calloc(world->ue_count, sizeof(*iccids));
+    if (iccids == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "out of memory reading SIM pool");
+        return ULAB_EINTERNAL;
+    }
+
+    ulab_status("SIMPOOL", "get unassigned sims type=%s", opts->sim_type);
+    if (bff_get_sims_from_pool(bff, opts->sim_type, iccids,
+                               world->ue_count, &count, err)) {
+        free(iccids);
+        return ULAB_EBFF;
+    }
+
+    if (count < world->ue_count) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "not enough UNASSIGNED sims in pool type=%s: "
+                 "need=%zu got=%zu",
+                 opts->sim_type, world->ue_count, count);
+        free(iccids);
+        return ULAB_EBFF;
+    }
+
+    for (i = 0; i < world->ue_count; i++) {
+        ulab_copy(world->ues[i].iccid, sizeof(world->ues[i].iccid),
+                  iccids[i]);
+        ulab_status("SIMPOOL", "ue %s iccid=%s", world->ues[i].ref,
+                    world->ues[i].iccid);
+    }
+
+    free(iccids);
+
+    return ULAB_OK;
+}
+
 static int setup_bff_sims(bff_client_t *bff,
                           const scenario_t *scenario,
                           world_t *world,
+                          const runner_opts_t *opts,
                           ulab_error_t *err) {
 
     subscriber_t *sub;
@@ -229,8 +287,10 @@ static int setup_bff_sims(bff_client_t *bff,
             return ULAB_EBFF;
         }
 
-        ulab_status("BFF", "allocate sim %s", ue->ref);
-        if (bff_allocate_sim(bff, ue, sub, network, package, err)) {
+        ulab_status("BFF", "allocate sim %s iccid=%s", ue->ref,
+                    ue->iccid);
+        if (bff_allocate_sim_from_pool(bff, ue, sub, network, package,
+                                       opts->sim_type, err)) {
             return ULAB_EBFF;
         }
     }
@@ -241,6 +301,7 @@ static int setup_bff_sims(bff_client_t *bff,
 static int setup_bff_world(bff_client_t *bff,
                            const scenario_t *scenario,
                            world_t *world,
+                           const runner_opts_t *opts,
                            ulab_error_t *err) {
 
     if (setup_bff_networks(bff, scenario, world, err)) {
@@ -248,6 +309,10 @@ static int setup_bff_world(bff_client_t *bff,
     }
 
     if (setup_bff_sites(bff, scenario, world, err)) {
+        return ULAB_EBFF;
+    }
+
+    if (setup_bff_sim_pool(bff, world, opts, err)) {
         return ULAB_EBFF;
     }
 
@@ -259,7 +324,7 @@ static int setup_bff_world(bff_client_t *bff,
         return ULAB_EBFF;
     }
 
-    if (setup_bff_sims(bff, scenario, world, err)) {
+    if (setup_bff_sims(bff, scenario, world, opts, err)) {
         return ULAB_EBFF;
     }
 
@@ -302,6 +367,10 @@ static int setup_bff_subscriber_only(bff_client_t *bff,
         return rc;
     }
 
+    if (setup_bff_sim_pool(bff, world, opts, err)) {
+        return ULAB_EBFF;
+    }
+
     if (setup_bff_packages(bff, scenario, world, err)) {
         return ULAB_EBFF;
     }
@@ -310,7 +379,7 @@ static int setup_bff_subscriber_only(bff_client_t *bff,
         return ULAB_EBFF;
     }
 
-    if (setup_bff_sims(bff, scenario, world, err)) {
+    if (setup_bff_sims(bff, scenario, world, opts, err)) {
         return ULAB_EBFF;
     }
 
@@ -551,7 +620,7 @@ int runner_validate(const runner_opts_t *opts) {
                                        &err);
     } else {
         ulab_status("SETUP", "creating BFF world resources");
-        rc = setup_bff_world(&bff, scenario, &world, &err);
+        rc = setup_bff_world(&bff, scenario, &world, opts, &err);
     }
     if (rc != ULAB_OK) {
         goto done;
