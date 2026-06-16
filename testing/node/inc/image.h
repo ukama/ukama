@@ -34,6 +34,7 @@
 #define CF_COPY    "COPY %s %s\n"
 #define CF_ADD     "ADD %s %s\n"
 #define CF_CMD     "CMD [%s]\n"
+#define CF_ENTRYPOINT "ENTRYPOINT [%s]\n"
 #define CF_MKDIR   "RUN mkdir -p %s\n"
 #define CF_ENV     "ENV %s %s\n"
 #define CF_SYMLINK "RUN ln -sfn %s %s\n"

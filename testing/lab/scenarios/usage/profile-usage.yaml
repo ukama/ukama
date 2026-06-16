@@ -1,0 +1,65 @@
+version: 1
+name: profile-usage
+seed: 44
+
+world:
+  networks: 1
+  sites_per_network: 2
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 10
+
+packages:
+  - ref: daily_1gb
+    name: Daily 1GB
+    data_mb: 1024
+    duration_hours: 24
+    amount: 1.00
+    assign_percent: 100
+
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+
+runtime:
+  start: [nodes, ues]
+  wait: [nodes_ready, ues_attached]
+
+profiles:
+  usage:
+    light:
+      percent: 60
+      amount_mb: 50
+    normal:
+      percent: 30
+      amount_mb: 200
+    heavy:
+      percent: 10
+      amount_mb: 700
+
+phases:
+  - name: morning_usage
+    events:
+      - type: traffic_by_profile
+        ues: all
+        profile: usage
+    checks:
+      - type: usage_sample
+        sample_per_site: 3
+        expected: from_model
+        tolerance_percent: 2
+
+final_checks:
+  - type: count
+    target: sims
+    expected: 20
+  - type: balance_non_negative
+    ues: all
