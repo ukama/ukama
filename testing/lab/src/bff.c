@@ -1112,7 +1112,7 @@ int bff_get_sim_usage(bff_client_t *c,
     json_t *obj;
     json_t *u;
 
-    snprintf(vars, sizeof(vars), "{\"simId\":\"%s\"}", ue->bff_id);
+    snprintf(vars, sizeof(vars), "{\"sim_id\":\"%s\"}", ue->bff_id);
 
     if (bff_call(c, "getDataUsage", BFF_GET_DATA_USAGE, vars, &root,
         err)) {
@@ -1148,7 +1148,7 @@ int bff_get_packages_for_sim(bff_client_t *c, const ue_t *ue,
     json_t *act;
     size_t i;
 
-    snprintf(vars, sizeof(vars), "{\"data\":{\"simId\":\"%s\"}}",
+    snprintf(vars, sizeof(vars), "{\"data\":{\"sim_id\":\"%s\"}}",
              ue->bff_id);
 
     if (bff_call(c, "getPackagesForSim", BFF_GET_SIM_PACKAGES, vars,
