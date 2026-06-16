@@ -18,6 +18,7 @@ import { GetCustomerOverviewResolver } from "./getCustomerOverview";
 import { GetCustomerSimsResolver } from "./getCustomerSims";
 import { GetCustomerSupportResolver } from "./getCustomerSupport";
 import { GetEventsResolver } from "./getEvents";
+import { GetHomeKpisResolver } from "./getHomeKpis";
 import { GetInventoryReadinessResolver } from "./getInventoryReadiness";
 import { GetMetricsResolver } from "./getMetrics";
 import { GetNetworkNodeResolver } from "./getNetworkNode";
@@ -40,6 +41,8 @@ import { SearchCustomersResolver } from "./searchCustomers";
 import { SupportSearchResolver } from "./supportSearch";
 
 const resolvers: NonEmptyArray<any> = [
+  // Home (shared business / network)
+  GetHomeKpisResolver,
   // Business backend
   GetBusinessHomeResolver,
   GetSalesOverviewResolver,

@@ -5,8 +5,12 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import BizNetworkScreen from '../_components/BizNetworkScreen';
 
-export default function BizNetworkPage() {
-  return <BizNetworkScreen />;
-}
+/** Bar palette for the business revenue/package breakdown charts. */
+export const BAR_COLORS = [
+  'var(--uk-ac)',
+  'var(--uk-secondary)',
+  'var(--uk-success-bright)',
+  'var(--uk-beige)',
+  'var(--uk-orange)',
+];

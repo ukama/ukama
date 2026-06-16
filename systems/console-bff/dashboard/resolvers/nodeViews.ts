@@ -219,7 +219,9 @@ export class NodeViewResolver {
       const keys = [
         ...new Set(groups.flatMap(g => getGraphsKeyByType(g, nodeType))),
       ];
-      return fetchLatestKpis(ctx.dataSources.metric, url, keys);
+      return fetchLatestKpis(ctx.dataSources.metric, url, keys, {
+        nodeId: root.nodeId,
+      });
     });
     return { metrics: value, error };
   }

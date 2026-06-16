@@ -7,8 +7,9 @@
  */
 import { NonEmptyArray } from "type-graphql";
 
+import { GetApps } from "./getApps";
 import { GetHealthReportResolver } from "./getHealthReport";
 
-const resolvers: NonEmptyArray<any> = [GetHealthReportResolver];
+const resolvers: NonEmptyArray<any> = [GetHealthReportResolver, GetApps];
 
 export default resolvers;

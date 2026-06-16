@@ -11,6 +11,7 @@
  * key from the metric service, bounded concurrency, polled by the console —
  * no subscriptions/WS in v1 (BUILD-PLAN §5.1·4).
  */
+import { logger } from "../common/logger";
 import { mapWithConcurrency } from "../common/utils/concurrency";
 import type MetricAPI from "../metric/datasource/metric_api";
 import type { MetricThresholdMeta } from "./metrics/catalog";
@@ -54,14 +55,27 @@ export interface KpiEntry {
 export const fetchLatestKpis = async (
   metricApi: MetricAPI,
   baseURL: string,
-  keys: readonly string[]
+  keys: readonly string[],
+  opts: { nodeId?: string } = {}
 ): Promise<KpiEntry[]> => {
   const results = await mapWithConcurrency(keys, async key => {
-    // Mock keys never touch the upstream; live keys hit the metric service.
-    const r = isMockKey(key)
-      ? { type: key, ...mockLatest(key, baseURL) }
-      : await metricApi.getLatestMetric(baseURL, key);
-    return r;
+    // One failing live key must not blank the whole section — degrade that
+    // single KPI to success:false and let the rest render.
+    try {
+      if (isMockKey(key)) return { type: key, ...mockLatest(key, baseURL) };
+      // Per-node KPIs must be node-scoped (the org-scoped /v1/metrics handler
+      // hardcodes the `system` node type and 404s on node-only metrics).
+      return opts.nodeId
+        ? await metricApi.getNodeLatest(baseURL, key, opts.nodeId)
+        : await metricApi.getLatestMetric(baseURL, key);
+    } catch (e) {
+      logger.warn(`[fetchLatestKpis] '${key}' failed: ${e}`);
+      return {
+        type: key,
+        value: [Math.floor(Date.now() / 1000), 0] as [number, number],
+        success: false,
+      };
+    }
   });
   return results.map(result => {
     const meta = metricMeta(result.type);

@@ -43,10 +43,9 @@ import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
 import { publicEnv } from '@/lib/runtime-env';
 import UploadSimsDialog from './UploadSimsDialog';
 
-type SimRow = { isAllocated: boolean; isFailed: boolean; isPhysical: boolean };
-type TypeFilter = 'all' | 'physical' | 'esim';
+type SimRow = { isAllocated: boolean; isFailed: boolean };
 type StatusFilter = 'all' | 'available' | 'assigned' | 'faulty';
-type SortKey = 'type' | 'status' | 'added';
+type SortKey = 'status' | 'added';
 type SortDir = 'asc' | 'desc';
 
 const statusKey = (s: SimRow): StatusFilter =>
@@ -101,7 +100,6 @@ const simStatusLabel = (sim: { isAllocated: boolean; isFailed: boolean }) =>
 export default function SimPoolScreen({ canAct }: { canAct: boolean }) {
   const toast = useToast();
   const [showUpload, setShowUpload] = useState(false);
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [sortKey, setSortKey] = useState<SortKey>('added');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
@@ -124,26 +122,22 @@ export default function SimPoolScreen({ canAct }: { canAct: boolean }) {
 
   const sims = useMemo(() => {
     const filtered = allSims.filter((s) => {
-      if (typeFilter !== 'all') {
-        if (typeFilter === 'physical' && !s.isPhysical) return false;
-        if (typeFilter === 'esim' && s.isPhysical) return false;
-      }
       if (statusFilter !== 'all' && statusKey(s) !== statusFilter) return false;
       return true;
     });
     const dir = sortDir === 'asc' ? 1 : -1;
     return [...filtered].sort((a, b) => {
       let cmp = 0;
-      if (sortKey === 'type') {
-        cmp = Number(a.isPhysical) - Number(b.isPhysical);
-      } else if (sortKey === 'status') {
+      if (sortKey === 'status') {
         cmp = statusKey(a).localeCompare(statusKey(b));
       } else {
-        cmp = (parseTimestamp(a.createdAt) || 0) - (parseTimestamp(b.createdAt) || 0);
+        cmp =
+          (parseTimestamp(a.createdAt) || 0) -
+          (parseTimestamp(b.createdAt) || 0);
       }
       return cmp * dir;
     });
-  }, [allSims, typeFilter, statusFilter, sortKey, sortDir]);
+  }, [allSims, statusFilter, sortKey, sortDir]);
 
   return (
     <div className="page">
@@ -183,7 +177,10 @@ export default function SimPoolScreen({ canAct }: { canAct: boolean }) {
             icon: 'sim_card',
             label: 'Assigned',
             value: sectionValue(stats?.consumed, stats?.error),
-            sub: stats?.pctAssigned != null ? `${stats.pctAssigned}% of pool` : undefined,
+            sub:
+              stats?.pctAssigned != null
+                ? `${stats.pctAssigned}% of pool`
+                : undefined,
             color: 'var(--uk-ac)',
           },
           {
@@ -198,14 +195,6 @@ export default function SimPoolScreen({ canAct }: { canAct: boolean }) {
             value: sectionValue(stats?.failed, stats?.error),
             color: 'var(--uk-error)',
           },
-          {
-            icon: 'sim_card',
-            label: 'eSIM / physical',
-            value: stats?.error
-              ? '—'
-              : `${stats?.esim ?? 0} / ${stats?.physical ?? 0}`,
-            color: 'var(--uk-secondary)',
-          },
         ]}
       />
 
@@ -218,15 +207,6 @@ export default function SimPoolScreen({ canAct }: { canAct: boolean }) {
             SIMs <span className="cnt tnum">{sims.length}</span>
           </div>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-            <FilterChips
-              value={typeFilter}
-              onChange={(v) => setTypeFilter(v as TypeFilter)}
-              options={[
-                { value: 'all', label: 'All types' },
-                { value: 'physical', label: 'Physical' },
-                { value: 'esim', label: 'eSIM' },
-              ]}
-            />
             <FilterChips
               value={statusFilter}
               onChange={(v) => setStatusFilter(v as StatusFilter)}
@@ -241,7 +221,7 @@ export default function SimPoolScreen({ canAct }: { canAct: boolean }) {
         </div>
         <div className="tbl-wrap">
           {loading ? (
-            <SkeletonTable cols={5} rows={4} />
+            <SkeletonTable cols={4} rows={4} />
           ) : simsSection?.error ? (
             <EmptyState
               art="error"
@@ -251,28 +231,25 @@ export default function SimPoolScreen({ canAct }: { canAct: boolean }) {
               onCta={() => refetch()}
             />
           ) : allSims.length === 0 ? (
-            <EmptyState art="sim" title="No SIMs" sub="Upload a SIM batch to get started." />
+            <EmptyState
+              art="sim"
+              title="No SIMs"
+              sub="Upload a SIM batch to get started."
+            />
           ) : sims.length === 0 ? (
             <EmptyState
               art="search"
               title="No SIMs match"
-              sub="Try a different type or status filter."
+              sub="Try a different status filter."
             />
           ) : (
             <Table>
               <TableHead>
                 <TableRow>
                   <TableCell>ICCID</TableCell>
-                  <TableCell sortDirection={sortKey === 'type' ? sortDir : false}>
-                    <TableSortLabel
-                      active={sortKey === 'type'}
-                      direction={sortKey === 'type' ? sortDir : 'asc'}
-                      onClick={() => toggleSort('type')}
-                    >
-                      Type
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell sortDirection={sortKey === 'status' ? sortDir : false}>
+                  <TableCell
+                    sortDirection={sortKey === 'status' ? sortDir : false}
+                  >
                     <TableSortLabel
                       active={sortKey === 'status'}
                       direction={sortKey === 'status' ? sortDir : 'asc'}
@@ -281,7 +258,9 @@ export default function SimPoolScreen({ canAct }: { canAct: boolean }) {
                       Status
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell sortDirection={sortKey === 'added' ? sortDir : false}>
+                  <TableCell
+                    sortDirection={sortKey === 'added' ? sortDir : false}
+                  >
                     <TableSortLabel
                       active={sortKey === 'added'}
                       direction={sortKey === 'added' ? sortDir : 'asc'}
@@ -299,11 +278,14 @@ export default function SimPoolScreen({ canAct }: { canAct: boolean }) {
                     <TableCell className="tnum" style={{ fontWeight: 600 }}>
                       {sim.iccid}
                     </TableCell>
-                    <TableCell>{sim.isPhysical ? 'Physical' : 'eSIM'}</TableCell>
                     <TableCell>
-                      <StatusBadge status={simStatus(sim)}>{simStatusLabel(sim)}</StatusBadge>
+                      <StatusBadge status={simStatus(sim)}>
+                        {simStatusLabel(sim)}
+                      </StatusBadge>
                     </TableCell>
-                    <TableCell className="muted">{formatDate(sim.createdAt)}</TableCell>
+                    <TableCell className="muted">
+                      {formatDate(sim.createdAt)}
+                    </TableCell>
                     {canAct && (
                       <TableCell>
                         <SimMenu iccid={sim.iccid} />
@@ -315,19 +297,19 @@ export default function SimPoolScreen({ canAct }: { canAct: boolean }) {
             </Table>
           )}
         </div>
-        {!loading && !simsSection?.error && (
+        {!loading &&
+          !simsSection?.error &&
           (() => {
             // When the pool is larger than what the list returns, show
             // "Showing N of M" so the cap is clear vs. the stats total.
             const total = stats?.error ? undefined : stats?.total;
-            const noFilter = typeFilter === 'all' && statusFilter === 'all';
+            const noFilter = statusFilter === 'all';
             return noFilter && total != null && total > allSims.length ? (
               <TableFooter showing={allSims.length} total={total} />
             ) : (
               <TableFooter count={sims.length} noun="SIMs" />
             );
-          })()
-        )}
+          })()}
       </div>
       {showUpload && (
         <UploadSimsDialog

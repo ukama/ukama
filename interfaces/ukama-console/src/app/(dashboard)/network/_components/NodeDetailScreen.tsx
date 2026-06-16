@@ -11,29 +11,39 @@
  * Node detail — per-type tabs, left KPI rail, node product imagery and the
  * "Turn node off" power menu (node-site-detail.jsx NodeDetail).
  */
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Button from '@mui/material/Button';
 import RestartAltRounded from '@mui/icons-material/RestartAltRounded';
 import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
+import SystemUpdateAltRounded from '@mui/icons-material/SystemUpdateAltRounded';
+import ErrorRounded from '@mui/icons-material/ErrorRounded';
+import HelpRounded from '@mui/icons-material/HelpRounded';
+import CircularProgress from '@mui/material/CircularProgress';
 import Skeleton from '@mui/material/Skeleton';
 
 import { useNodeDetailQuery } from '@/client/graphql/node-detail.generated';
-import { useNodeKpisQuery } from '@/client/graphql/node-kpis.generated';
-import type { MetricsRangeQuery } from '@/client/graphql/range-metrics.generated';
 import { useMetricsRangeQuery } from '@/client/graphql/range-metrics.generated';
 import { useRestartNodeMutation } from '@/client/graphql/controller.generated';
+import {
+  useGetAppsQuery,
+  useUpdateSoftwareMutation,
+} from '@/client/graphql/software.generated';
 import AppModal from '@/components/AppModal';
 import AppTabs from '@/components/AppTabs';
-import MetricLineChart, { ChartMessage, thresholdLegendRows } from '@/components/MetricLineChart';
+import MetricChartCard from '@/components/MetricChartCard';
 import DetailPicker from '@/components/DetailPicker';
 import { EmptyState } from '@/components/EmptyState';
 import KV from '@/components/KV';
 import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
 import { useToast } from '@/components/ToastProvider';
+import { metricLabel } from '@/lib/labels';
 import { toUkamaNode } from '@/lib/mappers/nodes';
+import { type LatestEntry, seriesLatest } from '@/lib/metrics';
+import { formatDate } from '@/lib/parsers';
+import { RANGE_SECONDS } from '@/lib/ranges';
 import { ConnectivityDot, StateChip } from './nodeStatus';
 
 const TABS = ['Overview', 'Network', 'Resources', 'Radio', 'Software'];
@@ -49,16 +59,6 @@ const NODE_IMAGES: Record<string, string> = {
 const NODE_IMAGE_FALLBACK = `${NODE_IMAGE_BASE}/ukama_tower_node.png`;
 const nodeImage = (type: string): string =>
   NODE_IMAGES[type.toLowerCase()] ?? NODE_IMAGE_FALLBACK;
-
-type Range = 'Day' | 'Week' | 'Month';
-const RANGES: Range[] = ['Day', 'Week', 'Month'];
-
-/** Window length per range, in seconds (drives the metricsRange from/to). */
-const RANGE_SECONDS: Record<Range, number> = {
-  Day: 86_400,
-  Week: 604_800,
-  Month: 2_592_000,
-};
 
 /* -------------------------------------------------------------------------- *
  * Per-node-type metric key lists (which KPIs/graphs exist for a node type),
@@ -147,91 +147,31 @@ const TAB_SECTIONS: Record<string, SectionDef[]> = {
   Radio: [{ key: 'radio', title: 'Radio', group: 'radio' }],
 };
 
-function LegendDot({ color, label }: { color: string; label: string }) {
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--uk-ink-2)' }}>
-      <span style={{ width: 9, height: 9, borderRadius: 3, background: color }} />
-      {label}
-    </span>
-  );
-}
-
-function RangeToggle({ value, onChange }: { value: Range; onChange: (r: Range) => void }) {
-  return (
-    <div className="range-toggle" role="group" aria-label="Time range">
-      {RANGES.map((r) => (
-        <button
-          key={r}
-          type="button"
-          className={r === value ? 'is-active' : ''}
-          aria-pressed={r === value}
-          onClick={() => onChange(r)}
-        >
-          {r}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-/** One metric series straight from the BFF (metricsRange). */
-type MetricSeries = MetricsRangeQuery['metricsRange']['metrics'][number];
-
-/** One metric chart with its own range filter — self-fetches its series so
- *  every graph filters independently. Rendered with Recharts. */
-function MetricChart({
+/** Hidden fetcher: one batched metricsRange (Day window) for rail KPIs whose
+ *  chart isn't currently shown, so every left-rail value still has a source
+ *  without a separate latest query. Reports each series' latest upward. */
+function RailLatest({
   nodeId,
-  metricKey,
-  off,
+  keys,
+  onLatest,
 }: {
   nodeId: string;
-  metricKey: string;
-  off: boolean;
+  keys: string[];
+  onLatest: (key: string, entry: LatestEntry) => void;
 }) {
-  const [range, setRange] = useState<Range>('Day');
   const [nowSec] = useState(() => Math.floor(Date.now() / 1000));
-  const to = nowSec;
-  const from = nowSec - RANGE_SECONDS[range];
-  const { data, loading, error } = useMetricsRangeQuery({
-    variables: { data: { keys: [metricKey], nodeId, from, to } },
+  const { data } = useMetricsRangeQuery({
+    variables: {
+      data: { keys, nodeId, from: nowSec - RANGE_SECONDS.Day, to: nowSec },
+    },
+    skip: keys.length === 0,
   });
-
-  const m: MetricSeries | undefined = data?.metricsRange.metrics?.[0];
-  const hasData = !!m && m.values.length > 0 && m.success !== false;
-  const values: [number, number][] = hasData
-    ? off
-      ? m!.values.map((v) => [v[0] ?? 0, 0])
-      : m!.values.map((v) => [v[0] ?? 0, v[1] ?? 0])
-    : [];
-  const legend = thresholdLegendRows(m?.threshold ?? null, m?.unit);
-  const title = m?.label || metricKey;
-  return (
-    <SectionCard title={title} right={<RangeToggle value={range} onChange={setRange} />}>
-      {error ? (
-        <ChartMessage kind="error" message={error.message} height={300} />
-      ) : loading && !m ? (
-        <Skeleton variant="rounded" sx={{ height: 300 }} />
-      ) : !hasData ? (
-        <ChartMessage kind="empty" height={300} />
-      ) : (
-        <>
-          <MetricLineChart
-            values={values}
-            title={title}
-            unit={m?.unit}
-            format={m?.format}
-            threshold={m?.threshold ?? null}
-            height={300}
-          />
-          <div style={{ display: 'flex', gap: 18, justifyContent: 'center', marginTop: 10, flexWrap: 'wrap' }}>
-            {legend.map((l) => (
-              <LegendDot key={l.label} {...l} />
-            ))}
-          </div>
-        </>
-      )}
-    </SectionCard>
-  );
+  useEffect(() => {
+    for (const m of data?.metricsRange.metrics ?? []) {
+      onLatest(m.type, seriesLatest(m));
+    }
+  }, [data, onLatest]);
+  return null;
 }
 
 /** Right-panel charts for a metric group — one self-filtering chart per key. */
@@ -239,10 +179,12 @@ function GroupCharts({
   nodeId,
   keys,
   off,
+  onLatest,
 }: {
   nodeId: string;
   keys: string[];
   off: boolean;
+  onLatest?: (key: string, entry: LatestEntry) => void;
 }) {
   if (keys.length === 0) {
     return (
@@ -256,9 +198,17 @@ function GroupCharts({
     );
   }
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--uk-gap)' }}>
+    <div
+      style={{ display: 'flex', flexDirection: 'column', gap: 'var(--uk-gap)' }}
+    >
       {keys.map((k) => (
-        <MetricChart key={k} nodeId={nodeId} metricKey={k} off={off} />
+        <MetricChartCard
+          key={k}
+          nodeId={nodeId}
+          metricKey={k}
+          off={off}
+          onLatest={onLatest}
+        />
       ))}
     </div>
   );
@@ -272,7 +222,9 @@ function RestartAction({ nodeId, name }: { nodeId: string; name: string }) {
     onCompleted: (d) => {
       setOpen(false);
       toast(
-        d.restartNode.success ? `Restarting ${name}…` : `Couldn't restart ${name}`,
+        d.restartNode.success
+          ? `Restarting ${name}…`
+          : `Couldn't restart ${name}`,
       );
     },
     onError: () => {
@@ -318,10 +270,12 @@ function RestartAction({ nodeId, name }: { nodeId: string; name: string }) {
             </>
           }
         >
-          <div style={{ fontSize: 14, color: 'var(--uk-ink-2)', lineHeight: 1.55 }}>
-            This will reboot <b style={{ color: 'var(--uk-ink)' }}>{name}</b>. The node
-            will be briefly offline while it restarts, and active sessions may be
-            interrupted.
+          <div
+            style={{ fontSize: 14, color: 'var(--uk-ink-2)', lineHeight: 1.55 }}
+          >
+            This will reboot <b style={{ color: 'var(--uk-ink)' }}>{name}</b>.
+            The node will be briefly offline while it restarts, and active
+            sessions may be interrupted.
           </div>
         </AppModal>
       )}
@@ -340,9 +294,21 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
   const { data, loading, refetch } = useNodeDetailQuery({
     variables: { nodeId },
   });
-  // Node health KPIs live in their own query so they can poll independently
-  // once the metric service is wired (backend gap #6); plain fetch for now.
-  const { data: kpisData } = useNodeKpisQuery({ variables: { nodeId } });
+  // Latest rail KPI values keyed by metric key. Single source of truth is the
+  // metricsRange series (chart for charted keys, a batched Day fetch for the
+  // rest) — no separate latest query, so a metric is never fetched twice.
+  const [latestByKey, setLatestByKey] = useState<Record<string, LatestEntry>>(
+    {},
+  );
+  const reportLatest = useCallback((key: string, entry: LatestEntry) => {
+    setLatestByKey((prev) => {
+      const cur = prev[key];
+      if (cur && cur.value === entry.value && cur.success === entry.success) {
+        return prev; // unchanged — skip to avoid a render loop
+      }
+      return { ...prev, [key]: entry };
+    });
+  }, []);
 
   const view = data?.nodeView;
   const nodeSection = view?.node;
@@ -353,11 +319,6 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
     label: `${nd.name || nd.id} (${nd.id})`,
     status: '',
   }));
-  // Latest KPI entries keyed by metric key — carry label/unit/value from BFF.
-  const kpiByKey = new Map(
-    (kpisData?.nodeView.kpis.metrics ?? []).map((m) => [m.key, m]),
-  );
-
   if (loading) {
     return (
       <div className="page">
@@ -391,19 +352,21 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
 
   // KPIs are node-type specific (legacy console parity, backend gap #6).
   const kind = nodeKind(nodeSection.node.type);
-  // Render straight from BFF-provided metadata: label, unit, value.
-  const labelFor = (key: string) => kpiByKey.get(key)?.label || key;
+  // Render straight from series-derived metadata: label, unit, value. Never
+  // shows a raw snake_case key — falls back to a humanized key.
+  const labelFor = (key: string) => metricLabel(latestByKey[key]?.label, key);
   const fmtKpi = (key: string): string => {
-    const e = kpiByKey.get(key);
+    const e = latestByKey[key];
     if (!e || !e.success) return '—';
     const v = e.format === 'decimal' ? e.value.toFixed(2) : Math.round(e.value);
     const unit = e.unit ?? '';
     if (!unit) return `${v}`;
     return unit === '%' ? `${v}%` : `${v} ${unit}`;
   };
-  // Uptime is reported in seconds — show a human-readable "Nd Nh" / "Nh Nm".
+  // Uptime is reported in seconds — show a human-readable "Nd Nh" / "Nh Nm" /
+  // "Nm" / "Ns". Sub-minute uptime renders as seconds (not a misleading "0m").
   const fmtUptime = (): string => {
-    const e = kpiByKey.get('uptime');
+    const e = latestByKey['uptime'];
     if (!e || !e.success) return '—';
     let s = Math.max(0, Math.round(e.value));
     const d = Math.floor(s / 86400);
@@ -411,9 +374,11 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
     const h = Math.floor(s / 3600);
     s -= h * 3600;
     const m = Math.floor(s / 60);
+    s -= m * 60;
     if (d) return `${d}d ${h}h`;
     if (h) return `${h}h ${m}m`;
-    return `${m}m`;
+    if (m) return `${m}m`;
+    return `${s}s`;
   };
   // KV rows for a metric group (one per node-type key, value or "—").
   const groupRows = (group: MetricGroup) => {
@@ -444,12 +409,32 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
     : (sections[0]?.key ?? 'info');
   const activeGroup = sections.find((s) => s.key === activeKey)?.group;
 
+  // Charted keys (active group) get their latest from the chart series; every
+  // other rail key (other cards + uptime) is fetched once by the batched
+  // RailLatest below. Union by key so nothing is fetched twice.
+  const chartedKeys = activeGroup ? groupKeys(activeGroup, kind) : [];
+  const showsUptime = sections.some((s) => s.key === 'info');
+  const railKeys = Array.from(
+    new Set([
+      ...sections.flatMap((s) => (s.group ? groupKeys(s.group, kind) : [])),
+      ...(showsUptime ? ['uptime'] : []),
+    ]),
+  );
+  const nonChartedKeys = railKeys.filter((k) => !chartedKeys.includes(k));
+
   return (
     <div className="page">
+      <RailLatest
+        nodeId={n.id}
+        keys={nonChartedKeys}
+        onLatest={reportLatest}
+      />
       <PageHeader
         crumb={['Nodes', n.serial]}
         title={
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+          <span
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}
+          >
             <ConnectivityDot connectivity={n.connectivity} />
             {nodeName}
           </span>
@@ -471,13 +456,28 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
         <StateChip state={n.state} />
       </div>
 
-      <AppTabs tabs={visibleTabs} value={activeTab} onChange={setTab} scrollable />
+      <AppTabs
+        tabs={visibleTabs}
+        value={activeTab}
+        onChange={setTab}
+        scrollable
+      />
 
       {activeTab === 'Software' ? (
-        <NodeApps apps={apps} error={!!softwareSection?.error} />
+        <NodeApps
+          apps={apps}
+          error={!!softwareSection?.error}
+          nodeId={nodeId}
+        />
       ) : (
         <div className="detail-grid">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--uk-gap)' }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--uk-gap)',
+            }}
+          >
             {sections.map((s) => (
               <SectionCard
                 key={s.key}
@@ -504,7 +504,11 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
             {activeKey === 'info' ? (
               <SectionCard
                 title="Node hardware"
-                right={<span style={{ fontSize: 12, color: 'var(--uk-ink-3)' }}>{n.type}</span>}
+                right={
+                  <span style={{ fontSize: 12, color: 'var(--uk-ink-3)' }}>
+                    {n.type}
+                  </span>
+                }
               >
                 <div
                   style={{
@@ -531,6 +535,7 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
                 nodeId={n.id}
                 keys={activeGroup ? groupKeys(activeGroup, kind) : []}
                 off={off}
+                onLatest={reportLatest}
               />
             )}
           </div>
@@ -541,24 +546,220 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
 }
 
 /** Software tab — node apps as a card grid (legacy NodeSoftwareTab). */
+/** Presentable label + colour for each backend SoftwareStatusType. */
+type SoftwareStatus =
+  | 'up_to_date'
+  | 'update_available'
+  | 'update_in_progress'
+  | 'update_failed'
+  | 'unknown';
+
+const SOFTWARE_STATUS_META: Record<
+  SoftwareStatus,
+  { label: string; color: string }
+> = {
+  up_to_date: { label: 'Up to date', color: 'var(--uk-success)' },
+  update_available: { label: 'Update available', color: 'var(--uk-ac-dark)' },
+  update_in_progress: { label: 'Updating…', color: 'var(--uk-ac-dark)' },
+  update_failed: { label: 'Update failed', color: 'var(--uk-error)' },
+  unknown: { label: 'Status unknown', color: 'var(--uk-ink-3)' },
+};
+
+const softwareStatusMeta = (status: string) =>
+  SOFTWARE_STATUS_META[status as SoftwareStatus] ??
+  SOFTWARE_STATUS_META.unknown;
+
+function SoftwareStatusIcon({ status }: { status: string }) {
+  const sx = { fontSize: 18, color: softwareStatusMeta(status).color };
+  switch (status) {
+    case 'up_to_date':
+      return <CheckCircleRounded sx={sx} />;
+    case 'update_available':
+      return <SystemUpdateAltRounded sx={sx} />;
+    case 'update_in_progress':
+      return <CircularProgress size={15} sx={{ color: 'var(--uk-ac-dark)' }} />;
+    case 'update_failed':
+      return <ErrorRounded sx={sx} />;
+    default:
+      return <HelpRounded sx={sx} />;
+  }
+}
+
+/** Humanize a byte count (e.g. 204800 → "200 KB"). */
+const humanBytes = (n?: number | null): string => {
+  if (n == null) return '—';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let v = n;
+  let i = 0;
+  while (v >= 1024 && i < units.length - 1) {
+    v /= 1024;
+    i += 1;
+  }
+  return `${v.toFixed(i > 0 && v < 100 ? 1 : 0)} ${units[i]}`;
+};
+
+function ResourceRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        gap: 16,
+        padding: '10px 0',
+        borderBottom: '1px solid var(--uk-line-soft)',
+      }}
+    >
+      <span style={{ fontSize: 13, color: 'var(--uk-ink-3)' }}>{label}</span>
+      <span className="tnum" style={{ fontSize: 13, fontWeight: 600 }}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+/**
+ * App detail dialog — fetches the node's runtime resource usage for a single
+ * app (getApps with nodeId + appName) and renders CPU / memory / disk I/O.
+ */
+function AppResourceDialog({
+  nodeId,
+  appName,
+  onClose,
+}: {
+  nodeId: string;
+  appName: string;
+  onClose: () => void;
+}) {
+  const { data, loading, error } = useGetAppsQuery({
+    variables: { data: { nodeId, appName } },
+    fetchPolicy: 'network-only',
+  });
+  const app = data?.getApps?.apps?.[0];
+  const res = app?.resource;
+  return (
+    <AppModal
+      title={appName}
+      width={460}
+      onClose={onClose}
+      footer={
+        <Button
+          color="inherit"
+          sx={{ color: 'var(--uk-ink-3)' }}
+          onClick={onClose}
+        >
+          Close
+        </Button>
+      }
+    >
+      {loading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 28 }}>
+          <CircularProgress size={22} />
+        </div>
+      ) : error || !app ? (
+        <div
+          style={{ fontSize: 13.5, color: 'var(--uk-ink-3)', padding: '8px 0' }}
+        >
+          {error
+            ? "Couldn't load app resources."
+            : 'No resource data for this app.'}
+        </div>
+      ) : (
+        <div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+            <span style={{ fontSize: 12.5, color: 'var(--uk-ink-2)' }}>
+              {app.version}
+              {app.tag && app.tag !== app.version ? ` · ${app.tag}` : ''}
+            </span>
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                textTransform: 'capitalize',
+                color:
+                  app.status === 'running'
+                    ? 'var(--uk-success)'
+                    : 'var(--uk-ink-2)',
+              }}
+            >
+              {app.status}
+            </span>
+          </div>
+          <ResourceRow
+            label="CPU"
+            value={res ? `${res.cpuPercent.toFixed(1)}%` : '—'}
+          />
+          <ResourceRow
+            label="Memory (RSS)"
+            value={res ? humanBytes(res.memoryRssKb * 1024) : '—'}
+          />
+          <ResourceRow
+            label="Disk read"
+            value={res ? humanBytes(res.diskReadBytes) : '—'}
+          />
+          <ResourceRow
+            label="Disk write"
+            value={res ? humanBytes(res.diskWriteBytes) : '—'}
+          />
+        </div>
+      )}
+    </AppModal>
+  );
+}
+
 function NodeApps({
   apps,
   error,
+  nodeId,
 }: {
-  apps: { name: string; status: string; currentVersion: string; desiredVersion: string; releaseDate: string }[];
+  apps: {
+    name: string;
+    status: string;
+    currentVersion: string;
+    desiredVersion: string;
+    releaseDate: string;
+  }[];
   error: boolean;
+  nodeId: string;
 }) {
+  const toast = useToast();
+  const [updatingName, setUpdatingName] = useState<string | null>(null);
+  const [selectedApp, setSelectedApp] = useState<string | null>(null);
+  const [updateSoftware] = useUpdateSoftwareMutation({
+    refetchQueries: ['NodeDetail'],
+    awaitRefetchQueries: true,
+  });
+
+  const runUpdate = async (name: string, tag: string) => {
+    setUpdatingName(name);
+    try {
+      await updateSoftware({ variables: { data: { name, nodeId, tag } } });
+      toast(`Updating ${name} → ${tag}`);
+    } catch {
+      toast(`Couldn't update ${name}`);
+    } finally {
+      setUpdatingName(null);
+    }
+  };
+
   if (error) {
     return (
       <div className="card">
-        <EmptyState art="error" title="Couldn't load apps" sub="The software service didn't respond." />
+        <EmptyState
+          art="error"
+          title="Couldn't load apps"
+          sub="The software service didn't respond."
+        />
       </div>
     );
   }
   if (apps.length === 0) {
     return (
       <div className="card">
-        <EmptyState art="search" title="No apps" sub="This node isn't reporting any installed apps." />
+        <EmptyState
+          art="search"
+          title="No apps"
+          sub="This node isn't reporting any installed apps."
+        />
       </div>
     );
   }
@@ -566,34 +767,110 @@ function NodeApps({
     <SectionCard title="Node apps" count={apps.length}>
       <div className="apps-grid">
         {apps.map((app) => {
-          const update = app.status === 'update_available';
+          const meta = softwareStatusMeta(app.status);
+          // In-flight either optimistically (this card was just clicked) or per
+          // the freshly-fetched backend status.
+          const inProgress =
+            app.status === 'update_in_progress' || updatingName === app.name;
+          const canUpdate =
+            !inProgress &&
+            (app.status === 'update_available' ||
+              app.status === 'update_failed');
+          const showTarget =
+            (app.status === 'update_available' ||
+              app.status === 'update_failed') &&
+            !!app.desiredVersion;
           return (
-            <div key={app.name} className="app-card">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                <CheckCircleRounded sx={{ fontSize: 18, color: update ? 'var(--uk-ac)' : 'var(--uk-success)' }} />
-                <span style={{ fontWeight: 600, textTransform: 'capitalize' }}>{app.name}</span>
+            <div
+              key={app.name}
+              className="app-card app-card-clickable"
+              role="button"
+              tabIndex={0}
+              aria-label={`View ${app.name} resources`}
+              onClick={() => setSelectedApp(app.name)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setSelectedApp(app.name);
+                }
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  marginBottom: 6,
+                }}
+              >
+                <SoftwareStatusIcon
+                  status={inProgress ? 'update_in_progress' : app.status}
+                />
+                <span style={{ fontWeight: 600, textTransform: 'capitalize' }}>
+                  {app.name}
+                </span>
               </div>
               <div style={{ fontSize: 12.5, color: 'var(--uk-ink-2)' }}>
-                Version: <span className="tnum">{app.currentVersion || '—'}</span>
+                Version:{' '}
+                <span className="tnum">{app.currentVersion || '—'}</span>
               </div>
               {app.releaseDate && (
-                <div style={{ fontSize: 12, color: 'var(--uk-ink-3)', marginTop: 2 }}>
-                  Released {app.releaseDate}
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: 'var(--uk-ink-3)',
+                    marginTop: 2,
+                  }}
+                >
+                  Released {formatDate(app.releaseDate)}
                 </div>
               )}
-              <div style={{ marginTop: 10 }}>
-                {update ? (
-                  <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--uk-ac-dark)' }}>
-                    Update available{app.desiredVersion ? ` → ${app.desiredVersion}` : ''}
-                  </span>
-                ) : (
-                  <span style={{ fontSize: 12.5, color: 'var(--uk-success)' }}>Up to date</span>
+              <div
+                style={{
+                  marginTop: 10,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  gap: 8,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 12.5,
+                    fontWeight: app.status === 'up_to_date' ? 400 : 600,
+                    color: inProgress ? 'var(--uk-ac-dark)' : meta.color,
+                  }}
+                >
+                  {inProgress ? 'Updating…' : meta.label}
+                  {showTarget ? ` → ${app.desiredVersion}` : ''}
+                </span>
+                {canUpdate && (
+                  <Button
+                    size="small"
+                    variant="contained"
+                    disabled={updatingName !== null}
+                    onClick={(e) => {
+                      e.stopPropagation(); // don't open the resource dialog
+                      runUpdate(app.name, app.desiredVersion);
+                    }}
+                  >
+                    {app.status === 'update_failed'
+                      ? 'Retry update'
+                      : 'Update Now'}
+                  </Button>
                 )}
               </div>
             </div>
           );
         })}
       </div>
+      {selectedApp && (
+        <AppResourceDialog
+          nodeId={nodeId}
+          appName={selectedApp}
+          onClose={() => setSelectedApp(null)}
+        />
+      )}
     </SectionCard>
   );
 }

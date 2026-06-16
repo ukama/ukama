@@ -1,0 +1,132 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026-present, Ukama Inc.
+
+# Business-lens analytics documents (Home / Revenue / Packages), backed by the
+# console-bff `analytics` service. KPI values flow through a generic `kpis`
+# array keyed by string — read them via `kpiByKey` (src/lib/kpis.ts). Some
+# fields/KPI keys are exposed ahead of analytics-backend support; the screens
+# treat every value as optional. See docs/analytics-backend-gaps.md.
+
+fragment KpiFields on KpiDto {
+  key
+  value
+  formatted
+  delta
+  deltaPeriod
+  stale
+  asOf
+}
+
+fragment NamedValueFields on NamedValueDto {
+  id
+  name
+  value
+}
+
+# Shared home KPI strip for both Business and Network home screens,
+# parameterised by `lens` (BUSINESS | NETWORK). Sites are fetched separately
+# from the registry via `sitesView` (no analytics-collector dependency).
+
+query GetHomeKpis($data: HomeViewInput!) {
+  getHomeKpis(data: $data) {
+    kpis {
+      ...KpiFields
+    }
+  }
+}
+
+query GetBusinessHome($data: AnalyticsWindowInput!) {
+  getBusinessHome(data: $data) {
+    kpis {
+      ...KpiFields
+    }
+    sites {
+      siteId
+      name
+      status
+      revenue
+      customers
+    }
+    topPackages {
+      ...NamedValueFields
+    }
+    recentActivity {
+      routingKey
+      description
+      occurredAt
+    }
+  }
+}
+
+query GetBusinessSites($data: AnalyticsWindowInput!) {
+  getBusinessSites(data: $data) {
+    sites {
+      siteId
+      name
+      status
+      revenue
+      revenueToday
+      customers
+      dataUsed
+      uptime
+      topPackage
+      issue
+      latitude
+      longitude
+    }
+    meta {
+      count
+    }
+  }
+}
+
+query GetSalesOverview($data: AnalyticsWindowInput!) {
+  getSalesOverview(data: $data) {
+    kpis {
+      ...KpiFields
+    }
+    revenueTrend {
+      key
+      points {
+        time
+        value
+      }
+    }
+    revenueBySite {
+      ...NamedValueFields
+    }
+    revenueByPackage {
+      ...NamedValueFields
+    }
+  }
+}
+
+query GetPackagePerformance($data: AnalyticsWindowInput!) {
+  getPackagePerformance(data: $data) {
+    kpis {
+      ...KpiFields
+    }
+    packages {
+      packageId
+      name
+      price
+      validity
+      dataQuota
+      status
+      soldCount
+      revenue
+      revenueSharePct
+      dataUsed
+      activeSubscribers
+    }
+    revenueMix {
+      ...NamedValueFields
+    }
+    meta {
+      count
+    }
+  }
+}

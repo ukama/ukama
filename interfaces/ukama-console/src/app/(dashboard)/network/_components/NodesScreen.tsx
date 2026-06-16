@@ -19,14 +19,23 @@ import { useNodesListQuery } from '@/client/graphql/nodes-list.generated';
 import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
 import { EmptyState } from '@/components/EmptyState';
 import PageHeader from '@/components/PageHeader';
+import PageWatermark from '@/components/PageWatermark';
 import type { UkamaNode } from '@/data';
 import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
 import { useUiPrefs } from '@/lib/store';
 import { toUkamaNode } from '@/lib/mappers/nodes';
 import { ConnectivityDot, StateChip } from './nodeStatus';
 
-function NodeCard({ n, onOpen }: { n: UkamaNode; onOpen: (n: UkamaNode) => void }) {
-  const Icon = n.type.startsWith('Amp') ? SettingsInputAntennaRounded : RouterRounded;
+function NodeCard({
+  n,
+  onOpen,
+}: {
+  n: UkamaNode;
+  onOpen: (n: UkamaNode) => void;
+}) {
+  const Icon = n.type.startsWith('Amp')
+    ? SettingsInputAntennaRounded
+    : RouterRounded;
   return (
     <div
       className="card ecard"
@@ -37,7 +46,14 @@ function NodeCard({ n, onOpen }: { n: UkamaNode; onOpen: (n: UkamaNode) => void 
         if (e.key === 'Enter') onOpen(n);
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: 10,
+        }}
+      >
         <div style={{ display: 'flex', gap: 12, flex: 1, minWidth: 0 }}>
           <div
             style={{
@@ -145,14 +161,31 @@ export default function NodesScreen() {
           n.site?.siteId ? siteNameById.get(n.site.siteId) : undefined,
         ),
       )
-      .sort((a, b) => (rank(a.id) < 0 ? 99 : rank(a.id)) - (rank(b.id) < 0 ? 99 : rank(b.id)));
+      .sort(
+        (a, b) =>
+          (rank(a.id) < 0 ? 99 : rank(a.id)) -
+          (rank(b.id) < 0 ? 99 : rank(b.id)),
+      );
   }, [nodesSection?.nodes, siteNameById]);
 
   return (
-    <div className="page">
-      <PageHeader title="Nodes" count={nodes.length} sub="Radio hardware deployed across your sites." />
+    <div
+      className="page"
+      style={{ position: 'relative', overflow: 'hidden', isolation: 'isolate' }}
+    >
+      <PageWatermark icon={RouterRounded} />
+      <PageHeader
+        title="Nodes"
+        count={nodes.length}
+        sub="Radio hardware deployed across your sites."
+      />
       {loading ? (
-        <div className="tile-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+        <div
+          className="tile-grid"
+          style={{
+            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+          }}
+        >
           {[0, 1, 2].map((i) => (
             <Skeleton key={i} variant="rounded" sx={{ height: 132 }} />
           ))}
@@ -166,9 +199,20 @@ export default function NodesScreen() {
           onCta={() => refetch()}
         />
       ) : nodes.length === 0 ? (
-        <EmptyState art="node" title="No nodes" sub="Registered nodes appear here." />
+        <EmptyState
+          art="node"
+          title="No nodes yet"
+          sub="Set up your network and register nodes to get started."
+          cta="Set up network"
+          onCta={() => router.push('/configure')}
+        />
       ) : (
-        <div className="tile-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+        <div
+          className="tile-grid"
+          style={{
+            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+          }}
+        >
           {nodes.map((n) => (
             <NodeCard
               key={n.id}

@@ -30,7 +30,17 @@ interface CurrencyContextValue {
   symbol: string;
   /** Formats an amount with the resolved symbol, e.g. "$1,200". */
   format: (amount: number) => string;
+  /** Money formatter for KPI/table cells: 2dp, "—" for null/undefined. */
+  money: (value?: number | null) => string;
 }
+
+/** Build the 2dp money formatter for a given currency symbol. */
+const makeMoney =
+  (symbol: string) =>
+  (value?: number | null): string =>
+    value == null
+      ? '—'
+      : `${symbol}${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 
 const CurrencyContext = createContext<CurrencyContextValue | null>(null);
 
@@ -50,8 +60,8 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     return {
       code,
       symbol,
-      format: (amount: number) =>
-        `${symbol}${amount.toLocaleString()}`,
+      format: (amount: number) => `${symbol}${amount.toLocaleString()}`,
+      money: makeMoney(symbol),
     };
   }, [data, code]);
 
@@ -68,6 +78,7 @@ export function useCurrency(): CurrencyContextValue {
       code: '',
       symbol: '$',
       format: (amount: number) => `$${amount.toLocaleString()}`,
+      money: makeMoney('$'),
     }
   );
 }

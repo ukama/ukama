@@ -73,7 +73,10 @@ export function useActivation(): Activation {
  * 1. Saved in-flow progress always wins — /configure steps self-guard, so a
  *    stale URL (e.g. network created meanwhile) auto-forwards correctly.
  * 2. No network yet → network creation (an independent, self-guarding step).
- * 3. Network but no site → install-site step.
+ * 3. Network but no site:
+ *    - known networkId → install-site step (scoped to that network).
+ *    - networkId unknown → select-network step (pick which one to install
+ *      into) before install.
  * 4. Activated → dashboard.
  */
 export function resolveResumeUrl(
@@ -83,10 +86,8 @@ export function resolveResumeUrl(
   if (lastConfigureUrl?.startsWith('/configure')) return lastConfigureUrl;
   if (!status || !status.hasNetwork) return '/configure/network';
   if (!status.hasSite) {
-    const q = status.networkId
-      ? `?networkid=${encodeURIComponent(status.networkId)}`
-      : '';
-    return `/configure/install${q}`;
+    if (!status.networkId) return '/configure/select-network';
+    return `/configure/install?networkid=${encodeURIComponent(status.networkId)}`;
   }
   return '/';
 }

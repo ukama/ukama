@@ -108,15 +108,17 @@ export const METRIC_CATALOG: Record<string, MetricMeta> = {
     threshold: { min: 0, normal: 12000, max: 16000 },
   },
   // --- customers ---
+  // tnode active subscribers — real series (trx_lte_core_active_ue).
   subscribers_active: {
-    label: "Active subscribers",
+    label: "Active customers",
     unit: "",
     format: "number",
     base: 32,
     min: 0,
-    max: 200,
+    max: 1000,
     jitter: 0.18,
     trend: 0.12,
+    threshold: { min: 0, normal: 100, max: 1000 },
   },
   // --- network: cellular ---
   cellular_uplink: {
@@ -206,6 +208,28 @@ export const METRIC_CATALOG: Record<string, MetricMeta> = {
     jitter: 0.18,
     trend: 0.1,
   },
+  solar_panel_voltage: {
+    label: "Solar voltage",
+    unit: "V",
+    format: "number",
+    base: 60,
+    min: 0,
+    max: 100,
+    jitter: 0.12,
+    trend: 0.06,
+    threshold: { min: 0, normal: 75, max: 100 },
+  },
+  solar_panel_current: {
+    label: "Solar current",
+    unit: "A",
+    format: "number",
+    base: 4,
+    min: 0,
+    max: 12,
+    jitter: 0.16,
+    trend: 0.08,
+    threshold: { min: 0, normal: 5, max: 12 },
+  },
   controller_temperature: {
     label: "Controller temp.",
     unit: "°C",
@@ -248,9 +272,56 @@ const FALLBACK: MetricMeta = {
 export const metricMeta = (key: string): MetricMeta =>
   METRIC_CATALOG[key] ?? { ...FALLBACK, label: key };
 
-/** Keys backed by a real metric endpoint. Empty for now — everything mocks.
- *  Move a key here as its upstream lands. */
-export const LIVE_METRIC_KEYS = new Set<string>();
+/**
+ * Keys backed by a real metric endpoint (node-scoped: requested with a nodeId
+ * so the gateway resolves the node type from the id). Each generic key below
+ * exists under tnode/anode/cnode in default-metrics.yaml.
+ *
+ * Still mocked:
+ *  - site_uptime_percentage: no backing series in default-metrics.yaml.
+ */
+export const LIVE_METRIC_KEYS = new Set<string>([
+  // health / resources (all node types)
+  "uptime",
+  "cpu",
+  "memory",
+  "disk",
+  "cpu_temperature",
+  // tnode customers (active subscribers)
+  "subscribers_active",
+  // tnode cellular
+  "cellular_uplink",
+  "cellular_downlink",
+  // tnode / cnode backhaul
+  "backhaul_uplink",
+  "backhaul_downlink",
+  "backhaul_latency",
+  // tnode / cnode power
+  "power",
+  // anode radio
+  "pa_power",
+  "rx_power",
+  "tx_power",
+  // anode FEM health
+  "fem1_temperature",
+  "fem2_temperature",
+  // cnode site power/health (fetched with the site's cnode id)
+  "battery_charge",
+  "solar_panel_power",
+  "solar_panel_voltage",
+  "solar_panel_current",
+  "controller_temperature",
+  "load_current",
+  // cnode switch ports (1,2,3,9) — speed + power per port
+  "switch_port_1_speed",
+  "switch_port_1_power",
+  "switch_port_2_speed",
+  "switch_port_2_power",
+  "switch_port_3_speed",
+  "switch_port_3_power",
+  "switch_port_9_speed",
+  "switch_port_9_power",
+]);
 
 /** Mock unless explicitly disabled; never mock a key that has a live endpoint. */
 const MOCK_ENABLED = process.env.MOCK_METRICS !== "false";

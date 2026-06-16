@@ -8,9 +8,11 @@
 'use client';
 
 /**
- * Business Home — KPIs + full-height sites map, wired to `commerceView`
- * (revenue) and `networkOverview` (customers + sites). Per-site revenue is
- * backend gap #10 and renders as "—" until it lands.
+ * Business Home — KPIs + full-height sites map, wired to the analytics service:
+ * `getBusinessHome` (headline KPIs) and `getBusinessSites` (per-site revenue /
+ * customers / coordinates). Per-site revenue (was backend gap #10) is now
+ * served by the analytics rollup. KPI keys and any not-yet-emitted fields are
+ * listed in docs/analytics-backend-gaps.md and degrade to "—".
  */
 import ListAltRounded from '@mui/icons-material/ListAltRounded';
 import Button from '@mui/material/Button';
@@ -18,30 +20,27 @@ import Skeleton from '@mui/material/Skeleton';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
-import {
-  useBizHomeNetworkQuery,
-  useBizHomeRevenueQuery,
-} from '@/client/graphql/commerce.generated';
+import { useGetHomeKpisQuery } from '@/client/graphql/analytics.generated';
+import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
+import { HomeLens } from '@/client/graphql/types';
 import AppModal from '@/components/AppModal';
 import DateChip from '@/components/DateChip';
 import { KpiRow } from '@/components/Kpi';
-import SiteMap, { StatusDot } from '@/components/Map/SiteMap';
+import { StatusDot } from '@/components/Map/SiteMap';
+import UkamaMap, { HOME_MAP_ZOOM } from '@/components/Map/UkamaMap';
 import PageHeader from '@/components/PageHeader';
-import { sectionValue } from '@/components/SectionFallback';
-import type { BizSite } from '@/data';
+import { useCurrency } from '@/lib/currency';
+import { KPI_KEYS, kpiAmount, kpiByKey, kpiText, kpiValue } from '@/lib/kpis';
+import { type MapSite, toMapSites } from '@/lib/mappers/sites';
+import { pinColor } from '@/lib/status';
 import { useUiPrefs } from '@/lib/store';
-
-const money = (value?: number | null): string =>
-  value == null
-    ? '—'
-    : `$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 
 function SiteSummaryList({
   sites,
   onSite,
 }: {
-  sites: BizSite[];
-  onSite: (s: BizSite) => void;
+  sites: MapSite[];
+  onSite: (s: MapSite) => void;
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -72,8 +71,7 @@ function SiteSummaryList({
             <div
               style={{ fontSize: 12.5, color: 'var(--uk-ink-2)', marginTop: 1 }}
             >
-              {/* per-site revenue/customers: backend gap #10 */}
-              {s.status === 'offline' ? 'Offline' : 'Online'} · revenue —
+              {s.status === 'offline' ? 'Offline' : 'Online'}
             </div>
           </div>
         </div>
@@ -86,45 +84,41 @@ export default function BizHomeScreen() {
   const router = useRouter();
   const networkId = useUiPrefs((s) => s.networkId);
   const [showSummary, setShowSummary] = useState(false);
+  // Org currency symbol from getCurrencySymbol (shared via CurrencyProvider).
+  const { money } = useCurrency();
 
-  const { data: revenueData, loading: revenueLoading } = useBizHomeRevenueQuery(
-    {
-      variables: { networkId },
-    },
-  );
-  const { data: networkData, loading: networkLoading } = useBizHomeNetworkQuery(
-    {
-      variables: { networkId },
-      skip: !networkId,
-    },
-  );
-  const revenue = revenueData?.commerceView.revenue;
-  const subStats = networkData?.networkOverview.subscriberStats;
-  const siteStats = networkData?.networkOverview.siteStats;
-  const loading = revenueLoading || networkLoading;
+  // KPIs come from the analytics rollup; sites come live from the registry
+  // (sitesView) so the map doesn't depend on the analytics collector.
+  const { data: homeData, loading: homeLoading } = useGetHomeKpisQuery({
+    variables: { data: { lens: HomeLens.Business, networkId } },
+  });
+  const { data: sitesData, loading: sitesLoading } = useSitesListQuery({
+    variables: { networkId },
+    skip: !networkId,
+  });
+  const kpis = homeData?.getHomeKpis.kpis;
+  const monthDelta = kpiByKey(kpis, KPI_KEYS.revenueMonth)?.delta;
+  const totalCustomers = kpiValue(kpis, KPI_KEYS.customersTotal);
+  const loading = homeLoading || sitesLoading;
 
-  const sites: BizSite[] = useMemo(
-    () =>
-      (siteStats?.sites ?? []).map((s) => ({
-        id: s.id,
-        name: s.name,
-        status: s.isDeactivated ? 'offline' : 'online',
-        // TODO(backend-gap #10): per-site revenue/customer rollup
-        revenue: 0,
-        revToday: 0,
-        customers: 0,
-        custToday: 0,
-        data: '—',
-        uptime: 0,
-        top: '—',
-        issue: null,
-        lat: parseFloat(s.latitude) || 0,
-        lng: parseFloat(s.longitude) || 0,
-      })),
-    [siteStats?.sites],
+  const sites = useMemo(
+    () => toMapSites(sitesData?.sitesView.sites.sites ?? []),
+    [sitesData?.sitesView.sites.sites],
   );
-  const online = sites.filter((s) => s.status === 'online').length;
-  const goSite = (id: string) => router.push(`/business/sites/${id}`);
+  const online = sites.filter((s) => s.status !== 'offline').length;
+  // The business site-detail page was removed; drill into the canonical
+  // Network site detail instead.
+  const goSite = (id: string) => router.push(`/network/sites/${id}`);
+
+  const bizMarkers = sites
+    .filter((s) => s.lat !== 0 || s.lng !== 0)
+    .map((s) => ({
+      id: s.id,
+      lat: s.lat,
+      lng: s.lng,
+      color: pinColor(s.status),
+      popup: <div style={{ fontWeight: 600 }}>{s.name}</div>,
+    }));
 
   return (
     <div className="page">
@@ -142,32 +136,32 @@ export default function BizHomeScreen() {
               icon: 'monetization_on',
               color: 'var(--uk-beige)',
               label: 'Revenue this month',
-              value: revenue?.error ? '—' : money(revenue?.monthPaid),
+              value: kpiAmount(kpis, KPI_KEYS.revenueMonth, money),
               sub:
-                revenue?.momPct != null
-                  ? `${revenue.momPct >= 0 ? '+' : ''}${revenue.momPct}% vs last month`
+                monthDelta != null
+                  ? `${monthDelta >= 0 ? '+' : ''}${monthDelta}% vs last month`
                   : undefined,
             },
             {
               icon: 'group',
               color: 'var(--uk-secondary)',
               label: 'Active customers',
-              value: sectionValue(subStats?.active, subStats?.error),
+              value: kpiText(kpis, KPI_KEYS.activeCustomers),
               sub:
-                subStats?.total != null ? `${subStats.total} total` : undefined,
+                totalCustomers != null ? `${totalCustomers} total` : undefined,
             },
             {
               icon: 'donut_small',
               color: 'var(--uk-ac)',
               label: 'Collected to date',
-              value: revenue?.error ? '—' : money(revenue?.totalPaid),
+              value: kpiAmount(kpis, KPI_KEYS.revenueCollected, money),
             },
             {
               icon: 'cell_tower',
               color: 'var(--uk-success-bright)',
               label: 'Sites online',
-              value: siteStats?.error ? '—' : `${online}/${sites.length}`,
-              danger: online < sites.length,
+              value: sites.length === 0 ? '—' : `${online}/${sites.length}`,
+              danger: sites.length > 0 && online < sites.length,
             },
           ]}
         />
@@ -181,14 +175,32 @@ export default function BizHomeScreen() {
           flexDirection: 'column',
         }}
       >
-        {networkLoading ? (
+        {sitesLoading ? (
           <Skeleton variant="rounded" sx={{ flex: 1, minHeight: 380, mt: 1 }} />
         ) : (
-          <SiteMap
-            sites={sites}
-            title="Sites"
-            fill
-            action={
+          <div
+            className="card"
+            style={{
+              padding: 0,
+              overflow: 'hidden',
+              flex: 1,
+              minHeight: 380,
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <div
+              className="sec-head"
+              style={{
+                padding: '16px 20px 12px',
+                margin: 0,
+                borderBottom: '1px solid var(--uk-line-soft)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div className="sec-title">Sites</div>
               <Button
                 variant="text"
                 startIcon={<ListAltRounded />}
@@ -196,9 +208,16 @@ export default function BizHomeScreen() {
               >
                 View summary
               </Button>
-            }
-            onSelect={(s) => goSite(s.id)}
-          />
+            </div>
+            <div style={{ flex: 1, minHeight: 300 }}>
+              <UkamaMap
+                markers={bizMarkers}
+                onSelect={goSite}
+                zoom={HOME_MAP_ZOOM}
+                height="100%"
+              />
+            </div>
+          </div>
         )}
       </div>
 

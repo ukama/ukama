@@ -38,7 +38,7 @@ const EXTRA: Record<string, { tone: ToneVariant; label: string }> = {
   testing: { tone: 'warn', label: 'Testing' },
   expired: { tone: 'warn', label: 'Expired' },
   assigned: { tone: 'info', label: 'Assigned' },
-  available: { tone: 'info', label: 'Available' },
+  available: { tone: 'neut', label: 'Available' },
   lowsales: { tone: 'neut', label: 'Low sales' },
   warning: { tone: 'warn', label: 'Warning' },
   paid: { tone: 'ok', label: 'Paid' },

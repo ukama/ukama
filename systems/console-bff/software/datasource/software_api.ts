@@ -8,37 +8,16 @@
 import { VERSION } from "../../common/configs";
 import { BaseRESTDataSource } from "../../common/datasource";
 import {
-  Apps,
   GetSoftwaresInput,
   Softwares,
   StringResponse,
   UpdateSoftwareInputDto,
 } from "../resolvers/types";
-import { mapApps, mapSoftwares, mapUpdateSoftware } from "./mapper";
+import { mapSoftwares, mapUpdateSoftware } from "./mapper";
 
 const SOFTWARE = "software";
 
 class SoftwareAPI extends BaseRESTDataSource {
-  getApps = async (baseURL: string, data: GetSoftwaresInput): Promise<Apps> => {
-    const queryParams = new URLSearchParams();
-    const { nodeId } = data;
-    if (nodeId) {
-      queryParams.append("node_id", nodeId);
-    }
-    this.logger.info(
-      `GetApps [GET]: ${baseURL}/${VERSION}/${SOFTWARE}/apps?${queryParams.toString()}`
-    );
-    this.baseURL = baseURL;
-    return this.get(`/${VERSION}/${SOFTWARE}/apps?${queryParams.toString()}`)
-      .then(apps => {
-        return mapApps(apps);
-      })
-      .catch(error => {
-        this.logger.error(`Error getting apps: ${error}`);
-        throw error;
-      });
-  };
-
   getSoftwares = async (
     baseURL: string,
     data: GetSoftwaresInput

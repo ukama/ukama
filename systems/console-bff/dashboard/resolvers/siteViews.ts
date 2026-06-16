@@ -33,6 +33,8 @@ type SiteViewRoot = SiteView & {
   _urls: ServiceUrlResolver;
   /** site core memo so `components` doesn't re-fetch the site. */
   _site?: Promise<SiteDto>;
+  /** controller (cnode) id memo so power/kpis resolve once per request. */
+  _cnodeId?: Promise<string | undefined>;
 };
 
 const toSiteComponent = (
@@ -147,6 +149,24 @@ export class SiteViewResolver {
     return root._site;
   }
 
+  /** The site's controller (cnode) id — the source of power/health metrics.
+   *  Memoized so the power and kpis sections share one node lookup. */
+  private siteCnodeId(
+    root: SiteViewRoot,
+    ctx: AppContext
+  ): Promise<string | undefined> {
+    if (!root._cnodeId) {
+      root._cnodeId = root._urls
+        .url("node")
+        .then(url => ctx.dataSources.node.getNodesForSite(url, root.siteId))
+        .then(
+          res => res.nodes.find(n => n.id?.toLowerCase().includes("cnode"))?.id
+        )
+        .catch(() => undefined);
+    }
+    return root._cnodeId;
+  }
+
   @FieldResolver(() => SiteSection)
   async site(
     @Root() root: SiteViewRoot,
@@ -203,8 +223,13 @@ export class SiteViewResolver {
     // (closes backend gap #8). Org-scoped latest values; per-site filtering
     // lands with the metric service's site filter.
     const { value, error } = await runSection("power", async () => {
-      const url = await root._urls.url("metrics");
-      return fetchLatestKpis(ctx.dataSources.metric, url, SITE_POWER_KEYS);
+      const [url, nodeId] = await Promise.all([
+        root._urls.url("metrics"),
+        this.siteCnodeId(root, ctx),
+      ]);
+      return fetchLatestKpis(ctx.dataSources.metric, url, SITE_POWER_KEYS, {
+        nodeId,
+      });
     });
     return { metrics: value, error };
   }
@@ -218,8 +243,13 @@ export class SiteViewResolver {
     // (closes backend gap #7 for the detail screen; per-site list rows in
     // sitesView remain a gap until a site filter exists).
     const { value, error } = await runSection("kpis", async () => {
-      const url = await root._urls.url("metrics");
-      return fetchLatestKpis(ctx.dataSources.metric, url, SITE_KPI_KEYS);
+      const [url, nodeId] = await Promise.all([
+        root._urls.url("metrics"),
+        this.siteCnodeId(root, ctx),
+      ]);
+      return fetchLatestKpis(ctx.dataSources.metric, url, SITE_KPI_KEYS, {
+        nodeId,
+      });
     });
     return { metrics: value, error };
   }

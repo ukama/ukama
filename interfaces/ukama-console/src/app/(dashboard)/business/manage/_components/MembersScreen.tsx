@@ -33,22 +33,8 @@ import StatusBadge from '@/components/StatusBadge';
 import { useToast } from '@/components/ToastProvider';
 import { ROLE_DESC } from '@/data';
 import { formatDate } from '@/lib/parsers';
+import { roleLabel } from '@/lib/roles';
 import InviteMemberDialog from './InviteMemberDialog';
-
-/** Token roles (ROLE_*) → the friendly labels used across the console. */
-const ROLE_LABELS: Record<string, string> = {
-  ROLE_OWNER: 'Owner',
-  ROLE_ADMIN: 'Admin',
-  ROLE_NETWORK_OWNER: 'Network owner',
-  ROLE_VENDOR: 'Vendor',
-  ROLE_USER: 'Member',
-};
-
-function roleLabel(role: string): string {
-  if (ROLE_LABELS[role]) return ROLE_LABELS[role];
-  const cleaned = role.replace(/^ROLE_/, '').replace(/_/g, ' ').toLowerCase();
-  return cleaned ? cleaned[0]?.toUpperCase() + cleaned.slice(1) : role;
-}
 
 /** Team row view-model from the membersView composite (members +
  *  invitations merged server-side; status: Active | Deactivated | Invited). */

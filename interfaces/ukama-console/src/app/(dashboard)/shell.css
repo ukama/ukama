@@ -39,7 +39,8 @@
   align-items: center;
   gap: 12px;
   padding: 8px 16px;
-  background: var(--uk-ac-soft);
+  /* Translucent accent tint that reads blue in both light and dark modes. */
+  background: color-mix(in srgb, var(--uk-ac) 18%, transparent);
   color: var(--uk-ink);
   border-bottom: 1px solid var(--uk-line);
   font-size: 13.5px;
@@ -130,6 +131,8 @@
   display: flex;
   align-items: center;
   gap: 9px;
+  width: 200px;
+  flex: none;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 6px 10px 6px 12px;
@@ -145,6 +148,7 @@
 .netswitch .dot {
   width: 7px;
   height: 7px;
+  flex: none;
   border-radius: 50%;
   background: var(--uk-success-bright);
   box-shadow: 0 0 0 3px rgba(29, 205, 159, 0.25);
@@ -152,6 +156,12 @@
 .netswitch .nm {
   font-size: 13.5px;
   font-weight: 500;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
 }
 
 .viewseg {
@@ -425,17 +435,51 @@
   outline-offset: 2px;
 }
 
-/* Software tab — node apps card grid. */
+/* Software tab — node apps card grid. Cap at 4 wider cards per row, then
+   step down on narrower viewports. */
 .apps-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--uk-gap);
+}
+@media (max-width: 1200px) {
+  .apps-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 820px) {
+  .apps-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 540px) {
+  .apps-grid {
+    grid-template-columns: 1fr;
+  }
 }
 .app-card {
   border: 1px solid var(--uk-line);
   border-radius: var(--uk-r-sm);
   padding: 14px;
   background: var(--uk-card);
+}
+.app-card-clickable {
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.app-card-clickable:hover {
+  border-color: var(--uk-ac);
+  background: var(--uk-card-hover, var(--uk-elev-1, var(--uk-card)));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+.app-card-clickable:focus-visible {
+  outline: 2px solid var(--uk-ac);
+  outline-offset: 2px;
 }
 
 /* Range toggle (Day / Week / Month) on metric chart cards. */
@@ -654,6 +698,7 @@
     min-width: 0;
   }
   .netswitch {
+    width: auto;
     min-width: 0;
   }
   .railtoggle {

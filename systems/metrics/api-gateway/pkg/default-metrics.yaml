@@ -190,6 +190,15 @@ tnode:
     tickInterval: 10
     tickPositions: []
     threshold: { min: 0, normal: 100, max: 1000 }
+  subscribers_active:
+    metric: trx_lte_core_active_ue
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 100, max: 1000 }
   lte_subscribers:
     metric: trx_lte_core_subscribers
     needRate: false

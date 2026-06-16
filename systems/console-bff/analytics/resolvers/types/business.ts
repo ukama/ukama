@@ -89,6 +89,12 @@ export class PackageRowDto {
   @Field(() => Float)
   revenue: number;
 
+  // This package's share of total revenue, 0–100. Backend gap: emitted empty
+  // (null) for now; the console derives it client-side until the backend sends
+  // it. See docs/analytics-backend-gaps.md.
+  @Field(() => Float, { nullable: true })
+  revenueSharePct?: number;
+
   @Field(() => Float)
   dataUsed: number;
 

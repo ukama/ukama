@@ -13,44 +13,9 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import { useAuth } from '@/lib/auth/context';
 import { useCurrency } from '@/lib/currency';
+import { countryLabel, initials } from '@/lib/format';
+import { roleLabel } from '@/lib/roles';
 import PageHeader from './PageHeader';
-
-const ROLE_LABELS: Record<string, string> = {
-  ROLE_OWNER: 'Owner',
-  ROLE_ADMIN: 'Admin',
-  ROLE_NETWORK_OWNER: 'Network owner',
-  ROLE_VENDOR: 'Vendor',
-  ROLE_USER: 'Member',
-};
-
-function roleLabel(role: string): string {
-  if (ROLE_LABELS[role]) return ROLE_LABELS[role];
-  const c = role.replace(/^ROLE_/, '').replace(/_/g, ' ').toLowerCase();
-  return c ? c[0]?.toUpperCase() + c.slice(1) : role;
-}
-
-function countryLabel(country: string): string {
-  if (/^[A-Z]{2}$/.test(country)) {
-    try {
-      return (
-        new Intl.DisplayNames(['en'], { type: 'region' }).of(country) ?? country
-      );
-    } catch {
-      return country;
-    }
-  }
-  return country;
-}
-
-function initials(name: string, email: string): string {
-  const base = name?.trim() || email || '?';
-  return base
-    .split(/\s+/)
-    .map((x) => x[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-}
 
 function ReadField({ label, value }: { label: string; value: string }) {
   return (

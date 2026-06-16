@@ -63,7 +63,7 @@ type Query {
   getSimsFromPool(data: GetSimsInput!): SimsPoolResDto!
   getSite(siteId: String!): SiteDto!
   getSites(data: SitesInputDto!): SitesResDto!
-  getApps: Apps
+  getApps(data: GetAppsInputDto!): Apps
   getSoftwares(data: GetSoftwaresInput!): Softwares!
   getSimsByNetwork(networkId: String!): SubscriberSimsResDto!
   getSubscriber(subscriberId: String!): SubscriberDto!
@@ -1304,11 +1304,24 @@ type Apps {
   apps: [App!]!
 }
 
+type AppResource {
+  cpuPercent: Float!
+  memoryRssKb: Float!
+  diskReadBytes: Float!
+  diskWriteBytes: Float!
+}
+
 type App {
   name: String!
-  space: String!
-  notes: String!
-  metricsKeys: [String!]!
+  version: String!
+  tag: String!
+  status: String!
+  resource: AppResource
+}
+
+input GetAppsInputDto {
+  nodeId: String!
+  appName: String
 }
 
 input GetSoftwaresInput {
@@ -1691,4 +1704,162 @@ input UserFirstVisitInputDto {
   name: String!
   email: String!
   firstVisit: Boolean!
+}
+
+# ===========================================================================
+# Analytics — Business lens (mirrors systems/console-bff/analytics/resolvers).
+# Some fields/KPIs are exposed ahead of analytics-backend support so the
+# console can bind to a stable contract; see docs/analytics-backend-gaps.md.
+# This block is hand-maintained until `pnpm codegen` is run against a live
+# analytics-enabled BFF, which will regenerate it from introspection.
+# ===========================================================================
+
+extend type Query {
+  getBusinessHome(data: AnalyticsWindowInput!): BusinessHomeDto!
+  getSalesOverview(data: AnalyticsWindowInput!): SalesOverviewDto!
+  getPackagePerformance(data: AnalyticsWindowInput!): PackagePerformanceDto!
+  getBusinessSites(data: AnalyticsWindowInput!): BusinessSitesDto!
+}
+
+input AnalyticsWindowInput {
+  networkId: String
+  siteId: String
+  nodeId: String
+  status: String
+  severity: String
+  state: String
+  metric: String
+  query: String
+  period: String
+  from: String
+  to: String
+  timezone: String
+  page: Int
+  pageSize: Int
+}
+
+type KpiDto {
+  key: String!
+  value: Float!
+  formatted: String
+  delta: Float
+  deltaPeriod: String
+  stale: Boolean
+  asOf: String
+}
+
+type MetaDto {
+  count: Int!
+  page: Int!
+  size: Int!
+  pages: Int!
+}
+
+type PointDto {
+  time: String
+  value: Float!
+}
+
+type TimeSeriesDto {
+  key: String!
+  points: [PointDto!]!
+}
+
+type NamedValueDto {
+  name: String
+  id: String
+  value: Float!
+}
+
+type ActivityItemDto {
+  routingKey: String
+  description: String
+  occurredAt: String
+}
+
+type SiteSummaryDto {
+  siteId: String!
+  name: String
+  status: String
+  revenue: Float!
+  customers: Int!
+}
+
+type BusinessHomeDto {
+  kpis: [KpiDto!]!
+  sites: [SiteSummaryDto!]!
+  topPackages: [NamedValueDto!]!
+  recentActivity: [ActivityItemDto!]!
+}
+
+type SalesOverviewDto {
+  kpis: [KpiDto!]!
+  revenueTrend: TimeSeriesDto
+  revenueBySite: [NamedValueDto!]!
+  revenueByPackage: [NamedValueDto!]!
+}
+
+type PackageRowDto {
+  packageId: String!
+  name: String
+  price: Float!
+  validity: String
+  dataQuota: String
+  status: String
+  soldCount: Int!
+  revenue: Float!
+  revenueSharePct: Float
+  dataUsed: Float!
+  activeSubscribers: Int!
+}
+
+type PackagePerformanceDto {
+  kpis: [KpiDto!]!
+  packages: [PackageRowDto!]!
+  revenueMix: [NamedValueDto!]!
+  meta: MetaDto
+}
+
+type BusinessSiteRowDto {
+  siteId: String!
+  name: String
+  status: String
+  revenue: Float!
+  revenueToday: Float!
+  customers: Int!
+  dataUsed: Float!
+  uptime: Float!
+  topPackage: String
+  issue: String
+  latitude: Float!
+  longitude: Float!
+}
+
+type BusinessSitesDto {
+  sites: [BusinessSiteRowDto!]!
+  meta: MetaDto
+}
+
+# Shared home queries (Business + Network), parameterised by lens.
+
+enum HomeLens {
+  BUSINESS
+  NETWORK
+}
+
+input HomeViewInput {
+  lens: HomeLens!
+  networkId: String
+  period: String
+  from: String
+  to: String
+  timezone: String
+}
+
+type HomeKpis {
+  kpis: [KpiDto!]!
+}
+
+extend type Query {
+  getHomeKpis(data: HomeViewInput!): HomeKpis!
 }

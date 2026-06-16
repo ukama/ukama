@@ -5,9 +5,61 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Field, InputType, ObjectType } from "type-graphql";
+import { Field, Float, InputType, ObjectType } from "type-graphql";
 
 import { TIMEFRAME_FILTER } from "../../common/enums";
+
+/** Per-app runtime resource usage, as reported by the node's app supervisor. */
+@ObjectType()
+export class AppResource {
+  @Field(() => Float)
+  cpuPercent: number;
+
+  @Field(() => Float)
+  memoryRssKb: number;
+
+  @Field(() => Float)
+  diskReadBytes: number;
+
+  @Field(() => Float)
+  diskWriteBytes: number;
+}
+
+@ObjectType()
+export class App {
+  @Field()
+  name: string;
+
+  @Field()
+  version: string;
+
+  @Field()
+  tag: string;
+
+  // Runtime lifecycle state from the node (e.g. "running").
+  @Field()
+  status: string;
+
+  @Field(() => AppResource, { nullable: true })
+  resource?: AppResource;
+}
+
+@ObjectType()
+export class Apps {
+  @Field(() => [App])
+  apps: App[];
+}
+
+@InputType()
+export class GetAppsInputDto {
+  // Required: the node whose apps to list.
+  @Field()
+  nodeId: string;
+
+  // Optional: filter to a single app by name (e.g. "deviced").
+  @Field({ nullable: true })
+  appName?: string;
+}
 
 @InputType()
 export class GetHealthReportInputDto {

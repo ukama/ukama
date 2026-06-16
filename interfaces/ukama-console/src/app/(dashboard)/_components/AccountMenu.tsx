@@ -18,29 +18,8 @@ import LogoutRounded from '@mui/icons-material/LogoutRounded';
 
 import { useAuth } from '@/lib/auth/context';
 import { logout } from '@/lib/auth/client';
-
-const ROLE_LABELS: Record<string, string> = {
-  ROLE_OWNER: 'Owner',
-  ROLE_ADMIN: 'Admin',
-  ROLE_NETWORK_OWNER: 'Network owner',
-  ROLE_VENDOR: 'Vendor',
-  ROLE_USER: 'Member',
-};
-
-const roleLabel = (role?: string): string => {
-  if (!role) return '';
-  if (ROLE_LABELS[role]) return ROLE_LABELS[role];
-  const c = role.replace(/^ROLE_/, '').replace(/_/g, ' ').toLowerCase();
-  return c ? c[0]!.toUpperCase() + c.slice(1) : role;
-};
-
-const initials = (name?: string): string =>
-  (name ?? '')
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('') || '?';
+import { initials } from '@/lib/format';
+import { roleLabel } from '@/lib/roles';
 
 export default function AccountMenu() {
   const user = useAuth();

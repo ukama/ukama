@@ -44,21 +44,69 @@ const isNodeOffline = async (
   }
 };
 
-/** Backfill the presentation metadata the upstream omits (label always; unit/
- *  format/threshold only when missing) so the console renders from data. */
-const enrich = (m: MetricRes): MetricRes => {
-  const meta = metricMeta(m.type);
+/** Normalize raw units to console-friendly ones (applied to every series so
+ *  it's consistent everywhere). bps → Mbps: scale values + threshold by 1e6,
+ *  preserving the -1 gap-fill sentinel. */
+const UNIT_SCALE: Record<string, { unit: string; div: number }> = {
+  bps: { unit: "Mbps", div: 1e6 },
+};
+const normalizeUnits = (m: MetricRes): MetricRes => {
+  const rule = m.unit ? UNIT_SCALE[m.unit] : undefined;
+  if (!rule) return m;
+  const scale = (v: number) => (v === -1 ? -1 : v / rule.div);
   return {
     ...m,
-    label: m.label ?? (meta.label || m.type),
-    unit: m.unit ?? meta.unit,
-    format: m.format ?? meta.format,
-    threshold:
-      m.threshold ?? (meta.threshold ? { ...meta.threshold } : undefined),
+    unit: rule.unit,
+    values: (m.values ?? []).map(([t, v]) => [t, scale(v)]),
+    threshold: m.threshold
+      ? {
+          min: m.threshold.min / rule.div,
+          normal: m.threshold.normal / rule.div,
+          max: m.threshold.max / rule.div,
+        }
+      : m.threshold,
   };
 };
 
+/** Backfill the presentation metadata the upstream omits (label always; unit/
+ *  format/threshold only when missing) so the console renders from data, then
+ *  normalize units. */
+const enrich = (m: MetricRes): MetricRes =>
+  normalizeUnits({
+    ...m,
+    label: m.label ?? (metricMeta(m.type).label || m.type),
+    unit: m.unit ?? metricMeta(m.type).unit,
+    format: m.format ?? metricMeta(m.type).format,
+    threshold:
+      m.threshold ??
+      (metricMeta(m.type).threshold
+        ? { ...metricMeta(m.type).threshold! }
+        : undefined),
+  });
+
 const MAX_KEYS = 10;
+
+/**
+ * Resolution control for range charts. The console's Day/Week/Month filter
+ * sets the from/to window; we derive a Prometheus `step` from the span so the
+ * series is a bounded ~TARGET_POINTS samples regardless of range, instead of
+ * the old hardcoded 1s (which pulled 86 400 points for a single Day).
+ *   Day   (86 400s)  → step 720s  (12 min)  → ~120 points
+ *   Week  (604 800s) → step 5 040s (84 min) → ~120 points
+ *   Month (2 592 000s) → step 21 600s (6 h) → ~120 points
+ * MIN_STEP keeps us at/above Prometheus' 15s scrape interval so we never
+ * oversample. MAX_STEP caps very wide windows.
+ */
+const TARGET_POINTS = 120;
+const MIN_STEP = 60;
+const MAX_STEP = 86_400;
+
+/** Bucketing step (seconds) for a [from,to] window, clamped to sane bounds. */
+const deriveStep = (from: number, to: number): number => {
+  const span = Math.max(0, to - from);
+  const step = Math.ceil(span / TARGET_POINTS);
+  return Math.min(MAX_STEP, Math.max(MIN_STEP, step));
+};
 
 @InputType()
 export class MetricsRangeInput {
@@ -79,6 +127,11 @@ export class MetricsRangeInput {
   /** Prometheus aggregation, default "avg". */
   @Field({ nullable: true })
   operation?: string;
+
+  /** Optional resolution override (seconds). Omit to auto-derive from the
+   *  [from,to] window — the console's Day/Week/Month filter drives that. */
+  @Field(() => Int, { nullable: true })
+  step?: number;
 }
 
 @Resolver()
@@ -93,7 +146,8 @@ export class MetricsRangeResolver {
     }
     const keys = data.keys.slice(0, MAX_KEYS);
     const to = data.to ?? Math.floor(Date.now() / 1000);
-    const step = Math.max(60, Math.floor((to - data.from) / 48));
+    const step =
+      data.step && data.step > 0 ? data.step : deriveStep(data.from, to);
     const scope = data.nodeId ?? ctx.headers.orgName;
 
     // An offline/unknown node reports no telemetry — return empty series so
@@ -126,6 +180,7 @@ export class MetricsRangeResolver {
       const args = {
         from: data.from,
         to,
+        step,
         nodeId: data.nodeId,
         operation: data.operation ?? "avg",
         orgName: ctx.headers.orgName,
@@ -136,9 +191,38 @@ export class MetricsRangeResolver {
       const results = await mapWithConcurrency(liveKeys, key =>
         getNodeMetricRange(baseURL, key, args)
       );
-      live = results.flatMap(res => res.metrics).map(enrich);
+      // Always emit one entry per requested key: when the upstream returns no
+      // series (e.g. the gateway has no mapping/data for it yet), fall back to
+      // an empty, enriched placeholder so the console still gets the catalog
+      // label/unit (no raw key shown) and renders a "no data" state.
+      live = liveKeys.flatMap((key, i) => {
+        const found = results[i]?.metrics ?? [];
+        if (found.length > 0) return found.map(enrich);
+        return [
+          enrich({
+            success: false,
+            msg: "no-data",
+            type: key,
+            nodeId: data.nodeId,
+            values: [],
+          } as MetricRes),
+        ];
+      });
     }
 
-    return { metrics: [...mocked, ...live] };
+    // One series per (key, node/site). The gateway's `avg(...) without(job,
+    // instance,receive,tenant_id)` keeps stray labels (e.g. the dummy's
+    // `metric` label, exported_* from multi-path ingestion), so a single key
+    // can come back as multiple groups that we then stamp with the same
+    // nodeId — collapse them so each chart key yields one line.
+    const seen = new Set<string>();
+    const metrics = [...mocked, ...live].filter(m => {
+      const k = `${m.type}|${m.nodeId ?? ""}|${m.siteId ?? ""}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+
+    return { metrics };
   }
 }

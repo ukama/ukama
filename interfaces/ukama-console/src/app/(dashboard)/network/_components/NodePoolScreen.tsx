@@ -16,12 +16,9 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import IconButton from '@mui/material/IconButton';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import AddLocationAltRounded from '@mui/icons-material/AddLocationAltRounded';
-import InfoRounded from '@mui/icons-material/InfoRounded';
-import MoreVertRounded from '@mui/icons-material/MoreVertRounded';
+import TableSortLabel from '@mui/material/TableSortLabel';
+import Button from '@mui/material/Button';
+import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
 import { useNodePoolQuery } from '@/client/graphql/nodes-list.generated';
 import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
 import { EmptyState } from '@/components/EmptyState';
@@ -30,7 +27,6 @@ import TableFooter from '@/components/data-table/TableFooter';
 import { KpiRow } from '@/components/Kpi';
 import PageHeader from '@/components/PageHeader';
 import StatusBadge from '@/components/StatusBadge';
-import { useToast } from '@/components/ToastProvider';
 import { useUiPrefs } from '@/lib/store';
 import { toUkamaNode } from '@/lib/mappers/nodes';
 
@@ -43,11 +39,20 @@ interface PoolRow {
   status: PoolStatus;
   site: string;
   connectivity: string;
+  state: string;
 }
 
 const NP_LABEL: Record<PoolStatus, string> = {
   available: 'Available',
   assigned: 'Assigned',
+};
+
+/** Sortable columns and the value each row sorts by. */
+type SortKey = 'type' | 'connectivity' | 'status';
+const sortValue = (n: PoolRow, by: SortKey): string => {
+  if (by === 'type') return n.type;
+  if (by === 'connectivity') return connectivity(n.connectivity).label;
+  return NP_LABEL[n.status];
 };
 
 /** Maps a node's raw connectivity to a status badge + label. */
@@ -58,43 +63,44 @@ function connectivity(raw: string): { kind: string; label: string } {
   return { kind: 'configuring', label: 'Unknown' };
 }
 
-function PoolMenu({ item }: { item: PoolRow }) {
-  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+/**
+ * Row action, driven by the node's lifecycle state — the label — and its
+ * connectivity — whether the action is live:
+ *  - Unknown state → not yet set up → "Configure" (routes to the flow).
+ *  - Configured / Faulty state → "View detail" (routes to the node page).
+ * Either action requires the node to be reachable, so the button is disabled
+ * unless the node is Online. (An unconfigured node reports Unknown connectivity
+ * until it first checks in, so it shows a disabled Configure until it's live.)
+ */
+function RowAction({ item }: { item: PoolRow }) {
   const router = useRouter();
-  const toast = useToast();
+  const isOnline = item.connectivity.toLowerCase() === 'online';
+  const needsConfigure = item.state.toLowerCase() === 'unknown';
+
+  const label = needsConfigure ? 'Configure' : 'View detail';
+  const onClick = () =>
+    needsConfigure
+      ? router.push('/configure/select-network')
+      : router.push(`/network/nodes/${item.id}`);
+
   return (
-    <>
-      <IconButton
-        size="small"
-        aria-label="More actions"
-        sx={{ color: 'var(--uk-ink-3)' }}
-        onClick={(e) => setAnchor(e.currentTarget)}
-      >
-        <MoreVertRounded sx={{ fontSize: 20 }} />
-      </IconButton>
-      <Menu anchorEl={anchor} open={!!anchor} onClose={() => setAnchor(null)}>
-        {item.status === 'available' && (
-          <MenuItem
-            sx={{ fontSize: 13.5, gap: 1.25 }}
-            onClick={() => {
-              setAnchor(null);
-              toast(`Assign ${item.serial} to a site`);
-            }}
-          >
-            <AddLocationAltRounded sx={{ fontSize: 18 }} /> Assign to site
-          </MenuItem>
-        )}
-        <MenuItem
-          sx={{ fontSize: 13.5, gap: 1.25 }}
-          onClick={() => {
-            setAnchor(null);
-            router.push(`/network/nodes/${item.id}`);
-          }}
-        >
-          <InfoRounded sx={{ fontSize: 18 }} /> Details
-        </MenuItem>
-      </Menu>
-    </>
+    <Button
+      variant="text"
+      size="small"
+      disabled={!isOnline}
+      endIcon={<ChevronRightRounded />}
+      onClick={onClick}
+      sx={{
+        fontSize: 13.5,
+        fontWeight: 600,
+        textTransform: 'none',
+        whiteSpace: 'nowrap',
+        color: needsConfigure ? 'var(--uk-ac)' : 'var(--uk-ink-2)',
+        '& .MuiButton-endIcon': { ml: 0.25 },
+      }}
+    >
+      {label}
+    </Button>
   );
 }
 
@@ -111,7 +117,8 @@ export default function NodePoolScreen() {
   });
   const siteNameById = useMemo(() => {
     const map = new Map<string, string>();
-    for (const s of sitesData?.sitesView.sites.sites ?? []) map.set(s.id, s.name);
+    for (const s of sitesData?.sitesView.sites.sites ?? [])
+      map.set(s.id, s.name);
     return map;
   }, [sitesData]);
 
@@ -128,13 +135,34 @@ export default function NodePoolScreen() {
           status: siteId ? ('assigned' as const) : ('available' as const),
           site: siteId ? (siteNameById.get(siteId) ?? siteId) : '—',
           connectivity: n.status.connectivity,
+          state: n.status.state,
         };
       }),
-    [nodesSection?.nodes, siteNameById]
+    [nodesSection?.nodes, siteNameById],
   );
 
   const avail = pool.filter((n) => n.status === 'available').length;
   const deployed = pool.length - avail;
+
+  // Click-to-sort on Type / Connectivity / Status (toggles asc → desc → off).
+  const [sort, setSort] = useState<{ by: SortKey; dir: 'asc' | 'desc' } | null>(
+    null,
+  );
+  const toggleSort = (by: SortKey) =>
+    setSort((cur) =>
+      cur?.by !== by
+        ? { by, dir: 'asc' }
+        : cur.dir === 'asc'
+          ? { by, dir: 'desc' }
+          : null,
+    );
+  const sortedPool = useMemo(() => {
+    if (!sort) return pool;
+    return [...pool].sort((a, b) => {
+      const r = sortValue(a, sort.by).localeCompare(sortValue(b, sort.by));
+      return sort.dir === 'asc' ? r : -r;
+    });
+  }, [pool, sort]);
 
   return (
     <div className="page">
@@ -152,7 +180,12 @@ export default function NodePoolScreen() {
             value: avail,
             color: 'var(--uk-success-bright)',
           },
-          { icon: 'cell_tower', label: 'Deployed (live)', value: deployed, color: 'var(--uk-ac)' },
+          {
+            icon: 'cell_tower',
+            label: 'Deployed (live)',
+            value: deployed,
+            color: 'var(--uk-ac)',
+          },
           { icon: 'account_tree', label: 'In inventory', value: pool.length },
         ]}
       />
@@ -169,21 +202,42 @@ export default function NodePoolScreen() {
               onCta={() => refetch()}
             />
           ) : pool.length === 0 ? (
-            <EmptyState art="node" title="No nodes in inventory" sub="Registered nodes appear here." />
+            <EmptyState
+              art="node"
+              title="No nodes in inventory"
+              sub="Registered nodes appear here."
+            />
           ) : (
             <Table>
               <TableHead>
                 <TableRow>
                   <TableCell>Node ID</TableCell>
-                  <TableCell>Type</TableCell>
-                  <TableCell>Connectivity</TableCell>
-                  <TableCell>Status</TableCell>
+                  {(
+                    [
+                      ['type', 'Type'],
+                      ['connectivity', 'Connectivity'],
+                      ['status', 'Status'],
+                    ] as [SortKey, string][]
+                  ).map(([key, label]) => (
+                    <TableCell
+                      key={key}
+                      sortDirection={sort?.by === key ? sort.dir : false}
+                    >
+                      <TableSortLabel
+                        active={sort?.by === key}
+                        direction={sort?.by === key ? sort.dir : 'asc'}
+                        onClick={() => toggleSort(key)}
+                      >
+                        {label}
+                      </TableSortLabel>
+                    </TableCell>
+                  ))}
                   <TableCell>Site</TableCell>
-                  <TableCell sx={{ width: 44 }} />
+                  <TableCell align="right" sx={{ width: 130 }} />
                 </TableRow>
               </TableHead>
               <TableBody>
-                {pool.map((n) => {
+                {sortedPool.map((n) => {
                   const conn = connectivity(n.connectivity);
                   return (
                     <TableRow key={n.id}>
@@ -192,14 +246,18 @@ export default function NodePoolScreen() {
                       </TableCell>
                       <TableCell>{n.type}</TableCell>
                       <TableCell>
-                        <StatusBadge status={conn.kind}>{conn.label}</StatusBadge>
+                        <StatusBadge status={conn.kind}>
+                          {conn.label}
+                        </StatusBadge>
                       </TableCell>
                       <TableCell>
-                        <StatusBadge status={n.status}>{NP_LABEL[n.status]}</StatusBadge>
+                        <StatusBadge status={n.status}>
+                          {NP_LABEL[n.status]}
+                        </StatusBadge>
                       </TableCell>
                       <TableCell className="muted">{n.site}</TableCell>
-                      <TableCell>
-                        <PoolMenu item={n} />
+                      <TableCell align="right">
+                        <RowAction item={n} />
                       </TableCell>
                     </TableRow>
                   );
@@ -208,7 +266,9 @@ export default function NodePoolScreen() {
             </Table>
           )}
         </div>
-        {!loading && !nodesSection?.error && <TableFooter count={pool.length} noun="nodes" />}
+        {!loading && !nodesSection?.error && (
+          <TableFooter count={pool.length} noun="nodes" />
+        )}
       </div>
     </div>
   );

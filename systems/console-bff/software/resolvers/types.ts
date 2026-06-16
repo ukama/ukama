@@ -9,27 +9,6 @@ import { Field, InputType, ObjectType } from "type-graphql";
 
 import { SOFTWARE_STATUS } from "../../common/enums";
 
-@ObjectType()
-export class App {
-  @Field()
-  name: string;
-
-  @Field()
-  space: string;
-
-  @Field()
-  notes: string;
-
-  @Field(() => [String])
-  metricsKeys: string[];
-}
-
-@ObjectType()
-export class Apps {
-  @Field(() => [App])
-  apps: App[];
-}
-
 @InputType()
 export class GetSoftwaresInput {
   @Field()

@@ -48,6 +48,10 @@ class MetricAPI extends BaseRESTDataSource {
    * Generic latest-value read for one metric key (org-scoped, no entity
    * stamping). Used by the dashboard KPI sections (plan Phase 4 — polled,
    * no subscriptions in v1).
+   *
+   * NOTE: this hits `/v1/metrics/:metric`, whose gateway handler hardcodes the
+   * `system` node type. Only use it for system/org-scoped keys — for per-node
+   * KPIs use getNodeLatest (the gateway can't resolve a node type here).
    */
   getLatestMetric = async (
     baseURL: string,
@@ -61,6 +65,42 @@ class MetricAPI extends BaseRESTDataSource {
       const data = res?.data?.result?.[0];
       if (data?.value?.length > 0) {
         return { type, value: data.value as [number, number], success: true };
+      }
+      return { type, value: [0, 0] as [number, number], success: false };
+    });
+  };
+
+  /** Lookback window (seconds) for deriving a node's latest KPI value. */
+  private static readonly LATEST_LOOKBACK = 3600;
+  private static readonly LATEST_STEP = 60;
+
+  /**
+   * Latest value for a per-node metric. The gateway has no node-scoped instant
+   * endpoint, so we query the node range endpoint (`/v1/nodes/:node/metrics/:metric`,
+   * which resolves node type from the id) over a short recent window and take
+   * the most recent sample.
+   */
+  getNodeLatest = async (
+    baseURL: string,
+    type: string,
+    nodeId: string
+  ): Promise<{ type: string; value: [number, number]; success: boolean }> => {
+    const to = Math.floor(Date.now() / 1000);
+    const from = to - MetricAPI.LATEST_LOOKBACK;
+    const path = `/${VERSION}/nodes/${nodeId}/${METRICS}/${type}?from=${from}&to=${to}&step=${MetricAPI.LATEST_STEP}`;
+    this.logger.info(`GetNodeLatest [GET]: ${baseURL}${path}`);
+    this.baseURL = baseURL;
+    return this.get(path).then(res => {
+      const values = res?.data?.result?.[0]?.values as
+        | [number, string][]
+        | undefined;
+      const last = Array.isArray(values) ? values[values.length - 1] : null;
+      if (last && last.length === 2) {
+        return {
+          type,
+          value: [Number(last[0]), Number(last[1])] as [number, number],
+          success: true,
+        };
       }
       return { type, value: [0, 0] as [number, number], success: false };
     });

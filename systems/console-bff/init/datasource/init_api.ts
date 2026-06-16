@@ -80,13 +80,13 @@ class InitAPI extends BaseRESTDataSource {
 
   validateSession = async (
     store: RootDatabase,
-    cookies: string
+    auth: { cookie?: string; token?: string }
   ): Promise<ValidateSessionRes> => {
     this.logger.info(
       `ValidateSession [GET]: ${this.baseURL}/${VERSION}/sessions`
     );
-    // STEP 1 — Kratos session → identity (auth_id)
-    const whoamiRes = await whoami(cookies).catch(err => {
+    // STEP 1 — Kratos session (cookie or API token) → identity (auth_id)
+    const whoamiRes = await whoami(auth).catch(err => {
       throw new SessionValidationError(
         "KRATOS_WHOAMI",
         `Kratos /sessions/whoami failed (AUTH_URL reachable?): ${err}`
@@ -96,7 +96,7 @@ class InitAPI extends BaseRESTDataSource {
     if (!aId) {
       throw new SessionValidationError(
         "KRATOS_WHOAMI",
-        "Kratos returned no identity for this session cookie (expired/invalid session?)"
+        "Kratos returned no identity for this session (expired/invalid cookie or token?)"
       );
     }
 

@@ -5,19 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Apps, Softwares, StringResponse } from "../resolvers/types";
-
-export const mapApps = (res: Softwares): Apps => {
-  const apps = res.software.map(software => ({
-    name: software.name,
-    space: software.space,
-    notes: software.notes,
-    metricsKeys: software.metricsKeys,
-  }));
-  return {
-    apps: apps,
-  };
-};
+import { Softwares, StringResponse } from "../resolvers/types";
 
 export const mapSoftwares = (softwares: Softwares): Softwares => {
   return {

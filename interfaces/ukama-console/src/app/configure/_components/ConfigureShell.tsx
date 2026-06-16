@@ -35,9 +35,18 @@ const STEPS = [
   '/configure/sims',
 ] as const;
 
+/** Alternate paths that map onto a numbered step (same rail position). */
+const STEP_ALIASES: Record<string, number> = {
+  // Selecting an existing network is the Network step (alternative to naming).
+  '/configure/select-network': 0,
+};
+
 /** Index of the active step by exact path match (-1 if not a numbered step). */
-const stepIndexFor = (pathname: string): number =>
-  STEPS.reduce((best, step, i) => (pathname === step ? i : best), -1);
+const stepIndexFor = (pathname: string): number => {
+  const alias = STEP_ALIASES[pathname];
+  if (alias !== undefined) return alias;
+  return STEPS.reduce((best, step, i) => (pathname === step ? i : best), -1);
+};
 
 function TreeNode({
   icon,

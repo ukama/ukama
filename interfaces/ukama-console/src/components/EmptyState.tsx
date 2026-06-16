@@ -54,7 +54,10 @@ export function EmptyArt({
     ),
     sim: (
       <>
-        <path d="M40 31h28l15 15v44a4 4 0 0 1-4 4H40a4 4 0 0 1-4-4V35a4 4 0 0 1 4-4z" {...c} />
+        <path
+          d="M40 31h28l15 15v44a4 4 0 0 1-4 4H40a4 4 0 0 1-4-4V35a4 4 0 0 1 4-4z"
+          {...c}
+        />
         <rect x="50" y="60" width="24" height="23" rx="3" {...a} />
         <path d="M62 60v23M50 71.5h24" {...a} />
       </>
@@ -68,13 +71,19 @@ export function EmptyArt({
     ),
     site: (
       <>
-        <path d="M60 88s21-17 21-34a21 21 0 1 0-42 0c0 17 21 34 21 34z" {...c} />
+        <path
+          d="M60 88s21-17 21-34a21 21 0 1 0-42 0c0 17 21 34 21 34z"
+          {...c}
+        />
         <circle cx="60" cy="52" r="8.5" {...a} />
       </>
     ),
     invoice: (
       <>
-        <path d="M43 29h25l13 13v45a4 4 0 0 1-4 4H43a4 4 0 0 1-4-4V33a4 4 0 0 1 4-4z" {...c} />
+        <path
+          d="M43 29h25l13 13v45a4 4 0 0 1-4 4H43a4 4 0 0 1-4-4V33a4 4 0 0 1 4-4z"
+          {...c}
+        />
         <path d="M51 57h28M51 67h28M51 77h18" {...c} />
         <path d="M66 29v13h13" {...a} />
       </>
@@ -102,8 +111,16 @@ export function EmptyArt({
       style={{ display: 'block', margin: '0 auto' }}
       aria-hidden="true"
     >
-      <circle cx="60" cy="60" r="52" fill="var(--uk-ac-soft)" opacity={tone === 'error' ? 0.55 : 1} />
-      {tone === 'error' && <circle cx="60" cy="60" r="52" fill="rgba(226,116,41,.10)" />}
+      <circle
+        cx="60"
+        cy="60"
+        r="52"
+        fill="var(--uk-ac-soft)"
+        opacity={tone === 'error' ? 0.55 : 1}
+      />
+      {tone === 'error' && (
+        <circle cx="60" cy="60" r="52" fill="rgba(226,116,41,.10)" />
+      )}
       {art[name]}
     </svg>
   );
@@ -116,7 +133,8 @@ export function EmptyState({
   cta,
   onCta,
 }: {
-  art?: EmptyArtName;
+  /** Pass `null` to render no icon. */
+  art?: EmptyArtName | null;
   title: string;
   sub?: string;
   cta?: string;
@@ -124,7 +142,7 @@ export function EmptyState({
 }) {
   return (
     <div style={{ padding: '46px 24px 50px', textAlign: 'center' }}>
-      <EmptyArt name={art} />
+      {art != null && <EmptyArt name={art} />}
       <div
         style={{
           fontFamily: 'var(--font-display)',
