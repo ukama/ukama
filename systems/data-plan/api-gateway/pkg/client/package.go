@@ -99,3 +99,10 @@ func (p *PackageClient) GetPackages() (*pb.GetAllResponse, error) {
 
 	return p.packageClient.GetAll(ctx, &pb.GetAllRequest{})
 }
+
+func (p *PackageClient) IsPackageNameAvailable(name string) (*pb.IsNameAvailableResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), p.timeout)
+	defer cancel()
+
+	return p.packageClient.IsNameAvailable(ctx, &pb.IsNameAvailableRequest{Name: name})
+}

@@ -44,6 +44,10 @@ type PackagesRequest struct {
 	Uuid string `example:"{{PackageUUID}}" form:"uuid" json:"uuid" path:"uuid" binding:"required" validate:"required"`
 }
 
+type CheckPackageNameRequest struct {
+	Name string `example:"Monthly-Data" json:"name" query:"name" binding:"required" validate:"required"`
+}
+
 type GetBaseRatesByCountryRequest struct {
 	Country     string `json:"country" query:"country" binding:"required" validation:"required"`
 	Provider    string `json:"provider" query:"provider" binding:"required"`

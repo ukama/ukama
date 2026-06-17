@@ -21,6 +21,16 @@ service PackagesService {
     rpc Delete (DeletePackageRequest) returns (DeletePackageResponse){}
     rpc Update (UpdatePackageRequest) returns (UpdatePackageResponse){}
     rpc GetAll (GetAllRequest) returns (GetAllResponse){}
+    rpc IsNameAvailable (IsNameAvailableRequest) returns (IsNameAvailableResponse){}
+}
+
+message IsNameAvailableRequest{
+    string name = 1 [(validator.field) = {string_not_empty: true}];
+}
+
+message IsNameAvailableResponse{
+    bool isAvailable = 1 [json_name = "is_available"];
+    string name = 2;
 }
 
 message GetPackageRequest{

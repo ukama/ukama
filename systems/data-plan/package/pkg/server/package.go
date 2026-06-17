@@ -10,7 +10,11 @@ package server
 
 import (
 	"context"
+	"errors"
+	"strings"
 	"time"
+
+	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
@@ -112,9 +116,44 @@ func (p *PackageServer) GetAll(ctx context.Context, req *pb.GetAllRequest) (*pb.
 	return packageList, nil
 }
 
+func (p *PackageServer) IsNameAvailable(ctx context.Context, req *pb.IsNameAvailableRequest) (*pb.IsNameAvailableResponse, error) {
+	name := strings.TrimSpace(req.GetName())
+	if name == "" {
+		return nil, status.Error(codes.InvalidArgument, "package name must not be empty")
+	}
+
+	log.Infof("Checking availability of package name: %q", name)
+
+	available, err := p.isNameAvailable(name)
+	if err != nil {
+		log.Errorf("error while checking package name availability: %s", err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "package")
+	}
+
+	return &pb.IsNameAvailableResponse{
+		Name:        name,
+		IsAvailable: available,
+	}, nil
+}
+
+// isNameAvailable reports whether the given (already trimmed) name is free.
+func (p *PackageServer) isNameAvailable(name string) (bool, error) {
+	_, err := p.packageRepo.GetByName(name)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return true, nil
+		}
+		return false, err
+	}
+
+	return false, nil
+}
+
 func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
 
 	log.Infof("Adding package %v", req)
+
+	name := strings.TrimSpace(req.GetName())
 
 	ownId, err := uuid.FromString(req.GetOwnerId())
 	if err != nil {
@@ -165,7 +204,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 	pkg := db.Package{
 		Uuid:         pkgUuid,
 		OwnerId:      ownId,
-		Name:         req.GetName(),
+		Name:         name,
 		SimType:      ukama.ParseSimType(req.GetSimType()),
 		Active:       req.Active,
 		From:         from,
@@ -231,10 +270,28 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		calculateTotalAmount(&pkg)
 	}
 
+	// Validate the name and confirm it is free just before writing, to keep the
+	// check-then-write window small. The partial unique index on package name
+	// remains the source of truth for races.
+	if name == "" {
+		return nil, status.Error(codes.InvalidArgument, "package name must not be empty")
+	}
+
+	available, err := p.isNameAvailable(name)
+	if err != nil {
+		log.Errorf("error while checking package name availability: %s", err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "package")
+	}
+	if !available {
+		return nil, status.Errorf(codes.AlreadyExists,
+			"package with name %q already exists", name)
+	}
+
 	err = p.packageRepo.Add(&pkg, &pr)
 	if err != nil {
 		log.Error("Error while adding a package. " + err.Error())
-		return nil, status.Errorf(codes.Internal, "Error while adding a package.")
+		// Surface unique-name violations (e.g. on concurrent Add) as AlreadyExists.
+		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
 
 	resp := &pb.AddPackageResponse{Package: dbPackageToPbPackages(&pkg)}
@@ -305,15 +362,33 @@ func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest
 func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
 	log.Infof("Update Package Uuid: %v, Name: %v,Active: %v",
 		req.Uuid, req.Name, req.Active)
-	_package := &db.Package{
-		Name:   req.GetName(),
-		Active: req.Active,
-	}
 
 	packageID, err := uuid.FromString(req.GetUuid())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of package uuid. Error %s", err.Error())
+	}
+
+	// Name is an optional update: an empty name leaves the existing name
+	// untouched (gorm skips zero-value fields). Only when a name is supplied do
+	// we reject a rename that would collide with another package. A package
+	// keeping its own name is allowed (the match is itself).
+	name := strings.TrimSpace(req.GetName())
+	if name != "" {
+		existing, err := p.packageRepo.GetByName(name)
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Errorf("error while checking package name availability: %s", err.Error())
+			return nil, grpc.SqlErrorToGrpc(err, "package")
+		}
+		if existing != nil && existing.Uuid != packageID {
+			return nil, status.Errorf(codes.AlreadyExists,
+				"package with name %q already exists", name)
+		}
+	}
+
+	_package := &db.Package{
+		Name:   name,
+		Active: req.Active,
 	}
 
 	err = p.packageRepo.Update(packageID, _package)

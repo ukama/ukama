@@ -22,8 +22,8 @@ import (
 type Package struct {
 	gorm.Model
 	Uuid           uuid.UUID `gorm:"unique;type:uuid;index"`
-	OwnerId        uuid.UUID
-	Name           string
+	OwnerId        uuid.UUID `gorm:"not null;type:uuid"`
+	Name           string    `gorm:"uniqueIndex:idx_packages_name_unique,where:deleted_at IS NULL,expression:LOWER(name)"`
 	SimType        ukama.SimType
 	Active         bool           `gorm:"not null; default:false"`
 	Duration       uint64         `gorm:"not null; default:0"`

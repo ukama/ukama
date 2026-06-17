@@ -75,6 +75,7 @@ type packageS interface {
 	GetPackageDetails(id string) (*pb.GetPackageResponse, error)
 	GetPackages() (*pb.GetAllResponse, error)
 	DeletePackage(id string) (*pb.DeletePackageResponse, error)
+	IsPackageNameAvailable(name string) (*pb.IsNameAvailableResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -147,6 +148,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		packages := auth.Group("/packages", "Packages", "Packages operations")
 		packages.POST("", formatDoc("Add Package", ""), tonic.Handler(r.AddPackageHandler, http.StatusCreated))
 		packages.GET("", formatDoc("Get all packages", ""), tonic.Handler(r.getPackagesHandler, http.StatusOK))
+		packages.GET("/name-availability", formatDoc("Check package name availability", ""), tonic.Handler(r.isPackageNameAvailableHandler, http.StatusOK))
 		packages.GET("/:uuid", formatDoc("Get package", ""), tonic.Handler(r.getPackageHandler, http.StatusOK))
 		packages.GET("/:uuid/details", formatDoc("Get package details", ""), tonic.Handler(r.getPackageDetailsHandler, http.StatusOK))
 		packages.PATCH("/:uuid", formatDoc("Update Package", ""), tonic.Handler(r.UpdatePackageHandler, http.StatusOK))
@@ -176,6 +178,10 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 
 func (r *Router) getPackagesHandler(c *gin.Context) (*pb.GetAllResponse, error) {
 	return r.clients.p.GetPackages()
+}
+
+func (r *Router) isPackageNameAvailableHandler(c *gin.Context, req *CheckPackageNameRequest) (*pb.IsNameAvailableResponse, error) {
+	return r.clients.p.IsPackageNameAvailable(req.Name)
 }
 
 func (r *Router) getBaseRateHandler(c *gin.Context, req *GetBaseRateRequest) (*bpb.GetBaseRatesByIdResponse, error) {

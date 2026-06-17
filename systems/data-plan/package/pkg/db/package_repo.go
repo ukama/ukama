@@ -21,6 +21,7 @@ type PackageRepo interface {
 	Add(dataPackage *Package, packageRate *PackageRate) error
 	Get(uuid uuid.UUID) (*Package, error)
 	GetDetails(uuid.UUID) (*Package, error)
+	GetByName(name string) (*Package, error)
 	Delete(uuid uuid.UUID) error
 	GetAll() ([]Package, error)
 	Update(uuid uuid.UUID, pkg *Package) error
@@ -74,6 +75,21 @@ func (p *packageRepo) GetDetails(uuid uuid.UUID) (*Package, error) {
 
 	result := p.Db.GetGormDb().Preload(clause.Associations).Where("uuid = ?", uuid).First(&_package)
 
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &_package, nil
+}
+
+// GetByName returns the package matching the given name, case-insensitively
+// (so "Plan", "plan" and "PLAN" are treated as the same). Soft-deleted packages
+// are excluded by GORM, mirroring the partial unique index on LOWER(name) WHERE
+// deleted_at IS NULL. Returns gorm.ErrRecordNotFound when the name is free.
+func (p *packageRepo) GetByName(name string) (*Package, error) {
+	var _package Package
+
+	result := p.Db.GetGormDb().Where("LOWER(name) = LOWER(?)", name).First(&_package)
 	if result.Error != nil {
 		return nil, result.Error
 	}
