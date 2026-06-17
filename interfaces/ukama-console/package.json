@@ -40,6 +40,8 @@
     "@mui/material": "^7.3.11",
     "@mui/material-nextjs": "^7.3.10",
     "@nerdwallet/apollo-cache-policies": "^3.3.3",
+    "@stripe/react-stripe-js": "^3.0.0",
+    "@stripe/stripe-js": "^5.2.0",
     "@tanstack/react-table": "^8.21.3",
     "graphql": "^16.11.0",
     "leaflet": "^1.9.4",

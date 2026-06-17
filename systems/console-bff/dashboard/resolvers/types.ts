@@ -498,6 +498,14 @@ export class BalanceSection {
 
   @Field(() => String, { nullable: true })
   latestUnpaidPeriod?: string | null;
+
+  /** Sum of unpaid invoice totals, in major currency units (not cents). */
+  @Field(() => Number, { nullable: true })
+  outstandingAmount?: number | null;
+
+  /** ISO currency code of the outstanding invoices (e.g. USD). */
+  @Field(() => String, { nullable: true })
+  currency?: string | null;
 }
 
 @ObjectType()

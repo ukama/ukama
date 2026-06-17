@@ -120,6 +120,13 @@ query BillingOverview($networkId: String, $invoiceLimit: Int! = 20) {
         isPaid
         networkId
         createdAt
+        rawReport {
+          totalAmountCents
+          currency
+          fileUrl
+          paymentDueDate
+          status
+        }
       }
     }
     balance {
@@ -128,6 +135,8 @@ query BillingOverview($networkId: String, $invoiceLimit: Int! = 20) {
       }
       outstandingCount
       latestUnpaidPeriod
+      outstandingAmount
+      currency
     }
   }
 }

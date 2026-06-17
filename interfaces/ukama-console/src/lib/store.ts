@@ -12,9 +12,9 @@
  * handled by MUI's useColorScheme. Persisted to localStorage; the attributes
  * are applied to <html> by <ThemeAttributes/> after mount (no SSR mismatch).
  */
+import type { Accent, Density } from '@/theme/tokens';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Accent, Density } from '@/theme/tokens';
 
 export type Rail = 'full' | 'icon';
 
@@ -38,7 +38,7 @@ export const useUiPrefs = create<UiPrefsState>()(
       accent: 'blue',
       density: 'compact',
       rail: 'full',
-      networkId: 'kwacha',
+      networkId: '',
       lastConfigureUrl: null,
       setAccent: (accent) => set({ accent }),
       setDensity: (density) => set({ density }),

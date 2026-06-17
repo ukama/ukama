@@ -160,12 +160,18 @@ export class CommerceViewResolver {
         isPaid: false,
       });
       const unpaid = res.reports.filter(report => !report.isPaid);
-      // TODO(backend-gap): billing — outstanding *amount* needs an invoice
-      // amount/balance field on the reports list (today only count/period are
-      // derivable) — unblocks: commerceView.balance.outstandingAmount
+      // Outstanding amount is derived from each invoice's raw report
+      // (totalAmountCents, synced from the billing provider). Cents → major
+      // units; non-numeric/missing totals contribute 0.
+      const outstandingCents = unpaid.reduce((acc, report) => {
+        const cents = Number(report.rawReport?.totalAmountCents);
+        return acc + (Number.isFinite(cents) ? cents : 0);
+      }, 0);
       return {
         outstandingCount: unpaid.length,
         latestUnpaidPeriod: unpaid[0]?.period ?? null,
+        outstandingAmount: unpaid.length ? outstandingCents / 100 : null,
+        currency: unpaid[0]?.rawReport?.currency ?? null,
       };
     });
     return { ...value, error };

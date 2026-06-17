@@ -24,6 +24,8 @@ const envSchema = z.object({
   NEXT_PUBLIC_API_GW_4SS: z.string().url().default('http://localhost:8080'),
   /** Auth app (login redirect target) */
   NEXT_PUBLIC_AUTH_APP_URL: z.string().url().default('http://localhost:4455'),
+  /** Stripe publishable key (pk_...) for the billing payment dialog */
+  NEXT_PUBLIC_STRIPE_PK: z.string().default(''),
 });
 
 /** Docker/CI pass unset build args through as empty strings — zod
@@ -36,4 +38,5 @@ export const env = envSchema.parse({
   NEXT_PUBLIC_METRIC_URL: blank(process.env.NEXT_PUBLIC_METRIC_URL),
   NEXT_PUBLIC_API_GW_4SS: blank(process.env.NEXT_PUBLIC_API_GW_4SS),
   NEXT_PUBLIC_AUTH_APP_URL: blank(process.env.NEXT_PUBLIC_AUTH_APP_URL),
+  NEXT_PUBLIC_STRIPE_PK: blank(process.env.NEXT_PUBLIC_STRIPE_PK),
 });

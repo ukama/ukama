@@ -220,8 +220,10 @@ export type AttachedNodes = {
 
 export type BalanceSection = {
   __typename?: 'BalanceSection';
+  currency?: Maybe<Scalars['String']['output']>;
   error?: Maybe<SectionError>;
   latestUnpaidPeriod?: Maybe<Scalars['String']['output']>;
+  outstandingAmount?: Maybe<Scalars['Float']['output']>;
   outstandingCount?: Maybe<Scalars['Int']['output']>;
 };
 
@@ -2090,6 +2092,11 @@ export type QueryGetPackageArgs = {
 
 export type QueryGetPackagePerformanceArgs = {
   data: AnalyticsWindowInput;
+};
+
+
+export type QueryGetPackagesArgs = {
+  networkId?: InputMaybe<Scalars['String']['input']>;
 };
 
 

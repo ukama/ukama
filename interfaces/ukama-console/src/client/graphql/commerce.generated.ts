@@ -38,7 +38,7 @@ export type BillingOverviewQueryVariables = Types.Exact<{
 }>;
 
 
-export type BillingOverviewQuery = { __typename?: 'Query', commerceView: { __typename?: 'CommerceView', networkId?: string | null, invoices: { __typename?: 'InvoicesSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, reports?: Array<{ __typename?: 'ReportDto', id: string, period: string, type: string, isPaid: boolean, networkId: string, createdAt: string }> | null }, balance: { __typename?: 'BalanceSection', outstandingCount?: number | null, latestUnpaidPeriod?: string | null, error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null } } };
+export type BillingOverviewQuery = { __typename?: 'Query', commerceView: { __typename?: 'CommerceView', networkId?: string | null, invoices: { __typename?: 'InvoicesSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, reports?: Array<{ __typename?: 'ReportDto', id: string, period: string, type: string, isPaid: boolean, networkId: string, createdAt: string, rawReport: { __typename?: 'RawReportDto', totalAmountCents: string, currency: string, fileUrl: string, paymentDueDate: string, status: string } }> | null }, balance: { __typename?: 'BalanceSection', outstandingCount?: number | null, latestUnpaidPeriod?: string | null, outstandingAmount?: number | null, currency?: string | null, error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null } } };
 
 
 export const BizHomeRevenueDocument = gql`
@@ -302,6 +302,13 @@ export const BillingOverviewDocument = gql`
         isPaid
         networkId
         createdAt
+        rawReport {
+          totalAmountCents
+          currency
+          fileUrl
+          paymentDueDate
+          status
+        }
       }
     }
     balance {
@@ -310,6 +317,8 @@ export const BillingOverviewDocument = gql`
       }
       outstandingCount
       latestUnpaidPeriod
+      outstandingAmount
+      currency
     }
   }
 }
