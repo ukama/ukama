@@ -11,6 +11,7 @@ import { AddPackageResolver } from "./addPackage";
 import { DeletePackageResolver } from "./deletePackage";
 import { GetPackageResolver } from "./getPackage";
 import { GetPackagesResolver } from "./getPackages";
+import { IsPackageNameAvailableResolver } from "./isPackageNameAvailable";
 import { UpdatePackageResolver } from "./updatePackage";
 
 const resolvers: NonEmptyArray<any> = [
@@ -18,6 +19,7 @@ const resolvers: NonEmptyArray<any> = [
   DeletePackageResolver,
   GetPackageResolver,
   GetPackagesResolver,
+  IsPackageNameAvailableResolver,
   UpdatePackageResolver,
 ];
 

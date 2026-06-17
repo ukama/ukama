@@ -13,10 +13,15 @@ import { IdResponse, THeaders } from "../../common/types";
 import {
   AddPackageInputDto,
   PackageDto,
+  PackageNameAvailabilityResDto,
   PackagesResDto,
   UpdatePackageInputDto,
 } from "../resolver/types";
-import { dtoToPackageDto, dtoToPackagesDto } from "./mapper";
+import {
+  dtoToPackageDto,
+  dtoToPackageNameAvailabilityDto,
+  dtoToPackagesDto,
+} from "./mapper";
 
 const VERSION = "v1";
 const PACKAGES = "packages";
@@ -33,6 +38,20 @@ class PackageApi extends BaseRESTDataSource {
     return this.get(`/${VERSION}/${PACKAGES}/${packageId}`, {}).then(res =>
       dtoToPackageDto(res)
     );
+  };
+
+  isPackageNameAvailable = async (
+    baseURL: string,
+    name: string
+  ): Promise<PackageNameAvailabilityResDto> => {
+    const params = new URLSearchParams({ name });
+    this.logger.info(
+      `IsPackageNameAvailable [GET]: ${baseURL}/${VERSION}/${PACKAGES}/name-availability?${params.toString()}`
+    );
+    this.baseURL = baseURL;
+    return this.get(
+      `/${VERSION}/${PACKAGES}/name-availability?${params.toString()}`
+    ).then(res => dtoToPackageNameAvailabilityDto(res));
   };
 
   getPackages = async (baseURL: string): Promise<PackagesResDto> => {
@@ -71,6 +90,7 @@ class PackageApi extends BaseRESTDataSource {
         voice_volume: 0,
         traffic_policy: 0,
         networks: [],
+        network_id: req.networkId ?? "",
         type: "prepaid",
         apn: "ukama.tel",
         country: req.country,
