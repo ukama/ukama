@@ -94,13 +94,15 @@ func runGrpcServer(gormdb sql.Db) {
 
 	dbStruct := db.InitDBStruct(siteRepo, intentRepo, flightRepo, stateRepo, componentRepo, portMapRepo)
 
+	controllerProvider := providers.NewControllerClientProvider(svcConf.NodeControllerHost)
+
 	r := reconciler.New(
 		intentRepo,
 		stateRepo,
 		flightRepo,
 		portMapRepo,
 		componentRepo,
-		providers.NewControllerClientProvider(svcConf.NodeControllerHost),
+		controllerProvider,
 		adapters.NewTowerAdapter(cmdAdapter),
 		adapters.NewAmplifierAdapter(cmdAdapter),
 		adapters.NewCNodeAdapter(cmdAdapter),
@@ -117,7 +119,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	nodeClient := creg.NewNodeClient(regUrl.String())
 	siteClient := creg.NewSiteClient(regUrl.String())
-	srv := server.NewSiteControllerServer(svcConf.OrgName, r, mbClient, nodeClient, siteClient, providers.NewHealthClientProvider(svcConf.HealthHost), dbStruct)
+	srv := server.NewSiteControllerServer(svcConf.OrgName, r, mbClient, nodeClient, siteClient, providers.NewHealthClientProvider(svcConf.HealthHost), controllerProvider, dbStruct)
 	eventServer := server.NewSiteControllerEventServer(
 		srv, siteRepo, intentRepo, flightRepo, stateRepo, componentRepo,
 		svcConf,
