@@ -14,14 +14,18 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	registry "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/node/controller/pkg/db"
 
 	"github.com/ukama/ukama/systems/node/controller/mocks"
 	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	"github.com/ukama/ukama/systems/node/controller/pkg"
+	opmonpb "github.com/ukama/ukama/systems/node/operation-monitor/pb/gen"
+	opmgrpb "github.com/ukama/ukama/systems/operation/manager/pb/gen"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -236,6 +240,67 @@ func TestControllerServer_ToggleNodeService(t *testing.T) {
 
 	msgclientRepo.AssertExpectations(t)
 	assert.NoError(t, err)
+}
+
+func TestControllerServer_ToggleNodeService_SiteLevelLock(t *testing.T) {
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	conRepo := &mocks.NodeLogRepo{}
+	nodeClient := &mbmocks.NodeClient{}
+	opMgr := &mocks.OperationManager{}
+	opMon := &mocks.OperationMonitor{}
+
+	nodeId := "uk-983794-tnode-78-7830"
+	siteId := uuid.NewV4().String()
+
+	nodeClient.On("Get", nodeId).Return(&registry.NodeInfo{
+		Id:   nodeId,
+		Site: registry.NodeSiteInfo{SiteId: siteId},
+	}, nil).Once()
+
+	op := &opmgrpb.Operation{Id: "op-1", FencingToken: 1, ResourceKey: "site:" + siteId}
+	opMgr.On("Start", mock.MatchedBy(func(req *opmgrpb.StartOperationRequest) bool {
+		return req.ResourceKey == "site:"+siteId
+	})).Return(&opmgrpb.StartOperationResponse{Operation: op}, nil).Once()
+	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
+	opMgr.On("MarkRunning", "op-1", uint64(1)).Return(&opmgrpb.MarkRunningResponse{}, nil).Once()
+	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nodeClient, opMgr, opMon, 30, 60, pkg.IsDebugMode)
+
+	resp, err := s.ToggleNodeService(context.TODO(), &pb.ToggleNodeServiceRequest{NodeId: nodeId, State: "on"})
+
+	assert.NoError(t, err)
+	assert.Equal(t, "site:"+siteId, resp.ResourceKey)
+	opMgr.AssertExpectations(t)
+	nodeClient.AssertExpectations(t)
+}
+
+func TestControllerServer_ToggleNodeService_LockFallsBackToNode(t *testing.T) {
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	conRepo := &mocks.NodeLogRepo{}
+	nodeClient := &mbmocks.NodeClient{}
+	opMgr := &mocks.OperationManager{}
+	opMon := &mocks.OperationMonitor{}
+
+	nodeId := "uk-983794-tnode-78-7830"
+
+	nodeClient.On("Get", nodeId).Return(nil, assert.AnError).Once()
+
+	op := &opmgrpb.Operation{Id: "op-2", FencingToken: 1, ResourceKey: "node:" + nodeId}
+	opMgr.On("Start", mock.MatchedBy(func(req *opmgrpb.StartOperationRequest) bool {
+		return req.ResourceKey == "node:"+nodeId
+	})).Return(&opmgrpb.StartOperationResponse{Operation: op}, nil).Once()
+	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
+	opMgr.On("MarkRunning", "op-2", uint64(1)).Return(&opmgrpb.MarkRunningResponse{}, nil).Once()
+	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nodeClient, opMgr, opMon, 30, 60, pkg.IsDebugMode)
+
+	_, err := s.ToggleNodeService(context.TODO(), &pb.ToggleNodeServiceRequest{NodeId: nodeId, State: "on"})
+
+	assert.NoError(t, err)
+	opMgr.AssertExpectations(t)
+	nodeClient.AssertExpectations(t)
 }
 
 func TestControllerServer_ToggleNodeService_InvalidNodeId(t *testing.T) {

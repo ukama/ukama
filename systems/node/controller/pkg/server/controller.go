@@ -331,6 +331,9 @@ func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.Toggle
 }
 
 func (c *ControllerServer) siteResourceKey(nodeID string) string {
+	if c.nodeClient == nil {
+		return "node:" + nodeID
+	}
 	n, err := c.nodeClient.Get(nodeID)
 	if err != nil || n == nil || n.Site.SiteId == "" {
 		log.Warnf("could not resolve site for node %s, using node-level lock: %v", nodeID, err)
