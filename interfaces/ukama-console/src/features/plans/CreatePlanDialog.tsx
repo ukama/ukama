@@ -18,15 +18,6 @@
  * confirmed-available name. A plan is either org-wide ("Available within an
  * org" → no networkId) or scoped to a single network.
  */
-import { useEffect, useState } from 'react';
-import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
-import CircularProgress from '@mui/material/CircularProgress';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import AddRounded from '@mui/icons-material/AddRounded';
-import SaveRounded from '@mui/icons-material/SaveRounded';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Controller, useForm } from 'react-hook-form';
 import { useGetNetworksQuery } from '@/client/graphql/networks.generated';
 import {
   GetPackagesDocument,
@@ -40,8 +31,17 @@ import { Field, SelectInput, TextInput } from '@/components/form/FormField';
 import { useToast } from '@/components/ToastProvider';
 import { useAuth } from '@/lib/auth/context';
 import { useCurrency } from '@/lib/currency';
-import { createPlanSchema, VALIDITY_OPTIONS } from './schemas';
+import { zodResolver } from '@hookform/resolvers/zod';
+import AddRounded from '@mui/icons-material/AddRounded';
+import SaveRounded from '@mui/icons-material/SaveRounded';
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import CircularProgress from '@mui/material/CircularProgress';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import { useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import type { CreatePlanValues } from './schemas';
+import { createPlanSchema, VALIDITY_OPTIONS } from './schemas';
 
 const normalizeUnit = (u: string): 'GB' | 'MB' =>
   u?.toUpperCase() === 'MB' ? 'MB' : 'GB';
@@ -68,7 +68,8 @@ export default function CreatePlanDialog({
   const { symbol } = useCurrency();
   const editing = Boolean(pkg);
 
-  const { data: networksData, loading: networksLoading } = useGetNetworksQuery();
+  const { data: networksData, loading: networksLoading } =
+    useGetNetworksQuery();
   const networkOptions =
     networksData?.getNetworks.networks.map((n) => ({
       value: n.id,
@@ -98,7 +99,7 @@ export default function CreatePlanDialog({
           name: '',
           unit: 'GB',
           days: 30,
-          availableWithinOrg: true,
+          availableWithinOrg: false,
           networkId: '',
         } as CreatePlanValues),
   });
@@ -114,7 +115,9 @@ export default function CreatePlanDialog({
   const [checkName] = useIsPackageNameAvailableLazyQuery({
     fetchPolicy: 'network-only',
     onCompleted: (res) =>
-      setNameState(res.isPackageNameAvailable.isAvailable ? 'available' : 'taken'),
+      setNameState(
+        res.isPackageNameAvailable.isAvailable ? 'available' : 'taken',
+      ),
     onError: () => setNameState('idle'),
   });
 
@@ -154,9 +157,7 @@ export default function CreatePlanDialog({
 
   const saving = adding || updating;
 
-  // The name is acceptable when it's confirmed available, or (when editing)
-  // left unchanged.
-  const nameOk = nameUnchanged || nameState === 'available';
+  const nameOk = !!trimmedName && nameState !== 'taken';
 
   const submit = handleSubmit((v) => {
     if (editing && pkg) {
@@ -254,7 +255,15 @@ export default function CreatePlanDialog({
         </>
       }
     >
-      <p style={{ fontSize: 13.5, color: 'var(--uk-ink-2)', lineHeight: 1.6, margin: '0 0 18px', textWrap: 'pretty' }}>
+      <p
+        style={{
+          fontSize: 13.5,
+          color: 'var(--uk-ink-2)',
+          lineHeight: 1.6,
+          margin: '0 0 18px',
+          textWrap: 'pretty',
+        }}
+      >
         {editing
           ? 'Update the plan name. Price, data, and validity are fixed once a plan is created.'
           : 'Create a custom data plan that can be assigned to customers.'}
@@ -293,11 +302,22 @@ export default function CreatePlanDialog({
       ) : (
         <>
           <Field label="Price" required error={errors.price?.message}>
-            <TextInput placeholder="0.00" prefix={symbol} type="number" invalid={!!errors.price} {...register('price')} />
+            <TextInput
+              placeholder="0.00"
+              prefix={symbol}
+              type="number"
+              invalid={!!errors.price}
+              {...register('price')}
+            />
           </Field>
           <div className="ff-grid2">
             <Field label="Data volume" required error={errors.data?.message}>
-              <TextInput placeholder="20" type="number" invalid={!!errors.data} {...register('data')} />
+              <TextInput
+                placeholder="20"
+                type="number"
+                invalid={!!errors.data}
+                {...register('data')}
+              />
             </Field>
             <Field label="Unit">
               <SelectInput
@@ -311,7 +331,10 @@ export default function CreatePlanDialog({
           </div>
           <Field label="Validity" required error={errors.days?.message}>
             <SelectInput
-              options={VALIDITY_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+              options={VALIDITY_OPTIONS.map((o) => ({
+                value: o.value,
+                label: o.label,
+              }))}
               {...register('days')}
             />
           </Field>
@@ -329,7 +352,7 @@ export default function CreatePlanDialog({
                     sx={{ p: 0, pr: 1.5 }}
                   />
                 }
-                label="Available within an org"
+                label="Available to all networks"
               />
             )}
           />
@@ -337,7 +360,9 @@ export default function CreatePlanDialog({
           {!orgWide && (
             <Field label="Network" required error={errors.networkId?.message}>
               <SelectInput
-                placeholder={networksLoading ? 'Loading networks…' : 'Select a network'}
+                placeholder={
+                  networksLoading ? 'Loading networks…' : 'Select a network'
+                }
                 options={networkOptions}
                 invalid={!!errors.networkId}
                 {...register('networkId')}
