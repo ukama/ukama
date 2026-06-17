@@ -58,7 +58,7 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
   // Adding a customer assigns them a SIM + data plan, so a missing pool SIM or
   // data plan blocks the flow (guide the user to set the prerequisite up).
   const { available: poolSims } = useAvailablePoolSims();
-  const { available: dataPlans } = useAvailableDataPlans();
+  const { available: dataPlans } = useAvailableDataPlans(networkId);
   const openAddCustomer = () => {
     if (poolSims === 0) {
       toast(NO_POOL_SIMS_MESSAGE);

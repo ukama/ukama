@@ -60,6 +60,7 @@ export type AddPackageInputDto = {
   dataVolume: Scalars['Int']['input'];
   duration: Scalars['Int']['input'];
   name: Scalars['String']['input'];
+  networkId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type AddPackagesSimResDto = {
@@ -1582,6 +1583,7 @@ export type PackageDto = {
   markup: PackageMarkupApiDto;
   messageUnit: Scalars['String']['output'];
   name: Scalars['String']['output'];
+  networkId?: Maybe<Scalars['String']['output']>;
   ownerId: Scalars['String']['output'];
   provider: Scalars['String']['output'];
   rate: PackageRateApiDto;
@@ -1609,6 +1611,12 @@ export type PackageMarkupApiDto = {
   __typename?: 'PackageMarkupAPIDto';
   baserate: Scalars['String']['output'];
   markup: Scalars['Float']['output'];
+};
+
+export type PackageNameAvailabilityResDto = {
+  __typename?: 'PackageNameAvailabilityResDto';
+  isAvailable: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
 };
 
 export type PackagePerformanceDto = {
@@ -1826,6 +1834,7 @@ export type Query = {
   getTopology: NetworkTopologyDto;
   getUser: UserResDto;
   inventoryView: InventoryView;
+  isPackageNameAvailable: PackageNameAvailabilityResDto;
   listCustomers: CustomerListDto;
   membersView: MembersView;
   metricsRange: MetricsRes;
@@ -2211,6 +2220,11 @@ export type QueryGetTopologyArgs = {
 
 export type QueryGetUserArgs = {
   userId: Scalars['String']['input'];
+};
+
+
+export type QueryIsPackageNameAvailableArgs = {
+  name: Scalars['String']['input'];
 };
 
 

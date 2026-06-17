@@ -13,6 +13,7 @@ import {
   PackagesAPIResDto,
   PackagesResDto,
 } from "../resolver/types";
+import { toConsoleDataUnit } from "./dataUnit";
 
 export const dtoToPackagesDto = (res: PackagesAPIResDto): PackagesResDto => {
   const packages: PackageDto[] = [];
@@ -35,7 +36,8 @@ export const dtoToPackagesDto = (res: PackagesAPIResDto): PackagesResDto => {
       networkId: p.network_id,
       simType: p.sim_type,
       currency: p.currency,
-      dataUnit: p.data_unit,
+      // Backend enum (e.g. "GigaBytes") → console short label ("GB").
+      dataUnit: toConsoleDataUnit(p.data_unit),
       duration: p.duration,
       flatrate: p.flatrate,
       provider: p.provider,
@@ -73,7 +75,8 @@ export const dtoToPackageDto = (res: PackageAPIResDto): PackageDto => {
     networkId: res.package.network_id,
     simType: res.package.sim_type,
     currency: res.package.currency,
-    dataUnit: res.package.data_unit,
+    // Backend enum (e.g. "GigaBytes") → console short label ("GB").
+    dataUnit: toConsoleDataUnit(res.package.data_unit),
     duration: res.package.duration,
     flatrate: res.package.flatrate,
     provider: res.package.provider,

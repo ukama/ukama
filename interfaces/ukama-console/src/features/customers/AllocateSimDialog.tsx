@@ -47,7 +47,8 @@ export default function AllocateSimDialog({
   const [planId, setPlanId] = useState('');
   const [iccid, setIccid] = useState('');
 
-  const { data: pkgData } = useGetPackagesQuery();
+  // Only this network's plans + org-wide plans (the BFF filters on networkId).
+  const { data: pkgData } = useGetPackagesQuery({ variables: { networkId } });
   const planOptions = useMemo(
     () =>
       (pkgData?.getPackages.packages ?? []).map((p) => ({

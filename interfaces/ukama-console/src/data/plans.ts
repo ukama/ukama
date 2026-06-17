@@ -17,6 +17,8 @@ export const PlanSchema = z.object({
   days: z.number(),
   subs: z.number(),
   color: z.string(),
+  /** Network the plan is scoped to; "All networks" when org-wide. */
+  network: z.string().optional(),
 });
 
 export type Plan = z.infer<typeof PlanSchema>;

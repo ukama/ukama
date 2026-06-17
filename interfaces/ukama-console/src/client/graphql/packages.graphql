@@ -73,11 +73,12 @@ fragment Package on PackageDto {
   apn
   ownerId
   amount
+  networkId
   ...PackageRate
   ...PackageMarkup
 }
-query getPackages {
-  getPackages {
+query getPackages($networkId: String) {
+  getPackages(networkId: $networkId) {
     packages {
       ...Package
     }
@@ -86,6 +87,13 @@ query getPackages {
 query getPackage($packageId: String!) {
   getPackage(packageId: $packageId) {
     ...Package
+  }
+}
+
+query isPackageNameAvailable($name: String!) {
+  isPackageNameAvailable(name: $name) {
+    isAvailable
+    name
   }
 }
 

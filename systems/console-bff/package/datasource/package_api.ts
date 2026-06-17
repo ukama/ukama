@@ -17,6 +17,7 @@ import {
   PackagesResDto,
   UpdatePackageInputDto,
 } from "../resolver/types";
+import { toBackendDataUnit } from "./dataUnit";
 import {
   dtoToPackageDto,
   dtoToPackageNameAvailabilityDto,
@@ -54,12 +55,23 @@ class PackageApi extends BaseRESTDataSource {
     ).then(res => dtoToPackageNameAvailabilityDto(res));
   };
 
-  getPackages = async (baseURL: string): Promise<PackagesResDto> => {
+  getPackages = async (
+    baseURL: string,
+    networkId?: string
+  ): Promise<PackagesResDto> => {
     this.logger.info(`GetPackages [GET]: ${baseURL}/${VERSION}/${PACKAGES}`);
     this.baseURL = baseURL;
-    return this.get(`/${VERSION}/${PACKAGES}`).then(res =>
-      dtoToPackagesDto(res)
+    const res = await this.get(`/${VERSION}/${PACKAGES}`).then(r =>
+      dtoToPackagesDto(r)
     );
+    // When scoped to a network, keep that network's plans plus org-wide plans
+    // (no networkId). No filter → all plans (unchanged behaviour).
+    if (networkId) {
+      res.packages = res.packages.filter(
+        p => !p.networkId || p.networkId === networkId
+      );
+    }
+    return res;
   };
 
   addPackage = async (
@@ -79,7 +91,8 @@ class PackageApi extends BaseRESTDataSource {
       body: {
         name: req.name,
         amount: req.amount,
-        data_unit: req.dataUnit,
+        // Console sends short labels (GB/MB); the backend expects its enum.
+        data_unit: toBackendDataUnit(req.dataUnit),
         data_volume: req.dataVolume,
         duration: req.duration,
         active: true,

@@ -12,16 +12,26 @@
  * Create: addPackage with all fields. Edit: the gateway only allows changing
  * the name (UpdatePackageInputDto = { name, active }), so the other fields
  * are shown prefilled but read-only, and we call updatePackage.
+ *
+ * Plan names must be unique, so the name is validated live against
+ * isPackageNameAvailable (debounced) and the submit button is gated on a
+ * confirmed-available name. A plan is either org-wide ("Available within an
+ * org" → no networkId) or scoped to a single network.
  */
+import { useEffect, useState } from 'react';
 import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
 import CircularProgress from '@mui/material/CircularProgress';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import AddRounded from '@mui/icons-material/AddRounded';
 import SaveRounded from '@mui/icons-material/SaveRounded';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
+import { useGetNetworksQuery } from '@/client/graphql/networks.generated';
 import {
   GetPackagesDocument,
   useAddPackageMutation,
+  useIsPackageNameAvailableLazyQuery,
   useUpdatePacakgeMutation,
   type PackageFragment,
 } from '@/client/graphql/packages.generated';
@@ -43,6 +53,9 @@ const validityLabel = (days: number): string =>
   VALIDITY_OPTIONS.find((o) => o.value === String(days))?.label ??
   `${days} days`;
 
+/** Live name-availability state for the inline validation line. */
+type NameState = 'idle' | 'checking' | 'available' | 'taken';
+
 export default function CreatePlanDialog({
   pkg,
   onClose,
@@ -55,8 +68,17 @@ export default function CreatePlanDialog({
   const { symbol } = useCurrency();
   const editing = Boolean(pkg);
 
+  const { data: networksData, loading: networksLoading } = useGetNetworksQuery();
+  const networkOptions =
+    networksData?.getNetworks.networks.map((n) => ({
+      value: n.id,
+      label: n.name,
+    })) ?? [];
+
   const {
     register,
+    control,
+    watch,
     handleSubmit,
     formState: { errors, isValid },
   } = useForm<CreatePlanValues>({
@@ -69,9 +91,46 @@ export default function CreatePlanDialog({
           data: pkg.dataVolume,
           unit: normalizeUnit(pkg.dataUnit),
           days: normalizeDays(pkg.duration),
+          availableWithinOrg: !pkg.networkId,
+          networkId: pkg.networkId ?? '',
         }
-      : ({ name: '', unit: 'GB', days: 30 } as CreatePlanValues),
+      : ({
+          name: '',
+          unit: 'GB',
+          days: 30,
+          availableWithinOrg: true,
+          networkId: '',
+        } as CreatePlanValues),
   });
+
+  // eslint-disable-next-line react-hooks/incompatible-library -- RHF watch() is intentionally incompatible
+  const orgWide = watch('availableWithinOrg');
+  const nameValue = watch('name');
+  const trimmedName = (nameValue ?? '').trim();
+  const nameUnchanged = editing && pkg ? trimmedName === pkg.name : false;
+
+  // ---- live name-availability check (debounced) ----
+  const [nameState, setNameState] = useState<NameState>('idle');
+  const [checkName] = useIsPackageNameAvailableLazyQuery({
+    fetchPolicy: 'network-only',
+    onCompleted: (res) =>
+      setNameState(res.isPackageNameAvailable.isAvailable ? 'available' : 'taken'),
+    onError: () => setNameState('idle'),
+  });
+
+  useEffect(() => {
+    // Empty name (zod handles "required") or an unchanged name in edit mode
+    // never needs a round-trip.
+    if (!trimmedName || nameUnchanged) {
+      setNameState('idle');
+      return;
+    }
+    setNameState('checking');
+    const t = setTimeout(() => {
+      void checkName({ variables: { name: trimmedName } });
+    }, 400);
+    return () => clearTimeout(t);
+  }, [trimmedName, nameUnchanged, checkName]);
 
   const refetch = [{ query: GetPackagesDocument }];
 
@@ -94,6 +153,10 @@ export default function CreatePlanDialog({
   });
 
   const saving = adding || updating;
+
+  // The name is acceptable when it's confirmed available, or (when editing)
+  // left unchanged.
+  const nameOk = nameUnchanged || nameState === 'available';
 
   const submit = handleSubmit((v) => {
     if (editing && pkg) {
@@ -119,10 +182,37 @@ export default function CreatePlanDialog({
           duration: v.days,
           country: user.country ?? '',
           currency: user.currency,
+          // Org-wide → no network; otherwise the selected network.
+          networkId: v.availableWithinOrg ? '' : (v.networkId ?? ''),
         },
       },
     });
   });
+
+  // Inline availability message under the name field (zod errors take priority).
+  const availabilityLine =
+    errors.name || !trimmedName || nameUnchanged ? null : (
+      <div
+        style={{
+          marginTop: 5,
+          fontSize: 11.5,
+          color:
+            nameState === 'taken'
+              ? 'var(--uk-error)'
+              : nameState === 'available'
+                ? 'var(--uk-success)'
+                : 'var(--uk-ink-3)',
+        }}
+      >
+        {nameState === 'checking'
+          ? 'Checking availability…'
+          : nameState === 'available'
+            ? '✓ Name is available'
+            : nameState === 'taken'
+              ? 'That plan name is already taken'
+              : null}
+      </div>
+    );
 
   return (
     <AppModal
@@ -150,7 +240,7 @@ export default function CreatePlanDialog({
                 <AddRounded />
               )
             }
-            disabled={!isValid || saving}
+            disabled={!isValid || saving || !nameOk}
             onClick={submit}
           >
             {saving
@@ -170,7 +260,12 @@ export default function CreatePlanDialog({
           : 'Create a custom data plan that can be assigned to customers.'}
       </p>
       <Field label="Data plan name" required error={errors.name?.message}>
-        <TextInput placeholder="e.g. Standard" invalid={!!errors.name} {...register('name')} />
+        <TextInput
+          placeholder="e.g. Standard"
+          invalid={!!errors.name || nameState === 'taken'}
+          {...register('name')}
+        />
+        {availabilityLine}
       </Field>
 
       {editing && pkg ? (
@@ -220,6 +315,35 @@ export default function CreatePlanDialog({
               {...register('days')}
             />
           </Field>
+
+          <Controller
+            control={control}
+            name="availableWithinOrg"
+            render={({ field }) => (
+              <FormControlLabel
+                sx={{ ml: 0, mb: '14px', alignSelf: 'baseline' }}
+                control={
+                  <Checkbox
+                    checked={field.value}
+                    onChange={(e) => field.onChange(e.target.checked)}
+                    sx={{ p: 0, pr: 1.5 }}
+                  />
+                }
+                label="Available within an org"
+              />
+            )}
+          />
+
+          {!orgWide && (
+            <Field label="Network" required error={errors.networkId?.message}>
+              <SelectInput
+                placeholder={networksLoading ? 'Loading networks…' : 'Select a network'}
+                options={networkOptions}
+                invalid={!!errors.networkId}
+                {...register('networkId')}
+              />
+            </Field>
+          )}
         </>
       )}
     </AppModal>

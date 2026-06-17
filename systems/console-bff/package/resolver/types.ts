@@ -13,6 +13,7 @@ import {
   IsOptional,
   IsUUID,
   Min,
+  ValidateIf,
 } from "class-validator";
 import { Field, Float, InputType, Int, ObjectType } from "type-graphql";
 
@@ -292,8 +293,11 @@ export class AddPackageInputDto {
   @IsNotEmpty()
   currency: string;
 
+  // Org-wide plans send an empty networkId; only validate the UUID when a
+  // network is actually provided (empty string / null = org-wide).
   @Field({ nullable: true })
   @IsOptional()
+  @ValidateIf((o: AddPackageInputDto) => !!o.networkId)
   @IsUUID()
   networkId?: string;
 }

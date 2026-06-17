@@ -53,8 +53,9 @@ export default function AddCustomerDialog({
     defaultValues: { first: '', last: '', email: '', planId: '', sim: '' },
   });
 
-  // Data plans + unallocated pool SIMs for the dropdowns.
-  const { data: pkgData } = useGetPackagesQuery();
+  // Data plans + unallocated pool SIMs for the dropdowns. Only this network's
+  // plans + org-wide plans (the BFF filters when networkId is passed).
+  const { data: pkgData } = useGetPackagesQuery({ variables: { networkId } });
   const planOptions = useMemo(
     () =>
       (pkgData?.getPackages.packages ?? []).map((p) => ({
@@ -152,19 +153,36 @@ export default function AddCustomerDialog({
         </>
       }
     >
-      <p style={{ fontSize: 13.5, color: 'var(--uk-ink-2)', lineHeight: 1.6, margin: '0 0 18px', textWrap: 'pretty' }}>
+      <p
+        style={{
+          fontSize: 13.5,
+          color: 'var(--uk-ink-2)',
+          lineHeight: 1.6,
+          margin: '0 0 18px',
+          textWrap: 'pretty',
+        }}
+      >
         Add a customer to your network and assign them a SIM and data plan.
       </p>
       <div className="ff-grid2">
         <Field label="First name" required error={errors.first?.message}>
-          <TextInput placeholder="John" invalid={!!errors.first} {...register('first')} />
+          <TextInput
+            placeholder="John"
+            invalid={!!errors.first}
+            {...register('first')}
+          />
         </Field>
         <Field label="Last name">
           <TextInput placeholder="Doe" {...register('last')} />
         </Field>
       </div>
       <Field label="Email" error={errors.email?.message}>
-        <TextInput placeholder="name@email.com" type="email" invalid={!!errors.email} {...register('email')} />
+        <TextInput
+          placeholder="name@email.com"
+          type="email"
+          invalid={!!errors.email}
+          {...register('email')}
+        />
       </Field>
       <Field label="Data plan">
         <SelectInput
@@ -173,7 +191,10 @@ export default function AddCustomerDialog({
           {...register('planId')}
         />
       </Field>
-      <Field label="SIM" hint="Leave on auto-assign to take the next SIM from the pool">
+      <Field
+        label="SIM"
+        hint="Leave on auto-assign to take the next SIM from the pool"
+      >
         <SelectInput options={simOptions} {...register('sim')} />
       </Field>
     </AppModal>
