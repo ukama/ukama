@@ -167,6 +167,17 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 			"invalid format of base rate. Error %s", err.Error())
 	}
 
+	// networkId is optional: when omitted the package is not scoped to a
+	// specific network (stored as uuid.Nil).
+	var networkId uuid.UUID
+	if req.GetNetworkId() != "" {
+		networkId, err = uuid.FromString(req.GetNetworkId())
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"invalid format of network uuid. Error %s", err.Error())
+		}
+	}
+
 	formattedFrom, err := validation.ValidateDate(req.From)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Error: %s", err.Error())
@@ -229,6 +240,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		Overdraft:     req.Overdraft,
 		TrafficPolicy: req.TrafficPolicy,
 		Networks:      req.Networks,
+		NetworkId:     networkId,
 		Country:       req.Country,
 		SyncStatus:    ukama.StatusTypePending,
 	}
@@ -317,6 +329,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 			DataUnitCost:    pkg.PackageRate.Data,
 			MessageUnitCost: pkg.PackageRate.SmsMo,
 			VoiceUnitCost:   pkg.PackageRate.SmsMt,
+			NetworkId:       resp.Package.NetworkId,
 		}
 		err = p.msgbus.PublishRequest(route, evt)
 		if err != nil {
@@ -470,8 +483,18 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 		Overdraft:     p.Overdraft,
 		TrafficPolicy: p.TrafficPolicy,
 		Networks:      p.Networks,
+		NetworkId:     networkIdToString(p.NetworkId),
 		SyncStatus:    p.SyncStatus.String(),
 	}
+}
+
+// networkIdToString returns the network uuid as a string, or an empty string
+// when the package is not scoped to a network (uuid.Nil).
+func networkIdToString(id uuid.UUID) string {
+	if id == uuid.Nil {
+		return ""
+	}
+	return id.String()
 }
 
 func calculateRatePerUnit(pr *db.PackageRate, rate *bpb.Rate, mu ukama.MessageUnitType, du ukama.DataUnitType) {

@@ -26,6 +26,7 @@ import (
 	"gorm.io/gorm"
 
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	ukama "github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
@@ -835,6 +836,136 @@ func TestPackageServer_Add(t *testing.T) {
 		assert.NotNil(t, resp)
 		assert.True(t, resp.Package.Flatrate)
 		packageRepo.AssertExpectations(t)
+	})
+
+	t.Run("Success_WithNetworkId", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		rate := &mocks.RateClientProvider{}
+		ownerId := uuid.NewV4().String()
+		baserate := uuid.NewV4().String()
+		networkId := uuid.NewV4()
+
+		s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
+
+		req := &pb.AddPackageRequest{
+			Name:       TestPackageName,
+			OwnerId:    ownerId,
+			BaserateId: baserate,
+			NetworkId:  networkId.String(),
+			From:       fixedFromTime.Format(time.RFC3339),
+			To:         fixedToTime.Format(time.RFC3339),
+		}
+
+		rateClient := &splmocks.RateServiceClient{}
+		rate.On("GetClient").Return(rateClient, nil)
+		rateClient.On("GetRateById", mock.Anything, mock.Anything).Return(&rpb.GetRateByIdResponse{
+			Rate: &bpb.Rate{Country: "USA", Provider: "ukama"},
+		}, nil)
+
+		packageRepo.On("GetByName", TestPackageName).Return(nil, gorm.ErrRecordNotFound).Once()
+		packageRepo.On("Add", mock.MatchedBy(func(p *db.Package) bool {
+			return p.NetworkId == networkId
+		}), mock.Anything).Return(nil).Once()
+
+		resp, err := s.Add(context.TODO(), req)
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		assert.Equal(t, networkId.String(), resp.Package.NetworkId)
+		packageRepo.AssertExpectations(t)
+	})
+
+	t.Run("Success_EventCarriesNetworkId", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		rate := &mocks.RateClientProvider{}
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+		ownerId := uuid.NewV4().String()
+		baserate := uuid.NewV4().String()
+		networkId := uuid.NewV4()
+
+		s := NewPackageServer(OrgName, packageRepo, rate, msgbusClient, OrgId)
+
+		req := &pb.AddPackageRequest{
+			Name:       TestPackageName,
+			OwnerId:    ownerId,
+			BaserateId: baserate,
+			NetworkId:  networkId.String(),
+			From:       fixedFromTime.Format(time.RFC3339),
+			To:         fixedToTime.Format(time.RFC3339),
+		}
+
+		rateClient := &splmocks.RateServiceClient{}
+		rate.On("GetClient").Return(rateClient, nil)
+		rateClient.On("GetRateById", mock.Anything, mock.Anything).Return(&rpb.GetRateByIdResponse{
+			Rate: &bpb.Rate{Country: "USA", Provider: "ukama"},
+		}, nil)
+
+		packageRepo.On("GetByName", TestPackageName).Return(nil, gorm.ErrRecordNotFound).Once()
+		packageRepo.On("Add", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequest", mock.Anything, mock.MatchedBy(func(e *epb.CreatePackageEvent) bool {
+			return e.NetworkId == networkId.String()
+		})).Return(nil).Once()
+
+		resp, err := s.Add(context.TODO(), req)
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		packageRepo.AssertExpectations(t)
+		msgbusClient.AssertExpectations(t)
+	})
+
+	t.Run("Success_WithoutNetworkId", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		rate := &mocks.RateClientProvider{}
+		ownerId := uuid.NewV4().String()
+		baserate := uuid.NewV4().String()
+
+		s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
+
+		req := &pb.AddPackageRequest{
+			Name:       TestPackageName,
+			OwnerId:    ownerId,
+			BaserateId: baserate,
+			From:       fixedFromTime.Format(time.RFC3339),
+			To:         fixedToTime.Format(time.RFC3339),
+		}
+
+		rateClient := &splmocks.RateServiceClient{}
+		rate.On("GetClient").Return(rateClient, nil)
+		rateClient.On("GetRateById", mock.Anything, mock.Anything).Return(&rpb.GetRateByIdResponse{
+			Rate: &bpb.Rate{Country: "USA", Provider: "ukama"},
+		}, nil)
+
+		packageRepo.On("GetByName", TestPackageName).Return(nil, gorm.ErrRecordNotFound).Once()
+		packageRepo.On("Add", mock.MatchedBy(func(p *db.Package) bool {
+			return p.NetworkId == uuid.Nil
+		}), mock.Anything).Return(nil).Once()
+
+		resp, err := s.Add(context.TODO(), req)
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		assert.Equal(t, "", resp.Package.NetworkId)
+		packageRepo.AssertExpectations(t)
+	})
+
+	t.Run("Error_InvalidNetworkUUID", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		rate := &mocks.RateClientProvider{}
+
+		s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
+
+		req := &pb.AddPackageRequest{
+			Name:       TestPackageName,
+			OwnerId:    uuid.NewV4().String(),
+			BaserateId: uuid.NewV4().String(),
+			NetworkId:  "invalid-uuid",
+			From:       fixedFromTime.Format(time.RFC3339),
+			To:         fixedToTime.Format(time.RFC3339),
+		}
+
+		resp, err := s.Add(context.TODO(), req)
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+		assert.Contains(t, err.Error(), "invalid format of network uuid")
 	})
 
 	t.Run("Error_DuplicateName", func(t *testing.T) {

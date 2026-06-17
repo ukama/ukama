@@ -46,6 +46,7 @@ type Package struct {
 	Overdraft      float64
 	TrafficPolicy  uint32
 	Networks       pq.StringArray `gorm:"type:varchar(64)[]" json:"networks"`
+	NetworkId      uuid.UUID      `gorm:"type:uuid"` // optional; uuid.Nil when not scoped to a network
 	SyncStatus     ukama.StatusType
 }
 

@@ -98,6 +98,7 @@ message AddPackageRequest {
     uint32 trafficPolicy = 29 [json_name = "traffic_policy"];;
     repeated string networks = 30 [json_name = "networks"];
     string currency = 31;
+    string networkId = 32 [json_name = "network_id"];
 }
 
 message AddPackageResponse {
@@ -138,6 +139,7 @@ message Package {
     uint32 trafficPolicy = 31 [json_name = "traffic_policy"];;
     repeated string networks = 32 [json_name = "networks"];
     string syncStatus = 33 [json_name = "sync_status"];
+    string networkId = 34 [json_name = "network_id"];
 }
 
 message PackageRate{ 

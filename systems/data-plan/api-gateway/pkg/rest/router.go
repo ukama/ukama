@@ -283,6 +283,7 @@ func (r *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.
 		Networks:      req.Networks,
 		Country:       req.Country,
 		Currency:      req.Currency,
+		NetworkId:     req.NetworkId,
 	}
 
 	return r.clients.p.AddPackage(pack)

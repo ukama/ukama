@@ -32,6 +32,7 @@ type AddPackageRequest struct {
 	Networks      []string `json:"networks"`
 	Country       string   `json:"country"`
 	Currency      string   `json:"currency"`
+	NetworkId     string   `example:"{{NetworkUUID}}" json:"network_id"`
 }
 
 type UpdatePackageRequest struct {
