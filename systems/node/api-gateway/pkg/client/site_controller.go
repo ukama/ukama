@@ -24,6 +24,10 @@ func NewSiteController(host string, timeout time.Duration) *SiteController {
 	return &SiteController{conn: conn, client: pb.NewSiteControllerServiceClient(conn), timeout: timeout}
 }
 
+func NewSiteControllerFromClient(mClient pb.SiteControllerServiceClient) *SiteController {
+	return &SiteController{conn: nil, client: mClient, timeout: 1 * time.Second}
+}
+
 func (s *SiteController) SetSite(siteID, state, reason, requestedBy string) (*pb.SetSiteResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
@@ -70,4 +74,16 @@ func (s *SiteController) PowerCycleNode(siteID, role, reason, requestedBy string
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 	return s.client.PowerCycleNode(ctx, &pb.PowerCycleNodeRequest{SiteId: siteID, Role: role, Reason: reason, RequestedBy: requestedBy})
+}
+
+func (s *SiteController) RestartSite(siteID, networkID string) (*pb.RestartSiteResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
+	return s.client.RestartSite(ctx, &pb.RestartSiteRequest{SiteId: siteID, NetworkId: networkID})
+}
+
+func (s *SiteController) ToggleInternetSwitch(siteID string, status bool, port int32) (*pb.ToggleInternetSwitchResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
+	return s.client.ToggleInternetSwitch(ctx, &pb.ToggleInternetSwitchRequest{SiteId: siteID, Status: status, Port: port})
 }

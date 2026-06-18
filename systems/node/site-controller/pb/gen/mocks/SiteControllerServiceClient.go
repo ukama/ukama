@@ -312,6 +312,80 @@ func (_m *SiteControllerServiceClient) UpsertPortMap(ctx context.Context, in *ge
 	return r0, r1
 }
 
+// RestartSite provides a mock function with given fields: ctx, in, opts
+func (_m *SiteControllerServiceClient) RestartSite(ctx context.Context, in *gen.RestartSiteRequest, opts ...grpc.CallOption) (*gen.RestartSiteResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RestartSite")
+	}
+
+	var r0 *gen.RestartSiteResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RestartSiteRequest, ...grpc.CallOption) (*gen.RestartSiteResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RestartSiteRequest, ...grpc.CallOption) *gen.RestartSiteResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.RestartSiteResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.RestartSiteRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ToggleInternetSwitch provides a mock function with given fields: ctx, in, opts
+func (_m *SiteControllerServiceClient) ToggleInternetSwitch(ctx context.Context, in *gen.ToggleInternetSwitchRequest, opts ...grpc.CallOption) (*gen.ToggleInternetSwitchResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ToggleInternetSwitch")
+	}
+
+	var r0 *gen.ToggleInternetSwitchResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleInternetSwitchRequest, ...grpc.CallOption) (*gen.ToggleInternetSwitchResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleInternetSwitchRequest, ...grpc.CallOption) *gen.ToggleInternetSwitchResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ToggleInternetSwitchResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ToggleInternetSwitchRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewSiteControllerServiceClient creates a new instance of SiteControllerServiceClient. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewSiteControllerServiceClient(t interface {

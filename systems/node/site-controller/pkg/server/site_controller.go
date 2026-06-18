@@ -91,6 +91,32 @@ func (s *SiteControllerServer) SetRadio(ctx context.Context, req *pb.SetRadioReq
 	return &pb.SetRadioResponse{}, nil
 }
 
+func (s *SiteControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteRequest) (*pb.RestartSiteResponse, error) {
+	client, err := s.controller.GetClient()
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "node-controller unavailable: %v", err)
+	}
+	resp, err := client.RestartSite(ctx, &contpb.RestartSiteRequest{SiteId: req.SiteId, NetworkId: req.NetworkId})
+	if err != nil {
+		return nil, mapErr(err)
+	}
+	log.Infof("site-controller: forwarded RESTART for site %s, ops=%v", req.SiteId, resp.GetOperationIds())
+	return &pb.RestartSiteResponse{OperationIds: resp.GetOperationIds(), Status: resp.GetStatus()}, nil
+}
+
+func (s *SiteControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.ToggleInternetSwitchRequest) (*pb.ToggleInternetSwitchResponse, error) {
+	client, err := s.controller.GetClient()
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "node-controller unavailable: %v", err)
+	}
+	resp, err := client.ToggleInternetSwitch(ctx, &contpb.ToggleInternetSwitchRequest{SiteId: req.SiteId, Status: req.Status, Port: req.Port})
+	if err != nil {
+		return nil, mapErr(err)
+	}
+	log.Infof("site-controller: forwarded internet switch for site %s port %d to %v, op=%s", req.SiteId, req.Port, req.Status, resp.GetOperationId())
+	return &pb.ToggleInternetSwitchResponse{OperationId: resp.GetOperationId(), ResourceKey: resp.GetResourceKey(), Status: resp.GetStatus()}, nil
+}
+
 func (s *SiteControllerServer) resolveNode(siteID, nodeType string) (string, error) {
 	if siteID == "" {
 		return "", status.Errorf(codes.InvalidArgument, "site id cannot be empty")
