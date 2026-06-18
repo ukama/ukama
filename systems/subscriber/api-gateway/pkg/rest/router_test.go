@@ -11,6 +11,7 @@ package rest
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -22,6 +23,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/ukama/ukama/systems/common/rest"
@@ -41,6 +44,11 @@ import (
 )
 
 // Test data constants
+
+const (
+	tokenApiEndpoint = "/v1/tokens"
+)
+
 const (
 	testIccid           = "1234567890123456789"
 	testMsisdn          = "555-555-1234"
@@ -68,6 +76,7 @@ const (
 	testDataPlanId      = "plan123"
 	testUsage           = 100.5
 	testUsageUnit       = "minutes"
+	token               = "some fake token"
 )
 
 // Test UUIDs
@@ -1155,5 +1164,63 @@ func TestRouter_addReqToAddSimReqPb(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, result)
 		assert.Contains(t, err.Error(), "invalid add request")
+	})
+}
+
+func TestRouter_GetSimToken(t *testing.T) {
+	m := &smmocks.SimManagerServiceClient{}
+	arc := &cmocks.AuthClient{}
+
+	t.Run("SimTokenGenerated", func(t *testing.T) {
+		tokenReq := &smPb.SimTokenRequest{
+			Iccid: testIccid,
+		}
+
+		tokenResp := &smPb.SimTokenResponse{
+			Token: token,
+		}
+
+		arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+		m.On("GenerateSimToken", mock.Anything, tokenReq).Return(tokenResp, nil)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s",
+			tokenApiEndpoint, tokenReq.Iccid), nil)
+
+		r := NewRouter(&Clients{
+			sm: client.NewSimManagerFromClient(m),
+		}, routerConfig, arc.AuthenticateUser).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		m.AssertExpectations(t)
+	})
+
+	t.Run("PaymentNotValid", func(t *testing.T) {
+		tokenReq := &smPb.SimTokenRequest{
+			Iccid: "invalid payment id",
+		}
+
+		arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+		m.On("GenerateSimToken", mock.Anything, tokenReq).Return(nil,
+			status.Errorf(codes.InvalidArgument, "invalid iccid"))
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s",
+			tokenApiEndpoint, tokenReq.Iccid), nil)
+
+		r := NewRouter(&Clients{
+			sm: client.NewSimManagerFromClient(m),
+		}, routerConfig, arc.AuthenticateUser).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		m.AssertExpectations(t)
 	})
 }

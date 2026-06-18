@@ -20,14 +20,29 @@ import (
 	"github.com/ukama/ukama/systems/common/errors"
 )
 
-func GetIccidFromToken(simToken string, key string) (string, error) {
-	str, err := decrypt(simToken, key)
+type Codec interface {
+	GetIccidFromToken(string) (string, error)
+	GenerateTokenFromIccid(string) (string, error)
+}
+
+type tokenCodec struct {
+	Key string
+}
+
+func NewTokenCodec(key string) Codec {
+	return &tokenCodec{
+		Key: key,
+	}
+}
+
+func (c *tokenCodec) GetIccidFromToken(simToken string) (string, error) {
+	str, err := decrypt(simToken, c.Key)
 	if err != nil {
 		return "", err
 	}
 
 	var iccidEnvelope struct {
-		ICCID string `json:"iccid"`
+		ICCID string `json:"iccid,string"`
 	}
 
 	err = json.Unmarshal([]byte(str), &iccidEnvelope)
@@ -38,9 +53,9 @@ func GetIccidFromToken(simToken string, key string) (string, error) {
 	return iccidEnvelope.ICCID, nil
 }
 
-func GenerateTokenFromIccid(iccid string, key string) (string, error) {
+func (c *tokenCodec) GenerateTokenFromIccid(iccid string) (string, error) {
 	iccidEnvelope := struct {
-		ICCID string `json:"iccid"`
+		ICCID string `json:"iccid,string"`
 	}{
 		ICCID: iccid,
 	}
@@ -50,7 +65,7 @@ func GenerateTokenFromIccid(iccid string, key string) (string, error) {
 		return "", errors.Wrap(err, "failed to marshal sim token")
 	}
 
-	return encrypt(string(tokenJson), key)
+	return encrypt(string(tokenJson), c.Key)
 }
 
 func encrypt(plaintext string, key string) (string, error) {

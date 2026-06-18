@@ -142,6 +142,21 @@ func (this *TerminateSimRequest) Validate() error {
 func (this *TerminateSimResponse) Validate() error {
 	return nil
 }
+func (this *SimTokenRequest) Validate() error {
+	if this.Iccid == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must not be an empty string`, this.Iccid))
+	}
+	if !(len(this.Iccid) > 17) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length greater than '17'`, this.Iccid))
+	}
+	if !(len(this.Iccid) < 23) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length smaller than '23'`, this.Iccid))
+	}
+	return nil
+}
+func (this *SimTokenResponse) Validate() error {
+	return nil
+}
 
 var _regex_AddPackageRequest_SimId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 var _regex_AddPackageRequest_PackageId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
@@ -338,6 +353,15 @@ func (this *Sim) Validate() error {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Package); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Package", err)
 		}
+	}
+	if this.Iccid == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must not be an empty string`, this.Iccid))
+	}
+	if !(len(this.Iccid) > 17) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length greater than '17'`, this.Iccid))
+	}
+	if !(len(this.Iccid) < 23) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length smaller than '23'`, this.Iccid))
 	}
 	if !_regex_Sim_Msisdn.MatchString(this.Msisdn) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Msisdn", fmt.Errorf(`must be a phone number format`))

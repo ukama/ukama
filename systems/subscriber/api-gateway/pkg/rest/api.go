@@ -212,3 +212,7 @@ type ListPackagesForSimReq struct {
 	Count         uint32 `form:"count" json:"count" query:"count" binding:"required"`
 	Sort          bool   `form:"sort" json:"sort" query:"sort" binding:"required"`
 }
+
+type GetSimTokenReq struct {
+	Iccid string `example:"{{8910300000003540855}}" path:"iccid" validate:"required"`
+}

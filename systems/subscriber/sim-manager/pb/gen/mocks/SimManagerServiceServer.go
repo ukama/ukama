@@ -74,6 +74,36 @@ func (_m *SimManagerServiceServer) AllocateSim(_a0 context.Context, _a1 *gen.All
 	return r0, r1
 }
 
+// GenerateSimToken provides a mock function with given fields: _a0, _a1
+func (_m *SimManagerServiceServer) GenerateSimToken(_a0 context.Context, _a1 *gen.SimTokenRequest) (*gen.SimTokenResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GenerateSimToken")
+	}
+
+	var r0 *gen.SimTokenResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.SimTokenRequest) (*gen.SimTokenResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.SimTokenRequest) *gen.SimTokenResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.SimTokenResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.SimTokenRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetPackagesForSim provides a mock function with given fields: _a0, _a1
 func (_m *SimManagerServiceServer) GetPackagesForSim(_a0 context.Context, _a1 *gen.GetPackagesForSimRequest) (*gen.GetPackagesForSimResponse, error) {
 	ret := _m.Called(_a0, _a1)
