@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -328,4 +329,18 @@ func TestControllerServer_ToggleNodeService_InvalidNodeId(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "node is not a tower node")
+}
+
+func TestSiteKey_NormalizesSoSiteActionsAreMutuallyExclusive(t *testing.T) {
+	id := uuid.NewV4()
+
+	// A site action (RestartSite/ToggleInternetSwitch) keys on the site id directly,
+	// while a node action (ToggleNodeService/ToggleRfSwitch) keys on the site resolved
+	// from the registry. Both must produce the same key for the same site, regardless of
+	// casing, so only one operation can hold the lock at a time.
+	direct := siteKey(id.String())
+	resolved := siteKey(strings.ToUpper(id.String()))
+
+	assert.Equal(t, "site:"+id.String(), direct)
+	assert.Equal(t, direct, resolved)
 }

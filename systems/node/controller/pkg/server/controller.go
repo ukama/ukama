@@ -114,7 +114,7 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 		validatedNodeIds = append(validatedNodeIds, nId.String())
 	}
 
-	op, err := c.acquireAndRegister("RestartSite", "site:"+req.GetSiteId())
+	op, err := c.acquireAndRegister("RestartSite", siteKey(req.GetSiteId()))
 	if err != nil {
 		return nil, err
 	}
@@ -251,7 +251,7 @@ func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.Tog
 		return nil, err
 	}
 
-	op, err := c.acquireAndRegister("ToggleInternetSwitch", "site:"+siteId.String())
+	op, err := c.acquireAndRegister("ToggleInternetSwitch", siteKey(siteId.String()))
 	if err != nil {
 		return nil, err
 	}
@@ -330,6 +330,13 @@ func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.Toggle
 	return &pb.ToggleNodeServiceResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
 }
 
+func siteKey(siteID string) string {
+	if id, err := uuid.FromString(siteID); err == nil {
+		return "site:" + id.String()
+	}
+	return "site:" + siteID
+}
+
 func (c *ControllerServer) siteResourceKey(nodeID string) string {
 	if c.nodeClient == nil {
 		return "node:" + nodeID
@@ -339,7 +346,7 @@ func (c *ControllerServer) siteResourceKey(nodeID string) string {
 		log.Warnf("could not resolve site for node %s, using node-level lock: %v", nodeID, err)
 		return "node:" + nodeID
 	}
-	return "site:" + n.Site.SiteId
+	return siteKey(n.Site.SiteId)
 }
 
 func (c *ControllerServer) acquireAndRegister(actionType, resourceKey string) (*opmgrpb.Operation, error) {
