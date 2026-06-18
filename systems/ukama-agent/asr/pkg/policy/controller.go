@@ -10,6 +10,7 @@ package policy
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"google.golang.org/protobuf/proto"
@@ -151,7 +152,7 @@ func (p *policyController) NewPolicy(packageId uuid.UUID) (*db.Policy, error) {
 	if err != nil {
 		log.Errorf("Failed to get package %s.Error: %v", packageId.String(), err)
 
-		return nil, err
+		return nil, fmt.Errorf("failed to get package %s. Error: %w", packageId.String(), err)
 	}
 
 	st := uint64(time.Now().Unix())
@@ -211,13 +212,13 @@ func (p *policyController) SyncProfile(s *SimInfo, as *db.Asr, action string, ob
 		msg = e
 		httpMethod = "PATCH"
 	default:
-		log.Errorf("invalid action %s to sync subscriber profile called.", action)
+		log.Errorf("Invalid action %s to sync subscriber profile called.", action)
 		return nil
 	}
 
 	err := p.syncSubscriberPolicy(httpMethod, s.Imsi, s.NetworkId.String(), &as.Policy)
 	if err != nil {
-		return err
+		return fmt.Errorf("error while syncing subscriber policy for imsi %s. Error: %w", s.Imsi, err)
 	}
 
 	if event {
@@ -239,7 +240,8 @@ func (p *policyController) RunPolicyControl(imsi string, event bool) (error, boo
 	pf, err := p.asrRepo.GetByImsi(imsi)
 	if err != nil {
 		log.Errorf("failed to read profile for %s. Error %s", imsi, err.Error())
-		return err, removed
+
+		return fmt.Errorf("failed to read profile for %s. Error %s", imsi, err), removed
 	}
 
 	for _, pt := range p.Rules {
@@ -257,7 +259,8 @@ func (p *policyController) RunPolicyControl(imsi string, event bool) (error, boo
 					log.Errorf("Error while applying action for failing policy compliance (%s, %s). Error: %v",
 						pf.Imsi, pt.Name, err)
 
-					return err, removed
+					return fmt.Errorf("error while applying action for failing policy compliance (%s, %s). Error: %w",
+						pf.Imsi, pt.Name, err), removed
 				}
 
 				/* if profile is removed then just stop checking polices further*/
@@ -279,8 +282,9 @@ func (p *policyController) syncSubscriberPolicy(method string, imsi string, netw
 
 	jd, err := json.Marshal(pMsg)
 	if err != nil {
-		log.Errorf("Failed to marshal policy %+v for subscriber %s. Errors %s", pMsg, imsi, err.Error())
-		return err
+		log.Errorf("Failed to marshal policy %+v for subscriber %s. Error: %s", pMsg, imsi, err.Error())
+
+		return fmt.Errorf("failed to marshal policy %+v for subscriber %s. Error: %s", pMsg, imsi, err)
 	}
 
 	path := "/pcrf/v1/subscriber/imsi/" + imsi
@@ -294,8 +298,9 @@ func (p *policyController) syncSubscriberPolicy(method string, imsi string, netw
 
 	msgBytes, err := proto.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to protobuf marshal message %+v. Errors %s", msg, err.Error())
-		return err
+		log.Errorf("Failed to protobuf marshal message %+v. Errors: %s", msg, err.Error())
+
+		return fmt.Errorf("failed to protobuf marshal message %+v. Errors: %w", msg, err)
 	}
 
 	broadcasterMsg := &epb.BroadcasterEvent{
@@ -307,8 +312,9 @@ func (p *policyController) syncSubscriberPolicy(method string, imsi string, netw
 
 	err = p.msgbus.PublishRequest(route, broadcasterMsg)
 	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", pMsg, route, err.Error())
-		return err
+		log.Errorf("Failed to publish request message %+v with key %+v. Error: %s", pMsg, route, err.Error())
+
+		return fmt.Errorf("failed to publish request message %+v with key %+v. Error: %w", pMsg, route, err)
 	}
 
 	log.Infof("Published Policy %s  for imsi %s on route %s.", msg, imsi, route)
@@ -321,8 +327,9 @@ func (p *policyController) publishEvent(action string, object string, msg protor
 		route := p.MsgBusRoutingKey.SetObject(object).SetAction(action).MustBuild()
 		err = p.msgbus.PublishRequest(route, msg)
 		if err != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
-			return err
+			log.Errorf("Failed to publish event message %+v with key %+v. Error: %s", msg, route, err.Error())
+
+			return fmt.Errorf("failed to publish event message %+v with key %+v. Error: %w", msg, route, err)
 		}
 	}
 	return err
@@ -339,12 +346,12 @@ func (p *policyController) StopPolicyControllerRoutine() {
 }
 
 func (p *policyController) doPolicyCheck() error {
-
 	pf, err := p.asrRepo.List()
 	log.Infof("Policy check routine started at %s for %d profiles.", time.Now().String(), len(pf))
 	if err != nil {
 		log.Errorf("Failed to list profiles: %s.", err.Error())
-		return err
+
+		return fmt.Errorf("failed to list profiles: %w", err)
 	}
 
 	for _, profile := range pf {

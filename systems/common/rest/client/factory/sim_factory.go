@@ -57,6 +57,8 @@ func (s *simFactoryClient) ReadSimCardInfo(iccid string) (*SimCardInfo, error) {
 		return nil, fmt.Errorf("getSimCard failure: %w", err)
 	}
 
+	log.Debugf("Unmarshaling resp from sim factory: %+v", resp)
+
 	err = json.Unmarshal(resp.Body(), &card)
 	if err != nil {
 		log.Tracef("Failed to desrialize sim card info. Error message is %v", err)
