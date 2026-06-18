@@ -61,7 +61,7 @@ type SimManagerServer struct {
 	packageClient             cdplan.PackageClient
 	subscriberRegistryService providers.SubscriberRegistryClientProvider
 	simPoolService            providers.SimPoolClientProvider
-	key                       string
+	tokenCodec                utils.Codec
 	msgbus                    mb.MsgBusServiceClient
 	baseRoutingKey            msgbus.RoutingKeyBuilder
 	orgId                     string
@@ -78,7 +78,8 @@ func NewSimManagerServer(
 	orgName string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 	agentFactory adapters.AgentFactory, packageClient cdplan.PackageClient,
 	subscriberRegistryService providers.SubscriberRegistryClientProvider,
-	simPoolService providers.SimPoolClientProvider, key string,
+	simPoolService providers.SimPoolClientProvider,
+	tokenCodec utils.Codec,
 	msgBus mb.MsgBusServiceClient,
 	orgId string,
 	pushMetricHost string,
@@ -96,7 +97,7 @@ func NewSimManagerServer(
 		packageClient:             packageClient,
 		subscriberRegistryService: subscriberRegistryService,
 		simPoolService:            simPoolService,
-		key:                       key,
+		tokenCodec:                tokenCodec,
 		msgbus:                    msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).
 			SetOrgName(orgName).SetService(pkg.ServiceName),
@@ -169,7 +170,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	}
 
 	if req.SimToken != "" {
-		iccid, err := utils.GetIccidFromToken(req.SimToken, s.key)
+		iccid, err := s.tokenCodec.GetIccidFromToken(req.SimToken)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal,
 				"an unknown error occurred while getting iccid from sim token. Error %s", err.Error())
@@ -828,6 +829,19 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (
 	}
 
 	return &pb.ToggleSimStatusResponse{}, nil
+}
+
+func (s *SimManagerServer) GenerateSimToken(ctx context.Context, req *pb.SimTokenRequest) (*pb.SimTokenResponse, error) {
+	log.Infof("Generating token for sim %v", req.Iccid)
+
+	tok, err := s.tokenCodec.GenerateTokenFromIccid(req.Iccid)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal,
+			"an unexpected error has occurred while generating token for sim %s. Error: %v",
+			req.Iccid, err)
+	}
+
+	return &pb.SimTokenResponse{Token: tok}, nil
 }
 
 func getSim(simId string, simRepo sims.SimRepo) (*sims.Sim, error) {

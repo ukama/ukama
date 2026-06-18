@@ -26,6 +26,7 @@ import (
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/interceptor"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/server"
+	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/utils"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
@@ -156,7 +157,7 @@ func runGrpcServer(gormDB sql.Db) {
 		pckgClient,
 		providers.NewSubscriberRegistryClientProvider(serviceConfig.Registry, serviceConfig.Timeout),
 		providers.NewSimPoolClientProvider(serviceConfig.SimPool, serviceConfig.Timeout),
-		serviceConfig.Key,
+		utils.NewTokenCodec(serviceConfig.Key),
 		mbClient,
 		serviceConfig.OrgId,
 		serviceConfig.PushMetricHost,
