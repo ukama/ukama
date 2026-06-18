@@ -30,7 +30,11 @@ const formatData = (volume: number, unit: string): string => {
   return `${volume} ${u}`;
 };
 
-export function packageToPlan(pkg: PackageFragment, index = 0): Plan {
+export function packageToPlan(
+  pkg: PackageFragment,
+  index = 0,
+  networkName?: string,
+): Plan {
   return {
     id: pkg.uuid,
     name: pkg.name,
@@ -39,5 +43,7 @@ export function packageToPlan(pkg: PackageFragment, index = 0): Plan {
     days: Math.round(pkg.duration),
     subs: 0,
     color: PALETTE[index % PALETTE.length] ?? 'var(--uk-ac)',
+    // Org-wide plans carry no networkId → available across all networks.
+    network: pkg.networkId ? (networkName ?? pkg.networkId) : 'All networks',
   };
 }

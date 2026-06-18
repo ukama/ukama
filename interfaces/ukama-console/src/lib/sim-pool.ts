@@ -34,12 +34,17 @@ export function useAvailablePoolSims(): {
   return { available, loading };
 }
 
-/** Count of data plans (packages) available to assign. */
-export function useAvailableDataPlans(): {
+/**
+ * Count of data plans (packages) available to assign. Pass a networkId to count
+ * only that network's plans + org-wide plans (the BFF filters); omit to count
+ * all plans.
+ */
+export function useAvailableDataPlans(networkId?: string): {
   available: number;
   loading: boolean;
 } {
   const { data, loading } = useGetPackagesQuery({
+    variables: { networkId },
     fetchPolicy: 'cache-and-network',
   });
   return { available: (data?.getPackages.packages ?? []).length, loading };

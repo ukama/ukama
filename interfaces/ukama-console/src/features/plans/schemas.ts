@@ -9,16 +9,24 @@
 /** Create-plan form schema (BUILD-PLAN §13.4 — zod schema colocated). */
 import { z } from 'zod';
 
-export const createPlanSchema = z.object({
-  name: z.string().min(1, 'Plan name is required'),
-  price: z.coerce.number({ message: 'Enter a price' }).positive('Must be > 0'),
-  data: z.coerce.number({ message: 'Enter a volume' }).positive('Must be > 0'),
-  unit: z.enum(['GB', 'MB']),
-  // Stored as days; the form offers preset durations (daily/weekly/monthly).
-  days: z.coerce.number().int().refine((d) => [1, 7, 30].includes(d), {
-    message: 'Select a validity period',
-  }),
-});
+export const createPlanSchema = z
+  .object({
+    name: z.string().min(1, 'Plan name is required'),
+    price: z.coerce.number({ message: 'Enter a price' }).positive('Must be > 0'),
+    data: z.coerce.number({ message: 'Enter a volume' }).positive('Must be > 0'),
+    unit: z.enum(['GB', 'MB']),
+    // Stored as days; the form offers preset durations (daily/weekly/monthly).
+    days: z.coerce.number().int().refine((d) => [1, 7, 30].includes(d), {
+      message: 'Select a validity period',
+    }),
+    // Org-wide plans carry no network; otherwise a specific network is required.
+    availableWithinOrg: z.boolean(),
+    networkId: z.string().optional(),
+  })
+  .refine((v) => v.availableWithinOrg || !!v.networkId, {
+    message: 'Select a network',
+    path: ['networkId'],
+  });
 
 export type CreatePlanValues = z.infer<typeof createPlanSchema>;
 

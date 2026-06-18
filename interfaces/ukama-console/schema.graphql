@@ -46,7 +46,8 @@ type Query {
   getOrgTree: OrgTreeRes!
   getOrgs: OrgsResDto!
   getPackage(packageId: String!): PackageDto!
-  getPackages: PackagesResDto!
+  getPackages(networkId: String): PackagesResDto!
+  isPackageNameAvailable(name: String!): PackageNameAvailabilityResDto!
   getPayment(paymentId: String!): PaymentDto!
   getPayments(data: GetPaymentsInputDto!): PaymentsDto!
   getToken(paymentId: String!): TokenResDto!
@@ -1102,8 +1103,14 @@ type PackageDto {
   apn: String!
   ownerId: String!
   amount: Float!
+  networkId: String
   rate: PackageRateAPIDto!
   markup: PackageMarkupAPIDto!
+}
+
+type PackageNameAvailabilityResDto {
+  isAvailable: Boolean!
+  name: String!
 }
 
 type PackageRateAPIDto {
@@ -1529,6 +1536,7 @@ input AddPackageInputDto {
   dataVolume: Int!
   country: String!
   currency: String!
+  networkId: String
 }
 
 type IdResponse {

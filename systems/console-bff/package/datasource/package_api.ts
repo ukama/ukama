@@ -13,10 +13,16 @@ import { IdResponse, THeaders } from "../../common/types";
 import {
   AddPackageInputDto,
   PackageDto,
+  PackageNameAvailabilityResDto,
   PackagesResDto,
   UpdatePackageInputDto,
 } from "../resolver/types";
-import { dtoToPackageDto, dtoToPackagesDto } from "./mapper";
+import { toBackendDataUnit } from "./dataUnit";
+import {
+  dtoToPackageDto,
+  dtoToPackageNameAvailabilityDto,
+  dtoToPackagesDto,
+} from "./mapper";
 
 const VERSION = "v1";
 const PACKAGES = "packages";
@@ -35,12 +41,37 @@ class PackageApi extends BaseRESTDataSource {
     );
   };
 
-  getPackages = async (baseURL: string): Promise<PackagesResDto> => {
+  isPackageNameAvailable = async (
+    baseURL: string,
+    name: string
+  ): Promise<PackageNameAvailabilityResDto> => {
+    const params = new URLSearchParams({ name });
+    this.logger.info(
+      `IsPackageNameAvailable [GET]: ${baseURL}/${VERSION}/${PACKAGES}/name-availability?${params.toString()}`
+    );
+    this.baseURL = baseURL;
+    return this.get(
+      `/${VERSION}/${PACKAGES}/name-availability?${params.toString()}`
+    ).then(res => dtoToPackageNameAvailabilityDto(res));
+  };
+
+  getPackages = async (
+    baseURL: string,
+    networkId?: string
+  ): Promise<PackagesResDto> => {
     this.logger.info(`GetPackages [GET]: ${baseURL}/${VERSION}/${PACKAGES}`);
     this.baseURL = baseURL;
-    return this.get(`/${VERSION}/${PACKAGES}`).then(res =>
-      dtoToPackagesDto(res)
+    const res = await this.get(`/${VERSION}/${PACKAGES}`).then(r =>
+      dtoToPackagesDto(r)
     );
+    // When scoped to a network, keep that network's plans plus org-wide plans
+    // (no networkId). No filter → all plans (unchanged behaviour).
+    if (networkId) {
+      res.packages = res.packages.filter(
+        p => !p.networkId || p.networkId === networkId
+      );
+    }
+    return res;
   };
 
   addPackage = async (
@@ -60,7 +91,8 @@ class PackageApi extends BaseRESTDataSource {
       body: {
         name: req.name,
         amount: req.amount,
-        data_unit: req.dataUnit,
+        // Console sends short labels (GB/MB); the backend expects its enum.
+        data_unit: toBackendDataUnit(req.dataUnit),
         data_volume: req.dataVolume,
         duration: req.duration,
         active: true,
@@ -71,6 +103,7 @@ class PackageApi extends BaseRESTDataSource {
         voice_volume: 0,
         traffic_policy: 0,
         networks: [],
+        network_id: req.networkId ?? "",
         type: "prepaid",
         apn: "ukama.tel",
         country: req.country,

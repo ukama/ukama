@@ -11,19 +11,28 @@ export type SimPackagesFragment = { __typename?: 'SimToPackagesDto', id: string,
 
 export type SubscriberSimsFragment = { __typename?: 'SubscriberToSimsDto', subscriberId: string, sims: Array<{ __typename?: 'SubscriberSimsDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, isPhysical: boolean }> };
 
-export type PackageFragment = { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } };
+export type PackageFragment = { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, networkId?: string | null, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } };
 
-export type GetPackagesQueryVariables = Types.Exact<{ [key: string]: never; }>;
+export type GetPackagesQueryVariables = Types.Exact<{
+  networkId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+}>;
 
 
-export type GetPackagesQuery = { __typename?: 'Query', getPackages: { __typename?: 'PackagesResDto', packages: Array<{ __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } }> } };
+export type GetPackagesQuery = { __typename?: 'Query', getPackages: { __typename?: 'PackagesResDto', packages: Array<{ __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, networkId?: string | null, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } }> } };
 
 export type GetPackageQueryVariables = Types.Exact<{
   packageId: Types.Scalars['String']['input'];
 }>;
 
 
-export type GetPackageQuery = { __typename?: 'Query', getPackage: { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
+export type GetPackageQuery = { __typename?: 'Query', getPackage: { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, networkId?: string | null, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
+
+export type IsPackageNameAvailableQueryVariables = Types.Exact<{
+  name: Types.Scalars['String']['input'];
+}>;
+
+
+export type IsPackageNameAvailableQuery = { __typename?: 'Query', isPackageNameAvailable: { __typename?: 'PackageNameAvailabilityResDto', isAvailable: boolean, name: string } };
 
 export type GetSimsBySubscriberQueryVariables = Types.Exact<{
   data: Types.GetSimBySubscriberInputDto;
@@ -37,7 +46,7 @@ export type AddPackageMutationVariables = Types.Exact<{
 }>;
 
 
-export type AddPackageMutation = { __typename?: 'Mutation', addPackage: { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
+export type AddPackageMutation = { __typename?: 'Mutation', addPackage: { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, networkId?: string | null, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
 
 export type RemovePackageForSimMutationVariables = Types.Exact<{
   data: Types.RemovePackageFormSimInputDto;
@@ -80,7 +89,7 @@ export type UpdatePacakgeMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdatePacakgeMutation = { __typename?: 'Mutation', updatePackage: { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
+export type UpdatePacakgeMutation = { __typename?: 'Mutation', updatePackage: { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, networkId?: string | null, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
 
 export const SimPackagesFragmentDoc = gql`
     fragment SimPackages on SimToPackagesDto {
@@ -154,14 +163,15 @@ export const PackageFragmentDoc = gql`
   apn
   ownerId
   amount
+  networkId
   ...PackageRate
   ...PackageMarkup
 }
     ${PackageRateFragmentDoc}
 ${PackageMarkupFragmentDoc}`;
 export const GetPackagesDocument = gql`
-    query getPackages {
-  getPackages {
+    query getPackages($networkId: String) {
+  getPackages(networkId: $networkId) {
     packages {
       ...Package
     }
@@ -181,6 +191,7 @@ export const GetPackagesDocument = gql`
  * @example
  * const { data, loading, error } = useGetPackagesQuery({
  *   variables: {
+ *      networkId: // value for 'networkId'
  *   },
  * });
  */
@@ -246,6 +257,50 @@ export type GetPackageQueryHookResult = ReturnType<typeof useGetPackageQuery>;
 export type GetPackageLazyQueryHookResult = ReturnType<typeof useGetPackageLazyQuery>;
 export type GetPackageSuspenseQueryHookResult = ReturnType<typeof useGetPackageSuspenseQuery>;
 export type GetPackageQueryResult = Apollo.QueryResult<GetPackageQuery, GetPackageQueryVariables>;
+export const IsPackageNameAvailableDocument = gql`
+    query isPackageNameAvailable($name: String!) {
+  isPackageNameAvailable(name: $name) {
+    isAvailable
+    name
+  }
+}
+    `;
+
+/**
+ * __useIsPackageNameAvailableQuery__
+ *
+ * To run a query within a React component, call `useIsPackageNameAvailableQuery` and pass it any options that fit your needs.
+ * When your component renders, `useIsPackageNameAvailableQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useIsPackageNameAvailableQuery({
+ *   variables: {
+ *      name: // value for 'name'
+ *   },
+ * });
+ */
+export function useIsPackageNameAvailableQuery(baseOptions: Apollo.QueryHookOptions<IsPackageNameAvailableQuery, IsPackageNameAvailableQueryVariables> & ({ variables: IsPackageNameAvailableQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<IsPackageNameAvailableQuery, IsPackageNameAvailableQueryVariables>(IsPackageNameAvailableDocument, options);
+      }
+export function useIsPackageNameAvailableLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<IsPackageNameAvailableQuery, IsPackageNameAvailableQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<IsPackageNameAvailableQuery, IsPackageNameAvailableQueryVariables>(IsPackageNameAvailableDocument, options);
+        }
+// @ts-ignore
+export function useIsPackageNameAvailableSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<IsPackageNameAvailableQuery, IsPackageNameAvailableQueryVariables>): Apollo.UseSuspenseQueryResult<IsPackageNameAvailableQuery, IsPackageNameAvailableQueryVariables>;
+export function useIsPackageNameAvailableSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<IsPackageNameAvailableQuery, IsPackageNameAvailableQueryVariables>): Apollo.UseSuspenseQueryResult<IsPackageNameAvailableQuery | undefined, IsPackageNameAvailableQueryVariables>;
+export function useIsPackageNameAvailableSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<IsPackageNameAvailableQuery, IsPackageNameAvailableQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<IsPackageNameAvailableQuery, IsPackageNameAvailableQueryVariables>(IsPackageNameAvailableDocument, options);
+        }
+export type IsPackageNameAvailableQueryHookResult = ReturnType<typeof useIsPackageNameAvailableQuery>;
+export type IsPackageNameAvailableLazyQueryHookResult = ReturnType<typeof useIsPackageNameAvailableLazyQuery>;
+export type IsPackageNameAvailableSuspenseQueryHookResult = ReturnType<typeof useIsPackageNameAvailableSuspenseQuery>;
+export type IsPackageNameAvailableQueryResult = Apollo.QueryResult<IsPackageNameAvailableQuery, IsPackageNameAvailableQueryVariables>;
 export const GetSimsBySubscriberDocument = gql`
     query getSimsBySubscriber($data: GetSimBySubscriberInputDto!) {
   getSimsBySubscriber(data: $data) {

@@ -34,11 +34,34 @@ export default function PlanCard({
   const { symbol } = useCurrency();
 
   return (
-    <div className="card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <div
+      className="card"
+      style={{
+        padding: 0,
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
       <div style={{ height: 4, background: plan.color }} />
-      <div className="card-pad" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 500 }}>
+      <div
+        className="card-pad"
+        style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+          }}
+        >
+          <div
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 18,
+              fontWeight: 500,
+            }}
+          >
             {plan.name}
           </div>
           {!readOnly && (
@@ -51,7 +74,11 @@ export default function PlanCard({
               >
                 <MoreVertRounded sx={{ fontSize: 19 }} />
               </IconButton>
-              <Menu anchorEl={anchor} open={!!anchor} onClose={() => setAnchor(null)}>
+              <Menu
+                anchorEl={anchor}
+                open={!!anchor}
+                onClose={() => setAnchor(null)}
+              >
                 <MenuItem
                   sx={{ fontSize: 13.5, gap: 1.25 }}
                   onClick={() => {
@@ -65,20 +92,55 @@ export default function PlanCard({
             </>
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, margin: '8px 0 2px' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'baseline',
+            gap: 4,
+            margin: '8px 0 2px',
+          }}
+        >
           <span
             className="tnum"
-            style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 500 }}
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 30,
+              fontWeight: 500,
+            }}
           >
-            {symbol}{plan.price}
+            {symbol}
+            {plan.price}
           </span>
           <span style={{ fontSize: 13, color: 'var(--uk-ink-3)' }}>
             / {plan.days === 1 ? 'day' : 'month'}
           </span>
         </div>
         <div style={{ fontSize: 13.5, color: 'var(--uk-ink-2)' }}>
-          {plan.data} data · {plan.days === 1 ? '1 day' : plan.days + ' days'} validity
+          {plan.data} data · {plan.days === 1 ? '1 day' : plan.days + ' days'}{' '}
+          validity
         </div>
+        {plan.network && (
+          <div style={{ marginTop: 12, display: 'flex' }}>
+            <span
+              title={plan.network}
+              style={{
+                maxWidth: '100%',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                fontSize: 12,
+                fontWeight: 500,
+                color: 'var(--uk-ink-2)',
+                background: 'var(--uk-hover)',
+                border: '1px solid var(--uk-line)',
+                borderRadius: 999,
+                padding: '3px 10px',
+              }}
+            >
+              {plan.network}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

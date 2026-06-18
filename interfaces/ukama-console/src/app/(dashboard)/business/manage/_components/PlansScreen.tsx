@@ -16,6 +16,7 @@ import {
   useGetPackagesQuery,
   type PackageFragment,
 } from '@/client/graphql/packages.generated';
+import { useGetNetworksQuery } from '@/client/graphql/networks.generated';
 import { EmptyState } from '@/components/EmptyState';
 import PageHeader from '@/components/PageHeader';
 import CreatePlanDialog from '@/features/plans/CreatePlanDialog';
@@ -30,10 +31,16 @@ export default function PlansScreen() {
   const create = () => setDialog({ pkg: null });
 
   const { data, loading, error } = useGetPackagesQuery();
-  const packages = useMemo(
-    () => data?.getPackages.packages ?? [],
-    [data],
-  );
+  const packages = useMemo(() => data?.getPackages.packages ?? [], [data]);
+
+  // Resolve a plan's networkId → network name for the card chip.
+  const { data: networksData } = useGetNetworksQuery();
+  const networkNameById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const n of networksData?.getNetworks.networks ?? [])
+      m.set(n.id, n.name);
+    return m;
+  }, [networksData]);
 
   return (
     <div className="page">
@@ -43,7 +50,11 @@ export default function PlansScreen() {
         count={loading ? undefined : packages.length}
         sub="Plans you can assign to customers."
         actions={
-          <Button variant="contained" startIcon={<AddRounded />} onClick={create}>
+          <Button
+            variant="contained"
+            startIcon={<AddRounded />}
+            onClick={create}
+          >
             Create plan
           </Button>
         }
@@ -51,7 +62,9 @@ export default function PlansScreen() {
       {loading ? (
         <div
           className="tile-grid"
-          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}
+          style={{
+            gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+          }}
         >
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} variant="rounded" height={220} />
@@ -78,12 +91,18 @@ export default function PlansScreen() {
       ) : (
         <div
           className="tile-grid"
-          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}
+          style={{
+            gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+          }}
         >
           {packages.map((pkg, i) => (
             <PlanCard
               key={pkg.uuid}
-              plan={packageToPlan(pkg, i)}
+              plan={packageToPlan(
+                pkg,
+                i,
+                pkg.networkId ? networkNameById.get(pkg.networkId) : undefined,
+              )}
               onEdit={() => setDialog({ pkg })}
             />
           ))}
