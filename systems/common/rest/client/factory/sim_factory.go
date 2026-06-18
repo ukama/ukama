@@ -80,7 +80,7 @@ type SimCardInfo struct {
 	AlgoType       uint32 `json:"algo_type,omitempty"`
 	UeDlAmbrBps    uint32 `json:"ue_dl_ambr_bps,omitempty"`
 	UeUlAmbrBps    uint32 `json:"ue_ul_ambr_bps,omitempty"`
-	Sqn            uint64 `json:"sqn,omitempty"`
+	Sqn            uint64 `json:"sqn,string,omitempty"`
 	CsgIdPrsent    bool   `json:"c_sg_id_prsent,omitempty"`
 	CsgId          uint32 `json:"csg_id,omitempty"`
 	DefaultApnName string `json:"default_apn_name,omitempty"`
