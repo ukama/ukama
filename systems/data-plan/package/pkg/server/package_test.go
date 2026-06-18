@@ -26,6 +26,7 @@ import (
 	"gorm.io/gorm"
 
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	ukama "github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
@@ -532,6 +533,7 @@ func TestPackageServer_Add(t *testing.T) {
 		baserate := uuid.NewV4().String()
 		packageRepo := &mocks.PackageRepo{}
 		rate := &mocks.RateClientProvider{}
+		packageRepo.On("GetByName", TestPackageName).Return(nil, gorm.ErrRecordNotFound).Once()
 		packageRepo.On("Add", mock.MatchedBy(func(p *db.Package) bool {
 			return p.Active == true && p.Name == TestPackageName
 		}), mock.Anything).Return(nil).Once()
@@ -763,6 +765,7 @@ func TestPackageServer_Add(t *testing.T) {
 		s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
 
 		req := &pb.AddPackageRequest{
+			Name:       TestPackageName,
 			OwnerId:    ownerId,
 			BaserateId: baserate,
 			From:       fixedFromTime.Format(time.RFC3339),
@@ -784,12 +787,13 @@ func TestPackageServer_Add(t *testing.T) {
 			},
 		}, nil)
 
+		packageRepo.On("GetByName", TestPackageName).Return(nil, gorm.ErrRecordNotFound).Once()
 		packageRepo.On("Add", mock.Anything, mock.Anything).Return(errors.New("package repo error"))
 
 		resp, err := s.Add(context.TODO(), req)
 		assert.Error(t, err)
 		assert.Nil(t, resp)
-		assert.Contains(t, err.Error(), "Error while adding a package")
+		assert.Contains(t, err.Error(), "package repo error")
 	})
 
 	t.Run("Success_FlatratePackage", func(t *testing.T) {
@@ -801,6 +805,7 @@ func TestPackageServer_Add(t *testing.T) {
 		s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
 
 		req := &pb.AddPackageRequest{
+			Name:       TestFlatratePackageName,
 			OwnerId:    ownerId,
 			BaserateId: baserate,
 			Flatrate:   true, // Test flatrate package
@@ -823,6 +828,7 @@ func TestPackageServer_Add(t *testing.T) {
 			},
 		}, nil)
 
+		packageRepo.On("GetByName", TestFlatratePackageName).Return(nil, gorm.ErrRecordNotFound).Once()
 		packageRepo.On("Add", mock.Anything, mock.Anything).Return(nil)
 
 		resp, err := s.Add(context.TODO(), req)
@@ -830,6 +836,201 @@ func TestPackageServer_Add(t *testing.T) {
 		assert.NotNil(t, resp)
 		assert.True(t, resp.Package.Flatrate)
 		packageRepo.AssertExpectations(t)
+	})
+
+	t.Run("Success_WithNetworkId", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		rate := &mocks.RateClientProvider{}
+		ownerId := uuid.NewV4().String()
+		baserate := uuid.NewV4().String()
+		networkId := uuid.NewV4()
+
+		s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
+
+		req := &pb.AddPackageRequest{
+			Name:       TestPackageName,
+			OwnerId:    ownerId,
+			BaserateId: baserate,
+			NetworkId:  networkId.String(),
+			From:       fixedFromTime.Format(time.RFC3339),
+			To:         fixedToTime.Format(time.RFC3339),
+		}
+
+		rateClient := &splmocks.RateServiceClient{}
+		rate.On("GetClient").Return(rateClient, nil)
+		rateClient.On("GetRateById", mock.Anything, mock.Anything).Return(&rpb.GetRateByIdResponse{
+			Rate: &bpb.Rate{Country: "USA", Provider: "ukama"},
+		}, nil)
+
+		packageRepo.On("GetByName", TestPackageName).Return(nil, gorm.ErrRecordNotFound).Once()
+		packageRepo.On("Add", mock.MatchedBy(func(p *db.Package) bool {
+			return p.NetworkId == networkId
+		}), mock.Anything).Return(nil).Once()
+
+		resp, err := s.Add(context.TODO(), req)
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		assert.Equal(t, networkId.String(), resp.Package.NetworkId)
+		packageRepo.AssertExpectations(t)
+	})
+
+	t.Run("Success_EventCarriesNetworkId", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		rate := &mocks.RateClientProvider{}
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+		ownerId := uuid.NewV4().String()
+		baserate := uuid.NewV4().String()
+		networkId := uuid.NewV4()
+
+		s := NewPackageServer(OrgName, packageRepo, rate, msgbusClient, OrgId)
+
+		req := &pb.AddPackageRequest{
+			Name:       TestPackageName,
+			OwnerId:    ownerId,
+			BaserateId: baserate,
+			NetworkId:  networkId.String(),
+			From:       fixedFromTime.Format(time.RFC3339),
+			To:         fixedToTime.Format(time.RFC3339),
+		}
+
+		rateClient := &splmocks.RateServiceClient{}
+		rate.On("GetClient").Return(rateClient, nil)
+		rateClient.On("GetRateById", mock.Anything, mock.Anything).Return(&rpb.GetRateByIdResponse{
+			Rate: &bpb.Rate{Country: "USA", Provider: "ukama"},
+		}, nil)
+
+		packageRepo.On("GetByName", TestPackageName).Return(nil, gorm.ErrRecordNotFound).Once()
+		packageRepo.On("Add", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequest", mock.Anything, mock.MatchedBy(func(e *epb.CreatePackageEvent) bool {
+			return e.NetworkId == networkId.String()
+		})).Return(nil).Once()
+
+		resp, err := s.Add(context.TODO(), req)
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		packageRepo.AssertExpectations(t)
+		msgbusClient.AssertExpectations(t)
+	})
+
+	t.Run("Success_WithoutNetworkId", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		rate := &mocks.RateClientProvider{}
+		ownerId := uuid.NewV4().String()
+		baserate := uuid.NewV4().String()
+
+		s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
+
+		req := &pb.AddPackageRequest{
+			Name:       TestPackageName,
+			OwnerId:    ownerId,
+			BaserateId: baserate,
+			From:       fixedFromTime.Format(time.RFC3339),
+			To:         fixedToTime.Format(time.RFC3339),
+		}
+
+		rateClient := &splmocks.RateServiceClient{}
+		rate.On("GetClient").Return(rateClient, nil)
+		rateClient.On("GetRateById", mock.Anything, mock.Anything).Return(&rpb.GetRateByIdResponse{
+			Rate: &bpb.Rate{Country: "USA", Provider: "ukama"},
+		}, nil)
+
+		packageRepo.On("GetByName", TestPackageName).Return(nil, gorm.ErrRecordNotFound).Once()
+		packageRepo.On("Add", mock.MatchedBy(func(p *db.Package) bool {
+			return p.NetworkId == uuid.Nil
+		}), mock.Anything).Return(nil).Once()
+
+		resp, err := s.Add(context.TODO(), req)
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		assert.Equal(t, "", resp.Package.NetworkId)
+		packageRepo.AssertExpectations(t)
+	})
+
+	t.Run("Error_InvalidNetworkUUID", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		rate := &mocks.RateClientProvider{}
+
+		s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
+
+		req := &pb.AddPackageRequest{
+			Name:       TestPackageName,
+			OwnerId:    uuid.NewV4().String(),
+			BaserateId: uuid.NewV4().String(),
+			NetworkId:  "invalid-uuid",
+			From:       fixedFromTime.Format(time.RFC3339),
+			To:         fixedToTime.Format(time.RFC3339),
+		}
+
+		resp, err := s.Add(context.TODO(), req)
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+		assert.Contains(t, err.Error(), "invalid format of network uuid")
+	})
+
+	t.Run("Error_DuplicateName", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		rate := &mocks.RateClientProvider{}
+		ownerId := uuid.NewV4().String()
+		baserate := uuid.NewV4().String()
+
+		s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
+
+		req := &pb.AddPackageRequest{
+			Name:       TestPackageName,
+			OwnerId:    ownerId,
+			BaserateId: baserate,
+			From:       fixedFromTime.Format(time.RFC3339),
+			To:         fixedToTime.Format(time.RFC3339),
+		}
+
+		rateClient := &splmocks.RateServiceClient{}
+		rate.On("GetClient").Return(rateClient, nil)
+		rateClient.On("GetRateById", mock.Anything, &rpb.GetRateByIdRequest{
+			OwnerId:  ownerId,
+			BaseRate: baserate,
+		}).Return(&rpb.GetRateByIdResponse{
+			Rate: &bpb.Rate{Country: "USA", Provider: "ukama"},
+		}, nil)
+
+		packageRepo.On("GetByName", TestPackageName).
+			Return(&db.Package{Uuid: uuid.NewV4(), Name: TestPackageName}, nil).Once()
+
+		resp, err := s.Add(context.TODO(), req)
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		assert.Equal(t, codes.AlreadyExists, status.Code(err))
+		packageRepo.AssertNotCalled(t, "Add", mock.Anything, mock.Anything)
+		packageRepo.AssertExpectations(t)
+	})
+
+	t.Run("Error_EmptyName", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		rate := &mocks.RateClientProvider{}
+		ownerId := uuid.NewV4().String()
+		baserate := uuid.NewV4().String()
+
+		s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
+
+		req := &pb.AddPackageRequest{
+			Name:       "   ",
+			OwnerId:    ownerId,
+			BaserateId: baserate,
+			From:       fixedFromTime.Format(time.RFC3339),
+			To:         fixedToTime.Format(time.RFC3339),
+		}
+
+		rateClient := &splmocks.RateServiceClient{}
+		rate.On("GetClient").Return(rateClient, nil)
+		rateClient.On("GetRateById", mock.Anything, mock.Anything).Return(&rpb.GetRateByIdResponse{
+			Rate: &bpb.Rate{Country: "USA", Provider: "ukama"},
+		}, nil)
+
+		resp, err := s.Add(context.TODO(), req)
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+		packageRepo.AssertNotCalled(t, "Add", mock.Anything, mock.Anything)
 	})
 }
 
@@ -940,6 +1141,7 @@ func TestPackageServer_Update(t *testing.T) {
 		mockPackage := &pb.UpdatePackageRequest{
 			Name: "Daily-pack-updated",
 		}
+		packageRepo.On("GetByName", "Daily-pack-updated").Return(nil, gorm.ErrRecordNotFound).Once()
 		packageRepo.On("Update", packageUUID, mock.MatchedBy(func(p *db.Package) bool {
 			return p.Active == true && p.Name == "Daily-pack-updated"
 		})).Return(nil).Once()
@@ -983,6 +1185,7 @@ func TestPackageServer_Update(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		s := NewPackageServer(OrgName, packageRepo, nil, msgbusClient, OrgId)
 		packageUUID := uuid.NewV4()
+		packageRepo.On("GetByName", "fail-update").Return(nil, gorm.ErrRecordNotFound).Once()
 		packageRepo.On("Update", packageUUID, mock.Anything).Return(errors.New("db error")).Once()
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Maybe()
 		resp, err := s.Update(context.TODO(), &pb.UpdatePackageRequest{
@@ -1000,6 +1203,7 @@ func TestPackageServer_Update(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		s := NewPackageServer(OrgName, packageRepo, nil, msgbusClient, OrgId)
 		packageUUID := uuid.NewV4()
+		packageRepo.On("GetByName", "msgbus-fail").Return(nil, gorm.ErrRecordNotFound).Once()
 		packageRepo.On("Update", packageUUID, mock.Anything).Return(nil).Once()
 
 		packageRepo.On("Get", packageUUID).Return(&db.Package{
@@ -1028,6 +1232,7 @@ func TestPackageServer_Update(t *testing.T) {
 		s := NewPackageServer(OrgName, packageRepo, nil, nil, OrgId)
 		packageUUID := uuid.NewV4()
 
+		packageRepo.On("GetByName", "NameOnly").Return(nil, gorm.ErrRecordNotFound).Once()
 		packageRepo.On("Update", packageUUID, mock.MatchedBy(func(p *db.Package) bool {
 			return p.Name == "NameOnly" && p.Active == false
 		})).Return(nil).Once()
@@ -1080,6 +1285,7 @@ func TestPackageServer_Update(t *testing.T) {
 		s := NewPackageServer(OrgName, packageRepo, nil, nil, OrgId)
 		packageUUID := uuid.NewV4()
 
+		packageRepo.On("GetByName", "NoMsgBus").Return(nil, gorm.ErrRecordNotFound).Once()
 		packageRepo.On("Update", packageUUID, mock.Anything).Return(nil).Once()
 
 		packageRepo.On("Get", packageUUID).Return(&db.Package{
@@ -1105,6 +1311,7 @@ func TestPackageServer_Update(t *testing.T) {
 		s := NewPackageServer(OrgName, packageRepo, nil, nil, OrgId)
 		packageUUID := uuid.NewV4()
 
+		packageRepo.On("GetByName", "GetFail").Return(nil, gorm.ErrRecordNotFound).Once()
 		packageRepo.On("Update", packageUUID, mock.Anything).Return(nil).Once()
 
 		packageRepo.On("Get", packageUUID).Return(nil, errors.New("get error")).Once()
@@ -1144,6 +1351,125 @@ func TestPackageServer_Update(t *testing.T) {
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, "", resp.Package.Name)
+		packageRepo.AssertExpectations(t)
+	})
+
+	t.Run("Error_DuplicateName", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		s := NewPackageServer(OrgName, packageRepo, nil, nil, OrgId)
+		packageUUID := uuid.NewV4()
+		otherUUID := uuid.NewV4()
+
+		// A different package already owns the requested name.
+		packageRepo.On("GetByName", TestUpdatedPackageName).
+			Return(&db.Package{Uuid: otherUUID, Name: TestUpdatedPackageName}, nil).Once()
+
+		resp, err := s.Update(context.TODO(), &pb.UpdatePackageRequest{
+			Uuid:   packageUUID.String(),
+			Name:   TestUpdatedPackageName,
+			Active: true,
+		})
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		assert.Equal(t, codes.AlreadyExists, status.Code(err))
+		packageRepo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+		packageRepo.AssertExpectations(t)
+	})
+
+	t.Run("Success_RenameToOwnName", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		s := NewPackageServer(OrgName, packageRepo, nil, nil, OrgId)
+		packageUUID := uuid.NewV4()
+
+		// GetByName returns the same package being updated; not a collision.
+		packageRepo.On("GetByName", TestPackageName).
+			Return(&db.Package{Uuid: packageUUID, Name: TestPackageName}, nil).Once()
+		packageRepo.On("Update", packageUUID, mock.Anything).Return(nil).Once()
+		packageRepo.On("Get", packageUUID).Return(&db.Package{
+			Uuid:   packageUUID,
+			Name:   TestPackageName,
+			Active: true,
+			From:   fixedBaseTime,
+			To:     fixedToTime,
+		}, nil).Once()
+
+		resp, err := s.Update(context.TODO(), &pb.UpdatePackageRequest{
+			Uuid:   packageUUID.String(),
+			Name:   TestPackageName,
+			Active: true,
+		})
+		assert.NoError(t, err)
+		assert.Equal(t, TestPackageName, resp.Package.Name)
+		packageRepo.AssertExpectations(t)
+	})
+}
+
+// ============================================================================
+// IS NAME AVAILABLE TESTS
+// ============================================================================
+
+func TestPackageServer_IsNameAvailable(t *testing.T) {
+	t.Run("Available", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		s := NewPackageServer(OrgName, packageRepo, nil, nil, OrgId)
+
+		packageRepo.On("GetByName", TestPackageName).Return(nil, gorm.ErrRecordNotFound).Once()
+
+		resp, err := s.IsNameAvailable(context.TODO(), &pb.IsNameAvailableRequest{Name: TestPackageName})
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		assert.True(t, resp.IsAvailable)
+		assert.Equal(t, TestPackageName, resp.Name)
+		packageRepo.AssertExpectations(t)
+	})
+
+	t.Run("Taken", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		s := NewPackageServer(OrgName, packageRepo, nil, nil, OrgId)
+
+		packageRepo.On("GetByName", TestPackageName).
+			Return(&db.Package{Uuid: uuid.NewV4(), Name: TestPackageName}, nil).Once()
+
+		resp, err := s.IsNameAvailable(context.TODO(), &pb.IsNameAvailableRequest{Name: TestPackageName})
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		assert.False(t, resp.IsAvailable)
+		packageRepo.AssertExpectations(t)
+	})
+
+	t.Run("TrimsWhitespace", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		s := NewPackageServer(OrgName, packageRepo, nil, nil, OrgId)
+
+		packageRepo.On("GetByName", TestPackageName).Return(nil, gorm.ErrRecordNotFound).Once()
+
+		resp, err := s.IsNameAvailable(context.TODO(), &pb.IsNameAvailableRequest{Name: "  " + TestPackageName + "  "})
+		assert.NoError(t, err)
+		assert.True(t, resp.IsAvailable)
+		assert.Equal(t, TestPackageName, resp.Name)
+		packageRepo.AssertExpectations(t)
+	})
+
+	t.Run("Error_EmptyName", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		s := NewPackageServer(OrgName, packageRepo, nil, nil, OrgId)
+
+		resp, err := s.IsNameAvailable(context.TODO(), &pb.IsNameAvailableRequest{Name: "   "})
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+		packageRepo.AssertNotCalled(t, "GetByName", mock.Anything)
+	})
+
+	t.Run("Error_Database", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		s := NewPackageServer(OrgName, packageRepo, nil, nil, OrgId)
+
+		packageRepo.On("GetByName", TestPackageName).Return(nil, errors.New("db error")).Once()
+
+		resp, err := s.IsNameAvailable(context.TODO(), &pb.IsNameAvailableRequest{Name: TestPackageName})
+		assert.Error(t, err)
+		assert.Nil(t, resp)
 		packageRepo.AssertExpectations(t)
 	})
 }

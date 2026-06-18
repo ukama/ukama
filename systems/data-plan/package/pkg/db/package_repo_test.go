@@ -669,6 +669,73 @@ func Test_Package_Add(t *testing.T) {
 	})
 }
 
+func Test_Package_GetByName(t *testing.T) {
+	t.Run("NameExists", func(t *testing.T) {
+		setup := setupTestDB(t)
+		packID, _ := uuid.FromString(TestPackageUUID)
+		pack := createTestPackage(packID, TestPackageName)
+
+		rows := createPackageRows(pack)
+		setup.Mock.ExpectQuery(`^SELECT.*packages.*WHERE.*name.*`).
+			WithArgs(TestPackageName, sqlmock.AnyArg()).
+			WillReturnRows(rows)
+
+		result, err := setup.Repo.GetByName(TestPackageName)
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, TestPackageName, result.Name)
+		err = setup.Mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("CaseInsensitiveMatch", func(t *testing.T) {
+		setup := setupTestDB(t)
+		packID, _ := uuid.FromString(TestPackageUUID)
+		pack := createTestPackage(packID, TestPackageName)
+
+		rows := createPackageRows(pack)
+		// Query must compare on LOWER(name) so "SILVER PLAN" matches "Silver Plan".
+		setup.Mock.ExpectQuery(`LOWER\(name\) = LOWER`).
+			WithArgs("SILVER PLAN", sqlmock.AnyArg()).
+			WillReturnRows(rows)
+
+		result, err := setup.Repo.GetByName("SILVER PLAN")
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, TestPackageName, result.Name)
+		err = setup.Mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("NameAvailable", func(t *testing.T) {
+		setup := setupTestDB(t)
+
+		setup.Mock.ExpectQuery(`^SELECT.*packages.*WHERE.*name.*`).
+			WithArgs("Free Name", sqlmock.AnyArg()).
+			WillReturnError(gorm.ErrRecordNotFound)
+
+		result, err := setup.Repo.GetByName("Free Name")
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Equal(t, gorm.ErrRecordNotFound, err)
+		err = setup.Mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("DatabaseError", func(t *testing.T) {
+		setup := setupTestDB(t)
+
+		setup.Mock.ExpectQuery(`^SELECT.*packages.*WHERE.*name.*`).
+			WithArgs(TestPackageName, sqlmock.AnyArg()).
+			WillReturnError(errors.New("connection timeout"))
+
+		result, err := setup.Repo.GetByName(TestPackageName)
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Contains(t, err.Error(), "connection timeout")
+	})
+}
+
 func Test_Package_Delete(t *testing.T) {
 	t.Run("Delete_Success", func(t *testing.T) {
 		setup := setupTestDB(t)

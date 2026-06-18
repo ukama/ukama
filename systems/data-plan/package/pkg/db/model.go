@@ -22,8 +22,8 @@ import (
 type Package struct {
 	gorm.Model
 	Uuid           uuid.UUID `gorm:"unique;type:uuid;index"`
-	OwnerId        uuid.UUID
-	Name           string
+	OwnerId        uuid.UUID `gorm:"not null;type:uuid"`
+	Name           string    `gorm:"uniqueIndex:idx_packages_name_unique,where:deleted_at IS NULL,expression:LOWER(name)"`
 	SimType        ukama.SimType
 	Active         bool           `gorm:"not null; default:false"`
 	Duration       uint64         `gorm:"not null; default:0"`
@@ -46,6 +46,7 @@ type Package struct {
 	Overdraft      float64
 	TrafficPolicy  uint32
 	Networks       pq.StringArray `gorm:"type:varchar(64)[]" json:"networks"`
+	NetworkId      uuid.UUID      `gorm:"type:uuid"` // optional; uuid.Nil when not scoped to a network
 	SyncStatus     ukama.StatusType
 }
 

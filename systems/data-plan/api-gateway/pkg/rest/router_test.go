@@ -133,6 +133,38 @@ func TestRouter_PingRoute(t *testing.T) {
 	assert.Contains(t, w.Body.String(), "pong")
 }
 
+func TestRouter_IsPackageNameAvailable(t *testing.T) {
+	w := httptest.NewRecorder()
+
+	hreq, _ := http.NewRequest("GET", "/v1/packages/name-availability", nil)
+	q := hreq.URL.Query()
+	q.Add("name", "Monthly-Data")
+	hreq.URL.RawQuery = q.Encode()
+
+	m := &rmocks.RateServiceClient{}
+	p := &pmocks.PackagesServiceClient{}
+	b := &bmocks.BaseRatesServiceClient{}
+	arc := &cmocks.AuthClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+	p.On("IsNameAvailable", mock.Anything, &ppb.IsNameAvailableRequest{Name: "Monthly-Data"}).
+		Return(&ppb.IsNameAvailableResponse{Name: "Monthly-Data", IsAvailable: true}, nil)
+
+	r := NewRouter(&Clients{
+		r: client.NewRateClientFromClient(m),
+		b: client.NewBaseRateClientFromClient(b),
+		p: client.NewPackageFromClient(p),
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
+
+	// act
+	r.ServeHTTP(w, hreq)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "is_available")
+	p.AssertExpectations(t)
+}
+
 func TestRouter_GetRates(t *testing.T) {
 	ownerId := uuid.NewV4().String()
 	req := GetRateRequest{

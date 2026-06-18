@@ -32,6 +32,7 @@ type AddPackageRequest struct {
 	Networks      []string `json:"networks"`
 	Country       string   `json:"country"`
 	Currency      string   `json:"currency"`
+	NetworkId     string   `example:"{{NetworkUUID}}" json:"network_id"`
 }
 
 type UpdatePackageRequest struct {
@@ -42,6 +43,10 @@ type UpdatePackageRequest struct {
 
 type PackagesRequest struct {
 	Uuid string `example:"{{PackageUUID}}" form:"uuid" json:"uuid" path:"uuid" binding:"required" validate:"required"`
+}
+
+type CheckPackageNameRequest struct {
+	Name string `example:"Monthly-Data" json:"name" query:"name" binding:"required" validate:"required"`
 }
 
 type GetBaseRatesByCountryRequest struct {
