@@ -219,15 +219,14 @@ func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.
 
 	/* Add to ASR */
 	asr := &db.Asr{
-		Iccid:       req.Iccid,
-		Imsi:        sim.Imsi,
-		Op:          sim.Op,
-		Key:         sim.Key,
-		Amf:         sim.Amf,
-		AlgoType:    sim.AlgoType,
-		UeDlAmbrBps: sim.UeDlAmbrBps,
-		UeUlAmbrBps: sim.UeUlAmbrBps,
-		// Sqn:                     uint64(sim.Sqn),
+		Iccid:                   req.Iccid,
+		Imsi:                    sim.Imsi,
+		Op:                      sim.Op,
+		Key:                     sim.Key,
+		Amf:                     sim.Amf,
+		AlgoType:                sim.AlgoType,
+		UeDlAmbrBps:             sim.UeDlAmbrBps,
+		UeUlAmbrBps:             sim.UeUlAmbrBps,
 		Sqn:                     sim.Sqn,
 		CsgIdPrsent:             sim.CsgIdPrsent,
 		CsgId:                   sim.CsgId,

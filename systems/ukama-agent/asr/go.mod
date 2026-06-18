@@ -19,7 +19,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
-	github.com/ukama/ukama/systems/common v0.0.0-20260618141337-8e65957a8643
+	github.com/ukama/ukama/systems/common v0.0.0-20260618190926-94e833225a23
 	github.com/ukama/ukama/systems/ukama-agent/cdr v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.22.0
 	google.golang.org/grpc v1.73.0
