@@ -16,13 +16,24 @@ import (
 )
 
 func TestDataUnitType(t *testing.T) {
-	t.Run("DataUnitTypeValidString", func(tt *testing.T) {
+	t.Run("DataUnitTypeValidLongString", func(tt *testing.T) {
 		dataUnitType := ukama.ParseDataUnitType("Bytes")
 
 		assert.NotNil(t, dataUnitType)
 		assert.Equal(t, dataUnitType.String(), ukama.DataUnitTypeB.String())
 		assert.Equal(t, uint8(dataUnitType), uint8(1))
 		assert.Equal(t, ukama.ReturnDataUnits(dataUnitType), int64(1))
+		assert.Equal(t, ukama.ReturnDataUnitsInBytes(dataUnitType), uint64(1))
+	})
+
+	t.Run("DataUnitTypeValidShortString", func(tt *testing.T) {
+		dataUnitType := ukama.ParseDataUnitType("mB")
+
+		assert.NotNil(t, dataUnitType)
+		assert.Equal(t, dataUnitType.String(), ukama.DataUnitTypeMB.String())
+		assert.Equal(t, uint8(dataUnitType), uint8(3))
+		assert.Equal(t, ukama.ReturnDataUnits(dataUnitType), int64(1))
+		assert.Equal(t, ukama.ReturnDataUnitsInBytes(dataUnitType), uint64(1024*1024))
 	})
 
 	t.Run("DataUnitTypeValidNumber", func(tt *testing.T) {
@@ -32,6 +43,7 @@ func TestDataUnitType(t *testing.T) {
 		assert.Equal(t, uint8(dataUnitType), uint8(2))
 		assert.Equal(t, dataUnitType.String(), ukama.DataUnitTypeKB.String())
 		assert.Equal(t, ukama.ReturnDataUnits(dataUnitType), int64(1))
+		assert.Equal(t, ukama.ReturnDataUnitsInBytes(dataUnitType), uint64(1024))
 	})
 
 	t.Run("DataUnitTypeNonValidString", func(tt *testing.T) {
@@ -44,11 +56,11 @@ func TestDataUnitType(t *testing.T) {
 	})
 
 	t.Run("DataUnitTypeNonValidNumber", func(tt *testing.T) {
-		dataUnitType := ukama.DataUnitType(uint8(10))
+		dataUnitType := ukama.DataUnitType(uint8(100))
 
 		assert.NotNil(t, dataUnitType)
 		assert.Equal(t, dataUnitType.String(), ukama.DataUnitTypeUnknown.String())
-		assert.Equal(t, uint8(dataUnitType), uint8(10))
+		assert.Equal(t, uint8(dataUnitType), uint8(100))
 		assert.Equal(t, ukama.ReturnDataUnits(dataUnitType), int64(0))
 	})
 }
