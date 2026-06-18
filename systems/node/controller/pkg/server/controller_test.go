@@ -343,4 +343,175 @@ func TestSiteKey_NormalizesSoSiteActionsAreMutuallyExclusive(t *testing.T) {
 
 	assert.Equal(t, "site:"+id.String(), direct)
 	assert.Equal(t, direct, resolved)
+
+	// Non-uuid input falls back to the raw value rather than dropping the prefix.
+	assert.Equal(t, "site:not-a-uuid", siteKey("not-a-uuid"))
+}
+
+func TestControllerServer_RestartSite_SiteLevelLock(t *testing.T) {
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	conRepo := &mocks.NodeLogRepo{}
+	siteClient := &mbmocks.SiteClient{}
+	networkClient := &mbmocks.NetworkClient{}
+	nodeClient := &mbmocks.NodeClient{}
+	opMgr := &mocks.OperationManager{}
+	opMon := &mocks.OperationMonitor{}
+
+	siteId := uuid.NewV4().String()
+	netId := uuid.NewV4().String()
+	node1 := "uk-983794-tnode-78-7830"
+	node2 := "uk-983794-anode-78-7830"
+
+	siteClient.On("Get", siteId).Return(&registry.SiteInfo{}, nil).Once()
+	networkClient.On("Get", netId).Return(&registry.NetworkInfo{}, nil).Once()
+	nodeClient.On("GetNodesBySite", siteId).Return(&registry.NodesBySite{
+		Nodes: []registry.NodeInfo{{Id: node1}, {Id: node2}},
+	}, nil).Once()
+	conRepo.On("Get", mock.Anything).Return(&db.NodeLog{}, nil).Times(2)
+
+	op := &opmgrpb.Operation{Id: "op-r", FencingToken: 1, ResourceKey: "site:" + siteId}
+	opMgr.On("Start", mock.MatchedBy(func(req *opmgrpb.StartOperationRequest) bool {
+		return req.ResourceKey == "site:"+siteId
+	})).Return(&opmgrpb.StartOperationResponse{Operation: op}, nil).Once()
+	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
+	opMgr.On("MarkRunning", "op-r", uint64(1)).Return(&opmgrpb.MarkRunningResponse{}, nil).Once()
+	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Times(2)
+
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, networkClient, siteClient, nodeClient, opMgr, opMon, 30, 60, pkg.IsDebugMode)
+
+	resp, err := s.RestartSite(context.TODO(), &pb.RestartSiteRequest{SiteId: siteId, NetworkId: netId})
+
+	assert.NoError(t, err)
+	// One site-level operation covers all the site's nodes.
+	assert.Len(t, resp.OperationIds, 1)
+	assert.Equal(t, "op-r", resp.OperationIds[0])
+	opMgr.AssertExpectations(t)
+}
+
+func TestControllerServer_ToggleInternetSwitch_SiteLevelLock(t *testing.T) {
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	conRepo := &mocks.NodeLogRepo{}
+	siteClient := &mbmocks.SiteClient{}
+	opMgr := &mocks.OperationManager{}
+	opMon := &mocks.OperationMonitor{}
+
+	siteId := uuid.NewV4().String()
+
+	siteClient.On("Get", siteId).Return(&registry.SiteInfo{}, nil).Once()
+
+	op := &opmgrpb.Operation{Id: "op-i", FencingToken: 1, ResourceKey: "site:" + siteId}
+	opMgr.On("Start", mock.MatchedBy(func(req *opmgrpb.StartOperationRequest) bool {
+		return req.ResourceKey == "site:"+siteId
+	})).Return(&opmgrpb.StartOperationResponse{Operation: op}, nil).Once()
+	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
+	opMgr.On("MarkRunning", "op-i", uint64(1)).Return(&opmgrpb.MarkRunningResponse{}, nil).Once()
+	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, siteClient, nil, opMgr, opMon, 30, 60, pkg.IsDebugMode)
+
+	resp, err := s.ToggleInternetSwitch(context.TODO(), &pb.ToggleInternetSwitchRequest{SiteId: siteId, Status: true, Port: 2})
+
+	assert.NoError(t, err)
+	assert.Equal(t, "site:"+siteId, resp.ResourceKey)
+	opMgr.AssertExpectations(t)
+	siteClient.AssertExpectations(t)
+}
+
+func TestControllerServer_RestartSite_PublishFailureFailsOperation(t *testing.T) {
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	conRepo := &mocks.NodeLogRepo{}
+	siteClient := &mbmocks.SiteClient{}
+	networkClient := &mbmocks.NetworkClient{}
+	nodeClient := &mbmocks.NodeClient{}
+	opMgr := &mocks.OperationManager{}
+	opMon := &mocks.OperationMonitor{}
+
+	siteId := uuid.NewV4().String()
+	netId := uuid.NewV4().String()
+	node1 := "uk-983794-tnode-78-7830"
+
+	siteClient.On("Get", siteId).Return(&registry.SiteInfo{}, nil).Once()
+	networkClient.On("Get", netId).Return(&registry.NetworkInfo{}, nil).Once()
+	nodeClient.On("GetNodesBySite", siteId).Return(&registry.NodesBySite{
+		Nodes: []registry.NodeInfo{{Id: node1}},
+	}, nil).Once()
+	conRepo.On("Get", mock.Anything).Return(&db.NodeLog{}, nil).Once()
+
+	op := &opmgrpb.Operation{Id: "op-r", FencingToken: 1, ResourceKey: "site:" + siteId}
+	opMgr.On("Start", mock.Anything).Return(&opmgrpb.StartOperationResponse{Operation: op}, nil).Once()
+	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
+	opMgr.On("MarkRunning", "op-r", uint64(1)).Return(&opmgrpb.MarkRunningResponse{}, nil).Once()
+	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(assert.AnError).Once()
+	opMgr.On("FailOperation", "op-r", mock.Anything, mock.Anything).Return(&opmgrpb.ForceUnlockResponse{}, nil).Once()
+
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, networkClient, siteClient, nodeClient, opMgr, opMon, 30, 60, pkg.IsDebugMode)
+
+	_, err := s.RestartSite(context.TODO(), &pb.RestartSiteRequest{SiteId: siteId, NetworkId: netId})
+
+	assert.Error(t, err)
+	opMgr.AssertExpectations(t)
+}
+
+func TestControllerServer_RestartSite_Validation(t *testing.T) {
+	s := NewControllerServer(testOrgName, &mocks.NodeLogRepo{}, &mbmocks.MsgBusServiceClient{}, nil, nil, nil, nil, nil, 0, 0, pkg.IsDebugMode)
+
+	_, err := s.RestartSite(context.TODO(), &pb.RestartSiteRequest{SiteId: "", NetworkId: uuid.NewV4().String()})
+	assert.Error(t, err)
+
+	_, err = s.RestartSite(context.TODO(), &pb.RestartSiteRequest{SiteId: "site-1", NetworkId: ""})
+	assert.Error(t, err)
+
+	_, err = s.RestartSite(context.TODO(), &pb.RestartSiteRequest{SiteId: "site-1", NetworkId: "not-a-uuid"})
+	assert.Error(t, err)
+}
+
+func TestControllerServer_ToggleInternetSwitch_Validation(t *testing.T) {
+	s := NewControllerServer(testOrgName, &mocks.NodeLogRepo{}, &mbmocks.MsgBusServiceClient{}, nil, nil, nil, nil, nil, 0, 0, pkg.IsDebugMode)
+
+	_, err := s.ToggleInternetSwitch(context.TODO(), &pb.ToggleInternetSwitchRequest{SiteId: ""})
+	assert.Error(t, err)
+
+	_, err = s.ToggleInternetSwitch(context.TODO(), &pb.ToggleInternetSwitchRequest{SiteId: "not-a-uuid"})
+	assert.Error(t, err)
+}
+
+func TestControllerServer_ToggleRfSwitch_InvalidNodeType(t *testing.T) {
+	s := NewControllerServer(testOrgName, &mocks.NodeLogRepo{}, &mbmocks.MsgBusServiceClient{}, nil, nil, nil, nil, nil, 0, 0, pkg.IsDebugMode)
+
+	_, err := s.ToggleRfSwitch(context.TODO(), &pb.ToggleRfSwitchRequest{NodeId: "uk-983794-tnode-78-7830", State: "on"})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "node is not an amplifier node")
+}
+
+func TestControllerServer_ToggleRfSwitch_SiteLevelLock(t *testing.T) {
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	conRepo := &mocks.NodeLogRepo{}
+	nodeClient := &mbmocks.NodeClient{}
+	opMgr := &mocks.OperationManager{}
+	opMon := &mocks.OperationMonitor{}
+
+	nodeId := "uk-983794-anode-78-7830"
+	siteId := uuid.NewV4().String()
+
+	nodeClient.On("Get", nodeId).Return(&registry.NodeInfo{
+		Id:   nodeId,
+		Site: registry.NodeSiteInfo{SiteId: siteId},
+	}, nil).Once()
+
+	op := &opmgrpb.Operation{Id: "op-rf", FencingToken: 1, ResourceKey: "site:" + siteId}
+	opMgr.On("Start", mock.MatchedBy(func(req *opmgrpb.StartOperationRequest) bool {
+		return req.ResourceKey == "site:"+siteId
+	})).Return(&opmgrpb.StartOperationResponse{Operation: op}, nil).Once()
+	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
+	opMgr.On("MarkRunning", "op-rf", uint64(1)).Return(&opmgrpb.MarkRunningResponse{}, nil).Once()
+	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nodeClient, opMgr, opMon, 30, 60, pkg.IsDebugMode)
+
+	resp, err := s.ToggleRfSwitch(context.TODO(), &pb.ToggleRfSwitchRequest{NodeId: nodeId, State: "on"})
+
+	assert.NoError(t, err)
+	assert.Equal(t, "site:"+siteId, resp.ResourceKey)
+	opMgr.AssertExpectations(t)
+	nodeClient.AssertExpectations(t)
 }
