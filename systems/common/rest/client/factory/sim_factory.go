@@ -21,7 +21,7 @@ import (
 const SimFactoryEndpoint = "/v1/sims"
 
 type SimFactoryClient interface {
-	ReadSimCardInfo(Iccid string) (*SimCardInfo, error)
+	ReadSimCardInfo(iccid string) (*SimCardInfo, error)
 }
 
 type simFactoryClient struct {

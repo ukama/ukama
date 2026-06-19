@@ -162,7 +162,7 @@ func (s *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp
 }
 
 func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.ActivateResp, error) {
-	log.Infof("Adding ASR profile for imsi %s", req.GetImsi())
+	log.Infof("Adding ASR profile for iccid %s", req.GetIccid())
 
 	/* Package DataPlan Id */
 	pId, err := uuid.FromString(req.PackageId)
