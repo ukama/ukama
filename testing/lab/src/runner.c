@@ -607,6 +607,12 @@ int runner_validate(const runner_opts_t *opts) {
     }
 
     if (!opts->setup_only) {
+        rc = runtime_ensure_network(&runtime, &err);
+        if (rc != ULAB_OK) {
+            rc = ULAB_ERUNTIME;
+            goto done;
+        }
+
         ulab_status("RUNTIME", "factory/build/start site node bundles");
         rc = start_runtime_sites(opts->repo, scenario, &world, &runtime,
                                  &err);

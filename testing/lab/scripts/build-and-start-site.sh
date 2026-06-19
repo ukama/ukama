@@ -25,6 +25,7 @@ NODE_RUNTIME="${NODE_RUNTIME:-starter}"
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 STATE_DIR="$RUN_DIR/runtime-sites"
 NODE_STATE_DIR="$RUN_DIR/runtime-nodes"
+NET_STATE="$RUN_DIR/runtime-net/net.env"
 mkdir -p "$STATE_DIR" "$NODE_STATE_DIR"
 
 need_cmd() {
@@ -115,6 +116,7 @@ write_node_state() {
         echo "CONTAINER_NAME=$container"
         echo "IMAGE=testing/virtualnode:$node_id"
         echo "SLOT=$SLOT"
+        echo "LAB_NET=${LAB_NET:-}"
     } > "$state_file"
 }
 
@@ -131,6 +133,7 @@ write_site_state() {
         echo "CNODE_CONTAINER=$CNODE_CONTAINER"
         echo "ANODE_CONTAINER=$ANODE_CONTAINER"
         echo "SLOT=$SLOT"
+        echo "LAB_NET=${LAB_NET:-}"
     } > "$state_file"
 
     {
@@ -143,6 +146,20 @@ write_site_state() {
 need_cmd curl
 need_cmd jq
 need_cmd podman
+
+if [ ! -f "$NET_STATE" ]; then
+    echo "lab network state not found: $NET_STATE" >&2
+    echo "runtime must create the lab network before starting site nodes" >&2
+    exit 1
+fi
+
+# shellcheck disable=SC1090
+. "$NET_STATE"
+
+if [ -z "${LAB_NET:-}" ]; then
+    echo "LAB_NET missing in $NET_STATE" >&2
+    exit 1
+fi
 
 FACTORY_JSON="$(mktemp "${TMPDIR:-/tmp}/ukama-factory-sites.XXXXXX")"
 cleanup() {
@@ -187,9 +204,9 @@ assign_org "$TNODE_ID"
 assign_org "$CNODE_ID"
 assign_org "$ANODE_ID"
 
-"$SCRIPT_DIR/start-node.sh" "$TNODE_ID" "$TNODE_CONTAINER" "$RUN_DIR"
-"$SCRIPT_DIR/start-node.sh" "$CNODE_ID" "$CNODE_CONTAINER" "$RUN_DIR"
-"$SCRIPT_DIR/start-node.sh" "$ANODE_ID" "$ANODE_CONTAINER" "$RUN_DIR"
+LAB_NET="$LAB_NET" "$SCRIPT_DIR/start-node.sh" "$TNODE_ID" "$TNODE_CONTAINER" "$RUN_DIR"
+LAB_NET="$LAB_NET" "$SCRIPT_DIR/start-node.sh" "$CNODE_ID" "$CNODE_CONTAINER" "$RUN_DIR"
+LAB_NET="$LAB_NET" "$SCRIPT_DIR/start-node.sh" "$ANODE_ID" "$ANODE_CONTAINER" "$RUN_DIR"
 
 write_site_state
 write_node_state "$SITE_REF-tnode" "$TNODE_ID" "tnode" "$TNODE_CONTAINER"

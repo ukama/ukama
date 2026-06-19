@@ -210,6 +210,27 @@ void runtime_close(runtime_t *rt) {
     }
 }
 
+
+int runtime_ensure_network(runtime_t *rt, ulab_error_t *err) {
+
+    char args[ULAB_MAX_ARGS];
+    int rc;
+
+    rc = snprintf(args, sizeof(args), "%s", rt->run_dir);
+    if (rc < 0 || (size_t)rc >= sizeof(args)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "ensure-network args too long");
+        return ULAB_ERR;
+    }
+
+    ulab_status("NET", "ensure lab podman network");
+    if (run_script(rt, "ensure-network.sh", args, err)) {
+        return ULAB_ERR;
+    }
+
+    return ULAB_OK;
+}
+
 int runtime_build_and_start_sites(const char *repo,
                                   runtime_t *rt,
                                   world_t *w,

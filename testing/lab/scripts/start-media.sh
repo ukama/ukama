@@ -16,7 +16,7 @@ REPO="$1"
 RUN_DIR="$2"
 
 UE_DIR="$REPO/testing/ue"
-SITE_STATE_DIR="$RUN_DIR/runtime-sites"
+NET_STATE="$RUN_DIR/runtime-net/net.env"
 MEDIA_STATE_DIR="$RUN_DIR/runtime-media"
 MEDIA_STATE_FILE="$MEDIA_STATE_DIR/media.env"
 
@@ -26,8 +26,6 @@ IPERF_PORT=5201
 
 RUN_ID="$(basename "$RUN_DIR")"
 SAFE_RUN_ID="$(printf "%s" "$RUN_ID" | tr -c 'A-Za-z0-9-' '-' | sed 's/^-*//;s/-*$//')"
-
-LAB_NET="ukama-lab-$SAFE_RUN_ID"
 MEDIA_CONTAINER="ukama-media-$SAFE_RUN_ID"
 
 need_cmd() {
@@ -44,55 +42,36 @@ need_file() {
     fi
 }
 
-first_site_env() {
-    find "$SITE_STATE_DIR" -type f -name '*.env' | sort | head -1
-}
-
-container_has_network() {
+container_ip_on_network() {
     container="$1"
     network="$2"
 
-    podman inspect -f '{{json .NetworkSettings.Networks}}' "$container" 2>/dev/null |
-        grep -q "\"$network\""
-}
-
-media_ip() {
-    podman inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' \
-        "$MEDIA_CONTAINER" 2>/dev/null
+    podman inspect -f '{{range $name, $net := .NetworkSettings.Networks}}{{if eq $name "'"$network"'"}}{{$net.IPAddress}}{{end}}{{end}}' \
+        "$container" 2>/dev/null
 }
 
 need_cmd podman
 need_file "$UE_DIR/media/Containerfile"
 
-SITE_ENV="$(first_site_env || true)"
-if [ -z "$SITE_ENV" ]; then
-    echo "no site runtime state found in $SITE_STATE_DIR" >&2
+if [ ! -f "$NET_STATE" ]; then
+    echo "lab network state not found: $NET_STATE" >&2
     exit 1
 fi
 
 # shellcheck disable=SC1090
-. "$SITE_ENV"
+. "$NET_STATE"
 
-if [ -z "${TNODE_CONTAINER:-}" ]; then
-    echo "TNODE_CONTAINER missing in $SITE_ENV" >&2
+if [ -z "${LAB_NET:-}" ]; then
+    echo "LAB_NET missing in $NET_STATE" >&2
     exit 1
 fi
 
 mkdir -p "$MEDIA_STATE_DIR"
 
-echo "media: create network $LAB_NET"
-podman network exists "$LAB_NET" >/dev/null 2>&1 ||
-    podman network create "$LAB_NET" >/dev/null
-
-echo "media: connect tower $TNODE_CONTAINER to $LAB_NET"
-if ! container_has_network "$TNODE_CONTAINER" "$LAB_NET"; then
-    podman network connect "$LAB_NET" "$TNODE_CONTAINER"
-fi
-
 echo "media: build $MEDIA_IMAGE"
 podman build -t "$MEDIA_IMAGE" -f "$UE_DIR/media/Containerfile" "$UE_DIR"
 
-echo "media: start $MEDIA_CONTAINER"
+echo "media: start $MEDIA_CONTAINER network=$LAB_NET"
 podman rm -f "$MEDIA_CONTAINER" >/dev/null 2>&1 || true
 
 podman run -d \
@@ -100,7 +79,7 @@ podman run -d \
     --network "$LAB_NET" \
     "$MEDIA_IMAGE" >/dev/null
 
-MEDIA_IP="$(media_ip)"
+MEDIA_IP="$(container_ip_on_network "$MEDIA_CONTAINER" "$LAB_NET")"
 if [ -z "$MEDIA_IP" ]; then
     echo "media container has no IP on $LAB_NET: $MEDIA_CONTAINER" >&2
     podman inspect "$MEDIA_CONTAINER" >&2 || true
@@ -114,7 +93,6 @@ MEDIA_IP=$MEDIA_IP
 HTTP_PORT=$HTTP_PORT
 IPERF_PORT=$IPERF_PORT
 LAB_NET=$LAB_NET
-TNODE_CONTAINER=$TNODE_CONTAINER
 STATE
 
 echo "media-ready container=$MEDIA_CONTAINER ip=$MEDIA_IP network=$LAB_NET"

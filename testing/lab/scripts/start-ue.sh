@@ -22,44 +22,75 @@ SITE_REF="$7"
 RUN_DIR="$8"
 
 UE_DIR="$REPO/testing/ue"
+NET_STATE="$RUN_DIR/runtime-net/net.env"
 SITE_STATE="$RUN_DIR/runtime-sites/$(printf "%s" "$SITE_REF" | tr -c 'A-Za-z0-9_.-' '-').env"
 MEDIA_STATE="$RUN_DIR/runtime-media/media.env"
 UE_STATE_DIR="$RUN_DIR/runtime-ues"
 UE_IMAGE="ukama/ue:dev"
+UE_CONTAINER="ue-$IMSI"
 
 mkdir -p "$UE_STATE_DIR"
 
-if ! command -v podman >/dev/null 2>&1; then
-    echo "podman is required" >&2
-    exit 1
-fi
+need_cmd() {
+    if ! command -v "$1" >/dev/null 2>&1; then
+        echo "missing required command: $1" >&2
+        exit 1
+    fi
+}
 
-if [ ! -x "$UE_DIR/scripts/run-ue.sh" ]; then
-    echo "missing $UE_DIR/scripts/run-ue.sh" >&2
-    exit 1
-fi
+need_file() {
+    if [ ! -f "$1" ]; then
+        echo "missing $1" >&2
+        exit 1
+    fi
+}
 
-if [ ! -f "$SITE_STATE" ]; then
-    echo "site state not found: $SITE_STATE" >&2
-    exit 1
-fi
+container_ip_on_network() {
+    container="$1"
+    network="$2"
 
-if [ ! -f "$MEDIA_STATE" ]; then
-    echo "media state not found: $MEDIA_STATE" >&2
-    exit 1
-fi
+    podman inspect -f '{{range $name, $net := .NetworkSettings.Networks}}{{if eq $name "'"$network"'"}}{{$net.IPAddress}}{{end}}{{end}}' \
+        "$container" 2>/dev/null
+}
 
+ue_data_port() {
+    last3="$(printf "%s" "$IMSI" | sed 's/.*\(...\)$/\1/')"
+    awk -v x="$last3" 'BEGIN { printf "%d", 41000 + x }'
+}
+
+need_cmd podman
+need_cmd awk
+need_file "$UE_DIR/ue/Containerfile"
+need_file "$NET_STATE"
+need_file "$SITE_STATE"
+need_file "$MEDIA_STATE"
+
+# shellcheck disable=SC1090
+. "$NET_STATE"
+# shellcheck disable=SC1090
 . "$SITE_STATE"
+# shellcheck disable=SC1090
 . "$MEDIA_STATE"
+
+if [ -z "${LAB_NET:-}" ]; then
+    echo "LAB_NET missing in $NET_STATE" >&2
+    exit 1
+fi
 
 if [ -z "${TNODE_CONTAINER:-}" ]; then
     echo "TNODE_CONTAINER missing in $SITE_STATE" >&2
     exit 1
 fi
 
-TOWER_IP="$(podman inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$TNODE_CONTAINER")"
+TOWER_IP="$(container_ip_on_network "$TNODE_CONTAINER" "$LAB_NET")"
 if [ -z "$TOWER_IP" ]; then
-    echo "tower container has no IP: $TNODE_CONTAINER" >&2
+    echo "tower container has no IP on $LAB_NET: $TNODE_CONTAINER" >&2
+    podman inspect "$TNODE_CONTAINER" >&2 || true
+    exit 1
+fi
+
+if [ -z "${MEDIA_IP:-}" ]; then
+    echo "MEDIA_IP missing in $MEDIA_STATE" >&2
     exit 1
 fi
 
@@ -75,18 +106,33 @@ IMSI,ICCID,MSISDN,SmDpAddress,ActivationCode,IsPhysical,QrCode,UE_IP,APN,Enabled
 $IMSI,$ICCID,10000000000,lab,lab,TRUE,lab,$UE_IP,internet,TRUE
 CSVEOF
 
-UE_IMAGE="$UE_IMAGE" \
-UE_NETWORK_MODE=podman \
-TOWER_IP="$TOWER_IP" \
-MEDIA_IP="$MEDIA_IP" \
-EPCEMU_PORT=18028 \
-EPCEMU_DATA_PORT=18029 \
-PCRF_PORT=18030 \
-UE_DATA_HOST=0.0.0.0 \
-ALLOW_LOCAL_MEDIA=true \
-    "$UE_DIR/scripts/run-ue.sh" --csv "$CSV" --imsi "$IMSI" > "$UE_STATE_DIR/$UE_ID.start.out"
+UE_DATA_PORT="$(ue_data_port)"
 
-UE_CONTAINER="ue-$IMSI"
+echo "ue: start $UE_CONTAINER network=$LAB_NET tower=$TOWER_IP media=$MEDIA_IP ip=$UE_IP"
+podman rm -f "$UE_CONTAINER" >/dev/null 2>&1 || true
+
+podman run -d \
+    --name "$UE_CONTAINER" \
+    --network "$LAB_NET" \
+    --cap-add NET_ADMIN \
+    --device /dev/net/tun \
+    -e UE_IMSI="$IMSI" \
+    -e UE_ICCID="$ICCID" \
+    -e UE_IP="$UE_IP/22" \
+    -e UE_APN="internet" \
+    -e UE_TUN="tun0" \
+    -e EPCEMU_URL="http://$TOWER_IP:18028" \
+    -e EPCEMU_DATA_HOST="$TOWER_IP" \
+    -e EPCEMU_DATA_PORT="18029" \
+    -e UE_DATA_HOST="0.0.0.0" \
+    -e UE_DATA_PORT="$UE_DATA_PORT" \
+    -e PCRF_URL="http://$TOWER_IP:18030" \
+    -e MEDIA_IP="$MEDIA_IP" \
+    -e UE_DETACH_ON_EXIT="1" \
+    "$UE_IMAGE" \
+    /bin/sh -c '/opt/ukama/ue-agent/ue-agent || exit 1; tail -f /dev/null' \
+    > "$UE_STATE_DIR/$UE_ID.start.out"
+
 STATE_FILE="$UE_STATE_DIR/$UE_ID.env"
 cat > "$STATE_FILE" <<STATE
 UE_REF=$UE_REF
@@ -95,16 +141,18 @@ UE_CONTAINER=$UE_CONTAINER
 IMSI=$IMSI
 ICCID=$ICCID
 UE_IP=$UE_IP
+UE_DATA_PORT=$UE_DATA_PORT
 SITE_REF=$SITE_REF
 TNODE_CONTAINER=$TNODE_CONTAINER
 TOWER_IP=$TOWER_IP
 MEDIA_IP=$MEDIA_IP
 HTTP_PORT=8080
 IPERF_PORT=5201
+LAB_NET=$LAB_NET
 CSV=$CSV
 UE_DIR=$UE_DIR
 STATE
 
 cp "$STATE_FILE" "$UE_STATE_DIR/$UE_REF.env"
 
-echo "ue-started ref=$UE_REF imsi=$IMSI ip=$UE_IP tower=$TNODE_CONTAINER media=$MEDIA_IP"
+echo "ue-started ref=$UE_REF imsi=$IMSI ip=$UE_IP tower=$TOWER_IP media=$MEDIA_IP network=$LAB_NET"

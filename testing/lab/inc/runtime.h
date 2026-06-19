@@ -23,6 +23,7 @@ typedef struct {
 int runtime_init(runtime_t *rt, const char *script_dir,
                  const char *run_dir, const char *repo);
 void runtime_close(runtime_t *rt);
+int runtime_ensure_network(runtime_t *rt, ulab_error_t *err);
 int runtime_build_and_start_sites(const char *repo,
                                   runtime_t *rt,
                                   world_t *w,

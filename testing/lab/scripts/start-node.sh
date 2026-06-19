@@ -17,6 +17,7 @@ CONTAINER_NAME="$2"
 RUN_DIR="$3"
 IMAGE_REPO="${IMAGE_REPO:-testing/virtualnode}"
 IMAGE="$IMAGE_REPO:$NODE_ID"
+LAB_NET="${LAB_NET:-}"
 
 need_cmd() {
     if ! command -v "$1" >/dev/null 2>&1; then
@@ -28,6 +29,11 @@ need_cmd() {
 need_cmd podman
 
 PUBLISH_ARGS=""
+NETWORK_ARGS=""
+
+if [ -n "$LAB_NET" ]; then
+    NETWORK_ARGS="--network $LAB_NET"
+fi
 
 if [ "${ULAB_PUBLISH_NODE_PORTS:-0}" = "1" ]; then
     PUBLISH_ARGS="-p 18001:18001 -p 18026:18026 -p 18028:18028 -p 18029:18029/udp -p 18030:18030"
@@ -36,7 +42,7 @@ fi
 echo "podman: removing existing container if present: $CONTAINER_NAME"
 podman rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
 
-echo "podman: starting $CONTAINER_NAME from $IMAGE"
+echo "podman: starting $CONTAINER_NAME from $IMAGE network=${LAB_NET:-default}"
 
 if [ -n "${ULAB_NODE_ENTRYPOINT:-}" ]; then
     # shellcheck disable=SC2086
@@ -44,6 +50,7 @@ if [ -n "${ULAB_NODE_ENTRYPOINT:-}" ]; then
         --name "$CONTAINER_NAME" \
         --privileged \
         --device /dev/net/tun \
+        $NETWORK_ARGS \
         --entrypoint "$ULAB_NODE_ENTRYPOINT" \
         $PUBLISH_ARGS \
         "$IMAGE" \
@@ -54,8 +61,9 @@ else
         --name "$CONTAINER_NAME" \
         --privileged \
         --device /dev/net/tun \
+        $NETWORK_ARGS \
         $PUBLISH_ARGS \
         "$IMAGE"
 fi
 
-echo "node-started node=$NODE_ID container=$CONTAINER_NAME run_dir=$RUN_DIR"
+echo "node-started node=$NODE_ID container=$CONTAINER_NAME network=${LAB_NET:-default} run_dir=$RUN_DIR"
