@@ -32,12 +32,20 @@ if [ ! -f "$UE_DIR/media/Containerfile" ]; then
     exit 1
 fi
 
+if [ ! -x "$UE_DIR/scripts/run-media.sh" ]; then
+    echo "missing $UE_DIR/scripts/run-media.sh" >&2
+    exit 1
+fi
+
 echo "media: build $MEDIA_IMAGE"
 podman build -t "$MEDIA_IMAGE" -f "$UE_DIR/media/Containerfile" "$UE_DIR"
 
 echo "media: start $MEDIA_CONTAINER"
-podman rm -f "$MEDIA_CONTAINER" >/dev/null 2>&1 || true
-podman run -d --name "$MEDIA_CONTAINER" "$MEDIA_IMAGE" >/dev/null
+MEDIA_NAME="$MEDIA_CONTAINER" \
+MEDIA_IMAGE="$MEDIA_IMAGE" \
+MEDIA_NETWORK_MODE=podman \
+ALLOW_LOCAL_MEDIA=true \
+    "$UE_DIR/scripts/run-media.sh" >/dev/null
 
 MEDIA_IP="$(podman inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$MEDIA_CONTAINER")"
 if [ -z "$MEDIA_IP" ]; then
@@ -50,6 +58,7 @@ MEDIA_CONTAINER=$MEDIA_CONTAINER
 MEDIA_IP=$MEDIA_IP
 HTTP_PORT=8080
 IPERF_PORT=5201
+UE_DIR=$UE_DIR
 STATE
 
 echo "media-ready container=$MEDIA_CONTAINER ip=$MEDIA_IP"

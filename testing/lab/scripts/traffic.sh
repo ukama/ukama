@@ -24,13 +24,12 @@ fi
 
 . "$STATE_FILE"
 
-# Repo layout is fixed for ukama-lab smoke E2E.
-UE_DIR="$(cd "$(dirname "$0")/../../.." && pwd)/testing/ue"
 if [ ! -x "$UE_DIR/scripts/traffic-ue.sh" ]; then
     echo "missing $UE_DIR/scripts/traffic-ue.sh" >&2
     exit 1
 fi
 
 echo "traffic ue=$UE_KEY imsi=$IMSI mb=$AMOUNT_MB media=$MEDIA_IP"
-"$UE_DIR/scripts/traffic-ue.sh" "$IMSI" iperf "$AMOUNT_MB" "$MEDIA_IP"
+MEDIA_IP="$MEDIA_IP" HTTP_PORT=8080 IPERF_PORT=5201 \
+    "$UE_DIR/scripts/traffic-ue.sh" --imsi "$IMSI" --mode iperf --mb "$AMOUNT_MB"
 echo "traffic-complete ue=$UE_KEY imsi=$IMSI mb=$AMOUNT_MB"
