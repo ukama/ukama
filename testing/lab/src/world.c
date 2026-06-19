@@ -59,6 +59,31 @@ static uint32_t seeded_u32(const scenario_t *s,
     return ulab_hash32(key, s->seed);
 }
 
+
+static void ue_ip_for_site_index(size_t site_ue_idx,
+                                 char *out,
+                                 size_t out_len) {
+
+    size_t host;
+    size_t third;
+    size_t fourth;
+
+    /*
+     * UE CIDR is 192.168.8.0/22. 192.168.8.1 is used by EPC TUN,
+     * so the first UE starts at 192.168.8.2. IPs are reused per site
+     * because each tower node owns its own isolated UE subnet.
+     */
+    host = site_ue_idx + 2;
+    third = ULAB_UE_SUBNET_BASE_C + (host / 256);
+    fourth = host % 256;
+
+    snprintf(out, out_len, "%u.%u.%zu.%zu",
+             ULAB_UE_SUBNET_BASE_A,
+             ULAB_UE_SUBNET_BASE_B,
+             third,
+             fourth);
+}
+
 static const char *pick_package(const scenario_t *s, size_t ue_idx) {
 
     uint32_t roll;
@@ -181,6 +206,7 @@ int world_generate(const scenario_t *s,
                          site->ref);
                 snprintf(ue->package_ref, sizeof(ue->package_ref), "%s",
                          pick_package(s, ue_idx));
+                ue_ip_for_site_index(k, ue->ip, sizeof(ue->ip));
                 ue_idx++;
             }
         }

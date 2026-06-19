@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "scenario.h"
+#include "world.h"
 
 static int fail(ulab_error_t *err, const char *msg) {
     snprintf(err->msg, sizeof(err->msg), "%s", msg);
@@ -34,6 +35,15 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
 
     if (s->world.ues_per_site == 0) {
         return fail(err, "world.ues_per_site must be > 0");
+    }
+
+    if (s->world.tower_per_site == 0) {
+        return fail(err, "world.nodes_per_site must include tower node");
+    }
+
+    if (s->world.ues_per_site >
+        s->world.tower_per_site * ULAB_MAX_UES_PER_TOWER) {
+        return fail(err, "world.ues_per_site exceeds 500 UEs per tower");
     }
 
     if (s->world.tower_per_site + s->world.amplifier_per_site +

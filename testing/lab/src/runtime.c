@@ -187,13 +187,15 @@ static int load_runtime_site_state(runtime_t *rt,
 
 int runtime_init(runtime_t *rt,
                  const char *script_dir,
-                 const char *run_dir) {
+                 const char *run_dir,
+                 const char *repo) {
 
     char path[ULAB_MAX_PATH];
 
     memset(rt, 0, sizeof(*rt));
     ulab_copy(rt->script_dir, sizeof(rt->script_dir), script_dir);
     ulab_copy(rt->run_dir, sizeof(rt->run_dir), run_dir);
+    ulab_copy(rt->repo, sizeof(rt->repo), repo ? repo : "");
 
     snprintf(path, sizeof(path), "%s/runtime.log", run_dir);
     rt->logf = fopen(path, "w");
@@ -281,23 +283,72 @@ int runtime_wait_nodes_ready(runtime_t *rt,
     return ULAB_OK;
 }
 
+int runtime_ensure_media(runtime_t *rt, ulab_error_t *err) {
+
+    char args[ULAB_MAX_ARGS];
+    int rc;
+
+    if (rt->repo[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "runtime media requires --repo");
+        return ULAB_ERR;
+    }
+
+    rc = snprintf(args, sizeof(args), "%s %s", rt->repo, rt->run_dir);
+    if (rc < 0 || (size_t)rc >= sizeof(args)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "start-media args too long");
+        return ULAB_ERR;
+    }
+
+    ulab_status("MEDIA", "start/ensure media target");
+    if (run_script(rt, "start-media.sh", args, err)) {
+        return ULAB_ERR;
+    }
+
+    memset(args, 0, sizeof(args));
+    rc = snprintf(args, sizeof(args), "%s", rt->run_dir);
+    if (rc < 0 || (size_t)rc >= sizeof(args)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "wait-media args too long");
+        return ULAB_ERR;
+    }
+
+    ulab_status("MEDIA", "wait ready");
+    if (run_script(rt, "wait-media-ready.sh", args, err)) {
+        return ULAB_ERR;
+    }
+
+    return ULAB_OK;
+}
+
 int runtime_build_and_start_ues(const char *repo,
                                 runtime_t *rt,
                                 const world_t *w,
                                 const selector_result_t *ues,
                                 ulab_error_t *err) {
     size_t i;
-    (void)repo;
+    const char *repo_path;
+
+    repo_path = (repo != NULL && repo[0] != '\0') ? repo : rt->repo;
+    if (repo_path == NULL || repo_path[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "start-ue requires --repo");
+        return ULAB_ERR;
+    }
 
     for (i = 0; i < ues->count; i++) {
         const ue_t *ue = &w->ues[ues->idx[i]];
         char args[4096];
         int rc;
 
-        rc = snprintf(args, sizeof(args), "%s %s %s %s %s",
+        rc = snprintf(args, sizeof(args), "%s %s %s %s %s %s %s %s",
+                      repo_path,
+                      ue->ref,
                       ue->id,
                       ue->imsi,
                       ue->iccid,
+                      ue->ip,
                       ue->site_ref,
                       rt->run_dir);
 

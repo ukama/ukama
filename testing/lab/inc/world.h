@@ -19,6 +19,12 @@
 #define ULAB_NODE_KIND_AMPLIFIER  "anode"
 #define ULAB_NODE_KIND_CONTROLLER "cnode"
 
+#define ULAB_MAX_UES_PER_TOWER 500u
+#define ULAB_UE_SUBNET_BASE_A 192u
+#define ULAB_UE_SUBNET_BASE_B 168u
+#define ULAB_UE_SUBNET_BASE_C 8u
+#define ULAB_UE_SUBNET_PREFIX 22u
+
 typedef struct {
     char ref[ULAB_MAX_REF];
     char id[ULAB_MAX_ID];
@@ -76,6 +82,7 @@ typedef struct {
     char network_ref[ULAB_MAX_REF];
     char site_ref[ULAB_MAX_REF];
     char package_ref[ULAB_MAX_REF];
+    char ip[ULAB_MAX_REF];
     char bff_id[ULAB_MAX_ID];
     int  started;
     int  attached;

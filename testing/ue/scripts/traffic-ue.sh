@@ -8,84 +8,30 @@
 
 set -euo pipefail
 
-MEDIA_IP="${MEDIA_IP:-127.0.0.1}"
-
-IMSI=""
-MODE="http"
-ALLOW_LOCAL_MEDIA="${ALLOW_LOCAL_MEDIA:-true}"
-HTTP_PORT="${HTTP_PORT:-8080}"
-IPERF_PORT="${IPERF_PORT:-5201}"
-
-usage() {
-    cat <<USAGE
-Usage: $0 --imsi <imsi> [--mode ping|http|iperf]
-
-Environment:
-  MEDIA_IP            Default: 127.0.0.1
-  HTTP_PORT           Default: 8080
-  IPERF_PORT          Default: 5201
-  IPERF_TIME          Default: 10
-  ALLOW_LOCAL_MEDIA   Default: true for lab mode
-USAGE
-}
-
-is_local_media_ip() {
-    local ip="$1"
-
-    case "$ip" in
-        127.*|0.0.0.0|localhost)
-            return 0
-            ;;
-        *)
-            return 1
-            ;;
-    esac
-}
-
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        --imsi)
-            IMSI="$2"
-            shift 2
-            ;;
-        --mode)
-            MODE="$2"
-            shift 2
-            ;;
-        -h|--help)
-            usage
-            exit 0
-            ;;
-        *)
-            echo "unknown arg $1" >&2
-            usage >&2
-            exit 1
-            ;;
-    esac
-done
-
-: "${IMSI:?--imsi required}"
-
-if is_local_media_ip "$MEDIA_IP" && [[ "$ALLOW_LOCAL_MEDIA" != "true" ]]; then
-    echo "MEDIA_IP=$MEDIA_IP is local; real E2E requires external media" >&2
-    echo "set ALLOW_LOCAL_MEDIA=true only for temporary lab testing" >&2
-    exit 1
+if [[ $# -lt 4 ]]; then
+    echo "usage: $0 <imsi> <ping|http|iperf> <mb> <media-ip>" >&2
+    exit 2
 fi
+
+IMSI="$1"
+MODE="$2"
+MB="$3"
+MEDIA_IP="$4"
+HTTP_PORT=8080
+IPERF_PORT=5201
 
 case "$MODE" in
     ping)
-        podman exec "ue-${IMSI}" ping -c "${PING_COUNT:-5}" "$MEDIA_IP"
+        podman exec "ue-$IMSI" ping -c 5 "$MEDIA_IP"
         ;;
     http)
-        podman exec "ue-${IMSI}" curl -fsS \
-            "http://${MEDIA_IP}:${HTTP_PORT}/"
+        podman exec "ue-$IMSI" curl -fsS "http://$MEDIA_IP:$HTTP_PORT/"
         ;;
     iperf)
-        podman exec "ue-${IMSI}" iperf3 -c "$MEDIA_IP" \
-            -p "$IPERF_PORT" -t "${IPERF_TIME:-10}"
+        podman exec "ue-$IMSI" iperf3 -c "$MEDIA_IP" -p "$IPERF_PORT" -n "${MB}M"
         ;;
     *)
-        echo "unknown mode $MODE" >&2
+        echo "unknown mode: $MODE" >&2
         exit 1
         ;;
 esac
