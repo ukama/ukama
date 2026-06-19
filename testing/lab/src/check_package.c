@@ -34,8 +34,10 @@ int check_package(check_ctx_t *ctx, const check_spec_t *check,
     }
     for (i = 0; i < ues.count; i++) {
         ue_t *ue = &ctx->world->ues[ues.idx[i]];
-        package_t *pkg = world_package_by_ref(ctx->world,
-            check->package_ref[0] ? check->package_ref : ue->package_ref);
+        package_t *pkg = check->package_ref[0] ?
+            world_package_for_network(ctx->world, check->package_ref,
+                                      ue->network_ref) :
+            world_package_by_ref(ctx->world, ue->package_ref);
         int active = 0;
         if (pkg == NULL) continue;
         if (bff_get_packages_for_sim(ctx->bff, ue, pkg->bff_id, &active,

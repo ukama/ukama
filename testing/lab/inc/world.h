@@ -90,6 +90,8 @@ typedef struct {
 
 typedef struct {
     char     ref[ULAB_MAX_REF];
+    char     base_ref[ULAB_MAX_REF];
+    char     network_ref[ULAB_MAX_REF];
     char     name[ULAB_MAX_NAME];
     uint64_t data_mb;
     uint32_t duration_days;
@@ -124,6 +126,9 @@ site_t *world_site_by_ref(world_t *w, const char *ref);
 node_t *world_node_by_ref(world_t *w, const char *ref);
 ue_t *world_ue_by_ref(world_t *w, const char *ref);
 package_t *world_package_by_ref(world_t *w, const char *ref);
+package_t *world_package_for_network(world_t *w,
+                                     const char *package_ref,
+                                     const char *network_ref);
 int world_add_ues(world_t *w,
                   const scenario_t *s,
                   const char *phase,
