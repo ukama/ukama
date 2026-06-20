@@ -52,17 +52,18 @@ container_ip_on_network() {
 
 need_cmd podman
 need_file "$UE_DIR/media/Containerfile"
-
-if [ ! -f "$NET_STATE" ]; then
-    echo "lab network state not found: $NET_STATE" >&2
-    exit 1
-fi
+need_file "$NET_STATE"
 
 # shellcheck disable=SC1090
 . "$NET_STATE"
 
 if [ -z "${LAB_NET:-}" ]; then
     echo "LAB_NET missing in $NET_STATE" >&2
+    exit 1
+fi
+
+if ! podman network exists "$LAB_NET" >/dev/null 2>&1; then
+    echo "podman network does not exist: $LAB_NET" >&2
     exit 1
 fi
 

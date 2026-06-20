@@ -206,6 +206,14 @@ container_name() {
     echo "ukama-vnode-$(safe_name "$1")"
 }
 
+container_ip_on_network() {
+    container="$1"
+    network="$2"
+
+    podman inspect -f '{{range $name, $net := .NetworkSettings.Networks}}{{if eq $name "'"$network"'"}}{{$net.IPAddress}}{{end}}{{end}}' \
+        "$container" 2>/dev/null
+}
+
 write_node_state() {
     logical_node_id="$1"
     node_id="$2"
@@ -239,6 +247,9 @@ write_site_state() {
         echo "TNODE_CONTAINER=$TNODE_CONTAINER"
         echo "CNODE_CONTAINER=$CNODE_CONTAINER"
         echo "ANODE_CONTAINER=$ANODE_CONTAINER"
+        echo "TNODE_IP=${TNODE_IP:-}"
+        echo "CNODE_IP=${CNODE_IP:-}"
+        echo "ANODE_IP=${ANODE_IP:-}"
         echo "SLOT=$SLOT"
         echo "LAB_NET=${LAB_NET:-}"
     } > "$state_file"
@@ -316,9 +327,19 @@ assign_org "$TNODE_ID"
 assign_org "$CNODE_ID"
 assign_org "$ANODE_ID"
 
-LAB_NET="$LAB_NET" "$SCRIPT_DIR/start-node.sh" "$TNODE_ID" "$TNODE_CONTAINER" "$RUN_DIR"
-LAB_NET="$LAB_NET" "$SCRIPT_DIR/start-node.sh" "$CNODE_ID" "$CNODE_CONTAINER" "$RUN_DIR"
-LAB_NET="$LAB_NET" "$SCRIPT_DIR/start-node.sh" "$ANODE_ID" "$ANODE_CONTAINER" "$RUN_DIR"
+"$SCRIPT_DIR/start-node.sh" "$TNODE_ID" "$TNODE_CONTAINER" "$RUN_DIR"
+"$SCRIPT_DIR/start-node.sh" "$CNODE_ID" "$CNODE_CONTAINER" "$RUN_DIR"
+"$SCRIPT_DIR/start-node.sh" "$ANODE_ID" "$ANODE_CONTAINER" "$RUN_DIR"
+
+TNODE_IP="$(container_ip_on_network "$TNODE_CONTAINER" "$LAB_NET")"
+CNODE_IP="$(container_ip_on_network "$CNODE_CONTAINER" "$LAB_NET")"
+ANODE_IP="$(container_ip_on_network "$ANODE_CONTAINER" "$LAB_NET")"
+
+if [ -z "$TNODE_IP" ] || [ -z "$CNODE_IP" ] || [ -z "$ANODE_IP" ]; then
+    echo "one or more site containers have no IP on $LAB_NET" >&2
+    podman ps -a --filter "name=ukama-vnode-" >&2 || true
+    exit 1
+fi
 
 write_site_state
 write_node_state "$SITE_REF-tnode" "$TNODE_ID" "tnode" "$TNODE_CONTAINER"
