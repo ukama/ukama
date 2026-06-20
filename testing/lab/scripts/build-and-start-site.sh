@@ -39,50 +39,157 @@ safe_name() {
     printf "%s" "$1" | tr -c 'A-Za-z0-9_.-' '-'
 }
 
-pick_tnode() {
+pick_site_bundle() {
     json="$1"
 
     jq -r '
+      def nid:
+        ((.nodeId // .nodeID // .node_id // .id // "") | tostring);
+
+      def ntype:
+        ((.nodeType // .node_type // .type // .kind // "") |
+         tostring | ascii_downcase);
+
+      def assoc_tnode:
+        ((.associatedTNodeId // .associated_tnode_id //
+          .associatedTnodeId // .associated_tnode //
+          .tnodeId // .tnode_id //
+          .parentTNodeId // .parent_tnode_id // "") | tostring);
+
+      def kind:
+        if (.type == "tnode" or (.id | ascii_downcase | test("-tnode-"))) then
+          "tnode"
+        elif (.type == "cnode" or (.id | ascii_downcase | test("-cnode-"))) then
+          "cnode"
+        elif (.type == "anode" or (.id | ascii_downcase | test("-anode-"))) then
+          "anode"
+        else
+          .type
+        end;
+
+      def derived($id; $kind):
+        ($id | gsub("-tnode-"; "-" + $kind + "-"));
+
       [
         .. | objects
-        | select((.nodeId? // .nodeID? // .node_id? // .id?) != null)
-        | {
-            id:   ((.nodeId // .nodeID // .node_id // .id) | tostring),
-            type: ((.nodeType // .node_type // .type // .kind // "") |
-                   tostring | ascii_downcase)
-          }
-        | select((.id | ascii_downcase | test("-tnode-")) or
-                 (.type == "tnode"))
-        | .id
+        | select((nid | length) > 0)
+        | {id: nid, type: ntype, associated_tnode_id: assoc_tnode}
       ]
-      | unique
+      | unique_by(.id)
+      as $nodes
+      |
+      [
+        $nodes[]
+        | select(kind == "tnode")
+        | .id as $tnode
+        | (derived($tnode; "cnode")) as $derived_cnode
+        | (derived($tnode; "anode")) as $derived_anode
+        | (
+            $nodes
+            | map(select((kind == "cnode") and
+                         ((.id == $derived_cnode) or
+                          (.associated_tnode_id == $tnode))))
+            | .[0].id // ""
+          ) as $cnode
+        | (
+            $nodes
+            | map(select((kind == "anode") and
+                         ((.id == $derived_anode) or
+                          (.associated_tnode_id == $tnode))))
+            | .[0].id // ""
+          ) as $anode
+        | select(($cnode | length) > 0 and ($anode | length) > 0)
+        | [$tnode, $cnode, $anode]
+        | @tsv
+      ]
       | first // empty
     ' "$json"
 }
 
-derive_node_id() {
-    node_id="$1"
-    kind="$2"
+print_incomplete_bundles() {
+    json="$1"
 
-    case "$node_id" in
-        *-tnode-*)
-            echo "$node_id" | sed "s/-tnode-/-$kind-/"
-            ;;
-        *)
-            echo "cannot derive $kind from non-tnode id: $node_id" >&2
-            exit 1
-            ;;
-    esac
+    jq -r '
+      def nid:
+        ((.nodeId // .nodeID // .node_id // .id // "") | tostring);
+
+      def ntype:
+        ((.nodeType // .node_type // .type // .kind // "") |
+         tostring | ascii_downcase);
+
+      def assoc_tnode:
+        ((.associatedTNodeId // .associated_tnode_id //
+          .associatedTnodeId // .associated_tnode //
+          .tnodeId // .tnode_id //
+          .parentTNodeId // .parent_tnode_id // "") | tostring);
+
+      def kind:
+        if (.type == "tnode" or (.id | ascii_downcase | test("-tnode-"))) then
+          "tnode"
+        elif (.type == "cnode" or (.id | ascii_downcase | test("-cnode-"))) then
+          "cnode"
+        elif (.type == "anode" or (.id | ascii_downcase | test("-anode-"))) then
+          "anode"
+        else
+          .type
+        end;
+
+      def derived($id; $kind):
+        ($id | gsub("-tnode-"; "-" + $kind + "-"));
+
+      [
+        .. | objects
+        | select((nid | length) > 0)
+        | {id: nid, type: ntype, associated_tnode_id: assoc_tnode}
+      ]
+      | unique_by(.id)
+      as $nodes
+      |
+      [
+        $nodes[]
+        | select(kind == "tnode")
+        | .id as $tnode
+        | (derived($tnode; "cnode")) as $derived_cnode
+        | (derived($tnode; "anode")) as $derived_anode
+        | (
+            $nodes
+            | any((kind == "cnode") and
+                  ((.id == $derived_cnode) or
+                   (.associated_tnode_id == $tnode)))
+          ) as $has_cnode
+        | (
+            $nodes
+            | any((kind == "anode") and
+                  ((.id == $derived_anode) or
+                   (.associated_tnode_id == $tnode)))
+          ) as $has_anode
+        | select(($has_cnode and $has_anode) | not)
+        | "skip incomplete bundle tnode=\($tnode) cnode=\($has_cnode) anode=\($has_anode)"
+      ]
+      | .[0:20][]?
+    ' "$json" >&2 || true
 }
 
 mark_provisioned() {
     node_id="$1"
+    body="$(mktemp "${TMPDIR:-/tmp}/ukama-mark-provisioned.XXXXXX")"
 
     echo "factory: marking node provisioned $node_id"
-    curl -fsS -X PATCH \
+    code="$(curl -sS -o "$body" -w "%{http_code}" -X PATCH \
         "$FACTORY_URL/v1/nodefactory/node/$node_id" \
-        -H "accept: application/json" \
-        >/dev/null
+        -H "accept: application/json")"
+
+    case "$code" in
+        200|204|409)
+            rm -f "$body"
+            ;;
+        *)
+            echo "factory: mark provisioned failed node=$node_id status=$code" >&2
+            cat "$body" >&2 || true
+            rm -f "$body"
+            exit 1
+            ;;
+    esac
 }
 
 assign_org() {
@@ -167,27 +274,32 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-echo "factory: fetching unprovisioned tnodes for site=$SITE_REF"
+echo "factory: fetching unprovisioned factory nodes for site=$SITE_REF"
 
 curl -fsS -X GET \
     "$FACTORY_URL/v1/nodefactory/nodes?isProvisioned=false" \
     -H "accept: application/json" \
     > "$FACTORY_JSON"
-TNODE_ID="$(pick_tnode "$FACTORY_JSON")"
 
-if [ -z "$TNODE_ID" ]; then
-    echo "no available tnode factory node for site=$SITE_REF" >&2
+BUNDLE="$(pick_site_bundle "$FACTORY_JSON")"
+
+if [ -z "$BUNDLE" ]; then
+    echo "no complete unprovisioned factory bundle for site=$SITE_REF" >&2
+    print_incomplete_bundles "$FACTORY_JSON"
     exit 1
 fi
 
-CNODE_ID="$(derive_node_id "$TNODE_ID" cnode)"
-ANODE_ID="$(derive_node_id "$TNODE_ID" anode)"
+# shellcheck disable=SC2086
+set -- $BUNDLE
+TNODE_ID="$1"
+CNODE_ID="$2"
+ANODE_ID="$3"
 
 TNODE_CONTAINER="$(container_name "$TNODE_ID")"
 CNODE_CONTAINER="$(container_name "$CNODE_ID")"
 ANODE_CONTAINER="$(container_name "$ANODE_ID")"
 
-echo "factory: selected site bundle site=$SITE_REF tnode=$TNODE_ID cnode=$CNODE_ID anode=$ANODE_ID"
+echo "factory: selected complete site bundle site=$SITE_REF tnode=$TNODE_ID cnode=$CNODE_ID anode=$ANODE_ID"
 
 # Build first. Do not mutate factory state until all three images build.
 "$SCRIPT_DIR/build-node.sh" "$REPO" "$TNODE_ID" "$NODE_RUNTIME"
