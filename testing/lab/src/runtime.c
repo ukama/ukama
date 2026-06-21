@@ -363,6 +363,27 @@ int runtime_build_and_start_ues(const char *repo,
         char args[4096];
         int rc;
 
+        if (ue->imsi[0] == '\0') {
+            snprintf(err->msg, sizeof(err->msg),
+                     "start-ue missing IMSI for ue %s", ue->id);
+            return ULAB_ERR;
+        }
+
+        if (ue->iccid[0] == '\0') {
+            snprintf(err->msg, sizeof(err->msg),
+                     "start-ue missing ICCID for ue %s", ue->id);
+            return ULAB_ERR;
+        }
+
+        if (ue->ip[0] == '\0') {
+            snprintf(err->msg, sizeof(err->msg),
+                     "start-ue missing IP for ue %s", ue->id);
+            return ULAB_ERR;
+        }
+
+        ulab_status("UE", "start %s imsi=%s iccid=%s ip=%s site=%s",
+                    ue->ref, ue->imsi, ue->iccid, ue->ip, ue->site_ref);
+
         rc = snprintf(args, sizeof(args), "%s %s %s %s %s %s %s %s",
                       repo_path,
                       ue->ref,

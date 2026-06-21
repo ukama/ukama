@@ -711,8 +711,21 @@ int bff_allocate_sim_from_pool(bff_client_t *c,
         return ULAB_ERR;
     }
 
-    sim_json_get_str(obj, "iccid", ue->iccid, sizeof(ue->iccid));
-    sim_json_get_str(obj, "imsi", ue->imsi, sizeof(ue->imsi));
+    {
+        char tmp[ULAB_MAX_ID];
+
+        memset(tmp, 0, sizeof(tmp));
+        if (sim_json_get_str(obj, "iccid", tmp, sizeof(tmp)) == ULAB_OK &&
+            tmp[0] != '\0') {
+            ulab_copy(ue->iccid, sizeof(ue->iccid), tmp);
+        }
+
+        memset(tmp, 0, sizeof(tmp));
+        if (sim_json_get_str(obj, "imsi", tmp, sizeof(tmp)) == ULAB_OK &&
+            tmp[0] != '\0') {
+            ulab_copy(ue->imsi, sizeof(ue->imsi), tmp);
+        }
+    }
 
     json_decref(root);
 
