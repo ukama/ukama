@@ -13,6 +13,7 @@ import {
   RestartNodesInputDto,
   RestartSiteInputDto,
   ToggleInternetSwitchInputDto,
+  SetSiteInputDto,
   ToggleSiteStatusInputDto,
 } from "../resolvers/types";
 
@@ -136,6 +137,25 @@ class ControllerApi extends BaseRESTDataSource {
 
     this.baseURL = baseURL;
     return this.post(`/${VERSION}/sites/${req.siteId}/service/${state}`)
+      .then(() => {
+        return { success: true };
+      })
+      .catch(error => {
+        this.logger.error(`Request failed: ${error}`);
+        return { success: false };
+      });
+  };
+  setSite = async (
+    baseURL: string,
+    req: SetSiteInputDto
+  ): Promise<TBooleanResponse> => {
+    const state = req.status ? "on" : "off";
+    this.logger.info(
+      `SetSite [POST]: ${baseURL}/${VERSION}/sites/${req.siteId}/${state}`
+    );
+
+    this.baseURL = baseURL;
+    return this.post(`/${VERSION}/sites/${req.siteId}/${state}`)
       .then(() => {
         return { success: true };
       })

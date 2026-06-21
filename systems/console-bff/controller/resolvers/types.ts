@@ -60,3 +60,12 @@ export class ToggleSiteStatusInputDto {
   @Field()
   status: boolean;
 }
+
+@InputType()
+export class SetSiteInputDto {
+  @Field()
+  siteId: string;
+
+  @Field()
+  status: boolean;
+}
