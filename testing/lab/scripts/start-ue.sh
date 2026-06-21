@@ -202,8 +202,6 @@ if ! podman run -d \
     --name "$UE_CONTAINER" \
     --privileged \
     --device /dev/net/tun \
-    --cap-add NET_ADMIN \
-    --cap-add NET_RAW \
     --network "$LAB_NET" \
     -e UE_IMSI="$IMSI" \
     -e UE_ICCID="$ICCID" \
