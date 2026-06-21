@@ -15,6 +15,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	contpb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/adapters"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/db"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/policy"
@@ -267,20 +268,49 @@ func (r *Reconciler) ensureCriticalPoe(ctx context.Context, siteID string) error
 	}
 	return nil
 }
+// resolveSiteNode returns the node id assigned to a role in the site port map
+// (tower for service, amplifier for radio).
+func (r *Reconciler) resolveSiteNode(siteID, role string) (string, error) {
+	ports, err := r.ports.GetBySite(siteID)
+	if err != nil {
+		return "", err
+	}
+	p, err := policy.FindRole(ports, role)
+	if err != nil {
+		return "", err
+	}
+	if p.NodeID == "" {
+		return "", fmt.Errorf("no node assigned to role %s for site %s", role, siteID)
+	}
+	return p.NodeID, nil
+}
+
 func (r *Reconciler) applyService(ctx context.Context, siteID, state string) error {
-	_, err := r.controllerProvider.GetClient()
+	nodeID, err := r.resolveSiteNode(siteID, policy.RoleTower)
+	if err != nil {
+		return fmt.Errorf("resolve service node: %w", err)
+	}
+	client, err := r.controllerProvider.GetClient()
 	if err != nil {
 		return fmt.Errorf("get controller client: %w", err)
 	}
-	// TODO: Implement controller service call
-	return fmt.Errorf("apply service: %w", err)
+	if _, err := client.ToggleNodeService(ctx, &contpb.ToggleNodeServiceRequest{NodeId: nodeID, State: state}); err != nil {
+		return fmt.Errorf("apply service: %w", err)
+	}
+	return nil
 }
 
 func (r *Reconciler) applyRadio(ctx context.Context, siteID, state string) error {
-	_, err := r.controllerProvider.GetClient()
+	nodeID, err := r.resolveSiteNode(siteID, policy.RoleAmplifier)
+	if err != nil {
+		return fmt.Errorf("resolve radio node: %w", err)
+	}
+	client, err := r.controllerProvider.GetClient()
 	if err != nil {
 		return fmt.Errorf("get controller client: %w", err)
 	}
-	// TODO: Implement controller radio call
-	return fmt.Errorf("apply radio: %w", err)
+	if _, err := client.ToggleRfSwitch(ctx, &contpb.ToggleRfSwitchRequest{NodeId: nodeID, State: state}); err != nil {
+		return fmt.Errorf("apply radio: %w", err)
+	}
+	return nil
 }
