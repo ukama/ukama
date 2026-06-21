@@ -44,15 +44,6 @@ export class ToggleInternetSwitchInputDto {
 }
 
 @InputType()
-export class ToggleRFStatusInputDto {
-  @Field()
-  nodeId: string;
-
-  @Field()
-  status: boolean;
-}
-
-@InputType()
 export class ToggleSiteStatusInputDto {
   @Field()
   siteId: string;
