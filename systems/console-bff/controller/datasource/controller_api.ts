@@ -82,12 +82,12 @@ class ControllerApi extends BaseRESTDataSource {
     req: ToggleInternetSwitchInputDto
   ): Promise<TBooleanResponse> => {
     this.logger.info(
-      `ToggleInternetSwitch [POST]: ${baseURL}/${VERSION}/${CONTROLLER}/sites/${req.siteId}/toggle-internet-switch`
+      `ToggleInternetSwitch [POST]: ${baseURL}/${VERSION}/sites/${req.siteId}/internet-port`
     );
 
     this.baseURL = baseURL;
     return this.post(
-      `/${VERSION}/${CONTROLLER}/sites/${req.siteId}/toggle-internet-port`,
+      `/${VERSION}/sites/${req.siteId}/internet-port`,
       {
         body: {
           port: req.port,
