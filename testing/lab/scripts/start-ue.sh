@@ -66,15 +66,20 @@ ue_data_port() {
     awk -v x="$last3" 'BEGIN { printf "%d", 41000 + x }'
 }
 
-wait_http() {
-    name="$1"
-    url="$2"
+container_running() {
+    podman inspect -f '{{.State.Running}}' "$1" 2>/dev/null | grep -q '^true$'
+}
+
+wait_container_http() {
+    container="$1"
+    name="$2"
+    url="$3"
     i=0
 
-    echo "ue: wait $name $url"
+    echo "ue: wait $name from $container url=$url"
 
     while [ "$i" -lt 60 ]; do
-        if curl -fsS "$url" >/dev/null 2>&1; then
+        if podman exec "$container" curl -fsS --max-time 2 "$url" >/dev/null 2>&1; then
             echo "ue: $name ready"
             return 0
         fi
@@ -83,7 +88,7 @@ wait_http() {
         sleep 2
     done
 
-    echo "$name not ready: $url" >&2
+    echo "$name not ready from $container: $url" >&2
     return 1
 }
 
@@ -111,6 +116,11 @@ fi
 
 if [ -z "${TNODE_CONTAINER:-}" ]; then
     echo "TNODE_CONTAINER missing in $SITE_STATE" >&2
+    exit 1
+fi
+
+if [ -z "${MEDIA_CONTAINER:-}" ]; then
+    echo "MEDIA_CONTAINER missing in $MEDIA_STATE" >&2
     exit 1
 fi
 
@@ -144,14 +154,15 @@ if ! podman network exists "$LAB_NET" >/dev/null 2>&1; then
     exit 1
 fi
 
-if ! podman inspect "$TNODE_CONTAINER" >/dev/null 2>&1; then
-    echo "tower container not found: $TNODE_CONTAINER" >&2
+if ! container_running "$TNODE_CONTAINER"; then
+    echo "tower container is not running: $TNODE_CONTAINER" >&2
+    podman ps -a --filter "name=$TNODE_CONTAINER" >&2 || true
     exit 1
 fi
 
-if ! podman inspect -f '{{.State.Running}}' "$TNODE_CONTAINER" 2>/dev/null | grep -q true; then
-    echo "tower container is not running: $TNODE_CONTAINER" >&2
-    podman ps -a --filter "name=$TNODE_CONTAINER" >&2 || true
+if ! container_running "$MEDIA_CONTAINER"; then
+    echo "media container is not running: $MEDIA_CONTAINER" >&2
+    podman ps -a --filter "name=$MEDIA_CONTAINER" >&2 || true
     exit 1
 fi
 
@@ -162,9 +173,13 @@ if [ -z "$TOWER_IP" ]; then
     exit 1
 fi
 
-wait_http epcemu "http://$TOWER_IP:18028/v1/status"
-wait_http pcrf "http://$TOWER_IP:18030/v1/status"
-wait_http media "http://$MEDIA_IP:$HTTP_PORT/"
+# Do not use host-published ports for the E2E path.  Validate the same network
+# path the UE will use by curling from another container already on LAB_NET.
+# /v1/ping returns 503 until the service is really ready; /v1/status may return
+# 200 while ready=false.
+wait_container_http "$MEDIA_CONTAINER" epcemu "http://$TOWER_IP:18028/v1/ping"
+wait_container_http "$MEDIA_CONTAINER" pcrf "http://$TOWER_IP:18030/v1/ping"
+wait_container_http "$MEDIA_CONTAINER" media "http://$MEDIA_IP:$HTTP_PORT/"
 
 if [ ! -f "$UE_STATE_DIR/.ue-image-built" ]; then
     echo "ue: build $UE_IMAGE"
@@ -215,7 +230,7 @@ fi
 
 sleep 2
 
-if ! podman inspect -f '{{.State.Running}}' "$UE_CONTAINER" 2>/dev/null | grep -q true; then
+if ! container_running "$UE_CONTAINER"; then
     echo "UE container exited early: $UE_CONTAINER" >&2
     podman logs "$UE_CONTAINER" >&2 || true
     exit 1
@@ -233,6 +248,7 @@ UE_DATA_PORT=$UE_DATA_PORT
 SITE_REF=$SITE_REF
 TNODE_CONTAINER=$TNODE_CONTAINER
 TOWER_IP=$TOWER_IP
+MEDIA_CONTAINER=$MEDIA_CONTAINER
 MEDIA_IP=$MEDIA_IP
 HTTP_PORT=$HTTP_PORT
 IPERF_PORT=$IPERF_PORT
