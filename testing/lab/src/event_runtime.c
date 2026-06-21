@@ -20,7 +20,10 @@ int event_runtime(event_ctx_t *ctx,
     case EVT_START_UES:
         rc = selector_resolve_ues(ctx->world, &event->ues, &res, err);
         if (rc == ULAB_OK) {
-            rc = runtime_build_and_start_ues(NULL, /* XXX */
+            rc = runtime_ensure_media(ctx->runtime, err);
+        }
+        if (rc == ULAB_OK) {
+            rc = runtime_build_and_start_ues(NULL,
                                              ctx->runtime,
                                              ctx->world,
                                              &res,

@@ -424,6 +424,13 @@ static int runtime_all_ues(const scenario_t *scenario,
     }
 
     if (scenario->runtime.start_ues) {
+        ulab_status("RUNTIME", "start media");
+        rc = runtime_ensure_media(runtime, err);
+        if (rc != ULAB_OK) {
+            selector_result_free(&ues);
+            return ULAB_ERUNTIME;
+        }
+
         ulab_status("RUNTIME", "start ues");
         rc = runtime_build_and_start_ues(NULL, runtime, world, &ues, err);
         if (rc != ULAB_OK) {
@@ -593,13 +600,19 @@ int runner_validate(const runner_opts_t *opts) {
     report_world(&world);
     write_world_artifact(&world, runDir);
 
-    rc = runtime_init(&runtime, opts->script_dir, runDir);
+    rc = runtime_init(&runtime, opts->script_dir, runDir, opts->repo);
     if (rc != ULAB_OK) {
         rc = ULAB_ERUNTIME;
         goto done;
     }
 
     if (!opts->setup_only) {
+        rc = runtime_ensure_network(&runtime, &err);
+        if (rc != ULAB_OK) {
+            rc = ULAB_ERUNTIME;
+            goto done;
+        }
+
         ulab_status("RUNTIME", "factory/build/start site node bundles");
         rc = start_runtime_sites(opts->repo, scenario, &world, &runtime,
                                  &err);

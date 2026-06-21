@@ -12,19 +12,21 @@ MEDIA_IP="${MEDIA_IP:-127.0.0.1}"
 
 IMSI=""
 MODE="http"
+MB=""
 ALLOW_LOCAL_MEDIA="${ALLOW_LOCAL_MEDIA:-true}"
 HTTP_PORT="${HTTP_PORT:-8080}"
 IPERF_PORT="${IPERF_PORT:-5201}"
 
 usage() {
     cat <<USAGE
-Usage: $0 --imsi <imsi> [--mode ping|http|iperf]
+Usage: $0 --imsi <imsi> [--mode ping|http|iperf] [--mb <megabytes>]
 
 Environment:
   MEDIA_IP            Default: 127.0.0.1
   HTTP_PORT           Default: 8080
   IPERF_PORT          Default: 5201
   IPERF_TIME          Default: 10
+  --mb                For iperf, send this many MB instead of using IPERF_TIME
   ALLOW_LOCAL_MEDIA   Default: true for lab mode
 USAGE
 }
@@ -50,6 +52,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --mode)
             MODE="$2"
+            shift 2
+            ;;
+        --mb)
+            MB="$2"
             shift 2
             ;;
         -h|--help)
@@ -81,8 +87,13 @@ case "$MODE" in
             "http://${MEDIA_IP}:${HTTP_PORT}/"
         ;;
     iperf)
-        podman exec "ue-${IMSI}" iperf3 -c "$MEDIA_IP" \
-            -p "$IPERF_PORT" -t "${IPERF_TIME:-10}"
+        if [[ -n "$MB" ]]; then
+            podman exec "ue-${IMSI}" iperf3 -c "$MEDIA_IP" \
+                -p "$IPERF_PORT" -n "${MB}M"
+        else
+            podman exec "ue-${IMSI}" iperf3 -c "$MEDIA_IP" \
+                -p "$IPERF_PORT" -t "${IPERF_TIME:-10}"
+        fi
         ;;
     *)
         echo "unknown mode $MODE" >&2
