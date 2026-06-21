@@ -51,3 +51,12 @@ export class ToggleRFStatusInputDto {
   @Field()
   status: boolean;
 }
+
+@InputType()
+export class ToggleSiteStatusInputDto {
+  @Field()
+  siteId: string;
+
+  @Field()
+  status: boolean;
+}

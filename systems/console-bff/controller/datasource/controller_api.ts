@@ -14,6 +14,7 @@ import {
   RestartSiteInputDto,
   ToggleInternetSwitchInputDto,
   ToggleRFStatusInputDto,
+  ToggleSiteStatusInputDto,
 } from "../resolvers/types";
 
 const CONTROLLER = "controller";
@@ -105,27 +106,15 @@ class ControllerApi extends BaseRESTDataSource {
   };
   toggleRFStatus = async (
     baseURL: string,
-    req: ToggleRFStatusInputDto
+    req: ToggleSiteStatusInputDto
   ): Promise<TBooleanResponse> => {
+    const state = req.status ? "on" : "off";
     this.logger.info(
-      `ToggleRFStatus [POST]: ${baseURL}/${VERSION}/${CONTROLLER}/nodes/${req.nodeId.replace(
-        "tnode",
-        "anode"
-      )}/toggle-radio`
+      `ToggleRFStatus [POST]: ${baseURL}/${VERSION}/sites/${req.siteId}/radio/${state}`
     );
 
     this.baseURL = baseURL;
-    return this.post(
-      `/${VERSION}/${CONTROLLER}/nodes/${req.nodeId.replace(
-        "tnode",
-        "anode"
-      )}/toggle-radio`,
-      {
-        body: {
-          state: req.status ? "on" : "off",
-        },
-      }
-    )
+    return this.post(`/${VERSION}/sites/${req.siteId}/radio/${state}`)
       .then(() => {
         return { success: true };
       })
@@ -136,21 +125,15 @@ class ControllerApi extends BaseRESTDataSource {
   };
   toggleService = async (
     baseURL: string,
-    req: ToggleRFStatusInputDto
+    req: ToggleSiteStatusInputDto
   ): Promise<TBooleanResponse> => {
+    const state = req.status ? "on" : "off";
     this.logger.info(
-      `ToggleServiceStatus [POST]: ${baseURL}/${VERSION}/${CONTROLLER}/nodes/${req.nodeId}/toggle-service`
+      `ToggleServiceStatus [POST]: ${baseURL}/${VERSION}/sites/${req.siteId}/service/${state}`
     );
 
     this.baseURL = baseURL;
-    return this.post(
-      `/${VERSION}/${CONTROLLER}/nodes/${req.nodeId}/toggle-service`,
-      {
-        body: {
-          state: req.status ? "on" : "off",
-        },
-      }
-    )
+    return this.post(`/${VERSION}/sites/${req.siteId}/service/${state}`)
       .then(() => {
         return { success: true };
       })
