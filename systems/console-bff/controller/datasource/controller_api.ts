@@ -42,12 +42,15 @@ class ControllerApi extends BaseRESTDataSource {
     req: RestartNodesInputDto
   ): Promise<TBooleanResponse> => {
     this.logger.info(
-      `RestartNodes [POST]: ${baseURL}/${VERSION}/network/${req.networkId}/restart-nodes`
+      `RestartNodes [POST]: ${baseURL}/${VERSION}/${CONTROLLER}/networks/${req.networkId}/restart-nodes`
     );
     this.baseURL = baseURL;
-    return this.post(`/${VERSION}/network/${req.networkId}/restart-nodes`, {
-      body: req.nodeIds,
-    })
+    return this.post(
+      `/${VERSION}/${CONTROLLER}/networks/${req.networkId}/restart-nodes`,
+      {
+        body: req.nodeIds,
+      }
+    )
       .then(() => {
         return { success: true };
       })
