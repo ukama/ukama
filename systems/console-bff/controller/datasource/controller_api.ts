@@ -13,7 +13,6 @@ import {
   RestartNodesInputDto,
   RestartSiteInputDto,
   ToggleInternetSwitchInputDto,
-  ToggleRFStatusInputDto,
   ToggleSiteStatusInputDto,
 } from "../resolvers/types";
 
