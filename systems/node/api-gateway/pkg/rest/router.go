@@ -79,6 +79,8 @@ type siteController interface {
 	GetPortMap(siteID string) (*sitepb.GetPortMapResponse, error)
 	ApplySwitchPolicy(siteID string) (*sitepb.ApplySwitchPolicyResponse, error)
 	PowerCycleNode(siteID, role, reason, requestedBy string) (*sitepb.PowerCycleNodeResponse, error)
+	RestartSite(siteID, networkID string) (*sitepb.RestartSiteResponse, error)
+	ToggleInternetSwitch(siteID string, status bool, port int32) (*sitepb.ToggleInternetSwitchResponse, error)
 }
 
 type configurator interface {
@@ -168,6 +170,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		siteS.PUT("/:site_id/ports", formatDoc("Update site port map", "Update static site switch port map"), tonic.Handler(r.putSitePortMapHandler, http.StatusOK))
 		siteS.POST("/:site_id/switch-policy", formatDoc("Apply switch policy", "Generate and push switch.d policy"), tonic.Handler(r.postApplySwitchPolicyHandler, http.StatusOK))
 		siteS.POST("/:site_id/nodes/:role/power-cycle", formatDoc("Power-cycle site node", "Power-cycle a site node through CNode switch.d"), tonic.Handler(r.postPowerCycleNodeHandler, http.StatusOK))
+		siteS.POST("/:site_id/internet-port", formatDoc("Toggle site internet port", "Turn the site internet switch port on/off"), tonic.Handler(r.postToggleInternetSwitchHandler, http.StatusOK))
 
 		const cfg = "/configurator"
 		cfgS := auth.Group(cfg, "Configurator", "Config for nodes")
@@ -200,8 +203,8 @@ func (r *Router) postRestartNodeHandler(c *gin.Context, req *RestartNodeRequest)
 	return r.clients.Controller.RestartNode(req.NodeId)
 }
 
-func (r *Router) postRestartSiteHandler(c *gin.Context, req *RestartSiteRequest) (*contPb.RestartSiteResponse, error) {
-	return r.clients.Controller.RestartSite(req.SiteId, req.NetworkId)
+func (r *Router) postRestartSiteHandler(c *gin.Context, req *RestartSiteRequest) (*sitepb.RestartSiteResponse, error) {
+	return r.clients.SiteController.RestartSite(req.SiteId, req.NetworkId)
 }
 
 func (r *Router) getListAppsHandler(c *gin.Context, req *ListAppsRequest) (*spb.GetAppListResponse, error) {
@@ -324,6 +327,10 @@ func (r *Router) postApplySwitchPolicyHandler(c *gin.Context, req *SiteStateRequ
 
 func (r *Router) postPowerCycleNodeHandler(c *gin.Context, req *PowerCycleNodeRequest) (*sitepb.PowerCycleNodeResponse, error) {
 	return r.clients.SiteController.PowerCycleNode(req.SiteId, req.Role, req.Reason, req.RequestedBy)
+}
+
+func (r *Router) postToggleInternetSwitchHandler(c *gin.Context, req *ToggleInternetSwitchRequest) (*sitepb.ToggleInternetSwitchResponse, error) {
+	return r.clients.SiteController.ToggleInternetSwitch(req.SiteId, req.Status, req.Port)
 }
 
 func (r *Router) enforceStateTransitionHandler(c *gin.Context, req *EnforceStateTransitionRequest) (*nspb.EnforceStateTransitionResponse, error) {

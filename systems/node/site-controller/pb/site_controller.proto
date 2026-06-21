@@ -22,6 +22,8 @@ service SiteControllerService {
   rpc GetPortMap(GetPortMapRequest) returns (GetPortMapResponse);
   rpc ApplySwitchPolicy(ApplySwitchPolicyRequest) returns (ApplySwitchPolicyResponse);
   rpc PowerCycleNode(PowerCycleNodeRequest) returns (PowerCycleNodeResponse);
+  rpc RestartSite(RestartSiteRequest) returns (RestartSiteResponse);
+  rpc ToggleInternetSwitch(ToggleInternetSwitchRequest) returns (ToggleInternetSwitchResponse);
 }
 
 message SiteIntentMsg {
@@ -129,3 +131,25 @@ message PowerCycleNodeRequest {
 }
 
 message PowerCycleNodeResponse {}
+
+message RestartSiteRequest {
+  string site_id = 1 [(validator.field) = { string_not_empty: true }];
+  string network_id = 2 [(validator.field) = { string_not_empty: true }];
+}
+
+message RestartSiteResponse {
+  repeated string operation_ids = 1;
+  string status = 2;
+}
+
+message ToggleInternetSwitchRequest {
+  string site_id = 1 [(validator.field) = { string_not_empty: true }];
+  bool status = 2;
+  int32 port = 3;
+}
+
+message ToggleInternetSwitchResponse {
+  string operation_id = 1;
+  string resource_key = 2;
+  string status = 3;
+}

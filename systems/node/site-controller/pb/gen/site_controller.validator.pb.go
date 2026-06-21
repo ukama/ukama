@@ -141,3 +141,24 @@ func (this *PowerCycleNodeRequest) Validate() error {
 func (this *PowerCycleNodeResponse) Validate() error {
 	return nil
 }
+func (this *RestartSiteRequest) Validate() error {
+	if this.SiteId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SiteId", fmt.Errorf(`value '%v' must not be an empty string`, this.SiteId))
+	}
+	if this.NetworkId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must not be an empty string`, this.NetworkId))
+	}
+	return nil
+}
+func (this *RestartSiteResponse) Validate() error {
+	return nil
+}
+func (this *ToggleInternetSwitchRequest) Validate() error {
+	if this.SiteId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SiteId", fmt.Errorf(`value '%v' must not be an empty string`, this.SiteId))
+	}
+	return nil
+}
+func (this *ToggleInternetSwitchResponse) Validate() error {
+	return nil
+}

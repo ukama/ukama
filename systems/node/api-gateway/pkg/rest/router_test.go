@@ -31,6 +31,8 @@ import (
 	cmocks "github.com/ukama/ukama/systems/node/configurator/pb/gen/mocks"
 	cpb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	nmocks "github.com/ukama/ukama/systems/node/controller/pb/gen/mocks"
+	sitepb "github.com/ukama/ukama/systems/node/site-controller/pb/gen"
+	sitemocks "github.com/ukama/ukama/systems/node/site-controller/pb/gen/mocks"
 	spb "github.com/ukama/ukama/systems/node/software/pb/gen"
 	smocks "github.com/ukama/ukama/systems/node/software/pb/gen/mocks"
 	nspb "github.com/ukama/ukama/systems/node/state/pb/gen"
@@ -141,20 +143,48 @@ func TestRestartSite(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/v1/controller/networks/0f37639d-3fd6-4741-b63b-9dd4f7ce55f0/sites/site-1/restart", nil)
 	arc := &cmmocks.AuthClient{}
-	c := &nmocks.ControllerServiceClient{}
+	c := &sitemocks.SiteControllerServiceClient{}
 
 	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
-	RestartSiteRequest := &cpb.RestartSiteRequest{
+	RestartSiteRequest := &sitepb.RestartSiteRequest{
 		SiteId:    "site-1",
 		NetworkId: "0f37639d-3fd6-4741-b63b-9dd4f7ce55f0",
 	}
 
-	c.On("RestartSite", mock.Anything, RestartSiteRequest).Return(&cpb.RestartSiteResponse{},
+	c.On("RestartSite", mock.Anything, RestartSiteRequest).Return(&sitepb.RestartSiteResponse{},
 		nil)
 
 	r := NewRouter(&Clients{
-		Controller: client.NewControllerFromClient(c),
+		SiteController: client.NewSiteControllerFromClient(c),
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	c.AssertExpectations(t)
+}
+
+func TestToggleInternetSwitch(t *testing.T) {
+	// arrange
+	w := httptest.NewRecorder()
+	body := `{"status":true,"port":2}`
+	req, _ := http.NewRequest("POST", "/v1/sites/0f37639d-3fd6-4741-b63b-9dd4f7ce55f0/internet-port", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	arc := &cmmocks.AuthClient{}
+	c := &sitemocks.SiteControllerServiceClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
+	c.On("ToggleInternetSwitch", mock.Anything, &sitepb.ToggleInternetSwitchRequest{
+		SiteId: "0f37639d-3fd6-4741-b63b-9dd4f7ce55f0",
+		Status: true,
+		Port:   2,
+	}).Return(&sitepb.ToggleInternetSwitchResponse{}, nil)
+
+	r := NewRouter(&Clients{
+		SiteController: client.NewSiteControllerFromClient(c),
 	}, routerConfig, arc.AuthenticateUser).f.Engine()
 	// act
 	r.ServeHTTP(w, req)

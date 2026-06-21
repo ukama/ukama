@@ -134,6 +134,36 @@ func (_m *SiteControllerServiceServer) PowerCycleNode(_a0 context.Context, _a1 *
 	return r0, r1
 }
 
+// RestartSite provides a mock function with given fields: _a0, _a1
+func (_m *SiteControllerServiceServer) RestartSite(_a0 context.Context, _a1 *gen.RestartSiteRequest) (*gen.RestartSiteResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RestartSite")
+	}
+
+	var r0 *gen.RestartSiteResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RestartSiteRequest) (*gen.RestartSiteResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RestartSiteRequest) *gen.RestartSiteResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.RestartSiteResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.RestartSiteRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // SetRadio provides a mock function with given fields: _a0, _a1
 func (_m *SiteControllerServiceServer) SetRadio(_a0 context.Context, _a1 *gen.SetRadioRequest) (*gen.SetRadioResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -216,6 +246,36 @@ func (_m *SiteControllerServiceServer) SetSite(_a0 context.Context, _a1 *gen.Set
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.SetSiteRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ToggleInternetSwitch provides a mock function with given fields: _a0, _a1
+func (_m *SiteControllerServiceServer) ToggleInternetSwitch(_a0 context.Context, _a1 *gen.ToggleInternetSwitchRequest) (*gen.ToggleInternetSwitchResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ToggleInternetSwitch")
+	}
+
+	var r0 *gen.ToggleInternetSwitchResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleInternetSwitchRequest) (*gen.ToggleInternetSwitchResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleInternetSwitchRequest) *gen.ToggleInternetSwitchResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ToggleInternetSwitchResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ToggleInternetSwitchRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

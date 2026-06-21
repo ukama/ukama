@@ -114,30 +114,21 @@ func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteR
 		validatedNodeIds = append(validatedNodeIds, nId.String())
 	}
 
-	ops := make([]*opmgrpb.Operation, 0, len(validatedNodeIds))
-	for _, nodeId := range validatedNodeIds {
-		op, err := c.acquireAndRegister("RestartSite", "node:"+nodeId)
-		if err != nil {
-			c.failOperations(ops, "RestartSite", "RestartSite aborted before dispatch because a node lock was unavailable")
-			return nil, err
-		}
-		ops = append(ops, op)
+	op, err := c.acquireAndRegister("RestartSite", siteKey(req.GetSiteId()))
+	if err != nil {
+		return nil, err
 	}
-
-	operationIds := make([]string, 0, len(ops))
-	for i, nodeId := range validatedNodeIds {
-		op := ops[i]
-		if err := c.markRunning(op, "RestartSite"); err != nil {
-			c.failOperation(op, "RestartSite", fmt.Sprintf("mark running failed: %v", err))
-			return nil, status.Errorf(codes.Internal, "mark running: %v", err)
-		}
+	if err := c.markRunning(op, "RestartSite"); err != nil {
+		c.failOperation(op, "RestartSite", fmt.Sprintf("mark running failed: %v", err))
+		return nil, status.Errorf(codes.Internal, "mark running: %v", err)
+	}
+	for _, nodeId := range validatedNodeIds {
 		if err := c.publishMessage(c.orgName+"..."+nodeId, actions["RESTART"].method, actions["RESTART"].path, nodeId, []byte("")); err != nil {
 			c.failOperation(op, "RestartSite", fmt.Sprintf("publish failed: %v", err))
 			return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
 		}
-		operationIds = append(operationIds, op.Id)
 	}
-	return &pb.RestartSiteResponse{OperationIds: operationIds, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
+	return &pb.RestartSiteResponse{OperationIds: []string{op.Id}, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
 }
 
 func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeRequest) (*pb.RestartNodeResponse, error) {
@@ -260,7 +251,7 @@ func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.Tog
 		return nil, err
 	}
 
-	op, err := c.acquireAndRegister("ToggleInternetSwitch", "site:"+siteId.String())
+	op, err := c.acquireAndRegister("ToggleInternetSwitch", siteKey(siteId.String()))
 	if err != nil {
 		return nil, err
 	}
@@ -292,7 +283,7 @@ func (c *ControllerServer) ToggleRfSwitch(ctx context.Context, req *pb.ToggleRfS
 		return nil, err
 	}
 
-	op, err := c.acquireAndRegister("ToggleRfSwitch", "node:"+nId.String())
+	op, err := c.acquireAndRegister("ToggleRfSwitch", c.siteResourceKey(nId.String()))
 	if err != nil {
 		return nil, err
 	}
@@ -324,7 +315,7 @@ func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.Toggle
 		return nil, err
 	}
 
-	op, err := c.acquireAndRegister("ToggleNodeService", "node:"+nId.String())
+	op, err := c.acquireAndRegister("ToggleNodeService", c.siteResourceKey(nId.String()))
 	if err != nil {
 		return nil, err
 	}
@@ -337,6 +328,25 @@ func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.Toggle
 		return nil, status.Errorf(codes.Internal, "Failed to publish Node SERVICE switch message: %s", err.Error())
 	}
 	return &pb.ToggleNodeServiceResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
+}
+
+func siteKey(siteID string) string {
+	if id, err := uuid.FromString(siteID); err == nil {
+		return "site:" + id.String()
+	}
+	return "site:" + siteID
+}
+
+func (c *ControllerServer) siteResourceKey(nodeID string) string {
+	if c.nodeClient == nil {
+		return "node:" + nodeID
+	}
+	n, err := c.nodeClient.Get(nodeID)
+	if err != nil || n == nil || n.Site.SiteId == "" {
+		log.Warnf("could not resolve site for node %s, using node-level lock: %v", nodeID, err)
+		return "node:" + nodeID
+	}
+	return siteKey(n.Site.SiteId)
 }
 
 func (c *ControllerServer) acquireAndRegister(actionType, resourceKey string) (*opmgrpb.Operation, error) {

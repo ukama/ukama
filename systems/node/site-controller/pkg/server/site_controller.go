@@ -12,9 +12,12 @@ import (
 	"context"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	"github.com/ukama/ukama/systems/common/ukama"
+	contpb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	pb "github.com/ukama/ukama/systems/node/site-controller/pb/gen"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/db"
@@ -33,14 +36,15 @@ type SiteControllerServer struct {
 	siteRegistry   creg.SiteClient
 	nodeClient     creg.NodeClient
 	healthClient   providers.HealthClientProvider
+	controller     providers.ControllerClientProvider
 	baseRoutingKey msgbus.RoutingKeyBuilder
 }
 
-func NewSiteControllerServer(orgName string, r *reconciler.Reconciler, mb msgBusServiceClient.MsgBusServiceClient, nodeClient creg.NodeClient, siteClient creg.SiteClient, healthClient providers.HealthClientProvider, dbStructs *db.DBStruct) *SiteControllerServer {
-	return &SiteControllerServer{reconciler: r, msgBus: mb, baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName), nodeClient: nodeClient, siteRegistry: siteClient, healthClient: healthClient, orgName: orgName, dbStructs: dbStructs}
+func NewSiteControllerServer(orgName string, r *reconciler.Reconciler, mb msgBusServiceClient.MsgBusServiceClient, nodeClient creg.NodeClient, siteClient creg.SiteClient, healthClient providers.HealthClientProvider, controller providers.ControllerClientProvider, dbStructs *db.DBStruct) *SiteControllerServer {
+	return &SiteControllerServer{reconciler: r, msgBus: mb, baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName), nodeClient: nodeClient, siteRegistry: siteClient, healthClient: healthClient, controller: controller, orgName: orgName, dbStructs: dbStructs}
 }
 
-func (s *SiteControllerServer) SetSer(ctx context.Context, req *pb.SetSiteRequest) (*pb.SetSiteResponse, error) {
+func (s *SiteControllerServer) SetSite(ctx context.Context, req *pb.SetSiteRequest) (*pb.SetSiteResponse, error) {
 	st, err := s.reconciler.SetSite(ctx, req.SiteId, req.State, req.Reason, req.RequestedBy)
 	if err != nil {
 		return nil, mapErr(err)
@@ -49,30 +53,88 @@ func (s *SiteControllerServer) SetSer(ctx context.Context, req *pb.SetSiteReques
 	if err != nil {
 		return nil, mapErr(err)
 	}
-	
+
 	return &pb.SetSiteResponse{State: siteStateToPB(st, intent)}, nil
 }
 
 func (s *SiteControllerServer) SetService(ctx context.Context, req *pb.SetServiceRequest) (*pb.SetServiceResponse, error) {
-	err :=s.dbStructs.SiteState.Upsert(&db.SiteState{
-		SiteID: req.SiteId,
-		ServiceState: req.State,
-	})
+	nodeID, err := s.resolveNode(req.SiteId, ukama.NODE_ID_TYPE_TOWERNODE)
+	if err != nil {
+		return nil, err
+	}
+	client, err := s.controller.GetClient()
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "node-controller unavailable: %v", err)
+	}
+	resp, err := client.ToggleNodeService(ctx, &contpb.ToggleNodeServiceRequest{NodeId: nodeID, State: req.State})
 	if err != nil {
 		return nil, mapErr(err)
 	}
+	log.Infof("site-controller: forwarded SERVICE %s for site %s to node %s, op=%s", req.State, req.SiteId, nodeID, resp.GetOperationId())
 	return &pb.SetServiceResponse{}, nil
 }
 
 func (s *SiteControllerServer) SetRadio(ctx context.Context, req *pb.SetRadioRequest) (*pb.SetRadioResponse, error) {
-	err := s.dbStructs.SiteState.Upsert(&db.SiteState{
-		SiteID: req.SiteId,
-		RadioState: req.State,
-	})
+	nodeID, err := s.resolveNode(req.SiteId, ukama.NODE_ID_TYPE_AMPNODE)
+	if err != nil {
+		return nil, err
+	}
+	client, err := s.controller.GetClient()
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "node-controller unavailable: %v", err)
+	}
+	resp, err := client.ToggleRfSwitch(ctx, &contpb.ToggleRfSwitchRequest{NodeId: nodeID, State: req.State})
 	if err != nil {
 		return nil, mapErr(err)
 	}
+	log.Infof("site-controller: forwarded RADIO %s for site %s to node %s, op=%s", req.State, req.SiteId, nodeID, resp.GetOperationId())
 	return &pb.SetRadioResponse{}, nil
+}
+
+func (s *SiteControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteRequest) (*pb.RestartSiteResponse, error) {
+	client, err := s.controller.GetClient()
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "node-controller unavailable: %v", err)
+	}
+	resp, err := client.RestartSite(ctx, &contpb.RestartSiteRequest{SiteId: req.SiteId, NetworkId: req.NetworkId})
+	if err != nil {
+		return nil, mapErr(err)
+	}
+	log.Infof("site-controller: forwarded RESTART for site %s, ops=%v", req.SiteId, resp.GetOperationIds())
+	return &pb.RestartSiteResponse{OperationIds: resp.GetOperationIds(), Status: resp.GetStatus()}, nil
+}
+
+func (s *SiteControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.ToggleInternetSwitchRequest) (*pb.ToggleInternetSwitchResponse, error) {
+	client, err := s.controller.GetClient()
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "node-controller unavailable: %v", err)
+	}
+	resp, err := client.ToggleInternetSwitch(ctx, &contpb.ToggleInternetSwitchRequest{SiteId: req.SiteId, Status: req.Status, Port: req.Port})
+	if err != nil {
+		return nil, mapErr(err)
+	}
+	log.Infof("site-controller: forwarded internet switch for site %s port %d to %v, op=%s", req.SiteId, req.Port, req.Status, resp.GetOperationId())
+	return &pb.ToggleInternetSwitchResponse{OperationId: resp.GetOperationId(), ResourceKey: resp.GetResourceKey(), Status: resp.GetStatus()}, nil
+}
+
+func (s *SiteControllerServer) resolveNode(siteID, nodeType string) (string, error) {
+	if siteID == "" {
+		return "", status.Errorf(codes.InvalidArgument, "site id cannot be empty")
+	}
+	resp, err := s.nodeClient.GetNodesBySite(siteID)
+	if err != nil {
+		return "", status.Errorf(codes.Internal, "failed to resolve nodes for site %s: %v", siteID, err)
+	}
+	for _, n := range resp.Nodes {
+		nId, err := ukama.ValidateNodeId(n.Id)
+		if err != nil {
+			continue
+		}
+		if t := ukama.GetNodeType(nId.String()); t != nil && *t == nodeType {
+			return nId.String(), nil
+		}
+	}
+	return "", status.Errorf(codes.NotFound, "no node of type %s found for site %s", nodeType, siteID)
 }
 
 func (s *SiteControllerServer) GetSiteState(ctx context.Context, req *pb.GetSiteStateRequest) (*pb.GetSiteStateResponse, error) {

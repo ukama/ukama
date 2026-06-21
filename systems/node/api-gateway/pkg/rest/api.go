@@ -93,3 +93,9 @@ type PowerCycleNodeRequest struct {
 	Reason      string `json:"reason"`
 	RequestedBy string `json:"requestedBy"`
 }
+
+type ToggleInternetSwitchRequest struct {
+	SiteId string `json:"site_id" validate:"required" path:"site_id"`
+	Status bool   `json:"status"`
+	Port   int32  `json:"port" validate:"required"`
+}
