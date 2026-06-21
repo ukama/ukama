@@ -24,7 +24,7 @@ type Config struct {
 	ReconcileInterval   time.Duration 	 `default:"30s"`
 	ComponentSyncDelay  time.Duration 	 `default:"30s"`
 	HealthHost          string        	 `default:"health:9090"`
-	NodeControllerHost  string        	 `default:"controller:8080"`
+	NodeControllerHost  string        	 `default:"controller:9090"`
 	ReconcileMaxRetries int           	 `default:"3"`
 	OrgName             string
 	Service             *uconf.Service
