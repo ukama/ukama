@@ -11,6 +11,7 @@ package ukama
 import (
 	"database/sql/driver"
 	"strconv"
+	"strings"
 )
 
 type DataUnitType uint8
@@ -33,7 +34,7 @@ func (s DataUnitType) Value() (driver.Value, error) {
 }
 
 func (s DataUnitType) String() string {
-	t := map[DataUnitType]string{0: "unknown", 1: "Bytes", 2: "KiloBytes", 3: "MegaBytes", 4: "GigaBytes"}
+	t := map[DataUnitType]string{0: "unknown", 1: "bytes", 2: "kilobytes", 3: "megabytes", 4: "gigabytes"}
 
 	v, ok := t[s]
 	if !ok {
@@ -49,14 +50,20 @@ func ParseDataUnitType(value string) DataUnitType {
 		return DataUnitType(i)
 	}
 
-	t := map[string]DataUnitType{"unknown": 0, "Bytes": 1, "KiloBytes": 2, "MegaBytes": 3, "GigaBytes": 4}
+	s := map[string]DataUnitType{"unknown": 0, "bytes": 1, "kilobytes": 2, "megabytes": 3, "gigabytes": 4}
+	t := map[string]DataUnitType{"unknown": 0, "b": 1, "kb": 2, "mb": 3, "gb": 4}
 
-	v, ok := t[value]
-	if !ok {
-		return DataUnitType(0)
+	v, ok := s[strings.ToLower(value)]
+	if ok {
+		return DataUnitType(v)
 	}
 
-	return DataUnitType(v)
+	v, ok = t[strings.ToLower(value)]
+	if ok {
+		return DataUnitType(v)
+	}
+
+	return DataUnitType(0)
 }
 
 func ReturnDataUnits(value DataUnitType) int64 {
@@ -68,4 +75,16 @@ func ReturnDataUnits(value DataUnitType) int64 {
 		return 0
 	}
 	return v
+}
+
+func ReturnDataUnitsInBytes(value DataUnitType) uint64 {
+	t := map[DataUnitType]int64{DataUnitTypeUnknown: 0, DataUnitTypeB: 1, DataUnitTypeKB: 1024,
+		DataUnitTypeMB: 1024 * 1024, DataUnitTypeGB: 1024 * 1024 * 1024}
+
+	v, ok := t[value]
+	if !ok {
+		return 0
+	}
+
+	return uint64(v)
 }

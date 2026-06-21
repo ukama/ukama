@@ -21,7 +21,7 @@ import (
 const SimFactoryEndpoint = "/v1/sims"
 
 type SimFactoryClient interface {
-	ReadSimCardInfo(Iccid string) (*SimCardInfo, error)
+	ReadSimCardInfo(iccid string) (*SimCardInfo, error)
 }
 
 type simFactoryClient struct {
@@ -57,6 +57,8 @@ func (s *simFactoryClient) ReadSimCardInfo(iccid string) (*SimCardInfo, error) {
 		return nil, fmt.Errorf("getSimCard failure: %w", err)
 	}
 
+	log.Debugf("Unmarshaling resp from sim factory: %+v", resp)
+
 	err = json.Unmarshal(resp.Body(), &card)
 	if err != nil {
 		log.Tracef("Failed to desrialize sim card info. Error message is %v", err)
@@ -78,7 +80,7 @@ type SimCardInfo struct {
 	AlgoType       uint32 `json:"algo_type,omitempty"`
 	UeDlAmbrBps    uint32 `json:"ue_dl_ambr_bps,omitempty"`
 	UeUlAmbrBps    uint32 `json:"ue_ul_ambr_bps,omitempty"`
-	Sqn            uint64 `json:"sqn,omitempty"`
+	Sqn            uint64 `json:"sqn,string,omitempty"`
 	CsgIdPrsent    bool   `json:"c_sg_id_prsent,omitempty"`
 	CsgId          uint32 `json:"csg_id,omitempty"`
 	DefaultApnName string `json:"default_apn_name,omitempty"`

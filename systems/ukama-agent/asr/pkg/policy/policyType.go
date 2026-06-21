@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
 
@@ -46,7 +47,7 @@ func RemoveProfile(p *policyController, pf db.Asr, event bool) (error, bool) {
 
 	err := p.asrRepo.Delete(pf.Imsi, db.POLICY_FAILURE)
 	if err != nil {
-		return err, false
+		return grpc.SqlErrorToGrpc(err, "error removing ASR record by imsi:"), false
 	}
 
 	/* Create event */
@@ -66,12 +67,14 @@ func RemoveProfile(p *policyController, pf db.Asr, event bool) (error, bool) {
 	err = p.syncSubscriberPolicy(http.MethodDelete, pf.Imsi, pf.NetworkId.String(), &pf.Policy)
 	if err != nil {
 		log.Errorf("Failed to sync subscriber policy after profile removal: %v", err)
+		//TODO: why aren't we failing?
 	}
 
 	if event {
 		err = p.publishEvent(msgbus.ACTION_CRUD_DELETE, "activesubscriber", e)
 		if err != nil {
 			log.Errorf("Failed to publish subscriber profile removal event to backend: %v", err)
+			//TODO: why aren't we failing?
 		}
 	}
 
