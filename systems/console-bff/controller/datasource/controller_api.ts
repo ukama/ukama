@@ -12,8 +12,8 @@ import {
   RestartNodeInputDto,
   RestartNodesInputDto,
   RestartSiteInputDto,
-  ToggleInternetSwitchInputDto,
   SetSiteInputDto,
+  ToggleInternetSwitchInputDto,
   ToggleSiteStatusInputDto,
 } from "../resolvers/types";
 
@@ -90,15 +90,12 @@ class ControllerApi extends BaseRESTDataSource {
     );
 
     this.baseURL = baseURL;
-    return this.post(
-      `/${VERSION}/sites/${req.siteId}/internet-port`,
-      {
-        body: {
-          port: req.port,
-          status: req.status,
-        },
-      }
-    )
+    return this.post(`/${VERSION}/sites/${req.siteId}/internet-port`, {
+      body: {
+        port: req.port,
+        status: req.status,
+      },
+    })
       .then(() => {
         return { success: true };
       })
