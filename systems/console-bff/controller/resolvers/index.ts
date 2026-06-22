@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2023-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 import { NonEmptyArray } from "type-graphql";
 
@@ -11,6 +11,7 @@ import { ExampleResolver } from "./exampleResolver";
 import { RestartNodeResolver } from "./restartNode";
 import { RestartNodesResolver } from "./restartNodes";
 import { RestartSiteResolver } from "./restartSite";
+import { SetSiteResolver } from "./setSite";
 import { ToggleInternetSwitchResolver } from "./toggleInternetSwitch";
 import { ToggleRFStatusResolver } from "./toggleRFStatus";
 import { ToggleServiceResolver } from "./toggleService";
@@ -23,6 +24,7 @@ const resolvers: NonEmptyArray<any> = [
   ToggleServiceResolver,
   ToggleRFStatusResolver,
   ToggleInternetSwitchResolver,
+  SetSiteResolver,
 ];
 
 export default resolvers;

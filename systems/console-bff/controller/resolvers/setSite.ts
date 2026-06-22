@@ -9,17 +9,17 @@ import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
 import { CBooleanResponse } from "../../common/types";
 import type { AppContext } from "../../server/context";
-import { ToggleSiteStatusInputDto } from "./types";
+import { SetSiteInputDto } from "./types";
 
 @Resolver()
-export class ToggleRFStatusResolver {
+export class SetSiteResolver {
   @Mutation(() => CBooleanResponse)
-  async toggleRFStatus(
-    @Arg("data") data: ToggleSiteStatusInputDto,
+  async setSite(
+    @Arg("data") data: SetSiteInputDto,
     @Ctx() ctx: AppContext
   ): Promise<CBooleanResponse> {
     const { dataSources } = ctx;
     const baseURL = await ctx.urls.url("controller");
-    return dataSources.controller.toggleRFStatus(baseURL, data);
+    return dataSources.controller.setSite(baseURL, data);
   }
 }

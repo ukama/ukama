@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2023-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 import { Field, InputType } from "type-graphql";
 
@@ -44,9 +44,18 @@ export class ToggleInternetSwitchInputDto {
 }
 
 @InputType()
-export class ToggleRFStatusInputDto {
+export class ToggleSiteStatusInputDto {
   @Field()
-  nodeId: string;
+  siteId: string;
+
+  @Field()
+  status: boolean;
+}
+
+@InputType()
+export class SetSiteInputDto {
+  @Field()
+  siteId: string;
 
   @Field()
   status: boolean;
