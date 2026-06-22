@@ -81,6 +81,7 @@ func (b *BroadcasterServer) NodeFeederBroadcast(ctx context.Context, msg *epb.Br
 
 	for _, node := range nodes.Nodes {
 		nfMsg.NodeId = node.Id
+		nfMsg.Target = b.orgName + "." + "*" + "." + "*" + "." + node.Id
 		err = b.publishMessage(msg.RoutingKey, nfMsg)
 		if err != nil {
 			log.Errorf("Failed to publish message for node %s. Error: %v", node.Id, err)
