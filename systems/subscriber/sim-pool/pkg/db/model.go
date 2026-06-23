@@ -15,7 +15,7 @@ import (
 
 type Sim struct {
 	gorm.Model
-	Iccid          string `gorm:"index:idx_iccid,unique"`
+	Iccid          string `gorm:"index:idx_iccid,unique,where:deleted_at is null;not null;size:22"`
 	Msisdn         string
 	IsAllocated    bool
 	IsFailed       bool

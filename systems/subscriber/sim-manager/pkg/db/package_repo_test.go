@@ -45,7 +45,7 @@ func TestPackageRepo_Add(t *testing.T) {
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
 			WithArgs(pkg.Id, pkg.SimId, sqlmock.AnyArg(), sqlmock.AnyArg(),
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
-				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
@@ -75,7 +75,7 @@ func TestPackageRepo_Add(t *testing.T) {
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
 			WithArgs(pkg.Id, pkg.SimId, sqlmock.AnyArg(), sqlmock.AnyArg(),
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
-				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
 		r := db.NewPackageRepo(&UkamaDbMock{
@@ -436,8 +436,8 @@ func TestPackageRepo_Delete(t *testing.T) {
 
 		mock.ExpectBegin()
 
-		mock.ExpectExec(regexp.QuoteMeta(`DELETE`)).
-			WithArgs(packageId).
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "packages" SET`)).
+			WithArgs(sqlmock.AnyArg(), packageId).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
@@ -461,8 +461,8 @@ func TestPackageRepo_Delete(t *testing.T) {
 
 		mock.ExpectBegin()
 
-		mock.ExpectExec(regexp.QuoteMeta(`DELETE`)).
-			WithArgs(packageId).
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "packages" SET`)).
+			WithArgs(sqlmock.AnyArg(), packageId).
 			WillReturnError(sql.ErrNoRows)
 
 		r := db.NewPackageRepo(&UkamaDbMock{
@@ -484,8 +484,8 @@ func TestPackageRepo_Delete(t *testing.T) {
 		mock, gdb := prepareDb(t)
 
 		mock.ExpectBegin()
-		mock.ExpectExec(regexp.QuoteMeta(`DELETE`)).
-			WithArgs(packageId).
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "packages" SET`)).
+			WithArgs(sqlmock.AnyArg(), packageId).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		r := db.NewPackageRepo(&UkamaDbMock{

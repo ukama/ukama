@@ -42,6 +42,16 @@ func (l *SimPoolEventServer) EventNotification(ctx context.Context, e *epb.Event
 			return nil, err
 		}
 
+	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.terminate"):
+		msg, err := epb.UnmarshalEventSimTermination(e.Msg, "EventSimTermination")
+		if err != nil {
+			return nil, err
+		}
+		err = handleEventCloudSimManagerSimTerminate(e.RoutingKey, msg, l)
+		if err != nil {
+			return nil, err
+		}
+
 	default:
 		log.Errorf("handler not registered for %s", e.RoutingKey)
 	}
@@ -57,4 +67,15 @@ func handleEventCloudSimManagerSimAllocate(key string, msg *epb.EventSimAllocati
 		return err
 	}
 	return err
+}
+
+func handleEventCloudSimManagerSimTerminate(key string, msg *epb.EventSimTermination, l *SimPoolEventServer) error {
+	log.Infof("Keys %s and Proto is: %+v", key, msg)
+
+	err := l.simPoolRepo.UpdateStatus(msg.Iccid, false, false)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

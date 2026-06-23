@@ -785,6 +785,72 @@ func Test_Delete(t *testing.T) {
 	})
 }
 
+func Test_SoftDeletedSimsExcludedFromQueries(t *testing.T) {
+	t.Run("GetSimsByTypeFiltersSoftDeleted", func(t *testing.T) {
+		var db *extsql.DB
+
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		rows := sqlmock.NewRows([]string{"id", "iccid", "msisdn", "is_allocated", "is_failed", "sim_type", "sm_dp_address", "activation_code", "is_physical", "qr_code", "created_at", "updated_at", "deleted_at"})
+
+		mock.ExpectQuery(`^SELECT .* FROM "sims" WHERE sim_type = \$1 AND "sims"\."deleted_at" IS NULL`).
+			WithArgs(ukama.SimTypeTest).
+			WillReturnRows(rows)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := NewSimRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		sims, err := r.GetSimsByType(ukama.SimTypeTest)
+		assert.NoError(t, err)
+		assert.Empty(t, sims)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("DeleteSoftDeletesBySettingDeletedAt", func(t *testing.T) {
+		simId := []uint64{TestId1}
+		var db *extsql.DB
+
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		mock.ExpectBegin()
+		mock.ExpectExec(`UPDATE "sims" SET "deleted_at"=\$1 WHERE id IN \(\$2\) AND "sims"\."deleted_at" IS NULL`).
+			WithArgs(sqlmock.AnyArg(), simId[0]).
+			WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectCommit()
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := NewSimRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		err = r.Delete(simId)
+		assert.NoError(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}
+
 func Test_GetSims(t *testing.T) {
 	t.Run("GetSimsWithSpecificType", func(t *testing.T) {
 		var db *extsql.DB
