@@ -14,14 +14,14 @@ import {
 } from "./types";
 
 @Resolver()
-export class TerminatePackageForSimResolver {
+export class SetInactivePackageResolver {
   @Mutation(() => RemovePackageFromSimResDto)
-  async terminatePackageForSim(
+  async setInactivePackageForSim(
     @Arg("data") data: RemovePackageFormSimInputDto,
     @Ctx() ctx: AppContext
   ): Promise<RemovePackageFromSimResDto> {
     const { dataSources } = ctx;
     const baseURL = await ctx.urls.url("sim");
-    return await dataSources.sim.terminatePackageForSim(baseURL, data);
+    return await dataSources.sim.setInactivePackageForSim(baseURL, data);
   }
 }

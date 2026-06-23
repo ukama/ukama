@@ -148,16 +148,16 @@ class SimApi extends BaseRESTDataSource {
     );
   };
 
-  terminatePackageForSim = async (
+  setInactivePackageForSim = async (
     baseURL: string,
     req: RemovePackageFormSimInputDto
   ): Promise<RemovePackageFromSimResDto> => {
-    this.logger.info(
-      `TerminatePackageFromSim [PATCH]: ${baseURL}/${VERSION}/${SIM}/${req.simId}/package/${req.packageId}/terminate`
-    );
     this.baseURL = baseURL;
+    this.logger.info(
+      `SetInactivePackageForSim [PATCH]: ${baseURL}/${VERSION}/${SIM}/${req.simId}/package/${req.packageId}/inactive`
+    );
     return this.patch(
-      `/${VERSION}/${SIM}/${req.simId}/package/${req.packageId}/terminate`
+      `/${VERSION}/${SIM}/${req.simId}/package/${req.packageId}/inactive`
     ).then(res => res);
   };
 
