@@ -739,3 +739,46 @@ func TestSiteRepo_List(t *testing.T) {
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
+
+func Test_SiteRepo_Delete(t *testing.T) {
+	t.Run("SiteExist", func(t *testing.T) {
+		mock, r, err := createMockDBAndRepo(t)
+		assert.NoError(t, err)
+
+		mock.ExpectBegin()
+		rows := sqlmock.NewRows([]string{"id", "name", "network_id", "is_default"}).
+			AddRow(testSite.Id, testSite.Name, testSite.NetworkId, false)
+		mock.ExpectQuery(`^SELECT.*sites.*`).
+			WithArgs(testSite.Id, sqlmock.AnyArg()).
+			WillReturnRows(rows)
+		mock.ExpectExec(`UPDATE "sites"`).
+			WithArgs(sqlmock.AnyArg(), testSite.Id).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
+
+		site, err := r.Delete(testSite.Id)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, site)
+		assert.Equal(t, testSite.Id, site.Id)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("SiteNotFound", func(t *testing.T) {
+		siteID := uuid.NewV4()
+		mock, r, err := createMockDBAndRepo(t)
+		assert.NoError(t, err)
+
+		mock.ExpectBegin()
+		mock.ExpectQuery(`^SELECT.*sites.*`).
+			WithArgs(siteID, sqlmock.AnyArg()).
+			WillReturnError(fmt.Errorf("record not found"))
+		mock.ExpectRollback()
+
+		site, err := r.Delete(siteID)
+
+		assert.Error(t, err)
+		assert.Nil(t, site)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}

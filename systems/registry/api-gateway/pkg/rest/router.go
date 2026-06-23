@@ -74,6 +74,7 @@ type site interface {
 	GetSite(siteId string) (*sitepb.GetResponse, error)
 	List(networkId string, isDeactivate bool) (*sitepb.ListResponse, error)
 	UpdateSite(siteId, name string) (*sitepb.UpdateResponse, error)
+	RemoveSite(siteId string) (*sitepb.DeleteResponse, error)
 }
 
 type invitation interface {
@@ -210,6 +211,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		sites.POST("", formatDoc("Add Site", "Add a new site to a network"), tonic.Handler(r.postSiteHandler, http.StatusCreated))
 		sites.GET("/:site_id", formatDoc("Get Site", "Get a site of a network"), tonic.Handler(r.getSiteHandler, http.StatusOK))
 		sites.PATCH("/:site_id", formatDoc("Update Site", "Update a site of a network"), tonic.Handler(r.updateSiteHandler, http.StatusOK))
+		sites.DELETE("/:site_id", formatDoc("Remove Site", "Remove a site of a network"), tonic.Handler(r.removeSiteHandler, http.StatusOK))
 
 		// Node routes
 		const node = "/nodes"
@@ -373,6 +375,10 @@ func (r *Router) updateSiteHandler(c *gin.Context, req *UpdateSiteRequest) (*sit
 		req.SiteId,
 		req.Name,
 	)
+}
+
+func (r *Router) removeSiteHandler(c *gin.Context, req *GetSiteRequest) (*sitepb.DeleteResponse, error) {
+	return r.clients.Site.RemoveSite(req.SiteId)
 }
 
 func (r *Router) postSiteHandler(c *gin.Context, req *AddSiteRequest) (*sitepb.AddResponse, error) {

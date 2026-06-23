@@ -102,3 +102,10 @@ func (i *SiteRegistry) UpdateSite(siteId, name string) (*pb.UpdateResponse, erro
 		Name:   name,
 	})
 }
+
+func (i *SiteRegistry) RemoveSite(siteId string) (*pb.DeleteResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), i.timeout)
+	defer cancel()
+
+	return i.client.Delete(ctx, &pb.DeleteRequest{SiteId: siteId})
+}
