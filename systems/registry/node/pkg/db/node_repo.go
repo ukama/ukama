@@ -118,12 +118,13 @@ func (n *nodeRepo) Delete(nodeId ukama.NodeID, nestedFunc func(ukama.NodeID, *go
 		return fmt.Errorf("node %s is still attached to a parent node", node.Id)
 	}
 
-	if node.Site.SiteId != uuid.Nil {
-		return fmt.Errorf("node is still assigned to site/network")
-	}
-
 	err = n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		result := tx.Where("node_id", nodeId.StringLowercase()).Delete(&NodeStatus{})
+		result := tx.Where("node_id = ?", nodeId.StringLowercase()).Delete(&Site{})
+		if result.Error != nil {
+			return result.Error
+		}
+
+		result = tx.Where("node_id = ?", nodeId.StringLowercase()).Delete(&NodeStatus{})
 		if result.Error != nil {
 			return result.Error
 		}
@@ -131,6 +132,9 @@ func (n *nodeRepo) Delete(nodeId ukama.NodeID, nestedFunc func(ukama.NodeID, *go
 		result = tx.Delete(&Node{Id: nodeId.StringLowercase()})
 		if result.Error != nil {
 			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
 		}
 
 		if nestedFunc != nil {
