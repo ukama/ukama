@@ -66,6 +66,7 @@ type network interface {
 	GetNetworks() (*netpb.GetNetworksResponse, error)
 	SetNetworkDefault(netID string) (*netpb.SetDefaultResponse, error)
 	GetDefault() (*netpb.GetDefaultResponse, error)
+	RemoveNetwork(netID string) (*netpb.DeleteResponse, error)
 }
 
 type site interface {
@@ -197,8 +198,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		networks.POST("", formatDoc("Add Network", "Add a new network to an organization"), tonic.Handler(r.postNetworkHandler, http.StatusCreated))
 		networks.GET("/:net_id", formatDoc("Get Network", "Get a specific network"), tonic.Handler(r.getNetworkHandler, http.StatusOK))
 		networks.PATCH("/:net_id", formatDoc("Set Network Default", "Set a specific network default"), tonic.Handler(r.setNetworkDefaultHandler, http.StatusOK))
-		// update network
-		// networks.DELETE("/:net_id", formatDoc("Remove Network", "Remove a network of an organization"), tonic.Handler(r.removeNetworkHandler, http.StatusOK))
+		networks.DELETE("/:net_id", formatDoc("Remove Network", "Remove a network of an organization"), tonic.Handler(r.removeNetworkHandler, http.StatusOK))
 		// Admins
 		// Vendors
 
@@ -353,6 +353,10 @@ func (r *Router) getDefaultNetworkHandler(c *gin.Context) (*netpb.GetDefaultResp
 func (r *Router) postNetworkHandler(c *gin.Context, req *AddNetworkRequest) (*netpb.AddResponse, error) {
 	return r.clients.Network.AddNetwork(req.NetName, req.AllowedCountries, req.AllowedNetworks,
 		req.Budget, req.Overdraft, req.TrafficPolicy, req.PaymentLinks)
+}
+
+func (r *Router) removeNetworkHandler(c *gin.Context, req *GetNetworkRequest) (*netpb.DeleteResponse, error) {
+	return r.clients.Network.RemoveNetwork(req.NetworkId)
 }
 
 func (r *Router) getSiteHandler(c *gin.Context, req *GetSiteRequest) (*sitepb.GetResponse, error) {

@@ -305,3 +305,37 @@ func TestNetworkRegistry_GetNetworks(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 }
+
+func TestNetworkRegistry_RemoveNetwork(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockClient := &netmocks.NetworkServiceClient{}
+		registry := NewNetworkRegistryFromClient(mockClient)
+
+		expectedResponse := &netpb.DeleteResponse{}
+
+		mockClient.On("Delete", mock.Anything, &netpb.DeleteRequest{NetworkId: "test-network-id"}).
+			Return(expectedResponse, nil)
+
+		response, err := registry.RemoveNetwork("test-network-id")
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedResponse, response)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("Error", func(t *testing.T) {
+		mockClient := &netmocks.NetworkServiceClient{}
+		registry := NewNetworkRegistryFromClient(mockClient)
+
+		expectedError := status.Error(codes.NotFound, "network not found")
+		mockClient.On("Delete", mock.Anything, &netpb.DeleteRequest{NetworkId: "non-existent-id"}).
+			Return(nil, expectedError)
+
+		response, err := registry.RemoveNetwork("non-existent-id")
+
+		assert.Error(t, err)
+		assert.Nil(t, response)
+		assert.Equal(t, expectedError, err)
+		mockClient.AssertExpectations(t)
+	})
+}

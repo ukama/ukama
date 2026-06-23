@@ -132,6 +132,36 @@ func (_m *network) GetNetworks() (*gen.GetNetworksResponse, error) {
 	return r0, r1
 }
 
+// RemoveNetwork provides a mock function with given fields: netID
+func (_m *network) RemoveNetwork(netID string) (*gen.DeleteResponse, error) {
+	ret := _m.Called(netID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveNetwork")
+	}
+
+	var r0 *gen.DeleteResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (*gen.DeleteResponse, error)); ok {
+		return rf(netID)
+	}
+	if rf, ok := ret.Get(0).(func(string) *gen.DeleteResponse); ok {
+		r0 = rf(netID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.DeleteResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(netID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // SetNetworkDefault provides a mock function with given fields: netID
 func (_m *network) SetNetworkDefault(netID string) (*gen.SetDefaultResponse, error) {
 	ret := _m.Called(netID)

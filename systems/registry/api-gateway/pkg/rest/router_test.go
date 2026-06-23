@@ -805,6 +805,36 @@ func TestSetNetworkDefault(t *testing.T) {
 	net.AssertExpectations(t)
 }
 
+func TestRemoveNetwork(t *testing.T) {
+	// arrange
+	networkId := uuid.NewV4()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("DELETE", "/v1/networks/"+networkId.String(), nil)
+	arc := &cmocks.AuthClient{}
+	net := &netmocks.NetworkServiceClient{}
+	node := &nmocks.NodeServiceClient{}
+	mem := &mmocks.MemberServiceClient{}
+	site := &sitmocks.SiteServiceClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
+	net.On("Delete", mock.Anything, mock.Anything).Return(&netpb.DeleteResponse{}, nil)
+
+	r := NewRouter(&Clients{
+		Node:    client.NewNodeFromClient(node),
+		Member:  client.NewRegistryFromClient(mem),
+		Network: client.NewNetworkRegistryFromClient(net),
+		Site:    client.NewSiteRegistryFromClient(site),
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	net.AssertExpectations(t)
+}
+
 // ===== SITE ENDPOINT TESTS =====
 
 func TestGetSites(t *testing.T) {

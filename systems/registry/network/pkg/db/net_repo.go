@@ -9,6 +9,7 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/ukama/ukama/systems/common/sql"
@@ -16,6 +17,8 @@ import (
 
 	"gorm.io/gorm"
 )
+
+var ErrCannotDeleteDefaultNetwork = errors.New("cannot delete default network")
 
 type NetRepo interface {
 	Add(network *Network, nestedFunc func(*Network, *gorm.DB) error) error
@@ -128,16 +131,27 @@ func (n netRepo) Add(network *Network, nestedFunc func(*Network, *gorm.DB) error
 	})
 }
 
-func (s netRepo) Delete(networkId uuid.UUID) error {
-	result := s.Db.GetGormDb().Where("id = ?", networkId).Delete(&Network{})
-	if result.Error != nil {
-		return result.Error
-	}
-	if result.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
-	}
+func (n netRepo) Delete(networkId uuid.UUID) error {
+	return n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		var ntwk Network
+		if err := tx.First(&ntwk, networkId).Error; err != nil {
+			return err
+		}
 
-	return nil
+		if ntwk.IsDefault {
+			return ErrCannotDeleteDefaultNetwork
+		}
+
+		result := tx.Delete(&ntwk)
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
+		}
+
+		return nil
+	})
 }
 
 func (n netRepo) GetNetworkCount() (int64, error) {
