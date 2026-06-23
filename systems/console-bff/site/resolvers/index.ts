@@ -8,12 +8,14 @@
 import { NonEmptyArray } from "type-graphql";
 
 import { AddSiteResolver } from "./addSite";
+import { DeleteSiteResolver } from "./deleteSite";
 import { GetSiteResolver } from "./getSite";
 import { GetSitesResolver } from "./getSites";
 import { UpdateSiteResolver } from "./updateSite";
 
 const resolvers: NonEmptyArray<any> = [
   AddSiteResolver,
+  DeleteSiteResolver,
   GetSiteResolver,
   GetSitesResolver,
   UpdateSiteResolver,

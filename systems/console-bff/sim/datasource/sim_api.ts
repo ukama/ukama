@@ -7,6 +7,7 @@
  */
 import { BaseRESTDataSource } from "../../common/datasource";
 import { logger } from "../../common/logger";
+import { CBooleanResponse } from "../../common/types";
 import {
   AllocateSimAPIDto,
   AllocateSimInputDto,
@@ -153,6 +154,21 @@ class SimApi extends BaseRESTDataSource {
   ): Promise<DeleteSimResDto> => {
     this.baseURL = baseURL;
     return this.delete(`/${VERSION}/${SIM}/${req.simId}`).then(res => res);
+  };
+
+  deleteSimFromPool = async (
+    baseURL: string,
+    simId: string
+  ): Promise<CBooleanResponse> => {
+    this.logger.info(
+      `DeleteSimFromPool [DELETE]: ${baseURL}/${VERSION}/${SIMPOOL}/sim/${simId}`
+    );
+    this.baseURL = baseURL;
+    return this.delete(`/${VERSION}/${SIMPOOL}/sim/${simId}`).then(() => {
+      return {
+        success: true,
+      };
+    });
   };
   addPackageToSim = async (
     baseURL: string,

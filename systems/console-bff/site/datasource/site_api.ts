@@ -7,6 +7,7 @@
  */
 import { VERSION } from "../../common/configs";
 import { BaseRESTDataSource } from "../../common/datasource";
+import { CBooleanResponse } from "../../common/types";
 import {
   AddSiteInputDto,
   SiteDto,
@@ -64,6 +65,21 @@ class SiteApi extends BaseRESTDataSource {
         spectrum_id: req.spectrum_id,
       },
     }).then(res => dtoToSiteDto(res));
+  };
+
+  deleteSite = async (
+    baseURL: string,
+    siteId: string
+  ): Promise<CBooleanResponse> => {
+    this.logger.info(
+      `DeleteSite [DELETE]: ${baseURL}/${VERSION}/${SITES}/${siteId}`
+    );
+    this.baseURL = baseURL;
+    return this.delete(`/${VERSION}/${SITES}/${siteId}`).then(() => {
+      return {
+        success: true,
+      };
+    });
   };
 
   updateSite = async (

@@ -33,6 +33,21 @@ class RateApi extends BaseRESTDataSource {
     });
   };
 
+  deleteMarkup = async (
+    baseURL: string,
+    userId: string
+  ): Promise<CBooleanResponse> => {
+    this.logger.info(
+      `DeleteMarkup [DELETE]: ${baseURL}/${VERSION}/${MARKUP}/users/${userId}`
+    );
+    this.baseURL = baseURL;
+    return this.delete(`/${VERSION}/${MARKUP}/users/${userId}`).then(() => {
+      return {
+        success: true,
+      };
+    });
+  };
+
   getDefaultMarkup = async (baseURL: string): Promise<DefaultMarkupResDto> => {
     this.logger.info(
       `GetDefaultMarkup [GET]: ${baseURL}/${VERSION}/${MARKUP}/default`
