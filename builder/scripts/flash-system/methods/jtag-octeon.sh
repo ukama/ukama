@@ -803,16 +803,37 @@ method_apply() {
     echo "  1. Power OFF the TRX"
     echo "  2. Disconnect the BDI / JTAG cable  (REQUIRED — while connected the BDI holds the"
     echo "     CPU in reset, so the board will NOT finish booting from flash)"
-    echo "  3. Power ON the TRX"
-    echo "  4. Wait until it boots to Linux and shows the 'LSM login:' prompt on serial"
-    echo "  5. CLOSE PuTTY/screen on /dev/ttyUSB0 (the script needs the serial port to log in"
-    echo "     and enable ethernet for you — post_config isn't on the board yet)"
+    echo "  3. CLOSE PuTTY/screen on /dev/ttyUSB0 (the script needs the serial port)"
+    echo "  4. Power ON the TRX"
     echo ""
-    echo "When you press ENTER, the script logs in over serial (root), runs the devmem"
-    echo "ethernet-enable, then SSHes in for Phase 2. (If it can't use the serial, it'll tell"
-    echo "you to run 'devmem 0x00011800B0001000 64 0x0140' twice on the console yourself.)"
+    echo "The script will wait for the 'LSM login:' prompt on ${serial_dev} and continue"
+    echo "automatically. Press ENTER at any time to skip waiting and proceed immediately."
     echo ""
-    read -rp "Press ENTER once Linux has booted and PuTTY is closed: " _
+
+    local pause1_log="${LOG_DIR}/pause1-serial.log"
+    local prompt_seen=0 elapsed=0 max_pause1_wait=240
+    if uboot_open "$serial_dev" "$baud" "$pause1_log" 2>/dev/null; then
+        while [ "$elapsed" -lt "$max_pause1_wait" ]; do
+            # Allow the operator to skip the wait by pressing ENTER.
+            local key=""
+            if IFS= read -rs -t 1 -n 1 key 2>/dev/null; then
+                echo "  skipped by user"
+                prompt_seen=1
+                break
+            fi
+            if grep -qF "LSM login:" "$pause1_log" 2>/dev/null; then
+                echo "  'LSM login:' seen on serial — continuing automatically."
+                prompt_seen=1
+                break
+            fi
+            elapsed=$((elapsed + 1))
+        done
+        uboot_close
+    fi
+
+    if [ "$prompt_seen" -ne 1 ]; then
+        echo "  WARNING: 'LSM login:' not seen within ${max_pause1_wait}s; continuing anyway."
+    fi
 
     echo ""
     echo "=== Phase 2: SSH + dd image flash ==="
