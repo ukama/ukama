@@ -20,6 +20,7 @@ import { GetSimsResolver } from "./getSims";
 import { GetSimsBySubscriberResolver } from "./getSimsBySubscriber";
 import { GetSimsFromPoolResolver } from "./getSimsFromPool";
 import { RemovePackageForSimResolver } from "./removePackageForSim";
+import { TerminatePackageForSimResolver } from "./terminatePackageForSim";
 import { ToggleSimStatusResolver } from "./toggleSimStatus";
 import { UploadSimsResolver } from "./uploadSims";
 
@@ -39,6 +40,7 @@ const resolvers: NonEmptyArray<any> = [
   RemovePackageForSimResolver,
   ToggleSimStatusResolver,
   UploadSimsResolver,
+  TerminatePackageForSimResolver,
 ];
 
 export default resolvers;
