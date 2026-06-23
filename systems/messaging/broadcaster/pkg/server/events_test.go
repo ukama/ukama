@@ -13,17 +13,19 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ukama/ukama/systems/common/msgbus"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
+
+	"github.com/ukama/ukama/systems/common/msgbus"
+
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
 const (
-	testOrgName      = "org"
-	broadcastRouteT  = "event.cloud.local.{{ .Org}}.ukamaagent.asr.policies.publish"
-	unknownRouteKey  = "event.cloud.local.org.ukamaagent.asr.publish.unknown"
-	errWrapAnyEvent  = "failed to wrap broadcaster event in any: %v"
+	testOrgName       = "org"
+	broadcastRouteT   = "event.cloud.local.{{ .Org}}.ukamaagent.asr.policies.publish"
+	unknownRouteKey   = "event.cloud.local.org.ukamaagent.asr.publish.unknown"
+	errWrapAnyEvent   = "failed to wrap broadcaster event in any: %v"
 	errWrapAnyGeneric = "failed to wrap generic message in any: %v"
 )
 
@@ -37,8 +39,8 @@ func TestEventNotificationUnknownRouteReturnsError(t *testing.T) {
 		RoutingKey: unknownRouteKey,
 		Msg:        &anypb.Any{},
 	})
-	if err == nil || !strings.Contains(err.Error(), "no handler routing key") {
-		t.Fatalf("expected unknown routing key error, got %v", err)
+	if err == nil || !strings.Contains(err.Error(), "no handler for routing key") {
+		t.Fatalf("no handler for routing key %s", unknownRouteKey)
 	}
 	if resp != nil {
 		t.Fatalf("expected nil response for unknown route")
@@ -87,8 +89,8 @@ func TestEventNotificationUnsupportedBroadcastTypeReturnsError(t *testing.T) {
 		RoutingKey: msgbus.PrepareRoute(testOrgName, broadcastRouteT),
 		Msg:        anyMsg,
 	})
-	if err == nil || !strings.Contains(err.Error(), "no handler broadcast type") {
-		t.Fatalf("expected unsupported broadcast type error, got %v", err)
+	if err == nil || !strings.Contains(err.Error(), "no handler for broadcast of type") {
+		t.Fatalf("no handler for broadcast of type %s", msg.Type)
 	}
 	if resp != nil {
 		t.Fatalf("expected nil response for unsupported broadcast type")
