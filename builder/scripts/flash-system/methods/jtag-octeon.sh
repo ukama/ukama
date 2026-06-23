@@ -142,6 +142,15 @@ method_validate() {
         echo "  [ OK ] band: ${band} ($band_cfg)"
     fi
 
+    local rc_post_src
+    rc_post_src="$(dirname "$BOARD_CONFIG")/payloads/rc_post.local"
+    if [ ! -f "$rc_post_src" ]; then
+        echo "  [FAIL] rc_post.local payload not found: $rc_post_src"
+        fail=1
+    else
+        echo "  [ OK ] rc_post.local payload: $rc_post_src"
+    fi
+
     if [ -z "${TRX_ROOT_PASSWORD:-}" ]; then
         echo "  [FAIL] TRX_ROOT_PASSWORD environment variable is not set"
         fail=1
@@ -175,7 +184,7 @@ method_confirm() {
     echo "Plan:"
     echo "  Phase 1 (JTAG)  : TFTP+JTAG bringup, flash OS/RD/uboot to ${trx_ip}"
     echo "  Manual pause    : you power-cycle TRX and remove BDI cable"
-    echo "  Phase 2 (SSH)   : scp+dd 8 .img files to /dev/flash_*"
+    echo "  Phase 2 (SSH)   : scp+dd 8 .img files to /dev/flash_*, install band.cfg + rc_post.local"
     echo "  Band            : ${band}"
     echo ""
     echo "This will overwrite the TRX flash."
@@ -693,41 +702,16 @@ _phase2_run() {
     done
 
     echo ""
-    echo "All 8 images written. Next: power-cycle the TRX to boot from the new flash."
-}
+    echo "Syncing TRX filesystems..."
+    sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "sync"
+    echo "  sync done."
 
-_phase3_run() {
-    local trx_ip ssh_user
-    trx_ip=$(yq_read "$BOARD_CONFIG" network.trx_ip)
-    ssh_user=$(yq_read "$BOARD_CONFIG" phase2.ssh_user)
+    echo "Inspecting /mnt/app mount source:"
+    sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" \
+        "mount | grep ' /mnt/app ' || true; df -h /mnt/app || true"
 
-    local sshpass_args=(-p "$TRX_ROOT_PASSWORD")
-    local ssh_opts=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR)
-
-    # After the 2nd power-cycle the freshly-flashed env/app boot with ethernet down
-    # (the dd of flash_env replaced the u-boot env that enabled it, and rc_post.local
-    # isn't installed yet), so bootstrap ethernet over serial again before SSH.
-    _phase2_enable_ethernet_over_serial
-
-    echo "Waiting for TRX SSH at ${trx_ip} (after 2nd power-cycle)..."
-    local elapsed=0
-    while [ "$elapsed" -lt 120 ]; do
-        if sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" true 2>/dev/null; then
-            break
-        fi
-        sleep 2
-        elapsed=$((elapsed + 2))
-    done
-    if [ "$elapsed" -ge 120 ]; then
-        echo "ERROR: TRX not reachable via SSH within 120s."
-        echo "  Ethernet still down after 2nd boot. On the TRX serial console (root / cavium.lte)"
-        echo "  run twice:  devmem 0x00011800B0001000 64 0x0140   then re-run Phase 3."
-        return 1
-    fi
-    echo "SSH up."
-
-    # Copy band config
-    local band_default band_configs_dir band_cfg_src band_cfg_target
+    # Copy band config and rc_post.local while we still have SSH/ethernet from boot 1.
+    local band_default band_configs_dir band_cfg_src band_cfg_target rc_post_src rc_post_target
     band_default=$(yq_read "$BOARD_CONFIG" band.default)
     band_configs_dir=$(yq_read "$BOARD_CONFIG" band.configs_dir)
     band_cfg_src="${band_configs_dir}/${band_default}.cfg"
@@ -741,25 +725,20 @@ _phase3_run() {
         echo "WARNING: band config source not found at ${band_cfg_src}"
     fi
 
-    # Create rc_post.local for ethernet persistence in Linux
-    local rc_post_target
+    rc_post_src="$(dirname "$BOARD_CONFIG")/payloads/rc_post.local"
     rc_post_target=$(yq_read "$BOARD_CONFIG" phase2.rc_post_local)
-    echo "Installing rc_post.local (${rc_post_target}) for SGMII autoneg persistence..."
-    sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" \
-        "mkdir -p /mnt/app && cat > ${rc_post_target} << 'EOF'
-#!/bin/sh
-# Re-enable SGMII autoneg after Linux boot
-devmem 0x00011800B0001000 64 0x0140 2>/dev/null || true
-EOF
-chmod +x ${rc_post_target}"
+    echo "Installing rc_post.local (${rc_post_src} -> ${rc_post_target})..."
+    sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "mkdir -p /mnt/app"
+    sshpass "${sshpass_args[@]}" scp "${ssh_opts[@]}" "$rc_post_src" "${ssh_user}@${trx_ip}:${rc_post_target}"
+    sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "chmod +x ${rc_post_target}"
 
     echo ""
-    echo "Phase 3 complete. Config files installed."
+    echo "All 8 images written and config files installed."
     echo "  Band config : ${band_cfg_target}"
     echo "  Ethernet fix: ${rc_post_target}"
     echo ""
-    echo "The TRX should now boot with working ethernet and a valid band config."
-    echo "If you power-cycle again, both settings will persist."
+    echo "Next: power-cycle the TRX to boot from the newly flashed images."
+    echo "After power-cycle, rc_post.local will enable ethernet automatically."
 }
 
 method_apply() {
@@ -795,28 +774,41 @@ method_apply() {
     echo ""
     echo "=== Manual pause 2 ==="
     echo "Please power-cycle the TRX now to boot from the newly flashed images."
-    echo "After power-cycle, ethernet will come up automatically (preboot mw64)."
+    echo "rc_post.local is already installed, so ethernet will come up automatically."
     echo ""
-    read -rp "Press ENTER when ready: " _
-
-    echo ""
-    echo "=== Phase 3: SSH config copy ==="
-    _phase3_run
+    read -rp "Press ENTER once the TRX has booted: " _
 }
 
 method_verify() {
-    local trx_ip ssh_user
+    local trx_ip ssh_user band_cfg_target rc_post_target
     trx_ip=$(yq_read "$BOARD_CONFIG" network.trx_ip)
     ssh_user=$(yq_read "$BOARD_CONFIG" phase2.ssh_user)
+    band_cfg_target=$(yq_read "$BOARD_CONFIG" band.target_path)
+    rc_post_target=$(yq_read "$BOARD_CONFIG" phase2.rc_post_local)
 
+    local sshpass_args=(-p "$TRX_ROOT_PASSWORD")
     local ssh_opts=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR)
 
-    if sshpass -p "$TRX_ROOT_PASSWORD" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" true 2>/dev/null; then
-        echo "  [ OK ] all 8 images written; TRX still reachable over SSH"
-    else
-        echo "  [WARN] TRX not reachable over SSH right after flashing (it may have dropped the link)"
+    echo "  Waiting for TRX SSH after final power-cycle..."
+    local elapsed=0
+    while [ "$elapsed" -lt 120 ]; do
+        if sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" true 2>/dev/null; then
+            break
+        fi
+        sleep 2
+        elapsed=$((elapsed + 2))
+    done
+
+    if [ "$elapsed" -ge 120 ]; then
+        echo "  [WARN] TRX not reachable over SSH after final power-cycle (it may still be booting)"
+        echo "  Final check is manual: confirm the TRX boots and ${rc_post_target} enables ethernet."
+        return 0
     fi
-    echo "  Final check is manual: power-cycle the TRX and confirm it boots and comes up."
+
+    echo "  [ OK ] TRX reachable over SSH after final power-cycle"
+    echo "  Verifying installed config files..."
+    sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" \
+        "ls -l '${band_cfg_target}' '${rc_post_target}'" 2>/dev/null || true
     return 0
 }
 
