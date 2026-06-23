@@ -355,16 +355,38 @@ _phase1_run() {
             echo "  Please manually telnet to the BDI and run: HOST $host_ip then CONFIG cnf71xx.cfg"
             return 1
         fi
-        echo "  Config sent — BDI is rebooting and auto-loading it. Waiting 45s to settle..."
-        sleep 45
-        echo ""
-        echo ">>> The BDI was just configured and is now warm at cnMIPS#0>."
-        echo ">>> Do this, then RE-RUN the script (no keypress needed here):"
-        echo ">>>   1. COLD power-cycle the TRX (power OFF, ~5s, ON — JTAG cable stays connected)"
-        echo ">>>   2. Re-run:  sudo -E ./flash trx"
-        echo ">>> The re-run will see the warm BDI, skip CONFIG, and go straight to"
-        echo ">>> go 0x400000 + oct-remote-boot — the path that brings up u-boot."
-        return 1
+        echo "  Config sent — BDI is rebooting and auto-loading cnf71xx.cfg over TFTP."
+        echo "  Keeping the TFTP server up and polling until the BDI comes up configured..."
+        # The BDI's post-reboot auto-load needs our TFTP server (still running here) to be
+        # serving cnf71xx.cfg. Poll the prompt until it returns cnMIPS#0>, then continue in
+        # this same run — do NOT exit (exiting tears down TFTP and the BDI stays bare).
+        local cfg_wait=0 bdi_now=""
+        while [ "$cfg_wait" -lt 120 ]; do
+            sleep 10
+            cfg_wait=$((cfg_wait + 10))
+            bdi_now=$(expect -c "
+                set timeout 15
+                log_user 0
+                spawn telnet $bdi_ip
+                expect {
+                    \"cnMIPS#0>\" { puts BDI_READY }
+                    \"Core#0>\"   { puts BDI_BARE }
+                    timeout       { puts BDI_DOWN }
+                }
+                catch { send \"quit\r\"; expect eof }
+            " 2>/dev/null | grep -oE 'BDI_READY|BDI_BARE|BDI_DOWN' | tail -1)
+            if [ "$bdi_now" = "BDI_READY" ]; then
+                echo "  BDI came up configured (cnMIPS#0>) after ${cfg_wait}s."
+                break
+            fi
+            echo "  ...BDI not ready yet (${bdi_now:-no response}, ${cfg_wait}s)"
+        done
+        if [ "$bdi_now" != "BDI_READY" ]; then
+            echo "ERROR: BDI did not auto-load its config (still ${bdi_now:-unknown} after ${cfg_wait}s)."
+            echo "  Almost always means CNF71XX.cfg (+ its .def) is missing so TFTP auto-load fails."
+            echo "  Confirm the file exists at: $bdi_config_src"
+            return 1
+        fi
     else
         echo "ERROR: could not reach the BDI telnet prompt at ${bdi_ip}."
         echo "  Check BDI power and network, then re-run."
