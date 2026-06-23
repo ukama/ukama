@@ -151,6 +151,16 @@ method_validate() {
         echo "  [ OK ] rc_post.local payload: $rc_post_src"
     fi
 
+    local post_trx_ip post_host_ip
+    post_trx_ip=$(yq_read "$BOARD_CONFIG" network.post_flash.trx_ip)
+    post_host_ip=$(yq_read "$BOARD_CONFIG" network.post_flash.host_ip)
+    if [ -z "$post_trx_ip" ] || [ "$post_trx_ip" = "null" ] || [ -z "$post_host_ip" ] || [ "$post_host_ip" = "null" ]; then
+        echo "  [FAIL] network.post_flash.trx_ip/host_ip not configured"
+        fail=1
+    else
+        echo "  [ OK ] post-flash subnet: host ${post_host_ip}, TRX ${post_trx_ip}"
+    fi
+
     if [ -z "${TRX_ROOT_PASSWORD:-}" ]; then
         echo "  [FAIL] TRX_ROOT_PASSWORD environment variable is not set"
         fail=1
@@ -185,6 +195,7 @@ method_confirm() {
     echo "  Phase 1 (JTAG)  : TFTP+JTAG bringup, flash OS/RD/uboot to ${trx_ip}"
     echo "  Manual pause    : you power-cycle TRX and remove BDI cable"
     echo "  Phase 2 (SSH)   : scp+dd 8 .img files to /dev/flash_*, install band.cfg + rc_post.local"
+    echo "  Post-flash      : TRX moves to $(yq_read "$BOARD_CONFIG" network.post_flash.trx_ip); bench box -> $(yq_read "$BOARD_CONFIG" network.post_flash.host_ip)"
     echo "  Band            : ${band}"
     echo ""
     echo "This will overwrite the TRX flash."
@@ -695,10 +706,9 @@ _phase2_run() {
         sshpass "${sshpass_args[@]}" scp "${ssh_opts[@]}" "$src" "${ssh_user}@${trx_ip}:${staging}/${name}"
 
         echo "  [${key}] dd to ${dst}"
-        # bs=1 is REQUIRED: the MTD CFI driver on the TRX Linux 3.4 kernel silently
-        # corrupts flash with large write() buffers (e.g. bs=1M). Proven manual baseline.
+        # Supreeth confirmed the bench uses bs=1M for the 8 .img dd's on TRX.
         sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" \
-            "dd if=${staging}/${name} of=${dst} bs=1 && rm -f ${staging}/${name}"
+            "dd if=${staging}/${name} of=${dst} bs=1M && rm -f ${staging}/${name}"
     done
 
     echo ""
@@ -741,6 +751,43 @@ _phase2_run() {
     echo "After power-cycle, rc_post.local will enable ethernet automatically."
 }
 
+# After the full app images are flashed, the TRX reboots into its production
+# network (e.g. 10.102.81.61). Move the bench box NIC to the matching subnet so
+# method_verify can reach it.
+_phase2_rehost_for_post_flash() {
+    local post_trx_ip post_host_ip post_netmask post_iface pre_trx_ip
+    post_trx_ip=$(yq_read "$BOARD_CONFIG" network.post_flash.trx_ip)
+    post_host_ip=$(yq_read "$BOARD_CONFIG" network.post_flash.host_ip)
+    post_netmask=$(yq_read "$BOARD_CONFIG" network.post_flash.netmask)
+    post_iface=$(yq_read "$BOARD_CONFIG" network.post_flash.interface)
+
+    if [ -z "$post_trx_ip" ] || [ "$post_trx_ip" = "null" ]; then
+        echo "  No network.post_flash.trx_ip configured; skipping host IP reconfiguration."
+        return 0
+    fi
+    if [ -z "$post_host_ip" ] || [ "$post_host_ip" = "null" ]; then
+        return 0
+    fi
+
+    # Auto-detect interface if not specified.
+    if [ -z "$post_iface" ] || [ "$post_iface" = "null" ]; then
+        pre_trx_ip=$(yq_read "$BOARD_CONFIG" network.trx_ip)
+        post_iface=$(ip route get "$pre_trx_ip" 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="dev") {print $(i+1); exit}}')
+    fi
+    if [ -z "$post_iface" ] || [ "$post_iface" = "null" ]; then
+        echo "  WARNING: could not detect host interface for post-flash subnet ${post_host_ip}; skipping rehost."
+        return 0
+    fi
+
+    local cidr
+    cidr=$(python3 -c "import ipaddress; print(ipaddress.IPv4Network('0.0.0.0/${post_netmask}').prefixlen)" 2>/dev/null || echo "24")
+
+    echo "Rehosting bench box to post-flash subnet: ${post_iface} -> ${post_host_ip}/${cidr}"
+    ip addr add "${post_host_ip}/${cidr}" dev "$post_iface" 2>/dev/null || true
+    echo "  Bench box now has ${post_host_ip}/${cidr} on ${post_iface}."
+    echo "  After power-cycle, the TRX will be at ${post_trx_ip}."
+}
+
 method_apply() {
     trap _jtag_octeon_cleanup EXIT
 
@@ -777,11 +824,19 @@ method_apply() {
     echo "rc_post.local is already installed, so ethernet will come up automatically."
     echo ""
     read -rp "Press ENTER once the TRX has booted: " _
+
+    # The flashed app images reconfigure the TRX to its production IP. Move the
+    # bench box to the matching subnet so verification can reach it.
+    _phase2_rehost_for_post_flash
 }
 
 method_verify() {
     local trx_ip ssh_user band_cfg_target rc_post_target
-    trx_ip=$(yq_read "$BOARD_CONFIG" network.trx_ip)
+    if yq_exists "$BOARD_CONFIG" network.post_flash.trx_ip; then
+        trx_ip=$(yq_read "$BOARD_CONFIG" network.post_flash.trx_ip)
+    else
+        trx_ip=$(yq_read "$BOARD_CONFIG" network.trx_ip)
+    fi
     ssh_user=$(yq_read "$BOARD_CONFIG" phase2.ssh_user)
     band_cfg_target=$(yq_read "$BOARD_CONFIG" band.target_path)
     rc_post_target=$(yq_read "$BOARD_CONFIG" phase2.rc_post_local)

@@ -7,6 +7,15 @@ network:
   trx_ip: 192.168.53.151
   trx_mac: "AA:BB:CC:DD:EE:FF"
   netmask: 255.255.255.0
+  # Once the full app images are flashed, the TRX reboots into its production
+  # network config. The bench box must move to the same subnet for verification.
+  post_flash:
+    trx_ip: 10.102.81.61
+    host_ip: 10.102.81.100
+    netmask: 255.255.255.0
+    # Host interface to reconfigure. If empty, the script auto-detects the
+    # interface currently used to reach network.trx_ip.
+    interface: ""
 
 bdi:
   telnet_port: 23
