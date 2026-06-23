@@ -170,7 +170,7 @@ func createTestSubscriber(name, email string) int_db.Subscriber {
 		Address:               TEST_ADDRESS_DEFAULT,
 		CreatedAt:             time.Now(),
 		UpdatedAt:             time.Now(),
-		DeletedAt:             nil,
+		DeletedAt:             gorm.DeletedAt{},
 	}
 }
 
@@ -223,7 +223,7 @@ func TestSubscriber_Add(t *testing.T) {
 			Address:               TEST_ADDRESS_ALICE,
 			CreatedAt:             time.Now(),
 			UpdatedAt:             time.Now(),
-			DeletedAt:             nil,
+			DeletedAt:             gorm.DeletedAt{},
 		}
 
 		expectedError := errors.New(TEST_ERROR_EXPECTED)
@@ -487,7 +487,9 @@ func TestSubscriber_Delete(t *testing.T) {
 		mock, repo := setupTestDB(t)
 		subscriberId := uuid.NewV4()
 		mock.ExpectBegin()
-		mock.ExpectExec(`DELETE FROM "subscribers"`).WithArgs(subscriberId).WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectExec(`UPDATE "subscribers" SET "deleted_at"=\$1 WHERE subscriber_id = \$2 AND "subscribers"."deleted_at" IS NULL`).
+			WithArgs(sqlmock.AnyArg(), subscriberId).
+			WillReturnResult(sqlmock.NewResult(0, 1))
 		mock.ExpectCommit()
 		err := repo.Delete(subscriberId)
 		assert.NoError(t, err)
@@ -498,7 +500,9 @@ func TestSubscriber_Delete(t *testing.T) {
 		mock, repo := setupTestDB(t)
 		subscriberId := uuid.NewV4()
 		mock.ExpectBegin()
-		mock.ExpectExec(`DELETE FROM "subscribers"`).WithArgs(subscriberId).WillReturnResult(sqlmock.NewResult(0, 0))
+		mock.ExpectExec(`UPDATE "subscribers" SET "deleted_at"=\$1 WHERE subscriber_id = \$2 AND "subscribers"."deleted_at" IS NULL`).
+			WithArgs(sqlmock.AnyArg(), subscriberId).
+			WillReturnResult(sqlmock.NewResult(0, 0))
 		mock.ExpectCommit()
 		err := repo.Delete(subscriberId)
 		assert.Error(t, err)
@@ -511,7 +515,9 @@ func TestSubscriber_Delete(t *testing.T) {
 		subscriberId := uuid.NewV4()
 		dbErr := errors.New(TEST_ERROR_DB)
 		mock.ExpectBegin()
-		mock.ExpectExec(`DELETE FROM "subscribers"`).WithArgs(subscriberId).WillReturnError(dbErr)
+		mock.ExpectExec(`UPDATE "subscribers" SET "deleted_at"=\$1 WHERE subscriber_id = \$2 AND "subscribers"."deleted_at" IS NULL`).
+			WithArgs(sqlmock.AnyArg(), subscriberId).
+			WillReturnError(dbErr)
 		mock.ExpectRollback()
 		err := repo.Delete(subscriberId)
 		assert.Error(t, err)
@@ -660,7 +666,7 @@ func TestSubscriber_GetByEmail(t *testing.T) {
 			subscriber.Address, subscriber.CreatedAt, subscriber.UpdatedAt, subscriber.DeletedAt,
 		)
 
-		mock.ExpectQuery(`^SELECT \* FROM "subscribers" WHERE email = \$1 ORDER BY "subscribers"\."subscriber_id" LIMIT \$2`).
+		mock.ExpectQuery(`^SELECT \* FROM "subscribers" WHERE email = \$1 AND "subscribers"\."deleted_at" IS NULL ORDER BY "subscribers"\."subscriber_id" LIMIT \$2`).
 			WithArgs(expectedEmail, 1).
 			WillReturnRows(subRow)
 
@@ -689,7 +695,7 @@ func TestSubscriber_GetByEmail(t *testing.T) {
 
 		nonExistentEmail := TEST_EMAIL_NONEXISTENT
 
-		mock.ExpectQuery(`^SELECT \* FROM "subscribers" WHERE email = \$1 ORDER BY "subscribers"\."subscriber_id" LIMIT \$2`).
+		mock.ExpectQuery(`^SELECT \* FROM "subscribers" WHERE email = \$1 AND "subscribers"\."deleted_at" IS NULL ORDER BY "subscribers"\."subscriber_id" LIMIT \$2`).
 			WithArgs(nonExistentEmail, 1).
 			WillReturnError(sql.ErrNoRows)
 
@@ -710,7 +716,7 @@ func TestSubscriber_GetByEmail(t *testing.T) {
 		email := TEST_EMAIL_TEST
 		expectedError := errors.New(TEST_ERROR_DB_FAILED)
 
-		mock.ExpectQuery(`^SELECT \* FROM "subscribers" WHERE email = \$1 ORDER BY "subscribers"\."subscriber_id" LIMIT \$2`).
+		mock.ExpectQuery(`^SELECT \* FROM "subscribers" WHERE email = \$1 AND "subscribers"\."deleted_at" IS NULL ORDER BY "subscribers"\."subscriber_id" LIMIT \$2`).
 			WithArgs(email, 1).
 			WillReturnError(expectedError)
 
