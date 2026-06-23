@@ -271,10 +271,14 @@ func Test_GetMembers(t *testing.T) {
 func Test_RemoveMember(t *testing.T) {
 	t.Run("RemoveMemberOfAnOrg", func(t *testing.T) {
 		// Arrange
-		member := createTestMember(roles.TYPE_USERS, false)
+		member := createTestMember(roles.TYPE_USERS, true)
 		mock, _, repo := setupTestDB(t)
 
+		rows := createMemberRows(member)
 		mock.ExpectBegin()
+		mock.ExpectQuery(`^SELECT.*members.*`).
+			WithArgs(member.MemberId, sqlmock.AnyArg()).
+			WillReturnRows(rows)
 		mock.ExpectExec(`^UPDATE.*members.*`).
 			WithArgs(sqlmock.AnyArg(), member.MemberId).
 			WillReturnResult(sqlmock.NewResult(1, 1))
@@ -289,15 +293,37 @@ func Test_RemoveMember(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
+	t.Run("RemoveMemberNotDeactivated", func(t *testing.T) {
+		// Arrange
+		member := createTestMember(roles.TYPE_USERS, false)
+		mock, _, repo := setupTestDB(t)
+
+		rows := createMemberRows(member)
+		mock.ExpectBegin()
+		mock.ExpectQuery(`^SELECT.*members.*`).
+			WithArgs(member.MemberId, sqlmock.AnyArg()).
+			WillReturnRows(rows)
+		mock.ExpectRollback()
+
+		// Act
+		err := repo.RemoveMember(member.MemberId, orgId.String(), nil)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Equal(t, ErrMemberNotDeactivated, err)
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
 	t.Run("RemoveMemberNotFound", func(t *testing.T) {
 		// Arrange
 		memberId := uuid.NewV4()
 		mock, _, repo := setupTestDB(t)
 
 		mock.ExpectBegin()
-		mock.ExpectExec(`^UPDATE.*members.*`).
-			WithArgs(sqlmock.AnyArg(), memberId).
-			WillReturnResult(sqlmock.NewResult(0, 0))
+		mock.ExpectQuery(`^SELECT.*members.*`).
+			WithArgs(memberId, sqlmock.AnyArg()).
+			WillReturnError(gorm.ErrRecordNotFound)
 		mock.ExpectRollback()
 
 		// Act
@@ -312,17 +338,21 @@ func Test_RemoveMember(t *testing.T) {
 
 	t.Run("RemoveMemberWithError", func(t *testing.T) {
 		// Arrange
-		memberId := uuid.NewV4()
+		member := createTestMember(roles.TYPE_USERS, true)
 		mock, _, repo := setupTestDB(t)
 
+		rows := createMemberRows(member)
 		mock.ExpectBegin()
+		mock.ExpectQuery(`^SELECT.*members.*`).
+			WithArgs(member.MemberId, sqlmock.AnyArg()).
+			WillReturnRows(rows)
 		mock.ExpectExec(`^UPDATE.*members.*`).
-			WithArgs(sqlmock.AnyArg(), memberId).
+			WithArgs(sqlmock.AnyArg(), member.MemberId).
 			WillReturnError(errors.New("test error"))
 		mock.ExpectRollback()
 
 		// Act
-		err := repo.RemoveMember(memberId, orgId.String(), nil)
+		err := repo.RemoveMember(member.MemberId, orgId.String(), nil)
 
 		// Assert
 		assert.Error(t, err)

@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"errors"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -212,6 +213,10 @@ func (m *MemberServer) RemoveMember(ctx context.Context, req *pb.MemberRequest) 
 		return nil
 	})
 	if err != nil {
+		if errors.Is(err, db.ErrMemberNotDeactivated) {
+			return nil, status.Errorf(codes.FailedPrecondition,
+				"member must be deactivated first")
+		}
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
 

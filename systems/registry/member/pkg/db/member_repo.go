@@ -9,12 +9,16 @@
 package db
 
 import (
+	"errors"
+
 	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
 	"github.com/ukama/ukama/systems/common/sql"
 )
+
+var ErrMemberNotDeactivated = errors.New("member must be deactivated first")
 
 type MemberRepo interface {
 
@@ -108,6 +112,15 @@ func (r *memberRepo) UpdateMember(member *Member) error {
 
 func (r *memberRepo) RemoveMember(memberId uuid.UUID, orgId string, nestedFunc func(string, string) error) error {
 	err := r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		var member Member
+		if err := tx.Where("member_id = ?", memberId).First(&member).Error; err != nil {
+			return err
+		}
+
+		if !member.Deactivated {
+			return ErrMemberNotDeactivated
+		}
+
 		//TOTO: Were causing error Orgs relation not found
 		// if nestedFunc != nil {
 		// 	nestErr := nestedFunc(orgId, memberId.String())
