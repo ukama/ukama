@@ -77,6 +77,7 @@ type simManager interface {
 		toEndDate string, isActive, asExpired, sort bool, count uint32) (*simMangPb.ListPackagesForSimResponse, error)
 	SetActivePackageForSim(req *simMangPb.SetActivePackageRequest) (*simMangPb.SetActivePackageResponse, error)
 	GetUsages(iccid, simType, cdrType, from, to, region string) (*simMangPb.UsageResponse, error)
+	TerminatePackageForSim(req *simMangPb.TerminatePackageRequest) (*simMangPb.TerminatePackageResponse, error)
 
 	// Deprecated: Use pkg.client.SimManager.ListSims with subscriberId as filtering param instead.
 	GetSimsBySub(subscriberId string) (*simMangPb.GetSimsBySubscriberResponse, error)
@@ -189,6 +190,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		sim.GET(simIdKey+"/package", formatDoc("Get packages for a given SIM", ""), tonic.Handler(r.listPackagesForSim, http.StatusOK))
 		sim.POST(simIdKey+"/package", formatDoc("Add a new package to the given SIM", ""), tonic.Handler(r.addPackageForSim, http.StatusCreated))
 		sim.PATCH(simIdKey+"/package/:package_id", formatDoc("Set active package for a given SIM", ""), tonic.Handler(r.setActivePackageForSim, http.StatusOK))
+		sim.PATCH(simIdKey+"/package/:package_id/terminate", formatDoc("Terminate a package for a given SIM", ""), tonic.Handler(r.terminatePackageForSim, http.StatusOK))
 		sim.DELETE(simIdKey+"/package/:package_id", formatDoc("Delete a package from a given SIM", ""), tonic.Handler(r.removePkgForSim, http.StatusOK))
 		// Deprecated: Use GET /v1/sim with subscriberId as query param instead.
 		sim.GET("/subscriber"+subscriberIdKey, formatDoc("Get the list of SIMs for a given subscriber", ""), tonic.Handler(r.getSimsBySub, http.StatusOK))
@@ -387,6 +389,14 @@ func (r *Router) postPkgForSim(c *gin.Context, req *PostPkgToSimReq) error {
 	}
 
 	return nil
+}
+
+func (r *Router) terminatePackageForSim(c *gin.Context, req *RemovePkgFromSimReq) (*simMangPb.TerminatePackageResponse, error) {
+	payload := simMangPb.TerminatePackageRequest{
+		SimId:     req.SimId,
+		PackageId: req.PackageId,
+	}
+	return r.clients.sm.TerminatePackageForSim(&payload)
 }
 
 func (r *Router) listPackagesForSim(c *gin.Context, req *ListPackagesForSimReq) (*simMangPb.ListPackagesForSimResponse, error) {

@@ -129,6 +129,13 @@ func (sm *SimManager) RemovePackageForSim(req *pb.RemovePackageRequest) (*pb.Rem
 	return sm.client.RemovePackageForSim(ctx, req)
 }
 
+func (sm *SimManager) TerminatePackageForSim(req *pb.TerminatePackageRequest) (*pb.TerminatePackageResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
+	defer cancel()
+
+	return sm.client.TerminatePackageForSim(ctx, req)
+}
+
 func (sm *SimManager) TerminateSim(simId string) (*pb.TerminateSimResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()

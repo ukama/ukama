@@ -148,6 +148,19 @@ class SimApi extends BaseRESTDataSource {
     );
   };
 
+  terminatePackageForSim = async (
+    baseURL: string,
+    req: RemovePackageFormSimInputDto
+  ): Promise<RemovePackageFromSimResDto> => {
+    this.logger.info(
+      `TerminatePackageFromSim [PUT]: ${baseURL}/${VERSION}/${SIM}/${req.simId}/package/${req.packageId}/terminate`
+    );
+    this.baseURL = baseURL;
+    return this.put(
+      `/${VERSION}/${SIM}/${req.simId}/package/${req.packageId}/terminate`
+    ).then(res => res);
+  };
+
   deleteSim = async (
     baseURL: string,
     req: DeleteSimInputDto
