@@ -58,6 +58,11 @@ int control_get_public_state(ControlCtx *ctx,
                              char *outState,
                              size_t outStateSize);
 
+int control_get_subsys_public_state(ControlCtx *ctx,
+                                    ControlSubsystem subsystem,
+                                    char *outState,
+                                    size_t outStateSize);
+
 int control_request(ControlCtx *ctx,
                     const char *nodeType,
                     ControlSubsystem subsystem,

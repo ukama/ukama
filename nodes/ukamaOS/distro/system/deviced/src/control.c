@@ -151,6 +151,41 @@ int control_get_public_state(ControlCtx *ctx,
     return STATUS_OK;
 }
 
+
+int control_get_subsys_public_state(ControlCtx *ctx,
+                                    ControlSubsystem subsystem,
+                                    char *outState,
+                                    size_t outStateSize) {
+
+    ControlSubsysState *ss = NULL;
+    const char *stateStr = NULL;
+
+    if (!ctx || !outState || outStateSize == 0) {
+        return STATUS_NOK;
+    }
+
+    pthread_mutex_lock(&ctx->Lock);
+
+    ss = get_subsys(ctx, subsystem);
+    if (!ss) {
+        pthread_mutex_unlock(&ctx->Lock);
+        return STATUS_NOK;
+    }
+
+    if (ss->Phase == CONTROL_PHASE_FAULT) {
+        stateStr = "fault";
+    } else if (ss->Phase == CONTROL_PHASE_PENDING ||
+               ss->Phase == CONTROL_PHASE_EXECUTING) {
+        stateStr = "transitioning";
+    } else {
+        stateStr = (ss->Current == CONTROL_STATE_ON) ? "on" : "off";
+    }
+
+    (void)snprintf(outState, outStateSize, "%s", stateStr);
+    pthread_mutex_unlock(&ctx->Lock);
+    return STATUS_OK;
+}
+
 bool control_set_pending(ControlCtx *ctx,
                          ControlSubsystem subsystem,
                          ControlState desired,

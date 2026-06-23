@@ -25,6 +25,8 @@ int wc_send_action_alarm_to_notifyd(Config *config,
                                    const char *details,
                                    int *retCode);
 int wc_send_reboot_to_client(Config *config, int *retCode);
+int wc_send_radio_to_client(Config *config, ControlState desired, int *retCode);
+int wc_post_service_to_pcrf(Config *config, ControlState desired, int *retCode);
 int wc_put_gpio_to_femd(Config *config,
                         int femUnit,
                         ControlState desired,

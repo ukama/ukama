@@ -84,10 +84,16 @@ static void setup_client_webservice_endpoints(Config *config, UInst *instance) {
     setup_common_webservice_endpoints(config, instance);
 
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
-                               API_RES_EP("restart"), 0,
-                               &web_service_cb_post_restart, config);
+                               API_RES_EP("reboot"), 0,
+                               &web_service_cb_post_reboot, config);
     setup_unsupported_methods(instance, "POST",
-                              URL_PREFIX, API_RES_EP("restart"));
+                              URL_PREFIX, API_RES_EP("reboot"));
+
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("radio"), 0,
+                               &web_service_cb_post_radio_client, config);
+    setup_unsupported_methods(instance, "POST",
+                              URL_PREFIX, API_RES_EP("radio"));
 
     ulfius_set_default_endpoint(instance, &web_service_cb_default, config);
 }
@@ -108,12 +114,6 @@ static void setup_controller_node_webservice_endpoints(Config *config,
                                &web_service_cb_post_restart, config);
     setup_unsupported_methods(instance, "POST",
                               URL_PREFIX, API_RES_EP("restart"));
-
-    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
-                               API_RES_EP("service"), 0,
-                               &web_service_cb_post_service, config);
-    setup_unsupported_methods(instance, "POST",
-                              URL_PREFIX, API_RES_EP("service"));
 
     /* need to add ep related to switch/charger/HAT/etc. TODO */
    
@@ -143,6 +143,12 @@ static void setup_tower_node_webservice_endpoints(Config *config,
     setup_unsupported_methods(instance, "POST",
                               URL_PREFIX, API_RES_EP("service"));
 
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("radio"), 0,
+                               &web_service_cb_post_radio, config);
+    setup_unsupported_methods(instance, "POST",
+                              URL_PREFIX, API_RES_EP("radio"));
+
     ulfius_set_default_endpoint(instance, &web_service_cb_default, config);
 }
 
@@ -168,13 +174,34 @@ static void setup_amplifier_node_webservice_endpoints(Config *config, UInst *ins
     setup_unsupported_methods(instance, "POST",
                               URL_PREFIX, API_RES_EP("radio"));
 
-    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
-                               API_RES_EP("service"), 0,
-                               &web_service_cb_post_service, config);
-    setup_unsupported_methods(instance, "POST",
-                              URL_PREFIX, API_RES_EP("service"));
 
     ulfius_set_default_endpoint(instance, &web_service_cb_default, config);
+}
+
+static int setup_webservice_endpoints(Config *config, UInst *serviceInst) {
+
+    if (config->clientMode) {
+        setup_client_webservice_endpoints(config, serviceInst);
+        return USYS_TRUE;
+    }
+
+    if (strcmp(config->nodeType, UKAMA_TOWER_NODE) == 0) {
+        setup_tower_node_webservice_endpoints(config, serviceInst);
+        return USYS_TRUE;
+    }
+
+    if (strcmp(config->nodeType, UKAMA_AMPLIFIER_NODE) == 0) {
+        setup_amplifier_node_webservice_endpoints(config, serviceInst);
+        return USYS_TRUE;
+    }
+
+    if (strcmp(config->nodeType, UKAMA_CONTROLLER_NODE) == 0) {
+        setup_controller_node_webservice_endpoints(config, serviceInst);
+        return USYS_TRUE;
+    }
+
+    usys_log_error("Unable to setup web services for: %s", config->nodeType);
+    return USYS_FALSE;
 }
 
 int start_web_service(Config *config, UInst *serviceInst) {
@@ -183,38 +210,27 @@ int start_web_service(Config *config, UInst *serviceInst) {
                              config->servicePort,
                              NULL,
                              NULL) != U_OK) {
-		usys_log_error("Error initializing instance for webservice port %d",
+        usys_log_error("Error initializing instance for webservice port %d",
                        config->servicePort);
-		return USYS_FALSE;
-	}
-
-	/* Set few params. */
-	u_map_put(serviceInst->default_headers, "Access-Control-Allow-Origin", "*");
-    
-	/* setup endpoints and methods callback. */
-    if (config->clientMode) {
-        setup_client_webservice_endpoints(config, serviceInst);
-    } else {
-        if (strcmp(config->nodeType, UKAMA_TOWER_NODE) == 0) {
-            setup_tower_node_webservice_endpoints(config, serviceInst);
-        } else if (strcmp(config->nodeType, UKAMA_AMPLIFIER_NODE) == 0) {
-            setup_amplifier_node_webservice_endpoints(config, serviceInst);
-        } else if (strcmp(config->nodeType, UKAMA_CONTROLLER_NODE) == 0) {
-            setup_controller_node_webservice_endpoints(config, serviceInst);
-        } else {
-            usys_log_error("Unable to setup web services for: %s",
-                           config->nodeType);
-            return USYS_FALSE;
-        }
+        return USYS_FALSE;
     }
 
-	if (!start_framework(config, serviceInst)) {
-		usys_log_error("Failed to start webservices on port: %d",
+    /* Set few params. */
+    u_map_put(serviceInst->default_headers, "Access-Control-Allow-Origin", "*");
+
+    /* Setup endpoints and methods callback. */
+    if (!setup_webservice_endpoints(config, serviceInst)) {
+        return USYS_FALSE;
+    }
+
+    if (!start_framework(config, serviceInst)) {
+        usys_log_error("Failed to start webservices on port: %d",
                        config->servicePort);
-		return USYS_FALSE;
-	}
+        return USYS_FALSE;
+    }
 
-	usys_log_debug("Webservice started on port: %d", config->servicePort);
+    usys_log_debug("Webservice started on port: %d", config->servicePort);
 
-	return USYS_TRUE;
+    return USYS_TRUE;
 }
+

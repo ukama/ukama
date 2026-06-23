@@ -129,6 +129,7 @@ int main(int argc, char **argv) {
     serviceConfig.nodedPort    = usys_find_service_port(SERVICE_NODE);
     serviceConfig.notifydPort  = usys_find_service_port(SERVICE_NOTIFY);
     serviceConfig.femPort      = usys_find_service_port(SERVICE_FEM);
+    serviceConfig.pcrfPort     = usys_find_service_port(SERVICE_PCRF);
     serviceConfig.nodeID       = NULL;
     serviceConfig.nodeType     = NULL;
     serviceConfig.clientMode   = clientMode;
@@ -143,12 +144,14 @@ int main(int argc, char **argv) {
             !serviceConfig.nodedPort   ||
             !serviceConfig.notifydPort ||
             !serviceConfig.clientPort  ||
-            !serviceConfig.femPort ) {
-            usys_log_error("Unable to determine the port for services: %s %s %s %s",
+            !serviceConfig.femPort     ||
+            !serviceConfig.pcrfPort ) {
+            usys_log_error("Unable to determine the port for services: %s %s %s %s %s",
                            SERVICE_DEVICE,
                            SERVICE_NODE,
                            SERVICE_NOTIFY,
-                           SERVICE_DEVICE_CLIENT);
+                           SERVICE_DEVICE_CLIENT,
+                           SERVICE_PCRF);
             exitCode = USYS_TRUE;
             goto done;
         }
@@ -185,10 +188,13 @@ int main(int argc, char **argv) {
 
     serviceConfig.startTime = time(NULL);
 
+    /* Service is OFF by default */
     if (serviceConfig.nodeType) {
         if (strcmp(serviceConfig.nodeType, UKAMA_TOWER_NODE) == 0) {
-            serviceConfig.control->Service.Current = CONTROL_STATE_ON;
-            serviceConfig.control->Service.Desired = CONTROL_STATE_ON;
+            serviceConfig.control->Service.Current = CONTROL_STATE_OFF;
+            serviceConfig.control->Service.Desired = CONTROL_STATE_OFF;
+            serviceConfig.control->Radio.Current   = CONTROL_STATE_ON;
+            serviceConfig.control->Radio.Desired   = CONTROL_STATE_ON;
         } else if (strcmp(serviceConfig.nodeType, UKAMA_AMPLIFIER_NODE) == 0) {
             serviceConfig.control->Radio.Current = CONTROL_STATE_ON;
             serviceConfig.control->Radio.Desired = CONTROL_STATE_ON;

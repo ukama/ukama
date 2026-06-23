@@ -409,8 +409,14 @@ int web_service_cb_state(const URequest *request,
 
     if (strcmp(config->nodeType, UKAMA_TOWER_NODE) == 0) {
         json_object_set_new(json, "service", json_string(state));
+        if (control_get_subsys_public_state(config->control,
+                                            CONTROL_SUBSYS_RADIO,
+                                            state,
+                                            sizeof(state)) == STATUS_OK) {
+            json_object_set_new(json, "radio", json_string(state));
+        }
     } else if (strcmp(config->nodeType, UKAMA_CONTROLLER_NODE) == 0){
-        json_object_set_new(json, "service", json_string(state));
+        /* CNode does not own service/radio. */
     } else if (strcmp(config->nodeType, UKAMA_AMPLIFIER_NODE) == 0) {
         json_object_set_new(json, "radio", json_string(state));
     } else {
@@ -436,6 +442,10 @@ int web_service_cb_post_service(const URequest *request,
         return json_set_empty(response, HttpStatus_InternalServerError);
     }
 
+    if (strcmp(config->nodeType, UKAMA_TOWER_NODE) != 0) {
+        return json_set_empty(response, HttpStatus_NotFound);
+    }
+
     return _post_state_change(request, response, config, CONTROL_SUBSYS_SERVICE);
 }
 
@@ -450,11 +460,55 @@ int web_service_cb_post_radio(const URequest *request,
         return json_set_empty(response, HttpStatus_InternalServerError);
     }
 
-    if (strcmp(config->nodeType, UKAMA_AMPLIFIER_NODE) != 0) {
-        return json_set_empty(response, HttpStatus_BadRequest);
+    if (strcmp(config->nodeType, UKAMA_AMPLIFIER_NODE) != 0 &&
+        strcmp(config->nodeType, UKAMA_TOWER_NODE) != 0) {
+        return json_set_empty(response, HttpStatus_NotFound);
     }
 
     return _post_state_change(request, response, config, CONTROL_SUBSYS_RADIO);
+}
+
+
+int web_service_cb_post_radio_client(const URequest *request,
+                                     UResponse *response,
+                                     void *epConfig) {
+
+    Config *config = NULL;
+    ControlState desired = CONTROL_STATE_OFF;
+    bool force = false;
+
+    config = (Config *)epConfig;
+    if (!config || !config->clientMode) {
+        return json_set_empty(response, HttpStatus_NotFound);
+    }
+
+    if (!_parse_state_request(request, &desired, &force)) {
+        return json_set_empty(response, HttpStatus_BadRequest);
+    }
+
+    (void)force;
+    if (actions_radio_apply(config, desired) != STATUS_OK) {
+        return json_set_empty(response, HttpStatus_InternalServerError);
+    }
+
+    return json_set_empty(response, HttpStatus_Accepted);
+}
+
+int web_service_cb_post_reboot(const URequest *request,
+                               UResponse *response,
+                               void *epConfig) {
+
+    Config *config = NULL;
+
+    (void)request;
+
+    config = (Config *)epConfig;
+    if (!config) {
+        return json_set_empty(response, HttpStatus_InternalServerError);
+    }
+
+    (void)actions_restart_apply(config);
+    return json_set_empty(response, HttpStatus_Accepted);
 }
 
 int web_service_cb_post_restart(const URequest *request,
