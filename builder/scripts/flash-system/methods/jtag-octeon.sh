@@ -704,6 +704,11 @@ _phase3_run() {
     local sshpass_args=(-p "$TRX_ROOT_PASSWORD")
     local ssh_opts=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR)
 
+    # After the 2nd power-cycle the freshly-flashed env/app boot with ethernet down
+    # (the dd of flash_env replaced the u-boot env that enabled it, and rc_post.local
+    # isn't installed yet), so bootstrap ethernet over serial again before SSH.
+    _phase2_enable_ethernet_over_serial
+
     echo "Waiting for TRX SSH at ${trx_ip} (after 2nd power-cycle)..."
     local elapsed=0
     while [ "$elapsed" -lt 120 ]; do
@@ -714,7 +719,9 @@ _phase3_run() {
         elapsed=$((elapsed + 2))
     done
     if [ "$elapsed" -ge 120 ]; then
-        echo "ERROR: TRX not reachable via SSH within 120s"
+        echo "ERROR: TRX not reachable via SSH within 120s."
+        echo "  Ethernet still down after 2nd boot. On the TRX serial console (root / cavium.lte)"
+        echo "  run twice:  devmem 0x00011800B0001000 64 0x0140   then re-run Phase 3."
         return 1
     fi
     echo "SSH up."
