@@ -6,10 +6,15 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
+
 #include "config.h"
 #include "deviced.h"
 #include "web_client.h"
 #include "control.h"
+#include "node_profile.h"
 
 #include "usys_api.h"
 #include "usys_file.h"
@@ -188,18 +193,7 @@ int main(int argc, char **argv) {
 
     serviceConfig.startTime = time(NULL);
 
-    /* Service is OFF by default */
-    if (serviceConfig.nodeType) {
-        if (strcmp(serviceConfig.nodeType, UKAMA_TOWER_NODE) == 0) {
-            serviceConfig.control->Service.Current = CONTROL_STATE_OFF;
-            serviceConfig.control->Service.Desired = CONTROL_STATE_OFF;
-            serviceConfig.control->Radio.Current   = CONTROL_STATE_ON;
-            serviceConfig.control->Radio.Desired   = CONTROL_STATE_ON;
-        } else if (strcmp(serviceConfig.nodeType, UKAMA_AMPLIFIER_NODE) == 0) {
-            serviceConfig.control->Radio.Current = CONTROL_STATE_ON;
-            serviceConfig.control->Radio.Desired = CONTROL_STATE_ON;
-        }
-    }
+    node_profile_init_control(&serviceConfig);
 
     if (start_web_service(&serviceConfig, &serviceInst) != USYS_TRUE) {
         usys_log_error("Webservice failed to setup for clients. Exiting.");

@@ -6,6 +6,7 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -108,49 +109,6 @@ bool control_is_busy(ControlCtx *ctx) {
 
     return busy;
 }
-
-int control_get_public_state(ControlCtx *ctx,
-                             const char *nodeType,
-                             char *outState,
-                             size_t outStateSize) {
-
-    ControlSubsysState *ss = NULL;
-    const char *stateStr = NULL;
-
-    if (!ctx ||
-        !nodeType ||
-        !outState ||
-        outStateSize == 0)
-        return STATUS_NOK;
-
-    pthread_mutex_lock(&ctx->Lock);
-
-    if (strcmp(nodeType, UKAMA_TOWER_NODE) == 0) {
-        ss = &ctx->Service;
-    } else if (strcmp(nodeType, UKAMA_CONTROLLER_NODE) == 0){
-        ss = &ctx->Service;
-    } else if (strcmp(nodeType, UKAMA_AMPLIFIER_NODE) == 0) {
-        ss = &ctx->Radio;
-    } else {
-        pthread_mutex_unlock(&ctx->Lock);
-        return STATUS_NOK;
-    }
-
-    if (ss->Phase == CONTROL_PHASE_FAULT) {
-        stateStr = "fault";
-    } else if (ss->Phase == CONTROL_PHASE_PENDING || ss->Phase == CONTROL_PHASE_EXECUTING) {
-        stateStr = "transitioning";
-    } else {
-        stateStr = (ss->Current == CONTROL_STATE_ON) ? "on" : "off";
-    }
-
-    (void)snprintf(outState, outStateSize, "%s", stateStr);
-
-    pthread_mutex_unlock(&ctx->Lock);
-
-    return STATUS_OK;
-}
-
 
 int control_get_subsys_public_state(ControlCtx *ctx,
                                     ControlSubsystem subsystem,

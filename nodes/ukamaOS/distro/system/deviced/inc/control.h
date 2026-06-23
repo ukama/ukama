@@ -53,11 +53,6 @@ void control_destroy(ControlCtx *ctx);
 
 bool control_is_busy(ControlCtx *ctx);
 
-int control_get_public_state(ControlCtx *ctx,
-                             const char *nodeType,
-                             char *outState,
-                             size_t outStateSize);
-
 int control_get_subsys_public_state(ControlCtx *ctx,
                                     ControlSubsystem subsystem,
                                     char *outState,

@@ -10,10 +10,7 @@
 #define ACTIONS_H_
 
 #include "config.h"
-#include "control.h"
 
-int actions_service_apply(Config *config, ControlState desired);
-int actions_radio_apply(Config *config, ControlState desired);
 int actions_restart_apply(Config *config);
 
 #endif

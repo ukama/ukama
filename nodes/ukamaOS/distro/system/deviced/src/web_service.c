@@ -17,6 +17,7 @@
 #include "control.h"
 #include "deviced.h"
 #include "http_status.h"
+#include "node_profile.h"
 #include "web_client.h"
 
 #include "usys_log.h"
@@ -35,48 +36,6 @@ typedef struct {
     bool Immediate;
     unsigned long long Token;
 } WorkerArgs;
-
-static bool is_tower_node(Config *config) {
-
-    if (!config || !config->nodeType) {
-        return false;
-    }
-
-    return strcmp(config->nodeType, UKAMA_TOWER_NODE) == 0;
-}
-
-static bool restart_remote_client_reboot(Config *config) {
-
-    int retCode;
-
-    retCode = -1;
-
-    if (!config) {
-        return false;
-    }
-
-    if (!is_tower_node(config)) {
-        return true;
-    }
-
-    if (config->clientMode) {
-        return true;
-    }
-
-    if (wc_send_reboot_to_client(config, &retCode) != USYS_OK) {
-        usys_log_error("Remote client reboot failed");
-        return false;
-    }
-
-    if (retCode != HttpStatus_Accepted) {
-        usys_log_error("Remote client reboot not accepted: %d (%s)",
-                       retCode,
-                       HttpStatusStr(retCode));
-        return false;
-    }
-
-    return true;
-}
 
 static int json_set_empty(UResponse *response, int status) {
 
@@ -215,7 +174,7 @@ static void* _worker_run(void *arg) {
             sleep(WAIT_BEFORE_REBOOT);
         }
 
-        if (!restart_remote_client_reboot(config)) {
+        if (node_profile_before_restart(config) != STATUS_OK) {
             control_mark_fault(control, args->Subsystem);
             usys_free(args);
             pthread_exit(NULL);
@@ -245,7 +204,7 @@ static void* _worker_run(void *arg) {
                                           "Enabling cellular service" : "Disabling cellular service",
                                            &retCode);
 
-        execRet = actions_service_apply(config, desired);
+        execRet = node_profile_apply(config, args->Subsystem, desired);
         if (execRet == STATUS_OK) {
             control_mark_done(control, args->Subsystem, desired);
         } else {
@@ -263,7 +222,7 @@ static void* _worker_run(void *arg) {
                                               "Enabling radio" : "Disabling radio",
                                               &retCode);
 
-        execRet = actions_radio_apply(config, desired);
+        execRet = node_profile_apply(config, args->Subsystem, desired);
         if (execRet == STATUS_OK) {
             control_mark_done(control, args->Subsystem, desired);
         } else {
@@ -377,7 +336,6 @@ int web_service_cb_state(const URequest *request,
                          void *epConfig) {
 
     Config *config = NULL;
-    char state[32];
     JsonObj *json = NULL;
     time_t now = 0;
     long uptime = 0;
@@ -386,14 +344,6 @@ int web_service_cb_state(const URequest *request,
 
     config = (Config *)epConfig;
     if (!config || !config->control || !config->nodeType) {
-        return json_set_empty(response, HttpStatus_InternalServerError);
-    }
-
-    memset(state, 0, sizeof(state));
-    if (control_get_public_state(config->control,
-                                 config->nodeType,
-                                 state,
-                                 sizeof(state)) != STATUS_OK) {
         return json_set_empty(response, HttpStatus_InternalServerError);
     }
 
@@ -407,19 +357,7 @@ int web_service_cb_state(const URequest *request,
         return json_set_empty(response, HttpStatus_InternalServerError);
     }
 
-    if (strcmp(config->nodeType, UKAMA_TOWER_NODE) == 0) {
-        json_object_set_new(json, "service", json_string(state));
-        if (control_get_subsys_public_state(config->control,
-                                            CONTROL_SUBSYS_RADIO,
-                                            state,
-                                            sizeof(state)) == STATUS_OK) {
-            json_object_set_new(json, "radio", json_string(state));
-        }
-    } else if (strcmp(config->nodeType, UKAMA_CONTROLLER_NODE) == 0){
-        /* CNode does not own service/radio. */
-    } else if (strcmp(config->nodeType, UKAMA_AMPLIFIER_NODE) == 0) {
-        json_object_set_new(json, "radio", json_string(state));
-    } else {
+    if (node_profile_build_state(config, json) != STATUS_OK) {
         json_decref(json);
         return json_set_empty(response, HttpStatus_BadRequest);
     }
@@ -442,7 +380,7 @@ int web_service_cb_post_service(const URequest *request,
         return json_set_empty(response, HttpStatus_InternalServerError);
     }
 
-    if (strcmp(config->nodeType, UKAMA_TOWER_NODE) != 0) {
+    if (!node_profile_has_subsystem(config, CONTROL_SUBSYS_SERVICE)) {
         return json_set_empty(response, HttpStatus_NotFound);
     }
 
@@ -460,8 +398,7 @@ int web_service_cb_post_radio(const URequest *request,
         return json_set_empty(response, HttpStatus_InternalServerError);
     }
 
-    if (strcmp(config->nodeType, UKAMA_AMPLIFIER_NODE) != 0 &&
-        strcmp(config->nodeType, UKAMA_TOWER_NODE) != 0) {
+    if (!node_profile_has_subsystem(config, CONTROL_SUBSYS_RADIO)) {
         return json_set_empty(response, HttpStatus_NotFound);
     }
 
@@ -487,7 +424,7 @@ int web_service_cb_post_radio_client(const URequest *request,
     }
 
     (void)force;
-    if (actions_radio_apply(config, desired) != STATUS_OK) {
+    if (node_profile_apply(config, CONTROL_SUBSYS_RADIO, desired) != STATUS_OK) {
         return json_set_empty(response, HttpStatus_InternalServerError);
     }
 

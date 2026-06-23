@@ -6,6 +6,7 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/reboot.h>
 
