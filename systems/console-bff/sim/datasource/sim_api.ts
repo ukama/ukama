@@ -153,10 +153,10 @@ class SimApi extends BaseRESTDataSource {
     req: RemovePackageFormSimInputDto
   ): Promise<RemovePackageFromSimResDto> => {
     this.logger.info(
-      `TerminatePackageFromSim [PUT]: ${baseURL}/${VERSION}/${SIM}/${req.simId}/package/${req.packageId}/terminate`
+      `TerminatePackageFromSim [PATCH]: ${baseURL}/${VERSION}/${SIM}/${req.simId}/package/${req.packageId}/terminate`
     );
     this.baseURL = baseURL;
-    return this.put(
+    return this.patch(
       `/${VERSION}/${SIM}/${req.simId}/package/${req.packageId}/terminate`
     ).then(res => res);
   };
