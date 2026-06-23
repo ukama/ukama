@@ -20,7 +20,7 @@ import (
 type Invitation struct {
 	Id        uuid.UUID `gorm:"primaryKey;type:uuid"`
 	Link      string
-	Email     string
+	Email     string `gorm:"uniqueIndex:idx_invitations_email_unique,where:deleted_at is null,expression:lower(email)"`
 	Name      string
 	ExpiresAt time.Time
 	CreatedAt time.Time
