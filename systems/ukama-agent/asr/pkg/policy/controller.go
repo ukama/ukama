@@ -320,7 +320,8 @@ func (p *policyController) syncSubscriberPolicy(method string, imsi string, netw
 		Msg:        msgBytes,
 		RoutingKey: "request.cloud.local" + "." + p.OrgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish",
 		Type:       epb.BroadcastType_NODE_BROADCAST,
-		Scope:      epb.BroadcastScope_ORGANIZATIONAL_SCOPE,
+		Scope:      epb.BroadcastScope_NETWORK_SCOPE,
+		TargetId:   network,
 	}
 
 	err = p.msgbus.PublishRequest(route, broadcasterMsg)

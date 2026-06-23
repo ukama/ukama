@@ -80,8 +80,8 @@ type UpdateRerouteById struct {
 
 type Policy struct {
 	Uuid      uuid.UUID `json:"uuid" validate:"required"`
-	Ulbr      uint64    `json:"ulbr" validate:"required"`
-	Dlbr      uint64    `json:"dlbr" validate:"required"`
+	Ulbr      uint64    `json:"ulbr"`
+	Dlbr      uint64    `json:"dlbr"`
 	Data      uint64    `json:"total_data" validate:"required"`
 	Consumed  uint64    `json:"consumed_data"`
 	Burst     uint64    `json:"burst" validate:"required"`
