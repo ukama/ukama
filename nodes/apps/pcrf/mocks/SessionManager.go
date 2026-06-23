@@ -6,6 +6,7 @@ import (
 	context "context"
 
 	mock "github.com/stretchr/testify/mock"
+	session "github.com/ukama/ukama/nodes/apps/pcrf/pkg/controller/session"
 
 	store "github.com/ukama/ukama/nodes/apps/pcrf/pkg/controller/store"
 )
@@ -82,6 +83,24 @@ func (_m *SessionManager) IfSessionExist(ctx context.Context, imsi string, ip st
 		r0 = rf(ctx, imsi, ip)
 	} else {
 		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
+// Status provides a mock function with no fields
+func (_m *SessionManager) Status() session.Status {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Status")
+	}
+
+	var r0 session.Status
+	if rf, ok := ret.Get(0).(func() session.Status); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(session.Status)
 	}
 
 	return r0

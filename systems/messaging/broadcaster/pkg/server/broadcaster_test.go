@@ -13,10 +13,11 @@ import (
 	"errors"
 	"testing"
 
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
+
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 )
 
 const (
