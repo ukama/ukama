@@ -742,6 +742,9 @@ func Test_Package_Delete(t *testing.T) {
 		packID := uuid.NewV4()
 
 		setup.Mock.ExpectBegin()
+		setup.Mock.ExpectExec(`^UPDATE "package_rates" SET "deleted_at"`).WillReturnResult(sqlmock.NewResult(1, 1))
+		setup.Mock.ExpectExec(`^UPDATE "package_details" SET "deleted_at"`).WillReturnResult(sqlmock.NewResult(1, 1))
+		setup.Mock.ExpectExec(`^UPDATE "package_markups" SET "deleted_at"`).WillReturnResult(sqlmock.NewResult(1, 1))
 		setup.Mock.ExpectExec(`^UPDATE "packages" SET "deleted_at"`).WillReturnResult(sqlmock.NewResult(1, 1))
 		setup.Mock.ExpectCommit()
 
@@ -754,7 +757,7 @@ func Test_Package_Delete(t *testing.T) {
 		packID := uuid.NewV4()
 
 		setup.Mock.ExpectBegin()
-		setup.Mock.ExpectExec(`^UPDATE "packages" SET "deleted_at"`).WillReturnError(errors.New("delete failed"))
+		setup.Mock.ExpectExec(`^UPDATE "package_rates" SET "deleted_at"`).WillReturnError(errors.New("delete failed"))
 		setup.Mock.ExpectRollback()
 
 		err := setup.Repo.Delete(packID)
