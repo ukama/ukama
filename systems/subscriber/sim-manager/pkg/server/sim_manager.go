@@ -1290,34 +1290,31 @@ func setActivePackageForSim(ctx context.Context, reqSimId, reqPackageId string, 
 }
 
 func setInactivePackageForSim(reqSimId, reqPackageId string, packageRepo sims.PackageRepo) error {
-
 	packageId, err := uuid.FromString(reqPackageId)
 	if err != nil {
-		log.Errorf("invalid format of package uuid. Error %s", err.Error())
-		return fmt.Errorf("invalid format of package uuid. Error %s", err.Error())
+		return status.Errorf(codes.InvalidArgument,
+			"invalid format of package uuid. Error %s", err.Error())
 	}
 
 	pckg, err := packageRepo.Get(packageId)
 	if err != nil {
-		log.Errorf("error getting package. Error %s", err.Error())
-		return fmt.Errorf("error getting package. Error %s", err.Error())
+		return grpc.SqlErrorToGrpc(err, "package")
 	}
 
 	if pckg.SimId.String() != reqSimId {
-		log.Errorf("simId packageId mismatch: package %s does not belong to the provided sim %s",
-			reqPackageId, reqSimId)
-		return fmt.Errorf("simId packageId mismatch: package %s does not belong to the provided sim %s",
+		return status.Errorf(codes.InvalidArgument,
+			"simId packageId mismatch: package %s does not belong to the provided sim %s",
 			reqPackageId, reqSimId)
 	}
 
 	if !pckg.IsActive {
-		log.Errorf("cannot set inactive package (%s) as inactive", pckg.Id)
-		return fmt.Errorf("cannot set inactive package (%s) as inactive", pckg.Id)
+		return status.Errorf(codes.FailedPrecondition,
+			"cannot set inactive package (%s) as inactive", pckg.Id)
 	}
 
 	if pckg.AsExpired {
-		log.Errorf("package (%s) has already been marked as expired", pckg.Id)
-		return fmt.Errorf("package (%s) has already been marked as expired", pckg.Id)
+		return status.Errorf(codes.FailedPrecondition,
+			"package (%s) has already been marked as expired", pckg.Id)
 	}
 
 	packageToSetInactive := &sims.Package{
@@ -1332,8 +1329,8 @@ func setInactivePackageForSim(reqSimId, reqPackageId string, packageRepo sims.Pa
 	})
 
 	if err != nil {
-		log.Errorf("failed to set package as inactive. Error %s", err.Error())
-		return fmt.Errorf("failed to set package as inactive. Error %s", err.Error())
+		return status.Errorf(codes.Internal,
+			"failed to set package as inactive. Error %s", err.Error())
 	}
 
 	return nil
