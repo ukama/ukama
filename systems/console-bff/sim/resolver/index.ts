@@ -15,6 +15,7 @@ import { GetDataUsageResolver } from "./getDataUsage";
 import { GetDataUsagesResolver } from "./getDataUsages";
 import { GetPackagesForSimResolver } from "./getPackagesForSim";
 import { GetSimResolver } from "./getSim";
+import { GetSimByIccidResolver } from "./getSimByIccid";
 import { GetSimPoolStatsResolver } from "./getSimPoolStats";
 import { GetSimsResolver } from "./getSims";
 import { GetSimsBySubscriberResolver } from "./getSimsBySubscriber";
@@ -26,6 +27,7 @@ import { UploadSimsResolver } from "./uploadSims";
 
 const resolvers: NonEmptyArray<any> = [
   AllocateSimResolver,
+  GetSimByIccidResolver,
   DeleteSimResolver,
   DeleteSimFromPoolResolver,
   GetSimsFromPoolResolver,
