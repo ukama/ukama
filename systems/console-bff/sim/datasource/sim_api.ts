@@ -137,10 +137,10 @@ class SimApi extends BaseRESTDataSource {
     baseURL: string,
     iccid: string
   ): Promise<SimPoolResDto> => {
+    this.baseURL = baseURL;
     this.logger.info(
       `GetSimByIccid [GET]: ${baseURL}/${VERSION}/${SIMPOOL}/sim/${iccid}`
     );
-    this.baseURL = baseURL;
     return this.get(`/${VERSION}/${SIMPOOL}/sim/${iccid}`).then(res =>
       dtoToSimByIccidDto(res.sim)
     );

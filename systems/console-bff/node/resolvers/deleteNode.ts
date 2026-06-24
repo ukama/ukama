@@ -11,15 +11,12 @@ import type { AppContext } from "../../server/context";
 import { DeleteNode, NodeInput } from "./types";
 
 @Resolver()
-export class DeleteNodeFromOrgResolver {
+export class DeleteNodeResolver {
   @Mutation(() => DeleteNode)
-  async deleteNodeFromOrg(
-    @Arg("data") data: NodeInput,
-    @Ctx() context: AppContext
-  ) {
+  async deleteNode(@Arg("data") data: NodeInput, @Ctx() context: AppContext) {
     const { dataSources } = context;
     const baseURL = await context.urls.url("node");
-    return await dataSources.node.deleteNodeFromOrg(baseURL, {
+    return await dataSources.node.deleteNode(baseURL, {
       id: data.id,
     });
   }
