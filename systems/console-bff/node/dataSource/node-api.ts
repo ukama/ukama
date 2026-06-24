@@ -8,21 +8,10 @@
 import { VERSION } from "../../common/configs";
 import { BaseRESTDataSource } from "../../common/datasource";
 import { CBooleanResponse } from "../../common/types";
-import {
-  AddNodeInput,
-  AddNodeToSiteInput,
-  DeleteNode,
-  GetNodesByStateInput,
-  Node,
-  NodeInput,
-  NodeStateRes,
-  Nodes,
-  NodesFilterInput,
-  UpdateNodeInput,
-  UpdateNodeStateInput,
-} from "../resolvers/types";
+import { AddNodeInput, AddNodeToSiteInput, DeleteNode, GetNodesByStateInput, Node, NodeInput, NodeStateRes, Nodes, NodesFilterInput, UpdateNodeInput, UpdateNodeStateInput } from "../resolvers/types";
 import { AttachNodeInput } from "./../resolvers/types";
 import { getNodeState, parseNodeRes, parseNodesRes } from "./mapper";
+
 
 const NODES = "nodes";
 class NodeAPI extends BaseRESTDataSource {
@@ -78,11 +67,9 @@ class NodeAPI extends BaseRESTDataSource {
   }
   async deleteNode(baseURL: string, args: NodeInput): Promise<DeleteNode> {
     this.baseURL = baseURL;
-    return this.delete(`/${VERSION}/${NODES}/${args.id}`).then(() =>
-      this.delete(`/${VERSION}/${NODES}/${args.id}`).then(() => {
-        return { id: args.id };
-      })
-    );
+    return this.delete(`/${VERSION}/${NODES}/${args.id}`).then(() => ({
+      id: args.id,
+    }));
   }
   async attachNode(
     baseURL: string,
