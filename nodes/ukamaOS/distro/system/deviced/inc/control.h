@@ -17,7 +17,7 @@ typedef enum {
     CONTROL_SUBSYS_NONE = 0,
     CONTROL_SUBSYS_SERVICE,
     CONTROL_SUBSYS_RADIO,
-    CONTROL_SUBSYS_RESTART,
+    CONTROL_SUBSYS_REBOOT,
 } ControlSubsystem;
 
 typedef enum {
@@ -45,7 +45,7 @@ typedef struct {
     ControlSubsystem   Active;
     ControlSubsysState Service;
     ControlSubsysState Radio;
-    ControlSubsysState Restart;
+    ControlSubsysState Reboot;
 } ControlCtx;
 
 ControlCtx *control_create(void);
@@ -64,7 +64,7 @@ void control_mark_done(ControlCtx *ctx,
                        ControlSubsystem subsystem,
                        ControlState finalState);
 
-void control_mark_restart_done(ControlCtx *ctx);
+void control_mark_reboot_done(ControlCtx *ctx);
 
 bool control_begin_execute(ControlCtx *ctx,
                            ControlSubsystem subsystem,

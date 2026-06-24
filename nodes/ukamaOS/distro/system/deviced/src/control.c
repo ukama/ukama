@@ -28,8 +28,8 @@ static ControlSubsysState *get_subsys(ControlCtx *ctx, ControlSubsystem subsyste
     case CONTROL_SUBSYS_RADIO:
         ss = &ctx->Radio;
         break;
-    case CONTROL_SUBSYS_RESTART:
-        ss = &ctx->Restart;
+    case CONTROL_SUBSYS_REBOOT:
+        ss = &ctx->Reboot;
         break;
     default:
         ss = NULL;
@@ -81,10 +81,10 @@ ControlCtx *control_create(void) {
     ctx->Radio.Desired = CONTROL_STATE_OFF;
     ctx->Radio.Token   = 1;
 
-    ctx->Restart.Phase   = CONTROL_PHASE_IDLE;
-    ctx->Restart.Current = CONTROL_STATE_OFF;
-    ctx->Restart.Desired = CONTROL_STATE_OFF;
-    ctx->Restart.Token   = 1;
+    ctx->Reboot.Phase   = CONTROL_PHASE_IDLE;
+    ctx->Reboot.Current = CONTROL_STATE_OFF;
+    ctx->Reboot.Desired = CONTROL_STATE_OFF;
+    ctx->Reboot.Token   = 1;
 
     return ctx;
 }
@@ -319,8 +319,8 @@ void control_mark_done(ControlCtx *ctx,
     pthread_mutex_unlock(&ctx->Lock);
 }
 
-void control_mark_restart_done(ControlCtx *ctx) {
+void control_mark_reboot_done(ControlCtx *ctx) {
     control_mark_done(ctx,
-                      CONTROL_SUBSYS_RESTART,
+                      CONTROL_SUBSYS_REBOOT,
                       CONTROL_STATE_OFF);
 }

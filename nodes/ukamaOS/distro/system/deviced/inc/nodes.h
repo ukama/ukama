@@ -37,7 +37,7 @@ int node_controller_build_state(Config *config, JsonObj *json);
 
 int node_tower_apply_service(Config *config, ControlState desired);
 int node_tower_apply_radio(Config *config, ControlState desired);
-int node_tower_before_restart(Config *config);
+int node_tower_before_reboot(Config *config);
 
 int node_amplifier_apply_radio(Config *config, ControlState desired);
 

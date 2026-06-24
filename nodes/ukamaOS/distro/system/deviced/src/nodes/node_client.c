@@ -17,7 +17,8 @@ void node_client_setup_endpoints(Config *config, UInst *instance) {
 
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
                                API_RES_EP("reboot"), 0,
-                               &web_service_cb_post_reboot, config);
+                               &web_service_cb_post_client_reboot,
+                               config);
     node_add_unsupported_methods(instance, "POST", URL_PREFIX,
                                  API_RES_EP("reboot"));
 

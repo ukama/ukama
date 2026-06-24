@@ -36,10 +36,10 @@ void node_tower_setup_endpoints(Config *config, UInst *instance) {
                                  API_RES_EP("state"));
 
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
-                               API_RES_EP("restart"), 0,
-                               &web_service_cb_post_restart, config);
+                               API_RES_EP("reboot"), 0,
+                               &web_service_cb_post_reboot, config);
     node_add_unsupported_methods(instance, "POST", URL_PREFIX,
-                                 API_RES_EP("restart"));
+                                 API_RES_EP("reboot"));
 
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
                                API_RES_EP("service"), 0,
@@ -104,7 +104,7 @@ int node_tower_apply_radio(Config *config, ControlState desired) {
            STATUS_OK : STATUS_NOK;
 }
 
-int node_tower_before_restart(Config *config) {
+int node_tower_before_reboot(Config *config) {
 
     int retCode = -1;
 

@@ -16,7 +16,7 @@ static inline bool is_debug_mode(void) {
     return getenv(ENV_DEVICED_DEBUG_MODE) != NULL;
 }
 
-int actions_restart_apply(Config *config) {
+int actions_reboot_apply(Config *config) {
 
     (void)config;
 

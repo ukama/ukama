@@ -24,10 +24,10 @@ void node_controller_setup_endpoints(Config *config, UInst *instance) {
                                  API_RES_EP("state"));
 
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
-                               API_RES_EP("restart"), 0,
-                               &web_service_cb_post_restart, config);
+                               API_RES_EP("reboot"), 0,
+                               &web_service_cb_post_reboot, config);
     node_add_unsupported_methods(instance, "POST", URL_PREFIX,
-                                 API_RES_EP("restart"));
+                                 API_RES_EP("reboot"));
 
     /* CNode owns no service/radio endpoint in device.d. */
 }

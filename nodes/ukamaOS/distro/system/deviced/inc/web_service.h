@@ -31,13 +31,13 @@ int web_service_cb_post_radio(const URequest *request,
                               UResponse *response,
                               void *epConfig);
 
-int web_service_cb_post_restart(const URequest *request,
-                                UResponse *response,
-                                void *epConfig);
-
 int web_service_cb_post_reboot(const URequest *request,
                                UResponse *response,
                                void *epConfig);
+
+int web_service_cb_post_client_reboot(const URequest *request,
+                                      UResponse *response,
+                                      void *epConfig);
 
 int web_service_cb_post_radio_client(const URequest *request,
                                      UResponse *response,

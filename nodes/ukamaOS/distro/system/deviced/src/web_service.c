@@ -129,7 +129,7 @@ static void* worker_run(void *arg) {
     control = config->control;
 
     delay = args->Immediate ? 0 : WAIT_BEFORE_REBOOT;
-    if (delay > 0 && args->Subsystem != CONTROL_SUBSYS_RESTART) {
+    if (delay > 0 && args->Subsystem != CONTROL_SUBSYS_REBOOT) {
         sleep(delay);
     }
 
@@ -139,8 +139,8 @@ static void* worker_run(void *arg) {
         ss = &control->Service;
     } else if (args->Subsystem == CONTROL_SUBSYS_RADIO) {
         ss = &control->Radio;
-    } else if (args->Subsystem == CONTROL_SUBSYS_RESTART) {
-        ss = &control->Restart;
+    } else if (args->Subsystem == CONTROL_SUBSYS_REBOOT) {
+        ss = &control->Reboot;
     }
 
     if (!ss || ss->Phase != CONTROL_PHASE_PENDING || ss->Token != args->Token) {
@@ -157,11 +157,11 @@ static void* worker_run(void *arg) {
         pthread_exit(NULL);
     }
 
-    if (args->Subsystem == CONTROL_SUBSYS_RESTART) {
+    if (args->Subsystem == CONTROL_SUBSYS_REBOOT) {
 
         if (wc_send_action_alarm_to_notifyd(config,
-                                            "restart",
-                                            "Restarting the node",
+                                            "reboot",
+                                            "Rebooting the node",
                                             &retCode) == USYS_NOK) {
             usys_log_error("Unable to send notification to notify.d");
             control_mark_fault(control, args->Subsystem);
@@ -174,7 +174,7 @@ static void* worker_run(void *arg) {
         }
 
         if (node_is_tower(config) &&
-            node_tower_before_restart(config) != STATUS_OK) {
+            node_tower_before_reboot(config) != STATUS_OK) {
             control_mark_fault(control, args->Subsystem);
             usys_free(args);
             pthread_exit(NULL);
@@ -184,7 +184,7 @@ static void* worker_run(void *arg) {
             sleep(WAIT_AFTER_REMOTE_REBOOT);
         }
 
-        execRet = actions_restart_apply(config);
+        execRet = actions_reboot_apply(config);
 
         /* reboot() shouldn't return (except debug mode). If we reached here and
          * apply failed, mark fault.
@@ -424,9 +424,9 @@ int web_service_cb_post_radio_client(const URequest *request,
     return json_set_empty(response, HttpStatus_Accepted);
 }
 
-int web_service_cb_post_reboot(const URequest *request,
-                               UResponse *response,
-                               void *epConfig) {
+int web_service_cb_post_client_reboot(const URequest *request,
+                                      UResponse *response,
+                                      void *epConfig) {
 
     Config *config = NULL;
 
@@ -437,13 +437,13 @@ int web_service_cb_post_reboot(const URequest *request,
         return json_set_empty(response, HttpStatus_InternalServerError);
     }
 
-    (void)actions_restart_apply(config);
+    (void)actions_reboot_apply(config);
     return json_set_empty(response, HttpStatus_Accepted);
 }
 
-int web_service_cb_post_restart(const URequest *request,
-                                UResponse *response,
-                                void *epConfig) {
+int web_service_cb_post_reboot(const URequest *request,
+                               UResponse *response,
+                               void *epConfig) {
 
     Config *config = NULL;
     ControlState desired = CONTROL_STATE_OFF;
@@ -485,7 +485,7 @@ int web_service_cb_post_restart(const URequest *request,
     }
 
     allowed = control_set_pending(config->control,
-                                 CONTROL_SUBSYS_RESTART,
+                                 CONTROL_SUBSYS_REBOOT,
                                  CONTROL_STATE_OFF,
                                  force,
                                  &httpStatus,
@@ -500,8 +500,8 @@ int web_service_cb_post_restart(const URequest *request,
         return json_set_empty(response, httpStatus);
     }
 
-    if (schedule_worker(config, CONTROL_SUBSYS_RESTART, immediate, token) != STATUS_OK) {
-        control_mark_fault(config->control, CONTROL_SUBSYS_RESTART);
+    if (schedule_worker(config, CONTROL_SUBSYS_REBOOT, immediate, token) != STATUS_OK) {
+        control_mark_fault(config->control, CONTROL_SUBSYS_REBOOT);
         return json_set_empty(response, HttpStatus_InternalServerError);
     }
 
