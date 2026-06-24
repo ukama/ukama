@@ -505,6 +505,7 @@ func TestSimManagerEventServer_HandleOperatorCdrCreateEvent(t *testing.T) {
 				sims.Sim{
 					Id:           simId,
 					SubscriberId: subscriberId,
+					Type:         ukama.SimTypeOperatorData,
 				},
 			}, nil)
 
@@ -622,7 +623,7 @@ func TestSimManagerEventServer_HandleOperatorCdrCreateEvent(t *testing.T) {
 		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
 		_, err = s.EventNotification(context.TODO(), msg)
 
-		assert.NoError(t, err)
+		assert.Error(t, err)
 	})
 
 	t.Run("InvalidEventTypeSent", func(t *testing.T) {
@@ -657,7 +658,9 @@ func TestSimManagerEventServer_HandleUkamaAgentCdrCreateEvent(t *testing.T) {
 		repo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return([]sims.Sim{
-				sims.Sim{},
+				sims.Sim{
+					Type: ukama.SimTypeUkamaData,
+				},
 			}, nil)
 
 		evt := &epb.CDRReported{}

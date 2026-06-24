@@ -182,28 +182,29 @@ func (es *SimManagerEventServer) handleOperatorCdrCreateEvent(key string, cdr *e
 	log.Infof("Keys %s and Proto is: %+v", key, cdr)
 
 	if cdr.Type != ukama.CdrTypeData.String() {
-		log.Warnf("Unsupported CDR Type (%s) received for data usage count. Skipping", cdr.Type)
+		log.Errorf("Invalid cdr type: cdr must be of type %s, not %s",
+			ukama.CdrTypeData.String(), cdr.Type)
 
-		return nil
+		return fmt.Errorf("invalid cdr type: cdr must be of type %s, not %s",
+			ukama.CdrTypeData.String(), cdr.Type)
 	}
 
-	operatorSims, err := es.simRepo.List(cdr.Iccid, "", "", "", ukama.SimTypeOperatorData, ukama.SimStatusActive, 0, false, 0, false)
+	sim, err := es.getSimFromIccidOrImsi(cdr.Iccid, "")
 	if err != nil {
-		return fmt.Errorf("error while looking up sim for given iccid %q: %w",
-			cdr.Iccid, err)
+		log.Errorf("Error while looking up sim for operator agent CDR create event. Error: %v",
+			err)
+
+		return fmt.Errorf("error while looking up sim for operator agent CDR create event. Error: %w",
+			err)
 	}
 
-	if len(operatorSims) == 0 {
-		return fmt.Errorf("no corresponding active sim found for given iccid %q",
-			cdr.Iccid)
-	}
+	if sim.Type != ukama.SimTypeOperatorData {
+		log.Errorf("Invalid sim type: sim must be of type %s, not %s",
+			ukama.SimTypeOperatorData.String(), sim.Type.String())
 
-	if len(operatorSims) > 1 {
-		return fmt.Errorf("inconsistent state: multiple sim found for given iccid %q",
-			cdr.Iccid)
+		return fmt.Errorf("invalid sim type: sim must be of type %s, not %s",
+			ukama.SimTypeOperatorData.String(), sim.Type.String())
 	}
-
-	sim := operatorSims[0]
 
 	usageMsg := &epb.EventSimUsage{
 		SimId:        sim.Id.String(),
@@ -232,23 +233,22 @@ func (es *SimManagerEventServer) handleOperatorCdrCreateEvent(key string, cdr *e
 func (es *SimManagerEventServer) handleUkamaAgentCdrCreateEvent(key string, cdr *epb.CDRReported) error {
 	log.Infof("Keys %s and Proto is: %+v", key, cdr)
 
-	ukamaSims, err := es.simRepo.List("", cdr.Imsi, "", "", ukama.SimTypeUkamaData, ukama.SimStatusActive, 0, false, 0, false)
+	sim, err := es.getSimFromIccidOrImsi("", cdr.Imsi)
 	if err != nil {
-		return fmt.Errorf("error while looking up sim for given imsi %q: %w",
-			cdr.Imsi, err)
+		log.Errorf("Error while looking up sim for ukama agent CDR create event. Error: %v",
+			err)
+
+		return fmt.Errorf("error while looking up sim for ukama agent CDR create event. Error: %w",
+			err)
 	}
 
-	if len(ukamaSims) == 0 {
-		return fmt.Errorf("no corresponding sim found for given imsi %q",
-			cdr.Imsi)
-	}
+	if sim.Type != ukama.SimTypeUkamaData {
+		log.Errorf("Invalid sim type: sim must be of type %s, not %s",
+			ukama.SimTypeUkamaData.String(), sim.Type.String())
 
-	if len(ukamaSims) > 1 {
-		return fmt.Errorf("inconsistent state: multiple sim found for given imsi %q",
-			cdr.Imsi)
+		return fmt.Errorf("invalid sim type: sim must be of type %s, not %s",
+			ukama.SimTypeUkamaData.String(), sim.Type.String())
 	}
-
-	sim := ukamaSims[0]
 
 	usageMsg := &epb.EventSimUsage{
 		SimId:        sim.Id.String(),
@@ -278,13 +278,13 @@ func (es *SimManagerEventServer) handleUkamaAgentCdrCreateEvent(key string, cdr 
 func (es *SimManagerEventServer) handleUkamaAgentAsrProfileCreateEvent(key string, asrProfile *epb.Profile) error {
 	log.Infof("Keys %s and Proto is: %+v", key, asrProfile)
 
-	sim, err := es.getSimFromIccid(asrProfile.Iccid)
+	sim, err := es.getSimFromIccidOrImsi(asrProfile.Iccid, "")
 	if err != nil {
-		log.Errorf("Error while looking up sim from iccid %s. Error: %v",
-			asrProfile.Iccid, err)
+		log.Errorf("Error while looking up sim for ukama agent ASR create event. Error: %v",
+			err)
 
-		return fmt.Errorf("error while looking up sim from iccid %s. Error: %w",
-			asrProfile.Iccid, err)
+		return fmt.Errorf("error while looking up sim for ukama agent ASR create event. Error: %w",
+			err)
 	}
 
 	if sim.Type != ukama.SimTypeUkamaData {
@@ -304,13 +304,13 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrProfileCreateEvent(key strin
 func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key string, asrProfile *epb.Profile) error {
 	log.Infof("Keys %s and Proto is: %+v", key, asrProfile)
 
-	sim, err := es.getSimFromIccid(asrProfile.Iccid)
+	sim, err := es.getSimFromIccidOrImsi(asrProfile.Iccid, "")
 	if err != nil {
-		log.Errorf("Error while looking up sim from iccid %s. Error: %v",
-			asrProfile.Iccid, err)
+		log.Errorf("Error while looking up sim for ukama agent ASR delete event. Error: %v",
+			err)
 
-		return fmt.Errorf("error while looking up sim from iccid %s. Error: %w",
-			asrProfile.Iccid, err)
+		return fmt.Errorf("error while looking up sim for ukama agent ASR delte event. Error: %w",
+			err)
 	}
 
 	if sim.Type != ukama.SimTypeUkamaData {
@@ -379,30 +379,30 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key strin
 	return nil
 }
 
-func (es *SimManagerEventServer) getSimFromIccid(iccid string) (*sims.Sim, error) {
-	ukamaSims, err := es.simRepo.List(iccid, "", "", "", ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
+func (es *SimManagerEventServer) getSimFromIccidOrImsi(iccid, imsi string) (*sims.Sim, error) {
+	ukamaSims, err := es.simRepo.List(iccid, imsi, "", "", ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
 	if err != nil {
-		log.Errorf("Sim list error for given iccid %q: %v",
-			iccid, err)
+		log.Errorf("Sim list error for given (iccid: %q, imisi: %q). Error:: %v",
+			iccid, imsi, err)
 
-		return nil, fmt.Errorf("sim list error for given iccid %q: %w",
-			iccid, err)
+		return nil, fmt.Errorf("sim list error for given (iccid: %q, imisi: %q). Error:: %w",
+			iccid, imsi, err)
 	}
 
 	if len(ukamaSims) == 0 {
-		log.Errorf("No corresponding sim found for given iccid %q",
-			iccid)
+		log.Errorf("No corresponding sim found for given (iccid %q, imsi: %q)",
+			iccid, imsi)
 
-		return nil, fmt.Errorf("no corresponding sim found for given iccid %q",
-			iccid)
+		return nil, fmt.Errorf("no corresponding sim found for given (iccid: %q, imsi: %q)",
+			iccid, imsi)
 	}
 
 	if len(ukamaSims) > 1 {
-		log.Errorf("Inconsistent state: multiple sims found for given iccid %q",
-			iccid)
+		log.Errorf("Inconsistent state: multiple sims found for given (iccid: %q, imsi: %q)",
+			iccid, imsi)
 
-		return nil, fmt.Errorf("inconsistent state: multiple sims found for given iccid %q",
-			iccid)
+		return nil, fmt.Errorf("inconsistent state: multiple sims found for given (iccid %q, imsi: %q)",
+			iccid, imsi)
 	}
 
 	sim := ukamaSims[0]
