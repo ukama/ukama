@@ -78,8 +78,8 @@ func NewController(db string, br pkg.BrdigeConfig, period time.Duration, nodeId 
 	}
 
 	c.nodeId = nodeId
-	c.serviceOn = true
-	c.serviceReason = "ok"
+	c.serviceOn = false
+	c.serviceReason = "startup_diable"
 	c.sm = sm
 	c.store = store
 	c.publisher = newPublisher(period)
@@ -241,13 +241,13 @@ func (c *Controller) SetService(ctx context.Context, req *api.ServiceRequest) er
 		c.serviceMu.Unlock()
 		return nil
 	case "off":
-		if err := c.sm.EndAllSessions(); err != nil {
-			return err
-		}
 		c.serviceMu.Lock()
 		c.serviceOn = false
 		c.serviceReason = "operator_disabled"
 		c.serviceMu.Unlock()
+		if err := c.sm.EndAllSessions(); err != nil {
+                        return err
+                }
 		return nil
 	default:
 		return fmt.Errorf("invalid service state %q", req.State)
