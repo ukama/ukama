@@ -10,8 +10,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "web_service.h"
-
 #include "actions.h"
 #include "config.h"
 #include "control.h"
@@ -19,6 +17,7 @@
 #include "http_status.h"
 #include "nodes.h"
 #include "web_client.h"
+#include "web_service.h"
 
 #include "usys_log.h"
 #include "usys_mem.h"
@@ -43,9 +42,9 @@ static int json_set_empty(UResponse *response, int status) {
     return U_CALLBACK_CONTINUE;
 }
 
-static bool _parse_state_request(const URequest *request,
-                                 ControlState *desired,
-                                 bool *force) {
+static bool parse_state_request(const URequest *request,
+                                ControlState *desired,
+                                bool *force) {
 
     JsonErrObj err;
     JsonObj *json = NULL;
@@ -105,7 +104,7 @@ static bool _parse_state_request(const URequest *request,
     return true;
 }
 
-static void* _worker_run(void *arg) {
+static void* worker_run(void *arg) {
 
     WorkerArgs *args = NULL;
     Config *config = NULL;
@@ -237,10 +236,10 @@ static void* _worker_run(void *arg) {
     pthread_exit(NULL);
 }
 
-static int _schedule_worker(Config *config,
-                            ControlSubsystem subsystem,
-                            bool immediate,
-                            unsigned long long token) {
+static int schedule_worker(Config *config,
+                           ControlSubsystem subsystem,
+                           bool immediate,
+                           unsigned long long token) {
 
     pthread_t thread;
     WorkerArgs *args = NULL;
@@ -257,7 +256,7 @@ static int _schedule_worker(Config *config,
     args->Immediate = immediate;
     args->Token = token;
 
-    ret = pthread_create(&thread, NULL, _worker_run, (void *)args);
+    ret = pthread_create(&thread, NULL, worker_run, (void *)args);
     if (ret != 0) {
         usys_free(args);
         return STATUS_NOK;
@@ -267,10 +266,10 @@ static int _schedule_worker(Config *config,
     return STATUS_OK;
 }
 
-static int _post_state_change(const URequest *request,
-                              UResponse *response,
-                              Config *config,
-                              ControlSubsystem subsystem) {
+static int post_state_change(const URequest *request,
+                             UResponse *response,
+                             Config *config,
+                             ControlSubsystem subsystem) {
 
     ControlState desired = CONTROL_STATE_OFF;
     bool force = false;
@@ -283,7 +282,7 @@ static int _post_state_change(const URequest *request,
         return json_set_empty(response, HttpStatus_InternalServerError);
     }
 
-    if (!_parse_state_request(request, &desired, &force)) {
+    if (!parse_state_request(request, &desired, &force)) {
         return json_set_empty(response, HttpStatus_BadRequest);
     }
 
@@ -304,7 +303,7 @@ static int _post_state_change(const URequest *request,
         return json_set_empty(response, httpStatus);
     }
 
-    if (_schedule_worker(config, subsystem, immediate, token) != STATUS_OK) {
+    if (schedule_worker(config, subsystem, immediate, token) != STATUS_OK) {
         control_mark_fault(config->control, subsystem);
         return json_set_empty(response, HttpStatus_InternalServerError);
     }
@@ -312,25 +311,7 @@ static int _post_state_change(const URequest *request,
     return json_set_empty(response, HttpStatus_Accepted);
 }
 
-int web_service_cb_ping(const URequest *request,
-                        UResponse *response,
-                        void *epConfig) {
 
-    (void)request;
-    (void)epConfig;
-    return json_set_empty(response, HttpStatus_OK);
-}
-
-int web_service_cb_version(const URequest *request,
-                           UResponse *response,
-                           void *epConfig) {
-
-    (void)request;
-    (void)epConfig;
-
-    ulfius_set_string_body_response(response, HttpStatus_OK, VERSION);
-    return U_CALLBACK_CONTINUE;
-}
 
 int web_service_cb_state(const URequest *request,
                          UResponse *response,
@@ -397,7 +378,7 @@ int web_service_cb_post_service(const URequest *request,
         return json_set_empty(response, HttpStatus_NotFound);
     }
 
-    return _post_state_change(request, response, config, CONTROL_SUBSYS_SERVICE);
+    return post_state_change(request, response, config, CONTROL_SUBSYS_SERVICE);
 }
 
 int web_service_cb_post_radio(const URequest *request,
@@ -415,9 +396,8 @@ int web_service_cb_post_radio(const URequest *request,
         return json_set_empty(response, HttpStatus_NotFound);
     }
 
-    return _post_state_change(request, response, config, CONTROL_SUBSYS_RADIO);
+    return post_state_change(request, response, config, CONTROL_SUBSYS_RADIO);
 }
-
 
 int web_service_cb_post_radio_client(const URequest *request,
                                      UResponse *response,
@@ -432,7 +412,7 @@ int web_service_cb_post_radio_client(const URequest *request,
         return json_set_empty(response, HttpStatus_NotFound);
     }
 
-    if (!_parse_state_request(request, &desired, &force)) {
+    if (!parse_state_request(request, &desired, &force)) {
         return json_set_empty(response, HttpStatus_BadRequest);
     }
 
@@ -520,7 +500,7 @@ int web_service_cb_post_restart(const URequest *request,
         return json_set_empty(response, httpStatus);
     }
 
-    if (_schedule_worker(config, CONTROL_SUBSYS_RESTART, immediate, token) != STATUS_OK) {
+    if (schedule_worker(config, CONTROL_SUBSYS_RESTART, immediate, token) != STATUS_OK) {
         control_mark_fault(config->control, CONTROL_SUBSYS_RESTART);
         return json_set_empty(response, HttpStatus_InternalServerError);
     }
@@ -544,4 +524,24 @@ int web_service_cb_not_allowed(const URequest *request,
     (void)request;
     (void)user_data;
     return json_set_empty(response, HttpStatus_MethodNotAllowed);
+}
+
+int web_service_cb_ping(const URequest *request,
+                        UResponse *response,
+                        void *epConfig) {
+
+    (void)request;
+    (void)epConfig;
+    return json_set_empty(response, HttpStatus_OK);
+}
+
+int web_service_cb_version(const URequest *request,
+                           UResponse *response,
+                           void *epConfig) {
+
+    (void)request;
+    (void)epConfig;
+
+    ulfius_set_string_body_response(response, HttpStatus_OK, VERSION);
+    return U_CALLBACK_CONTINUE;
 }

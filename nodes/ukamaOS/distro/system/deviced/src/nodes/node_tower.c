@@ -23,8 +23,8 @@ void node_tower_init_control(Config *config) {
     config->control->Service.Current = CONTROL_STATE_OFF;
     config->control->Service.Desired = CONTROL_STATE_OFF;
 
-    config->control->Radio.Current = CONTROL_STATE_ON;
-    config->control->Radio.Desired = CONTROL_STATE_ON;
+    config->control->Radio.Current   = CONTROL_STATE_ON;
+    config->control->Radio.Desired   = CONTROL_STATE_ON;
 }
 
 void node_tower_setup_endpoints(Config *config, UInst *instance) {

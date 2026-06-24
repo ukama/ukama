@@ -9,7 +9,6 @@
 #include <stdio.h>
 
 #include "nodes.h"
-
 #include "web_service.h"
 
 #include "usys_log.h"

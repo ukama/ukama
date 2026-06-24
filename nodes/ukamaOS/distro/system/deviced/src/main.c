@@ -125,8 +125,7 @@ int main(int argc, char **argv) {
     } else {
         serviceConfig.serviceName  = usys_strdup(SERVICE_DEVICE_CLIENT);
     }
-    serviceConfig.servicePort      = usys_find_service_port(serviceConfig.serviceName);
-
+    serviceConfig.servicePort  = usys_find_service_port(serviceConfig.serviceName);
     serviceConfig.nodedPort    = usys_find_service_port(SERVICE_NODE);
     serviceConfig.notifydPort  = usys_find_service_port(SERVICE_NOTIFY);
     serviceConfig.femPort      = usys_find_service_port(SERVICE_FEM);
