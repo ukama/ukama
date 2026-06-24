@@ -82,17 +82,6 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 
 	switch e.RoutingKey {
-	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate"):
-		msg, err := cpb.UnmarshalProtoEvent[epb.EventSimAllocation](e.Msg)
-		if err != nil {
-			return nil, err
-		}
-
-		err = es.handleSimManagerSimAllocateEvent(e.RoutingKey, msg)
-		if err != nil {
-			return nil, err
-		}
-
 	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.payments.processor.payment.success"):
 		msg, err := cpb.UnmarshalProtoEvent[epb.Payment](e.Msg)
 		if err != nil {
@@ -126,6 +115,17 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 			return nil, err
 		}
 
+	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.create"):
+		msg, err := cpb.UnmarshalProtoEvent[epb.Profile](e.Msg)
+		if err != nil {
+			return nil, err
+		}
+
+		err = es.handleUkamaAgentAsrProfileCreateEvent(e.RoutingKey, msg)
+		if err != nil {
+			return nil, err
+		}
+
 	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.delete"):
 		msg, err := cpb.UnmarshalProtoEvent[epb.Profile](e.Msg)
 		if err != nil {
@@ -141,16 +141,6 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 	}
 
 	return &epb.EventResponse{}, nil
-}
-
-// We auto activate any new allocated sim
-func (es *SimManagerEventServer) handleSimManagerSimAllocateEvent(key string, msg *epb.EventSimAllocation) error {
-	log.Infof("Keys %s and Proto is: %+v", key, msg)
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
-	defer cancel()
-
-	return activateSim(ctx, msg.Id, es.simRepo, es.agentFactory, es.orgId, es.metricsPusher, es.msgbus, es.baseRoutingKey)
 }
 
 func (es *SimManagerEventServer) handleProcessorPaymentSuccessEvent(key string, msg *epb.Payment) error {
@@ -284,26 +274,52 @@ func (es *SimManagerEventServer) handleUkamaAgentCdrCreateEvent(key string, cdr 
 	return nil
 }
 
-func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key string, asrProfile *epb.Profile) error {
+// We activate any new allocated sim as long as ARS registration was successful
+func (es *SimManagerEventServer) handleUkamaAgentAsrProfileCreateEvent(key string, asrProfile *epb.Profile) error {
 	log.Infof("Keys %s and Proto is: %+v", key, asrProfile)
 
-	ukamaSims, err := es.simRepo.List(asrProfile.Iccid, "", "", "", ukama.SimTypeUkamaData, ukama.SimStatusActive, 0, false, 0, false)
+	sim, err := es.getSimFromIccid(asrProfile.Iccid)
 	if err != nil {
-		return fmt.Errorf("error while looking up sim for given iccid %q: %w",
+		log.Errorf("Error while looking up sim from iccid %s. Error: %v",
+			asrProfile.Iccid, err)
+
+		return fmt.Errorf("error while looking up sim from iccid %s. Error: %w",
 			asrProfile.Iccid, err)
 	}
 
-	if len(ukamaSims) == 0 {
-		return fmt.Errorf("no corresponding sim found for given iccid %q",
-			asrProfile.Iccid)
+	if sim.Type != ukama.SimTypeUkamaData {
+		log.Errorf("Invalid sim type: sim must be of type %s, not %s",
+			ukama.SimTypeUkamaData.String(), sim.Type.String())
+
+		return fmt.Errorf("invalid sim type: sim must be of type %s, not %s",
+			ukama.SimTypeUkamaData.String(), sim.Type.String())
 	}
 
-	if len(ukamaSims) > 1 {
-		return fmt.Errorf("inconsistent state: multiple sim found for given iccid %q",
-			asrProfile.Iccid)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
+	defer cancel()
+
+	return activateSim(ctx, sim.Id.String(), es.simRepo, es.agentFactory, es.orgId, es.metricsPusher, es.msgbus, es.baseRoutingKey)
+}
+
+func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key string, asrProfile *epb.Profile) error {
+	log.Infof("Keys %s and Proto is: %+v", key, asrProfile)
+
+	sim, err := es.getSimFromIccid(asrProfile.Iccid)
+	if err != nil {
+		log.Errorf("Error while looking up sim from iccid %s. Error: %v",
+			asrProfile.Iccid, err)
+
+		return fmt.Errorf("error while looking up sim from iccid %s. Error: %w",
+			asrProfile.Iccid, err)
 	}
 
-	sim := ukamaSims[0]
+	if sim.Type != ukama.SimTypeUkamaData {
+		log.Errorf("Invalid sim type: sim must be of type %s, not %s",
+			ukama.SimTypeUkamaData.String(), sim.Type.String())
+
+		return fmt.Errorf("invalid sim type: sim must be of type %s, not %s",
+			ukama.SimTypeUkamaData.String(), sim.Type.String())
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
 	defer cancel()
@@ -313,6 +329,9 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key strin
 	err = terminatePackageForSim(ctx, sim.Id.String(), asrProfile.SimPackage, es.simRepo,
 		es.packageRepo, es.msgbus, es.baseRoutingKey)
 	if err != nil {
+		log.Errorf("Failed to terminate active package %s on sim %s. Error: %v",
+			asrProfile.SimPackage, sim.Id.String(), err)
+
 		return fmt.Errorf("failed to terminate active package %s on sim %s. Error: %w",
 			asrProfile.SimPackage, sim.Id.String(), err)
 	}
@@ -348,6 +367,9 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key strin
 			err = setActivePackageForSim(ctx, sim.Id.String(), nextPackage.Id.String(), es.simRepo, es.packageRepo,
 				es.agentFactory, es.msgbus, es.baseRoutingKey)
 			if err != nil {
+				log.Errorf("Failed to activate next package %s for sim %s. Error: %v",
+					nextPackage.Id.String(), sim.Id.String(), err)
+
 				return fmt.Errorf("failed to activate next package %s for sim %s. Error: %w",
 					nextPackage.Id.String(), sim.Id.String(), err)
 			}
@@ -355,4 +377,35 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key strin
 	}
 
 	return nil
+}
+
+func (es *SimManagerEventServer) getSimFromIccid(iccid string) (*sims.Sim, error) {
+	ukamaSims, err := es.simRepo.List(iccid, "", "", "", ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
+	if err != nil {
+		log.Errorf("Sim list error for given iccid %q: %v",
+			iccid, err)
+
+		return nil, fmt.Errorf("sim list error for given iccid %q: %w",
+			iccid, err)
+	}
+
+	if len(ukamaSims) == 0 {
+		log.Errorf("No corresponding sim found for given iccid %q",
+			iccid)
+
+		return nil, fmt.Errorf("no corresponding sim found for given iccid %q",
+			iccid)
+	}
+
+	if len(ukamaSims) > 1 {
+		log.Errorf("Inconsistent state: multiple sims found for given iccid %q",
+			iccid)
+
+		return nil, fmt.Errorf("inconsistent state: multiple sims found for given iccid %q",
+			iccid)
+	}
+
+	sim := ukamaSims[0]
+
+	return &sim, nil
 }

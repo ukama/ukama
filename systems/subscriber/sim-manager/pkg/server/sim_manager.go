@@ -354,6 +354,14 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		PackageEndDate: timestamppb.New(sim.Package.EndDate),
 	}
 
+	// agentRequest := client.AgentRequestData{
+	// Iccid:        sim.Iccid,
+	// Imsi:         sim.Imsi,
+	// NetworkId:    sim.NetworkId.String(),
+	// PackageId:    sim.Package.PackageId.String(),
+	// SimPackageId: sim.Package.Id.String(),
+	// }
+
 	err = publishEventMessage(route, evt, s.msgbus)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evt, route, err)
