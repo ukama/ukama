@@ -95,11 +95,12 @@ export class AddMemberInputDto {
 
 @InputType()
 export class UpdateMemberInputDto {
-  @Field()
+  @Field({ nullable: true })
+  @IsOptional()
   @IsBoolean()
-  isDeactivated: boolean;
+  isDeactivated?: boolean;
 
-  @Field()
+  @Field({ nullable: true })
   @IsOptional()
   role?: string;
 }
