@@ -8,15 +8,15 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import type { AppContext } from "../../server/context";
-import { SimsPoolResDto } from "./types";
+import { SimPoolResDto } from "./types";
 
 @Resolver()
 export class GetSimByIccidResolver {
-  @Query(() => SimsPoolResDto)
+  @Query(() => SimPoolResDto)
   async getSimByIccid(
     @Arg("iccid") iccid: string,
     @Ctx() ctx: AppContext
-  ): Promise<SimsPoolResDto> {
+  ): Promise<SimPoolResDto> {
     const { dataSources } = ctx;
     const baseURL = await ctx.urls.url("sim");
     return await dataSources.sim.getSimByIccid(baseURL, iccid);

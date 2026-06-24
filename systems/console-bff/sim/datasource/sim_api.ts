@@ -23,6 +23,7 @@ import {
   RemovePackageFromSimResDto,
   SimDataUsage,
   SimDto,
+  SimPoolResDto,
   SimPoolStatsDto,
   SimStatusResDto,
   SimUsageInputDto,
@@ -35,6 +36,7 @@ import {
 } from "../resolver/types";
 import {
   dtoToAllocateSimResDto,
+  dtoToSimByIccidDto,
   dtoToSimResDto,
   dtoToSimsDto,
   dtoToSimsFromPoolDto,
@@ -134,13 +136,13 @@ class SimApi extends BaseRESTDataSource {
   getSimByIccid = async (
     baseURL: string,
     iccid: string
-  ): Promise<SimsPoolResDto> => {
+  ): Promise<SimPoolResDto> => {
     this.logger.info(
       `GetSimByIccid [GET]: ${baseURL}/${VERSION}/${SIMPOOL}/sim/${iccid}`
     );
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/${SIMPOOL}/sim/${iccid}`).then(res =>
-      dtoToSimsFromPoolDto(res)
+      dtoToSimByIccidDto(res.sim)
     );
   };
 
