@@ -39,6 +39,7 @@ extern "C" {
 #define SERVICE_SWITCH           "switch"
 #define SERVICE_AGGREGATOR       "aggregator"
 #define SERVICE_AGGREGATOR_ADMIN "aggregator-admin"
+#define SERVICE_POWER            "power"
 #define SERVICE_EPC              "epc"
 #define SERVICE_EPCEMU           "epcemu"
 #define SERVICE_EPCEMU_DATA      "epcemu-data"

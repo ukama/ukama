@@ -38,19 +38,10 @@
 #define LOOKOUT_MANAGER_STARTER    "starter"
 #define LOOKOUT_MANAGER_SUPERVISOR "supervisor"
 
-#define LOOKOUT_STATUS_NA         "not-available"
-#define LOOKOUT_GPS_COORD_NA      "-999.000000,-999.000000"
-#define LOOKOUT_GPS_TIME_NA       "not-available"
-
+#define LOOKOUT_STATUS_NA      "not-available"
+#define LOOKOUT_GPS_COORD_NA   "-999.000000,-999.000000"
+#define LOOKOUT_GPS_TIME_NA    "not-available"
 #define LOOKOUT_SCHEMA_VERSION "1.0"
-
-#define LOOKOUT_SERVICE_POWER      "power"
-#define LOOKOUT_SERVICE_POWERD     "powerd"
-#define LOOKOUT_SERVICE_CONTROLLER "controllerd"
-#define LOOKOUT_SERVICE_BACKHAUL   "backhauld"
-#define LOOKOUT_SERVICE_FEM        "femd"
-#define LOOKOUT_SERVICE_GPS        "gps"
-#define LOOKOUT_SERVICE_SWITCH     "switchd"
 
 #define EP_BS              "/"
 #define REST_API_VERSION   "v1"

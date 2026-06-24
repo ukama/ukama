@@ -8,6 +8,7 @@
 
 #include "config.h"
 #include "deviced.h"
+#include "nodes.h"
 #include "web_client.h"
 #include "control.h"
 
@@ -124,11 +125,11 @@ int main(int argc, char **argv) {
     } else {
         serviceConfig.serviceName  = usys_strdup(SERVICE_DEVICE_CLIENT);
     }
-    serviceConfig.servicePort      = usys_find_service_port(serviceConfig.serviceName);
-
+    serviceConfig.servicePort  = usys_find_service_port(serviceConfig.serviceName);
     serviceConfig.nodedPort    = usys_find_service_port(SERVICE_NODE);
     serviceConfig.notifydPort  = usys_find_service_port(SERVICE_NOTIFY);
     serviceConfig.femPort      = usys_find_service_port(SERVICE_FEM);
+    serviceConfig.pcrfPort     = usys_find_service_port(SERVICE_PCRF);
     serviceConfig.nodeID       = NULL;
     serviceConfig.nodeType     = NULL;
     serviceConfig.clientMode   = clientMode;
@@ -143,12 +144,14 @@ int main(int argc, char **argv) {
             !serviceConfig.nodedPort   ||
             !serviceConfig.notifydPort ||
             !serviceConfig.clientPort  ||
-            !serviceConfig.femPort ) {
-            usys_log_error("Unable to determine the port for services: %s %s %s %s",
+            !serviceConfig.femPort     ||
+            !serviceConfig.pcrfPort ) {
+            usys_log_error("Unable to determine the port for services: %s %s %s %s %s",
                            SERVICE_DEVICE,
                            SERVICE_NODE,
                            SERVICE_NOTIFY,
-                           SERVICE_DEVICE_CLIENT);
+                           SERVICE_DEVICE_CLIENT,
+                           SERVICE_PCRF);
             exitCode = USYS_TRUE;
             goto done;
         }
@@ -185,14 +188,13 @@ int main(int argc, char **argv) {
 
     serviceConfig.startTime = time(NULL);
 
-    if (serviceConfig.nodeType) {
-        if (strcmp(serviceConfig.nodeType, UKAMA_TOWER_NODE) == 0) {
-            serviceConfig.control->Service.Current = CONTROL_STATE_ON;
-            serviceConfig.control->Service.Desired = CONTROL_STATE_ON;
-        } else if (strcmp(serviceConfig.nodeType, UKAMA_AMPLIFIER_NODE) == 0) {
-            serviceConfig.control->Radio.Current = CONTROL_STATE_ON;
-            serviceConfig.control->Radio.Desired = CONTROL_STATE_ON;
-        }
+    /* Node-specific default control state. */
+    if (node_is_tower(&serviceConfig)) {
+        node_tower_init_control(&serviceConfig);
+    } else if (node_is_amplifier(&serviceConfig)) {
+        node_amplifier_init_control(&serviceConfig);
+    } else if (node_is_controller(&serviceConfig)) {
+        node_controller_init_control(&serviceConfig);
     }
 
     if (start_web_service(&serviceConfig, &serviceInst) != USYS_TRUE) {

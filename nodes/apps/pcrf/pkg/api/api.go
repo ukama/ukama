@@ -191,3 +191,16 @@ type ReRouteResponse struct {
 	ID int
 	Ip string
 }
+
+type GetServiceRequest struct {
+}
+
+type ServiceRequest struct {
+	State string `json:"state" validate:"required"`
+}
+
+type ServiceResponse struct {
+	State     string `json:"state"`
+	Admission string `json:"admission"`
+	Reason    string `json:"reason"`
+}
