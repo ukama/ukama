@@ -19,7 +19,6 @@ typedef struct _u_request   URequest;
 typedef struct _u_response  UResponse;
 
 int get_nodeid_and_type_from_noded(Config *config);
-int wc_send_alarm_to_notifyd(Config *config, int *retCode);
 int wc_send_action_alarm_to_notifyd(Config *config,
                                    const char *value,
                                    const char *details,

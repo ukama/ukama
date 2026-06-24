@@ -56,7 +56,7 @@ LIBS+=-ljansson
 LIBS+=-lpthread
 LIBS+=-lusys
 
-# Source files
+# Soruce files
 CFILES   = $(wildcard ./src/*.c)
 CFILES  += $(wildcard ./src/nodes/*.c)
 OBJFILES = $(CFILES:.c=.o)

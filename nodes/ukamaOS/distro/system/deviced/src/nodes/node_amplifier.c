@@ -6,29 +6,47 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
-#include "node_profile.h"
+#include "nodes.h"
+
 #include "web_client.h"
 #include "web_service.h"
 
 #include "usys_log.h"
 
-static void amplifier_init_control(Config *config) {
+void node_amplifier_init_control(Config *config) {
 
-    if (!config || !config->control) {
-        return;
-    }
+    if (!config || !config->control) return;
 
     config->control->Radio.Current = CONTROL_STATE_ON;
     config->control->Radio.Desired = CONTROL_STATE_ON;
 }
 
-static int amplifier_build_state(Config *config, JsonObj *json) {
+void node_amplifier_setup_endpoints(Config *config, UInst *instance) {
 
-    char state[32];
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("state"), 0,
+                               &web_service_cb_state, config);
+    node_add_unsupported_methods(instance, "GET", URL_PREFIX,
+                                 API_RES_EP("state"));
 
-    if (!config || !config->control || !json) {
-        return STATUS_NOK;
-    }
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("restart"), 0,
+                               &web_service_cb_post_restart, config);
+    node_add_unsupported_methods(instance, "POST", URL_PREFIX,
+                                 API_RES_EP("restart"));
+
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("radio"), 0,
+                               &web_service_cb_post_radio, config);
+    node_add_unsupported_methods(instance, "POST", URL_PREFIX,
+                                 API_RES_EP("radio"));
+}
+
+int node_amplifier_build_state(Config *config, JsonObj *json) {
+
+    char state[32] = {0};
+
+    if (!config || !config->control || !json) return STATUS_NOK;
 
     if (control_get_subsys_public_state(config->control,
                                         CONTROL_SUBSYS_RADIO,
@@ -36,24 +54,16 @@ static int amplifier_build_state(Config *config, JsonObj *json) {
                                         sizeof(state)) != STATUS_OK) {
         return STATUS_NOK;
     }
-
     json_object_set_new(json, "radio", json_string(state));
+
     return STATUS_OK;
 }
 
-static bool amplifier_supports(ControlSubsystem subsystem) {
+int node_amplifier_apply_radio(Config *config, ControlState desired) {
 
-    return subsystem == CONTROL_SUBSYS_RADIO ||
-           subsystem == CONTROL_SUBSYS_RESTART;
-}
+    int retCode = -1;
 
-static int amplifier_apply_radio(Config *config, ControlState desired) {
-
-    int retCode;
-
-    if (!config) {
-        return STATUS_NOK;
-    }
+    if (!config) return STATUS_NOK;
 
     usys_log_info("radio: %s (via femd:%d)",
                   desired == CONTROL_STATE_ON ? "on" : "off",
@@ -73,32 +83,3 @@ static int amplifier_apply_radio(Config *config, ControlState desired) {
 
     return STATUS_OK;
 }
-
-static int amplifier_apply(Config *config,
-                           ControlSubsystem subsystem,
-                           ControlState desired) {
-
-    if (subsystem == CONTROL_SUBSYS_RADIO) {
-        return amplifier_apply_radio(config, desired);
-    }
-
-    usys_log_error("amplifier: unsupported action");
-    return STATUS_NOK;
-}
-
-static const NodeEndpoint amplifier_endpoints[] = {
-    { "GET",  API_RES_EP("state"),   web_service_cb_state },
-    { "POST", API_RES_EP("restart"), web_service_cb_post_restart },
-    { "POST", API_RES_EP("radio"),   web_service_cb_post_radio },
-    { NULL, NULL, NULL }
-};
-
-const NodeProfile node_profile_amplifier = {
-    .nodeType       = UKAMA_AMPLIFIER_NODE,
-    .endpoints      = amplifier_endpoints,
-    .init_control   = amplifier_init_control,
-    .build_state    = amplifier_build_state,
-    .supports       = amplifier_supports,
-    .apply          = amplifier_apply,
-    .before_restart = NULL,
-};

@@ -6,54 +6,37 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
-#include "node_profile.h"
+#include "nodes.h"
+
 #include "web_service.h"
 
-#include "usys_log.h"
-
-static void controller_init_control(Config *config) {
+void node_controller_init_control(Config *config) {
 
     (void)config;
 }
 
-static int controller_build_state(Config *config, JsonObj *json) {
+void node_controller_setup_endpoints(Config *config, UInst *instance) {
+
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("state"), 0,
+                               &web_service_cb_state, config);
+    node_add_unsupported_methods(instance, "GET", URL_PREFIX,
+                                 API_RES_EP("state"));
+
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("restart"), 0,
+                               &web_service_cb_post_restart, config);
+    node_add_unsupported_methods(instance, "POST", URL_PREFIX,
+                                 API_RES_EP("restart"));
+
+    /* CNode owns no service/radio endpoint in device.d. */
+}
+
+int node_controller_build_state(Config *config, JsonObj *json) {
 
     (void)config;
     (void)json;
 
-    /* CNode does not own service/radio. */
+    /* CNode exposes only common state fields added by web_service.c. */
     return STATUS_OK;
 }
-
-static bool controller_supports(ControlSubsystem subsystem) {
-
-    return subsystem == CONTROL_SUBSYS_RESTART;
-}
-
-static int controller_apply(Config *config,
-                            ControlSubsystem subsystem,
-                            ControlState desired) {
-
-    (void)config;
-    (void)subsystem;
-    (void)desired;
-
-    usys_log_error("controller: unsupported action");
-    return STATUS_NOK;
-}
-
-static const NodeEndpoint controller_endpoints[] = {
-    { "GET",  API_RES_EP("state"),   web_service_cb_state },
-    { "POST", API_RES_EP("restart"), web_service_cb_post_restart },
-    { NULL, NULL, NULL }
-};
-
-const NodeProfile node_profile_controller = {
-    .nodeType       = UKAMA_CONTROLLER_NODE,
-    .endpoints      = controller_endpoints,
-    .init_control   = controller_init_control,
-    .build_state    = controller_build_state,
-    .supports       = controller_supports,
-    .apply          = controller_apply,
-    .before_restart = NULL,
-};

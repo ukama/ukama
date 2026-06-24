@@ -324,32 +324,3 @@ void control_mark_restart_done(ControlCtx *ctx) {
                       CONTROL_SUBSYS_RESTART,
                       CONTROL_STATE_OFF);
 }
-
-int control_request(ControlCtx *ctx,
-                    const char *nodeType,
-                    ControlSubsystem subsystem,
-                    ControlState desired,
-                    bool force,
-                    int *httpStatus) {
-
-    bool allowed             = false;
-    bool runImmediate        = false;
-    unsigned long long token = 0;
-
-    if (!ctx || !nodeType || !httpStatus) return STATUS_NOK;
-
-    allowed = control_set_pending(ctx,
-                                  subsystem,
-                                  desired,
-                                  force,
-                                  httpStatus,
-                                  &runImmediate,
-                                  &token);
-
-    if (!allowed) return STATUS_OK;
-
-    (void)runImmediate;
-    (void)token;
-
-    return STATUS_OK;
-}

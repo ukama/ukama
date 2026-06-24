@@ -6,15 +6,11 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-#include <signal.h>
-#include <stdlib.h>
-#include <unistd.h>
-
 #include "config.h"
 #include "deviced.h"
+#include "nodes.h"
 #include "web_client.h"
 #include "control.h"
-#include "node_profile.h"
 
 #include "usys_api.h"
 #include "usys_file.h"
@@ -193,7 +189,14 @@ int main(int argc, char **argv) {
 
     serviceConfig.startTime = time(NULL);
 
-    node_profile_init_control(&serviceConfig);
+    /* Node-specific default control state. */
+    if (node_is_tower(&serviceConfig)) {
+        node_tower_init_control(&serviceConfig);
+    } else if (node_is_amplifier(&serviceConfig)) {
+        node_amplifier_init_control(&serviceConfig);
+    } else if (node_is_controller(&serviceConfig)) {
+        node_controller_init_control(&serviceConfig);
+    }
 
     if (start_web_service(&serviceConfig, &serviceInst) != USYS_TRUE) {
         usys_log_error("Webservice failed to setup for clients. Exiting.");

@@ -17,7 +17,7 @@
 #include "control.h"
 #include "deviced.h"
 #include "http_status.h"
-#include "node_profile.h"
+#include "nodes.h"
 #include "web_client.h"
 
 #include "usys_log.h"
@@ -174,7 +174,8 @@ static void* _worker_run(void *arg) {
             sleep(WAIT_BEFORE_REBOOT);
         }
 
-        if (node_profile_before_restart(config) != STATUS_OK) {
+        if (node_is_tower(config) &&
+            node_tower_before_restart(config) != STATUS_OK) {
             control_mark_fault(control, args->Subsystem);
             usys_free(args);
             pthread_exit(NULL);
@@ -204,7 +205,7 @@ static void* _worker_run(void *arg) {
                                           "Enabling cellular service" : "Disabling cellular service",
                                            &retCode);
 
-        execRet = node_profile_apply(config, args->Subsystem, desired);
+        execRet = actions_service_apply(config, desired);
         if (execRet == STATUS_OK) {
             control_mark_done(control, args->Subsystem, desired);
         } else {
@@ -222,7 +223,7 @@ static void* _worker_run(void *arg) {
                                               "Enabling radio" : "Disabling radio",
                                               &retCode);
 
-        execRet = node_profile_apply(config, args->Subsystem, desired);
+        execRet = actions_radio_apply(config, desired);
         if (execRet == STATUS_OK) {
             control_mark_done(control, args->Subsystem, desired);
         } else {
@@ -339,6 +340,7 @@ int web_service_cb_state(const URequest *request,
     JsonObj *json = NULL;
     time_t now = 0;
     long uptime = 0;
+    int ret = STATUS_NOK;
 
     (void)request;
 
@@ -347,19 +349,30 @@ int web_service_cb_state(const URequest *request,
         return json_set_empty(response, HttpStatus_InternalServerError);
     }
 
-    now = time(NULL);
-    if (config->startTime > 0 && now >= config->startTime) {
-        uptime = (long)(now - config->startTime);
-    }
-
     json = json_object();
     if (!json) {
         return json_set_empty(response, HttpStatus_InternalServerError);
     }
 
-    if (node_profile_build_state(config, json) != STATUS_OK) {
+    if (node_is_tower(config)) {
+        ret = node_tower_build_state(config, json);
+    } else if (node_is_amplifier(config)) {
+        ret = node_amplifier_build_state(config, json);
+    } else if (node_is_controller(config)) {
+        ret = node_controller_build_state(config, json);
+    } else {
         json_decref(json);
         return json_set_empty(response, HttpStatus_BadRequest);
+    }
+
+    if (ret != STATUS_OK) {
+        json_decref(json);
+        return json_set_empty(response, HttpStatus_InternalServerError);
+    }
+
+    now = time(NULL);
+    if (config->startTime > 0 && now >= config->startTime) {
+        uptime = (long)(now - config->startTime);
     }
 
     json_object_set_new(json, "uptime_s", json_integer(uptime));
@@ -380,7 +393,7 @@ int web_service_cb_post_service(const URequest *request,
         return json_set_empty(response, HttpStatus_InternalServerError);
     }
 
-    if (!node_profile_has_subsystem(config, CONTROL_SUBSYS_SERVICE)) {
+    if (!node_is_tower(config)) {
         return json_set_empty(response, HttpStatus_NotFound);
     }
 
@@ -398,7 +411,7 @@ int web_service_cb_post_radio(const URequest *request,
         return json_set_empty(response, HttpStatus_InternalServerError);
     }
 
-    if (!node_profile_has_subsystem(config, CONTROL_SUBSYS_RADIO)) {
+    if (!node_is_tower(config) && !node_is_amplifier(config)) {
         return json_set_empty(response, HttpStatus_NotFound);
     }
 
@@ -424,7 +437,7 @@ int web_service_cb_post_radio_client(const URequest *request,
     }
 
     (void)force;
-    if (node_profile_apply(config, CONTROL_SUBSYS_RADIO, desired) != STATUS_OK) {
+    if (actions_radio_apply(config, desired) != STATUS_OK) {
         return json_set_empty(response, HttpStatus_InternalServerError);
     }
 

@@ -6,32 +6,59 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
-#include "node_profile.h"
+#include <string.h>
+
+#include "nodes.h"
+
+#include "http_status.h"
 #include "web_client.h"
 #include "web_service.h"
-#include "http_status.h"
 
 #include "usys_log.h"
 
-static void tower_init_control(Config *config) {
+void node_tower_init_control(Config *config) {
 
-    if (!config || !config->control) {
-        return;
-    }
+    if (!config || !config->control) return;
 
     config->control->Service.Current = CONTROL_STATE_OFF;
     config->control->Service.Desired = CONTROL_STATE_OFF;
-    config->control->Radio.Current   = CONTROL_STATE_ON;
-    config->control->Radio.Desired   = CONTROL_STATE_ON;
+
+    config->control->Radio.Current = CONTROL_STATE_ON;
+    config->control->Radio.Desired = CONTROL_STATE_ON;
 }
 
-static int tower_build_state(Config *config, JsonObj *json) {
+void node_tower_setup_endpoints(Config *config, UInst *instance) {
 
-    char state[32];
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("state"), 0,
+                               &web_service_cb_state, config);
+    node_add_unsupported_methods(instance, "GET", URL_PREFIX,
+                                 API_RES_EP("state"));
 
-    if (!config || !config->control || !json) {
-        return STATUS_NOK;
-    }
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("restart"), 0,
+                               &web_service_cb_post_restart, config);
+    node_add_unsupported_methods(instance, "POST", URL_PREFIX,
+                                 API_RES_EP("restart"));
+
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("service"), 0,
+                               &web_service_cb_post_service, config);
+    node_add_unsupported_methods(instance, "POST", URL_PREFIX,
+                                 API_RES_EP("service"));
+
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("radio"), 0,
+                               &web_service_cb_post_radio, config);
+    node_add_unsupported_methods(instance, "POST", URL_PREFIX,
+                                 API_RES_EP("radio"));
+}
+
+int node_tower_build_state(Config *config, JsonObj *json) {
+
+    char state[32] = {0};
+
+    if (!config || !config->control || !json) return STATUS_NOK;
 
     if (control_get_subsys_public_state(config->control,
                                         CONTROL_SUBSYS_SERVICE,
@@ -41,43 +68,34 @@ static int tower_build_state(Config *config, JsonObj *json) {
     }
     json_object_set_new(json, "service", json_string(state));
 
+    memset(state, 0, sizeof(state));
     if (control_get_subsys_public_state(config->control,
                                         CONTROL_SUBSYS_RADIO,
                                         state,
-                                        sizeof(state)) == STATUS_OK) {
-        json_object_set_new(json, "radio", json_string(state));
+                                        sizeof(state)) != STATUS_OK) {
+        return STATUS_NOK;
     }
+    json_object_set_new(json, "radio", json_string(state));
 
     return STATUS_OK;
 }
 
-static bool tower_supports(ControlSubsystem subsystem) {
-
-    return subsystem == CONTROL_SUBSYS_SERVICE ||
-           subsystem == CONTROL_SUBSYS_RADIO   ||
-           subsystem == CONTROL_SUBSYS_RESTART;
-}
-
-static int tower_apply_service(Config *config, ControlState desired) {
+int node_tower_apply_service(Config *config, ControlState desired) {
 
     int retCode = -1;
 
-    if (!config) {
-        return STATUS_NOK;
-    }
+    if (!config) return STATUS_NOK;
 
     usys_log_info("service: %s", desired == CONTROL_STATE_ON ? "on" : "off");
 
     return wc_post_service_to_pcrf(config, desired, &retCode);
 }
 
-static int tower_apply_radio(Config *config, ControlState desired) {
+int node_tower_apply_radio(Config *config, ControlState desired) {
 
     int retCode = -1;
 
-    if (!config) {
-        return STATUS_NOK;
-    }
+    if (!config) return STATUS_NOK;
 
     usys_log_info("radio: %s (tower trx client)",
                   desired == CONTROL_STATE_ON ? "on" : "off");
@@ -86,29 +104,11 @@ static int tower_apply_radio(Config *config, ControlState desired) {
            STATUS_OK : STATUS_NOK;
 }
 
-static int tower_apply(Config *config,
-                       ControlSubsystem subsystem,
-                       ControlState desired) {
-
-    if (subsystem == CONTROL_SUBSYS_SERVICE) {
-        return tower_apply_service(config, desired);
-    }
-
-    if (subsystem == CONTROL_SUBSYS_RADIO) {
-        return tower_apply_radio(config, desired);
-    }
-
-    usys_log_error("tower: unsupported action");
-    return STATUS_NOK;
-}
-
-static int tower_before_restart(Config *config) {
+int node_tower_before_restart(Config *config) {
 
     int retCode = -1;
 
-    if (!config) {
-        return STATUS_NOK;
-    }
+    if (!config) return STATUS_NOK;
 
     if (wc_send_reboot_to_client(config, &retCode) != USYS_OK) {
         usys_log_error("Remote client reboot failed");
@@ -124,21 +124,3 @@ static int tower_before_restart(Config *config) {
 
     return STATUS_OK;
 }
-
-static const NodeEndpoint tower_endpoints[] = {
-    { "GET",  API_RES_EP("state"),   web_service_cb_state },
-    { "POST", API_RES_EP("restart"), web_service_cb_post_restart },
-    { "POST", API_RES_EP("service"), web_service_cb_post_service },
-    { "POST", API_RES_EP("radio"),   web_service_cb_post_radio },
-    { NULL, NULL, NULL }
-};
-
-const NodeProfile node_profile_tower = {
-    .nodeType       = UKAMA_TOWER_NODE,
-    .endpoints      = tower_endpoints,
-    .init_control   = tower_init_control,
-    .build_state    = tower_build_state,
-    .supports       = tower_supports,
-    .apply          = tower_apply,
-    .before_restart = tower_before_restart,
-};

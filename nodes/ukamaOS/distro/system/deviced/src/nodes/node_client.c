@@ -8,37 +8,40 @@
 
 #include <stdio.h>
 
-#include "node_profile.h"
+#include "nodes.h"
+
 #include "web_service.h"
 
 #include "usys_log.h"
 
-static int client_build_state(Config *config, JsonObj *json) {
+void node_client_setup_endpoints(Config *config, UInst *instance) {
 
-    (void)config;
-    (void)json;
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("reboot"), 0,
+                               &web_service_cb_post_reboot, config);
+    node_add_unsupported_methods(instance, "POST", URL_PREFIX,
+                                 API_RES_EP("reboot"));
 
-    return STATUS_NOK;
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("radio"), 0,
+                               &web_service_cb_post_radio_client, config);
+    node_add_unsupported_methods(instance, "POST", URL_PREFIX,
+                                 API_RES_EP("radio"));
 }
 
-static bool client_supports(ControlSubsystem subsystem) {
-
-    return subsystem == CONTROL_SUBSYS_RADIO ||
-           subsystem == CONTROL_SUBSYS_RESTART;
-}
-
-static int client_apply_radio(Config *config, ControlState desired) {
+int node_client_apply_radio(Config *config, ControlState desired) {
 
     FILE *fp;
 
-    (void)config;
+    if (!config) return STATUS_NOK;
 
     usys_log_info("radio: %s (client emu)",
                   desired == CONTROL_STATE_ON ? "on" : "off");
 
     fp = fopen(DEF_RADIO_EMU_FILE, "w");
     if (!fp) {
-        usys_log_error("radio: failed to open emu state file: %s", DEF_RADIO_EMU_FILE);
+        usys_log_error("radio: failed to open emu state file: %s",
+                       DEF_RADIO_EMU_FILE);
         return STATUS_NOK;
     }
 
@@ -47,31 +50,3 @@ static int client_apply_radio(Config *config, ControlState desired) {
 
     return STATUS_OK;
 }
-
-static int client_apply(Config *config,
-                        ControlSubsystem subsystem,
-                        ControlState desired) {
-
-    if (subsystem == CONTROL_SUBSYS_RADIO) {
-        return client_apply_radio(config, desired);
-    }
-
-    usys_log_error("client: unsupported action");
-    return STATUS_NOK;
-}
-
-static const NodeEndpoint client_endpoints[] = {
-    { "POST", API_RES_EP("reboot"), web_service_cb_post_reboot },
-    { "POST", API_RES_EP("radio"),  web_service_cb_post_radio_client },
-    { NULL, NULL, NULL }
-};
-
-const NodeProfile node_profile_client = {
-    .nodeType       = "client",
-    .endpoints      = client_endpoints,
-    .init_control   = NULL,
-    .build_state    = client_build_state,
-    .supports       = client_supports,
-    .apply          = client_apply,
-    .before_restart = NULL,
-};

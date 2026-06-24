@@ -58,13 +58,6 @@ int control_get_subsys_public_state(ControlCtx *ctx,
                                     char *outState,
                                     size_t outStateSize);
 
-int control_request(ControlCtx *ctx,
-                    const char *nodeType,
-                    ControlSubsystem subsystem,
-                    ControlState desired,
-                    bool force,
-                    int *httpStatus);
-
 void control_mark_fault(ControlCtx *ctx, ControlSubsystem subsystem);
 
 void control_mark_done(ControlCtx *ctx,

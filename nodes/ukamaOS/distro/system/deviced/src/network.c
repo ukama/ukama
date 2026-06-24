@@ -6,13 +6,13 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+#include <ulfius.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ulfius.h>
 
-#include "config.h"
 #include "deviced.h"
-#include "node_profile.h"
+#include "config.h"
+#include "nodes.h"
 #include "web_service.h"
 
 static int start_framework(Config *config, UInst *instance) {
@@ -32,10 +32,10 @@ static int start_framework(Config *config, UInst *instance) {
     return USYS_TRUE;
 }
 
-static void setup_unsupported_methods(UInst *instance,
-                                      const char *allowedMethod,
-                                      const char *prefix,
-                                      const char *resource) {
+void node_add_unsupported_methods(UInst *instance,
+                                  char *allowedMethod,
+                                  char *prefix,
+                                  char *resource) {
 
     if (strcmp(allowedMethod, "GET") != 0) {
         ulfius_add_endpoint_by_val(instance, "GET", prefix,
@@ -71,63 +71,47 @@ static void setup_common_webservice_endpoints(Config *config, UInst *instance) {
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("ping"), 0,
                                &web_service_cb_ping, config);
-    setup_unsupported_methods(instance, "GET",
-                              URL_PREFIX, API_RES_EP("ping"));
+    node_add_unsupported_methods(instance, "GET",
+                                 URL_PREFIX, API_RES_EP("ping"));
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("version"), 0,
                                &web_service_cb_version, config);
-    setup_unsupported_methods(instance, "GET",
-                              URL_PREFIX, API_RES_EP("version"));
-}
-
-static int setup_profile_endpoints(Config *config,
-                                   UInst *instance,
-                                   const NodeProfile *profile) {
-
-    const NodeEndpoint *ep = NULL;
-
-    if (!config || !instance || !profile || !profile->endpoints) {
-        return USYS_FALSE;
-    }
-
-    for (ep = profile->endpoints; ep->method != NULL; ep++) {
-        ulfius_add_endpoint_by_val(instance,
-                                   ep->method,
-                                   URL_PREFIX,
-                                   ep->resource,
-                                   0,
-                                   ep->callback,
-                                   config);
-        setup_unsupported_methods(instance,
-                                  ep->method,
-                                  URL_PREFIX,
-                                  ep->resource);
-    }
-
-    return USYS_TRUE;
+    node_add_unsupported_methods(instance, "GET",
+                                 URL_PREFIX, API_RES_EP("version"));
 }
 
 static int setup_webservice_endpoints(Config *config, UInst *serviceInst) {
 
-    const NodeProfile *profile = NULL;
-
-    profile = node_profile_get(config);
-    if (!profile) {
-        usys_log_error("Unable to setup web services for: %s",
-                       config && config->nodeType ? config->nodeType : "unknown");
-        return USYS_FALSE;
-    }
-
     setup_common_webservice_endpoints(config, serviceInst);
 
-    if (!setup_profile_endpoints(config, serviceInst, profile)) {
-        return USYS_FALSE;
+    if (config->clientMode) {
+        node_client_setup_endpoints(config, serviceInst);
+        ulfius_set_default_endpoint(serviceInst, &web_service_cb_default, config);
+        return USYS_TRUE;
     }
 
-    ulfius_set_default_endpoint(serviceInst, &web_service_cb_default, config);
+    if (node_is_tower(config)) {
+        node_tower_setup_endpoints(config, serviceInst);
+        ulfius_set_default_endpoint(serviceInst, &web_service_cb_default, config);
+        return USYS_TRUE;
+    }
 
-    return USYS_TRUE;
+    if (node_is_amplifier(config)) {
+        node_amplifier_setup_endpoints(config, serviceInst);
+        ulfius_set_default_endpoint(serviceInst, &web_service_cb_default, config);
+        return USYS_TRUE;
+    }
+
+    if (node_is_controller(config)) {
+        node_controller_setup_endpoints(config, serviceInst);
+        ulfius_set_default_endpoint(serviceInst, &web_service_cb_default, config);
+        return USYS_TRUE;
+    }
+
+    usys_log_error("Unable to setup web services for: %s",
+                   config->nodeType ? config->nodeType : "unknown");
+    return USYS_FALSE;
 }
 
 int start_web_service(Config *config, UInst *serviceInst) {
@@ -145,17 +129,11 @@ int start_web_service(Config *config, UInst *serviceInst) {
     u_map_put(serviceInst->default_headers, "Access-Control-Allow-Origin", "*");
 
     /* Setup endpoints and methods callback. */
-    if (!setup_webservice_endpoints(config, serviceInst)) {
+    if (setup_webservice_endpoints(config, serviceInst) != USYS_TRUE) {
+        usys_log_error("Unable to setup endpoints: %s",
+                       config->nodeType ? config->nodeType : "unknown");
         return USYS_FALSE;
     }
 
-    if (!start_framework(config, serviceInst)) {
-        usys_log_error("Failed to start webservices on port: %d",
-                       config->servicePort);
-        return USYS_FALSE;
-    }
-
-    usys_log_debug("Webservice started on port: %d", config->servicePort);
-
-    return USYS_TRUE;
+    return start_framework(config, serviceInst);
 }
