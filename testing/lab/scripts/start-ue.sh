@@ -219,7 +219,7 @@ if ! podman run -d \
     -e IPERF_PORT="$IPERF_PORT" \
     -e UE_DETACH_ON_EXIT="1" \
     "$UE_IMAGE" \
-    /bin/sh -c '/opt/ukama/ue-agent/ue-agent || exit 1; tail -f /dev/null' \
+    /bin/sh -c 'exec /opt/ukama/ue-agent/ue-agent' \
     > "$UE_STATE_DIR/$UE_ID.start.out" 2>&1; then
     echo "failed to start UE container: $UE_CONTAINER" >&2
     cat "$UE_STATE_DIR/$UE_ID.start.out" >&2 || true

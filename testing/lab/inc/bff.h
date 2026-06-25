@@ -78,6 +78,7 @@ int bff_upload_sims_from_csv(bff_client_t *c,
 int bff_get_sims_from_pool(bff_client_t *c,
                            const char *sim_type,
                            char iccids[][ULAB_MAX_ID],
+                           char pool_sim_ids[][ULAB_MAX_ID],
                            size_t max_iccids,
                            size_t *iccid_count,
                            ulab_error_t *err);
@@ -127,5 +128,9 @@ int bff_query_count(bff_client_t *c,
                     const world_t *w,
                     size_t *count,
                     ulab_error_t *err);
+
+int bff_cleanup_world(bff_client_t *c,
+                      const world_t *w,
+                      ulab_error_t *err);
 
 #endif /* ULAB_BFF_H_ */

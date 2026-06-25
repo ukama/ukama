@@ -31,6 +31,7 @@ typedef struct {
     int print_plan;
     int cleanup;
     int keep;
+    int keep_on_failure;
     int quiet;
     int verbose;
 } runner_opts_t;

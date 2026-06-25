@@ -34,7 +34,10 @@ static void usage(void) {
     printf("  --subscriber     create package/subscriber/SIM only\n");
     printf("  --network-id <id> existing BFF network id for --subscriber\n");
     printf("  --sim-csv <file> upload SIM CSV before allocation\n");
-    printf("  --sim-type <type> SIM pool type; default: test\n");
+    printf("  --sim-type <type> SIM pool type; default: ukama_data\n");
+    printf("  --cleanup        force cleanup after setup-only/subscriber run\n");
+    printf("  --keep           skip cleanup and keep runtime/resources\n");
+    printf("  --keep-on-failure keep runtime/resources when validate fails\n");
     printf("  --print-world    dry-run: print generated world sample\n");
     printf("  --quiet          summary only\n");
     printf("  --verbose        debug logs\n");
@@ -55,8 +58,9 @@ static void opts_init(runner_opts_t *o) {
     ulab_copy(o->sim_csv_path, sizeof(o->sim_csv_path),
               ulab_getenv_default("UKAMA_LAB_SIM_CSV", ""));
     ulab_copy(o->sim_type, sizeof(o->sim_type),
-              ulab_getenv_default("UKAMA_LAB_SIM_TYPE", "test"));
-    o->keep = 1;
+              ulab_getenv_default("UKAMA_LAB_SIM_TYPE", "ukama_data"));
+    o->cleanup = 0;
+    o->keep = 0;
 }
 
 static int parse_opts(int argc, char **argv, int start, runner_opts_t *o) {
@@ -97,6 +101,9 @@ static int parse_opts(int argc, char **argv, int start, runner_opts_t *o) {
             o->keep = 0;
         } else if (ulab_streq(argv[i], "--keep")) {
             o->keep = 1;
+            o->cleanup = 0;
+        } else if (ulab_streq(argv[i], "--keep-on-failure")) {
+            o->keep_on_failure = 1;
         } else if (ulab_streq(argv[i], "--quiet")) {
             o->quiet = 1;
         } else if (ulab_streq(argv[i], "--verbose")) {

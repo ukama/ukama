@@ -482,6 +482,34 @@ static int sim_copy_pool_iccid(json_t *item,
     return ulab_copy(out, out_len, s);
 }
 
+static int sim_copy_pool_id(json_t *item,
+                            char *out,
+                            size_t out_len) {
+    json_t *v;
+    const char *s;
+
+    if (out == NULL || out_len == 0) {
+        return ULAB_ERR;
+    }
+    out[0] = '\0';
+
+    if (item == NULL || !json_is_object(item)) {
+        return ULAB_ERR;
+    }
+
+    v = json_object_get(item, "id");
+    if (v == NULL || !json_is_string(v)) {
+        return ULAB_ERR;
+    }
+
+    s = json_string_value(v);
+    if (s == NULL || s[0] == '\0') {
+        return ULAB_ERR;
+    }
+
+    return ulab_copy(out, out_len, s);
+}
+
 int bff_upload_sims_from_csv(bff_client_t *c,
                              const char *csv_path,
                              const char *sim_type,
@@ -575,6 +603,7 @@ int bff_upload_sims_from_csv(bff_client_t *c,
 int bff_get_sims_from_pool(bff_client_t *c,
                            const char *sim_type,
                            char iccids[][ULAB_MAX_ID],
+                           char pool_sim_ids[][ULAB_MAX_ID],
                            size_t max_iccids,
                            size_t *iccid_count,
                            ulab_error_t *err) {
@@ -607,7 +636,7 @@ int bff_get_sims_from_pool(bff_client_t *c,
     ulab_json_escape(sim_type, type_esc, sizeof(type_esc));
     snprintf(query, sizeof(query),
              "query { getSimsFromPool(data:{type:%s,"
-             "status:UNASSIGNED}) { sims { iccid } } }",
+             "status:UNASSIGNED}) { sims { id iccid } } }",
              type_esc);
 
     if (sim_graphql_call(c, "getSimsFromPool", query, &root, err)) {
@@ -631,6 +660,9 @@ int bff_get_sims_from_pool(bff_client_t *c,
     for (i = 0; i < json_array_size(arr) && n < max_iccids; i++) {
         it = json_array_get(arr, i);
         if (sim_copy_pool_iccid(it, iccids[n], ULAB_MAX_ID) == ULAB_OK) {
+            if (pool_sim_ids != NULL) {
+                sim_copy_pool_id(it, pool_sim_ids[n], ULAB_MAX_ID);
+            }
             n++;
         }
     }
@@ -695,7 +727,7 @@ int bff_allocate_sim_from_pool(bff_client_t *c,
              "mutation { allocateSim(data:{iccid:\"%s\","
              "network_id:\"%s\",sim_type:\"%s\","
              "package_id:\"%s\",subscriber_id:\"%s\","
-             "traffic_policy:0}) { id subscriber_id network_id iccid imsi "
+             "traffic_policy:1}) { id subscriber_id network_id iccid imsi "
              "status package { packageId isActive startDate endDate } } }",
              iccid_esc, net_esc, type_esc, pkg_esc, sub_esc);
 
@@ -724,6 +756,20 @@ int bff_allocate_sim_from_pool(bff_client_t *c,
         if (sim_json_get_str(obj, "imsi", tmp, sizeof(tmp)) == ULAB_OK &&
             tmp[0] != '\0') {
             ulab_copy(ue->imsi, sizeof(ue->imsi), tmp);
+        }
+
+        {
+            json_t *pkg_obj;
+
+            pkg_obj = json_object_get(obj, "package");
+            if (pkg_obj != NULL && json_is_object(pkg_obj)) {
+                memset(tmp, 0, sizeof(tmp));
+                if (sim_json_get_str(pkg_obj, "packageId", tmp,
+                    sizeof(tmp)) == ULAB_OK && tmp[0] != '\0') {
+                    ulab_copy(ue->sim_package_id,
+                              sizeof(ue->sim_package_id), tmp);
+                }
+            }
         }
     }
 

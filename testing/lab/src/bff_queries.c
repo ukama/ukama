@@ -38,7 +38,8 @@ const char *BFF_ALLOCATE_SIM =
 " package { packageId isActive startDate endDate } } }";
 
 const char *BFF_GET_DATA_USAGE =
-"query GetDataUsage($simId: String!) { getDataUsage(simId: $simId) { usage } }";
+"query GetDataUsage($data: SimUsageInputDto!) {"
+" getDataUsage(data: $data) { simId usage } }";
 
 const char *BFF_GET_SIM_PACKAGES =
 "query GetPackagesForSim($data: GetPackagesForSimInputDto!) {"
@@ -46,8 +47,8 @@ const char *BFF_GET_SIM_PACKAGES =
 " package_id is_active } } }";
 
 const char *BFF_GET_NODE_STATE =
-"query GetNodeState($nodeId: String!) {"
-" getNodeState(nodeId: $nodeId) { state connectivity } }";
+"query GetNodeState($id: String!) {"
+" getNodeState(id: $id) { state connectivity } }";
 
 const char *BFF_NETWORK_OVERVIEW =
 "query NetworkOverview($networkId: String!) {"

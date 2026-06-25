@@ -12,7 +12,9 @@
 #include <time.h>
 
 #include "runner.h"
+#include "bff.h"
 #include "event.h"
+#include "runtime.h"
 #include "log.h"
 #include "selector.h"
 #include "util.h"
@@ -196,6 +198,7 @@ static int setup_bff_sim_pool(bff_client_t *bff,
                               ulab_error_t *err) {
 
     char (*iccids)[ULAB_MAX_ID];
+    char (*pool_ids)[ULAB_MAX_ID];
     size_t count;
     size_t i;
 
@@ -213,16 +216,20 @@ static int setup_bff_sim_pool(bff_client_t *bff,
     }
 
     iccids = calloc(world->ue_count, sizeof(*iccids));
-    if (iccids == NULL) {
+    pool_ids = calloc(world->ue_count, sizeof(*pool_ids));
+    if (iccids == NULL || pool_ids == NULL) {
         snprintf(err->msg, sizeof(err->msg),
                  "out of memory reading SIM pool");
+        free(iccids);
+        free(pool_ids);
         return ULAB_EINTERNAL;
     }
 
     ulab_status("SIMPOOL", "get unassigned sims type=%s", opts->sim_type);
-    if (bff_get_sims_from_pool(bff, opts->sim_type, iccids,
+    if (bff_get_sims_from_pool(bff, opts->sim_type, iccids, pool_ids,
                                world->ue_count, &count, err)) {
         free(iccids);
+        free(pool_ids);
         return ULAB_EBFF;
     }
 
@@ -232,17 +239,22 @@ static int setup_bff_sim_pool(bff_client_t *bff,
                  "need=%zu got=%zu",
                  opts->sim_type, world->ue_count, count);
         free(iccids);
+        free(pool_ids);
         return ULAB_EBFF;
     }
 
     for (i = 0; i < world->ue_count; i++) {
         ulab_copy(world->ues[i].iccid, sizeof(world->ues[i].iccid),
                   iccids[i]);
-        ulab_status("SIMPOOL", "ue %s iccid=%s", world->ues[i].ref,
-                    world->ues[i].iccid);
+        ulab_copy(world->ues[i].pool_sim_id,
+                  sizeof(world->ues[i].pool_sim_id), pool_ids[i]);
+        ulab_status("SIMPOOL", "ue %s iccid=%s pool=%s",
+                    world->ues[i].ref, world->ues[i].iccid,
+                    world->ues[i].pool_sim_id);
     }
 
     free(iccids);
+    free(pool_ids);
 
     return ULAB_OK;
 }
@@ -398,6 +410,35 @@ static int start_runtime_sites(const char *repo,
 
     return runtime_build_and_start_sites(repo, runtime, world, err) ?
         ULAB_ERUNTIME : ULAB_OK;
+}
+
+static int wait_runtime_nodes(const scenario_t *scenario,
+                              world_t *world,
+                              runtime_t *runtime,
+                              ulab_error_t *err) {
+
+    selector_t all;
+    selector_result_t nodes;
+    int rc;
+
+    if (!scenario->runtime.wait_nodes_ready) {
+        return ULAB_OK;
+    }
+
+    memset(&all, 0, sizeof(all));
+    memset(&nodes, 0, sizeof(nodes));
+    all.kind = SEL_ALL;
+
+    rc = selector_resolve_nodes(world, &all, &nodes, err);
+    if (rc != ULAB_OK) {
+        return ULAB_ERUNTIME;
+    }
+
+    ulab_status("RUNTIME", "wait nodes ready");
+    rc = runtime_wait_nodes_ready(runtime, world, &nodes, err);
+    selector_result_free(&nodes);
+
+    return rc == ULAB_OK ? ULAB_OK : ULAB_ERUNTIME;
 }
 
 static int runtime_all_ues(const scenario_t *scenario,
@@ -561,6 +602,54 @@ static void write_model_artifact(const model_t *model,
     model_write_json(model, path);
 }
 
+static int should_cleanup(const runner_opts_t *opts, int rc) {
+
+    if (opts->keep) {
+        return 0;
+    }
+
+    if (rc != ULAB_OK && opts->keep_on_failure) {
+        return 0;
+    }
+
+    if (opts->setup_only && !opts->cleanup) {
+        return 0;
+    }
+
+    return 1;
+}
+
+static void cleanup_run(const runner_opts_t *opts,
+                        bff_client_t *bff,
+                        runtime_t *runtime,
+                        world_t *world,
+                        int rc) {
+
+    ulab_error_t cleanup_err;
+
+    if (!should_cleanup(opts, rc)) {
+        return;
+    }
+
+    memset(&cleanup_err, 0, sizeof(cleanup_err));
+    ulab_status("CLEANUP", "stop UE runtime");
+    if (runtime_stop_ues(runtime, world, &cleanup_err)) {
+        ulab_log_error("%s", cleanup_err.msg);
+    }
+
+    memset(&cleanup_err, 0, sizeof(cleanup_err));
+    ulab_status("CLEANUP", "delete BFF resources");
+    if (bff_cleanup_world(bff, world, &cleanup_err)) {
+        ulab_log_error("%s", cleanup_err.msg);
+    }
+
+    memset(&cleanup_err, 0, sizeof(cleanup_err));
+    ulab_status("CLEANUP", "stop media/nodes/network");
+    if (runtime_cleanup_infra(runtime, world, &cleanup_err)) {
+        ulab_log_error("%s", cleanup_err.msg);
+    }
+}
+
 int runner_validate(const runner_opts_t *opts) {
 
     scenario_t *scenario;
@@ -619,6 +708,11 @@ int runner_validate(const runner_opts_t *opts) {
         if (rc != ULAB_OK) {
             goto done;
         }
+
+        rc = wait_runtime_nodes(scenario, &world, &runtime, &err);
+        if (rc != ULAB_OK) {
+            goto done;
+        }
     }
 
     rc = bff_init(&bff, opts->bff_url, runDir);
@@ -672,6 +766,8 @@ done:
     if (err.msg[0] != '\0') {
         ulab_log_error("%s", err.msg);
     }
+
+    cleanup_run(opts, &bff, &runtime, &world, rc);
 
     report_close(&report);
     runtime_close(&runtime);

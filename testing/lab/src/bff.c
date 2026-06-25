@@ -1111,8 +1111,17 @@ int bff_get_sim_usage(bff_client_t *c,
     json_t *root;
     json_t *obj;
     json_t *u;
+    const char *usage_str;
 
-    snprintf(vars, sizeof(vars), "{\"sim_id\":\"%s\"}", ue->bff_id);
+    if (ue == NULL || ue->bff_id[0] == '\0' || ue->iccid[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getDataUsage missing SIM id or ICCID");
+        return ULAB_ERR;
+    }
+
+    snprintf(vars, sizeof(vars),
+             "{\"data\":{\"simId\":\"%s\",\"iccid\":\"%s\",\"type\":\"data\"}}",
+             ue->bff_id, ue->iccid);
 
     if (bff_call(c, "getDataUsage", BFF_GET_DATA_USAGE, vars, &root,
         err)) {
@@ -1122,17 +1131,24 @@ int bff_get_sim_usage(bff_client_t *c,
     obj = dig(root, "data", "getDataUsage");
     u = obj ? json_object_get(obj, "usage") : NULL;
 
-    if (u == NULL || !json_is_integer(u)) {
-        snprintf(err->msg, sizeof(err->msg), "getDataUsage missing usage");
+    if (u != NULL && json_is_integer(u)) {
+        *used_mb = (uint64_t)json_integer_value(u);
         json_decref(root);
-        return ULAB_ERR;
+        return ULAB_OK;
     }
 
-    *used_mb = (uint64_t)json_integer_value(u);
+    if (u != NULL && json_is_string(u)) {
+        usage_str = json_string_value(u);
+        if (usage_str != NULL && ulab_parse_u64(usage_str, used_mb) == ULAB_OK) {
+            json_decref(root);
+            return ULAB_OK;
+        }
+    }
 
+    snprintf(err->msg, sizeof(err->msg), "getDataUsage missing usage");
     json_decref(root);
 
-    return ULAB_OK;
+    return ULAB_ERR;
 }
 
 int bff_get_packages_for_sim(bff_client_t *c, const ue_t *ue,
@@ -1192,7 +1208,7 @@ int bff_get_node_state(bff_client_t *c, const node_t *node,
     json_t *root;
     json_t *obj;
 
-    snprintf(vars, sizeof(vars), "{\"nodeId\":\"%s\"}", node->bff_id);
+    snprintf(vars, sizeof(vars), "{\"id\":\"%s\"}", node->bff_id);
 
     if (bff_call(c, "getNodeState", BFF_GET_NODE_STATE, vars, &root,
         err)) {
@@ -1270,6 +1286,185 @@ int bff_query_count(bff_client_t *c, const char *target, const world_t *w,
                ulab_streq(target, "ues")) {
         *count = w->ue_count;
     } else {
+        return ULAB_ERR;
+    }
+
+    return ULAB_OK;
+}
+
+static int bff_cleanup_call(bff_client_t *c,
+                            const char *op,
+                            const char *query) {
+    json_t *root;
+    ulab_error_t err;
+
+    root = NULL;
+    memset(&err, 0, sizeof(err));
+
+    if (query == NULL || query[0] == '\0') {
+        return ULAB_OK;
+    }
+
+    if (bff_call(c, op, query, "{}", &root, &err)) {
+        if (c != NULL && c->logf != NULL) {
+            fprintf(c->logf, "cleanup warning: %s: %s\n", op, err.msg);
+            fflush(c->logf);
+        }
+        return ULAB_ERR;
+    }
+
+    json_decref(root);
+    return ULAB_OK;
+}
+
+static const char *cleanup_package_for_ue(const world_t *w,
+                                          const ue_t *ue) {
+    size_t i;
+
+    if (ue->sim_package_id[0] != '\0') {
+        return ue->sim_package_id;
+    }
+
+    for (i = 0; i < w->package_count; i++) {
+        if (ulab_streq(w->packages[i].ref, ue->package_ref) &&
+            w->packages[i].bff_id[0] != '\0') {
+            return w->packages[i].bff_id;
+        }
+    }
+
+    return NULL;
+}
+
+int bff_cleanup_world(bff_client_t *c,
+                      const world_t *w,
+                      ulab_error_t *err) {
+    char query[ULAB_MAX_QUERY];
+    const char *pkg_id;
+    size_t i;
+    int failures;
+    int n;
+
+    failures = 0;
+
+    if (c == NULL || c->url[0] == '\0' || w == NULL) {
+        return ULAB_OK;
+    }
+
+    for (i = 0; i < w->ue_count; i++) {
+        const ue_t *ue = &w->ues[i];
+
+        if (ue->bff_id[0] == '\0') {
+            continue;
+        }
+
+        pkg_id = cleanup_package_for_ue(w, ue);
+        if (pkg_id != NULL && pkg_id[0] != '\0') {
+            n = snprintf(query, sizeof(query),
+                         "mutation { setInactivePackageForSim(data: {"
+                         "packageId: \"%s\", simId: \"%s\"}) { packageId } }",
+                         pkg_id, ue->bff_id);
+            if (n >= 0 && (size_t)n < sizeof(query) &&
+                bff_cleanup_call(c, "setInactivePackageForSim", query)) {
+                failures++;
+            }
+
+            n = snprintf(query, sizeof(query),
+                         "mutation { removePackageForSim(data: {"
+                         "packageId: \"%s\", simId: \"%s\"}) { packageId } }",
+                         pkg_id, ue->bff_id);
+            if (n >= 0 && (size_t)n < sizeof(query) &&
+                bff_cleanup_call(c, "removePackageForSim", query)) {
+                failures++;
+            }
+        }
+
+        n = snprintf(query, sizeof(query),
+                     "mutation { toggleSimStatus(data: {sim_id: \"%s\", "
+                     "status: \"inactive\"}) { simId } }",
+                     ue->bff_id);
+        if (n >= 0 && (size_t)n < sizeof(query) &&
+            bff_cleanup_call(c, "toggleSimStatus", query)) {
+            failures++;
+        }
+
+        n = snprintf(query, sizeof(query),
+                     "mutation { deleteSim(data: {simId: \"%s\"}) { simId } }",
+                     ue->bff_id);
+        if (n >= 0 && (size_t)n < sizeof(query) &&
+            bff_cleanup_call(c, "deleteSim", query)) {
+            failures++;
+        }
+
+        if (ue->pool_sim_id[0] != '\0') {
+            n = snprintf(query, sizeof(query),
+                         "mutation { deleteSimFromPool(simId: \"%s\") { success } }",
+                         ue->pool_sim_id);
+            if (n >= 0 && (size_t)n < sizeof(query) &&
+                bff_cleanup_call(c, "deleteSimFromPool", query)) {
+                failures++;
+            }
+        }
+    }
+
+    for (i = 0; i < w->package_count; i++) {
+        if (w->packages[i].bff_id[0] == '\0') {
+            continue;
+        }
+
+        n = snprintf(query, sizeof(query),
+                     "mutation { deletePackage(packageId: \"%s\") { uuid } }",
+                     w->packages[i].bff_id);
+        if (n >= 0 && (size_t)n < sizeof(query) &&
+            bff_cleanup_call(c, "deletePackage", query)) {
+            failures++;
+        }
+    }
+
+    for (i = 0; i < w->node_count; i++) {
+        if (w->nodes[i].bff_id[0] == '\0') {
+            continue;
+        }
+
+        n = snprintf(query, sizeof(query),
+                     "mutation { deleteNode(data: {id: \"%s\"}) { id } }",
+                     w->nodes[i].bff_id);
+        if (n >= 0 && (size_t)n < sizeof(query) &&
+            bff_cleanup_call(c, "deleteNode", query)) {
+            failures++;
+        }
+    }
+
+    for (i = 0; i < w->site_count; i++) {
+        if (w->sites[i].bff_id[0] == '\0') {
+            continue;
+        }
+
+        n = snprintf(query, sizeof(query),
+                     "mutation { deleteSite(id: \"%s\") { success } }",
+                     w->sites[i].bff_id);
+        if (n >= 0 && (size_t)n < sizeof(query) &&
+            bff_cleanup_call(c, "deleteSite", query)) {
+            failures++;
+        }
+    }
+
+    for (i = 0; i < w->network_count; i++) {
+        if (w->networks[i].bff_id[0] == '\0') {
+            continue;
+        }
+
+        n = snprintf(query, sizeof(query),
+                     "mutation { deleteNetwork(id: \"%s\") { success } }",
+                     w->networks[i].bff_id);
+        if (n >= 0 && (size_t)n < sizeof(query) &&
+            bff_cleanup_call(c, "deleteNetwork", query)) {
+            failures++;
+        }
+    }
+
+    if (failures > 0 && err != NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "BFF cleanup had %d failed step(s)", failures);
         return ULAB_ERR;
     }
 
