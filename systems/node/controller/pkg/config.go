@@ -32,11 +32,11 @@ type HttpServices struct {
 }
 
 type OperationServices struct {
-	ManagerHost string        `default:"manager:9090"`
-	MonitorHost string        `default:"operation-monitor:9090"`
-	Timeout     time.Duration `default:"5s"`
-	LeaseSecs   uint32        `default:"600"`
-	DeadlineSecs uint32       `default:"600"`
+	ManagerHost  string        `default:"manager:9090"`
+	MonitorHost  string        `default:"operation-monitor:9090"`
+	Timeout      time.Duration `default:"5s"`
+	LeaseSecs    uint32        `default:"600"`
+	DeadlineSecs uint32        `default:"600"`
 }
 
 func NewConfig(name string) *Config {
