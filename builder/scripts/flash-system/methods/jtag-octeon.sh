@@ -450,12 +450,18 @@ _phase1_run() {
     # oct-remote-boot retries so the u-boot prompt is caught whenever it appears.
     echo "Opening serial console at $serial_dev ($baud)..."
     uboot_open "$serial_dev" "$baud" "${LOG_DIR}/uboot.log"
-    echo "Spamming keys to interrupt zero-second autoboot (until prompt appears)..."
+    echo "Watching serial for 'Hit any key to stop autoboot:' and sending a key when seen..."
     (
-        exec 3>"$serial_dev"
-        while true; do
-            printf ' \r\n' >&3
-            sleep 0.03
+        # u-boot ignores input before the autoboot stop message, so don't spam early.
+        # Poll the log and send a single key as soon as the message appears.
+        local boot_log="${LOG_DIR}/uboot.log"
+        local sent=0
+        while [ "$sent" -eq 0 ]; do
+            if grep -qF "Hit any key to stop autoboot:" "$boot_log" 2>/dev/null; then
+                printf ' ' > "$serial_dev"
+                sent=1
+            fi
+            sleep 0.2
         done
     ) &
     SPAM_PID=$!
