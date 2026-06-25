@@ -65,7 +65,6 @@ services:
    - DISTRIBUTOR_SERVICE_HOST=distributor
    - DISTRIBUTOR_SERVICE_PORT=9090
    - HTTP_INITCLIENT=http://${LOCAL_HOST_IP}:8071
-   - EVENTNOTIFYHOST=eventnotify:9090
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
   restart: always

@@ -49,7 +49,6 @@ services:
    - MSGCLIENT_HOST=msgclient-node:9095
    - SITE_CONTROLLER_SERVICE_HOST=site-controller
    - SITE_CONTROLLER_SERVICE_PORT=9090
-   - NODECONTROLLERHOST=controller:9090
    - ORGNAME=${ORGNAME}
    - HTTP_INITCLIENT=http://api-gateway-init:8080
   restart: always
