@@ -25,10 +25,10 @@ safe_name() {
 }
 
 need_cmd() {
-    if ! command -v "$1" >/dev/null 2>&1; then
+    command -v "$1" >/dev/null 2>&1 || {
         echo "missing required command: $1" >&2
         exit 1
-    fi
+    }
 }
 
 load_state() {
@@ -43,6 +43,44 @@ load_state() {
     # simple KEY=value lines.
     # shellcheck disable=SC1090
     . "$state_file"
+}
+
+node_kind() {
+    kind="${NODE_KIND:-}"
+
+    if [ -n "$kind" ]; then
+        echo "$kind"
+        return
+    fi
+
+    case "${FACTORY_NODE_ID:-} ${LOGICAL_NODE_ID:-}" in
+        *tnode*|*tower*) echo "tnode" ;;
+        *anode*|*amplifier*) echo "anode" ;;
+        *cnode*|*controller*) echo "cnode" ;;
+        *) echo "node" ;;
+    esac
+}
+
+required_apps() {
+    if [ -n "${ULAB_REQUIRED_STARTER_APPS:-}" ]; then
+        echo "$ULAB_REQUIRED_STARTER_APPS"
+        return
+    fi
+
+    case "$(node_kind)" in
+        tnode|tower)
+            echo "${ULAB_TOWER_READY_APPS:-init-network,noded,meshd,epcemu,pcrf}"
+            ;;
+        anode|amplifier)
+            echo "${ULAB_AMPLIFIER_READY_APPS:-noded,meshd}"
+            ;;
+        cnode|controller)
+            echo "${ULAB_CONTROLLER_READY_APPS:-noded,meshd}"
+            ;;
+        *)
+            echo "${ULAB_NODE_READY_APPS:-noded,meshd}"
+            ;;
+    esac
 }
 
 container_running() {
@@ -60,20 +98,22 @@ starter_status() {
         2>/dev/null
 }
 
-starter_apps_running() {
+check_required_apps() {
     tmp_file="/tmp/ukama-starter-status.$$"
+    apps="$(required_apps)"
 
     if ! starter_status > "$tmp_file"; then
         rm -f "$tmp_file"
         return 1
     fi
 
-    python3 - "$tmp_file" <<'PY'
+    REQUIRED_APPS="$apps" python3 - "$tmp_file" <<'PY'
 import json
 import os
 import sys
 
 path = sys.argv[1]
+required = [x.strip() for x in os.environ.get("REQUIRED_APPS", "").split(",") if x.strip()]
 
 try:
     with open(path, "r", encoding="utf-8") as f:
@@ -86,51 +126,31 @@ starterd = data.get("starterd") or {}
 if starterd.get("updateInProgress") is True:
     print("starterd update in progress", file=sys.stderr)
     sys.exit(1)
+
 if starterd.get("terminateRequested") is True:
     print("starterd terminate requested", file=sys.stderr)
     sys.exit(1)
 
-apps = []
-spaces = data.get("spaces")
-if isinstance(spaces, list):
-    for space in spaces:
-        space_name = str(space.get("name") or "unknown")
-        for app in space.get("apps") or []:
-            if isinstance(app, dict):
-                app = dict(app)
-                app["_space"] = space_name
-                apps.append(app)
+apps = {}
+for space in data.get("spaces") or []:
+    for app in space.get("apps") or []:
+        name = str(app.get("name") or "")
+        state = str(app.get("state") or "").lower()
+        if name:
+            apps[name] = state
 
-if not apps:
-    legacy = data.get("apps") or data.get("data", {}).get("apps") or data.get("services")
-    if isinstance(legacy, list):
-        apps = [app for app in legacy if isinstance(app, dict)]
-
-if not apps:
-    print("starter.d status has no apps list", file=sys.stderr)
-    sys.exit(1)
-
-required = [x.strip() for x in os.environ.get("ULAB_REQUIRED_STARTER_APPS", "").split(",") if x.strip()]
-required_set = set(required)
-seen = set()
 bad = []
 
-for app in apps:
-    name = str(app.get("name") or app.get("tag") or "unknown")
-    state = str(app.get("state") or app.get("status") or "").strip()
-    normalized = state.lower()
-    if not required_set or name in required_set:
-        seen.add(name)
-        if normalized not in ("running", "active"):
-            bad.append((app.get("_space") or "apps", name, state))
-
-missing = sorted(required_set - seen)
-for name in missing:
-    bad.append(("apps", name, "missing"))
+for name in required:
+    state = apps.get(name)
+    if state is None:
+        bad.append(f"{name}: missing")
+    elif state not in ("running", "active"):
+        bad.append(f"{name}: {state}")
 
 if bad:
-    for space, name, state in bad:
-        print(f"{space}/{name}: {state}", file=sys.stderr)
+    for item in bad:
+        print(item, file=sys.stderr)
     sys.exit(1)
 
 sys.exit(0)
@@ -138,71 +158,26 @@ PY
 
     rc="$?"
     rm -f "$tmp_file"
-
     return "$rc"
 }
 
-print_starter_debug() {
-    tmp_file="/tmp/ukama-starter-status-debug.$$"
+print_debug() {
+    echo "---- podman ps ----" >&2
+    podman ps -a --filter "name=$CONTAINER_NAME" >&2 || true
+
+    echo "---- required starter.d apps ----" >&2
+    echo "$(required_apps)" >&2
 
     echo "---- starter.d /v1/status ----" >&2
+    starter_status >&2 || echo "starter.d not reachable on port ${STARTER_PORT}" >&2
 
-    if starter_status > "$tmp_file"; then
-        cat "$tmp_file" >&2
-        echo >&2
-
-        echo "---- starter.d non-running apps ----" >&2
-
-        python3 - "$tmp_file" <<'PY' >&2 || true
-import json
-import sys
-
-path = sys.argv[1]
-
-try:
-    with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-except Exception:
-    sys.exit(0)
-
-apps = []
-spaces = data.get("spaces")
-if isinstance(spaces, list):
-    for space in spaces:
-        space_name = str(space.get("name") or "unknown")
-        for app in space.get("apps") or []:
-            if isinstance(app, dict):
-                app = dict(app)
-                app["_space"] = space_name
-                apps.append(app)
-
-if not apps:
-    legacy = data.get("apps") or data.get("data", {}).get("apps") or data.get("services")
-    if isinstance(legacy, list):
-        apps = [app for app in legacy if isinstance(app, dict)]
-
-found = False
-for app in apps:
-    name = str(app.get("name") or app.get("tag") or "unknown")
-    state = str(app.get("state") or app.get("status") or "").strip()
-    normalized = state.lower()
-    if normalized not in ("running", "active"):
-        found = True
-        print(f"{app.get('_space') or 'apps'}/{name}: {state}")
-
-if not found:
-    print("none")
-PY
-    else
-        echo "starter.d not reachable on port ${STARTER_PORT}" >&2
-    fi
-
-    rm -f "$tmp_file"
+    echo "---- container logs ----" >&2
+    container_logs_tail >&2
 }
 
 node_ready() {
     container_running || return 1
-    starter_apps_running || return 1
+    check_required_apps || return 1
     return 0
 }
 
@@ -210,13 +185,13 @@ need_cmd podman
 need_cmd python3
 load_state
 
-echo "wait-node: logical=$LOGICAL_NODE_ID factory=$FACTORY_NODE_ID container=$CONTAINER_NAME timeout=${TIMEOUT_SEC}s"
+echo "wait-node: logical=$LOGICAL_NODE_ID factory=${FACTORY_NODE_ID:-} container=$CONTAINER_NAME kind=$(node_kind) apps=$(required_apps) timeout=${TIMEOUT_SEC}s"
 
 start_ts="$(date +%s)"
 
 while :; do
     if node_ready; then
-        echo "node-ready logical=$LOGICAL_NODE_ID factory=$FACTORY_NODE_ID container=$CONTAINER_NAME"
+        echo "node-ready logical=$LOGICAL_NODE_ID factory=${FACTORY_NODE_ID:-} container=$CONTAINER_NAME"
         exit 0
     fi
 
@@ -224,16 +199,8 @@ while :; do
     elapsed=$((now_ts - start_ts))
 
     if [ "$elapsed" -ge "$TIMEOUT_SEC" ]; then
-        echo "node not ready after ${TIMEOUT_SEC}s: logical=$LOGICAL_NODE_ID factory=$FACTORY_NODE_ID container=$CONTAINER_NAME" >&2
-
-        echo "---- podman ps ----" >&2
-        podman ps -a --filter "name=$CONTAINER_NAME" >&2 || true
-
-        print_starter_debug
-
-        echo "---- container logs ----" >&2
-        container_logs_tail >&2
-
+        echo "node not ready after ${TIMEOUT_SEC}s: logical=$LOGICAL_NODE_ID factory=${FACTORY_NODE_ID:-} container=$CONTAINER_NAME" >&2
+        print_debug
         exit 1
     fi
 
