@@ -123,3 +123,63 @@ func TestSimAllocationEvent(t *testing.T) {
 		assert.NotNil(t, response)
 	})
 }
+
+func TestSimTerminationEvent(t *testing.T) {
+	mockRepo := &spmock.SimRepo{}
+	server := NewSimPoolEventServer(testOrgName, mockRepo)
+	routingKey := msgbus.PrepareRoute(testOrgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.terminate")
+
+	t.Run("Success", func(t *testing.T) {
+		simTermination := &epb.EventSimTermination{
+			Iccid: testIccid,
+		}
+		anyMsg, err := anypb.New(simTermination)
+		assert.NoError(t, err)
+
+		event := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyMsg,
+		}
+
+		mockRepo.On("UpdateStatus", testIccid, false, false).Return(nil).Once()
+
+		response, err := server.EventNotification(context.Background(), event)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, response)
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("UpdateStatusError", func(t *testing.T) {
+		msg := &epb.EventSimTermination{
+			Iccid: testIccidError,
+		}
+
+		expectedError := errors.New("database update failed")
+		mockRepo.On("UpdateStatus", testIccidError, false, false).Return(expectedError).Once()
+
+		err := handleEventCloudSimManagerSimTerminate(routingKey, msg, server)
+
+		assert.Error(t, err)
+		assert.Equal(t, expectedError, err)
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("UnmarshalError", func(t *testing.T) {
+		invalidMsg := &epb.EventSimUsage{
+			Id: testId,
+		}
+		anyMsg, err := anypb.New(invalidMsg)
+		assert.NoError(t, err)
+
+		event := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyMsg,
+		}
+
+		response, err := server.EventNotification(context.Background(), event)
+
+		assert.Error(t, err)
+		assert.Nil(t, response)
+	})
+}

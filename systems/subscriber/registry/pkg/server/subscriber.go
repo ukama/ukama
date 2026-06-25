@@ -451,6 +451,10 @@ func pbManagerSimsToPbSubscriberSims(s []*simMangerPb.Sim) []*upb.Sim {
 }
 
 func dbSubscriberToPbSubscriber(s *db.Subscriber, simList []*upb.Sim) *upb.Subscriber {
+	var deletedAt string
+	if s.DeletedAt.Valid {
+		deletedAt = s.DeletedAt.Time.String()
+	}
 
 	return &upb.Subscriber{
 		Name:                  s.Name,
@@ -465,6 +469,7 @@ func dbSubscriberToPbSubscriber(s *db.Subscriber, simList []*upb.Sim) *upb.Subsc
 		Address:               s.Address,
 		CreatedAt:             s.CreatedAt.String(),
 		UpdatedAt:             s.UpdatedAt.String(),
+		DeletedAt:             deletedAt,
 		Dob:                   s.DOB,
 	}
 }
