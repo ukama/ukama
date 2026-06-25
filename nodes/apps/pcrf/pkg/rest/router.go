@@ -105,10 +105,11 @@ func (r *Router) status(c *gin.Context) {
 	ctrStatus := r.controller.Status()
 
 	c.JSON(http.StatusOK, gin.H{
-		"ready":  ctrStatus.Ready,
-		"state":  ctrStatus.State,
-		"reason": ctrStatus.Reason,
-		"nodeId": r.nodeId,
+		"ready":   ctrStatus.Ready,
+		"state":   ctrStatus.State,
+		"reason":  ctrStatus.Reason,
+		"service": ctrStatus.Service,
+		"nodeId":  r.nodeId,
 		"initNetwork": gin.H{
 			"url":   r.runtime.InitNetworkURL,
 			"ready": r.runtime.InitNetworkReady,
@@ -146,6 +147,10 @@ func (r *Router) init() {
 	{
 		v1 := auth.Group("/v1", "PCRF", "pcrf")
 
+		svc := v1.Group("/service", "Service", "service")
+		svc.GET("", formatDoc("Get service state", "Get service admission state"), tonic.Handler(r.getService, http.StatusOK))
+		svc.POST("", formatDoc("Set service state", "Enable or disable service admission"), tonic.Handler(r.setService, http.StatusAccepted))
+
 		s := v1.Group("/session", "session", "session")
 		s.POST("", formatDoc("Create session", "Create a new session"), tonic.Handler(r.createSession, http.StatusAccepted))
 		s.DELETE("", formatDoc("End session", "End a session"), tonic.Handler(r.endSession, http.StatusAccepted))
@@ -171,6 +176,15 @@ func (r *Router) init() {
 		sub.DELETE("/imsi/:imsi", formatDoc("Delete subscriber", "Delete subscriber"), tonic.Handler(r.deleteSubscriber, http.StatusOK))
 		sub.PATCH("/imsi/:imsi", formatDoc("Update subscriber policy", "Update subscriber policy"), tonic.Handler(r.updateSubscriber, http.StatusOK))
 	}
+}
+
+func (r *Router) getService(c *gin.Context, req *api.GetServiceRequest) (*api.ServiceResponse, error) {
+	status := r.controller.ServiceStatus()
+	return &status, nil
+}
+
+func (r *Router) setService(c *gin.Context, req *api.ServiceRequest) error {
+	return r.controller.SetService(c, req)
 }
 
 func (r *Router) createSession(c *gin.Context, req *api.CreateSession) error {

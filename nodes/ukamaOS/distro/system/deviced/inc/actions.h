@@ -14,6 +14,7 @@
 
 int actions_service_apply(Config *config, ControlState desired);
 int actions_radio_apply(Config *config, ControlState desired);
-int actions_restart_apply(Config *config);
+int actions_reboot_apply(Config *config);
 
 #endif
+

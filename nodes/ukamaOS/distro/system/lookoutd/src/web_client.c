@@ -309,30 +309,6 @@ static int get_capps_from_supervisord(Config *config, CappList **cappList) {
     return STATUS_OK;
 }
 
-static int wc_find_service_port3(const char *a,
-                                 const char *b,
-                                 const char *c) {
-
-    int port = 0;
-
-    if (a) {
-        port = usys_find_service_port((char *)a);
-        if (port > 0) return port;
-    }
-
-    if (b) {
-        port = usys_find_service_port((char *)b);
-        if (port > 0) return port;
-    }
-
-    if (c) {
-        port = usys_find_service_port((char *)c);
-        if (port > 0) return port;
-    }
-
-    return 0;
-}
-
 static int wc_get_json_from_service(int port,
                                     const char *path,
                                     JsonObj **out) {
@@ -447,7 +423,7 @@ static int get_capps_from_starterd(Config *config,
 
 static void wc_free_capp_list(CappList *list) {
 
-    CappList *ptr = NULL;
+    CappList *ptr  = NULL;
     CappList *next = NULL;
 
     for (ptr = list; ptr; ptr = next) {
@@ -472,7 +448,7 @@ static void wc_free_capp_list(CappList *list) {
 
 static char *wc_json_dup_string(JsonObj *json, const char *key) {
 
-    JsonObj *entry = NULL;
+    JsonObj *entry    = NULL;
     const char *value = NULL;
 
     if (json == NULL || key == NULL) {
@@ -490,6 +466,30 @@ static char *wc_json_dup_string(JsonObj *json, const char *key) {
     }
 
     return strdup(value);
+}
+
+
+static char *read_device_state_field(const char *field) {
+
+    int port = 0;
+    JsonObj *json = NULL;
+    char *value = NULL;
+
+    if (!field) return NULL;
+
+    port = usys_find_service_port(SERVICE_DEVICE);
+    if (port <= 0) {
+        return NULL;
+    }
+
+    if (wc_get_json_from_service(port, "/v1/state", &json) != STATUS_OK) {
+        return NULL;
+    }
+
+    value = wc_json_dup_string(json, field);
+    json_decref(json);
+
+    return value;
 }
 
 static void wc_free_starter_data(StarterStatusData *starter) {
@@ -599,11 +599,8 @@ static int get_gps_data(GPSClientData *gps) {
 
     memset(gps, 0, sizeof(GPSClientData));
     gps->available = USYS_TRUE;
-    gps->lock = USYS_FALSE;
-
-    port = wc_find_service_port3(LOOKOUT_SERVICE_GPS,
-                                 "gpsd",
-                                 "gps.d");
+    gps->lock      = USYS_FALSE;
+    port           = usys_find_service_port(SERVICE_GPS);
     if (port <= 0) {
         usys_log_error("Failed to resolve gps service port");
         return STATUS_NOK;
@@ -646,14 +643,17 @@ static int get_gps_data(GPSClientData *gps) {
 
 static void collect_radio_data(RadioStatusData *radio) {
 
-    extern char *get_radio_status(void);
-
     if (!radio) return;
 
     memset(radio, 0, sizeof(RadioStatusData));
 
+    radio->state = read_device_state_field("radio");
+    if (!radio->state) {
+        radio->available = USYS_FALSE;
+        return;
+    }
+
     radio->available = USYS_TRUE;
-    radio->state = strdup(get_radio_status());
 }
 
 static void collect_cellular_data(CellularStatusData *cellular) {
@@ -662,9 +662,14 @@ static void collect_cellular_data(CellularStatusData *cellular) {
 
     memset(cellular, 0, sizeof(CellularStatusData));
 
+    cellular->service = read_device_state_field("service");
+    if (!cellular->service) {
+        cellular->available = USYS_TRUE;
+        cellular->error = strdup("service_state_unavailable");
+        return;
+    }
+
     cellular->available = USYS_TRUE;
-    cellular->service = NULL;
-    cellular->error = strdup("cellular_status_not_supported");
 }
 
 static void collect_power_data(PowerStatusData *power) {
@@ -677,20 +682,17 @@ static void collect_power_data(PowerStatusData *power) {
     if (!power) return;
 
     memset(power, 0, sizeof(PowerStatusData));
-
-    port = wc_find_service_port3(LOOKOUT_SERVICE_POWER,
-                                 LOOKOUT_SERVICE_POWERD,
-                                 "power.d");
+    port = usys_find_service_port(SERVICE_POWER);
     if (port <= 0 ||
         wc_get_json_from_service(port, "/v1/status", &json) != STATUS_OK) {
         power->available = USYS_FALSE;
         return;
     }
 
-    power->available = USYS_TRUE;
-    power->ok = wc_json_bool(json, "ok", false);
-    power->board = wc_json_dup_string(json, "board");
-    power->reason = wc_json_dup_string(json, "reason");
+    power->available  = USYS_TRUE;
+    power->ok         = wc_json_bool(json, "ok", false);
+    power->board      = wc_json_dup_string(json, "board");
+    power->reason     = wc_json_dup_string(json, "reason");
     power->totalWatts = wc_json_num(json, "totalWatts", 0.0);
 
     lm75 = json_object_get(json, "lm75");
@@ -715,9 +717,7 @@ static void collect_switch_data(SwitchStatusData *sw) {
     memset(sw, 0, sizeof(SwitchStatusData));
     sw->available = USYS_TRUE;
 
-    port = wc_find_service_port3(LOOKOUT_SERVICE_SWITCH,
-                                 "switch",
-                                 "switch.d");
+    port = usys_find_service_port(SERVICE_SWITCH);
     if (port <= 0) {
         return;
     }
@@ -735,10 +735,7 @@ static void collect_controller_data(ControllerStatusData *controller) {
 
     memset(controller, 0, sizeof(ControllerStatusData));
     controller->available = USYS_TRUE;
-
-    port = wc_find_service_port3(LOOKOUT_SERVICE_CONTROLLER,
-                                 "controller",
-                                 "controller.d");
+    port = usys_find_service_port(SERVICE_CONTROLLER);
     if (port <= 0) {
         return;
     }
@@ -755,9 +752,7 @@ static void collect_backhaul_data(BackhaulStatusData *backhaul) {
     memset(backhaul, 0, sizeof(BackhaulStatusData));
     backhaul->available = USYS_TRUE;
 
-    port = wc_find_service_port3(LOOKOUT_SERVICE_BACKHAUL,
-                                 "backhaul",
-                                 "backhaul.d");
+    port = usys_find_service_port(SERVICE_BACKHAUL);
     if (port <= 0) {
         return;
     }
@@ -774,9 +769,7 @@ static void collect_fem_data(FemStatusData *fem) {
     memset(fem, 0, sizeof(FemStatusData));
     fem->available = USYS_TRUE;
 
-    port = wc_find_service_port3(LOOKOUT_SERVICE_FEM,
-                                 "fem",
-                                 "fem.d");
+    port = usys_find_service_port(SERVICE_FEM);
     if (port <= 0) {
         return;
     }
