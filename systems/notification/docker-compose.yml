@@ -84,9 +84,6 @@ services:
   environment:
    - DEBUGMODE=true
    - BYPASS_AUTH_MODE=true
-   - SERVICES_MAILER=mailer:9090
-   - SERVICES_EVENTNOTIFICATION=eventnotify:9090
-   - SERVICES_DISTRIBUTOR=distributor:9090
   depends_on:
    - mailer
    - eventnotify

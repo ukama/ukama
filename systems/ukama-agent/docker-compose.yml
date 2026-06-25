@@ -64,7 +64,6 @@ services:
   environment:
    - DEBUGMODE=true
    - AUTH_BYPASSAUTHMODE=true
-   - SERVICES_ASR=asr:9090
   depends_on:
    - asr
 

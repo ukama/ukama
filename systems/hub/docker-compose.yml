@@ -35,8 +35,6 @@ services:
    - DEBUGMODE=true
    - BYPASS_AUTH_MODE=true
    - NODEMETRICSPORT=10251
-   - SERVICES_ARTIFACTMANAGER=artifactmanager:9090
-   - SERVICES_DISTRIBUTOR=distributor:9090
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
   depends_on:
@@ -53,8 +51,6 @@ services:
    - DEBUGMODE=true
    - BYPASS_AUTH_MODE=true
    - NODEMETRICSPORT=10251
-   - SERVICES_ARTIFACTMANAGER=artifactmanager:9090
-   - SERVICES_DISTRIBUTOR=distributor:9090
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
   depends_on:

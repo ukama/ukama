@@ -51,7 +51,7 @@ func NewConfig() *Config {
 
 		Services: GrpcEndpoints{
 			Timeout: 3 * time.Second,
-			Lookup:  "0.0.0.0:9090",
+			Lookup:  "lookup:9090",
 		},
 		Http: HttpEndpoints{
 			Timeout:     3 * time.Second,
