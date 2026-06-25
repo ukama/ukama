@@ -42,9 +42,8 @@ message EventSimAllocation {
     string status = 10;
     bool isPhysical = 11 [json_name = "is_physical"];
     string packageId = 12 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
-    string dataPlanId = 13 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "data_plan_id"];
-    uint32 trafficPolicy = 14 [json_name = "traffic_policy"];
-    google.protobuf.Timestamp packageEndDate = 15 [json_name = "end_date"];
+    uint32 trafficPolicy = 13 [json_name = "traffic_policy"];
+    google.protobuf.Timestamp packageEndDate = 14 [json_name = "end_date"];
 }
 
 
