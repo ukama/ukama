@@ -107,7 +107,7 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 
 	return &RouterConfig{
 		metricsServerConfig: svcConf.MetricsServer,
-		httpEndpoints:       &svcConf.HttpServices,
+		httpEndpoints:       &svcConf.Http,
 		serverConf:          &svcConf.Server,
 		metricsConf:         svcConf.MetricsConfig,
 		debugMode:           svcConf.DebugMode,

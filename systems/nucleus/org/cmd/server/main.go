@@ -98,8 +98,8 @@ func runGrpcServer(gormdb sql.Db) {
 		svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue,
 		svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
 
-	orch := providers.NewOrchestratorProvider(svcConf.HttpServices.OrchestratorClient, svcConf.DebugMode)
-	regUrl, err := ic.GetHostUrl(ic.NewInitClient(svcConf.HttpServices.InitClient, client.WithDebug(svcConf.DebugMode)),
+	orch := providers.NewOrchestratorProvider(svcConf.Http.OrchestratorClient, svcConf.DebugMode)
+	regUrl, err := ic.GetHostUrl(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode)),
 		ic.CreateHostString(svcConf.OrgName, registrySys), &svcConf.OrgName)
 	if err != nil {
 		log.Errorf("Failed to resolve registry address: %v", err)

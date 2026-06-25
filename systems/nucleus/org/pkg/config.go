@@ -39,7 +39,7 @@ type Config struct {
 	Currency          string            `default:"usd"`
 	OwnerId           string
 	OrgId             string
-	HttpServices      HttpServices
+	Http              HttpServices
 }
 
 type HttpServices struct {

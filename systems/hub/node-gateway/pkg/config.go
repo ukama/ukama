@@ -20,7 +20,7 @@ type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Server            rest.HttpConfig
 	Services          GrpcEndpoints  `mapstructure:"services"`
-	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
+	Http              HttpEndpoints  `mapstructure:"http"`
 	Metrics           config.Metrics `mapstructure:"metrics"`
 	Auth              *config.Auth   `mapstructure:"auth"`
 	IsGlobal          bool           `default:"true"`
@@ -54,7 +54,7 @@ func NewConfig() *Config {
 			ArtifactManager: "artifactmanager:9090",
 			Distributor:     "distributor:9090",
 		},
-		HttpServices: HttpEndpoints{
+		Http: HttpEndpoints{
 			Timeout:     3 * time.Second,
 			Distributor: "http://distributor:8099",
 		},

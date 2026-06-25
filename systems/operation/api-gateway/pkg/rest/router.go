@@ -88,7 +88,7 @@ func NewRouter(clients *Clients, conf *RouterConfig, authfunc func(*gin.Context,
 func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 	return &RouterConfig{
 		metricsConfig: svcConf.Metrics,
-		httpEndpoints: &svcConf.HttpServices,
+		httpEndpoints: &svcConf.Http,
 		serverConf:    &svcConf.Server,
 		debugMode:     svcConf.DebugMode,
 		auth:          svcConf.Auth,

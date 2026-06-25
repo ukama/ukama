@@ -90,7 +90,7 @@ func NewRouter(clients *Clients, config *RouterConfig) *Router {
 
 func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 	return &RouterConfig{
-		httpEndpoints: &svcConf.HttpServices,
+		httpEndpoints: &svcConf.Http,
 		serverConf:    &svcConf.Server,
 		debugMode:     svcConf.DebugMode,
 	}
@@ -239,9 +239,9 @@ func (r *Router) startHandler(c *gin.Context, req *StartReq) (*pbdc.StartMetrics
 	}
 
 	startReq := &pbdc.StartMetricsRequest{
-		Profile: profile,
-		NodeId: nodeId,
-		SiteId:  req.SiteId,
+		Profile:   profile,
+		NodeId:    nodeId,
+		SiteId:    req.SiteId,
 		NetworkId: req.NetworkId,
 	}
 
