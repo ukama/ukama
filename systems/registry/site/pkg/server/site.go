@@ -249,6 +249,37 @@ func (s *SiteServer) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Upd
 	}, nil
 }
 
+func (s *SiteServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
+	log.Infof("Deleting site %s", req.SiteId)
+
+	siteId, err := uuid.FromString(req.SiteId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+	}
+
+	site, err := s.siteRepo.Delete(siteId)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "site")
+	}
+
+	if s.msgbus != nil {
+		route := s.baseRoutingKey.SetAction("delete").SetObject("site").MustBuild()
+		evt := &epb.EventDeleteSite{
+			SiteId:    site.Id.String(),
+			NetworkId: site.NetworkId.String(),
+		}
+
+		err = s.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		}
+	}
+
+	s.pushSiteCount(site.NetworkId)
+
+	return &pb.DeleteResponse{}, nil
+}
+
 func dbSiteToPbSite(site *db.Site) *pb.Site {
 
 	return &pb.Site{

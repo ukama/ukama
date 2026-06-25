@@ -132,6 +132,36 @@ func (_m *site) UpdateSite(siteId string, name string) (*gen.UpdateResponse, err
 	return r0, r1
 }
 
+// RemoveSite provides a mock function with given fields: siteId
+func (_m *site) RemoveSite(siteId string) (*gen.DeleteResponse, error) {
+	ret := _m.Called(siteId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveSite")
+	}
+
+	var r0 *gen.DeleteResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (*gen.DeleteResponse, error)); ok {
+		return rf(siteId)
+	}
+	if rf, ok := ret.Get(0).(func(string) *gen.DeleteResponse); ok {
+		r0 = rf(siteId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.DeleteResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(siteId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // newSite creates a new instance of site. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func newSite(t interface {

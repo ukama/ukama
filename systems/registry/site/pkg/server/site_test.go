@@ -1130,3 +1130,44 @@ func TestSiteService_Add(t *testing.T) {
 		msgclientRepo.AssertExpectations(t)
 	})
 }
+
+func TestSiteService_Delete(t *testing.T) {
+	siteRepo := &mocks.SiteRepo{}
+	msgclientRepo := &cmocks.MsgBusServiceClient{}
+	netRepo := &mocks.NetworkClientProvider{}
+
+	s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "", nil)
+
+	t.Run("SiteExist", func(t *testing.T) {
+		mockSite := createMockSite()
+
+		siteRepo.On("Delete", testSiteId).Return(mockSite, nil).Once()
+		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		siteRepo.On("GetSiteCount", testNetworkId).Return(int64(1), nil).Once()
+
+		resp, err := s.Delete(context.TODO(), &pb.DeleteRequest{SiteId: testSiteId.String()})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		siteRepo.AssertExpectations(t)
+		msgclientRepo.AssertExpectations(t)
+	})
+
+	t.Run("SiteNotFound", func(t *testing.T) {
+		siteRepo.On("Delete", testSiteId).Return(nil, gorm.ErrRecordNotFound).Once()
+
+		resp, err := s.Delete(context.TODO(), &pb.DeleteRequest{SiteId: testSiteId.String()})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		siteRepo.AssertExpectations(t)
+	})
+
+	t.Run("InvalidUUID", func(t *testing.T) {
+		resp, err := s.Delete(context.TODO(), &pb.DeleteRequest{SiteId: testInvalidUUID})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		assert.Contains(t, err.Error(), "Error parsing UUID")
+	})
+}

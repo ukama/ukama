@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"errors"
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
@@ -212,6 +213,10 @@ func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 	err = n.netRepo.Delete(netId)
 	if err != nil {
 		log.Error(err)
+
+		if errors.Is(err, db.ErrCannotDeleteDefaultNetwork) {
+			return nil, status.Errorf(codes.FailedPrecondition, "cannot delete default network")
+		}
 
 		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}

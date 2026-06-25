@@ -296,3 +296,37 @@ func TestSiteRegistry_UpdateSite(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 }
+
+func TestSiteRegistry_RemoveSite(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockClient := &sitemocks.SiteServiceClient{}
+		registry := NewSiteRegistryFromClient(mockClient)
+
+		expectedResponse := &pb.DeleteResponse{}
+
+		mockClient.On("Delete", mock.Anything, &pb.DeleteRequest{SiteId: "test-site-id"}).
+			Return(expectedResponse, nil)
+
+		response, err := registry.RemoveSite("test-site-id")
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedResponse, response)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("Error", func(t *testing.T) {
+		mockClient := &sitemocks.SiteServiceClient{}
+		registry := NewSiteRegistryFromClient(mockClient)
+
+		expectedError := status.Error(codes.NotFound, "site not found")
+		mockClient.On("Delete", mock.Anything, &pb.DeleteRequest{SiteId: "non-existent-id"}).
+			Return(nil, expectedError)
+
+		response, err := registry.RemoveSite("non-existent-id")
+
+		assert.Error(t, err)
+		assert.Nil(t, response)
+		assert.Equal(t, expectedError, err)
+		mockClient.AssertExpectations(t)
+	})
+}

@@ -71,6 +71,7 @@ const (
 	EventNodeStateTransition
 	EventOperationCompleted
 	EventOperationFailed
+	EventSiteDelete
 )
 
 var EventRoutingKey = [...]string{
@@ -123,6 +124,7 @@ var EventRoutingKey = [...]string{
 	EventNodeStateTransition: "event.cloud.local.{{ .Org}}.node.state.node.transition",
 	EventOperationCompleted:  "event.cloud.global.{{ .Org}}.operation.manager.operation.completed",
 	EventOperationFailed:     "event.cloud.global.{{ .Org}}.operation.manager.operation.failed",
+	EventSiteDelete:          "event.cloud.local.{{ .Org}}.registry.site.site.delete",
 }
 
 var EventToEventConfig = map[EventId]EventConfig{
@@ -517,5 +519,13 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "An operation did not reach its expected final state",
 		Scope:       notif.SCOPE_ORG,
 		Type:        notif.TYPE_ERROR,
+	},
+	EventSiteDelete: {
+		Key:         EventSiteDelete,
+		Name:        "EventDeleteSite",
+		Title:       "Site Deleted",
+		Description: "Site Deleted",
+		Scope:       notif.SCOPE_SITE,
+		Type:        TypeDefault,
 	},
 }

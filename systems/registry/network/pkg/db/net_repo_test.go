@@ -487,6 +487,11 @@ func Test_NetRepo_Delete(t *testing.T) {
 
 		mock, _, repo := setupMockDBWithExpectations(t, func(mock sqlmock.Sqlmock) {
 			mock.ExpectBegin()
+			rows := sqlmock.NewRows([]string{"id", "name", "is_default"}).
+				AddRow(network.Id, network.Name, false)
+			mock.ExpectQuery(`^SELECT.*networks.*`).
+				WithArgs(network.Id, sqlmock.AnyArg()).
+				WillReturnRows(rows)
 			mock.ExpectExec(regexp.QuoteMeta(`UPDATE "networks"`)).
 				WithArgs(sqlmock.AnyArg(), network.Id).
 				WillReturnResult(sqlmock.NewResult(1, 1))
@@ -509,10 +514,10 @@ func Test_NetRepo_Delete(t *testing.T) {
 
 		mock, _, repo := setupMockDBWithExpectations(t, func(mock sqlmock.Sqlmock) {
 			mock.ExpectBegin()
-			mock.ExpectExec(regexp.QuoteMeta(`UPDATE "networks"`)).
-				WithArgs(sqlmock.AnyArg(), networkID).
-				WillReturnResult(sqlmock.NewResult(0, 0)) // No rows affected
-			mock.ExpectCommit()
+			mock.ExpectQuery(`^SELECT.*networks.*`).
+				WithArgs(networkID, sqlmock.AnyArg()).
+				WillReturnError(extsql.ErrNoRows)
+			mock.ExpectRollback()
 		})
 
 		// Act
@@ -520,7 +525,31 @@ func Test_NetRepo_Delete(t *testing.T) {
 
 		// Assert
 		assert.Error(t, err)
-		assert.Equal(t, gorm.ErrRecordNotFound, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("CannotDeleteDefaultNetwork", func(t *testing.T) {
+		network := NewNetworkBuilder().
+			WithName(testNetworkName3).
+			Build()
+		network.IsDefault = true
+
+		mock, _, repo := setupMockDBWithExpectations(t, func(mock sqlmock.Sqlmock) {
+			mock.ExpectBegin()
+			rows := sqlmock.NewRows([]string{"id", "name", "is_default"}).
+				AddRow(network.Id, network.Name, true)
+			mock.ExpectQuery(`^SELECT.*networks.*`).
+				WithArgs(network.Id, sqlmock.AnyArg()).
+				WillReturnRows(rows)
+			mock.ExpectRollback()
+		})
+
+		err := repo.Delete(network.Id)
+
+		assert.Error(t, err)
+		assert.Equal(t, net_db.ErrCannotDeleteDefaultNetwork, err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -532,6 +561,11 @@ func Test_NetRepo_Delete(t *testing.T) {
 
 		mock, _, repo := setupMockDBWithExpectations(t, func(mock sqlmock.Sqlmock) {
 			mock.ExpectBegin()
+			rows := sqlmock.NewRows([]string{"id", "name", "is_default"}).
+				AddRow(networkID, testNetworkName3, false)
+			mock.ExpectQuery(`^SELECT.*networks.*`).
+				WithArgs(networkID, sqlmock.AnyArg()).
+				WillReturnRows(rows)
 			mock.ExpectExec(regexp.QuoteMeta(`UPDATE "networks"`)).
 				WithArgs(sqlmock.AnyArg(), networkID).
 				WillReturnError(fmt.Errorf("database connection lost"))
@@ -748,4 +782,47 @@ func Test_NetRepo_SetDefault(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 	})
+}
+
+func Test_NetRepo_SoftDeletedNetworkNotFetchable(t *testing.T) {
+	netID := uuid.NewV4()
+
+	mock, _, repo := setupMockDBWithExpectations(t, func(mock sqlmock.Sqlmock) {
+		mock.ExpectQuery(`^SELECT.*networks.*`).
+			WithArgs(netID, sqlmock.AnyArg()).
+			WillReturnError(extsql.ErrNoRows)
+	})
+
+	network, err := repo.Get(netID)
+
+	assert.Error(t, err)
+	assert.Nil(t, network)
+
+	err = mock.ExpectationsWereMet()
+	assert.NoError(t, err)
+}
+
+func Test_NetRepo_AddReusesNameAfterSoftDelete(t *testing.T) {
+	network := NewNetworkBuilder().
+		WithName(testNetworkName1).
+		Build()
+
+	mock, _, repo := setupMockDBWithExpectations(t, func(mock sqlmock.Sqlmock) {
+		mock.ExpectBegin()
+
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
+			WithArgs(network.Id, network.Name, sqlmock.AnyArg(), sqlmock.AnyArg(),
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		mock.ExpectCommit()
+	})
+
+	err := repo.Add(network, nil)
+
+	assert.NoError(t, err)
+
+	err = mock.ExpectationsWereMet()
+	assert.NoError(t, err)
 }

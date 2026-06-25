@@ -27,6 +27,7 @@ type SiteRepo interface {
 	Get(siteId uuid.UUID) (*Site, error)
 	GetSites(networkId uuid.UUID) ([]Site, error)
 	Update(site *Site) error
+	Delete(siteId uuid.UUID) (*Site, error)
 	GetSiteCount(networkId uuid.UUID) (int64, error)
 	List(networkId *uuid.UUID, isDeactivated bool) ([]Site, error)
 }
@@ -109,6 +110,33 @@ func (s *siteRepo) Update(site *Site) error {
 	}
 
 	return nil
+}
+
+func (s siteRepo) Delete(siteId uuid.UUID) (*Site, error) {
+	var deletedSite *Site
+
+	err := s.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		var site Site
+		if err := tx.First(&site, siteId).Error; err != nil {
+			return err
+		}
+
+		result := tx.Delete(&site)
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
+		}
+
+		deletedSite = &site
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return deletedSite, nil
 }
 
 func (s siteRepo) GetSiteCount(networkId uuid.UUID) (int64, error) {

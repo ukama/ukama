@@ -774,4 +774,20 @@ func TestNetworkServer_Delete(t *testing.T) {
 		assert.NotNil(t, resp)
 		netRepo.AssertExpectations(t)
 	})
+
+	t.Run("Cannot delete default network", func(t *testing.T) {
+		orgId := uuid.NewV4()
+		netId := uuid.NewV4()
+		netRepo := &mocks.NetRepo{}
+
+		netRepo.On("Delete", netId).Return(db.ErrCannotDeleteDefaultNetwork).Once()
+
+		s := NewNetworkServer(OrgName, netRepo, nil, nil, "", "", "", "", orgId.String())
+		resp, err := s.Delete(context.TODO(), &pb.DeleteRequest{
+			NetworkId: netId.String()})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		netRepo.AssertExpectations(t)
+	})
 }

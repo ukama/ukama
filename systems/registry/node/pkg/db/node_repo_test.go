@@ -309,6 +309,10 @@ func TestNodeRepo_Delete(t *testing.T) {
 			WithArgs(sqlmock.AnyArg(), nodeId).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).
+			WithArgs(sqlmock.AnyArg(), nodeId).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
 		mock.ExpectCommit()
 
 		// Act
@@ -322,15 +326,46 @@ func TestNodeRepo_Delete(t *testing.T) {
 	})
 
 	t.Run("NodeOnSite", func(t *testing.T) {
+		siteRow := sqlmock.NewRows([]string{"id", "name"}).
+			AddRow(nodeId, name)
+
 		mock.ExpectQuery(`^SELECT.*nodes.*`).
 			WithArgs(nodeId, sqlmock.AnyArg()).
-			WillReturnRows(row)
+			WillReturnRows(siteRow)
+
+		mock.ExpectQuery(`^SELECT.*parent_node_id.*`).
+			WithArgs(nodeId).
+			WillReturnRows(siteRow)
+
+		mock.ExpectQuery(`^SELECT.*sites.*`).
+			WithArgs(nodeId).
+			WillReturnRows(siteRow)
+
+		mock.ExpectQuery(`^SELECT.*node_statuses.*`).
+			WithArgs(nodeId).
+			WillReturnRows(siteRow)
+
+		mock.ExpectBegin()
+
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).
+			WithArgs(sqlmock.AnyArg(), nodeId).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).
+			WithArgs(sqlmock.AnyArg(), nodeId).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).
+			WithArgs(sqlmock.AnyArg(), nodeId).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		mock.ExpectCommit()
 
 		// Act
 		err = r.Delete(nodeId, nil)
 
 		// Assert
-		assert.Error(t, err)
+		assert.NoError(t, err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
