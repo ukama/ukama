@@ -5,31 +5,38 @@
 #
 # Copyright (c) 2026-present, Ukama Inc.
 
-set -u
+set -eu
 
-if [ "$#" -ne 1 ]; then
+if [ "$#" -lt 1 ]; then
     echo "usage: $0 <run-dir>" >&2
     exit 2
 fi
 
 RUN_DIR="$1"
-STATE_FILE="$RUN_DIR/runtime-net/net.env"
+ENV_FILE="$RUN_DIR/runtime.env"
 
-if [ ! -f "$STATE_FILE" ]; then
-    echo "cleanup-network: state not found $STATE_FILE"
-    exit 0
+network_name=""
+
+if [ -f "$ENV_FILE" ]; then
+    # shellcheck disable=SC1090
+    . "$ENV_FILE"
+    network_name="${LAB_NET:-${ULAB_NETWORK:-${NETWORK_NAME:-}}}"
 fi
 
-# shellcheck disable=SC1090
-. "$STATE_FILE"
-
-if [ -n "${LAB_NET:-}" ]; then
-    echo "cleanup-network: rm $LAB_NET"
-    podman network rm "$LAB_NET" >/dev/null 2>&1 || true
+if [ -z "$network_name" ]; then
+    run_name="$(basename "$RUN_DIR")"
+    network_name="ukama-lab-$run_name"
 fi
 
-if [ -n "${CNI_CONFIG:-}" ]; then
-    rm -f "$CNI_CONFIG" 2>/dev/null || true
-fi
+echo "cleanup-network: $network_name"
+
+# Remove any leftover containers still attached to this run network.
+containers="$(podman ps -a --filter "network=$network_name" --format '{{.Names}}' 2>/dev/null || true)"
+for c in $containers; do
+    echo "cleanup-network-container: $c"
+    podman rm -f "$c" >/dev/null 2>&1 || true
+done
+
+podman network rm "$network_name" >/dev/null 2>&1 || true
 
 exit 0
