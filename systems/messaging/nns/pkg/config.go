@@ -26,7 +26,7 @@ type Config struct {
 	Timeout           time.Duration    `default:"3s"`
 	MsgClient         *uconf.MsgClient `default:"{}"`
 	Service           *uconf.Service
-	Org               string `default:""`
+	OrgId             string `default:""`
 	OrgName           string
 	Http              HttpServices
 }
