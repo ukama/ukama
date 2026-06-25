@@ -35,7 +35,6 @@ const OrgName = "testorg"
 
 var OrgId = uuid.NewV4()
 var timeDuration int = 600
-var IsGlobal = true
 var TestFile = "./testdata/metrics.tar.gz"
 
 func Test_StoreArtifact(t *testing.T) {
@@ -63,7 +62,7 @@ func Test_StoreArtifact(t *testing.T) {
 	st.On("PutFile", mock.Anything, req.Name, strings.ToLower(req.Type.String()), ver, pkg.ChunkIndexExtension, bytes.NewReader([]byte("index file"))).Return("", nil).Once()
 	mbClient.On("PublishRequest", mock.Anything, mock.AnythingOfType("*events.EventArtifactUploaded")).Return(nil).Once()
 
-	s := NewArtifactServer(OrgId, OrgName, st, chS, time.Duration(timeDuration)*time.Second, mbClient, "", true)
+	s := NewArtifactServer(OrgId, OrgName, st, chS, time.Duration(timeDuration)*time.Second, mbClient, "")
 
 	resp, err := s.StoreArtifact(context.TODO(), req)
 	assert.NoError(t, err)
@@ -100,7 +99,7 @@ func Test_GetArtifact(t *testing.T) {
 	ver := semver.MustParse("0.0.1")
 	st.On("GetFile", mock.Anything, req.Name, strings.ToLower(req.Type.String()), ver, pkg.TarGzExtension).Return(io.NopCloser(bytes.NewReader(data)), nil).Once()
 
-	s := NewArtifactServer(OrgId, OrgName, st, chS, time.Duration(timeDuration)*time.Second, mbClient, "", true)
+	s := NewArtifactServer(OrgId, OrgName, st, chS, time.Duration(timeDuration)*time.Second, mbClient, "")
 
 	resp, err := s.GetArtifact(context.TODO(), req)
 	assert.NoError(t, err)
@@ -143,7 +142,7 @@ func Test_GetArtifactVersionList(t *testing.T) {
 
 	st.On("ListVersions", mock.Anything, req.Name, strings.ToLower(req.Type.String())).Return(artifacts, nil).Once()
 
-	s := NewArtifactServer(OrgId, OrgName, st, chS, time.Duration(timeDuration)*time.Second, mbClient, "", true)
+	s := NewArtifactServer(OrgId, OrgName, st, chS, time.Duration(timeDuration)*time.Second, mbClient, "")
 
 	resp, err := s.GetArtifactVersionList(context.TODO(), req)
 	assert.NoError(t, err)
@@ -172,7 +171,7 @@ func Test_ListArtifacts(t *testing.T) {
 
 	st.On("ListApps", mock.Anything, strings.ToLower(req.Type.String())).Return(artifacts, nil).Once()
 
-	s := NewArtifactServer(OrgId, OrgName, st, chS, time.Duration(timeDuration)*time.Second, mbClient, "", true)
+	s := NewArtifactServer(OrgId, OrgName, st, chS, time.Duration(timeDuration)*time.Second, mbClient, "")
 
 	resp, err := s.ListArtifacts(context.TODO(), req)
 	assert.NoError(t, err)

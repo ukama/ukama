@@ -26,7 +26,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/ukama/ukama/systems/common/rest"
-	"github.com/ukama/ukama/systems/hub/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/hub/api-gateway/pkg/client"
 
 	log "github.com/sirupsen/logrus"
@@ -46,9 +45,6 @@ var defaultCors = cors.Config{
 var routerConfig = &RouterConfig{
 	serverConf: &rest.HttpConfig{
 		Cors: defaultCors,
-	},
-	httpEndpoints: &pkg.HttpEndpoints{
-		Distributor: "localhost:8089",
 	},
 	auth: &cconfig.Auth{
 		AuthAppUrl:     "http://localhost:4455",

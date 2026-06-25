@@ -46,7 +46,6 @@ type RouterConfig struct {
 	metricsConfig config.Metrics
 	httpEndpoints *pkg.HttpEndpoints
 	debugMode     bool
-	isGlobal      bool
 	serverConf    *rest.HttpConfig
 	auth          *config.Auth
 	distributor   string
@@ -98,7 +97,6 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 		serverConf:    &svcConf.Server,
 		debugMode:     svcConf.DebugMode,
 		auth:          svcConf.Auth,
-		isGlobal:      svcConf.IsGlobal,
 		distributor:   svcConf.Http.Distributor,
 	}
 }

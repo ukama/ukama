@@ -37,21 +37,16 @@ type ChunkerServer struct {
 	OrgName        string
 	Store          pkg.StoreConfig
 	ChunkConfig    pkg.ChunkConfig
-	IsGlobal       bool
 }
 
 func NewChunkerServer(orgId uuid.UUID, orgName string, config *pkg.Config,
-	msgBus mb.MsgBusServiceClient, pushGateway string, isGlobal bool) *ChunkerServer {
+	msgBus mb.MsgBusServiceClient, pushGateway string) *ChunkerServer {
 
 	rotuingKey := msgbus.NewRoutingKeyBuilder().SetCloudSource().SetGlobalScope().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName)
-	if isGlobal {
-		rotuingKey = msgbus.NewRoutingKeyBuilder().SetCloudSource().SetGlobalScope().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName)
-	}
 
 	return &ChunkerServer{
 		OrgId:          orgId,
 		OrgName:        orgName,
-		IsGlobal:       isGlobal,
 		msgbus:         msgBus,
 		baseRoutingKey: rotuingKey,
 		pushGateway:    pushGateway,

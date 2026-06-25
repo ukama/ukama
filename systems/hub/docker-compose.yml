@@ -39,7 +39,6 @@ services:
    - SERVICES_DISTRIBUTOR=distributor:9090
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
-   - ISGLOBAL=true
   depends_on:
    - artifactmanager
    - distributor
@@ -58,7 +57,6 @@ services:
    - SERVICES_DISTRIBUTOR=distributor:9090
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
-   - ISGLOBAL=true
   depends_on:
    - artifactmanager
    - distributor
@@ -78,7 +76,6 @@ services:
    - CHUNKER_HOST=http://distributor:9090
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
-   - ISGLOBAL=TRUE
    - PUSHGATEWAY=http://localhost:9091
   restart: always
   networks:
@@ -106,7 +103,6 @@ services:
    - DISTRIBUTOR_SERVICE_PORT=9090
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
-   - ISGLOBAL=TRUE
   networks:
    - ukama-net
   restart: always

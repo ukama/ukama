@@ -23,7 +23,6 @@ type Config struct {
 	Http              HttpEndpoints  `mapstructure:"http"`
 	Metrics           config.Metrics `mapstructure:"metrics"`
 	Auth              *config.Auth   `mapstructure:"auth"`
-	IsGlobal          bool           `default:"true"`
 }
 
 type GrpcEndpoints struct {
