@@ -91,7 +91,7 @@ func runGrpcServer() {
 		log.Fatalf("Failed to resolve %s system address from initClient: %v", registrySystem, err)
 	}
 
-	sanitizerSrv, err := server.NewSanitizerServer(registrySystemUrl.String(), serviceConfig.PushGatewayHost,
+	sanitizerSrv, err := server.NewSanitizerServer(registrySystemUrl.String(), serviceConfig.PushGateway,
 		serviceConfig.OrgName, serviceConfig.Org, mbClient)
 	if err != nil {
 		log.Fatalf("Sanitizer server initialization failed. Error: %v", err)

@@ -28,7 +28,6 @@ services:
       - ORG_SERVICE_PORT=9090
       - USERHOST=user:9090
       - OWNERID=${OWNERID}
-      - ORGID=${ORGID}
       - ORGNAME=${ORGNAME}
       - CURRENCY=${CURRENCY}
       - COUNTRY=${COUNTRY}
@@ -50,7 +49,6 @@ services:
       - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9091
       - USER_SERVICE_HOST=user
       - USER_SERVICE_PORT=9090
-      - ORG=org:9090
       - ORGNAME=${ORGNAME}
       - OWNERID=${OWNERID}
       - OWNERNAME=${OWNERNAME}
