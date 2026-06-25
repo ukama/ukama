@@ -8,12 +8,14 @@
 import { NonEmptyArray } from "type-graphql";
 
 import { AddNetworkResolver } from "./addNetwork";
+import { DeleteNetworkResolver } from "./deleteNetwork";
 import { GetNetworkResolver } from "./getNetwork";
 import { GetNetworksResolver } from "./getNetworks";
 import { SetDefaultNetworkResolver } from "./setDefaultNetwork";
 
 const resolvers: NonEmptyArray<any> = [
   AddNetworkResolver,
+  DeleteNetworkResolver,
   GetNetworkResolver,
   GetNetworksResolver,
   SetDefaultNetworkResolver,

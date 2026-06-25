@@ -1,3 +1,5 @@
+import { IsOptional } from "class-validator";
+
 /*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -93,13 +95,14 @@ export class AddMemberInputDto {
 
 @InputType()
 export class UpdateMemberInputDto {
-  @Field()
+  @Field({ nullable: true })
+  @IsOptional()
   @IsBoolean()
-  isDeactivated: boolean;
+  isDeactivated?: boolean;
 
-  @Field()
-  @IsNotEmpty()
-  role: string;
+  @Field({ nullable: true })
+  @IsOptional()
+  role?: string;
 }
 
 // (Removed dead MemberInputDto — unused, and its memberId field was

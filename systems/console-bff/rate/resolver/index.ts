@@ -8,11 +8,13 @@
 import { NonEmptyArray } from "type-graphql";
 
 import { DefaultMarkupResolver } from "./defaultMarkup";
+import { DeleteMarkupResolver } from "./deleteMarkup";
 import { GetDefaultMarkupResolver } from "./getDefaultMarkup";
 import { GetDefaultMarkupHistoryResolver } from "./getDefaultMarkupHistory";
 
 const resolvers: NonEmptyArray<any> = [
   DefaultMarkupResolver,
+  DeleteMarkupResolver,
   GetDefaultMarkupResolver,
   GetDefaultMarkupHistoryResolver,
 ];

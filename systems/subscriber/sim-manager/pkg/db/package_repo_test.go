@@ -323,7 +323,7 @@ func TestPackageRepo_Update(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectQuery(`^UPDATE.*packages.*`).
-			WithArgs(pckg.SimId, sqlmock.AnyArg(), pckg.Id).
+			WithArgs(false, false, sqlmock.AnyArg(), pckg.Id).
 			WillReturnRows(packageRow)
 
 		mock.ExpectCommit()
@@ -356,7 +356,7 @@ func TestPackageRepo_Update(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectQuery(`^UPDATE.*packages.*`).
-			WithArgs(pckg.SimId, sqlmock.AnyArg(), pckg.Id).
+			WithArgs(false, false, sqlmock.AnyArg(), pckg.Id).
 			WillReturnRows(packageRow)
 
 		r := db.NewPackageRepo(&UkamaDbMock{
@@ -387,7 +387,7 @@ func TestPackageRepo_Update(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectQuery(`^UPDATE.*packages.*`).
-			WithArgs(pckg.SimId, sqlmock.AnyArg(), pckg.Id).
+			WithArgs(false, false, sqlmock.AnyArg(), pckg.Id).
 			WillReturnError(sql.ErrNoRows)
 
 		r := db.NewPackageRepo(&UkamaDbMock{

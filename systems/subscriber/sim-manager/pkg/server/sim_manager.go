@@ -807,6 +807,14 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 	return &pb.SetActivePackageResponse{}, nil
 }
 
+func (s *SimManagerServer) SetInactivePackageForSim(ctx context.Context, req *pb.SetInactivePackageRequest) (*pb.SetInactivePackageResponse, error) {
+	if err := setInactivePackageForSim(req.SimId, req.PackageId, s.packageRepo); err != nil {
+		return nil, err
+	}
+
+	return &pb.SetInactivePackageResponse{}, nil
+}
+
 func (s *SimManagerServer) TerminatePackageForSim(ctx context.Context, req *pb.TerminatePackageRequest) (*pb.TerminatePackageResponse, error) {
 	if err := terminatePackageForSim(ctx, req.SimId, req.PackageId, s.simRepo, s.packageRepo, s.msgbus, s.baseRoutingKey); err != nil {
 		return nil, err
@@ -1276,6 +1284,53 @@ func setActivePackageForSim(ctx context.Context, reqSimId, reqPackageId string, 
 	err = publishEventMessage(route, evtMsg, msgbus)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
+	}
+
+	return nil
+}
+
+func setInactivePackageForSim(reqSimId, reqPackageId string, packageRepo sims.PackageRepo) error {
+	packageId, err := uuid.FromString(reqPackageId)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument,
+			"invalid format of package uuid. Error %s", err.Error())
+	}
+
+	pckg, err := packageRepo.Get(packageId)
+	if err != nil {
+		return grpc.SqlErrorToGrpc(err, "package")
+	}
+
+	if pckg.SimId.String() != reqSimId {
+		return status.Errorf(codes.InvalidArgument,
+			"simId packageId mismatch: package %s does not belong to the provided sim %s",
+			reqPackageId, reqSimId)
+	}
+
+	if !pckg.IsActive {
+		return status.Errorf(codes.FailedPrecondition,
+			"cannot set inactive package (%s) as inactive", pckg.Id)
+	}
+
+	if pckg.AsExpired {
+		return status.Errorf(codes.FailedPrecondition,
+			"package (%s) has already been marked as expired", pckg.Id)
+	}
+
+	packageToSetInactive := &sims.Package{
+		Id:       pckg.Id,
+		IsActive: false,
+	}
+
+	err = packageRepo.Update(packageToSetInactive, func(pckg *sims.Package, tx *gorm.DB) error {
+		packageToSetInactive.EndDate = time.Now().UTC()
+
+		return nil
+	})
+
+	if err != nil {
+		return status.Errorf(codes.Internal,
+			"failed to set package as inactive. Error %s", err.Error())
 	}
 
 	return nil

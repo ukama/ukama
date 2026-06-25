@@ -148,7 +148,23 @@ func (p *packageRepo) Update(pkg *Package, nestedFunc func(*Package, *gorm.DB) e
 			}
 		}
 
-		result := tx.Clauses(clause.Returning{}).Updates(pkg)
+		// GORM Updates skips zero-value struct fields, so bool fields like is_active
+		// cannot be set to false via struct updates alone.
+		updates := map[string]interface{}{
+			"is_active":  pkg.IsActive,
+			"as_expired": pkg.AsExpired,
+		}
+		if !pkg.StartDate.IsZero() {
+			updates["start_date"] = pkg.StartDate
+		}
+		if !pkg.EndDate.IsZero() {
+			updates["end_date"] = pkg.EndDate
+		}
+		if pkg.DefaultDuration != 0 {
+			updates["default_duration"] = pkg.DefaultDuration
+		}
+
+		result := tx.Model(pkg).Clauses(clause.Returning{}).Updates(updates)
 
 		if result.Error != nil {
 			return result.Error

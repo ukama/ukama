@@ -7,7 +7,7 @@
  */
 import { VERSION } from "../../common/configs";
 import { BaseRESTDataSource } from "../../common/datasource";
-import { TBooleanResponse } from "../../common/types";
+import { CBooleanResponse, TBooleanResponse } from "../../common/types";
 import {
   AddNetworkInputDto,
   NetworkDto,
@@ -58,6 +58,21 @@ class NetworkApi extends BaseRESTDataSource {
       await this.setDefaultNetwork(baseURL, res.id);
     }
     return res;
+  };
+
+  deleteNetwork = async (
+    baseURL: string,
+    networkId: string
+  ): Promise<CBooleanResponse> => {
+    this.logger.info(
+      `DeleteNetwork [DELETE]: ${baseURL}/${VERSION}/networks/${networkId}`
+    );
+    this.baseURL = baseURL;
+    return this.delete(`/${VERSION}/networks/${networkId}`).then(() => {
+      return {
+        success: true,
+      };
+    });
   };
 
   setDefaultNetwork = async (

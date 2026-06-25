@@ -10,7 +10,7 @@ import { NonEmptyArray } from "type-graphql";
 import { AddNodeResolver } from "./addNode";
 import { AddNodeToSiteResolver } from "./addNodeToSite";
 import { AttachNodeResolver } from "./attachNode";
-import { DeleteNodeFromOrgResolver } from "./deleteNodeFromOrg";
+import { DeleteNodeResolver } from "./deleteNode";
 import { DetachNodeResolver } from "./detachNode";
 import { GetAppsChangeLogResolver } from "./getAppsChangeLog";
 import { GetNodeResolver } from "./getNode";
@@ -40,7 +40,7 @@ const resolvers: NonEmptyArray<any> = [
   GetNodesForSiteResolver,
   GetAppsChangeLogResolver,
   GetNodesLocationResolver,
-  DeleteNodeFromOrgResolver,
+  DeleteNodeResolver,
   GetNodesByNetworkResolver,
   ReleaseNodeFromSiteResolver,
 ];
