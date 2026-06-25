@@ -34,7 +34,6 @@ services:
   environment:
    - DEBUGMODE=true
    - BYPASS_AUTH_MODE=true
-   - NODEMETRICSPORT=10251
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
   depends_on:
@@ -50,7 +49,6 @@ services:
   environment:
    - DEBUGMODE=true
    - BYPASS_AUTH_MODE=true
-   - NODEMETRICSPORT=10251
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
   depends_on:
