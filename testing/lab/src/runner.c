@@ -305,6 +305,17 @@ static int setup_bff_sims(bff_client_t *bff,
                                        opts->sim_type, err)) {
             return ULAB_EBFF;
         }
+
+        ulab_status("BFF", "add package to sim %s package=%s",
+                    ue->ref, package->ref);
+        if (bff_add_package_to_sim(bff, ue, package, err)) {
+            return ULAB_EBFF;
+        }
+
+        ulab_status("BFF", "activate sim %s", ue->ref);
+        if (bff_toggle_sim_status(bff, ue, "active", err)) {
+            return ULAB_EBFF;
+        }
     }
 
     return ULAB_OK;
@@ -711,6 +722,12 @@ int runner_validate(const runner_opts_t *opts) {
 
         rc = wait_runtime_nodes(scenario, &world, &runtime, &err);
         if (rc != ULAB_OK) {
+            goto done;
+        }
+
+        rc = runtime_enable_pcrf_service(&runtime, &world, &err);
+        if (rc != ULAB_OK) {
+            rc = ULAB_ERUNTIME;
             goto done;
         }
     }

@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "bff.h"
 #include "util.h"
@@ -777,3 +778,136 @@ int bff_allocate_sim_from_pool(bff_client_t *c,
 
     return ULAB_OK;
 }
+
+static void sim_today(char *out, size_t out_len) {
+    time_t now;
+    struct tm tmv;
+    struct tm *tmp;
+
+    if (out == NULL || out_len == 0) {
+        return;
+    }
+
+    now = time(NULL);
+    tmp = gmtime(&now);
+    if (tmp == NULL) {
+        snprintf(out, out_len, "1970-01-01");
+        return;
+    }
+
+    tmv = *tmp;
+    strftime(out, out_len, "%Y-%m-%d", &tmv);
+}
+
+int bff_add_package_to_sim(bff_client_t *c,
+                           ue_t *ue,
+                           const package_t *pkg,
+                           ulab_error_t *err) {
+    char sim_esc[ULAB_MAX_ID * 2];
+    char pkg_esc[ULAB_MAX_ID * 2];
+    char start_date[32];
+    char query[ULAB_MAX_QUERY * 2];
+    json_t *root;
+    json_t *obj;
+    json_t *arr;
+    json_t *item;
+    json_t *success;
+    int ok;
+
+    root = NULL;
+
+    if (ue == NULL || ue->bff_id[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg), "addPackagesToSim missing SIM id");
+        return ULAB_ERR;
+    }
+
+    if (pkg == NULL || pkg->bff_id[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg), "addPackagesToSim missing package id");
+        return ULAB_ERR;
+    }
+
+    ulab_json_escape(ue->bff_id, sim_esc, sizeof(sim_esc));
+    ulab_json_escape(pkg->bff_id, pkg_esc, sizeof(pkg_esc));
+    sim_today(start_date, sizeof(start_date));
+
+    snprintf(query, sizeof(query),
+             "mutation { addPackagesToSim(data:{sim_id:\"%s\"," 
+             "packages:[{package_id:\"%s\",start_date:\"%s\"}]}) "
+             "{ packages { packageId success error } } }",
+             sim_esc, pkg_esc, start_date);
+
+    if (sim_graphql_call(c, "addPackagesToSim", query, &root, err)) {
+        return ULAB_ERR;
+    }
+
+    obj = sim_dig(root, "data", "addPackagesToSim");
+    arr = obj ? json_object_get(obj, "packages") : NULL;
+    item = (arr && json_is_array(arr) && json_array_size(arr) > 0) ?
+        json_array_get(arr, 0) : NULL;
+
+    success = item ? json_object_get(item, "success") : NULL;
+    ok = success && json_is_boolean(success) && json_is_true(success);
+
+    if (!ok) {
+        const char *msg = NULL;
+        json_t *e = item ? json_object_get(item, "error") : NULL;
+
+        if (e != NULL && json_is_string(e)) {
+            msg = json_string_value(e);
+        }
+
+	snprintf(err->msg, sizeof(err->msg),
+			"addPackagesToSim failed sim=%.128s package=%.128s%.3s%.512s",
+			ue->bff_id, pkg->bff_id,
+			msg ? ": " : "", msg ? msg : "");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+
+    if (sim_json_get_str(item, "packageId", ue->sim_package_id,
+        sizeof(ue->sim_package_id)) != ULAB_OK) {
+        ulab_copy(ue->sim_package_id, sizeof(ue->sim_package_id),
+                  pkg->bff_id);
+    }
+
+    json_decref(root);
+    return ULAB_OK;
+}
+
+int bff_toggle_sim_status(bff_client_t *c,
+                          const ue_t *ue,
+                          const char *status,
+                          ulab_error_t *err) {
+    char sim_esc[ULAB_MAX_ID * 2];
+    char status_esc[ULAB_MAX_REF * 2];
+    char query[ULAB_MAX_QUERY];
+    json_t *root;
+
+    root = NULL;
+
+    if (ue == NULL || ue->bff_id[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg), "toggleSimStatus missing SIM id");
+        return ULAB_ERR;
+    }
+
+    if (status == NULL || status[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg), "toggleSimStatus missing status");
+        return ULAB_ERR;
+    }
+
+    ulab_json_escape(ue->bff_id, sim_esc, sizeof(sim_esc));
+    ulab_json_escape(status, status_esc, sizeof(status_esc));
+
+    snprintf(query, sizeof(query),
+             "mutation { toggleSimStatus(data:{sim_id:\"%s\",status:\"%s\"}) "
+             "{ simId } }",
+             sim_esc, status_esc);
+
+    if (sim_graphql_call(c, "toggleSimStatus", query, &root, err)) {
+        return ULAB_ERR;
+    }
+
+    json_decref(root);
+    return ULAB_OK;
+}
+

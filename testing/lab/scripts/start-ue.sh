@@ -226,14 +226,6 @@ if ! podman run -d \
     exit 1
 fi
 
-sleep 2
-
-if ! container_running "$UE_CONTAINER"; then
-    echo "UE container exited early: $UE_CONTAINER" >&2
-    podman logs "$UE_CONTAINER" >&2 || true
-    exit 1
-fi
-
 STATE_FILE="$UE_STATE_DIR/$UE_ID.env"
 cat > "$STATE_FILE" <<STATE
 UE_REF=$UE_REF
@@ -256,5 +248,13 @@ UE_DIR=$UE_DIR
 STATE
 
 cp "$STATE_FILE" "$UE_STATE_DIR/$UE_REF.env"
+
+sleep 2
+
+if ! container_running "$UE_CONTAINER"; then
+    echo "UE container exited early: $UE_CONTAINER" >&2
+    podman logs "$UE_CONTAINER" >&2 || true
+    exit 1
+fi
 
 echo "ue-started ref=$UE_REF imsi=$IMSI ip=$UE_IP_ADDR tower=$TOWER_IP media=$MEDIA_IP network=$LAB_NET"

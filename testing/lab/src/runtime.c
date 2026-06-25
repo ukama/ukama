@@ -20,7 +20,7 @@ static int run_script(runtime_t *rt,
                       const char *name,
                       const char *args,
                       ulab_error_t *err) {
- 
+
     char cmd[ULAB_MAX_QUERY];
     char script[ULAB_MAX_PATH];
     char log_path[ULAB_MAX_PATH];
@@ -41,15 +41,28 @@ static int run_script(runtime_t *rt,
     }
 
     /*
-     * Do not pipe script output back into C.
-     * Build scripts can produce a lot of output, so write directly to log.
+     * Keep full script output in the per-script log, but show a small
+     * heartbeat in the terminal so long node/image builds do not look hung.
      */
     n = snprintf(cmd, sizeof(cmd),
                  "mkdir -p '%s' >/dev/null 2>&1; "
-                 "'%s' %s >> '%s' 2>&1",
+                 "touch '%s'; "
+                 "('%s' %s >> '%s' 2>&1) & "
+                 "pid=$!; "
+                 "while kill -0 $pid 2>/dev/null; do "
+                 "sleep ${ULAB_SCRIPT_PROGRESS_INTERVAL:-10}; "
+                 "if kill -0 $pid 2>/dev/null; then "
+                 "echo 'RUNNING  %s ...'; "
+                 "tail -n ${ULAB_SCRIPT_PROGRESS_LINES:-10} '%s' | sed 's/^/  /'; "
+                 "fi; "
+                 "done; "
+                 "wait $pid",
                  rt->run_dir,
+                 log_path,
                  script,
                  args ? args : "",
+                 log_path,
+                 name,
                  log_path);
     if (n < 0 || (size_t)n >= sizeof(cmd)) {
         snprintf(err->msg, sizeof(err->msg), "script command too long");
@@ -193,7 +206,6 @@ static int write_runtime_node_state(runtime_t *rt,
     fprintf(f, "NETWORK_REF=%s\n", site->network_ref);
     fprintf(f, "CONTAINER_NAME=%s\n", container);
     fprintf(f, "IMAGE=testing/virtualnode:%s\n", factory_id);
-    fprintf(f, "LAB_NET=ukama-lab\n");
     fclose(f);
 
     ulab_copy(node->bff_id, sizeof(node->bff_id), factory_id);
@@ -422,6 +434,40 @@ int runtime_wait_nodes_ready(runtime_t *rt,
         ulab_status("NODE", "wait ready %s", n->id);
 
         if (run_script(rt, "wait-nodes-ready.sh", args, err)) {
+            return ULAB_ERR;
+        }
+    }
+
+    return ULAB_OK;
+}
+
+int runtime_enable_pcrf_service(runtime_t *rt, const world_t *w,
+                                ulab_error_t *err) {
+    size_t i;
+    int rc;
+    char args[ULAB_MAX_ARGS];
+
+    if (rt == NULL || w == NULL) {
+        return ULAB_OK;
+    }
+
+    for (i = 0; i < w->node_count; i++) {
+        const node_t *n = &w->nodes[i];
+
+        if (!ulab_streq(n->type, ULAB_NODE_TOWER)) {
+            continue;
+        }
+
+        memset(args, 0, sizeof(args));
+        rc = snprintf(args, sizeof(args), "%s %s", n->id, rt->run_dir);
+        if (rc < 0 || (size_t)rc >= sizeof(args)) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "enable-pcrf args too long for node %s", n->id);
+            return ULAB_ERR;
+        }
+
+        ulab_status("PCRF", "enable service %s", n->id);
+        if (run_script(rt, "enable-pcrf-service.sh", args, err)) {
             return ULAB_ERR;
         }
     }

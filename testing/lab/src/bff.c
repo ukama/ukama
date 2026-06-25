@@ -1306,6 +1306,18 @@ static int bff_cleanup_call(bff_client_t *c,
     }
 
     if (bff_call(c, op, query, "{}", &root, &err)) {
+        if ((ulab_streq(op, "setInactivePackageForSim") ||
+             ulab_streq(op, "removePackageForSim")) &&
+            strstr(err.msg, "package record not found") != NULL) {
+            if (c != NULL && c->logf != NULL) {
+                fprintf(c->logf,
+                        "cleanup ignore: %s: package record not found\n",
+                        op);
+                fflush(c->logf);
+            }
+            return ULAB_OK;
+        }
+
         if (c != NULL && c->logf != NULL) {
             fprintf(c->logf, "cleanup warning: %s: %s\n", op, err.msg);
             fflush(c->logf);

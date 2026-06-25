@@ -99,6 +99,16 @@ int bff_allocate_sim(bff_client_t *c,
                      const char *sim_type,
                      ulab_error_t *err);
 
+int bff_add_package_to_sim(bff_client_t *c,
+                           ue_t *ue,
+                           const package_t *pkg,
+                           ulab_error_t *err);
+
+int bff_toggle_sim_status(bff_client_t *c,
+                          const ue_t *ue,
+                          const char *status,
+                          ulab_error_t *err);
+
 int bff_get_sim_usage(bff_client_t *c,
                       const ue_t *ue,
                       uint64_t *used_mb,

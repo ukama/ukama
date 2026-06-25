@@ -88,10 +88,6 @@ container_running() {
         grep -q '^true$'
 }
 
-container_logs_tail() {
-    podman logs --tail 80 "$CONTAINER_NAME" 2>/dev/null || true
-}
-
 starter_status() {
     podman exec "$CONTAINER_NAME" sh -lc \
         "curl -fsS --max-time 2 http://127.0.0.1:${STARTER_PORT}/v1/status" \
@@ -126,7 +122,6 @@ starterd = data.get("starterd") or {}
 if starterd.get("updateInProgress") is True:
     print("starterd update in progress", file=sys.stderr)
     sys.exit(1)
-
 if starterd.get("terminateRequested") is True:
     print("starterd terminate requested", file=sys.stderr)
     sys.exit(1)
@@ -135,12 +130,11 @@ apps = {}
 for space in data.get("spaces") or []:
     for app in space.get("apps") or []:
         name = str(app.get("name") or "")
-        state = str(app.get("state") or "").lower()
+        state = str(app.get("state") or "").strip().lower()
         if name:
             apps[name] = state
 
 bad = []
-
 for name in required:
     state = apps.get(name)
     if state is None:
@@ -172,7 +166,7 @@ print_debug() {
     starter_status >&2 || echo "starter.d not reachable on port ${STARTER_PORT}" >&2
 
     echo "---- container logs ----" >&2
-    container_logs_tail >&2
+    podman logs --tail 80 "$CONTAINER_NAME" >&2 2>/dev/null || true
 }
 
 node_ready() {

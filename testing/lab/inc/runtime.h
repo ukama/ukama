@@ -31,6 +31,8 @@ int runtime_build_and_start_sites(const char *repo,
 int runtime_wait_nodes_ready(runtime_t *rt, const world_t *w,
                              const selector_result_t *nodes,
                              ulab_error_t *err);
+int runtime_enable_pcrf_service(runtime_t *rt, const world_t *w,
+                                ulab_error_t *err);
 int runtime_ensure_media(runtime_t *rt, ulab_error_t *err);
 int runtime_build_and_start_ues(const char *repo,
                                 runtime_t *rt,
