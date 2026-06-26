@@ -511,11 +511,13 @@ func (s *AsrRecordServer) UpdateTai(c context.Context, req *pb.UpdateTaiReq) (*p
 	return &pb.UpdateTaiResp{}, nil
 }
 
-func (s *AsrRecordServer) UpdateandSyncAsrProfile(imsi string) error {
+func (s *AsrRecordServer) UpdateAndSyncAsrProfile(imsi string) error {
 	log.Infof("Updating and syncing ASR profile for imsi %s", imsi)
 
 	sub, err := s.asrRepo.GetByImsi(imsi)
 	if err != nil {
+		log.Errorf("ASR record not found for imsi %s. Error: %v", imsi, err)
+
 		return grpc.SqlErrorToGrpc(err, "error getting ASR record by imsi:")
 	}
 
