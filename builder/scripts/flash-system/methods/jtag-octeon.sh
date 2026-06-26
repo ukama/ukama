@@ -13,6 +13,9 @@ OCT_TAIL_PID=""
 SPAM_PID=""
 TFTP_STAGE_DIR=""
 
+# Temporary verbose mode for debugging Phase 1. Set TRX_VERBOSE=0 to disable.
+TRX_VERBOSE="${TRX_VERBOSE:-1}"
+
 _jtag_octeon_cleanup() {
     uboot_close
     tftp_stop
@@ -450,6 +453,14 @@ _phase1_run() {
     # oct-remote-boot retries so the u-boot prompt is caught whenever it appears.
     echo "Opening serial console at $serial_dev ($baud)..."
     uboot_open "$serial_dev" "$baud" "${LOG_DIR}/uboot.log"
+
+    local serial_tail_pid=""
+    if [ "$TRX_VERBOSE" = "1" ]; then
+        echo "(verbose) Tailing serial log to console..."
+        tail -f "${LOG_DIR}/uboot.log" &
+        serial_tail_pid=$!
+    fi
+
     echo "Watching serial for 'Hit any key to stop autoboot:' and sending a key when seen..."
     (
         # u-boot ignores input before the autoboot stop message, so don't spam early.
@@ -490,6 +501,12 @@ _phase1_run() {
         disown "$REMOTE_BOOT_PID" 2>/dev/null || true
         echo "  oct-remote-boot started (PID $REMOTE_BOOT_PID)"
 
+        if [ "$TRX_VERBOSE" = "1" ]; then
+            echo "(verbose) Tailing oct-remote-boot log to console..."
+            tail -f "$oct_log" &
+            OCT_TAIL_PID=$!
+        fi
+
         # Match the u-boot prompt broadly — it may be "Octeon zen(ram)=>" or
         # "Octeon zen(Failsafe)=>" depending on board/flash state (per Supreeth).
         echo "Waiting for u-boot prompt 'Octeon zen…=>' with DDR ~400 MHz (up to 180s)..."
@@ -529,6 +546,10 @@ _phase1_run() {
             # flash. REMOTE_BOOT_PID stays set and is reaped by the cleanup after flashing.
             prompt_seen=1
             echo "  u-boot prompt + good DDR clock (${mhz} MHz) on attempt ${oct_try}."
+            if [ -n "$OCT_TAIL_PID" ]; then
+                kill "$OCT_TAIL_PID" 2>/dev/null || true
+                OCT_TAIL_PID=""
+            fi
             break
         fi
 
@@ -561,6 +582,10 @@ _phase1_run() {
     fi
 
     if [ "$prompt_seen" -ne 1 ]; then
+        if [ -n "$serial_tail_pid" ]; then
+            kill "$serial_tail_pid" 2>/dev/null || true
+            serial_tail_pid=""
+        fi
         uboot_close
         echo "ERROR: u-boot prompt did not appear after ${max_oct_tries} oct-remote-boot attempts."
         echo "  If oct-remote-boot kept segfaulting, the BDI GDB stub may be wedged: cold"
@@ -610,6 +635,10 @@ _phase1_run() {
     _phase1_flash_artifact "$serial_dev" "$uboot_prompt" "rd"    "$ddr_rd"
     _phase1_flash_artifact "$serial_dev" "$uboot_prompt" "uboot" "$ddr_os"
 
+    if [ -n "$serial_tail_pid" ]; then
+        kill "$serial_tail_pid" 2>/dev/null || true
+        serial_tail_pid=""
+    fi
     uboot_close
     tftp_stop
     [ -n "$REMOTE_BOOT_PID" ] && sudo kill "$REMOTE_BOOT_PID" 2>/dev/null || true
