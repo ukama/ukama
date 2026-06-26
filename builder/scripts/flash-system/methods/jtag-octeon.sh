@@ -461,18 +461,14 @@ _phase1_run() {
         serial_tail_pid=$!
     fi
 
-    echo "Watching serial for 'Hit any key to stop autoboot:' and sending a key when seen..."
+    echo "Spamming serial with key presses to stop zero-second autoboot..."
     (
-        # u-boot ignores input before the autoboot stop message, so don't spam early.
-        # Poll the log and send a single key as soon as the message appears.
-        local boot_log="${LOG_DIR}/uboot.log"
-        local sent=0
-        while [ "$sent" -eq 0 ]; do
-            if grep -qF "Hit any key to stop autoboot:" "$boot_log" 2>/dev/null; then
-                printf ' ' > "$serial_dev"
-                sent=1
-            fi
-            sleep 0.2
+        # The TRX u-boot has a zero-second autoboot delay; keep a key pressed
+        # (space) so it stops immediately when it checks for input.
+        exec 3>"$serial_dev"
+        while true; do
+            printf ' ' >&3
+            sleep 0.03
         done
     ) &
     SPAM_PID=$!
