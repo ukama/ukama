@@ -280,6 +280,7 @@ static int setup_bff_sims(bff_client_t *bff,
     network_t *network;
     package_t *package;
     ue_t *ue;
+    int active;
     size_t i;
 
     if (!scenario->setup.create_sims) {
@@ -288,9 +289,11 @@ static int setup_bff_sims(bff_client_t *bff,
 
     for (i = 0; i < world->ue_count; i++) {
         ue = &world->ues[i];
+
         sub = find_subscriber(world, ue->subscriber_ref);
         network = world_network_by_ref(world, ue->network_ref);
-        package = world_package_by_ref(world, ue->package_ref);
+        package = world_package_for_network(world, ue->package_ref,
+                                            ue->network_ref);
 
         if (sub == NULL || !ulab_streq(sub->ref, ue->subscriber_ref)) {
             snprintf(err->msg, sizeof(err->msg),
@@ -310,6 +313,13 @@ static int setup_bff_sims(bff_client_t *bff,
             return ULAB_EBFF;
         }
 
+        /*
+         * allocateSim is authoritative for this setup path.
+         * We pass package_id into allocateSim, so it assigns the SIM to the
+         * subscriber/network and binds the package. Do not clear, re-add, or
+         * explicitly activate the SIM here; doing so creates duplicate package
+         * rows and can fail when the SIM is already active.
+         */
         ulab_status("BFF", "allocate sim %s iccid=%s", ue->ref,
                     ue->iccid);
         if (bff_allocate_sim_from_pool(bff, ue, sub, network, package,
@@ -317,26 +327,24 @@ static int setup_bff_sims(bff_client_t *bff,
             return ULAB_EBFF;
         }
 
-        if (ue->sim_package_id[0] != '\0') {
-            ulab_status("BFF", "sim %s already has package %s",
-                        ue->ref, ue->sim_package_id);
-        } else {
-            ulab_status("BFF", "clear existing sim packages %s", ue->ref);
-            if (bff_clear_sim_packages(bff, ue, err)) {
-                return ULAB_EBFF;
-            }
-
-            ulab_status("BFF", "add package to sim %s package=%s",
-                        ue->ref, package->ref);
-            if (bff_add_package_to_sim(bff, ue, package, err)) {
-                return ULAB_EBFF;
-            }
-        }
-
-        ulab_status("BFF", "activate sim %s", ue->ref);
-        if (bff_toggle_sim_status(bff, ue, "active", err)) {
+        active = 0;
+        ulab_status("BFF", "verify sim package %s package=%s",
+                    ue->ref, package->ref);
+        if (bff_get_packages_for_sim(bff, ue, package->bff_id, &active,
+                                     err)) {
             return ULAB_EBFF;
         }
+
+        if (!active) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "ue %s sim allocated but package %s is not active",
+                     ue->ref, package->bff_id);
+            return ULAB_EBFF;
+        }
+
+        ulab_copy(ue->sim_package_id,
+                  sizeof(ue->sim_package_id),
+                  package->bff_id);
     }
 
     return ULAB_OK;
