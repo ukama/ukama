@@ -822,8 +822,10 @@ _phase2_rehost_for_post_flash() {
 method_apply() {
     trap _jtag_octeon_cleanup EXIT
 
-    local trx_ip
+    local trx_ip serial_dev baud
     trx_ip=$(yq_read "$BOARD_CONFIG" network.trx_ip)
+    serial_dev=$(yq_read "$BOARD_CONFIG" serial.device)
+    baud=$(yq_read "$BOARD_CONFIG" serial.baud)
 
     echo "=== Phase 1: JTAG bringup ==="
     _phase1_run
