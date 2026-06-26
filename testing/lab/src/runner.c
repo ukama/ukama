@@ -17,6 +17,7 @@
 #include "runtime.h"
 #include "log.h"
 #include "selector.h"
+#include "sim_factory.h"
 #include "util.h"
 
 static void make_run_id(char *out, size_t len, const scenario_t *scenario) {
@@ -206,65 +207,94 @@ static subscriber_t *find_subscriber(world_t *world,
 static int setup_bff_sim_pool(bff_client_t *bff,
                               world_t *world,
                               const runner_opts_t *opts,
+                              const char *run_dir,
                               ulab_error_t *err) {
 
-    char (*iccids)[ULAB_MAX_ID];
+    char (*pool_iccids)[ULAB_MAX_ID];
     char (*pool_ids)[ULAB_MAX_ID];
-    size_t count;
+    char factory_csv[ULAB_MAX_PATH];
+    size_t pool_count;
+    size_t max_pool;
     size_t i;
+    size_t j;
 
     if (world->ue_count == 0) {
         return ULAB_OK;
     }
 
     if (opts->sim_csv_path[0] != '\0') {
-        ulab_status("SIMPOOL", "upload %s type=%s",
-                    opts->sim_csv_path, opts->sim_type);
-        if (bff_upload_sims_from_csv(bff, opts->sim_csv_path,
-                                     opts->sim_type, err)) {
-            return ULAB_EBFF;
-        }
+        snprintf(err->msg, sizeof(err->msg),
+                 "--sim-csv is no longer supported for validate setup; "
+                 "ukama-lab now provisions fresh warehouse/factory SIMs per run");
+        return ULAB_EUSAGE;
     }
 
-    iccids = calloc(world->ue_count, sizeof(*iccids));
-    pool_ids = calloc(world->ue_count, sizeof(*pool_ids));
-    if (iccids == NULL || pool_ids == NULL) {
+    memset(factory_csv, 0, sizeof(factory_csv));
+    if (sim_factory_prepare_world(opts, world, run_dir, factory_csv,
+                                  sizeof(factory_csv), err)) {
+        return ULAB_EBFF;
+    }
+
+    ulab_status("SIMPOOL", "upload %s type=%s", factory_csv,
+                opts->sim_type);
+    if (bff_upload_sims_from_csv(bff, factory_csv, opts->sim_type, err)) {
+        return ULAB_EBFF;
+    }
+
+    max_pool = world->ue_count * 32;
+    if (max_pool < 1024) {
+        max_pool = 1024;
+    }
+
+    pool_iccids = calloc(max_pool, sizeof(*pool_iccids));
+    pool_ids = calloc(max_pool, sizeof(*pool_ids));
+    if (pool_iccids == NULL || pool_ids == NULL) {
         snprintf(err->msg, sizeof(err->msg),
                  "out of memory reading SIM pool");
-        free(iccids);
+        free(pool_iccids);
         free(pool_ids);
         return ULAB_EINTERNAL;
     }
 
     ulab_status("SIMPOOL", "get unassigned sims type=%s", opts->sim_type);
-    if (bff_get_sims_from_pool(bff, opts->sim_type, iccids, pool_ids,
-                               world->ue_count, &count, err)) {
-        free(iccids);
-        free(pool_ids);
-        return ULAB_EBFF;
-    }
-
-    if (count < world->ue_count) {
-        snprintf(err->msg, sizeof(err->msg),
-                 "not enough UNASSIGNED sims in pool type=%s: "
-                 "need=%zu got=%zu",
-                 opts->sim_type, world->ue_count, count);
-        free(iccids);
+    if (bff_get_sims_from_pool(bff, opts->sim_type, pool_iccids, pool_ids,
+                               max_pool, &pool_count, err)) {
+        free(pool_iccids);
         free(pool_ids);
         return ULAB_EBFF;
     }
 
     for (i = 0; i < world->ue_count; i++) {
-        ulab_copy(world->ues[i].iccid, sizeof(world->ues[i].iccid),
-                  iccids[i]);
-        ulab_copy(world->ues[i].pool_sim_id,
-                  sizeof(world->ues[i].pool_sim_id), pool_ids[i]);
-        ulab_status("SIMPOOL", "ue %s iccid=%s pool=%s",
+        int found;
+
+        found = 0;
+        for (j = 0; j < pool_count; j++) {
+            if (!ulab_streq(world->ues[i].iccid, pool_iccids[j])) {
+                continue;
+            }
+
+            ulab_copy(world->ues[i].pool_sim_id,
+                      sizeof(world->ues[i].pool_sim_id), pool_ids[j]);
+            found = 1;
+            break;
+        }
+
+        if (!found) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "prepared factory SIM iccid=%s for ue=%s is not "
+                     "available as UNASSIGNED in SIM pool",
+                     world->ues[i].iccid, world->ues[i].ref);
+            free(pool_iccids);
+            free(pool_ids);
+            return ULAB_EBFF;
+        }
+
+        ulab_status("SIMPOOL", "match ue %s iccid=%s imsi=%s pool=%s",
                     world->ues[i].ref, world->ues[i].iccid,
-                    world->ues[i].pool_sim_id);
+                    world->ues[i].imsi, world->ues[i].pool_sim_id);
     }
 
-    free(iccids);
+    free(pool_iccids);
     free(pool_ids);
 
     return ULAB_OK;
@@ -345,6 +375,10 @@ static int setup_bff_sims(bff_client_t *bff,
         ulab_copy(ue->sim_package_id,
                   sizeof(ue->sim_package_id),
                   package->bff_id);
+
+        if (sim_factory_wait_asr(opts, ue, err)) {
+            return ULAB_EBFF;
+        }
     }
 
     return ULAB_OK;
@@ -354,6 +388,7 @@ static int setup_bff_world(bff_client_t *bff,
                            const scenario_t *scenario,
                            world_t *world,
                            const runner_opts_t *opts,
+                           const char *run_dir,
                            ulab_error_t *err) {
 
     if (setup_bff_networks(bff, scenario, world, err)) {
@@ -364,7 +399,7 @@ static int setup_bff_world(bff_client_t *bff,
         return ULAB_EBFF;
     }
 
-    if (setup_bff_sim_pool(bff, world, opts, err)) {
+    if (setup_bff_sim_pool(bff, world, opts, run_dir, err)) {
         return ULAB_EBFF;
     }
 
@@ -410,6 +445,7 @@ static int setup_bff_subscriber_only(bff_client_t *bff,
                                      const scenario_t *scenario,
                                      world_t *world,
                                      const runner_opts_t *opts,
+                                     const char *run_dir,
                                      ulab_error_t *err) {
 
     int rc;
@@ -419,7 +455,7 @@ static int setup_bff_subscriber_only(bff_client_t *bff,
         return rc;
     }
 
-    if (setup_bff_sim_pool(bff, world, opts, err)) {
+    if (setup_bff_sim_pool(bff, world, opts, run_dir, err)) {
         return ULAB_EBFF;
     }
 
@@ -770,10 +806,11 @@ int runner_validate(const runner_opts_t *opts) {
     if (opts->subscriber_only) {
         ulab_status("SETUP", "creating package/subscriber/SIM only");
         rc = setup_bff_subscriber_only(&bff, scenario, &world, opts,
-                                       &err);
+                                       runDir, &err);
     } else {
         ulab_status("SETUP", "creating BFF world resources");
-        rc = setup_bff_world(&bff, scenario, &world, opts, &err);
+        rc = setup_bff_world(&bff, scenario, &world, opts, runDir,
+                             &err);
     }
     if (rc != ULAB_OK) {
         goto done;

@@ -20,6 +20,14 @@ typedef struct {
     char subscriber_network_id[ULAB_MAX_ID];
     char sim_csv_path[ULAB_MAX_PATH];
     char sim_type[ULAB_MAX_REF];
+    char warehouse_url[ULAB_MAX_URL];
+    char factory_url[ULAB_MAX_URL];
+    char asr_url[ULAB_MAX_URL];
+    char sim_org[ULAB_MAX_REF];
+    char sim_vendor[ULAB_MAX_REF];
+    char sim_profile[ULAB_MAX_REF];
+    char sim_form_factor[ULAB_MAX_REF];
+    char sim_batch_prefix[ULAB_MAX_REF];
 
     uint32_t seed_override;
 
