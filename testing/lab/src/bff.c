@@ -1003,11 +1003,19 @@ int bff_add_site(bff_client_t *c,
     return ULAB_OK;
 }
 
-int bff_add_package(bff_client_t *c, package_t *p, ulab_error_t *err) {
+int bff_add_package(bff_client_t *c,
+                    package_t *p,
+                    const network_t *net,
+                    ulab_error_t *err) {
     char vars[4096];
     json_t *root;
     json_t *obj;
     uint32_t duration;
+
+    if (net == NULL || net->bff_id[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg), "addPackage missing network id");
+        return ULAB_ERR;
+    }
 
     duration = p->duration_days;
     if (duration == 0) {
@@ -1018,8 +1026,9 @@ int bff_add_package(bff_client_t *c, package_t *p, ulab_error_t *err) {
              "{\"data\":{\"name\":\"%s\",\"amount\":%.2f,"
              "\"dataUnit\":\"MB\",\"dataVolume\":%llu,"
              "\"duration\":%u,\"currency\":\"USD\","
-             "\"country\":\"USA\"}}", p->name, p->amount,
-             (unsigned long long)p->data_mb, duration);
+             "\"country\":\"USA\",\"networkId\":\"%s\"}}",
+             p->name, p->amount,
+             (unsigned long long)p->data_mb, duration, net->bff_id);
 
     if (bff_call(c, "addPackage", BFF_ADD_PACKAGE, vars, &root, err)) {
         return ULAB_ERR;
@@ -1347,6 +1356,93 @@ static const char *cleanup_package_for_ue(const world_t *w,
     return NULL;
 }
 
+
+static int cleanup_sim_packages_from_bff(bff_client_t *c,
+                                         const ue_t *ue,
+                                         int *failures) {
+    char vars[ULAB_MAX_QUERY];
+    char query[ULAB_MAX_QUERY];
+    char package_ids[32][ULAB_MAX_ID];
+    json_t *root;
+    json_t *obj;
+    json_t *arr;
+    json_t *it;
+    json_t *pid;
+    ulab_error_t qerr;
+    size_t i;
+    size_t count;
+    int n;
+
+    root = NULL;
+    count = 0;
+    memset(&qerr, 0, sizeof(qerr));
+
+    if (ue == NULL || ue->bff_id[0] == '\0') {
+        return ULAB_OK;
+    }
+
+    snprintf(vars, sizeof(vars), "{\"data\":{\"sim_id\":\"%s\"}}",
+             ue->bff_id);
+
+    if (bff_call(c, "getPackagesForSim", BFF_GET_SIM_PACKAGES, vars,
+        &root, &qerr)) {
+        if (c != NULL && c->logf != NULL) {
+            fprintf(c->logf,
+                    "cleanup warning: getPackagesForSim failed for sim %s: %s\n",
+                    ue->bff_id, qerr.msg);
+            fflush(c->logf);
+        }
+        return ULAB_ERR;
+    }
+
+    obj = dig(root, "data", "getPackagesForSim");
+    arr = obj ? json_object_get(obj, "packages") : NULL;
+    if (arr != NULL && json_is_array(arr)) {
+        for (i = 0; i < json_array_size(arr) && count < 32; i++) {
+            it = json_array_get(arr, i);
+            pid = it ? json_object_get(it, "package_id") : NULL;
+            if (pid != NULL && json_is_string(pid) &&
+                json_string_value(pid) != NULL &&
+                json_string_value(pid)[0] != '\0') {
+                ulab_copy(package_ids[count], sizeof(package_ids[count]),
+                          json_string_value(pid));
+                count++;
+            }
+        }
+    }
+
+    json_decref(root);
+
+    for (i = 0; i < count; i++) {
+        n = snprintf(query, sizeof(query),
+                     "mutation { setInactivePackageForSim(data: {"
+                     "packageId: \"%s\", simId: \"%s\"}) { packageId } }",
+                     package_ids[i], ue->bff_id);
+        if (n >= 0 && (size_t)n < sizeof(query) &&
+            bff_cleanup_call(c, "setInactivePackageForSim", query)) {
+            (*failures)++;
+        }
+
+        n = snprintf(query, sizeof(query),
+                     "mutation { removePackageForSim(data: {"
+                     "packageId: \"%s\", simId: \"%s\"}) { packageId } }",
+                     package_ids[i], ue->bff_id);
+        if (n >= 0 && (size_t)n < sizeof(query) &&
+            bff_cleanup_call(c, "removePackageForSim", query)) {
+            (*failures)++;
+        }
+    }
+
+    return ULAB_OK;
+}
+
+static int cleanup_should_delete_pool_sim(void) {
+    const char *v;
+
+    v = getenv("ULAB_DELETE_SIM_POOL_ON_CLEANUP");
+    return v != NULL && v[0] != '\0' && !ulab_streq(v, "0");
+}
+
 int bff_cleanup_world(bff_client_t *c,
                       const world_t *w,
                       ulab_error_t *err) {
@@ -1369,24 +1465,26 @@ int bff_cleanup_world(bff_client_t *c,
             continue;
         }
 
-        pkg_id = cleanup_package_for_ue(w, ue);
-        if (pkg_id != NULL && pkg_id[0] != '\0') {
-            n = snprintf(query, sizeof(query),
-                         "mutation { setInactivePackageForSim(data: {"
-                         "packageId: \"%s\", simId: \"%s\"}) { packageId } }",
-                         pkg_id, ue->bff_id);
-            if (n >= 0 && (size_t)n < sizeof(query) &&
-                bff_cleanup_call(c, "setInactivePackageForSim", query)) {
-                failures++;
-            }
+        if (cleanup_sim_packages_from_bff(c, ue, &failures)) {
+            pkg_id = cleanup_package_for_ue(w, ue);
+            if (pkg_id != NULL && pkg_id[0] != '\0') {
+                n = snprintf(query, sizeof(query),
+                             "mutation { setInactivePackageForSim(data: {"
+                             "packageId: \"%s\", simId: \"%s\"}) { packageId } }",
+                             pkg_id, ue->bff_id);
+                if (n >= 0 && (size_t)n < sizeof(query) &&
+                    bff_cleanup_call(c, "setInactivePackageForSim", query)) {
+                    failures++;
+                }
 
-            n = snprintf(query, sizeof(query),
-                         "mutation { removePackageForSim(data: {"
-                         "packageId: \"%s\", simId: \"%s\"}) { packageId } }",
-                         pkg_id, ue->bff_id);
-            if (n >= 0 && (size_t)n < sizeof(query) &&
-                bff_cleanup_call(c, "removePackageForSim", query)) {
-                failures++;
+                n = snprintf(query, sizeof(query),
+                             "mutation { removePackageForSim(data: {"
+                             "packageId: \"%s\", simId: \"%s\"}) { packageId } }",
+                             pkg_id, ue->bff_id);
+                if (n >= 0 && (size_t)n < sizeof(query) &&
+                    bff_cleanup_call(c, "removePackageForSim", query)) {
+                    failures++;
+                }
             }
         }
 
@@ -1407,7 +1505,7 @@ int bff_cleanup_world(bff_client_t *c,
             failures++;
         }
 
-        if (ue->pool_sim_id[0] != '\0') {
+        if (ue->pool_sim_id[0] != '\0' && cleanup_should_delete_pool_sim()) {
             n = snprintf(query, sizeof(query),
                          "mutation { deleteSimFromPool(simId: \"%s\") { success } }",
                          ue->pool_sim_id);
@@ -1415,7 +1513,14 @@ int bff_cleanup_world(bff_client_t *c,
                 bff_cleanup_call(c, "deleteSimFromPool", query)) {
                 failures++;
             }
+        } else if (ue->pool_sim_id[0] != '\0' &&
+                   c != NULL && c->logf != NULL) {
+            fprintf(c->logf,
+                    "cleanup keep SIM pool record id=%s iccid=%s\n",
+                    ue->pool_sim_id, ue->iccid);
+            fflush(c->logf);
         }
+
     }
 
     for (i = 0; i < w->package_count; i++) {

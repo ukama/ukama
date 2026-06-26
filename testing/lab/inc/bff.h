@@ -63,6 +63,7 @@ int bff_add_site(bff_client_t *c,
 
 int bff_add_package(bff_client_t *c,
                     package_t *p,
+                    const network_t *net,
                     ulab_error_t *err);
 
 int bff_add_subscriber(bff_client_t *c,
@@ -102,6 +103,10 @@ int bff_allocate_sim(bff_client_t *c,
 int bff_add_package_to_sim(bff_client_t *c,
                            ue_t *ue,
                            const package_t *pkg,
+                           ulab_error_t *err);
+
+int bff_clear_sim_packages(bff_client_t *c,
+                           const ue_t *ue,
                            ulab_error_t *err);
 
 int bff_toggle_sim_status(bff_client_t *c,

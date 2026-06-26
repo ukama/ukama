@@ -130,6 +130,8 @@ static int setup_bff_packages(bff_client_t *bff,
                               world_t *world,
                               ulab_error_t *err) {
 
+    network_t *network;
+    package_t *package;
     size_t i;
 
     if (!scenario->setup.create_packages) {
@@ -137,8 +139,17 @@ static int setup_bff_packages(bff_client_t *bff,
     }
 
     for (i = 0; i < world->package_count; i++) {
-        ulab_status("BFF", "add package %s", world->packages[i].ref);
-        if (bff_add_package(bff, &world->packages[i], err)) {
+        package = &world->packages[i];
+        network = world_network_by_ref(world, package->network_ref);
+        if (network == NULL || network->bff_id[0] == '\0') {
+            snprintf(err->msg, sizeof(err->msg),
+                     "package %s has invalid network id",
+                     package->ref);
+            return ULAB_EBFF;
+        }
+
+        ulab_status("BFF", "add package %s", package->ref);
+        if (bff_add_package(bff, package, network, err)) {
             return ULAB_EBFF;
         }
     }
@@ -306,10 +317,20 @@ static int setup_bff_sims(bff_client_t *bff,
             return ULAB_EBFF;
         }
 
-        ulab_status("BFF", "add package to sim %s package=%s",
-                    ue->ref, package->ref);
-        if (bff_add_package_to_sim(bff, ue, package, err)) {
-            return ULAB_EBFF;
+        if (ue->sim_package_id[0] != '\0') {
+            ulab_status("BFF", "sim %s already has package %s",
+                        ue->ref, ue->sim_package_id);
+        } else {
+            ulab_status("BFF", "clear existing sim packages %s", ue->ref);
+            if (bff_clear_sim_packages(bff, ue, err)) {
+                return ULAB_EBFF;
+            }
+
+            ulab_status("BFF", "add package to sim %s package=%s",
+                        ue->ref, package->ref);
+            if (bff_add_package_to_sim(bff, ue, package, err)) {
+                return ULAB_EBFF;
+            }
         }
 
         ulab_status("BFF", "activate sim %s", ue->ref);

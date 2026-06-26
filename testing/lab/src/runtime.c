@@ -41,19 +41,22 @@ static int run_script(runtime_t *rt,
     }
 
     /*
-     * Keep full script output in the per-script log, but show a small
-     * heartbeat in the terminal so long node/image builds do not look hung.
+     * Keep script output in its run log, but do not tail it to stdout.
+     * Long builds should show only a small heartbeat so they do not look hung.
      */
     n = snprintf(cmd, sizeof(cmd),
                  "mkdir -p '%s' >/dev/null 2>&1; "
-                 "touch '%s'; "
+                 ": > '%s'; "
                  "('%s' %s >> '%s' 2>&1) & "
                  "pid=$!; "
+                 "start=$(date +%%s); "
+                 "interval=${ULAB_SCRIPT_PROGRESS_INTERVAL:-10}; "
                  "while kill -0 $pid 2>/dev/null; do "
-                 "sleep ${ULAB_SCRIPT_PROGRESS_INTERVAL:-10}; "
+                 "sleep $interval; "
                  "if kill -0 $pid 2>/dev/null; then "
-                 "echo 'RUNNING  %s ...'; "
-                 "tail -n ${ULAB_SCRIPT_PROGRESS_LINES:-10} '%s' | sed 's/^/  /'; "
+                 "now=$(date +%%s); "
+                 "elapsed=$((now - start)); "
+                 "echo 'RUNNING  %s' \"${elapsed}s\"; "
                  "fi; "
                  "done; "
                  "wait $pid",
@@ -62,8 +65,7 @@ static int run_script(runtime_t *rt,
                  script,
                  args ? args : "",
                  log_path,
-                 name,
-                 log_path);
+                 name);
     if (n < 0 || (size_t)n >= sizeof(cmd)) {
         snprintf(err->msg, sizeof(err->msg), "script command too long");
         return ULAB_ERR;
