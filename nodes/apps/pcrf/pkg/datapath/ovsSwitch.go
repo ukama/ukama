@@ -9,7 +9,6 @@
 package datapath
 
 import (
-	"bytes"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -224,52 +223,135 @@ func (o *OvsSwitch) inputTable() (*ofctrl.Table, error) {
 	return t, nil
 }
 
-func (o *OvsSwitch) DeleteMeter(id uint32) error {
-	var sw *ofctrl.OFSwitch
-	var err error
-
-	sw, err = o.switchHandle()
-	if err != nil {
-		return err
+func (o *OvsSwitch) ovsOfctl(args ...string) (string, error) {
+	if o == nil || o.bridgeName == "" {
+		return "", fmt.Errorf("OVS bridge name is not set")
 	}
 
-	meterMod := openflow15.NewMeterMod()
-	meterMod.MeterId = id
-	meterMod.Command = openflow15.MC_DELETE
+	cmdArgs := []string{"-O", "OpenFlow15"}
+	cmdArgs = append(cmdArgs, args...)
 
-	return sw.Send(meterMod)
+	cmd := exec.Command("ovs-ofctl", cmdArgs...)
+	out, err := cmd.CombinedOutput()
+	output := strings.TrimSpace(string(out))
+	if err != nil {
+		return output, fmt.Errorf("ovs-ofctl %s failed: %w output=%s",
+			strings.Join(cmdArgs, " "), err, output)
+	}
+
+	return output, nil
 }
 
-func (o *OvsSwitch) AddMeter(id, rate, burstSize uint32) error {
-	var sw *ofctrl.OFSwitch
-	var err error
-	var mb util.Message
+func meterSpec(id, rate, burstSize uint32) string {
+	if burstSize > 0 {
+		return fmt.Sprintf("meter=%d,kbps,burst,stats,bands=type=drop,rate=%d,burst_size=%d",
+			id, rate, burstSize)
+	}
 
-	sw, err = o.switchHandle()
+	return fmt.Sprintf("meter=%d,kbps,stats,bands=type=drop,rate=%d",
+		id, rate)
+}
+
+func flowField(dp UeDataPath) string {
+	switch dp {
+	case TX_PATH:
+		return "nw_src"
+	case RX_PATH:
+		return "nw_dst"
+	default:
+		return ""
+	}
+}
+
+func (o *OvsSwitch) flowSpec(ip net.IP, dp UeDataPath, meter uint32, cookie uint64) (string, error) {
+	field := flowField(dp)
+	if field == "" {
+		return "", fmt.Errorf("invalid UE datapath %d", dp)
+	}
+
+	return fmt.Sprintf("cookie=0x%x,table=0,priority=100,ip,%s=%s,actions=meter:%d,NORMAL",
+		cookie, field, ip.String(), meter), nil
+}
+
+func (o *OvsSwitch) verifyFlowForUE(ip net.IP, dp UeDataPath, meter uint32) error {
+	field := flowField(dp)
+	if field == "" {
+		return fmt.Errorf("invalid UE datapath %d", dp)
+	}
+
+	out, err := o.ovsOfctl("dump-flows", o.bridgeName)
 	if err != nil {
 		return err
 	}
 
-	meter := ofctrl.NewMeter(id, ofctrl.MeterKbps, sw)
-	mbDrop := new(openflow15.MeterBandDrop)
-	meterBandHeader := *openflow15.NewMeterBandHeader()
+	needle := fmt.Sprintf("%s=%s", field, ip.String())
+	meterNeedle := fmt.Sprintf("meter:%d", meter)
+	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, "priority=100") &&
+			strings.Contains(line, needle) &&
+			strings.Contains(line, meterNeedle) &&
+			strings.Contains(line, "NORMAL") {
+			return nil
+		}
+	}
 
-	meterBandHeader.Type = uint16(ofctrl.MeterDrop)
-	meterBandHeader.Rate = rate
-	meterBandHeader.BurstSize = burstSize
+	return fmt.Errorf("OVS flow not installed bridge=%s ip=%s path=%s meter=%d flows=%s",
+		o.bridgeName, ip.String(), field, meter, out)
+}
 
-	mbDrop.MeterBandHeader = meterBandHeader
-	mb = mbDrop
-	meter.AddMeterBand(&mb)
-
-	err = meter.Install()
+func (o *OvsSwitch) addFlowForUEPath(ip net.IP, dp UeDataPath, meter uint32, cookie uint64) error {
+	spec, err := o.flowSpec(ip, dp, meter, cookie)
 	if err != nil {
-		log.Errorf("failed to install meter id=%d rate=%d burst=%d: %v",
-			id, rate, burstSize, err)
+		return err
+	}
+
+	_, err = o.ovsOfctl("add-flow", o.bridgeName, spec)
+	if err != nil {
+		return err
+	}
+
+	if err = o.verifyFlowForUE(ip, dp, meter); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (o *OvsSwitch) DeleteMeter(id uint32) error {
+	out, err := o.ovsOfctl("del-meter", o.bridgeName, fmt.Sprintf("meter=%d", id))
+	if err != nil {
+		// Deleting an already-removed meter should not break session cleanup.
+		if strings.Contains(out, "does not exist") ||
+			strings.Contains(out, "not found") ||
+			strings.Contains(out, "No such") {
+			return nil
+		}
+
+		return err
+	}
+
+	return nil
+}
+
+func (o *OvsSwitch) AddMeter(id, rate, burstSize uint32) error {
+	spec := meterSpec(id, rate, burstSize)
+
+	_, err := o.ovsOfctl("add-meter", o.bridgeName, spec)
+	if err == nil {
+		return nil
+	}
+
+	// If a previous failed attach left the meter behind, update it instead of
+	// failing the new session. This keeps retry behavior deterministic.
+	_, modErr := o.ovsOfctl("mod-meter", o.bridgeName, spec)
+	if modErr == nil {
+		return nil
+	}
+
+	log.Errorf("failed to install meter id=%d rate=%d burst=%d: add=%v mod=%v",
+		id, rate, burstSize, err, modErr)
+
+	return err
 }
 
 func (o *OvsSwitch) CreateMetersForUE(rxMeter, txMeter, rxRate, txRate, burstSize uint32) error {
@@ -329,89 +411,6 @@ func parseIPv4(ipString string) (net.IP, error) {
 	return ip4, nil
 }
 
-func (o *OvsSwitch) runOvsOfctl(args ...string) ([]byte, error) {
-	var stderr bytes.Buffer
-
-	cmd := exec.Command("ovs-ofctl", args...)
-	cmd.Stderr = &stderr
-
-	out, err := cmd.Output()
-	if err != nil {
-		return out, fmt.Errorf("ovs-ofctl %s failed: %v: %s",
-			strings.Join(args, " "), err, strings.TrimSpace(stderr.String()))
-	}
-
-	return out, nil
-}
-
-func (o *OvsSwitch) verifyUEFlow(cookie uint64, ipString string, dp UeDataPath) error {
-	out, err := o.runOvsOfctl("-O", "OpenFlow15", "dump-flows", o.bridgeName)
-	if err != nil {
-		return err
-	}
-
-	dump := string(out)
-	cookieStr := fmt.Sprintf("cookie=0x%x", cookie)
-	if !strings.Contains(dump, cookieStr) || !strings.Contains(dump, "priority=100") {
-		return fmt.Errorf("UE flow missing from OVS bridge=%s cookie=0x%x ip=%s", o.bridgeName, cookie, ipString)
-	}
-
-	switch dp {
-	case TX_PATH:
-		if !strings.Contains(dump, "nw_src="+ipString) {
-			return fmt.Errorf("UE TX flow missing src match bridge=%s cookie=0x%x ip=%s", o.bridgeName, cookie, ipString)
-		}
-	case RX_PATH:
-		if !strings.Contains(dump, "nw_dst="+ipString) {
-			return fmt.Errorf("UE RX flow missing dst match bridge=%s cookie=0x%x ip=%s", o.bridgeName, cookie, ipString)
-		}
-	}
-
-	return nil
-}
-
-func (o *OvsSwitch) installUEFlow(ipString string, meter uint32, cookie uint64, dp UeDataPath) error {
-	var match string
-	var path string
-
-	switch dp {
-	case TX_PATH:
-		match = "nw_src=" + ipString
-		path = "TX"
-	case RX_PATH:
-		match = "nw_dst=" + ipString
-		path = "RX"
-	default:
-		return fmt.Errorf("invalid UE datapath %d", dp)
-	}
-
-	flow := fmt.Sprintf("cookie=0x%x,table=0,priority=100,ip,%s,actions=meter:%d,NORMAL",
-		cookie, match, meter)
-
-	_, err := o.runOvsOfctl("-O", "OpenFlow15", "add-flow", o.bridgeName, flow)
-	if err != nil {
-		return fmt.Errorf("failed to install %s flow for UE %s: %w", path, ipString, err)
-	}
-
-	if err = o.verifyUEFlow(cookie, ipString, dp); err != nil {
-		return fmt.Errorf("failed to verify %s flow for UE %s: %w", path, ipString, err)
-	}
-
-	log.Infof("Installed %s flow for UE %s meter=%d cookie=0x%x",
-		path, ipString, meter, cookie)
-	return nil
-}
-
-func (o *OvsSwitch) deleteUEFlowByCookie(cookie uint64) error {
-	flow := fmt.Sprintf("cookie=0x%x/-1", cookie)
-	_, err := o.runOvsOfctl("-O", "OpenFlow15", "del-flows", o.bridgeName, flow)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (o *OvsSwitch) createTxFlow(ip *net.IP) (*ofctrl.Flow, error) {
 	table, err := o.inputTable()
 	if err != nil {
@@ -456,37 +455,21 @@ func (o *OvsSwitch) updateFlowForUE(ipString string, rxMeter, txMeter uint32, rx
 		log.Errorf("Invalid IP address %s", ipString)
 		return err
 	}
-	ipString = ip.String()
 
-	if operationType == openflow15.FC_DELETE || operationType == openflow15.FC_DELETE_STRICT {
-		if err = o.deleteUEFlowByCookie(rxCookie); err != nil {
-			log.Errorf("Failed to delete RX flow for UE %s cookie=0x%x. Error: %s",
-				ipString, rxCookie, err.Error())
-			return err
-		}
-
-		if err = o.deleteUEFlowByCookie(txCookie); err != nil {
-			log.Errorf("Failed to delete TX flow for UE %s cookie=0x%x. Error: %s",
-				ipString, txCookie, err.Error())
-			return err
-		}
-
-		return nil
+	if operationType != openflow15.FC_ADD {
+		return fmt.Errorf("unsupported UE flow operation %d", operationType)
 	}
 
-	/*
-	 * Do not use ofctrl.Flow.ApplyAction(NewMeterAction(...)) here.
-	 * In the failing lab run, PCRF reported ueCount=1 but br0 only had
-	 * the default UE CIDR drop flows, which means ofctrl returned success
-	 * while OVS never realized the per-UE flow mods. Install the exact OVS
-	 * flows directly and verify they are present before session setup returns.
-	 */
-	if err = o.installUEFlow(ipString, rxMeter, rxCookie, RX_PATH); err != nil {
+	if err = o.addFlowForUEPath(ip, RX_PATH, rxMeter, rxCookie); err != nil {
+		log.Errorf("Failed to install RX flow for UE %s with meter id %d. Error: %s",
+			ipString, rxMeter, err.Error())
 		return err
 	}
 
-	if err = o.installUEFlow(ipString, txMeter, txCookie, TX_PATH); err != nil {
-		_ = o.deleteUEFlowByCookie(rxCookie)
+	if err = o.addFlowForUEPath(ip, TX_PATH, txMeter, txCookie); err != nil {
+		log.Errorf("Failed to install TX flow for UE %s with meter id %d. Error: %s",
+			ipString, txMeter, err.Error())
+		_ = o.deleteFlowfromSwitch(ip, RX_PATH)
 		return err
 	}
 
@@ -516,31 +499,18 @@ func getFlowKey(m ofctrl.FlowMatch) string {
 }
 
 func (o *OvsSwitch) deleteFlowfromSwitch(ip net.IP, dp UeDataPath) error {
-	sw, err := o.switchHandle()
-	if err != nil {
-		return err
+	field := flowField(dp)
+	if field == "" {
+		return fmt.Errorf("invalid UE datapath %d", dp)
 	}
 
-	flow := openflow15.NewFlowMod()
-	flow.TableId = 0
-	flow.Priority = 100
-	flow.Match = *openflow15.NewMatch()
-	flow.Command = openflow15.FC_DELETE
+	match := fmt.Sprintf("table=0,priority=100,ip,%s=%s",
+		field, ip.String())
 
-	flow.Match.AddField(*openflow15.NewEthTypeField(0x800))
-
-	switch dp {
-	case TX_PATH:
-		flow.Match.AddField(*openflow15.NewIpv4SrcField(ip, nil))
-
-	case RX_PATH:
-		flow.Match.AddField(*openflow15.NewIpv4DstField(ip, nil))
-	}
-
-	err = sw.Send(flow)
+	_, err := o.ovsOfctl("--strict", "del-flows", o.bridgeName, match)
 	if err != nil {
-		log.Errorf("failed to delete flow for UE %v. Error: %s",
-			ip, err.Error())
+		log.Errorf("failed to delete flow for UE %v path=%s. Error: %s",
+			ip, field, err.Error())
 		return err
 	}
 
@@ -548,11 +518,10 @@ func (o *OvsSwitch) deleteFlowfromSwitch(ip net.IP, dp UeDataPath) error {
 }
 
 func (o *OvsSwitch) deleteFlowFromTable(ip net.IP, dp UeDataPath) error {
-	/*
-	 * UE flows are installed directly in OVS with ovs-ofctl, so ofctrl's
-	 * in-memory table may not contain them. Keep this function as a no-op
-	 * to preserve call structure while avoiding false cleanup errors.
-	 */
+	// UE flows are installed directly in OVS with ovs-ofctl because the ofctrl
+	// Flow.Send path can report success while the switch does not contain the
+	// priority=100 UE allow/meter flows. There is no ofctrl table entry to clean
+	// up for these direct installs.
 	return nil
 }
 
