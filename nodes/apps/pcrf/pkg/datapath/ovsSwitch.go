@@ -224,117 +224,6 @@ func (o *OvsSwitch) inputTable() (*ofctrl.Table, error) {
 	return t, nil
 }
 
-func parseIPv4(ipString string) (net.IP, error) {
-	ip := net.ParseIP(ipString)
-	if ip == nil {
-		return nil, fmt.Errorf("invalid ip %s", ipString)
-	}
-
-	ip4 := ip.To4()
-	if ip4 == nil {
-		return nil, fmt.Errorf("invalid ipv4 %s", ipString)
-	}
-
-	return ip4, nil
-}
-
-func (o *OvsSwitch) ovsOfctl(args ...string) (string, error) {
-	allArgs := append([]string{"-O", "OpenFlow15"}, args...)
-	cmd := exec.Command("ovs-ofctl", allArgs...)
-
-	var out bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &stderr
-
-	if err := cmd.Run(); err != nil {
-		msg := strings.TrimSpace(stderr.String())
-		if msg == "" {
-			msg = strings.TrimSpace(out.String())
-		}
-		if msg == "" {
-			msg = err.Error()
-		}
-		return out.String(), fmt.Errorf("ovs-ofctl %s failed: %s", strings.Join(allArgs, " "), msg)
-	}
-
-	return out.String(), nil
-}
-
-func (o *OvsSwitch) dumpFlows() (string, error) {
-	return o.ovsOfctl("dump-flows", o.bridgeName)
-}
-
-func (o *OvsSwitch) flowCookieInstalled(cookie uint64) bool {
-	needle := fmt.Sprintf("cookie=0x%x", cookie)
-
-	for i := 0; i < 10; i++ {
-		flows, err := o.dumpFlows()
-		if err == nil && strings.Contains(flows, needle) {
-			return true
-		}
-		time.Sleep(100 * time.Millisecond)
-	}
-
-	return false
-}
-
-func (o *OvsSwitch) verifyUEFlows(ipString string, rxCookie, txCookie uint64) error {
-	rxOK := o.flowCookieInstalled(rxCookie)
-	txOK := o.flowCookieInstalled(txCookie)
-
-	if rxOK && txOK {
-		return nil
-	}
-
-	flows, err := o.dumpFlows()
-	if err != nil {
-		return fmt.Errorf("UE %s OVS flow verification failed: rx=%v tx=%v dump failed: %w",
-			ipString, rxOK, txOK, err)
-	}
-
-	return fmt.Errorf("UE %s OVS flow verification failed: rxCookie=0x%x installed=%v txCookie=0x%x installed=%v flows=%s",
-		ipString, rxCookie, rxOK, txCookie, txOK, strings.TrimSpace(flows))
-}
-
-func (o *OvsSwitch) installMeterWithOvsOfctl(id, rate, burstSize uint32) error {
-	_, _ = o.ovsOfctl("del-meter", o.bridgeName, fmt.Sprintf("meter=%d", id))
-
-	/*
-	 * OVS expects "bands=" in meter syntax. A previous fallback used "band=",
-	 * which makes session setup fail before attach completes.
-	 */
-	meter := fmt.Sprintf("meter=%d,kbps,burst,bands=type=drop,rate=%d,burst_size=%d",
-		id, rate, burstSize)
-	_, err := o.ovsOfctl("add-meter", o.bridgeName, meter)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (o *OvsSwitch) installUEFlowsWithOvsOfctl(ipString string, rxMeter, txMeter uint32, rxCookie, txCookie uint64) error {
-	rxFlow := fmt.Sprintf("cookie=0x%x,priority=100,ip,nw_dst=%s,actions=meter:%d,NORMAL",
-		rxCookie, ipString, rxMeter)
-	txFlow := fmt.Sprintf("cookie=0x%x,priority=100,ip,nw_src=%s,actions=meter:%d,NORMAL",
-		txCookie, ipString, txMeter)
-
-	_, _ = o.ovsOfctl("del-flows", o.bridgeName, fmt.Sprintf("cookie=0x%x/-1", rxCookie))
-	_, _ = o.ovsOfctl("del-flows", o.bridgeName, fmt.Sprintf("cookie=0x%x/-1", txCookie))
-
-	if _, err := o.ovsOfctl("add-flow", o.bridgeName, rxFlow); err != nil {
-		return fmt.Errorf("failed to install RX flow with ovs-ofctl: %w", err)
-	}
-
-	if _, err := o.ovsOfctl("add-flow", o.bridgeName, txFlow); err != nil {
-		_, _ = o.ovsOfctl("del-flows", o.bridgeName, fmt.Sprintf("cookie=0x%x/-1", rxCookie))
-		return fmt.Errorf("failed to install TX flow with ovs-ofctl: %w", err)
-	}
-
-	return nil
-}
-
 func (o *OvsSwitch) DeleteMeter(id uint32) error {
 	var sw *ofctrl.OFSwitch
 	var err error
@@ -426,6 +315,103 @@ func addActionsToFlow(f *ofctrl.Flow, meter uint32) *ofctrl.Flow {
 	return f
 }
 
+func parseIPv4(ipString string) (net.IP, error) {
+	ip := net.ParseIP(ipString)
+	if ip == nil {
+		return nil, fmt.Errorf("invalid ip %s", ipString)
+	}
+
+	ip4 := ip.To4()
+	if ip4 == nil {
+		return nil, fmt.Errorf("invalid ipv4 %s", ipString)
+	}
+
+	return ip4, nil
+}
+
+func (o *OvsSwitch) runOvsOfctl(args ...string) ([]byte, error) {
+	var stderr bytes.Buffer
+
+	cmd := exec.Command("ovs-ofctl", args...)
+	cmd.Stderr = &stderr
+
+	out, err := cmd.Output()
+	if err != nil {
+		return out, fmt.Errorf("ovs-ofctl %s failed: %v: %s",
+			strings.Join(args, " "), err, strings.TrimSpace(stderr.String()))
+	}
+
+	return out, nil
+}
+
+func (o *OvsSwitch) verifyUEFlow(cookie uint64, ipString string, dp UeDataPath) error {
+	out, err := o.runOvsOfctl("-O", "OpenFlow15", "dump-flows", o.bridgeName)
+	if err != nil {
+		return err
+	}
+
+	dump := string(out)
+	cookieStr := fmt.Sprintf("cookie=0x%x", cookie)
+	if !strings.Contains(dump, cookieStr) || !strings.Contains(dump, "priority=100") {
+		return fmt.Errorf("UE flow missing from OVS bridge=%s cookie=0x%x ip=%s", o.bridgeName, cookie, ipString)
+	}
+
+	switch dp {
+	case TX_PATH:
+		if !strings.Contains(dump, "nw_src="+ipString) {
+			return fmt.Errorf("UE TX flow missing src match bridge=%s cookie=0x%x ip=%s", o.bridgeName, cookie, ipString)
+		}
+	case RX_PATH:
+		if !strings.Contains(dump, "nw_dst="+ipString) {
+			return fmt.Errorf("UE RX flow missing dst match bridge=%s cookie=0x%x ip=%s", o.bridgeName, cookie, ipString)
+		}
+	}
+
+	return nil
+}
+
+func (o *OvsSwitch) installUEFlow(ipString string, meter uint32, cookie uint64, dp UeDataPath) error {
+	var match string
+	var path string
+
+	switch dp {
+	case TX_PATH:
+		match = "nw_src=" + ipString
+		path = "TX"
+	case RX_PATH:
+		match = "nw_dst=" + ipString
+		path = "RX"
+	default:
+		return fmt.Errorf("invalid UE datapath %d", dp)
+	}
+
+	flow := fmt.Sprintf("cookie=0x%x,table=0,priority=100,ip,%s,actions=meter:%d,NORMAL",
+		cookie, match, meter)
+
+	_, err := o.runOvsOfctl("-O", "OpenFlow15", "add-flow", o.bridgeName, flow)
+	if err != nil {
+		return fmt.Errorf("failed to install %s flow for UE %s: %w", path, ipString, err)
+	}
+
+	if err = o.verifyUEFlow(cookie, ipString, dp); err != nil {
+		return fmt.Errorf("failed to verify %s flow for UE %s: %w", path, ipString, err)
+	}
+
+	log.Infof("Installed %s flow for UE %s meter=%d cookie=0x%x",
+		path, ipString, meter, cookie)
+	return nil
+}
+
+func (o *OvsSwitch) deleteUEFlowByCookie(cookie uint64) error {
+	flow := fmt.Sprintf("cookie=0x%x/-1", cookie)
+	_, err := o.runOvsOfctl("-O", "OpenFlow15", "del-flows", o.bridgeName, flow)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (o *OvsSwitch) createTxFlow(ip *net.IP) (*ofctrl.Flow, error) {
 	table, err := o.inputTable()
 	if err != nil {
@@ -470,44 +456,39 @@ func (o *OvsSwitch) updateFlowForUE(ipString string, rxMeter, txMeter uint32, rx
 		log.Errorf("Invalid IP address %s", ipString)
 		return err
 	}
+	ipString = ip.String()
 
-	rxF, err := o.createRxFlow(&ip)
-	if err != nil {
-		log.Errorf("Failed to create RX flow for UE %s with meter id %d. Error: %s",
-			ipString, rxMeter, err.Error())
+	if operationType == openflow15.FC_DELETE || operationType == openflow15.FC_DELETE_STRICT {
+		if err = o.deleteUEFlowByCookie(rxCookie); err != nil {
+			log.Errorf("Failed to delete RX flow for UE %s cookie=0x%x. Error: %s",
+				ipString, rxCookie, err.Error())
+			return err
+		}
+
+		if err = o.deleteUEFlowByCookie(txCookie); err != nil {
+			log.Errorf("Failed to delete TX flow for UE %s cookie=0x%x. Error: %s",
+				ipString, txCookie, err.Error())
+			return err
+		}
+
+		return nil
+	}
+
+	/*
+	 * Do not use ofctrl.Flow.ApplyAction(NewMeterAction(...)) here.
+	 * In the failing lab run, PCRF reported ueCount=1 but br0 only had
+	 * the default UE CIDR drop flows, which means ofctrl returned success
+	 * while OVS never realized the per-UE flow mods. Install the exact OVS
+	 * flows directly and verify they are present before session setup returns.
+	 */
+	if err = o.installUEFlow(ipString, rxMeter, rxCookie, RX_PATH); err != nil {
 		return err
 	}
 
-	rxF.CookieID = rxCookie
-	rxF = addActionsToFlow(rxF, rxMeter)
-
-	err = rxF.Send(operationType)
-	if err != nil {
-		log.Errorf("Failed to submit RX flow for UE %s with meter id %d. Error: %s",
-			ipString, rxMeter, err.Error())
+	if err = o.installUEFlow(ipString, txMeter, txCookie, TX_PATH); err != nil {
+		_ = o.deleteUEFlowByCookie(rxCookie)
 		return err
 	}
-
-	rxF.UpdateInstallStatus(true)
-
-	txF, err := o.createTxFlow(&ip)
-	if err != nil {
-		log.Errorf("Failed to create TX flow for UE %s with meter id %d. Error: %s",
-			ipString, txMeter, err.Error())
-		return err
-	}
-
-	txF.CookieID = txCookie
-	txF = addActionsToFlow(txF, txMeter)
-
-	err = txF.Send(operationType)
-	if err != nil {
-		log.Errorf("Failed to submit TX flow for UE %s with meter id %d. Error: %s",
-			ipString, txMeter, err.Error())
-		return err
-	}
-
-	txF.UpdateInstallStatus(true)
 
 	return nil
 }
@@ -567,44 +548,11 @@ func (o *OvsSwitch) deleteFlowfromSwitch(ip net.IP, dp UeDataPath) error {
 }
 
 func (o *OvsSwitch) deleteFlowFromTable(ip net.IP, dp UeDataPath) error {
-	table, err := o.inputTable()
-	if err != nil {
-		return err
-	}
-
-	f := new(ofctrl.Flow)
-	f.Table = table
-
-	switch dp {
-	case TX_PATH:
-		f.Match = ofctrl.FlowMatch{
-			Ethertype: 0x0800,
-			Priority:  100,
-			IpSa:      &ip,
-		}
-
-	case RX_PATH:
-		f.Match = ofctrl.FlowMatch{
-			Ethertype: 0x0800,
-			Priority:  100,
-			IpDa:      &ip,
-		}
-	}
-
-	f.UpdateInstallStatus(true)
-
-	flowKey := getFlowKey(f.Match)
-	if flowKey == "" {
-		return fmt.Errorf("empty flow key for UE %v", ip)
-	}
-
-	err = table.DeleteFlow(flowKey)
-	if err != nil {
-		log.Errorf("Failed to remove flow for UE %v from the table. Error: %s",
-			ip, err.Error())
-		return err
-	}
-
+	/*
+	 * UE flows are installed directly in OVS with ovs-ofctl, so ofctrl's
+	 * in-memory table may not contain them. Keep this function as a no-op
+	 * to preserve call structure while avoiding false cleanup errors.
+	 */
 	return nil
 }
 
@@ -683,41 +631,6 @@ func (o *OvsSwitch) AddUEDataPath(ipString string, rxMeter, txMeter, rxRate, txR
 		return err
 	}
 
-	err = o.verifyUEFlows(ipString, rxCookie, txCookie)
-	if err == nil {
-		return nil
-	}
-
-	/*
-	 * FlowMod errors can be asynchronous. If OVS rejected the ofctrl flow, the
-	 * default UE CIDR drop rule remains and traffic times out even though PCRF
-	 * reports an active session. Retry through ovs-ofctl and verify the bridge.
-	 */
-	log.Warnf("UE %s flows not visible after ofctrl install, retrying with ovs-ofctl: %v",
-		ipString, err)
-
-	if meterErr := o.installMeterWithOvsOfctl(rxMeter, rxRate, burstSize); meterErr != nil {
-		_ = o.DeleteMetersForUE(rxMeter, txMeter)
-		return fmt.Errorf("failed to install RX meter with ovs-ofctl for UE %s: %w", ipString, meterErr)
-	}
-
-	if meterErr := o.installMeterWithOvsOfctl(txMeter, txRate, burstSize); meterErr != nil {
-		_ = o.DeleteMetersForUE(rxMeter, txMeter)
-		return fmt.Errorf("failed to install TX meter with ovs-ofctl for UE %s: %w", ipString, meterErr)
-	}
-
-	if flowErr := o.installUEFlowsWithOvsOfctl(ipString, rxMeter, txMeter, rxCookie, txCookie); flowErr != nil {
-		_ = o.DeleteMetersForUE(rxMeter, txMeter)
-		return flowErr
-	}
-
-	err = o.verifyUEFlows(ipString, rxCookie, txCookie)
-	if err != nil {
-		_ = o.DeleteMetersForUE(rxMeter, txMeter)
-		return err
-	}
-
-	log.Infof("Verified OVS flows for UE %s rxCookie=0x%x txCookie=0x%x", ipString, rxCookie, txCookie)
 	return nil
 }
 
