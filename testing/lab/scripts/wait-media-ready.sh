@@ -27,12 +27,8 @@ fi
 
 HTTP_PORT="${HTTP_PORT:-8080}"
 IPERF_PORT="${IPERF_PORT:-5201}"
-MEDIA_IF="${MEDIA_IF:-eth0}"
-MEDIA_BR="${MEDIA_BR:-br0}"
-TOWER_IF="${TOWER_IF:-ulabmed0}"
-TUN_TABLE="${TUN_TABLE:-2000}"
-BR_TABLE="${BR_TABLE:-1000}"
 UE_CIDR="${UE_CIDR:-192.168.8.0/22}"
+TUN_TABLE="${TUN_TABLE:-2000}"
 
 media_local_ready() {
     podman inspect -f '{{.State.Running}}' "$MEDIA_CONTAINER" 2>/dev/null | grep -q '^true$' && \
@@ -41,35 +37,19 @@ media_local_ready() {
     podman exec "$MEDIA_CONTAINER" sh -lc 'pgrep iperf3 >/dev/null' \
         >/dev/null 2>&1 && \
     podman exec "$MEDIA_CONTAINER" sh -lc \
-        "ip addr show '$MEDIA_IF' | grep -q '$MEDIA_IP/'" >/dev/null 2>&1 && \
-    podman exec "$MEDIA_CONTAINER" sh -lc \
-        "ip route | grep -q 'default via $MEDIA_GW'" >/dev/null 2>&1
+        "ip route show '$UE_CIDR' | grep -q 'via $TNODE_IP'" >/dev/null 2>&1
 }
 
 tower_path_ready() {
     podman inspect -f '{{.State.Running}}' "$TNODE_CONTAINER" 2>/dev/null | grep -q '^true$' && \
-    podman exec "$TNODE_CONTAINER" ovs-vsctl port-to-br "$TOWER_IF" \
-        >/dev/null 2>&1 && \
     podman exec "$TNODE_CONTAINER" curl -fsS --max-time 2 \
-        "http://$MEDIA_IP:$HTTP_PORT/" >/dev/null 2>&1 && \
-    podman exec "$TNODE_CONTAINER" sh -lc \
-        "ip route show table '$TUN_TABLE' | grep -q '^$MEDIA_IP dev $MEDIA_BR'" \
-        >/dev/null 2>&1 && \
-    podman exec "$TNODE_CONTAINER" sh -lc \
-        "ip route show table '$BR_TABLE' | grep -q '^$UE_CIDR dev $TUN_IF'" \
-        >/dev/null 2>&1 && \
-    podman exec "$TNODE_CONTAINER" sh -lc \
-        "iptables -C FORWARD -i '$TUN_IF' -o '$MEDIA_BR' -d '$MEDIA_IP/32' -j ACCEPT" \
-        >/dev/null 2>&1 && \
-    podman exec "$TNODE_CONTAINER" sh -lc \
-        "iptables -C FORWARD -i '$MEDIA_BR' -o '$TUN_IF' -s '$MEDIA_IP/32' -d '$UE_CIDR' -j ACCEPT" \
-        >/dev/null 2>&1
+        "http://$MEDIA_IP:$HTTP_PORT/" >/dev/null 2>&1
 }
 
 start_ts="$(date +%s)"
 while :; do
     if media_local_ready && tower_path_ready; then
-        echo "media-ready container=$MEDIA_CONTAINER ip=$MEDIA_IP bridge=$MEDIA_BR if=$TOWER_IF"
+        echo "media-ready container=$MEDIA_CONTAINER ip=$MEDIA_IP mode=${MEDIA_MODE:-podman-net}"
         exit 0
     fi
 
@@ -81,11 +61,10 @@ while :; do
         echo "---- media net ----" >&2
         podman exec "$MEDIA_CONTAINER" ip addr >&2 || true
         podman exec "$MEDIA_CONTAINER" ip route >&2 || true
-        echo "---- tower bridge ----" >&2
-        podman exec "$TNODE_CONTAINER" ovs-vsctl show >&2 || true
-        podman exec "$TNODE_CONTAINER" ip addr show "$TOWER_IF" >&2 || true
+        echo "---- tower net ----" >&2
+        podman exec "$TNODE_CONTAINER" ip addr >&2 || true
+        podman exec "$TNODE_CONTAINER" ip route >&2 || true
         podman exec "$TNODE_CONTAINER" ip route show table "$TUN_TABLE" >&2 || true
-        podman exec "$TNODE_CONTAINER" ip route show table "$BR_TABLE" >&2 || true
         podman exec "$TNODE_CONTAINER" iptables -S FORWARD >&2 || true
         podman exec "$TNODE_CONTAINER" curl -v --max-time 3 \
             "http://$MEDIA_IP:$HTTP_PORT/" >&2 || true
