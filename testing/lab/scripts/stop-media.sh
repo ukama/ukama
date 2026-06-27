@@ -25,6 +25,14 @@ fi
 
 MEDIA_BR="${MEDIA_BR:-br0}"
 TOWER_IF="${TOWER_IF:-ulabmed0}"
+TUN_TABLE="${TUN_TABLE:-2000}"
+
+if [ -n "${TNODE_CONTAINER:-}" ] && [ -n "${MEDIA_IP:-}" ]; then
+    echo "stop-media: delete route $MEDIA_IP/32 table $TUN_TABLE"
+    podman exec "$TNODE_CONTAINER" \
+        ip route del "$MEDIA_IP/32" table "$TUN_TABLE" \
+        >/dev/null 2>&1 || true
+fi
 
 if [ -n "${TNODE_CONTAINER:-}" ] && [ -n "${TOWER_IF:-}" ]; then
     echo "stop-media: del-port $MEDIA_BR $TOWER_IF"

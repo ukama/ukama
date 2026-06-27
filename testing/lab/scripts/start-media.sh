@@ -33,6 +33,12 @@ MEDIA_GW="${ULAB_MEDIA_GW:-10.10.10.1}"
 TOWER_IF="${ULAB_MEDIA_TOWER_IF:-ulabmed0}"
 MEDIA_IF="${ULAB_MEDIA_IF:-eth0}"
 
+# init-network policy-routes packets arriving from the UE tunnel using this table.
+# Media is directly attached to br0, so add a host route there too; otherwise
+# UE->media packets follow the table default gateway and never hit media.
+TUN_IF="${ULAB_MEDIA_TUN_IF:-tun3}"
+TUN_TABLE="${ULAB_MEDIA_TUN_TABLE:-2000}"
+
 # Only host network namespace plumbing needs privilege.
 # Keep podman rootless. Example:
 #   sudo -v
@@ -167,11 +173,19 @@ attach_media_to_tower_bridge() {
     host_nsenter -t "$media_pid" -n ip link set "$MEDIA_IF" up
     host_nsenter -t "$media_pid" -n ip route replace default via "$MEDIA_GW"
 
+    # init-network sends packets that enter from tun3 through table 2000.
+    # Add a more specific route for this lab media host; without it,
+    # UE->media traffic follows the default gateway in that table and times out.
+    podman exec "$tower_container" \
+        ip route replace "$MEDIA_IP/32" dev "$MEDIA_BR" table "$TUN_TABLE"
+    podman exec "$tower_container" ip route flush cache >/dev/null 2>&1 || true
+
     if ! podman exec "$tower_container" curl -fsS --max-time 3 \
         "http://$MEDIA_IP:$HTTP_PORT/" >/dev/null 2>&1; then
         echo "media user-plane HTTP check failed from tower: http://$MEDIA_IP:$HTTP_PORT/" >&2
         podman exec "$tower_container" ip addr show "$TOWER_IF" >&2 || true
         podman exec "$tower_container" ovs-vsctl show >&2 || true
+        podman exec "$tower_container" ip route show table "$TUN_TABLE" >&2 || true
         podman exec "$media_container" ip addr >&2 || true
         podman exec "$media_container" ip route >&2 || true
         return 1
@@ -274,6 +288,8 @@ MEDIA_GW=$MEDIA_GW
 MEDIA_BR=$MEDIA_BR
 MEDIA_IF=$MEDIA_IF
 TOWER_IF=$TOWER_IF
+TUN_IF=$TUN_IF
+TUN_TABLE=$TUN_TABLE
 TNODE_CONTAINER=$TNODE_CONTAINER
 HTTP_PORT=$HTTP_PORT
 IPERF_PORT=$IPERF_PORT
