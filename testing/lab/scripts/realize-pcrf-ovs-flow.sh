@@ -51,8 +51,18 @@ json_get_any_first() {
 }
 
 json_objects() {
-    # PCRF returns a compact array of objects. Split it without needing jq.
-    printf '%s' "$1" | tr -d '\n' | sed 's/},{/}\
+    # PCRF may return pretty JSON:
+    # [
+    #   { ... },
+    #   { ... }
+    # ]
+    #
+    # Normalize it into one object per line without requiring jq. The previous
+    # version only handled compact `},{` and failed on `}, {` / pretty output.
+    printf '%s' "$1" | tr '\n' ' ' | \
+        sed 's/^[[:space:]]*\[[[:space:]]*//' | \
+        sed 's/[[:space:]]*\][[:space:]]*$//' | \
+        sed 's/}[[:space:]]*,[[:space:]]*{/}\
 {/g'
 }
 
@@ -122,7 +132,7 @@ rx_obj="$(json_objects "$flow_json" | sed -n '1p')"
 tx_obj="$(json_objects "$flow_json" | sed -n '2p')"
 
 if [ -z "$rx_obj" ] || [ -z "$tx_obj" ]; then
-    echo "PCRF did not return two flow objects for IMSI $IMSI: $flow_json" >&2
+    echo "failed to parse two PCRF flow objects for IMSI $IMSI: $flow_json" >&2
     exit 1
 fi
 
