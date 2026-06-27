@@ -27,6 +27,11 @@ fi
 BRIDGE="${PCRF_OVS_BRIDGE:-br0}"
 PCRF_BASE="http://127.0.0.1:18030"
 
+# Fallback only exists for lab debugging. Keep default off so we do not silently
+# bypass PCRF metering. Set ULAB_OVS_ALLOW_UNMETERED_FALLBACK=1 only when you
+# explicitly want to prove the remaining UE->media path even if meters fail.
+ALLOW_UNMETERED_FALLBACK="${ULAB_OVS_ALLOW_UNMETERED_FALLBACK:-0}"
+
 if [ -z "${TNODE_CONTAINER:-}" ]; then
     echo "TNODE_CONTAINER missing in $STATE_FILE" >&2
     exit 1
@@ -51,14 +56,6 @@ json_get_any_first() {
 }
 
 json_objects() {
-    # PCRF may return pretty JSON:
-    # [
-    #   { ... },
-    #   { ... }
-    # ]
-    #
-    # Normalize it into one object per line without requiring jq. The previous
-    # version only handled compact `},{` and failed on `}, {` / pretty output.
     printf '%s' "$1" | tr '\n' ' ' | \
         sed 's/^[[:space:]]*\[[[:space:]]*//' | \
         sed 's/[[:space:]]*\][[:space:]]*$//' | \
@@ -66,43 +63,106 @@ json_objects() {
 {/g'
 }
 
+only_digits() {
+    printf '%s' "$1" | tr -cd '0-9'
+}
+
 hex_cookie() {
-    # PCRF cookies are generated from uint32 today. awk keeps this portable.
     awk -v n="$1" 'BEGIN { printf "0x%x", n }'
 }
 
-ovs() {
+ovs15() {
     podman exec "$TNODE_CONTAINER" ovs-ofctl -O OpenFlow15 "$@"
+}
+
+ovs_proto() {
+    proto="$1"
+    shift
+    podman exec "$TNODE_CONTAINER" ovs-ofctl -O "$proto" "$@"
+}
+
+dump_ovs_state() {
+    echo "---- OVS meters ----" >&2
+    ovs15 dump-meters "$BRIDGE" >&2 || true
+    echo "---- OVS flows ----" >&2
+    ovs15 dump-flows "$BRIDGE" >&2 || true
+}
+
+meter_exists() {
+    id="$1"
+    ovs15 dump-meters "$BRIDGE" 2>/dev/null | grep -Eq "(meter=$id([^0-9]|$)|meter:$id([^0-9]|$)|^ *$id:)"
+}
+
+try_meter() {
+    id="$1"
+    rate="$2"
+    proto="$3"
+    spec="$4"
+
+    echo "pcrf-ovs: try meter id=$id proto=$proto spec=$spec" >&2
+
+    # Delete first so every retry is deterministic. del-meter returns failure
+    # if the meter is absent; ignore that.
+    ovs_proto "$proto" del-meter "$BRIDGE" "meter=$id" >/dev/null 2>&1 || true
+
+    err="$(ovs_proto "$proto" add-meter "$BRIDGE" "$spec" 2>&1 >/dev/null)" && {
+        meter_exists "$id" && return 0
+        echo "pcrf-ovs: add-meter returned success but meter $id is not visible" >&2
+        return 1
+    }
+
+    echo "pcrf-ovs: add-meter failed id=$id proto=$proto err=$err" >&2
+    return 1
 }
 
 ensure_meter() {
     id="$1"
     rate="$2"
-    burst="$3"
 
-    if [ -z "$id" ] || [ -z "$rate" ]; then
-        echo "invalid meter id/rate id=$id rate=$rate" >&2
+    id="$(only_digits "$id")"
+    rate="$(only_digits "$rate")"
+
+    if [ -z "$id" ]; then
+        echo "invalid meter id: $id" >&2
         return 1
     fi
 
-    if [ "${burst:-0}" -gt 0 ] 2>/dev/null; then
-        spec="meter=$id,kbps,burst,stats,bands=type=drop,rate=$rate,burst_size=$burst"
-    else
-        spec="meter=$id,kbps,stats,bands=type=drop,rate=$rate"
+    # Keep rate sane and definitely non-empty. PCRF policy values have had
+    # serialization differences in lab; this script is only realizing the meter
+    # objects PCRF already assigned by ID.
+    if [ -z "$rate" ] || [ "$rate" -le 0 ] 2>/dev/null; then
+        rate=1000000
     fi
 
-    # Make retries deterministic: add if missing, modify if it already exists.
-    ovs add-meter "$BRIDGE" "$spec" >/dev/null 2>&1 || \
-        ovs mod-meter "$BRIDGE" "$spec" >/dev/null
+    # Try the forms used by common OVS versions. Official docs describe
+    # add-meter switch meter, with bands after all other fields; examples in
+    # the wild use both "band=" and "bands=" depending on version.
+    for proto in OpenFlow13 OpenFlow15; do
+        try_meter "$id" "$rate" "$proto" \
+            "meter=$id,kbps,band=type=drop,rate=$rate" && return 0
+
+        try_meter "$id" "$rate" "$proto" \
+            "meter=$id,kbps,bands=type=drop,rate=$rate" && return 0
+
+        try_meter "$id" "$rate" "$proto" \
+            "meter=$id,kbps,stats,band=type=drop,rate=$rate" && return 0
+
+        try_meter "$id" "$rate" "$proto" \
+            "meter=$id,kbps,stats,bands=type=drop,rate=$rate" && return 0
+    done
+
+    echo "pcrf-ovs: failed to create OVS meter id=$id rate=$rate" >&2
+    dump_ovs_state
+    return 1
 }
 
 del_flow() {
     field="$1"
-    ovs --strict del-flows "$BRIDGE" "table=0,priority=100,ip,$field=$UE_IP" \
+    ovs15 --strict del-flows "$BRIDGE" "table=0,priority=100,ip,$field=$UE_IP" \
         >/dev/null 2>&1 || true
 }
 
-add_flow() {
+add_flow_metered() {
     field="$1"
     cookie="$2"
     meter="$3"
@@ -110,19 +170,41 @@ add_flow() {
     cookie_hex="$(hex_cookie "$cookie")"
     spec="cookie=$cookie_hex,table=0,priority=100,ip,$field=$UE_IP,actions=meter:$meter,NORMAL"
 
+    echo "pcrf-ovs: add flow $spec" >&2
     del_flow "$field"
-    ovs add-flow "$BRIDGE" "$spec" >/dev/null
+    ovs15 add-flow "$BRIDGE" "$spec" >/dev/null
 }
 
-verify_flow() {
+add_flow_unmetered() {
+    field="$1"
+    cookie="$2"
+
+    cookie_hex="$(hex_cookie "$cookie")"
+    spec="cookie=$cookie_hex,table=0,priority=100,ip,$field=$UE_IP,actions=NORMAL"
+
+    echo "pcrf-ovs: add UNMETERED LAB FALLBACK flow $spec" >&2
+    del_flow "$field"
+    ovs15 add-flow "$BRIDGE" "$spec" >/dev/null
+}
+
+verify_flow_metered() {
     field="$1"
     meter="$2"
 
-    flows="$(ovs dump-flows "$BRIDGE" 2>/dev/null || true)"
+    flows="$(ovs15 dump-flows "$BRIDGE" 2>/dev/null || true)"
     printf '%s\n' "$flows" | grep -q "priority=100" && \
     printf '%s\n' "$flows" | grep -q "$field=$UE_IP" && \
     printf '%s\n' "$flows" | grep -q "meter:$meter" && \
     printf '%s\n' "$flows" | grep -q "NORMAL"
+}
+
+verify_flow_unmetered() {
+    field="$1"
+
+    flows="$(ovs15 dump-flows "$BRIDGE" 2>/dev/null || true)"
+    printf '%s\n' "$flows" | grep -q "priority=100" && \
+    printf '%s\n' "$flows" | grep -q "$field=$UE_IP" && \
+    printf '%s\n' "$flows" | grep -q "actions=NORMAL"
 }
 
 flow_json="$(podman exec "$TNODE_CONTAINER" \
@@ -147,31 +229,51 @@ policy_json="$(podman exec "$TNODE_CONTAINER" \
 # Store.CreateMeter uses Ulbr for RX and Dlbr for TX. Keep that mapping.
 rx_rate="$(json_get_any_first "$policy_json" Ulbr ulbr ULBR 2>/dev/null || true)"
 tx_rate="$(json_get_any_first "$policy_json" Dlbr dlbr DLBR 2>/dev/null || true)"
-burst="$(json_get_any_first "$policy_json" Burst burst 2>/dev/null || true)"
 
-# Conservative fallback only for lab smoke if policy serialization changes.
-# The PCRF flow cookies/meter IDs still come from PCRF; this does not bypass
-# the OVS meter action, it only ensures the meter object exists.
-rx_rate="${rx_rate:-10000000}"
-tx_rate="${tx_rate:-10000000}"
-burst="${burst:-0}"
+rx_rate="${rx_rate:-1000000}"
+tx_rate="${tx_rate:-1000000}"
 
-ensure_meter "$rx_meter" "$rx_rate" "$burst"
-ensure_meter "$tx_meter" "$tx_rate" "$burst"
+echo "pcrf-ovs: flow records imsi=$IMSI ip=$UE_IP rx_cookie=$rx_cookie tx_cookie=$tx_cookie rx_meter=$rx_meter tx_meter=$tx_meter rx_rate=$rx_rate tx_rate=$tx_rate" >&2
 
-add_flow "nw_dst" "$rx_cookie" "$rx_meter"
-add_flow "nw_src" "$tx_cookie" "$tx_meter"
+metered=1
+ensure_meter "$rx_meter" "$rx_rate" || metered=0
+ensure_meter "$tx_meter" "$tx_rate" || metered=0
 
-if ! verify_flow "nw_dst" "$rx_meter"; then
-    echo "missing RX OVS flow for UE $UE_IP meter=$rx_meter" >&2
-    ovs dump-flows "$BRIDGE" >&2 || true
-    exit 1
+if [ "$metered" -eq 1 ]; then
+    add_flow_metered "nw_dst" "$rx_cookie" "$rx_meter"
+    add_flow_metered "nw_src" "$tx_cookie" "$tx_meter"
+
+    if ! verify_flow_metered "nw_dst" "$rx_meter"; then
+        echo "missing RX metered OVS flow for UE $UE_IP meter=$rx_meter" >&2
+        dump_ovs_state
+        exit 1
+    fi
+
+    if ! verify_flow_metered "nw_src" "$tx_meter"; then
+        echo "missing TX metered OVS flow for UE $UE_IP meter=$tx_meter" >&2
+        dump_ovs_state
+        exit 1
+    fi
+
+    echo "pcrf-ovs-ready imsi=$IMSI ip=$UE_IP rx_meter=$rx_meter tx_meter=$tx_meter bridge=$BRIDGE"
+    exit 0
 fi
 
-if ! verify_flow "nw_src" "$tx_meter"; then
-    echo "missing TX OVS flow for UE $UE_IP meter=$tx_meter" >&2
-    ovs dump-flows "$BRIDGE" >&2 || true
-    exit 1
+if [ "$ALLOW_UNMETERED_FALLBACK" = "1" ]; then
+    echo "pcrf-ovs: WARNING using unmetered lab fallback because meter creation failed" >&2
+
+    add_flow_unmetered "nw_dst" "$rx_cookie"
+    add_flow_unmetered "nw_src" "$tx_cookie"
+
+    verify_flow_unmetered "nw_dst" && verify_flow_unmetered "nw_src" || {
+        echo "missing unmetered fallback OVS flow for UE $UE_IP" >&2
+        dump_ovs_state
+        exit 1
+    }
+
+    echo "pcrf-ovs-ready-unmetered imsi=$IMSI ip=$UE_IP bridge=$BRIDGE"
+    exit 0
 fi
 
-echo "pcrf-ovs-ready imsi=$IMSI ip=$UE_IP rx_meter=$rx_meter tx_meter=$tx_meter bridge=$BRIDGE"
+echo "pcrf-ovs: meter creation failed and ULAB_OVS_ALLOW_UNMETERED_FALLBACK is not enabled" >&2
+exit 1
