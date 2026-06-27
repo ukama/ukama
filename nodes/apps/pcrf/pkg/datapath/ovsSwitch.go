@@ -224,6 +224,20 @@ func (o *OvsSwitch) inputTable() (*ofctrl.Table, error) {
 	return t, nil
 }
 
+func parseIPv4(ipString string) (net.IP, error) {
+	ip := net.ParseIP(ipString)
+	if ip == nil {
+		return nil, fmt.Errorf("invalid ip %s", ipString)
+	}
+
+	ip4 := ip.To4()
+	if ip4 == nil {
+		return nil, fmt.Errorf("invalid ipv4 %s", ipString)
+	}
+
+	return ip4, nil
+}
+
 func (o *OvsSwitch) ovsOfctl(args ...string) (string, error) {
 	allArgs := append([]string{"-O", "OpenFlow15"}, args...)
 	cmd := exec.Command("ovs-ofctl", allArgs...)
@@ -286,7 +300,11 @@ func (o *OvsSwitch) verifyUEFlows(ipString string, rxCookie, txCookie uint64) er
 func (o *OvsSwitch) installMeterWithOvsOfctl(id, rate, burstSize uint32) error {
 	_, _ = o.ovsOfctl("del-meter", o.bridgeName, fmt.Sprintf("meter=%d", id))
 
-	meter := fmt.Sprintf("meter=%d,kbps,burst,band=type=drop,rate=%d,burst_size=%d",
+	/*
+	 * OVS expects "bands=" in meter syntax. A previous fallback used "band=",
+	 * which makes session setup fail before attach completes.
+	 */
+	meter := fmt.Sprintf("meter=%d,kbps,burst,bands=type=drop,rate=%d,burst_size=%d",
 		id, rate, burstSize)
 	_, err := o.ovsOfctl("add-meter", o.bridgeName, meter)
 	if err != nil {
@@ -301,6 +319,9 @@ func (o *OvsSwitch) installUEFlowsWithOvsOfctl(ipString string, rxMeter, txMeter
 		rxCookie, ipString, rxMeter)
 	txFlow := fmt.Sprintf("cookie=0x%x,priority=100,ip,nw_src=%s,actions=meter:%d,NORMAL",
 		txCookie, ipString, txMeter)
+
+	_, _ = o.ovsOfctl("del-flows", o.bridgeName, fmt.Sprintf("cookie=0x%x/-1", rxCookie))
+	_, _ = o.ovsOfctl("del-flows", o.bridgeName, fmt.Sprintf("cookie=0x%x/-1", txCookie))
 
 	if _, err := o.ovsOfctl("add-flow", o.bridgeName, rxFlow); err != nil {
 		return fmt.Errorf("failed to install RX flow with ovs-ofctl: %w", err)
@@ -444,10 +465,10 @@ func (o *OvsSwitch) createRxFlow(ip *net.IP) (*ofctrl.Flow, error) {
 }
 
 func (o *OvsSwitch) updateFlowForUE(ipString string, rxMeter, txMeter uint32, rxCookie, txCookie uint64, operationType int) error {
-	ip := net.ParseIP(ipString)
-	if ip == nil {
+	ip, err := parseIPv4(ipString)
+	if err != nil {
 		log.Errorf("Invalid IP address %s", ipString)
-		return fmt.Errorf("invalid ip %s", ipString)
+		return err
 	}
 
 	rxF, err := o.createRxFlow(&ip)
@@ -624,13 +645,13 @@ func (o *OvsSwitch) deleteFlowForRXPath(ip net.IP) error {
 }
 
 func (o *OvsSwitch) DeleteFlowForUE(ipString string) error {
-	ip := net.ParseIP(ipString)
-	if ip == nil {
+	ip, err := parseIPv4(ipString)
+	if err != nil {
 		log.Errorf("Invalid IP address %s", ipString)
-		return fmt.Errorf("invalid ip %s", ipString)
+		return err
 	}
 
-	err := o.deleteFlowForTXPath(ip)
+	err = o.deleteFlowForTXPath(ip)
 	if err != nil {
 		log.Errorf("Failed to delete TX flow for UE %s", ipString)
 		return err
@@ -668,11 +689,9 @@ func (o *OvsSwitch) AddUEDataPath(ipString string, rxMeter, txMeter, rxRate, txR
 	}
 
 	/*
-	 * ofctrl.Send can return success even when OVS rejects the async FlowMod.
-	 * If the default UE-CIDR drop flow remains without the per-UE priority=100
-	 * allow/meter flows, traffic is dropped even though PCRF reports a session.
-	 * Fall back to ovs-ofctl and verify the real OVS state before accepting the
-	 * session.
+	 * FlowMod errors can be asynchronous. If OVS rejected the ofctrl flow, the
+	 * default UE CIDR drop rule remains and traffic times out even though PCRF
+	 * reports an active session. Retry through ovs-ofctl and verify the bridge.
 	 */
 	log.Warnf("UE %s flows not visible after ofctrl install, retrying with ovs-ofctl: %v",
 		ipString, err)
