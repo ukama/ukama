@@ -23,6 +23,16 @@ fi
 # shellcheck disable=SC1090
 . "$STATE_FILE"
 
+MEDIA_BR="${MEDIA_BR:-br0}"
+TOWER_IF="${TOWER_IF:-ulabmed0}"
+
+if [ -n "${TNODE_CONTAINER:-}" ] && [ -n "${TOWER_IF:-}" ]; then
+    echo "stop-media: del-port $MEDIA_BR $TOWER_IF"
+    podman exec "$TNODE_CONTAINER" \
+        ovs-vsctl --if-exists del-port "$MEDIA_BR" "$TOWER_IF" \
+        >/dev/null 2>&1 || true
+fi
+
 if [ -n "${MEDIA_CONTAINER:-}" ]; then
     echo "stop-media: rm $MEDIA_CONTAINER"
     podman rm -f "$MEDIA_CONTAINER" >/dev/null 2>&1 || true

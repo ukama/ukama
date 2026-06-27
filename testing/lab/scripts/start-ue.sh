@@ -118,34 +118,6 @@ wait_pcrf_service_on() {
     return 1
 }
 
-
-wait_pcrf_subscriber() {
-    container="$1"
-    imsi="$2"
-    i=0
-    url="http://127.0.0.1:18030/v1/subscriber/imsi/$imsi"
-    body=""
-
-    echo "ue: wait pcrf subscriber imsi=$imsi timeout=60s"
-
-    while [ "$i" -lt 60 ]; do
-        body="$(podman exec "$container" curl -fsS --max-time 2 "$url" 2>/dev/null || true)"
-        if printf "%s" "$body" | grep -Eq '"imsi"[[:space:]]*:[[:space:]]*"?'"$imsi"'"?' || \
-           printf "%s" "$body" | grep -q '[{}]'; then
-            echo "ue: pcrf subscriber ready imsi=$imsi"
-            return 0
-        fi
-
-        i=$((i + 1))
-        sleep 1
-    done
-
-    echo "pcrf subscriber not found after 60s: imsi=$imsi" >&2
-    echo "This usually means ukama-agent ASR did not sync the allocated SIM/profile into PCRF local DB." >&2
-    echo "last subscriber body: $body" >&2
-    return 1
-}
-
 print_attach_debug() {
     echo "---- UE container ----" >&2
     podman ps -a --filter "name=$UE_CONTAINER" >&2 || true
@@ -252,15 +224,15 @@ if [ -z "$TOWER_IP" ]; then
     exit 1
 fi
 
-# Do not use host-published ports for the E2E path.  Validate the same network
-# path the UE will use by curling from another container already on LAB_NET.
+# EPCEMU/PCRF control stays on the tower container.  Media is attached to
+# the tower user-plane bridge, so validate media reachability from the tower
+# through that bridge before starting the UE.
 # /v1/ping returns 503 until the service is really ready; /v1/status may return
 # 200 while ready=false.
-wait_container_http "$MEDIA_CONTAINER" epcemu "http://$TOWER_IP:18028/v1/ping"
-wait_container_http "$MEDIA_CONTAINER" pcrf "http://$TOWER_IP:18030/v1/ping"
-wait_pcrf_service_on "$MEDIA_CONTAINER" "http://$TOWER_IP:18030/v1/service"
-wait_pcrf_subscriber "$TNODE_CONTAINER" "$IMSI"
-wait_container_http "$MEDIA_CONTAINER" media "http://$MEDIA_IP:$HTTP_PORT/"
+wait_container_http "$TNODE_CONTAINER" epcemu "http://127.0.0.1:18028/v1/ping"
+wait_container_http "$TNODE_CONTAINER" pcrf "http://127.0.0.1:18030/v1/ping"
+wait_pcrf_service_on "$TNODE_CONTAINER" "http://127.0.0.1:18030/v1/service"
+wait_container_http "$TNODE_CONTAINER" media "http://$MEDIA_IP:$HTTP_PORT/"
 
 if [ ! -f "$UE_STATE_DIR/.ue-image-built" ]; then
     echo "ue: build $UE_IMAGE"
