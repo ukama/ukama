@@ -83,7 +83,7 @@ static int setup_bff_networks(bff_client_t *bff,
     }
 
     for (i = 0; i < world->network_count; i++) {
-        ulab_status("BFF", "add network %s", world->networks[i].ref);
+        ulab_status("BACKEND", "add network %s", world->networks[i].ref);
         if (bff_add_network(bff, &world->networks[i], err)) {
             return ULAB_EBFF;
         }
@@ -117,7 +117,7 @@ static int setup_bff_sites(bff_client_t *bff,
             return ULAB_EBFF;
         }
 
-        ulab_status("BFF", "add site %s", world->sites[i].ref);
+        ulab_status("BACKEND", "add site %s", world->sites[i].ref);
         if (bff_add_site(bff, &world->sites[i], network, err)) {
             return ULAB_EBFF;
         }
@@ -149,7 +149,7 @@ static int setup_bff_packages(bff_client_t *bff,
             return ULAB_EBFF;
         }
 
-        ulab_status("BFF", "add package %s", package->ref);
+        ulab_status("BACKEND", "add package %s", package->ref);
         if (bff_add_package(bff, package, network, err)) {
             return ULAB_EBFF;
         }
@@ -181,7 +181,7 @@ static int setup_bff_subscribers(bff_client_t *bff,
             return ULAB_EBFF;
         }
 
-        ulab_status("BFF", "add subscriber %s", sub->ref);
+        ulab_status("BACKEND", "add subscriber %s", sub->ref);
         if (bff_add_subscriber(bff, sub, network, err)) {
             return ULAB_EBFF;
         }
@@ -350,7 +350,7 @@ static int setup_bff_sims(bff_client_t *bff,
          * explicitly activate the SIM here; doing so creates duplicate package
          * rows and can fail when the SIM is already active.
          */
-        ulab_status("BFF", "allocate sim %s iccid=%s", ue->ref,
+        ulab_status("BACKEND", "allocate sim %s iccid=%s", ue->ref,
                     ue->iccid);
         if (bff_allocate_sim_from_pool(bff, ue, sub, network, package,
                                        opts->sim_type, err)) {
@@ -358,7 +358,7 @@ static int setup_bff_sims(bff_client_t *bff,
         }
 
         active = 0;
-        ulab_status("BFF", "verify sim package %s package=%s",
+        ulab_status("BACKEND", "verify sim package %s package=%s",
                     ue->ref, package->ref);
         if (bff_get_packages_for_sim(bff, ue, package->bff_id, &active,
                                      err)) {
@@ -714,7 +714,7 @@ static void cleanup_run(const runner_opts_t *opts,
     }
 
     memset(&cleanup_err, 0, sizeof(cleanup_err));
-    ulab_status("CLEANUP", "delete BFF resources");
+    ulab_status("CLEANUP", "delete backend resources");
     if (bff_cleanup_world(bff, world, &cleanup_err)) {
         ulab_log_error("%s", cleanup_err.msg);
     }
@@ -808,7 +808,7 @@ int runner_validate(const runner_opts_t *opts) {
         rc = setup_bff_subscriber_only(&bff, scenario, &world, opts,
                                        runDir, &err);
     } else {
-        ulab_status("SETUP", "creating BFF world resources");
+        ulab_status("SETUP", "creating backend world resources");
         rc = setup_bff_world(&bff, scenario, &world, opts, runDir,
                              &err);
     }

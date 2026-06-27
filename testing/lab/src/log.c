@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 #include <time.h>
 
 #include "log.h"
@@ -77,12 +78,23 @@ void ulab_log_error(const char *fmt, ...) {
 
 void ulab_status(const char *state, const char *fmt, ...) {
     va_list ap;
+    const char *color;
 
     if (g_quiet) {
         return;
     }
 
-    fprintf(stderr, "\033[1;36m%-8s\033[0m ", state);
+    if (strcmp(state, "FAIL") == 0 || strcmp(state, "ERROR") == 0) {
+        color = "\033[1;31m";
+    } else if (strcmp(state, "PASS") == 0) {
+        color = "\033[1;32m";
+    } else if (strcmp(state, "SKIP") == 0) {
+        color = "\033[1;33m";
+    } else {
+        color = "\033[1;36m";
+    }
+
+    fprintf(stderr, "%s%-8s\033[0m ", color, state);
 
     va_start(ap, fmt);
     vfprintf(stderr, fmt, ap);

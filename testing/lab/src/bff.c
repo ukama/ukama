@@ -914,7 +914,7 @@ int bff_wait_site_anchor_online(bff_client_t *c,
                     site->latitude[0] != '\0' &&
                     site->longitude[0] != '\0') {
                     json_decref(root);
-                    ulab_status("BFF", "site %s anchor online %s lat=%s lng=%s",
+                    ulab_status("BACKEND", "site %s anchor online %s lat=%s lng=%s",
                                 site->ref, site->tnode_id, site->latitude,
                                 site->longitude);
                     return ULAB_OK;
@@ -925,10 +925,10 @@ int bff_wait_site_anchor_online(bff_client_t *c,
         json_decref(root);
 
         if (found) {
-            ulab_status("BFF", "waiting site %s anchor online/location",
+            ulab_status("BACKEND", "waiting site %s anchor online/location",
                         site->ref);
         } else {
-            ulab_status("BFF", "waiting site %s anchor in registry",
+            ulab_status("BACKEND", "waiting site %s anchor in registry",
                         site->ref);
         }
 
@@ -1581,7 +1581,7 @@ int bff_cleanup_world(bff_client_t *c,
 
     if (failures > 0 && err != NULL) {
         snprintf(err->msg, sizeof(err->msg),
-                 "BFF cleanup had %d failed step(s)", failures);
+                 "backend cleanup had %d failed step(s)", failures);
         return ULAB_ERR;
     }
 

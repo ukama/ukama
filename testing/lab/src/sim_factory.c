@@ -372,7 +372,7 @@ static int sf_factory_wait_batch(const runner_opts_t *opts,
     int i;
 
     got = 0;
-    ulab_status("SIMFACTORY", "wait batch %s count=%zu",
+    ulab_status("FACTORY", "wait batch %s count=%zu",
                 batch_id, expected_count);
 
     for (i = 0; i < SIMFACTORY_WAIT_ATTEMPTS; i++) {
@@ -606,7 +606,7 @@ static int sf_assign_ues_from_csv(world_t *world,
 
         ulab_copy(world->ues[idx].iccid, sizeof(world->ues[idx].iccid), iccid);
         ulab_copy(world->ues[idx].imsi, sizeof(world->ues[idx].imsi), imsi);
-        ulab_status("SIMFACTORY", "ue %s iccid=%s imsi=%s",
+        ulab_status("FACTORY", "ue %s iccid=%s imsi=%s",
                     world->ues[idx].ref, world->ues[idx].iccid,
                     world->ues[idx].imsi);
         idx++;
@@ -642,7 +642,7 @@ int sim_factory_prepare_world(const runner_opts_t *opts,
 
     if (opts->warehouse_url[0] == '\0' || opts->factory_url[0] == '\0') {
         snprintf(err->msg, sizeof(err->msg),
-                 "Mode-B SIM provisioning requires --warehouse-url and --factory-url");
+                 "SIM provisioning requires --warehouse-url and --factory-url");
         return ULAB_ERR;
     }
 
@@ -659,7 +659,7 @@ int sim_factory_prepare_world(const runner_opts_t *opts,
         return ULAB_ERR;
     }
 
-    ulab_status("SIMFACTORY", "batch %s count=%zu", batch_id,
+    ulab_status("FACTORY", "batch %s count=%zu", batch_id,
                 world->ue_count);
 
     seed = sf_run_serial_seed(world);
@@ -686,7 +686,7 @@ int sim_factory_prepare_world(const runner_opts_t *opts,
                 continue;
             }
 
-            ulab_status("SIMFACTORY", "add %s iccid=%s imsi=%s",
+            ulab_status("FACTORY", "add %s iccid=%s imsi=%s",
                         world->ues[i].ref, iccid, imsi);
             if (sf_warehouse_add_sim(opts, batch_id, iccid, imsi, err) == ULAB_OK) {
                 added = 1;
@@ -711,7 +711,7 @@ int sim_factory_prepare_world(const runner_opts_t *opts,
         return ULAB_ERR;
     }
 
-    ulab_status("SIMFACTORY", "export %s", csv_path);
+    ulab_status("FACTORY", "export %s", csv_path);
     if (sf_factory_export_csv(opts, batch_id, world->ue_count, csv_path, err)) {
         return ULAB_ERR;
     }

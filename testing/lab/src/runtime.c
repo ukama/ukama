@@ -41,8 +41,8 @@ static int run_script(runtime_t *rt,
     }
 
     /*
-     * Keep script output in its run log, but do not tail it to stdout.
-     * Long builds should show only a small heartbeat so they do not look hung.
+     * Keep script output in its run log. Do not print scrolling RUNNING lines.
+     * When stderr is interactive, show a tiny single-line spinner instead.
      */
     n = snprintf(cmd, sizeof(cmd),
                  "mkdir -p '%s' >/dev/null 2>&1; "
@@ -50,15 +50,24 @@ static int run_script(runtime_t *rt,
                  "('%s' %s >> '%s' 2>&1) & "
                  "pid=$!; "
                  "start=$(date +%%s); "
-                 "interval=${ULAB_SCRIPT_PROGRESS_INTERVAL:-10}; "
+                 "interval=${ULAB_SCRIPT_PROGRESS_INTERVAL:-1}; "
+                 "spin='|/-\\'; "
+                 "idx=0; "
+                 "printed=0; "
                  "while kill -0 $pid 2>/dev/null; do "
                  "sleep $interval; "
-                 "if kill -0 $pid 2>/dev/null; then "
+                 "if kill -0 $pid 2>/dev/null && [ -t 2 ]; then "
                  "now=$(date +%%s); "
                  "elapsed=$((now - start)); "
-                 "echo 'RUNNING  %s' \"${elapsed}s\"; "
+                 "idx=$((idx + 1)); "
+                 "case $((idx %% 4)) in "
+                 "0) ch='|';; 1) ch='/';; 2) ch='-';; *) ch='\\';; "
+                 "esac; "
+                 "printf '\\r%%s %s %%ss' \"$ch\" \"$elapsed\" >&2; "
+                 "printed=1; "
                  "fi; "
                  "done; "
+                 "if [ \"$printed\" = 1 ]; then printf '\\r\\033[K' >&2; fi; "
                  "wait $pid",
                  rt->run_dir,
                  log_path,
