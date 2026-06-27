@@ -33,6 +33,12 @@ MEDIA_GW="${ULAB_MEDIA_GW:-10.10.10.1}"
 TOWER_IF="${ULAB_MEDIA_TOWER_IF:-ulabmed0}"
 MEDIA_IF="${ULAB_MEDIA_IF:-eth0}"
 
+# Only host network namespace plumbing needs privilege.
+# Keep podman rootless. Example:
+#   sudo -v
+#   ULAB_NETNS_SUDO=sudo ./bin/ukama-lab validate ...
+NETNS_SUDO="${ULAB_NETNS_SUDO:-}"
+
 RUN_ID="$(basename "$RUN_DIR")"
 SAFE_RUN_ID="$(printf "%s" "$RUN_ID" | tr -c 'A-Za-z0-9-' '-' | sed 's/^-*//;s/-*$//')"
 MEDIA_CONTAINER="ukama-media-$SAFE_RUN_ID"
@@ -40,10 +46,37 @@ MEDIA_CONTAINER="ukama-media-$SAFE_RUN_ID"
 HOST_TOWER_IF="umt$$"
 HOST_MEDIA_IF="umm$$"
 
+run_priv() {
+    if [ -n "$NETNS_SUDO" ]; then
+        # shellcheck disable=SC2086
+        $NETNS_SUDO "$@"
+    else
+        "$@"
+    fi
+}
+
+host_ip() {
+    run_priv ip "$@"
+}
+
+host_nsenter() {
+    run_priv nsenter "$@"
+}
+
 need_cmd() {
     if ! command -v "$1" >/dev/null 2>&1; then
         echo "missing required command: $1" >&2
         exit 1
+    fi
+}
+
+need_priv_cmd() {
+    if [ -n "$NETNS_SUDO" ]; then
+        cmd="${NETNS_SUDO%% *}"
+        if ! command -v "$cmd" >/dev/null 2>&1; then
+            echo "missing required command: $cmd" >&2
+            exit 1
+        fi
     fi
 }
 
@@ -87,8 +120,20 @@ find_tower_container() {
 }
 
 cleanup_partial_veth() {
-    ip link del "$HOST_TOWER_IF" >/dev/null 2>&1 || true
-    ip link del "$HOST_MEDIA_IF" >/dev/null 2>&1 || true
+    host_ip link del "$HOST_TOWER_IF" >/dev/null 2>&1 || true
+    host_ip link del "$HOST_MEDIA_IF" >/dev/null 2>&1 || true
+
+    if [ -n "${TNODE_CONTAINER:-}" ]; then
+        podman exec "$TNODE_CONTAINER" \
+            ovs-vsctl --if-exists del-port "$MEDIA_BR" "$TOWER_IF" >/dev/null 2>&1 || true
+        podman exec "$TNODE_CONTAINER" \
+            ip link del "$TOWER_IF" >/dev/null 2>&1 || true
+    fi
+
+    if [ -n "${MEDIA_CONTAINER:-}" ]; then
+        podman exec "$MEDIA_CONTAINER" \
+            ip link del "$MEDIA_IF" >/dev/null 2>&1 || true
+    fi
 }
 
 attach_media_to_tower_bridge() {
@@ -104,23 +149,23 @@ attach_media_to_tower_bridge() {
     podman exec "$tower_container" \
         ovs-vsctl --if-exists del-port "$MEDIA_BR" "$TOWER_IF" >/dev/null 2>&1 || true
 
-    ip link add "$HOST_TOWER_IF" type veth peer name "$HOST_MEDIA_IF"
+    host_ip link add "$HOST_TOWER_IF" type veth peer name "$HOST_MEDIA_IF"
 
-    ip link set "$HOST_TOWER_IF" netns "$tower_pid"
-    ip link set "$HOST_MEDIA_IF" netns "$media_pid"
+    host_ip link set "$HOST_TOWER_IF" netns "$tower_pid"
+    host_ip link set "$HOST_MEDIA_IF" netns "$media_pid"
 
-    nsenter -t "$tower_pid" -n ip link set "$HOST_TOWER_IF" name "$TOWER_IF"
-    nsenter -t "$tower_pid" -n ip link set "$TOWER_IF" up
+    host_nsenter -t "$tower_pid" -n ip link set "$HOST_TOWER_IF" name "$TOWER_IF"
+    host_nsenter -t "$tower_pid" -n ip link set "$TOWER_IF" up
 
     podman exec "$tower_container" \
         ovs-vsctl --may-exist add-port "$MEDIA_BR" "$TOWER_IF"
     podman exec "$tower_container" ip link set "$TOWER_IF" up
 
-    nsenter -t "$media_pid" -n ip link set lo up
-    nsenter -t "$media_pid" -n ip link set "$HOST_MEDIA_IF" name "$MEDIA_IF"
-    nsenter -t "$media_pid" -n ip addr replace "$MEDIA_IP/$MEDIA_PREFIX" dev "$MEDIA_IF"
-    nsenter -t "$media_pid" -n ip link set "$MEDIA_IF" up
-    nsenter -t "$media_pid" -n ip route replace default via "$MEDIA_GW"
+    host_nsenter -t "$media_pid" -n ip link set lo up
+    host_nsenter -t "$media_pid" -n ip link set "$HOST_MEDIA_IF" name "$MEDIA_IF"
+    host_nsenter -t "$media_pid" -n ip addr replace "$MEDIA_IP/$MEDIA_PREFIX" dev "$MEDIA_IF"
+    host_nsenter -t "$media_pid" -n ip link set "$MEDIA_IF" up
+    host_nsenter -t "$media_pid" -n ip route replace default via "$MEDIA_GW"
 
     if ! podman exec "$tower_container" curl -fsS --max-time 3 \
         "http://$MEDIA_IP:$HTTP_PORT/" >/dev/null 2>&1; then
@@ -138,6 +183,7 @@ attach_media_to_tower_bridge() {
 need_cmd podman
 need_cmd ip
 need_cmd nsenter
+need_priv_cmd
 need_file "$UE_DIR/media/Containerfile"
 need_file "$NET_STATE"
 
@@ -173,6 +219,8 @@ mkdir -p "$MEDIA_STATE_DIR"
 podman rm -f "$MEDIA_CONTAINER" >/dev/null 2>&1 || true
 podman exec "$TNODE_CONTAINER" \
     ovs-vsctl --if-exists del-port "$MEDIA_BR" "$TOWER_IF" >/dev/null 2>&1 || true
+podman exec "$TNODE_CONTAINER" \
+    ip link del "$TOWER_IF" >/dev/null 2>&1 || true
 
 trap cleanup_partial_veth EXIT HUP INT TERM
 
@@ -230,6 +278,7 @@ TNODE_CONTAINER=$TNODE_CONTAINER
 HTTP_PORT=$HTTP_PORT
 IPERF_PORT=$IPERF_PORT
 LAB_NET=$LAB_NET
+NETNS_SUDO=$NETNS_SUDO
 STATE
 
 echo "media-ready container=$MEDIA_CONTAINER ip=$MEDIA_IP bridge=$MEDIA_BR tower=$TNODE_CONTAINER"
