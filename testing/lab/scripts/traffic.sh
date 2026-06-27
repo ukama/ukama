@@ -64,6 +64,17 @@ podman exec "$UE_CONTAINER" \
 echo "traffic route ue=$UE_KEY media=$MEDIA_IP via=tun0"
 podman exec "$UE_CONTAINER" ip route get "$MEDIA_IP" || true
 
+echo "traffic precheck http ue=$UE_KEY media=$MEDIA_IP"
+if ! MEDIA_IP="$MEDIA_IP" HTTP_PORT=8080 IPERF_PORT=5201 \
+    "$UE_DIR/scripts/traffic-ue.sh" --imsi "$IMSI" --mode http; then
+    echo "traffic HTTP precheck failed; dumping datapath state" >&2
+    podman exec "$TNODE_CONTAINER" sh -lc 'curl -sS http://127.0.0.1:18028/v1/status || true' >&2 || true
+    podman exec "$TNODE_CONTAINER" sh -lc 'curl -sS http://127.0.0.1:18030/v1/status || true' >&2 || true
+    podman exec "$TNODE_CONTAINER" sh -lc 'ip rule; ip route show table 2000; ip route show table 1000; iptables -S FORWARD' >&2 || true
+    podman exec "$TNODE_CONTAINER" sh -lc 'ovs-ofctl -O OpenFlow15 dump-meters br0 || true; ovs-ofctl -O OpenFlow15 dump-flows br0 || true' >&2 || true
+    exit 1
+fi
+
 echo "traffic ue=$UE_KEY imsi=$IMSI mb=$AMOUNT_MB media=$MEDIA_IP"
 MEDIA_IP="$MEDIA_IP" HTTP_PORT=8080 IPERF_PORT=5201 \
     "$UE_DIR/scripts/traffic-ue.sh" --imsi "$IMSI" --mode iperf --mb "$AMOUNT_MB"

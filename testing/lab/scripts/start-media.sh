@@ -38,6 +38,9 @@ MEDIA_IF="${ULAB_MEDIA_IF:-eth0}"
 # UE->media packets follow the table default gateway and never hit media.
 TUN_IF="${ULAB_MEDIA_TUN_IF:-tun3}"
 TUN_TABLE="${ULAB_MEDIA_TUN_TABLE:-2000}"
+BR_TABLE="${ULAB_MEDIA_BR_TABLE:-1000}"
+UE_CIDR="${ULAB_UE_CIDR:-192.168.8.0/22}"
+UE_PROBE_IP="${ULAB_UE_PROBE_IP:-192.168.8.2}"
 
 # Only host network namespace plumbing needs privilege.
 # Keep podman rootless. Example:
@@ -173,12 +176,36 @@ attach_media_to_tower_bridge() {
     host_nsenter -t "$media_pid" -n ip link set "$MEDIA_IF" up
     host_nsenter -t "$media_pid" -n ip route replace default via "$MEDIA_GW"
 
-    # init-network sends packets that enter from tun3 through table 2000.
-    # Add a more specific route for this lab media host; without it,
-    # UE->media traffic follows the default gateway in that table and times out.
-    podman exec "$tower_container" \
-        ip route replace "$MEDIA_IP/32" dev "$MEDIA_BR" table "$TUN_TABLE"
-    podman exec "$tower_container" ip route flush cache >/dev/null 2>&1 || true
+    # init-network policy-routes forwarded packets by ingress interface:
+    #   iif tun3 -> table 2000
+    #   iif br0  -> table 1000
+    #
+    # The tower-local curl check only proves OUTPUT -> br0 works. UE traffic is
+    # FORWARD traffic, so install both policy routes and explicit FORWARD accepts.
+    podman exec "$tower_container" sh -lc "
+        set -e
+
+        ip route replace '$MEDIA_IP/32' dev '$MEDIA_BR' table '$TUN_TABLE'
+        ip route replace '$UE_CIDR' dev '$TUN_IF' table '$BR_TABLE'
+        ip route flush cache >/dev/null 2>&1 || true
+
+        sysctl -w net.ipv4.ip_forward=1 >/dev/null 2>&1 || true
+        sysctl -w net.ipv4.conf.'$TUN_IF'.rp_filter=0 >/dev/null 2>&1 || true
+        sysctl -w net.ipv4.conf.'$MEDIA_BR'.rp_filter=0 >/dev/null 2>&1 || true
+
+        iptables -C FORWARD -i '$TUN_IF' -o '$MEDIA_BR' -d '$MEDIA_IP/32' -j ACCEPT 2>/dev/null ||
+            iptables -I FORWARD 1 -i '$TUN_IF' -o '$MEDIA_BR' -d '$MEDIA_IP/32' -j ACCEPT
+
+        iptables -C FORWARD -i '$MEDIA_BR' -o '$TUN_IF' -s '$MEDIA_IP/32' -d '$UE_CIDR' -j ACCEPT 2>/dev/null ||
+            iptables -I FORWARD 1 -i '$MEDIA_BR' -o '$TUN_IF' -s '$MEDIA_IP/32' -d '$UE_CIDR' -j ACCEPT
+    "
+
+    echo "media: route ue->media table=$TUN_TABLE $MEDIA_IP/32 dev=$MEDIA_BR"
+    echo "media: route media->ue table=$BR_TABLE $UE_CIDR dev=$TUN_IF"
+    podman exec "$tower_container" sh -lc \
+        "ip route get '$MEDIA_IP' from '$UE_PROBE_IP' iif '$TUN_IF' || true"
+    podman exec "$tower_container" sh -lc \
+        "ip route get '$UE_PROBE_IP' from '$MEDIA_IP' iif '$MEDIA_BR' || true"
 
     if ! podman exec "$tower_container" curl -fsS --max-time 3 \
         "http://$MEDIA_IP:$HTTP_PORT/" >/dev/null 2>&1; then
@@ -290,6 +317,9 @@ MEDIA_IF=$MEDIA_IF
 TOWER_IF=$TOWER_IF
 TUN_IF=$TUN_IF
 TUN_TABLE=$TUN_TABLE
+BR_TABLE=$BR_TABLE
+UE_CIDR=$UE_CIDR
+UE_PROBE_IP=$UE_PROBE_IP
 TNODE_CONTAINER=$TNODE_CONTAINER
 HTTP_PORT=$HTTP_PORT
 IPERF_PORT=$IPERF_PORT

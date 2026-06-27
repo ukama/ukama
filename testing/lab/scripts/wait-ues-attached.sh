@@ -48,12 +48,27 @@ pcrf_flow_ready() {
         grep -q '[{}\[]'
 }
 
+realize_pcrf_ovs_flow() {
+    script_dir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+    "$script_dir/realize-pcrf-ovs-flow.sh" "$STATE_FILE" "$IMSI" "$UE_IP"
+}
+
+ovs_flow_ready() {
+    podman exec "$TNODE_CONTAINER" \
+        ovs-ofctl -O OpenFlow15 dump-flows br0 2>/dev/null | \
+        grep -q "priority=100.*nw_src=$UE_IP.*NORMAL" && \
+    podman exec "$TNODE_CONTAINER" \
+        ovs-ofctl -O OpenFlow15 dump-flows br0 2>/dev/null | \
+        grep -q "priority=100.*nw_dst=$UE_IP.*NORMAL"
+}
+
 start_ts="$(date +%s)"
 while :; do
     ue_running=0
     epc_attached=0
     pcrf_subscriber=0
     pcrf_flow=0
+    ovs_flow=0
 
     ue_is_running && ue_running=1
     pcrf_subscriber_exists && pcrf_subscriber=1
@@ -64,14 +79,26 @@ while :; do
        [ "$pcrf_subscriber" -eq 1 ] && \
        [ "$epc_attached" -eq 1 ] && \
        [ "$pcrf_flow" -eq 1 ]; then
-        echo "ue-attached ue=$UE_KEY imsi=$IMSI ip=$UE_IP"
+        if ovs_flow_ready; then
+            ovs_flow=1
+        else
+            realize_pcrf_ovs_flow && ovs_flow=1 || ovs_flow=0
+        fi
+    fi
+
+    if [ "$ue_running" -eq 1 ] && \
+       [ "$pcrf_subscriber" -eq 1 ] && \
+       [ "$epc_attached" -eq 1 ] && \
+       [ "$pcrf_flow" -eq 1 ] && \
+       [ "$ovs_flow" -eq 1 ]; then
+        echo "ue-attached ue=$UE_KEY imsi=$IMSI ip=$UE_IP ovs_flow=ready"
         exit 0
     fi
 
     now_ts="$(date +%s)"
     if [ $((now_ts - start_ts)) -ge "$TIMEOUT_SEC" ]; then
         echo "UE not attached: ue=$UE_KEY imsi=$IMSI" >&2
-        echo "ue_running=$ue_running pcrf_subscriber=$pcrf_subscriber epc_attached=$epc_attached pcrf_flow=$pcrf_flow" >&2
+        echo "ue_running=$ue_running pcrf_subscriber=$pcrf_subscriber epc_attached=$epc_attached pcrf_flow=$pcrf_flow ovs_flow=$ovs_flow" >&2
         echo "---- UE container ----" >&2
         podman ps -a --filter "name=$UE_CONTAINER" >&2 || true
         echo "---- UE logs ----" >&2
@@ -95,6 +122,14 @@ while :; do
         echo "---- PCRF status ----" >&2
         podman exec "$TNODE_CONTAINER" \
             curl -fsS --max-time 5 "http://127.0.0.1:18030/v1/status" >&2 || true
+        echo >&2
+        echo "---- OVS meters ----" >&2
+        podman exec "$TNODE_CONTAINER" \
+            ovs-ofctl -O OpenFlow15 dump-meters br0 >&2 || true
+        echo >&2
+        echo "---- OVS flows ----" >&2
+        podman exec "$TNODE_CONTAINER" \
+            ovs-ofctl -O OpenFlow15 dump-flows br0 >&2 || true
         echo >&2
         exit 1
     fi
