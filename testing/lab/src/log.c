@@ -123,7 +123,7 @@ void ulab_status(const char *state, const char *fmt, ...) {
     }
 
     color = state_color(state);
-    fprintf(stderr, "%s%-8s%s ", color, state, C_RESET);
+    fprintf(stderr, "%s%-10s%s ", color, state, C_RESET);
 
     va_start(ap, fmt);
     vfprintf(stderr, fmt, ap);
