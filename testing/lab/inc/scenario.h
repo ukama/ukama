@@ -67,7 +67,8 @@ typedef enum {
 } event_type_t;
 
 typedef enum {
-    CHECK_COUNT = 0,
+    CHECK_MODEL_COUNT = 0,
+    CHECK_BFF_COUNT,
     CHECK_NODE_READY,
     CHECK_UE_ATTACHED,
     CHECK_USAGE_PER_SIM,
@@ -146,6 +147,10 @@ typedef struct {
     uint32_t       version;
     char           name[ULAB_MAX_NAME];
     uint32_t       seed;
+    char           suite[ULAB_MAX_REF];
+    char           priority[ULAB_MAX_REF];
+    char           tags[ULAB_MAX_LINE];
+    char           status[ULAB_MAX_REF];
     world_spec_t   world;
     package_spec_t packages[ULAB_MAX_PACKAGES];
     size_t         package_count;

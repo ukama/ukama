@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
+#include <jansson.h>
 
 #include "runner.h"
 #include "bff.h"
@@ -20,9 +22,15 @@
 #include "sim_factory.h"
 #include "util.h"
 
-static void make_run_id(char *out, size_t len, const scenario_t *scenario) {
+static void make_run_id(char *out, size_t len, const scenario_t *scenario,
+                        const runner_opts_t *opts) {
 
     time_t now;
+
+    if (opts != NULL && opts->run_id[0] != '\0') {
+        snprintf(out, len, "%s", opts->run_id);
+        return;
+    }
 
     now = time(NULL);
     snprintf(out, len, "lab-%s-%u-%ld", scenario->name,
@@ -51,7 +59,7 @@ static int prepare_run(const runner_opts_t *opts,
         return ULAB_ESCENARIO;
     }
 
-    make_run_id(run_id, sizeof(run_id), scenario);
+    make_run_id(run_id, sizeof(run_id), scenario, opts);
     snprintf(runDir, runDirLen, "%s/%s", opts->out_dir, run_id);
 
     if (ulab_mkdir_p(runDir)) {
@@ -69,6 +77,267 @@ static int prepare_run(const runner_opts_t *opts,
     }
 
     return ULAB_OK;
+}
+
+static void created_path(const char *run_dir, char *path, size_t path_len) {
+    snprintf(path, path_len, "%s/created.json", run_dir);
+}
+
+static int created_exists(const char *run_dir) {
+    char path[ULAB_MAX_PATH];
+
+    created_path(run_dir, path, sizeof(path));
+    return access(path, F_OK) == 0;
+}
+
+static void write_json_string_array(FILE *f,
+                                    const char *name,
+                                    const char ids[][ULAB_MAX_ID],
+                                    size_t count,
+                                    int comma) {
+    size_t i;
+    int first;
+
+    fprintf(f, "  \"%s\": [", name);
+    first = 1;
+    for (i = 0; i < count; i++) {
+        char esc[ULAB_MAX_ID * 2];
+
+        if (!first) {
+            fprintf(f, ", ");
+        }
+        ulab_json_escape(ids[i], esc, sizeof(esc));
+        fprintf(f, "\"%s\"", esc);
+        first = 0;
+    }
+    fprintf(f, "]%s\n", comma ? "," : "");
+}
+
+static int created_write(const char *run_dir, const world_t *world) {
+    char path[ULAB_MAX_PATH];
+    char tmp[ULAB_MAX_PATH];
+    char (*ids)[ULAB_MAX_ID];
+    const char *suffix = ".tmp";
+    size_t suffix_len = 4;
+    size_t path_len;
+    FILE *f;
+    size_t max;
+    size_t i;
+
+    if (run_dir == NULL || world == NULL) {
+        return ULAB_ERR;
+    }
+
+    created_path(run_dir, path, sizeof(path));
+
+    path_len = strlen(path);
+    if (path_len + suffix_len + 1 > sizeof(tmp)) {
+        fprintf(stderr, "created path too long: %s\n", path);
+        return ULAB_ERR;
+    }
+
+    memcpy(tmp, path, path_len);
+    memcpy(tmp + path_len, suffix, suffix_len + 1);
+
+    max = world->network_count;
+    if (world->site_count > max) max = world->site_count;
+    if (world->node_count > max) max = world->node_count;
+    if (world->subscriber_count > max) max = world->subscriber_count;
+    if (world->package_count > max) max = world->package_count;
+    if (max == 0) max = 1;
+
+    ids = calloc(max, sizeof(*ids));
+    if (ids == NULL) {
+        return ULAB_ERR;
+    }
+
+    f = fopen(tmp, "w");
+    if (f == NULL) {
+        free(ids);
+        return ULAB_ERR;
+    }
+
+    fprintf(f, "{\n");
+    fprintf(f, "  \"run_id\": \"%s\",\n", world->run_id);
+
+    memset(ids, 0, max * sizeof(*ids));
+    for (i = 0; i < world->network_count; i++) {
+        ulab_copy(ids[i], ULAB_MAX_ID, world->networks[i].bff_id);
+    }
+    write_json_string_array(f, "networks", ids, world->network_count, 1);
+
+    memset(ids, 0, max * sizeof(*ids));
+    for (i = 0; i < world->site_count; i++) {
+        ulab_copy(ids[i], ULAB_MAX_ID, world->sites[i].bff_id);
+    }
+    write_json_string_array(f, "sites", ids, world->site_count, 1);
+
+    memset(ids, 0, max * sizeof(*ids));
+    for (i = 0; i < world->node_count; i++) {
+        ulab_copy(ids[i], ULAB_MAX_ID, world->nodes[i].bff_id);
+    }
+    write_json_string_array(f, "nodes", ids, world->node_count, 1);
+
+    memset(ids, 0, max * sizeof(*ids));
+    for (i = 0; i < world->subscriber_count; i++) {
+        ulab_copy(ids[i], ULAB_MAX_ID, world->subscribers[i].bff_id);
+    }
+    write_json_string_array(f, "subscribers", ids, world->subscriber_count, 1);
+
+    memset(ids, 0, max * sizeof(*ids));
+    for (i = 0; i < world->package_count; i++) {
+        ulab_copy(ids[i], ULAB_MAX_ID, world->packages[i].bff_id);
+    }
+    write_json_string_array(f, "packages", ids, world->package_count, 1);
+
+    fprintf(f, "  \"sims\": [");
+    for (i = 0; i < world->ue_count; i++) {
+        char id[ULAB_MAX_ID * 2];
+        char pool[ULAB_MAX_ID * 2];
+        char pkg[ULAB_MAX_ID * 2];
+
+        if (i > 0) fprintf(f, ", ");
+        ulab_json_escape(world->ues[i].bff_id, id, sizeof(id));
+        ulab_json_escape(world->ues[i].pool_sim_id, pool, sizeof(pool));
+        ulab_json_escape(world->ues[i].sim_package_id, pkg, sizeof(pkg));
+        fprintf(f, "{\"id\":\"%s\",\"pool_sim_id\":\"%s\","
+                   "\"package_id\":\"%s\"}", id, pool, pkg);
+    }
+    fprintf(f, "]\n");
+    fprintf(f, "}\n");
+
+    if (fclose(f) != 0) {
+        free(ids);
+        unlink(tmp);
+        return ULAB_ERR;
+    }
+
+    free(ids);
+
+    if (rename(tmp, path) != 0) {
+        unlink(tmp);
+        return ULAB_ERR;
+    }
+
+    return ULAB_OK;
+}
+
+static void copy_array_value(json_t *root,
+                             const char *name,
+                             size_t idx,
+                             char *out,
+                             size_t out_len) {
+    json_t *arr;
+    json_t *v;
+
+    arr = json_object_get(root, name);
+    if (arr == NULL || !json_is_array(arr) || idx >= json_array_size(arr)) {
+        return;
+    }
+
+    v = json_array_get(arr, idx);
+    if (v != NULL && json_is_string(v) && json_string_value(v) != NULL) {
+        ulab_copy(out, out_len, json_string_value(v));
+    }
+}
+
+static int created_load(const char *run_dir, world_t *world) {
+    char path[ULAB_MAX_PATH];
+    json_error_t jerr;
+    json_t *root;
+    json_t *arr;
+    size_t i;
+
+    created_path(run_dir, path, sizeof(path));
+    root = json_load_file(path, 0, &jerr);
+    if (root == NULL || !json_is_object(root)) {
+        if (root != NULL) json_decref(root);
+        return ULAB_ERR;
+    }
+
+    for (i = 0; i < world->network_count; i++) {
+        copy_array_value(root, "networks", i, world->networks[i].bff_id,
+                         sizeof(world->networks[i].bff_id));
+    }
+    for (i = 0; i < world->site_count; i++) {
+        copy_array_value(root, "sites", i, world->sites[i].bff_id,
+                         sizeof(world->sites[i].bff_id));
+    }
+    for (i = 0; i < world->node_count; i++) {
+        copy_array_value(root, "nodes", i, world->nodes[i].bff_id,
+                         sizeof(world->nodes[i].bff_id));
+    }
+    for (i = 0; i < world->subscriber_count; i++) {
+        copy_array_value(root, "subscribers", i, world->subscribers[i].bff_id,
+                         sizeof(world->subscribers[i].bff_id));
+    }
+    for (i = 0; i < world->package_count; i++) {
+        copy_array_value(root, "packages", i, world->packages[i].bff_id,
+                         sizeof(world->packages[i].bff_id));
+    }
+
+    arr = json_object_get(root, "sims");
+    if (arr != NULL && json_is_array(arr)) {
+        for (i = 0; i < json_array_size(arr) && i < world->ue_count; i++) {
+            json_t *obj = json_array_get(arr, i);
+            json_t *id;
+            json_t *pool;
+            json_t *pkg;
+
+            if (obj == NULL || !json_is_object(obj)) {
+                continue;
+            }
+            id = json_object_get(obj, "id");
+            pool = json_object_get(obj, "pool_sim_id");
+            pkg = json_object_get(obj, "package_id");
+            if (id != NULL && json_is_string(id)) {
+                ulab_copy(world->ues[i].bff_id, sizeof(world->ues[i].bff_id),
+                          json_string_value(id));
+            }
+            if (pool != NULL && json_is_string(pool)) {
+                ulab_copy(world->ues[i].pool_sim_id,
+                          sizeof(world->ues[i].pool_sim_id),
+                          json_string_value(pool));
+            }
+            if (pkg != NULL && json_is_string(pkg)) {
+                ulab_copy(world->ues[i].sim_package_id,
+                          sizeof(world->ues[i].sim_package_id),
+                          json_string_value(pkg));
+            }
+        }
+    }
+
+    json_decref(root);
+    return ULAB_OK;
+}
+
+static void created_clear_ids(world_t *world) {
+    size_t i;
+
+    for (i = 0; i < world->network_count; i++) world->networks[i].bff_id[0] = '\0';
+    for (i = 0; i < world->site_count; i++) world->sites[i].bff_id[0] = '\0';
+    for (i = 0; i < world->node_count; i++) world->nodes[i].bff_id[0] = '\0';
+    for (i = 0; i < world->subscriber_count; i++) world->subscribers[i].bff_id[0] = '\0';
+    for (i = 0; i < world->package_count; i++) world->packages[i].bff_id[0] = '\0';
+    for (i = 0; i < world->ue_count; i++) {
+        world->ues[i].bff_id[0] = '\0';
+        world->ues[i].sim_package_id[0] = '\0';
+        world->ues[i].pool_sim_id[0] = '\0';
+    }
+}
+
+static void created_finalize(const char *run_dir) {
+    char path[ULAB_MAX_PATH];
+    char final_path[ULAB_MAX_PATH];
+
+    if (run_dir == NULL || run_dir[0] == '\0') {
+        return;
+    }
+
+    created_path(run_dir, path, sizeof(path));
+    snprintf(final_path, sizeof(final_path), "%s/created.final.json", run_dir);
+    unlink(final_path);
+    rename(path, final_path);
 }
 
 static int setup_bff_networks(bff_client_t *bff,
@@ -394,26 +663,32 @@ static int setup_bff_world(bff_client_t *bff,
     if (setup_bff_networks(bff, scenario, world, err)) {
         return ULAB_EBFF;
     }
+    created_write(run_dir, world);
 
     if (setup_bff_sites(bff, scenario, world, err)) {
         return ULAB_EBFF;
     }
+    created_write(run_dir, world);
 
     if (setup_bff_sim_pool(bff, world, opts, run_dir, err)) {
         return ULAB_EBFF;
     }
+    created_write(run_dir, world);
 
     if (setup_bff_packages(bff, scenario, world, err)) {
         return ULAB_EBFF;
     }
+    created_write(run_dir, world);
 
     if (setup_bff_subscribers(bff, scenario, world, err)) {
         return ULAB_EBFF;
     }
+    created_write(run_dir, world);
 
     if (setup_bff_sims(bff, scenario, world, opts, err)) {
         return ULAB_EBFF;
     }
+    created_write(run_dir, world);
 
     return ULAB_OK;
 }
@@ -458,18 +733,22 @@ static int setup_bff_subscriber_only(bff_client_t *bff,
     if (setup_bff_sim_pool(bff, world, opts, run_dir, err)) {
         return ULAB_EBFF;
     }
+    created_write(run_dir, world);
 
     if (setup_bff_packages(bff, scenario, world, err)) {
         return ULAB_EBFF;
     }
+    created_write(run_dir, world);
 
     if (setup_bff_subscribers(bff, scenario, world, err)) {
         return ULAB_EBFF;
     }
+    created_write(run_dir, world);
 
     if (setup_bff_sims(bff, scenario, world, opts, err)) {
         return ULAB_EBFF;
     }
+    created_write(run_dir, world);
 
     return ULAB_OK;
 }
@@ -648,6 +927,8 @@ static int run_phase(scenario_t *scenario,
 
     for (i = 0; i < phase->event_count; i++) {
         rc = event_run(&event_ctx, &phase->events[i], err);
+        report_event(report, phase->name, &phase->events[i],
+                     rc == ULAB_OK, rc == ULAB_OK ? "ok" : err->msg);
         if (rc != ULAB_OK) {
             return rc;
         }
@@ -695,35 +976,83 @@ static int should_cleanup(const runner_opts_t *opts, int rc) {
     return 1;
 }
 
-static void cleanup_run(const runner_opts_t *opts,
-                        bff_client_t *bff,
-                        runtime_t *runtime,
-                        world_t *world,
-                        int rc) {
+static int cleanup_run(const runner_opts_t *opts,
+                       bff_client_t *bff,
+                       runtime_t *runtime,
+                       world_t *world,
+                       const char *run_dir,
+                       int rc) {
 
     ulab_error_t cleanup_err;
+    int failures;
+
+    failures = 0;
 
     if (!should_cleanup(opts, rc)) {
-        return;
+        return ULAB_OK;
     }
 
     memset(&cleanup_err, 0, sizeof(cleanup_err));
     ulab_status("CLEANUP", "stop UE runtime");
     if (runtime_stop_ues(runtime, world, &cleanup_err)) {
+        failures++;
         ulab_log_error("%s", cleanup_err.msg);
     }
 
     memset(&cleanup_err, 0, sizeof(cleanup_err));
     ulab_status("CLEANUP", "delete backend resources");
     if (bff_cleanup_world(bff, world, &cleanup_err)) {
+        failures++;
         ulab_log_error("%s", cleanup_err.msg);
     }
 
     memset(&cleanup_err, 0, sizeof(cleanup_err));
     ulab_status("CLEANUP", "stop media/nodes/network");
     if (runtime_cleanup_infra(runtime, world, &cleanup_err)) {
+        failures++;
         ulab_log_error("%s", cleanup_err.msg);
     }
+
+    if (failures == 0) {
+        created_finalize(run_dir);
+    }
+
+    return failures == 0 ? ULAB_OK : ULAB_ERR;
+}
+
+static int preclean_existing_run(bff_client_t *bff,
+                                 runtime_t *runtime,
+                                 world_t *world,
+                                 const char *run_dir,
+                                 ulab_error_t *err) {
+    runner_opts_t cleanup_opts;
+    int rc;
+
+    if (!created_exists(run_dir)) {
+        return ULAB_OK;
+    }
+
+    ulab_status("CLEANUP", "existing created.json found; cleaning run first");
+
+    if (created_load(run_dir, world)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "failed to load existing created.json for cleanup");
+        return ULAB_ERR;
+    }
+
+    memset(&cleanup_opts, 0, sizeof(cleanup_opts));
+    cleanup_opts.cleanup = 1;
+
+    rc = cleanup_run(&cleanup_opts, bff, runtime, world, run_dir, ULAB_OK);
+    created_clear_ids(world);
+
+    if (rc != ULAB_OK) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "pre-cleanup failed for existing run_id");
+        return ULAB_ERR;
+    }
+
+    return ULAB_OK;
 }
 
 int runner_validate(const runner_opts_t *opts) {
@@ -739,9 +1068,13 @@ int runner_validate(const runner_opts_t *opts) {
     check_ctx_t check_ctx;
     size_t i;
     int rc;
+    int cleanup_rc;
+    int skip_cleanup;
 
     scenario = NULL;
     rc = ULAB_OK;
+    cleanup_rc = ULAB_OK;
+    skip_cleanup = 0;
     memset(&world,   0, sizeof(world));
     memset(&model,   0, sizeof(model));
     memset(&bff,     0, sizeof(bff));
@@ -758,16 +1091,42 @@ int runner_validate(const runner_opts_t *opts) {
     rc = prepare_run(opts, scenario, &world, &model, runDir,
                      sizeof(runDir), &err);
     if (rc != ULAB_OK) {
+        skip_cleanup = 1;
         goto done;
     }
 
-    report_open(&report, world.run_id, runDir);
+    if (report_open(&report, scenario, world.run_id, runDir)) {
+        snprintf(err.msg, sizeof(err.msg), "failed to open report files");
+        rc = ULAB_EINTERNAL;
+        goto done;
+    }
     report_world(&world);
     write_world_artifact(&world, runDir);
+
+    if (ulab_streq(scenario->status, "skip") ||
+        ulab_streq(scenario->status, "wip")) {
+        ulab_status("SKIP", "%s status=%s", scenario->name,
+                    scenario->status);
+        skip_cleanup = 1;
+        rc = ULAB_OK;
+        goto done;
+    }
 
     rc = runtime_init(&runtime, opts->script_dir, runDir, opts->repo);
     if (rc != ULAB_OK) {
         rc = ULAB_ERUNTIME;
+        goto done;
+    }
+
+    rc = bff_init(&bff, opts->bff_url, runDir);
+    if (rc != ULAB_OK) {
+        rc = ULAB_EBFF;
+        goto done;
+    }
+
+    rc = preclean_existing_run(&bff, &runtime, &world, runDir, &err);
+    if (rc != ULAB_OK) {
+        rc = ULAB_EBFF;
         goto done;
     }
 
@@ -795,12 +1154,6 @@ int runner_validate(const runner_opts_t *opts) {
             rc = ULAB_ERUNTIME;
             goto done;
         }
-    }
-
-    rc = bff_init(&bff, opts->bff_url, runDir);
-    if (rc != ULAB_OK) {
-        rc = ULAB_EBFF;
-        goto done;
     }
 
     if (opts->subscriber_only) {
@@ -839,9 +1192,8 @@ int runner_validate(const runner_opts_t *opts) {
                     scenario->final_check_count, &report, &err);
 
     write_model_artifact(&model, runDir);
-    report_result(&report);
 
-    if (rc == ULAB_OK && report.failed) {
+    if (rc == ULAB_OK && (report.failed || report.event_failed)) {
         rc = ULAB_ERR;
     }
 
@@ -850,8 +1202,22 @@ done:
         ulab_log_error("%s", err.msg);
     }
 
-    cleanup_run(opts, &bff, &runtime, &world, rc);
+    if (!skip_cleanup) {
+        cleanup_rc = cleanup_run(opts, &bff, &runtime, &world, runDir, rc);
+        report_set_cleanup(&report, cleanup_rc != ULAB_OK);
+        if (cleanup_rc != ULAB_OK && rc == ULAB_OK) {
+            rc = ULAB_ERR;
+        }
+    }
 
+    if (scenario != NULL && ulab_streq(scenario->status, "xfail") &&
+        rc != ULAB_OK) {
+        ulab_status("XFAIL", "%s failed as expected", scenario->name);
+        rc = ULAB_OK;
+    }
+
+    report_set_final_rc(&report, rc);
+    report_result(&report);
     report_close(&report);
     runtime_close(&runtime);
     bff_close(&bff);

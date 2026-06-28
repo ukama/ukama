@@ -1,6 +1,10 @@
 version: 1
 name: one-site-one-ue
 seed: 1
+suite: smoke
+priority: p0
+tags: [runtime, bff, sim]
+status: active
 
 world:
   networks: 1
@@ -46,7 +50,7 @@ phases:
         tolerance_percent: 2
 
 final_checks:
-  - type: count
+  - type: model_count
     target: nodes
     expected: 3
   - type: package_active

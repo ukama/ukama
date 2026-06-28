@@ -29,6 +29,7 @@ static void usage(void) {
     printf("  --seed <n>       override scenario seed\n");
     printf("  --bff <url>      BFF GraphQL endpoint\n");
     printf("  --out <dir>      output directory\n");
+    printf("  --run-id <id>    fixed run id; existing created.json is cleaned first\n");
     printf("  --scripts <dir>  runtime script directory\n");
     printf("  --setup-only     create BFF world and skip runtime\n");
     printf("  --subscriber     create package/subscriber/SIM only\n");
@@ -103,6 +104,8 @@ static int parse_opts(int argc, char **argv, int start, runner_opts_t *o) {
             ulab_copy(o->bff_url, sizeof(o->bff_url), argv[++i]);
         } else if (ulab_streq(argv[i], "--out") && i + 1 < argc) {
             ulab_copy(o->out_dir, sizeof(o->out_dir), argv[++i]);
+        } else if (ulab_streq(argv[i], "--run-id") && i + 1 < argc) {
+            ulab_copy(o->run_id, sizeof(o->run_id), argv[++i]);
         } else if (ulab_streq(argv[i], "--scripts") && i + 1 < argc) {
             ulab_copy(o->script_dir, sizeof(o->script_dir), argv[++i]);
         } else if (ulab_streq(argv[i], "--repo") && i + 1 < argc) {

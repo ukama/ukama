@@ -11,6 +11,7 @@
 
 #include "scenario.h"
 #include "world.h"
+#include "util.h"
 
 static int fail(ulab_error_t *err, const char *msg) {
     snprintf(err->msg, sizeof(err->msg), "%s", msg);
@@ -27,6 +28,13 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
 
     if (s->name[0] == '\0') {
         return fail(err, "missing scenario name");
+    }
+
+    if (!ulab_streq(s->status, "active") &&
+        !ulab_streq(s->status, "wip") &&
+        !ulab_streq(s->status, "skip") &&
+        !ulab_streq(s->status, "xfail")) {
+        return fail(err, "scenario status must be active/wip/skip/xfail");
     }
 
     if (s->world.networks == 0 || s->world.sites_per_network == 0) {

@@ -1,6 +1,10 @@
 version: 1
 name: two-networks-many-ues
 seed: 77
+suite: wip
+priority: p2
+tags: [wip]
+status: wip
 
 world:
   networks: 2
@@ -15,13 +19,13 @@ packages:
   - ref: daily_1gb
     name: Daily 1GB
     data_mb: 1024
-    duration_hours: 24
+    duration_days: 1
     amount: 1.00
     assign_percent: 70
   - ref: weekly_10gb
     name: Weekly 10GB
     data_mb: 10240
-    duration_hours: 168
+    duration_days: 7
     amount: 7.00
     assign_percent: 30
 
@@ -64,16 +68,16 @@ phases:
         tolerance_percent: 2
 
 final_checks:
-  - type: count
+  - type: model_count
     target: networks
     expected: 2
-  - type: count
+  - type: model_count
     target: sites
     expected: 6
-  - type: count
+  - type: model_count
     target: nodes
     expected: 24
-  - type: count
+  - type: model_count
     target: sims
     expected: 300
   - type: dashboard_loads

@@ -33,6 +33,9 @@ typedef enum {
 
 void scenario_init(scenario_t *s) {
     memset(s, 0, sizeof(*s));
+    snprintf(s->suite, sizeof(s->suite), "default");
+    snprintf(s->priority, sizeof(s->priority), "p2");
+    snprintf(s->status, sizeof(s->status), "active");
 }
 
 const char *scenario_event_name(event_type_t type) {
@@ -51,7 +54,8 @@ const char *scenario_event_name(event_type_t type) {
 
 const char *scenario_check_name(check_type_t type) {
     switch (type) {
-    case CHECK_COUNT: return "count";
+    case CHECK_MODEL_COUNT: return "model_count";
+    case CHECK_BFF_COUNT: return "bff_count";
     case CHECK_NODE_READY: return "node_ready";
     case CHECK_UE_ATTACHED: return "ue_attached";
     case CHECK_USAGE_PER_SIM: return "usage_per_sim";
@@ -83,7 +87,9 @@ int scenario_event_from_name(const char *name, event_type_t *out) {
 }
 
 int scenario_check_from_name(const char *name, check_type_t *out) {
-    if (ulab_streq(name, "count")) *out = CHECK_COUNT;
+    if (ulab_streq(name, "count") || ulab_streq(name, "model_count")) {
+        *out = CHECK_MODEL_COUNT;
+    } else if (ulab_streq(name, "bff_count")) *out = CHECK_BFF_COUNT;
     else if (ulab_streq(name, "node_ready")) *out = CHECK_NODE_READY;
     else if (ulab_streq(name, "ue_attached")) *out = CHECK_UE_ATTACHED;
     else if (ulab_streq(name, "usage_per_sim")) {
@@ -349,6 +355,14 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
                 }
             } else if (ulab_streq(key, "seed")) {
                 if (ulab_parse_u32(val, &s->seed) != ULAB_OK) goto bad;
+            } else if (ulab_streq(key, "suite")) {
+                if (ulab_copy(s->suite, sizeof(s->suite), val)) goto bad;
+            } else if (ulab_streq(key, "priority")) {
+                if (ulab_copy(s->priority, sizeof(s->priority), val)) goto bad;
+            } else if (ulab_streq(key, "tags")) {
+                if (ulab_copy(s->tags, sizeof(s->tags), val)) goto bad;
+            } else if (ulab_streq(key, "status")) {
+                if (ulab_copy(s->status, sizeof(s->status), val)) goto bad;
             } else if (ulab_streq(key, "world")) sec = SEC_WORLD;
             else if (ulab_streq(key, "packages")) sec = SEC_PACKAGES;
             else if (ulab_streq(key, "setup")) sec = SEC_SETUP;
@@ -562,7 +576,7 @@ void scenario_list_events(void) {
 void scenario_list_checks(void) {
     int i;
 
-    for (i = CHECK_COUNT; i <= CHECK_BALANCE_NON_NEGATIVE; i++) {
+    for (i = CHECK_MODEL_COUNT; i <= CHECK_BALANCE_NON_NEGATIVE; i++) {
         printf("%s\n", scenario_check_name((check_type_t)i));
     }
 }

@@ -1,6 +1,10 @@
 version: 1
 name: profile-usage
 seed: 44
+suite: wip
+priority: p2
+tags: [wip]
+status: wip
 
 world:
   networks: 1
@@ -15,7 +19,7 @@ packages:
   - ref: daily_1gb
     name: Daily 1GB
     data_mb: 1024
-    duration_hours: 24
+    duration_days: 1
     amount: 1.00
     assign_percent: 100
 
@@ -58,7 +62,7 @@ phases:
         tolerance_percent: 2
 
 final_checks:
-  - type: count
+  - type: model_count
     target: sims
     expected: 20
   - type: balance_non_negative

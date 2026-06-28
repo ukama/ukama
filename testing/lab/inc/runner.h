@@ -28,6 +28,7 @@ typedef struct {
     char sim_profile[ULAB_MAX_REF];
     char sim_form_factor[ULAB_MAX_REF];
     char sim_batch_prefix[ULAB_MAX_REF];
+    char run_id[ULAB_MAX_ID];
 
     uint32_t seed_override;
 
