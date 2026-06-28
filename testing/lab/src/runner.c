@@ -83,7 +83,7 @@ static int setup_bff_networks(bff_client_t *bff,
     }
 
     for (i = 0; i < world->network_count; i++) {
-        ulab_status("BACKEND", "add network %s", world->networks[i].ref);
+        ulab_status("NETWORK", "add network %s", world->networks[i].ref);
         if (bff_add_network(bff, &world->networks[i], err)) {
             return ULAB_EBFF;
         }
@@ -117,7 +117,7 @@ static int setup_bff_sites(bff_client_t *bff,
             return ULAB_EBFF;
         }
 
-        ulab_status("BACKEND", "add site %s", world->sites[i].ref);
+        ulab_status("SITE", "add site %s", world->sites[i].ref);
         if (bff_add_site(bff, &world->sites[i], network, err)) {
             return ULAB_EBFF;
         }
@@ -149,7 +149,7 @@ static int setup_bff_packages(bff_client_t *bff,
             return ULAB_EBFF;
         }
 
-        ulab_status("BACKEND", "add package %s", package->ref);
+        ulab_status("PACKAGE", "add package %s", package->ref);
         if (bff_add_package(bff, package, network, err)) {
             return ULAB_EBFF;
         }
@@ -181,7 +181,7 @@ static int setup_bff_subscribers(bff_client_t *bff,
             return ULAB_EBFF;
         }
 
-        ulab_status("BACKEND", "add subscriber %s", sub->ref);
+        ulab_status("SUBSCRIBER", "add subscriber %s", sub->ref);
         if (bff_add_subscriber(bff, sub, network, err)) {
             return ULAB_EBFF;
         }
@@ -350,7 +350,7 @@ static int setup_bff_sims(bff_client_t *bff,
          * explicitly activate the SIM here; doing so creates duplicate package
          * rows and can fail when the SIM is already active.
          */
-        ulab_status("BACKEND", "allocate sim %s iccid=%s", ue->ref,
+        ulab_status("SIM", "allocate sim %s iccid=%s", ue->ref,
                     ue->iccid);
         if (bff_allocate_sim_from_pool(bff, ue, sub, network, package,
                                        opts->sim_type, err)) {
@@ -358,7 +358,7 @@ static int setup_bff_sims(bff_client_t *bff,
         }
 
         active = 0;
-        ulab_status("BACKEND", "verify sim package %s package=%s",
+        ulab_status("SIM", "verify sim package %s package=%s",
                     ue->ref, package->ref);
         if (bff_get_packages_for_sim(bff, ue, package->bff_id, &active,
                                      err)) {
@@ -510,7 +510,7 @@ static int wait_runtime_nodes(const scenario_t *scenario,
         return ULAB_ERUNTIME;
     }
 
-    ulab_status("RUNTIME", "wait nodes ready");
+    ulab_status("NODE", "wait nodes ready");
     rc = runtime_wait_nodes_ready(runtime, world, &nodes, err);
     selector_result_free(&nodes);
 
@@ -541,14 +541,14 @@ static int runtime_all_ues(const scenario_t *scenario,
     }
 
     if (scenario->runtime.start_ues) {
-        ulab_status("RUNTIME", "start media");
+        ulab_status("MEDIA", "start media");
         rc = runtime_ensure_media(runtime, err);
         if (rc != ULAB_OK) {
             selector_result_free(&ues);
             return ULAB_ERUNTIME;
         }
 
-        ulab_status("RUNTIME", "start ues");
+        ulab_status("UE", "start ues");
         rc = runtime_build_and_start_ues(NULL, runtime, world, &ues, err);
         if (rc != ULAB_OK) {
             selector_result_free(&ues);
@@ -557,7 +557,7 @@ static int runtime_all_ues(const scenario_t *scenario,
     }
 
     if (scenario->runtime.wait_ues_attached) {
-        ulab_status("RUNTIME", "wait ues attached");
+        ulab_status("UE", "wait ues attached");
         rc = runtime_wait_ues_attached(runtime, world, &ues, err);
         if (rc != ULAB_OK) {
             selector_result_free(&ues);
@@ -778,7 +778,7 @@ int runner_validate(const runner_opts_t *opts) {
             goto done;
         }
 
-        ulab_status("RUNTIME", "factory/build/start site node bundles");
+        ulab_status("SITE", "factory/build/start site node bundles");
         rc = start_runtime_sites(opts->repo, scenario, &world, &runtime,
                                  &err);
         if (rc != ULAB_OK) {
@@ -804,11 +804,11 @@ int runner_validate(const runner_opts_t *opts) {
     }
 
     if (opts->subscriber_only) {
-        ulab_status("SETUP", "creating package/subscriber/SIM only");
+        ulab_status("SUBSCRIBER", "creating package/subscriber/SIM only");
         rc = setup_bff_subscriber_only(&bff, scenario, &world, opts,
                                        runDir, &err);
     } else {
-        ulab_status("SETUP", "creating backend world resources");
+        ulab_status("BACKEND", "creating backend world resources");
         rc = setup_bff_world(&bff, scenario, &world, opts, runDir,
                              &err);
     }

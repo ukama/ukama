@@ -477,7 +477,7 @@ int runtime_enable_pcrf_service(runtime_t *rt, const world_t *w,
             return ULAB_ERR;
         }
 
-        ulab_status("PCRF", "enable service %s", n->id);
+        ulab_status("NODE", "enable service %s", n->id);
         if (run_script(rt, "enable-pcrf-service.sh", args, err)) {
             return ULAB_ERR;
         }
