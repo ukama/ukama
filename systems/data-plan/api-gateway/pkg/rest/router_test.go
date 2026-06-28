@@ -24,7 +24,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/systems/data-plan/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/data-plan/api-gateway/pkg/client"
 
 	cconfig "github.com/ukama/ukama/systems/common/config"
@@ -91,9 +90,6 @@ var routerConfig = &RouterConfig{
 		Cors: defaultCors,
 	},
 
-	httpEndpoints: &pkg.HttpEndpoints{
-		NodeMetrics: "localhost:8080",
-	},
 	auth: &cconfig.Auth{
 		AuthAppUrl:    "http://localhost:4455",
 		AuthServerUrl: "http://localhost:4434",

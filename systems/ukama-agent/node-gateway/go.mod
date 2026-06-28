@@ -17,7 +17,7 @@ require (
 	github.com/loopfz/gadgeto v0.11.5
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
-	github.com/ukama/ukama/systems/common v0.0.0-20260424133213-448b64544fad
+	github.com/ukama/ukama/systems/common v0.0.0-20260619120609-7efa630ff962
 	github.com/ukama/ukama/systems/ukama-agent/asr v0.0.0-20260428062756-185718f3c7c3
 	github.com/ukama/ukama/systems/ukama-agent/cdr v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.22.0

@@ -29,7 +29,7 @@ type Config struct {
 	MsgClient         *config.MsgClient `default:"{}"`
 	Queue             *config.Queue     `default:"{}"`
 	Service           *config.Service   `default:"{}"`
-	PushGatewayHost   string            `default:"http://localhost:9091"`
+	PushGateway       string            `default:"http://localhost:9091"`
 	IsMsgBus          bool              `default:"true"`
 	Metrics           *config.Metrics   `default:"{}"`
 	Org               string            `default:""`

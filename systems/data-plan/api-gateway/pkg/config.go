@@ -20,7 +20,7 @@ type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Server            rest.HttpConfig
 	Services          GrpcEndpoints  `mapstructure:"services"`
-	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
+	Http              HttpEndpoints  `mapstructure:"http"`
 	Metrics           config.Metrics `mapstructure:"metrics"`
 	Auth              *config.Auth   `mapstructure:"auth"`
 }
@@ -33,8 +33,7 @@ type GrpcEndpoints struct {
 }
 
 type HttpEndpoints struct {
-	Timeout     time.Duration
-	NodeMetrics string
+	Timeout time.Duration
 }
 
 func NewConfig() *Config {
@@ -52,9 +51,8 @@ func NewConfig() *Config {
 			Baserate: "baserate:9090",
 			Rate:     "rate:9090",
 		},
-		HttpServices: HttpEndpoints{
-			Timeout:     5 * time.Second,
-			NodeMetrics: "http://localhost",
+		Http: HttpEndpoints{
+			Timeout: 5 * time.Second,
 		},
 		Server: rest.HttpConfig{
 			Port: 8080,

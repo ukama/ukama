@@ -25,7 +25,7 @@ services:
    - COMPONENT_SERVICE_HOST=component
    - COMPONENT_SERVICE_PORT=9090
    - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9091
-   - FACTORYURL=http://api-gateway-factory:8080
+   - HTTP_FACTORYCLIENT=http://api-gateway-factory:8080
    - REPOURL=${REPOURL}
    - TOKEN=${TOKEN}
    - COMPONENTENVIRONMENT=${COMPONENT_ENVIRONMENT}

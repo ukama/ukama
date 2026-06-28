@@ -42,7 +42,6 @@ services:
    - MSGCLIENT_HOST=msgclient-dataplan:9095
    - PACKAGE_SERVICE_HOST=package
    - PACKAGE_SERVICE_PORT=9090
-   - RATE=rate:9090
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
   restart: always
@@ -63,7 +62,6 @@ services:
    - MSGCLIENT_HOST=msgclient-dataplan:9095
    - RATE_SERVICE_HOST=rate
    - RATE_SERVICE_PORT=9090
-   - BASERATE=baserate:9090
    - ORGNAME=${ORGNAME}
   restart: always
   networks:

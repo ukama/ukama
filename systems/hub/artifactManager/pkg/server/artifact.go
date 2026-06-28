@@ -48,7 +48,6 @@ type ArtifcatServer struct {
 	storage               pkg.Storage
 	storageRequestTimeout time.Duration
 	chunker               chunkServer
-	IsGlobal              bool
 }
 
 type chunkServer interface {
@@ -56,17 +55,13 @@ type chunkServer interface {
 }
 
 func NewArtifactServer(orgId uuid.UUID, orgName string, storage pkg.Storage, chunk chunkServer, storageTimeout time.Duration,
-	msgBus mb.MsgBusServiceClient, pushGateway string, isGlobal bool) *ArtifcatServer {
+	msgBus mb.MsgBusServiceClient, pushGateway string) *ArtifcatServer {
 
 	rotuingKey := msgbus.NewRoutingKeyBuilder().SetCloudSource().SetGlobalScope().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName)
-	if isGlobal {
-		rotuingKey = msgbus.NewRoutingKeyBuilder().SetCloudSource().SetGlobalScope().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName)
-	}
 
 	return &ArtifcatServer{
 		OrgId:                 orgId,
 		OrgName:               orgName,
-		IsGlobal:              isGlobal,
 		msgbus:                msgBus,
 		baseRoutingKey:        rotuingKey,
 		pushGateway:           pushGateway,
