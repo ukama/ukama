@@ -67,10 +67,10 @@ void report_check(report_t *r, const check_result_t *res) {
 
 void report_result(report_t *r) {
     if (r->failed) {
-        ulab_status("RESULT", "FAIL checks=%zu failed=%zu artifacts=%s",
+        ulab_status("FAIL", "checks=%zu failed=%zu artifacts=%s",
                     r->checks, r->failed, r->run_dir);
     } else {
-        ulab_status("RESULT", "PASS checks=%zu artifacts=%s", r->checks,
+        ulab_status("PASS", "checks=%zu artifacts=%s", r->checks,
                     r->run_dir);
     }
 }
