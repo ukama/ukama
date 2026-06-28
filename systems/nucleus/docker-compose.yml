@@ -26,6 +26,7 @@ services:
       - HTTP_INITCLIENT=http://api-gateway-init:8080
       - ORG_SERVICE_HOST=org
       - ORG_SERVICE_PORT=9090
+      - ORGID=${ORGID}
       - OWNERID=${OWNERID}
       - ORGNAME=${ORGNAME}
       - CURRENCY=${CURRENCY}
