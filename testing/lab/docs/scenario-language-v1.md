@@ -32,6 +32,9 @@ Supported events:
 - `wait_ues_attached`
 - `restart_nodes`
 - `wait_nodes_ready`
+- `add_package_to_sim`
+- `remove_package_from_sim`
+- `set_sim_status`
 - `check`
 
 Supported checks:
@@ -87,3 +90,23 @@ List/status/runtime checks:
   ues: all
   amount_mb: 1
 ```
+
+
+BFF lifecycle events:
+
+```yaml
+- type: remove_package_from_sim
+  ues: all
+
+- type: add_package_to_sim
+  ues: all
+  package: daily_1gb
+
+- type: set_sim_status
+  ues: all
+  status: inactive
+```
+
+`status_equals` for SIMs supports `active` and `inactive` based on active
+package assignment. `set_sim_status` only validates the mutation path in this
+build; runtime enforcement is tested separately.

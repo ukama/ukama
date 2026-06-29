@@ -63,12 +63,17 @@ static int check_sim_status(check_ctx_t *ctx, const check_spec_t *check,
         res->passed = ue->started != 0;
     } else if (ulab_streq(want, "attached")) {
         res->passed = ue->attached != 0;
-    } else if (ulab_streq(want, "active")) {
+    } else if (ulab_streq(want, "active") ||
+               ulab_streq(want, "inactive")) {
         active = 0;
         if (bff_get_packages_for_sim(ctx->bff, ue, NULL, &active, err)) {
             return ULAB_ERR;
         }
-        res->passed = active != 0;
+        if (ulab_streq(want, "active")) {
+            res->passed = active != 0;
+        } else {
+            res->passed = active == 0;
+        }
     } else {
         snprintf(err->msg, sizeof(err->msg),
                  "unsupported sim status: %s", want);

@@ -50,6 +50,9 @@ const char *scenario_event_name(event_type_t type) {
     case EVT_WAIT_UES_ATTACHED: return "wait_ues_attached";
     case EVT_RESTART_NODES: return "restart_nodes";
     case EVT_WAIT_NODES_READY: return "wait_nodes_ready";
+    case EVT_ADD_PACKAGE_TO_SIM: return "add_package_to_sim";
+    case EVT_REMOVE_PACKAGE_FROM_SIM: return "remove_package_from_sim";
+    case EVT_SET_SIM_STATUS: return "set_sim_status";
     case EVT_CHECK: return "check";
     default: return "unknown";
     }
@@ -88,6 +91,12 @@ int scenario_event_from_name(const char *name, event_type_t *out) {
         *out = EVT_RESTART_NODES;
     } else if (ulab_streq(name, "wait_nodes_ready")) {
         *out = EVT_WAIT_NODES_READY;
+    } else if (ulab_streq(name, "add_package_to_sim")) {
+        *out = EVT_ADD_PACKAGE_TO_SIM;
+    } else if (ulab_streq(name, "remove_package_from_sim")) {
+        *out = EVT_REMOVE_PACKAGE_FROM_SIM;
+    } else if (ulab_streq(name, "set_sim_status")) {
+        *out = EVT_SET_SIM_STATUS;
     } else if (ulab_streq(name, "check")) *out = EVT_CHECK;
     else return ULAB_ERR;
     return ULAB_OK;
@@ -299,6 +308,8 @@ static int apply_event_field(event_spec_t *e, const char *key,
     }
     if (ulab_streq(key, "package")) return ulab_copy(e->package_ref,
         sizeof(e->package_ref), val);
+    if (ulab_streq(key, "status")) return ulab_copy(e->status,
+        sizeof(e->status), val);
     if (ulab_streq(key, "expect_result")) return ulab_copy(e->expect_result,
         sizeof(e->expect_result), val);
     if (ulab_streq(key, "error_contains")) return ulab_copy(e->error_contains,

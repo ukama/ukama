@@ -63,6 +63,9 @@ typedef enum {
     EVT_WAIT_UES_ATTACHED,
     EVT_RESTART_NODES,
     EVT_WAIT_NODES_READY,
+    EVT_ADD_PACKAGE_TO_SIM,
+    EVT_REMOVE_PACKAGE_FROM_SIM,
+    EVT_SET_SIM_STATUS,
     EVT_CHECK
 } event_type_t;
 
@@ -113,6 +116,7 @@ typedef struct {
     char         profile[ULAB_MAX_REF];
     char         expect_result[ULAB_MAX_REF];
     char         error_contains[ULAB_MAX_ERR];
+    char         status[ULAB_MAX_REF];
     uint32_t     count_per_site;
     char         package_ref[ULAB_MAX_REF];
     check_spec_t checks[ULAB_MAX_CHECKS];
