@@ -20,7 +20,7 @@ type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Server            rest.HttpConfig
 	Services          GrpcEndpoints  `mapstructure:"services"`
-	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
+	Http              HttpEndpoints  `mapstructure:"http"`
 	Metrics           config.Metrics `mapstructure:"metrics"`
 	Auth              *config.Auth   `mapstructure:"auth"`
 }
@@ -48,7 +48,7 @@ func NewConfig() *Config {
 			Timeout: 3 * time.Second,
 			Manager: "manager:9090",
 		},
-		HttpServices: HttpEndpoints{
+		Http: HttpEndpoints{
 			Timeout:      3 * time.Second,
 			RegistryHost: "http://api-gateway-registry:8080",
 		},

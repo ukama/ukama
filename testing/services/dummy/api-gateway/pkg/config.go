@@ -20,7 +20,7 @@ type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Server            rest.HttpConfig
 	Services          GrpcEndpoints `mapstructure:"services"`
-	HttpServices      HttpEndpoints `mapstructure:"httpServices"`
+	Http              HttpEndpoints `mapstructure:"http"`
 	Auth              *config.Auth  `mapstructure:"auth"`
 }
 
@@ -50,7 +50,7 @@ func NewConfig() *Config {
 			Dsimfactory: "dsimfactory:9090",
 			Dcontroller: "dcontroller:9090",
 		},
-		HttpServices: HttpEndpoints{
+		Http: HttpEndpoints{
 			Timeout: 3 * time.Second,
 		},
 		Server: rest.HttpConfig{

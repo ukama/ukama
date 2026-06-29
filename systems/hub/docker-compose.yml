@@ -34,12 +34,8 @@ services:
   environment:
    - DEBUGMODE=true
    - BYPASS_AUTH_MODE=true
-   - NODEMETRICSPORT=10251
-   - SERVICES_ARTIFACTMANAGER=artifactmanager:9090
-   - SERVICES_DISTRIBUTOR=distributor:9090
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
-   - ISGLOBAL=true
   depends_on:
    - artifactmanager
    - distributor
@@ -53,12 +49,8 @@ services:
   environment:
    - DEBUGMODE=true
    - BYPASS_AUTH_MODE=true
-   - NODEMETRICSPORT=10251
-   - SERVICES_ARTIFACTMANAGER=artifactmanager:9090
-   - SERVICES_DISTRIBUTOR=distributor:9090
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
-   - ISGLOBAL=true
   depends_on:
    - artifactmanager
    - distributor
@@ -78,7 +70,6 @@ services:
    - CHUNKER_HOST=http://distributor:9090
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
-   - ISGLOBAL=TRUE
    - PUSHGATEWAY=http://localhost:9091
   restart: always
   networks:
@@ -106,7 +97,6 @@ services:
    - DISTRIBUTOR_SERVICE_PORT=9090
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
-   - ISGLOBAL=TRUE
   networks:
    - ukama-net
   restart: always

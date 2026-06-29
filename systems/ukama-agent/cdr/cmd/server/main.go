@@ -112,7 +112,7 @@ func runGrpcServer(gormdb sql.Db) {
 	}
 
 	cdrServer, err := server.NewCDRServer(cdr, usage, serviceConfig.OrgId, serviceConfig.OrgName,
-		serviceConfig.PushGatewayHost, asrClient, mbClient)
+		serviceConfig.PushGateway, asrClient, mbClient)
 	if err != nil {
 		log.Fatalf("asr server initialization failed. Error: %v", err)
 	}

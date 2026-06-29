@@ -88,7 +88,6 @@ type Config struct {
 	MsgClient         *config.MsgClient `default:"{}"`
 	OrgName           string
 	OrgId             string
-	IsGlobal          bool `default:"true"`
 	PushGateway       string
 	Grpc              *config.Grpc `default:"{}"`
 }

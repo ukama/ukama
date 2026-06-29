@@ -20,7 +20,7 @@ type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Server            rest.HttpConfig
 	Services          GrpcEndpoints  `mapstructure:"services"`
-	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
+	Http              HttpEndpoints  `mapstructure:"http"`
 	Metrics           config.Metrics `mapstructure:"metrics"`
 	Auth              *config.Auth   `mapstructure:"auth"`
 }
@@ -31,9 +31,8 @@ type GrpcEndpoints struct {
 }
 
 type HttpEndpoints struct {
-	Timeout     time.Duration
-	Files       string
-	NodeMetrics string
+	Timeout time.Duration
+	Files   string
 }
 
 func NewConfig() *Config {
@@ -50,10 +49,9 @@ func NewConfig() *Config {
 			Timeout: 3 * time.Second,
 			Report:  "billing-report:9090",
 		},
-		HttpServices: HttpEndpoints{
-			Timeout:     3 * time.Second,
-			Files:       `http://billing-report:3000`,
-			NodeMetrics: "http://localhost",
+		Http: HttpEndpoints{
+			Timeout: 3 * time.Second,
+			Files:   `http://billing-report:3000`,
 		},
 
 		Server: rest.HttpConfig{

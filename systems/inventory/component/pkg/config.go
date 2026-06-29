@@ -32,19 +32,23 @@ type Config struct {
 	ComponentEnvironment string               `default:"production"`
 	RepoPath             string               `default:"/temp/git/networks"`
 	PushGateway          string               `default:"http://localhost:9091"`
-	FactoryUrl           string               `default:"http://api-gateway-factory:8080"`
 	NodeComponentDetails NodeComponentDetails `default:"{}"`
+	Http                 HttpServices         `default:"{}"`
+}
+
+type HttpServices struct {
+	FactoryClient string `default:"api-gateway-factory:8080"`
 }
 
 type NodeComponentDetails struct {
-	ImagesURL     string                  `default:""`
-	Specification string                  `default:""`
-	Warranty      uint32                  `default:"1"`
-	Managed       string                  `default:"true"`
-	Category      string                  `default:"access"`
-	Manufacturer  string                  `default:"Ukama Inc"`
-	Inventory     string                  `default:"ukma-access"`
-	DatasheetURL  string                  `default:"http://www.ukama.com/datasheet"`
+	ImagesURL     string `default:""`
+	Specification string `default:""`
+	Warranty      uint32 `default:"1"`
+	Managed       string `default:"true"`
+	Category      string `default:"access"`
+	Manufacturer  string `default:"Ukama Inc"`
+	Inventory     string `default:"ukma-access"`
+	DatasheetURL  string `default:"http://www.ukama.com/datasheet"`
 }
 
 var NetworkMetric = []metric.MetricConfig{}

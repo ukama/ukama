@@ -21,6 +21,7 @@ type MailerConfig struct {
 	Password string `default:""`
 	From     string `default:"hello@dev.ukama.com"`
 }
+
 type Config struct {
 	uconf.BaseConfig `mapstructure:",squash"`
 	DB               *uconf.Database `default:"{}"`
@@ -37,6 +38,7 @@ func NewConfig(name string) *Config {
 		DB: &uconf.Database{
 			DbName: name,
 		},
+		
 		Service: uconf.LoadServiceHostConfig(name),
 	}
 }

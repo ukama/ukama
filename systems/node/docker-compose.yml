@@ -25,10 +25,6 @@ services:
    - CONTROLLER_SERVICE_PORT=9090
    - ORGNAME=${ORGNAME}
    - HTTP_INITCLIENT=http://api-gateway-init:8080
-   - OPERATION_MANAGERHOST=manager:9090
-   - OPERATION_MONITORHOST=operation-monitor:9090
-   - OPERATION_LEASESECS=600
-   - OPERATION_DEADLINESECS=600
   restart: always
   networks:
    - ukama-net
@@ -49,7 +45,6 @@ services:
    - MSGCLIENT_HOST=msgclient-node:9095
    - SITE_CONTROLLER_SERVICE_HOST=site-controller
    - SITE_CONTROLLER_SERVICE_PORT=9090
-   - NODECONTROLLERHOST=controller:9090
    - ORGNAME=${ORGNAME}
    - HTTP_INITCLIENT=http://api-gateway-init:8080
   restart: always
