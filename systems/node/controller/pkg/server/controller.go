@@ -65,7 +65,6 @@ func NewControllerServer(orgName string, nRepo db.NodeLogRepo, msgBus mb.MsgBusS
 	return &ControllerServer{
 		nRepo:                nRepo,
 		orgName:              orgName,
-		nodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		msgbus:               msgBus,
 		debug:                debug,
 		networkClient:        cnet,
@@ -75,7 +74,33 @@ func NewControllerServer(orgName string, nRepo db.NodeLogRepo, msgBus mb.MsgBusS
 		opMonitor:            opMon,
 		opLeaseSecs:          leaseSecs,
 		opDeadlineSecs:       deadlineSecs,
+		nodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
+}
+
+func (c *ControllerServer) SendNodeCommand(ctx context.Context, req *pb.SendNodeCommandRequest) (*pb.SendNodeCommandResponse, error) {
+	nId, err := ukama.ValidateNodeId(req.NodeId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of node id. Error %s", err.Error())
+	}
+	if _, err = c.nRepo.Get(nId.String()); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
+	}
+
+	op, err := c.acquireAndRegister("SendNodeCommand", "node:"+nId.String())
+	if err != nil {
+		return nil, err
+	}
+	if err := c.markRunning(op, "RestartNode"); err != nil {
+		c.failOperation(op, "RestartNode", fmt.Sprintf("mark running failed: %v", err))
+		return nil, status.Errorf(codes.Internal, "mark running: %v", err)
+	}
+	if err := c.publishMessage(c.orgName+"..."+nId.String(), req.Method, req.Path, nId.String(), req.Body); err != nil {
+		c.failOperation(op, "SendNodeCommand", fmt.Sprintf("publish failed: %v", err))
+		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
+	}
+
+	return &pb.SendNodeCommandResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
 }
 
 func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeRequest) (*pb.RestartNodeResponse, error) {

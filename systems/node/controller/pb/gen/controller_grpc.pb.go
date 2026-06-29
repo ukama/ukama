@@ -27,6 +27,7 @@ type ControllerServiceClient interface {
 	ToggleSwitchPort(ctx context.Context, in *ToggleSwitchPortRequest, opts ...grpc.CallOption) (*ToggleSwitchPortResponse, error)
 	ToggleService(ctx context.Context, in *ToggleServiceRequest, opts ...grpc.CallOption) (*ToggleServiceResponse, error)
 	PingNode(ctx context.Context, in *PingNodeRequest, opts ...grpc.CallOption) (*PingNodeResponse, error)
+	SendNodeCommand(ctx context.Context, in *SendNodeCommandRequest, opts ...grpc.CallOption) (*SendNodeCommandResponse, error)
 }
 
 type controllerServiceClient struct {
@@ -82,6 +83,15 @@ func (c *controllerServiceClient) PingNode(ctx context.Context, in *PingNodeRequ
 	return out, nil
 }
 
+func (c *controllerServiceClient) SendNodeCommand(ctx context.Context, in *SendNodeCommandRequest, opts ...grpc.CallOption) (*SendNodeCommandResponse, error) {
+	out := new(SendNodeCommandResponse)
+	err := c.cc.Invoke(ctx, "/ukama.node.controller.v1.ControllerService/SendNodeCommand", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ControllerServiceServer is the server API for ControllerService service.
 // All implementations must embed UnimplementedControllerServiceServer
 // for forward compatibility
@@ -91,6 +101,7 @@ type ControllerServiceServer interface {
 	ToggleSwitchPort(context.Context, *ToggleSwitchPortRequest) (*ToggleSwitchPortResponse, error)
 	ToggleService(context.Context, *ToggleServiceRequest) (*ToggleServiceResponse, error)
 	PingNode(context.Context, *PingNodeRequest) (*PingNodeResponse, error)
+	SendNodeCommand(context.Context, *SendNodeCommandRequest) (*SendNodeCommandResponse, error)
 	mustEmbedUnimplementedControllerServiceServer()
 }
 
@@ -112,6 +123,9 @@ func (UnimplementedControllerServiceServer) ToggleService(context.Context, *Togg
 }
 func (UnimplementedControllerServiceServer) PingNode(context.Context, *PingNodeRequest) (*PingNodeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PingNode not implemented")
+}
+func (UnimplementedControllerServiceServer) SendNodeCommand(context.Context, *SendNodeCommandRequest) (*SendNodeCommandResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendNodeCommand not implemented")
 }
 func (UnimplementedControllerServiceServer) mustEmbedUnimplementedControllerServiceServer() {}
 
@@ -216,6 +230,24 @@ func _ControllerService_PingNode_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ControllerService_SendNodeCommand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendNodeCommandRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ControllerServiceServer).SendNodeCommand(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.node.controller.v1.ControllerService/SendNodeCommand",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ControllerServiceServer).SendNodeCommand(ctx, req.(*SendNodeCommandRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ControllerService_ServiceDesc is the grpc.ServiceDesc for ControllerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -242,6 +274,10 @@ var ControllerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PingNode",
 			Handler:    _ControllerService_PingNode_Handler,
+		},
+		{
+			MethodName: "SendNodeCommand",
+			Handler:    _ControllerService_SendNodeCommand_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

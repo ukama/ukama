@@ -74,6 +74,36 @@ func (_m *ControllerServiceServer) RestartNode(_a0 context.Context, _a1 *gen.Res
 	return r0, r1
 }
 
+// SendNodeCommand provides a mock function with given fields: _a0, _a1
+func (_m *ControllerServiceServer) SendNodeCommand(_a0 context.Context, _a1 *gen.SendNodeCommandRequest) (*gen.SendNodeCommandResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SendNodeCommand")
+	}
+
+	var r0 *gen.SendNodeCommandResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.SendNodeCommandRequest) (*gen.SendNodeCommandResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.SendNodeCommandRequest) *gen.SendNodeCommandResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.SendNodeCommandResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.SendNodeCommandRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ToggleRadio provides a mock function with given fields: _a0, _a1
 func (_m *ControllerServiceServer) ToggleRadio(_a0 context.Context, _a1 *gen.ToggleRadioRequest) (*gen.ToggleRadioResponse, error) {
 	ret := _m.Called(_a0, _a1)
