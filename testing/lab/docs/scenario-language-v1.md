@@ -1,11 +1,20 @@
 # Scenario language v1
 
 Top-level fields: `version`, `name`, `seed`, optional `suite`, `priority`,
-`tags`, `status`, then `world`, `packages`, `setup`, `runtime`, optional
-`profiles`, `phases`, and `final_checks`.
+`tags`, `status`, optional `provider`, then `world`, `packages`, `setup`,
+`runtime`, optional `profiles`, `phases`, and `final_checks`.
 
 The language is strict. Unknown event/check names must fail validation.
 Packages use `duration_days` only.
+
+Provider block is optional. Missing provider defaults to `virtual`.
+
+```yaml
+provider:
+  type: virtual
+```
+
+Only `virtual` is supported in this build.
 
 Scenario status values:
 

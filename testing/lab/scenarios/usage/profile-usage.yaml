@@ -6,6 +6,9 @@ priority: p2
 tags: [wip]
 status: wip
 
+provider:
+  type: virtual
+
 world:
   networks: 1
   sites_per_network: 2

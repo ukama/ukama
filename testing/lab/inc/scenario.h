@@ -137,6 +137,10 @@ typedef struct {
 } setup_spec_t;
 
 typedef struct {
+    char type[ULAB_MAX_REF];
+} provider_spec_t;
+
+typedef struct {
     int start_nodes;
     int start_ues;
     int wait_nodes_ready;
@@ -155,6 +159,7 @@ typedef struct {
     package_spec_t packages[ULAB_MAX_PACKAGES];
     size_t         package_count;
     setup_spec_t   setup;
+    provider_spec_t provider;
     runtime_spec_t runtime;
     profile_spec_t profiles[ULAB_MAX_BUCKETS];
     size_t         profile_count;

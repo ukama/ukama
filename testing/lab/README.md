@@ -2,8 +2,8 @@
 
 `ukama-lab` is a real-runtime E2E scenario runner for Ukama. It reads a
 strict v1 YAML scenario, generates a deterministic test world, creates
-control-plane objects through the Console BFF GraphQL API, starts real virtual
-nodes/UEs through runtime adapters, generates traffic, tracks expected state,
+control-plane objects through the Console BFF GraphQL API, starts nodes through a provider layer
+(currently `virtual`) and starts UEs through runtime adapters, generates traffic, tracks expected state,
 and validates product-visible state through BFF queries.
 
 ## Build

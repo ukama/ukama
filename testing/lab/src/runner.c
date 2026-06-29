@@ -1112,7 +1112,7 @@ int runner_validate(const runner_opts_t *opts) {
         goto done;
     }
 
-    rc = runtime_init(&runtime, opts->script_dir, runDir, opts->repo);
+    rc = runtime_init(&runtime, scenario->provider.type, opts->script_dir, runDir, opts->repo);
     if (rc != ULAB_OK) {
         rc = ULAB_ERUNTIME;
         goto done;

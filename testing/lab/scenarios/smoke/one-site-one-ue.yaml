@@ -6,6 +6,9 @@ priority: p0
 tags: [runtime, bff, sim]
 status: active
 
+provider:
+  type: virtual
+
 world:
   networks: 1
   sites_per_network: 1

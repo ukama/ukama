@@ -21,6 +21,7 @@ typedef enum {
     SEC_PACKAGES,
     SEC_SETUP,
     SEC_SETUP_LIST,
+    SEC_PROVIDER,
     SEC_RUNTIME,
     SEC_PROFILES,
     SEC_PROFILE_ONE,
@@ -36,6 +37,7 @@ void scenario_init(scenario_t *s) {
     snprintf(s->suite, sizeof(s->suite), "default");
     snprintf(s->priority, sizeof(s->priority), "p2");
     snprintf(s->status, sizeof(s->status), "active");
+    snprintf(s->provider.type, sizeof(s->provider.type), "virtual");
 }
 
 const char *scenario_event_name(event_type_t type) {
@@ -366,6 +368,7 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
             } else if (ulab_streq(key, "world")) sec = SEC_WORLD;
             else if (ulab_streq(key, "packages")) sec = SEC_PACKAGES;
             else if (ulab_streq(key, "setup")) sec = SEC_SETUP;
+            else if (ulab_streq(key, "provider")) sec = SEC_PROVIDER;
             else if (ulab_streq(key, "runtime")) sec = SEC_RUNTIME;
             else if (ulab_streq(key, "profiles")) sec = SEC_PROFILES;
             else if (ulab_streq(key, "phases")) sec = SEC_PHASES;
@@ -453,6 +456,15 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
             } else goto unknown;
             continue;
         }
+
+        if (sec == SEC_PROVIDER) {
+            if (ind == 2 && ulab_streq(key, "type")) {
+                if (ulab_copy(s->provider.type,
+                    sizeof(s->provider.type), val)) goto bad;
+            } else goto unknown;
+            continue;
+        }
+
         if (sec == SEC_RUNTIME) {
             if (ind == 2 && ulab_streq(key, "start")) {
                 s->runtime.start_nodes = parse_inline_list(val, "nodes");
