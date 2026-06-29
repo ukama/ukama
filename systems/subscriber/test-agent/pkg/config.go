@@ -19,8 +19,8 @@ type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Grpc              *config.Grpc    `default:"{}"`
 	Metrics           *config.Metrics `default:"{}"`
+	Timeout           time.Duration   `default:"3s"`
 	Service           *config.Service
-	Timeout           time.Duration `default:"3s"`
 }
 
 func NewConfig(name string) *Config {

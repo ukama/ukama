@@ -10,7 +10,6 @@ import { BaseRESTDataSource } from "../../common/datasource";
 import { TBooleanResponse } from "../../common/types";
 import {
   RestartNodeInputDto,
-  RestartNodesInputDto,
   RestartSiteInputDto,
   SetSiteInputDto,
   ToggleInternetSwitchInputDto,
@@ -18,6 +17,7 @@ import {
 } from "../resolvers/types";
 
 const CONTROLLER = "controller";
+const SITES = "sites";
 
 class ControllerApi extends BaseRESTDataSource {
   restartNode = async (
@@ -38,40 +38,15 @@ class ControllerApi extends BaseRESTDataSource {
       });
   };
 
-  restartNodes = async (
-    baseURL: string,
-    req: RestartNodesInputDto
-  ): Promise<TBooleanResponse> => {
-    this.logger.info(
-      `RestartNodes [POST]: ${baseURL}/${VERSION}/${CONTROLLER}/networks/${req.networkId}/restart-nodes`
-    );
-    this.baseURL = baseURL;
-    return this.post(
-      `/${VERSION}/${CONTROLLER}/networks/${req.networkId}/restart-nodes`,
-      {
-        body: req.nodeIds,
-      }
-    )
-      .then(() => {
-        return { success: true };
-      })
-      .catch(error => {
-        this.logger.error(`Request failed: ${error}`);
-        return { success: false };
-      });
-  };
-
   restartSite = async (
     baseURL: string,
     req: RestartSiteInputDto
   ): Promise<TBooleanResponse> => {
     this.logger.info(
-      `RestartSite [POST]: ${baseURL}/${VERSION}/${CONTROLLER}/networks/${req.networkId}/sites/${req.siteId}/restart`
+      `RestartSite [POST]: ${baseURL}/${VERSION}/${SITES}/${req.siteId}/restart`
     );
     this.baseURL = baseURL;
-    return this.post(
-      `/${VERSION}/${CONTROLLER}/networks/${req.networkId}/sites/${req.siteId}/restart`
-    )
+    return this.post(`/${VERSION}/${SITES}/${req.siteId}/restart`)
       .then(() => {
         return { success: true };
       })

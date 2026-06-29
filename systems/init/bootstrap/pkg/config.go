@@ -19,16 +19,16 @@ import (
 type Config struct {
 	uconf.BaseConfig `mapstructure:",squash"`
 	DB               *uconf.Database  `default:"{}"`
-	Grpc             *uconf.Grpc   `default:"{}"`
-	Queue            *uconf.Queue  `default:"{}"`
-	Timeout          time.Duration `default:"20s"`
-	Service          *uconf.Service
+	Grpc             *uconf.Grpc      `default:"{}"`
+	Queue            *uconf.Queue     `default:"{}"`
+	Timeout          time.Duration    `default:"20s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	OrgName          string           `default:"ukama"`
 	Lookup           string           `default:"lookup:9090"`
+	DNSMap           []OrgDNS         `mapstructure:"-"`
+	MeshNamespace    string           `default:"messaging"`
 	Http             HttpServices
-	DNSMap           []OrgDNS `mapstructure:"-"`
-	MeshNamespace    string   `default:"messaging"`
+	Service          *uconf.Service
 }
 
 type OrgDNS struct {
@@ -50,6 +50,7 @@ func NewConfig(name string) *Config {
 			Timeout:        7 * time.Second,
 			ListenerRoutes: []string{},
 		},
+		Lookup: "lookup:9090",
 		DNSMap: []OrgDNS{
 			{
 				OrgName: "ukama",

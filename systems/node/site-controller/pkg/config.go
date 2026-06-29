@@ -15,23 +15,23 @@ import (
 )
 
 type Config struct {
-	uconf.BaseConfig 	`mapstructure:",squash"`
-	DB               	*uconf.Database  `default:"{}"`
-	Grpc             	*uconf.Grpc      `default:"{}"`
-	Queue            	*uconf.Queue     `default:"{}"`
-	Timeout          	time.Duration    `default:"20s"`
-	MsgClient        	*uconf.MsgClient `default:"{}"`
-	ReconcileInterval   time.Duration 	 `default:"30s"`
-	ComponentSyncDelay  time.Duration 	 `default:"30s"`
-	HealthHost          string        	 `default:"health:9090"`
-	NodeControllerHost  string        	 `default:"controller:9090"`
-	ReconcileMaxRetries int           	 `default:"3"`
+	uconf.BaseConfig    `mapstructure:",squash"`
+	DB                  *uconf.Database  `default:"{}"`
+	Grpc                *uconf.Grpc      `default:"{}"`
+	Queue               *uconf.Queue     `default:"{}"`
+	Timeout             time.Duration    `default:"20s"`
+	MsgClient           *uconf.MsgClient `default:"{}"`
+	ReconcileInterval   time.Duration    `default:"30s"`
+	ComponentSyncDelay  time.Duration    `default:"30s"`
+	HealthHost          string           `default:"health:9090"`
+	NodeControllerHost  string           `default:"controller:9090"`
+	ReconcileMaxRetries int              `default:"3"`
 	OrgName             string
 	Service             *uconf.Service
 	Http                HttpServices
 }
 type HttpServices struct {
-	InitClient    string `default:"api-gateway-init:8080"`
+	InitClient string `default:"api-gateway-init:8080"`
 }
 
 func NewConfig(name string) *Config {
@@ -39,8 +39,10 @@ func NewConfig(name string) *Config {
 		DB: &uconf.Database{
 			DbName: name,
 		},
-		Timeout: 3 * time.Second,
-		Service: uconf.LoadServiceHostConfig(name),
+		ReconcileMaxRetries: 3,
+		HealthHost:          "health:9090",
+		NodeControllerHost:  "controller:9090",
+		Service:             uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
 			Timeout: 7 * time.Second,
 			ListenerRoutes: []string{

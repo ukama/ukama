@@ -23,9 +23,9 @@ import (
 
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 
+	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/node/controller/pkg"
 	cclient "github.com/ukama/ukama/systems/node/controller/pkg/client"
@@ -53,7 +53,7 @@ type ControllerServer struct {
 	networkClient        creg.NetworkClient
 	siteClient           creg.SiteClient
 	nodeClient           creg.NodeClient
-	opManager            cclient.OperationManager
+	opManager            copr.ManagerClient
 	opMonitor            cclient.OperationMonitor
 	opLeaseSecs          uint32
 	opDeadlineSecs       uint32
@@ -61,11 +61,10 @@ type ControllerServer struct {
 	orgName              string
 }
 
-func NewControllerServer(orgName string, nRepo db.NodeLogRepo, msgBus mb.MsgBusServiceClient, cnet creg.NetworkClient, csite creg.SiteClient, cnode creg.NodeClient, opMgr cclient.OperationManager, opMon cclient.OperationMonitor, leaseSecs, deadlineSecs uint32, debug bool) *ControllerServer {
+func NewControllerServer(orgName string, nRepo db.NodeLogRepo, msgBus mb.MsgBusServiceClient, cnet creg.NetworkClient, csite creg.SiteClient, cnode creg.NodeClient, opMgr copr.ManagerClient, opMon cclient.OperationMonitor, leaseSecs, deadlineSecs uint32, debug bool) *ControllerServer {
 	return &ControllerServer{
 		nRepo:                nRepo,
 		orgName:              orgName,
-		nodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		msgbus:               msgBus,
 		debug:                debug,
 		networkClient:        cnet,
@@ -75,60 +74,33 @@ func NewControllerServer(orgName string, nRepo db.NodeLogRepo, msgBus mb.MsgBusS
 		opMonitor:            opMon,
 		opLeaseSecs:          leaseSecs,
 		opDeadlineSecs:       deadlineSecs,
+		nodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
 }
 
-func (c *ControllerServer) RestartSite(ctx context.Context, req *pb.RestartSiteRequest) (*pb.RestartSiteResponse, error) {
-	log.Infof("Restarting site %v", req)
-
-	if req.SiteId == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "site name cannot be empty")
-	}
-	if req.NetworkId == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "network cannot be empty")
-	}
-	netId, err := uuid.FromString(req.GetNetworkId())
+func (c *ControllerServer) SendNodeCommand(ctx context.Context, req *pb.SendNodeCommandRequest) (*pb.SendNodeCommandResponse, error) {
+	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid network ID format: %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of node id. Error %s", err.Error())
 	}
-	if _, err = c.siteClient.Get(req.GetSiteId()); err != nil {
-		return nil, fmt.Errorf("failed to validate site %s and network %s. Error %s", req.GetSiteId(), netId.String(), err.Error())
-	}
-	if _, err = c.networkClient.Get(netId.String()); err != nil {
-		return nil, fmt.Errorf("failed to validate network with network %s. Error %s", netId.String(), err.Error())
-	}
-	nodes, err := c.nodeClient.GetNodesBySite(req.SiteId)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get nodes with site %s and network %s. Error %s", req.GetSiteId(), netId.String(), err.Error())
+	if _, err = c.nRepo.Get(nId.String()); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
 	}
 
-	validatedNodeIds := make([]string, 0, len(nodes.Nodes))
-	for _, node := range nodes.Nodes {
-		nId, err := ukama.ValidateNodeId(node.Id)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid format of node id. Error %s", err.Error())
-		}
-		if _, err = c.nRepo.Get(nId.String()); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
-		}
-		validatedNodeIds = append(validatedNodeIds, nId.String())
-	}
-
-	op, err := c.acquireAndRegister("RestartSite", siteKey(req.GetSiteId()))
+	op, err := c.acquireAndRegister("SendNodeCommand", "node:"+nId.String())
 	if err != nil {
 		return nil, err
 	}
-	if err := c.markRunning(op, "RestartSite"); err != nil {
-		c.failOperation(op, "RestartSite", fmt.Sprintf("mark running failed: %v", err))
+	if err := c.markRunning(op, "RestartNode"); err != nil {
+		c.failOperation(op, "RestartNode", fmt.Sprintf("mark running failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "mark running: %v", err)
 	}
-	for _, nodeId := range validatedNodeIds {
-		if err := c.publishMessage(c.orgName+"..."+nodeId, actions["RESTART"].method, actions["RESTART"].path, nodeId, []byte("")); err != nil {
-			c.failOperation(op, "RestartSite", fmt.Sprintf("publish failed: %v", err))
-			return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
-		}
+	if err := c.publishMessage(c.orgName+"..."+nId.String(), req.Method, req.Path, nId.String(), req.Body); err != nil {
+		c.failOperation(op, "SendNodeCommand", fmt.Sprintf("publish failed: %v", err))
+		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
 	}
-	return &pb.RestartSiteResponse{OperationIds: []string{op.Id}, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
+
+	return &pb.SendNodeCommandResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
 }
 
 func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeRequest) (*pb.RestartNodeResponse, error) {
@@ -179,71 +151,16 @@ func (c *ControllerServer) PingNode(ctx context.Context, req *pb.PingNodeRequest
 	return &pb.PingNodeResponse{}, nil
 }
 
-func (c *ControllerServer) RestartNodes(ctx context.Context, req *pb.RestartNodesRequest) (*pb.RestartNodesResponse, error) {
-	if len(req.NodeIds) == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "node IDs cannot be empty")
-	}
+func (c *ControllerServer) ToggleSwitchPort(ctx context.Context, req *pb.ToggleSwitchPortRequest) (*pb.ToggleSwitchPortResponse, error) {
+	log.Infof("Toggling internet switch for node %v, port %v to %v", req.NodeId, req.Port, req.Status)
 
-	validatedNodeIds := make([]string, 0, len(req.NodeIds))
-	for _, nodeId := range req.NodeIds {
-		nId, err := ukama.ValidateNodeId(nodeId)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid format of node id. Error %s", err.Error())
-		}
-		if _, err = c.nRepo.Get(nId.String()); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
-		}
-		validatedNodeIds = append(validatedNodeIds, nId.String())
-	}
-
-	ops := make([]*opmgrpb.Operation, 0, len(validatedNodeIds))
-	for _, nodeId := range validatedNodeIds {
-		op, err := c.acquireAndRegister("RestartNodes", "node:"+nodeId)
-		if err != nil {
-			c.failOperations(ops, "RestartNodes", "RestartNodes aborted before dispatch because a node lock was unavailable")
-			return nil, err
-		}
-		ops = append(ops, op)
-	}
-
-	operationIds := make([]string, 0, len(ops))
-	for i, nodeId := range validatedNodeIds {
-		data, err := proto.Marshal(&pb.RestartNodeRequest{NodeId: nodeId})
-		if err != nil {
-			c.failOperations(ops[i:], "RestartNodes", fmt.Sprintf("marshal failed: %v", err))
-			return nil, err
-		}
-
-		op := ops[i]
-		if err := c.markRunning(op, "RestartNodes"); err != nil {
-			c.failOperation(op, "RestartNodes", fmt.Sprintf("mark running failed: %v", err))
-			return nil, status.Errorf(codes.Internal, "mark running: %v", err)
-		}
-		if err := c.publishMessage(c.orgName+"..."+nodeId, actions["RESTART"].method, actions["RESTART"].path, nodeId, data); err != nil {
-			c.failOperation(op, "RestartNodes", fmt.Sprintf("publish failed: %v", err))
-			return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
-		}
-		operationIds = append(operationIds, op.Id)
-	}
-	return &pb.RestartNodesResponse{OperationIds: operationIds, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
-}
-
-func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.ToggleInternetSwitchRequest) (*pb.ToggleInternetSwitchResponse, error) {
-	log.Infof("Toggling internet switch for site %v, port %v to %v", req.SiteId, req.Port, req.Status)
-
-	if req.SiteId == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "site ID cannot be empty")
-	}
-	siteId, err := uuid.FromString(req.GetSiteId())
+	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid site ID format: %s", err.Error())
-	}
-	if _, err = c.siteClient.Get(req.SiteId); err != nil {
-		return nil, fmt.Errorf("failed to validate site %s. Error %s", req.SiteId, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of node id. Error %s", err.Error())
 	}
 
-	data, err := proto.Marshal(&pb.ToggleInternetSwitchRequest{
-		SiteId: siteId.String(),
+	data, err := proto.Marshal(&pb.ToggleSwitchPortRequest{
+		NodeId: nId.String(),
 		Status: req.Status,
 		Port:   req.Port,
 	})
@@ -251,7 +168,7 @@ func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.Tog
 		return nil, err
 	}
 
-	op, err := c.acquireAndRegister("ToggleInternetSwitch", siteKey(siteId.String()))
+	op, err := c.acquireAndRegister("ToggleInternetSwitch", nodeKey(nId.String()))
 	if err != nil {
 		return nil, err
 	}
@@ -259,14 +176,14 @@ func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.Tog
 		c.failOperation(op, "ToggleInternetSwitch", fmt.Sprintf("mark running failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "mark running: %v", err)
 	}
-	if err := c.publishMessage(c.orgName+"..."+siteId.String(), actions["SWITCH"].method, actions["SWITCH"].path, siteId.String(), data); err != nil {
+	if err := c.publishMessage(c.orgName+"..."+nId.String(), actions["SWITCH"].method, actions["SWITCH"].path, nId.String(), data); err != nil {
 		c.failOperation(op, "ToggleInternetSwitch", fmt.Sprintf("publish failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "Failed to publish switch port reboot message: %s", err.Error())
 	}
-	return &pb.ToggleInternetSwitchResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
+	return &pb.ToggleSwitchPortResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
 }
 
-func (c *ControllerServer) ToggleRfSwitch(ctx context.Context, req *pb.ToggleRfSwitchRequest) (*pb.ToggleRfSwitchResponse, error) {
+func (c *ControllerServer) ToggleRadio(ctx context.Context, req *pb.ToggleRadioRequest) (*pb.ToggleRadioResponse, error) {
 	log.Infof("Toggling RADIO on/off for node %v, to %v", req.NodeId, req.State)
 	// TODO: RF toggle will send command to Tnode and Anode both
 	nId, err := ukama.ValidateNodeId(req.NodeId)
@@ -283,7 +200,7 @@ func (c *ControllerServer) ToggleRfSwitch(ctx context.Context, req *pb.ToggleRfS
 		return nil, err
 	}
 
-	op, err := c.acquireAndRegister("ToggleRfSwitch", c.siteResourceKey(nId.String()))
+	op, err := c.acquireAndRegister("ToggleRfSwitch", nodeKey(nId.String()))
 	if err != nil {
 		return nil, err
 	}
@@ -295,10 +212,10 @@ func (c *ControllerServer) ToggleRfSwitch(ctx context.Context, req *pb.ToggleRfS
 		c.failOperation(op, "ToggleRfSwitch", fmt.Sprintf("publish failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "Failed to publish RADIO switch message: %s", err.Error())
 	}
-	return &pb.ToggleRfSwitchResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
+	return &pb.ToggleRadioResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
 }
 
-func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.ToggleNodeServiceRequest) (*pb.ToggleNodeServiceResponse, error) {
+func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.ToggleServiceRequest) (*pb.ToggleServiceResponse, error) {
 	log.Infof("Toggling Node SERVICE on/off for node %v, to %v", req.NodeId, req.State)
 
 	nId, err := ukama.ValidateNodeId(req.NodeId)
@@ -315,7 +232,7 @@ func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.Toggle
 		return nil, err
 	}
 
-	op, err := c.acquireAndRegister("ToggleNodeService", c.siteResourceKey(nId.String()))
+	op, err := c.acquireAndRegister("ToggleNodeService", nodeKey(nId.String()))
 	if err != nil {
 		return nil, err
 	}
@@ -327,38 +244,20 @@ func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.Toggle
 		c.failOperation(op, "ToggleNodeService", fmt.Sprintf("publish failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "Failed to publish Node SERVICE switch message: %s", err.Error())
 	}
-	return &pb.ToggleNodeServiceResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
+	return &pb.ToggleServiceResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
 }
 
-func siteKey(siteID string) string {
-	if id, err := uuid.FromString(siteID); err == nil {
-		return "site:" + id.String()
-	}
-	return "site:" + siteID
+func nodeKey(nodeID string) string {
+	return "node:" + nodeID
 }
 
-func (c *ControllerServer) siteResourceKey(nodeID string) string {
-	if c.nodeClient == nil {
-		return "node:" + nodeID
-	}
-	n, err := c.nodeClient.Get(nodeID)
-	if err != nil || n == nil || n.Site.SiteId == "" {
-		log.Warnf("could not resolve site for node %s, using node-level lock: %v", nodeID, err)
-		return "node:" + nodeID
-	}
-	return siteKey(n.Site.SiteId)
-}
-
-func (c *ControllerServer) acquireAndRegister(actionType, resourceKey string) (*opmgrpb.Operation, error) {
+func (c *ControllerServer) acquireAndRegister(actionType, resourceKey string) (*copr.OperationInfo, error) {
 	if c.opManager == nil || c.opMonitor == nil {
 		log.Warnf("%s running without operation manager/monitor for %s", actionType, resourceKey)
-		return &opmgrpb.Operation{
-			Id:          "",
-			ResourceKey: resourceKey,
-		}, nil
+		return nil, fmt.Errorf("operation manager/monitor is not set")
 	}
 
-	startResp, err := c.opManager.Start(&opmgrpb.StartOperationRequest{
+	startResp, err := c.opManager.Start(copr.StartRequest{
 		Type:         actionType,
 		System:       "node",
 		ResourceKey:  resourceKey,
@@ -385,7 +284,7 @@ func (c *ControllerServer) acquireAndRegister(actionType, resourceKey string) (*
 	return op, nil
 }
 
-func (c *ControllerServer) markRunning(op *opmgrpb.Operation, actionType string) error {
+func (c *ControllerServer) markRunning(op *copr.OperationInfo, actionType string) error {
 	if c.opManager == nil || op == nil || op.Id == "" {
 		return nil
 	}
@@ -397,18 +296,12 @@ func (c *ControllerServer) markRunning(op *opmgrpb.Operation, actionType string)
 	return nil
 }
 
-func (c *ControllerServer) failOperation(op *opmgrpb.Operation, actionType, reason string) {
+func (c *ControllerServer) failOperation(op *copr.OperationInfo, actionType, reason string) {
 	if c.opManager == nil || op == nil || op.Id == "" {
 		return
 	}
-	if _, err := c.opManager.FailOperation(op.Id, pkg.ServiceName, reason); err != nil {
-		log.Errorf("%s failed to mark operation %s failed: %v", actionType, op.Id, err)
-	}
-}
-
-func (c *ControllerServer) failOperations(ops []*opmgrpb.Operation, actionType, reason string) {
-	for _, op := range ops {
-		c.failOperation(op, actionType, reason)
+	if _, err := c.opManager.ForceUnlock(op.Id, pkg.ServiceName, reason); err != nil {
+		log.Errorf("%s failed to force unlock operation %s: %v", actionType, op.Id, err)
 	}
 }
 

@@ -18,11 +18,11 @@ import (
 
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
-	Server            rest.HttpConfig
 	Services          GrpcEndpoints  `mapstructure:"services"`
 	Http              HttpEndpoints  `mapstructure:"http"`
 	Metrics           config.Metrics `mapstructure:"metrics"`
 	Auth              *config.Auth   `mapstructure:"auth"`
+	Server            rest.HttpConfig
 }
 
 type GrpcEndpoints struct {

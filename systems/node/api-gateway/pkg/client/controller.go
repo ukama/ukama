@@ -58,20 +58,6 @@ func (c *Controller) Close() {
 	}
 }
 
-func (c *Controller) RestartSite(siteId, networkId string) (*pb.RestartSiteResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
-	defer cancel()
-
-	return c.client.RestartSite(ctx, &pb.RestartSiteRequest{SiteId: siteId, NetworkId: networkId})
-}
-
-func (c *Controller) PingNode(req *pb.PingNodeRequest) (*pb.PingNodeResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
-	defer cancel()
-
-	return c.client.PingNode(ctx, req)
-}
-
 func (c *Controller) RestartNode(nodeId string) (*pb.RestartNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
@@ -79,30 +65,30 @@ func (c *Controller) RestartNode(nodeId string) (*pb.RestartNodeResponse, error)
 	return c.client.RestartNode(ctx, &pb.RestartNodeRequest{NodeId: nodeId})
 }
 
-func (c *Controller) RestartNodes(networkId string, nodeIds []string) (*pb.RestartNodesResponse, error) {
+func (c *Controller) ToggleSwitchPort(status bool, port int32, nodeId string) (*pb.ToggleSwitchPortResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	return c.client.RestartNodes(ctx, &pb.RestartNodesRequest{NetworkId: networkId, NodeIds: nodeIds})
+	return c.client.ToggleSwitchPort(ctx, &pb.ToggleSwitchPortRequest{Status: status, Port: port, NodeId: nodeId})
 }
 
-func (c *Controller) ToggleInternetSwitch(status bool, port int32, siteId string) (*pb.ToggleInternetSwitchResponse, error) {
+func (c *Controller) ToggleRadio(nodeId string, state string) (*pb.ToggleRadioResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	return c.client.ToggleInternetSwitch(ctx, &pb.ToggleInternetSwitchRequest{Status: status, SiteId: siteId, Port: port})
+	return c.client.ToggleRadio(ctx, &pb.ToggleRadioRequest{NodeId: nodeId, State: state})
 }
 
-func (c *Controller) ToggleRf(nodeId string, state string) (*pb.ToggleRfSwitchResponse, error) {
+func (c *Controller) ToggleService(nodeId string, state string) (*pb.ToggleServiceResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	return c.client.ToggleRfSwitch(ctx, &pb.ToggleRfSwitchRequest{NodeId: nodeId, State: state})
+	return c.client.ToggleService(ctx, &pb.ToggleServiceRequest{NodeId: nodeId, State: state})
 }
 
-func (c *Controller) ToggleNodeService(nodeId string, state string) (*pb.ToggleNodeServiceResponse, error) {
+func (c *Controller) PingNode(nodeId string) (*pb.PingNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	return c.client.ToggleNodeService(ctx, &pb.ToggleNodeServiceRequest{NodeId: nodeId, State: state})
+	return c.client.PingNode(ctx, &pb.PingNodeRequest{NodeId: nodeId})
 }

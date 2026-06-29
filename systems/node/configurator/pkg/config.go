@@ -54,5 +54,10 @@ func NewConfig(name string) *Config {
 				"event.node.local.{{ .Org}}.messaging.mesh.config.create",
 			},
 		},
+		Operation: OperationServices{
+			ManagerHost: "manager:9090",
+			Timeout:     5 * time.Second,
+			LeaseSecs:   1800,
+		},
 	}
 }

@@ -42,6 +42,8 @@ func NewConfig(name string) *Config {
 		Queue: config.Queue{
 			Uri: "amqp://guest:guest@rabbitmq:5672/",
 		},
+		Net:     "nns:9090",
+		Metrics: config.DefaultMetrics(),
 		Listener: ListenerConfig{
 			ExecutionRetryCount: 3,
 			RetryPeriodSec:      30,
@@ -49,7 +51,6 @@ func NewConfig(name string) *Config {
 			Routes:              []mb.RoutingKey{"request.cloud.local.*.*.*.nodefeeder.publish"},
 			Exchange:            "amq.topic",
 		},
-		Metrics: config.DefaultMetrics(),
 		//request.cloud.local.ukamaorg.messaging.eventgenerator.nodefeeder.publish
 	}
 }

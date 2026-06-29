@@ -57,18 +57,18 @@ func New(
 		maxRetries = 3
 	}
 	return &Reconciler{
-		intents:           intents,
-		states:            states,
-		flights:           flights,
-		ports:             ports,
-		components:        components,
+		intents:            intents,
+		states:             states,
+		flights:            flights,
+		ports:              ports,
+		components:         components,
 		controllerProvider: controllerProvider,
-		tower:             tower,
-		amplifier:         amp,
-		cnode:             cnode,
-		reconcileInterval: reconcileInterval,
-		maxRetries:        maxRetries,
-		flightTTL:         24 * time.Hour,
+		tower:              tower,
+		amplifier:          amp,
+		cnode:              cnode,
+		reconcileInterval:  reconcileInterval,
+		maxRetries:         maxRetries,
+		flightTTL:          24 * time.Hour,
 	}
 }
 
@@ -221,6 +221,7 @@ func (r *Reconciler) SetRadio(ctx context.Context, siteID, state, reason, reques
 	}
 	return r.states.Get(siteID)
 }
+
 // PowerCycleNode looks up the port for role and forwards PoE cycle to the CNode. It does not reject
 // the cnode role; switch.d on the node enforces never_off_remote and related policy.
 func (r *Reconciler) PowerCycleNode(ctx context.Context, siteID, role, reason string) error {
@@ -268,6 +269,7 @@ func (r *Reconciler) ensureCriticalPoe(ctx context.Context, siteID string) error
 	}
 	return nil
 }
+
 // resolveSiteNode returns the node id assigned to a role in the site port map
 // (tower for service, amplifier for radio).
 func (r *Reconciler) resolveSiteNode(siteID, role string) (string, error) {
@@ -294,7 +296,7 @@ func (r *Reconciler) applyService(ctx context.Context, siteID, state string) err
 	if err != nil {
 		return fmt.Errorf("get controller client: %w", err)
 	}
-	if _, err := client.ToggleNodeService(ctx, &contpb.ToggleNodeServiceRequest{NodeId: nodeID, State: state}); err != nil {
+	if _, err := client.ToggleService(ctx, &contpb.ToggleServiceRequest{NodeId: nodeID, State: state}); err != nil {
 		return fmt.Errorf("apply service: %w", err)
 	}
 	return nil
@@ -309,7 +311,7 @@ func (r *Reconciler) applyRadio(ctx context.Context, siteID, state string) error
 	if err != nil {
 		return fmt.Errorf("get controller client: %w", err)
 	}
-	if _, err := client.ToggleRfSwitch(ctx, &contpb.ToggleRfSwitchRequest{NodeId: nodeID, State: state}); err != nil {
+	if _, err := client.ToggleRadio(ctx, &contpb.ToggleRadioRequest{NodeId: nodeID, State: state}); err != nil {
 		return fmt.Errorf("apply radio: %w", err)
 	}
 	return nil

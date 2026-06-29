@@ -80,11 +80,6 @@ func runGrpcServer(gormdb sql.Db) {
 		svcConf.MsgClient.ListenerRoutes,
 	)
 
-	cmdAdapter, err := adapters.NewControllerAdapter(svcConf.Service.Host, svcConf.Timeout)
-	if err != nil {
-		log.Fatalf("failed to connect controller: %v", err)
-	}
-
 	intentRepo := db.NewIntentRepo(gormdb)
 	stateRepo := db.NewStateRepo(gormdb)
 	portMapRepo := db.NewPortMapRepo(gormdb)
@@ -103,9 +98,9 @@ func runGrpcServer(gormdb sql.Db) {
 		portMapRepo,
 		componentRepo,
 		controllerProvider,
-		adapters.NewTowerAdapter(cmdAdapter),
-		adapters.NewAmplifierAdapter(cmdAdapter),
-		adapters.NewCNodeAdapter(cmdAdapter),
+		adapters.NewTowerAdapter(controllerProvider),
+		adapters.NewAmplifierAdapter(controllerProvider),
+		adapters.NewCNodeAdapter(controllerProvider),
 		svcConf.ReconcileInterval,
 		svcConf.ReconcileMaxRetries,
 	)

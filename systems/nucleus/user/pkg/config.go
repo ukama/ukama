@@ -58,6 +58,7 @@ func NewConfig(name string) *Config {
 		DB: &config.Database{
 			DbName: name + "s",
 		},
+		Org:     "org:9090",
 		Service: config.LoadServiceHostConfig(name),
 		MsgClient: &config.MsgClient{
 			Timeout: 7 * time.Second,

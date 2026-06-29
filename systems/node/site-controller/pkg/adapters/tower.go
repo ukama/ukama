@@ -11,12 +11,28 @@ package adapters
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+
+	crpc "github.com/ukama/ukama/systems/node/controller/pb/gen"
+	"github.com/ukama/ukama/systems/node/site-controller/providers"
 )
 
-type TowerAdapter struct{ cmd NodeCommandAdapter }
+type TowerAdapter struct {
+	cmd providers.ControllerClientProvider
+}
 
-func NewTowerAdapter(cmd NodeCommandAdapter) *TowerAdapter { return &TowerAdapter{cmd: cmd} }
+func NewTowerAdapter(cmd providers.ControllerClientProvider) *TowerAdapter {
+	return &TowerAdapter{cmd: cmd}
+}
 func (a *TowerAdapter) SetService(ctx context.Context, nodeID, state string) error {
 	b, _ := json.Marshal(map[string]string{"state": state})
-	return a.cmd.Send(ctx, nodeID, "POST", "/device/v1/service", b)
+	client, err := a.cmd.GetClient()
+	if err != nil {
+		return fmt.Errorf("failed to get client: %w", err)
+	}
+	_, err = client.SendNodeCommand(ctx, &crpc.SendNodeCommandRequest{NodeId: nodeID, Method: "POST", Path: "/device/v1/service", Body: b})
+	if err != nil {
+		return fmt.Errorf("failed to send node command: %w", err)
+	}
+	return nil
 }

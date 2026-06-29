@@ -49,6 +49,7 @@ var SiteMetric = []metric.MetricConfig{
 
 func NewConfig(name string) *Config {
 	return &Config{
+		Network: "network:9090",
 		DB: &uconf.Database{
 			DbName: name,
 		},

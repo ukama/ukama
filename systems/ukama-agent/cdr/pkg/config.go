@@ -42,6 +42,7 @@ type GrpcEndPoints struct {
 
 func NewConfig(name string) *Config {
 	return &Config{
+		AsrHost: "asr:9090",
 		DB: &config.Database{
 			DbName: ServiceName,
 		},

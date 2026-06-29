@@ -76,10 +76,10 @@ func (s *SiteController) PowerCycleNode(siteID, role, reason, requestedBy string
 	return s.client.PowerCycleNode(ctx, &pb.PowerCycleNodeRequest{SiteId: siteID, Role: role, Reason: reason, RequestedBy: requestedBy})
 }
 
-func (s *SiteController) RestartSite(siteID, networkID string) (*pb.RestartSiteResponse, error) {
+func (s *SiteController) RestartSite(siteID string) (*pb.RestartSiteResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
-	return s.client.RestartSite(ctx, &pb.RestartSiteRequest{SiteId: siteID, NetworkId: networkID})
+	return s.client.RestartSite(ctx, &pb.RestartSiteRequest{SiteId: siteID, NetworkId: ""})
 }
 
 func (s *SiteController) ToggleInternetSwitch(siteID string, status bool, port int32) (*pb.ToggleInternetSwitchResponse, error) {

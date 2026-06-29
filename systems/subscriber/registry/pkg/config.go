@@ -35,6 +35,7 @@ type HttpServices struct {
 
 func NewConfig(name string) *Config {
 	return &Config{
+		SimManagerHost: "simmanager:9090",
 		DB: &uconf.Database{
 			DbName: name,
 		},

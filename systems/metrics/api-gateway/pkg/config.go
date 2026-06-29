@@ -30,16 +30,16 @@ type NameUpdate struct {
 
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
-	Server            rest.HttpConfig
 	Services          GrpcEndpoints  `mapstructure:"services"`
 	Http              HttpEndpoints  `mapstructure:"http"`
 	MetricsServer     config.Metrics `mapstructure:"metrics"`
-	MetricsStore      string         `default:"http://localhost:8080"`
 	Auth              *config.Auth   `mapstructure:"auth"`
+	Period            time.Duration  `default:"5s"`
+	MetricsStore      string         `default:"http://localhost:8080"`
+	MetricsKeyMapFile string         `default:"default-metrics.yaml"`
+	Server            rest.HttpConfig
 	MetricsConfig     *MetricsConfig
 	OrgName           string
-	Period            time.Duration `default:"5s"`
-	MetricsKeyMapFile string        `default:"default-metrics.yaml"`
 }
 
 type Metric struct {

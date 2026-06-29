@@ -28,8 +28,8 @@ type Config struct {
 	Grpc             *uconf.Grpc     `default:"{}"`
 	Queue            *uconf.Queue    `default:"{}"`
 	Timeout          time.Duration   `default:"50s"`
+	TemplatesPath    string          `default:"templates"`
 	Service          *uconf.Service
-	TemplatesPath    string `default:"templates"`
 	Mailer           *MailerConfig
 }
 
@@ -38,7 +38,6 @@ func NewConfig(name string) *Config {
 		DB: &uconf.Database{
 			DbName: name,
 		},
-		
 		Service: uconf.LoadServiceHostConfig(name),
 	}
 }

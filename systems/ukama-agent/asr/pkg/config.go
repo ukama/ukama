@@ -39,6 +39,7 @@ type HttpServices struct {
 
 func NewConfig(name string) *Config {
 	return &Config{
+		CDRHost: "cdr:9090",
 		DB: &config.Database{
 			DbName: ServiceName,
 		},

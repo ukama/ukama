@@ -16,14 +16,20 @@ type RestartNodeRequest struct {
 	NodeId string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
 }
 
+type ToggleSwitchPortRequest struct {
+	NodeId string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
+	Status bool   `json:"status"`
+	Port   int32  `json:"port" validate:"required"`
+}
+
+type ToggleStateRequest struct {
+	NodeId string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
+	State  string `json:"state" validate:"required" example:"on|off" path:"state"`
+}
 type GetStatesRequest struct {
 	NodeId string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
 }
 
-type RestartSiteRequest struct {
-	SiteId    string `json:"site_id"  example:"site-1" validate:"required" path:"site_name"`
-	NetworkId string `json:"network_id" example:"{{NetworkId}}" validate:"required" path:"network_id"`
-}
 type GetStatesHistoryRequest struct {
 	NodeId     string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
 	PageNumber int32  `json:"page_number" query:"page_number"`
@@ -34,11 +40,6 @@ type GetStatesHistoryRequest struct {
 type EnforceStateTransitionRequest struct {
 	NodeId string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
 	Event  string `json:"event" validate:"required" example:"{{Event}}" path:"event"`
-}
-
-type RestartNodesRequest struct {
-	NetworkId string   `json:"network_id" example:"{{NetworkId}}" validate:"required" path:"network_id"`
-	NodeIds   []string `json:"node_ids" example:"{{NodeIds}}" validate:"required"`
 }
 type ApplyConfigRequest struct {
 	Commit string `json:"commit" path:"commit" example:"commit" validate:"required"`
