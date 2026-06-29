@@ -27,27 +27,10 @@ func (this *PingNodeResponse) Validate() error {
 	return nil
 }
 
-var _regex_RestartNodesRequest_NetworkId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_ToggleSwitchPortRequest_SiteId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
-func (this *RestartNodesRequest) Validate() error {
-	if !_regex_RestartNodesRequest_NetworkId.MatchString(this.NetworkId) {
-		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.NetworkId))
-	}
-	if this.NetworkId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must not be an empty string`, this.NetworkId))
-	}
-	for _, item := range this.NodeIds {
-		if item == "" {
-			return github_com_mwitkow_go_proto_validators.FieldError("NodeIds", fmt.Errorf(`value '%v' must not be an empty string`, item))
-		}
-	}
-	return nil
-}
-
-var _regex_ToggleInternetSwitchRequest_SiteId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-
-func (this *ToggleInternetSwitchRequest) Validate() error {
-	if !_regex_ToggleInternetSwitchRequest_SiteId.MatchString(this.SiteId) {
+func (this *ToggleSwitchPortRequest) Validate() error {
+	if !_regex_ToggleSwitchPortRequest_SiteId.MatchString(this.SiteId) {
 		return github_com_mwitkow_go_proto_validators.FieldError("SiteId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SiteId))
 	}
 	if this.SiteId == "" {
@@ -55,16 +38,10 @@ func (this *ToggleInternetSwitchRequest) Validate() error {
 	}
 	return nil
 }
-func (this *ToggleInternetSwitchResponse) Validate() error {
+func (this *ToggleSwitchPortResponse) Validate() error {
 	return nil
 }
-func (this *RestartNodesResponse) Validate() error {
-	return nil
-}
-func (this *RestartSiteResponse) Validate() error {
-	return nil
-}
-func (this *ToggleRfSwitchRequest) Validate() error {
+func (this *ToggleRadioRequest) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
 	}
@@ -73,7 +50,7 @@ func (this *ToggleRfSwitchRequest) Validate() error {
 	}
 	return nil
 }
-func (this *ToggleRfSwitchResponse) Validate() error {
+func (this *ToggleRadioResponse) Validate() error {
 	return nil
 }
 func (this *RestartNodeRequest) Validate() error {
@@ -82,25 +59,10 @@ func (this *RestartNodeRequest) Validate() error {
 	}
 	return nil
 }
-
-var _regex_RestartSiteRequest_NetworkId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-
-func (this *RestartSiteRequest) Validate() error {
-	if this.SiteId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("SiteId", fmt.Errorf(`value '%v' must not be an empty string`, this.SiteId))
-	}
-	if !_regex_RestartSiteRequest_NetworkId.MatchString(this.NetworkId) {
-		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.NetworkId))
-	}
-	if this.NetworkId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must not be an empty string`, this.NetworkId))
-	}
-	return nil
-}
 func (this *RestartNodeResponse) Validate() error {
 	return nil
 }
-func (this *ToggleNodeServiceRequest) Validate() error {
+func (this *ToggleServiceRequest) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
 	}
@@ -109,7 +71,7 @@ func (this *ToggleNodeServiceRequest) Validate() error {
 	}
 	return nil
 }
-func (this *ToggleNodeServiceResponse) Validate() error {
+func (this *ToggleServiceResponse) Validate() error {
 	return nil
 }
 func (this *PublishMsgRequest) Validate() error {
