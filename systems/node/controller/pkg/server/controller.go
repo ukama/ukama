@@ -23,7 +23,6 @@ import (
 
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 
 	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
@@ -128,21 +127,15 @@ func (c *ControllerServer) PingNode(ctx context.Context, req *pb.PingNodeRequest
 }
 
 func (c *ControllerServer) ToggleSwitchPort(ctx context.Context, req *pb.ToggleSwitchPortRequest) (*pb.ToggleSwitchPortResponse, error) {
-	log.Infof("Toggling internet switch for site %v, port %v to %v", req.SiteId, req.Port, req.Status)
+	log.Infof("Toggling internet switch for node %v, port %v to %v", req.NodeId, req.Port, req.Status)
 
-	if req.SiteId == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "site ID cannot be empty")
-	}
-	siteId, err := uuid.FromString(req.GetSiteId())
+	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid site ID format: %s", err.Error())
-	}
-	if _, err = c.siteClient.Get(req.SiteId); err != nil {
-		return nil, fmt.Errorf("failed to validate site %s. Error %s", req.SiteId, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of node id. Error %s", err.Error())
 	}
 
 	data, err := proto.Marshal(&pb.ToggleSwitchPortRequest{
-		SiteId: siteId.String(),
+		NodeId: nId.String(),
 		Status: req.Status,
 		Port:   req.Port,
 	})
@@ -150,7 +143,7 @@ func (c *ControllerServer) ToggleSwitchPort(ctx context.Context, req *pb.ToggleS
 		return nil, err
 	}
 
-	op, err := c.acquireAndRegister("ToggleInternetSwitch", siteKey(siteId.String()))
+	op, err := c.acquireAndRegister("ToggleInternetSwitch", nodeKey(nId.String()))
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +151,7 @@ func (c *ControllerServer) ToggleSwitchPort(ctx context.Context, req *pb.ToggleS
 		c.failOperation(op, "ToggleInternetSwitch", fmt.Sprintf("mark running failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "mark running: %v", err)
 	}
-	if err := c.publishMessage(c.orgName+"..."+siteId.String(), actions["SWITCH"].method, actions["SWITCH"].path, siteId.String(), data); err != nil {
+	if err := c.publishMessage(c.orgName+"..."+nId.String(), actions["SWITCH"].method, actions["SWITCH"].path, nId.String(), data); err != nil {
 		c.failOperation(op, "ToggleInternetSwitch", fmt.Sprintf("publish failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "Failed to publish switch port reboot message: %s", err.Error())
 	}
@@ -182,7 +175,7 @@ func (c *ControllerServer) ToggleRadio(ctx context.Context, req *pb.ToggleRadioR
 		return nil, err
 	}
 
-	op, err := c.acquireAndRegister("ToggleRfSwitch", c.siteResourceKey(nId.String()))
+	op, err := c.acquireAndRegister("ToggleRfSwitch", nodeKey(nId.String()))
 	if err != nil {
 		return nil, err
 	}
@@ -214,7 +207,7 @@ func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.Toggle
 		return nil, err
 	}
 
-	op, err := c.acquireAndRegister("ToggleNodeService", c.siteResourceKey(nId.String()))
+	op, err := c.acquireAndRegister("ToggleNodeService", nodeKey(nId.String()))
 	if err != nil {
 		return nil, err
 	}
@@ -229,23 +222,8 @@ func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.Toggle
 	return &pb.ToggleServiceResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
 }
 
-func siteKey(siteID string) string {
-	if id, err := uuid.FromString(siteID); err == nil {
-		return "site:" + id.String()
-	}
-	return "site:" + siteID
-}
-
-func (c *ControllerServer) siteResourceKey(nodeID string) string {
-	if c.nodeClient == nil {
-		return "node:" + nodeID
-	}
-	n, err := c.nodeClient.Get(nodeID)
-	if err != nil || n == nil || n.Site.SiteId == "" {
-		log.Warnf("could not resolve site for node %s, using node-level lock: %v", nodeID, err)
-		return "node:" + nodeID
-	}
-	return siteKey(n.Site.SiteId)
+func nodeKey(nodeID string) string {
+	return "node:" + nodeID
 }
 
 func (c *ControllerServer) acquireAndRegister(actionType, resourceKey string) (*copr.OperationInfo, error) {

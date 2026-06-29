@@ -11,7 +11,6 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -19,8 +18,6 @@ import (
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
-	registry "github.com/ukama/ukama/systems/common/rest/client/registry"
-	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/node/controller/pkg/db"
 
 	"github.com/ukama/ukama/systems/node/controller/mocks"
@@ -144,65 +141,9 @@ func TestControllerServer_ToggleNodeService(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestControllerServer_ToggleNodeService_SiteLevelLock(t *testing.T) {
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
-	conRepo := &mocks.NodeLogRepo{}
-	nodeClient := &mbmocks.NodeClient{}
-	opMgr := &mbmocks.ManagerClient{}
-	opMon := &mocks.OperationMonitor{}
-
+func TestNodeKey(t *testing.T) {
 	nodeId := "uk-983794-tnode-78-7830"
-	siteId := uuid.NewV4().String()
-
-	nodeClient.On("Get", nodeId).Return(&registry.NodeInfo{
-		Id:   nodeId,
-		Site: registry.NodeSiteInfo{SiteId: siteId},
-	}, nil).Once()
-
-	op := &copr.OperationInfo{Id: "op-1", FencingToken: 1, ResourceKey: "site:" + siteId}
-	opMgr.On("Start", mock.MatchedBy(func(req copr.StartRequest) bool {
-		return req.ResourceKey == "site:"+siteId
-	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
-	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
-	opMgr.On("MarkRunning", "op-1", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
-	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
-
-	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nodeClient, opMgr, opMon, 30, 60, pkg.IsDebugMode)
-
-	resp, err := s.ToggleNodeService(context.TODO(), &pb.ToggleServiceRequest{NodeId: nodeId, State: "on"})
-
-	assert.NoError(t, err)
-	assert.Equal(t, "site:"+siteId, resp.ResourceKey)
-	opMgr.AssertExpectations(t)
-	nodeClient.AssertExpectations(t)
-}
-
-func TestControllerServer_ToggleNodeService_LockFallsBackToNode(t *testing.T) {
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
-	conRepo := &mocks.NodeLogRepo{}
-	nodeClient := &mbmocks.NodeClient{}
-	opMgr := &mbmocks.ManagerClient{}
-	opMon := &mocks.OperationMonitor{}
-
-	nodeId := "uk-983794-tnode-78-7830"
-
-	nodeClient.On("Get", nodeId).Return(nil, assert.AnError).Once()
-
-	op := &copr.OperationInfo{Id: "op-2", FencingToken: 1, ResourceKey: "node:" + nodeId}
-	opMgr.On("Start", mock.MatchedBy(func(req copr.StartRequest) bool {
-		return req.ResourceKey == "node:"+nodeId
-	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
-	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
-	opMgr.On("MarkRunning", "op-2", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
-	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
-
-	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nodeClient, opMgr, opMon, 30, 60, pkg.IsDebugMode)
-
-	_, err := s.ToggleNodeService(context.TODO(), &pb.ToggleServiceRequest{NodeId: nodeId, State: "on"})
-
-	assert.NoError(t, err)
-	opMgr.AssertExpectations(t)
-	nodeClient.AssertExpectations(t)
+	assert.Equal(t, "node:"+nodeId, nodeKey(nodeId))
 }
 
 func TestControllerServer_ToggleNodeService_InvalidNodeId(t *testing.T) {
@@ -224,37 +165,19 @@ func TestControllerServer_ToggleNodeService_InvalidNodeId(t *testing.T) {
 	assert.Contains(t, err.Error(), "node is not a tower node")
 }
 
-func TestSiteKey_NormalizesSoSiteActionsAreMutuallyExclusive(t *testing.T) {
-	id := uuid.NewV4()
-
-	// A site action (ToggleSwitchPort) keys on the site id directly, while a node
-	// action (ToggleNodeService/ToggleRadio) keys on the site resolved from the
-	// registry. Both must produce the same key for the same site, regardless of
-	// casing, so only one operation can hold the lock at a time.
-	direct := siteKey(id.String())
-	resolved := siteKey(strings.ToUpper(id.String()))
-
-	assert.Equal(t, "site:"+id.String(), direct)
-	assert.Equal(t, direct, resolved)
-
-	// Non-uuid input falls back to the raw value rather than dropping the prefix.
-	assert.Equal(t, "site:not-a-uuid", siteKey("not-a-uuid"))
-}
-
-func TestControllerServer_ToggleSwitchPort_SiteLevelLock(t *testing.T) {
+func TestControllerServer_ToggleSwitchPort_NodeLevelLock(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 	conRepo := &mocks.NodeLogRepo{}
 	siteClient := &mbmocks.SiteClient{}
 	opMgr := &mbmocks.ManagerClient{}
 	opMon := &mocks.OperationMonitor{}
 
-	siteId := uuid.NewV4().String()
+	nodeId := "uk-983794-tnode-78-7830"
+	resourceKey := nodeKey(nodeId)
 
-	siteClient.On("Get", siteId).Return(&registry.SiteInfo{}, nil).Once()
-
-	op := &copr.OperationInfo{Id: "op-i", FencingToken: 1, ResourceKey: "site:" + siteId}
+	op := &copr.OperationInfo{Id: "op-i", FencingToken: 1, ResourceKey: resourceKey}
 	opMgr.On("Start", mock.MatchedBy(func(req copr.StartRequest) bool {
-		return req.ResourceKey == "site:"+siteId
+		return req.ResourceKey == resourceKey
 	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
 	opMgr.On("MarkRunning", "op-i", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
@@ -262,10 +185,10 @@ func TestControllerServer_ToggleSwitchPort_SiteLevelLock(t *testing.T) {
 
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, siteClient, nil, opMgr, opMon, 30, 60, pkg.IsDebugMode)
 
-	resp, err := s.ToggleSwitchPort(context.TODO(), &pb.ToggleSwitchPortRequest{SiteId: siteId, Status: true, Port: 2})
+	resp, err := s.ToggleSwitchPort(context.TODO(), &pb.ToggleSwitchPortRequest{NodeId: nodeId, Status: true, Port: 2})
 
 	assert.NoError(t, err)
-	assert.Equal(t, "site:"+siteId, resp.ResourceKey)
+	assert.Equal(t, resourceKey, resp.ResourceKey)
 	opMgr.AssertExpectations(t)
 	siteClient.AssertExpectations(t)
 }
@@ -277,12 +200,13 @@ func TestControllerServer_ToggleSwitchPort_PublishFailureFailsOperation(t *testi
 	opMgr := &mbmocks.ManagerClient{}
 	opMon := &mocks.OperationMonitor{}
 
-	siteId := uuid.NewV4().String()
+	nodeId := "uk-983794-tnode-78-7830"
+	resourceKey := nodeKey(nodeId)
 
-	siteClient.On("Get", siteId).Return(&registry.SiteInfo{}, nil).Once()
-
-	op := &copr.OperationInfo{Id: "op-i", FencingToken: 1, ResourceKey: "site:" + siteId}
-	opMgr.On("Start", mock.Anything).Return(&copr.StartResponse{Operation: op}, nil).Once()
+	op := &copr.OperationInfo{Id: "op-i", FencingToken: 1, ResourceKey: resourceKey}
+	opMgr.On("Start", mock.MatchedBy(func(req copr.StartRequest) bool {
+		return req.ResourceKey == resourceKey
+	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
 	opMgr.On("MarkRunning", "op-i", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
 	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(assert.AnError).Once()
@@ -290,7 +214,7 @@ func TestControllerServer_ToggleSwitchPort_PublishFailureFailsOperation(t *testi
 
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, siteClient, nil, opMgr, opMon, 30, 60, pkg.IsDebugMode)
 
-	_, err := s.ToggleSwitchPort(context.TODO(), &pb.ToggleSwitchPortRequest{SiteId: siteId, Status: true, Port: 2})
+	_, err := s.ToggleSwitchPort(context.TODO(), &pb.ToggleSwitchPortRequest{NodeId: nodeId, Status: true, Port: 2})
 
 	assert.Error(t, err)
 	opMgr.AssertExpectations(t)
@@ -299,10 +223,10 @@ func TestControllerServer_ToggleSwitchPort_PublishFailureFailsOperation(t *testi
 func TestControllerServer_ToggleSwitchPort_Validation(t *testing.T) {
 	s := NewControllerServer(testOrgName, &mocks.NodeLogRepo{}, &mbmocks.MsgBusServiceClient{}, nil, nil, nil, nil, nil, 0, 0, pkg.IsDebugMode)
 
-	_, err := s.ToggleSwitchPort(context.TODO(), &pb.ToggleSwitchPortRequest{SiteId: ""})
+	_, err := s.ToggleSwitchPort(context.TODO(), &pb.ToggleSwitchPortRequest{NodeId: ""})
 	assert.Error(t, err)
 
-	_, err = s.ToggleSwitchPort(context.TODO(), &pb.ToggleSwitchPortRequest{SiteId: "not-a-uuid"})
+	_, err = s.ToggleSwitchPort(context.TODO(), &pb.ToggleSwitchPortRequest{NodeId: "not-a-uuid"})
 	assert.Error(t, err)
 }
 
@@ -312,37 +236,4 @@ func TestControllerServer_ToggleRadio_InvalidNodeType(t *testing.T) {
 	_, err := s.ToggleRadio(context.TODO(), &pb.ToggleRadioRequest{NodeId: "uk-983794-tnode-78-7830", State: "on"})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "node is not an amplifier node")
-}
-
-func TestControllerServer_ToggleRadio_SiteLevelLock(t *testing.T) {
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
-	conRepo := &mocks.NodeLogRepo{}
-	nodeClient := &mbmocks.NodeClient{}
-	opMgr := &mbmocks.ManagerClient{}
-	opMon := &mocks.OperationMonitor{}
-
-	nodeId := "uk-983794-anode-78-7830"
-	siteId := uuid.NewV4().String()
-
-	nodeClient.On("Get", nodeId).Return(&registry.NodeInfo{
-		Id:   nodeId,
-		Site: registry.NodeSiteInfo{SiteId: siteId},
-	}, nil).Once()
-
-	op := &copr.OperationInfo{Id: "op-rf", FencingToken: 1, ResourceKey: "site:" + siteId}
-	opMgr.On("Start", mock.MatchedBy(func(req copr.StartRequest) bool {
-		return req.ResourceKey == "site:"+siteId
-	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
-	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
-	opMgr.On("MarkRunning", "op-rf", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
-	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
-
-	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nodeClient, opMgr, opMon, 30, 60, pkg.IsDebugMode)
-
-	resp, err := s.ToggleRadio(context.TODO(), &pb.ToggleRadioRequest{NodeId: nodeId, State: "on"})
-
-	assert.NoError(t, err)
-	assert.Equal(t, "site:"+siteId, resp.ResourceKey)
-	opMgr.AssertExpectations(t)
-	nodeClient.AssertExpectations(t)
 }
