@@ -10,10 +10,12 @@
 #include <string.h>
 #include <stdio.h>
 
-int check_model_count(check_ctx_t *ctx, const check_spec_t *check,
-                      check_result_t *res, ulab_error_t *err);
-int check_bff_count(check_ctx_t *ctx, const check_spec_t *check,
-                    check_result_t *res, ulab_error_t *err);
+int check_backend_count(check_ctx_t *ctx, const check_spec_t *check,
+                        check_result_t *res, ulab_error_t *err);
+int check_list(check_ctx_t *ctx, const check_spec_t *check,
+               check_result_t *res, ulab_error_t *err);
+int check_status(check_ctx_t *ctx, const check_spec_t *check,
+                 check_result_t *res, ulab_error_t *err);
 int check_runtime(check_ctx_t *ctx, const check_spec_t *check,
                   check_result_t *res, ulab_error_t *err);
 int check_usage(check_ctx_t *ctx, const check_spec_t *check,
@@ -33,13 +35,18 @@ int check_run(check_ctx_t *ctx, const check_spec_t *check,
               check_result_t *res, ulab_error_t *err) {
     res_init(res, check);
     switch (check->type) {
-    case CHECK_MODEL_COUNT:
-        return check_model_count(ctx, check, res, err);
-    case CHECK_BFF_COUNT:
-        return check_bff_count(ctx, check, res, err);
+    case CHECK_BACKEND_COUNT:
+        return check_backend_count(ctx, check, res, err);
+    case CHECK_LIST_CONTAINS:
+    case CHECK_LIST_EXCLUDES:
+        return check_list(ctx, check, res, err);
+    case CHECK_STATUS_EQUALS:
+        return check_status(ctx, check, res, err);
     case CHECK_NODE_READY:
     case CHECK_UE_ATTACHED:
     case CHECK_NODE_STATE:
+    case CHECK_TRAFFIC_ALLOWED:
+    case CHECK_TRAFFIC_BLOCKED:
         return check_runtime(ctx, check, res, err);
     case CHECK_USAGE_PER_SIM:
     case CHECK_USAGE_SAMPLE:

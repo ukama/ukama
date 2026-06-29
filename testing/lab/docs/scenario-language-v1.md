@@ -5,7 +5,7 @@ Top-level fields: `version`, `name`, `seed`, optional `suite`, `priority`,
 `runtime`, optional `profiles`, `phases`, and `final_checks`.
 
 The language is strict. Unknown event/check names must fail validation.
-Packages use `duration_days` only.
+Packages use `duration_days`.
 
 Provider block is optional. Missing provider defaults to `virtual`.
 
@@ -36,8 +36,12 @@ Supported events:
 
 Supported checks:
 
-- `model_count` (`count` is accepted as a legacy alias)
-- `bff_count` (reserved/skipped in Phase 0)
+- `backend_count` (`count` is accepted as an alias)
+- `list_contains`
+- `list_excludes`
+- `status_equals`
+- `traffic_allowed`
+- `traffic_blocked`
 - `node_ready`
 - `ue_attached`
 - `usage_per_sim`
@@ -47,3 +51,39 @@ Supported checks:
 - `node_state`
 - `dashboard_loads`
 - `balance_non_negative`
+
+
+Event expected failure:
+
+```yaml
+- type: restart_nodes
+  nodes: all
+  expect:
+    result: failure
+    error_contains: "script failed"
+```
+
+Backend count:
+
+```yaml
+- type: backend_count
+  target: sims
+  expected: from_world
+```
+
+List/status/runtime checks:
+
+```yaml
+- type: list_contains
+  view: sims
+  ref: ue-000001
+
+- type: status_equals
+  entity: sim
+  ref: ue-000001
+  status: active
+
+- type: traffic_allowed
+  ues: all
+  amount_mb: 1
+```

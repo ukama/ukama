@@ -6,8 +6,12 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
+#include <string.h>
+#include <stdio.h>
+
 #include "log.h"
 #include "event.h"
+#include "util.h"
 
 int event_traffic(event_ctx_t *ctx, const event_spec_t *event,
                   ulab_error_t *err);
@@ -16,8 +20,8 @@ int event_runtime(event_ctx_t *ctx, const event_spec_t *event,
 int event_bff(event_ctx_t *ctx, const event_spec_t *event,
               ulab_error_t *err);
 
-int event_run(event_ctx_t *ctx, const event_spec_t *event,
-              ulab_error_t *err) {
+static int event_run_actual(event_ctx_t *ctx, const event_spec_t *event,
+                            ulab_error_t *err) {
     ulab_status("EVENT", "%s", scenario_event_name(event->type));
     switch (event->type) {
     case EVT_TRAFFIC:
@@ -36,6 +40,44 @@ int event_run(event_ctx_t *ctx, const event_spec_t *event,
         snprintf(err->msg, sizeof(err->msg), "unsupported event");
         return ULAB_ERR;
     }
+}
+
+int event_run(event_ctx_t *ctx, const event_spec_t *event,
+              ulab_error_t *err) {
+    ulab_error_t actual_err;
+    int expect_failure;
+    int rc;
+
+    memset(&actual_err, 0, sizeof(actual_err));
+    expect_failure = ulab_streq(event->expect_result, "failure") ||
+                     ulab_streq(event->expect_result, "fail");
+
+    rc = event_run_actual(ctx, event, &actual_err);
+
+    if (!expect_failure) {
+        if (rc != ULAB_OK) {
+            *err = actual_err;
+        }
+        return rc;
+    }
+
+    if (rc == ULAB_OK) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "expected event failure but event succeeded");
+        return ULAB_ERR;
+    }
+
+    if ((ulab_streq(event->expect_result, "failure") ||
+         ulab_streq(event->expect_result, "fail")) &&
+        event->error_contains[0] &&
+        strstr(actual_err.msg, event->error_contains) == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "expected failure containing '%.256s', got '%.512s'",
+                 event->error_contains, actual_err.msg);
+        return ULAB_ERR;
+    }
+
+    return ULAB_OK;
 }
 
 void event_list_supported(void) {

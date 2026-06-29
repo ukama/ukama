@@ -138,11 +138,18 @@ int bff_site_view_loads(bff_client_t *c,
                         const site_t *site,
                         ulab_error_t *err);
 
-int bff_query_count(bff_client_t *c,
-                    const char *target,
-                    const world_t *w,
-                    size_t *count,
-                    ulab_error_t *err);
+int bff_backend_count(bff_client_t *c,
+                      const char *target,
+                      const world_t *w,
+                      size_t *count,
+                      ulab_error_t *err);
+
+int bff_backend_contains(bff_client_t *c,
+                         const char *view,
+                         const char *id,
+                         const world_t *w,
+                         int *found,
+                         ulab_error_t *err);
 
 int bff_cleanup_world(bff_client_t *c,
                       const world_t *w,

@@ -27,6 +27,9 @@ extern const char *BFF_GET_SIM_PACKAGES;
 extern const char *BFF_GET_NODE_STATE;
 extern const char *BFF_NETWORK_OVERVIEW;
 extern const char *BFF_SITE_VIEW;
+extern const char *BFF_GET_NETWORKS;
+extern const char *BFF_GET_SITES;
+extern const char *BFF_GET_NODES_FOR_SITE;
 extern const char *BFF_GET_COMPONENTS_BY_USER_ID;
 extern const char *BFF_GET_NODES;
 
@@ -1198,9 +1201,13 @@ int bff_get_packages_for_sim(bff_client_t *c, const ue_t *ue,
         act = it ? json_object_get(it, "is_active") : NULL;
 
         if (pid != NULL && json_is_string(pid) &&
-            ulab_streq(json_string_value(pid), package_id)) {
-            if (act != NULL) {
-                *active = json_is_true(act);
+            (package_id == NULL || package_id[0] == '\0' ||
+             ulab_streq(json_string_value(pid), package_id))) {
+            if (act != NULL && json_is_true(act)) {
+                *active = 1;
+            }
+            if (package_id == NULL || package_id[0] == '\0') {
+                continue;
             }
         }
     }
@@ -1275,29 +1282,254 @@ int bff_site_view_loads(bff_client_t *c, const site_t *site,
     return ULAB_OK;
 }
 
-int bff_query_count(bff_client_t *c, const char *target, const world_t *w,
-                    size_t *count, ulab_error_t *err) {
 
-    (void)c;
-    (void)err;
+static int json_array_has_id(json_t *arr, const char *id) {
+    size_t i;
 
-    if (ulab_streq(target, "networks")) {
-        *count = w->network_count;
-    } else if (ulab_streq(target, "sites")) {
-        *count = w->site_count;
-    } else if (ulab_streq(target, "nodes")) {
-        *count = w->node_count;
-    } else if (ulab_streq(target, "packages")) {
-        *count = w->package_count;
-    } else if (ulab_streq(target, "subscribers")) {
-        *count = w->subscriber_count;
-    } else if (ulab_streq(target, "sims") ||
-               ulab_streq(target, "ues")) {
-        *count = w->ue_count;
-    } else {
+    if (arr == NULL || !json_is_array(arr) || id == NULL || id[0] == '\0') {
+        return 0;
+    }
+
+    for (i = 0; i < json_array_size(arr); i++) {
+        json_t *it = json_array_get(arr, i);
+        json_t *v;
+        const char *s;
+
+        if (it == NULL || !json_is_object(it)) {
+            continue;
+        }
+
+        v = json_object_get(it, "id");
+        if (v == NULL || !json_is_string(v)) {
+            v = json_object_get(it, "uuid");
+        }
+        if (v == NULL || !json_is_string(v)) {
+            continue;
+        }
+
+        s = json_string_value(v);
+        if (s != NULL && ulab_streq(s, id)) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+static int backend_get_networks(bff_client_t *c, json_t **root,
+                                ulab_error_t *err) {
+    return bff_call(c, "getNetworks", BFF_GET_NETWORKS, "{}", root, err);
+}
+
+static int backend_get_sites(bff_client_t *c, const char *network_id,
+                             json_t **root, ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+
+    snprintf(vars, sizeof(vars), "{\"networkId\":\"%s\"}",
+             network_id ? network_id : "");
+    return bff_call(c, "getSites", BFF_GET_SITES, vars, root, err);
+}
+
+static int backend_get_nodes_for_site(bff_client_t *c, const char *site_id,
+                                      json_t **root, ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+
+    snprintf(vars, sizeof(vars), "{\"siteId\":\"%s\"}",
+             site_id ? site_id : "");
+    return bff_call(c, "getNodesForSite", BFF_GET_NODES_FOR_SITE, vars,
+                    root, err);
+}
+
+static int backend_network_contains(bff_client_t *c, const char *id,
+                                    int *found, ulab_error_t *err) {
+    json_t *root;
+    json_t *obj;
+    json_t *arr;
+
+    root = NULL;
+    if (backend_get_networks(c, &root, err)) {
         return ULAB_ERR;
     }
 
+    obj = dig(root, "data", "getNetworks");
+    arr = obj ? json_object_get(obj, "networks") : NULL;
+    *found = json_array_has_id(arr, id);
+    json_decref(root);
+
+    return ULAB_OK;
+}
+
+static int backend_site_contains(bff_client_t *c, const world_t *w,
+                                 const char *id, int *found,
+                                 ulab_error_t *err) {
+    size_t i;
+
+    *found = 0;
+    for (i = 0; i < w->network_count; i++) {
+        json_t *root;
+        json_t *obj;
+        json_t *arr;
+
+        if (w->networks[i].bff_id[0] == '\0') {
+            continue;
+        }
+
+        root = NULL;
+        if (backend_get_sites(c, w->networks[i].bff_id, &root, err)) {
+            return ULAB_ERR;
+        }
+
+        obj = dig(root, "data", "getSites");
+        arr = obj ? json_object_get(obj, "sites") : NULL;
+        if (json_array_has_id(arr, id)) {
+            *found = 1;
+            json_decref(root);
+            return ULAB_OK;
+        }
+        json_decref(root);
+    }
+
+    return ULAB_OK;
+}
+
+static int backend_node_contains(bff_client_t *c, const world_t *w,
+                                 const char *id, int *found,
+                                 ulab_error_t *err) {
+    size_t i;
+
+    *found = 0;
+    for (i = 0; i < w->site_count; i++) {
+        json_t *root;
+        json_t *obj;
+        json_t *arr;
+
+        if (w->sites[i].bff_id[0] == '\0') {
+            continue;
+        }
+
+        root = NULL;
+        if (backend_get_nodes_for_site(c, w->sites[i].bff_id, &root, err)) {
+            return ULAB_ERR;
+        }
+
+        obj = dig(root, "data", "getNodesForSite");
+        arr = obj ? json_object_get(obj, "nodes") : NULL;
+        if (json_array_has_id(arr, id)) {
+            *found = 1;
+            json_decref(root);
+            return ULAB_OK;
+        }
+        json_decref(root);
+    }
+
+    return ULAB_OK;
+}
+
+static int backend_sim_contains(bff_client_t *c, const world_t *w,
+                                const char *id, int *found,
+                                ulab_error_t *err) {
+    size_t i;
+
+    *found = 0;
+
+    for (i = 0; i < w->ue_count; i++) {
+        int active;
+
+        if (!ulab_streq(w->ues[i].bff_id, id)) {
+            continue;
+        }
+
+        active = 0;
+        if (bff_get_packages_for_sim(c, &w->ues[i], NULL, &active, err)) {
+            return ULAB_ERR;
+        }
+        *found = 1;
+        return ULAB_OK;
+    }
+
+    return ULAB_OK;
+}
+
+int bff_backend_contains(bff_client_t *c, const char *view, const char *id,
+                         const world_t *w, int *found, ulab_error_t *err) {
+    if (view == NULL || id == NULL || w == NULL || found == NULL) {
+        snprintf(err->msg, sizeof(err->msg), "backend_contains bad args");
+        return ULAB_ERR;
+    }
+
+    if (ulab_streq(view, "networks")) {
+        return backend_network_contains(c, id, found, err);
+    }
+    if (ulab_streq(view, "sites")) {
+        return backend_site_contains(c, w, id, found, err);
+    }
+    if (ulab_streq(view, "nodes")) {
+        return backend_node_contains(c, w, id, found, err);
+    }
+    if (ulab_streq(view, "sims") || ulab_streq(view, "ues")) {
+        return backend_sim_contains(c, w, id, found, err);
+    }
+
+    snprintf(err->msg, sizeof(err->msg),
+             "unsupported backend list view: %s", view);
+    return ULAB_ERR;
+}
+
+int bff_backend_count(bff_client_t *c, const char *target, const world_t *w,
+                      size_t *count, ulab_error_t *err) {
+    size_t i;
+    size_t n;
+
+    if (target == NULL || w == NULL || count == NULL) {
+        snprintf(err->msg, sizeof(err->msg), "backend_count bad args");
+        return ULAB_ERR;
+    }
+
+    n = 0;
+
+    if (ulab_streq(target, "networks")) {
+        for (i = 0; i < w->network_count; i++) {
+            int found = 0;
+            if (bff_backend_contains(c, "networks", w->networks[i].bff_id,
+                                     w, &found, err)) {
+                return ULAB_ERR;
+            }
+            if (found) n++;
+        }
+    } else if (ulab_streq(target, "sites")) {
+        for (i = 0; i < w->site_count; i++) {
+            int found = 0;
+            if (bff_backend_contains(c, "sites", w->sites[i].bff_id,
+                                     w, &found, err)) {
+                return ULAB_ERR;
+            }
+            if (found) n++;
+        }
+    } else if (ulab_streq(target, "nodes")) {
+        for (i = 0; i < w->node_count; i++) {
+            int found = 0;
+            if (bff_backend_contains(c, "nodes", w->nodes[i].bff_id,
+                                     w, &found, err)) {
+                return ULAB_ERR;
+            }
+            if (found) n++;
+        }
+    } else if (ulab_streq(target, "sims") || ulab_streq(target, "ues")) {
+        for (i = 0; i < w->ue_count; i++) {
+            int found = 0;
+            if (bff_backend_contains(c, "sims", w->ues[i].bff_id,
+                                     w, &found, err)) {
+                return ULAB_ERR;
+            }
+            if (found) n++;
+        }
+    } else {
+        snprintf(err->msg, sizeof(err->msg),
+                 "unsupported backend_count target: %s", target);
+        return ULAB_ERR;
+    }
+
+    *count = n;
     return ULAB_OK;
 }
 

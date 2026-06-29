@@ -28,6 +28,7 @@ typedef enum {
     SEC_PROFILE_BUCKET,
     SEC_PHASES,
     SEC_PHASE_EVENTS,
+    SEC_EVENT_EXPECT,
     SEC_PHASE_CHECKS,
     SEC_FINAL_CHECKS
 } parse_sec_t;
@@ -56,8 +57,12 @@ const char *scenario_event_name(event_type_t type) {
 
 const char *scenario_check_name(check_type_t type) {
     switch (type) {
-    case CHECK_MODEL_COUNT: return "model_count";
-    case CHECK_BFF_COUNT: return "bff_count";
+    case CHECK_BACKEND_COUNT: return "backend_count";
+    case CHECK_LIST_CONTAINS: return "list_contains";
+    case CHECK_LIST_EXCLUDES: return "list_excludes";
+    case CHECK_STATUS_EQUALS: return "status_equals";
+    case CHECK_TRAFFIC_ALLOWED: return "traffic_allowed";
+    case CHECK_TRAFFIC_BLOCKED: return "traffic_blocked";
     case CHECK_NODE_READY: return "node_ready";
     case CHECK_UE_ATTACHED: return "ue_attached";
     case CHECK_USAGE_PER_SIM: return "usage_per_sim";
@@ -89,10 +94,19 @@ int scenario_event_from_name(const char *name, event_type_t *out) {
 }
 
 int scenario_check_from_name(const char *name, check_type_t *out) {
-    if (ulab_streq(name, "count") || ulab_streq(name, "model_count")) {
-        *out = CHECK_MODEL_COUNT;
-    } else if (ulab_streq(name, "bff_count")) *out = CHECK_BFF_COUNT;
-    else if (ulab_streq(name, "node_ready")) *out = CHECK_NODE_READY;
+    if (ulab_streq(name, "count") || ulab_streq(name, "backend_count")) {
+        *out = CHECK_BACKEND_COUNT;
+    } else if (ulab_streq(name, "list_contains")) {
+        *out = CHECK_LIST_CONTAINS;
+    } else if (ulab_streq(name, "list_excludes")) {
+        *out = CHECK_LIST_EXCLUDES;
+    } else if (ulab_streq(name, "status_equals")) {
+        *out = CHECK_STATUS_EQUALS;
+    } else if (ulab_streq(name, "traffic_allowed")) {
+        *out = CHECK_TRAFFIC_ALLOWED;
+    } else if (ulab_streq(name, "traffic_blocked")) {
+        *out = CHECK_TRAFFIC_BLOCKED;
+    } else if (ulab_streq(name, "node_ready")) *out = CHECK_NODE_READY;
     else if (ulab_streq(name, "ue_attached")) *out = CHECK_UE_ATTACHED;
     else if (ulab_streq(name, "usage_per_sim")) {
         *out = CHECK_USAGE_PER_SIM;
@@ -228,6 +242,17 @@ static int apply_check_field(check_spec_t *c, const char *key,
         sizeof(c->expected), val);
     if (ulab_streq(key, "package")) return ulab_copy(c->package_ref,
         sizeof(c->package_ref), val);
+    if (ulab_streq(key, "view")) return ulab_copy(c->view,
+        sizeof(c->view), val);
+    if (ulab_streq(key, "ref")) return ulab_copy(c->ref,
+        sizeof(c->ref), val);
+    if (ulab_streq(key, "entity")) return ulab_copy(c->entity,
+        sizeof(c->entity), val);
+    if (ulab_streq(key, "status")) return ulab_copy(c->status,
+        sizeof(c->status), val);
+    if (ulab_streq(key, "amount_mb")) {
+        return ulab_parse_u64(val, &c->expected_used_mb);
+    }
     if (ulab_streq(key, "expected_used_mb")) {
         return ulab_parse_u64(val, &c->expected_used_mb);
     }
@@ -274,6 +299,10 @@ static int apply_event_field(event_spec_t *e, const char *key,
     }
     if (ulab_streq(key, "package")) return ulab_copy(e->package_ref,
         sizeof(e->package_ref), val);
+    if (ulab_streq(key, "expect_result")) return ulab_copy(e->expect_result,
+        sizeof(e->expect_result), val);
+    if (ulab_streq(key, "error_contains")) return ulab_copy(e->error_contains,
+        sizeof(e->error_contains), val);
     if (parse_selector_value(&e->ues, key, val) == ULAB_OK &&
         ulab_streq(key, "ues")) return ULAB_OK;
     if (parse_selector_value(&e->sites, key, val) == ULAB_OK &&
@@ -295,6 +324,18 @@ static int apply_event_field(event_spec_t *e, const char *key,
     if (ulab_streq(key, "count_per_network")) {
         e->nodes.kind = SEL_NODE_TYPE_COUNT_PER_NETWORK;
         return ulab_parse_u32(val, &e->nodes.count);
+    }
+    return ULAB_ERR;
+}
+
+
+static int apply_event_expect_field(event_spec_t *e, const char *key,
+                                    const char *val) {
+    if (ulab_streq(key, "result")) {
+        return ulab_copy(e->expect_result, sizeof(e->expect_result), val);
+    }
+    if (ulab_streq(key, "error_contains")) {
+        return ulab_copy(e->error_contains, sizeof(e->error_contains), val);
     }
     return ULAB_ERR;
 }
@@ -523,8 +564,30 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
                     !ulab_streq(key, "type")) goto bad;
                 event = new_event(phase, val, err);
                 if (event == NULL) goto fail;
+            } else if (ind == 8 && event != NULL &&
+                       ulab_streq(key, "expect") && val[0] == '\0') {
+                sec = SEC_EVENT_EXPECT;
             } else if (ind == 8 && event != NULL) {
                 if (apply_event_field(event, key, val) != ULAB_OK) goto unknown;
+            } else if (ind == 4 && ulab_streq(key, "checks")) {
+                sec = SEC_PHASE_CHECKS;
+            } else goto unknown;
+            continue;
+        }
+        if (sec == SEC_EVENT_EXPECT) {
+            if (ind == 10 && event != NULL) {
+                if (apply_event_expect_field(event, key, val) != ULAB_OK) {
+                    goto unknown;
+                }
+            } else if (ind == 8 && event != NULL) {
+                sec = SEC_PHASE_EVENTS;
+                if (apply_event_field(event, key, val) != ULAB_OK) goto unknown;
+            } else if (ind == 6 && ulab_starts(p, "- ")) {
+                sec = SEC_PHASE_EVENTS;
+                if (parse_item_value(p, &key, &val) ||
+                    !ulab_streq(key, "type")) goto bad;
+                event = new_event(phase, val, err);
+                if (event == NULL) goto fail;
             } else if (ind == 4 && ulab_streq(key, "checks")) {
                 sec = SEC_PHASE_CHECKS;
             } else goto unknown;
@@ -588,7 +651,7 @@ void scenario_list_events(void) {
 void scenario_list_checks(void) {
     int i;
 
-    for (i = CHECK_MODEL_COUNT; i <= CHECK_BALANCE_NON_NEGATIVE; i++) {
+    for (i = CHECK_BACKEND_COUNT; i <= CHECK_BALANCE_NON_NEGATIVE; i++) {
         printf("%s\n", scenario_check_name((check_type_t)i));
     }
 }

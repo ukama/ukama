@@ -71,16 +71,16 @@ phases:
         tolerance_percent: 2
 
 final_checks:
-  - type: model_count
+  - type: backend_count
     target: networks
     expected: 2
-  - type: model_count
+  - type: backend_count
     target: sites
     expected: 6
-  - type: model_count
+  - type: backend_count
     target: nodes
-    expected: 24
-  - type: model_count
+    expected: 18
+  - type: backend_count
     target: sims
     expected: 300
   - type: dashboard_loads

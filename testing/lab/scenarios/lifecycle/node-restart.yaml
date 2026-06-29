@@ -55,7 +55,7 @@ phases:
   - name: restart_access
     events:
       - type: restart_nodes
-        type_selector: access
+        type_selector: tower
         count_per_network: 1
       - type: wait_nodes_ready
         nodes: all

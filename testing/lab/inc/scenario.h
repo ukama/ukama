@@ -67,8 +67,12 @@ typedef enum {
 } event_type_t;
 
 typedef enum {
-    CHECK_MODEL_COUNT = 0,
-    CHECK_BFF_COUNT,
+    CHECK_BACKEND_COUNT = 0,
+    CHECK_LIST_CONTAINS,
+    CHECK_LIST_EXCLUDES,
+    CHECK_STATUS_EQUALS,
+    CHECK_TRAFFIC_ALLOWED,
+    CHECK_TRAFFIC_BLOCKED,
     CHECK_NODE_READY,
     CHECK_UE_ATTACHED,
     CHECK_USAGE_PER_SIM,
@@ -88,6 +92,10 @@ typedef struct {
     selector_t   sites;
     selector_t   networks;
     char         package_ref[ULAB_MAX_REF];
+    char         view[ULAB_MAX_REF];
+    char         ref[ULAB_MAX_REF];
+    char         entity[ULAB_MAX_REF];
+    char         status[ULAB_MAX_REF];
     char         expected[ULAB_MAX_REF];
     uint64_t     expected_used_mb;
     uint64_t     expected_remaining_mb;
@@ -103,6 +111,8 @@ typedef struct {
     selector_t   sites;
     uint64_t     amount_mb;
     char         profile[ULAB_MAX_REF];
+    char         expect_result[ULAB_MAX_REF];
+    char         error_contains[ULAB_MAX_ERR];
     uint32_t     count_per_site;
     char         package_ref[ULAB_MAX_REF];
     check_spec_t checks[ULAB_MAX_CHECKS];

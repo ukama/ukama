@@ -4,7 +4,7 @@
 strict v1 YAML scenario, generates a deterministic test world, creates
 control-plane objects through the Console BFF GraphQL API, starts nodes through a provider layer
 (currently `virtual`) and starts UEs through runtime adapters, generates traffic, tracks expected state,
-and validates product-visible state through BFF queries.
+and validates product-visible state through backend/BFF queries.
 
 ## Build
 
@@ -24,3 +24,17 @@ bin/ukama-lab dry-run scenarios/smoke/usage-accumulation.yaml --print-world
 export UKAMA_LAB_BFF=http://localhost:4000/graphql
 bin/ukama-lab validate scenarios/smoke/usage-accumulation.yaml
 ```
+
+
+## Scenario language additions
+
+Phase-2 adds expected event failures and backend-oriented checks:
+
+```text
+backend_count
+list_contains / list_excludes
+status_equals
+traffic_allowed / traffic_blocked
+```
+
+`count` is kept as an alias for `backend_count`.

@@ -53,7 +53,7 @@ phases:
         tolerance_percent: 2
 
 final_checks:
-  - type: model_count
+  - type: backend_count
     target: nodes
     expected: 3
   - type: package_active

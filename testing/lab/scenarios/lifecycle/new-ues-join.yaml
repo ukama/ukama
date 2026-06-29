@@ -55,7 +55,7 @@ phases:
 # create_ues is part of the language but intentionally disabled in v1.0
 # until BFF delete/replay semantics and runtime identity reuse are finalized.
 final_checks:
-  - type: model_count
+  - type: backend_count
     target: sims
     expected: 40
   - type: balance_non_negative
