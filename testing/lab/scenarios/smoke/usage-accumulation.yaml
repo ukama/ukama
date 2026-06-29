@@ -1,10 +1,10 @@
 version: 1
 name: usage-accumulation
 seed: 42
-suite: wip
-priority: p2
-tags: [wip]
-status: wip
+suite: p0
+priority: p0
+tags: [virtual, p0]
+status: active
 
 provider:
   type: virtual
@@ -81,5 +81,8 @@ final_checks:
     package: daily_1gb
   - type: balance_non_negative
     ues: all
+  - type: traffic_allowed
+    ues: all
+    amount_mb: 1
   - type: dashboard_loads
     networks: all

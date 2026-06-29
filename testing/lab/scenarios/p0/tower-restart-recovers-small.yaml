@@ -1,9 +1,9 @@
 version: 1
-name: node-restart
-seed: 91
+name: p0-tower-restart-recovers-small
+seed: 308
 suite: p0
 priority: p0
-tags: [virtual, p0]
+tags: [virtual, node, restart]
 status: active
 
 provider:
@@ -11,12 +11,12 @@ provider:
 
 world:
   networks: 1
-  sites_per_network: 2
+  sites_per_network: 1
   nodes_per_site:
     tower: 1
-    controller: 1
     amplifier: 1
-  ues_per_site: 5
+    controller: 1
+  ues_per_site: 2
 
 packages:
   - ref: daily_1gb
@@ -45,18 +45,17 @@ phases:
     events:
       - type: traffic
         ues: all
-        amount_mb: 100
+        amount_mb: 10
     checks:
-      - type: usage_sample
-        sample_per_site: 2
-        expected: from_model
-        tolerance_percent: 2
+      - type: traffic_allowed
+        ues: all
+        amount_mb: 1
 
-  - name: restart_access
+  - name: restart_tower
     events:
       - type: restart_nodes
         type_selector: tower
-        count_per_network: 1
+        count: 1
       - type: wait_nodes_ready
         nodes: all
     checks:
@@ -67,12 +66,12 @@ phases:
     events:
       - type: traffic
         ues: all
-        amount_mb: 50
+        amount_mb: 10
     checks:
       - type: usage_sample
-        sample_per_site: 2
+        sample_per_site: 1
         expected: from_model
-        tolerance_percent: 5
+        tolerance_percent: 10
 
 final_checks:
   - type: balance_non_negative

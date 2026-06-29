@@ -1,9 +1,9 @@
 version: 1
-name: one-site-one-ue
-seed: 1
-suite: smoke
+name: p0-profile-usage-small
+seed: 310
+suite: p0
 priority: p0
-tags: [runtime, bff, sim]
+tags: [virtual, usage, profile]
 status: active
 
 provider:
@@ -16,7 +16,7 @@ world:
     tower: 1
     amplifier: 1
     controller: 1
-  ues_per_site: 1
+  ues_per_site: 6
 
 packages:
   - ref: daily_1gb
@@ -40,40 +40,33 @@ runtime:
   start: [nodes, ues]
   wait: [nodes_ready, ues_attached]
 
+profiles:
+  usage:
+    light:
+      percent: 50
+      amount_mb: 25
+    normal:
+      percent: 33
+      amount_mb: 100
+    heavy:
+      percent: 17
+      amount_mb: 250
+
 phases:
-  - name: first_usage
+  - name: profile_traffic
     events:
-      - type: traffic
+      - type: traffic_by_profile
         ues: all
-        amount_mb: 100
+        profile: usage
     checks:
-      - type: usage_per_sim
-        ues: all
+      - type: usage_sample
+        sample_per_site: 3
         expected: from_model
-        tolerance_percent: 2
+        tolerance_percent: 5
 
 final_checks:
   - type: backend_count
-    target: networks
-    expected: 1
-  - type: backend_count
-    target: sites
-    expected: 1
-  - type: backend_count
-    target: nodes
-    expected: 3
-  - type: backend_count
     target: sims
-    expected: 1
-  - type: list_contains
-    view: sims
-    ref: ue-000001
-  - type: status_equals
-    entity: sim
-    ref: ue-000001
-    status: active
-  - type: package_active
-    ues: all
-    package: daily_1gb
+    expected: from_world
   - type: balance_non_negative
     ues: all

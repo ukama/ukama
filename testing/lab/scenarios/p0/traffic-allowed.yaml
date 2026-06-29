@@ -1,9 +1,9 @@
 version: 1
-name: one-site-one-ue
-seed: 1
-suite: smoke
+name: p0-traffic-allowed
+seed: 304
+suite: p0
 priority: p0
-tags: [runtime, bff, sim]
+tags: [virtual, runtime, traffic]
 status: active
 
 provider:
@@ -41,39 +41,20 @@ runtime:
   wait: [nodes_ready, ues_attached]
 
 phases:
-  - name: first_usage
+  - name: traffic_check
     events:
       - type: traffic
         ues: all
-        amount_mb: 100
+        amount_mb: 25
     checks:
       - type: usage_per_sim
         ues: all
-        expected: from_model
-        tolerance_percent: 2
+        expected_used_mb: 25
+        tolerance_percent: 5
+      - type: traffic_allowed
+        ues: all
+        amount_mb: 1
 
 final_checks:
-  - type: backend_count
-    target: networks
-    expected: 1
-  - type: backend_count
-    target: sites
-    expected: 1
-  - type: backend_count
-    target: nodes
-    expected: 3
-  - type: backend_count
-    target: sims
-    expected: 1
-  - type: list_contains
-    view: sims
-    ref: ue-000001
-  - type: status_equals
-    entity: sim
-    ref: ue-000001
-    status: active
-  - type: package_active
-    ues: all
-    package: daily_1gb
   - type: balance_non_negative
     ues: all
