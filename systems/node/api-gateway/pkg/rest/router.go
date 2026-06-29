@@ -77,7 +77,7 @@ type siteController interface {
 	GetPortMap(siteID string) (*sitepb.GetPortMapResponse, error)
 	ApplySwitchPolicy(siteID string) (*sitepb.ApplySwitchPolicyResponse, error)
 	PowerCycleNode(siteID, role, reason, requestedBy string) (*sitepb.PowerCycleNodeResponse, error)
-	RestartSite(siteID, networkID string) (*sitepb.RestartSiteResponse, error)
+	RestartSite(siteID string) (*sitepb.RestartSiteResponse, error)
 	ToggleInternetSwitch(siteID string, status bool, port int32) (*sitepb.ToggleInternetSwitchResponse, error)
 }
 
@@ -170,6 +170,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		siteS.POST("/:site_id/switch-policy", formatDoc("Apply switch policy", "Generate and push switch.d policy"), tonic.Handler(r.postApplySwitchPolicyHandler, http.StatusOK))
 		siteS.POST("/:site_id/nodes/:role/power-cycle", formatDoc("Power-cycle site node", "Power-cycle a site node through CNode switch.d"), tonic.Handler(r.postPowerCycleNodeHandler, http.StatusOK))
 		siteS.POST("/:site_id/internet-port", formatDoc("Toggle site internet port", "Turn the site internet switch port on/off"), tonic.Handler(r.postToggleInternetSwitchHandler, http.StatusOK))
+		siteS.POST("/:site_id/restart", formatDoc("Restart site", "Restart the site"), tonic.Handler(r.postRestartSiteHandler, http.StatusOK))
 
 		const cfg = "/configurator"
 		cfgS := auth.Group(cfg, "Configurator", "Config for nodes")
@@ -292,6 +293,10 @@ func (r *Router) getStatesHistoryHandler(c *gin.Context, req *GetStatesHistoryRe
 	}
 
 	return r.clients.State.GetStatesHistory(nodeId, int32(pageSize), int32(pageNumber), startTime, endTime)
+}
+
+func (r *Router) postRestartSiteHandler(c *gin.Context, req *SiteStateRequest) (*sitepb.RestartSiteResponse, error) {
+	return r.clients.SiteController.RestartSite(req.SiteId)
 }
 
 func (r *Router) toggleSiteStateHandler(c *gin.Context, req *SiteActionRequest) (*sitepb.SetSiteResponse, error) {

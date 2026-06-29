@@ -132,9 +132,9 @@ func (_m *siteController) PowerCycleNode(siteID string, role string, reason stri
 	return r0, r1
 }
 
-// RestartSite provides a mock function with given fields: siteID, networkID
-func (_m *siteController) RestartSite(siteID string, networkID string) (*gen.RestartSiteResponse, error) {
-	ret := _m.Called(siteID, networkID)
+// RestartSite provides a mock function with given fields: siteID
+func (_m *siteController) RestartSite(siteID string) (*gen.RestartSiteResponse, error) {
+	ret := _m.Called(siteID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RestartSite")
@@ -142,19 +142,19 @@ func (_m *siteController) RestartSite(siteID string, networkID string) (*gen.Res
 
 	var r0 *gen.RestartSiteResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (*gen.RestartSiteResponse, error)); ok {
-		return rf(siteID, networkID)
+	if rf, ok := ret.Get(0).(func(string) (*gen.RestartSiteResponse, error)); ok {
+		return rf(siteID)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) *gen.RestartSiteResponse); ok {
-		r0 = rf(siteID, networkID)
+	if rf, ok := ret.Get(0).(func(string) *gen.RestartSiteResponse); ok {
+		r0 = rf(siteID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.RestartSiteResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(siteID, networkID)
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(siteID)
 	} else {
 		r1 = ret.Error(1)
 	}
