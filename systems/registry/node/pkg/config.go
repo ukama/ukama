@@ -34,7 +34,7 @@ type Config struct {
 
 type HttpServices struct {
 	InventoryClient string `default:"http://api-gateway-inventory:8080"`
-	InitClient    string	`default:"http://api-gateway-init:8080"`
+	InitClient      string `default:"http://api-gateway-init:8080"`
 }
 
 const (
@@ -64,6 +64,7 @@ var NodeMetric = []metric.MetricConfig{
 
 func NewConfig(name string) *Config {
 	return &Config{
+		SiteHost: "site:9090",
 		DB: &uconf.Database{
 			DbName: name,
 		},
@@ -82,4 +83,3 @@ func NewConfig(name string) *Config {
 		},
 	}
 }
- 

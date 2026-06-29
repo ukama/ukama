@@ -23,8 +23,7 @@ const (
 
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
-	Grpc              *config.Grpc `default:"{}"`
-	Http              HttpServices
+	Grpc              *config.Grpc      `default:"{}"`
 	Timeout           time.Duration     `default:"3s"`
 	MsgClient         *config.MsgClient `default:"{}"`
 	Queue             *config.Queue     `default:"{}"`
@@ -33,6 +32,7 @@ type Config struct {
 	IsMsgBus          bool              `default:"true"`
 	Metrics           *config.Metrics   `default:"{}"`
 	Org               string            `default:""`
+	Http              HttpServices
 	OrgName           string
 }
 

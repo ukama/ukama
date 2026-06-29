@@ -22,10 +22,10 @@ type Config struct {
 	Metrics           *config.Metrics   `default:"{}"`
 	Timeout           time.Duration     `default:"3s"`
 	MsgClient         *config.MsgClient `default:"{}"`
+	System            string            `default:"billing"`
+	LagoHost          string            `default:"localhost"`
+	LagoPort          uint              `default:"3000"`
 	Service           *config.Service
-	System            string `default:"billing"`
-	LagoHost          string `default:"localhost"`
-	LagoPort          uint   `default:"3000"`
 	LagoAPIKey        string
 	OrgName           string
 	OrgId             string

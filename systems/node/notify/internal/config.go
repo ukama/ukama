@@ -23,9 +23,9 @@ type Config struct {
 	Timeout          time.Duration    `default:"3s"`
 	Queue            *uconf.Queue     `default:"{}"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
-	Service          *uconf.Service
-	System           string `default:"notification"`
+	System           string           `default:"notification"`
 	OrgName          string
+	Service          *uconf.Service
 }
 
 func NewConfig(name string) *Config {

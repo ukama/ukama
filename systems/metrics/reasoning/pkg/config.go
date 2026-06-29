@@ -18,35 +18,35 @@ import (
 )
 
 type Config struct {
-	uconf.BaseConfig     `mapstructure:",squash"`
-	EtcdHost          	 string
-	DialTimeoutSecond 	 time.Duration
-	Grpc                 *uconf.Grpc      `default:"{}"`
-	Queue                *uconf.Queue     `default:"{}"`
-	Timeout              time.Duration    `default:"3s"`
-	MsgClient            *uconf.MsgClient `default:"{}"`
-	PrometheusInterval   int              `default:"60"`
-	SchedulerInterval    time.Duration    `default:"60s"`
-	OrgName              string           `default:"ukama"`
-	PrometheusHost       string           `default:"http://prometheus:9090"`
-	MetricsKeyMapFile    string           `default:"/etc/reasoning/metric-key-map.json"`
-	MetricsRulesFile     string           `default:"/etc/reasoning/metric-rules.json"`
-	FormatDecimalPoints  int              `default:"5"`
-	MetricKeyMap         *MetricKeyMap
-	MetricPatterns       MetricPatternsMap // pattern key -> node type -> metric_key
-	Service              *uconf.Service
-	Http            	 HttpServices
+	uconf.BaseConfig    `mapstructure:",squash"`
+	EtcdHost            string
+	Grpc                *uconf.Grpc      `default:"{}"`
+	Queue               *uconf.Queue     `default:"{}"`
+	Timeout             time.Duration    `default:"3s"`
+	MsgClient           *uconf.MsgClient `default:"{}"`
+	PrometheusInterval  int              `default:"60"`
+	SchedulerInterval   time.Duration    `default:"60s"`
+	OrgName             string           `default:"ukama"`
+	PrometheusHost      string           `default:"http://prometheus:9090"`
+	MetricsKeyMapFile   string           `default:"/etc/reasoning/metric-key-map.json"`
+	MetricsRulesFile    string           `default:"/etc/reasoning/metric-rules.json"`
+	FormatDecimalPoints int              `default:"5"`
+	DialTimeoutSecond   time.Duration
+	MetricKeyMap        *MetricKeyMap
+	MetricPatterns      MetricPatternsMap // pattern key -> node type -> metric_key
+	Service             *uconf.Service
+	Http                HttpServices
 }
 
 type Metric struct {
-	Step             int         `json:"step" yaml:"step"`
-	Key              string      `json:"key" yaml:"key"`
-	MetricKey        string      `json:"metric_key" yaml:"metric_key"`
-	Category         string      `json:"category" yaml:"category"`
-	MetricType       string      `json:"metric_type" yaml:"metric_type"`
-	TrendSensitivity float64     `json:"trend_sensitivity" yaml:"trend_sensitivity"`
-	Thresholds       Thresholds  `json:"thresholds" yaml:"thresholds"`
-	StateDirection   string      `json:"state_direction" yaml:"state_direction"`
+	Step             int        `json:"step" yaml:"step"`
+	Key              string     `json:"key" yaml:"key"`
+	MetricKey        string     `json:"metric_key" yaml:"metric_key"`
+	Category         string     `json:"category" yaml:"category"`
+	MetricType       string     `json:"metric_type" yaml:"metric_type"`
+	TrendSensitivity float64    `json:"trend_sensitivity" yaml:"trend_sensitivity"`
+	Thresholds       Thresholds `json:"thresholds" yaml:"thresholds"`
+	StateDirection   string     `json:"state_direction" yaml:"state_direction"`
 }
 
 type Thresholds struct {
@@ -77,7 +77,7 @@ func NewConfig(name string) *Config {
 	return &Config{
 		EtcdHost:          "localhost:2379",
 		DialTimeoutSecond: 5 * time.Second,
-		Service: uconf.LoadServiceHostConfig(name),
+		Service:           uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
 			Timeout: 5 * time.Second,
 		},
@@ -90,7 +90,7 @@ var metricKeyMapFallbackPaths = []string{"metric-key-map.json", "./metric-key-ma
 // metricKeyMapFile supports the new format with metric_patterns and node_types.
 type metricKeyMapFile struct {
 	MetricPatterns map[string]map[string]string `json:"metric_patterns"`
-	NodeTypes      map[string]Metrics          `json:"node_types"`
+	NodeTypes      map[string]Metrics           `json:"node_types"`
 }
 
 func LoadMetricKeyMap(config *Config) (*MetricKeyMap, error) {

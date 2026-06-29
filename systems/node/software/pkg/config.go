@@ -43,6 +43,7 @@ func NewConfig(name string) *Config {
 		DB: &uconf.Database{
 			DbName: name,
 		},
+		Health:  "health:9090",
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
 			Timeout: 7 * time.Second,

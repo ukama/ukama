@@ -91,7 +91,8 @@ func NewConfig(name string) *Config {
 		DB: &config.Database{
 			DbName: name,
 		},
-		Service: config.LoadServiceHostConfig(name),
+		UserHost: "user:9090",
+		Service:  config.LoadServiceHostConfig(name),
 		MsgClient: &config.MsgClient{
 			Timeout: 7 * time.Second,
 		},

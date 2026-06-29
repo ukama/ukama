@@ -17,12 +17,11 @@ import (
 
 type Config struct {
 	uconf.BaseConfig     `mapstructure:",squash"`
-	DB                   *uconf.Database  `default:"{}"`
-	Grpc                 *uconf.Grpc      `default:"{}"`
-	Queue                *uconf.Queue     `default:"{}"`
-	Timeout              time.Duration    `default:"3s"`
-	MsgClient            *uconf.MsgClient `default:"{}"`
-	Service              *uconf.Service
+	DB                   *uconf.Database      `default:"{}"`
+	Grpc                 *uconf.Grpc          `default:"{}"`
+	Queue                *uconf.Queue         `default:"{}"`
+	Timeout              time.Duration        `default:"3s"`
+	MsgClient            *uconf.MsgClient     `default:"{}"`
 	RepoUrl              string               `default:""`
 	Token                string               `default:""`
 	OwnerId              string               `default:""`
@@ -34,6 +33,7 @@ type Config struct {
 	PushGateway          string               `default:"http://localhost:9091"`
 	NodeComponentDetails NodeComponentDetails `default:"{}"`
 	Http                 HttpServices         `default:"{}"`
+	Service              *uconf.Service
 }
 
 type HttpServices struct {
