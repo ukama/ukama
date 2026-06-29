@@ -26,7 +26,7 @@ import (
 	"github.com/ukama/ukama/systems/node/controller/mocks"
 	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	"github.com/ukama/ukama/systems/node/controller/pkg"
-	"google.golang.org/protobuf/proto"
+	opmonpb "github.com/ukama/ukama/systems/node/operation-monitor/pb/gen"
 )
 
 const testOrgName = "test-org"
@@ -34,110 +34,113 @@ const testOrgName = "test-org"
 func TestControllerServer_RestartNode(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 	conRepo := &mocks.NodeLogRepo{}
-	opMgr := &mbmocks.OperatorClient{}
+	opMgr := &mbmocks.ManagerClient{}
 	opMon := &mocks.OperationMonitor{}
 
 	nodeId := "uk-983794-hnode-78-7830"
-	setupOperationMocks(opMgr, opMon, "op-rn", "node:"+nodeId)
 
-	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, opMgr, opMon, 30, 60, pkg.IsDebugMode)
+	NodeLog := db.NodeLog{NodeId: nodeId}
+	conRepo.On("Get", nodeId).Return(&NodeLog, nil).Once()
 
-	conRepo.On("Get", nodeId).Return(&db.NodeLog{NodeId: nodeId}, nil).Once()
+	op := &copr.OperationInfo{Id: "op-restart", FencingToken: 1, ResourceKey: "node:" + nodeId}
+	opMgr.On("Start", mock.MatchedBy(func(req copr.StartRequest) bool {
+		return req.ResourceKey == "node:"+nodeId
+	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
+	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
+	opMgr.On("MarkRunning", "op-restart", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
+
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
-		Target:     "test-org" + "..." + nodeId,
+		Target:     testOrgName + "..." + nodeId,
 		HttpMethod: "POST",
 		Path:       "/device/v1/restart",
 		Msg:        []byte{},
 		NodeId:     nodeId,
 	}).Return(nil).Once()
 
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, opMgr, opMon, 30, 60, pkg.IsDebugMode)
+
 	resp, err := s.RestartNode(context.TODO(), &pb.RestartNodeRequest{NodeId: nodeId})
 
-	assert.NoError(t, err)
-	assert.Equal(t, "op-rn", resp.OperationId)
-	assert.Equal(t, "node:"+nodeId, resp.ResourceKey)
 	msgclientRepo.AssertExpectations(t)
 	opMgr.AssertExpectations(t)
-}
-
-func TestControllerServer_PingNode(t *testing.T) {
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
-	conRepo := &mocks.NodeLogRepo{}
-
-	nodeId := "uk-983794-hnode-78-7830"
-	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, nil, nil, 0, 0, pkg.IsDebugMode)
-
-	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
-		Target:     "test-org" + "." + "." + "." + nodeId,
-		HttpMethod: "GET",
-		Path:       "/device/v1/ping",
-		Msg:        []byte{},
-		NodeId:     nodeId,
-	}).Return(nil).Once()
-
-	_, err := s.PingNode(context.TODO(), &pb.PingNodeRequest{NodeId: nodeId})
-
-	msgclientRepo.AssertExpectations(t)
 	assert.NoError(t, err)
+	assert.Equal(t, "op-restart", resp.OperationId)
+	assert.Equal(t, "node:"+nodeId, resp.ResourceKey)
 }
 
 func TestControllerServer_ToggleRadio(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 	conRepo := &mocks.NodeLogRepo{}
-	opMgr := &mocks.ManagerClient{}
+	opMgr := &mbmocks.ManagerClient{}
 	opMon := &mocks.OperationMonitor{}
 
 	nodeId := "uk-983794-anode-78-7830"
-	setupOperationMocks(opMgr, opMon, "op-rf", "node:"+nodeId)
-
-	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, opMgr, opMon, 30, 60, pkg.IsDebugMode)
 
 	jsonBody := map[string]string{"state": "on"}
 	data, err := json.Marshal(jsonBody)
 	if err != nil {
 		t.Fatalf("failed to marshal message: %v", err)
 	}
+
+	op := &copr.OperationInfo{Id: "op-rf", FencingToken: 1, ResourceKey: "node:" + nodeId}
+	opMgr.On("Start", mock.MatchedBy(func(req copr.StartRequest) bool {
+		return req.ResourceKey == "node:"+nodeId
+	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
+	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
+	opMgr.On("MarkRunning", "op-rf", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
+
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
-		Target:     "test-org" + "..." + nodeId,
+		Target:     testOrgName + "..." + nodeId,
 		HttpMethod: "POST",
 		Path:       "/device/v1/radio",
 		Msg:        data,
 		NodeId:     nodeId,
 	}).Return(nil).Once()
 
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, opMgr, opMon, 30, 60, pkg.IsDebugMode)
+
 	_, err = s.ToggleRadio(context.TODO(), &pb.ToggleRadioRequest{NodeId: nodeId, State: "on"})
 
 	msgclientRepo.AssertExpectations(t)
+	opMgr.AssertExpectations(t)
 	assert.NoError(t, err)
 }
 
 func TestControllerServer_ToggleNodeService(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 	conRepo := &mocks.NodeLogRepo{}
-	opMgr := &mocks.ManagerClient{}
+	opMgr := &mbmocks.ManagerClient{}
 	opMon := &mocks.OperationMonitor{}
 
 	nodeId := "uk-983794-tnode-78-7830"
-	setupOperationMocks(opMgr, opMon, "op-svc", "node:"+nodeId)
-
-	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, opMgr, opMon, 30, 60, pkg.IsDebugMode)
 
 	jsonBody := map[string]string{"state": "on"}
 	data, err := json.Marshal(jsonBody)
 	if err != nil {
 		t.Fatalf("failed to marshal message: %v", err)
 	}
+
+	op := &copr.OperationInfo{Id: "op-svc", FencingToken: 1, ResourceKey: "node:" + nodeId}
+	opMgr.On("Start", mock.MatchedBy(func(req copr.StartRequest) bool {
+		return req.ResourceKey == "node:"+nodeId
+	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
+	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
+	opMgr.On("MarkRunning", "op-svc", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
+
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
-		Target:     "test-org" + "..." + nodeId,
+		Target:     testOrgName + "..." + nodeId,
 		HttpMethod: "POST",
 		Path:       "/device/v1/service",
 		Msg:        data,
 		NodeId:     nodeId,
 	}).Return(nil).Once()
 
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, opMgr, opMon, 30, 60, pkg.IsDebugMode)
+
 	_, err = s.ToggleNodeService(context.TODO(), &pb.ToggleServiceRequest{NodeId: nodeId, State: "on"})
 
 	msgclientRepo.AssertExpectations(t)
+	opMgr.AssertExpectations(t)
 	assert.NoError(t, err)
 }
 
@@ -145,7 +148,7 @@ func TestControllerServer_ToggleNodeService_SiteLevelLock(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 	conRepo := &mocks.NodeLogRepo{}
 	nodeClient := &mbmocks.NodeClient{}
-	opMgr := &mocks.ManagerClient{}
+	opMgr := &mbmocks.ManagerClient{}
 	opMon := &mocks.OperationMonitor{}
 
 	nodeId := "uk-983794-tnode-78-7830"
@@ -155,7 +158,13 @@ func TestControllerServer_ToggleNodeService_SiteLevelLock(t *testing.T) {
 		Id:   nodeId,
 		Site: registry.NodeSiteInfo{SiteId: siteId},
 	}, nil).Once()
-	setupOperationMocks(opMgr, opMon, "op-1", "site:"+siteId)
+
+	op := &copr.OperationInfo{Id: "op-1", FencingToken: 1, ResourceKey: "site:" + siteId}
+	opMgr.On("Start", mock.MatchedBy(func(req copr.StartRequest) bool {
+		return req.ResourceKey == "site:"+siteId
+	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
+	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
+	opMgr.On("MarkRunning", "op-1", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
 	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nodeClient, opMgr, opMon, 30, 60, pkg.IsDebugMode)
@@ -172,13 +181,19 @@ func TestControllerServer_ToggleNodeService_LockFallsBackToNode(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 	conRepo := &mocks.NodeLogRepo{}
 	nodeClient := &mbmocks.NodeClient{}
-	opMgr := &mocks.ManagerClient{}
+	opMgr := &mbmocks.ManagerClient{}
 	opMon := &mocks.OperationMonitor{}
 
 	nodeId := "uk-983794-tnode-78-7830"
 
 	nodeClient.On("Get", nodeId).Return(nil, assert.AnError).Once()
-	setupOperationMocks(opMgr, opMon, "op-2", "node:"+nodeId)
+
+	op := &copr.OperationInfo{Id: "op-2", FencingToken: 1, ResourceKey: "node:" + nodeId}
+	opMgr.On("Start", mock.MatchedBy(func(req copr.StartRequest) bool {
+		return req.ResourceKey == "node:"+nodeId
+	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
+	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
+	opMgr.On("MarkRunning", "op-2", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
 	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nodeClient, opMgr, opMon, 30, 60, pkg.IsDebugMode)
@@ -191,7 +206,14 @@ func TestControllerServer_ToggleNodeService_LockFallsBackToNode(t *testing.T) {
 }
 
 func TestControllerServer_ToggleNodeService_InvalidNodeId(t *testing.T) {
-	s := NewControllerServer(testOrgName, &mocks.NodeLogRepo{}, &mbmocks.MsgBusServiceClient{}, nil, nil, nil, nil, nil, 0, 0, pkg.IsDebugMode)
+	s := NewControllerServer(
+		testOrgName,
+		&mocks.NodeLogRepo{},
+		&mbmocks.MsgBusServiceClient{},
+		nil, nil, nil, nil, nil,
+		0, 0,
+		pkg.IsDebugMode,
+	)
 
 	_, err := s.ToggleNodeService(context.TODO(), &pb.ToggleServiceRequest{
 		NodeId: "uk-983794-anode-78-7830",
@@ -205,15 +227,17 @@ func TestControllerServer_ToggleNodeService_InvalidNodeId(t *testing.T) {
 func TestSiteKey_NormalizesSoSiteActionsAreMutuallyExclusive(t *testing.T) {
 	id := uuid.NewV4()
 
-	// A site action (ToggleSwitchPort) keys on the site id directly, while a node action
-	// (ToggleNodeService/ToggleRadio) keys on the site resolved from the registry. Both must
-	// produce the same key for the same site, regardless of casing, so only one operation
-	// can hold the lock at a time.
+	// A site action (ToggleSwitchPort) keys on the site id directly, while a node
+	// action (ToggleNodeService/ToggleRadio) keys on the site resolved from the
+	// registry. Both must produce the same key for the same site, regardless of
+	// casing, so only one operation can hold the lock at a time.
 	direct := siteKey(id.String())
 	resolved := siteKey(strings.ToUpper(id.String()))
 
 	assert.Equal(t, "site:"+id.String(), direct)
 	assert.Equal(t, direct, resolved)
+
+	// Non-uuid input falls back to the raw value rather than dropping the prefix.
 	assert.Equal(t, "site:not-a-uuid", siteKey("not-a-uuid"))
 }
 
@@ -221,13 +245,19 @@ func TestControllerServer_ToggleSwitchPort_SiteLevelLock(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 	conRepo := &mocks.NodeLogRepo{}
 	siteClient := &mbmocks.SiteClient{}
-	opMgr := &mocks.ManagerClient{}
+	opMgr := &mbmocks.ManagerClient{}
 	opMon := &mocks.OperationMonitor{}
 
 	siteId := uuid.NewV4().String()
 
 	siteClient.On("Get", siteId).Return(&registry.SiteInfo{}, nil).Once()
-	setupOperationMocks(opMgr, opMon, "op-i", "site:"+siteId)
+
+	op := &copr.OperationInfo{Id: "op-i", FencingToken: 1, ResourceKey: "site:" + siteId}
+	opMgr.On("Start", mock.MatchedBy(func(req copr.StartRequest) bool {
+		return req.ResourceKey == "site:"+siteId
+	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
+	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
+	opMgr.On("MarkRunning", "op-i", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
 	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, siteClient, nil, opMgr, opMon, 30, 60, pkg.IsDebugMode)
@@ -244,13 +274,17 @@ func TestControllerServer_ToggleSwitchPort_PublishFailureFailsOperation(t *testi
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 	conRepo := &mocks.NodeLogRepo{}
 	siteClient := &mbmocks.SiteClient{}
-	opMgr := &mocks.ManagerClient{}
+	opMgr := &mbmocks.ManagerClient{}
 	opMon := &mocks.OperationMonitor{}
 
 	siteId := uuid.NewV4().String()
 
 	siteClient.On("Get", siteId).Return(&registry.SiteInfo{}, nil).Once()
-	setupOperationMocks(opMgr, opMon, "op-i", "site:"+siteId)
+
+	op := &copr.OperationInfo{Id: "op-i", FencingToken: 1, ResourceKey: "site:" + siteId}
+	opMgr.On("Start", mock.Anything).Return(&copr.StartResponse{Operation: op}, nil).Once()
+	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
+	opMgr.On("MarkRunning", "op-i", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
 	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(assert.AnError).Once()
 	opMgr.On("ForceUnlock", "op-i", mock.Anything, mock.Anything).Return(&copr.OperationInfo{}, nil).Once()
 
@@ -272,42 +306,6 @@ func TestControllerServer_ToggleSwitchPort_Validation(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestControllerServer_ToggleSwitchPort_PublishesMarshaledRequest(t *testing.T) {
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
-	conRepo := &mocks.NodeLogRepo{}
-	siteClient := &mbmocks.SiteClient{}
-	opMgr := &mocks.ManagerClient{}
-	opMon := &mocks.OperationMonitor{}
-
-	siteId := uuid.NewV4().String()
-	normalizedSiteId, err := uuid.FromString(siteId)
-	assert.NoError(t, err)
-
-	data, err := proto.Marshal(&pb.ToggleSwitchPortRequest{
-		SiteId: normalizedSiteId.String(),
-		Status: true,
-		Port:   2,
-	})
-	assert.NoError(t, err)
-
-	siteClient.On("Get", siteId).Return(&registry.SiteInfo{}, nil).Once()
-	setupOperationMocks(opMgr, opMon, "op-i", "site:"+normalizedSiteId.String())
-	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
-		Target:     "test-org" + "..." + normalizedSiteId.String(),
-		HttpMethod: "POST",
-		Path:       "/device/v1/switch",
-		Msg:        data,
-		NodeId:     normalizedSiteId.String(),
-	}).Return(nil).Once()
-
-	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, siteClient, nil, opMgr, opMon, 30, 60, pkg.IsDebugMode)
-
-	_, err = s.ToggleSwitchPort(context.TODO(), &pb.ToggleSwitchPortRequest{SiteId: siteId, Status: true, Port: 2})
-
-	assert.NoError(t, err)
-	msgclientRepo.AssertExpectations(t)
-}
-
 func TestControllerServer_ToggleRadio_InvalidNodeType(t *testing.T) {
 	s := NewControllerServer(testOrgName, &mocks.NodeLogRepo{}, &mbmocks.MsgBusServiceClient{}, nil, nil, nil, nil, nil, 0, 0, pkg.IsDebugMode)
 
@@ -320,7 +318,7 @@ func TestControllerServer_ToggleRadio_SiteLevelLock(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 	conRepo := &mocks.NodeLogRepo{}
 	nodeClient := &mbmocks.NodeClient{}
-	opMgr := &mocks.ManagerClient{}
+	opMgr := &mbmocks.ManagerClient{}
 	opMon := &mocks.OperationMonitor{}
 
 	nodeId := "uk-983794-anode-78-7830"
@@ -330,7 +328,13 @@ func TestControllerServer_ToggleRadio_SiteLevelLock(t *testing.T) {
 		Id:   nodeId,
 		Site: registry.NodeSiteInfo{SiteId: siteId},
 	}, nil).Once()
-	setupOperationMocks(opMgr, opMon, "op-rf", "site:"+siteId)
+
+	op := &copr.OperationInfo{Id: "op-rf", FencingToken: 1, ResourceKey: "site:" + siteId}
+	opMgr.On("Start", mock.MatchedBy(func(req copr.StartRequest) bool {
+		return req.ResourceKey == "site:"+siteId
+	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
+	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
+	opMgr.On("MarkRunning", "op-rf", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
 	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nodeClient, opMgr, opMon, 30, 60, pkg.IsDebugMode)

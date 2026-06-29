@@ -12,6 +12,9 @@ gen:
 	protoc -I ./pb/dep -I ./pb  --go_out=$(GOPATH)/src --go-grpc_out=$(GOPATH)/src --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=$(GOPATH)/src \
  			   pb/msgclient/*.proto
 
+gen-mocks:
+	mockery --all --recursive --dir ./rest/client
+
 gen-unmarshall:
 	python3 pb/generate_unmarshall_func.py
 
