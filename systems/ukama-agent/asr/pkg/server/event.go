@@ -14,13 +14,16 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/rest/client/factory"
+	"github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
 
 	log "github.com/sirupsen/logrus"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	cpb "github.com/ukama/ukama/systems/common/pb/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	pb "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
+	pm "github.com/ukama/ukama/systems/ukama-agent/asr/pkg/policy"
 )
 
 const (
@@ -28,19 +31,31 @@ const (
 )
 
 type AsrEventServer struct {
-	asrRepo  db.AsrRecordRepo
-	gutiRepo db.GutiRepo
-	s        *AsrRecordServer
-	orgName  string
+	asrRepo        db.AsrRecordRepo
+	gutiRepo       db.GutiRepo
+	s              *AsrRecordServer
+	network        registry.NetworkClient
+	factory        factory.SimFactoryClient
+	msgbus         mb.MsgBusServiceClient
+	baseRoutingKey msgbus.RoutingKeyBuilder
+	pc             pm.Controller
+	allowedToS     int64
+	orgName        string
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewAsrEventServer(asrRepo db.AsrRecordRepo, s *AsrRecordServer, gutiRepo db.GutiRepo, org string) *AsrEventServer {
+func NewAsrEventServer(asrRepo db.AsrRecordRepo, s *AsrRecordServer, gutiRepo db.GutiRepo, factory factory.SimFactoryClient,
+	network registry.NetworkClient, pc pm.Controller, msgBus mb.MsgBusServiceClient, aToS int64, org string) *AsrEventServer {
 	return &AsrEventServer{
-		asrRepo:  asrRepo,
-		gutiRepo: gutiRepo,
-		orgName:  org,
-		s:        s,
+		asrRepo:    asrRepo,
+		gutiRepo:   gutiRepo,
+		factory:    factory,
+		network:    network,
+		msgbus:     msgBus,
+		pc:         pc,
+		allowedToS: aToS,
+		orgName:    org,
+		s:          s,
 	}
 }
 
@@ -78,7 +93,7 @@ func (as *AsrEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 			return nil, fmt.Errorf("error while handling sim manage SimAllocate Event: %w", err)
 		}
 	default:
-		log.Errorf("No handler routing key %s", e.RoutingKey)
+		log.Errorf("No handler for routing key %s", e.RoutingKey)
 	}
 
 	return &epb.EventResponse{}, nil
@@ -109,17 +124,12 @@ func (as *AsrEventServer) handleSimManagerSimAllocateEvent(key string, sim *epb.
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
 	defer cancel()
 
-	_, err := as.s.Activate(ctx, &pb.ActivateReq{
-		Iccid:        sim.Iccid,
-		Imsi:         sim.Imsi,
-		SimPackageId: sim.PackageId,
-		PackageId:    sim.DataPlanId,
-		NetworkId:    sim.NetworkId,
-	})
+	_, err := activate(ctx, sim.Iccid, sim.Imsi, sim.PackageId, sim.DataPlanId, sim.NetworkId,
+		as.network, as.factory, as.asrRepo, as.pc, as.allowedToS, as.msgbus, as.baseRoutingKey)
 	if err != nil {
 		log.Errorf("Failed to activate sim %s. Error: %v", sim.Imsi, err)
 
-		//TODO: Rollback for sim manager and sim pool if necessary
+		//TODO: publish activation failure for rollback on sim manager and sim pool if necessary
 
 		return fmt.Errorf("failed to activate sim %s. Error: %w", sim.Imsi, err)
 	}
