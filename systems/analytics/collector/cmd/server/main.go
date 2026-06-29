@@ -20,7 +20,6 @@ import (
 
 	"github.com/ukama/ukama/systems/analytics/collector/cmd/version"
 	"github.com/ukama/ukama/systems/analytics/collector/pkg"
-	"github.com/ukama/ukama/systems/analytics/collector/pkg/clients"
 	"github.com/ukama/ukama/systems/analytics/collector/pkg/db"
 	"github.com/ukama/ukama/systems/analytics/collector/pkg/refresh"
 	"github.com/ukama/ukama/systems/analytics/collector/pkg/server"
@@ -33,9 +32,24 @@ import (
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
+	"github.com/ukama/ukama/systems/common/rest/client"
+	cdp "github.com/ukama/ukama/systems/common/rest/client/dataplan"
+	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
+	cinvent "github.com/ukama/ukama/systems/common/rest/client/inventory"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	ssub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 )
 
 var serviceConfig *pkg.Config
+
+const (
+	registrySystemName   = "registry"
+	subscriberSystemName = "subscriber"
+	dataplanSystemName   = "dataplan"
+	metricsSystemName    = "metrics"
+	nodeSystemName       = "node"
+	billingSystemName    = "billing"
+)
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
@@ -110,14 +124,48 @@ func runGrpcServer(gormdb sql.Db) {
 	factRepo := db.NewFactRepo(gormdb)
 	rollupRepo := db.NewRollupRepo(gormdb)
 
+	invClient := cinvent.NewComponentClient(serviceConfig.Http.InventoryClient)
+
+	regUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
+		ic.CreateHostString(serviceConfig.OrgName, registrySystemName), &serviceConfig.OrgName)
+	if err != nil {
+		log.Errorf("Failed to resolve registry address: %v", err)
+	}
+
+	subUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
+		ic.CreateHostString(serviceConfig.OrgName, subscriberSystemName), &serviceConfig.OrgName)
+	if err != nil {
+		log.Errorf("Failed to resolve subscriber address: %v", err)
+	}
+
+	dpUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
+		ic.CreateHostString(serviceConfig.OrgName, dataplanSystemName), &serviceConfig.OrgName)
+	if err != nil {
+		log.Errorf("Failed to resolve dataplan address: %v", err)
+	}
+
+	// mUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
+	// 	ic.CreateHostString(serviceConfig.OrgName, metricsSystemName), &serviceConfig.OrgName)
+	// if err != nil {
+	// 	log.Errorf("Failed to resolve metrics address: %v", err)
+	// }
+
+	// bUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
+	// 	ic.CreateHostString(serviceConfig.OrgName, billingSystemName), &serviceConfig.OrgName)
+	// if err != nil {
+	// 	log.Errorf("Failed to resolve billing address: %v", err)
+	// }
+
+	regNet := creg.NewNetworkClient(regUrl.String())
+	regSite := creg.NewSiteClient(regUrl.String())
+	regNode := creg.NewNodeClient(regUrl.String())
+	subReg := ssub.NewSubscriberClient(subUrl.String())
+	dpPkgs := cdp.NewPackageClient(dpUrl.String())
+	// mClient := cm.NewMetricsClient(mUrl)
+	// bClient := cb.NewBillingClient(bUrl)
+
 	refresher := refresh.NewRefresher(stateRepo, snapshotRepo, factRepo,
-		clients.NewRegistryClient(serviceConfig.Http.RegistryClient),
-		clients.NewSubscriberClient(serviceConfig.Http.SubscriberClient),
-		clients.NewDataplanClient(serviceConfig.Http.DataplanClient),
-		clients.NewMetricsClient(serviceConfig.Http.MetricsClient),
-		clients.NewNodeClient(serviceConfig.Http.NodeClient),
-		clients.NewInventoryClient(serviceConfig.Http.InventoryClient),
-		clients.NewBillingClient(serviceConfig.Http.BillingClient))
+		regNet, regSite, regNode, subReg, dpPkgs, invClient, serviceConfig.Currency)
 
 	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
 		serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId,

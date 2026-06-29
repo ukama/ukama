@@ -230,7 +230,7 @@ func (c *stubRegistryClient) GetSites() ([]clients.RegistrySite, error) {
 
 func newTestRefresher(stateRepo db.StateRepo, registryClient clients.RegistryClient) *refresh.Refresher {
 	return refresh.NewRefresher(stateRepo, newStubSnapshotRepo(), &stubFactRepo{},
-		registryClient, nil, nil, nil, nil, nil, nil)
+		nil, nil, nil, nil, nil, nil, "")
 }
 
 func TestCollectorServer_Refresh(t *testing.T) {
