@@ -110,3 +110,17 @@ BFF lifecycle events:
 `status_equals` for SIMs supports `active` and `inactive` based on active
 package assignment. `set_sim_status` only validates the mutation path in this
 build; runtime enforcement is tested separately.
+
+## Generated scenarios
+
+Generated scenarios are plain scenario YAML files. Use:
+
+```sh
+ukama-lab generate --model sim --mode smoke --out scenarios/generated
+```
+
+Supported generator models in this phase: `org`, `network`, `site`, `node`, `sim`, `subscriber`, `package`.
+
+Supported generator modes in this phase: `smoke`, `transition`, `negative`, `pairwise`, `full`.
+
+Generator docs: `docs/generator.md`.

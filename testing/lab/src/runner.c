@@ -491,13 +491,6 @@ static int setup_bff_sim_pool(bff_client_t *bff,
         return ULAB_OK;
     }
 
-    if (opts->sim_csv_path[0] != '\0') {
-        snprintf(err->msg, sizeof(err->msg),
-                 "--sim-csv is no longer supported for validate setup; "
-                 "ukama-lab now provisions fresh warehouse/factory SIMs per run");
-        return ULAB_EUSAGE;
-    }
-
     memset(factory_csv, 0, sizeof(factory_csv));
     if (sim_factory_prepare_world(opts, world, run_dir, factory_csv,
                                   sizeof(factory_csv), err)) {
@@ -669,66 +662,6 @@ static int setup_bff_world(bff_client_t *bff,
         return ULAB_EBFF;
     }
     created_write(run_dir, world);
-
-    if (setup_bff_sim_pool(bff, world, opts, run_dir, err)) {
-        return ULAB_EBFF;
-    }
-    created_write(run_dir, world);
-
-    if (setup_bff_packages(bff, scenario, world, err)) {
-        return ULAB_EBFF;
-    }
-    created_write(run_dir, world);
-
-    if (setup_bff_subscribers(bff, scenario, world, err)) {
-        return ULAB_EBFF;
-    }
-    created_write(run_dir, world);
-
-    if (setup_bff_sims(bff, scenario, world, opts, err)) {
-        return ULAB_EBFF;
-    }
-    created_write(run_dir, world);
-
-    return ULAB_OK;
-}
-
-static int set_subscriber_network_id(world_t *world,
-                                     const char *network_id,
-                                     ulab_error_t *err) {
-
-    if (network_id == NULL || network_id[0] == '\0') {
-        snprintf(err->msg, sizeof(err->msg),
-                 "--subscriber requires --network-id or "
-                 "UKAMA_LAB_NETWORK_ID");
-        return ULAB_EUSAGE;
-    }
-
-    if (world->network_count != 1) {
-        snprintf(err->msg, sizeof(err->msg),
-                 "--subscriber currently supports exactly one network");
-        return ULAB_EUSAGE;
-    }
-
-    ulab_copy(world->networks[0].bff_id,
-              sizeof(world->networks[0].bff_id), network_id);
-
-    return ULAB_OK;
-}
-
-static int setup_bff_subscriber_only(bff_client_t *bff,
-                                     const scenario_t *scenario,
-                                     world_t *world,
-                                     const runner_opts_t *opts,
-                                     const char *run_dir,
-                                     ulab_error_t *err) {
-
-    int rc;
-
-    rc = set_subscriber_network_id(world, opts->subscriber_network_id, err);
-    if (rc != ULAB_OK) {
-        return rc;
-    }
 
     if (setup_bff_sim_pool(bff, world, opts, run_dir, err)) {
         return ULAB_EBFF;
@@ -959,38 +892,15 @@ static void write_model_artifact(const model_t *model,
     model_write_json(model, path);
 }
 
-static int should_cleanup(const runner_opts_t *opts, int rc) {
-
-    if (opts->keep) {
-        return 0;
-    }
-
-    if (rc != ULAB_OK && opts->keep_on_failure) {
-        return 0;
-    }
-
-    if (opts->setup_only && !opts->cleanup) {
-        return 0;
-    }
-
-    return 1;
-}
-
-static int cleanup_run(const runner_opts_t *opts,
-                       bff_client_t *bff,
+static int cleanup_run(bff_client_t *bff,
                        runtime_t *runtime,
                        world_t *world,
-                       const char *run_dir,
-                       int rc) {
+                       const char *run_dir) {
 
     ulab_error_t cleanup_err;
     int failures;
 
     failures = 0;
-
-    if (!should_cleanup(opts, rc)) {
-        return ULAB_OK;
-    }
 
     memset(&cleanup_err, 0, sizeof(cleanup_err));
     ulab_status("CLEANUP", "stop UE runtime");
@@ -1025,7 +935,6 @@ static int preclean_existing_run(bff_client_t *bff,
                                  world_t *world,
                                  const char *run_dir,
                                  ulab_error_t *err) {
-    runner_opts_t cleanup_opts;
     int rc;
 
     if (!created_exists(run_dir)) {
@@ -1040,10 +949,7 @@ static int preclean_existing_run(bff_client_t *bff,
         return ULAB_ERR;
     }
 
-    memset(&cleanup_opts, 0, sizeof(cleanup_opts));
-    cleanup_opts.cleanup = 1;
-
-    rc = cleanup_run(&cleanup_opts, bff, runtime, world, run_dir, ULAB_OK);
+    rc = cleanup_run(bff, runtime, world, run_dir);
     created_clear_ids(world);
 
     if (rc != ULAB_OK) {
@@ -1130,41 +1036,31 @@ int runner_validate(const runner_opts_t *opts) {
         goto done;
     }
 
-    if (!opts->setup_only) {
-        rc = runtime_ensure_network(&runtime, &err);
-        if (rc != ULAB_OK) {
-            rc = ULAB_ERUNTIME;
-            goto done;
-        }
-
-        ulab_status("SITE", "factory/build/start site node bundles");
-        rc = start_runtime_sites(opts->repo, scenario, &world, &runtime,
-                                 &err);
-        if (rc != ULAB_OK) {
-            goto done;
-        }
-
-        rc = wait_runtime_nodes(scenario, &world, &runtime, &err);
-        if (rc != ULAB_OK) {
-            goto done;
-        }
-
-        rc = runtime_enable_pcrf_service(&runtime, &world, &err);
-        if (rc != ULAB_OK) {
-            rc = ULAB_ERUNTIME;
-            goto done;
-        }
+    rc = runtime_ensure_network(&runtime, &err);
+    if (rc != ULAB_OK) {
+        rc = ULAB_ERUNTIME;
+        goto done;
     }
 
-    if (opts->subscriber_only) {
-        ulab_status("SUBSCRIBER", "creating package/subscriber/SIM only");
-        rc = setup_bff_subscriber_only(&bff, scenario, &world, opts,
-                                       runDir, &err);
-    } else {
-        ulab_status("BACKEND", "creating backend world resources");
-        rc = setup_bff_world(&bff, scenario, &world, opts, runDir,
-                             &err);
+    ulab_status("SITE", "factory/build/start site node bundles");
+    rc = start_runtime_sites(opts->repo, scenario, &world, &runtime, &err);
+    if (rc != ULAB_OK) {
+        goto done;
     }
+
+    rc = wait_runtime_nodes(scenario, &world, &runtime, &err);
+    if (rc != ULAB_OK) {
+        goto done;
+    }
+
+    rc = runtime_enable_pcrf_service(&runtime, &world, &err);
+    if (rc != ULAB_OK) {
+        rc = ULAB_ERUNTIME;
+        goto done;
+    }
+
+    ulab_status("BACKEND", "creating backend world resources");
+    rc = setup_bff_world(&bff, scenario, &world, opts, runDir, &err);
     if (rc != ULAB_OK) {
         goto done;
     }
@@ -1172,18 +1068,16 @@ int runner_validate(const runner_opts_t *opts) {
     model_sync_world(&model, &world);
     write_world_artifact(&world, runDir);
 
-    if (!opts->setup_only) {
-        rc = runtime_all_ues(scenario, &world, &runtime, &err);
+    rc = runtime_all_ues(scenario, &world, &runtime, &err);
+    if (rc != ULAB_OK) {
+        goto done;
+    }
+
+    for (i = 0; i < scenario->phase_count; i++) {
+        rc = run_phase(scenario, &world, &model, &bff, &runtime,
+                       &report, &scenario->phases[i], &err);
         if (rc != ULAB_OK) {
             goto done;
-        }
-
-        for (i = 0; i < scenario->phase_count; i++) {
-            rc = run_phase(scenario, &world, &model, &bff, &runtime,
-                           &report, &scenario->phases[i], &err);
-            if (rc != ULAB_OK) {
-                goto done;
-            }
         }
     }
 
@@ -1203,7 +1097,7 @@ done:
     }
 
     if (!skip_cleanup) {
-        cleanup_rc = cleanup_run(opts, &bff, &runtime, &world, runDir, rc);
+        cleanup_rc = cleanup_run(&bff, &runtime, &world, runDir);
         report_set_cleanup(&report, cleanup_rc != ULAB_OK);
         if (cleanup_rc != ULAB_OK && rc == ULAB_OK) {
             rc = ULAB_ERR;
@@ -1221,48 +1115,6 @@ done:
     report_close(&report);
     runtime_close(&runtime);
     bff_close(&bff);
-    world_free(&world);
-    model_free(&model);
-    free(scenario);
-
-    return rc;
-}
-
-int runner_dry_run(const runner_opts_t *opts) {
-
-    scenario_t *scenario;
-    world_t world;
-    model_t model;
-    ulab_error_t err;
-    char runDir[ULAB_MAX_PATH];
-    int rc;
-
-    scenario = NULL;
-    memset(&world, 0, sizeof(world));
-    memset(&model, 0, sizeof(model));
-    memset(&err,   0, sizeof(err));
-    memset(runDir, 0, sizeof(runDir));
-
-    scenario = calloc(1, sizeof(*scenario));
-    if (scenario == NULL) {
-        return ULAB_EINTERNAL;
-    }
-
-    rc = prepare_run(opts, scenario, &world, &model, runDir,
-                     sizeof(runDir), &err);
-    if (rc != ULAB_OK) {
-        ulab_log_error("%s", err.msg);
-        goto done;
-    }
-
-    ulab_status("DRY-RUN", "%s", scenario->name);
-    report_world(&world);
-
-    if (opts->print_world) {
-        world_print(&world);
-    }
-
-done:
     world_free(&world);
     model_free(&model);
     free(scenario);

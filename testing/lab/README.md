@@ -12,12 +12,6 @@ and validates product-visible state through backend/BFF queries.
 make
 ```
 
-## Dry run
-
-```sh
-bin/ukama-lab dry-run scenarios/smoke/usage-accumulation.yaml --print-world
-```
-
 ## Validate
 
 ```sh
@@ -38,3 +32,15 @@ traffic_allowed / traffic_blocked
 ```
 
 `count` is kept as an alias for `backend_count`.
+
+## Scenario generator
+
+Generate normal scenario YAMLs from product models:
+
+```sh
+ukama-lab generate --model sim --mode smoke --out scenarios/generated
+ukama-lab generate --model all --mode full --out scenarios/generated
+```
+
+Models live in `models/`. Templates live in `templates/generated/`. Generated scenarios use the same `validate` path as handwritten scenarios.
+
