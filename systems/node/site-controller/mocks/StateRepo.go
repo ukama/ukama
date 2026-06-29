@@ -42,9 +42,9 @@ func (_m *StateRepo) Get(siteID string) (*db.SiteState, error) {
 	return r0, r1
 }
 
-// Upsert provides a mock function with given fields: state
-func (_m *StateRepo) Upsert(state *db.SiteState) error {
-	ret := _m.Called(state)
+// Upsert provides a mock function with given fields: patch
+func (_m *StateRepo) Upsert(patch *db.SiteState) error {
+	ret := _m.Called(patch)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Upsert")
@@ -52,7 +52,7 @@ func (_m *StateRepo) Upsert(state *db.SiteState) error {
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(*db.SiteState) error); ok {
-		r0 = rf(state)
+		r0 = rf(patch)
 	} else {
 		r0 = ret.Error(0)
 	}

@@ -31,7 +31,7 @@ type SiteControllerServer struct {
 	pb.UnimplementedSiteControllerServiceServer
 	orgName        string
 	reconciler     *reconciler.Reconciler
-	dbStructs       *db.DBStruct
+	dbStructs      *db.DBStruct
 	msgBus         msgBusServiceClient.MsgBusServiceClient
 	siteRegistry   creg.SiteClient
 	nodeClient     creg.NodeClient
@@ -66,7 +66,7 @@ func (s *SiteControllerServer) SetService(ctx context.Context, req *pb.SetServic
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "node-controller unavailable: %v", err)
 	}
-	resp, err := client.ToggleNodeService(ctx, &contpb.ToggleNodeServiceRequest{NodeId: nodeID, State: req.State})
+	resp, err := client.ToggleService(ctx, &contpb.ToggleServiceRequest{NodeId: nodeID, State: req.State})
 	if err != nil {
 		return nil, mapErr(err)
 	}
@@ -83,7 +83,7 @@ func (s *SiteControllerServer) SetRadio(ctx context.Context, req *pb.SetRadioReq
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "node-controller unavailable: %v", err)
 	}
-	resp, err := client.ToggleRfSwitch(ctx, &contpb.ToggleRfSwitchRequest{NodeId: nodeID, State: req.State})
+	resp, err := client.ToggleRadio(ctx, &contpb.ToggleRadioRequest{NodeId: nodeID, State: req.State})
 	if err != nil {
 		return nil, mapErr(err)
 	}
@@ -96,12 +96,24 @@ func (s *SiteControllerServer) RestartSite(ctx context.Context, req *pb.RestartS
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "node-controller unavailable: %v", err)
 	}
-	resp, err := client.RestartSite(ctx, &contpb.RestartSiteRequest{SiteId: req.SiteId, NetworkId: req.NetworkId})
+	nodes, err := s.nodeClient.GetNodesBySite(req.SiteId)
 	if err != nil {
 		return nil, mapErr(err)
 	}
-	log.Infof("site-controller: forwarded RESTART for site %s, ops=%v", req.SiteId, resp.GetOperationIds())
-	return &pb.RestartSiteResponse{OperationIds: resp.GetOperationIds(), Status: resp.GetStatus()}, nil
+	operationIds := make([]string, 0)
+	for _, node := range nodes.Nodes {
+		if node.Type != ukama.NODE_ID_TYPE_CNODE {
+			resp, err := client.RestartNode(ctx, &contpb.RestartNodeRequest{NodeId: node.Id})
+			if err != nil {
+				return nil, mapErr(err)
+			}
+			log.Infof("site-controller: restarted node %s for site %s, op=%s", node.Id, req.SiteId, resp.GetOperationId())
+			operationIds = append(operationIds, resp.GetOperationId())
+		}
+	}
+
+	log.Infof("site-controller: forwarded RESTART for site %s", req.SiteId)
+	return &pb.RestartSiteResponse{OperationIds: operationIds, Status: "success"}, nil
 }
 
 func (s *SiteControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.ToggleInternetSwitchRequest) (*pb.ToggleInternetSwitchResponse, error) {
@@ -109,7 +121,24 @@ func (s *SiteControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "node-controller unavailable: %v", err)
 	}
-	resp, err := client.ToggleInternetSwitch(ctx, &contpb.ToggleInternetSwitchRequest{SiteId: req.SiteId, Status: req.Status, Port: req.Port})
+
+	nodes, err := s.nodeClient.GetNodesBySite(req.SiteId)
+	if err != nil {
+		return nil, mapErr(err)
+	}
+
+	var cnodeId string
+	for _, node := range nodes.Nodes {
+		if node.Type == ukama.NODE_ID_TYPE_CNODE {
+			cnodeId = node.Id
+			break
+		}
+	}
+	if cnodeId == "" {
+		return nil, status.Errorf(codes.NotFound, "no CNODE found for site %s", req.SiteId)
+	}
+
+	resp, err := client.ToggleSwitchPort(ctx, &contpb.ToggleSwitchPortRequest{NodeId: cnodeId, Status: req.Status, Port: req.Port})
 	if err != nil {
 		return nil, mapErr(err)
 	}
