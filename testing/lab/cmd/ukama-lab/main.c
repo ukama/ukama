@@ -33,8 +33,19 @@ static void usage(void) {
     printf("  --setup-only     create BFF world and skip runtime\n");
     printf("  --subscriber     create package/subscriber/SIM only\n");
     printf("  --network-id <id> existing BFF network id for --subscriber\n");
-    printf("  --sim-csv <file> upload SIM CSV before allocation\n");
-    printf("  --sim-type <type> SIM pool type; default: test\n");
+    printf("  --sim-type <type> SIM pool type; default: ukama_data\n");
+    printf("  --warehouse-url <url> warehouse API URL for run SIM provisioning\n");
+    printf("  --factory-url <url> sim factory API URL for run SIM export\n");
+    printf("  --asr-url <url> optional ukama-agent ASR API URL for post-allocation check\n");
+    printf("  --sim-org <org> SIM org; default: ukama\n");
+    printf("  --sim-vendor <vendor> SIM vendor; default: gemalto\n");
+    printf("  --sim-profile <profile> SIM profile; default: 5g\n");
+    printf("  --sim-form-factor <ff> SIM form factor; default: 4ff\n");
+    printf("  --sim-batch-prefix <prefix> SIM batch prefix; default: BATCH-ULAB\n");
+    printf("  --sim-csv <file> deprecated; Mode-B provisions and exports SIMs per run\n");
+    printf("  --cleanup        force cleanup after setup-only/subscriber run\n");
+    printf("  --keep           skip cleanup and keep runtime/resources\n");
+    printf("  --keep-on-failure keep runtime/resources when validate fails\n");
     printf("  --print-world    dry-run: print generated world sample\n");
     printf("  --quiet          summary only\n");
     printf("  --verbose        debug logs\n");
@@ -55,8 +66,28 @@ static void opts_init(runner_opts_t *o) {
     ulab_copy(o->sim_csv_path, sizeof(o->sim_csv_path),
               ulab_getenv_default("UKAMA_LAB_SIM_CSV", ""));
     ulab_copy(o->sim_type, sizeof(o->sim_type),
-              ulab_getenv_default("UKAMA_LAB_SIM_TYPE", "test"));
-    o->keep = 1;
+              ulab_getenv_default("UKAMA_LAB_SIM_TYPE", "ukama_data"));
+    ulab_copy(o->warehouse_url, sizeof(o->warehouse_url),
+              ulab_getenv_default("UKAMA_LAB_WAREHOUSE_URL",
+                                  "http://warehouse-ukama.udev.ukama.com"));
+    ulab_copy(o->factory_url, sizeof(o->factory_url),
+              ulab_getenv_default("UKAMA_LAB_FACTORY_URL",
+                                  "http://factory-ukama.udev.ukama.com"));
+    ulab_copy(o->asr_url, sizeof(o->asr_url),
+              ulab_getenv_default("UKAMA_LAB_ASR_URL", ""));
+    ulab_copy(o->sim_org, sizeof(o->sim_org),
+              ulab_getenv_default("UKAMA_LAB_SIM_ORG", "ukama"));
+    ulab_copy(o->sim_vendor, sizeof(o->sim_vendor),
+              ulab_getenv_default("UKAMA_LAB_SIM_VENDOR", "gemalto"));
+    ulab_copy(o->sim_profile, sizeof(o->sim_profile),
+              ulab_getenv_default("UKAMA_LAB_SIM_PROFILE", "5g"));
+    ulab_copy(o->sim_form_factor, sizeof(o->sim_form_factor),
+              ulab_getenv_default("UKAMA_LAB_SIM_FORM_FACTOR", "4ff"));
+    ulab_copy(o->sim_batch_prefix, sizeof(o->sim_batch_prefix),
+              ulab_getenv_default("UKAMA_LAB_SIM_BATCH_PREFIX",
+                                  "BATCH-ULAB"));
+    o->cleanup = 0;
+    o->keep = 0;
 }
 
 static int parse_opts(int argc, char **argv, int start, runner_opts_t *o) {
@@ -88,6 +119,22 @@ static int parse_opts(int argc, char **argv, int start, runner_opts_t *o) {
             ulab_copy(o->sim_csv_path, sizeof(o->sim_csv_path), argv[++i]);
         } else if (ulab_streq(argv[i], "--sim-type") && i + 1 < argc) {
             ulab_copy(o->sim_type, sizeof(o->sim_type), argv[++i]);
+        } else if (ulab_streq(argv[i], "--warehouse-url") && i + 1 < argc) {
+            ulab_copy(o->warehouse_url, sizeof(o->warehouse_url), argv[++i]);
+        } else if (ulab_streq(argv[i], "--factory-url") && i + 1 < argc) {
+            ulab_copy(o->factory_url, sizeof(o->factory_url), argv[++i]);
+        } else if (ulab_streq(argv[i], "--asr-url") && i + 1 < argc) {
+            ulab_copy(o->asr_url, sizeof(o->asr_url), argv[++i]);
+        } else if (ulab_streq(argv[i], "--sim-org") && i + 1 < argc) {
+            ulab_copy(o->sim_org, sizeof(o->sim_org), argv[++i]);
+        } else if (ulab_streq(argv[i], "--sim-vendor") && i + 1 < argc) {
+            ulab_copy(o->sim_vendor, sizeof(o->sim_vendor), argv[++i]);
+        } else if (ulab_streq(argv[i], "--sim-profile") && i + 1 < argc) {
+            ulab_copy(o->sim_profile, sizeof(o->sim_profile), argv[++i]);
+        } else if (ulab_streq(argv[i], "--sim-form-factor") && i + 1 < argc) {
+            ulab_copy(o->sim_form_factor, sizeof(o->sim_form_factor), argv[++i]);
+        } else if (ulab_streq(argv[i], "--sim-batch-prefix") && i + 1 < argc) {
+            ulab_copy(o->sim_batch_prefix, sizeof(o->sim_batch_prefix), argv[++i]);
         } else if (ulab_streq(argv[i], "--print-world")) {
             o->print_world = 1;
         } else if (ulab_streq(argv[i], "--print-plan")) {
@@ -97,6 +144,9 @@ static int parse_opts(int argc, char **argv, int start, runner_opts_t *o) {
             o->keep = 0;
         } else if (ulab_streq(argv[i], "--keep")) {
             o->keep = 1;
+            o->cleanup = 0;
+        } else if (ulab_streq(argv[i], "--keep-on-failure")) {
+            o->keep_on_failure = 1;
         } else if (ulab_streq(argv[i], "--quiet")) {
             o->quiet = 1;
         } else if (ulab_streq(argv[i], "--verbose")) {

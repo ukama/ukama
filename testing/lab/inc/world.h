@@ -84,6 +84,8 @@ typedef struct {
     char package_ref[ULAB_MAX_REF];
     char ip[ULAB_MAX_REF];
     char bff_id[ULAB_MAX_ID];
+    char sim_package_id[ULAB_MAX_ID];
+    char pool_sim_id[ULAB_MAX_ID];
     int  started;
     int  attached;
 } ue_t;

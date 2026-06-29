@@ -92,9 +92,60 @@ wait_container_http() {
     return 1
 }
 
+
+wait_pcrf_service_on() {
+    container="$1"
+    url="$2"
+    i=0
+    body=""
+
+    echo "ue: wait pcrf service from $container url=$url"
+
+    while [ "$i" -lt 60 ]; do
+        body="$(podman exec "$container" curl -fsS --max-time 2 "$url" 2>/dev/null || true)"
+        if printf "%s" "$body" | grep -Eq '"state"[[:space:]]*:[[:space:]]*"on"' && \
+           printf "%s" "$body" | grep -Eq '"admission"[[:space:]]*:[[:space:]]*"enabled"'; then
+            echo "ue: pcrf service ready"
+            return 0
+        fi
+
+        i=$((i + 1))
+        sleep 2
+    done
+
+    echo "pcrf service not enabled from $container: $url" >&2
+    echo "last service body: $body" >&2
+    return 1
+}
+
+print_attach_debug() {
+    echo "---- UE container ----" >&2
+    podman ps -a --filter "name=$UE_CONTAINER" >&2 || true
+
+    echo "---- UE logs ----" >&2
+    podman logs --tail 120 "$UE_CONTAINER" >&2 || true
+    echo >&2
+
+    echo "---- EPCEMU status from tower ----" >&2
+    podman exec "$TNODE_CONTAINER" sh -lc \
+        'curl -sS --max-time 5 http://127.0.0.1:18028/v1/status || true' >&2 || true
+    echo >&2
+
+    echo "---- PCRF service from tower ----" >&2
+    podman exec "$TNODE_CONTAINER" sh -lc \
+        'curl -sS --max-time 5 http://127.0.0.1:18030/v1/service || true' >&2 || true
+    echo >&2
+
+    echo "---- PCRF status from tower ----" >&2
+    podman exec "$TNODE_CONTAINER" sh -lc \
+        'curl -sS --max-time 5 http://127.0.0.1:18030/v1/status || true' >&2 || true
+    echo >&2
+}
+
 need_cmd podman
 need_cmd awk
 need_cmd curl
+need_cmd grep
 need_char_device /dev/net/tun
 
 need_file "$UE_DIR/ue/Containerfile"
@@ -173,13 +224,15 @@ if [ -z "$TOWER_IP" ]; then
     exit 1
 fi
 
-# Do not use host-published ports for the E2E path.  Validate the same network
-# path the UE will use by curling from another container already on LAB_NET.
+# EPCEMU/PCRF control stays on the tower container.  Media is attached to
+# the tower user-plane bridge, so validate media reachability from the tower
+# through that bridge before starting the UE.
 # /v1/ping returns 503 until the service is really ready; /v1/status may return
 # 200 while ready=false.
-wait_container_http "$MEDIA_CONTAINER" epcemu "http://$TOWER_IP:18028/v1/ping"
-wait_container_http "$MEDIA_CONTAINER" pcrf "http://$TOWER_IP:18030/v1/ping"
-wait_container_http "$MEDIA_CONTAINER" media "http://$MEDIA_IP:$HTTP_PORT/"
+wait_container_http "$TNODE_CONTAINER" epcemu "http://127.0.0.1:18028/v1/ping"
+wait_container_http "$TNODE_CONTAINER" pcrf "http://127.0.0.1:18030/v1/ping"
+wait_pcrf_service_on "$TNODE_CONTAINER" "http://127.0.0.1:18030/v1/service"
+wait_container_http "$TNODE_CONTAINER" media "http://$MEDIA_IP:$HTTP_PORT/"
 
 if [ ! -f "$UE_STATE_DIR/.ue-image-built" ]; then
     echo "ue: build $UE_IMAGE"
@@ -219,20 +272,22 @@ if ! podman run -d \
     -e IPERF_PORT="$IPERF_PORT" \
     -e UE_DETACH_ON_EXIT="1" \
     "$UE_IMAGE" \
-    /bin/sh -c '/opt/ukama/ue-agent/ue-agent || exit 1; tail -f /dev/null' \
+    /bin/sh -c 'exec /opt/ukama/ue-agent/ue-agent' \
     > "$UE_STATE_DIR/$UE_ID.start.out" 2>&1; then
     echo "failed to start UE container: $UE_CONTAINER" >&2
     cat "$UE_STATE_DIR/$UE_ID.start.out" >&2 || true
     exit 1
 fi
 
-sleep 2
-
-if ! container_running "$UE_CONTAINER"; then
-    echo "UE container exited early: $UE_CONTAINER" >&2
-    podman logs "$UE_CONTAINER" >&2 || true
+UE_CONTAINER_IP="$(container_ip_on_network "$UE_CONTAINER" "$LAB_NET")"
+if [ -z "$UE_CONTAINER_IP" ]; then
+    echo "UE container has no IP on $LAB_NET: $UE_CONTAINER" >&2
+    print_attach_debug
+    podman inspect "$UE_CONTAINER" >&2 || true
     exit 1
 fi
+
+echo "ue: container ip=$UE_CONTAINER_IP network=$LAB_NET"
 
 STATE_FILE="$UE_STATE_DIR/$UE_ID.env"
 cat > "$STATE_FILE" <<STATE
@@ -243,6 +298,7 @@ IMSI=$IMSI
 ICCID=$ICCID
 UE_IP=$UE_IP_ADDR
 UE_DATA_PORT=$UE_DATA_PORT
+UE_CONTAINER_IP=$UE_CONTAINER_IP
 SITE_REF=$SITE_REF
 TNODE_CONTAINER=$TNODE_CONTAINER
 TOWER_IP=$TOWER_IP
@@ -256,5 +312,13 @@ UE_DIR=$UE_DIR
 STATE
 
 cp "$STATE_FILE" "$UE_STATE_DIR/$UE_REF.env"
+
+sleep 2
+
+if ! container_running "$UE_CONTAINER"; then
+    echo "UE container exited early: $UE_CONTAINER" >&2
+    print_attach_debug
+    exit 1
+fi
 
 echo "ue-started ref=$UE_REF imsi=$IMSI ip=$UE_IP_ADDR tower=$TOWER_IP media=$MEDIA_IP network=$LAB_NET"
