@@ -290,7 +290,8 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		// if agent operation fails.
 
 		return nil, status.Errorf(codes.Internal,
-			"error while activating sim type %s on remote agent with request: %v", simType, agentRequest)
+			"error while activating sim type %s on remote agent with request: %v",
+			simType, agentRequest)
 	}
 
 	orgInfos, err := s.nucleusOrgClient.Get(s.orgName)

@@ -50,14 +50,13 @@ type SimManagerEventServer struct {
 	orgId                     string
 	orgName                   string
 	metricsPusher             MetricsPusher
-	s                         *SimManagerServer
 	epb.UnimplementedEventNotificationServiceServer
 }
 
 func NewSimManagerEventServer(orgName, orgId string, simRepo sims.SimRepo, packageRepo sims.PackageRepo, agentFactory adapters.AgentFactory,
 	packageClient cdplan.PackageClient, subscriberRegistryService providers.SubscriberRegistryClientProvider,
 	networkClient creg.NetworkClient, mailerClient cnotif.MailerClient, nucleusOrgClient cnuc.OrgClient,
-	nucleusUserClient cnuc.UserClient, msgBus mb.MsgBusServiceClient, pushMetricHost string, s *SimManagerServer) *SimManagerEventServer {
+	nucleusUserClient cnuc.UserClient, msgBus mb.MsgBusServiceClient, pushMetricHost string) *SimManagerEventServer {
 	return &SimManagerEventServer{
 		simRepo:                   simRepo,
 		packageRepo:               packageRepo,
@@ -74,7 +73,6 @@ func NewSimManagerEventServer(orgName, orgId string, simRepo sims.SimRepo, packa
 		orgName:       orgName,
 		orgId:         orgId,
 		metricsPusher: NewMetricsPusher(pushMetricHost),
-		s:             s,
 	}
 }
 
