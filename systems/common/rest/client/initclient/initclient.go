@@ -125,14 +125,14 @@ func GetHostUrl(ic InitClient, host string, org *string) (*url.URL, error) {
 	return CreateHTTPURL(*sysIpInfo, API_GW_INTERFACE)
 }
 
-// GetApiGwAddress resolves the api-gw address for a host the same way as
+// GetHostAddress resolves the api-gw address for a host the same way as
 // GetHostUrl, but returns the registered api-gw URL when the system has one,
 // otherwise it falls back to the raw ApiGwIp:ApiGwPort. The returned address
 // can therefore be either a URL (a stable hostname the network layer
 // re-resolves to the current IP, so cached values do not break on IP changes)
 // or an IP:port, matching GetHostUrl's behavior. The registered URL is expected
 // to already include its scheme (e.g. http://...), so none is added here.
-func GetApiGwAddress(ic InitClient, host string, org *string) (*url.URL, error) {
+func GetHostAddress(ic InitClient, host string, org *string) (*url.URL, error) {
 	log.Infof("Getting api-gw address from initclient matching host %s", host)
 
 	sysIpInfo, err := ic.GetSystemFromHost(host, org)

@@ -194,7 +194,7 @@ func TestGetHostUrl(t *testing.T) {
 
 }
 
-func TestGetApiGwAddress(t *testing.T) {
+func TestGetHostAddress(t *testing.T) {
 	t.Run("ResolveFailure", func(tt *testing.T) {
 		var org *string = nil
 
@@ -204,7 +204,7 @@ func TestGetApiGwAddress(t *testing.T) {
 		initclientMock.On("GetSystemFromHost", host, org).
 			Return(nil, errors.New("some error"))
 
-		u, err := initclient.GetApiGwAddress(initclientMock, host, org)
+		u, err := initclient.GetHostAddress(initclientMock, host, org)
 
 		assert.Error(tt, err)
 		assert.Nil(tt, u)
@@ -225,7 +225,7 @@ func TestGetApiGwAddress(t *testing.T) {
 				ApiGwPort:  testPort,
 			}, nil)
 
-		u, err := initclient.GetApiGwAddress(initclientMock, host, nil)
+		u, err := initclient.GetHostAddress(initclientMock, host, nil)
 
 		assert.NoError(tt, err)
 		assert.NotNil(tt, u)
@@ -248,7 +248,7 @@ func TestGetApiGwAddress(t *testing.T) {
 				ApiGwUrl:   "https://api.test-system.test-org.ukama.com",
 			}, nil)
 
-		u, err := initclient.GetApiGwAddress(initclientMock, host, nil)
+		u, err := initclient.GetHostAddress(initclientMock, host, nil)
 
 		assert.NoError(tt, err)
 		assert.NotNil(tt, u)
@@ -272,7 +272,7 @@ func TestGetApiGwAddress(t *testing.T) {
 				ApiGwUrl:   clusterUrl,
 			}, nil)
 
-		u, err := initclient.GetApiGwAddress(initclientMock, host, nil)
+		u, err := initclient.GetHostAddress(initclientMock, host, nil)
 
 		assert.NoError(tt, err)
 		assert.NotNil(tt, u)
@@ -295,7 +295,7 @@ func TestGetApiGwAddress(t *testing.T) {
 				ApiGwUrl:   "api.test-system.test-org.ukama.com:8080",
 			}, nil)
 
-		u, err := initclient.GetApiGwAddress(initclientMock, host, nil)
+		u, err := initclient.GetHostAddress(initclientMock, host, nil)
 
 		assert.Error(tt, err)
 		assert.Nil(tt, u)

@@ -115,7 +115,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	//TODO: We should perform InitClient resolutions on demand, in order to avoid URL changes side effects.
 	// Looking up registry system's host from initClient
-	factoryServiceUrl, err := ic.GetApiGwAddress(ic.NewInitClient(serviceConfig.Http.InitClient, cclient.WithDebug(serviceConfig.DebugMode)),
+	factoryServiceUrl, err := ic.GetHostAddress(ic.NewInitClient(serviceConfig.Http.InitClient, cclient.WithDebug(serviceConfig.DebugMode)),
 		ic.CreateHostString(serviceConfig.OrgName, factorySystem), &serviceConfig.OrgName)
 	if err != nil {
 		log.Fatalf("Failed to resolve %s system address from initClient: %v", factorySystem, err)
@@ -123,7 +123,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	factoryClient := factory.NewSimFactoryClient(factoryServiceUrl.String(), cclient.WithDebug(serviceConfig.DebugMode))
 
-	networkServiceUrl, err := ic.GetApiGwAddress(ic.NewInitClient(serviceConfig.Http.InitClient, cclient.WithDebug(serviceConfig.DebugMode)),
+	networkServiceUrl, err := ic.GetHostAddress(ic.NewInitClient(serviceConfig.Http.InitClient, cclient.WithDebug(serviceConfig.DebugMode)),
 		ic.CreateHostString(serviceConfig.OrgName, registrySystem), &serviceConfig.OrgName)
 	if err != nil {
 		log.Fatalf("Failed to resolve %s system address from initClient: %v", registrySystem, err)
@@ -132,7 +132,7 @@ func runGrpcServer(gormdb sql.Db) {
 	networkClient := registry.NewNetworkClient(networkServiceUrl.String(), cclient.WithDebug(serviceConfig.DebugMode))
 
 	// Looking up data plan system's host from initClient
-	dataPlanUrl, err := ic.GetApiGwAddress(ic.NewInitClient(serviceConfig.Http.InitClient, cclient.WithDebug(serviceConfig.DebugMode)),
+	dataPlanUrl, err := ic.GetHostAddress(ic.NewInitClient(serviceConfig.Http.InitClient, cclient.WithDebug(serviceConfig.DebugMode)),
 		ic.CreateHostString(serviceConfig.OrgName, dataPlanSystem), &serviceConfig.OrgName)
 	if err != nil {
 		log.Fatalf("Failed to resolve %s system address from initClient: %v", dataPlanSystem, err)

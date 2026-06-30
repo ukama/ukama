@@ -70,7 +70,7 @@ func runGrpcServer() {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	regUrl, err := ic.GetApiGwAddress(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode)),
+	regUrl, err := ic.GetHostAddress(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode)),
 	ic.CreateHostString(svcConf.OrgName, registrySystemName), &svcConf.OrgName)
 	if err != nil {
 		log.Errorf("Failed to resolve registry address: %v", err)

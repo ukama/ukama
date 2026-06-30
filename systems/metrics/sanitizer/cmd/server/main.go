@@ -85,7 +85,7 @@ func runGrpcServer() {
 	}
 
 	//TODO: we should do initclient resolutions on demand, in order to avoid URL changes side effects.
-	registrySystemUrl, err := ic.GetApiGwAddress(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
+	registrySystemUrl, err := ic.GetHostAddress(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
 		ic.CreateHostString(serviceConfig.OrgName, registrySystem), &serviceConfig.OrgName)
 	if err != nil {
 		log.Fatalf("Failed to resolve %s system address from initClient: %v", registrySystem, err)

@@ -29,7 +29,7 @@ func main() {
 
 	//registryClient := multipl.NewRegistryProvider(serviceConfig.Registry.Host, serviceConfig.Registry.TimeoutSeconds, serviceConfig.DebugMode)
 
-	regUrl, err := ic.GetApiGwAddress(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
+	regUrl, err := ic.GetHostAddress(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
 		ic.CreateHostString(serviceConfig.OrgName, "registry"), &serviceConfig.OrgName)
 	if err != nil {
 		log.Errorf("Failed to resolve registry address: %v", err)

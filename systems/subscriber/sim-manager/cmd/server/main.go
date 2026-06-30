@@ -118,25 +118,25 @@ func runGrpcServer(gormDB sql.Db) {
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	//TODO: We should do initclient resolution on demand, in order to avoid systems url changes side effects
-	regUrl, err := ic.GetApiGwAddress(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
+	regUrl, err := ic.GetHostAddress(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
 		ic.CreateHostString(serviceConfig.OrgName, registrySystemName), &serviceConfig.OrgName)
 	if err != nil {
 		log.Errorf("Failed to resolve registry address: %v", err)
 	}
 
-	dataplanUrl, err := ic.GetApiGwAddress(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
+	dataplanUrl, err := ic.GetHostAddress(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
 		ic.CreateHostString(serviceConfig.OrgName, dataplanSystemName), &serviceConfig.OrgName)
 	if err != nil {
 		log.Errorf("Failed to resolve dataplan address: %v", err)
 	}
 
-	notificationUrl, err := ic.GetApiGwAddress(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
+	notificationUrl, err := ic.GetHostAddress(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
 		ic.CreateHostString(serviceConfig.OrgName, notificationSystemName), &serviceConfig.OrgName)
 	if err != nil {
 		log.Errorf("Failed to resolve notification address: %v", err)
 	}
 
-	ukamaAgentUrl, err := ic.GetApiGwAddress(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
+	ukamaAgentUrl, err := ic.GetHostAddress(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
 		ic.CreateHostString(serviceConfig.OrgName, ukamaAgentSystemName), &serviceConfig.OrgName)
 	if err != nil {
 		log.Errorf("Failed to resolve ukama agent address: %v", err)
