@@ -253,6 +253,80 @@ func Test_Terminate(t *testing.T) {
 	})
 }
 
+func Test_Get(t *testing.T) {
+	t.Run("ReturnsOperation", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		op := &Operation{
+			Id:           uuid.NewV4(),
+			Type:         "RestartNode",
+			System:       "node",
+			Status:       OperationRunning,
+			FencingToken: 1,
+			ResourceKey:  "node:abc",
+		}
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
+			WillReturnRows(operationRow(op))
+
+		out, err := repo.Get(op.Id)
+
+		assert.NoError(t, err)
+		assert.Equal(t, op.Id, out.Id)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("ReturnsErrorWhenNotFound", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
+			WillReturnError(gorm.ErrRecordNotFound)
+
+		out, err := repo.Get(uuid.NewV4())
+
+		assert.Error(t, err)
+		assert.Nil(t, out)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}
+
+func Test_GetByIdempotencyKey(t *testing.T) {
+	t.Run("ReturnsExistingOperation", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		op := &Operation{
+			Id:           uuid.NewV4(),
+			Type:         "RestartNode",
+			System:       "node",
+			Status:       OperationRunning,
+			FencingToken: 2,
+			ResourceKey:  "node:abc",
+		}
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
+			WillReturnRows(operationRow(op))
+
+		out, err := repo.GetByIdempotencyKey("key-123")
+
+		assert.NoError(t, err)
+		assert.Equal(t, op.Id, out.Id)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("ReturnsNilWhenMissing", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
+			WillReturnError(gorm.ErrRecordNotFound)
+
+		out, err := repo.GetByIdempotencyKey("missing")
+
+		assert.NoError(t, err)
+		assert.Nil(t, out)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}
+
 func Test_GetByResource(t *testing.T) {
 	t.Run("ReturnsNilWhenNotLocked", func(t *testing.T) {
 		mock, repo := setupTestDB(t)
@@ -264,6 +338,31 @@ func Test_GetByResource(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Nil(t, out)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("ReturnsHolderWhenLocked", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		holder := &Operation{
+			Id:           uuid.NewV4(),
+			Type:         "RestartNode",
+			System:       "node",
+			Status:       OperationRunning,
+			FencingToken: 4,
+			ResourceKey:  "node:abc",
+		}
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "resource_locks"`)).
+			WillReturnRows(sqlmock.NewRows([]string{"resource_key", "operation_id", "fencing_token"}).
+				AddRow(holder.ResourceKey, holder.Id, holder.FencingToken))
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
+			WillReturnRows(operationRow(holder))
+
+		out, err := repo.GetByResource("node:abc")
+
+		assert.NoError(t, err)
+		assert.Equal(t, holder.Id, out.Id)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
