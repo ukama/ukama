@@ -1,6 +1,13 @@
 version: 1
 name: new-ues-join
 seed: 100
+suite: wip
+priority: p2
+tags: [wip]
+status: wip
+
+provider:
+  type: virtual
 
 world:
   networks: 1
@@ -15,7 +22,7 @@ packages:
   - ref: daily_1gb
     name: Daily 1GB
     data_mb: 1024
-    duration_hours: 24
+    duration_days: 1
     amount: 1.00
     assign_percent: 100
 
@@ -48,7 +55,7 @@ phases:
 # create_ues is part of the language but intentionally disabled in v1.0
 # until BFF delete/replay semantics and runtime identity reuse are finalized.
 final_checks:
-  - type: count
+  - type: backend_count
     target: sims
     expected: 40
   - type: balance_non_negative

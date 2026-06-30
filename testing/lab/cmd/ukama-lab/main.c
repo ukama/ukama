@@ -15,40 +15,34 @@
 #include "event.h"
 #include "log.h"
 #include "util.h"
+#include "generator.h"
 
 static void usage(void) {
     printf("ukama-lab %s\n", ULAB_VERSION);
     printf("usage:\n");
     printf("  ukama-lab validate <scenario.yaml> [options]\n");
-    printf("  ukama-lab dry-run <scenario.yaml> [options]\n");
+    printf("  ukama-lab generate --model <name|all> --mode <name|all> [options]\n");
     printf("  ukama-lab list-checks\n");
     printf("  ukama-lab list-events\n");
     printf("  ukama-lab version\n");
     printf("options:\n");
-    printf("  --repo <dir>     ukama repo root path (MUST)\n");
-    printf("  --seed <n>       override scenario seed\n");
-    printf("  --bff <url>      BFF GraphQL endpoint\n");
-    printf("  --out <dir>      output directory\n");
-    printf("  --scripts <dir>  runtime script directory\n");
-    printf("  --setup-only     create BFF world and skip runtime\n");
-    printf("  --subscriber     create package/subscriber/SIM only\n");
-    printf("  --network-id <id> existing BFF network id for --subscriber\n");
-    printf("  --sim-type <type> SIM pool type; default: ukama_data\n");
+    printf("  --repo <dir>          ukama repo root path (MUST)\n");
+    printf("  --seed <n>            override scenario seed\n");
+    printf("  --bff <url>           BFF GraphQL endpoint\n");
+    printf("  --out <dir>           output directory\n");
+    printf("  --run-id <id>         fixed run id; existing created.json is cleaned first\n");
+    printf("  --scripts <dir>       runtime script directory\n");
+    printf("  --sim-type <type>     SIM pool type; default: ukama_data\n");
     printf("  --warehouse-url <url> warehouse API URL for run SIM provisioning\n");
-    printf("  --factory-url <url> sim factory API URL for run SIM export\n");
-    printf("  --asr-url <url> optional ukama-agent ASR API URL for post-allocation check\n");
-    printf("  --sim-org <org> SIM org; default: ukama\n");
-    printf("  --sim-vendor <vendor> SIM vendor; default: gemalto\n");
-    printf("  --sim-profile <profile> SIM profile; default: 5g\n");
-    printf("  --sim-form-factor <ff> SIM form factor; default: 4ff\n");
-    printf("  --sim-batch-prefix <prefix> SIM batch prefix; default: BATCH-ULAB\n");
-    printf("  --sim-csv <file> deprecated; Mode-B provisions and exports SIMs per run\n");
-    printf("  --cleanup        force cleanup after setup-only/subscriber run\n");
-    printf("  --keep           skip cleanup and keep runtime/resources\n");
-    printf("  --keep-on-failure keep runtime/resources when validate fails\n");
-    printf("  --print-world    dry-run: print generated world sample\n");
-    printf("  --quiet          summary only\n");
-    printf("  --verbose        debug logs\n");
+    printf("  --factory-url <url>   sim factory API URL for run SIM export\n");
+    printf("  --asr-url <url>       optional ukama-agent ASR API URL for post-allocation check\n");
+    printf("generate options:\n");
+    printf("  --model <name|all>    org/network/site/node/sim/subscriber/package\n");
+    printf("  --mode <name|all>     smoke/transition/negative/pairwise/full\n");
+    printf("  --models <dir>        model directory; default: models\n");
+    printf("  --templates <dir>     template directory; default: templates/generated\n");
+    printf("  --quiet               summary only\n");
+    printf("  --verbose             debug logs\n");
 }
 
 static void opts_init(runner_opts_t *o) {
@@ -60,11 +54,6 @@ static void opts_init(runner_opts_t *o) {
               ulab_getenv_default("UKAMA_LAB_OUT", "runs"));
     ulab_copy(o->script_dir, sizeof(o->script_dir),
               ulab_getenv_default("UKAMA_LAB_SCRIPTS", "scripts"));
-    ulab_copy(o->subscriber_network_id,
-              sizeof(o->subscriber_network_id),
-              ulab_getenv_default("UKAMA_LAB_NETWORK_ID", ""));
-    ulab_copy(o->sim_csv_path, sizeof(o->sim_csv_path),
-              ulab_getenv_default("UKAMA_LAB_SIM_CSV", ""));
     ulab_copy(o->sim_type, sizeof(o->sim_type),
               ulab_getenv_default("UKAMA_LAB_SIM_TYPE", "ukama_data"));
     ulab_copy(o->warehouse_url, sizeof(o->warehouse_url),
@@ -75,19 +64,6 @@ static void opts_init(runner_opts_t *o) {
                                   "http://factory-ukama.udev.ukama.com"));
     ulab_copy(o->asr_url, sizeof(o->asr_url),
               ulab_getenv_default("UKAMA_LAB_ASR_URL", ""));
-    ulab_copy(o->sim_org, sizeof(o->sim_org),
-              ulab_getenv_default("UKAMA_LAB_SIM_ORG", "ukama"));
-    ulab_copy(o->sim_vendor, sizeof(o->sim_vendor),
-              ulab_getenv_default("UKAMA_LAB_SIM_VENDOR", "gemalto"));
-    ulab_copy(o->sim_profile, sizeof(o->sim_profile),
-              ulab_getenv_default("UKAMA_LAB_SIM_PROFILE", "5g"));
-    ulab_copy(o->sim_form_factor, sizeof(o->sim_form_factor),
-              ulab_getenv_default("UKAMA_LAB_SIM_FORM_FACTOR", "4ff"));
-    ulab_copy(o->sim_batch_prefix, sizeof(o->sim_batch_prefix),
-              ulab_getenv_default("UKAMA_LAB_SIM_BATCH_PREFIX",
-                                  "BATCH-ULAB"));
-    o->cleanup = 0;
-    o->keep = 0;
 }
 
 static int parse_opts(int argc, char **argv, int start, runner_opts_t *o) {
@@ -103,20 +79,12 @@ static int parse_opts(int argc, char **argv, int start, runner_opts_t *o) {
             ulab_copy(o->bff_url, sizeof(o->bff_url), argv[++i]);
         } else if (ulab_streq(argv[i], "--out") && i + 1 < argc) {
             ulab_copy(o->out_dir, sizeof(o->out_dir), argv[++i]);
+        } else if (ulab_streq(argv[i], "--run-id") && i + 1 < argc) {
+            ulab_copy(o->run_id, sizeof(o->run_id), argv[++i]);
         } else if (ulab_streq(argv[i], "--scripts") && i + 1 < argc) {
             ulab_copy(o->script_dir, sizeof(o->script_dir), argv[++i]);
         } else if (ulab_streq(argv[i], "--repo") && i + 1 < argc) {
             ulab_copy(o->repo, sizeof(o->repo), argv[++i]);
-        } else if (ulab_streq(argv[i], "--setup-only")) {
-            o->setup_only = 1;
-        } else if (ulab_streq(argv[i], "--subscriber")) {
-            o->subscriber_only = 1;
-            o->setup_only = 1;
-        } else if (ulab_streq(argv[i], "--network-id") && i + 1 < argc) {
-            ulab_copy(o->subscriber_network_id,
-                      sizeof(o->subscriber_network_id), argv[++i]);
-        } else if (ulab_streq(argv[i], "--sim-csv") && i + 1 < argc) {
-            ulab_copy(o->sim_csv_path, sizeof(o->sim_csv_path), argv[++i]);
         } else if (ulab_streq(argv[i], "--sim-type") && i + 1 < argc) {
             ulab_copy(o->sim_type, sizeof(o->sim_type), argv[++i]);
         } else if (ulab_streq(argv[i], "--warehouse-url") && i + 1 < argc) {
@@ -125,28 +93,6 @@ static int parse_opts(int argc, char **argv, int start, runner_opts_t *o) {
             ulab_copy(o->factory_url, sizeof(o->factory_url), argv[++i]);
         } else if (ulab_streq(argv[i], "--asr-url") && i + 1 < argc) {
             ulab_copy(o->asr_url, sizeof(o->asr_url), argv[++i]);
-        } else if (ulab_streq(argv[i], "--sim-org") && i + 1 < argc) {
-            ulab_copy(o->sim_org, sizeof(o->sim_org), argv[++i]);
-        } else if (ulab_streq(argv[i], "--sim-vendor") && i + 1 < argc) {
-            ulab_copy(o->sim_vendor, sizeof(o->sim_vendor), argv[++i]);
-        } else if (ulab_streq(argv[i], "--sim-profile") && i + 1 < argc) {
-            ulab_copy(o->sim_profile, sizeof(o->sim_profile), argv[++i]);
-        } else if (ulab_streq(argv[i], "--sim-form-factor") && i + 1 < argc) {
-            ulab_copy(o->sim_form_factor, sizeof(o->sim_form_factor), argv[++i]);
-        } else if (ulab_streq(argv[i], "--sim-batch-prefix") && i + 1 < argc) {
-            ulab_copy(o->sim_batch_prefix, sizeof(o->sim_batch_prefix), argv[++i]);
-        } else if (ulab_streq(argv[i], "--print-world")) {
-            o->print_world = 1;
-        } else if (ulab_streq(argv[i], "--print-plan")) {
-            o->print_plan = 1;
-        } else if (ulab_streq(argv[i], "--cleanup")) {
-            o->cleanup = 1;
-            o->keep = 0;
-        } else if (ulab_streq(argv[i], "--keep")) {
-            o->keep = 1;
-            o->cleanup = 0;
-        } else if (ulab_streq(argv[i], "--keep-on-failure")) {
-            o->keep_on_failure = 1;
         } else if (ulab_streq(argv[i], "--quiet")) {
             o->quiet = 1;
         } else if (ulab_streq(argv[i], "--verbose")) {
@@ -176,6 +122,10 @@ int main(int argc, char **argv) {
         return ULAB_OK;
     }
 
+    if (ulab_streq(argv[1], "generate")) {
+        return generator_run(argc - 2, argv + 2);
+    }
+
     if (ulab_streq(argv[1], "list-checks")) {
         check_list_supported();
         return ULAB_OK;
@@ -200,8 +150,7 @@ int main(int argc, char **argv) {
     }
 
     /* repo path is must else we wont know how to build virtual node/ue */
-    if (!opts.subscriber_only &&
-        (opts.repo[0] == '\0' || strstr(opts.repo, "ukama") == NULL)) {
+    if (opts.repo[0] == '\0' || strstr(opts.repo, "ukama") == NULL) {
         printf("Missing --repo. Ukama repo root is MUST\n");
         usage();
         return ULAB_EUSAGE;
@@ -212,10 +161,6 @@ int main(int argc, char **argv) {
 
     if (ulab_streq(argv[1], "validate")) {
         return runner_validate(&opts);
-    }
-
-    if (ulab_streq(argv[1], "dry-run")) {
-        return runner_dry_run(&opts);
     }
 
     usage();

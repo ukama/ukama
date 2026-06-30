@@ -1,6 +1,13 @@
 version: 1
 name: node-restart
 seed: 91
+suite: p0
+priority: p0
+tags: [virtual, p0]
+status: active
+
+provider:
+  type: virtual
 
 world:
   networks: 1
@@ -15,7 +22,7 @@ packages:
   - ref: daily_1gb
     name: Daily 1GB
     data_mb: 1024
-    duration_hours: 24
+    duration_days: 1
     amount: 1.00
     assign_percent: 100
 
@@ -48,7 +55,7 @@ phases:
   - name: restart_access
     events:
       - type: restart_nodes
-        type_selector: access
+        type_selector: tower
         count_per_network: 1
       - type: wait_nodes_ready
         nodes: all

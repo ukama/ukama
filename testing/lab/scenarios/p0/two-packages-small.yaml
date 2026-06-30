@@ -1,0 +1,68 @@
+version: 1
+name: p0-two-packages-small
+seed: 307
+suite: p0
+priority: p0
+tags: [virtual, package, sim]
+status: active
+
+provider:
+  type: virtual
+
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 4
+
+packages:
+  - ref: daily_1gb
+    name: Daily 1GB
+    data_mb: 1024
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 50
+  - ref: weekly_10gb
+    name: Weekly 10GB
+    data_mb: 10240
+    duration_days: 7
+    amount: 7.00
+    assign_percent: 50
+
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+
+runtime:
+  start: [nodes, ues]
+  wait: [nodes_ready, ues_attached]
+
+phases:
+  - name: package_mix_usage
+    events:
+      - type: traffic
+        ues: all
+        amount_mb: 15
+    checks:
+      - type: backend_count
+        target: sims
+        expected: from_world
+      - type: usage_sample
+        sample_per_site: 2
+        expected: from_model
+        tolerance_percent: 5
+
+final_checks:
+  - type: balance_non_negative
+    ues: all
+  - type: dashboard_loads
+    networks: all

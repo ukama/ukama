@@ -10,6 +10,7 @@
 #include "selector.h"
 #include "util.h"
 #include <stdio.h>
+#include <string.h>
 
 int check_runtime(check_ctx_t *ctx, const check_spec_t *check,
                   check_result_t *res, ulab_error_t *err) {
@@ -30,6 +31,41 @@ int check_runtime(check_ctx_t *ctx, const check_spec_t *check,
         selector_result_free(&sel);
         return ULAB_OK;
     }
+
+    if (check->type == CHECK_TRAFFIC_ALLOWED ||
+        check->type == CHECK_TRAFFIC_BLOCKED) {
+        ulab_error_t tmp;
+        uint64_t amount;
+        int rc;
+        int n;
+
+        memset(&tmp, 0, sizeof(tmp));
+        amount = check->expected_used_mb ? check->expected_used_mb : 1;
+
+        if (selector_resolve_ues(ctx->world, &check->ues, &sel, err)) {
+            return ULAB_ERR;
+        }
+
+        rc = runtime_generate_traffic(ctx->runtime, ctx->world, &sel,
+                                      amount, &tmp);
+        if (check->type == CHECK_TRAFFIC_ALLOWED) {
+            res->passed = rc == ULAB_OK;
+        } else {
+            res->passed = rc != ULAB_OK;
+        }
+
+        n = snprintf(res->detail, sizeof(res->detail),
+                     "ues=%zu amount_mb=%llu runtime_rc=%d",
+                     sel.count, (unsigned long long)amount, rc);
+        if (n > 0 && (size_t)n < sizeof(res->detail) && tmp.msg[0]) {
+            snprintf(res->detail + n, sizeof(res->detail) - (size_t)n,
+                     " error=%.256s", tmp.msg);
+        }
+
+        selector_result_free(&sel);
+        return ULAB_OK;
+    }
+
     if (selector_resolve_nodes(ctx->world, &check->nodes, &sel, err)) {
         return ULAB_ERR;
     }

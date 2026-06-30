@@ -1,0 +1,49 @@
+version: 1
+name: @NAME@
+seed: @SEED@
+suite: generated
+priority: @PRIORITY@
+tags: [generated, @ENTITY@, @MODE@, @TEMPLATE@]
+status: @STATUS@
+
+provider:
+  type: virtual
+
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+
+packages:
+  - ref: daily_1gb
+    name: Daily 1GB
+    data_mb: 1024
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+
+runtime:
+  start: [nodes, ues]
+  wait: [nodes_ready, ues_attached]
+
+phases:
+  - name: @PHASE@
+    events:
+@EVENTS@    checks:
+@CHECKS@
+final_checks:
+@FINAL_CHECKS@

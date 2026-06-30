@@ -1,0 +1,3 @@
+entity: org
+states: [active, suspended, deactivated]
+actions: [create, read, update, suspend, deactivate]

@@ -63,11 +63,19 @@ typedef enum {
     EVT_WAIT_UES_ATTACHED,
     EVT_RESTART_NODES,
     EVT_WAIT_NODES_READY,
+    EVT_ADD_PACKAGE_TO_SIM,
+    EVT_REMOVE_PACKAGE_FROM_SIM,
+    EVT_SET_SIM_STATUS,
     EVT_CHECK
 } event_type_t;
 
 typedef enum {
-    CHECK_COUNT = 0,
+    CHECK_BACKEND_COUNT = 0,
+    CHECK_LIST_CONTAINS,
+    CHECK_LIST_EXCLUDES,
+    CHECK_STATUS_EQUALS,
+    CHECK_TRAFFIC_ALLOWED,
+    CHECK_TRAFFIC_BLOCKED,
     CHECK_NODE_READY,
     CHECK_UE_ATTACHED,
     CHECK_USAGE_PER_SIM,
@@ -87,6 +95,10 @@ typedef struct {
     selector_t   sites;
     selector_t   networks;
     char         package_ref[ULAB_MAX_REF];
+    char         view[ULAB_MAX_REF];
+    char         ref[ULAB_MAX_REF];
+    char         entity[ULAB_MAX_REF];
+    char         status[ULAB_MAX_REF];
     char         expected[ULAB_MAX_REF];
     uint64_t     expected_used_mb;
     uint64_t     expected_remaining_mb;
@@ -102,6 +114,9 @@ typedef struct {
     selector_t   sites;
     uint64_t     amount_mb;
     char         profile[ULAB_MAX_REF];
+    char         expect_result[ULAB_MAX_REF];
+    char         error_contains[ULAB_MAX_ERR];
+    char         status[ULAB_MAX_REF];
     uint32_t     count_per_site;
     char         package_ref[ULAB_MAX_REF];
     check_spec_t checks[ULAB_MAX_CHECKS];
@@ -136,6 +151,10 @@ typedef struct {
 } setup_spec_t;
 
 typedef struct {
+    char type[ULAB_MAX_REF];
+} provider_spec_t;
+
+typedef struct {
     int start_nodes;
     int start_ues;
     int wait_nodes_ready;
@@ -146,10 +165,15 @@ typedef struct {
     uint32_t       version;
     char           name[ULAB_MAX_NAME];
     uint32_t       seed;
+    char           suite[ULAB_MAX_REF];
+    char           priority[ULAB_MAX_REF];
+    char           tags[ULAB_MAX_LINE];
+    char           status[ULAB_MAX_REF];
     world_spec_t   world;
     package_spec_t packages[ULAB_MAX_PACKAGES];
     size_t         package_count;
     setup_spec_t   setup;
+    provider_spec_t provider;
     runtime_spec_t runtime;
     profile_spec_t profiles[ULAB_MAX_BUCKETS];
     size_t         profile_count;

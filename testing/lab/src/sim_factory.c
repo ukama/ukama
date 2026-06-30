@@ -23,6 +23,11 @@
 #define SIMFACTORY_WAIT_SLEEP_SEC   2
 #define ASR_WAIT_ATTEMPTS           60
 #define ASR_WAIT_SLEEP_SEC          2
+#define SIMFACTORY_ORG             "ukama"
+#define SIMFACTORY_VENDOR          "gemalto"
+#define SIMFACTORY_PROFILE         "5g"
+#define SIMFACTORY_FORM_FACTOR     "4ff"
+#define SIMFACTORY_BATCH_PREFIX    "BATCH-ULAB"
 
 typedef struct {
     char *buf;
@@ -259,10 +264,10 @@ static int sf_warehouse_add_sim(const runner_opts_t *opts,
     ulab_json_escape(iccid, iccid_esc, sizeof(iccid_esc));
     ulab_json_escape(imsi, imsi_esc, sizeof(imsi_esc));
     ulab_json_escape(batch_id, batch_esc, sizeof(batch_esc));
-    ulab_json_escape(opts->sim_form_factor, form_esc, sizeof(form_esc));
-    ulab_json_escape(opts->sim_profile, profile_esc, sizeof(profile_esc));
-    ulab_json_escape(opts->sim_vendor, vendor_esc, sizeof(vendor_esc));
-    ulab_json_escape(opts->sim_org, org_esc, sizeof(org_esc));
+    ulab_json_escape(SIMFACTORY_FORM_FACTOR, form_esc, sizeof(form_esc));
+    ulab_json_escape(SIMFACTORY_PROFILE, profile_esc, sizeof(profile_esc));
+    ulab_json_escape(SIMFACTORY_VENDOR, vendor_esc, sizeof(vendor_esc));
+    ulab_json_escape(SIMFACTORY_ORG, org_esc, sizeof(org_esc));
 
     rc = snprintf(body, sizeof(body),
                   "{\"batch_id\":\"%s\","
@@ -319,7 +324,7 @@ static int sf_factory_batch_count(const runner_opts_t *opts,
     *actual_count = 0;
 
     if (sf_url_escape(batch_id, batch_q, sizeof(batch_q), err) ||
-        sf_url_escape(opts->sim_org, org_q, sizeof(org_q), err) ||
+        sf_url_escape(SIMFACTORY_ORG, org_q, sizeof(org_q), err) ||
         sf_url_escape(opts->sim_type, type_q, sizeof(type_q), err)) {
         return ULAB_ERR;
     }
@@ -408,7 +413,7 @@ static int sf_factory_export_csv(const runner_opts_t *opts,
     body = NULL;
 
     if (sf_url_escape(batch_id, batch_q, sizeof(batch_q), err) ||
-        sf_url_escape(opts->sim_org, org_q, sizeof(org_q), err) ||
+        sf_url_escape(SIMFACTORY_ORG, org_q, sizeof(org_q), err) ||
         sf_url_escape(opts->sim_type, type_q, sizeof(type_q), err)) {
         return ULAB_ERR;
     }
@@ -647,7 +652,7 @@ int sim_factory_prepare_world(const runner_opts_t *opts,
     }
 
     rc = snprintf(batch_id, sizeof(batch_id), "%s-%s",
-                  opts->sim_batch_prefix, world->run_id);
+                  SIMFACTORY_BATCH_PREFIX, world->run_id);
     if (rc < 0 || (size_t)rc >= sizeof(batch_id)) {
         snprintf(err->msg, sizeof(err->msg), "SIM batch id too long");
         return ULAB_ERR;

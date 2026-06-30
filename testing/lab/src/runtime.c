@@ -12,6 +12,7 @@
 #include <stdlib.h>
 
 #include "runtime.h"
+#include "node_provider.h"
 #include "log.h"
 #include "util.h"
 #include "ulab.h"
@@ -330,6 +331,7 @@ static int load_runtime_site_state(runtime_t *rt,
 }
 
 int runtime_init(runtime_t *rt,
+                 const char *provider,
                  const char *script_dir,
                  const char *run_dir,
                  const char *repo) {
@@ -337,6 +339,8 @@ int runtime_init(runtime_t *rt,
     char path[ULAB_MAX_PATH];
 
     memset(rt, 0, sizeof(*rt));
+    ulab_copy(rt->provider, sizeof(rt->provider),
+              provider && provider[0] ? provider : "virtual");
     ulab_copy(rt->script_dir, sizeof(rt->script_dir), script_dir);
     ulab_copy(rt->run_dir, sizeof(rt->run_dir), run_dir);
     ulab_copy(rt->repo, sizeof(rt->repo), repo ? repo : "");
@@ -375,10 +379,10 @@ int runtime_ensure_network(runtime_t *rt, ulab_error_t *err) {
     return ULAB_OK;
 }
 
-int runtime_build_and_start_sites(const char *repo,
-                                  runtime_t *rt,
-                                  world_t *w,
-                                  ulab_error_t *err) {
+int runtime_virtual_build_and_start_sites(const char *repo,
+                                          runtime_t *rt,
+                                          world_t *w,
+                                          ulab_error_t *err) {
     size_t i;
     site_t *site;
     char args[ULAB_MAX_ARGS];
@@ -422,10 +426,10 @@ int runtime_build_and_start_sites(const char *repo,
     return ULAB_OK;
 }
 
-int runtime_wait_nodes_ready(runtime_t *rt,
-                             const world_t *w,
-                             const selector_result_t *nodes,
-                             ulab_error_t *err) {
+int runtime_virtual_wait_nodes_ready(runtime_t *rt,
+                                     const world_t *w,
+                                     const selector_result_t *nodes,
+                                     ulab_error_t *err) {
     size_t i;
     const node_t *n;
     char args[4096];
@@ -451,6 +455,26 @@ int runtime_wait_nodes_ready(runtime_t *rt,
 
     return ULAB_OK;
 }
+
+int runtime_build_and_start_sites(const char *repo,
+                                  runtime_t *rt,
+                                  world_t *w,
+                                  ulab_error_t *err) {
+    (void)repo;
+
+    if (node_provider_build(rt, w, err)) {
+        return ULAB_ERR;
+    }
+
+    return node_provider_start(rt, w, err);
+}
+
+int runtime_wait_nodes_ready(runtime_t *rt, const world_t *w,
+                             const selector_result_t *nodes,
+                             ulab_error_t *err) {
+    return node_provider_wait_ready(rt, w, nodes, err);
+}
+
 
 int runtime_enable_pcrf_service(runtime_t *rt, const world_t *w,
                                 ulab_error_t *err) {
@@ -649,10 +673,10 @@ int runtime_generate_traffic(runtime_t *rt,
     return ULAB_OK;
 }
 
-int runtime_restart_nodes(runtime_t *rt,
-                          const world_t *w,
-                          const selector_result_t *nodes,
-                          ulab_error_t *err) {
+int runtime_virtual_restart_nodes(runtime_t *rt,
+                                  const world_t *w,
+                                  const selector_result_t *nodes,
+                                  ulab_error_t *err) {
     size_t i;
 
     for (i = 0; i < nodes->count; i++) {
@@ -673,6 +697,13 @@ int runtime_restart_nodes(runtime_t *rt,
     }
 
     return ULAB_OK;
+}
+
+int runtime_restart_nodes(runtime_t *rt,
+                          const world_t *w,
+                          const selector_result_t *nodes,
+                          ulab_error_t *err) {
+    return node_provider_restart(rt, w, nodes, err);
 }
 
 
@@ -725,7 +756,8 @@ int runtime_stop_ues(runtime_t *rt, const world_t *w, ulab_error_t *err) {
     return ULAB_OK;
 }
 
-int runtime_cleanup_infra(runtime_t *rt, const world_t *w, ulab_error_t *err) {
+int runtime_virtual_cleanup_infra(runtime_t *rt, const world_t *w,
+                                  ulab_error_t *err) {
     char args[ULAB_MAX_ARGS];
     size_t i;
     int failures;
@@ -771,6 +803,11 @@ int runtime_cleanup_infra(runtime_t *rt, const world_t *w, ulab_error_t *err) {
 
     return ULAB_OK;
 }
+
+int runtime_cleanup_infra(runtime_t *rt, const world_t *w, ulab_error_t *err) {
+    return node_provider_cleanup(rt, w, err);
+}
+
 
 int runtime_cleanup(runtime_t *rt, const world_t *w, ulab_error_t *err) {
     ulab_error_t tmp;
