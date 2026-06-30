@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strconv"
 
 	"github.com/ukama/ukama/systems/common/rest/client"
 
@@ -21,20 +22,24 @@ import (
 const SiteEndpoint = "/v1/sites"
 
 type SiteInfo struct {
-	Id          string  `json:"id,omitempty"`
-	Name        string  `json:"name,omitempty"`
-	NetworkId   string  `json:"network_id,omitempty"`
-	BackhaulId  string  `json:"backhaul_id,omitempty"`
-	PowerId     string  `json:"power_id,omitempty"`
-	AccessId    string  `json:"access_id,omitempty"`
-	SwitchId    string  `json:"switch_id,omitempty"`
-	SpectrumId  string  `json:"spectrum_id,omitempty"`
-	Deactivated bool    `json:"deactivated,omitempty"`
+	Id          string `json:"id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	NetworkId   string `json:"network_id,omitempty"`
+	BackhaulId  string `json:"backhaul_id,omitempty"`
+	PowerId     string `json:"power_id,omitempty"`
+	AccessId    string `json:"access_id,omitempty"`
+	SwitchId    string `json:"switch_id,omitempty"`
+	SpectrumId  string `json:"spectrum_id,omitempty"`
+	Deactivated bool   `json:"deactivated,omitempty"`
 	Latitude    string `json:"latitude,omitempty"`
 	Longitude   string `json:"longitude,omitempty"`
-	InstallDate string  `json:"install_date,omitempty"`
-	CreatedAt   string  `json:"created_at,omitempty"`
-	Location    string  `json:"location,omitempty"`
+	InstallDate string `json:"install_date,omitempty"`
+	CreatedAt   string `json:"created_at,omitempty"`
+	Location    string `json:"location,omitempty"`
+}
+
+type Sites struct {
+	Sites []*SiteInfo `json:"sites"`
 }
 
 type Site struct {
@@ -43,6 +48,7 @@ type Site struct {
 
 type SiteClient interface {
 	Get(id string) (*SiteInfo, error)
+	GetAll(deactivated bool, networkId string) (Sites, error)
 }
 
 type siteClient struct {
@@ -85,4 +91,29 @@ func (s *siteClient) Get(id string) (*SiteInfo, error) {
 	log.Infof("Site Info: %+v", site.SiteInfo)
 
 	return site.SiteInfo, nil
+}
+
+func (s *siteClient) GetAll(deactivated bool, networkId string) (Sites, error) {
+	log.Debugf("Getting all sites")
+
+	sites := Sites{}
+	var params url.Values
+	params.Set("is_deactivated", strconv.FormatBool(deactivated))
+	if networkId != "" {
+		params.Set("network_id", networkId)
+	}
+	resp, err := s.R.Get(s.u.String() + SiteEndpoint + "?" + params.Encode())
+	if err != nil {
+		log.Errorf("GetAllSites failure. error: %s", err.Error())
+		return Sites{}, fmt.Errorf("get all sites failure: %w", err)
+	}
+
+	err = json.Unmarshal(resp.Body(), &sites)
+	if err != nil {
+		return Sites{}, fmt.Errorf("sites deserialization failure: %w", err)
+	}
+
+	log.Infof("Sites: %+v", sites.Sites)
+
+	return sites, nil
 }

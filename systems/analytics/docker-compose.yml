@@ -53,15 +53,12 @@ services:
    - COLLECTOR_SERVICE_PORT=9090
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
+   - OWNERID=${OWNERID}
+   - CURRENCY=${CURRENCY}
    - ROLLUP_SCHEDULER_ENABLED=true
    - ROLLUP_SCHEDULER_INTERVAL=5m
-   - HTTP_REGISTRYCLIENT=http://api-gateway-registry:8080
-   - HTTP_SUBSCRIBERCLIENT=http://api-gateway-subscriber:8080
-   - HTTP_DATAPLANCLIENT=http://api-gateway-dataplan:8080
-   - HTTP_METRICSCLIENT=http://api-gateway-metrics:8080
-   - HTTP_NODECLIENT=http://api-gateway-node:8080
+   - HTTP_INITCLIENT=http://api-gateway-init:8080
    - HTTP_INVENTORYCLIENT=http://api-gateway-inventory:8080
-   - HTTP_BILLINGCLIENT=http://api-gateway-billing:8080
   restart: always
   networks:
    - ukama-net
