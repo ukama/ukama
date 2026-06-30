@@ -16,7 +16,13 @@ extern "C" {
 #include <assert.h>
 #include <ctype.h>
 #include <dirent.h>
+#if defined(__linux__)
 #include <endian.h>
+#elif defined(__APPLE__)
+#include <sys/endian.h>
+#else
+#include <endian.h>
+#endif
 #include <errno.h>
 #include <fcntl.h>
 #include <math.h>
@@ -32,21 +38,19 @@ extern "C" {
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <time.h>
 #include <ulimit.h>
 #include <unistd.h>
 #include <poll.h>
-#include <asm/types.h>
+#include <sys/types.h>
 #include <arpa/inet.h>
-#include <linux/if_ether.h>
-#include <linux/if_packet.h>
-#include <linux/if_tun.h>
-#include <linux/sctp.h>
-#include <linux/types.h>
 #include <net/if.h>
 #include <netinet/in.h>
+#if defined(__linux__)
 #include <netinet/ip.h>
 #include <netinet/udp.h>
+#endif
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/queue.h>
@@ -54,9 +58,15 @@ extern "C" {
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/wait.h>
-#include <netdb.h>
+#if defined(__linux__)
+#include <asm/types.h>
+#include <linux/if_ether.h>
+#include <linux/if_packet.h>
+#include <linux/if_tun.h>
+#include <linux/sctp.h>
+#include <linux/types.h>
+#endif
 
     /* Macro's for boolean values */
 #define USYS_FALSE        false
@@ -101,7 +111,11 @@ typedef sem_t USysSem;
  * @brief spinlock object
  *
  */
+#if defined(__APPLE__)
+typedef pthread_mutex_t USysSpinlock;
+#else
 typedef pthread_spinlock_t USysSpinlock;
+#endif
 
 /**
  * @typedef USysThreadAttr

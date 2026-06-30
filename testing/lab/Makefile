@@ -34,6 +34,22 @@ else
 endif
 PLATFORM = platform
 
+# Homebrew libraries are not on the default compiler search path on macOS.
+ifeq ($(OS),Darwin)
+BREW_PREFIX := $(shell brew --prefix 2>/dev/null)
+CPPFLAGS ?= $(shell pkg-config --cflags gnutls libmicrohttpd nettle 2>/dev/null)
+LDFLAGS += $(shell pkg-config --libs-only-L gnutls libmicrohttpd nettle 2>/dev/null)
+LDFLAGS += -L$(BREW_PREFIX)/opt/gnutls/lib
+LDFLAGS += -L$(BREW_PREFIX)/opt/libmicrohttpd/lib
+LDFLAGS += -L$(BREW_PREFIX)/opt/nettle/lib
+LDFLAGS += -L$(BREW_PREFIX)/opt/libidn2/lib
+LDFLAGS += -L$(BREW_PREFIX)/opt/libtasn1/lib
+LDFLAGS += -L$(BREW_PREFIX)/opt/p11-kit/lib
+LDFLAGS += -L$(BREW_PREFIX)/opt/unbound/lib
+LDFLAGS += -L$(BREW_PREFIX)/opt/openssl@3/lib
+export CPPFLAGS
+endif
+
 # Compile flags
 CFLAGS = -c
 CFLAGS += -g
@@ -89,10 +105,12 @@ $(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(TARGET_OBJFILES)
 	echo "Done."
 
 $(PLATFORM):
-	$(MAKE) -C $(PLATFORM_DIR)
+	$(MAKE) -C $(PLATFORM_DIR) \
+		CFLAGS="-g -O0 -Wall -Wno-unused-variable -fPIC -DHAVE_SYS_TIME_H -DLOG_USE_COLOR" \
+		CPPFLAGS="$(CPPFLAGS)"
 
 $(VENDOR_PKG):
-	$(MAKE) -C $(VENDOR_DIR) $@
+	$(MAKE) -C $(VENDOR_DIR) $@ CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)"
 
 version.h:
 	$(NODES_DIR)/utils/scripts/generate_version.sh

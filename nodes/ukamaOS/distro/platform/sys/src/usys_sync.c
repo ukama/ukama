@@ -9,6 +9,57 @@
 #include "usys_sync.h"
 #include "usys_log.h"
 
+#if defined(__APPLE__)
+static int usys_mutex_timedlock_compat(USysMutex *mutex, const struct timespec *absTime) {
+    while (1) {
+        int rc = pthread_mutex_trylock(mutex);
+
+        if (rc == 0) {
+            return 0;
+        }
+        if (rc != EBUSY) {
+            return rc;
+        }
+
+        struct timespec now;
+
+        clock_gettime(CLOCK_REALTIME, &now);
+        if (now.tv_sec > absTime->tv_sec ||
+            (now.tv_sec == absTime->tv_sec && now.tv_nsec >= absTime->tv_nsec)) {
+            return ETIMEDOUT;
+        }
+
+        struct timespec sleep_for = {0, 1000000L};
+
+        nanosleep(&sleep_for, NULL);
+    }
+}
+
+static int usys_sem_timedwait_compat(USysSem *sem, const struct timespec *absTime) {
+    while (1) {
+        if (sem_trywait(sem) == 0) {
+            return 0;
+        }
+        if (errno != EAGAIN) {
+            return -1;
+        }
+
+        struct timespec now;
+
+        clock_gettime(CLOCK_REALTIME, &now);
+        if (now.tv_sec > absTime->tv_sec ||
+            (now.tv_sec == absTime->tv_sec && now.tv_nsec >= absTime->tv_nsec)) {
+            errno = ETIMEDOUT;
+            return -1;
+        }
+
+        struct timespec sleep_for = {0, 1000000L};
+
+        nanosleep(&sleep_for, NULL);
+    }
+}
+#endif
+
 USysError usys_mutex_init(USysMutex *mutex) {
   pthread_mutexattr_t mutexAttr;
 
@@ -83,7 +134,11 @@ USysError usys_mutex_timedlock_sec(USysMutex *mutex, uint32_t wait_time) {
     clock_gettime(CLOCK_REALTIME, &absTime);
     absTime.tv_sec += wait_time;
 
+#if defined(__APPLE__)
+    if (usys_mutex_timedlock_compat(mutex, &absTime) != 0) {
+#else
     if (pthread_mutex_timedlock(mutex, &absTime) != 0) {
+#endif
         usys_log_warn("Mutex timedlock failed");
         return ERR_PLTF_MUTEX_TIMEDLOCK_FAILED;
     }
@@ -102,7 +157,11 @@ USysError usys_mutex_timedlock_nsec(USysMutex *mutex, uint32_t wait_time) {
     clock_gettime(CLOCK_REALTIME, &absTime);
     absTime.tv_nsec += wait_time;
 
+#if defined(__APPLE__)
+    if (usys_mutex_timedlock_compat(mutex, &absTime) != 0) {
+#else
     if (pthread_mutex_timedlock(mutex, &absTime) != 0) {
+#endif
         usys_log_warn("Mutex timedlock failed");
         return ERR_PLTF_MUTEX_TIMEDLOCK_FAILED;
     }
@@ -191,7 +250,11 @@ USysError usys_sem_timedwait_sec(USysSem *sem, uint32_t wait_time) {
     clock_gettime(CLOCK_REALTIME, &absTime);
     absTime.tv_sec += wait_time;
 
+#if defined(__APPLE__)
+    if (usys_sem_timedwait_compat(sem, &absTime) != 0) {
+#else
     if (sem_timedwait(sem, &absTime) != 0) {
+#endif
         usys_log_warn("Semaphore sem_timedwait failed");
         return ERR_PLTF_SEM_TIMEDWAIT_FAIL;
     }
@@ -210,7 +273,11 @@ USysError usys_sem_timedwait_nsec(USysSem *sem, uint32_t wait_time) {
     clock_gettime(CLOCK_REALTIME, &absTime);
     absTime.tv_nsec += wait_time;
 
+#if defined(__APPLE__)
+    if (usys_sem_timedwait_compat(sem, &absTime) != 0) {
+#else
     if (sem_timedwait(sem, &absTime) != 0) {
+#endif
         usys_log_warn("Semaphore sem_timedwait failed");
         return ERR_PLTF_SEM_TIMEDWAIT_FAIL;
     }
@@ -247,37 +314,65 @@ USysError usys_sem_destroy(USysSem *sem) {
 }
 
 USysError usys_spinlock_init(USysSpinlock *spinlock) {
+#if defined(__APPLE__)
+  if (pthread_mutex_init(spinlock, NULL) != 0) {
+    usys_log_warn("spinlock initialization failed");
+    return ERR_PLTF_SPIN_LOCK_INIT_FAILED;
+  }
+#else
   if(pthread_spin_init(spinlock, PTHREAD_PROCESS_PRIVATE) != 0) {
     usys_log_warn("spinlock  initialization failed");
     return ERR_PLTF_SPIN_LOCK_INIT_FAILED;
   }
+#endif
 
   return ERR_PLTF_NONE;
 }
 
 USysError usys_spinlock_lock(USysSpinlock *spinlock) {
+#if defined(__APPLE__)
+  if (pthread_mutex_lock(spinlock) != 0) {
+    usys_log_warn("spinlock lock failed");
+    return ERR_PLTF_SPIN_LOCK_LOCK_FAILED;
+  }
+#else
   if(pthread_spin_lock(spinlock) != 0) {
     usys_log_warn("spinlock lock failed");
     return ERR_PLTF_SPIN_LOCK_LOCK_FAILED;
   }
+#endif
 
   return ERR_PLTF_NONE;
 }
 
 USysError usys_spinlock_unlock(USysSpinlock *spinlock) {
+#if defined(__APPLE__)
+  if (pthread_mutex_unlock(spinlock) != 0) {
+    usys_log_warn("spinlock unlock failed");
+    return ERR_PLTF_SPIN_LOCK_UNLOCK_FAILED;
+  }
+#else
   if(pthread_spin_unlock(spinlock) != 0) {
     usys_log_warn("spinlock unlock failed");
     return ERR_PLTF_SPIN_LOCK_UNLOCK_FAILED;
   }
+#endif
 
   return ERR_PLTF_NONE;
 }
 
 USysError usys_spinlock_destroy(USysSpinlock *spinlock) {
+#if defined(__APPLE__)
+  if (pthread_mutex_destroy(spinlock) != 0) {
+    usys_log_warn("spinlock destroy failed");
+    return ERR_PLTF_SPIN_LOCK_DESTROY_FAILED;
+  }
+#else
   if(pthread_spin_destroy(spinlock) != 0) {
     usys_log_warn("spinlock destroy failed");
     return ERR_PLTF_SPIN_LOCK_DESTROY_FAILED;
   }
+#endif
 
   return ERR_PLTF_NONE;
 }

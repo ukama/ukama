@@ -43,6 +43,18 @@ DOCKER_CONTEXT := $(CURDIR)
 BOARDS_SRC     := $(REPO_ROOT)/nodes/configs/boards
 BOARDS_STAGE   := $(DOCKER_CONTEXT)/boards
 
+# macOS ships openrsync, which does not support GNU rsync's --info=progress2.
+RSYNC := rsync
+RSYNC_FLAGS := -a
+ifeq ($(shell $(RSYNC) --help 2>&1 | grep -q 'info=progress2'; echo $$?),0)
+RSYNC_FLAGS += --info=progress2
+else ifeq ($(shell $(RSYNC) --help 2>&1 | grep -q -- '--progress'; echo $$?),0)
+RSYNC_FLAGS += --progress
+endif
+
+# Prefer pigz when available; fall back to gzip on macOS.
+TAR_COMPRESS := $(shell command -v pigz >/dev/null 2>&1 && echo 'pigz -1' || echo 'gzip -1')
+
 .PHONY: all clean container sourcetgz stage-boards unstage-boards \
         print-version print-local-image $(PLATFORM) $(VENDOR_PKG)
 
@@ -80,7 +92,7 @@ sourcetgz: $(TARGET_EXEC)
 
 	( set -e; \
 	  mkdir -p $(STAGE_DIR); \
-	  rsync -a --info=progress2 \
+	  $(RSYNC) $(RSYNC_FLAGS) \
 	    --exclude='.git' \
 	    --exclude='**/build' \
 	    --exclude='**/out' \
@@ -95,7 +107,7 @@ sourcetgz: $(TARGET_EXEC)
 	  git clone --no-checkout --filter=blob:none --tags --depth=500 $(REPO_ROOT) $(GITMETA_DIR); \
 	  printf "gitdir: .gitmeta/.git\n" > $(STAGE_DIR)/ukama/.git; \
 	  cd $(STAGE_DIR) && \
-	  tar -cf - ukama | pigz -1 > $(PKG_NAME); \
+	  tar -cf - ukama | $(TAR_COMPRESS) > $(PKG_NAME); \
 	  mv $(PKG_NAME) $(CURDIR)/$(PKG_NAME); \
 	)
 

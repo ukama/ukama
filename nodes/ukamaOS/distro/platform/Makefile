@@ -33,7 +33,9 @@ endif
 LIBS = $(ULFIUS_LIB) $(CURL_LIB)
 LIBS+=-lpthread
 LIBS+=-ljansson
+ifneq ($(OS),Darwin)
 LIBS+=-lrt
+endif
 LIBS+=-lm
 
 # Compiler flags
@@ -85,7 +87,11 @@ $(info INC :: $(INC_FILES))
 
 .PHONY: install clean memcheck
 # Main target for building
+ifeq ($(OS),Darwin)
+all: $(TARGET_STATIC_LIB)
+else
 all: $(TARGET_STATIC_LIB) $(TARGET_LIB)
+endif
 	@echo Done.
 
 # CLANG FORMAT
@@ -158,7 +164,7 @@ $(UTEST_BIN):$(TEST_OBJFILES) $(TARGET_LIB)
 # Build Object files 
 $(BUILD_DIR)/%.o: %.c 
 	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(INC_FILES) -c $< -o $@
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(INC_FILES) -c $< -o $@
 
 # Memory check
 memcheck: $(UTEST_BIN)
