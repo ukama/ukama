@@ -191,6 +191,74 @@ func TestGetHostUrl(t *testing.T) {
 		assert.NoError(tt, err)
 		assert.NotNil(tt, u)
 	})
+
+	t.Run("FallsBackToIpWhenNoUrl", func(tt *testing.T) {
+		var org *string = nil
+
+		initclientMock := &cmocks.InitClient{}
+		host := systemName
+
+		initclientMock.On("GetSystemFromHost", host, org).
+			Return(&initclient.SystemIPInfo{
+				SystemId:   uuid.NewV4().String(),
+				SystemName: systemName,
+				OrgName:    orgName,
+				ApiGwIp:    testIp,
+				ApiGwPort:  testPort,
+			}, nil)
+
+		u, err := initclient.GetHostUrl(initclientMock, host, nil)
+
+		assert.NoError(tt, err)
+		assert.NotNil(tt, u)
+		assert.Equal(tt, fmt.Sprintf("http://%s:%d", testIp, testPort), u.String())
+	})
+
+	t.Run("PrefersApiGwUrlWithScheme", func(tt *testing.T) {
+		var org *string = nil
+
+		initclientMock := &cmocks.InitClient{}
+		host := systemName
+
+		initclientMock.On("GetSystemFromHost", host, org).
+			Return(&initclient.SystemIPInfo{
+				SystemId:   uuid.NewV4().String(),
+				SystemName: systemName,
+				OrgName:    orgName,
+				ApiGwIp:    testIp,
+				ApiGwPort:  testPort,
+				ApiGwUrl:   "https://api.test-system.test-org.ukama.com",
+			}, nil)
+
+		u, err := initclient.GetHostUrl(initclientMock, host, nil)
+
+		assert.NoError(tt, err)
+		assert.NotNil(tt, u)
+		assert.Equal(tt, "https://api.test-system.test-org.ukama.com", u.String())
+	})
+
+	t.Run("PrefersApiGwUrlAndDefaultsScheme", func(tt *testing.T) {
+		var org *string = nil
+
+		initclientMock := &cmocks.InitClient{}
+		host := systemName
+
+		initclientMock.On("GetSystemFromHost", host, org).
+			Return(&initclient.SystemIPInfo{
+				SystemId:   uuid.NewV4().String(),
+				SystemName: systemName,
+				OrgName:    orgName,
+				ApiGwIp:    testIp,
+				ApiGwPort:  testPort,
+				ApiGwUrl:   "api.test-system.test-org.ukama.com:8080",
+			}, nil)
+
+		u, err := initclient.GetHostUrl(initclientMock, host, nil)
+
+		assert.NoError(tt, err)
+		assert.NotNil(tt, u)
+		assert.Equal(tt, "http://api.test-system.test-org.ukama.com:8080", u.String())
+	})
 }
 
 func TestParseHostString(t *testing.T) {

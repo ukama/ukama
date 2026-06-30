@@ -15,6 +15,7 @@
 #define ENV_DNS_SERVER	"ENV_DNS_SERVER"
 #define ENV_SYSTEM_NAME "ENV_SYSTEM_NAME"
 #define ENV_SYSTEM_ADDR "ENV_SYSTEM_ADDR"
+#define ENV_SYSTEM_API_GW_URL "ENV_SYSTEM_API_GW_URL"
 #define ENV_SYSTEM_DNS  "ENV_SYSTEM_DNS"
 #define ENV_SYSTEM_PORT "ENV_SYSTEM_PORT"
 #define ENV_SYSTEM_CERT "ENV_SYSTEM_CERT"
@@ -63,6 +64,7 @@ typedef struct {
 	char *systemAddr; /* address where system can be reached at */
 	char *systemPort; /* port where system can be reached at */
 	char *systemCert; /* Certificate for the system */
+	char *systemApiGwUrl; /* stable api-gw URL (optional); preferred over IP by consumers */
 
     char *systemNodeGwAddr; /* address where system's node-gw is available */
     char *systemNodeGwPort; /* poer where system's node-gw port is */

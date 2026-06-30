@@ -10,6 +10,10 @@ export ENV_SYSTEM_NAME="messaging"
 export ENV_SYSTEM_ADDR="192.168.0.0"
 export ENV_SYSTEM_PORT="8888"
 export ENV_SYSTEM_CERT="This is a certificate"
+# Optional: stable api-gw URL (DNS/service name). When set it is registered to
+# init/lookup and preferred by consumers over the raw IP, so cached values do
+# not break when the system's IP changes. Leave unset to keep IP-based behavior.
+#export ENV_SYSTEM_API_GW_URL="http://messaging.ukama001.svc.cluster.local:8888"
 export ENV_INIT_SYSTEM_ADDR="localhost"
 export ENV_INIT_SYSTEM_PORT=8081
 export ENV_INIT_CLIENT_ADDR="localhost"

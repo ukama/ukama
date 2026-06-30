@@ -67,6 +67,7 @@ typedef struct {
 	char *cert;
 	char *apiGwIp;
 	char *apiGwPort;
+	char *apiGwUrl;
     char *nodeGwIp;
     char *nodeGwPort;
 } Register;

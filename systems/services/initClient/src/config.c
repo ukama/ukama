@@ -39,6 +39,7 @@ int read_config_from_env(Config **config){
 	char *systemDNS=NULL, *timePeriod=NULL, *dnsServer=NULL, *nameServer=NULL;
 	char *systemDNSNodeGw=NULL;
 	char *systemNodeGwAddr=NULL, *systemNodeGwPort=NULL;
+	char *systemApiGwUrl=NULL;
 
 	int period = 0;
 	int freeSystemAddr = 0;
@@ -66,6 +67,11 @@ int read_config_from_env(Config **config){
 		log_error("Required env variables not defined");
 		return FALSE;
 	}
+
+	/* Optional: a stable api-gw URL (e.g. DNS/service name). When set it is
+	 * registered to init/lookup and preferred by consumers over the raw IP,
+	 * so cached values do not break when the system's IP changes. */
+	systemApiGwUrl = getenv(ENV_SYSTEM_API_GW_URL);
 
 	systemDNSNodeGw  = getenv(ENV_SYSTEM_DNS_NODE_GW);
 	systemNodeGwAddr = getenv(ENV_SYSTEM_NODE_GW_ADDR);
@@ -173,6 +179,10 @@ int read_config_from_env(Config **config){
 	(*config)->systemPort = strdup(systemPort);
 	(*config)->systemCert = strdup(systemCert);
 
+	if (systemApiGwUrl) {
+		(*config)->systemApiGwUrl = strdup(systemApiGwUrl);
+	}
+
 	(*config)->initSystemAPIVer = strdup(apiVersion);
 	(*config)->initSystemAddr   = strdup(initSystemAddr);
 	(*config)->initSystemPort   = strdup(initSystemPort);
@@ -238,6 +248,7 @@ void clear_config(Config *config) {
 	if (config->systemAddr)       		free(config->systemAddr);
 	if (config->systemPort)       		free(config->systemPort);
 	if (config->systemCert)       		free(config->systemCert);
+	if (config->systemApiGwUrl)   		free(config->systemApiGwUrl);
 	if (config->initSystemAddr)   		free(config->initSystemAddr);
 	if (config->initSystemPort)   		free(config->initSystemPort);
 	if (config->initSystemAPIVer) 		free(config->initSystemAPIVer);
