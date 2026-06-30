@@ -81,7 +81,7 @@ func runGrpcServer() {
 	serviceConfig.MetricKeyMap = metricKeyMap
 	log.Infof("Metric key map: %+v", serviceConfig.MetricKeyMap)
 
-	regUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
+	regUrl, err := ic.GetApiGwAddress(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
 		ic.CreateHostString(serviceConfig.OrgName, registrySystemName), &serviceConfig.OrgName)
 	if err != nil {
 		log.Errorf("Failed to resolve registry address: %v", err)
