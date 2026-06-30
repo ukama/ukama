@@ -122,6 +122,15 @@ func GetHostUrl(ic InitClient, host string, org *string) (*url.URL, error) {
 		return nil, fmt.Errorf("initclient GetSystem failure: %w", err)
 	}
 
+	// Prefer the registered api-gw URL when available. A URL is typically a
+	// stable hostname (DNS / service name) that the network layer re-resolves
+	// to the current IP, so callers that cache it do not break when a system's
+	// IP changes. Fall back to the raw ApiGwIp:ApiGwPort for backward
+	// compatibility when no URL was registered.
+	if strings.TrimSpace(sysIpInfo.ApiGwUrl) != "" {
+		return createURLFromString(sysIpInfo.SystemName, sysIpInfo.OrgName, sysIpInfo.ApiGwUrl)
+	}
+
 	return CreateHTTPURL(*sysIpInfo, API_GW_INTERFACE)
 }
 
@@ -146,16 +155,6 @@ func CreateHTTPURL(s SystemIPInfo, interfaceType string) (*url.URL, error) {
 	if interfaceType == "node-gw" {
 		return createURL(s.SystemName, s.OrgName, s.NodeGwIp, HTTP_PROTOCOL, s.NodeGwPort)
 	}
-
-	// Prefer the registered api-gw URL when available. A URL is typically a
-	// stable hostname (DNS / service name) that the network layer re-resolves
-	// to the current IP, so callers that cache it do not break when a system's
-	// IP changes. Fall back to the raw ApiGwIp:ApiGwPort for backward
-	// compatibility when no URL was registered.
-	if strings.TrimSpace(s.ApiGwUrl) != "" {
-		return createURLFromString(s.SystemName, s.OrgName, s.ApiGwUrl)
-	}
-
 	return createURL(s.SystemName, s.OrgName, s.ApiGwIp, HTTP_PROTOCOL, s.ApiGwPort)
 }
 
