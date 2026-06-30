@@ -189,6 +189,9 @@ static int create_request(Request **request, Config *config) {
 		reg->apiGwIp    = strdup(config->systemAddr);
 		reg->apiGwPort  = strdup(config->systemPort);
 		reg->cert       = strdup(config->systemCert);
+		if (config->systemApiGwUrl) {
+			reg->apiGwUrl = strdup(config->systemApiGwUrl);
+		}
         reg->nodeGwIp   = strdup(config->systemNodeGwAddr);
         reg->nodeGwPort = strdup(config->systemNodeGwPort);
 
@@ -215,6 +218,7 @@ static void free_request(Request *request) {
 		if (reg->name)       free(reg->name);
 		if (reg->cert)       free(reg->cert);
 		if (reg->apiGwIp)    free(reg->apiGwIp);
+		if (reg->apiGwUrl)   free(reg->apiGwUrl);
 		if (reg->apiGwPort)  free(reg->apiGwPort);
         if (reg->nodeGwIp)   free(reg->nodeGwIp);
         if (reg->nodeGwPort) free(reg->nodeGwPort);
