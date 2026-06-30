@@ -192,6 +192,24 @@ func TestGetHostUrl(t *testing.T) {
 		assert.NotNil(tt, u)
 	})
 
+}
+
+func TestGetApiGwAddress(t *testing.T) {
+	t.Run("ResolveFailure", func(tt *testing.T) {
+		var org *string = nil
+
+		initclientMock := &cmocks.InitClient{}
+		host := fmt.Sprintf("%s.%s.", orgName, systemName)
+
+		initclientMock.On("GetSystemFromHost", host, org).
+			Return(nil, errors.New("some error"))
+
+		u, err := initclient.GetApiGwAddress(initclientMock, host, org)
+
+		assert.Error(tt, err)
+		assert.Nil(tt, u)
+	})
+
 	t.Run("FallsBackToIpWhenNoUrl", func(tt *testing.T) {
 		var org *string = nil
 
@@ -207,14 +225,14 @@ func TestGetHostUrl(t *testing.T) {
 				ApiGwPort:  testPort,
 			}, nil)
 
-		u, err := initclient.GetHostUrl(initclientMock, host, nil)
+		u, err := initclient.GetApiGwAddress(initclientMock, host, nil)
 
 		assert.NoError(tt, err)
 		assert.NotNil(tt, u)
 		assert.Equal(tt, fmt.Sprintf("http://%s:%d", testIp, testPort), u.String())
 	})
 
-	t.Run("PrefersApiGwUrlWithScheme", func(tt *testing.T) {
+	t.Run("ReturnsRegisteredUrl", func(tt *testing.T) {
 		var org *string = nil
 
 		initclientMock := &cmocks.InitClient{}
@@ -230,14 +248,38 @@ func TestGetHostUrl(t *testing.T) {
 				ApiGwUrl:   "https://api.test-system.test-org.ukama.com",
 			}, nil)
 
-		u, err := initclient.GetHostUrl(initclientMock, host, nil)
+		u, err := initclient.GetApiGwAddress(initclientMock, host, nil)
 
 		assert.NoError(tt, err)
 		assert.NotNil(tt, u)
 		assert.Equal(tt, "https://api.test-system.test-org.ukama.com", u.String())
 	})
 
-	t.Run("PrefersApiGwUrlAndDefaultsScheme", func(tt *testing.T) {
+	t.Run("ReturnsClusterDnsUrl", func(tt *testing.T) {
+		var org *string = nil
+
+		initclientMock := &cmocks.InitClient{}
+		host := systemName
+		clusterUrl := "http://gateway.ukama-node.svc.cluster.local:8080"
+
+		initclientMock.On("GetSystemFromHost", host, org).
+			Return(&initclient.SystemIPInfo{
+				SystemId:   uuid.NewV4().String(),
+				SystemName: systemName,
+				OrgName:    orgName,
+				ApiGwIp:    testIp,
+				ApiGwPort:  testPort,
+				ApiGwUrl:   clusterUrl,
+			}, nil)
+
+		u, err := initclient.GetApiGwAddress(initclientMock, host, nil)
+
+		assert.NoError(tt, err)
+		assert.NotNil(tt, u)
+		assert.Equal(tt, clusterUrl, u.String())
+	})
+
+	t.Run("ErrorsWhenUrlHasNoScheme", func(tt *testing.T) {
 		var org *string = nil
 
 		initclientMock := &cmocks.InitClient{}
@@ -253,11 +295,10 @@ func TestGetHostUrl(t *testing.T) {
 				ApiGwUrl:   "api.test-system.test-org.ukama.com:8080",
 			}, nil)
 
-		u, err := initclient.GetHostUrl(initclientMock, host, nil)
+		u, err := initclient.GetApiGwAddress(initclientMock, host, nil)
 
-		assert.NoError(tt, err)
-		assert.NotNil(tt, u)
-		assert.Equal(tt, "http://api.test-system.test-org.ukama.com:8080", u.String())
+		assert.Error(tt, err)
+		assert.Nil(tt, u)
 	})
 }
 

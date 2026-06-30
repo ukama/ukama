@@ -122,13 +122,28 @@ func GetHostUrl(ic InitClient, host string, org *string) (*url.URL, error) {
 		return nil, fmt.Errorf("initclient GetSystem failure: %w", err)
 	}
 
-	// Prefer the registered api-gw URL when available. A URL is typically a
-	// stable hostname (DNS / service name) that the network layer re-resolves
-	// to the current IP, so callers that cache it do not break when a system's
-	// IP changes. Fall back to the raw ApiGwIp:ApiGwPort for backward
-	// compatibility when no URL was registered.
+	return CreateHTTPURL(*sysIpInfo, API_GW_INTERFACE)
+}
+
+// GetApiGwAddress resolves the api-gw address for a host the same way as
+// GetHostUrl, but returns the registered api-gw URL when the system has one,
+// otherwise it falls back to the raw ApiGwIp:ApiGwPort. The returned address
+// can therefore be either a URL (a stable hostname the network layer
+// re-resolves to the current IP, so cached values do not break on IP changes)
+// or an IP:port, matching GetHostUrl's behavior. The registered URL is expected
+// to already include its scheme (e.g. http://...), so none is added here.
+func GetApiGwAddress(ic InitClient, host string, org *string) (*url.URL, error) {
+	log.Infof("Getting api-gw address from initclient matching host %s", host)
+
+	sysIpInfo, err := ic.GetSystemFromHost(host, org)
+	if err != nil {
+		log.Errorf("Initclient GetSystem failure. error: %s", err)
+
+		return nil, fmt.Errorf("initclient GetSystem failure: %w", err)
+	}
+
 	if strings.TrimSpace(sysIpInfo.ApiGwUrl) != "" {
-		return createURLFromString(sysIpInfo.SystemName, sysIpInfo.OrgName, sysIpInfo.ApiGwUrl)
+		return parseApiGwUrl(sysIpInfo.SystemName, sysIpInfo.OrgName, sysIpInfo.ApiGwUrl)
 	}
 
 	return CreateHTTPURL(*sysIpInfo, API_GW_INTERFACE)
@@ -158,24 +173,21 @@ func CreateHTTPURL(s SystemIPInfo, interfaceType string) (*url.URL, error) {
 	return createURL(s.SystemName, s.OrgName, s.ApiGwIp, HTTP_PROTOCOL, s.ApiGwPort)
 }
 
-// createURLFromString builds a URL from a pre-registered api-gw URL string.
-// If the URL has no scheme, http is assumed.
-func createURLFromString(name, org, rawURL string) (*url.URL, error) {
+// parseApiGwUrl builds a URL from a pre-registered api-gw URL string. The URL is
+// expected to already include its scheme (e.g. http://...), so none is added.
+func parseApiGwUrl(name, org, rawURL string) (*url.URL, error) {
 	log.Infof("Creating url from registered api-gw url %q for system %s and org %s",
 		rawURL, name, org)
 
 	rawURL = strings.TrimSpace(rawURL)
-	if !strings.Contains(rawURL, "://") {
-		rawURL = HTTP_PROTOCOL + "://" + rawURL
-	}
 
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		return nil, fmt.Errorf("error while parsing api-gw url %q: %w", rawURL, err)
 	}
 
-	if u.Host == "" {
-		return nil, fmt.Errorf("error while parsing api-gw url %q: missing host", rawURL)
+	if u.Scheme == "" || u.Host == "" {
+		return nil, fmt.Errorf("error while parsing api-gw url %q: scheme and host are required", rawURL)
 	}
 
 	return u, nil
