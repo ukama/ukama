@@ -53,8 +53,9 @@ type nodedClient struct {
 func NewNodedClient(h string, debug bool) (*nodedClient, error) {
 	u, err := url.Parse(strings.TrimRight(h, "/"))
 	if err != nil {
-		log.Errorf("Can't parse %s url. Error: %s", h, err.Error())
-		return nil, err
+		log.Errorf("Fail to parse url: %s. Error: %v", h, err)
+
+		return nil, fmt.Errorf("fail to parse url: %s. Error: %w", h, err)
 	}
 
 	return &nodedClient{
@@ -86,20 +87,25 @@ func (r *nodedClient) GetNodeInfo() (*NodeInfo, error) {
 
 	resp, err := r.R.C.R().Get(r.u.String() + NodeEndpoint)
 	if err != nil {
-		log.Errorf("Get NodeInfo failure. error: %s", err.Error())
+		log.Errorf("Get NodeInfo failure. error: %v", err)
+
 		return nil, fmt.Errorf("get NodeInfo failure: %w", err)
 	}
 
 	if resp.StatusCode() != 200 {
 		respBody = strings.TrimSpace(string(resp.Body()))
+		log.Errorf("Node info returned http %d: %s",
+			resp.StatusCode(), respBody)
+
 		return nil, fmt.Errorf("node info returned http %d: %s",
 			resp.StatusCode(), respBody)
 	}
 
 	err = json.Unmarshal(resp.Body(), node)
 	if err != nil {
-		log.Errorf("Failed to deserialize node info. Error message is: %s",
-			err.Error())
+		log.Errorf("Failed to deserialize node info. Error message is: %v",
+			err)
+
 		return nil, fmt.Errorf("node info deserialization failure: %w", err)
 	}
 

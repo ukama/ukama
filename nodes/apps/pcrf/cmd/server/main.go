@@ -9,6 +9,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -29,17 +30,19 @@ import (
 var svcConf *pkg.Config
 
 func main() {
-	var err error
-	var pcrfPort int
-	var nodedURL string
-	var initNetworkURL string
-	var nodeClient interface {
-		GetNodeId() (string, error)
-	}
-	var initNetworkClient *client.InitNetworkClient
-	var initStatus *client.InitNetworkStatus
-	var nodeId string
-	var ctr *controller.Controller
+	var (
+		err            error
+		pcrfPort       int
+		nodedURL       string
+		initNetworkURL string
+		nodeClient     interface {
+			GetNodeId() (string, error)
+		}
+		initNetworkClient *client.InitNetworkClient
+		initStatus        *client.InitNetworkStatus
+		nodeId            string
+		ctr               *controller.Controller
+	)
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -72,6 +75,14 @@ func main() {
 			pkg.InitNetworkServiceName, err)
 	}
 
+	ukamaLocalServiceURL, err := service.LocalURL(pkg.UkamaServiceName)
+	if err != nil {
+		log.Fatalf("Failed to resolve %s from /etc/services: %v",
+			pkg.UkamaAgentSystemName, err)
+	}
+
+	ukamaAgentURL := fmt.Sprintf("%s/%s", ukamaLocalServiceURL, pkg.UkamaAgentSystemName)
+
 	log.Infof("Starting PCRF service %s on port %d",
 		pkg.ServiceName, svcConf.Server.Port)
 
@@ -98,10 +109,18 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to read node info: %v", err)
 	}
+
+	ukamaAgentClient, err := client.NewRemoteControllerClient(ukamaAgentURL, svcConf.DebugMode)
+	if err != nil {
+		log.Fatalf("Failed to create ukama agent client: %v", err)
+	}
+
 	log.Infof("PCRF running on node %s", nodeId)
 
-	ctr, err = controller.NewController(svcConf.DB,
+	ctr, err = controller.NewController(
+		svcConf.DB,
 		svcConf.Bridge,
+		ukamaAgentClient,
 		svcConf.SyncPeriod,
 		nodeId,
 		svcConf.DebugMode)
@@ -130,7 +149,9 @@ func main() {
 
 func sigHandler(sigs chan os.Signal, done chan bool, ctr *controller.Controller) {
 	sig := <-sigs
+
 	log.Infof("Starting signal handler routine for %v", sig)
 	_ = ctr.ExitController()
+
 	done <- true
 }

@@ -34,11 +34,14 @@ type remoteControllerClient struct {
 }
 
 func NewRemoteControllerClient(h string, debug bool) (*remoteControllerClient, error) {
+	log.Infof("New remote controller clien")
+
 	u, err := url.Parse(h)
 
 	if err != nil {
-		log.Errorf("Can't parse  %s url. Error: %s", h, err.Error())
-		return nil, err
+		log.Errorf("Fail to parse ukama agent url: %s. Error: %v", h, err)
+
+		return nil, fmt.Errorf("fail to parse ukama agent url: %s. Error: %w", h, err)
 	}
 
 	return &remoteControllerClient{
@@ -49,14 +52,16 @@ func NewRemoteControllerClient(h string, debug bool) (*remoteControllerClient, e
 }
 
 func (r *remoteControllerClient) PushCdr(req *api.CDR) error {
-	log.Debugf("Posting  CDR: %+v", req)
+	log.Debugf("Posting  CDR: %v", req)
 
 	url := r.u.String() + CDREndpoint + "/" + req.Imsi
 
 	b, err := json.Marshal(req)
 	if err != nil {
-		log.Errorf("Error marshalling CDR. error: %s", err.Error())
-		return fmt.Errorf("marshal CDR request failure for imsi : %s. Error %s", req.Imsi, err.Error())
+		log.Errorf("Error marshalling CDR. error: %s", err)
+
+		return fmt.Errorf("marshal CDR request failure for imsi : %s. Error %w",
+			req.Imsi, err)
 	}
 
 	_, err = r.R.C.R().
@@ -66,8 +71,9 @@ func (r *remoteControllerClient) PushCdr(req *api.CDR) error {
 		SetBody(b).
 		Post(url)
 	if err != nil {
-		log.Errorf("Post CDR failure. error: %s", err.Error())
-		return fmt.Errorf("post CDR failure: %s", err.Error())
+		log.Errorf("Post CDR failure. error: %v", err)
+
+		return fmt.Errorf("post CDR failure: %w", err)
 	}
 
 	return nil
@@ -79,14 +85,14 @@ func (r *remoteControllerClient) GetSubscriberProfile(imsi string) (*api.Spr, er
 	spr := &api.Spr{}
 	resp, err := r.R.C.R().Get(r.u.String() + ProfileEndpoint + "/" + imsi)
 	if err != nil {
-		log.Errorf("GetPolicy failure. error: %s", err.Error())
+		log.Errorf("GetPolicy failure. error: %v", err)
 
 		return nil, fmt.Errorf("GetPolicy failure: %w", err)
 	}
 
 	err = json.Unmarshal(resp.Body(), &spr)
 	if err != nil {
-		log.Tracef("Failed to deserialize policy info. Error message is: %s", err.Error())
+		log.Tracef("Failed to deserialize policy info. Error message is: %v", err)
 
 		return nil, fmt.Errorf("policy info deserailization failure: %w", err)
 	}
