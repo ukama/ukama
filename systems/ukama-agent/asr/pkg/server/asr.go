@@ -161,110 +161,9 @@ func (s *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp
 	return resp, nil
 }
 
-func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.ActivateResp, error) {
-	log.Infof("Adding ASR profile for iccid %s", req.GetIccid())
-
-	/* Package DataPlan Id */
-	pId, err := uuid.FromString(req.PackageId)
-	if err != nil {
-		log.Errorf("PackageId not valid: %s", req.PackageId)
-
-		return nil, fmt.Errorf("packageId %s not valid.`Error:%w ", req.PackageId, err)
-	}
-
-	/* Sim Package Id */
-	spId, err := uuid.FromString(req.SimPackageId)
-	if err != nil {
-		log.Errorf("SimPackageId not valid: %s", req.SimPackageId)
-
-		return nil, fmt.Errorf("sim packageId %s not valid.`Error:%w ", req.SimPackageId, err)
-	}
-
-	/* NetworkId */
-	nId, err := uuid.FromString(req.NetworkId)
-	if err != nil {
-		log.Errorf("NetworkId not valid: %s", req.NetworkId)
-
-		return nil, fmt.Errorf("networkId %s not valid.`Error:%w ", req.NetworkId, err)
-	}
-
-	// Fetch network details from registry
-	_, err = s.network.Get(req.NetworkId)
-	if err != nil {
-		return nil, fmt.Errorf("error while fetching network %s info: %w", req.NetworkId, err)
-	}
-
-	// network-org validation is no longer needed since we are using initClient to fetch
-	// the correct registry system that matches with the current running org.
-
-	/* Send Request to SIM Factory */
-	sim, err := s.factory.ReadSimCardInfo(req.Iccid)
-	if err != nil {
-		return nil, fmt.Errorf("error reading sim (iccid: %s) info from factory. Error: %w", req.Iccid, err)
-	}
-
-	pcrfData := &pm.SimInfo{
-		Imsi:      sim.Imsi,
-		Iccid:     sim.Iccid,
-		PackageId: pId,
-		NetworkId: nId,
-		Visitor:   false, // We will using this flag on roaming in VLR
-	}
-
-	/* Send message to PCRF */
-	policy, err := s.pc.NewPolicy(pcrfData.PackageId)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error creating policy:")
-	}
-
-	/* Add to ASR */
-	asr := &db.Asr{
-		Iccid:                   req.Iccid,
-		Imsi:                    sim.Imsi,
-		Op:                      sim.Op,
-		Key:                     sim.Key,
-		Amf:                     sim.Amf,
-		AlgoType:                sim.AlgoType,
-		UeDlAmbrBps:             sim.UeDlAmbrBps,
-		UeUlAmbrBps:             sim.UeUlAmbrBps,
-		Sqn:                     sim.Sqn,
-		CsgIdPrsent:             sim.CsgIdPrsent,
-		CsgId:                   sim.CsgId,
-		DefaultApnName:          sim.DefaultApnName,
-		PackageId:               pId,
-		SimPackageId:            spId,
-		NetworkId:               nId,
-		Policy:                  *policy,
-		LastStatusChangeAt:      time.Now(),
-		AllowedTimeOfService:    s.allowedToS,
-		LastStatusChangeReasons: db.ACTIVATION,
-	}
-
-	err = s.asrRepo.Add(asr)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error updating asr:")
-	}
-
-	err, removed := s.pc.RunPolicyControl(asr.Imsi, false)
-	if err != nil {
-		log.Errorf("Error running policy control for imsi %s. Error %s", asr.Imsi, err.Error())
-
-		return nil, fmt.Errorf("error running policy control for imsi %s. Error: %w", asr.Imsi, err)
-	}
-
-	if removed {
-		log.Infof("Profile not added to repo as one or more policies were failed for imsi %s", asr.Imsi)
-
-		return nil, fmt.Errorf("profile not added to repo as one or more policies were failed for imsi %s", asr.Imsi)
-	}
-
-	err = s.pc.SyncProfile(pcrfData, asr, msgbus.ACTION_CRUD_CREATE, "activesubscriber", true)
-	if err != nil {
-		return nil, fmt.Errorf("failure to sync imsi %s pcrf profile for ASR activation. Error: %w", asr.Imsi, err)
-	}
-
-	log.Debugf("Activated %s imsi with %+v", asr.Imsi, asr)
-	return &pb.ActivateResp{}, err
+func (s *AsrRecordServer) Activate(ctx context.Context, req *pb.ActivateReq) (*pb.ActivateResp, error) {
+	return activate(ctx, req.Iccid, req.Imsi, req.SimPackageId, req.PackageId, req.NetworkId, s.network,
+		s.factory, s.asrRepo, s.pc, s.allowedToS, s.msgbus, s.baseRoutingKey)
 }
 
 func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackageReq) (*pb.UpdatePackageResp, error) {
@@ -511,11 +410,13 @@ func (s *AsrRecordServer) UpdateTai(c context.Context, req *pb.UpdateTaiReq) (*p
 	return &pb.UpdateTaiResp{}, nil
 }
 
-func (s *AsrRecordServer) UpdateandSyncAsrProfile(imsi string) error {
+func (s *AsrRecordServer) UpdateAndSyncAsrProfile(imsi string) error {
 	log.Infof("Updating and syncing ASR profile for imsi %s", imsi)
 
 	sub, err := s.asrRepo.GetByImsi(imsi)
 	if err != nil {
+		log.Errorf("ASR record not found for imsi %s. Error: %v", imsi, err)
+
 		return grpc.SqlErrorToGrpc(err, "error getting ASR record by imsi:")
 	}
 
@@ -562,4 +463,112 @@ func (s *AsrRecordServer) UpdateandSyncAsrProfile(imsi string) error {
 	}
 
 	return nil
+}
+
+func activate(ctx context.Context, iccid, imsi, packageId, dataPlanId, networkId string, networkClient registry.NetworkClient,
+	factoryClient factory.SimFactoryClient, asrRepo db.AsrRecordRepo, policyController pm.Controller, allowedToS int64,
+	msgBus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) (*pb.ActivateResp, error) {
+	log.Infof("Adding ASR profile for iccid %s", iccid)
+
+	/* Package DataPlan Id */
+	pId, err := uuid.FromString(dataPlanId)
+	if err != nil {
+		log.Errorf("PackageId not valid: %s", dataPlanId)
+
+		return nil, fmt.Errorf("packageId %s not valid.`Error:%w ", dataPlanId, err)
+	}
+
+	/* Sim Package Id */
+	spId, err := uuid.FromString(packageId)
+	if err != nil {
+		log.Errorf("SimPackageId not valid: %s", packageId)
+
+		return nil, fmt.Errorf("sim packageId %s not valid.`Error:%w ", packageId, err)
+	}
+
+	/* NetworkId */
+	nId, err := uuid.FromString(networkId)
+	if err != nil {
+		log.Errorf("NetworkId not valid: %s", networkId)
+
+		return nil, fmt.Errorf("networkId %s not valid.`Error:%w ", networkId, err)
+	}
+
+	// Fetch network details from registry
+	_, err = networkClient.Get(networkId)
+	if err != nil {
+		return nil, fmt.Errorf("error while fetching network %s info: %w", networkId, err)
+	}
+
+	// network-org validation is no longer needed since we are using initClient to fetch
+	// the correct registry system that matches with the current running org.
+
+	/* Send Request to SIM Factory */
+	sim, err := factoryClient.ReadSimCardInfo(iccid)
+	if err != nil {
+		return nil, fmt.Errorf("error reading sim (iccid: %s) info from factory. Error: %w", iccid, err)
+	}
+
+	pcrfData := &pm.SimInfo{
+		Imsi:      sim.Imsi,
+		Iccid:     sim.Iccid,
+		PackageId: pId,
+		NetworkId: nId,
+		Visitor:   false, // We will using this flag on roaming in VLR
+	}
+
+	/* Send message to PCRF */
+	policy, err := policyController.NewPolicy(pcrfData.PackageId)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "error creating policy:")
+	}
+
+	/* Add to ASR */
+	asr := &db.Asr{
+		Iccid:                   iccid,
+		Imsi:                    sim.Imsi,
+		Op:                      sim.Op,
+		Key:                     sim.Key,
+		Amf:                     sim.Amf,
+		AlgoType:                sim.AlgoType,
+		UeDlAmbrBps:             sim.UeDlAmbrBps,
+		UeUlAmbrBps:             sim.UeUlAmbrBps,
+		Sqn:                     sim.Sqn,
+		CsgIdPrsent:             sim.CsgIdPrsent,
+		CsgId:                   sim.CsgId,
+		DefaultApnName:          sim.DefaultApnName,
+		PackageId:               pId,
+		SimPackageId:            spId,
+		NetworkId:               nId,
+		Policy:                  *policy,
+		LastStatusChangeAt:      time.Now(),
+		AllowedTimeOfService:    allowedToS,
+		LastStatusChangeReasons: db.ACTIVATION,
+	}
+
+	err = asrRepo.Add(asr)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "error updating asr:")
+	}
+
+	err, removed := policyController.RunPolicyControl(asr.Imsi, false)
+	if err != nil {
+		log.Errorf("Error running policy control for imsi %s. Error %s", asr.Imsi, err.Error())
+
+		return nil, fmt.Errorf("error running policy control for imsi %s. Error: %w", asr.Imsi, err)
+	}
+
+	if removed {
+		log.Infof("Profile not added to repo as one or more policies were failed for imsi %s", asr.Imsi)
+
+		return nil, fmt.Errorf("profile not added to repo as one or more policies were failed for imsi %s", asr.Imsi)
+	}
+
+	err = policyController.SyncProfile(pcrfData, asr, msgbus.ACTION_CRUD_CREATE, "activesubscriber", true)
+	if err != nil {
+		return nil, fmt.Errorf("failure to sync imsi %s pcrf profile for ASR activation. Error: %w", asr.Imsi, err)
+	}
+
+	log.Debugf("Activated %s imsi with %+v", asr.Imsi, asr)
+	return &pb.ActivateResp{}, err
 }

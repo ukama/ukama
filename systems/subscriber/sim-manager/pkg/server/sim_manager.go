@@ -290,7 +290,8 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		// if agent operation fails.
 
 		return nil, status.Errorf(codes.Internal,
-			"error while activating sim type %s on remote agent with request: %v", simType, agentRequest)
+			"error while activating sim type %s on remote agent with request: %v",
+			simType, agentRequest)
 	}
 
 	orgInfos, err := s.nucleusOrgClient.Get(s.orgName)
@@ -353,6 +354,14 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		TrafficPolicy:  sim.TrafficPolicy,
 		PackageEndDate: timestamppb.New(sim.Package.EndDate),
 	}
+
+	// agentRequest := client.AgentRequestData{
+	// Iccid:        sim.Iccid,
+	// Imsi:         sim.Imsi,
+	// NetworkId:    sim.NetworkId.String(),
+	// PackageId:    sim.Package.PackageId.String(),
+	// SimPackageId: sim.Package.Id.String(),
+	// }
 
 	err = publishEventMessage(route, evt, s.msgbus)
 	if err != nil {
