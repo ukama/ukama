@@ -45,7 +45,7 @@ bdi_telnet_cmd() {
         return 1
     fi
     expect -c "
-        set timeout 8
+        set timeout 300
         spawn telnet $host
         expect {
             \"Core#0>\" {}
@@ -230,27 +230,27 @@ _phase1_uboot_env() {
     local restore_errexit=0
     case $- in *e*) restore_errexit=1; set +e ;; esac
 
-    uboot_send_and_wait "$dev" "setenv ethaddr ${mac_dashed}" "$prompt" 8
-    uboot_send_and_wait "$dev" "setenv ipaddr ${trx_ip}" "$prompt" 8
-    uboot_send_and_wait "$dev" "setenv netmask ${netmask}" "$prompt" 8
-    uboot_send_and_wait "$dev" "setenv serverip ${host_ip}" "$prompt" 8
-    uboot_send_and_wait "$dev" "setenv bootby flash" "$prompt" 8
-    uboot_send_and_wait "$dev" "setenv cfgloadby flash" "$prompt" 8
-    uboot_send_and_wait "$dev" "setenv swloadby flash" "$prompt" 8
-    uboot_send_and_wait "$dev" 'setenv i2cinit "i2c dev 0; i2c probe; i2c dev 1; i2c probe"' "$prompt" 8
+    uboot_send_and_wait "$dev" "setenv ethaddr ${mac_dashed}" "$prompt" 300
+    uboot_send_and_wait "$dev" "setenv ipaddr ${trx_ip}" "$prompt" 300
+    uboot_send_and_wait "$dev" "setenv netmask ${netmask}" "$prompt" 300
+    uboot_send_and_wait "$dev" "setenv serverip ${host_ip}" "$prompt" 300
+    uboot_send_and_wait "$dev" "setenv bootby flash" "$prompt" 300
+    uboot_send_and_wait "$dev" "setenv cfgloadby flash" "$prompt" 300
+    uboot_send_and_wait "$dev" "setenv swloadby flash" "$prompt" 300
+    uboot_send_and_wait "$dev" 'setenv i2cinit "i2c dev 0; i2c probe; i2c dev 1; i2c probe"' "$prompt" 300
     # Add mw64 to bootcmd as a fallback in case preboot doesn't run (e.g. bootdelay=0).
-    uboot_send_and_wait "$dev" 'setenv bootcmd "mw64 0x00011800B0001000 0x0140; run i2cinit; run namedalloc; run bootcby${bootby}"' "$prompt" 8
+    uboot_send_and_wait "$dev" 'setenv bootcmd "mw64 0x00011800B0001000 0x0140; run i2cinit; run namedalloc; run bootcby${bootby}"' "$prompt" 300
     # bootcbytftp uses the actual staged filenames (lsm_os_trx.gz / lsm_rd_trx.gz).
-    uboot_send_and_wait "$dev" 'setenv bootcbytftp "tftp 0x21000000 lsm_os_trx.gz; gunzip 0x21000000 0x20000000 0x1000000; tftp 0x30800000 lsm_rd_trx.gz; bootoctlinux 0x20000000 coremask=0x7 endbootargs rd_name=initrd mem=512M;"' "$prompt" 8
+    uboot_send_and_wait "$dev" 'setenv bootcbytftp "tftp 0x21000000 lsm_os_trx.gz; gunzip 0x21000000 0x20000000 0x1000000; tftp 0x30800000 lsm_rd_trx.gz; bootoctlinux 0x20000000 coremask=0x7 endbootargs rd_name=initrd mem=512M;"' "$prompt" 300
     # bootcbyflash: copy OS + RD from flash (where Phase 1 wrote them) and boot Linux.
     local bootcbyflash_cmd
     bootcbyflash_cmd="setenv bootcbyflash \"cp.b 0x17E20000 0x21000000 ${os_size_hex}; gunzip 0x21000000 0x20000000 0x1000000; cp.b 0x18320000 0x30800000 ${rd_size_hex}; bootoctlinux 0x20000000 coremask=0x7 endbootargs rd_name=initrd mem=512M;\""
-    uboot_send_and_wait "$dev" "$bootcbyflash_cmd" "$prompt" 8
-    uboot_send_and_wait "$dev" 'setenv namedalloc "namedalloc dsp-dump 0x400000 0x7f4D0000; namedalloc cazac 0x630000 0x7f8D0000; namedalloc cpu-dsp-if 0x100000 0x7ff00000; namedalloc dsp-log-buf 0x4000000 0x80000000; namedalloc initrd 0x2800000 0x30800000;"' "$prompt" 8
-    uboot_send_and_wait "$dev" "setenv mk_ubootenv 1" "$prompt" 8
+    uboot_send_and_wait "$dev" "$bootcbyflash_cmd" "$prompt" 300
+    uboot_send_and_wait "$dev" 'setenv namedalloc "namedalloc dsp-dump 0x400000 0x7f4D0000; namedalloc cazac 0x630000 0x7f8D0000; namedalloc cpu-dsp-if 0x100000 0x7ff00000; namedalloc dsp-log-buf 0x4000000 0x80000000; namedalloc initrd 0x2800000 0x30800000;"' "$prompt" 300
+    uboot_send_and_wait "$dev" "setenv mk_ubootenv 1" "$prompt" 300
     # SGMII autoneg must be enabled BEFORE Linux boots, otherwise octeth0 stays down.
     # u-boot's 'preboot' runs automatically before bootcmd.
-    uboot_send_and_wait "$dev" "setenv preboot 'mw64 0x00011800B0001000 0x0140'" "$prompt" 8
+    uboot_send_and_wait "$dev" "setenv preboot 'mw64 0x00011800B0001000 0x0140'" "$prompt" 300
 
     [ "$restore_errexit" = "1" ] && set -e
     return 0
@@ -272,16 +272,16 @@ _phase1_flash_artifact() {
     local marker_before
     marker_before=$(wc -c < "$UBOOT_LOG" 2>/dev/null || echo 0)
 
-    uboot_send_and_wait "$dev" "tftp ${ddr_addr} ${name}" "$prompt" 120
+    uboot_send_and_wait "$dev" "tftp ${ddr_addr} ${name}" "$prompt" 300
 
     if ! tail -c +"$marker_before" "$UBOOT_LOG" 2>/dev/null | grep -q "Bytes transferred = "; then
         echo "ERROR: tftp failed for $key — no 'Bytes transferred' seen in log"
         return 1
     fi
 
-    uboot_send_and_wait "$dev" "protect off all" "$prompt" 10
-    uboot_send_and_wait "$dev" "erase ${flash_addr} +\${filesize}" "$prompt" 60
-    uboot_send_and_wait "$dev" "cp.b ${ddr_addr} ${flash_addr} \${filesize}" "$prompt" 120
+    uboot_send_and_wait "$dev" "protect off all" "$prompt" 300
+    uboot_send_and_wait "$dev" "erase ${flash_addr} +\${filesize}" "$prompt" 300
+    uboot_send_and_wait "$dev" "cp.b ${ddr_addr} ${flash_addr} \${filesize}" "$prompt" 300
 }
 
 _phase1_run() {
@@ -343,7 +343,7 @@ _phase1_run() {
     echo "Checking BDI state at ${bdi_ip} (cnMIPS#0> = configured, Core#0> = bare)..."
     local bdi_state
     bdi_state=$(expect -c "
-        set timeout 20
+        set timeout 300
         log_user 0
         spawn telnet $bdi_ip
         expect {
@@ -359,7 +359,7 @@ _phase1_run() {
     elif [ "$bdi_state" = "BDI_BARE" ]; then
         echo "  BDI is unconfigured — sending HOST + CONFIG (the BDI will reboot and auto-load)..."
         if ! expect -c "
-            set timeout 25
+            set timeout 300
             spawn telnet $bdi_ip
             expect {
                 \"Core#0>\" {}
@@ -384,11 +384,11 @@ _phase1_run() {
         # serving cnf71xx.cfg. Poll the prompt until it returns cnMIPS#0>, then continue in
         # this same run — do NOT exit (exiting tears down TFTP and the BDI stays bare).
         local cfg_wait=0 bdi_now=""
-        while [ "$cfg_wait" -lt 120 ]; do
+        while [ "$cfg_wait" -lt 300 ]; do
             sleep 10
             cfg_wait=$((cfg_wait + 10))
             bdi_now=$(expect -c "
-                set timeout 15
+                set timeout 300
                 log_user 0
                 spawn telnet $bdi_ip
                 expect {
@@ -420,7 +420,7 @@ _phase1_run() {
     local gdb_wait=0
     while ! nc -z "$bdi_ip" 2001 2>/dev/null; do
         gdb_wait=$((gdb_wait + 5))
-        if [ "$gdb_wait" -ge 60 ]; then
+        if [ "$gdb_wait" -ge 300 ]; then
             echo "ERROR: BDI GDB port still closed after 60s — the BDI may not have auto-loaded"
             echo "  its config (TFTP must be running when the BDI boots)."
             echo "  Power-cycle the BDI now (TFTP is still being served) and re-run this script."
@@ -505,9 +505,9 @@ _phase1_run() {
 
         # Match the u-boot prompt broadly — it may be "Octeon zen(ram)=>" or
         # "Octeon zen(Failsafe)=>" depending on board/flash state (per Supreeth).
-        echo "Waiting for u-boot prompt 'Octeon zen…=>' with DDR ~400 MHz (up to 180s)..."
+        echo "Waiting for u-boot prompt 'Octeon zen…=>' with DDR ~400 MHz (up to 300s)..."
         elapsed=0; clk=""; mhz=""; ddr_mislock=0; prompt_this=0
-        while [ "$elapsed" -lt 180 ]; do
+        while [ "$elapsed" -lt 300 ]; do
             # Once a DDR clock is measured, reject a bad lock immediately (no point
             # waiting for u-boot on a clock that won't link ethernet).
             clk=$(grep -a "Measured DDR clock" "$oct_log" 2>/dev/null | tail -1 || true)
@@ -523,7 +523,7 @@ _phase1_run() {
             # If oct-remote-boot exited, u-boot may still be printing — short grace window.
             if ! kill -0 "$REMOTE_BOOT_PID" 2>/dev/null; then
                 local grace=0
-                while [ "$grace" -lt 15 ]; do
+                while [ "$grace" -lt 300 ]; do
                     if grep -qE "Octeon zen.*=>" "${LOG_DIR}/uboot.log" 2>/dev/null; then
                         prompt_this=1
                         break
@@ -599,22 +599,22 @@ _phase1_run() {
     _phase1_uboot_env "$serial_dev" "$uboot_prompt"
 
     echo "Enabling ethernet (mw64 x2) and saving env..."
-    uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 8 || true
-    uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 8 || true
-    uboot_send_and_wait "$serial_dev" "saveenv" "$uboot_prompt" 15 || true
+    uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 300 || true
+    uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 300 || true
+    uboot_send_and_wait "$serial_dev" "saveenv" "$uboot_prompt" 300 || true
 
     local ping_marker link_up=0 ping_attempt=0 max_ping_attempts=6
     echo "Bringing up ethernet link to ${host_ip} (mw64 + ping retries)..."
     while [ "$ping_attempt" -lt "$max_ping_attempts" ]; do
         ping_attempt=$((ping_attempt + 1))
         ping_marker=$(wc -c < "$UBOOT_LOG" 2>/dev/null || echo 0)
-        uboot_send_and_wait "$serial_dev" "ping ${host_ip}" "$uboot_prompt" 20 || true
+        uboot_send_and_wait "$serial_dev" "ping ${host_ip}" "$uboot_prompt" 300 || true
         if tail -c +"$ping_marker" "$UBOOT_LOG" 2>/dev/null | grep -q "is alive"; then
             link_up=1
             break
         fi
         echo "  ping attempt ${ping_attempt}/${max_ping_attempts} failed — re-enabling ethernet (mw64) and retrying..."
-        uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 8 || true
+        uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 300 || true
         sleep 2
     done
 
@@ -674,13 +674,13 @@ _phase2_enable_ethernet_over_serial() {
 
     uboot_send "$serial_dev" ""
     sleep 2
-    if ! uboot_wait_for "~ #" 5; then
+    if ! uboot_wait_for "~ #" 300; then
         uboot_send "$serial_dev" ""
-        if uboot_wait_for "login:" 90; then
+        if uboot_wait_for "login:" 300; then
             uboot_send "$serial_dev" "root"
-            uboot_wait_for "assword" 15 || true
+            uboot_wait_for "assword" 300 || true
             uboot_send "$serial_dev" "cavium.lte"
-            if ! uboot_wait_for "~ #" 30; then
+            if ! uboot_wait_for "~ #" 300; then
                 echo "  WARNING: serial login didn't reach a shell prompt; relying on SSH wait."
                 if [ -n "$phase2_tail_pid" ]; then
                     kill "$phase2_tail_pid" 2>/dev/null || true
@@ -774,15 +774,15 @@ _phase2_run() {
 
     echo "Waiting for TRX SSH at ${trx_ip}..."
     local elapsed=0
-    while [ "$elapsed" -lt 120 ]; do
+    while [ "$elapsed" -lt 300 ]; do
         if sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" true 2>/dev/null; then
             break
         fi
         sleep 2
         elapsed=$((elapsed + 2))
     done
-    if [ "$elapsed" -ge 120 ]; then
-        echo "ERROR: TRX not reachable via SSH within 120s."
+    if [ "$elapsed" -ge 300 ]; then
+        echo "ERROR: TRX not reachable via SSH within 300s."
         echo "  Ethernet likely still down. On the TRX serial console (root / cavium.lte) run"
         echo "  twice:  devmem 0x00011800B0001000 64 0x0140   then re-run the flash."
         return 1
@@ -929,7 +929,7 @@ method_apply() {
     echo ""
 
     local pause1_log="${LOG_DIR}/pause1-serial.log"
-    local prompt_seen=0 elapsed=0 max_pause1_wait=240
+    local prompt_seen=0 elapsed=0 max_pause1_wait=300
     local pause1_tail_pid=""
     if uboot_open "$serial_dev" "$baud" "$pause1_log" 2>/dev/null; then
         if [ "$TRX_VERBOSE" = "1" ]; then
@@ -995,7 +995,7 @@ method_verify() {
 
     echo "  Waiting for TRX SSH after final power-cycle..."
     local elapsed=0
-    while [ "$elapsed" -lt 120 ]; do
+    while [ "$elapsed" -lt 300 ]; do
         if sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" true 2>/dev/null; then
             break
         fi
@@ -1003,7 +1003,7 @@ method_verify() {
         elapsed=$((elapsed + 2))
     done
 
-    if [ "$elapsed" -ge 120 ]; then
+    if [ "$elapsed" -ge 300 ]; then
         echo "  [WARN] TRX not reachable over SSH after final power-cycle (it may still be booting)"
         echo "  Final check is manual: confirm the TRX boots and ${rc_post_target} enables ethernet."
         return 0
