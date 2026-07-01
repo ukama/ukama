@@ -785,6 +785,19 @@ _phase2_run() {
         echo "WARNING: band config source not found at ${band_cfg_src}"
     fi
 
+    # After dd'ing flash_app0/1, the running /mnt/app mount has a stale superblock.
+    # Remount it so we can write rc_post.local into the newly-flashed app image.
+    echo "Remounting /mnt/app to pick up the freshly-flashed app image..."
+    local app_dev
+    app_dev=$(sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "mount | awk '/ \/mnt\/app / {print \$1}'")
+    if [ -n "$app_dev" ]; then
+        sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" \
+            "umount /mnt/app 2>/dev/null || true; mount -t jffs2 ${app_dev} /mnt/app"
+        echo "  remounted /mnt/app from ${app_dev}."
+    else
+        echo "  WARNING: could not determine /mnt/app device; copy may fail."
+    fi
+
     rc_post_src="$(dirname "$BOARD_CONFIG")/payloads/rc_post.local"
     rc_post_target=$(yq_read "$BOARD_CONFIG" phase2.rc_post_local)
     echo "Installing rc_post.local (${rc_post_src} -> ${rc_post_target})..."
