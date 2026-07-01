@@ -10,6 +10,10 @@
 
 #include "hdlc.h"
 
+#define HDLC_CTRL_PF                       0x10
+#define HDLC_CTRL_U_MASK_NO_PF             0xEF
+#define HDLC_CTRL_S_MASK_NO_NR_PF          0x0F
+
 static uint16_t update_fcs_bit(uint16_t fcs)
 {
     if ((fcs & 1) != 0) {
@@ -68,10 +72,7 @@ static bool append_escaped(uint8_t byte,
             return false;
         }
 
-        return append_byte((uint8_t)(byte ^ HDLC_ESCAPE_XOR),
-                           frame,
-                           frameSize,
-                           off);
+        return append_byte(byte ^ HDLC_ESCAPE_XOR, frame, frameSize, off);
     }
 
     return append_byte(byte, frame, frameSize, off);
@@ -91,7 +92,9 @@ bool hdlc_encode(const uint8_t *payload,
         return false;
     }
 
-    *frameLen = 0;
+    if (payloadLen < 2) {
+        return false;
+    }
 
     if (!append_byte(HDLC_FLAG, frame, frameSize, &off)) {
         return false;
@@ -125,6 +128,56 @@ bool hdlc_encode(const uint8_t *payload,
     return true;
 }
 
+bool hdlc_encode_addr_info(uint8_t address,
+                           uint8_t control,
+                           const uint8_t *info,
+                           size_t infoLen,
+                           uint8_t *frame,
+                           size_t frameSize,
+                           size_t *frameLen)
+{
+    uint8_t payload[HDLC_MAX_INFO + 2];
+
+    if (frame == NULL || frameLen == NULL) {
+        return false;
+    }
+
+    if (info == NULL && infoLen != 0) {
+        return false;
+    }
+
+    if (infoLen > HDLC_MAX_INFO) {
+        return false;
+    }
+
+    payload[0] = address;
+    payload[1] = control;
+
+    if (infoLen > 0) {
+        memcpy(&payload[2], info, infoLen);
+    }
+
+    return hdlc_encode(payload, infoLen + 2, frame, frameSize, frameLen);
+}
+
+bool hdlc_encode_frame(const HdlcFrame *decoded,
+                       uint8_t *frame,
+                       size_t frameSize,
+                       size_t *frameLen)
+{
+    if (decoded == NULL) {
+        return false;
+    }
+
+    return hdlc_encode_addr_info(decoded->address,
+                                 decoded->control,
+                                 decoded->info,
+                                 decoded->infoLen,
+                                 frame,
+                                 frameSize,
+                                 frameLen);
+}
+
 static bool decode_byte(uint8_t byte,
                         uint8_t *decoded,
                         size_t decodedSize,
@@ -136,7 +189,7 @@ static bool decode_byte(uint8_t byte,
     }
 
     if (*escaped) {
-        byte = (uint8_t)(byte ^ HDLC_ESCAPE_XOR);
+        byte = byte ^ HDLC_ESCAPE_XOR;
         *escaped = false;
     } else if (byte == HDLC_ESCAPE) {
         *escaped = true;
@@ -171,8 +224,6 @@ bool hdlc_decode(const uint8_t *frame,
         return false;
     }
 
-    *payloadLen = 0;
-
     for (i = 0; i < frameLen; i++) {
         if (frame[i] == HDLC_FLAG) {
             if (!started) {
@@ -201,7 +252,7 @@ bool hdlc_decode(const uint8_t *frame,
         return false;
     }
 
-    if (decodedLen < 3) {
+    if (decodedLen < 4) { /* addr + ctrl + fcs-low + fcs-high */
         return false;
     }
 
@@ -223,43 +274,11 @@ bool hdlc_decode(const uint8_t *frame,
     return true;
 }
 
-bool hdlc_payload_from_frame(const HdlcFrame *input,
-                             uint8_t *payload,
-                             size_t payloadSize,
-                             size_t *payloadLen)
-{
-    size_t len;
-
-    if (input == NULL || payload == NULL || payloadLen == NULL) {
-        return false;
-    }
-
-    if (input->infoLen > HDLC_MAX_INFO) {
-        return false;
-    }
-
-    len = input->infoLen + 2;
-    if (len > payloadSize) {
-        return false;
-    }
-
-    payload[0] = input->address;
-    payload[1] = input->control;
-
-    if (input->infoLen > 0) {
-        memcpy(&payload[2], input->info, input->infoLen);
-    }
-
-    *payloadLen = len;
-
-    return true;
-}
-
 bool hdlc_frame_from_payload(const uint8_t *payload,
                              size_t payloadLen,
-                             HdlcFrame *output)
+                             HdlcFrame *decoded)
 {
-    if (payload == NULL || output == NULL) {
+    if (payload == NULL || decoded == NULL) {
         return false;
     }
 
@@ -271,47 +290,61 @@ bool hdlc_frame_from_payload(const uint8_t *payload,
         return false;
     }
 
-    memset(output, 0, sizeof(*output));
+    memset(decoded, 0, sizeof(*decoded));
 
-    output->address = payload[0];
-    output->control = payload[1];
-    output->infoLen = payloadLen - 2;
+    decoded->address = payload[0];
+    decoded->control = payload[1];
+    decoded->infoLen = payloadLen - 2;
 
-    if (output->infoLen > 0) {
-        memcpy(output->info, &payload[2], output->infoLen);
+    if (decoded->infoLen > 0) {
+        memcpy(decoded->info, &payload[2], decoded->infoLen);
     }
 
     return true;
 }
 
-bool hdlc_encode_frame(const HdlcFrame *input,
-                       uint8_t *frame,
-                       size_t frameSize,
-                       size_t *frameLen)
+bool hdlc_payload_from_frame(const HdlcFrame *decoded,
+                             uint8_t *payload,
+                             size_t payloadSize,
+                             size_t *payloadLen)
 {
-    uint8_t payload[HDLC_MAX_FRAME];
-    size_t payloadLen;
-
-    if (!hdlc_payload_from_frame(input,
-                                 payload,
-                                 sizeof(payload),
-                                 &payloadLen)) {
+    if (decoded == NULL || payload == NULL || payloadLen == NULL) {
         return false;
     }
 
-    return hdlc_encode(payload, payloadLen, frame, frameSize, frameLen);
+    if (decoded->infoLen > HDLC_MAX_INFO) {
+        return false;
+    }
+
+    if (decoded->infoLen + 2 > payloadSize) {
+        return false;
+    }
+
+    payload[0] = decoded->address;
+    payload[1] = decoded->control;
+
+    if (decoded->infoLen > 0) {
+        memcpy(&payload[2], decoded->info, decoded->infoLen);
+    }
+
+    *payloadLen = decoded->infoLen + 2;
+
+    return true;
 }
 
 bool hdlc_decode_frame(const uint8_t *frame,
                        size_t frameLen,
-                       HdlcFrame *output)
+                       HdlcFrame *decoded)
 {
-    uint8_t payload[HDLC_MAX_FRAME];
+    uint8_t payload[HDLC_MAX_INFO + 2];
     size_t payloadLen;
 
-    if (output == NULL) {
+    if (decoded == NULL) {
         return false;
     }
+
+    memset(payload, 0, sizeof(payload));
+    payloadLen = 0;
 
     if (!hdlc_decode(frame,
                      frameLen,
@@ -321,251 +354,135 @@ bool hdlc_decode_frame(const uint8_t *frame,
         return false;
     }
 
-    return hdlc_frame_from_payload(payload, payloadLen, output);
-}
-
-bool hdlc_encode_addr_info(uint8_t address,
-                           uint8_t control,
-                           const uint8_t *info,
-                           size_t infoLen,
-                           uint8_t *frame,
-                           size_t frameSize,
-                           size_t *frameLen)
-{
-    HdlcFrame input;
-
-    if (info == NULL && infoLen != 0) {
-        return false;
-    }
-
-    if (infoLen > HDLC_MAX_INFO) {
-        return false;
-    }
-
-    memset(&input, 0, sizeof(input));
-    input.address = address;
-    input.control = control;
-    input.infoLen = infoLen;
-
-    if (infoLen > 0) {
-        memcpy(input.info, info, infoLen);
-    }
-
-    return hdlc_encode_frame(&input, frame, frameSize, frameLen);
+    return hdlc_frame_from_payload(payload, payloadLen, decoded);
 }
 
 uint8_t hdlc_i_ctrl(uint8_t ns, uint8_t nr, bool poll)
 {
-    uint8_t control;
+    uint8_t ctrl;
 
-    control = (uint8_t)(((ns & HDLC_SEQ_MASK) << 1) |
-                        ((nr & HDLC_SEQ_MASK) << 5));
-
+    ctrl = (uint8_t)(((ns & 0x07) << 1) | ((nr & 0x07) << 5));
     if (poll) {
-        control |= HDLC_CTRL_PF;
+        ctrl |= HDLC_CTRL_PF;
     }
 
-    return control;
+    return ctrl;
 }
 
 uint8_t hdlc_rr_ctrl(uint8_t nr, bool poll)
 {
-    uint8_t control;
+    uint8_t ctrl;
 
-    control = (uint8_t)(HDLC_CTRL_RR | ((nr & HDLC_SEQ_MASK) << 5));
+    ctrl = (uint8_t)(0x01 | ((nr & 0x07) << 5));
     if (poll) {
-        control |= HDLC_CTRL_PF;
+        ctrl |= HDLC_CTRL_PF;
     }
 
-    return control;
+    return ctrl;
 }
 
 uint8_t hdlc_rnr_ctrl(uint8_t nr, bool poll)
 {
-    uint8_t control;
+    uint8_t ctrl;
 
-    control = (uint8_t)(HDLC_CTRL_RNR | ((nr & HDLC_SEQ_MASK) << 5));
+    ctrl = (uint8_t)(0x05 | ((nr & 0x07) << 5));
     if (poll) {
-        control |= HDLC_CTRL_PF;
+        ctrl |= HDLC_CTRL_PF;
     }
 
-    return control;
-}
-
-static uint8_t u_ctrl(uint8_t base, bool pf)
-{
-    if (pf) {
-        return (uint8_t)(base | HDLC_CTRL_PF);
-    }
-
-    return base;
+    return ctrl;
 }
 
 uint8_t hdlc_snrm_ctrl(bool poll)
 {
-    return u_ctrl(HDLC_CTRL_SNRM, poll);
+    return (uint8_t)(0x83 | (poll ? HDLC_CTRL_PF : 0x00));
 }
 
 uint8_t hdlc_disc_ctrl(bool poll)
 {
-    return u_ctrl(HDLC_CTRL_DISC, poll);
+    return (uint8_t)(0x43 | (poll ? HDLC_CTRL_PF : 0x00));
 }
 
 uint8_t hdlc_ua_ctrl(bool final)
 {
-    return u_ctrl(HDLC_CTRL_UA, final);
+    return (uint8_t)(0x63 | (final ? HDLC_CTRL_PF : 0x00));
 }
 
 uint8_t hdlc_dm_ctrl(bool final)
 {
-    return u_ctrl(HDLC_CTRL_DM, final);
+    return (uint8_t)(0x0F | (final ? HDLC_CTRL_PF : 0x00));
 }
 
 uint8_t hdlc_frmr_ctrl(bool final)
 {
-    return u_ctrl(HDLC_CTRL_FRMR, final);
+    return (uint8_t)(0x87 | (final ? HDLC_CTRL_PF : 0x00));
 }
 
 uint8_t hdlc_xid_ctrl(bool poll)
 {
-    return u_ctrl(HDLC_CTRL_XID, poll);
+    return (uint8_t)(0xAF | (poll ? HDLC_CTRL_PF : 0x00));
 }
 
-bool hdlc_is_i_frame(uint8_t control)
+bool hdlc_is_i_frame(uint8_t ctrl)
 {
-    return ((control & 0x01) == 0);
+    return (ctrl & 0x01) == 0;
 }
 
-bool hdlc_is_s_frame(uint8_t control)
+bool hdlc_is_rr(uint8_t ctrl)
 {
-    return ((control & 0x03) == 0x01);
+    return !hdlc_is_i_frame(ctrl) && ((ctrl & HDLC_CTRL_S_MASK_NO_NR_PF) == 0x01);
 }
 
-bool hdlc_is_u_frame(uint8_t control)
+bool hdlc_is_rnr(uint8_t ctrl)
 {
-    return ((control & 0x03) == 0x03);
+    return !hdlc_is_i_frame(ctrl) && ((ctrl & HDLC_CTRL_S_MASK_NO_NR_PF) == 0x05);
 }
 
-bool hdlc_is_rr(uint8_t control)
+bool hdlc_is_snrm(uint8_t ctrl)
 {
-    return hdlc_is_s_frame(control) && ((control & 0x0F) == HDLC_CTRL_RR);
+    return (ctrl & HDLC_CTRL_U_MASK_NO_PF) == 0x83;
 }
 
-bool hdlc_is_rnr(uint8_t control)
+bool hdlc_is_disc(uint8_t ctrl)
 {
-    return hdlc_is_s_frame(control) && ((control & 0x0F) == HDLC_CTRL_RNR);
+    return (ctrl & HDLC_CTRL_U_MASK_NO_PF) == 0x43;
 }
 
-static bool u_is(uint8_t control, uint8_t base)
+bool hdlc_is_ua(uint8_t ctrl)
 {
-    return hdlc_is_u_frame(control) && ((control & (uint8_t)~HDLC_CTRL_PF) == base);
+    return (ctrl & HDLC_CTRL_U_MASK_NO_PF) == 0x63;
 }
 
-bool hdlc_is_snrm(uint8_t control)
+bool hdlc_is_dm(uint8_t ctrl)
 {
-    return u_is(control, HDLC_CTRL_SNRM);
+    return (ctrl & HDLC_CTRL_U_MASK_NO_PF) == 0x0F;
 }
 
-bool hdlc_is_disc(uint8_t control)
+bool hdlc_is_frmr(uint8_t ctrl)
 {
-    return u_is(control, HDLC_CTRL_DISC);
+    return (ctrl & HDLC_CTRL_U_MASK_NO_PF) == 0x87;
 }
 
-bool hdlc_is_ua(uint8_t control)
+bool hdlc_is_xid(uint8_t ctrl)
 {
-    return u_is(control, HDLC_CTRL_UA);
+    return (ctrl & HDLC_CTRL_U_MASK_NO_PF) == 0xAF;
 }
 
-bool hdlc_is_dm(uint8_t control)
+bool hdlc_poll_final(uint8_t ctrl)
 {
-    return u_is(control, HDLC_CTRL_DM);
+    return (ctrl & HDLC_CTRL_PF) != 0;
 }
 
-bool hdlc_is_frmr(uint8_t control)
+uint8_t hdlc_ns(uint8_t ctrl)
 {
-    return u_is(control, HDLC_CTRL_FRMR);
-}
-
-bool hdlc_is_xid(uint8_t control)
-{
-    return u_is(control, HDLC_CTRL_XID);
-}
-
-bool hdlc_pf(uint8_t control)
-{
-    return ((control & HDLC_CTRL_PF) != 0);
-}
-
-bool hdlc_i_ns(uint8_t control, uint8_t *ns)
-{
-    if (ns == NULL || !hdlc_is_i_frame(control)) {
-        return false;
+    if (!hdlc_is_i_frame(ctrl)) {
+        return 0;
     }
 
-    *ns = (uint8_t)((control >> 1) & HDLC_SEQ_MASK);
-
-    return true;
+    return (uint8_t)((ctrl >> 1) & 0x07);
 }
 
-bool hdlc_i_nr(uint8_t control, uint8_t *nr)
+uint8_t hdlc_nr(uint8_t ctrl)
 {
-    if (nr == NULL || !hdlc_is_i_frame(control)) {
-        return false;
-    }
-
-    *nr = (uint8_t)((control >> 5) & HDLC_SEQ_MASK);
-
-    return true;
-}
-
-bool hdlc_s_nr(uint8_t control, uint8_t *nr)
-{
-    if (nr == NULL || !hdlc_is_s_frame(control)) {
-        return false;
-    }
-
-    *nr = (uint8_t)((control >> 5) & HDLC_SEQ_MASK);
-
-    return true;
-}
-
-const char *hdlc_control_name(uint8_t control)
-{
-    if (hdlc_is_i_frame(control)) {
-        return "I";
-    }
-
-    if (hdlc_is_xid(control)) {
-        return "XID";
-    }
-
-    if (hdlc_is_snrm(control)) {
-        return "SNRM";
-    }
-
-    if (hdlc_is_disc(control)) {
-        return "DISC";
-    }
-
-    if (hdlc_is_ua(control)) {
-        return "UA";
-    }
-
-    if (hdlc_is_dm(control)) {
-        return "DM";
-    }
-
-    if (hdlc_is_frmr(control)) {
-        return "FRMR";
-    }
-
-    if (hdlc_is_rr(control)) {
-        return "RR";
-    }
-
-    if (hdlc_is_rnr(control)) {
-        return "RNR";
-    }
-
-    return "CTRL";
+    return (uint8_t)((ctrl >> 5) & 0x07);
 }

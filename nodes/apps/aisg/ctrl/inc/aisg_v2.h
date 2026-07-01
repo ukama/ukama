@@ -10,6 +10,7 @@
 #define AISG_V2_H_
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #include "serial.h"
@@ -41,20 +42,35 @@
 
 #define AISG_ADDR_BROADCAST                0xFF
 #define AISG_ADDR_DEFAULT                  0x00
-
-/*
- * Phase 0/1 keeps the old transport shape visible and honest.
- * Real TS 25.462 control helpers are introduced in later phases.
- */
-#define AISG_CTRL_I_FRAME                  0x00
-#define AISG_CTRL_XID                      0xBF
+#define AISG_ADDR_ASSIGNED                 0x01
 
 #define AISG_DEFAULT_TIMEOUT_MS            3000
+#define AISG_SCAN_EXTRA_TIMEOUT_MS         250
 #define AISG_MAX_RX_ATTEMPTS               4
+
+#define AISG_XID_FI                        0x81
+#define AISG_XID_GI_ADDRESSING             0xF0
+#define AISG_XID_PI_UNIQUE_ID              0x01
+#define AISG_XID_PI_HDLC_ADDRESS           0x02
+#define AISG_XID_PI_BIT_MASK               0x03
+#define AISG_XID_PI_DEVICE_TYPE            0x04
+#define AISG_XID_PI_3GPP_RELEASE           0x05
+#define AISG_XID_PI_VENDOR_CODE            0x06
+#define AISG_XID_UNIQUE_ID_MAX             19
+#define AISG_XID_VENDOR_WILDCARD           0xFFFF
+
+typedef enum {
+    AISG_L2_NO_ADDRESS = 0,
+    AISG_L2_ADDRESS_ASSIGNED,
+    AISG_L2_CONNECTED
+} AisgL2State;
 
 typedef struct {
     SerialPort *serial;
     uint8_t deviceAddress;
+    uint8_t ns;
+    uint8_t nr;
+    AisgL2State state;
 } AisgBus;
 
 typedef struct {
@@ -62,6 +78,10 @@ typedef struct {
     bool unsupported;
     uint8_t address;
     uint8_t deviceType;
+    uint8_t uniqueId[AISG_XID_UNIQUE_ID_MAX];
+    size_t uniqueIdLen;
+    bool hasVendorCode;
+    uint16_t vendorCode;
     char model[64];
 } AisgDevice;
 
