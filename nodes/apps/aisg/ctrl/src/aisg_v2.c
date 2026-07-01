@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "aisg_v2.h"
 #include "hdlc.h"
@@ -35,6 +36,9 @@ typedef struct {
 
     bool has3gppRelease;
     uint8_t release;
+
+    bool hasAisgVersion;
+    uint8_t aisgVersion;
 
     bool hasVendorCode;
     uint16_t vendorCode;
@@ -234,6 +238,13 @@ static bool send_frame(AisgBus *bus,
     }
 
     log_hex_bytes("TX hdlc", raw, rawLen);
+
+    /*
+     * TS 25.462 requires at least 3 ms between receive and transmit.
+     * Waiting before every command is a small cost and keeps the bus timing
+     * conservative while the state machine is still simple.
+     */
+    usleep(AISG_MIN_TURNAROUND_US);
 
     if (!serial_write_all(bus->serial, raw, rawLen)) {
         usys_log_debug("aisg: TX serial write failed");
@@ -505,6 +516,14 @@ static bool parse_xid_addressing_info(const uint8_t *info,
             params->release = pv[0];
             break;
 
+        case AISG_XID_PI_AISG_VERSION:
+            if (pl != 1) {
+                return false;
+            }
+            params->hasAisgVersion = true;
+            params->aisgVersion = pv[0];
+            break;
+
         case AISG_XID_PI_VENDOR_CODE:
             if (pl != 2) {
                 return false;
@@ -741,6 +760,249 @@ static bool xid_assign_address(AisgBus *bus, AisgDevice *device)
     return true;
 }
 
+static bool build_xid_one_octet_info(uint8_t pi,
+                                     uint8_t value,
+                                     uint8_t *info,
+                                     size_t size,
+                                     size_t *len)
+{
+    uint8_t pv[1];
+    size_t off;
+
+    if (info == NULL || len == NULL) {
+        return false;
+    }
+
+    pv[0] = value;
+
+    if (!begin_xid_addressing_info(info, size, &off)) {
+        return false;
+    }
+
+    if (!append_xid_param(info, size, &off, pi, pv, sizeof(pv))) {
+        return false;
+    }
+
+    if (!finish_xid_info(info, off)) {
+        return false;
+    }
+
+    *len = off;
+
+    return true;
+}
+
+static bool xid_negotiate_one_octet(AisgBus *bus,
+                                    const char *name,
+                                    uint8_t pi,
+                                    uint8_t offered,
+                                    uint8_t *accepted)
+{
+    HdlcFrame tx;
+    HdlcFrame rx;
+    XidAddressingParams params;
+    size_t infoLen;
+    bool hasValue;
+    uint8_t value;
+
+    if (bus == NULL || name == NULL || accepted == NULL) {
+        return false;
+    }
+
+    if (bus->state != AISG_L2_ADDRESS_ASSIGNED) {
+        usys_log_debug("aisg: %s negotiation rejected in state=%s",
+                       name,
+                       l2_state_name(bus->state));
+        return false;
+    }
+
+    memset(&tx, 0, sizeof(tx));
+    memset(&rx, 0, sizeof(rx));
+
+    tx.address = bus->deviceAddress;
+    tx.control = hdlc_xid_ctrl(true);
+
+    if (!build_xid_one_octet_info(pi,
+                                  offered,
+                                  tx.info,
+                                  sizeof(tx.info),
+                                  &infoLen)) {
+        usys_log_debug("aisg: %s negotiation build failed", name);
+        return false;
+    }
+    tx.infoLen = infoLen;
+
+    usys_log_debug("aisg: %s negotiation start pi=%u offered=0x%02X addr=0x%02X",
+                   name,
+                   pi,
+                   offered,
+                   bus->deviceAddress);
+
+    if (!send_frame(bus, &tx, &rx, AISG_DEFAULT_TIMEOUT_MS)) {
+        usys_log_debug("aisg: %s negotiation failed: no response", name);
+        return false;
+    }
+
+    if (rx.address != bus->deviceAddress) {
+        usys_log_debug("aisg: %s negotiation failed: addr=0x%02X expected=0x%02X",
+                       name,
+                       rx.address,
+                       bus->deviceAddress);
+        return false;
+    }
+
+    if (!hdlc_is_xid(rx.control)) {
+        usys_log_debug("aisg: %s negotiation failed: unexpected ctrl=0x%02X",
+                       name,
+                       rx.control);
+        return false;
+    }
+
+    if (!parse_xid_addressing_info(rx.info, rx.infoLen, &params)) {
+        usys_log_debug("aisg: %s negotiation failed: malformed XID response",
+                       name);
+        return false;
+    }
+
+    hasValue = false;
+    value = 0;
+
+    if (pi == AISG_XID_PI_3GPP_RELEASE) {
+        hasValue = params.has3gppRelease;
+        value = params.release;
+    } else if (pi == AISG_XID_PI_AISG_VERSION) {
+        hasValue = params.hasAisgVersion;
+        value = params.aisgVersion;
+    }
+
+    if (!hasValue) {
+        usys_log_debug("aisg: %s negotiation failed: PI=%u missing in response",
+                       name,
+                       pi);
+        return false;
+    }
+
+    if (value != offered) {
+        usys_log_debug("aisg: %s negotiation failed: accepted=0x%02X expected=0x%02X",
+                       name,
+                       value,
+                       offered);
+        return false;
+    }
+
+    *accepted = value;
+
+    usys_log_debug("aisg: %s negotiation OK accepted=0x%02X", name, value);
+
+    return true;
+}
+
+static bool xid_negotiate_3gpp_release(AisgBus *bus)
+{
+    uint8_t accepted;
+
+    if (!xid_negotiate_one_octet(bus,
+                                 "3GPP release",
+                                 AISG_XID_PI_3GPP_RELEASE,
+                                 AISG_3GPP_RELEASE_ID,
+                                 &accepted)) {
+        return false;
+    }
+
+    bus->has3gppRelease = true;
+    bus->negotiated3gppRelease = accepted;
+
+    return true;
+}
+
+static bool xid_negotiate_aisg_version(AisgBus *bus)
+{
+    uint8_t accepted;
+
+    if (!xid_negotiate_one_octet(bus,
+                                 "AISG version",
+                                 AISG_XID_PI_AISG_VERSION,
+                                 AISG_PROTOCOL_VERSION,
+                                 &accepted)) {
+        return false;
+    }
+
+    bus->hasAisgVersion = true;
+    bus->negotiatedAisgVersion = accepted;
+
+    return true;
+}
+
+static bool l2_establish_link(AisgBus *bus)
+{
+    HdlcFrame tx;
+    HdlcFrame rx;
+
+    if (bus == NULL) {
+        return false;
+    }
+
+    if (bus->state != AISG_L2_ADDRESS_ASSIGNED) {
+        usys_log_debug("aisg: SNRM rejected in state=%s",
+                       l2_state_name(bus->state));
+        return false;
+    }
+
+    memset(&tx, 0, sizeof(tx));
+    memset(&rx, 0, sizeof(rx));
+
+    tx.address = bus->deviceAddress;
+    tx.control = hdlc_snrm_ctrl(true);
+    tx.infoLen = 0;
+
+    usys_log_debug("aisg: link establishment start SNRM addr=0x%02X",
+                   bus->deviceAddress);
+
+    if (!send_frame(bus, &tx, &rx, AISG_DEFAULT_TIMEOUT_MS)) {
+        usys_log_debug("aisg: link establishment failed: no UA response");
+        return false;
+    }
+
+    if (rx.address != bus->deviceAddress) {
+        usys_log_debug("aisg: link establishment failed: addr=0x%02X expected=0x%02X",
+                       rx.address,
+                       bus->deviceAddress);
+        return false;
+    }
+
+    if (hdlc_is_dm(rx.control)) {
+        usys_log_debug("aisg: link establishment failed: secondary returned DM");
+        return false;
+    }
+
+    if (!hdlc_is_ua(rx.control)) {
+        usys_log_debug("aisg: link establishment failed: unexpected ctrl=0x%02X",
+                       rx.control);
+        return false;
+    }
+
+    if (!hdlc_poll_final(rx.control)) {
+        usys_log_debug("aisg: link establishment failed: UA missing final bit");
+        return false;
+    }
+
+    if (rx.infoLen != 0) {
+        usys_log_debug("aisg: link establishment failed: UA info_len=%zu expected=0",
+                       rx.infoLen);
+        return false;
+    }
+
+    bus->state = AISG_L2_CONNECTED;
+    bus->ns = 0;
+    bus->nr = 0;
+
+    usys_log_debug("aisg: link establishment OK state=%s addr=0x%02X",
+                   l2_state_name(bus->state),
+                   bus->deviceAddress);
+
+    return true;
+}
+
 void aisg_v2_bus_init(AisgBus *bus, SerialPort *serial)
 {
     if (bus == NULL) {
@@ -773,6 +1035,10 @@ bool aisg_v2_scan(AisgBus *bus, AisgDevice *device)
     bus->state = AISG_L2_NO_ADDRESS;
     bus->ns = 0;
     bus->nr = 0;
+    bus->has3gppRelease = false;
+    bus->negotiated3gppRelease = 0;
+    bus->hasAisgVersion = false;
+    bus->negotiatedAisgVersion = 0;
 
     if (!xid_scan_single(bus, device)) {
         usys_log_debug("aisg: scan failed");
@@ -781,6 +1047,21 @@ bool aisg_v2_scan(AisgBus *bus, AisgDevice *device)
 
     if (!xid_assign_address(bus, device)) {
         usys_log_debug("aisg: address assignment failed");
+        return false;
+    }
+
+    if (!xid_negotiate_3gpp_release(bus)) {
+        usys_log_debug("aisg: 3GPP release negotiation failed");
+        return false;
+    }
+
+    if (!xid_negotiate_aisg_version(bus)) {
+        usys_log_debug("aisg: AISG version negotiation failed");
+        return false;
+    }
+
+    if (!l2_establish_link(bus)) {
+        usys_log_debug("aisg: link establishment failed");
         return false;
     }
 
@@ -801,8 +1082,9 @@ bool aisg_v2_send_retap(AisgBus *bus,
         return false;
     }
 
-    if (bus->state == AISG_L2_NO_ADDRESS) {
-        usys_log_debug("aisg: RETAP rejected: device has no assigned address");
+    if (bus->state != AISG_L2_CONNECTED) {
+        usys_log_debug("aisg: RETAP rejected: link state=%s expected=CONNECTED",
+                       l2_state_name(bus->state));
         return false;
     }
 

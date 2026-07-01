@@ -44,6 +44,11 @@
 #define AISG_ADDR_DEFAULT                  0x00
 #define AISG_ADDR_ASSIGNED                 0x01
 
+#define AISG_3GPP_RELEASE_ID               0x06
+#define AISG_PROTOCOL_VERSION              0x02
+#define AISG_LINK_TIMEOUT_MS               180000
+#define AISG_MIN_TURNAROUND_US             3000
+
 #define AISG_DEFAULT_TIMEOUT_MS            3000
 #define AISG_SCAN_EXTRA_TIMEOUT_MS         250
 #define AISG_MAX_RX_ATTEMPTS               4
@@ -56,6 +61,7 @@
 #define AISG_XID_PI_DEVICE_TYPE            0x04
 #define AISG_XID_PI_3GPP_RELEASE           0x05
 #define AISG_XID_PI_VENDOR_CODE            0x06
+#define AISG_XID_PI_AISG_VERSION           20
 #define AISG_XID_UNIQUE_ID_MAX             19
 #define AISG_XID_VENDOR_WILDCARD           0xFFFF
 
@@ -71,6 +77,10 @@ typedef struct {
     uint8_t ns;
     uint8_t nr;
     AisgL2State state;
+    bool has3gppRelease;
+    uint8_t negotiated3gppRelease;
+    bool hasAisgVersion;
+    uint8_t negotiatedAisgVersion;
 } AisgBus;
 
 typedef struct {
