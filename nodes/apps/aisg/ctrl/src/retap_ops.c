@@ -141,7 +141,13 @@ bool retap_build_send_configuration_data(RetapRequest *request,
         return false;
     }
 
-    if (len > RETAP_MAX_PAYLOAD) {
+    /*
+     * TS 25.463 single-antenna SendConfigurationData carries at most
+     * 70 octets of configuration data per elementary procedure. Larger
+     * configuration files must be split by the backend and sent one
+     * RETAP request at a time, waiting for OK before the next segment.
+     */
+    if (len == 0 || len > RETAP_CONFIG_SEGMENT_MAX) {
         return false;
     }
 

@@ -15,6 +15,8 @@
 #include "retap_ops.h"
 #include "usys_log.h"
 
+#define RAW_CONFIG_FILE_MAX_BYTES          (256U * 1024U)
+
 typedef struct {
     SerialPort serial;
     AisgBus bus;
@@ -25,31 +27,59 @@ typedef struct {
     int16_t tiltTenthsDeg;
 } RawRs485Context;
 
-static bool read_file_bytes(const char *path,
-                            uint8_t *buf,
-                            size_t size,
+static bool read_file_alloc(const char *path,
+                            uint8_t **data,
                             size_t *len)
 {
     FILE *file = NULL;
+    uint8_t *buf = NULL;
+    long fileLen;
     size_t n;
 
-    if (path == NULL || buf == NULL || len == NULL) {
+    if (path == NULL || data == NULL || len == NULL) {
         return false;
     }
+
+    *data = NULL;
+    *len = 0;
 
     file = fopen(path, "rb");
     if (file == NULL) {
         return false;
     }
 
-    n = fread(buf, 1, size, file);
-    if (ferror(file)) {
+    if (fseek(file, 0, SEEK_END) != 0) {
+        fclose(file);
+        return false;
+    }
+
+    fileLen = ftell(file);
+    if (fileLen <= 0 || (unsigned long)fileLen > RAW_CONFIG_FILE_MAX_BYTES) {
+        fclose(file);
+        return false;
+    }
+
+    if (fseek(file, 0, SEEK_SET) != 0) {
+        fclose(file);
+        return false;
+    }
+
+    buf = malloc((size_t)fileLen);
+    if (buf == NULL) {
+        fclose(file);
+        return false;
+    }
+
+    n = fread(buf, 1, (size_t)fileLen, file);
+    if (ferror(file) || n != (size_t)fileLen) {
+        free(buf);
         fclose(file);
         return false;
     }
 
     fclose(file);
 
+    *data = buf;
     *len = n;
 
     return true;
@@ -334,13 +364,18 @@ static bool raw_handle_self_test(RawRs485Context *ctx,
 }
 
 static bool read_config_blob(CtrlRequest *request,
-                             uint8_t *data,
-                             size_t size,
+                             uint8_t **data,
                              size_t *len,
                              CtrlResponse *response)
 {
     JsonObj *value = NULL;
     const char *path = NULL;
+
+    if (request == NULL || data == NULL || len == NULL) {
+        return ctrl_response_set_error(response,
+                                       CtrlCodeInvalidRequest,
+                                       "invalid config request");
+    }
 
     value = json_object_get(request->payload, "configPath");
     path = json_is_string(value) ? json_string_value(value) : NULL;
@@ -351,7 +386,7 @@ static bool read_config_blob(CtrlRequest *request,
                                        "missing configPath");
     }
 
-    if (!read_file_bytes(path, data, size, len)) {
+    if (!read_file_alloc(path, data, len)) {
         return ctrl_response_set_error(response,
                                        CtrlCodeInvalidRequest,
                                        "failed to read config blob");
@@ -366,25 +401,63 @@ static bool raw_handle_send_config(RawRs485Context *ctx,
 {
     RetapRequest retapReq;
     RetapResponse retapResp;
-    uint8_t data[RETAP_MAX_PAYLOAD];
-    size_t len;
+    uint8_t *data = NULL;
+    size_t len = 0;
+    size_t off = 0;
+    size_t chunkLen;
+    size_t chunks = 0;
+    size_t totalChunks;
     JsonObj *payload = NULL;
 
-    if (!read_config_blob(request, data, sizeof(data), &len, response)) {
-        return false;
-    }
-
-    if (!retap_build_send_configuration_data(&retapReq, data, len)) {
+    if (ctx == NULL || !ctx->device.present) {
         return ctrl_response_set_error(response,
-                                       CtrlCodeInvalidRequest,
-                                       "failed to build config request");
+                                       CtrlCodeTransportError,
+                                       "device not connected; run scan first");
     }
 
-    if (!execute_retap(ctx, &retapReq, &retapResp, response)) {
+    if (!read_config_blob(request, &data, &len, response)) {
         return false;
     }
+
+    totalChunks = (len + RETAP_CONFIG_SEGMENT_MAX - 1) /
+                  RETAP_CONFIG_SEGMENT_MAX;
+
+    while (off < len) {
+        chunkLen = len - off;
+        if (chunkLen > RETAP_CONFIG_SEGMENT_MAX) {
+            chunkLen = RETAP_CONFIG_SEGMENT_MAX;
+        }
+
+        if (!retap_build_send_configuration_data(&retapReq,
+                                                 &data[off],
+                                                 chunkLen)) {
+            free(data);
+            return ctrl_response_set_error(response,
+                                           CtrlCodeInvalidRequest,
+                                           "failed to build config segment request");
+        }
+
+        usys_log_debug("aisg: send config segment %zu/%zu offset=%zu len=%zu",
+                       chunks + 1,
+                       totalChunks,
+                       off,
+                       chunkLen);
+
+        if (!execute_retap(ctx, &retapReq, &retapResp, response)) {
+            free(data);
+            ctx->configured = false;
+            ctx->calibrated = false;
+            return false;
+        }
+
+        off += chunkLen;
+        chunks++;
+    }
+
+    free(data);
 
     ctx->configured = true;
+    ctx->calibrated = false;
 
     payload = build_ok_payload();
     if (payload == NULL) {
@@ -392,6 +465,15 @@ static bool raw_handle_send_config(RawRs485Context *ctx,
     }
 
     json_object_set_new(payload, "configured", json_true());
+    json_object_set_new(payload, "calibrated", json_false());
+    json_object_set_new(payload, "bytes", json_integer((json_int_t)len));
+    json_object_set_new(payload, "chunks", json_integer((json_int_t)chunks));
+    json_object_set_new(payload,
+                        "totalChunks",
+                        json_integer((json_int_t)totalChunks));
+    json_object_set_new(payload,
+                        "segmentMaxBytes",
+                        json_integer(RETAP_CONFIG_SEGMENT_MAX));
 
     return ctrl_response_set_ok(response, payload);
 }
@@ -399,19 +481,45 @@ static bool raw_handle_send_config(RawRs485Context *ctx,
 static bool raw_handle_calibrate(RawRs485Context *ctx,
                                  CtrlResponse *response)
 {
-    bool ok;
+    RetapRequest request;
+    RetapResponse retapResp;
+    JsonObj *payload = NULL;
 
-    ok = raw_handle_simple(
-        ctx,
-        response,
-        retap_build_calibrate,
-        build_operation_payload("op-cal-001", "calibrate"));
-
-    if (ok) {
-        ctx->calibrated = true;
+    if (ctx == NULL || !ctx->device.present) {
+        return ctrl_response_set_error(response,
+                                       CtrlCodeTransportError,
+                                       "device not connected; run scan first");
     }
 
-    return ok;
+    if (!ctx->configured) {
+        return ctrl_response_set_error(response,
+                                       CtrlCodeNotConfigured,
+                                       "configuration must be loaded before calibration");
+    }
+
+    if (!retap_build_calibrate(&request)) {
+        return ctrl_response_set_error(response,
+                                       CtrlCodeInvalidRequest,
+                                       "failed to build calibrate request");
+    }
+
+    if (!execute_retap(ctx, &request, &retapResp, response)) {
+        ctx->calibrated = false;
+        return false;
+    }
+
+    ctx->calibrated = true;
+
+    payload = build_operation_payload("op-cal-001", "calibrate");
+    if (payload == NULL) {
+        return false;
+    }
+
+    json_object_set_new(payload, "state", json_string("completed"));
+    json_object_set_new(payload, "configured", json_true());
+    json_object_set_new(payload, "calibrated", json_true());
+
+    return ctrl_response_set_ok(response, payload);
 }
 
 static bool raw_handle_get_tilt(RawRs485Context *ctx,
