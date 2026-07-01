@@ -674,13 +674,13 @@ _phase2_enable_ethernet_over_serial() {
 
     uboot_send "$serial_dev" ""
     sleep 2
-    if ! uboot_wait_for "~#" 5; then
+    if ! uboot_wait_for "~ #" 5; then
         uboot_send "$serial_dev" ""
         if uboot_wait_for "login:" 90; then
             uboot_send "$serial_dev" "root"
             uboot_wait_for "assword" 15 || true
             uboot_send "$serial_dev" "cavium.lte"
-            if ! uboot_wait_for "~#" 30; then
+            if ! uboot_wait_for "~ #" 30; then
                 echo "  WARNING: serial login didn't reach a shell prompt; relying on SSH wait."
                 if [ -n "$phase2_tail_pid" ]; then
                     kill "$phase2_tail_pid" 2>/dev/null || true
