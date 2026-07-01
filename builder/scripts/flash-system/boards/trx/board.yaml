@@ -1,0 +1,70 @@
+name: "TRX Board (Tower Node Radio)"
+method: jtag-octeon
+
+network:
+  bdi_ip: 192.168.53.72
+  host_ip: 192.168.53.100
+  trx_ip: 192.168.53.151
+  trx_mac: "AA:BB:CC:DD:EE:FF"
+  netmask: 255.255.255.0
+  # Once the full app images are flashed, the TRX reboots into its production
+  # network config. The bench box must move to the same subnet for verification.
+  post_flash:
+    trx_ip: 10.102.81.61
+    host_ip: 10.102.81.100
+    netmask: 255.255.255.0
+    # Host interface to reconfigure. If empty, the script auto-detects the
+    # interface currently used to reach network.trx_ip.
+    interface: ""
+
+bdi:
+  telnet_port: 23
+  gdb_port: 2001
+  prompt: "cnMIPS#0>"
+  config_file: /usr/ukm/ukama/builder/scripts/build-system/trx/cnf71xx.cfg
+
+oct_remote_boot:
+  path: /work/bringup/homeN/tip_sdk/host/remote-utils/oct-remote-boot
+  board: TIP
+  ddr_clock_hz: 400000000
+
+serial:
+  device: /dev/ttyUSB0
+  baud: 115200
+  uboot_prompt: "Octeon zen(ram)=>"
+
+phase1:
+  ddr_os_load_addr:    0x21000000
+  ddr_rd_load_addr:    0x30800000
+  artifacts:
+    os:
+      path: /usr/ukm/ukama/builder/scripts/build-system/trx/lsm_os_trx.gz
+      flash_addr: 0x17E20000
+      size:       0x3DC7E6
+    rd:
+      path: /usr/ukm/ukama/builder/scripts/build-system/trx/lsm_rd_trx.gz
+      flash_addr: 0x18320000
+      size:       0x2727F07
+    uboot:
+      path: /usr/ukm/ukama/builder/scripts/build-system/trx/u-boot-octeon_trx.bin
+      flash_addr: 0x17C00000
+      size:       0xB9200
+
+phase2:
+  ssh_user: root
+  ssh_staging_dir: /mnt/tmp
+  rc_post_local: /mnt/app/rc_post.local
+  images:
+    app0:  { src: /usr/ukm/ukama/builder/scripts/build-system/trx/flash_app0.img,  dst: /dev/flash_app0 }
+    app1:  { src: /usr/ukm/ukama/builder/scripts/build-system/trx/flash_app1.img,  dst: /dev/flash_app1 }
+    env:   { src: /usr/ukm/ukama/builder/scripts/build-system/trx/flash_env.img,   dst: /dev/flash_env  }
+    os0:   { src: /usr/ukm/ukama/builder/scripts/build-system/trx/flash_os0.img,   dst: /dev/flash_os0  }
+    os1:   { src: /usr/ukm/ukama/builder/scripts/build-system/trx/flash_os1.img,   dst: /dev/flash_os1  }
+    rd0:   { src: /usr/ukm/ukama/builder/scripts/build-system/trx/flash_rd0.img,   dst: /dev/flash_rd0  }
+    rd1:   { src: /usr/ukm/ukama/builder/scripts/build-system/trx/flash_rd1.img,   dst: /dev/flash_rd1  }
+    uboot: { src: /usr/ukm/ukama/builder/scripts/build-system/trx/flash_uboot.img, dst: /dev/flash_uboot }
+
+band:
+  default: startup_B1
+  configs_dir: /usr/ukm/ukama/builder/scripts/build-system/trx/band_configs
+  target_path: /etc/trx/band.cfg

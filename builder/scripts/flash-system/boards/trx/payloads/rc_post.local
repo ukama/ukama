@@ -1,0 +1,8 @@
+#!/bin/sh
+echo "Configuring Autoneg for ethernet."
+devmem 0x00011800B0001000 64 0x0140
+readValue=`devmem 0x00011800B0001000 64`
+echo "Ethernet Autoneg config is $readValue "
+if [ -e /mnt/app/init.d ];then
+        cp /mnt/app/init.d/* /etc/init.d/
+fi
