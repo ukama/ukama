@@ -12,7 +12,7 @@ import NodeAPI from "../../node/dataSource/node-api";
 import { AddNodeResolver } from "../../node/resolvers/addNode";
 import { AddNodeToSiteResolver } from "../../node/resolvers/addNodeToSite";
 import { AttachNodeResolver } from "../../node/resolvers/attachNode";
-import { DeleteNodeFromOrgResolver } from "../../node/resolvers/deleteNodeFromOrg";
+import { DeleteNodeResolver } from "../../node/resolvers/deleteNode";
 import { DetachNodeResolver } from "../../node/resolvers/detachNode";
 import { GetAppsChangeLogResolver } from "../../node/resolvers/getAppsChangeLog";
 import { GetNodeResolver } from "../../node/resolvers/getNode";
@@ -58,7 +58,7 @@ const createSchema = async () => {
       AddNodeResolver,
       AddNodeToSiteResolver,
       AttachNodeResolver,
-      DeleteNodeFromOrgResolver,
+      DeleteNodeResolver,
       DetachNodeResolver,
       GetAppsChangeLogResolver,
       GetNodeResolver,

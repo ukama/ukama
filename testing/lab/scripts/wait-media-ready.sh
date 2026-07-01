@@ -22,14 +22,34 @@ if [ ! -f "$STATE_FILE" ]; then
     exit 1
 fi
 
+# shellcheck disable=SC1090
 . "$STATE_FILE"
+
+HTTP_PORT="${HTTP_PORT:-8080}"
+IPERF_PORT="${IPERF_PORT:-5201}"
+UE_CIDR="${UE_CIDR:-192.168.8.0/22}"
+TUN_TABLE="${TUN_TABLE:-2000}"
+
+media_local_ready() {
+    podman inspect -f '{{.State.Running}}' "$MEDIA_CONTAINER" 2>/dev/null | grep -q '^true$' && \
+    podman exec "$MEDIA_CONTAINER" curl -fsS --max-time 2 \
+        "http://127.0.0.1:$HTTP_PORT/" >/dev/null 2>&1 && \
+    podman exec "$MEDIA_CONTAINER" sh -lc 'pgrep iperf3 >/dev/null' \
+        >/dev/null 2>&1 && \
+    podman exec "$MEDIA_CONTAINER" sh -lc \
+        "ip route show '$UE_CIDR' | grep -q 'via $TNODE_IP'" >/dev/null 2>&1
+}
+
+tower_path_ready() {
+    podman inspect -f '{{.State.Running}}' "$TNODE_CONTAINER" 2>/dev/null | grep -q '^true$' && \
+    podman exec "$TNODE_CONTAINER" curl -fsS --max-time 2 \
+        "http://$MEDIA_IP:$HTTP_PORT/" >/dev/null 2>&1
+}
 
 start_ts="$(date +%s)"
 while :; do
-    if podman inspect -f '{{.State.Running}}' "$MEDIA_CONTAINER" 2>/dev/null | grep -q '^true$' && \
-       podman exec "$MEDIA_CONTAINER" curl -fsS --max-time 2 http://127.0.0.1:8080/ >/dev/null 2>&1 && \
-       podman exec "$MEDIA_CONTAINER" sh -lc 'pgrep iperf3 >/dev/null' >/dev/null 2>&1; then
-        echo "media-ready container=$MEDIA_CONTAINER ip=$MEDIA_IP"
+    if media_local_ready && tower_path_ready; then
+        echo "media-ready container=$MEDIA_CONTAINER ip=$MEDIA_IP mode=${MEDIA_MODE:-podman-net}"
         exit 0
     fi
 
@@ -38,6 +58,16 @@ while :; do
         echo "media not ready: $MEDIA_CONTAINER" >&2
         podman ps -a --filter "name=$MEDIA_CONTAINER" >&2 || true
         podman logs --tail 80 "$MEDIA_CONTAINER" >&2 || true
+        echo "---- media net ----" >&2
+        podman exec "$MEDIA_CONTAINER" ip addr >&2 || true
+        podman exec "$MEDIA_CONTAINER" ip route >&2 || true
+        echo "---- tower net ----" >&2
+        podman exec "$TNODE_CONTAINER" ip addr >&2 || true
+        podman exec "$TNODE_CONTAINER" ip route >&2 || true
+        podman exec "$TNODE_CONTAINER" ip route show table "$TUN_TABLE" >&2 || true
+        podman exec "$TNODE_CONTAINER" iptables -S FORWARD >&2 || true
+        podman exec "$TNODE_CONTAINER" curl -v --max-time 3 \
+            "http://$MEDIA_IP:$HTTP_PORT/" >&2 || true
         exit 1
     fi
 

@@ -115,7 +115,6 @@ services:
    - MSGCLIENT_HOST=msgclient-registry:9095
    - SITE_SERVICE_HOST=site
    - SITE_SERVICE_PORT=9090
-   - NETWORK=network:9090
    - ORGNAME=${ORGNAME}
    - HTTP_INVENTORYCLIENT=http://api-gateway-inventory:8080
   restart: always

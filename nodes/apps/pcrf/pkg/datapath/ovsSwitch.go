@@ -312,6 +312,20 @@ func addActionsToFlow(f *ofctrl.Flow, meter uint32) *ofctrl.Flow {
 	return f
 }
 
+func parseIPv4(ipString string) (net.IP, error) {
+	ip := net.ParseIP(ipString)
+	if ip == nil {
+		return nil, fmt.Errorf("invalid ip %s", ipString)
+	}
+
+	ip4 := ip.To4()
+	if ip4 == nil {
+		return nil, fmt.Errorf("invalid ipv4 %s", ipString)
+	}
+
+	return ip4, nil
+}
+
 func (o *OvsSwitch) createTxFlow(ip *net.IP) (*ofctrl.Flow, error) {
 	table, err := o.inputTable()
 	if err != nil {
@@ -351,10 +365,10 @@ func (o *OvsSwitch) createRxFlow(ip *net.IP) (*ofctrl.Flow, error) {
 }
 
 func (o *OvsSwitch) updateFlowForUE(ipString string, rxMeter, txMeter uint32, rxCookie, txCookie uint64, operationType int) error {
-	ip := net.ParseIP(ipString)
-	if ip == nil {
+	ip, err := parseIPv4(ipString)
+	if err != nil {
 		log.Errorf("Invalid IP address %s", ipString)
-		return fmt.Errorf("invalid ip %s", ipString)
+		return err
 	}
 
 	rxF, err := o.createRxFlow(&ip)
@@ -531,13 +545,13 @@ func (o *OvsSwitch) deleteFlowForRXPath(ip net.IP) error {
 }
 
 func (o *OvsSwitch) DeleteFlowForUE(ipString string) error {
-	ip := net.ParseIP(ipString)
-	if ip == nil {
+	ip, err := parseIPv4(ipString)
+	if err != nil {
 		log.Errorf("Invalid IP address %s", ipString)
-		return fmt.Errorf("invalid ip %s", ipString)
+		return err
 	}
 
-	err := o.deleteFlowForTXPath(ip)
+	err = o.deleteFlowForTXPath(ip)
 	if err != nil {
 		log.Errorf("Failed to delete TX flow for UE %s", ipString)
 		return err

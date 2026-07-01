@@ -1,0 +1,3 @@
+entity: network
+states: [active, suspended, deactivated, archived]
+actions: [create, read, update, suspend, deactivate, archive]

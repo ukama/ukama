@@ -20,9 +20,9 @@ type Config struct {
 	DB               *uconf.Database  `default:"{}"`
 	Grpc             *uconf.Grpc      `default:"{}"`
 	Queue            *uconf.Queue     `default:"{}"`
-	Service          *uconf.Service
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Timeout          time.Duration    `default:"20s"`
+	Service          *uconf.Service
 	OrgName          string
 	OrgId            string
 }

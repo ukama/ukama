@@ -86,7 +86,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	factoryClient := cfactory.NewNodeFactoryClient(serviceConfig.FactoryUrl)
+	factoryClient := cfactory.NewNodeFactoryClient(serviceConfig.Http.FactoryClient)
 
 	gc, err := gitClient.NewGitClient(serviceConfig.RepoUrl, serviceConfig.Username, serviceConfig.Token, cwd+serviceConfig.RepoPath)
 	if err != nil {

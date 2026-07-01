@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #
+# Copyright (c) 2026-present, Ukama Inc.
+
 # Generate N Ukama node sets in factory via API only.
 #
 # For each generated tower node, the script creates:
@@ -203,20 +208,68 @@ print(node_id)
 '
 }
 
-urlenc() {
-    python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "$1"
-}
-
 generate_node() {
     node_type="$1"
     tnode_id="${2:-}"
 
     path="/v1/nodefactory/node/${node_type}/generate"
-    if [ -n "$tnode_id" ]; then
-        path="${path}?associatedTNodeId=$(urlenc "$tnode_id")"
+
+    tmp_body="$(mktemp)"
+    tmp_json="$(mktemp)"
+
+    python3 - "$tnode_id" >"$tmp_json" <<'PY'
+import json
+import sys
+
+print(json.dumps({
+    "associatedTNodeId": sys.argv[1] if len(sys.argv) > 1 else ""
+}))
+PY
+
+    CURL_OPTS=(-sS)
+    add_curl_headers
+    CURL_OPTS+=(
+        -H "Content-Type: application/json"
+        -X POST
+        -d @"$tmp_json"
+        -o "$tmp_body"
+        -w '%{http_code}'
+        "${FACTORY_URL}${path}"
+    )
+
+    code="$(curl "${CURL_OPTS[@]}" || true)"
+
+    if [ "$code" -lt 200 ] || [ "$code" -ge 300 ]; then
+        echo "error: POST ${path} failed with HTTP ${code}" >&2
+        cat "$tmp_body" >&2
+        echo >&2
+        rm -f "$tmp_body" "$tmp_json"
+        exit 1
     fi
 
-    api_call POST "$path" | json_id
+    cat "$tmp_body" | json_id
+
+    rm -f "$tmp_body" "$tmp_json"
+}
+
+assert_bundle_ids() {
+    tnode_id="$1"
+    cnode_id="$2"
+    anode_id="$3"
+
+    expected_cnode="$(printf "%s" "$tnode_id" | sed 's/-tnode-/-cnode-/')"
+    expected_anode="$(printf "%s" "$tnode_id" | sed 's/-tnode-/-anode-/')"
+
+    if [ "$cnode_id" != "$expected_cnode" ] ||
+       [ "$anode_id" != "$expected_anode" ]; then
+        echo "error: factory generated non-derived bundle ids" >&2
+        echo "  tnode:          $tnode_id" >&2
+        echo "  cnode:          $cnode_id" >&2
+        echo "  expected cnode: $expected_cnode" >&2
+        echo "  anode:          $anode_id" >&2
+        echo "  expected anode: $expected_anode" >&2
+        exit 1
+    fi
 }
 
 provision_node() {
@@ -238,6 +291,7 @@ while [ "$i" -le "$COUNT" ]; do
     tnode_id="$(generate_node tnode)"
     cnode_id="$(generate_node cnode "$tnode_id")"
     anode_id="$(generate_node anode "$tnode_id")"
+    assert_bundle_ids "$tnode_id" "$cnode_id" "$anode_id"
 
     if [ "$PROVISION" = "true" ]; then
         echo "factory: provisioning ${tnode_id} ${cnode_id} ${anode_id}" >&2

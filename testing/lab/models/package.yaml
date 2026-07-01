@@ -1,0 +1,3 @@
+entity: package
+states: [draft, active, archived, deactivated]
+actions: [create, read, update, archive, deactivate, add_to_sim, remove_from_sim]

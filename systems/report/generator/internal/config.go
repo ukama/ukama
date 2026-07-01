@@ -22,12 +22,12 @@ type Config struct {
 	Metrics           *config.Metrics   `default:"{}"`
 	Timeout           time.Duration     `default:"3s"`
 	MsgClient         *config.MsgClient `default:"{}"`
+	System            string            `default:"report"`
+	PdfHost           string            `default:""`
+	PdfPort           int               `default:"3000"`
+	PdfPrefix         string            `default:"/pdf/"`
+	PdfFolder         string            `default:"/home/ukama/srv/static"`
 	Service           *config.Service
-	System            string `default:"report"`
-	PdfHost           string `default:""`
-	PdfPort           int    `default:"3000"`
-	PdfPrefix         string `default:"/pdf/"`
-	PdfFolder         string `default:"/home/ukama/srv/static"`
 	OrgName           string
 	OrgId             string
 }

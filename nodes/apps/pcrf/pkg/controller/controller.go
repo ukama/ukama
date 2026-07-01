@@ -11,6 +11,8 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -27,19 +29,23 @@ import (
 )
 
 type Controller struct {
-	store     *store.Store
-	sm        session.SessionManager
-	rc        client.RemoteController
-	publisher *Publisher
-	nodeId    string
+	store         *store.Store
+	sm            session.SessionManager
+	rc            client.RemoteController
+	publisher     *Publisher
+	nodeId        string
+	serviceMu     sync.RWMutex
+	serviceOn     bool
+	serviceReason string
 }
 
 type ControllerStatus struct {
-	NodeID   string          `json:"nodeId"`
-	Ready    bool            `json:"ready"`
-	State    string          `json:"state"`
-	Reason   string          `json:"reason"`
-	DataPath datapath.Status `json:"datapath"`
+	NodeID   string              `json:"nodeId"`
+	Ready    bool                `json:"ready"`
+	State    string              `json:"state"`
+	Reason   string              `json:"reason"`
+	Service  api.ServiceResponse `json:"service"`
+	DataPath datapath.Status     `json:"datapath"`
 	Sessions struct {
 		Active uint32 `json:"active"`
 	} `json:"sessions"`
@@ -76,6 +82,8 @@ func NewController(db string, br pkg.BrdigeConfig, rc client.RemoteController, p
 	}
 
 	c.nodeId = nodeId
+	c.serviceOn = false
+	c.serviceReason = "startup_diable"
 	c.rc = rc
 	c.sm = sm
 	c.store = store
@@ -94,6 +102,7 @@ func (c *Controller) Status() ControllerStatus {
 		Ready:    smStatus.DataPath.Connected,
 		State:    "ready",
 		Reason:   "none",
+		Service:  c.ServiceStatus(),
 		DataPath: smStatus.DataPath,
 	}
 
@@ -206,12 +215,67 @@ func (c *Controller) validateSubscriber(imsi string) (*store.Subscriber, error) 
 	return s, nil
 }
 
+func (c *Controller) ServiceStatus() api.ServiceResponse {
+	c.serviceMu.RLock()
+	defer c.serviceMu.RUnlock()
+
+	state := "off"
+	admission := "disabled"
+	reason := c.serviceReason
+	if c.serviceOn {
+		state = "on"
+		admission = "enabled"
+	}
+	if reason == "" {
+		reason = "ok"
+	}
+
+	return api.ServiceResponse{
+		State:     state,
+		Admission: admission,
+		Reason:    reason,
+	}
+}
+
+func (c *Controller) SetService(ctx context.Context, req *api.ServiceRequest) error {
+	state := strings.ToLower(strings.TrimSpace(req.State))
+	switch state {
+	case "on":
+		c.serviceMu.Lock()
+		c.serviceOn = true
+		c.serviceReason = "ok"
+		c.serviceMu.Unlock()
+		return nil
+	case "off":
+		c.serviceMu.Lock()
+		c.serviceOn = false
+		c.serviceReason = "operator_disabled"
+		c.serviceMu.Unlock()
+		if err := c.sm.EndAllSessions(); err != nil {
+			return err
+		}
+		return nil
+	default:
+		return fmt.Errorf("invalid service state %q", req.State)
+	}
+}
+
+func (c *Controller) serviceEnabled() bool {
+	c.serviceMu.RLock()
+	defer c.serviceMu.RUnlock()
+	return c.serviceOn
+}
+
 func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) error {
 	var sub *store.Subscriber
 	var err error
 
 	log.Infof("New session request received for subscriber %s and Ip address %s",
 		req.ImsiStr, req.IpStr)
+
+	if !c.serviceEnabled() {
+		return fmt.Errorf("service_disabled")
+	}
 
 	sub, err = c.validateSubscriber(req.ImsiStr)
 	if err != nil {

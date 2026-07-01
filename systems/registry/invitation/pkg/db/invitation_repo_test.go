@@ -66,8 +66,8 @@ var (
 	testUpdatedAt  = time.Now()
 
 	// Test roles and statuses
-	testRole           = roles.TYPE_ADMIN
-	testStatus         = ukama.InvitationStatus_INVITE_PENDING
+	testRole   = roles.TYPE_ADMIN
+	testStatus = ukama.InvitationStatus_INVITE_PENDING
 
 	// Database column names
 	dbColumns = []string{"id", "name", "email", "role", "status", "user_id", "expires_at", "link", "created_at", "updated_at", "deleted_at"}
@@ -488,17 +488,25 @@ func TestInvitationRepo_Delete(t *testing.T) {
 		invitation := createDefaultTestInvitation()
 		mock, _, r := setupTestDB(t)
 		nestedFuncCalled := false
-		nestedFunc := func(string, string) error {
+		var nestedEmail, nestedID string
+		nestedFunc := func(email, id string) error {
 			nestedFuncCalled = true
+			nestedEmail = email
+			nestedID = id
 			return nil
 		}
 
-		mock.ExpectBegin()
+		rows := sqlmock.NewRows(dbColumns).
+			AddRow(invitation.Id, invitation.Name, invitation.Email, invitation.Role, invitation.Status,
+				invitation.UserId, invitation.ExpiresAt, invitation.Link, invitation.CreatedAt, invitation.UpdatedAt, invitation.DeletedAt)
 
+		mock.ExpectBegin()
+		mock.ExpectQuery(selectQueryPattern).
+			WithArgs(invitation.Id, sqlmock.AnyArg()).
+			WillReturnRows(rows)
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "invitations"`)).
 			WithArgs(sqlmock.AnyArg(), invitation.Id).
 			WillReturnResult(sqlmock.NewResult(1, 1))
-
 		mock.ExpectCommit()
 
 		// Act
@@ -507,6 +515,8 @@ func TestInvitationRepo_Delete(t *testing.T) {
 		// Assert
 		assert.NoError(t, err)
 		assert.True(t, nestedFuncCalled)
+		assert.Equal(t, invitation.Email, nestedEmail)
+		assert.Equal(t, invitation.Id.String(), nestedID)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -521,7 +531,14 @@ func TestInvitationRepo_Delete(t *testing.T) {
 			return expectedError
 		}
 
+		rows := sqlmock.NewRows(dbColumns).
+			AddRow(invitation.Id, invitation.Name, invitation.Email, invitation.Role, invitation.Status,
+				invitation.UserId, invitation.ExpiresAt, invitation.Link, invitation.CreatedAt, invitation.UpdatedAt, invitation.DeletedAt)
+
 		mock.ExpectBegin()
+		mock.ExpectQuery(selectQueryPattern).
+			WithArgs(invitation.Id, sqlmock.AnyArg()).
+			WillReturnRows(rows)
 		mock.ExpectRollback()
 
 		// Act

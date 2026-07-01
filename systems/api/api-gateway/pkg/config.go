@@ -21,16 +21,16 @@ type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	DB                *config.Database `default:"{}"`
 	Server            rest.HttpConfig
-	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
+	Http              HttpEndpoints  `mapstructure:"http"`
 	Metrics           config.Metrics `mapstructure:"metrics"`
 	Auth              *config.Auth   `mapstructure:"auth"`
 }
 
 type HttpEndpoints struct {
 	Timeout        time.Duration
-	RegistryHost   string `default:"registry:9090"`
-	DataPlanHost   string `default:"data-plan:9090"`
-	SubscriberHost string `default:"subscriber:9090"`
+	RegistryHost   string `default:"api-gateway-registry:8080"`
+	DataPlanHost   string `default:"api-gateway-dataplan:8080"`
+	SubscriberHost string `default:"api-gateway-subscriber:8080"`
 	NodeMetrics    string
 }
 
@@ -53,9 +53,8 @@ func NewConfig(name string) *Config {
 			Cors: defaultCors,
 		},
 
-		HttpServices: HttpEndpoints{
-			Timeout:     3 * time.Second,
-			NodeMetrics: "http://localhost:8075",
+		Http: HttpEndpoints{
+			Timeout: 3 * time.Second,
 		},
 
 		Metrics: *config.DefaultMetrics(),

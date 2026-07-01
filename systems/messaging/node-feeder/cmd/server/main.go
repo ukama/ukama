@@ -29,15 +29,15 @@ func main() {
 
 	//registryClient := multipl.NewRegistryProvider(serviceConfig.Registry.Host, serviceConfig.Registry.TimeoutSeconds, serviceConfig.DebugMode)
 
-	pub, err := multipl.NewQPub(serviceConfig.Queue.Uri, global.ServiceName, serviceConfig.Registry, os.Getenv(global.POD_NAME_ENV_VAR))
-	if err != nil {
-		log.Fatalf("Failed to create publisher: %v", err)
-	}
-
 	regUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
 		ic.CreateHostString(serviceConfig.OrgName, "registry"), &serviceConfig.OrgName)
 	if err != nil {
 		log.Errorf("Failed to resolve registry address: %v", err)
+	}
+
+	pub, err := multipl.NewQPub(serviceConfig.Queue.Uri, global.ServiceName, regUrl.String(), os.Getenv(global.POD_NAME_ENV_VAR))
+	if err != nil {
+		log.Fatalf("Failed to create publisher: %v", err)
 	}
 
 	m := multipl.NewRequestMultiplier(regUrl.String(), pub)

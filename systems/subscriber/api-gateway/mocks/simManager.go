@@ -372,6 +372,36 @@ func (_m *simManager) SetActivePackageForSim(req *gen.SetActivePackageRequest) (
 	return r0, r1
 }
 
+// SetInactivePackageForSim provides a mock function with given fields: req
+func (_m *simManager) SetInactivePackageForSim(req *gen.SetInactivePackageRequest) (*gen.SetInactivePackageResponse, error) {
+	ret := _m.Called(req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetInactivePackageForSim")
+	}
+
+	var r0 *gen.SetInactivePackageResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*gen.SetInactivePackageRequest) (*gen.SetInactivePackageResponse, error)); ok {
+		return rf(req)
+	}
+	if rf, ok := ret.Get(0).(func(*gen.SetInactivePackageRequest) *gen.SetInactivePackageResponse); ok {
+		r0 = rf(req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.SetInactivePackageResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(*gen.SetInactivePackageRequest) error); ok {
+		r1 = rf(req)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // TerminateSim provides a mock function with given fields: simId
 func (_m *simManager) TerminateSim(simId string) (*gen.TerminateSimResponse, error) {
 	ret := _m.Called(simId)

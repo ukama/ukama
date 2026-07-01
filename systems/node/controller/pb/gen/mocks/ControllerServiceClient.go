@@ -90,8 +90,8 @@ func (_m *ControllerServiceClient) RestartNode(ctx context.Context, in *gen.Rest
 	return r0, r1
 }
 
-// RestartNodes provides a mock function with given fields: ctx, in, opts
-func (_m *ControllerServiceClient) RestartNodes(ctx context.Context, in *gen.RestartNodesRequest, opts ...grpc.CallOption) (*gen.RestartNodesResponse, error) {
+// SendNodeCommand provides a mock function with given fields: ctx, in, opts
+func (_m *ControllerServiceClient) SendNodeCommand(ctx context.Context, in *gen.SendNodeCommandRequest, opts ...grpc.CallOption) (*gen.SendNodeCommandResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -102,23 +102,23 @@ func (_m *ControllerServiceClient) RestartNodes(ctx context.Context, in *gen.Res
 	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
-		panic("no return value specified for RestartNodes")
+		panic("no return value specified for SendNodeCommand")
 	}
 
-	var r0 *gen.RestartNodesResponse
+	var r0 *gen.SendNodeCommandResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.RestartNodesRequest, ...grpc.CallOption) (*gen.RestartNodesResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.SendNodeCommandRequest, ...grpc.CallOption) (*gen.SendNodeCommandResponse, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.RestartNodesRequest, ...grpc.CallOption) *gen.RestartNodesResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.SendNodeCommandRequest, ...grpc.CallOption) *gen.SendNodeCommandResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.RestartNodesResponse)
+			r0 = ret.Get(0).(*gen.SendNodeCommandResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.RestartNodesRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.SendNodeCommandRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -127,8 +127,8 @@ func (_m *ControllerServiceClient) RestartNodes(ctx context.Context, in *gen.Res
 	return r0, r1
 }
 
-// RestartSite provides a mock function with given fields: ctx, in, opts
-func (_m *ControllerServiceClient) RestartSite(ctx context.Context, in *gen.RestartSiteRequest, opts ...grpc.CallOption) (*gen.RestartSiteResponse, error) {
+// ToggleRadio provides a mock function with given fields: ctx, in, opts
+func (_m *ControllerServiceClient) ToggleRadio(ctx context.Context, in *gen.ToggleRadioRequest, opts ...grpc.CallOption) (*gen.ToggleRadioResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -139,23 +139,23 @@ func (_m *ControllerServiceClient) RestartSite(ctx context.Context, in *gen.Rest
 	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
-		panic("no return value specified for RestartSite")
+		panic("no return value specified for ToggleRadio")
 	}
 
-	var r0 *gen.RestartSiteResponse
+	var r0 *gen.ToggleRadioResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.RestartSiteRequest, ...grpc.CallOption) (*gen.RestartSiteResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleRadioRequest, ...grpc.CallOption) (*gen.ToggleRadioResponse, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.RestartSiteRequest, ...grpc.CallOption) *gen.RestartSiteResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleRadioRequest, ...grpc.CallOption) *gen.ToggleRadioResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.RestartSiteResponse)
+			r0 = ret.Get(0).(*gen.ToggleRadioResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.RestartSiteRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ToggleRadioRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -164,8 +164,8 @@ func (_m *ControllerServiceClient) RestartSite(ctx context.Context, in *gen.Rest
 	return r0, r1
 }
 
-// ToggleInternetSwitch provides a mock function with given fields: ctx, in, opts
-func (_m *ControllerServiceClient) ToggleInternetSwitch(ctx context.Context, in *gen.ToggleInternetSwitchRequest, opts ...grpc.CallOption) (*gen.ToggleInternetSwitchResponse, error) {
+// ToggleService provides a mock function with given fields: ctx, in, opts
+func (_m *ControllerServiceClient) ToggleService(ctx context.Context, in *gen.ToggleServiceRequest, opts ...grpc.CallOption) (*gen.ToggleServiceResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -176,23 +176,23 @@ func (_m *ControllerServiceClient) ToggleInternetSwitch(ctx context.Context, in 
 	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ToggleInternetSwitch")
+		panic("no return value specified for ToggleService")
 	}
 
-	var r0 *gen.ToggleInternetSwitchResponse
+	var r0 *gen.ToggleServiceResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleInternetSwitchRequest, ...grpc.CallOption) (*gen.ToggleInternetSwitchResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleServiceRequest, ...grpc.CallOption) (*gen.ToggleServiceResponse, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleInternetSwitchRequest, ...grpc.CallOption) *gen.ToggleInternetSwitchResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleServiceRequest, ...grpc.CallOption) *gen.ToggleServiceResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ToggleInternetSwitchResponse)
+			r0 = ret.Get(0).(*gen.ToggleServiceResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ToggleInternetSwitchRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ToggleServiceRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -201,8 +201,8 @@ func (_m *ControllerServiceClient) ToggleInternetSwitch(ctx context.Context, in 
 	return r0, r1
 }
 
-// ToggleNodeService provides a mock function with given fields: ctx, in, opts
-func (_m *ControllerServiceClient) ToggleNodeService(ctx context.Context, in *gen.ToggleNodeServiceRequest, opts ...grpc.CallOption) (*gen.ToggleNodeServiceResponse, error) {
+// ToggleSwitchPort provides a mock function with given fields: ctx, in, opts
+func (_m *ControllerServiceClient) ToggleSwitchPort(ctx context.Context, in *gen.ToggleSwitchPortRequest, opts ...grpc.CallOption) (*gen.ToggleSwitchPortResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -213,60 +213,23 @@ func (_m *ControllerServiceClient) ToggleNodeService(ctx context.Context, in *ge
 	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ToggleNodeService")
+		panic("no return value specified for ToggleSwitchPort")
 	}
 
-	var r0 *gen.ToggleNodeServiceResponse
+	var r0 *gen.ToggleSwitchPortResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleNodeServiceRequest, ...grpc.CallOption) (*gen.ToggleNodeServiceResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleSwitchPortRequest, ...grpc.CallOption) (*gen.ToggleSwitchPortResponse, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleNodeServiceRequest, ...grpc.CallOption) *gen.ToggleNodeServiceResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleSwitchPortRequest, ...grpc.CallOption) *gen.ToggleSwitchPortResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ToggleNodeServiceResponse)
+			r0 = ret.Get(0).(*gen.ToggleSwitchPortResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ToggleNodeServiceRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// ToggleRfSwitch provides a mock function with given fields: ctx, in, opts
-func (_m *ControllerServiceClient) ToggleRfSwitch(ctx context.Context, in *gen.ToggleRfSwitchRequest, opts ...grpc.CallOption) (*gen.ToggleRfSwitchResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ToggleRfSwitch")
-	}
-
-	var r0 *gen.ToggleRfSwitchResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleRfSwitchRequest, ...grpc.CallOption) (*gen.ToggleRfSwitchResponse, error)); ok {
-		return rf(ctx, in, opts...)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleRfSwitchRequest, ...grpc.CallOption) *gen.ToggleRfSwitchResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ToggleRfSwitchResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ToggleRfSwitchRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ToggleSwitchPortRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

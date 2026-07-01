@@ -30,12 +30,13 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
+	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
-	crpc "github.com/ukama/ukama/systems/node/controller/pkg/rpc"
 )
 
 const registrySystemName = "registry"
+const operationSystemName = "operation"
 
 var svcConf *pkg.Config
 
@@ -80,6 +81,13 @@ func runGrpcServer(gormdb sql.Db) {
 	}
 
 	//TODO: We should do initclient resolution on demand, in order to avoid systems url changes side effects
+
+	operationUrl, err := ic.GetHostUrl(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode)),
+		ic.CreateHostString(svcConf.OrgName, operationSystemName), &svcConf.OrgName)
+	if err != nil {
+		log.Errorf("Failed to resolve operation address: %v", err)
+	}
+
 	regUrl, err := ic.GetHostUrl(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode)),
 		ic.CreateHostString(svcConf.OrgName, registrySystemName), &svcConf.OrgName)
 	if err != nil {
@@ -89,12 +97,12 @@ func runGrpcServer(gormdb sql.Db) {
 	cnet := creg.NewNetworkClient(regUrl.String())
 	csite := creg.NewSiteClient(regUrl.String())
 	cnode := creg.NewNodeClient(regUrl.String())
+	opMgr := copr.NewManagerClient(operationUrl.String())
 
 	mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	opMgr := cclient.NewOperationManager(svcConf.Operation.ManagerHost, svcConf.Operation.Timeout)
 	opMon := cclient.NewOperationMonitor(svcConf.Operation.MonitorHost, svcConf.Operation.Timeout)
 
 	contServer := server.NewControllerServer(svcConf.OrgName, db.NewNodeLogRepo(gormdb),
@@ -105,7 +113,6 @@ func runGrpcServer(gormdb sql.Db) {
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterControllerServiceServer(s, contServer)
-		crpc.RegisterCommandServiceServer(s, contServer)
 		epb.RegisterEventNotificationServiceServer(s, controllerEventServer)
 
 	})

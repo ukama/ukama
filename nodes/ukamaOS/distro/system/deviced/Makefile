@@ -58,6 +58,7 @@ LIBS+=-lusys
 
 # Soruce files
 CFILES   = $(wildcard ./src/*.c)
+CFILES  += $(wildcard ./src/nodes/*.c)
 OBJFILES = $(CFILES:.c=.o)
 
 .PHONY: $(TARGET_EXEC)

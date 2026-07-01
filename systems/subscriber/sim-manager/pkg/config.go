@@ -51,6 +51,10 @@ type HttpServices struct {
 
 func NewConfig(name string) *Config {
 	return &Config{
+		SimPool:       "simpool:9090",
+		Registry:      "registry:9090",
+		TestAgent:     "testagent:9090",
+		OperatorAgent: "http://operator-agent:8080",
 		DB: &config.Database{
 			DbName: name,
 		},

@@ -108,12 +108,19 @@ func (p *packageRepo) GetAll() ([]Package, error) {
 }
 
 func (r *packageRepo) Delete(uuid uuid.UUID) error {
-	p := &Package{}
-	result := r.Db.GetGormDb().Model(&Package{}).Where("uuid=?", uuid).Delete(p)
-	if result.Error != nil {
+	return r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("package_id = ?", uuid).Delete(&PackageRate{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("package_id = ?", uuid).Delete(&PackageDetails{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("package_id = ?", uuid).Delete(&PackageMarkup{}).Error; err != nil {
+			return err
+		}
+		result := tx.Where("uuid = ?", uuid).Delete(&Package{})
 		return result.Error
-	}
-	return nil
+	})
 }
 
 func (b *packageRepo) Update(uuid uuid.UUID, pkg *Package) error {

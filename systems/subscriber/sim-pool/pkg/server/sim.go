@@ -169,7 +169,7 @@ func dbSimsToPbSim(packages []db.Sim) []*pb.Sim {
 }
 
 func dbSimToPbSim(p *db.Sim) *pb.Sim {
-	return &pb.Sim{
+	res := &pb.Sim{
 		Id:             uint64(p.ID),
 		Iccid:          p.Iccid,
 		Msisdn:         p.Msisdn,
@@ -178,12 +178,17 @@ func dbSimToPbSim(p *db.Sim) *pb.Sim {
 		SmDpAddress:    p.SmDpAddress,
 		ActivationCode: p.ActivationCode,
 		CreatedAt:      p.CreatedAt.String(),
-		DeletedAt:      p.DeletedAt.Time.String(),
 		UpdatedAt:      p.UpdatedAt.String(),
 		IsPhysical:     p.IsPhysical,
 		QrCode:         p.QrCode,
 		IsFailed:       p.IsFailed,
 	}
+
+	if p.DeletedAt.Valid {
+		res.DeletedAt = p.DeletedAt.Time.String()
+	}
+
+	return res
 }
 
 func (p *SimPoolServer) PublishEventMessage(route string, msg protoreflect.ProtoMessage) error {

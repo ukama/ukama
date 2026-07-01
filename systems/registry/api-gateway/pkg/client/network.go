@@ -112,3 +112,10 @@ func (n *NetworkRegistry) GetNetworks() (*netpb.GetNetworksResponse, error) {
 
 	return res, nil
 }
+
+func (n *NetworkRegistry) RemoveNetwork(netID string) (*netpb.DeleteResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+	defer cancel()
+
+	return n.client.Delete(ctx, &netpb.DeleteRequest{NetworkId: netID})
+}

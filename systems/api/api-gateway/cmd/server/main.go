@@ -31,11 +31,11 @@ func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
 
-	networkClient := client.NewNetworkClientSet(creg.NewNetworkClient(svcConf.HttpServices.RegistryHost))
-	packageClient := client.NewPackageClientSet(cdplan.NewPackageClient(svcConf.HttpServices.DataPlanHost))
-	simClient := client.NewSimClientSet(csub.NewSimClient(svcConf.HttpServices.SubscriberHost),
-		csub.NewSubscriberClient(svcConf.HttpServices.SubscriberHost))
-	nodeClient := client.NewNodeClientSet(creg.NewNodeClient(svcConf.HttpServices.RegistryHost))
+	networkClient := client.NewNetworkClientSet(creg.NewNetworkClient(svcConf.Http.RegistryHost))
+	packageClient := client.NewPackageClientSet(cdplan.NewPackageClient(svcConf.Http.DataPlanHost))
+	simClient := client.NewSimClientSet(csub.NewSimClient(svcConf.Http.SubscriberHost),
+		csub.NewSubscriberClient(svcConf.Http.SubscriberHost))
+	nodeClient := client.NewNodeClientSet(creg.NewNodeClient(svcConf.Http.RegistryHost))
 
 	router := rest.NewRouter(networkClient, packageClient, simClient, nodeClient, rest.NewRouterConfig(svcConf),
 		auth.NewAuthClient(svcConf.Auth.AuthServerUrl, cclient.WithDebug(svcConf.DebugMode)).AuthenticateUser)

@@ -18,11 +18,11 @@ import (
 
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
-	Server            rest.HttpConfig
 	Services          GrpcEndpoints  `mapstructure:"services"`
-	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
+	Http              HttpEndpoints  `mapstructure:"http"`
 	Metrics           config.Metrics `mapstructure:"metrics"`
 	Auth              *config.Auth   `mapstructure:"auth"`
+	Server            rest.HttpConfig
 }
 
 type HttpEndpoints struct {
@@ -60,7 +60,7 @@ func NewConfig() *Config {
 			Cors: defaultCors,
 		},
 
-		HttpServices: HttpEndpoints{
+		Http: HttpEndpoints{
 			Timeout:     5 * time.Second,
 			NodeMetrics: "http://localhost",
 		},

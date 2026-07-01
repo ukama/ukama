@@ -24,9 +24,9 @@ import (
 )
 
 const (
-	testOrgName  = "test-org"
-	testTowerID  = "uk-983794-tnode-78-7830"
-	testAmpID    = "uk-983794-anode-78-7830"
+	testOrgName = "test-org"
+	testTowerID = "uk-983794-tnode-78-7830"
+	testAmpID   = "uk-983794-anode-78-7830"
 )
 
 type fakeControllerProvider struct {
@@ -50,9 +50,9 @@ func TestSetService_ForwardsToTowerNode(t *testing.T) {
 		Nodes: []registry.NodeInfo{{Id: testAmpID}, {Id: testTowerID}},
 	}, nil).Once()
 
-	controllerClient.On("ToggleNodeService", mock.Anything, mock.MatchedBy(func(req *contpb.ToggleNodeServiceRequest) bool {
+	controllerClient.On("ToggleService", mock.Anything, mock.MatchedBy(func(req *contpb.ToggleServiceRequest) bool {
 		return req.NodeId == testTowerID && req.State == "on"
-	})).Return(&contpb.ToggleNodeServiceResponse{OperationId: "op-1"}, nil).Once()
+	})).Return(&contpb.ToggleServiceResponse{OperationId: "op-1"}, nil).Once()
 
 	s := newTestServer(nodeClient, controllerClient)
 
@@ -72,9 +72,9 @@ func TestSetRadio_ForwardsToAmplifierNode(t *testing.T) {
 		Nodes: []registry.NodeInfo{{Id: testTowerID}, {Id: testAmpID}},
 	}, nil).Once()
 
-	controllerClient.On("ToggleRfSwitch", mock.Anything, mock.MatchedBy(func(req *contpb.ToggleRfSwitchRequest) bool {
+	controllerClient.On("ToggleRadio", mock.Anything, mock.MatchedBy(func(req *contpb.ToggleRadioRequest) bool {
 		return req.NodeId == testAmpID && req.State == "off"
-	})).Return(&contpb.ToggleRfSwitchResponse{OperationId: "op-2"}, nil).Once()
+	})).Return(&contpb.ToggleRadioResponse{OperationId: "op-2"}, nil).Once()
 
 	s := newTestServer(nodeClient, controllerClient)
 

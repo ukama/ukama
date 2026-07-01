@@ -39,21 +39,16 @@ var defaultSiteState = db.SiteState{
 	Reason:       "site_created",
 }
 
-var defaultSiteComponent = db.SiteComponent{
-	Components: []string{""},
-}
-
 type SiteControllerEventServer struct {
-	s                  *SiteControllerServer
-	orgName            string
-	sites              db.SiteRepo
-	intents            db.IntentRepo
-	flights            db.IntentFlightRepo
-	states             db.StateRepo
-	components          db.ComponentRepo
-	componentSyncDelay  time.Duration
+	s                    *SiteControllerServer
+	orgName              string
+	sites                db.SiteRepo
+	intents              db.IntentRepo
+	flights              db.IntentFlightRepo
+	states               db.StateRepo
+	components           db.ComponentRepo
+	componentSyncDelay   time.Duration
 	componentSyncTimeout time.Duration
-	config               *pkg.Config
 	epb.UnimplementedEventNotificationServiceServer
 }
 
@@ -169,10 +164,13 @@ func (c *SiteControllerEventServer) handleHealthReport(ctx context.Context, msg 
 		}
 
 		radioState := report.Interfaces.Radio.State
-		c.s.SetRadio(ctx, &pb.SetRadioRequest{
+		_, err = c.s.SetRadio(ctx, &pb.SetRadioRequest{
 			SiteId: siteId,
-			State: radioState,
+			State:  radioState,
 		})
+		if err != nil {
+			return err
+		}
 		return nil
 
 	case ukama.NODE_ID_TYPE_CNODE:

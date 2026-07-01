@@ -30,21 +30,16 @@ type NameUpdate struct {
 
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
-	Server            rest.HttpConfig
 	Services          GrpcEndpoints  `mapstructure:"services"`
-	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
+	Http              HttpEndpoints  `mapstructure:"http"`
 	MetricsServer     config.Metrics `mapstructure:"metrics"`
-	MetricsStore      string         `default:"http://localhost:8080"`
 	Auth              *config.Auth   `mapstructure:"auth"`
+	Period            time.Duration  `default:"5s"`
+	MetricsStore      string         `default:"http://localhost:8080"`
+	MetricsKeyMapFile string         `default:"default-metrics.yaml"`
+	Server            rest.HttpConfig
 	MetricsConfig     *MetricsConfig
 	OrgName           string
-	Period            time.Duration `default:"5s"`
-	MetricsKeyMapFile string        `default:"default-metrics.yaml"`
-	Http              HttpServices
-}
-
-type HttpServices struct {
-	InitClient string `default:"api-gateway-init:8080"`
 }
 
 type Metric struct {
@@ -93,6 +88,7 @@ type GrpcEndpoints struct {
 type HttpEndpoints struct {
 	Timeout     time.Duration
 	NodeMetrics string
+	InitClient  string `default:"api-gateway-init:8080"`
 }
 
 func NewConfig() *Config {
@@ -111,7 +107,7 @@ func NewConfig() *Config {
 			Sanitizer: "sanitizer:9090",
 			Reasoning: "reasoning:9090",
 		},
-		HttpServices: HttpEndpoints{
+		Http: HttpEndpoints{
 			Timeout:     3 * time.Second,
 			NodeMetrics: "http://localhost",
 		},

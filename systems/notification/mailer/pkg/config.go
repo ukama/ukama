@@ -21,14 +21,15 @@ type MailerConfig struct {
 	Password string `default:""`
 	From     string `default:"hello@dev.ukama.com"`
 }
+
 type Config struct {
 	uconf.BaseConfig `mapstructure:",squash"`
 	DB               *uconf.Database `default:"{}"`
 	Grpc             *uconf.Grpc     `default:"{}"`
 	Queue            *uconf.Queue    `default:"{}"`
 	Timeout          time.Duration   `default:"50s"`
+	TemplatesPath    string          `default:"templates"`
 	Service          *uconf.Service
-	TemplatesPath    string `default:"templates"`
 	Mailer           *MailerConfig
 }
 

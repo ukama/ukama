@@ -30,7 +30,6 @@ type Config struct {
 	TimeoutSeconds    int    `default:"3"`
 	DevicePort        int    `default:"0"`
 	Net               string `default:"nns:9090"`
-	Registry          string `default:"api-gateway-registry:8080"`
 	Http              HttpServices
 }
 
@@ -43,6 +42,8 @@ func NewConfig(name string) *Config {
 		Queue: config.Queue{
 			Uri: "amqp://guest:guest@rabbitmq:5672/",
 		},
+		Net:     "nns:9090",
+		Metrics: config.DefaultMetrics(),
 		Listener: ListenerConfig{
 			ExecutionRetryCount: 3,
 			RetryPeriodSec:      30,
@@ -50,7 +51,6 @@ func NewConfig(name string) *Config {
 			Routes:              []mb.RoutingKey{"request.cloud.local.*.*.*.nodefeeder.publish"},
 			Exchange:            "amq.topic",
 		},
-		Metrics: config.DefaultMetrics(),
 		//request.cloud.local.ukamaorg.messaging.eventgenerator.nodefeeder.publish
 	}
 }

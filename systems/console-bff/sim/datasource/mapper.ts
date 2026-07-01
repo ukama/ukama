@@ -219,3 +219,21 @@ export const dtoToSimsFromPoolDto = (res: any): SimsPoolResDto => {
   }
   return { sims: sims };
 };
+
+export const dtoToSimByIccidDto = (sim: any): SimPoolResDto => {
+  return {
+    id: sim.id,
+    iccid: sim.iccid,
+    msisdn: sim.msisdn,
+    qrCode: sim.qr_code,
+    simType: sim.sim_type,
+    isFailed: sim.is_failed,
+    updatedAt: sim.updated_at,
+    createdAt: sim.created_at,
+    deletedAt: sim.deleted_at,
+    isPhysical: sim.is_physical,
+    isAllocated: sim.is_allocated,
+    smApAddress: sim.sm_ap_address,
+    activationCode: sim.activation_code,
+  };
+};

@@ -18,11 +18,11 @@ import (
 
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
-	Server            rest.HttpConfig
 	Services          GrpcEndpoints  `mapstructure:"services"`
-	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
+	Http              HttpEndpoints  `mapstructure:"http"`
 	Metrics           config.Metrics `mapstructure:"metrics"`
 	Auth              *config.Auth   `mapstructure:"auth"`
+	Server            rest.HttpConfig
 }
 
 type GrpcEndpoints struct {
@@ -56,7 +56,7 @@ func NewConfig() *Config {
 			State:          "state:9090",
 			SiteController: "site-controller:9090",
 		},
-		HttpServices: HttpEndpoints{
+		Http: HttpEndpoints{
 			Timeout: 3 * time.Second,
 		},
 

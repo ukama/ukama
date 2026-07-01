@@ -626,12 +626,19 @@ static void json_add_cellular(JsonObj *interfaces,
         return;
     }
 
-    json_object_set_new(jCellular, "available", json_false());
     json_object_set_new(jCellular,
-                        "error",
-                        json_string(cellular->error ?
-                                    cellular->error :
-                                    "cellular_status_not_supported"));
+                        "available",
+                        cellular->service ? json_true() : json_false());
+    if (cellular->service) {
+        json_object_set_new(jCellular,
+                            "service",
+                            json_string(cellular->service));
+    }
+    if (cellular->error) {
+        json_object_set_new(jCellular,
+                            "error",
+                            json_string(cellular->error));
+    }
 
     json_object_set_new(interfaces, "cellular", jCellular);
 }

@@ -15,14 +15,14 @@ import (
 )
 
 type Config struct {
-	DB               *uconf.Database `default:"{}"`
 	uconf.BaseConfig `mapstructure:",squash"`
-	Grpc             *uconf.Grpc   `default:"{}"`
-	Queue            *uconf.Queue  `default:"{}"`
-	Timeout          time.Duration `default:"20s"`
-	Service          *uconf.Service
+	DB               *uconf.Database  `default:"{}"`
+	Grpc             *uconf.Grpc      `default:"{}"`
+	Queue            *uconf.Queue     `default:"{}"`
+	Timeout          time.Duration    `default:"20s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	OrgName          string           `default:"ukama"`
+	Service          *uconf.Service
 	Http             HttpServices
 	Operation        OperationServices
 }
@@ -32,11 +32,11 @@ type HttpServices struct {
 }
 
 type OperationServices struct {
-	ManagerHost string        `default:"manager:9090"`
-	MonitorHost string        `default:"operation-monitor:9090"`
-	Timeout     time.Duration `default:"5s"`
-	LeaseSecs   uint32        `default:"600"`
-	DeadlineSecs uint32       `default:"600"`
+	ManagerHost  string        `default:"manager:9090"`
+	MonitorHost  string        `default:"operation-monitor:9090"`
+	Timeout      time.Duration `default:"5s"`
+	LeaseSecs    uint32        `default:"600"`
+	DeadlineSecs uint32        `default:"600"`
 }
 
 func NewConfig(name string) *Config {
@@ -50,6 +50,12 @@ func NewConfig(name string) *Config {
 			ListenerRoutes: []string{
 				"event.cloud.local.{{ .Org}}.registry.node.node.create",
 			},
+		},
+		Operation: OperationServices{
+			ManagerHost:  "manager:9090",
+			Timeout:      5 * time.Second,
+			LeaseSecs:    600,
+			DeadlineSecs: 600,
 		},
 	}
 }

@@ -6,6 +6,7 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -27,8 +28,8 @@ static ControlSubsysState *get_subsys(ControlCtx *ctx, ControlSubsystem subsyste
     case CONTROL_SUBSYS_RADIO:
         ss = &ctx->Radio;
         break;
-    case CONTROL_SUBSYS_RESTART:
-        ss = &ctx->Restart;
+    case CONTROL_SUBSYS_REBOOT:
+        ss = &ctx->Reboot;
         break;
     default:
         ss = NULL;
@@ -80,10 +81,10 @@ ControlCtx *control_create(void) {
     ctx->Radio.Desired = CONTROL_STATE_OFF;
     ctx->Radio.Token   = 1;
 
-    ctx->Restart.Phase   = CONTROL_PHASE_IDLE;
-    ctx->Restart.Current = CONTROL_STATE_OFF;
-    ctx->Restart.Desired = CONTROL_STATE_OFF;
-    ctx->Restart.Token   = 1;
+    ctx->Reboot.Phase   = CONTROL_PHASE_IDLE;
+    ctx->Reboot.Current = CONTROL_STATE_OFF;
+    ctx->Reboot.Desired = CONTROL_STATE_OFF;
+    ctx->Reboot.Token   = 1;
 
     return ctx;
 }
@@ -109,45 +110,37 @@ bool control_is_busy(ControlCtx *ctx) {
     return busy;
 }
 
-int control_get_public_state(ControlCtx *ctx,
-                             const char *nodeType,
-                             char *outState,
-                             size_t outStateSize) {
+int control_get_subsys_public_state(ControlCtx *ctx,
+                                    ControlSubsystem subsystem,
+                                    char *outState,
+                                    size_t outStateSize) {
 
     ControlSubsysState *ss = NULL;
     const char *stateStr = NULL;
 
-    if (!ctx ||
-        !nodeType ||
-        !outState ||
-        outStateSize == 0)
+    if (!ctx || !outState || outStateSize == 0) {
         return STATUS_NOK;
+    }
 
     pthread_mutex_lock(&ctx->Lock);
 
-    if (strcmp(nodeType, UKAMA_TOWER_NODE) == 0) {
-        ss = &ctx->Service;
-    } else if (strcmp(nodeType, UKAMA_CONTROLLER_NODE) == 0){
-        ss = &ctx->Service;
-    } else if (strcmp(nodeType, UKAMA_AMPLIFIER_NODE) == 0) {
-        ss = &ctx->Radio;
-    } else {
+    ss = get_subsys(ctx, subsystem);
+    if (!ss) {
         pthread_mutex_unlock(&ctx->Lock);
         return STATUS_NOK;
     }
 
     if (ss->Phase == CONTROL_PHASE_FAULT) {
         stateStr = "fault";
-    } else if (ss->Phase == CONTROL_PHASE_PENDING || ss->Phase == CONTROL_PHASE_EXECUTING) {
+    } else if (ss->Phase == CONTROL_PHASE_PENDING ||
+               ss->Phase == CONTROL_PHASE_EXECUTING) {
         stateStr = "transitioning";
     } else {
         stateStr = (ss->Current == CONTROL_STATE_ON) ? "on" : "off";
     }
 
     (void)snprintf(outState, outStateSize, "%s", stateStr);
-
     pthread_mutex_unlock(&ctx->Lock);
-
     return STATUS_OK;
 }
 
@@ -326,37 +319,8 @@ void control_mark_done(ControlCtx *ctx,
     pthread_mutex_unlock(&ctx->Lock);
 }
 
-void control_mark_restart_done(ControlCtx *ctx) {
+void control_mark_reboot_done(ControlCtx *ctx) {
     control_mark_done(ctx,
-                      CONTROL_SUBSYS_RESTART,
+                      CONTROL_SUBSYS_REBOOT,
                       CONTROL_STATE_OFF);
-}
-
-int control_request(ControlCtx *ctx,
-                    const char *nodeType,
-                    ControlSubsystem subsystem,
-                    ControlState desired,
-                    bool force,
-                    int *httpStatus) {
-
-    bool allowed             = false;
-    bool runImmediate        = false;
-    unsigned long long token = 0;
-
-    if (!ctx || !nodeType || !httpStatus) return STATUS_NOK;
-
-    allowed = control_set_pending(ctx,
-                                  subsystem,
-                                  desired,
-                                  force,
-                                  httpStatus,
-                                  &runImmediate,
-                                  &token);
-
-    if (!allowed) return STATUS_OK;
-
-    (void)runImmediate;
-    (void)token;
-
-    return STATUS_OK;
 }

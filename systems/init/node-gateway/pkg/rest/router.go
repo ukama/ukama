@@ -71,7 +71,7 @@ func NewRouter(clients *Clients, config *RouterConfig) *Router {
 func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 	return &RouterConfig{
 		metricsConfig: svcConf.Metrics,
-		httpEndpoints: &svcConf.HttpServices,
+		httpEndpoints: &svcConf.Http,
 		serverConf:    &svcConf.Server,
 		debugMode:     svcConf.DebugMode,
 		auth:          svcConf.Auth,
@@ -125,16 +125,16 @@ func (r *Router) reflectorGetHandler(c *gin.Context, req *ReflectorGetRequest) (
 
 func (r *Router) reflectorDownloadHandler(c *gin.Context, req *ReflectorDownloadRequest) (*rpb.DownloadResponse, error) {
 	return r.clients.Reflector.Download(&rpb.DownloadRequest{
-		NodeId: req.NodeId,
-		Bytes: req.Bytes,
-		ChunkBytes: req.ChunkBytes,
+		NodeId:       req.NodeId,
+		Bytes:        req.Bytes,
+		ChunkBytes:   req.ChunkBytes,
 		ChunkDelayMs: req.ChunkDelayMs,
 	})
 }
 
 func (r *Router) reflectorUploadHandler(c *gin.Context, req *ReflectorUploadRequest) (*rpb.UploadResponse, error) {
 	return r.clients.Reflector.Upload(&rpb.UploadRequest{
-		NodeId: req.NodeId,
+		NodeId:  req.NodeId,
 		Payload: req.Payload,
 	})
 }

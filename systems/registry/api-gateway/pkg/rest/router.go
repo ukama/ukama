@@ -66,6 +66,7 @@ type network interface {
 	GetNetworks() (*netpb.GetNetworksResponse, error)
 	SetNetworkDefault(netID string) (*netpb.SetDefaultResponse, error)
 	GetDefault() (*netpb.GetDefaultResponse, error)
+	RemoveNetwork(netID string) (*netpb.DeleteResponse, error)
 }
 
 type site interface {
@@ -73,6 +74,7 @@ type site interface {
 	GetSite(siteId string) (*sitepb.GetResponse, error)
 	List(networkId string, isDeactivate bool) (*sitepb.ListResponse, error)
 	UpdateSite(siteId, name string) (*sitepb.UpdateResponse, error)
+	RemoveSite(siteId string) (*sitepb.DeleteResponse, error)
 }
 
 type invitation interface {
@@ -138,7 +140,7 @@ func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Contex
 func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 	return &RouterConfig{
 		metricsConfig: svcConf.Metrics,
-		httpEndpoints: &svcConf.HttpServices,
+		httpEndpoints: &svcConf.Http,
 		serverConf:    &svcConf.Server,
 		debugMode:     svcConf.DebugMode,
 		auth:          svcConf.Auth,
@@ -197,8 +199,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		networks.POST("", formatDoc("Add Network", "Add a new network to an organization"), tonic.Handler(r.postNetworkHandler, http.StatusCreated))
 		networks.GET("/:net_id", formatDoc("Get Network", "Get a specific network"), tonic.Handler(r.getNetworkHandler, http.StatusOK))
 		networks.PATCH("/:net_id", formatDoc("Set Network Default", "Set a specific network default"), tonic.Handler(r.setNetworkDefaultHandler, http.StatusOK))
-		// update network
-		// networks.DELETE("/:net_id", formatDoc("Remove Network", "Remove a network of an organization"), tonic.Handler(r.removeNetworkHandler, http.StatusOK))
+		networks.DELETE("/:net_id", formatDoc("Remove Network", "Remove a network of an organization"), tonic.Handler(r.removeNetworkHandler, http.StatusOK))
 		// Admins
 		// Vendors
 
@@ -210,6 +211,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		sites.POST("", formatDoc("Add Site", "Add a new site to a network"), tonic.Handler(r.postSiteHandler, http.StatusCreated))
 		sites.GET("/:site_id", formatDoc("Get Site", "Get a site of a network"), tonic.Handler(r.getSiteHandler, http.StatusOK))
 		sites.PATCH("/:site_id", formatDoc("Update Site", "Update a site of a network"), tonic.Handler(r.updateSiteHandler, http.StatusOK))
+		sites.DELETE("/:site_id", formatDoc("Remove Site", "Remove a site of a network"), tonic.Handler(r.removeSiteHandler, http.StatusOK))
 
 		// Node routes
 		const node = "/nodes"
@@ -355,6 +357,10 @@ func (r *Router) postNetworkHandler(c *gin.Context, req *AddNetworkRequest) (*ne
 		req.Budget, req.Overdraft, req.TrafficPolicy, req.PaymentLinks)
 }
 
+func (r *Router) removeNetworkHandler(c *gin.Context, req *GetNetworkRequest) (*netpb.DeleteResponse, error) {
+	return r.clients.Network.RemoveNetwork(req.NetworkId)
+}
+
 func (r *Router) getSiteHandler(c *gin.Context, req *GetSiteRequest) (*sitepb.GetResponse, error) {
 	return r.clients.Site.GetSite(req.SiteId)
 }
@@ -369,6 +375,10 @@ func (r *Router) updateSiteHandler(c *gin.Context, req *UpdateSiteRequest) (*sit
 		req.SiteId,
 		req.Name,
 	)
+}
+
+func (r *Router) removeSiteHandler(c *gin.Context, req *GetSiteRequest) (*sitepb.DeleteResponse, error) {
+	return r.clients.Site.RemoveSite(req.SiteId)
 }
 
 func (r *Router) postSiteHandler(c *gin.Context, req *AddSiteRequest) (*sitepb.AddResponse, error) {

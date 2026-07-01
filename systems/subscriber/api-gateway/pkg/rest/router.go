@@ -76,6 +76,7 @@ type simManager interface {
 	ListPackagesForSim(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate,
 		toEndDate string, isActive, asExpired, sort bool, count uint32) (*simMangPb.ListPackagesForSimResponse, error)
 	SetActivePackageForSim(req *simMangPb.SetActivePackageRequest) (*simMangPb.SetActivePackageResponse, error)
+	SetInactivePackageForSim(req *simMangPb.SetInactivePackageRequest) (*simMangPb.SetInactivePackageResponse, error)
 	GetUsages(iccid, simType, cdrType, from, to, region string) (*simMangPb.UsageResponse, error)
 
 	// Deprecated: Use pkg.client.SimManager.ListSims with subscriberId as filtering param instead.
@@ -123,7 +124,7 @@ func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Contex
 func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 	return &RouterConfig{
 		metricsConfig: svcConf.Metrics,
-		httpEndpoints: &svcConf.HttpServices,
+		httpEndpoints: &svcConf.Http,
 		serverConf:    &svcConf.Server,
 		debugMode:     svcConf.DebugMode,
 		auth:          svcConf.Auth,
@@ -189,6 +190,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		sim.GET(simIdKey+"/package", formatDoc("Get packages for a given SIM", ""), tonic.Handler(r.listPackagesForSim, http.StatusOK))
 		sim.POST(simIdKey+"/package", formatDoc("Add a new package to the given SIM", ""), tonic.Handler(r.addPackageForSim, http.StatusCreated))
 		sim.PATCH(simIdKey+"/package/:package_id", formatDoc("Set active package for a given SIM", ""), tonic.Handler(r.setActivePackageForSim, http.StatusOK))
+		sim.PATCH(simIdKey+"/package/:package_id/inactive", formatDoc("Set inactive package for a given SIM", ""), tonic.Handler(r.setInactivePackageForSim, http.StatusOK))
 		sim.DELETE(simIdKey+"/package/:package_id", formatDoc("Delete a package from a given SIM", ""), tonic.Handler(r.removePkgForSim, http.StatusOK))
 		// Deprecated: Use GET /v1/sim with subscriberId as query param instead.
 		sim.GET("/subscriber"+subscriberIdKey, formatDoc("Get the list of SIMs for a given subscriber", ""), tonic.Handler(r.getSimsBySub, http.StatusOK))
@@ -387,6 +389,14 @@ func (r *Router) postPkgForSim(c *gin.Context, req *PostPkgToSimReq) error {
 	}
 
 	return nil
+}
+
+func (r *Router) setInactivePackageForSim(c *gin.Context, req *RemovePkgFromSimReq) (*simMangPb.SetInactivePackageResponse, error) {
+	payload := simMangPb.SetInactivePackageRequest{
+		SimId:     req.SimId,
+		PackageId: req.PackageId,
+	}
+	return r.clients.sm.SetInactivePackageForSim(&payload)
 }
 
 func (r *Router) listPackagesForSim(c *gin.Context, req *ListPackagesForSimReq) (*simMangPb.ListPackagesForSimResponse, error) {

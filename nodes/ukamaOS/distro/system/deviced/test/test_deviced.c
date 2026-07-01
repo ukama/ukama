@@ -114,7 +114,7 @@ static void stop_process(pid_t pid) {
     (void)waitpid(pid, &status, 0);
 }
 
-/* A tiny mock client that answers /v1/reboot/ with 202.
+/* A tiny mock client that answers /v1/reboot with 202.
  * This is used to validate tower restart remote-client logic without modifying device.d.
  */
 
@@ -145,7 +145,7 @@ static void *mockclient_run(void *arg) {
 static int mockclient_start(MockClient *mc, int port) {
     memset(mc, 0, sizeof(*mc));
     if (ulfius_init_instance(&mc->inst, port, NULL, NULL) != U_OK) return -1;
-    ulfius_add_endpoint_by_val(&mc->inst, "POST", NULL, "/v1/reboot/", 0, &cb_client_reboot, NULL);
+    ulfius_add_endpoint_by_val(&mc->inst, "POST", NULL, "/v1/reboot", 0, &cb_client_reboot, NULL);
     if (pthread_create(&mc->thread, NULL, mockclient_run, mc) != 0) return -1;
     for (int i = 0; i < 50; i++) {
         if (mc->started) return 0;
@@ -194,7 +194,7 @@ static void suite_setup_server_mode(void) {
     mock_service_reset(&g_notifyd);
     mock_service_reset(&g_femd);
 
-    /* mock client server for /v1/reboot/ */
+    /* mock client server for /v1/reboot */
     TEST_ASSERT_EQUAL_INT(0, mockclient_start(&g_client, g_port_client));
 
     g_pid_server = spawn_deviced(g_bin_server, 0, "localhost", g_preload_so);

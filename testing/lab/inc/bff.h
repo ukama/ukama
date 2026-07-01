@@ -63,6 +63,7 @@ int bff_add_site(bff_client_t *c,
 
 int bff_add_package(bff_client_t *c,
                     package_t *p,
+                    const network_t *net,
                     ulab_error_t *err);
 
 int bff_add_subscriber(bff_client_t *c,
@@ -78,6 +79,7 @@ int bff_upload_sims_from_csv(bff_client_t *c,
 int bff_get_sims_from_pool(bff_client_t *c,
                            const char *sim_type,
                            char iccids[][ULAB_MAX_ID],
+                           char pool_sim_ids[][ULAB_MAX_ID],
                            size_t max_iccids,
                            size_t *iccid_count,
                            ulab_error_t *err);
@@ -97,6 +99,20 @@ int bff_allocate_sim(bff_client_t *c,
                      const package_t *pkg,
                      const char *sim_type,
                      ulab_error_t *err);
+
+int bff_add_package_to_sim(bff_client_t *c,
+                           ue_t *ue,
+                           const package_t *pkg,
+                           ulab_error_t *err);
+
+int bff_clear_sim_packages(bff_client_t *c,
+                           const ue_t *ue,
+                           ulab_error_t *err);
+
+int bff_toggle_sim_status(bff_client_t *c,
+                          const ue_t *ue,
+                          const char *status,
+                          ulab_error_t *err);
 
 int bff_get_sim_usage(bff_client_t *c,
                       const ue_t *ue,
@@ -122,10 +138,21 @@ int bff_site_view_loads(bff_client_t *c,
                         const site_t *site,
                         ulab_error_t *err);
 
-int bff_query_count(bff_client_t *c,
-                    const char *target,
-                    const world_t *w,
-                    size_t *count,
-                    ulab_error_t *err);
+int bff_backend_count(bff_client_t *c,
+                      const char *target,
+                      const world_t *w,
+                      size_t *count,
+                      ulab_error_t *err);
+
+int bff_backend_contains(bff_client_t *c,
+                         const char *view,
+                         const char *id,
+                         const world_t *w,
+                         int *found,
+                         ulab_error_t *err);
+
+int bff_cleanup_world(bff_client_t *c,
+                      const world_t *w,
+                      ulab_error_t *err);
 
 #endif /* ULAB_BFF_H_ */

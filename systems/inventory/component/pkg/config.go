@@ -17,12 +17,11 @@ import (
 
 type Config struct {
 	uconf.BaseConfig     `mapstructure:",squash"`
-	DB                   *uconf.Database  `default:"{}"`
-	Grpc                 *uconf.Grpc      `default:"{}"`
-	Queue                *uconf.Queue     `default:"{}"`
-	Timeout              time.Duration    `default:"3s"`
-	MsgClient            *uconf.MsgClient `default:"{}"`
-	Service              *uconf.Service
+	DB                   *uconf.Database      `default:"{}"`
+	Grpc                 *uconf.Grpc          `default:"{}"`
+	Queue                *uconf.Queue         `default:"{}"`
+	Timeout              time.Duration        `default:"3s"`
+	MsgClient            *uconf.MsgClient     `default:"{}"`
 	RepoUrl              string               `default:""`
 	Token                string               `default:""`
 	OwnerId              string               `default:""`
@@ -32,19 +31,24 @@ type Config struct {
 	ComponentEnvironment string               `default:"production"`
 	RepoPath             string               `default:"/temp/git/networks"`
 	PushGateway          string               `default:"http://localhost:9091"`
-	FactoryUrl           string               `default:"http://api-gateway-factory:8080"`
 	NodeComponentDetails NodeComponentDetails `default:"{}"`
+	Http                 HttpServices         `default:"{}"`
+	Service              *uconf.Service
+}
+
+type HttpServices struct {
+	FactoryClient string `default:"api-gateway-factory:8080"`
 }
 
 type NodeComponentDetails struct {
-	ImagesURL     string                  `default:""`
-	Specification string                  `default:""`
-	Warranty      uint32                  `default:"1"`
-	Managed       string                  `default:"true"`
-	Category      string                  `default:"access"`
-	Manufacturer  string                  `default:"Ukama Inc"`
-	Inventory     string                  `default:"ukma-access"`
-	DatasheetURL  string                  `default:"http://www.ukama.com/datasheet"`
+	ImagesURL     string `default:""`
+	Specification string `default:""`
+	Warranty      uint32 `default:"1"`
+	Managed       string `default:"true"`
+	Category      string `default:"access"`
+	Manufacturer  string `default:"Ukama Inc"`
+	Inventory     string `default:"ukma-access"`
+	DatasheetURL  string `default:"http://www.ukama.com/datasheet"`
 }
 
 var NetworkMetric = []metric.MetricConfig{}

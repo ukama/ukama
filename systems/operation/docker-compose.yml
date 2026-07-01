@@ -42,8 +42,6 @@ services:
   environment:
    - DEBUGMODE=true
    - BYPASS_AUTH_MODE=true
-   - SERVICES_MANAGER=manager:9090
-   - HTTPSERVICES_REGISTRYHOST=http://api-gateway-registry:8080
   depends_on:
    - manager
    - postgresd-operation

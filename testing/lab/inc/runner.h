@@ -17,25 +17,19 @@ typedef struct {
     char out_dir[ULAB_MAX_PATH];
     char script_dir[ULAB_MAX_PATH];
     char repo[ULAB_MAX_PATH];
-    char subscriber_network_id[ULAB_MAX_ID];
-    char sim_csv_path[ULAB_MAX_PATH];
     char sim_type[ULAB_MAX_REF];
+    char warehouse_url[ULAB_MAX_URL];
+    char factory_url[ULAB_MAX_URL];
+    char asr_url[ULAB_MAX_URL];
+    char run_id[ULAB_MAX_ID];
 
     uint32_t seed_override;
 
     int has_seed_override;
-    int dry_run;
-    int setup_only;
-    int subscriber_only;
-    int print_world;
-    int print_plan;
-    int cleanup;
-    int keep;
     int quiet;
     int verbose;
 } runner_opts_t;
 
 int runner_validate(const runner_opts_t *opts);
-int runner_dry_run(const runner_opts_t *opts);
 
 #endif /* ULAB_RUNNER_H_ */

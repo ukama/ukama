@@ -36,7 +36,7 @@ func NewInvitationRepo(db sql.Db) InvitationRepo {
 
 func (r *invitationRepo) GetByEmail(email string) (*Invitation, error) {
 	var invitation Invitation
-	err := r.Db.GetGormDb().Where("email = ?", email).First(&invitation).Error
+	err := r.Db.GetGormDb().Where("LOWER(email) = LOWER(?)", email).First(&invitation).Error
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (r *invitationRepo) Add(invitation *Invitation, nestedFunc func(*Invitation
 
 func (r *invitationRepo) Get(id uuid.UUID) (*Invitation, error) {
 	var invitation Invitation
-	err := r.Db.GetGormDb().First(&invitation, id).Error
+	err := r.Db.GetGormDb().Where("id = ?", id).First(&invitation).Error
 	if err != nil {
 		return nil, err
 	}
@@ -83,17 +83,17 @@ func (r *invitationRepo) GetAll() ([]*Invitation, error) {
 func (r *invitationRepo) Delete(id uuid.UUID, nestedFunc func(string, string) error) error {
 	err := r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		if nestedFunc != nil {
-			nestErr := nestedFunc("", "")
-			if nestErr != nil {
+			var invitation Invitation
+			if err := tx.Where("id = ?", id).First(&invitation).Error; err != nil {
+				return err
+			}
+			if nestErr := nestedFunc(invitation.Email, invitation.Id.String()); nestErr != nil {
 				return nestErr
 			}
 		}
 
-		if err := tx.Delete(&Invitation{}, id).Error; err != nil {
-			return err
-		}
-
-		return nil
+		result := tx.Where("id = ?", id).Delete(&Invitation{})
+		return result.Error
 	})
 
 	return err

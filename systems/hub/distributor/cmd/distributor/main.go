@@ -99,7 +99,7 @@ func startChunkRequestServer() *ugrpc.UkamaGrpcServer {
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	chunkerServer := server.NewChunkerServer(orgId, serviceConfig.OrgName, serviceConfig,
-		mbClient, serviceConfig.PushGateway, serviceConfig.IsGlobal)
+		mbClient, serviceConfig.PushGateway)
 
 	log.Debugf("Distribution server is %+v and config %+v", chunkerServer, serviceConfig.Grpc)
 

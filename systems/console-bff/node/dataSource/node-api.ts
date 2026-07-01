@@ -76,16 +76,11 @@ class NodeAPI extends BaseRESTDataSource {
       parseNodesRes(res)
     );
   }
-  async deleteNodeFromOrg(
-    baseURL: string,
-    args: NodeInput
-  ): Promise<DeleteNode> {
+  async deleteNode(baseURL: string, args: NodeInput): Promise<DeleteNode> {
     this.baseURL = baseURL;
-    return this.delete(`/${VERSION}/${NODES}/${args.id}/sites`).then(() =>
-      this.delete(`${args.id}`).then(() => {
-        return { id: args.id };
-      })
-    );
+    return this.delete(`/${VERSION}/${NODES}/${args.id}`).then(() => ({
+      id: args.id,
+    }));
   }
   async attachNode(
     baseURL: string,

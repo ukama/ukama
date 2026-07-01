@@ -1,0 +1,3 @@
+entity: sim
+states: [unassigned, assigned, active, inactive, deactivated, released]
+actions: [upload, allocate, set_active, set_inactive, release, add_package, remove_package]

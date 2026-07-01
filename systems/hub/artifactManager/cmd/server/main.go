@@ -58,7 +58,7 @@ func main() {
 		serviceConfig.MsgClient.ListenerRoutes)
 
 	artifcatServer := server.NewArtifactServer(orgId, serviceConfig.OrgName, storage, chunker,
-		time.Duration(serviceConfig.Storage.TimeoutSecond)*time.Second, mbClient, serviceConfig.PushGateway, serviceConfig.IsGlobal)
+		time.Duration(serviceConfig.Storage.TimeoutSecond)*time.Second, mbClient, serviceConfig.PushGateway)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 

@@ -23,7 +23,6 @@ extern bool json_serialize_action_alarm_notification(JsonObj **json,
 
 /* jserdes.c */
 extern bool json_deserialize_node_info(char **data, char *tag, json_t *json);
-extern bool json_serialize_alarm_notification(JsonObj **json, Config *config);
 
 static char *ukama_node_type_from_nodeid(const char *nodeID) {
 
@@ -155,6 +154,14 @@ cleanup:
     return ret;
 }
 
+
+static JsonObj *build_state_body(ControlState desired) {
+
+    return json_pack("{s:s}",
+                     "state",
+                     desired == CONTROL_STATE_ON ? "on" : "off");
+}
+
 static JsonObj *build_femd_gpio_body(ControlState desired) {
 
     int on;
@@ -191,59 +198,6 @@ int get_nodeid_and_type_from_noded(Config *config) {
     usys_log_info("Node ID: %s Node Type: %s", config->nodeID, config->nodeType);
 
     return STATUS_OK;
-}
-
-int wc_send_alarm_to_notifyd(Config *config, int *retCode) {
-
-    int ret = USYS_OK;
-    char url[128] = {0};
-    char *jsonStr=NULL;
-    JsonObj *json = NULL;
-    UResponse *httpResp = NULL;
-    URequest *httpReq = NULL;
-
-    sprintf(url,"http://%s:%d%s%s", DEF_NOTIFY_HOST,
-            config->notifydPort, DEF_NOTIFY_EP, config->serviceName);
-
-    if (json_serialize_alarm_notification(&json, config) == USYS_FALSE) {
-        usys_log_error("Unable to serialize the notification");
-        return USYS_NOK;
-    }
-
-    httpReq = wc_create_http_request(url, "POST", json);
-    if (!httpReq) {
-        json_decref(json);
-        return USYS_NOK;
-    }
-
-    jsonStr = json_dumps(json, 0);
-    usys_log_debug("Sending Notification. URL: %s method: POST, json: %s",
-                   url, jsonStr);
-    free(jsonStr);
-
-    ret = wc_send_http_request(httpReq, &httpResp);
-    if (ret != STATUS_OK || httpResp->status != HttpStatus_Accepted) {
-        usys_log_error("Failed sending alarm to notiy.d: %s Code: %d Str: %s",
-                       url, httpResp->status,
-                       HttpStatusStr(httpResp->status));
-        ret = USYS_NOK;
-    }
-
-    *retCode = httpResp->status;
-
-    /* cleaup code */
-    json_decref(json);
-    if (httpReq) {
-        ulfius_clean_request(httpReq);
-        usys_free(httpReq);
-    }
-
-    if (httpResp) {
-        ulfius_clean_response(httpResp);
-        usys_free(httpResp);
-    }
-
-    return ret;
 }
 
 int wc_send_action_alarm_to_notifyd(Config *config,
@@ -326,7 +280,7 @@ int wc_send_reboot_to_client(Config *config, int *retCode) {
              config->clientHost,
              config->clientPort,
              URL_PREFIX,
-             API_RES_EP("reboot/"));
+             API_RES_EP("reboot"));
 
     httpReq = wc_create_http_request(url, "POST", NULL);
     if (!httpReq) {
@@ -368,6 +322,147 @@ cleanup:
         usys_free(httpResp);
     }
 
+    return ret;
+}
+
+
+int wc_post_service_to_pcrf(Config *config, ControlState desired, int *retCode) {
+
+    int ret;
+    char url[128];
+    char *jsonStr;
+    JsonObj *json;
+    UResponse *httpResp;
+    URequest *httpReq;
+
+    ret = STATUS_NOK;
+    jsonStr = NULL;
+    json = NULL;
+    httpResp = NULL;
+    httpReq = NULL;
+
+    if (!config || !retCode) return STATUS_NOK;
+    if (config->pcrfPort <= 0) return STATUS_NOK;
+
+    snprintf(url, sizeof(url), "http://%s:%d/v1/service",
+             DEF_PCRF_HOST,
+             config->pcrfPort);
+
+    json = build_state_body(desired);
+    if (!json) return STATUS_NOK;
+
+    httpReq = wc_create_http_request(url, "POST", json);
+    if (!httpReq) {
+        json_decref(json);
+        return STATUS_NOK;
+    }
+
+    jsonStr = json_dumps(json, 0);
+    usys_log_debug("Sending PCRF service state. URL: %s method: POST, json: %s",
+                   url, jsonStr ? jsonStr : "");
+    if (jsonStr) free(jsonStr);
+
+    ret = wc_send_http_request(httpReq, &httpResp);
+    if (ret != STATUS_OK || !httpResp) {
+        usys_log_error("Failed sending PCRF service state. URL: %s", url);
+        ret = STATUS_NOK;
+        goto cleanup;
+    }
+
+    *retCode = httpResp->status;
+    if (httpResp->status != HttpStatus_Accepted &&
+        httpResp->status != HttpStatus_OK) {
+        usys_log_error("PCRF service state failed. URL: %s Code: %d Str: %s",
+                       url,
+                       httpResp->status,
+                       HttpStatusStr(httpResp->status));
+        ret = STATUS_NOK;
+        goto cleanup;
+    }
+
+    ret = STATUS_OK;
+
+cleanup:
+    json_decref(json);
+    if (httpReq) {
+        ulfius_clean_request(httpReq);
+        usys_free(httpReq);
+    }
+    if (httpResp) {
+        ulfius_clean_response(httpResp);
+        usys_free(httpResp);
+    }
+    return ret;
+}
+
+int wc_send_radio_to_client(Config *config, ControlState desired, int *retCode) {
+
+    int ret;
+    char url[128];
+    char *jsonStr;
+    JsonObj *json;
+    UResponse *httpResp;
+    URequest *httpReq;
+
+    ret = USYS_NOK;
+    jsonStr = NULL;
+    json = NULL;
+    httpResp = NULL;
+    httpReq = NULL;
+
+    if (!config || !retCode) return USYS_NOK;
+
+    snprintf(url, sizeof(url),
+             "http://%s:%d%s%s",
+             config->clientHost,
+             config->clientPort,
+             URL_PREFIX,
+             API_RES_EP("radio"));
+
+    json = build_state_body(desired);
+    if (!json) return USYS_NOK;
+
+    httpReq = wc_create_http_request(url, "POST", json);
+    if (!httpReq) {
+        json_decref(json);
+        return USYS_NOK;
+    }
+
+    jsonStr = json_dumps(json, 0);
+    usys_log_debug("Sending client radio state. URL: %s method: POST, json: %s",
+                   url, jsonStr ? jsonStr : "");
+    if (jsonStr) free(jsonStr);
+
+    ret = wc_send_http_request(httpReq, &httpResp);
+    if (ret != USYS_OK || !httpResp) {
+        usys_log_error("Failed sending radio state to client device.d");
+        ret = USYS_NOK;
+        goto cleanup;
+    }
+
+    *retCode = httpResp->status;
+    if (httpResp->status != HttpStatus_Accepted &&
+        httpResp->status != HttpStatus_OK) {
+        usys_log_error("Client radio state failed. URL: %s Code: %d Str: %s",
+                       url,
+                       httpResp->status,
+                       HttpStatusStr(httpResp->status));
+        ret = USYS_NOK;
+        goto cleanup;
+    }
+
+    ret = USYS_OK;
+
+cleanup:
+    json_decref(json);
+    if (httpReq) {
+        ulfius_clean_request(httpReq);
+        usys_free(httpReq);
+    }
+    if (httpResp) {
+        ulfius_clean_response(httpResp);
+        usys_free(httpResp);
+    }
     return ret;
 }
 

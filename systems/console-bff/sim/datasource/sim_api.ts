@@ -7,6 +7,7 @@
  */
 import { BaseRESTDataSource } from "../../common/datasource";
 import { logger } from "../../common/logger";
+import { CBooleanResponse } from "../../common/types";
 import {
   AllocateSimAPIDto,
   AllocateSimInputDto,
@@ -22,6 +23,7 @@ import {
   RemovePackageFromSimResDto,
   SimDataUsage,
   SimDto,
+  SimPoolResDto,
   SimPoolStatsDto,
   SimStatusResDto,
   SimUsageInputDto,
@@ -34,6 +36,7 @@ import {
 } from "../resolver/types";
 import {
   dtoToAllocateSimResDto,
+  dtoToSimByIccidDto,
   dtoToSimResDto,
   dtoToSimsDto,
   dtoToSimsFromPoolDto,
@@ -130,6 +133,19 @@ class SimApi extends BaseRESTDataSource {
     );
   };
 
+  getSimByIccid = async (
+    baseURL: string,
+    iccid: string
+  ): Promise<SimPoolResDto> => {
+    this.baseURL = baseURL;
+    this.logger.info(
+      `GetSimByIccid [GET]: ${baseURL}/${VERSION}/${SIMPOOL}/sim/${iccid}`
+    );
+    return this.get(`/${VERSION}/${SIMPOOL}/sim/${iccid}`).then(res =>
+      dtoToSimByIccidDto(res.sim)
+    );
+  };
+
   getDataUsage = async (
     baseURL: string,
     data: SimUsageInputDto
@@ -147,12 +163,40 @@ class SimApi extends BaseRESTDataSource {
     );
   };
 
+  setInactivePackageForSim = async (
+    baseURL: string,
+    req: RemovePackageFormSimInputDto
+  ): Promise<RemovePackageFromSimResDto> => {
+    this.baseURL = baseURL;
+    this.logger.info(
+      `SetInactivePackageForSim [PATCH]: ${baseURL}/${VERSION}/${SIM}/${req.simId}/package/${req.packageId}/inactive`
+    );
+    return this.patch(
+      `/${VERSION}/${SIM}/${req.simId}/package/${req.packageId}/inactive`
+    ).then(res => res);
+  };
+
   deleteSim = async (
     baseURL: string,
     req: DeleteSimInputDto
   ): Promise<DeleteSimResDto> => {
     this.baseURL = baseURL;
     return this.delete(`/${VERSION}/${SIM}/${req.simId}`).then(res => res);
+  };
+
+  deleteSimFromPool = async (
+    baseURL: string,
+    simId: string
+  ): Promise<CBooleanResponse> => {
+    this.logger.info(
+      `DeleteSimFromPool [DELETE]: ${baseURL}/${VERSION}/${SIMPOOL}/sim/${simId}`
+    );
+    this.baseURL = baseURL;
+    return this.delete(`/${VERSION}/${SIMPOOL}/sim/${simId}`).then(() => {
+      return {
+        success: true,
+      };
+    });
   };
   addPackageToSim = async (
     baseURL: string,
@@ -177,12 +221,13 @@ class SimApi extends BaseRESTDataSource {
     baseURL: string,
     req: RemovePackageFormSimInputDto
   ): Promise<RemovePackageFromSimResDto> => {
+    this.logger.info(
+      `RemovePackageFromSim [PUT]: ${baseURL}/${VERSION}/${SIM}/${req.simId}/package/${req.packageId}`
+    );
     this.baseURL = baseURL;
-    return this.put(``, {
-      body: {
-        ...req,
-      },
-    }).then(res => res);
+    return this.delete(
+      `/${VERSION}/${SIM}/${req.simId}/package/${req.packageId}`
+    ).then(res => res);
   };
 
   getPackagesForSim = async (

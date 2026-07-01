@@ -115,10 +115,8 @@ static void make_package_name(char *out, size_t out_len,
                               const network_t *network) {
 
     /*
-     * Package names are globally unique in the new backend.
+     * Package names are globally unique in the backend.
      * Scope each scenario package template to the generated network id.
-     * For --subscriber, network->bff_id is filled from --network-id later,
-     * but network->id still contains the unique lab run id.
      */
     snprintf(out, out_len, "%.120s %.120s", base_name, network->id);
 }

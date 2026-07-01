@@ -14,7 +14,7 @@ import (
 	uconf "github.com/ukama/ukama/systems/common/config"
 	evt "github.com/ukama/ukama/systems/common/events"
 )
- 
+
 type Config struct {
 	uconf.BaseConfig `mapstructure:",squash"`
 	DB               *uconf.Database  `default:"{}"`
@@ -92,4 +92,3 @@ func NewConfig(name string) *Config {
 			}},
 	}
 }
- 

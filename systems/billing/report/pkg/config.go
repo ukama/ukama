@@ -22,13 +22,13 @@ type Config struct {
 	Metrics           *config.Metrics   `default:"{}"`
 	Timeout           time.Duration     `default:"3s"`
 	MsgClient         *config.MsgClient `default:"{}"`
+	System            string            `default:"billing"`
+	SubscriberHost    string            `default:"http://api-gateway-subscriber:8080"`
+	PdfHost           string            `default:""`
+	PdfPort           int               `default:"3000"`
+	PdfPrefix         string            `default:"/pdf/"`
+	PdfFolder         string            `default:"/srv/static"`
 	Service           *config.Service
-	System            string `default:"billing"`
-	SubscriberHost    string `default:"http://api-gateway-subscriber:8080"`
-	PdfHost           string `default:""`
-	PdfPort           int    `default:"3000"`
-	PdfPrefix         string `default:"/pdf/"`
-	PdfFolder         string `default:"/srv/static"`
 	OrgName           string
 	OrgId             string
 }

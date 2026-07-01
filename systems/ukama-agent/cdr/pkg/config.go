@@ -28,7 +28,7 @@ type Config struct {
 	Metrics           *config.Metrics   `default:"{}"`
 	Timeout           time.Duration     `default:"3s"`
 	MsgClient         *config.MsgClient `default:"{}"`
-	PushGatewayHost   string            `default:"http://localhost:9091"`
+	PushGateway       string            `default:"http://localhost:9091"`
 	Queue             *config.Queue     `default:"{}"`
 	Service           *config.Service   `default:"{}"`
 	AsrHost           string            `default:"asr:9090"`
@@ -42,6 +42,7 @@ type GrpcEndPoints struct {
 
 func NewConfig(name string) *Config {
 	return &Config{
+		AsrHost: "asr:9090",
 		DB: &config.Database{
 			DbName: ServiceName,
 		},

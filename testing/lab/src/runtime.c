@@ -12,6 +12,7 @@
 #include <stdlib.h>
 
 #include "runtime.h"
+#include "node_provider.h"
 #include "log.h"
 #include "util.h"
 #include "ulab.h"
@@ -20,7 +21,7 @@ static int run_script(runtime_t *rt,
                       const char *name,
                       const char *args,
                       ulab_error_t *err) {
- 
+
     char cmd[ULAB_MAX_QUERY];
     char script[ULAB_MAX_PATH];
     char log_path[ULAB_MAX_PATH];
@@ -41,16 +42,40 @@ static int run_script(runtime_t *rt,
     }
 
     /*
-     * Do not pipe script output back into C.
-     * Build scripts can produce a lot of output, so write directly to log.
+     * Keep script output in its run log. Do not print scrolling RUNNING lines.
+     * When stderr is interactive, show a tiny single-line spinner instead.
      */
     n = snprintf(cmd, sizeof(cmd),
                  "mkdir -p '%s' >/dev/null 2>&1; "
-                 "'%s' %s >> '%s' 2>&1",
+                 ": > '%s'; "
+                 "('%s' %s >> '%s' 2>&1) & "
+                 "pid=$!; "
+                 "start=$(date +%%s); "
+                 "interval=${ULAB_SCRIPT_PROGRESS_INTERVAL:-1}; "
+                 "spin='|/-\\'; "
+                 "idx=0; "
+                 "printed=0; "
+                 "while kill -0 $pid 2>/dev/null; do "
+                 "sleep $interval; "
+                 "if kill -0 $pid 2>/dev/null && [ -t 2 ]; then "
+                 "now=$(date +%%s); "
+                 "elapsed=$((now - start)); "
+                 "idx=$((idx + 1)); "
+                 "case $((idx %% 4)) in "
+                 "0) ch='|';; 1) ch='/';; 2) ch='-';; *) ch='\\';; "
+                 "esac; "
+                 "printf '\\r%%s %s %%ss' \"$ch\" \"$elapsed\" >&2; "
+                 "printed=1; "
+                 "fi; "
+                 "done; "
+                 "if [ \"$printed\" = 1 ]; then printf '\\r\\033[K' >&2; fi; "
+                 "wait $pid",
                  rt->run_dir,
+                 log_path,
                  script,
                  args ? args : "",
-                 log_path);
+                 log_path,
+                 name);
     if (n < 0 || (size_t)n >= sizeof(cmd)) {
         snprintf(err->msg, sizeof(err->msg), "script command too long");
         return ULAB_ERR;
@@ -136,20 +161,140 @@ static int read_state_value(const char *path,
     return ULAB_ERR;
 }
 
-static int load_runtime_site_state(runtime_t *rt,
-                                   site_t *site,
+
+static int runtime_site_state_path(runtime_t *rt,
+                                   const site_t *site,
+                                   char *path,
+                                   size_t path_len,
                                    ulab_error_t *err) {
     char safe[ULAB_MAX_REF];
-    char path[ULAB_MAX_PATH];
     int rc;
 
     safe_name(site->ref, safe, sizeof(safe));
+    rc = snprintf(path, path_len, "%s/runtime-sites/%s.env",
+                  rt->run_dir, safe);
+    if (rc < 0 || (size_t)rc >= path_len) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "runtime site state path too long");
+        return ULAB_ERR;
+    }
 
-    rc = snprintf(path, sizeof(path), "%s/runtime-sites/%s.env",
+    return ULAB_OK;
+}
+
+static int write_runtime_node_state(runtime_t *rt,
+                                    const site_t *site,
+                                    node_t *node,
+                                    const char *factory_id,
+                                    const char *node_kind,
+                                    const char *container,
+                                    ulab_error_t *err) {
+    char safe[ULAB_MAX_REF];
+    char path[ULAB_MAX_PATH];
+    FILE *f;
+    int rc;
+
+    safe_name(node->id, safe, sizeof(safe));
+    rc = snprintf(path, sizeof(path), "%s/runtime-nodes/%s.env",
                   rt->run_dir, safe);
     if (rc < 0 || (size_t)rc >= sizeof(path)) {
         snprintf(err->msg, sizeof(err->msg),
-                 "runtime site state path too long");
+                 "runtime node state path too long for %s", node->id);
+        return ULAB_ERR;
+    }
+
+    f = fopen(path, "w");
+    if (f == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "failed to write runtime node state for %s", node->id);
+        return ULAB_ERR;
+    }
+
+    fprintf(f, "LOGICAL_NODE_ID=%s\n", node->id);
+    fprintf(f, "FACTORY_NODE_ID=%s\n", factory_id);
+    fprintf(f, "NODE_TYPE=%s\n", node_kind);
+    fprintf(f, "NODE_KIND=%s\n", node_kind);
+    fprintf(f, "SITE_REF=%s\n", site->ref);
+    fprintf(f, "NETWORK_REF=%s\n", site->network_ref);
+    fprintf(f, "CONTAINER_NAME=%s\n", container);
+    fprintf(f, "IMAGE=testing/virtualnode:%s\n", factory_id);
+    fclose(f);
+
+    ulab_copy(node->bff_id, sizeof(node->bff_id), factory_id);
+
+    return ULAB_OK;
+}
+
+static int map_runtime_site_nodes(runtime_t *rt,
+                                  world_t *w,
+                                  site_t *site,
+                                  ulab_error_t *err) {
+    char site_state[ULAB_MAX_PATH];
+    char tcontainer[ULAB_MAX_ID];
+    char ccontainer[ULAB_MAX_ID];
+    char acontainer[ULAB_MAX_ID];
+    size_t i;
+
+    if (runtime_site_state_path(rt, site, site_state,
+        sizeof(site_state), err)) {
+        return ULAB_ERR;
+    }
+
+    if (read_state_value(site_state, "TNODE_CONTAINER", tcontainer,
+        sizeof(tcontainer))) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "TNODE_CONTAINER missing for site %s", site->ref);
+        return ULAB_ERR;
+    }
+
+    if (read_state_value(site_state, "CNODE_CONTAINER", ccontainer,
+        sizeof(ccontainer))) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "CNODE_CONTAINER missing for site %s", site->ref);
+        return ULAB_ERR;
+    }
+
+    if (read_state_value(site_state, "ANODE_CONTAINER", acontainer,
+        sizeof(acontainer))) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "ANODE_CONTAINER missing for site %s", site->ref);
+        return ULAB_ERR;
+    }
+
+    for (i = 0; i < w->node_count; i++) {
+        node_t *node = &w->nodes[i];
+
+        if (!ulab_streq(node->site_ref, site->ref)) {
+            continue;
+        }
+
+        if (ulab_streq(node->type, ULAB_NODE_TOWER)) {
+            if (write_runtime_node_state(rt, site, node, site->tnode_id,
+                ULAB_NODE_KIND_TOWER, tcontainer, err)) {
+                return ULAB_ERR;
+            }
+        } else if (ulab_streq(node->type, ULAB_NODE_AMPLIFIER)) {
+            if (write_runtime_node_state(rt, site, node, site->anode_id,
+                ULAB_NODE_KIND_AMPLIFIER, acontainer, err)) {
+                return ULAB_ERR;
+            }
+        } else if (ulab_streq(node->type, ULAB_NODE_CONTROLLER)) {
+            if (write_runtime_node_state(rt, site, node, site->cnode_id,
+                ULAB_NODE_KIND_CONTROLLER, ccontainer, err)) {
+                return ULAB_ERR;
+            }
+        }
+    }
+
+    return ULAB_OK;
+}
+
+static int load_runtime_site_state(runtime_t *rt,
+                                   site_t *site,
+                                   ulab_error_t *err) {
+    char path[ULAB_MAX_PATH];
+
+    if (runtime_site_state_path(rt, site, path, sizeof(path), err)) {
         return ULAB_ERR;
     }
 
@@ -186,6 +331,7 @@ static int load_runtime_site_state(runtime_t *rt,
 }
 
 int runtime_init(runtime_t *rt,
+                 const char *provider,
                  const char *script_dir,
                  const char *run_dir,
                  const char *repo) {
@@ -193,6 +339,8 @@ int runtime_init(runtime_t *rt,
     char path[ULAB_MAX_PATH];
 
     memset(rt, 0, sizeof(*rt));
+    ulab_copy(rt->provider, sizeof(rt->provider),
+              provider && provider[0] ? provider : "virtual");
     ulab_copy(rt->script_dir, sizeof(rt->script_dir), script_dir);
     ulab_copy(rt->run_dir, sizeof(rt->run_dir), run_dir);
     ulab_copy(rt->repo, sizeof(rt->repo), repo ? repo : "");
@@ -231,10 +379,10 @@ int runtime_ensure_network(runtime_t *rt, ulab_error_t *err) {
     return ULAB_OK;
 }
 
-int runtime_build_and_start_sites(const char *repo,
-                                  runtime_t *rt,
-                                  world_t *w,
-                                  ulab_error_t *err) {
+int runtime_virtual_build_and_start_sites(const char *repo,
+                                          runtime_t *rt,
+                                          world_t *w,
+                                          ulab_error_t *err) {
     size_t i;
     site_t *site;
     char args[ULAB_MAX_ARGS];
@@ -266,6 +414,10 @@ int runtime_build_and_start_sites(const char *repo,
             return ULAB_ERR;
         }
 
+        if (map_runtime_site_nodes(rt, w, site, err)) {
+            return ULAB_ERR;
+        }
+
         ulab_status("SITE", "%s tnode=%s cnode=%s anode=%s",
                     site->ref, site->tnode_id, site->cnode_id,
                     site->anode_id);
@@ -274,10 +426,10 @@ int runtime_build_and_start_sites(const char *repo,
     return ULAB_OK;
 }
 
-int runtime_wait_nodes_ready(runtime_t *rt,
-                             const world_t *w,
-                             const selector_result_t *nodes,
-                             ulab_error_t *err) {
+int runtime_virtual_wait_nodes_ready(runtime_t *rt,
+                                     const world_t *w,
+                                     const selector_result_t *nodes,
+                                     ulab_error_t *err) {
     size_t i;
     const node_t *n;
     char args[4096];
@@ -297,6 +449,60 @@ int runtime_wait_nodes_ready(runtime_t *rt,
         ulab_status("NODE", "wait ready %s", n->id);
 
         if (run_script(rt, "wait-nodes-ready.sh", args, err)) {
+            return ULAB_ERR;
+        }
+    }
+
+    return ULAB_OK;
+}
+
+int runtime_build_and_start_sites(const char *repo,
+                                  runtime_t *rt,
+                                  world_t *w,
+                                  ulab_error_t *err) {
+    (void)repo;
+
+    if (node_provider_build(rt, w, err)) {
+        return ULAB_ERR;
+    }
+
+    return node_provider_start(rt, w, err);
+}
+
+int runtime_wait_nodes_ready(runtime_t *rt, const world_t *w,
+                             const selector_result_t *nodes,
+                             ulab_error_t *err) {
+    return node_provider_wait_ready(rt, w, nodes, err);
+}
+
+
+int runtime_enable_pcrf_service(runtime_t *rt, const world_t *w,
+                                ulab_error_t *err) {
+    size_t i;
+    int rc;
+    char args[ULAB_MAX_ARGS];
+
+    if (rt == NULL || w == NULL) {
+        return ULAB_OK;
+    }
+
+    for (i = 0; i < w->node_count; i++) {
+        const node_t *n = &w->nodes[i];
+
+        if (!ulab_streq(n->type, ULAB_NODE_TOWER)) {
+            continue;
+        }
+
+        memset(args, 0, sizeof(args));
+        rc = snprintf(args, sizeof(args), "%s %s", n->id, rt->run_dir);
+        if (rc < 0 || (size_t)rc >= sizeof(args)) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "enable-pcrf args too long for node %s", n->id);
+            return ULAB_ERR;
+        }
+
+        ulab_status("NODE", "enable service %s", n->id);
+        if (run_script(rt, "enable-pcrf-service.sh", args, err)) {
             return ULAB_ERR;
         }
     }
@@ -467,10 +673,10 @@ int runtime_generate_traffic(runtime_t *rt,
     return ULAB_OK;
 }
 
-int runtime_restart_nodes(runtime_t *rt,
-                          const world_t *w,
-                          const selector_result_t *nodes,
-                          ulab_error_t *err) {
+int runtime_virtual_restart_nodes(runtime_t *rt,
+                                  const world_t *w,
+                                  const selector_result_t *nodes,
+                                  ulab_error_t *err) {
     size_t i;
 
     for (i = 0; i < nodes->count; i++) {
@@ -488,6 +694,141 @@ int runtime_restart_nodes(runtime_t *rt,
         if (run_script(rt, "restart-node.sh", args, err)) {
             return ULAB_ERR;
         }
+    }
+
+    return ULAB_OK;
+}
+
+int runtime_restart_nodes(runtime_t *rt,
+                          const world_t *w,
+                          const selector_result_t *nodes,
+                          ulab_error_t *err) {
+    return node_provider_restart(rt, w, nodes, err);
+}
+
+
+static int cleanup_script(runtime_t *rt,
+                          const char *script,
+                          const char *args) {
+    ulab_error_t err;
+
+    memset(&err, 0, sizeof(err));
+    if (run_script(rt, script, args, &err)) {
+        if (rt->logf) {
+            fprintf(rt->logf, "cleanup warning: %s %s: %s\n",
+                    script, args ? args : "", err.msg);
+            fflush(rt->logf);
+        }
+        return ULAB_ERR;
+    }
+
+    return ULAB_OK;
+}
+
+int runtime_stop_ues(runtime_t *rt, const world_t *w, ulab_error_t *err) {
+    char args[ULAB_MAX_ARGS];
+    size_t i;
+    int failures;
+    int rc;
+
+    failures = 0;
+
+    if (rt == NULL || rt->run_dir[0] == '\0' || w == NULL) {
+        return ULAB_OK;
+    }
+
+    for (i = 0; i < w->ue_count; i++) {
+        rc = snprintf(args, sizeof(args), "%s %s",
+                      w->ues[i].id, rt->run_dir);
+        if (rc >= 0 && (size_t)rc < sizeof(args)) {
+            if (cleanup_script(rt, "stop-ue.sh", args)) {
+                failures++;
+            }
+        }
+    }
+
+    if (failures > 0 && err != NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "UE cleanup had %d failed step(s)", failures);
+        return ULAB_ERR;
+    }
+
+    return ULAB_OK;
+}
+
+int runtime_virtual_cleanup_infra(runtime_t *rt, const world_t *w,
+                                  ulab_error_t *err) {
+    char args[ULAB_MAX_ARGS];
+    size_t i;
+    int failures;
+    int rc;
+
+    failures = 0;
+
+    if (rt == NULL || rt->run_dir[0] == '\0') {
+        return ULAB_OK;
+    }
+
+    rc = snprintf(args, sizeof(args), "%s", rt->run_dir);
+    if (rc >= 0 && (size_t)rc < sizeof(args)) {
+        if (cleanup_script(rt, "stop-media.sh", args)) {
+            failures++;
+        }
+    }
+
+    if (w != NULL) {
+        for (i = 0; i < w->node_count; i++) {
+            rc = snprintf(args, sizeof(args), "%s %s",
+                          w->nodes[i].id, rt->run_dir);
+            if (rc >= 0 && (size_t)rc < sizeof(args)) {
+                if (cleanup_script(rt, "stop-node.sh", args)) {
+                    failures++;
+                }
+            }
+        }
+    }
+
+    rc = snprintf(args, sizeof(args), "%s", rt->run_dir);
+    if (rc >= 0 && (size_t)rc < sizeof(args)) {
+        if (cleanup_script(rt, "cleanup-network.sh", args)) {
+            failures++;
+        }
+    }
+
+    if (failures > 0 && err != NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "runtime infra cleanup had %d failed step(s)", failures);
+        return ULAB_ERR;
+    }
+
+    return ULAB_OK;
+}
+
+int runtime_cleanup_infra(runtime_t *rt, const world_t *w, ulab_error_t *err) {
+    return node_provider_cleanup(rt, w, err);
+}
+
+
+int runtime_cleanup(runtime_t *rt, const world_t *w, ulab_error_t *err) {
+    ulab_error_t tmp;
+    int failures;
+
+    failures = 0;
+    memset(&tmp, 0, sizeof(tmp));
+
+    if (runtime_stop_ues(rt, w, &tmp)) {
+        failures++;
+    }
+
+    memset(&tmp, 0, sizeof(tmp));
+    if (runtime_cleanup_infra(rt, w, &tmp)) {
+        failures++;
+    }
+
+    if (failures > 0 && err != NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "runtime cleanup had %d failed section(s)", failures);
+        return ULAB_ERR;
     }
 
     return ULAB_OK;

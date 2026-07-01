@@ -61,13 +61,11 @@ type state interface {
 	EnforeTransition(nodeId string, event string) (*nspb.EnforceStateTransitionResponse, error)
 }
 type controller interface {
-	RestartSite(siteName, networkId string) (*contPb.RestartSiteResponse, error)
 	RestartNode(nodeId string) (*contPb.RestartNodeResponse, error)
-	RestartNodes(networkId string, nodeIds []string) (*contPb.RestartNodesResponse, error)
-	ToggleInternetSwitch(status bool, port int32, siteId string) (*contPb.ToggleInternetSwitchResponse, error)
-	PingNode(*contPb.PingNodeRequest) (*contPb.PingNodeResponse, error)
-	ToggleRf(nodeId string, state string) (*contPb.ToggleRfSwitchResponse, error)
-	ToggleNodeService(nodeId string, state string) (*contPb.ToggleNodeServiceResponse, error)
+	ToggleSwitchPort(status bool, port int32, nodeId string) (*contPb.ToggleSwitchPortResponse, error)
+	PingNode(nodeId string) (*contPb.PingNodeResponse, error)
+	ToggleRadio(nodeId string, state string) (*contPb.ToggleRadioResponse, error)
+	ToggleService(nodeId string, state string) (*contPb.ToggleServiceResponse, error)
 }
 
 type siteController interface {
@@ -79,7 +77,7 @@ type siteController interface {
 	GetPortMap(siteID string) (*sitepb.GetPortMapResponse, error)
 	ApplySwitchPolicy(siteID string) (*sitepb.ApplySwitchPolicyResponse, error)
 	PowerCycleNode(siteID, role, reason, requestedBy string) (*sitepb.PowerCycleNodeResponse, error)
-	RestartSite(siteID, networkID string) (*sitepb.RestartSiteResponse, error)
+	RestartSite(siteID string) (*sitepb.RestartSiteResponse, error)
 	ToggleInternetSwitch(siteID string, status bool, port int32) (*sitepb.ToggleInternetSwitchResponse, error)
 }
 
@@ -122,7 +120,7 @@ func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Contex
 func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 	return &RouterConfig{
 		metricsConfig: svcConf.Metrics,
-		httpEndpoints: &svcConf.HttpServices,
+		httpEndpoints: &svcConf.Http,
 		serverConf:    &svcConf.Server,
 		debugMode:     svcConf.DebugMode,
 		auth:          svcConf.Auth,
@@ -155,9 +153,10 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	{
 		const cont = "/controller"
 		controller := auth.Group(cont, "Controller", "Operations on controllers")
-		controller.POST("/networks/:network_id/sites/:site_name/restart", formatDoc("Restart a site in an organization", "Restarting a site within an organization"), tonic.Handler(r.postRestartSiteHandler, http.StatusOK))
 		controller.POST("/nodes/:node_id/restart", formatDoc("Restart a node", "Restarting a node"), tonic.Handler(r.postRestartNodeHandler, http.StatusOK))
-		controller.POST("/networks/:network_id/restart-nodes", formatDoc("Restart multiple nodes within a network", "Restarting multiple nodes within a network"), tonic.Handler(r.postRestartNodesHandler, http.StatusOK))
+		controller.POST("/nodes/:node_id/switch-port", formatDoc("Toggle switch port", "Toggle switch port"), tonic.Handler(r.postToggleSwitchPortHandler, http.StatusOK))
+		controller.POST("/nodes/:node_id/radio", formatDoc("Toggle radio", "Toggle radio"), tonic.Handler(r.postToggleNodeRadioHandler, http.StatusOK))
+		controller.POST("/nodes/:node_id/service", formatDoc("Toggle service", "Toggle service"), tonic.Handler(r.postToggleNodeServiceHandler, http.StatusOK))
 		controller.GET("/nodes/:node_id/ping", formatDoc("Ping a node", "Ping a node"), tonic.Handler(r.getPingNodeHandler, http.StatusAccepted))
 
 		const sites = "/sites"
@@ -171,6 +170,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		siteS.POST("/:site_id/switch-policy", formatDoc("Apply switch policy", "Generate and push switch.d policy"), tonic.Handler(r.postApplySwitchPolicyHandler, http.StatusOK))
 		siteS.POST("/:site_id/nodes/:role/power-cycle", formatDoc("Power-cycle site node", "Power-cycle a site node through CNode switch.d"), tonic.Handler(r.postPowerCycleNodeHandler, http.StatusOK))
 		siteS.POST("/:site_id/internet-port", formatDoc("Toggle site internet port", "Turn the site internet switch port on/off"), tonic.Handler(r.postToggleInternetSwitchHandler, http.StatusOK))
+		siteS.POST("/:site_id/restart", formatDoc("Restart site", "Restart the site"), tonic.Handler(r.postRestartSiteHandler, http.StatusOK))
 
 		const cfg = "/configurator"
 		cfgS := auth.Group(cfg, "Configurator", "Config for nodes")
@@ -194,17 +194,23 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 }
 
 func (r *Router) getPingNodeHandler(c *gin.Context, req *PingNodeRequest) (*contPb.PingNodeResponse, error) {
-	return r.clients.Controller.PingNode(&contPb.PingNodeRequest{
-		NodeId: req.NodeId,
-	})
+	return r.clients.Controller.PingNode(req.NodeId)
 }
 
 func (r *Router) postRestartNodeHandler(c *gin.Context, req *RestartNodeRequest) (*contPb.RestartNodeResponse, error) {
 	return r.clients.Controller.RestartNode(req.NodeId)
 }
 
-func (r *Router) postRestartSiteHandler(c *gin.Context, req *RestartSiteRequest) (*sitepb.RestartSiteResponse, error) {
-	return r.clients.SiteController.RestartSite(req.SiteId, req.NetworkId)
+func (r *Router) postToggleSwitchPortHandler(c *gin.Context, req *ToggleSwitchPortRequest) (*contPb.ToggleSwitchPortResponse, error) {
+	return r.clients.Controller.ToggleSwitchPort(req.Status, req.Port, req.NodeId)
+}
+
+func (r *Router) postToggleNodeRadioHandler(c *gin.Context, req *ToggleStateRequest) (*contPb.ToggleRadioResponse, error) {
+	return r.clients.Controller.ToggleRadio(req.NodeId, req.State)
+}
+
+func (r *Router) postToggleNodeServiceHandler(c *gin.Context, req *ToggleStateRequest) (*contPb.ToggleServiceResponse, error) {
+	return r.clients.Controller.ToggleService(req.NodeId, req.State)
 }
 
 func (r *Router) getListAppsHandler(c *gin.Context, req *ListAppsRequest) (*spb.GetAppListResponse, error) {
@@ -266,10 +272,6 @@ func (r *Router) getRunningConfigVersionHandler(c *gin.Context, req *GetConfigVe
 	return cfg, nil
 }
 
-func (r *Router) postRestartNodesHandler(c *gin.Context, req *RestartNodesRequest) (*contPb.RestartNodesResponse, error) {
-	return r.clients.Controller.RestartNodes(req.NetworkId, req.NodeIds)
-}
-
 func (r *Router) getStatesHistoryHandler(c *gin.Context, req *GetStatesHistoryRequest) (*nspb.GetStatesHistoryResponse, error) {
 	nodeId := c.Param("node_id")
 
@@ -291,6 +293,10 @@ func (r *Router) getStatesHistoryHandler(c *gin.Context, req *GetStatesHistoryRe
 	}
 
 	return r.clients.State.GetStatesHistory(nodeId, int32(pageSize), int32(pageNumber), startTime, endTime)
+}
+
+func (r *Router) postRestartSiteHandler(c *gin.Context, req *SiteStateRequest) (*sitepb.RestartSiteResponse, error) {
+	return r.clients.SiteController.RestartSite(req.SiteId)
 }
 
 func (r *Router) toggleSiteStateHandler(c *gin.Context, req *SiteActionRequest) (*sitepb.SetSiteResponse, error) {

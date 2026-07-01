@@ -16,19 +16,19 @@ import (
 
 type Config struct {
 	uconf.BaseConfig  `mapstructure:",squash"`
-	EtcdHost          string
-	DialTimeoutSecond time.Duration
-	NodeMetricsPort   int
 	Dns               *DnsConfig
 	Grpc              *uconf.Grpc      `default:"{}"`
 	Queue             *uconf.Queue     `default:"{}"`
 	Metrics           *uconf.Metrics   `default:"{}"`
 	Timeout           time.Duration    `default:"3s"`
 	MsgClient         *uconf.MsgClient `default:"{}"`
+	DialTimeoutSecond time.Duration
 	Service           *uconf.Service
-	Org               string `default:""`
-	OrgName           string
 	Http              HttpServices
+	OrgId             string
+	EtcdHost          string
+	OrgName           string
+	NodeMetricsPort   int
 }
 
 type HttpServices struct {
