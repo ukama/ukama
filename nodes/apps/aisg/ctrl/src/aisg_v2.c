@@ -1068,15 +1068,91 @@ bool aisg_v2_scan(AisgBus *bus, AisgDevice *device)
     return true;
 }
 
+static bool l2_validate_i_response(AisgBus *bus,
+                                   const HdlcFrame *rx,
+                                   uint8_t txNs,
+                                   uint8_t txNr)
+{
+    uint8_t expectedAck;
+    uint8_t rxNs;
+    uint8_t rxNr;
+
+    if (bus == NULL || rx == NULL) {
+        return false;
+    }
+
+    if (rx->address != bus->deviceAddress) {
+        usys_log_debug("aisg: I-response addr=0x%02X expected=0x%02X",
+                       rx->address,
+                       bus->deviceAddress);
+        return false;
+    }
+
+    if (hdlc_is_frmr(rx->control)) {
+        usys_log_debug("aisg: I-response rejected: secondary returned FRMR");
+        return false;
+    }
+
+    if (hdlc_is_rnr(rx->control)) {
+        usys_log_debug("aisg: I-response rejected: secondary returned RNR");
+        return false;
+    }
+
+    if (hdlc_is_rr(rx->control)) {
+        usys_log_debug("aisg: I-response rejected: RR acknowledgement carried no RETAP data");
+        return false;
+    }
+
+    if (!hdlc_is_i_frame(rx->control)) {
+        usys_log_debug("aisg: I-response rejected: unexpected ctrl=0x%02X",
+                       rx->control);
+        return false;
+    }
+
+    if (!hdlc_poll_final(rx->control)) {
+        usys_log_debug("aisg: I-response rejected: final bit not set");
+        return false;
+    }
+
+    expectedAck = (uint8_t)((txNs + 1) & 0x07);
+    rxNs = hdlc_ns(rx->control);
+    rxNr = hdlc_nr(rx->control);
+
+    if (rxNr != expectedAck) {
+        usys_log_debug("aisg: I-response rejected: N(R)=%u expected_ack=%u",
+                       rxNr,
+                       expectedAck);
+        return false;
+    }
+
+    if (rxNs != txNr) {
+        usys_log_debug("aisg: I-response rejected: N(S)=%u expected=%u",
+                       rxNs,
+                       txNr);
+        return false;
+    }
+
+    bus->ns = expectedAck;
+    bus->nr = (uint8_t)((rxNs + 1) & 0x07);
+
+    usys_log_debug("aisg: I-response sequence OK next_ns=%u next_nr=%u",
+                   bus->ns,
+                   bus->nr);
+
+    return true;
+}
+
 bool aisg_v2_send_retap(AisgBus *bus,
                         RetapRequest *request,
                         RetapResponse *response)
 {
-    uint8_t retap[RETAP_MAX_PAYLOAD + 1];
-    uint8_t rxRetap[RETAP_MAX_PAYLOAD + 1];
+    uint8_t retap[RETAP_MAX_ENCODED];
     HdlcFrame tx;
     HdlcFrame rx;
     size_t retapLen;
+    uint8_t txNs;
+    uint8_t txNr;
+    int timeoutMs;
 
     if (bus == NULL || request == NULL || response == NULL) {
         return false;
@@ -1089,44 +1165,67 @@ bool aisg_v2_send_retap(AisgBus *bus,
     }
 
     if (!retap_encode_request(request, retap, sizeof(retap), &retapLen)) {
-        usys_log_debug("aisg: failed to encode RETAP request");
+        usys_log_debug("aisg: failed to encode RETAP request procedure=0x%02X",
+                       request->procedure);
+        return false;
+    }
+
+    if (retapLen > HDLC_MAX_INFO) {
+        usys_log_debug("aisg: RETAP encoded payload too large len=%zu max=%u",
+                       retapLen,
+                       HDLC_MAX_INFO);
         return false;
     }
 
     memset(&tx, 0, sizeof(tx));
+    memset(&rx, 0, sizeof(rx));
+
+    txNs = bus->ns;
+    txNr = bus->nr;
+
     tx.address = bus->deviceAddress;
-    tx.control = hdlc_i_ctrl(bus->ns, bus->nr, true);
-    if (retapLen > sizeof(tx.info)) {
-        return false;
-    }
+    tx.control = hdlc_i_ctrl(txNs, txNr, true);
     memcpy(tx.info, retap, retapLen);
     tx.infoLen = retapLen;
 
-    if (!send_frame(bus, &tx, &rx, AISG_DEFAULT_TIMEOUT_MS)) {
-        usys_log_debug("aisg: RETAP transport failed");
+    timeoutMs = retap_request_timeout_ms(request);
+
+    usys_log_debug("aisg: RETAP TX procedure=0x%02X data_len=%zu timeout_ms=%d ns=%u nr=%u",
+                   request->procedure,
+                   request->dataLen,
+                   timeoutMs,
+                   txNs,
+                   txNr);
+
+    if (!send_frame(bus, &tx, &rx, timeoutMs)) {
+        usys_log_debug("aisg: RETAP transport failed procedure=0x%02X",
+                       request->procedure);
         return false;
     }
 
-    if (!hdlc_is_i_frame(rx.control)) {
-        usys_log_debug("aisg: RETAP response unexpected ctrl=0x%02X",
-                       rx.control);
+    if (!l2_validate_i_response(bus, &rx, txNs, txNr)) {
         return false;
     }
 
-    if (rx.address != bus->deviceAddress) {
-        usys_log_debug("aisg: RETAP response addr=0x%02X expected=0x%02X",
-                       rx.address,
-                       bus->deviceAddress);
-        return false;
-    }
-
-    if (rx.infoLen > sizeof(rxRetap)) {
-        usys_log_debug("aisg: RETAP response payload too large len=%zu",
+    if (!retap_decode_response(rx.info, rx.infoLen, response)) {
+        usys_log_debug("aisg: RETAP response decode failed procedure=0x%02X info_len=%zu",
+                       request->procedure,
                        rx.infoLen);
         return false;
     }
 
-    memcpy(rxRetap, rx.info, rx.infoLen);
+    if (response->procedure != request->procedure) {
+        usys_log_debug("aisg: RETAP response procedure mismatch got=0x%02X expected=0x%02X",
+                       response->procedure,
+                       request->procedure);
+        return false;
+    }
 
-    return retap_decode_response(rxRetap, rx.infoLen, response);
+    usys_log_debug("aisg: RETAP RX procedure=0x%02X return=0x%02X failure=0x%02X data_len=%zu",
+                   response->procedure,
+                   response->returnCode,
+                   response->failureReason,
+                   response->dataLen);
+
+    return true;
 }

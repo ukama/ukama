@@ -27,11 +27,7 @@ static bool build_no_payload(RetapRequest *request, uint8_t procedure)
 
 static bool response_is_ok(RetapResponse *response)
 {
-    if (response == NULL) {
-        return false;
-    }
-
-    return response->returnCode == RETAP_RETURN_OK;
+    return retap_response_is_ok(response);
 }
 
 static bool copy_retap_string(char *dst,
@@ -90,12 +86,17 @@ bool retap_parse_get_information(RetapResponse *response, RetapInfo *info)
     return true;
 }
 
-bool retap_build_get_alarm_status(RetapRequest *request)
+bool retap_build_get_error_status(RetapRequest *request)
 {
-    return build_no_payload(request, RETAP_PROC_GET_ALARM_STATUS);
+    return build_no_payload(request, RETAP_PROC_GET_ERROR_STATUS);
 }
 
-bool retap_parse_alarm_list(RetapResponse *response, RetapAlarmList *alarms)
+bool retap_build_get_alarm_status(RetapRequest *request)
+{
+    return retap_build_get_error_status(request);
+}
+
+bool retap_parse_return_code_list(RetapResponse *response, RetapAlarmList *alarms)
 {
     size_t i;
 
@@ -110,6 +111,11 @@ bool retap_parse_alarm_list(RetapResponse *response, RetapAlarmList *alarms)
     }
 
     return true;
+}
+
+bool retap_parse_alarm_list(RetapResponse *response, RetapAlarmList *alarms)
+{
+    return retap_parse_return_code_list(response, alarms);
 }
 
 bool retap_build_clear_active_alarms(RetapRequest *request)
@@ -168,7 +174,7 @@ bool retap_parse_get_tilt(RetapResponse *response, int16_t *tiltTenthsDeg)
         return false;
     }
 
-    raw = ((uint16_t)response->data[0] << 8) | response->data[1];
+    raw = (uint16_t)response->data[0] | ((uint16_t)response->data[1] << 8);
     *tiltTenthsDeg = (int16_t)raw;
 
     return true;
@@ -185,8 +191,8 @@ bool retap_build_set_tilt(RetapRequest *request, int16_t tiltTenthsDeg)
     raw = (uint16_t)tiltTenthsDeg;
 
     retap_request_init(request, RETAP_PROC_SET_TILT);
-    request->data[0] = (uint8_t)((raw >> 8) & 0xFF);
-    request->data[1] = (uint8_t)(raw & 0xFF);
+    request->data[0] = (uint8_t)(raw & 0xFF);
+    request->data[1] = (uint8_t)((raw >> 8) & 0xFF);
     request->dataLen = 2;
 
     return true;

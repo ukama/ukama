@@ -36,6 +36,10 @@ bool retap_encode_request(RetapRequest *request,
 bool retap_decode_response(const uint8_t *buf,
                            size_t len,
                            RetapResponse *response);
+bool retap_response_is_ok(const RetapResponse *response);
+bool retap_response_is_fail(const RetapResponse *response);
+int retap_request_timeout_ms(const RetapRequest *request);
 CtrlCode retap_failure_to_ctrl_code(uint8_t failureReason);
+const char *retap_return_code_str(uint8_t code);
 
 #endif /* RETAP_H_ */

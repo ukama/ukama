@@ -185,6 +185,9 @@ static JsonObj *build_alarm_payload(RetapAlarmList *alarms)
         }
 
         json_object_set_new(alarm, "code", json_integer(alarms->codes[i]));
+        json_object_set_new(alarm,
+                            "name",
+                            json_string(retap_return_code_str(alarms->codes[i])));
         json_object_set_new(alarm, "state", json_string("raised"));
         json_array_append_new(array, alarm);
     }
@@ -282,17 +285,17 @@ static bool raw_handle_get_alarms(RawRs485Context *ctx,
     RetapResponse retapResp;
     RetapAlarmList alarms;
 
-    retap_build_get_alarm_status(&request);
+    retap_build_get_error_status(&request);
 
     if (!execute_retap(ctx, &request, &retapResp, response)) {
         return false;
     }
 
     memset(&alarms, 0, sizeof(alarms));
-    if (!retap_parse_alarm_list(&retapResp, &alarms)) {
+    if (!retap_parse_return_code_list(&retapResp, &alarms)) {
         return ctrl_response_set_error(response,
                                        CtrlCodeFormatError,
-                                       "failed to parse alarms");
+                                       "failed to parse error status");
     }
 
     return ctrl_response_set_ok(response, build_alarm_payload(&alarms));

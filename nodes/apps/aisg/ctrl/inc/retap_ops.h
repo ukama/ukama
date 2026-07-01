@@ -25,8 +25,10 @@ typedef struct {
 
 bool retap_build_get_information(RetapRequest *request);
 bool retap_parse_get_information(RetapResponse *response, RetapInfo *info);
-bool retap_build_get_alarm_status(RetapRequest *request);
-bool retap_parse_alarm_list(RetapResponse *response, RetapAlarmList *alarms);
+bool retap_build_get_error_status(RetapRequest *request);
+bool retap_build_get_alarm_status(RetapRequest *request); /* legacy API name */
+bool retap_parse_return_code_list(RetapResponse *response, RetapAlarmList *alarms);
+bool retap_parse_alarm_list(RetapResponse *response, RetapAlarmList *alarms); /* legacy API name */
 bool retap_build_clear_active_alarms(RetapRequest *request);
 bool retap_build_alarm_subscribe(RetapRequest *request);
 bool retap_build_self_test(RetapRequest *request);
