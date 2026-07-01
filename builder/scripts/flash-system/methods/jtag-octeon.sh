@@ -665,6 +665,13 @@ _phase2_enable_ethernet_over_serial() {
     echo "Enabling TRX ethernet over serial (login as root, devmem x2)..."
     uboot_open "$serial_dev" "$baud" "${LOG_DIR}/phase2-serial.log" || return 0
 
+    local phase2_tail_pid=""
+    if [ "$TRX_VERBOSE" = "1" ]; then
+        echo "(verbose) Tailing phase2 serial log to console..."
+        tail -f "${LOG_DIR}/phase2-serial.log" &
+        phase2_tail_pid=$!
+    fi
+
     uboot_send "$serial_dev" ""
     sleep 2
     if ! uboot_wait_for "~#" 5; then
@@ -675,11 +682,19 @@ _phase2_enable_ethernet_over_serial() {
             uboot_send "$serial_dev" "cavium.lte"
             if ! uboot_wait_for "~#" 30; then
                 echo "  WARNING: serial login didn't reach a shell prompt; relying on SSH wait."
+                if [ -n "$phase2_tail_pid" ]; then
+                    kill "$phase2_tail_pid" 2>/dev/null || true
+                    phase2_tail_pid=""
+                fi
                 uboot_close
                 return 0
             fi
         else
             echo "  WARNING: no serial login prompt (still booting?); relying on SSH wait."
+            if [ -n "$phase2_tail_pid" ]; then
+                kill "$phase2_tail_pid" 2>/dev/null || true
+                phase2_tail_pid=""
+            fi
             uboot_close
             return 0
         fi
@@ -690,6 +705,10 @@ _phase2_enable_ethernet_over_serial() {
     uboot_send "$serial_dev" "devmem 0x00011800B0001000 64 0x0140"
     sleep 1
     echo "  ethernet-enable (devmem x2) sent over serial."
+    if [ -n "$phase2_tail_pid" ]; then
+        kill "$phase2_tail_pid" 2>/dev/null || true
+        phase2_tail_pid=""
+    fi
     uboot_close
     return 0
 }
@@ -845,7 +864,13 @@ method_apply() {
 
     local pause1_log="${LOG_DIR}/pause1-serial.log"
     local prompt_seen=0 elapsed=0 max_pause1_wait=240
+    local pause1_tail_pid=""
     if uboot_open "$serial_dev" "$baud" "$pause1_log" 2>/dev/null; then
+        if [ "$TRX_VERBOSE" = "1" ]; then
+            echo "(verbose) Tailing pause1 serial log to console..."
+            tail -f "$pause1_log" &
+            pause1_tail_pid=$!
+        fi
         while [ "$elapsed" -lt "$max_pause1_wait" ]; do
             # Allow the operator to skip the wait by pressing ENTER.
             local key=""
@@ -861,6 +886,10 @@ method_apply() {
             fi
             elapsed=$((elapsed + 1))
         done
+        if [ -n "$pause1_tail_pid" ]; then
+            kill "$pause1_tail_pid" 2>/dev/null || true
+            pause1_tail_pid=""
+        fi
         uboot_close
     fi
 
