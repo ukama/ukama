@@ -713,6 +713,54 @@ _phase2_enable_ethernet_over_serial() {
     return 0
 }
 
+_phase2_remount_app() {
+    local trx_ip="$1" ssh_user="$2"
+    local sshpass_args=(-p "$TRX_ROOT_PASSWORD")
+    local ssh_opts=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR)
+
+    echo "Remounting /mnt/app to pick up the freshly-flashed app image..."
+    local app_dev
+    app_dev=$(sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "mount | grep ' /mnt/app ' | awk '{print \$1}'") || app_dev=""
+    if [ -z "$app_dev" ]; then
+        app_dev="/dev/flash_app0"
+        echo "  WARNING: could not parse /mnt/app device; falling back to ${app_dev}."
+    fi
+
+    # sshd stores its host keys under /mnt/app, so a normal umount is busy.
+    # Lazy-unmount the stale filesystem, then mount the image that was just
+    # written by dd and verify it is writable.
+    local out
+    out=$(sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "
+        sync
+        umount /mnt/app 2>/dev/null || true
+        umount -l /mnt/app 2>/dev/null || true
+        if mount -t jffs2 ${app_dev} /mnt/app >/dev/null 2>&1; then
+            if touch /mnt/app/.probe 2>/dev/null && rm -f /mnt/app/.probe 2>/dev/null; then
+                echo MOUNT_OK
+            else
+                echo MOUNT_RO
+            fi
+        else
+            echo MOUNT_FAIL
+        fi
+    ") || out=""
+
+    if printf '%s\n' "$out" | grep -q '^MOUNT_OK$'; then
+        echo "  remounted /mnt/app from ${app_dev} and verified writable."
+        return 0
+    fi
+
+    echo "  WARNING: /mnt/app remount did not verify writable."
+    echo "           Diagnostics from TRX:"
+    sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "
+        echo '--- /proc/mounts ---'; grep /mnt/app /proc/mounts || true
+        echo '--- dmesg tail ---'; dmesg | tail -n 30 || true
+        echo '--- open files on /mnt/app ---'
+        if command -v lsof >/dev/null 2>&1; then lsof /mnt/app 2>/dev/null || true; else fuser -mv /mnt/app 2>/dev/null || true; fi
+    " || true
+    return 1
+}
+
 _phase2_run() {
     local trx_ip ssh_user staging
     trx_ip=$(yq_read "$BOARD_CONFIG" network.trx_ip)
@@ -785,24 +833,29 @@ _phase2_run() {
         echo "WARNING: band config source not found at ${band_cfg_src}"
     fi
 
-    # After dd'ing flash_app0/1, the running /mnt/app mount has a stale superblock.
-    # Remount it so we can write rc_post.local into the newly-flashed app image.
-    echo "Remounting /mnt/app to pick up the freshly-flashed app image..."
-    local app_dev
-    app_dev=$(sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "mount | awk '/ \/mnt\/app / {print \$1}'")
-    if [ -n "$app_dev" ]; then
-        sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" \
-            "umount /mnt/app 2>/dev/null || true; mount -t jffs2 ${app_dev} /mnt/app"
-        echo "  remounted /mnt/app from ${app_dev}."
-    else
-        echo "  WARNING: could not determine /mnt/app device; copy may fail."
-    fi
+    # After dd'ing flash_app0, the running /mnt/app mount has a stale superblock.
+    # Remount it before installing any files that live on the app partition.
+    _phase2_remount_app "$trx_ip" "$ssh_user" || true
 
     rc_post_src="$(dirname "$BOARD_CONFIG")/payloads/rc_post.local"
     rc_post_target=$(yq_read "$BOARD_CONFIG" phase2.rc_post_local)
     echo "Installing rc_post.local (${rc_post_src} -> ${rc_post_target})..."
     sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "mkdir -p /mnt/app"
-    sshpass "${sshpass_args[@]}" scp "${ssh_opts[@]}" "$rc_post_src" "${ssh_user}@${trx_ip}:${rc_post_target}"
+
+    if ! sshpass "${sshpass_args[@]}" scp "${ssh_opts[@]}" "$rc_post_src" "${ssh_user}@${trx_ip}:${rc_post_target}"; then
+        echo "ERROR: rc_post.local copy failed (Input/output error). Trying an explicit remount + retry..."
+        if _phase2_remount_app "$trx_ip" "$ssh_user"; then
+            sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "rm -f ${rc_post_target}"
+            if ! sshpass "${sshpass_args[@]}" scp "${ssh_opts[@]}" "$rc_post_src" "${ssh_user}@${trx_ip}:${rc_post_target}"; then
+                echo "ERROR: rc_post.local copy still failed after remount."
+                return 1
+            fi
+        else
+            echo "ERROR: could not remount /mnt/app writable; cannot install rc_post.local."
+            return 1
+        fi
+    fi
+
     sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "chmod +x ${rc_post_target}"
 
     echo ""
