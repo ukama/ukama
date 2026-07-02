@@ -336,3 +336,50 @@ func TestSubscriberClient_GetByEmail(t *testing.T) {
 		assert.Nil(tt, s)
 	})
 }
+
+func TestSubscriberClient_GetByNetwork(t *testing.T) {
+	const testNetworkId = "2f59b2ea-6836-4e0c-84d6-e50e8c51ecc8"
+
+	t.Run("SubscribersFound", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), subscriber.SubscribersByNetworkEndpoint+"/"+testNetworkId)
+
+			resp := `{"subscribers":[{"name":"salman dev","subscriber_id":"` + testUuid + `","network_id":"` + testNetworkId + `","email":"salman@dev.com","sim":[{"id":"d8df838c-1c96-45de-94e4-dfe45b0c1d0b","iccid":"8910302434653071249","type":"ukama_data","status":"active"}]}]}`
+
+			return &http.Response{
+				StatusCode: 200,
+				Status:     "200 OK",
+				Body:       io.NopCloser(bytes.NewBufferString(resp)),
+				Header:     make(http.Header),
+			}
+		}
+
+		testSubscriberClient := subscriber.NewSubscriberClient("")
+		testSubscriberClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		subs, err := testSubscriberClient.GetByNetwork(testNetworkId)
+
+		assert.NoError(tt, err)
+		assert.Len(tt, subs, 1)
+		assert.Equal(tt, testUuid, subs[0].SubscriberId)
+		assert.Equal(tt, testNetworkId, subs[0].NetworkId)
+		assert.Len(tt, subs[0].Sim, 1)
+		assert.Equal(tt, "8910302434653071249", subs[0].Sim[0].Iccid)
+	})
+
+	t.Run("RequestFailure", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), subscriber.SubscribersByNetworkEndpoint+"/"+testNetworkId)
+
+			return nil
+		}
+
+		testSubscriberClient := subscriber.NewSubscriberClient("")
+		testSubscriberClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		subs, err := testSubscriberClient.GetByNetwork(testNetworkId)
+
+		assert.Error(tt, err)
+		assert.Nil(tt, subs)
+	})
+}

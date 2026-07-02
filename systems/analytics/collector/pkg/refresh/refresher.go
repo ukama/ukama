@@ -93,16 +93,16 @@ func (r *Refresher) Refresh(source string) (*db.RefreshState, error) {
 	switch source {
 	case SourceRegistry:
 		err = r.refreshRegistry(now)
-	// case SourceSubscriber:
-	// 	err = r.refreshSubscriber(now)
+	case SourceSubscriber:
+		err = r.refreshSubscriber(now)
 	case SourceDataplan:
 		err = r.refreshDataplan(now)
-	// case SourceMetrics:
-	// 	err = r.refreshMetrics(now)
 	case SourceNode:
 		err = r.refreshNode(now)
 	case SourceInventory:
 		err = r.refreshInventory(now)
+	// case SourceMetrics:
+	// 	err = r.refreshMetrics(now)
 	// case SourceBilling:
 	// 	err = r.refreshBilling(now)
 	default:
@@ -194,42 +194,50 @@ func (r *Refresher) refreshRegistry(now time.Time) error {
 	return r.stateRepo.MarkRollupDirty("network_health_hourly")
 }
 
-// func (r *Refresher) refreshSubscriber(now time.Time) error {
-// 	subs, err := r.subSubscriberClient.GetAll(false, "")
-// 	if err != nil {
-// 		return err
-// 	}
+func (r *Refresher) refreshSubscriber(now time.Time) error {
+	networks, err := r.regNetworkClient.GetAll()
+	if err != nil {
+		return err
+	}
 
-// 	for _, s := range subs {
-// 		id, perr := uuid.FromString(s.SubscriberId)
-// 		if perr != nil {
-// 			log.Warnf("skipping subscriber with invalid id %q: %v", s.SubscriberId, perr)
+	for _, n := range networks {
+		subs, err := r.subSubscriberClient.GetByNetwork(n.Id)
+		if err != nil {
+			return err
+		}
 
-// 			continue
-// 		}
+		for _, s := range subs {
+			id, perr := uuid.FromString(s.SubscriberId)
+			if perr != nil {
+				log.Warnf("skipping subscriber with invalid id %q: %v", s.SubscriberId, perr)
 
-// 		netId, _ := uuid.FromString(s.NetworkId)
+				continue
+			}
 
-// 		snap := &db.CustomerSnapshot{
-// 			CustomerId: id,
-// 			NetworkId:  netId,
-// 			Name:       s.Name,
-// 			Email:      s.Email,
-// 			Status:     "active",
-// 			UpdatedAt:  now,
-// 		}
+			netId, _ := uuid.FromString(s.NetworkId)
 
-// 		if t, terr := time.Parse(time.RFC3339, s.CreatedAt); terr == nil {
-// 			snap.SourceCreatedAt = &t
-// 		}
+			snap := &db.CustomerSnapshot{
+				CustomerId: id,
+				NetworkId:  netId,
+				Name:       s.Name,
+				Email:      s.Email,
+				Status:     "active",
+				UpdatedAt:  now,
+			}
 
-// 		if err := r.snapshotRepo.UpsertCustomer(snap); err != nil {
-// 			return err
-// 		}
-// 	}
+			if t, terr := time.Parse(time.RFC3339, s.CreatedAt); terr == nil {
+				snap.SourceCreatedAt = &t
+			}
 
-// 	return r.stateRepo.MarkRollupDirty("customer_state_daily")
-// }
+			if err := r.snapshotRepo.UpsertCustomer(snap); err != nil {
+				return err
+			}
+
+		}
+	}
+
+	return r.stateRepo.MarkRollupDirty("customer_state_daily")
+}
 
 func (r *Refresher) refreshDataplan(now time.Time) error {
 	packages, err := r.dpPackageClient.GetAll()
@@ -266,33 +274,6 @@ func (r *Refresher) refreshDataplan(now time.Time) error {
 
 	return r.stateRepo.MarkRollupDirty("business_package_daily")
 }
-
-// func (r *Refresher) refreshMetrics(now time.Time) error {
-// 	metrics, err := r.metricsClient.GetLatestMetrics()
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	for _, m := range metrics {
-// 		sampledAt := now
-// 		if m.Timestamp > 0 {
-// 			sampledAt = time.Unix(m.Timestamp, 0).UTC()
-// 		}
-
-// 		if err := r.factRepo.AddMetricSample(&db.MetricSample{
-// 			Metric:       m.Metric,
-// 			ResourceType: m.ResourceType,
-// 			ResourceId:   m.ResourceId,
-// 			Value:        m.Value,
-// 			Unit:         m.Unit,
-// 			SampledAt:    sampledAt,
-// 		}); err != nil {
-// 			return err
-// 		}
-// 	}
-
-// 	return r.stateRepo.MarkRollupDirty("metric_hourly")
-// }
 
 func (r *Refresher) refreshNode(now time.Time) error {
 	nodes, err := r.regNodeClient.GetAll()
@@ -340,6 +321,33 @@ func (r *Refresher) refreshInventory(now time.Time) error {
 
 	return r.stateRepo.MarkRollupDirty("business_inventory_daily")
 }
+
+// func (r *Refresher) refreshMetrics(now time.Time) error {
+// 	metrics, err := r.metricsClient.GetLatestMetrics()
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	for _, m := range metrics {
+// 		sampledAt := now
+// 		if m.Timestamp > 0 {
+// 			sampledAt = time.Unix(m.Timestamp, 0).UTC()
+// 		}
+
+// 		if err := r.factRepo.AddMetricSample(&db.MetricSample{
+// 			Metric:       m.Metric,
+// 			ResourceType: m.ResourceType,
+// 			ResourceId:   m.ResourceId,
+// 			Value:        m.Value,
+// 			Unit:         m.Unit,
+// 			SampledAt:    sampledAt,
+// 		}); err != nil {
+// 			return err
+// 		}
+// 	}
+
+// 	return r.stateRepo.MarkRollupDirty("metric_hourly")
+// }
 
 // func (r *Refresher) refreshBilling(now time.Time) error {
 // 	account, err := r.billingClient.GetAccount()
