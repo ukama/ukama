@@ -874,6 +874,7 @@ _phase2_run() {
     local sshpass_args=(-p "$TRX_ROOT_PASSWORD")
     local ssh_opts=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR)
 
+    local rc_post_src rc_post_target app0_image
     rc_post_src="$(dirname "$BOARD_CONFIG")/payloads/rc_post.local"
     rc_post_target=$(yq_read "$BOARD_CONFIG" phase2.rc_post_local)
     app0_image=$(yq_read "$BOARD_CONFIG" phase2.images.app0.src)
@@ -934,7 +935,7 @@ _phase2_run() {
         "mount | grep ' /mnt/app ' || true; df -h /mnt/app || true"
 
     # Copy band config and rc_post.local while we still have SSH/ethernet from boot 1.
-    local band_default band_configs_dir band_cfg_src band_cfg_target rc_post_src rc_post_target
+    local band_default band_configs_dir band_cfg_src band_cfg_target
     band_default=$(yq_read "$BOARD_CONFIG" band.default)
     band_configs_dir=$(yq_read "$BOARD_CONFIG" band.configs_dir)
     band_cfg_src="${band_configs_dir}/${band_default}.cfg"
