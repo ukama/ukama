@@ -42,4 +42,22 @@ int retap_request_timeout_ms(const RetapRequest *request);
 CtrlCode retap_failure_to_ctrl_code(uint8_t failureReason);
 const char *retap_return_code_str(uint8_t code);
 
+/* Secondary-side helpers used by aisg-emu --mode ret. */
+bool retap_decode_request(const uint8_t *buf,
+                          size_t len,
+                          RetapRequest *request);
+bool retap_encode_ok_response(uint8_t procedure,
+                              const uint8_t *data,
+                              size_t dataLen,
+                              uint8_t *buf,
+                              size_t size,
+                              size_t *len);
+bool retap_encode_fail_response(uint8_t procedure,
+                                uint8_t failureReason,
+                                const uint8_t *extra,
+                                size_t extraLen,
+                                uint8_t *buf,
+                                size_t size,
+                                size_t *len);
+
 #endif /* RETAP_H_ */

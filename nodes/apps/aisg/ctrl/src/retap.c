@@ -203,6 +203,118 @@ CtrlCode retap_failure_to_ctrl_code(uint8_t failureReason)
     }
 }
 
+
+bool retap_decode_request(const uint8_t *buf,
+                          size_t len,
+                          RetapRequest *request)
+{
+    uint16_t dataLen;
+
+    if (buf == NULL || request == NULL || len < RETAP_HEADER_LEN) {
+        return false;
+    }
+
+    dataLen = (uint16_t)buf[1] | ((uint16_t)buf[2] << 8);
+    if ((size_t)dataLen + RETAP_HEADER_LEN != len) {
+        return false;
+    }
+
+    if (dataLen > RETAP_MAX_PAYLOAD) {
+        return false;
+    }
+
+    retap_request_init(request, buf[0]);
+    request->dataLen = dataLen;
+
+    if (dataLen > 0) {
+        memcpy(request->data, &buf[RETAP_HEADER_LEN], dataLen);
+    }
+
+    return true;
+}
+
+bool retap_encode_ok_response(uint8_t procedure,
+                              const uint8_t *data,
+                              size_t dataLen,
+                              uint8_t *buf,
+                              size_t size,
+                              size_t *len)
+{
+    size_t appLen;
+
+    if (buf == NULL || len == NULL) {
+        return false;
+    }
+
+    if (data == NULL && dataLen != 0) {
+        return false;
+    }
+
+    if (dataLen > RETAP_MAX_PAYLOAD) {
+        return false;
+    }
+
+    appLen = dataLen + 1; /* OK + optional data. */
+    if (size < RETAP_HEADER_LEN + appLen) {
+        return false;
+    }
+
+    buf[0] = procedure;
+    buf[1] = (uint8_t)(appLen & 0xFF);
+    buf[2] = (uint8_t)((appLen >> 8) & 0xFF);
+    buf[RETAP_HEADER_LEN] = RETAP_RETURN_OK;
+
+    if (dataLen > 0) {
+        memcpy(&buf[RETAP_HEADER_LEN + 1], data, dataLen);
+    }
+
+    *len = RETAP_HEADER_LEN + appLen;
+
+    return true;
+}
+
+bool retap_encode_fail_response(uint8_t procedure,
+                                uint8_t failureReason,
+                                const uint8_t *extra,
+                                size_t extraLen,
+                                uint8_t *buf,
+                                size_t size,
+                                size_t *len)
+{
+    size_t appLen;
+
+    if (buf == NULL || len == NULL) {
+        return false;
+    }
+
+    if (extra == NULL && extraLen != 0) {
+        return false;
+    }
+
+    if (extraLen > RETAP_MAX_PAYLOAD - 2) {
+        return false;
+    }
+
+    appLen = extraLen + 2; /* FAIL + reason + optional extra. */
+    if (size < RETAP_HEADER_LEN + appLen) {
+        return false;
+    }
+
+    buf[0] = procedure;
+    buf[1] = (uint8_t)(appLen & 0xFF);
+    buf[2] = (uint8_t)((appLen >> 8) & 0xFF);
+    buf[RETAP_HEADER_LEN] = RETAP_RETURN_FAIL;
+    buf[RETAP_HEADER_LEN + 1] = failureReason;
+
+    if (extraLen > 0) {
+        memcpy(&buf[RETAP_HEADER_LEN + 2], extra, extraLen);
+    }
+
+    *len = RETAP_HEADER_LEN + appLen;
+
+    return true;
+}
+
 const char *retap_return_code_str(uint8_t code)
 {
     switch (code) {

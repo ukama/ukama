@@ -35,6 +35,7 @@ CFLAGS+=-I$(VENDOR_INC)
 CFLAGS+=-I$(PLATFORM_INC_SYS)
 CFLAGS+=-I$(PLATFORM_INC_LOG)
 CFLAGS+=-I./inc
+CFLAGS+=-I../ctrl/inc
 CFLAGS+=-D_REENTRANT
 
 COVFLAGS=-fprofile-arcs -ftest-coverage
