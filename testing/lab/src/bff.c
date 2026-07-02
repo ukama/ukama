@@ -29,6 +29,7 @@ extern const char *BFF_NETWORK_OVERVIEW;
 extern const char *BFF_SITE_VIEW;
 extern const char *BFF_GET_NETWORKS;
 extern const char *BFF_GET_SITES;
+extern const char *BFF_GET_SITES_LEGACY;
 extern const char *BFF_GET_NODES_FOR_SITE;
 extern const char *BFF_GET_COMPONENTS_BY_USER_ID;
 extern const char *BFF_GET_NODES;
@@ -1324,10 +1325,45 @@ static int backend_get_networks(bff_client_t *c, json_t **root,
 static int backend_get_sites(bff_client_t *c, const char *network_id,
                              json_t **root, ulab_error_t *err) {
     char vars[ULAB_MAX_QUERY];
+    char legacy_vars[ULAB_MAX_QUERY];
+    ulab_error_t first_err;
 
-    snprintf(vars, sizeof(vars), "{\"networkId\":\"%s\"}",
+    if (root != NULL) {
+        *root = NULL;
+    }
+
+    snprintf(vars, sizeof(vars), "{\"data\":{\"networkId\":\"%s\"}}",
              network_id ? network_id : "");
-    return bff_call(c, "getSites", BFF_GET_SITES, vars, root, err);
+
+    memset(&first_err, 0, sizeof(first_err));
+    if (bff_call(c, "getSites", BFF_GET_SITES, vars, root, &first_err) == ULAB_OK) {
+        return ULAB_OK;
+    }
+
+    /*
+     * Keep compatibility with older BFF deployments that still exposed
+     * getSites(networkId: String!). Current BFF expects
+     * getSites(data: SitesInputDto!).
+     */
+    if (strstr(first_err.msg, "Unknown argument \"data\"") != NULL ||
+        strstr(first_err.msg, "SitesInputDto") != NULL ||
+        strstr(first_err.msg, "Field \"getSites\" argument \"networkId\"") != NULL) {
+        if (root != NULL && *root != NULL) {
+            json_decref(*root);
+            *root = NULL;
+        }
+
+        snprintf(legacy_vars, sizeof(legacy_vars), "{\"networkId\":\"%s\"}",
+                 network_id ? network_id : "");
+        return bff_call(c, "getSites", BFF_GET_SITES_LEGACY, legacy_vars,
+                        root, err);
+    }
+
+    if (err != NULL) {
+        *err = first_err;
+    }
+
+    return ULAB_ERR;
 }
 
 static int backend_get_nodes_for_site(bff_client_t *c, const char *site_id,

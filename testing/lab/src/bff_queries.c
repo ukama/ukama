@@ -64,6 +64,10 @@ const char *BFF_GET_NETWORKS =
 "query GetNetworks { getNetworks { networks { id name } } }";
 
 const char *BFF_GET_SITES =
+"query GetSites($data: SitesInputDto!) { getSites(data: $data) {"
+" sites { id name } } }";
+
+const char *BFF_GET_SITES_LEGACY =
 "query GetSites($networkId: String!) { getSites(networkId: $networkId) {"
 " sites { id name } } }";
 
