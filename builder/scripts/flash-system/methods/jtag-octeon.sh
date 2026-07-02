@@ -761,6 +761,64 @@ _phase2_remount_app() {
     return 1
 }
 
+# Inject rc_post.local into the local flash_app0.img on the bench box before it
+# is dd'd to the TRX. This avoids writing to a live jffs2 /mnt/app mount, which
+# has been returning Input/output error even when the mount probes as writable.
+_phase2_inject_rc_post_into_app0_image() {
+    local app0_image="$1" rc_post_src="$2" rc_post_target="$3"
+    local internal_path="${rc_post_target#/mnt/app}"
+    internal_path="${internal_path#/}"
+
+    local tmpdir mntdir loopdev
+    tmpdir=$(mktemp -d) || return 1
+    mntdir="${tmpdir}/mnt"
+    mkdir -p "$mntdir" || { rm -rf "$tmpdir"; return 1; }
+
+    echo "Injecting rc_post.local into ${app0_image} on the bench box (pre-dd)..."
+
+    # Load the modules needed to mount a jffs2 image via loopback.
+    modprobe jffs2 >/dev/null 2>&1 || true
+    modprobe mtdblock >/dev/null 2>&1 || true
+
+    loopdev=$(losetup -f 2>/dev/null) || loopdev=""
+    if [ -z "$loopdev" ]; then
+        echo "  WARNING: no free loop device available; will try post-flash copy instead."
+        rm -rf "$tmpdir"
+        return 1
+    fi
+
+    if ! losetup "$loopdev" "$app0_image" >/dev/null 2>&1; then
+        echo "  WARNING: could not set up loop device for app0 image; will try post-flash copy instead."
+        rm -rf "$tmpdir"
+        return 1
+    fi
+
+    if ! mount -t jffs2 "$loopdev" "$mntdir" >/dev/null 2>&1; then
+        echo "  WARNING: could not mount app0 image as jffs2; will try post-flash copy instead."
+        losetup -d "$loopdev" >/dev/null 2>&1 || true
+        rm -rf "$tmpdir"
+        return 1
+    fi
+
+    mkdir -p "${mntdir}/$(dirname "$internal_path")"
+    if ! cp "$rc_post_src" "${mntdir}/${internal_path}"; then
+        echo "  WARNING: could not copy rc_post.local into app0 image; will try post-flash copy instead."
+        umount "$mntdir" >/dev/null 2>&1 || true
+        losetup -d "$loopdev" >/dev/null 2>&1 || true
+        rm -rf "$tmpdir"
+        return 1
+    fi
+    chmod +x "${mntdir}/${internal_path}"
+
+    sync
+    umount "$mntdir" >/dev/null 2>&1 || true
+    losetup -d "$loopdev" >/dev/null 2>&1 || true
+    rm -rf "$tmpdir"
+
+    echo "  injected rc_post.local into app0 image; it will be flashed by dd along with the other images."
+    return 0
+}
+
 _phase2_run() {
     local trx_ip ssh_user staging
     trx_ip=$(yq_read "$BOARD_CONFIG" network.trx_ip)
@@ -769,6 +827,17 @@ _phase2_run() {
 
     local sshpass_args=(-p "$TRX_ROOT_PASSWORD")
     local ssh_opts=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR)
+
+    rc_post_src="$(dirname "$BOARD_CONFIG")/payloads/rc_post.local"
+    rc_post_target=$(yq_read "$BOARD_CONFIG" phase2.rc_post_local)
+    app0_image=$(yq_read "$BOARD_CONFIG" phase2.images.app0.src)
+
+    local rc_post_injected=0
+    if [ -f "$rc_post_src" ] && [ -f "$app0_image" ]; then
+        if _phase2_inject_rc_post_into_app0_image "$app0_image" "$rc_post_src" "$rc_post_target"; then
+            rc_post_injected=1
+        fi
+    fi
 
     _phase2_enable_ethernet_over_serial
 
@@ -833,36 +902,38 @@ _phase2_run() {
         echo "WARNING: band config source not found at ${band_cfg_src}"
     fi
 
-    # After dd'ing flash_app0, the running /mnt/app mount has a stale superblock.
-    # Remount it before installing any files that live on the app partition.
-    _phase2_remount_app "$trx_ip" "$ssh_user" || true
+    if [ "$rc_post_injected" -eq 1 ]; then
+        echo "rc_post.local was pre-injected into flash_app0.img; skipping post-flash copy."
+    else
+        # After dd'ing flash_app0, the running /mnt/app mount has a stale superblock.
+        # Remount it before installing any files that live on the app partition.
+        _phase2_remount_app "$trx_ip" "$ssh_user" || true
 
-    rc_post_src="$(dirname "$BOARD_CONFIG")/payloads/rc_post.local"
-    rc_post_target=$(yq_read "$BOARD_CONFIG" phase2.rc_post_local)
-    echo "Installing rc_post.local (${rc_post_src} -> ${rc_post_target})..."
-    sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "mkdir -p /mnt/app"
+        echo "Installing rc_post.local (${rc_post_src} -> ${rc_post_target})..."
+        sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "mkdir -p /mnt/app"
 
-    # scp to jffs2 intermittently returns Input/output error even when the mount
-    # is verified writable. Use a plain ssh cat first; fall back to scp only if
-    # that fails.
-    if ! cat "$rc_post_src" | sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "cat > ${rc_post_target}"; then
-        echo "ERROR: rc_post.local copy via ssh cat failed. Trying scp..."
-        if ! sshpass "${sshpass_args[@]}" scp "${ssh_opts[@]}" "$rc_post_src" "${ssh_user}@${trx_ip}:${rc_post_target}"; then
-            echo "ERROR: rc_post.local scp also failed. Trying an explicit remount + retry..."
-            if _phase2_remount_app "$trx_ip" "$ssh_user"; then
-                sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "rm -f ${rc_post_target}"
-                if ! cat "$rc_post_src" | sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "cat > ${rc_post_target}"; then
-                    echo "ERROR: rc_post.local copy still failed after remount."
+        # scp to jffs2 intermittently returns Input/output error even when the mount
+        # is verified writable. Use a plain ssh cat first; fall back to scp only if
+        # that fails.
+        if ! cat "$rc_post_src" | sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "cat > ${rc_post_target}"; then
+            echo "ERROR: rc_post.local copy via ssh cat failed. Trying scp..."
+            if ! sshpass "${sshpass_args[@]}" scp "${ssh_opts[@]}" "$rc_post_src" "${ssh_user}@${trx_ip}:${rc_post_target}"; then
+                echo "ERROR: rc_post.local scp also failed. Trying an explicit remount + retry..."
+                if _phase2_remount_app "$trx_ip" "$ssh_user"; then
+                    sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "rm -f ${rc_post_target}"
+                    if ! cat "$rc_post_src" | sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "cat > ${rc_post_target}"; then
+                        echo "ERROR: rc_post.local copy still failed after remount."
+                        return 1
+                    fi
+                else
+                    echo "ERROR: could not remount /mnt/app writable; cannot install rc_post.local."
                     return 1
                 fi
-            else
-                echo "ERROR: could not remount /mnt/app writable; cannot install rc_post.local."
-                return 1
             fi
         fi
-    fi
 
-    sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "chmod +x ${rc_post_target}"
+        sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "chmod +x ${rc_post_target}"
+    fi
 
     echo ""
     echo "All 8 images written and config files installed."
