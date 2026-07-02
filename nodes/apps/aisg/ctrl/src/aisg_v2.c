@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "aisg_v2.h"
@@ -15,6 +16,7 @@
 #include "usys_log.h"
 
 #define AISG_TRACE_BYTES_PER_LINE          16
+#define AISG_POLL_DELAY_US                 50000
 
 #define XID_INFO_MIN_LEN                   3
 #define XID_SCAN_ID_LEN                    AISG_XID_UNIQUE_ID_MAX
@@ -67,6 +69,65 @@ static const char *ctrl_name(uint8_t ctrl)
     if (hdlc_is_frmr(ctrl))    return "FRMR";
 
     return "CTRL";
+}
+
+
+const char *aisg_v2_l2_state_str(AisgL2State state)
+{
+    return l2_state_name(state);
+}
+
+const char *aisg_v2_error_str(AisgError error)
+{
+    switch (error) {
+    case AISG_ERROR_NONE:                         return "None";
+    case AISG_ERROR_TRANSPORT:                    return "Transport";
+    case AISG_ERROR_TIMEOUT:                      return "Timeout";
+    case AISG_ERROR_MULTIPLE_DEVICES:             return "MultipleDevices";
+    case AISG_ERROR_UNSUPPORTED_DEVICE_TYPE:      return "UnsupportedDeviceType";
+    case AISG_ERROR_UNSUPPORTED_PROTOCOL_VERSION: return "UnsupportedProtocolVersion";
+    case AISG_ERROR_LINK_NOT_CONNECTED:           return "LinkNotConnected";
+    case AISG_ERROR_FRAME_REJECT:                 return "FrameReject";
+    case AISG_ERROR_RECEIVER_NOT_READY:           return "ReceiverNotReady";
+    case AISG_ERROR_PROTOCOL:                     return "Protocol";
+    default:                                      return "Unknown";
+    }
+}
+
+static void set_error(AisgBus *bus, AisgError error)
+{
+    if (bus != NULL) {
+        bus->lastError = error;
+    }
+}
+
+static int64_t monotonic_ms(void)
+{
+    struct timespec ts;
+
+    if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) {
+        return 0;
+    }
+
+    return ((int64_t)ts.tv_sec * 1000) + ((int64_t)ts.tv_nsec / 1000000);
+}
+
+static int remaining_ms(int64_t startMs, int timeoutMs)
+{
+    int64_t now;
+    int64_t elapsed;
+
+    if (timeoutMs <= 0) {
+        return AISG_DEFAULT_TIMEOUT_MS;
+    }
+
+    now = monotonic_ms();
+    elapsed = now - startMs;
+    if (elapsed >= timeoutMs) {
+        return 0;
+    }
+
+    return (int)(timeoutMs - elapsed);
 }
 
 static void log_hex_bytes(const char *label,
@@ -616,6 +677,7 @@ static bool xid_scan_single(AisgBus *bus, AisgDevice *device)
 
     if (!send_frame(bus, &tx, &rx, AISG_DEFAULT_TIMEOUT_MS)) {
         usys_log_debug("aisg: XID scan failed: no valid response");
+        set_error(bus, AISG_ERROR_TRANSPORT);
         return false;
     }
 
@@ -644,6 +706,7 @@ static bool xid_scan_single(AisgBus *bus, AisgDevice *device)
     if (read_extra_scan_response(bus)) {
         device->unsupported = true;
         device->present = false;
+        set_error(bus, AISG_ERROR_MULTIPLE_DEVICES);
         return false;
     }
 
@@ -658,6 +721,7 @@ static bool xid_scan_single(AisgBus *bus, AisgDevice *device)
     if (device->deviceType != AISG_SUPPORTED_DEVICE_TYPE) {
         device->unsupported = true;
         device->present = false;
+        set_error(bus, AISG_ERROR_UNSUPPORTED_DEVICE_TYPE);
         usys_log_debug("aisg: unsupported device_type=0x%02X expected=0x%02X",
                        device->deviceType,
                        AISG_SUPPORTED_DEVICE_TYPE);
@@ -739,6 +803,7 @@ static bool xid_assign_address(AisgBus *bus, AisgDevice *device)
                        "device_type=0x%02X",
                        params.deviceType);
         device->unsupported = true;
+        set_error(bus, AISG_ERROR_UNSUPPORTED_DEVICE_TYPE);
         return false;
     }
 
@@ -887,6 +952,7 @@ static bool xid_negotiate_one_octet(AisgBus *bus,
                        name,
                        value,
                        offered);
+        set_error(bus, AISG_ERROR_UNSUPPORTED_PROTOCOL_VERSION);
         return false;
     }
 
@@ -972,12 +1038,14 @@ static bool l2_establish_link(AisgBus *bus)
 
     if (hdlc_is_dm(rx.control)) {
         usys_log_debug("aisg: link establishment failed: secondary returned DM");
+        set_error(bus, AISG_ERROR_LINK_NOT_CONNECTED);
         return false;
     }
 
     if (!hdlc_is_ua(rx.control)) {
         usys_log_debug("aisg: link establishment failed: unexpected ctrl=0x%02X",
                        rx.control);
+        set_error(bus, AISG_ERROR_TRANSPORT);
         return false;
     }
 
@@ -1016,11 +1084,30 @@ void aisg_v2_bus_init(AisgBus *bus, SerialPort *serial)
     bus->ns            = 0;
     bus->nr            = 0;
     bus->state         = AISG_L2_NO_ADDRESS;
+    bus->maxInfoLen    = AISG_HDLC_DEFAULT_INFO_MAX;
+    bus->lastError     = AISG_ERROR_NONE;
 
     usys_log_debug("aisg: init scope=%s supported_device_type=0x%02X state=%s",
                    AISG_SCOPE_NAME,
                    AISG_SUPPORTED_DEVICE_TYPE,
                    l2_state_name(bus->state));
+}
+
+void aisg_v2_bus_reset_link(AisgBus *bus)
+{
+    SerialPort *serial;
+
+    if (bus == NULL) {
+        return;
+    }
+
+    serial = bus->serial;
+    memset(bus, 0, sizeof(*bus));
+    bus->serial = serial;
+    bus->deviceAddress = AISG_ADDR_DEFAULT;
+    bus->state = AISG_L2_NO_ADDRESS;
+    bus->maxInfoLen = AISG_HDLC_DEFAULT_INFO_MAX;
+    bus->lastError = AISG_ERROR_NONE;
 }
 
 bool aisg_v2_scan(AisgBus *bus, AisgDevice *device)
@@ -1039,6 +1126,8 @@ bool aisg_v2_scan(AisgBus *bus, AisgDevice *device)
     bus->negotiated3gppRelease = 0;
     bus->hasAisgVersion = false;
     bus->negotiatedAisgVersion = 0;
+    bus->maxInfoLen = AISG_HDLC_DEFAULT_INFO_MAX;
+    bus->lastError = AISG_ERROR_NONE;
 
     if (!xid_scan_single(bus, device)) {
         usys_log_debug("aisg: scan failed");
@@ -1065,56 +1154,82 @@ bool aisg_v2_scan(AisgBus *bus, AisgDevice *device)
         return false;
     }
 
+    bus->lastError = AISG_ERROR_NONE;
     return true;
 }
 
-static bool l2_validate_i_response(AisgBus *bus,
-                                   const HdlcFrame *rx,
-                                   uint8_t txNs,
-                                   uint8_t txNr)
+typedef enum {
+    L2_RX_INVALID = 0,
+    L2_RX_I_RESPONSE,
+    L2_RX_ACK_ONLY,
+    L2_RX_NOT_READY
+} L2RxResult;
+
+static L2RxResult l2_classify_response(AisgBus *bus,
+                                       const HdlcFrame *rx,
+                                       uint8_t txNs,
+                                       uint8_t txNr)
 {
     uint8_t expectedAck;
     uint8_t rxNs;
     uint8_t rxNr;
 
     if (bus == NULL || rx == NULL) {
-        return false;
+        return L2_RX_INVALID;
     }
 
     if (rx->address != bus->deviceAddress) {
-        usys_log_debug("aisg: I-response addr=0x%02X expected=0x%02X",
+        usys_log_debug("aisg: response addr=0x%02X expected=0x%02X",
                        rx->address,
                        bus->deviceAddress);
-        return false;
+        set_error(bus, AISG_ERROR_PROTOCOL);
+        return L2_RX_INVALID;
     }
+
+    expectedAck = (uint8_t)((txNs + 1) & 0x07);
 
     if (hdlc_is_frmr(rx->control)) {
-        usys_log_debug("aisg: I-response rejected: secondary returned FRMR");
-        return false;
+        usys_log_debug("aisg: response rejected: secondary returned FRMR");
+        set_error(bus, AISG_ERROR_FRAME_REJECT);
+        return L2_RX_INVALID;
     }
 
-    if (hdlc_is_rnr(rx->control)) {
-        usys_log_debug("aisg: I-response rejected: secondary returned RNR");
-        return false;
-    }
+    if (hdlc_is_rr(rx->control) || hdlc_is_rnr(rx->control)) {
+        rxNr = hdlc_nr(rx->control);
+        if (rxNr != expectedAck) {
+            usys_log_debug("aisg: S-response rejected: N(R)=%u expected_ack=%u",
+                           rxNr,
+                           expectedAck);
+            set_error(bus, AISG_ERROR_PROTOCOL);
+            return L2_RX_INVALID;
+        }
 
-    if (hdlc_is_rr(rx->control)) {
-        usys_log_debug("aisg: I-response rejected: RR acknowledgement carried no RETAP data");
-        return false;
+        bus->ns = expectedAck;
+
+        if (hdlc_is_rnr(rx->control)) {
+            usys_log_debug("aisg: secondary receiver-not-ready nr=%u", rxNr);
+            set_error(bus, AISG_ERROR_RECEIVER_NOT_READY);
+            return L2_RX_NOT_READY;
+        }
+
+        usys_log_debug("aisg: RR ack received nr=%u; polling for RETAP response",
+                       rxNr);
+        return L2_RX_ACK_ONLY;
     }
 
     if (!hdlc_is_i_frame(rx->control)) {
-        usys_log_debug("aisg: I-response rejected: unexpected ctrl=0x%02X",
+        usys_log_debug("aisg: response rejected: unexpected ctrl=0x%02X",
                        rx->control);
-        return false;
+        set_error(bus, AISG_ERROR_PROTOCOL);
+        return L2_RX_INVALID;
     }
 
     if (!hdlc_poll_final(rx->control)) {
         usys_log_debug("aisg: I-response rejected: final bit not set");
-        return false;
+        set_error(bus, AISG_ERROR_PROTOCOL);
+        return L2_RX_INVALID;
     }
 
-    expectedAck = (uint8_t)((txNs + 1) & 0x07);
     rxNs = hdlc_ns(rx->control);
     rxNr = hdlc_nr(rx->control);
 
@@ -1122,23 +1237,118 @@ static bool l2_validate_i_response(AisgBus *bus,
         usys_log_debug("aisg: I-response rejected: N(R)=%u expected_ack=%u",
                        rxNr,
                        expectedAck);
-        return false;
+        set_error(bus, AISG_ERROR_PROTOCOL);
+        return L2_RX_INVALID;
     }
 
     if (rxNs != txNr) {
         usys_log_debug("aisg: I-response rejected: N(S)=%u expected=%u",
                        rxNs,
                        txNr);
-        return false;
+        set_error(bus, AISG_ERROR_PROTOCOL);
+        return L2_RX_INVALID;
     }
 
     bus->ns = expectedAck;
     bus->nr = (uint8_t)((rxNs + 1) & 0x07);
+    bus->lastError = AISG_ERROR_NONE;
 
     usys_log_debug("aisg: I-response sequence OK next_ns=%u next_nr=%u",
                    bus->ns,
                    bus->nr);
 
+    return L2_RX_I_RESPONSE;
+}
+
+static bool l2_poll_for_i_response(AisgBus *bus,
+                                   HdlcFrame *rx,
+                                   uint8_t txNs,
+                                   uint8_t txNr,
+                                   int64_t startMs,
+                                   int timeoutMs)
+{
+    HdlcFrame poll;
+    int waitMs;
+    L2RxResult result;
+
+    if (bus == NULL || rx == NULL) {
+        return false;
+    }
+
+    for (;;) {
+        result = l2_classify_response(bus, rx, txNs, txNr);
+        if (result == L2_RX_I_RESPONSE) {
+            return true;
+        }
+
+        if (result == L2_RX_INVALID) {
+            return false;
+        }
+
+        waitMs = remaining_ms(startMs, timeoutMs);
+        if (waitMs <= 0) {
+            set_error(bus, AISG_ERROR_TIMEOUT);
+            return false;
+        }
+
+        if (result == L2_RX_NOT_READY) {
+            usleep(AISG_POLL_DELAY_US);
+            waitMs = remaining_ms(startMs, timeoutMs);
+            if (waitMs <= 0) {
+                set_error(bus, AISG_ERROR_TIMEOUT);
+                return false;
+            }
+        }
+
+        memset(&poll, 0, sizeof(poll));
+        poll.address = bus->deviceAddress;
+        poll.control = hdlc_rr_ctrl(bus->nr, true);
+        poll.infoLen = 0;
+
+        usys_log_debug("aisg: polling secondary for pending I-frame nr=%u wait_ms=%d",
+                       bus->nr,
+                       waitMs);
+
+        if (!send_frame(bus, &poll, rx, waitMs)) {
+            set_error(bus, AISG_ERROR_TIMEOUT);
+            return false;
+        }
+    }
+}
+
+bool aisg_v2_disconnect(AisgBus *bus)
+{
+    HdlcFrame tx;
+    HdlcFrame rx;
+
+    if (bus == NULL) {
+        return false;
+    }
+
+    if (bus->state == AISG_L2_NO_ADDRESS) {
+        aisg_v2_bus_reset_link(bus);
+        return true;
+    }
+
+    memset(&tx, 0, sizeof(tx));
+    memset(&rx, 0, sizeof(rx));
+
+    tx.address = bus->deviceAddress;
+    tx.control = hdlc_disc_ctrl(true);
+    tx.infoLen = 0;
+
+    if (!send_frame(bus, &tx, &rx, AISG_DEFAULT_TIMEOUT_MS)) {
+        set_error(bus, AISG_ERROR_TRANSPORT);
+        return false;
+    }
+
+    if (rx.address != tx.address ||
+        (!hdlc_is_ua(rx.control) && !hdlc_is_dm(rx.control))) {
+        set_error(bus, AISG_ERROR_PROTOCOL);
+        return false;
+    }
+
+    aisg_v2_bus_reset_link(bus);
     return true;
 }
 
@@ -1153,6 +1363,7 @@ bool aisg_v2_send_retap(AisgBus *bus,
     uint8_t txNs;
     uint8_t txNr;
     int timeoutMs;
+    int64_t startMs;
 
     if (bus == NULL || request == NULL || response == NULL) {
         return false;
@@ -1161,6 +1372,7 @@ bool aisg_v2_send_retap(AisgBus *bus,
     if (bus->state != AISG_L2_CONNECTED) {
         usys_log_debug("aisg: RETAP rejected: link state=%s expected=CONNECTED",
                        l2_state_name(bus->state));
+        set_error(bus, AISG_ERROR_LINK_NOT_CONNECTED);
         return false;
     }
 
@@ -1170,10 +1382,15 @@ bool aisg_v2_send_retap(AisgBus *bus,
         return false;
     }
 
-    if (retapLen > HDLC_MAX_INFO) {
-        usys_log_debug("aisg: RETAP encoded payload too large len=%zu max=%u",
+    if (bus->maxInfoLen == 0) {
+        bus->maxInfoLen = AISG_HDLC_DEFAULT_INFO_MAX;
+    }
+
+    if (retapLen > bus->maxInfoLen) {
+        usys_log_debug("aisg: RETAP encoded payload too large len=%zu max=%zu",
                        retapLen,
-                       HDLC_MAX_INFO);
+                       bus->maxInfoLen);
+        set_error(bus, AISG_ERROR_PROTOCOL);
         return false;
     }
 
@@ -1189,6 +1406,7 @@ bool aisg_v2_send_retap(AisgBus *bus,
     tx.infoLen = retapLen;
 
     timeoutMs = retap_request_timeout_ms(request);
+    startMs = monotonic_ms();
 
     usys_log_debug("aisg: RETAP TX procedure=0x%02X data_len=%zu timeout_ms=%d ns=%u nr=%u",
                    request->procedure,
@@ -1200,10 +1418,11 @@ bool aisg_v2_send_retap(AisgBus *bus,
     if (!send_frame(bus, &tx, &rx, timeoutMs)) {
         usys_log_debug("aisg: RETAP transport failed procedure=0x%02X",
                        request->procedure);
+        set_error(bus, AISG_ERROR_TIMEOUT);
         return false;
     }
 
-    if (!l2_validate_i_response(bus, &rx, txNs, txNr)) {
+    if (!l2_poll_for_i_response(bus, &rx, txNs, txNr, startMs, timeoutMs)) {
         return false;
     }
 
@@ -1211,6 +1430,7 @@ bool aisg_v2_send_retap(AisgBus *bus,
         usys_log_debug("aisg: RETAP response decode failed procedure=0x%02X info_len=%zu",
                        request->procedure,
                        rx.infoLen);
+        set_error(bus, AISG_ERROR_PROTOCOL);
         return false;
     }
 
@@ -1218,6 +1438,7 @@ bool aisg_v2_send_retap(AisgBus *bus,
         usys_log_debug("aisg: RETAP response procedure mismatch got=0x%02X expected=0x%02X",
                        response->procedure,
                        request->procedure);
+        set_error(bus, AISG_ERROR_PROTOCOL);
         return false;
     }
 

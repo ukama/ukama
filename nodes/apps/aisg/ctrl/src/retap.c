@@ -114,7 +114,7 @@ bool retap_decode_response(const uint8_t *buf,
         }
 
         if (appLen > 0) {
-            memcpy(response->data, &data[1], appLen);
+            memcpy(response->data, &data[2], appLen);
         }
         response->dataLen = appLen;
 

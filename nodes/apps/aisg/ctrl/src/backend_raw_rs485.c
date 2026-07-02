@@ -144,6 +144,15 @@ static JsonObj *build_status_payload(RawRs485Context *ctx)
             json_object_set_new(json, "currentTiltDeg", json_null());
         }
         json_object_set_new(json,
+                            "linkState",
+                            json_string(aisg_v2_l2_state_str(ctx->bus.state)));
+        json_object_set_new(json,
+                            "lastLinkError",
+                            json_string(aisg_v2_error_str(ctx->bus.lastError)));
+        json_object_set_new(json,
+                            "hdlcMaxInfoLen",
+                            json_integer((json_int_t)ctx->bus.maxInfoLen));
+        json_object_set_new(json,
                             "targetTiltKnown",
                             json_boolean(ctx->targetTiltKnown));
         if (ctx->targetTiltKnown) {
@@ -167,6 +176,56 @@ static CtrlCode retap_response_code(RetapResponse *response)
     return retap_failure_to_ctrl_code(response->failureReason);
 }
 
+
+static CtrlCode aisg_error_to_ctrl_code(AisgError error)
+{
+    switch (error) {
+    case AISG_ERROR_NONE:
+        return CtrlCodeOk;
+    case AISG_ERROR_MULTIPLE_DEVICES:
+        return CtrlCodeMultipleDevices;
+    case AISG_ERROR_UNSUPPORTED_DEVICE_TYPE:
+        return CtrlCodeUnsupportedDeviceType;
+    case AISG_ERROR_UNSUPPORTED_PROTOCOL_VERSION:
+        return CtrlCodeUnsupportedProtocolVersion;
+    case AISG_ERROR_LINK_NOT_CONNECTED:
+        return CtrlCodeLinkNotConnected;
+    case AISG_ERROR_FRAME_REJECT:
+        return CtrlCodeFrameReject;
+    case AISG_ERROR_RECEIVER_NOT_READY:
+        return CtrlCodeReceiverNotReady;
+    case AISG_ERROR_PROTOCOL:
+        return CtrlCodeProtocolError;
+    case AISG_ERROR_TIMEOUT:
+        return CtrlCodeTimeout;
+    case AISG_ERROR_TRANSPORT:
+    default:
+        return CtrlCodeTransportError;
+    }
+}
+
+static bool ctrl_response_set_aisg_error(CtrlResponse *response,
+                                         AisgError error,
+                                         const char *fallback)
+{
+    CtrlCode code;
+    char reason[CTRL_REASON_LEN];
+
+    code = aisg_error_to_ctrl_code(error);
+    if (code == CtrlCodeOk) {
+        code = CtrlCodeTransportError;
+    }
+
+    snprintf(reason,
+             sizeof(reason),
+             "%s%s%s",
+             fallback ? fallback : ctrl_code_str(code),
+             error == AISG_ERROR_NONE ? "" : ": ",
+             error == AISG_ERROR_NONE ? "" : aisg_v2_error_str(error));
+
+    return ctrl_response_set_error(response, code, reason);
+}
+
 static bool execute_retap(RawRs485Context *ctx,
                           RetapRequest *request,
                           RetapResponse *response,
@@ -175,9 +234,9 @@ static bool execute_retap(RawRs485Context *ctx,
     CtrlCode code;
 
     if (!aisg_v2_send_retap(&ctx->bus, request, response)) {
-        return ctrl_response_set_error(ctrlResp,
-                                       CtrlCodeTransportError,
-                                       "failed to execute RETAP");
+        return ctrl_response_set_aisg_error(ctrlResp,
+                                            ctx->bus.lastError,
+                                            "failed to execute RETAP");
     }
 
     if (response->returnCode != RETAP_RETURN_FAIL) {
@@ -191,12 +250,17 @@ static bool execute_retap(RawRs485Context *ctx,
 
 static bool raw_require_connected(RawRs485Context *ctx, CtrlResponse *response)
 {
-    if (ctx != NULL && ctx->device.present) {
+    if (ctx != NULL && ctx->device.present &&
+        ctx->bus.state == AISG_L2_CONNECTED) {
         return true;
     }
 
+    if (ctx != NULL) {
+        ctx->bus.lastError = AISG_ERROR_LINK_NOT_CONNECTED;
+    }
+
     return ctrl_response_set_error(response,
-                                   CtrlCodeTransportError,
+                                   CtrlCodeLinkNotConnected,
                                    "device not connected; run scan first");
 }
 
@@ -248,6 +312,7 @@ static void raw_clear_device_runtime_state(RawRs485Context *ctx)
     ctx->serialNumber[0] = '\0';
     ctx->hardwareVersion[0] = '\0';
     ctx->softwareVersion[0] = '\0';
+    aisg_v2_bus_reset_link(&ctx->bus);
 }
 
 static void raw_update_identity(RawRs485Context *ctx, RetapInfo *info)
@@ -412,9 +477,9 @@ static bool raw_handle_status(RawRs485Context *ctx, CtrlResponse *response)
 static bool raw_handle_scan(RawRs485Context *ctx, CtrlResponse *response)
 {
     if (!aisg_v2_scan(&ctx->bus, &ctx->device)) {
-        return ctrl_response_set_error(response,
-                                       CtrlCodeTransportError,
-                                       "scan failed");
+        return ctrl_response_set_aisg_error(response,
+                                            ctx->bus.lastError,
+                                            "scan failed");
     }
 
     return ctrl_response_set_ok(response, build_status_payload(ctx));

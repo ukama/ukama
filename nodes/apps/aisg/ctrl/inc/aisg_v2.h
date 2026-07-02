@@ -48,6 +48,8 @@
 #define AISG_PROTOCOL_VERSION              0x02
 #define AISG_LINK_TIMEOUT_MS               180000
 #define AISG_MIN_TURNAROUND_US             3000
+#define AISG_HDLC_DEFAULT_INFO_MAX         78
+
 
 #define AISG_DEFAULT_TIMEOUT_MS            3000
 #define AISG_SCAN_EXTRA_TIMEOUT_MS         250
@@ -71,6 +73,19 @@ typedef enum {
     AISG_L2_CONNECTED
 } AisgL2State;
 
+typedef enum {
+    AISG_ERROR_NONE = 0,
+    AISG_ERROR_TRANSPORT,
+    AISG_ERROR_TIMEOUT,
+    AISG_ERROR_MULTIPLE_DEVICES,
+    AISG_ERROR_UNSUPPORTED_DEVICE_TYPE,
+    AISG_ERROR_UNSUPPORTED_PROTOCOL_VERSION,
+    AISG_ERROR_LINK_NOT_CONNECTED,
+    AISG_ERROR_FRAME_REJECT,
+    AISG_ERROR_RECEIVER_NOT_READY,
+    AISG_ERROR_PROTOCOL
+} AisgError;
+
 typedef struct {
     SerialPort *serial;
     uint8_t deviceAddress;
@@ -81,6 +96,8 @@ typedef struct {
     uint8_t negotiated3gppRelease;
     bool hasAisgVersion;
     uint8_t negotiatedAisgVersion;
+    size_t maxInfoLen;
+    AisgError lastError;
 } AisgBus;
 
 typedef struct {
@@ -96,7 +113,11 @@ typedef struct {
 } AisgDevice;
 
 void aisg_v2_bus_init(AisgBus *bus, SerialPort *serial);
+void aisg_v2_bus_reset_link(AisgBus *bus);
+const char *aisg_v2_l2_state_str(AisgL2State state);
+const char *aisg_v2_error_str(AisgError error);
 bool aisg_v2_scan(AisgBus *bus, AisgDevice *device);
+bool aisg_v2_disconnect(AisgBus *bus);
 bool aisg_v2_send_retap(AisgBus *bus,
                         RetapRequest *request,
                         RetapResponse *response);
