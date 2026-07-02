@@ -16,6 +16,76 @@ static void copy_str(char *dst, size_t size, const char *src) {
     snprintf(dst, size, "%s", src ? src : "");
 }
 
+
+static JsonObj *json_child(JsonObj *json, const char *key) {
+    JsonObj *value = NULL;
+
+    if (json == NULL || key == NULL) {
+        return NULL;
+    }
+
+    value = json_object_get(json, key);
+    if (!json_is_object(value)) {
+        return NULL;
+    }
+
+    return value;
+}
+
+static bool json_number_at(JsonObj *json, const char *key, double *out) {
+    JsonObj *value = NULL;
+
+    if (json == NULL || key == NULL || out == NULL) {
+        return false;
+    }
+
+    value = json_object_get(json, key);
+    if (!json_is_number(value)) {
+        return false;
+    }
+
+    *out = json_number_value(value);
+    return true;
+}
+
+static bool json_find_number(JsonObj *json,
+                             const char **keys,
+                             size_t keyCount,
+                             double *out) {
+    JsonObj *child = NULL;
+    size_t i;
+
+    if (json == NULL || keys == NULL || out == NULL) {
+        return false;
+    }
+
+    for (i = 0; i < keyCount; i++) {
+        if (json_number_at(json, keys[i], out)) {
+            return true;
+        }
+    }
+
+    child = json_child(json, "device");
+    if (child != NULL) {
+        for (i = 0; i < keyCount; i++) {
+            if (json_number_at(child, keys[i], out)) {
+                return true;
+            }
+        }
+    }
+
+    child = json_child(json, "tilt");
+    if (child != NULL) {
+        for (i = 0; i < keyCount; i++) {
+            if (json_number_at(child, keys[i], out)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 static const char *state_str(AisgdState state) {
     switch (state) {
     case AisgdStateStarting:          return "starting";
@@ -127,7 +197,76 @@ void status_update_from_controller(AppStatus *status, JsonObj *payload) {
                  json_string_value(value));
     }
 
+    /*
+     * Controller status, get_tilt and set_tilt responses may expose tilt with
+     * slightly different field names. Keep this tolerant so aisgd stays
+     * compatible with controller-side payload refinements.
+     */
+    {
+        static const char *currentKeys[] = {
+            "currentTiltDeg",
+            "tiltDeg",
+            "electricalTiltDeg",
+            "tilt"
+        };
+        static const char *targetKeys[] = {
+            "targetTiltDeg",
+            "requestedTiltDeg"
+        };
+        double tilt = 0.0;
+
+        if (json_find_number(payload,
+                             currentKeys,
+                             sizeof(currentKeys) / sizeof(currentKeys[0]),
+                             &tilt)) {
+            status->currentTiltDeg = tilt;
+            status->tiltKnown = true;
+        }
+
+        if (json_find_number(payload,
+                             targetKeys,
+                             sizeof(targetKeys) / sizeof(targetKeys[0]),
+                             &tilt)) {
+            status->targetTiltDeg = tilt;
+            status->targetTiltKnown = true;
+        }
+    }
+
     status->controllerConnected = true;
+    pthread_mutex_unlock(&status->mutex);
+}
+
+
+void status_update_tilt_from_controller(AppStatus *status, JsonObj *payload) {
+
+    if (status == NULL || payload == NULL) {
+        return;
+    }
+
+    status_update_from_controller(status, payload);
+}
+
+void status_set_tilt(AppStatus *status, double currentTiltDeg) {
+
+    if (status == NULL) {
+        return;
+    }
+
+    pthread_mutex_lock(&status->mutex);
+    status->currentTiltDeg = currentTiltDeg;
+    status->tiltKnown = true;
+    pthread_mutex_unlock(&status->mutex);
+}
+
+void status_set_target_tilt(AppStatus *status, double targetTiltDeg) {
+
+    if (status == NULL) {
+        return;
+    }
+
+    pthread_mutex_lock(&status->mutex);
+    status->targetTiltDeg = targetTiltDeg;
+    status->targetTiltKnown = true;
     pthread_mutex_unlock(&status->mutex);
 }
 
@@ -157,6 +296,10 @@ void status_mark_controller_down(AppStatus *status, const char *reason) {
     status->configured    = false;
     status->calibrated    = false;
     status->busy          = false;
+    status->tiltKnown     = false;
+    status->targetTiltKnown = false;
+    status->currentTiltDeg = 0.0;
+    status->targetTiltDeg  = 0.0;
 
     copy_str(status->mode,  sizeof(status->mode), "unknown");
     copy_str(status->model, sizeof(status->model), "");
@@ -222,7 +365,11 @@ JsonObj *status_to_json(AppStatus *status) {
     bool configured;
     bool calibrated;
     bool busy;
+    bool tiltKnown;
+    bool targetTiltKnown;
     bool opActive;
+    double currentTiltDeg;
+    double targetTiltDeg;
 
     if (status == NULL) return NULL;
 
@@ -236,6 +383,10 @@ JsonObj *status_to_json(AppStatus *status) {
     configured   = status->configured;
     calibrated   = status->calibrated;
     busy         = status->busy;
+    tiltKnown    = status->tiltKnown;
+    targetTiltKnown = status->targetTiltKnown;
+    currentTiltDeg  = status->currentTiltDeg;
+    targetTiltDeg   = status->targetTiltDeg;
     opActive     = status->operationActive;
     copy_str(reason,  sizeof(reason),  status->reason);
     copy_str(backend, sizeof(backend), status->backend);
@@ -265,6 +416,18 @@ JsonObj *status_to_json(AppStatus *status) {
     json_object_set_new(device, "configured", json_boolean(configured));
     json_object_set_new(device, "calibrated", json_boolean(calibrated));
     json_object_set_new(device, "busy", json_boolean(busy));
+    json_object_set_new(device, "tiltKnown", json_boolean(tiltKnown));
+    if (tiltKnown) {
+        json_object_set_new(device, "currentTiltDeg", json_real(currentTiltDeg));
+    } else {
+        json_object_set_new(device, "currentTiltDeg", json_null());
+    }
+    json_object_set_new(device, "targetTiltKnown", json_boolean(targetTiltKnown));
+    if (targetTiltKnown) {
+        json_object_set_new(device, "targetTiltDeg", json_real(targetTiltDeg));
+    } else {
+        json_object_set_new(device, "targetTiltDeg", json_null());
+    }
 
     json_object_set_new(operation, "active", json_boolean(opActive));
     json_object_set_new(operation, "type", json_string(opType));

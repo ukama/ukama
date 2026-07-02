@@ -27,6 +27,7 @@
 #define OP_SCAN               "scan"
 #define OP_CONFIG             "configure"
 #define OP_CALIBRATE          "calibrate"
+#define OP_GET_TILT           "get-tilt"
 #define OP_SET_TILT           "set-tilt"
 #define OP_SELF_TEST          "self-test"
 
@@ -191,6 +192,76 @@ static JsonObj *build_tilt_payload(double targetTiltDeg)
                         json_real(targetTiltDeg));
 
     return payload;
+}
+
+static bool json_number_at(JsonObj *json, const char *key)
+{
+    JsonObj *value = NULL;
+
+    if (json == NULL || key == NULL) {
+        return false;
+    }
+
+    value = json_object_get(json, key);
+    return json_is_number(value);
+}
+
+static JsonObj *json_object_child(JsonObj *json, const char *key)
+{
+    JsonObj *value = NULL;
+
+    if (json == NULL || key == NULL) {
+        return NULL;
+    }
+
+    value = json_object_get(json, key);
+    if (!json_is_object(value)) {
+        return NULL;
+    }
+
+    return value;
+}
+
+static bool payload_has_current_tilt(JsonObj *payload)
+{
+    static const char *keys[] = {
+        "currentTiltDeg",
+        "tiltDeg",
+        "electricalTiltDeg",
+        "tilt"
+    };
+    JsonObj *child = NULL;
+    size_t i;
+
+    if (payload == NULL) {
+        return false;
+    }
+
+    for (i = 0; i < sizeof(keys) / sizeof(keys[0]); i++) {
+        if (json_number_at(payload, keys[i])) {
+            return true;
+        }
+    }
+
+    child = json_object_child(payload, "device");
+    if (child != NULL) {
+        for (i = 0; i < sizeof(keys) / sizeof(keys[0]); i++) {
+            if (json_number_at(child, keys[i])) {
+                return true;
+            }
+        }
+    }
+
+    child = json_object_child(payload, "tilt");
+    if (child != NULL) {
+        for (i = 0; i < sizeof(keys) / sizeof(keys[0]); i++) {
+            if (json_number_at(child, keys[i])) {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 static JsonObj *build_device_data_payload(int field)
@@ -372,10 +443,29 @@ bool aisgd_ops_calibrate(AisgdContext *ctx, JsonObj **response) {
 
 bool aisgd_ops_get_tilt(AisgdContext *ctx, JsonObj **response) {
 
-    return call_controller(ctx,
-                           CTRL_GET_TILT,
-                           empty_payload(),
-                           response);
+    bool ok;
+
+    if (ctx == NULL || response == NULL) {
+        return false;
+    }
+
+    status_set_operation(ctx->status, OP_GET_TILT, "op-get-tilt-001");
+
+    ok = call_controller(ctx,
+                         CTRL_GET_TILT,
+                         empty_payload(),
+                         response);
+
+    if (ok) {
+        status_update_tilt_from_controller(ctx->status, *response);
+    }
+
+    status_clear_operation(ctx->status);
+    if (ok) {
+        status_set_ready_if_idle(ctx->status, "ready");
+    }
+
+    return ok;
 }
 
 bool aisgd_ops_set_tilt(AisgdContext *ctx,
@@ -384,6 +474,10 @@ bool aisgd_ops_set_tilt(AisgdContext *ctx,
 
     JsonObj *payload = NULL;
     bool ok;
+
+    if (ctx == NULL || response == NULL) {
+        return false;
+    }
 
     if (ctx->config->requireCalibrateBeforeSetTilt &&
         !ctx->status->calibrated) {
@@ -398,11 +492,27 @@ bool aisgd_ops_set_tilt(AisgdContext *ctx,
         return false;
     }
 
-    status_set_operation(ctx->status, OP_SET_TILT, "op-tilt-001");
+    status_set_operation(ctx->status, OP_SET_TILT, "op-set-tilt-001");
+
     ok = call_controller(ctx, CTRL_SET_TILT, payload, response);
 
-    if (!ok) {
-        status_clear_operation(ctx->status);
+    if (ok) {
+        status_set_target_tilt(ctx->status, targetTiltDeg);
+        status_update_tilt_from_controller(ctx->status, *response);
+
+        if (!payload_has_current_tilt(*response)) {
+            /*
+             * TS 25.463 SetTilt is a blocking Class 1 operation. If the
+             * controller returned OK but did not echo the current tilt, keep
+             * aisgd status useful by reflecting the requested final position.
+             */
+            status_set_tilt(ctx->status, targetTiltDeg);
+        }
+    }
+
+    status_clear_operation(ctx->status);
+    if (ok) {
+        status_set_ready_if_idle(ctx->status, "ready");
     }
 
     return ok;
