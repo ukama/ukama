@@ -51,6 +51,8 @@ typedef struct {
     double currentTiltDeg;
     double targetTiltDeg;
     char reason[STATUS_REASON_LEN];
+    char lastErrorCode[STATUS_MAX_STR];
+    char lastErrorReason[STATUS_REASON_LEN];
     char model[STATUS_MAX_STR];
     char operationType[STATUS_MAX_STR];
     char operationId[STATUS_MAX_STR];
@@ -79,6 +81,8 @@ typedef struct {
     char serialNumber[STATUS_MAX_STR];
     char hardwareVersion[STATUS_MAX_STR];
     char softwareVersion[STATUS_MAX_STR];
+    char lastErrorCode[STATUS_MAX_STR];
+    char lastErrorReason[STATUS_REASON_LEN];
     bool operationActive;
     char operationType[STATUS_MAX_STR];
     char operationId[STATUS_MAX_STR];
@@ -91,6 +95,11 @@ void status_set_operation(AppStatus *status, const char *type, const char *id);
 void status_clear_operation(AppStatus *status);
 void status_update_from_controller(AppStatus *status, JsonObj *payload);
 void status_update_tilt_from_controller(AppStatus *status, JsonObj *payload);
+void status_update_error_status_from_controller(AppStatus *status, JsonObj *payload);
+void status_note_controller_error(AppStatus *status,
+                                  const char *code,
+                                  const char *reason,
+                                  JsonObj *payload);
 void status_mark_controller_up(AppStatus *status, const char *reason);
 void status_mark_identified(AppStatus *status, JsonObj *payload);
 void status_mark_configured(AppStatus *status, JsonObj *payload);

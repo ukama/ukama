@@ -63,7 +63,10 @@ static bool call_controller(AisgdContext *ctx,
     status_mark_controller_up(ctx->status, "controller connected");
 
     if (!ctrlResp.ok) {
-        status_set(ctx->status, AisgdStateDegraded, ctrlResp.reason);
+        status_note_controller_error(ctx->status,
+                                     ctrlResp.code,
+                                     ctrlResp.reason,
+                                     ctrlResp.payload);
         ctrl_response_free(&ctrlResp);
         return false;
     }
@@ -418,6 +421,14 @@ bool aisgd_ops_reconcile(AisgdContext *ctx, JsonObj **response)
     payload = NULL;
     add_action(actions, "device-identified");
 
+    if (!aisgd_ops_get_alarms(ctx, &payload)) {
+        json_decref(actions);
+        return false;
+    }
+    json_decref(payload);
+    payload = NULL;
+    add_action(actions, "error-status-reconciled");
+
     if (!aisgd_ops_subscribe_alarms(ctx, &payload)) {
         json_decref(actions);
         return false;
@@ -494,6 +505,9 @@ bool aisgd_ops_get_alarms(AisgdContext *ctx, JsonObj **response)
 
     status_set_operation(ctx->status, OP_GET_ALARMS, "op-get-alarms-001");
     ok = call_controller(ctx, CTRL_GET_ALARMS, empty_payload(), response);
+    if (ok) {
+        status_update_error_status_from_controller(ctx->status, *response);
+    }
     status_clear_operation(ctx->status);
 
     return ok;
@@ -509,6 +523,9 @@ bool aisgd_ops_clear_alarms(AisgdContext *ctx, JsonObj **response)
 
     status_set_operation(ctx->status, OP_CLEAR_ALARMS, "op-clear-alarms-001");
     ok = call_controller(ctx, CTRL_CLEAR_ALARMS, empty_payload(), response);
+    if (ok) {
+        status_update_error_status_from_controller(ctx->status, *response);
+    }
     status_clear_operation(ctx->status);
 
     return ok;

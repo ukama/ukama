@@ -125,6 +125,111 @@ static const char *json_string_value_or(JsonObj *json, const char *key)
     return json_string_value(value);
 }
 
+#define AISGD_RETAP_RC_NOT_CALIBRATED 0x0e
+#define AISGD_RETAP_RC_NOT_SCALED     0x0f
+#define AISGD_RETAP_RC_POSITION_LOST  0x14
+
+static bool str_eq(const char *a, const char *b)
+{
+    return a != NULL && b != NULL && strcmp(a, b) == 0;
+}
+
+static bool str_contains(const char *haystack, const char *needle)
+{
+    return haystack != NULL && needle != NULL && strstr(haystack, needle) != NULL;
+}
+
+static bool json_int_at(JsonObj *json, const char *key, int *out)
+{
+    JsonObj *value = NULL;
+
+    if (json == NULL || key == NULL || out == NULL) {
+        return false;
+    }
+
+    value = json_object_get(json, key);
+    if (!json_is_integer(value)) {
+        return false;
+    }
+
+    *out = (int)json_integer_value(value);
+    return true;
+}
+
+static JsonObj *active_error_array(JsonObj *payload)
+{
+    JsonObj *value = NULL;
+    JsonObj *child = NULL;
+
+    if (payload == NULL) {
+        return NULL;
+    }
+
+    value = json_object_get(payload, "active");
+    if (json_is_array(value)) {
+        return value;
+    }
+
+    child = json_child(payload, "alarms");
+    if (child != NULL) {
+        value = json_object_get(child, "active");
+        if (json_is_array(value)) {
+            return value;
+        }
+    }
+
+    child = json_child(payload, "errors");
+    if (child != NULL) {
+        value = json_object_get(child, "active");
+        if (json_is_array(value)) {
+            return value;
+        }
+    }
+
+    return NULL;
+}
+
+static bool error_item_matches(JsonObj *item, const char *name, int code)
+{
+    const char *s = NULL;
+    int c = -1;
+
+    if (item == NULL) {
+        return false;
+    }
+
+    s = json_string_value_or(item, "name");
+    if (str_eq(s, name)) {
+        return true;
+    }
+
+    s = json_string_value_or(item, "codeName");
+    if (str_eq(s, name)) {
+        return true;
+    }
+
+    s = json_string_value_or(item, "reason");
+    if (str_contains(s, name)) {
+        return true;
+    }
+
+    if (json_int_at(item, "code", &c) && c == code) {
+        return true;
+    }
+
+    return false;
+}
+
+static void clear_last_error_locked(AppStatus *status)
+{
+    if (status == NULL) {
+        return;
+    }
+
+    status->lastErrorCode[0] = '\0';
+    status->lastErrorReason[0] = '\0';
+}
+
 const char *status_state_name(AisgdState state)
 {
     switch (state) {
@@ -414,6 +519,7 @@ void status_update_from_controller(AppStatus *status, JsonObj *payload)
     }
 
     status->controllerConnected = true;
+    clear_last_error_locked(status);
     recompute_locked(status, NULL);
 
     pthread_mutex_unlock(&status->mutex);
@@ -428,6 +534,132 @@ void status_update_tilt_from_controller(AppStatus *status, JsonObj *payload)
     status_update_from_controller(status, payload);
 }
 
+
+void status_update_error_status_from_controller(AppStatus *status, JsonObj *payload)
+{
+    JsonObj *active = NULL;
+    JsonObj *item = NULL;
+    size_t index;
+    bool hasNotScaled = false;
+    bool hasNotCalibrated = false;
+    bool hasPositionLost = false;
+
+    if (status == NULL || payload == NULL) {
+        return;
+    }
+
+    active = active_error_array(payload);
+    if (active == NULL) {
+        return;
+    }
+
+    json_array_foreach(active, index, item) {
+        if (error_item_matches(item, "NotScaled", AISGD_RETAP_RC_NOT_SCALED)) {
+            hasNotScaled = true;
+        }
+        if (error_item_matches(item,
+                               "NotCalibrated",
+                               AISGD_RETAP_RC_NOT_CALIBRATED)) {
+            hasNotCalibrated = true;
+        }
+        if (error_item_matches(item,
+                               "PositionLost",
+                               AISGD_RETAP_RC_POSITION_LOST)) {
+            hasPositionLost = true;
+        }
+    }
+
+    pthread_mutex_lock(&status->mutex);
+
+    clear_last_error_locked(status);
+
+    if (status->devicePresent && status->identified) {
+        if (hasNotScaled) {
+            status->configured = false;
+            status->calibrated = false;
+            copy_str(status->reason,
+                     sizeof(status->reason),
+                     "device configuration required");
+        } else {
+            status->configured = true;
+            if (hasNotCalibrated || hasPositionLost) {
+                status->calibrated = false;
+                copy_str(status->reason,
+                         sizeof(status->reason),
+                         hasPositionLost ?
+                         "device position lost; calibration required" :
+                         "device calibration required");
+            } else {
+                status->calibrated = true;
+                copy_str(status->reason,
+                         sizeof(status->reason),
+                         "device configuration and calibration verified");
+            }
+        }
+    }
+
+    recompute_locked(status, NULL);
+    pthread_mutex_unlock(&status->mutex);
+}
+
+void status_note_controller_error(AppStatus *status,
+                                  const char *code,
+                                  const char *reason,
+                                  JsonObj *payload)
+{
+    if (status == NULL) {
+        return;
+    }
+
+    pthread_mutex_lock(&status->mutex);
+
+    copy_str(status->lastErrorCode,
+             sizeof(status->lastErrorCode),
+             code ? code : "Unknown");
+    copy_str(status->lastErrorReason,
+             sizeof(status->lastErrorReason),
+             reason ? reason : "controller operation failed");
+
+    if (str_eq(code, "NotConfigured") ||
+        str_contains(reason, "NotScaled")) {
+        status->configured = false;
+        status->calibrated = false;
+        status->tiltKnown = false;
+    } else if (str_eq(code, "NotCalibrated") ||
+               str_contains(reason, "NotCalibrated") ||
+               str_contains(reason, "PositionLost")) {
+        if (status->identified) {
+            status->configured = true;
+        }
+        status->calibrated = false;
+        status->tiltKnown = false;
+    } else if (str_eq(code, "LinkNotConnected") ||
+               str_eq(code, "TransportError") ||
+               str_eq(code, "Timeout")) {
+        status->devicePresent = false;
+        status->identified = false;
+        status->configured = false;
+        status->calibrated = false;
+        status->tiltKnown = false;
+        status->targetTiltKnown = false;
+    } else if (str_eq(code, "UnsupportedDeviceType") ||
+               str_eq(code, "UnsupportedProtocolVersion") ||
+               str_eq(code, "MultipleDevices")) {
+        status->devicePresent = false;
+        status->identified = false;
+        status->configured = false;
+        status->calibrated = false;
+    }
+
+    if (payload != NULL) {
+        /* Some failures still include state hints from ctrl. */
+        status->controllerConnected = true;
+    }
+
+    recompute_locked(status, reason ? reason : "controller operation failed");
+    pthread_mutex_unlock(&status->mutex);
+}
+
 void status_mark_identified(AppStatus *status, JsonObj *payload)
 {
     if (status == NULL) {
@@ -438,6 +670,7 @@ void status_mark_identified(AppStatus *status, JsonObj *payload)
     status->controllerConnected = true;
     status->devicePresent = true;
     status->identified = true;
+    clear_last_error_locked(status);
     copy_identity_locked(status, payload);
     recompute_locked(status, "device identified");
     pthread_mutex_unlock(&status->mutex);
@@ -454,6 +687,7 @@ void status_mark_configured(AppStatus *status, JsonObj *payload)
     status->devicePresent = true;
     status->identified = true;
     status->configured = true;
+    clear_last_error_locked(status);
     status->calibrated = false;
     status->tiltKnown = false;
     status->targetTiltKnown = false;
@@ -474,6 +708,7 @@ void status_mark_calibrated(AppStatus *status, JsonObj *payload)
     status->identified = true;
     status->configured = true;
     status->calibrated = true;
+    clear_last_error_locked(status);
     copy_identity_locked(status, payload);
     recompute_locked(status, "ready");
     pthread_mutex_unlock(&status->mutex);
@@ -501,6 +736,7 @@ void status_mark_reset(AppStatus *status, const char *reason)
     status->serialNumber[0] = '\0';
     status->hardwareVersion[0] = '\0';
     status->softwareVersion[0] = '\0';
+    clear_last_error_locked(status);
 
     recompute_locked(status, reason ? reason : "device reset; scan required");
 
@@ -550,6 +786,10 @@ void status_mark_controller_down(AppStatus *status, const char *reason)
     status->targetTiltKnown = false;
     status->currentTiltDeg = 0.0;
     status->targetTiltDeg = 0.0;
+    copy_str(status->lastErrorCode, sizeof(status->lastErrorCode), "ControllerUnavailable");
+    copy_str(status->lastErrorReason,
+             sizeof(status->lastErrorReason),
+             reason ? reason : "controller unavailable");
 
     copy_str(status->mode,  sizeof(status->mode), "unknown");
     copy_str(status->model, sizeof(status->model), "");
@@ -622,6 +862,12 @@ bool status_snapshot(AppStatus *status, AppStatusSnapshot *snapshot)
     snapshot->currentTiltDeg = status->currentTiltDeg;
     snapshot->targetTiltDeg = status->targetTiltDeg;
     copy_str(snapshot->reason, sizeof(snapshot->reason), status->reason);
+    copy_str(snapshot->lastErrorCode,
+             sizeof(snapshot->lastErrorCode),
+             status->lastErrorCode);
+    copy_str(snapshot->lastErrorReason,
+             sizeof(snapshot->lastErrorReason),
+             status->lastErrorReason);
     copy_str(snapshot->model, sizeof(snapshot->model), status->model);
     copy_str(snapshot->operationType,
              sizeof(snapshot->operationType),
@@ -651,6 +897,8 @@ JsonObj *status_to_json(AppStatus *status)
     char serialNumber[STATUS_MAX_STR];
     char hardwareVersion[STATUS_MAX_STR];
     char softwareVersion[STATUS_MAX_STR];
+    char lastErrorCode[STATUS_MAX_STR];
+    char lastErrorReason[STATUS_REASON_LEN];
     char opType[STATUS_MAX_STR];
     char opId[STATUS_MAX_STR];
 
@@ -698,6 +946,8 @@ JsonObj *status_to_json(AppStatus *status)
     copy_str(serialNumber,    sizeof(serialNumber),    status->serialNumber);
     copy_str(hardwareVersion, sizeof(hardwareVersion), status->hardwareVersion);
     copy_str(softwareVersion, sizeof(softwareVersion), status->softwareVersion);
+    copy_str(lastErrorCode, sizeof(lastErrorCode), status->lastErrorCode);
+    copy_str(lastErrorReason, sizeof(lastErrorReason), status->lastErrorReason);
     copy_str(opType,  sizeof(opType),  status->operationType);
     copy_str(opId,    sizeof(opId),    status->operationId);
 
@@ -722,6 +972,11 @@ JsonObj *status_to_json(AppStatus *status)
     json_object_set_new(root, "state", json_string(status_state_name(state)));
     json_object_set_new(root, "ready", json_boolean(ready));
     json_object_set_new(root, "reason", json_string(reason));
+    json_object_set_new(root,
+                        "lastError",
+                        json_pack("{s:s, s:s}",
+                                  "code", lastErrorCode,
+                                  "reason", lastErrorReason));
 
     json_object_set_new(controller, "connected", json_boolean(connected));
     json_object_set_new(controller, "backend", json_string(backend));
