@@ -32,6 +32,20 @@ const char *ctrl_code_str(CtrlCode code)
         return "HardwareError";
     case CtrlCodeUnsupportedProcedure:
         return "UnsupportedProcedure";
+    case CtrlCodeUnsupportedDeviceType:
+        return "UnsupportedDeviceType";
+    case CtrlCodeUnsupportedProtocolVersion:
+        return "UnsupportedProtocolVersion";
+    case CtrlCodeMultipleDevices:
+        return "MultipleDevices";
+    case CtrlCodeLinkNotConnected:
+        return "LinkNotConnected";
+    case CtrlCodeFrameReject:
+        return "FrameReject";
+    case CtrlCodeReceiverNotReady:
+        return "ReceiverNotReady";
+    case CtrlCodeProtocolError:
+        return "ProtocolError";
     case CtrlCodeTransportError:
         return "TransportError";
     case CtrlCodeTimeout:

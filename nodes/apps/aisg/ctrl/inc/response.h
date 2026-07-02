@@ -24,6 +24,13 @@ typedef enum {
     CtrlCodeWorkingSoftwareMissing,
     CtrlCodeHardwareError,
     CtrlCodeUnsupportedProcedure,
+    CtrlCodeUnsupportedDeviceType,
+    CtrlCodeUnsupportedProtocolVersion,
+    CtrlCodeMultipleDevices,
+    CtrlCodeLinkNotConnected,
+    CtrlCodeFrameReject,
+    CtrlCodeReceiverNotReady,
+    CtrlCodeProtocolError,
     CtrlCodeTransportError,
     CtrlCodeTimeout,
     CtrlCodeInvalidRequest

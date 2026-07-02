@@ -6,6 +6,7 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "web_service.h"
@@ -65,6 +66,44 @@ static void set_error_response(UResponse *response,
     set_json_response(response, status, json);
 }
 
+static const char *status_failure_reason(AisgdContext *ctx,
+                                         const char *fallback) {
+
+    static char message[STATUS_REASON_LEN * 2];
+    AppStatusSnapshot snapshot;
+
+    if (ctx != NULL && ctx->status != NULL &&
+        status_snapshot(ctx->status, &snapshot)) {
+        if (snapshot.lastErrorCode[0] != '\0') {
+            snprintf(message,
+                     sizeof(message),
+                     "%s: %s",
+                     snapshot.lastErrorCode,
+                     snapshot.lastErrorReason[0] != '\0' ?
+                     snapshot.lastErrorReason :
+                     (snapshot.reason[0] != '\0' ? snapshot.reason : fallback));
+            return message;
+        }
+
+        if (snapshot.reason[0] != '\0') {
+            snprintf(message, sizeof(message), "%s", snapshot.reason);
+            return message;
+        }
+    }
+
+    return fallback ? fallback : "operation failed";
+}
+
+static int set_operation_failure(UResponse *response,
+                                 AisgdContext *ctx,
+                                 const char *fallback) {
+
+    set_error_response(response,
+                       HttpStatus_ServiceUnavailable,
+                       status_failure_reason(ctx, fallback));
+    return U_CALLBACK_CONTINUE;
+}
+
 static bool parse_json_body(const URequest *request, JsonObj **json) {
 
     if (json == NULL) {
@@ -107,10 +146,7 @@ static int run_simple_op(UResponse *response,
     }
 
     if (!op(ctx, &json)) {
-        set_error_response(response,
-                           HttpStatus_ServiceUnavailable,
-                           "operation failed");
-        return U_CALLBACK_CONTINUE;
+        return set_operation_failure(response, ctx, "operation failed");
     }
 
     set_json_response(response, HttpStatus_OK, json);
@@ -204,10 +240,9 @@ int web_service_cb_reconcile(const URequest *request,
     (void)request;
 
     if (!aisgd_ops_reconcile((AisgdContext *)data, &json)) {
-        set_error_response(response,
-                           HttpStatus_ServiceUnavailable,
-                           "reconcile failed");
-        return U_CALLBACK_CONTINUE;
+        return set_operation_failure(response,
+                                     (AisgdContext *)data,
+                                     "reconcile failed");
     }
 
     set_json_response(response, HttpStatus_OK, json);
@@ -316,10 +351,9 @@ int web_service_cb_configure(const URequest *request,
 
     if (!aisgd_ops_configure((AisgdContext *)data, profile, path, &json)) {
         json_decref(body);
-        set_error_response(response,
-                           HttpStatus_ServiceUnavailable,
-                           "configure failed");
-        return U_CALLBACK_CONTINUE;
+        return set_operation_failure(response,
+                                     (AisgdContext *)data,
+                                     "configure failed");
     }
 
     json_decref(body);
@@ -356,10 +390,9 @@ int web_service_cb_set_tilt(const URequest *request,
                             json_number_value(value),
                             &json)) {
         json_decref(body);
-        set_error_response(response,
-                           HttpStatus_ServiceUnavailable,
-                           "set tilt failed");
-        return U_CALLBACK_CONTINUE;
+        return set_operation_failure(response,
+                                     (AisgdContext *)data,
+                                     "set tilt failed");
     }
 
     json_decref(body);
@@ -384,10 +417,9 @@ int web_service_cb_get_device_data(const URequest *request,
     if (!aisgd_ops_get_device_data((AisgdContext *)data,
                                    atoi(field),
                                    &json)) {
-        set_error_response(response,
-                           HttpStatus_ServiceUnavailable,
-                           "get device data failed");
-        return U_CALLBACK_CONTINUE;
+        return set_operation_failure(response,
+                                     (AisgdContext *)data,
+                                     "get device data failed");
     }
 
     set_json_response(response, HttpStatus_OK, json);
