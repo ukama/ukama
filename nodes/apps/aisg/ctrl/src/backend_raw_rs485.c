@@ -22,9 +22,17 @@ typedef struct {
     AisgBus bus;
     AisgDevice device;
 
+    bool identified;
     bool configured;
     bool calibrated;
+    bool tiltKnown;
+    bool targetTiltKnown;
     int16_t tiltTenthsDeg;
+    int16_t targetTiltTenthsDeg;
+    char productNumber[64];
+    char serialNumber[64];
+    char hardwareVersion[64];
+    char softwareVersion[64];
 } RawRs485Context;
 
 static bool read_file_alloc(const char *path,
@@ -100,6 +108,9 @@ static JsonObj *build_status_payload(RawRs485Context *ctx)
                         "present",
                         json_boolean(ctx != NULL && ctx->device.present));
     json_object_set_new(json,
+                        "identified",
+                        json_boolean(ctx != NULL && ctx->identified));
+    json_object_set_new(json,
                         "configured",
                         json_boolean(ctx != NULL && ctx->configured));
     json_object_set_new(json,
@@ -107,6 +118,42 @@ static JsonObj *build_status_payload(RawRs485Context *ctx)
                         json_boolean(ctx != NULL && ctx->calibrated));
     json_object_set_new(json, "powerManaged", json_boolean(false));
     json_object_set_new(json, "transport", json_string("raw-rs485"));
+
+    if (ctx != NULL) {
+        json_object_set_new(json,
+                            "model",
+                            json_string(ctx->productNumber));
+        json_object_set_new(json,
+                            "productNumber",
+                            json_string(ctx->productNumber));
+        json_object_set_new(json,
+                            "serialNumber",
+                            json_string(ctx->serialNumber));
+        json_object_set_new(json,
+                            "hardwareVersion",
+                            json_string(ctx->hardwareVersion));
+        json_object_set_new(json,
+                            "softwareVersion",
+                            json_string(ctx->softwareVersion));
+        json_object_set_new(json, "tiltKnown", json_boolean(ctx->tiltKnown));
+        if (ctx->tiltKnown) {
+            json_object_set_new(json,
+                                "currentTiltDeg",
+                                json_real(ctx->tiltTenthsDeg / 10.0));
+        } else {
+            json_object_set_new(json, "currentTiltDeg", json_null());
+        }
+        json_object_set_new(json,
+                            "targetTiltKnown",
+                            json_boolean(ctx->targetTiltKnown));
+        if (ctx->targetTiltKnown) {
+            json_object_set_new(json,
+                                "targetTiltDeg",
+                                json_real(ctx->targetTiltTenthsDeg / 10.0));
+        } else {
+            json_object_set_new(json, "targetTiltDeg", json_null());
+        }
+    }
 
     return json;
 }
@@ -140,6 +187,93 @@ static bool execute_retap(RawRs485Context *ctx,
     code = retap_response_code(response);
 
     return ctrl_response_set_error(ctrlResp, code, ctrl_code_str(code));
+}
+
+static bool raw_require_connected(RawRs485Context *ctx, CtrlResponse *response)
+{
+    if (ctx != NULL && ctx->device.present) {
+        return true;
+    }
+
+    return ctrl_response_set_error(response,
+                                   CtrlCodeTransportError,
+                                   "device not connected; run scan first");
+}
+
+static bool raw_require_configured(RawRs485Context *ctx, CtrlResponse *response)
+{
+    if (!raw_require_connected(ctx, response)) {
+        return false;
+    }
+
+    if (ctx->configured) {
+        return true;
+    }
+
+    return ctrl_response_set_error(response,
+                                   CtrlCodeNotConfigured,
+                                   "configuration must be loaded first");
+}
+
+static bool raw_require_calibrated(RawRs485Context *ctx, CtrlResponse *response)
+{
+    if (!raw_require_configured(ctx, response)) {
+        return false;
+    }
+
+    if (ctx->calibrated) {
+        return true;
+    }
+
+    return ctrl_response_set_error(response,
+                                   CtrlCodeNotCalibrated,
+                                   "calibration must be completed first");
+}
+
+static void raw_clear_device_runtime_state(RawRs485Context *ctx)
+{
+    if (ctx == NULL) {
+        return;
+    }
+
+    ctx->device.present = false;
+    ctx->identified = false;
+    ctx->configured = false;
+    ctx->calibrated = false;
+    ctx->tiltKnown = false;
+    ctx->targetTiltKnown = false;
+    ctx->tiltTenthsDeg = 0;
+    ctx->targetTiltTenthsDeg = 0;
+    ctx->productNumber[0] = '\0';
+    ctx->serialNumber[0] = '\0';
+    ctx->hardwareVersion[0] = '\0';
+    ctx->softwareVersion[0] = '\0';
+}
+
+static void raw_update_identity(RawRs485Context *ctx, RetapInfo *info)
+{
+    if (ctx == NULL || info == NULL) {
+        return;
+    }
+
+    snprintf(ctx->productNumber,
+             sizeof(ctx->productNumber),
+             "%s",
+             info->productNumber);
+    snprintf(ctx->serialNumber,
+             sizeof(ctx->serialNumber),
+             "%s",
+             info->serialNumber);
+    snprintf(ctx->hardwareVersion,
+             sizeof(ctx->hardwareVersion),
+             "%s",
+             info->hardwareVersion);
+    snprintf(ctx->softwareVersion,
+             sizeof(ctx->softwareVersion),
+             "%s",
+             info->softwareVersion);
+
+    ctx->identified = true;
 }
 
 static JsonObj *build_ok_payload(void)
@@ -292,6 +426,10 @@ static bool raw_handle_get_info(RawRs485Context *ctx, CtrlResponse *response)
     RetapResponse retapResp;
     RetapInfo info;
 
+    if (!raw_require_connected(ctx, response)) {
+        return false;
+    }
+
     retap_build_get_information(&request);
 
     if (!execute_retap(ctx, &request, &retapResp, response)) {
@@ -305,6 +443,8 @@ static bool raw_handle_get_info(RawRs485Context *ctx, CtrlResponse *response)
                                        "failed to parse information");
     }
 
+    raw_update_identity(ctx, &info);
+
     return ctrl_response_set_ok(response, build_info_payload(&info));
 }
 
@@ -314,6 +454,10 @@ static bool raw_handle_get_alarms(RawRs485Context *ctx,
     RetapRequest request;
     RetapResponse retapResp;
     RetapAlarmList alarms;
+
+    if (!raw_require_connected(ctx, response)) {
+        return false;
+    }
 
     retap_build_get_error_status(&request);
 
@@ -338,6 +482,11 @@ static bool raw_handle_simple(RawRs485Context *ctx,
 {
     RetapRequest request;
     RetapResponse retapResp;
+
+    if (!raw_require_connected(ctx, response)) {
+        json_decref(payload);
+        return false;
+    }
 
     if (!build(&request)) {
         return ctrl_response_set_error(response,
@@ -409,10 +558,8 @@ static bool raw_handle_send_config(RawRs485Context *ctx,
     size_t totalChunks;
     JsonObj *payload = NULL;
 
-    if (ctx == NULL || !ctx->device.present) {
-        return ctrl_response_set_error(response,
-                                       CtrlCodeTransportError,
-                                       "device not connected; run scan first");
+    if (!raw_require_connected(ctx, response)) {
+        return false;
     }
 
     if (!read_config_blob(request, &data, &len, response)) {
@@ -458,6 +605,8 @@ static bool raw_handle_send_config(RawRs485Context *ctx,
 
     ctx->configured = true;
     ctx->calibrated = false;
+    ctx->tiltKnown = false;
+    ctx->targetTiltKnown = false;
 
     payload = build_ok_payload();
     if (payload == NULL) {
@@ -485,16 +634,8 @@ static bool raw_handle_calibrate(RawRs485Context *ctx,
     RetapResponse retapResp;
     JsonObj *payload = NULL;
 
-    if (ctx == NULL || !ctx->device.present) {
-        return ctrl_response_set_error(response,
-                                       CtrlCodeTransportError,
-                                       "device not connected; run scan first");
-    }
-
-    if (!ctx->configured) {
-        return ctrl_response_set_error(response,
-                                       CtrlCodeNotConfigured,
-                                       "configuration must be loaded before calibration");
+    if (!raw_require_configured(ctx, response)) {
+        return false;
     }
 
     if (!retap_build_calibrate(&request)) {
@@ -529,6 +670,10 @@ static bool raw_handle_get_tilt(RawRs485Context *ctx,
     RetapResponse retapResp;
     int16_t tilt;
 
+    if (!raw_require_connected(ctx, response)) {
+        return false;
+    }
+
     retap_build_get_tilt(&request);
 
     if (!execute_retap(ctx, &request, &retapResp, response)) {
@@ -542,6 +687,7 @@ static bool raw_handle_get_tilt(RawRs485Context *ctx,
     }
 
     ctx->tiltTenthsDeg = tilt;
+    ctx->tiltKnown = true;
 
     return ctrl_response_set_ok(response, build_tilt_payload(tilt));
 }
@@ -557,7 +703,17 @@ static bool raw_handle_set_tilt(RawRs485Context *ctx,
     double target;
     int16_t tilt;
 
+    if (!raw_require_calibrated(ctx, response)) {
+        return false;
+    }
+
     value = json_object_get(request->payload, "targetTiltDeg");
+    if (!json_is_number(value)) {
+        return ctrl_response_set_error(response,
+                                       CtrlCodeInvalidRequest,
+                                       "missing targetTiltDeg");
+    }
+
     target = json_number_value(value);
     tilt = (int16_t)(target * 10.0);
 
@@ -568,6 +724,9 @@ static bool raw_handle_set_tilt(RawRs485Context *ctx,
     }
 
     ctx->tiltTenthsDeg = tilt;
+    ctx->targetTiltTenthsDeg = tilt;
+    ctx->tiltKnown = true;
+    ctx->targetTiltKnown = true;
 
     payload = build_operation_payload("op-tilt-001", "set-tilt");
     if (payload == NULL) {
@@ -575,6 +734,8 @@ static bool raw_handle_set_tilt(RawRs485Context *ctx,
     }
 
     json_object_set_new(payload, "targetTiltDeg", json_real(target));
+    json_object_set_new(payload, "currentTiltDeg", json_real(tilt / 10.0));
+    json_object_set_new(payload, "rawTiltTenthsDeg", json_integer(tilt));
 
     return ctrl_response_set_ok(response, payload);
 }
@@ -588,7 +749,16 @@ static bool raw_handle_get_device_data(RawRs485Context *ctx,
     JsonObj *value = NULL;
     int field;
 
+    if (!raw_require_connected(ctx, response)) {
+        return false;
+    }
+
     value = json_object_get(request->payload, "field");
+    if (!json_is_integer(value)) {
+        return ctrl_response_set_error(response,
+                                       CtrlCodeInvalidRequest,
+                                       "missing field");
+    }
     field = (int)json_integer_value(value);
 
     retap_build_get_device_data(&retapReq, (uint8_t)field);
@@ -598,6 +768,19 @@ static bool raw_handle_get_device_data(RawRs485Context *ctx,
     }
 
     return ctrl_response_set_ok(response, build_device_data_payload(field));
+}
+
+
+static bool raw_handle_reset(RawRs485Context *ctx, CtrlResponse *response)
+{
+    bool ok;
+
+    ok = raw_handle_simple(ctx, response, retap_build_reset_software, NULL);
+    if (ok) {
+        raw_clear_device_runtime_state(ctx);
+    }
+
+    return ok;
 }
 
 static bool raw_execute(Backend *backend,
@@ -642,8 +825,7 @@ static bool raw_execute(Backend *backend,
     case CtrlMsgGetDeviceData:
         return raw_handle_get_device_data(ctx, request, response);
     case CtrlMsgResetSoftware:
-        return raw_handle_simple(
-            ctx, response, retap_build_reset_software, NULL);
+        return raw_handle_reset(ctx, response);
     default:
         return ctrl_response_set_error(response,
                                        CtrlCodeUnsupportedProcedure,
