@@ -19,8 +19,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const ProfileEndpoint = "/v1/policy/imsi"
-const CDREndpoint = "/v1/cdr/imsi"
+const ProfileEndpoint = "/v1/asr"
+const CDREndpoint = "/v1/cdr"
 
 type RemoteController interface {
 	GetSubscriberProfile(imsi string) (*api.Spr, error)
