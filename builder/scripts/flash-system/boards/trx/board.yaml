@@ -67,4 +67,7 @@ phase2:
 band:
   default: startup_B1
   configs_dir: /usr/ukm/ukama/builder/scripts/build-system/trx/band_configs
-  target_path: /etc/trx/band.cfg
+  # Must live on the persistent app partition — the root fs is an initramfs, so
+  # anything written under /etc is lost on reboot. Supreeth's manual flow copies
+  # the band config into /mnt/app (the LTE app loads startup.cfg from there).
+  target_path: /mnt/app/startup.cfg

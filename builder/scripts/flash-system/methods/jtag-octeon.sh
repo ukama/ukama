@@ -935,6 +935,10 @@ _phase2_run() {
         "mount | grep ' /mnt/app ' || true; df -h /mnt/app || true"
 
     # Copy band config and rc_post.local while we still have SSH/ethernet from boot 1.
+    # Both live on /mnt/app, and after dd'ing flash_app0 the running /mnt/app mount
+    # has a stale superblock — remount it BEFORE writing anything there.
+    _phase2_remount_app "$trx_ip" "$ssh_user" || true
+
     local band_default band_configs_dir band_cfg_src band_cfg_target
     band_default=$(yq_read "$BOARD_CONFIG" band.default)
     band_configs_dir=$(yq_read "$BOARD_CONFIG" band.configs_dir)
@@ -944,7 +948,10 @@ _phase2_run() {
     if [ -f "$band_cfg_src" ]; then
         echo "Installing band config (${band_cfg_src} -> ${band_cfg_target})..."
         sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "mkdir -p $(dirname "$band_cfg_target")"
-        sshpass "${sshpass_args[@]}" scp "${ssh_opts[@]}" "$band_cfg_src" "${ssh_user}@${trx_ip}:${band_cfg_target}"
+        if ! cat "$band_cfg_src" | sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "cat > ${band_cfg_target}"; then
+            echo "ERROR: band config copy via ssh cat failed. Trying scp..."
+            sshpass "${sshpass_args[@]}" scp "${ssh_opts[@]}" "$band_cfg_src" "${ssh_user}@${trx_ip}:${band_cfg_target}"
+        fi
     else
         echo "WARNING: band config source not found at ${band_cfg_src}"
     fi
@@ -952,10 +959,6 @@ _phase2_run() {
     if [ "$rc_post_injected" -eq 1 ]; then
         echo "rc_post.local was pre-injected into flash_app0.img; skipping post-flash copy."
     else
-        # After dd'ing flash_app0, the running /mnt/app mount has a stale superblock.
-        # Remount it before installing any files that live on the app partition.
-        _phase2_remount_app "$trx_ip" "$ssh_user" || true
-
         echo "Installing rc_post.local (${rc_post_src} -> ${rc_post_target})..."
         sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "mkdir -p /mnt/app"
 
