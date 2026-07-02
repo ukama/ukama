@@ -9,15 +9,21 @@ CURPATH := $(dir $(CURMAKE))
 
 SUBDIRS := aisgd ctrl emu
 
-.PHONY: all clean $(SUBDIRS)
+.PHONY: all clean test protocol-test $(SUBDIRS)
 
 all: $(SUBDIRS)
 
 $(SUBDIRS):
 	$(MAKE) -C $(CURPATH)$@
 
+test: protocol-test
+
+protocol-test:
+	$(MAKE) -C $(CURPATH)tests/protocol test
+
 clean:
 	@for dir in $(SUBDIRS); do \
 		echo "Cleaning $$dir"; \
 		$(MAKE) -C $(CURPATH)$$dir clean; \
 	done
+	$(MAKE) -C $(CURPATH)tests/protocol clean
