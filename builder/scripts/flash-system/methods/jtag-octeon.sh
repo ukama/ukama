@@ -27,7 +27,7 @@ _jtag_octeon_cleanup() {
         sudo kill "$REMOTE_BOOT_PID" 2>/dev/null || true
         REMOTE_BOOT_PID=""
     fi
-    sudo pkill -9 -f oct-remote-boot 2>/dev/null || true
+    sudo pkill -9 -f '[o]ct-remote-boot' 2>/dev/null || true
     if [ -n "$SPAM_PID" ]; then
         kill "$SPAM_PID" 2>/dev/null || true
         SPAM_PID=""
@@ -486,7 +486,7 @@ _phase1_run() {
         echo "=== oct-remote-boot attempt ${oct_try}/${max_oct_tries} (no re-go, no power-cycle) ==="
 
         # Clear any stale oct-remote-boot still holding the BDI GDB port.
-        sudo pkill -9 -f oct-remote-boot 2>/dev/null || true
+        sudo pkill -9 -f '[o]ct-remote-boot' 2>/dev/null || true
         sleep 1
 
         echo "Starting oct-remote-boot (OCTEON_ROOT=$oct_env_root, $oct_env_protocol)..."
@@ -564,7 +564,7 @@ _phase1_run() {
         elif [ "$oct_exit" -eq 139 ] || grep -qaE "Segmentation fault|GDB Reply Error|in reset, told to continue" "$oct_log" 2>/dev/null; then
             echo "  oct-remote-boot exited (GDB error / segfault) — re-running it (normal recovery)."
         else
-            echo "  no u-boot prompt within 180s — re-running."
+            echo "  no u-boot prompt within 300s — re-running."
         fi
         echo "--- last 15 lines of oct-remote-boot output ---"
         tail -n 15 "$oct_log" 2>/dev/null | sed 's/^/    /' || true
@@ -672,32 +672,45 @@ _phase2_enable_ethernet_over_serial() {
         phase2_tail_pid=$!
     fi
 
-    uboot_send "$serial_dev" ""
-    sleep 2
-    if ! uboot_wait_for "~ #" 300; then
+    # Marker-based login: only match output that appears AFTER each send, so a
+    # stale "LSM login:" already sitting in the log can't short-circuit a step.
+    # Short per-step timeouts — the board is already at the login prompt; if this
+    # doesn't work quickly we fall back to the SSH wait rather than look hung.
+    local login_attempt logged_in=0 marker
+    for login_attempt in 1 2 3; do
+        marker=$(uboot_log_mark)
         uboot_send "$serial_dev" ""
-        if uboot_wait_for "login:" 300; then
-            uboot_send "$serial_dev" "root"
-            uboot_wait_for "assword" 300 || true
-            uboot_send "$serial_dev" "cavium.lte"
-            if ! uboot_wait_for "~ #" 300; then
-                echo "  WARNING: serial login didn't reach a shell prompt; relying on SSH wait."
-                if [ -n "$phase2_tail_pid" ]; then
-                    kill "$phase2_tail_pid" 2>/dev/null || true
-                    phase2_tail_pid=""
-                fi
-                uboot_close
-                return 0
-            fi
-        else
-            echo "  WARNING: no serial login prompt (still booting?); relying on SSH wait."
-            if [ -n "$phase2_tail_pid" ]; then
-                kill "$phase2_tail_pid" 2>/dev/null || true
-                phase2_tail_pid=""
-            fi
-            uboot_close
-            return 0
+        if uboot_wait_for_from "$marker" "~ #" 8; then
+            logged_in=1
+            break
         fi
+        if ! uboot_wait_for_from "$marker" "login:" 30; then
+            echo "  no fresh login prompt on attempt ${login_attempt}/3 (still booting?); retrying..."
+            continue
+        fi
+        marker=$(uboot_log_mark)
+        uboot_send "$serial_dev" "root"
+        if ! uboot_wait_for_from "$marker" "assword" 20; then
+            echo "  no password prompt on attempt ${login_attempt}/3; retrying..."
+            continue
+        fi
+        marker=$(uboot_log_mark)
+        uboot_send "$serial_dev" "${TRX_ROOT_PASSWORD:-cavium.lte}"
+        if uboot_wait_for_from "$marker" "~ #" 20; then
+            logged_in=1
+            break
+        fi
+        echo "  login attempt ${login_attempt}/3 didn't reach a shell prompt; retrying..."
+    done
+
+    if [ "$logged_in" -ne 1 ]; then
+        echo "  WARNING: serial login didn't reach a shell prompt; relying on SSH wait."
+        if [ -n "$phase2_tail_pid" ]; then
+            kill "$phase2_tail_pid" 2>/dev/null || true
+            phase2_tail_pid=""
+        fi
+        uboot_close
+        return 0
     fi
 
     uboot_send "$serial_dev" "devmem 0x00011800B0001000 64 0x0140"
@@ -769,53 +782,86 @@ _phase2_inject_rc_post_into_app0_image() {
     local internal_path="${rc_post_target#/mnt/app}"
     internal_path="${internal_path#/}"
 
-    local tmpdir mntdir loopdev
-    tmpdir=$(mktemp -d) || return 1
-    mntdir="${tmpdir}/mnt"
-    mkdir -p "$mntdir" || { rm -rf "$tmpdir"; return 1; }
-
     echo "Injecting rc_post.local into ${app0_image} on the bench box (pre-dd)..."
 
-    # Load the modules needed to mount a jffs2 image via loopback.
+    # jffs2 only mounts on MTD devices — a losetup loop device will NOT work.
+    # Stage the image into an mtdram device sized to match (TRX NOR erase size
+    # is 128 KiB, per the u-boot erase sector counts), mount that, edit, dump back.
+    local erase_kib=128 img_bytes total_kib
+    img_bytes=$(stat -c %s "$app0_image" 2>/dev/null || echo 0)
+    if [ "$img_bytes" -eq 0 ] || [ $((img_bytes % (erase_kib * 1024))) -ne 0 ]; then
+        echo "  WARNING: app0 image size ${img_bytes} is not a multiple of ${erase_kib}KiB; will try post-flash copy instead."
+        return 1
+    fi
+    total_kib=$((img_bytes / 1024))
+
     modprobe jffs2 >/dev/null 2>&1 || true
+    modprobe -r mtdram >/dev/null 2>&1 || true
+    if ! modprobe mtdram total_size="$total_kib" erase_size="$erase_kib" >/dev/null 2>&1; then
+        echo "  WARNING: mtdram kernel module unavailable; will try post-flash copy instead."
+        return 1
+    fi
     modprobe mtdblock >/dev/null 2>&1 || true
 
-    loopdev=$(losetup -f 2>/dev/null) || loopdev=""
-    if [ -z "$loopdev" ]; then
-        echo "  WARNING: no free loop device available; will try post-flash copy instead."
-        rm -rf "$tmpdir"
+    local mtd_idx mtd_dev
+    mtd_idx=$(grep -i mtdram /proc/mtd 2>/dev/null | head -1 | sed 's/^mtd\([0-9]*\):.*/\1/')
+    mtd_dev="/dev/mtdblock${mtd_idx}"
+    if [ -z "$mtd_idx" ] || [ ! -e "$mtd_dev" ]; then
+        echo "  WARNING: no mtdblock device for mtdram; will try post-flash copy instead."
+        modprobe -r mtdram >/dev/null 2>&1 || true
         return 1
     fi
 
-    if ! losetup "$loopdev" "$app0_image" >/dev/null 2>&1; then
-        echo "  WARNING: could not set up loop device for app0 image; will try post-flash copy instead."
+    local tmpdir mntdir
+    tmpdir=$(mktemp -d) || { modprobe -r mtdram >/dev/null 2>&1 || true; return 1; }
+    mntdir="${tmpdir}/mnt"
+    mkdir -p "$mntdir"
+
+    _inject_cleanup() {
+        umount "$mntdir" >/dev/null 2>&1 || true
         rm -rf "$tmpdir"
+        modprobe -r mtdram >/dev/null 2>&1 || true
+    }
+
+    if ! dd if="$app0_image" of="$mtd_dev" bs=1M >/dev/null 2>&1; then
+        echo "  WARNING: could not load app0 image into mtdram; will try post-flash copy instead."
+        _inject_cleanup
         return 1
     fi
 
-    if ! mount -t jffs2 "$loopdev" "$mntdir" >/dev/null 2>&1; then
-        echo "  WARNING: could not mount app0 image as jffs2; will try post-flash copy instead."
-        losetup -d "$loopdev" >/dev/null 2>&1 || true
-        rm -rf "$tmpdir"
+    if ! mount -t jffs2 "$mtd_dev" "$mntdir" >/dev/null 2>&1; then
+        echo "  WARNING: could not mount app0 image as jffs2 (via mtdram); will try post-flash copy instead."
+        _inject_cleanup
         return 1
     fi
 
     mkdir -p "${mntdir}/$(dirname "$internal_path")"
     if ! cp "$rc_post_src" "${mntdir}/${internal_path}"; then
         echo "  WARNING: could not copy rc_post.local into app0 image; will try post-flash copy instead."
-        umount "$mntdir" >/dev/null 2>&1 || true
-        losetup -d "$loopdev" >/dev/null 2>&1 || true
-        rm -rf "$tmpdir"
+        _inject_cleanup
         return 1
     fi
     chmod +x "${mntdir}/${internal_path}"
-
     sync
     umount "$mntdir" >/dev/null 2>&1 || true
-    losetup -d "$loopdev" >/dev/null 2>&1 || true
-    rm -rf "$tmpdir"
+
+    # Keep a pristine copy of the build artifact, then write the edited image back.
+    [ -f "${app0_image}.orig" ] || cp "$app0_image" "${app0_image}.orig"
+    if ! dd if="$mtd_dev" of="${tmpdir}/app0.new" bs=1M >/dev/null 2>&1; then
+        echo "  WARNING: could not dump edited app0 image from mtdram; will try post-flash copy instead."
+        _inject_cleanup
+        return 1
+    fi
+    if [ "$(stat -c %s "${tmpdir}/app0.new")" != "$img_bytes" ]; then
+        echo "  WARNING: edited app0 image size mismatch; keeping original, will try post-flash copy instead."
+        _inject_cleanup
+        return 1
+    fi
+    mv "${tmpdir}/app0.new" "$app0_image"
+    _inject_cleanup
 
     echo "  injected rc_post.local into app0 image; it will be flashed by dd along with the other images."
+    echo "  (original image saved as ${app0_image}.orig)"
     return 0
 }
 
