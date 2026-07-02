@@ -842,17 +842,23 @@ _phase2_run() {
     echo "Installing rc_post.local (${rc_post_src} -> ${rc_post_target})..."
     sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "mkdir -p /mnt/app"
 
-    if ! sshpass "${sshpass_args[@]}" scp "${ssh_opts[@]}" "$rc_post_src" "${ssh_user}@${trx_ip}:${rc_post_target}"; then
-        echo "ERROR: rc_post.local copy failed (Input/output error). Trying an explicit remount + retry..."
-        if _phase2_remount_app "$trx_ip" "$ssh_user"; then
-            sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "rm -f ${rc_post_target}"
-            if ! sshpass "${sshpass_args[@]}" scp "${ssh_opts[@]}" "$rc_post_src" "${ssh_user}@${trx_ip}:${rc_post_target}"; then
-                echo "ERROR: rc_post.local copy still failed after remount."
+    # scp to jffs2 intermittently returns Input/output error even when the mount
+    # is verified writable. Use a plain ssh cat first; fall back to scp only if
+    # that fails.
+    if ! cat "$rc_post_src" | sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "cat > ${rc_post_target}"; then
+        echo "ERROR: rc_post.local copy via ssh cat failed. Trying scp..."
+        if ! sshpass "${sshpass_args[@]}" scp "${ssh_opts[@]}" "$rc_post_src" "${ssh_user}@${trx_ip}:${rc_post_target}"; then
+            echo "ERROR: rc_post.local scp also failed. Trying an explicit remount + retry..."
+            if _phase2_remount_app "$trx_ip" "$ssh_user"; then
+                sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "rm -f ${rc_post_target}"
+                if ! cat "$rc_post_src" | sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "cat > ${rc_post_target}"; then
+                    echo "ERROR: rc_post.local copy still failed after remount."
+                    return 1
+                fi
+            else
+                echo "ERROR: could not remount /mnt/app writable; cannot install rc_post.local."
                 return 1
             fi
-        else
-            echo "ERROR: could not remount /mnt/app writable; cannot install rc_post.local."
-            return 1
         fi
     fi
 
