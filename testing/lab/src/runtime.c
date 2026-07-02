@@ -725,7 +725,11 @@ static int cleanup_script(runtime_t *rt,
     return ULAB_OK;
 }
 
-int runtime_stop_ues(runtime_t *rt, const world_t *w, ulab_error_t *err) {
+static int runtime_ue_script(runtime_t *rt,
+                             const world_t *w,
+                             const char *script,
+                             const char *failure_label,
+                             ulab_error_t *err) {
     char args[ULAB_MAX_ARGS];
     size_t i;
     int failures;
@@ -741,15 +745,82 @@ int runtime_stop_ues(runtime_t *rt, const world_t *w, ulab_error_t *err) {
         rc = snprintf(args, sizeof(args), "%s %s",
                       w->ues[i].id, rt->run_dir);
         if (rc >= 0 && (size_t)rc < sizeof(args)) {
-            if (cleanup_script(rt, "stop-ue.sh", args)) {
+            if (cleanup_script(rt, script, args)) {
                 failures++;
             }
+        } else {
+            failures++;
         }
     }
 
     if (failures > 0 && err != NULL) {
         snprintf(err->msg, sizeof(err->msg),
-                 "UE cleanup had %d failed step(s)", failures);
+                 "%s had %d failed step(s)",
+                 failure_label ? failure_label : script, failures);
+        return ULAB_ERR;
+    }
+
+    return ULAB_OK;
+}
+
+int runtime_detach_ues(runtime_t *rt, const world_t *w, ulab_error_t *err) {
+    return runtime_ue_script(rt, w, "detach-ue.sh",
+                             "UE detach", err);
+}
+
+int runtime_cleanup_ues(runtime_t *rt, const world_t *w, ulab_error_t *err) {
+    return runtime_ue_script(rt, w, "cleanup-ue.sh",
+                             "UE cleanup", err);
+}
+
+int runtime_collect_cdr_diagnostics(runtime_t *rt,
+                                    const world_t *w,
+                                    ulab_error_t *err) {
+    char args[ULAB_MAX_ARGS];
+    int rc;
+
+    (void)w;
+
+    if (rt == NULL || rt->run_dir[0] == '\0') {
+        return ULAB_OK;
+    }
+
+    rc = snprintf(args, sizeof(args), "%s", rt->run_dir);
+    if (rc < 0 || (size_t)rc >= sizeof(args)) {
+        if (err != NULL) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "cdr diagnostics args too long");
+        }
+        return ULAB_ERR;
+    }
+
+    ulab_status("CDR", "collect tower /ukama and ukama-agent stats");
+    if (run_script(rt, "collect-cdr-diagnostics.sh", args, err)) {
+        return ULAB_ERR;
+    }
+
+    return ULAB_OK;
+}
+
+int runtime_stop_ues(runtime_t *rt, const world_t *w, ulab_error_t *err) {
+    ulab_error_t tmp;
+    int failures;
+
+    failures = 0;
+
+    memset(&tmp, 0, sizeof(tmp));
+    if (runtime_detach_ues(rt, w, &tmp)) {
+        failures++;
+    }
+
+    memset(&tmp, 0, sizeof(tmp));
+    if (runtime_cleanup_ues(rt, w, &tmp)) {
+        failures++;
+    }
+
+    if (failures > 0 && err != NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "UE stop had %d failed section(s)", failures);
         return ULAB_ERR;
     }
 

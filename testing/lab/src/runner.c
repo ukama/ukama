@@ -782,11 +782,40 @@ static int runtime_all_ues(const scenario_t *scenario,
     return ULAB_OK;
 }
 
-static int run_checks(check_ctx_t *ctx,
-                      const check_spec_t *checks,
-                      size_t count,
-                      report_t *report,
-                      ulab_error_t *err) {
+typedef enum {
+    CHECK_RUN_ALL = 0,
+    CHECK_RUN_NON_USAGE,
+    CHECK_RUN_USAGE
+} check_run_mode_t;
+
+static int is_usage_check(const check_spec_t *check) {
+    return check != NULL &&
+        (check->type == CHECK_USAGE_PER_SIM ||
+         check->type == CHECK_USAGE_SAMPLE);
+}
+
+static int check_mode_includes(const check_spec_t *check,
+                               check_run_mode_t mode) {
+    int usage;
+
+    if (mode == CHECK_RUN_ALL) {
+        return 1;
+    }
+
+    usage = is_usage_check(check);
+    if (mode == CHECK_RUN_USAGE) {
+        return usage;
+    }
+
+    return !usage;
+}
+
+static int run_checks_mode(check_ctx_t *ctx,
+                           const check_spec_t *checks,
+                           size_t count,
+                           report_t *report,
+                           check_run_mode_t mode,
+                           ulab_error_t *err) {
 
     check_result_t result;
     size_t i;
@@ -795,6 +824,10 @@ static int run_checks(check_ctx_t *ctx,
     failed = 0;
 
     for (i = 0; i < count; i++) {
+        if (!check_mode_includes(&checks[i], mode)) {
+            continue;
+        }
+
         if (check_run(ctx, &checks[i], &result, err)) {
             return ULAB_ERR;
         }
@@ -806,6 +839,51 @@ static int run_checks(check_ctx_t *ctx,
     }
 
     return failed ? ULAB_ERR : ULAB_OK;
+}
+
+static int run_deferred_usage_checks(check_ctx_t *ctx,
+                                     const scenario_t *scenario,
+                                     report_t *report,
+                                     ulab_error_t *err) {
+    size_t i;
+    int rc;
+
+    if (scenario == NULL) {
+        return ULAB_OK;
+    }
+
+    for (i = 0; i < scenario->phase_count; i++) {
+        rc = run_checks_mode(ctx,
+                             scenario->phases[i].checks,
+                             scenario->phases[i].check_count,
+                             report, CHECK_RUN_USAGE, err);
+        if (rc != ULAB_OK) {
+            return rc;
+        }
+    }
+
+    return run_checks_mode(ctx, scenario->final_checks,
+                           scenario->final_check_count,
+                           report, CHECK_RUN_USAGE, err);
+}
+
+static unsigned int cdr_wait_seconds(void) {
+    const char *v;
+    char *end;
+    unsigned long sec;
+
+    v = getenv("ULAB_CDR_WAIT_SEC");
+    if (v == NULL || v[0] == '\0') {
+        return 5u;
+    }
+
+    end = NULL;
+    sec = strtoul(v, &end, 10);
+    if (end == v || sec > 300ul) {
+        return 5u;
+    }
+
+    return (unsigned int)sec;
 }
 
 static void init_check_ctx(check_ctx_t *ctx,
@@ -868,8 +946,8 @@ static int run_phase(scenario_t *scenario,
     }
 
     init_check_ctx(&check_ctx, scenario, world, model, bff, runtime);
-    rc = run_checks(&check_ctx, phase->checks, phase->check_count,
-                    report, err);
+    rc = run_checks_mode(&check_ctx, phase->checks, phase->check_count,
+                         report, CHECK_RUN_NON_USAGE, err);
 
     return rc;
 }
@@ -903,8 +981,15 @@ static int cleanup_run(bff_client_t *bff,
     failures = 0;
 
     memset(&cleanup_err, 0, sizeof(cleanup_err));
-    ulab_status("CLEANUP", "stop UE runtime");
-    if (runtime_stop_ues(runtime, world, &cleanup_err)) {
+    ulab_status("CLEANUP", "detach UE sessions");
+    if (runtime_detach_ues(runtime, world, &cleanup_err)) {
+        failures++;
+        ulab_log_error("%s", cleanup_err.msg);
+    }
+
+    memset(&cleanup_err, 0, sizeof(cleanup_err));
+    ulab_status("CLEANUP", "cleanup UE containers");
+    if (runtime_cleanup_ues(runtime, world, &cleanup_err)) {
         failures++;
         ulab_log_error("%s", cleanup_err.msg);
     }
@@ -1082,8 +1167,39 @@ int runner_validate(const runner_opts_t *opts) {
     }
 
     init_check_ctx(&check_ctx, scenario, &world, &model, &bff, &runtime);
-    rc = run_checks(&check_ctx, scenario->final_checks,
-                    scenario->final_check_count, &report, &err);
+    rc = run_checks_mode(&check_ctx, scenario->final_checks,
+                         scenario->final_check_count, &report,
+                         CHECK_RUN_NON_USAGE, &err);
+    if (rc != ULAB_OK) {
+        goto done;
+    }
+
+    if (world.ue_count > 0) {
+        unsigned int wait_sec;
+
+        ulab_status("UE", "detach sessions before CDR/usage checks");
+        rc = runtime_detach_ues(&runtime, &world, &err);
+        if (rc != ULAB_OK) {
+            rc = ULAB_ERUNTIME;
+            goto done;
+        }
+
+        wait_sec = cdr_wait_seconds();
+        if (wait_sec > 0) {
+            ulab_status("CDR", "wait %u sec for PCRF CDR publisher",
+                        wait_sec);
+            sleep(wait_sec);
+        }
+
+        rc = runtime_collect_cdr_diagnostics(&runtime, &world, &err);
+        if (rc != ULAB_OK) {
+            rc = ULAB_ERUNTIME;
+            goto done;
+        }
+    }
+
+    ulab_status("USAGE", "run deferred CDR-backed checks");
+    rc = run_deferred_usage_checks(&check_ctx, scenario, &report, &err);
 
     write_model_artifact(&model, runDir);
 
