@@ -6,1067 +6,700 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "aisg_v2.h"
 #include "hdlc.h"
 #include "usys_log.h"
 
-#define AISG_TRACE_BYTES_PER_LINE          16
-#define AISG_POLL_DELAY_US                 50000
-
-#define XID_INFO_MIN_LEN                   3
-#define XID_SCAN_ID_LEN                    AISG_XID_UNIQUE_ID_MAX
+#define AISG_TX_FRAME_RETRY                3
+#define AISG_READ_FRAME_BUDGET            12
+#define AISG_DISCOVERY_ADDR                0x02
+#define AISG_PRIMARY_AISG_VERSION          0x02
+#define AISG_PRIMARY_3GPP_RELEASE          0x06
 
 typedef struct {
-    bool hasUniqueId;
-    uint8_t uniqueId[AISG_XID_UNIQUE_ID_MAX];
+    uint8_t uniqueId[AISG_MAX_UID_LEN];
     size_t uniqueIdLen;
-
-    bool hasAddress;
-    uint8_t address;
-
-    bool hasMask;
-    uint8_t mask[AISG_XID_UNIQUE_ID_MAX];
-    size_t maskLen;
-
-    bool hasDeviceType;
+    uint8_t hdlcAddress;
     uint8_t deviceType;
-
-    bool has3gppRelease;
-    uint8_t release;
-
-    bool hasAisgVersion;
-    uint8_t aisgVersion;
-
+    uint8_t vendorCode[2];
+    bool hasUniqueId;
+    bool hasAddress;
+    bool hasDeviceType;
     bool hasVendorCode;
-    uint16_t vendorCode;
-} XidAddressingParams;
+} XidAddressInfo;
 
-static const char *l2_state_name(AisgL2State state)
+static bool is_xid_control(uint8_t ctrl)
 {
-    switch (state) {
-    case AISG_L2_NO_ADDRESS:       return "NO_ADDRESS";
-    case AISG_L2_ADDRESS_ASSIGNED: return "ADDRESS_ASSIGNED";
-    case AISG_L2_CONNECTED:        return "CONNECTED";
-    default:                       return "UNKNOWN";
-    }
+    return ctrl == AISG_CTRL_XID_PF || ctrl == AISG_CTRL_XID_BASE;
 }
 
-static const char *ctrl_name(uint8_t ctrl)
+static bool is_ua_control(uint8_t ctrl)
 {
-    if (hdlc_is_i_frame(ctrl)) return "I";
-    if (hdlc_is_xid(ctrl))     return "XID";
-    if (hdlc_is_snrm(ctrl))    return "SNRM";
-    if (hdlc_is_disc(ctrl))    return "DISC";
-    if (hdlc_is_ua(ctrl))      return "UA";
-    if (hdlc_is_dm(ctrl))      return "DM";
-    if (hdlc_is_rr(ctrl))      return "RR";
-    if (hdlc_is_rnr(ctrl))     return "RNR";
-    if (hdlc_is_frmr(ctrl))    return "FRMR";
-
-    return "CTRL";
+    return ctrl == AISG_CTRL_UA_PF || ctrl == AISG_CTRL_UA_BASE;
 }
 
-
-const char *aisg_v2_l2_state_str(AisgL2State state)
+static bool is_dm_control(uint8_t ctrl)
 {
-    return l2_state_name(state);
+    return ctrl == AISG_CTRL_DM_PF || ctrl == AISG_CTRL_DM_BASE;
 }
 
-const char *aisg_v2_error_str(AisgError error)
+static bool is_i_frame(uint8_t ctrl)
 {
-    switch (error) {
-    case AISG_ERROR_NONE:                         return "None";
-    case AISG_ERROR_TRANSPORT:                    return "Transport";
-    case AISG_ERROR_TIMEOUT:                      return "Timeout";
-    case AISG_ERROR_MULTIPLE_DEVICES:             return "MultipleDevices";
-    case AISG_ERROR_UNSUPPORTED_DEVICE_TYPE:      return "UnsupportedDeviceType";
-    case AISG_ERROR_UNSUPPORTED_PROTOCOL_VERSION: return "UnsupportedProtocolVersion";
-    case AISG_ERROR_LINK_NOT_CONNECTED:           return "LinkNotConnected";
-    case AISG_ERROR_FRAME_REJECT:                 return "FrameReject";
-    case AISG_ERROR_RECEIVER_NOT_READY:           return "ReceiverNotReady";
-    case AISG_ERROR_PROTOCOL:                     return "Protocol";
-    default:                                      return "Unknown";
-    }
+    return (ctrl & 0x01) == 0;
 }
 
-static void set_error(AisgBus *bus, AisgError error)
+static uint8_t make_i_control(uint8_t ns, uint8_t nr)
 {
-    if (bus != NULL) {
-        bus->lastError = error;
-    }
+    return (uint8_t)(((ns & 0x07) << 1) | AISG_CTRL_I_PF |
+                     ((nr & 0x07) << 5));
 }
 
-static int64_t monotonic_ms(void)
+static uint8_t i_control_ns(uint8_t ctrl)
 {
-    struct timespec ts;
-
-    if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) {
-        return 0;
-    }
-
-    return ((int64_t)ts.tv_sec * 1000) + ((int64_t)ts.tv_nsec / 1000000);
+    return (uint8_t)((ctrl >> 1) & 0x07);
 }
 
-static int remaining_ms(int64_t startMs, int timeoutMs)
+static uint8_t i_control_nr(uint8_t ctrl)
 {
-    int64_t now;
-    int64_t elapsed;
-
-    if (timeoutMs <= 0) {
-        return AISG_DEFAULT_TIMEOUT_MS;
-    }
-
-    now = monotonic_ms();
-    elapsed = now - startMs;
-    if (elapsed >= timeoutMs) {
-        return 0;
-    }
-
-    return (int)(timeoutMs - elapsed);
+    return (uint8_t)((ctrl >> 5) & 0x07);
 }
 
-static void log_hex_bytes(const char *label,
-                          const uint8_t *data,
-                          size_t len)
+static void hexdump_line(const char *prefix, const uint8_t *data, size_t len)
 {
-    char line[(AISG_TRACE_BYTES_PER_LINE * 3) + 1];
-    size_t off;
+    char line[512];
+    size_t off = 0;
     size_t i;
-    size_t n;
-    size_t pos;
-    int written;
 
-    if (label == NULL || data == NULL) {
+    if (prefix == NULL || data == NULL) {
         return;
     }
 
-    usys_log_debug("aisg: %s len=%zu", label, len);
-
-    off = 0;
-    while (off < len) {
-        n = len - off;
-        if (n > AISG_TRACE_BYTES_PER_LINE) {
-            n = AISG_TRACE_BYTES_PER_LINE;
-        }
-
-        pos = 0;
-        memset(line, 0, sizeof(line));
-
-        for (i = 0; i < n; i++) {
-            written = snprintf(&line[pos],
-                               sizeof(line) - pos,
-                               "%02X%s",
-                               data[off + i],
-                               (i + 1 == n) ? "" : " ");
-            if (written <= 0) {
-                break;
-            }
-
-            pos += (size_t)written;
-            if (pos >= sizeof(line)) {
-                break;
-            }
-        }
-
-        usys_log_debug("aisg: %s[%04zu..%04zu] %s",
-                       label,
-                       off,
-                       off + n - 1,
-                       line);
-
-        off += n;
+    off += (size_t)snprintf(line + off, sizeof(line) - off, "%s len=%zu", prefix, len);
+    for (i = 0; i < len && off + 4 < sizeof(line); i++) {
+        off += (size_t)snprintf(line + off, sizeof(line) - off, " %02x", data[i]);
     }
+
+    usys_log_trace("%s", line);
 }
 
-static void log_frame(const char *label, const HdlcFrame *frame)
+static void unique_id_to_hex(AisgDevice *device)
 {
-    if (label == NULL || frame == NULL) {
+    size_t i;
+    size_t off = 0;
+
+    if (device == NULL) {
         return;
     }
 
-    usys_log_debug("aisg: %s addr=0x%02X ctrl=0x%02X(%s) pf=%u "
-                   "ns=%u nr=%u info_len=%zu",
-                   label,
-                   frame->address,
-                   frame->control,
-                   ctrl_name(frame->control),
-                   hdlc_poll_final(frame->control) ? 1 : 0,
-                   hdlc_ns(frame->control),
-                   hdlc_nr(frame->control),
-                   frame->infoLen);
-
-    if (frame->infoLen > 0) {
-        log_hex_bytes(label, frame->info, frame->infoLen);
+    device->uniqueIdHex[0] = '\0';
+    for (i = 0; i < device->uniqueIdLen && off + 2 < sizeof(device->uniqueIdHex); i++) {
+        off += (size_t)snprintf(device->uniqueIdHex + off,
+                                sizeof(device->uniqueIdHex) - off,
+                                "%02X",
+                                device->uniqueId[i]);
     }
 }
 
-static bool same_frame(const HdlcFrame *a, const HdlcFrame *b)
+static void unique_id_to_label(const uint8_t *uid,
+                               size_t uidLen,
+                               char *dst,
+                               size_t dstSize)
 {
-    if (a == NULL || b == NULL) {
-        return false;
+    size_t i;
+    bool printable = true;
+
+    if (dst == NULL || dstSize == 0) {
+        return;
     }
 
-    if (a->address != b->address ||
-        a->control != b->control ||
-        a->infoLen != b->infoLen) {
-        return false;
+    dst[0] = '\0';
+    if (uid == NULL || uidLen == 0) {
+        snprintf(dst, dstSize, "%s", "RET");
+        return;
     }
 
-    if (a->infoLen == 0) {
-        return true;
+    for (i = 0; i < uidLen; i++) {
+        if (!isprint(uid[i])) {
+            printable = false;
+            break;
+        }
     }
 
-    return memcmp(a->info, b->info, a->infoLen) == 0;
+    if (printable) {
+        snprintf(dst, dstSize, "%.*s", (int)uidLen, (const char *)uid);
+        return;
+    }
+
+    for (i = 0; i < uidLen && (i * 2 + 2) < dstSize; i++) {
+        snprintf(dst + i * 2, dstSize - i * 2, "%02X", uid[i]);
+    }
 }
 
-static bool read_decoded_frame(AisgBus *bus,
-                               const HdlcFrame *txFrame,
-                               HdlcFrame *rxFrame,
-                               int timeoutMs)
+static bool send_payload_only(AisgBus *bus,
+                              const uint8_t *payload,
+                              size_t payloadLen)
 {
-    uint8_t raw[HDLC_MAX_FRAME];
-    size_t rawLen;
-    int attempt;
+    uint8_t frame[HDLC_MAX_FRAME];
+    size_t frameLen;
 
-    if (bus == NULL || rxFrame == NULL) {
+    if (bus == NULL || bus->serial == NULL || payload == NULL) {
         return false;
     }
 
-    for (attempt = 0; attempt < AISG_MAX_RX_ATTEMPTS; attempt++) {
-        memset(raw, 0, sizeof(raw));
-        rawLen = 0;
+    if (!hdlc_encode(payload, payloadLen, frame, sizeof(frame), &frameLen)) {
+        return false;
+    }
 
-        if (!serial_read_frame(bus->serial,
-                               raw,
-                               sizeof(raw),
-                               &rawLen,
-                               timeoutMs)) {
-            usys_log_debug("aisg: RX timeout attempt=%d", attempt + 1);
+    hexdump_line("aisg tx payload", payload, payloadLen);
+    hexdump_line("aisg tx frame", frame, frameLen);
+
+    if (!serial_flush_rx(bus->serial)) {
+        return false;
+    }
+
+    if (!serial_write_all(bus->serial, frame, frameLen)) {
+        return false;
+    }
+
+    return true;
+}
+
+static bool frame_matches_echo(const uint8_t *a,
+                               size_t aLen,
+                               const uint8_t *b,
+                               size_t bLen)
+{
+    return a != NULL && b != NULL && aLen == bLen && memcmp(a, b, aLen) == 0;
+}
+
+static bool read_decoded_payload(AisgBus *bus,
+                                 uint8_t *payload,
+                                 size_t payloadSize,
+                                 size_t *payloadLen,
+                                 int timeoutMs)
+{
+    uint8_t frame[HDLC_MAX_FRAME];
+    size_t frameLen;
+
+    if (bus == NULL || payload == NULL || payloadLen == NULL) {
+        return false;
+    }
+
+    if (!serial_read_frame(bus->serial,
+                           frame,
+                           sizeof(frame),
+                           &frameLen,
+                           timeoutMs)) {
+        return false;
+    }
+
+    hexdump_line("aisg rx frame", frame, frameLen);
+
+    if (!hdlc_decode(frame, frameLen, payload, payloadSize, payloadLen)) {
+        usys_log_trace("aisg rx invalid HDLC/FCS frame ignored");
+        return false;
+    }
+
+    hexdump_line("aisg rx payload", payload, *payloadLen);
+
+    return true;
+}
+
+static bool transact_payload(AisgBus *bus,
+                             const uint8_t *tx,
+                             size_t txLen,
+                             uint8_t *rx,
+                             size_t rxSize,
+                             size_t *rxLen,
+                             int timeoutMs,
+                             bool (*accept)(const uint8_t *candidate,
+                                            size_t candidateLen,
+                                            void *ctx),
+                             void *acceptCtx)
+{
+    uint8_t candidate[HDLC_MAX_FRAME];
+    size_t candidateLen;
+    int i;
+
+    if (!send_payload_only(bus, tx, txLen)) {
+        return false;
+    }
+
+    for (i = 0; i < AISG_READ_FRAME_BUDGET; i++) {
+        candidateLen = 0;
+        if (!read_decoded_payload(bus,
+                                  candidate,
+                                  sizeof(candidate),
+                                  &candidateLen,
+                                  timeoutMs)) {
             return false;
         }
 
-        log_hex_bytes("RX hdlc", raw, rawLen);
-
-        memset(rxFrame, 0, sizeof(*rxFrame));
-        if (!hdlc_decode_frame(raw, rawLen, rxFrame)) {
-            usys_log_debug("aisg: RX hdlc decode failed attempt=%d",
-                           attempt + 1);
+        if (frame_matches_echo(tx, txLen, candidate, candidateLen)) {
+            usys_log_trace("aisg rx local echo ignored");
             continue;
         }
 
-        log_frame("RX frame", rxFrame);
-
-        if (txFrame != NULL && same_frame(txFrame, rxFrame)) {
-            usys_log_debug("aisg: RX rejected local echo attempt=%d",
-                           attempt + 1);
+        if (accept != NULL && !accept(candidate, candidateLen, acceptCtx)) {
+            usys_log_trace("aisg rx unexpected frame ignored addr=0x%02x ctrl=0x%02x",
+                           candidateLen > 0 ? candidate[0] : 0,
+                           candidateLen > 1 ? candidate[1] : 0);
             continue;
         }
 
+        if (candidateLen > rxSize) {
+            return false;
+        }
+
+        memcpy(rx, candidate, candidateLen);
+        *rxLen = candidateLen;
         return true;
     }
-
-    usys_log_debug("aisg: RX failed after echo/invalid frames attempts=%d",
-                   AISG_MAX_RX_ATTEMPTS);
 
     return false;
 }
 
-static bool send_frame(AisgBus *bus,
-                       const HdlcFrame *txFrame,
-                       HdlcFrame *rxFrame,
-                       int timeoutMs)
+static bool append_byte(uint8_t *buf, size_t size, size_t *off, uint8_t value)
 {
-    uint8_t raw[HDLC_MAX_FRAME];
-    size_t rawLen;
-
-    if (bus == NULL || bus->serial == NULL || txFrame == NULL) {
+    if (buf == NULL || off == NULL || *off + 1 > size) {
         return false;
     }
 
-    log_frame("TX frame", txFrame);
-
-    memset(raw, 0, sizeof(raw));
-    rawLen = 0;
-
-    if (!hdlc_encode_frame(txFrame, raw, sizeof(raw), &rawLen)) {
-        usys_log_debug("aisg: TX hdlc encode failed");
-        return false;
-    }
-
-    log_hex_bytes("TX hdlc", raw, rawLen);
-
-    /*
-     * TS 25.462 requires at least 3 ms between receive and transmit.
-     * Waiting before every command is a small cost and keeps the bus timing
-     * conservative while the state machine is still simple.
-     */
-    usleep(AISG_MIN_TURNAROUND_US);
-
-    if (!serial_write_all(bus->serial, raw, rawLen)) {
-        usys_log_debug("aisg: TX serial write failed");
-        return false;
-    }
-
-    if (rxFrame == NULL) {
-        return true;
-    }
-
-    return read_decoded_frame(bus, txFrame, rxFrame, timeoutMs);
-}
-
-static bool append_xid_param(uint8_t *buf,
-                             size_t size,
-                             size_t *off,
-                             uint8_t pi,
-                             const uint8_t *pv,
-                             size_t pvLen)
-{
-    if (buf == NULL || off == NULL || pv == NULL) {
-        return false;
-    }
-
-    if (pvLen == 0 || pvLen > 255) {
-        return false;
-    }
-
-    if (*off + 2 + pvLen > size) {
-        return false;
-    }
-
-    buf[(*off)++] = pi;
-    buf[(*off)++] = (uint8_t)pvLen;
-    memcpy(&buf[*off], pv, pvLen);
-    *off += pvLen;
-
+    buf[(*off)++] = value;
     return true;
 }
 
-static bool begin_xid_addressing_info(uint8_t *info,
-                                      size_t size,
-                                      size_t *off)
+static bool append_bytes(uint8_t *buf,
+                         size_t size,
+                         size_t *off,
+                         const uint8_t *src,
+                         size_t srcLen)
 {
-    if (info == NULL || off == NULL || size < XID_INFO_MIN_LEN) {
+    if (buf == NULL || off == NULL || src == NULL || *off + srcLen > size) {
+        return false;
+    }
+
+    memcpy(&buf[*off], src, srcLen);
+    *off += srcLen;
+    return true;
+}
+
+static bool append_tlv(uint8_t *buf,
+                       size_t size,
+                       size_t *off,
+                       uint8_t pi,
+                       const uint8_t *pv,
+                       size_t pvLen)
+{
+    if (pvLen > 255) {
+        return false;
+    }
+
+    return append_byte(buf, size, off, pi) &&
+           append_byte(buf, size, off, (uint8_t)pvLen) &&
+           append_bytes(buf, size, off, pv, pvLen);
+}
+
+static bool xid_begin(uint8_t *buf, size_t size, size_t *off, uint8_t addr)
+{
+    if (buf == NULL || off == NULL) {
         return false;
     }
 
     *off = 0;
-    info[(*off)++] = AISG_XID_FI;
-    info[(*off)++] = AISG_XID_GI_ADDRESSING;
-    info[(*off)++] = 0x00; /* GL, filled by finish_xid_info(). */
-
-    return true;
+    return append_byte(buf, size, off, addr) &&
+           append_byte(buf, size, off, AISG_CTRL_XID_PF) &&
+           append_byte(buf, size, off, AISG_XID_FI_STD) &&
+           append_byte(buf, size, off, AISG_XID_GI_ADDR) &&
+           append_byte(buf, size, off, 0x00);
 }
 
-static bool finish_xid_info(uint8_t *info, size_t off)
+static bool xid_finish(uint8_t *buf, size_t off)
 {
-    size_t gl;
-
-    if (info == NULL || off < XID_INFO_MIN_LEN) {
+    if (buf == NULL || off < 5 || off - 5 > 255) {
         return false;
     }
 
-    gl = off - XID_INFO_MIN_LEN;
-    if (gl > 255) {
-        return false;
-    }
-
-    info[2] = (uint8_t)gl;
-
+    buf[4] = (uint8_t)(off - 5);
     return true;
 }
 
-static bool build_xid_scan_info(uint8_t *info, size_t size, size_t *len)
+static bool build_xid_scan(uint8_t *buf, size_t size, size_t *len)
 {
-    uint8_t uid[XID_SCAN_ID_LEN];
-    uint8_t mask[XID_SCAN_ID_LEN];
     size_t off;
+    uint8_t uid = 0x00;
+    uint8_t mask = 0x00;
 
-    if (info == NULL || len == NULL) {
+    if (!xid_begin(buf, size, &off, AISG_ADDR_BROADCAST)) {
         return false;
     }
 
-    memset(uid, 0, sizeof(uid));
-    memset(mask, 0, sizeof(mask));
-
-    if (!begin_xid_addressing_info(info, size, &off)) {
+    /* Single-RET deployment: wildcard one-octet tree-scan branch. */
+    if (!append_tlv(buf, size, &off, AISG_XID_PI_UNIQUE_ID, &uid, 1) ||
+        !append_tlv(buf, size, &off, AISG_XID_PI_BIT_MASK, &mask, 1)) {
         return false;
     }
 
-    if (!append_xid_param(info,
-                          size,
-                          &off,
-                          AISG_XID_PI_UNIQUE_ID,
-                          uid,
-                          sizeof(uid))) {
-        return false;
-    }
-
-    if (!append_xid_param(info,
-                          size,
-                          &off,
-                          AISG_XID_PI_BIT_MASK,
-                          mask,
-                          sizeof(mask))) {
-        return false;
-    }
-
-    if (!finish_xid_info(info, off)) {
+    if (!xid_finish(buf, off)) {
         return false;
     }
 
     *len = off;
-
     return true;
 }
 
-static bool build_xid_assign_info(const AisgDevice *device,
-                                  uint8_t assignedAddress,
-                                  uint8_t *info,
-                                  size_t size,
-                                  size_t *len)
+static bool build_xid_assign(uint8_t *buf,
+                             size_t size,
+                             size_t *len,
+                             const XidAddressInfo *info,
+                             uint8_t assignedAddress)
 {
-    uint8_t address[1];
-    uint8_t deviceType[1];
     size_t off;
+    uint8_t rel = AISG_PRIMARY_3GPP_RELEASE;
+    uint8_t vendorWild[2] = {0xFF, 0xFF};
+    uint8_t typeWild = 0xFF;
+    const uint8_t *vendor = vendorWild;
+    uint8_t type = typeWild;
 
-    if (device == NULL || info == NULL || len == NULL) {
+    if (info == NULL || !info->hasUniqueId || info->uniqueIdLen == 0) {
         return false;
     }
 
-    if (device->uniqueIdLen == 0 ||
-        device->uniqueIdLen > AISG_XID_UNIQUE_ID_MAX) {
+    if (!xid_begin(buf, size, &off, AISG_ADDR_BROADCAST)) {
         return false;
     }
 
-    address[0] = assignedAddress;
-    deviceType[0] = AISG_SUPPORTED_DEVICE_TYPE;
+    if (info->hasVendorCode) {
+        vendor = info->vendorCode;
+    } else if (info->uniqueIdLen >= 2) {
+        vendor = info->uniqueId;
+    }
 
-    if (!begin_xid_addressing_info(info, size, &off)) {
+    if (info->hasDeviceType) {
+        type = info->deviceType;
+    }
+
+    if (!append_tlv(buf, size, &off,
+                    AISG_XID_PI_UNIQUE_ID,
+                    info->uniqueId,
+                    info->uniqueIdLen) ||
+        !append_tlv(buf, size, &off,
+                    AISG_XID_PI_HDLC_ADDR,
+                    &assignedAddress,
+                    1) ||
+        !append_tlv(buf, size, &off,
+                    AISG_XID_PI_VENDOR_CODE,
+                    vendor,
+                    2) ||
+        !append_tlv(buf, size, &off,
+                    AISG_XID_PI_DEVICE_TYPE,
+                    &type,
+                    1) ||
+        !append_tlv(buf, size, &off,
+                    AISG_XID_PI_3GPP_RELEASE,
+                    &rel,
+                    1)) {
         return false;
     }
 
-    if (!append_xid_param(info,
-                          size,
-                          &off,
-                          AISG_XID_PI_UNIQUE_ID,
-                          device->uniqueId,
-                          device->uniqueIdLen)) {
-        return false;
-    }
-
-    if (!append_xid_param(info,
-                          size,
-                          &off,
-                          AISG_XID_PI_HDLC_ADDRESS,
-                          address,
-                          sizeof(address))) {
-        return false;
-    }
-
-    if (!append_xid_param(info,
-                          size,
-                          &off,
-                          AISG_XID_PI_DEVICE_TYPE,
-                          deviceType,
-                          sizeof(deviceType))) {
-        return false;
-    }
-
-    if (!finish_xid_info(info, off)) {
+    if (!xid_finish(buf, off)) {
         return false;
     }
 
     *len = off;
-
     return true;
 }
 
-static bool parse_xid_addressing_info(const uint8_t *info,
-                                      size_t infoLen,
-                                      XidAddressingParams *params)
+static bool build_xid_aisg_version(uint8_t *buf,
+                                   size_t size,
+                                   size_t *len,
+                                   uint8_t address)
 {
-    size_t pos;
+    size_t off;
+    uint8_t version = AISG_PRIMARY_AISG_VERSION;
+
+    if (!xid_begin(buf, size, &off, address)) {
+        return false;
+    }
+
+    if (!append_tlv(buf, size, &off,
+                    AISG_XID_PI_AISG_VERSION,
+                    &version,
+                    1)) {
+        return false;
+    }
+
+    if (!xid_finish(buf, off)) {
+        return false;
+    }
+
+    *len = off;
+    return true;
+}
+
+static bool parse_xid_address_info(const uint8_t *payload,
+                                   size_t len,
+                                   XidAddressInfo *info)
+{
     size_t end;
-    uint8_t gl;
+    size_t pos;
     uint8_t pi;
     uint8_t pl;
-    const uint8_t *pv;
 
-    if (info == NULL || params == NULL) {
+    if (payload == NULL || info == NULL || len < 5) {
         return false;
     }
 
-    memset(params, 0, sizeof(*params));
-
-    if (infoLen < XID_INFO_MIN_LEN) {
+    if (!is_xid_control(payload[1]) ||
+        payload[2] != AISG_XID_FI_STD ||
+        payload[3] != AISG_XID_GI_ADDR) {
         return false;
     }
 
-    if (info[0] != AISG_XID_FI || info[1] != AISG_XID_GI_ADDRESSING) {
+    memset(info, 0, sizeof(*info));
+
+    end = 5 + payload[4];
+    if (end > len) {
         return false;
     }
 
-    gl = info[2];
-    if ((size_t)gl > infoLen - XID_INFO_MIN_LEN) {
-        return false;
-    }
-
-    pos = XID_INFO_MIN_LEN;
-    end = XID_INFO_MIN_LEN + (size_t)gl;
-
-    while (pos < end) {
-        if (pos + 2 > end) {
+    pos = 5;
+    while (pos + 2 <= end) {
+        pi = payload[pos++];
+        pl = payload[pos++];
+        if (pos + pl > end) {
             return false;
         }
-
-        pi = info[pos++];
-        pl = info[pos++];
-
-        if (pl == 0 || pos + (size_t)pl > end) {
-            return false;
-        }
-
-        pv = &info[pos];
-        pos += (size_t)pl;
 
         switch (pi) {
         case AISG_XID_PI_UNIQUE_ID:
-            if (pl > AISG_XID_UNIQUE_ID_MAX) {
-                return false;
+            if (pl > 0 && pl <= AISG_MAX_UID_LEN) {
+                memcpy(info->uniqueId, &payload[pos], pl);
+                info->uniqueIdLen = pl;
+                info->hasUniqueId = true;
             }
-            params->hasUniqueId = true;
-            params->uniqueIdLen = pl;
-            memcpy(params->uniqueId, pv, pl);
             break;
-
-        case AISG_XID_PI_HDLC_ADDRESS:
-            if (pl != 1) {
-                return false;
+        case AISG_XID_PI_HDLC_ADDR:
+            if (pl == 1) {
+                info->hdlcAddress = payload[pos];
+                info->hasAddress = true;
             }
-            params->hasAddress = true;
-            params->address = pv[0];
             break;
-
-        case AISG_XID_PI_BIT_MASK:
-            if (pl > AISG_XID_UNIQUE_ID_MAX) {
-                return false;
-            }
-            params->hasMask = true;
-            params->maskLen = pl;
-            memcpy(params->mask, pv, pl);
-            break;
-
         case AISG_XID_PI_DEVICE_TYPE:
-            if (pl != 1) {
-                return false;
+            if (pl == 1) {
+                info->deviceType = payload[pos];
+                info->hasDeviceType = true;
             }
-            params->hasDeviceType = true;
-            params->deviceType = pv[0];
             break;
-
-        case AISG_XID_PI_3GPP_RELEASE:
-            if (pl != 1) {
-                return false;
-            }
-            params->has3gppRelease = true;
-            params->release = pv[0];
-            break;
-
-        case AISG_XID_PI_AISG_VERSION:
-            if (pl != 1) {
-                return false;
-            }
-            params->hasAisgVersion = true;
-            params->aisgVersion = pv[0];
-            break;
-
         case AISG_XID_PI_VENDOR_CODE:
-            if (pl != 2) {
-                return false;
+            if (pl == 2) {
+                info->vendorCode[0] = payload[pos];
+                info->vendorCode[1] = payload[pos + 1];
+                info->hasVendorCode = true;
             }
-            params->hasVendorCode = true;
-            params->vendorCode = (uint16_t)(((uint16_t)pv[0] << 8) | pv[1]);
             break;
-
         default:
-            usys_log_debug("aisg: XID ignoring unsupported PI=0x%02X len=%u",
-                           pi,
-                           pl);
             break;
+        }
+
+        pos += pl;
+    }
+
+    return info->hasUniqueId;
+}
+
+static bool accept_xid_any(const uint8_t *candidate, size_t candidateLen, void *ctx)
+{
+    XidAddressInfo info;
+    (void)ctx;
+
+    return parse_xid_address_info(candidate, candidateLen, &info);
+}
+
+static bool accept_xid_addr(const uint8_t *candidate, size_t candidateLen, void *ctx)
+{
+    uint8_t expected = *(uint8_t *)ctx;
+
+    if (candidate == NULL || candidateLen < 2) {
+        return false;
+    }
+
+    if (candidate[0] != expected) {
+        return false;
+    }
+
+    return accept_xid_any(candidate, candidateLen, NULL);
+}
+
+static bool accept_ua_addr(const uint8_t *candidate, size_t candidateLen, void *ctx)
+{
+    uint8_t expected = *(uint8_t *)ctx;
+
+    if (candidate == NULL || candidateLen < 2) {
+        return false;
+    }
+
+    if (candidate[0] != expected) {
+        return false;
+    }
+
+    if (is_dm_control(candidate[1])) {
+        usys_log_trace("aisg secondary returned DM while establishing link");
+        return false;
+    }
+
+    return is_ua_control(candidate[1]);
+}
+
+static bool accept_retap_i_frame(const uint8_t *candidate,
+                                 size_t candidateLen,
+                                 void *ctx)
+{
+    AisgBus *bus = ctx;
+    uint8_t remoteNs;
+    uint8_t remoteNr;
+
+    if (bus == NULL || candidate == NULL || candidateLen < 5) {
+        return false;
+    }
+
+    if (candidate[0] != bus->deviceAddress || !is_i_frame(candidate[1])) {
+        return false;
+    }
+
+    remoteNs = i_control_ns(candidate[1]);
+    remoteNr = i_control_nr(candidate[1]);
+
+    if (remoteNr != ((bus->txSeq + 1) & 0x07)) {
+        usys_log_trace("aisg I-frame ack mismatch expected=%u got=%u",
+                       (bus->txSeq + 1) & 0x07,
+                       remoteNr);
+        return false;
+    }
+
+    if (remoteNs != bus->rxSeq) {
+        usys_log_trace("aisg I-frame rx sequence mismatch expected=%u got=%u",
+                       bus->rxSeq,
+                       remoteNs);
+        return false;
+    }
+
+    return true;
+}
+
+static bool send_snrm(AisgBus *bus, uint8_t address)
+{
+    uint8_t req[2];
+    uint8_t resp[HDLC_MAX_FRAME];
+    size_t respLen;
+    int retry;
+
+    req[0] = address;
+    req[1] = AISG_CTRL_SNRM_PF;
+
+    for (retry = 0; retry < AISG_TX_FRAME_RETRY; retry++) {
+        if (transact_payload(bus,
+                             req,
+                             sizeof(req),
+                             resp,
+                             sizeof(resp),
+                             &respLen,
+                             AISG_DEFAULT_TIMEOUT_MS,
+                             accept_ua_addr,
+                             &address)) {
+            bus->deviceAddress = address;
+            bus->txSeq = 0;
+            bus->rxSeq = 0;
+            bus->linked = true;
+            return true;
         }
     }
 
-    return pos == end;
+    return false;
 }
 
-static void apply_xid_params_to_device(const XidAddressingParams *params,
-                                       AisgDevice *device)
+static bool negotiate_aisg_version(AisgBus *bus, uint8_t address)
 {
-    if (params == NULL || device == NULL) {
-        return;
-    }
+    uint8_t req[HDLC_MAX_FRAME];
+    uint8_t resp[HDLC_MAX_FRAME];
+    size_t reqLen;
+    size_t respLen;
 
-    if (params->hasUniqueId) {
-        device->uniqueIdLen = params->uniqueIdLen;
-        memcpy(device->uniqueId, params->uniqueId, params->uniqueIdLen);
-    }
-
-    if (params->hasAddress) {
-        device->address = params->address;
-    }
-
-    if (params->hasDeviceType) {
-        device->deviceType = params->deviceType;
-    }
-
-    if (params->hasVendorCode) {
-        device->hasVendorCode = true;
-        device->vendorCode = params->vendorCode;
-    }
-}
-
-static bool read_extra_scan_response(AisgBus *bus)
-{
-    HdlcFrame extra;
-
-    memset(&extra, 0, sizeof(extra));
-
-    if (!read_decoded_frame(bus, NULL, &extra, AISG_SCAN_EXTRA_TIMEOUT_MS)) {
+    if (!build_xid_aisg_version(req, sizeof(req), &reqLen, address)) {
         return false;
     }
 
-    usys_log_debug("aisg: scan saw extra response addr=0x%02X ctrl=0x%02X; "
-                   "multiple devices/collision unsupported",
-                   extra.address,
-                   extra.control);
-
-    return true;
-}
-
-static bool xid_scan_single(AisgBus *bus, AisgDevice *device)
-{
-    HdlcFrame tx;
-    HdlcFrame rx;
-    XidAddressingParams params;
-    size_t infoLen;
-
-    if (bus == NULL || device == NULL) {
-        return false;
-    }
-
-    memset(&tx, 0, sizeof(tx));
-    memset(&rx, 0, sizeof(rx));
-
-    tx.address = AISG_ADDR_BROADCAST;
-    tx.control = hdlc_xid_ctrl(true);
-
-    if (!build_xid_scan_info(tx.info, sizeof(tx.info), &infoLen)) {
-        usys_log_debug("aisg: XID scan build failed");
-        return false;
-    }
-    tx.infoLen = infoLen;
-
-    usys_log_debug("aisg: XID scan start uid_len=%d mask=all-zero scope=%s",
-                   XID_SCAN_ID_LEN,
-                   AISG_SCOPE_NAME);
-
-    if (!send_frame(bus, &tx, &rx, AISG_DEFAULT_TIMEOUT_MS)) {
-        usys_log_debug("aisg: XID scan failed: no valid response");
-        set_error(bus, AISG_ERROR_TRANSPORT);
-        return false;
-    }
-
-    if (!hdlc_is_xid(rx.control)) {
-        usys_log_debug("aisg: XID scan failed: unexpected ctrl=0x%02X",
-                       rx.control);
-        return false;
-    }
-
-    if (!parse_xid_addressing_info(rx.info, rx.infoLen, &params)) {
-        usys_log_debug("aisg: XID scan failed: malformed XID response");
-        return false;
-    }
-
-    if (!params.hasUniqueId || !params.hasAddress || !params.hasDeviceType) {
-        usys_log_debug("aisg: XID scan failed: missing required response "
-                       "fields uid=%u addr=%u type=%u",
-                       params.hasUniqueId ? 1 : 0,
-                       params.hasAddress ? 1 : 0,
-                       params.hasDeviceType ? 1 : 0);
-        return false;
-    }
-
-    apply_xid_params_to_device(&params, device);
-
-    if (read_extra_scan_response(bus)) {
-        device->unsupported = true;
-        device->present = false;
-        set_error(bus, AISG_ERROR_MULTIPLE_DEVICES);
-        return false;
-    }
-
-    log_hex_bytes("XID unique-id", device->uniqueId, device->uniqueIdLen);
-    usys_log_debug("aisg: XID scan response addr=0x%02X device_type=0x%02X "
-                   "vendor=%s0x%04X",
-                   device->address,
-                   device->deviceType,
-                   device->hasVendorCode ? "" : "unknown/",
-                   device->hasVendorCode ? device->vendorCode : 0);
-
-    if (device->deviceType != AISG_SUPPORTED_DEVICE_TYPE) {
-        device->unsupported = true;
-        device->present = false;
-        set_error(bus, AISG_ERROR_UNSUPPORTED_DEVICE_TYPE);
-        usys_log_debug("aisg: unsupported device_type=0x%02X expected=0x%02X",
-                       device->deviceType,
-                       AISG_SUPPORTED_DEVICE_TYPE);
-        return false;
+    if (!transact_payload(bus,
+                          req,
+                          reqLen,
+                          resp,
+                          sizeof(resp),
+                          &respLen,
+                          AISG_DEFAULT_TIMEOUT_MS,
+                          accept_xid_addr,
+                          &address)) {
+        /* Some strict 3GPP RETs do not implement AISG PI=20. Keep going. */
+        usys_log_trace("aisg version negotiation did not respond; continuing with 3GPP RETAP");
     }
 
     return true;
 }
 
-static bool xid_assign_address(AisgBus *bus, AisgDevice *device)
+static bool scan_once(AisgBus *bus, XidAddressInfo *found)
 {
-    HdlcFrame tx;
-    HdlcFrame rx;
-    XidAddressingParams params;
-    size_t infoLen;
+    uint8_t req[HDLC_MAX_FRAME];
+    uint8_t resp[HDLC_MAX_FRAME];
+    size_t reqLen;
+    size_t respLen;
 
-    if (bus == NULL || device == NULL) {
+    if (!build_xid_scan(req, sizeof(req), &reqLen)) {
         return false;
     }
 
-    memset(&tx, 0, sizeof(tx));
-    memset(&rx, 0, sizeof(rx));
-
-    tx.address = AISG_ADDR_BROADCAST;
-    tx.control = hdlc_xid_ctrl(true);
-
-    if (!build_xid_assign_info(device,
-                               AISG_ADDR_ASSIGNED,
-                               tx.info,
-                               sizeof(tx.info),
-                               &infoLen)) {
-        usys_log_debug("aisg: XID address assignment build failed");
-        return false;
-    }
-    tx.infoLen = infoLen;
-
-    usys_log_debug("aisg: XID assign address=0x%02X device_type=0x%02X",
-                   AISG_ADDR_ASSIGNED,
-                   AISG_SUPPORTED_DEVICE_TYPE);
-
-    if (!send_frame(bus, &tx, &rx, AISG_DEFAULT_TIMEOUT_MS)) {
-        usys_log_debug("aisg: XID address assignment failed: no response");
+    if (!transact_payload(bus,
+                          req,
+                          reqLen,
+                          resp,
+                          sizeof(resp),
+                          &respLen,
+                          AISG_DEFAULT_TIMEOUT_MS,
+                          accept_xid_any,
+                          NULL)) {
         return false;
     }
 
-    if (!hdlc_is_xid(rx.control)) {
-        usys_log_debug("aisg: XID address assignment failed: unexpected "
-                       "ctrl=0x%02X",
-                       rx.control);
-        return false;
-    }
-
-    if (rx.address != AISG_ADDR_ASSIGNED) {
-        usys_log_debug("aisg: XID address assignment failed: response "
-                       "addr=0x%02X expected=0x%02X",
-                       rx.address,
-                       AISG_ADDR_ASSIGNED);
-        return false;
-    }
-
-    if (!parse_xid_addressing_info(rx.info, rx.infoLen, &params)) {
-        usys_log_debug("aisg: XID address assignment failed: malformed response");
-        return false;
-    }
-
-    if (!params.hasUniqueId || !params.hasDeviceType) {
-        usys_log_debug("aisg: XID address assignment failed: missing uid/type");
-        return false;
-    }
-
-    if (params.uniqueIdLen != device->uniqueIdLen ||
-        memcmp(params.uniqueId, device->uniqueId, device->uniqueIdLen) != 0) {
-        usys_log_debug("aisg: XID address assignment failed: UID mismatch");
-        return false;
-    }
-
-    if (params.deviceType != AISG_SUPPORTED_DEVICE_TYPE) {
-        usys_log_debug("aisg: XID address assignment failed: unsupported "
-                       "device_type=0x%02X",
-                       params.deviceType);
-        device->unsupported = true;
-        set_error(bus, AISG_ERROR_UNSUPPORTED_DEVICE_TYPE);
-        return false;
-    }
-
-    device->address = AISG_ADDR_ASSIGNED;
-    device->deviceType = params.deviceType;
-    device->present = true;
-    device->unsupported = false;
-    snprintf(device->model, sizeof(device->model), "%s", "single-ret");
-
-    bus->deviceAddress = device->address;
-    bus->state = AISG_L2_ADDRESS_ASSIGNED;
-    bus->ns = 0;
-    bus->nr = 0;
-
-    usys_log_debug("aisg: XID address assignment OK addr=0x%02X state=%s",
-                   bus->deviceAddress,
-                   l2_state_name(bus->state));
-
-    return true;
+    return parse_xid_address_info(resp, respLen, found);
 }
 
-static bool build_xid_one_octet_info(uint8_t pi,
-                                     uint8_t value,
-                                     uint8_t *info,
-                                     size_t size,
-                                     size_t *len)
+static bool assign_address(AisgBus *bus,
+                           const XidAddressInfo *found,
+                           uint8_t assignedAddress)
 {
-    uint8_t pv[1];
-    size_t off;
+    uint8_t req[HDLC_MAX_FRAME];
+    uint8_t resp[HDLC_MAX_FRAME];
+    size_t reqLen;
+    size_t respLen;
 
-    if (info == NULL || len == NULL) {
+    if (!build_xid_assign(req, sizeof(req), &reqLen, found, assignedAddress)) {
         return false;
     }
 
-    pv[0] = value;
-
-    if (!begin_xid_addressing_info(info, size, &off)) {
+    if (!transact_payload(bus,
+                          req,
+                          reqLen,
+                          resp,
+                          sizeof(resp),
+                          &respLen,
+                          AISG_DEFAULT_TIMEOUT_MS,
+                          accept_xid_addr,
+                          &assignedAddress)) {
         return false;
     }
-
-    if (!append_xid_param(info, size, &off, pi, pv, sizeof(pv))) {
-        return false;
-    }
-
-    if (!finish_xid_info(info, off)) {
-        return false;
-    }
-
-    *len = off;
-
-    return true;
-}
-
-static bool xid_negotiate_one_octet(AisgBus *bus,
-                                    const char *name,
-                                    uint8_t pi,
-                                    uint8_t offered,
-                                    uint8_t *accepted)
-{
-    HdlcFrame tx;
-    HdlcFrame rx;
-    XidAddressingParams params;
-    size_t infoLen;
-    bool hasValue;
-    uint8_t value;
-
-    if (bus == NULL || name == NULL || accepted == NULL) {
-        return false;
-    }
-
-    if (bus->state != AISG_L2_ADDRESS_ASSIGNED) {
-        usys_log_debug("aisg: %s negotiation rejected in state=%s",
-                       name,
-                       l2_state_name(bus->state));
-        return false;
-    }
-
-    memset(&tx, 0, sizeof(tx));
-    memset(&rx, 0, sizeof(rx));
-
-    tx.address = bus->deviceAddress;
-    tx.control = hdlc_xid_ctrl(true);
-
-    if (!build_xid_one_octet_info(pi,
-                                  offered,
-                                  tx.info,
-                                  sizeof(tx.info),
-                                  &infoLen)) {
-        usys_log_debug("aisg: %s negotiation build failed", name);
-        return false;
-    }
-    tx.infoLen = infoLen;
-
-    usys_log_debug("aisg: %s negotiation start pi=%u offered=0x%02X addr=0x%02X",
-                   name,
-                   pi,
-                   offered,
-                   bus->deviceAddress);
-
-    if (!send_frame(bus, &tx, &rx, AISG_DEFAULT_TIMEOUT_MS)) {
-        usys_log_debug("aisg: %s negotiation failed: no response", name);
-        return false;
-    }
-
-    if (rx.address != bus->deviceAddress) {
-        usys_log_debug("aisg: %s negotiation failed: addr=0x%02X expected=0x%02X",
-                       name,
-                       rx.address,
-                       bus->deviceAddress);
-        return false;
-    }
-
-    if (!hdlc_is_xid(rx.control)) {
-        usys_log_debug("aisg: %s negotiation failed: unexpected ctrl=0x%02X",
-                       name,
-                       rx.control);
-        return false;
-    }
-
-    if (!parse_xid_addressing_info(rx.info, rx.infoLen, &params)) {
-        usys_log_debug("aisg: %s negotiation failed: malformed XID response",
-                       name);
-        return false;
-    }
-
-    hasValue = false;
-    value = 0;
-
-    if (pi == AISG_XID_PI_3GPP_RELEASE) {
-        hasValue = params.has3gppRelease;
-        value = params.release;
-    } else if (pi == AISG_XID_PI_AISG_VERSION) {
-        hasValue = params.hasAisgVersion;
-        value = params.aisgVersion;
-    }
-
-    if (!hasValue) {
-        usys_log_debug("aisg: %s negotiation failed: PI=%u missing in response",
-                       name,
-                       pi);
-        return false;
-    }
-
-    if (value != offered) {
-        usys_log_debug("aisg: %s negotiation failed: accepted=0x%02X expected=0x%02X",
-                       name,
-                       value,
-                       offered);
-        set_error(bus, AISG_ERROR_UNSUPPORTED_PROTOCOL_VERSION);
-        return false;
-    }
-
-    *accepted = value;
-
-    usys_log_debug("aisg: %s negotiation OK accepted=0x%02X", name, value);
-
-    return true;
-}
-
-static bool xid_negotiate_3gpp_release(AisgBus *bus)
-{
-    uint8_t accepted;
-
-    if (!xid_negotiate_one_octet(bus,
-                                 "3GPP release",
-                                 AISG_XID_PI_3GPP_RELEASE,
-                                 AISG_3GPP_RELEASE_ID,
-                                 &accepted)) {
-        return false;
-    }
-
-    bus->has3gppRelease = true;
-    bus->negotiated3gppRelease = accepted;
-
-    return true;
-}
-
-static bool xid_negotiate_aisg_version(AisgBus *bus)
-{
-    uint8_t accepted;
-
-    if (!xid_negotiate_one_octet(bus,
-                                 "AISG version",
-                                 AISG_XID_PI_AISG_VERSION,
-                                 AISG_PROTOCOL_VERSION,
-                                 &accepted)) {
-        return false;
-    }
-
-    bus->hasAisgVersion = true;
-    bus->negotiatedAisgVersion = accepted;
-
-    return true;
-}
-
-static bool l2_establish_link(AisgBus *bus)
-{
-    HdlcFrame tx;
-    HdlcFrame rx;
-
-    if (bus == NULL) {
-        return false;
-    }
-
-    if (bus->state != AISG_L2_ADDRESS_ASSIGNED) {
-        usys_log_debug("aisg: SNRM rejected in state=%s",
-                       l2_state_name(bus->state));
-        return false;
-    }
-
-    memset(&tx, 0, sizeof(tx));
-    memset(&rx, 0, sizeof(rx));
-
-    tx.address = bus->deviceAddress;
-    tx.control = hdlc_snrm_ctrl(true);
-    tx.infoLen = 0;
-
-    usys_log_debug("aisg: link establishment start SNRM addr=0x%02X",
-                   bus->deviceAddress);
-
-    if (!send_frame(bus, &tx, &rx, AISG_DEFAULT_TIMEOUT_MS)) {
-        usys_log_debug("aisg: link establishment failed: no UA response");
-        return false;
-    }
-
-    if (rx.address != bus->deviceAddress) {
-        usys_log_debug("aisg: link establishment failed: addr=0x%02X expected=0x%02X",
-                       rx.address,
-                       bus->deviceAddress);
-        return false;
-    }
-
-    if (hdlc_is_dm(rx.control)) {
-        usys_log_debug("aisg: link establishment failed: secondary returned DM");
-        set_error(bus, AISG_ERROR_LINK_NOT_CONNECTED);
-        return false;
-    }
-
-    if (!hdlc_is_ua(rx.control)) {
-        usys_log_debug("aisg: link establishment failed: unexpected ctrl=0x%02X",
-                       rx.control);
-        set_error(bus, AISG_ERROR_TRANSPORT);
-        return false;
-    }
-
-    if (!hdlc_poll_final(rx.control)) {
-        usys_log_debug("aisg: link establishment failed: UA missing final bit");
-        return false;
-    }
-
-    if (rx.infoLen != 0) {
-        usys_log_debug("aisg: link establishment failed: UA info_len=%zu expected=0",
-                       rx.infoLen);
-        return false;
-    }
-
-    bus->state = AISG_L2_CONNECTED;
-    bus->ns = 0;
-    bus->nr = 0;
-
-    usys_log_debug("aisg: link establishment OK state=%s addr=0x%02X",
-                   l2_state_name(bus->state),
-                   bus->deviceAddress);
 
     return true;
 }
@@ -1081,372 +714,150 @@ void aisg_v2_bus_init(AisgBus *bus, SerialPort *serial)
 
     bus->serial        = serial;
     bus->deviceAddress = AISG_ADDR_DEFAULT;
-    bus->ns            = 0;
-    bus->nr            = 0;
-    bus->state         = AISG_L2_NO_ADDRESS;
-    bus->maxInfoLen    = AISG_HDLC_DEFAULT_INFO_MAX;
-    bus->lastError     = AISG_ERROR_NONE;
-
-    usys_log_debug("aisg: init scope=%s supported_device_type=0x%02X state=%s",
-                   AISG_SCOPE_NAME,
-                   AISG_SUPPORTED_DEVICE_TYPE,
-                   l2_state_name(bus->state));
-}
-
-void aisg_v2_bus_reset_link(AisgBus *bus)
-{
-    SerialPort *serial;
-
-    if (bus == NULL) {
-        return;
-    }
-
-    serial = bus->serial;
-    memset(bus, 0, sizeof(*bus));
-    bus->serial = serial;
-    bus->deviceAddress = AISG_ADDR_DEFAULT;
-    bus->state = AISG_L2_NO_ADDRESS;
-    bus->maxInfoLen = AISG_HDLC_DEFAULT_INFO_MAX;
-    bus->lastError = AISG_ERROR_NONE;
+    bus->txSeq         = 0;
+    bus->rxSeq         = 0;
+    bus->linked        = false;
 }
 
 bool aisg_v2_scan(AisgBus *bus, AisgDevice *device)
 {
-    if (bus == NULL || device == NULL) {
+    static const int bauds[] = {9600, 38400, 115200};
+    XidAddressInfo found;
+    uint8_t assignedAddress = AISG_DISCOVERY_ADDR;
+    size_t i;
+    int originalBaud;
+
+    if (bus == NULL || bus->serial == NULL || device == NULL) {
         return false;
     }
 
     memset(device, 0, sizeof(AisgDevice));
-
+    bus->linked = false;
     bus->deviceAddress = AISG_ADDR_DEFAULT;
-    bus->state = AISG_L2_NO_ADDRESS;
-    bus->ns = 0;
-    bus->nr = 0;
-    bus->has3gppRelease = false;
-    bus->negotiated3gppRelease = 0;
-    bus->hasAisgVersion = false;
-    bus->negotiatedAisgVersion = 0;
-    bus->maxInfoLen = AISG_HDLC_DEFAULT_INFO_MAX;
-    bus->lastError = AISG_ERROR_NONE;
+    bus->txSeq = 0;
+    bus->rxSeq = 0;
 
-    if (!xid_scan_single(bus, device)) {
-        usys_log_debug("aisg: scan failed");
-        return false;
-    }
+    originalBaud = bus->serial->baud;
 
-    if (!xid_assign_address(bus, device)) {
-        usys_log_debug("aisg: address assignment failed");
-        return false;
-    }
-
-    if (!xid_negotiate_3gpp_release(bus)) {
-        usys_log_debug("aisg: 3GPP release negotiation failed");
-        return false;
-    }
-
-    if (!xid_negotiate_aisg_version(bus)) {
-        usys_log_debug("aisg: AISG version negotiation failed");
-        return false;
-    }
-
-    if (!l2_establish_link(bus)) {
-        usys_log_debug("aisg: link establishment failed");
-        return false;
-    }
-
-    bus->lastError = AISG_ERROR_NONE;
-    return true;
-}
-
-typedef enum {
-    L2_RX_INVALID = 0,
-    L2_RX_I_RESPONSE,
-    L2_RX_ACK_ONLY,
-    L2_RX_NOT_READY
-} L2RxResult;
-
-static L2RxResult l2_classify_response(AisgBus *bus,
-                                       const HdlcFrame *rx,
-                                       uint8_t txNs,
-                                       uint8_t txNr)
-{
-    uint8_t expectedAck;
-    uint8_t rxNs;
-    uint8_t rxNr;
-
-    if (bus == NULL || rx == NULL) {
-        return L2_RX_INVALID;
-    }
-
-    if (rx->address != bus->deviceAddress) {
-        usys_log_debug("aisg: response addr=0x%02X expected=0x%02X",
-                       rx->address,
-                       bus->deviceAddress);
-        set_error(bus, AISG_ERROR_PROTOCOL);
-        return L2_RX_INVALID;
-    }
-
-    expectedAck = (uint8_t)((txNs + 1) & 0x07);
-
-    if (hdlc_is_frmr(rx->control)) {
-        usys_log_debug("aisg: response rejected: secondary returned FRMR");
-        set_error(bus, AISG_ERROR_FRAME_REJECT);
-        return L2_RX_INVALID;
-    }
-
-    if (hdlc_is_rr(rx->control) || hdlc_is_rnr(rx->control)) {
-        rxNr = hdlc_nr(rx->control);
-        if (rxNr != expectedAck) {
-            usys_log_debug("aisg: S-response rejected: N(R)=%u expected_ack=%u",
-                           rxNr,
-                           expectedAck);
-            set_error(bus, AISG_ERROR_PROTOCOL);
-            return L2_RX_INVALID;
+    for (i = 0; i < sizeof(bauds) / sizeof(bauds[0]); i++) {
+        if (bauds[i] != bus->serial->baud && !serial_set_baud(bus->serial, bauds[i])) {
+            continue;
         }
 
-        bus->ns = expectedAck;
+        usleep(AISG_SCAN_HOLD_MS * 1000);
+        usys_log_trace("aisg scan try baud=%d", bauds[i]);
 
-        if (hdlc_is_rnr(rx->control)) {
-            usys_log_debug("aisg: secondary receiver-not-ready nr=%u", rxNr);
-            set_error(bus, AISG_ERROR_RECEIVER_NOT_READY);
-            return L2_RX_NOT_READY;
+        memset(&found, 0, sizeof(found));
+        if (!scan_once(bus, &found)) {
+            continue;
         }
 
-        usys_log_debug("aisg: RR ack received nr=%u; polling for RETAP response",
-                       rxNr);
-        return L2_RX_ACK_ONLY;
-    }
-
-    if (!hdlc_is_i_frame(rx->control)) {
-        usys_log_debug("aisg: response rejected: unexpected ctrl=0x%02X",
-                       rx->control);
-        set_error(bus, AISG_ERROR_PROTOCOL);
-        return L2_RX_INVALID;
-    }
-
-    if (!hdlc_poll_final(rx->control)) {
-        usys_log_debug("aisg: I-response rejected: final bit not set");
-        set_error(bus, AISG_ERROR_PROTOCOL);
-        return L2_RX_INVALID;
-    }
-
-    rxNs = hdlc_ns(rx->control);
-    rxNr = hdlc_nr(rx->control);
-
-    if (rxNr != expectedAck) {
-        usys_log_debug("aisg: I-response rejected: N(R)=%u expected_ack=%u",
-                       rxNr,
-                       expectedAck);
-        set_error(bus, AISG_ERROR_PROTOCOL);
-        return L2_RX_INVALID;
-    }
-
-    if (rxNs != txNr) {
-        usys_log_debug("aisg: I-response rejected: N(S)=%u expected=%u",
-                       rxNs,
-                       txNr);
-        set_error(bus, AISG_ERROR_PROTOCOL);
-        return L2_RX_INVALID;
-    }
-
-    bus->ns = expectedAck;
-    bus->nr = (uint8_t)((rxNs + 1) & 0x07);
-    bus->lastError = AISG_ERROR_NONE;
-
-    usys_log_debug("aisg: I-response sequence OK next_ns=%u next_nr=%u",
-                   bus->ns,
-                   bus->nr);
-
-    return L2_RX_I_RESPONSE;
-}
-
-static bool l2_poll_for_i_response(AisgBus *bus,
-                                   HdlcFrame *rx,
-                                   uint8_t txNs,
-                                   uint8_t txNr,
-                                   int64_t startMs,
-                                   int timeoutMs)
-{
-    HdlcFrame poll;
-    int waitMs;
-    L2RxResult result;
-
-    if (bus == NULL || rx == NULL) {
-        return false;
-    }
-
-    for (;;) {
-        result = l2_classify_response(bus, rx, txNs, txNr);
-        if (result == L2_RX_I_RESPONSE) {
-            return true;
+        if (found.hasAddress && found.hdlcAddress >= 1 && found.hdlcAddress <= 254) {
+            assignedAddress = found.hdlcAddress;
         }
 
-        if (result == L2_RX_INVALID) {
-            return false;
+        if (assignedAddress == AISG_ADDR_DEFAULT || assignedAddress == AISG_ADDR_BROADCAST) {
+            assignedAddress = AISG_DISCOVERY_ADDR;
         }
 
-        waitMs = remaining_ms(startMs, timeoutMs);
-        if (waitMs <= 0) {
-            set_error(bus, AISG_ERROR_TIMEOUT);
-            return false;
-        }
-
-        if (result == L2_RX_NOT_READY) {
-            usleep(AISG_POLL_DELAY_US);
-            waitMs = remaining_ms(startMs, timeoutMs);
-            if (waitMs <= 0) {
-                set_error(bus, AISG_ERROR_TIMEOUT);
-                return false;
+        if (!assign_address(bus, &found, assignedAddress)) {
+            if (found.hasAddress && found.hdlcAddress >= 1 && found.hdlcAddress <= 254 &&
+                send_snrm(bus, found.hdlcAddress)) {
+                assignedAddress = found.hdlcAddress;
+            } else {
+                assignedAddress = AISG_DISCOVERY_ADDR;
+                if (!assign_address(bus, &found, assignedAddress)) {
+                    continue;
+                }
             }
         }
 
-        memset(&poll, 0, sizeof(poll));
-        poll.address = bus->deviceAddress;
-        poll.control = hdlc_rr_ctrl(bus->nr, true);
-        poll.infoLen = 0;
+        negotiate_aisg_version(bus, assignedAddress);
 
-        usys_log_debug("aisg: polling secondary for pending I-frame nr=%u wait_ms=%d",
-                       bus->nr,
-                       waitMs);
-
-        if (!send_frame(bus, &poll, rx, waitMs)) {
-            set_error(bus, AISG_ERROR_TIMEOUT);
-            return false;
+        if (!bus->linked && !send_snrm(bus, assignedAddress)) {
+            continue;
         }
-    }
-}
 
-bool aisg_v2_disconnect(AisgBus *bus)
-{
-    HdlcFrame tx;
-    HdlcFrame rx;
+        device->present     = true;
+        device->linked      = true;
+        device->address     = assignedAddress;
+        device->deviceType  = found.hasDeviceType ? found.deviceType : AISG_DEVICE_TYPE_RET_SINGLE;
+        device->baud        = bus->serial->baud;
+        device->uniqueIdLen = found.uniqueIdLen;
+        memcpy(device->uniqueId, found.uniqueId, found.uniqueIdLen);
+        unique_id_to_hex(device);
+        unique_id_to_label(device->uniqueId,
+                           device->uniqueIdLen,
+                           device->model,
+                           sizeof(device->model));
 
-    if (bus == NULL) {
-        return false;
-    }
+        bus->deviceAddress = assignedAddress;
+        bus->linked = true;
 
-    if (bus->state == AISG_L2_NO_ADDRESS) {
-        aisg_v2_bus_reset_link(bus);
         return true;
     }
 
-    memset(&tx, 0, sizeof(tx));
-    memset(&rx, 0, sizeof(rx));
-
-    tx.address = bus->deviceAddress;
-    tx.control = hdlc_disc_ctrl(true);
-    tx.infoLen = 0;
-
-    if (!send_frame(bus, &tx, &rx, AISG_DEFAULT_TIMEOUT_MS)) {
-        set_error(bus, AISG_ERROR_TRANSPORT);
-        return false;
-    }
-
-    if (rx.address != tx.address ||
-        (!hdlc_is_ua(rx.control) && !hdlc_is_dm(rx.control))) {
-        set_error(bus, AISG_ERROR_PROTOCOL);
-        return false;
-    }
-
-    aisg_v2_bus_reset_link(bus);
-    return true;
+    serial_set_baud(bus->serial, originalBaud);
+    return false;
 }
 
 bool aisg_v2_send_retap(AisgBus *bus,
                         RetapRequest *request,
                         RetapResponse *response)
 {
-    uint8_t retap[RETAP_MAX_ENCODED];
-    HdlcFrame tx;
-    HdlcFrame rx;
+    uint8_t retap[RETAP_MAX_PAYLOAD + 3];
+    uint8_t tx[RETAP_MAX_PAYLOAD + 8];
+    uint8_t rx[HDLC_MAX_FRAME];
     size_t retapLen;
-    uint8_t txNs;
-    uint8_t txNr;
-    int timeoutMs;
-    int64_t startMs;
+    size_t txLen;
+    size_t rxLen;
+    size_t rxRetapLen;
+    int retry;
 
-    if (bus == NULL || request == NULL || response == NULL) {
-        return false;
-    }
-
-    if (bus->state != AISG_L2_CONNECTED) {
-        usys_log_debug("aisg: RETAP rejected: link state=%s expected=CONNECTED",
-                       l2_state_name(bus->state));
-        set_error(bus, AISG_ERROR_LINK_NOT_CONNECTED);
+    if (bus == NULL || request == NULL || response == NULL ||
+        bus->deviceAddress == AISG_ADDR_DEFAULT || !bus->linked) {
         return false;
     }
 
     if (!retap_encode_request(request, retap, sizeof(retap), &retapLen)) {
-        usys_log_debug("aisg: failed to encode RETAP request procedure=0x%02X",
-                       request->procedure);
         return false;
     }
 
-    if (bus->maxInfoLen == 0) {
-        bus->maxInfoLen = AISG_HDLC_DEFAULT_INFO_MAX;
+    for (retry = 0; retry < AISG_TX_FRAME_RETRY; retry++) {
+        txLen = 0;
+        tx[txLen++] = bus->deviceAddress;
+        tx[txLen++] = make_i_control(bus->txSeq, bus->rxSeq);
+
+        memcpy(&tx[txLen], retap, retapLen);
+        txLen += retapLen;
+
+        if (!transact_payload(bus,
+                              tx,
+                              txLen,
+                              rx,
+                              sizeof(rx),
+                              &rxLen,
+                              AISG_LONG_TIMEOUT_MS,
+                              accept_retap_i_frame,
+                              bus)) {
+            send_snrm(bus, bus->deviceAddress);
+            continue;
+        }
+
+        if (rxLen < 5) {
+            return false;
+        }
+
+        rxRetapLen = rxLen - 2;
+        if (!retap_decode_response(&rx[2], rxRetapLen, response)) {
+            return false;
+        }
+
+        bus->txSeq = (uint8_t)((bus->txSeq + 1) & 0x07);
+        bus->rxSeq = (uint8_t)((i_control_ns(rx[1]) + 1) & 0x07);
+
+        return true;
     }
 
-    if (retapLen > bus->maxInfoLen) {
-        usys_log_debug("aisg: RETAP encoded payload too large len=%zu max=%zu",
-                       retapLen,
-                       bus->maxInfoLen);
-        set_error(bus, AISG_ERROR_PROTOCOL);
-        return false;
-    }
-
-    memset(&tx, 0, sizeof(tx));
-    memset(&rx, 0, sizeof(rx));
-
-    txNs = bus->ns;
-    txNr = bus->nr;
-
-    tx.address = bus->deviceAddress;
-    tx.control = hdlc_i_ctrl(txNs, txNr, true);
-    memcpy(tx.info, retap, retapLen);
-    tx.infoLen = retapLen;
-
-    timeoutMs = retap_request_timeout_ms(request);
-    startMs = monotonic_ms();
-
-    usys_log_debug("aisg: RETAP TX procedure=0x%02X data_len=%zu timeout_ms=%d ns=%u nr=%u",
-                   request->procedure,
-                   request->dataLen,
-                   timeoutMs,
-                   txNs,
-                   txNr);
-
-    if (!send_frame(bus, &tx, &rx, timeoutMs)) {
-        usys_log_debug("aisg: RETAP transport failed procedure=0x%02X",
-                       request->procedure);
-        set_error(bus, AISG_ERROR_TIMEOUT);
-        return false;
-    }
-
-    if (!l2_poll_for_i_response(bus, &rx, txNs, txNr, startMs, timeoutMs)) {
-        return false;
-    }
-
-    if (!retap_decode_response(rx.info, rx.infoLen, response)) {
-        usys_log_debug("aisg: RETAP response decode failed procedure=0x%02X info_len=%zu",
-                       request->procedure,
-                       rx.infoLen);
-        set_error(bus, AISG_ERROR_PROTOCOL);
-        return false;
-    }
-
-    if (response->procedure != request->procedure) {
-        usys_log_debug("aisg: RETAP response procedure mismatch got=0x%02X expected=0x%02X",
-                       response->procedure,
-                       request->procedure);
-        set_error(bus, AISG_ERROR_PROTOCOL);
-        return false;
-    }
-
-    usys_log_debug("aisg: RETAP RX procedure=0x%02X return=0x%02X failure=0x%02X data_len=%zu",
-                   response->procedure,
-                   response->returnCode,
-                   response->failureReason,
-                   response->dataLen);
-
-    return true;
+    return false;
 }

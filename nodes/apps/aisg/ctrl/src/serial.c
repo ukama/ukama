@@ -6,6 +6,7 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
@@ -15,7 +16,8 @@
 
 #include "serial.h"
 
-static speed_t baud_to_speed(int baud) {
+static speed_t baud_to_speed(int baud)
+{
     switch (baud) {
     case 9600:   return B9600;
     case 19200:  return B19200;
@@ -26,22 +28,16 @@ static speed_t baud_to_speed(int baud) {
     }
 }
 
-bool serial_open(SerialPort *port, const char *device, int baud) {
+static bool serial_apply_config(SerialPort *port, int baud)
+{
     struct termios tio;
 
-    if (port == NULL || device == NULL) return false;
-
-    memset(port, 0, sizeof(SerialPort));
-    port->fd = -1;
-    snprintf(port->device, sizeof(port->device), "%s", device);
-    port->baud = baud;
-
-    port->fd = open(device, O_RDWR | O_NOCTTY | O_SYNC);
-    if (port->fd < 0) return false;
+    if (port == NULL || port->fd < 0) {
+        return false;
+    }
 
     memset(&tio, 0, sizeof(tio));
     if (tcgetattr(port->fd, &tio) != 0) {
-        serial_close(port);
         return false;
     }
 
@@ -54,50 +50,123 @@ bool serial_open(SerialPort *port, const char *device, int baud) {
     tio.c_cflag &= ~CSTOPB;
     tio.c_cflag &= ~CSIZE;
     tio.c_cflag |= CS8;
+#ifdef CRTSCTS
+    tio.c_cflag &= ~CRTSCTS;
+#endif
+
+    tio.c_iflag &= ~(IXON | IXOFF | IXANY);
+    tio.c_lflag = 0;
+    tio.c_oflag = 0;
+    tio.c_cc[VMIN] = 0;
+    tio.c_cc[VTIME] = 0;
 
     if (tcsetattr(port->fd, TCSANOW, &tio) != 0) {
+        return false;
+    }
+
+    port->baud = baud;
+    tcflush(port->fd, TCIOFLUSH);
+
+    return true;
+}
+
+bool serial_open(SerialPort *port, const char *device, int baud)
+{
+    if (port == NULL || device == NULL) {
+        return false;
+    }
+
+    memset(port, 0, sizeof(SerialPort));
+    port->fd = -1;
+    snprintf(port->device, sizeof(port->device), "%s", device);
+
+    port->fd = open(device, O_RDWR | O_NOCTTY | O_SYNC);
+    if (port->fd < 0) {
+        return false;
+    }
+
+    if (!serial_apply_config(port, baud)) {
         serial_close(port);
         return false;
     }
 
-    tcflush(port->fd, TCIOFLUSH);
     return true;
 }
 
-void serial_close(SerialPort *port) {
-    if (port == NULL) return;
-    if (port->fd >= 0) close(port->fd);
+void serial_close(SerialPort *port)
+{
+    if (port == NULL) {
+        return;
+    }
+
+    if (port->fd >= 0) {
+        close(port->fd);
+    }
+
     port->fd = -1;
 }
 
-bool serial_write_all(SerialPort *port, const uint8_t *data, size_t len) {
+bool serial_set_baud(SerialPort *port, int baud)
+{
+    if (port == NULL || port->fd < 0) {
+        return false;
+    }
+
+    if (port->baud == baud) {
+        return true;
+    }
+
+    return serial_apply_config(port, baud);
+}
+
+bool serial_flush_rx(SerialPort *port)
+{
+    if (port == NULL || port->fd < 0) {
+        return false;
+    }
+
+    return tcflush(port->fd, TCIFLUSH) == 0;
+}
+
+bool serial_write_all(SerialPort *port, const uint8_t *data, size_t len)
+{
     size_t off;
     ssize_t n;
 
-    if (port == NULL || port->fd < 0 || data == NULL) return false;
+    if (port == NULL || port->fd < 0 || data == NULL) {
+        return false;
+    }
 
     off = 0;
     while (off < len) {
         n = write(port->fd, data + off, len - off);
-        if (n <= 0) return false;
+        if (n < 0 && errno == EINTR) {
+            continue;
+        }
+        if (n <= 0) {
+            return false;
+        }
         off += (size_t)n;
     }
 
-    return true;
+    return tcdrain(port->fd) == 0;
 }
 
 bool serial_read_frame(SerialPort *port,
                        uint8_t *buf,
                        size_t size,
                        size_t *len,
-                       int timeoutMs) {
+                       int timeoutMs)
+{
     fd_set rfds;
     struct timeval tv;
     uint8_t byte;
     bool seenFlag;
     size_t off;
+    int rc;
+    ssize_t n;
 
-    if (port == NULL || port->fd < 0 || buf == NULL || len == NULL) {
+    if (port == NULL || port->fd < 0 || buf == NULL || len == NULL || size == 0) {
         return false;
     }
 
@@ -110,17 +179,40 @@ bool serial_read_frame(SerialPort *port,
         tv.tv_sec = timeoutMs / 1000;
         tv.tv_usec = (timeoutMs % 1000) * 1000;
 
-        if (select(port->fd + 1, &rfds, NULL, NULL, &tv) <= 0) return false;
-        if (read(port->fd, &byte, 1) != 1) return false;
+        rc = select(port->fd + 1, &rfds, NULL, NULL, &tv);
+        if (rc < 0 && errno == EINTR) {
+            continue;
+        }
+        if (rc <= 0) {
+            return false;
+        }
+
+        n = read(port->fd, &byte, 1);
+        if (n < 0 && errno == EINTR) {
+            continue;
+        }
+        if (n != 1) {
+            return false;
+        }
+
+        if (byte == 0x7E) {
+            if (!seenFlag) {
+                seenFlag = true;
+                off = 0;
+                buf[off++] = byte;
+                continue;
+            }
+
+            buf[off++] = byte;
+            *len = off;
+            return true;
+        }
+
+        if (!seenFlag) {
+            continue;
+        }
 
         buf[off++] = byte;
-        if (byte == 0x7E) {
-            if (seenFlag && off > 1) {
-                *len = off;
-                return true;
-            }
-            seenFlag = true;
-        }
     }
 
     return false;

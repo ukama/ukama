@@ -21,6 +21,8 @@ typedef struct {
 
 bool serial_open(SerialPort *port, const char *device, int baud);
 void serial_close(SerialPort *port);
+bool serial_set_baud(SerialPort *port, int baud);
+bool serial_flush_rx(SerialPort *port);
 bool serial_write_all(SerialPort *port, const uint8_t *data, size_t len);
 bool serial_read_frame(SerialPort *port,
                        uint8_t *buf,

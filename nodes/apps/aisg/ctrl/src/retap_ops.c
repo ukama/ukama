@@ -27,7 +27,11 @@ static bool build_no_payload(RetapRequest *request, uint8_t procedure)
 
 static bool response_is_ok(RetapResponse *response)
 {
-    return retap_response_is_ok(response);
+    if (response == NULL) {
+        return false;
+    }
+
+    return response->returnCode == RETAP_RETURN_OK;
 }
 
 static bool copy_retap_string(char *dst,
@@ -86,17 +90,12 @@ bool retap_parse_get_information(RetapResponse *response, RetapInfo *info)
     return true;
 }
 
-bool retap_build_get_error_status(RetapRequest *request)
-{
-    return build_no_payload(request, RETAP_PROC_GET_ERROR_STATUS);
-}
-
 bool retap_build_get_alarm_status(RetapRequest *request)
 {
-    return retap_build_get_error_status(request);
+    return build_no_payload(request, RETAP_PROC_GET_ALARM_STATUS);
 }
 
-bool retap_parse_return_code_list(RetapResponse *response, RetapAlarmList *alarms)
+bool retap_parse_alarm_list(RetapResponse *response, RetapAlarmList *alarms)
 {
     size_t i;
 
@@ -111,11 +110,6 @@ bool retap_parse_return_code_list(RetapResponse *response, RetapAlarmList *alarm
     }
 
     return true;
-}
-
-bool retap_parse_alarm_list(RetapResponse *response, RetapAlarmList *alarms)
-{
-    return retap_parse_return_code_list(response, alarms);
 }
 
 bool retap_build_clear_active_alarms(RetapRequest *request)
@@ -141,13 +135,7 @@ bool retap_build_send_configuration_data(RetapRequest *request,
         return false;
     }
 
-    /*
-     * TS 25.463 single-antenna SendConfigurationData carries at most
-     * 70 octets of configuration data per elementary procedure. Larger
-     * configuration files must be split by the backend and sent one
-     * RETAP request at a time, waiting for OK before the next segment.
-     */
-    if (len == 0 || len > RETAP_CONFIG_SEGMENT_MAX) {
+    if (len > RETAP_MAX_PAYLOAD) {
         return false;
     }
 
