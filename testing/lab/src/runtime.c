@@ -773,9 +773,11 @@ int runtime_cleanup_ues(runtime_t *rt, const world_t *w, ulab_error_t *err) {
                              "UE cleanup", err);
 }
 
-int runtime_collect_cdr_diagnostics(runtime_t *rt,
-                                    const world_t *w,
-                                    ulab_error_t *err) {
+static int runtime_collect_diagnostics(runtime_t *rt,
+                                       const world_t *w,
+                                       const char *out_name,
+                                       const char *status_label,
+                                       ulab_error_t *err) {
     char args[ULAB_MAX_ARGS];
     int rc;
 
@@ -785,21 +787,35 @@ int runtime_collect_cdr_diagnostics(runtime_t *rt,
         return ULAB_OK;
     }
 
-    rc = snprintf(args, sizeof(args), "%s", rt->run_dir);
+    rc = snprintf(args, sizeof(args), "%s %s", rt->run_dir, out_name);
     if (rc < 0 || (size_t)rc >= sizeof(args)) {
         if (err != NULL) {
             snprintf(err->msg, sizeof(err->msg),
-                     "cdr diagnostics args too long");
+                     "diagnostics args too long");
         }
         return ULAB_ERR;
     }
 
-    ulab_status("CDR", "collect tower /ukama and ukama-agent stats");
+    ulab_status(status_label, "collect tower /ukama and ukama-agent stats");
     if (run_script(rt, "collect-cdr-diagnostics.sh", args, err)) {
         return ULAB_ERR;
     }
 
     return ULAB_OK;
+}
+
+int runtime_collect_cdr_diagnostics(runtime_t *rt,
+                                    const world_t *w,
+                                    ulab_error_t *err) {
+    return runtime_collect_diagnostics(rt, w, "cdr-diagnostics",
+                                       "CDR", err);
+}
+
+int runtime_collect_failure_diagnostics(runtime_t *rt,
+                                        const world_t *w,
+                                        ulab_error_t *err) {
+    return runtime_collect_diagnostics(rt, w, "failure-diagnostics",
+                                       "DIAG", err);
 }
 
 int runtime_stop_ues(runtime_t *rt, const world_t *w, ulab_error_t *err) {

@@ -7,13 +7,22 @@
 
 set -u
 
-if [ "$#" -ne 1 ]; then
-    echo "usage: $0 <run-dir>" >&2
+if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
+    echo "usage: $0 <run-dir> [out-dir-name]" >&2
     exit 2
 fi
 
 RUN_DIR="$1"
-OUT_DIR="$RUN_DIR/cdr-diagnostics"
+OUT_NAME="${2:-cdr-diagnostics}"
+
+case "$OUT_NAME" in
+    ""|*/*|*..*|*[!A-Za-z0-9_.-]*)
+        echo "invalid diagnostics out-dir-name: $OUT_NAME" >&2
+        exit 2
+        ;;
+esac
+
+OUT_DIR="$RUN_DIR/$OUT_NAME"
 SUMMARY="$OUT_DIR/summary.txt"
 STRICT="${ULAB_CDR_DIAG_STRICT:-0}"
 NODE_GW_URL="${ULAB_UKAMA_AGENT_NODE_GW_URL:-http://localhost:8072}"
@@ -49,6 +58,7 @@ write_manifest() {
     {
         printf '{\n'
         printf '  "run_dir": "%s",\n' "$(json_escape "$RUN_DIR")"
+        printf '  "diagnostics_dir": "%s",\n' "$(json_escape "$OUT_NAME")"
         printf '  "node_gateway_url": "%s",\n' "$(json_escape "$NODE_GW_URL")"
         printf '  "api_gateway_url": "%s",\n' "$(json_escape "$API_GW_URL")"
         printf '  "end_time": %s\n' "$END_TIME"
@@ -276,7 +286,7 @@ collect_tower() {
 }
 
 write_manifest
-log "cdr diagnostics begin run_dir=$RUN_DIR"
+log "diagnostics begin run_dir=$RUN_DIR out=$OUT_DIR"
 log "node_gw=$NODE_GW_URL api_gw=$API_GW_URL end_time=$END_TIME"
 
 if [ ! -d "$RUN_DIR/runtime-nodes" ]; then
@@ -288,7 +298,7 @@ else
     done
 fi
 
-log "cdr diagnostics complete failures=$FAILURES out=$OUT_DIR"
+log "diagnostics complete failures=$FAILURES out=$OUT_DIR"
 
 if [ "$STRICT" = "1" ] && [ "$FAILURES" -gt 0 ]; then
     exit 1

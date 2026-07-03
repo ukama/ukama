@@ -1061,11 +1061,13 @@ int runner_validate(const runner_opts_t *opts) {
     int rc;
     int cleanup_rc;
     int skip_cleanup;
+    int diagnostics_collected;
 
     scenario = NULL;
     rc = ULAB_OK;
     cleanup_rc = ULAB_OK;
     skip_cleanup = 0;
+    diagnostics_collected = 0;
     memset(&world,   0, sizeof(world));
     memset(&model,   0, sizeof(model));
     memset(&bff,     0, sizeof(bff));
@@ -1196,6 +1198,7 @@ int runner_validate(const runner_opts_t *opts) {
             rc = ULAB_ERUNTIME;
             goto done;
         }
+        diagnostics_collected = 1;
     }
 
     ulab_status("USAGE", "run deferred CDR-backed checks");
@@ -1210,6 +1213,24 @@ int runner_validate(const runner_opts_t *opts) {
 done:
     if (err.msg[0] != '\0') {
         ulab_log_error("%s", err.msg);
+    }
+
+    if (rc != ULAB_OK && !skip_cleanup && !diagnostics_collected &&
+        runtime.run_dir[0] != '\0') {
+        ulab_error_t diag_err;
+
+        memset(&diag_err, 0, sizeof(diag_err));
+        ulab_status("DIAG", "failure detected; collect tower /ukama before cleanup");
+        if (runtime_collect_failure_diagnostics(&runtime, &world, &diag_err)) {
+            ulab_log_error("failure diagnostics failed: %s", diag_err.msg);
+            if (runtime.logf) {
+                fprintf(runtime.logf, "failure diagnostics failed: %s\n",
+                        diag_err.msg);
+                fflush(runtime.logf);
+            }
+        } else {
+            diagnostics_collected = 1;
+        }
     }
 
     if (!skip_cleanup) {
