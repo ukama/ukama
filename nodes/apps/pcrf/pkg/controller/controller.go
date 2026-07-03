@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	defaultApnName = "ukama.co"
+	defaultApnName = "internet"
 )
 
 type Controller struct {
