@@ -28,6 +28,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	defaultApnName = "ukama.co"
+)
+
 type Controller struct {
 	store         *store.Store
 	sm            session.SessionManager
@@ -573,7 +577,7 @@ func handlePendingSyncSession(c *Controller) {
 		log.Infof("[Publisher] Session %d for subscriber %s is ready for backend sync.",
 			session.ID, session.SubscriberID.Imsi)
 
-		err = c.publishCDRToRemoteController(session)
+		err = c.sendCDRToRemoteController(&session)
 		if err != nil {
 			log.Warnf("error while pushing CDR to remote backend controller: %v", err)
 		}
@@ -616,20 +620,10 @@ func (c *Controller) publishCDR() {
 	}
 }
 
-func (c *Controller) publishCDRToRemoteController(session store.Session) error {
-	cdr := &api.CDR{
-		Session:       session.ID,
-		NodeId:        session.NodeId,
-		Imsi:          session.SubscriberID.Imsi,
-		Policy:        session.PolicyID.ID.String(),
-		ApnName:       session.ApnName,
-		Ip:            session.UeIpAddr,
-		StartTime:     session.StartTime,
-		EndTime:       session.EndTime,
-		LastUpdatedAt: session.UpdatedAt,
-		TxBytes:       session.TxBytes,
-		RxBytes:       session.RxBytes,
-		TotalBytes:    session.TotalBytes,
+func (c *Controller) sendCDRToRemoteController(session *store.Session) error {
+	cdr := store.PrepareCDR(session)
+	if cdr.ApnName == "" {
+		cdr.ApnName = defaultApnName
 	}
 
 	return c.rc.PushCdr(cdr)
