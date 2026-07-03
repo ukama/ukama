@@ -98,8 +98,8 @@ int check_usage(check_ctx_t *ctx, const check_spec_t *check,
 
         expected_bytes = mb_to_bytes(expected_mb);
         actual_bytes = 0;
-        lower_bytes  = 0;
-        upper_bytes  = 0;
+        lower_bytes = 0;
+        upper_bytes = 0;
 
         if (bff_get_sim_usage(ctx->bff, ue, &actual_bytes, err)) {
             selector_result_free(&ues);
@@ -112,7 +112,7 @@ int check_usage(check_ctx_t *ctx, const check_spec_t *check,
             ok++;
         } else if (first_fail[0] == '\0') {
             snprintf(first_fail, sizeof(first_fail),
-                     " first_fail=%s iccid=%s expected=%lluB actual=%lluB "
+                     " first_fail=%.64s iccid=%.32s expected=%lluB actual=%lluB "
                      "range=%llu..%lluB",
                      ue->ref,
                      ue->iccid,
