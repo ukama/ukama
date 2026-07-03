@@ -105,6 +105,21 @@ static int run_script(runtime_t *rt,
     return ULAB_OK;
 }
 
+static int env_enabled(const char *name) {
+    const char *v;
+
+    v = getenv(name);
+    if (v == NULL || v[0] == '\0') {
+        return 0;
+    }
+
+    return strcmp(v, "0") != 0 &&
+           strcmp(v, "false") != 0 &&
+           strcmp(v, "FALSE") != 0 &&
+           strcmp(v, "no") != 0 &&
+           strcmp(v, "NO") != 0;
+}
+
 static void safe_name(const char *in, char *out, size_t out_len) {
     size_t i;
     size_t j;
@@ -807,6 +822,11 @@ static int runtime_collect_diagnostics(runtime_t *rt,
 int runtime_collect_cdr_diagnostics(runtime_t *rt,
                                     const world_t *w,
                                     ulab_error_t *err) {
+    if (env_enabled("ULAB_CDR_DIAG_DISABLE")) {
+        ulab_status("CDR", "diagnostics disabled");
+        return ULAB_OK;
+    }
+
     return runtime_collect_diagnostics(rt, w, "cdr-diagnostics",
                                        "CDR", err);
 }
