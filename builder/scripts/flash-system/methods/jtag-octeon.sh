@@ -934,64 +934,110 @@ _phase2_run() {
     sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" \
         "mount | grep ' /mnt/app ' || true; df -h /mnt/app || true"
 
-    # Copy band config and rc_post.local while we still have SSH/ethernet from boot 1.
-    # Both live on /mnt/app, and after dd'ing flash_app0 the running /mnt/app mount
-    # has a stale superblock — remount it BEFORE writing anything there.
-    _phase2_remount_app "$trx_ip" "$ssh_user" || true
+    # Do NOT write anything to /mnt/app here. The flash under the live jffs2
+    # mount was just replaced by dd; writes through it — even after a remount —
+    # return Input/output errors and corrupt the freshly-flashed image (the next
+    # boot then hits flashmnt's "no sign file" rebuild and wipes the partition).
+    # All config installs happen AFTER the final power-cycle, over SSH, on a
+    # cleanly-mounted /mnt/app (_phase2_post_flash_config). rc_post.local ships
+    # inside flash_app0.img, so ethernet comes up on its own after the reboot.
+    if [ "$rc_post_injected" -eq 1 ]; then
+        echo "rc_post.local was pre-injected into flash_app0.img."
+    else
+        echo "rc_post.local ships inside flash_app0.img; nothing to copy before the reboot."
+    fi
 
-    local band_default band_configs_dir band_cfg_src band_cfg_target
+    echo ""
+    echo "All 8 images written."
+    echo "Next: power-cycle the TRX to boot from the newly flashed images."
+    echo "Band config is installed after the reboot, once /mnt/app is cleanly mounted."
+}
+
+# Install band config (and rc_post.local if somehow missing) AFTER the final
+# power-cycle. Writes to /mnt/app are only safe on a boot that mounted the
+# flashed image cleanly — pre-reboot writes through the stale mount hit EIO and
+# corrupt the partition. If anything changed, reboot the TRX so the LTE app
+# picks it up; method_verify then waits for it to come back.
+_phase2_post_flash_config() {
+    local trx_ip ssh_user
+    if yq_exists "$BOARD_CONFIG" network.post_flash.trx_ip; then
+        trx_ip=$(yq_read "$BOARD_CONFIG" network.post_flash.trx_ip)
+    else
+        trx_ip=$(yq_read "$BOARD_CONFIG" network.trx_ip)
+    fi
+    ssh_user=$(yq_read "$BOARD_CONFIG" phase2.ssh_user)
+
+    local sshpass_args=(-p "$TRX_ROOT_PASSWORD")
+    local ssh_opts=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR)
+
+    local band_default band_configs_dir band_cfg_src band_cfg_target rc_post_src rc_post_target
     band_default=$(yq_read "$BOARD_CONFIG" band.default)
     band_configs_dir=$(yq_read "$BOARD_CONFIG" band.configs_dir)
     band_cfg_src="${band_configs_dir}/${band_default}.cfg"
     band_cfg_target=$(yq_read "$BOARD_CONFIG" band.target_path)
+    rc_post_src="$(dirname "$BOARD_CONFIG")/payloads/rc_post.local"
+    rc_post_target=$(yq_read "$BOARD_CONFIG" phase2.rc_post_local)
 
+    echo "Waiting for TRX SSH at ${trx_ip} (booted from flash)..."
+    local elapsed=0
+    while [ "$elapsed" -lt 300 ]; do
+        if sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" true 2>/dev/null; then
+            break
+        fi
+        sleep 2
+        elapsed=$((elapsed + 2))
+    done
+    if [ "$elapsed" -ge 300 ]; then
+        echo "ERROR: TRX not reachable at ${trx_ip} after the final power-cycle."
+        echo "  Wait for it to finish booting, then re-check; band config not installed."
+        return 1
+    fi
+    echo "  TRX is up at ${trx_ip}."
+
+    local reboot_needed=0
+
+    # rc_post.local normally arrives with the flashed app image; only copy if missing.
+    if sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "test -f ${rc_post_target}"; then
+        echo "  rc_post.local already present at ${rc_post_target} (from the app image)."
+    else
+        echo "  rc_post.local missing — installing ${rc_post_src} -> ${rc_post_target}..."
+        cat "$rc_post_src" | sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" \
+            "cat > ${rc_post_target} && chmod +x ${rc_post_target}" || {
+            echo "ERROR: rc_post.local install failed."
+            return 1
+        }
+        reboot_needed=1
+    fi
+
+    # Band config: skip the write (and the reboot) if the target already matches.
     if [ -f "$band_cfg_src" ]; then
-        echo "Installing band config (${band_cfg_src} -> ${band_cfg_target})..."
-        sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "mkdir -p $(dirname "$band_cfg_target")"
-        if ! cat "$band_cfg_src" | sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "cat > ${band_cfg_target}"; then
-            echo "ERROR: band config copy via ssh cat failed. Trying scp..."
-            sshpass "${sshpass_args[@]}" scp "${ssh_opts[@]}" "$band_cfg_src" "${ssh_user}@${trx_ip}:${band_cfg_target}"
+        local local_md5 remote_md5
+        local_md5=$(md5sum "$band_cfg_src" | awk '{print $1}')
+        remote_md5=$(sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" \
+            "md5sum ${band_cfg_target} 2>/dev/null | cut -d' ' -f1" || true)
+        if [ "$local_md5" = "$remote_md5" ]; then
+            echo "  Band config at ${band_cfg_target} already matches ${band_default}."
+        else
+            echo "  Installing band config (${band_cfg_src} -> ${band_cfg_target})..."
+            if ! cat "$band_cfg_src" | sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "cat > ${band_cfg_target}"; then
+                echo "ERROR: band config install failed."
+                return 1
+            fi
+            reboot_needed=1
         fi
     else
         echo "WARNING: band config source not found at ${band_cfg_src}"
     fi
 
-    if [ "$rc_post_injected" -eq 1 ]; then
-        echo "rc_post.local was pre-injected into flash_app0.img; skipping post-flash copy."
-    else
-        echo "Installing rc_post.local (${rc_post_src} -> ${rc_post_target})..."
-        sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "mkdir -p /mnt/app"
+    sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "sync"
 
-        # scp to jffs2 intermittently returns Input/output error even when the mount
-        # is verified writable. Use a plain ssh cat first; fall back to scp only if
-        # that fails.
-        if ! cat "$rc_post_src" | sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "cat > ${rc_post_target}"; then
-            echo "ERROR: rc_post.local copy via ssh cat failed. Trying scp..."
-            if ! sshpass "${sshpass_args[@]}" scp "${ssh_opts[@]}" "$rc_post_src" "${ssh_user}@${trx_ip}:${rc_post_target}"; then
-                echo "ERROR: rc_post.local scp also failed. Trying an explicit remount + retry..."
-                if _phase2_remount_app "$trx_ip" "$ssh_user"; then
-                    sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "rm -f ${rc_post_target}"
-                    if ! cat "$rc_post_src" | sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "cat > ${rc_post_target}"; then
-                        echo "ERROR: rc_post.local copy still failed after remount."
-                        return 1
-                    fi
-                else
-                    echo "ERROR: could not remount /mnt/app writable; cannot install rc_post.local."
-                    return 1
-                fi
-            fi
-        fi
-
-        sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "chmod +x ${rc_post_target}"
+    if [ "$reboot_needed" -eq 1 ]; then
+        echo "  Rebooting the TRX so the new config takes effect..."
+        sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "reboot" 2>/dev/null || true
+        echo "  (If it doesn't come back within ~5 minutes, power-cycle it manually.)"
+        sleep 20
     fi
-
-    echo ""
-    echo "All 8 images written and config files installed."
-    echo "  Band config : ${band_cfg_target}"
-    echo "  Ethernet fix: ${rc_post_target}"
-    echo ""
-    echo "Next: power-cycle the TRX to boot from the newly flashed images."
-    echo "After power-cycle, rc_post.local will enable ethernet automatically."
+    return 0
 }
 
 # After the full app images are flashed, the TRX reboots into its production
@@ -1097,13 +1143,17 @@ method_apply() {
     echo ""
     echo "=== Manual pause 2 ==="
     echo "Please power-cycle the TRX now to boot from the newly flashed images."
-    echo "rc_post.local is already installed, so ethernet will come up automatically."
+    echo "rc_post.local (inside the app image) will bring ethernet up automatically."
     echo ""
-    read -rp "Press ENTER once the TRX has booted: " _
+    read -rp "Press ENTER once the TRX is powered back on (no need to wait for full boot): " _
 
     # The flashed app images reconfigure the TRX to its production IP. Move the
-    # bench box to the matching subnet so verification can reach it.
+    # bench box to the matching subnet so the post-flash steps can reach it.
     _phase2_rehost_for_post_flash
+
+    # Install band config (+ rc_post.local if missing) on the cleanly-mounted
+    # /mnt/app, rebooting the TRX if anything changed.
+    _phase2_post_flash_config
 }
 
 method_verify() {
