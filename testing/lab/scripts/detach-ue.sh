@@ -42,7 +42,7 @@ TMP="$BODY.tmp"
 mkdir -p "$RUN_DIR/runtime-ues"
 
 HTTP_CODE="$(podman exec "$TNODE_CONTAINER" sh -lc \
-    "curl -sS --max-time 8 -o /tmp/ulab-detach-$IMSI.out -w '%{http_code}' -X DELETE 'http://127.0.0.1:18028/v1/ue/$IMSI'; rc=\$?; cat /tmp/ulab-detach-$IMSI.out 2>/dev/null > /tmp/ulab-detach-$IMSI.body; rm -f /tmp/ulab-detach-$IMSI.out; if [ \$rc -ne 0 ]; then echo CURLERR; fi" \
+    "curl -sS --max-time 8 -o /tmp/ulab-detach-$IMSI.out -w '%{http_code}' -X DELETE 'http://127.0.0.1:18028/v1/ue/detach' -H 'Content-Type: application/json' -d '{\"imsi\":\"$IMSI\"}'; rc=\$?; cat /tmp/ulab-detach-$IMSI.out 2>/dev/null > /tmp/ulab-detach-$IMSI.body; rm -f /tmp/ulab-detach-$IMSI.out; if [ \$rc -ne 0 ]; then echo CURLERR; fi" \
     2>"$TMP.err" || true)"
 
 # The command above returns the HTTP code on stdout. Keep the body separately
@@ -55,7 +55,7 @@ mv "$TMP" "$BODY"
 printf "%s\n" "$HTTP_CODE" > "$CODE"
 
 case "$HTTP_CODE" in
-    200|202|204|404)
+    200|202|204)
         echo "detach-ue: imsi=$IMSI status=$HTTP_CODE"
         ;;
     *)
