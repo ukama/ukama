@@ -156,7 +156,8 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Fatalf("asr server initialization failed. Error: %v", err)
 	}
 
-	nSrv := server.NewAsrEventServer(asrRepo, asrServer, gutiRepo, serviceConfig.OrgName)
+	nSrv := server.NewAsrEventServer(asrRepo, asrServer, gutiRepo, factoryClient, networkClient,
+		controller, mbClient, serviceConfig.AllowedTimeOfService, serviceConfig.OrgName)
 
 	rpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		gen.RegisterAsrRecordServiceServer(s, asrServer)

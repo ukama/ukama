@@ -19,6 +19,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
+	github.com/tj/assert v0.0.3
 	github.com/ukama/ukama/systems/common v0.0.0-20260619120609-7efa630ff962
 	github.com/ukama/ukama/systems/ukama-agent/cdr v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.22.0

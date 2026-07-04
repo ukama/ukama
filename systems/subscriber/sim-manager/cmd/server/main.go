@@ -177,7 +177,7 @@ func runGrpcServer(gormDB sql.Db) {
 		nucleusOrgClient,
 		nucleusUserClient,
 		mbClient,
-		serviceConfig.PushMetricHost, simManagerServer)
+		serviceConfig.PushMetricHost)
 
 	fsInterceptor := interceptor.NewFakeSimInterceptor(serviceConfig.TestAgent, serviceConfig.Timeout)
 

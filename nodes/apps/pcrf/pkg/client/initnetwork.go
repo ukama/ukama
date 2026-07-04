@@ -14,6 +14,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const InitNetworkStatusEndpoint = "/v1/status"
@@ -62,7 +64,12 @@ func (c *InitNetworkClient) GetStatus() (*InitNetworkStatus, error) {
 	if err != nil {
 		return nil, fmt.Errorf("get init-network status: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil {
+			log.Warnf("Fail to gracefuly close response body: %v", err)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("init-network status returned http %d", resp.StatusCode)

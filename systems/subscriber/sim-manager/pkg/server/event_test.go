@@ -35,241 +35,6 @@ import (
 	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 )
 
-func TestSimManagerEventServer_HandleSimManagerSimAllocateEvent(t *testing.T) {
-	msgbusClient := &cmocks.MsgBusServiceClient{}
-
-	routingKey := msgbus.PrepareRoute(OrgName,
-		"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate")
-
-	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
-
-	t.Run("AllocatedSimNotFound", func(t *testing.T) {
-		repo := mocks.SimRepo{}
-		repo.On("Get", mock.Anything).Return(nil, errors.New("sim not found"))
-
-		allocatedSim := epb.EventSimAllocation{}
-
-		anyE, err := anypb.New(&allocatedSim)
-		assert.NoError(t, err)
-
-		msg := &epb.Event{
-			RoutingKey: routingKey,
-			Msg:        anyE,
-		}
-
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
-		_, err = s.EventNotification(context.TODO(), msg)
-
-		assert.Error(t, err)
-	})
-
-	t.Run("ActiveSimFound", func(t *testing.T) {
-		repo := mocks.SimRepo{}
-		simId := uuid.NewV4()
-
-		repo.On("Get", mock.Anything).Return(&sims.Sim{
-			Id:     simId,
-			Status: ukama.SimStatusActive,
-		}, nil)
-
-		allocatedSim := epb.EventSimAllocation{
-			Id:     simId.String(),
-			Status: ukama.SimStatusActive.String(),
-		}
-
-		anyE, err := anypb.New(&allocatedSim)
-		assert.NoError(t, err)
-
-		msg := &epb.Event{
-			RoutingKey: routingKey,
-			Msg:        anyE,
-		}
-
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
-		_, err = s.EventNotification(context.TODO(), msg)
-
-		assert.Error(t, err)
-	})
-
-	t.Run("ActiveSimUpdateFailure", func(t *testing.T) {
-		repo := mocks.SimRepo{}
-		agentFactory := &mocks.AgentFactory{}
-
-		simId := uuid.NewV4()
-
-		repo.On("Get", mock.Anything).Return(&sims.Sim{
-			Id:     simId,
-			Status: ukama.SimStatusInactive,
-			Type:   ukama.SimTypeUkamaData,
-		}, nil)
-
-		repo.On("Update", mock.Anything, mock.Anything).
-			Return(errors.New("failed to update sim"))
-
-		allocatedSim := epb.EventSimAllocation{
-			Id:     simId.String(),
-			Status: ukama.SimStatusInactive.String(),
-			Type:   ukama.SimTypeUkamaData.String(),
-		}
-
-		anyE, err := anypb.New(&allocatedSim)
-		assert.NoError(t, err)
-
-		msg := &epb.Event{
-			RoutingKey: routingKey,
-			Msg:        anyE,
-		}
-
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, agentFactory, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
-		_, err = s.EventNotification(context.TODO(), msg)
-
-		assert.Error(t, err)
-	})
-
-	t.Run("ActiveSimAgentFailure", func(t *testing.T) {
-		repo := mocks.SimRepo{}
-		agentFactory := &mocks.AgentFactory{}
-
-		simId := uuid.NewV4()
-
-		repo.On("Get", mock.Anything).Return(&sims.Sim{
-			Id:     simId,
-			Status: ukama.SimStatusInactive,
-		}, nil)
-
-		repo.On("Update", mock.Anything, mock.Anything).Return(nil)
-
-		agentFactory.On("GetAgentAdapter", mock.Anything).
-			Return(nil, false).Once()
-
-		allocatedSim := epb.EventSimAllocation{
-			Id:     simId.String(),
-			Status: ukama.SimStatusInactive.String(),
-		}
-
-		anyE, err := anypb.New(&allocatedSim)
-		assert.NoError(t, err)
-
-		msg := &epb.Event{
-			RoutingKey: routingKey,
-			Msg:        anyE,
-		}
-
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, agentFactory, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
-		_, err = s.EventNotification(context.TODO(), msg)
-
-		assert.Error(t, err)
-	})
-
-	t.Run("ActiveSimAgentActivateSimFailure", func(t *testing.T) {
-		repo := mocks.SimRepo{}
-		agentFactory := &mocks.AgentFactory{}
-
-		simId := uuid.NewV4()
-
-		repo.On("Get", mock.Anything).Return(&sims.Sim{
-			Id:     simId,
-			Status: ukama.SimStatusInactive,
-			Type:   ukama.SimTypeUkamaData,
-		}, nil)
-
-		repo.On("Update", mock.Anything, mock.Anything).Return(nil)
-
-		agentAdapter := agentFactory.On("GetAgentAdapter", ukama.SimTypeUkamaData).
-			Return(&mocks.AgentAdapter{}, true).
-			Once().
-			ReturnArguments.Get(0).(*mocks.AgentAdapter)
-
-		agentAdapter.On("ActivateSim", mock.Anything, mock.Anything).
-			Return(errors.New("fail to activate sim on remote agent")).Once()
-
-		allocatedSim := epb.EventSimAllocation{
-			Id:     simId.String(),
-			Status: ukama.SimStatusInactive.String(),
-			Type:   ukama.SimTypeUkamaData.String(),
-		}
-
-		anyE, err := anypb.New(&allocatedSim)
-		assert.NoError(t, err)
-
-		msg := &epb.Event{
-			RoutingKey: routingKey,
-			Msg:        anyE,
-		}
-
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, agentFactory, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
-		_, err = s.EventNotification(context.TODO(), msg)
-
-		assert.Error(t, err)
-	})
-
-	t.Run("ActiveSimAgentActivateSimSuccess", func(t *testing.T) {
-		repo := mocks.SimRepo{}
-		agentFactory := &mocks.AgentFactory{}
-
-		simId := uuid.NewV4()
-
-		repo.On("Get", mock.Anything).Return(&sims.Sim{
-			Id:     simId,
-			Status: ukama.SimStatusInactive,
-			Type:   ukama.SimTypeUkamaData,
-		}, nil)
-
-		repo.On("Update", mock.Anything, mock.Anything).Return(nil)
-
-		agentAdapter := agentFactory.On("GetAgentAdapter", ukama.SimTypeUkamaData).
-			Return(&mocks.AgentAdapter{}, true).
-			Once().
-			ReturnArguments.Get(0).(*mocks.AgentAdapter)
-
-		agentAdapter.On("ActivateSim", mock.Anything, mock.Anything).
-			Return(nil).Once()
-
-		repo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
-			mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return([]sims.Sim{}, nil)
-
-		allocatedSim := epb.EventSimAllocation{
-			Id:     simId.String(),
-			Status: ukama.SimStatusInactive.String(),
-			Type:   ukama.SimTypeUkamaData.String(),
-		}
-
-		anyE, err := anypb.New(&allocatedSim)
-		assert.NoError(t, err)
-
-		msg := &epb.Event{
-			RoutingKey: routingKey,
-			Msg:        anyE,
-		}
-
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, agentFactory, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
-		_, err = s.EventNotification(context.TODO(), msg)
-
-		assert.NoError(t, err)
-	})
-
-	t.Run("InvalidEventTypeSent", func(t *testing.T) {
-		repo := mocks.SimRepo{}
-		evt := &epb.Payment{
-			Id: uuid.NewV4().String(),
-		}
-
-		anyE, err := anypb.New(evt)
-		assert.NoError(t, err)
-
-		msg := &epb.Event{
-			RoutingKey: routingKey,
-			Msg:        anyE,
-		}
-
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
-		_, err = s.EventNotification(context.TODO(), msg)
-
-		assert.Error(t, err)
-	})
-}
-
 func TestSimManagerEventServer_HandleProcessorPaymentSuccessEvent(t *testing.T) {
 	msgbusClient := &cmocks.MsgBusServiceClient{}
 
@@ -355,7 +120,7 @@ func TestSimManagerEventServer_HandleProcessorPaymentSuccessEvent(t *testing.T) 
 		}
 
 		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, packageClient,
-			subscriberRegistryProvider, networkClient, mailerClient, orgClient, userClient, msgbusClient, "", nil)
+			subscriberRegistryProvider, networkClient, mailerClient, orgClient, userClient, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.NoError(t, err)
@@ -405,7 +170,7 @@ func TestSimManagerEventServer_HandleProcessorPaymentSuccessEvent(t *testing.T) 
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, packageClient, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, packageClient, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -453,7 +218,7 @@ func TestSimManagerEventServer_HandleProcessorPaymentSuccessEvent(t *testing.T) 
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, packageClient, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, packageClient, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -495,7 +260,7 @@ func TestSimManagerEventServer_HandleProcessorPaymentSuccessEvent(t *testing.T) 
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, packageClient, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, packageClient, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -535,7 +300,7 @@ func TestSimManagerEventServer_HandleProcessorPaymentSuccessEvent(t *testing.T) 
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, packageClient, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, packageClient, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -573,7 +338,7 @@ func TestSimManagerEventServer_HandleProcessorPaymentSuccessEvent(t *testing.T) 
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, packageClient, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, packageClient, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -602,7 +367,7 @@ func TestSimManagerEventServer_HandleProcessorPaymentSuccessEvent(t *testing.T) 
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -627,7 +392,7 @@ func TestSimManagerEventServer_HandleProcessorPaymentSuccessEvent(t *testing.T) 
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -650,7 +415,7 @@ func TestSimManagerEventServer_HandleProcessorPaymentSuccessEvent(t *testing.T) 
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -673,7 +438,7 @@ func TestSimManagerEventServer_HandleProcessorPaymentSuccessEvent(t *testing.T) 
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -693,7 +458,7 @@ func TestSimManagerEventServer_HandleProcessorPaymentSuccessEvent(t *testing.T) 
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -713,7 +478,7 @@ func TestSimManagerEventServer_HandleProcessorPaymentSuccessEvent(t *testing.T) 
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -740,6 +505,7 @@ func TestSimManagerEventServer_HandleOperatorCdrCreateEvent(t *testing.T) {
 				sims.Sim{
 					Id:           simId,
 					SubscriberId: subscriberId,
+					Type:         ukama.SimTypeOperatorData,
 				},
 			}, nil)
 
@@ -756,7 +522,7 @@ func TestSimManagerEventServer_HandleOperatorCdrCreateEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.NoError(t, err)
@@ -784,7 +550,7 @@ func TestSimManagerEventServer_HandleOperatorCdrCreateEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -809,7 +575,7 @@ func TestSimManagerEventServer_HandleOperatorCdrCreateEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -834,7 +600,7 @@ func TestSimManagerEventServer_HandleOperatorCdrCreateEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -854,10 +620,10 @@ func TestSimManagerEventServer_HandleOperatorCdrCreateEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
-		assert.NoError(t, err)
+		assert.Error(t, err)
 	})
 
 	t.Run("InvalidEventTypeSent", func(t *testing.T) {
@@ -872,7 +638,7 @@ func TestSimManagerEventServer_HandleOperatorCdrCreateEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -892,7 +658,9 @@ func TestSimManagerEventServer_HandleUkamaAgentCdrCreateEvent(t *testing.T) {
 		repo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return([]sims.Sim{
-				sims.Sim{},
+				sims.Sim{
+					Type: ukama.SimTypeUkamaData,
+				},
 			}, nil)
 
 		evt := &epb.CDRReported{}
@@ -905,7 +673,7 @@ func TestSimManagerEventServer_HandleUkamaAgentCdrCreateEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.NoError(t, err)
@@ -931,7 +699,7 @@ func TestSimManagerEventServer_HandleUkamaAgentCdrCreateEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -954,7 +722,7 @@ func TestSimManagerEventServer_HandleUkamaAgentCdrCreateEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -977,7 +745,7 @@ func TestSimManagerEventServer_HandleUkamaAgentCdrCreateEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -995,7 +763,7 @@ func TestSimManagerEventServer_HandleUkamaAgentCdrCreateEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -1022,6 +790,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 				sims.Sim{
 					Id:     simId,
 					Status: ukama.SimStatusActive,
+					Type:   ukama.SimTypeUkamaData,
 				},
 			}, nil)
 
@@ -1037,6 +806,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			Return(&sims.Sim{
 				Id:     simId,
 				Status: ukama.SimStatusActive,
+				Type:   ukama.SimTypeUkamaData,
 			}, nil)
 
 		packageRepo.On("Update", mock.Anything, mock.Anything).
@@ -1065,7 +835,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.NoError(t, err)
@@ -1087,6 +857,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 				sims.Sim{
 					Id:     simId,
 					Status: ukama.SimStatusActive,
+					Type:   ukama.SimTypeUkamaData,
 				},
 			}, nil)
 
@@ -1102,6 +873,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			Return(&sims.Sim{
 				Id:     simId,
 				Status: ukama.SimStatusActive,
+				Type:   ukama.SimTypeUkamaData,
 			}, nil)
 
 		packageRepo.On("Update", mock.Anything, mock.Anything).
@@ -1136,7 +908,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -1158,6 +930,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 				sims.Sim{
 					Id:     simId,
 					Status: ukama.SimStatusActive,
+					Type:   ukama.SimTypeUkamaData,
 				},
 			}, nil)
 
@@ -1172,6 +945,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			Return(&sims.Sim{
 				Id:     simId,
 				Status: ukama.SimStatusActive,
+				Type:   ukama.SimTypeUkamaData,
 			}, nil)
 
 		packageRepo.On("Update", mock.Anything, mock.Anything).
@@ -1193,7 +967,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -1215,6 +989,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 				sims.Sim{
 					Id:     simId,
 					Status: ukama.SimStatusActive,
+					Type:   ukama.SimTypeUkamaData,
 				},
 			}, nil)
 
@@ -1229,6 +1004,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			Return(&sims.Sim{
 				Id:     simId,
 				Status: ukama.SimStatusActive,
+				Type:   ukama.SimTypeUkamaData,
 			}, nil)
 
 		packageRepo.On("Update", mock.Anything, mock.Anything).
@@ -1246,7 +1022,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -1294,7 +1070,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -1340,7 +1116,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -1383,7 +1159,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -1425,7 +1201,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -1466,7 +1242,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -1501,7 +1277,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -1531,7 +1307,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -1560,7 +1336,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -1586,7 +1362,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -1612,7 +1388,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -1633,7 +1409,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)

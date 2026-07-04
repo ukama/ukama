@@ -138,7 +138,6 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 }
 
 func (r *Router) postCDR(c *gin.Context, req *PostCDRReq) (*cpb.CDRResp, error) {
-
 	return r.clients.c.PostCDR(&cpb.CDR{
 		Session:       req.Session,
 		Imsi:          req.Imsi,
@@ -156,7 +155,6 @@ func (r *Router) postCDR(c *gin.Context, req *PostCDRReq) (*cpb.CDRResp, error) 
 }
 
 func (r *Router) getCDR(c *gin.Context, req *GetCDRReq) (*cpb.RecordResp, error) {
-
 	return r.clients.c.GetCDR(&cpb.RecordReq{
 		Imsi:      req.Imsi,
 		StartTime: req.StartTime,
@@ -168,7 +166,6 @@ func (r *Router) getCDR(c *gin.Context, req *GetCDRReq) (*cpb.RecordResp, error)
 }
 
 func (r *Router) getUsage(c *gin.Context, req *GetUsageReq) (*cpb.UsageResp, error) {
-
 	return r.clients.c.GetUsage(&cpb.UsageReq{
 		Imsi:      req.Imsi,
 		StartTime: req.StartTime,
@@ -180,7 +177,6 @@ func (r *Router) getUsage(c *gin.Context, req *GetUsageReq) (*cpb.UsageResp, err
 }
 
 func (r *Router) postGuti(c *gin.Context, req *UpdateGutiReq) (*pb.UpdateGutiResp, error) {
-
 	return r.clients.a.UpdateGuti(&pb.UpdateGutiReq{
 		Imsi:      req.Imsi,
 		UpdatedAt: req.UpdatedAt,
@@ -195,7 +191,6 @@ func (r *Router) postGuti(c *gin.Context, req *UpdateGutiReq) (*pb.UpdateGutiRes
 }
 
 func (r *Router) postTai(c *gin.Context, req *UpdateTaiReq) (*pb.UpdateTaiResp, error) {
-
 	return r.clients.a.UpdateTai(&pb.UpdateTaiReq{
 		Imsi:      req.Imsi,
 		UpdatedAt: req.UpdatedAt,

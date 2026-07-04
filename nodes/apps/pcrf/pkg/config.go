@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gin-contrib/cors"
+
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 )
@@ -61,4 +62,3 @@ func NewConfig(name string) *Config {
 		SyncPeriod: 5 * time.Second,
 	}
 }
-
