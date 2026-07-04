@@ -55,6 +55,11 @@ func NewQueueListener(service string, queueUri string, serviceId string, request
 	if err != nil {
 		return nil, err
 	}
+
+	// Opt into per-consumer prefetch backpressure (0 = unlimited/unchanged).
+	// Set before StartQueueListening subscribes the consumer.
+	mb.ConsumerPrefetchCount = conf.ConsumerPrefetch
+
 	q := &QueueListener{
 		service:        service,
 		consumer:       client,
