@@ -89,6 +89,29 @@ static int path_join2(char *out, size_t n, const char *a, const char *b) {
     return rc < 0 || (size_t)rc >= n ? ULAB_ERR : ULAB_OK;
 }
 
+
+static int scenario_path(char *out, size_t n, const char *dir, const char *name) {
+    size_t dl;
+    size_t nl;
+
+    if (out == NULL || dir == NULL || name == NULL || n == 0) {
+        return ULAB_ERR;
+    }
+
+    dl = strlen(dir);
+    nl = strlen(name);
+    if (dl + 1 + nl + 5 + 1 > n) {
+        return ULAB_ERR;
+    }
+
+    memcpy(out, dir, dl);
+    out[dl] = '/';
+    memcpy(out + dl + 1, name, nl);
+    memcpy(out + dl + 1 + nl, ".yaml", 6);
+
+    return ULAB_OK;
+}
+
 static int add_action(model_def_t *m, const char *action) {
     if (action == NULL || action[0] == '\0') {
         return ULAB_OK;
@@ -126,8 +149,8 @@ static int load_model(const gen_opts_t *opts, const char *entity,
     memset(model, 0, sizeof(*model));
     in_actions = 0;
 
-    if (snprintf(path, sizeof(path), "%s/%s.yaml", opts->models_dir,
-                 entity) >= (int)sizeof(path)) {
+    if (scenario_path(path, sizeof(path), opts->models_dir, entity)) {
+        fprintf(stderr, "model path too long: %s/%s.yaml\n", opts->models_dir, entity);
         return ULAB_ERR;
     }
 
@@ -280,7 +303,10 @@ static int write_success_scenario(const gen_opts_t *opts,
     if (path_join2(dir, sizeof(dir), opts->out_dir, entity)) return ULAB_ERR;
     if (ulab_mkdir_p(dir)) return ULAB_ERR;
     snprintf(name, sizeof(name), "%s-%s-success", entity, action);
-    snprintf(path, sizeof(path), "%s/%s.yaml", dir, name);
+    if (scenario_path(path, sizeof(path), dir, name)) {
+        fprintf(stderr, "generated scenario path too long: %s/%s.yaml\n", dir, name);
+        return ULAB_ERR;
+    }
 
     f = fopen(path, "w");
     if (f == NULL) {
@@ -360,7 +386,10 @@ static int write_blocked_scenario(const gen_opts_t *opts,
     if (path_join2(dir, sizeof(dir), opts->out_dir, entity)) return ULAB_ERR;
     if (ulab_mkdir_p(dir)) return ULAB_ERR;
     snprintf(name, sizeof(name), "%s-%s-blocked", entity, action);
-    snprintf(path, sizeof(path), "%s/%s.yaml", dir, name);
+    if (scenario_path(path, sizeof(path), dir, name)) {
+        fprintf(stderr, "generated scenario path too long: %s/%s.yaml\n", dir, name);
+        return ULAB_ERR;
+    }
 
     f = fopen(path, "w");
     if (f == NULL) {
