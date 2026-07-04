@@ -17,74 +17,30 @@
 #include "scenario.h"
 #include "util.h"
 
-#define GEN_MAX_TEXT 4096
+#define GEN_MAX_ACTIONS 64
 
 typedef struct {
     char model[ULAB_MAX_REF];
-    char mode[ULAB_MAX_REF];
     char out_dir[ULAB_MAX_PATH];
     char models_dir[ULAB_MAX_PATH];
-    char templates_dir[ULAB_MAX_PATH];
 } gen_opts_t;
 
 typedef struct {
-    const char *entity;
-    const char *mode;
-    const char *templ;
-    char name[ULAB_MAX_NAME];
-    char seed[ULAB_MAX_REF];
-    char priority[ULAB_MAX_REF];
-    char status[ULAB_MAX_REF];
-    char phase[ULAB_MAX_NAME];
-    char events[GEN_MAX_TEXT];
-    char checks[GEN_MAX_TEXT];
-    char final_checks[GEN_MAX_TEXT];
-} gen_case_t;
+    char entity[ULAB_MAX_REF];
+    char actions[GEN_MAX_ACTIONS][ULAB_MAX_REF];
+    size_t action_count;
+} model_def_t;
 
-static const char *entities[] = {
-    "org", "network", "site", "node", "sim", "subscriber", "package"
-};
-
-static const char *modes[] = {
-    "smoke", "transition", "negative", "pairwise", "full"
-};
-
-static const char *templates_all[] = {
-    "state-transition",
-    "blocked-transition",
-    "lifecycle-cleanup",
-    "permission-check",
-    "retry-idempotency",
-    "partial-failure",
-    "wrong-org-network",
-    "empty-state",
-    "boundary-values",
-    "backend-failure",
-    "runtime-effect",
-    "read-model-check"
+static const char *default_entities[] = {
+    "sim", "package", "subscriber", "node"
 };
 
 static void usage(void) {
     printf("usage:\n");
-    printf("  ukama-lab generate --model <name|all> --mode <name|all> [options]\n");
+    printf("  ukama-lab generate --model <name|all> [options]\n");
     printf("options:\n");
     printf("  --out <dir>        output directory; default: scenarios/generated\n");
     printf("  --models <dir>     model directory; default: models\n");
-    printf("  --templates <dir>  template directory; default: templates/generated\n");
-}
-
-static int is_in(const char *v, const char **arr, size_t n) {
-    size_t i;
-
-    if (ulab_streq(v, "all")) {
-        return 1;
-    }
-    for (i = 0; i < n; i++) {
-        if (ulab_streq(v, arr[i])) {
-            return 1;
-        }
-    }
-    return 0;
 }
 
 static int parse_opts(int argc, char **argv, gen_opts_t *opts) {
@@ -92,11 +48,8 @@ static int parse_opts(int argc, char **argv, gen_opts_t *opts) {
 
     memset(opts, 0, sizeof(*opts));
     ulab_copy(opts->model, sizeof(opts->model), "all");
-    ulab_copy(opts->mode, sizeof(opts->mode), "smoke");
     ulab_copy(opts->out_dir, sizeof(opts->out_dir), "scenarios/generated");
     ulab_copy(opts->models_dir, sizeof(opts->models_dir), "models");
-    ulab_copy(opts->templates_dir, sizeof(opts->templates_dir),
-              "templates/generated");
 
     for (i = 0; i < argc; i++) {
         if (ulab_streq(argv[i], "--model") && i + 1 < argc) {
@@ -104,23 +57,19 @@ static int parse_opts(int argc, char **argv, gen_opts_t *opts) {
                 return ULAB_EUSAGE;
             }
         } else if (ulab_streq(argv[i], "--mode") && i + 1 < argc) {
-            if (ulab_copy(opts->mode, sizeof(opts->mode), argv[++i])) {
-                return ULAB_EUSAGE;
-            }
+            /* accepted for compatibility; phase-6 stores suite/priority in YAML */
+            i++;
         } else if (ulab_streq(argv[i], "--out") && i + 1 < argc) {
             if (ulab_copy(opts->out_dir, sizeof(opts->out_dir), argv[++i])) {
                 return ULAB_EUSAGE;
             }
         } else if (ulab_streq(argv[i], "--models") && i + 1 < argc) {
-            if (ulab_copy(opts->models_dir, sizeof(opts->models_dir),
-                          argv[++i])) {
+            if (ulab_copy(opts->models_dir, sizeof(opts->models_dir), argv[++i])) {
                 return ULAB_EUSAGE;
             }
         } else if (ulab_streq(argv[i], "--templates") && i + 1 < argc) {
-            if (ulab_copy(opts->templates_dir, sizeof(opts->templates_dir),
-                          argv[++i])) {
-                return ULAB_EUSAGE;
-            }
+            /* accepted for compatibility; generator is model-driven now */
+            i++;
         } else if (ulab_streq(argv[i], "--help")) {
             usage();
             return ULAB_EUSAGE;
@@ -130,24 +79,7 @@ static int parse_opts(int argc, char **argv, gen_opts_t *opts) {
         }
     }
 
-    if (!is_in(opts->model, entities, sizeof(entities) / sizeof(entities[0]))) {
-        fprintf(stderr, "unknown model: %s\n", opts->model);
-        return ULAB_EUSAGE;
-    }
-    if (!is_in(opts->mode, modes, sizeof(modes) / sizeof(modes[0]))) {
-        fprintf(stderr, "unknown mode: %s\n", opts->mode);
-        return ULAB_EUSAGE;
-    }
-
     return ULAB_OK;
-}
-
-static int path_join3(char *out, size_t n, const char *a, const char *b,
-                      const char *c) {
-    int rc;
-
-    rc = snprintf(out, n, "%s/%s/%s", a, b, c);
-    return rc < 0 || (size_t)rc >= n ? ULAB_ERR : ULAB_OK;
 }
 
 static int path_join2(char *out, size_t n, const char *a, const char *b) {
@@ -157,16 +89,43 @@ static int path_join2(char *out, size_t n, const char *a, const char *b) {
     return rc < 0 || (size_t)rc >= n ? ULAB_ERR : ULAB_OK;
 }
 
-static int load_model(const gen_opts_t *opts, const char *entity) {
-    char path[ULAB_MAX_PATH];
-    char want[ULAB_MAX_LINE];
-    char line[ULAB_MAX_LINE];
-    FILE *fp;
-
-    if (snprintf(want, sizeof(want), "entity: %s", entity) >=
-        (int)sizeof(want)) {
+static int add_action(model_def_t *m, const char *action) {
+    if (action == NULL || action[0] == '\0') {
+        return ULAB_OK;
+    }
+    if (m->action_count >= GEN_MAX_ACTIONS) {
         return ULAB_ERR;
     }
+    return ulab_copy(m->actions[m->action_count++], ULAB_MAX_REF, action);
+}
+
+static int parse_actions_inline(model_def_t *m, char *val) {
+    char *p;
+    char *tok;
+
+    p = ulab_trim(val);
+    if (*p == '[') p++;
+    tok = strtok(p, ",]");
+    while (tok != NULL) {
+        char *a = ulab_trim(tok);
+        if (add_action(m, a)) {
+            return ULAB_ERR;
+        }
+        tok = strtok(NULL, ",]");
+    }
+    return ULAB_OK;
+}
+
+static int load_model(const gen_opts_t *opts, const char *entity,
+                      model_def_t *model) {
+    char path[ULAB_MAX_PATH];
+    char line[ULAB_MAX_LINE];
+    FILE *fp;
+    int in_actions;
+
+    memset(model, 0, sizeof(*model));
+    in_actions = 0;
+
     if (snprintf(path, sizeof(path), "%s/%s.yaml", opts->models_dir,
                  entity) >= (int)sizeof(path)) {
         return ULAB_ERR;
@@ -177,378 +136,340 @@ static int load_model(const gen_opts_t *opts, const char *entity) {
         fprintf(stderr, "missing model: %s\n", path);
         return ULAB_ERR;
     }
+
     while (fgets(line, sizeof(line), fp) != NULL) {
-        char *p = ulab_trim(line);
-        if (ulab_starts(p, want)) {
-            fclose(fp);
-            return ULAB_OK;
+        char *key;
+        char *val;
+        char *p;
+
+        p = ulab_trim(line);
+        if (*p == '\0' || *p == '#') {
+            continue;
         }
-    }
-    fclose(fp);
-    fprintf(stderr, "model entity mismatch: %s\n", path);
-    return ULAB_ERR;
-}
+        if (ulab_starts(p, "- ") && in_actions) {
+            if (add_action(model, ulab_trim(p + 2))) {
+                fclose(fp);
+                return ULAB_ERR;
+            }
+            continue;
+        }
+        if (strchr(p, ':') == NULL) {
+            continue;
+        }
+        key = p;
+        val = strchr(p, ':');
+        *val++ = '\0';
+        key = ulab_trim(key);
+        val = ulab_trim(val);
 
-static int template_for_mode(const char *mode, const char *templ) {
-    if (ulab_streq(mode, "full")) return 1;
-    if (ulab_streq(mode, "smoke")) {
-        return ulab_streq(templ, "read-model-check") ||
-               ulab_streq(templ, "runtime-effect");
-    }
-    if (ulab_streq(mode, "transition")) {
-        return ulab_streq(templ, "state-transition") ||
-               ulab_streq(templ, "lifecycle-cleanup");
-    }
-    if (ulab_streq(mode, "negative")) {
-        return ulab_streq(templ, "blocked-transition") ||
-               ulab_streq(templ, "partial-failure") ||
-               ulab_streq(templ, "wrong-org-network") ||
-               ulab_streq(templ, "backend-failure");
-    }
-    if (ulab_streq(mode, "pairwise")) {
-        return ulab_streq(templ, "boundary-values") ||
-               ulab_streq(templ, "read-model-check") ||
-               ulab_streq(templ, "runtime-effect") ||
-               ulab_streq(templ, "permission-check") ||
-               ulab_streq(templ, "retry-idempotency") ||
-               ulab_streq(templ, "empty-state");
-    }
-    return 0;
-}
-
-static void set_common(gen_case_t *c, const char *entity, const char *mode,
-                       const char *templ) {
-    uint32_t seed;
-
-    memset(c, 0, sizeof(*c));
-    c->entity = entity;
-    c->mode = mode;
-    c->templ = templ;
-    seed = ulab_hash32(entity, 6000);
-    seed = ulab_hash32(mode, seed);
-    seed = ulab_hash32(templ, seed);
-    snprintf(c->name, sizeof(c->name), "generated-%s-%s-%s", entity, mode,
-             templ);
-    snprintf(c->seed, sizeof(c->seed), "%u", 6000u + (seed % 200000u));
-    snprintf(c->priority, sizeof(c->priority), "%s",
-             ulab_streq(mode, "smoke") ? "p0" : "p2");
-    snprintf(c->status, sizeof(c->status), "active");
-    snprintf(c->phase, sizeof(c->phase), "%s", templ);
-}
-
-static void set_read_model(gen_case_t *c) {
-    snprintf(c->events, sizeof(c->events),
-             "      - type: check\n");
-    snprintf(c->checks, sizeof(c->checks),
-             "      - type: backend_count\n"
-             "        target: networks\n"
-             "        expected: from_world\n"
-             "      - type: backend_count\n"
-             "        target: sites\n"
-             "        expected: from_world\n"
-             "      - type: backend_count\n"
-             "        target: nodes\n"
-             "        expected: from_world\n"
-             "      - type: backend_count\n"
-             "        target: sims\n"
-             "        expected: from_world\n");
-    snprintf(c->final_checks, sizeof(c->final_checks),
-             "  - type: dashboard_loads\n"
-             "    networks: all\n");
-}
-
-static void set_runtime(gen_case_t *c) {
-    snprintf(c->events, sizeof(c->events),
-             "      - type: traffic\n"
-             "        ues: all\n"
-             "        amount_mb: 1\n");
-    snprintf(c->checks, sizeof(c->checks),
-             "      - type: traffic_allowed\n"
-             "        ues: all\n"
-             "        amount_mb: 1\n");
-    snprintf(c->final_checks, sizeof(c->final_checks),
-             "  - type: balance_non_negative\n"
-             "    ues: all\n");
-}
-
-static void set_state_transition(gen_case_t *c) {
-    if (ulab_streq(c->entity, "sim") || ulab_streq(c->entity, "subscriber")) {
-        snprintf(c->events, sizeof(c->events),
-                 "      - type: set_sim_status\n"
-                 "        ues: all\n"
-                 "        status: inactive\n"
-                 "      - type: set_sim_status\n"
-                 "        ues: all\n"
-                 "        status: active\n");
-        snprintf(c->checks, sizeof(c->checks),
-                 "      - type: backend_count\n"
-                 "        target: sims\n"
-                 "        expected: from_world\n");
-    } else if (ulab_streq(c->entity, "package")) {
-        snprintf(c->events, sizeof(c->events),
-                 "      - type: remove_package_from_sim\n"
-                 "        ues: all\n"
-                 "      - type: add_package_to_sim\n"
-                 "        ues: all\n"
-                 "        package: daily_1gb\n");
-        snprintf(c->checks, sizeof(c->checks),
-                 "      - type: backend_count\n"
-                 "        target: sims\n"
-                 "        expected: from_world\n");
-    } else if (ulab_streq(c->entity, "node")) {
-        snprintf(c->events, sizeof(c->events),
-                 "      - type: wait_nodes_ready\n"
-                 "        nodes: all\n");
-        snprintf(c->checks, sizeof(c->checks),
-                 "      - type: node_ready\n"
-                 "        nodes: all\n");
-    } else {
-        set_read_model(c);
-    }
-    if (c->final_checks[0] == '\0') {
-        snprintf(c->final_checks, sizeof(c->final_checks),
-                 "  - type: balance_non_negative\n"
-                 "    ues: all\n");
-    }
-}
-
-static void set_blocked_transition(gen_case_t *c) {
-    snprintf(c->events, sizeof(c->events),
-             "      - type: create_ues\n"
-             "        count_per_site: 1\n"
-             "        expect:\n"
-             "          result: failure\n"
-             "          error_contains: \"not enabled\"\n");
-    snprintf(c->checks, sizeof(c->checks),
-             "      - type: backend_count\n"
-             "        target: sims\n"
-             "        expected: from_world\n");
-    snprintf(c->final_checks, sizeof(c->final_checks),
-             "  - type: balance_non_negative\n"
-             "    ues: all\n");
-}
-
-static void set_lifecycle_cleanup(gen_case_t *c) {
-    snprintf(c->events, sizeof(c->events),
-             "      - type: remove_package_from_sim\n"
-             "        ues: all\n"
-             "      - type: add_package_to_sim\n"
-             "        ues: all\n"
-             "        package: daily_1gb\n");
-    snprintf(c->checks, sizeof(c->checks),
-             "      - type: backend_count\n"
-             "        target: sims\n"
-             "        expected: from_world\n");
-    snprintf(c->final_checks, sizeof(c->final_checks),
-             "  - type: balance_non_negative\n"
-             "    ues: all\n");
-}
-
-static void set_add_missing_package(gen_case_t *c, const char *contains) {
-    snprintf(c->events, sizeof(c->events),
-             "      - type: add_package_to_sim\n"
-             "        ues: all\n"
-             "        expect:\n"
-             "          result: failure\n"
-             "          error_contains: \"%s\"\n",
-             contains);
-    snprintf(c->checks, sizeof(c->checks),
-             "      - type: backend_count\n"
-             "        target: sims\n"
-             "        expected: from_world\n");
-    snprintf(c->final_checks, sizeof(c->final_checks),
-             "  - type: balance_non_negative\n"
-             "    ues: all\n");
-}
-
-static void set_add_unknown_package(gen_case_t *c) {
-    snprintf(c->events, sizeof(c->events),
-             "      - type: add_package_to_sim\n"
-             "        ues: all\n"
-             "        package: wrong_network_package\n"
-             "        expect:\n"
-             "          result: failure\n"
-             "          error_contains: \"unknown package\"\n");
-    snprintf(c->checks, sizeof(c->checks),
-             "      - type: backend_count\n"
-             "        target: sims\n"
-             "        expected: from_world\n");
-    snprintf(c->final_checks, sizeof(c->final_checks),
-             "  - type: balance_non_negative\n"
-             "    ues: all\n");
-}
-
-static void set_backend_failure(gen_case_t *c) {
-    snprintf(c->events, sizeof(c->events),
-             "      - type: set_sim_status\n"
-             "        ues: all\n"
-             "        expect:\n"
-             "          result: failure\n"
-             "          error_contains: \"missing status\"\n");
-    snprintf(c->checks, sizeof(c->checks),
-             "      - type: backend_count\n"
-             "        target: sims\n"
-             "        expected: from_world\n");
-    snprintf(c->final_checks, sizeof(c->final_checks),
-             "  - type: balance_non_negative\n"
-             "    ues: all\n");
-}
-
-static void build_case(gen_case_t *c, const char *entity, const char *mode,
-                       const char *templ) {
-    set_common(c, entity, mode, templ);
-
-    if (ulab_streq(templ, "state-transition")) set_state_transition(c);
-    else if (ulab_streq(templ, "blocked-transition")) set_blocked_transition(c);
-    else if (ulab_streq(templ, "lifecycle-cleanup")) set_lifecycle_cleanup(c);
-    else if (ulab_streq(templ, "permission-check")) set_blocked_transition(c);
-    else if (ulab_streq(templ, "retry-idempotency")) set_lifecycle_cleanup(c);
-    else if (ulab_streq(templ, "partial-failure")) {
-        set_add_missing_package(c, "missing package");
-    } else if (ulab_streq(templ, "wrong-org-network")) set_add_unknown_package(c);
-    else if (ulab_streq(templ, "empty-state")) set_read_model(c);
-    else if (ulab_streq(templ, "boundary-values")) set_runtime(c);
-    else if (ulab_streq(templ, "backend-failure")) set_backend_failure(c);
-    else if (ulab_streq(templ, "runtime-effect")) set_runtime(c);
-    else set_read_model(c);
-}
-
-static const char *token_value(const gen_case_t *c, const char *tok,
-                               size_t len) {
-    if (len == 4 && strncmp(tok, "NAME", len) == 0) return c->name;
-    if (len == 4 && strncmp(tok, "SEED", len) == 0) return c->seed;
-    if (len == 6 && strncmp(tok, "ENTITY", len) == 0) return c->entity;
-    if (len == 4 && strncmp(tok, "MODE", len) == 0) return c->mode;
-    if (len == 8 && strncmp(tok, "TEMPLATE", len) == 0) return c->templ;
-    if (len == 8 && strncmp(tok, "PRIORITY", len) == 0) return c->priority;
-    if (len == 6 && strncmp(tok, "STATUS", len) == 0) return c->status;
-    if (len == 5 && strncmp(tok, "PHASE", len) == 0) return c->phase;
-    if (len == 6 && strncmp(tok, "EVENTS", len) == 0) return c->events;
-    if (len == 6 && strncmp(tok, "CHECKS", len) == 0) return c->checks;
-    if (len == 12 && strncmp(tok, "FINAL_CHECKS", len) == 0) {
-        return c->final_checks;
-    }
-    return NULL;
-}
-
-static void emit_line(FILE *out, const char *line, const gen_case_t *c) {
-    const char *p = line;
-
-    while (*p) {
-        if (*p == '@') {
-            const char *e = strchr(p + 1, '@');
-            const char *v;
-            if (e != NULL) {
-                v = token_value(c, p + 1, (size_t)(e - p - 1));
-                if (v != NULL) {
-                    fputs(v, out);
-                    p = e + 1;
-                    continue;
+        if (ulab_streq(key, "entity")) {
+            if (ulab_copy(model->entity, sizeof(model->entity), val)) {
+                fclose(fp);
+                return ULAB_ERR;
+            }
+            in_actions = 0;
+        } else if (ulab_streq(key, "actions")) {
+            in_actions = 1;
+            if (val[0] != '\0') {
+                if (parse_actions_inline(model, val)) {
+                    fclose(fp);
+                    return ULAB_ERR;
                 }
             }
+        } else {
+            in_actions = 0;
         }
-        fputc(*p++, out);
-    }
-}
-
-static int render_case(const gen_opts_t *opts, const gen_case_t *c) {
-    char tpath[ULAB_MAX_PATH];
-    char odir[ULAB_MAX_PATH];
-    char opath[ULAB_MAX_PATH];
-    char file[ULAB_MAX_NAME];
-    char tmpl_file[ULAB_MAX_NAME];
-    FILE *in;
-    FILE *out;
-    char line[ULAB_MAX_LINE];
-
-    if (snprintf(tmpl_file, sizeof(tmpl_file), "%s.yaml.tmpl", c->templ) >=
-        (int)sizeof(tmpl_file)) {
-        return ULAB_ERR;
-    }
-    if (path_join2(tpath, sizeof(tpath), opts->templates_dir, tmpl_file)) {
-        return ULAB_ERR;
-    }
-    if (path_join3(odir, sizeof(odir), opts->out_dir, c->entity, c->mode)) {
-        return ULAB_ERR;
-    }
-    if (ulab_mkdir_p(odir)) {
-        return ULAB_ERR;
-    }
-    if (snprintf(file, sizeof(file), "%s.yaml", c->name) >=
-        (int)sizeof(file)) {
-        return ULAB_ERR;
-    }
-    if (path_join2(opath, sizeof(opath), odir, file)) {
-        return ULAB_ERR;
     }
 
-    in = fopen(tpath, "r");
-    if (in == NULL) {
-        fprintf(stderr, "missing template: %s\n", tpath);
+    fclose(fp);
+
+    if (!ulab_streq(model->entity, entity)) {
+        fprintf(stderr, "model entity mismatch: %s\n", path);
         return ULAB_ERR;
     }
-    out = fopen(opath, "w");
-    if (out == NULL) {
-        fclose(in);
-        fprintf(stderr, "unable to write: %s\n", opath);
-        return ULAB_ERR;
+    if (model->action_count == 0) {
+        add_action(model, "read");
     }
 
-    while (fgets(line, sizeof(line), in) != NULL) {
-        emit_line(out, line, c);
-    }
-
-    fclose(out);
-    fclose(in);
-    printf("generated %s\n", opath);
     return ULAB_OK;
 }
 
-static int generate_one(const gen_opts_t *opts, const char *entity,
-                        const char *mode) {
-    size_t i;
+static const char *event_for_action(const char *entity, const char *action) {
+    if (ulab_streq(entity, "node") && ulab_streq(action, "restart")) {
+        return "restart_nodes";
+    }
+    if ((ulab_streq(entity, "package") && ulab_streq(action, "add_to_sim")) ||
+        (ulab_streq(entity, "sim") && ulab_streq(action, "add_package"))) {
+        return "add_package_to_sim";
+    }
+    if ((ulab_streq(entity, "package") && ulab_streq(action, "remove_from_sim")) ||
+        (ulab_streq(entity, "sim") && ulab_streq(action, "remove_package"))) {
+        return "remove_package_from_sim";
+    }
+    if (ulab_streq(entity, "sim") &&
+        (ulab_streq(action, "set_active") || ulab_streq(action, "set_inactive") ||
+         ulab_streq(action, "release") || ulab_streq(action, "deactivate"))) {
+        return "set_sim_status";
+    }
+    return "check";
+}
 
-    if (load_model(opts, entity)) {
+static const char *status_for_action(const char *action) {
+    if (ulab_streq(action, "set_inactive") || ulab_streq(action, "release") ||
+        ulab_streq(action, "deactivate") || ulab_streq(action, "archive") ||
+        ulab_streq(action, "suspend") || ulab_streq(action, "retire")) {
+        return "inactive";
+    }
+    return "active";
+}
+
+static void write_common_world(FILE *f) {
+    fprintf(f,
+            "provider:\n"
+            "  type: virtual\n\n"
+            "world:\n"
+            "  networks: 1\n"
+            "  sites_per_network: 1\n"
+            "  nodes_per_site:\n"
+            "    tower: 1\n"
+            "    amplifier: 1\n"
+            "    controller: 1\n"
+            "  ues_per_site: 1\n\n"
+            "packages:\n"
+            "  - ref: daily_1gb\n"
+            "    name: Daily 1GB\n"
+            "    data_mb: 1024\n"
+            "    duration_days: 1\n"
+            "    amount: 1.00\n"
+            "    assign_percent: 100\n"
+            "  - ref: weekly_10gb\n"
+            "    name: Weekly 10GB\n"
+            "    data_mb: 10240\n"
+            "    duration_days: 7\n"
+            "    amount: 7.00\n"
+            "    assign_percent: 0\n\n"
+            "setup:\n"
+            "  create_via_bff:\n"
+            "    - networks\n"
+            "    - sites\n"
+            "    - nodes\n"
+            "    - node_site_links\n"
+            "    - packages\n"
+            "    - subscribers\n"
+            "    - sims\n\n"
+            "runtime:\n"
+            "  start: [nodes, ues]\n"
+            "  wait: [nodes_ready, ues_attached]\n\n");
+}
+
+static int write_success_scenario(const gen_opts_t *opts,
+                                  const char *entity,
+                                  const char *action,
+                                  FILE *index) {
+    char dir[ULAB_MAX_PATH];
+    char path[ULAB_MAX_PATH];
+    char name[ULAB_MAX_NAME];
+    const char *event;
+    uint32_t seed;
+    FILE *f;
+
+    event = event_for_action(entity, action);
+    seed = ulab_hash32(entity, 9000);
+    seed = ulab_hash32(action, seed);
+
+    if (path_join2(dir, sizeof(dir), opts->out_dir, entity)) return ULAB_ERR;
+    if (ulab_mkdir_p(dir)) return ULAB_ERR;
+    snprintf(name, sizeof(name), "%s-%s-success", entity, action);
+    snprintf(path, sizeof(path), "%s/%s.yaml", dir, name);
+
+    f = fopen(path, "w");
+    if (f == NULL) {
+        fprintf(stderr, "unable to write: %s\n", path);
         return ULAB_ERR;
     }
-    for (i = 0; i < sizeof(templates_all) / sizeof(templates_all[0]); i++) {
-        gen_case_t c;
-        if (!template_for_mode(mode, templates_all[i])) {
-            continue;
+
+    fprintf(f,
+            "version: 1\n"
+            "name: %s\n"
+            "seed: %u\n"
+            "suite: generated\n"
+            "priority: p1\n"
+            "tags: [generated, %s, %s, success]\n"
+            "status: active\n"
+            "generated: true\n"
+            "entity: %s\n"
+            "action: %s\n\n",
+            name, seed, entity, action, entity, action);
+    write_common_world(f);
+
+    fprintf(f, "phases:\n  - name: action\n    events:\n");
+    if (ulab_streq(event, "add_package_to_sim")) {
+        fprintf(f, "      - type: add_package_to_sim\n        ues: all\n        package: weekly_10gb\n");
+    } else if (ulab_streq(event, "remove_package_from_sim")) {
+        fprintf(f, "      - type: remove_package_from_sim\n        ues: all\n");
+    } else if (ulab_streq(event, "set_sim_status")) {
+        fprintf(f, "      - type: set_sim_status\n        ues: all\n        status: %s\n", status_for_action(action));
+    } else if (ulab_streq(event, "restart_nodes")) {
+        fprintf(f, "      - type: restart_nodes\n        type_selector: tower\n        count_per_network: 1\n");
+    } else {
+        fprintf(f, "      - type: check\n");
+    }
+
+    fprintf(f,
+            "    checks:\n"
+            "      - type: backend_count\n"
+            "        target: sims\n"
+            "        expected: from_world\n"
+            "      - type: list_contains\n"
+            "        view: sims\n"
+            "        ref: ue-000001\n");
+    if (ulab_streq(entity, "sim")) {
+        fprintf(f,
+                "      - type: status_equals\n"
+                "        entity: sim\n"
+                "        ref: ue-000001\n"
+                "        status: %s\n", status_for_action(action));
+    }
+    fprintf(f,
+            "\nfinal_checks:\n"
+            "  - type: balance_non_negative\n"
+            "    ues: all\n");
+
+    fclose(f);
+    if (index != NULL) {
+        fprintf(index, "  - file: %s/%s.yaml\n    entity: %s\n    action: %s\n    case: success\n    suite: generated\n    priority: p1\n",
+                entity, name, entity, action);
+    }
+    printf("generated %s\n", path);
+    return ULAB_OK;
+}
+
+static int write_blocked_scenario(const gen_opts_t *opts,
+                                  const char *entity,
+                                  const char *action,
+                                  FILE *index) {
+    char dir[ULAB_MAX_PATH];
+    char path[ULAB_MAX_PATH];
+    char name[ULAB_MAX_NAME];
+    uint32_t seed;
+    FILE *f;
+
+    seed = ulab_hash32(entity, 10000);
+    seed = ulab_hash32(action, seed);
+
+    if (path_join2(dir, sizeof(dir), opts->out_dir, entity)) return ULAB_ERR;
+    if (ulab_mkdir_p(dir)) return ULAB_ERR;
+    snprintf(name, sizeof(name), "%s-%s-blocked", entity, action);
+    snprintf(path, sizeof(path), "%s/%s.yaml", dir, name);
+
+    f = fopen(path, "w");
+    if (f == NULL) {
+        fprintf(stderr, "unable to write: %s\n", path);
+        return ULAB_ERR;
+    }
+
+    fprintf(f,
+            "version: 1\n"
+            "name: %s\n"
+            "seed: %u\n"
+            "suite: generated\n"
+            "priority: p2\n"
+            "tags: [generated, %s, %s, blocked, negative]\n"
+            "status: active\n"
+            "generated: true\n"
+            "entity: %s\n"
+            "action: %s\n\n",
+            name, seed, entity, action, entity, action);
+    write_common_world(f);
+
+    fprintf(f,
+            "phases:\n"
+            "  - name: blocked_action\n"
+            "    events:\n"
+            "      - type: set_sim_status\n"
+            "        ues: all\n"
+            "        expect:\n"
+            "          result: failure\n"
+            "          error_contains: \"missing status\"\n"
+            "    checks:\n"
+            "      - type: backend_count\n"
+            "        target: sims\n"
+            "        expected: from_world\n\n"
+            "final_checks:\n"
+            "  - type: balance_non_negative\n"
+            "    ues: all\n");
+
+    fclose(f);
+    if (index != NULL) {
+        fprintf(index, "  - file: %s/%s.yaml\n    entity: %s\n    action: %s\n    case: blocked\n    suite: generated\n    priority: p2\n",
+                entity, name, entity, action);
+    }
+    printf("generated %s\n", path);
+    return ULAB_OK;
+}
+
+static int generate_model(const gen_opts_t *opts, const char *entity,
+                          FILE *index) {
+    model_def_t model;
+    size_t i;
+
+    if (load_model(opts, entity, &model)) {
+        return ULAB_ERR;
+    }
+
+    for (i = 0; i < model.action_count; i++) {
+        if (write_success_scenario(opts, entity, model.actions[i], index)) {
+            return ULAB_ERR;
         }
-        build_case(&c, entity, mode, templates_all[i]);
-        if (render_case(opts, &c)) {
+        if (write_blocked_scenario(opts, entity, model.actions[i], index)) {
             return ULAB_ERR;
         }
     }
+
     return ULAB_OK;
 }
 
 int generator_run(int argc, char **argv) {
     gen_opts_t opts;
+    char index_path[ULAB_MAX_PATH];
+    FILE *index;
     size_t i;
-    size_t j;
 
     if (parse_opts(argc, argv, &opts) != ULAB_OK) {
         usage();
         return ULAB_EUSAGE;
     }
 
-    for (i = 0; i < sizeof(entities) / sizeof(entities[0]); i++) {
-        if (!ulab_streq(opts.model, "all") && !ulab_streq(opts.model,
-            entities[i])) {
-            continue;
+    if (ulab_mkdir_p(opts.out_dir)) {
+        fprintf(stderr, "unable to create output dir: %s\n", opts.out_dir);
+        return ULAB_ERR;
+    }
+
+    if (path_join2(index_path, sizeof(index_path), opts.out_dir, "index.yaml")) {
+        return ULAB_ERR;
+    }
+    index = fopen(index_path, "w");
+    if (index == NULL) {
+        fprintf(stderr, "unable to write: %s\n", index_path);
+        return ULAB_ERR;
+    }
+    fprintf(index, "generated_scenarios:\n");
+
+    if (!ulab_streq(opts.model, "all")) {
+        if (generate_model(&opts, opts.model, index)) {
+            fclose(index);
+            return ULAB_ERR;
         }
-        for (j = 0; j < sizeof(modes) / sizeof(modes[0]); j++) {
-            if (!ulab_streq(opts.mode, "all") && !ulab_streq(opts.mode,
-                modes[j])) {
-                continue;
-            }
-            if (generate_one(&opts, entities[i], modes[j])) {
+    } else {
+        for (i = 0; i < sizeof(default_entities) / sizeof(default_entities[0]); i++) {
+            if (generate_model(&opts, default_entities[i], index)) {
+                fclose(index);
                 return ULAB_ERR;
             }
         }
     }
 
+    fclose(index);
+    printf("generated index %s\n", index_path);
     return ULAB_OK;
 }

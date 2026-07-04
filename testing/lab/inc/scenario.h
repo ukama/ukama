@@ -169,6 +169,9 @@ typedef struct {
     char           priority[ULAB_MAX_REF];
     char           tags[ULAB_MAX_LINE];
     char           status[ULAB_MAX_REF];
+    int            generated;
+    char           entity[ULAB_MAX_REF];
+    char           action[ULAB_MAX_REF];
     world_spec_t   world;
     package_spec_t packages[ULAB_MAX_PACKAGES];
     size_t         package_count;

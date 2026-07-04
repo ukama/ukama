@@ -417,6 +417,12 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
                 if (ulab_copy(s->tags, sizeof(s->tags), val)) goto bad;
             } else if (ulab_streq(key, "status")) {
                 if (ulab_copy(s->status, sizeof(s->status), val)) goto bad;
+            } else if (ulab_streq(key, "generated")) {
+                s->generated = ulab_streq(val, "true") || ulab_streq(val, "1");
+            } else if (ulab_streq(key, "entity")) {
+                if (ulab_copy(s->entity, sizeof(s->entity), val)) goto bad;
+            } else if (ulab_streq(key, "action")) {
+                if (ulab_copy(s->action, sizeof(s->action), val)) goto bad;
             } else if (ulab_streq(key, "world")) sec = SEC_WORLD;
             else if (ulab_streq(key, "packages")) sec = SEC_PACKAGES;
             else if (ulab_streq(key, "setup")) sec = SEC_SETUP;
@@ -477,6 +483,11 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
                     if (ulab_parse_u64(val, &pkg->data_mb)) goto bad;
                 } else if (ulab_streq(key, "duration_days")) {
                     if (ulab_parse_u32(val, &pkg->duration_days)) goto bad;
+                } else if (ulab_streq(key, "duration_hours")) {
+                    uint32_t hours = 0;
+                    if (ulab_parse_u32(val, &hours)) goto bad;
+                    pkg->duration_days = (hours + 23u) / 24u;
+                    if (pkg->duration_days == 0) pkg->duration_days = 1;
                 } else if (ulab_streq(key, "amount")) {
                     if (ulab_parse_double(val, &pkg->amount)) goto bad;
                 } else if (ulab_streq(key, "assign_percent")) {

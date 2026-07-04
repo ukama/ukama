@@ -11,6 +11,8 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <dirent.h>
+#include <sys/stat.h>
 #include <jansson.h>
 
 #include "runner.h"
@@ -1042,7 +1044,7 @@ static int preclean_existing_run(bff_client_t *bff,
     return ULAB_OK;
 }
 
-int runner_validate(const runner_opts_t *opts) {
+static int runner_validate_one(const runner_opts_t *opts) {
 
     scenario_t *scenario;
     world_t world;
@@ -1254,4 +1256,170 @@ done:
     free(scenario);
 
     return rc;
+}
+
+
+static int runner_path_is_dir(const char *path) {
+    struct stat st;
+
+    if (stat(path, &st) != 0) {
+        return 0;
+    }
+    return S_ISDIR(st.st_mode) ? 1 : 0;
+}
+
+static int runner_is_yaml(const char *path) {
+    return ulab_ends(path, ".yaml") || ulab_ends(path, ".yml");
+}
+
+static int runner_tag_match(const char *tags, const char *want) {
+    char needle[ULAB_MAX_REF + 4];
+
+    if (want == NULL || want[0] == '\0') {
+        return 1;
+    }
+    if (tags == NULL || tags[0] == '\0') {
+        return 0;
+    }
+    if (strstr(tags, want) != NULL) {
+        return 1;
+    }
+    snprintf(needle, sizeof(needle), " %s", want);
+    return strstr(tags, needle) != NULL;
+}
+
+static int runner_matches_filters(const runner_opts_t *opts,
+                                  const scenario_t *s) {
+    if (opts->suite_filter[0] != '\0' &&
+        !ulab_streq(opts->suite_filter, s->suite)) {
+        return 0;
+    }
+    if (opts->priority_filter[0] != '\0' &&
+        !ulab_streq(opts->priority_filter, s->priority)) {
+        return 0;
+    }
+    if (opts->tag_filter[0] != '\0' &&
+        !runner_tag_match(s->tags, opts->tag_filter)) {
+        return 0;
+    }
+    if (opts->generated_only && !s->generated) {
+        return 0;
+    }
+    return 1;
+}
+
+static int runner_run_file_if_match(const runner_opts_t *opts,
+                                    const char *path,
+                                    size_t *matched,
+                                    size_t *failed) {
+    runner_opts_t one;
+    scenario_t *scenario;
+    ulab_error_t err;
+
+    if (!runner_is_yaml(path)) {
+        return ULAB_OK;
+    }
+
+    scenario = calloc(1, sizeof(*scenario));
+    if (scenario == NULL) {
+        (*failed)++;
+        return ULAB_ERR;
+    }
+
+    memset(&err, 0, sizeof(err));
+    if (scenario_load(path, scenario, &err)) {
+        fprintf(stderr, "%s: %s\n", path, err.msg);
+        free(scenario);
+        (*failed)++;
+        return ULAB_ERR;
+    }
+
+    if (!runner_matches_filters(opts, scenario)) {
+        free(scenario);
+        return ULAB_OK;
+    }
+
+    one = *opts;
+    ulab_copy(one.scenario_path, sizeof(one.scenario_path), path);
+    if (opts->run_id[0] != '\0') {
+        snprintf(one.run_id, sizeof(one.run_id), "%s-%s", opts->run_id,
+                 scenario->name[0] ? scenario->name : "scenario");
+    }
+
+    free(scenario);
+
+    (*matched)++;
+    if (runner_validate_one(&one) != ULAB_OK) {
+        (*failed)++;
+    }
+
+    return ULAB_OK;
+}
+
+static int runner_scan_dir(const runner_opts_t *opts,
+                           const char *dir,
+                           size_t *matched,
+                           size_t *failed) {
+    DIR *dp;
+    struct dirent *de;
+    int rc;
+
+    dp = opendir(dir);
+    if (dp == NULL) {
+        fprintf(stderr, "unable to open scenario directory: %s\n", dir);
+        return ULAB_ERR;
+    }
+
+    rc = ULAB_OK;
+    while ((de = readdir(dp)) != NULL) {
+        char path[ULAB_MAX_PATH];
+        struct stat st;
+
+        if (ulab_streq(de->d_name, ".") || ulab_streq(de->d_name, "..")) {
+            continue;
+        }
+        if (snprintf(path, sizeof(path), "%s/%s", dir, de->d_name) >=
+            (int)sizeof(path)) {
+            rc = ULAB_ERR;
+            continue;
+        }
+        if (stat(path, &st) != 0) {
+            rc = ULAB_ERR;
+            continue;
+        }
+        if (S_ISDIR(st.st_mode)) {
+            if (runner_scan_dir(opts, path, matched, failed) != ULAB_OK) {
+                rc = ULAB_ERR;
+            }
+        } else if (S_ISREG(st.st_mode)) {
+            if (runner_run_file_if_match(opts, path, matched, failed) != ULAB_OK) {
+                rc = ULAB_ERR;
+            }
+        }
+    }
+
+    closedir(dp);
+    return rc;
+}
+
+int runner_validate(const runner_opts_t *opts) {
+    size_t matched;
+    size_t failed;
+    int rc;
+
+    if (!runner_path_is_dir(opts->scenario_path)) {
+        return runner_validate_one(opts);
+    }
+
+    matched = 0;
+    failed = 0;
+    rc = runner_scan_dir(opts, opts->scenario_path, &matched, &failed);
+
+    ulab_status("SUITE", "matched=%zu failed=%zu path=%s", matched, failed,
+                opts->scenario_path);
+
+    if (rc != ULAB_OK || failed != 0 || matched == 0) {
+        return ULAB_ERR;
+    }
+    return ULAB_OK;
 }

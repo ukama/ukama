@@ -22,12 +22,16 @@ typedef struct {
     char factory_url[ULAB_MAX_URL];
     char asr_url[ULAB_MAX_URL];
     char run_id[ULAB_MAX_ID];
+    char suite_filter[ULAB_MAX_REF];
+    char priority_filter[ULAB_MAX_REF];
+    char tag_filter[ULAB_MAX_REF];
 
     uint32_t seed_override;
 
     int has_seed_override;
     int quiet;
     int verbose;
+    int generated_only;
 } runner_opts_t;
 
 int runner_validate(const runner_opts_t *opts);
