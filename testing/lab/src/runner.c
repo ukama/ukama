@@ -1308,6 +1308,33 @@ static int runner_matches_filters(const runner_opts_t *opts,
     return 1;
 }
 
+static int runner_child_run_id(char *out, size_t out_len,
+                               const char *parent,
+                               const char *child) {
+    size_t parent_len;
+    size_t child_len;
+    size_t room;
+
+    if (out == NULL || out_len == 0 || parent == NULL || child == NULL) {
+        return ULAB_ERR;
+    }
+
+    parent_len = strlen(parent);
+    child_len = strlen(child);
+
+    if (parent_len + 1 + child_len + 1 > out_len) {
+        return ULAB_ERR;
+    }
+
+    room = parent_len;
+    memcpy(out, parent, room);
+    out[room++] = '-';
+    memcpy(out + room, child, child_len);
+    out[room + child_len] = '\0';
+
+    return ULAB_OK;
+}
+
 static int runner_run_file_if_match(const runner_opts_t *opts,
                                     const char *path,
                                     size_t *matched,
@@ -1342,8 +1369,14 @@ static int runner_run_file_if_match(const runner_opts_t *opts,
     one = *opts;
     ulab_copy(one.scenario_path, sizeof(one.scenario_path), path);
     if (opts->run_id[0] != '\0') {
-        snprintf(one.run_id, sizeof(one.run_id), "%s-%s", opts->run_id,
-                 scenario->name[0] ? scenario->name : "scenario");
+        if (runner_child_run_id(one.run_id, sizeof(one.run_id), opts->run_id,
+                                scenario->name[0] ? scenario->name :
+                                                     "scenario") != ULAB_OK) {
+            fprintf(stderr, "%s: run id too long\n", path);
+            free(scenario);
+            (*failed)++;
+            return ULAB_ERR;
+        }
     }
 
     free(scenario);
