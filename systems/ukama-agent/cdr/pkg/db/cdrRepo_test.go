@@ -119,7 +119,7 @@ func TestCDRRepo_Add(t *testing.T) {
 		// Use a fresh copy so this subtest does not depend on mutations made to
 		// the shared fixture by the preceding subtest.
 		dup := cdr
-		dup.Model.ID = 0
+		dup.ID = 0
 
 		// Act
 		inserted, err := r.Add(&dup)
