@@ -1,3 +1,18 @@
 entity: node
 states: [inventory, installed, maintenance, released, retired]
-actions: [create, read, start, wait_ready, restart, release, retire]
+actions:
+  - name: restart
+    event: restart_nodes
+    selector: tower
+    from: [installed]
+    to: installed
+    blocked_from: [retired]
+    checks: [backend_count]
+    priority: p1
+  - name: read
+    event: check
+    from: [installed]
+    to: installed
+    blocked_from: [retired]
+    checks: [backend_count]
+    priority: p2

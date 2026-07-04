@@ -1,3 +1,37 @@
 entity: sim
 states: [unassigned, assigned, active, inactive, deactivated, released]
-actions: [upload, allocate, set_active, set_inactive, release, add_package, remove_package]
+actions:
+  - name: set_active
+    event: set_sim_status
+    status: active
+    from: [inactive, assigned]
+    to: active
+    blocked_from: [deactivated, released]
+    checks: [backend_count, list_contains, status_equals]
+    runtime: traffic_allowed
+    priority: p1
+  - name: set_inactive
+    event: set_sim_status
+    status: inactive
+    from: [active]
+    to: inactive
+    blocked_from: [deactivated, released]
+    checks: [backend_count, list_contains, status_equals]
+    runtime: traffic_blocked
+    priority: p1
+  - name: add_package
+    event: add_package_to_sim
+    package: weekly_10gb
+    from: [active]
+    to: active
+    blocked_from: [deactivated, released]
+    checks: [backend_count, list_contains]
+    priority: p1
+  - name: remove_package
+    event: remove_package_from_sim
+    from: [active]
+    to: inactive
+    blocked_from: [deactivated, released]
+    checks: [backend_count, list_contains, status_equals]
+    runtime: traffic_blocked
+    priority: p1
