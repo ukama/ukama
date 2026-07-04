@@ -73,14 +73,63 @@ func TestCDRRepo_Add(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.Add(&cdr)
+		inserted, err := r.Add(&cdr)
 
 		// Assert12
 		assert.NoError(t, err)
+		assert.True(t, inserted)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 
+	})
+
+	t.Run("AddDuplicate", func(t *testing.T) {
+		// Arrange
+		var sqldb *extsql.DB
+		var err error
+
+		sqldb, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		mock.ExpectBegin()
+
+		// ON CONFLICT ... DO NOTHING and the row already exists: Postgres returns
+		// no row, so RowsAffected is 0. Match the INSERT loosely (the exact column
+		// / arg count depends on whether the primary key is populated), the key
+		// assertion is that Add reports inserted == false.
+		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}))
+
+		mock.ExpectCommit()
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 sqldb,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewCDRRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Use a fresh copy so this subtest does not depend on mutations made to
+		// the shared fixture by the preceding subtest.
+		dup := cdr
+		dup.ID = 0
+
+		// Act
+		inserted, err := r.Add(&dup)
+
+		// Assert
+		assert.NoError(t, err)
+		assert.False(t, inserted)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
 	})
 
 }

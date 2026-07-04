@@ -13,21 +13,31 @@ type CDRRepo struct {
 }
 
 // Add provides a mock function with given fields: cdr
-func (_m *CDRRepo) Add(cdr *db.CDR) error {
+func (_m *CDRRepo) Add(cdr *db.CDR) (bool, error) {
 	ret := _m.Called(cdr)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Add")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.CDR) error); ok {
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*db.CDR) (bool, error)); ok {
+		return rf(cdr)
+	}
+	if rf, ok := ret.Get(0).(func(*db.CDR) bool); ok {
 		r0 = rf(cdr)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(bool)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(*db.CDR) error); ok {
+		r1 = rf(cdr)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetByFilters provides a mock function with given fields: imsi, session, policy, startTime, endTime

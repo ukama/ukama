@@ -23,7 +23,10 @@ import (
 
 // declare interface so that we can mock it
 type CDRRepo interface {
-	Add(cdr *CDR) error
+	// Add inserts a CDR. It is idempotent: a retransmit of an already stored
+	// record (same natural key) is dropped. Returns inserted=true only when a
+	// new row was actually written.
+	Add(cdr *CDR) (inserted bool, err error)
 	GetByImsi(imsi string) (*[]CDR, error)
 	GetBySession(imsi string, session uint64) (*[]CDR, error)
 	GetByFilters(imsi string, session uint64, policy string, startTime uint64, endTime uint64) (*[]CDR, error)
@@ -45,15 +48,31 @@ func NewCDRRepo(db sql.Db) *cdrRepo {
 	}
 }
 
-func (p *cdrRepo) Add(cdr *CDR) error {
+func (p *cdrRepo) Add(cdr *CDR) (bool, error) {
 
-	r := p.db.GetGormDb().Create(cdr)
+	/* Idempotent insert: a retransmit of the same record (same natural key:
+	   imsi, node_id, session, start_time, end_time, last_updated_at) is a true
+	   duplicate and is dropped. A genuine in-session update carries a newer
+	   last_updated_at and lands as a new row. */
+	r := p.db.GetGormDb().Clauses(clause.OnConflict{
+		Columns: []clause.Column{
+			{Name: "imsi"}, {Name: "node_id"}, {Name: "session"},
+			{Name: "start_time"}, {Name: "end_time"}, {Name: "last_updated_at"},
+		},
+		DoNothing: true,
+	}).Create(cdr)
 	if r.Error != nil {
 		log.Errorf("error creating cdr %+v. Error: %v", cdr, r.Error)
-		return r.Error
+		return false, r.Error
 	}
 
-	return nil
+	if r.RowsAffected == 0 {
+		log.Infof("Duplicate CDR ignored for imsi %s node %s session %d (last_updated_at %d)",
+			cdr.Imsi, cdr.NodeId, cdr.Session, cdr.LastUpdatedAt)
+		return false, nil
+	}
+
+	return true, nil
 }
 
 func (p *cdrRepo) GetByImsi(imsi string) (*[]CDR, error) {
