@@ -73,14 +73,56 @@ func TestCDRRepo_Add(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.Add(&cdr)
+		inserted, err := r.Add(&cdr)
 
 		// Assert12
 		assert.NoError(t, err)
+		assert.True(t, inserted)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 
+	})
+
+	t.Run("AddDuplicate", func(t *testing.T) {
+		// Arrange
+		var sqldb *extsql.DB
+		var err error
+
+		sqldb, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		mock.ExpectBegin()
+
+		// ON CONFLICT DO NOTHING: no row returned -> RowsAffected 0.
+		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), cdr.Session, cdr.NodeId, cdr.Imsi, cdr.Policy, cdr.ApnName, cdr.Ip, cdr.StartTime, cdr.EndTime, cdr.LastUpdatedAt, cdr.TxBytes, cdr.RxBytes, cdr.TotalBytes).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}))
+
+		mock.ExpectCommit()
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 sqldb,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewCDRRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		inserted, err := r.Add(&cdr)
+
+		// Assert
+		assert.NoError(t, err)
+		assert.False(t, inserted)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
 	})
 
 }

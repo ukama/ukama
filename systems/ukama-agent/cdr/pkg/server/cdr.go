@@ -98,9 +98,17 @@ func (s *CDRServer) PostCDR(c context.Context, req *pb.CDR) (*pb.CDRResp, error)
 	log.Debugf("Received CDR post request %+v", req)
 
 	cdr := pbCDRToDbCDR(req)
-	err := s.cdrRepo.Add(cdr)
+	inserted, err := s.cdrRepo.Add(cdr)
 	if err != nil {
 		return nil, err
+	}
+
+	/* Idempotency: a retransmitted (duplicate) CDR is not stored a second time.
+	   Skip usage recomputation, metric push and event publish so a duplicate has
+	   no side-effects. */
+	if !inserted {
+		log.Infof("Ignoring duplicate CDR for imsi %s node %s session %d", req.Imsi, req.NodeId, req.Session)
+		return &pb.CDRResp{}, nil
 	}
 
 	err = s.UpdateUsage(req.Imsi, cdr)
@@ -460,22 +468,31 @@ func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
 
 		} else {
 			/* This will always be new session as new node is reporting CDR now */
-			log.Infof("End session %d and create new session %d for imsi %s because of node handover from %s to %s", ou.LastSessionId, sessionId, cdr.Imsi, lastCDRNodeId, cdr.NodeId)
-			lastUpdatedAt = cdr.LastUpdatedAt
-			u.LastSessionUsage = u.Usage                 /* Usage till last session last CDR */
-			u.Historical = u.Historical + cdr.TotalBytes /* usage is historical + current */
-			u.Usage = u.LastSessionUsage + cdr.TotalBytes
-			u.LastNodeId = cdr.NodeId
-			u.LastCDRUpdatedAt = cdr.LastUpdatedAt
-			u.Policy = cdr.Policy
-			u.LastSessionId = cdr.Session
-			newSessionFlag = true
-			nodeChangedFlag = true
-			/* If this report says session is ending too */
-			if cdr.EndTime != 0 {
-				u.LastSessionUsage = u.Usage
+			/* Guard against duplicates/out-of-order: only account CDRs newer than
+			   the last one used, mirroring the same-node branches. Without this a
+			   duplicated handover/new-session CDR would be added to Historical twice. */
+			if cdr.LastUpdatedAt > lastUpdatedAt {
+				log.Infof("End session %d and create new session %d for imsi %s because of node handover from %s to %s", ou.LastSessionId, sessionId, cdr.Imsi, lastCDRNodeId, cdr.NodeId)
+				tempUsage = u
+				lastUpdatedAt = cdr.LastUpdatedAt
+				u.LastSessionUsage = u.Usage                 /* Usage till last session last CDR */
+				u.Historical = u.Historical + cdr.TotalBytes /* usage is historical + current */
+				u.Usage = u.LastSessionUsage + cdr.TotalBytes
+				u.LastNodeId = cdr.NodeId
+				u.LastCDRUpdatedAt = cdr.LastUpdatedAt
+				u.Policy = cdr.Policy
+				u.LastSessionId = cdr.Session
+				newSessionFlag = true
+				nodeChangedFlag = true
+				/* If this report says session is ending too */
+				if cdr.EndTime != 0 {
+					u.LastSessionUsage = u.Usage
+				}
+				//policy = cdr.Policy
+			} else {
+				log.Infof("Ignoring CDR %+v because last used CDR for usage was with LastUpdatedAt %d", cdr, lastUpdatedAt)
+				continue
 			}
-			//policy = cdr.Policy
 		}
 
 		/* If new session created send a event regading last session */

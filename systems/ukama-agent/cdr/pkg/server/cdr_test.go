@@ -80,7 +80,7 @@ func TestCDR_PostCDR(t *testing.T) {
 
 	asrClient.On("GetAsr", usage.Imsi).Return(
 		&asrpb.ReadResp{}, nil)
-	cdrRepo.On("Add", &cdr).Return(nil).Once()
+	cdrRepo.On("Add", &cdr).Return(true, nil).Once()
 	usageRepo.On("Get", cdr.Imsi).Return(&usage, nil).Once()
 	cdrRepo.On("QueryUsage", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 		mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(uint64(0), nil).Once()
@@ -96,6 +96,47 @@ func TestCDR_PostCDR(t *testing.T) {
 	cdrRepo.AssertExpectations(t)
 	usageRepo.AssertExpectations(t)
 	assert.NoError(t, err)
+}
+
+func TestCDR_PostCDR_Duplicate(t *testing.T) {
+	cdrRepo := &mocks.CDRRepo{}
+	usageRepo := &mocks.UsageRepo{}
+	asrClient := &mocks.AsrService{}
+	mbC := &cmocks.MsgBusServiceClient{}
+
+	s, err := NewCDRServer(cdrRepo, usageRepo, OrgId, OrgName, "", asrClient, mbC)
+	assert.NoError(t, err)
+
+	req := &pb.CDR{
+		Session:       cdr.Session,
+		NodeId:        cdr.NodeId,
+		Imsi:          cdr.Imsi,
+		Policy:        cdr.Policy,
+		ApnName:       cdr.ApnName,
+		Ip:            cdr.Ip,
+		StartTime:     cdr.StartTime,
+		EndTime:       cdr.EndTime,
+		LastUpdatedAt: cdr.LastUpdatedAt,
+		TxBytes:       cdr.TxBytes,
+		RxBytes:       cdr.RxBytes,
+		TotalBytes:    cdr.TotalBytes,
+	}
+
+	// Add reports the record was a duplicate (not inserted).
+	cdrRepo.On("Add", &cdr).Return(false, nil).Once()
+
+	_, err = s.PostCDR(context.TODO(), req)
+	assert.NoError(t, err)
+
+	// No usage recomputation, no query, no metric/asr call, no event publish.
+	cdrRepo.AssertExpectations(t)
+	usageRepo.AssertExpectations(t)
+	cdrRepo.AssertNotCalled(t, "GetByTimeAndNodeId", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	cdrRepo.AssertNotCalled(t, "QueryUsage", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+		mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	usageRepo.AssertNotCalled(t, "Add", mock.Anything)
+	asrClient.AssertNotCalled(t, "GetAsr", mock.Anything)
+	mbC.AssertNotCalled(t, "PublishRequest", mock.Anything, mock.Anything)
 }
 
 func TestCDR_InitUsage(t *testing.T) {

@@ -14,15 +14,15 @@ import (
 
 type CDR struct {
 	gorm.Model
-	Session       uint64
-	NodeId        string `gorm:"Index:cdr_node_idx;not null"`
-	Imsi          string `gorm:"Index:cdr_imsi_idx;not null"`
+	Session       uint64 `gorm:"uniqueIndex:cdr_natural_key_idx"`
+	NodeId        string `gorm:"uniqueIndex:cdr_natural_key_idx;Index:cdr_node_idx;not null"`
+	Imsi          string `gorm:"uniqueIndex:cdr_natural_key_idx;Index:cdr_imsi_idx;not null"`
 	Policy        string `gorm:"Index:cdr_policy_idx;not null"`
 	ApnName       string
 	Ip            string
-	StartTime     uint64
-	EndTime       uint64
-	LastUpdatedAt uint64
+	StartTime     uint64 `gorm:"uniqueIndex:cdr_natural_key_idx"`
+	EndTime       uint64 `gorm:"uniqueIndex:cdr_natural_key_idx"`
+	LastUpdatedAt uint64 `gorm:"uniqueIndex:cdr_natural_key_idx"`
 	TxBytes       uint64
 	RxBytes       uint64
 	TotalBytes    uint64
