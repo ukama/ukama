@@ -19,6 +19,7 @@ type ListenerConfig struct {
 	Threads             int             // how many go routines run message processor
 	Exchange            string          // exchange
 	Routes              []mb.RoutingKey // routes
+	ConsumerPrefetch    int             // >0 caps unacked messages per consumer (backpressure); 0 = unlimited (default)
 }
 
 type Config struct {

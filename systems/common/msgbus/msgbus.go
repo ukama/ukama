@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ukama/ukama/systems/common/errors"
@@ -21,6 +22,27 @@ import (
 )
 
 const CONNECTION_NOT_INIT_ERR_MSG = "Connection is not initialized"
+
+// Backoff bounds used when a consumer channel/connection dies and we
+// try to re-establish the subscription.
+const (
+	consumerMinBackoff = 1 * time.Second
+	consumerMaxBackoff = 30 * time.Second
+)
+
+// defaultHeartbeat is the AMQP heartbeat interval negotiated with the broker.
+// A dead TCP socket (broker restart, LB/NAT idle timeout, network partition)
+// is detected after ~2 missed heartbeats, which then triggers NotifyClose and
+// the consumer reconnect logic. 10s matches RabbitMQ's own default, so this is
+// a safeguard (e.g. against a broker proposing 0/disabled) rather than a
+// behaviour change.
+const defaultHeartbeat = 10 * time.Second
+
+// ConsumerPrefetchCount, when > 0, sets a per-consumer channel QoS prefetch so
+// the broker will not deliver more than this many unacked messages at once
+// (backpressure). It defaults to 0 (unlimited) to preserve existing throughput
+// behaviour across all services; set it at process start-up to opt in.
+var ConsumerPrefetchCount = 0
 
 // Defines our interface for connecting and consuming messages.
 // Consider using github.com/wagslane/go-rabbitmq instead. It provides similar functionality.
@@ -52,12 +74,34 @@ type Consumer interface {
 	Close()
 }
 
-// Real implementation, encapsulates a pointer to an amqp.Connection
-// Does not reconnect if connection is lost
+// Real implementation, encapsulates a pointer to an amqp.Connection.
+// The consumer path is reconnect-aware: if the underlying channel or
+// connection dies, active subscriptions are automatically re-established
+// (see subscribe/superviseConsumer). The publisher path (m.channel) is
+// unchanged.
 type MsgClient struct {
-	conn    *amqp.Connection
-	log     *logrus.Entry
-	channel *amqp.Channel
+	conn             *amqp.Connection
+	log              *logrus.Entry
+	channel          *amqp.Channel
+	connectionString string
+	connMu           sync.Mutex // guards conn re-dial + consumer channel creation
+	mu               sync.Mutex // guards closed
+	closed           bool       // set once Close() is called; stops reconnection
+}
+
+// subscription captures everything required to (re)establish a consumer so
+// it can be replayed after a connection/channel drop.
+type subscription struct {
+	queueName       string
+	exchangeName    string
+	exchangeType    string
+	declareExchange bool
+	durableQueue    bool
+	autoAck         bool
+	routingKeys     []RoutingKey
+	consumerName    string
+	queueArgs       map[string]interface{}
+	handlerFunc     func(amqp.Delivery, chan<- bool)
 }
 
 // Servcie Config
@@ -103,9 +147,10 @@ func createClient(connectionString string) (*MsgClient, error) {
 	}
 
 	client := &MsgClient{
-		conn:    conn,
-		channel: channel,
-		log:     logrus.WithField("prefix", ""),
+		conn:             conn,
+		channel:          channel,
+		log:              logrus.WithField("prefix", ""),
+		connectionString: connectionString,
 	}
 
 	return client, nil
@@ -116,7 +161,10 @@ func RemovePassFromConnection(connectioStr string) string {
 }
 
 func connectClient(connectionString string) (*amqp.Connection, error) {
-	conn, err := amqp.Dial(fmt.Sprintf("%s/", connectionString))
+	conn, err := amqp.DialConfig(fmt.Sprintf("%s/", connectionString), amqp.Config{
+		Heartbeat: defaultHeartbeat,
+		Locale:    "en_US",
+	})
 	if err != nil {
 		logrus.Errorf("Trying to connect to AMQP compatible broker at: %s", RemovePassFromConnection(connectionString))
 
@@ -131,6 +179,8 @@ func (m *MsgClient) ConnectToBroker(connectionString string) {
 	if connectionString == "" {
 		panic("Cannot initialize connection to broker, connectionString not set.")
 	}
+
+	m.connectionString = connectionString
 
 	conn := false
 	for !conn {
@@ -241,40 +291,159 @@ func (m *MsgClient) Subscribe(queueName string, exchangeName string, exchangeTyp
 
 func (m *MsgClient) SubscribeWithArgs(queueName string, exchangeName string, exchangeType string,
 	routingKeys []RoutingKey, consumerName string, queueArgs map[string]interface{}, handlerFunc func(amqp.Delivery, chan<- bool)) error {
-	ch, err := m.createChannel()
+	return m.subscribe(&subscription{
+		queueName:       queueName,
+		exchangeName:    exchangeName,
+		exchangeType:    exchangeType,
+		declareExchange: true,
+		durableQueue:    false,
+		autoAck:         false,
+		routingKeys:     routingKeys,
+		consumerName:    consumerName,
+		queueArgs:       queueArgs,
+		handlerFunc:     handlerFunc,
+	})
+}
+
+// subscribe establishes the consumer once synchronously (so the caller still
+// receives immediate setup errors, preserving previous behaviour) and then
+// hands the subscription to a supervisor goroutine that re-establishes it if
+// the channel or connection is ever lost.
+func (m *MsgClient) subscribe(sub *subscription) error {
+	closeCh, err := m.establishConsumer(sub)
 	if err != nil {
 		return err
 	}
 
-	err = m.declareExchange(ch, exchangeName, exchangeType)
-	if err != nil {
-		return err
+	go m.superviseConsumer(sub, closeCh)
+	return nil
+}
+
+// newConsumerChannel returns a fresh channel, re-dialling the connection first
+// if it has been lost. It is safe for concurrent use across subscriptions.
+func (m *MsgClient) newConsumerChannel() (*amqp.Channel, error) {
+	if m.isIntentionallyClosed() {
+		return nil, fmt.Errorf("client is closed; not reconnecting consumer")
 	}
 
-	m.log.Debugf("declared Exchange, declaring Queue (%s)", "")
-	queue, err := m.declareQueue(ch, queueName, false, queueArgs)
-	if err != nil {
-		return err
-	}
+	m.connMu.Lock()
+	defer m.connMu.Unlock()
 
-	m.log.Debugf("declared Queue (%d messages, %d consumers), binding to Exchange (key '%s')",
-		queue.Messages, queue.Consumers, exchangeName)
+	if m.conn == nil || m.conn.IsClosed() {
+		if m.connectionString == "" {
+			return nil, fmt.Errorf("connection string not set; cannot (re)connect consumer")
+		}
 
-	//Binding queue with exchange
-	for _, routingKey := range routingKeys {
-		err = m.bindQueue(ch, queue.Name, routingKey, exchangeName)
+		c, err := connectClient(m.connectionString)
 		if err != nil {
-			return err
+			return nil, err
+		}
+		m.conn = c
+	}
+
+	return m.conn.Channel()
+}
+
+// establishConsumer (re)declares the queue, binds routes, starts consuming and
+// returns the channel's close-notification so the supervisor can react to drops.
+func (m *MsgClient) establishConsumer(sub *subscription) (<-chan *amqp.Error, error) {
+	ch, err := m.newConsumerChannel()
+	if err != nil {
+		return nil, err
+	}
+
+	if sub.declareExchange {
+		if err := m.declareExchange(ch, sub.exchangeName, sub.exchangeType); err != nil {
+			_ = ch.Close()
+			return nil, err
 		}
 	}
 
-	msgs, err := m.consume(ch, queue.Name, consumerName, false)
+	queue, err := m.declareQueue(ch, sub.queueName, sub.durableQueue, sub.queueArgs)
 	if err != nil {
-		return err
+		_ = ch.Close()
+		return nil, err
 	}
 
-	go m.consumeLoop(msgs, handlerFunc)
-	return nil
+	m.log.Debugf("declared Queue (%d messages, %d consumers), binding to Exchange (key '%s')",
+		queue.Messages, queue.Consumers, sub.exchangeName)
+
+	for _, routingKey := range sub.routingKeys {
+		if err := m.bindQueue(ch, queue.Name, routingKey, sub.exchangeName); err != nil {
+			_ = ch.Close()
+			return nil, err
+		}
+	}
+
+	if ConsumerPrefetchCount > 0 {
+		if err := ch.Qos(ConsumerPrefetchCount, 0, false); err != nil {
+			_ = ch.Close()
+			return nil, err
+		}
+	}
+
+	msgs, err := m.consume(ch, queue.Name, sub.consumerName, sub.autoAck)
+	if err != nil {
+		_ = ch.Close()
+		return nil, err
+	}
+
+	closeCh := ch.NotifyClose(make(chan *amqp.Error, 1))
+	go m.consumeLoop(msgs, sub.handlerFunc)
+	return closeCh, nil
+}
+
+// superviseConsumer blocks until the consumer channel/connection closes, then
+// re-establishes the subscription with exponential backoff. It exits only when
+// the client is intentionally closed.
+func (m *MsgClient) superviseConsumer(sub *subscription, closeCh <-chan *amqp.Error) {
+	backoff := consumerMinBackoff
+
+	for {
+		amqpErr := <-closeCh
+		if m.isIntentionallyClosed() {
+			return
+		}
+
+		m.log.Warnf("[msgbus] consumer %q on queue %q lost its channel (err: %v). Re-establishing.",
+			sub.consumerName, sub.queueName, amqpErr)
+
+		for {
+			if m.isIntentionallyClosed() {
+				return
+			}
+
+			time.Sleep(backoff)
+
+			newCloseCh, err := m.establishConsumer(sub)
+			if err != nil {
+				backoff = nextBackoff(backoff, consumerMaxBackoff)
+				m.log.Errorf("[msgbus] failed to re-subscribe consumer %q on queue %q: %s. Retrying in %s.",
+					sub.consumerName, sub.queueName, err, backoff)
+				continue
+			}
+
+			m.log.Infof("[msgbus] consumer %q re-subscribed on queue %q routes %v.",
+				sub.consumerName, sub.queueName, sub.routingKeys)
+			backoff = consumerMinBackoff
+			closeCh = newCloseCh
+			break
+		}
+	}
+}
+
+func (m *MsgClient) isIntentionallyClosed() bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.closed
+}
+
+func nextBackoff(cur, max time.Duration) time.Duration {
+	next := cur * 2
+	if next > max {
+		return max
+	}
+	return next
 }
 
 func (m *MsgClient) createChannel() (*amqp.Channel, error) {
@@ -313,34 +482,16 @@ func (m *MsgClient) declareExchange(ch *amqp.Channel, exchangeName string, excha
 // SubscribeToServiceQueue creates a durable queue with a serviceName name and routes messages from an exchange
 // If queue does not exist then it will be created with the `serviceName`
 func (m *MsgClient) SubscribeToServiceQueue(serviceName string, exchangeName string, routingKeys []RoutingKey, consumerId string, handlerFunc func(amqp.Delivery, chan<- bool)) error {
-	ch, err := m.createChannel()
-	if err != nil {
-		return err
-	}
-
-	queue, err := m.declareQueue(ch, serviceName, true, nil)
-	if err != nil {
-		return err
-	}
-
-	m.log.Debugf("declared Queue (%d messages, %d consumers), binding to Exchange (key '%s')",
-		queue.Messages, queue.Consumers, exchangeName)
-
-	//Binding queue with exchange
-	for _, routingKey := range routingKeys {
-		err = m.bindQueue(ch, queue.Name, routingKey, exchangeName)
-		if err != nil {
-			return err
-		}
-	}
-
-	msgs, err := m.consume(ch, queue.Name, consumerId, false)
-	if err != nil {
-		return err
-	}
-
-	go m.consumeLoop(msgs, handlerFunc)
-	return nil
+	return m.subscribe(&subscription{
+		queueName:       serviceName,
+		exchangeName:    exchangeName,
+		declareExchange: false,
+		durableQueue:    true,
+		autoAck:         false,
+		routingKeys:     routingKeys,
+		consumerName:    consumerId,
+		handlerFunc:     handlerFunc,
+	})
 }
 
 func (m *MsgClient) consume(ch *amqp.Channel, queueName string, consumerId string, autoAck bool) (<-chan amqp.Delivery, error) {
@@ -362,27 +513,26 @@ func (m *MsgClient) consume(ch *amqp.Channel, queueName string, consumerId strin
 
 // Subscribe directly to queue
 func (m *MsgClient) SubscribeToQueue(queueName string, consumerName string, handlerFunc func(amqp.Delivery, chan<- bool)) error {
-	ch, err := m.createChannel()
-	if err != nil {
-		return err
-	}
-
-	queue, err := m.declareQueue(ch, queueName, false, nil)
-	if err != nil {
-		return err
-	}
-
-	msgs, err := m.consume(ch, queue.Name, consumerName, true)
-	if err != nil {
-		return err
-	}
-
-	go m.consumeLoop(msgs, handlerFunc)
-	return nil
+	return m.subscribe(&subscription{
+		queueName:       queueName,
+		declareExchange: false,
+		durableQueue:    false,
+		autoAck:         true,
+		routingKeys:     nil,
+		consumerName:    consumerName,
+		handlerFunc:     handlerFunc,
+	})
 }
 
-// Close connection
+// Close connection. Also signals any consumer supervisor goroutines to stop
+// reconnecting.
 func (m *MsgClient) Close() {
+	m.mu.Lock()
+	m.closed = true
+	m.mu.Unlock()
+
+	m.connMu.Lock()
+	defer m.connMu.Unlock()
 	if m.conn != nil && !m.conn.IsClosed() {
 		m.conn.Close()
 	}

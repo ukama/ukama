@@ -106,6 +106,12 @@ func runGrpcServer(d sql.Db) {
 	})
 
 	signalHandler(handler, grpcServer)
+
+	// Opt into per-consumer prefetch backpressure (0 = unlimited/unchanged).
+	// Must be set before consumers subscribe in CreateServiceMsgBusHandler.
+	msgbus.ConsumerPrefetchCount = serviceConfig.ConsumerPrefetch
+	log.Infof("Consumer prefetch count set to %d", msgbus.ConsumerPrefetchCount)
+
 	log.Infof("Message Bus Handler is %+v", handler)
 	err := handler.CreateServiceMsgBusHandler()
 	if err != nil {
