@@ -1,0 +1,18 @@
+profile_type: topology
+items:
+  - name: 1net_1site
+    networks: 1
+    sites_per_network: 1
+    tags: [topology, small]
+  - name: 1net_3sites
+    networks: 1
+    sites_per_network: 3
+    tags: [topology, multisite]
+  - name: 2net_3sites
+    networks: 2
+    sites_per_network: 3
+    tags: [topology, multinetwork]
+  - name: 5net_10sites
+    networks: 5
+    sites_per_network: 2
+    tags: [topology, scale]

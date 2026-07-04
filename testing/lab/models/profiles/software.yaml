@@ -1,0 +1,22 @@
+profile_type: software
+items:
+  - name: no_update
+    mode: none
+    expect: unchanged
+    tags: [software, none]
+  - name: same_version
+    mode: same_version
+    expect: idempotent
+    tags: [software, idempotent]
+  - name: new_version
+    mode: new_version
+    expect: updated
+    tags: [software, update]
+  - name: invalid_version
+    mode: invalid_version
+    expect: failure
+    tags: [software, negative]
+  - name: rollback
+    mode: rollback
+    expect: recovered
+    tags: [software, rollback]

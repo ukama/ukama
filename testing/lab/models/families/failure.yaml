@@ -1,0 +1,9 @@
+family: failure
+description: Negative and dirty-state cases.
+priority: p2
+flows: [bad_input, wrong_network, missing_dependency, duplicate_request, partial_failure]
+topologies: [1net_1site, 2net_3sites]
+scales: [tiny, small]
+runtime: [normal, node_offline]
+failures: [missing_sim, missing_package, wrong_network, duplicate_request, partial_failure]
+verification: [bff_mutation, read_model, dashboard]

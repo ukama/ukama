@@ -1,0 +1,9 @@
+family: node_ops
+description: Node restart, offline/degraded behavior, release, and recovery scenarios.
+priority: p1
+flows: [restart, offline, recover, release, retire]
+topologies: [1net_1site, 1net_3sites, 2net_3sites]
+scales: [tiny, small]
+runtime: [normal, node_restart, node_offline]
+failures: [none, partial_failure]
+verification: [read_model, runtime, dashboard]

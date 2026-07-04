@@ -1,0 +1,26 @@
+profile_type: failure
+items:
+  - name: none
+    mode: none
+    expect: success
+    tags: [failure, none]
+  - name: missing_sim
+    mode: missing_sim
+    expect: failure
+    tags: [failure, sim]
+  - name: missing_package
+    mode: missing_package
+    expect: failure
+    tags: [failure, package]
+  - name: wrong_network
+    mode: wrong_network
+    expect: failure
+    tags: [failure, network]
+  - name: duplicate_request
+    mode: duplicate_request
+    expect: idempotent
+    tags: [failure, retry]
+  - name: partial_failure
+    mode: partial_failure
+    expect: no_dirty_state
+    tags: [failure, partial]

@@ -1,0 +1,9 @@
+family: usage
+description: Usage generation and rollup scenarios.
+priority: p1
+flows: [traffic, profile_traffic, quota_rollup]
+topologies: [1net_1site, 1net_3sites, 2net_3sites]
+scales: [tiny, small, medium]
+runtime: [normal, node_restart]
+failures: [none]
+verification: [runtime, read_model, dashboard]

@@ -1,0 +1,9 @@
+family: subscriber
+description: Subscriber/customer creation, update, deactivation, and retry scenarios.
+priority: p1
+flows: [create, update, allocate_sim, deactivate, reactivate]
+topologies: [1net_1site, 2net_3sites]
+scales: [tiny, small, medium]
+runtime: [normal]
+failures: [none, missing_sim, missing_package, duplicate_request, partial_failure]
+verification: [bff_mutation, read_model, dashboard]

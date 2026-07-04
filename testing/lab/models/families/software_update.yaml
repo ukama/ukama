@@ -1,0 +1,10 @@
+family: software_update
+description: Node software update, version, retry, and rollback scenarios.
+priority: p1
+flows: [update_tower, update_amplifier, update_controller]
+topologies: [1net_1site, 1net_3sites]
+scales: [tiny, small]
+runtime: [normal, node_offline]
+failures: [none, partial_failure]
+software: [same_version, new_version, invalid_version, rollback]
+verification: [read_model, dashboard, audit]

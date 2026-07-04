@@ -1,0 +1,9 @@
+family: package
+description: Package creation, assignment, top-up, expiry, and archive scenarios.
+priority: p1
+flows: [create, add_to_sim, remove_from_sim, topup, archive, expire]
+topologies: [1net_1site, 2net_3sites]
+scales: [tiny, small, medium]
+runtime: [normal]
+failures: [none, missing_package, wrong_network, duplicate_request]
+verification: [bff_mutation, read_model, dashboard]

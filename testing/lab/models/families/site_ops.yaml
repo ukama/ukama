@@ -1,0 +1,9 @@
+family: site_ops
+description: Site service/radio controls and site lifecycle scenarios.
+priority: p1
+flows: [restart_site, service_off, service_on, radio_off, radio_on, deactivate]
+topologies: [1net_1site, 1net_3sites]
+scales: [tiny, small]
+runtime: [normal, service_off, radio_off]
+failures: [none]
+verification: [runtime, read_model, dashboard]

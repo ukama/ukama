@@ -1,0 +1,9 @@
+family: sim_pool
+description: SIM upload, pool, allocation, and exhaustion scenarios.
+priority: p1
+flows: [upload, allocate, allocate_specific, release, duplicate_upload]
+topologies: [1net_1site, 2net_3sites]
+scales: [tiny, small, medium, large]
+runtime: [normal]
+failures: [none, missing_sim, duplicate_request, wrong_network]
+verification: [bff_mutation, read_model, dashboard]

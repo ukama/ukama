@@ -1,0 +1,20 @@
+profile_type: verification
+items:
+  - name: bff_mutation
+    checks: [backend_count]
+    tags: [verify, bff]
+  - name: read_model
+    checks: [list_contains, status_equals]
+    tags: [verify, read_model]
+  - name: dashboard
+    checks: [dashboard_loads]
+    tags: [verify, dashboard]
+  - name: runtime
+    checks: [traffic_allowed, traffic_blocked]
+    tags: [verify, runtime]
+  - name: history
+    checks: [history_preserved]
+    tags: [verify, history]
+  - name: audit
+    checks: [audit_event_exists]
+    tags: [verify, audit]

@@ -1,0 +1,9 @@
+family: lifecycle
+description: Suspend, deactivate, archive, release, retire, and restore semantics.
+priority: p1
+flows: [sim_suspend, sim_deactivate, package_archive, subscriber_deactivate, node_release, node_retire, site_deactivate]
+topologies: [1net_1site, 1net_3sites, 2net_3sites]
+scales: [tiny, small, medium]
+runtime: [normal, service_off, node_offline]
+failures: [none, wrong_network]
+verification: [read_model, dashboard, runtime, history, audit]

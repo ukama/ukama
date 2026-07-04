@@ -1,0 +1,9 @@
+family: smoke
+description: Core end-to-end sanity scenarios.
+priority: p0
+flows: [network_create, site_create, sim_allocate, ue_traffic]
+topologies: [1net_1site]
+scales: [tiny, small]
+runtime: [normal]
+failures: [none]
+verification: [bff_mutation, read_model, runtime]

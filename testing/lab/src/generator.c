@@ -18,6 +18,8 @@
 
 #define GEN_MAX_ACTIONS 64
 #define GEN_MAX_LIST    16
+#define GEN_MAX_MATRIX_ITEMS 128
+#define GEN_MAX_MATRIX_FILES 32
 
 typedef struct {
     char model[ULAB_MAX_REF];
@@ -52,8 +54,55 @@ typedef struct {
     size_t action_count;
 } model_def_t;
 
+
+typedef struct {
+    char name[ULAB_MAX_REF];
+} matrix_item_t;
+
+typedef struct {
+    char name[ULAB_MAX_REF];
+    char kind[ULAB_MAX_REF];
+    matrix_item_t items[GEN_MAX_MATRIX_ITEMS];
+    size_t item_count;
+} matrix_profile_t;
+
+typedef struct {
+    char name[ULAB_MAX_REF];
+    char priority[ULAB_MAX_REF];
+    char flows[GEN_MAX_LIST][ULAB_MAX_REF];
+    size_t flow_count;
+    char topologies[GEN_MAX_LIST][ULAB_MAX_REF];
+    size_t topology_count;
+    char scales[GEN_MAX_LIST][ULAB_MAX_REF];
+    size_t scale_count;
+    char runtime[GEN_MAX_LIST][ULAB_MAX_REF];
+    size_t runtime_count;
+    char failures[GEN_MAX_LIST][ULAB_MAX_REF];
+    size_t failure_count;
+    char software[GEN_MAX_LIST][ULAB_MAX_REF];
+    size_t software_count;
+    char verification[GEN_MAX_LIST][ULAB_MAX_REF];
+    size_t verification_count;
+} matrix_family_t;
+
+typedef struct {
+    matrix_profile_t profiles[GEN_MAX_MATRIX_FILES];
+    size_t profile_count;
+    matrix_family_t families[GEN_MAX_MATRIX_FILES];
+    size_t family_count;
+} matrix_def_t;
+
 static const char *default_entities[] = {
     "sim", "package", "subscriber", "node"
+};
+
+static const char *default_profiles[] = {
+    "topology", "scale", "runtime", "failure", "software", "verification"
+};
+
+static const char *default_families[] = {
+    "smoke", "usage", "sim_pool", "package", "subscriber", "lifecycle",
+    "node_ops", "site_ops", "software_update", "failure", "dashboard"
 };
 
 static void usage(void) {
@@ -570,6 +619,237 @@ static int generate_action(const gen_opts_t *opts, const model_def_t *m,
     return ULAB_OK;
 }
 
+
+static int matrix_path(char *out, size_t n, const gen_opts_t *opts,
+                       const char *subdir, const char *name) {
+    int rc;
+
+    rc = snprintf(out, n, "%s/%s/%s.yaml", opts->models_dir, subdir, name);
+    return rc < 0 || (size_t)rc >= n ? ULAB_ERR : ULAB_OK;
+}
+
+static matrix_profile_t *new_profile(matrix_def_t *matrix,
+                                     const char *name) {
+    matrix_profile_t *p;
+
+    if (matrix->profile_count >= GEN_MAX_MATRIX_FILES) {
+        return NULL;
+    }
+    p = &matrix->profiles[matrix->profile_count++];
+    memset(p, 0, sizeof(*p));
+    if (ulab_copy(p->name, sizeof(p->name), name)) {
+        return NULL;
+    }
+    return p;
+}
+
+static matrix_family_t *new_family(matrix_def_t *matrix,
+                                   const char *name) {
+    matrix_family_t *f;
+
+    if (matrix->family_count >= GEN_MAX_MATRIX_FILES) {
+        return NULL;
+    }
+    f = &matrix->families[matrix->family_count++];
+    memset(f, 0, sizeof(*f));
+    if (ulab_copy(f->name, sizeof(f->name), name)) {
+        return NULL;
+    }
+    ulab_copy(f->priority, sizeof(f->priority), "p2");
+    return f;
+}
+
+static int profile_add_item(matrix_profile_t *profile, const char *name) {
+    if (profile->item_count >= GEN_MAX_MATRIX_ITEMS) {
+        return ULAB_ERR;
+    }
+    if (ulab_copy(profile->items[profile->item_count].name,
+                  sizeof(profile->items[profile->item_count].name), name)) {
+        return ULAB_ERR;
+    }
+    profile->item_count++;
+    return ULAB_OK;
+}
+
+static int load_profile(const gen_opts_t *opts, const char *name,
+                        matrix_def_t *matrix) {
+    char path[ULAB_MAX_PATH];
+    char line[ULAB_MAX_LINE];
+    FILE *fp;
+    matrix_profile_t *profile;
+
+    if (matrix_path(path, sizeof(path), opts, "profiles", name)) {
+        return ULAB_ERR;
+    }
+    fp = fopen(path, "r");
+    if (fp == NULL) {
+        fprintf(stderr, "missing matrix profile: %s\n", path);
+        return ULAB_ERR;
+    }
+    profile = new_profile(matrix, name);
+    if (profile == NULL) {
+        fclose(fp);
+        return ULAB_ERR;
+    }
+
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        char *p;
+        char *val;
+
+        p = ulab_trim(line);
+        if (*p == '\0' || *p == '#') {
+            continue;
+        }
+        if (ulab_starts(p, "profile_type:")) {
+            val = ulab_trim(strchr(p, ':') + 1);
+            if (ulab_copy(profile->kind, sizeof(profile->kind), val)) {
+                fclose(fp);
+                return ULAB_ERR;
+            }
+        } else if (ulab_starts(p, "- name:")) {
+            val = ulab_trim(strchr(p, ':') + 1);
+            if (profile_add_item(profile, val)) {
+                fclose(fp);
+                return ULAB_ERR;
+            }
+        }
+    }
+
+    fclose(fp);
+
+    if (profile->kind[0] == '\0' || profile->item_count == 0) {
+        fprintf(stderr, "invalid matrix profile: %s\n", path);
+        return ULAB_ERR;
+    }
+    return ULAB_OK;
+}
+
+static int parse_family_field(matrix_family_t *family,
+                              const char *key,
+                              char *val) {
+    if (ulab_streq(key, "priority")) {
+        return ulab_copy(family->priority, sizeof(family->priority), val);
+    }
+    if (ulab_streq(key, "flows")) {
+        return parse_list(family->flows, &family->flow_count, val);
+    }
+    if (ulab_streq(key, "topologies")) {
+        return parse_list(family->topologies, &family->topology_count, val);
+    }
+    if (ulab_streq(key, "scales")) {
+        return parse_list(family->scales, &family->scale_count, val);
+    }
+    if (ulab_streq(key, "runtime")) {
+        return parse_list(family->runtime, &family->runtime_count, val);
+    }
+    if (ulab_streq(key, "failures")) {
+        return parse_list(family->failures, &family->failure_count, val);
+    }
+    if (ulab_streq(key, "software")) {
+        return parse_list(family->software, &family->software_count, val);
+    }
+    if (ulab_streq(key, "verification")) {
+        return parse_list(family->verification, &family->verification_count, val);
+    }
+    return ULAB_OK;
+}
+
+static int load_family(const gen_opts_t *opts, const char *name,
+                       matrix_def_t *matrix) {
+    char path[ULAB_MAX_PATH];
+    char line[ULAB_MAX_LINE];
+    FILE *fp;
+    matrix_family_t *family;
+
+    if (matrix_path(path, sizeof(path), opts, "families", name)) {
+        return ULAB_ERR;
+    }
+    fp = fopen(path, "r");
+    if (fp == NULL) {
+        fprintf(stderr, "missing scenario family: %s\n", path);
+        return ULAB_ERR;
+    }
+    family = NULL;
+
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        char *p;
+        char *key;
+        char *val;
+
+        p = ulab_trim(line);
+        if (*p == '\0' || *p == '#') {
+            continue;
+        }
+        if (strchr(p, ':') == NULL) {
+            continue;
+        }
+        key = p;
+        val = strchr(p, ':');
+        *val++ = '\0';
+        key = ulab_trim(key);
+        val = ulab_trim(val);
+
+        if (ulab_streq(key, "family")) {
+            family = new_family(matrix, val);
+            if (family == NULL) {
+                fclose(fp);
+                return ULAB_ERR;
+            }
+        } else if (family != NULL) {
+            if (parse_family_field(family, key, val)) {
+                fclose(fp);
+                return ULAB_ERR;
+            }
+        }
+    }
+
+    fclose(fp);
+
+    if (family == NULL || family->flow_count == 0 ||
+        family->topology_count == 0 || family->scale_count == 0 ||
+        family->runtime_count == 0 || family->failure_count == 0 ||
+        family->verification_count == 0) {
+        fprintf(stderr, "invalid scenario family: %s\n", path);
+        return ULAB_ERR;
+    }
+    return ULAB_OK;
+}
+
+static int load_matrix_models(const gen_opts_t *opts, matrix_def_t *matrix) {
+    size_t i;
+
+    memset(matrix, 0, sizeof(*matrix));
+    for (i = 0; i < sizeof(default_profiles) / sizeof(default_profiles[0]); i++) {
+        if (load_profile(opts, default_profiles[i], matrix)) {
+            return ULAB_ERR;
+        }
+    }
+    for (i = 0; i < sizeof(default_families) / sizeof(default_families[0]); i++) {
+        if (load_family(opts, default_families[i], matrix)) {
+            return ULAB_ERR;
+        }
+    }
+    return ULAB_OK;
+}
+
+static void write_matrix_index(FILE *index, const matrix_def_t *matrix) {
+    size_t i;
+
+    fprintf(index, "matrix:\n");
+    fprintf(index, "  profiles:\n");
+    for (i = 0; i < matrix->profile_count; i++) {
+        fprintf(index, "    - name: %s\n", matrix->profiles[i].name);
+        fprintf(index, "      kind: %s\n", matrix->profiles[i].kind);
+        fprintf(index, "      count: %zu\n", matrix->profiles[i].item_count);
+    }
+    fprintf(index, "  families:\n");
+    for (i = 0; i < matrix->family_count; i++) {
+        fprintf(index, "    - name: %s\n", matrix->families[i].name);
+        fprintf(index, "      priority: %s\n", matrix->families[i].priority);
+        fprintf(index, "      flows: %zu\n", matrix->families[i].flow_count);
+    }
+}
+
 static int generate_model(const gen_opts_t *opts, const char *entity,
                           FILE *index) {
     model_def_t model;
@@ -590,6 +870,7 @@ static int generate_model(const gen_opts_t *opts, const char *entity,
 
 int generator_run(int argc, char **argv) {
     gen_opts_t opts;
+    matrix_def_t matrix;
     char index_path[ULAB_MAX_PATH];
     FILE *index;
     size_t i;
@@ -598,6 +879,12 @@ int generator_run(int argc, char **argv) {
         usage();
         return ULAB_EUSAGE;
     }
+
+    if (load_matrix_models(&opts, &matrix)) {
+        return ULAB_ERR;
+    }
+    printf("loaded matrix profiles=%zu families=%zu\n", matrix.profile_count,
+           matrix.family_count);
 
     if (ulab_mkdir_p(opts.out_dir)) {
         fprintf(stderr, "unable to create output dir: %s\n", opts.out_dir);
@@ -612,6 +899,7 @@ int generator_run(int argc, char **argv) {
         fprintf(stderr, "unable to write: %s\n", index_path);
         return ULAB_ERR;
     }
+    write_matrix_index(index, &matrix);
     fprintf(index, "generated_scenarios:\n");
 
     if (!ulab_streq(opts.model, "all")) {
