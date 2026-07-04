@@ -412,6 +412,46 @@ static void write_checks(FILE *f, const model_def_t *m,
     }
 }
 
+
+static void append_piece(char *dst, size_t n, const char *piece) {
+    size_t used;
+    size_t i;
+
+    if (dst == NULL || n == 0 || piece == NULL) {
+        return;
+    }
+    used = strlen(dst);
+    if (used >= n) {
+        dst[n - 1] = '\0';
+        return;
+    }
+    for (i = 0; piece[i] != '\0' && used + 1 < n; i++) {
+        dst[used++] = piece[i];
+    }
+    dst[used] = '\0';
+}
+
+static void build_scenario_name(char *out, size_t n,
+                                const char *entity, const char *action,
+                                const char *case_name,
+                                const char *from_state) {
+    const char *state;
+
+    if (out == NULL || n == 0) {
+        return;
+    }
+
+    state = from_state && from_state[0] ? from_state : "default";
+    out[0] = '\0';
+    append_piece(out, n, entity);
+    append_piece(out, n, "-");
+    append_piece(out, n, action);
+    append_piece(out, n, "-");
+    append_piece(out, n, case_name);
+    append_piece(out, n, "-");
+    append_piece(out, n, state);
+}
+
 static int write_scenario(const gen_opts_t *opts, const model_def_t *m,
                           const action_rule_t *a, const char *case_name,
                           const char *from_state, int blocked, FILE *index) {
@@ -428,8 +468,8 @@ static int write_scenario(const gen_opts_t *opts, const model_def_t *m,
         return ULAB_ERR;
     }
 
-    snprintf(name, sizeof(name), "%s-%s-%s-%s", m->entity, a->name,
-             case_name, from_state && from_state[0] ? from_state : "default");
+    build_scenario_name(name, sizeof(name), m->entity, a->name, case_name,
+                        from_state);
     if (path_yaml(path, sizeof(path), dir, name)) {
         return ULAB_ERR;
     }
