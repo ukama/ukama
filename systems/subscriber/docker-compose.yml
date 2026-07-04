@@ -135,6 +135,7 @@ services:
    - ENV_SYSTEM_DNS=api-gateway-subscriber
    - ENV_DNS_SERVER=false
    - ENV_SYSTEM_PORT=8080
+   - ENV_SYSTEM_API_GW_URL=http://api-gateway-subscriber:8080
    - ENV_SYSTEM_CERT=This-is-a-certificate
    - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
    - ENV_INIT_SYSTEM_PORT=8071
@@ -191,6 +192,7 @@ services:
    - ENV_SYSTEM_DNS=subscriber-auth
    - ENV_DNS_SERVER=false
    - ENV_SYSTEM_PORT=4423
+   - ENV_SYSTEM_API_GW_URL=http://subscriber-auth:4423
    - ENV_SYSTEM_CERT=This-is-a-certificate
    - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
    - ENV_INIT_SYSTEM_PORT=8071

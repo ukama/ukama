@@ -34,6 +34,12 @@ int serialize_request(Request *request, json_t **json) {
 		json_object_set_new(*json, JSON_API_GW_IP,    json_string(reg->apiGwIp));
 		json_object_set_new(*json, JSON_API_GW_PORT,  json_integer(atoi(reg->apiGwPort)));
 		json_object_set_new(*json, JSON_CERTIFICATE,  json_string(reg->cert));
+
+		/* Optional: only sent when a stable api-gw URL was configured. */
+		if (reg->apiGwUrl && strlen(reg->apiGwUrl) > 0) {
+			json_object_set_new(*json, JSON_API_GW_URL, json_string(reg->apiGwUrl));
+		}
+
 		json_object_set_new(*json, JSON_NODE_GW_IP,   json_string(reg->nodeGwIp));
 		json_object_set_new(*json, JSON_NODE_GW_PORT, json_integer(atoi(reg->nodeGwPort)));
 

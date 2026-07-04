@@ -125,6 +125,30 @@ func GetHostUrl(ic InitClient, host string, org *string) (*url.URL, error) {
 	return CreateHTTPURL(*sysIpInfo, API_GW_INTERFACE)
 }
 
+// GetHostAddress resolves the api-gw address for a host the same way as
+// GetHostUrl, but returns the registered api-gw URL when the system has one,
+// otherwise it falls back to the raw ApiGwIp:ApiGwPort. The returned address
+// can therefore be either a URL (a stable hostname the network layer
+// re-resolves to the current IP, so cached values do not break on IP changes)
+// or an IP:port, matching GetHostUrl's behavior. The registered URL is expected
+// to already include its scheme (e.g. http://...), so none is added here.
+func GetHostAddress(ic InitClient, host string, org *string) (*url.URL, error) {
+	log.Infof("Getting api-gw address from initclient matching host %s", host)
+
+	sysIpInfo, err := ic.GetSystemFromHost(host, org)
+	if err != nil {
+		log.Errorf("Initclient GetSystem failure. error: %s", err)
+
+		return nil, fmt.Errorf("initclient GetSystem failure: %w", err)
+	}
+
+	if strings.TrimSpace(sysIpInfo.ApiGwUrl) != "" {
+		return parseApiGwUrl(sysIpInfo.SystemName, sysIpInfo.OrgName, sysIpInfo.ApiGwUrl)
+	}
+
+	return CreateHTTPURL(*sysIpInfo, API_GW_INTERFACE)
+}
+
 func GetNodeGwHostURL(ic InitClient, host string, org *string) (*url.URL, error) {
 	log.Infof("Getting url from initclient matching host %s", host)
 
@@ -147,6 +171,26 @@ func CreateHTTPURL(s SystemIPInfo, interfaceType string) (*url.URL, error) {
 		return createURL(s.SystemName, s.OrgName, s.NodeGwIp, HTTP_PROTOCOL, s.NodeGwPort)
 	}
 	return createURL(s.SystemName, s.OrgName, s.ApiGwIp, HTTP_PROTOCOL, s.ApiGwPort)
+}
+
+// parseApiGwUrl builds a URL from a pre-registered api-gw URL string. The URL is
+// expected to already include its scheme (e.g. http://...), so none is added.
+func parseApiGwUrl(name, org, rawURL string) (*url.URL, error) {
+	log.Infof("Creating url from registered api-gw url %q for system %s and org %s",
+		rawURL, name, org)
+
+	rawURL = strings.TrimSpace(rawURL)
+
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return nil, fmt.Errorf("error while parsing api-gw url %q: %w", rawURL, err)
+	}
+
+	if u.Scheme == "" || u.Host == "" {
+		return nil, fmt.Errorf("error while parsing api-gw url %q: scheme and host are required", rawURL)
+	}
+
+	return u, nil
 }
 
 func createURL(name, org, ip, protocol string, port uint) (*url.URL, error) {

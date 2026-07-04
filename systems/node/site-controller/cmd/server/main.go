@@ -106,7 +106,7 @@ func runGrpcServer(gormdb sql.Db) {
 	)
 	reconciler.NewWorker(r, siteRepo, svcConf.ReconcileInterval).Start(context.Background())
 
-	regUrl, err := ic.GetHostUrl(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode)),
+	regUrl, err := ic.GetHostAddress(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode)),
 		ic.CreateHostString(svcConf.OrgName, registrySystemName), &svcConf.OrgName)
 	if err != nil {
 		log.Errorf("Failed to resolve registry address: %v", err)

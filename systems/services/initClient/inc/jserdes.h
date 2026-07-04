@@ -18,6 +18,7 @@
 #define JSON_CERTIFICATE  "certificate"
 #define JSON_API_GW_IP    "apiGwIp"
 #define JSON_API_GW_PORT  "apiGwPort"
+#define JSON_API_GW_URL   "apiGwUrl"
 #define JSON_NODE_GW_IP   "nodeGwIp"
 #define JSON_NODE_GW_PORT "nodeGwPort"
 #define JSON_HEALTH       "apiGwHealth"
