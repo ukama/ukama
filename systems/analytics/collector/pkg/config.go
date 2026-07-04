@@ -22,10 +22,12 @@ type Config struct {
 	Timeout          time.Duration    `default:"3s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	PushGateway      string           `default:"http://localhost:9091"`
+	Currency         string           `default:"usd"`
 	Service          *uconf.Service
 	Http             HttpServices
 	OrgName          string
 	OrgId            string
+	OwnerId          string
 	RollupScheduler  RollupScheduler
 }
 
@@ -36,13 +38,8 @@ type RollupScheduler struct {
 }
 
 type HttpServices struct {
-	RegistryClient   string `default:"api-gateway-registry:8080"`
-	SubscriberClient string `default:"api-gateway-subscriber:8080"`
-	DataplanClient   string `default:"api-gateway-dataplan:8080"`
-	MetricsClient    string `default:"api-gateway-metrics:8080"`
-	NodeClient       string `default:"api-gateway-node:8080"`
-	InventoryClient  string `default:"api-gateway-inventory:8080"`
-	BillingClient    string `default:"api-gateway-billing:8080"`
+	InitClient      string `default:"api-gateway-init:8080"`
+	InventoryClient string `default:"api-gateway-inventory:8080"`
 }
 
 func NewConfig(name string) *Config {

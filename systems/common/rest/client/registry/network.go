@@ -54,6 +54,7 @@ type AddNetworkRequest struct {
 type NetworkClient interface {
 	Get(Id string) (*NetworkInfo, error)
 	GetDefault() (*NetworkInfo, error)
+	GetAll() ([]*NetworkInfo, error)
 	Add(req AddNetworkRequest) (*NetworkInfo, error)
 }
 
@@ -148,4 +149,24 @@ func (n *networkClient) GetDefault() (*NetworkInfo, error) {
 	log.Infof("Network Info: %+v", ntwk.NetworkInfo)
 
 	return ntwk.NetworkInfo, nil
+}
+
+func (n *networkClient) GetAll() ([]*NetworkInfo, error) {
+	log.Debugf("Getting all networks")
+	networks := []*NetworkInfo{}
+	resp, err := n.R.Get(n.u.String() + NetworkEndpoint)
+	if err != nil {
+		log.Errorf("GetAllNetworks failure. error: %s", err.Error())
+		return nil, fmt.Errorf("get all networks failure: %w", err)
+	}
+
+	err = json.Unmarshal(resp.Body(), &networks)
+	if err != nil {
+		return nil, fmt.Errorf("networks deserialization failure: %w", err)
+	}
+
+	log.Infof("Networks: %+v", networks)
+
+	return networks, nil
+
 }

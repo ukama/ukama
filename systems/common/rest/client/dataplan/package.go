@@ -89,8 +89,13 @@ type AddPackageRequest struct {
 	Networks      []string `json:"networks"`
 }
 
+type Packages struct {
+	Packages []*PackageInfo `json:"packages"`
+}
+
 type PackageClient interface {
 	Get(Id string) (*PackageInfo, error)
+	GetAll() (Packages, error)
 	Add(req AddPackageRequest) (*PackageInfo, error)
 }
 
@@ -166,4 +171,26 @@ func (p *packageClient) Get(id string) (*PackageInfo, error) {
 	log.Infof("Package Info: %+v", pkg.PackageInfo)
 
 	return pkg.PackageInfo, nil
+}
+
+func (p *packageClient) GetAll() (Packages, error) {
+	log.Debugf("Getting all packages")
+
+	pkgs := Packages{}
+
+	resp, err := p.R.Get(p.u.String() + PackageEndpoint)
+	if err != nil {
+		log.Errorf("GetAllPackages failure. error: %s", err.Error())
+		return Packages{}, fmt.Errorf("GetAllPackages failure: %w", err)
+	}
+
+	err = json.Unmarshal(resp.Body(), &pkgs)
+	if err != nil {
+		log.Tracef("Failed to deserialize packages. Error message is: %s", err.Error())
+		return Packages{}, fmt.Errorf("packages deserialization failure: %w", err)
+	}
+
+	log.Infof("Packages: %+v", pkgs)
+
+	return pkgs, nil
 }
