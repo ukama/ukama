@@ -784,30 +784,30 @@ static int runtime_all_ues(const scenario_t *scenario,
 
 typedef enum {
     CHECK_RUN_ALL = 0,
-    CHECK_RUN_NON_USAGE,
-    CHECK_RUN_USAGE
+    CHECK_RUN_LIVE_RUNTIME,
+    CHECK_RUN_FINAL
 } check_run_mode_t;
 
-static int is_usage_check(const check_spec_t *check) {
+static int is_live_runtime_check(const check_spec_t *check) {
     return check != NULL &&
-        (check->type == CHECK_USAGE_PER_SIM ||
-         check->type == CHECK_USAGE_SAMPLE);
+        (check->type == CHECK_TRAFFIC_ALLOWED ||
+         check->type == CHECK_TRAFFIC_BLOCKED);
 }
 
 static int check_mode_includes(const check_spec_t *check,
                                check_run_mode_t mode) {
-    int usage;
+    int live_runtime;
 
     if (mode == CHECK_RUN_ALL) {
         return 1;
     }
 
-    usage = is_usage_check(check);
-    if (mode == CHECK_RUN_USAGE) {
-        return usage;
+    live_runtime = is_live_runtime_check(check);
+    if (mode == CHECK_RUN_LIVE_RUNTIME) {
+        return live_runtime;
     }
 
-    return !usage;
+    return !live_runtime;
 }
 
 static int run_checks_mode(check_ctx_t *ctx,
@@ -841,10 +841,11 @@ static int run_checks_mode(check_ctx_t *ctx,
     return failed ? ULAB_ERR : ULAB_OK;
 }
 
-static int run_deferred_usage_checks(check_ctx_t *ctx,
-                                     const scenario_t *scenario,
-                                     report_t *report,
-                                     ulab_error_t *err) {
+static int run_deferred_checks(check_ctx_t *ctx,
+                               const scenario_t *scenario,
+                               report_t *report,
+                               check_run_mode_t mode,
+                               ulab_error_t *err) {
     size_t i;
     int rc;
 
@@ -856,7 +857,7 @@ static int run_deferred_usage_checks(check_ctx_t *ctx,
         rc = run_checks_mode(ctx,
                              scenario->phases[i].checks,
                              scenario->phases[i].check_count,
-                             report, CHECK_RUN_USAGE, err);
+                             report, mode, err);
         if (rc != ULAB_OK) {
             return rc;
         }
@@ -864,7 +865,7 @@ static int run_deferred_usage_checks(check_ctx_t *ctx,
 
     return run_checks_mode(ctx, scenario->final_checks,
                            scenario->final_check_count,
-                           report, CHECK_RUN_USAGE, err);
+                           report, mode, err);
 }
 
 static unsigned int cdr_wait_seconds(void) {
@@ -928,7 +929,6 @@ static int run_phase(scenario_t *scenario,
                      ulab_error_t *err) {
 
     event_ctx_t event_ctx;
-    check_ctx_t check_ctx;
     size_t i;
     int rc;
 
@@ -945,11 +945,7 @@ static int run_phase(scenario_t *scenario,
         }
     }
 
-    init_check_ctx(&check_ctx, scenario, world, model, bff, runtime);
-    rc = run_checks_mode(&check_ctx, phase->checks, phase->check_count,
-                         report, CHECK_RUN_NON_USAGE, err);
-
-    return rc;
+    return ULAB_OK;
 }
 
 static void write_world_artifact(const world_t *world,
@@ -1169,9 +1165,9 @@ int runner_validate(const runner_opts_t *opts) {
     }
 
     init_check_ctx(&check_ctx, scenario, &world, &model, &bff, &runtime);
-    rc = run_checks_mode(&check_ctx, scenario->final_checks,
-                         scenario->final_check_count, &report,
-                         CHECK_RUN_NON_USAGE, &err);
+
+    rc = run_deferred_checks(&check_ctx, scenario, &report,
+                             CHECK_RUN_LIVE_RUNTIME, &err);
     if (rc != ULAB_OK) {
         goto done;
     }
@@ -1179,7 +1175,7 @@ int runner_validate(const runner_opts_t *opts) {
     if (world.ue_count > 0) {
         unsigned int wait_sec;
 
-        ulab_status("UE", "detach sessions before CDR/usage checks");
+        ulab_status("UE", "detach sessions before validation checks");
         rc = runtime_detach_ues(&runtime, &world, &err);
         if (rc != ULAB_OK) {
             rc = ULAB_ERUNTIME;
@@ -1201,8 +1197,9 @@ int runner_validate(const runner_opts_t *opts) {
         diagnostics_collected = 1;
     }
 
-    ulab_status("USAGE", "run deferred CDR-backed checks");
-    rc = run_deferred_usage_checks(&check_ctx, scenario, &report, &err);
+    ulab_status("VERIFY", "run checks");
+    rc = run_deferred_checks(&check_ctx, scenario, &report,
+                             CHECK_RUN_FINAL, &err);
 
     write_model_artifact(&model, runDir);
 
