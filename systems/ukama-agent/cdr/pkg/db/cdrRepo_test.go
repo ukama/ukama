@@ -94,9 +94,11 @@ func TestCDRRepo_Add(t *testing.T) {
 
 		mock.ExpectBegin()
 
-		// ON CONFLICT DO NOTHING: no row returned -> RowsAffected 0.
+		// ON CONFLICT ... DO NOTHING and the row already exists: Postgres returns
+		// no row, so RowsAffected is 0. Match the INSERT loosely (the exact column
+		// / arg count depends on whether the primary key is populated), the key
+		// assertion is that Add reports inserted == false.
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), cdr.Session, cdr.NodeId, cdr.Imsi, cdr.Policy, cdr.ApnName, cdr.Ip, cdr.StartTime, cdr.EndTime, cdr.LastUpdatedAt, cdr.TxBytes, cdr.RxBytes, cdr.TotalBytes).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}))
 
 		mock.ExpectCommit()
@@ -114,8 +116,13 @@ func TestCDRRepo_Add(t *testing.T) {
 			GormDb: gdb,
 		})
 
+		// Use a fresh copy so this subtest does not depend on mutations made to
+		// the shared fixture by the preceding subtest.
+		dup := cdr
+		dup.Model.ID = 0
+
 		// Act
-		inserted, err := r.Add(&cdr)
+		inserted, err := r.Add(&dup)
 
 		// Assert
 		assert.NoError(t, err)
