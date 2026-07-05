@@ -17,26 +17,23 @@ import (
 
 	"github.com/ukama/ukama/systems/common/errors"
 
+	amqp091 "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
+	rabbitmq "github.com/wagslane/go-rabbitmq"
 )
 
 const CONNECTION_NOT_INIT_ERR_MSG = "Connection is not initialized"
 
-// Backoff bounds used when a consumer channel/connection dies and we
-// try to re-establish the subscription.
-const (
-	consumerMinBackoff = 1 * time.Second
-	consumerMaxBackoff = 30 * time.Second
-)
-
 // defaultHeartbeat is the AMQP heartbeat interval negotiated with the broker.
-// A dead TCP socket (broker restart, LB/NAT idle timeout, network partition)
-// is detected after ~2 missed heartbeats, which then triggers NotifyClose and
-// the consumer reconnect logic. 10s matches RabbitMQ's own default, so this is
-// a safeguard (e.g. against a broker proposing 0/disabled) rather than a
-// behaviour change.
+// Heartbeats keep the TCP connection active (so k8s conntrack / LB idle timers
+// don't silently drop it) and let the client detect a dead peer. The wagslane
+// consumer below auto-reconnects and re-subscribes when that happens.
 const defaultHeartbeat = 10 * time.Second
+
+// handlerAckTimeout bounds how long we wait for a handler to signal completion
+// on its done channel before requeueing the message.
+const handlerAckTimeout = 30 * time.Second
 
 // ConsumerPrefetchCount, when > 0, sets a per-consumer channel QoS prefetch so
 // the broker will not deliver more than this many unacked messages at once
@@ -74,19 +71,24 @@ type Consumer interface {
 	Close()
 }
 
-// Real implementation, encapsulates a pointer to an amqp.Connection.
-// The consumer path is reconnect-aware: if the underlying channel or
-// connection dies, active subscriptions are automatically re-established
-// (see subscribe/superviseConsumer). The publisher path (m.channel) is
-// unchanged.
+// Real implementation. The consumer path uses the wagslane/go-rabbitmq
+// transport (see subscribe/ensureConn), which auto-reconnects and re-subscribes
+// on channel/connection loss or server-side consumer cancellation. The legacy
+// publisher path (m.channel, streadway) is unchanged.
 type MsgClient struct {
-	conn             *amqp.Connection
+	conn             *amqp.Connection // streadway connection, used by the (legacy) publisher methods
 	log              *logrus.Entry
 	channel          *amqp.Channel
 	connectionString string
-	connMu           sync.Mutex // guards conn re-dial + consumer channel creation
-	mu               sync.Mutex // guards closed
-	closed           bool       // set once Close() is called; stops reconnection
+	connMu           sync.Mutex // guards wConn creation
+	mu               sync.Mutex // guards closed + consumers
+	closed           bool       // set once Close() is called
+
+	// Consumer transport. Uses github.com/wagslane/go-rabbitmq, which manages
+	// heartbeats, dead-connection detection and automatic re-subscription of
+	// consumers on reconnect (the same library the publisher/qpub uses).
+	wConn     *rabbitmq.Conn
+	consumers []*rabbitmq.Consumer
 }
 
 // subscription captures everything required to (re)establish a consumer so
@@ -126,7 +128,12 @@ type RPCResponse struct {
 // creates a message consumer and initializes connection
 
 func NewConsumerClient(connectionString string) (Consumer, error) {
-	return createClient(connectionString)
+	// Consumer clients use the wagslane transport, created lazily on the first
+	// Subscribe call. No eager streadway dial is needed here.
+	return &MsgClient{
+		connectionString: connectionString,
+		log:              logrus.WithField("prefix", ""),
+	}, nil
 }
 
 // NewPublisherClient creates a publisher and opens connection and channel
@@ -305,129 +312,121 @@ func (m *MsgClient) SubscribeWithArgs(queueName string, exchangeName string, exc
 	})
 }
 
-// subscribe establishes the consumer once synchronously (so the caller still
-// receives immediate setup errors, preserving previous behaviour) and then
-// hands the subscription to a supervisor goroutine that re-establishes it if
-// the channel or connection is ever lost.
+// subscribe creates a wagslane consumer for the subscription and runs it. The
+// wagslane Conn transparently reconnects and re-subscribes the consumer on any
+// channel/connection loss OR server-side consumer cancellation, so no custom
+// reconnect supervisor is needed here.
 func (m *MsgClient) subscribe(sub *subscription) error {
-	closeCh, err := m.establishConsumer(sub)
+	conn, err := m.ensureConn()
 	if err != nil {
 		return err
 	}
 
-	go m.superviseConsumer(sub, closeCh)
-	return nil
-}
-
-// newConsumerChannel returns a fresh channel, re-dialling the connection first
-// if it has been lost. It is safe for concurrent use across subscriptions.
-func (m *MsgClient) newConsumerChannel() (*amqp.Channel, error) {
-	if m.isIntentionallyClosed() {
-		return nil, fmt.Errorf("client is closed; not reconnecting consumer")
+	opts := []func(*rabbitmq.ConsumerOptions){
+		rabbitmq.WithConsumerOptionsConsumerName(sub.consumerName),
 	}
 
-	m.connMu.Lock()
-	defer m.connMu.Unlock()
-
-	if m.conn == nil || m.conn.IsClosed() {
-		if m.connectionString == "" {
-			return nil, fmt.Errorf("connection string not set; cannot (re)connect consumer")
-		}
-
-		c, err := connectClient(m.connectionString)
-		if err != nil {
-			return nil, err
-		}
-		m.conn = c
+	if sub.durableQueue {
+		opts = append(opts, rabbitmq.WithConsumerOptionsQueueDurable)
 	}
 
-	return m.conn.Channel()
-}
-
-// establishConsumer (re)declares the queue, binds routes, starts consuming and
-// returns the channel's close-notification so the supervisor can react to drops.
-func (m *MsgClient) establishConsumer(sub *subscription) (<-chan *amqp.Error, error) {
-	ch, err := m.newConsumerChannel()
-	if err != nil {
-		return nil, err
+	if sub.exchangeName != "" {
+		opts = append(opts, rabbitmq.WithConsumerOptionsExchangeName(sub.exchangeName))
 	}
 
+	// Only declare the exchange when the caller asked for it. SubscribeToServiceQueue
+	// binds to the pre-existing amq.topic and must NOT redeclare it.
 	if sub.declareExchange {
-		if err := m.declareExchange(ch, sub.exchangeName, sub.exchangeType); err != nil {
-			_ = ch.Close()
-			return nil, err
+		opts = append(opts, rabbitmq.WithConsumerOptionsExchangeDeclare, rabbitmq.WithConsumerOptionsExchangeDurable)
+		if sub.exchangeType != "" {
+			opts = append(opts, rabbitmq.WithConsumerOptionsExchangeKind(sub.exchangeType))
 		}
 	}
 
-	queue, err := m.declareQueue(ch, sub.queueName, sub.durableQueue, sub.queueArgs)
-	if err != nil {
-		_ = ch.Close()
-		return nil, err
+	for _, rk := range sub.routingKeys {
+		opts = append(opts, rabbitmq.WithConsumerOptionsRoutingKey(string(rk)))
 	}
 
-	m.log.Debugf("declared Queue (%d messages, %d consumers), binding to Exchange (key '%s')",
-		queue.Messages, queue.Consumers, sub.exchangeName)
+	if sub.queueArgs != nil {
+		opts = append(opts, rabbitmq.WithConsumerOptionsQueueArgs(rabbitmq.Table(sub.queueArgs)))
+	}
 
-	for _, routingKey := range sub.routingKeys {
-		if err := m.bindQueue(ch, queue.Name, routingKey, sub.exchangeName); err != nil {
-			_ = ch.Close()
-			return nil, err
-		}
+	if sub.autoAck {
+		opts = append(opts, rabbitmq.WithConsumerOptionsConsumerAutoAck(true))
 	}
 
 	if ConsumerPrefetchCount > 0 {
-		if err := ch.Qos(ConsumerPrefetchCount, 0, false); err != nil {
-			_ = ch.Close()
-			return nil, err
-		}
+		opts = append(opts, rabbitmq.WithConsumerOptionsQOSPrefetch(ConsumerPrefetchCount))
 	}
 
-	msgs, err := m.consume(ch, queue.Name, sub.consumerName, sub.autoAck)
+	consumer, err := rabbitmq.NewConsumer(conn, sub.queueName, opts...)
 	if err != nil {
-		_ = ch.Close()
+		return err
+	}
+
+	m.mu.Lock()
+	m.consumers = append(m.consumers, consumer)
+	m.mu.Unlock()
+
+	// Run blocks and keeps consuming across reconnects until the consumer is
+	// closed, so it must run in its own goroutine.
+	go func() {
+		if err := consumer.Run(m.wagslaneHandler(sub)); err != nil && !m.isIntentionallyClosed() {
+			m.log.Errorf("[msgbus] consumer %q on queue %q stopped: %s", sub.consumerName, sub.queueName, err)
+		}
+	}()
+
+	m.log.Infof("[msgbus] consumer %q subscribed on queue %q routes %v", sub.consumerName, sub.queueName, sub.routingKeys)
+	return nil
+}
+
+// ensureConn lazily creates the shared wagslane connection (heartbeat enabled,
+// auto-reconnecting).
+func (m *MsgClient) ensureConn() (*rabbitmq.Conn, error) {
+	m.connMu.Lock()
+	defer m.connMu.Unlock()
+
+	if m.wConn != nil {
+		return m.wConn, nil
+	}
+
+	if m.connectionString == "" {
+		return nil, fmt.Errorf("connection string not set; cannot connect consumer")
+	}
+
+	conn, err := rabbitmq.NewConn(
+		m.connectionString,
+		rabbitmq.WithConnectionOptionsLogging,
+		rabbitmq.WithConnectionOptionsConfig(rabbitmq.Config{
+			Heartbeat: defaultHeartbeat,
+			Locale:    "en_US",
+		}),
+	)
+	if err != nil {
 		return nil, err
 	}
 
-	closeCh := ch.NotifyClose(make(chan *amqp.Error, 1))
-	go m.consumeLoop(msgs, sub.handlerFunc)
-	return closeCh, nil
+	m.wConn = conn
+	return conn, nil
 }
 
-// superviseConsumer blocks until the consumer channel/connection closes, then
-// re-establishes the subscription with exponential backoff. It exits only when
-// the client is intentionally closed.
-func (m *MsgClient) superviseConsumer(sub *subscription, closeCh <-chan *amqp.Error) {
-	backoff := consumerMinBackoff
+// wagslaneHandler bridges a wagslane delivery to the existing handlerFunc
+// signature (streadway amqp.Delivery + done channel) and maps the outcome to a
+// wagslane Action. When autoAck is set the returned Action is ignored.
+func (m *MsgClient) wagslaneHandler(sub *subscription) rabbitmq.Handler {
+	return func(d rabbitmq.Delivery) rabbitmq.Action {
+		done := make(chan bool, 1)
+		sub.handlerFunc(toStreadwayDelivery(d.Delivery), done)
 
-	for {
-		amqpErr := <-closeCh
-		if m.isIntentionallyClosed() {
-			return
-		}
-
-		m.log.Warnf("[msgbus] consumer %q on queue %q lost its channel (err: %v). Re-establishing.",
-			sub.consumerName, sub.queueName, amqpErr)
-
-		for {
-			if m.isIntentionallyClosed() {
-				return
+		select {
+		case ok := <-done:
+			if ok {
+				return rabbitmq.Ack
 			}
-
-			time.Sleep(backoff)
-
-			newCloseCh, err := m.establishConsumer(sub)
-			if err != nil {
-				backoff = nextBackoff(backoff, consumerMaxBackoff)
-				m.log.Errorf("[msgbus] failed to re-subscribe consumer %q on queue %q: %s. Retrying in %s.",
-					sub.consumerName, sub.queueName, err, backoff)
-				continue
-			}
-
-			m.log.Infof("[msgbus] consumer %q re-subscribed on queue %q routes %v.",
-				sub.consumerName, sub.queueName, sub.routingKeys)
-			backoff = consumerMinBackoff
-			closeCh = newCloseCh
-			break
+			return rabbitmq.NackRequeue
+		case <-time.After(handlerAckTimeout):
+			m.log.Errorf("[msgbus] handler timed out for queue %q key %q; requeueing", sub.queueName, d.RoutingKey)
+			return rabbitmq.NackRequeue
 		}
 	}
 }
@@ -438,12 +437,62 @@ func (m *MsgClient) isIntentionallyClosed() bool {
 	return m.closed
 }
 
-func nextBackoff(cur, max time.Duration) time.Duration {
-	next := cur * 2
-	if next > max {
-		return max
+// toStreadwayDelivery converts an amqp091 delivery to the streadway
+// amqp.Delivery type used by existing handlerFunc callers. The returned value
+// has no Acknowledger (acking is handled by the returned wagslane Action), so
+// callers must not call Ack/Nack on it directly.
+func toStreadwayDelivery(d amqp091.Delivery) amqp.Delivery {
+	return amqp.Delivery{
+		Headers:         convHeadersToStreadway(d.Headers),
+		ContentType:     d.ContentType,
+		ContentEncoding: d.ContentEncoding,
+		DeliveryMode:    d.DeliveryMode,
+		Priority:        d.Priority,
+		CorrelationId:   d.CorrelationId,
+		ReplyTo:         d.ReplyTo,
+		Expiration:      d.Expiration,
+		MessageId:       d.MessageId,
+		Timestamp:       d.Timestamp,
+		Type:            d.Type,
+		UserId:          d.UserId,
+		AppId:           d.AppId,
+		ConsumerTag:     d.ConsumerTag,
+		MessageCount:    d.MessageCount,
+		DeliveryTag:     d.DeliveryTag,
+		Redelivered:     d.Redelivered,
+		Exchange:        d.Exchange,
+		RoutingKey:      d.RoutingKey,
+		Body:            d.Body,
 	}
-	return next
+}
+
+// convHeadersToStreadway deep-converts amqp091 header tables (including nested
+// tables/arrays such as x-death) into streadway amqp.Table so that consumers
+// which type-assert to amqp.Table (e.g. node-feeder retry counting) keep working.
+func convHeadersToStreadway(in amqp091.Table) amqp.Table {
+	if in == nil {
+		return nil
+	}
+	out := make(amqp.Table, len(in))
+	for k, v := range in {
+		out[k] = convHeaderValue(v)
+	}
+	return out
+}
+
+func convHeaderValue(v interface{}) interface{} {
+	switch t := v.(type) {
+	case amqp091.Table:
+		return convHeadersToStreadway(t)
+	case []interface{}:
+		s := make([]interface{}, len(t))
+		for i, e := range t {
+			s[i] = convHeaderValue(e)
+		}
+		return s
+	default:
+		return v
+	}
 }
 
 func (m *MsgClient) createChannel() (*amqp.Channel, error) {
@@ -529,16 +578,33 @@ func (m *MsgClient) SubscribeToQueue(queueName string, consumerName string, hand
 func (m *MsgClient) Close() {
 	m.mu.Lock()
 	m.closed = true
+	consumers := m.consumers
+	m.consumers = nil
 	m.mu.Unlock()
+
+	// Stop wagslane consumers first, then the shared connection.
+	for _, c := range consumers {
+		c.Close()
+	}
 
 	m.connMu.Lock()
 	defer m.connMu.Unlock()
+	if m.wConn != nil {
+		_ = m.wConn.Close()
+		m.wConn = nil
+	}
+	// streadway connection (only present for publisher clients).
 	if m.conn != nil && !m.conn.IsClosed() {
 		m.conn.Close()
 	}
 }
 
 func (m *MsgClient) IsClosed() bool {
+	// Consumer clients have no streadway connection; report the intentional
+	// close flag instead (the wagslane Conn reconnects on its own otherwise).
+	if m.conn == nil {
+		return m.isIntentionallyClosed()
+	}
 	return m.conn.IsClosed()
 }
 

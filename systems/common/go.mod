@@ -25,6 +25,7 @@ require (
 	github.com/num30/config v0.1.3
 	github.com/penglongli/gin-metrics v0.1.10
 	github.com/prometheus/client_golang v1.19.1
+	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.19.0
@@ -102,7 +103,6 @@ require (
 	github.com/prometheus/client_model v0.5.0 // indirect
 	github.com/prometheus/common v0.48.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
-	github.com/rabbitmq/amqp091-go v1.10.0 // indirect
 	github.com/rs/zerolog v1.29.0 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
