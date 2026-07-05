@@ -1595,6 +1595,17 @@ static int bff_cleanup_call(bff_client_t *c,
             return ULAB_OK;
         }
 
+        if (ulab_streq(op, "toggleSimStatus") &&
+            strstr(err.msg, "inactive is invalid for deactivation") != NULL) {
+            if (c != NULL && c->logf != NULL) {
+                fprintf(c->logf,
+                        "cleanup ignore: %s: sim already inactive\n",
+                        op);
+                fflush(c->logf);
+            }
+            return ULAB_OK;
+        }
+
         if (c != NULL && c->logf != NULL) {
             fprintf(c->logf, "cleanup warning: %s: %s\n", op, err.msg);
             fflush(c->logf);
@@ -1682,14 +1693,6 @@ static int cleanup_sim_packages_from_bff(bff_client_t *c,
     json_decref(root);
 
     for (i = 0; i < count; i++) {
-        n = snprintf(query, sizeof(query),
-                     "mutation { setInactivePackageForSim(data: {"
-                     "packageId: \"%s\", simId: \"%s\"}) { packageId } }",
-                     package_ids[i], ue->bff_id);
-        if (n >= 0 && (size_t)n < sizeof(query) &&
-            bff_cleanup_call(c, "setInactivePackageForSim", query)) {
-            (*failures)++;
-        }
 
         n = snprintf(query, sizeof(query),
                      "mutation { removePackageForSim(data: {"
