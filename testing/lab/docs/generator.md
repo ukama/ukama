@@ -1,63 +1,49 @@
-# Scenario generator
+# Phase-6 generator model
 
-The generator creates normal scenario YAML files from simple product model files.
-Generated scenarios run through the same `validate` path as handwritten scenarios.
+Phase-6 generated scenarios must be meaningful product cases, not blind Cartesian matrix combinations.
 
-## Command
+## Topologies
 
-```sh
-ukama-lab generate --model sim --mode smoke --out scenarios/generated
-```
+Use only these topology names:
 
-Options:
+- `simple`: 1 network, 1 site, 1 tower + 1 amplifier + 1 controller, 1 UE, 1 data package, 1GB traffic per UE.
+- `medium`: 1 network, 3 sites, 1 tower + 1 amplifier + 1 controller per site, 30 UEs per tower, 5 data packages, 2GB traffic per UE.
+- `large`: 1 network, 10 sites, 1 tower + 1 amplifier + 1 controller per site, 100 UEs per tower, 10 data packages, 5GB traffic per UE.
 
-- `--model <name|all>`: `org`, `network`, `site`, `node`, `sim`, `subscriber`, `package`, or `all`
-- `--mode <name|all>`: `smoke`, `transition`, `negative`, `pairwise`, `full`, or `all`
-- `--models <dir>`: model directory, default `models`
-- `--templates <dir>`: template directory, default `templates/generated`
-- `--out <dir>`: output directory, default `scenarios/generated`
+## Families
 
-## Models in this phase
-
-- `org`
-- `network`
-- `site`
-- `node`
-- `sim`
-- `subscriber`
-- `package`
-
-Later models: member/invite, payment/billing, notification/alarm.
-
-## Modes in this phase
+Use product family names only:
 
 - `smoke`
-- `transition`
-- `negative`
-- `pairwise`
-- `full`
+- `backend`
+- `usage`
+- `sim_pool`
+- `package`
+- `subscriber`
+- `lifecycle`
+- `node_ops`
+- `site_ops`
+- `software_update`
+- `failure`
+- `scale`
 
-Later modes: fuzz and replay.
+Do not use `dashboard` for Phase-6 backend validation. UI dashboard validation is separate and later.
 
-## Templates in this phase
+## Cases
 
-Implemented:
+Each family defines explicit named `cases`. A generated scenario must come from a real case name.
 
-- `state-transition`
-- `blocked-transition`
-- `lifecycle-cleanup`
-- `permission-check`
-- `retry-idempotency`
-- `partial-failure`
-- `wrong-org-network`
-- `empty-state`
-- `boundary-values`
-- `backend-failure`
-- `runtime-effect`
-- `read-model-check`
+Example:
 
-Skipped for now:
+```yaml
+family: sim_pool
+cases:
+  - name: sim_pool_empty_blocks_allocation
+    topology: simple
+    priority: p1
+    tags: [sim_pool, negative]
+    events: [allocate_sim]
+    checks: [expected_failure, sim_pool_count_zero]
+```
 
-- `relationship-check`
-- `dashboard-view`
-- `UI-handoff`
+The old compatibility fields (`flows`, `topologies`, `scales`, `runtime`, `failures`, `verification`) remain only until the generator is switched to case-based generation.

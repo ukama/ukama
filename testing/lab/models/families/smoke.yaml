@@ -1,9 +1,29 @@
 family: smoke
-description: Core end-to-end sanity scenarios.
+description: Small end-to-end sanity scenarios.
 priority: p0
-flows: [network_create, site_create, sim_allocate, ue_traffic]
-topologies: [1net_1site]
-scales: [tiny, small]
+flows: [smoke_simple_ue_traffic, smoke_backend_counts, smoke_node_restart_recovers]
+topologies: [simple]
+scales: [simple]
 runtime: [normal]
 failures: [none]
-verification: [bff_mutation, read_model, runtime]
+verification: [backend]
+
+cases:
+  - name: smoke_simple_ue_traffic
+    topology: simple
+    priority: p0
+    tags: [smoke, runtime, usage]
+    events: [traffic]
+    checks: [ue_attached, usage_per_sim, balance_non_negative]
+  - name: smoke_backend_counts
+    topology: simple
+    priority: p0
+    tags: [smoke, backend]
+    events: [check]
+    checks: [backend_count_networks, backend_count_sites, backend_count_nodes, backend_count_sims]
+  - name: smoke_node_restart_recovers
+    topology: simple
+    priority: p0
+    tags: [smoke, node_ops, restart]
+    events: [restart_nodes, traffic]
+    checks: [node_ready, traffic_allowed, usage_per_sim]

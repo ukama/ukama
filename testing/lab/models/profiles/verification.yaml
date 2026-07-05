@@ -1,20 +1,20 @@
 profile_type: verification
 items:
-  - name: bff_mutation
-    checks: [backend_count]
-    tags: [verify, bff]
-  - name: read_model
-    checks: [list_contains, status_equals]
-    tags: [verify, read_model]
-  - name: dashboard
-    checks: [dashboard_loads]
-    tags: [verify, dashboard]
+  - name: backend
+    checks: [backend_count, list_contains, status_equals]
+    tags: [verify, backend]
   - name: runtime
-    checks: [traffic_allowed, traffic_blocked]
+    checks: [traffic_allowed, traffic_blocked, node_health_ok]
     tags: [verify, runtime]
+  - name: usage
+    checks: [usage_per_sim, balance_non_negative]
+    tags: [verify, usage]
   - name: history
-    checks: [history_preserved]
+    checks: [history_preserved, relationship_exists, relationship_ended]
     tags: [verify, history]
   - name: audit
     checks: [audit_event_exists]
     tags: [verify, audit]
+  - name: software_version
+    checks: [node_version_equals, node_health_ok]
+    tags: [verify, software]

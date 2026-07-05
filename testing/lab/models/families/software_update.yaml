@@ -1,10 +1,63 @@
 family: software_update
-description: Node software update, version, retry, and rollback scenarios.
+description: Node software update, version, rollback, and retry behavior.
 priority: p1
-flows: [update_tower, update_amplifier, update_controller]
-topologies: [1net_1site, 1net_3sites]
-scales: [tiny, small]
-runtime: [normal, node_offline]
-failures: [none, partial_failure]
-software: [same_version, new_version, invalid_version, rollback]
-verification: [read_model, dashboard, audit]
+flows: [software_update_tower_success, software_update_amplifier_success, software_update_controller_success, software_update_same_version_idempotent, software_update_invalid_version_fails, software_update_offline_node_fails, software_update_failure_rolls_back, software_update_restart_required_health_ok]
+topologies: [simple]
+scales: [simple]
+runtime: [normal]
+failures: [none]
+software: [no_update]
+verification: [software_version]
+
+cases:
+  - name: software_update_tower_success
+    topology: simple
+    priority: p1
+    tags: [software_update, tower]
+    events: [software_update_tower]
+    checks: [node_version_equals, node_health_ok]
+  - name: software_update_amplifier_success
+    topology: simple
+    priority: p1
+    tags: [software_update, amplifier]
+    events: [software_update_amplifier]
+    checks: [node_version_equals, node_health_ok]
+  - name: software_update_controller_success
+    topology: simple
+    priority: p1
+    tags: [software_update, controller]
+    events: [software_update_controller]
+    checks: [node_version_equals, node_health_ok]
+  - name: software_update_same_version_idempotent
+    topology: simple
+    priority: p1
+    tags: [software_update, idempotent]
+    events: [software_update_same_version]
+    checks: [node_version_unchanged, node_health_ok]
+  - name: software_update_invalid_version_fails
+    topology: simple
+    priority: p1
+    tags: [software_update, negative]
+    events: [software_update_invalid_version]
+    checks: [expected_failure, node_version_unchanged, node_health_ok]
+  - name: software_update_offline_node_fails
+    topology: simple
+    priority: p1
+    tags: [software_update, offline, negative]
+    setup: [node_offline]
+    events: [software_update_tower]
+    checks: [expected_failure, node_version_unchanged]
+  - name: software_update_failure_rolls_back
+    topology: simple
+    priority: p2
+    tags: [software_update, rollback]
+    setup: [update_failure]
+    events: [software_update_tower]
+    checks: [rollback_completed, node_health_ok]
+  - name: software_update_restart_required_health_ok
+    topology: simple
+    priority: p1
+    tags: [software_update, restart]
+    setup: [restart_required]
+    events: [software_update_tower]
+    checks: [node_restarted, node_version_equals, node_health_ok]

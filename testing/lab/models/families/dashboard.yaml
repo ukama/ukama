@@ -1,9 +1,0 @@
-family: dashboard
-description: Console/BFF read-model and dashboard coverage scenarios.
-priority: p1
-flows: [network_overview, sites_view, node_view, subscribers_view, commerce_view, inventory_view]
-topologies: [1net_1site, 1net_3sites, 2net_3sites]
-scales: [tiny, small, medium]
-runtime: [normal]
-failures: [none, partial_failure]
-verification: [dashboard, read_model]

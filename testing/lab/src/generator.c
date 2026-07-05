@@ -109,8 +109,8 @@ static const char *default_profiles[] = {
 };
 
 static const char *default_families[] = {
-    "smoke", "usage", "sim_pool", "package", "subscriber", "lifecycle",
-    "node_ops", "site_ops", "software_update", "failure", "dashboard"
+    "smoke", "backend", "usage", "sim_pool", "package", "subscriber",
+    "lifecycle", "node_ops", "site_ops", "software_update", "failure", "scale"
 };
 
 static void usage(void) {
@@ -994,12 +994,12 @@ static int is_runtime_supported(const char *runtime) {
 }
 
 static int is_verification_supported(const char *verification) {
-    return ulab_streq(verification, "bff_mutation") ||
-           ulab_streq(verification, "read_model") ||
-           ulab_streq(verification, "dashboard") ||
+    return ulab_streq(verification, "backend") ||
            ulab_streq(verification, "runtime") ||
+           ulab_streq(verification, "usage") ||
            ulab_streq(verification, "history") ||
-           ulab_streq(verification, "audit");
+           ulab_streq(verification, "audit") ||
+           ulab_streq(verification, "software_version");
 }
 
 static int is_software_supported(const char *software) {
@@ -1072,7 +1072,7 @@ static const char *matrix_entity_for_family(const char *family) {
     if (ulab_streq(family, "package")) return "package";
     if (ulab_streq(family, "subscriber")) return "subscriber";
     if (ulab_streq(family, "site_ops")) return "site";
-    if (ulab_streq(family, "dashboard")) return "dashboard";
+    if (ulab_streq(family, "backend")) return "backend";
     return "sim";
 }
 
@@ -1179,9 +1179,9 @@ static void write_matrix_checks(FILE *f, const char *family,
                 "        view: sims\n"
                 "        ref: ue-000001\n");
     }
-    if (!wip && ulab_streq(verification, "dashboard")) {
+    if (!wip && ulab_streq(verification, "__backend_removed__")) {
         fprintf(f,
-                "      - type: dashboard_section_ok\n"
+                "      - type: backend_count\n"
                 "        section: network_overview\n");
     }
     if (!wip && ulab_streq(verification, "history")) {

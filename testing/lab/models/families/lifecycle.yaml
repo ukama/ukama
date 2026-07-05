@@ -1,9 +1,54 @@
 family: lifecycle
-description: Suspend, deactivate, archive, release, retire, and restore semantics.
+description: Suspend, deactivate, archive, release, retire, restore, and history behavior.
 priority: p1
-flows: [sim_suspend, sim_deactivate, package_archive, subscriber_deactivate, node_release, node_retire, site_deactivate]
-topologies: [1net_1site, 1net_3sites, 2net_3sites]
-scales: [tiny, small, medium]
-runtime: [normal, service_off, node_offline]
-failures: [none, wrong_network]
-verification: [read_model, dashboard, runtime, history, audit]
+flows: [lifecycle_sim_suspend_blocks_traffic, lifecycle_sim_reactivate_restores_traffic, lifecycle_subscriber_deactivate_blocks_sims, lifecycle_package_archive_preserves_history, lifecycle_node_release_preserves_site_history, lifecycle_node_retire_blocks_assignment, lifecycle_site_deactivate_blocks_service]
+topologies: [simple]
+scales: [simple]
+runtime: [normal]
+failures: [none]
+verification: [backend]
+
+cases:
+  - name: lifecycle_sim_suspend_blocks_traffic
+    topology: simple
+    priority: p1
+    tags: [lifecycle, sim, suspend, runtime]
+    events: [set_sim_inactive, traffic]
+    checks: [sim_inactive, traffic_blocked, history_preserved]
+  - name: lifecycle_sim_reactivate_restores_traffic
+    topology: simple
+    priority: p1
+    tags: [lifecycle, sim, reactivate, runtime]
+    setup: [sim_inactive]
+    events: [set_sim_active, traffic]
+    checks: [sim_active, traffic_allowed]
+  - name: lifecycle_subscriber_deactivate_blocks_sims
+    topology: simple
+    priority: p1
+    tags: [lifecycle, subscriber, deactivate]
+    events: [deactivate_subscriber]
+    checks: [subscriber_inactive, sim_inactive_or_blocked, history_preserved]
+  - name: lifecycle_package_archive_preserves_history
+    topology: simple
+    priority: p1
+    tags: [lifecycle, package, archive]
+    events: [archive_package]
+    checks: [package_hidden_from_assignment, package_history_preserved]
+  - name: lifecycle_node_release_preserves_site_history
+    topology: simple
+    priority: p1
+    tags: [lifecycle, node, release]
+    events: [release_node_from_site]
+    checks: [node_available_or_released, site_history_preserved]
+  - name: lifecycle_node_retire_blocks_assignment
+    topology: simple
+    priority: p1
+    tags: [lifecycle, node, retire]
+    events: [retire_node]
+    checks: [node_retired, assignment_blocked, history_preserved]
+  - name: lifecycle_site_deactivate_blocks_service
+    topology: medium
+    priority: p2
+    tags: [lifecycle, site, deactivate]
+    events: [deactivate_site, traffic]
+    checks: [site_inactive, traffic_blocked_for_site, node_history_preserved]

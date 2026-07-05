@@ -14,9 +14,17 @@ items:
     tags: [software, update]
   - name: invalid_version
     mode: invalid_version
-    expect: failure
+    expect: clean_failure
     tags: [software, negative]
+  - name: update_failure
+    mode: update_failure
+    expect: rollback_or_safe_failure
+    tags: [software, failure]
   - name: rollback
     mode: rollback
     expect: recovered
     tags: [software, rollback]
+  - name: restart_required
+    mode: restart_required
+    expect: reboot_and_healthy
+    tags: [software, restart]

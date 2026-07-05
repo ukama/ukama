@@ -1,9 +1,41 @@
 family: usage
-description: Usage generation and rollup scenarios.
+description: Usage generation, quota, and rollup scenarios.
 priority: p1
-flows: [traffic, profile_traffic, quota_rollup]
-topologies: [1net_1site, 1net_3sites, 2net_3sites]
-scales: [tiny, small, medium]
-runtime: [normal, node_restart]
+flows: [usage_simple_one_ue_1gb, usage_medium_three_site_rollup, usage_medium_profile_mix, usage_large_scale_5gb_per_ue, usage_node_restart_preserves_rollup]
+topologies: [simple]
+scales: [simple]
+runtime: [normal]
 failures: [none]
-verification: [runtime, read_model, dashboard]
+verification: [usage]
+
+cases:
+  - name: usage_simple_one_ue_1gb
+    topology: simple
+    priority: p1
+    tags: [usage, runtime, simple]
+    events: [traffic_1gb]
+    checks: [usage_per_sim, balance_non_negative]
+  - name: usage_medium_three_site_rollup
+    topology: medium
+    priority: p1
+    tags: [usage, rollup, medium]
+    events: [traffic_2gb_per_ue]
+    checks: [usage_per_sim, site_usage_rollup, network_usage_rollup]
+  - name: usage_medium_profile_mix
+    topology: medium
+    priority: p1
+    tags: [usage, profile, medium]
+    events: [traffic_by_profile]
+    checks: [usage_per_profile, package_balance_non_negative]
+  - name: usage_large_scale_5gb_per_ue
+    topology: large
+    priority: p2
+    tags: [usage, scale, large]
+    events: [traffic_5gb_per_ue]
+    checks: [usage_per_sim, network_usage_rollup, balance_non_negative]
+  - name: usage_node_restart_preserves_rollup
+    topology: medium
+    priority: p1
+    tags: [usage, restart, recovery]
+    events: [traffic_2gb_per_ue, restart_tower, traffic_2gb_per_ue]
+    checks: [node_ready, usage_accumulates, no_double_count]

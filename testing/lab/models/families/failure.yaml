@@ -1,9 +1,59 @@
 family: failure
-description: Negative and dirty-state cases.
+description: Negative, dirty-state, retry, stale state, and partial failure behavior.
 priority: p2
-flows: [bad_input, wrong_network, missing_dependency, duplicate_request, partial_failure]
-topologies: [1net_1site, 2net_3sites]
-scales: [tiny, small]
-runtime: [normal, node_offline]
-failures: [missing_sim, missing_package, wrong_network, duplicate_request, partial_failure]
-verification: [bff_mutation, read_model, dashboard]
+flows: [failure_missing_sim_clean, failure_missing_package_clean, failure_wrong_network_clean, failure_duplicate_request_idempotent, failure_partial_backend_no_dirty_state, failure_retry_after_partial_setup, failure_stale_package_assignment_fails]
+topologies: [simple]
+scales: [simple]
+runtime: [normal]
+failures: [none]
+verification: [backend]
+
+cases:
+  - name: failure_missing_sim_clean
+    topology: simple
+    priority: p1
+    tags: [failure, sim_pool, negative]
+    setup: [sim_pool_empty]
+    events: [allocate_sim]
+    checks: [expected_failure, no_dirty_state]
+  - name: failure_missing_package_clean
+    topology: simple
+    priority: p1
+    tags: [failure, package, negative]
+    setup: [no_package]
+    events: [allocate_sim]
+    checks: [expected_failure, no_dirty_state]
+  - name: failure_wrong_network_clean
+    topology: medium
+    priority: p1
+    tags: [failure, wrong_network]
+    setup: [wrong_network_object]
+    events: [add_package_to_sim]
+    checks: [expected_failure, no_cross_network_leak]
+  - name: failure_duplicate_request_idempotent
+    topology: simple
+    priority: p1
+    tags: [failure, duplicate, idempotency]
+    events: [repeat_same_mutation]
+    checks: [no_duplicate, backend_counts_stable]
+  - name: failure_partial_backend_no_dirty_state
+    topology: simple
+    priority: p2
+    tags: [failure, partial]
+    setup: [fail_after_first_mutation]
+    events: [create_customer_flow]
+    checks: [expected_failure, no_orphan_subscriber, no_half_assigned_sim]
+  - name: failure_retry_after_partial_setup
+    topology: simple
+    priority: p2
+    tags: [failure, retry]
+    setup: [partial_setup_exists]
+    events: [retry_create_customer_flow]
+    checks: [no_duplicate, final_state_consistent]
+  - name: failure_stale_package_assignment_fails
+    topology: simple
+    priority: p2
+    tags: [failure, stale_state]
+    setup: [package_archived_after_dialog_open]
+    events: [add_package_to_sim]
+    checks: [expected_failure, active_package_count_unchanged]

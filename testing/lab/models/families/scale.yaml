@@ -1,0 +1,35 @@
+family: scale
+description: Explicit large/medium scale scenarios only.
+priority: p2
+flows: [scale_medium_90_ues_usage, scale_large_1000_ues_usage, scale_large_1000_sim_pool, scale_large_10_sites_backend_counts]
+topologies: [simple]
+scales: [simple]
+runtime: [normal]
+failures: [none]
+verification: [usage]
+
+cases:
+  - name: scale_medium_90_ues_usage
+    topology: medium
+    priority: p2
+    tags: [scale, medium, usage]
+    events: [traffic_2gb_per_ue]
+    checks: [usage_per_sim, network_usage_rollup]
+  - name: scale_large_1000_ues_usage
+    topology: large
+    priority: p2
+    tags: [scale, large, usage]
+    events: [traffic_5gb_per_ue]
+    checks: [usage_per_sim, network_usage_rollup, balance_non_negative]
+  - name: scale_large_1000_sim_pool
+    topology: large
+    priority: p2
+    tags: [scale, sim_pool]
+    events: [upload_1000_sims]
+    checks: [backend_count_sims_1000]
+  - name: scale_large_10_sites_backend_counts
+    topology: large
+    priority: p2
+    tags: [scale, backend]
+    events: [check]
+    checks: [backend_count_sites_10, backend_count_nodes_30]

@@ -1,9 +1,47 @@
 family: node_ops
-description: Node restart, offline/degraded behavior, release, and recovery scenarios.
+description: Node restart, offline, recovery, release, and retire behavior.
 priority: p1
-flows: [restart, offline, recover, release, retire]
-topologies: [1net_1site, 1net_3sites, 2net_3sites]
-scales: [tiny, small]
-runtime: [normal, node_restart, node_offline]
-failures: [none, partial_failure]
-verification: [read_model, runtime, dashboard]
+flows: [node_restart_tower_recovers_ue_traffic, node_restart_medium_all_towers, node_offline_blocks_traffic, node_restore_recovers_traffic, node_release_from_site, node_retire_blocks_reuse]
+topologies: [simple]
+scales: [simple]
+runtime: [normal]
+failures: [none]
+verification: [runtime]
+
+cases:
+  - name: node_restart_tower_recovers_ue_traffic
+    topology: simple
+    priority: p1
+    tags: [node_ops, restart, runtime]
+    events: [restart_tower, traffic]
+    checks: [node_ready, traffic_allowed, usage_per_sim]
+  - name: node_restart_medium_all_towers
+    topology: medium
+    priority: p2
+    tags: [node_ops, restart, medium]
+    events: [restart_all_towers, traffic_2gb_per_ue]
+    checks: [all_nodes_ready, usage_per_sim]
+  - name: node_offline_blocks_traffic
+    topology: simple
+    priority: p1
+    tags: [node_ops, offline, negative]
+    events: [mark_node_offline, traffic]
+    checks: [traffic_blocked, backend_node_offline]
+  - name: node_restore_recovers_traffic
+    topology: simple
+    priority: p1
+    tags: [node_ops, restore, runtime]
+    events: [mark_node_offline, restore_node, traffic]
+    checks: [node_ready, traffic_allowed]
+  - name: node_release_from_site
+    topology: simple
+    priority: p1
+    tags: [node_ops, release, lifecycle]
+    events: [release_node_from_site]
+    checks: [node_released, relationship_ended, history_preserved]
+  - name: node_retire_blocks_reuse
+    topology: simple
+    priority: p1
+    tags: [node_ops, retire, lifecycle]
+    events: [retire_node]
+    checks: [node_retired, assignment_blocked]
