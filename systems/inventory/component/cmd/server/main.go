@@ -9,7 +9,10 @@
 package main
 
 import (
+	"context"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/num30/config"
 	"google.golang.org/grpc"
@@ -95,6 +98,13 @@ func runGrpcServer(gormdb sql.Db) {
 
 	componentServer := server.NewComponentServer(serviceConfig.OrgName, db.NewComponentRepo(gormdb),
 		mbClient, serviceConfig.PushGateway, gc, cwd+serviceConfig.RepoPath, factoryClient, serviceConfig)
+
+	// Automatically start the node-sync scheduler at service initialization and
+	// keep it alive via a self-healing supervisor. The supervisor is bound to a
+	// context cancelled on SIGINT/SIGTERM so it shuts down gracefully.
+	schedulerCtx, stopScheduler := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stopScheduler()
+	componentServer.StartSchedulerSupervisor(schedulerCtx)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterComponentServiceServer(s, componentServer)

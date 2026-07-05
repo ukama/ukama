@@ -9,6 +9,7 @@
 package scheduler
 
 import (
+	"sync"
 	"time"
 
 	"github.com/go-co-op/gocron"
@@ -16,50 +17,89 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// defaultInterval is used as a safe fallback when a non-positive interval is
+// supplied. gocron panics on a zero/negative interval, so we guard against it.
+const defaultInterval = time.Minute
+
 type ComponentScheduler interface {
 	SetNewJob(string, any, ...any) (*gocron.Job, error)
 	Start(string, any, ...any) error
 	Stop() error
+	IsRunning() bool
 }
 
 type componentScheduler struct {
+	// mu guards all access to s so that Start, Stop, IsRunning and the
+	// supervisor goroutine can be called concurrently without racing.
+	mu       sync.Mutex
 	s        *gocron.Scheduler
 	interval time.Duration
 }
 
 func NewComponentScheduler(interval time.Duration) ComponentScheduler {
-	sched := gocron.NewScheduler(time.UTC).WaitForSchedule()
-
-	componentSched := &componentScheduler{
-		s:        sched,
-		interval: interval,
+	if interval <= 0 {
+		log.Warnf("Invalid scheduler interval %s, falling back to default %s", interval, defaultInterval)
+		interval = defaultInterval
 	}
 
-	return componentSched
+	return &componentScheduler{
+		s:        newScheduler(),
+		interval: interval,
+	}
+}
+
+// newScheduler builds a fresh gocron scheduler with the standard hardening
+// options applied.
+func newScheduler() *gocron.Scheduler {
+	return gocron.NewScheduler(time.UTC).WaitForSchedule()
 }
 
 func (h *componentScheduler) SetNewJob(tag string, taskFunc any, params ...any) (*gocron.Job, error) {
-	log.Infof("Setting new %q job for scheduler", tag)
-	log.Infof("Scheduler interval is set to %s. Set SCHEDULERINTERVAL env var to adjust.", h.interval)
+	h.mu.Lock()
+	defer h.mu.Unlock()
 
-	return h.s.Every(h.interval).Tag(tag).Do(taskFunc, params...)
+	return h.setNewJobLocked(tag, taskFunc, params...)
+}
+
+// setNewJobLocked registers a job on the current scheduler. Callers MUST hold
+// h.mu. SingletonMode guarantees a slow run can never overlap with the next
+// scheduled tick.
+func (h *componentScheduler) setNewJobLocked(tag string, taskFunc any, params ...any) (*gocron.Job, error) {
+	log.Infof("Setting new %q job for scheduler (interval: %s). Set SCHEDULERINTERVAL env var to adjust.", tag, h.interval)
+
+	return h.s.Every(h.interval).Tag(tag).SingletonMode().Do(taskFunc, params...)
 }
 
 func (h *componentScheduler) Start(tag string, taskFunc any, params ...any) error {
-	if h.s.IsRunning() {
-		log.Infof("Scheduler is already running...")
+	h.mu.Lock()
+	defer h.mu.Unlock()
 
-		return nil
+	// If the scheduler is already running, add the job only if it is not
+	// already registered. This makes Start idempotent.
+	if h.s != nil && h.s.IsRunning() {
+		if jobs, err := h.s.FindJobsByTag(tag); err == nil && len(jobs) > 0 {
+			log.Infof("Scheduler already running with job %q, skipping start", tag)
+
+			return nil
+		}
+
+		log.Infof("Scheduler already running, adding job %q", tag)
+		_, err := h.setNewJobLocked(tag, taskFunc, params...)
+
+		return err
 	}
 
-	log.Infof("Starting scheduler for job: %q", tag)
+	// Fully tear down any previous (stopped) scheduler before replacing it so
+	// we never orphan its internal goroutines or leftover jobs.
+	if h.s != nil {
+		h.s.Stop()
+		h.s.Clear()
+	}
 
-	sched := gocron.NewScheduler(time.UTC).WaitForSchedule()
+	log.Infof("Starting scheduler for job %q", tag)
+	h.s = newScheduler()
 
-	h.s = sched
-
-	_, err := h.SetNewJob(tag, taskFunc, params...)
-	if err != nil {
+	if _, err := h.setNewJobLocked(tag, taskFunc, params...); err != nil {
 		return err
 	}
 
@@ -69,11 +109,23 @@ func (h *componentScheduler) Start(tag string, taskFunc any, params ...any) erro
 }
 
 func (h *componentScheduler) Stop() error {
-	log.Infof("Stopping scheduler")
+	h.mu.Lock()
+	defer h.mu.Unlock()
 
-	if h.s.IsRunning() {
+	if h.s != nil && h.s.IsRunning() {
+		log.Infof("Stopping scheduler")
 		h.s.Stop()
+		h.s.Clear()
 	}
 
 	return nil
+}
+
+// IsRunning reports whether the underlying scheduler is currently running. It
+// is used by the supervisor to detect an unexpectedly dead scheduler.
+func (h *componentScheduler) IsRunning() bool {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	return h.s != nil && h.s.IsRunning()
 }

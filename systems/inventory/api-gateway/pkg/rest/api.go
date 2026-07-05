@@ -38,7 +38,3 @@ type ListComponentsReq struct {
 type VerifyRequest struct {
 	PartNumber string `example:"{{ComponentPartNumber}}" path:"part_number" validate:"required"`
 }
-
-type StartSchedulerRequest struct{}
-
-type StopSchedulerRequest struct{}
