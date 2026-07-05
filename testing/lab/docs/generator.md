@@ -1,49 +1,63 @@
-# Phase-6 generator model
+# Generated scenario catalog
 
-Phase-6 generated scenarios must be meaningful product cases, not blind Cartesian matrix combinations.
+Phase-6 generation is case-based, not Cartesian-product based.
 
-## Topologies
+The generator reads:
 
-Use only these topology names:
+- `models/profiles/topology.yaml`
+- `models/profiles/scale.yaml`
+- `models/families/*.yaml`
 
-- `simple`: 1 network, 1 site, 1 tower + 1 amplifier + 1 controller, 1 UE, 1 data package, 1GB traffic per UE.
-- `medium`: 1 network, 3 sites, 1 tower + 1 amplifier + 1 controller per site, 30 UEs per tower, 5 data packages, 2GB traffic per UE.
-- `large`: 1 network, 10 sites, 1 tower + 1 amplifier + 1 controller per site, 100 UEs per tower, 10 data packages, 5GB traffic per UE.
+It writes one scenario per explicit family case:
 
-## Families
-
-Use product family names only:
-
-- `smoke`
-- `backend`
-- `usage`
-- `sim_pool`
-- `package`
-- `subscriber`
-- `lifecycle`
-- `node_ops`
-- `site_ops`
-- `software_update`
-- `failure`
-- `scale`
-
-Do not use `dashboard` for Phase-6 backend validation. UI dashboard validation is separate and later.
-
-## Cases
-
-Each family defines explicit named `cases`. A generated scenario must come from a real case name.
-
-Example:
-
-```yaml
-family: sim_pool
-cases:
-  - name: sim_pool_empty_blocks_allocation
-    topology: simple
-    priority: p1
-    tags: [sim_pool, negative]
-    events: [allocate_sim]
-    checks: [expected_failure, sim_pool_count_zero]
+```sh
+./bin/ukama-lab generate --model all --models models --out scenarios/generated
 ```
 
-The old compatibility fields (`flows`, `topologies`, `scales`, `runtime`, `failures`, `verification`) remain only until the generator is switched to case-based generation.
+Generated output layout:
+
+```text
+scenarios/generated/
+  backend/
+  smoke/
+  usage/
+  sim_pool/
+  package/
+  subscriber/
+  lifecycle/
+  node_ops/
+  site_ops/
+  software_update/
+  failure/
+  scale/
+  index.yaml
+```
+
+Topology names are meaningful and fixed:
+
+- `simple`: 1 network, 1 site, 1 tower/amplifier/controller, 1 UE, 1 package, 1GB per UE
+- `medium`: 1 network, 3 sites, 1 tower/amplifier/controller per site, 30 UEs per site, 5 packages, 2GB per UE
+- `large`: 1 network, 10 sites, 1 tower/amplifier/controller per site, 100 UEs per site, 10 packages, 5GB per UE
+
+Family files define explicit cases only. Example:
+
+```yaml
+family: usage
+cases:
+  - name: usage_simple_one_ue_1gb
+    topology: simple
+    priority: p1
+    tags: [usage, runtime, simple]
+    events: [traffic_1gb]
+    checks: [usage_per_sim, balance_non_negative]
+```
+
+The generator marks unsupported cases as `status: wip` instead of inventing fake test behavior. WIP scenarios validate but are skipped by the runner.
+
+Run examples:
+
+```sh
+./bin/ukama-lab validate scenarios/generated
+./bin/ukama-lab run scenarios --suite generated --priority p0
+./bin/ukama-lab run scenarios --tag usage
+```

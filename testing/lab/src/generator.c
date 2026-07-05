@@ -9,19 +9,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <unistd.h>
 
 #include "generator.h"
 #include "scenario.h"
 #include "util.h"
 
-#define GEN_MAX_ACTIONS       64
-#define GEN_MAX_LIST          32
-#define GEN_MAX_ITEMS         128
-#define GEN_MAX_PROFILES      16
-#define GEN_MAX_FAMILIES      32
-#define GEN_MAX_PACKAGES_OUT  10
+#define GEN_MAX_FAMILIES  32
+#define GEN_MAX_CASES     512
+#define GEN_MAX_PROFILES  16
+#define GEN_MAX_LIST      24
+#define GEN_MAX_TAGS      384
+
+/*
+ * Phase-6 generator rule:
+ *   - do NOT create blind Cartesian products.
+ *   - read explicit family cases from models/families YAML files.
+ *   - use simple/medium/large topology+scale profiles to materialize world.
+ *   - generate one meaningful scenario per named case.
+ */
 
 typedef struct {
     char model[ULAB_MAX_REF];
@@ -31,91 +36,49 @@ typedef struct {
 
 typedef struct {
     char name[ULAB_MAX_REF];
-    char event[ULAB_MAX_REF];
-    char status[ULAB_MAX_REF];
-    char package_ref[ULAB_MAX_REF];
-    char selector[ULAB_MAX_REF];
-    char from[GEN_MAX_LIST][ULAB_MAX_REF];
-    size_t from_count;
-    char to[ULAB_MAX_REF];
-    char blocked_from[GEN_MAX_LIST][ULAB_MAX_REF];
-    size_t blocked_count;
-    char guards[GEN_MAX_LIST][ULAB_MAX_REF];
-    size_t guard_count;
-    char checks[GEN_MAX_LIST][ULAB_MAX_REF];
-    size_t check_count;
-    char runtime[ULAB_MAX_REF];
-    char priority[ULAB_MAX_REF];
-} action_rule_t;
-
-typedef struct {
-    char entity[ULAB_MAX_REF];
-    char states[GEN_MAX_LIST][ULAB_MAX_REF];
-    size_t state_count;
-    action_rule_t actions[GEN_MAX_ACTIONS];
-    size_t action_count;
-} model_def_t;
-
-typedef struct {
-    char name[ULAB_MAX_REF];
-    char mode[ULAB_MAX_REF];
-    char expect[ULAB_MAX_REF];
     uint32_t networks;
     uint32_t sites_per_network;
     uint32_t ues_per_site;
     uint32_t packages;
-    uint32_t sim_pool;
-} matrix_item_t;
-
-typedef struct {
-    char name[ULAB_MAX_REF];
-    char kind[ULAB_MAX_REF];
-    matrix_item_t items[GEN_MAX_ITEMS];
-    size_t item_count;
-} matrix_profile_t;
+    uint64_t traffic_mb_per_ue;
+} topo_profile_t;
 
 typedef struct {
     char name[ULAB_MAX_REF];
     char priority[ULAB_MAX_REF];
-    char flows[GEN_MAX_LIST][ULAB_MAX_REF];
-    size_t flow_count;
-    char topologies[GEN_MAX_LIST][ULAB_MAX_REF];
-    size_t topology_count;
-    char scales[GEN_MAX_LIST][ULAB_MAX_REF];
-    size_t scale_count;
-    char runtime[GEN_MAX_LIST][ULAB_MAX_REF];
-    size_t runtime_count;
-    char failures[GEN_MAX_LIST][ULAB_MAX_REF];
-    size_t failure_count;
-    char software[GEN_MAX_LIST][ULAB_MAX_REF];
-    size_t software_count;
-    char verification[GEN_MAX_LIST][ULAB_MAX_REF];
-    size_t verification_count;
-} matrix_family_t;
+    char tags[GEN_MAX_TAGS];
+    char setup[GEN_MAX_LIST][ULAB_MAX_REF];
+    size_t setup_count;
+    char events[GEN_MAX_LIST][ULAB_MAX_REF];
+    size_t event_count;
+    char checks[GEN_MAX_LIST][ULAB_MAX_REF];
+    size_t check_count;
+    char topology[ULAB_MAX_REF];
+} gen_case_t;
 
 typedef struct {
-    matrix_profile_t profiles[GEN_MAX_PROFILES];
+    char name[ULAB_MAX_REF];
+    char priority[ULAB_MAX_REF];
+    gen_case_t cases[GEN_MAX_CASES];
+    size_t case_count;
+} gen_family_t;
+
+typedef struct {
+    topo_profile_t profiles[GEN_MAX_PROFILES];
     size_t profile_count;
-    matrix_family_t families[GEN_MAX_FAMILIES];
+    gen_family_t families[GEN_MAX_FAMILIES];
     size_t family_count;
-} matrix_def_t;
-
-static const char *default_entities[] = {
-    "sim", "package", "subscriber", "node"
-};
-
-static const char *default_profiles[] = {
-    "topology", "scale", "runtime", "failure", "software", "verification"
-};
+} gen_catalog_t;
 
 static const char *default_families[] = {
     "smoke", "backend", "usage", "sim_pool", "package", "subscriber",
-    "lifecycle", "node_ops", "site_ops", "software_update", "failure", "scale"
+    "lifecycle", "node_ops", "site_ops", "software_update", "failure",
+    "scale"
 };
 
 static void usage(void) {
     printf("usage:\n");
-    printf("  ukama-lab generate --model <name|all> [options]\n");
+    printf("  ukama-lab generate --model <all|family> [options]\n");
     printf("options:\n");
     printf("  --out <dir>        output directory; default: scenarios/generated\n");
     printf("  --models <dir>     model directory; default: models\n");
@@ -129,9 +92,6 @@ static int append_str(char *dst, size_t n, const char *src) {
         return ULAB_ERR;
     }
     used = strlen(dst);
-    if (used >= n) {
-        return ULAB_ERR;
-    }
     for (i = 0; src[i] != '\0'; i++) {
         if (used + 1 >= n) {
             dst[n - 1] = '\0';
@@ -146,31 +106,30 @@ static int append_str(char *dst, size_t n, const char *src) {
 static void clean_token(char *s) {
     size_t i;
 
-    for (i = 0; s[i] != '\0'; i++) {
-        if (s[i] == ' ' || s[i] == '/' || s[i] == ':' || s[i] == ',') {
+    for (i = 0; s != NULL && s[i] != '\0'; i++) {
+        if (s[i] == ' ' || s[i] == '/' || s[i] == ':' ||
+            s[i] == ',' || s[i] == '[' || s[i] == ']') {
             s[i] = '_';
         }
     }
 }
 
-static int build_path3(char *out, size_t n,
-                       const char *a, const char *b, const char *c) {
+static int path_join(char *out, size_t n, const char *a, const char *b) {
+    out[0] = '\0';
+    if (append_str(out, n, a)) return ULAB_ERR;
+    if (append_str(out, n, "/")) return ULAB_ERR;
+    if (append_str(out, n, b)) return ULAB_ERR;
+    return ULAB_OK;
+}
+
+static int path_join3(char *out, size_t n, const char *a, const char *b,
+                      const char *c) {
     out[0] = '\0';
     if (append_str(out, n, a)) return ULAB_ERR;
     if (append_str(out, n, "/")) return ULAB_ERR;
     if (append_str(out, n, b)) return ULAB_ERR;
     if (append_str(out, n, "/")) return ULAB_ERR;
     if (append_str(out, n, c)) return ULAB_ERR;
-    return ULAB_OK;
-}
-
-static int build_yaml_path(char *out, size_t n,
-                           const char *dir, const char *name) {
-    out[0] = '\0';
-    if (append_str(out, n, dir)) return ULAB_ERR;
-    if (append_str(out, n, "/")) return ULAB_ERR;
-    if (append_str(out, n, name)) return ULAB_ERR;
-    if (append_str(out, n, ".yaml")) return ULAB_ERR;
     return ULAB_OK;
 }
 
@@ -187,8 +146,6 @@ static int parse_opts(int argc, char **argv, gen_opts_t *opts) {
             if (ulab_copy(opts->model, sizeof(opts->model), argv[++i])) {
                 return ULAB_EUSAGE;
             }
-        } else if (ulab_streq(argv[i], "--mode") && i + 1 < argc) {
-            i++;
         } else if (ulab_streq(argv[i], "--out") && i + 1 < argc) {
             if (ulab_copy(opts->out_dir, sizeof(opts->out_dir), argv[++i])) {
                 return ULAB_EUSAGE;
@@ -197,7 +154,9 @@ static int parse_opts(int argc, char **argv, gen_opts_t *opts) {
             if (ulab_copy(opts->models_dir, sizeof(opts->models_dir), argv[++i])) {
                 return ULAB_EUSAGE;
             }
-        } else if (ulab_streq(argv[i], "--templates") && i + 1 < argc) {
+        } else if ((ulab_streq(argv[i], "--mode") ||
+                    ulab_streq(argv[i], "--templates")) && i + 1 < argc) {
+            /* accepted for backwards-compatible scripts; ignored */
             i++;
         } else if (ulab_streq(argv[i], "--help")) {
             usage();
@@ -208,6 +167,19 @@ static int parse_opts(int argc, char **argv, gen_opts_t *opts) {
         }
     }
 
+    return ULAB_OK;
+}
+
+static int split_kv(char *line, char **key, char **val) {
+    char *c;
+
+    c = strchr(line, ':');
+    if (c == NULL) {
+        return ULAB_ERR;
+    }
+    *c = '\0';
+    *key = ulab_trim(line);
+    *val = ulab_trim(c + 1);
     return ULAB_OK;
 }
 
@@ -227,8 +199,8 @@ static int add_word(char arr[GEN_MAX_LIST][ULAB_MAX_REF], size_t *count,
     return ULAB_OK;
 }
 
-static int parse_list(char arr[GEN_MAX_LIST][ULAB_MAX_REF], size_t *count,
-                      char *val) {
+static int parse_inline_list(char arr[GEN_MAX_LIST][ULAB_MAX_REF],
+                             size_t *count, char *val) {
     char *p;
     char *tok;
 
@@ -248,74 +220,101 @@ static int parse_list(char arr[GEN_MAX_LIST][ULAB_MAX_REF], size_t *count,
     return ULAB_OK;
 }
 
-static action_rule_t *new_action(model_def_t *m, const char *name) {
-    action_rule_t *a;
+static const topo_profile_t *find_profile(const gen_catalog_t *cat,
+                                          const char *name) {
+    size_t i;
 
-    if (m->action_count >= GEN_MAX_ACTIONS) {
-        return NULL;
+    for (i = 0; i < cat->profile_count; i++) {
+        if (ulab_streq(cat->profiles[i].name, name)) {
+            return &cat->profiles[i];
+        }
     }
-    a = &m->actions[m->action_count++];
-    memset(a, 0, sizeof(*a));
-    if (ulab_copy(a->name, sizeof(a->name), name)) {
-        return NULL;
-    }
-    clean_token(a->name);
-    ulab_copy(a->event, sizeof(a->event), "check");
-    ulab_copy(a->priority, sizeof(a->priority), "p2");
-    return a;
+    return NULL;
 }
 
-static int parse_action_field(action_rule_t *a, const char *key, char *val) {
-    if (ulab_streq(key, "event")) return ulab_copy(a->event, sizeof(a->event), val);
-    if (ulab_streq(key, "status")) return ulab_copy(a->status, sizeof(a->status), val);
-    if (ulab_streq(key, "package")) return ulab_copy(a->package_ref, sizeof(a->package_ref), val);
-    if (ulab_streq(key, "selector")) return ulab_copy(a->selector, sizeof(a->selector), val);
-    if (ulab_streq(key, "from")) return parse_list(a->from, &a->from_count, val);
-    if (ulab_streq(key, "to")) return ulab_copy(a->to, sizeof(a->to), val);
-    if (ulab_streq(key, "blocked_from")) return parse_list(a->blocked_from, &a->blocked_count, val);
-    if (ulab_streq(key, "guards")) return parse_list(a->guards, &a->guard_count, val);
-    if (ulab_streq(key, "checks")) return parse_list(a->checks, &a->check_count, val);
-    if (ulab_streq(key, "runtime")) return ulab_copy(a->runtime, sizeof(a->runtime), val);
-    if (ulab_streq(key, "priority")) return ulab_copy(a->priority, sizeof(a->priority), val);
-    return ULAB_ERR;
-}
-
-static int model_yaml_path(char *out, size_t n,
-                           const gen_opts_t *opts, const char *entity) {
-    out[0] = '\0';
-    if (append_str(out, n, opts->models_dir)) return ULAB_ERR;
-    if (append_str(out, n, "/")) return ULAB_ERR;
-    if (append_str(out, n, entity)) return ULAB_ERR;
-    if (append_str(out, n, ".yaml")) return ULAB_ERR;
-    return ULAB_OK;
-}
-
-static int load_model(const gen_opts_t *opts, const char *entity,
-                      model_def_t *model) {
+static int load_topology_profiles(const gen_opts_t *opts,
+                                  gen_catalog_t *cat) {
     char path[ULAB_MAX_PATH];
     char line[ULAB_MAX_LINE];
     FILE *fp;
-    int in_actions;
-    action_rule_t *cur;
+    topo_profile_t *cur;
 
-    memset(model, 0, sizeof(*model));
-    in_actions = 0;
-    cur = NULL;
-
-    if (model_yaml_path(path, sizeof(path), opts, entity)) {
+    if (path_join3(path, sizeof(path), opts->models_dir, "profiles",
+                   "topology.yaml")) {
         return ULAB_ERR;
     }
-
     fp = fopen(path, "r");
     if (fp == NULL) {
-        fprintf(stderr, "missing model: %s\n", path);
+        fprintf(stderr, "missing topology profile: %s\n", path);
         return ULAB_ERR;
     }
 
+    cur = NULL;
     while (fgets(line, sizeof(line), fp) != NULL) {
+        char *p;
         char *key;
         char *val;
+
+        p = ulab_trim(line);
+        if (*p == '\0' || *p == '#') {
+            continue;
+        }
+        if (ulab_starts(p, "- name:")) {
+            if (cat->profile_count >= GEN_MAX_PROFILES) {
+                fclose(fp);
+                return ULAB_ERR;
+            }
+            cur = &cat->profiles[cat->profile_count++];
+            memset(cur, 0, sizeof(*cur));
+            val = ulab_trim(strchr(p, ':') + 1);
+            if (ulab_copy(cur->name, sizeof(cur->name), val)) {
+                fclose(fp);
+                return ULAB_ERR;
+            }
+            clean_token(cur->name);
+            continue;
+        }
+        if (cur == NULL || split_kv(p, &key, &val)) {
+            continue;
+        }
+        if (ulab_streq(key, "networks")) {
+            if (ulab_parse_u32(val, &cur->networks)) goto bad;
+        } else if (ulab_streq(key, "sites_per_network")) {
+            if (ulab_parse_u32(val, &cur->sites_per_network)) goto bad;
+        }
+    }
+
+    fclose(fp);
+    return cat->profile_count > 0 ? ULAB_OK : ULAB_ERR;
+
+bad:
+    fclose(fp);
+    return ULAB_ERR;
+}
+
+static int load_scale_profiles(const gen_opts_t *opts,
+                               gen_catalog_t *cat) {
+    char path[ULAB_MAX_PATH];
+    char line[ULAB_MAX_LINE];
+    FILE *fp;
+    topo_profile_t *cur;
+
+    if (path_join3(path, sizeof(path), opts->models_dir, "profiles",
+                   "scale.yaml")) {
+        return ULAB_ERR;
+    }
+    fp = fopen(path, "r");
+    if (fp == NULL) {
+        fprintf(stderr, "missing scale profile: %s\n", path);
+        return ULAB_ERR;
+    }
+
+    cur = NULL;
+    while (fgets(line, sizeof(line), fp) != NULL) {
         char *p;
+        char *key;
+        char *val;
+        size_t i;
 
         p = ulab_trim(line);
         if (*p == '\0' || *p == '#') {
@@ -323,135 +322,642 @@ static int load_model(const gen_opts_t *opts, const char *entity,
         }
         if (ulab_starts(p, "- name:")) {
             val = ulab_trim(strchr(p, ':') + 1);
-            cur = new_action(model, val);
-            if (cur == NULL) {
-                fclose(fp);
-                return ULAB_ERR;
-            }
-            continue;
-        }
-        if (strchr(p, ':') == NULL) {
-            continue;
-        }
-        key = p;
-        val = strchr(p, ':');
-        *val++ = '\0';
-        key = ulab_trim(key);
-        val = ulab_trim(val);
-
-        if (ulab_streq(key, "entity")) {
-            if (ulab_copy(model->entity, sizeof(model->entity), val)) {
-                fclose(fp);
-                return ULAB_ERR;
-            }
-            clean_token(model->entity);
-            in_actions = 0;
-        } else if (ulab_streq(key, "states")) {
-            if (val[0] != '\0') {
-                if (parse_list(model->states, &model->state_count, val)) {
-                    fclose(fp);
-                    return ULAB_ERR;
+            cur = NULL;
+            for (i = 0; i < cat->profile_count; i++) {
+                if (ulab_streq(cat->profiles[i].name, val)) {
+                    cur = &cat->profiles[i];
+                    break;
                 }
             }
-            in_actions = 0;
-        } else if (ulab_starts(p, "- ") && !in_actions) {
-            if (add_word(model->states, &model->state_count, ulab_trim(p + 2))) {
-                fclose(fp);
-                return ULAB_ERR;
-            }
-        } else if (ulab_streq(key, "actions")) {
-            in_actions = 1;
-        } else if (in_actions && cur != NULL) {
-            if (parse_action_field(cur, key, val)) {
-                fprintf(stderr, "unknown action field in %s: %s\n", path, key);
-                fclose(fp);
-                return ULAB_ERR;
-            }
+            continue;
+        }
+        if (cur == NULL || split_kv(p, &key, &val)) {
+            continue;
+        }
+        if (ulab_streq(key, "ues_per_site")) {
+            if (ulab_parse_u32(val, &cur->ues_per_site)) goto bad;
+        } else if (ulab_streq(key, "packages")) {
+            if (ulab_parse_u32(val, &cur->packages)) goto bad;
+        } else if (ulab_streq(key, "traffic_mb_per_ue")) {
+            if (ulab_parse_u64(val, &cur->traffic_mb_per_ue)) goto bad;
         }
     }
 
     fclose(fp);
+    return ULAB_OK;
 
-    if (!ulab_streq(model->entity, entity)) {
-        fprintf(stderr, "model entity mismatch: %s\n", path);
+bad:
+    fclose(fp);
+    return ULAB_ERR;
+}
+
+static gen_family_t *add_family(gen_catalog_t *cat, const char *name) {
+    gen_family_t *f;
+
+    if (cat->family_count >= GEN_MAX_FAMILIES) {
+        return NULL;
+    }
+    f = &cat->families[cat->family_count++];
+    memset(f, 0, sizeof(*f));
+    if (ulab_copy(f->name, sizeof(f->name), name)) {
+        return NULL;
+    }
+    clean_token(f->name);
+    ulab_copy(f->priority, sizeof(f->priority), "p2");
+    return f;
+}
+
+static gen_case_t *add_case(gen_family_t *family, const char *name) {
+    gen_case_t *c;
+
+    if (family->case_count >= GEN_MAX_CASES) {
+        return NULL;
+    }
+    c = &family->cases[family->case_count++];
+    memset(c, 0, sizeof(*c));
+    if (ulab_copy(c->name, sizeof(c->name), name)) {
+        return NULL;
+    }
+    clean_token(c->name);
+    ulab_copy(c->topology, sizeof(c->topology), "simple");
+    ulab_copy(c->priority, sizeof(c->priority),
+              family->priority[0] ? family->priority : "p2");
+    return c;
+}
+
+static int load_family_file(const gen_opts_t *opts, const char *name,
+                            gen_catalog_t *cat) {
+    char path[ULAB_MAX_PATH];
+    char line[ULAB_MAX_LINE];
+    FILE *fp;
+    gen_family_t *family;
+    gen_case_t *cur;
+    int in_cases;
+
+    if (path_join3(path, sizeof(path), opts->models_dir, "families", name)) {
         return ULAB_ERR;
     }
-    if (model->action_count == 0) {
-        fprintf(stderr, "model has no actions: %s\n", path);
+    if (append_str(path, sizeof(path), ".yaml")) {
+        return ULAB_ERR;
+    }
+    fp = fopen(path, "r");
+    if (fp == NULL) {
+        fprintf(stderr, "missing family model: %s\n", path);
         return ULAB_ERR;
     }
 
+    family = NULL;
+    cur = NULL;
+    in_cases = 0;
+
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        char *p;
+        char *key;
+        char *val;
+
+        p = ulab_trim(line);
+        if (*p == '\0' || *p == '#') {
+            continue;
+        }
+        if (ulab_streq(p, "cases:")) {
+            in_cases = 1;
+            continue;
+        }
+        if (split_kv(p, &key, &val)) {
+            continue;
+        }
+
+        if (!in_cases) {
+            if (ulab_streq(key, "family")) {
+                family = add_family(cat, val);
+                if (family == NULL) goto bad;
+            } else if (family != NULL && ulab_streq(key, "priority")) {
+                if (ulab_copy(family->priority, sizeof(family->priority), val)) {
+                    goto bad;
+                }
+            }
+            continue;
+        }
+
+        if (family == NULL) {
+            goto bad;
+        }
+        if (ulab_streq(key, "- name")) {
+            cur = add_case(family, val);
+            if (cur == NULL) goto bad;
+            continue;
+        }
+        if (cur == NULL) {
+            continue;
+        }
+        if (ulab_streq(key, "topology")) {
+            if (ulab_copy(cur->topology, sizeof(cur->topology), val)) goto bad;
+            clean_token(cur->topology);
+        } else if (ulab_streq(key, "priority")) {
+            if (ulab_copy(cur->priority, sizeof(cur->priority), val)) goto bad;
+        } else if (ulab_streq(key, "tags")) {
+            if (ulab_copy(cur->tags, sizeof(cur->tags), val)) goto bad;
+        } else if (ulab_streq(key, "setup")) {
+            if (parse_inline_list(cur->setup, &cur->setup_count, val)) goto bad;
+        } else if (ulab_streq(key, "events")) {
+            if (parse_inline_list(cur->events, &cur->event_count, val)) goto bad;
+        } else if (ulab_streq(key, "checks")) {
+            if (parse_inline_list(cur->checks, &cur->check_count, val)) goto bad;
+        }
+    }
+
+    fclose(fp);
+    if (family == NULL || family->case_count == 0) {
+        fprintf(stderr, "invalid or empty family model: %s\n", path);
+        return ULAB_ERR;
+    }
+    return ULAB_OK;
+
+bad:
+    fclose(fp);
+    fprintf(stderr, "invalid family model: %s\n", path);
+    return ULAB_ERR;
+}
+
+static int load_catalog(const gen_opts_t *opts, gen_catalog_t *cat) {
+    size_t i;
+
+    memset(cat, 0, sizeof(*cat));
+    if (load_topology_profiles(opts, cat)) {
+        return ULAB_ERR;
+    }
+    if (load_scale_profiles(opts, cat)) {
+        return ULAB_ERR;
+    }
+
+    if (!ulab_streq(opts->model, "all")) {
+        return load_family_file(opts, opts->model, cat);
+    }
+
+    for (i = 0; i < sizeof(default_families) / sizeof(default_families[0]); i++) {
+        if (load_family_file(opts, default_families[i], cat)) {
+            return ULAB_ERR;
+        }
+    }
     return ULAB_OK;
 }
 
-static int has_check(const action_rule_t *a, const char *name) {
+static int list_has(const char arr[GEN_MAX_LIST][ULAB_MAX_REF], size_t count,
+                    const char *word) {
     size_t i;
 
-    for (i = 0; i < a->check_count; i++) {
-        if (ulab_streq(a->checks[i], name)) {
+    for (i = 0; i < count; i++) {
+        if (ulab_streq(arr[i], word)) {
             return 1;
         }
     }
     return 0;
 }
 
-static const char *action_status(const action_rule_t *a) {
-    if (a->status[0] != '\0') {
-        return a->status;
-    }
-    if (a->to[0] != '\0') {
-        if (ulab_streq(a->to, "inactive") || ulab_streq(a->to, "deactivated") ||
-            ulab_streq(a->to, "released") || ulab_streq(a->to, "suspended") ||
-            ulab_streq(a->to, "retired") || ulab_streq(a->to, "archived")) {
-            return "inactive";
-        }
-    }
-    return "active";
+static int case_has_tag(const gen_case_t *c, const char *word) {
+    return c->tags[0] != '\0' && strstr(c->tags, word) != NULL;
 }
 
-static void write_common_packages(FILE *f, uint32_t package_count) {
-    uint32_t i;
-    uint32_t n;
+static int event_supported(const char *event) {
+    return ulab_streq(event, "check") ||
+           ulab_streq(event, "traffic") ||
+           ulab_streq(event, "traffic_1gb") ||
+           ulab_streq(event, "traffic_2gb_per_ue") ||
+           ulab_streq(event, "traffic_5gb_per_ue") ||
+           ulab_streq(event, "traffic_by_profile") ||
+           ulab_streq(event, "restart_nodes") ||
+           ulab_streq(event, "restart_tower") ||
+           ulab_streq(event, "restart_site") ||
+           ulab_streq(event, "toggle_service_off") ||
+           ulab_streq(event, "toggle_service_on") ||
+           ulab_streq(event, "toggle_radio_off") ||
+           ulab_streq(event, "toggle_radio_on") ||
+           ulab_streq(event, "mark_node_offline") ||
+           ulab_streq(event, "restore_node") ||
+           ulab_streq(event, "software_update_tower") ||
+           ulab_streq(event, "software_update_amplifier") ||
+           ulab_streq(event, "software_update_controller") ||
+           ulab_streq(event, "software_update_same_version") ||
+           ulab_streq(event, "add_package_to_sim") ||
+           ulab_streq(event, "topup") ||
+           ulab_streq(event, "remove_package_from_sim") ||
+           ulab_streq(event, "set_sim_inactive") ||
+           ulab_streq(event, "set_sim_active");
+}
 
-    n = package_count;
-    if (n == 0) n = 1;
-    if (n > GEN_MAX_PACKAGES_OUT) n = GEN_MAX_PACKAGES_OUT;
+static int check_supported(const char *check) {
+    return ulab_streq(check, "backend_count") ||
+           ulab_streq(check, "backend_count_networks") ||
+           ulab_streq(check, "backend_count_sites") ||
+           ulab_streq(check, "backend_count_nodes") ||
+           ulab_streq(check, "backend_count_sims") ||
+           ulab_streq(check, "backend_count_subscribers") ||
+           ulab_streq(check, "backend_count_packages") ||
+           ulab_streq(check, "backend_package_count") ||
+           ulab_streq(check, "ue_attached") ||
+           ulab_streq(check, "list_contains") ||
+           ulab_streq(check, "usage_per_sim") ||
+           ulab_streq(check, "balance_non_negative") ||
+           ulab_streq(check, "traffic_allowed") ||
+           ulab_streq(check, "traffic_blocked") ||
+           ulab_streq(check, "node_ready") ||
+           ulab_streq(check, "nodes_ready") ||
+           ulab_streq(check, "node_health_ok") ||
+           ulab_streq(check, "node_version_equals") ||
+           ulab_streq(check, "history_preserved") ||
+           ulab_streq(check, "relationship_exists") ||
+           ulab_streq(check, "relationship_ended") ||
+           ulab_streq(check, "audit_event_exists") ||
+           ulab_streq(check, "status_equals") ||
+           ulab_streq(check, "sim_assigned") ||
+           ulab_streq(check, "sim_not_in_unassigned_pool") ||
+           ulab_streq(check, "subscriber_has_sim") ||
+           ulab_streq(check, "package_active");
+}
+
+static int setup_supported(const char *setup) {
+    return ulab_streq(setup, "network") ||
+           ulab_streq(setup, "site") ||
+           ulab_streq(setup, "sites") ||
+           ulab_streq(setup, "nodes") ||
+           ulab_streq(setup, "subscriber") ||
+           ulab_streq(setup, "subscribers") ||
+           ulab_streq(setup, "sim") ||
+           ulab_streq(setup, "sims") ||
+           ulab_streq(setup, "package") ||
+           ulab_streq(setup, "packages") ||
+           ulab_streq(setup, "active_package") ||
+           ulab_streq(setup, "active_subscriber") ||
+           ulab_streq(setup, "sim_pool_one") ||
+           ulab_streq(setup, "sim_csv_one") ||
+           ulab_streq(setup, "known_iccid") ||
+           ulab_streq(setup, "service_off") ||
+           ulab_streq(setup, "radio_off") ||
+           ulab_streq(setup, "node_offline") ||
+           ulab_streq(setup, "restart_required");
+}
+
+static int case_is_wip(const gen_family_t *family, const gen_case_t *c) {
+    size_t i;
+
+    (void)family;
+    for (i = 0; i < c->event_count; i++) {
+        if (!event_supported(c->events[i])) {
+            return 1;
+        }
+    }
+    for (i = 0; i < c->check_count; i++) {
+        if (!check_supported(c->checks[i])) {
+            return 1;
+        }
+    }
+    for (i = 0; i < c->setup_count; i++) {
+        if (!setup_supported(c->setup[i])) {
+            return 1;
+        }
+    }
+    if (case_has_tag(c, "negative") || case_has_tag(c, "partial") ||
+        case_has_tag(c, "retry") || case_has_tag(c, "duplicate") ||
+        case_has_tag(c, "wrong_network") || case_has_tag(c, "rollback")) {
+        return 1;
+    }
+    return 0;
+}
+
+static uint64_t event_amount_mb(const char *event, const topo_profile_t *p) {
+    if (ulab_streq(event, "traffic_1gb")) return 1024;
+    if (ulab_streq(event, "traffic_2gb_per_ue")) return 2048;
+    if (ulab_streq(event, "traffic_5gb_per_ue")) return 5120;
+    return p->traffic_mb_per_ue ? p->traffic_mb_per_ue : 1;
+}
+
+static int case_needs_ues(const gen_family_t *family, const gen_case_t *c) {
+    size_t i;
+
+    if (ulab_streq(family->name, "usage") ||
+        ulab_streq(family->name, "node_ops") ||
+        ulab_streq(family->name, "site_ops") ||
+        ulab_streq(family->name, "lifecycle") ||
+        ulab_streq(family->name, "scale") ||
+        case_has_tag(c, "runtime")) {
+        return 1;
+    }
+    for (i = 0; i < c->event_count; i++) {
+        if (strstr(c->events[i], "traffic") != NULL ||
+            strstr(c->events[i], "restart") != NULL ||
+            strstr(c->events[i], "service") != NULL ||
+            strstr(c->events[i], "radio") != NULL ||
+            strstr(c->events[i], "offline") != NULL ||
+            strstr(c->events[i], "restore") != NULL) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int case_has_event(const gen_case_t *c, const char *event) {
+    return list_has(c->events, c->event_count, event);
+}
+
+static int case_has_setup(const gen_case_t *c, const char *setup) {
+    return list_has(c->setup, c->setup_count, setup);
+}
+
+static uint32_t scenario_package_count(const gen_case_t *c,
+                                       const topo_profile_t *p) {
+    uint32_t count;
+
+    count = p->packages ? p->packages : 1;
+    if ((case_has_event(c, "add_package_to_sim") ||
+         case_has_event(c, "topup")) && count < 2) {
+        count = 2;
+    }
+    if (count > ULAB_MAX_PACKAGES) {
+        count = ULAB_MAX_PACKAGES;
+    }
+    return count;
+}
+
+static void write_packages(FILE *f, uint32_t count, uint64_t data_mb) {
+    uint32_t i;
+
+    if (count == 0) {
+        count = 1;
+    }
+    if (data_mb == 0) {
+        data_mb = 1024;
+    }
 
     fprintf(f, "packages:\n");
-    for (i = 0; i < n; i++) {
+    for (i = 0; i < count; i++) {
         fprintf(f,
                 "  - ref: pkg_%03u\n"
-                "    name: Package %03u\n"
-                "    data_mb: %u\n"
-                "    duration_days: %u\n"
-                "    amount: %u.00\n"
+                "    name: Data Package %u\n"
+                "    data_mb: %llu\n"
+                "    duration_days: 1\n"
+                "    amount: %.2f\n"
                 "    assign_percent: %u\n",
-                i + 1, i + 1, 1024u * (i + 1), i + 1, i + 1,
-                i == 0 ? 100u : 0u);
+                i + 1, i + 1, (unsigned long long)data_mb,
+                (double)(i + 1), i == 0 ? 100u : 0u);
     }
     fprintf(f, "\n");
 }
 
-static void write_common_setup(FILE *f) {
+static void write_profile_section(FILE *f, const gen_case_t *c) {
+    if (!case_has_event(c, "traffic_by_profile")) {
+        return;
+    }
     fprintf(f,
-            "setup:\n"
-            "  create_via_bff:\n"
-            "    - networks\n"
-            "    - sites\n"
-            "    - nodes\n"
-            "    - node_site_links\n"
-            "    - packages\n"
-            "    - subscribers\n"
-            "    - sims\n\n"
-            "runtime:\n"
-            "  start: [nodes, ues]\n"
-            "  wait: [nodes_ready, ues_attached]\n\n");
+            "profiles:\n"
+            "  mixed_usage:\n"
+            "    light:\n"
+            "      percent: 70\n"
+            "      amount_mb: 512\n"
+            "    heavy:\n"
+            "      percent: 30\n"
+            "      amount_mb: 2048\n\n");
 }
 
-static void write_base_world(FILE *f, uint32_t networks,
-                             uint32_t sites_per_network,
-                             uint32_t ues_per_site,
-                             uint32_t package_count) {
+static void write_setup_preamble(FILE *f, const gen_case_t *c) {
+    if (case_has_setup(c, "service_off")) {
+        fprintf(f,
+                "      - type: toggle_service\n"
+                "        state: off\n");
+    }
+    if (case_has_setup(c, "radio_off")) {
+        fprintf(f,
+                "      - type: toggle_radio\n"
+                "        state: off\n");
+    }
+    if (case_has_setup(c, "node_offline")) {
+        fprintf(f, "      - type: mark_node_offline\n");
+    }
+}
+
+static int write_one_event(FILE *f, const char *event,
+                           const topo_profile_t *profile) {
+    if (ulab_streq(event, "traffic") || ulab_streq(event, "traffic_1gb") ||
+        ulab_streq(event, "traffic_2gb_per_ue") ||
+        ulab_streq(event, "traffic_5gb_per_ue")) {
+        fprintf(f,
+                "      - type: traffic\n"
+                "        ues: all\n"
+                "        amount_mb: %llu\n",
+                (unsigned long long)event_amount_mb(event, profile));
+        return ULAB_OK;
+    }
+    if (ulab_streq(event, "traffic_by_profile")) {
+        fprintf(f,
+                "      - type: traffic_by_profile\n"
+                "        profile: mixed_usage\n");
+        return ULAB_OK;
+    }
+    if (ulab_streq(event, "restart_nodes") ||
+        ulab_streq(event, "restart_tower")) {
+        fprintf(f,
+                "      - type: restart_nodes\n"
+                "        type_selector: tower\n"
+                "        count_per_network: 1\n");
+        return ULAB_OK;
+    }
+    if (ulab_streq(event, "restart_site")) {
+        fprintf(f,
+                "      - type: restart_site\n"
+                "        nodes: all\n");
+        return ULAB_OK;
+    }
+    if (ulab_streq(event, "toggle_service_off")) {
+        fprintf(f,
+                "      - type: toggle_service\n"
+                "        state: off\n");
+        return ULAB_OK;
+    }
+    if (ulab_streq(event, "toggle_service_on")) {
+        fprintf(f,
+                "      - type: toggle_service\n"
+                "        state: on\n");
+        return ULAB_OK;
+    }
+    if (ulab_streq(event, "toggle_radio_off")) {
+        fprintf(f,
+                "      - type: toggle_radio\n"
+                "        state: off\n");
+        return ULAB_OK;
+    }
+    if (ulab_streq(event, "toggle_radio_on")) {
+        fprintf(f,
+                "      - type: toggle_radio\n"
+                "        state: on\n");
+        return ULAB_OK;
+    }
+    if (ulab_streq(event, "mark_node_offline")) {
+        fprintf(f, "      - type: mark_node_offline\n");
+        return ULAB_OK;
+    }
+    if (ulab_streq(event, "restore_node")) {
+        fprintf(f, "      - type: restore_node\n");
+        return ULAB_OK;
+    }
+    if (ulab_streq(event, "software_update_tower") ||
+        ulab_streq(event, "software_update_amplifier") ||
+        ulab_streq(event, "software_update_controller")) {
+        fprintf(f,
+                "      - type: software_update\n"
+                "        type_selector: tower\n"
+                "        count_per_network: 1\n"
+                "        version: v2.0.0\n");
+        return ULAB_OK;
+    }
+    if (ulab_streq(event, "software_update_same_version")) {
+        fprintf(f,
+                "      - type: software_update\n"
+                "        type_selector: tower\n"
+                "        count_per_network: 1\n"
+                "        version: current\n");
+        return ULAB_OK;
+    }
+    if (ulab_streq(event, "add_package_to_sim") ||
+        ulab_streq(event, "topup")) {
+        fprintf(f,
+                "      - type: add_package_to_sim\n"
+                "        ues: all\n"
+                "        package: pkg_002\n");
+        return ULAB_OK;
+    }
+    if (ulab_streq(event, "remove_package_from_sim")) {
+        fprintf(f,
+                "      - type: remove_package_from_sim\n"
+                "        ues: all\n");
+        return ULAB_OK;
+    }
+    if (ulab_streq(event, "set_sim_inactive")) {
+        fprintf(f,
+                "      - type: set_sim_status\n"
+                "        ues: all\n"
+                "        status: inactive\n");
+        return ULAB_OK;
+    }
+    if (ulab_streq(event, "set_sim_active")) {
+        fprintf(f,
+                "      - type: set_sim_status\n"
+                "        ues: all\n"
+                "        status: active\n");
+        return ULAB_OK;
+    }
+    if (ulab_streq(event, "check")) {
+        fprintf(f, "      - type: check\n");
+        return ULAB_OK;
+    }
+
+    fprintf(f, "      - type: check\n");
+    return ULAB_ERR;
+}
+
+static void write_check_backend_count(FILE *f, const char *target) {
+    fprintf(f,
+            "      - type: backend_count\n"
+            "        target: %s\n"
+            "        expected: from_world\n", target);
+}
+
+static void write_one_check(FILE *f, const char *check, const char *family) {
+    if (ulab_streq(check, "backend_count_networks")) {
+        write_check_backend_count(f, "networks");
+    } else if (ulab_streq(check, "backend_count_sites")) {
+        write_check_backend_count(f, "sites");
+    } else if (ulab_streq(check, "backend_count_nodes") ||
+               ulab_streq(check, "nodes_ready")) {
+        write_check_backend_count(f, "nodes");
+    } else if (ulab_streq(check, "backend_count_sims") ||
+               ulab_streq(check, "backend_count")) {
+        write_check_backend_count(f, "sims");
+    } else if (ulab_streq(check, "backend_count_subscribers")) {
+        write_check_backend_count(f, "subscribers");
+    } else if (ulab_streq(check, "backend_count_packages") ||
+               ulab_streq(check, "backend_package_count")) {
+        write_check_backend_count(f, "packages");
+    } else if (ulab_streq(check, "list_contains") ||
+               ulab_streq(check, "sim_assigned") ||
+               ulab_streq(check, "sim_not_in_unassigned_pool") ||
+               ulab_streq(check, "subscriber_has_sim")) {
+        fprintf(f,
+                "      - type: list_contains\n"
+                "        view: sims\n"
+                "        ref: ue-000001\n");
+    } else if (ulab_streq(check, "usage_per_sim")) {
+        fprintf(f,
+                "      - type: usage_per_sim\n"
+                "        ues: all\n"
+                "        expected: from_model\n"
+                "        tolerance_percent: 2\n");
+    } else if (ulab_streq(check, "balance_non_negative")) {
+        fprintf(f,
+                "      - type: balance_non_negative\n"
+                "        ues: all\n");
+    } else if (ulab_streq(check, "ue_attached")) {
+        fprintf(f,
+                "      - type: ue_attached\n"
+                "        ues: all\n");
+    } else if (ulab_streq(check, "traffic_allowed")) {
+        fprintf(f,
+                "      - type: traffic_allowed\n"
+                "        ues: all\n"
+                "        amount_mb: 1\n");
+    } else if (ulab_streq(check, "traffic_blocked")) {
+        fprintf(f,
+                "      - type: traffic_blocked\n"
+                "        ues: all\n"
+                "        amount_mb: 1\n");
+    } else if (ulab_streq(check, "node_ready")) {
+        fprintf(f,
+                "      - type: node_ready\n"
+                "        nodes: all\n");
+    } else if (ulab_streq(check, "node_health_ok")) {
+        fprintf(f, "      - type: node_health_ok\n");
+    } else if (ulab_streq(check, "node_version_equals")) {
+        fprintf(f,
+                "      - type: node_version_equals\n"
+                "        version: v2.0.0\n");
+    } else if (ulab_streq(check, "history_preserved")) {
+        fprintf(f,
+                "      - type: history_preserved\n"
+                "        entity: %s\n", family);
+    } else if (ulab_streq(check, "relationship_exists")) {
+        fprintf(f,
+                "      - type: relationship_exists\n"
+                "        entity: %s\n", family);
+    } else if (ulab_streq(check, "relationship_ended")) {
+        fprintf(f,
+                "      - type: relationship_ended\n"
+                "        entity: %s\n", family);
+    } else if (ulab_streq(check, "audit_event_exists")) {
+        fprintf(f,
+                "      - type: audit_event_exists\n"
+                "        entity: %s\n", family);
+    } else if (ulab_streq(check, "status_equals")) {
+        fprintf(f,
+                "      - type: status_equals\n"
+                "        entity: sim\n"
+                "        ref: ue-000001\n"
+                "        status: active\n");
+    } else if (ulab_streq(check, "package_active")) {
+        fprintf(f,
+                "      - type: package_active\n"
+                "        ues: all\n");
+    } else {
+        write_check_backend_count(f, "sims");
+    }
+}
+
+static void write_world(FILE *f, const topo_profile_t *p) {
+    uint32_t networks;
+    uint32_t sites;
+    uint32_t ues;
+
+    networks = p->networks ? p->networks : 1;
+    sites = p->sites_per_network ? p->sites_per_network : 1;
+    ues = p->ues_per_site ? p->ues_per_site : 1;
+
     fprintf(f,
             "provider:\n"
             "  type: virtual\n\n"
@@ -463,141 +969,99 @@ static void write_base_world(FILE *f, uint32_t networks,
             "    amplifier: 1\n"
             "    controller: 1\n"
             "  ues_per_site: %u\n\n",
-            networks ? networks : 1u,
-            sites_per_network ? sites_per_network : 1u,
-            ues_per_site ? ues_per_site : 1u);
-    write_common_packages(f, package_count);
-    write_common_setup(f);
+            networks, sites, ues);
 }
 
-static void write_action_event(FILE *f, const model_def_t *m,
-                               const action_rule_t *a, int blocked) {
-    (void)m;
+static void write_setup(FILE *f) {
+    fprintf(f,
+            "setup:\n"
+            "  create_via_bff:\n"
+            "    - networks\n"
+            "    - sites\n"
+            "    - nodes\n"
+            "    - node_site_links\n"
+            "    - packages\n"
+            "    - subscribers\n"
+            "    - sims\n\n");
+}
 
-    if (blocked) {
-        fprintf(f,
-                "      - type: set_sim_status\n"
-                "        ues: all\n"
-                "        expect:\n"
-                "          result: failure\n"
-                "          error_contains: \"missing status\"\n");
+static void write_runtime(FILE *f, int needs_ues) {
+    fprintf(f,
+            "runtime:\n"
+            "  start: %s\n"
+            "  wait: %s\n\n",
+            needs_ues ? "[nodes, ues]" : "[nodes]",
+            needs_ues ? "[nodes_ready, ues_attached]" : "[nodes_ready]");
+}
+
+
+static void normalized_tags(const gen_case_t *c, char *out, size_t out_len) {
+    const char *p;
+    size_t len;
+
+    if (out_len == 0) {
+        return;
+    }
+    out[0] = '\0';
+    if (c == NULL || c->tags[0] == '\0') {
         return;
     }
 
-    if (ulab_streq(a->event, "set_sim_status")) {
-        fprintf(f,
-                "      - type: set_sim_status\n"
-                "        ues: all\n"
-                "        status: %s\n", action_status(a));
-    } else if (ulab_streq(a->event, "add_package_to_sim")) {
-        fprintf(f,
-                "      - type: add_package_to_sim\n"
-                "        ues: all\n"
-                "        package: %s\n",
-                a->package_ref[0] ? a->package_ref : "pkg_002");
-    } else if (ulab_streq(a->event, "remove_package_from_sim")) {
-        fprintf(f,
-                "      - type: remove_package_from_sim\n"
-                "        ues: all\n");
-    } else if (ulab_streq(a->event, "restart_nodes")) {
-        fprintf(f,
-                "      - type: restart_nodes\n"
-                "        type_selector: %s\n"
-                "        count_per_network: 1\n",
-                a->selector[0] ? a->selector : "tower");
-    } else {
-        fprintf(f, "      - type: check\n");
+    p = c->tags;
+    while (*p == ' ' || *p == '[') {
+        p++;
     }
+    len = strlen(p);
+    while (len > 0 && (p[len - 1] == ' ' || p[len - 1] == ']')) {
+        len--;
+    }
+    if (len >= out_len) {
+        len = out_len - 1;
+    }
+    memcpy(out, p, len);
+    out[len] = '\0';
 }
 
-static void write_basic_checks(FILE *f, const char *target) {
-    fprintf(f,
-            "    checks:\n"
-            "      - type: backend_count\n"
-            "        target: %s\n"
-            "        expected: from_world\n",
-            target != NULL && target[0] ? target : "sims");
-}
-
-static void write_action_checks(FILE *f, const model_def_t *m,
-                                const action_rule_t *a, int blocked) {
-    write_basic_checks(f, ulab_streq(m->entity, "node") ? "nodes" : "sims");
-
-    if (!blocked && has_check(a, "list_contains")) {
-        fprintf(f,
-                "      - type: list_contains\n"
-                "        view: sims\n"
-                "        ref: ue-000001\n");
-    }
-    if (!blocked && has_check(a, "status_equals") &&
-        (ulab_streq(m->entity, "sim") || ulab_streq(m->entity, "subscriber"))) {
-        fprintf(f,
-                "      - type: status_equals\n"
-                "        entity: sim\n"
-                "        ref: ue-000001\n"
-                "        status: %s\n", action_status(a));
-    }
-    if (!blocked && ulab_streq(a->runtime, "traffic_allowed")) {
-        fprintf(f,
-                "      - type: traffic_allowed\n"
-                "        ues: all\n"
-                "        amount_mb: 1\n");
-    } else if (!blocked && ulab_streq(a->runtime, "traffic_blocked")) {
-        fprintf(f,
-                "      - type: traffic_blocked\n"
-                "        ues: all\n"
-                "        amount_mb: 1\n");
-    }
-}
-
-static void build_entity_name(char *out, size_t n,
-                              const char *entity, const char *action,
-                              const char *case_name,
-                              const char *from_state) {
-    out[0] = '\0';
-    append_str(out, n, entity);
-    append_str(out, n, "-");
-    append_str(out, n, action);
-    append_str(out, n, "-");
-    append_str(out, n, case_name);
-    append_str(out, n, "-");
-    append_str(out, n, from_state && from_state[0] ? from_state : "default");
-    clean_token(out);
-}
-
-static int write_entity_scenario(const gen_opts_t *opts, const model_def_t *m,
-                                 const action_rule_t *a, const char *case_name,
-                                 const char *from_state, int blocked,
-                                 FILE *index) {
+static int write_case_scenario(const gen_opts_t *opts,
+                               const gen_family_t *family,
+                               const gen_case_t *c,
+                               const topo_profile_t *p,
+                               FILE *index,
+                               size_t *active_count,
+                               size_t *wip_count) {
     char dir[ULAB_MAX_PATH];
     char path[ULAB_MAX_PATH];
-    char name[ULAB_MAX_NAME];
+    char tags[GEN_MAX_TAGS];
     uint32_t seed;
+    uint32_t packages;
+    int wip;
+    int needs_ues;
+    size_t i;
     FILE *f;
 
-    if (build_path3(dir, sizeof(dir), opts->out_dir, m->entity, "")) {
+    if (path_join(dir, sizeof(dir), opts->out_dir, family->name)) {
         return ULAB_ERR;
-    }
-    if (dir[0] != '\0' && dir[strlen(dir) - 1] == '/') {
-        dir[strlen(dir) - 1] = '\0';
     }
     if (ulab_mkdir_p(dir)) {
         return ULAB_ERR;
     }
-
-    build_entity_name(name, sizeof(name), m->entity, a->name, case_name,
-                      from_state);
-    if (build_yaml_path(path, sizeof(path), dir, name)) {
+    if (path_join(path, sizeof(path), dir, c->name)) {
+        return ULAB_ERR;
+    }
+    if (append_str(path, sizeof(path), ".yaml")) {
         return ULAB_ERR;
     }
 
-    seed = ulab_hash32(m->entity, blocked ? 11000 : 9000);
-    seed = ulab_hash32(a->name, seed);
-    seed = ulab_hash32(from_state ? from_state : "default", seed);
+    normalized_tags(c, tags, sizeof(tags));
+    wip = case_is_wip(family, c);
+    needs_ues = case_needs_ues(family, c);
+    packages = scenario_package_count(c, p);
+    seed = ulab_hash32(family->name, 62000);
+    seed = ulab_hash32(c->name, seed);
 
     f = fopen(path, "w");
     if (f == NULL) {
-        fprintf(stderr, "unable to write: %s\n", path);
+        fprintf(stderr, "unable to write scenario: %s\n", path);
         return ULAB_ERR;
     }
 
@@ -607,733 +1071,48 @@ static int write_entity_scenario(const gen_opts_t *opts, const model_def_t *m,
             "seed: %u\n"
             "suite: generated\n"
             "priority: %s\n"
-            "tags: [generated, entity, %s, %s, %s%s]\n"
-            "status: active\n"
+            "tags: [generated, %s%s%s]\n"
+            "status: %s\n"
             "generated: true\n"
             "entity: %s\n"
-            "action: %s\n\n",
-            name, seed, a->priority[0] ? a->priority : "p2",
-            m->entity, a->name, case_name, blocked ? ", negative" : "",
-            m->entity, a->name);
+            "action: %s\n\n"
+            "# family: %s\n"
+            "# case: %s\n"
+            "# topology: %s\n"
+            "# generated_status: %s\n\n",
+            c->name, seed, c->priority[0] ? c->priority : family->priority,
+            family->name, tags[0] ? ", " : "", tags,
+            wip ? "wip" : "active",
+            family->name, c->event_count ? c->events[0] : "check",
+            family->name, c->name, p->name, wip ? "wip" : "active");
 
-    fprintf(f,
-            "# model_from: %s\n"
-            "# model_to: %s\n"
-            "# model_expected: %s\n\n",
-            from_state && from_state[0] ? from_state : "default",
-            a->to[0] ? a->to : "unchanged",
-            blocked ? "failure" : "success");
+    write_world(f, p);
+    write_packages(f, packages, p->traffic_mb_per_ue);
+    write_setup(f);
+    write_runtime(f, needs_ues);
+    write_profile_section(f, c);
 
-    write_base_world(f, 1, 1, 1, 2);
     fprintf(f,
             "phases:\n"
             "  - name: action\n"
             "    events:\n");
-    write_action_event(f, m, a, blocked);
-    write_action_checks(f, m, a, blocked);
-
-    fprintf(f,
-            "\nfinal_checks:\n"
-            "  - type: balance_non_negative\n"
-            "    ues: all\n");
-
-    fclose(f);
-
-    fprintf(index,
-            "  - file: %s/%s.yaml\n"
-            "    entity: %s\n"
-            "    action: %s\n"
-            "    case: %s\n"
-            "    from: %s\n"
-            "    expected: %s\n"
-            "    priority: %s\n",
-            m->entity, name, m->entity, a->name, case_name,
-            from_state && from_state[0] ? from_state : "default",
-            blocked ? "failure" : "success",
-            a->priority[0] ? a->priority : "p2");
-
-    return ULAB_OK;
-}
-
-static int generate_action(const gen_opts_t *opts, const model_def_t *m,
-                           const action_rule_t *a, FILE *index) {
-    size_t i;
-
-    if (a->from_count == 0) {
-        if (write_entity_scenario(opts, m, a, "success", "default", 0, index)) {
-            return ULAB_ERR;
-        }
-    } else {
-        for (i = 0; i < a->from_count; i++) {
-            if (write_entity_scenario(opts, m, a, "success", a->from[i], 0, index)) {
-                return ULAB_ERR;
-            }
-        }
-    }
-
-    for (i = 0; i < a->blocked_count; i++) {
-        if (write_entity_scenario(opts, m, a, "blocked", a->blocked_from[i], 1, index)) {
-            return ULAB_ERR;
-        }
-    }
-
-    for (i = 0; i < a->guard_count; i++) {
-        if (write_entity_scenario(opts, m, a, "guard", a->guards[i], 1, index)) {
-            return ULAB_ERR;
-        }
-    }
-
-    return ULAB_OK;
-}
-
-static int matrix_path(char *out, size_t n, const gen_opts_t *opts,
-                       const char *subdir, const char *name) {
-    out[0] = '\0';
-    if (append_str(out, n, opts->models_dir)) return ULAB_ERR;
-    if (append_str(out, n, "/")) return ULAB_ERR;
-    if (append_str(out, n, subdir)) return ULAB_ERR;
-    if (append_str(out, n, "/")) return ULAB_ERR;
-    if (append_str(out, n, name)) return ULAB_ERR;
-    if (append_str(out, n, ".yaml")) return ULAB_ERR;
-    return ULAB_OK;
-}
-
-static matrix_profile_t *new_profile(matrix_def_t *matrix,
-                                     const char *name) {
-    matrix_profile_t *p;
-
-    if (matrix->profile_count >= GEN_MAX_PROFILES) {
-        return NULL;
-    }
-    p = &matrix->profiles[matrix->profile_count++];
-    memset(p, 0, sizeof(*p));
-    if (ulab_copy(p->name, sizeof(p->name), name)) {
-        return NULL;
-    }
-    return p;
-}
-
-static matrix_family_t *new_family(matrix_def_t *matrix,
-                                   const char *name) {
-    matrix_family_t *f;
-
-    if (matrix->family_count >= GEN_MAX_FAMILIES) {
-        return NULL;
-    }
-    f = &matrix->families[matrix->family_count++];
-    memset(f, 0, sizeof(*f));
-    if (ulab_copy(f->name, sizeof(f->name), name)) {
-        return NULL;
-    }
-    clean_token(f->name);
-    ulab_copy(f->priority, sizeof(f->priority), "p2");
-    return f;
-}
-
-static matrix_item_t *profile_add_item(matrix_profile_t *profile,
-                                       const char *name) {
-    matrix_item_t *item;
-
-    if (profile->item_count >= GEN_MAX_ITEMS) {
-        return NULL;
-    }
-    item = &profile->items[profile->item_count++];
-    memset(item, 0, sizeof(*item));
-    if (ulab_copy(item->name, sizeof(item->name), name)) {
-        return NULL;
-    }
-    clean_token(item->name);
-    return item;
-}
-
-static int parse_profile_field(matrix_item_t *item,
-                               const char *key,
-                               char *val) {
-    if (ulab_streq(key, "mode") || ulab_streq(key, "condition")) {
-        return ulab_copy(item->mode, sizeof(item->mode), val);
-    }
-    if (ulab_streq(key, "expect")) {
-        return ulab_copy(item->expect, sizeof(item->expect), val);
-    }
-    if (ulab_streq(key, "networks")) {
-        return ulab_parse_u32(val, &item->networks);
-    }
-    if (ulab_streq(key, "sites_per_network")) {
-        return ulab_parse_u32(val, &item->sites_per_network);
-    }
-    if (ulab_streq(key, "ues_per_site")) {
-        return ulab_parse_u32(val, &item->ues_per_site);
-    }
-    if (ulab_streq(key, "packages")) {
-        return ulab_parse_u32(val, &item->packages);
-    }
-    if (ulab_streq(key, "sim_pool")) {
-        return ulab_parse_u32(val, &item->sim_pool);
-    }
-    return ULAB_OK;
-}
-
-static int load_profile(const gen_opts_t *opts, const char *name,
-                        matrix_def_t *matrix) {
-    char path[ULAB_MAX_PATH];
-    char line[ULAB_MAX_LINE];
-    FILE *fp;
-    matrix_profile_t *profile;
-    matrix_item_t *cur;
-
-    if (matrix_path(path, sizeof(path), opts, "profiles", name)) {
-        return ULAB_ERR;
-    }
-    fp = fopen(path, "r");
-    if (fp == NULL) {
-        fprintf(stderr, "missing matrix profile: %s\n", path);
-        return ULAB_ERR;
-    }
-    profile = new_profile(matrix, name);
-    if (profile == NULL) {
-        fclose(fp);
-        return ULAB_ERR;
-    }
-    cur = NULL;
-
-    while (fgets(line, sizeof(line), fp) != NULL) {
-        char *p;
-        char *key;
-        char *val;
-
-        p = ulab_trim(line);
-        if (*p == '\0' || *p == '#') {
-            continue;
-        }
-        if (ulab_starts(p, "- name:")) {
-            val = ulab_trim(strchr(p, ':') + 1);
-            cur = profile_add_item(profile, val);
-            if (cur == NULL) {
-                fclose(fp);
-                return ULAB_ERR;
-            }
-            continue;
-        }
-        if (strchr(p, ':') == NULL) {
-            continue;
-        }
-        key = p;
-        val = strchr(p, ':');
-        *val++ = '\0';
-        key = ulab_trim(key);
-        val = ulab_trim(val);
-
-        if (ulab_streq(key, "profile_type")) {
-            if (ulab_copy(profile->kind, sizeof(profile->kind), val)) {
-                fclose(fp);
-                return ULAB_ERR;
-            }
-            clean_token(profile->kind);
-        } else if (cur != NULL) {
-            if (parse_profile_field(cur, key, val)) {
-                fclose(fp);
-                return ULAB_ERR;
-            }
-        }
-    }
-
-    fclose(fp);
-
-    if (profile->kind[0] == '\0' || profile->item_count == 0) {
-        fprintf(stderr, "invalid matrix profile: %s\n", path);
-        return ULAB_ERR;
-    }
-    return ULAB_OK;
-}
-
-static int parse_family_field(matrix_family_t *family,
-                              const char *key,
-                              char *val) {
-    if (ulab_streq(key, "priority")) {
-        return ulab_copy(family->priority, sizeof(family->priority), val);
-    }
-    if (ulab_streq(key, "flows")) {
-        return parse_list(family->flows, &family->flow_count, val);
-    }
-    if (ulab_streq(key, "topologies")) {
-        return parse_list(family->topologies, &family->topology_count, val);
-    }
-    if (ulab_streq(key, "scales")) {
-        return parse_list(family->scales, &family->scale_count, val);
-    }
-    if (ulab_streq(key, "runtime")) {
-        return parse_list(family->runtime, &family->runtime_count, val);
-    }
-    if (ulab_streq(key, "failures")) {
-        return parse_list(family->failures, &family->failure_count, val);
-    }
-    if (ulab_streq(key, "software")) {
-        return parse_list(family->software, &family->software_count, val);
-    }
-    if (ulab_streq(key, "verification")) {
-        return parse_list(family->verification, &family->verification_count, val);
-    }
-    return ULAB_OK;
-}
-
-static int load_family(const gen_opts_t *opts, const char *name,
-                       matrix_def_t *matrix) {
-    char path[ULAB_MAX_PATH];
-    char line[ULAB_MAX_LINE];
-    FILE *fp;
-    matrix_family_t *family;
-
-    if (matrix_path(path, sizeof(path), opts, "families", name)) {
-        return ULAB_ERR;
-    }
-    fp = fopen(path, "r");
-    if (fp == NULL) {
-        fprintf(stderr, "missing scenario family: %s\n", path);
-        return ULAB_ERR;
-    }
-    family = NULL;
-
-    while (fgets(line, sizeof(line), fp) != NULL) {
-        char *p;
-        char *key;
-        char *val;
-
-        p = ulab_trim(line);
-        if (*p == '\0' || *p == '#') {
-            continue;
-        }
-        if (strchr(p, ':') == NULL) {
-            continue;
-        }
-        key = p;
-        val = strchr(p, ':');
-        *val++ = '\0';
-        key = ulab_trim(key);
-        val = ulab_trim(val);
-
-        if (ulab_streq(key, "family")) {
-            family = new_family(matrix, val);
-            if (family == NULL) {
-                fclose(fp);
-                return ULAB_ERR;
-            }
-        } else if (family != NULL) {
-            if (parse_family_field(family, key, val)) {
-                fclose(fp);
-                return ULAB_ERR;
-            }
-        }
-    }
-
-    fclose(fp);
-
-    if (family == NULL || family->flow_count == 0 ||
-        family->topology_count == 0 || family->scale_count == 0 ||
-        family->runtime_count == 0 || family->failure_count == 0 ||
-        family->verification_count == 0) {
-        fprintf(stderr, "invalid scenario family: %s\n", path);
-        return ULAB_ERR;
-    }
-    return ULAB_OK;
-}
-
-static const matrix_profile_t *find_profile(const matrix_def_t *matrix,
-                                            const char *kind) {
-    size_t i;
-
-    for (i = 0; i < matrix->profile_count; i++) {
-        if (ulab_streq(matrix->profiles[i].name, kind) ||
-            ulab_streq(matrix->profiles[i].kind, kind)) {
-            return &matrix->profiles[i];
-        }
-    }
-    return NULL;
-}
-
-static const matrix_item_t *profile_item(const matrix_def_t *matrix,
-                                         const char *kind,
-                                         const char *name) {
-    const matrix_profile_t *p;
-    size_t i;
-
-    p = find_profile(matrix, kind);
-    if (p == NULL) {
-        return NULL;
-    }
-    for (i = 0; i < p->item_count; i++) {
-        if (ulab_streq(p->items[i].name, name)) {
-            return &p->items[i];
-        }
-    }
-    return NULL;
-}
-
-static int load_matrix_models(const gen_opts_t *opts, matrix_def_t *matrix) {
-    size_t i;
-
-    memset(matrix, 0, sizeof(*matrix));
-    for (i = 0; i < sizeof(default_profiles) / sizeof(default_profiles[0]); i++) {
-        if (load_profile(opts, default_profiles[i], matrix)) {
-            return ULAB_ERR;
-        }
-    }
-    for (i = 0; i < sizeof(default_families) / sizeof(default_families[0]); i++) {
-        if (load_family(opts, default_families[i], matrix)) {
-            return ULAB_ERR;
-        }
-    }
-    return ULAB_OK;
-}
-
-static int is_runtime_supported(const char *runtime) {
-    return ulab_streq(runtime, "normal") ||
-           ulab_streq(runtime, "node_restart") ||
-           ulab_streq(runtime, "service_off") ||
-           ulab_streq(runtime, "radio_off") ||
-           ulab_streq(runtime, "node_offline");
-}
-
-static int is_verification_supported(const char *verification) {
-    return ulab_streq(verification, "backend") ||
-           ulab_streq(verification, "runtime") ||
-           ulab_streq(verification, "usage") ||
-           ulab_streq(verification, "history") ||
-           ulab_streq(verification, "audit") ||
-           ulab_streq(verification, "software_version");
-}
-
-static int is_software_supported(const char *software) {
-    return ulab_streq(software, "no_update") ||
-           ulab_streq(software, "same_version") ||
-           ulab_streq(software, "new_version") ||
-           ulab_streq(software, "rollback");
-}
-
-static int is_family_flow_supported(const char *family, const char *flow) {
-    if (ulab_streq(family, "software_update")) return 1;
-    if (ulab_streq(family, "site_ops")) {
-        return ulab_streq(flow, "restart_site") ||
-               ulab_streq(flow, "service_off") ||
-               ulab_streq(flow, "service_on") ||
-               ulab_streq(flow, "radio_off") ||
-               ulab_streq(flow, "radio_on");
-    }
-    if (ulab_streq(family, "node_ops")) {
-        return ulab_streq(flow, "restart") ||
-               ulab_streq(flow, "offline") ||
-               ulab_streq(flow, "recover");
-    }
-    if (ulab_streq(family, "lifecycle")) {
-        return ulab_streq(flow, "sim_suspend") ||
-               ulab_streq(flow, "sim_deactivate");
-    }
-    return 1;
-}
-
-static int should_mark_wip(const char *family, const char *flow,
-                           const char *runtime, const char *failure,
-                           const char *software, const char *verification) {
-    if (!is_family_flow_supported(family, flow)) return 1;
-    if (!is_runtime_supported(runtime)) return 1;
-    if (!ulab_streq(failure, "none")) return 1;
-    if (!is_software_supported(software)) return 1;
-    if (!is_verification_supported(verification)) return 1;
-    return 0;
-}
-
-static void build_matrix_name(char *out, size_t n,
-                              const char *family, const char *flow,
-                              const char *topology, const char *scale,
-                              const char *runtime, const char *failure,
-                              const char *software, const char *verification) {
-    out[0] = '\0';
-    append_str(out, n, family);
-    append_str(out, n, "-");
-    append_str(out, n, flow);
-    append_str(out, n, "-");
-    append_str(out, n, topology);
-    append_str(out, n, "-");
-    append_str(out, n, scale);
-    append_str(out, n, "-");
-    append_str(out, n, runtime);
-    append_str(out, n, "-");
-    append_str(out, n, failure);
-    if (!ulab_streq(software, "no_update")) {
-        append_str(out, n, "-");
-        append_str(out, n, software);
-    }
-    append_str(out, n, "-");
-    append_str(out, n, verification);
-    clean_token(out);
-}
-
-static const char *matrix_entity_for_family(const char *family) {
-    if (ulab_streq(family, "node_ops") || ulab_streq(family, "software_update")) return "node";
-    if (ulab_streq(family, "package")) return "package";
-    if (ulab_streq(family, "subscriber")) return "subscriber";
-    if (ulab_streq(family, "site_ops")) return "site";
-    if (ulab_streq(family, "backend")) return "backend";
-    return "sim";
-}
-
-static void write_matrix_event(FILE *f, const char *family, const char *flow,
-                               const char *runtime, const char *software,
-                               int wip) {
-    if (wip) {
+    write_setup_preamble(f, c);
+    if (c->event_count == 0 || wip) {
         fprintf(f, "      - type: check\n");
-        return;
-    }
-
-    if (ulab_streq(family, "software_update")) {
-        fprintf(f,
-                "      - type: software_update\n"
-                "        type_selector: tower\n"
-                "        count_per_network: 1\n"
-                "        version: %s\n", software);
-    } else if (ulab_streq(flow, "service_off") ||
-               ulab_streq(runtime, "service_off")) {
-        fprintf(f,
-                "      - type: toggle_service\n"
-                "        state: off\n");
-    } else if (ulab_streq(flow, "service_on")) {
-        fprintf(f,
-                "      - type: toggle_service\n"
-                "        state: on\n");
-    } else if (ulab_streq(flow, "radio_off") ||
-               ulab_streq(runtime, "radio_off")) {
-        fprintf(f,
-                "      - type: toggle_radio\n"
-                "        state: off\n");
-    } else if (ulab_streq(flow, "radio_on")) {
-        fprintf(f,
-                "      - type: toggle_radio\n"
-                "        state: on\n");
-    } else if (ulab_streq(flow, "offline") ||
-               ulab_streq(runtime, "node_offline")) {
-        fprintf(f, "      - type: mark_node_offline\n");
-    } else if (ulab_streq(flow, "recover")) {
-        fprintf(f, "      - type: restore_node\n");
-    } else if (ulab_streq(flow, "restart_site")) {
-        fprintf(f,
-                "      - type: restart_site\n"
-                "        nodes: all\n");
-    } else if (ulab_streq(runtime, "node_restart") ||
-               (ulab_streq(family, "node_ops") &&
-                ulab_streq(flow, "restart"))) {
-        fprintf(f,
-                "      - type: restart_nodes\n"
-                "        type_selector: tower\n"
-                "        count_per_network: 1\n");
-    } else if (ulab_streq(family, "usage") ||
-               ulab_streq(flow, "ue_traffic") ||
-               ulab_streq(flow, "traffic")) {
-        fprintf(f,
-                "      - type: traffic\n"
-                "        ues: all\n"
-                "        amount_mb: 1\n");
-    } else if (ulab_streq(flow, "profile_traffic")) {
-        fprintf(f,
-                "      - type: traffic_by_profile\n"
-                "        profile: mixed\n");
-    } else if (ulab_streq(flow, "add_to_sim") || ulab_streq(flow, "topup")) {
-        fprintf(f,
-                "      - type: add_package_to_sim\n"
-                "        ues: all\n"
-                "        package: pkg_002\n");
-    } else if (ulab_streq(flow, "remove_from_sim")) {
-        fprintf(f,
-                "      - type: remove_package_from_sim\n"
-                "        ues: all\n");
-    } else if (ulab_streq(flow, "sim_suspend") ||
-               ulab_streq(flow, "sim_deactivate")) {
-        fprintf(f,
-                "      - type: set_sim_status\n"
-                "        ues: all\n"
-                "        status: inactive\n");
     } else {
-        fprintf(f, "      - type: check\n");
-    }
-}
-
-static void write_matrix_checks(FILE *f, const char *family,
-                                const char *verification,
-                                const char *runtime,
-                                const char *software,
-                                int wip) {
-    const char *target;
-    const char *entity;
-
-    target = (ulab_streq(family, "node_ops") ||
-              ulab_streq(family, "software_update")) ? "nodes" : "sims";
-    entity = matrix_entity_for_family(family);
-
-    fprintf(f,
-            "    checks:\n"
-            "      - type: backend_count\n"
-            "        target: %s\n"
-            "        expected: from_world\n", target);
-
-    if (!wip && ulab_streq(verification, "read_model")) {
-        fprintf(f,
-                "      - type: list_contains\n"
-                "        view: sims\n"
-                "        ref: ue-000001\n");
-    }
-    if (!wip && ulab_streq(verification, "__backend_removed__")) {
-        fprintf(f,
-                "      - type: backend_count\n"
-                "        section: network_overview\n");
-    }
-    if (!wip && ulab_streq(verification, "history")) {
-        fprintf(f,
-                "      - type: history_preserved\n"
-                "        entity: %s\n", entity);
-    }
-    if (!wip && ulab_streq(verification, "audit")) {
-        fprintf(f,
-                "      - type: audit_event_exists\n"
-                "        entity: %s\n", entity);
-    }
-    if (!wip && ulab_streq(family, "software_update")) {
-        fprintf(f,
-                "      - type: node_version_equals\n"
-                "        version: %s\n"
-                "      - type: node_health_ok\n",
-                software);
-    }
-    if (!wip && ulab_streq(verification, "runtime")) {
-        if (ulab_streq(runtime, "service_off") ||
-            ulab_streq(runtime, "radio_off") ||
-            ulab_streq(runtime, "node_offline")) {
-            fprintf(f,
-                    "      - type: traffic_blocked\n"
-                    "        ues: all\n"
-                    "        amount_mb: 1\n");
-        } else {
-            fprintf(f,
-                    "      - type: traffic_allowed\n"
-                    "        ues: all\n"
-                    "        amount_mb: 1\n");
+        for (i = 0; i < c->event_count; i++) {
+            write_one_event(f, c->events[i], p);
         }
     }
-}
 
-static void write_profile_section(FILE *f, const char *flow) {
-    if (!ulab_streq(flow, "profile_traffic")) {
-        return;
+    fprintf(f, "    checks:\n");
+    if (c->check_count == 0 || wip) {
+        write_check_backend_count(f, "sims");
+    } else {
+        for (i = 0; i < c->check_count; i++) {
+            write_one_check(f, c->checks[i], family->name);
+        }
     }
-    fprintf(f,
-            "profiles:\n"
-            "  - name: mixed\n"
-            "    buckets:\n"
-            "      - name: light\n"
-            "        percent: 70\n"
-            "        amount_mb: 1\n"
-            "      - name: heavy\n"
-            "        percent: 30\n"
-            "        amount_mb: 3\n\n");
-}
-
-static int write_matrix_scenario(const gen_opts_t *opts,
-                                 const matrix_family_t *family,
-                                 const matrix_item_t *topology,
-                                 const matrix_item_t *scale,
-                                 const char *flow,
-                                 const char *runtime,
-                                 const char *failure,
-                                 const char *software,
-                                 const char *verification,
-                                 FILE *index,
-                                 size_t *count_out) {
-    char dir[ULAB_MAX_PATH];
-    char path[ULAB_MAX_PATH];
-    char name[ULAB_MAX_NAME];
-    uint32_t seed;
-    uint32_t networks;
-    uint32_t sites;
-    uint32_t ues;
-    uint32_t packages;
-    int wip;
-    FILE *f;
-
-    if (build_path3(dir, sizeof(dir), opts->out_dir, family->name, "")) {
-        return ULAB_ERR;
-    }
-    if (dir[0] != '\0' && dir[strlen(dir) - 1] == '/') {
-        dir[strlen(dir) - 1] = '\0';
-    }
-    if (ulab_mkdir_p(dir)) {
-        return ULAB_ERR;
-    }
-
-    build_matrix_name(name, sizeof(name), family->name, flow,
-                      topology->name, scale->name, runtime, failure,
-                      software, verification);
-    if (build_yaml_path(path, sizeof(path), dir, name)) {
-        return ULAB_ERR;
-    }
-
-    networks = topology->networks ? topology->networks : 1;
-    sites = topology->sites_per_network ? topology->sites_per_network : 1;
-    ues = scale->ues_per_site ? scale->ues_per_site : 1;
-    packages = scale->packages ? scale->packages : 1;
-    wip = should_mark_wip(family->name, flow, runtime, failure,
-                          software, verification);
-
-    seed = ulab_hash32(family->name, 41000);
-    seed = ulab_hash32(flow, seed);
-    seed = ulab_hash32(topology->name, seed);
-    seed = ulab_hash32(scale->name, seed);
-    seed = ulab_hash32(runtime, seed);
-    seed = ulab_hash32(failure, seed);
-    seed = ulab_hash32(software, seed);
-    seed = ulab_hash32(verification, seed);
-
-    f = fopen(path, "w");
-    if (f == NULL) {
-        fprintf(stderr, "unable to write: %s\n", path);
-        return ULAB_ERR;
-    }
-
-    fprintf(f,
-            "version: 1\n"
-            "name: %s\n"
-            "seed: %u\n"
-            "suite: generated\n"
-            "priority: %s\n"
-            "tags: [generated, matrix, %s, %s, %s, %s, %s, %s, %s, %s%s]\n"
-            "status: %s\n"
-            "generated: true\n"
-            "entity: %s\n"
-            "action: %s\n\n",
-            name, seed, family->priority[0] ? family->priority : "p2",
-            family->name, flow, topology->name, scale->name, runtime,
-            failure, software, verification, wip ? ", future" : "",
-            wip ? "wip" : "active",
-            matrix_entity_for_family(family->name), flow);
-
-    fprintf(f,
-            "# family: %s\n"
-            "# flow: %s\n"
-            "# topology: %s\n"
-            "# scale: %s\n"
-            "# runtime_condition: %s\n"
-            "# failure_condition: %s\n"
-            "# software_condition: %s\n"
-            "# verification: %s\n"
-            "# generated_status: %s\n\n",
-            family->name, flow, topology->name, scale->name, runtime,
-            failure, software, verification, wip ? "wip" : "active");
-
-    write_base_world(f, networks, sites, ues, packages);
-    write_profile_section(f, flow);
-
-    fprintf(f,
-            "phases:\n"
-            "  - name: matrix_action\n"
-            "    events:\n");
-    write_matrix_event(f, family->name, flow, runtime, software, wip);
-    write_matrix_checks(f, family->name, verification, runtime, software, wip);
 
     fprintf(f,
             "\nfinal_checks:\n"
@@ -1345,177 +1124,124 @@ static int write_matrix_scenario(const gen_opts_t *opts,
     fprintf(index,
             "  - file: %s/%s.yaml\n"
             "    family: %s\n"
-            "    flow: %s\n"
+            "    case: %s\n"
             "    topology: %s\n"
-            "    scale: %s\n"
-            "    runtime: %s\n"
-            "    failure: %s\n"
-            "    software: %s\n"
-            "    verification: %s\n"
             "    status: %s\n"
             "    priority: %s\n",
-            family->name, name, family->name, flow, topology->name,
-            scale->name, runtime, failure, software, verification,
+            family->name, c->name, family->name, c->name, p->name,
             wip ? "wip" : "active",
-            family->priority[0] ? family->priority : "p2");
+            c->priority[0] ? c->priority : family->priority);
 
-    (*count_out)++;
+    if (wip) {
+        (*wip_count)++;
+    } else {
+        (*active_count)++;
+    }
     return ULAB_OK;
 }
 
-static int generate_family_matrix(const gen_opts_t *opts,
-                                  const matrix_def_t *matrix,
-                                  const matrix_family_t *family,
-                                  FILE *index,
-                                  size_t *count_out) {
-    size_t fi;
-    size_t ti;
-    size_t si;
-    size_t ri;
-    size_t fai;
-    size_t swi;
-    size_t vi;
+static int generate_family(const gen_opts_t *opts,
+                           const gen_catalog_t *cat,
+                           const gen_family_t *family,
+                           FILE *index,
+                           size_t *active_count,
+                           size_t *wip_count) {
+    size_t i;
 
-    for (fi = 0; fi < family->flow_count; fi++) {
-        for (ti = 0; ti < family->topology_count; ti++) {
-            const matrix_item_t *topology;
-
-            topology = profile_item(matrix, "topology", family->topologies[ti]);
-            if (topology == NULL) return ULAB_ERR;
-
-            for (si = 0; si < family->scale_count; si++) {
-                const matrix_item_t *scale;
-
-                scale = profile_item(matrix, "scale", family->scales[si]);
-                if (scale == NULL) return ULAB_ERR;
-
-                for (ri = 0; ri < family->runtime_count; ri++) {
-                    for (fai = 0; fai < family->failure_count; fai++) {
-                        for (swi = 0; swi < family->software_count ||
-                             (swi == 0 && family->software_count == 0); swi++) {
-                            const char *software;
-
-                            software = family->software_count ?
-                                       family->software[swi] : "no_update";
-                            for (vi = 0; vi < family->verification_count; vi++) {
-                                if (write_matrix_scenario(opts, family,
-                                                          topology, scale,
-                                                          family->flows[fi],
-                                                          family->runtime[ri],
-                                                          family->failures[fai],
-                                                          software,
-                                                          family->verification[vi],
-                                                          index, count_out)) {
-                                    return ULAB_ERR;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+    for (i = 0; i < family->case_count; i++) {
+        const topo_profile_t *p;
+        p = find_profile(cat, family->cases[i].topology);
+        if (p == NULL) {
+            fprintf(stderr, "unknown topology %.128s in case %.128s\n",
+                    family->cases[i].topology, family->cases[i].name);
+            return ULAB_ERR;
         }
-    }
-    return ULAB_OK;
-}
-
-static void write_matrix_index(FILE *index, const matrix_def_t *matrix) {
-    size_t i;
-
-    fprintf(index, "matrix:\n");
-    fprintf(index, "  profiles:\n");
-    for (i = 0; i < matrix->profile_count; i++) {
-        fprintf(index, "    - name: %s\n", matrix->profiles[i].name);
-        fprintf(index, "      kind: %s\n", matrix->profiles[i].kind);
-        fprintf(index, "      count: %zu\n", matrix->profiles[i].item_count);
-    }
-    fprintf(index, "  families:\n");
-    for (i = 0; i < matrix->family_count; i++) {
-        fprintf(index, "    - name: %s\n", matrix->families[i].name);
-        fprintf(index, "      priority: %s\n", matrix->families[i].priority);
-        fprintf(index, "      flows: %zu\n", matrix->families[i].flow_count);
-    }
-}
-
-static int generate_model(const gen_opts_t *opts, const char *entity,
-                          FILE *index) {
-    model_def_t model;
-    size_t i;
-
-    if (load_model(opts, entity, &model)) {
-        return ULAB_ERR;
-    }
-
-    for (i = 0; i < model.action_count; i++) {
-        if (generate_action(opts, &model, &model.actions[i], index)) {
+        if (write_case_scenario(opts, family, &family->cases[i], p, index,
+                                active_count, wip_count)) {
             return ULAB_ERR;
         }
     }
-
     return ULAB_OK;
+}
+
+static void write_index_header(FILE *index, const gen_catalog_t *cat) {
+    size_t i;
+
+    fprintf(index, "catalog:\n");
+    fprintf(index, "  topologies:\n");
+    for (i = 0; i < cat->profile_count; i++) {
+        fprintf(index,
+                "    - name: %s\n"
+                "      networks: %u\n"
+                "      sites_per_network: %u\n"
+                "      ues_per_site: %u\n"
+                "      packages: %u\n"
+                "      traffic_mb_per_ue: %llu\n",
+                cat->profiles[i].name,
+                cat->profiles[i].networks,
+                cat->profiles[i].sites_per_network,
+                cat->profiles[i].ues_per_site,
+                cat->profiles[i].packages,
+                (unsigned long long)cat->profiles[i].traffic_mb_per_ue);
+    }
+    fprintf(index, "generated_scenarios:\n");
 }
 
 int generator_run(int argc, char **argv) {
     gen_opts_t opts;
-    matrix_def_t matrix;
+    gen_catalog_t *cat;
     char index_path[ULAB_MAX_PATH];
     FILE *index;
     size_t i;
-    size_t matrix_count;
+    size_t active_count;
+    size_t wip_count;
 
     if (parse_opts(argc, argv, &opts) != ULAB_OK) {
         usage();
         return ULAB_EUSAGE;
     }
 
-    if (load_matrix_models(&opts, &matrix)) {
+    cat = calloc(1, sizeof(*cat));
+    if (cat == NULL) {
         return ULAB_ERR;
     }
-    printf("loaded matrix profiles=%zu families=%zu\n", matrix.profile_count,
-           matrix.family_count);
+
+    if (load_catalog(&opts, cat)) {
+        free(cat);
+        return ULAB_ERR;
+    }
 
     if (ulab_mkdir_p(opts.out_dir)) {
+        free(cat);
         fprintf(stderr, "unable to create output dir: %s\n", opts.out_dir);
         return ULAB_ERR;
     }
-
-    index_path[0] = '\0';
-    if (append_str(index_path, sizeof(index_path), opts.out_dir)) return ULAB_ERR;
-    if (append_str(index_path, sizeof(index_path), "/index.yaml")) return ULAB_ERR;
-
+    if (path_join(index_path, sizeof(index_path), opts.out_dir, "index.yaml")) {
+        free(cat);
+        return ULAB_ERR;
+    }
     index = fopen(index_path, "w");
     if (index == NULL) {
+        free(cat);
         fprintf(stderr, "unable to write: %s\n", index_path);
         return ULAB_ERR;
     }
 
-    write_matrix_index(index, &matrix);
-    fprintf(index, "generated_scenarios:\n");
-
-    if (!ulab_streq(opts.model, "all")) {
-        if (generate_model(&opts, opts.model, index)) {
+    write_index_header(index, cat);
+    active_count = 0;
+    wip_count = 0;
+    for (i = 0; i < cat->family_count; i++) {
+        if (generate_family(&opts, cat, &cat->families[i], index,
+                            &active_count, &wip_count)) {
             fclose(index);
-            return ULAB_ERR;
-        }
-    } else {
-        for (i = 0; i < sizeof(default_entities) / sizeof(default_entities[0]); i++) {
-            if (generate_model(&opts, default_entities[i], index)) {
-                fclose(index);
-                return ULAB_ERR;
-            }
-        }
-    }
-
-    matrix_count = 0;
-    for (i = 0; i < matrix.family_count; i++) {
-        if (generate_family_matrix(&opts, &matrix, &matrix.families[i],
-                                   index, &matrix_count)) {
-            fclose(index);
+            free(cat);
             return ULAB_ERR;
         }
     }
 
     fclose(index);
-    printf("generated matrix scenarios=%zu\n", matrix_count);
-    printf("generated index %s\n", index_path);
+    printf("generated cases active=%zu wip=%zu index=%s\n",
+           active_count, wip_count, index_path);
+    free(cat);
     return ULAB_OK;
 }
