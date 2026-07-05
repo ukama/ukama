@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgconn"
+	pgconnv5 "github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 	wrp "github.com/ukama/ukama/systems/common/errors"
@@ -172,10 +173,19 @@ func IsNotFoundError(err error) bool {
 }
 
 func IsDuplicateKeyError(err error) bool {
+	// gorm.io/driver/postgres (>=1.6) uses pgx/v5, whose errors are
+	// *github.com/jackc/pgx/v5/pgconn.PgError. Older code paths may still
+	// surface the standalone *github.com/jackc/pgconn.PgError, so check both.
 	var pge *pgconn.PgError
-	if errors.As(err, &pge) {
-		return pge.Code == PGERROR_CODE_UNIQUE_VIOLATION
+	if errors.As(err, &pge) && pge.Code == PGERROR_CODE_UNIQUE_VIOLATION {
+		return true
 	}
+
+	var pgeV5 *pgconnv5.PgError
+	if errors.As(err, &pgeV5) && pgeV5.Code == PGERROR_CODE_UNIQUE_VIOLATION {
+		return true
+	}
+
 	return false
 }
 
