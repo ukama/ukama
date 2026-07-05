@@ -1,0 +1,20 @@
+profile_type: verification
+items:
+  - name: backend
+    checks: [backend_count, list_contains, status_equals]
+    tags: [verify, backend]
+  - name: runtime
+    checks: [traffic_allowed, traffic_blocked, node_health_ok]
+    tags: [verify, runtime]
+  - name: usage
+    checks: [usage_per_sim, balance_non_negative]
+    tags: [verify, usage]
+  - name: history
+    checks: [history_preserved, relationship_exists, relationship_ended]
+    tags: [verify, history]
+  - name: audit
+    checks: [audit_event_exists]
+    tags: [verify, audit]
+  - name: software_version
+    checks: [node_version_equals, node_health_ok]
+    tags: [verify, software]

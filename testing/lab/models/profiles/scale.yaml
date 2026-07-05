@@ -1,0 +1,20 @@
+profile_type: scale
+items:
+  - name: simple
+    ues_per_site: 1
+    sim_pool: 1
+    packages: 1
+    traffic_mb_per_ue: 1024
+    tags: [scale, simple]
+  - name: medium
+    ues_per_site: 30
+    sim_pool: 90
+    packages: 5
+    traffic_mb_per_ue: 2048
+    tags: [scale, medium]
+  - name: large
+    ues_per_site: 100
+    sim_pool: 1000
+    packages: 10
+    traffic_mb_per_ue: 5120
+    tags: [scale, large]

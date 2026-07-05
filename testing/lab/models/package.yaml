@@ -1,3 +1,25 @@
 entity: package
 states: [draft, active, archived, deactivated]
-actions: [create, read, update, archive, deactivate, add_to_sim, remove_from_sim]
+actions:
+  - name: add_to_sim
+    event: add_package_to_sim
+    package: weekly_10gb
+    from: [active]
+    to: active
+    blocked_from: [archived, deactivated]
+    checks: [backend_count, list_contains]
+    priority: p1
+  - name: remove_from_sim
+    event: remove_package_from_sim
+    from: [active]
+    to: active
+    blocked_from: [draft]
+    checks: [backend_count, list_contains]
+    priority: p1
+  - name: read
+    event: check
+    from: [active]
+    to: active
+    blocked_from: []
+    checks: [backend_count]
+    priority: p2

@@ -1,3 +1,19 @@
 entity: subscriber
 states: [active, suspended, deactivated, archived]
-actions: [create, read, update, suspend, deactivate, reactivate]
+actions:
+  - name: read
+    event: check
+    from: [active]
+    to: active
+    blocked_from: [archived]
+    checks: [backend_count, list_contains]
+    priority: p2
+  - name: deactivate
+    event: set_sim_status
+    status: inactive
+    from: [active, suspended]
+    to: deactivated
+    blocked_from: [archived]
+    checks: [backend_count, list_contains]
+    runtime: traffic_blocked
+    priority: p2

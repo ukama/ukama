@@ -1,0 +1,50 @@
+family: subscriber
+description: Subscriber/customer creation, SIM allocation, update, deactivation, and retry behavior.
+priority: p1
+flows: [subscriber_create_simple, subscriber_create_no_sim_fails, subscriber_create_no_package_fails, subscriber_deactivate_blocks_sim_traffic, subscriber_retry_after_partial_failure, subscriber_medium_90_customers]
+topologies: [simple]
+scales: [simple]
+runtime: [normal]
+failures: [none]
+verification: [backend]
+
+cases:
+  - name: subscriber_create_simple
+    topology: simple
+    priority: p1
+    tags: [subscriber, create, backend]
+    events: [create_subscriber, allocate_sim]
+    checks: [subscriber_visible, sim_assigned]
+  - name: subscriber_create_no_sim_fails
+    topology: simple
+    priority: p1
+    tags: [subscriber, negative, sim_pool]
+    setup: [sim_pool_empty]
+    events: [create_subscriber, allocate_sim]
+    checks: [expected_failure, no_orphan_active_sim]
+  - name: subscriber_create_no_package_fails
+    topology: simple
+    priority: p1
+    tags: [subscriber, negative, package]
+    setup: [no_package]
+    events: [create_subscriber, allocate_sim]
+    checks: [expected_failure, no_dirty_state]
+  - name: subscriber_deactivate_blocks_sim_traffic
+    topology: simple
+    priority: p1
+    tags: [subscriber, lifecycle, runtime]
+    events: [deactivate_subscriber, traffic]
+    checks: [subscriber_inactive, traffic_blocked, history_preserved]
+  - name: subscriber_retry_after_partial_failure
+    topology: simple
+    priority: p2
+    tags: [subscriber, retry, partial]
+    setup: [fail_after_subscriber_create]
+    events: [create_subscriber, retry_create_subscriber]
+    checks: [no_duplicate_subscriber, sim_assignment_consistent]
+  - name: subscriber_medium_90_customers
+    topology: medium
+    priority: p2
+    tags: [subscriber, medium, scale]
+    events: [create_90_subscribers]
+    checks: [backend_count_subscribers_90, sim_assignments_90]

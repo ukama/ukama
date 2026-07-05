@@ -1,0 +1,53 @@
+family: sim_pool
+description: SIM upload, pool, allocation, exhaustion, and release behavior.
+priority: p1
+flows: [sim_pool_simple_allocate, sim_pool_empty_blocks_allocation, sim_pool_duplicate_upload_idempotent, sim_pool_allocate_specific_iccid, sim_pool_medium_allocate_90, sim_pool_large_1000_stock]
+topologies: [simple]
+scales: [simple]
+runtime: [normal]
+failures: [none]
+verification: [backend]
+
+cases:
+  - name: sim_pool_simple_allocate
+    topology: simple
+    priority: p1
+    tags: [sim_pool, backend, allocation]
+    setup: [sim_pool_one, active_package, active_subscriber]
+    events: [allocate_sim]
+    checks: [sim_assigned, sim_not_in_unassigned_pool, subscriber_has_sim]
+  - name: sim_pool_empty_blocks_allocation
+    topology: simple
+    priority: p1
+    tags: [sim_pool, negative, empty]
+    setup: [sim_pool_empty]
+    events: [allocate_sim]
+    checks: [expected_failure, subscriber_not_created_or_no_active_sim, sim_pool_count_zero]
+  - name: sim_pool_duplicate_upload_idempotent
+    topology: simple
+    priority: p1
+    tags: [sim_pool, duplicate, idempotency]
+    setup: [sim_csv_one]
+    events: [upload_sims, upload_sims]
+    checks: [no_duplicate_sims, sim_pool_count_stable]
+  - name: sim_pool_allocate_specific_iccid
+    topology: simple
+    priority: p1
+    tags: [sim_pool, iccid, allocation]
+    setup: [known_iccid]
+    events: [allocate_specific_sim]
+    checks: [specific_iccid_assigned, sim_not_in_pool]
+  - name: sim_pool_medium_allocate_90
+    topology: medium
+    priority: p2
+    tags: [sim_pool, medium, allocation]
+    setup: [sim_pool_90]
+    events: [allocate_all_sims]
+    checks: [backend_count_sims_90, no_unassigned_sims]
+  - name: sim_pool_large_1000_stock
+    topology: large
+    priority: p2
+    tags: [sim_pool, large, scale]
+    setup: [sim_pool_1000]
+    events: [upload_sims]
+    checks: [backend_count_sims_1000, list_pagination_ok]

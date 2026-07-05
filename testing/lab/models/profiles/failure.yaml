@@ -1,0 +1,34 @@
+profile_type: failure
+items:
+  - name: none
+    mode: none
+    expect: success
+    tags: [failure, none]
+  - name: sim_pool_empty
+    mode: sim_pool_empty
+    expect: clean_failure
+    tags: [failure, sim_pool]
+  - name: missing_package
+    mode: missing_package
+    expect: clean_failure
+    tags: [failure, package]
+  - name: wrong_network
+    mode: wrong_network
+    expect: clean_failure
+    tags: [failure, network]
+  - name: duplicate_request
+    mode: duplicate_request
+    expect: idempotent
+    tags: [failure, duplicate]
+  - name: partial_backend_failure
+    mode: partial_backend_failure
+    expect: no_dirty_state
+    tags: [failure, partial]
+  - name: retry_after_partial_setup
+    mode: retry_after_partial_setup
+    expect: no_duplicate
+    tags: [failure, retry]
+  - name: stale_state
+    mode: stale_state
+    expect: clean_failure
+    tags: [failure, stale]

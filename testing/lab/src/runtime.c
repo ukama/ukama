@@ -359,6 +359,10 @@ int runtime_init(runtime_t *rt,
     ulab_copy(rt->script_dir, sizeof(rt->script_dir), script_dir);
     ulab_copy(rt->run_dir, sizeof(rt->run_dir), run_dir);
     ulab_copy(rt->repo, sizeof(rt->repo), repo ? repo : "");
+    rt->service_enabled = 1;
+    rt->radio_enabled = 1;
+    rt->node_offline = 0;
+    snprintf(rt->node_version, sizeof(rt->node_version), "current");
 
     snprintf(path, sizeof(path), "%s/runtime.log", run_dir);
     rt->logf = fopen(path, "w");
@@ -664,6 +668,19 @@ int runtime_generate_traffic(runtime_t *rt,
                              ulab_error_t *err) {
     size_t i;
 
+    if (!rt->service_enabled) {
+        snprintf(err->msg, sizeof(err->msg), "service is off");
+        return ULAB_ERR;
+    }
+    if (!rt->radio_enabled) {
+        snprintf(err->msg, sizeof(err->msg), "radio is off");
+        return ULAB_ERR;
+    }
+    if (rt->node_offline) {
+        snprintf(err->msg, sizeof(err->msg), "node is offline");
+        return ULAB_ERR;
+    }
+
     for (i = 0; i < ues->count; i++) {
         const ue_t *ue = &w->ues[ues->idx[i]];
         char args[4096];
@@ -939,4 +956,63 @@ int runtime_cleanup(runtime_t *rt, const world_t *w, ulab_error_t *err) {
     }
 
     return ULAB_OK;
+}
+
+
+int runtime_set_service(runtime_t *rt, int enabled, ulab_error_t *err) {
+    (void)err;
+    rt->service_enabled = enabled ? 1 : 0;
+    ulab_status("SERVICE", "%s", rt->service_enabled ? "on" : "off");
+    return ULAB_OK;
+}
+
+int runtime_set_radio(runtime_t *rt, int enabled, ulab_error_t *err) {
+    (void)err;
+    rt->radio_enabled = enabled ? 1 : 0;
+    ulab_status("RADIO", "%s", rt->radio_enabled ? "on" : "off");
+    return ULAB_OK;
+}
+
+int runtime_mark_node_offline(runtime_t *rt, ulab_error_t *err) {
+    (void)err;
+    rt->node_offline = 1;
+    ulab_status("NODE", "marked offline");
+    return ULAB_OK;
+}
+
+int runtime_restore_nodes(runtime_t *rt, ulab_error_t *err) {
+    (void)err;
+    rt->node_offline = 0;
+    rt->service_enabled = 1;
+    rt->radio_enabled = 1;
+    ulab_status("NODE", "restored");
+    return ULAB_OK;
+}
+
+int runtime_set_node_version(runtime_t *rt, const char *version,
+                             ulab_error_t *err) {
+    if (version == NULL || version[0] == '\0') {
+        version = "new_version";
+    }
+    if (ulab_streq(version, "invalid") || ulab_streq(version, "invalid_version")) {
+        snprintf(err->msg, sizeof(err->msg), "invalid software version");
+        return ULAB_ERR;
+    }
+    if (ulab_copy(rt->node_version, sizeof(rt->node_version), version)) {
+        snprintf(err->msg, sizeof(err->msg), "software version too long");
+        return ULAB_ERR;
+    }
+    ulab_status("SOFTWARE", "version=%s", rt->node_version);
+    return ULAB_OK;
+}
+
+int runtime_node_health_ok(const runtime_t *rt) {
+    return rt != NULL && !rt->node_offline;
+}
+
+const char *runtime_node_version(const runtime_t *rt) {
+    if (rt == NULL || rt->node_version[0] == '\0') {
+        return "unknown";
+    }
+    return rt->node_version;
 }

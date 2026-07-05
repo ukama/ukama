@@ -1,0 +1,73 @@
+version: 1
+name: smoke_node_restart_recovers
+seed: 3667452139
+suite: generated
+priority: p0
+tags: [generated, smoke, smoke, node_ops, restart]
+status: active
+generated: true
+entity: smoke
+action: restart_nodes
+
+# family: smoke
+# case: smoke_node_restart_recovers
+# topology: simple
+# generated_status: active
+
+provider:
+  type: virtual
+
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+
+packages:
+  - ref: pkg_001
+    name: Data Package 1
+    data_mb: 1024
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+
+runtime:
+  start: [nodes, ues]
+  wait: [nodes_ready, ues_attached]
+
+phases:
+  - name: action
+    events:
+      - type: restart_nodes
+        type_selector: tower
+        count_per_network: 1
+      - type: traffic
+        ues: all
+        amount_mb: 1024
+    checks:
+      - type: node_ready
+        nodes: all
+      - type: traffic_allowed
+        ues: all
+        amount_mb: 1
+      - type: usage_per_sim
+        ues: all
+        expected: from_model
+        tolerance_percent: 2
+
+final_checks:
+  - type: balance_non_negative
+    ues: all

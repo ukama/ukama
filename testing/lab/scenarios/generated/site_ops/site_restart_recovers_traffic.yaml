@@ -1,0 +1,69 @@
+version: 1
+name: site_restart_recovers_traffic
+seed: 4072175947
+suite: generated
+priority: p1
+tags: [generated, site_ops, site_ops, restart, runtime]
+status: active
+generated: true
+entity: site_ops
+action: restart_site
+
+# family: site_ops
+# case: site_restart_recovers_traffic
+# topology: simple
+# generated_status: active
+
+provider:
+  type: virtual
+
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+
+packages:
+  - ref: pkg_001
+    name: Data Package 1
+    data_mb: 1024
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+
+runtime:
+  start: [nodes, ues]
+  wait: [nodes_ready, ues_attached]
+
+phases:
+  - name: action
+    events:
+      - type: restart_site
+        nodes: all
+      - type: traffic
+        ues: all
+        amount_mb: 1024
+    checks:
+      - type: backend_count
+        target: nodes
+        expected: from_world
+      - type: traffic_allowed
+        ues: all
+        amount_mb: 1
+
+final_checks:
+  - type: balance_non_negative
+    ues: all

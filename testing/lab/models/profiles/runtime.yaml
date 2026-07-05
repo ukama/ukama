@@ -1,0 +1,34 @@
+profile_type: runtime
+items:
+  - name: normal
+    condition: normal
+    expect: traffic_allowed
+    tags: [runtime, normal]
+  - name: node_restart
+    condition: node_restart
+    expect: recovers
+    tags: [runtime, restart]
+  - name: node_offline
+    condition: node_offline
+    expect: traffic_blocked
+    tags: [runtime, node_offline]
+  - name: service_off
+    condition: service_off
+    expect: traffic_blocked
+    tags: [runtime, service_off]
+  - name: radio_off
+    condition: radio_off
+    expect: traffic_blocked
+    tags: [runtime, radio_off]
+  - name: pcrf_down
+    condition: pcrf_down
+    expect: attach_blocked
+    tags: [runtime, pcrf]
+  - name: epc_down
+    condition: epc_down
+    expect: attach_blocked
+    tags: [runtime, epc]
+  - name: media_down
+    condition: media_down
+    expect: traffic_failure
+    tags: [runtime, media]

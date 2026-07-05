@@ -1,0 +1,17 @@
+profile_type: topology
+items:
+  - name: simple
+    networks: 1
+    sites_per_network: 1
+    description: 1 site, 1 tower/amplifier/controller set, 1 UE, 1 package, 1GB per UE
+    tags: [topology, simple]
+  - name: medium
+    networks: 1
+    sites_per_network: 3
+    description: 3 sites, 1 tower/amplifier/controller per site, 30 UEs per tower, 5 packages, 2GB per UE
+    tags: [topology, medium, multisite]
+  - name: large
+    networks: 1
+    sites_per_network: 10
+    description: 10 sites, 1 tower/amplifier/controller per site, 100 UEs per tower, 10 packages, 5GB per UE
+    tags: [topology, large, scale]

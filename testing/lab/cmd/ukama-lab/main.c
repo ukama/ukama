@@ -20,7 +20,8 @@
 static void usage(void) {
     printf("ukama-lab %s\n", ULAB_VERSION);
     printf("usage:\n");
-    printf("  ukama-lab validate <scenario.yaml> [options]\n");
+    printf("  ukama-lab validate <scenario.yaml|dir> [options]\n");
+    printf("  ukama-lab run <scenario.yaml|dir> [options]\n");
     printf("  ukama-lab generate --model <name|all> --mode <name|all> [options]\n");
     printf("  ukama-lab list-checks\n");
     printf("  ukama-lab list-events\n");
@@ -41,6 +42,10 @@ static void usage(void) {
     printf("  --mode <name|all>     smoke/transition/negative/pairwise/full\n");
     printf("  --models <dir>        model directory; default: models\n");
     printf("  --templates <dir>     template directory; default: templates/generated\n");
+    printf("  --suite <name>        run matching scenario suite only\n");
+    printf("  --priority <name>     run matching scenario priority only\n");
+    printf("  --tag <name>          run scenarios containing tag\n");
+    printf("  --generated           run generated scenarios only\n");
     printf("  --quiet               summary only\n");
     printf("  --verbose             debug logs\n");
 }
@@ -93,6 +98,14 @@ static int parse_opts(int argc, char **argv, int start, runner_opts_t *o) {
             ulab_copy(o->factory_url, sizeof(o->factory_url), argv[++i]);
         } else if (ulab_streq(argv[i], "--asr-url") && i + 1 < argc) {
             ulab_copy(o->asr_url, sizeof(o->asr_url), argv[++i]);
+        } else if (ulab_streq(argv[i], "--suite") && i + 1 < argc) {
+            ulab_copy(o->suite_filter, sizeof(o->suite_filter), argv[++i]);
+        } else if (ulab_streq(argv[i], "--priority") && i + 1 < argc) {
+            ulab_copy(o->priority_filter, sizeof(o->priority_filter), argv[++i]);
+        } else if (ulab_streq(argv[i], "--tag") && i + 1 < argc) {
+            ulab_copy(o->tag_filter, sizeof(o->tag_filter), argv[++i]);
+        } else if (ulab_streq(argv[i], "--generated")) {
+            o->generated_only = 1;
         } else if (ulab_streq(argv[i], "--quiet")) {
             o->quiet = 1;
         } else if (ulab_streq(argv[i], "--verbose")) {
@@ -159,7 +172,7 @@ int main(int argc, char **argv) {
     ulab_log_set_quiet(opts.quiet);
     ulab_log_set_verbose(opts.verbose);
 
-    if (ulab_streq(argv[1], "validate")) {
+    if (ulab_streq(argv[1], "validate") || ulab_streq(argv[1], "run")) {
         return runner_validate(&opts);
     }
 

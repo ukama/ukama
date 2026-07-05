@@ -1,0 +1,116 @@
+version: 1
+name: scale_large_1000_ues_usage
+seed: 816409698
+suite: generated
+priority: p2
+tags: [generated, scale, scale, large, usage]
+status: wip
+generated: true
+entity: scale
+action: traffic_5gb_per_ue
+
+# family: scale
+# case: scale_large_1000_ues_usage
+# topology: large
+# generated_status: wip
+
+provider:
+  type: virtual
+
+world:
+  networks: 1
+  sites_per_network: 10
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 100
+
+packages:
+  - ref: pkg_001
+    name: Data Package 1
+    data_mb: 5120
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+  - ref: pkg_002
+    name: Data Package 2
+    data_mb: 5120
+    duration_days: 1
+    amount: 2.00
+    assign_percent: 0
+  - ref: pkg_003
+    name: Data Package 3
+    data_mb: 5120
+    duration_days: 1
+    amount: 3.00
+    assign_percent: 0
+  - ref: pkg_004
+    name: Data Package 4
+    data_mb: 5120
+    duration_days: 1
+    amount: 4.00
+    assign_percent: 0
+  - ref: pkg_005
+    name: Data Package 5
+    data_mb: 5120
+    duration_days: 1
+    amount: 5.00
+    assign_percent: 0
+  - ref: pkg_006
+    name: Data Package 6
+    data_mb: 5120
+    duration_days: 1
+    amount: 6.00
+    assign_percent: 0
+  - ref: pkg_007
+    name: Data Package 7
+    data_mb: 5120
+    duration_days: 1
+    amount: 7.00
+    assign_percent: 0
+  - ref: pkg_008
+    name: Data Package 8
+    data_mb: 5120
+    duration_days: 1
+    amount: 8.00
+    assign_percent: 0
+  - ref: pkg_009
+    name: Data Package 9
+    data_mb: 5120
+    duration_days: 1
+    amount: 9.00
+    assign_percent: 0
+  - ref: pkg_010
+    name: Data Package 10
+    data_mb: 5120
+    duration_days: 1
+    amount: 10.00
+    assign_percent: 0
+
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+
+runtime:
+  start: [nodes, ues]
+  wait: [nodes_ready, ues_attached]
+
+phases:
+  - name: action
+    events:
+      - type: check
+    checks:
+      - type: backend_count
+        target: sims
+        expected: from_world
+
+final_checks:
+  - type: balance_non_negative
+    ues: all

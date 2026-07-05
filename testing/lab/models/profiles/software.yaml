@@ -1,0 +1,30 @@
+profile_type: software
+items:
+  - name: no_update
+    mode: none
+    expect: unchanged
+    tags: [software, none]
+  - name: same_version
+    mode: same_version
+    expect: idempotent
+    tags: [software, idempotent]
+  - name: new_version
+    mode: new_version
+    expect: updated
+    tags: [software, update]
+  - name: invalid_version
+    mode: invalid_version
+    expect: clean_failure
+    tags: [software, negative]
+  - name: update_failure
+    mode: update_failure
+    expect: rollback_or_safe_failure
+    tags: [software, failure]
+  - name: rollback
+    mode: rollback
+    expect: recovered
+    tags: [software, rollback]
+  - name: restart_required
+    mode: restart_required
+    expect: reboot_and_healthy
+    tags: [software, restart]

@@ -53,6 +53,12 @@ const char *scenario_event_name(event_type_t type) {
     case EVT_ADD_PACKAGE_TO_SIM: return "add_package_to_sim";
     case EVT_REMOVE_PACKAGE_FROM_SIM: return "remove_package_from_sim";
     case EVT_SET_SIM_STATUS: return "set_sim_status";
+    case EVT_TOGGLE_SERVICE: return "toggle_service";
+    case EVT_TOGGLE_RADIO: return "toggle_radio";
+    case EVT_RESTART_SITE: return "restart_site";
+    case EVT_SOFTWARE_UPDATE: return "software_update";
+    case EVT_MARK_NODE_OFFLINE: return "mark_node_offline";
+    case EVT_RESTORE_NODE: return "restore_node";
     case EVT_CHECK: return "check";
     default: return "unknown";
     }
@@ -74,6 +80,13 @@ const char *scenario_check_name(check_type_t type) {
     case CHECK_PACKAGE_REMAINING: return "package_remaining";
     case CHECK_NODE_STATE: return "node_state";
     case CHECK_DASHBOARD_LOADS: return "dashboard_loads";
+    case CHECK_DASHBOARD_SECTION_OK: return "dashboard_section_ok";
+    case CHECK_NODE_VERSION_EQUALS: return "node_version_equals";
+    case CHECK_NODE_HEALTH_OK: return "node_health_ok";
+    case CHECK_HISTORY_PRESERVED: return "history_preserved";
+    case CHECK_AUDIT_EVENT_EXISTS: return "audit_event_exists";
+    case CHECK_RELATIONSHIP_EXISTS: return "relationship_exists";
+    case CHECK_RELATIONSHIP_ENDED: return "relationship_ended";
     case CHECK_BALANCE_NON_NEGATIVE: return "balance_non_negative";
     default: return "unknown";
     }
@@ -97,6 +110,18 @@ int scenario_event_from_name(const char *name, event_type_t *out) {
         *out = EVT_REMOVE_PACKAGE_FROM_SIM;
     } else if (ulab_streq(name, "set_sim_status")) {
         *out = EVT_SET_SIM_STATUS;
+    } else if (ulab_streq(name, "toggle_service")) {
+        *out = EVT_TOGGLE_SERVICE;
+    } else if (ulab_streq(name, "toggle_radio")) {
+        *out = EVT_TOGGLE_RADIO;
+    } else if (ulab_streq(name, "restart_site")) {
+        *out = EVT_RESTART_SITE;
+    } else if (ulab_streq(name, "software_update")) {
+        *out = EVT_SOFTWARE_UPDATE;
+    } else if (ulab_streq(name, "mark_node_offline")) {
+        *out = EVT_MARK_NODE_OFFLINE;
+    } else if (ulab_streq(name, "restore_node")) {
+        *out = EVT_RESTORE_NODE;
     } else if (ulab_streq(name, "check")) *out = EVT_CHECK;
     else return ULAB_ERR;
     return ULAB_OK;
@@ -128,6 +153,20 @@ int scenario_check_from_name(const char *name, check_type_t *out) {
     } else if (ulab_streq(name, "node_state")) *out = CHECK_NODE_STATE;
     else if (ulab_streq(name, "dashboard_loads")) {
         *out = CHECK_DASHBOARD_LOADS;
+    } else if (ulab_streq(name, "dashboard_section_ok")) {
+        *out = CHECK_DASHBOARD_SECTION_OK;
+    } else if (ulab_streq(name, "node_version_equals")) {
+        *out = CHECK_NODE_VERSION_EQUALS;
+    } else if (ulab_streq(name, "node_health_ok")) {
+        *out = CHECK_NODE_HEALTH_OK;
+    } else if (ulab_streq(name, "history_preserved")) {
+        *out = CHECK_HISTORY_PRESERVED;
+    } else if (ulab_streq(name, "audit_event_exists")) {
+        *out = CHECK_AUDIT_EVENT_EXISTS;
+    } else if (ulab_streq(name, "relationship_exists")) {
+        *out = CHECK_RELATIONSHIP_EXISTS;
+    } else if (ulab_streq(name, "relationship_ended")) {
+        *out = CHECK_RELATIONSHIP_ENDED;
     } else if (ulab_streq(name, "balance_non_negative")) {
         *out = CHECK_BALANCE_NON_NEGATIVE;
     } else return ULAB_ERR;
@@ -259,6 +298,9 @@ static int apply_check_field(check_spec_t *c, const char *key,
         sizeof(c->entity), val);
     if (ulab_streq(key, "status")) return ulab_copy(c->status,
         sizeof(c->status), val);
+    if (ulab_streq(key, "section") || ulab_streq(key, "version")) {
+        return ulab_copy(c->expected, sizeof(c->expected), val);
+    }
     if (ulab_streq(key, "amount_mb")) {
         return ulab_parse_u64(val, &c->expected_used_mb);
     }
@@ -308,7 +350,8 @@ static int apply_event_field(event_spec_t *e, const char *key,
     }
     if (ulab_streq(key, "package")) return ulab_copy(e->package_ref,
         sizeof(e->package_ref), val);
-    if (ulab_streq(key, "status")) return ulab_copy(e->status,
+    if (ulab_streq(key, "status") || ulab_streq(key, "state") ||
+        ulab_streq(key, "version")) return ulab_copy(e->status,
         sizeof(e->status), val);
     if (ulab_streq(key, "expect_result")) return ulab_copy(e->expect_result,
         sizeof(e->expect_result), val);
@@ -417,6 +460,12 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
                 if (ulab_copy(s->tags, sizeof(s->tags), val)) goto bad;
             } else if (ulab_streq(key, "status")) {
                 if (ulab_copy(s->status, sizeof(s->status), val)) goto bad;
+            } else if (ulab_streq(key, "generated")) {
+                s->generated = ulab_streq(val, "true") || ulab_streq(val, "1");
+            } else if (ulab_streq(key, "entity")) {
+                if (ulab_copy(s->entity, sizeof(s->entity), val)) goto bad;
+            } else if (ulab_streq(key, "action")) {
+                if (ulab_copy(s->action, sizeof(s->action), val)) goto bad;
             } else if (ulab_streq(key, "world")) sec = SEC_WORLD;
             else if (ulab_streq(key, "packages")) sec = SEC_PACKAGES;
             else if (ulab_streq(key, "setup")) sec = SEC_SETUP;
@@ -477,6 +526,11 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
                     if (ulab_parse_u64(val, &pkg->data_mb)) goto bad;
                 } else if (ulab_streq(key, "duration_days")) {
                     if (ulab_parse_u32(val, &pkg->duration_days)) goto bad;
+                } else if (ulab_streq(key, "duration_hours")) {
+                    uint32_t hours = 0;
+                    if (ulab_parse_u32(val, &hours)) goto bad;
+                    pkg->duration_days = (hours + 23u) / 24u;
+                    if (pkg->duration_days == 0) pkg->duration_days = 1;
                 } else if (ulab_streq(key, "amount")) {
                     if (ulab_parse_double(val, &pkg->amount)) goto bad;
                 } else if (ulab_streq(key, "assign_percent")) {

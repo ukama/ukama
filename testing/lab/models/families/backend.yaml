@@ -1,0 +1,47 @@
+family: backend
+description: Backend mutation/query/read-model behavior through Console backend APIs.
+priority: p1
+# Compatibility fields for current generator; real generator will use cases below.
+flows: [backend_counts_simple, backend_counts_medium, backend_invalid_ids_fail_cleanly, backend_wrong_network_isolation, backend_duplicate_request_idempotent]
+topologies: [simple]
+scales: [simple]
+runtime: [normal]
+failures: [none]
+verification: [backend]
+
+cases:
+  - name: backend_counts_simple
+    topology: simple
+    priority: p1
+    tags: [backend, counts, simple]
+    setup: [network, site, nodes, subscriber, sim, package]
+    events: [check]
+    checks: [backend_count_networks, backend_count_sites, backend_count_nodes, backend_count_sims]
+  - name: backend_counts_medium
+    topology: medium
+    priority: p1
+    tags: [backend, counts, medium]
+    setup: [network, sites, nodes, subscribers, sims, packages]
+    events: [check]
+    checks: [backend_count_sites, backend_count_nodes, backend_count_sims, backend_package_count]
+  - name: backend_invalid_ids_fail_cleanly
+    topology: simple
+    priority: p2
+    tags: [backend, negative, invalid_id]
+    setup: [network]
+    events: [backend_query_invalid_id]
+    checks: [expected_failure, no_dirty_state]
+  - name: backend_wrong_network_isolation
+    topology: medium
+    priority: p1
+    tags: [backend, negative, network_isolation]
+    setup: [two_network_objects]
+    events: [use_wrong_network_object]
+    checks: [expected_failure, no_cross_network_leak]
+  - name: backend_duplicate_request_idempotent
+    topology: simple
+    priority: p1
+    tags: [backend, duplicate, idempotency]
+    setup: [network, site, sim, package]
+    events: [repeat_same_mutation]
+    checks: [no_duplicate, backend_counts_stable]

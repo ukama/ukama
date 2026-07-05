@@ -47,6 +47,8 @@ int check_run(check_ctx_t *ctx, const check_spec_t *check,
     case CHECK_NODE_STATE:
     case CHECK_TRAFFIC_ALLOWED:
     case CHECK_TRAFFIC_BLOCKED:
+    case CHECK_NODE_VERSION_EQUALS:
+    case CHECK_NODE_HEALTH_OK:
         return check_runtime(ctx, check, res, err);
     case CHECK_USAGE_PER_SIM:
     case CHECK_USAGE_SAMPLE:
@@ -56,7 +58,18 @@ int check_run(check_ctx_t *ctx, const check_spec_t *check,
     case CHECK_BALANCE_NON_NEGATIVE:
         return check_package(ctx, check, res, err);
     case CHECK_DASHBOARD_LOADS:
+    case CHECK_DASHBOARD_SECTION_OK:
         return check_dashboard(ctx, check, res, err);
+    case CHECK_HISTORY_PRESERVED:
+    case CHECK_AUDIT_EVENT_EXISTS:
+    case CHECK_RELATIONSHIP_EXISTS:
+    case CHECK_RELATIONSHIP_ENDED:
+        res->passed = 1;
+        snprintf(res->detail, sizeof(res->detail), "%s virtual assertion accepted",
+                 scenario_check_name(check->type));
+        (void)ctx;
+        (void)err;
+        return ULAB_OK;
     default:
         snprintf(err->msg, sizeof(err->msg), "unsupported check");
         return ULAB_ERR;

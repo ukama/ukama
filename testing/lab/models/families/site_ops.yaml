@@ -1,0 +1,49 @@
+family: site_ops
+description: Site restart, service/radio controls, and site lifecycle behavior.
+priority: p1
+flows: [site_restart_recovers_traffic, site_service_off_blocks_ues, site_service_on_restores_ues, site_radio_off_blocks_ues, site_radio_on_restores_ues, site_deactivate_blocks_service]
+topologies: [simple]
+scales: [simple]
+runtime: [normal]
+failures: [none]
+verification: [runtime]
+
+cases:
+  - name: site_restart_recovers_traffic
+    topology: simple
+    priority: p1
+    tags: [site_ops, restart, runtime]
+    events: [restart_site, traffic]
+    checks: [nodes_ready, traffic_allowed]
+  - name: site_service_off_blocks_ues
+    topology: simple
+    priority: p1
+    tags: [site_ops, service_off, runtime]
+    events: [toggle_service_off, traffic]
+    checks: [traffic_blocked, backend_service_state_off]
+  - name: site_service_on_restores_ues
+    topology: simple
+    priority: p1
+    tags: [site_ops, service_on, runtime]
+    setup: [service_off]
+    events: [toggle_service_on, traffic]
+    checks: [traffic_allowed, backend_service_state_on]
+  - name: site_radio_off_blocks_ues
+    topology: simple
+    priority: p1
+    tags: [site_ops, radio_off, runtime]
+    events: [toggle_radio_off, traffic]
+    checks: [traffic_blocked, backend_radio_state_off]
+  - name: site_radio_on_restores_ues
+    topology: simple
+    priority: p1
+    tags: [site_ops, radio_on, runtime]
+    setup: [radio_off]
+    events: [toggle_radio_on, traffic]
+    checks: [traffic_allowed, backend_radio_state_on]
+  - name: site_deactivate_blocks_service
+    topology: medium
+    priority: p2
+    tags: [site_ops, deactivate, lifecycle]
+    events: [deactivate_site]
+    checks: [site_inactive, traffic_blocked, history_preserved]

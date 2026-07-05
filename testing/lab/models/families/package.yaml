@@ -1,0 +1,50 @@
+family: package
+description: Package create, assignment, top-up, removal, archive, and expiry behavior.
+priority: p1
+flows: [package_simple_assign, package_topup_five_packages, package_remove_blocks_or_updates_traffic, package_archive_blocks_new_assignment, package_wrong_network_fails, package_duplicate_name_fails]
+topologies: [simple]
+scales: [simple]
+runtime: [normal]
+failures: [none]
+verification: [backend]
+
+cases:
+  - name: package_simple_assign
+    topology: simple
+    priority: p1
+    tags: [package, assign, backend]
+    events: [add_package_to_sim]
+    checks: [package_active, subscriber_has_package]
+  - name: package_topup_five_packages
+    topology: medium
+    priority: p1
+    tags: [package, topup, medium]
+    setup: [five_packages]
+    events: [topup_all_active_sims]
+    checks: [packages_for_sim, package_count, balance_non_negative]
+  - name: package_remove_blocks_or_updates_traffic
+    topology: simple
+    priority: p1
+    tags: [package, remove, runtime]
+    events: [remove_package_from_sim]
+    checks: [relationship_ended, traffic_blocked_or_package_inactive]
+  - name: package_archive_blocks_new_assignment
+    topology: simple
+    priority: p1
+    tags: [package, archive, negative]
+    setup: [archived_package]
+    events: [add_package_to_sim]
+    checks: [expected_failure, package_history_preserved]
+  - name: package_wrong_network_fails
+    topology: medium
+    priority: p1
+    tags: [package, wrong_network, negative]
+    setup: [package_from_other_network]
+    events: [add_package_to_sim]
+    checks: [expected_failure, no_cross_network_assignment]
+  - name: package_duplicate_name_fails
+    topology: simple
+    priority: p2
+    tags: [package, duplicate]
+    events: [create_package_duplicate_name]
+    checks: [expected_failure, package_count_stable]

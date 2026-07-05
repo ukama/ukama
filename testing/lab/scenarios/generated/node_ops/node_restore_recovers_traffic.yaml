@@ -1,0 +1,68 @@
+version: 1
+name: node_restore_recovers_traffic
+seed: 2432924424
+suite: generated
+priority: p1
+tags: [generated, node_ops, node_ops, restore, runtime]
+status: active
+generated: true
+entity: node_ops
+action: mark_node_offline
+
+# family: node_ops
+# case: node_restore_recovers_traffic
+# topology: simple
+# generated_status: active
+
+provider:
+  type: virtual
+
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+
+packages:
+  - ref: pkg_001
+    name: Data Package 1
+    data_mb: 1024
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+
+runtime:
+  start: [nodes, ues]
+  wait: [nodes_ready, ues_attached]
+
+phases:
+  - name: action
+    events:
+      - type: mark_node_offline
+      - type: restore_node
+      - type: traffic
+        ues: all
+        amount_mb: 1024
+    checks:
+      - type: node_ready
+        nodes: all
+      - type: traffic_allowed
+        ues: all
+        amount_mb: 1
+
+final_checks:
+  - type: balance_non_negative
+    ues: all

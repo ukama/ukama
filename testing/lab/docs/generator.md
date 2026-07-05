@@ -1,63 +1,63 @@
-# Scenario generator
+# Generated scenario catalog
 
-The generator creates normal scenario YAML files from simple product model files.
-Generated scenarios run through the same `validate` path as handwritten scenarios.
+Phase-6 generation is case-based, not Cartesian-product based.
 
-## Command
+The generator reads:
+
+- `models/profiles/topology.yaml`
+- `models/profiles/scale.yaml`
+- `models/families/*.yaml`
+
+It writes one scenario per explicit family case:
 
 ```sh
-ukama-lab generate --model sim --mode smoke --out scenarios/generated
+./bin/ukama-lab generate --model all --models models --out scenarios/generated
 ```
 
-Options:
+Generated output layout:
 
-- `--model <name|all>`: `org`, `network`, `site`, `node`, `sim`, `subscriber`, `package`, or `all`
-- `--mode <name|all>`: `smoke`, `transition`, `negative`, `pairwise`, `full`, or `all`
-- `--models <dir>`: model directory, default `models`
-- `--templates <dir>`: template directory, default `templates/generated`
-- `--out <dir>`: output directory, default `scenarios/generated`
+```text
+scenarios/generated/
+  backend/
+  smoke/
+  usage/
+  sim_pool/
+  package/
+  subscriber/
+  lifecycle/
+  node_ops/
+  site_ops/
+  software_update/
+  failure/
+  scale/
+  index.yaml
+```
 
-## Models in this phase
+Topology names are meaningful and fixed:
 
-- `org`
-- `network`
-- `site`
-- `node`
-- `sim`
-- `subscriber`
-- `package`
+- `simple`: 1 network, 1 site, 1 tower/amplifier/controller, 1 UE, 1 package, 1GB per UE
+- `medium`: 1 network, 3 sites, 1 tower/amplifier/controller per site, 30 UEs per site, 5 packages, 2GB per UE
+- `large`: 1 network, 10 sites, 1 tower/amplifier/controller per site, 100 UEs per site, 10 packages, 5GB per UE
 
-Later models: member/invite, payment/billing, notification/alarm.
+Family files define explicit cases only. Example:
 
-## Modes in this phase
+```yaml
+family: usage
+cases:
+  - name: usage_simple_one_ue_1gb
+    topology: simple
+    priority: p1
+    tags: [usage, runtime, simple]
+    events: [traffic_1gb]
+    checks: [usage_per_sim, balance_non_negative]
+```
 
-- `smoke`
-- `transition`
-- `negative`
-- `pairwise`
-- `full`
+The generator marks unsupported cases as `status: wip` instead of inventing fake test behavior. WIP scenarios validate but are skipped by the runner.
 
-Later modes: fuzz and replay.
+Run examples:
 
-## Templates in this phase
-
-Implemented:
-
-- `state-transition`
-- `blocked-transition`
-- `lifecycle-cleanup`
-- `permission-check`
-- `retry-idempotency`
-- `partial-failure`
-- `wrong-org-network`
-- `empty-state`
-- `boundary-values`
-- `backend-failure`
-- `runtime-effect`
-- `read-model-check`
-
-Skipped for now:
-
-- `relationship-check`
-- `dashboard-view`
-- `UI-handoff`
+```sh
+./bin/ukama-lab validate scenarios/generated
+./bin/ukama-lab run scenarios --suite generated --priority p0
+./bin/ukama-lab run scenarios --tag usage
+```
