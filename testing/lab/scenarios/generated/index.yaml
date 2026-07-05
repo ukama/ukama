@@ -1,0 +1,435 @@
+catalog:
+  topologies:
+    - name: simple
+      networks: 1
+      sites_per_network: 1
+      ues_per_site: 1
+      packages: 1
+      traffic_mb_per_ue: 1024
+    - name: medium
+      networks: 1
+      sites_per_network: 3
+      ues_per_site: 30
+      packages: 5
+      traffic_mb_per_ue: 2048
+    - name: large
+      networks: 1
+      sites_per_network: 10
+      ues_per_site: 100
+      packages: 10
+      traffic_mb_per_ue: 5120
+generated_scenarios:
+  - file: smoke/smoke_simple_ue_traffic.yaml
+    family: smoke
+    case: smoke_simple_ue_traffic
+    topology: simple
+    status: active
+    priority: p0
+  - file: smoke/smoke_backend_counts.yaml
+    family: smoke
+    case: smoke_backend_counts
+    topology: simple
+    status: active
+    priority: p0
+  - file: smoke/smoke_node_restart_recovers.yaml
+    family: smoke
+    case: smoke_node_restart_recovers
+    topology: simple
+    status: active
+    priority: p0
+  - file: backend/backend_counts_simple.yaml
+    family: backend
+    case: backend_counts_simple
+    topology: simple
+    status: active
+    priority: p1
+  - file: backend/backend_counts_medium.yaml
+    family: backend
+    case: backend_counts_medium
+    topology: medium
+    status: active
+    priority: p1
+  - file: backend/backend_invalid_ids_fail_cleanly.yaml
+    family: backend
+    case: backend_invalid_ids_fail_cleanly
+    topology: simple
+    status: wip
+    priority: p2
+  - file: backend/backend_wrong_network_isolation.yaml
+    family: backend
+    case: backend_wrong_network_isolation
+    topology: medium
+    status: wip
+    priority: p1
+  - file: backend/backend_duplicate_request_idempotent.yaml
+    family: backend
+    case: backend_duplicate_request_idempotent
+    topology: simple
+    status: wip
+    priority: p1
+  - file: usage/usage_simple_one_ue_1gb.yaml
+    family: usage
+    case: usage_simple_one_ue_1gb
+    topology: simple
+    status: active
+    priority: p1
+  - file: usage/usage_medium_three_site_rollup.yaml
+    family: usage
+    case: usage_medium_three_site_rollup
+    topology: medium
+    status: wip
+    priority: p1
+  - file: usage/usage_medium_profile_mix.yaml
+    family: usage
+    case: usage_medium_profile_mix
+    topology: medium
+    status: wip
+    priority: p1
+  - file: usage/usage_large_scale_5gb_per_ue.yaml
+    family: usage
+    case: usage_large_scale_5gb_per_ue
+    topology: large
+    status: wip
+    priority: p2
+  - file: usage/usage_node_restart_preserves_rollup.yaml
+    family: usage
+    case: usage_node_restart_preserves_rollup
+    topology: medium
+    status: wip
+    priority: p1
+  - file: sim_pool/sim_pool_simple_allocate.yaml
+    family: sim_pool
+    case: sim_pool_simple_allocate
+    topology: simple
+    status: wip
+    priority: p1
+  - file: sim_pool/sim_pool_empty_blocks_allocation.yaml
+    family: sim_pool
+    case: sim_pool_empty_blocks_allocation
+    topology: simple
+    status: wip
+    priority: p1
+  - file: sim_pool/sim_pool_duplicate_upload_idempotent.yaml
+    family: sim_pool
+    case: sim_pool_duplicate_upload_idempotent
+    topology: simple
+    status: wip
+    priority: p1
+  - file: sim_pool/sim_pool_allocate_specific_iccid.yaml
+    family: sim_pool
+    case: sim_pool_allocate_specific_iccid
+    topology: simple
+    status: wip
+    priority: p1
+  - file: sim_pool/sim_pool_medium_allocate_90.yaml
+    family: sim_pool
+    case: sim_pool_medium_allocate_90
+    topology: medium
+    status: wip
+    priority: p2
+  - file: sim_pool/sim_pool_large_1000_stock.yaml
+    family: sim_pool
+    case: sim_pool_large_1000_stock
+    topology: large
+    status: wip
+    priority: p2
+  - file: package/package_simple_assign.yaml
+    family: package
+    case: package_simple_assign
+    topology: simple
+    status: wip
+    priority: p1
+  - file: package/package_topup_five_packages.yaml
+    family: package
+    case: package_topup_five_packages
+    topology: medium
+    status: wip
+    priority: p1
+  - file: package/package_remove_blocks_or_updates_traffic.yaml
+    family: package
+    case: package_remove_blocks_or_updates_traffic
+    topology: simple
+    status: wip
+    priority: p1
+  - file: package/package_archive_blocks_new_assignment.yaml
+    family: package
+    case: package_archive_blocks_new_assignment
+    topology: simple
+    status: wip
+    priority: p1
+  - file: package/package_wrong_network_fails.yaml
+    family: package
+    case: package_wrong_network_fails
+    topology: medium
+    status: wip
+    priority: p1
+  - file: package/package_duplicate_name_fails.yaml
+    family: package
+    case: package_duplicate_name_fails
+    topology: simple
+    status: wip
+    priority: p2
+  - file: subscriber/subscriber_create_simple.yaml
+    family: subscriber
+    case: subscriber_create_simple
+    topology: simple
+    status: wip
+    priority: p1
+  - file: subscriber/subscriber_create_no_sim_fails.yaml
+    family: subscriber
+    case: subscriber_create_no_sim_fails
+    topology: simple
+    status: wip
+    priority: p1
+  - file: subscriber/subscriber_create_no_package_fails.yaml
+    family: subscriber
+    case: subscriber_create_no_package_fails
+    topology: simple
+    status: wip
+    priority: p1
+  - file: subscriber/subscriber_deactivate_blocks_sim_traffic.yaml
+    family: subscriber
+    case: subscriber_deactivate_blocks_sim_traffic
+    topology: simple
+    status: wip
+    priority: p1
+  - file: subscriber/subscriber_retry_after_partial_failure.yaml
+    family: subscriber
+    case: subscriber_retry_after_partial_failure
+    topology: simple
+    status: wip
+    priority: p2
+  - file: subscriber/subscriber_medium_90_customers.yaml
+    family: subscriber
+    case: subscriber_medium_90_customers
+    topology: medium
+    status: wip
+    priority: p2
+  - file: lifecycle/lifecycle_sim_suspend_blocks_traffic.yaml
+    family: lifecycle
+    case: lifecycle_sim_suspend_blocks_traffic
+    topology: simple
+    status: wip
+    priority: p1
+  - file: lifecycle/lifecycle_sim_reactivate_restores_traffic.yaml
+    family: lifecycle
+    case: lifecycle_sim_reactivate_restores_traffic
+    topology: simple
+    status: wip
+    priority: p1
+  - file: lifecycle/lifecycle_subscriber_deactivate_blocks_sims.yaml
+    family: lifecycle
+    case: lifecycle_subscriber_deactivate_blocks_sims
+    topology: simple
+    status: wip
+    priority: p1
+  - file: lifecycle/lifecycle_package_archive_preserves_history.yaml
+    family: lifecycle
+    case: lifecycle_package_archive_preserves_history
+    topology: simple
+    status: wip
+    priority: p1
+  - file: lifecycle/lifecycle_node_release_preserves_site_history.yaml
+    family: lifecycle
+    case: lifecycle_node_release_preserves_site_history
+    topology: simple
+    status: wip
+    priority: p1
+  - file: lifecycle/lifecycle_node_retire_blocks_assignment.yaml
+    family: lifecycle
+    case: lifecycle_node_retire_blocks_assignment
+    topology: simple
+    status: wip
+    priority: p1
+  - file: lifecycle/lifecycle_site_deactivate_blocks_service.yaml
+    family: lifecycle
+    case: lifecycle_site_deactivate_blocks_service
+    topology: medium
+    status: wip
+    priority: p2
+  - file: node_ops/node_restart_tower_recovers_ue_traffic.yaml
+    family: node_ops
+    case: node_restart_tower_recovers_ue_traffic
+    topology: simple
+    status: active
+    priority: p1
+  - file: node_ops/node_restart_medium_all_towers.yaml
+    family: node_ops
+    case: node_restart_medium_all_towers
+    topology: medium
+    status: wip
+    priority: p2
+  - file: node_ops/node_offline_blocks_traffic.yaml
+    family: node_ops
+    case: node_offline_blocks_traffic
+    topology: simple
+    status: wip
+    priority: p1
+  - file: node_ops/node_restore_recovers_traffic.yaml
+    family: node_ops
+    case: node_restore_recovers_traffic
+    topology: simple
+    status: active
+    priority: p1
+  - file: node_ops/node_release_from_site.yaml
+    family: node_ops
+    case: node_release_from_site
+    topology: simple
+    status: wip
+    priority: p1
+  - file: node_ops/node_retire_blocks_reuse.yaml
+    family: node_ops
+    case: node_retire_blocks_reuse
+    topology: simple
+    status: wip
+    priority: p1
+  - file: site_ops/site_restart_recovers_traffic.yaml
+    family: site_ops
+    case: site_restart_recovers_traffic
+    topology: simple
+    status: active
+    priority: p1
+  - file: site_ops/site_service_off_blocks_ues.yaml
+    family: site_ops
+    case: site_service_off_blocks_ues
+    topology: simple
+    status: wip
+    priority: p1
+  - file: site_ops/site_service_on_restores_ues.yaml
+    family: site_ops
+    case: site_service_on_restores_ues
+    topology: simple
+    status: wip
+    priority: p1
+  - file: site_ops/site_radio_off_blocks_ues.yaml
+    family: site_ops
+    case: site_radio_off_blocks_ues
+    topology: simple
+    status: wip
+    priority: p1
+  - file: site_ops/site_radio_on_restores_ues.yaml
+    family: site_ops
+    case: site_radio_on_restores_ues
+    topology: simple
+    status: wip
+    priority: p1
+  - file: site_ops/site_deactivate_blocks_service.yaml
+    family: site_ops
+    case: site_deactivate_blocks_service
+    topology: medium
+    status: wip
+    priority: p2
+  - file: software_update/software_update_tower_success.yaml
+    family: software_update
+    case: software_update_tower_success
+    topology: simple
+    status: active
+    priority: p1
+  - file: software_update/software_update_amplifier_success.yaml
+    family: software_update
+    case: software_update_amplifier_success
+    topology: simple
+    status: active
+    priority: p1
+  - file: software_update/software_update_controller_success.yaml
+    family: software_update
+    case: software_update_controller_success
+    topology: simple
+    status: active
+    priority: p1
+  - file: software_update/software_update_same_version_idempotent.yaml
+    family: software_update
+    case: software_update_same_version_idempotent
+    topology: simple
+    status: wip
+    priority: p1
+  - file: software_update/software_update_invalid_version_fails.yaml
+    family: software_update
+    case: software_update_invalid_version_fails
+    topology: simple
+    status: wip
+    priority: p1
+  - file: software_update/software_update_offline_node_fails.yaml
+    family: software_update
+    case: software_update_offline_node_fails
+    topology: simple
+    status: wip
+    priority: p1
+  - file: software_update/software_update_failure_rolls_back.yaml
+    family: software_update
+    case: software_update_failure_rolls_back
+    topology: simple
+    status: wip
+    priority: p2
+  - file: software_update/software_update_restart_required_health_ok.yaml
+    family: software_update
+    case: software_update_restart_required_health_ok
+    topology: simple
+    status: wip
+    priority: p1
+  - file: failure/failure_missing_sim_clean.yaml
+    family: failure
+    case: failure_missing_sim_clean
+    topology: simple
+    status: wip
+    priority: p1
+  - file: failure/failure_missing_package_clean.yaml
+    family: failure
+    case: failure_missing_package_clean
+    topology: simple
+    status: wip
+    priority: p1
+  - file: failure/failure_wrong_network_clean.yaml
+    family: failure
+    case: failure_wrong_network_clean
+    topology: medium
+    status: wip
+    priority: p1
+  - file: failure/failure_duplicate_request_idempotent.yaml
+    family: failure
+    case: failure_duplicate_request_idempotent
+    topology: simple
+    status: wip
+    priority: p1
+  - file: failure/failure_partial_backend_no_dirty_state.yaml
+    family: failure
+    case: failure_partial_backend_no_dirty_state
+    topology: simple
+    status: wip
+    priority: p2
+  - file: failure/failure_retry_after_partial_setup.yaml
+    family: failure
+    case: failure_retry_after_partial_setup
+    topology: simple
+    status: wip
+    priority: p2
+  - file: failure/failure_stale_package_assignment_fails.yaml
+    family: failure
+    case: failure_stale_package_assignment_fails
+    topology: simple
+    status: wip
+    priority: p2
+  - file: scale/scale_medium_90_ues_usage.yaml
+    family: scale
+    case: scale_medium_90_ues_usage
+    topology: medium
+    status: wip
+    priority: p2
+  - file: scale/scale_large_1000_ues_usage.yaml
+    family: scale
+    case: scale_large_1000_ues_usage
+    topology: large
+    status: wip
+    priority: p2
+  - file: scale/scale_large_1000_sim_pool.yaml
+    family: scale
+    case: scale_large_1000_sim_pool
+    topology: large
+    status: wip
+    priority: p2
+  - file: scale/scale_large_10_sites_backend_counts.yaml
+    family: scale
+    case: scale_large_10_sites_backend_counts
+    topology: large
+    status: wip
+    priority: p2

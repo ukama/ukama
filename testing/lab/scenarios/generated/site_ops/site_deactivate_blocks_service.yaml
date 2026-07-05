@@ -1,0 +1,86 @@
+version: 1
+name: site_deactivate_blocks_service
+seed: 736471545
+suite: generated
+priority: p2
+tags: [generated, site_ops, site_ops, deactivate, lifecycle]
+status: wip
+generated: true
+entity: site_ops
+action: deactivate_site
+
+# family: site_ops
+# case: site_deactivate_blocks_service
+# topology: medium
+# generated_status: wip
+
+provider:
+  type: virtual
+
+world:
+  networks: 1
+  sites_per_network: 3
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 30
+
+packages:
+  - ref: pkg_001
+    name: Data Package 1
+    data_mb: 2048
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+  - ref: pkg_002
+    name: Data Package 2
+    data_mb: 2048
+    duration_days: 1
+    amount: 2.00
+    assign_percent: 0
+  - ref: pkg_003
+    name: Data Package 3
+    data_mb: 2048
+    duration_days: 1
+    amount: 3.00
+    assign_percent: 0
+  - ref: pkg_004
+    name: Data Package 4
+    data_mb: 2048
+    duration_days: 1
+    amount: 4.00
+    assign_percent: 0
+  - ref: pkg_005
+    name: Data Package 5
+    data_mb: 2048
+    duration_days: 1
+    amount: 5.00
+    assign_percent: 0
+
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+
+runtime:
+  start: [nodes, ues]
+  wait: [nodes_ready, ues_attached]
+
+phases:
+  - name: action
+    events:
+      - type: check
+    checks:
+      - type: backend_count
+        target: sims
+        expected: from_world
+
+final_checks:
+  - type: balance_non_negative
+    ues: all
