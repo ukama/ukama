@@ -19,6 +19,10 @@ typedef struct {
     char run_dir[ULAB_MAX_PATH];
     char repo[ULAB_MAX_PATH];
     FILE *logf;
+    int service_enabled;
+    int radio_enabled;
+    int node_offline;
+    char node_version[ULAB_MAX_REF];
 } runtime_t;
 
 int runtime_init(runtime_t *rt, const char *provider,
@@ -47,6 +51,14 @@ int runtime_wait_ues_attached(runtime_t *rt, world_t *w,
 int runtime_generate_traffic(runtime_t *rt, const world_t *w,
                              const selector_result_t *ues,
                              uint64_t amount_mb, ulab_error_t *err);
+int runtime_set_service(runtime_t *rt, int enabled, ulab_error_t *err);
+int runtime_set_radio(runtime_t *rt, int enabled, ulab_error_t *err);
+int runtime_mark_node_offline(runtime_t *rt, ulab_error_t *err);
+int runtime_restore_nodes(runtime_t *rt, ulab_error_t *err);
+int runtime_set_node_version(runtime_t *rt, const char *version,
+                             ulab_error_t *err);
+int runtime_node_health_ok(const runtime_t *rt);
+const char *runtime_node_version(const runtime_t *rt);
 int runtime_restart_nodes(runtime_t *rt, const world_t *w,
                           const selector_result_t *nodes,
                           ulab_error_t *err);

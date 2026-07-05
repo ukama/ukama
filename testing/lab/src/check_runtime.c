@@ -18,6 +18,23 @@ int check_runtime(check_ctx_t *ctx, const check_spec_t *check,
     size_t i;
     size_t ok = 0;
 
+    if (check->type == CHECK_NODE_VERSION_EQUALS) {
+        const char *expected = check->expected[0] ? check->expected :
+                               (check->status[0] ? check->status : "current");
+        const char *actual = runtime_node_version(ctx->runtime);
+        res->passed = ulab_streq(expected, actual);
+        snprintf(res->detail, sizeof(res->detail), "expected=%s actual=%s",
+                 expected, actual);
+        return ULAB_OK;
+    }
+
+    if (check->type == CHECK_NODE_HEALTH_OK) {
+        res->passed = runtime_node_health_ok(ctx->runtime);
+        snprintf(res->detail, sizeof(res->detail), "node_health=%s",
+                 res->passed ? "ok" : "bad");
+        return ULAB_OK;
+    }
+
     if (check->type == CHECK_UE_ATTACHED) {
         if (selector_resolve_ues(ctx->world, &check->ues, &sel, err)) {
             return ULAB_ERR;

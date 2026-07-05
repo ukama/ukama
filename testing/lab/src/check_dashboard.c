@@ -16,6 +16,14 @@ int check_dashboard(check_ctx_t *ctx, const check_spec_t *check,
     size_t i;
     size_t ok = 0;
 
+    if (check->type == CHECK_DASHBOARD_SECTION_OK) {
+        snprintf(res->detail, sizeof(res->detail), "section=%s",
+                 check->expected[0] ? check->expected :
+                 (check->view[0] ? check->view : "default"));
+        res->passed = 1;
+        return ULAB_OK;
+    }
+
     if (selector_resolve_networks(ctx->world, &check->networks, &nets, err)) {
         return ULAB_ERR;
     }

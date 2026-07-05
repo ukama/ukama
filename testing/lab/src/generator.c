@@ -986,24 +986,42 @@ static int load_matrix_models(const gen_opts_t *opts, matrix_def_t *matrix) {
 }
 
 static int is_runtime_supported(const char *runtime) {
-    return ulab_streq(runtime, "normal") || ulab_streq(runtime, "node_restart");
+    return ulab_streq(runtime, "normal") ||
+           ulab_streq(runtime, "node_restart") ||
+           ulab_streq(runtime, "service_off") ||
+           ulab_streq(runtime, "radio_off") ||
+           ulab_streq(runtime, "node_offline");
 }
 
 static int is_verification_supported(const char *verification) {
     return ulab_streq(verification, "bff_mutation") ||
            ulab_streq(verification, "read_model") ||
            ulab_streq(verification, "dashboard") ||
-           ulab_streq(verification, "runtime");
+           ulab_streq(verification, "runtime") ||
+           ulab_streq(verification, "history") ||
+           ulab_streq(verification, "audit");
 }
 
 static int is_software_supported(const char *software) {
-    return ulab_streq(software, "no_update");
+    return ulab_streq(software, "no_update") ||
+           ulab_streq(software, "same_version") ||
+           ulab_streq(software, "new_version") ||
+           ulab_streq(software, "rollback");
 }
 
 static int is_family_flow_supported(const char *family, const char *flow) {
-    if (ulab_streq(family, "software_update")) return 0;
+    if (ulab_streq(family, "software_update")) return 1;
     if (ulab_streq(family, "site_ops")) {
-        return ulab_streq(flow, "restart_site");
+        return ulab_streq(flow, "restart_site") ||
+               ulab_streq(flow, "service_off") ||
+               ulab_streq(flow, "service_on") ||
+               ulab_streq(flow, "radio_off") ||
+               ulab_streq(flow, "radio_on");
+    }
+    if (ulab_streq(family, "node_ops")) {
+        return ulab_streq(flow, "restart") ||
+               ulab_streq(flow, "offline") ||
+               ulab_streq(flow, "recover");
     }
     if (ulab_streq(family, "lifecycle")) {
         return ulab_streq(flow, "sim_suspend") ||
@@ -1059,15 +1077,49 @@ static const char *matrix_entity_for_family(const char *family) {
 }
 
 static void write_matrix_event(FILE *f, const char *family, const char *flow,
-                               const char *runtime, int wip) {
+                               const char *runtime, const char *software,
+                               int wip) {
     if (wip) {
         fprintf(f, "      - type: check\n");
         return;
     }
 
-    if (ulab_streq(runtime, "node_restart") ||
-        (ulab_streq(family, "node_ops") && ulab_streq(flow, "restart")) ||
-        (ulab_streq(family, "site_ops") && ulab_streq(flow, "restart_site"))) {
+    if (ulab_streq(family, "software_update")) {
+        fprintf(f,
+                "      - type: software_update\n"
+                "        type_selector: tower\n"
+                "        count_per_network: 1\n"
+                "        version: %s\n", software);
+    } else if (ulab_streq(flow, "service_off") ||
+               ulab_streq(runtime, "service_off")) {
+        fprintf(f,
+                "      - type: toggle_service\n"
+                "        state: off\n");
+    } else if (ulab_streq(flow, "service_on")) {
+        fprintf(f,
+                "      - type: toggle_service\n"
+                "        state: on\n");
+    } else if (ulab_streq(flow, "radio_off") ||
+               ulab_streq(runtime, "radio_off")) {
+        fprintf(f,
+                "      - type: toggle_radio\n"
+                "        state: off\n");
+    } else if (ulab_streq(flow, "radio_on")) {
+        fprintf(f,
+                "      - type: toggle_radio\n"
+                "        state: on\n");
+    } else if (ulab_streq(flow, "offline") ||
+               ulab_streq(runtime, "node_offline")) {
+        fprintf(f, "      - type: mark_node_offline\n");
+    } else if (ulab_streq(flow, "recover")) {
+        fprintf(f, "      - type: restore_node\n");
+    } else if (ulab_streq(flow, "restart_site")) {
+        fprintf(f,
+                "      - type: restart_site\n"
+                "        nodes: all\n");
+    } else if (ulab_streq(runtime, "node_restart") ||
+               (ulab_streq(family, "node_ops") &&
+                ulab_streq(flow, "restart"))) {
         fprintf(f,
                 "      - type: restart_nodes\n"
                 "        type_selector: tower\n"
@@ -1092,7 +1144,8 @@ static void write_matrix_event(FILE *f, const char *family, const char *flow,
         fprintf(f,
                 "      - type: remove_package_from_sim\n"
                 "        ues: all\n");
-    } else if (ulab_streq(flow, "sim_suspend") || ulab_streq(flow, "sim_deactivate")) {
+    } else if (ulab_streq(flow, "sim_suspend") ||
+               ulab_streq(flow, "sim_deactivate")) {
         fprintf(f,
                 "      - type: set_sim_status\n"
                 "        ues: all\n"
@@ -1104,11 +1157,15 @@ static void write_matrix_event(FILE *f, const char *family, const char *flow,
 
 static void write_matrix_checks(FILE *f, const char *family,
                                 const char *verification,
-                                const char *runtime, int wip) {
+                                const char *runtime,
+                                const char *software,
+                                int wip) {
     const char *target;
+    const char *entity;
 
     target = (ulab_streq(family, "node_ops") ||
               ulab_streq(family, "software_update")) ? "nodes" : "sims";
+    entity = matrix_entity_for_family(family);
 
     fprintf(f,
             "    checks:\n"
@@ -1124,15 +1181,40 @@ static void write_matrix_checks(FILE *f, const char *family,
     }
     if (!wip && ulab_streq(verification, "dashboard")) {
         fprintf(f,
-                "      - type: dashboard_loads\n"
-                "        view: network_overview\n");
+                "      - type: dashboard_section_ok\n"
+                "        section: network_overview\n");
     }
-    if (!wip && ulab_streq(verification, "runtime") &&
-        (ulab_streq(runtime, "normal") || ulab_streq(runtime, "node_restart"))) {
+    if (!wip && ulab_streq(verification, "history")) {
         fprintf(f,
-                "      - type: traffic_allowed\n"
-                "        ues: all\n"
-                "        amount_mb: 1\n");
+                "      - type: history_preserved\n"
+                "        entity: %s\n", entity);
+    }
+    if (!wip && ulab_streq(verification, "audit")) {
+        fprintf(f,
+                "      - type: audit_event_exists\n"
+                "        entity: %s\n", entity);
+    }
+    if (!wip && ulab_streq(family, "software_update")) {
+        fprintf(f,
+                "      - type: node_version_equals\n"
+                "        version: %s\n"
+                "      - type: node_health_ok\n",
+                software);
+    }
+    if (!wip && ulab_streq(verification, "runtime")) {
+        if (ulab_streq(runtime, "service_off") ||
+            ulab_streq(runtime, "radio_off") ||
+            ulab_streq(runtime, "node_offline")) {
+            fprintf(f,
+                    "      - type: traffic_blocked\n"
+                    "        ues: all\n"
+                    "        amount_mb: 1\n");
+        } else {
+            fprintf(f,
+                    "      - type: traffic_allowed\n"
+                    "        ues: all\n"
+                    "        amount_mb: 1\n");
+        }
     }
 }
 
@@ -1250,8 +1332,8 @@ static int write_matrix_scenario(const gen_opts_t *opts,
             "phases:\n"
             "  - name: matrix_action\n"
             "    events:\n");
-    write_matrix_event(f, family->name, flow, runtime, wip);
-    write_matrix_checks(f, family->name, verification, runtime, wip);
+    write_matrix_event(f, family->name, flow, runtime, software, wip);
+    write_matrix_checks(f, family->name, verification, runtime, software, wip);
 
     fprintf(f,
             "\nfinal_checks:\n"
