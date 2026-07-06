@@ -29,11 +29,11 @@ import { KPI_KEYS, kpiText } from '@/lib/kpis';
 import { toMapSites } from '@/lib/mappers/sites';
 import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
 import { pinColor } from '@/lib/status';
-import { useUiPrefs } from '@/lib/store';
+import { useNetworkId } from '@/lib/useNetworkId';
 
 export default function NetworkHomeScreen() {
   const router = useRouter();
-  const networkId = useUiPrefs((s) => s.networkId);
+  const networkId = useNetworkId();
   const [sel, setSel] = useState<string | null>(null);
 
   // KPIs come from the analytics rollup; sites come live from the registry

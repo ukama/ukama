@@ -24,7 +24,7 @@ import {
   useAvailableDataPlans,
   useAvailablePoolSims,
 } from '@/lib/sim-pool';
-import { useUiPrefs } from '@/lib/store';
+import { useNetworkId } from '@/lib/useNetworkId';
 import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
 import GroupRounded from '@mui/icons-material/GroupRounded';
 import PersonAddRounded from '@mui/icons-material/PersonAddRounded';
@@ -49,7 +49,7 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
   const agent = mode === 'agent';
   const showSite = mode === 'network';
   const clickRow = mode !== 'network';
-  const networkId = useUiPrefs((s) => s.networkId);
+  const networkId = useNetworkId();
 
   const [q, setQ] = useState('');
   const [openSub, setOpenSub] = useState<Subscriber | null>(null);

@@ -31,17 +31,18 @@ import StatusBadge from '@/components/StatusBadge';
 import { BAR_COLORS } from '@/lib/charts';
 import { useCurrency } from '@/lib/currency';
 import { kpiAmount } from '@/lib/kpis';
-import { useUiPrefs } from '@/lib/store';
+import { useNetworkId } from '@/lib/useNetworkId';
 
 const isActive = (status?: string | null): boolean =>
   (status ?? '').toLowerCase() === 'active';
 
 export default function BizPackagesScreen() {
-  const networkId = useUiPrefs((s) => s.networkId);
+  const networkId = useNetworkId();
   // Org currency symbol comes from getCurrencySymbol (shared via CurrencyProvider).
   const { money } = useCurrency();
   const { data, loading, error, refetch } = useGetPackagePerformanceQuery({
     variables: { data: { networkId } },
+    skip: !networkId,
   });
   const perf = data?.getPackagePerformance;
   const kpis = perf?.kpis;

@@ -17,7 +17,7 @@ import { useTopBarAlertsQuery } from '@/client/graphql/network-home.generated';
 import { useToast } from '@/components/ToastProvider';
 import type { Alert } from '@/data';
 import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
-import { useUiPrefs } from '@/lib/store';
+import { useNetworkId } from '@/lib/useNetworkId';
 import AlertDialog from './AlertDialog';
 import { Ic } from './icons';
 
@@ -54,7 +54,7 @@ export default function NotificationsMenu() {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [openAlert, setOpenAlert] = useState<Alert | null>(null);
   const toast = useToast();
-  const networkId = useUiPrefs((s) => s.networkId);
+  const networkId = useNetworkId();
 
   // Polled notifications (v1: no subscriptions — BUILD-PLAN §5.1·4); shares
   // the networkOverview cache entry with the home screen.

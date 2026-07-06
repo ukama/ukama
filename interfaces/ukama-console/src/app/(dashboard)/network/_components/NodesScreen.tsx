@@ -22,7 +22,7 @@ import PageHeader from '@/components/PageHeader';
 import PageWatermark from '@/components/PageWatermark';
 import type { UkamaNode } from '@/data';
 import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
-import { useUiPrefs } from '@/lib/store';
+import { useNetworkId } from '@/lib/useNetworkId';
 import { toUkamaNode } from '@/lib/mappers/nodes';
 import { ConnectivityDot, StateChip } from './nodeStatus';
 
@@ -128,7 +128,7 @@ function NodeCard({
 
 export default function NodesScreen() {
   const router = useRouter();
-  const networkId = useUiPrefs((s) => s.networkId);
+  const networkId = useNetworkId();
 
   const { data, loading, refetch } = useNodesListQuery({
     variables: { networkId },

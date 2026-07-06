@@ -54,7 +54,7 @@ import { toUkamaNode } from '@/lib/mappers/nodes';
 import { toSite } from '@/lib/mappers/sites';
 import { formatDate } from '@/lib/parsers';
 import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
-import { useUiPrefs } from '@/lib/store';
+import { useNetworkId } from '@/lib/useNetworkId';
 import { Ic } from '../../_components/icons';
 
 interface CompDef {
@@ -726,7 +726,7 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
   const router = useRouter();
   const [selComp, setSelComp] = useState('node');
 
-  const networkId = useUiPrefs((s) => s.networkId);
+  const networkId = useNetworkId();
 
   const { data, loading, refetch } = useNetworkSiteDetailQuery({
     variables: { siteId },

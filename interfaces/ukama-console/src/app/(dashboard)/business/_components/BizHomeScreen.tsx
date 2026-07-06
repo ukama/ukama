@@ -33,7 +33,7 @@ import { useCurrency } from '@/lib/currency';
 import { KPI_KEYS, kpiAmount, kpiByKey, kpiText, kpiValue } from '@/lib/kpis';
 import { type MapSite, toMapSites } from '@/lib/mappers/sites';
 import { pinColor } from '@/lib/status';
-import { useUiPrefs } from '@/lib/store';
+import { useNetworkId } from '@/lib/useNetworkId';
 
 function SiteSummaryList({
   sites,
@@ -82,7 +82,7 @@ function SiteSummaryList({
 
 export default function BizHomeScreen() {
   const router = useRouter();
-  const networkId = useUiPrefs((s) => s.networkId);
+  const networkId = useNetworkId();
   const [showSummary, setShowSummary] = useState(false);
   // Org currency symbol from getCurrencySymbol (shared via CurrencyProvider).
   const { money } = useCurrency();
@@ -91,6 +91,7 @@ export default function BizHomeScreen() {
   // (sitesView) so the map doesn't depend on the analytics collector.
   const { data: homeData, loading: homeLoading } = useGetHomeKpisQuery({
     variables: { data: { lens: HomeLens.Business, networkId } },
+    skip: !networkId,
   });
   const { data: sitesData, loading: sitesLoading } = useSitesListQuery({
     variables: { networkId },

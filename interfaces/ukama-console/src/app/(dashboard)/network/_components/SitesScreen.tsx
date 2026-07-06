@@ -22,7 +22,7 @@ import SearchField from '@/components/SearchField';
 import StatusBadge from '@/components/StatusBadge';
 import type { Site } from '@/data';
 import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
-import { useUiPrefs } from '@/lib/store';
+import { useNetworkId } from '@/lib/useNetworkId';
 import { toSite } from '@/lib/mappers/sites';
 
 function SiteCard({ s, onOpen }: { s: Site; onOpen: (s: Site) => void }) {
@@ -122,7 +122,7 @@ function SiteCard({ s, onOpen }: { s: Site; onOpen: (s: Site) => void }) {
 
 export default function SitesScreen() {
   const router = useRouter();
-  const networkId = useUiPrefs((s) => s.networkId);
+  const networkId = useNetworkId();
   const [q, setQ] = useState('');
 
   const { data, loading, refetch } = useSitesListQuery({
