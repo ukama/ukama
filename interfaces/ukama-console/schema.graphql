@@ -1644,7 +1644,8 @@ input RemovePackageFormSimInputDto {
 }
 
 type SimStatusResDto {
-  simId: String
+  success: Boolean!
+  message: String
 }
 
 input ToggleSimStatusInputDto {

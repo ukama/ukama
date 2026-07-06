@@ -86,16 +86,21 @@ export default function SubscriberDrawer({
   const [toggleSim, { loading: togglingSim }] = useToggleSimStatusMutation({
     onCompleted: (d) => {
       setConfirmSim(false);
-      if (d.toggleSimStatus.simId) {
-        toast(`SIM ${simActive ? 'deactivated' : 'activated'}`);
+      const res = d.toggleSimStatus;
+      if (res.success) {
+        // Activation/deactivation runs asynchronously on the backend, so the
+        // toast reports that the process has started, not that it's applied.
+        toast(
+          `SIM ${simActive ? 'deactivation' : 'activation'} process initiated`,
+        );
         onChanged?.(); // refresh the list + this subscriber's sim status
       } else {
-        toast("Couldn't update SIM status");
+        toast(res.message ?? "Couldn't update SIM status");
       }
     },
-    onError: () => {
+    onError: (e) => {
       setConfirmSim(false);
-      toast("Couldn't update SIM status");
+      toast(e.message || "Couldn't update SIM status");
     },
   });
 

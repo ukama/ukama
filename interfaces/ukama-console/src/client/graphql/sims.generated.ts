@@ -44,7 +44,7 @@ export type ToggleSimStatusMutationVariables = Types.Exact<{
 }>;
 
 
-export type ToggleSimStatusMutation = { __typename?: 'Mutation', toggleSimStatus: { __typename?: 'SimStatusResDto', simId?: string | null } };
+export type ToggleSimStatusMutation = { __typename?: 'Mutation', toggleSimStatus: { __typename?: 'SimStatusResDto', success: boolean, message?: string | null } };
 
 export type GetSimQueryVariables = Types.Exact<{
   data: Types.GetSimInputDto;
@@ -303,7 +303,8 @@ export type AllocateSimMutationOptions = Apollo.BaseMutationOptions<AllocateSimM
 export const ToggleSimStatusDocument = gql`
     mutation toggleSimStatus($data: ToggleSimStatusInputDto!) {
   toggleSimStatus(data: $data) {
-    simId
+    success
+    message
   }
 }
     `;

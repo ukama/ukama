@@ -121,10 +121,20 @@ export class SimDetailsDto {
   allocatedAt: string;
 }
 
+/**
+ * Result of a SIM status toggle. The sim backend returns only an HTTP status
+ * (no body) on success and an error message on failure, so we surface a simple
+ * success flag plus an optional message the console can show. The physical
+ * activation/deactivation is asynchronous — success means "accepted", not
+ * "applied".
+ */
 @ObjectType()
 export class SimStatusResDto {
+  @Field()
+  success: boolean;
+
   @Field(() => String, { nullable: true })
-  simId?: string;
+  message?: string;
 }
 @ObjectType()
 export class DeleteSimResDto {

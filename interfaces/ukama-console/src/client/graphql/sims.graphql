@@ -110,7 +110,8 @@ mutation allocateSim($data: AllocateSimInputDto!) {
 
 mutation toggleSimStatus($data: ToggleSimStatusInputDto!) {
   toggleSimStatus(data: $data) {
-    simId
+    success
+    message
   }
 }
 

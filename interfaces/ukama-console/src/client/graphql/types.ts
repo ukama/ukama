@@ -2660,7 +2660,8 @@ export type SimRowDto = {
 
 export type SimStatusResDto = {
   __typename?: 'SimStatusResDto';
-  simId?: Maybe<Scalars['String']['output']>;
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
 };
 
 export type SimToPackagesDto = {
