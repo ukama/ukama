@@ -266,7 +266,6 @@ export default function SubscriberDrawer({
           )}
         </div>
 
-        <DetailRow k="Site" v={sub.site} />
         <DetailRow k="ICCID" v={sub.iccid} />
         <DetailRow
           k="SIM status"
