@@ -1,0 +1,58 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026-present, Ukama Inc.
+
+# Operation-lock status for node/site actions. The BFF aggregates per-node
+# locks (keyed node:<id>) into a page-friendly shape; the console polls these
+# and renders busy/available. See OPERATION-LOCK-PLAN.md.
+
+fragment OperationFields on OperationDto {
+  id
+  type
+  status
+  requestedBy
+  startedAt
+  leaseExpiresAt
+}
+
+query GetNodeOperationStatus($nodeId: String!) {
+  getNodeOperationStatus(data: { nodeId: $nodeId }) {
+    nodeId
+    busy
+    operation {
+      ...OperationFields
+    }
+  }
+}
+
+query GetSiteOperationStatus($siteId: String!) {
+  getSiteOperationStatus(data: { siteId: $siteId }) {
+    siteId
+    busy
+    degraded
+    nodes {
+      nodeId
+      type
+      busy
+      operation {
+        ...OperationFields
+      }
+    }
+    actions {
+      restartSite {
+        available
+        reason
+      }
+      rf {
+        available
+        reason
+      }
+      service {
+        available
+        reason
+      }
+    }
+  }
+}

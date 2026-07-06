@@ -17,7 +17,7 @@ import PageHeader from '@/components/PageHeader';
 import SearchField from '@/components/SearchField';
 import PlanCard from '@/features/plans/PlanCard';
 import { packageToPlan } from '@/features/plans/mapPackage';
-import { useUiPrefs } from '@/lib/store';
+import { useNetworkId } from '@/lib/useNetworkId';
 
 type Sort = 'price-asc' | 'price-desc' | 'data-desc';
 
@@ -29,9 +29,10 @@ export default function AgentPlansScreen() {
 
   // Agent lens only sees plans for the selected network + org-wide plans;
   // the BFF applies that filter when networkId is passed.
-  const networkId = useUiPrefs((s) => s.networkId);
+  const networkId = useNetworkId();
   const { data, loading, error } = useGetPackagesQuery({
-    variables: { networkId },
+    // Optional filter: '' (no/invalid network) → undefined = org-wide plans.
+    variables: { networkId: networkId || undefined },
   });
   const { data: networksData } = useGetNetworksQuery();
   const networkNameById = useMemo(() => {

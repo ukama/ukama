@@ -48,6 +48,29 @@ const VERSION = "v1";
 const SIMPOOL = "simpool";
 const SIM = "sim";
 
+/**
+ * Best-effort extraction of a human-readable message from an Apollo
+ * RESTDataSource error (thrown on non-2xx). The backend error text lives on
+ * `extensions.response.body` (string or `{ message }`); fall back to the
+ * error's own message.
+ */
+const extractErrorMessage = (error: unknown): string => {
+  const err = error as {
+    message?: string;
+    extensions?: { response?: { body?: unknown } };
+  };
+  const body = err?.extensions?.response?.body;
+  if (typeof body === "string" && body.trim()) return body;
+  if (
+    body &&
+    typeof body === "object" &&
+    typeof (body as { message?: unknown }).message === "string"
+  ) {
+    return (body as { message: string }).message;
+  }
+  return err?.message ?? "Failed to update SIM status";
+};
+
 class SimApi extends BaseRESTDataSource {
   uploadSims = async (
     baseURL: string,
@@ -73,9 +96,18 @@ class SimApi extends BaseRESTDataSource {
       `ToggleSimStatus [PATCH]: ${baseURL}/${VERSION}/${SIM}/${req.sim_id}`
     );
     this.baseURL = baseURL;
+    // The sim backend returns only an HTTP status (no body) on success and an
+    // error message on failure. Map that to a typed {success, message} so the
+    // console can toast without depending on a thrown GraphQL error.
     return this.patch(`/${VERSION}/${SIM}/${req.sim_id}`, {
       body: { status: req.status },
-    });
+    })
+      .then(() => ({ success: true }) as SimStatusResDto)
+      .catch(error => {
+        const message = extractErrorMessage(error);
+        this.logger.error(`ToggleSimStatus failed: ${message}`);
+        return { success: false, message };
+      });
   };
 
   getTokenByIccid = async (baseURL: string, iccid: string): Promise<string> => {

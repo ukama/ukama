@@ -27,7 +27,7 @@ import TableFooter from '@/components/data-table/TableFooter';
 import { KpiRow } from '@/components/Kpi';
 import PageHeader from '@/components/PageHeader';
 import StatusBadge from '@/components/StatusBadge';
-import { useUiPrefs } from '@/lib/store';
+import { useNetworkId } from '@/lib/useNetworkId';
 import { toUkamaNode } from '@/lib/mappers/nodes';
 
 type PoolStatus = 'available' | 'assigned';
@@ -110,7 +110,7 @@ export default function NodePoolScreen() {
 
   // Resolve siteId → site name for the Site column. NodePool isn't scoped to
   // a network, so use the currently-selected network for the site lookup.
-  const networkId = useUiPrefs((s) => s.networkId);
+  const networkId = useNetworkId();
   const { data: sitesData } = useSitesListQuery({
     variables: { networkId },
     skip: !networkId,

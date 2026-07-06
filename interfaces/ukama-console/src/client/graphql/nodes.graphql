@@ -60,7 +60,7 @@ query GetNodes($data: NodesFilterInput!) {
 }
 
 mutation deleteNode($data: NodeInput!) {
-  deleteNodeFromOrg(data: $data) {
+  deleteNode(data: $data) {
     id
   }
 }
@@ -152,13 +152,13 @@ mutation ToggleInternetSwitch($data: ToggleInternetSwitchInputDto!) {
   }
 }
 
-mutation ToggleRFStatus($data: ToggleRFStatusInputDto!) {
+mutation ToggleRFStatus($data: ToggleSiteStatusInputDto!) {
   toggleRFStatus(data: $data) {
     success
   }
 }
 
-mutation ToggleService($data: ToggleRFStatusInputDto!) {
+mutation ToggleService($data: ToggleSiteStatusInputDto!) {
   toggleService(data: $data) {
     success
   }

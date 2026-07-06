@@ -39,6 +39,9 @@ import KV from '@/components/KV';
 import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
 import { useToast } from '@/components/ToastProvider';
+import { ActionButton } from '@/components/ActionButton';
+import { byWhom, prettyOpType, useElapsed } from '@/features/operations/labels';
+import { useNodeOperationStatus } from '@/features/operations/useOperationStatus';
 import { metricLabel } from '@/lib/labels';
 import { toUkamaNode } from '@/lib/mappers/nodes';
 import { type LatestEntry, seriesLatest } from '@/lib/metrics';
@@ -214,34 +217,61 @@ function GroupCharts({
   );
 }
 
-/** Restart node — single action, confirmation dialog, then mutation. */
+/** Restart node — single action, confirmation dialog, then mutation.
+ *  Reflects the node's operation-lock so the button stays busy for the whole
+ *  async reboot (not just the HTTP call) and disables when another user's
+ *  operation holds the lock. */
 function RestartAction({ nodeId, name }: { nodeId: string; name: string }) {
   const [open, setOpen] = useState(false);
   const toast = useToast();
+  const lock = useNodeOperationStatus(nodeId);
+  const op = lock.operation;
+  const elapsed = useElapsed(op?.startedAt);
+
+  const busyLabel = `Restarting…${elapsed ? ` (${elapsed})` : ''}`;
+  const busyReason = op
+    ? `${prettyOpType(op.type)} in progress${byWhom(op.requestedBy)}`
+    : undefined;
+
   const [restart, { loading }] = useRestartNodeMutation({
     onCompleted: (d) => {
       setOpen(false);
-      toast(
-        d.restartNode.success
-          ? `Restarting ${name}…`
-          : `Couldn't restart ${name}`,
-      );
+      if (d.restartNode.success) {
+        lock.markBusy();
+        toast(`Restarting ${name}…`);
+      } else {
+        toast(`Couldn't restart ${name}`);
+      }
+      lock.refetch();
     },
     onError: () => {
       setOpen(false);
       toast(`Couldn't restart ${name}`);
+      lock.refetch();
     },
   });
+
+  const submit = () => {
+    lock.markBusy(); // optimistic — busy immediately, before the first poll
+    restart({ variables: { data: { nodeId } } });
+  };
+  // Guard against firing into a guaranteed conflict if the node turned busy
+  // (by someone else) while the confirm dialog was open.
+  const submitBlocked = loading || (lock.busy && !loading);
+
   return (
     <>
-      <Button
+      <ActionButton
         variant="contained"
         startIcon={<RestartAltRounded />}
         sx={{ bgcolor: '#1C1E22', '&:hover': { bgcolor: '#2c2f36' } }}
         onClick={() => setOpen(true)}
+        busy={lock.busy}
+        busyLabel={busyLabel}
+        reason={busyReason}
       >
         Restart node
-      </Button>
+      </ActionButton>
       {open && (
         <AppModal
           title="Restart node"
@@ -262,10 +292,14 @@ function RestartAction({ nodeId, name }: { nodeId: string; name: string }) {
               <Button
                 variant="contained"
                 startIcon={<RestartAltRounded />}
-                disabled={loading}
-                onClick={() => restart({ variables: { data: { nodeId } } })}
+                disabled={submitBlocked}
+                onClick={submit}
               >
-                {loading ? 'Restarting…' : 'Restart node'}
+                {loading
+                  ? 'Restarting…'
+                  : lock.busy
+                    ? 'Node is busy'
+                    : 'Restart node'}
               </Button>
             </>
           }

@@ -13,30 +13,31 @@
  * (node-site-detail.jsx SiteDetail). Metrics come from the BFF (mocked until
  * the metric service lands); the console renders whatever it returns.
  */
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import GroupRounded from '@mui/icons-material/GroupRounded';
+import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded';
+import RestartAltRounded from '@mui/icons-material/RestartAltRounded';
+import SettingsRounded from '@mui/icons-material/SettingsRounded';
 import Button from '@mui/material/Button';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
+import CircularProgress from '@mui/material/CircularProgress';
+import Divider from '@mui/material/Divider';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import Switch from '@mui/material/Switch';
-import Divider from '@mui/material/Divider';
-import TextField from '@mui/material/TextField';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 import Skeleton from '@mui/material/Skeleton';
-import GroupRounded from '@mui/icons-material/GroupRounded';
-import RestartAltRounded from '@mui/icons-material/RestartAltRounded';
-import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded';
-import SettingsRounded from '@mui/icons-material/SettingsRounded';
+import Switch from '@mui/material/Switch';
+import TextField from '@mui/material/TextField';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 import {
   useRestartSiteMutation,
   useToggleRfStatusMutation,
   useToggleServiceMutation,
 } from '@/client/graphql/controller.generated';
+import { useMetricsRangeQuery } from '@/client/graphql/range-metrics.generated';
 import { useNetworkSiteDetailQuery } from '@/client/graphql/site-detail.generated';
 import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
-import { useMetricsRangeQuery } from '@/client/graphql/range-metrics.generated';
 import AppModal from '@/components/AppModal';
 import DetailPicker from '@/components/DetailPicker';
 import { EmptyState } from '@/components/EmptyState';
@@ -46,12 +47,14 @@ import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
 import StatusBadge from '@/components/StatusBadge';
 import { useToast } from '@/components/ToastProvider';
-import { formatDate } from '@/lib/parsers';
-import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
-import { useUiPrefs } from '@/lib/store';
+import { byWhom, prettyOpType } from '@/features/operations/labels';
+import { useSiteOperationStatus } from '@/features/operations/useOperationStatus';
 import { normalizeCoords } from '@/lib/geo';
 import { toUkamaNode } from '@/lib/mappers/nodes';
 import { toSite } from '@/lib/mappers/sites';
+import { formatDate } from '@/lib/parsers';
+import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
+import { useNetworkId } from '@/lib/useNetworkId';
 import { Ic } from '../../_components/icons';
 
 interface CompDef {
@@ -495,18 +498,30 @@ function SiteActions({
   const [serviceOn, setServiceOn] = useState(true);
   const open = Boolean(anchorEl);
 
+  // Operation-lock status aggregated by the BFF over the site's nodes. Each
+  // action depends on a different physical node (RF→amplifier, service→tower,
+  // restart→all), so they enable/disable independently.
+  const lock = useSiteOperationStatus(siteId);
+  const siteOp = lock.activeOperation;
+  const siteBusyReason = siteOp
+    ? `${prettyOpType(siteOp.type)} in progress${byWhom(siteOp.requestedBy)}`
+    : 'Working…';
+
   const [restartSite, { loading: restarting }] = useRestartSiteMutation({
     onCompleted: (d) => {
       setRestart(false);
-      toast(
-        d.restartSite.success
-          ? `Restarting ${siteName}…`
-          : `Couldn't restart ${siteName}`,
-      );
+      if (d.restartSite.success) {
+        lock.markBusy();
+        toast(`Restarting ${siteName}…`);
+      } else {
+        toast(`Couldn't restart ${siteName}`);
+      }
+      lock.refetch();
     },
     onError: () => {
       setRestart(false);
       toast(`Couldn't restart ${siteName}`);
+      lock.refetch();
     },
   });
 
@@ -523,14 +538,17 @@ function SiteActions({
     if (!tnodeId) return;
     const next = !rfOn;
     setRfOn(next); // optimistic
+    lock.markBusy(); // busy immediately; the tower node lock will confirm
     try {
       await toggleRF({
-        variables: { data: { nodeId: tnodeId, status: next } },
+        variables: { data: { siteId: siteId, status: next } },
       });
       toast(`RF turned ${next ? 'on' : 'off'}`);
     } catch {
       setRfOn(!next); // revert
       toast(`Couldn't turn RF ${next ? 'on' : 'off'}`);
+    } finally {
+      lock.refetch();
     }
   };
 
@@ -538,30 +556,67 @@ function SiteActions({
     if (!tnodeId) return;
     const next = !serviceOn;
     setServiceOn(next); // optimistic
+    lock.markBusy();
     try {
       await toggleService({
-        variables: { data: { nodeId: tnodeId, status: next } },
+        variables: { data: { siteId: siteId, status: next } },
       });
       toast(`Service turned ${next ? 'on' : 'off'}`);
     } catch {
       setServiceOn(!next); // revert
       toast(`Couldn't turn service ${next ? 'on' : 'off'}`);
+    } finally {
+      lock.refetch();
     }
   };
 
-  const togglesDisabled = !tnodeId || rfLoading || serviceLoading;
+  // Per-action disable + reason. A busy amplifier disables RF while a busy
+  // tower disables Service — independently — and any busy node disables
+  // Restart site (it locks every node).
+  const rfDisabled =
+    !tnodeId || !lock.actions.rf.available || lock.busy || rfLoading;
+  const serviceDisabled =
+    !tnodeId || !lock.actions.service.available || lock.busy || serviceLoading;
+  const restartDisabled =
+    !lock.actions.restartSite.available || lock.busy || restarting;
+
+  const noTower = 'No tower node on this site';
+  const rfReason = !tnodeId
+    ? noTower
+    : !lock.actions.rf.available
+      ? (lock.actions.rf.reason ?? siteBusyReason)
+      : lock.busy
+        ? siteBusyReason
+        : undefined;
+  const serviceReason = !tnodeId
+    ? noTower
+    : !lock.actions.service.available
+      ? (lock.actions.service.reason ?? siteBusyReason)
+      : lock.busy
+        ? siteBusyReason
+        : undefined;
+  const restartReason = restartDisabled
+    ? (lock.actions.restartSite.reason ?? siteBusyReason)
+    : undefined;
 
   return (
     <>
       <Button
         variant="contained"
-        startIcon={<SettingsRounded />}
+        startIcon={
+          lock.busy ? (
+            <CircularProgress size={15} color="inherit" />
+          ) : (
+            <SettingsRounded />
+          )
+        }
         endIcon={<KeyboardArrowDownRounded />}
         onClick={(e) => setAnchorEl(e.currentTarget)}
         aria-haspopup="true"
         aria-expanded={open ? 'true' : undefined}
+        title={lock.busy ? siteBusyReason : undefined}
       >
-        Site actions
+        Site actions{lock.busy ? ' • busy' : ''}
       </Button>
       <Menu
         anchorEl={anchorEl}
@@ -572,6 +627,7 @@ function SiteActions({
         slotProps={{ paper: { sx: { minWidth: 248 } } }}
       >
         <MenuItem
+          disabled={restartDisabled}
           onClick={() => {
             setAnchorEl(null);
             setConfirm('');
@@ -581,32 +637,26 @@ function SiteActions({
           <ListItemIcon>
             <RestartAltRounded fontSize="small" />
           </ListItemIcon>
-          <ListItemText>Restart site</ListItemText>
+          <ListItemText primary="Restart site" secondary={restartReason} />
         </MenuItem>
         <Divider />
-        <MenuItem disabled={togglesDisabled} onClick={onToggleRf}>
-          <ListItemText
-            primary="RF"
-            secondary={tnodeId ? undefined : 'No tower node on this site'}
-          />
+        <MenuItem disabled={rfDisabled} onClick={onToggleRf}>
+          <ListItemText primary="RF" secondary={rfReason} />
           <ToggleState on={rfOn} />
           <Switch
             edge="end"
             checked={rfOn}
-            disabled={togglesDisabled}
+            disabled={rfDisabled}
             tabIndex={-1}
           />
         </MenuItem>
-        <MenuItem disabled={togglesDisabled} onClick={onToggleService}>
-          <ListItemText
-            primary="Service"
-            secondary={tnodeId ? undefined : 'No tower node on this site'}
-          />
+        <MenuItem disabled={serviceDisabled} onClick={onToggleService}>
+          <ListItemText primary="Service" secondary={serviceReason} />
           <ToggleState on={serviceOn} />
           <Switch
             edge="end"
             checked={serviceOn}
-            disabled={togglesDisabled}
+            disabled={serviceDisabled}
             tabIndex={-1}
           />
         </MenuItem>
@@ -631,12 +681,17 @@ function SiteActions({
               </Button>
               <Button
                 variant="contained"
-                disabled={confirm !== siteName || restarting}
-                onClick={() =>
-                  restartSite({ variables: { data: { siteId, networkId } } })
-                }
+                disabled={confirm !== siteName || restarting || lock.busy}
+                onClick={() => {
+                  lock.markBusy();
+                  restartSite({ variables: { data: { siteId, networkId } } });
+                }}
               >
-                {restarting ? 'Restarting…' : 'Restart'}
+                {restarting
+                  ? 'Restarting…'
+                  : lock.busy
+                    ? 'Site is busy'
+                    : 'Restart'}
               </Button>
             </>
           }
@@ -671,7 +726,7 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
   const router = useRouter();
   const [selComp, setSelComp] = useState('node');
 
-  const networkId = useUiPrefs((s) => s.networkId);
+  const networkId = useNetworkId();
 
   const { data, loading, refetch } = useNetworkSiteDetailQuery({
     variables: { siteId },

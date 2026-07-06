@@ -18,14 +18,14 @@ export type RestartSiteMutationVariables = Types.Exact<{
 export type RestartSiteMutation = { __typename?: 'Mutation', restartSite: { __typename?: 'CBooleanResponse', success: boolean } };
 
 export type ToggleRfStatusMutationVariables = Types.Exact<{
-  data: Types.ToggleRfStatusInputDto;
+  data: Types.ToggleSiteStatusInputDto;
 }>;
 
 
 export type ToggleRfStatusMutation = { __typename?: 'Mutation', toggleRFStatus: { __typename?: 'CBooleanResponse', success: boolean } };
 
 export type ToggleServiceMutationVariables = Types.Exact<{
-  data: Types.ToggleRfStatusInputDto;
+  data: Types.ToggleSiteStatusInputDto;
 }>;
 
 
@@ -99,7 +99,7 @@ export type RestartSiteMutationHookResult = ReturnType<typeof useRestartSiteMuta
 export type RestartSiteMutationResult = Apollo.MutationResult<RestartSiteMutation>;
 export type RestartSiteMutationOptions = Apollo.BaseMutationOptions<RestartSiteMutation, RestartSiteMutationVariables>;
 export const ToggleRfStatusDocument = gql`
-    mutation ToggleRFStatus($data: ToggleRFStatusInputDto!) {
+    mutation ToggleRFStatus($data: ToggleSiteStatusInputDto!) {
   toggleRFStatus(data: $data) {
     success
   }
@@ -132,7 +132,7 @@ export type ToggleRfStatusMutationHookResult = ReturnType<typeof useToggleRfStat
 export type ToggleRfStatusMutationResult = Apollo.MutationResult<ToggleRfStatusMutation>;
 export type ToggleRfStatusMutationOptions = Apollo.BaseMutationOptions<ToggleRfStatusMutation, ToggleRfStatusMutationVariables>;
 export const ToggleServiceDocument = gql`
-    mutation ToggleService($data: ToggleRFStatusInputDto!) {
+    mutation ToggleService($data: ToggleSiteStatusInputDto!) {
   toggleService(data: $data) {
     success
   }

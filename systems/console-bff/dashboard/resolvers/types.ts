@@ -361,7 +361,6 @@ export class SubscribersView {
 
   subscribers?: SubscribersSection;
   plans?: PlansSection;
-  usage?: GapSection;
 }
 
 /* ------------------------------- simPoolView ------------------------------ */

@@ -43,10 +43,5 @@ query NetworkCustomers($networkId: String!) {
         name
       }
     }
-    usage {
-      error {
-        ...SectionErrorFields
-      }
-    }
   }
 }

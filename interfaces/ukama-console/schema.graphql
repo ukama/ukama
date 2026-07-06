@@ -1,4 +1,7 @@
 type Query {
+  getSimsUsageByNetwork(networkId: String!): [SimUsageItem!]!
+  getNodeOperationStatus(data: NodeOperationStatusInputDto!): NodeOperationStatusDto!
+  getSiteOperationStatus(data: SiteOperationStatusInputDto!): SiteOperationStatusDto!
   getReport(id: String!): GetReportDto!
   getReportPdf(id: String!): GetReportDto!
   getReports(data: GetReportsInputDto!): GetReportsDto!
@@ -807,7 +810,6 @@ type SubscribersView {
   networkId: String!
   subscribers: SubscribersSection!
   plans: PlansSection!
-  usage: GapSection!
 }
 
 type SubscribersSection {
@@ -1642,7 +1644,13 @@ input RemovePackageFormSimInputDto {
 }
 
 type SimStatusResDto {
-  simId: String
+  success: Boolean!
+  message: String
+}
+
+type SimUsageItem {
+  simId: String!
+  usage: String!
 }
 
 input ToggleSimStatusInputDto {
@@ -1870,4 +1878,53 @@ type HomeKpis {
 
 extend type Query {
   getHomeKpis(data: HomeViewInput!): HomeKpis!
+}
+type OperationDto {
+  id: String!
+  type: String!
+  system: String!
+  status: String!
+  fencingToken: Float!
+  requestedBy: String
+  idempotencyKey: String
+  resourceKey: String!
+  leaseExpiresAt: String
+  error: String
+  startedAt: String
+  terminalAt: String
+  createdAt: String
+}
+
+type ActionAvailabilityDto {
+  available: Boolean!
+  reason: String
+}
+
+type NodeOperationStatusDto {
+  nodeId: String!
+  type: NodeTypeEnum
+  busy: Boolean!
+  operation: OperationDto
+}
+
+type SiteActionsDto {
+  restartSite: ActionAvailabilityDto!
+  rf: ActionAvailabilityDto!
+  service: ActionAvailabilityDto!
+}
+
+type SiteOperationStatusDto {
+  siteId: String!
+  busy: Boolean!
+  degraded: Boolean!
+  nodes: [NodeOperationStatusDto!]!
+  actions: SiteActionsDto!
+}
+
+input NodeOperationStatusInputDto {
+  nodeId: String!
+}
+
+input SiteOperationStatusInputDto {
+  siteId: String!
 }

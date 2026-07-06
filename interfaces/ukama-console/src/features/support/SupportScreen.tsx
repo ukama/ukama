@@ -32,7 +32,7 @@ import { useAuth } from '@/lib/auth/context';
 import { toUkamaNode } from '@/lib/mappers/nodes';
 import { toSite } from '@/lib/mappers/sites';
 import { toSubscriber } from '@/lib/mappers/subscribers';
-import { useUiPrefs } from '@/lib/store';
+import { useNetworkId } from '@/lib/useNetworkId';
 
 type Kind = 'customer' | 'site' | 'node';
 
@@ -181,7 +181,7 @@ const customerResult = (s: Subscriber): Result => ({
 
 export default function SupportScreen({ mode }: { mode: 'biz' | 'network' }) {
   const network = mode === 'network';
-  const networkId = useUiPrefs((s) => s.networkId);
+  const networkId = useNetworkId();
   const user = useAuth();
   const toast = useToast();
   const [q, setQ] = useState('');

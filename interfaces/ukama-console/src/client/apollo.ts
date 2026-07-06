@@ -24,6 +24,7 @@ import { ApolloClient, HttpLink, from } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { InvalidationPolicyCache } from '@nerdwallet/apollo-cache-policies';
 
+const SECOND = 1000;
 const MINUTE = 60 * 1000;
 
 /** Default freshness window — reads older than this refetch (plan §5). */
@@ -31,6 +32,11 @@ export const DEFAULT_TTL = 5 * MINUTE;
 
 /** Per-type freshness overrides: volatile data expires faster. */
 const TYPE_TTLS: Record<string, number> = {
+  // operation-lock status is highly volatile — the polling hooks refetch
+  // while an action is in flight; keep the cache honest between polls.
+  NodeOperationStatusDto: 5 * SECOND,
+  SiteOperationStatusDto: 5 * SECOND,
+  OperationDto: 5 * SECOND,
   // ops status changes quickly
   NodeDto: 1 * MINUTE,
   // activation state must react quickly to setup progress (alert bar/guards)

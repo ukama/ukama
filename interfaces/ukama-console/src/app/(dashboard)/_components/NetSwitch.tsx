@@ -37,9 +37,12 @@ export default function NetSwitch() {
   const selected = networks.find((n) => n.id === networkId);
   const fallback = networks.find((n) => n.isDefault) ?? networks[0];
 
-  // Self-heal a stale selection (seed default / deleted network).
+  // Self-heal a stale selection (seed default / deleted network). When there
+  // are no networks at all, clear the stale id to '' so network-scoped
+  // queries (guarded by `skip: !networkId`) stop firing with a dead id.
   useEffect(() => {
-    if (!loading && !selected && fallback) setNetworkId(fallback.id);
+    if (loading || selected) return;
+    setNetworkId(fallback?.id ?? '');
   }, [loading, selected, fallback, setNetworkId]);
 
   const current = selected ?? fallback;
