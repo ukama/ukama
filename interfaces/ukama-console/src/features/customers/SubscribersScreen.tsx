@@ -326,7 +326,7 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
         <SubscriberDrawer
           sub={openSub}
           onClose={() => setOpenSub(null)}
-          readOnly={mode === 'biz'}
+          agent={agent}
           onChanged={() => void refetch()}
         />
       )}
