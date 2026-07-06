@@ -269,31 +269,6 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 
 	sim.Package = *firstPackage
 
-	simAgent, ok := s.agentFactory.GetAgentAdapter(simType)
-	if !ok {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid sim type: %q for sim with ICCID: %q", simType, poolSim.Iccid)
-	}
-
-	agentRequest := client.AgentRequestData{
-		Iccid:        sim.Iccid,
-		Imsi:         sim.Imsi,
-		NetworkId:    sim.NetworkId.String(),
-		PackageId:    sim.Package.PackageId.String(),
-		SimPackageId: sim.Package.Id.String(),
-	}
-
-	log.Infof("Activating sim on remote agent with request: %v", agentRequest)
-	_, err = simAgent.BindSim(ctx, agentRequest)
-	if err != nil {
-		// TODO: think of rolling back the DB transaction on sim manager
-		// if agent operation fails.
-
-		return nil, status.Errorf(codes.Internal,
-			"error while activating sim type %s on remote agent with request: %v",
-			simType, agentRequest)
-	}
-
 	orgInfos, err := s.nucleusOrgClient.Get(s.orgName)
 	if err != nil {
 		return nil, err
@@ -354,14 +329,6 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		TrafficPolicy:  sim.TrafficPolicy,
 		PackageEndDate: timestamppb.New(sim.Package.EndDate),
 	}
-
-	// agentRequest := client.AgentRequestData{
-	// Iccid:        sim.Iccid,
-	// Imsi:         sim.Imsi,
-	// NetworkId:    sim.NetworkId.String(),
-	// PackageId:    sim.Package.PackageId.String(),
-	// SimPackageId: sim.Package.Id.String(),
-	// }
 
 	err = publishEventMessage(route, evt, s.msgbus)
 	if err != nil {
