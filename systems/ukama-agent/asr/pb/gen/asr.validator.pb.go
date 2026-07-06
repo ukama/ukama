@@ -8,6 +8,7 @@ import (
 	math "math"
 	proto "github.com/golang/protobuf/proto"
 	_ "github.com/mwitkow/go-proto-validators"
+	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
@@ -25,24 +26,22 @@ func (this *UsageReq) Validate() error {
 func (this *UsageForPeriodReq) Validate() error {
 	return nil
 }
+
+var _regex_Record_Imsi = regexp.MustCompile(`^[0-9]{6,15}$`)
+var _regex_Record_Iccid = regexp.MustCompile(`^[0-9]{18,22}$`)
+
 func (this *Record) Validate() error {
+	if !_regex_Record_Imsi.MatchString(this.Imsi) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{6,15}$"`, this.Imsi))
+	}
 	if this.Imsi == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must not be an empty string`, this.Imsi))
 	}
-	if !(len(this.Imsi) > 5) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.Imsi))
-	}
-	if !(len(this.Imsi) < 16) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length smaller than '16'`, this.Imsi))
+	if !_regex_Record_Iccid.MatchString(this.Iccid) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{18,22}$"`, this.Iccid))
 	}
 	if this.Iccid == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must not be an empty string`, this.Iccid))
-	}
-	if !(len(this.Iccid) > 17) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length greater than '17'`, this.Iccid))
-	}
-	if !(len(this.Iccid) < 23) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length smaller than '23'`, this.Iccid))
 	}
 	if this.Apn != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Apn); err != nil {
@@ -70,60 +69,60 @@ func (this *ReadResp) Validate() error {
 	}
 	return nil
 }
+
+var _regex_ActivateReq_Iccid = regexp.MustCompile(`^[0-9]{18,22}$`)
+
 func (this *ActivateReq) Validate() error {
+	if !_regex_ActivateReq_Iccid.MatchString(this.Iccid) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{18,22}$"`, this.Iccid))
+	}
 	if this.Iccid == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must not be an empty string`, this.Iccid))
-	}
-	if !(len(this.Iccid) > 17) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length greater than '17'`, this.Iccid))
-	}
-	if !(len(this.Iccid) < 23) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length smaller than '23'`, this.Iccid))
 	}
 	return nil
 }
 func (this *ActivateResp) Validate() error {
 	return nil
 }
+
+var _regex_InactivateReq_Iccid = regexp.MustCompile(`^[0-9]{18,22}$`)
+
 func (this *InactivateReq) Validate() error {
+	if !_regex_InactivateReq_Iccid.MatchString(this.Iccid) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{18,22}$"`, this.Iccid))
+	}
 	if this.Iccid == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must not be an empty string`, this.Iccid))
-	}
-	if !(len(this.Iccid) > 17) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length greater than '17'`, this.Iccid))
-	}
-	if !(len(this.Iccid) < 23) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length smaller than '23'`, this.Iccid))
 	}
 	return nil
 }
 func (this *InactivateResp) Validate() error {
 	return nil
 }
+
+var _regex_UpdatePackageReq_Iccid = regexp.MustCompile(`^[0-9]{18,22}$`)
+
 func (this *UpdatePackageReq) Validate() error {
+	if !_regex_UpdatePackageReq_Iccid.MatchString(this.Iccid) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{18,22}$"`, this.Iccid))
+	}
 	if this.Iccid == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must not be an empty string`, this.Iccid))
-	}
-	if !(len(this.Iccid) > 17) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length greater than '17'`, this.Iccid))
-	}
-	if !(len(this.Iccid) < 23) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length smaller than '23'`, this.Iccid))
 	}
 	return nil
 }
 func (this *UpdatePackageResp) Validate() error {
 	return nil
 }
+
+var _regex_UpdateGutiReq_Imsi = regexp.MustCompile(`^[0-9]{6,15}$`)
+
 func (this *UpdateGutiReq) Validate() error {
+	if !_regex_UpdateGutiReq_Imsi.MatchString(this.Imsi) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{6,15}$"`, this.Imsi))
+	}
 	if this.Imsi == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must not be an empty string`, this.Imsi))
-	}
-	if !(len(this.Imsi) > 5) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.Imsi))
-	}
-	if !(len(this.Imsi) < 16) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length smaller than '16'`, this.Imsi))
 	}
 	if nil == this.Guti {
 		return github_com_mwitkow_go_proto_validators.FieldError("Guti", fmt.Errorf("message must exist"))
@@ -177,15 +176,15 @@ func (this *Policy) Validate() error {
 	}
 	return nil
 }
+
+var _regex_QueryUsageReq_Iccid = regexp.MustCompile(`^[0-9]{18,22}$`)
+
 func (this *QueryUsageReq) Validate() error {
+	if !_regex_QueryUsageReq_Iccid.MatchString(this.Iccid) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{18,22}$"`, this.Iccid))
+	}
 	if this.Iccid == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must not be an empty string`, this.Iccid))
-	}
-	if !(len(this.Iccid) > 17) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length greater than '17'`, this.Iccid))
-	}
-	if !(len(this.Iccid) < 23) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length smaller than '23'`, this.Iccid))
 	}
 	return nil
 }
