@@ -161,7 +161,7 @@ func (r *Resty) Post(url string, b []byte) (*resty.Response, error) {
 		RawError:   respError,
 	}
 
-	if !((resp.StatusCode() >= http.StatusOK) && resp.StatusCode() < http.StatusBadRequest) {
+	if resp.StatusCode() < http.StatusOK || resp.StatusCode() >= http.StatusBadRequest {
 		log.Errorf("Failed to perform POST on %q. HTTP operation resp code: %d. Error: %v",
 			url, errStatus.StatusCode, errStatus.RawError)
 

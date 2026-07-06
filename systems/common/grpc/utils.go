@@ -16,7 +16,6 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/sirupsen/logrus"
-	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/sql"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -50,7 +49,7 @@ func CreateGrpcConn(conf config.GrpcService) *grpc.ClientConn {
 				MinConnectTimeout: conf.Timeout,
 			}))
 	if err != nil {
-		log.Fatalf("Failed to connect to service %s. Error: %v", conf.Host, err)
+		logrus.Fatalf("Failed to connect to service %s. Error: %v", conf.Host, err)
 	}
 	return conn
 }

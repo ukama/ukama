@@ -102,7 +102,8 @@ func (q *qPub) PublishProto(payload proto.Message, routingKey string) error {
 }
 
 func (q *qPub) Close() error {
-	q.conn.Close()
+	_ = q.conn.Close()
+
 	return nil
 }
 

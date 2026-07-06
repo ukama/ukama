@@ -102,6 +102,36 @@ func (_m *SubscriberClient) GetByEmail(email string) (*subscriber.SubscriberInfo
 	return r0, r1
 }
 
+// GetByNetwork provides a mock function with given fields: networkId
+func (_m *SubscriberClient) GetByNetwork(networkId string) ([]*subscriber.SubscriberNetworkInfo, error) {
+	ret := _m.Called(networkId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByNetwork")
+	}
+
+	var r0 []*subscriber.SubscriberNetworkInfo
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) ([]*subscriber.SubscriberNetworkInfo, error)); ok {
+		return rf(networkId)
+	}
+	if rf, ok := ret.Get(0).(func(string) []*subscriber.SubscriberNetworkInfo); ok {
+		r0 = rf(networkId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*subscriber.SubscriberNetworkInfo)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(networkId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewSubscriberClient creates a new instance of SubscriberClient. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewSubscriberClient(t interface {

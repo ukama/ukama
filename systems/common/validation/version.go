@@ -17,7 +17,7 @@ import (
 func ParseVersion(version string) (*semver.Version, error) {
 	v, err := semver.NewVersion(version)
 	if err != nil {
-		return nil, errors.New("Invalid version format. Refer to https://semver.org/ for more information")
+		return nil, errors.New("invalid version format. Refer to https://semver.org/ for more information")
 	}
 
 	return v, err

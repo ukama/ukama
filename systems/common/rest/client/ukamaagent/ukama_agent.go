@@ -89,7 +89,7 @@ func (u *ukamaAgentClient) GetUsages(iccid, cdrType, from, to, region string) (m
 	log.Debugf("Getting ukama sim usages: %v", iccid)
 
 	var startTime int64 = defaultStartTime
-	var endTime int64 = time.Now().Add(time.Hour).Unix()
+	endTime := time.Now().Add(time.Hour).Unix()
 
 	usage := UkamaSimUsage{}
 

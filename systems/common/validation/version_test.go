@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const invalidVersionErrMsg = "Invalid version format. Refer to https://semver.org/ for more information"
+const invalidVersionErrMsg = "invalid version format. Refer to https://semver.org/ for more information"
 
 func TestParseVersion(t *testing.T) {
 	tests := []struct {

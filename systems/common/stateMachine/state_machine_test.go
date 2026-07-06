@@ -85,7 +85,7 @@ func createTempConfigFile(t *testing.T, content string) string {
 	t.Helper()
 	tempFile, err := os.CreateTemp("", "node-state-config-*.json")
 	require.NoError(t, err)
-	defer tempFile.Close()
+	defer func() { _ = tempFile.Close() }()
 
 	_, err = tempFile.Write([]byte(content))
 	require.NoError(t, err)

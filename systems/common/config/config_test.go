@@ -28,13 +28,13 @@ func TestLoadConfig(t *testing.T) {
 	const url = "test_url"
 
 	t.Run("EnvVars", func(t *testing.T) {
-		os.Setenv("SOMEURL", url)
-		os.Setenv("DB_DBNAME", "connStr")
-		os.Setenv("DEBUGMODE", "true")
-		os.Setenv("ARRAY", "this,is,test")
-		defer os.Unsetenv("SOMEURL")
-		defer os.Unsetenv("DB_DBNAME")
-		defer os.Unsetenv("DEBUGMODE")
+		_ = os.Setenv("SOMEURL", url)
+		_ = os.Setenv("DB_DBNAME", "connStr")
+		_ = os.Setenv("DEBUGMODE", "true")
+		_ = os.Setenv("ARRAY", "this,is,test")
+		defer func() { _ = os.Unsetenv("SOMEURL") }()
+		defer func() { _ = os.Unsetenv("DB_DBNAME") }()
+		defer func() { _ = os.Unsetenv("DEBUGMODE") }()
 
 		conf := &TestConfig{
 			DB: &Database{},
@@ -71,7 +71,7 @@ array: ["this", "is", "test" ]
 		assert.Len(t, conf.Array, 3)
 		assert.Equal(t, "this", conf.Array[0])
 		assert.Equal(t, "is", conf.Array[1])
-		os.Remove(file)
+		_ = os.Remove(file)
 	})
 
 }

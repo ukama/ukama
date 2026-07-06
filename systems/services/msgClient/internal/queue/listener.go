@@ -65,7 +65,13 @@ func NewQueueListener(s db.Service) (*QueueListener, error) {
 		hc = hpb.NewHealthClient(conn)
 	}
 
-	client, err := mb.NewConsumerClient(s.MsgBusUri)
+	// msgClient forwards events to services and has no dead-letter queue of its
+	// own, so use the managed retry: a failed delivery is retried with a delay
+	// and then parked, instead of being dropped or looping.
+	client, err := mb.NewConsumerClientWithRetry(s.MsgBusUri, mb.RetryPolicy{
+		MaxAttempts: 3,
+		Delay:       30 * time.Second,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -142,23 +148,38 @@ func (q *QueueListener) incomingMessageHandler(delivery amqp.Delivery, done chan
 	ctx, cancel := context.WithTimeout(context.Background(), q.grpcTimeout)
 	defer cancel()
 
-	q.processEventMsg(ctx, delivery)
+	// Signal success only when the event was actually delivered. On a retryable
+	// failure we signal false so the managed retry (delay queue + parking) kicks
+	// in instead of dropping the event.
+	err := q.processEventMsg(ctx, delivery)
 
-	done <- true
+	done <- err == nil
 }
 
-func (q *QueueListener) processEventMsg(ctx context.Context, d amqp.Delivery) {
+// processEventMsg returns nil when the event was delivered (or is unrecoverable
+// and must not be retried, e.g. a malformed payload), and a non-nil error for
+// retryable failures (target unreachable, downstream error).
+func (q *QueueListener) processEventMsg(ctx context.Context, d amqp.Delivery) error {
 	// Read Db for the key and find the services which we need to post message to.
 	log.Debugf("Raw message: %+v", d)
 
 	evtAny := new(anypb.Any)
 	err := proto.Unmarshal(d.Body, evtAny)
 	if err != nil {
+		// Malformed payload: retrying will not help, so ack (return nil) to drop it.
 		log.Errorf("Failed to parse message with key %s. Error %s", d.RoutingKey, err.Error())
-		return
+		return nil
 	}
+	// On a retried delivery the message comes back via the delay queue and its
+	// routing key is the queue name, so prefer the original routing key that the
+	// retry machinery preserved in a header.
+	routingKey := d.RoutingKey
+	if orig, ok := d.Headers["x-original-routing-key"].(string); ok && orig != "" {
+		routingKey = orig
+	}
+
 	e := &pb.Event{
-		RoutingKey: d.RoutingKey,
+		RoutingKey: routingKey,
 		Msg:        evtAny,
 	}
 
@@ -166,15 +187,17 @@ func (q *QueueListener) processEventMsg(ctx context.Context, d amqp.Delivery) {
 
 	if q.gConn == nil {
 		if err := q.reConnect(); err != nil {
-			return
+			return fmt.Errorf("failed to connect to %s: %w", q.serviceHost, err)
 		}
 	}
 
 	_, err = q.gClient.EventNotification(ctx, e)
 	if err != nil {
 		log.Errorf("Failed to send message to %s with key %s. Error %s", q.serviceHost, d.RoutingKey, err.Error())
+		return fmt.Errorf("failed to deliver event with key %s: %w", d.RoutingKey, err)
 	}
 
+	return nil
 }
 
 func (q *QueueListener) healthCheck() {
