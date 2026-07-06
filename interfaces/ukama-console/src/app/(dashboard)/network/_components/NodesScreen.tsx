@@ -211,6 +211,10 @@ export default function NodesScreen() {
           className="tile-grid"
           style={{
             gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            paddingBottom: 4,
           }}
         >
           {nodes.map((n) => (

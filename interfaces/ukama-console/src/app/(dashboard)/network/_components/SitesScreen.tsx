@@ -180,7 +180,10 @@ export default function SitesScreen() {
           width={260}
         />
       </div>
-      {loading ? (
+      <div
+        style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingBottom: 4 }}
+      >
+        {loading ? (
         <div
           className="tile-grid"
           style={{
@@ -242,6 +245,7 @@ export default function SitesScreen() {
           )}
         </>
       )}
+      </div>
     </div>
   );
 }

@@ -248,7 +248,15 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
           ) : undefined
         }
       />
-      <div style={{ marginTop: 4 }}>
+      <div
+        style={{
+          marginTop: 4,
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
         <div
           style={{
             display: 'flex',
@@ -265,7 +273,10 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
           />
         </div>
 
-        <div className="tbl-wrap" style={{ overflowX: 'auto' }}>
+        <div
+          className="tbl-wrap"
+          style={{ overflow: 'auto', flex: 1, minHeight: 0 }}
+        >
           <DataTable<Subscriber>
             columns={columns}
             data={subscribers}
