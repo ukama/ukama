@@ -14,6 +14,12 @@ export type Scalars = {
   Float: { input: number; output: number; }
 };
 
+export type ActionAvailabilityDto = {
+  __typename?: 'ActionAvailabilityDto';
+  available: Scalars['Boolean']['output'];
+  reason?: Maybe<Scalars['String']['output']>;
+};
+
 export type ActivityItemDto = {
   __typename?: 'ActivityItemDto';
   description?: Maybe<Scalars['String']['output']>;
@@ -870,9 +876,13 @@ export type Mutation = {
   createInvitation: InvitationDto;
   defaultMarkup: CBooleanResponse;
   deleteInvitation: DeleteInvitationResDto;
-  deleteNodeFromOrg: DeleteNode;
+  deleteMarkup: CBooleanResponse;
+  deleteNetwork: CBooleanResponse;
+  deleteNode: DeleteNode;
   deletePackage: IdResponse;
   deleteSim: DeleteSimResDto;
+  deleteSimFromPool: CBooleanResponse;
+  deleteSite: CBooleanResponse;
   deleteSubscriber: CBooleanResponse;
   detachhNode: CBooleanResponse;
   processPayment: ProcessPaymentDto;
@@ -882,9 +892,10 @@ export type Mutation = {
   removeMember: CBooleanResponse;
   removePackageForSim: RemovePackageFromSimResDto;
   restartNode: CBooleanResponse;
-  restartNodes: CBooleanResponse;
   restartSite: CBooleanResponse;
   setDefaultNetwork: CBooleanResponse;
+  setInactivePackageForSim: RemovePackageFromSimResDto;
+  setSite: CBooleanResponse;
   toggleInternetSwitch: CBooleanResponse;
   toggleRFStatus: CBooleanResponse;
   toggleService: CBooleanResponse;
@@ -969,7 +980,17 @@ export type MutationDeleteInvitationArgs = {
 };
 
 
-export type MutationDeleteNodeFromOrgArgs = {
+export type MutationDeleteMarkupArgs = {
+  userId: Scalars['String']['input'];
+};
+
+
+export type MutationDeleteNetworkArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type MutationDeleteNodeArgs = {
   data: NodeInput;
 };
 
@@ -981,6 +1002,16 @@ export type MutationDeletePackageArgs = {
 
 export type MutationDeleteSimArgs = {
   data: DeleteSimInputDto;
+};
+
+
+export type MutationDeleteSimFromPoolArgs = {
+  simId: Scalars['String']['input'];
+};
+
+
+export type MutationDeleteSiteArgs = {
+  id: Scalars['String']['input'];
 };
 
 
@@ -1029,11 +1060,6 @@ export type MutationRestartNodeArgs = {
 };
 
 
-export type MutationRestartNodesArgs = {
-  data: RestartNodesInputDto;
-};
-
-
 export type MutationRestartSiteArgs = {
   data: RestartSiteInputDto;
 };
@@ -1044,18 +1070,28 @@ export type MutationSetDefaultNetworkArgs = {
 };
 
 
+export type MutationSetInactivePackageForSimArgs = {
+  data: RemovePackageFormSimInputDto;
+};
+
+
+export type MutationSetSiteArgs = {
+  data: SetSiteInputDto;
+};
+
+
 export type MutationToggleInternetSwitchArgs = {
   data: ToggleInternetSwitchInputDto;
 };
 
 
 export type MutationToggleRfStatusArgs = {
-  data: ToggleRfStatusInputDto;
+  data: ToggleSiteStatusInputDto;
 };
 
 
 export type MutationToggleServiceArgs = {
-  data: ToggleRfStatusInputDto;
+  data: ToggleSiteStatusInputDto;
 };
 
 
@@ -1337,6 +1373,18 @@ export type NodeLatestMetric = {
   success: Scalars['Boolean']['output'];
   type: Scalars['String']['output'];
   value: Array<Scalars['Float']['output']>;
+};
+
+export type NodeOperationStatusDto = {
+  __typename?: 'NodeOperationStatusDto';
+  busy: Scalars['Boolean']['output'];
+  nodeId: Scalars['String']['output'];
+  operation?: Maybe<OperationDto>;
+  type?: Maybe<NodeTypeEnum>;
+};
+
+export type NodeOperationStatusInputDto = {
+  nodeId: Scalars['String']['input'];
 };
 
 export type NodePoolDto = {
@@ -1789,6 +1837,7 @@ export type Query = {
   getNode: Node;
   getNodeApps: NodeApps;
   getNodeLatestMetric: NodeLatestMetric;
+  getNodeOperationStatus: NodeOperationStatusDto;
   getNodePool: NodePoolDto;
   getNodeState: NodeStateRes;
   getNodes: Nodes;
@@ -1817,6 +1866,7 @@ export type Query = {
   getResourceLock: ResourceLockDto;
   getSalesOverview: SalesOverviewDto;
   getSim: SimDto;
+  getSimByIccid: SimPoolResDto;
   getSimPool: SimPoolDto;
   getSimPoolStats: SimPoolStatsDto;
   getSims: SimsResDto;
@@ -1824,6 +1874,7 @@ export type Query = {
   getSimsBySubscriber: SubscriberToSimsDto;
   getSimsFromPool: SimsPoolResDto;
   getSite: SiteDto;
+  getSiteOperationStatus: SiteOperationStatusDto;
   getSites: SitesResDto;
   getSoftwares: Softwares;
   getSubscriber: SubscriberDto;
@@ -2043,6 +2094,11 @@ export type QueryGetNodeLatestMetricArgs = {
 };
 
 
+export type QueryGetNodeOperationStatusArgs = {
+  data: NodeOperationStatusInputDto;
+};
+
+
 export type QueryGetNodePoolArgs = {
   data: AnalyticsWindowInput;
 };
@@ -2090,6 +2146,11 @@ export type QueryGetPackageArgs = {
 
 export type QueryGetPackagePerformanceArgs = {
   data: AnalyticsWindowInput;
+};
+
+
+export type QueryGetPackagesArgs = {
+  networkId?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -2148,6 +2209,11 @@ export type QueryGetSimArgs = {
 };
 
 
+export type QueryGetSimByIccidArgs = {
+  iccid: Scalars['String']['input'];
+};
+
+
 export type QueryGetSimPoolArgs = {
   data: AnalyticsWindowInput;
 };
@@ -2180,6 +2246,11 @@ export type QueryGetSimsFromPoolArgs = {
 
 export type QueryGetSiteArgs = {
   siteId: Scalars['String']['input'];
+};
+
+
+export type QueryGetSiteOperationStatusArgs = {
+  data: SiteOperationStatusInputDto;
 };
 
 
@@ -2377,11 +2448,6 @@ export type RestartNodeInputDto = {
   nodeId: Scalars['String']['input'];
 };
 
-export type RestartNodesInputDto = {
-  networkId: Scalars['String']['input'];
-  nodeIds: Array<Scalars['String']['input']>;
-};
-
 export type RestartSiteInputDto = {
   networkId: Scalars['String']['input'];
   siteId: Scalars['String']['input'];
@@ -2445,6 +2511,11 @@ export enum SectionErrorCode {
 
 export type SetDefaultNetworkInputDto = {
   id: Scalars['String']['input'];
+};
+
+export type SetSiteInputDto = {
+  siteId: Scalars['String']['input'];
+  status: Scalars['Boolean']['input'];
 };
 
 export type SimAllocatePackageDto = {
@@ -2637,6 +2708,13 @@ export type Site = {
   siteName: Scalars['String']['output'];
 };
 
+export type SiteActionsDto = {
+  __typename?: 'SiteActionsDto';
+  restartSite: ActionAvailabilityDto;
+  rf: ActionAvailabilityDto;
+  service: ActionAvailabilityDto;
+};
+
 export type SiteComponentDto = {
   __typename?: 'SiteComponentDto';
   componentId?: Maybe<Scalars['String']['output']>;
@@ -2686,6 +2764,19 @@ export type SiteNodeCountsSection = {
   __typename?: 'SiteNodeCountsSection';
   counts?: Maybe<Array<SiteNodeCountDto>>;
   error?: Maybe<SectionError>;
+};
+
+export type SiteOperationStatusDto = {
+  __typename?: 'SiteOperationStatusDto';
+  actions: SiteActionsDto;
+  busy: Scalars['Boolean']['output'];
+  degraded: Scalars['Boolean']['output'];
+  nodes: Array<NodeOperationStatusDto>;
+  siteId: Scalars['String']['output'];
+};
+
+export type SiteOperationStatusInputDto = {
+  siteId: Scalars['String']['input'];
 };
 
 export type SiteRowDto = {
@@ -3024,14 +3115,14 @@ export type ToggleInternetSwitchInputDto = {
   status: Scalars['Boolean']['input'];
 };
 
-export type ToggleRfStatusInputDto = {
-  nodeId: Scalars['String']['input'];
-  status: Scalars['Boolean']['input'];
-};
-
 export type ToggleSimStatusInputDto = {
   sim_id: Scalars['String']['input'];
   status: Scalars['String']['input'];
+};
+
+export type ToggleSiteStatusInputDto = {
+  siteId: Scalars['String']['input'];
+  status: Scalars['Boolean']['input'];
 };
 
 export type TokenResDto = {
@@ -3069,8 +3160,8 @@ export type UpdateInvitationResDto = {
 };
 
 export type UpdateMemberInputDto = {
-  isDeactivated: Scalars['Boolean']['input'];
-  role: Scalars['String']['input'];
+  isDeactivated?: InputMaybe<Scalars['Boolean']['input']>;
+  role?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateNodeInput = {

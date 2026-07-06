@@ -24,7 +24,7 @@ export type DeleteNodeMutationVariables = Types.Exact<{
 }>;
 
 
-export type DeleteNodeMutation = { __typename?: 'Mutation', deleteNodeFromOrg: { __typename?: 'DeleteNode', id: string } };
+export type DeleteNodeMutation = { __typename?: 'Mutation', deleteNode: { __typename?: 'DeleteNode', id: string } };
 
 export type AttachNodeMutationVariables = Types.Exact<{
   data: Types.AttachNodeInput;
@@ -111,14 +111,14 @@ export type ToggleInternetSwitchMutationVariables = Types.Exact<{
 export type ToggleInternetSwitchMutation = { __typename?: 'Mutation', toggleInternetSwitch: { __typename?: 'CBooleanResponse', success: boolean } };
 
 export type ToggleRfStatusMutationVariables = Types.Exact<{
-  data: Types.ToggleRfStatusInputDto;
+  data: Types.ToggleSiteStatusInputDto;
 }>;
 
 
 export type ToggleRfStatusMutation = { __typename?: 'Mutation', toggleRFStatus: { __typename?: 'CBooleanResponse', success: boolean } };
 
 export type ToggleServiceMutationVariables = Types.Exact<{
-  data: Types.ToggleRfStatusInputDto;
+  data: Types.ToggleSiteStatusInputDto;
 }>;
 
 
@@ -257,7 +257,7 @@ export type GetNodesSuspenseQueryHookResult = ReturnType<typeof useGetNodesSuspe
 export type GetNodesQueryResult = Apollo.QueryResult<GetNodesQuery, GetNodesQueryVariables>;
 export const DeleteNodeDocument = gql`
     mutation deleteNode($data: NodeInput!) {
-  deleteNodeFromOrg(data: $data) {
+  deleteNode(data: $data) {
     id
   }
 }
@@ -730,7 +730,7 @@ export type ToggleInternetSwitchMutationHookResult = ReturnType<typeof useToggle
 export type ToggleInternetSwitchMutationResult = Apollo.MutationResult<ToggleInternetSwitchMutation>;
 export type ToggleInternetSwitchMutationOptions = Apollo.BaseMutationOptions<ToggleInternetSwitchMutation, ToggleInternetSwitchMutationVariables>;
 export const ToggleRfStatusDocument = gql`
-    mutation ToggleRFStatus($data: ToggleRFStatusInputDto!) {
+    mutation ToggleRFStatus($data: ToggleSiteStatusInputDto!) {
   toggleRFStatus(data: $data) {
     success
   }
@@ -763,7 +763,7 @@ export type ToggleRfStatusMutationHookResult = ReturnType<typeof useToggleRfStat
 export type ToggleRfStatusMutationResult = Apollo.MutationResult<ToggleRfStatusMutation>;
 export type ToggleRfStatusMutationOptions = Apollo.BaseMutationOptions<ToggleRfStatusMutation, ToggleRfStatusMutationVariables>;
 export const ToggleServiceDocument = gql`
-    mutation ToggleService($data: ToggleRFStatusInputDto!) {
+    mutation ToggleService($data: ToggleSiteStatusInputDto!) {
   toggleService(data: $data) {
     success
   }
