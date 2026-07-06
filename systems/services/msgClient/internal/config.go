@@ -27,10 +27,6 @@ type Config struct {
 	MasterOrgName    string
 	Shovel           Shovel
 	MsgBus           MsgBus
-	// ConsumerPrefetch, when > 0, caps the number of unacked messages the
-	// broker delivers to each consumer channel (backpressure). 0 = unlimited
-	// (default, unchanged behaviour).
-	ConsumerPrefetch int `default:"0"`
 }
 
 type MsgBus struct {

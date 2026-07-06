@@ -241,17 +241,33 @@ func (n *NodeEventServer) handleNodeStateTransitionEvent(ctx context.Context, ke
 
 	node, err := n.s.GetNode(ctx, &pb.GetNodeRequest{NodeId: nodeID})
 
-	if err != nil && status.Code(err) == codes.NotFound {
+	if err != nil {
+		if status.Code(err) != codes.NotFound {
+			return fmt.Errorf("error retrieving node: %w", err)
+		}
+
+		// Node not found: create it. Concurrent state-transition events for the
+		// same node (or a redelivery) can race here — one create wins and the
+		// others hit a unique-constraint violation. Treat "already exists" as
+		// success and re-fetch, so the handler is idempotent regardless of
+		// ordering/concurrency.
 		log.Infof("Node %s not found, creating new node", nodeID)
-		req := &pb.AddNodeRequest{
-			NodeId: nodeID,
+
+		_, addErr := n.s.AddNode(ctx, &pb.AddNodeRequest{NodeId: nodeID})
+		if addErr != nil && status.Code(addErr) != codes.AlreadyExists {
+			// Not reported as a duplicate: the node may still have been created
+			// concurrently (e.g. a misreported error code), so re-check before failing.
+			if _, getErr := n.s.GetNode(ctx, &pb.GetNodeRequest{NodeId: nodeID}); getErr != nil {
+				return fmt.Errorf("failed to create node %s: %w", nodeID, addErr)
+			}
+			log.Infof("Node %s already existed (concurrent create); continuing", nodeID)
 		}
-		_, err = n.s.AddNode(ctx, req)
+
+		// Re-fetch so the downstream status update has the node record.
+		node, err = n.s.GetNode(ctx, &pb.GetNodeRequest{NodeId: nodeID})
 		if err != nil {
-			return fmt.Errorf("failed to create node: %w", err)
+			return fmt.Errorf("error retrieving node %s after create: %w", nodeID, err)
 		}
-	} else if err != nil {
-		return fmt.Errorf("error retrieving node: %w", err)
 	}
 
 	var connectivity string

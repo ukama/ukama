@@ -11,6 +11,9 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"runtime/debug"
+	"sync"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -40,6 +43,15 @@ const (
 	eventPublishErrorMsg = "Failed to publish message %+v with key %+v. Errors %v"
 )
 
+// Scheduler supervision tuning. The supervisor periodically reconciles the
+// desired state (running) with the actual state and restarts the scheduler
+// with capped exponential backoff if it is found dead.
+const (
+	schedulerHealthCheckInterval = 30 * time.Second
+	schedulerRestartBackoffMin   = 1 * time.Second
+	schedulerRestartBackoffMax   = 5 * time.Minute
+)
+
 type ComponentServer struct {
 	pb.UnimplementedComponentServiceServer
 	orgName            string
@@ -52,6 +64,11 @@ type ComponentServer struct {
 	gitDirPath         string
 	factoryClient      cfactory.NodeFactoryClient
 	config             *pkg.Config
+
+	// schedulerMu guards schedulerCancel so the supervisor lifecycle can be
+	// controlled safely from concurrent RPC calls and service startup.
+	schedulerMu     sync.Mutex
+	schedulerCancel context.CancelFunc
 }
 
 func NewComponentServer(orgName string, componentRepo db.ComponentRepo, msgBus mb.MsgBusServiceClient, pushGateway string, gc gitClient.GitClient, path string, factoryClient cfactory.NodeFactoryClient, config *pkg.Config) *ComponentServer {
@@ -193,26 +210,146 @@ func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncCompon
 	return &pb.SyncComponentsResponse{}, nil
 }
 
-func (c *ComponentServer) StartScheduler(ctx context.Context, req *pb.StartSchedulerRequest) (*pb.StartSchedulerResponse, error) {
-	log.Info("Starting scheduler")
+// StartSchedulerSupervisor starts the node-sync scheduler together with a
+// supervisor goroutine that keeps it alive, restarting it automatically if it
+// dies unexpectedly. It is safe to call multiple times: a supervisor is only
+// started once until it is stopped. The provided context bounds the lifetime
+// of the supervisor (e.g. cancel it on graceful service shutdown).
+func (c *ComponentServer) StartSchedulerSupervisor(ctx context.Context) {
+	c.schedulerMu.Lock()
+	if c.schedulerCancel != nil {
+		c.schedulerMu.Unlock()
+		log.Info("Scheduler supervisor already running, skipping start")
 
-	log.Infof("Running job immediately at initialization")
-	c.NodeSyncJob(context.Background())
-	
-	err := c.componentScheduler.Start(jobTag, func() { c.NodeSyncJob(context.Background()) })
-	if err != nil {
-		log.Errorf("Failed to start scheduler. Error %s", err.Error())
+		return
 	}
+
+	supervisorCtx, cancel := context.WithCancel(ctx)
+	c.schedulerCancel = cancel
+	c.schedulerMu.Unlock()
+
+	go c.superviseScheduler(supervisorCtx)
+}
+
+// stopSchedulerSupervisor cancels the supervisor goroutine if one is running.
+func (c *ComponentServer) stopSchedulerSupervisor() {
+	c.schedulerMu.Lock()
+	defer c.schedulerMu.Unlock()
+
+	if c.schedulerCancel != nil {
+		c.schedulerCancel()
+		c.schedulerCancel = nil
+	}
+}
+
+// superviseScheduler is a self-healing control loop. It (re)starts the
+// scheduler whenever it is found not running, applying capped exponential
+// backoff on repeated start failures, and exits cleanly when ctx is cancelled.
+func (c *ComponentServer) superviseScheduler(ctx context.Context) {
+	log.Info("Scheduler supervisor started")
+
+	backoff := schedulerRestartBackoffMin
+
+	for {
+		if !c.componentScheduler.IsRunning() {
+			if err := c.startSchedulerOnce(); err != nil {
+				log.Errorf("Failed to start scheduler: %v. Retrying in %s", err, backoff)
+
+				if sleepOrDone(ctx, backoff) {
+					break
+				}
+
+				backoff = nextBackoff(backoff)
+
+				continue
+			}
+
+			log.Info("Scheduler is running")
+			backoff = schedulerRestartBackoffMin
+		}
+
+		if sleepOrDone(ctx, schedulerHealthCheckInterval) {
+			break
+		}
+	}
+
+	log.Info("Scheduler supervisor stopping (context cancelled)")
+
+	if err := c.componentScheduler.Stop(); err != nil {
+		log.Errorf("Failed to stop scheduler during supervisor shutdown: %v", err)
+	}
+}
+
+// startSchedulerOnce kicks off an immediate, non-blocking sync run and then
+// registers the recurring job. NodeSyncJob is always run through the panic-safe
+// wrapper so a failing run can never crash the process or the supervisor.
+func (c *ComponentServer) startSchedulerOnce() error {
+	go c.safeNodeSyncJob(context.Background())
+
+	return c.componentScheduler.Start(jobTag, func() {
+		c.safeNodeSyncJob(context.Background())
+	})
+}
+
+// safeNodeSyncJob runs NodeSyncJob with panic recovery so a panic in a single
+// run is logged and contained instead of taking down the service.
+func (c *ComponentServer) safeNodeSyncJob(ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Errorf("Recovered from panic in node sync job: %v\n%s", r, debug.Stack())
+		}
+	}()
+
+	c.NodeSyncJob(ctx)
+}
+
+// nextBackoff doubles the backoff duration up to the configured maximum.
+func nextBackoff(d time.Duration) time.Duration {
+	next := d * 2
+	if next > schedulerRestartBackoffMax {
+		return schedulerRestartBackoffMax
+	}
+
+	return next
+}
+
+// sleepOrDone waits for d or until ctx is cancelled. It returns true if ctx was
+// cancelled (i.e. the caller should stop).
+func sleepOrDone(ctx context.Context, d time.Duration) bool {
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+
+	select {
+	case <-ctx.Done():
+		return true
+	case <-timer.C:
+		return false
+	}
+}
+
+func (c *ComponentServer) StartScheduler(ctx context.Context, req *pb.StartSchedulerRequest) (*pb.StartSchedulerResponse, error) {
+	log.Info("StartScheduler RPC invoked")
+
+	// Start (or ensure) the supervised scheduler. This returns immediately;
+	// the initial sync runs in the background so the RPC is never blocked.
+	c.StartSchedulerSupervisor(context.Background())
+
 	return &pb.StartSchedulerResponse{}, nil
 }
 
 func (c *ComponentServer) StopScheduler(ctx context.Context, req *pb.StopSchedulerRequest) (*pb.StopSchedulerResponse, error) {
-	log.Info("Stopping scheduler")
+	log.Info("StopScheduler RPC invoked")
 
-	err := c.componentScheduler.Stop()
-	if err != nil {
+	// Cancel the supervisor first so it does not immediately restart the
+	// scheduler we are about to stop.
+	c.stopSchedulerSupervisor()
+
+	if err := c.componentScheduler.Stop(); err != nil {
 		log.Errorf("Failed to stop scheduler. Error %s", err.Error())
+
+		return nil, status.Errorf(codes.Internal, "failed to stop scheduler: %s", err.Error())
 	}
+
 	return &pb.StopSchedulerResponse{}, nil
 }
 
