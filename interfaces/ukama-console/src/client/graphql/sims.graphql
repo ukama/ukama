@@ -142,6 +142,15 @@ query GetDataUsages($data: SimUsagesInputDto!) {
   }
 }
 
+# One aggregated call for all SIM usage on a network (BFF fans out per SIM),
+# keyed by SIM id on the client.
+query GetSimsUsageByNetwork($networkId: String!) {
+  getSimsUsageByNetwork(networkId: $networkId) {
+    simId
+    usage
+  }
+}
+
 ##
 
 ### Software Start ###

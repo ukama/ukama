@@ -18,6 +18,7 @@ import StatusBadge from '@/components/StatusBadge';
 import { useToast } from '@/components/ToastProvider';
 import type { Subscriber } from '@/data';
 import { formatDate, parseTimestamp } from '@/lib/parsers';
+import { bytesToGB, formatBytes } from '@/lib/usage';
 import {
   NO_DATA_PLANS_MESSAGE,
   NO_POOL_SIMS_MESSAGE,
@@ -128,9 +129,12 @@ export default function SubscriberDrawer({
     }
     setShowAllocate(true);
   };
-  // usage is -1 when unknown/none — clamp so we never render "-1 GB".
-  const usage = Math.max(0, sub.usage);
-  const pct = sub.cap ? Math.min(100, (usage / sub.cap) * 100) : 50;
+  // usage is raw bytes (-1 when unknown/none — clamp so we never render "-1").
+  const usageBytes = Math.max(0, sub.usage);
+  const usageLabel = formatBytes(usageBytes);
+  const pct = sub.cap
+    ? Math.min(100, (bytesToGB(usageBytes) / sub.cap) * 100)
+    : 50;
   const initials = sub.name
     .split(' ')
     .map((x) => x[0])
@@ -249,7 +253,7 @@ export default function SubscriberDrawer({
                   marginTop: 7,
                 }}
               >
-                {usage} of {sub.cap} GB used this cycle
+                {usageLabel} of {sub.cap} GB used this cycle
               </div>
             </>
           ) : (
@@ -257,7 +261,7 @@ export default function SubscriberDrawer({
               className="tnum"
               style={{ fontSize: 12.5, color: 'var(--uk-ink-2)' }}
             >
-              {usage} GB used · unlimited
+              {usageLabel} used · unlimited
             </div>
           )}
         </div>

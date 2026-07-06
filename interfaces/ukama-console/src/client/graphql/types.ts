@@ -1873,6 +1873,7 @@ export type Query = {
   getSimsByNetwork: SubscriberSimsResDto;
   getSimsBySubscriber: SubscriberToSimsDto;
   getSimsFromPool: SimsPoolResDto;
+  getSimsUsageByNetwork: Array<SimUsageItem>;
   getSite: SiteDto;
   getSiteOperationStatus: SiteOperationStatusDto;
   getSites: SitesResDto;
@@ -2241,6 +2242,11 @@ export type QueryGetSimsBySubscriberArgs = {
 
 export type QueryGetSimsFromPoolArgs = {
   data: GetSimsInput;
+};
+
+
+export type QueryGetSimsUsageByNetworkArgs = {
+  networkId: Scalars['String']['input'];
 };
 
 
@@ -2679,6 +2685,12 @@ export type SimUsageInputDto = {
   type: Scalars['String']['input'];
 };
 
+export type SimUsageItem = {
+  __typename?: 'SimUsageItem';
+  simId: Scalars['String']['output'];
+  usage: Scalars['String']['output'];
+};
+
 export type SimUsagesInputDto = {
   networkId: Scalars['String']['input'];
   type: Scalars['String']['input'];
@@ -3029,7 +3041,6 @@ export type SubscribersView = {
   networkId: Scalars['String']['output'];
   plans: PlansSection;
   subscribers: SubscribersSection;
-  usage: GapSection;
 };
 
 export type SubscriptionDto = {

@@ -67,6 +67,13 @@ export type GetDataUsagesQueryVariables = Types.Exact<{
 
 export type GetDataUsagesQuery = { __typename?: 'Query', getDataUsages: { __typename?: 'SimDataUsages', usages: Array<{ __typename?: 'SimDataUsage', usage: string, simId: string }> } };
 
+export type GetSimsUsageByNetworkQueryVariables = Types.Exact<{
+  networkId: Types.Scalars['String']['input'];
+}>;
+
+
+export type GetSimsUsageByNetworkQuery = { __typename?: 'Query', getSimsUsageByNetwork: Array<{ __typename?: 'SimUsageItem', simId: string, usage: string }> };
+
 export const SimPackageFragmentDoc = gql`
     fragment SimPackage on SimPackage {
   id
@@ -468,3 +475,47 @@ export type GetDataUsagesQueryHookResult = ReturnType<typeof useGetDataUsagesQue
 export type GetDataUsagesLazyQueryHookResult = ReturnType<typeof useGetDataUsagesLazyQuery>;
 export type GetDataUsagesSuspenseQueryHookResult = ReturnType<typeof useGetDataUsagesSuspenseQuery>;
 export type GetDataUsagesQueryResult = Apollo.QueryResult<GetDataUsagesQuery, GetDataUsagesQueryVariables>;
+export const GetSimsUsageByNetworkDocument = gql`
+    query GetSimsUsageByNetwork($networkId: String!) {
+  getSimsUsageByNetwork(networkId: $networkId) {
+    simId
+    usage
+  }
+}
+    `;
+
+/**
+ * __useGetSimsUsageByNetworkQuery__
+ *
+ * To run a query within a React component, call `useGetSimsUsageByNetworkQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSimsUsageByNetworkQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSimsUsageByNetworkQuery({
+ *   variables: {
+ *      networkId: // value for 'networkId'
+ *   },
+ * });
+ */
+export function useGetSimsUsageByNetworkQuery(baseOptions: Apollo.QueryHookOptions<GetSimsUsageByNetworkQuery, GetSimsUsageByNetworkQueryVariables> & ({ variables: GetSimsUsageByNetworkQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetSimsUsageByNetworkQuery, GetSimsUsageByNetworkQueryVariables>(GetSimsUsageByNetworkDocument, options);
+      }
+export function useGetSimsUsageByNetworkLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSimsUsageByNetworkQuery, GetSimsUsageByNetworkQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetSimsUsageByNetworkQuery, GetSimsUsageByNetworkQueryVariables>(GetSimsUsageByNetworkDocument, options);
+        }
+// @ts-ignore
+export function useGetSimsUsageByNetworkSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSimsUsageByNetworkQuery, GetSimsUsageByNetworkQueryVariables>): Apollo.UseSuspenseQueryResult<GetSimsUsageByNetworkQuery, GetSimsUsageByNetworkQueryVariables>;
+export function useGetSimsUsageByNetworkSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSimsUsageByNetworkQuery, GetSimsUsageByNetworkQueryVariables>): Apollo.UseSuspenseQueryResult<GetSimsUsageByNetworkQuery | undefined, GetSimsUsageByNetworkQueryVariables>;
+export function useGetSimsUsageByNetworkSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSimsUsageByNetworkQuery, GetSimsUsageByNetworkQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetSimsUsageByNetworkQuery, GetSimsUsageByNetworkQueryVariables>(GetSimsUsageByNetworkDocument, options);
+        }
+export type GetSimsUsageByNetworkQueryHookResult = ReturnType<typeof useGetSimsUsageByNetworkQuery>;
+export type GetSimsUsageByNetworkLazyQueryHookResult = ReturnType<typeof useGetSimsUsageByNetworkLazyQuery>;
+export type GetSimsUsageByNetworkSuspenseQueryHookResult = ReturnType<typeof useGetSimsUsageByNetworkSuspenseQuery>;
+export type GetSimsUsageByNetworkQueryResult = Apollo.QueryResult<GetSimsUsageByNetworkQuery, GetSimsUsageByNetworkQueryVariables>;

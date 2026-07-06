@@ -179,7 +179,10 @@ export default function NodesScreen() {
         count={nodes.length}
         sub="Radio hardware deployed across your sites."
       />
-      {loading ? (
+      <div
+        style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingBottom: 4 }}
+      >
+        {loading ? (
         <div
           className="tile-grid"
           style={{
@@ -211,10 +214,6 @@ export default function NodesScreen() {
           className="tile-grid"
           style={{
             gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-            flex: 1,
-            minHeight: 0,
-            overflowY: 'auto',
-            paddingBottom: 4,
           }}
         >
           {nodes.map((n) => (
@@ -226,6 +225,7 @@ export default function NodesScreen() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

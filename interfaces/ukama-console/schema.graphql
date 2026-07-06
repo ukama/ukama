@@ -1,4 +1,5 @@
 type Query {
+  getSimsUsageByNetwork(networkId: String!): [SimUsageItem!]!
   getNodeOperationStatus(data: NodeOperationStatusInputDto!): NodeOperationStatusDto!
   getSiteOperationStatus(data: SiteOperationStatusInputDto!): SiteOperationStatusDto!
   getReport(id: String!): GetReportDto!
@@ -809,7 +810,6 @@ type SubscribersView {
   networkId: String!
   subscribers: SubscribersSection!
   plans: PlansSection!
-  usage: GapSection!
 }
 
 type SubscribersSection {
@@ -1646,6 +1646,11 @@ input RemovePackageFormSimInputDto {
 type SimStatusResDto {
   success: Boolean!
   message: String
+}
+
+type SimUsageItem {
+  simId: String!
+  usage: String!
 }
 
 input ToggleSimStatusInputDto {

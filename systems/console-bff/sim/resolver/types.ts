@@ -595,6 +595,20 @@ export class SimDataUsages {
   usages: SimDataUsage[];
 }
 
+/**
+ * One <simId>:<usage> pair. Returned as a list by getSimsUsageByNetwork so the
+ * console can build a lookup map and show usage per subscriber SIM without
+ * making one call per SIM.
+ */
+@ObjectType()
+export class SimUsageItem {
+  @Field()
+  simId: string;
+
+  @Field()
+  usage: string;
+}
+
 @ObjectType()
 export class SimPoolStatsDto {
   @Field()
