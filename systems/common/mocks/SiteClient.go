@@ -42,6 +42,34 @@ func (_m *SiteClient) Get(id string) (*registry.SiteInfo, error) {
 	return r0, r1
 }
 
+// GetAll provides a mock function with given fields: deactivated, networkId
+func (_m *SiteClient) GetAll(deactivated bool, networkId string) (registry.Sites, error) {
+	ret := _m.Called(deactivated, networkId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAll")
+	}
+
+	var r0 registry.Sites
+	var r1 error
+	if rf, ok := ret.Get(0).(func(bool, string) (registry.Sites, error)); ok {
+		return rf(deactivated, networkId)
+	}
+	if rf, ok := ret.Get(0).(func(bool, string) registry.Sites); ok {
+		r0 = rf(deactivated, networkId)
+	} else {
+		r0 = ret.Get(0).(registry.Sites)
+	}
+
+	if rf, ok := ret.Get(1).(func(bool, string) error); ok {
+		r1 = rf(deactivated, networkId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewSiteClient creates a new instance of SiteClient. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewSiteClient(t interface {
