@@ -7,12 +7,16 @@
  */
 import { NonEmptyArray } from "type-graphql";
 
+import { GetNodeOperationStatusResolver } from "./getNodeOperationStatus";
 import { GetOperationResolver } from "./getOperation";
 import { GetResourceLockResolver } from "./getResourceLock";
+import { GetSiteOperationStatusResolver } from "./getSiteOperationStatus";
 
 const resolvers: NonEmptyArray<any> = [
   GetOperationResolver,
   GetResourceLockResolver,
+  GetNodeOperationStatusResolver,
+  GetSiteOperationStatusResolver,
 ];
 
 export default resolvers;
