@@ -40,7 +40,10 @@ const isTerminal = (op?: OperationDto): boolean =>
  * system's sweeper (30s interval) will flip it to TIMEOUT shortly, and the
  * UI should not show a stuck spinner in the meantime.
  */
-export const leaseExpired = (op: OperationDto | undefined, now: number): boolean => {
+export const leaseExpired = (
+  op: OperationDto | undefined,
+  now: number
+): boolean => {
   if (!op?.leaseExpiresAt) return false;
   const t = Date.parse(op.leaseExpiresAt);
   return Number.isFinite(t) && t <= now;
@@ -61,7 +64,8 @@ export const isLockBusy = (
 export const activeOperation = (
   lock: ResourceLockDto | undefined,
   now: number = Date.now()
-): OperationDto | undefined => (isLockBusy(lock, now) ? lock?.operation : undefined);
+): OperationDto | undefined =>
+  isLockBusy(lock, now) ? lock?.operation : undefined;
 
 /** A per-request read result for one node (lock resolved, or read failed). */
 export interface NodeLockRead {
@@ -111,9 +115,9 @@ export const busyReason = (op?: OperationDto): string => {
 export const buildSiteActions = (
   statuses: NodeOperationStatusDto[]
 ): SiteActionsDto => {
-  const tower = statuses.find((s) => s.type === NODE_TYPE.tnode);
-  const amp = statuses.find((s) => s.type === NODE_TYPE.anode);
-  const firstBusy = statuses.find((s) => s.busy);
+  const tower = statuses.find(s => s.type === NODE_TYPE.tnode);
+  const amp = statuses.find(s => s.type === NODE_TYPE.anode);
+  const firstBusy = statuses.find(s => s.busy);
 
   const restartSite: SiteActionsDto["restartSite"] = firstBusy
     ? { available: false, reason: busyReason(firstBusy.operation) }
@@ -124,7 +128,8 @@ export const buildSiteActions = (
     missingReason: string
   ): SiteActionsDto["rf"] => {
     if (!node) return { available: false, reason: missingReason };
-    if (node.busy) return { available: false, reason: busyReason(node.operation) };
+    if (node.busy)
+      return { available: false, reason: busyReason(node.operation) };
     return { available: true };
   };
 

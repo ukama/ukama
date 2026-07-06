@@ -13,7 +13,11 @@ import {
   nodeResourceKey,
   toNodeStatus,
 } from "./logic";
-import { NodeOperationStatusDto, OperationDto, ResourceLockDto } from "./resolvers/types";
+import {
+  NodeOperationStatusDto,
+  OperationDto,
+  ResourceLockDto,
+} from "./resolvers/types";
 
 const NOW = Date.parse("2026-07-06T12:00:00Z");
 
@@ -35,7 +39,9 @@ const lock = (over: Partial<ResourceLockDto> = {}): ResourceLockDto => ({
   ...over,
 });
 
-const status = (over: Partial<NodeOperationStatusDto>): NodeOperationStatusDto => ({
+const status = (
+  over: Partial<NodeOperationStatusDto>
+): NodeOperationStatusDto => ({
   nodeId: "n",
   busy: false,
   ...over,
@@ -56,8 +62,12 @@ describe("isLockBusy", () => {
     expect(isLockBusy(lock(), NOW)).toBe(true);
   });
   it("false when op is terminal (any case)", () => {
-    expect(isLockBusy(lock({ operation: op({ status: "SUCCESS" }) }), NOW)).toBe(false);
-    expect(isLockBusy(lock({ operation: op({ status: "failed" }) }), NOW)).toBe(false);
+    expect(
+      isLockBusy(lock({ operation: op({ status: "SUCCESS" }) }), NOW)
+    ).toBe(false);
+    expect(isLockBusy(lock({ operation: op({ status: "failed" }) }), NOW)).toBe(
+      false
+    );
   });
   it("false when lease already expired (sweeper will reclaim)", () => {
     const expired = op({ leaseExpiresAt: new Date(NOW - 1000).toISOString() });
@@ -70,18 +80,33 @@ describe("leaseExpired", () => {
     expect(leaseExpired(op({ leaseExpiresAt: undefined }), NOW)).toBe(false);
   });
   it("true only once the lease timestamp has passed", () => {
-    expect(leaseExpired(op({ leaseExpiresAt: new Date(NOW + 1).toISOString() }), NOW)).toBe(false);
-    expect(leaseExpired(op({ leaseExpiresAt: new Date(NOW - 1).toISOString() }), NOW)).toBe(true);
+    expect(
+      leaseExpired(op({ leaseExpiresAt: new Date(NOW + 1).toISOString() }), NOW)
+    ).toBe(false);
+    expect(
+      leaseExpired(op({ leaseExpiresAt: new Date(NOW - 1).toISOString() }), NOW)
+    ).toBe(true);
   });
 });
 
 describe("toNodeStatus", () => {
   it("failed read fails open (idle, no op)", () => {
-    const s = toNodeStatus({ id: "n1", type: NODE_TYPE.tnode, failed: true }, NOW);
-    expect(s).toEqual({ nodeId: "n1", type: NODE_TYPE.tnode, busy: false, operation: undefined });
+    const s = toNodeStatus(
+      { id: "n1", type: NODE_TYPE.tnode, failed: true },
+      NOW
+    );
+    expect(s).toEqual({
+      nodeId: "n1",
+      type: NODE_TYPE.tnode,
+      busy: false,
+      operation: undefined,
+    });
   });
   it("busy node surfaces its operation", () => {
-    const s = toNodeStatus({ id: "n1", type: NODE_TYPE.anode, lock: lock() }, NOW);
+    const s = toNodeStatus(
+      { id: "n1", type: NODE_TYPE.anode, lock: lock() },
+      NOW
+    );
     expect(s.busy).toBe(true);
     expect(s.operation?.id).toBe("op-1");
   });
@@ -101,7 +126,12 @@ describe("buildSiteActions — independent async release", () => {
   it("amplifier busy → RF and restartSite locked, service stays available", () => {
     const a = buildSiteActions([
       status({ nodeId: "t", type: NODE_TYPE.tnode }),
-      status({ nodeId: "a", type: NODE_TYPE.anode, busy: true, operation: op({ type: "ToggleRF", requestedBy: "sam" }) }),
+      status({
+        nodeId: "a",
+        type: NODE_TYPE.anode,
+        busy: true,
+        operation: op({ type: "ToggleRF", requestedBy: "sam" }),
+      }),
     ]);
     expect(a.rf.available).toBe(false);
     expect(a.rf.reason).toContain("sam");
@@ -111,7 +141,12 @@ describe("buildSiteActions — independent async release", () => {
 
   it("tower busy → service and restartSite locked, RF stays available", () => {
     const a = buildSiteActions([
-      status({ nodeId: "t", type: NODE_TYPE.tnode, busy: true, operation: op({ type: "ToggleService" }) }),
+      status({
+        nodeId: "t",
+        type: NODE_TYPE.tnode,
+        busy: true,
+        operation: op({ type: "ToggleService" }),
+      }),
       status({ nodeId: "a", type: NODE_TYPE.anode }),
     ]);
     expect(a.service.available).toBe(false);
@@ -120,7 +155,9 @@ describe("buildSiteActions — independent async release", () => {
   });
 
   it("missing role node → action unavailable with a clear reason", () => {
-    const a = buildSiteActions([status({ nodeId: "t", type: NODE_TYPE.tnode })]);
+    const a = buildSiteActions([
+      status({ nodeId: "t", type: NODE_TYPE.tnode }),
+    ]);
     expect(a.rf.available).toBe(false);
     expect(a.rf.reason).toBe("No amplifier node on this site");
   });

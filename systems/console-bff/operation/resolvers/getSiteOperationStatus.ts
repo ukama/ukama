@@ -46,7 +46,7 @@ export class GetSiteOperationStatusResolver {
     const nodes = nodesRes.nodes ?? [];
 
     const reads: NodeLockRead[] = await Promise.all(
-      nodes.map(async (n) => {
+      nodes.map(async n => {
         try {
           const lock = await ctx.dataSources.operation.getResourceLock(
             opURL,
@@ -60,12 +60,12 @@ export class GetSiteOperationStatusResolver {
     );
 
     const now = Date.now();
-    const statuses = reads.map((r) => toNodeStatus(r, now));
+    const statuses = reads.map(r => toNodeStatus(r, now));
 
     return {
       siteId: data.siteId,
-      busy: statuses.some((s) => s.busy),
-      degraded: reads.some((r) => r.failed),
+      busy: statuses.some(s => s.busy),
+      degraded: reads.some(r => r.failed),
       nodes: statuses,
       actions: buildSiteActions(statuses),
     };
