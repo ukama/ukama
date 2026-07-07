@@ -182,18 +182,6 @@ export type App = {
   version: Scalars['String']['output'];
 };
 
-export type AppChangeLog = {
-  __typename?: 'AppChangeLog';
-  date: Scalars['Float']['output'];
-  version: Scalars['String']['output'];
-};
-
-export type AppChangeLogs = {
-  __typename?: 'AppChangeLogs';
-  logs: Array<AppChangeLog>;
-  type: NodeTypeEnum;
-};
-
 export type AppResource = {
   __typename?: 'AppResource';
   cpuPercent: Scalars['Float']['output'];
@@ -1300,13 +1288,6 @@ export type NetworkSitesDto = {
   sites: Array<SiteRowDto>;
 };
 
-export type NetworkStats = {
-  __typename?: 'NetworkStats';
-  activeSubscriber: Scalars['Float']['output'];
-  averageSignalStrength: Scalars['Float']['output'];
-  averageThroughput: Scalars['Float']['output'];
-};
-
 export type NetworkSupportSearchDto = {
   __typename?: 'NetworkSupportSearchDto';
   results: Array<SupportResultDto>;
@@ -1331,26 +1312,6 @@ export type Node = {
   name: Scalars['String']['output'];
   site: NodeSite;
   status: NodeStatus;
-  type: NodeTypeEnum;
-};
-
-export type NodeApp = {
-  __typename?: 'NodeApp';
-  cpu: Scalars['String']['output'];
-  date: Scalars['Float']['output'];
-  memory: Scalars['String']['output'];
-  name: Scalars['String']['output'];
-  notes: Scalars['String']['output'];
-  version: Scalars['String']['output'];
-};
-
-export type NodeApps = {
-  __typename?: 'NodeApps';
-  apps: Array<NodeApp>;
-  type: NodeTypeEnum;
-};
-
-export type NodeAppsChangeLogInput = {
   type: NodeTypeEnum;
 };
 
@@ -1793,10 +1754,8 @@ export type ProcessPaymentInputDto = {
 export type Query = {
   __typename?: 'Query';
   commerceView: CommerceView;
-  example?: Maybe<Scalars['String']['output']>;
   getAlarms: NetworkAlarmsDto;
   getApps?: Maybe<Apps>;
-  getAppsChangeLog: AppChangeLogs;
   getBackhaul: MetricPanelDto;
   getBillingSummary: BillingSummaryDto;
   getBusinessHome: BusinessHomeDto;
@@ -1832,10 +1791,8 @@ export type Query = {
   getNetworkOverview: NetworkOverviewDto;
   getNetworkSite: NetworkSiteDto;
   getNetworkSites: NetworkSitesDto;
-  getNetworkStats: NetworkStats;
   getNetworks: NetworksResDto;
   getNode: Node;
-  getNodeApps: NodeApps;
   getNodeLatestMetric: NodeLatestMetric;
   getNodeOperationStatus: NodeOperationStatusDto;
   getNodePool: NodePoolDto;
@@ -1917,11 +1874,6 @@ export type QueryGetAlarmsArgs = {
 
 export type QueryGetAppsArgs = {
   data: GetAppsInputDto;
-};
-
-
-export type QueryGetAppsChangeLogArgs = {
-  data: NodeAppsChangeLogInput;
 };
 
 
@@ -2075,18 +2027,8 @@ export type QueryGetNetworkSitesArgs = {
 };
 
 
-export type QueryGetNetworkStatsArgs = {
-  networkId: Scalars['String']['input'];
-};
-
-
 export type QueryGetNodeArgs = {
   data: NodeInput;
-};
-
-
-export type QueryGetNodeAppsArgs = {
-  data: NodeAppsChangeLogInput;
 };
 
 
