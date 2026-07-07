@@ -35,6 +35,7 @@ import {
   useToggleRfStatusMutation,
   useToggleServiceMutation,
 } from '@/client/graphql/controller.generated';
+import { useToggleInternetSwitchMutation } from '@/client/graphql/nodes.generated';
 import { useMetricsRangeQuery } from '@/client/graphql/range-metrics.generated';
 import { useNetworkSiteDetailQuery } from '@/client/graphql/site-detail.generated';
 import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
@@ -270,12 +271,35 @@ const SWITCH_PORTS: { n: number; name: string }[] = [
 function SwitchPortRow({
   port,
   cnodeId,
+  siteId,
 }: {
   port: { n: number; name: string };
   cnodeId: string | null;
+  siteId: string;
 }) {
   const [open, setOpen] = useState(false);
   const [enabled, setEnabled] = useState(true);
+  const toast = useToast();
+  const [toggleSwitch, { loading: toggling }] =
+    useToggleInternetSwitchMutation({
+      onError: () => {
+        setEnabled((v) => !v); // revert optimistic flip
+        toast(`Couldn't switch Port ${port.n}`);
+      },
+    });
+
+  const onToggle = (next: boolean) => {
+    setEnabled(next); // optimistic
+    void toggleSwitch({
+      variables: { data: { siteId, port: port.n, status: next } },
+    }).then((res) => {
+      if (!res.data?.toggleInternetSwitch.success) {
+        setEnabled((v) => !v); // revert on server-reported failure
+        toast(`Couldn't switch Port ${port.n}`);
+      }
+    });
+  };
+
   return (
     <div style={{ borderTop: '1px solid var(--uk-line)', padding: '14px 0' }}>
       <div
@@ -300,7 +324,8 @@ function SwitchPortRow({
           <Switch
             edge="end"
             checked={enabled}
-            onChange={(e) => setEnabled(e.target.checked)}
+            disabled={toggling}
+            onChange={(e) => onToggle(e.target.checked)}
           />
         </label>
       </div>
@@ -368,11 +393,17 @@ function SwitchPortRow({
 }
 
 /** Right panel when the Switch component is selected: its ports + KPIs. */
-function SwitchPortsPanel({ cnodeId }: { cnodeId: string | null }) {
+function SwitchPortsPanel({
+  cnodeId,
+  siteId,
+}: {
+  cnodeId: string | null;
+  siteId: string;
+}) {
   return (
     <SectionCard title={`Switch ports (${SWITCH_PORTS.length})`}>
       {SWITCH_PORTS.map((p) => (
-        <SwitchPortRow key={p.n} port={p} cnodeId={cnodeId} />
+        <SwitchPortRow key={p.n} port={p} cnodeId={cnodeId} siteId={siteId} />
       ))}
     </SectionCard>
   );
@@ -1066,7 +1097,7 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
               onOpen={(id) => router.push(`/network/nodes/${id}`)}
             />
           ) : selected.id === 'switch' ? (
-            <SwitchPortsPanel cnodeId={cnodeId} />
+            <SwitchPortsPanel cnodeId={cnodeId} siteId={siteId} />
           ) : (
             <ComponentPanel comp={selected} cnodeId={cnodeId} />
           )}
