@@ -870,6 +870,14 @@ static int run_deferred_checks(check_ctx_t *ctx,
                            report, mode, err);
 }
 
+
+static int cleanup_disabled_by_env(void) {
+    const char *v;
+
+    v = getenv("ULAB_NO_CLEANUP");
+    return v != NULL && v[0] != '\0' && !ulab_streq(v, "0");
+}
+
 static unsigned int cdr_wait_seconds(void) {
     const char *v;
     char *end;
@@ -1059,12 +1067,14 @@ static int runner_validate_one(const runner_opts_t *opts) {
     int rc;
     int cleanup_rc;
     int skip_cleanup;
+    int no_cleanup;
     int diagnostics_collected;
 
     scenario = NULL;
     rc = ULAB_OK;
     cleanup_rc = ULAB_OK;
     skip_cleanup = 0;
+    no_cleanup = cleanup_disabled_by_env();
     diagnostics_collected = 0;
     memset(&world,   0, sizeof(world));
     memset(&model,   0, sizeof(model));
@@ -1232,7 +1242,10 @@ done:
         }
     }
 
-    if (!skip_cleanup) {
+    if (!skip_cleanup && no_cleanup) {
+        ulab_status("CLEANUP", "skip cleanup (ULAB_NO_CLEANUP=%s)",
+                    getenv("ULAB_NO_CLEANUP"));
+    } else if (!skip_cleanup) {
         cleanup_rc = cleanup_run(&bff, &runtime, &world, runDir);
         report_set_cleanup(&report, cleanup_rc != ULAB_OK);
         if (cleanup_rc != ULAB_OK && rc == ULAB_OK) {
