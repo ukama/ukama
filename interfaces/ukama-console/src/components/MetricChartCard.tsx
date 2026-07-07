@@ -85,11 +85,18 @@ export default function MetricChartCard({
     if (m && onLatest) onLatest(metricKey, seriesLatest(m));
   }, [m, metricKey, onLatest]);
 
-  const hasData = !!m && m.values.length > 0 && m.success !== false;
-  const values: [number, number][] = hasData
+  // -1 is the BFF gap-fill sentinel (no sample at that timestamp). Treat it as
+  // a gap — never plot it as a real value — so the chart's last real point
+  // matches the left-rail KPI (which uses seriesLatest, also skipping -1).
+  const hasReal = !!m && m.values.some((v) => v[1] != null && v[1] !== -1);
+  const hasData = !!m && m.values.length > 0 && m.success !== false && (off || hasReal);
+  const values: [number, number | null][] = hasData
     ? off
       ? m!.values.map((v) => [v[0] ?? 0, 0])
-      : m!.values.map((v) => [v[0] ?? 0, v[1] ?? 0])
+      : m!.values.map((v) => {
+          const raw = v[1];
+          return [v[0] ?? 0, raw == null || raw === -1 ? null : raw];
+        })
     : [];
   const legend = thresholdLegendRows(m?.threshold ?? null, m?.unit);
   const title = titleOverride ?? metricLabel(m?.label, metricKey, fallbackLabel);
