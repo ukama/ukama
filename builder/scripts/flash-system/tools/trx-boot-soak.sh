@@ -5,24 +5,13 @@
 #
 # Copyright (c) 2025-present, Ukama Inc.
 #
-# TRX boot soak test — run on the BENCH BOX after a board is fully flashed.
+# TRX boot soak test, run on the bench box after a board is flashed.
+# Reboots the TRX N times, waits for each boot to reach the login prompt and
+# records PASS/FAIL plus any DDR read-leveling errors from that boot's serial log.
+# sshd comes up before the known bringup hang point, so the soak survives hung boots.
 #
-# For each cycle it reboots the TRX over SSH, captures the serial boot log,
-# waits until the boot completes all the way to the login prompt (getty up),
-# and records PASS/FAIL plus any DDR read-leveling outliers from that boot.
-# A FAIL means the LTE bringup hung before login — the known intermittent
-# late-bringup hang. sshd comes up before the hang point, so the soak keeps
-# going even across hung boots.
-#
-# Note: this uses warm reboots (`reboot` over SSH). u-boot re-runs full DDR
-# init/leveling on every warm reboot, but cold power-cycles stress the DDR
-# PLL harder — for a final verdict, mix in a few manual cold cycles too.
-#
-# Usage (on the bench box):
-#   export TRX_ROOT_PASSWORD='cavium.lte'
-#   sudo -E ./tools/trx-boot-soak.sh [cycles]      # default 5
-#
-# Env overrides: TRX_IP (10.102.81.61), SERIAL (/dev/ttyUSB0), BOOT_TIMEOUT (900s)
+# Usage: export TRX_ROOT_PASSWORD='cavium.lte'; sudo -E ./tools/trx-boot-soak.sh [cycles]
+# Env: TRX_IP (10.102.81.61), SERIAL (/dev/ttyUSB0), BOOT_TIMEOUT (900)
 
 set -u
 
@@ -41,7 +30,7 @@ ssh_cmd() {
 }
 
 if ! ssh_cmd 'true' 2>/dev/null; then
-    echo "ERROR: TRX not reachable at ${TRX_IP} — board must be booted with SSH up to start."
+    echo "ERROR: TRX not reachable at ${TRX_IP} - board must be booted with SSH up to start."
     echo "  (Check: bench box has the post-flash IP: sudo ip addr add 10.102.81.100/24 dev enp0s31f6)"
     exit 1
 fi
@@ -63,7 +52,7 @@ for i in $(seq 1 "$CYCLES"); do
         sudo bash -c "cat '$SERIAL' > '$log'" &
         cat_pid=$!
     else
-        echo "  (serial device ${SERIAL} not found — continuing without serial capture)"
+        echo "  (serial device ${SERIAL} not found - continuing without serial capture)"
     fi
 
     ssh_cmd reboot >/dev/null 2>&1 || true
@@ -82,11 +71,10 @@ for i in $(seq 1 "$CYCLES"); do
 
     if [ "$booted" -eq 1 ]; then
         pass=$((pass + 1))
-        echo "  PASS — boot completed to login in ~${elapsed}s"
+        echo "  PASS - boot completed to login in ~${elapsed}s"
     else
         fail=$((fail + 1))
-        echo "  FAIL — bringup did not reach login within ${BOOT_TIMEOUT}s"
-        # Capture on-board state for the postmortem before the next cycle kills it.
+        echo "  FAIL - bringup did not reach login within ${BOOT_TIMEOUT}s"
         ssh_cmd 'cat /proc/loadavg; echo ---; ps w' > "${OUT}/boot-${i}.hang-state.txt" 2>/dev/null || true
         echo "  hang state saved to ${OUT}/boot-${i}.hang-state.txt"
     fi
@@ -95,8 +83,7 @@ for i in $(seq 1 "$CYCLES"); do
         sudo kill "$cat_pid" 2>/dev/null || true
     fi
 
-    # DDR read-leveling health for this boot: clean rows end in "(0)";
-    # any other count means bit errors during leveling (marginal DDR).
+    # clean read-leveling rows end in "(0)"; anything else = bit errors during DDR training
     if [ -s "$log" ]; then
         if grep -a "Rlevel Rank" "$log" | grep -qvE '\(0\)$'; then
             grep -a "Rlevel Rank" "$log" | grep -vE '\(0\)$' | sed 's/^/  DDR OUTLIER: /'
@@ -108,5 +95,5 @@ done
 
 echo ""
 echo "=== Soak result: ${pass} PASS / ${fail} FAIL out of ${CYCLES} cycles ==="
-echo "Correlate FAILs with 'DDR OUTLIER' lines above — a match points at marginal"
+echo "Correlate FAILs with 'DDR OUTLIER' lines above - a match points at marginal"
 echo "DDR on this board rather than software. Logs: ${OUT}/"

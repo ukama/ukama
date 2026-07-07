@@ -72,7 +72,7 @@ LOG_DIR="${FLASH_DIR}/logs/${TIMESTAMP}_${BOARD}"
 mkdir -p "$LOG_DIR"
 
 echo "================================================"
-echo " Ukama flash — $(yq_read "$BOARD_CONFIG" name)"
+echo " Ukama flash - $(yq_read "$BOARD_CONFIG" name)"
 echo " method: $METHOD"
 echo " logs:   $LOG_DIR"
 echo "================================================"
@@ -80,7 +80,7 @@ echo "================================================"
 echo ""
 echo "[1/5] Validating..."
 if ! method_validate; then
-    echo "Validation failed — nothing was written."
+    echo "Validation failed - nothing was written."
     exit 1
 fi
 

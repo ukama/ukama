@@ -134,7 +134,7 @@ method_monitor() {
     boot_marker=$(yq_read "$BOARD_CONFIG" serial.boot_marker)
 
     if [ ! -e "$serial_dev" ]; then
-        echo "Serial $serial_dev not available — skipping monitor."
+        echo "Serial $serial_dev not available - skipping monitor."
         echo "To monitor manually: screen $serial_dev $(yq_read "$BOARD_CONFIG" serial.baud)"
         return 0
     fi

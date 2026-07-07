@@ -40,7 +40,7 @@ BAND=b7 ./flash trx
 
 ## Flow
 
-**Phase 1 — JTAG bringup** (~5 min, automated)
+**Phase 1 - JTAG bringup** (~5 min, automated)
 1. Validates artifacts, BDI reachability, `oct-remote-boot` presence.
 2. Starts a local TFTP server with the Phase 1 artifacts.
 3. Telnets to BDI, sends `go 0x400000`.
@@ -55,7 +55,7 @@ BAND=b7 ./flash trx
 - Powers ON the TRX (boots from newly-flashed u-boot)
 - Presses ENTER to continue
 
-**Phase 2 — Image flash via SSH** (~12 min, automated)
+**Phase 2 - Image flash via SSH** (~12 min, automated)
 8. SSHs into TRX as root.
 9. For each of 8 `.img` files: scp to `/mnt/tmp`, `dd` to its `/dev/flash_*`, delete from `/mnt/tmp`.
 10. Copies the selected band config to `/etc/trx/band.cfg`.

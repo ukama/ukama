@@ -13,7 +13,7 @@ OCT_TAIL_PID=""
 SPAM_PID=""
 TFTP_STAGE_DIR=""
 
-# Temporary verbose mode for debugging Phase 1. Set TRX_VERBOSE=0 to disable.
+# TRX_VERBOSE=0 silences the serial/oct-remote-boot tails
 TRX_VERBOSE="${TRX_VERBOSE:-1}"
 
 _jtag_octeon_cleanup() {
@@ -35,13 +35,11 @@ _jtag_octeon_cleanup() {
     [ -n "$TFTP_STAGE_DIR" ] && sudo rm -rf "$TFTP_STAGE_DIR"
 }
 
-# Send a single command to the BDI via telnet and wait for its prompt.
-# Usage: bdi_telnet_cmd <host> <command>
 bdi_telnet_cmd() {
     local host="$1"
     local cmd="$2"
     if ! command -v expect >/dev/null 2>&1; then
-        echo "WARNING: expect not installed — cannot send BDI command '$cmd'" >&2
+        echo "WARNING: expect not installed - cannot send BDI command '$cmd'" >&2
         return 1
     fi
     expect -c "
@@ -56,9 +54,7 @@ bdi_telnet_cmd() {
             }
         }
         send \"$cmd\r\"
-        # Wait for the BDI prompt to come back before quitting. Without this the
-        # quit can merge onto the command line (\"go 0x400000quit\" -> syntax error)
-        # and the command never executes.
+        # wait for the prompt before quit, otherwise they merge and the command never runs
         expect {
             \"cnMIPS#0>\" {}
             \"Core#0>\"   {}
@@ -218,7 +214,7 @@ _phase1_uboot_env() {
 
     local mac_dashed="${trx_mac//:/-}"
 
-    # Compute actual file sizes for bootcbyflash so cp.b copies exactly the right amount.
+    # exact file sizes for the bootcbyflash cp.b commands
     local os_path rd_path os_size rd_size os_size_hex rd_size_hex
     os_path=$(yq_read "$BOARD_CONFIG" phase1.artifacts.os.path)
     rd_path=$(yq_read "$BOARD_CONFIG" phase1.artifacts.rd.path)
@@ -238,18 +234,14 @@ _phase1_uboot_env() {
     uboot_send_and_wait "$dev" "setenv cfgloadby flash" "$prompt" 300
     uboot_send_and_wait "$dev" "setenv swloadby flash" "$prompt" 300
     uboot_send_and_wait "$dev" 'setenv i2cinit "i2c dev 0; i2c probe; i2c dev 1; i2c probe"' "$prompt" 300
-    # Add mw64 to bootcmd as a fallback in case preboot doesn't run (e.g. bootdelay=0).
     uboot_send_and_wait "$dev" 'setenv bootcmd "mw64 0x00011800B0001000 0x0140; run i2cinit; run namedalloc; run bootcby${bootby}"' "$prompt" 300
-    # bootcbytftp uses the actual staged filenames (lsm_os_trx.gz / lsm_rd_trx.gz).
     uboot_send_and_wait "$dev" 'setenv bootcbytftp "tftp 0x21000000 lsm_os_trx.gz; gunzip 0x21000000 0x20000000 0x1000000; tftp 0x30800000 lsm_rd_trx.gz; bootoctlinux 0x20000000 coremask=0x7 endbootargs rd_name=initrd mem=512M;"' "$prompt" 300
-    # bootcbyflash: copy OS + RD from flash (where Phase 1 wrote them) and boot Linux.
     local bootcbyflash_cmd
     bootcbyflash_cmd="setenv bootcbyflash \"cp.b 0x17E20000 0x21000000 ${os_size_hex}; gunzip 0x21000000 0x20000000 0x1000000; cp.b 0x18320000 0x30800000 ${rd_size_hex}; bootoctlinux 0x20000000 coremask=0x7 endbootargs rd_name=initrd mem=512M;\""
     uboot_send_and_wait "$dev" "$bootcbyflash_cmd" "$prompt" 300
     uboot_send_and_wait "$dev" 'setenv namedalloc "namedalloc dsp-dump 0x400000 0x7f4D0000; namedalloc cazac 0x630000 0x7f8D0000; namedalloc cpu-dsp-if 0x100000 0x7ff00000; namedalloc dsp-log-buf 0x4000000 0x80000000; namedalloc initrd 0x2800000 0x30800000;"' "$prompt" 300
     uboot_send_and_wait "$dev" "setenv mk_ubootenv 1" "$prompt" 300
-    # SGMII autoneg must be enabled BEFORE Linux boots, otherwise octeth0 stays down.
-    # u-boot's 'preboot' runs automatically before bootcmd.
+    # SGMII autoneg must be on before Linux boots or octeth0 stays down
     uboot_send_and_wait "$dev" "setenv preboot 'mw64 0x00011800B0001000 0x0140'" "$prompt" 300
 
     [ "$restore_errexit" = "1" ] && set -e
@@ -275,7 +267,7 @@ _phase1_flash_artifact() {
     uboot_send_and_wait "$dev" "tftp ${ddr_addr} ${name}" "$prompt" 300
 
     if ! tail -c +"$marker_before" "$UBOOT_LOG" 2>/dev/null | grep -q "Bytes transferred = "; then
-        echo "ERROR: tftp failed for $key — no 'Bytes transferred' seen in log"
+        echo "ERROR: tftp failed for $key - no 'Bytes transferred' seen in log"
         return 1
     fi
 
@@ -334,12 +326,7 @@ _phase1_run() {
         echo "WARNING: bdi.config_file not found at $bdi_config_src"
     fi
 
-    # --- BDI state check ---
-    # The bench procedure never reloads CONFIG on an already-configured BDI: at
-    # cnMIPS#0> the operator goes straight to go + oct-remote-boot. Every bring-up
-    # attempted right after a CONFIG reload (= BDI reboot) has hung in DDR init,
-    # so CONFIG is sent only when the BDI is actually bare (Core#0>), and after
-    # that the TRX must be cold power-cycled before bring-up.
+    # only send CONFIG to a bare BDI (Core#0>); reloading a configured one hangs the next DDR init
     echo "Checking BDI state at ${bdi_ip} (cnMIPS#0> = configured, Core#0> = bare)..."
     local bdi_state
     bdi_state=$(expect -c "
@@ -355,9 +342,9 @@ _phase1_run() {
     " 2>/dev/null | grep -oE 'BDI_READY|BDI_BARE|BDI_DOWN' | tail -1)
 
     if [ "$bdi_state" = "BDI_READY" ]; then
-        echo "  BDI already configured — skipping CONFIG reload (matches the manual flow)."
+        echo "  BDI already configured - skipping CONFIG reload (matches the manual flow)."
     elif [ "$bdi_state" = "BDI_BARE" ]; then
-        echo "  BDI is unconfigured — sending HOST + CONFIG (the BDI will reboot and auto-load)..."
+        echo "  BDI is unconfigured - sending HOST + CONFIG (the BDI will reboot and auto-load)..."
         if ! expect -c "
             set timeout 300
             spawn telnet $bdi_ip
@@ -378,11 +365,9 @@ _phase1_run() {
             echo "  Please manually telnet to the BDI and run: HOST $host_ip then CONFIG cnf71xx.cfg"
             return 1
         fi
-        echo "  Config sent — BDI is rebooting and auto-loading cnf71xx.cfg over TFTP."
+        echo "  Config sent - BDI is rebooting and auto-loading cnf71xx.cfg over TFTP."
         echo "  Keeping the TFTP server up and polling until the BDI comes up configured..."
-        # The BDI's post-reboot auto-load needs our TFTP server (still running here) to be
-        # serving cnf71xx.cfg. Poll the prompt until it returns cnMIPS#0>, then continue in
-        # this same run — do NOT exit (exiting tears down TFTP and the BDI stays bare).
+        # keep TFTP up while the BDI reboots and auto-loads the config
         local cfg_wait=0 bdi_now=""
         while [ "$cfg_wait" -lt 300 ]; do
             sleep 10
@@ -421,7 +406,7 @@ _phase1_run() {
     while ! nc -z "$bdi_ip" 2001 2>/dev/null; do
         gdb_wait=$((gdb_wait + 5))
         if [ "$gdb_wait" -ge 300 ]; then
-            echo "ERROR: BDI GDB port still closed after 60s — the BDI may not have auto-loaded"
+            echo "ERROR: BDI GDB port still closed after 60s - the BDI may not have auto-loaded"
             echo "  its config (TFTP must be running when the BDI boots)."
             echo "  Power-cycle the BDI now (TFTP is still being served) and re-run this script."
             return 1
@@ -430,15 +415,7 @@ _phase1_run() {
     done
     echo "  GDB port is open."
 
-    # --- Phase 1 core bring-up ---
-    # The bench procedure (confirmed with Supreeth):
-    #   1. go 0x400000   ONCE, via BDI telnet.
-    #   2. oct-remote-boot. If it segfaults / GDB-errors ("Core 0, in reset, told to
-    #      continue / Segmentation fault"), just RUN OCT-REMOTE-BOOT AGAIN — no
-    #      power-cycle, no re-sending go. It succeeds on the 1st run, rarely the 2nd.
-    #   3. watch serial, interrupt autoboot, flash via TFTP.
-    # We automate exactly that: send go once, keep the serial open, and retry only
-    # oct-remote-boot until the u-boot prompt appears.
+    # bring-up: go 0x400000 once, then oct-remote-boot; on failure re-run only oct-remote-boot
     local oct_log="${LOG_DIR}/oct-remote-boot.log"
     local prompt_seen=0
 
@@ -449,8 +426,6 @@ _phase1_run() {
     fi
     sleep 5
 
-    # Open the serial console and start interrupting autoboot. Kept open across all
-    # oct-remote-boot retries so the u-boot prompt is caught whenever it appears.
     echo "Opening serial console at $serial_dev ($baud)..."
     uboot_open "$serial_dev" "$baud" "${LOG_DIR}/uboot.log"
 
@@ -463,8 +438,7 @@ _phase1_run() {
 
     echo "Spamming serial with key presses to stop zero-second autoboot..."
     (
-        # The TRX u-boot has a zero-second autoboot delay; keep a key pressed
-        # (space) so it stops immediately when it checks for input.
+        # autoboot delay is zero, keep a key held down
         exec 3>"$serial_dev"
         while true; do
             printf ' ' >&3
@@ -473,11 +447,7 @@ _phase1_run() {
     ) &
     SPAM_PID=$!
 
-    # The Octeon DDR PLL is a cold-boot lottery: each oct-remote-boot run re-rolls the
-    # measured DDR clock (seen 267 / 400 / 201 MHz across re-runs). Only ~400 MHz works —
-    # at the wrong clock the SGMII ref clock is off and ethernet never links. So we
-    # accept an attempt ONLY if u-boot comes up AND the clock is ~400; otherwise we
-    # re-run oct-remote-boot (no re-go, no power-cycle) to re-roll the DDR clock.
+    # the DDR clock lock varies per attempt; only ~400 MHz gives a working SGMII clock
     local oct_try=0 max_oct_tries=8
     local elapsed clk mhz oct_exit ddr_mislock prompt_this
     while [ "$oct_try" -lt "$max_oct_tries" ]; do
@@ -485,7 +455,6 @@ _phase1_run() {
         echo ""
         echo "=== oct-remote-boot attempt ${oct_try}/${max_oct_tries} (no re-go, no power-cycle) ==="
 
-        # Clear any stale oct-remote-boot still holding the BDI GDB port.
         sudo pkill -9 -f '[o]ct-remote-boot' 2>/dev/null || true
         sleep 1
 
@@ -503,13 +472,10 @@ _phase1_run() {
             OCT_TAIL_PID=$!
         fi
 
-        # Match the u-boot prompt broadly — it may be "Octeon zen(ram)=>" or
-        # "Octeon zen(Failsafe)=>" depending on board/flash state (per Supreeth).
+        # prompt can be "Octeon zen(ram)=>" or "Octeon zen(Failsafe)=>"
         echo "Waiting for u-boot prompt 'Octeon zen…=>' with DDR ~400 MHz (up to 300s)..."
         elapsed=0; clk=""; mhz=""; ddr_mislock=0; prompt_this=0
         while [ "$elapsed" -lt 300 ]; do
-            # Once a DDR clock is measured, reject a bad lock immediately (no point
-            # waiting for u-boot on a clock that won't link ethernet).
             clk=$(grep -a "Measured DDR clock" "$oct_log" 2>/dev/null | tail -1 || true)
             mhz=$(printf '%s' "$clk" | grep -oE '[0-9]+' | head -1 || true)
             if [ -n "$mhz" ] && { [ "$mhz" -lt 380 ] || [ "$mhz" -gt 420 ]; }; then
@@ -520,7 +486,7 @@ _phase1_run() {
                 prompt_this=1
                 break
             fi
-            # If oct-remote-boot exited, u-boot may still be printing — short grace window.
+            # oct-remote-boot exited; u-boot may still be printing
             if ! kill -0 "$REMOTE_BOOT_PID" 2>/dev/null; then
                 local grace=0
                 while [ "$grace" -lt 300 ]; do
@@ -538,8 +504,7 @@ _phase1_run() {
         done
 
         if [ "$prompt_this" -eq 1 ] && [ -n "$mhz" ] && [ "$mhz" -ge 380 ] && [ "$mhz" -le 420 ]; then
-            # Leave oct-remote-boot running — it hosts u-boot in DDR over GDB while we
-            # flash. REMOTE_BOOT_PID stays set and is reaped by the cleanup after flashing.
+            # oct-remote-boot stays running; it hosts u-boot over GDB while we flash
             prompt_seen=1
             echo "  u-boot prompt + good DDR clock (${mhz} MHz) on attempt ${oct_try}."
             if [ -n "$OCT_TAIL_PID" ]; then
@@ -549,7 +514,6 @@ _phase1_run() {
             break
         fi
 
-        # Failed attempt: stop oct-remote-boot if still alive, report why, then re-run.
         if kill -0 "$REMOTE_BOOT_PID" 2>/dev/null; then
             sudo kill "$REMOTE_BOOT_PID" 2>/dev/null || true
         fi
@@ -558,20 +522,19 @@ _phase1_run() {
         REMOTE_BOOT_PID=""
 
         if [ "$ddr_mislock" -eq 1 ]; then
-            echo "  DDR mislocked at ${mhz} MHz (need ~400) — re-running to re-roll the DDR clock."
+            echo "  DDR mislocked at ${mhz} MHz (need ~400) - re-running to re-roll the DDR clock."
         elif [ "$prompt_this" -eq 1 ]; then
-            echo "  u-boot came up but DDR clock unknown/!~400 — re-running."
+            echo "  u-boot came up but DDR clock unknown/!~400 - re-running."
         elif [ "$oct_exit" -eq 139 ] || grep -qaE "Segmentation fault|GDB Reply Error|in reset, told to continue" "$oct_log" 2>/dev/null; then
-            echo "  oct-remote-boot exited (GDB error / segfault) — re-running it (normal recovery)."
+            echo "  oct-remote-boot exited (GDB error / segfault) - re-running it (normal recovery)."
         else
-            echo "  no u-boot prompt within 300s — re-running."
+            echo "  no u-boot prompt within 300s - re-running."
         fi
         echo "--- last 15 lines of oct-remote-boot output ---"
         tail -n 15 "$oct_log" 2>/dev/null | sed 's/^/    /' || true
         sleep 2
     done
 
-    # Stop the autoboot spammer regardless of outcome.
     if [ -n "$SPAM_PID" ]; then
         kill "$SPAM_PID" 2>/dev/null || true
         SPAM_PID=""
@@ -613,7 +576,7 @@ _phase1_run() {
             link_up=1
             break
         fi
-        echo "  ping attempt ${ping_attempt}/${max_ping_attempts} failed — re-enabling ethernet (mw64) and retrying..."
+        echo "  ping attempt ${ping_attempt}/${max_ping_attempts} failed - re-enabling ethernet (mw64) and retrying..."
         uboot_send_and_wait "$serial_dev" "mw64 0x00011800B0001000 0x0140" "$uboot_prompt" 300 || true
         sleep 2
     done
@@ -621,11 +584,11 @@ _phase1_run() {
     if [ "$link_up" -ne 1 ]; then
         echo "ERROR: TRX ethernet link did not come up after ${max_ping_attempts} attempts (octeth0 Down)."
         echo "  mw64 ethernet-enable + ping kept failing. Usual cause is a mislocked DDR clock"
-        echo "  (SGMII reference clock off) — cold power-cycle the TRX and re-run; also check the cable."
+        echo "  (SGMII reference clock off) - cold power-cycle the TRX and re-run; also check the cable."
         grep -a "Measured DDR clock" "$oct_log" 2>/dev/null | tail -1 | sed 's/^/  oct-remote-boot: /' || true
         return 1
     fi
-    echo "  host ${host_ip} is reachable — ethernet link up after ${ping_attempt} attempt(s)"
+    echo "  host ${host_ip} is reachable - ethernet link up after ${ping_attempt} attempt(s)"
 
     _phase1_flash_artifact "$serial_dev" "$uboot_prompt" "os"    "$ddr_os"
     _phase1_flash_artifact "$serial_dev" "$uboot_prompt" "rd"    "$ddr_rd"
@@ -641,11 +604,8 @@ _phase1_run() {
     REMOTE_BOOT_PID=""
 }
 
-# On a freshly-erased board the post_config script (rc_post.local) that enables SGMII
-# autoneg isn't on the board yet (it arrives with the Phase 2 app images), so Linux
-# boots with ethernet down and SSH can't connect. Bootstrap it the way it's done by
-# hand: log in over serial and run "devmem 0x00011800B0001000 64 0x0140" twice.
-# Best-effort — needs exclusive /dev/ttyUSB0; if it can't, we fall back to SSH wait.
+# A freshly-erased board boots with ethernet down (no rc_post.local yet); log in
+# over serial and enable it with devmem. Best-effort, falls back to the SSH wait.
 _phase2_enable_ethernet_over_serial() {
     local serial_dev baud
     serial_dev=$(yq_read "$BOARD_CONFIG" serial.device)
@@ -656,7 +616,7 @@ _phase2_enable_ethernet_over_serial() {
         holder=$(lsof -t "$serial_dev" 2>/dev/null | head -1 || true)
     fi
     if [ -n "$holder" ]; then
-        echo "  NOTE: $serial_dev is held by another process (PID $holder) — skipping auto"
+        echo "  NOTE: $serial_dev is held by another process (PID $holder) - skipping auto"
         echo "        ethernet-enable. Close PuTTY/screen, or on the console run twice:"
         echo "          devmem 0x00011800B0001000 64 0x0140"
         return 0
@@ -672,10 +632,7 @@ _phase2_enable_ethernet_over_serial() {
         phase2_tail_pid=$!
     fi
 
-    # Marker-based login: only match output that appears AFTER each send, so a
-    # stale "LSM login:" already sitting in the log can't short-circuit a step.
-    # Short per-step timeouts — the board is already at the login prompt; if this
-    # doesn't work quickly we fall back to the SSH wait rather than look hung.
+    # only match output newer than each send; stale prompts in the log must not count
     local login_attempt logged_in=0 marker
     for login_attempt in 1 2 3; do
         marker=$(uboot_log_mark)
@@ -739,9 +696,7 @@ _phase2_remount_app() {
         echo "  WARNING: could not parse /mnt/app device; falling back to ${app_dev}."
     fi
 
-    # sshd stores its host keys under /mnt/app, so a normal umount is busy.
-    # Lazy-unmount the stale filesystem, then mount the image that was just
-    # written by dd and verify it is writable.
+    # sshd keeps its host keys under /mnt/app, so a plain umount is busy; lazy-unmount first
     local out
     out=$(sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "
         sync
@@ -774,9 +729,7 @@ _phase2_remount_app() {
     return 1
 }
 
-# Inject rc_post.local into the local flash_app0.img on the bench box before it
-# is dd'd to the TRX. This avoids writing to a live jffs2 /mnt/app mount, which
-# has been returning Input/output error even when the mount probes as writable.
+# Inject rc_post.local into flash_app0.img on the bench box before it is dd'd.
 _phase2_inject_rc_post_into_app0_image() {
     local app0_image="$1" rc_post_src="$2" rc_post_target="$3"
     local internal_path="${rc_post_target#/mnt/app}"
@@ -784,9 +737,7 @@ _phase2_inject_rc_post_into_app0_image() {
 
     echo "Injecting rc_post.local into ${app0_image} on the bench box (pre-dd)..."
 
-    # jffs2 only mounts on MTD devices — a losetup loop device will NOT work.
-    # Stage the image into an mtdram device sized to match (TRX NOR erase size
-    # is 128 KiB, per the u-boot erase sector counts), mount that, edit, dump back.
+    # jffs2 only mounts on MTD devices, so stage the image into mtdram (128 KiB erase size)
     local erase_kib=128 img_bytes total_kib
     img_bytes=$(stat -c %s "$app0_image" 2>/dev/null || echo 0)
     if [ "$img_bytes" -eq 0 ] || [ $((img_bytes % (erase_kib * 1024))) -ne 0 ]; then
@@ -845,7 +796,6 @@ _phase2_inject_rc_post_into_app0_image() {
     sync
     umount "$mntdir" >/dev/null 2>&1 || true
 
-    # Keep a pristine copy of the build artifact, then write the edited image back.
     [ -f "${app0_image}.orig" ] || cp "$app0_image" "${app0_image}.orig"
     if ! dd if="$mtd_dev" of="${tmpdir}/app0.new" bs=1M >/dev/null 2>&1; then
         echo "  WARNING: could not dump edited app0 image from mtdram; will try post-flash copy instead."
@@ -920,7 +870,6 @@ _phase2_run() {
         sshpass "${sshpass_args[@]}" scp "${ssh_opts[@]}" "$src" "${ssh_user}@${trx_ip}:${staging}/${name}"
 
         echo "  [${key}] dd to ${dst}"
-        # Supreeth confirmed the bench uses bs=1M for the 8 .img dd's on TRX.
         sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" \
             "dd if=${staging}/${name} of=${dst} bs=1M && rm -f ${staging}/${name}"
     done
@@ -934,13 +883,9 @@ _phase2_run() {
     sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" \
         "mount | grep ' /mnt/app ' || true; df -h /mnt/app || true"
 
-    # Do NOT write anything to /mnt/app here. The flash under the live jffs2
-    # mount was just replaced by dd; writes through it — even after a remount —
-    # return Input/output errors and corrupt the freshly-flashed image (the next
-    # boot then hits flashmnt's "no sign file" rebuild and wipes the partition).
-    # All config installs happen AFTER the final power-cycle, over SSH, on a
-    # cleanly-mounted /mnt/app (_phase2_post_flash_config). rc_post.local ships
-    # inside flash_app0.img, so ethernet comes up on its own after the reboot.
+    # Never write to /mnt/app here: the flash under the live mount was just replaced
+    # by dd and writes through it corrupt the new image. Config installs happen after
+    # the power-cycle in _phase2_post_flash_config.
     if [ "$rc_post_injected" -eq 1 ]; then
         echo "rc_post.local was pre-injected into flash_app0.img."
     else
@@ -953,11 +898,8 @@ _phase2_run() {
     echo "Band config is installed after the reboot, once /mnt/app is cleanly mounted."
 }
 
-# Install band config (and rc_post.local if somehow missing) AFTER the final
-# power-cycle. Writes to /mnt/app are only safe on a boot that mounted the
-# flashed image cleanly — pre-reboot writes through the stale mount hit EIO and
-# corrupt the partition. If anything changed, reboot the TRX so the LTE app
-# picks it up; method_verify then waits for it to come back.
+# Install band config (and rc_post.local if missing) after the final power-cycle,
+# once /mnt/app is cleanly mounted. Reboots the TRX if anything changed.
 _phase2_post_flash_config() {
     local trx_ip ssh_user
     if yq_exists "$BOARD_CONFIG" network.post_flash.trx_ip; then
@@ -996,11 +938,11 @@ _phase2_post_flash_config() {
 
     local reboot_needed=0
 
-    # rc_post.local normally arrives with the flashed app image; only copy if missing.
+    # rc_post.local normally ships inside the app image; only copy if missing
     if sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "test -f ${rc_post_target}"; then
         echo "  rc_post.local already present at ${rc_post_target} (from the app image)."
     else
-        echo "  rc_post.local missing — installing ${rc_post_src} -> ${rc_post_target}..."
+        echo "  rc_post.local missing - installing ${rc_post_src} -> ${rc_post_target}..."
         cat "$rc_post_src" | sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" \
             "cat > ${rc_post_target} && chmod +x ${rc_post_target}" || {
             echo "ERROR: rc_post.local install failed."
@@ -1009,7 +951,7 @@ _phase2_post_flash_config() {
         reboot_needed=1
     fi
 
-    # Band config: skip the write (and the reboot) if the target already matches.
+    # skip the write (and the reboot) if the target already matches
     if [ -f "$band_cfg_src" ]; then
         local local_md5 remote_md5
         local_md5=$(md5sum "$band_cfg_src" | awk '{print $1}')
@@ -1040,9 +982,7 @@ _phase2_post_flash_config() {
     return 0
 }
 
-# After the full app images are flashed, the TRX reboots into its production
-# network (e.g. 10.102.81.61). Move the bench box NIC to the matching subnet so
-# method_verify can reach it.
+# The flashed TRX comes up on its production subnet; add a matching IP on the bench NIC.
 _phase2_rehost_for_post_flash() {
     local post_trx_ip post_host_ip post_netmask post_iface pre_trx_ip
     post_trx_ip=$(yq_read "$BOARD_CONFIG" network.post_flash.trx_ip)
@@ -1058,7 +998,6 @@ _phase2_rehost_for_post_flash() {
         return 0
     fi
 
-    # Auto-detect interface if not specified.
     if [ -z "$post_iface" ] || [ "$post_iface" = "null" ]; then
         pre_trx_ip=$(yq_read "$BOARD_CONFIG" network.trx_ip)
         post_iface=$(ip route get "$pre_trx_ip" 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="dev") {print $(i+1); exit}}')
@@ -1092,7 +1031,7 @@ method_apply() {
     echo "=== Manual pause 1 ==="
     echo "Please:"
     echo "  1. Power OFF the TRX"
-    echo "  2. Disconnect the BDI / JTAG cable  (REQUIRED — while connected the BDI holds the"
+    echo "  2. Disconnect the BDI / JTAG cable  (REQUIRED - while connected the BDI holds the"
     echo "     CPU in reset, so the board will NOT finish booting from flash)"
     echo "  3. CLOSE PuTTY/screen on /dev/ttyUSB0 (the script needs the serial port)"
     echo "  4. Power ON the TRX"
@@ -1111,7 +1050,6 @@ method_apply() {
             pause1_tail_pid=$!
         fi
         while [ "$elapsed" -lt "$max_pause1_wait" ]; do
-            # Allow the operator to skip the wait by pressing ENTER.
             local key=""
             if IFS= read -rs -t 1 -n 1 key 2>/dev/null; then
                 echo "  skipped by user"
@@ -1119,7 +1057,7 @@ method_apply() {
                 break
             fi
             if grep -qF "LSM login:" "$pause1_log" 2>/dev/null; then
-                echo "  'LSM login:' seen on serial — continuing automatically."
+                echo "  'LSM login:' seen on serial - continuing automatically."
                 prompt_seen=1
                 break
             fi
@@ -1147,12 +1085,7 @@ method_apply() {
     echo ""
     read -rp "Press ENTER once the TRX is powered back on (no need to wait for full boot): " _
 
-    # The flashed app images reconfigure the TRX to its production IP. Move the
-    # bench box to the matching subnet so the post-flash steps can reach it.
     _phase2_rehost_for_post_flash
-
-    # Install band config (+ rc_post.local if missing) on the cleanly-mounted
-    # /mnt/app, rebooting the TRX if anything changed.
     _phase2_post_flash_config
 }
 

@@ -70,13 +70,11 @@ uboot_wait_for() {
     return 1
 }
 
-# Current byte offset of the serial log, for uboot_wait_for_from.
 uboot_log_mark() {
     wc -c < "$UBOOT_LOG" 2>/dev/null || echo 0
 }
 
-# Like uboot_wait_for, but only matches bytes appended AFTER the given mark, so
-# stale prompts already in the log (e.g. an old "LSM login:") can't match.
+# Like uboot_wait_for, but only matches output appended after the given mark.
 uboot_wait_for_from() {
     local mark="$1"
     local pattern="$2"
@@ -107,8 +105,7 @@ uboot_send() {
         printf '%s' "${command:$i:1}" >&3
         sleep 0.02
     done
-    # CR only. A trailing "\r\n" submits an extra empty line: harmless in u-boot,
-    # fatal at a Linux "login:" prompt (the \n is read as an empty password).
+    # CR only: a trailing \n gets read as an empty password at a login prompt
     printf '\r' >&3
     exec 3>&-
 }

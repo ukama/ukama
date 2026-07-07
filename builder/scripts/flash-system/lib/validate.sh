@@ -12,20 +12,20 @@ validate_tarball() {
     local min_entries="${4:-100}"
 
     if [ ! -f "$path" ]; then
-        echo "  [FAIL] $label: file not found — $path" >&2
+        echo "  [FAIL] $label: file not found - $path" >&2
         return 1
     fi
 
     local listing
     if ! listing=$(tar tzf "$path" 2>/dev/null); then
-        echo "  [FAIL] $label: not a readable gzip tarball — $path" >&2
+        echo "  [FAIL] $label: not a readable gzip tarball - $path" >&2
         return 1
     fi
 
     local entry_count
     entry_count=$(printf '%s\n' "$listing" | grep -c '.' || true)
     if [ "$entry_count" -lt "$min_entries" ]; then
-        echo "  [FAIL] $label: only $entry_count entries (need >= $min_entries) — likely empty or truncated" >&2
+        echo "  [FAIL] $label: only $entry_count entries (need >= $min_entries) - likely empty or truncated" >&2
         return 1
     fi
 
