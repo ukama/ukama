@@ -5,12 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import {
-  GetNodeLatestMetricInput,
-  GetSiteLatestMetricInput,
-  NodeLatestMetric,
-  SiteLatestMetric,
-} from "../resolver/types";
+import { GetNodeLatestMetricInput, NodeLatestMetric } from "../resolver/types";
 
 const parseLatestMetricRes = (
   res: any,
@@ -48,11 +43,4 @@ export const parseNodeLatestMetricRes = (
   args: GetNodeLatestMetricInput
 ): NodeLatestMetric => {
   return parseLatestMetricRes(res, args, "node") as NodeLatestMetric;
-};
-
-export const parseSiteLatestMetricRes = (
-  res: any,
-  args: GetSiteLatestMetricInput
-): SiteLatestMetric => {
-  return parseLatestMetricRes(res, args, "site") as SiteLatestMetric;
 };

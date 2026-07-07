@@ -6,13 +6,8 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { BaseRESTDataSource } from "../../common/datasource";
-import {
-  GetNodeLatestMetricInput,
-  GetSiteLatestMetricInput,
-  NodeLatestMetric,
-  SiteLatestMetric,
-} from "../resolver/types";
-import { parseNodeLatestMetricRes, parseSiteLatestMetricRes } from "./mapper";
+import { GetNodeLatestMetricInput, NodeLatestMetric } from "../resolver/types";
+import { parseNodeLatestMetricRes } from "./mapper";
 
 const VERSION = "v1";
 const METRICS = "metrics";
@@ -28,19 +23,6 @@ class MetricAPI extends BaseRESTDataSource {
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/${METRICS}/${args.type}`).then(res =>
       parseNodeLatestMetricRes(res, args)
-    );
-  };
-
-  getSiteLatestMetric = async (
-    baseURL: string,
-    args: GetSiteLatestMetricInput
-  ): Promise<SiteLatestMetric> => {
-    this.logger.info(
-      `GetSiteLatestMetric [GET]: ${baseURL}/${VERSION}/${METRICS}/${args.type}`
-    );
-    this.baseURL = baseURL;
-    return this.get(`/${VERSION}/${METRICS}/${args.type}`).then(res =>
-      parseSiteLatestMetricRes(res, args)
     );
   };
 

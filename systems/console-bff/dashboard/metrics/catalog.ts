@@ -7,15 +7,12 @@
  */
 
 /**
- * Metric catalog — the single source of presentation + mock-shape metadata
- * for every KPI/graph key the console renders. Each entry mirrors the fields
- * the metric service returns per key (unit/format/threshold/tick*), plus the
- * `label` the backend doesn't send and a mock seed (base/min/max/jitter/
- * trend). The console renders whatever the BFF returns — it owns none of this.
- *
- * Going live per metric: add its key to LIVE_METRIC_KEYS (then real values
- * flow; label/unit/threshold are still backfilled from here when the upstream
- * omits them).
+ * Metric catalog — the single source of presentation metadata for every
+ * KPI/graph key the console renders. Each entry carries the `label` the metric
+ * service doesn't send, plus unit/format/threshold used to backfill a response
+ * when the upstream omits them. Values themselves always come from the metric
+ * service; this catalog never produces data. The console renders whatever the
+ * BFF returns — it owns none of this.
  */
 
 export interface MetricThresholdMeta {
@@ -29,82 +26,37 @@ export interface MetricMeta {
   unit: string;
   /** Value formatting hint for the console: "number" | "decimal". */
   format: string;
-  /** Mock seed: centre value and bounds. */
-  base: number;
-  min: number;
-  max: number;
-  jitter: number;
-  trend: number;
   threshold?: MetricThresholdMeta;
 }
 
-const PCT: Pick<MetricMeta, "unit" | "format" | "min" | "max" | "threshold"> = {
+const PCT: Pick<MetricMeta, "unit" | "format" | "threshold"> = {
   unit: "%",
   format: "number",
-  min: 0,
-  max: 100,
   threshold: { min: 0, normal: 80, max: 100 },
 };
-const TEMP: Pick<MetricMeta, "unit" | "format" | "min" | "max" | "threshold"> =
-  {
-    unit: "°C",
-    format: "number",
-    min: 0,
-    max: 100,
-    threshold: { min: 0, normal: 80, max: 100 },
-  };
-const DBM: Pick<MetricMeta, "unit" | "format" | "min" | "max" | "threshold"> = {
+const TEMP: Pick<MetricMeta, "unit" | "format" | "threshold"> = {
+  unit: "°C",
+  format: "number",
+  threshold: { min: 0, normal: 80, max: 100 },
+};
+const DBM: Pick<MetricMeta, "unit" | "format" | "threshold"> = {
   unit: "dBm",
   format: "decimal",
-  min: 0,
-  max: 40,
   threshold: { min: 0, normal: 31, max: 34 },
 };
 
 export const METRIC_CATALOG: Record<string, MetricMeta> = {
   // --- node health ---
-  uptime: {
-    label: "Uptime",
-    unit: "s",
-    format: "number",
-    base: 864000,
-    min: 0,
-    max: 2592000,
-    jitter: 0.01,
-    trend: 0.02,
-  },
-  cpu_temperature: {
-    label: "Temp. (CPU)",
-    base: 46,
-    jitter: 0.12,
-    trend: 0.05,
-    ...TEMP,
-  },
-  fem1_temperature: {
-    label: "FEM 1 temp.",
-    base: 44,
-    jitter: 0.12,
-    trend: 0.04,
-    ...TEMP,
-  },
-  fem2_temperature: {
-    label: "FEM 2 temp.",
-    base: 48,
-    jitter: 0.12,
-    trend: 0.04,
-    ...TEMP,
-  },
-  memory: { label: "Memory", base: 52, jitter: 0.1, trend: 0.06, ...PCT },
-  cpu: { label: "CPU", base: 38, jitter: 0.16, trend: 0.05, ...PCT },
+  uptime: { label: "Uptime", unit: "s", format: "number" },
+  cpu_temperature: { label: "Temp. (CPU)", ...TEMP },
+  fem1_temperature: { label: "FEM 1 temp.", ...TEMP },
+  fem2_temperature: { label: "FEM 2 temp.", ...TEMP },
+  memory: { label: "Memory", ...PCT },
+  cpu: { label: "CPU", ...PCT },
   disk: {
     label: "Disk",
     unit: "MB",
     format: "number",
-    base: 6200,
-    min: 0,
-    max: 16000,
-    jitter: 0.04,
-    trend: 0.08,
     threshold: { min: 0, normal: 12000, max: 16000 },
   },
   // --- customers ---
@@ -113,11 +65,6 @@ export const METRIC_CATALOG: Record<string, MetricMeta> = {
     label: "Active customers",
     unit: "",
     format: "number",
-    base: 32,
-    min: 0,
-    max: 1000,
-    jitter: 0.18,
-    trend: 0.12,
     threshold: { min: 0, normal: 100, max: 1000 },
   },
   // --- network: cellular ---
@@ -125,22 +72,12 @@ export const METRIC_CATALOG: Record<string, MetricMeta> = {
     label: "Cellular uplink",
     unit: "Mbps",
     format: "decimal",
-    base: 18,
-    min: 0,
-    max: 50,
-    jitter: 0.2,
-    trend: 0.1,
     threshold: { min: 0, normal: 5, max: 30 },
   },
   cellular_downlink: {
     label: "Cellular downlink",
     unit: "Mbps",
     format: "decimal",
-    base: 64,
-    min: 0,
-    max: 200,
-    jitter: 0.2,
-    trend: 0.12,
     threshold: { min: 0, normal: 60, max: 160 },
   },
   // --- network: backhaul ---
@@ -148,33 +85,18 @@ export const METRIC_CATALOG: Record<string, MetricMeta> = {
     label: "Backhaul uplink",
     unit: "Mbps",
     format: "decimal",
-    base: 22,
-    min: 0,
-    max: 250,
-    jitter: 0.18,
-    trend: 0.1,
     threshold: { min: 0, normal: 10, max: 200 },
   },
   backhaul_downlink: {
     label: "Backhaul downlink",
     unit: "Mbps",
     format: "decimal",
-    base: 70,
-    min: 0,
-    max: 250,
-    jitter: 0.18,
-    trend: 0.12,
     threshold: { min: 0, normal: 10, max: 200 },
   },
   backhaul_latency: {
     label: "Backhaul latency",
     unit: "ms",
     format: "decimal",
-    base: 35,
-    min: 0,
-    max: 1050,
-    jitter: 0.25,
-    trend: 0.05,
     threshold: { min: 0, normal: 800, max: 1000 },
   },
   // --- site power / infrastructure ---
@@ -182,148 +104,52 @@ export const METRIC_CATALOG: Record<string, MetricMeta> = {
     label: "Uptime",
     unit: "%",
     format: "number",
-    base: 96,
-    min: 80,
-    max: 100,
-    jitter: 0.03,
-    trend: 0.01,
   },
   battery_charge: {
     label: "Available power",
     unit: "%",
     format: "number",
-    base: 78,
-    min: 0,
-    max: 100,
-    jitter: 0.08,
-    trend: 0.05,
   },
   solar_panel_power: {
     label: "Solar power",
     unit: "W",
     format: "number",
-    base: 320,
-    min: 0,
-    max: 600,
-    jitter: 0.18,
-    trend: 0.1,
   },
   solar_panel_voltage: {
     label: "Solar voltage",
     unit: "V",
     format: "number",
-    base: 60,
-    min: 0,
-    max: 100,
-    jitter: 0.12,
-    trend: 0.06,
     threshold: { min: 0, normal: 75, max: 100 },
   },
   solar_panel_current: {
     label: "Solar current",
     unit: "A",
     format: "number",
-    base: 4,
-    min: 0,
-    max: 12,
-    jitter: 0.16,
-    trend: 0.08,
     threshold: { min: 0, normal: 5, max: 12 },
   },
   controller_temperature: {
     label: "Controller temp.",
     unit: "°C",
     format: "number",
-    base: 42,
-    min: 0,
-    max: 90,
-    jitter: 0.12,
-    trend: 0.05,
     threshold: { min: 0, normal: 60, max: 80 },
   },
   load_current: {
     label: "Load current",
     unit: "A",
     format: "decimal",
-    base: 5,
-    min: 0,
-    max: 12,
-    jitter: 0.16,
-    trend: 0.06,
   },
   // --- radio ---
-  power: { label: "TX power", base: 31, jitter: 0.06, trend: 0.02, ...DBM },
-  pa_power: { label: "PA power", base: 30, jitter: 0.06, trend: 0.02, ...DBM },
-  rx_power: { label: "RX power", base: 28, jitter: 0.06, trend: 0.02, ...DBM },
-  tx_power: { label: "TX power", base: 31, jitter: 0.06, trend: 0.02, ...DBM },
+  power: { label: "TX power", ...DBM },
+  pa_power: { label: "PA power", ...DBM },
+  rx_power: { label: "RX power", ...DBM },
+  tx_power: { label: "TX power", ...DBM },
 };
 
 const FALLBACK: MetricMeta = {
   label: "",
   unit: "",
   format: "number",
-  base: 40,
-  min: 0,
-  max: 100,
-  jitter: 0.12,
-  trend: 0.04,
 };
 
 export const metricMeta = (key: string): MetricMeta =>
   METRIC_CATALOG[key] ?? { ...FALLBACK, label: key };
-
-/**
- * Keys backed by a real metric endpoint (node-scoped: requested with a nodeId
- * so the gateway resolves the node type from the id). Each generic key below
- * exists under tnode/anode/cnode in default-metrics.yaml.
- *
- * Still mocked:
- *  - site_uptime_percentage: no backing series in default-metrics.yaml.
- */
-export const LIVE_METRIC_KEYS = new Set<string>([
-  // health / resources (all node types)
-  "uptime",
-  "cpu",
-  "memory",
-  "disk",
-  "cpu_temperature",
-  // tnode customers (active subscribers)
-  "subscribers_active",
-  // tnode cellular
-  "cellular_uplink",
-  "cellular_downlink",
-  // tnode / cnode backhaul
-  "backhaul_uplink",
-  "backhaul_downlink",
-  "backhaul_latency",
-  // tnode / cnode power
-  "power",
-  // anode radio
-  "pa_power",
-  "rx_power",
-  "tx_power",
-  // anode FEM health
-  "fem1_temperature",
-  "fem2_temperature",
-  // cnode site power/health (fetched with the site's cnode id)
-  "battery_charge",
-  "solar_panel_power",
-  "solar_panel_voltage",
-  "solar_panel_current",
-  "controller_temperature",
-  "load_current",
-  // cnode switch ports (1,2,3,9) — speed + power per port
-  "switch_port_1_speed",
-  "switch_port_1_power",
-  "switch_port_2_speed",
-  "switch_port_2_power",
-  "switch_port_3_speed",
-  "switch_port_3_power",
-  "switch_port_9_speed",
-  "switch_port_9_power",
-]);
-
-/** Mock unless explicitly disabled; never mock a key that has a live endpoint. */
-const MOCK_ENABLED = process.env.MOCK_METRICS !== "false";
-export const isMockKey = (key: string): boolean =>
-  MOCK_ENABLED && !LIVE_METRIC_KEYS.has(key);
