@@ -184,6 +184,8 @@ func (p *policyController) NewPolicy(packageId uuid.UUID) (*db.Policy, error) {
 		EndTime:      endTime,
 	}
 
+	log.Infof("Returning new policy object %v", policy)
+
 	return &policy, nil
 }
 
