@@ -116,9 +116,10 @@ const DEFAULT_COMP: CompDef = {
   metric: 'battery_charge',
 };
 
-/** Two rows of daily uptime bars from the site_uptime_percentage series. */
-function UptimeBars({ values }: { values: number[] }) {
-  const bars = (vals: number[]) => (
+/** Two rows of daily uptime bars from the site_uptime_percentage series.
+ *  `null` days are gaps (no data) and render as a muted bar. */
+function UptimeBars({ values }: { values: (number | null)[] }) {
+  const bars = (vals: (number | null)[]) => (
     <div className="uptime-row">
       {vals.map((v, i) => (
         <span
@@ -126,8 +127,12 @@ function UptimeBars({ values }: { values: number[] }) {
           className="uptime-bar"
           style={{
             background:
-              v >= 95 ? 'var(--uk-success-bright)' : 'var(--uk-orange)',
-            opacity: 0.6,
+              v == null
+                ? 'var(--uk-line)'
+                : v >= 95
+                  ? 'var(--uk-success-bright)'
+                  : 'var(--uk-orange)',
+            opacity: v == null ? 0.35 : 0.6,
           }}
         />
       ))}
@@ -779,11 +784,15 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
       },
     },
   });
+  // Daily uptime %, gaps (-1 / missing) kept as null so the bars can render
+  // them as "no data" and the average ignores them — never treat a gap as a
+  // real 0/-1 reading.
   const uptimeVals = (uptimeData?.metricsRange.metrics?.[0]?.values ?? []).map(
-    (v) => v[1] ?? 0,
+    (v) => (v[1] == null || v[1] === -1 ? null : v[1]),
   );
-  const uptimePct = uptimeVals.length
-    ? Math.round(uptimeVals.reduce((a, b) => a + b, 0) / uptimeVals.length)
+  const realUptime = uptimeVals.filter((v): v is number => v != null);
+  const uptimePct = realUptime.length
+    ? Math.round(realUptime.reduce((a, b) => a + b, 0) / realUptime.length)
     : null;
 
   const { data: sitesData } = useSitesListQuery({
@@ -1005,9 +1014,9 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
               uptime over 90 days
             </span>
           </div>
-          {uptimeLoading && uptimeVals.length === 0 ? (
+          {uptimeLoading && realUptime.length === 0 ? (
             <Skeleton variant="rounded" sx={{ height: 88, mt: 1 }} />
-          ) : uptimeVals.length === 0 ? (
+          ) : realUptime.length === 0 ? (
             <div
               style={{ fontSize: 13, color: 'var(--uk-ink-3)', marginTop: 8 }}
             >
