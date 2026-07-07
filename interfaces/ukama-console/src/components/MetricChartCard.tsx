@@ -50,6 +50,7 @@ function LegendDot({ color, label }: { color: string; label: string }) {
  *   it without a second query.
  * - `titleOverride` forces the card title; otherwise the server label / a
  *   humanized key is used.
+ * - `hideLegend` hides the threshold legend footer (Normal/High/Critical).
  */
 export default function MetricChartCard({
   metricKey,
@@ -59,6 +60,7 @@ export default function MetricChartCard({
   off = false,
   height = DEFAULT_HEIGHT,
   onLatest,
+  hideLegend = false,
 }: {
   metricKey: string;
   nodeId?: string | null;
@@ -67,6 +69,7 @@ export default function MetricChartCard({
   off?: boolean;
   height?: number;
   onLatest?: (key: string, entry: LatestEntry) => void;
+  hideLegend?: boolean;
 }) {
   const [range, setRange] = useState<Range>('Day');
   const [nowSec] = useState(() => Math.floor(Date.now() / 1000));
@@ -122,19 +125,21 @@ export default function MetricChartCard({
             threshold={m?.threshold ?? null}
             height={height}
           />
-          <div
-            style={{
-              display: 'flex',
-              gap: 18,
-              justifyContent: 'center',
-              marginTop: 10,
-              flexWrap: 'wrap',
-            }}
-          >
-            {legend.map((l) => (
-              <LegendDot key={l.label} {...l} />
-            ))}
-          </div>
+          {!hideLegend && (
+            <div
+              style={{
+                display: 'flex',
+                gap: 18,
+                justifyContent: 'center',
+                marginTop: 10,
+                flexWrap: 'wrap',
+              }}
+            >
+              {legend.map((l) => (
+                <LegendDot key={l.label} {...l} />
+              ))}
+            </div>
+          )}
         </>
       )}
     </SectionCard>

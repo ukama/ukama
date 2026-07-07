@@ -257,6 +257,7 @@ function ComponentPanel({
           metricKey={k}
           fallbackLabel={comp.label}
           nodeId={cnodeId}
+          hideLegend
         />
       ))}
     </div>
@@ -376,12 +377,14 @@ function SwitchPortRow({
               fallbackLabel="Speed (MBPS)"
               titleOverride="Speed (MBPS)"
               nodeId={cnodeId}
+              hideLegend
             />
             <MetricChartCard
               metricKey={`switch_port_${port.n}_power`}
               fallbackLabel="Power (watts)"
               titleOverride="Power (watts)"
               nodeId={cnodeId}
+              hideLegend
             />
           </div>
         ) : (
