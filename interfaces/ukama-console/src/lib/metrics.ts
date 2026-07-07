@@ -19,21 +19,17 @@ export type LatestEntry = {
   format?: string | null;
 };
 
-/** Collapse a series to its latest KPI value: the most recent sample that
- *  isn't a gap-fill placeholder (-1). The chart's last point IS the latest. */
+/** Collapse a series to its CURRENT KPI value: the value at the most recent
+ *  timestamp. If that latest sample is a gap-fill placeholder (-1) or missing,
+ *  the metric isn't reporting now → success:false, so the rail shows "—"
+ *  instead of a stale earlier reading. */
 export const seriesLatest = (m: MetricSeries): LatestEntry => {
   const vals = m.values ?? [];
-  let last: number | null = null;
-  for (let i = vals.length - 1; i >= 0; i--) {
-    const v = vals[i]?.[1];
-    if (v != null && v !== -1) {
-      last = v;
-      break;
-    }
-  }
+  const raw = vals.length ? vals[vals.length - 1]?.[1] : null;
+  const latest = raw != null && raw !== -1 ? raw : null;
   return {
-    value: last ?? 0,
-    success: m.success !== false && last != null,
+    value: latest ?? 0,
+    success: m.success !== false && latest != null,
     label: m.label,
     unit: m.unit,
     format: m.format,
