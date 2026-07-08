@@ -73,11 +73,11 @@ Cost: non-vanilla image (`timescale/timescaledb`), hypertable calls in migration
 
 Defined once in the `schema` module; identical for all three services.
 
-- **Base window `W`** (config; **default 5min**, with watermark `L` default 10min — decision #2, §11): the atomic unit of the pipeline. Boundaries are **epoch-aligned**: window `N` = `[N·W, (N+1)·W)` UTC. Window ID = `N` (deterministic everywhere; never derived from timers or process start).
-- **Watermark lag `L`** (config, e.g. 2·W): window `N` becomes *eligible* at `(N+1)·W + L`. Ingest pulls only eligible windows → late-arriving source data within `L` is captured normally.
-- **Late data beyond `L`:** the affected window is marked `dirty` in the ledger → Analysis recomputes it → Aggregator recomputes the containing day/week/month. The dirty-cascade is the single mechanism for corrections, backfill, and algo upgrades.
+- **Base window `W`** (config; **default 5min** — decision #2, §11): the atomic unit of the pipeline. Boundaries are **epoch-aligned**: window `N` = `[N·W, (N+1)·W)` UTC. Window ID = `N` (deterministic everywhere; never derived from timers or process start).
+- **Eligibility (simplified — watermark removed):** every window is pulled as soon as it closes; there is no separate watermark lag. *(Revised decision: an earlier draft had a lag `L` for late source data; dropped for simplicity.)*
+- **Late data:** any data a source finalizes after its window was pulled is handled by marking the window `dirty` in the ledger → Analysis recomputes it → Aggregator recomputes the containing day/week/month. The dirty-cascade is the single mechanism for late data, corrections, backfill, and algo upgrades.
 - **Pull cadence is ingest-level config, not spec-level:** all pulls run on the global base window `W` (from the shared pipeline config). Specs declare *what* to pull, never *when* — keeps every dataset on one deterministic grid and specs purely declarative. (Per-source cadence multiples are a possible future config extension, not in specs.)
-- **Config governance:** `W` and `L` live in one shared config (env-injected to all services from compose/helm) and are recorded in `pipeline_config` with a version; changing `W` starts a new **grid epoch** — old windows stay valid under their epoch, new windows use the new grid (no silent invalidation).
+- **Config governance:** `W` lives in one shared config (env-injected to all services from compose/helm) and are recorded in `pipeline_config` with a version; changing `W` starts a new **grid epoch** — old windows stay valid under their epoch, new windows use the new grid (no silent invalidation).
 - Spans (day/week/month) are defined in **org timezone**, computed by Aggregator over UTC base windows; span set is a config list (`daily, weekly, monthly` now; `quarterly, annual` later — zero code change).
 
 ---
@@ -107,7 +107,7 @@ pulls:
     map: { network_id: $.id, name: $.name, status: $.status }
 ```
 
-Pull interval/window logic lives in **ingest service config** (shared pipeline config: `W`, watermark `L`), not in specs — specs stay purely declarative (*what*, not *when*). Pagination is intentionally absent: source api-gateways don't paginate yet; when they do, it becomes an engine-level capability (spec opt-in), not a per-spec invention.
+Pull interval/window logic lives in **ingest service config** (shared pipeline config: `W`), not in specs — specs stay purely declarative (*what*, not *when*). Pagination is intentionally absent: source api-gateways don't paginate yet; when they do, it becomes an engine-level capability (spec opt-in), not a per-spec invention.
 
 - **Raw zone:** `raw_records(id, org_id, dataset_key, window_id, event_time, payload jsonb, fields jsonb, ingested_at)` — hypertable on `event_time`. `payload` = untouched original (bronze, replayable); `fields` = mapped/normalized columns per spec. Records are assigned to windows by **event time**, not arrival time.
 - **Address resolution (initclient):** the spec's `system:` field is a logical name — never a URL. Before pulling, Ingest resolves it through the init system, following the repo-wide pattern (see `analytics/collector/cmd/server/main.go:129`, `notification/event-notify/cmd/server/main.go:96`):
@@ -147,7 +147,7 @@ Pull interval/window logic lives in **ingest service config** (shared pipeline c
   - **Lineage propagation:** bound fields plus the parent's own lineage are stamped onto every child row (`metrics.node.uptime` rows carry `node_id, site_id, network_id`). The `network_uptime@v1` algo then just groups one dataset by `network_id` — no joins, no extra fetches.
   - **Validation:** DAG must be acyclic and reference existing dataset keys (CI + startup).
   - **Iteration-level idempotency & retry:** each iteration's dedup key includes its bound params, and the ledger tracks per-dataset iteration counts (`done/total`). A partially failed fan-out retries **only the failed iterations**; the dataset (and thus `window.ready`) isn't marked `pulled` until all iterations land or the retry budget is exhausted (`failed`, with per-iteration errors in `ingest_errors`).
-  - **Fan-out control:** N networks × M sites × K nodes calls per window — bounded worker pool per source system + spec `rate_limit`; chain latency must fit inside watermark `L` (sizing input for `L`). Guardrail metric: iterations per window per dataset.
+  - **Fan-out control:** N networks × M sites × K nodes calls per window — bounded worker pool per source system + spec `rate_limit`; chain latency should fit within one window `W` (sizing input for `W`). Guardrail metric: iterations per window per dataset.
   - **Prefer bulk endpoints:** `for_each` is for APIs that only serve per-entity calls. If a bulk endpoint exists (`/v1/nodes?network=…` or plain getAll), use it — one pull beats N. Spec review should treat every new `for_each` as a question: "does the source system have (or should it grow) a bulk endpoint?"
 - **Pull strategies:** `window` (from/to templated per window — preferred), `incremental` (persisted cursor per (source, org) in `source_cursors`), `full_snapshot` (dimension-style reference data: sims, packages, nodes — stored as **change-log + state-as-of**, decision #4 §11: a row persists only when its content-hash changes; per-window high-water marks make deletions detectable; Analysis reads *state as of window N* = latest change ≤ N).
 - **Dedup/idempotency:** natural key `(dataset_key, org, dedup_key)` unique index; `dedup_key` = source row id for windowed/incremental records, content-hash of mapped fields for snapshots (which is what implements the change-log). Re-pulls are no-ops.
@@ -294,7 +294,7 @@ Percentile variants (p95 latency/usage) are deferred to Phase 4 (decision #5 §1
 | # | Question | Decision |
 |---|---|---|
 | 1 | Deployment model | **Per-org deployment** (repo convention: `ORGNAME` env, per-org compose/helm). `org_id` stays on every table (cheap, keeps schema portable); platform cross-org KPIs run later in a separate Ukama-operated instance — out of scope for v1. |
-| 2 | Window sizing | **`W = 5min`, `L = 10min`** (pipeline config defaults). Snapshots pulled 288×/day; `for_each` chains must complete within eligibility — monitored via chain-latency metric. |
+| 2 | Window sizing | **`W = 5min`** (pipeline config default). Snapshots pulled 288×/day; `for_each` chains should complete within one window — monitored via chain-latency metric. *(Revised: the separate watermark `L` was dropped — windows are pulled at close; late data goes through the dirty-recompute path.)* |
 | 3 | Historical backfill | **None — start fresh.** Trends read `new` for the first day/week/month. Admin `RepullWindow` remains for later selective backfill of windowed sources. |
 | 4 | Snapshot storage | **Change-log + state-as-of.** A `full_snapshot` row is stored only when its content-hash changes (`dedup_key = hash(fields)`); each dataset also records "seen in window N" high-water marks so deletions are detectable. Analysis reads *state as of window N* = latest change ≤ N. Resolves the dedup contradiction with minimal storage. |
 | 5 | Percentile KPIs | **Deferred to Phase 4** (with t-digest sketches or daily-grain compute — decided then). v1 ships AVG/MIN/MAX for latency/usage KPIs; BACKHAUL_LATENCY_P95 and USAGE_PER_SUBSCRIBER p95 removed from the v1 catalog. |

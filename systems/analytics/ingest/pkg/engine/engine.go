@@ -104,7 +104,7 @@ func (e *Engine) runOnce() {
 // high-water mark are retried too. Cheap: completed windows short-circuit on
 // a ledger status read.
 func (e *Engine) processPull(pull schema.PullSpec, now time.Time) error {
-	newest := e.grid.NewestEligible(pull.Strategy, now)
+	newest := e.grid.NewestEligible(now)
 
 	for w := newest - e.catchup + 1; w <= newest; w++ {
 		status, err := e.ledger.Status(e.org, schema.LedgerKindDataset, pull.Key, w)

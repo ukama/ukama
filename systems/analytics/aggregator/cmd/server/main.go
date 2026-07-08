@@ -94,7 +94,7 @@ func run(sDb sql.Db) {
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
 		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
-	grid := schema.Grid{W: serviceConfig.Window.W, L: serviceConfig.Window.L}
+	grid := schema.Grid{W: serviceConfig.Window.W}
 
 	repo := db.NewRepo(sDb)
 

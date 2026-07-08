@@ -32,7 +32,6 @@ type Config struct {
 // WindowConfig is the shared pipeline grid — MUST match ingest/aggregator.
 type WindowConfig struct {
 	W time.Duration `default:"5m"`
-	L time.Duration `default:"10m"`
 }
 
 type EngineConfig struct {

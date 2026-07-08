@@ -111,7 +111,7 @@ func (r *Runner) Stop() {
 
 func (r *Runner) sweepOnce() {
 	now := time.Now().UTC()
-	newest := r.grid.NewestEligible(schema.StrategyFullSnapshot, now)
+	newest := r.grid.NewestEligible(now)
 
 	for _, kpi := range r.kpis {
 		for w := newest - r.catchup + 1; w <= newest; w++ {

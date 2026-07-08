@@ -26,12 +26,10 @@ type Window struct {
 // ingest, analysis and aggregator (env-injected from the same deployment
 // config).
 type Grid struct {
-	// W is the base window duration (pipeline default: 5m).
+	// W is the base window duration (pipeline default: 5m). Every window is
+	// pulled as soon as it closes; late-arriving source data is handled by
+	// the dirty-window recompute path, not by delaying pulls.
 	W time.Duration
-	// L is the watermark lag: a windowed pull for window N only becomes
-	// eligible at N.End + L (pipeline default: 10m). Snapshot pulls are
-	// eligible at N.End (state is captured at window close).
-	L time.Duration
 }
 
 // WindowAt returns the window containing t.
@@ -53,26 +51,9 @@ func (g Grid) Window(id int64) Window {
 	}
 }
 
-// EligibleAt returns the time at which the window may be pulled for the
-// given strategy.
-func (g Grid) EligibleAt(strategy Strategy, w Window) time.Time {
-	if strategy == StrategyWindow {
-		return w.End.Add(g.L)
-	}
-
-	return w.End
-}
-
-// NewestEligible returns the id of the most recent window eligible at 'now'
-// for the given strategy: window N is eligible when now >= EligibleAt(N).
-// Windowed pulls wait out the watermark L; snapshots are eligible at close.
-func (g Grid) NewestEligible(strategy Strategy, now time.Time) int64 {
-	ref := now
-	if strategy == StrategyWindow {
-		ref = now.Add(-g.L)
-	}
-
-	// The window containing ref has not closed yet; its predecessor is the
-	// newest one whose eligibility time has passed.
-	return g.WindowAt(ref).ID - 1
+// NewestEligible returns the id of the most recent window pullable at 'now':
+// a window is eligible as soon as it closes, so that is the predecessor of
+// the window containing now.
+func (g Grid) NewestEligible(now time.Time) int64 {
+	return g.WindowAt(now).ID - 1
 }

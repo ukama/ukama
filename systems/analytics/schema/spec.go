@@ -23,7 +23,7 @@ type Strategy string
 
 const (
 	// StrategyWindow pulls window-bounded data ({{.WindowStart}}/{{.WindowEnd}}
-	// templated into params); eligible at window end + watermark L.
+	// templated into params); eligible at window close.
 	StrategyWindow Strategy = "window"
 	// StrategyFullSnapshot pulls current state every window, stored as a
 	// change-log (rows only on content change + tombstones); eligible at
