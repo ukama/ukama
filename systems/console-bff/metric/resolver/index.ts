@@ -7,12 +7,8 @@
  */
 import { NonEmptyArray } from "type-graphql";
 
-import { GetNetworkStatsResolver } from "./getNetworkStats";
 import { GetNodeLatestMetricResolver } from "./getNodeLatestMetric";
 
-const resolvers: NonEmptyArray<any> = [
-  GetNodeLatestMetricResolver,
-  GetNetworkStatsResolver,
-];
+const resolvers: NonEmptyArray<any> = [GetNodeLatestMetricResolver];
 
 export default resolvers;

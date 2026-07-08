@@ -26,13 +26,14 @@ import PageHeader from '@/components/PageHeader';
 import { sectionValue } from '@/components/SectionFallback';
 import StatusBadge from '@/components/StatusBadge';
 import { useToast } from '@/components/ToastProvider';
-import { useUiPrefs } from '@/lib/store';
+import { useNetworkId } from '@/lib/useNetworkId';
 
 export default function BillingScreen({ embed }: { embed?: boolean }) {
   const toast = useToast();
-  const networkId = useUiPrefs((s) => s.networkId);
+  const networkId = useNetworkId();
   const { data, loading: invLoading, refetch } = useBillingOverviewQuery({
     variables: { networkId },
+    skip: !networkId,
   });
   const invoicesSection = data?.commerceView.invoices;
   const balanceSection = data?.commerceView.balance;

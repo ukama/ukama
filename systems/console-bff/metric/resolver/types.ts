@@ -7,29 +7,10 @@
  */
 import { Field, InputType, ObjectType } from "type-graphql";
 
-@ObjectType()
-export class NetworkStats {
-  @Field()
-  activeSubscriber: number;
-
-  @Field()
-  averageSignalStrength: number;
-
-  @Field()
-  averageThroughput: number;
-}
 @InputType()
 export class GetNodeLatestMetricInput {
   @Field()
   nodeId: string;
-
-  @Field()
-  type: string;
-}
-@InputType()
-export class GetSiteLatestMetricInput {
-  @Field()
-  siteId: string;
 
   @Field()
   type: string;
@@ -48,27 +29,6 @@ export class NodeLatestMetric {
 
   @Field()
   nodeId: string;
-
-  @Field()
-  type: string;
-
-  @Field(() => [Number, Number])
-  value: [number, number];
-}
-
-@ObjectType()
-export class SiteLatestMetric {
-  @Field()
-  success: boolean;
-
-  @Field()
-  msg: string;
-
-  @Field()
-  orgId: string;
-
-  @Field()
-  siteId: string;
 
   @Field()
   type: string;

@@ -24,7 +24,7 @@ export type DeleteNodeMutationVariables = Types.Exact<{
 }>;
 
 
-export type DeleteNodeMutation = { __typename?: 'Mutation', deleteNodeFromOrg: { __typename?: 'DeleteNode', id: string } };
+export type DeleteNodeMutation = { __typename?: 'Mutation', deleteNode: { __typename?: 'DeleteNode', id: string } };
 
 export type AttachNodeMutationVariables = Types.Exact<{
   data: Types.AttachNodeInput;
@@ -82,13 +82,6 @@ export type UpdateNodeMutationVariables = Types.Exact<{
 
 export type UpdateNodeMutation = { __typename?: 'Mutation', updateNode: { __typename?: 'Node', id: string, name: string, latitude: string, longitude: string, type: Types.NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: string, longitude: string, type: Types.NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
 
-export type GetNodeAppsQueryVariables = Types.Exact<{
-  data: Types.NodeAppsChangeLogInput;
-}>;
-
-
-export type GetNodeAppsQuery = { __typename?: 'Query', getNodeApps: { __typename?: 'NodeApps', type: Types.NodeTypeEnum, apps: Array<{ __typename?: 'NodeApp', name: string, date: number, version: string, cpu: string, memory: string, notes: string }> } };
-
 export type GetNodeStateQueryVariables = Types.Exact<{
   getNodeStateId: Types.Scalars['String']['input'];
 }>;
@@ -111,14 +104,14 @@ export type ToggleInternetSwitchMutationVariables = Types.Exact<{
 export type ToggleInternetSwitchMutation = { __typename?: 'Mutation', toggleInternetSwitch: { __typename?: 'CBooleanResponse', success: boolean } };
 
 export type ToggleRfStatusMutationVariables = Types.Exact<{
-  data: Types.ToggleRfStatusInputDto;
+  data: Types.ToggleSiteStatusInputDto;
 }>;
 
 
 export type ToggleRfStatusMutation = { __typename?: 'Mutation', toggleRFStatus: { __typename?: 'CBooleanResponse', success: boolean } };
 
 export type ToggleServiceMutationVariables = Types.Exact<{
-  data: Types.ToggleRfStatusInputDto;
+  data: Types.ToggleSiteStatusInputDto;
 }>;
 
 
@@ -257,7 +250,7 @@ export type GetNodesSuspenseQueryHookResult = ReturnType<typeof useGetNodesSuspe
 export type GetNodesQueryResult = Apollo.QueryResult<GetNodesQuery, GetNodesQueryVariables>;
 export const DeleteNodeDocument = gql`
     mutation deleteNode($data: NodeInput!) {
-  deleteNodeFromOrg(data: $data) {
+  deleteNode(data: $data) {
     id
   }
 }
@@ -564,57 +557,6 @@ export function useUpdateNodeMutation(baseOptions?: Apollo.MutationHookOptions<U
 export type UpdateNodeMutationHookResult = ReturnType<typeof useUpdateNodeMutation>;
 export type UpdateNodeMutationResult = Apollo.MutationResult<UpdateNodeMutation>;
 export type UpdateNodeMutationOptions = Apollo.BaseMutationOptions<UpdateNodeMutation, UpdateNodeMutationVariables>;
-export const GetNodeAppsDocument = gql`
-    query getNodeApps($data: NodeAppsChangeLogInput!) {
-  getNodeApps(data: $data) {
-    apps {
-      name
-      date
-      version
-      cpu
-      memory
-      notes
-    }
-    type
-  }
-}
-    `;
-
-/**
- * __useGetNodeAppsQuery__
- *
- * To run a query within a React component, call `useGetNodeAppsQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetNodeAppsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetNodeAppsQuery({
- *   variables: {
- *      data: // value for 'data'
- *   },
- * });
- */
-export function useGetNodeAppsQuery(baseOptions: Apollo.QueryHookOptions<GetNodeAppsQuery, GetNodeAppsQueryVariables> & ({ variables: GetNodeAppsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetNodeAppsQuery, GetNodeAppsQueryVariables>(GetNodeAppsDocument, options);
-      }
-export function useGetNodeAppsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNodeAppsQuery, GetNodeAppsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetNodeAppsQuery, GetNodeAppsQueryVariables>(GetNodeAppsDocument, options);
-        }
-// @ts-ignore
-export function useGetNodeAppsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetNodeAppsQuery, GetNodeAppsQueryVariables>): Apollo.UseSuspenseQueryResult<GetNodeAppsQuery, GetNodeAppsQueryVariables>;
-export function useGetNodeAppsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNodeAppsQuery, GetNodeAppsQueryVariables>): Apollo.UseSuspenseQueryResult<GetNodeAppsQuery | undefined, GetNodeAppsQueryVariables>;
-export function useGetNodeAppsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNodeAppsQuery, GetNodeAppsQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetNodeAppsQuery, GetNodeAppsQueryVariables>(GetNodeAppsDocument, options);
-        }
-export type GetNodeAppsQueryHookResult = ReturnType<typeof useGetNodeAppsQuery>;
-export type GetNodeAppsLazyQueryHookResult = ReturnType<typeof useGetNodeAppsLazyQuery>;
-export type GetNodeAppsSuspenseQueryHookResult = ReturnType<typeof useGetNodeAppsSuspenseQuery>;
-export type GetNodeAppsQueryResult = Apollo.QueryResult<GetNodeAppsQuery, GetNodeAppsQueryVariables>;
 export const GetNodeStateDocument = gql`
     query GetNodeState($getNodeStateId: String!) {
   getNodeState(id: $getNodeStateId) {
@@ -730,7 +672,7 @@ export type ToggleInternetSwitchMutationHookResult = ReturnType<typeof useToggle
 export type ToggleInternetSwitchMutationResult = Apollo.MutationResult<ToggleInternetSwitchMutation>;
 export type ToggleInternetSwitchMutationOptions = Apollo.BaseMutationOptions<ToggleInternetSwitchMutation, ToggleInternetSwitchMutationVariables>;
 export const ToggleRfStatusDocument = gql`
-    mutation ToggleRFStatus($data: ToggleRFStatusInputDto!) {
+    mutation ToggleRFStatus($data: ToggleSiteStatusInputDto!) {
   toggleRFStatus(data: $data) {
     success
   }
@@ -763,7 +705,7 @@ export type ToggleRfStatusMutationHookResult = ReturnType<typeof useToggleRfStat
 export type ToggleRfStatusMutationResult = Apollo.MutationResult<ToggleRfStatusMutation>;
 export type ToggleRfStatusMutationOptions = Apollo.BaseMutationOptions<ToggleRfStatusMutation, ToggleRfStatusMutationVariables>;
 export const ToggleServiceDocument = gql`
-    mutation ToggleService($data: ToggleRFStatusInputDto!) {
+    mutation ToggleService($data: ToggleSiteStatusInputDto!) {
   toggleService(data: $data) {
     success
   }

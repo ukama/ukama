@@ -9,7 +9,7 @@ export type NetworkCustomersQueryVariables = Types.Exact<{
 }>;
 
 
-export type NetworkCustomersQuery = { __typename?: 'Query', subscribersView: { __typename?: 'SubscribersView', networkId: string, subscribers: { __typename?: 'SubscribersSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, subscribers?: Array<{ __typename?: 'SubscriberDto', uuid: string, name: string, phone: string, email: string, networkId: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, iccid: string, msisdn: string, status: string, type: string, package?: { __typename?: 'SimPackageDto', package_id: string, is_active: boolean, updated_at: string } | null }> | null }> | null }, plans: { __typename?: 'PlansSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, plans?: Array<{ __typename?: 'PlanNameDto', packageId: string, name: string }> | null }, usage: { __typename?: 'GapSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null } } };
+export type NetworkCustomersQuery = { __typename?: 'Query', subscribersView: { __typename?: 'SubscribersView', networkId: string, subscribers: { __typename?: 'SubscribersSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, subscribers?: Array<{ __typename?: 'SubscriberDto', uuid: string, name: string, phone: string, email: string, networkId: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, iccid: string, msisdn: string, status: string, type: string, package?: { __typename?: 'SimPackageDto', package_id: string, is_active: boolean, updated_at: string } | null }> | null }> | null }, plans: { __typename?: 'PlansSection', error?: { __typename?: 'SectionError', section: string, code: Types.SectionErrorCode, message: string } | null, plans?: Array<{ __typename?: 'PlanNameDto', packageId: string, name: string }> | null } } };
 
 
 export const NetworkCustomersDocument = gql`
@@ -47,11 +47,6 @@ export const NetworkCustomersDocument = gql`
       plans {
         packageId
         name
-      }
-    }
-    usage {
-      error {
-        ...SectionErrorFields
       }
     }
   }

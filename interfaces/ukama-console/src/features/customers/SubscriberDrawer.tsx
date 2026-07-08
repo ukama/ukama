@@ -10,12 +10,15 @@ import {
   useGetPackagesForSimQuery,
   useGetPackagesQuery,
 } from '@/client/graphql/packages.generated';
+import { useToggleSimStatusMutation } from '@/client/graphql/sims.generated';
 import AppDrawer, { DetailRow } from '@/components/AppDrawer';
+import AppModal from '@/components/AppModal';
 import Meter from '@/components/Meter';
 import StatusBadge from '@/components/StatusBadge';
 import { useToast } from '@/components/ToastProvider';
 import type { Subscriber } from '@/data';
 import { formatDate, parseTimestamp } from '@/lib/parsers';
+import { bytesToGB, formatBytes } from '@/lib/usage';
 import {
   NO_DATA_PLANS_MESSAGE,
   NO_POOL_SIMS_MESSAGE,
@@ -62,18 +65,54 @@ const KIND_ORDER: Record<PackageKind, number> = {
 export default function SubscriberDrawer({
   sub,
   onClose,
-  readOnly,
+  agent,
   onChanged,
 }: {
   sub: Subscriber;
   onClose: () => void;
-  readOnly?: boolean;
+  /** Customer (agent) lens only — enables the Top-up / SIM management footer. */
+  agent?: boolean;
   onChanged?: () => void;
 }) {
   const toast = useToast();
   const [showTopUp, setShowTopUp] = useState(false);
   const [showAllocate, setShowAllocate] = useState(false);
   const hasSim = !!sub.simId;
+  const simActive = sub.sim === 'active';
+  // Suspended SIMs are managed elsewhere — the active/inactive toggle is
+  // disabled for them here.
+  const simSuspended = sub.sim === 'suspended';
+  const [confirmSim, setConfirmSim] = useState(false);
+
+  const [toggleSim, { loading: togglingSim }] = useToggleSimStatusMutation({
+    onCompleted: (d) => {
+      setConfirmSim(false);
+      const res = d.toggleSimStatus;
+      if (res.success) {
+        // Activation/deactivation runs asynchronously on the backend, so the
+        // toast reports that the process has started, not that it's applied.
+        toast(
+          `SIM ${simActive ? 'deactivation' : 'activation'} process initiated`,
+        );
+        onChanged?.(); // refresh the list + this subscriber's sim status
+      } else {
+        toast(res.message ?? "Couldn't update SIM status");
+      }
+    },
+    onError: (e) => {
+      setConfirmSim(false);
+      toast(e.message || "Couldn't update SIM status");
+    },
+  });
+
+  const doToggleSim = () => {
+    if (!sub.simId) return;
+    toggleSim({
+      variables: {
+        data: { sim_id: sub.simId, status: simActive ? 'inactive' : 'active' },
+      },
+    });
+  };
 
   // Allocating needs an available pool SIM and a data plan — guide the user to
   // set up whichever is missing instead of opening an unusable dialog.
@@ -90,9 +129,12 @@ export default function SubscriberDrawer({
     }
     setShowAllocate(true);
   };
-  // usage is -1 when unknown/none — clamp so we never render "-1 GB".
-  const usage = Math.max(0, sub.usage);
-  const pct = sub.cap ? Math.min(100, (usage / sub.cap) * 100) : 50;
+  // usage is raw bytes (-1 when unknown/none — clamp so we never render "-1").
+  const usageBytes = Math.max(0, sub.usage);
+  const usageLabel = formatBytes(usageBytes);
+  const pct = sub.cap
+    ? Math.min(100, (bytesToGB(usageBytes) / sub.cap) * 100)
+    : 50;
   const initials = sub.name
     .split(' ')
     .map((x) => x[0])
@@ -211,7 +253,7 @@ export default function SubscriberDrawer({
                   marginTop: 7,
                 }}
               >
-                {usage} of {sub.cap} GB used this cycle
+                {usageLabel} of {sub.cap} GB used this cycle
               </div>
             </>
           ) : (
@@ -219,12 +261,11 @@ export default function SubscriberDrawer({
               className="tnum"
               style={{ fontSize: 12.5, color: 'var(--uk-ink-2)' }}
             >
-              {usage} GB used · unlimited
+              {usageLabel} used · unlimited
             </div>
           )}
         </div>
 
-        <DetailRow k="Site" v={sub.site} />
         <DetailRow k="ICCID" v={sub.iccid} />
         <DetailRow
           k="SIM status"
@@ -295,7 +336,7 @@ export default function SubscriberDrawer({
         )}
       </div>
 
-      {!readOnly && (
+      {agent && (
         <div
           style={{
             padding: '14px 24px',
@@ -305,14 +346,33 @@ export default function SubscriberDrawer({
           }}
         >
           {hasSim ? (
-            <Button
-              variant="contained"
-              startIcon={<AddCardRounded />}
-              sx={{ flex: 1 }}
-              onClick={() => setShowTopUp(true)}
-            >
-              Top up
-            </Button>
+            <>
+              <Button
+                variant="contained"
+                startIcon={<AddCardRounded />}
+                sx={{ flex: 1 }}
+                disabled={!simActive}
+                title={!simActive ? 'SIM must be active to top up' : undefined}
+                onClick={() => setShowTopUp(true)}
+              >
+                Top up
+              </Button>
+              <Button
+                variant="outlined"
+                color={simActive ? 'error' : 'primary'}
+                startIcon={<SimCardRounded />}
+                sx={{ flex: 1 }}
+                disabled={togglingSim || simSuspended}
+                title={simSuspended ? 'SIM is suspended' : undefined}
+                onClick={() => setConfirmSim(true)}
+              >
+                {simSuspended
+                  ? 'SIM suspended'
+                  : simActive
+                    ? 'Deactivate SIM'
+                    : 'Activate SIM'}
+              </Button>
+            </>
           ) : (
             <Button
               variant="contained"
@@ -324,6 +384,59 @@ export default function SubscriberDrawer({
             </Button>
           )}
         </div>
+      )}
+
+      {confirmSim && (
+        <AppModal
+          title={simActive ? 'Deactivate SIM' : 'Activate SIM'}
+          width={420}
+          onClose={() => {
+            if (!togglingSim) setConfirmSim(false);
+          }}
+          footer={
+            <>
+              <Button
+                color="inherit"
+                sx={{ color: 'var(--uk-ink-3)' }}
+                disabled={togglingSim}
+                onClick={() => setConfirmSim(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                color={simActive ? 'error' : 'primary'}
+                startIcon={<SimCardRounded />}
+                disabled={togglingSim}
+                onClick={doToggleSim}
+              >
+                {togglingSim
+                  ? 'Updating…'
+                  : simActive
+                    ? 'Deactivate SIM'
+                    : 'Activate SIM'}
+              </Button>
+            </>
+          }
+        >
+          <div
+            style={{ fontSize: 14, color: 'var(--uk-ink-2)', lineHeight: 1.55 }}
+          >
+            {simActive ? (
+              <>
+                This will deactivate the SIM for{' '}
+                <b style={{ color: 'var(--uk-ink)' }}>{sub.name}</b>. They&apos;ll
+                lose connectivity until the SIM is reactivated.
+              </>
+            ) : (
+              <>
+                This will activate the SIM for{' '}
+                <b style={{ color: 'var(--uk-ink)' }}>{sub.name}</b> and restore
+                their connectivity.
+              </>
+            )}
+          </div>
+        </AppModal>
       )}
 
       {showTopUp && (

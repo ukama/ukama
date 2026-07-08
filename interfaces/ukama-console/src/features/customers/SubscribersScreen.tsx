@@ -7,9 +7,9 @@
  */
 'use client';
 import { useNetworkCustomersQuery } from '@/client/graphql/network-customers.generated';
+import { useGetSimsUsageByNetworkQuery } from '@/client/graphql/sims.generated';
 import DataTable from '@/components/data-table/DataTable';
 import DateChip from '@/components/DateChip';
-import Meter from '@/components/Meter';
 import PageHeader from '@/components/PageHeader';
 import PageWatermark from '@/components/PageWatermark';
 import SearchField from '@/components/SearchField';
@@ -24,11 +24,13 @@ import {
   useAvailableDataPlans,
   useAvailablePoolSims,
 } from '@/lib/sim-pool';
-import { useUiPrefs } from '@/lib/store';
+import { useNetworkId } from '@/lib/useNetworkId';
+import { bytesToGB, formatBytes, parseUsageBytes } from '@/lib/usage';
 import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
 import GroupRounded from '@mui/icons-material/GroupRounded';
 import PersonAddRounded from '@mui/icons-material/PersonAddRounded';
 import Button from '@mui/material/Button';
+import Skeleton from '@mui/material/Skeleton';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
@@ -49,7 +51,7 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
   const agent = mode === 'agent';
   const showSite = mode === 'network';
   const clickRow = mode !== 'network';
-  const networkId = useUiPrefs((s) => s.networkId);
+  const networkId = useNetworkId();
 
   const [q, setQ] = useState('');
   const [openSub, setOpenSub] = useState<Subscriber | null>(null);
@@ -78,14 +80,33 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
   const subsSection = data?.subscribersView.subscribers;
   const plansSection = data?.subscribersView.plans;
 
+  // One aggregated usage call for the whole network (BFF fans out per SIM),
+  // indexed by SIM id and converted from bytes to GB to match `cap`.
+  const { data: usageData, loading: usageLoading } =
+    useGetSimsUsageByNetworkQuery({
+      variables: { networkId },
+      skip: !networkId,
+      fetchPolicy: 'cache-and-network',
+    });
+  const usageBySim = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const u of usageData?.getSimsUsageByNetwork ?? []) {
+      const bytes = parseUsageBytes(u.usage); // raw bytes; formatted on render
+      if (bytes != null) m.set(u.simId, bytes);
+    }
+    return m;
+  }, [usageData]);
+
   const subscribers: Subscriber[] = useMemo(() => {
     const plansById = new Map(
       (plansSection?.plans ?? []).map((p) => [p.packageId, p]),
     );
-    return (subsSection?.subscribers ?? []).map((s) =>
-      toSubscriber(s, plansById),
-    );
-  }, [subsSection?.subscribers, plansSection?.plans]);
+    return (subsSection?.subscribers ?? []).map((s) => {
+      const sub = toSubscriber(s, plansById);
+      const usage = sub.simId ? usageBySim.get(sub.simId) : undefined;
+      return usage != null ? { ...sub, usage } : sub;
+    });
+  }, [subsSection?.subscribers, plansSection?.plans, usageBySim]);
 
   const planNames = useMemo(
     () => [...(plansSection?.plans ?? []).map((p) => p.name), 'No plan'],
@@ -142,36 +163,25 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
       enableSorting: true,
       cell: ({ row }) => {
         const s = row.original;
-        if (s.plan === 'No plan' || s.usage < 0)
-          return <span className="muted">—</span>;
-        const pct = s.cap ? Math.min(100, (s.usage / s.cap) * 100) : 60;
-        const over = !!s.cap && s.usage / s.cap > 0.9;
+        if (s.plan === 'No plan') return <span className="muted">—</span>;
+        // Usage is fetched separately (getSimsUsageByNetwork) — show a skeleton
+        // until it resolves, rather than a premature "—".
+        if (usageLoading && s.usage < 0)
+          return <Skeleton variant="rounded" width={140} height={16} />;
+        if (s.usage < 0) return <span className="muted">—</span>;
+        const over = !!s.cap && bytesToGB(s.usage) / s.cap > 0.9;
         return (
-          <div
+          <span
+            className="tnum"
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              width: 150,
+              fontSize: 12,
+              color: over ? 'var(--uk-orange)' : 'var(--uk-ink-2)',
+              whiteSpace: 'nowrap',
             }}
           >
-            <Meter
-              value={pct}
-              color={over ? 'var(--uk-orange)' : undefined}
-              sx={{ flex: 1, minWidth: 60 }}
-            />
-            <span
-              className="tnum"
-              style={{
-                fontSize: 12,
-                color: 'var(--uk-ink-2)',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {s.usage}
-              {s.cap ? '/' + s.cap : ''} GB
-            </span>
-          </div>
+            {formatBytes(s.usage)}
+            {s.cap ? ` / ${s.cap} GB` : ''}
+          </span>
         );
       },
     });
@@ -220,7 +230,7 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
       });
     }
     return cols;
-  }, [clickRow, showSite, planNames]);
+  }, [clickRow, showSite, planNames, usageLoading]);
 
   return (
     <div
@@ -248,7 +258,15 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
           ) : undefined
         }
       />
-      <div style={{ marginTop: 4 }}>
+      <div
+        style={{
+          marginTop: 4,
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
         <div
           style={{
             display: 'flex',
@@ -265,7 +283,10 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
           />
         </div>
 
-        <div className="tbl-wrap" style={{ overflowX: 'auto' }}>
+        <div
+          className="tbl-wrap"
+          style={{ overflow: 'auto', flex: 1, minHeight: 0 }}
+        >
           <DataTable<Subscriber>
             columns={columns}
             data={subscribers}
@@ -315,7 +336,7 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
         <SubscriberDrawer
           sub={openSub}
           onClose={() => setOpenSub(null)}
-          readOnly={mode === 'biz'}
+          agent={agent}
           onChanged={() => void refetch()}
         />
       )}

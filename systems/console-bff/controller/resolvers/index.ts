@@ -7,7 +7,6 @@
  */
 import { NonEmptyArray } from "type-graphql";
 
-import { ExampleResolver } from "./exampleResolver";
 import { RestartNodeResolver } from "./restartNode";
 import { RestartSiteResolver } from "./restartSite";
 import { SetSiteResolver } from "./setSite";
@@ -16,7 +15,6 @@ import { ToggleRFStatusResolver } from "./toggleRFStatus";
 import { ToggleServiceResolver } from "./toggleService";
 
 const resolvers: NonEmptyArray<any> = [
-  ExampleResolver,
   RestartNodeResolver,
   RestartSiteResolver,
   ToggleServiceResolver,

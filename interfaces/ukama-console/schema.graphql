@@ -1,10 +1,39 @@
 type Query {
+  getAlarms(data: AnalyticsWindowInput!): NetworkAlarmsDto!
+  getBackhaul(data: AnalyticsWindowInput!): MetricPanelDto!
+  getBillingSummary(data: AnalyticsWindowInput!): BillingSummaryDto!
+  getBusinessHome(data: AnalyticsWindowInput!): BusinessHomeDto!
+  getBusinessSite(data: AnalyticsSiteInput!): BusinessSiteDto!
+  getBusinessSites(data: AnalyticsWindowInput!): BusinessSitesDto!
+  getCustomer(data: CustomerByIdInput!): CustomerDetailDto!
+  getCustomerOverview(data: AnalyticsWindowInput!): CustomerOverviewDto!
+  getCustomerSims(data: AnalyticsWindowInput!): CustomerSimsDto!
+  getCustomerSupport(data: CustomerByIdInput!): CustomerSupportDto!
+  getEvents(data: AnalyticsWindowInput!): NetworkEventsDto!
+  getHomeKpis(data: HomeViewInput!): HomeKpis!
+  getInventoryReadiness(data: AnalyticsWindowInput!): InventoryReadinessDto!
+  getMetrics(data: AnalyticsWindowInput!): NetworkMetricsDto!
+  getNetworkNode(data: AnalyticsNodeInput!): NetworkNodeDto!
+  getNetworkNodes(data: AnalyticsWindowInput!): NetworkNodesDto!
+  getNetworkOverview(data: AnalyticsWindowInput!): NetworkOverviewDto!
+  getNetworkSite(data: AnalyticsSiteInput!): NetworkSiteDto!
+  getNetworkSites(data: AnalyticsWindowInput!): NetworkSitesDto!
+  getNodePool(data: AnalyticsWindowInput!): NodePoolDto!
+  getPackagePerformance(data: AnalyticsWindowInput!): PackagePerformanceDto!
+  getPower(data: AnalyticsWindowInput!): MetricPanelDto!
+  getRadio(data: AnalyticsWindowInput!): MetricPanelDto!
+  getRefreshState: RefreshStateDto!
+  getSalesOverview(data: AnalyticsWindowInput!): SalesOverviewDto!
+  getSimPool(data: AnalyticsWindowInput!): SimPoolDto!
+  getTopology(data: AnalyticsWindowInput!): NetworkTopologyDto!
+  listCustomers(data: AnalyticsWindowInput!): CustomerListDto!
+  searchCustomers(data: AnalyticsWindowInput!): CustomerListDto!
+  supportSearch(data: AnalyticsWindowInput!): NetworkSupportSearchDto!
   getReport(id: String!): GetReportDto!
   getReportPdf(id: String!): GetReportDto!
   getReports(data: GetReportsInputDto!): GetReportsDto!
   getComponentById(componentId: String!): ComponentDto!
   getComponentsByUserId(data: ComponentTypeInputDto!): ComponentsResDto!
-  example: String
   commerceView(networkId: String): CommerceView!
   inventoryView: InventoryView!
   membersView: MembersView!
@@ -12,11 +41,13 @@ type Query {
   networkOverview(networkId: String!): NetworkOverview!
   nodesView(networkId: String): NodesView!
   nodeView(nodeId: String!): NodeView!
+  onboardingStatus: OnboardingStatusDto!
   simPoolView(simType: String!): SimPoolView!
   sitesView(networkId: String!): SitesView!
   siteView(siteId: String!): SiteView!
   subscriberView(subscriberId: String!): SubscriberView!
   subscribersView(networkId: String!): SubscribersView!
+  getApps(data: GetAppsInputDto!): Apps
   getHealthReport(data: GetHealthReportInputDto!): HealthInfo!
   getCountries: CountriesRes!
   getCurrencySymbol(code: String!): CurrencyRes!
@@ -27,13 +58,10 @@ type Query {
   getMember(id: String!): MemberDto!
   getMemberByUserId(userId: String!): MemberDto!
   getMembers: MembersResDto!
-  getNetworkStats(networkId: String!): NetworkStats!
   getNodeLatestMetric(data: GetNodeLatestMetricInput!): NodeLatestMetric!
   getNetwork(networkId: String!): NetworkDto!
   getNetworks: NetworksResDto!
-  getAppsChangeLog(data: NodeAppsChangeLogInput!): AppChangeLogs!
   getNode(data: NodeInput!): Node!
-  getNodeApps(data: NodeAppsChangeLogInput!): NodeApps!
   getNodeState(id: String!): NodeStateRes!
   getNodes(data: NodesFilterInput!): Nodes!
   getNodesByNetwork(networkId: String!): Nodes!
@@ -42,6 +70,10 @@ type Query {
   getNodesLocation: Nodes!
   getNotification(id: String!): NotificationResDto!
   getNotifications: NotificationsResDto!
+  getNodeOperationStatus(data: NodeOperationStatusInputDto!): NodeOperationStatusDto!
+  getOperation(data: GetOperationInputDto!): OperationDto
+  getResourceLock(data: GetResourceLockInputDto!): ResourceLockDto!
+  getSiteOperationStatus(data: SiteOperationStatusInputDto!): SiteOperationStatusDto!
   getOrg: OrgDto!
   getOrgTree: OrgTreeRes!
   getOrgs: OrgsResDto!
@@ -58,13 +90,14 @@ type Query {
   getDataUsages(data: SimUsagesInputDto!): SimDataUsages!
   getPackagesForSim(data: GetPackagesForSimInputDto!): GetSimPackagesDtoAPI!
   getSim(data: GetSimInputDto!): SimDto!
+  getSimByIccid(iccid: String!): SimPoolResDto!
   getSimPoolStats(data: GetSimsInput!): SimPoolStatsDto!
   getSims(data: ListSimsInput!): SimsResDto!
   getSimsBySubscriber(data: GetSimBySubscriberInputDto!): SubscriberToSimsDto!
   getSimsFromPool(data: GetSimsInput!): SimsPoolResDto!
+  getSimsUsageByNetwork(networkId: String!): [SimUsageItem!]!
   getSite(siteId: String!): SiteDto!
   getSites(data: SitesInputDto!): SitesResDto!
-  getApps(data: GetAppsInputDto!): Apps
   getSoftwares(data: GetSoftwaresInput!): Softwares!
   getSimsByNetwork(networkId: String!): SubscriberSimsResDto!
   getSubscriber(subscriberId: String!): SubscriberDto!
@@ -72,6 +105,444 @@ type Query {
   getSubscribersByNetwork(networkId: String!): SubscribersResDto!
   getUser(userId: String!): UserResDto!
   whoami: WhoamiDto!
+}
+
+type NetworkAlarmsDto {
+  kpis: [KpiDto!]!
+  alarms: [AlarmRowDto!]!
+  meta: MetaDto
+}
+
+type KpiDto {
+  key: String!
+  value: Float!
+  formatted: String
+  delta: Float
+  deltaPeriod: String
+  stale: Boolean
+  asOf: String
+}
+
+type AlarmRowDto {
+  alarmId: String
+  severity: String
+  state: String
+  resourceType: String
+  resourceId: String
+  description: String
+  customersAffected: Int!
+  revenueAtRisk: Float!
+  recommendedAction: String
+  openedAt: String
+  closedAt: String
+}
+
+type MetaDto {
+  count: Int!
+  page: Int!
+  size: Int!
+  pages: Int!
+}
+
+input AnalyticsWindowInput {
+  networkId: String
+  siteId: String
+  nodeId: String
+  status: String
+  severity: String
+  state: String
+  metric: String
+  query: String
+  period: String
+  from: String
+  to: String
+  timezone: String
+  page: Int
+  pageSize: Int
+}
+
+type MetricPanelDto {
+  kpis: [KpiDto!]!
+  series: [TimeSeriesDto!]!
+  alarms: [AlarmRowDto!]!
+}
+
+type TimeSeriesDto {
+  key: String!
+  points: [PointDto!]!
+}
+
+type PointDto {
+  time: String
+  value: Float!
+}
+
+type BillingSummaryDto {
+  kpis: [KpiDto!]!
+  invoices: [InvoiceRowDto!]!
+  lastInvoiceDate: String
+  meta: MetaDto
+}
+
+type InvoiceRowDto {
+  invoiceId: String
+  amount: Float!
+  status: String
+  generatedAt: String
+}
+
+type BusinessHomeDto {
+  kpis: [KpiDto!]!
+  sites: [SiteSummaryDto!]!
+  topPackages: [NamedValueDto!]!
+  recentActivity: [ActivityItemDto!]!
+}
+
+type SiteSummaryDto {
+  siteId: String!
+  name: String
+  status: String
+  revenue: Float!
+  customers: Int!
+}
+
+type NamedValueDto {
+  name: String
+  id: String
+  value: Float!
+}
+
+type ActivityItemDto {
+  routingKey: String
+  description: String
+  occurredAt: String
+}
+
+type BusinessSiteDto {
+  site: BusinessSiteRowDto
+  kpis: [KpiDto!]!
+  revenueTrend: TimeSeriesDto
+}
+
+type BusinessSiteRowDto {
+  siteId: String!
+  name: String
+  status: String
+  revenue: Float!
+  revenueToday: Float!
+  customers: Int!
+  dataUsed: Float!
+  uptime: Float!
+  topPackage: String
+  issue: String
+  latitude: Float!
+  longitude: Float!
+}
+
+input AnalyticsSiteInput {
+  siteId: String!
+  period: String
+  from: String
+  to: String
+  timezone: String
+}
+
+type BusinessSitesDto {
+  sites: [BusinessSiteRowDto!]!
+  meta: MetaDto
+}
+
+type CustomerDetailDto {
+  customer: CustomerRowDto
+  kpis: [KpiDto!]!
+  packageHistory: [PackageIntervalDto!]!
+}
+
+type CustomerRowDto {
+  customerId: String!
+  name: String
+  email: String
+  status: String
+  packageName: String
+  packageStatus: String
+  dataUsage: Float!
+  lastSeen: String
+  siteId: String
+  siteName: String
+  simIccid: String
+  simStatus: String
+}
+
+type PackageIntervalDto {
+  packageId: String
+  packageName: String
+  startAt: String
+  endAt: String
+  state: String
+}
+
+input CustomerByIdInput {
+  customerId: String!
+  period: String
+  from: String
+  to: String
+  timezone: String
+}
+
+type CustomerOverviewDto {
+  kpis: [KpiDto!]!
+}
+
+type CustomerSimsDto {
+  sims: [SimRowDto!]!
+  meta: MetaDto
+}
+
+type SimRowDto {
+  simId: String!
+  iccid: String
+  status: String
+  customerId: String
+  batchId: String
+  allocatedAt: String
+}
+
+type CustomerSupportDto {
+  customer: CustomerRowDto
+  likelyIssue: String
+  recommendedAction: String
+  escalationNeeded: Boolean!
+  signals: [SupportSignalDto!]!
+  recentActivity: [ActivityItemDto!]!
+}
+
+type SupportSignalDto {
+  key: String!
+  state: String
+  detail: String
+}
+
+type NetworkEventsDto {
+  events: [EventRowDto!]!
+  meta: MetaDto
+}
+
+type EventRowDto {
+  routingKey: String
+  resourceType: String
+  resourceId: String
+  description: String
+  occurredAt: String
+}
+
+type HomeKpis {
+  kpis: [KpiDto!]!
+}
+
+input HomeViewInput {
+  lens: HomeLens!
+  networkId: String
+  period: String
+  from: String
+  to: String
+  timezone: String
+}
+
+"""Which lens's home data to fetch."""
+enum HomeLens {
+  BUSINESS
+  NETWORK
+}
+
+type InventoryReadinessDto {
+  kpis: [KpiDto!]!
+}
+
+type NetworkMetricsDto {
+  metrics: [MetricInfoDto!]!
+  series: [TimeSeriesDto!]!
+}
+
+type MetricInfoDto {
+  name: String
+  unit: String
+  lastSampleAt: String
+  stale: Boolean!
+}
+
+type NetworkNodeDto {
+  node: NodeRowDto
+  kpis: [KpiDto!]!
+  series: [TimeSeriesDto!]!
+  recentEvents: [EventRowDto!]!
+}
+
+type NodeRowDto {
+  nodeId: String!
+  name: String
+  type: String
+  status: String
+  siteId: String
+  siteName: String
+  uptime: Float!
+  lastTelemetry: String
+  noTelemetryWarning: Boolean!
+  configuringDurationSeconds: Float!
+}
+
+input AnalyticsNodeInput {
+  nodeId: String!
+  period: String
+  from: String
+  to: String
+  timezone: String
+}
+
+type NetworkNodesDto {
+  kpis: [KpiDto!]!
+  nodes: [NodeRowDto!]!
+  meta: MetaDto
+}
+
+type NetworkOverviewDto {
+  networkStatus: String
+  kpis: [KpiDto!]!
+  recentEvents: [EventRowDto!]!
+}
+
+type NetworkSiteDto {
+  site: SiteRowDto
+  kpis: [KpiDto!]!
+  series: [TimeSeriesDto!]!
+  alarms: [AlarmRowDto!]!
+}
+
+type SiteRowDto {
+  siteId: String!
+  name: String
+  status: String
+  nodeCount: Int!
+  customers: Int!
+  uptime: Float!
+  issueSummary: String
+  backhaulLatencyHigh: Boolean!
+  batteryCritical: Boolean!
+  offlineDurationSeconds: Float!
+  latitude: Float!
+  longitude: Float!
+}
+
+type NetworkSitesDto {
+  kpis: [KpiDto!]!
+  sites: [SiteRowDto!]!
+  meta: MetaDto
+}
+
+type NodePoolDto {
+  kpis: [KpiDto!]!
+  nodes: [NodeRowDto!]!
+}
+
+type PackagePerformanceDto {
+  kpis: [KpiDto!]!
+  packages: [PackageRowDto!]!
+  revenueMix: [NamedValueDto!]!
+  meta: MetaDto
+}
+
+type PackageRowDto {
+  packageId: String!
+  name: String
+  price: Float!
+  validity: String
+  dataQuota: String
+  status: String
+  soldCount: Int!
+  revenue: Float!
+  revenueSharePct: Float
+  dataUsed: Float!
+  activeSubscribers: Int!
+}
+
+type RefreshStateDto {
+  states: [SourceStateDto!]!
+  rollups: [RollupStateDto!]!
+}
+
+type SourceStateDto {
+  source: String
+  status: String
+  detail: String
+  lastRunAt: String
+  lastSuccessAt: String
+}
+
+type RollupStateDto {
+  rollup: String
+  watermark: String
+  dirty: Boolean!
+}
+
+type SalesOverviewDto {
+  kpis: [KpiDto!]!
+  revenueTrend: TimeSeriesDto
+  revenueBySite: [NamedValueDto!]!
+  revenueByPackage: [NamedValueDto!]!
+}
+
+type SimPoolDto {
+  kpis: [KpiDto!]!
+  batches: [SimBatchDto!]!
+}
+
+type SimBatchDto {
+  batchId: String!
+  quantity: Int!
+  assigned: Int!
+  assignedPercent: Float!
+  uploadedAt: String
+}
+
+type NetworkTopologyDto {
+  sites: [TopologySiteDto!]!
+}
+
+type TopologySiteDto {
+  siteId: String
+  name: String
+  status: String
+  latitude: Float!
+  longitude: Float!
+  nodes: [TopologyNodeDto!]!
+}
+
+type TopologyNodeDto {
+  nodeId: String
+  name: String
+  type: String
+  status: String
+}
+
+type CustomerListDto {
+  customers: [CustomerRowDto!]!
+  meta: MetaDto
+}
+
+type NetworkSupportSearchDto {
+  results: [SupportResultDto!]!
+}
+
+type SupportResultDto {
+  resourceType: String
+  resourceId: String
+  name: String
+  status: String
+  customers: Int!
+  uptime30d: Float!
+  batteryPercent: Float!
+  signalDbm: Float!
+  statusSummary: String
+  recommendation: String
 }
 
 type GetReportDto {
@@ -376,6 +847,7 @@ type MetricRes {
   dataPlanId: String
   siteId: String
   type: String!
+  label: String
   values: [[Float!]!]!
   unit: String
   format: String
@@ -396,6 +868,7 @@ input MetricsRangeInput {
   to: Int
   nodeId: String
   operation: String
+  step: Int
 }
 
 type NetworkOverview {
@@ -523,6 +996,10 @@ type KpiEntryDto {
   value: Float!
   timestamp: Float!
   success: Boolean!
+  label: String
+  unit: String
+  format: String
+  threshold: MetricThreshold
 }
 
 type NodesView {
@@ -538,6 +1015,8 @@ type GapSection {
 type NodeView {
   nodeId: String!
   node: NodeSection!
+  site: SiteSection!
+  siblings: NodesSection!
   health: HealthSection!
   software: SoftwareSection!
   stateHistory: NodeStateSection!
@@ -548,6 +1027,11 @@ type NodeView {
 type NodeSection {
   error: SectionError
   node: Node
+}
+
+type SiteSection {
+  error: SectionError
+  site: SiteDto
 }
 
 type HealthSection {
@@ -642,6 +1126,14 @@ enum NodeStateEnum {
   Faulty
 }
 
+type OnboardingStatusDto {
+  hasNetwork: Boolean!
+  hasSite: Boolean!
+  hasNode: Boolean!
+  networkId: String
+  networkName: String
+}
+
 type SimPoolView {
   simType: String!
   stats: SimPoolStatsSection!
@@ -673,6 +1165,7 @@ type SitesView {
   networkId: String!
   sites: SitesSection!
   nodeCounts: SiteNodeCountsSection!
+  customers: SiteCustomersSection!
   kpis: GapSection!
   financials: GapSection!
 }
@@ -689,6 +1182,11 @@ type SiteNodeCountDto {
   offline: Int!
 }
 
+type SiteCustomersSection {
+  error: SectionError
+  count: Int
+}
+
 type SiteView {
   siteId: String!
   site: SiteSection!
@@ -697,11 +1195,6 @@ type SiteView {
   power: KpisSection!
   kpis: KpisSection!
   financials: GapSection!
-}
-
-type SiteSection {
-  error: SectionError
-  site: SiteDto
 }
 
 type SiteComponentsSection {
@@ -807,7 +1300,6 @@ type SubscribersView {
   networkId: String!
   subscribers: SubscribersSection!
   plans: PlansSection!
-  usage: GapSection!
 }
 
 type SubscribersSection {
@@ -818,6 +1310,30 @@ type SubscribersSection {
 type PlansSection {
   error: SectionError
   plans: [PlanNameDto!]
+}
+
+type Apps {
+  apps: [App!]!
+}
+
+type App {
+  name: String!
+  version: String!
+  tag: String!
+  status: String!
+  resource: AppResource
+}
+
+type AppResource {
+  cpuPercent: Float!
+  memoryRssKb: Float!
+  diskReadBytes: Float!
+  diskWriteBytes: Float!
+}
+
+input GetAppsInputDto {
+  nodeId: String!
+  appName: String
 }
 
 input GetHealthReportInputDto {
@@ -896,12 +1412,6 @@ type MembersResDto {
   members: [MemberDto!]!
 }
 
-type NetworkStats {
-  activeSubscriber: Float!
-  averageSignalStrength: Float!
-  averageThroughput: Float!
-}
-
 type NodeLatestMetric {
   success: Boolean!
   msg: String!
@@ -920,36 +1430,8 @@ type NetworksResDto {
   networks: [NetworkDto!]!
 }
 
-type AppChangeLogs {
-  logs: [AppChangeLog!]!
-  type: NodeTypeEnum!
-}
-
-type AppChangeLog {
-  version: String!
-  date: Float!
-}
-
-input NodeAppsChangeLogInput {
-  type: NodeTypeEnum!
-}
-
 input NodeInput {
   id: String!
-}
-
-type NodeApps {
-  apps: [NodeApp!]!
-  type: NodeTypeEnum!
-}
-
-type NodeApp {
-  name: String!
-  date: Float!
-  version: String!
-  cpu: String!
-  memory: String!
-  notes: String!
 }
 
 type Nodes {
@@ -993,6 +1475,69 @@ type NotificationResDto {
 
 type NotificationsResDto {
   notifications: [NotificationsDto!]!
+}
+
+type NodeOperationStatusDto {
+  nodeId: String!
+  type: NodeTypeEnum
+  busy: Boolean!
+  operation: OperationDto
+}
+
+type OperationDto {
+  id: String!
+  type: String!
+  system: String!
+  status: String!
+  fencingToken: Float!
+  requestedBy: String
+  idempotencyKey: String
+  resourceKey: String!
+  leaseExpiresAt: String
+  error: String
+  startedAt: String
+  terminalAt: String
+  createdAt: String
+}
+
+input NodeOperationStatusInputDto {
+  nodeId: String!
+}
+
+input GetOperationInputDto {
+  id: String!
+}
+
+type ResourceLockDto {
+  locked: Boolean!
+  operation: OperationDto
+}
+
+input GetResourceLockInputDto {
+  resourceKey: String!
+}
+
+type SiteOperationStatusDto {
+  siteId: String!
+  busy: Boolean!
+  degraded: Boolean!
+  nodes: [NodeOperationStatusDto!]!
+  actions: SiteActionsDto!
+}
+
+type SiteActionsDto {
+  restartSite: ActionAvailabilityDto!
+  rf: ActionAvailabilityDto!
+  service: ActionAvailabilityDto!
+}
+
+type ActionAvailabilityDto {
+  available: Boolean!
+  reason: String
+}
+
+input SiteOperationStatusInputDto {
+  siteId: String!
 }
 
 type OrgDto {
@@ -1102,15 +1647,10 @@ type PackageDto {
   provider: String!
   apn: String!
   ownerId: String!
-  amount: Float!
   networkId: String
+  amount: Float!
   rate: PackageRateAPIDto!
   markup: PackageMarkupAPIDto!
-}
-
-type PackageNameAvailabilityResDto {
-  isAvailable: Boolean!
-  name: String!
 }
 
 type PackageRateAPIDto {
@@ -1127,6 +1667,11 @@ type PackageMarkupAPIDto {
 
 type PackagesResDto {
   packages: [PackageDto!]!
+}
+
+type PackageNameAvailabilityResDto {
+  isAvailable: Boolean!
+  name: String!
 }
 
 type PaymentsDto {
@@ -1299,36 +1844,17 @@ type SimsPoolResDto {
   sims: [SimPoolResDto!]!
 }
 
+type SimUsageItem {
+  simId: String!
+  usage: String!
+}
+
 type SitesResDto {
   sites: [SiteDto!]!
 }
 
 input SitesInputDto {
   networkId: String
-}
-
-type Apps {
-  apps: [App!]!
-}
-
-type AppResource {
-  cpuPercent: Float!
-  memoryRssKb: Float!
-  diskReadBytes: Float!
-  diskWriteBytes: Float!
-}
-
-type App {
-  name: String!
-  version: String!
-  tag: String!
-  status: String!
-  resource: AppResource
-}
-
-input GetAppsInputDto {
-  nodeId: String!
-  appName: String
 }
 
 input GetSoftwaresInput {
@@ -1369,12 +1895,14 @@ type WhoamiDto {
 }
 
 type Mutation {
+  rebuildRollups(data: RebuildRollupsInput!): RebuildRollupsResultDto!
+  refreshAnalytics(data: RefreshInput!): RefreshResultDto!
   restartNode(data: RestartNodeInputDto!): CBooleanResponse!
-  restartNodes(data: RestartNodesInputDto!): CBooleanResponse!
   restartSite(data: RestartSiteInputDto!): CBooleanResponse!
+  setSite(data: SetSiteInputDto!): CBooleanResponse!
   toggleInternetSwitch(data: ToggleInternetSwitchInputDto!): CBooleanResponse!
-  toggleRFStatus(data: ToggleRFStatusInputDto!): CBooleanResponse!
-  toggleService(data: ToggleRFStatusInputDto!): CBooleanResponse!
+  toggleRFStatus(data: ToggleSiteStatusInputDto!): CBooleanResponse!
+  toggleService(data: ToggleSiteStatusInputDto!): CBooleanResponse!
   createInvitation(data: CreateInvitationInputDto!): InvitationDto!
   deleteInvitation(id: String!): DeleteInvitationResDto!
   updateInvitation(data: UpdateInvitationInputDto!): UpdateInvitationResDto!
@@ -1382,11 +1910,12 @@ type Mutation {
   removeMember(id: String!): CBooleanResponse!
   updateMember(data: UpdateMemberInputDto!, memberId: String!): CBooleanResponse!
   addNetwork(data: AddNetworkInputDto!): NetworkDto!
+  deleteNetwork(id: String!): CBooleanResponse!
   setDefaultNetwork(data: SetDefaultNetworkInputDto!): CBooleanResponse!
   addNode(data: AddNodeInput!): Node!
   addNodeToSite(data: AddNodeToSiteInput!): CBooleanResponse!
   attachNode(data: AttachNodeInput!): CBooleanResponse!
-  deleteNodeFromOrg(data: NodeInput!): DeleteNode!
+  deleteNode(data: NodeInput!): DeleteNode!
   detachhNode(data: NodeInput!): CBooleanResponse!
   releaseNodeFromSite(data: NodeInput!): CBooleanResponse!
   updateNode(data: UpdateNodeInput!): Node!
@@ -1398,19 +1927,41 @@ type Mutation {
   processPayment(data: ProcessPaymentInputDto!): ProcessPaymentDto!
   updatePayment(data: UpdatePaymentInputDto!): PaymentDto!
   defaultMarkup(data: DefaultMarkupInputDto!): CBooleanResponse!
+  deleteMarkup(userId: String!): CBooleanResponse!
   addPackagesToSim(data: AddPackagesToSimInputDto!): AddPackagesSimResDto!
   allocateSim(data: AllocateSimInputDto!): AllocateSimAPIDto!
   deleteSim(data: DeleteSimInputDto!): DeleteSimResDto!
+  deleteSimFromPool(simId: String!): CBooleanResponse!
   removePackageForSim(data: RemovePackageFormSimInputDto!): RemovePackageFromSimResDto!
+  setInactivePackageForSim(data: RemovePackageFormSimInputDto!): RemovePackageFromSimResDto!
   toggleSimStatus(data: ToggleSimStatusInputDto!): SimStatusResDto!
   uploadSims(data: UploadSimsInputDto!): UploadSimsResDto!
   addSite(data: AddSiteInputDto!): SiteDto!
+  deleteSite(id: String!): CBooleanResponse!
   updateSite(data: UpdateSiteInputDto!, siteId: String!): SiteDto!
   updateSoftware(data: UpdateSoftwareInputDto!): StringResponse!
   addSubscriber(data: SubscriberInputDto!): SubscriberDto!
   deleteSubscriber(subscriberId: String!): CBooleanResponse!
   updateSubscriber(data: UpdateSubscriberInputDto!, subscriberId: String!): CBooleanResponse!
   updateFirstVisit(data: UserFirstVisitInputDto!): UserFirstVisitResDto!
+}
+
+type RebuildRollupsResultDto {
+  rollups: [RollupStateDto!]!
+}
+
+input RebuildRollupsInput {
+  family: String!
+  from: String
+  to: String
+}
+
+type RefreshResultDto {
+  states: [SourceStateDto!]!
+}
+
+input RefreshInput {
+  source: String!
 }
 
 type CBooleanResponse {
@@ -1421,14 +1972,14 @@ input RestartNodeInputDto {
   nodeId: String!
 }
 
-input RestartNodesInputDto {
-  networkId: String!
-  nodeIds: [String!]!
-}
-
 input RestartSiteInputDto {
   siteId: String!
   networkId: String!
+}
+
+input SetSiteInputDto {
+  siteId: String!
+  status: Boolean!
 }
 
 input ToggleInternetSwitchInputDto {
@@ -1437,8 +1988,8 @@ input ToggleInternetSwitchInputDto {
   status: Boolean!
 }
 
-input ToggleRFStatusInputDto {
-  nodeId: String!
+input ToggleSiteStatusInputDto {
+  siteId: String!
   status: Boolean!
 }
 
@@ -1477,8 +2028,8 @@ input AddMemberInputDto {
 }
 
 input UpdateMemberInputDto {
-  isDeactivated: Boolean!
-  role: String!
+  isDeactivated: Boolean
+  role: String
 }
 
 input AddNetworkInputDto {
@@ -1642,7 +2193,8 @@ input RemovePackageFormSimInputDto {
 }
 
 type SimStatusResDto {
-  simId: String
+  success: Boolean!
+  message: String
 }
 
 input ToggleSimStatusInputDto {
@@ -1712,162 +2264,4 @@ input UserFirstVisitInputDto {
   name: String!
   email: String!
   firstVisit: Boolean!
-}
-
-# ===========================================================================
-# Analytics — Business lens (mirrors systems/console-bff/analytics/resolvers).
-# Some fields/KPIs are exposed ahead of analytics-backend support so the
-# console can bind to a stable contract; see docs/analytics-backend-gaps.md.
-# This block is hand-maintained until `pnpm codegen` is run against a live
-# analytics-enabled BFF, which will regenerate it from introspection.
-# ===========================================================================
-
-extend type Query {
-  getBusinessHome(data: AnalyticsWindowInput!): BusinessHomeDto!
-  getSalesOverview(data: AnalyticsWindowInput!): SalesOverviewDto!
-  getPackagePerformance(data: AnalyticsWindowInput!): PackagePerformanceDto!
-  getBusinessSites(data: AnalyticsWindowInput!): BusinessSitesDto!
-}
-
-input AnalyticsWindowInput {
-  networkId: String
-  siteId: String
-  nodeId: String
-  status: String
-  severity: String
-  state: String
-  metric: String
-  query: String
-  period: String
-  from: String
-  to: String
-  timezone: String
-  page: Int
-  pageSize: Int
-}
-
-type KpiDto {
-  key: String!
-  value: Float!
-  formatted: String
-  delta: Float
-  deltaPeriod: String
-  stale: Boolean
-  asOf: String
-}
-
-type MetaDto {
-  count: Int!
-  page: Int!
-  size: Int!
-  pages: Int!
-}
-
-type PointDto {
-  time: String
-  value: Float!
-}
-
-type TimeSeriesDto {
-  key: String!
-  points: [PointDto!]!
-}
-
-type NamedValueDto {
-  name: String
-  id: String
-  value: Float!
-}
-
-type ActivityItemDto {
-  routingKey: String
-  description: String
-  occurredAt: String
-}
-
-type SiteSummaryDto {
-  siteId: String!
-  name: String
-  status: String
-  revenue: Float!
-  customers: Int!
-}
-
-type BusinessHomeDto {
-  kpis: [KpiDto!]!
-  sites: [SiteSummaryDto!]!
-  topPackages: [NamedValueDto!]!
-  recentActivity: [ActivityItemDto!]!
-}
-
-type SalesOverviewDto {
-  kpis: [KpiDto!]!
-  revenueTrend: TimeSeriesDto
-  revenueBySite: [NamedValueDto!]!
-  revenueByPackage: [NamedValueDto!]!
-}
-
-type PackageRowDto {
-  packageId: String!
-  name: String
-  price: Float!
-  validity: String
-  dataQuota: String
-  status: String
-  soldCount: Int!
-  revenue: Float!
-  revenueSharePct: Float
-  dataUsed: Float!
-  activeSubscribers: Int!
-}
-
-type PackagePerformanceDto {
-  kpis: [KpiDto!]!
-  packages: [PackageRowDto!]!
-  revenueMix: [NamedValueDto!]!
-  meta: MetaDto
-}
-
-type BusinessSiteRowDto {
-  siteId: String!
-  name: String
-  status: String
-  revenue: Float!
-  revenueToday: Float!
-  customers: Int!
-  dataUsed: Float!
-  uptime: Float!
-  topPackage: String
-  issue: String
-  latitude: Float!
-  longitude: Float!
-}
-
-type BusinessSitesDto {
-  sites: [BusinessSiteRowDto!]!
-  meta: MetaDto
-}
-
-# Shared home queries (Business + Network), parameterised by lens.
-
-enum HomeLens {
-  BUSINESS
-  NETWORK
-}
-
-input HomeViewInput {
-  lens: HomeLens!
-  networkId: String
-  period: String
-  from: String
-  to: String
-  timezone: String
-}
-
-type HomeKpis {
-  kpis: [KpiDto!]!
-}
-
-extend type Query {
-  getHomeKpis(data: HomeViewInput!): HomeKpis!
 }

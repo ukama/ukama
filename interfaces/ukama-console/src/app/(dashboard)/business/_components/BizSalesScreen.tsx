@@ -22,7 +22,7 @@ import SectionCard from '@/components/SectionCard';
 import { BAR_COLORS } from '@/lib/charts';
 import { useCurrency } from '@/lib/currency';
 import { KPI_KEYS, kpiAmount } from '@/lib/kpis';
-import { useUiPrefs } from '@/lib/store';
+import { useNetworkId } from '@/lib/useNetworkId';
 
 const toBars = (rows: { name?: string | null; value: number }[]) =>
   rows
@@ -35,11 +35,12 @@ const toBars = (rows: { name?: string | null; value: number }[]) =>
     }));
 
 export default function BizSalesScreen() {
-  const networkId = useUiPrefs((s) => s.networkId);
+  const networkId = useNetworkId();
   // Org currency symbol from getCurrencySymbol (shared via CurrencyProvider).
   const { money } = useCurrency();
   const { data, loading, error } = useGetSalesOverviewQuery({
     variables: { data: { networkId } },
+    skip: !networkId,
   });
   const overview = data?.getSalesOverview;
   const kpis = overview?.kpis;

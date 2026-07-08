@@ -10,9 +10,8 @@ import { Arg, Ctx, FieldResolver, Query, Resolver, Root } from "type-graphql";
 import type { AppContext } from "../../server/context";
 import { ServiceUrlResolver } from "../baseUrls";
 import { groupBy } from "../derive";
-import { notImplementedSection, runSection } from "../section";
+import { runSection } from "../section";
 import {
-  GapSection,
   PlanNameDto,
   PlansSection,
   SubscribersSection,
@@ -71,13 +70,5 @@ export class SubscribersViewResolver {
       );
     });
     return { plans: value, error };
-  }
-
-  @FieldResolver(() => GapSection)
-  usage(): GapSection {
-    // TODO(backend-gap): subscriber — batch usage endpoint
-    // `/v1/usages?sim_ids=` + per-subscriber aggregation (today: one call per
-    // sim) — unblocks: subscribersView.usage (docs/backend-gaps.md #2)
-    return { error: notImplementedSection("usage").error };
   }
 }

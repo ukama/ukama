@@ -20,13 +20,13 @@ mutation RestartSite($data: RestartSiteInputDto!) {
   }
 }
 
-mutation ToggleRFStatus($data: ToggleRFStatusInputDto!) {
+mutation ToggleRFStatus($data: ToggleSiteStatusInputDto!) {
   toggleRFStatus(data: $data) {
     success
   }
 }
 
-mutation ToggleService($data: ToggleRFStatusInputDto!) {
+mutation ToggleService($data: ToggleSiteStatusInputDto!) {
   toggleService(data: $data) {
     success
   }

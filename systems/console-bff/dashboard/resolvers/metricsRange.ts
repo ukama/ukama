@@ -26,8 +26,7 @@ import type {
 } from "../../subscriptions/resolvers/types";
 import { MetricsRes as MetricsResType } from "../../subscriptions/resolvers/types";
 import { ServiceUrlResolver } from "../baseUrls";
-import { isMockKey, metricMeta } from "../metrics/catalog";
-import { mockRangeValues } from "../metrics/mock";
+import { metricMeta } from "../metrics/catalog";
 
 /** True when the node isn't online (offline/unknown) — no telemetry expected. */
 const isNodeOffline = async (
@@ -148,7 +147,6 @@ export class MetricsRangeResolver {
     const to = data.to ?? Math.floor(Date.now() / 1000);
     const step =
       data.step && data.step > 0 ? data.step : deriveStep(data.from, to);
-    const scope = data.nodeId ?? ctx.headers.orgName;
 
     // An offline/unknown node reports no telemetry — return empty series so
     // the console shows a "no data" state instead of a fabricated chart.
@@ -156,25 +154,24 @@ export class MetricsRangeResolver {
       ? await isNodeOffline(ctx, data.nodeId)
       : false;
 
-    const liveKeys = keys.filter(k => !isMockKey(k));
-    const mockKeys = keys.filter(k => isMockKey(k));
-
-    // Mocked keys: synthesize MetricRes directly (no upstream call).
-    const mocked: MetricRes[] = mockKeys.map(key =>
+    // Empty, enriched placeholder for a key with no upstream data — the console
+    // still gets the catalog label/unit (no raw key shown) and renders a "no
+    // data" state. Never fabricate values.
+    const emptyFor = (key: string): MetricRes =>
       enrich({
-        success: true,
-        msg: "mock",
+        success: false,
+        msg: "no-data",
         type: key,
         nodeId: data.nodeId,
-        values: nodeOffline
-          ? []
-          : mockRangeValues(key, scope, data.from, to, step),
-      } as MetricRes)
-    );
+        values: [],
+      } as MetricRes);
 
-    // Live keys: real metric service, then backfill presentation metadata.
-    let live: MetricRes[] = [];
-    if (liveKeys.length > 0) {
+    // Every requested key goes to the real metric service. When the node is
+    // offline or there are no keys, short-circuit to empty placeholders.
+    let series: MetricRes[];
+    if (keys.length === 0 || nodeOffline) {
+      series = keys.map(emptyFor);
+    } else {
       const urls = new ServiceUrlResolver(ctx.headers.orgName);
       const baseURL = await urls.url("metrics");
       const args = {
@@ -188,25 +185,15 @@ export class MetricsRangeResolver {
         type: STATS_TYPE.HOME,
         withSubscription: false,
       } as GetMetricsStatInput;
-      const results = await mapWithConcurrency(liveKeys, key =>
+      const results = await mapWithConcurrency(keys, key =>
         getNodeMetricRange(baseURL, key, args)
       );
       // Always emit one entry per requested key: when the upstream returns no
       // series (e.g. the gateway has no mapping/data for it yet), fall back to
-      // an empty, enriched placeholder so the console still gets the catalog
-      // label/unit (no raw key shown) and renders a "no data" state.
-      live = liveKeys.flatMap((key, i) => {
+      // the empty placeholder.
+      series = keys.flatMap((key, i) => {
         const found = results[i]?.metrics ?? [];
-        if (found.length > 0) return found.map(enrich);
-        return [
-          enrich({
-            success: false,
-            msg: "no-data",
-            type: key,
-            nodeId: data.nodeId,
-            values: [],
-          } as MetricRes),
-        ];
+        return found.length > 0 ? found.map(enrich) : [emptyFor(key)];
       });
     }
 
@@ -216,7 +203,7 @@ export class MetricsRangeResolver {
     // can come back as multiple groups that we then stamp with the same
     // nodeId — collapse them so each chart key yields one line.
     const seen = new Set<string>();
-    const metrics = [...mocked, ...live].filter(m => {
+    const metrics = series.filter(m => {
       const k = `${m.type}|${m.nodeId ?? ""}|${m.siteId ?? ""}`;
       if (seen.has(k)) return false;
       seen.add(k);
