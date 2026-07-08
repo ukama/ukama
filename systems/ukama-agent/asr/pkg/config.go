@@ -52,8 +52,10 @@ func NewConfig(name string) *Config {
 		MsgClient: &config.MsgClient{
 			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{
-				"event.cloud.local.*.ukamaagent.cdr.cdr.create",
-				"event.cloud.local.*.subscriber.simmanager.sim.allocate",
+				// "event.cloud.local.*.ukamaagent.cdr.cdr.create",
+				// "event.cloud.local.*.subscriber.simmanager.sim.allocate",
+				"event.cloud.local.{{ .Org}}.ukamaagent.cdr.cdr.create",
+				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate",
 			},
 		},
 	}

@@ -72,6 +72,34 @@ func (_m *PackageClient) Get(Id string) (*dataplan.PackageInfo, error) {
 	return r0, r1
 }
 
+// GetAll provides a mock function with no fields
+func (_m *PackageClient) GetAll() (dataplan.Packages, error) {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAll")
+	}
+
+	var r0 dataplan.Packages
+	var r1 error
+	if rf, ok := ret.Get(0).(func() (dataplan.Packages, error)); ok {
+		return rf()
+	}
+	if rf, ok := ret.Get(0).(func() dataplan.Packages); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(dataplan.Packages)
+	}
+
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewPackageClient creates a new instance of PackageClient. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewPackageClient(t interface {

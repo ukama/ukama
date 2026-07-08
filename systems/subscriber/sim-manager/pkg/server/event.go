@@ -114,7 +114,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 		}
 
 	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.create"):
-		msg, err := cpb.UnmarshalProtoEvent[epb.Profile](e.Msg)
+		msg, err := cpb.UnmarshalProtoEvent[epb.AsrActivated](e.Msg)
 		if err != nil {
 			return nil, err
 		}
@@ -125,7 +125,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 		}
 
 	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.delete"):
-		msg, err := cpb.UnmarshalProtoEvent[epb.Profile](e.Msg)
+		msg, err := cpb.UnmarshalProtoEvent[epb.AsrInactivated](e.Msg)
 		if err != nil {
 			return nil, err
 		}
@@ -273,10 +273,10 @@ func (es *SimManagerEventServer) handleUkamaAgentCdrCreateEvent(key string, cdr 
 }
 
 // We activate any new allocated sim as long as ARS registration was successful
-func (es *SimManagerEventServer) handleUkamaAgentAsrProfileCreateEvent(key string, asrProfile *epb.Profile) error {
+func (es *SimManagerEventServer) handleUkamaAgentAsrProfileCreateEvent(key string, asrProfile *epb.AsrActivated) error {
 	log.Infof("Keys %s and Proto is: %+v", key, asrProfile)
 
-	sim, err := es.getSimFromIccidOrImsi(asrProfile.Iccid, "")
+	sim, err := es.getSimFromIccidOrImsi(asrProfile.Subscriber.Iccid, "")
 	if err != nil {
 		log.Errorf("Error while looking up sim for ukama agent ASR create event. Error: %v",
 			err)
@@ -299,10 +299,10 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrProfileCreateEvent(key strin
 	return activateSim(ctx, sim.Id.String(), es.simRepo, es.agentFactory, es.orgId, es.metricsPusher, es.msgbus, es.baseRoutingKey)
 }
 
-func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key string, asrProfile *epb.Profile) error {
+func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key string, asrProfile *epb.AsrInactivated) error {
 	log.Infof("Keys %s and Proto is: %+v", key, asrProfile)
 
-	sim, err := es.getSimFromIccidOrImsi(asrProfile.Iccid, "")
+	sim, err := es.getSimFromIccidOrImsi(asrProfile.Subscriber.Iccid, "")
 	if err != nil {
 		log.Errorf("Error while looking up sim for ukama agent ASR delete event. Error: %v",
 			err)
@@ -322,16 +322,16 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key strin
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
 	defer cancel()
 
-	log.Infof("terminating package %s on sim %s", asrProfile.SimPackage, sim.Id.String())
+	log.Infof("terminating package %s on sim %s", asrProfile.Subscriber.SimPackage, sim.Id.String())
 
-	err = terminatePackageForSim(ctx, sim.Id.String(), asrProfile.SimPackage, es.simRepo,
+	err = terminatePackageForSim(ctx, sim.Id.String(), asrProfile.Subscriber.SimPackage, es.simRepo,
 		es.packageRepo, es.msgbus, es.baseRoutingKey)
 	if err != nil {
 		log.Errorf("Failed to terminate active package %s on sim %s. Error: %v",
-			asrProfile.SimPackage, sim.Id.String(), err)
+			asrProfile.Subscriber.SimPackage, sim.Id.String(), err)
 
 		return fmt.Errorf("failed to terminate active package %s on sim %s. Error: %w",
-			asrProfile.SimPackage, sim.Id.String(), err)
+			asrProfile.Subscriber.SimPackage, sim.Id.String(), err)
 	}
 
 	// Get next package to activate if any
@@ -349,7 +349,7 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key strin
 
 		var i int
 		for i, p = range packages {
-			if p.Id.String() == asrProfile.SimPackage {
+			if p.Id.String() == asrProfile.Subscriber.SimPackage {
 				break
 			}
 		}
