@@ -12,9 +12,9 @@ type SimFactoryClient struct {
 	mock.Mock
 }
 
-// ReadSimCardInfo provides a mock function with given fields: Iccid
-func (_m *SimFactoryClient) ReadSimCardInfo(Iccid string) (*factory.SimCardInfo, error) {
-	ret := _m.Called(Iccid)
+// ReadSimCardInfo provides a mock function with given fields: iccid
+func (_m *SimFactoryClient) ReadSimCardInfo(iccid string) (*factory.SimCardInfo, error) {
+	ret := _m.Called(iccid)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ReadSimCardInfo")
@@ -23,10 +23,10 @@ func (_m *SimFactoryClient) ReadSimCardInfo(Iccid string) (*factory.SimCardInfo,
 	var r0 *factory.SimCardInfo
 	var r1 error
 	if rf, ok := ret.Get(0).(func(string) (*factory.SimCardInfo, error)); ok {
-		return rf(Iccid)
+		return rf(iccid)
 	}
 	if rf, ok := ret.Get(0).(func(string) *factory.SimCardInfo); ok {
-		r0 = rf(Iccid)
+		r0 = rf(iccid)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*factory.SimCardInfo)
@@ -34,7 +34,7 @@ func (_m *SimFactoryClient) ReadSimCardInfo(Iccid string) (*factory.SimCardInfo,
 	}
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(Iccid)
+		r1 = rf(iccid)
 	} else {
 		r1 = ret.Error(1)
 	}
