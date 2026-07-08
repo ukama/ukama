@@ -18,6 +18,10 @@ import { useMemo, useState } from 'react';
 import Button from '@mui/material/Button';
 
 import { Ic } from '@/app/(dashboard)/_components/icons';
+import {
+  useRestartNodeMutation,
+  useRestartSiteMutation,
+} from '@/client/graphql/controller.generated';
 import { useNetworkCustomersQuery } from '@/client/graphql/network-customers.generated';
 import { useNodesListQuery } from '@/client/graphql/nodes-list.generated';
 import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
@@ -187,6 +191,22 @@ export default function SupportScreen({ mode }: { mode: 'biz' | 'network' }) {
   const [q, setQ] = useState('');
   const [selId, setSelId] = useState<string | null>(null);
 
+  // Restart actions use the real controller mutations (same as Site/Node
+  // detail). Success/optimistic feedback is toasted from the click handler;
+  // these callbacks only surface failures.
+  const [restartSite] = useRestartSiteMutation({
+    onCompleted: (d) => {
+      if (!d.restartSite.success) toast("Couldn't restart site");
+    },
+    onError: () => toast("Couldn't restart site"),
+  });
+  const [restartNode] = useRestartNodeMutation({
+    onCompleted: (d) => {
+      if (!d.restartNode.success) toast("Couldn't restart node");
+    },
+    onError: () => toast("Couldn't restart node"),
+  });
+
   // Network lens: sites + nodes. Business lens: customers. Unused queries skip.
   const { data: sitesData, loading: sitesLoading } = useSitesListQuery({
     variables: { networkId },
@@ -277,7 +297,12 @@ export default function SupportScreen({ mode }: { mode: 'biz' | 'network' }) {
             }
           />
         </div>
-        <Button variant="contained" sx={{ height: 38, px: 3.5 }}>
+        <Button
+          variant="contained"
+          sx={{ height: 38, px: 3.5 }}
+          disabled={filtered.length === 0}
+          onClick={() => setSelId(filtered[0]?.id ?? null)}
+        >
           Search
         </Button>
       </div>
@@ -493,6 +518,20 @@ export default function SupportScreen({ mode }: { mode: 'biz' | 'network' }) {
                         .writeText(lines.join('\n'))
                         .then(() => toast('Summary copied to clipboard'))
                         .catch(() => toast('Could not copy summary'));
+                    } else if (a.label === 'Restart site' && cur.kind === 'site') {
+                      // cur.id is prefixed 's_' by siteResult().
+                      toast(`Restarting ${cur.title}…`);
+                      void restartSite({
+                        variables: {
+                          data: { siteId: cur.id.slice(2), networkId },
+                        },
+                      });
+                    } else if (a.label === 'Restart node' && cur.kind === 'node') {
+                      // cur.id is prefixed 'n_' by nodeResult().
+                      toast(`Restarting ${cur.title}…`);
+                      void restartNode({
+                        variables: { data: { nodeId: cur.id.slice(2) } },
+                      });
                     } else {
                       toast(`${a.label} — ${cur.title}`);
                     }

@@ -35,6 +35,7 @@ import {
   useToggleRfStatusMutation,
   useToggleServiceMutation,
 } from '@/client/graphql/controller.generated';
+import { useToggleInternetSwitchMutation } from '@/client/graphql/nodes.generated';
 import { useMetricsRangeQuery } from '@/client/graphql/range-metrics.generated';
 import { useNetworkSiteDetailQuery } from '@/client/graphql/site-detail.generated';
 import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
@@ -115,9 +116,10 @@ const DEFAULT_COMP: CompDef = {
   metric: 'battery_charge',
 };
 
-/** Two rows of daily uptime bars from the site_uptime_percentage series. */
-function UptimeBars({ values }: { values: number[] }) {
-  const bars = (vals: number[]) => (
+/** Two rows of daily uptime bars from the site_uptime_percentage series.
+ *  `null` days are gaps (no data) and render as a muted bar. */
+function UptimeBars({ values }: { values: (number | null)[] }) {
+  const bars = (vals: (number | null)[]) => (
     <div className="uptime-row">
       {vals.map((v, i) => (
         <span
@@ -125,8 +127,12 @@ function UptimeBars({ values }: { values: number[] }) {
           className="uptime-bar"
           style={{
             background:
-              v >= 95 ? 'var(--uk-success-bright)' : 'var(--uk-orange)',
-            opacity: 0.6,
+              v == null
+                ? 'var(--uk-line)'
+                : v >= 95
+                  ? 'var(--uk-success-bright)'
+                  : 'var(--uk-orange)',
+            opacity: v == null ? 0.35 : 0.6,
           }}
         />
       ))}
@@ -251,6 +257,7 @@ function ComponentPanel({
           metricKey={k}
           fallbackLabel={comp.label}
           nodeId={cnodeId}
+          hideLegend
         />
       ))}
     </div>
@@ -270,12 +277,35 @@ const SWITCH_PORTS: { n: number; name: string }[] = [
 function SwitchPortRow({
   port,
   cnodeId,
+  siteId,
 }: {
   port: { n: number; name: string };
   cnodeId: string | null;
+  siteId: string;
 }) {
   const [open, setOpen] = useState(false);
   const [enabled, setEnabled] = useState(true);
+  const toast = useToast();
+  const [toggleSwitch, { loading: toggling }] =
+    useToggleInternetSwitchMutation({
+      onError: () => {
+        setEnabled((v) => !v); // revert optimistic flip
+        toast(`Couldn't switch Port ${port.n}`);
+      },
+    });
+
+  const onToggle = (next: boolean) => {
+    setEnabled(next); // optimistic
+    void toggleSwitch({
+      variables: { data: { siteId, port: port.n, status: next } },
+    }).then((res) => {
+      if (!res.data?.toggleInternetSwitch.success) {
+        setEnabled((v) => !v); // revert on server-reported failure
+        toast(`Couldn't switch Port ${port.n}`);
+      }
+    });
+  };
+
   return (
     <div style={{ borderTop: '1px solid var(--uk-line)', padding: '14px 0' }}>
       <div
@@ -300,7 +330,8 @@ function SwitchPortRow({
           <Switch
             edge="end"
             checked={enabled}
-            onChange={(e) => setEnabled(e.target.checked)}
+            disabled={toggling}
+            onChange={(e) => onToggle(e.target.checked)}
           />
         </label>
       </div>
@@ -346,12 +377,14 @@ function SwitchPortRow({
               fallbackLabel="Speed (MBPS)"
               titleOverride="Speed (MBPS)"
               nodeId={cnodeId}
+              hideLegend
             />
             <MetricChartCard
               metricKey={`switch_port_${port.n}_power`}
               fallbackLabel="Power (watts)"
               titleOverride="Power (watts)"
               nodeId={cnodeId}
+              hideLegend
             />
           </div>
         ) : (
@@ -368,11 +401,17 @@ function SwitchPortRow({
 }
 
 /** Right panel when the Switch component is selected: its ports + KPIs. */
-function SwitchPortsPanel({ cnodeId }: { cnodeId: string | null }) {
+function SwitchPortsPanel({
+  cnodeId,
+  siteId,
+}: {
+  cnodeId: string | null;
+  siteId: string;
+}) {
   return (
     <SectionCard title={`Switch ports (${SWITCH_PORTS.length})`}>
       {SWITCH_PORTS.map((p) => (
-        <SwitchPortRow key={p.n} port={p} cnodeId={cnodeId} />
+        <SwitchPortRow key={p.n} port={p} cnodeId={cnodeId} siteId={siteId} />
       ))}
     </SectionCard>
   );
@@ -748,11 +787,15 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
       },
     },
   });
+  // Daily uptime %, gaps (-1 / missing) kept as null so the bars can render
+  // them as "no data" and the average ignores them — never treat a gap as a
+  // real 0/-1 reading.
   const uptimeVals = (uptimeData?.metricsRange.metrics?.[0]?.values ?? []).map(
-    (v) => v[1] ?? 0,
+    (v) => (v[1] == null || v[1] === -1 ? null : v[1]),
   );
-  const uptimePct = uptimeVals.length
-    ? Math.round(uptimeVals.reduce((a, b) => a + b, 0) / uptimeVals.length)
+  const realUptime = uptimeVals.filter((v): v is number => v != null);
+  const uptimePct = realUptime.length
+    ? Math.round(realUptime.reduce((a, b) => a + b, 0) / realUptime.length)
     : null;
 
   const { data: sitesData } = useSitesListQuery({
@@ -974,9 +1017,9 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
               uptime over 90 days
             </span>
           </div>
-          {uptimeLoading && uptimeVals.length === 0 ? (
+          {uptimeLoading && realUptime.length === 0 ? (
             <Skeleton variant="rounded" sx={{ height: 88, mt: 1 }} />
-          ) : uptimeVals.length === 0 ? (
+          ) : realUptime.length === 0 ? (
             <div
               style={{ fontSize: 13, color: 'var(--uk-ink-3)', marginTop: 8 }}
             >
@@ -1066,7 +1109,7 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
               onOpen={(id) => router.push(`/network/nodes/${id}`)}
             />
           ) : selected.id === 'switch' ? (
-            <SwitchPortsPanel cnodeId={cnodeId} />
+            <SwitchPortsPanel cnodeId={cnodeId} siteId={siteId} />
           ) : (
             <ComponentPanel comp={selected} cnodeId={cnodeId} />
           )}

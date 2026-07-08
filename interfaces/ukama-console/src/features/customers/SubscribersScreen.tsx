@@ -10,7 +10,6 @@ import { useNetworkCustomersQuery } from '@/client/graphql/network-customers.gen
 import { useGetSimsUsageByNetworkQuery } from '@/client/graphql/sims.generated';
 import DataTable from '@/components/data-table/DataTable';
 import DateChip from '@/components/DateChip';
-import Meter from '@/components/Meter';
 import PageHeader from '@/components/PageHeader';
 import PageWatermark from '@/components/PageWatermark';
 import SearchField from '@/components/SearchField';
@@ -170,35 +169,19 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
         if (usageLoading && s.usage < 0)
           return <Skeleton variant="rounded" width={140} height={16} />;
         if (s.usage < 0) return <span className="muted">—</span>;
-        const usedGb = bytesToGB(s.usage);
-        const pct = s.cap ? Math.min(100, (usedGb / s.cap) * 100) : 60;
-        const over = !!s.cap && usedGb / s.cap > 0.9;
+        const over = !!s.cap && bytesToGB(s.usage) / s.cap > 0.9;
         return (
-          <div
+          <span
+            className="tnum"
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              width: 150,
+              fontSize: 12,
+              color: over ? 'var(--uk-orange)' : 'var(--uk-ink-2)',
+              whiteSpace: 'nowrap',
             }}
           >
-            <Meter
-              value={pct}
-              color={over ? 'var(--uk-orange)' : undefined}
-              sx={{ flex: 1, minWidth: 60 }}
-            />
-            <span
-              className="tnum"
-              style={{
-                fontSize: 12,
-                color: 'var(--uk-ink-2)',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {formatBytes(s.usage)}
-              {s.cap ? ` / ${s.cap} GB` : ''}
-            </span>
-          </div>
+            {formatBytes(s.usage)}
+            {s.cap ? ` / ${s.cap} GB` : ''}
+          </span>
         );
       },
     });

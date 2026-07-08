@@ -15,8 +15,7 @@ import { logger } from "../common/logger";
 import { mapWithConcurrency } from "../common/utils/concurrency";
 import type MetricAPI from "../metric/datasource/metric_api";
 import type { MetricThresholdMeta } from "./metrics/catalog";
-import { isMockKey, metricMeta } from "./metrics/catalog";
-import { mockLatest } from "./metrics/mock";
+import { metricMeta } from "./metrics/catalog";
 
 /** Metric keys per KPI section (see common/utils TYPE_KEYS_GROUPS). */
 export const NETWORK_KPI_KEYS = [
@@ -62,7 +61,6 @@ export const fetchLatestKpis = async (
     // One failing live key must not blank the whole section — degrade that
     // single KPI to success:false and let the rest render.
     try {
-      if (isMockKey(key)) return { type: key, ...mockLatest(key, baseURL) };
       // Per-node KPIs must be node-scoped (the org-scoped /v1/metrics handler
       // hardcodes the `system` node type and 404s on node-only metrics).
       return opts.nodeId

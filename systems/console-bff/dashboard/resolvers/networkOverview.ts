@@ -139,13 +139,44 @@ export class NetworkOverviewResolver {
     @Root() root: OverviewRoot,
     @Ctx() ctx: AppContext
   ): Promise<KpisSection> {
-    // Phase 4: latest network KPIs polled from the metric service (closes
-    // backend gap #5). Console polls this selection — no subscriptions in v1.
+    // Latest network KPIs polled from the metric service — no subscriptions in
+    // v1. Keys with no upstream (network_uptime, data_usage, package_sales)
+    // return success:false; the console renders a "no data" state. Never mock.
+    // See systems/console-bff/BACKEND-GAPS.md for the upstream tickets.
     const { value, error } = await runSection("kpis", async () => {
       // NB: the metric system's service-discovery name is "metrics"
       // (getSystemNameByService), not SUB_GRAPHS' "metric".
       const url = await root._urls.url("metrics");
-      return fetchLatestKpis(ctx.dataSources.metric, url, NETWORK_KPI_KEYS);
+      const kpis = await fetchLatestKpis(
+        ctx.dataSources.metric,
+        url,
+        NETWORK_KPI_KEYS
+      );
+
+      // Real wiring: node_active_subscribers = the system-scoped
+      // `subscribers_active` metric (the same real source getHomeKpis uses for
+      // "Active customers"). Overrides the empty NETWORK_KPI_KEYS entry so at
+      // least this KPI is genuinely backed.
+      try {
+        const active = await ctx.dataSources.metric.getLatestMetric(
+          url,
+          "subscribers_active"
+        );
+        if (active.success) {
+          const i = kpis.findIndex(k => k.key === "node_active_subscribers");
+          if (i >= 0) {
+            kpis[i] = {
+              ...kpis[i],
+              value: Math.round(Number(active.value?.[1] ?? 0)),
+              timestamp: active.value?.[0] ?? kpis[i].timestamp,
+              success: true,
+            };
+          }
+        }
+      } catch {
+        // Leave node_active_subscribers as success:false — no fabrication.
+      }
+      return kpis;
     });
     return { metrics: value, error };
   }
