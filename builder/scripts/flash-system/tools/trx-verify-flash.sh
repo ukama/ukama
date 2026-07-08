@@ -13,6 +13,10 @@
 #      (checks what dd wrote on a previous flash run)
 # All three sums matching means scp and dd are both byte-exact.
 #
+# Partitions mounted rw on the board (app0 -> /mnt/app, jffs2) are skipped:
+# Phase 2 copies rc_post.local/band.cfg into them and jffs2 rewrites blocks
+# once mounted, so their raw bytes diverge from the source image by design.
+#
 # Usage: export TRX_ROOT_PASSWORD='cavium.lte'; ./tools/trx-verify-flash.sh
 # Env: TRX_IP (10.102.81.61), IMG_DIR (build-system/trx)
 
@@ -47,6 +51,12 @@ for key in app0 app1 env os0 os1 rd0 rd1 uboot; do
     dev="/dev/flash_${key}"
     if [ ! -f "$img" ]; then
         echo "[${key}] SKIP - image not found: $img"
+        continue
+    fi
+
+    mnt=$(ssh_cmd "grep '^${dev} ' /proc/mounts" 2>/dev/null | cut -d' ' -f2)
+    if [ -n "$mnt" ]; then
+        echo "[${key}] SKIP - mounted rw at ${mnt}; live filesystem diverges from image by design"
         continue
     fi
 
