@@ -1,0 +1,82 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain it at http://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+package algos
+
+import (
+	"fmt"
+
+	"github.com/ukama/ukama/systems/analytics/schema"
+)
+
+// Datasets maps a KPI spec input name to its rows (each row = the parsed
+// spec-mapped Fields of a raw record).
+type Datasets map[string][]map[string]interface{}
+
+// Result is one KPI value for one scope combination. Components
+// (Sum/Count/Min/Max) are mandatory — Aggregator computes exact weighted
+// rollups from them.
+type Result struct {
+	Scope map[string]string
+	Value float64
+	Sum   float64
+	Count float64
+	Min   float64
+	Max   float64
+}
+
+// Algo is a pure, deterministic function: same window + same inputs =>
+// same results, on any host, after any replay.
+type Algo func(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error)
+
+// Registry maps "name@version" (the KPI spec's algo field) to its
+// implementation. Versioned: algo changes ship as new versions.
+type Registry struct {
+	algos map[string]Algo
+}
+
+func NewRegistry() *Registry {
+	return &Registry{algos: map[string]Algo{}}
+}
+
+func (r *Registry) Register(nameVersion string, algo Algo) {
+	r.algos[nameVersion] = algo
+}
+
+func (r *Registry) Get(nameVersion string) (Algo, error) {
+	algo, ok := r.algos[nameVersion]
+	if !ok {
+		return nil, fmt.Errorf("algo %q not registered", nameVersion)
+	}
+
+	return algo, nil
+}
+
+// Default returns the registry with all production algos registered. A KPI
+// spec referencing an unregistered algo fails at startup, not at runtime.
+func Default() *Registry {
+	r := NewRegistry()
+
+	r.Register("sites_online@v1", SitesOnline)
+	r.Register("active_customers@v1", ActiveCustomers)
+
+	return r
+}
+
+// CountResult builds a Result for simple gauge/count KPIs where the window
+// value is a single observation (Sum=value, Count=1, Min=Max=value).
+func CountResult(scope map[string]string, value float64) Result {
+	return Result{
+		Scope: scope,
+		Value: value,
+		Sum:   value,
+		Count: 1,
+		Min:   value,
+		Max:   value,
+	}
+}

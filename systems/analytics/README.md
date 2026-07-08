@@ -1,37 +1,73 @@
-# Analytics System
+# Ukama Analytics System (v2)
 
-Analytics owns every KPI formula consumed by the console. It ingests events from other systems via `msgclient-analytics`, backfills snapshots from source system API gateways, and serves pre-computed KPIs over REST (`/v1/analytics/*`) through its api-gateway. The console-bff is the first consumer; the UI and BFF never calculate KPIs.
+Windowed KPI pipeline. Design doc: [docs/analytics-v2-plan.md](docs/analytics-v2-plan.md).
 
-See [`../../analytics-kpi-plan.md`](../../analytics-kpi-plan.md) for the full design and [`docs/schema.md`](docs/schema.md) for the DB contract.
-
-## Services
+```
+source api-gateways ──pull──> INGEST ──window.ready──> ANALYSIS ──kpi.computed──> AGGREGATOR <──REST── api-gateway
+                              raw_records              kpi_windows                kpi_rollups
+```
 
 | Service | Role |
 |---|---|
-| `api-gateway` | REST frontend (`/v1/analytics/business|customers|network/*`, collector admin routes). gRPC client to internal services. No KPI logic. |
-| `business` | Business/operator KPIs: home, sales overview, package performance, billing summary, business sites, inventory readiness. Read-only DB access. |
-| `customer` | Customer lifecycle & support: overview, list/search/detail, support diagnosis, SIMs, SIM pool. Read-only DB access. |
-| `network` | Network ops: overview, topology, sites, nodes, node pool, radio, backhaul, power, alarms, metrics, events, support search. Read-only DB access. |
-| `collector` | The only DB writer. Consumes events (idempotent), refreshes snapshots from source gateways, rebuilds rollups, owns migrations, demo seed. |
+| `schema` | Shared library: window grid, GORM models, spec types/validation, pipeline event payloads |
+| `ingest` | Pulls data from other systems per source specs (`ingest/configs/sources/*.yaml`) on the epoch-aligned window grid; raw zone writer |
+| `analysis` | Runs one algo per KPI per window (`analysis/configs/kpis/*.yaml` + `pkg/algos` registry); KPI zone writer |
+| `aggregator` | Rolls KPI windows up to daily/weekly/monthly with SUM/AVG/MIN/MAX/COUNT/LAST + trends; serves the read gRPC API |
+| `api-gateway` | REST facade over aggregator (fizz/tonic, OpenAPI) |
+
+## MVP KPIs
+
+- `SITES_ONLINE` (scope `network_id`) — sites with ≥1 online node, from `registry.node.list`.
+- `ACTIVE_CUSTOMERS` (scope `network_id`) — subscribers with ≥1 active SIM, from `subscriber.registry.getByNetwork` (fans out per network via `for_each` over `registry.network.getAll`).
+
+## Inter-service communication
+
+- Fast path: internal msgbus events via msgClient — `...analytics.ingest.window.ready` and `...analytics.analysis.kpi.computed` (payloads are `structpb.Struct`, no custom protos).
+- Source of truth: the `window_ledger` table. Every stage claims `(kind, key, org, window)` rows (`FOR UPDATE SKIP LOCKED`) before working — this dedupes pulls per window run and survives restarts/replicas. Sweepers in analysis (60s) and aggregator (120s) recover anything whose event was lost.
 
 ## Build
 
-Each service:
+```bash
+# 1. Generate aggregator gRPC code (requires protoc + protoc-gen-go(-grpc)):
+cd aggregator && make gen
 
-```
-make gen     # protoc + mockery (requires protoc, protoc-gen-go, protoc-gen-go-grpc, govalidators, mockery)
-go mod tidy
-make         # builds bin/<service>
-make test
+# 2. Tidy modules (resolves deps; go.sum files are created here):
+for d in schema ingest analysis aggregator api-gateway; do (cd $d && go mod tidy); done
+
+# 3. Build everything:
+make build
 ```
 
-System: `make` at this level builds all services (subdirs pattern). `docker-compose build && docker-compose up` to run (requires services_ukama-net network, RabbitMQ, and the init system, same as other Ukama systems).
+Note: `pb/gen` for the aggregator and all `go.sum` files must be generated on a
+machine with the Go toolchain + protoc (they are not committed by this change).
+
+## Run
+
+```bash
+# shared infra (rabbitmq etc.) from systems/services first, then:
+ORGNAME=<org> ORGID=<id> LOCAL_HOST_IP=<ip> docker-compose up --build
+```
 
 ## Smoke test
 
+```bash
+curl 'http://localhost:8085/v1/analytics/kpis'
+curl 'http://localhost:8085/v1/analytics/kpis/values?keys=SITES_ONLINE,ACTIVE_CUSTOMERS&span=daily'
+curl 'http://localhost:8085/v1/analytics/kpis/timeseries?keys=ACTIVE_CUSTOMERS&span=daily&op=AVG'
+curl 'http://localhost:8085/v1/analytics/kpis/breakdown?key=SITES_ONLINE&by=network_id&top=10'
 ```
-curl http://localhost:8085/v1/analytics/business/home
-curl http://localhost:8085/v1/analytics/customers/overview
-curl http://localhost:8085/v1/analytics/network/overview
-curl http://localhost:8085/v1/analytics/collector/state
-```
+
+## Adding a KPI
+
+1. If it needs new data: add a pull to a source spec (or a new spec file) in `ingest/configs/sources/` — one static dataset key per endpoint.
+2. Write the algo in `analysis/pkg/algos/` and register it in `Default()`.
+3. Add the KPI spec yaml to `analysis/configs/kpis/` AND `aggregator/configs/kpis/` (aggregator reads rollup_ops/metadata from it).
+4. Nothing else changes — aggregator, gateway and API are KPI-generic.
+
+## MVP simplifications (vs. the full plan)
+
+- Pull auth: BypassAuth inside ukama-net (plan decision #7).
+- Partial-span trends use simple full-compare flagged `is_partial` (plan default `elapsed` mode lands in Phase 2).
+- for_each iteration retries re-run the whole dataset window (idempotent via dedup); per-iteration retry is Phase 2.
+- No TimescaleDB yet: plain Postgres (schema stays compatible; see plan §2).
+- Admin RPCs (repull/recompute) and metrics push are stubs for Phase 2.

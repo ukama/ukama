@@ -1,0 +1,18 @@
+# ACTIVE_CUSTOMERS: subscribers per network with at least one active SIM.
+kpi: ACTIVE_CUSTOMERS
+domain: subscriber
+algo: active_customers@v1
+scope: [network_id]
+inputs:
+  subscribers:
+    dataset: subscriber.registry.getByNetwork
+    fields: [subscriber_id, network_id, sims]
+  networks:
+    dataset: registry.network.getAll
+    fields: [network_id]
+output:
+  type: int
+  unit: count
+  symbol: ""
+rollup_ops: [AVG, MIN, MAX, LAST]
+positive_direction: up

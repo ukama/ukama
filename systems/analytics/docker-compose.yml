@@ -1,16 +1,13 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at https://mozilla.org/MPL/2.0/.
-#
-# Copyright (c) 2026-present, Ukama Inc.
-
 version: '3.9'
 
+# Analytics v2 pipeline: ingest -> analysis -> aggregator -> api-gateway.
+# The window grid (WINDOW_W / WINDOW_L) MUST be identical across the three
+# pipeline services.
 services:
  postgresd-analytics:
   image: postgres:13.3
   ports:
-   - 5410:5432
+   - '5410:5432'
   environment:
    - POSTGRES_USER=postgres
    - POSTGRES_PASSWORD=Pass2020!
@@ -19,29 +16,8 @@ services:
   volumes:
    - postgress-data:/var/lib/postgresql
 
- analytics:
-  build: ./analytics
-  environment:
-   - DEBUGMODE=true
-   - DB_HOST=postgresd-analytics
-   - DB_PASSWORD=Pass2020!
-   - DB_USER=postgres
-   - ANALYTICS_SERVICE_HOST=analytics
-   - ANALYTICS_SERVICE_PORT=9090
-   - ORGNAME=${ORGNAME}
-   - ORGID=${ORGID}
-   - SIM_LOW_STOCK_THRESHOLD=50
-   - NETWORK_LATENCY_THRESHOLD_MS=100
-   - BATTERY_CRITICAL_PERCENT=20
-   - TELEMETRY_FRESH_SECONDS=600
-  restart: always
-  networks:
-   - ukama-net
-  depends_on:
-   - postgresd-analytics
-
- collector:
-  build: ./collector
+ ingest:
+  build: ./ingest
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-analytics
@@ -49,16 +25,15 @@ services:
    - DB_USER=postgres
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - MSGCLIENT_HOST=msgclient-analytics:9095
-   - COLLECTOR_SERVICE_HOST=collector
-   - COLLECTOR_SERVICE_PORT=9090
-   - ORGNAME=${ORGNAME}
-   - ORGID=${ORGID}
-   - OWNERID=${OWNERID}
-   - CURRENCY=${CURRENCY}
-   - ROLLUP_SCHEDULER_ENABLED=true
-   - ROLLUP_SCHEDULER_INTERVAL=5m
+   - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9091
+   - INGEST_SERVICE_HOST=ingest
+   - INGEST_SERVICE_PORT=9090
    - HTTP_INITCLIENT=http://api-gateway-init:8080
-   - HTTP_INVENTORYCLIENT=http://api-gateway-inventory:8080
+   - WINDOW_W=5m
+   - WINDOW_L=10m
+   - ENGINE_SPECSDIR=/configs/sources
+   - ORGID=${ORGID}
+   - ORGNAME=${ORGNAME}
   restart: always
   networks:
    - ukama-net
@@ -66,23 +41,70 @@ services:
    - msgclient-analytics
    - postgresd-analytics
 
- api-gateway-analytics:
-  build: ./api-gateway
+ analysis:
+  build: ./analysis
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-analytics
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-analytics:9095
+   - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9091
+   - ANALYSIS_SERVICE_HOST=analysis
+   - ANALYSIS_SERVICE_PORT=9090
+   - WINDOW_W=5m
+   - WINDOW_L=10m
+   - ENGINE_SPECSDIR=/configs/kpis
+   - ORGID=${ORGID}
+   - ORGNAME=${ORGNAME}
   restart: always
-  ports:
-   - 8085:8080
   networks:
    - ukama-net
+  depends_on:
+   - msgclient-analytics
+   - postgresd-analytics
+   - ingest
+
+ aggregator:
+  build: ./aggregator
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-analytics
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-analytics:9095
+   - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9091
+   - AGGREGATOR_SERVICE_HOST=aggregator
+   - AGGREGATOR_SERVICE_PORT=9090
+   - WINDOW_W=5m
+   - WINDOW_L=10m
+   - ROLLUP_SPECSDIR=/configs/kpis
+   - ROLLUP_TIMEZONE=UTC
+   - ORGID=${ORGID}
+   - ORGNAME=${ORGNAME}
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - msgclient-analytics
+   - postgresd-analytics
+   - analysis
+
+ api-gateway-analytics:
+  build: ./api-gateway
+  ports:
+   - '8085:8080'
   environment:
    - DEBUGMODE=true
    - BYPASS_AUTH_MODE=true
-   - BUSINESS=analytics:9090
-   - CUSTOMER=analytics:9090
-   - NETWORK=analytics:9090
-   - COLLECTOR=collector:9090
+   - SERVICES_AGGREGATOR=aggregator:9090
+  restart: always
+  networks:
+   - ukama-net
   depends_on:
-   - analytics
-   - collector
+   - aggregator
 
  msgclient-analytics:
   build: ../services/msgClient
@@ -109,8 +131,8 @@ services:
    - ENV_SYSTEM_DNS=api-gateway-analytics
    - ENV_DNS_SERVER=false
    - ENV_SYSTEM_PORT=8080
+   - ENV_SYSTEM_CERT=deafult
    - ENV_SYSTEM_API_GW_URL=http://api-gateway-analytics:8080
-   - ENV_SYSTEM_CERT=This-is-a-certificate
    - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
    - ENV_INIT_SYSTEM_PORT=8071
    - ENV_INIT_CLIENT_ADDR=initclient-analytics
@@ -119,6 +141,8 @@ services:
   restart: always
   networks:
    - ukama-net
+  depends_on:
+   - api-gateway-analytics
 
 networks:
  ukama-net:

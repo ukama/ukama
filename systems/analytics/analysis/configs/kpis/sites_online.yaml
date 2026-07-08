@@ -1,0 +1,18 @@
+# SITES_ONLINE: sites per network with at least one online node.
+kpi: SITES_ONLINE
+domain: network
+algo: sites_online@v1
+scope: [network_id]
+inputs:
+  nodes:
+    dataset: registry.node.list
+    fields: [node_id, site_id, network_id, connectivity]
+  networks:
+    dataset: registry.network.getAll
+    fields: [network_id]
+output:
+  type: int
+  unit: count
+  symbol: ""
+rollup_ops: [AVG, MIN, MAX, LAST]
+positive_direction: up

@@ -1,0 +1,36 @@
+# Registry source spec — datasets pulled from the registry system's
+# api-gateway (resolved via initclient). Cadence is pipeline config (W), not
+# spec-level. Dataset keys are static and globally unique:
+# <system>.<resource>.<operation>.
+version: 1
+source: registry
+system: registry
+
+pulls:
+  # Bulk list — one call enumerates all networks.
+  # NOTE: the gateway serializes protobuf structs with encoding/json, so
+  # field paths use the pb camelCase json tags (isDeactivated, siteId, ...).
+  - key: registry.network.getAll
+    endpoint: /v1/networks
+    strategy: full_snapshot
+    items: $.networks
+    entity: network_id
+    map:
+      network_id: $.id
+      name: $.name
+      deactivated: $.isDeactivated
+
+  # Bulk list endpoint with filters — nodes with full lineage (site,
+  # network) and live status; input for SITES_ONLINE.
+  - key: registry.node.list
+    endpoint: /v1/nodes/list
+    strategy: full_snapshot
+    items: $.nodes
+    entity: node_id
+    map:
+      node_id: $.id
+      type: $.type
+      connectivity: $.status.connectivity
+      state: $.status.state
+      site_id: $.site.siteId
+      network_id: $.site.networkId
