@@ -242,16 +242,6 @@ export const ATTACH_NODE = `mutation AttachNode($data: AttachNodeInput!) {
   }
 }`;
 
-export const GET_APPS_CHANGE = `query GetAppsChangeLog($data: NodeAppsChangeLogInput!) {
-  getAppsChangeLog(data: $data) {
-    logs {
-      version
-      date
-    }
-    type
-  }
-}`;
-
 export const GET_NODE = `query GetNode($data: NodeInput!) {
   getNode(data: $data) {
     id
@@ -301,20 +291,6 @@ export const GET_NODES = `query GetNodes($data: GetNodesInput!) {
         state
       }
     }
-  }
-}`;
-
-export const GET_NODE_APPS = `query GetNodeApps($data: NodeAppsChangeLogInput!) {
-  getNodeApps(data: $data) {
-    apps {
-      name
-      date
-      version
-      cpu
-      memory
-      notes
-    }
-    type
   }
 }`;
 

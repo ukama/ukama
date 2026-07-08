@@ -59,8 +59,9 @@ export function ChartMessage({
 }
 
 export interface MetricLineChartProps {
-  /** [timestampSeconds, value] pairs, ascending. */
-  values: [number, number][];
+  /** [timestampSeconds, value] pairs, ascending. `null` = a gap (no sample);
+   *  the line breaks rather than dropping to a placeholder. */
+  values: [number, number | null][];
   /** Series title used in the tooltip (e.g. "Temperature"). */
   title: string;
   unit?: string | null;
@@ -117,7 +118,10 @@ export default function MetricLineChart({
     format === 'decimal' ? v.toFixed(2) : String(Math.round(v));
   const u = unit ? ` ${unit}` : '';
 
-  const ys = data.map((d) => d.value);
+  // Ignore gap (null) samples when sizing the Y-axis.
+  const ys = data
+    .map((d) => d.value)
+    .filter((v): v is number => v != null);
   const dataMax = ys.length ? Math.max(...ys) : 1;
   const top = Math.ceil(Math.max(threshold?.max ?? 0, dataMax) * 1.06);
 

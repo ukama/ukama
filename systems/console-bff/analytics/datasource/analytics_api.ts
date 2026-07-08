@@ -63,7 +63,6 @@ const REVENUE_SHIM_KEYS = [
   "revenue_collected",
   "revenue_month",
   "revenue_prev_month",
-  "revenue_pending",
 ] as const;
 
 const kpiValue = (
@@ -118,8 +117,9 @@ class AnalyticsAPI extends BaseRESTDataSource {
       `${path}?${windowQuery(data)}`
     );
     // TODO(analytics-backend): drop once the lens overview endpoints emit the
-    // home KPIs the console reads (revenue_month/collected, customers_total,
-    // network_uptime, data_usage). See docs/analytics-backend-gaps.md.
+    // home KPIs the console reads (revenue_month/collected, network_uptime,
+    // data_usage). `customers_total` has no source and is not fabricated.
+    // See docs/analytics-backend-gaps.md.
     return { kpis: await this.enrichHomeKpis(res.kpis ?? [], data) };
   };
 
@@ -140,9 +140,10 @@ class AnalyticsAPI extends BaseRESTDataSource {
    *   Network:  network_uptime, active_customers, data_usage
    * We backfill them from REAL analytics data — windowed sales `revenue`
    * (this month / all-time) and the business/home strip (active_customers /
-   * network_uptime / data_sold) — so they match the analytics DB. Only
-   * `customers_total` has no source yet and mirrors active_customers (mock).
-   * Remove once the backend emits these. Tracking: docs/analytics-backend-gaps.md
+   * network_uptime / data_sold) — so they match the analytics DB.
+   * `customers_total` has no source yet and is NOT fabricated (omitted →
+   * console shows "—"). Remove once the backend emits these keys.
+   * Tracking: docs/analytics-backend-gaps.md
    */
   private enrichHomeKpis = async (
     base: KpiDto[],
@@ -152,7 +153,6 @@ class AnalyticsAPI extends BaseRESTDataSource {
     const NEEDED = [
       "revenue_month",
       "revenue_collected",
-      "customers_total",
       "active_customers",
       "network_uptime",
       "data_usage",
@@ -216,11 +216,9 @@ class AnalyticsAPI extends BaseRESTDataSource {
       mk("active_customers", activeCustomers, {
         formatted: String(activeCustomers),
       }),
-      // No dedicated total-customers source yet → mirror active (mock).
-      mk("customers_total", activeCustomers, {
-        formatted: String(activeCustomers),
-        stale: true,
-      }),
+      // No dedicated total-customers source yet. Do NOT fabricate it — omit the
+      // key so the console degrades to "—" until the subscriber service exposes
+      // an all-states count. See systems/console-bff/BACKEND-GAPS.md.
     ];
     if (uptime != null)
       candidates.push(
@@ -266,7 +264,8 @@ class AnalyticsAPI extends BaseRESTDataSource {
    * these, we derive them from REAL payment data by re-querying the overview
    * endpoint for the relevant windows (this month / last month / all-time) and
    * reading each window's `revenue` KPI — so the values always match the data in
-   * the analytics DB. `revenue_pending` has no backend source yet, so it stays 0.
+   * the analytics DB. `revenue_pending` has no backend source yet and is NOT
+   * fabricated — it is omitted so the console degrades to "—".
    * Remove this shim once the backend provides these keys.
    * Tracking: systems/console-bff/docs/analytics-backend-gaps.md
    */
@@ -340,8 +339,9 @@ class AnalyticsAPI extends BaseRESTDataSource {
         monthRev?.delta
       ),
       revenue_prev_month: kpi("revenue_prev_month", prevRev?.value ?? 0),
-      // No pending-payment source in analytics yet → 0, flagged as mock.
-      revenue_pending: kpi("revenue_pending", 0, undefined, true),
+      // revenue_pending intentionally omitted — no pending-payment source in
+      // analytics yet, and the BFF must not fabricate it. The console degrades
+      // to "—". See systems/console-bff/BACKEND-GAPS.md.
     };
 
     const merged = [...(overview.kpis ?? [])];

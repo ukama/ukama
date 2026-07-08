@@ -14,9 +14,7 @@ import { AddNodeToSiteResolver } from "../../node/resolvers/addNodeToSite";
 import { AttachNodeResolver } from "../../node/resolvers/attachNode";
 import { DeleteNodeResolver } from "../../node/resolvers/deleteNode";
 import { DetachNodeResolver } from "../../node/resolvers/detachNode";
-import { GetAppsChangeLogResolver } from "../../node/resolvers/getAppsChangeLog";
 import { GetNodeResolver } from "../../node/resolvers/getNode";
-import { GetNodeAppsResolver } from "../../node/resolvers/getNodeApps";
 import { GetNodesResolver } from "../../node/resolvers/getNodes";
 import { GetNodesByNetworkResolver } from "../../node/resolvers/getNodesByNetwork";
 import { GetNodesLocationResolver } from "../../node/resolvers/getNodesLocation";
@@ -30,12 +28,10 @@ import {
   ATTACH_NODE,
   DELETE_NODE,
   DETACH_NODE,
-  GET_APPS_CHANGE,
   GET_NETWORK_NODES,
   GET_NODE,
   GET_NODES,
   GET_NODES_LOCATION,
-  GET_NODE_APPS,
   GET_NODE_LOCATION,
   UPDATE_NODE,
   UPDATE_NODE_STATE,
@@ -60,10 +56,8 @@ const createSchema = async () => {
       AttachNodeResolver,
       DeleteNodeResolver,
       DetachNodeResolver,
-      GetAppsChangeLogResolver,
       GetNodeResolver,
       GetNodesResolver,
-      GetNodeAppsResolver,
       GetNodesByNetworkResolver,
       GetNodesLocationResolver,
       ReleaseNodeFromSiteResolver,
@@ -208,24 +202,6 @@ describe("Node API integration tests", () => {
     expect(data.attachNode.success).toBeTruthy();
   });
 
-  it("should get apps change log", async () => {
-    const res = await server.executeOperation(
-      {
-        query: GET_APPS_CHANGE,
-        variables: { data: { type: NODE_TYPE.anode } },
-      },
-      {
-        contextValue: contextValue,
-      }
-    );
-    const body = JSON.stringify(res.body);
-    const { singleResult } = JSON.parse(body);
-    expect(singleResult.errors).toBeUndefined();
-    const { data } = singleResult;
-    expect(data.getAppsChangeLog.logs).toBeDefined();
-    expect(data.getAppsChangeLog.type).toEqual(NODE_TYPE.anode);
-  });
-
   it("should get node using node id", async () => {
     const res = await server.executeOperation(
       {
@@ -259,24 +235,6 @@ describe("Node API integration tests", () => {
     expect(singleResult.errors).toBeUndefined();
     const { data } = singleResult;
     expect(data.getNodes.nodes.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("should get node apps", async () => {
-    const res = await server.executeOperation(
-      {
-        query: GET_NODE_APPS,
-        variables: { data: { type: NODE_TYPE.anode } },
-      },
-      {
-        contextValue: contextValue,
-      }
-    );
-    const body = JSON.stringify(res.body);
-    const { singleResult } = JSON.parse(body);
-    expect(singleResult.errors).toBeUndefined();
-    const { data } = singleResult;
-    expect(data.getNodeApps.apps.length).toBeGreaterThanOrEqual(1);
-    expect(data.getNodeApps.type).toEqual(NODE_TYPE.anode);
   });
 
   it("should get node location", async () => {

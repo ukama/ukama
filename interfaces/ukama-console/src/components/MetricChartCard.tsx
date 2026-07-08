@@ -50,6 +50,7 @@ function LegendDot({ color, label }: { color: string; label: string }) {
  *   it without a second query.
  * - `titleOverride` forces the card title; otherwise the server label / a
  *   humanized key is used.
+ * - `hideLegend` hides the threshold legend footer (Normal/High/Critical).
  */
 export default function MetricChartCard({
   metricKey,
@@ -59,6 +60,7 @@ export default function MetricChartCard({
   off = false,
   height = DEFAULT_HEIGHT,
   onLatest,
+  hideLegend = false,
 }: {
   metricKey: string;
   nodeId?: string | null;
@@ -67,6 +69,7 @@ export default function MetricChartCard({
   off?: boolean;
   height?: number;
   onLatest?: (key: string, entry: LatestEntry) => void;
+  hideLegend?: boolean;
 }) {
   const [range, setRange] = useState<Range>('Day');
   const [nowSec] = useState(() => Math.floor(Date.now() / 1000));
@@ -85,11 +88,18 @@ export default function MetricChartCard({
     if (m && onLatest) onLatest(metricKey, seriesLatest(m));
   }, [m, metricKey, onLatest]);
 
-  const hasData = !!m && m.values.length > 0 && m.success !== false;
-  const values: [number, number][] = hasData
+  // -1 is the BFF gap-fill sentinel (no sample at that timestamp). Treat it as
+  // a gap — never plot it as a real value — so the chart's last real point
+  // matches the left-rail KPI (which uses seriesLatest, also skipping -1).
+  const hasReal = !!m && m.values.some((v) => v[1] != null && v[1] !== -1);
+  const hasData = !!m && m.values.length > 0 && m.success !== false && (off || hasReal);
+  const values: [number, number | null][] = hasData
     ? off
       ? m!.values.map((v) => [v[0] ?? 0, 0])
-      : m!.values.map((v) => [v[0] ?? 0, v[1] ?? 0])
+      : m!.values.map((v) => {
+          const raw = v[1];
+          return [v[0] ?? 0, raw == null || raw === -1 ? null : raw];
+        })
     : [];
   const legend = thresholdLegendRows(m?.threshold ?? null, m?.unit);
   const title = titleOverride ?? metricLabel(m?.label, metricKey, fallbackLabel);
@@ -115,19 +125,21 @@ export default function MetricChartCard({
             threshold={m?.threshold ?? null}
             height={height}
           />
-          <div
-            style={{
-              display: 'flex',
-              gap: 18,
-              justifyContent: 'center',
-              marginTop: 10,
-              flexWrap: 'wrap',
-            }}
-          >
-            {legend.map((l) => (
-              <LegendDot key={l.label} {...l} />
-            ))}
-          </div>
+          {!hideLegend && (
+            <div
+              style={{
+                display: 'flex',
+                gap: 18,
+                justifyContent: 'center',
+                marginTop: 10,
+                flexWrap: 'wrap',
+              }}
+            >
+              {legend.map((l) => (
+                <LegendDot key={l.label} {...l} />
+              ))}
+            </div>
+          )}
         </>
       )}
     </SectionCard>

@@ -211,6 +211,7 @@ function GroupCharts({
           metricKey={k}
           off={off}
           onLatest={onLatest}
+          hideLegend
         />
       ))}
     </div>
