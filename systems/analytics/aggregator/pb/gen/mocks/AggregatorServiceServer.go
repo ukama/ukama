@@ -104,6 +104,36 @@ func (_m *AggregatorServiceServer) GetKpis(_a0 context.Context, _a1 *gen.GetKpis
 	return r0, r1
 }
 
+// GetPerformanceReport provides a mock function with given fields: _a0, _a1
+func (_m *AggregatorServiceServer) GetPerformanceReport(_a0 context.Context, _a1 *gen.GetPerformanceReportRequest) (*gen.GetPerformanceReportResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPerformanceReport")
+	}
+
+	var r0 *gen.GetPerformanceReportResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetPerformanceReportRequest) (*gen.GetPerformanceReportResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetPerformanceReportRequest) *gen.GetPerformanceReportResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetPerformanceReportResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetPerformanceReportRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListKpis provides a mock function with given fields: _a0, _a1
 func (_m *AggregatorServiceServer) ListKpis(_a0 context.Context, _a1 *gen.ListKpisRequest) (*gen.ListKpisResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -126,6 +156,36 @@ func (_m *AggregatorServiceServer) ListKpis(_a0 context.Context, _a1 *gen.ListKp
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListKpisRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ListReports provides a mock function with given fields: _a0, _a1
+func (_m *AggregatorServiceServer) ListReports(_a0 context.Context, _a1 *gen.ListReportsRequest) (*gen.ListReportsResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListReports")
+	}
+
+	var r0 *gen.ListReportsResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListReportsRequest) (*gen.ListReportsResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListReportsRequest) *gen.ListReportsResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ListReportsResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListReportsRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

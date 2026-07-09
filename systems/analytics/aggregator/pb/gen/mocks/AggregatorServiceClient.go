@@ -127,6 +127,43 @@ func (_m *AggregatorServiceClient) GetKpis(ctx context.Context, in *gen.GetKpisR
 	return r0, r1
 }
 
+// GetPerformanceReport provides a mock function with given fields: ctx, in, opts
+func (_m *AggregatorServiceClient) GetPerformanceReport(ctx context.Context, in *gen.GetPerformanceReportRequest, opts ...grpc.CallOption) (*gen.GetPerformanceReportResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPerformanceReport")
+	}
+
+	var r0 *gen.GetPerformanceReportResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetPerformanceReportRequest, ...grpc.CallOption) (*gen.GetPerformanceReportResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetPerformanceReportRequest, ...grpc.CallOption) *gen.GetPerformanceReportResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetPerformanceReportResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetPerformanceReportRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListKpis provides a mock function with given fields: ctx, in, opts
 func (_m *AggregatorServiceClient) ListKpis(ctx context.Context, in *gen.ListKpisRequest, opts ...grpc.CallOption) (*gen.ListKpisResponse, error) {
 	_va := make([]interface{}, len(opts))
@@ -156,6 +193,43 @@ func (_m *AggregatorServiceClient) ListKpis(ctx context.Context, in *gen.ListKpi
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListKpisRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ListReports provides a mock function with given fields: ctx, in, opts
+func (_m *AggregatorServiceClient) ListReports(ctx context.Context, in *gen.ListReportsRequest, opts ...grpc.CallOption) (*gen.ListReportsResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListReports")
+	}
+
+	var r0 *gen.ListReportsResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListReportsRequest, ...grpc.CallOption) (*gen.ListReportsResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListReportsRequest, ...grpc.CallOption) *gen.ListReportsResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ListReportsResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListReportsRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

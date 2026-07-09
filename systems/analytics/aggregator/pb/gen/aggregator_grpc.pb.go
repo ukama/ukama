@@ -30,6 +30,11 @@ type AggregatorServiceClient interface {
 	GetKpiTimeSeries(ctx context.Context, in *GetKpiTimeSeriesRequest, opts ...grpc.CallOption) (*GetKpiTimeSeriesResponse, error)
 	// GetKpiBreakdown ranks scope values for one KPI (top-N).
 	GetKpiBreakdown(ctx context.Context, in *GetKpiBreakdownRequest, opts ...grpc.CallOption) (*GetKpiBreakdownResponse, error)
+	// ListReports returns the performance report registry.
+	ListReports(ctx context.Context, in *ListReportsRequest, opts ...grpc.CallOption) (*ListReportsResponse, error)
+	// GetPerformanceReport composes a resource performance table from the
+	// latest available KPI values + entity attributes.
+	GetPerformanceReport(ctx context.Context, in *GetPerformanceReportRequest, opts ...grpc.CallOption) (*GetPerformanceReportResponse, error)
 }
 
 type aggregatorServiceClient struct {
@@ -76,6 +81,24 @@ func (c *aggregatorServiceClient) GetKpiBreakdown(ctx context.Context, in *GetKp
 	return out, nil
 }
 
+func (c *aggregatorServiceClient) ListReports(ctx context.Context, in *ListReportsRequest, opts ...grpc.CallOption) (*ListReportsResponse, error) {
+	out := new(ListReportsResponse)
+	err := c.cc.Invoke(ctx, "/ukama.analytics.aggregator.v1.AggregatorService/ListReports", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aggregatorServiceClient) GetPerformanceReport(ctx context.Context, in *GetPerformanceReportRequest, opts ...grpc.CallOption) (*GetPerformanceReportResponse, error) {
+	out := new(GetPerformanceReportResponse)
+	err := c.cc.Invoke(ctx, "/ukama.analytics.aggregator.v1.AggregatorService/GetPerformanceReport", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AggregatorServiceServer is the server API for AggregatorService service.
 // All implementations must embed UnimplementedAggregatorServiceServer
 // for forward compatibility
@@ -88,6 +111,11 @@ type AggregatorServiceServer interface {
 	GetKpiTimeSeries(context.Context, *GetKpiTimeSeriesRequest) (*GetKpiTimeSeriesResponse, error)
 	// GetKpiBreakdown ranks scope values for one KPI (top-N).
 	GetKpiBreakdown(context.Context, *GetKpiBreakdownRequest) (*GetKpiBreakdownResponse, error)
+	// ListReports returns the performance report registry.
+	ListReports(context.Context, *ListReportsRequest) (*ListReportsResponse, error)
+	// GetPerformanceReport composes a resource performance table from the
+	// latest available KPI values + entity attributes.
+	GetPerformanceReport(context.Context, *GetPerformanceReportRequest) (*GetPerformanceReportResponse, error)
 	mustEmbedUnimplementedAggregatorServiceServer()
 }
 
@@ -106,6 +134,12 @@ func (UnimplementedAggregatorServiceServer) GetKpiTimeSeries(context.Context, *G
 }
 func (UnimplementedAggregatorServiceServer) GetKpiBreakdown(context.Context, *GetKpiBreakdownRequest) (*GetKpiBreakdownResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetKpiBreakdown not implemented")
+}
+func (UnimplementedAggregatorServiceServer) ListReports(context.Context, *ListReportsRequest) (*ListReportsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListReports not implemented")
+}
+func (UnimplementedAggregatorServiceServer) GetPerformanceReport(context.Context, *GetPerformanceReportRequest) (*GetPerformanceReportResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPerformanceReport not implemented")
 }
 func (UnimplementedAggregatorServiceServer) mustEmbedUnimplementedAggregatorServiceServer() {}
 
@@ -192,6 +226,42 @@ func _AggregatorService_GetKpiBreakdown_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AggregatorService_ListReports_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListReportsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AggregatorServiceServer).ListReports(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.analytics.aggregator.v1.AggregatorService/ListReports",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AggregatorServiceServer).ListReports(ctx, req.(*ListReportsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AggregatorService_GetPerformanceReport_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPerformanceReportRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AggregatorServiceServer).GetPerformanceReport(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.analytics.aggregator.v1.AggregatorService/GetPerformanceReport",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AggregatorServiceServer).GetPerformanceReport(ctx, req.(*GetPerformanceReportRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AggregatorService_ServiceDesc is the grpc.ServiceDesc for AggregatorService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -214,6 +284,14 @@ var AggregatorService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetKpiBreakdown",
 			Handler:    _AggregatorService_GetKpiBreakdown_Handler,
+		},
+		{
+			MethodName: "ListReports",
+			Handler:    _AggregatorService_ListReports_Handler,
+		},
+		{
+			MethodName: "GetPerformanceReport",
+			Handler:    _AggregatorService_GetPerformanceReport_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

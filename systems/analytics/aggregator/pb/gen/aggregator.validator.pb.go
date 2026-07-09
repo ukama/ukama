@@ -15,6 +15,55 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *ReportInfo) Validate() error {
+	return nil
+}
+func (this *ListReportsRequest) Validate() error {
+	return nil
+}
+func (this *ListReportsResponse) Validate() error {
+	for _, item := range this.Reports {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Reports", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *GetPerformanceReportRequest) Validate() error {
+	// Validation of proto3 map<> fields is unsupported.
+	return nil
+}
+func (this *ReportCell) Validate() error {
+	if this.Trend != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Trend); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Trend", err)
+		}
+	}
+	return nil
+}
+func (this *ReportRow) Validate() error {
+	// Validation of proto3 map<> fields is unsupported.
+	for _, item := range this.Cells {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Cells", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *GetPerformanceReportResponse) Validate() error {
+	for _, item := range this.Rows {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Rows", err)
+			}
+		}
+	}
+	return nil
+}
 func (this *KpiInfo) Validate() error {
 	return nil
 }
