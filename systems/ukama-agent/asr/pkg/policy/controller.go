@@ -324,6 +324,7 @@ func (p *policyController) syncSubscriberPolicy(method string, imsi string, netw
 		Type:       epb.BroadcastType_NODE_BROADCAST,
 		Scope:      epb.BroadcastScope_NETWORK_SCOPE,
 		TargetId:   network,
+		NodeType:   epb.NodeType_TNODE,
 	}
 
 	err = p.msgbus.PublishRequest(route, broadcasterMsg)
