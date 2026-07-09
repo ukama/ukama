@@ -79,6 +79,10 @@ func Default() *Registry {
 	r.Register("active_plans@v1", ActivePlans)
 	r.Register("package_data_used@v1", PackageDataUsed)
 
+	// Revenue KPIs (settled payments; org-wide scope).
+	r.Register("revenue@v1", Revenue)
+	r.Register("paid_customers@v1", PaidCustomers)
+
 	return r
 }
 
