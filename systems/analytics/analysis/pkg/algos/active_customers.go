@@ -10,22 +10,22 @@ package algos
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/ukama/ukama/systems/analytics/schema"
 )
 
-// ActiveCustomers (ACTIVE_CUSTOMERS @ scope network_id): number of
-// subscribers per network with at least one SIM in "active" status.
+// ActiveCustomers (ACTIVE_CUSTOMERS @ scope network_id): number of distinct
+// subscribers per network holding at least one active SIM.
 //
 // Inputs:
-//   subscribers — subscriber.registry.getByNetwork (subscriber_id,
-//                 network_id, sims[] with status)
-//   networks    — registry.network.getAll (network_id) — zero-fill.
+//   active_sims — subscriber.sim.listActive (sim_id, subscriber_id,
+//                 network_id) — source-filtered to sim_status=active
+//   networks    — registry.network.getAll (network_id) — zero-fill so
+//                 networks with no active sims still emit 0.
 func ActiveCustomers(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
-	subscribers, ok := in["subscribers"]
+	sims, ok := in["active_sims"]
 	if !ok {
-		return nil, fmt.Errorf("ACTIVE_CUSTOMERS: missing input 'subscribers'")
+		return nil, fmt.Errorf("ACTIVE_CUSTOMERS: missing input 'active_sims'")
 	}
 
 	networks, ok := in["networks"]
@@ -33,17 +33,22 @@ func ActiveCustomers(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Res
 		return nil, fmt.Errorf("ACTIVE_CUSTOMERS: missing input 'networks'")
 	}
 
-	active := map[string]int{} // network -> active subscriber count
+	// network -> set of distinct subscribers with an active sim
+	subscribers := map[string]map[string]bool{}
 
-	for _, sub := range subscribers {
-		networkID := str(sub["network_id"])
-		if networkID == "" {
+	for _, sim := range sims {
+		networkID := str(sim["network_id"])
+		subscriberID := str(sim["subscriber_id"])
+
+		if networkID == "" || subscriberID == "" {
 			continue
 		}
 
-		if hasActiveSim(sub["sims"]) {
-			active[networkID]++
+		if subscribers[networkID] == nil {
+			subscribers[networkID] = map[string]bool{}
 		}
+
+		subscribers[networkID][subscriberID] = true
 	}
 
 	results := make([]Result, 0, len(networks))
@@ -56,29 +61,9 @@ func ActiveCustomers(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Res
 
 		results = append(results, CountResult(
 			map[string]string{"network_id": networkID},
-			float64(active[networkID]),
+			float64(len(subscribers[networkID])),
 		))
 	}
 
 	return results, nil
-}
-
-func hasActiveSim(sims interface{}) bool {
-	arr, ok := sims.([]interface{})
-	if !ok {
-		return false
-	}
-
-	for _, s := range arr {
-		sim, ok := s.(map[string]interface{})
-		if !ok {
-			continue
-		}
-
-		if strings.EqualFold(str(sim["status"]), "active") {
-			return true
-		}
-	}
-
-	return false
 }

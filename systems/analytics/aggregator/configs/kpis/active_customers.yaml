@@ -1,12 +1,13 @@
-# ACTIVE_CUSTOMERS: subscribers per network with at least one active SIM.
+# ACTIVE_CUSTOMERS: distinct subscribers per network with at least one
+# active SIM (source-filtered via /v1/sim?network_id=&sim_status=active).
 kpi: ACTIVE_CUSTOMERS
 domain: subscriber
-algo: active_customers@v1
+algo: active_customers@v2
 scope: [network_id]
 inputs:
-  subscribers:
-    dataset: subscriber.registry.getByNetwork
-    fields: [subscriber_id, network_id, sims]
+  active_sims:
+    dataset: subscriber.sim.listActive
+    fields: [sim_id, subscriber_id, network_id]
   networks:
     dataset: registry.network.getAll
     fields: [network_id]

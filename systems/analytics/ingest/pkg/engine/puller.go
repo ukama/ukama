@@ -67,7 +67,15 @@ func (p *Puller) Execute(pull schema.PullSpec, win schema.Window) (int, error) {
 
 			entity := ""
 			if pull.Entity != "" {
-				entity = fmt.Sprintf("%v", fields[pull.Entity])
+				v, ok := fields[pull.Entity]
+				if !ok || v == nil || fmt.Sprintf("%v", v) == "" {
+					// A snapshot row without its entity key would collapse
+					// the change-log — fail loudly instead of storing junk.
+					return 0, fmt.Errorf("dataset %s window %d: entity field %q missing/empty in mapped item (check the spec's map paths against the source response)",
+						pull.Key, win.ID, pull.Entity)
+				}
+
+				entity = fmt.Sprintf("%v", v)
 			}
 
 			hash := HashFields(fields)

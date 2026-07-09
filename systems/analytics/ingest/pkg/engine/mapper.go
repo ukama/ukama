@@ -21,6 +21,11 @@ import (
 
 // GetPath extracts a value from a decoded JSON item using a "$.a.b" path.
 // "$" returns the item itself.
+//
+// Key matching is exact first, then case/underscore-insensitive: Ukama
+// gateways serialize protobuf structs inconsistently (some emit
+// "subscriberId", others "subscriber_id"), so "$.subscriber_id" matches
+// either form.
 func GetPath(item interface{}, path string) (interface{}, bool) {
 	if path == "$" {
 		return item, true
@@ -35,13 +40,32 @@ func GetPath(item interface{}, path string) (interface{}, bool) {
 			return nil, false
 		}
 
-		cur, ok = m[seg]
+		cur, ok = lookupKey(m, seg)
 		if !ok {
 			return nil, false
 		}
 	}
 
 	return cur, true
+}
+
+func lookupKey(m map[string]interface{}, key string) (interface{}, bool) {
+	if v, ok := m[key]; ok {
+		return v, true
+	}
+
+	want := normalizeKey(key)
+	for k, v := range m {
+		if normalizeKey(k) == want {
+			return v, true
+		}
+	}
+
+	return nil, false
+}
+
+func normalizeKey(k string) string {
+	return strings.ToLower(strings.ReplaceAll(k, "_", ""))
 }
 
 // MapItem projects one source item through the spec field map, then merges

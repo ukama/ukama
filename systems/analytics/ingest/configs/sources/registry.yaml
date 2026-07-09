@@ -8,8 +8,8 @@ system: registry
 
 pulls:
   # Bulk list — one call enumerates all networks.
-  # NOTE: the gateway serializes protobuf structs with encoding/json, so
-  # field paths use the pb camelCase json tags (isDeactivated, siteId, ...).
+  # NOTE: path matching is case/underscore-insensitive (mapper), covering
+  # both snake_case and camelCase gateway serializations.
   - key: registry.network.getAll
     endpoint: /v1/networks
     strategy: full_snapshot
@@ -18,7 +18,7 @@ pulls:
     map:
       network_id: $.id
       name: $.name
-      deactivated: $.isDeactivated
+      deactivated: $.is_deactivated
 
   # Bulk list endpoint with filters — nodes with full lineage (site,
   # network) and live status; input for SITES_ONLINE.
@@ -32,5 +32,5 @@ pulls:
       type: $.type
       connectivity: $.status.connectivity
       state: $.status.state
-      site_id: $.site.siteId
-      network_id: $.site.networkId
+      site_id: $.site.site_id
+      network_id: $.site.network_id

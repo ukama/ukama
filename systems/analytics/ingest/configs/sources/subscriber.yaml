@@ -1,22 +1,26 @@
-# Subscriber source spec. The subscriber system only lists subscribers
-# per-network, so this pull fans out over the networks dataset (for_each DAG);
-# child rows inherit network_id lineage. Input for ACTIVE_CUSTOMERS.
+# Subscriber source spec. Uses the sim-manager's filtered bulk list
+# (/v1/sim?network_id=&sim_status=active) fanned out per network (for_each
+# DAG); child rows inherit network_id lineage. Input for ACTIVE_CUSTOMERS.
 version: 1
 source: subscriber
 system: subscriber
 
 pulls:
-  - key: subscriber.registry.getByNetwork
-    endpoint: /v1/subscribers/networks/{{.network_id}}
+  - key: subscriber.sim.listActive
+    endpoint: /v1/sim
     strategy: full_snapshot
-    items: $.subscribers
-    entity: subscriber_id
+    items: $.sims
+    entity: sim_id
     for_each:
       dataset: registry.network.getAll
       bind: [network_id]
+    params:
+      network_id: "{{.network_id}}"
+      sim_status: active
     map:
-      # pb camelCase json tags (see registry.yaml note); network_id also
-      # arrives via the for_each bind (lineage) as a fallback.
-      subscriber_id: $.subscriberId
-      network_id: $.networkId
-      sims: $.sim
+      # Path matching is case/underscore-insensitive (mapper), so these
+      # match both snake_case and camelCase serializations.
+      sim_id: $.id
+      subscriber_id: $.subscriber_id
+      network_id: $.network_id
+      status: $.status

@@ -63,7 +63,10 @@ func Default() *Registry {
 	r := NewRegistry()
 
 	r.Register("sites_online@v1", SitesOnline)
-	r.Register("active_customers@v1", ActiveCustomers)
+	// v2: counts distinct subscribers from the source-filtered active-sims
+	// list (subscriber.sim.listActive) instead of parsing per-subscriber
+	// sim arrays.
+	r.Register("active_customers@v2", ActiveCustomers)
 
 	return r
 }
