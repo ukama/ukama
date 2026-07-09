@@ -322,6 +322,18 @@ func (m *MsgClient) subscribe(sub *subscription) error {
 		return err
 	}
 
+	// Declare the queue and its route bindings synchronously so any setup error
+	// is returned to the caller. wagslane performs declare/bind inside
+	// consumer.Run() on a background goroutine, where a failure is only logged
+	// and the consumer silently receives nothing. Doing it here guarantees the
+	// queue is bound (or fails loudly) before we start consuming. wagslane still
+	// re-declares/re-binds idempotently on reconnect for self-healing.
+	if len(sub.routingKeys) > 0 || sub.declareExchange {
+		if err := m.declareTopology(sub); err != nil {
+			return err
+		}
+	}
+
 	opts := []func(*rabbitmq.ConsumerOptions){
 		rabbitmq.WithConsumerOptionsConsumerName(sub.consumerName),
 	}
@@ -408,6 +420,53 @@ func (m *MsgClient) ensureConn() (*rabbitmq.Conn, error) {
 
 	m.wConn = conn
 	return conn, nil
+}
+
+// declareTopology synchronously declares the exchange (when requested), the
+// queue, and the route bindings for a subscription, returning any error to the
+// caller. This mirrors what wagslane does inside consumer.Run(), but done here
+// the errors surface at subscribe time instead of being swallowed in the
+// background goroutine (which previously left consumers bound to nothing).
+func (m *MsgClient) declareTopology(sub *subscription) error {
+	tconn, err := amqp091.Dial(m.connectionString)
+	if err != nil {
+		return fmt.Errorf("topology setup: dial failed: %w", err)
+	}
+	defer func() { _ = tconn.Close() }()
+
+	ch, err := tconn.Channel()
+	if err != nil {
+		return fmt.Errorf("topology setup: channel failed: %w", err)
+	}
+	defer func() { _ = ch.Close() }()
+
+	if sub.declareExchange {
+		kind := sub.exchangeType
+		if kind == "" {
+			kind = "topic"
+		}
+		if err := ch.ExchangeDeclare(sub.exchangeName, kind, true, false, false, false, nil); err != nil {
+			return fmt.Errorf("failed to declare exchange %q: %w", sub.exchangeName, err)
+		}
+	}
+
+	var args amqp091.Table
+	if sub.queueArgs != nil {
+		args = amqp091.Table(sub.queueArgs)
+	}
+	if _, err := ch.QueueDeclare(sub.queueName, sub.durableQueue, false, false, false, args); err != nil {
+		return fmt.Errorf("failed to declare queue %q: %w", sub.queueName, err)
+	}
+
+	for _, rk := range sub.routingKeys {
+		if err := ch.QueueBind(sub.queueName, string(rk), sub.exchangeName, false, nil); err != nil {
+			return fmt.Errorf("failed to bind queue %q to exchange %q with key %q: %w",
+				sub.queueName, sub.exchangeName, rk, err)
+		}
+		m.log.Infof("[msgbus] bound queue %q to exchange %q with key %q", sub.queueName, sub.exchangeName, rk)
+	}
+
+	return nil
 }
 
 // wagslaneHandler bridges a wagslane delivery to the existing handlerFunc
