@@ -1,0 +1,16 @@
+# PACKAGE_REVENUE: sales x package price (org-currency cents). Sales proxy,
+# not settled payments.
+kpi: PACKAGE_REVENUE
+domain: business
+algo: package_revenue@v1
+scope: [network_id, package_id]
+inputs:
+  sim_packages:
+    dataset: subscriber.simpackage.listBySim
+    fields: [sim_package_id, package_id, network_id, start_date]
+  packages:
+    dataset: dataplan.package.getAll
+    fields: [package_id, network_id, amount, duration, active]
+output: { type: int, unit: cents, symbol: "$" }
+rollup_ops: [SUM, AVG, MAX]
+positive_direction: up

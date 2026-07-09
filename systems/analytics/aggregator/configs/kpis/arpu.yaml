@@ -1,0 +1,18 @@
+# ARPU: MRR / distinct subscribers with an active assignment.
+kpi: ARPU
+domain: business
+algo: arpu@v1
+scope: [network_id]
+inputs:
+  sim_packages:
+    dataset: subscriber.simpackage.listBySim
+    fields: [package_id, network_id, subscriber_id, is_active, as_expired]
+  packages:
+    dataset: dataplan.package.getAll
+    fields: [package_id, network_id, amount, duration]
+  networks:
+    dataset: registry.network.getAll
+    fields: [network_id]
+output: { type: int, unit: cents, symbol: "$" }
+rollup_ops: [AVG, MIN, MAX, LAST]
+positive_direction: up

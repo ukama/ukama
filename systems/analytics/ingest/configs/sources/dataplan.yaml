@@ -1,0 +1,23 @@
+# Data-plan source spec: package catalog. network_id == "" means an
+# org-level package, valid for every network (handled by the package KPIs'
+# network matcher).
+version: 1
+source: dataplan
+system: dataplan
+
+pulls:
+  - key: dataplan.package.getAll
+    endpoint: /v1/packages
+    strategy: full_snapshot
+    items: $.packages
+    entity: package_id
+    map:
+      package_id: $.uuid
+      name: $.name
+      active: $.active
+      duration: $.duration        # days
+      amount: $.amount
+      currency: $.currency
+      data_volume: $.data_volume
+      sim_type: $.sim_type
+      network_id: $.network_id    # "" = org-level

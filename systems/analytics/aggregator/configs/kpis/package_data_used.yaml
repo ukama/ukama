@@ -1,0 +1,17 @@
+# PACKAGE_DATA_USED: window data usage attributed to each sim's active
+# package.
+kpi: PACKAGE_DATA_USED
+domain: business
+algo: package_data_used@v1
+scope: [network_id, package_id]
+inputs:
+  usage:
+    dataset: subscriber.usage.getBySim
+    fields: [sim_id, network_id, usage]
+    mode: window
+  sim_packages:
+    dataset: subscriber.simpackage.listBySim
+    fields: [sim_id, package_id, is_active, as_expired]
+output: { type: float, unit: bytes, symbol: B }
+rollup_ops: [SUM, AVG, MAX]
+positive_direction: up
