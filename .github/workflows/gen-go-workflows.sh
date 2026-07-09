@@ -36,6 +36,7 @@ generate(){
 }
 
 generate "systems/api"          "api"
+generate "systems/analytics"    "analytics"
 generate "systems/auth"         "auth"
 generate "systems/billing"      "billing"
 generate "systems/data-plan"    "data-plan"
