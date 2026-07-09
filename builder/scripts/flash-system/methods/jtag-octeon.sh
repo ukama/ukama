@@ -888,8 +888,14 @@ _phase2_run() {
     # the power-cycle in _phase2_post_flash_config.
     if [ "$rc_post_injected" -eq 1 ]; then
         echo "rc_post.local was pre-injected into flash_app0.img."
+    elif [ -f "$app0_image" ] && grep -aq "$(basename "$rc_post_target")" "$app0_image"; then
+        # jffs2 dirent names are stored uncompressed, so the name being in the image
+        # means some version of the file is there; content is md5-verified post-boot.
+        echo "rc_post.local name found inside flash_app0.img (pre-inject skipped this run);"
+        echo "its content will be verified against the payload after the power-cycle."
     else
-        echo "rc_post.local ships inside flash_app0.img; nothing to copy before the reboot."
+        echo "WARNING: rc_post.local is NOT inside flash_app0.img (pre-inject failed);"
+        echo "it will be installed over SSH after the power-cycle."
     fi
 
     echo ""
@@ -938,11 +944,20 @@ _phase2_post_flash_config() {
 
     local reboot_needed=0
 
-    # rc_post.local normally ships inside the app image; only copy if missing
-    if sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" "test -f ${rc_post_target}"; then
-        echo "  rc_post.local already present at ${rc_post_target} (from the app image)."
+    # rc_post.local normally ships inside the app image; verify its content against
+    # the payload (a mere test -f would accept a stale copy from an old image)
+    local rc_local_md5 rc_remote_md5
+    rc_local_md5=$(md5sum "$rc_post_src" | awk '{print $1}')
+    rc_remote_md5=$(sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" \
+        "md5sum ${rc_post_target} 2>/dev/null | cut -d' ' -f1" || true)
+    if [ "$rc_local_md5" = "$rc_remote_md5" ]; then
+        echo "  rc_post.local at ${rc_post_target} matches the payload."
     else
-        echo "  rc_post.local missing - installing ${rc_post_src} -> ${rc_post_target}..."
+        if [ -n "$rc_remote_md5" ]; then
+            echo "  rc_post.local at ${rc_post_target} differs from the payload (stale copy) - reinstalling..."
+        else
+            echo "  rc_post.local missing - installing ${rc_post_src} -> ${rc_post_target}..."
+        fi
         cat "$rc_post_src" | sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" \
             "cat > ${rc_post_target} && chmod +x ${rc_post_target}" || {
             echo "ERROR: rc_post.local install failed."
