@@ -62,7 +62,9 @@ func (r *Registry) Get(nameVersion string) (Algo, error) {
 func Default() *Registry {
 	r := NewRegistry()
 
-	r.Register("sites_online@v1", SitesOnline)
+	// v2: site online = its cnode is online (was: any node online).
+	r.Register("sites_online@v2", SitesOnline)
+	r.Register("sites_degraded@v1", SitesDegraded)
 	// v2: counts distinct subscribers from the source-filtered active-sims
 	// list (subscriber.sim.listActive) instead of parsing per-subscriber
 	// sim arrays.

@@ -1,8 +1,7 @@
-# SITES_ONLINE (definition v2): sites per network whose cnode is online.
-# Sites without a cnode count as not online.
-kpi: SITES_ONLINE
+# SITES_DEGRADED: sites per network with at least one offline node.
+kpi: SITES_DEGRADED
 domain: network
-algo: sites_online@v2
+algo: sites_degraded@v1
 scope: [network_id]
 inputs:
   nodes:
@@ -16,4 +15,4 @@ output:
   unit: count
   symbol: ""
 rollup_ops: [AVG, MIN, MAX, LAST]
-positive_direction: up
+positive_direction: down
