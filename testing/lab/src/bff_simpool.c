@@ -1007,7 +1007,7 @@ int bff_toggle_sim_status(bff_client_t *c,
 
     snprintf(query, sizeof(query),
              "mutation { toggleSimStatus(data:{sim_id:\"%s\",status:\"%s\"}) "
-             "{ simId } }",
+             "{ success } }",
              sim_esc, status_esc);
 
     if (sim_graphql_call(c, "toggleSimStatus", query, &root, err)) {

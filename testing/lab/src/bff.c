@@ -1761,7 +1761,7 @@ int bff_cleanup_world(bff_client_t *c,
 
         n = snprintf(query, sizeof(query),
                      "mutation { toggleSimStatus(data: {sim_id: \"%s\", "
-                     "status: \"inactive\"}) { simId } }",
+                     "status: \"inactive\"}) { success } }",
                      ue->bff_id);
         if (n >= 0 && (size_t)n < sizeof(query) &&
             bff_cleanup_call(c, "toggleSimStatus", query)) {
