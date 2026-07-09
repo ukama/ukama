@@ -1,8 +1,6 @@
 module github.com/ukama/ukama/systems/messaging/node-feeder
 
-go 1.24.0
-
-toolchain go1.24.12
+go 1.25.0
 
 replace github.com/ukama/ukama/systems/common => ../../common
 
@@ -21,10 +19,10 @@ require (
 	github.com/sirupsen/logrus v1.9.4
 	github.com/streadway/amqp v1.1.0
 	github.com/stretchr/testify v1.11.1
-	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
+	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/messaging/nns v0.0.0-00010101000000-000000000000
-	github.com/wagslane/go-rabbitmq v0.14.2
-	google.golang.org/grpc v1.78.0
+	github.com/wagslane/go-rabbitmq v0.15.0
+	google.golang.org/grpc v1.82.0
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -101,14 +99,14 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	golang.org/x/arch v0.18.0 // indirect
-	golang.org/x/crypto v0.47.0 // indirect
+	golang.org/x/crypto v0.50.0 // indirect
 	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0 // indirect
-	golang.org/x/net v0.49.0 // indirect
-	golang.org/x/sync v0.19.0 // indirect
-	golang.org/x/sys v0.40.0 // indirect
-	golang.org/x/text v0.33.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20251222181119-0a764e51fe1b // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20251222181119-0a764e51fe1b // indirect
+	golang.org/x/net v0.53.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
+	golang.org/x/text v0.36.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260414002931-afd174a4e478 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gorm.io/driver/postgres v1.6.0 // indirect
 	gorm.io/gorm v1.30.0 // indirect
