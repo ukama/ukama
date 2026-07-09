@@ -24,6 +24,14 @@ type KpiWindowReader interface {
 	WindowsInRange(orgID, kpiKey string, fromID, toID int64) ([]schema.KpiWindow, error)
 }
 
+// RawStateReader is aggregator's read-only view of the ingest zone's
+// change-log state — used by performance reports for entity attributes.
+type RawStateReader interface {
+	// LatestState returns the latest non-deleted row per entity for a
+	// dataset (state as of now).
+	LatestState(orgID, datasetKey string) ([]schema.RawRecord, error)
+}
+
 // RollupRepo owns the rollup zone.
 type RollupRepo interface {
 	Upsert(rows []schema.KpiRollup) error
@@ -44,6 +52,25 @@ type repo struct {
 
 func NewRepo(db sql.Db) *repo {
 	return &repo{db: db}
+}
+
+func (r *repo) LatestState(orgID, datasetKey string) ([]schema.RawRecord, error) {
+	rows := []schema.RawRecord{}
+
+	err := r.db.GetGormDb().Raw(`
+		SELECT * FROM (
+			SELECT DISTINCT ON (entity_key) *
+			FROM raw_records
+			WHERE org_id = ? AND dataset_key = ?
+			ORDER BY entity_key, window_id DESC, id DESC
+		) latest
+		WHERE latest.deleted = false`,
+		orgID, datasetKey).Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return rows, nil
 }
 
 func (r *repo) WindowsInRange(orgID, kpiKey string, fromID, toID int64) ([]schema.KpiWindow, error) {

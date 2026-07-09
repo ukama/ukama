@@ -26,6 +26,60 @@ service AggregatorService {
 
     // GetKpiBreakdown ranks scope values for one KPI (top-N).
     rpc GetKpiBreakdown(GetKpiBreakdownRequest) returns (GetKpiBreakdownResponse);
+
+    // ListReports returns the performance report registry.
+    rpc ListReports(ListReportsRequest) returns (ListReportsResponse);
+
+    // GetPerformanceReport composes a resource performance table from the
+    // latest available KPI values + entity attributes.
+    rpc GetPerformanceReport(GetPerformanceReportRequest) returns (GetPerformanceReportResponse);
+}
+
+message ReportInfo {
+    string report = 1;
+    string title = 2;
+    string resource = 3;           // entity dataset key
+    repeated string columns = 4;
+    repeated string attributes = 5;
+}
+
+message ListReportsRequest {
+}
+
+message ListReportsResponse {
+    repeated ReportInfo reports = 1;
+}
+
+message GetPerformanceReportRequest {
+    string report = 1;
+    string span = 2;               // daily|weekly|monthly (default daily)
+    map<string, string> scope = 3; // optional filters, e.g. network_id
+    int32 top = 4;
+}
+
+message ReportCell {
+    string column = 1;
+    double value = 2;
+    string unit = 3;
+    string symbol = 4;
+    string format = 5;             // display hint from the report spec
+    Trend trend = 6;
+    bool is_partial = 7;
+    string computed_at = 8;        // RFC3339; empty when no data yet
+}
+
+message ReportRow {
+    string entity_id = 1;
+    map<string, string> attributes = 2;
+    repeated ReportCell cells = 3;
+    string status = 4;
+}
+
+message GetPerformanceReportResponse {
+    string report = 1;
+    string title = 2;
+    string span = 3;
+    repeated ReportRow rows = 4;
 }
 
 message KpiInfo {

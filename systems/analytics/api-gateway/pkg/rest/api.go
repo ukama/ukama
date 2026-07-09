@@ -26,6 +26,15 @@ type GetKpiTimeSeriesRequest struct {
 	NetworkId string `form:"network_id" query:"network_id"`
 }
 
+// GetPerformanceReportRequest: resource performance table from the latest
+// available KPI values.
+type GetPerformanceReportRequest struct {
+	Report    string `path:"report" json:"report" validate:"required"`
+	Span      string `form:"span" query:"span"` // daily|weekly|monthly (default daily)
+	NetworkId string `form:"network_id" query:"network_id"`
+	Top       int32  `form:"top" query:"top"`
+}
+
 // GetKpiBreakdownRequest: top-N scope values for one KPI.
 type GetKpiBreakdownRequest struct {
 	Key  string `form:"key" query:"key" binding:"required" validate:"required"`

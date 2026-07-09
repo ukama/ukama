@@ -19,6 +19,7 @@ import (
 	"github.com/ukama/ukama/systems/analytics/aggregator/cmd/version"
 	"github.com/ukama/ukama/systems/analytics/aggregator/pkg"
 	"github.com/ukama/ukama/systems/analytics/aggregator/pkg/db"
+	"github.com/ukama/ukama/systems/analytics/aggregator/pkg/performance"
 	"github.com/ukama/ukama/systems/analytics/aggregator/pkg/rollup"
 	"github.com/ukama/ukama/systems/analytics/aggregator/pkg/server"
 	"github.com/ukama/ukama/systems/analytics/schema"
@@ -105,7 +106,16 @@ func run(sDb sql.Db) {
 		log.Fatalf("Initializing rollup engine failed: %v", err)
 	}
 
-	readServer := server.NewAggregatorServer(serviceConfig.OrgName, kpis, repo)
+	reports, err := schema.LoadReportSpecs(serviceConfig.Rollup.ReportsDir, kpis)
+	if err != nil {
+		log.Fatalf("Loading report specs from %s failed: %v", serviceConfig.Rollup.ReportsDir, err)
+	}
+
+	log.Infof("Loaded %d report specs from %s", len(reports), serviceConfig.Rollup.ReportsDir)
+
+	composer := performance.NewComposer(serviceConfig.OrgName, reports, repo, repo)
+
+	readServer := server.NewAggregatorServer(serviceConfig.OrgName, kpis, repo, composer)
 	eventServer := server.NewAggregatorEventServer(serviceConfig.OrgName, engine)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {

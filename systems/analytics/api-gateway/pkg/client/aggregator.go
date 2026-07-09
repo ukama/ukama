@@ -79,6 +79,25 @@ func (a *Aggregator) GetKpiTimeSeries(keys []string, span, op, from, to string, 
 	})
 }
 
+func (a *Aggregator) ListReports() (*pb.ListReportsResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
+	defer cancel()
+
+	return a.client.ListReports(ctx, &pb.ListReportsRequest{})
+}
+
+func (a *Aggregator) GetPerformanceReport(report, span string, scope map[string]string, top int32) (*pb.GetPerformanceReportResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
+	defer cancel()
+
+	return a.client.GetPerformanceReport(ctx, &pb.GetPerformanceReportRequest{
+		Report: report,
+		Span:   span,
+		Scope:  scope,
+		Top:    top,
+	})
+}
+
 func (a *Aggregator) GetKpiBreakdown(key, span, op, by string, top int32) (*pb.GetKpiBreakdownResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
 	defer cancel()

@@ -47,6 +47,8 @@ type aggregator interface {
 	GetKpis(keys []string, span, op string, scope map[string]string) (*pb.GetKpisResponse, error)
 	GetKpiTimeSeries(keys []string, span, op, from, to string, scope map[string]string) (*pb.GetKpiTimeSeriesResponse, error)
 	GetKpiBreakdown(key, span, op, by string, top int32) (*pb.GetKpiBreakdownResponse, error)
+	ListReports() (*pb.ListReportsResponse, error)
+	GetPerformanceReport(report, span string, scope map[string]string, top int32) (*pb.GetPerformanceReportResponse, error)
 }
 
 type Clients struct {
@@ -123,6 +125,12 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 			tonic.Handler(r.getKpiTimeSeriesHandler, http.StatusOK))
 		kpis.GET("/breakdown", formatDoc("Get KPI breakdown", "Top-N scope values for one KPI"),
 			tonic.Handler(r.getKpiBreakdownHandler, http.StatusOK))
+
+		reports := auth.Group("/analytics/reports", "Reports", "Resource performance reports")
+		reports.GET("", formatDoc("List reports", "Performance report registry"),
+			tonic.Handler(r.listReportsHandler, http.StatusOK))
+		reports.GET("/:report", formatDoc("Get performance report", "Resource performance table from latest available KPI values"),
+			tonic.Handler(r.getPerformanceReportHandler, http.StatusOK))
 	}
 }
 
@@ -150,6 +158,14 @@ func (r *Router) getKpiTimeSeriesHandler(c *gin.Context, req *GetKpiTimeSeriesRe
 
 func (r *Router) getKpiBreakdownHandler(c *gin.Context, req *GetKpiBreakdownRequest) (*pb.GetKpiBreakdownResponse, error) {
 	return r.clients.Aggregator.GetKpiBreakdown(req.Key, req.Span, req.Op, req.By, req.Top)
+}
+
+func (r *Router) listReportsHandler(c *gin.Context) (*pb.ListReportsResponse, error) {
+	return r.clients.Aggregator.ListReports()
+}
+
+func (r *Router) getPerformanceReportHandler(c *gin.Context, req *GetPerformanceReportRequest) (*pb.GetPerformanceReportResponse, error) {
+	return r.clients.Aggregator.GetPerformanceReport(req.Report, req.Span, scopeFilter(req.NetworkId), req.Top)
 }
 
 func splitKeys(csv string) []string {

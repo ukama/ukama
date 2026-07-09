@@ -39,6 +39,8 @@ type RollupConfig struct {
 	Timezone string `default:"UTC"`
 	// SpecsDir holds the KPI specs (rollup_ops, output metadata).
 	SpecsDir string `default:"configs/kpis"`
+	// ReportsDir holds the performance report specs.
+	ReportsDir string `default:"configs/reports"`
 	// SweepInterval recomputes current spans (covers lost events + partial
 	// span refresh).
 	SweepInterval time.Duration `default:"120s"`

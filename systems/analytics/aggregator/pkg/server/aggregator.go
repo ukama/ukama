@@ -19,32 +19,128 @@ import (
 
 	pb "github.com/ukama/ukama/systems/analytics/aggregator/pb/gen"
 	"github.com/ukama/ukama/systems/analytics/aggregator/pkg/db"
+	"github.com/ukama/ukama/systems/analytics/aggregator/pkg/performance"
 	"github.com/ukama/ukama/systems/analytics/aggregator/pkg/rollup"
 	"github.com/ukama/ukama/systems/analytics/schema"
 )
 
-// AggregatorServer is the generic KPI read API over kpi_rollups. No per-KPI
-// code: adding a KPI requires no changes here.
+// AggregatorServer is the generic KPI read API over kpi_rollups plus the
+// performance-report composer. No per-KPI/per-report code: adding either
+// requires no changes here.
 type AggregatorServer struct {
-	org     string
-	kpis    []schema.KpiSpec
-	byKey   map[string]schema.KpiSpec
-	rollups db.RollupRepo
+	org      string
+	kpis     []schema.KpiSpec
+	byKey    map[string]schema.KpiSpec
+	rollups  db.RollupRepo
+	composer *performance.Composer
 	pb.UnimplementedAggregatorServiceServer
 }
 
-func NewAggregatorServer(org string, kpis []schema.KpiSpec, rollups db.RollupRepo) *AggregatorServer {
+func NewAggregatorServer(org string, kpis []schema.KpiSpec, rollups db.RollupRepo,
+	composer *performance.Composer) *AggregatorServer {
 	byKey := map[string]schema.KpiSpec{}
 	for _, k := range kpis {
 		byKey[k.Kpi] = k
 	}
 
 	return &AggregatorServer{
-		org:     org,
-		kpis:    kpis,
-		byKey:   byKey,
-		rollups: rollups,
+		org:      org,
+		kpis:     kpis,
+		byKey:    byKey,
+		rollups:  rollups,
+		composer: composer,
 	}
+}
+
+func (s *AggregatorServer) ListReports(ctx context.Context, req *pb.ListReportsRequest) (*pb.ListReportsResponse, error) {
+	specs := s.composer.List()
+
+	infos := make([]*pb.ReportInfo, 0, len(specs))
+
+	for _, r := range specs {
+		columns := make([]string, 0, len(r.Columns))
+		for _, c := range r.Columns {
+			columns = append(columns, c.Name)
+		}
+
+		attributes := make([]string, 0, len(r.Resource.Attributes))
+		for _, a := range r.Resource.Attributes {
+			attributes = append(attributes, a.Name)
+		}
+
+		infos = append(infos, &pb.ReportInfo{
+			Report:     r.Report,
+			Title:      r.Title,
+			Resource:   r.Resource.Dataset,
+			Columns:    columns,
+			Attributes: attributes,
+		})
+	}
+
+	return &pb.ListReportsResponse{Reports: infos}, nil
+}
+
+func (s *AggregatorServer) GetPerformanceReport(ctx context.Context, req *pb.GetPerformanceReportRequest) (*pb.GetPerformanceReportResponse, error) {
+	span, err := validateSpan(req.Span)
+	if err != nil {
+		return nil, err
+	}
+
+	report, err := s.composer.Compose(req.Report, span, req.Scope, int(req.Top))
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "composing report: %v", err)
+	}
+
+	rows := make([]*pb.ReportRow, 0, len(report.Rows))
+
+	for _, row := range report.Rows {
+		cells := make([]*pb.ReportCell, 0, len(row.Cells))
+
+		for _, cell := range row.Cells {
+			pbCell := &pb.ReportCell{
+				Column:    cell.Column,
+				Value:     cell.Value,
+				Unit:      cell.Unit,
+				Symbol:    cell.Symbol,
+				Format:    cell.Format,
+				IsPartial: cell.IsPartial,
+				Trend:     &pb.Trend{Direction: cell.Trend},
+			}
+
+			if cell.PrevValue != nil {
+				pbCell.Trend.HasPrevious = true
+				pbCell.Trend.PrevValue = *cell.PrevValue
+			}
+
+			if cell.ChangeAbs != nil {
+				pbCell.Trend.ChangeAbs = *cell.ChangeAbs
+			}
+
+			if cell.ChangePct != nil {
+				pbCell.Trend.ChangePct = *cell.ChangePct
+			}
+
+			if !cell.ComputedAt.IsZero() {
+				pbCell.ComputedAt = cell.ComputedAt.UTC().Format(time.RFC3339)
+			}
+
+			cells = append(cells, pbCell)
+		}
+
+		rows = append(rows, &pb.ReportRow{
+			EntityId:   row.EntityID,
+			Attributes: row.Attributes,
+			Cells:      cells,
+			Status:     row.Status,
+		})
+	}
+
+	return &pb.GetPerformanceReportResponse{
+		Report: report.Report,
+		Title:  report.Title,
+		Span:   report.Span,
+		Rows:   rows,
+	}, nil
 }
 
 func (s *AggregatorServer) ListKpis(ctx context.Context, req *pb.ListKpisRequest) (*pb.ListKpisResponse, error) {
