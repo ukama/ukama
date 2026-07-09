@@ -10,22 +10,25 @@ package algos
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/ukama/ukama/systems/analytics/schema"
 )
 
 // ActiveCustomers (ACTIVE_CUSTOMERS @ scope network_id): number of distinct
-// subscribers per network holding at least one active SIM.
+// subscribers per network with at least one SIM in "active" status.
 //
 // Inputs:
-//   active_sims — subscriber.sim.listActive (sim_id, subscriber_id,
-//                 network_id) — source-filtered to sim_status=active
-//   networks    — registry.network.getAll (network_id) — zero-fill so
-//                 networks with no active sims still emit 0.
+//   sims     — subscriber.sim.list (sim_id, subscriber_id, network_id,
+//              status): ALL sims; the active filter is applied here. (v3:
+//              shares the dataset with the package/usage KPIs instead of a
+//              separate source-filtered pull.)
+//   networks — registry.network.getAll (network_id) — zero-fill so networks
+//              with no active sims still emit 0.
 func ActiveCustomers(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
-	sims, ok := in["active_sims"]
+	sims, ok := in["sims"]
 	if !ok {
-		return nil, fmt.Errorf("ACTIVE_CUSTOMERS: missing input 'active_sims'")
+		return nil, fmt.Errorf("ACTIVE_CUSTOMERS: missing input 'sims'")
 	}
 
 	networks, ok := in["networks"]
@@ -34,7 +37,7 @@ func ActiveCustomers(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Res
 	}
 
 	// network -> set of distinct subscribers with an active sim
-	subscribers := map[string]map[string]bool{}
+	active := map[string]map[string]bool{}
 
 	for _, sim := range sims {
 		networkID := str(sim["network_id"])
@@ -44,26 +47,16 @@ func ActiveCustomers(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Res
 			continue
 		}
 
-		if subscribers[networkID] == nil {
-			subscribers[networkID] = map[string]bool{}
-		}
+		if strings.EqualFold(str(sim["status"]), "active") {
+			if active[networkID] == nil {
+				active[networkID] = map[string]bool{}
+			}
 
-		subscribers[networkID][subscriberID] = true
+			active[networkID][subscriberID] = true
+		}
 	}
 
-	results := make([]Result, 0, len(networks))
-
-	for _, network := range networks {
-		networkID := str(network["network_id"])
-		if networkID == "" {
-			continue
-		}
-
-		results = append(results, CountResult(
-			map[string]string{"network_id": networkID},
-			float64(len(subscribers[networkID])),
-		))
-	}
-
-	return results, nil
+	return zeroFilled(networks, func(networkID string) float64 {
+		return float64(len(active[networkID]))
+	}), nil
 }

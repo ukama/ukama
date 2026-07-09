@@ -65,10 +65,9 @@ func Default() *Registry {
 	// v2: site online = its cnode is online (was: any node online).
 	r.Register("sites_online@v2", SitesOnline)
 	r.Register("sites_degraded@v1", SitesDegraded)
-	// v2: counts distinct subscribers from the source-filtered active-sims
-	// list (subscriber.sim.listActive) instead of parsing per-subscriber
-	// sim arrays.
-	r.Register("active_customers@v2", ActiveCustomers)
+	// v3: reads the shared all-sims dataset (subscriber.sim.list) and
+	// filters status=active in-algo — one sims pull feeds all sim KPIs.
+	r.Register("active_customers@v3", ActiveCustomers)
 	r.Register("usage_by_network@v1", UsageByNetwork)
 
 	// Package KPIs (see docs/packages-kpi-plan.md).

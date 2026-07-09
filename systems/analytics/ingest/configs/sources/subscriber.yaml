@@ -1,32 +1,13 @@
-# Subscriber source spec. Uses the sim-manager's filtered bulk list
-# (/v1/sim?network_id=&sim_status=active) fanned out per network (for_each
-# DAG); child rows inherit network_id lineage. Input for ACTIVE_CUSTOMERS.
+# Subscriber source spec. One sims dataset (all statuses) feeds
+# ACTIVE_CUSTOMERS (status filtered in the algo), sim-package assignments
+# and usage fan-outs — pulled once per network per window.
 version: 1
 source: subscriber
 system: subscriber
 
 pulls:
-  - key: subscriber.sim.listActive
-    endpoint: /v1/sim
-    strategy: full_snapshot
-    items: $.sims
-    entity: sim_id
-    for_each:
-      dataset: registry.network.getAll
-      bind: [network_id]
-    params:
-      network_id: "{{.network_id}}"
-      sim_status: active
-    map:
-      # Path matching is case/underscore-insensitive (mapper), so these
-      # match both snake_case and camelCase serializations.
-      sim_id: $.id
-      subscriber_id: $.subscriber_id
-      network_id: $.network_id
-      status: $.status
-
   # ALL sims per network (no status filter) — inactive sims still carry
-  # purchase history. Parent for sim-package assignments.
+  # purchase history. Parent for sim-packages and usage.
   - key: subscriber.sim.list
     endpoint: /v1/sim
     strategy: full_snapshot
@@ -70,7 +51,7 @@ pulls:
     items: $
     entity: sim_id
     for_each:
-      dataset: subscriber.sim.listActive
+      dataset: subscriber.sim.list
       bind: [sim_id, network_id]
     params:
       sim_id: "{{.sim_id}}"
