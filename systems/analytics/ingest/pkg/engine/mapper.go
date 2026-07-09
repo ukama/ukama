@@ -151,10 +151,15 @@ func ItemsAt(body []byte, itemsPath string) ([]interface{}, error) {
 		return []interface{}{}, nil // key present, null value = empty set
 	}
 
-	arr, ok := node.([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("items path %q does not point at an array", itemsPath)
+	if arr, ok := node.([]interface{}); ok {
+		return arr, nil
 	}
 
-	return arr, nil
+	// Single-object responses (e.g. /v1/usages returns {"usage": {...},
+	// "cost": {...}}) are treated as one record.
+	if obj, ok := node.(map[string]interface{}); ok {
+		return []interface{}{obj}, nil
+	}
+
+	return nil, fmt.Errorf("items path %q points at neither an array nor an object", itemsPath)
 }

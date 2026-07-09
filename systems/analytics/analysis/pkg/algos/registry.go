@@ -69,6 +69,7 @@ func Default() *Registry {
 	// list (subscriber.sim.listActive) instead of parsing per-subscriber
 	// sim arrays.
 	r.Register("active_customers@v2", ActiveCustomers)
+	r.Register("usage_by_network@v1", UsageByNetwork)
 
 	return r
 }

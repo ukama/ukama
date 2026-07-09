@@ -24,3 +24,25 @@ pulls:
       subscriber_id: $.subscriber_id
       network_id: $.network_id
       status: $.status
+
+  # Per-sim data usage for the window (strategy: window — from/to templated
+  # per window boundary). Fans out over active sims; sim_id/network_id
+  # lineage comes from the binds. Input for USAGE_BY_NETWORK.
+  - key: subscriber.usage.getBySim
+    endpoint: /v1/usages
+    strategy: window
+    items: $
+    entity: sim_id
+    for_each:
+      dataset: subscriber.sim.listActive
+      bind: [sim_id, network_id]
+    params:
+      sim_id: "{{.sim_id}}"
+      sim_type: ukama_data
+      cdr_type: DATA
+      region: ""
+      from: "{{.WindowStart}}"
+      to: "{{.WindowEnd}}"
+    map:
+      usage: $.usage
+      cost: $.cost
