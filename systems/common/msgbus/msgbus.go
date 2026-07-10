@@ -65,6 +65,7 @@ type Consumer interface {
 	Subscribe(queueName string, exchangeName string, exchangeType string, routingKeys []RoutingKey, consumerName string, handlerFunc func(amqp.Delivery, chan<- bool)) error
 	SubscribeToQueue(queueName string, consumerName string, handlerFunc func(amqp.Delivery, chan<- bool)) error
 	SubscribeToServiceQueue(serviceName string, exchangeName string, routingKeys []RoutingKey, consumerId string, handlerFunc func(amqp.Delivery, chan<- bool)) error
+	SubscribeToServiceQueueWithArgs(serviceName string, exchangeName string, routingKeys []RoutingKey, consumerId string, queueArgs map[string]interface{}, handlerFunc func(amqp.Delivery, chan<- bool)) error
 	SubscribeWithArgs(queueName string, exchangeName string, exchangeType string,
 		routingKeys []RoutingKey, consumerName string, queueArgs map[string]interface{}, handlerFunc func(amqp.Delivery, chan<- bool)) error
 	IsClosed() bool
@@ -104,6 +105,15 @@ type subscription struct {
 	consumerName    string
 	queueArgs       map[string]interface{}
 	handlerFunc     func(amqp.Delivery, chan<- bool)
+
+	// requeueOnFailure controls what happens when the handler reports failure
+	// (done <- false) or times out. When true the message is nacked with
+	// requeue=true (immediate redelivery on the same queue). When false it is
+	// nacked with requeue=false, which routes it to the queue's dead-letter
+	// exchange when one is configured (or drops it otherwise) — required for
+	// TTL-based retry topologies like node-feeder's, and avoids hot-looping a
+	// poison message at the head of the queue.
+	requeueOnFailure bool
 }
 
 // Servcie Config
@@ -305,10 +315,11 @@ func (m *MsgClient) SubscribeWithArgs(queueName string, exchangeName string, exc
 		declareExchange: true,
 		durableQueue:    false,
 		autoAck:         false,
-		routingKeys:     routingKeys,
-		consumerName:    consumerName,
-		queueArgs:       queueArgs,
-		handlerFunc:     handlerFunc,
+		routingKeys:      routingKeys,
+		consumerName:     consumerName,
+		queueArgs:        queueArgs,
+		handlerFunc:      handlerFunc,
+		requeueOnFailure: true,
 	})
 }
 
@@ -482,10 +493,16 @@ func (m *MsgClient) wagslaneHandler(sub *subscription) rabbitmq.Handler {
 			if ok {
 				return rabbitmq.Ack
 			}
-			return rabbitmq.NackRequeue
+			if sub.requeueOnFailure {
+				return rabbitmq.NackRequeue
+			}
+			return rabbitmq.NackDiscard
 		case <-time.After(handlerAckTimeout):
-			m.log.Errorf("[msgbus] handler timed out for queue %q key %q; requeueing", sub.queueName, d.RoutingKey)
-			return rabbitmq.NackRequeue
+			m.log.Errorf("[msgbus] handler timed out for queue %q key %q", sub.queueName, d.RoutingKey)
+			if sub.requeueOnFailure {
+				return rabbitmq.NackRequeue
+			}
+			return rabbitmq.NackDiscard
 		}
 	}
 }
@@ -591,14 +608,38 @@ func (m *MsgClient) declareExchange(ch *amqp.Channel, exchangeName string, excha
 // If queue does not exist then it will be created with the `serviceName`
 func (m *MsgClient) SubscribeToServiceQueue(serviceName string, exchangeName string, routingKeys []RoutingKey, consumerId string, handlerFunc func(amqp.Delivery, chan<- bool)) error {
 	return m.subscribe(&subscription{
-		queueName:       serviceName,
-		exchangeName:    exchangeName,
-		declareExchange: false,
-		durableQueue:    true,
-		autoAck:         false,
-		routingKeys:     routingKeys,
-		consumerName:    consumerId,
-		handlerFunc:     handlerFunc,
+		queueName:        serviceName,
+		exchangeName:     exchangeName,
+		declareExchange:  false,
+		durableQueue:     true,
+		autoAck:          false,
+		routingKeys:      routingKeys,
+		consumerName:     consumerId,
+		handlerFunc:      handlerFunc,
+		requeueOnFailure: true,
+	})
+}
+
+// SubscribeToServiceQueueWithArgs is like SubscribeToServiceQueue but declares
+// the durable queue with the given arguments (e.g. x-dead-letter-exchange /
+// x-dead-letter-routing-key) and nacks WITHOUT requeue when the handler
+// reports failure, so failed messages flow to the queue's dead-letter exchange
+// (TTL retry topology) instead of hot-looping at the head of the queue.
+// The args must match any pre-existing queue declaration exactly, otherwise the
+// broker rejects the declare with PRECONDITION_FAILED (delete the queue once
+// when changing args).
+func (m *MsgClient) SubscribeToServiceQueueWithArgs(serviceName string, exchangeName string, routingKeys []RoutingKey, consumerId string, queueArgs map[string]interface{}, handlerFunc func(amqp.Delivery, chan<- bool)) error {
+	return m.subscribe(&subscription{
+		queueName:        serviceName,
+		exchangeName:     exchangeName,
+		declareExchange:  false,
+		durableQueue:     true,
+		autoAck:          false,
+		routingKeys:      routingKeys,
+		consumerName:     consumerId,
+		queueArgs:        queueArgs,
+		handlerFunc:      handlerFunc,
+		requeueOnFailure: false,
 	})
 }
 
@@ -622,13 +663,14 @@ func (m *MsgClient) consume(ch *amqp.Channel, queueName string, consumerId strin
 // Subscribe directly to queue
 func (m *MsgClient) SubscribeToQueue(queueName string, consumerName string, handlerFunc func(amqp.Delivery, chan<- bool)) error {
 	return m.subscribe(&subscription{
-		queueName:       queueName,
-		declareExchange: false,
-		durableQueue:    false,
-		autoAck:         true,
-		routingKeys:     nil,
-		consumerName:    consumerName,
-		handlerFunc:     handlerFunc,
+		queueName:        queueName,
+		declareExchange:  false,
+		durableQueue:     false,
+		autoAck:          true,
+		routingKeys:      nil,
+		consumerName:     consumerName,
+		handlerFunc:      handlerFunc,
+		requeueOnFailure: true,
 	})
 }
 
