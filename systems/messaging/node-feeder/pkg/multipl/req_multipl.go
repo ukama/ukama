@@ -31,10 +31,14 @@ func NewRequestMultiplier(registryClient string, queue QueuePublisher) pkg.Reque
 	}
 }
 
+// Process fans a wildcard-target request (org.network.site.node, where any of
+// network/site/node may be "*") out into one concrete request per matching
+// node, republished on the node-feeder retry queue. Republished targets are
+// always fully-qualified 4-segment targets ending in a concrete node id, so
+// they are executed directly on the next consumption and can never loop back
+// into the multiplier.
 func (r *requestMultiplier) Process(req *epb.NodeFeederMessage) error {
-	// "org.nodeId"
-	counter := 0
-	//target = orgId.networkId.siteId.nodeId
+	//target = org.network.site.node
 	segments := strings.Split(req.Target, ".")
 	if len(segments) != 4 {
 		return fmt.Errorf("invalid format of target: %s", req.Target)
@@ -50,66 +54,56 @@ func (r *requestMultiplier) Process(req *epb.NodeFeederMessage) error {
 		return err
 	}
 
-	if nodeId != "*" {
-		err := r.PublishToFilteredNodes(req, nodeResp.Nodes, orgName, networkName, siteName, nodeId)
-		if err != nil {
-			log.Errorf("Failed to publish message to queue: %s", err)
-		}
-	} else {
-		err := r.PublishToNode(req, orgName, nodeId)
-		if err != nil {
-			log.Errorf("Failed to publish message to queue: %s", err)
-			return fmt.Errorf("failed to publish message to queue")
-		} else {
-			log.Infof("Created %d requests for node id %s", counter, nodeId)
-		}
-	}
-
-	log.Infof("Pulished requests %+v.", req)
-	return nil
-}
-
-func (r *requestMultiplier) PublishToNode(req *epb.NodeFeederMessage, orgName string, node string) error {
-	err := r.queue.Publish(&epb.NodeFeederMessage{
-		Target:     orgName + "." + node,
-		HttpMethod: req.HttpMethod,
-		Path:       req.Path,
-		Msg:        req.Msg,
-		NodeId:     req.NodeId,
-	})
-
-	if err != nil {
-		log.Errorf("Failed to publish message to queue: %s", err)
-		return fmt.Errorf("failed to publish message to queue")
-	}
-	return nil
-}
-
-func (r *requestMultiplier) PublishToFilteredNodes(req *epb.NodeFeederMessage, nodeResp []*rc.NodeInfo, orgName string, networkId string, siteId string, nodeId string) error {
 	counter := 0
 
-	for _, n := range nodeResp {
+	for _, n := range nodeResp.Nodes {
 		/* Figure a better way : This is generating a multiple nested request */
 		nResp, err := r.nodeClient.Get(n.Id)
 		if err != nil {
 			return err
 		}
 
-		if networkId == "*" || nResp.Site.NetworkId == networkId {
-			if siteId == "*" || nResp.Site.SiteId == siteId {
-				if nodeId == "*" {
-					err := r.PublishToNode(req, orgName, n.Id)
-					if err != nil {
-						log.Errorf("Failed to publish message to queue: %s", err)
-						return fmt.Errorf("failed to publish message to queue")
-					} else {
-						counter++
-					}
-				}
-			}
+		if networkName != "*" && nResp.Site.NetworkId != networkName {
+			continue
 		}
+
+		if siteName != "*" && nResp.Site.SiteId != siteName {
+			continue
+		}
+
+		if nodeId != "*" && !strings.EqualFold(n.Id, nodeId) {
+			continue
+		}
+
+		err = r.PublishToNode(req, orgName, networkName, siteName, n.Id)
+		if err != nil {
+			log.Errorf("Failed to publish message to queue: %s", err)
+			return fmt.Errorf("failed to publish message to queue")
+		}
+
+		counter++
 	}
 
-	log.Infof("Created %d requests", counter)
+	log.Infof("Created %d node requests for target %s", counter, req.Target)
+	return nil
+}
+
+// PublishToNode republishes the request for a single concrete node. The target
+// keeps the original org/network/site segments (only the node segment is
+// resolved), which is sufficient for the executor: it validates and uses only
+// the node id segment.
+func (r *requestMultiplier) PublishToNode(req *epb.NodeFeederMessage, orgName string, networkName string, siteName string, nodeId string) error {
+	err := r.queue.Publish(&epb.NodeFeederMessage{
+		Target:     orgName + "." + networkName + "." + siteName + "." + nodeId,
+		HttpMethod: req.HttpMethod,
+		Path:       req.Path,
+		Msg:        req.Msg,
+		NodeId:     nodeId,
+	})
+
+	if err != nil {
+		log.Errorf("Failed to publish message to queue: %s", err)
+		return fmt.Errorf("failed to publish message to queue")
+	}
 	return nil
 }
