@@ -966,6 +966,26 @@ _phase2_post_flash_config() {
         reboot_needed=1
     fi
 
+    # The stock /etc/profile wraps every login in an audit shell pinned to core 0,
+    # which hangs once the LTE apps saturate that core. rc_post.local strips it but
+    # only runs when boot completes - in e2e mode the cell bringup blocks rc forever,
+    # so the strip must run early, from rc_pre.local (executed right after /mnt/app
+    # mounts, before sshd). The flashed image ships a stock rc_pre.local, so insert
+    # the line after every flash; also patch the live /etc/profile so no reboot is
+    # needed for logins to work on this boot.
+    local rc_pre="/mnt/app/rc_pre.local"
+    if sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" \
+        "grep -q audit_log ${rc_pre} 2>/dev/null"; then
+        echo "  rc_pre.local already strips the audit shell (login-hang fix present)."
+    else
+        echo "  Inserting audit-shell strip into ${rc_pre} (login-hang fix)..."
+        sshpass "${sshpass_args[@]}" ssh "${ssh_opts[@]}" "${ssh_user}@${trx_ip}" \
+            "if [ -f ${rc_pre} ]; then { head -1 ${rc_pre}; echo \"sed -i '/audit_log/d' /etc/profile\"; tail -n +2 ${rc_pre}; } > /tmp/rc_pre.new && cp /tmp/rc_pre.new ${rc_pre}; else printf '#!/bin/sh\nsed -i \"/audit_log/d\" /etc/profile\n' > ${rc_pre}; fi && chmod +x ${rc_pre} && sed -i '/audit_log/d' /etc/profile" || {
+            echo "ERROR: rc_pre.local login-hang fix failed."
+            return 1
+        }
+    fi
+
     # skip the write (and the reboot) if the target already matches
     if [ -f "$band_cfg_src" ]; then
         local local_md5 remote_md5
