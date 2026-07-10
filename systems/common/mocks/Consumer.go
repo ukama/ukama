@@ -91,6 +91,24 @@ func (_m *Consumer) SubscribeToServiceQueue(serviceName string, exchangeName str
 	return r0
 }
 
+// SubscribeToServiceQueueWithArgs provides a mock function with given fields: serviceName, exchangeName, routingKeys, consumerId, queueArgs, handlerFunc
+func (_m *Consumer) SubscribeToServiceQueueWithArgs(serviceName string, exchangeName string, routingKeys []msgbus.RoutingKey, consumerId string, queueArgs map[string]interface{}, handlerFunc func(amqp.Delivery, chan<- bool)) error {
+	ret := _m.Called(serviceName, exchangeName, routingKeys, consumerId, queueArgs, handlerFunc)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SubscribeToServiceQueueWithArgs")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string, []msgbus.RoutingKey, string, map[string]interface{}, func(amqp.Delivery, chan<- bool)) error); ok {
+		r0 = rf(serviceName, exchangeName, routingKeys, consumerId, queueArgs, handlerFunc)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // SubscribeWithArgs provides a mock function with given fields: queueName, exchangeName, exchangeType, routingKeys, consumerName, queueArgs, handlerFunc
 func (_m *Consumer) SubscribeWithArgs(queueName string, exchangeName string, exchangeType string, routingKeys []msgbus.RoutingKey, consumerName string, queueArgs map[string]interface{}, handlerFunc func(amqp.Delivery, chan<- bool)) error {
 	ret := _m.Called(queueName, exchangeName, exchangeType, routingKeys, consumerName, queueArgs, handlerFunc)
