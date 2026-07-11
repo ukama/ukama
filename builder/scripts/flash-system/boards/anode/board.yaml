@@ -1,0 +1,32 @@
+name: "Amplifier Node (Controller Board)"
+method: sd-card
+target: /dev/sda
+
+partitions:
+  - { num: 1, type: primary,  fs: fat32,      start: 1MiB,     end: 1025MiB,  label: boot,     tarball: boot }
+  - { num: 2, type: primary,  fs: ext4,       start: 1025MiB,  end: 5121MiB,  label: recovery }
+  - { num: 3, type: extended,                  start: 5121MiB,  end: 28673MiB }
+  - { num: 5, type: logical,  fs: ext4,       start: 5122MiB,  end: 11265MiB, label: primary,  tarball: rootfsA, install_autoflash: true }
+  - { num: 6, type: logical,  fs: ext4,       start: 11266MiB, end: 17409MiB, label: passive,  tarball: rootfsB, install_autoflash: true }
+  - { num: 7, type: logical,  fs: ext4,       start: 17410MiB, end: 27649MiB, label: data }
+  - { num: 8, type: logical,  fs: linux-swap, start: 27650MiB, end: 28673MiB, label: swap }
+
+tarballs:
+  boot:
+    path: /usr/ukm/ukama/builder/scripts/build-system/boot.tgz
+    must_contain: [u-boot.bin]
+    min_entries: 3
+  rootfsA:
+    path: /usr/ukm/ukama/builder/scripts/build-system/rootfsA.tgz
+    must_contain: [bin, lib, etc, usr]
+    min_entries: 1000
+  rootfsB:
+    path: /usr/ukm/ukama/builder/scripts/build-system/rootfsB.tgz
+    must_contain: [bin, lib, etc, usr]
+    min_entries: 1000
+
+serial:
+  device: /dev/ttyUSB0
+  baud: 115200
+  success_marker: "Flash complete. Rebooting."
+  boot_marker: "login:"

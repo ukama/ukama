@@ -1,0 +1,12 @@
+#!/bin/sh
+echo "Configuring Autoneg for ethernet."
+devmem 0x00011800B0001000 64 0x0140
+readValue=`devmem 0x00011800B0001000 64`
+echo "Ethernet Autoneg config is $readValue "
+if [ -e /mnt/app/init.d ];then
+        cp /mnt/app/init.d/* /etc/init.d/
+fi
+# The stock /etc/profile wraps every login in an audit shell pinned to core 0
+# (oncpu 0 /usr/bin/script ... audit_log.txt), which hangs once the RF/LTE apps
+# are loaded. The rootfs is an initramfs, so remove it again on every boot.
+sed -i '/audit_log/d' /etc/profile
