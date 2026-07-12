@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ukama.com/schemas/log-v1.schema.json",
+  "title": "Ukama structured log record",
+  "type": "object",
+  "required": [
+    "schema",
+    "ts",
+    "mono_ms",
+    "level",
+    "app",
+    "component",
+    "event",
+    "msg",
+    "pid",
+    "source_file",
+    "source_line"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ukama.log.v1"
+    },
+    "ts": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "mono_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "level": {
+      "enum": [
+        "trace",
+        "debug",
+        "info",
+        "warn",
+        "error",
+        "critical"
+      ]
+    },
+    "app": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "component": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "event": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "maxLength": 96
+    },
+    "msg": {
+      "type": "string",
+      "maxLength": 2048
+    },
+    "pid": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "tid": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "source_file": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "source_line": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "source_function": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "truncated": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": true
+}
