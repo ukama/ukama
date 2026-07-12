@@ -46,6 +46,7 @@ LDFLAGS+=--coverage
 CURL_LIB  = -lcurl -lssl -lcrypto
 
 ULFIUS_LIB=-lulfius
+ULFIUS_LIB+=-lyder
 ULFIUS_LIB+=-lorcania
 ULFIUS_LIB+=-lmicrohttpd
 ULFIUS_LIB+=-lgnutls
