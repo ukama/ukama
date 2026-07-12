@@ -141,6 +141,14 @@ static bool cfg_validate(Config *config) {
     if (config->termGraceSec <= 0)          config->termGraceSec = 5;
     if (config->restartMaxBackoffSec <= 0)  config->restartMaxBackoffSec = 60;
     if (config->restartStableResetSec <= 0) config->restartStableResetSec = 300;
+    if (!config->logSpoolDir || !*config->logSpoolDir) {
+        usys_log_error("config: log spool directory missing");
+        return false;
+    }
+    if (config->logSpoolMaxBytes <= 0) {
+        config->logSpoolMaxBytes =
+            STARTERD_DEFAULT_LOG_SPOOL_MAX_BYTES;
+    }
     if (config->logRecordMaxBytes <= 0) {
         config->logRecordMaxBytes = STARTERD_DEFAULT_LOG_RECORD_MAX;
     }
@@ -172,6 +180,11 @@ bool config_load(Config *config) {
                                     STARTERD_DEFAULT_READY_FILE);
     config->rlogSocketPath = cfg_get_str("STARTERD_RLOG_SOCKET",
                                          STARTERD_DEFAULT_RLOG_SOCKET);
+    config->logSpoolDir = cfg_get_str("STARTERD_LOG_SPOOL_DIR",
+                                      STARTERD_DEFAULT_LOG_SPOOL_DIR);
+    config->logSpoolMaxBytes =
+        cfg_get_int("STARTERD_LOG_SPOOL_MAX_BYTES",
+                    STARTERD_DEFAULT_LOG_SPOOL_MAX_BYTES);
     config->logRecordMaxBytes =
         cfg_get_int("STARTERD_LOG_RECORD_MAX_BYTES",
                     STARTERD_DEFAULT_LOG_RECORD_MAX);
@@ -225,6 +238,7 @@ void config_free(Config *config) {
     free(config->manifestPath);
     free(config->readyFile);
     free(config->rlogSocketPath);
+    free(config->logSpoolDir);
     free(config->appsRoot);
     free(config->pkgsDir);
     free(config->stateDir);

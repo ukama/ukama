@@ -15,7 +15,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
-#include <sys/time.h>
 #include <sys/un.h>
 #include <time.h>
 #include <unistd.h>
@@ -29,6 +28,7 @@
 struct RlogClient {
     char socketPath[RLOG_SOCKET_PATH_MAX];
     char producerBootId[RLOG_PRODUCER_BOOT_ID_MAX];
+    char connectedProducer[RLOG_PRODUCER_BOOT_ID_MAX];
     int reconnectMs;
     int fd;
     int64_t nextRetryMs;
@@ -46,6 +46,7 @@ static void client_close(RlogClient *client) {
     if (!client) return;
     if (client->fd >= 0) close(client->fd);
     client->fd = -1;
+    client->connectedProducer[0] = '\0';
     client->nextRetryMs = monotonic_ms() + client->reconnectMs;
 }
 
@@ -74,9 +75,7 @@ static json_t *recv_json(int fd) {
     pfd.fd = fd;
     pfd.events = POLLIN;
 
-    if (poll(&pfd, 1, RLOG_ACK_TIMEOUT_MS) <= 0) {
-        return NULL;
-    }
+    if (poll(&pfd, 1, RLOG_ACK_TIMEOUT_MS) <= 0) return NULL;
 
     received = recv(fd, buffer, RLOG_REPLY_MAX, 0);
     if (received <= 0) return NULL;
@@ -85,17 +84,30 @@ static json_t *recv_json(int fd) {
     return json_loadb(buffer, (size_t)received, 0, &error);
 }
 
-static bool client_connect(RlogClient *client) {
+static bool client_connect(RlogClient *client, const char *producerBootId) {
     struct sockaddr_un address;
     json_t *hello;
     json_t *reply;
     const char *op;
     size_t pathLen;
+    size_t producerLen;
     socklen_t addressLen;
 
-    if (!client) return false;
-    if (client->fd >= 0) return true;
+    if (!client || !producerBootId || !*producerBootId) return false;
+
+    if (client->fd >= 0 &&
+        strcmp(client->connectedProducer, producerBootId) == 0) {
+        return true;
+    }
+
+    if (client->fd >= 0) client_close(client);
     if (monotonic_ms() < client->nextRetryMs) return false;
+
+    producerLen = strlen(producerBootId);
+    if (producerLen >= sizeof(client->connectedProducer)) {
+        errno = ENAMETOOLONG;
+        return false;
+    }
 
     client->fd = socket(AF_UNIX, SOCK_SEQPACKET, 0);
     if (client->fd < 0) {
@@ -114,7 +126,6 @@ static bool client_connect(RlogClient *client) {
     }
 
     memcpy(address.sun_path, client->socketPath, pathLen + 1);
-
     addressLen = (socklen_t)(offsetof(struct sockaddr_un, sun_path) +
                               pathLen + 1);
 
@@ -127,7 +138,7 @@ static bool client_connect(RlogClient *client) {
     hello = json_pack("{s:s,s:s,s:s}",
                       "op", "hello",
                       "producer", "starterd",
-                      "producer_boot_id", client->producerBootId);
+                      "producer_boot_id", producerBootId);
     if (!hello || !send_json(client->fd, hello)) {
         if (hello) json_decref(hello);
         client_close(client);
@@ -149,6 +160,7 @@ static bool client_connect(RlogClient *client) {
         return false;
     }
 
+    memcpy(client->connectedProducer, producerBootId, producerLen + 1);
     json_decref(reply);
     return true;
 }
@@ -194,6 +206,51 @@ void rlog_client_destroy(RlogClient *client) {
     free(client);
 }
 
+bool rlog_client_send_frame(RlogClient *client, json_t *frame) {
+    json_t *reply;
+    json_t *captureSeqValue;
+    json_t *accepted;
+    const char *producerBootId;
+    const char *op;
+    uint64_t captureSeq;
+    bool ok;
+
+    if (!client || !frame || !json_is_object(frame)) return false;
+
+    producerBootId = json_string_value(
+        json_object_get(frame, "producer_boot_id"));
+    captureSeqValue = json_object_get(frame, "capture_seq");
+    if (!producerBootId || !*producerBootId ||
+        !json_is_integer(captureSeqValue)) {
+        return false;
+    }
+
+    captureSeq = (uint64_t)json_integer_value(captureSeqValue);
+    if (captureSeq == 0 || !client_connect(client, producerBootId)) {
+        return false;
+    }
+
+    if (!send_json(client->fd, frame)) {
+        client_close(client);
+        return false;
+    }
+
+    reply = recv_json(client->fd);
+    if (!reply) {
+        client_close(client);
+        return false;
+    }
+
+    op = json_string_value(json_object_get(reply, "op"));
+    accepted = json_object_get(reply, "accepted_through");
+    ok = op && strcmp(op, "ack") == 0 && json_is_integer(accepted) &&
+         (uint64_t)json_integer_value(accepted) >= captureSeq;
+
+    json_decref(reply);
+    if (!ok) client_close(client);
+    return ok;
+}
+
 bool rlog_client_send(RlogClient *client,
                       json_t *record,
                       const char *space,
@@ -204,16 +261,11 @@ bool rlog_client_send(RlogClient *client,
                       uint64_t captureSeq,
                       const char *captureId) {
     json_t *frame;
-    json_t *reply;
-    const char *op;
-    json_t *accepted;
     bool ok;
 
     if (!client || !record || !app || !stream || !captureId) {
         return false;
     }
-
-    if (!client_connect(client)) return false;
 
     frame = json_pack("{s:s,s:s,s:I,s:s,s:s,s:s,s:i,s:i,s:s,s:o}",
                       "op", "event",
@@ -228,26 +280,7 @@ bool rlog_client_send(RlogClient *client,
                       "record", json_incref(record));
     if (!frame) return false;
 
-    ok = send_json(client->fd, frame);
+    ok = rlog_client_send_frame(client, frame);
     json_decref(frame);
-    if (!ok) {
-        client_close(client);
-        return false;
-    }
-
-    reply = recv_json(client->fd);
-    if (!reply) {
-        client_close(client);
-        return false;
-    }
-
-    op = json_string_value(json_object_get(reply, "op"));
-    accepted = json_object_get(reply, "accepted_through");
-    ok = op && strcmp(op, "ack") == 0 &&
-         json_is_integer(accepted) &&
-         (uint64_t)json_integer_value(accepted) >= captureSeq;
-
-    json_decref(reply);
-    if (!ok) client_close(client);
     return ok;
 }

@@ -32,6 +32,7 @@ int log_store_append(LogStore *store, json_t *record, uint64_t *seqOut);
 const char *log_store_boot_id(const LogStore *store);
 const char *log_store_node_id(const LogStore *store);
 const char *log_store_active_path(const LogStore *store);
+const char *log_store_state_dir(const LogStore *store);
 uint64_t log_store_current_seq(const LogStore *store);
 size_t log_store_active_bytes(const LogStore *store);
 

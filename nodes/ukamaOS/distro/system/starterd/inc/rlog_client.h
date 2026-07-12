@@ -18,6 +18,7 @@ RlogClient *rlog_client_create(const char *socketPath,
                                const char *producerBootId,
                                int reconnectMs);
 void rlog_client_destroy(RlogClient *client);
+bool rlog_client_send_frame(RlogClient *client, json_t *frame);
 bool rlog_client_send(RlogClient *client,
                       json_t *record,
                       const char *space,

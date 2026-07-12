@@ -799,6 +799,10 @@ const char *log_store_active_path(const LogStore *store) {
     return store ? store->activePath : NULL;
 }
 
+const char *log_store_state_dir(const LogStore *store) {
+    return store ? store->stateDir : NULL;
+}
+
 uint64_t log_store_current_seq(const LogStore *store) {
     return store ? store->currentSeq : 0;
 }

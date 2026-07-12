@@ -9,10 +9,13 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <sys/types.h>
 
 bool log_router_start(const char *socketPath,
+                      const char *spoolDir,
+                      size_t spoolMaxBytes,
                       int maxRecordBytes,
                       int reconnectMs);
 void log_router_stop(void);

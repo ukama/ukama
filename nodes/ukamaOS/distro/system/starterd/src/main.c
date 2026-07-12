@@ -84,6 +84,8 @@ int main(int argc, char **argv) {
     }
 
     if (!log_router_start(config.rlogSocketPath,
+                          config.logSpoolDir,
+                          (size_t)config.logSpoolMaxBytes,
                           config.logRecordMaxBytes,
                           config.logReconnectMs)) {
         usys_log_error("startup: log router start failed");

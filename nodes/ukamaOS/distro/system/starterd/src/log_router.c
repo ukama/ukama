@@ -23,14 +23,24 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "log_spool.h"
 #include "rlog_client.h"
 
 #define ROUTER_MAX_EVENTS 32
 #define ROUTER_BUFFER_MAX (32U * 1024U)
+#define ROUTER_REPLAY_MAX 64
 #define BOOT_ID_PATH      "/proc/sys/kernel/random/boot_id"
 
 #define STREAM_STDOUT "stdout"
 #define STREAM_STDERR "stderr"
+
+#define LOG_SCHEMA "ukama.log.v1"
+
+typedef enum {
+    ROUTER_DIRECT = 0,
+    ROUTER_SPOOLING,
+    ROUTER_REPLAYING
+} RouterState;
 
 typedef struct LogStream {
     int fd;
@@ -49,16 +59,46 @@ typedef struct {
     int epollFd;
     int wakeFd;
     int maxRecordBytes;
+    int reconnectMs;
     bool running;
     pthread_t thread;
     pthread_mutex_t mutex;
     LogStream *streams;
     RlogClient *client;
+    LogSpool *spool;
+    RouterState state;
     char producerBootId[128];
     uint64_t captureSeq;
 } LogRouter;
 
 static LogRouter *gRouter = NULL;
+
+static uint64_t monotonic_ms(void) {
+    struct timespec now;
+
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return ((uint64_t)now.tv_sec * 1000ULL) +
+           ((uint64_t)now.tv_nsec / 1000000ULL);
+}
+
+static void utc_timestamp(char *buffer, size_t size) {
+    struct timespec now;
+    struct tm utc;
+
+    if (!buffer || size == 0) return;
+
+    clock_gettime(CLOCK_REALTIME, &now);
+    gmtime_r(&now.tv_sec, &utc);
+    snprintf(buffer, size,
+             "%04d-%02d-%02dT%02d:%02d:%02d.%03ldZ",
+             utc.tm_year + 1900,
+             utc.tm_mon + 1,
+             utc.tm_mday,
+             utc.tm_hour,
+             utc.tm_min,
+             utc.tm_sec,
+             now.tv_nsec / 1000000L);
+}
 
 static void trim_newline(char *value) {
     size_t len;
@@ -121,7 +161,7 @@ static json_t *wrap_unstructured(const LogStream *stream,
     record = json_object();
     if (!record) return NULL;
 
-    json_object_set_new(record, "schema", json_string("ukama.log.v1"));
+    json_object_set_new(record, "schema", json_string(LOG_SCHEMA));
     json_object_set_new(record, "level",
                         json_string(fallback_level(stream->stream)));
     json_object_set_new(record, "app", json_string(stream->app));
@@ -155,10 +195,153 @@ static bool is_rlog_app(const char *name) {
            strcmp(name, "rlogd") == 0;
 }
 
+static json_t *build_frame(LogRouter *router,
+                           json_t *record,
+                           const char *space,
+                           const char *app,
+                           pid_t pid,
+                           uint32_t generation,
+                           const char *stream) {
+    char captureId[256];
+
+    if (!router || !record || !app || !stream) return NULL;
+
+    router->captureSeq++;
+    snprintf(captureId, sizeof(captureId), "%s:%llu",
+             router->producerBootId,
+             (unsigned long long)router->captureSeq);
+
+    json_object_set_new(record, "space", json_string(space ? space : ""));
+    json_object_set_new(record, "app", json_string(app));
+    json_object_set_new(record, "pid", json_integer(pid));
+    json_object_set_new(record, "app_generation",
+                        json_integer(generation));
+    json_object_set_new(record, "stream", json_string(stream));
+    json_object_set_new(record, "producer_boot_id",
+                        json_string(router->producerBootId));
+    json_object_set_new(record, "capture_seq",
+                        json_integer((json_int_t)router->captureSeq));
+    json_object_set_new(record, "capture_id", json_string(captureId));
+
+    return json_pack("{s:s,s:s,s:I,s:s,s:s,s:s,s:i,s:i,s:s,s:O}",
+                     "op", "event",
+                     "producer_boot_id", router->producerBootId,
+                     "capture_seq", (json_int_t)router->captureSeq,
+                     "capture_id", captureId,
+                     "space", space ? space : "",
+                     "app", app,
+                     "pid", (int)pid,
+                     "app_generation", (int)generation,
+                     "stream", stream,
+                     "record", record);
+}
+
+static bool replay_send(json_t *frame, void *data) {
+    LogRouter *router;
+
+    router = (LogRouter *)data;
+    return rlog_client_send_frame(router->client, frame);
+}
+
+static int spool_frame(LogRouter *router, json_t *frame) {
+    int rc;
+
+    rc = log_spool_append(router->spool, frame);
+    if (rc == 0) {
+        router->state = ROUTER_SPOOLING;
+        return 0;
+    }
+
+    write_fallback(json_object_get(frame, "record"));
+    return rc;
+}
+
+static void emit_drop_summary(LogRouter *router) {
+    LogDropCounts counts;
+    uint64_t total;
+    json_t *record;
+    json_t *frame;
+    char timestamp[40];
+    bool sent;
+
+    log_spool_get_dropped(router->spool, &counts);
+    total = counts.trace + counts.debug + counts.info + counts.warn +
+            counts.error + counts.critical;
+    if (total == 0) return;
+
+    utc_timestamp(timestamp, sizeof(timestamp));
+    record = json_pack("{s:s,s:s,s:I,s:s,s:s,s:s,s:s,s:i,s:i,s:I,"
+                       "s:I,s:I,s:I,s:I,s:I}",
+                       "schema", LOG_SCHEMA,
+                       "ts", timestamp,
+                       "mono_ms", (json_int_t)monotonic_ms(),
+                       "level", "warn",
+                       "app", "starter",
+                       "component", "log_router",
+                       "event", "log_records_dropped",
+                       "msg", "Log records were dropped while spooling",
+                       "pid", (int)getpid(),
+                       "source_line", __LINE__,
+                       "trace", (json_int_t)counts.trace,
+                       "debug", (json_int_t)counts.debug,
+                       "info", (json_int_t)counts.info,
+                       "warn", (json_int_t)counts.warn,
+                       "error", (json_int_t)counts.error,
+                       "critical", (json_int_t)counts.critical);
+    if (!record) return;
+
+    json_object_set_new(record, "source_file",
+                        json_string("src/log_router.c"));
+    json_object_set_new(record, "source_function",
+                        json_string("emit_drop_summary"));
+
+    frame = build_frame(router, record, "", "starter",
+                        getpid(), 0, "internal");
+    if (!frame) {
+        json_decref(record);
+        return;
+    }
+
+    sent = rlog_client_send_frame(router->client, frame);
+    if (sent || log_spool_append(router->spool, frame) == 0) {
+        log_spool_clear_dropped(router->spool);
+    }
+
+    json_decref(frame);
+    json_decref(record);
+}
+
+static void replay_spool(LogRouter *router) {
+    int replayed;
+
+    if (!router || !log_spool_has_backlog(router->spool)) {
+        if (router) {
+            router->state = ROUTER_DIRECT;
+            emit_drop_summary(router);
+        }
+        return;
+    }
+
+    router->state = ROUTER_REPLAYING;
+    replayed = log_spool_replay(router->spool,
+                                ROUTER_REPLAY_MAX,
+                                replay_send,
+                                router);
+    if (replayed < 0) {
+        router->state = ROUTER_SPOOLING;
+        return;
+    }
+
+    if (!log_spool_has_backlog(router->spool)) {
+        router->state = ROUTER_DIRECT;
+        emit_drop_summary(router);
+    }
+}
+
 static void route_line(LogRouter *router, LogStream *stream,
                        const char *line, size_t len) {
     json_t *record;
-    char captureId[256];
+    json_t *frame;
     bool sent;
 
     if (!router || !stream || !line) return;
@@ -166,41 +349,32 @@ static void route_line(LogRouter *router, LogStream *stream,
     record = parse_record(stream, line, len);
     if (!record) return;
 
-    router->captureSeq++;
-    snprintf(captureId, sizeof(captureId), "%s:%llu",
-             router->producerBootId,
-             (unsigned long long)router->captureSeq);
-
-    json_object_set_new(record, "space",
-                        json_string(stream->space ? stream->space : ""));
-    json_object_set_new(record, "app", json_string(stream->app));
-    json_object_set_new(record, "pid", json_integer(stream->pid));
-    json_object_set_new(record, "app_generation",
-                        json_integer(stream->generation));
-    json_object_set_new(record, "stream", json_string(stream->stream));
-    json_object_set_new(record, "producer_boot_id",
-                        json_string(router->producerBootId));
-    json_object_set_new(record, "capture_seq",
-                        json_integer((json_int_t)router->captureSeq));
-    json_object_set_new(record, "capture_id", json_string(captureId));
-
-    sent = false;
-    if (!is_rlog_app(stream->app)) {
-        sent = rlog_client_send(router->client,
-                                record,
-                                stream->space,
-                                stream->app,
-                                stream->pid,
-                                stream->generation,
-                                stream->stream,
-                                router->captureSeq,
-                                captureId);
+    frame = build_frame(router, record,
+                        stream->space,
+                        stream->app,
+                        stream->pid,
+                        stream->generation,
+                        stream->stream);
+    if (!frame) {
+        json_decref(record);
+        return;
     }
 
-    if (!sent) {
+    if (is_rlog_app(stream->app)) {
         write_fallback(record);
+        json_decref(frame);
+        json_decref(record);
+        return;
     }
 
+    if (log_spool_has_backlog(router->spool)) {
+        (void)spool_frame(router, frame);
+    } else {
+        sent = rlog_client_send_frame(router->client, frame);
+        if (!sent) (void)spool_frame(router, frame);
+    }
+
+    json_decref(frame);
     json_decref(record);
 }
 
@@ -308,7 +482,7 @@ static void *router_thread(void *data) {
         int idx;
 
         count = epoll_wait(router->epollFd, events,
-                           ROUTER_MAX_EVENTS, -1);
+                           ROUTER_MAX_EVENTS, router->reconnectMs);
         if (count < 0) {
             if (errno == EINTR) continue;
             break;
@@ -317,13 +491,15 @@ static void *router_thread(void *data) {
         for (idx = 0; idx < count; idx++) {
             if (events[idx].data.ptr == NULL) {
                 uint64_t value;
+
                 (void)read(router->wakeFd, &value, sizeof(value));
                 continue;
             }
 
-            stream_read(router,
-                        (LogStream *)events[idx].data.ptr);
+            stream_read(router, (LogStream *)events[idx].data.ptr);
         }
+
+        replay_spool(router);
     }
 
     return NULL;
@@ -405,18 +581,24 @@ static bool add_stream(LogRouter *router,
 }
 
 bool log_router_start(const char *socketPath,
+                      const char *spoolDir,
+                      size_t spoolMaxBytes,
                       int maxRecordBytes,
                       int reconnectMs) {
     LogRouter *router;
     struct epoll_event event;
 
-    if (gRouter || !socketPath || !*socketPath) return false;
+    if (gRouter || !socketPath || !*socketPath ||
+        !spoolDir || !*spoolDir) {
+        return false;
+    }
 
     router = calloc(1, sizeof(*router));
     if (!router) return false;
 
     router->maxRecordBytes = maxRecordBytes > 0 ?
                              maxRecordBytes : (int)ROUTER_BUFFER_MAX;
+    router->reconnectMs = reconnectMs > 0 ? reconnectMs : 1000;
     router->epollFd = epoll_create1(EPOLL_CLOEXEC);
     router->wakeFd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
     if (router->epollFd < 0 || router->wakeFd < 0) {
@@ -429,10 +611,14 @@ bool log_router_start(const char *socketPath,
     pthread_mutex_init(&router->mutex, NULL);
     read_boot_id(router->producerBootId,
                  sizeof(router->producerBootId));
+
+    router->spool = log_spool_open(spoolDir, spoolMaxBytes);
     router->client = rlog_client_create(socketPath,
                                          router->producerBootId,
-                                         reconnectMs);
-    if (!router->client) {
+                                         router->reconnectMs);
+    if (!router->spool || !router->client) {
+        log_spool_close(router->spool);
+        rlog_client_destroy(router->client);
         close(router->wakeFd);
         close(router->epollFd);
         pthread_mutex_destroy(&router->mutex);
@@ -440,11 +626,15 @@ bool log_router_start(const char *socketPath,
         return false;
     }
 
+    router->state = log_spool_has_backlog(router->spool) ?
+                    ROUTER_REPLAYING : ROUTER_DIRECT;
+
     memset(&event, 0, sizeof(event));
     event.events = EPOLLIN;
     event.data.ptr = NULL;
     if (epoll_ctl(router->epollFd, EPOLL_CTL_ADD,
                   router->wakeFd, &event) != 0) {
+        log_spool_close(router->spool);
         rlog_client_destroy(router->client);
         close(router->wakeFd);
         close(router->epollFd);
@@ -456,6 +646,7 @@ bool log_router_start(const char *socketPath,
     router->running = true;
     if (pthread_create(&router->thread, NULL,
                        router_thread, router) != 0) {
+        log_spool_close(router->spool);
         rlog_client_destroy(router->client);
         close(router->wakeFd);
         close(router->epollFd);
@@ -496,6 +687,7 @@ void log_router_stop(void) {
         stream = next;
     }
 
+    log_spool_close(router->spool);
     rlog_client_destroy(router->client);
     close(router->wakeFd);
     close(router->epollFd);

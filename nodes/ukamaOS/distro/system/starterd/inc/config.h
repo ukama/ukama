@@ -16,6 +16,8 @@ typedef struct {
     char *manifestPath;
     char *readyFile;
     char *rlogSocketPath;
+    char *logSpoolDir;
+    int logSpoolMaxBytes;
     int logRecordMaxBytes;
     int logReconnectMs;
 
