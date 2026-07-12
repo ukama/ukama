@@ -9,8 +9,8 @@
 #include "rlog_client.h"
 
 #include <errno.h>
-#include <limits.h>
 #include <poll.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,10 +22,13 @@
 
 #define RLOG_REPLY_MAX 4096
 #define RLOG_ACK_TIMEOUT_MS 500
+#define RLOG_PRODUCER_BOOT_ID_MAX 128
+#define RLOG_SOCKET_PATH_MAX \
+    sizeof(((struct sockaddr_un *)0)->sun_path)
 
 struct RlogClient {
-    char socketPath[PATH_MAX];
-    char producerBootId[128];
+    char socketPath[RLOG_SOCKET_PATH_MAX];
+    char producerBootId[RLOG_PRODUCER_BOOT_ID_MAX];
     int reconnectMs;
     int fd;
     int64_t nextRetryMs;
@@ -87,6 +90,8 @@ static bool client_connect(RlogClient *client) {
     json_t *hello;
     json_t *reply;
     const char *op;
+    size_t pathLen;
+    socklen_t addressLen;
 
     if (!client) return false;
     if (client->fd >= 0) return true;
@@ -100,11 +105,21 @@ static bool client_connect(RlogClient *client) {
 
     memset(&address, 0, sizeof(address));
     address.sun_family = AF_UNIX;
-    snprintf(address.sun_path, sizeof(address.sun_path), "%s",
-             client->socketPath);
+
+    pathLen = strlen(client->socketPath);
+    if (pathLen >= sizeof(address.sun_path)) {
+        errno = ENAMETOOLONG;
+        client_close(client);
+        return false;
+    }
+
+    memcpy(address.sun_path, client->socketPath, pathLen + 1);
+
+    addressLen = (socklen_t)(offsetof(struct sockaddr_un, sun_path) +
+                              pathLen + 1);
 
     if (connect(client->fd, (struct sockaddr *)&address,
-                sizeof(address)) != 0) {
+                addressLen) != 0) {
         client_close(client);
         return false;
     }
@@ -142,19 +157,30 @@ RlogClient *rlog_client_create(const char *socketPath,
                                const char *producerBootId,
                                int reconnectMs) {
     RlogClient *client;
+    size_t socketPathLen;
+    size_t producerBootIdLen;
 
     if (!socketPath || !*socketPath ||
         !producerBootId || !*producerBootId) {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    socketPathLen = strlen(socketPath);
+    producerBootIdLen = strlen(producerBootId);
+
+    if (socketPathLen >= RLOG_SOCKET_PATH_MAX ||
+        producerBootIdLen >= RLOG_PRODUCER_BOOT_ID_MAX) {
+        errno = ENAMETOOLONG;
         return NULL;
     }
 
     client = calloc(1, sizeof(*client));
     if (!client) return NULL;
 
-    snprintf(client->socketPath, sizeof(client->socketPath), "%s",
-             socketPath);
-    snprintf(client->producerBootId,
-             sizeof(client->producerBootId), "%s", producerBootId);
+    memcpy(client->socketPath, socketPath, socketPathLen + 1);
+    memcpy(client->producerBootId, producerBootId,
+           producerBootIdLen + 1);
     client->reconnectMs = reconnectMs > 0 ? reconnectMs : 1000;
     client->fd = -1;
     client->nextRetryMs = 0;
