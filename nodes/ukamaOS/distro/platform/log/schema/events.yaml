@@ -1,0 +1,81 @@
+schema: ukama.log.events.v1
+
+events:
+  log_message:
+    category: generic
+    description: Existing formatted log call without a domain event.
+
+  service_starting:
+    category: service
+  service_started:
+    category: service
+  service_start_failed:
+    category: service
+  service_stopped:
+    category: service
+
+  process_started:
+    category: process
+  process_exited:
+    category: process
+  process_signaled:
+    category: process
+  process_restart_scheduled:
+    category: process
+
+  dependency_connect_failed:
+    category: dependency
+    required_fields: [dependency]
+  dependency_connected:
+    category: dependency
+    required_fields: [dependency]
+  dependency_disconnected:
+    category: dependency
+    required_fields: [dependency]
+  dependency_request_failed:
+    category: dependency
+    required_fields: [dependency, operation]
+  dependency_response_invalid:
+    category: dependency
+    required_fields: [dependency, operation]
+  dependency_timeout:
+    category: dependency
+    required_fields: [dependency, operation]
+
+  config_received:
+    category: configuration
+  config_applied:
+    category: configuration
+  config_apply_failed:
+    category: configuration
+  config_synchronized:
+    category: configuration
+  config_sync_failed:
+    category: configuration
+
+  resource_not_found:
+    category: resource
+  resource_open_failed:
+    category: resource
+  resource_read_failed:
+    category: resource
+  resource_write_failed:
+    category: resource
+
+  data_field_missing:
+    category: data
+  data_parse_failed:
+    category: data
+  data_validation_failed:
+    category: data
+  data_integrity_failed:
+    category: data
+
+  subscriber_not_configured:
+    category: subscriber
+  ue_attach_started:
+    category: session
+  ue_attach_completed:
+    category: session
+  ue_attach_failed:
+    category: session

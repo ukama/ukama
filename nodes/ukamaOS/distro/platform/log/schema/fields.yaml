@@ -1,0 +1,107 @@
+schema: ukama.log.fields.v1
+
+required:
+  schema:
+    type: string
+    description: Structured log schema version.
+  ts:
+    type: string
+    description: UTC RFC3339 timestamp with milliseconds.
+  mono_ms:
+    type: unsigned_integer
+    description: Milliseconds from the monotonic clock.
+  level:
+    type: string
+    description: trace, debug, info, warn, error, or critical.
+  app:
+    type: string
+    description: Producing application name.
+  component:
+    type: string
+    description: Subsystem within the application.
+  event:
+    type: string
+    description: Stable lowercase snake case event name.
+  msg:
+    type: string
+    description: Human-readable event description.
+  pid:
+    type: integer
+    description: Producing process identifier.
+  source_file:
+    type: string
+    description: Source file that emitted the record.
+  source_line:
+    type: integer
+    description: Source line that emitted the record.
+
+common_optional:
+  tid:
+    type: integer
+    description: Producing thread identifier.
+  source_function:
+    type: string
+    description: Source function that emitted the record.
+  dependency:
+    type: string
+    description: Canonical dependency name.
+  operation:
+    type: string
+    description: Operation being attempted.
+  endpoint:
+    type: string
+    description: Credential-free local or remote endpoint.
+  protocol:
+    type: string
+    description: Transport or application protocol.
+  error:
+    type: string
+    description: Human-readable underlying error.
+  error_code:
+    type: string
+    description: Stable symbolic error code.
+  errno:
+    type: integer
+    description: POSIX errno when applicable.
+  http_status:
+    type: integer
+    description: HTTP response status.
+  retryable:
+    type: boolean
+    description: Whether retrying the operation may succeed.
+  attempt:
+    type: integer
+    description: Current attempt number.
+  duration_ms:
+    type: unsigned_integer
+    description: Operation duration in milliseconds.
+  request_id:
+    type: string
+    description: Request correlation identifier.
+  trace_id:
+    type: string
+    description: Cross-application correlation identifier.
+  session_id:
+    type: string
+    description: Session lifecycle identifier.
+  config_event_id:
+    type: string
+    description: Configuration delivery identifier.
+  config_revision:
+    type: unsigned_integer
+    description: Configuration revision.
+  subscriber_ref:
+    type: string
+    description: Redacted stable subscriber reference.
+  state_from:
+    type: string
+    description: Previous state.
+  state_to:
+    type: string
+    description: New state.
+  reason:
+    type: string
+    description: Stable reason value.
+  truncated:
+    type: boolean
+    description: Record content was truncated to fit the size limit.

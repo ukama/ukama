@@ -6,188 +6,173 @@
  * Copyright (c) 2024-present, Ukama Inc.
  */
 
+#include <curl/curl.h>
+#include <jansson.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <jansson.h>
-#include <curl/curl.h>
 
+#include "jserdes.h"
+#include "nodeInfo.h"
+#include "rlogd.h"
 #include "usys_log.h"
 #include "usys_mem.h"
 #include "usys_types.h"
 
-#include "rlogd.h"
-#include "nodeInfo.h"
-#include "jserdes.h"
-
-#define NODE_INFO_EP  "/v1/nodeinfo"
+#define NODE_INFO_EP "/v1/nodeinfo"
+#define NODED_CONNECT_TIMEOUT_MS 1000L
+#define NODED_REQUEST_TIMEOUT_MS 2000L
 
 struct Response {
     char *buffer;
     size_t size;
 };
 
-static char *create_noded_url(char *host, int port);
-static size_t response_callback(void *contents, size_t size, size_t nmemb, void *userp);
-static long send_request_to_noded(char *nodedURL, struct Response *response);
-static int process_response_from_noded(char *response,	char **uuid);
+static char *create_noded_url(const char *host, int port) {
+    char *url;
+    int length;
 
-static char *create_noded_url(char *host, int port) {
+    if (!host || !*host || port <= 0) return NULL;
 
-    char *url=NULL;
+    url = calloc(MAX_URL_LEN, 1);
+    if (!url) return NULL;
 
-    if (host == NULL || port == 0) return NULL;
-
-    url = (char *)malloc(MAX_URL_LEN);
-    if (url) {
-        sprintf(url, "%s:%d/%s", host, port, NODE_INFO_EP);
+    length = snprintf(url, MAX_URL_LEN, "http://%s:%d%s",
+                      host, port, NODE_INFO_EP);
+    if (length < 0 || length >= MAX_URL_LEN) {
+        free(url);
+        return NULL;
     }
 
     return url;
 }
 
-static size_t response_callback(void *contents, size_t size, size_t nmemb,
-								void *userp) {
+static size_t response_callback(void *contents, size_t size,
+                                size_t count, void *userData) {
+    struct Response *response;
+    char *buffer;
+    size_t bytes;
 
-    size_t realsize = size * nmemb;
-    struct Response *response = (struct Response *)userp;
+    response = userData;
+    bytes = size * count;
+    if (bytes == 0) return 0;
 
-    response->buffer = realloc(response->buffer, response->size + realsize + 1);
-  
-    if(response->buffer == NULL) {
-        usys_log_error("Not enough memory to realloc of size: %d",
-                       response->size + realsize + 1);
+    buffer = realloc(response->buffer,
+                     response->size + bytes + 1U);
+    if (!buffer) {
+        usys_log_error("Unable to grow noded response buffer");
         return 0;
     }
 
-    memcpy(&(response->buffer[response->size]), contents, realsize);
-    response->size += realsize;
-    response->buffer[response->size] = 0;
-  
-    return realsize;
+    response->buffer = buffer;
+    memcpy(response->buffer + response->size, contents, bytes);
+    response->size += bytes;
+    response->buffer[response->size] = '\0';
+    return bytes;
 }
 
-static int process_response_from_noded(char *response,	char **uuid) {
+static int process_response(const char *response, char **uuid) {
+    json_error_t error;
+    json_t *json;
+    NodeInfo *nodeInfo;
+    int rc;
 
-    int ret=USYS_FALSE;
-    json_t *json=NULL;
-    NodeInfo *nodeInfo=NULL;
+    if (!response || !uuid) return USYS_FALSE;
 
-    if (response == NULL) return USYS_FALSE;
-
-    json = json_loads(response, JSON_DECODE_ANY, NULL);
-
+    nodeInfo = NULL;
+    json = json_loads(response, 0, &error);
     if (!json) {
-        usys_log_error("Can not load str into JSON object. Str: %s", response);
-        goto done;
+        usys_log_error("Unable to parse noded response: %s", error.text);
+        return USYS_FALSE;
     }
 
-    ret = deserialize_node_info(&nodeInfo, json);
-    if (ret == USYS_FALSE) {
-        usys_log_error("Deserialization failed for response: %s", response);
-        goto done;
+    rc = deserialize_node_info(&nodeInfo, json);
+    json_decref(json);
+    if (rc == USYS_FALSE || !nodeInfo || !nodeInfo->uuid) {
+        free_node_info(nodeInfo);
+        return USYS_FALSE;
     }
 
     *uuid = strdup(nodeInfo->uuid);
-    ret = USYS_TRUE;
-	
-done:
-    json_decref(json);
     free_node_info(nodeInfo);
-    return ret;
+    return *uuid ? USYS_TRUE : USYS_FALSE;
 }
 
-static long send_request_to_noded(char *nodedURL, struct Response *response) {
+static long send_request(const char *url, struct Response *response) {
+    struct curl_slist *headers;
+    CURL *curl;
+    CURLcode result;
+    long status;
 
-    long resCode=0;
-    CURL *curl=NULL;
-    CURLcode res;
-    struct curl_slist *headers=NULL;
+    if (!url || !response) return 0;
 
-    curl_global_init(CURL_GLOBAL_ALL);
+    status = 0;
+    headers = NULL;
     curl = curl_easy_init();
-    if (curl == NULL) {
-        return resCode;
-    }
+    if (!curl) return 0;
 
-    response->buffer = malloc(1);
-    response->size   = 0;
-  
-    /* Add to the header. */
     headers = curl_slist_append(headers, "Accept: application/json");
-    headers = curl_slist_append(headers, "charset: utf-8");
-
-    curl_easy_setopt(curl, CURLOPT_URL, nodedURL);
-    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
+    curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, response_callback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)response);
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "rlog.d/0.1");
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "rlog.d/1");
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT_MS,
+                     NODED_CONNECT_TIMEOUT_MS);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS,
+                     NODED_REQUEST_TIMEOUT_MS);
 
-    res = curl_easy_perform(curl);
-
-    if (res != CURLE_OK) {
-        usys_log_error("Error sending request to node.d at URL %s: %s", nodedURL,
-                       curl_easy_strerror(res));
+    result = curl_easy_perform(curl);
+    if (result == CURLE_OK) {
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
     } else {
-        /* get status code. */
-        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &resCode);
+        usys_log_warn("Unable to query noded: %s",
+                      curl_easy_strerror(result));
     }
 
     curl_slist_free_all(headers);
     curl_easy_cleanup(curl);
-    curl_global_cleanup();
-
-    return resCode;
+    return status;
 }
 
-int get_nodeID_from_noded(char **nodeID, char *host, int port) {
-
-    int ret=USYS_FALSE;
-    char *nodedURL=NULL;
+int get_nodeID_from_noded(char **nodeId, char *host, int port) {
     struct Response response;
+    char *url;
+    int rc;
 
-    if (host == NULL || port == 0) return USYS_FALSE;
+    if (!nodeId || !host || port <= 0) return USYS_FALSE;
 
-    *nodeID = NULL;
-    nodedURL = create_noded_url(host, port);
+    *nodeId = NULL;
+    memset(&response, 0, sizeof(response));
+    url = create_noded_url(host, port);
+    if (!url) return USYS_FALSE;
 
-    if (send_request_to_noded(nodedURL, &response) == 200) {
-        if (process_response_from_noded(response.buffer, nodeID)) {
-            usys_log_debug("Recevied NodeID (UUID) from noded: %s", *nodeID);
-        } else {
-            usys_log_error("Unable to receive proper NodeID from noded");
-            goto done;
-        }
-    } else {
-        usys_log_error("Unable to send request to noded");
-        goto done;
+    if (curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK) {
+        free(url);
+        return USYS_FALSE;
     }
 
-    ret = USYS_TRUE;
+    rc = USYS_FALSE;
+    if (send_request(url, &response) == 200 &&
+        process_response(response.buffer, nodeId) == USYS_TRUE) {
+        rc = USYS_TRUE;
+    }
 
-done:
-    if (nodedURL) free(nodedURL);
-    if (response.buffer) free(response.buffer);
-
-    return ret;
+    curl_global_cleanup();
+    free(response.buffer);
+    free(url);
+    return rc;
 }
 
 void free_node_info(NodeInfo *nodeInfo) {
+    if (!nodeInfo) return;
 
-    NodeInfo *ptr = NULL;
-
-    if (nodeInfo == NULL) return;
-
-    ptr = nodeInfo;
-	
-    usys_free(ptr->uuid);
-    usys_free(ptr->name);
-    usys_free(ptr->partNumber);
-    usys_free(ptr->skew);
-    usys_free(ptr->mac);
-    usys_free(ptr->assemblyDate);
-    usys_free(ptr->oem);
-    
+    usys_free(nodeInfo->uuid);
+    usys_free(nodeInfo->name);
+    usys_free(nodeInfo->partNumber);
+    usys_free(nodeInfo->skew);
+    usys_free(nodeInfo->mac);
+    usys_free(nodeInfo->assemblyDate);
+    usys_free(nodeInfo->oem);
     usys_free(nodeInfo);
 }

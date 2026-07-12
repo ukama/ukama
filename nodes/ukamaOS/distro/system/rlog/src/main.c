@@ -6,171 +6,254 @@
  * Copyright (c) 2024-present, Ukama Inc.
  */
 
+#include <getopt.h>
+#include <signal.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <getopt.h>
-#include <pthread.h>
+#include <strings.h>
+#include <unistd.h>
 
 #include "ulfius.h"
 
 #include "usys_api.h"
-#include "usys_error.h"
-#include "usys_log.h"
-#include "usys_file.h"
 #include "usys_mem.h"
+#include "usys_file.h"
+#include "usys_getopt.h"
+#include "usys_log.h"
+#include "usys_string.h"
+#include "usys_types.h"
 #include "usys_services.h"
 
-#include "nodeInfo.h"
 #include "rlogd.h"
-
 #include "version.h"
 
-/* network.c */
-extern int start_websocket_server(char *nodeID, int port, UInst *websocketInst);
 extern int start_web_services(int port, UInst *serviceInst);
+extern int get_nodeID_from_noded(char **nodeID, char *host, int port);
 
-/* Global */
 ThreadData *gData = NULL;
 
-static void usage() {
+static volatile sig_atomic_t gTerminate = 0;
 
-    printf("rlog.d: logging facility \n");
-    printf("Usage: rlog.d [options] \n");
+static void usage(void) {
+    printf("rlog.d: local node logging facility\n");
+    printf("Usage: rlog.d [options]\n");
     printf("Options:\n");
-    printf("--h, --help                         This help menu. \n");
-    printf("--l, --level <ERROR | DEBUG | INFO> Log level for the process. \n");
-    printf("--v, --version                      Version. \n");
+    printf("  -l, --level LEVEL  trace, debug, info, warn, error, critical\n");
+    printf("  -v, --version      Show version\n");
+    printf("  -h, --help         Show this help\n");
 }
 
-void set_log_level(char *slevel) {
+static void on_signal(int signalNumber) {
+    (void)signalNumber;
+    gTerminate = 1;
+}
 
-    int ilevel = LOG_TRACE;
+static int install_signal_handlers(void) {
+    struct sigaction action;
 
-    if (!strcmp(slevel, "DEBUG")) {
-        ilevel = USYS_LOG_DEBUG;
-    } else if (!strcmp(slevel, "INFO")) {
-        ilevel = USYS_LOG_INFO;
-    } else if (!strcmp(slevel, "ERROR")) {
-        ilevel = USYS_LOG_ERROR;
+    memset(&action, 0, sizeof(action));
+    action.sa_handler = on_signal;
+    sigemptyset(&action.sa_mask);
+
+    if (sigaction(SIGTERM, &action, NULL) != 0 ||
+        sigaction(SIGINT, &action, NULL) != 0) {
+        return -1;
     }
 
-    log_set_level(ilevel);
+    return 0;
 }
 
-void init_config_and_buffer() {
+static int parse_log_level(const char *value) {
+    if (!value) return -1;
 
-    gData = (ThreadData *)malloc(sizeof(ThreadData));
-
-    gData->output        = DEF_OUTPUT;
-    gData->level         = USYS_LOG_DEBUG;
-    gData->flushTime     = DEF_FLUSH_TIME;
-    gData->bufferSize    = 0;
-    gData->jOutputBuffer = json_pack("{s:[]}", JTAG_LOGS);
-    pthread_mutex_init(&gData->bufferMutex, NULL);
-}
-
-void clean_for_exit(int stage, UInst *service, UInst *socket, char **id) {
-
-    switch (stage) {
-    case NORMAL_EXIT:
-        ulfius_stop_framework(socket);
-        ulfius_clean_instance(socket);
-    case WEB_SOCKET_FAIL:
-        ulfius_stop_framework(service);
-        ulfius_clean_instance(service);
-    case WEB_SERVICE_FAIL:
-        usys_free(*id);
-    case NODED_FAIL:
-        json_decref(gData->jOutputBuffer);
-    default:
-        usys_free(gData);
-        return;
+    if (strcasecmp(value, "trace") == 0) return USYS_LOG_TRACE;
+    if (strcasecmp(value, "debug") == 0) return USYS_LOG_DEBUG;
+    if (strcasecmp(value, "info") == 0) return USYS_LOG_INFO;
+    if (strcasecmp(value, "warn") == 0) return USYS_LOG_WARN;
+    if (strcasecmp(value, "error") == 0) return USYS_LOG_ERROR;
+    if (strcasecmp(value, "critical") == 0 ||
+        strcasecmp(value, "fatal") == 0) {
+        return USYS_LOG_CRITICAL;
     }
+
+    return -1;
 }
 
-int main (int argc, char **argv) {
+static int parse_options(int argc, char **argv) {
+    int option;
+    int optionIndex;
 
-    char *debug=DEF_LOG_LEVEL;
-    char *nodeID=NULL;
-    int  opt, opdidx;
-    int  nodedPort = 0;
-    int  rlogdPort = 0, rlogdAdminPort = 0;
-    UInst websocketInst;
-    UInst serviceInst;
+    static struct option longOptions[] = {
+        {"level", required_argument, NULL, 'l'},
+        {"help", no_argument, NULL, 'h'},
+        {"version", no_argument, NULL, 'v'},
+        {NULL, 0, NULL, 0}
+    };
 
-    usys_log_set_service(SERVICE_NAME);
-    usys_log_remote_init(SERVICE_NAME);
-    init_config_and_buffer();
+    while (true) {
+        optionIndex = 0;
+        option = getopt_long(argc, argv, "l:hv", longOptions,
+                             &optionIndex);
+        if (option == -1) break;
 
-    while (USYS_TRUE) {
-        opt    = 0;
-        opdidx = 0;
+        switch (option) {
+        case 'l': {
+            int level = parse_log_level(optarg);
 
-        static struct option long_options[] = {
-            { "level",   required_argument, 0, 'l'},
-            { "help",    no_argument,       0, 'h'},
-            { "version", no_argument,       0, 'v'},
-            { 0,         0,                 0,  0}
-        };
-
-        opt = getopt_long(argc, argv, "l:hv:", long_options, &opdidx);
-        if (opt == -1) {
+            if (level < 0) {
+                fprintf(stderr, "rlog.d: invalid log level: %s\n",
+                        optarg);
+                return -1;
+            }
+            gData->level = level;
+            usys_log_set_level(level);
             break;
         }
-
-        switch (opt) {
         case 'h':
             usage();
             exit(0);
-            break;
-
-        case 'l':
-            debug = optarg;
-            set_log_level(debug);
-            break;
-
         case 'v':
-            fprintf(stdout, "rlog.d - Version: %s\n", VERSION);
+            printf("rlog.d - Version: %s\n", VERSION);
             exit(0);
-
         default:
-            usage();
-            exit(0);
+            return -1;
         }
     }
 
-    nodedPort      = usys_find_service_port(SERVICE_NODE);
-    rlogdPort      = usys_find_service_port(SERVICE_RLOG);
-    rlogdAdminPort = usys_find_service_port(SERVICE_RLOG_ADMIN);
+    return optind == argc ? 0 : -1;
+}
 
-    if (nodedPort == 0 || rlogdPort == 0 || rlogdAdminPort == 0) {
-        usys_log_error("Error getting noded/rlogd port from service db");
-        exit(1);
+static char *resolve_node_id(int nodedPort) {
+    const char *configured;
+    char *nodeId;
+
+    configured = getenv("RLOG_NODE_ID");
+    if (configured && *configured) {
+        return strdup(configured);
     }
 
-	if (get_nodeID_from_noded(&nodeID, DEF_NODED_HOST, nodedPort) != USYS_TRUE) {
-	    usys_log_error("Error retreiving NodeID from noded.d at %s:%d",
-                       DEF_NODED_HOST, nodedPort);
-        clean_for_exit(NODED_FAIL, &serviceInst, &websocketInst, &nodeID);
-        return 0;
-	}
-
-    if (start_web_services(rlogdAdminPort, &serviceInst) != USYS_TRUE) {
-        usys_log_error("Unable to setup webservice on: %d", rlogdAdminPort);
-        clean_for_exit(WEB_SOCKET_FAIL, &serviceInst, &websocketInst, &nodeID);
-        return 0;
+    nodeId = NULL;
+    if (nodedPort > 0 &&
+        get_nodeID_from_noded(&nodeId, DEF_NODED_HOST,
+                              nodedPort) == USYS_TRUE) {
+        return nodeId;
     }
 
-    if (start_websocket_server(nodeID, rlogdPort, &websocketInst) != USYS_TRUE){
-        usys_log_error("Unable to setup websocket on port: %d", rlogdPort);
-        clean_for_exit(WEB_SOCKET_FAIL, &serviceInst, &websocketInst, &nodeID);
-        return 0;
+    usys_log_warn("Unable to retrieve node ID; using default");
+    return strdup(DEF_NODE_ID);
+}
+
+static void cleanup(UInst *serviceInst, bool serviceStarted,
+                    char *nodeId) {
+    if (serviceStarted) {
+        ulfius_stop_framework(serviceInst);
+        ulfius_clean_instance(serviceInst);
     }
 
-    pause();
+    if (gData) {
+        if (gData->ingest) {
+            ingest_stop(gData->ingest);
+            gData->ingest = NULL;
+        }
+        if (gData->store) {
+            log_store_close(gData->store);
+            gData->store = NULL;
+        }
+        free(gData);
+        gData = NULL;
+    }
 
-    clean_for_exit(NORMAL_EXIT, &serviceInst, &websocketInst, &nodeID);
+    usys_free(nodeId);
+}
 
-	return 0;
+int main(int argc, char **argv) {
+    UInst serviceInst;
+    LogStoreConfig storeConfig;
+    const char *socketPath;
+    char *nodeId;
+    int nodedPort;
+    int adminPort;
+    bool serviceStarted;
+    int exitCode;
+
+    memset(&serviceInst, 0, sizeof(serviceInst));
+    memset(&storeConfig, 0, sizeof(storeConfig));
+    serviceStarted = false;
+    nodeId = NULL;
+    exitCode = 1;
+
+    usys_log_set_service(SERVICE_NAME);
+
+    gData = calloc(1, sizeof(*gData));
+    if (!gData) {
+        return 1;
+    }
+    gData->level = USYS_LOG_DEBUG;
+    usys_log_set_level(gData->level);
+
+    if (parse_options(argc, argv) != 0) {
+        usage();
+        goto done;
+    }
+
+    if (install_signal_handlers() != 0) {
+        usys_log_error("Unable to install signal handlers");
+        goto done;
+    }
+
+    nodedPort = usys_find_service_port(SERVICE_NODE);
+    adminPort = usys_find_service_port(SERVICE_RLOG_ADMIN);
+    if (adminPort <= 0) {
+        usys_log_error("Unable to find rlog admin service port");
+        goto done;
+    }
+
+    nodeId = resolve_node_id(nodedPort);
+    if (!nodeId) {
+        usys_log_error("Unable to allocate node ID");
+        goto done;
+    }
+
+    storeConfig.logDir = getenv("RLOG_LOG_DIR");
+    storeConfig.nodeId = nodeId;
+    gData->store = log_store_open(&storeConfig);
+    if (!gData->store) {
+        usys_log_error("Unable to open canonical log store");
+        goto done;
+    }
+
+    socketPath = getenv("RLOG_INGEST_SOCKET");
+    if (!socketPath || !*socketPath) {
+        socketPath = DEF_INGEST_SOCKET;
+    }
+
+    gData->ingest = ingest_start(socketPath, gData->store);
+    if (!gData->ingest) {
+        usys_log_error("Unable to start local ingest socket: %s",
+                       socketPath);
+        goto done;
+    }
+
+    if (start_web_services(adminPort, &serviceInst) != USYS_TRUE) {
+        usys_log_error("Unable to start admin service on port %d",
+                       adminPort);
+        goto done;
+    }
+    serviceStarted = true;
+
+    usys_log_info("rlog.d ready: node=%s ingest=%s admin=%d",
+                  nodeId, socketPath, adminPort);
+
+    while (!gTerminate) {
+        pause();
+    }
+
+    usys_log_info("rlog.d terminating");
+    exitCode = 0;
+
+done:
+    cleanup(&serviceInst, serviceStarted, nodeId);
+    return exitCode;
 }

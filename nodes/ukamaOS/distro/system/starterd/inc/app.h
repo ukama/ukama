@@ -35,6 +35,7 @@ typedef struct App {
     pid_t pgid;
     pid_t lastPid;
     pid_t lastPgid;
+    uint32_t generation;
 
     AppState state;
     AppReason reason;

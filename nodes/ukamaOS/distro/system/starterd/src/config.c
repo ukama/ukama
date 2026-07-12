@@ -141,6 +141,24 @@ static bool cfg_validate(Config *config) {
     if (config->termGraceSec <= 0)          config->termGraceSec = 5;
     if (config->restartMaxBackoffSec <= 0)  config->restartMaxBackoffSec = 60;
     if (config->restartStableResetSec <= 0) config->restartStableResetSec = 300;
+    if (!config->logSpoolDir || !*config->logSpoolDir) {
+        usys_log_error("config: log spool directory missing");
+        return false;
+    }
+    if (config->logSpoolMaxBytes <= 0) {
+        config->logSpoolMaxBytes =
+            STARTERD_DEFAULT_LOG_SPOOL_MAX_BYTES;
+    }
+    if (config->logRecordMaxBytes <= 0) {
+        config->logRecordMaxBytes = STARTERD_DEFAULT_LOG_RECORD_MAX;
+    }
+    if (config->logReconnectMs <= 0) {
+        config->logReconnectMs = STARTERD_DEFAULT_LOG_RECONNECT_MS;
+    }
+    if (!config->rlogSocketPath || !*config->rlogSocketPath) {
+        usys_log_error("config: rlog socket path missing");
+        return false;
+    }
 
     return true;
 }
@@ -155,13 +173,30 @@ bool config_load(Config *config) {
 
     cfg_load_env_file_if_enabled();
 
-    config->manifestPath = cfg_get_str("STARTERD_MANIFEST",   STARTERD_DEFAULT_MANIFEST_FILE);
-    config->logPath      = cfg_get_str("STARTERD_LOG_PATH",   STARTERD_DEFAULT_LOG_PATH);
-    config->readyFile    = cfg_get_str("STARTERD_READY_FILE", STARTERD_DEFAULT_READY_FILE);
+    config->manifestPath =
+        cfg_get_str("STARTERD_MANIFEST",
+                    STARTERD_DEFAULT_MANIFEST_FILE);
+    config->readyFile = cfg_get_str("STARTERD_READY_FILE",
+                                    STARTERD_DEFAULT_READY_FILE);
+    config->rlogSocketPath = cfg_get_str("STARTERD_RLOG_SOCKET",
+                                         STARTERD_DEFAULT_RLOG_SOCKET);
+    config->logSpoolDir = cfg_get_str("STARTERD_LOG_SPOOL_DIR",
+                                      STARTERD_DEFAULT_LOG_SPOOL_DIR);
+    config->logSpoolMaxBytes =
+        cfg_get_int("STARTERD_LOG_SPOOL_MAX_BYTES",
+                    STARTERD_DEFAULT_LOG_SPOOL_MAX_BYTES);
+    config->logRecordMaxBytes =
+        cfg_get_int("STARTERD_LOG_RECORD_MAX_BYTES",
+                    STARTERD_DEFAULT_LOG_RECORD_MAX);
+    config->logReconnectMs =
+        cfg_get_int("STARTERD_LOG_RECONNECT_MS",
+                    STARTERD_DEFAULT_LOG_RECONNECT_MS);
 
     config->appsRoot     = cfg_get_str("STARTERD_APPS_ROOT", "/ukama/apps");
-    config->pkgsDir      = cfg_get_str("STARTERD_PKGS_DIR",  "/ukama/apps/pkgs");
-    config->stateDir     = cfg_get_str("STARTERD_STATE_DIR", "/ukama/state/starterd");
+    config->pkgsDir =
+        cfg_get_str("STARTERD_PKGS_DIR", "/ukama/apps/pkgs");
+    config->stateDir =
+        cfg_get_str("STARTERD_STATE_DIR", "/ukama/state/starterd");
 
     config->httpAddr     = cfg_get_str("STARTERD_HTTP_ADDR", "127.0.0.1");
 
@@ -186,8 +221,10 @@ bool config_load(Config *config) {
     config->pingTimeoutSec   = cfg_get_int("STARTERD_PING_TIMEOUT_SEC",   3);
     config->termGraceSec     = cfg_get_int("STARTERD_TERM_GRACE_SEC",     5);
 
-    config->restartMaxBackoffSec  = cfg_get_int("STARTERD_RESTART_MAX_BACKOFF_SEC",  60);
-    config->restartStableResetSec = cfg_get_int("STARTERD_RESTART_STABLE_RESET_SEC", 300);
+    config->restartMaxBackoffSec =
+        cfg_get_int("STARTERD_RESTART_MAX_BACKOFF_SEC", 60);
+    config->restartStableResetSec =
+        cfg_get_int("STARTERD_RESTART_STABLE_RESET_SEC", 300);
 
     config->bootSpace = cfg_get_str("STARTERD_BOOT_SPACE", "boot");
 
@@ -199,8 +236,9 @@ void config_free(Config *config) {
     if (!config) return;
 
     free(config->manifestPath);
-    free(config->logPath);
     free(config->readyFile);
+    free(config->rlogSocketPath);
+    free(config->logSpoolDir);
     free(config->appsRoot);
     free(config->pkgsDir);
     free(config->stateDir);

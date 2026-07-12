@@ -6,135 +6,170 @@
  * Copyright (c) 2024-present, Ukama Inc.
  */
 
-#include "http_status.h"
-#include "usys_error.h"
-#include "usys_log.h"
+#include <strings.h>
 
+#include "http_status.h"
 #include "rlogd.h"
+#include "usys_log.h"
 #include "version.h"
 
 extern ThreadData *gData;
 
-int web_service_cb_ping(const URequest *request, UResponse *response,
+static int level_from_string(const char *value) {
+    if (!value) return -1;
+
+    if (strcasecmp(value, "trace") == 0) return USYS_LOG_TRACE;
+    if (strcasecmp(value, "debug") == 0) return USYS_LOG_DEBUG;
+    if (strcasecmp(value, "info") == 0) return USYS_LOG_INFO;
+    if (strcasecmp(value, "warn") == 0) return USYS_LOG_WARN;
+    if (strcasecmp(value, "error") == 0) return USYS_LOG_ERROR;
+    if (strcasecmp(value, "critical") == 0 ||
+        strcasecmp(value, "fatal") == 0) {
+        return USYS_LOG_CRITICAL;
+    }
+
+    return -1;
+}
+
+static const char *level_to_string(int level) {
+    switch (level) {
+    case USYS_LOG_TRACE:
+        return "trace";
+    case USYS_LOG_DEBUG:
+        return "debug";
+    case USYS_LOG_INFO:
+        return "info";
+    case USYS_LOG_WARN:
+        return "warn";
+    case USYS_LOG_ERROR:
+        return "error";
+    case USYS_LOG_CRITICAL:
+        return "critical";
+    default:
+        return "unknown";
+    }
+}
+
+int web_service_cb_ping(const URequest *request,
+                        UResponse *response,
                         void *data) {
+    (void)request;
+    (void)data;
 
     ulfius_set_string_body_response(response, HttpStatus_OK,
                                     HttpStatusStr(HttpStatus_OK));
-
     return U_CALLBACK_CONTINUE;
 }
 
-int web_service_cb_version(const URequest *request, UResponse *response,
+int web_service_cb_version(const URequest *request,
+                           UResponse *response,
                            void *data) {
+    (void)request;
+    (void)data;
 
     ulfius_set_string_body_response(response, HttpStatus_OK, VERSION);
+    return U_CALLBACK_CONTINUE;
+}
 
+int web_service_cb_status(const URequest *request,
+                          UResponse *response,
+                          void *data) {
+    json_t *status;
+
+    (void)request;
+    (void)data;
+
+    if (!gData || !gData->store || !gData->ingest) {
+        ulfius_set_string_body_response(
+            response, HttpStatus_ServiceUnavailable,
+            HttpStatusStr(HttpStatus_ServiceUnavailable));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    status = json_pack("{s:b,s:s,s:s,s:I,s:I,s:s,s:s}",
+                       "ready", 1,
+                       "nodeId", log_store_node_id(gData->store),
+                       "bootId", log_store_boot_id(gData->store),
+                       "currentSeq",
+                       (json_int_t)log_store_current_seq(gData->store),
+                       "activeBytes",
+                       (json_int_t)log_store_active_bytes(gData->store),
+                       "ingestSocket",
+                       ingest_socket_path(gData->ingest),
+                       "level", level_to_string(gData->level));
+    if (!status) {
+        ulfius_set_string_body_response(
+            response, HttpStatus_InternalServerError,
+            HttpStatusStr(HttpStatus_InternalServerError));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    ulfius_set_json_body_response(response, HttpStatus_OK, status);
+    json_decref(status);
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_get_level(const URequest *request,
+                             UResponse *response,
+                             void *data) {
+    (void)request;
+    (void)data;
+
+    if (!gData) {
+        ulfius_set_string_body_response(
+            response, HttpStatus_ServiceUnavailable,
+            HttpStatusStr(HttpStatus_ServiceUnavailable));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    ulfius_set_string_body_response(response, HttpStatus_OK,
+                                    level_to_string(gData->level));
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_post_level(const URequest *request,
+                              UResponse *response,
+                              void *data) {
+    const char *value;
+    int level;
+
+    (void)data;
+
+    value = u_map_get(request->map_url, "level");
+    level = level_from_string(value);
+    if (level < 0) {
+        ulfius_set_string_body_response(
+            response, HttpStatus_BadRequest,
+            HttpStatusStr(HttpStatus_BadRequest));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    gData->level = level;
+    usys_log_set_level(level);
+    ulfius_set_string_body_response(response, HttpStatus_OK,
+                                    level_to_string(level));
     return U_CALLBACK_CONTINUE;
 }
 
 int web_service_cb_not_allowed(const URequest *request,
                                UResponse *response,
-                               void *user_data) {
+                               void *data) {
+    (void)request;
+    (void)data;
 
-    ulfius_set_string_body_response(response,
-                                    HttpStatus_MethodNotAllowed,
-                                    HttpStatusStr(HttpStatus_MethodNotAllowed));
+    ulfius_set_string_body_response(
+        response, HttpStatus_MethodNotAllowed,
+        HttpStatusStr(HttpStatus_MethodNotAllowed));
     return U_CALLBACK_CONTINUE;
 }
 
-int web_service_cb_get_level(const URequest *request, UResponse *response,
-                             void *data) {
-
-    char *level = NULL;
-
-    if (gData->level == USYS_LOG_DEBUG) {
-        level = "debug";
-    } else if (gData->level == USYS_LOG_INFO) {
-        level = "info";
-    } else if (gData->level == USYS_LOG_ERROR) {
-        level = "error";
-    }
-
-    ulfius_set_string_body_response(response, HttpStatus_OK, level);
-
-    return U_CALLBACK_CONTINUE;
-}
-
-int web_service_cb_get_output(const URequest *request, UResponse *response,
-                              void *data) {
-
-    char *output = NULL;
-
-    if (gData->output == STDOUT) {
-        output = "stdout";
-    } else if (gData->output == STDERR) {
-        output = "stderr";
-    } else if (gData->output == LOG_FILE) {
-        output = "file";
-    } else if (gData->output == UKAMA_SERVICE) {
-        output = "ukama";
-    }
-
-    ulfius_set_string_body_response(response, HttpStatus_OK, output);
-
-    return U_CALLBACK_CONTINUE;
-}
-
-int web_service_cb_default(const URequest *request, UResponse *response,
+int web_service_cb_default(const URequest *request,
+                           UResponse *response,
                            void *data) {
+    (void)request;
+    (void)data;
 
     ulfius_set_string_body_response(response, HttpStatus_NotFound,
                                     HttpStatusStr(HttpStatus_NotFound));
-
-    return U_CALLBACK_CONTINUE;
-}
-
-int web_service_cb_post_level(const URequest *request, UResponse *response,
-                              void *data) {
-
-    const char *level=NULL;
-
-    level = u_map_get(request->map_url, "level");
-    if (level == NULL) {
-        ulfius_set_string_body_response(response,
-                                        HttpStatus_BadRequest,
-                                        HttpStatusStr(HttpStatus_BadRequest));
-        return U_CALLBACK_CONTINUE;
-    }
-
-    if (strcasecmp(level, "debug") == 0) {
-        gData->level = USYS_LOG_DEBUG;
-    } else if (strcasecmp(level, "info") == 0) {
-        gData->level = USYS_LOG_INFO;
-    } else if (strcasecmp(level, "error") == 0) {
-        gData->level = USYS_LOG_ERROR;
-    }
-    
-    return U_CALLBACK_CONTINUE;
-}
-
-int web_service_cb_post_output(const URequest *request, UResponse *response,
-                               void *data) {
-
-    const char *output=NULL;
-
-    output = u_map_get(request->map_url, "output");
-    if (output == NULL) {
-        ulfius_set_string_body_response(response,
-                                        HttpStatus_BadRequest,
-                                        HttpStatusStr(HttpStatus_BadRequest));
-        return U_CALLBACK_CONTINUE;
-    }
-
-    if (strcasecmp(output, "stdout") == 0) {
-        gData->output = STDOUT;
-    } else if (strcasecmp(output, "stderr") == 0) {
-        gData->output = STDERR;
-    } else if (strcasecmp(output, "file") == 0) {
-        gData->output = LOG_FILE;
-    } else if (strcasecmp(output, "ukama") == 0) {
-        gData->output = UKAMA_SERVICE;
-    }
-
     return U_CALLBACK_CONTINUE;
 }

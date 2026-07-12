@@ -1,69 +1,23 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "rlog.d API",
+    "title": "rlog.d local ingest interface",
     "version": "1.0.0",
-    "description": "API documentation for the rlog.d application",
+    "description": "The former HTTP/WebSocket log-ingest API is retired. Structured records are accepted only through the local AF_UNIX SOCK_SEQPACKET socket at /run/ukama/rlog-ingest.sock. This file is retained to document that there is no public HTTP ingest API.",
     "contact": {
       "name": "Ukama Inc.",
       "url": "http://www.ukama.com",
       "email": "hello@ukama.com"
     },
     "license": {
-      "name": "Mozilla Public License 2.0 (MPLV2)",
+      "name": "Mozilla Public License 2.0",
       "url": "https://www.mozilla.org/en-US/MPL/2.0/"
     }
   },
-  "host": "localhost:18010",
-  "schemes": ["http"],
-  "paths": {
-    "/v1/ping": {
-      "get": {
-        "summary": "Ping the server",
-        "description": "Returns OK if the server is running",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "type": "string"
-            }
-          },
-          "404": {
-            "description": "Not Found"
-          }
-        }
-      }
-    },
-  "/v1/version": {
-    "get": {
-      "summary": "Get API version",
-      "description": "Returns the API version",
-      "responses": {
-        "200": {
-          "description": "Version",
-          "schema": {
-          "type": "string"
-           }
-        },
-        "404": {
-          "description": "Not Found"
-        }
-      }
-    }
-  },
-    "/v1/logit": {
-      "post": {
-        "summary": "Create websocket connection",
-        "responses": {
-          "500": {
-            "description": "Internal Server Error",
-            "schema": {
-              "type": "string"
-            }
-          }
-        }
-      }
-    }
+  "paths": {},
+  "x-ukama-ingest": {
+    "transport": "AF_UNIX SOCK_SEQPACKET",
+    "socket": "/run/ukama/rlog-ingest.sock",
+    "operations": ["hello", "event", "ack", "error"]
   }
 }
-
