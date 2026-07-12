@@ -59,11 +59,11 @@ LIBS+=-lpthread
 LIBS+=-lusys
 LIBS+=-lzstd
 
-# Soruce files
+# Source files
 CFILES   = $(wildcard ./src/*.c)
 OBJFILES = $(CFILES:.c=.o)
 
-UTILITY_CFILE = ./tools/ukama-log.c
+UTILITY_CFILE = ./tools/ukama_log.c
 UTILITY_OBJFILE = $(UTILITY_CFILE:.c=.o)
 UTILITY_LIBS = -ljansson -lzstd
 

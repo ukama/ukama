@@ -34,6 +34,7 @@
 #define CURRENT_LINK           "current.jsonl"
 #define STATE_FILE             "rlogd.json"
 #define LINE_MAX_BYTES         (64U * 1024U)
+#define RECOVERY_FILE_MAX      (64U * 1024U * 1024U)
 
 struct LogStore {
     char logDir[PATH_MAX];
@@ -162,6 +163,158 @@ static uint64_t seq_from_record(json_t *record) {
     }
 
     return (uint64_t)json_integer_value(value);
+}
+
+static uint64_t capture_seq_from_record(json_t *record,
+                                        const char *producerBootId) {
+    json_t *producer;
+    json_t *sequence;
+    json_int_t value;
+
+    if (!record || !json_is_object(record) ||
+        !producerBootId || !*producerBootId) {
+        return 0;
+    }
+
+    producer = json_object_get(record, "producer_boot_id");
+    sequence = json_object_get(record, "capture_seq");
+    if (!json_is_string(producer) || !json_is_integer(sequence) ||
+        strcmp(json_string_value(producer), producerBootId) != 0) {
+        return 0;
+    }
+
+    value = json_integer_value(sequence);
+    return value > 0 ? (uint64_t)value : 0;
+}
+
+static uint64_t scan_capture_buffer(const char *data, size_t size,
+                                    const char *producerBootId) {
+    const char *cursor;
+    const char *end;
+    uint64_t highest;
+
+    if (!data || size == 0 || !producerBootId) return 0;
+
+    cursor = data;
+    end = data + size;
+    highest = 0;
+
+    while (cursor < end) {
+        const char *newline;
+        size_t length;
+        json_error_t error;
+        json_t *record;
+        uint64_t sequence;
+
+        newline = memchr(cursor, '\n', (size_t)(end - cursor));
+        length = newline ? (size_t)(newline - cursor) :
+                           (size_t)(end - cursor);
+        if (length > 0 && length <= LINE_MAX_BYTES) {
+            record = json_loadb(cursor, length, 0, &error);
+            if (record) {
+                sequence = capture_seq_from_record(record,
+                                                   producerBootId);
+                if (sequence > highest) highest = sequence;
+                json_decref(record);
+            }
+        }
+
+        if (!newline) break;
+        cursor = newline + 1;
+    }
+
+    return highest;
+}
+
+static uint64_t scan_capture_plain(const char *path,
+                                   const char *producerBootId) {
+    FILE *file;
+    char *line;
+    size_t capacity;
+    ssize_t length;
+    uint64_t highest;
+
+    file = fopen(path, "r");
+    if (!file) return 0;
+
+    line = NULL;
+    capacity = 0;
+    highest = 0;
+    while ((length = getline(&line, &capacity, file)) >= 0) {
+        json_error_t error;
+        json_t *record;
+        uint64_t sequence;
+
+        if ((size_t)length > LINE_MAX_BYTES) continue;
+        record = json_loadb(line, (size_t)length, 0, &error);
+        if (!record) continue;
+
+        sequence = capture_seq_from_record(record, producerBootId);
+        if (sequence > highest) highest = sequence;
+        json_decref(record);
+    }
+
+    free(line);
+    fclose(file);
+    return highest;
+}
+
+static uint64_t scan_capture_compressed(const char *path,
+                                        const char *producerBootId) {
+    struct stat status;
+    FILE *file;
+    void *compressed;
+    char *plain;
+    size_t compressedSize;
+    unsigned long long plainSize;
+    size_t decoded;
+    uint64_t highest;
+
+    if (stat(path, &status) != 0 || status.st_size <= 0) return 0;
+
+    compressedSize = (size_t)status.st_size;
+    compressed = malloc(compressedSize);
+    if (!compressed) return 0;
+
+    file = fopen(path, "rb");
+    if (!file) {
+        free(compressed);
+        return 0;
+    }
+
+    if (fread(compressed, 1, compressedSize, file) != compressedSize) {
+        fclose(file);
+        free(compressed);
+        return 0;
+    }
+    fclose(file);
+
+    plainSize = ZSTD_getFrameContentSize(compressed, compressedSize);
+    if (plainSize == ZSTD_CONTENTSIZE_ERROR ||
+        plainSize == ZSTD_CONTENTSIZE_UNKNOWN ||
+        plainSize > RECOVERY_FILE_MAX) {
+        free(compressed);
+        return 0;
+    }
+
+    plain = malloc((size_t)plainSize + 1U);
+    if (!plain) {
+        free(compressed);
+        return 0;
+    }
+
+    decoded = ZSTD_decompress(plain, (size_t)plainSize,
+                              compressed, compressedSize);
+    free(compressed);
+    if (ZSTD_isError(decoded)) {
+        free(plain);
+        return 0;
+    }
+
+    plain[decoded] = '\0';
+    highest = scan_capture_buffer(plain, decoded, producerBootId);
+    free(plain);
+    return highest;
 }
 
 static void scan_active(LogStore *store) {
@@ -299,6 +452,9 @@ static int write_state(LogStore *store) {
 
     rc = fprintf(fp, "%s\n", data) < 0 ? -1 : 0;
     if (fflush(fp) != 0) {
+        rc = -1;
+    }
+    if (rc == 0 && fsync(fileno(fp)) != 0) {
         rc = -1;
     }
     fclose(fp);
@@ -809,4 +965,93 @@ uint64_t log_store_current_seq(const LogStore *store) {
 
 size_t log_store_active_bytes(const LogStore *store) {
     return store ? store->activeBytes : 0;
+}
+
+static uint64_t scan_capture_boot_dir(const char *bootDir,
+                                      const char *producerBootId) {
+    DIR *directory;
+    struct dirent *entry;
+    char activePath[PATH_MAX];
+    uint64_t highest;
+
+    if (!bootDir || !producerBootId) return 0;
+
+    highest = 0;
+    if (snprintf(activePath, sizeof(activePath), "%s/%s",
+                 bootDir, ACTIVE_FILE) < (int)sizeof(activePath)) {
+        highest = scan_capture_plain(activePath, producerBootId);
+    }
+
+    directory = opendir(bootDir);
+    if (!directory) return highest;
+
+    while ((entry = readdir(directory)) != NULL) {
+        char path[PATH_MAX];
+        size_t length;
+        uint64_t sequence;
+
+        length = strlen(entry->d_name);
+        if (length < 4 ||
+            strcmp(entry->d_name + length - 4, ".zst") != 0) {
+            continue;
+        }
+
+        if (snprintf(path, sizeof(path), "%s/%s",
+                     bootDir, entry->d_name) >= (int)sizeof(path)) {
+            continue;
+        }
+
+        sequence = scan_capture_compressed(path, producerBootId);
+        if (sequence > highest) highest = sequence;
+    }
+
+    closedir(directory);
+    return highest;
+}
+
+uint64_t log_store_last_capture_seq(LogStore *store,
+                                    const char *producerBootId) {
+    char bootsRoot[PATH_MAX];
+    DIR *directory;
+    struct dirent *entry;
+    uint64_t highest;
+
+    if (!store || !producerBootId || !*producerBootId) return 0;
+
+    if (snprintf(bootsRoot, sizeof(bootsRoot), "%s/boots",
+                 store->logDir) >= (int)sizeof(bootsRoot)) {
+        return 0;
+    }
+
+    pthread_mutex_lock(&store->mutex);
+    if (store->active) fflush(store->active);
+
+    highest = 0;
+    directory = opendir(bootsRoot);
+    if (directory) {
+        while ((entry = readdir(directory)) != NULL) {
+            char bootDir[PATH_MAX];
+            struct stat status;
+            uint64_t sequence;
+
+            if (entry->d_name[0] == '.') continue;
+            if (snprintf(bootDir, sizeof(bootDir), "%s/%s",
+                         bootsRoot, entry->d_name) >=
+                (int)sizeof(bootDir)) {
+                continue;
+            }
+            if (stat(bootDir, &status) != 0 ||
+                !S_ISDIR(status.st_mode)) {
+                continue;
+            }
+
+            sequence = scan_capture_boot_dir(bootDir,
+                                             producerBootId);
+            if (sequence > highest) highest = sequence;
+        }
+        closedir(directory);
+    }
+
+    pthread_mutex_unlock(&store->mutex);
+    return highest;
 }

@@ -214,8 +214,15 @@ static int string_list_add_csv(StringList *list, const char *csv) {
     save = NULL;
     token = strtok_r(copy, ",", &save);
     while (token) {
+        char *end;
+
         while (*token == ' ' || *token == '\t') {
             token++;
+        }
+        end = token + strlen(token);
+        while (end > token &&
+               (end[-1] == ' ' || end[-1] == '\t')) {
+            *--end = '\0';
         }
         if (*token && string_list_add(list, token) != 0) {
             rc = -1;

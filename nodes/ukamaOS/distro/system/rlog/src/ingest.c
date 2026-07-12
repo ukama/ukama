@@ -261,6 +261,20 @@ static int handle_hello(IngestServer *server, int fd, json_t *request) {
         return send_error(fd, "unable to persist producer state");
     }
 
+    {
+        uint64_t recovered;
+
+        recovered = log_store_last_capture_seq(server->store,
+                                               producerBootId);
+        if (recovered > server->acceptedCaptureSeq) {
+            server->acceptedCaptureSeq = recovered;
+            if (write_state(server) != 0) {
+                return send_error(fd,
+                                  "unable to recover ingest cursor");
+            }
+        }
+    }
+
     reply = json_pack("{s:s,s:b,s:s,s:I,s:s}",
                       "op", "hello",
                       "ready", 1,

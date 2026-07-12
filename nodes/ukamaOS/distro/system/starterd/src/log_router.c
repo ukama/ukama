@@ -163,21 +163,59 @@ static const char *fallback_level(const char *stream) {
 
 static json_t *wrap_unstructured(const LogStream *stream,
                                  const char *line) {
+    char timestamp[40];
     json_t *record;
 
     record = json_object();
     if (!record) return NULL;
 
+    utc_timestamp(timestamp, sizeof(timestamp));
     json_object_set_new(record, "schema", json_string(LOG_SCHEMA));
+    json_object_set_new(record, "ts", json_string(timestamp));
+    json_object_set_new(record, "mono_ms",
+                        json_integer((json_int_t)monotonic_ms()));
     json_object_set_new(record, "level",
                         json_string(fallback_level(stream->stream)));
     json_object_set_new(record, "app", json_string(stream->app));
     json_object_set_new(record, "component", json_string("process"));
     json_object_set_new(record, "event", json_string("process_output"));
     json_object_set_new(record, "msg", json_string(line ? line : ""));
+    json_object_set_new(record, "source_file",
+                        json_string("process-output"));
+    json_object_set_new(record, "source_line", json_integer(1));
     json_object_set_new(record, "structured", json_false());
 
     return record;
+}
+
+static bool valid_level(const char *level) {
+    return level &&
+           (strcmp(level, "trace") == 0 ||
+            strcmp(level, "debug") == 0 ||
+            strcmp(level, "info") == 0 ||
+            strcmp(level, "warn") == 0 ||
+            strcmp(level, "error") == 0 ||
+            strcmp(level, "critical") == 0);
+}
+
+static bool record_is_structured(json_t *record) {
+    const char *schema;
+    const char *level;
+
+    if (!record || !json_is_object(record)) return false;
+
+    schema = json_string_value(json_object_get(record, "schema"));
+    level = json_string_value(json_object_get(record, "level"));
+
+    return schema && strcmp(schema, LOG_SCHEMA) == 0 &&
+           valid_level(level) &&
+           json_is_string(json_object_get(record, "ts")) &&
+           json_is_integer(json_object_get(record, "mono_ms")) &&
+           json_is_string(json_object_get(record, "component")) &&
+           json_is_string(json_object_get(record, "event")) &&
+           json_is_string(json_object_get(record, "msg")) &&
+           json_is_string(json_object_get(record, "source_file")) &&
+           json_is_integer(json_object_get(record, "source_line"));
 }
 
 static json_t *parse_record(const LogStream *stream,
@@ -187,7 +225,7 @@ static json_t *parse_record(const LogStream *stream,
     json_t *record;
 
     record = json_loadb(line, len, 0, &error);
-    if (!record || !json_is_object(record)) {
+    if (!record_is_structured(record)) {
         if (record) json_decref(record);
         return wrap_unstructured(stream, line);
     }
@@ -247,9 +285,9 @@ static int spool_frame(LogRouter *router, json_t *frame) {
     int rc;
 
     rc = log_spool_append(router->spool, frame);
-    if (rc == 0) {
+    if (rc >= 0) {
         router->state = ROUTER_SPOOLING;
-        return 0;
+        return rc;
     }
 
     write_fallback(router, json_object_get(frame, "record"));
@@ -595,8 +633,13 @@ bool log_router_start(const char *socketPath,
 
     router->fallbackFd = -1;
     router->selfFd = -1;
-    router->maxRecordBytes = maxRecordBytes > 0 ?
-                             maxRecordBytes : (int)ROUTER_BUFFER_MAX;
+    if (maxRecordBytes <= 0) {
+        router->maxRecordBytes = (int)ROUTER_BUFFER_MAX;
+    } else if ((size_t)maxRecordBytes > ROUTER_BUFFER_MAX) {
+        router->maxRecordBytes = (int)ROUTER_BUFFER_MAX;
+    } else {
+        router->maxRecordBytes = maxRecordBytes;
+    }
     router->reconnectMs = reconnectMs > 0 ? reconnectMs : 1000;
     router->epollFd = epoll_create1(EPOLL_CLOEXEC);
     router->wakeFd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);

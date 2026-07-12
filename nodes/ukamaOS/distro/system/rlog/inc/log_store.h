@@ -35,5 +35,7 @@ const char *log_store_active_path(const LogStore *store);
 const char *log_store_state_dir(const LogStore *store);
 uint64_t log_store_current_seq(const LogStore *store);
 size_t log_store_active_bytes(const LogStore *store);
+uint64_t log_store_last_capture_seq(LogStore *store,
+                                    const char *producerBootId);
 
 #endif /* LOG_STORE_H_ */
