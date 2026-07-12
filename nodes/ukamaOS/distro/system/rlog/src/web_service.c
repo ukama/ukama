@@ -32,6 +32,43 @@ int web_service_cb_version(const URequest *request, UResponse *response,
     return U_CALLBACK_CONTINUE;
 }
 
+int web_service_cb_status(const URequest *request, UResponse *response,
+                          void *data) {
+
+    json_t *status;
+
+    if (!gData || !gData->store || !gData->ingest) {
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_ServiceUnavailable,
+                                        HttpStatusStr(
+                                            HttpStatus_ServiceUnavailable));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    status = json_pack("{s:b,s:s,s:s,s:I,s:I,s:s}",
+                       "ready", 1,
+                       "nodeId", log_store_node_id(gData->store),
+                       "bootId", log_store_boot_id(gData->store),
+                       "currentSeq",
+                       (json_int_t)log_store_current_seq(gData->store),
+                       "activeBytes",
+                       (json_int_t)log_store_active_bytes(gData->store),
+                       "ingestSocket",
+                       ingest_socket_path(gData->ingest));
+    if (!status) {
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_InternalServerError,
+                                        HttpStatusStr(
+                                            HttpStatus_InternalServerError));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    ulfius_set_json_body_response(response, HttpStatus_OK, status);
+    json_decref(status);
+
+    return U_CALLBACK_CONTINUE;
+}
+
 int web_service_cb_not_allowed(const URequest *request,
                                UResponse *response,
                                void *user_data) {

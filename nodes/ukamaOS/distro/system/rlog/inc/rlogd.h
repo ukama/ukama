@@ -12,6 +12,7 @@
 #include "ulfius.h"
 #include "jansson.h"
 #include "log_store.h"
+#include "ingest.h"
 
 #define SERVICE_NAME  SERVICE_RLOG
 #define STATUS_OK     (0)
@@ -36,6 +37,7 @@
 #define DEF_NODE_TYPE          "tower"
 #define DEF_OUTPUT             LOG_FILE
 #define DEF_LOG_FILE           "/ukama/apps.log"
+#define DEF_INGEST_SOCKET      "/run/ukama/rlog-ingest.sock"
 #define DEF_FLUSH_TIME         5 /*seconds */
 
 #define EP_BS                  "/"
@@ -84,6 +86,7 @@ typedef struct {
     int             bufferSize;
     pthread_mutex_t bufferMutex; /* thread-safe the buffer */
     LogStore        *store;
+    IngestServer    *ingest;
 } ThreadData;
 
 #endif /* RLOGD_H_ */

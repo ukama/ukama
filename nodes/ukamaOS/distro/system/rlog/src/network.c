@@ -119,6 +119,12 @@ static void setup_webservice_endpoints(UInst *instance) {
                               URL_PREFIX, API_RES_EP("version"));
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("status"), 0,
+                               &web_service_cb_status, NULL);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("status"));
+
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("level"), 0,
                                &web_service_cb_get_level, NULL);
     setup_unsupported_methods(instance, "GET",

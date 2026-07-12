@@ -69,6 +69,7 @@ void init_config_and_buffer() {
     gData->bufferSize    = 0;
     gData->jOutputBuffer = json_pack("{s:[]}", JTAG_LOGS);
     gData->store         = NULL;
+    gData->ingest        = NULL;
     pthread_mutex_init(&gData->bufferMutex, NULL);
 }
 
@@ -84,6 +85,10 @@ void clean_for_exit(int stage, UInst *service, UInst *socket, char **id) {
     case WEB_SERVICE_FAIL:
         usys_free(*id);
     case NODED_FAIL:
+        if (gData->ingest) {
+            ingest_stop(gData->ingest);
+            gData->ingest = NULL;
+        }
         if (gData->store) {
             log_store_close(gData->store);
             gData->store = NULL;
@@ -169,6 +174,24 @@ int main (int argc, char **argv) {
         gData->store = log_store_open(&storeConfig);
         if (!gData->store) {
             usys_log_error("Unable to open canonical log store");
+            clean_for_exit(NODED_FAIL, &serviceInst, &websocketInst,
+                           &nodeID);
+            return 1;
+        }
+    }
+
+    {
+        const char *socketPath;
+
+        socketPath = getenv("RLOG_INGEST_SOCKET");
+        if (!socketPath || !*socketPath) {
+            socketPath = DEF_INGEST_SOCKET;
+        }
+
+        gData->ingest = ingest_start(socketPath, gData->store);
+        if (!gData->ingest) {
+            usys_log_error("Unable to start local ingest socket: %s",
+                           socketPath);
             clean_for_exit(NODED_FAIL, &serviceInst, &websocketInst,
                            &nodeID);
             return 1;
