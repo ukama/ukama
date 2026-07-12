@@ -13,8 +13,10 @@
 
 #define STARTERD_SERVICE_NAME          "starter"
 #define STARTERD_DEFAULT_MANIFEST_FILE "/ukama/manifest.json"
-#define STARTERD_DEFAULT_LOG_PATH      "/ukama/apps.log"
 #define STARTERD_DEFAULT_READY_FILE    "/ukama/init/starter/ready"
+#define STARTERD_DEFAULT_RLOG_SOCKET   "/run/ukama/rlog-ingest.sock"
+#define STARTERD_DEFAULT_LOG_RECORD_MAX 32768
+#define STARTERD_DEFAULT_LOG_RECONNECT_MS 1000
 
 typedef enum {
     APP_STATE_STOPPED = 0,

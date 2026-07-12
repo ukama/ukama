@@ -19,6 +19,7 @@
 #include <time.h>
 
 #include "usys_log.h"
+#include "log_router.h"
 
 extern char **environ;
 
@@ -540,27 +541,13 @@ static void runtime_child_fail(int fd, int err) {
     _exit(127);
 }
 
-static bool runtime_set_cloexec(int fd) {
-
-    int flags;
-
-    flags = fcntl(fd, F_GETFD);
-    if (flags < 0) {
-        return false;
-    }
-
-    if (fcntl(fd, F_SETFD, flags | FD_CLOEXEC) < 0) {
-        return false;
-    }
-
-    return true;
-}
-
 bool app_runtime_start(Config *config, App *app, const char *execPath) {
 
     pid_t pid;
     char **envp;
     int errPipe[2];
+    int stdoutPipe[2];
+    int stderrPipe[2];
     int childErr;
     ssize_t n;
 
@@ -571,17 +558,21 @@ bool app_runtime_start(Config *config, App *app, const char *execPath) {
     envp = app->envp;
     errPipe[0] = -1;
     errPipe[1] = -1;
+    stdoutPipe[0] = -1;
+    stdoutPipe[1] = -1;
+    stderrPipe[0] = -1;
+    stderrPipe[1] = -1;
 
-    if (pipe(errPipe) != 0) {
+    if (pipe2(errPipe, O_CLOEXEC) != 0 ||
+        pipe2(stdoutPipe, O_CLOEXEC) != 0 ||
+        pipe2(stderrPipe, O_CLOEXEC) != 0) {
+        if (errPipe[0] >= 0) close(errPipe[0]);
+        if (errPipe[1] >= 0) close(errPipe[1]);
+        if (stdoutPipe[0] >= 0) close(stdoutPipe[0]);
+        if (stdoutPipe[1] >= 0) close(stdoutPipe[1]);
+        if (stderrPipe[0] >= 0) close(stderrPipe[0]);
+        if (stderrPipe[1] >= 0) close(stderrPipe[1]);
         usys_log_error("runtime: pipe failed for %s/%s",
-                       app->space, app->name);
-        return false;
-    }
-
-    if (!runtime_set_cloexec(errPipe[1])) {
-        close(errPipe[0]);
-        close(errPipe[1]);
-        usys_log_error("runtime: cloexec failed for %s/%s",
                        app->space, app->name);
         return false;
     }
@@ -590,6 +581,10 @@ bool app_runtime_start(Config *config, App *app, const char *execPath) {
     if (pid < 0) {
         close(errPipe[0]);
         close(errPipe[1]);
+        close(stdoutPipe[0]);
+        close(stdoutPipe[1]);
+        close(stderrPipe[0]);
+        close(stderrPipe[1]);
         usys_log_error("runtime: fork failed for %s/%s",
                        app->space, app->name);
         return false;
@@ -601,6 +596,16 @@ bool app_runtime_start(Config *config, App *app, const char *execPath) {
         const char *realExec;
 
         close(errPipe[0]);
+        close(stdoutPipe[0]);
+        close(stderrPipe[0]);
+
+        if (dup2(stdoutPipe[1], STDOUT_FILENO) < 0 ||
+            dup2(stderrPipe[1], STDERR_FILENO) < 0) {
+            runtime_child_fail(errPipe[1], errno);
+        }
+
+        close(stdoutPipe[1]);
+        close(stderrPipe[1]);
 
         runtime_launch_init(&launch);
 
@@ -625,23 +630,25 @@ bool app_runtime_start(Config *config, App *app, const char *execPath) {
         }
 
         realExec = runtime_exec_path(execPath, &launch);
-
         execve(realExec, launch.argv, childEnvp);
 
         childErr = errno;
         runtime_free_env_array(childEnvp);
         runtime_launch_free(&launch);
-
         runtime_child_fail(errPipe[1], childErr);
     }
 
     close(errPipe[1]);
+    close(stdoutPipe[1]);
+    close(stderrPipe[1]);
 
     childErr = 0;
     n = read(errPipe[0], &childErr, sizeof(childErr));
     close(errPipe[0]);
 
     if (n == sizeof(childErr)) {
+        close(stdoutPipe[0]);
+        close(stderrPipe[0]);
         (void)waitpid(pid, NULL, 0);
         usys_log_error("runtime: exec failed for %s/%s: %s",
                        app->space, app->name, strerror(childErr));
@@ -649,14 +656,33 @@ bool app_runtime_start(Config *config, App *app, const char *execPath) {
     }
 
     if (n < 0) {
+        close(stdoutPipe[0]);
+        close(stderrPipe[0]);
         (void)waitpid(pid, NULL, 0);
         usys_log_error("runtime: exec status read failed for %s/%s",
                        app->space, app->name);
         return false;
     }
 
-    app->pid  = pid;
+    app->pid = pid;
     app->pgid = pid;
+    app->generation++;
+
+    if (!log_router_register(app->space,
+                             app->name,
+                             pid,
+                             app->generation,
+                             stdoutPipe[0],
+                             stderrPipe[0])) {
+        killpg(pid, SIGTERM);
+        (void)waitpid(pid, NULL, 0);
+        app->pid = 0;
+        app->pgid = 0;
+        usys_log_error("runtime: log registration failed for %s/%s",
+                       app->space, app->name);
+        return false;
+    }
+
     return true;
 }
 

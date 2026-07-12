@@ -12,7 +12,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <fcntl.h>
 
 #include "starterd.h"
 #include "config.h"
@@ -22,6 +21,7 @@
 #include "supervisor.h"
 #include "network.h"
 #include "web_service.h"
+#include "log_router.h"
 
 #include "usys_log.h"
 
@@ -41,27 +41,6 @@ static void setup_signals(void) {
     sa.sa_handler = on_signal;
     sigaction(SIGTERM, &sa, NULL);
     sigaction(SIGINT, &sa, NULL);
-}
-
-static void redirect_logs(const char *path) {
-
-    int fd;
-
-    if (!path || !*path) {
-        return;
-    }
-
-    fd = open(path, O_CREAT | O_APPEND | O_WRONLY, 0644);
-    if (fd < 0) {
-        return;
-    }
-
-    dup2(fd, STDOUT_FILENO);
-    dup2(fd, STDERR_FILENO);
-
-    if (fd > 2) {
-        close(fd);
-    }
 }
 
 static int log_level_from_env(void) {
@@ -104,11 +83,18 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    redirect_logs(config.logPath);
+    if (!log_router_start(config.rlogSocketPath,
+                          config.logRecordMaxBytes,
+                          config.logReconnectMs)) {
+        usys_log_error("startup: log router start failed");
+        config_free(&config);
+        return 1;
+    }
 
     spaceList = NULL;
     if (!manifest_load(&config, &spaceList)) {
         usys_log_error("startup: manifest load failed");
+        log_router_stop();
         config_free(&config);
         return 1;
     }
@@ -131,6 +117,7 @@ int main(int argc, char **argv) {
     if (!network_init(&ctx)) {
         usys_log_error("startup: network init failed");
         manifest_free(spaceList);
+        log_router_stop();
         config_free(&config);
         return 1;
     }
@@ -140,6 +127,7 @@ int main(int argc, char **argv) {
         usys_log_error("startup: supervisor start failed");
         network_shutdown(&ctx);
         manifest_free(spaceList);
+        log_router_stop();
         config_free(&config);
         return 1;
     }
@@ -151,6 +139,7 @@ int main(int argc, char **argv) {
         supervisor_stop(sup);
         network_shutdown(&ctx);
         manifest_free(spaceList);
+        log_router_stop();
         config_free(&config);
         return 1;
     }
@@ -163,7 +152,8 @@ int main(int argc, char **argv) {
 
     supervisor_signal(sup);
 
-    usys_log_info("starterd: running on %s:%d", config.httpAddr, config.httpPort);
+    usys_log_info("starterd: running on %s:%d",
+                  config.httpAddr, config.httpPort);
 
     while (!gTerminate && !ctx.switchRequested) {
         sleep(1);
@@ -182,6 +172,7 @@ int main(int argc, char **argv) {
     actions_free(&queue);
     state_store_save(&config, spaceList);
     manifest_free(spaceList);
+    log_router_stop();
     config_free(&config);
 
     exitCode = ctx.switchRequested ? 77 : ctx.exitCode;

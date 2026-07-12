@@ -14,8 +14,10 @@
 typedef struct {
 
     char *manifestPath;
-    char *logPath;
     char *readyFile;
+    char *rlogSocketPath;
+    int logRecordMaxBytes;
+    int logReconnectMs;
 
     char *appsRoot;
     char *pkgsDir;
