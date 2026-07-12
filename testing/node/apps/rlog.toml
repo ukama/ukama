@@ -10,6 +10,10 @@
 	bin_from="/nodes/ukamaOS/distro/system/rlog/rlog.d"
 	bin_to="/sbin"
 
+[build-misc]
+        from="/nodes/ukamaOS/distro/system/rlog/ukama-log"
+        to="/sbin"
+
 [app-exec]
 	name="rlog"
 	version="latest"
