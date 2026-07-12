@@ -11,6 +11,7 @@
 
 #include "ulfius.h"
 #include "jansson.h"
+#include "log_store.h"
 
 #define SERVICE_NAME  SERVICE_RLOG
 #define STATUS_OK     (0)
@@ -82,6 +83,7 @@ typedef struct {
     json_t          *jOutputBuffer;
     int             bufferSize;
     pthread_mutex_t bufferMutex; /* thread-safe the buffer */
+    LogStore        *store;
 } ThreadData;
 
 #endif /* RLOGD_H_ */

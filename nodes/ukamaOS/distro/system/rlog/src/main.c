@@ -11,6 +11,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #include "ulfius.h"
 
@@ -67,6 +68,7 @@ void init_config_and_buffer() {
     gData->flushTime     = DEF_FLUSH_TIME;
     gData->bufferSize    = 0;
     gData->jOutputBuffer = json_pack("{s:[]}", JTAG_LOGS);
+    gData->store         = NULL;
     pthread_mutex_init(&gData->bufferMutex, NULL);
 }
 
@@ -82,6 +84,10 @@ void clean_for_exit(int stage, UInst *service, UInst *socket, char **id) {
     case WEB_SERVICE_FAIL:
         usys_free(*id);
     case NODED_FAIL:
+        if (gData->store) {
+            log_store_close(gData->store);
+            gData->store = NULL;
+        }
         json_decref(gData->jOutputBuffer);
     default:
         usys_free(gData);
@@ -149,12 +155,25 @@ int main (int argc, char **argv) {
         exit(1);
     }
 
-	if (get_nodeID_from_noded(&nodeID, DEF_NODED_HOST, nodedPort) != USYS_TRUE) {
-	    usys_log_error("Error retreiving NodeID from noded.d at %s:%d",
-                       DEF_NODED_HOST, nodedPort);
-        clean_for_exit(NODED_FAIL, &serviceInst, &websocketInst, &nodeID);
-        return 0;
-	}
+    if (get_nodeID_from_noded(&nodeID, DEF_NODED_HOST, nodedPort) !=
+        USYS_TRUE) {
+        usys_log_warn("Unable to retrieve node ID; using default");
+        nodeID = strdup(DEF_NODE_ID);
+    }
+
+    {
+        LogStoreConfig storeConfig = {0};
+
+        storeConfig.logDir = getenv("RLOG_LOG_DIR");
+        storeConfig.nodeId = nodeID;
+        gData->store = log_store_open(&storeConfig);
+        if (!gData->store) {
+            usys_log_error("Unable to open canonical log store");
+            clean_for_exit(NODED_FAIL, &serviceInst, &websocketInst,
+                           &nodeID);
+            return 1;
+        }
+    }
 
     if (start_web_services(rlogdAdminPort, &serviceInst) != USYS_TRUE) {
         usys_log_error("Unable to setup webservice on: %d", rlogdAdminPort);
