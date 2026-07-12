@@ -63,7 +63,11 @@ typedef struct {
     bool running;
     pthread_t thread;
     pthread_mutex_t mutex;
+    pthread_cond_t streamCond;
     LogStream *streams;
+    int fallbackFd;
+    int selfFd;
+    bool selfCaptured;
     RlogClient *client;
     LogSpool *spool;
     RouterState state;
@@ -131,9 +135,10 @@ static void read_boot_id(char *buffer, size_t size) {
     fclose(fp);
 }
 
-static void write_fallback(json_t *record) {
+static void write_fallback(LogRouter *router, json_t *record) {
     char *data;
     size_t len;
+    int fd;
     const char newline = '\n';
 
     if (!record) return;
@@ -141,9 +146,11 @@ static void write_fallback(json_t *record) {
     data = json_dumps(record, JSON_COMPACT | JSON_ENSURE_ASCII);
     if (!data) return;
 
+    fd = router && router->fallbackFd >= 0 ?
+         router->fallbackFd : STDERR_FILENO;
     len = strlen(data);
-    (void)write(STDERR_FILENO, data, len);
-    (void)write(STDERR_FILENO, &newline, 1);
+    (void)write(fd, data, len);
+    (void)write(fd, &newline, 1);
     free(data);
 }
 
@@ -186,13 +193,6 @@ static json_t *parse_record(const LogStream *stream,
     }
 
     return record;
-}
-
-static bool is_rlog_app(const char *name) {
-    if (!name) return false;
-    return strcmp(name, "rlog") == 0 ||
-           strcmp(name, "rlog.d") == 0 ||
-           strcmp(name, "rlogd") == 0;
 }
 
 static json_t *build_frame(LogRouter *router,
@@ -252,7 +252,7 @@ static int spool_frame(LogRouter *router, json_t *frame) {
         return 0;
     }
 
-    write_fallback(json_object_get(frame, "record"));
+    write_fallback(router, json_object_get(frame, "record"));
     return rc;
 }
 
@@ -360,13 +360,6 @@ static void route_line(LogRouter *router, LogStream *stream,
         return;
     }
 
-    if (is_rlog_app(stream->app)) {
-        write_fallback(record);
-        json_decref(frame);
-        json_decref(record);
-        return;
-    }
-
     if (log_spool_has_backlog(router->spool)) {
         (void)spool_frame(router, frame);
     } else {
@@ -422,6 +415,10 @@ static void stream_remove(LogRouter *router, LogStream *stream) {
         }
         cursor = &(*cursor)->next;
     }
+    if (router->selfFd == stream->fd) {
+        router->selfFd = -1;
+    }
+    pthread_cond_broadcast(&router->streamCond);
     pthread_mutex_unlock(&router->mutex);
 
     free(stream->space);
@@ -596,6 +593,8 @@ bool log_router_start(const char *socketPath,
     router = calloc(1, sizeof(*router));
     if (!router) return false;
 
+    router->fallbackFd = -1;
+    router->selfFd = -1;
     router->maxRecordBytes = maxRecordBytes > 0 ?
                              maxRecordBytes : (int)ROUTER_BUFFER_MAX;
     router->reconnectMs = reconnectMs > 0 ? reconnectMs : 1000;
@@ -609,6 +608,20 @@ bool log_router_start(const char *socketPath,
     }
 
     pthread_mutex_init(&router->mutex, NULL);
+    pthread_cond_init(&router->streamCond, NULL);
+
+    router->fallbackFd = dup(STDERR_FILENO);
+    if (router->fallbackFd < 0 ||
+        fcntl(router->fallbackFd, F_SETFD, FD_CLOEXEC) != 0) {
+        if (router->fallbackFd >= 0) close(router->fallbackFd);
+        close(router->wakeFd);
+        close(router->epollFd);
+        pthread_cond_destroy(&router->streamCond);
+        pthread_mutex_destroy(&router->mutex);
+        free(router);
+        return false;
+    }
+
     read_boot_id(router->producerBootId,
                  sizeof(router->producerBootId));
 
@@ -619,8 +632,10 @@ bool log_router_start(const char *socketPath,
     if (!router->spool || !router->client) {
         log_spool_close(router->spool);
         rlog_client_destroy(router->client);
+        close(router->fallbackFd);
         close(router->wakeFd);
         close(router->epollFd);
+        pthread_cond_destroy(&router->streamCond);
         pthread_mutex_destroy(&router->mutex);
         free(router);
         return false;
@@ -636,8 +651,10 @@ bool log_router_start(const char *socketPath,
                   router->wakeFd, &event) != 0) {
         log_spool_close(router->spool);
         rlog_client_destroy(router->client);
+        close(router->fallbackFd);
         close(router->wakeFd);
         close(router->epollFd);
+        pthread_cond_destroy(&router->streamCond);
         pthread_mutex_destroy(&router->mutex);
         free(router);
         return false;
@@ -648,8 +665,10 @@ bool log_router_start(const char *socketPath,
                        router_thread, router) != 0) {
         log_spool_close(router->spool);
         rlog_client_destroy(router->client);
+        close(router->fallbackFd);
         close(router->wakeFd);
         close(router->epollFd);
+        pthread_cond_destroy(&router->streamCond);
         pthread_mutex_destroy(&router->mutex);
         free(router);
         return false;
@@ -662,10 +681,29 @@ bool log_router_start(const char *socketPath,
 void log_router_stop(void) {
     LogRouter *router;
     LogStream *stream;
+    struct timespec deadline;
     uint64_t wake;
 
     router = gRouter;
     if (!router) return;
+
+    if (router->selfCaptured) {
+        (void)dup2(router->fallbackFd, STDERR_FILENO);
+        router->selfCaptured = false;
+
+        clock_gettime(CLOCK_REALTIME, &deadline);
+        deadline.tv_sec += 1;
+
+        pthread_mutex_lock(&router->mutex);
+        while (router->selfFd >= 0) {
+            if (pthread_cond_timedwait(&router->streamCond,
+                                       &router->mutex,
+                                       &deadline) == ETIMEDOUT) {
+                break;
+            }
+        }
+        pthread_mutex_unlock(&router->mutex);
+    }
 
     router->running = false;
     wake = 1;
@@ -689,12 +727,15 @@ void log_router_stop(void) {
 
     log_spool_close(router->spool);
     rlog_client_destroy(router->client);
+    close(router->fallbackFd);
     close(router->wakeFd);
     close(router->epollFd);
+    pthread_cond_destroy(&router->streamCond);
     pthread_mutex_destroy(&router->mutex);
     free(router);
     gRouter = NULL;
 }
+
 
 bool log_router_register(const char *space,
                          const char *app,
@@ -718,5 +759,38 @@ bool log_router_register(const char *space,
         return false;
     }
 
+    return true;
+}
+
+bool log_router_capture_self(const char *space,
+                             const char *app,
+                             pid_t pid,
+                             uint32_t generation) {
+    int pipeFd[2];
+
+    if (!gRouter || gRouter->selfCaptured || !app || !*app) {
+        return false;
+    }
+
+    if (pipe2(pipeFd, O_CLOEXEC) != 0) {
+        return false;
+    }
+
+    if (dup2(pipeFd[1], STDERR_FILENO) < 0) {
+        close(pipeFd[0]);
+        close(pipeFd[1]);
+        return false;
+    }
+    close(pipeFd[1]);
+
+    if (!add_stream(gRouter, space, app, pid, generation,
+                    pipeFd[0], STREAM_STDERR)) {
+        (void)dup2(gRouter->fallbackFd, STDERR_FILENO);
+        close(pipeFd[0]);
+        return false;
+    }
+
+    gRouter->selfFd = pipeFd[0];
+    gRouter->selfCaptured = true;
     return true;
 }

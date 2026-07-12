@@ -93,6 +93,14 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    if (!log_router_capture_self("", STARTERD_SERVICE_NAME,
+                                 getpid(), 1)) {
+        usys_log_error("startup: self log capture failed");
+        log_router_stop();
+        config_free(&config);
+        return 1;
+    }
+
     spaceList = NULL;
     if (!manifest_load(&config, &spaceList)) {
         usys_log_error("startup: manifest load failed");
@@ -174,8 +182,6 @@ int main(int argc, char **argv) {
     actions_free(&queue);
     state_store_save(&config, spaceList);
     manifest_free(spaceList);
-    log_router_stop();
-    config_free(&config);
 
     exitCode = ctx.switchRequested ? 77 : ctx.exitCode;
 
@@ -185,5 +191,7 @@ int main(int argc, char **argv) {
         usys_log_info("starterd: exiting with code %d", exitCode);
     }
 
+    log_router_stop();
+    config_free(&config);
     return exitCode;
 }

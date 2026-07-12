@@ -25,3 +25,7 @@ bool log_router_register(const char *space,
                          uint32_t generation,
                          int stdoutFd,
                          int stderrFd);
+bool log_router_capture_self(const char *space,
+                             const char *app,
+                             pid_t pid,
+                             uint32_t generation);
