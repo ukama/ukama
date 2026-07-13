@@ -36,6 +36,7 @@ apk add readline bash autoconf automake libmicrohttpd-dev gnutls-dev \
     openssl-dev readline cmake autoconf automake alpine-sdk build-base \
     git tcpdump ethtool iperf3 htop vim doas \
     libunistring-dev \
+    zstd zstd-dev \
     patchelf
 
 # build apps

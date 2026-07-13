@@ -8,6 +8,9 @@
 
 MANIFEST_FILE=manifest.json
 
+PKG_UTILS="$(dirname "$0")/build-system/pkg-utils.sh"
+source "$PKG_UTILS"
+
 log() {
     local type="$1"
     local message="$2"
@@ -88,77 +91,11 @@ EOF
 }
 
 generate_manifest_file() {
-
     local apps_to_include="$1"
+    local apps_array=()
 
-    # Create an array from the comma-separated list
     IFS=',' read -r -a apps_array <<< "$apps_to_include"
-
-    cat <<EOF > ${MANIFEST_FILE}
-{   
-    "version": "0.1",
-    
-    "spaces" : [
-        { "name" : "boot" },   
-        { "name" : "services" },
-        { "name" : "reboot" }  
-    ],
-
-    "capps": [
-        {
-            "name"   : "noded",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "boot"
-        },
-        {
-            "name"   : "bootstrap",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "boot",
-	        "depends_on" : [
-                {
-                    "capp"  : "noded",
-			        "state" : "active"
-		        }
-	        ]
-        },
-        {
-            "name"   : "meshd",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "boot",
-	        "depends_on" : [
-                {
-                    "capp"  : "bootstrap",
-			        "state" : "done"
-		        }
-	        ]
-        }
-EOF
-
-  echo '        ,' >> ${MANIFEST_FILE}
-  echo '        {"name" : "services", "capps" : [' >> ${MANIFEST_FILE}
-
-  for app in "${apps_array[@]}"; do
-    case "$app" in
-      "wimcd"|"configd"|"metricsd"|"lookoutd"|"deviced"|"notifyd")
-        cat <<EOF >> ${MANIFSET_FILE}
-        {
-            "name"   : "$app",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "services"
-        },
-EOF
-        ;;
-    esac
-  done
-
-  # Remove the last comma and close the JSON array
-  sed -i '$ s/,$//' ${MANIFEST_FILE}
-  echo '    ]}'  >> ${MANIFEST_FILE}
-  echo '}'       >> ${MANIFEST_FILE}
+    create_starter_manifest "$MANIFEST_FILE" "${apps_array[@]}"
 }
 
 build_base_image() {
@@ -191,12 +128,12 @@ build_base_apps() {
     # Only copy the apps needed and generate the manifest file.
     IFS=',' read -r -a array <<< "$apps"
     for app in "${array[@]}"; do
-        mv ./pkgs/${app}_latest.tar.gz /mnt/${base_id}/ukama/apps/
+        mv ./pkgs/${app}_latest.tar.gz /mnt/${base_id}/ukama/apps/pkgs/
     done
 
     generate_manifest_file $apps
     
-    cp ${MANIFEST_FILE} /mnt/${base_id}/manifest.json
+    cp ${MANIFEST_FILE} /mnt/${base_id}/ukama/manifest.json
 
     # install the starter.d app
     install_starter_app /mnt/${base_id}/

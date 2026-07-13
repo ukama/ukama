@@ -91,11 +91,11 @@ int main (int argc, char **argv) {
 	char *debug=DEF_LOG_LEVEL;
 	char *nodeID=NULL;
 	int opt, opdidx;
-    char buffer[MAX_BUFFER] = {0};
-    struct _u_instance webInst;
-
-    usys_log_set_service(SERVICE_NAME);
-    //    usys_log_remote_init(SERVICE_NAME);
+    	char buffer[MAX_BUFFER] = {0};
+	struct _u_instance webInst;
+	
+	usys_log_set_service(SERVICE_NAME);
+	usys_log_set_level(USYS_LOG_TRACE);
 
 	/* Prase command line args. */
 	while (TRUE) {

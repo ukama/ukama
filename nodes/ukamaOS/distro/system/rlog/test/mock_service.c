@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
     char logMessage[MSG_LENGTH+1] = {0};
 
     usys_log_set_service(SERVICE_NAME);
-    usys_log_remote_init(SERVICE_NAME);
+    usys_log_set_level(USYS_LOG_TRACE);
 
     while (1) {
 

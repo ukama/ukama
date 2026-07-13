@@ -8,6 +8,9 @@
 set -e
 set -x
 
+PKG_UTILS="$(dirname "$0")/build-system/pkg-utils.sh"
+source "$PKG_UTILS"
+
 # Variables
 LOG_FILE="build_run.log"
 IMG_NAME="access-node.img"
@@ -147,8 +150,8 @@ function build_apps_using_target() {
     #    exit the qemu
     # 4. remove the above script from the system.d
     # 5. rest of stuff as before
-   
 
+    :
 }
 
 function build_apps_using_container() {
@@ -229,7 +232,7 @@ function copy_misc_files() {
     log "INFO" "Copying various files to image"
 
     create_manifest_file $apps
-    sudo cp ${MANIFEST_FILE} "${PRIMARY_MOUNT}/manifest.json"
+    sudo cp ${MANIFEST_FILE} "${PRIMARY_MOUNT}/ukama/manifest.json"
     rm ${MANIFEST_FILE}
 
     # install the starter.d app
@@ -315,6 +318,8 @@ apt-get update && apt-get install -y \
     libmicrohttpd-dev \
     libcurl4-openssl-dev \
     libjansson-dev \
+    libzstd-dev \
+    zstd \
     gcc-aarch64-linux-gnu \
     g++-aarch64-linux-gnu \
     uuid-dev \
@@ -384,94 +389,10 @@ EOF
 
 function create_manifest_file() {
     local apps_to_include="$1"
-    log "INFO" "Creating manifest file"
+    local apps_array=()
 
-    # Create an array from the comma-separated list
     IFS=',' read -r -a apps_array <<< "$apps_to_include"
-
-   cat <<EOF > ${MANIFEST_FILE}
-{
-    "version": "0.1",
-
-    "spaces" : [
-        { "name" : "boot" },
-        { "name" : "services" },
-        { "name" : "reboot" }
-    ],
-
-    "capps": [
-        {
-            "name"   : "noded",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "boot"
-        },
-        {
-            "name"   : "bootstrap",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "boot",
-                "depends_on" : [
-                {
-                    "capp"  : "noded",
-                                "state" : "active"
-                        }
-                ]
-        },
-        {
-            "name"   : "meshd",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "boot",
-                "depends_on" : [
-                {
-                    "capp"  : "bootstrap",
-                                "state" : "done"
-                        }
-                ]
-        }
-EOF
-
-  echo '        ,' >> ${MANIFEST_FILE}
-  echo '        {"name" : "services", "capps" : [' >> ${MANIFEST_FILE}
-
-  for app in "${apps_array[@]}"; do
-    case "$app" in
-      "wimcd"|"configd"|"metricsd"|"lookoutd"|"deviced"|"notifyd")
-        cat <<EOF >> ${MANIFEST_FILE}
-        {
-            "name"   : "$app",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "services"
-        },
-EOF
-        ;;
-    esac
-  done
-
-  echo '        ,' >> ${MANIFEST_FILE}
-  echo '        {"name" : "services", "capps" : [' >> ${MANIFEST_FILE}
-
-  for app in "${apps_array[@]}"; do
-    case "$app" in
-      "wimcd"|"configd"|"metricsd"|"lookoutd"|"deviced"|"notifyd")
-        cat <<EOF >> ${MANIFEST_FILE}
-        {
-            "name"   : "$app",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "services"
-        },
-EOF
-        ;;
-    esac
-  done
-
-  # Remove the last comma and close the JSON array
-  sed -i '$ s/,$//' ${MANIFEST_FILE}
-  echo '    ]}'  >> ${MANIFEST_FILE}
-  echo '}'       >> ${MANIFEST_FILE}
+    create_starter_manifest "$MANIFEST_FILE" "${apps_array[@]}"
 }
 
 function mount_partitions() {
@@ -493,11 +414,11 @@ function setup_ukama_dirs() {
     mkdir -p "${PRIMARY_MOUNT}/ukama/apps/pkgs"
     mkdir -p "${PRIMARY_MOUNT}/ukama/apps/rootfs"
     mkdir -p "${PRIMARY_MOUNT}/ukama/apps/registry"
+    mkdir -p "${PRIMARY_MOUNT}/ukama/logs"
+    mkdir -p "${PRIMARY_MOUNT}/ukama/state/starterd/log-spool"
 
     echo "${NODE_ID}" > "${PRIMARY_MOUNT}/ukama/nodeid"
     echo "localhost"  > "${PRIMARY_MOUNT}/ukama/bootstrap"
-
-    touch "${PRIMARY_MOUNT}/ukama/apps.log"
 
     log "SUCCESS" "Ukama directories created."
 }
@@ -521,6 +442,9 @@ Description=Starter service for running starter.d
 After=network.target
 
 [Service]
+Environment=STARTERD_MANIFEST=/ukama/manifest.json
+Environment=STARTERD_RLOG_SOCKET=/run/ukama/rlog-ingest.sock
+Environment=STARTERD_LOG_SPOOL_DIR=/ukama/state/starterd/log-spool
 ExecStart=/sbin/starter.d
 Restart=always
 User=root

@@ -976,10 +976,38 @@ static void write_model_artifact(const model_t *model,
     model_write_json(model, path);
 }
 
+static void collect_failure_logs_once(runtime_t *runtime,
+                                      world_t *world,
+                                      int *attempted) {
+    ulab_error_t diag_err;
+
+    if (runtime == NULL || world == NULL || attempted == NULL ||
+        *attempted || runtime->run_dir[0] == '\0') {
+        return;
+    }
+
+    *attempted = 1;
+    memset(&diag_err, 0, sizeof(diag_err));
+    ulab_status("DIAG",
+                "failure detected; collect structured node error logs");
+
+    if (runtime_collect_failure_logs(runtime, world, &diag_err)) {
+        ulab_log_error("failure log collection failed: %s",
+                       diag_err.msg);
+        if (runtime->logf != NULL) {
+            fprintf(runtime->logf,
+                    "failure log collection failed: %s\n",
+                    diag_err.msg);
+            fflush(runtime->logf);
+        }
+    }
+}
+
 static int cleanup_run(bff_client_t *bff,
                        runtime_t *runtime,
                        world_t *world,
-                       const char *run_dir) {
+                       const char *run_dir,
+                       int *failure_logs_attempted) {
 
     ulab_error_t cleanup_err;
     int failures;
@@ -991,6 +1019,8 @@ static int cleanup_run(bff_client_t *bff,
     if (runtime_detach_ues(runtime, world, &cleanup_err)) {
         failures++;
         ulab_log_error("%s", cleanup_err.msg);
+        collect_failure_logs_once(runtime, world,
+                                  failure_logs_attempted);
     }
 
     memset(&cleanup_err, 0, sizeof(cleanup_err));
@@ -998,6 +1028,8 @@ static int cleanup_run(bff_client_t *bff,
     if (runtime_cleanup_ues(runtime, world, &cleanup_err)) {
         failures++;
         ulab_log_error("%s", cleanup_err.msg);
+        collect_failure_logs_once(runtime, world,
+                                  failure_logs_attempted);
     }
 
     memset(&cleanup_err, 0, sizeof(cleanup_err));
@@ -1005,6 +1037,8 @@ static int cleanup_run(bff_client_t *bff,
     if (bff_cleanup_world(bff, world, &cleanup_err)) {
         failures++;
         ulab_log_error("%s", cleanup_err.msg);
+        collect_failure_logs_once(runtime, world,
+                                  failure_logs_attempted);
     }
 
     memset(&cleanup_err, 0, sizeof(cleanup_err));
@@ -1012,6 +1046,8 @@ static int cleanup_run(bff_client_t *bff,
     if (runtime_cleanup_infra(runtime, world, &cleanup_err)) {
         failures++;
         ulab_log_error("%s", cleanup_err.msg);
+        collect_failure_logs_once(runtime, world,
+                                  failure_logs_attempted);
     }
 
     if (failures == 0) {
@@ -1025,6 +1061,7 @@ static int preclean_existing_run(bff_client_t *bff,
                                  runtime_t *runtime,
                                  world_t *world,
                                  const char *run_dir,
+                                 int *failure_logs_attempted,
                                  ulab_error_t *err) {
     int rc;
 
@@ -1040,7 +1077,8 @@ static int preclean_existing_run(bff_client_t *bff,
         return ULAB_ERR;
     }
 
-    rc = cleanup_run(bff, runtime, world, run_dir);
+    rc = cleanup_run(bff, runtime, world, run_dir,
+                     failure_logs_attempted);
     created_clear_ids(world);
 
     if (rc != ULAB_OK) {
@@ -1068,14 +1106,14 @@ static int runner_validate_one(const runner_opts_t *opts) {
     int cleanup_rc;
     int skip_cleanup;
     int no_cleanup;
-    int diagnostics_collected;
+    int failure_logs_attempted;
 
     scenario = NULL;
     rc = ULAB_OK;
     cleanup_rc = ULAB_OK;
     skip_cleanup = 0;
     no_cleanup = cleanup_disabled_by_env();
-    diagnostics_collected = 0;
+    failure_logs_attempted = 0;
     memset(&world,   0, sizeof(world));
     memset(&model,   0, sizeof(model));
     memset(&bff,     0, sizeof(bff));
@@ -1125,7 +1163,8 @@ static int runner_validate_one(const runner_opts_t *opts) {
         goto done;
     }
 
-    rc = preclean_existing_run(&bff, &runtime, &world, runDir, &err);
+    rc = preclean_existing_run(&bff, &runtime, &world, runDir,
+                               &failure_logs_attempted, &err);
     if (rc != ULAB_OK) {
         rc = ULAB_EBFF;
         goto done;
@@ -1206,7 +1245,6 @@ static int runner_validate_one(const runner_opts_t *opts) {
             rc = ULAB_ERUNTIME;
             goto done;
         }
-        diagnostics_collected = 1;
     }
 
     ulab_status("VERIFY", "run checks");
@@ -1224,29 +1262,17 @@ done:
         ulab_log_error("%s", err.msg);
     }
 
-    if (rc != ULAB_OK && !skip_cleanup && !diagnostics_collected &&
-        runtime.run_dir[0] != '\0') {
-        ulab_error_t diag_err;
-
-        memset(&diag_err, 0, sizeof(diag_err));
-        ulab_status("DIAG", "failure detected; collect tower /ukama before cleanup");
-        if (runtime_collect_failure_diagnostics(&runtime, &world, &diag_err)) {
-            ulab_log_error("failure diagnostics failed: %s", diag_err.msg);
-            if (runtime.logf) {
-                fprintf(runtime.logf, "failure diagnostics failed: %s\n",
-                        diag_err.msg);
-                fflush(runtime.logf);
-            }
-        } else {
-            diagnostics_collected = 1;
-        }
+    if (rc != ULAB_OK && !skip_cleanup) {
+        collect_failure_logs_once(&runtime, &world,
+                                  &failure_logs_attempted);
     }
 
     if (!skip_cleanup && no_cleanup) {
         ulab_status("CLEANUP", "skip cleanup (ULAB_NO_CLEANUP=%s)",
                     getenv("ULAB_NO_CLEANUP"));
     } else if (!skip_cleanup) {
-        cleanup_rc = cleanup_run(&bff, &runtime, &world, runDir);
+        cleanup_rc = cleanup_run(&bff, &runtime, &world, runDir,
+                                 &failure_logs_attempted);
         report_set_cleanup(&report, cleanup_rc != ULAB_OK);
         if (cleanup_rc != ULAB_OK && rc == ULAB_OK) {
             rc = ULAB_ERR;

@@ -40,12 +40,21 @@ LDFLAGS+=-L$(VENDOR_LIB)
 LDFLAGS+=-L$(VENDOR_LIB64)
 LDFLAGS+=-L$(PLATFORM_LIB)
 
-ULFIUS_LIB=-lulfius -lorcania -lmicrohttpd -lgnutls -lnettle
-ULFIUS_LIB+=-lhogweed -lp11-kit -lz -lcurl
+ULFIUS_LIB=-lulfius
+ULFIUS_LIB+=-lorcania
 
 ifneq ($(ALPINE_BUILD),1)
 ULFIUS_LIB+=-lyder
 endif
+
+ULFIUS_LIB+=-ljansson
+ULFIUS_LIB+=-lmicrohttpd
+ULFIUS_LIB+=-lgnutls
+ULFIUS_LIB+=-lnettle
+ULFIUS_LIB+=-lhogweed
+ULFIUS_LIB+=-lp11-kit
+ULFIUS_LIB+=-lz
+ULFIUS_LIB+=-lcurl
 
 LIBS = $(ULFIUS_LIB)
 LIBS+=-lpthread

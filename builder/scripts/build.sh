@@ -6,6 +6,17 @@
 #
 # Copyright (c) 2023-present, Ukama Inc.
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BUILDER_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+source "${SCRIPT_DIR}/build-system/pkg-utils.sh"
+
+log() {
+    local level="$1"
+    local message="$2"
+
+    printf '[%s] %s\n' "$level" "$message"
+}
+
 mock_sysfs_for_noded() {
 
     repo=$1
@@ -86,7 +97,11 @@ build_base_image() {
     mount -o loop,offset=$((512*2048)) ${base_id}.img /mnt/${base_id} || exit 1
 
     mv ./pkgs /mnt/${base_id}/ukama/apps/
-    cp ${ukama_root}/nodes/manifest.json /mnt/${base_id}/
+
+    get_enabled_apps "${BUILDER_ROOT}/boards/common.config" ""
+    create_starter_manifest manifest.json "${APPS[@]}"
+    cp manifest.json /mnt/${base_id}/ukama/manifest.json
+    rm -f manifest.json
 
     # install the starter.d app
     install_starter_app /mnt/${base_id}/

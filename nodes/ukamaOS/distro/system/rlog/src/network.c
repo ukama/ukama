@@ -89,7 +89,7 @@ int start_web_services(int port, UInst *serviceInst) {
     struct sockaddr_in bindAddress;
     const char *bindingIp;
 
-    bindingIp = getenv(ENV_BINDING_IP);
+    bindingIp = getenv(ENV_RLOG_BINDING_IP);
     if (!bindingIp || !*bindingIp) {
         bindingIp = DEF_BINDING_IP;
     }

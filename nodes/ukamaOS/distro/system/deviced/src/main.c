@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
     Config serviceConfig = {0};
 
     usys_log_set_service(SERVICE_NAME);
-    //usys_log_remote_init(SERVICE_NAME);
+    usys_log_set_level(USYS_LOG_TRACE);
 
     /* Parsing command line args. */
     while (true) {

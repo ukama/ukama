@@ -43,9 +43,6 @@
 #define RUNTIME_STARTER_STR    "starter"
 #define LONG_OPTIONS_SIZE      9
 
-#define RUNTIME_SUPERVISOR_STR "supervisor"
-#define RUNTIME_STARTER_STR    "starter"
-
 extern char *envVnodeBoardVersion;
 extern char *envVNodeRunTarget;
 enum {
@@ -61,7 +58,7 @@ extern int build_capp(Config *config);
 static RuntimeType get_runtime_type(char *arg) {
 
     if (arg == NULL) {
-        return RUNTIME_SUPERVISOR;
+        return RUNTIME_STARTER;
     }
 
     if (strcasecmp(arg, RUNTIME_SUPERVISOR_STR) == 0) {
@@ -70,7 +67,7 @@ static RuntimeType get_runtime_type(char *arg) {
         return RUNTIME_STARTER;
     }
 
-    return RUNTIME_SUPERVISOR;
+    return RUNTIME_STARTER;
 }
 
 void usage() {
@@ -82,9 +79,9 @@ void usage() {
 	printf("--x, --exec                         command to execute\n");
 	printf("                                    [create delete inspect verify]\n");
 	printf("--c, --apps                         apps config folder\n");
-    printf("--b, --board                        board-apps config folder\n");
+	printf("--b, --board                        board-apps config folder\n");
 	printf("--r, --registry                     registry URL\n");
-    printf("--R, --runtime <supervisor|starter> runtime mode\n");
+	printf("--R, --runtime <supervisor|starter> runtime mode\n");
 	printf("--l, --level <ERROR | DEBUG | INFO> logging levels\n");
 	printf("--V, --version                      version.\n");
 }
@@ -131,7 +128,7 @@ int main (int argc, char *argv[]) {
 
 	int cmd=VNODE_CMD_NONE;
 	char *configDir=NULL, *registryURL=NULL;
-    char *boardDir=NULL;
+     	char *boardDir=NULL;
 	char *debug=DEF_LOG_LEVEL;
 	char *envVNodeMetaData=NULL;
 	char *envNodeID=NULL;
@@ -140,9 +137,9 @@ int main (int argc, char *argv[]) {
 	Configs *configs=NULL, *ptr=NULL;
 	Node *node=NULL;
 	json_t *jNode=NULL;
-    BoardConfig boardConfig;
-    NodeType nodeType;
-    RuntimeType runtime = RUNTIME_SUPERVISOR;
+	BoardConfig boardConfig;
+	NodeType nodeType;
+	RuntimeType runtime = RUNTIME_STARTER;
 
 	while (TRUE) {
 
@@ -150,12 +147,12 @@ int main (int argc, char *argv[]) {
 		int opdidx = 0;
 
 		static struct option long_options[] = {
-            { "board",     required_argument, 0, 'b'},
+			{ "board",     required_argument, 0, 'b'},
 			{ "exec",      required_argument, 0, 'x'},
 			{ "target",    required_argument, 0, 't'},
 			{ "capp",      required_argument, 0, 'c'},
 			{ "registry",  required_argument, 0, 'r'},
-            { "runtime",   required_argument, 0, 'R'},
+			{ "runtime",   required_argument, 0, 'R'},
 			{ "level",     required_argument, 0, 'l'},
 			{ "help",      no_argument,       0, 'h'},
 			{ "version",   no_argument,       0, 'V'},
@@ -323,18 +320,17 @@ int main (int argc, char *argv[]) {
 		ptr = ptr->next;
 	}
 
-    /* always have supervisor flow */
-	if (!create_supervisor_config(configs)) {
-		log_error("Unable to create configuration file for supervisor.d");
-		purge_supervisor_config(SVISOR_FILENAME);
-		free_configs(configs);
-		exit(1);
-	}
+    if (runtime == RUNTIME_SUPERVISOR &&
+        !create_supervisor_config(configs)) {
+        log_error("Unable to create configuration file for supervisor.d");
+        purge_supervisor_config(SVISOR_FILENAME);
+        free_configs(configs);
+        exit(1);
+    }
 
 	if (runtime == RUNTIME_STARTER) {
 		if (!create_manifest_config(configs)) {
 			log_error("Unable to create manifest file for starter.d");
-			purge_supervisor_config(SVISOR_FILENAME);
 			free_configs(configs);
 			exit(1);
 		}
@@ -349,6 +345,8 @@ int main (int argc, char *argv[]) {
 
     if (runtime == RUNTIME_STARTER) {
         purge_manifest_config(MANIFEST_FILENAME);
+    } else {
+        purge_supervisor_config(SVISOR_FILENAME);
     }
 
 	free_configs(configs);

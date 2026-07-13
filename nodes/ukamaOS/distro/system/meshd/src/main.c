@@ -136,18 +136,18 @@ void catch_sigterm(void) {
 
 int main (int argc, char *argv[]) {
 
-	char *configFile=NULL;
-	char *debug=DEF_LOG_LEVEL;
-	Config *config=NULL;
-    ThreadArgs threadArgs;
-    pthread_t thread;
+   char *configFile=NULL;
+   char *debug=DEF_LOG_LEVEL;
+   Config *config=NULL;
+   ThreadArgs threadArgs;
+   pthread_t thread;
     
-	struct _u_instance webInst;
-    struct _u_instance fwdInst;
-	struct _websocket_client_handler websocketHandler = {NULL, NULL};
+   struct _u_instance webInst;
+   struct _u_instance fwdInst;
+   struct _websocket_client_handler websocketHandler = {NULL, NULL};
 
     usys_log_set_service(SERVICE_NAME);
-    //    usys_log_remote_init(SERVICE_NAME);
+    usys_log_set_level(USYS_LOG_DEBUG);
 
     state = (State *)calloc(1, sizeof(State));
     if (state == NULL) {
@@ -157,8 +157,6 @@ int main (int argc, char *argv[]) {
     state->fwdInst = &fwdInst;
     state->webInst = &webInst;
     state->handler = &websocketHandler;
-
-	set_log_level("DEBUG");	
 
     catch_sigterm();
 
