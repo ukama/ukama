@@ -24,12 +24,21 @@
 #define DEF_NODE_ID       "ukama-unknown"
 #define DEF_INGEST_SOCKET "/run/ukama/rlog-ingest.sock"
 
+#define ENV_RLOG_LOG_LEVEL      "RLOG_LOG_LEVEL"
+#define ENV_RLOG_LOG_DIR        "RLOG_LOG_DIR"
+#define ENV_RLOG_NODE_ID        "RLOG_NODE_ID"
+#define ENV_RLOG_INGEST_SOCKET  "RLOG_INGEST_SOCKET"
+#define ENV_RLOG_ROTATE_BYTES   "RLOG_ROTATE_BYTES"
+#define ENV_RLOG_ROTATE_SECONDS "RLOG_ROTATE_SECONDS"
+#define ENV_RLOG_RETAIN_BYTES   "RLOG_RETAIN_BYTES"
+#define ENV_RLOG_RETAIN_DAYS    "RLOG_RETAIN_DAYS"
+#define ENV_RLOG_BINDING_IP     "RLOG_BINDING_IP"
+
 #define EP_BS       "/"
 #define API_VERSION "v1"
 #define URL_PREFIX  EP_BS API_VERSION
 #define API_RES_EP(resource) EP_BS resource
 
-#define ENV_BINDING_IP "ENV_BINDING_IP"
 #define DEF_BINDING_IP "127.0.0.1"
 
 #define MAX_URL_LEN 512

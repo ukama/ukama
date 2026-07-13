@@ -13,6 +13,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define RLOG_DEFAULT_LOG_DIR        "/ukama/logs"
+#define RLOG_DEFAULT_ROTATE_BYTES   (16U * 1024U * 1024U)
+#define RLOG_DEFAULT_ROTATE_SECONDS (60 * 60)
+#define RLOG_DEFAULT_RETAIN_BYTES   (128U * 1024U * 1024U)
+#define RLOG_DEFAULT_RETAIN_DAYS    7
+
 typedef struct LogStore LogStore;
 
 typedef struct {

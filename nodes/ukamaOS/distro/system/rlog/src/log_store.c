@@ -23,12 +23,7 @@
 #include <unistd.h>
 #include <zstd.h>
 
-#define DEFAULT_LOG_DIR        "/ukama/logs"
 #define DEFAULT_NODE_ID        "unknown"
-#define DEFAULT_ROTATE_BYTES   (16U * 1024U * 1024U)
-#define DEFAULT_ROTATE_SECONDS (60 * 60)
-#define DEFAULT_RETAIN_BYTES   (128U * 1024U * 1024U)
-#define DEFAULT_RETAIN_DAYS    7
 #define BOOT_ID_PATH           "/proc/sys/kernel/random/boot_id"
 #define ACTIVE_FILE            "events-current.jsonl"
 #define CURRENT_LINK           "current.jsonl"
@@ -798,7 +793,7 @@ LogStore *log_store_open(const LogStoreConfig *config) {
     }
 
     logDir = config && config->logDir && *config->logDir ?
-             config->logDir : DEFAULT_LOG_DIR;
+             config->logDir : RLOG_DEFAULT_LOG_DIR;
     nodeId = config && config->nodeId && *config->nodeId ?
              config->nodeId : DEFAULT_NODE_ID;
 
@@ -807,14 +802,14 @@ LogStore *log_store_open(const LogStoreConfig *config) {
     read_boot_id(store->bootId, sizeof(store->bootId));
 
     store->rotateBytes = config && config->rotateBytes ?
-                         config->rotateBytes : DEFAULT_ROTATE_BYTES;
+                         config->rotateBytes : RLOG_DEFAULT_ROTATE_BYTES;
     store->rotateSeconds = config && config->rotateSeconds > 0 ?
                            config->rotateSeconds :
-                           DEFAULT_ROTATE_SECONDS;
+                           RLOG_DEFAULT_ROTATE_SECONDS;
     store->retainBytes = config && config->retainBytes ?
-                         config->retainBytes : DEFAULT_RETAIN_BYTES;
+                         config->retainBytes : RLOG_DEFAULT_RETAIN_BYTES;
     store->retainDays = config && config->retainDays > 0 ?
-                        config->retainDays : DEFAULT_RETAIN_DAYS;
+                        config->retainDays : RLOG_DEFAULT_RETAIN_DAYS;
 
     if (snprintf(bootsDir, sizeof(bootsDir), "%s/boots",
                  store->logDir) >= (int)sizeof(bootsDir) ||
