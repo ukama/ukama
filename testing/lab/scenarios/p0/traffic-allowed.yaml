@@ -1,5 +1,6 @@
 version: 1
 name: p0-traffic-allowed
+description: Verify an active packaged SIM passes traffic and reports the expected usage.
 seed: 304
 suite: p0
 priority: p0

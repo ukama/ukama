@@ -1,5 +1,6 @@
 version: 1
 name: two-networks-many-ues
+description: Exercise 300 UEs across two networks and verify profile usage, backend counts, and dashboards.
 seed: 77
 suite: wip
 priority: p2

@@ -1,5 +1,6 @@
 version: 1
 name: negative-create-ues-disabled
+description: Verify the disabled create_ues event fails cleanly and creates no additional SIMs.
 seed: 404
 suite: negative
 priority: p1

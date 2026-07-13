@@ -1,5 +1,6 @@
 version: 1
 name: p0-sim-status-active
+description: Verify the provisioned SIM is attached, active, and assigned the expected package.
 seed: 303
 suite: p0
 priority: p0

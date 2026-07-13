@@ -1,5 +1,6 @@
 version: 1
 name: negative-add-missing-package-fails
+description: Verify adding an unknown package is rejected while the existing SIM remains active and unchanged.
 seed: 401
 suite: negative
 priority: p1

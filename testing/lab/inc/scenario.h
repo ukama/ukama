@@ -177,6 +177,7 @@ typedef struct {
 typedef struct {
     uint32_t       version;
     char           name[ULAB_MAX_NAME];
+    char           description[ULAB_MAX_LINE];
     uint32_t       seed;
     char           suite[ULAB_MAX_REF];
     char           priority[ULAB_MAX_REF];

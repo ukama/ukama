@@ -1,5 +1,6 @@
 version: 1
 name: negative-add-package-missing-field-fails
+description: Verify adding a package without a package reference fails without changing backend SIM state.
 seed: 402
 suite: negative
 priority: p1

@@ -1,5 +1,6 @@
 version: 1
 name: lifecycle-sim-package-remove-idempotent
+description: Verify removing the same SIM package twice leaves the SIM inactive and the SIM count unchanged.
 seed: 502
 suite: lifecycle
 priority: p1

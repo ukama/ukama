@@ -450,6 +450,10 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
                 if (ulab_copy(s->name, sizeof(s->name), val) != ULAB_OK) {
                     goto bad;
                 }
+            } else if (ulab_streq(key, "description")) {
+                if (ulab_copy(s->description, sizeof(s->description), val)) {
+                    goto bad;
+                }
             } else if (ulab_streq(key, "seed")) {
                 if (ulab_parse_u32(val, &s->seed) != ULAB_OK) goto bad;
             } else if (ulab_streq(key, "suite")) {

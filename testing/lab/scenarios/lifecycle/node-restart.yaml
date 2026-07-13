@@ -1,5 +1,6 @@
 version: 1
 name: node-restart
+description: Verify traffic and cumulative usage recover after restarting one tower in a two-site network.
 seed: 91
 suite: p0
 priority: p0

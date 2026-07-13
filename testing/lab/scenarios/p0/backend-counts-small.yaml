@@ -1,5 +1,6 @@
 version: 1
 name: p0-backend-counts-small
+description: Verify backend network, site, node, and SIM counts match the generated world.
 seed: 301
 suite: p0
 priority: p0

@@ -1134,6 +1134,11 @@ static int runner_validate_one(const runner_opts_t *opts) {
         goto done;
     }
 
+    ulab_status("SCENARIO", "%s", scenario->name);
+    if (scenario->description[0] != '\0') {
+        ulab_status("PURPOSE", "%s", scenario->description);
+    }
+
     if (report_open(&report, scenario, world.run_id, runDir)) {
         snprintf(err.msg, sizeof(err.msg), "failed to open report files");
         rc = ULAB_EINTERNAL;
