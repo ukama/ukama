@@ -83,6 +83,10 @@ func run(sDb sql.Db) {
 		log.Fatalf("Loading source specs from %s failed: %v", serviceConfig.Engine.SpecsDir, err)
 	}
 
+	if len(specs) == 0 {
+		log.Fatalf("No source specs found in %s — is the configs dir present in the image?", serviceConfig.Engine.SpecsDir)
+	}
+
 	log.Infof("Loaded %d source specs from %s", len(specs), serviceConfig.Engine.SpecsDir)
 
 	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName,

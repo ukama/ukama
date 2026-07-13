@@ -85,6 +85,10 @@ func run(sDb sql.Db) {
 		log.Fatalf("Loading KPI specs from %s failed: %v", serviceConfig.Engine.SpecsDir, err)
 	}
 
+	if len(kpis) == 0 {
+		log.Fatalf("No KPI specs found in %s — is the configs dir present in the image?", serviceConfig.Engine.SpecsDir)
+	}
+
 	log.Infof("Loaded %d KPI specs from %s", len(kpis), serviceConfig.Engine.SpecsDir)
 
 	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName,
