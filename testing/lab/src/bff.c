@@ -1813,9 +1813,30 @@ int bff_cleanup_world(bff_client_t *c,
             continue;
         }
 
-        n = snprintf(query, sizeof(query),
-                     "mutation { deleteNode(data: {id: \"%s\"}) { id } }",
-                     w->nodes[i].bff_id);
+        n = snprintf(
+            query,
+            sizeof(query),
+            "mutation { releaseNodeFromSite(data: {id: \"%s\"}) "
+            "{ success } }",
+            w->nodes[i].bff_id);
+
+        if (n >= 0 && (size_t)n < sizeof(query) &&
+            bff_cleanup_call(c, "releaseNodeFromSite", query)) {
+            failures++;
+        }
+    }
+
+    for (i = 0; i < w->node_count; i++) {
+        if (w->nodes[i].bff_id[0] == '\0') {
+            continue;
+        }
+
+        n = snprintf(
+            query,
+            sizeof(query),
+            "mutation { deleteNode(data: {id: \"%s\"}) { id } }",
+            w->nodes[i].bff_id);
+
         if (n >= 0 && (size_t)n < sizeof(query) &&
             bff_cleanup_call(c, "deleteNode", query)) {
             failures++;
@@ -1827,9 +1848,12 @@ int bff_cleanup_world(bff_client_t *c,
             continue;
         }
 
-        n = snprintf(query, sizeof(query),
-                     "mutation { deleteSite(id: \"%s\") { success } }",
-                     w->sites[i].bff_id);
+        n = snprintf(
+            query,
+            sizeof(query),
+            "mutation { deleteSite(id: \"%s\") { success } }",
+            w->sites[i].bff_id);
+
         if (n >= 0 && (size_t)n < sizeof(query) &&
             bff_cleanup_call(c, "deleteSite", query)) {
             failures++;
@@ -1841,9 +1865,12 @@ int bff_cleanup_world(bff_client_t *c,
             continue;
         }
 
-        n = snprintf(query, sizeof(query),
-                     "mutation { deleteNetwork(id: \"%s\") { success } }",
-                     w->networks[i].bff_id);
+        n = snprintf(
+            query,
+            sizeof(query),
+            "mutation { deleteNetwork(id: \"%s\") { success } }",
+            w->networks[i].bff_id);
+
         if (n >= 0 && (size_t)n < sizeof(query) &&
             bff_cleanup_call(c, "deleteNetwork", query)) {
             failures++;
