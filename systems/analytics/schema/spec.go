@@ -60,14 +60,32 @@ type PullSpec struct {
 	// iterating registry networks).
 	System  string `yaml:"system"`
 	BaseURL string `yaml:"base_url"`
+
+	// Gateway selects which of the system's gateways to resolve via
+	// initclient: "api" (default) or "node" (device-facing node-gateway).
+	Gateway string `yaml:"gateway"`
+
+	// OnError: "fail" (default — the whole dataset window fails and is
+	// retried) or "record" — a failed for_each iteration writes a synthetic
+	// row carrying the binds plus unreachable:true. Use for health probes
+	// where unreachable IS the signal.
+	OnError string `yaml:"on_error"`
 }
 
 // ForEachSpec fans a pull out over the rows of a parent dataset, binding row
 // fields into endpoint/params templates. Bound fields plus the parent's
 // lineage are stamped onto every child row.
 type ForEachSpec struct {
-	Dataset string   `yaml:"dataset"`
-	Bind    []string `yaml:"bind"`
+	Dataset string         `yaml:"dataset"`
+	Bind    []string       `yaml:"bind"`
+	Filter  *ForEachFilter `yaml:"filter"` // optional parent-row filter
+}
+
+// ForEachFilter keeps only parent rows whose field value is in the list
+// (case-insensitive), e.g. only tnode/anode nodes for health probes.
+type ForEachFilter struct {
+	Field string   `yaml:"field"`
+	In    []string `yaml:"in"`
 }
 
 // KpiSpec is one KPI: inputs from the warehouse (never endpoints), one
@@ -167,6 +185,15 @@ func ValidateSourceSpecs(specs []SourceSpec) error {
 			}
 			if p.Strategy == StrategyFullSnapshot && p.Entity == "" {
 				return fmt.Errorf("dataset %s: full_snapshot requires an entity field", p.Key)
+			}
+			if p.Gateway != "" && p.Gateway != "api" && p.Gateway != "node" {
+				return fmt.Errorf("dataset %s: gateway must be api or node, got %q", p.Key, p.Gateway)
+			}
+			if p.OnError != "" && p.OnError != "fail" && p.OnError != "record" {
+				return fmt.Errorf("dataset %s: on_error must be fail or record, got %q", p.Key, p.OnError)
+			}
+			if p.OnError == "record" && p.ForEach == nil {
+				return fmt.Errorf("dataset %s: on_error record requires for_each (the binds identify the failed entity)", p.Key)
 			}
 			if len(p.Map) == 0 {
 				return fmt.Errorf("dataset %s: empty field map", p.Key)

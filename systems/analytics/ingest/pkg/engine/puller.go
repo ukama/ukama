@@ -58,12 +58,29 @@ func (p *Puller) Execute(pull schema.PullSpec, win schema.Window) (int, error) {
 	for _, binds := range iterations {
 		items, err := p.fetchWithRetry(pull, win, binds)
 		if err != nil {
-			return 0, fmt.Errorf("dataset %s window %d iteration %v: %w",
-				pull.Key, win.ID, binds, err)
+			// on_error: record — for health-probe style pulls where an
+			// unreachable target IS the signal: write a synthetic row with
+			// the binds + unreachable:true instead of failing the window.
+			if pull.OnError == "record" {
+				log.Warnf("dataset %s window %d iteration %v unreachable, recording: %v",
+					pull.Key, win.ID, binds, err)
+
+				items = []interface{}{map[string]interface{}{"unreachable": true}}
+			} else {
+				return 0, fmt.Errorf("dataset %s window %d iteration %v: %w",
+					pull.Key, win.ID, binds, err)
+			}
 		}
 
 		for _, item := range items {
 			fields := MapItem(item, pull.Map, binds)
+
+			// Propagate the unreachable marker from on_error:record rows.
+			if u, ok := item.(map[string]interface{}); ok {
+				if unreachable, ok := u["unreachable"].(bool); ok && unreachable {
+					fields["unreachable"] = true
+				}
+			}
 
 			entity := ""
 			if pull.Entity != "" {
@@ -141,6 +158,24 @@ func (p *Puller) iterations(pull schema.PullSpec, win schema.Window) ([]map[stri
 			return nil, fmt.Errorf("parent %s fields: %w", parent.EntityKey, err)
 		}
 
+		// Optional parent-row filter (e.g. only tnode/anode for health).
+		if f := pull.ForEach.Filter; f != nil {
+			value := fmt.Sprintf("%v", fields[f.Field])
+
+			keep := false
+			for _, want := range f.In {
+				if strings.EqualFold(value, want) {
+					keep = true
+
+					break
+				}
+			}
+
+			if !keep {
+				continue
+			}
+		}
+
 		binds := map[string]string{}
 		for _, b := range pull.ForEach.Bind {
 			v, ok := fields[b]
@@ -194,10 +229,21 @@ func (p *Puller) fetch(pull schema.PullSpec, win schema.Window, binds map[string
 
 	base := pull.BaseURL
 	if base == "" {
-		resolved, err := p.resolver.Resolve(p.org, pull.System)
+		var (
+			resolved string
+			err      error
+		)
+
+		if pull.Gateway == "node" {
+			resolved, err = p.resolver.ResolveNodeGw(p.org, pull.System)
+		} else {
+			resolved, err = p.resolver.Resolve(p.org, pull.System)
+		}
+
 		if err != nil {
 			return nil, err
 		}
+
 		base = resolved
 	}
 

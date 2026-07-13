@@ -1,0 +1,21 @@
+# SITE_UPTIME (%): U / (U + (D - I)) x 100 per site, from per-window health
+# probes of the site's tnode/anode nodes. Intentionally-off windows (radio
+# available but switched off) are excluded from the denominator.
+# Query with op=AVG at span daily/weekly/monthly.
+kpi: SITE_UPTIME
+domain: network
+algo: site_uptime@v1
+scope: [network_id, site_id]
+inputs:
+  health:
+    dataset: node.health.interfaces
+    fields: [node_id, site_id, network_id, type, cellular_available, radio_available, radio_state, unreachable]
+  nodes:
+    dataset: registry.node.list
+    fields: [node_id, site_id, network_id, type]
+output:
+  type: float
+  unit: percent
+  symbol: "%"
+rollup_ops: [AVG, MIN, MAX]
+positive_direction: up

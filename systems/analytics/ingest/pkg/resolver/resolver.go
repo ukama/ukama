@@ -26,9 +26,11 @@ import (
 // resolution is lazy per (org, system) so ingest survives systems that
 // register late and address changes without restarts.
 type Resolver interface {
-	// Resolve returns the base URL for (org, system).
+	// Resolve returns the api-gateway base URL for (org, system).
 	Resolve(org, system string) (string, error)
-	// Invalidate drops the cached entry (called on connection failures so
+	// ResolveNodeGw returns the node-gateway base URL for (org, system).
+	ResolveNodeGw(org, system string) (string, error)
+	// Invalidate drops the cached entries (called on connection failures so
 	// the next attempt re-resolves).
 	Invalidate(org, system string)
 }
@@ -57,7 +59,15 @@ func New(initHost string, ttl time.Duration, debug bool) Resolver {
 }
 
 func (r *resolver) Resolve(org, system string) (string, error) {
-	key := org + "." + system
+	return r.resolve(org, system, "api")
+}
+
+func (r *resolver) ResolveNodeGw(org, system string) (string, error) {
+	return r.resolve(org, system, "node")
+}
+
+func (r *resolver) resolve(org, system, gateway string) (string, error) {
+	key := org + "." + system + "." + gateway
 
 	r.mu.Lock()
 	if e, ok := r.cache[key]; ok && time.Now().Before(e.expiresAt) {
@@ -67,14 +77,26 @@ func (r *resolver) Resolve(org, system string) (string, error) {
 	}
 	r.mu.Unlock()
 
-	url, err := ic.GetHostUrl(
-		ic.NewInitClient(r.initHost, client.WithDebug(r.debug)),
-		ic.CreateHostString(org, system), &org)
-	if err != nil {
-		return "", fmt.Errorf("resolving %s via initclient: %w", key, err)
-	}
+	initClient := ic.NewInitClient(r.initHost, client.WithDebug(r.debug))
+	host := ic.CreateHostString(org, system)
 
-	resolved := url.String()
+	var resolved string
+
+	if gateway == "node" {
+		url, err := ic.GetNodeGwHostURL(initClient, host, &org)
+		if err != nil {
+			return "", fmt.Errorf("resolving node-gw %s via initclient: %w", key, err)
+		}
+
+		resolved = url.String()
+	} else {
+		url, err := ic.GetHostUrl(initClient, host, &org)
+		if err != nil {
+			return "", fmt.Errorf("resolving %s via initclient: %w", key, err)
+		}
+
+		resolved = url.String()
+	}
 
 	r.mu.Lock()
 	r.cache[key] = cacheEntry{url: resolved, expiresAt: time.Now().Add(r.ttl)}
@@ -87,6 +109,7 @@ func (r *resolver) Resolve(org, system string) (string, error) {
 
 func (r *resolver) Invalidate(org, system string) {
 	r.mu.Lock()
-	delete(r.cache, org+"."+system)
+	delete(r.cache, org+"."+system+".api")
+	delete(r.cache, org+"."+system+".node")
 	r.mu.Unlock()
 }
