@@ -26,3 +26,13 @@
 # Final output format for capp
 [capp-output]
 	format="tar.gz"
+
+[capp-exec.env]
+	RLOG_LOG_LEVEL="debug"
+	RLOG_LOG_DIR="/ukama/logs"
+	RLOG_INGEST_SOCKET="/run/ukama/rlog-ingest.sock"
+	RLOG_ROTATE_BYTES="16777216"
+	RLOG_ROTATE_SECONDS="3600"
+	RLOG_RETAIN_BYTES="134217728"
+	RLOG_RETAIN_DAYS="7"
+	RLOG_BINDING_IP="127.0.0.1"

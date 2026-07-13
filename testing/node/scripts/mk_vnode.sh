@@ -381,12 +381,13 @@ setup_ukama_dirs() {
           "${BUILD_DIR}/ukama/etc"
 
     mkdir -p "${BUILD_DIR}/ukama/state/starter" \
-          "${BUILD_DIR}/ukama/init/starter"
+          "${BUILD_DIR}/ukama/state/starterd/log-spool" \
+          "${BUILD_DIR}/ukama/init/starter" \
+          "${BUILD_DIR}/ukama/logs"
 
     # Metadata
     echo "${nodeid}" > "${BUILD_DIR}/ukama/nodeid"
     echo "${bootstrap_server}" > "${BUILD_DIR}/ukama/bootstrap"
-    touch "${BUILD_DIR}/ukama/apps.log"
 
     # Copy all the apps configs.
     if [ -d "${UKAMA_OS}/../configs/apps" ]; then

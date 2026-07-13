@@ -117,12 +117,19 @@ setup_chroot_environment() {
         update-locale LANG=en_US.UTF-8
         debconf-set-selections <<< "grub-pc grub-pc/install_devices_empty boolean true"
         apt-get update
-        apt-get install -y -o Dpkg::Options::="--force-confnew" linux-image-generic
+        apt-get install -y -o Dpkg::Options::="--force-confnew" \
+            linux-image-generic \
+            libzstd1 \
+            zstd
 
-        mkdir -p /ukama /ukama/configs /ukama/apps/pkgs /ukama/apps/rootfs /ukama/apps/registry
+        mkdir -p /ukama/configs \
+                 /ukama/apps/pkgs \
+                 /ukama/apps/rootfs \
+                 /ukama/apps/registry \
+                 /ukama/logs \
+                 /ukama/state/starterd/log-spool
         echo $NODE_ID > /ukama/nodeid
         echo "localhost" > /ukama/bootstrap
-        touch /ukama/apps.log
 
         cat > /etc/systemd/system/starterd.service << EOF
         [Unit]
@@ -130,7 +137,10 @@ setup_chroot_environment() {
         After=network.target
 
         [Service]
-        ExecStart=/sbin/starter.d --manifest-file /manifest.json
+        Environment=STARTERD_MANIFEST=/ukama/manifest.json
+        Environment=STARTERD_RLOG_SOCKET=/run/ukama/rlog-ingest.sock
+        Environment=STARTERD_LOG_SPOOL_DIR=/ukama/state/starterd/log-spool
+        ExecStart=/sbin/starter.d
         Type=simple
 
         [Install]

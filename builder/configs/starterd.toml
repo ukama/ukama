@@ -13,10 +13,6 @@
 [build-rootfs]
 	mkdir="/conf"
 
-[build-conf]
-    from="/nodes/manifest.json"
-    to="/manifest.json"
-
 # Following are use to create config.json file which is used by starter.d to start 
 # the capp within ukamaOS and pkg everything
 [capp-exec]
@@ -24,7 +20,6 @@
 	version="latest"
 	bin="starter.d"
 	path="/sbin" # path where the exec should be. Mathches build.bin_to
-	args="--manifest-file /manifest.file"
 	
 # Final output format for capp
 [capp-output]

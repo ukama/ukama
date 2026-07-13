@@ -15,7 +15,7 @@ EXPECTED_PARTITIONS=(1 2 3 4)  # [boot, passive, primary (root), swap]
 
 REQUIRED_FILES_PRIMARY=(
   "/sbin/starter.d"
-  "/manifest.json"
+  "/ukama/manifest.json"
   "/boot/vmlinuz"
 )
 

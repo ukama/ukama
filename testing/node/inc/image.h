@@ -39,7 +39,8 @@
 #define CF_ENV     "ENV %s %s\n"
 #define CF_SYMLINK "RUN ln -sfn %s %s\n"
 
-#define UPDATE_PKGS "python3 supervisor"
+#define BASE_PKGS       "python3"
+#define SUPERVISOR_PKGS "python3 supervisor"
 
 #define TOWER_OVS_PKGS_APK "openvswitch iproute2 iptables bash net-tools openvpn"
 #define TOWER_OVS_PKGS_APT "openvswitch-switch iproute2 iptables kmod net-tools openvpn"

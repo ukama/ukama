@@ -302,7 +302,10 @@ deploy_to_rootfs() {
     log INFO "Deploying apps/libs + manifest into ${rootfs}"
 
     # ensure dirs exist
-    sudo mkdir -p "${rootfs}/ukama/apps/pkgs" "${rootfs}/lib"
+    sudo mkdir -p "${rootfs}/ukama/apps/pkgs" \
+                     "${rootfs}/ukama/logs" \
+                     "${rootfs}/ukama/state/starterd/log-spool" \
+                     "${rootfs}/lib"
 
     # copy apps
     copy_all_apps      "$UKAMA_REPO_APP_PKG" "${rootfs}/ukama/apps/pkgs"
@@ -313,7 +316,7 @@ deploy_to_rootfs() {
     check_status $? "copy_required_libs to ${rootfs}" "deploy_to_rootfs"
 
     # create manifest
-    create_manifest_file "${rootfs}/manifest.json" "${APPS[@]}"
+    create_manifest_file "${rootfs}/ukama/manifest.json" "${APPS[@]}"
     check_status $? "create_manifest_file in ${rootfs}" "deploy_to_rootfs"
 }
 

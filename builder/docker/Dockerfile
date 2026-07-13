@@ -27,6 +27,7 @@ RUN if echo "${TARGETPLATFORM}" | grep -q "alpine"; then \
         p11-kit-dev \
         zlib-dev \
         jansson-dev \
+        zstd-dev \
         sqlite-dev \
         util-linux-dev \
         linux-headers \
@@ -71,6 +72,7 @@ RUN if echo "${TARGETPLATFORM}" | grep -q "alpine"; then \
         libmicrohttpd-dev \
         libcurl4-openssl-dev \
         libjansson-dev \
+        libzstd-dev \
         gcc-aarch64-linux-gnu \
         g++-aarch64-linux-gnu \
         uuid-dev \

@@ -8,6 +8,9 @@
 
 set -e
 
+PKG_UTILS="$(dirname "$0")/build-system/pkg-utils.sh"
+source "$PKG_UTILS"
+
 trap "cleanup; exit 1" ERR
 
 log() {
@@ -138,77 +141,11 @@ EOF
 }
 
 generate_manifest_file() {
-
     local apps_to_include="$1"
+    local apps_array=()
 
-    # Create an array from the comma-separated list
     IFS=',' read -r -a apps_array <<< "$apps_to_include"
-
-    cat <<EOF > ${MANIFEST_FILE}
-{   
-    "version": "0.1",
-    
-    "spaces" : [
-        { "name" : "boot" },   
-        { "name" : "services" },
-        { "name" : "reboot" }  
-    ],
-
-    "capps": [
-        {
-            "name"   : "noded",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "boot"
-        },
-        {
-            "name"   : "bootstrap",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "boot",
-	        "depends_on" : [
-                {
-                    "capp"  : "noded",
-			        "state" : "active"
-		        }
-	        ]
-        },
-        {
-            "name"   : "meshd",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "boot",
-	        "depends_on" : [
-                {
-                    "capp"  : "bootstrap",
-			        "state" : "done"
-		        }
-	        ]
-        }
-EOF
-
-  echo '        ,' >> ${MANIFEST_FILE}
-  echo '        {"name" : "services", "capps" : [' >> ${MANIFEST_FILE}
-
-  for app in "${apps_array[@]}"; do
-    case "$app" in
-      "wimcd"|"configd"|"metricsd"|"lookoutd"|"deviced"|"notifyd")
-        cat <<EOF >> ${MANIFEST_FILE}
-        {
-            "name"   : "$app",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "services"
-        },
-EOF
-        ;;
-    esac
-  done
-
-  # Remove the last comma and close the JSON array
-  sed -i '$ s/,$//' ${MANIFEST_FILE}
-  echo '    ]}'  >> ${MANIFEST_FILE}
-  echo '}'       >> ${MANIFEST_FILE}
+    create_starter_manifest "$MANIFEST_FILE" "${apps_array[@]}"
 }
 
 package_all_apps_via_container_build() {
@@ -253,13 +190,19 @@ copy_all_apps_to_image() {
 
     echo "Copying apps"
 
-    sudo mkdir -p "${PRIMARY}/ukama/apps/"
-    sudo mkdir -p "${PASSIVE}/ukama/apps/"
+    sudo mkdir -p "${PRIMARY}/ukama/apps/pkgs" \
+                       "${PRIMARY}/ukama/logs" \
+                       "${PRIMARY}/ukama/state/starterd/log-spool"
+    sudo mkdir -p "${PASSIVE}/ukama/apps/pkgs" \
+                       "${PASSIVE}/ukama/logs" \
+                       "${PASSIVE}/ukama/state/starterd/log-spool"
 
     IFS=',' read -r -a array <<< "$apps"
     for app in "${array[@]}"; do
-        sudo cp "${ukama_root}/build/pkgs/${app}_latest.tar.gz" "${PRIMARY}/ukama/apps/"
-        sudo cp "${ukama_root}/build/pkgs/${app}_latest.tar.gz" "${PASSIVE}/ukama/apps/"
+        sudo cp "${ukama_root}/build/pkgs/${app}_latest.tar.gz" \
+             "${PRIMARY}/ukama/apps/pkgs/"
+        sudo cp "${ukama_root}/build/pkgs/${app}_latest.tar.gz" \
+             "${PASSIVE}/ukama/apps/pkgs/"
     done
 
     # cleanup
@@ -274,8 +217,8 @@ copy_misc_files_to_image() {
     local apps=$4
 
     generate_manifest_file $apps
-    sudo cp ${MANIFEST_FILE} "${PRIMARY}/manifest.json"
-    sudo cp ${MANIFEST_FILE} "${PASSIVE}/manifest.json"
+    sudo cp ${MANIFEST_FILE} "${PRIMARY}/ukama/manifest.json"
+    sudo cp ${MANIFEST_FILE} "${PASSIVE}/ukama/manifest.json"
     rm ${MANIFEST_FILE}
 
     # install the starter.d app

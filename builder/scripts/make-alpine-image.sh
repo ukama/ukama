@@ -89,7 +89,7 @@ setup_alpine_rootfs() {
     # Install essential Alpine packages
     sudo chroot "$PRIMARY_MOUNT" /bin/sh <<'EOF'
 apk update
-apk add busybox dropbear dhcpcd openrc e2fsprogs
+apk add busybox dropbear dhcpcd openrc e2fsprogs zstd-libs
 rc-update add networking boot
 EOF
 
