@@ -30,7 +30,6 @@ services:
    - INGEST_SERVICE_PORT=9090
    - HTTP_INITCLIENT=http://api-gateway-init:8080
    - WINDOW_W=5m
-   - WINDOW_L=10m
    - ENGINE_SPECSDIR=/configs/sources
    - ORGID=${ORGID}
    - ORGNAME=${ORGNAME}
@@ -54,7 +53,6 @@ services:
    - ANALYSIS_SERVICE_HOST=analysis
    - ANALYSIS_SERVICE_PORT=9090
    - WINDOW_W=5m
-   - WINDOW_L=10m
    - ENGINE_SPECSDIR=/configs/kpis
    - ORGID=${ORGID}
    - ORGNAME=${ORGNAME}
@@ -79,7 +77,6 @@ services:
    - AGGREGATOR_SERVICE_HOST=aggregator
    - AGGREGATOR_SERVICE_PORT=9090
    - WINDOW_W=5m
-   - WINDOW_L=10m
    - ROLLUP_SPECSDIR=/configs/kpis
    - ROLLUP_TIMEZONE=UTC
    - ORGID=${ORGID}
