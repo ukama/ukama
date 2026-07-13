@@ -807,8 +807,10 @@ int runtime_cleanup_ues(runtime_t *rt, const world_t *w, ulab_error_t *err) {
 
 static int runtime_collect_diagnostics(runtime_t *rt,
                                        const world_t *w,
+                                       const char *script_name,
                                        const char *out_name,
                                        const char *status_label,
+                                       const char *status_text,
                                        ulab_error_t *err) {
     char args[ULAB_MAX_ARGS];
     int rc;
@@ -828,8 +830,8 @@ static int runtime_collect_diagnostics(runtime_t *rt,
         return ULAB_ERR;
     }
 
-    ulab_status(status_label, "collect tower /ukama and ukama-agent stats");
-    if (run_script(rt, "collect-cdr-diagnostics.sh", args, err)) {
+    ulab_status(status_label, "%s", status_text);
+    if (run_script(rt, script_name, args, err)) {
         return ULAB_ERR;
     }
 
@@ -839,20 +841,24 @@ static int runtime_collect_diagnostics(runtime_t *rt,
 int runtime_collect_cdr_diagnostics(runtime_t *rt,
                                     const world_t *w,
                                     ulab_error_t *err) {
-    if (env_enabled("ULAB_CDR_DIAG_DISABLE")) {
-        ulab_status("CDR", "diagnostics disabled");
+    if (!env_enabled("ULAB_CDR_DIAG_ENABLE")) {
         return ULAB_OK;
     }
 
-    return runtime_collect_diagnostics(rt, w, "cdr-diagnostics",
-                                       "CDR", err);
+    return runtime_collect_diagnostics(rt, w,
+                                       "collect-cdr-diagnostics.sh",
+                                       "cdr-diagnostics", "CDR",
+                                       "collect CDR diagnostics", err);
 }
 
-int runtime_collect_failure_diagnostics(runtime_t *rt,
-                                        const world_t *w,
-                                        ulab_error_t *err) {
-    return runtime_collect_diagnostics(rt, w, "failure-diagnostics",
-                                       "DIAG", err);
+int runtime_collect_failure_logs(runtime_t *rt,
+                                 const world_t *w,
+                                 ulab_error_t *err) {
+    return runtime_collect_diagnostics(rt, w,
+                                       "collect-failure-logs.sh",
+                                       "failure-diagnostics", "DIAG",
+                                       "collect structured node error logs",
+                                       err);
 }
 
 int runtime_stop_ues(runtime_t *rt, const world_t *w, ulab_error_t *err) {
