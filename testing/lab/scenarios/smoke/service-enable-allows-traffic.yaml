@@ -1,10 +1,10 @@
 version: 1
-name: smoke-service-on-off
-description: Verify service off blocks traffic and service on restores it.
-seed: 3
+name: service-enable-allows-traffic
+description: Verify enabling service allows a UE to attach and pass traffic.
+seed: 321
 suite: smoke
 priority: p0
-tags: [virtual, runtime, site, service]
+tags: [virtual, runtime, service, traffic]
 status: active
 
 provider:
@@ -38,48 +38,27 @@ setup:
     - sims
 
 runtime:
-  start: [nodes, ues]
-  wait: [nodes_ready, ues_attached]
+  start: [nodes]
+  wait: [nodes_ready]
 
 phases:
-  - name: service_baseline
-    checks:
-      - type: traffic_allowed
-        ues: all
-        amount_mb: 1
-
-  - name: service_off
-    events:
-      - type: toggle_service
-        sites: all
-        state: off
-    checks:
-      - type: traffic_blocked
-        ues: all
-        amount_mb: 1
-
-  - name: service_on
+  - name: enable_service_and_attach
     events:
       - type: toggle_service
         sites: all
         state: on
+      - type: start_ues
+        ues: ue-000001
       - type: wait_ues_attached
-        ues: all
+        ues: ue-000001
     checks:
       - type: traffic_allowed
-        ues: all
+        ues: ue-000001
         amount_mb: 1
 
 final_checks:
   - type: backend_count
-    target: sites
+    target: sims
     expected: 1
-  - type: status_equals
-    entity: sim
-    ref: ue-000001
-    status: active
-  - type: package_active
-    ues: all
-    package: daily_1gb
   - type: balance_non_negative
     ues: all

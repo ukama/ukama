@@ -7,8 +7,13 @@
  */
 
 #include "event.h"
+#include "log.h"
 #include "selector.h"
 #include "util.h"
+
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 static int event_state_enabled(const event_spec_t *event, int *enabled,
                                ulab_error_t *err) {
@@ -31,6 +36,64 @@ static int event_state_enabled(const event_spec_t *event, int *enabled,
     snprintf(err->msg, sizeof(err->msg), "%s invalid state: %s",
              scenario_event_name(event->type), event->status);
     return ULAB_ERR;
+}
+
+static int event_wait_ues_attached(event_ctx_t *ctx,
+                                    const event_spec_t *event,
+                                    ulab_error_t *err) {
+    selector_result_t res;
+    const char *current;
+    char *previous;
+    char timeout[32];
+    int rc;
+
+    previous = NULL;
+    if (event->amount_mb > 300) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "UE attach wait exceeds 300 seconds");
+        return ULAB_ERR;
+    }
+
+    if (event->amount_mb > 0) {
+        current = getenv("ULAB_UE_ATTACH_TIMEOUT");
+        if (current != NULL) {
+            previous = strdup(current);
+            if (previous == NULL) {
+                snprintf(err->msg, sizeof(err->msg),
+                         "failed to save UE attach timeout");
+                return ULAB_ERR;
+            }
+        }
+
+        snprintf(timeout, sizeof(timeout), "%llu",
+                 (unsigned long long)event->amount_mb);
+        if (setenv("ULAB_UE_ATTACH_TIMEOUT", timeout, 1) != 0) {
+            free(previous);
+            snprintf(err->msg, sizeof(err->msg),
+                     "failed to set UE attach timeout");
+            return ULAB_ERR;
+        }
+    }
+
+    rc = selector_resolve_ues(ctx->world, &event->ues, &res, err);
+    if (rc == ULAB_OK) {
+        rc = runtime_wait_ues_attached(ctx->runtime,
+                                       ctx->world,
+                                       &res,
+                                       err);
+    }
+    selector_result_free(&res);
+
+    if (event->amount_mb > 0) {
+        if (previous != NULL) {
+            setenv("ULAB_UE_ATTACH_TIMEOUT", previous, 1);
+        } else {
+            unsetenv("ULAB_UE_ATTACH_TIMEOUT");
+        }
+    }
+    free(previous);
+
+    return rc;
 }
 
 static int event_restart_nodes(event_ctx_t *ctx,
@@ -83,7 +146,7 @@ static int event_toggle_service(event_ctx_t *ctx,
     }
 
     selector_result_free(&res);
-    return ULAB_OK;
+    return runtime_set_service(ctx->runtime, enabled, err);
 }
 
 static int event_toggle_radio(event_ctx_t *ctx,
@@ -112,7 +175,7 @@ static int event_toggle_radio(event_ctx_t *ctx,
     }
 
     selector_result_free(&res);
-    return ULAB_OK;
+    return runtime_set_radio(ctx->runtime, enabled, err);
 }
 
 int event_runtime(event_ctx_t *ctx,
@@ -164,15 +227,18 @@ int event_runtime(event_ctx_t *ctx,
         return rc;
 
     case EVT_WAIT_UES_ATTACHED:
-        rc = selector_resolve_ues(ctx->world, &event->ues, &res, err);
-        if (rc == ULAB_OK) {
-            rc = runtime_wait_ues_attached(ctx->runtime,
-                                           ctx->world,
-                                           &res,
-                                           err);
+        return event_wait_ues_attached(ctx, event, err);
+
+    case EVT_WAIT:
+        if (event->amount_mb > 300) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "wait exceeds 300 seconds");
+            return ULAB_ERR;
         }
-        selector_result_free(&res);
-        return rc;
+        ulab_status("WAIT", "%llu sec",
+                    (unsigned long long)event->amount_mb);
+        sleep((unsigned int)event->amount_mb);
+        return ULAB_OK;
 
     case EVT_RESTART_NODES:
         return event_restart_nodes(ctx, event, err);

@@ -359,7 +359,7 @@ int runtime_init(runtime_t *rt,
     ulab_copy(rt->script_dir, sizeof(rt->script_dir), script_dir);
     ulab_copy(rt->run_dir, sizeof(rt->run_dir), run_dir);
     ulab_copy(rt->repo, sizeof(rt->repo), repo ? repo : "");
-    rt->service_enabled = 1;
+    rt->service_enabled = 0;
     rt->radio_enabled = 1;
     rt->node_offline = 0;
     snprintf(rt->node_version, sizeof(rt->node_version), "current");
@@ -526,6 +526,7 @@ int runtime_enable_pcrf_service(runtime_t *rt, const world_t *w,
         }
     }
 
+    rt->service_enabled = 1;
     return ULAB_OK;
 }
 
@@ -667,19 +668,6 @@ int runtime_generate_traffic(runtime_t *rt,
                              uint64_t amount_mb,
                              ulab_error_t *err) {
     size_t i;
-
-    if (!rt->service_enabled) {
-        snprintf(err->msg, sizeof(err->msg), "service is off");
-        return ULAB_ERR;
-    }
-    if (!rt->radio_enabled) {
-        snprintf(err->msg, sizeof(err->msg), "radio is off");
-        return ULAB_ERR;
-    }
-    if (rt->node_offline) {
-        snprintf(err->msg, sizeof(err->msg), "node is offline");
-        return ULAB_ERR;
-    }
 
     for (i = 0; i < ues->count; i++) {
         const ue_t *ue = &w->ues[ues->idx[i]];

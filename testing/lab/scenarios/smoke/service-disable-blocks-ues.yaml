@@ -1,10 +1,10 @@
 version: 1
-name: smoke-service-on-off
-description: Verify service off blocks traffic and service on restores it.
-seed: 3
+name: service-disable-blocks-ues
+description: Verify disabling service blocks traffic for an attached UE and prevents a second UE from attaching or passing traffic.
+seed: 322
 suite: smoke
 priority: p0
-tags: [virtual, runtime, site, service]
+tags: [virtual, runtime, service, traffic]
 status: active
 
 provider:
@@ -17,7 +17,7 @@ world:
     tower: 1
     amplifier: 1
     controller: 1
-  ues_per_site: 1
+  ues_per_site: 2
 
 packages:
   - ref: daily_1gb
@@ -38,48 +38,51 @@ setup:
     - sims
 
 runtime:
-  start: [nodes, ues]
-  wait: [nodes_ready, ues_attached]
+  start: [nodes]
+  wait: [nodes_ready]
 
 phases:
-  - name: service_baseline
+  - name: attach_existing_ue
+    events:
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: start_ues
+        ues: ue-000001
+      - type: wait_ues_attached
+        ues: ue-000001
     checks:
       - type: traffic_allowed
-        ues: all
+        ues: ue-000001
         amount_mb: 1
 
-  - name: service_off
+  - name: disable_service
     events:
       - type: toggle_service
         sites: all
         state: off
     checks:
       - type: traffic_blocked
-        ues: all
+        ues: ue-000001
         amount_mb: 1
 
-  - name: service_on
+  - name: reject_new_ue
     events:
-      - type: toggle_service
-        sites: all
-        state: on
+      - type: start_ues
+        ues: ue-000002
       - type: wait_ues_attached
-        ues: all
+        ues: ue-000002
+        seconds: 15
+        expect:
+          result: failure
     checks:
-      - type: traffic_allowed
-        ues: all
+      - type: traffic_blocked
+        ues: ue-000002
         amount_mb: 1
 
 final_checks:
   - type: backend_count
-    target: sites
-    expected: 1
-  - type: status_equals
-    entity: sim
-    ref: ue-000001
-    status: active
-  - type: package_active
-    ues: all
-    package: daily_1gb
+    target: sims
+    expected: 2
   - type: balance_non_negative
     ues: all

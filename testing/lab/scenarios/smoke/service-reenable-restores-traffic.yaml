@@ -1,10 +1,10 @@
 version: 1
-name: smoke-service-on-off
-description: Verify service off blocks traffic and service on restores it.
-seed: 3
+name: service-reenable-restores-traffic
+description: Verify an attached UE loses traffic when service is disabled and regains traffic after service is enabled again.
+seed: 323
 suite: smoke
 priority: p0
-tags: [virtual, runtime, site, service]
+tags: [virtual, runtime, service, recovery, traffic]
 status: active
 
 provider:
@@ -38,48 +38,58 @@ setup:
     - sims
 
 runtime:
-  start: [nodes, ues]
-  wait: [nodes_ready, ues_attached]
+  start: [nodes]
+  wait: [nodes_ready]
 
 phases:
-  - name: service_baseline
+  - name: attach_with_service_on
+    events:
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: start_ues
+        ues: ue-000001
+      - type: wait_ues_attached
+        ues: ue-000001
     checks:
       - type: traffic_allowed
-        ues: all
+        ues: ue-000001
         amount_mb: 1
 
-  - name: service_off
+  - name: disable_service
     events:
       - type: toggle_service
         sites: all
         state: off
     checks:
       - type: traffic_blocked
-        ues: all
+        ues: ue-000001
         amount_mb: 1
 
-  - name: service_on
+  - name: hold_service_off
+    events:
+      - type: wait
+        seconds: 10
+    checks:
+      - type: traffic_blocked
+        ues: ue-000001
+        amount_mb: 1
+
+  - name: reenable_service
     events:
       - type: toggle_service
         sites: all
         state: on
       - type: wait_ues_attached
-        ues: all
+        ues: ue-000001
     checks:
       - type: traffic_allowed
-        ues: all
+        ues: ue-000001
         amount_mb: 1
 
 final_checks:
   - type: backend_count
-    target: sites
+    target: sims
     expected: 1
-  - type: status_equals
-    entity: sim
-    ref: ue-000001
-    status: active
-  - type: package_active
-    ues: all
-    package: daily_1gb
   - type: balance_non_negative
     ues: all

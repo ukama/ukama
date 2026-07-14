@@ -229,10 +229,18 @@ fi
 # through that bridge before starting the UE.
 # /v1/ping returns 503 until the service is really ready; /v1/status may return
 # 200 while ready=false.
-wait_container_http "$TNODE_CONTAINER" epcemu "http://127.0.0.1:18028/v1/ping"
-wait_container_http "$TNODE_CONTAINER" pcrf "http://127.0.0.1:18030/v1/ping"
-wait_pcrf_service_on "$TNODE_CONTAINER" "http://127.0.0.1:18030/v1/service"
-wait_container_http "$TNODE_CONTAINER" media "http://$MEDIA_IP:$HTTP_PORT/"
+wait_container_http "$TNODE_CONTAINER" epcemu     "http://127.0.0.1:18028/v1/ping"
+wait_container_http "$TNODE_CONTAINER" pcrf     "http://127.0.0.1:18030/v1/ping"
+
+# Starting a UE and waiting for it to attach are separate operations.  The UE
+# must be able to start while service admission is off so negative service
+# scenarios can verify that the phone cannot camp.  wait-ues-attached.sh owns
+# the attach expectation and timeout.
+if [ "${ULAB_UE_WAIT_SERVICE_ON:-0}" = "1" ]; then
+    wait_pcrf_service_on "$TNODE_CONTAINER"         "http://127.0.0.1:18030/v1/service"
+fi
+
+wait_container_http "$TNODE_CONTAINER" media     "http://$MEDIA_IP:$HTTP_PORT/"
 
 if [ ! -f "$UE_STATE_DIR/.ue-image-built" ]; then
     echo "ue: build $UE_IMAGE"

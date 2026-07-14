@@ -48,6 +48,7 @@ const char *scenario_event_name(event_type_t type) {
     case EVT_CREATE_UES: return "create_ues";
     case EVT_START_UES: return "start_ues";
     case EVT_WAIT_UES_ATTACHED: return "wait_ues_attached";
+    case EVT_WAIT: return "wait";
     case EVT_RESTART_NODES: return "restart_nodes";
     case EVT_WAIT_NODES_READY: return "wait_nodes_ready";
     case EVT_ADD_PACKAGE_TO_SIM: return "add_package_to_sim";
@@ -100,6 +101,8 @@ int scenario_event_from_name(const char *name, event_type_t *out) {
     else if (ulab_streq(name, "start_ues")) *out = EVT_START_UES;
     else if (ulab_streq(name, "wait_ues_attached")) {
         *out = EVT_WAIT_UES_ATTACHED;
+    } else if (ulab_streq(name, "wait")) {
+        *out = EVT_WAIT;
     } else if (ulab_streq(name, "restart_nodes")) {
         *out = EVT_RESTART_NODES;
     } else if (ulab_streq(name, "wait_nodes_ready")) {
@@ -213,14 +216,22 @@ static int split_kv(char *s, char **key, char **val) {
 
 static int parse_selector_value(selector_t *sel, const char *key,
                                 const char *val) {
-    memset(sel, 0, sizeof(*sel));
-    if (ulab_streq(key, "ues") || ulab_streq(key, "nodes") ||
-        ulab_streq(key, "sites") || ulab_streq(key, "networks")) {
-        if (ulab_streq(val, "all")) {
-            sel->kind = SEL_ALL;
-            return ULAB_OK;
-        }
+    if (!ulab_streq(key, "ues") && !ulab_streq(key, "nodes") &&
+        !ulab_streq(key, "sites") && !ulab_streq(key, "networks")) {
+        return ULAB_ERR;
     }
+
+    memset(sel, 0, sizeof(*sel));
+    if (ulab_streq(val, "all")) {
+        sel->kind = SEL_ALL;
+        return ULAB_OK;
+    }
+
+    if (val != NULL && val[0] != '\0') {
+        sel->kind = SEL_REF;
+        return ulab_copy(sel->value, sizeof(sel->value), val);
+    }
+
     return ULAB_ERR;
 }
 
@@ -340,7 +351,8 @@ static int apply_event_field(event_spec_t *e, const char *key,
                              const char *val) {
     if (ulab_streq(key, "name")) return ulab_copy(e->name,
         sizeof(e->name), val);
-    if (ulab_streq(key, "amount_mb")) {
+    if (ulab_streq(key, "amount_mb") ||
+        ulab_streq(key, "seconds")) {
         return ulab_parse_u64(val, &e->amount_mb);
     }
     if (ulab_streq(key, "profile")) return ulab_copy(e->profile,

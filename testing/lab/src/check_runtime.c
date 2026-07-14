@@ -10,7 +10,29 @@
 #include "selector.h"
 #include "util.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
+
+static unsigned int control_wait_seconds(void) {
+    const char *value;
+    char *end;
+    unsigned long seconds;
+
+    value = getenv("ULAB_CONTROL_WAIT_SEC");
+    if (value == NULL || value[0] == '\0') {
+        return 30u;
+    }
+
+    end = NULL;
+    seconds = strtoul(value, &end, 10);
+    if (end == value || *end != '\0' || seconds > 300ul) {
+        return 30u;
+    }
+
+    return (unsigned int)seconds;
+}
 
 int check_runtime(check_ctx_t *ctx, const check_spec_t *check,
                   check_result_t *res, ulab_error_t *err) {
@@ -53,27 +75,40 @@ int check_runtime(check_ctx_t *ctx, const check_spec_t *check,
         check->type == CHECK_TRAFFIC_BLOCKED) {
         ulab_error_t tmp;
         uint64_t amount;
+        unsigned int timeout;
+        unsigned int attempt;
         int rc;
+        int expected;
         int n;
 
-        memset(&tmp, 0, sizeof(tmp));
         amount = check->expected_used_mb ? check->expected_used_mb : 1;
+        timeout = control_wait_seconds();
+        rc = ULAB_ERR;
+        expected = 0;
+        attempt = 0;
 
         if (selector_resolve_ues(ctx->world, &check->ues, &sel, err)) {
             return ULAB_ERR;
         }
 
-        rc = runtime_generate_traffic(ctx->runtime, ctx->world, &sel,
-                                      amount, &tmp);
-        if (check->type == CHECK_TRAFFIC_ALLOWED) {
-            res->passed = rc == ULAB_OK;
-        } else {
-            res->passed = rc != ULAB_OK;
-        }
+        do {
+            memset(&tmp, 0, sizeof(tmp));
+            rc = runtime_generate_traffic(ctx->runtime, ctx->world, &sel,
+                                          amount, &tmp);
+            expected = check->type == CHECK_TRAFFIC_ALLOWED ?
+                       rc == ULAB_OK : rc != ULAB_OK;
+            if (expected || attempt >= timeout) {
+                break;
+            }
+            sleep(1);
+            attempt++;
+        } while (1);
 
+        res->passed = expected;
         n = snprintf(res->detail, sizeof(res->detail),
-                     "ues=%zu amount_mb=%llu runtime_rc=%d",
-                     sel.count, (unsigned long long)amount, rc);
+                     "ues=%zu amount_mb=%llu runtime_rc=%d attempts=%u",
+                     sel.count, (unsigned long long)amount, rc,
+                     attempt + 1);
         if (n > 0 && (size_t)n < sizeof(res->detail) && tmp.msg[0]) {
             snprintf(res->detail + n, sizeof(res->detail) - (size_t)n,
                      " error=%.256s", tmp.msg);
