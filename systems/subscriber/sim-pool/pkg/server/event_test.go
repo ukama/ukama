@@ -15,17 +15,18 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"google.golang.org/protobuf/types/known/anypb"
+
+	"github.com/ukama/ukama/systems/common/msgbus"
 
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
-	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	spmock "github.com/ukama/ukama/systems/subscriber/sim-pool/mocks"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 const (
 	testOrgName       = "test-org"
-	testIccid         = "test-iccid-123"
+	testIccid         = "8910300000003540855"
 	testIccidError    = "test-iccid-789"
 	testId            = "test-id"
 	unknownRoutingKey = "unknown.routing.key"
