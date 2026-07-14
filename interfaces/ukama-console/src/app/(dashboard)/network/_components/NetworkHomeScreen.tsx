@@ -26,6 +26,7 @@ import UkamaMap, { HOME_MAP_ZOOM } from '@/components/Map/UkamaMap';
 import PageHeader from '@/components/PageHeader';
 import StatusBadge from '@/components/StatusBadge';
 import { KPI_KEYS, kpiText, kpiValue } from '@/lib/kpis';
+import { formatBytes } from '@/lib/usage';
 import { toMapSites } from '@/lib/mappers/sites';
 import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
 import { pinColor } from '@/lib/status';
@@ -128,7 +129,9 @@ export default function NetworkHomeScreen() {
               icon: 'donut_small',
               color: 'var(--uk-beige)',
               label: 'Data volume',
-              value: kpiText(kpis, KPI_KEYS.usageByNetwork, (v) => `${v} GB`),
+              value: kpiText(kpis, KPI_KEYS.usageByNetwork, (v) =>
+                formatBytes(v),
+              ),
             },
             {
               icon: 'cell_tower',
