@@ -20,6 +20,7 @@ import { useMemo, useState } from 'react';
 import { useGetKpiValuesQuery } from '@/client/graphql/analytics.generated';
 import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
 import DateChip from '@/components/DateChip';
+import { DEFAULT_RANGE, rangeToSpan } from '@/lib/dateRange';
 import { KpiRow } from '@/components/Kpi';
 import UkamaMap, { HOME_MAP_ZOOM } from '@/components/Map/UkamaMap';
 import PageHeader from '@/components/PageHeader';
@@ -34,6 +35,7 @@ export default function NetworkHomeScreen() {
   const router = useRouter();
   const networkId = useNetworkId();
   const [sel, setSel] = useState<string | null>(null);
+  const [range, setRange] = useState<string>(DEFAULT_RANGE);
 
   // KPIs come from the analytics rollup; sites come live from the registry
   // (sitesView) so the map doesn't depend on the analytics collector.
@@ -46,7 +48,7 @@ export default function NetworkHomeScreen() {
           KPI_KEYS.usageByNetwork,
           KPI_KEYS.sitesOnline,
         ],
-        span: 'daily',
+        span: rangeToSpan(range),
         networkId,
       },
     },
@@ -99,7 +101,10 @@ export default function NetworkHomeScreen() {
 
   return (
     <div className="page">
-      <PageHeader title="Home" actions={<DateChip />} />
+      <PageHeader
+        title="Home"
+        actions={<DateChip value={range} onChange={setRange} />}
+      />
       {loading ? (
         <Skeleton variant="rounded" sx={{ width: '100%', height: 96 }} />
       ) : (

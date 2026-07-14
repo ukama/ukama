@@ -25,6 +25,7 @@ import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
 import AppModal from '@/components/AppModal';
 import DateChip from '@/components/DateChip';
 import { KpiRow } from '@/components/Kpi';
+import { DEFAULT_RANGE, rangeToSpan } from '@/lib/dateRange';
 import { StatusDot } from '@/components/Map/SiteMap';
 import UkamaMap, { HOME_MAP_ZOOM } from '@/components/Map/UkamaMap';
 import PageHeader from '@/components/PageHeader';
@@ -83,6 +84,7 @@ export default function BizHomeScreen() {
   const router = useRouter();
   const networkId = useNetworkId();
   const [showSummary, setShowSummary] = useState(false);
+  const [range, setRange] = useState<string>(DEFAULT_RANGE);
   // Org currency symbol from getCurrencySymbol (shared via CurrencyProvider).
   const { money } = useCurrency();
 
@@ -97,7 +99,7 @@ export default function BizHomeScreen() {
           KPI_KEYS.activeCustomers,
           KPI_KEYS.sitesOnline,
         ],
-        span: 'monthly',
+        span: rangeToSpan(range),
         networkId,
       },
     },
@@ -141,7 +143,7 @@ export default function BizHomeScreen() {
       <PageHeader
         title="Home"
         sub="Revenue, customers and sites at a glance."
-        actions={<DateChip />}
+        actions={<DateChip value={range} onChange={setRange} />}
       />
       {loading ? (
         <Skeleton variant="rounded" sx={{ height: 96 }} />
@@ -151,11 +153,11 @@ export default function BizHomeScreen() {
             {
               icon: 'monetization_on',
               color: 'var(--uk-beige)',
-              label: 'Revenue this month',
+              label: 'Revenue',
               value: kpiAmount(kpis, KPI_KEYS.revenue, money),
               sub:
                 monthDelta != null
-                  ? `${monthDelta >= 0 ? '+' : ''}${Math.round(monthDelta)}% vs last month`
+                  ? `${monthDelta >= 0 ? '+' : ''}${Math.round(monthDelta)}% vs previous period`
                   : undefined,
             },
             {

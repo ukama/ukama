@@ -10,6 +10,7 @@
  *  attributes name/price/active, columns sold/revenue/data_used, plus a
  *  threshold-derived status. MRR / ARPU headline KPIs come from `getKpiValues`.
  *  Active-SIMs-per-package has no column in the report, so it shows "—". */
+import { useState } from 'react';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -32,6 +33,7 @@ import SkeletonTable from '@/components/data-table/SkeletonTable';
 import StatusBadge from '@/components/StatusBadge';
 import { BAR_COLORS } from '@/lib/charts';
 import { useCurrency } from '@/lib/currency';
+import { DEFAULT_RANGE, rangeToSpan } from '@/lib/dateRange';
 import { attrValue, cellValue, KPI_KEYS, kpiAmount } from '@/lib/kpis';
 import { useNetworkId } from '@/lib/useNetworkId';
 
@@ -49,10 +51,12 @@ export default function BizPackagesScreen() {
   const networkId = useNetworkId();
   // Org currency symbol comes from getCurrencySymbol (shared via CurrencyProvider).
   const { money } = useCurrency();
+  const [range, setRange] = useState<string>(DEFAULT_RANGE);
+  const span = rangeToSpan(range);
 
   const { data: kpiData, error: kpiError } = useGetKpiValuesQuery({
     variables: {
-      data: { keys: [KPI_KEYS.mrr, KPI_KEYS.arpu], span: 'monthly', networkId },
+      data: { keys: [KPI_KEYS.mrr, KPI_KEYS.arpu], span, networkId },
     },
     skip: !networkId,
   });
@@ -60,7 +64,7 @@ export default function BizPackagesScreen() {
   const { data, loading, error: reportError, refetch } =
     useGetPerformanceReportQuery({
       variables: {
-        data: { report: 'package_performance', span: 'monthly', networkId },
+        data: { report: 'package_performance', span, networkId },
       },
       skip: !networkId,
     });
@@ -99,7 +103,7 @@ export default function BizPackagesScreen() {
       <PageHeader
         title="Packages"
         sub="How your data packages are selling and performing."
-        actions={<DateChip />}
+        actions={<DateChip value={range} onChange={setRange} />}
       />
       <KpiRow
         cols={4}
@@ -109,7 +113,7 @@ export default function BizPackagesScreen() {
             color: 'var(--uk-beige)',
             label: 'Monthly recurring revenue',
             value: error ? '—' : kpiAmount(kpis, KPI_KEYS.mrr, money),
-            sub: 'paid this month',
+            sub: 'recurring',
           },
           {
             icon: 'payments',

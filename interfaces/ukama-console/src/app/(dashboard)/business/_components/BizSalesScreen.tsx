@@ -12,6 +12,7 @@
  *  cumulative "collected to date" or "pending" KPI, so those are not shown.
  *  Absent keys degrade to "—". */
 import Skeleton from '@mui/material/Skeleton';
+import { useState } from 'react';
 
 import {
   useGetKpiValuesQuery,
@@ -24,6 +25,7 @@ import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
 import { BAR_COLORS } from '@/lib/charts';
 import { useCurrency } from '@/lib/currency';
+import { DEFAULT_RANGE, rangeToSpan } from '@/lib/dateRange';
 import { attrValue, cellValue, KPI_KEYS, kpiAmount, kpiPrev } from '@/lib/kpis';
 import { useNetworkId } from '@/lib/useNetworkId';
 
@@ -31,13 +33,15 @@ export default function BizSalesScreen() {
   const networkId = useNetworkId();
   // Org currency symbol from getCurrencySymbol (shared via CurrencyProvider).
   const { money } = useCurrency();
+  const [range, setRange] = useState<string>(DEFAULT_RANGE);
+  const span = rangeToSpan(range);
 
   const { data: kpiData, loading: kpiLoading, error: kpiError } =
     useGetKpiValuesQuery({
       variables: {
         data: {
           keys: [KPI_KEYS.revenue, KPI_KEYS.mrr],
-          span: 'monthly',
+          span,
           networkId,
         },
       },
@@ -47,7 +51,7 @@ export default function BizSalesScreen() {
   const { data: reportData, loading: reportLoading, error: reportError } =
     useGetPerformanceReportQuery({
       variables: {
-        data: { report: 'package_performance', span: 'monthly', networkId },
+        data: { report: 'package_performance', span, networkId },
       },
       skip: !networkId,
     });
@@ -76,7 +80,7 @@ export default function BizSalesScreen() {
       <PageHeader
         title="Revenue"
         sub="Revenue across your network — your single most important number."
-        actions={<DateChip />}
+        actions={<DateChip value={range} onChange={setRange} />}
       />
 
       <div className="card card-pad" style={{ marginBottom: 'var(--uk-gap)' }}>
@@ -112,11 +116,11 @@ export default function BizSalesScreen() {
               {(
                 [
                   [
-                    'This month',
+                    'This period',
                     error ? '—' : kpiAmount(kpis, KPI_KEYS.revenue, money),
                   ],
                   [
-                    'Last month',
+                    'Previous',
                     error || lastMonth == null ? '—' : money(lastMonth),
                   ],
                 ] as const
@@ -142,7 +146,7 @@ export default function BizSalesScreen() {
           </div>
         )}
         <div style={{ fontSize: 12.5, color: 'var(--uk-ink-3)', marginTop: 8 }}>
-          Monthly recurring revenue and this month&apos;s revenue
+          Recurring revenue and revenue for the selected period
         </div>
       </div>
 
@@ -151,7 +155,7 @@ export default function BizSalesScreen() {
           {
             icon: 'monetization_on',
             color: 'var(--uk-beige)',
-            label: 'Revenue this month',
+            label: 'Revenue',
             value: error ? '—' : kpiAmount(kpis, KPI_KEYS.revenue, money),
           },
           {
