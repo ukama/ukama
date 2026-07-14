@@ -8,17 +8,16 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import type { AppContext } from "../../server/context";
-import { BusinessSitesDto } from "./types/business";
-import { AnalyticsWindowInput } from "./types/shared";
+import { GetKpiValuesDto, KpiValuesInput } from "./types/kpi";
 
 @Resolver()
-export class GetBusinessSitesResolver {
-  @Query(() => BusinessSitesDto)
-  async getBusinessSites(
-    @Arg("data") data: AnalyticsWindowInput,
+export class GetKpiValuesResolver {
+  @Query(() => GetKpiValuesDto)
+  async getKpiValues(
+    @Arg("data") data: KpiValuesInput,
     @Ctx() ctx: AppContext
-  ): Promise<BusinessSitesDto> {
+  ): Promise<GetKpiValuesDto> {
     const baseURL = await ctx.urls.url("analytics");
-    return ctx.dataSources.analytics.getBusinessSites(baseURL, data);
+    return ctx.dataSources.analytics.getKpiValues(baseURL, data);
   }
 }

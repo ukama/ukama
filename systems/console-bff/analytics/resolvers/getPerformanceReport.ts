@@ -8,17 +8,19 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import type { AppContext } from "../../server/context";
-import { BusinessHomeDto } from "./types/business";
-import { AnalyticsWindowInput } from "./types/shared";
+import {
+  GetPerformanceReportDto,
+  PerformanceReportInput,
+} from "./types/report";
 
 @Resolver()
-export class GetBusinessHomeResolver {
-  @Query(() => BusinessHomeDto)
-  async getBusinessHome(
-    @Arg("data") data: AnalyticsWindowInput,
+export class GetPerformanceReportResolver {
+  @Query(() => GetPerformanceReportDto)
+  async getPerformanceReport(
+    @Arg("data") data: PerformanceReportInput,
     @Ctx() ctx: AppContext
-  ): Promise<BusinessHomeDto> {
+  ): Promise<GetPerformanceReportDto> {
     const baseURL = await ctx.urls.url("analytics");
-    return ctx.dataSources.analytics.getBusinessHome(baseURL, data);
+    return ctx.dataSources.analytics.getPerformanceReport(baseURL, data);
   }
 }
