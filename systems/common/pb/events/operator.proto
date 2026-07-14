@@ -17,7 +17,7 @@ import "validator.proto";
 message EventOperatorCdrReport {
     string id = 1 [(validator.field) = {string_not_empty: true}];
     uint64 inventoryId = 2 [json_name = "inventory_id"];
-    string iccid = 3 [(validator.field) = {string_not_empty: true}];
+    string iccid = 3 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{18,22}$"}, json_name = "iccid" ];
     string type = 4 [(validator.field) = {string_not_empty: true}];
     uint64 connectTime = 5 [json_name = "connect_time"];
     uint64 closeTime = 6 [json_name = "close_time"];

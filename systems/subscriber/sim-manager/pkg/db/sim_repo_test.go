@@ -28,7 +28,7 @@ import (
 
 const (
 	testIccid = "8910300123456789053"
-	testImsi  = "890000-this-is-a-test-imsi"
+	testImsi  = "001012223334445"
 )
 
 var (

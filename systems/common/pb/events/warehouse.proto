@@ -17,8 +17,8 @@ import "validator.proto";
 
 
 message InventorySimEvent{
-    string iccid = 1 [(validator.field) = {string_not_empty: true}];
-    string imsi = 2;
+    string iccid = 1 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{18,22}$"}, json_name = "iccid" ];
+    string imsi = 2 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{6,15}$"}, json_name = "imsi"];
     string batchId = 3 [json_name = "batch_id"];
     string cardSerial = 4 [json_name = "card_serial"];
     string formFactor = 5 [json_name = "form_factor"];
