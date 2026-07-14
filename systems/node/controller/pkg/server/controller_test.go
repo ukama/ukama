@@ -103,7 +103,7 @@ func TestControllerServer_ToggleRadio(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestControllerServer_ToggleNodeService(t *testing.T) {
+func TestControllerServer_ToggleService(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 	conRepo := &mocks.NodeLogRepo{}
 	opMgr := &mbmocks.ManagerClient{}
@@ -134,7 +134,7 @@ func TestControllerServer_ToggleNodeService(t *testing.T) {
 
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, opMgr, opMon, 30, 60, pkg.IsDebugMode)
 
-	_, err = s.ToggleNodeService(context.TODO(), &pb.ToggleServiceRequest{NodeId: nodeId, State: "on"})
+	_, err = s.ToggleService(context.TODO(), &pb.ToggleServiceRequest{NodeId: nodeId, State: "on"})
 
 	msgclientRepo.AssertExpectations(t)
 	opMgr.AssertExpectations(t)
@@ -146,7 +146,7 @@ func TestNodeKey(t *testing.T) {
 	assert.Equal(t, "node:"+nodeId, nodeKey(nodeId))
 }
 
-func TestControllerServer_ToggleNodeService_InvalidNodeId(t *testing.T) {
+func TestControllerServer_ToggleService_InvalidNodeId(t *testing.T) {
 	s := NewControllerServer(
 		testOrgName,
 		&mocks.NodeLogRepo{},
@@ -156,7 +156,7 @@ func TestControllerServer_ToggleNodeService_InvalidNodeId(t *testing.T) {
 		pkg.IsDebugMode,
 	)
 
-	_, err := s.ToggleNodeService(context.TODO(), &pb.ToggleServiceRequest{
+	_, err := s.ToggleService(context.TODO(), &pb.ToggleServiceRequest{
 		NodeId: "uk-983794-anode-78-7830",
 		State:  "on",
 	})
