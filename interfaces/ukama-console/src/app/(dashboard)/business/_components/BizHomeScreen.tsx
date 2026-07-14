@@ -20,9 +20,8 @@ import Skeleton from '@mui/material/Skeleton';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
-import { useGetHomeKpisQuery } from '@/client/graphql/analytics.generated';
+import { useGetKpiValuesQuery } from '@/client/graphql/analytics.generated';
 import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
-import { HomeLens } from '@/client/graphql/types';
 import AppModal from '@/components/AppModal';
 import DateChip from '@/components/DateChip';
 import { KpiRow } from '@/components/Kpi';
@@ -30,7 +29,7 @@ import { StatusDot } from '@/components/Map/SiteMap';
 import UkamaMap, { HOME_MAP_ZOOM } from '@/components/Map/UkamaMap';
 import PageHeader from '@/components/PageHeader';
 import { useCurrency } from '@/lib/currency';
-import { KPI_KEYS, kpiAmount, kpiByKey, kpiText, kpiValue } from '@/lib/kpis';
+import { KPI_KEYS, kpiAmount, kpiDelta, kpiText } from '@/lib/kpis';
 import { type MapSite, toMapSites } from '@/lib/mappers/sites';
 import { pinColor } from '@/lib/status';
 import { useNetworkId } from '@/lib/useNetworkId';
@@ -89,17 +88,22 @@ export default function BizHomeScreen() {
 
   // KPIs come from the analytics rollup; sites come live from the registry
   // (sitesView) so the map doesn't depend on the analytics collector.
-  const { data: homeData, loading: homeLoading } = useGetHomeKpisQuery({
-    variables: { data: { lens: HomeLens.Business, networkId } },
+  const { data: homeData, loading: homeLoading } = useGetKpiValuesQuery({
+    variables: {
+      data: {
+        keys: [KPI_KEYS.revenue, KPI_KEYS.mrr, KPI_KEYS.activeCustomers],
+        span: 'monthly',
+        networkId,
+      },
+    },
     skip: !networkId,
   });
   const { data: sitesData, loading: sitesLoading } = useSitesListQuery({
     variables: { networkId },
     skip: !networkId,
   });
-  const kpis = homeData?.getHomeKpis.kpis;
-  const monthDelta = kpiByKey(kpis, KPI_KEYS.revenueMonth)?.delta;
-  const totalCustomers = kpiValue(kpis, KPI_KEYS.customersTotal);
+  const kpis = homeData?.getKpiValues.values;
+  const monthDelta = kpiDelta(kpis, KPI_KEYS.revenue);
   const loading = homeLoading || sitesLoading;
 
   const sites = useMemo(
@@ -137,10 +141,10 @@ export default function BizHomeScreen() {
               icon: 'monetization_on',
               color: 'var(--uk-beige)',
               label: 'Revenue this month',
-              value: kpiAmount(kpis, KPI_KEYS.revenueMonth, money),
+              value: kpiAmount(kpis, KPI_KEYS.revenue, money),
               sub:
                 monthDelta != null
-                  ? `${monthDelta >= 0 ? '+' : ''}${monthDelta}% vs last month`
+                  ? `${monthDelta >= 0 ? '+' : ''}${Math.round(monthDelta)}% vs last month`
                   : undefined,
             },
             {
@@ -148,14 +152,12 @@ export default function BizHomeScreen() {
               color: 'var(--uk-secondary)',
               label: 'Active customers',
               value: kpiText(kpis, KPI_KEYS.activeCustomers),
-              sub:
-                totalCustomers != null ? `${totalCustomers} total` : undefined,
             },
             {
               icon: 'donut_small',
               color: 'var(--uk-ac)',
-              label: 'Collected to date',
-              value: kpiAmount(kpis, KPI_KEYS.revenueCollected, money),
+              label: 'Recurring revenue',
+              value: kpiAmount(kpis, KPI_KEYS.mrr, money),
             },
             {
               icon: 'cell_tower',

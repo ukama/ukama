@@ -2,15 +2,14 @@
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2026-present, Ukama Inc.
  */
 'use client';
 
-/** Packages — selling & performance, wired to the analytics service
- *  (`getPackagePerformance`). KPIs come from the keyed `kpis` array; per-plan
- *  rows from `packages`. Some fields/keys are exposed ahead of backend support
- *  (see docs/analytics-backend-gaps.md) and degrade to "—". */
+/** Packages — selling & performance, wired to the analytics gateway. Per-plan
+ *  rows come from the `package_performance` report (`getPerformanceReport`):
+ *  attributes name/price/active, columns sold/revenue/data_used, plus a
+ *  threshold-derived status. MRR / ARPU headline KPIs come from `getKpiValues`.
+ *  Active-SIMs-per-package has no column in the report, so it shows "—". */
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -18,7 +17,10 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Meter from '@/components/Meter';
 
-import { useGetPackagePerformanceQuery } from '@/client/graphql/analytics.generated';
+import {
+  useGetKpiValuesQuery,
+  useGetPerformanceReportQuery,
+} from '@/client/graphql/analytics.generated';
 import BarList from '@/components/BarList';
 import DateChip from '@/components/DateChip';
 import { EmptyState } from '@/components/EmptyState';
@@ -30,38 +32,65 @@ import SkeletonTable from '@/components/data-table/SkeletonTable';
 import StatusBadge from '@/components/StatusBadge';
 import { BAR_COLORS } from '@/lib/charts';
 import { useCurrency } from '@/lib/currency';
-import { kpiAmount } from '@/lib/kpis';
+import { attrValue, cellValue, KPI_KEYS, kpiAmount } from '@/lib/kpis';
 import { useNetworkId } from '@/lib/useNetworkId';
 
-const isActive = (status?: string | null): boolean =>
-  (status ?? '').toLowerCase() === 'active';
+interface Plan {
+  packageId: string;
+  name: string;
+  price: number;
+  revenue: number;
+  sold: number;
+  active: boolean;
+  statusLabel?: string | null;
+}
 
 export default function BizPackagesScreen() {
   const networkId = useNetworkId();
   // Org currency symbol comes from getCurrencySymbol (shared via CurrencyProvider).
   const { money } = useCurrency();
-  const { data, loading, error, refetch } = useGetPackagePerformanceQuery({
-    variables: { data: { networkId } },
+
+  const { data: kpiData, error: kpiError } = useGetKpiValuesQuery({
+    variables: {
+      data: { keys: [KPI_KEYS.mrr, KPI_KEYS.arpu], span: 'monthly', networkId },
+    },
     skip: !networkId,
   });
-  const perf = data?.getPackagePerformance;
-  const kpis = perf?.kpis;
-  const plans = perf?.packages ?? [];
-  const totalRevenue = plans.reduce((sum, p) => sum + (p.revenue ?? 0), 0);
-  // revenueSharePct is a backend gap — derive from total until it lands.
-  const sharePct = (p: (typeof plans)[number]): number =>
-    p.revenueSharePct ??
-    (totalRevenue > 0 ? Math.round((p.revenue / totalRevenue) * 100) : 0);
+
+  const { data, loading, error: reportError, refetch } =
+    useGetPerformanceReportQuery({
+      variables: {
+        data: { report: 'package_performance', span: 'monthly', networkId },
+      },
+      skip: !networkId,
+    });
+
+  const error = reportError ?? kpiError;
+  const kpis = kpiData?.getKpiValues.values;
+
+  const plans: Plan[] = (data?.getPerformanceReport.rows ?? []).map((r) => ({
+    packageId: r.entityId,
+    name: attrValue(r.attributes, 'name') ?? '—',
+    price: Number(attrValue(r.attributes, 'price') ?? 0),
+    revenue: cellValue(r.cells, 'revenue') ?? 0,
+    sold: cellValue(r.cells, 'sold') ?? 0,
+    active: (attrValue(r.attributes, 'active') ?? '').toLowerCase() === 'true',
+    statusLabel: r.status,
+  }));
+
+  const totalRevenue = plans.reduce((sum, p) => sum + p.revenue, 0);
+  const sharePct = (p: Plan): number =>
+    totalRevenue > 0 ? Math.round((p.revenue / totalRevenue) * 100) : 0;
 
   const byRevenue = [...plans].sort((a, z) => z.revenue - a.revenue);
   const top = byRevenue[0];
   const topPkgs = byRevenue.slice(0, 3);
   const maxRevenue = Math.max(...topPkgs.map((p) => p.revenue), 1);
-  const mix = (perf?.revenueMix ?? [])
-    .filter((m) => m.value > 0)
-    .map((m, i) => ({
-      name: m.name ?? '—',
-      value: m.value,
+  const mix = byRevenue
+    .filter((p) => p.revenue > 0)
+    .map((p, i) => ({
+      name: p.name,
+      value: p.revenue,
       color: BAR_COLORS[i % BAR_COLORS.length] ?? 'var(--uk-ac)',
     }));
 
@@ -79,21 +108,21 @@ export default function BizPackagesScreen() {
             icon: 'monetization_on',
             color: 'var(--uk-beige)',
             label: 'Monthly recurring revenue',
-            value: error ? '—' : kpiAmount(kpis, 'mrr', money),
+            value: error ? '—' : kpiAmount(kpis, KPI_KEYS.mrr, money),
             sub: 'paid this month',
           },
           {
             icon: 'payments',
             color: 'var(--uk-ac)',
             label: 'ARPU',
-            value: error ? '—' : kpiAmount(kpis, 'arpu', money),
+            value: error ? '—' : kpiAmount(kpis, KPI_KEYS.arpu, money),
             sub: 'avg revenue / active SIM',
           },
           {
             icon: 'donut_small',
             color: 'var(--uk-success-bright)',
             label: 'Top plan by revenue',
-            value: top && top.revenue > 0 ? (top.name ?? '—') : '—',
+            value: top && top.revenue > 0 ? top.name : '—',
             sub:
               top && top.revenue > 0
                 ? `${sharePct(top)}% of revenue`
@@ -105,9 +134,7 @@ export default function BizPackagesScreen() {
             label: 'Active plans',
             value: error
               ? '—'
-              : sectionValue(
-                  plans.filter((p) => isActive(p.status)).length || null,
-                ),
+              : sectionValue(plans.filter((p) => p.active).length || null),
             sub: `across ${plans.length} packages`,
           },
         ]}
@@ -140,7 +167,7 @@ export default function BizPackagesScreen() {
                 <TableRow>
                   <TableCell>Package</TableCell>
                   <TableCell align="right">Price</TableCell>
-                  <TableCell align="right">Active SIMs</TableCell>
+                  <TableCell align="right">Sold</TableCell>
                   <TableCell align="right">Revenue</TableCell>
                   <TableCell align="right">Share</TableCell>
                   <TableCell>Status</TableCell>
@@ -149,14 +176,12 @@ export default function BizPackagesScreen() {
               <TableBody>
                 {byRevenue.map((p) => (
                   <TableRow key={p.packageId}>
-                    <TableCell style={{ fontWeight: 600 }}>
-                      {p.name ?? '—'}
-                    </TableCell>
+                    <TableCell style={{ fontWeight: 600 }}>{p.name}</TableCell>
                     <TableCell align="right" className="tnum">
                       {money(p.price)}
                     </TableCell>
                     <TableCell align="right" className="tnum">
-                      {p.activeSubscribers ?? '—'}
+                      {p.sold || '—'}
                     </TableCell>
                     <TableCell
                       align="right"
@@ -170,7 +195,7 @@ export default function BizPackagesScreen() {
                     </TableCell>
                     <TableCell>
                       <StatusBadge
-                        status={isActive(p.status) ? 'active' : 'inactive'}
+                        status={p.active ? 'active' : 'inactive'}
                         variant="pill"
                       />
                     </TableCell>
@@ -187,7 +212,7 @@ export default function BizPackagesScreen() {
           title="Top packages"
           right={
             <span style={{ fontSize: 12.5, color: 'var(--uk-ink-3)' }}>
-              By revenue collected
+              By revenue
             </span>
           }
         >
@@ -236,7 +261,7 @@ export default function BizPackagesScreen() {
                       }}
                     >
                       <span style={{ fontSize: 13.5, fontWeight: 600 }}>
-                        {p.name ?? '—'}
+                        {p.name}
                       </span>
                       <span
                         className="tnum"
@@ -249,9 +274,7 @@ export default function BizPackagesScreen() {
                         <b style={{ color: 'var(--uk-ink)' }}>
                           {money(p.revenue)}
                         </b>
-                        {p.activeSubscribers != null
-                          ? ` · ${p.activeSubscribers} active`
-                          : ''}
+                        {p.sold > 0 ? ` · ${p.sold} sold` : ''}
                       </span>
                     </div>
                     <Meter

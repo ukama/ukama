@@ -2,18 +2,21 @@
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2026-present, Ukama Inc.
  */
 'use client';
 
-/** Revenue — the single most important number, wired to the analytics service
- *  (`getSalesOverview`). Headline figures come from the keyed `kpis` array;
- *  the by-package / by-site breakdowns from `revenueByPackage` / `revenueBySite`.
- *  KPI keys are listed in docs/analytics-backend-gaps.md and degrade to "—". */
+/** Revenue — the single most important number, wired to the analytics gateway's
+ *  generic KPI API. Headline figures come from `getKpiValues` (revenue @ monthly
+ *  with a month-over-month trend, plus mrr); the by-package breakdown from the
+ *  `package_performance` report (`getPerformanceReport`). The gateway has no
+ *  cumulative "collected to date" or "pending" KPI, so those are not shown.
+ *  Absent keys degrade to "—". */
 import Skeleton from '@mui/material/Skeleton';
 
-import { useGetSalesOverviewQuery } from '@/client/graphql/analytics.generated';
+import {
+  useGetKpiValuesQuery,
+  useGetPerformanceReportQuery,
+} from '@/client/graphql/analytics.generated';
 import BarList from '@/components/BarList';
 import DateChip from '@/components/DateChip';
 import { KpiRow } from '@/components/Kpi';
@@ -21,44 +24,64 @@ import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
 import { BAR_COLORS } from '@/lib/charts';
 import { useCurrency } from '@/lib/currency';
-import { KPI_KEYS, kpiAmount } from '@/lib/kpis';
+import { attrValue, cellValue, KPI_KEYS, kpiAmount, kpiPrev } from '@/lib/kpis';
 import { useNetworkId } from '@/lib/useNetworkId';
-
-const toBars = (rows: { name?: string | null; value: number }[]) =>
-  rows
-    .filter((r) => r.value > 0)
-    .sort((a, z) => z.value - a.value)
-    .map((r, i) => ({
-      name: r.name ?? '—',
-      value: r.value,
-      color: BAR_COLORS[i % BAR_COLORS.length] ?? 'var(--uk-ac)',
-    }));
 
 export default function BizSalesScreen() {
   const networkId = useNetworkId();
   // Org currency symbol from getCurrencySymbol (shared via CurrencyProvider).
   const { money } = useCurrency();
-  const { data, loading, error } = useGetSalesOverviewQuery({
-    variables: { data: { networkId } },
-    skip: !networkId,
-  });
-  const overview = data?.getSalesOverview;
-  const kpis = overview?.kpis;
 
-  const byPackage = toBars(overview?.revenueByPackage ?? []);
-  const bySite = toBars(overview?.revenueBySite ?? []);
+  const { data: kpiData, loading: kpiLoading, error: kpiError } =
+    useGetKpiValuesQuery({
+      variables: {
+        data: {
+          keys: [KPI_KEYS.revenue, KPI_KEYS.mrr],
+          span: 'monthly',
+          networkId,
+        },
+      },
+      skip: !networkId,
+    });
+
+  const { data: reportData, loading: reportLoading, error: reportError } =
+    useGetPerformanceReportQuery({
+      variables: {
+        data: { report: 'package_performance', span: 'monthly', networkId },
+      },
+      skip: !networkId,
+    });
+
+  const kpis = kpiData?.getKpiValues.values;
+  const error = kpiError ?? reportError;
+  const loading = kpiLoading || reportLoading;
+
+  // Revenue-by-package bars from the package_performance report rows.
+  const byPackage = (reportData?.getPerformanceReport.rows ?? [])
+    .map((r) => ({
+      name: attrValue(r.attributes, 'name') ?? '—',
+      value: cellValue(r.cells, 'revenue') ?? 0,
+    }))
+    .filter((r) => r.value > 0)
+    .sort((a, z) => z.value - a.value)
+    .map((r, i) => ({
+      ...r,
+      color: BAR_COLORS[i % BAR_COLORS.length] ?? 'var(--uk-ac)',
+    }));
+
+  const lastMonth = kpiPrev(kpis, KPI_KEYS.revenue);
 
   return (
     <div className="page">
       <PageHeader
         title="Revenue"
-        sub="Revenue collected across your network — your single most important number."
+        sub="Revenue across your network — your single most important number."
         actions={<DateChip />}
       />
 
       <div className="card card-pad" style={{ marginBottom: 'var(--uk-gap)' }}>
         <div className="sec-title" style={{ marginBottom: 12 }}>
-          Revenue collected
+          Recurring revenue
         </div>
         {loading ? (
           <Skeleton variant="rounded" sx={{ height: 72 }} />
@@ -81,10 +104,8 @@ export default function BizSalesScreen() {
                   lineHeight: 1,
                 }}
               >
-                {error ? '—' : kpiAmount(kpis, KPI_KEYS.revenueCollected, money)}
+                {error ? '—' : kpiAmount(kpis, KPI_KEYS.mrr, money)}
               </span>
-              {/* MoM delta hidden until the backend provides a reliable
-                  previous-period revenue (current value is unreliable). */}
             </div>
             <div style={{ flex: 1, minWidth: 20 }} />
             <div style={{ display: 'flex', gap: 30, flexWrap: 'wrap' }}>
@@ -92,15 +113,11 @@ export default function BizSalesScreen() {
                 [
                   [
                     'This month',
-                    error ? '—' : kpiAmount(kpis, KPI_KEYS.revenueMonth, money),
+                    error ? '—' : kpiAmount(kpis, KPI_KEYS.revenue, money),
                   ],
                   [
                     'Last month',
-                    error ? '—' : kpiAmount(kpis, KPI_KEYS.revenuePrevMonth, money),
-                  ],
-                  [
-                    'Pending',
-                    error ? '—' : kpiAmount(kpis, KPI_KEYS.revenuePending, money),
+                    error || lastMonth == null ? '—' : money(lastMonth),
                   ],
                 ] as const
               ).map(([k, v]) => (
@@ -125,7 +142,7 @@ export default function BizSalesScreen() {
           </div>
         )}
         <div style={{ fontSize: 12.5, color: 'var(--uk-ink-3)', marginTop: 8 }}>
-          All payments collected to date
+          Monthly recurring revenue and this month&apos;s revenue
         </div>
       </div>
 
@@ -135,19 +152,13 @@ export default function BizSalesScreen() {
             icon: 'monetization_on',
             color: 'var(--uk-beige)',
             label: 'Revenue this month',
-            value: error ? '—' : kpiAmount(kpis, KPI_KEYS.revenueMonth, money),
+            value: error ? '—' : kpiAmount(kpis, KPI_KEYS.revenue, money),
           },
           {
             icon: 'payments',
             color: 'var(--uk-ac)',
-            label: 'Pending payments',
-            value: error ? '—' : kpiAmount(kpis, KPI_KEYS.revenuePending, money),
-          },
-          {
-            icon: 'donut_small',
-            color: 'var(--uk-success-bright)',
-            label: 'Collected to date',
-            value: error ? '—' : kpiAmount(kpis, KPI_KEYS.revenueCollected, money),
+            label: 'Recurring revenue',
+            value: error ? '—' : kpiAmount(kpis, KPI_KEYS.mrr, money),
           },
           {
             icon: 'sell',
@@ -158,30 +169,15 @@ export default function BizSalesScreen() {
         ]}
       />
 
-      <div className="tile-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
-        <SectionCard title="Revenue by package">
-          {error || byPackage.length === 0 ? (
-            <div
-              style={{ padding: 24, fontSize: 13, color: 'var(--uk-ink-3)' }}
-            >
-              {error ? '—' : 'No package revenue yet.'}
-            </div>
-          ) : (
-            <BarList rows={byPackage} />
-          )}
-        </SectionCard>
-        <SectionCard title="Revenue by site">
-          {error || bySite.length === 0 ? (
-            <div
-              style={{ padding: 24, fontSize: 13, color: 'var(--uk-ink-3)' }}
-            >
-              {error ? '—' : 'No site revenue yet.'}
-            </div>
-          ) : (
-            <BarList rows={bySite} />
-          )}
-        </SectionCard>
-      </div>
+      <SectionCard title="Revenue by package">
+        {error || byPackage.length === 0 ? (
+          <div style={{ padding: 24, fontSize: 13, color: 'var(--uk-ink-3)' }}>
+            {error ? '—' : 'No package revenue yet.'}
+          </div>
+        ) : (
+          <BarList rows={byPackage} />
+        )}
+      </SectionCard>
     </div>
   );
 }

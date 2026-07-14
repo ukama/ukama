@@ -17,9 +17,8 @@ import Skeleton from '@mui/material/Skeleton';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
-import { useGetHomeKpisQuery } from '@/client/graphql/analytics.generated';
+import { useGetKpiValuesQuery } from '@/client/graphql/analytics.generated';
 import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
-import { HomeLens } from '@/client/graphql/types';
 import DateChip from '@/components/DateChip';
 import { KpiRow } from '@/components/Kpi';
 import UkamaMap, { HOME_MAP_ZOOM } from '@/components/Map/UkamaMap';
@@ -38,8 +37,18 @@ export default function NetworkHomeScreen() {
 
   // KPIs come from the analytics rollup; sites come live from the registry
   // (sitesView) so the map doesn't depend on the analytics collector.
-  const { data: kpiData, loading: kpiLoading } = useGetHomeKpisQuery({
-    variables: { data: { lens: HomeLens.Network, networkId } },
+  const { data: kpiData, loading: kpiLoading } = useGetKpiValuesQuery({
+    variables: {
+      data: {
+        keys: [
+          KPI_KEYS.networkUptime,
+          KPI_KEYS.activeCustomers,
+          KPI_KEYS.usageByNetwork,
+        ],
+        span: 'daily',
+        networkId,
+      },
+    },
     skip: !networkId,
     ...visiblePoll(POLL_OVERVIEW_MS),
   });
@@ -53,7 +62,7 @@ export default function NetworkHomeScreen() {
     skip: !networkId,
     ...visiblePoll(POLL_OVERVIEW_MS),
   });
-  const kpis = kpiData?.getHomeKpis.kpis;
+  const kpis = kpiData?.getKpiValues.values;
   const loading = kpiLoading || sitesLoading;
 
   // The home map only needs each site's name, status and coordinates.
@@ -107,7 +116,7 @@ export default function NetworkHomeScreen() {
               icon: 'donut_small',
               color: 'var(--uk-beige)',
               label: 'Data volume',
-              value: kpiText(kpis, KPI_KEYS.dataUsage, (v) => `${v} GB`),
+              value: kpiText(kpis, KPI_KEYS.usageByNetwork, (v) => `${v} GB`),
             },
             {
               icon: 'cell_tower',
