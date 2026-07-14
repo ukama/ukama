@@ -130,6 +130,20 @@ int bff_get_node_state(bff_client_t *c,
                        bff_node_state_t *state,
                        ulab_error_t *err);
 
+int bff_restart_node(bff_client_t *c,
+                     const node_t *node,
+                     ulab_error_t *err);
+
+int bff_toggle_site_service(bff_client_t *c,
+                            const site_t *site,
+                            int enabled,
+                            ulab_error_t *err);
+
+int bff_toggle_site_radio(bff_client_t *c,
+                          const site_t *site,
+                          int enabled,
+                          ulab_error_t *err);
+
 int bff_network_overview_loads(bff_client_t *c,
                                const network_t *net,
                                ulab_error_t *err);
