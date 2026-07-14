@@ -27,6 +27,8 @@ export interface KpiProps {
   dir?: 'up' | 'down';
   sub?: React.ReactNode;
   danger?: boolean;
+  /** Truncate a long text value to one line (smaller font + ellipsis). */
+  truncate?: boolean;
 }
 
 /** Trend delta — green up / red down (stat-delta). */
@@ -74,9 +76,18 @@ export function Kpi({
   dir,
   sub,
   danger,
+  truncate,
 }: KpiProps) {
   return (
-    <Card sx={{ p: '16px 18px', display: 'flex', flexDirection: 'column', gap: '9px' }}>
+    <Card
+      sx={{
+        p: '16px 18px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '9px',
+        minWidth: 0,
+      }}
+    >
       <Box
         sx={{
           fontSize: 13,
@@ -92,15 +103,33 @@ export function Kpi({
         )}
         <span>{label}</span>
       </Box>
-      <Box sx={{ display: 'flex', alignItems: 'baseline', gap: '6px', whiteSpace: 'nowrap' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'baseline',
+          gap: '6px',
+          whiteSpace: 'nowrap',
+          minWidth: 0,
+          overflow: 'hidden',
+        }}
+      >
         <Box
           component="span"
           className="tnum"
+          title={truncate && typeof value === 'string' ? value : undefined}
           sx={{
             fontFamily: 'var(--font-display)',
-            fontSize: 26,
+            fontSize: truncate ? 19 : 26,
             fontWeight: 500,
-            lineHeight: 1,
+            lineHeight: truncate ? 1.25 : 1,
+            ...(truncate
+              ? {
+                  display: 'block',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: '100%',
+                }
+              : {}),
           }}
         >
           {value}

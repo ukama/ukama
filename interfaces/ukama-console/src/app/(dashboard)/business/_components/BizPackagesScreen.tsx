@@ -128,6 +128,7 @@ export default function BizPackagesScreen() {
             color: 'var(--uk-success-bright)',
             label: 'Top plan by revenue',
             value: top && top.revenue > 0 ? top.name : '—',
+            truncate: true,
             sub:
               top && top.revenue > 0
                 ? `${sharePct(top)}% of revenue`
