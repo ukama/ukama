@@ -24,7 +24,7 @@ import { KpiRow } from '@/components/Kpi';
 import UkamaMap, { HOME_MAP_ZOOM } from '@/components/Map/UkamaMap';
 import PageHeader from '@/components/PageHeader';
 import StatusBadge from '@/components/StatusBadge';
-import { KPI_KEYS, kpiText } from '@/lib/kpis';
+import { KPI_KEYS, kpiText, kpiValue } from '@/lib/kpis';
 import { toMapSites } from '@/lib/mappers/sites';
 import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
 import { pinColor } from '@/lib/status';
@@ -44,6 +44,7 @@ export default function NetworkHomeScreen() {
           KPI_KEYS.networkUptime,
           KPI_KEYS.activeCustomers,
           KPI_KEYS.usageByNetwork,
+          KPI_KEYS.sitesOnline,
         ],
         span: 'daily',
         networkId,
@@ -88,7 +89,13 @@ export default function NetworkHomeScreen() {
 
   const site = mapSites.find((s) => s.id === sel);
   const sitesTotal = mapSites.length;
-  const sitesOnline = mapSites.filter((s) => s.status === 'online').length;
+  // Online count from the analytics SITES_ONLINE KPI; fall back to the live
+  // registry status when the KPI hasn't been emitted yet.
+  const sitesOnlineKpi = kpiValue(kpis, KPI_KEYS.sitesOnline);
+  const sitesOnline =
+    sitesOnlineKpi != null
+      ? Math.round(sitesOnlineKpi)
+      : mapSites.filter((s) => s.status === 'online').length;
 
   return (
     <div className="page">

@@ -29,7 +29,7 @@ import { StatusDot } from '@/components/Map/SiteMap';
 import UkamaMap, { HOME_MAP_ZOOM } from '@/components/Map/UkamaMap';
 import PageHeader from '@/components/PageHeader';
 import { useCurrency } from '@/lib/currency';
-import { KPI_KEYS, kpiAmount, kpiDelta, kpiText } from '@/lib/kpis';
+import { KPI_KEYS, kpiAmount, kpiDelta, kpiText, kpiValue } from '@/lib/kpis';
 import { type MapSite, toMapSites } from '@/lib/mappers/sites';
 import { pinColor } from '@/lib/status';
 import { useNetworkId } from '@/lib/useNetworkId';
@@ -91,7 +91,12 @@ export default function BizHomeScreen() {
   const { data: homeData, loading: homeLoading } = useGetKpiValuesQuery({
     variables: {
       data: {
-        keys: [KPI_KEYS.revenue, KPI_KEYS.mrr, KPI_KEYS.activeCustomers],
+        keys: [
+          KPI_KEYS.revenue,
+          KPI_KEYS.mrr,
+          KPI_KEYS.activeCustomers,
+          KPI_KEYS.sitesOnline,
+        ],
         span: 'monthly',
         networkId,
       },
@@ -110,7 +115,13 @@ export default function BizHomeScreen() {
     () => toMapSites(sitesData?.sitesView.sites.sites ?? []),
     [sitesData?.sitesView.sites.sites],
   );
-  const online = sites.filter((s) => s.status !== 'offline').length;
+  // Online count from the analytics SITES_ONLINE KPI; fall back to the live
+  // registry status when the KPI hasn't been emitted yet.
+  const onlineKpi = kpiValue(kpis, KPI_KEYS.sitesOnline);
+  const online =
+    onlineKpi != null
+      ? Math.round(onlineKpi)
+      : sites.filter((s) => s.status !== 'offline').length;
   // The business site-detail page was removed; drill into the canonical
   // Network site detail instead.
   const goSite = (id: string) => router.push(`/network/sites/${id}`);
