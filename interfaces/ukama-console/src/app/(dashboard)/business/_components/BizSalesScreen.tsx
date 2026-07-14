@@ -26,7 +26,13 @@ import SectionCard from '@/components/SectionCard';
 import { BAR_COLORS } from '@/lib/charts';
 import { useCurrency } from '@/lib/currency';
 import { DEFAULT_RANGE, rangeToSpan } from '@/lib/dateRange';
-import { attrValue, cellValue, KPI_KEYS, kpiAmount, kpiPrev } from '@/lib/kpis';
+import {
+  attrValue,
+  cellMoney,
+  KPI_KEYS,
+  kpiAmount,
+  kpiAmountPrev,
+} from '@/lib/kpis';
 import { useNetworkId } from '@/lib/useNetworkId';
 
 export default function BizSalesScreen() {
@@ -36,17 +42,16 @@ export default function BizSalesScreen() {
   const [range, setRange] = useState<string>(DEFAULT_RANGE);
   const span = rangeToSpan(range);
 
-  const { data: kpiData, loading: kpiLoading, error: kpiError } =
-    useGetKpiValuesQuery({
-      variables: {
-        data: {
-          keys: [KPI_KEYS.revenue, KPI_KEYS.mrr],
-          span,
-          networkId,
-        },
+  const { data: kpiData, loading: kpiLoading } = useGetKpiValuesQuery({
+    variables: {
+      data: {
+        keys: [KPI_KEYS.revenue, KPI_KEYS.mrr],
+        span,
+        networkId,
       },
-      skip: !networkId,
-    });
+    },
+    skip: !networkId,
+  });
 
   const { data: reportData, loading: reportLoading, error: reportError } =
     useGetPerformanceReportQuery({
@@ -57,14 +62,17 @@ export default function BizSalesScreen() {
     });
 
   const kpis = kpiData?.getKpiValues.values;
-  const error = kpiError ?? reportError;
+  // The by-package breakdown depends only on the report; KPI tiles degrade to
+  // "—" on their own, so a KPI failure must not blank the breakdown.
+  const error = reportError;
   const loading = kpiLoading || reportLoading;
 
-  // Revenue-by-package bars from the package_performance report rows.
+  // Revenue-by-package bars from the package_performance report rows (money
+  // columns are reported in cents).
   const byPackage = (reportData?.getPerformanceReport.rows ?? [])
     .map((r) => ({
       name: attrValue(r.attributes, 'name') ?? '—',
-      value: cellValue(r.cells, 'revenue') ?? 0,
+      value: cellMoney(r.cells, 'revenue'),
     }))
     .filter((r) => r.value > 0)
     .sort((a, z) => z.value - a.value)
@@ -72,8 +80,6 @@ export default function BizSalesScreen() {
       ...r,
       color: BAR_COLORS[i % BAR_COLORS.length] ?? 'var(--uk-ac)',
     }));
-
-  const lastMonth = kpiPrev(kpis, KPI_KEYS.revenue);
 
   return (
     <div className="page">
@@ -108,21 +114,15 @@ export default function BizSalesScreen() {
                   lineHeight: 1,
                 }}
               >
-                {error ? '—' : kpiAmount(kpis, KPI_KEYS.mrr, money)}
+                {kpiAmount(kpis, KPI_KEYS.mrr, money)}
               </span>
             </div>
             <div style={{ flex: 1, minWidth: 20 }} />
             <div style={{ display: 'flex', gap: 30, flexWrap: 'wrap' }}>
               {(
                 [
-                  [
-                    'This period',
-                    error ? '—' : kpiAmount(kpis, KPI_KEYS.revenue, money),
-                  ],
-                  [
-                    'Previous',
-                    error || lastMonth == null ? '—' : money(lastMonth),
-                  ],
+                  ['This period', kpiAmount(kpis, KPI_KEYS.revenue, money)],
+                  ['Previous', kpiAmountPrev(kpis, KPI_KEYS.revenue, money)],
                 ] as const
               ).map(([k, v]) => (
                 <div key={k}>
@@ -156,13 +156,13 @@ export default function BizSalesScreen() {
             icon: 'monetization_on',
             color: 'var(--uk-beige)',
             label: 'Revenue',
-            value: error ? '—' : kpiAmount(kpis, KPI_KEYS.revenue, money),
+            value: kpiAmount(kpis, KPI_KEYS.revenue, money),
           },
           {
             icon: 'payments',
             color: 'var(--uk-ac)',
             label: 'Recurring revenue',
-            value: error ? '—' : kpiAmount(kpis, KPI_KEYS.mrr, money),
+            value: kpiAmount(kpis, KPI_KEYS.mrr, money),
           },
           {
             icon: 'sell',

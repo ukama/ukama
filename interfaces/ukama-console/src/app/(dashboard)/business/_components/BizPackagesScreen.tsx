@@ -34,7 +34,7 @@ import StatusBadge from '@/components/StatusBadge';
 import { BAR_COLORS } from '@/lib/charts';
 import { useCurrency } from '@/lib/currency';
 import { DEFAULT_RANGE, rangeToSpan } from '@/lib/dateRange';
-import { attrValue, cellValue, KPI_KEYS, kpiAmount } from '@/lib/kpis';
+import { attrValue, cellMoney, cellValue, KPI_KEYS, kpiAmount } from '@/lib/kpis';
 import { useNetworkId } from '@/lib/useNetworkId';
 
 interface Plan {
@@ -54,29 +54,30 @@ export default function BizPackagesScreen() {
   const [range, setRange] = useState<string>(DEFAULT_RANGE);
   const span = rangeToSpan(range);
 
-  const { data: kpiData, error: kpiError } = useGetKpiValuesQuery({
+  const { data: kpiData } = useGetKpiValuesQuery({
     variables: {
       data: { keys: [KPI_KEYS.mrr, KPI_KEYS.arpu], span, networkId },
     },
     skip: !networkId,
   });
 
-  const { data, loading, error: reportError, refetch } =
-    useGetPerformanceReportQuery({
-      variables: {
-        data: { report: 'package_performance', span, networkId },
-      },
-      skip: !networkId,
-    });
+  // The packages table/mix depend ONLY on the performance report — a KPI-strip
+  // failure must not blank them (and vice versa). MRR/ARPU degrade to "—" on
+  // their own when getKpiValues fails.
+  const { data, loading, error, refetch } = useGetPerformanceReportQuery({
+    variables: {
+      data: { report: 'package_performance', span, networkId },
+    },
+    skip: !networkId,
+  });
 
-  const error = reportError ?? kpiError;
   const kpis = kpiData?.getKpiValues.values;
 
   const plans: Plan[] = (data?.getPerformanceReport.rows ?? []).map((r) => ({
     packageId: r.entityId,
     name: attrValue(r.attributes, 'name') ?? '—',
     price: Number(attrValue(r.attributes, 'price') ?? 0),
-    revenue: cellValue(r.cells, 'revenue') ?? 0,
+    revenue: cellMoney(r.cells, 'revenue'),
     sold: cellValue(r.cells, 'sold') ?? 0,
     active: (attrValue(r.attributes, 'active') ?? '').toLowerCase() === 'true',
     statusLabel: r.status,
@@ -112,14 +113,14 @@ export default function BizPackagesScreen() {
             icon: 'monetization_on',
             color: 'var(--uk-beige)',
             label: 'Monthly recurring revenue',
-            value: error ? '—' : kpiAmount(kpis, KPI_KEYS.mrr, money),
+            value: kpiAmount(kpis, KPI_KEYS.mrr, money),
             sub: 'recurring',
           },
           {
             icon: 'payments',
             color: 'var(--uk-ac)',
             label: 'ARPU',
-            value: error ? '—' : kpiAmount(kpis, KPI_KEYS.arpu, money),
+            value: kpiAmount(kpis, KPI_KEYS.arpu, money),
             sub: 'avg revenue / active SIM',
           },
           {

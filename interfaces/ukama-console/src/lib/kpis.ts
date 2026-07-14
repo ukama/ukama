@@ -20,16 +20,16 @@
  * gateway's KPI registry — see systems/analytics/aggregator/configs/kpis.
  */
 export const KPI_KEYS = {
-  networkUptime: 'network_uptime',
-  siteUptime: 'site_uptime',
-  sitesOnline: 'sites_online',
-  activeCustomers: 'active_customers',
-  paidCustomers: 'paid_customers',
-  revenue: 'revenue',
-  mrr: 'mrr',
-  arpu: 'arpu',
-  usageByNetwork: 'usage_by_network',
-  packageSales: 'package_sales',
+  networkUptime: 'NETWORK_UPTIME',
+  siteUptime: 'SITE_UPTIME',
+  sitesOnline: 'SITES_ONLINE',
+  activeCustomers: 'ACTIVE_CUSTOMERS',
+  paidCustomers: 'PAID_CUSTOMERS',
+  revenue: 'REVENUE',
+  mrr: 'MRR',
+  arpu: 'ARPU',
+  usageByNetwork: 'USAGE_BY_NETWORK',
+  packageSales: 'PACKAGE_SALES',
 } as const;
 
 /** Period-over-period comparison carried by a KPI value. */
@@ -93,8 +93,9 @@ export const kpiText = (
 };
 
 /**
- * Money KPI display: formats the KPI's raw numeric value with the caller's
- * formatter (org currency symbol). Returns "—" when the KPI is absent.
+ * Money KPI display: formats the KPI's value with the caller's formatter (org
+ * currency symbol). Money KPIs are reported in MINOR units (unit: "cents"), so
+ * divide by 100 before formatting. Returns "—" when the KPI is absent.
  */
 export const kpiAmount = (
   kpis: readonly Kpi[] | undefined,
@@ -102,7 +103,25 @@ export const kpiAmount = (
   formatMoney: (value: number) => string,
 ): string => {
   const k = kpiByKey(kpis, key);
-  return k ? formatMoney(k.value) : '—';
+  if (!k) return '—';
+  const value = (k.unit ?? '').toLowerCase() === 'cents' ? k.value / 100 : k.value;
+  return formatMoney(value);
+};
+
+/**
+ * Money display of a KPI's PREVIOUS-period value (trend.prevValue), cents-aware
+ * like kpiAmount. Returns "—" when the KPI or its previous value is absent.
+ */
+export const kpiAmountPrev = (
+  kpis: readonly Kpi[] | undefined,
+  key: string,
+  formatMoney: (value: number) => string,
+): string => {
+  const k = kpiByKey(kpis, key);
+  const prev = k?.trend?.prevValue;
+  if (k == null || prev == null) return '—';
+  const value = (k.unit ?? '').toLowerCase() === 'cents' ? prev / 100 : prev;
+  return formatMoney(value);
 };
 
 /** Value for a report cell column, or undefined when the column is absent. */
@@ -110,6 +129,22 @@ export const cellValue = (
   cells: readonly { column: string; value: number }[] | undefined,
   column: string,
 ): number | undefined => cells?.find((c) => c.column === column)?.value;
+
+/**
+ * Money value for a report cell in MAJOR currency units. The gateway reports
+ * money columns in minor units (unit: "cents"), so divide by 100 when the cell
+ * says so. Returns 0 when the column is absent.
+ */
+export const cellMoney = (
+  cells:
+    | readonly { column: string; value: number; unit?: string | null }[]
+    | undefined,
+  column: string,
+): number => {
+  const c = cells?.find((x) => x.column === column);
+  if (!c) return 0;
+  return (c.unit ?? '').toLowerCase() === 'cents' ? c.value / 100 : c.value;
+};
 
 /** Value for a report-row attribute, or undefined when the attribute is absent. */
 export const attrValue = (
