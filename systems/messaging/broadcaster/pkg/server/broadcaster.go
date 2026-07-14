@@ -16,6 +16,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/messaging/broadcaster/pkg"
 
 	log "github.com/sirupsen/logrus"
@@ -64,12 +65,19 @@ func (b *BroadcasterServer) NodeFeederBroadcast(ctx context.Context, msg *epb.Br
 
 	switch msg.Scope {
 	case epb.BroadcastScope_UNKNOWN_SCOPE:
-		log.Errorf("Unknown broadcast scope: %s, Publishing msg as it is.", msg.Scope)
+		log.Warnf("Unknown broadcast scope: %s, Publishing msg as it is.", msg.Scope)
 		return b.publishMessage(msg.RoutingKey, nfMsg)
 	case epb.BroadcastScope_NETWORK_SCOPE:
 		listReq.NetworkId = msg.TargetId
+		log.Infof("Event will be broadcasted only to network: %s ", listReq.NetworkId)
 	case epb.BroadcastScope_SITE_SCOPE:
 		listReq.SiteId = msg.TargetId
+		log.Infof("Event will be broadcasted only to site: %s ", listReq.SiteId)
+	}
+
+	if msg.NodeType == epb.NodeType_TNODE {
+		listReq.Type = ukama.NODE_TYPE_TOWERNODE
+		log.Infof(" ... and event will be broadcasted only to %s nodes", listReq.Type)
 	}
 
 	nodes, err := b.nodeClient.List(listReq)
