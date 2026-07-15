@@ -215,7 +215,7 @@ func (c *ControllerServer) ToggleRadio(ctx context.Context, req *pb.ToggleRadioR
 	return &pb.ToggleRadioResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
 }
 
-func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.ToggleServiceRequest) (*pb.ToggleServiceResponse, error) {
+func (c *ControllerServer) ToggleService(ctx context.Context, req *pb.ToggleServiceRequest) (*pb.ToggleServiceResponse, error) {
 	log.Infof("Toggling Node SERVICE on/off for node %v, to %v", req.NodeId, req.State)
 
 	nId, err := ukama.ValidateNodeId(req.NodeId)
