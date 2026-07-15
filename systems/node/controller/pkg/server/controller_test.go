@@ -157,12 +157,12 @@ func TestControllerServer_ToggleNodeService_InvalidNodeId(t *testing.T) {
 	)
 
 	_, err := s.ToggleService(context.TODO(), &pb.ToggleServiceRequest{
-		NodeId: "uk-983794-anode-78-7830",
+		NodeId: "not-a-node-id",
 		State:  "on",
 	})
 
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "node is not a tower node")
+	assert.Contains(t, err.Error(), "invalid format of node id")
 }
 
 func TestControllerServer_ToggleSwitchPort_NodeLevelLock(t *testing.T) {
@@ -230,10 +230,49 @@ func TestControllerServer_ToggleSwitchPort_Validation(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestControllerServer_ToggleRadio_InvalidNodeType(t *testing.T) {
+func TestControllerServer_ToggleRadio_InvalidNodeId(t *testing.T) {
 	s := NewControllerServer(testOrgName, &mocks.NodeLogRepo{}, &mbmocks.MsgBusServiceClient{}, nil, nil, nil, nil, nil, 0, 0, pkg.IsDebugMode)
 
-	_, err := s.ToggleRadio(context.TODO(), &pb.ToggleRadioRequest{NodeId: "uk-983794-tnode-78-7830", State: "on"})
+	_, err := s.ToggleRadio(context.TODO(), &pb.ToggleRadioRequest{NodeId: "not-a-node-id", State: "on"})
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "node is not an amplifier node")
+	assert.Contains(t, err.Error(), "invalid format of node id")
+}
+
+func TestControllerServer_ToggleRadio_TowerNode(t *testing.T) {
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	conRepo := &mocks.NodeLogRepo{}
+	opMgr := &mbmocks.ManagerClient{}
+	opMon := &mocks.OperationMonitor{}
+
+	// Radio toggles are forwarded to both tower and amplifier nodes, so a
+	// tower node id must be accepted here.
+	nodeId := "uk-983794-tnode-78-7830"
+
+	data, err := json.Marshal(map[string]string{"state": "on"})
+	if err != nil {
+		t.Fatalf("failed to marshal message: %v", err)
+	}
+
+	op := &copr.OperationInfo{Id: "op-radio", FencingToken: 1, ResourceKey: "node:" + nodeId}
+	opMgr.On("Start", mock.MatchedBy(func(req copr.StartRequest) bool {
+		return req.ResourceKey == "node:"+nodeId
+	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
+	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
+	opMgr.On("MarkRunning", "op-radio", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
+
+	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
+		Target:     testOrgName + "..." + nodeId,
+		HttpMethod: "POST",
+		Path:       "/device/v1/radio",
+		Msg:        data,
+		NodeId:     nodeId,
+	}).Return(nil).Once()
+
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, opMgr, opMon, 30, 60, pkg.IsDebugMode)
+
+	_, err = s.ToggleRadio(context.TODO(), &pb.ToggleRadioRequest{NodeId: nodeId, State: "on"})
+
+	msgclientRepo.AssertExpectations(t)
+	opMgr.AssertExpectations(t)
+	assert.NoError(t, err)
 }
