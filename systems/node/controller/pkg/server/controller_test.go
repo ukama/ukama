@@ -49,7 +49,7 @@ func TestControllerServer_RestartNode(t *testing.T) {
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
 		Target:     testOrgName + "..." + nodeId,
 		HttpMethod: "POST",
-		Path:       "/device/v1/restart",
+		Path:       "/device/v1/reboot",
 		Msg:        []byte{},
 		NodeId:     nodeId,
 	}).Return(nil).Once()

@@ -38,7 +38,7 @@ var actions = map[string]struct {
 	path   string
 	method string
 }{
-	"RESTART": {path: "/device/v1/restart", method: "POST"},
+	"RESTART": {path: "/device/v1/reboot", method: "POST"},
 	"PING":    {path: "/device/v1/ping", method: "GET"},
 	"SWITCH":  {path: "/device/v1/switch", method: "POST"},
 	"RADIO":   {path: "/device/v1/radio", method: "POST"},
