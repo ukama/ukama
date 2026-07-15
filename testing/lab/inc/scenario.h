@@ -115,6 +115,7 @@ typedef struct {
     char         entity[ULAB_MAX_REF];
     char         status[ULAB_MAX_REF];
     char         expected[ULAB_MAX_REF];
+    char         app[ULAB_MAX_NAME];
     uint64_t     expected_used_mb;
     uint64_t     expected_remaining_mb;
     uint32_t     tolerance_percent;
@@ -132,6 +133,8 @@ typedef struct {
     char         expect_result[ULAB_MAX_REF];
     char         error_contains[ULAB_MAX_ERR];
     char         status[ULAB_MAX_REF];
+    char         app[ULAB_MAX_NAME];
+    char         tag[ULAB_MAX_REF];
     uint32_t     count_per_site;
     char         package_ref[ULAB_MAX_REF];
     check_spec_t checks[ULAB_MAX_CHECKS];

@@ -309,7 +309,10 @@ static int apply_check_field(check_spec_t *c, const char *key,
         sizeof(c->entity), val);
     if (ulab_streq(key, "status")) return ulab_copy(c->status,
         sizeof(c->status), val);
-    if (ulab_streq(key, "section") || ulab_streq(key, "version")) {
+    if (ulab_streq(key, "app")) return ulab_copy(c->app,
+        sizeof(c->app), val);
+    if (ulab_streq(key, "section") || ulab_streq(key, "version") ||
+        ulab_streq(key, "tag")) {
         return ulab_copy(c->expected, sizeof(c->expected), val);
     }
     if (ulab_streq(key, "amount_mb")) {
@@ -344,6 +347,21 @@ static int apply_check_field(check_spec_t *c, const char *key,
         c->ues.kind = SEL_CREATED_IN_PHASE;
         return ulab_copy(c->ues.value, sizeof(c->ues.value), val);
     }
+    if (ulab_streq(key, "type_selector")) {
+        if (ulab_copy(c->nodes.value, sizeof(c->nodes.value), val)) {
+            return ULAB_ERR;
+        }
+        c->nodes.kind = c->nodes.count > 0 ?
+            SEL_NODE_TYPE_COUNT_PER_NETWORK : SEL_NODE_TYPE;
+        return ULAB_OK;
+    }
+    if (ulab_streq(key, "count_per_network")) {
+        if (ulab_parse_u32(val, &c->nodes.count) || c->nodes.count == 0) {
+            return ULAB_ERR;
+        }
+        c->nodes.kind = SEL_NODE_TYPE_COUNT_PER_NETWORK;
+        return ULAB_OK;
+    }
     return ULAB_ERR;
 }
 
@@ -362,6 +380,10 @@ static int apply_event_field(event_spec_t *e, const char *key,
     }
     if (ulab_streq(key, "package")) return ulab_copy(e->package_ref,
         sizeof(e->package_ref), val);
+    if (ulab_streq(key, "app")) return ulab_copy(e->app,
+        sizeof(e->app), val);
+    if (ulab_streq(key, "tag")) return ulab_copy(e->tag,
+        sizeof(e->tag), val);
     if (ulab_streq(key, "status") || ulab_streq(key, "state") ||
         ulab_streq(key, "version")) return ulab_copy(e->status,
         sizeof(e->status), val);
@@ -384,12 +406,19 @@ static int apply_event_field(event_spec_t *e, const char *key,
         return ulab_copy(e->nodes.value, sizeof(e->nodes.value), val);
     }
     if (ulab_streq(key, "type_selector")) {
-        e->nodes.kind = SEL_NODE_TYPE;
-        return ulab_copy(e->nodes.value, sizeof(e->nodes.value), val);
+        if (ulab_copy(e->nodes.value, sizeof(e->nodes.value), val)) {
+            return ULAB_ERR;
+        }
+        e->nodes.kind = e->nodes.count > 0 ?
+            SEL_NODE_TYPE_COUNT_PER_NETWORK : SEL_NODE_TYPE;
+        return ULAB_OK;
     }
     if (ulab_streq(key, "count_per_network")) {
+        if (ulab_parse_u32(val, &e->nodes.count) || e->nodes.count == 0) {
+            return ULAB_ERR;
+        }
         e->nodes.kind = SEL_NODE_TYPE_COUNT_PER_NETWORK;
-        return ulab_parse_u32(val, &e->nodes.count);
+        return ULAB_OK;
     }
     return ULAB_ERR;
 }

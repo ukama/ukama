@@ -120,6 +120,49 @@ static int event_restart_nodes(event_ctx_t *ctx,
     return ULAB_OK;
 }
 
+static int event_software_update(event_ctx_t *ctx,
+                                 const event_spec_t *event,
+                                 ulab_error_t *err) {
+    selector_result_t res;
+    size_t i;
+
+    memset(&res, 0, sizeof(res));
+
+    if (event->app[0] == '\0' || event->tag[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "software_update requires app and tag");
+        return ULAB_ERR;
+    }
+
+    if (selector_resolve_nodes(ctx->world, &event->nodes, &res, err)) {
+        return ULAB_ERR;
+    }
+
+    if (res.count == 0) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "software_update selected no nodes");
+        selector_result_free(&res);
+        return ULAB_ERR;
+    }
+
+    for (i = 0; i < res.count; i++) {
+        node_t *node;
+
+        node = &ctx->world->nodes[res.idx[i]];
+        ulab_status("SOFTWARE", "update node=%s app=%s tag=%s",
+                    node->bff_id, event->app, event->tag);
+
+        if (bff_update_software(ctx->bff, node, event->app,
+                                event->tag, err)) {
+            selector_result_free(&res);
+            return ULAB_ERR;
+        }
+    }
+
+    selector_result_free(&res);
+    return ULAB_OK;
+}
+
 static int event_toggle_service(event_ctx_t *ctx,
                                 const event_spec_t *event,
                                 ulab_error_t *err) {
@@ -198,7 +241,7 @@ int event_runtime(event_ctx_t *ctx,
         return runtime_restore_nodes(ctx->runtime, err);
 
     case EVT_SOFTWARE_UPDATE:
-        return runtime_set_node_version(ctx->runtime, event->status, err);
+        return event_software_update(ctx, event, err);
 
     case EVT_RESTART_SITE:
         rc = selector_resolve_nodes(ctx->world, &event->nodes, &res, err);

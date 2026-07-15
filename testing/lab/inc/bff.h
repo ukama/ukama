@@ -37,6 +37,13 @@ typedef struct {
     char connectivity[ULAB_MAX_REF];
 } bff_node_state_t;
 
+typedef struct {
+    char name[ULAB_MAX_NAME];
+    char version[ULAB_MAX_REF];
+    char tag[ULAB_MAX_REF];
+    char status[ULAB_MAX_REF];
+} bff_app_state_t;
+
 int bff_init(bff_client_t *c,
              const char *url,
              const char *run_dir);
@@ -132,6 +139,18 @@ int bff_get_node_state(bff_client_t *c,
 
 int bff_restart_node(bff_client_t *c,
                      const node_t *node,
+                     ulab_error_t *err);
+
+int bff_update_software(bff_client_t *c,
+                        const node_t *node,
+                        const char *app,
+                        const char *tag,
+                        ulab_error_t *err);
+
+int bff_get_node_app(bff_client_t *c,
+                     const node_t *node,
+                     const char *app,
+                     bff_app_state_t *state,
                      ulab_error_t *err);
 
 int bff_toggle_site_service(bff_client_t *c,

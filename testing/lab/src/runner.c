@@ -793,7 +793,9 @@ typedef enum {
 static int is_live_runtime_check(const check_spec_t *check) {
     return check != NULL &&
         (check->type == CHECK_TRAFFIC_ALLOWED ||
-         check->type == CHECK_TRAFFIC_BLOCKED);
+         check->type == CHECK_TRAFFIC_BLOCKED ||
+         check->type == CHECK_NODE_VERSION_EQUALS ||
+         check->type == CHECK_NODE_HEALTH_OK);
 }
 
 static int check_mode_includes(const check_spec_t *check,

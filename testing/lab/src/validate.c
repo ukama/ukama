@@ -21,6 +21,7 @@ static int fail(ulab_error_t *err, const char *msg) {
 int scenario_validate(const scenario_t *s, ulab_error_t *err) {
     uint32_t pct = 0;
     size_t i;
+    size_t j;
 
     if (s->version != ULAB_SCHEMA_VER) {
         return fail(err, "unsupported scenario version");
@@ -45,15 +46,11 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
         return fail(err, "world must include networks and sites");
     }
 
-    if (s->world.ues_per_site == 0) {
-        return fail(err, "world.ues_per_site must be > 0");
-    }
-
     if (s->world.tower_per_site == 0) {
         return fail(err, "world.nodes_per_site must include tower node");
     }
 
-    if (s->world.ues_per_site >
+    if (s->world.ues_per_site > 0 && s->world.ues_per_site >
         s->world.tower_per_site * ULAB_MAX_UES_PER_TOWER) {
         return fail(err, "world.ues_per_site exceeds 500 UEs per tower");
     }
@@ -63,7 +60,7 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
         return fail(err, "world.nodes_per_site must include nodes");
     }
 
-    if (s->package_count == 0) {
+    if (s->world.ues_per_site > 0 && s->package_count == 0) {
         return fail(err, "at least one package is required");
     }
 
@@ -80,14 +77,29 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
         pct += p->assign_percent;
     }
 
-    if (pct != 100) {
+    if (s->package_count > 0 && pct != 100) {
         return fail(err, "package assign_percent values must add to 100");
     }
 
     if (!s->setup.create_networks || !s->setup.create_sites ||
-        !s->setup.create_nodes || !s->setup.create_packages ||
-        !s->setup.create_subscribers || !s->setup.create_sims) {
+        !s->setup.create_nodes) {
         return fail(err, "setup.create_via_bff missing required entries");
+    }
+
+    if (s->package_count > 0 && !s->setup.create_packages) {
+        return fail(err, "setup.create_via_bff missing packages");
+    }
+
+    if (s->world.ues_per_site > 0 &&
+        (!s->setup.create_packages || !s->setup.create_subscribers ||
+         !s->setup.create_sims)) {
+        return fail(err,
+                    "UE scenarios require packages, subscribers, and sims");
+    }
+
+    if (s->world.ues_per_site == 0 &&
+        (s->runtime.start_ues || s->runtime.wait_ues_attached)) {
+        return fail(err, "runtime UE actions require world.ues_per_site > 0");
     }
 
     for (i = 0; i < s->profile_count; i++) {
@@ -103,6 +115,52 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
 
     if (s->phase_count == 0) {
         return fail(err, "at least one phase is required");
+    }
+
+    for (i = 0; i < s->phase_count; i++) {
+        const phase_spec_t *phase;
+
+        phase = &s->phases[i];
+        for (j = 0; j < phase->event_count; j++) {
+            const event_spec_t *event;
+
+            event = &phase->events[j];
+            if (event->type != EVT_SOFTWARE_UPDATE) {
+                continue;
+            }
+
+            if (event->app[0] == '\0' || event->tag[0] == '\0') {
+                return fail(err,
+                            "software_update event requires app and tag");
+            }
+
+            if (event->nodes.kind == SEL_NONE) {
+                return fail(err,
+                            "software_update event requires node selector");
+            }
+        }
+
+        for (j = 0; j < phase->check_count; j++) {
+            const check_spec_t *check;
+
+            check = &phase->checks[j];
+            if (check->type == CHECK_NODE_VERSION_EQUALS &&
+                (check->app[0] == '\0' || check->expected[0] == '\0')) {
+                return fail(err,
+                            "node_version_equals requires app and version/tag");
+            }
+        }
+    }
+
+    for (i = 0; i < s->final_check_count; i++) {
+        const check_spec_t *check;
+
+        check = &s->final_checks[i];
+        if (check->type == CHECK_NODE_VERSION_EQUALS &&
+            (check->app[0] == '\0' || check->expected[0] == '\0')) {
+            return fail(err,
+                        "node_version_equals requires app and version/tag");
+        }
     }
 
     return ULAB_OK;
