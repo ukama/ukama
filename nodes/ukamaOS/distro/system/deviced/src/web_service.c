@@ -186,11 +186,15 @@ static void* worker_run(void *arg) {
 
         execRet = actions_reboot_apply(config);
 
-        /* reboot() shouldn't return (except debug mode). If we reached here and
-         * apply failed, mark fault.
+        /*
+         * A production reboot does not return. Debug mode and virtual-node
+         * implementations may return after completing the action, so release
+         * the control slot in that case.
          */
         if (execRet != STATUS_OK) {
             control_mark_fault(control, args->Subsystem);
+        } else {
+            control_mark_reboot_done(control);
         }
 
         usys_free(args);

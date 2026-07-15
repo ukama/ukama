@@ -793,7 +793,9 @@ typedef enum {
 static int is_live_runtime_check(const check_spec_t *check) {
     return check != NULL &&
         (check->type == CHECK_TRAFFIC_ALLOWED ||
-         check->type == CHECK_TRAFFIC_BLOCKED);
+         check->type == CHECK_TRAFFIC_BLOCKED ||
+         check->type == CHECK_NODE_VERSION_EQUALS ||
+         check->type == CHECK_NODE_HEALTH_OK);
 }
 
 static int check_mode_includes(const check_spec_t *check,
@@ -939,6 +941,7 @@ static int run_phase(scenario_t *scenario,
                      ulab_error_t *err) {
 
     event_ctx_t event_ctx;
+    check_ctx_t check_ctx;
     size_t i;
     int rc;
 
@@ -955,7 +958,10 @@ static int run_phase(scenario_t *scenario,
         }
     }
 
-    return ULAB_OK;
+    init_check_ctx(&check_ctx, scenario, world, model, bff, runtime);
+    return run_checks_mode(&check_ctx, phase->checks,
+                           phase->check_count, report,
+                           CHECK_RUN_LIVE_RUNTIME, err);
 }
 
 static void write_world_artifact(const world_t *world,
@@ -1134,6 +1140,11 @@ static int runner_validate_one(const runner_opts_t *opts) {
         goto done;
     }
 
+    ulab_status("SCENARIO", "%s", scenario->name);
+    if (scenario->description[0] != '\0') {
+        ulab_status("PURPOSE", "%s", scenario->description);
+    }
+
     if (report_open(&report, scenario, world.run_id, runDir)) {
         snprintf(err.msg, sizeof(err.msg), "failed to open report files");
         rc = ULAB_EINTERNAL;
@@ -1187,10 +1198,13 @@ static int runner_validate_one(const runner_opts_t *opts) {
         goto done;
     }
 
-    rc = runtime_enable_pcrf_service(&runtime, &world, &err);
-    if (rc != ULAB_OK) {
-        rc = ULAB_ERUNTIME;
-        goto done;
+    if (scenario->runtime.start_ues ||
+        scenario->runtime.wait_ues_attached) {
+        rc = runtime_enable_pcrf_service(&runtime, &world, &err);
+        if (rc != ULAB_OK) {
+            rc = ULAB_ERUNTIME;
+            goto done;
+        }
     }
 
     ulab_status("BACKEND", "creating backend world resources");
@@ -1217,8 +1231,9 @@ static int runner_validate_one(const runner_opts_t *opts) {
 
     init_check_ctx(&check_ctx, scenario, &world, &model, &bff, &runtime);
 
-    rc = run_deferred_checks(&check_ctx, scenario, &report,
-                             CHECK_RUN_LIVE_RUNTIME, &err);
+    rc = run_checks_mode(&check_ctx, scenario->final_checks,
+                         scenario->final_check_count, &report,
+                         CHECK_RUN_LIVE_RUNTIME, &err);
     if (rc != ULAB_OK) {
         goto done;
     }

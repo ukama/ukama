@@ -1,5 +1,6 @@
 version: 1
 name: p0-tower-restart-recovers-small
+description: Verify traffic resumes and usage remains correct after restarting the tower node.
 seed: 308
 suite: p0
 priority: p0
@@ -55,7 +56,7 @@ phases:
     events:
       - type: restart_nodes
         type_selector: tower
-        count: 1
+        count_per_network: 1
       - type: wait_nodes_ready
         nodes: all
     checks:

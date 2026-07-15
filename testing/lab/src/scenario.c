@@ -48,7 +48,9 @@ const char *scenario_event_name(event_type_t type) {
     case EVT_CREATE_UES: return "create_ues";
     case EVT_START_UES: return "start_ues";
     case EVT_WAIT_UES_ATTACHED: return "wait_ues_attached";
+    case EVT_WAIT: return "wait";
     case EVT_RESTART_NODES: return "restart_nodes";
+    case EVT_WAIT_NODE_CONNECTIVITY: return "wait_node_connectivity";
     case EVT_WAIT_NODES_READY: return "wait_nodes_ready";
     case EVT_ADD_PACKAGE_TO_SIM: return "add_package_to_sim";
     case EVT_REMOVE_PACKAGE_FROM_SIM: return "remove_package_from_sim";
@@ -100,8 +102,12 @@ int scenario_event_from_name(const char *name, event_type_t *out) {
     else if (ulab_streq(name, "start_ues")) *out = EVT_START_UES;
     else if (ulab_streq(name, "wait_ues_attached")) {
         *out = EVT_WAIT_UES_ATTACHED;
+    } else if (ulab_streq(name, "wait")) {
+        *out = EVT_WAIT;
     } else if (ulab_streq(name, "restart_nodes")) {
         *out = EVT_RESTART_NODES;
+    } else if (ulab_streq(name, "wait_node_connectivity")) {
+        *out = EVT_WAIT_NODE_CONNECTIVITY;
     } else if (ulab_streq(name, "wait_nodes_ready")) {
         *out = EVT_WAIT_NODES_READY;
     } else if (ulab_streq(name, "add_package_to_sim")) {
@@ -213,14 +219,22 @@ static int split_kv(char *s, char **key, char **val) {
 
 static int parse_selector_value(selector_t *sel, const char *key,
                                 const char *val) {
-    memset(sel, 0, sizeof(*sel));
-    if (ulab_streq(key, "ues") || ulab_streq(key, "nodes") ||
-        ulab_streq(key, "sites") || ulab_streq(key, "networks")) {
-        if (ulab_streq(val, "all")) {
-            sel->kind = SEL_ALL;
-            return ULAB_OK;
-        }
+    if (!ulab_streq(key, "ues") && !ulab_streq(key, "nodes") &&
+        !ulab_streq(key, "sites") && !ulab_streq(key, "networks")) {
+        return ULAB_ERR;
     }
+
+    memset(sel, 0, sizeof(*sel));
+    if (ulab_streq(val, "all")) {
+        sel->kind = SEL_ALL;
+        return ULAB_OK;
+    }
+
+    if (val != NULL && val[0] != '\0') {
+        sel->kind = SEL_REF;
+        return ulab_copy(sel->value, sizeof(sel->value), val);
+    }
+
     return ULAB_ERR;
 }
 
@@ -298,7 +312,10 @@ static int apply_check_field(check_spec_t *c, const char *key,
         sizeof(c->entity), val);
     if (ulab_streq(key, "status")) return ulab_copy(c->status,
         sizeof(c->status), val);
-    if (ulab_streq(key, "section") || ulab_streq(key, "version")) {
+    if (ulab_streq(key, "app")) return ulab_copy(c->app,
+        sizeof(c->app), val);
+    if (ulab_streq(key, "section") || ulab_streq(key, "version") ||
+        ulab_streq(key, "tag")) {
         return ulab_copy(c->expected, sizeof(c->expected), val);
     }
     if (ulab_streq(key, "amount_mb")) {
@@ -333,6 +350,21 @@ static int apply_check_field(check_spec_t *c, const char *key,
         c->ues.kind = SEL_CREATED_IN_PHASE;
         return ulab_copy(c->ues.value, sizeof(c->ues.value), val);
     }
+    if (ulab_streq(key, "type_selector")) {
+        if (ulab_copy(c->nodes.value, sizeof(c->nodes.value), val)) {
+            return ULAB_ERR;
+        }
+        c->nodes.kind = c->nodes.count > 0 ?
+            SEL_NODE_TYPE_COUNT_PER_NETWORK : SEL_NODE_TYPE;
+        return ULAB_OK;
+    }
+    if (ulab_streq(key, "count_per_network")) {
+        if (ulab_parse_u32(val, &c->nodes.count) || c->nodes.count == 0) {
+            return ULAB_ERR;
+        }
+        c->nodes.kind = SEL_NODE_TYPE_COUNT_PER_NETWORK;
+        return ULAB_OK;
+    }
     return ULAB_ERR;
 }
 
@@ -340,7 +372,8 @@ static int apply_event_field(event_spec_t *e, const char *key,
                              const char *val) {
     if (ulab_streq(key, "name")) return ulab_copy(e->name,
         sizeof(e->name), val);
-    if (ulab_streq(key, "amount_mb")) {
+    if (ulab_streq(key, "amount_mb") ||
+        ulab_streq(key, "seconds")) {
         return ulab_parse_u64(val, &e->amount_mb);
     }
     if (ulab_streq(key, "profile")) return ulab_copy(e->profile,
@@ -350,7 +383,12 @@ static int apply_event_field(event_spec_t *e, const char *key,
     }
     if (ulab_streq(key, "package")) return ulab_copy(e->package_ref,
         sizeof(e->package_ref), val);
+    if (ulab_streq(key, "app")) return ulab_copy(e->app,
+        sizeof(e->app), val);
+    if (ulab_streq(key, "tag")) return ulab_copy(e->tag,
+        sizeof(e->tag), val);
     if (ulab_streq(key, "status") || ulab_streq(key, "state") ||
+        ulab_streq(key, "connectivity") ||
         ulab_streq(key, "version")) return ulab_copy(e->status,
         sizeof(e->status), val);
     if (ulab_streq(key, "expect_result")) return ulab_copy(e->expect_result,
@@ -372,12 +410,19 @@ static int apply_event_field(event_spec_t *e, const char *key,
         return ulab_copy(e->nodes.value, sizeof(e->nodes.value), val);
     }
     if (ulab_streq(key, "type_selector")) {
-        e->nodes.kind = SEL_NODE_TYPE;
-        return ulab_copy(e->nodes.value, sizeof(e->nodes.value), val);
+        if (ulab_copy(e->nodes.value, sizeof(e->nodes.value), val)) {
+            return ULAB_ERR;
+        }
+        e->nodes.kind = e->nodes.count > 0 ?
+            SEL_NODE_TYPE_COUNT_PER_NETWORK : SEL_NODE_TYPE;
+        return ULAB_OK;
     }
     if (ulab_streq(key, "count_per_network")) {
+        if (ulab_parse_u32(val, &e->nodes.count) || e->nodes.count == 0) {
+            return ULAB_ERR;
+        }
         e->nodes.kind = SEL_NODE_TYPE_COUNT_PER_NETWORK;
-        return ulab_parse_u32(val, &e->nodes.count);
+        return ULAB_OK;
     }
     return ULAB_ERR;
 }
@@ -448,6 +493,10 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
                 if (ulab_parse_u32(val, &s->version) != ULAB_OK) goto bad;
             } else if (ulab_streq(key, "name")) {
                 if (ulab_copy(s->name, sizeof(s->name), val) != ULAB_OK) {
+                    goto bad;
+                }
+            } else if (ulab_streq(key, "description")) {
+                if (ulab_copy(s->description, sizeof(s->description), val)) {
                     goto bad;
                 }
             } else if (ulab_streq(key, "seed")) {

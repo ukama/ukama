@@ -1,5 +1,6 @@
 version: 1
 name: p0-two-packages-small
+description: Verify four UEs split across two packages and report correct usage and backend state.
 seed: 307
 suite: p0
 priority: p0

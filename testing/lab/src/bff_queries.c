@@ -46,9 +46,17 @@ const char *BFF_GET_SIM_PACKAGES =
 " getPackagesForSim(data: $data) { sim_id packages { "
 " package_id is_active } } }";
 
-const char *BFF_GET_NODE_STATE =
-"query GetNodeState($id: String!) {"
-" getNodeState(id: $id) { state connectivity } }";
+const char *BFF_GET_NODE =
+"query GetNode($data: NodeInput!) {"
+" getNode(data: $data) { id status { connectivity state } } }";
+
+const char *BFF_UPDATE_SOFTWARE =
+"mutation UpdateSoftware($data: UpdateSoftwareInputDto!) {"
+" updateSoftware(data: $data) { message } }";
+
+const char *BFF_GET_APPS =
+"query GetApps($data: GetAppsInputDto!) {"
+" getApps(data: $data) { apps { name version tag status } } }";
 
 const char *BFF_NETWORK_OVERVIEW =
 "query NetworkOverview($networkId: String!) {"

@@ -1,5 +1,6 @@
 version: 1
 name: lifecycle-sim-package-remove-add
+description: Verify removing a SIM package makes the SIM inactive and adding it back restores the active package state.
 seed: 501
 suite: lifecycle
 priority: p1

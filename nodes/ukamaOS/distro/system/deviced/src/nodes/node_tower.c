@@ -111,11 +111,29 @@ int node_tower_before_reboot(Config *config) {
     if (!config) return STATUS_NOK;
 
     if (wc_send_reboot_to_client(config, &retCode) != USYS_OK) {
+        if (config->remoteClientRebootOptional) {
+            usys_log_info(
+                "Remote client reboot unavailable; continuing node reboot "
+                "because %s is enabled",
+                ENV_DEVICED_REMOTE_CLIENT_REBOOT_OPTIONAL);
+            return STATUS_OK;
+        }
+
         usys_log_error("Remote client reboot failed");
         return STATUS_NOK;
     }
 
     if (retCode != HttpStatus_Accepted) {
+        if (config->remoteClientRebootOptional) {
+            usys_log_info(
+                "Remote client reboot returned %d (%s); continuing node "
+                "reboot because %s is enabled",
+                retCode,
+                HttpStatusStr(retCode),
+                ENV_DEVICED_REMOTE_CLIENT_REBOOT_OPTIONAL);
+            return STATUS_OK;
+        }
+
         usys_log_error("Remote client reboot not accepted: %d (%s)",
                        retCode,
                        HttpStatusStr(retCode));

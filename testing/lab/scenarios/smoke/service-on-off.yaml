@@ -1,10 +1,10 @@
 version: 1
-name: usage-accumulation
-description: Verify usage accumulates from 100 MB to 300 MB and traffic remains allowed.
-seed: 42
-suite: p0
+name: smoke-service-on-off
+description: Verify service off blocks traffic and service on restores it.
+seed: 3
+suite: smoke
 priority: p0
-tags: [virtual, p0]
+tags: [virtual, runtime, site, service]
 status: active
 
 provider:
@@ -42,48 +42,44 @@ runtime:
   wait: [nodes_ready, ues_attached]
 
 phases:
-  - name: use_100mb
-    events:
-      - type: traffic
-        ues: all
-        amount_mb: 100
+  - name: service_baseline
     checks:
-      - type: usage_per_sim
+      - type: traffic_allowed
         ues: all
-        expected_used_mb: 100
-        tolerance_percent: 2
+        amount_mb: 1
 
-  - name: use_200mb_more
+  - name: service_off
     events:
-      - type: traffic
-        ues: all
-        amount_mb: 200
+      - type: toggle_service
+        sites: all
+        state: off
     checks:
-      - type: usage_per_sim
+      - type: traffic_blocked
         ues: all
-        expected_used_mb: 300
-        tolerance_percent: 2
+        amount_mb: 1
+
+  - name: service_on
+    events:
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: wait_ues_attached
+        ues: all
+    checks:
+      - type: traffic_allowed
+        ues: all
+        amount_mb: 1
 
 final_checks:
   - type: backend_count
-    target: networks
-    expected: 1
-  - type: backend_count
     target: sites
     expected: 1
-  - type: backend_count
-    target: nodes
-    expected: 3
-  - type: backend_count
-    target: sims
-    expected: 1
+  - type: status_equals
+    entity: sim
+    ref: ue-000001
+    status: active
   - type: package_active
     ues: all
     package: daily_1gb
   - type: balance_non_negative
     ues: all
-  - type: traffic_allowed
-    ues: all
-    amount_mb: 1
-  - type: dashboard_loads
-    networks: all

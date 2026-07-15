@@ -215,7 +215,7 @@ func (c *ControllerServer) ToggleRadio(ctx context.Context, req *pb.ToggleRadioR
 	return &pb.ToggleRadioResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
 }
 
-func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.ToggleServiceRequest) (*pb.ToggleServiceResponse, error) {
+func (c *ControllerServer) ToggleService(ctx context.Context, req *pb.ToggleServiceRequest) (*pb.ToggleServiceResponse, error) {
 	log.Infof("Toggling Node SERVICE on/off for node %v, to %v", req.NodeId, req.State)
 
 	nId, err := ukama.ValidateNodeId(req.NodeId)
@@ -232,16 +232,16 @@ func (c *ControllerServer) ToggleNodeService(ctx context.Context, req *pb.Toggle
 		return nil, err
 	}
 
-	op, err := c.acquireAndRegister("ToggleNodeService", nodeKey(nId.String()))
+	op, err := c.acquireAndRegister("ToggleService", nodeKey(nId.String()))
 	if err != nil {
 		return nil, err
 	}
-	if err := c.markRunning(op, "ToggleNodeService"); err != nil {
-		c.failOperation(op, "ToggleNodeService", fmt.Sprintf("mark running failed: %v", err))
+	if err := c.markRunning(op, "ToggleService"); err != nil {
+		c.failOperation(op, "ToggleService", fmt.Sprintf("mark running failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "mark running: %v", err)
 	}
 	if err := c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), actions["SERVICE"].method, actions["SERVICE"].path, nId.String(), data); err != nil {
-		c.failOperation(op, "ToggleNodeService", fmt.Sprintf("publish failed: %v", err))
+		c.failOperation(op, "ToggleService", fmt.Sprintf("publish failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "Failed to publish Node SERVICE switch message: %s", err.Error())
 	}
 	return &pb.ToggleServiceResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil

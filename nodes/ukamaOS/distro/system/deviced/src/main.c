@@ -6,6 +6,10 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+
 #include "config.h"
 #include "deviced.h"
 #include "nodes.h"
@@ -38,6 +42,21 @@ static UsysOption longOptions[] = {
     { "version",     no_argument,       0, 'v' },
     { 0, 0, 0, 0 }
 };
+
+static bool env_is_enabled(const char *name) {
+
+    const char *value = NULL;
+
+    if (!name) return false;
+
+    value = getenv(name);
+    if (!value || !*value) return false;
+
+    return strcmp(value, "1") == 0 ||
+           strcasecmp(value, "true") == 0 ||
+           strcasecmp(value, "yes") == 0 ||
+           strcasecmp(value, "on") == 0;
+}
 
 void set_log_level(char *slevel) {
 
@@ -133,6 +152,8 @@ int main(int argc, char **argv) {
     serviceConfig.nodeID       = NULL;
     serviceConfig.nodeType     = NULL;
     serviceConfig.clientMode   = clientMode;
+    serviceConfig.remoteClientRebootOptional =
+        env_is_enabled(ENV_DEVICED_REMOTE_CLIENT_REBOOT_OPTIONAL);
     if (!clientMode) {
         serviceConfig.clientHost   = strdup(clientHost);
         serviceConfig.clientPort   = usys_find_service_port(SERVICE_DEVICE_CLIENT);
@@ -176,6 +197,12 @@ int main(int argc, char **argv) {
                 "%s: unable to connect with node.d", serviceConfig.serviceName);
             exitCode = USYS_TRUE;
             goto done;
+        }
+
+        if (node_is_tower(&serviceConfig)) {
+            usys_log_info("Remote client reboot is %s",
+                          serviceConfig.remoteClientRebootOptional ?
+                          "optional" : "required");
         }
 
         serviceConfig.control = control_create();

@@ -1,5 +1,6 @@
 version: 1
 name: p0-backend-list-contains
+description: Verify backend list views contain the created network, site, tower, and SIM records.
 seed: 302
 suite: p0
 priority: p0

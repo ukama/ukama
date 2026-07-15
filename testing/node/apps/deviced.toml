@@ -19,3 +19,6 @@
         autorestart="true"
         startretries=5
 	group="service"
+
+[app-exec.env]
+        DEVICED_REMOTE_CLIENT_REBOOT_OPTIONAL=1

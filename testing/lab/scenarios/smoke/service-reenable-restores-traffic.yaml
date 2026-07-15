@@ -1,0 +1,95 @@
+version: 1
+name: service-reenable-restores-traffic
+description: Verify an attached UE loses traffic when service is disabled and regains traffic after service is enabled again.
+seed: 323
+suite: smoke
+priority: p0
+tags: [virtual, runtime, service, recovery, traffic]
+status: active
+
+provider:
+  type: virtual
+
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+
+packages:
+  - ref: daily_1gb
+    name: Daily 1GB
+    data_mb: 1024
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+
+phases:
+  - name: attach_with_service_on
+    events:
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: start_ues
+        ues: ue-000001
+      - type: wait_ues_attached
+        ues: ue-000001
+    checks:
+      - type: traffic_allowed
+        ues: ue-000001
+        amount_mb: 1
+
+  - name: disable_service
+    events:
+      - type: toggle_service
+        sites: all
+        state: off
+    checks:
+      - type: traffic_blocked
+        ues: ue-000001
+        amount_mb: 1
+
+  - name: hold_service_off
+    events:
+      - type: wait
+        seconds: 10
+    checks:
+      - type: traffic_blocked
+        ues: ue-000001
+        amount_mb: 1
+
+  - name: reenable_service
+    events:
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: wait_ues_attached
+        ues: ue-000001
+    checks:
+      - type: traffic_allowed
+        ues: ue-000001
+        amount_mb: 1
+
+final_checks:
+  - type: backend_count
+    target: sims
+    expected: 1
+  - type: balance_non_negative
+    ues: all

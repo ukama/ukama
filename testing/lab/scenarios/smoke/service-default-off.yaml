@@ -1,10 +1,10 @@
 version: 1
-name: negative-add-package-missing-field-fails
-description: Verify adding a package without a package reference fails without changing backend SIM state.
-seed: 402
-suite: negative
-priority: p1
-tags: [virtual, negative, package, sim]
+name: service-default-off
+description: Verify a newly started node keeps service disabled by default, so a UE cannot attach or pass traffic.
+seed: 320
+suite: smoke
+priority: p0
+tags: [virtual, runtime, service]
 status: active
 
 provider:
@@ -38,22 +38,27 @@ setup:
     - sims
 
 runtime:
-  start: [nodes, ues]
-  wait: [nodes_ready, ues_attached]
+  start: [nodes]
+  wait: [nodes_ready]
 
 phases:
-  - name: add_package_without_package_ref
+  - name: verify_default_service_off
     events:
-      - type: add_package_to_sim
-        ues: all
+      - type: start_ues
+        ues: ue-000001
+      - type: wait_ues_attached
+        ues: ue-000001
+        seconds: 15
         expect:
           result: failure
-          error_contains: "missing package"
     checks:
-      - type: backend_count
-        target: sims
-        expected: from_world
+      - type: traffic_blocked
+        ues: ue-000001
+        amount_mb: 1
 
 final_checks:
+  - type: backend_count
+    target: sims
+    expected: 1
   - type: balance_non_negative
     ues: all

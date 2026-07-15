@@ -21,6 +21,7 @@
 typedef enum {
     SEL_NONE = 0,
     SEL_ALL,
+    SEL_REF,
     SEL_SAMPLE_PER_SITE,
     SEL_CREATED_IN_PHASE,
     SEL_AFFECTED_BY_PHASE,
@@ -61,7 +62,9 @@ typedef enum {
     EVT_CREATE_UES,
     EVT_START_UES,
     EVT_WAIT_UES_ATTACHED,
+    EVT_WAIT,
     EVT_RESTART_NODES,
+    EVT_WAIT_NODE_CONNECTIVITY,
     EVT_WAIT_NODES_READY,
     EVT_ADD_PACKAGE_TO_SIM,
     EVT_REMOVE_PACKAGE_FROM_SIM,
@@ -113,6 +116,7 @@ typedef struct {
     char         entity[ULAB_MAX_REF];
     char         status[ULAB_MAX_REF];
     char         expected[ULAB_MAX_REF];
+    char         app[ULAB_MAX_NAME];
     uint64_t     expected_used_mb;
     uint64_t     expected_remaining_mb;
     uint32_t     tolerance_percent;
@@ -130,6 +134,8 @@ typedef struct {
     char         expect_result[ULAB_MAX_REF];
     char         error_contains[ULAB_MAX_ERR];
     char         status[ULAB_MAX_REF];
+    char         app[ULAB_MAX_NAME];
+    char         tag[ULAB_MAX_REF];
     uint32_t     count_per_site;
     char         package_ref[ULAB_MAX_REF];
     check_spec_t checks[ULAB_MAX_CHECKS];
@@ -177,6 +183,7 @@ typedef struct {
 typedef struct {
     uint32_t       version;
     char           name[ULAB_MAX_NAME];
+    char           description[ULAB_MAX_LINE];
     uint32_t       seed;
     char           suite[ULAB_MAX_REF];
     char           priority[ULAB_MAX_REF];
