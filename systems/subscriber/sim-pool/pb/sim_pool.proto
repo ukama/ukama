@@ -96,7 +96,7 @@ message UploadResponse {
 }
 message Sim{
     uint64 id = 1;
-    string iccid = 2 [(validator.field) = { human_error:"must be a valid ICCID format", regex: "^[0-9]{19}$"}];
+    string iccid = 2 [(validator.field) = {string_not_empty: true, human_error:"must be a valid ICCID format" ,regex: "^[0-9]{18,22}$"}, json_name = "iccid" ];
     string msisdn = 3 [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}]; 
     bool isAllocated = 4 [json_name = "is_allocated"];
     bool isFailed = 5 [json_name = "is_failed"];
@@ -110,7 +110,7 @@ message Sim{
     string qrCode= 13 [json_name = "qr_code"];
 }
 message AddSim{
-    string iccid = 1 [(validator.field) = { human_error:"must be a valid ICCID format", regex: "^[0-9]{19}$"}];
+    string iccid = 1 [(validator.field) = {string_not_empty: true, human_error:"must be a valid ICCID format" ,regex: "^[0-9]{18,22}$"}, json_name = "iccid" ];
     string simType = 2 [json_name = "sim_type"];
     string msisdn = 3 [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
     string smDpAddress = 4 [json_name = "sm_ap_address"];

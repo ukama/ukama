@@ -126,7 +126,7 @@ message TerminateSimResponse{
 
 
 message SimTokenRequest {
-    string iccid = 6 [(validator.field) = {string_not_empty: true,  length_gt: 17, length_lt: 23}, json_name="iccid"];
+    string iccid = 1 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{18,22}$"}, json_name = "iccid" ];
 }
 
 
@@ -240,18 +240,18 @@ message Sim {
     string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
     string subscriberId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
     string networkId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
-    Package package = 5;
-    string iccid = 6 [(validator.field) = {string_not_empty: true,  length_gt: 17, length_lt: 23}, json_name="iccid"];
-    string msisdn = 7  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
-    string imsi = 8;
-    string type = 9;
-    string status = 10;
-    bool isPhysical = 11 [json_name = "is_physical"];
-    uint32 trafficPolicy = 12 [json_name = "traffic_policy"];
-    google.protobuf.Timestamp firstActivatedOn = 13;
-    google.protobuf.Timestamp lastActivatedOn = 14 ;
-    uint64 activationsCount = 15;
-    uint64 deactivationsCount = 16;
-    google.protobuf.Timestamp allocatedAt = 17 [json_name = "allocated_at"];
-    string syncStatus = 18 [json_name = "sync_status"];
+    Package package = 4;
+    string iccid = 5 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{18,22}$"}, json_name = "iccid" ];
+    string msisdn = 6  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
+    string imsi = 7;
+    string type = 8;
+    string status = 9;
+    bool isPhysical = 10 [json_name = "is_physical"];
+    uint32 trafficPolicy = 11 [json_name = "traffic_policy"];
+    google.protobuf.Timestamp firstActivatedOn = 12;
+    google.protobuf.Timestamp lastActivatedOn = 13 ;
+    uint64 activationsCount = 14;
+    uint64 deactivationsCount = 15;
+    google.protobuf.Timestamp allocatedAt = 16 [json_name = "allocated_at"];
+    string syncStatus = 17 [json_name = "sync_status"];
 }

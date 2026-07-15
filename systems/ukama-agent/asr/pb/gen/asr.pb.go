@@ -248,8 +248,8 @@ func (*UsageForPeriodReq_Iccid) isUsageForPeriodReq_Id() {}
 
 type Record struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Imsi          string                 `protobuf:"bytes,1,opt,name=Imsi,json=imsi,proto3" json:"Imsi,omitempty"`
-	Iccid         string                 `protobuf:"bytes,2,opt,name=Iccid,json=iccid,proto3" json:"Iccid,omitempty"`
+	Imsi          string                 `protobuf:"bytes,1,opt,name=imsi,proto3" json:"imsi,omitempty"`
+	Iccid         string                 `protobuf:"bytes,2,opt,name=iccid,proto3" json:"iccid,omitempty"`
 	Key           []byte                 `protobuf:"bytes,3,opt,name=Key,json=k,proto3" json:"Key,omitempty"`
 	Op            []byte                 `protobuf:"bytes,4,opt,name=Op,json=op,proto3" json:"Op,omitempty"`
 	Amf           []byte                 `protobuf:"bytes,5,opt,name=Amf,json=amf,proto3" json:"Amf,omitempty"`
@@ -582,7 +582,7 @@ func (x *ReadResp) GetRecord() *Record {
 
 type ActivateReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Iccid         string                 `protobuf:"bytes,1,opt,name=Iccid,json=iccid,proto3" json:"Iccid,omitempty"`
+	Iccid         string                 `protobuf:"bytes,1,opt,name=iccid,proto3" json:"iccid,omitempty"`
 	Imsi          string                 `protobuf:"bytes,2,opt,name=Imsi,proto3" json:"Imsi,omitempty"`
 	SimPackageId  string                 `protobuf:"bytes,3,opt,name=SimPackageId,proto3" json:"SimPackageId,omitempty"`
 	PackageId     string                 `protobuf:"bytes,4,opt,name=PackageId,proto3" json:"PackageId,omitempty"`
@@ -695,7 +695,7 @@ func (*ActivateResp) Descriptor() ([]byte, []int) {
 // Could be called by subscriber manager with ICCID and by billing service with imsi
 type InactivateReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Iccid         string                 `protobuf:"bytes,1,opt,name=Iccid,json=iccid,proto3" json:"Iccid,omitempty"`
+	Iccid         string                 `protobuf:"bytes,1,opt,name=iccid,proto3" json:"iccid,omitempty"`
 	Imsi          string                 `protobuf:"bytes,2,opt,name=Imsi,proto3" json:"Imsi,omitempty"`
 	PackageId     string                 `protobuf:"bytes,3,opt,name=PackageId,proto3" json:"PackageId,omitempty"`
 	NetworkId     string                 `protobuf:"bytes,4,opt,name=NetworkId,proto3" json:"NetworkId,omitempty"`
@@ -799,7 +799,7 @@ func (*InactivateResp) Descriptor() ([]byte, []int) {
 
 type UpdatePackageReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Iccid         string                 `protobuf:"bytes,1,opt,name=Iccid,json=iccid,proto3" json:"Iccid,omitempty"`
+	Iccid         string                 `protobuf:"bytes,1,opt,name=iccid,proto3" json:"iccid,omitempty"`
 	Imsi          string                 `protobuf:"bytes,2,opt,name=Imsi,proto3" json:"Imsi,omitempty"`
 	SimPackageId  string                 `protobuf:"bytes,3,opt,name=SimPackageId,proto3" json:"SimPackageId,omitempty"`
 	PackageId     string                 `protobuf:"bytes,4,opt,name=PackageId,proto3" json:"PackageId,omitempty"`
@@ -911,7 +911,7 @@ func (*UpdatePackageResp) Descriptor() ([]byte, []int) {
 
 type UpdateGutiReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Imsi          string                 `protobuf:"bytes,1,opt,name=Imsi,proto3" json:"Imsi,omitempty"`
+	Imsi          string                 `protobuf:"bytes,1,opt,name=imsi,proto3" json:"imsi,omitempty"`
 	Guti          *Guti                  `protobuf:"bytes,2,opt,name=Guti,proto3" json:"Guti,omitempty"`
 	UpdatedAt     uint32                 `protobuf:"varint,4,opt,name=UpdatedAt,json=updated_at,proto3" json:"UpdatedAt,omitempty"` // unix timestamp
 	unknownFields protoimpl.UnknownFields
@@ -1279,7 +1279,7 @@ func (x *Policy) GetEndTime() uint64 {
 
 type QueryUsageReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Iccid         string                 `protobuf:"bytes,1,opt,name=Iccid,json=iccid,proto3" json:"Iccid,omitempty"`
+	Iccid         string                 `protobuf:"bytes,1,opt,name=iccid,proto3" json:"iccid,omitempty"`
 	NodeId        string                 `protobuf:"bytes,2,opt,name=NodeId,proto3" json:"NodeId,omitempty"`
 	Session       uint64                 `protobuf:"varint,3,opt,name=Session,proto3" json:"Session,omitempty"`
 	From          uint64                 `protobuf:"varint,4,opt,name=From,proto3" json:"From,omitempty"`
@@ -1437,12 +1437,12 @@ const file_asr_proto_rawDesc = "" +
 	"\x05Iccid\x18\x02 \x01(\tH\x00R\x05Iccid\x12\x1c\n" +
 	"\tstartTime\x18\x03 \x01(\x04R\tstartTime\x12\x18\n" +
 	"\aendTime\x18\x04 \x01(\x04R\aendTimeB\x04\n" +
-	"\x02id\"\xfd\x03\n" +
-	"\x06Record\x12\x1e\n" +
-	"\x04Imsi\x18\x01 \x01(\tB\n" +
-	"\xe2\xdf\x1f\x06X\x01p\x05x\x10R\x04imsi\x12 \n" +
-	"\x05Iccid\x18\x02 \x01(\tB\n" +
-	"\xe2\xdf\x1f\x06X\x01p\x11x\x17R\x05iccid\x12\x0e\n" +
+	"\x02id\"\x94\x04\n" +
+	"\x06Record\x12)\n" +
+	"\x04imsi\x18\x01 \x01(\tB\x15\xe2\xdf\x1f\x11\n" +
+	"\r^[0-9]{6,15}$X\x01R\x04imsi\x12,\n" +
+	"\x05iccid\x18\x02 \x01(\tB\x16\xe2\xdf\x1f\x12\n" +
+	"\x0e^[0-9]{18,22}$X\x01R\x05iccid\x12\x0e\n" +
 	"\x03Key\x18\x03 \x01(\fR\x01k\x12\x0e\n" +
 	"\x02Op\x18\x04 \x01(\fR\x02op\x12\x10\n" +
 	"\x03Amf\x18\x05 \x01(\fR\x03amf\x12.\n" +
@@ -1467,33 +1467,33 @@ const file_asr_proto_rawDesc = "" +
 	"\x05Iccid\x18\x02 \x01(\tH\x00R\x05IccidB\x04\n" +
 	"\x02id\"C\n" +
 	"\bReadResp\x127\n" +
-	"\x06Record\x18\x01 \x01(\v2\x1f.ukama.subscriber.asr.v1.RecordR\x06Record\"\xa3\x01\n" +
-	"\vActivateReq\x12 \n" +
-	"\x05Iccid\x18\x01 \x01(\tB\n" +
-	"\xe2\xdf\x1f\x06X\x01p\x11x\x17R\x05iccid\x12\x12\n" +
+	"\x06Record\x18\x01 \x01(\v2\x1f.ukama.subscriber.asr.v1.RecordR\x06Record\"\xaf\x01\n" +
+	"\vActivateReq\x12,\n" +
+	"\x05iccid\x18\x01 \x01(\tB\x16\xe2\xdf\x1f\x12\n" +
+	"\x0e^[0-9]{18,22}$X\x01R\x05iccid\x12\x12\n" +
 	"\x04Imsi\x18\x02 \x01(\tR\x04Imsi\x12\"\n" +
 	"\fSimPackageId\x18\x03 \x01(\tR\fSimPackageId\x12\x1c\n" +
 	"\tPackageId\x18\x04 \x01(\tR\tPackageId\x12\x1c\n" +
 	"\tNetworkId\x18\x05 \x01(\tR\tNetworkId\"\x0e\n" +
-	"\fActivateResp\"\x81\x01\n" +
-	"\rInactivateReq\x12 \n" +
-	"\x05Iccid\x18\x01 \x01(\tB\n" +
-	"\xe2\xdf\x1f\x06X\x01p\x11x\x17R\x05iccid\x12\x12\n" +
+	"\fActivateResp\"\x8d\x01\n" +
+	"\rInactivateReq\x12,\n" +
+	"\x05iccid\x18\x01 \x01(\tB\x16\xe2\xdf\x1f\x12\n" +
+	"\x0e^[0-9]{18,22}$X\x01R\x05iccid\x12\x12\n" +
 	"\x04Imsi\x18\x02 \x01(\tR\x04Imsi\x12\x1c\n" +
 	"\tPackageId\x18\x03 \x01(\tR\tPackageId\x12\x1c\n" +
 	"\tNetworkId\x18\x04 \x01(\tR\tNetworkId\"\x10\n" +
-	"\x0eInactivateResp\"\xa8\x01\n" +
-	"\x10UpdatePackageReq\x12 \n" +
-	"\x05Iccid\x18\x01 \x01(\tB\n" +
-	"\xe2\xdf\x1f\x06X\x01p\x11x\x17R\x05iccid\x12\x12\n" +
+	"\x0eInactivateResp\"\xb4\x01\n" +
+	"\x10UpdatePackageReq\x12,\n" +
+	"\x05iccid\x18\x01 \x01(\tB\x16\xe2\xdf\x1f\x12\n" +
+	"\x0e^[0-9]{18,22}$X\x01R\x05iccid\x12\x12\n" +
 	"\x04Imsi\x18\x02 \x01(\tR\x04Imsi\x12\"\n" +
 	"\fSimPackageId\x18\x03 \x01(\tR\fSimPackageId\x12\x1c\n" +
 	"\tPackageId\x18\x04 \x01(\tR\tPackageId\x12\x1c\n" +
 	"\tNetworkId\x18\x05 \x01(\tR\tNetworkId\"\x13\n" +
-	"\x11UpdatePackageResp\"\x95\x01\n" +
-	"\rUpdateGutiReq\x12\x1e\n" +
-	"\x04Imsi\x18\x01 \x01(\tB\n" +
-	"\xe2\xdf\x1f\x06X\x01p\x05x\x10R\x04Imsi\x129\n" +
+	"\x11UpdatePackageResp\"\xa0\x01\n" +
+	"\rUpdateGutiReq\x12)\n" +
+	"\x04imsi\x18\x01 \x01(\tB\x15\xe2\xdf\x1f\x11\n" +
+	"\r^[0-9]{6,15}$X\x01R\x04imsi\x129\n" +
 	"\x04Guti\x18\x02 \x01(\v2\x1d.ukama.subscriber.asr.v1.GutiB\x06\xe2\xdf\x1f\x02 \x01R\x04Guti\x12)\n" +
 	"\tUpdatedAt\x18\x04 \x01(\rB\n" +
 	"\xe2\xdf\x1f\x06\x10\xf5\xb4͍\x06R\n" +
@@ -1525,10 +1525,10 @@ const file_asr_proto_rawDesc = "" +
 	"\x04Dlbr\x18\x06 \x01(\x04R\x04dlbr\x12\x1d\n" +
 	"\tStartTime\x18\a \x01(\x04R\n" +
 	"start_time\x12\x19\n" +
-	"\aEndTime\x18\b \x01(\x04R\bend_time\"\xcf\x01\n" +
-	"\rQueryUsageReq\x12 \n" +
-	"\x05Iccid\x18\x01 \x01(\tB\n" +
-	"\xe2\xdf\x1f\x06X\x01p\x11x\x17R\x05iccid\x12\x16\n" +
+	"\aEndTime\x18\b \x01(\x04R\bend_time\"\xdb\x01\n" +
+	"\rQueryUsageReq\x12,\n" +
+	"\x05iccid\x18\x01 \x01(\tB\x16\xe2\xdf\x1f\x12\n" +
+	"\x0e^[0-9]{18,22}$X\x01R\x05iccid\x12\x16\n" +
 	"\x06NodeId\x18\x02 \x01(\tR\x06NodeId\x12\x18\n" +
 	"\aSession\x18\x03 \x01(\x04R\aSession\x12\x12\n" +
 	"\x04From\x18\x04 \x01(\x04R\x04From\x12\x0e\n" +

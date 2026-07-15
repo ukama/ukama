@@ -9,35 +9,38 @@
 package db_test
 
 import (
-	extsql "database/sql"
 	"regexp"
 	"testing"
 	"time"
 
-	int_db "github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
+	"database/sql"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	int_db "github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
 )
 
+var (
+	Imsi = "012345678912345"
 
-var Imsi = "012345678912345"
-var Guti = int_db.Guti{
-	Imsi:            Imsi,
-	PlmnId:          "00101",
-	Mmegi:           101,
-	Mmec:            101,
-	MTmsi:           101,
-	DeviceUpdatedAt: time.Unix(int64(1639144056), 0),
-}
+	Guti = int_db.Guti{
+		Imsi:            Imsi,
+		PlmnId:          "00101",
+		Mmegi:           101,
+		Mmec:            101,
+		MTmsi:           101,
+		DeviceUpdatedAt: time.Unix(int64(1639144056), 0),
+	}
+)
 
 func TestGutiRepo_Update(t *testing.T) {
 
 	t.Run("UpdateGuti", func(t *testing.T) {
 		// Arrange
-		var db *extsql.DB
+		var db *sql.DB
 		var err error
 
 		db, mock, err := sqlmock.New() // mock sql.DB
@@ -91,7 +94,7 @@ func TestGutiRepo_Update(t *testing.T) {
 func TestGutiRepo_GetImsi(t *testing.T) {
 
 	t.Run("GetImsi", func(t *testing.T) {
-		var db *extsql.DB
+		var db *sql.DB
 		var err error
 
 		db, mock, err := sqlmock.New() // mock sql.DB

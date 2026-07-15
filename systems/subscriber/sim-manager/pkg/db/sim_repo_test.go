@@ -26,6 +26,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	testIccid = "8910300123456789053"
+	testImsi  = "001012223334445"
+)
+
 var (
 	validNestedSimFunc = func(sim *db.Sim, tx *gorm.DB) error {
 		return nil
@@ -214,11 +219,6 @@ func TestSimRepo_Get(t *testing.T) {
 }
 
 func TestSimRepo_List(t *testing.T) {
-	const (
-		testIccid = "890000-this-is-a-test-iccid"
-		testImsi  = "890000-this-is-a-test-imsi"
-	)
-
 	t.Run("ListAll", func(t *testing.T) {
 		var (
 			simId     = uuid.NewV4()
@@ -321,8 +321,6 @@ func TestSimRepo_List(t *testing.T) {
 }
 
 func TestSimRepo_GetByIccid(t *testing.T) {
-	const testIccid = "890000-this-is-a-test-iccid"
-
 	t.Run("IccidFound", func(t *testing.T) {
 		var (
 			simId     = uuid.NewV4()

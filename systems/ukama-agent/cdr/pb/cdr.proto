@@ -31,7 +31,7 @@ import "validator.proto";
 message CDR {
     uint64 Session =1  [json_name="session_id"];
     string NodeId = 2 [json_name="node_id"];
-    string Imsi = 3 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16 }, json_name="imsi"];
+    string imsi = 3 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{6,15}$"}, json_name = "imsi"];
     string Policy = 4 [json_name="policy"];
     string ApnName = 5  [json_name="apn_name"];
     string Ip = 6 [json_name="ue_ip"];
@@ -48,7 +48,7 @@ message CDRResp {
 }
 
 message RecordReq {
-    string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16 }, json_name="imsi"];
+    string imsi = 1 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{6,15}$"}, json_name = "imsi"];
     uint64 StartTime = 2 [json_name="start_time"];
     uint64 EndTime = 3 [json_name="end_time"];
     string Policy = 4 [json_name="policy"];
@@ -60,7 +60,7 @@ message RecordResp {
 }
 
 message UsageReq {
-    string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16 }, json_name="imsi"];
+    string imsi = 1 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{6,15}$"}, json_name = "imsi"];
     uint64 StartTime = 2 [json_name="start_time"];
     uint64 EndTime = 3 [json_name="end_time"];
     string Policy = 4 [json_name="policy"];
@@ -68,17 +68,17 @@ message UsageReq {
 }
 
 message UsageResp {
-    string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16 }, json_name="imsi"];
+    string imsi = 1 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{6,15}$"}, json_name = "imsi"];
     uint64 usage = 2;
     string policy = 3;
 }
 
 message CycleUsageReq {
-    string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16 }, json_name="imsi"];
+    string imsi = 1 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{6,15}$"}, json_name = "imsi"];
 }
 
 message CycleUsageResp {
-    string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16 }, json_name="imsi"];
+    string imsi = 1 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{6,15}$"}, json_name = "imsi"];
     uint64 historical = 2;
     uint64 usage = 3;
     uint64 LastSessionUsage = 4;
@@ -89,7 +89,7 @@ message CycleUsageResp {
 }
 
 message UsageForPeriodReq {
-    string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16 }, json_name="imsi"];
+    string imsi = 1 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{6,15}$"}, json_name = "imsi"];
     uint64 StartTime = 4;
     uint64 EndTime = 5;
 }
@@ -100,7 +100,7 @@ message UsageForPeriodResp {
 
 
 message QueryUsageReq {
-    string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16 }, json_name="imsi"];
+    string imsi = 1 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{6,15}$"}, json_name = "imsi"];
     string NodeId = 2;
     uint64 Session = 3;
     uint64 From = 4;

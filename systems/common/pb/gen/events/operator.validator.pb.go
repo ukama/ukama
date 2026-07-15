@@ -8,6 +8,7 @@ import (
 	math "math"
 	proto "github.com/golang/protobuf/proto"
 	_ "github.com/mwitkow/go-proto-validators"
+	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
@@ -16,9 +17,14 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+var _regex_EventOperatorCdrReport_Iccid = regexp.MustCompile(`^[0-9]{18,22}$`)
+
 func (this *EventOperatorCdrReport) Validate() error {
 	if this.Id == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must not be an empty string`, this.Id))
+	}
+	if !_regex_EventOperatorCdrReport_Iccid.MatchString(this.Iccid) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{18,22}$"`, this.Iccid))
 	}
 	if this.Iccid == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must not be an empty string`, this.Iccid))

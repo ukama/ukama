@@ -770,7 +770,7 @@ func (*TerminateSimResponse) Descriptor() ([]byte, []int) {
 
 type SimTokenRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Iccid         string                 `protobuf:"bytes,6,opt,name=iccid,proto3" json:"iccid,omitempty"`
+	Iccid         string                 `protobuf:"bytes,1,opt,name=iccid,proto3" json:"iccid,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1809,20 +1809,20 @@ type Sim struct {
 	Id                 string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	SubscriberId       string                 `protobuf:"bytes,2,opt,name=subscriberId,json=subscriber_id,proto3" json:"subscriberId,omitempty"`
 	NetworkId          string                 `protobuf:"bytes,3,opt,name=networkId,json=network_id,proto3" json:"networkId,omitempty"`
-	Package            *Package               `protobuf:"bytes,5,opt,name=package,proto3" json:"package,omitempty"`
-	Iccid              string                 `protobuf:"bytes,6,opt,name=iccid,proto3" json:"iccid,omitempty"`
-	Msisdn             string                 `protobuf:"bytes,7,opt,name=msisdn,proto3" json:"msisdn,omitempty"`
-	Imsi               string                 `protobuf:"bytes,8,opt,name=imsi,proto3" json:"imsi,omitempty"`
-	Type               string                 `protobuf:"bytes,9,opt,name=type,proto3" json:"type,omitempty"`
-	Status             string                 `protobuf:"bytes,10,opt,name=status,proto3" json:"status,omitempty"`
-	IsPhysical         bool                   `protobuf:"varint,11,opt,name=isPhysical,json=is_physical,proto3" json:"isPhysical,omitempty"`
-	TrafficPolicy      uint32                 `protobuf:"varint,12,opt,name=trafficPolicy,json=traffic_policy,proto3" json:"trafficPolicy,omitempty"`
-	FirstActivatedOn   *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=firstActivatedOn,proto3" json:"firstActivatedOn,omitempty"`
-	LastActivatedOn    *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=lastActivatedOn,proto3" json:"lastActivatedOn,omitempty"`
-	ActivationsCount   uint64                 `protobuf:"varint,15,opt,name=activationsCount,proto3" json:"activationsCount,omitempty"`
-	DeactivationsCount uint64                 `protobuf:"varint,16,opt,name=deactivationsCount,proto3" json:"deactivationsCount,omitempty"`
-	AllocatedAt        *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=allocatedAt,json=allocated_at,proto3" json:"allocatedAt,omitempty"`
-	SyncStatus         string                 `protobuf:"bytes,18,opt,name=syncStatus,json=sync_status,proto3" json:"syncStatus,omitempty"`
+	Package            *Package               `protobuf:"bytes,4,opt,name=package,proto3" json:"package,omitempty"`
+	Iccid              string                 `protobuf:"bytes,5,opt,name=iccid,proto3" json:"iccid,omitempty"`
+	Msisdn             string                 `protobuf:"bytes,6,opt,name=msisdn,proto3" json:"msisdn,omitempty"`
+	Imsi               string                 `protobuf:"bytes,7,opt,name=imsi,proto3" json:"imsi,omitempty"`
+	Type               string                 `protobuf:"bytes,8,opt,name=type,proto3" json:"type,omitempty"`
+	Status             string                 `protobuf:"bytes,9,opt,name=status,proto3" json:"status,omitempty"`
+	IsPhysical         bool                   `protobuf:"varint,10,opt,name=isPhysical,json=is_physical,proto3" json:"isPhysical,omitempty"`
+	TrafficPolicy      uint32                 `protobuf:"varint,11,opt,name=trafficPolicy,json=traffic_policy,proto3" json:"trafficPolicy,omitempty"`
+	FirstActivatedOn   *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=firstActivatedOn,proto3" json:"firstActivatedOn,omitempty"`
+	LastActivatedOn    *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=lastActivatedOn,proto3" json:"lastActivatedOn,omitempty"`
+	ActivationsCount   uint64                 `protobuf:"varint,14,opt,name=activationsCount,proto3" json:"activationsCount,omitempty"`
+	DeactivationsCount uint64                 `protobuf:"varint,15,opt,name=deactivationsCount,proto3" json:"deactivationsCount,omitempty"`
+	AllocatedAt        *timestamppb.Timestamp `protobuf:"bytes,16,opt,name=allocatedAt,json=allocated_at,proto3" json:"allocatedAt,omitempty"`
+	SyncStatus         string                 `protobuf:"bytes,17,opt,name=syncStatus,json=sync_status,proto3" json:"syncStatus,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -2030,10 +2030,10 @@ const file_sim_manager_proto_rawDesc = "" +
 	"\x17ToggleSimStatusResponse\"4\n" +
 	"\x13TerminateSimRequest\x12\x1d\n" +
 	"\x05simId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x06sim_id\"\x16\n" +
-	"\x14TerminateSimResponse\"3\n" +
-	"\x0fSimTokenRequest\x12 \n" +
-	"\x05iccid\x18\x06 \x01(\tB\n" +
-	"\xe2\xdf\x1f\x06X\x01p\x11x\x17R\x05iccid\"(\n" +
+	"\x14TerminateSimResponse\"?\n" +
+	"\x0fSimTokenRequest\x12,\n" +
+	"\x05iccid\x18\x01 \x01(\tB\x16\xe2\xdf\x1f\x12\n" +
+	"\x0e^[0-9]{18,22}$X\x01R\x05iccid\"(\n" +
 	"\x10SimTokenResponse\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\"~\n" +
 	"\x11AddPackageRequest\x12 \n" +
@@ -2108,31 +2108,31 @@ const file_sim_manager_proto_rawDesc = "" +
 	"\tcreatedAt\x18\b \x01(\tR\n" +
 	"created_at\x12\x1d\n" +
 	"\tupdatedAt\x18\t \x01(\tR\n" +
-	"updated_at\"\x93\a\n" +
+	"updated_at\"\x9f\a\n" +
 	"\x03Sim\x12\x19\n" +
 	"\x02id\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x02id\x12.\n" +
 	"\fsubscriberId\x18\x02 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\rsubscriber_id\x12(\n" +
 	"\tnetworkId\x18\x03 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\n" +
 	"network_id\x12B\n" +
-	"\apackage\x18\x05 \x01(\v2(.ukama.subscriber.sim_manager.v1.PackageR\apackage\x12 \n" +
-	"\x05iccid\x18\x06 \x01(\tB\n" +
-	"\xe2\xdf\x1f\x06X\x01p\x11x\x17R\x05iccid\x12\xde\x01\n" +
-	"\x06msisdn\x18\a \x01(\tB\xc5\x01\xe2\xdf\x1f\xc0\x01\n" +
+	"\apackage\x18\x04 \x01(\v2(.ukama.subscriber.sim_manager.v1.PackageR\apackage\x12,\n" +
+	"\x05iccid\x18\x05 \x01(\tB\x16\xe2\xdf\x1f\x12\n" +
+	"\x0e^[0-9]{18,22}$X\x01R\x05iccid\x12\xde\x01\n" +
+	"\x06msisdn\x18\x06 \x01(\tB\xc5\x01\xe2\xdf\x1f\xc0\x01\n" +
 	"\x9e\x01^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$*\x1dmust be a phone number formatR\x06msisdn\x12\x12\n" +
-	"\x04imsi\x18\b \x01(\tR\x04imsi\x12\x12\n" +
-	"\x04type\x18\t \x01(\tR\x04type\x12\x16\n" +
-	"\x06status\x18\n" +
-	" \x01(\tR\x06status\x12\x1f\n" +
+	"\x04imsi\x18\a \x01(\tR\x04imsi\x12\x12\n" +
+	"\x04type\x18\b \x01(\tR\x04type\x12\x16\n" +
+	"\x06status\x18\t \x01(\tR\x06status\x12\x1f\n" +
 	"\n" +
-	"isPhysical\x18\v \x01(\bR\vis_physical\x12%\n" +
-	"\rtrafficPolicy\x18\f \x01(\rR\x0etraffic_policy\x12F\n" +
-	"\x10firstActivatedOn\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\x10firstActivatedOn\x12D\n" +
-	"\x0flastActivatedOn\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\x0flastActivatedOn\x12*\n" +
-	"\x10activationsCount\x18\x0f \x01(\x04R\x10activationsCount\x12.\n" +
-	"\x12deactivationsCount\x18\x10 \x01(\x04R\x12deactivationsCount\x12=\n" +
-	"\vallocatedAt\x18\x11 \x01(\v2\x1a.google.protobuf.TimestampR\fallocated_at\x12\x1f\n" +
+	"isPhysical\x18\n" +
+	" \x01(\bR\vis_physical\x12%\n" +
+	"\rtrafficPolicy\x18\v \x01(\rR\x0etraffic_policy\x12F\n" +
+	"\x10firstActivatedOn\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\x10firstActivatedOn\x12D\n" +
+	"\x0flastActivatedOn\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\x0flastActivatedOn\x12*\n" +
+	"\x10activationsCount\x18\x0e \x01(\x04R\x10activationsCount\x12.\n" +
+	"\x12deactivationsCount\x18\x0f \x01(\x04R\x12deactivationsCount\x12=\n" +
+	"\vallocatedAt\x18\x10 \x01(\v2\x1a.google.protobuf.TimestampR\fallocated_at\x12\x1f\n" +
 	"\n" +
-	"syncStatus\x18\x12 \x01(\tR\vsync_status2\xc6\x10\n" +
+	"syncStatus\x18\x11 \x01(\tR\vsync_status2\xc6\x10\n" +
 	"\x11SimManagerService\x12x\n" +
 	"\vAllocateSim\x123.ukama.subscriber.sim_manager.v1.AllocateSimRequest\x1a4.ukama.subscriber.sim_manager.v1.AllocateSimResponse\x12i\n" +
 	"\x06GetSim\x12..ukama.subscriber.sim_manager.v1.GetSimRequest\x1a/.ukama.subscriber.sim_manager.v1.GetSimResponse\x12o\n" +
