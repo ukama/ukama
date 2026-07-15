@@ -79,7 +79,7 @@ func (s *SiteController) PowerCycleNode(siteID, role, reason, requestedBy string
 func (s *SiteController) RestartSite(siteID string) (*pb.RestartSiteResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
-	return s.client.RestartSite(ctx, &pb.RestartSiteRequest{SiteId: siteID, NetworkId: ""})
+	return s.client.RestartSite(ctx, &pb.RestartSiteRequest{SiteId: siteID})
 }
 
 func (s *SiteController) ToggleInternetSwitch(siteID string, status bool, port int32) (*pb.ToggleInternetSwitchResponse, error) {

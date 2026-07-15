@@ -75,19 +75,36 @@ func (s *SiteControllerServer) SetService(ctx context.Context, req *pb.SetServic
 }
 
 func (s *SiteControllerServer) SetRadio(ctx context.Context, req *pb.SetRadioRequest) (*pb.SetRadioResponse, error) {
-	nodeID, err := s.resolveNode(req.SiteId, ukama.NODE_ID_TYPE_AMPNODE)
-	if err != nil {
-		return nil, err
-	}
 	client, err := s.controller.GetClient()
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "node-controller unavailable: %v", err)
 	}
-	resp, err := client.ToggleRadio(ctx, &contpb.ToggleRadioRequest{NodeId: nodeID, State: req.State})
+	nodes, err := s.nodeClient.GetNodesBySite(req.SiteId)
 	if err != nil {
 		return nil, mapErr(err)
 	}
-	log.Infof("site-controller: forwarded RADIO %s for site %s to node %s, op=%s", req.State, req.SiteId, nodeID, resp.GetOperationId())
+	tnode := ""
+	anode := ""
+	for _, node := range nodes.Nodes {
+		if node.Type == ukama.NODE_ID_TYPE_TOWERNODE {
+			tnode = node.Id
+		}
+		if node.Type == ukama.NODE_ID_TYPE_AMPNODE {
+			anode = node.Id
+		}
+	}
+
+	_, err = client.ToggleRadio(ctx, &contpb.ToggleRadioRequest{NodeId: tnode, State: req.State})
+	if err != nil {
+		return nil, mapErr(err)
+	}
+
+	_, err = client.ToggleRadio(ctx, &contpb.ToggleRadioRequest{NodeId: anode, State: req.State})
+	if err != nil {
+		return nil, mapErr(err)
+	}
+
+	log.Infof("site-controller: forwarded RADIO %s for site %s to tnode=%s, anode=%s", req.State, req.SiteId, tnode, anode)
 	return &pb.SetRadioResponse{}, nil
 }
 
