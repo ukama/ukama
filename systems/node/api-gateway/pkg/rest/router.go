@@ -303,11 +303,11 @@ func (r *Router) toggleSiteStateHandler(c *gin.Context, req *SiteActionRequest) 
 	return r.clients.SiteController.SetSite(req.SiteId, req.State, req.Reason, req.RequestedBy)
 }
 
-func (r *Router) postToggleServiceHandler(c *gin.Context, req *SiteActionRequest) (*sitepb.SetServiceResponse, error) {
+func (r *Router) postToggleServiceHandler(c *gin.Context, req *SiteToggleActionRequest) (*sitepb.SetServiceResponse, error) {
 	return r.clients.SiteController.SetService(req.SiteId, req.State)
 }
 
-func (r *Router) postToggleRadioHandler(c *gin.Context, req *SiteActionRequest) (*sitepb.SetRadioResponse, error) {
+func (r *Router) postToggleRadioHandler(c *gin.Context, req *SiteToggleActionRequest) (*sitepb.SetRadioResponse, error) {
 	return r.clients.SiteController.SetRadio(req.SiteId, req.State)
 }
 

@@ -69,6 +69,11 @@ type SiteActionRequest struct {
 	State       string `json:"state" path:"state" validate:"required,oneof=on off"`
 }
 
+type SiteToggleActionRequest struct {
+	SiteId string `json:"site_id" validate:"required" path:"site_id"`
+	State  string `json:"state" path:"state" validate:"required,oneof=on off"`
+}
+
 type SiteStateRequest struct {
 	SiteId string `json:"site_id" validate:"required" path:"site_id"`
 }
