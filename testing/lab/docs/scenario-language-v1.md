@@ -31,6 +31,7 @@ Supported events:
 - `start_ues`
 - `wait_ues_attached`
 - `restart_nodes`
+- `wait_node_connectivity`
 - `wait_nodes_ready`
 - `add_package_to_sim`
 - `remove_package_from_sim`
@@ -68,6 +69,38 @@ Event expected failure:
     result: failure
     error_contains: "script failed"
 ```
+
+Node restart transition:
+
+```yaml
+- type: wait_node_connectivity
+  type_selector: tower
+  count_per_network: 1
+  connectivity: Online
+  seconds: 120
+
+- type: restart_nodes
+  type_selector: tower
+  count_per_network: 1
+
+- type: wait_node_connectivity
+  type_selector: tower
+  count_per_network: 1
+  connectivity: Offline
+  seconds: 120
+
+- type: wait_node_connectivity
+  type_selector: tower
+  count_per_network: 1
+  connectivity: Online
+  seconds: 300
+```
+
+`wait_node_connectivity` polls BFF `getNode.status.connectivity`. It succeeds only
+after every selected node has been observed with the requested connectivity.
+The default timeout is 180 seconds.
+`ULAB_NODE_CONNECTIVITY_POLL_SEC` controls the polling interval and defaults to
+two seconds.
 
 Backend count:
 
@@ -174,7 +207,7 @@ new version is reported and the node/app are healthy again:
 
 `node_version_equals` accepts a match against either the app's `version` or
 `tag` returned by BFF `getApps`. `node_health_ok` with `app` requires BFF
-`getNodeState.connectivity` to be `Online` and the selected app's BFF
+`getNode.status.connectivity` to be `Online` and the selected app's BFF
 `getApps.status` to be `running` or `active`.
 
 The default check timeout is 180 seconds with a five-second polling interval.

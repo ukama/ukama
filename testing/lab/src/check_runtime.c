@@ -194,7 +194,7 @@ static int check_node_health(check_ctx_t *ctx,
                              check_result_t *res,
                              ulab_error_t *err) {
     selector_result_t sel;
-    bff_node_state_t node_state;
+    bff_node_status_t node_state;
     bff_app_state_t app_state;
     ulab_error_t query_err;
     unsigned int timeout;
@@ -241,7 +241,7 @@ static int check_node_health(check_ctx_t *ctx,
             memset(&query_err, 0, sizeof(query_err));
             ulab_copy(last_node, sizeof(last_node), node->bff_id);
 
-            if (bff_get_node_state(ctx->bff, node, &node_state,
+            if (bff_get_node_status(ctx->bff, node, &node_state,
                                    &query_err)) {
                 ulab_copy(last_error, sizeof(last_error), query_err.msg);
                 continue;
@@ -400,8 +400,8 @@ int check_runtime(check_ctx_t *ctx, const check_spec_t *check,
         return ULAB_OK;
     }
     for (i = 0; i < sel.count; i++) {
-        bff_node_state_t st = {0};
-        if (bff_get_node_state(ctx->bff, &ctx->world->nodes[sel.idx[i]],
+        bff_node_status_t st = {0};
+        if (bff_get_node_status(ctx->bff, &ctx->world->nodes[sel.idx[i]],
             &st, err)) {
             selector_result_free(&sel);
             return ULAB_ERR;

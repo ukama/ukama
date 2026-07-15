@@ -125,6 +125,29 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
             const event_spec_t *event;
 
             event = &phase->events[j];
+            if (event->type == EVT_WAIT_NODE_CONNECTIVITY) {
+                if (event->nodes.kind == SEL_NONE) {
+                    return fail(err,
+                                "wait_node_connectivity requires "
+                                "node selector");
+                }
+                if (event->status[0] == '\0') {
+                    return fail(err,
+                                "wait_node_connectivity requires "
+                                "connectivity");
+                }
+                if (!ulab_streq(event->status, "Online") &&
+                    !ulab_streq(event->status, "Offline")) {
+                    return fail(err,
+                                "wait_node_connectivity connectivity "
+                                "must be Online or Offline");
+                }
+                if (event->amount_mb > 900) {
+                    return fail(err,
+                                "wait_node_connectivity exceeds 900 seconds");
+                }
+            }
+
             if (event->type != EVT_SOFTWARE_UPDATE) {
                 continue;
             }

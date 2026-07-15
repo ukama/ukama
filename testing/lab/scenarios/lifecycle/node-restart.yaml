@@ -1,6 +1,6 @@
 version: 1
 name: node-restart
-description: Verify traffic and cumulative usage recover after restarting one tower in a two-site network.
+description: Verify traffic and cumulative usage recover after one tower in a two-site network transitions Online to Offline to Online during restart.
 seed: 91
 suite: p0
 priority: p0
@@ -44,6 +44,11 @@ runtime:
 phases:
   - name: before_restart
     events:
+      - type: wait_node_connectivity
+        type_selector: tower
+        count_per_network: 1
+        connectivity: Online
+        seconds: 120
       - type: traffic
         ues: all
         amount_mb: 100
@@ -58,11 +63,25 @@ phases:
       - type: restart_nodes
         type_selector: tower
         count_per_network: 1
+      - type: wait_node_connectivity
+        type_selector: tower
+        count_per_network: 1
+        connectivity: Offline
+        seconds: 120
+      - type: wait_node_connectivity
+        type_selector: tower
+        count_per_network: 1
+        connectivity: Online
+        seconds: 300
       - type: wait_nodes_ready
-        nodes: all
+        type_selector: tower
+        count_per_network: 1
+      - type: wait_ues_attached
+        ues: all
     checks:
       - type: node_ready
-        nodes: all
+        type_selector: tower
+        count_per_network: 1
 
   - name: after_restart
     events:
@@ -70,6 +89,9 @@ phases:
         ues: all
         amount_mb: 50
     checks:
+      - type: traffic_allowed
+        ues: all
+        amount_mb: 1
       - type: usage_sample
         sample_per_site: 2
         expected: from_model

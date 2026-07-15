@@ -50,6 +50,7 @@ const char *scenario_event_name(event_type_t type) {
     case EVT_WAIT_UES_ATTACHED: return "wait_ues_attached";
     case EVT_WAIT: return "wait";
     case EVT_RESTART_NODES: return "restart_nodes";
+    case EVT_WAIT_NODE_CONNECTIVITY: return "wait_node_connectivity";
     case EVT_WAIT_NODES_READY: return "wait_nodes_ready";
     case EVT_ADD_PACKAGE_TO_SIM: return "add_package_to_sim";
     case EVT_REMOVE_PACKAGE_FROM_SIM: return "remove_package_from_sim";
@@ -105,6 +106,8 @@ int scenario_event_from_name(const char *name, event_type_t *out) {
         *out = EVT_WAIT;
     } else if (ulab_streq(name, "restart_nodes")) {
         *out = EVT_RESTART_NODES;
+    } else if (ulab_streq(name, "wait_node_connectivity")) {
+        *out = EVT_WAIT_NODE_CONNECTIVITY;
     } else if (ulab_streq(name, "wait_nodes_ready")) {
         *out = EVT_WAIT_NODES_READY;
     } else if (ulab_streq(name, "add_package_to_sim")) {
@@ -385,6 +388,7 @@ static int apply_event_field(event_spec_t *e, const char *key,
     if (ulab_streq(key, "tag")) return ulab_copy(e->tag,
         sizeof(e->tag), val);
     if (ulab_streq(key, "status") || ulab_streq(key, "state") ||
+        ulab_streq(key, "connectivity") ||
         ulab_streq(key, "version")) return ulab_copy(e->status,
         sizeof(e->status), val);
     if (ulab_streq(key, "expect_result")) return ulab_copy(e->expect_result,

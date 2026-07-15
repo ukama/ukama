@@ -799,15 +799,51 @@ static int write_one_event(FILE *f, const char *event,
     if (ulab_streq(event, "restart_nodes") ||
         ulab_streq(event, "restart_tower")) {
         fprintf(f,
+                "      - type: wait_node_connectivity\n"
+                "        type_selector: tower\n"
+                "        count_per_network: 1\n"
+                "        connectivity: Online\n"
+                "        seconds: 120\n"
                 "      - type: restart_nodes\n"
                 "        type_selector: tower\n"
-                "        count_per_network: 1\n");
+                "        count_per_network: 1\n"
+                "      - type: wait_node_connectivity\n"
+                "        type_selector: tower\n"
+                "        count_per_network: 1\n"
+                "        connectivity: Offline\n"
+                "        seconds: 120\n"
+                "      - type: wait_node_connectivity\n"
+                "        type_selector: tower\n"
+                "        count_per_network: 1\n"
+                "        connectivity: Online\n"
+                "        seconds: 300\n"
+                "      - type: wait_nodes_ready\n"
+                "        type_selector: tower\n"
+                "        count_per_network: 1\n"
+                "      - type: wait_ues_attached\n"
+                "        ues: all\n");
         return ULAB_OK;
     }
     if (ulab_streq(event, "restart_site")) {
         fprintf(f,
+                "      - type: wait_node_connectivity\n"
+                "        nodes: all\n"
+                "        connectivity: Online\n"
+                "        seconds: 120\n"
                 "      - type: restart_site\n"
-                "        nodes: all\n");
+                "        nodes: all\n"
+                "      - type: wait_node_connectivity\n"
+                "        nodes: all\n"
+                "        connectivity: Offline\n"
+                "        seconds: 120\n"
+                "      - type: wait_node_connectivity\n"
+                "        nodes: all\n"
+                "        connectivity: Online\n"
+                "        seconds: 300\n"
+                "      - type: wait_nodes_ready\n"
+                "        nodes: all\n"
+                "      - type: wait_ues_attached\n"
+                "        ues: all\n");
         return ULAB_OK;
     }
     if (ulab_streq(event, "toggle_service_off")) {

@@ -24,7 +24,7 @@ extern const char *BFF_ADD_SUBSCRIBER;
 extern const char *BFF_ALLOCATE_SIM;
 extern const char *BFF_GET_DATA_USAGE;
 extern const char *BFF_GET_SIM_PACKAGES;
-extern const char *BFF_GET_NODE_STATE;
+extern const char *BFF_GET_NODE;
 extern const char *BFF_UPDATE_SOFTWARE;
 extern const char *BFF_GET_APPS;
 extern const char *BFF_NETWORK_OVERVIEW;
@@ -1220,30 +1220,46 @@ int bff_get_packages_for_sim(bff_client_t *c, const ue_t *ue,
     return ULAB_OK;
 }
 
-int bff_get_node_state(bff_client_t *c, const node_t *node,
-                       bff_node_state_t *state, ulab_error_t *err) {
+int bff_get_node_status(bff_client_t *c, const node_t *node,
+                        bff_node_status_t *status, ulab_error_t *err) {
 
     char vars[ULAB_MAX_QUERY];
     json_t *root;
     json_t *obj;
+    json_t *node_status;
 
-    snprintf(vars, sizeof(vars), "{\"id\":\"%s\"}", node->bff_id);
+    snprintf(vars, sizeof(vars),
+             "{\"data\":{\"id\":\"%s\"}}",
+             node->bff_id);
 
-    if (bff_call(c, "getNodeState", BFF_GET_NODE_STATE, vars, &root,
-        err)) {
+    if (bff_call(c, "getNode", BFF_GET_NODE, vars, &root, err)) {
         return ULAB_ERR;
     }
 
-    obj = dig(root, "data", "getNodeState");
+    obj = dig(root, "data", "getNode");
     if (obj == NULL) {
-        snprintf(err->msg, sizeof(err->msg), "getNodeState missing data");
+        snprintf(err->msg, sizeof(err->msg), "getNode missing data");
         json_decref(root);
         return ULAB_ERR;
     }
 
-    json_get_str(obj, "state", state->state, sizeof(state->state));
-    json_get_str(obj, "connectivity", state->connectivity,
-                 sizeof(state->connectivity));
+    node_status = json_object_get(obj, "status");
+    if (node_status == NULL || !json_is_object(node_status)) {
+        snprintf(err->msg, sizeof(err->msg), "getNode missing status");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+
+    if (json_get_str(obj, "id", status->id, sizeof(status->id)) ||
+        json_get_str(node_status, "connectivity", status->connectivity,
+                     sizeof(status->connectivity)) ||
+        json_get_str(node_status, "state", status->state,
+                     sizeof(status->state))) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getNode missing id/status fields");
+        json_decref(root);
+        return ULAB_ERR;
+    }
 
     json_decref(root);
 

@@ -33,9 +33,10 @@ typedef struct {
 } bff_client_t;
 
 typedef struct {
-    char state[ULAB_MAX_REF];
+    char id[ULAB_MAX_ID];
     char connectivity[ULAB_MAX_REF];
-} bff_node_state_t;
+    char state[ULAB_MAX_REF];
+} bff_node_status_t;
 
 typedef struct {
     char name[ULAB_MAX_NAME];
@@ -132,10 +133,10 @@ int bff_get_packages_for_sim(bff_client_t *c,
                              int *active,
                              ulab_error_t *err);
 
-int bff_get_node_state(bff_client_t *c,
-                       const node_t *node,
-                       bff_node_state_t *state,
-                       ulab_error_t *err);
+int bff_get_node_status(bff_client_t *c,
+                        const node_t *node,
+                        bff_node_status_t *status,
+                        ulab_error_t *err);
 
 int bff_restart_node(bff_client_t *c,
                      const node_t *node,

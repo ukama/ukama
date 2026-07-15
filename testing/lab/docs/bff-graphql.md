@@ -16,6 +16,6 @@ Queries:
 
 - `getDataUsage(simId: String!)`
 - `getPackagesForSim(data: GetPackagesForSimInputDto!)`
-- `getNodeState(nodeId: String!)`
+- `getNode(data: NodeInput!) { id status { connectivity state } }`
 - `networkOverview(networkId: String!)`
 - `siteView(siteId: String!)`
