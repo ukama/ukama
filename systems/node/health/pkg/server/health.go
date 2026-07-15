@@ -155,13 +155,17 @@ func (h *HealthServer) ListApps(ctx context.Context, req *pb.ListAppsRequest) (*
 		return nil, status.Errorf(codes.InvalidArgument, "payload is invalid: %v", err)
 	}
 
-	apps := make([]*pb.App, len(parsed.Apps))
-	for i, a := range parsed.Apps {
-		if req.GetAppName() != "" && a.Name == req.GetAppName() {
-			apps[i] = parseAppToPb(&a)
-			break
+	apps := make([]*pb.App, 0, len(parsed.Apps))
+	for i := range parsed.Apps {
+		a := parsed.Apps[i]
+		if req.GetAppName() != "" && a.Name != req.GetAppName() {
+			continue
 		}
-		apps[i] = parseAppToPb(&a)
+		apps = append(apps, parseAppToPb(&a))
+	}
+
+	if req.GetAppName() != "" && len(apps) == 0 {
+		return nil, status.Errorf(codes.NotFound, "app %q not found", req.GetAppName())
 	}
 
 	return &pb.ListAppsResponse{Apps: apps}, nil
