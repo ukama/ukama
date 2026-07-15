@@ -23,12 +23,13 @@ const (
 // Action → completion rule fallback when caller doesn't supply one.
 // TODO: move to config or per-action proto when we add more actions.
 var DefaultCompletionRule = map[string]string{
+	"SendNodeCommand":      "state=Operational",
 	"RestartNode":          "state=Operational",
 	"RestartSite":          "state=Operational",
 	"RestartNodes":         "state=Operational",
-	"ToggleRfSwitch":       "state=Operational",
+	"ToggleRadio":          "state=Operational",
 	"ToggleInternetSwitch": "state=Operational",
-	"ToggleNodeService":    "state=Operational",
+	"ToggleService":        "state=Operational",
 	"UpdateSoftware":       "state=Operational",
 }
 
