@@ -20,13 +20,6 @@ export type ActionAvailabilityDto = {
   reason?: Maybe<Scalars['String']['output']>;
 };
 
-export type ActivityItemDto = {
-  __typename?: 'ActivityItemDto';
-  description?: Maybe<Scalars['String']['output']>;
-  occurredAt?: Maybe<Scalars['String']['output']>;
-  routingKey?: Maybe<Scalars['String']['output']>;
-};
-
 export type AddMemberInputDto = {
   role: Scalars['String']['input'];
   userId: Scalars['String']['input'];
@@ -107,21 +100,6 @@ export type AddSiteInputDto = {
   switch_id: Scalars['String']['input'];
 };
 
-export type AlarmRowDto = {
-  __typename?: 'AlarmRowDto';
-  alarmId?: Maybe<Scalars['String']['output']>;
-  closedAt?: Maybe<Scalars['String']['output']>;
-  customersAffected: Scalars['Int']['output'];
-  description?: Maybe<Scalars['String']['output']>;
-  openedAt?: Maybe<Scalars['String']['output']>;
-  recommendedAction?: Maybe<Scalars['String']['output']>;
-  resourceId?: Maybe<Scalars['String']['output']>;
-  resourceType?: Maybe<Scalars['String']['output']>;
-  revenueAtRisk: Scalars['Float']['output'];
-  severity?: Maybe<Scalars['String']['output']>;
-  state?: Maybe<Scalars['String']['output']>;
-};
-
 export type AlertsSection = {
   __typename?: 'AlertsSection';
   error?: Maybe<SectionError>;
@@ -152,39 +130,6 @@ export type AllocateSimInputDto = {
   sim_type: Scalars['String']['input'];
   subscriber_id: Scalars['String']['input'];
   traffic_policy: Scalars['Float']['input'];
-};
-
-export type AnalyticsNodeInput = {
-  from?: InputMaybe<Scalars['String']['input']>;
-  nodeId: Scalars['String']['input'];
-  period?: InputMaybe<Scalars['String']['input']>;
-  timezone?: InputMaybe<Scalars['String']['input']>;
-  to?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type AnalyticsSiteInput = {
-  from?: InputMaybe<Scalars['String']['input']>;
-  period?: InputMaybe<Scalars['String']['input']>;
-  siteId: Scalars['String']['input'];
-  timezone?: InputMaybe<Scalars['String']['input']>;
-  to?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type AnalyticsWindowInput = {
-  from?: InputMaybe<Scalars['String']['input']>;
-  metric?: InputMaybe<Scalars['String']['input']>;
-  networkId?: InputMaybe<Scalars['String']['input']>;
-  nodeId?: InputMaybe<Scalars['String']['input']>;
-  page?: InputMaybe<Scalars['Int']['input']>;
-  pageSize?: InputMaybe<Scalars['Int']['input']>;
-  period?: InputMaybe<Scalars['String']['input']>;
-  query?: InputMaybe<Scalars['String']['input']>;
-  severity?: InputMaybe<Scalars['String']['input']>;
-  siteId?: InputMaybe<Scalars['String']['input']>;
-  state?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<Scalars['String']['input']>;
-  timezone?: InputMaybe<Scalars['String']['input']>;
-  to?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type App = {
@@ -231,51 +176,6 @@ export type BalanceSection = {
   error?: Maybe<SectionError>;
   latestUnpaidPeriod?: Maybe<Scalars['String']['output']>;
   outstandingCount?: Maybe<Scalars['Int']['output']>;
-};
-
-export type BillingSummaryDto = {
-  __typename?: 'BillingSummaryDto';
-  invoices: Array<InvoiceRowDto>;
-  kpis: Array<KpiDto>;
-  lastInvoiceDate?: Maybe<Scalars['String']['output']>;
-  meta?: Maybe<MetaDto>;
-};
-
-export type BusinessHomeDto = {
-  __typename?: 'BusinessHomeDto';
-  kpis: Array<KpiDto>;
-  recentActivity: Array<ActivityItemDto>;
-  sites: Array<SiteSummaryDto>;
-  topPackages: Array<NamedValueDto>;
-};
-
-export type BusinessSiteDto = {
-  __typename?: 'BusinessSiteDto';
-  kpis: Array<KpiDto>;
-  revenueTrend?: Maybe<TimeSeriesDto>;
-  site?: Maybe<BusinessSiteRowDto>;
-};
-
-export type BusinessSiteRowDto = {
-  __typename?: 'BusinessSiteRowDto';
-  customers: Scalars['Int']['output'];
-  dataUsed: Scalars['Float']['output'];
-  issue?: Maybe<Scalars['String']['output']>;
-  latitude: Scalars['Float']['output'];
-  longitude: Scalars['Float']['output'];
-  name?: Maybe<Scalars['String']['output']>;
-  revenue: Scalars['Float']['output'];
-  revenueToday: Scalars['Float']['output'];
-  siteId: Scalars['String']['output'];
-  status?: Maybe<Scalars['String']['output']>;
-  topPackage?: Maybe<Scalars['String']['output']>;
-  uptime: Scalars['Float']['output'];
-};
-
-export type BusinessSitesDto = {
-  __typename?: 'BusinessSitesDto';
-  meta?: Maybe<MetaDto>;
-  sites: Array<BusinessSiteRowDto>;
 };
 
 export type CBooleanResponse = {
@@ -376,21 +276,6 @@ export type CurrencyRes = {
   symbol: Scalars['String']['output'];
 };
 
-export type CustomerByIdInput = {
-  customerId: Scalars['String']['input'];
-  from?: InputMaybe<Scalars['String']['input']>;
-  period?: InputMaybe<Scalars['String']['input']>;
-  timezone?: InputMaybe<Scalars['String']['input']>;
-  to?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type CustomerDetailDto = {
-  __typename?: 'CustomerDetailDto';
-  customer?: Maybe<CustomerRowDto>;
-  kpis: Array<KpiDto>;
-  packageHistory: Array<PackageIntervalDto>;
-};
-
 export type CustomerDto = {
   __typename?: 'CustomerDto';
   addressLine1?: Maybe<Scalars['String']['output']>;
@@ -404,49 +289,6 @@ export type CustomerDto = {
   phone?: Maybe<Scalars['String']['output']>;
   timezone?: Maybe<Scalars['String']['output']>;
   vatRate: Scalars['Float']['output'];
-};
-
-export type CustomerListDto = {
-  __typename?: 'CustomerListDto';
-  customers: Array<CustomerRowDto>;
-  meta?: Maybe<MetaDto>;
-};
-
-export type CustomerOverviewDto = {
-  __typename?: 'CustomerOverviewDto';
-  kpis: Array<KpiDto>;
-};
-
-export type CustomerRowDto = {
-  __typename?: 'CustomerRowDto';
-  customerId: Scalars['String']['output'];
-  dataUsage: Scalars['Float']['output'];
-  email?: Maybe<Scalars['String']['output']>;
-  lastSeen?: Maybe<Scalars['String']['output']>;
-  name?: Maybe<Scalars['String']['output']>;
-  packageName?: Maybe<Scalars['String']['output']>;
-  packageStatus?: Maybe<Scalars['String']['output']>;
-  simIccid?: Maybe<Scalars['String']['output']>;
-  simStatus?: Maybe<Scalars['String']['output']>;
-  siteId?: Maybe<Scalars['String']['output']>;
-  siteName?: Maybe<Scalars['String']['output']>;
-  status?: Maybe<Scalars['String']['output']>;
-};
-
-export type CustomerSimsDto = {
-  __typename?: 'CustomerSimsDto';
-  meta?: Maybe<MetaDto>;
-  sims: Array<SimRowDto>;
-};
-
-export type CustomerSupportDto = {
-  __typename?: 'CustomerSupportDto';
-  customer?: Maybe<CustomerRowDto>;
-  escalationNeeded: Scalars['Boolean']['output'];
-  likelyIssue?: Maybe<Scalars['String']['output']>;
-  recentActivity: Array<ActivityItemDto>;
-  recommendedAction?: Maybe<Scalars['String']['output']>;
-  signals: Array<SupportSignalDto>;
 };
 
 export type DataPlan = {
@@ -496,15 +338,6 @@ export type DeleteSimResDto = {
   simId?: Maybe<Scalars['String']['output']>;
 };
 
-export type EventRowDto = {
-  __typename?: 'EventRowDto';
-  description?: Maybe<Scalars['String']['output']>;
-  occurredAt?: Maybe<Scalars['String']['output']>;
-  resourceId?: Maybe<Scalars['String']['output']>;
-  resourceType?: Maybe<Scalars['String']['output']>;
-  routingKey?: Maybe<Scalars['String']['output']>;
-};
-
 export type FeeDto = {
   __typename?: 'FeeDto';
   eventsCount: Scalars['String']['output'];
@@ -533,6 +366,11 @@ export type GetHealthReportInputDto = {
   timestamp: Scalars['String']['input'];
 };
 
+export type GetKpiValuesDto = {
+  __typename?: 'GetKpiValuesDto';
+  values: Array<KpiValueDto>;
+};
+
 export type GetNodeLatestMetricInput = {
   nodeId: Scalars['String']['input'];
   type: Scalars['String']['input'];
@@ -552,6 +390,7 @@ export type GetPackagesForSimInputDto = {
 };
 
 export type GetPaymentsInputDto = {
+  itemId?: InputMaybe<Scalars['String']['input']>;
   paymentMethod?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<Scalars['String']['input']>;
   type?: InputMaybe<Scalars['String']['input']>;
@@ -563,6 +402,14 @@ export type GetPdfReportUrlDto = {
   downloadUrl: Scalars['String']['output'];
   filename: Scalars['String']['output'];
   id: Scalars['String']['output'];
+};
+
+export type GetPerformanceReportDto = {
+  __typename?: 'GetPerformanceReportDto';
+  report: Scalars['String']['output'];
+  rows: Array<ReportRowDto>;
+  span?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
 };
 
 export type GetReportDto = {
@@ -655,26 +502,6 @@ export type HealthSystemInfo = {
   value: Scalars['String']['output'];
 };
 
-export type HomeKpis = {
-  __typename?: 'HomeKpis';
-  kpis: Array<KpiDto>;
-};
-
-/** Which lens's home data to fetch. */
-export enum HomeLens {
-  Business = 'BUSINESS',
-  Network = 'NETWORK'
-}
-
-export type HomeViewInput = {
-  from?: InputMaybe<Scalars['String']['input']>;
-  lens: HomeLens;
-  networkId?: InputMaybe<Scalars['String']['input']>;
-  period?: InputMaybe<Scalars['String']['input']>;
-  timezone?: InputMaybe<Scalars['String']['input']>;
-  to?: InputMaybe<Scalars['String']['input']>;
-};
-
 export enum Invitation_Status {
   InviteAccepted = 'INVITE_ACCEPTED',
   InviteDeclined = 'INVITE_DECLINED',
@@ -684,11 +511,6 @@ export enum Invitation_Status {
 export type IdResponse = {
   __typename?: 'IdResponse';
   uuid: Scalars['String']['output'];
-};
-
-export type InventoryReadinessDto = {
-  __typename?: 'InventoryReadinessDto';
-  kpis: Array<KpiDto>;
 };
 
 export type InventoryView = {
@@ -716,14 +538,6 @@ export type InvitationsResDto = {
   invitations: Array<InvitationDto>;
 };
 
-export type InvoiceRowDto = {
-  __typename?: 'InvoiceRowDto';
-  amount: Scalars['Float']['output'];
-  generatedAt?: Maybe<Scalars['String']['output']>;
-  invoiceId?: Maybe<Scalars['String']['output']>;
-  status?: Maybe<Scalars['String']['output']>;
-};
-
 export type InvoicesSection = {
   __typename?: 'InvoicesSection';
   error?: Maybe<SectionError>;
@@ -737,17 +551,6 @@ export type ItemResDto = {
   type: Scalars['String']['output'];
 };
 
-export type KpiDto = {
-  __typename?: 'KpiDto';
-  asOf?: Maybe<Scalars['String']['output']>;
-  delta?: Maybe<Scalars['Float']['output']>;
-  deltaPeriod?: Maybe<Scalars['String']['output']>;
-  formatted?: Maybe<Scalars['String']['output']>;
-  key: Scalars['String']['output'];
-  stale?: Maybe<Scalars['Boolean']['output']>;
-  value: Scalars['Float']['output'];
-};
-
 export type KpiEntryDto = {
   __typename?: 'KpiEntryDto';
   format?: Maybe<Scalars['String']['output']>;
@@ -758,6 +561,30 @@ export type KpiEntryDto = {
   timestamp: Scalars['Float']['output'];
   unit?: Maybe<Scalars['String']['output']>;
   value: Scalars['Float']['output'];
+};
+
+export type KpiValueDto = {
+  __typename?: 'KpiValueDto';
+  computedAt?: Maybe<Scalars['String']['output']>;
+  from?: Maybe<Scalars['String']['output']>;
+  isPartial?: Maybe<Scalars['Boolean']['output']>;
+  kpi: Scalars['String']['output'];
+  op?: Maybe<Scalars['String']['output']>;
+  scope: Array<ScopeEntryDto>;
+  span?: Maybe<Scalars['String']['output']>;
+  symbol?: Maybe<Scalars['String']['output']>;
+  to?: Maybe<Scalars['String']['output']>;
+  trend?: Maybe<TrendDto>;
+  type?: Maybe<Scalars['String']['output']>;
+  unit?: Maybe<Scalars['String']['output']>;
+  value: Scalars['Float']['output'];
+};
+
+export type KpiValuesInput = {
+  keys: Array<Scalars['String']['input']>;
+  networkId?: InputMaybe<Scalars['String']['input']>;
+  op?: InputMaybe<Scalars['String']['input']>;
+  span?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type KpisSection = {
@@ -798,29 +625,6 @@ export type MembersView = {
   __typename?: 'MembersView';
   orgName: Scalars['String']['output'];
   team: TeamSection;
-};
-
-export type MetaDto = {
-  __typename?: 'MetaDto';
-  count: Scalars['Int']['output'];
-  page: Scalars['Int']['output'];
-  pages: Scalars['Int']['output'];
-  size: Scalars['Int']['output'];
-};
-
-export type MetricInfoDto = {
-  __typename?: 'MetricInfoDto';
-  lastSampleAt?: Maybe<Scalars['String']['output']>;
-  name?: Maybe<Scalars['String']['output']>;
-  stale: Scalars['Boolean']['output'];
-  unit?: Maybe<Scalars['String']['output']>;
-};
-
-export type MetricPanelDto = {
-  __typename?: 'MetricPanelDto';
-  alarms: Array<AlarmRowDto>;
-  kpis: Array<KpiDto>;
-  series: Array<TimeSeriesDto>;
 };
 
 export type MetricRes = {
@@ -889,8 +693,6 @@ export type Mutation = {
   deleteSubscriber: CBooleanResponse;
   detachhNode: CBooleanResponse;
   processPayment: ProcessPaymentDto;
-  rebuildRollups: RebuildRollupsResultDto;
-  refreshAnalytics: RefreshResultDto;
   releaseNodeFromSite: CBooleanResponse;
   removeMember: CBooleanResponse;
   removePackageForSim: RemovePackageFromSimResDto;
@@ -1035,16 +837,6 @@ export type MutationDetachhNodeArgs = {
 
 export type MutationProcessPaymentArgs = {
   data: ProcessPaymentInputDto;
-};
-
-
-export type MutationRebuildRollupsArgs = {
-  data: RebuildRollupsInput;
-};
-
-
-export type MutationRefreshAnalyticsArgs = {
-  data: RefreshInput;
 };
 
 
@@ -1199,13 +991,6 @@ export enum Notification_Type {
   TypeWarning = 'TYPE_WARNING'
 }
 
-export type NamedValueDto = {
-  __typename?: 'NamedValueDto';
-  id?: Maybe<Scalars['String']['output']>;
-  name?: Maybe<Scalars['String']['output']>;
-  value: Scalars['Float']['output'];
-};
-
 export type Network = {
   __typename?: 'Network';
   elementType: Scalars['String']['output'];
@@ -1213,13 +998,6 @@ export type Network = {
   networkName: Scalars['String']['output'];
   sites: Array<Site>;
   subscribers?: Maybe<Subscribers>;
-};
-
-export type NetworkAlarmsDto = {
-  __typename?: 'NetworkAlarmsDto';
-  alarms: Array<AlarmRowDto>;
-  kpis: Array<KpiDto>;
-  meta?: Maybe<MetaDto>;
 };
 
 export type NetworkDto = {
@@ -1235,33 +1013,6 @@ export type NetworkDto = {
   overdraft: Scalars['Float']['output'];
   paymentLinks: Scalars['Boolean']['output'];
   trafficPolicy: Scalars['Float']['output'];
-};
-
-export type NetworkEventsDto = {
-  __typename?: 'NetworkEventsDto';
-  events: Array<EventRowDto>;
-  meta?: Maybe<MetaDto>;
-};
-
-export type NetworkMetricsDto = {
-  __typename?: 'NetworkMetricsDto';
-  metrics: Array<MetricInfoDto>;
-  series: Array<TimeSeriesDto>;
-};
-
-export type NetworkNodeDto = {
-  __typename?: 'NetworkNodeDto';
-  kpis: Array<KpiDto>;
-  node?: Maybe<NodeRowDto>;
-  recentEvents: Array<EventRowDto>;
-  series: Array<TimeSeriesDto>;
-};
-
-export type NetworkNodesDto = {
-  __typename?: 'NetworkNodesDto';
-  kpis: Array<KpiDto>;
-  meta?: Maybe<MetaDto>;
-  nodes: Array<NodeRowDto>;
 };
 
 export type NetworkOverview = {
@@ -1280,42 +1031,10 @@ export type NetworkOverviewLatestAlertsArgs = {
   limit?: Scalars['Int']['input'];
 };
 
-export type NetworkOverviewDto = {
-  __typename?: 'NetworkOverviewDto';
-  kpis: Array<KpiDto>;
-  networkStatus?: Maybe<Scalars['String']['output']>;
-  recentEvents: Array<EventRowDto>;
-};
-
 export type NetworkSection = {
   __typename?: 'NetworkSection';
   error?: Maybe<SectionError>;
   network?: Maybe<NetworkDto>;
-};
-
-export type NetworkSiteDto = {
-  __typename?: 'NetworkSiteDto';
-  alarms: Array<AlarmRowDto>;
-  kpis: Array<KpiDto>;
-  series: Array<TimeSeriesDto>;
-  site?: Maybe<SiteRowDto>;
-};
-
-export type NetworkSitesDto = {
-  __typename?: 'NetworkSitesDto';
-  kpis: Array<KpiDto>;
-  meta?: Maybe<MetaDto>;
-  sites: Array<SiteRowDto>;
-};
-
-export type NetworkSupportSearchDto = {
-  __typename?: 'NetworkSupportSearchDto';
-  results: Array<SupportResultDto>;
-};
-
-export type NetworkTopologyDto = {
-  __typename?: 'NetworkTopologyDto';
-  sites: Array<TopologySiteDto>;
 };
 
 export type NetworksResDto = {
@@ -1366,26 +1085,6 @@ export type NodeOperationStatusDto = {
 
 export type NodeOperationStatusInputDto = {
   nodeId: Scalars['String']['input'];
-};
-
-export type NodePoolDto = {
-  __typename?: 'NodePoolDto';
-  kpis: Array<KpiDto>;
-  nodes: Array<NodeRowDto>;
-};
-
-export type NodeRowDto = {
-  __typename?: 'NodeRowDto';
-  configuringDurationSeconds: Scalars['Float']['output'];
-  lastTelemetry?: Maybe<Scalars['String']['output']>;
-  name?: Maybe<Scalars['String']['output']>;
-  noTelemetryWarning: Scalars['Boolean']['output'];
-  nodeId: Scalars['String']['output'];
-  siteId?: Maybe<Scalars['String']['output']>;
-  siteName?: Maybe<Scalars['String']['output']>;
-  status?: Maybe<Scalars['String']['output']>;
-  type?: Maybe<Scalars['String']['output']>;
-  uptime: Scalars['Float']['output'];
 };
 
 export type NodeSection = {
@@ -1627,15 +1326,6 @@ export type PackageDto = {
   voiceVolume: Scalars['Float']['output'];
 };
 
-export type PackageIntervalDto = {
-  __typename?: 'PackageIntervalDto';
-  endAt?: Maybe<Scalars['String']['output']>;
-  packageId?: Maybe<Scalars['String']['output']>;
-  packageName?: Maybe<Scalars['String']['output']>;
-  startAt?: Maybe<Scalars['String']['output']>;
-  state?: Maybe<Scalars['String']['output']>;
-};
-
 export type PackageMarkupApiDto = {
   __typename?: 'PackageMarkupAPIDto';
   baserate: Scalars['String']['output'];
@@ -1648,35 +1338,12 @@ export type PackageNameAvailabilityResDto = {
   name: Scalars['String']['output'];
 };
 
-export type PackagePerformanceDto = {
-  __typename?: 'PackagePerformanceDto';
-  kpis: Array<KpiDto>;
-  meta?: Maybe<MetaDto>;
-  packages: Array<PackageRowDto>;
-  revenueMix: Array<NamedValueDto>;
-};
-
 export type PackageRateApiDto = {
   __typename?: 'PackageRateAPIDto';
   amount: Scalars['Float']['output'];
   data: Scalars['Float']['output'];
   sms_mo: Scalars['String']['output'];
   sms_mt: Scalars['Float']['output'];
-};
-
-export type PackageRowDto = {
-  __typename?: 'PackageRowDto';
-  activeSubscribers: Scalars['Int']['output'];
-  dataQuota?: Maybe<Scalars['String']['output']>;
-  dataUsed: Scalars['Float']['output'];
-  name?: Maybe<Scalars['String']['output']>;
-  packageId: Scalars['String']['output'];
-  price: Scalars['Float']['output'];
-  revenue: Scalars['Float']['output'];
-  revenueSharePct?: Maybe<Scalars['Float']['output']>;
-  soldCount: Scalars['Int']['output'];
-  status?: Maybe<Scalars['String']['output']>;
-  validity?: Maybe<Scalars['String']['output']>;
 };
 
 export type PackagesResDto = {
@@ -1703,6 +1370,7 @@ export type PaymentDto = {
   id: Scalars['String']['output'];
   itemId: Scalars['String']['output'];
   itemType: Scalars['String']['output'];
+  metadata?: Maybe<Scalars['String']['output']>;
   paidAt: Scalars['String']['output'];
   payerEmail: Scalars['String']['output'];
   payerName: Scalars['String']['output'];
@@ -1714,6 +1382,13 @@ export type PaymentDto = {
 export type PaymentsDto = {
   __typename?: 'PaymentsDto';
   payments: Array<PaymentDto>;
+};
+
+export type PerformanceReportInput = {
+  networkId?: InputMaybe<Scalars['String']['input']>;
+  report: Scalars['String']['input'];
+  span?: InputMaybe<Scalars['String']['input']>;
+  top?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type PlanNameDto = {
@@ -1748,12 +1423,6 @@ export type PlansSection = {
   plans?: Maybe<Array<PlanNameDto>>;
 };
 
-export type PointDto = {
-  __typename?: 'PointDto';
-  time?: Maybe<Scalars['String']['output']>;
-  value: Scalars['Float']['output'];
-};
-
 export type PoolSimsSection = {
   __typename?: 'PoolSimsSection';
   error?: Maybe<SectionError>;
@@ -1774,48 +1443,29 @@ export type ProcessPaymentInputDto = {
 export type Query = {
   __typename?: 'Query';
   commerceView: CommerceView;
-  getAlarms: NetworkAlarmsDto;
   getApps?: Maybe<Apps>;
-  getBackhaul: MetricPanelDto;
-  getBillingSummary: BillingSummaryDto;
-  getBusinessHome: BusinessHomeDto;
-  getBusinessSite: BusinessSiteDto;
-  getBusinessSites: BusinessSitesDto;
   getComponentById: ComponentDto;
   getComponentsByUserId: ComponentsResDto;
   getCountries: CountriesRes;
   getCurrencySymbol: CurrencyRes;
-  getCustomer: CustomerDetailDto;
-  getCustomerOverview: CustomerOverviewDto;
-  getCustomerSims: CustomerSimsDto;
-  getCustomerSupport: CustomerSupportDto;
   getDataUsage: SimDataUsage;
   getDataUsages: SimDataUsages;
   getDefaultMarkup: DefaultMarkupResDto;
   getDefaultMarkupHistory: DefaultMarkupHistoryResDto;
-  getEvents: NetworkEventsDto;
   getGeneratedPdfReport: GetPdfReportUrlDto;
   getHealthReport: HealthInfo;
-  getHomeKpis: HomeKpis;
-  getInventoryReadiness: InventoryReadinessDto;
   getInvitation: InvitationDto;
   getInvitations: InvitationsResDto;
   getInvitationsByEmail: InvitationsResDto;
+  getKpiValues: GetKpiValuesDto;
   getMember: MemberDto;
   getMemberByUserId: MemberDto;
   getMembers: MembersResDto;
-  getMetrics: NetworkMetricsDto;
   getNetwork: NetworkDto;
-  getNetworkNode: NetworkNodeDto;
-  getNetworkNodes: NetworkNodesDto;
-  getNetworkOverview: NetworkOverviewDto;
-  getNetworkSite: NetworkSiteDto;
-  getNetworkSites: NetworkSitesDto;
   getNetworks: NetworksResDto;
   getNode: Node;
   getNodeLatestMetric: NodeLatestMetric;
   getNodeOperationStatus: NodeOperationStatusDto;
-  getNodePool: NodePoolDto;
   getNodeState: NodeStateRes;
   getNodes: Nodes;
   getNodesByNetwork: Nodes;
@@ -1829,22 +1479,17 @@ export type Query = {
   getOrgTree: OrgTreeRes;
   getOrgs: OrgsResDto;
   getPackage: PackageDto;
-  getPackagePerformance: PackagePerformanceDto;
   getPackages: PackagesResDto;
   getPackagesForSim: GetSimPackagesDtoApi;
   getPayment: PaymentDto;
   getPayments: PaymentsDto;
-  getPower: MetricPanelDto;
-  getRadio: MetricPanelDto;
-  getRefreshState: RefreshStateDto;
+  getPerformanceReport: GetPerformanceReportDto;
   getReport: GetReportDto;
   getReportPdf: GetReportDto;
   getReports: GetReportsDto;
   getResourceLock: ResourceLockDto;
-  getSalesOverview: SalesOverviewDto;
   getSim: SimDto;
   getSimByIccid: SimPoolResDto;
-  getSimPool: SimPoolDto;
   getSimPoolStats: SimPoolStatsDto;
   getSims: SimsResDto;
   getSimsByNetwork: SubscriberSimsResDto;
@@ -1860,24 +1505,20 @@ export type Query = {
   getSubscribersByNetwork: SubscribersResDto;
   getTimezones: TimezoneRes;
   getToken: TokenResDto;
-  getTopology: NetworkTopologyDto;
   getUser: UserResDto;
   inventoryView: InventoryView;
   isPackageNameAvailable: PackageNameAvailabilityResDto;
-  listCustomers: CustomerListDto;
   membersView: MembersView;
   metricsRange: MetricsRes;
   networkOverview: NetworkOverview;
   nodeView: NodeView;
   nodesView: NodesView;
   onboardingStatus: OnboardingStatusDto;
-  searchCustomers: CustomerListDto;
   simPoolView: SimPoolView;
   siteView: SiteView;
   sitesView: SitesView;
   subscriberView: SubscriberView;
   subscribersView: SubscribersView;
-  supportSearch: NetworkSupportSearchDto;
   whoami: WhoamiDto;
 };
 
@@ -1887,38 +1528,8 @@ export type QueryCommerceViewArgs = {
 };
 
 
-export type QueryGetAlarmsArgs = {
-  data: AnalyticsWindowInput;
-};
-
-
 export type QueryGetAppsArgs = {
   data: GetAppsInputDto;
-};
-
-
-export type QueryGetBackhaulArgs = {
-  data: AnalyticsWindowInput;
-};
-
-
-export type QueryGetBillingSummaryArgs = {
-  data: AnalyticsWindowInput;
-};
-
-
-export type QueryGetBusinessHomeArgs = {
-  data: AnalyticsWindowInput;
-};
-
-
-export type QueryGetBusinessSiteArgs = {
-  data: AnalyticsSiteInput;
-};
-
-
-export type QueryGetBusinessSitesArgs = {
-  data: AnalyticsWindowInput;
 };
 
 
@@ -1937,26 +1548,6 @@ export type QueryGetCurrencySymbolArgs = {
 };
 
 
-export type QueryGetCustomerArgs = {
-  data: CustomerByIdInput;
-};
-
-
-export type QueryGetCustomerOverviewArgs = {
-  data: AnalyticsWindowInput;
-};
-
-
-export type QueryGetCustomerSimsArgs = {
-  data: AnalyticsWindowInput;
-};
-
-
-export type QueryGetCustomerSupportArgs = {
-  data: CustomerByIdInput;
-};
-
-
 export type QueryGetDataUsageArgs = {
   data: SimUsageInputDto;
 };
@@ -1964,11 +1555,6 @@ export type QueryGetDataUsageArgs = {
 
 export type QueryGetDataUsagesArgs = {
   data: SimUsagesInputDto;
-};
-
-
-export type QueryGetEventsArgs = {
-  data: AnalyticsWindowInput;
 };
 
 
@@ -1982,16 +1568,6 @@ export type QueryGetHealthReportArgs = {
 };
 
 
-export type QueryGetHomeKpisArgs = {
-  data: HomeViewInput;
-};
-
-
-export type QueryGetInventoryReadinessArgs = {
-  data: AnalyticsWindowInput;
-};
-
-
 export type QueryGetInvitationArgs = {
   id: Scalars['String']['input'];
 };
@@ -1999,6 +1575,11 @@ export type QueryGetInvitationArgs = {
 
 export type QueryGetInvitationsByEmailArgs = {
   email: Scalars['String']['input'];
+};
+
+
+export type QueryGetKpiValuesArgs = {
+  data: KpiValuesInput;
 };
 
 
@@ -2012,38 +1593,8 @@ export type QueryGetMemberByUserIdArgs = {
 };
 
 
-export type QueryGetMetricsArgs = {
-  data: AnalyticsWindowInput;
-};
-
-
 export type QueryGetNetworkArgs = {
   networkId: Scalars['String']['input'];
-};
-
-
-export type QueryGetNetworkNodeArgs = {
-  data: AnalyticsNodeInput;
-};
-
-
-export type QueryGetNetworkNodesArgs = {
-  data: AnalyticsWindowInput;
-};
-
-
-export type QueryGetNetworkOverviewArgs = {
-  data: AnalyticsWindowInput;
-};
-
-
-export type QueryGetNetworkSiteArgs = {
-  data: AnalyticsSiteInput;
-};
-
-
-export type QueryGetNetworkSitesArgs = {
-  data: AnalyticsWindowInput;
 };
 
 
@@ -2059,11 +1610,6 @@ export type QueryGetNodeLatestMetricArgs = {
 
 export type QueryGetNodeOperationStatusArgs = {
   data: NodeOperationStatusInputDto;
-};
-
-
-export type QueryGetNodePoolArgs = {
-  data: AnalyticsWindowInput;
 };
 
 
@@ -2107,11 +1653,6 @@ export type QueryGetPackageArgs = {
 };
 
 
-export type QueryGetPackagePerformanceArgs = {
-  data: AnalyticsWindowInput;
-};
-
-
 export type QueryGetPackagesArgs = {
   networkId?: InputMaybe<Scalars['String']['input']>;
 };
@@ -2132,13 +1673,8 @@ export type QueryGetPaymentsArgs = {
 };
 
 
-export type QueryGetPowerArgs = {
-  data: AnalyticsWindowInput;
-};
-
-
-export type QueryGetRadioArgs = {
-  data: AnalyticsWindowInput;
+export type QueryGetPerformanceReportArgs = {
+  data: PerformanceReportInput;
 };
 
 
@@ -2162,11 +1698,6 @@ export type QueryGetResourceLockArgs = {
 };
 
 
-export type QueryGetSalesOverviewArgs = {
-  data: AnalyticsWindowInput;
-};
-
-
 export type QueryGetSimArgs = {
   data: GetSimInputDto;
 };
@@ -2174,11 +1705,6 @@ export type QueryGetSimArgs = {
 
 export type QueryGetSimByIccidArgs = {
   iccid: Scalars['String']['input'];
-};
-
-
-export type QueryGetSimPoolArgs = {
-  data: AnalyticsWindowInput;
 };
 
 
@@ -2252,11 +1778,6 @@ export type QueryGetTokenArgs = {
 };
 
 
-export type QueryGetTopologyArgs = {
-  data: AnalyticsWindowInput;
-};
-
-
 export type QueryGetUserArgs = {
   userId: Scalars['String']['input'];
 };
@@ -2264,11 +1785,6 @@ export type QueryGetUserArgs = {
 
 export type QueryIsPackageNameAvailableArgs = {
   name: Scalars['String']['input'];
-};
-
-
-export type QueryListCustomersArgs = {
-  data: AnalyticsWindowInput;
 };
 
 
@@ -2289,11 +1805,6 @@ export type QueryNodeViewArgs = {
 
 export type QueryNodesViewArgs = {
   networkId?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type QuerySearchCustomersArgs = {
-  data: AnalyticsWindowInput;
 };
 
 
@@ -2319,11 +1830,6 @@ export type QuerySubscriberViewArgs = {
 
 export type QuerySubscribersViewArgs = {
   networkId: Scalars['String']['input'];
-};
-
-
-export type QuerySupportSearchArgs = {
-  data: AnalyticsWindowInput;
 };
 
 export enum Role_Type {
@@ -2357,32 +1863,6 @@ export type RawReportDto = {
   vatAmountCurrency?: Maybe<Scalars['String']['output']>;
 };
 
-export type RebuildRollupsInput = {
-  family: Scalars['String']['input'];
-  from?: InputMaybe<Scalars['String']['input']>;
-  to?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type RebuildRollupsResultDto = {
-  __typename?: 'RebuildRollupsResultDto';
-  rollups: Array<RollupStateDto>;
-};
-
-export type RefreshInput = {
-  source: Scalars['String']['input'];
-};
-
-export type RefreshResultDto = {
-  __typename?: 'RefreshResultDto';
-  states: Array<SourceStateDto>;
-};
-
-export type RefreshStateDto = {
-  __typename?: 'RefreshStateDto';
-  rollups: Array<RollupStateDto>;
-  states: Array<SourceStateDto>;
-};
-
 export type RemovePackageFormSimInputDto = {
   packageId: Scalars['String']['input'];
   simId: Scalars['String']['input'];
@@ -2391,6 +1871,18 @@ export type RemovePackageFormSimInputDto = {
 export type RemovePackageFromSimResDto = {
   __typename?: 'RemovePackageFromSimResDto';
   packageId?: Maybe<Scalars['String']['output']>;
+};
+
+export type ReportCellDto = {
+  __typename?: 'ReportCellDto';
+  column: Scalars['String']['output'];
+  computedAt?: Maybe<Scalars['String']['output']>;
+  format?: Maybe<Scalars['String']['output']>;
+  isPartial?: Maybe<Scalars['Boolean']['output']>;
+  symbol?: Maybe<Scalars['String']['output']>;
+  trend?: Maybe<TrendDto>;
+  unit?: Maybe<Scalars['String']['output']>;
+  value: Scalars['Float']['output'];
 };
 
 export type ReportDto = {
@@ -2404,6 +1896,14 @@ export type ReportDto = {
   period: Scalars['String']['output'];
   rawReport: RawReportDto;
   type: Scalars['String']['output'];
+};
+
+export type ReportRowDto = {
+  __typename?: 'ReportRowDto';
+  attributes: Array<ScopeEntryDto>;
+  cells: Array<ReportCellDto>;
+  entityId: Scalars['String']['output'];
+  status?: Maybe<Scalars['String']['output']>;
 };
 
 export type ResourceLockDto = {
@@ -2431,13 +1931,6 @@ export type RevenueSection = {
   totalPending?: Maybe<Scalars['Float']['output']>;
 };
 
-export type RollupStateDto = {
-  __typename?: 'RollupStateDto';
-  dirty: Scalars['Boolean']['output'];
-  rollup?: Maybe<Scalars['String']['output']>;
-  watermark?: Maybe<Scalars['String']['output']>;
-};
-
 export enum Sim_Status {
   All = 'ALL',
   Assigned = 'ASSIGNED',
@@ -2451,12 +1944,10 @@ export enum Sim_Types {
   Unknown = 'unknown'
 }
 
-export type SalesOverviewDto = {
-  __typename?: 'SalesOverviewDto';
-  kpis: Array<KpiDto>;
-  revenueByPackage: Array<NamedValueDto>;
-  revenueBySite: Array<NamedValueDto>;
-  revenueTrend?: Maybe<TimeSeriesDto>;
+export type ScopeEntryDto = {
+  __typename?: 'ScopeEntryDto';
+  key: Scalars['String']['output'];
+  value: Scalars['String']['output'];
 };
 
 /** Typed failure of one section of a composite query. The section's data field resolves to null and a SectionError describes why, so the UI can distinguish 'failed' from 'genuinely empty'. */
@@ -2493,15 +1984,6 @@ export type SimAllocatePackageDto = {
   isActive?: Maybe<Scalars['Boolean']['output']>;
   packageId?: Maybe<Scalars['String']['output']>;
   startDate?: Maybe<Scalars['String']['output']>;
-};
-
-export type SimBatchDto = {
-  __typename?: 'SimBatchDto';
-  assigned: Scalars['Int']['output'];
-  assignedPercent: Scalars['Float']['output'];
-  batchId: Scalars['String']['output'];
-  quantity: Scalars['Int']['output'];
-  uploadedAt?: Maybe<Scalars['String']['output']>;
 };
 
 export type SimDataUsage = {
@@ -2558,12 +2040,6 @@ export type SimPackageDto = {
   updated_at: Scalars['String']['output'];
 };
 
-export type SimPoolDto = {
-  __typename?: 'SimPoolDto';
-  batches: Array<SimBatchDto>;
-  kpis: Array<KpiDto>;
-};
-
 export type SimPoolResDto = {
   __typename?: 'SimPoolResDto';
   activationCode: Scalars['String']['output'];
@@ -2614,16 +2090,6 @@ export type SimPoolView = {
 
 export type SimPoolViewSimsArgs = {
   limit?: Scalars['Int']['input'];
-};
-
-export type SimRowDto = {
-  __typename?: 'SimRowDto';
-  allocatedAt?: Maybe<Scalars['String']['output']>;
-  batchId?: Maybe<Scalars['String']['output']>;
-  customerId?: Maybe<Scalars['String']['output']>;
-  iccid?: Maybe<Scalars['String']['output']>;
-  simId: Scalars['String']['output'];
-  status?: Maybe<Scalars['String']['output']>;
 };
 
 export type SimStatusResDto = {
@@ -2754,35 +2220,10 @@ export type SiteOperationStatusInputDto = {
   siteId: Scalars['String']['input'];
 };
 
-export type SiteRowDto = {
-  __typename?: 'SiteRowDto';
-  backhaulLatencyHigh: Scalars['Boolean']['output'];
-  batteryCritical: Scalars['Boolean']['output'];
-  customers: Scalars['Int']['output'];
-  issueSummary?: Maybe<Scalars['String']['output']>;
-  latitude: Scalars['Float']['output'];
-  longitude: Scalars['Float']['output'];
-  name?: Maybe<Scalars['String']['output']>;
-  nodeCount: Scalars['Int']['output'];
-  offlineDurationSeconds: Scalars['Float']['output'];
-  siteId: Scalars['String']['output'];
-  status?: Maybe<Scalars['String']['output']>;
-  uptime: Scalars['Float']['output'];
-};
-
 export type SiteSection = {
   __typename?: 'SiteSection';
   error?: Maybe<SectionError>;
   site?: Maybe<SiteDto>;
-};
-
-export type SiteSummaryDto = {
-  __typename?: 'SiteSummaryDto';
-  customers: Scalars['Int']['output'];
-  name?: Maybe<Scalars['String']['output']>;
-  revenue: Scalars['Float']['output'];
-  siteId: Scalars['String']['output'];
-  status?: Maybe<Scalars['String']['output']>;
 };
 
 export type SiteView = {
@@ -2856,15 +2297,6 @@ export enum SoftwareStatusEnum {
 export type Softwares = {
   __typename?: 'Softwares';
   software: Array<Software>;
-};
-
-export type SourceStateDto = {
-  __typename?: 'SourceStateDto';
-  detail?: Maybe<Scalars['String']['output']>;
-  lastRunAt?: Maybe<Scalars['String']['output']>;
-  lastSuccessAt?: Maybe<Scalars['String']['output']>;
-  source?: Maybe<Scalars['String']['output']>;
-  status?: Maybe<Scalars['String']['output']>;
 };
 
 export type StringResponse = {
@@ -3018,27 +2450,6 @@ export type SubscriptionDto = {
   terminatedAt?: Maybe<Scalars['String']['output']>;
 };
 
-export type SupportResultDto = {
-  __typename?: 'SupportResultDto';
-  batteryPercent: Scalars['Float']['output'];
-  customers: Scalars['Int']['output'];
-  name?: Maybe<Scalars['String']['output']>;
-  recommendation?: Maybe<Scalars['String']['output']>;
-  resourceId?: Maybe<Scalars['String']['output']>;
-  resourceType?: Maybe<Scalars['String']['output']>;
-  signalDbm: Scalars['Float']['output'];
-  status?: Maybe<Scalars['String']['output']>;
-  statusSummary?: Maybe<Scalars['String']['output']>;
-  uptime30d: Scalars['Float']['output'];
-};
-
-export type SupportSignalDto = {
-  __typename?: 'SupportSignalDto';
-  detail?: Maybe<Scalars['String']['output']>;
-  key: Scalars['String']['output'];
-  state?: Maybe<Scalars['String']['output']>;
-};
-
 export enum Timeframe_Filter {
   All = 'ALL',
   Latest = 'LATEST',
@@ -3060,12 +2471,6 @@ export type TeamSection = {
   __typename?: 'TeamSection';
   error?: Maybe<SectionError>;
   rows?: Maybe<Array<TeamMemberDto>>;
-};
-
-export type TimeSeriesDto = {
-  __typename?: 'TimeSeriesDto';
-  key: Scalars['String']['output'];
-  points: Array<PointDto>;
 };
 
 export type TimezoneDto = {
@@ -3104,22 +2509,13 @@ export type TokenResDto = {
   token: Scalars['String']['output'];
 };
 
-export type TopologyNodeDto = {
-  __typename?: 'TopologyNodeDto';
-  name?: Maybe<Scalars['String']['output']>;
-  nodeId?: Maybe<Scalars['String']['output']>;
-  status?: Maybe<Scalars['String']['output']>;
-  type?: Maybe<Scalars['String']['output']>;
-};
-
-export type TopologySiteDto = {
-  __typename?: 'TopologySiteDto';
-  latitude: Scalars['Float']['output'];
-  longitude: Scalars['Float']['output'];
-  name?: Maybe<Scalars['String']['output']>;
-  nodes: Array<TopologyNodeDto>;
-  siteId?: Maybe<Scalars['String']['output']>;
-  status?: Maybe<Scalars['String']['output']>;
+export type TrendDto = {
+  __typename?: 'TrendDto';
+  changeAbs?: Maybe<Scalars['Float']['output']>;
+  changePct?: Maybe<Scalars['Float']['output']>;
+  direction?: Maybe<Scalars['String']['output']>;
+  hasPrevious?: Maybe<Scalars['Boolean']['output']>;
+  prevValue?: Maybe<Scalars['Float']['output']>;
 };
 
 export type UpdateInvitationInputDto = {

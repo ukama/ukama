@@ -108,6 +108,9 @@ class PaymentAPI extends BaseRESTDataSource {
     if (data.status) {
       params = params + `&status=${data.status}`;
     }
+    if (data.itemId) {
+      params = params + `&item_id=${data.itemId}`;
+    }
     logger.info(`[GET] GetPayments: ${baseURL}/${VERSION}/payments?${params}`);
     return this.get(`/${VERSION}/payments?${params}`).then(res =>
       dtoToPaymentsDto(res)

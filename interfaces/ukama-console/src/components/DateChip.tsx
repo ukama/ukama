@@ -7,7 +7,9 @@
  */
 'use client';
 
-/** "Today" date-range filter chip with dropdown (biz-common.jsx). */
+/** Date-range filter chip with dropdown. Options come from the shared
+ *  DATE_RANGES (Today / Last 7 days / Last 30 days) so every page is
+ *  consistent; the selected range maps to a KPI span via rangeToSpan. */
 import { useState } from 'react';
 import Chip from '@mui/material/Chip';
 import Menu from '@mui/material/Menu';
@@ -16,7 +18,9 @@ import CalendarTodayRounded from '@mui/icons-material/CalendarTodayRounded';
 import CheckRounded from '@mui/icons-material/CheckRounded';
 import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded';
 
-const DEFAULT_OPTIONS = ['Today', 'Last 7 days', 'This month', 'This quarter'];
+import { DATE_RANGES } from '@/lib/dateRange';
+
+const DEFAULT_OPTIONS: string[] = [...DATE_RANGES];
 
 export default function DateChip({
   value: controlled,

@@ -4,129 +4,68 @@
 #
 # Copyright (c) 2026-present, Ukama Inc.
 
-# Business-lens analytics documents (Home / Revenue / Packages), backed by the
-# console-bff `analytics` service. KPI values flow through a generic `kpis`
-# array keyed by string — read them via `kpiByKey` (src/lib/kpis.ts). Some
-# fields/KPI keys are exposed ahead of analytics-backend support; the screens
-# treat every value as optional. See docs/analytics-backend-gaps.md.
+# Analytics documents, backed by the console-bff `analytics` subgraph, which is
+# a thin wrapper over the analytics gateway's generic KPI read API:
+#   - getKpiValues        -> latest rollup value per KPI/scope for a span, with
+#                            a period-over-period trend. Read values by key via
+#                            kpiByKey/kpiAmount (src/lib/kpis.ts).
+#   - getPerformanceReport -> a resource performance table (per-entity rows with
+#                            KPI columns), e.g. the `package_performance` report.
+# KPI keys live in src/lib/kpis.ts (KPI_KEYS); an absent/not-yet-emitted key
+# degrades to "—". See systems/analytics/aggregator/configs for the registry.
 
-fragment KpiFields on KpiDto {
-  key
+fragment KpiValueFields on KpiValueDto {
+  kpi
   value
-  formatted
-  delta
-  deltaPeriod
-  stale
-  asOf
+  span
+  unit
+  symbol
+  isPartial
+  trend {
+    direction
+    changePct
+    changeAbs
+    prevValue
+    hasPrevious
+  }
 }
 
-fragment NamedValueFields on NamedValueDto {
-  id
-  name
+fragment ReportCellFields on ReportCellDto {
+  column
   value
+  unit
+  symbol
+  format
 }
 
-# Shared home KPI strip for both Business and Network home screens,
-# parameterised by `lens` (BUSINESS | NETWORK). Sites are fetched separately
-# from the registry via `sitesView` (no analytics-collector dependency).
-
-query GetHomeKpis($data: HomeViewInput!) {
-  getHomeKpis(data: $data) {
-    kpis {
-      ...KpiFields
+# Latest KPI values for a set of keys at a span (optionally network-scoped).
+# Used by every KPI strip (Business Home / Revenue / Packages, Network Home).
+query GetKpiValues($data: KpiValuesInput!) {
+  getKpiValues(data: $data) {
+    values {
+      ...KpiValueFields
     }
   }
 }
 
-query GetBusinessHome($data: AnalyticsWindowInput!) {
-  getBusinessHome(data: $data) {
-    kpis {
-      ...KpiFields
-    }
-    sites {
-      siteId
-      name
+# Resource performance table. Packages screen passes report: "package_performance"
+# to get per-package rows (attributes: name/price/validity/active; cells:
+# sold/revenue/data_used).
+query GetPerformanceReport($data: PerformanceReportInput!) {
+  getPerformanceReport(data: $data) {
+    report
+    title
+    span
+    rows {
+      entityId
       status
-      revenue
-      customers
-    }
-    topPackages {
-      ...NamedValueFields
-    }
-    recentActivity {
-      routingKey
-      description
-      occurredAt
-    }
-  }
-}
-
-query GetBusinessSites($data: AnalyticsWindowInput!) {
-  getBusinessSites(data: $data) {
-    sites {
-      siteId
-      name
-      status
-      revenue
-      revenueToday
-      customers
-      dataUsed
-      uptime
-      topPackage
-      issue
-      latitude
-      longitude
-    }
-    meta {
-      count
-    }
-  }
-}
-
-query GetSalesOverview($data: AnalyticsWindowInput!) {
-  getSalesOverview(data: $data) {
-    kpis {
-      ...KpiFields
-    }
-    revenueTrend {
-      key
-      points {
-        time
+      attributes {
+        key
         value
       }
-    }
-    revenueBySite {
-      ...NamedValueFields
-    }
-    revenueByPackage {
-      ...NamedValueFields
-    }
-  }
-}
-
-query GetPackagePerformance($data: AnalyticsWindowInput!) {
-  getPackagePerformance(data: $data) {
-    kpis {
-      ...KpiFields
-    }
-    packages {
-      packageId
-      name
-      price
-      validity
-      dataQuota
-      status
-      soldCount
-      revenue
-      revenueSharePct
-      dataUsed
-      activeSubscribers
-    }
-    revenueMix {
-      ...NamedValueFields
-    }
-    meta {
-      count
+      cells {
+        ...ReportCellFields
+      }
     }
   }
 }

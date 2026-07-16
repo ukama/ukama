@@ -1,34 +1,6 @@
 type Query {
-  getAlarms(data: AnalyticsWindowInput!): NetworkAlarmsDto!
-  getBackhaul(data: AnalyticsWindowInput!): MetricPanelDto!
-  getBillingSummary(data: AnalyticsWindowInput!): BillingSummaryDto!
-  getBusinessHome(data: AnalyticsWindowInput!): BusinessHomeDto!
-  getBusinessSite(data: AnalyticsSiteInput!): BusinessSiteDto!
-  getBusinessSites(data: AnalyticsWindowInput!): BusinessSitesDto!
-  getCustomer(data: CustomerByIdInput!): CustomerDetailDto!
-  getCustomerOverview(data: AnalyticsWindowInput!): CustomerOverviewDto!
-  getCustomerSims(data: AnalyticsWindowInput!): CustomerSimsDto!
-  getCustomerSupport(data: CustomerByIdInput!): CustomerSupportDto!
-  getEvents(data: AnalyticsWindowInput!): NetworkEventsDto!
-  getHomeKpis(data: HomeViewInput!): HomeKpis!
-  getInventoryReadiness(data: AnalyticsWindowInput!): InventoryReadinessDto!
-  getMetrics(data: AnalyticsWindowInput!): NetworkMetricsDto!
-  getNetworkNode(data: AnalyticsNodeInput!): NetworkNodeDto!
-  getNetworkNodes(data: AnalyticsWindowInput!): NetworkNodesDto!
-  getNetworkOverview(data: AnalyticsWindowInput!): NetworkOverviewDto!
-  getNetworkSite(data: AnalyticsSiteInput!): NetworkSiteDto!
-  getNetworkSites(data: AnalyticsWindowInput!): NetworkSitesDto!
-  getNodePool(data: AnalyticsWindowInput!): NodePoolDto!
-  getPackagePerformance(data: AnalyticsWindowInput!): PackagePerformanceDto!
-  getPower(data: AnalyticsWindowInput!): MetricPanelDto!
-  getRadio(data: AnalyticsWindowInput!): MetricPanelDto!
-  getRefreshState: RefreshStateDto!
-  getSalesOverview(data: AnalyticsWindowInput!): SalesOverviewDto!
-  getSimPool(data: AnalyticsWindowInput!): SimPoolDto!
-  getTopology(data: AnalyticsWindowInput!): NetworkTopologyDto!
-  listCustomers(data: AnalyticsWindowInput!): CustomerListDto!
-  searchCustomers(data: AnalyticsWindowInput!): CustomerListDto!
-  supportSearch(data: AnalyticsWindowInput!): NetworkSupportSearchDto!
+  getKpiValues(data: KpiValuesInput!): GetKpiValuesDto!
+  getPerformanceReport(data: PerformanceReportInput!): GetPerformanceReportDto!
   getReport(id: String!): GetReportDto!
   getReportPdf(id: String!): GetReportDto!
   getReports(data: GetReportsInputDto!): GetReportsDto!
@@ -1293,6 +1265,7 @@ type PaymentDto {
   status: String!
   extra: String!
   failureReason: String!
+  metadata: String
   createdAt: String!
 }
 
@@ -1682,6 +1655,7 @@ input GetPaymentsInputDto {
   type: String
   paymentMethod: String
   status: String
+  itemId: String
 }
 
 type TokenResDto {
@@ -2279,4 +2253,75 @@ input UserFirstVisitInputDto {
   name: String!
   email: String!
   firstVisit: Boolean!
+}
+type GetKpiValuesDto {
+  values: [KpiValueDto!]!
+}
+
+type KpiValueDto {
+  kpi: String!
+  value: Float!
+  span: String
+  op: String
+  from: String
+  to: String
+  type: String
+  unit: String
+  symbol: String
+  isPartial: Boolean
+  scope: [ScopeEntryDto!]!
+  trend: TrendDto
+  computedAt: String
+}
+
+type ScopeEntryDto {
+  key: String!
+  value: String!
+}
+
+type TrendDto {
+  direction: String
+  changePct: Float
+  changeAbs: Float
+  prevValue: Float
+  hasPrevious: Boolean
+}
+
+input KpiValuesInput {
+  keys: [String!]!
+  span: String
+  op: String
+  networkId: String
+}
+
+type GetPerformanceReportDto {
+  report: String!
+  title: String
+  span: String
+  rows: [ReportRowDto!]!
+}
+
+type ReportRowDto {
+  entityId: String!
+  attributes: [ScopeEntryDto!]!
+  cells: [ReportCellDto!]!
+  status: String
+}
+
+type ReportCellDto {
+  column: String!
+  value: Float!
+  unit: String
+  symbol: String
+  format: String
+  trend: TrendDto
+  isPartial: Boolean
+  computedAt: String
+}
+
+input PerformanceReportInput {
+  report: String!
+  span: String
+  networkId: String
+  top: Int
 }

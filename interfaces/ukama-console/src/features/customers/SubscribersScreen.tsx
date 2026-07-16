@@ -9,7 +9,6 @@
 import { useNetworkCustomersQuery } from '@/client/graphql/network-customers.generated';
 import { useGetSimsUsageByNetworkQuery } from '@/client/graphql/sims.generated';
 import DataTable from '@/components/data-table/DataTable';
-import DateChip from '@/components/DateChip';
 import PageHeader from '@/components/PageHeader';
 import PageWatermark from '@/components/PageWatermark';
 import SearchField from '@/components/SearchField';
@@ -253,8 +252,6 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
             >
               Add customer
             </Button>
-          ) : mode === 'biz' ? (
-            <DateChip />
           ) : undefined
         }
       />

@@ -26,6 +26,7 @@ fragment payment on PaymentDto {
   status
   failureReason
   extra
+  metadata
   createdAt
 }
 

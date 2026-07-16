@@ -28,19 +28,31 @@ export default function BarList({
           key={r.name}
           style={{
             display: 'grid',
-            gridTemplateColumns: '120px 1fr auto',
+            gridTemplateColumns: '140px minmax(0, 1fr) auto',
             alignItems: 'center',
             gap: 14,
           }}
         >
-          <span style={{ fontSize: 13.5, color: 'var(--uk-ink-2)' }}>{r.name}</span>
-          <div style={{ position: 'relative', height: 18 }}>
+          <span
+            title={r.name}
+            style={{
+              fontSize: 13.5,
+              color: 'var(--uk-ink-2)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              minWidth: 0,
+            }}
+          >
+            {r.name}
+          </span>
+          <div style={{ position: 'relative', height: 16 }}>
             <span
               style={{
                 position: 'absolute',
                 left: 0,
                 top: 0,
-                height: 18,
+                height: 16,
                 borderRadius: 999,
                 width: (r.value / max) * 100 + '%',
                 background: r.color,

@@ -17,15 +17,16 @@ import Skeleton from '@mui/material/Skeleton';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
-import { useGetHomeKpisQuery } from '@/client/graphql/analytics.generated';
+import { useGetKpiValuesQuery } from '@/client/graphql/analytics.generated';
 import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
-import { HomeLens } from '@/client/graphql/types';
 import DateChip from '@/components/DateChip';
+import { DEFAULT_RANGE, rangeToSpan } from '@/lib/dateRange';
 import { KpiRow } from '@/components/Kpi';
 import UkamaMap, { HOME_MAP_ZOOM } from '@/components/Map/UkamaMap';
 import PageHeader from '@/components/PageHeader';
 import StatusBadge from '@/components/StatusBadge';
-import { KPI_KEYS, kpiText } from '@/lib/kpis';
+import { KPI_KEYS, kpiText, kpiValue } from '@/lib/kpis';
+import { formatBytes } from '@/lib/usage';
 import { toMapSites } from '@/lib/mappers/sites';
 import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
 import { pinColor } from '@/lib/status';
@@ -35,11 +36,23 @@ export default function NetworkHomeScreen() {
   const router = useRouter();
   const networkId = useNetworkId();
   const [sel, setSel] = useState<string | null>(null);
+  const [range, setRange] = useState<string>(DEFAULT_RANGE);
 
   // KPIs come from the analytics rollup; sites come live from the registry
   // (sitesView) so the map doesn't depend on the analytics collector.
-  const { data: kpiData, loading: kpiLoading } = useGetHomeKpisQuery({
-    variables: { data: { lens: HomeLens.Network, networkId } },
+  const { data: kpiData, loading: kpiLoading } = useGetKpiValuesQuery({
+    variables: {
+      data: {
+        keys: [
+          KPI_KEYS.networkUptime,
+          KPI_KEYS.activeCustomers,
+          KPI_KEYS.usageByNetwork,
+          KPI_KEYS.sitesOnline,
+        ],
+        span: rangeToSpan(range),
+        networkId,
+      },
+    },
     skip: !networkId,
     ...visiblePoll(POLL_OVERVIEW_MS),
   });
@@ -53,7 +66,7 @@ export default function NetworkHomeScreen() {
     skip: !networkId,
     ...visiblePoll(POLL_OVERVIEW_MS),
   });
-  const kpis = kpiData?.getHomeKpis.kpis;
+  const kpis = kpiData?.getKpiValues.values;
   const loading = kpiLoading || sitesLoading;
 
   // The home map only needs each site's name, status and coordinates.
@@ -79,11 +92,20 @@ export default function NetworkHomeScreen() {
 
   const site = mapSites.find((s) => s.id === sel);
   const sitesTotal = mapSites.length;
-  const sitesOnline = mapSites.filter((s) => s.status === 'online').length;
+  // Online count from the analytics SITES_ONLINE KPI; fall back to the live
+  // registry status when the KPI hasn't been emitted yet.
+  const sitesOnlineKpi = kpiValue(kpis, KPI_KEYS.sitesOnline);
+  const sitesOnline =
+    sitesOnlineKpi != null
+      ? Math.round(sitesOnlineKpi)
+      : mapSites.filter((s) => s.status === 'online').length;
 
   return (
     <div className="page">
-      <PageHeader title="Home" actions={<DateChip />} />
+      <PageHeader
+        title="Home"
+        actions={<DateChip value={range} onChange={setRange} />}
+      />
       {loading ? (
         <Skeleton variant="rounded" sx={{ width: '100%', height: 96 }} />
       ) : (
@@ -107,7 +129,9 @@ export default function NetworkHomeScreen() {
               icon: 'donut_small',
               color: 'var(--uk-beige)',
               label: 'Data volume',
-              value: kpiText(kpis, KPI_KEYS.dataUsage, (v) => `${v} GB`),
+              value: kpiText(kpis, KPI_KEYS.usageByNetwork, (v) =>
+                formatBytes(v),
+              ),
             },
             {
               icon: 'cell_tower',
