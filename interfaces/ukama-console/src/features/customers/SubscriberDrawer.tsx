@@ -24,11 +24,17 @@ import {
 } from '@/lib/sim-pool';
 import { useNetworkId } from '@/lib/useNetworkId';
 import AddCardRounded from '@mui/icons-material/AddCardRounded';
+import MoreVertRounded from '@mui/icons-material/MoreVertRounded';
+import ReceiptLongRounded from '@mui/icons-material/ReceiptLongRounded';
 import SimCardRounded from '@mui/icons-material/SimCardRounded';
 import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 import Skeleton from '@mui/material/Skeleton';
 import { useMemo, useState } from 'react';
 import AllocateSimDialog from './AllocateSimDialog';
+import ReceiptDialog from './ReceiptDialog';
 import TopUpDialog from './TopUpDialog';
 
 type SimPackage = {
@@ -64,6 +70,33 @@ const KIND_ORDER: Record<PackageKind, number> = {
   ended: 2,
 };
 
+function PackageMenu({ onViewReceipt }: { onViewReceipt: () => void }) {
+  const [anchor, setAnchor] = useState<null | HTMLElement>(null);
+  return (
+    <>
+      <IconButton
+        size="small"
+        aria-label="Package options"
+        onClick={(e) => setAnchor(e.currentTarget)}
+        sx={{ color: 'var(--uk-ink-3)' }}
+      >
+        <MoreVertRounded sx={{ fontSize: 20 }} />
+      </IconButton>
+      <Menu anchorEl={anchor} open={!!anchor} onClose={() => setAnchor(null)}>
+        <MenuItem
+          onClick={() => {
+            setAnchor(null);
+            onViewReceipt();
+          }}
+        >
+          <ReceiptLongRounded sx={{ fontSize: 18, mr: 1, color: 'var(--uk-ink-3)' }} />
+          View receipt
+        </MenuItem>
+      </Menu>
+    </>
+  );
+}
+
 export default function SubscriberDrawer({
   sub,
   onClose,
@@ -79,6 +112,10 @@ export default function SubscriberDrawer({
   const toast = useToast();
   const [showTopUp, setShowTopUp] = useState(false);
   const [showAllocate, setShowAllocate] = useState(false);
+  const [receiptPkg, setReceiptPkg] = useState<{
+    packageId: string;
+    planName: string;
+  } | null>(null);
   const hasSim = !!sub.simId;
   const simActive = sub.sim === 'active';
   // Suspended SIMs are managed elsewhere — the active/inactive toggle is
@@ -327,9 +364,22 @@ export default function SubscriberDrawer({
                           {formatDate(p.start_date)} – {formatDate(p.end_date)}
                         </div>
                       </div>
-                      <StatusBadge status={badge.status}>
-                        {badge.label}
-                      </StatusBadge>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <StatusBadge status={badge.status}>
+                          {badge.label}
+                        </StatusBadge>
+                        {hasSim && (
+                          <PackageMenu
+                            onViewReceipt={() =>
+                              setReceiptPkg({
+                                packageId: p.package_id,
+                                planName:
+                                  planNameById.get(p.package_id) ?? p.package_id,
+                              })
+                            }
+                          />
+                        )}
+                      </div>
                     </div>
                   );
                 })}
@@ -461,6 +511,15 @@ export default function SubscriberDrawer({
             void refetchPkgs();
             onChanged?.();
           }}
+        />
+      )}
+
+      {receiptPkg && sub.simId && (
+        <ReceiptDialog
+          simId={sub.simId}
+          packageId={receiptPkg.packageId}
+          planName={receiptPkg.planName}
+          onClose={() => setReceiptPkg(null)}
         />
       )}
     </AppDrawer>

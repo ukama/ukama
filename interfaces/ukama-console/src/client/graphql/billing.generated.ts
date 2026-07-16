@@ -3,7 +3,7 @@ import * as Types from './types';
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 const defaultOptions = {} as const;
-export type PaymentFragment = { __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, extra: string, createdAt: string };
+export type PaymentFragment = { __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, extra: string, metadata?: string | null, createdAt: string };
 
 export type UpdatePaymentMutationVariables = Types.Exact<{
   data: Types.UpdatePaymentInputDto;
@@ -24,14 +24,14 @@ export type GetPaymentQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetPaymentQuery = { __typename?: 'Query', getPayment: { __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, extra: string, createdAt: string } };
+export type GetPaymentQuery = { __typename?: 'Query', getPayment: { __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, extra: string, metadata?: string | null, createdAt: string } };
 
 export type GetPaymentsQueryVariables = Types.Exact<{
   data: Types.GetPaymentsInputDto;
 }>;
 
 
-export type GetPaymentsQuery = { __typename?: 'Query', getPayments: { __typename?: 'PaymentsDto', payments: Array<{ __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, extra: string, createdAt: string }> } };
+export type GetPaymentsQuery = { __typename?: 'Query', getPayments: { __typename?: 'PaymentsDto', payments: Array<{ __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, extra: string, metadata?: string | null, createdAt: string }> } };
 
 export type CustomerFragment = { __typename?: 'CustomerDto', externalId: string, name: string, email?: string | null, addressLine1?: string | null, legalName?: string | null, legalNumber?: string | null, phone?: string | null, currency: string, timezone?: string | null, vatRate: number, createdAt: string };
 
@@ -81,6 +81,7 @@ export const PaymentFragmentDoc = gql`
   status
   failureReason
   extra
+  metadata
   createdAt
 }
     `;

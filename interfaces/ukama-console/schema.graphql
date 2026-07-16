@@ -1265,6 +1265,7 @@ type PaymentDto {
   status: String!
   extra: String!
   failureReason: String!
+  metadata: String
   createdAt: String!
 }
 
@@ -1654,6 +1655,7 @@ input GetPaymentsInputDto {
   type: String
   paymentMethod: String
   status: String
+  itemId: String
 }
 
 type TokenResDto {

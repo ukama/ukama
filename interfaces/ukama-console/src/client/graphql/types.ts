@@ -390,6 +390,7 @@ export type GetPackagesForSimInputDto = {
 };
 
 export type GetPaymentsInputDto = {
+  itemId?: InputMaybe<Scalars['String']['input']>;
   paymentMethod?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<Scalars['String']['input']>;
   type?: InputMaybe<Scalars['String']['input']>;
@@ -1369,6 +1370,7 @@ export type PaymentDto = {
   id: Scalars['String']['output'];
   itemId: Scalars['String']['output'];
   itemType: Scalars['String']['output'];
+  metadata?: Maybe<Scalars['String']['output']>;
   paidAt: Scalars['String']['output'];
   payerEmail: Scalars['String']['output'];
   payerName: Scalars['String']['output'];

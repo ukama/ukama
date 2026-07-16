@@ -60,6 +60,11 @@ export class PaymentDto {
   @Field()
   failureReason: string;
 
+  // Raw payment metadata (base64-encoded JSON, e.g. {"sim":"..."}). Used to
+  // match a payment to a specific SIM/package. Nullable — not all payments set it.
+  @Field({ nullable: true })
+  metadata?: string;
+
   @Field()
   createdAt: string;
 }
@@ -128,6 +133,9 @@ export class PaymentAPIDto {
 
   @Field()
   failure_reason: string;
+
+  @Field({ nullable: true })
+  metadata?: string;
 
   @Field()
   created_at: string;
@@ -200,6 +208,10 @@ export class GetPaymentsInputDto {
 
   @Field({ nullable: true })
   status?: string;
+
+  // Filter by item (e.g. the data-plan id) — maps to /v1/payments?item_id=...
+  @Field({ nullable: true })
+  itemId?: string;
 }
 
 @InputType()

@@ -42,6 +42,7 @@
     "@nerdwallet/apollo-cache-policies": "^3.3.3",
     "@tanstack/react-table": "^8.21.3",
     "graphql": "^16.11.0",
+    "jspdf": "^2.5.2",
     "leaflet": "^1.9.4",
     "next": "^16",
     "react": "^19",
