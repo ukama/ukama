@@ -58,8 +58,7 @@ static int app_version_matches(const bff_app_state_t *app,
         return 0;
     }
 
-    return ulab_streq(app->version, expected) ||
-           ulab_streq(app->tag, expected);
+    return ulab_streq(app->version, expected);
 }
 
 static int app_is_running(const bff_app_state_t *app) {

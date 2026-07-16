@@ -9,6 +9,15 @@ Packages use `duration_days`.
 
 Provider block is optional. Missing provider defaults to `virtual`.
 
+
+Scenario scalar values support explicit environment substitution using
+`${NAME}`. A missing variable is a scenario-load error. This is useful for
+exact build versions that change with the repository commit:
+
+```yaml
+tag: ${ULAB_SOFTWARE_TARGET_VERSION}
+```
+
 ```yaml
 provider:
   type: virtual
@@ -163,15 +172,25 @@ Generator docs: `docs/generator.md`.
 
 ## Software update smoke scenarios
 
-A software-only scenario may set `ues_per_site: 0` and omit `packages`,
-`subscribers`, and `sims` from `setup.create_via_bff`. The normal virtual site
-bundle is still started, while the selector chooses the node under test.
+A software-only scenario may set `ues_per_site: 0` and omit packages,
+subscribers, SIMs, and UEs. The virtual site bundle is still started, while
+the selector chooses the node under test.
 
-A successful update scenario should use two phases. The first phase is a
-preflight gate with no events. It verifies through BFF that the selected node
-is Online, the app is running, and the app reports the expected current tag or
-version. If either check fails, the phase fails and the runner does not execute
-the update phase:
+Before any virtual infrastructure or backend resources are created,
+`ukama-lab` scans the scenario for `software_update` events and verifies that
+each exact app/version has a non-empty `tar.gz` artifact in Hub. The Hub URL
+is selected with `--hub-url` or `UKAMA_LAB_HUB_URL`.
+
+The scenario should use exact current and target versions supplied through
+environment variables:
+
+```sh
+export ULAB_SOFTWARE_CURRENT_VERSION='v0.1.0-e9aa34489'
+export ULAB_SOFTWARE_TARGET_VERSION='2.0.0-lab.ge9aa34489'
+```
+
+The first phase verifies that the app is running and that the running binary
+reports the expected current version:
 
 ```yaml
 - name: verify_app_before_update
@@ -182,11 +201,11 @@ the update phase:
     - type: node_version_equals
       type_selector: controller
       app: example
-      version: v1.0.0
+      version: ${ULAB_SOFTWARE_CURRENT_VERSION}
 ```
 
-The second phase calls `updateSoftware` through BFF and then polls BFF until the
-new version is reported and the node/app are healthy again:
+The second phase calls BFF `updateSoftware`, then polls BFF until the running
+binary reports the exact target version and the node/app are healthy again:
 
 ```yaml
 - name: update_app
@@ -194,22 +213,26 @@ new version is reported and the node/app are healthy again:
     - type: software_update
       type_selector: controller
       app: example
-      tag: v2.0.0
+      tag: ${ULAB_SOFTWARE_TARGET_VERSION}
   checks:
     - type: node_version_equals
       type_selector: controller
       app: example
-      version: v2.0.0
+      version: ${ULAB_SOFTWARE_TARGET_VERSION}
     - type: node_health_ok
       type_selector: controller
       app: example
 ```
 
-`node_version_equals` accepts a match against either the app's `version` or
-`tag` returned by BFF `getApps`. `node_health_ok` with `app` requires BFF
-`getNode.status.connectivity` to be `Online` and the selected app's BFF
-`getApps.status` to be `running` or `active`.
+`node_version_equals` matches only the app's `version` returned by BFF
+`getApps`; the package `tag` alone is not accepted. This prevents a false pass
+when the package metadata changed but the old process is still running.
+
+`node_health_ok` with `app` requires BFF `getNode.status.connectivity` to be
+`Online` and the selected app's BFF `getApps.status` to be `running` or
+`active`.
 
 The default check timeout is 180 seconds with a five-second polling interval.
 They can be adjusted with `ULAB_SOFTWARE_UPDATE_TIMEOUT_SEC` and
 `ULAB_SOFTWARE_UPDATE_POLL_SEC`.
+

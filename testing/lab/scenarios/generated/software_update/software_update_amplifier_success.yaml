@@ -24,15 +24,7 @@ world:
     tower: 1
     amplifier: 1
     controller: 1
-  ues_per_site: 1
-
-packages:
-  - ref: pkg_001
-    name: Data Package 1
-    data_mb: 1024
-    duration_days: 1
-    amount: 1.00
-    assign_percent: 100
+  ues_per_site: 0
 
 setup:
   create_via_bff:
@@ -40,26 +32,38 @@ setup:
     - sites
     - nodes
     - node_site_links
-    - packages
-    - subscribers
-    - sims
 
 runtime:
   start: [nodes]
   wait: [nodes_ready]
 
 phases:
+  - name: verify_app_before_update
+    checks:
+      - type: node_health_ok
+        type_selector: amplifier
+        count_per_network: 1
+        app: example
+      - type: node_version_equals
+        type_selector: amplifier
+        count_per_network: 1
+        app: example
+        version: ${ULAB_SOFTWARE_CURRENT_VERSION}
+
   - name: action
     events:
       - type: software_update
-        type_selector: tower
+        type_selector: amplifier
         count_per_network: 1
-        version: v2.0.0
+        app: example
+        tag: ${ULAB_SOFTWARE_TARGET_VERSION}
     checks:
       - type: node_version_equals
-        version: v2.0.0
+        type_selector: amplifier
+        count_per_network: 1
+        app: example
+        version: ${ULAB_SOFTWARE_TARGET_VERSION}
       - type: node_health_ok
-
-final_checks:
-  - type: balance_non_negative
-    ues: all
+        type_selector: amplifier
+        count_per_network: 1
+        app: example

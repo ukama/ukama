@@ -14,6 +14,7 @@
 typedef struct {
     char scenario_path[ULAB_MAX_PATH];
     char bff_url[ULAB_MAX_PATH];
+    char hub_url[ULAB_MAX_URL];
     char out_dir[ULAB_MAX_PATH];
     char script_dir[ULAB_MAX_PATH];
     char repo[ULAB_MAX_PATH];

@@ -1,10 +1,10 @@
 version: 1
 name: software-update-cnode
-description: Verify an example app starts healthy on the expected current version, updates successfully on the cnode, and returns healthy on the requested target version without creating subscriber, SIM, package, or UE resources.
+description: Verify the example app is healthy at the expected current version, update it on the controller node from an exact tar.gz artifact in Hub, and confirm the running version and health after the update.
 seed: 331
 suite: smoke
-priority: p0
-tags: [virtual, software-update, cnode, app-health]
+priority: p1
+tags: [virtual, software-update, controller, example]
 status: active
 
 provider:
@@ -30,31 +30,36 @@ runtime:
   start: [nodes]
   wait: [nodes_ready]
 
-# Test fixture values:
-# - the cnode image must initially run example at v1.0.0
-# - v2.0.0 must exist in the software registry used by the test BFF
 phases:
-  - name: verify_example_app_before_update
+  - name: verify_example_before_update
     checks:
       - type: node_health_ok
         type_selector: controller
+        count_per_network: 1
         app: example
+
       - type: node_version_equals
         type_selector: controller
+        count_per_network: 1
         app: example
-        version: v1.0.0
+        version: ${ULAB_SOFTWARE_CURRENT_VERSION}
 
-  - name: update_example_app_on_cnode
+  - name: update_example
     events:
       - type: software_update
         type_selector: controller
+        count_per_network: 1
         app: example
-        tag: v2.0.0
+        tag: ${ULAB_SOFTWARE_TARGET_VERSION}
+
     checks:
       - type: node_version_equals
         type_selector: controller
+        count_per_network: 1
         app: example
-        version: v2.0.0
+        version: ${ULAB_SOFTWARE_TARGET_VERSION}
+
       - type: node_health_ok
         type_selector: controller
+        count_per_network: 1
         app: example

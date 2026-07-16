@@ -774,7 +774,7 @@ static void write_software_preflight(FILE *f, const gen_case_t *c) {
             "        type_selector: %s\n"
             "        count_per_network: 1\n"
             "        app: example\n"
-            "        version: v1.0.0\n\n",
+            "        version: ${ULAB_SOFTWARE_CURRENT_VERSION}\n\n",
             node_type, node_type);
 }
 
@@ -886,7 +886,7 @@ static int write_one_event(FILE *f, const char *event,
                 "        type_selector: %s\n"
                 "        count_per_network: 1\n"
                 "        app: example\n"
-                "        tag: v2.0.0\n",
+                "        tag: ${ULAB_SOFTWARE_TARGET_VERSION}\n",
                 software_node_type(event));
         return ULAB_OK;
     }
@@ -1014,9 +1014,11 @@ static void write_one_check(FILE *f, const char *check, const char *family,
                 "        type_selector: %s\n"
                 "        count_per_network: 1\n"
                 "        app: example\n"
-                "        version: v2.0.0\n",
+                "        version: %s\n",
                 c != NULL && c->event_count > 0 ?
-                software_node_type(c->events[0]) : "tower");
+                software_node_type(c->events[0]) : "tower",
+                ulab_streq(family, "software_update") ?
+                "${ULAB_SOFTWARE_TARGET_VERSION}" : "v2.0.0");
     } else if (ulab_streq(check, "history_preserved")) {
         fprintf(f,
                 "      - type: history_preserved\n"
@@ -1048,14 +1050,16 @@ static void write_one_check(FILE *f, const char *check, const char *family,
     }
 }
 
-static void write_world(FILE *f, const topo_profile_t *p) {
+static void write_world(FILE *f, const topo_profile_t *p,
+                        int software_only) {
     uint32_t networks;
     uint32_t sites;
     uint32_t ues;
 
     networks = p->networks ? p->networks : 1;
     sites = p->sites_per_network ? p->sites_per_network : 1;
-    ues = p->ues_per_site ? p->ues_per_site : 1;
+    ues = software_only ? 0 :
+          (p->ues_per_site ? p->ues_per_site : 1);
 
     fprintf(f,
             "provider:\n"
@@ -1071,17 +1075,21 @@ static void write_world(FILE *f, const topo_profile_t *p) {
             networks, sites, ues);
 }
 
-static void write_setup(FILE *f) {
+static void write_setup(FILE *f, int software_only) {
     fprintf(f,
             "setup:\n"
             "  create_via_bff:\n"
             "    - networks\n"
             "    - sites\n"
             "    - nodes\n"
-            "    - node_site_links\n"
-            "    - packages\n"
-            "    - subscribers\n"
-            "    - sims\n\n");
+            "    - node_site_links\n");
+    if (!software_only) {
+        fprintf(f,
+                "    - packages\n"
+                "    - subscribers\n"
+                "    - sims\n");
+    }
+    fprintf(f, "\n");
 }
 
 static void write_runtime(FILE *f, int needs_ues) {
@@ -1135,6 +1143,7 @@ static int write_case_scenario(const gen_opts_t *opts,
     uint32_t packages;
     int wip;
     int needs_ues;
+    int software_only;
     size_t i;
     FILE *f;
 
@@ -1153,7 +1162,8 @@ static int write_case_scenario(const gen_opts_t *opts,
 
     normalized_tags(c, tags, sizeof(tags));
     wip = case_is_wip(family, c);
-    needs_ues = case_needs_ues(family, c);
+    software_only = software_update_success_case(family, c);
+    needs_ues = software_only ? 0 : case_needs_ues(family, c);
     packages = scenario_package_count(c, p);
     seed = ulab_hash32(family->name, 62000);
     seed = ulab_hash32(c->name, seed);
@@ -1185,14 +1195,16 @@ static int write_case_scenario(const gen_opts_t *opts,
             family->name, c->event_count ? c->events[0] : "check",
             family->name, c->name, p->name, wip ? "wip" : "active");
 
-    write_world(f, p);
-    write_packages(f, packages, p->traffic_mb_per_ue);
-    write_setup(f);
+    write_world(f, p, software_only);
+    if (!software_only) {
+        write_packages(f, packages, p->traffic_mb_per_ue);
+    }
+    write_setup(f, software_only);
     write_runtime(f, needs_ues);
     write_profile_section(f, c);
 
     fprintf(f, "phases:\n");
-    if (!wip && software_update_success_case(family, c)) {
+    if (!wip && software_only) {
         write_software_preflight(f, c);
     }
     fprintf(f,
@@ -1216,10 +1228,12 @@ static int write_case_scenario(const gen_opts_t *opts,
         }
     }
 
-    fprintf(f,
-            "\nfinal_checks:\n"
-            "  - type: balance_non_negative\n"
-            "    ues: all\n");
+    if (!software_only) {
+        fprintf(f,
+                "\nfinal_checks:\n"
+                "  - type: balance_non_negative\n"
+                "    ues: all\n");
+    }
 
     fclose(f);
 
