@@ -6,7 +6,7 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 'use client';
-import { useAddPackagesToSimMutation, useGetPackagesQuery } from '@/client/graphql/packages.generated';
+import { useAddPaymentMutation, useGetPackagesQuery } from '@/client/graphql/packages.generated';
 import AppModal from '@/components/AppModal';
 import { Field, SelectInput } from '@/components/form/FormField';
 import { useToast } from '@/components/ToastProvider';
@@ -27,7 +27,7 @@ export default function TopUpDialog({
   onDone?: () => void;
 }) {
   const toast = useToast();
-  const { symbol } = useCurrency();
+  const { symbol, code } = useCurrency();
   const [planId, setPlanId] = useState('');
 
   const { data, loading } = useGetPackagesQuery();
@@ -40,7 +40,10 @@ export default function TopUpDialog({
     [data, symbol],
   );
 
-  const [addPackages, { loading: saving }] = useAddPackagesToSimMutation({
+  // Record a cash payment for the package. The payments system settles cash
+  // immediately and emits payment.success, which sim-manager consumes to
+  // allocate the package to the subscriber's SIM (no direct addPackagesToSim).
+  const [addPayment, { loading: saving }] = useAddPaymentMutation({
     onCompleted: () => {
       toast(`Topped up ${sub.name}`);
       onDone?.();
@@ -58,16 +61,20 @@ export default function TopUpDialog({
       toast('Select a data plan.');
       return;
     }
-    void addPackages({
+    const plan = data?.getPackages.packages.find((p) => p.uuid === planId);
+    if (!plan) {
+      toast('Select a valid data plan.');
+      return;
+    }
+    void addPayment({
       variables: {
         data: {
-          sim_id: sub.simId,
-          packages: [
-            {
-              package_id: planId,
-              start_date: new Date(Date.now() + 60_000).toISOString(),
-            },
-          ],
+          itemId: planId,
+          itemType: 'package',
+          paymentMethod: 'cash',
+          amount: String(plan.amount),
+          currency: code,
+          sim: sub.simId,
         },
       },
     });
