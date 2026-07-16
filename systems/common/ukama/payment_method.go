@@ -20,6 +20,7 @@ const (
 	PaymentMethodUnknown PaymentMethod = iota
 	PaymentMethodStripe
 	PaymentMethodMoPay
+	PaymentMethodCash
 )
 
 func (s *PaymentMethod) Scan(value interface{}) error {
@@ -32,7 +33,7 @@ func (s PaymentMethod) Value() (driver.Value, error) {
 }
 
 func (s PaymentMethod) String() string {
-	t := map[PaymentMethod]string{0: "unknown", 1: "stripe", 2: "mopay"}
+	t := map[PaymentMethod]string{0: "unknown", 1: "stripe", 2: "mopay", 3: "cash"}
 
 	v, ok := t[s]
 	if !ok {
@@ -48,7 +49,7 @@ func ParsePaymentMethod(value string) PaymentMethod {
 		return PaymentMethod(i)
 	}
 
-	t := map[string]PaymentMethod{"unknown": 0, "stripe": 1, "mopay": 2}
+	t := map[string]PaymentMethod{"unknown": 0, "stripe": 1, "mopay": 2, "cash": 3}
 
 	v, ok := t[strings.ToLower(value)]
 	if !ok {
