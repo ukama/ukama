@@ -18,7 +18,6 @@ import CircularProgress from '@mui/material/CircularProgress';
 import PersonAddRounded from '@mui/icons-material/PersonAddRounded';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { useGetPackagesQuery } from '@/client/graphql/packages.generated';
 import { useGetSimsFromPoolQuery } from '@/client/graphql/sims.generated';
 import { useAddSubscriberMutation } from '@/client/graphql/subscribers.generated';
 import { useAllocateSimMutation } from '@/client/graphql/sims.generated';
@@ -28,7 +27,8 @@ import { Field, SelectInput, TextInput } from '@/components/form/FormField';
 import { useToast } from '@/components/ToastProvider';
 import { useCurrency } from '@/lib/currency';
 import { publicEnv } from '@/lib/runtime-env';
-import { useUiPrefs } from '@/lib/store';
+import { useDataPlans } from '@/lib/sim-pool';
+import { useNetworkId } from '@/lib/useNetworkId';
 import { addCustomerSchema } from './schemas';
 import type { AddCustomerValues } from './schemas';
 
@@ -41,7 +41,7 @@ export default function AddCustomerDialog({
 }) {
   const toast = useToast();
   const { symbol } = useCurrency();
-  const networkId = useUiPrefs((s) => s.networkId);
+  const networkId = useNetworkId();
 
   const {
     register,
@@ -55,14 +55,14 @@ export default function AddCustomerDialog({
 
   // Data plans + unallocated pool SIMs for the dropdowns. Only this network's
   // plans + org-wide plans (the BFF filters when networkId is passed).
-  const { data: pkgData } = useGetPackagesQuery({ variables: { networkId } });
+  const { packages } = useDataPlans(networkId);
   const planOptions = useMemo(
     () =>
-      (pkgData?.getPackages.packages ?? []).map((p) => ({
+      packages.map((p) => ({
         value: p.uuid,
         label: `${p.name} · ${symbol}${p.amount}/${p.duration === 1 ? 'day' : 'mo'}`,
       })),
-    [pkgData, symbol],
+    [packages, symbol],
   );
 
   const { data: simData } = useGetSimsFromPoolQuery({

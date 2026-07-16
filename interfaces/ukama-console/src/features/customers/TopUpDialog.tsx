@@ -6,12 +6,14 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 'use client';
-import { useAddPaymentMutation, useGetPackagesQuery } from '@/client/graphql/packages.generated';
+import { useAddPaymentMutation } from '@/client/graphql/packages.generated';
 import AppModal from '@/components/AppModal';
 import { Field, SelectInput } from '@/components/form/FormField';
 import { useToast } from '@/components/ToastProvider';
 import type { Subscriber } from '@/data';
 import { useCurrency } from '@/lib/currency';
+import { useDataPlans } from '@/lib/sim-pool';
+import { useNetworkId } from '@/lib/useNetworkId';
 import AddCardRounded from '@mui/icons-material/AddCardRounded';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -28,16 +30,17 @@ export default function TopUpDialog({
 }) {
   const toast = useToast();
   const { symbol, code } = useCurrency();
+  const networkId = useNetworkId();
   const [planId, setPlanId] = useState('');
 
-  const { data, loading } = useGetPackagesQuery();
+  const { packages, loading } = useDataPlans(networkId);
   const planOptions = useMemo(
     () =>
-      (data?.getPackages.packages ?? []).map((p) => ({
+      packages.map((p) => ({
         value: p.uuid,
         label: `${p.name} · ${symbol}${p.amount}/${p.duration === 1 ? 'day' : 'mo'}`,
       })),
-    [data, symbol],
+    [packages, symbol],
   );
 
   // Record a cash payment for the package. The payments system settles cash
@@ -61,7 +64,7 @@ export default function TopUpDialog({
       toast('Select a data plan.');
       return;
     }
-    const plan = data?.getPackages.packages.find((p) => p.uuid === planId);
+    const plan = packages.find((p) => p.uuid === planId);
     if (!plan) {
       toast('Select a valid data plan.');
       return;

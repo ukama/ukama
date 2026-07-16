@@ -18,7 +18,6 @@ import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import SimCardRounded from '@mui/icons-material/SimCardRounded';
 
-import { useGetPackagesQuery } from '@/client/graphql/packages.generated';
 import {
   useAllocateSimMutation,
   useGetSimsFromPoolQuery,
@@ -30,7 +29,8 @@ import { useToast } from '@/components/ToastProvider';
 import type { Subscriber } from '@/data';
 import { useCurrency } from '@/lib/currency';
 import { publicEnv } from '@/lib/runtime-env';
-import { useUiPrefs } from '@/lib/store';
+import { useDataPlans } from '@/lib/sim-pool';
+import { useNetworkId } from '@/lib/useNetworkId';
 
 export default function AllocateSimDialog({
   sub,
@@ -43,19 +43,19 @@ export default function AllocateSimDialog({
 }) {
   const toast = useToast();
   const { symbol } = useCurrency();
-  const networkId = useUiPrefs((s) => s.networkId);
+  const networkId = useNetworkId();
   const [planId, setPlanId] = useState('');
   const [iccid, setIccid] = useState('');
 
   // Only this network's plans + org-wide plans (the BFF filters on networkId).
-  const { data: pkgData } = useGetPackagesQuery({ variables: { networkId } });
+  const { packages } = useDataPlans(networkId);
   const planOptions = useMemo(
     () =>
-      (pkgData?.getPackages.packages ?? []).map((p) => ({
+      packages.map((p) => ({
         value: p.uuid,
         label: `${p.name} · ${symbol}${p.amount}/${p.duration === 1 ? 'day' : 'mo'}`,
       })),
-    [pkgData, symbol],
+    [packages, symbol],
   );
 
   const { data: simData } = useGetSimsFromPoolQuery({

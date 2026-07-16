@@ -12,7 +12,10 @@
  * / Allocate a SIM) so they can block (with guidance) when there's nothing to
  * assign. A customer needs both an available pool SIM and a data plan.
  */
-import { useGetPackagesQuery } from '@/client/graphql/packages.generated';
+import {
+  useGetPackagesQuery,
+  type GetPackagesQuery,
+} from '@/client/graphql/packages.generated';
 import { useGetSimsFromPoolQuery } from '@/client/graphql/sims.generated';
 import { Sim_Status, type Sim_Types } from '@/client/graphql/types';
 import { publicEnv } from '@/lib/runtime-env';
@@ -34,12 +37,18 @@ export function useAvailablePoolSims(): {
   return { available, loading };
 }
 
+export type DataPlan = GetPackagesQuery['getPackages']['packages'][number];
+
 /**
- * Count of data plans (packages) available to assign. Pass a networkId to count
- * only that network's plans + org-wide plans (the BFF filters); omit to count
- * all plans.
+ * Data plans (packages) available to assign, plus a ready-to-gate count. Pass a
+ * networkId to scope to that network's plans + org-wide plans (the BFF filters);
+ * omit for all plans. This is the single source for plan reads across the
+ * customers lens — call it wherever plans are needed (dropdowns, name lookups,
+ * or the availability gate) rather than reaching for `useGetPackagesQuery`
+ * directly, so every caller shares one Apollo-cached request per network.
  */
-export function useAvailableDataPlans(networkId?: string): {
+export function useDataPlans(networkId?: string): {
+  packages: DataPlan[];
   available: number;
   loading: boolean;
 } {
@@ -47,7 +56,8 @@ export function useAvailableDataPlans(networkId?: string): {
     variables: { networkId },
     fetchPolicy: 'cache-and-network',
   });
-  return { available: (data?.getPackages.packages ?? []).length, loading };
+  const packages = data?.getPackages.packages ?? [];
+  return { packages, available: packages.length, loading };
 }
 
 /** User-facing copy when a prerequisite is missing. */
