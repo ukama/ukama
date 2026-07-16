@@ -1,0 +1,19 @@
+# MRR: sum of active assignments' package price normalized to 30 days
+# (estimated - matches the console label).
+kpi: MRR
+domain: business
+algo: mrr@v1
+scope: [network_id]
+inputs:
+  sim_packages:
+    dataset: subscriber.simpackage.listBySim
+    fields: [package_id, network_id, is_active, as_expired]
+  packages:
+    dataset: dataplan.package.getAll
+    fields: [package_id, network_id, amount, duration]
+  networks:
+    dataset: registry.network.getAll
+    fields: [network_id]
+output: { type: int, unit: cents, symbol: "$" }
+rollup_ops: [AVG, MIN, MAX, LAST]
+positive_direction: up

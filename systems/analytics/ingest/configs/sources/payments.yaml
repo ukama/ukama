@@ -1,0 +1,25 @@
+# Payments source spec: settled payment records from the payments system
+# (system name "payments" in init lookup). All statuses pulled — success is
+# filtered in the algos so failure KPIs can be added without re-ingesting.
+version: 1
+source: payments
+system: payments
+
+pulls:
+  - key: payments.processor.list
+    endpoint: /v1/payments
+    strategy: full_snapshot
+    items: $.payments
+    entity: payment_id
+    map:
+      payment_id: $.id
+      item_id: $.item_id
+      item_type: $.item_type
+      amount: $.amount          # decimal string, e.g. "12.85"
+      currency: $.currency
+      payment_method: $.payment_method
+      status: $.status          # success | failed | pending
+      paid_at: $.paid_at
+      payer_email: $.payer_email
+      payer_phone: $.payer_phone
+      created_at: $.created_at

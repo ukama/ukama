@@ -1,0 +1,13 @@
+# PAID_CUSTOMERS: distinct payers with a successful payment month-to-date
+# (state gauge; read with op=LAST, monthly trend = "+N this month").
+kpi: PAID_CUSTOMERS
+domain: business
+algo: paid_customers@v1
+scope: []
+inputs:
+  payments:
+    dataset: payments.processor.list
+    fields: [payment_id, status, paid_at, payer_email, payer_phone]
+output: { type: int, unit: count, symbol: "" }
+rollup_ops: [AVG, MIN, MAX, LAST]
+positive_direction: up

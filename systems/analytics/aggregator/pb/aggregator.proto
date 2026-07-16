@@ -1,0 +1,175 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain it at http://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2026-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/analytics/aggregator/pb/gen";
+
+package ukama.analytics.aggregator.v1;
+
+// AggregatorService is the generic KPI read API: no per-KPI RPCs — adding a
+// KPI requires no changes here.
+service AggregatorService {
+    // ListKpis returns the KPI registry (self-describing catalog).
+    rpc ListKpis(ListKpisRequest) returns (ListKpisResponse);
+
+    // GetKpis returns the latest rollup value per KPI/scope for a span.
+    rpc GetKpis(GetKpisRequest) returns (GetKpisResponse);
+
+    // GetKpiTimeSeries returns one value per span bucket over a range.
+    rpc GetKpiTimeSeries(GetKpiTimeSeriesRequest) returns (GetKpiTimeSeriesResponse);
+
+    // GetKpiBreakdown ranks scope values for one KPI (top-N).
+    rpc GetKpiBreakdown(GetKpiBreakdownRequest) returns (GetKpiBreakdownResponse);
+
+    // ListReports returns the performance report registry.
+    rpc ListReports(ListReportsRequest) returns (ListReportsResponse);
+
+    // GetPerformanceReport composes a resource performance table from the
+    // latest available KPI values + entity attributes.
+    rpc GetPerformanceReport(GetPerformanceReportRequest) returns (GetPerformanceReportResponse);
+}
+
+message ReportInfo {
+    string report = 1;
+    string title = 2;
+    string resource = 3;           // entity dataset key
+    repeated string columns = 4;
+    repeated string attributes = 5;
+}
+
+message ListReportsRequest {
+}
+
+message ListReportsResponse {
+    repeated ReportInfo reports = 1;
+}
+
+message GetPerformanceReportRequest {
+    string report = 1;
+    string span = 2;               // daily|weekly|monthly (default daily)
+    map<string, string> scope = 3; // optional filters, e.g. network_id
+    int32 top = 4;
+}
+
+message ReportCell {
+    string column = 1;
+    double value = 2;
+    string unit = 3;
+    string symbol = 4;
+    string format = 5;             // display hint from the report spec
+    Trend trend = 6;
+    bool is_partial = 7;
+    string computed_at = 8;        // RFC3339; empty when no data yet
+}
+
+message ReportRow {
+    string entity_id = 1;
+    map<string, string> attributes = 2;
+    repeated ReportCell cells = 3;
+    string status = 4;
+}
+
+message GetPerformanceReportResponse {
+    string report = 1;
+    string title = 2;
+    string span = 3;
+    repeated ReportRow rows = 4;
+}
+
+message KpiInfo {
+    string kpi = 1;
+    string domain = 2;
+    repeated string scope = 3;
+    repeated string rollup_ops = 4;
+    string type = 5;
+    string unit = 6;
+    string symbol = 7;
+    string positive_direction = 8;
+}
+
+message ListKpisRequest {
+}
+
+message ListKpisResponse {
+    repeated KpiInfo kpis = 1;
+}
+
+// Trend: day-over-day / week-over-week / month-over-month comparison.
+message Trend {
+    string direction = 1; // up|down|flat|new|na
+    double change_pct = 2;
+    double change_abs = 3;
+    double prev_value = 4;
+    bool has_previous = 5;
+}
+
+// KpiValue carries the metadata envelope: <KPI>: <value> plus from/to,
+// type, unit, symbol, scope, partiality and trend.
+message KpiValue {
+    string kpi = 1;
+    double value = 2;
+    string span = 3;
+    string op = 4;
+    string from = 5; // RFC3339
+    string to = 6;   // RFC3339
+    string type = 7;
+    string unit = 8;
+    string symbol = 9;
+    bool is_partial = 10;
+    map<string, string> scope = 11;
+    Trend trend = 12;
+    string computed_at = 13;
+}
+
+message GetKpisRequest {
+    repeated string keys = 1;
+    string span = 2;               // daily|weekly|monthly
+    string op = 3;                 // optional; defaults per KPI spec
+    map<string, string> scope = 4; // optional scope filters, e.g. network_id
+}
+
+message GetKpisResponse {
+    repeated KpiValue values = 1;
+}
+
+message GetKpiTimeSeriesRequest {
+    repeated string keys = 1;
+    string span = 2;
+    string op = 3;
+    string from = 4; // RFC3339, inclusive
+    string to = 5;   // RFC3339, exclusive
+    map<string, string> scope = 6;
+}
+
+message GetKpiTimeSeriesResponse {
+    repeated KpiValue values = 1;
+}
+
+message GetKpiBreakdownRequest {
+    string key = 1;
+    string span = 2;
+    string op = 3;
+    string by = 4; // scope dimension to rank by, e.g. network_id
+    int32 top = 5;
+}
+
+message BreakdownRow {
+    string scope_value = 1;
+    double value = 2;
+    Trend trend = 3;
+}
+
+message GetKpiBreakdownResponse {
+    string kpi = 1;
+    string span = 2;
+    string op = 3;
+    string from = 4;
+    string to = 5;
+    repeated BreakdownRow rows = 6;
+}

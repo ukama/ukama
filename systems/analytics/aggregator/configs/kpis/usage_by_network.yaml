@@ -1,0 +1,21 @@
+# USAGE_BY_NETWORK: total data usage (bytes) per network per window, from
+# per-sim /v1/usages pulls (cdr_type=DATA, sim_type=ukama_data). Daily SUM =
+# total data consumed that day.
+kpi: USAGE_BY_NETWORK
+domain: subscriber
+algo: usage_by_network@v1
+scope: [network_id]
+inputs:
+  usage:
+    dataset: subscriber.usage.getBySim
+    fields: [sim_id, network_id, usage]
+    mode: window
+  networks:
+    dataset: registry.network.getAll
+    fields: [network_id]
+output:
+  type: float
+  unit: bytes
+  symbol: B
+rollup_ops: [SUM, AVG, MAX, LAST]
+positive_direction: up

@@ -1,0 +1,19 @@
+# SITES_ONLINE (definition v2): sites per network whose cnode is online.
+# Sites without a cnode count as not online.
+kpi: SITES_ONLINE
+domain: network
+algo: sites_online@v2
+scope: [network_id]
+inputs:
+  nodes:
+    dataset: registry.node.list
+    fields: [node_id, site_id, network_id, type, connectivity]
+  networks:
+    dataset: registry.network.getAll
+    fields: [network_id]
+output:
+  type: int
+  unit: count
+  symbol: ""
+rollup_ops: [AVG, MIN, MAX, LAST]
+positive_direction: up

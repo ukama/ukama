@@ -1,0 +1,19 @@
+# ACTIVE_CUSTOMERS: distinct subscribers per network with at least one
+# active SIM (from the shared all-sims dataset; filtered in the algo).
+kpi: ACTIVE_CUSTOMERS
+domain: subscriber
+algo: active_customers@v3
+scope: [network_id]
+inputs:
+  sims:
+    dataset: subscriber.sim.list
+    fields: [sim_id, subscriber_id, network_id, status]
+  networks:
+    dataset: registry.network.getAll
+    fields: [network_id]
+output:
+  type: int
+  unit: count
+  symbol: ""
+rollup_ops: [AVG, MIN, MAX, LAST]
+positive_direction: up

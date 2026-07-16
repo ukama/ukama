@@ -1,0 +1,14 @@
+# REVENUE: successful payments settled in the window (org-wide; payments
+# carry no network attribution). One KPI, three cards via ops:
+#   SUM = revenue collected, COUNT = purchases, AVG = avg purchase.
+kpi: REVENUE
+domain: business
+algo: revenue@v1
+scope: []
+inputs:
+  payments:
+    dataset: payments.processor.list
+    fields: [payment_id, amount, status, paid_at]
+output: { type: int, unit: cents, symbol: "$" }
+rollup_ops: [SUM, COUNT, AVG, MAX]
+positive_direction: up

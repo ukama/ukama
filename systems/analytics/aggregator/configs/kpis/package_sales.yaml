@@ -1,0 +1,12 @@
+# PACKAGE_SALES: sim-package assignments started in the window (sold count).
+kpi: PACKAGE_SALES
+domain: business
+algo: package_sales@v1
+scope: [network_id, package_id]
+inputs:
+  sim_packages:
+    dataset: subscriber.simpackage.listBySim
+    fields: [sim_package_id, package_id, sim_id, network_id, start_date]
+output: { type: int, unit: count, symbol: "" }
+rollup_ops: [SUM, AVG, MAX]
+positive_direction: up

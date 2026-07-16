@@ -1,0 +1,24 @@
+# Package performance report: entity rows from the package catalog, KPI
+# columns from the latest available rollups, threshold-derived status.
+report: package_performance
+title: Package performance
+resource:
+  dataset: dataplan.package.getAll
+  entity_key: package_id
+  network_match: network_id    # "" on a package = org-level, matches every network
+  attributes:
+    - { name: name,     field: name }
+    - { name: price,    field: amount,   format: money }
+    - { name: validity, field: duration, format: days }
+    - { name: active,   field: active }
+row_scope: package_id
+columns:
+  - { name: sold,      kpi: PACKAGE_SALES,     op: SUM }
+  - { name: revenue,   kpi: PACKAGE_REVENUE,   op: SUM, format: money }
+  - { name: data_used, kpi: PACKAGE_DATA_USED, op: SUM, format: bytes }
+status:
+  - { when: "active == false", label: Inactive }
+  - { when: "sold == 0",       label: No sales }
+  - { when: "sold < 25",       label: Low sales }
+  - { default: true,           label: Active }
+sort: { column: revenue, desc: true }
