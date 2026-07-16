@@ -24,18 +24,15 @@ static int alloc_world(const scenario_t *s, world_t *w) {
     size_t packages = s->package_count * s->world.networks;
 
     memset(w, 0, sizeof(*w));
-    w->networks    = calloc(s->world.networks, sizeof(network_t));
-    w->sites       = calloc(sites, sizeof(site_t));
-    w->nodes       = calloc(nodes, sizeof(node_t));
-    w->subscribers = calloc(ues, sizeof(subscriber_t));
-    w->ues         = calloc(ues, sizeof(ue_t));
-    w->packages    = calloc(packages, sizeof(package_t));
-    if (!w->networks ||
-        !w->sites ||
-        !w->nodes ||
-        !w->subscribers ||
-        !w->ues ||
-        !w->packages) {
+    w->networks = calloc(s->world.networks, sizeof(network_t));
+    w->sites = calloc(sites, sizeof(site_t));
+    w->nodes = calloc(nodes, sizeof(node_t));
+    w->subscribers = ues ? calloc(ues, sizeof(subscriber_t)) : NULL;
+    w->ues = ues ? calloc(ues, sizeof(ue_t)) : NULL;
+    w->packages = packages ? calloc(packages, sizeof(package_t)) : NULL;
+    if (w->networks == NULL || w->sites == NULL || w->nodes == NULL ||
+        (ues > 0 && (w->subscribers == NULL || w->ues == NULL)) ||
+        (packages > 0 && w->packages == NULL)) {
         return ULAB_ERR;
     }
 
@@ -217,8 +214,9 @@ int world_generate(const scenario_t *s,
                          sub->ref);
                 snprintf(sub->name, sizeof(sub->name), "Lab User %zu",
                          num);
-                snprintf(sub->email, sizeof(sub->email),
-                         "%.180s-%06zu@ukama.test", run_id, num);
+		snprintf(sub->email, sizeof(sub->email),
+			"ulab-%08x-%06zu@ukama.com",
+			ulab_hash32(run_id, s->seed), num);
                 snprintf(sub->phone, sizeof(sub->phone), "+1555%07u", phone);
                 snprintf(sub->network_ref, sizeof(sub->network_ref), "%s",
                          net->ref);

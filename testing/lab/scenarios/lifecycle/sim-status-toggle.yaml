@@ -1,5 +1,6 @@
 version: 1
 name: lifecycle-sim-status-toggle
+description: Exercise inactive-to-active SIM transitions while preserving the backend SIM record.
 seed: 503
 suite: lifecycle
 priority: p1

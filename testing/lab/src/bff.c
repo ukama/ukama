@@ -24,7 +24,9 @@ extern const char *BFF_ADD_SUBSCRIBER;
 extern const char *BFF_ALLOCATE_SIM;
 extern const char *BFF_GET_DATA_USAGE;
 extern const char *BFF_GET_SIM_PACKAGES;
-extern const char *BFF_GET_NODE_STATE;
+extern const char *BFF_GET_NODE;
+extern const char *BFF_UPDATE_SOFTWARE;
+extern const char *BFF_GET_APPS;
 extern const char *BFF_NETWORK_OVERVIEW;
 extern const char *BFF_SITE_VIEW;
 extern const char *BFF_GET_NETWORKS;
@@ -1218,34 +1220,193 @@ int bff_get_packages_for_sim(bff_client_t *c, const ue_t *ue,
     return ULAB_OK;
 }
 
-int bff_get_node_state(bff_client_t *c, const node_t *node,
-                       bff_node_state_t *state, ulab_error_t *err) {
+int bff_get_node_status(bff_client_t *c, const node_t *node,
+                        bff_node_status_t *status, ulab_error_t *err) {
 
     char vars[ULAB_MAX_QUERY];
     json_t *root;
     json_t *obj;
+    json_t *node_status;
 
-    snprintf(vars, sizeof(vars), "{\"id\":\"%s\"}", node->bff_id);
+    snprintf(vars, sizeof(vars),
+             "{\"data\":{\"id\":\"%s\"}}",
+             node->bff_id);
 
-    if (bff_call(c, "getNodeState", BFF_GET_NODE_STATE, vars, &root,
-        err)) {
+    if (bff_call(c, "getNode", BFF_GET_NODE, vars, &root, err)) {
         return ULAB_ERR;
     }
 
-    obj = dig(root, "data", "getNodeState");
+    obj = dig(root, "data", "getNode");
     if (obj == NULL) {
-        snprintf(err->msg, sizeof(err->msg), "getNodeState missing data");
+        snprintf(err->msg, sizeof(err->msg), "getNode missing data");
         json_decref(root);
         return ULAB_ERR;
     }
 
-    json_get_str(obj, "state", state->state, sizeof(state->state));
-    json_get_str(obj, "connectivity", state->connectivity,
-                 sizeof(state->connectivity));
+    node_status = json_object_get(obj, "status");
+    if (node_status == NULL || !json_is_object(node_status)) {
+        snprintf(err->msg, sizeof(err->msg), "getNode missing status");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+
+    if (json_get_str(obj, "id", status->id, sizeof(status->id)) ||
+        json_get_str(node_status, "connectivity", status->connectivity,
+                     sizeof(status->connectivity)) ||
+        json_get_str(node_status, "state", status->state,
+                     sizeof(status->state))) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getNode missing id/status fields");
+        json_decref(root);
+        return ULAB_ERR;
+    }
 
     json_decref(root);
 
     return ULAB_OK;
+}
+
+int bff_update_software(bff_client_t *c,
+                        const node_t *node,
+                        const char *app,
+                        const char *tag,
+                        ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char app_esc[ULAB_MAX_NAME * 2];
+    char tag_esc[ULAB_MAX_REF * 2];
+    char node_esc[ULAB_MAX_ID * 2];
+    json_t *root;
+    json_t *obj;
+    json_t *message;
+    int n;
+
+    if (node == NULL || node->bff_id[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "updateSoftware missing node id");
+        return ULAB_ERR;
+    }
+
+    if (app == NULL || app[0] == '\0' || tag == NULL || tag[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "updateSoftware requires app and tag");
+        return ULAB_ERR;
+    }
+
+    ulab_json_escape(app, app_esc, sizeof(app_esc));
+    ulab_json_escape(tag, tag_esc, sizeof(tag_esc));
+    ulab_json_escape(node->bff_id, node_esc, sizeof(node_esc));
+
+    n = snprintf(vars, sizeof(vars),
+                 "{\"data\":{\"name\":\"%s\","
+                 "\"nodeId\":\"%s\",\"tag\":\"%s\"}}",
+                 app_esc, node_esc, tag_esc);
+    if (n < 0 || (size_t)n >= sizeof(vars)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "updateSoftware variables too long");
+        return ULAB_ERR;
+    }
+
+    root = NULL;
+    if (bff_call(c, "updateSoftware", BFF_UPDATE_SOFTWARE, vars,
+                 &root, err)) {
+        return ULAB_ERR;
+    }
+
+    obj = dig(root, "data", "updateSoftware");
+    message = obj ? json_object_get(obj, "message") : NULL;
+    if (message == NULL || !json_is_string(message)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "updateSoftware missing message");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+
+    json_decref(root);
+    return ULAB_OK;
+}
+
+int bff_get_node_app(bff_client_t *c,
+                     const node_t *node,
+                     const char *app,
+                     bff_app_state_t *state,
+                     ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char app_esc[ULAB_MAX_NAME * 2];
+    char node_esc[ULAB_MAX_ID * 2];
+    json_t *root;
+    json_t *obj;
+    json_t *arr;
+    json_t *it;
+    json_t *name;
+    const char *value;
+    size_t i;
+    int n;
+
+    if (node == NULL || node->bff_id[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg), "getApps missing node id");
+        return ULAB_ERR;
+    }
+
+    if (app == NULL || app[0] == '\0' || state == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getApps requires app and output state");
+        return ULAB_ERR;
+    }
+
+    memset(state, 0, sizeof(*state));
+    ulab_json_escape(app, app_esc, sizeof(app_esc));
+    ulab_json_escape(node->bff_id, node_esc, sizeof(node_esc));
+
+    n = snprintf(vars, sizeof(vars),
+                 "{\"data\":{\"nodeId\":\"%s\","
+                 "\"appName\":\"%s\"}}",
+                 node_esc, app_esc);
+    if (n < 0 || (size_t)n >= sizeof(vars)) {
+        snprintf(err->msg, sizeof(err->msg), "getApps variables too long");
+        return ULAB_ERR;
+    }
+
+    root = NULL;
+    if (bff_call(c, "getApps", BFF_GET_APPS, vars, &root, err)) {
+        return ULAB_ERR;
+    }
+
+    obj = dig(root, "data", "getApps");
+    arr = obj ? json_object_get(obj, "apps") : NULL;
+    if (arr == NULL || !json_is_array(arr)) {
+        snprintf(err->msg, sizeof(err->msg), "getApps missing apps list");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+
+    for (i = 0; i < json_array_size(arr); i++) {
+        it = json_array_get(arr, i);
+        name = it ? json_object_get(it, "name") : NULL;
+        value = name && json_is_string(name) ? json_string_value(name) : NULL;
+        if (value == NULL || !ulab_streq(value, app)) {
+            continue;
+        }
+
+        if (json_get_str(it, "name", state->name, sizeof(state->name)) ||
+            json_get_str(it, "version", state->version,
+                         sizeof(state->version)) ||
+            json_get_str(it, "tag", state->tag, sizeof(state->tag)) ||
+            json_get_str(it, "status", state->status,
+                         sizeof(state->status))) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "getApps returned incomplete app state for %s", app);
+            json_decref(root);
+            return ULAB_ERR;
+        }
+
+        json_decref(root);
+        return ULAB_OK;
+    }
+
+    snprintf(err->msg, sizeof(err->msg),
+             "getApps app not found: node=%s app=%s", node->bff_id, app);
+    json_decref(root);
+    return ULAB_ERR;
 }
 
 int bff_network_overview_loads(bff_client_t *c, const network_t *net,

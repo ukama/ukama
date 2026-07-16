@@ -19,6 +19,7 @@ typedef struct {
     char   run_id[ULAB_MAX_ID];
     char   run_dir[ULAB_MAX_PATH];
     char   scenario[ULAB_MAX_NAME];
+    char   description[ULAB_MAX_LINE];
     char   suite[ULAB_MAX_REF];
     char   priority[ULAB_MAX_REF];
     char   status[ULAB_MAX_REF];

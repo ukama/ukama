@@ -1,5 +1,6 @@
 version: 1
 name: p0-expected-failure-create-ues-disabled
+description: Verify the disabled create_ues event reports an expected failure without adding SIMs.
 seed: 309
 suite: p0
 priority: p0

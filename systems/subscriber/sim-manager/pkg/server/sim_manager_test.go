@@ -39,8 +39,8 @@ import (
 )
 
 const (
-	testIccid       = "890000-this-is-a-test-iccid"
-	testImsi        = "890000-this-is-a-test-iccid"
+	testIccid       = "8910300123456789053"
+	testImsi        = "001012223334445"
 	simId           = "e044081b-fbbe-45e9-8f78-0f9c0f112977"
 	OrgName         = "testorg"
 	orgId           = "592f7a8e-f318-4d3a-aab8-8d4187cde7f9"

@@ -7,6 +7,9 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
+	_ "github.com/mwitkow/go-proto-validators"
+	regexp "regexp"
+	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -14,9 +17,22 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+var _regex_SimUploaded_Iccid = regexp.MustCompile(`^[0-9]{18,22}$`)
+
 func (this *SimUploaded) Validate() error {
+	for _, item := range this.Iccid {
+		if !_regex_SimUploaded_Iccid.MatchString(item) {
+			return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{18,22}$"`, item))
+		}
+		if item == "" {
+			return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must not be an empty string`, item))
+		}
+	}
 	return nil
 }
 func (this *SimRemoved) Validate() error {
+	return nil
+}
+func (this *EventSimsUploaded) Validate() error {
 	return nil
 }

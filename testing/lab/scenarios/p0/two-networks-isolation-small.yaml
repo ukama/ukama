@@ -1,5 +1,6 @@
 version: 1
 name: p0-two-networks-isolation-small
+description: Verify two networks serve traffic with correct backend counts, usage, and dashboards.
 seed: 305
 suite: p0
 priority: p0

@@ -17,17 +17,15 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+var _regex_NodeChanged_Imsi = regexp.MustCompile(`^[0-9]{6,15}$`)
 var _regex_NodeChanged_Policy = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *NodeChanged) Validate() error {
+	if !_regex_NodeChanged_Imsi.MatchString(this.Imsi) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{6,15}$"`, this.Imsi))
+	}
 	if this.Imsi == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must not be an empty string`, this.Imsi))
-	}
-	if !(len(this.Imsi) > 5) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.Imsi))
-	}
-	if !(len(this.Imsi) < 16) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length smaller than '16'`, this.Imsi))
 	}
 	if !_regex_NodeChanged_Policy.MatchString(this.Policy) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Policy", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Policy))
@@ -38,17 +36,15 @@ func (this *NodeChanged) Validate() error {
 	return nil
 }
 
+var _regex_SessionCreated_Imsi = regexp.MustCompile(`^[0-9]{6,15}$`)
 var _regex_SessionCreated_Policy = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *SessionCreated) Validate() error {
+	if !_regex_SessionCreated_Imsi.MatchString(this.Imsi) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{6,15}$"`, this.Imsi))
+	}
 	if this.Imsi == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must not be an empty string`, this.Imsi))
-	}
-	if !(len(this.Imsi) > 5) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.Imsi))
-	}
-	if !(len(this.Imsi) < 16) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length smaller than '16'`, this.Imsi))
 	}
 	if !_regex_SessionCreated_Policy.MatchString(this.Policy) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Policy", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Policy))
@@ -58,30 +54,28 @@ func (this *SessionCreated) Validate() error {
 	}
 	return nil
 }
+
+var _regex_CDRReported_Imsi = regexp.MustCompile(`^[0-9]{6,15}$`)
+
 func (this *CDRReported) Validate() error {
+	if !_regex_CDRReported_Imsi.MatchString(this.Imsi) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{6,15}$"`, this.Imsi))
+	}
 	if this.Imsi == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must not be an empty string`, this.Imsi))
-	}
-	if !(len(this.Imsi) > 5) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.Imsi))
-	}
-	if !(len(this.Imsi) < 16) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length smaller than '16'`, this.Imsi))
 	}
 	return nil
 }
 
+var _regex_SessionDestroyed_Imsi = regexp.MustCompile(`^[0-9]{6,15}$`)
 var _regex_SessionDestroyed_Policy = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *SessionDestroyed) Validate() error {
+	if !_regex_SessionDestroyed_Imsi.MatchString(this.Imsi) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{6,15}$"`, this.Imsi))
+	}
 	if this.Imsi == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must not be an empty string`, this.Imsi))
-	}
-	if !(len(this.Imsi) > 5) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.Imsi))
-	}
-	if !(len(this.Imsi) < 16) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length smaller than '16'`, this.Imsi))
 	}
 	if !_regex_SessionDestroyed_Policy.MatchString(this.Policy) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Policy", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Policy))

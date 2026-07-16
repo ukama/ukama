@@ -29,6 +29,7 @@ typedef struct {
     char  *nodeID;
     char  *nodeType;
     bool  clientMode;
+    bool  remoteClientRebootOptional;
 
     ControlCtx *control;
     time_t     startTime;

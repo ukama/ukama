@@ -79,8 +79,8 @@ message UsageForPeriodReq {
 }
 
 message Record {
-    string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16 }, json_name="imsi"];
-    string Iccid = 2 [(validator.field) = {string_not_empty: true,  length_gt: 17, length_lt: 23}, json_name="iccid"];
+    string imsi = 1 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{6,15}$"}, json_name = "imsi"];
+    string iccid = 2 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{18,22}$"}, json_name = "iccid" ];
     bytes Key = 3 [json_name="k"];
     bytes Op = 4 [json_name="op"];
     bytes Amf = 5 [json_name="amf"];
@@ -113,7 +113,7 @@ message ReadResp {
 }
 
 message ActivateReq {
-    string Iccid = 1 [(validator.field) = { string_not_empty: true,  length_gt: 17, length_lt: 23}, json_name="iccid"];
+    string iccid = 1 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{18,22}$"}, json_name = "iccid" ];
     string Imsi = 2;
     string SimPackageId = 3;
     string PackageId = 4;
@@ -126,7 +126,7 @@ message ActivateResp {
 
 /* Could be called by subscriber manager with ICCID and by billing service with imsi */
 message InactivateReq {
-    string Iccid = 1 [(validator.field) = { string_not_empty: true,  length_gt: 17, length_lt: 23}, json_name="iccid"];
+    string iccid = 1 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{18,22}$"}, json_name = "iccid" ];
     string Imsi = 2;
     string PackageId = 3;
     string NetworkId = 4;
@@ -137,7 +137,7 @@ message InactivateResp {
 }
 
 message UpdatePackageReq {
-    string Iccid = 1 [(validator.field) = { string_not_empty: true,  length_gt: 17, length_lt: 23}, json_name="iccid"];
+    string iccid = 1 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{18,22}$"}, json_name = "iccid" ];
     string Imsi = 2;
     string SimPackageId = 3;
     string PackageId = 4;
@@ -149,7 +149,7 @@ message UpdatePackageResp {
 }
 
 message UpdateGutiReq{
-    string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16}];
+    string imsi = 1 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{6,15}$"}, json_name = "imsi"];
     Guti Guti = 2 [(validator.field) = { msg_exists: true }];
     uint32 UpdatedAt = 4 [json_name="updated_at",(validator.field) = { int_gt: 1639144053}]; // unix timestamp
 }
@@ -189,7 +189,7 @@ message Policy {
 
 
 message QueryUsageReq {
-    string Iccid = 1 [(validator.field) = { string_not_empty: true,  length_gt: 17, length_lt: 23}, json_name="iccid"];
+    string iccid = 1 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{18,22}$"}, json_name = "iccid" ];
     string NodeId = 2;
     uint64 Session = 3;
     uint64 From = 4;

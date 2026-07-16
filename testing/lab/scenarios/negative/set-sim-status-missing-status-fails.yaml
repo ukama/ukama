@@ -1,5 +1,6 @@
 version: 1
 name: negative-set-sim-status-missing-status-fails
+description: Verify setting SIM status without a status value fails and leaves the SIM active.
 seed: 403
 suite: negative
 priority: p1

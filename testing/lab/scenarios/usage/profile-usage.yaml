@@ -1,5 +1,6 @@
 version: 1
 name: profile-usage
+description: Verify 20 UEs across two sites follow usage profiles and report modeled usage.
 seed: 44
 suite: wip
 priority: p2

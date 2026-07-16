@@ -103,7 +103,7 @@ func TestControllerServer_ToggleRadio(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestControllerServer_ToggleNodeService(t *testing.T) {
+func TestControllerServer_ToggleService(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 	conRepo := &mocks.NodeLogRepo{}
 	opMgr := &mbmocks.ManagerClient{}
@@ -146,7 +146,7 @@ func TestNodeKey(t *testing.T) {
 	assert.Equal(t, "node:"+nodeId, nodeKey(nodeId))
 }
 
-func TestControllerServer_ToggleNodeService_InvalidNodeId(t *testing.T) {
+func TestControllerServer_ToggleService_InvalidNodeId(t *testing.T) {
 	s := NewControllerServer(
 		testOrgName,
 		&mocks.NodeLogRepo{},

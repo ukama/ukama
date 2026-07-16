@@ -50,8 +50,22 @@ int selector_resolve_ues(const world_t *w, const selector_t *sel,
     init(out);
 
     if (sel->kind == SEL_NONE || sel->kind == SEL_ALL) {
-        for (i = 0; i < w->ue_count; i++) if (add_idx(out, i)) return ULAB_ERR;
+        for (i = 0; i < w->ue_count; i++) {
+            if (add_idx(out, i)) return ULAB_ERR;
+        }
         return ULAB_OK;
+    }
+
+    if (sel->kind == SEL_REF) {
+        for (i = 0; i < w->ue_count; i++) {
+            if (ulab_streq(w->ues[i].ref, sel->value) ||
+                ulab_streq(w->ues[i].id, sel->value)) {
+                return add_idx(out, i);
+            }
+        }
+        snprintf(err->msg, sizeof(err->msg),
+                 "unknown UE selector: %s", sel->value);
+        return ULAB_ERR;
     }
 
     if (sel->kind == SEL_SAMPLE_PER_SITE) {
@@ -105,6 +119,17 @@ int selector_resolve_nodes(const world_t *w, const selector_t *sel,
         }
         return ULAB_OK;
     }
+    if (sel->kind == SEL_REF) {
+        for (i = 0; i < w->node_count; i++) {
+            if (ulab_streq(w->nodes[i].ref, sel->value) ||
+                ulab_streq(w->nodes[i].id, sel->value)) {
+                return add_idx(out, i);
+            }
+        }
+        snprintf(err->msg, sizeof(err->msg),
+                 "unknown node selector: %s", sel->value);
+        return ULAB_ERR;
+    }
     if (sel->kind == SEL_NODE_TYPE ||
         sel->kind == SEL_NODE_TYPE_COUNT_PER_NETWORK) {
         for (i = 0; i < w->node_count; i++) {
@@ -131,6 +156,17 @@ int selector_resolve_sites(const world_t *w, const selector_t *sel,
         }
         return ULAB_OK;
     }
+    if (sel->kind == SEL_REF) {
+        for (i = 0; i < w->site_count; i++) {
+            if (ulab_streq(w->sites[i].ref, sel->value) ||
+                ulab_streq(w->sites[i].id, sel->value)) {
+                return add_idx(out, i);
+            }
+        }
+        snprintf(err->msg, sizeof(err->msg),
+                 "unknown site selector: %s", sel->value);
+        return ULAB_ERR;
+    }
     return ULAB_ERR;
 }
 
@@ -144,6 +180,17 @@ int selector_resolve_networks(const world_t *w, const selector_t *sel,
             if (add_idx(out, i)) return ULAB_ERR;
         }
         return ULAB_OK;
+    }
+    if (sel->kind == SEL_REF) {
+        for (i = 0; i < w->network_count; i++) {
+            if (ulab_streq(w->networks[i].ref, sel->value) ||
+                ulab_streq(w->networks[i].id, sel->value)) {
+                return add_idx(out, i);
+            }
+        }
+        snprintf(err->msg, sizeof(err->msg),
+                 "unknown network selector: %s", sel->value);
+        return ULAB_ERR;
     }
     return ULAB_ERR;
 }

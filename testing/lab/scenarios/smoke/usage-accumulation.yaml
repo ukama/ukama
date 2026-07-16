@@ -1,5 +1,6 @@
 version: 1
 name: usage-accumulation
+description: Verify usage accumulates from 100 MB to 300 MB and traffic remains allowed.
 seed: 42
 suite: p0
 priority: p0

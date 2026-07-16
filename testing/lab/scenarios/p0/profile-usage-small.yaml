@@ -1,5 +1,6 @@
 version: 1
 name: p0-profile-usage-small
+description: Verify six UEs follow light, normal, and heavy profiles and report modeled usage.
 seed: 310
 suite: p0
 priority: p0

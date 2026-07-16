@@ -734,6 +734,50 @@ static void write_setup_preamble(FILE *f, const gen_case_t *c) {
     }
 }
 
+static const char *software_node_type(const char *event) {
+    if (ulab_streq(event, "software_update_amplifier")) {
+        return "amplifier";
+    }
+    if (ulab_streq(event, "software_update_controller")) {
+        return "controller";
+    }
+    return "tower";
+}
+
+static int software_update_success_case(const gen_family_t *family,
+                                        const gen_case_t *c) {
+    const char *event;
+
+    if (family == NULL || c == NULL || c->event_count == 0 ||
+        !ulab_streq(family->name, "software_update")) {
+        return 0;
+    }
+
+    event = c->events[0];
+    return ulab_streq(event, "software_update_tower") ||
+           ulab_streq(event, "software_update_amplifier") ||
+           ulab_streq(event, "software_update_controller");
+}
+
+static void write_software_preflight(FILE *f, const gen_case_t *c) {
+    const char *node_type;
+
+    node_type = software_node_type(c->events[0]);
+    fprintf(f,
+            "  - name: verify_app_before_update\n"
+            "    checks:\n"
+            "      - type: node_health_ok\n"
+            "        type_selector: %s\n"
+            "        count_per_network: 1\n"
+            "        app: example\n"
+            "      - type: node_version_equals\n"
+            "        type_selector: %s\n"
+            "        count_per_network: 1\n"
+            "        app: example\n"
+            "        version: v1.0.0\n\n",
+            node_type, node_type);
+}
+
 static int write_one_event(FILE *f, const char *event,
                            const topo_profile_t *profile) {
     if (ulab_streq(event, "traffic") || ulab_streq(event, "traffic_1gb") ||
@@ -755,15 +799,51 @@ static int write_one_event(FILE *f, const char *event,
     if (ulab_streq(event, "restart_nodes") ||
         ulab_streq(event, "restart_tower")) {
         fprintf(f,
+                "      - type: wait_node_connectivity\n"
+                "        type_selector: tower\n"
+                "        count_per_network: 1\n"
+                "        connectivity: Online\n"
+                "        seconds: 120\n"
                 "      - type: restart_nodes\n"
                 "        type_selector: tower\n"
-                "        count_per_network: 1\n");
+                "        count_per_network: 1\n"
+                "      - type: wait_node_connectivity\n"
+                "        type_selector: tower\n"
+                "        count_per_network: 1\n"
+                "        connectivity: Offline\n"
+                "        seconds: 120\n"
+                "      - type: wait_node_connectivity\n"
+                "        type_selector: tower\n"
+                "        count_per_network: 1\n"
+                "        connectivity: Online\n"
+                "        seconds: 300\n"
+                "      - type: wait_nodes_ready\n"
+                "        type_selector: tower\n"
+                "        count_per_network: 1\n"
+                "      - type: wait_ues_attached\n"
+                "        ues: all\n");
         return ULAB_OK;
     }
     if (ulab_streq(event, "restart_site")) {
         fprintf(f,
+                "      - type: wait_node_connectivity\n"
+                "        nodes: all\n"
+                "        connectivity: Online\n"
+                "        seconds: 120\n"
                 "      - type: restart_site\n"
-                "        nodes: all\n");
+                "        nodes: all\n"
+                "      - type: wait_node_connectivity\n"
+                "        nodes: all\n"
+                "        connectivity: Offline\n"
+                "        seconds: 120\n"
+                "      - type: wait_node_connectivity\n"
+                "        nodes: all\n"
+                "        connectivity: Online\n"
+                "        seconds: 300\n"
+                "      - type: wait_nodes_ready\n"
+                "        nodes: all\n"
+                "      - type: wait_ues_attached\n"
+                "        ues: all\n");
         return ULAB_OK;
     }
     if (ulab_streq(event, "toggle_service_off")) {
@@ -803,9 +883,11 @@ static int write_one_event(FILE *f, const char *event,
         ulab_streq(event, "software_update_controller")) {
         fprintf(f,
                 "      - type: software_update\n"
-                "        type_selector: tower\n"
+                "        type_selector: %s\n"
                 "        count_per_network: 1\n"
-                "        version: v2.0.0\n");
+                "        app: example\n"
+                "        tag: v2.0.0\n",
+                software_node_type(event));
         return ULAB_OK;
     }
     if (ulab_streq(event, "software_update_same_version")) {
@@ -813,7 +895,8 @@ static int write_one_event(FILE *f, const char *event,
                 "      - type: software_update\n"
                 "        type_selector: tower\n"
                 "        count_per_network: 1\n"
-                "        version: current\n");
+                "        app: example\n"
+                "        tag: current\n");
         return ULAB_OK;
     }
     if (ulab_streq(event, "add_package_to_sim") ||
@@ -860,7 +943,8 @@ static void write_check_backend_count(FILE *f, const char *target) {
             "        expected: from_world\n", target);
 }
 
-static void write_one_check(FILE *f, const char *check, const char *family) {
+static void write_one_check(FILE *f, const char *check, const char *family,
+                            const gen_case_t *c) {
     if (ulab_streq(check, "backend_count_networks")) {
         write_check_backend_count(f, "networks");
     } else if (ulab_streq(check, "backend_count_sites")) {
@@ -913,11 +997,26 @@ static void write_one_check(FILE *f, const char *check, const char *family) {
                 "      - type: node_ready\n"
                 "        nodes: all\n");
     } else if (ulab_streq(check, "node_health_ok")) {
-        fprintf(f, "      - type: node_health_ok\n");
+        if (ulab_streq(family, "software_update") &&
+            c != NULL && c->event_count > 0) {
+            fprintf(f,
+                    "      - type: node_health_ok\n"
+                    "        type_selector: %s\n"
+                    "        count_per_network: 1\n"
+                    "        app: example\n",
+                    software_node_type(c->events[0]));
+        } else {
+            fprintf(f, "      - type: node_health_ok\n");
+        }
     } else if (ulab_streq(check, "node_version_equals")) {
         fprintf(f,
                 "      - type: node_version_equals\n"
-                "        version: v2.0.0\n");
+                "        type_selector: %s\n"
+                "        count_per_network: 1\n"
+                "        app: example\n"
+                "        version: v2.0.0\n",
+                c != NULL && c->event_count > 0 ?
+                software_node_type(c->events[0]) : "tower");
     } else if (ulab_streq(check, "history_preserved")) {
         fprintf(f,
                 "      - type: history_preserved\n"
@@ -1092,8 +1191,11 @@ static int write_case_scenario(const gen_opts_t *opts,
     write_runtime(f, needs_ues);
     write_profile_section(f, c);
 
+    fprintf(f, "phases:\n");
+    if (!wip && software_update_success_case(family, c)) {
+        write_software_preflight(f, c);
+    }
     fprintf(f,
-            "phases:\n"
             "  - name: action\n"
             "    events:\n");
     write_setup_preamble(f, c);
@@ -1110,7 +1212,7 @@ static int write_case_scenario(const gen_opts_t *opts,
         write_check_backend_count(f, "sims");
     } else {
         for (i = 0; i < c->check_count; i++) {
-            write_one_check(f, c->checks[i], family->name);
+            write_one_check(f, c->checks[i], family->name, c);
         }
     }
 

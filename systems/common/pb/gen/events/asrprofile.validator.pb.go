@@ -17,29 +17,25 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+var _regex_Profile_Imsi = regexp.MustCompile(`^[0-9]{6,15}$`)
+var _regex_Profile_Iccid = regexp.MustCompile(`^[0-9]{18,22}$`)
 var _regex_Profile_Network = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 var _regex_Profile_Package = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 var _regex_Profile_Org = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 var _regex_Profile_SimPackage = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *Profile) Validate() error {
+	if !_regex_Profile_Imsi.MatchString(this.Imsi) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{6,15}$"`, this.Imsi))
+	}
 	if this.Imsi == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must not be an empty string`, this.Imsi))
 	}
-	if !(len(this.Imsi) > 5) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.Imsi))
-	}
-	if !(len(this.Imsi) < 16) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length smaller than '16'`, this.Imsi))
+	if !_regex_Profile_Iccid.MatchString(this.Iccid) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{18,22}$"`, this.Iccid))
 	}
 	if this.Iccid == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must not be an empty string`, this.Iccid))
-	}
-	if !(len(this.Iccid) > 5) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.Iccid))
-	}
-	if !(len(this.Iccid) < 22) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length smaller than '22'`, this.Iccid))
 	}
 	if !_regex_Profile_Network.MatchString(this.Network) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Network", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Network))

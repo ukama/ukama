@@ -41,6 +41,8 @@ int report_open(report_t *r,
 
     if (scenario != NULL) {
         ulab_copy(r->scenario, sizeof(r->scenario), scenario->name);
+        ulab_copy(r->description, sizeof(r->description),
+                  scenario->description);
         ulab_copy(r->suite, sizeof(r->suite), scenario->suite);
         ulab_copy(r->priority, sizeof(r->priority), scenario->priority);
         ulab_copy(r->status, sizeof(r->status), scenario->status);
@@ -66,6 +68,7 @@ int report_open(report_t *r,
     fprintf(r->json, "{\n");
     json_str(r->json, "run_id", r->run_id, 1);
     json_str(r->json, "scenario", r->scenario, 1);
+    json_str(r->json, "description", r->description, 1);
     json_str(r->json, "suite", r->suite, 1);
     json_str(r->json, "priority", r->priority, 1);
     json_str(r->json, "status", r->status, 1);
@@ -76,6 +79,7 @@ int report_open(report_t *r,
 
     fprintf(r->txt, "run_id: %s\n", r->run_id);
     fprintf(r->txt, "scenario: %s\n", r->scenario);
+    fprintf(r->txt, "description: %s\n", r->description);
     fprintf(r->txt, "suite: %s\n", r->suite);
     fprintf(r->txt, "priority: %s\n", r->priority);
     fprintf(r->txt, "status: %s\n", r->status);

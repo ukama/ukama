@@ -1,5 +1,6 @@
 version: 1
 name: new-ues-join
+description: Exercise baseline traffic for 40 UEs across two sites while dynamic UE joins remain disabled.
 seed: 100
 suite: wip
 priority: p2

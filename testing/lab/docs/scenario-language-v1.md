@@ -31,10 +31,12 @@ Supported events:
 - `start_ues`
 - `wait_ues_attached`
 - `restart_nodes`
+- `wait_node_connectivity`
 - `wait_nodes_ready`
 - `add_package_to_sim`
 - `remove_package_from_sim`
 - `set_sim_status`
+- `software_update`
 - `check`
 
 Supported checks:
@@ -53,6 +55,8 @@ Supported checks:
 - `package_remaining` (skipped until BFF exposes remaining balance)
 - `node_state`
 - `dashboard_loads`
+- `node_version_equals`
+- `node_health_ok`
 - `balance_non_negative`
 
 
@@ -65,6 +69,38 @@ Event expected failure:
     result: failure
     error_contains: "script failed"
 ```
+
+Node restart transition:
+
+```yaml
+- type: wait_node_connectivity
+  type_selector: tower
+  count_per_network: 1
+  connectivity: Online
+  seconds: 120
+
+- type: restart_nodes
+  type_selector: tower
+  count_per_network: 1
+
+- type: wait_node_connectivity
+  type_selector: tower
+  count_per_network: 1
+  connectivity: Offline
+  seconds: 120
+
+- type: wait_node_connectivity
+  type_selector: tower
+  count_per_network: 1
+  connectivity: Online
+  seconds: 300
+```
+
+`wait_node_connectivity` polls BFF `getNode.status.connectivity`. It succeeds only
+after every selected node has been observed with the requested connectivity.
+The default timeout is 180 seconds.
+`ULAB_NODE_CONNECTIVITY_POLL_SEC` controls the polling interval and defaults to
+two seconds.
 
 Backend count:
 
@@ -124,3 +160,56 @@ Supported generator models in this phase: `org`, `network`, `site`, `node`, `sim
 Supported generator modes in this phase: `smoke`, `transition`, `negative`, `pairwise`, `full`.
 
 Generator docs: `docs/generator.md`.
+
+## Software update smoke scenarios
+
+A software-only scenario may set `ues_per_site: 0` and omit `packages`,
+`subscribers`, and `sims` from `setup.create_via_bff`. The normal virtual site
+bundle is still started, while the selector chooses the node under test.
+
+A successful update scenario should use two phases. The first phase is a
+preflight gate with no events. It verifies through BFF that the selected node
+is Online, the app is running, and the app reports the expected current tag or
+version. If either check fails, the phase fails and the runner does not execute
+the update phase:
+
+```yaml
+- name: verify_app_before_update
+  checks:
+    - type: node_health_ok
+      type_selector: controller
+      app: example
+    - type: node_version_equals
+      type_selector: controller
+      app: example
+      version: v1.0.0
+```
+
+The second phase calls `updateSoftware` through BFF and then polls BFF until the
+new version is reported and the node/app are healthy again:
+
+```yaml
+- name: update_app
+  events:
+    - type: software_update
+      type_selector: controller
+      app: example
+      tag: v2.0.0
+  checks:
+    - type: node_version_equals
+      type_selector: controller
+      app: example
+      version: v2.0.0
+    - type: node_health_ok
+      type_selector: controller
+      app: example
+```
+
+`node_version_equals` accepts a match against either the app's `version` or
+`tag` returned by BFF `getApps`. `node_health_ok` with `app` requires BFF
+`getNode.status.connectivity` to be `Online` and the selected app's BFF
+`getApps.status` to be `running` or `active`.
+
+The default check timeout is 180 seconds with a five-second polling interval.
+They can be adjusted with `ULAB_SOFTWARE_UPDATE_TIMEOUT_SEC` and
+`ULAB_SOFTWARE_UPDATE_POLL_SEC`.
