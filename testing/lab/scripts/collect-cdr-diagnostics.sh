@@ -15,6 +15,12 @@ fi
 RUN_DIR="$1"
 OUT_NAME="${2:-cdr-diagnostics}"
 
+case "${ULAB_CDR_DIAG_ENABLE:-}" in
+    ""|0|false|FALSE|no|NO)
+        exit 0
+        ;;
+esac
+
 case "$OUT_NAME" in
     ""|*/*|*..*|*[!A-Za-z0-9_.-]*)
         echo "invalid diagnostics out-dir-name: $OUT_NAME" >&2
@@ -30,6 +36,7 @@ API_GW_URL="${ULAB_UKAMA_AGENT_API_GW_URL:-http://localhost:8073}"
 END_TIME="$(date +%s)"
 FAILURES=0
 
+rm -rf "$OUT_DIR"
 mkdir -p "$OUT_DIR"
 : > "$SUMMARY"
 
@@ -121,29 +128,6 @@ container_get() {
         200|201|202|204|404) return 0 ;;
         *) warn "tower query failed container=$container label=$label status=$code url=$url"; return 1 ;;
     esac
-}
-
-collect_tower_ukama() {
-    container="$1"
-    out="$2"
-    err="$out.err"
-
-    log "TOWER TAR $container /ukama -> $out"
-
-    if ! podman inspect -f '{{.State.Running}}' "$container" 2>/dev/null | grep -q '^true$'; then
-        warn "container not running for /ukama collection: $container"
-        return 1
-    fi
-
-    if podman exec "$container" sh -lc \
-        'if [ -d /ukama ]; then cd / && tar -czf - ukama; else echo /ukama missing >&2; exit 3; fi' \
-        > "$out" 2>"$err"; then
-        log "TOWER TAR ok $out"
-        return 0
-    fi
-
-    warn "failed to collect /ukama from $container"
-    return 1
 }
 
 ue_matches_site() {
@@ -264,8 +248,6 @@ collect_tower() {
         echo "SITE_REF=${SITE_REF:-}"
         echo "CONTAINER_NAME=$CONTAINER_NAME"
     } > "$tower_dir/tower.env"
-
-    collect_tower_ukama "$CONTAINER_NAME" "$tower_dir/ukama.tgz" || true
 
     if [ -d "$RUN_DIR/runtime-ues" ]; then
         found=0

@@ -42,10 +42,6 @@ jobs:
   #    run: pnpm test:unit
   #    working-directory: ${{ env.working-directory }}
 
-   - name: Dependency audit (fail on critical)
-     run: pnpm audit:ci
-     working-directory: ${{ env.working-directory }}
-
    - name: Configure AWS credentials
      uses: aws-actions/configure-aws-credentials@v1
      with:

@@ -1,5 +1,6 @@
 version: 1
 name: one-site-one-ue
+description: Verify end-to-end setup, UE attach, 100 MB traffic, usage, SIM state, and package state.
 seed: 1
 suite: smoke
 priority: p0

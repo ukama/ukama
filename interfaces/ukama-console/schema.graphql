@@ -1898,6 +1898,7 @@ type Mutation {
   updatePackage(data: UpdatePackageInputDto!, packageId: String!): PackageDto!
   processPayment(data: ProcessPaymentInputDto!): ProcessPaymentDto!
   updatePayment(data: UpdatePaymentInputDto!): PaymentDto!
+  addPayment(data: AddPaymentInputDto!): PaymentDto!
   defaultMarkup(data: DefaultMarkupInputDto!): CBooleanResponse!
   deleteMarkup(userId: String!): CBooleanResponse!
   addPackagesToSim(data: AddPackagesToSimInputDto!): AddPackagesSimResDto!
@@ -2088,6 +2089,20 @@ input UpdatePaymentInputDto {
   payerEmail: String
   payerName: String
   paymentMethod: String
+}
+
+input AddPaymentInputDto {
+  itemId: String!
+  itemType: String!
+  amount: String!
+  paymentMethod: String!
+  currency: String
+  payerName: String
+  payerEmail: String
+  payerPhone: String
+  country: String
+  description: String
+  sim: String
 }
 
 input DefaultMarkupInputDto {

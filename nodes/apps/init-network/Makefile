@@ -50,10 +50,21 @@ LDFLAGS+=-L$(VENDOR_LIB64)
 LDFLAGS+=-L$(PLATFORM_LIB)
 LDFLAGS+=--coverage
 
-
 CURL_LIB=-lcurl -lssl -lcrypto
-ULFIUS_LIB=-lulfius -lorcania -lmicrohttpd -lgnutls -lnettle
-ULFIUS_LIB+=-lhogweed -lp11-kit -lz
+
+ULFIUS_LIB=-lulfius
+ULFIUS_LIB+=-lorcania
+
+ifneq ($(ALPINE_BUILD),1)
+ULFIUS_LIB+=-lyder
+endif
+
+ULFIUS_LIB+=-lmicrohttpd
+ULFIUS_LIB+=-lgnutls
+ULFIUS_LIB+=-lnettle
+ULFIUS_LIB+=-lhogweed
+ULFIUS_LIB+=-lp11-kit
+ULFIUS_LIB+=-lz
 
 LIBS = $(ULFIUS_LIB) $(CURL_LIB)
 LIBS+=-ltoml

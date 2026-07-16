@@ -1,0 +1,195 @@
+version: 1
+name: p0-node-restarts-service-stays-off-small
+description: Verify each node transitions Online to Offline to Online after restart while service remains disabled and UEs cannot attach or pass traffic.
+seed: 308
+suite: smoke
+priority: p0
+tags: [virtual, node, restart, service]
+status: active
+
+provider:
+  type: virtual
+
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+
+packages:
+  - ref: daily_1gb
+    name: Daily 1GB
+    data_mb: 1024
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+
+phases:
+  - name: verify_nodes_online_and_service_off
+    events:
+      - type: wait_node_connectivity
+        nodes: all
+        connectivity: Online
+        seconds: 120
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
+        seconds: 15
+        expect:
+          result: failure
+    checks:
+      - type: traffic_blocked
+        ues: all
+        amount_mb: 1
+
+  - name: restart_tower
+    events:
+      - type: wait_node_connectivity
+        type_selector: tower
+        count_per_network: 1
+        connectivity: Online
+        seconds: 60
+      - type: restart_nodes
+        type_selector: tower
+        count_per_network: 1
+      - type: wait_node_connectivity
+        type_selector: tower
+        count_per_network: 1
+        connectivity: Offline
+        seconds: 120
+      - type: wait_node_connectivity
+        type_selector: tower
+        count_per_network: 1
+        connectivity: Online
+        seconds: 300
+      - type: wait_nodes_ready
+        type_selector: tower
+        count_per_network: 1
+      - type: wait_ues_attached
+        ues: all
+        seconds: 15
+        expect:
+          result: failure
+    checks:
+      - type: traffic_blocked
+        ues: all
+        amount_mb: 1
+
+  - name: restart_amplifier
+    events:
+      - type: wait_node_connectivity
+        type_selector: amplifier
+        count_per_network: 1
+        connectivity: Online
+        seconds: 60
+      - type: restart_nodes
+        type_selector: amplifier
+        count_per_network: 1
+      - type: wait_node_connectivity
+        type_selector: amplifier
+        count_per_network: 1
+        connectivity: Offline
+        seconds: 120
+      - type: wait_node_connectivity
+        type_selector: amplifier
+        count_per_network: 1
+        connectivity: Online
+        seconds: 300
+      - type: wait_nodes_ready
+        type_selector: amplifier
+        count_per_network: 1
+      - type: wait_ues_attached
+        ues: all
+        seconds: 15
+        expect:
+          result: failure
+    checks:
+      - type: traffic_blocked
+        ues: all
+        amount_mb: 1
+
+  - name: restart_controller
+    events:
+      - type: wait_node_connectivity
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Online
+        seconds: 60
+      - type: restart_nodes
+        type_selector: controller
+        count_per_network: 1
+      - type: wait_node_connectivity
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Offline
+        seconds: 120
+      - type: wait_node_connectivity
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Online
+        seconds: 300
+      - type: wait_nodes_ready
+        type_selector: controller
+        count_per_network: 1
+      - type: wait_ues_attached
+        ues: all
+        seconds: 15
+        expect:
+          result: failure
+    checks:
+      - type: traffic_blocked
+        ues: all
+        amount_mb: 1
+
+  - name: verify_all_nodes_recovered_service_off
+    events:
+      - type: wait_node_connectivity
+        nodes: all
+        connectivity: Online
+        seconds: 120
+      - type: wait_nodes_ready
+        nodes: all
+      - type: wait_ues_attached
+        ues: all
+        seconds: 15
+        expect:
+          result: failure
+    checks:
+      - type: traffic_blocked
+        ues: all
+        amount_mb: 1
+
+final_checks:
+  - type: backend_count
+    target: nodes
+    expected: 3
+  - type: status_equals
+    entity: node
+    ref: tower-site-001-001
+    status: Online
+  - type: status_equals
+    entity: node
+    ref: amplifier-site-001-001
+    status: Online
+  - type: status_equals
+    entity: node
+    ref: controller-site-001-001
+    status: Online

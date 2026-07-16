@@ -49,31 +49,55 @@ LDFLAGS+=-L$(PLATFORM_LIB)
 LDFLAGS+=--coverage
 
 # Libraries
-ULFIUS_LIB_DEP=-lorcania
-ifneq ($(ALPINE_BUILD),1)
-ULFIUS_LIB_DEP+=-lyder
-endif
-ULFIUS_LIB_DEP+=-lmicrohttpd
-ULFIUS_LIB_DEP+=-lgnutls
-ULFIUS_LIB_DEP+=-lnettle
-ULFIUS_LIB_DEP+=-lhogweed
-ULFIUS_LIB_DEP+=-lp11-kit
-ULFIUS_LIB_DEP+=-lz
-CURL_LIB_DEP=-lcurl
-CURL_LIB_DEP+=-lssl
-CURL_LIB_DEP+=-lcrypto
+#ULFIUS_LIB_DEP=-lorcania
+#ifneq ($(ALPINE_BUILD),1)
+#ULFIUS_LIB_DEP+=-lyder
+#endif
+#ULFIUS_LIB_DEP+=-lmicrohttpd
+#ULFIUS_LIB_DEP+=-lgnutls
+#ULFIUS_LIB_DEP+=-lnettle
+#ULFIUS_LIB_DEP+=-lhogweed
+#ULFIUS_LIB_DEP+=-lp11-kit
+#ULFIUS_LIB_DEP+=-lz
+#CURL_LIB_DEP=-lcurl
+#CURL_LIB_DEP+=-lssl
+#CURL_LIB_DEP+=-lcrypto
 
-LIBS+=-lpthread
-LIBS+=-lrt
-LIBS+=-lm
-LIBS+=$(ULFIUS_LIB_DEP)
-LIBS+=$(CURL_LIB_DEP)
-LIBS+=-ltoml
-LIBS+=-ljansson
-LIBS+=-lpthread
-LIBS+=-lusys
-LIBS+=-lmicrohttpd
-LIBS+=-lulfius
+# Libraries
+#
+# Static libraries must appear before the libraries they depend on.
+LIBS = -lusys
+LIBS += -ltoml
+LIBS += -lulfius
+ifneq ($(ALPINE_BUILD),1)
+LIBS += -lyder
+endif
+LIBS += -lorcania
+LIBS += -lmicrohttpd
+LIBS += -ljansson
+LIBS += -lcurl
+LIBS += -lgnutls
+LIBS += -lnettle
+LIBS += -lhogweed
+LIBS += -lp11-kit
+LIBS += -lz
+LIBS += -lssl
+LIBS += -lcrypto
+LIBS += -lpthread
+LIBS += -lrt
+LIBS += -lm
+
+#LIBS+=-lpthread
+#LIBS+=-lrt
+#LIBS+=-lm
+#LIBS+=$(ULFIUS_LIB_DEP)
+#LIBS+=$(CURL_LIB_DEP)
+#LIBS+=-ltoml
+#LIBS+=-ljansson
+#LIBS+=-lpthread
+#LIBS+=-lusys
+#LIBS+=-lmicrohttpd
+#LIBS+=-lulfius
 
 # Source files
 TARGET_CFILES   = $(wildcard ./src/*.c)

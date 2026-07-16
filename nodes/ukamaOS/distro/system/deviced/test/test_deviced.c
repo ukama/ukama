@@ -295,8 +295,8 @@ static void test_server_restart_triggers_notify_and_remote_reboot(void) {
 
     mock_service_reset(&g_notifyd);
 
-    snprintf(url, sizeof(url), "http://localhost:%d/v1/restart", g_port_device);
-    TEST_ASSERT_EQUAL_INT(0, http_request("POST", url, "{\"force\":true}", &r));
+    snprintf(url, sizeof(url), "http://localhost:%d/v1/reboot", g_port_device);
+    TEST_ASSERT_EQUAL_INT(0, http_request("POST", url, NULL, &r));
     TEST_ASSERT_EQUAL_INT(202, (int)r.status);
 
     /* Worker should send notify (POST /notify/v1/event/device.d) at least once */
@@ -329,8 +329,8 @@ static void test_client_mode_restart_endpoint_exists(void) {
     char url[256];
     HttpResp r;
 
-    /* In client-mode, /v1/restart is registered. */
-    snprintf(url, sizeof(url), "http://localhost:%d/v1/restart", g_port_client);
+    /* In client-mode, /v1/reboot is registered. */
+    snprintf(url, sizeof(url), "http://localhost:%d/v1/reboot", g_port_client);
     TEST_ASSERT_EQUAL_INT(0, http_request("POST", url, "{\"force\":true}", &r));
 
     /* It may return 202 if worker scheduled, or 200 if immediate due to state.

@@ -1,0 +1,11 @@
+name: "Controller Node (Raspberry Pi)"
+method: rpiboot
+
+image:
+  name: cnode-image.img
+  path: ../build-system/cnode-image.img
+
+serial:
+  device: /dev/ttyUSB0
+  baud: 115200
+  boot_marker: "Ukama OS boot complete"

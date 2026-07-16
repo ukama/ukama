@@ -33,9 +33,17 @@ typedef struct {
 } bff_client_t;
 
 typedef struct {
-    char state[ULAB_MAX_REF];
+    char id[ULAB_MAX_ID];
     char connectivity[ULAB_MAX_REF];
-} bff_node_state_t;
+    char state[ULAB_MAX_REF];
+} bff_node_status_t;
+
+typedef struct {
+    char name[ULAB_MAX_NAME];
+    char version[ULAB_MAX_REF];
+    char tag[ULAB_MAX_REF];
+    char status[ULAB_MAX_REF];
+} bff_app_state_t;
 
 int bff_init(bff_client_t *c,
              const char *url,
@@ -125,10 +133,36 @@ int bff_get_packages_for_sim(bff_client_t *c,
                              int *active,
                              ulab_error_t *err);
 
-int bff_get_node_state(bff_client_t *c,
-                       const node_t *node,
-                       bff_node_state_t *state,
-                       ulab_error_t *err);
+int bff_get_node_status(bff_client_t *c,
+                        const node_t *node,
+                        bff_node_status_t *status,
+                        ulab_error_t *err);
+
+int bff_restart_node(bff_client_t *c,
+                     const node_t *node,
+                     ulab_error_t *err);
+
+int bff_update_software(bff_client_t *c,
+                        const node_t *node,
+                        const char *app,
+                        const char *tag,
+                        ulab_error_t *err);
+
+int bff_get_node_app(bff_client_t *c,
+                     const node_t *node,
+                     const char *app,
+                     bff_app_state_t *state,
+                     ulab_error_t *err);
+
+int bff_toggle_site_service(bff_client_t *c,
+                            const site_t *site,
+                            int enabled,
+                            ulab_error_t *err);
+
+int bff_toggle_site_radio(bff_client_t *c,
+                          const site_t *site,
+                          int enabled,
+                          ulab_error_t *err);
 
 int bff_network_overview_loads(bff_client_t *c,
                                const network_t *net,

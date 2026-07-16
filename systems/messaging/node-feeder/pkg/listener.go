@@ -62,6 +62,8 @@ func NewQueueListener(service string, queueUri string, serviceId string, request
 		serviceId:      serviceId,
 		requestMult:    requestMult,
 		requestExec:    requestExec,
+		maxRetryCount:  conf.ExecutionRetryCount,
+		retryPeriodSec: conf.RetryPeriodSec,
 		listenerConfig: conf,
 	}
 
@@ -161,9 +163,31 @@ func (q *QueueListener) createWaitingQueue(ch *amqp.Channel) (amqp.Queue, error)
 
 func (q *QueueListener) StartQueueListening() (err error) {
 
-	err = q.consumer.SubscribeToServiceQueue("nodefeederService", q.listenerConfig.Exchange, q.listenerConfig.Routes, q.serviceId, q.incomingMessageHandler)
+	// Both queues carry the dead-letter args so that a handler failure
+	// (nack, requeue=false) routes the message to the dead-letter exchange ->
+	// waiting queue -> (TTL) -> back to the node-feeder queue for a bounded
+	// number of retries (see isRetryLimitReached).
+	dlxArgs := map[string]interface{}{
+		deadLetterExchangeHeaderName:   deadLetterExchangeName,
+		deadLetterRoutingKeyHeaderName: string(mb.NodeFeederRequestRoutingKey),
+	}
+
+	// Initial requests published by cloud services
+	// (request.cloud.local.*.*.*.nodefeeder.publish).
+	err = q.consumer.SubscribeToServiceQueueWithArgs("nodefeederService", q.listenerConfig.Exchange, q.listenerConfig.Routes, q.serviceId, dlxArgs, q.incomingMessageHandler)
 	if err != nil {
 		log.Errorf("Error subscribing for queue messages. Error: %+v", err)
+		return err
+	}
+
+	// Per-node requests fanned out by the multiplier and TTL-retried requests
+	// coming back from the waiting queue (request.cloud.node-feeder). This
+	// queue previously had no consumer, so multiplied/retried messages were
+	// never delivered to nodes.
+	err = q.consumer.SubscribeToServiceQueueWithArgs("node-feeder", q.listenerConfig.Exchange,
+		[]mb.RoutingKey{mb.NodeFeederRequestRoutingKey}, q.serviceId+"-retry", dlxArgs, q.incomingMessageHandler)
+	if err != nil {
+		log.Errorf("Error subscribing for retry queue messages. Error: %+v", err)
 		return err
 	}
 
@@ -221,22 +245,40 @@ func (q *QueueListener) isRetryLimitReached(delivery amqp.Delivery) bool {
 	return false
 }
 
+// unmarshalNodeFeederMessage decodes a NodeFeederMessage wrapped in anypb.Any
+// (the envelope msgBusServiceClient and the multiplier publish). It falls back
+// to a raw (unwrapped) NodeFeederMessage to drain messages published by older
+// multiplier builds that skipped the Any envelope.
+func unmarshalNodeFeederMessage(body []byte) (*epb.NodeFeederMessage, error) {
+	evtAny := new(anypb.Any)
+	if err := proto.Unmarshal(body, evtAny); err == nil {
+		request := &epb.NodeFeederMessage{}
+		if err := evtAny.UnmarshalTo(request); err == nil {
+			return request, nil
+		}
+	}
+
+	// Legacy format: raw NodeFeederMessage without the Any wrapper.
+	request := &epb.NodeFeederMessage{}
+	if err := proto.Unmarshal(body, request); err != nil {
+		return nil, err
+	}
+
+	if request.Target == "" || request.HttpMethod == "" {
+		return nil, errors.New("message is not a valid NodeFeederMessage")
+	}
+
+	return request, nil
+}
+
 // process node msg also
 func (q *QueueListener) processRequest(delivery amqp.Delivery) error {
 
 	log.Infof("Raw message %v", delivery.Body)
 
-	evtAny := new(anypb.Any)
-	err := proto.Unmarshal(delivery.Body, evtAny)
+	request, err := unmarshalNodeFeederMessage(delivery.Body)
 	if err != nil {
 		log.Errorf("Failed to parse message with key %s. Error %s", delivery.RoutingKey, err.Error())
-		return nil
-	}
-
-	request := &epb.NodeFeederMessage{}
-	err = evtAny.UnmarshalTo(request)
-	if err != nil {
-		log.Errorf("Error unmarshaling message. Error %v", err)
 		return nil
 	}
 

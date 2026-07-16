@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
     memset(&inst, 0, sizeof(inst));
 
     usys_log_set_service(SERVICE_WIMC_AGENT);
-    usys_log_remote_init(SERVICE_WIMC_AGENT);
+    usys_log_set_level(USYS_LOG_TRACE);
 
     if (usys_find_service_port(SERVICE_WIMC) == 0) {
         usys_log_error("Unable to find service port for %s", SERVICE_WIMC);

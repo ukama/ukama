@@ -798,9 +798,9 @@ int main(int argc, char **argv) {
         goto cleanup;
     }
     agentManagerMutexInit = 1;
-    
+
     usys_log_set_service(SERVICE_NAME);
-//    usys_log_remote_init(SERVICE_NAME);
+    usys_log_set_level(USYS_LOG_TRACE);
 
     wimcPort = usys_find_service_port(SERVICE_NAME);
     if (wimcPort == 0) {

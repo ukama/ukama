@@ -155,8 +155,8 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		controller := auth.Group(cont, "Controller", "Operations on controllers")
 		controller.POST("/nodes/:node_id/restart", formatDoc("Restart a node", "Restarting a node"), tonic.Handler(r.postRestartNodeHandler, http.StatusOK))
 		controller.POST("/nodes/:node_id/switch-port", formatDoc("Toggle switch port", "Toggle switch port"), tonic.Handler(r.postToggleSwitchPortHandler, http.StatusOK))
-		controller.POST("/nodes/:node_id/radio", formatDoc("Toggle radio", "Toggle radio"), tonic.Handler(r.postToggleNodeRadioHandler, http.StatusOK))
-		controller.POST("/nodes/:node_id/service", formatDoc("Toggle service", "Toggle service"), tonic.Handler(r.postToggleNodeServiceHandler, http.StatusOK))
+		controller.POST("/nodes/:node_id/radio/:state", formatDoc("Toggle radio", "Toggle radio"), tonic.Handler(r.postToggleNodeRadioHandler, http.StatusOK))
+		controller.POST("/nodes/:node_id/service/:state", formatDoc("Toggle service", "Toggle service"), tonic.Handler(r.postToggleNodeServiceHandler, http.StatusOK))
 		controller.GET("/nodes/:node_id/ping", formatDoc("Ping a node", "Ping a node"), tonic.Handler(r.getPingNodeHandler, http.StatusAccepted))
 
 		const sites = "/sites"
@@ -303,11 +303,11 @@ func (r *Router) toggleSiteStateHandler(c *gin.Context, req *SiteActionRequest) 
 	return r.clients.SiteController.SetSite(req.SiteId, req.State, req.Reason, req.RequestedBy)
 }
 
-func (r *Router) postToggleServiceHandler(c *gin.Context, req *SiteActionRequest) (*sitepb.SetServiceResponse, error) {
+func (r *Router) postToggleServiceHandler(c *gin.Context, req *SiteToggleActionRequest) (*sitepb.SetServiceResponse, error) {
 	return r.clients.SiteController.SetService(req.SiteId, req.State)
 }
 
-func (r *Router) postToggleRadioHandler(c *gin.Context, req *SiteActionRequest) (*sitepb.SetRadioResponse, error) {
+func (r *Router) postToggleRadioHandler(c *gin.Context, req *SiteToggleActionRequest) (*sitepb.SetRadioResponse, error) {
 	return r.clients.SiteController.SetRadio(req.SiteId, req.State)
 }
 

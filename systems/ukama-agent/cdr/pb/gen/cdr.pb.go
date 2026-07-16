@@ -26,7 +26,7 @@ type CDR struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Session       uint64                 `protobuf:"varint,1,opt,name=Session,json=session_id,proto3" json:"Session,omitempty"`
 	NodeId        string                 `protobuf:"bytes,2,opt,name=NodeId,json=node_id,proto3" json:"NodeId,omitempty"`
-	Imsi          string                 `protobuf:"bytes,3,opt,name=Imsi,json=imsi,proto3" json:"Imsi,omitempty"`
+	Imsi          string                 `protobuf:"bytes,3,opt,name=imsi,proto3" json:"imsi,omitempty"`
 	Policy        string                 `protobuf:"bytes,4,opt,name=Policy,json=policy,proto3" json:"Policy,omitempty"`
 	ApnName       string                 `protobuf:"bytes,5,opt,name=ApnName,json=apn_name,proto3" json:"ApnName,omitempty"`
 	Ip            string                 `protobuf:"bytes,6,opt,name=Ip,json=ue_ip,proto3" json:"Ip,omitempty"`
@@ -192,7 +192,7 @@ func (*CDRResp) Descriptor() ([]byte, []int) {
 
 type RecordReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Imsi          string                 `protobuf:"bytes,1,opt,name=Imsi,json=imsi,proto3" json:"Imsi,omitempty"`
+	Imsi          string                 `protobuf:"bytes,1,opt,name=imsi,proto3" json:"imsi,omitempty"`
 	StartTime     uint64                 `protobuf:"varint,2,opt,name=StartTime,json=start_time,proto3" json:"StartTime,omitempty"`
 	EndTime       uint64                 `protobuf:"varint,3,opt,name=EndTime,json=end_time,proto3" json:"EndTime,omitempty"`
 	Policy        string                 `protobuf:"bytes,4,opt,name=Policy,json=policy,proto3" json:"Policy,omitempty"`
@@ -312,7 +312,7 @@ func (x *RecordResp) GetCdr() []*CDR {
 
 type UsageReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Imsi          string                 `protobuf:"bytes,1,opt,name=Imsi,json=imsi,proto3" json:"Imsi,omitempty"`
+	Imsi          string                 `protobuf:"bytes,1,opt,name=imsi,proto3" json:"imsi,omitempty"`
 	StartTime     uint64                 `protobuf:"varint,2,opt,name=StartTime,json=start_time,proto3" json:"StartTime,omitempty"`
 	EndTime       uint64                 `protobuf:"varint,3,opt,name=EndTime,json=end_time,proto3" json:"EndTime,omitempty"`
 	Policy        string                 `protobuf:"bytes,4,opt,name=Policy,json=policy,proto3" json:"Policy,omitempty"`
@@ -388,7 +388,7 @@ func (x *UsageReq) GetSessionId() uint64 {
 
 type UsageResp struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Imsi          string                 `protobuf:"bytes,1,opt,name=Imsi,json=imsi,proto3" json:"Imsi,omitempty"`
+	Imsi          string                 `protobuf:"bytes,1,opt,name=imsi,proto3" json:"imsi,omitempty"`
 	Usage         uint64                 `protobuf:"varint,2,opt,name=usage,proto3" json:"usage,omitempty"`
 	Policy        string                 `protobuf:"bytes,3,opt,name=policy,proto3" json:"policy,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -448,7 +448,7 @@ func (x *UsageResp) GetPolicy() string {
 
 type CycleUsageReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Imsi          string                 `protobuf:"bytes,1,opt,name=Imsi,json=imsi,proto3" json:"Imsi,omitempty"`
+	Imsi          string                 `protobuf:"bytes,1,opt,name=imsi,proto3" json:"imsi,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -492,7 +492,7 @@ func (x *CycleUsageReq) GetImsi() string {
 
 type CycleUsageResp struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
-	Imsi             string                 `protobuf:"bytes,1,opt,name=Imsi,json=imsi,proto3" json:"Imsi,omitempty"`
+	Imsi             string                 `protobuf:"bytes,1,opt,name=imsi,proto3" json:"imsi,omitempty"`
 	Historical       uint64                 `protobuf:"varint,2,opt,name=historical,proto3" json:"historical,omitempty"`
 	Usage            uint64                 `protobuf:"varint,3,opt,name=usage,proto3" json:"usage,omitempty"`
 	LastSessionUsage uint64                 `protobuf:"varint,4,opt,name=LastSessionUsage,proto3" json:"LastSessionUsage,omitempty"`
@@ -592,7 +592,7 @@ func (x *CycleUsageResp) GetPolicy() string {
 
 type UsageForPeriodReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Imsi          string                 `protobuf:"bytes,1,opt,name=Imsi,json=imsi,proto3" json:"Imsi,omitempty"`
+	Imsi          string                 `protobuf:"bytes,1,opt,name=imsi,proto3" json:"imsi,omitempty"`
 	StartTime     uint64                 `protobuf:"varint,4,opt,name=StartTime,proto3" json:"StartTime,omitempty"`
 	EndTime       uint64                 `protobuf:"varint,5,opt,name=EndTime,proto3" json:"EndTime,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -696,7 +696,7 @@ func (x *UsageForPeriodResp) GetUsage() uint64 {
 
 type QueryUsageReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Imsi          string                 `protobuf:"bytes,1,opt,name=Imsi,json=imsi,proto3" json:"Imsi,omitempty"`
+	Imsi          string                 `protobuf:"bytes,1,opt,name=imsi,proto3" json:"imsi,omitempty"`
 	NodeId        string                 `protobuf:"bytes,2,opt,name=NodeId,proto3" json:"NodeId,omitempty"`
 	Session       uint64                 `protobuf:"varint,3,opt,name=Session,proto3" json:"Session,omitempty"`
 	From          uint64                 `protobuf:"varint,4,opt,name=From,proto3" json:"From,omitempty"`
@@ -842,13 +842,13 @@ var File_cdr_proto protoreflect.FileDescriptor
 
 const file_cdr_proto_rawDesc = "" +
 	"\n" +
-	"\tcdr.proto\x12\x17ukama.ukamaagent.cdr.v1\x1a\x0fvalidator.proto\"\xda\x02\n" +
+	"\tcdr.proto\x12\x17ukama.ukamaagent.cdr.v1\x1a\x0fvalidator.proto\"\xe5\x02\n" +
 	"\x03CDR\x12\x1b\n" +
 	"\aSession\x18\x01 \x01(\x04R\n" +
 	"session_id\x12\x17\n" +
-	"\x06NodeId\x18\x02 \x01(\tR\anode_id\x12\x1e\n" +
-	"\x04Imsi\x18\x03 \x01(\tB\n" +
-	"\xe2\xdf\x1f\x06X\x01p\x05x\x10R\x04imsi\x12\x16\n" +
+	"\x06NodeId\x18\x02 \x01(\tR\anode_id\x12)\n" +
+	"\x04imsi\x18\x03 \x01(\tB\x15\xe2\xdf\x1f\x11\n" +
+	"\r^[0-9]{6,15}$X\x01R\x04imsi\x12\x16\n" +
 	"\x06Policy\x18\x04 \x01(\tR\x06policy\x12\x19\n" +
 	"\aApnName\x18\x05 \x01(\tR\bapn_name\x12\x11\n" +
 	"\x02Ip\x18\x06 \x01(\tR\x05ue_ip\x12\x1d\n" +
@@ -861,10 +861,10 @@ const file_cdr_proto_rawDesc = "" +
 	"\aRxBytes\x18\v \x01(\x04R\brx_bytes\x12\x1f\n" +
 	"\n" +
 	"TotalBytes\x18\f \x01(\x04R\vtotal_bytes\"\t\n" +
-	"\aCDRResp\"\x9c\x01\n" +
-	"\tRecordReq\x12\x1e\n" +
-	"\x04Imsi\x18\x01 \x01(\tB\n" +
-	"\xe2\xdf\x1f\x06X\x01p\x05x\x10R\x04imsi\x12\x1d\n" +
+	"\aCDRResp\"\xa7\x01\n" +
+	"\tRecordReq\x12)\n" +
+	"\x04imsi\x18\x01 \x01(\tB\x15\xe2\xdf\x1f\x11\n" +
+	"\r^[0-9]{6,15}$X\x01R\x04imsi\x12\x1d\n" +
 	"\tStartTime\x18\x02 \x01(\x04R\n" +
 	"start_time\x12\x19\n" +
 	"\aEndTime\x18\x03 \x01(\x04R\bend_time\x12\x16\n" +
@@ -873,27 +873,27 @@ const file_cdr_proto_rawDesc = "" +
 	"session_id\"=\n" +
 	"\n" +
 	"RecordResp\x12/\n" +
-	"\x03cdr\x18\x01 \x03(\v2\x1c.ukama.ukamaagent.cdr.v1.CDRR\x04cdrs\"\x9b\x01\n" +
-	"\bUsageReq\x12\x1e\n" +
-	"\x04Imsi\x18\x01 \x01(\tB\n" +
-	"\xe2\xdf\x1f\x06X\x01p\x05x\x10R\x04imsi\x12\x1d\n" +
+	"\x03cdr\x18\x01 \x03(\v2\x1c.ukama.ukamaagent.cdr.v1.CDRR\x04cdrs\"\xa6\x01\n" +
+	"\bUsageReq\x12)\n" +
+	"\x04imsi\x18\x01 \x01(\tB\x15\xe2\xdf\x1f\x11\n" +
+	"\r^[0-9]{6,15}$X\x01R\x04imsi\x12\x1d\n" +
 	"\tStartTime\x18\x02 \x01(\x04R\n" +
 	"start_time\x12\x19\n" +
 	"\aEndTime\x18\x03 \x01(\x04R\bend_time\x12\x16\n" +
 	"\x06Policy\x18\x04 \x01(\tR\x06policy\x12\x1d\n" +
 	"\tSessionId\x18\x05 \x01(\x04R\n" +
-	"session_id\"Y\n" +
-	"\tUsageResp\x12\x1e\n" +
-	"\x04Imsi\x18\x01 \x01(\tB\n" +
-	"\xe2\xdf\x1f\x06X\x01p\x05x\x10R\x04imsi\x12\x14\n" +
+	"session_id\"d\n" +
+	"\tUsageResp\x12)\n" +
+	"\x04imsi\x18\x01 \x01(\tB\x15\xe2\xdf\x1f\x11\n" +
+	"\r^[0-9]{6,15}$X\x01R\x04imsi\x12\x14\n" +
 	"\x05usage\x18\x02 \x01(\x04R\x05usage\x12\x16\n" +
-	"\x06policy\x18\x03 \x01(\tR\x06policy\"/\n" +
-	"\rCycleUsageReq\x12\x1e\n" +
-	"\x04Imsi\x18\x01 \x01(\tB\n" +
-	"\xe2\xdf\x1f\x06X\x01p\x05x\x10R\x04imsi\"\x9c\x02\n" +
-	"\x0eCycleUsageResp\x12\x1e\n" +
-	"\x04Imsi\x18\x01 \x01(\tB\n" +
-	"\xe2\xdf\x1f\x06X\x01p\x05x\x10R\x04imsi\x12\x1e\n" +
+	"\x06policy\x18\x03 \x01(\tR\x06policy\":\n" +
+	"\rCycleUsageReq\x12)\n" +
+	"\x04imsi\x18\x01 \x01(\tB\x15\xe2\xdf\x1f\x11\n" +
+	"\r^[0-9]{6,15}$X\x01R\x04imsi\"\xa7\x02\n" +
+	"\x0eCycleUsageResp\x12)\n" +
+	"\x04imsi\x18\x01 \x01(\tB\x15\xe2\xdf\x1f\x11\n" +
+	"\r^[0-9]{6,15}$X\x01R\x04imsi\x12\x1e\n" +
 	"\n" +
 	"historical\x18\x02 \x01(\x04R\n" +
 	"historical\x12\x14\n" +
@@ -904,17 +904,17 @@ const file_cdr_proto_rawDesc = "" +
 	"lastNodeId\x18\x06 \x01(\tR\n" +
 	"lastNodeId\x12*\n" +
 	"\x10LastCDRUpdatedAt\x18\a \x01(\x04R\x10LastCDRUpdatedAt\x12\x16\n" +
-	"\x06Policy\x18\b \x01(\tR\x06Policy\"k\n" +
-	"\x11UsageForPeriodReq\x12\x1e\n" +
-	"\x04Imsi\x18\x01 \x01(\tB\n" +
-	"\xe2\xdf\x1f\x06X\x01p\x05x\x10R\x04imsi\x12\x1c\n" +
+	"\x06Policy\x18\b \x01(\tR\x06Policy\"v\n" +
+	"\x11UsageForPeriodReq\x12)\n" +
+	"\x04imsi\x18\x01 \x01(\tB\x15\xe2\xdf\x1f\x11\n" +
+	"\r^[0-9]{6,15}$X\x01R\x04imsi\x12\x1c\n" +
 	"\tStartTime\x18\x04 \x01(\x04R\tStartTime\x12\x18\n" +
 	"\aEndTime\x18\x05 \x01(\x04R\aEndTime\"*\n" +
 	"\x12UsageForPeriodResp\x12\x14\n" +
-	"\x05Usage\x18\x01 \x01(\x04R\x05Usage\"\xcb\x01\n" +
-	"\rQueryUsageReq\x12\x1e\n" +
-	"\x04Imsi\x18\x01 \x01(\tB\n" +
-	"\xe2\xdf\x1f\x06X\x01p\x05x\x10R\x04imsi\x12\x16\n" +
+	"\x05Usage\x18\x01 \x01(\x04R\x05Usage\"\xd6\x01\n" +
+	"\rQueryUsageReq\x12)\n" +
+	"\x04imsi\x18\x01 \x01(\tB\x15\xe2\xdf\x1f\x11\n" +
+	"\r^[0-9]{6,15}$X\x01R\x04imsi\x12\x16\n" +
 	"\x06NodeId\x18\x02 \x01(\tR\x06NodeId\x12\x18\n" +
 	"\aSession\x18\x03 \x01(\x04R\aSession\x12\x12\n" +
 	"\x04From\x18\x04 \x01(\x04R\x04From\x12\x0e\n" +

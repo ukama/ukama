@@ -64,8 +64,10 @@ int runtime_restart_nodes(runtime_t *rt, const world_t *w,
                           ulab_error_t *err);
 int runtime_detach_ues(runtime_t *rt, const world_t *w, ulab_error_t *err);
 int runtime_cleanup_ues(runtime_t *rt, const world_t *w, ulab_error_t *err);
-int runtime_collect_cdr_diagnostics(runtime_t *rt, const world_t *w, ulab_error_t *err);
-int runtime_collect_failure_diagnostics(runtime_t *rt, const world_t *w, ulab_error_t *err);
+int runtime_collect_cdr_diagnostics(runtime_t *rt, const world_t *w,
+                                    ulab_error_t *err);
+int runtime_collect_failure_logs(runtime_t *rt, const world_t *w,
+                                 ulab_error_t *err);
 int runtime_stop_ues(runtime_t *rt, const world_t *w, ulab_error_t *err);
 int runtime_cleanup_infra(runtime_t *rt, const world_t *w, ulab_error_t *err);
 int runtime_cleanup(runtime_t *rt, const world_t *w, ulab_error_t *err);

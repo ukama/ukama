@@ -111,4 +111,4 @@ CMD /bin/sh -c '/sbin/virtualNode \
     --exec "create" \
     --c "/apps/" \
     --b "/boards/" \
-    --runtime "${VNODE_RUNTIME:-supervisor}"'
+    --runtime "${VNODE_RUNTIME:-starter}"'

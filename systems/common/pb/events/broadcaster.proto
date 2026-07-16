@@ -19,7 +19,8 @@ message BroadcasterEvent {
     string targetId = 2;
     BroadcastScope scope = 3;
     BroadcastType type = 4;
-    string routingKey = 5 [(validator.field) = {string_not_empty: true}];
+    NodeType nodeType = 5;
+    string routingKey = 6 [(validator.field) = {string_not_empty: true}];
 }
 
 enum BroadcastScope {
@@ -33,4 +34,9 @@ enum BroadcastScope {
 enum BroadcastType {
     UNKNOWN_BROADCAST = 0;
     NODE_BROADCAST = 1;
+}
+
+enum NodeType {
+    UNDEFINED = 0;
+    TNODE = 1;
 }

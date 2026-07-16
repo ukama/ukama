@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	registry "github.com/ukama/ukama/systems/common/rest/client/registry"
+	"github.com/ukama/ukama/systems/common/ukama"
 	contpb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	contmocks "github.com/ukama/ukama/systems/node/controller/pb/gen/mocks"
 	pb "github.com/ukama/ukama/systems/node/site-controller/pb/gen"
@@ -63,18 +64,25 @@ func TestSetService_ForwardsToTowerNode(t *testing.T) {
 	controllerClient.AssertExpectations(t)
 }
 
-func TestSetRadio_ForwardsToAmplifierNode(t *testing.T) {
+func TestSetRadio_ForwardsToTowerAndAmplifierNodes(t *testing.T) {
 	siteID := "22222222-2222-2222-2222-222222222222"
 	nodeClient := &mbmocks.NodeClient{}
 	controllerClient := &contmocks.ControllerServiceClient{}
 
 	nodeClient.On("GetNodesBySite", siteID).Return(&registry.NodesBySite{
-		Nodes: []registry.NodeInfo{{Id: testTowerID}, {Id: testAmpID}},
+		Nodes: []registry.NodeInfo{
+			{Id: testTowerID, Type: ukama.NODE_ID_TYPE_TOWERNODE},
+			{Id: testAmpID, Type: ukama.NODE_ID_TYPE_AMPNODE},
+		},
 	}, nil).Once()
 
 	controllerClient.On("ToggleRadio", mock.Anything, mock.MatchedBy(func(req *contpb.ToggleRadioRequest) bool {
+		return req.NodeId == testTowerID && req.State == "off"
+	})).Return(&contpb.ToggleRadioResponse{OperationId: "op-t"}, nil).Once()
+
+	controllerClient.On("ToggleRadio", mock.Anything, mock.MatchedBy(func(req *contpb.ToggleRadioRequest) bool {
 		return req.NodeId == testAmpID && req.State == "off"
-	})).Return(&contpb.ToggleRadioResponse{OperationId: "op-2"}, nil).Once()
+	})).Return(&contpb.ToggleRadioResponse{OperationId: "op-a"}, nil).Once()
 
 	s := newTestServer(nodeClient, controllerClient)
 

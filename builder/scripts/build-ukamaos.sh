@@ -10,6 +10,16 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/build-system/pkg-utils.sh"
+
+log() {
+    local level="$1"
+    local message="$2"
+
+    printf '[%s] %s\n' "$level" "$message"
+}
+
 # Base parameters
 UKAMA_OS=`realpath ../../nodes/ukamaOS`
 UKAMA_REPO=`realpath ../../.`
@@ -176,8 +186,13 @@ build_starterd() {
    make clean; make TARGET=${TARGET} XGCCPATH=${XGCC_PATH}/
    copy_file ${STARTERD_ROOT}/starter.d ${ROOTFS}/sbin
 
-   # copy manifest file
-   copy_file ${UKAMA_REPO}/nodes/manifest.json ${ROOTFS}
+   mkdir -p "${ROOTFS}/ukama/logs" \
+            "${ROOTFS}/ukama/state/starterd/log-spool"
+
+   # Generate the starterd manifest from the enabled app configs.
+   get_enabled_apps "${APPS_BUILDER_ROOT}/boards/common.config" ""
+   create_starter_manifest "${ROOTFS}/ukama/manifest.json" \
+                           "${APPS[@]}"
 
    # Go back and clean up
    cd ${STARTERD_ROOT}; make clean

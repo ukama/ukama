@@ -217,7 +217,14 @@ bool control_set_pending(ControlCtx *ctx,
         ss->Phase = CONTROL_PHASE_IDLE;
     }
 
-    if (ss->Phase == CONTROL_PHASE_IDLE && ss->Current == desired) {
+    /*
+     * Service and radio are state transitions, so requesting the state
+     * already applied is idempotent. Reboot is an action and must always be
+     * scheduled while idle, even though its bookkeeping state is OFF.
+     */
+    if (subsystem != CONTROL_SUBSYS_REBOOT &&
+        ss->Phase == CONTROL_PHASE_IDLE &&
+        ss->Current == desired) {
         status  = HttpStatus_OK;
         allowed = false;
         goto done;

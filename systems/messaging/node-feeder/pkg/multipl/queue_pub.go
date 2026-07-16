@@ -13,6 +13,7 @@ import (
 
 	"github.com/wagslane/go-rabbitmq"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg/global"
@@ -63,7 +64,15 @@ func NewQPub(queueUri string, serviceName string, exchange string, instanceId st
 
 func (q *queuePublisher) Publish(msg *epb.NodeFeederMessage) error {
 
-	b, err := proto.Marshal(msg)
+	// Wrap in anypb.Any: the node-feeder listener (processRequest) expects the
+	// same envelope that msgBusServiceClient.PublishRequest produces for the
+	// initial publish, so multiplied/retried messages must match it.
+	anyMsg, err := anypb.New(msg)
+	if err != nil {
+		return err
+	}
+
+	b, err := proto.Marshal(anyMsg)
 	if err != nil {
 		return err
 	}

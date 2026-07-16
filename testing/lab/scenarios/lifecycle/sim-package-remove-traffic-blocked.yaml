@@ -1,5 +1,6 @@
 version: 1
 name: lifecycle-sim-package-remove-traffic-blocked
+description: Verify package removal makes the SIM inactive and blocks traffic; this is currently expected to fail.
 seed: 504
 suite: lifecycle
 priority: p2

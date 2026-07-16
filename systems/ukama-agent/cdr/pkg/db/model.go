@@ -15,8 +15,8 @@ import (
 type CDR struct {
 	gorm.Model
 	Session       uint64 `gorm:"uniqueIndex:cdr_natural_key_idx"`
-	NodeId        string `gorm:"uniqueIndex:cdr_natural_key_idx;Index:cdr_node_idx;not null"`
-	Imsi          string `gorm:"uniqueIndex:cdr_natural_key_idx;Index:cdr_imsi_idx;not null"`
+	NodeId        string `gorm:"uniqueIndex:cdr_natural_key_idx;not null"`
+	Imsi          string `gorm:"uniqueIndex:cdr_natural_key_idx;not null;size:15;check:imsi_checker,imsi ~ $$^[0-9]{6,15}$$"`
 	Policy        string `gorm:"Index:cdr_policy_idx;not null"`
 	ApnName       string
 	Ip            string
@@ -30,7 +30,7 @@ type CDR struct {
 
 type Usage struct {
 	gorm.Model
-	Imsi             string `gorm:"Index:usage_imsi_idx,unique,not null;"`
+	Imsi             string `gorm:"Index:usage_imsi_idx,unique;not null;size:15;check:imsi_checker,imsi ~ $$^[0-9]{6,15}$$"`
 	Historical       uint64 /* all data used till last session */
 	Usage            uint64 /* usage till now (last session + current session */
 	LastSessionUsage uint64 /* usage till last session for current package*/

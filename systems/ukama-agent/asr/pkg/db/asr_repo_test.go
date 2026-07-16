@@ -9,19 +9,20 @@
 package db_test
 
 import (
-	extsql "database/sql"
 	"regexp"
 	"testing"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
-	int_db "github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
+	"database/sql"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	log "github.com/sirupsen/logrus"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
+	int_db "github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
 )
 
 var Iccid = "0123456789012345678912"
@@ -101,7 +102,7 @@ func TestAsrRecordRepo_Add(t *testing.T) {
 
 	t.Run("Add", func(t *testing.T) {
 		// Arrange
-		var db *extsql.DB
+		var db *sql.DB
 		var err error
 
 		db, mock, err := sqlmock.New() // mock sql.DB
@@ -155,7 +156,7 @@ func TestAsrRecordRepo_Update(t *testing.T) {
 
 	t.Run("UpdatePackage", func(t *testing.T) {
 		// Arrange
-		var db *extsql.DB
+		var db *sql.DB
 		var err error
 		PackageId := uuid.NewV4()
 		db, mock, err := sqlmock.New() // mock sql.DB
@@ -213,7 +214,7 @@ func TestAsrRecordRepo_Delete(t *testing.T) {
 
 	t.Run("DeletePackage", func(t *testing.T) {
 		// Arrange
-		var db *extsql.DB
+		var db *sql.DB
 		var err error
 
 		db, mock, err := sqlmock.New() // mock sql.DB
@@ -272,7 +273,7 @@ func TestAsrRecordRepo_Get(t *testing.T) {
 	t.Run("ReadByID", func(t *testing.T) {
 		sub.ID = 1
 		// Arrange
-		var db *extsql.DB
+		var db *sql.DB
 		var err error
 
 		db, mock, err := sqlmock.New() // mock sql.DB
@@ -331,7 +332,7 @@ func TestAsrRecordRepo_Get(t *testing.T) {
 
 	t.Run("ReadByICCID", func(t *testing.T) {
 		// Arrange
-		var db *extsql.DB
+		var db *sql.DB
 		var err error
 
 		db, mock, err := sqlmock.New() // mock sql.DB
@@ -390,7 +391,7 @@ func TestAsrRecordRepo_Get(t *testing.T) {
 
 	t.Run("ReadByImsi", func(t *testing.T) {
 		// Arrange
-		var db *extsql.DB
+		var db *sql.DB
 		var err error
 
 		db, mock, err := sqlmock.New() // mock sql.DB
@@ -455,7 +456,7 @@ func TestAsrRecordRepo_UpdateTai(t *testing.T) {
 		sub.ID = 1
 
 		// Arrange
-		var db *extsql.DB
+		var db *sql.DB
 		var err error
 
 		db, mock, err := sqlmock.New() // mock sql.DB

@@ -184,6 +184,8 @@ func (p *policyController) NewPolicy(packageId uuid.UUID) (*db.Policy, error) {
 		EndTime:      endTime,
 	}
 
+	log.Infof("Returning new policy object %v", policy)
+
 	return &policy, nil
 }
 
@@ -322,6 +324,7 @@ func (p *policyController) syncSubscriberPolicy(method string, imsi string, netw
 		Type:       epb.BroadcastType_NODE_BROADCAST,
 		Scope:      epb.BroadcastScope_NETWORK_SCOPE,
 		TargetId:   network,
+		NodeType:   epb.NodeType_TNODE,
 	}
 
 	err = p.msgbus.PublishRequest(route, broadcasterMsg)

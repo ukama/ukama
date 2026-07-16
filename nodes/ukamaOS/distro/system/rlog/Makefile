@@ -7,9 +7,10 @@
 include ../../../config.mk
 
 TARGET_EXEC = rlog.d
+UTILITY_EXEC = ukama-log
 
 VERSION_FILE = version.h
-ARTIFACTS = $(TARGET_EXEC)
+ARTIFACTS = $(TARGET_EXEC) $(UTILITY_EXEC)
 
 APP_NAME = $(CUR_BUILD_DIRNAME)
 APP_CONFIG =
@@ -56,20 +57,31 @@ LIBS+=-ltoml
 LIBS+=-ljansson
 LIBS+=-lpthread
 LIBS+=-lusys
+LIBS+=-lzstd
 
-# Soruce files
+# Source files
 CFILES   = $(wildcard ./src/*.c)
 OBJFILES = $(CFILES:.c=.o)
 
+UTILITY_CFILE = ./tools/ukama_log.c
+UTILITY_OBJFILE = $(UTILITY_CFILE:.c=.o)
+UTILITY_LIBS = -ljansson -lzstd
+
 .PHONY: $(TARGET_EXEC) $(AGENT_EXEC)
 
-all: version.h rlog.d
+all: version.h rlog.d $(UTILITY_EXEC)
 #	cd test; make ALPINE_BUILD=$(ALPINE_BUILD) all; cd -
 
 rlog.d: $(TARGET_EXEC)
 
 $(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(OBJFILES)
 	$(CC) -o $(TARGET_EXEC) $(OBJFILES) $(COMM_OBJFILES) $(LDFLAGS) $(LIBS)
+	echo "Done."
+
+$(UTILITY_OBJFILE): $(VERSION_FILE)
+
+$(UTILITY_EXEC): $(VERSION_FILE) $(VENDOR_PKG) $(UTILITY_OBJFILE)
+	$(CC) -o $(UTILITY_EXEC) $(UTILITY_OBJFILE) $(LDFLAGS) $(UTILITY_LIBS)
 	echo "Done."
 
 $(VENDOR_PKG):
@@ -93,5 +105,5 @@ install: $(ARTIFACTS) $(VERSION)
 	fi
 
 clean:
-	rm -f $(TARGET_EXEC) $(OBJFILES) version.h
+	rm -f $(ARTIFACTS) $(OBJFILES) $(UTILITY_OBJFILE) version.h
 	cd test; make clean; cd -

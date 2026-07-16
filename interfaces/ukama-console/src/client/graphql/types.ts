@@ -72,6 +72,20 @@ export type AddPackagesToSimInputDto = {
   sim_id: Scalars['String']['input'];
 };
 
+export type AddPaymentInputDto = {
+  amount: Scalars['String']['input'];
+  country?: InputMaybe<Scalars['String']['input']>;
+  currency?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  itemId: Scalars['String']['input'];
+  itemType: Scalars['String']['input'];
+  payerEmail?: InputMaybe<Scalars['String']['input']>;
+  payerName?: InputMaybe<Scalars['String']['input']>;
+  payerPhone?: InputMaybe<Scalars['String']['input']>;
+  paymentMethod: Scalars['String']['input'];
+  sim?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type AddSiteInputDto = {
   access_id: Scalars['String']['input'];
   backhaul_id: Scalars['String']['input'];
@@ -660,6 +674,7 @@ export type Mutation = {
   addNodeToSite: CBooleanResponse;
   addPackage: PackageDto;
   addPackagesToSim: AddPackagesSimResDto;
+  addPayment: PaymentDto;
   addSite: SiteDto;
   addSubscriber: SubscriberDto;
   allocateSim: AllocateSimApiDto;
@@ -731,6 +746,11 @@ export type MutationAddPackageArgs = {
 
 export type MutationAddPackagesToSimArgs = {
   data: AddPackagesToSimInputDto;
+};
+
+
+export type MutationAddPaymentArgs = {
+  data: AddPaymentInputDto;
 };
 
 

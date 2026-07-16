@@ -15,9 +15,7 @@ CUR_PATH := $(dir $(CUR_MAKE))
 
 SYS_SUB_DIRS = $(shell find ./*/ -maxdepth 1 -type f -name 'Makefile' | sed 's|/[^/]*$$||' | awk -F './' '{ for (i=1; i<=NF; i++) printf $$i" " }')
 
-
 .PHONY: subdirs $(SYS_SUB_DIRS) distclean clean info
-
 
 #Build sub-directories
 subdirs: info $(SYS_SUB_DIRS)
@@ -27,13 +25,6 @@ $(SYS_SUB_DIRS):
 #Clean sub-directories
 clean:
 	@echo "Cleaning System build."
-	for dir in $(SYS_SUB_DIRS); do \
-                $(MAKE) -C $$dir -f Makefile $@; \
-        done
-
-#DistClean sub-directories
-distclean:
-	@echo "DistClean System build."
 	for dir in $(SYS_SUB_DIRS); do \
                 $(MAKE) -C $$dir -f Makefile $@; \
         done

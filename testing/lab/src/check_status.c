@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 
 #include "check.h"
 #include "util.h"
@@ -23,7 +24,7 @@ static int check_node_status(check_ctx_t *ctx, const check_spec_t *check,
                              const char *want, check_result_t *res,
                              ulab_error_t *err) {
     node_t *node;
-    bff_node_state_t st;
+    bff_node_status_t st;
 
     node = world_node_by_ref(ctx->world, check->ref);
     if (node == NULL) {
@@ -33,15 +34,20 @@ static int check_node_status(check_ctx_t *ctx, const check_spec_t *check,
     }
 
     memset(&st, 0, sizeof(st));
-    if (bff_get_node_state(ctx->bff, node, &st, err)) {
+    if (bff_get_node_status(ctx->bff, node, &st, err)) {
         return ULAB_ERR;
     }
 
-    res->passed = ulab_streq(st.state, want) ||
-                  ulab_streq(st.connectivity, want);
+    if (strcasecmp(want, "online") == 0 ||
+        strcasecmp(want, "offline") == 0) {
+        res->passed = strcasecmp(st.connectivity, want) == 0;
+    } else {
+        res->passed = strcasecmp(st.state, want) == 0;
+    }
+
     snprintf(res->detail, sizeof(res->detail),
-             "entity=node ref=%s expected=%s state=%s connectivity=%s",
-             check->ref, want, st.state, st.connectivity);
+             "entity=node ref=%s expected=%s connectivity=%s state=%s",
+             check->ref, want, st.connectivity, st.state);
 
     return ULAB_OK;
 }

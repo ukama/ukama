@@ -145,9 +145,6 @@ func (this *RestartSiteRequest) Validate() error {
 	if this.SiteId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("SiteId", fmt.Errorf(`value '%v' must not be an empty string`, this.SiteId))
 	}
-	if this.NetworkId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must not be an empty string`, this.NetworkId))
-	}
 	return nil
 }
 func (this *RestartSiteResponse) Validate() error {

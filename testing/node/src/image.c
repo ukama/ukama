@@ -228,11 +228,15 @@ static int create_container_file(char *target,
         }
     }
 
-    /* pkgs: alpine vs ubuntu/debian */
+    /* Runtime packages: starterd does not require supervisor. */
     if (strstr(target, TARGET_ALPINE) != NULL) {
-        sprintf(buffer, CF_RUN_APK, UPDATE_PKGS);
+        sprintf(buffer, CF_RUN_APK,
+                runtime == RUNTIME_STARTER ? BASE_PKGS :
+                SUPERVISOR_PKGS);
     } else {
-        sprintf(buffer, CF_RUN_APT, UPDATE_PKGS);
+        sprintf(buffer, CF_RUN_APT,
+                runtime == RUNTIME_STARTER ? BASE_PKGS :
+                SUPERVISOR_PKGS);
     }
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
@@ -311,8 +315,13 @@ static int create_container_file(char *target,
     sprintf(buffer, CF_SYMLINK, "/ukama/mocksysfs/sys", "/tmp/sys");
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-    sprintf(buffer, CF_ADD, "supervisor.conf", "/etc/supervisor.conf");
-    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+    if (runtime == RUNTIME_SUPERVISOR) {
+        sprintf(buffer, CF_ADD, "supervisor.conf",
+                "/etc/supervisor.conf");
+        if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) {
+            return FALSE;
+        }
+    }
 
     if (runtime == RUNTIME_STARTER) {
         sprintf(buffer, CF_ADD, MANIFEST_FILENAME, "/ukama/manifest.json");

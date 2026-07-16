@@ -32,6 +32,22 @@ func TestPaymentMethod(t *testing.T) {
 		assert.Equal(t, mopayMethod.String(), ukama.PaymentMethodMoPay.String())
 	})
 
+	t.Run("PaymentMethodCashValidString", func(tt *testing.T) {
+		cashMethod := ukama.ParsePaymentMethod("CaSh")
+
+		assert.NotNil(t, cashMethod)
+		assert.Equal(t, cashMethod.String(), ukama.PaymentMethodCash.String())
+		assert.Equal(t, uint8(cashMethod), uint8(3))
+	})
+
+	t.Run("PaymentMethodCashValidNumber", func(tt *testing.T) {
+		cashMethod := ukama.ParsePaymentMethod("3")
+
+		assert.NotNil(t, cashMethod)
+		assert.Equal(t, uint8(cashMethod), uint8(3))
+		assert.Equal(t, cashMethod.String(), ukama.PaymentMethodCash.String())
+	})
+
 	t.Run("PaymentMethodNonValidString", func(tt *testing.T) {
 		unsupportedMethod := ukama.ParsePaymentMethod("failure")
 

@@ -374,7 +374,7 @@ EOF
             alpine-sdk build-base libtool
             openssl-dev gnutls-dev curl curl-dev
             sqlite-dev zlib libuuid libcap libidn2 libmicrohttpd-dev
-            protobuf e2fsprogs util-linux rsync jansson tree
+            protobuf e2fsprogs util-linux rsync jansson zstd zstd-dev tree
             git tcpdump ethtool iperf3 htop vim doas
             kbd bison flex"
 
@@ -462,11 +462,11 @@ setup_ukama_dirs() {
     mkdir -p "/ukama/apps/rootfs"
     mkdir -p "/ukama/apps/registry"
     mkdir -p "/ukama/mocksysfs"
+    mkdir -p "/ukama/logs"
+    mkdir -p "/ukama/state/starterd/log-spool"
 
     echo "${NODE_ID}" > "/ukama/nodeid"
     echo "localhost"  > "/ukama/bootstrap"
-
-    touch "/ukama/apps.log"
 
     log "SUCCESS" "Ukama directories created."
 }

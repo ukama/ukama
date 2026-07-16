@@ -12,10 +12,17 @@ option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
 
 package ukama.events.v1;
 
+import "validator.proto";
+
+
 message SimUploaded {
-    repeated string Iccid = 1 [json_name = "iccid"];
+    repeated string iccid = 1 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{18,22}$"}, json_name = "iccid" ];
 }
 
 message SimRemoved {
     repeated uint64 Id = 1 [json_name = "Id"];
+}
+
+ message EventSimsUploaded{
+    string simType = 1 [json_name = "sim_type"];
 }

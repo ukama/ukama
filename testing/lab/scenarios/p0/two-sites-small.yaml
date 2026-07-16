@@ -1,5 +1,6 @@
 version: 1
 name: p0-two-sites-small
+description: Verify two sites serve traffic with correct site, node, usage, and dashboard state.
 seed: 306
 suite: p0
 priority: p0

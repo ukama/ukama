@@ -293,6 +293,79 @@ func TestHealthServerListApps(t *testing.T) {
 	hRepo.AssertExpectations(t)
 }
 
+func TestHealthServerListApps_FilterByAppName(t *testing.T) {
+	reportID := uuid.NewV4()
+	reported := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+	received := reported.Add(time.Minute)
+	payload, err := json.Marshal(map[string]interface{}{
+		"apps": []map[string]string{
+			{"name": "noded", "version": "v0.1.0", "tag": "v0.1.0", "state": "active"},
+			{"name": "metricsd", "version": "v0.2.0", "tag": "v0.2.0", "state": "active"},
+			{"name": "notifyd", "version": "v0.3.0", "tag": "v0.3.0", "state": "active"},
+		},
+	})
+	assert.NoError(t, err)
+	raw := json.RawMessage(payload)
+
+	report := &db.HealthReport{
+		ID:            reportID,
+		NodeID:        testNode.String(),
+		NodeType:      ukama.NODE_TYPE_HOMENODE,
+		SchemaVersion: "1",
+		ReportedAt:    reported,
+		ReceivedAt:    received,
+		Payload:       raw,
+	}
+
+	t.Run("ReturnsOnlyMatchingApp", func(t *testing.T) {
+		hRepo := &mocks.HealthRepo{}
+		hRepo.On("List", "", testNode.String(), (*time.Time)(nil), ukama.FilterTimeframesTypeLatest).Return([]*db.HealthReport{report}, nil).Once()
+		s := newTestHealthServer(hRepo)
+
+		resp, err := s.ListApps(context.Background(), &pb.ListAppsRequest{
+			NodeId:  testNode.String(),
+			AppName: "noded",
+		})
+
+		assert.NoError(t, err)
+		if assert.NotNil(t, resp) && assert.Len(t, resp.Apps, 1) {
+			assert.Equal(t, "noded", resp.Apps[0].Name)
+		}
+		hRepo.AssertExpectations(t)
+	})
+
+	t.Run("ReturnsAllAppsWhenNoFilter", func(t *testing.T) {
+		hRepo := &mocks.HealthRepo{}
+		hRepo.On("List", "", testNode.String(), (*time.Time)(nil), ukama.FilterTimeframesTypeLatest).Return([]*db.HealthReport{report}, nil).Once()
+		s := newTestHealthServer(hRepo)
+
+		resp, err := s.ListApps(context.Background(), &pb.ListAppsRequest{
+			NodeId: testNode.String(),
+		})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		assert.Len(t, resp.Apps, 3)
+		hRepo.AssertExpectations(t)
+	})
+
+	t.Run("ReturnsNotFoundForUnknownApp", func(t *testing.T) {
+		hRepo := &mocks.HealthRepo{}
+		hRepo.On("List", "", testNode.String(), (*time.Time)(nil), ukama.FilterTimeframesTypeLatest).Return([]*db.HealthReport{report}, nil).Once()
+		s := newTestHealthServer(hRepo)
+
+		resp, err := s.ListApps(context.Background(), &pb.ListAppsRequest{
+			NodeId:  testNode.String(),
+			AppName: "does-not-exist",
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		assert.Equal(t, codes.NotFound, status.Code(err))
+		hRepo.AssertExpectations(t)
+	})
+}
+
 func TestHealthServerListInterfaces(t *testing.T) {
 	t.Run("invalid_payload_returns_error", func(t *testing.T) {
 		hRepo := &mocks.HealthRepo{}

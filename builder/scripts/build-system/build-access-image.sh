@@ -351,11 +351,15 @@ else
 fi
 copy_all_apps "$UKAMA_REPO_APP_PKG" "$UKAMA_APP_PKG"
 copy_required_libs "$UKAMA_REPO_LIB_PKG" "$ROOTFS_DIR"
+mkdir -p "${ROOTFS_DIR}/ukama/logs" \
+         "${ROOTFS_DIR}/ukama/state/starterd/log-spool"
 create_manifest_file "$MANIFEST_FILE" "${APPS[@]}"
 
 copy_rootfs
-cp -rf "${MANIFEST_FILE}" "${PRIMARY_MOUNT}"
-cp -rf "${MANIFEST_FILE}" "${PASSIVE_MOUNT}"
+cp -f "${MANIFEST_FILE}" \
+       "${PRIMARY_MOUNT}/ukama/manifest.json"
+cp -f "${MANIFEST_FILE}" \
+       "${PASSIVE_MOUNT}/ukama/manifest.json"
 rm -rf "${MANIFEST_FILE}"
 set_permissions
 update_fstab "${PRIMARY_MOUNT}"

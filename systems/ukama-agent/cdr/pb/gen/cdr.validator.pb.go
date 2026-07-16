@@ -8,6 +8,7 @@ import (
 	math "math"
 	proto "github.com/golang/protobuf/proto"
 	_ "github.com/mwitkow/go-proto-validators"
+	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
@@ -16,30 +17,29 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+var _regex_CDR_Imsi = regexp.MustCompile(`^[0-9]{6,15}$`)
+
 func (this *CDR) Validate() error {
+	if !_regex_CDR_Imsi.MatchString(this.Imsi) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{6,15}$"`, this.Imsi))
+	}
 	if this.Imsi == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must not be an empty string`, this.Imsi))
-	}
-	if !(len(this.Imsi) > 5) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.Imsi))
-	}
-	if !(len(this.Imsi) < 16) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length smaller than '16'`, this.Imsi))
 	}
 	return nil
 }
 func (this *CDRResp) Validate() error {
 	return nil
 }
+
+var _regex_RecordReq_Imsi = regexp.MustCompile(`^[0-9]{6,15}$`)
+
 func (this *RecordReq) Validate() error {
+	if !_regex_RecordReq_Imsi.MatchString(this.Imsi) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{6,15}$"`, this.Imsi))
+	}
 	if this.Imsi == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must not be an empty string`, this.Imsi))
-	}
-	if !(len(this.Imsi) > 5) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.Imsi))
-	}
-	if !(len(this.Imsi) < 16) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length smaller than '16'`, this.Imsi))
 	}
 	return nil
 }
@@ -53,78 +53,78 @@ func (this *RecordResp) Validate() error {
 	}
 	return nil
 }
+
+var _regex_UsageReq_Imsi = regexp.MustCompile(`^[0-9]{6,15}$`)
+
 func (this *UsageReq) Validate() error {
+	if !_regex_UsageReq_Imsi.MatchString(this.Imsi) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{6,15}$"`, this.Imsi))
+	}
 	if this.Imsi == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must not be an empty string`, this.Imsi))
 	}
-	if !(len(this.Imsi) > 5) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.Imsi))
-	}
-	if !(len(this.Imsi) < 16) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length smaller than '16'`, this.Imsi))
-	}
 	return nil
 }
+
+var _regex_UsageResp_Imsi = regexp.MustCompile(`^[0-9]{6,15}$`)
+
 func (this *UsageResp) Validate() error {
+	if !_regex_UsageResp_Imsi.MatchString(this.Imsi) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{6,15}$"`, this.Imsi))
+	}
 	if this.Imsi == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must not be an empty string`, this.Imsi))
 	}
-	if !(len(this.Imsi) > 5) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.Imsi))
-	}
-	if !(len(this.Imsi) < 16) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length smaller than '16'`, this.Imsi))
-	}
 	return nil
 }
+
+var _regex_CycleUsageReq_Imsi = regexp.MustCompile(`^[0-9]{6,15}$`)
+
 func (this *CycleUsageReq) Validate() error {
+	if !_regex_CycleUsageReq_Imsi.MatchString(this.Imsi) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{6,15}$"`, this.Imsi))
+	}
 	if this.Imsi == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must not be an empty string`, this.Imsi))
 	}
-	if !(len(this.Imsi) > 5) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.Imsi))
-	}
-	if !(len(this.Imsi) < 16) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length smaller than '16'`, this.Imsi))
-	}
 	return nil
 }
+
+var _regex_CycleUsageResp_Imsi = regexp.MustCompile(`^[0-9]{6,15}$`)
+
 func (this *CycleUsageResp) Validate() error {
+	if !_regex_CycleUsageResp_Imsi.MatchString(this.Imsi) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{6,15}$"`, this.Imsi))
+	}
 	if this.Imsi == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must not be an empty string`, this.Imsi))
-	}
-	if !(len(this.Imsi) > 5) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.Imsi))
-	}
-	if !(len(this.Imsi) < 16) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length smaller than '16'`, this.Imsi))
 	}
 	return nil
 }
+
+var _regex_UsageForPeriodReq_Imsi = regexp.MustCompile(`^[0-9]{6,15}$`)
+
 func (this *UsageForPeriodReq) Validate() error {
+	if !_regex_UsageForPeriodReq_Imsi.MatchString(this.Imsi) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{6,15}$"`, this.Imsi))
+	}
 	if this.Imsi == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must not be an empty string`, this.Imsi))
-	}
-	if !(len(this.Imsi) > 5) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.Imsi))
-	}
-	if !(len(this.Imsi) < 16) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length smaller than '16'`, this.Imsi))
 	}
 	return nil
 }
 func (this *UsageForPeriodResp) Validate() error {
 	return nil
 }
+
+var _regex_QueryUsageReq_Imsi = regexp.MustCompile(`^[0-9]{6,15}$`)
+
 func (this *QueryUsageReq) Validate() error {
+	if !_regex_QueryUsageReq_Imsi.MatchString(this.Imsi) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{6,15}$"`, this.Imsi))
+	}
 	if this.Imsi == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must not be an empty string`, this.Imsi))
-	}
-	if !(len(this.Imsi) > 5) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.Imsi))
-	}
-	if !(len(this.Imsi) < 16) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length smaller than '16'`, this.Imsi))
 	}
 	return nil
 }

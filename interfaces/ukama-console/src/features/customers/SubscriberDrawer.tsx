@@ -6,10 +6,7 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 'use client';
-import {
-  useGetPackagesForSimQuery,
-  useGetPackagesQuery,
-} from '@/client/graphql/packages.generated';
+import { useGetPackagesForSimQuery } from '@/client/graphql/packages.generated';
 import { useToggleSimStatusMutation } from '@/client/graphql/sims.generated';
 import AppDrawer, { DetailRow } from '@/components/AppDrawer';
 import AppModal from '@/components/AppModal';
@@ -22,9 +19,10 @@ import { bytesToGB, formatBytes } from '@/lib/usage';
 import {
   NO_DATA_PLANS_MESSAGE,
   NO_POOL_SIMS_MESSAGE,
-  useAvailableDataPlans,
   useAvailablePoolSims,
+  useDataPlans,
 } from '@/lib/sim-pool';
+import { useNetworkId } from '@/lib/useNetworkId';
 import AddCardRounded from '@mui/icons-material/AddCardRounded';
 import SimCardRounded from '@mui/icons-material/SimCardRounded';
 import Button from '@mui/material/Button';
@@ -45,8 +43,12 @@ type PackageKind = 'current' | 'upcoming' | 'ended';
 
 const classify = (p: SimPackage, now: number): PackageKind => {
   if (p.is_active) return 'current';
-  const start = parseTimestamp(p.start_date);
-  if (!Number.isNaN(start) && start > now) return 'upcoming';
+  // A queued package chains off the previous package's end date, so its start
+  // can already be in the past while it is still waiting to activate. Decide
+  // "ended" by the END date, not the start — otherwise a queued package whose
+  // end is still in the future gets wrongly shown as Ended.
+  const end = parseTimestamp(p.end_date);
+  if (!Number.isNaN(end) && end > now) return 'upcoming';
   return 'ended';
 };
 
@@ -115,9 +117,11 @@ export default function SubscriberDrawer({
   };
 
   // Allocating needs an available pool SIM and a data plan — guide the user to
-  // set up whichever is missing instead of opening an unusable dialog.
+  // set up whichever is missing instead of opening an unusable dialog. The same
+  // plans list also resolves package ids → names for the packages section below.
+  const networkId = useNetworkId();
   const { available: poolSims } = useAvailablePoolSims();
-  const { available: dataPlans } = useAvailableDataPlans();
+  const { packages: plans, available: dataPlans } = useDataPlans(networkId);
   const openAllocate = () => {
     if (poolSims === 0) {
       toast(NO_POOL_SIMS_MESSAGE);
@@ -150,12 +154,11 @@ export default function SubscriberDrawer({
     skip: !sub.simId,
     fetchPolicy: 'cache-and-network',
   });
-  const { data: pkgData } = useGetPackagesQuery();
   const planNameById = useMemo(() => {
     const m = new Map<string, string>();
-    for (const p of pkgData?.getPackages.packages ?? []) m.set(p.uuid, p.name);
+    for (const p of plans) m.set(p.uuid, p.name);
     return m;
-  }, [pkgData]);
+  }, [plans]);
 
   const [now] = useState(() => Date.now());
   const packages = [...(simPkgData?.getPackagesForSim.packages ?? [])]
