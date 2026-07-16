@@ -43,8 +43,12 @@ type PackageKind = 'current' | 'upcoming' | 'ended';
 
 const classify = (p: SimPackage, now: number): PackageKind => {
   if (p.is_active) return 'current';
-  const start = parseTimestamp(p.start_date);
-  if (!Number.isNaN(start) && start > now) return 'upcoming';
+  // A queued package chains off the previous package's end date, so its start
+  // can already be in the past while it is still waiting to activate. Decide
+  // "ended" by the END date, not the start — otherwise a queued package whose
+  // end is still in the future gets wrongly shown as Ended.
+  const end = parseTimestamp(p.end_date);
+  if (!Number.isNaN(end) && end > now) return 'upcoming';
   return 'ended';
 };
 
