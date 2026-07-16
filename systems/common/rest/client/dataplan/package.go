@@ -48,6 +48,7 @@ type PackageInfo struct {
 	Type           string         `json:"type" validation:"required"`
 	Flatrate       bool           `json:"flat_rate" default:"false"`
 	Amount         float64        `json:"amount" default:"0.00"`
+	Currency       string         `json:"currency"`
 	Markup         PackageMarkup  `json:"markup" default:"0.00"`
 	PackageDetails PackageDetails `json:"package_details"`
 	Apn            string         `json:"apn" default:"ukama.tel"`

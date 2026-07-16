@@ -40,6 +40,7 @@ import (
 	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
 	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
 	cnuc "github.com/ukama/ukama/systems/common/rest/client/nucleus"
+	cpay "github.com/ukama/ukama/systems/common/rest/client/payments"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	subregpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
@@ -52,6 +53,14 @@ import (
 const (
 	DefaultMinuteDelayForPackageStartDate = 1
 	eventPublishErrorMsg                  = "Failed to publish message %+v with key %+v. Errors %v"
+
+	// Payment metadata keys. metadataSimKey ties a payment to a SIM;
+	// metadataProvisionedKey marks a payment whose package was already added by
+	// the caller (sim allocation), so the payment.success handler must not add it
+	// again.
+	metadataSimKey         = "sim"
+	metadataProvisionedKey = "provisioned"
+	metadataProvisionedYes = "true"
 )
 
 type SimManagerServer struct {
@@ -71,6 +80,7 @@ type SimManagerServer struct {
 	networkClient             creg.NetworkClient
 	nucleusOrgClient          cnuc.OrgClient
 	nucleusUserClient         cnuc.UserClient
+	paymentClient             cpay.PaymentClient
 	pb.UnimplementedSimManagerServiceServer
 }
 
@@ -87,9 +97,9 @@ func NewSimManagerServer(
 	networkClient creg.NetworkClient,
 	nucleusOrgClient cnuc.OrgClient,
 	nucleusUserClient cnuc.UserClient,
-
+	paymentClient cpay.PaymentClient,
 ) *SimManagerServer {
-	return &SimManagerServer{
+	s := &SimManagerServer{
 		orgName:                   orgName,
 		simRepo:                   simRepo,
 		packageRepo:               packageRepo,
@@ -107,7 +117,10 @@ func NewSimManagerServer(
 		networkClient:     networkClient,
 		nucleusOrgClient:  nucleusOrgClient,
 		nucleusUserClient: nucleusUserClient,
+		paymentClient:     paymentClient,
 	}
+
+	return s
 }
 
 func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimRequest) (*pb.AllocateSimResponse, error) {
@@ -268,6 +281,24 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	}
 
 	sim.Package = *firstPackage
+
+	if s.paymentClient != nil {
+		_, perr := s.paymentClient.Add(cpay.AddPaymentRequest{
+			ItemId:        packageId.String(),
+			ItemType:      ukama.ItemTypePackage.String(),
+			Amount:        fmt.Sprintf("%.2f", packageInfo.Amount),
+			Currency:      packageInfo.Currency,
+			PaymentMethod: ukama.PaymentMethodCash.String(),
+			Metadata: map[string]string{
+				metadataSimKey:         sim.Id.String(),
+				metadataProvisionedKey: metadataProvisionedYes,
+			},
+		})
+		if perr != nil {
+			log.Errorf("failed to record package sale for allocated sim %s: %v",
+				sim.Id.String(), perr)
+		}
+	}
 
 	orgInfos, err := s.nucleusOrgClient.Get(s.orgName)
 	if err != nil {

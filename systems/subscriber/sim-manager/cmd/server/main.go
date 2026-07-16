@@ -37,6 +37,7 @@ import (
 	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
 	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
 	cnuc "github.com/ukama/ukama/systems/common/rest/client/nucleus"
+	cpay "github.com/ukama/ukama/systems/common/rest/client/payments"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	generated "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 )
@@ -46,6 +47,7 @@ const (
 	dataplanSystemName     = "dataplan"
 	notificationSystemName = "notification"
 	ukamaAgentSystemName   = "ukamaagent"
+	paymentsSystemName     = "payments"
 )
 
 var serviceConfig = pkg.NewConfig(pkg.ServiceName)
@@ -117,7 +119,6 @@ func runGrpcServer(gormDB sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	//TODO: We should do initclient resolution on demand, in order to avoid systems url changes side effects
 	regUrl, err := ic.GetHostAddress(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
 		ic.CreateHostString(serviceConfig.OrgName, registrySystemName), &serviceConfig.OrgName)
 	if err != nil {
@@ -142,11 +143,18 @@ func runGrpcServer(gormDB sql.Db) {
 		log.Errorf("Failed to resolve ukama agent address: %v", err)
 	}
 
+	paymentsUrl, err := ic.GetHostAddress(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
+		ic.CreateHostString(serviceConfig.OrgName, paymentsSystemName), &serviceConfig.OrgName)
+	if err != nil {
+		log.Errorf("Failed to resolve payments address: %v", err)
+	}
+
 	netClient := creg.NewNetworkClient(regUrl.String())
 	pckgClient := cdplan.NewPackageClient(dataplanUrl.String())
 	notificationClient := cnotif.NewMailerClient(notificationUrl.String())
 	nucleusOrgClient := cnuc.NewOrgClient(serviceConfig.Http.NucleusClient)
 	nucleusUserClient := cnuc.NewUserClient(serviceConfig.Http.NucleusClient)
+	paymentClient := cpay.NewPaymentClient(paymentsUrl.String())
 
 	simManagerServer := server.NewSimManagerServer(
 		serviceConfig.OrgName,
@@ -165,6 +173,7 @@ func runGrpcServer(gormDB sql.Db) {
 		netClient,
 		nucleusOrgClient,
 		nucleusUserClient,
+		paymentClient,
 	)
 
 	simManagerEventServer := server.NewSimManagerEventServer(serviceConfig.OrgName,
