@@ -31,7 +31,7 @@ func TestManagerClient_Start(t *testing.T) {
 			assert.Equal(tt, req.URL.String(), operation.OperationsEndpoint)
 			assert.Equal(tt, "POST", req.Method)
 
-			body := `{"operation":{"id":"03cb753f-5e03-4c97-8e47-625115476c72","type":"deploy","system":"node","status":"PENDING","fencingToken":1,"resourceKey":"node/03cb753f-5e03-4c97-8e47-625115476c72","leaseExpiresAt":"2026-06-29T12:00:00Z","createdAt":"2026-06-29T11:00:00Z"}}`
+			body := `{"operation":{"id":"03cb753f-5e03-4c97-8e47-625115476c72","type":"deploy","system":"node","status":"PENDING","fencing_token":1,"resource_key":"node/03cb753f-5e03-4c97-8e47-625115476c72","lease_expires_at":"2026-06-29T12:00:00Z","created_at":"2026-06-29T11:00:00Z"}}`
 
 			return &http.Response{
 				StatusCode: 200,
@@ -54,6 +54,8 @@ func TestManagerClient_Start(t *testing.T) {
 		assert.NotNil(tt, resp.Operation)
 		assert.Equal(tt, testOperationId, resp.Operation.Id)
 		assert.Equal(tt, operation.StatusPending, resp.Operation.Status)
+		assert.Equal(tt, uint64(1), resp.Operation.FencingToken)
+		assert.Equal(tt, testResourceKey, resp.Operation.ResourceKey)
 		assert.Nil(tt, resp.ConflictingOperation)
 	})
 
@@ -62,7 +64,7 @@ func TestManagerClient_Start(t *testing.T) {
 			assert.Equal(tt, req.URL.String(), operation.OperationsEndpoint)
 			assert.Equal(tt, "POST", req.Method)
 
-			body := `{"conflictingOperation":{"id":"7f8b9c0d-1e2f-3a4b-5c6d-7e8f9a0b1c2d","type":"deploy","system":"node","status":"RUNNING","fencingToken":2,"resourceKey":"node/03cb753f-5e03-4c97-8e47-625115476c72","leaseExpiresAt":"2026-06-29T12:00:00Z","createdAt":"2026-06-29T11:00:00Z"}}`
+			body := `{"conflicting_operation":{"id":"7f8b9c0d-1e2f-3a4b-5c6d-7e8f9a0b1c2d","type":"deploy","system":"node","status":"RUNNING","fencing_token":2,"resource_key":"node/03cb753f-5e03-4c97-8e47-625115476c72","lease_expires_at":"2026-06-29T12:00:00Z","created_at":"2026-06-29T11:00:00Z"}}`
 
 			return &http.Response{
 				StatusCode: 200,
@@ -168,7 +170,7 @@ func TestManagerClient_Get(t *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), operation.OperationsEndpoint+"/"+testOperationId)
 
-			body := `{"operation":{"id":"03cb753f-5e03-4c97-8e47-625115476c72","type":"deploy","system":"node","status":"SUCCESS","fencingToken":1,"resourceKey":"node/03cb753f-5e03-4c97-8e47-625115476c72","leaseExpiresAt":"2026-06-29T12:00:00Z","createdAt":"2026-06-29T11:00:00Z"}}`
+			body := `{"operation":{"id":"03cb753f-5e03-4c97-8e47-625115476c72","type":"deploy","system":"node","status":"SUCCESS","fencing_token":1,"resource_key":"node/03cb753f-5e03-4c97-8e47-625115476c72","lease_expires_at":"2026-06-29T12:00:00Z","created_at":"2026-06-29T11:00:00Z"}}`
 
 			return &http.Response{
 				StatusCode: 200,
@@ -255,7 +257,7 @@ func TestManagerClient_GetByResource(t *testing.T) {
 			assert.Equal(tt, operation.OperationsEndpoint, req.URL.Path)
 			assert.Equal(tt, testResourceKey, req.URL.Query().Get("resource_key"))
 
-			body := `{"operation":{"id":"03cb753f-5e03-4c97-8e47-625115476c72","type":"deploy","system":"node","status":"RUNNING","fencingToken":1,"resourceKey":"node/03cb753f-5e03-4c97-8e47-625115476c72","leaseExpiresAt":"2026-06-29T12:00:00Z","createdAt":"2026-06-29T11:00:00Z"}}`
+			body := `{"operation":{"id":"03cb753f-5e03-4c97-8e47-625115476c72","type":"deploy","system":"node","status":"RUNNING","fencing_token":1,"resource_key":"node/03cb753f-5e03-4c97-8e47-625115476c72","lease_expires_at":"2026-06-29T12:00:00Z","created_at":"2026-06-29T11:00:00Z"}}`
 
 			return &http.Response{
 				StatusCode: 200,
@@ -347,7 +349,7 @@ func TestManagerClient_MarkRunning(t *testing.T) {
 			assert.Equal(tt, req.URL.String(), operation.OperationsEndpoint+"/"+testOperationId+"/run")
 			assert.Equal(tt, "POST", req.Method)
 
-			body := `{"operation":{"id":"03cb753f-5e03-4c97-8e47-625115476c72","type":"deploy","system":"node","status":"RUNNING","fencingToken":42,"resourceKey":"node/03cb753f-5e03-4c97-8e47-625115476c72","leaseExpiresAt":"2026-06-29T12:00:00Z","createdAt":"2026-06-29T11:00:00Z"}}`
+			body := `{"operation":{"id":"03cb753f-5e03-4c97-8e47-625115476c72","type":"deploy","system":"node","status":"RUNNING","fencing_token":42,"resource_key":"node/03cb753f-5e03-4c97-8e47-625115476c72","lease_expires_at":"2026-06-29T12:00:00Z","created_at":"2026-06-29T11:00:00Z"}}`
 
 			return &http.Response{
 				StatusCode: 200,
@@ -443,7 +445,7 @@ func TestManagerClient_ForceUnlock(t *testing.T) {
 			assert.Equal(tt, req.URL.String(), operation.OperationsEndpoint+"/"+testOperationId)
 			assert.Equal(tt, "DELETE", req.Method)
 
-			body := `{"operation":{"id":"03cb753f-5e03-4c97-8e47-625115476c72","type":"deploy","system":"node","status":"CANCELLED","fencingToken":1,"resourceKey":"node/03cb753f-5e03-4c97-8e47-625115476c72","leaseExpiresAt":"2026-06-29T12:00:00Z","createdAt":"2026-06-29T11:00:00Z"}}`
+			body := `{"operation":{"id":"03cb753f-5e03-4c97-8e47-625115476c72","type":"deploy","system":"node","status":"CANCELLED","fencing_token":1,"resource_key":"node/03cb753f-5e03-4c97-8e47-625115476c72","lease_expires_at":"2026-06-29T12:00:00Z","created_at":"2026-06-29T11:00:00Z"}}`
 
 			return &http.Response{
 				StatusCode: 200,

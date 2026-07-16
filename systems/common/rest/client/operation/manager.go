@@ -35,15 +35,15 @@ type OperationInfo struct {
 	Type           string    `json:"type"`
 	System         string    `json:"system"`
 	Status         string    `json:"status"`
-	FencingToken   uint64    `json:"fencingToken"`
-	RequestedBy    string    `json:"requestedBy,omitempty"`
-	IdempotencyKey string    `json:"idempotencyKey,omitempty"`
-	ResourceKey    string    `json:"resourceKey"`
-	LeaseExpiresAt time.Time `json:"leaseExpiresAt"`
+	FencingToken   uint64    `json:"fencing_token"`
+	RequestedBy    string    `json:"requested_by,omitempty"`
+	IdempotencyKey string    `json:"idempotency_key,omitempty"`
+	ResourceKey    string    `json:"resource_key"`
+	LeaseExpiresAt time.Time `json:"lease_expires_at"`
 	Error          string    `json:"error,omitempty"`
-	StartedAt      time.Time `json:"startedAt,omitempty"`
-	TerminalAt     time.Time `json:"terminalAt,omitempty"`
-	CreatedAt      time.Time `json:"createdAt"`
+	StartedAt      time.Time `json:"started_at,omitempty"`
+	TerminalAt     time.Time `json:"terminal_at,omitempty"`
+	CreatedAt      time.Time `json:"created_at"`
 }
 
 type StartRequest struct {
@@ -57,7 +57,7 @@ type StartRequest struct {
 
 type StartResponse struct {
 	Operation            *OperationInfo `json:"operation,omitempty"`
-	ConflictingOperation *OperationInfo `json:"conflictingOperation,omitempty"`
+	ConflictingOperation *OperationInfo `json:"conflicting_operation,omitempty"`
 }
 
 type GetResponse struct {

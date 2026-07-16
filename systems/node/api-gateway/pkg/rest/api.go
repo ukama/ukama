@@ -24,7 +24,7 @@ type ToggleSwitchPortRequest struct {
 
 type ToggleStateRequest struct {
 	NodeId string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
-	State  string `json:"state" validate:"required" example:"on|off" path:"state"`
+	State  string `json:"state" path:"state" validate:"required,oneof=on off"`
 }
 type GetStatesRequest struct {
 	NodeId string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
@@ -67,6 +67,11 @@ type SiteActionRequest struct {
 	Reason      string `json:"reason"`
 	RequestedBy string `json:"requestedBy"`
 	State       string `json:"state" path:"state" validate:"required,oneof=on off"`
+}
+
+type SiteToggleActionRequest struct {
+	SiteId string `json:"site_id" validate:"required" path:"site_id"`
+	State  string `json:"state" path:"state" validate:"required,oneof=on off"`
 }
 
 type SiteStateRequest struct {
