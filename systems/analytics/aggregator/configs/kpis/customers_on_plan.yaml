@@ -1,0 +1,15 @@
+# CUSTOMERS_ON_PLAN: distinct subscribers with an active assignment.
+kpi: CUSTOMERS_ON_PLAN
+domain: business
+algo: customers_on_plan@v1
+scope: [network_id]
+inputs:
+  sim_packages:
+    dataset: subscriber.simpackage.listBySim
+    fields: [network_id, subscriber_id, is_active, as_expired]
+  networks:
+    dataset: registry.network.getAll
+    fields: [network_id]
+output: { type: int, unit: count, symbol: "" }
+rollup_ops: [AVG, MIN, MAX, LAST]
+positive_direction: up

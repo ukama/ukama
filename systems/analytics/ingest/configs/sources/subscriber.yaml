@@ -1,0 +1,65 @@
+# Subscriber source spec. One sims dataset (all statuses) feeds
+# ACTIVE_CUSTOMERS (status filtered in the algo), sim-package assignments
+# and usage fan-outs — pulled once per network per window.
+version: 1
+source: subscriber
+system: subscriber
+
+pulls:
+  # ALL sims per network (no status filter) — inactive sims still carry
+  # purchase history. Parent for sim-packages and usage.
+  - key: subscriber.sim.list
+    endpoint: /v1/sim
+    strategy: full_snapshot
+    items: $.sims
+    entity: sim_id
+    for_each:
+      dataset: registry.network.getAll
+      bind: [network_id]
+    params:
+      network_id: "{{.network_id}}"
+    map:
+      sim_id: $.id
+      subscriber_id: $.subscriber_id
+      network_id: $.network_id
+      status: $.status
+
+  # Sim-package assignments incl. the full queue (future start_date) and
+  # expired ones. Input for all package KPIs.
+  - key: subscriber.simpackage.listBySim
+    endpoint: /v1/sim/{{.sim_id}}/package
+    strategy: full_snapshot
+    items: $.packages
+    entity: sim_package_id
+    for_each:
+      dataset: subscriber.sim.list
+      bind: [sim_id, subscriber_id, network_id]
+    map:
+      sim_package_id: $.id
+      package_id: $.package_id
+      start_date: $.start_date
+      end_date: $.end_date
+      is_active: $.is_active
+      as_expired: $.as_expired
+
+  # Per-sim data usage for the window (strategy: window — from/to templated
+  # per window boundary). Fans out over active sims; sim_id/network_id
+  # lineage comes from the binds. Input for USAGE_BY_NETWORK.
+  - key: subscriber.usage.getBySim
+    endpoint: /v1/usages
+    strategy: window
+    items: $
+    entity: sim_id
+    for_each:
+      dataset: subscriber.sim.list
+      bind: [sim_id, network_id]
+    params:
+      sim_id: "{{.sim_id}}"
+      sim_type: ukama_data
+      cdr_type: DATA
+      region: ""
+      from: "{{.WindowStart}}"
+      to: "{{.WindowEnd}}"
+    map:
+      usage: $.usage
+      cost: $.cost

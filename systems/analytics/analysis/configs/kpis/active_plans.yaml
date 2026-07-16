@@ -1,0 +1,15 @@
+# ACTIVE_PLANS: distinct packages with at least one active assignment.
+kpi: ACTIVE_PLANS
+domain: business
+algo: active_plans@v1
+scope: [network_id]
+inputs:
+  sim_packages:
+    dataset: subscriber.simpackage.listBySim
+    fields: [network_id, package_id, is_active, as_expired]
+  networks:
+    dataset: registry.network.getAll
+    fields: [network_id]
+output: { type: int, unit: count, symbol: "" }
+rollup_ops: [AVG, MIN, MAX, LAST]
+positive_direction: up

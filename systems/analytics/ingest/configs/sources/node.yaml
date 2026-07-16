@@ -1,0 +1,31 @@
+# Node source spec: per-node health interface probes via the node system's
+# NODE-GATEWAY (gateway: node — resolved through initclient NodeGwIp:Port).
+# Only tnode/anode participate in uptime (cnodes excluded by decision).
+# on_error: record — an unreachable node-gateway probe IS the signal: the
+# window records unreachable:true (counted as unplanned down) instead of
+# failing the dataset window.
+version: 1
+source: node
+system: node
+
+pulls:
+  - key: node.health.interfaces
+    endpoint: /v1/health/interfaces
+    gateway: node
+    strategy: full_snapshot
+    items: $
+    entity: node_id
+    on_error: record
+    for_each:
+      dataset: registry.node.list
+      bind: [node_id, site_id, network_id, type]
+      filter: { field: type, in: [tnode, anode] }
+    params:
+      nodeId: "{{.node_id}}"
+    map:
+      # Only uptime-relevant fields are mapped: the change-log hash is
+      # computed over mapped fields, so fluctuating values (gps time etc.)
+      # don't create a new row every window.
+      cellular_available: $.interfaces.cellular.available
+      radio_available: $.interfaces.radio.available
+      radio_state: $.interfaces.radio.state

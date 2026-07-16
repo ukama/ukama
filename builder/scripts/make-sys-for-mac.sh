@@ -73,7 +73,7 @@ filter_make_sys() {
                 PATHS+=("operation/api-gateway" "operation/manager")
                 ;;
             "analytics")
-                PATHS+=("analytics/api-gateway" "analytics/analytics" "analytics/business" "analytics/collector" "analytics/network")
+                PATHS+=("analytics/api-gateway" "analytics/analysis" "analytics/ingest" "analytics/aggregator")
                 ;;
         esac
     done
