@@ -6,12 +6,14 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 'use client';
-import { useAddPackagesToSimMutation, useGetPackagesQuery } from '@/client/graphql/packages.generated';
+import { useAddPaymentMutation } from '@/client/graphql/packages.generated';
 import AppModal from '@/components/AppModal';
 import { Field, SelectInput } from '@/components/form/FormField';
 import { useToast } from '@/components/ToastProvider';
 import type { Subscriber } from '@/data';
 import { useCurrency } from '@/lib/currency';
+import { useDataPlans } from '@/lib/sim-pool';
+import { useNetworkId } from '@/lib/useNetworkId';
 import AddCardRounded from '@mui/icons-material/AddCardRounded';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -27,20 +29,24 @@ export default function TopUpDialog({
   onDone?: () => void;
 }) {
   const toast = useToast();
-  const { symbol } = useCurrency();
+  const { symbol, code } = useCurrency();
+  const networkId = useNetworkId();
   const [planId, setPlanId] = useState('');
 
-  const { data, loading } = useGetPackagesQuery();
+  const { packages, loading } = useDataPlans(networkId);
   const planOptions = useMemo(
     () =>
-      (data?.getPackages.packages ?? []).map((p) => ({
+      packages.map((p) => ({
         value: p.uuid,
         label: `${p.name} · ${symbol}${p.amount}/${p.duration === 1 ? 'day' : 'mo'}`,
       })),
-    [data, symbol],
+    [packages, symbol],
   );
 
-  const [addPackages, { loading: saving }] = useAddPackagesToSimMutation({
+  // Record a cash payment for the package. The payments system settles cash
+  // immediately and emits payment.success, which sim-manager consumes to
+  // allocate the package to the subscriber's SIM (no direct addPackagesToSim).
+  const [addPayment, { loading: saving }] = useAddPaymentMutation({
     onCompleted: () => {
       toast(`Topped up ${sub.name}`);
       onDone?.();
@@ -58,16 +64,20 @@ export default function TopUpDialog({
       toast('Select a data plan.');
       return;
     }
-    void addPackages({
+    const plan = packages.find((p) => p.uuid === planId);
+    if (!plan) {
+      toast('Select a valid data plan.');
+      return;
+    }
+    void addPayment({
       variables: {
         data: {
-          sim_id: sub.simId,
-          packages: [
-            {
-              package_id: planId,
-              start_date: new Date(Date.now() + 60_000).toISOString(),
-            },
-          ],
+          itemId: planId,
+          itemType: 'package',
+          paymentMethod: 'cash',
+          amount: String(plan.amount),
+          currency: code,
+          sim: sub.simId,
         },
       },
     });

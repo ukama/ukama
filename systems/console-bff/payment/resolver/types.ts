@@ -201,3 +201,41 @@ export class GetPaymentsInputDto {
   @Field({ nullable: true })
   status?: string;
 }
+
+@InputType()
+export class AddPaymentInputDto {
+  @Field()
+  itemId: string;
+
+  @Field()
+  itemType: string;
+
+  @Field()
+  amount: string;
+
+  @Field()
+  paymentMethod: string;
+
+  @Field({ nullable: true })
+  currency?: string;
+
+  @Field({ nullable: true })
+  payerName?: string;
+
+  @Field({ nullable: true })
+  payerEmail?: string;
+
+  @Field({ nullable: true })
+  payerPhone?: string;
+
+  @Field({ nullable: true })
+  country?: string;
+
+  @Field({ nullable: true })
+  description?: string;
+
+  // Target SIM id, forwarded as metadata.sim. Required for cash package sales so
+  // sim-manager can attach the package to the subscriber's SIM.
+  @Field({ nullable: true })
+  sim?: string;
+}

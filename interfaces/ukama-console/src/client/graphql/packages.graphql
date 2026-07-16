@@ -152,3 +152,15 @@ mutation updatePacakge($packageId: String!, $data: UpdatePackageInputDto!) {
 
 ### Package End ###
 ### Payment start ###
+
+mutation addPayment($data: AddPaymentInputDto!) {
+  addPayment(data: $data) {
+    id
+    itemId
+    itemType
+    amount
+    currency
+    paymentMethod
+    status
+  }
+}

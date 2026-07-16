@@ -7,6 +7,7 @@
  */
 import { NonEmptyArray } from "type-graphql";
 
+import { AddPaymentResolver } from "./addPayment";
 import { GetPaymentResolver } from "./getPayment";
 import { GetPaymentsResolver } from "./getPayments";
 import { GetTokenResolver } from "./getToken";
@@ -19,6 +20,7 @@ const resolvers: NonEmptyArray<any> = [
   GetPaymentsResolver,
   UpdatePaymentResolver,
   ProcessPaymentResolver,
+  AddPaymentResolver,
 ];
 
 export default resolvers;

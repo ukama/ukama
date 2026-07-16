@@ -9,6 +9,7 @@ import { VERSION } from "../../common/configs";
 import { BaseRESTDataSource } from "../../common/datasource";
 import { logger } from "../../common/logger";
 import {
+  AddPaymentInputDto,
   GetPaymentsInputDto,
   PaymentDto,
   PaymentsDto,
@@ -24,6 +25,32 @@ import {
 } from "./mapper";
 
 class PaymentAPI extends BaseRESTDataSource {
+  addPayment = async (
+    baseURL: string,
+    req: AddPaymentInputDto
+  ): Promise<PaymentDto> => {
+    logger.info(`[POST] AddPayment: ${baseURL}/${VERSION}/payments`);
+    this.baseURL = baseURL;
+
+    const metadata = req.sim ? { sim: req.sim } : undefined;
+
+    return this.post(`/${VERSION}/payments`, {
+      body: {
+        item_id: req.itemId,
+        item_type: req.itemType,
+        amount: req.amount,
+        currency: req.currency,
+        payment_method: req.paymentMethod,
+        payer_name: req.payerName,
+        payer_email: req.payerEmail,
+        payer_phone: req.payerPhone,
+        country: req.country,
+        description: req.description,
+        metadata,
+      },
+    }).then(res => dtoToPaymentDto(res));
+  };
+
   updatePayment: any = async (
     baseURL: string,
     req: UpdatePaymentInputDto
