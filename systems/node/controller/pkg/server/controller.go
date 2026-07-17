@@ -180,7 +180,8 @@ func (c *ControllerServer) ToggleSwitchPort(ctx context.Context, req *pb.ToggleS
 		c.failOperation(op, "ToggleInternetSwitch", fmt.Sprintf("publish failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "Failed to publish switch port reboot message: %s", err.Error())
 	}
-	return &pb.ToggleSwitchPortResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
+	opStatus := c.completeOperation(op, "ToggleInternetSwitch")
+	return &pb.ToggleSwitchPortResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opStatus}, nil
 }
 
 func (c *ControllerServer) ToggleRadio(ctx context.Context, req *pb.ToggleRadioRequest) (*pb.ToggleRadioResponse, error) {
@@ -208,7 +209,8 @@ func (c *ControllerServer) ToggleRadio(ctx context.Context, req *pb.ToggleRadioR
 		c.failOperation(op, "ToggleRadio", fmt.Sprintf("publish failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "Failed to publish RADIO switch message: %s", err.Error())
 	}
-	return &pb.ToggleRadioResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
+	opStatus := c.completeOperation(op, "ToggleRadio")
+	return &pb.ToggleRadioResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opStatus}, nil
 }
 
 func (c *ControllerServer) ToggleService(ctx context.Context, req *pb.ToggleServiceRequest) (*pb.ToggleServiceResponse, error) {
@@ -236,7 +238,8 @@ func (c *ControllerServer) ToggleService(ctx context.Context, req *pb.ToggleServ
 		c.failOperation(op, "ToggleService", fmt.Sprintf("publish failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "Failed to publish Node SERVICE switch message: %s", err.Error())
 	}
-	return &pb.ToggleServiceResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
+	opStatus := c.completeOperation(op, "ToggleService")
+	return &pb.ToggleServiceResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opStatus}, nil
 }
 
 func nodeKey(nodeID string) string {
@@ -295,6 +298,23 @@ func (c *ControllerServer) failOperation(op *copr.OperationInfo, actionType, rea
 	if _, err := c.opManager.ForceUnlock(op.Id, pkg.ServiceName, reason); err != nil {
 		log.Errorf("%s failed to force unlock operation %s: %v", actionType, op.Id, err)
 	}
+}
+
+// completeOperation releases the lock right after a successful dispatch. Used
+// by toggle actions, which have no node state transition to observe: unlike a
+// reboot, flipping service/radio/switch-port never moves the node state
+// machine, so a monitor watch would only ever expire at the deadline while
+// the lock starves every other action on the resource. If the complete call
+// itself fails, the registered intent still expires the lock at the deadline.
+func (c *ControllerServer) completeOperation(op *copr.OperationInfo, actionType string) string {
+	if c.opManager == nil || op == nil || op.Id == "" {
+		return opmgrpb.OperationStatus_RUNNING.String()
+	}
+	if _, err := c.opManager.Complete(op.Id, pkg.ServiceName, "dispatched"); err != nil {
+		log.Errorf("%s failed to complete operation %s (lock frees at deadline): %v", actionType, op.Id, err)
+		return opmgrpb.OperationStatus_RUNNING.String()
+	}
+	return opmgrpb.OperationStatus_SUCCESS.String()
 }
 
 func (c *ControllerServer) publishMessage(target string, method string, path string, nodeId string, anyMsg []byte) error {
