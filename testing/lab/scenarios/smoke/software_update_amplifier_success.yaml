@@ -1,5 +1,6 @@
 version: 1
 name: software_update_amplifier_success
+description: Verify the example app is healthy at the expected current version on the amplifier node, update it from the exact tar.gz version published in Hub, and confirm the running target version and app health after the update.
 seed: 1127603796
 suite: generated
 priority: p1

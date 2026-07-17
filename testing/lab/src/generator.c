@@ -759,6 +759,19 @@ static int software_update_success_case(const gen_family_t *family,
            ulab_streq(event, "software_update_controller");
 }
 
+static void write_software_description(FILE *f, const gen_case_t *c) {
+    const char *node_type;
+
+    node_type = software_node_type(c->events[0]);
+    fprintf(f,
+            "description: Verify the example app is healthy at the "
+            "expected current version on the %s node, update it from "
+            "the exact tar.gz version published in Hub, and confirm "
+            "the running target version and app health after the "
+            "update.\n",
+            node_type);
+}
+
 static void write_software_preflight(FILE *f, const gen_case_t *c) {
     const char *node_type;
 
@@ -1176,7 +1189,12 @@ static int write_case_scenario(const gen_opts_t *opts,
 
     fprintf(f,
             "version: 1\n"
-            "name: %s\n"
+            "name: %s\n",
+            c->name);
+    if (software_only) {
+        write_software_description(f, c);
+    }
+    fprintf(f,
             "seed: %u\n"
             "suite: generated\n"
             "priority: %s\n"
@@ -1189,7 +1207,7 @@ static int write_case_scenario(const gen_opts_t *opts,
             "# case: %s\n"
             "# topology: %s\n"
             "# generated_status: %s\n\n",
-            c->name, seed, c->priority[0] ? c->priority : family->priority,
+            seed, c->priority[0] ? c->priority : family->priority,
             family->name, tags[0] ? ", " : "", tags,
             wip ? "wip" : "active",
             family->name, c->event_count ? c->events[0] : "check",
