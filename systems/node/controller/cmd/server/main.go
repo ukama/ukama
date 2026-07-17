@@ -85,13 +85,15 @@ func runGrpcServer(gormdb sql.Db) {
 	operationUrl, err := ic.GetHostAddress(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode)),
 		ic.CreateHostString(svcConf.OrgName, operationSystemName), &svcConf.OrgName)
 	if err != nil {
-		log.Errorf("Failed to resolve operation address: %v", err)
+		// Fatal, not Errorf: continuing would nil-deref operationUrl below and
+		// panic-loop the pod with a confusing stack instead of a clear reason.
+		log.Fatalf("Failed to resolve operation address: %v", err)
 	}
 
 	regUrl, err := ic.GetHostAddress(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode)),
 		ic.CreateHostString(svcConf.OrgName, registrySystemName), &svcConf.OrgName)
 	if err != nil {
-		log.Errorf("Failed to resolve registry address: %v", err)
+		log.Fatalf("Failed to resolve registry address: %v", err)
 	}
 
 	cnet := creg.NewNetworkClient(regUrl.String())
