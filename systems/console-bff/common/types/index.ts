@@ -27,12 +27,16 @@ export type ErrorType = {
 
 export type TBooleanResponse = {
   success: boolean;
+  message?: string;
 };
 
 @ObjectType()
 export class CBooleanResponse {
   @Field()
   success: boolean;
+
+  @Field({ nullable: true })
+  message?: string;
 }
 
 @ObjectType()
