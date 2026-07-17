@@ -17,6 +17,7 @@ import "validator.proto";
 
 message SimUploaded {
     repeated string iccid = 1 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{18,22}$"}, json_name = "iccid" ];
+    repeated string failedIccid = 2 [json_name = "failed_iccid"];
 }
 
 message SimRemoved {
