@@ -85,3 +85,9 @@ func (m *Manager) ForceUnlock(id, actor, reason string) (*pb.ForceUnlockResponse
 	defer cancel()
 	return m.client.ForceUnlock(ctx, &pb.ForceUnlockRequest{Id: id, Actor: actor, Reason: reason})
 }
+
+func (m *Manager) Complete(id, actor, reason string) (*pb.ForceUnlockResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
+	defer cancel()
+	return m.client.CompleteOperation(ctx, &pb.ForceUnlockRequest{Id: id, Actor: actor, Reason: reason})
+}

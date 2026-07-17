@@ -38,6 +38,12 @@ type ForceUnlockRequest struct {
 	Reason string `json:"reason" validate:"required"`
 }
 
+type CompleteOperationRequest struct {
+	Id     string `json:"id" path:"id" validate:"required,uuid"`
+	Actor  string `json:"actor" validate:"required"`
+	Reason string `json:"reason"`
+}
+
 /*
  * REST response DTOs.
  *

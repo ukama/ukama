@@ -35,8 +35,8 @@ type OperationServices struct {
 	ManagerHost  string        `default:"manager:9090"`
 	MonitorHost  string        `default:"operation-monitor:9090"`
 	Timeout      time.Duration `default:"5s"`
-	LeaseSecs    uint32        `default:"600"`
-	DeadlineSecs uint32        `default:"600"`
+	LeaseSecs    uint32        `default:"120"`
+	DeadlineSecs uint32        `default:"120"`
 }
 
 func NewConfig(name string) *Config {
@@ -54,8 +54,8 @@ func NewConfig(name string) *Config {
 		Operation: OperationServices{
 			ManagerHost:  "manager:9090",
 			Timeout:      5 * time.Second,
-			LeaseSecs:    600,
-			DeadlineSecs: 600,
+			LeaseSecs:    120,
+			DeadlineSecs: 120,
 		},
 	}
 }
