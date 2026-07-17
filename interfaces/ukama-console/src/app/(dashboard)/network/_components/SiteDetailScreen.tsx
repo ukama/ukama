@@ -128,7 +128,7 @@ const UPTIME_LEVELS: { label: string; tint: number; min: number }[] = [
 ];
 
 const uptimeTint = (v: number): { label: string; tint: number } =>
-  UPTIME_LEVELS.find((l) => v >= l.min) ?? UPTIME_LEVELS[UPTIME_LEVELS.length - 1];
+  UPTIME_LEVELS.find((l) => v >= l.min) ?? { label: '<25%', tint: 14 };
 
 function UptimeBox({ v, label }: { v: number | null; label: string }) {
   return (
