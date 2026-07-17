@@ -11,7 +11,7 @@
 	bin_to="/sbin"
 
 [build-conf]
-	from="/nodes/apps/init-network/config/config.toml"
+	from="/nodes/apps/init-network/config.toml"
 	to="/ukama/configs/init-network"
 
 [app-exec]
