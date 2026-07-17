@@ -76,7 +76,7 @@ update_ukama_os_env() {
         if [ "${BUILD_ENV}" = "local" ]; then
             UKAMA_ROOT="$(realpath ../../)"
         else
-            UKAMA_ROOT="/tmp/virtnode/ukama/"
+            UKAMA_ROOT="/tmp/virtnode/ukama"
         fi
     fi
 
@@ -148,7 +148,7 @@ build_apps_pkg() {
     # build-all-apps.sh writes packages here
     pkgs_src="${UKAMA_ROOT}/build/pkgs"
 
-    # image.c expects ./pkgs/<name>-<version>.tar.gz
+    # image.c expects ./pkgs/<name>_<version>.tar.gz
     # relative to the current vnode build working directory.
     # Use CWD (captured at script startup) so it matches the caller.
     pkgs_stage="${CWD}/pkgs"
@@ -178,7 +178,7 @@ build_apps_pkg() {
     for pkg in "${pkgs_src}"/*.tar.gz; do
         [ -f "${pkg}" ] || continue
 
-        cp -f "${pkg}" "${pkgs_stage}/"
+        cp -Lf "${pkg}" "${pkgs_stage}/"
         found_pkgs=1
     done
     shopt -u nullglob
