@@ -42,9 +42,11 @@ pulls:
       is_active: $.is_active
       as_expired: $.as_expired
 
-  # Per-sim data usage for the window (strategy: window — from/to templated
-  # per window boundary). Fans out over active sims; sim_id/network_id
-  # lineage comes from the binds. Input for USAGE_BY_NETWORK.
+  # Per-sim cumulative data usage: no from/to — the backend returns the
+  # sim's total usage to date, sampled once per window. USAGE_BY_NETWORK is
+  # therefore a cumulative counter: serve it with LAST (latest total), never
+  # SUM across windows. Fans out over sims; sim_id/network_id lineage comes
+  # from the binds.
   - key: subscriber.usage.getBySim
     endpoint: /v1/usages
     strategy: window
@@ -58,8 +60,6 @@ pulls:
       sim_type: ukama_data
       cdr_type: DATA
       region: ""
-      from: "{{.WindowStart}}"
-      to: "{{.WindowEnd}}"
     map:
       usage: $.usage
       cost: $.cost

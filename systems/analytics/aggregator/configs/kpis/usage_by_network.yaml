@@ -1,6 +1,8 @@
-# USAGE_BY_NETWORK: total data usage (bytes) per network per window, from
-# per-sim /v1/usages pulls (cdr_type=DATA, sim_type=ukama_data). Daily SUM =
-# total data consumed that day.
+# USAGE_BY_NETWORK: cumulative data usage (bytes) per network, from per-sim
+# /v1/usages pulls WITHOUT from/to — the backend returns each sim's total
+# usage to date, sampled every window. The window value is a cumulative
+# counter: serve with LAST (latest total). Never SUM across windows — that
+# would add cumulative readings together. Trend compares span-end totals.
 kpi: USAGE_BY_NETWORK
 domain: subscriber
 algo: usage_by_network@v1
@@ -17,5 +19,5 @@ output:
   type: float
   unit: bytes
   symbol: B
-rollup_ops: [SUM, AVG, MAX, LAST]
+rollup_ops: [LAST, MAX, AVG]
 positive_direction: up

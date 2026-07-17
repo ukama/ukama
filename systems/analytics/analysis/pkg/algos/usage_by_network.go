@@ -16,19 +16,22 @@ import (
 	"github.com/ukama/ukama/systems/analytics/schema"
 )
 
-// UsageByNetwork (USAGE_BY_NETWORK @ scope network_id): total data usage
-// (bytes) per network for the window, summed over the per-sim usage records.
+// UsageByNetwork (USAGE_BY_NETWORK @ scope network_id): CUMULATIVE data
+// usage (bytes) per network — /v1/usages is called without from/to, so each
+// per-sim record is the sim's total usage to date, sampled once per window.
+// The per-network window value is the sum of those cumulative counters.
+//
+// Serve with op=LAST (latest total). SUM across windows is intentionally
+// not offered — it would add cumulative readings together.
 //
 // Inputs:
-//   usage    — subscriber.usage.getBySim (mode: window): one record per
-//              active sim per window; the "usage" field is the dynamic
-//              usage object from /v1/usages, whose numeric values are the
-//              consumed bytes.
+//   usage    — subscriber.usage.getBySim (mode: window): one record per sim
+//              per window; the "usage" field is the dynamic usage object
+//              from /v1/usages (numeric leaves = bytes to date).
 //   networks — registry.network.getAll (network_id) — zero-fill.
 //
 // Components: Sum = total bytes, Count = number of sim usage records,
-// Min/Max = smallest/largest per-sim usage — this makes daily SUM exact and
-// AVG a true per-window weighted average in the aggregator.
+// Min/Max = smallest/largest per-sim total (AVG = mean total per sim).
 func UsageByNetwork(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
 	usage, ok := in["usage"]
 	if !ok {
