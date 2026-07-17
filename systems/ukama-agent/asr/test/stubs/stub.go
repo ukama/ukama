@@ -232,7 +232,7 @@ func (r *Router) getPackage(c *gin.Context, req *GetPackageRequest) (*Package, e
 				Type:     "postpaid",
 				Flatrate: false,
 				Amount:   0,
-				Duration: 2592000, //30 days
+				Duration: 2592000, //in minutes, 1800 days (which is roughly 4.93 years).
 			},
 		}, nil
 
@@ -261,7 +261,7 @@ func (r *Router) getPackage(c *gin.Context, req *GetPackageRequest) (*Package, e
 				Type:     "postpaid",
 				Flatrate: false,
 				Amount:   0,
-				Duration: 1296000, //15 days
+				Duration: 1296000, //in minutes, 900 days
 			},
 		}, nil
 

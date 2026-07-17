@@ -64,7 +64,7 @@ var (
 		Type:     "postpaid",
 		Flatrate: false,
 		Amount:   0,
-		Duration: 2592000, //1800 days (which is roughly 4.93 years).
+		Duration: 2592000, //in minutes, 1800 days (which is roughly 4.93 years).
 	}
 
 	sub = db.Asr{
