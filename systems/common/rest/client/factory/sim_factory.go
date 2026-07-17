@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strconv"
 
 	"github.com/ukama/ukama/systems/common/rest/client"
 
@@ -71,6 +72,36 @@ func (s *simFactoryClient) ReadSimCardInfo(iccid string) (*SimCardInfo, error) {
 	return card.SimCardInfo, nil
 }
 
+func (s *simFactoryClient) ListSims(imsi, batchId, orgName, simType string, count uint32, sort bool) ([]*SimCardInfo, error) {
+	log.Debugf("Getting factory sims matching: [imsi=%s, batchId=%s, orgname=%s, simType=%s", imsi, batchId, orgName, simType)
+
+	sims := Sims{}
+
+	resp, err := s.R.Get(s.u.String() +
+		fmt.Sprintf("%s?imsi=%s&batch_id=%s&org_name=%s&sim_type=%s&count=%d&sort=%s",
+			SimFactoryEndpoint, imsi, batchId, orgName, simType, count, strconv.FormatBool(sort)))
+	if err != nil {
+		log.Errorf("List sims failure. error: %v", err)
+
+		return nil, fmt.Errorf("list sims failure: %w", err)
+	}
+
+	err = json.Unmarshal(resp.Body(), &sims)
+	if err != nil {
+		log.Tracef("Failed to deserialize factory sims info. Error message is: %v", err)
+
+		return nil, fmt.Errorf("factory sims info deserialization failure: %w", err)
+	}
+
+	if sims.Sims == nil {
+		log.Tracef("An unknown error occured while listing factory sims: Sims list is nil!")
+
+		return nil, fmt.Errorf("an unknown error occured while listing factory sims: Sims list is nil!")
+	}
+
+	return sims.Sims, nil
+}
+
 type SimCardInfo struct {
 	Imsi           string `json:"imsi,omitempty"`
 	Iccid          string `json:"iccid,omitempty"`
@@ -84,8 +115,15 @@ type SimCardInfo struct {
 	CsgIdPrsent    bool   `json:"c_sg_id_prsent,omitempty"`
 	CsgId          uint32 `json:"csg_id,omitempty"`
 	DefaultApnName string `json:"default_apn_name,omitempty"`
+	BatchId        string `json:"batch_id"`
+	OrgName        string `json:"org_name"`
+	SimType        string `json:"sim_type"`
 }
 
 type Sim struct {
 	SimCardInfo *SimCardInfo `json:"sim"`
+}
+
+type Sims struct {
+	Sims []*SimCardInfo `json:"sims"`
 }
