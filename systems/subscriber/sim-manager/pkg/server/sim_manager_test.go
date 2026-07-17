@@ -1522,9 +1522,10 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 
 		packageRepo.On("Get", packageId).Return(
 			&sims.Package{Id: packageId,
-				SimId:    simId,
-				EndDate:  time.Now().UTC().AddDate(0, 1, 0), // next month
-				IsActive: false,
+				SimId:           simId,
+				DefaultDuration: 1,
+				EndDate:         time.Now().UTC().AddDate(0, 1, 0), // next month
+				IsActive:        false,
 			}, nil).Once()
 
 		packageRepo.On("Update",

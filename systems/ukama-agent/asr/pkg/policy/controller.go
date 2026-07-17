@@ -159,8 +159,8 @@ func (p *policyController) NewPolicy(packageId uuid.UUID) (*db.Policy, error) {
 	// should we use sim manager startDate instead ?
 	startTime := uint64(time.Now().Unix())
 
-	// starttime is in seconds and pack.Duration is in days
-	endTime := uint64(startTime) + (pack.Duration * 24 * 3600)
+	// starttime is in seconds and pack.Duration is in minutes
+	endTime := uint64(startTime) + (pack.Duration * 60)
 
 	// totalData is in bytes and pack.DataVolume depends on pack.DataUnit
 	dataUnit := ukama.ParseDataUnitType(pack.DataUnit)

@@ -138,3 +138,53 @@ func TestValidateDate(t *testing.T) {
 		})
 	}
 }
+
+func TestCalculateEndDate(t *testing.T) {
+	// Use a fixed start date to ensure tests are deterministic and predictable
+	baselineStart := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		name            string
+		durationMinutes uint64
+		expectedEnd     time.Time
+	}{
+		{
+			name:            "Zero duration",
+			durationMinutes: 0,
+			expectedEnd:     baselineStart,
+		},
+		{
+			name:            "Less than a day (100 minutes)",
+			durationMinutes: 100,
+			expectedEnd:     baselineStart.Add(100 * time.Minute),
+		},
+		{
+			name:            "Exactly one day (1,440 minutes)",
+			durationMinutes: 1440,
+			expectedEnd:     time.Date(2026, time.January, 2, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			name:            "Mixed time (3 years, 2 months, 5 days, 40 minutes)",
+			durationMinutes: (3 * MinutesInYear) + (2 * MinutesInMonth) + (5 * MinutesInDay) + 40,
+			// Jan 1 + 3 years = Jan 1, 2029
+			// Jan 1 + 2 months (approx 60 days applied by AddDate) = Mar 1, 2029
+			// Mar 1 + 5 days = Mar 6, 2029 (at 00:40)
+			expectedEnd: time.Date(2029, time.March, 6, 0, 40, 0, 0, time.UTC),
+		},
+		{
+			name:            "Extreme overflow prevention (500 years in minutes)",
+			durationMinutes: 500 * MinutesInYear, // ~262,800,000 minutes (would overflow standard time.Duration)
+			expectedEnd:     time.Date(2526, time.January, 1, 0, 0, 0, 0, time.UTC),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actualEnd := CalculateEndDate(baselineStart, tt.durationMinutes)
+			if !actualEnd.Equal(tt.expectedEnd) {
+				t.Errorf("calculateEndDate() failed for scenario '%s'.\nExpected: %v\nGot:      %v",
+					tt.name, tt.expectedEnd, actualEnd)
+			}
+		})
+	}
+}

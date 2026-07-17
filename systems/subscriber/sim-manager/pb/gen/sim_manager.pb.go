@@ -1702,7 +1702,7 @@ type Package struct {
 	PackageId       string                 `protobuf:"bytes,2,opt,name=packageId,json=package_id,proto3" json:"packageId,omitempty"`
 	StartDate       string                 `protobuf:"bytes,3,opt,name=startDate,json=start_date,proto3" json:"startDate,omitempty"`
 	EndDate         string                 `protobuf:"bytes,4,opt,name=endDate,json=end_date,proto3" json:"endDate,omitempty"`
-	DefaultDuration uint64                 `protobuf:"varint,5,opt,name=defaultDuration,json=default_duration,proto3" json:"defaultDuration,omitempty"`
+	DefaultDuration uint64                 `protobuf:"varint,5,opt,name=defaultDuration,json=default_duration,proto3" json:"defaultDuration,omitempty"` /// in minutes, cannot be more than 1000 years
 	IsActive        bool                   `protobuf:"varint,6,opt,name=isActive,json=is_active,proto3" json:"isActive,omitempty"`
 	AsExpired       bool                   `protobuf:"varint,7,opt,name=asExpired,json=as_expired,proto3" json:"asExpired,omitempty"`
 	CreatedAt       string                 `protobuf:"bytes,8,opt,name=createdAt,json=created_at,proto3" json:"createdAt,omitempty"`

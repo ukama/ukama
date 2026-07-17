@@ -152,6 +152,12 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 			"cannot set package to sim: package is no more active within its org")
 	}
 
+	// We validate package duration to make sure it is greater than 0 min and lesser than 1000 years
+	if err := validation.ValidatePackageDuration(packageInfo.Duration); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Error: %v",
+			fmt.Errorf("invalid package duration: %w", err))
+	}
+
 	strType := strings.ToLower(req.GetSimType())
 	simType := ukama.ParseSimType(strType)
 	pkgInfoSimType := ukama.ParseSimType(packageInfo.SimType)
@@ -257,7 +263,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		firstPackage.SimId = sim.Id
 
 		firstPackage.StartDate = time.Now().UTC().Add(time.Minute * DefaultMinuteDelayForPackageStartDate)
-		firstPackage.EndDate = firstPackage.StartDate.Add(time.Hour * 24 * time.Duration(packageInfo.Duration))
+		firstPackage.EndDate = validation.CalculateEndDate(firstPackage.StartDate, packageInfo.Duration)
 
 		return nil
 	})
@@ -1026,12 +1032,19 @@ func addPackageForSim(ctx context.Context, simId, packageId, startDate string, s
 
 	pkgInfo, err := packageClient.Get(packageUuid.String())
 	if err != nil {
-		return err
+		return status.Errorf(codes.Internal,
+			"failed to retrieve package from data plan system. Error %s", err.Error())
 	}
 
 	if !pkgInfo.IsActive {
 		return status.Error(codes.FailedPrecondition,
 			"cannot set package to sim: data plan package is no more active within its org")
+	}
+
+	// We validate package duration to make sure it is greater than 0 min and lesser than 1000 years
+	if err := validation.ValidatePackageDuration(pkgInfo.Duration); err != nil {
+		return status.Errorf(codes.InvalidArgument, "Error: %v",
+			fmt.Errorf("invalid package duration: %w", err))
 	}
 
 	pkgInfoSimType := ukama.ParseSimType(pkgInfo.SimType)
@@ -1063,11 +1076,11 @@ func addPackageForSim(ctx context.Context, simId, packageId, startDate string, s
 		}
 
 		pkg.StartDate = startDate
-		pkg.EndDate = pkg.StartDate.Add(time.Hour * 24 * time.Duration(pkgInfo.Duration))
+		pkg.EndDate = validation.CalculateEndDate(pkg.StartDate, pkgInfo.Duration)
 		pkg.IsActive = true
 	} else {
 		pkg.StartDate = packages[len(packages)-1].EndDate.Add(time.Minute * DefaultMinuteDelayForPackageStartDate)
-		pkg.EndDate = pkg.StartDate.Add(time.Hour * 24 * time.Duration(pkgInfo.Duration))
+		pkg.EndDate = validation.CalculateEndDate(pkg.StartDate, pkgInfo.Duration)
 	}
 
 	log.Infof("Package start date: %v, end date: %v", pkg.StartDate, pkg.EndDate)
@@ -1192,6 +1205,12 @@ func setActivePackageForSim(ctx context.Context, reqSimId, reqPackageId string, 
 			"cannot set already active package (%s) as active", pkg.Id)
 	}
 
+	// We validate package duration to make sure it is greater than 0 min and lesser than 1000 years
+	if err := validation.ValidatePackageDuration(pkg.DefaultDuration); err != nil {
+		return status.Errorf(codes.InvalidArgument, "Error: %v",
+			fmt.Errorf("invalid package duration: %w", err))
+	}
+
 	// Update package on sim manager
 	newPackageToActivate := &sims.Package{
 		Id:       pkg.Id,
@@ -1203,8 +1222,8 @@ func setActivePackageForSim(ctx context.Context, reqSimId, reqPackageId string, 
 		newPackageToActivate.StartDate = time.Now().UTC().
 			Add(time.Minute * DefaultMinuteDelayForPackageStartDate)
 
-		newPackageToActivate.EndDate = newPackageToActivate.StartDate.
-			Add(time.Hour * 24 * time.Duration(pkg.DefaultDuration))
+		newPackageToActivate.EndDate = validation.CalculateEndDate(newPackageToActivate.
+			StartDate, pkg.DefaultDuration)
 
 		return nil
 	})
