@@ -122,7 +122,19 @@ const DEFAULT_COMP: CompDef = {
  *  GitHub-contribution-style: the block's tint scales with the day's uptime —
  *  100% = full colour, 0% = transparent. `null` days are gaps (no rollup
  *  yet) and render as a muted outline block. */
-function UptimeBars({ values }: { values: (number | null)[] }) {
+function UptimeBars({
+  values,
+  startMs,
+}: {
+  values: (number | null)[];
+  startMs: number;
+}) {
+  const dayLabel = (i: number) =>
+    new Date(startMs + i * 86_400_000).toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
   return (
     <div
       style={{
@@ -147,7 +159,11 @@ function UptimeBars({ values }: { values: (number | null)[] }) {
             <span
               key={i}
               className="uptime-bar"
-              title={v == null ? 'No data' : `${Math.round(v)}% uptime`}
+              title={
+                v == null
+                  ? `${dayLabel(i)} — no data`
+                  : `${dayLabel(i)} — ${v.toFixed(1)}% uptime`
+              }
               style={
                 v == null
                   ? {
@@ -1036,7 +1052,7 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
               No uptime data available.
             </div>
           ) : (
-            <UptimeBars values={uptimeVals} />
+            <UptimeBars values={uptimeVals} startMs={uFrom.getTime()} />
           )}
         </SectionCard>
 

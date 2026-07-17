@@ -5,7 +5,7 @@
 # exactly at daily/weekly/monthly. NOT an average of per-site percentages.
 kpi: NETWORK_UPTIME
 domain: network
-algo: network_uptime@v1
+algo: network_uptime@v2
 scope: [network_id]
 inputs:
   health:
@@ -13,7 +13,7 @@ inputs:
     fields: [node_id, site_id, network_id, type, cellular_available, radio_available, radio_state, unreachable]
   nodes:
     dataset: registry.node.list
-    fields: [node_id, site_id, network_id, type]
+    fields: [node_id, site_id, network_id, type, connectivity]
 output:
   type: float
   unit: percent

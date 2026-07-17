@@ -23,11 +23,15 @@ import (
 //   I = intentionally-off windows (operator switched the radio off) —
 //       excluded from the denominator
 //
-// Per-window node classification (cnodes are excluded; only tnode/anode):
-//   tnode UP:  cellular.available && radio.available && radio.state == on
-//   anode UP:  radio.available && radio.state == on
-//   INTENTIONAL: radio.available && radio.state == off (radio works but is
-//       switched off; for tnodes this overrides cellular state)
+// Per-window node classification (cnodes are excluded; only tnode/anode).
+// Registry connectivity gates everything: the health endpoint serves the
+// node's LAST PUSHED report (not a live probe), so an offline node keeps
+// "healthy" stale data forever — connectivity is the liveness signal.
+//   DOWN: registry connectivity != online (regardless of health report)
+//   tnode UP:  online && cellular.available && radio.available && state == on
+//   anode UP:  online && radio.available && radio.state == on
+//   INTENTIONAL: online && radio.available && radio.state == off (radio
+//       works but is switched off; for tnodes this overrides cellular state)
 //   DOWN: everything else — radio.available == false, cellular fault on a
 //       tnode, or the health probe unreachable (unreachable == true)
 //
@@ -184,7 +188,7 @@ func classifySites(in Datasets, kpi string) (map[string]*siteAgg, error) {
 			sites[siteID] = agg
 		}
 
-		switch classifyNode(nodeType, healthByNode[str(node["node_id"])]) {
+		switch classifyNode(nodeType, str(node["connectivity"]), healthByNode[str(node["node_id"])]) {
 		case stateUp:
 			// keeps agg.up
 		case stateIntentional:
@@ -206,9 +210,14 @@ const (
 	stateDown
 )
 
-// classifyNode implements the per-node rules. A missing health row (probe
-// never ran) and unreachable probes both count as down.
-func classifyNode(nodeType string, h map[string]interface{}) int {
+// classifyNode implements the per-node rules. Registry connectivity is the
+// liveness gate (the health report is last-pushed state, not a live probe);
+// a missing health row and unreachable probes also count as down.
+func classifyNode(nodeType, connectivity string, h map[string]interface{}) int {
+	if !isOnline(connectivity) {
+		return stateDown
+	}
+
 	if h == nil || asBool(h["unreachable"]) {
 		return stateDown
 	}
