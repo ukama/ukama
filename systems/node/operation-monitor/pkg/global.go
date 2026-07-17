@@ -29,8 +29,6 @@ const (
 var DefaultCompletionRule = map[string]string{
 	"SendNodeCommand":      "substate=on",
 	"RestartNode":          "substate=on",
-	"RestartSite":          "substate=on",
-	"RestartNodes":         "substate=on",
 	"ToggleRadio":          "substate=on",
 	"ToggleInternetSwitch": "substate=on",
 	"ToggleService":        "substate=on",
