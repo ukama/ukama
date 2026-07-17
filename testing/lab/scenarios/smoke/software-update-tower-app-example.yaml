@@ -1,5 +1,5 @@
 version: 1
-name: software_update_tower_success
+name: software_update_tower_app_example
 description: Verify the example app is healthy at the expected current version on the tower node, update it from the exact tar.gz version published in Hub, and confirm the running target version and app health after the update.
 seed: 3837459242
 suite: generated

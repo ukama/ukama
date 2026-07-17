@@ -1,5 +1,5 @@
 version: 1
-name: software_update_controller_success
+name: software_update_controller_app_example
 description: Verify the example app is healthy at the expected current version on the controller node, update it from the exact tar.gz version published in Hub, and confirm the running target version and app health after the update.
 seed: 1744158685
 suite: generated
@@ -40,6 +40,9 @@ runtime:
 
 phases:
   - name: verify_app_before_update
+    events:
+      - type: wait
+        seconds: 150
     checks:
       - type: node_health_ok
         type_selector: controller
