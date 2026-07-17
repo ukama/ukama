@@ -9,8 +9,24 @@
 package validation
 
 import (
+	"errors"
 	"fmt"
 	"time"
+)
+
+const (
+	MinutesInDay   = 24 * 60
+	MinutesInYear  = 365 * MinutesInDay
+	MinutesInMonth = 30 * MinutesInDay
+
+	// Safety limits
+	MaxPackageYears   = 1000
+	MaxAllowedMinutes = uint64(MaxPackageYears * MinutesInYear)
+)
+
+var (
+	ErrDurationTooLong = errors.New("package duration exceeds the maximum allowed limit of 1000 years")
+	ErrDurationZero    = errors.New("package duration must be greater than zero minutes")
 )
 
 func IsFutureDate(date string) error {
@@ -55,4 +71,32 @@ func ValidateDate(date string) (string, error) {
 
 func FromString(s string) (time.Time, error) {
 	return time.Parse(time.RFC3339, s)
+}
+
+// ValidatePackageDuration ensures the duration fits safely limits
+func ValidatePackageDuration(durationMinutes uint64) error {
+	if durationMinutes == 0 {
+		return ErrDurationZero
+	}
+
+	if durationMinutes > MaxAllowedMinutes {
+		return fmt.Errorf("%w: received %d minutes", ErrDurationTooLong, durationMinutes)
+	}
+
+	return nil
+}
+
+// CalculateEndDate ensures the duration safely converts in a future date
+func CalculateEndDate(startDate time.Time, durationMinutes uint64) time.Time {
+	years := durationMinutes / MinutesInYear
+	remMinutes := durationMinutes % MinutesInYear
+
+	months := remMinutes / MinutesInMonth
+	remMinutes = remMinutes % MinutesInMonth
+
+	days := remMinutes / MinutesInDay
+	finalMinutes := remMinutes % MinutesInDay
+
+	calculatedDate := startDate.AddDate(int(years), int(months), int(days))
+	return calculatedDate.Add(time.Minute * time.Duration(finalMinutes))
 }
