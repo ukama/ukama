@@ -584,7 +584,18 @@ export type KpiValuesInput = {
   keys: Array<Scalars['String']['input']>;
   networkId?: InputMaybe<Scalars['String']['input']>;
   op?: InputMaybe<Scalars['String']['input']>;
+  siteId?: InputMaybe<Scalars['String']['input']>;
   span?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type KpiTimeSeriesInput = {
+  from?: InputMaybe<Scalars['String']['input']>;
+  keys: Array<Scalars['String']['input']>;
+  networkId?: InputMaybe<Scalars['String']['input']>;
+  op?: InputMaybe<Scalars['String']['input']>;
+  siteId?: InputMaybe<Scalars['String']['input']>;
+  span?: InputMaybe<Scalars['String']['input']>;
+  to?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type KpisSection = {

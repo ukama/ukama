@@ -8,7 +8,9 @@
 import { VERSION } from "../../common/configs";
 import { BaseRESTDataSource } from "../../common/datasource";
 import {
+  GetKpiTimeSeriesDto,
   GetKpiValuesDto,
+  KpiTimeSeriesInput,
   KpiValueDto,
   KpiValuesInput,
   ScopeEntryDto,
@@ -87,9 +89,42 @@ class AnalyticsAPI extends BaseRESTDataSource {
     if (data.span) q.append("span", data.span);
     if (data.op) q.append("op", data.op);
     if (data.networkId) q.append("network_id", data.networkId);
+    if (data.siteId) q.append("site_id", data.siteId);
 
     const res = await this.callGet<RawGetKpiValues>(
       `kpis/values?${q.toString()}`
+    );
+
+    const values: KpiValueDto[] = (res.values ?? []).map(v => ({
+      ...v,
+      scope: toScopeEntries(v.scope),
+    }));
+
+    return { values };
+  };
+
+  /**
+   * GET /v1/analytics/kpis/timeseries — one value per span bucket over
+   * [from, to) (RFC3339; gateway defaults to the trailing month). Each value
+   * carries its own from/to, so the client can place points on the time axis.
+   */
+  getKpiTimeSeries = async (
+    baseURL: string,
+    data: KpiTimeSeriesInput
+  ): Promise<GetKpiTimeSeriesDto> => {
+    this.baseURL = baseURL;
+
+    const q = new URLSearchParams();
+    q.append("keys", data.keys.join(","));
+    if (data.span) q.append("span", data.span);
+    if (data.op) q.append("op", data.op);
+    if (data.from) q.append("from", data.from);
+    if (data.to) q.append("to", data.to);
+    if (data.networkId) q.append("network_id", data.networkId);
+    if (data.siteId) q.append("site_id", data.siteId);
+
+    const res = await this.callGet<RawGetKpiValues>(
+      `kpis/timeseries?${q.toString()}`
     );
 
     const values: KpiValueDto[] = (res.values ?? []).map(v => ({

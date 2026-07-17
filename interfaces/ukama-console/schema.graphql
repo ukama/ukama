@@ -1,5 +1,6 @@
 type Query {
   getKpiValues(data: KpiValuesInput!): GetKpiValuesDto!
+  getKpiTimeSeries(data: KpiTimeSeriesInput!): GetKpiTimeSeriesDto!
   getPerformanceReport(data: PerformanceReportInput!): GetPerformanceReportDto!
   getReport(id: String!): GetReportDto!
   getReportPdf(id: String!): GetReportDto!
@@ -2292,6 +2293,21 @@ input KpiValuesInput {
   span: String
   op: String
   networkId: String
+  siteId: String
+}
+
+input KpiTimeSeriesInput {
+  keys: [String!]!
+  span: String
+  op: String
+  from: String
+  to: String
+  networkId: String
+  siteId: String
+}
+
+type GetKpiTimeSeriesDto {
+  values: [KpiValueDto!]!
 }
 
 type GetPerformanceReportDto {

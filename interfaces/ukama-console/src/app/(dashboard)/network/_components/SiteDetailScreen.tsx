@@ -35,8 +35,8 @@ import {
   useToggleRfStatusMutation,
   useToggleServiceMutation,
 } from '@/client/graphql/controller.generated';
+import { useGetKpiTimeSeriesQuery } from '@/client/graphql/analytics.generated';
 import { useToggleInternetSwitchMutation } from '@/client/graphql/nodes.generated';
-import { useMetricsRangeQuery } from '@/client/graphql/range-metrics.generated';
 import { useNetworkSiteDetailQuery } from '@/client/graphql/site-detail.generated';
 import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
 import AppModal from '@/components/AppModal';
@@ -51,6 +51,7 @@ import { useToast } from '@/components/ToastProvider';
 import { byWhom, prettyOpType } from '@/features/operations/labels';
 import { useSiteOperationStatus } from '@/features/operations/useOperationStatus';
 import { normalizeCoords } from '@/lib/geo';
+import { KPI_KEYS } from '@/lib/kpis';
 import { toUkamaNode } from '@/lib/mappers/nodes';
 import { toSite } from '@/lib/mappers/sites';
 import { formatDate } from '@/lib/parsers';
@@ -116,32 +117,12 @@ const DEFAULT_COMP: CompDef = {
   metric: 'battery_charge',
 };
 
-/** Two rows of daily uptime bars from the site_uptime_percentage series.
- *  `null` days are gaps (no data) and render as a muted bar. */
+/** One row of daily uptime blocks from the analytics SITE_UPTIME series
+ *  (oldest → newest, one block per day over the trailing month), rendered
+ *  GitHub-contribution-style: the block's tint scales with the day's uptime —
+ *  100% = full colour, 0% = transparent. `null` days are gaps (no rollup
+ *  yet) and render as a muted outline block. */
 function UptimeBars({ values }: { values: (number | null)[] }) {
-  const bars = (vals: (number | null)[]) => (
-    <div className="uptime-row">
-      {vals.map((v, i) => (
-        <span
-          key={i}
-          className="uptime-bar"
-          style={{
-            background:
-              v == null
-                ? 'var(--uk-line)'
-                : v >= 95
-                  ? 'var(--uk-success-bright)'
-                  : 'var(--uk-orange)',
-            opacity: v == null ? 0.35 : 0.6,
-          }}
-        />
-      ))}
-    </div>
-  );
-  const mid = Math.ceil(values.length / 2);
-  // First row = most recent half (… → today); second = older half.
-  const recent = values.slice(mid);
-  const older = values.slice(0, mid);
   return (
     <div
       style={{
@@ -161,24 +142,32 @@ function UptimeBars({ values }: { values: (number | null)[] }) {
           minHeight: 0,
         }}
       >
-        {bars(recent)}
-        <div className="uptime-caption">
-          <span>30 days ago</span>
-          <span>Today</span>
+        <div className="uptime-row">
+          {values.map((v, i) => (
+            <span
+              key={i}
+              className="uptime-bar"
+              title={v == null ? 'No data' : `${Math.round(v)}% uptime`}
+              style={
+                v == null
+                  ? {
+                      background: 'var(--uk-line)',
+                      opacity: 0.35,
+                    }
+                  : {
+                      // Tint scales with uptime (100% = full colour, 0% =
+                      // transparent); the inset line keeps a 0% day visible
+                      // as an empty cell.
+                      background: `color-mix(in srgb, var(--uk-success-bright) ${Math.max(0, Math.min(100, Math.round(v)))}%, transparent)`,
+                      boxShadow: 'inset 0 0 0 1px var(--uk-line)',
+                    }
+              }
+            />
+          ))}
         </div>
-      </div>
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 0,
-        }}
-      >
-        {bars(older)}
         <div className="uptime-caption">
-          <span>60 days ago</span>
-          <span>31 days ago</span>
+          <span>{values.length - 1} days ago</span>
+          <span>Today</span>
         </div>
       </div>
     </div>
@@ -776,23 +765,44 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
   const nodesSection = view?.nodes;
   const components = view?.components.components ?? [];
 
-  // 90-day daily uptime series for the Site overview card.
-  const [uNow] = useState(() => Math.floor(Date.now() / 1000));
-  const { data: uptimeData, loading: uptimeLoading } = useMetricsRangeQuery({
-    variables: {
-      data: {
-        keys: ['site_uptime_percentage'],
-        from: uNow - 90 * 86_400,
-        to: uNow,
+  // Trailing-month daily SITE_UPTIME series (analytics KPI, one AVG value
+  // per day) for the Site overview card.
+  const UPTIME_DAYS = 30;
+  const [uNow] = useState(() => {
+    const d = new Date();
+    d.setUTCHours(0, 0, 0, 0);
+    return d.getTime();
+  });
+  const uFrom = new Date(uNow - (UPTIME_DAYS - 1) * 86_400_000);
+  const uTo = new Date(uNow + 86_400_000); // exclusive: include today's bucket
+  const { data: uptimeData, loading: uptimeLoading } = useGetKpiTimeSeriesQuery(
+    {
+      variables: {
+        data: {
+          keys: [KPI_KEYS.siteUptime],
+          span: 'daily',
+          op: 'AVG',
+          siteId,
+          from: uFrom.toISOString(),
+          to: uTo.toISOString(),
+        },
       },
     },
-  });
-  // Daily uptime %, gaps (-1 / missing) kept as null so the bars can render
-  // them as "no data" and the average ignores them — never treat a gap as a
-  // real 0/-1 reading.
-  const uptimeVals = (uptimeData?.metricsRange.metrics?.[0]?.values ?? []).map(
-    (v) => (v[1] == null || v[1] === -1 ? null : v[1]),
   );
+  // One slot per day (oldest → today); days the pipeline hasn't rolled up
+  // yet stay null so the bars render them as "no data" and the average
+  // ignores them — never treat a gap as a real 0 reading.
+  const uptimeVals: (number | null)[] = Array.from(
+    { length: UPTIME_DAYS },
+    () => null,
+  );
+  for (const v of uptimeData?.getKpiTimeSeries.values ?? []) {
+    if (!v.from) continue;
+    const day = Math.floor(
+      (Date.parse(v.from) - uFrom.getTime()) / 86_400_000,
+    );
+    if (day >= 0 && day < UPTIME_DAYS) uptimeVals[day] = v.value;
+  }
   const realUptime = uptimeVals.filter((v): v is number => v != null);
   const uptimePct = realUptime.length
     ? Math.round(realUptime.reduce((a, b) => a + b, 0) / realUptime.length)
@@ -1014,7 +1024,7 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
               {uptimePct != null ? `${uptimePct}%` : '—'}
             </span>
             <span style={{ fontSize: 13, color: 'var(--uk-ink-3)' }}>
-              uptime over 90 days
+              uptime over 30 days
             </span>
           </div>
           {uptimeLoading && realUptime.length === 0 ? (

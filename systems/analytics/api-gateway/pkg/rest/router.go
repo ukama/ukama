@@ -148,12 +148,13 @@ func (r *Router) listKpisHandler(c *gin.Context) (*pb.ListKpisResponse, error) {
 }
 
 func (r *Router) getKpisHandler(c *gin.Context, req *GetKpisRequest) (*pb.GetKpisResponse, error) {
-	return r.clients.Aggregator.GetKpis(splitKeys(req.Keys), req.Span, req.Op, scopeFilter(req.NetworkId))
+	return r.clients.Aggregator.GetKpis(splitKeys(req.Keys), req.Span, req.Op,
+		scopeFilter(req.NetworkId, req.SiteId))
 }
 
 func (r *Router) getKpiTimeSeriesHandler(c *gin.Context, req *GetKpiTimeSeriesRequest) (*pb.GetKpiTimeSeriesResponse, error) {
 	return r.clients.Aggregator.GetKpiTimeSeries(splitKeys(req.Keys), req.Span, req.Op,
-		req.From, req.To, scopeFilter(req.NetworkId))
+		req.From, req.To, scopeFilter(req.NetworkId, req.SiteId))
 }
 
 func (r *Router) getKpiBreakdownHandler(c *gin.Context, req *GetKpiBreakdownRequest) (*pb.GetKpiBreakdownResponse, error) {
@@ -165,7 +166,7 @@ func (r *Router) listReportsHandler(c *gin.Context) (*pb.ListReportsResponse, er
 }
 
 func (r *Router) getPerformanceReportHandler(c *gin.Context, req *GetPerformanceReportRequest) (*pb.GetPerformanceReportResponse, error) {
-	return r.clients.Aggregator.GetPerformanceReport(req.Report, req.Span, scopeFilter(req.NetworkId), req.Top)
+	return r.clients.Aggregator.GetPerformanceReport(req.Report, req.Span, scopeFilter(req.NetworkId, ""), req.Top)
 }
 
 func splitKeys(csv string) []string {
@@ -182,10 +183,20 @@ func splitKeys(csv string) []string {
 	return out
 }
 
-func scopeFilter(networkID string) map[string]string {
-	if networkID == "" {
+func scopeFilter(networkID, siteID string) map[string]string {
+	scope := map[string]string{}
+
+	if networkID != "" {
+		scope["network_id"] = networkID
+	}
+
+	if siteID != "" {
+		scope["site_id"] = siteID
+	}
+
+	if len(scope) == 0 {
 		return nil
 	}
 
-	return map[string]string{"network_id": networkID}
+	return scope
 }

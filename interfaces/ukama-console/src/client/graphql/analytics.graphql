@@ -48,6 +48,25 @@ query GetKpiValues($data: KpiValuesInput!) {
   }
 }
 
+# KPI time series: one value per span bucket over [from, to). Each value
+# carries its own from/to so points can be placed on the time axis. Used by
+# the Site detail uptime card (SITE_UPTIME, span=daily, siteId-scoped).
+query GetKpiTimeSeries($data: KpiTimeSeriesInput!) {
+  getKpiTimeSeries(data: $data) {
+    values {
+      kpi
+      value
+      span
+      op
+      from
+      to
+      unit
+      symbol
+      isPartial
+    }
+  }
+}
+
 # Resource performance table. Packages screen passes report: "package_performance"
 # to get per-package rows (attributes: name/price/validity/active; cells:
 # sold/revenue/data_used).

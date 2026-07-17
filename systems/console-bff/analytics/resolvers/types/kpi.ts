@@ -102,7 +102,7 @@ export class GetKpiValuesDto {
 /**
  * Input for `getKpiValues`. `keys` is required (the KPI keys to read, e.g.
  * ["network_uptime", "site_uptime"]); `span`/`op` default per the KPI spec on
- * the gateway; `networkId` is an optional scope filter.
+ * the gateway; `networkId`/`siteId` are optional scope filters.
  */
 @InputType()
 export class KpiValuesInput {
@@ -117,4 +117,47 @@ export class KpiValuesInput {
 
   @Field({ nullable: true })
   networkId?: string;
+
+  @Field({ nullable: true })
+  siteId?: string;
+}
+
+/**
+ * Input for `getKpiTimeSeries`: one value per span bucket over [from, to).
+ * `from`/`to` are RFC3339; the gateway defaults to the trailing month when
+ * omitted. Scope filters as in `KpiValuesInput`.
+ */
+@InputType()
+export class KpiTimeSeriesInput {
+  @Field(() => [String])
+  keys: string[];
+
+  @Field({ nullable: true })
+  span?: string; // daily | weekly | monthly (default daily)
+
+  @Field({ nullable: true })
+  op?: string; // AVG | MIN | MAX | ... (defaults per KPI spec)
+
+  @Field({ nullable: true })
+  from?: string; // RFC3339, inclusive
+
+  @Field({ nullable: true })
+  to?: string; // RFC3339, exclusive
+
+  @Field({ nullable: true })
+  networkId?: string;
+
+  @Field({ nullable: true })
+  siteId?: string;
+}
+
+/**
+ * Response envelope for `getKpiTimeSeries` (mirrors GetKpiTimeSeriesResponse):
+ * a flat list of KPI values, one per span bucket per KPI/scope, each carrying
+ * its own from/to so the client can place it on the time axis.
+ */
+@ObjectType()
+export class GetKpiTimeSeriesDto {
+  @Field(() => [KpiValueDto])
+  values: KpiValueDto[];
 }
