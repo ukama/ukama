@@ -91,8 +91,8 @@ func (c *ControllerServer) SendNodeCommand(ctx context.Context, req *pb.SendNode
 	if err != nil {
 		return nil, err
 	}
-	if err := c.markRunning(op, "RestartNode"); err != nil {
-		c.failOperation(op, "RestartNode", fmt.Sprintf("mark running failed: %v", err))
+	if err := c.markRunning(op, "SendNodeCommand"); err != nil {
+		c.failOperation(op, "SendNodeCommand", fmt.Sprintf("mark running failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "mark running: %v", err)
 	}
 	if err := c.publishMessage(c.orgName+"..."+nId.String(), req.Method, req.Path, nId.String(), req.Body); err != nil {
@@ -100,7 +100,11 @@ func (c *ControllerServer) SendNodeCommand(ctx context.Context, req *pb.SendNode
 		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
 	}
 
-	return &pb.SendNodeCommandResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
+	// Generic command pushes (switch policy, PoE, service/radio via adapters)
+	// never move the locked node's state machine, so there is no transition to
+	// watch for — release on dispatch like the toggles. Reboots use RestartNode.
+	opStatus := c.completeOperation(op, "SendNodeCommand")
+	return &pb.SendNodeCommandResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opStatus}, nil
 }
 
 func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeRequest) (*pb.RestartNodeResponse, error) {
