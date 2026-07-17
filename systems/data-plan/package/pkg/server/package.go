@@ -11,9 +11,12 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -23,9 +26,6 @@ import (
 	"github.com/ukama/ukama/systems/data-plan/package/pkg"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/client"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/db"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -208,6 +208,12 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 	to, err := validation.FromString(formattedTo)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Error: %s", err.Error())
+	}
+
+	// We validate package duration to make sure it is greater than 0 min and lesser than 1000 years
+	if err := validation.ValidatePackageDuration(req.GetDuration()); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Error: %v",
+			fmt.Errorf("invalid package duration: %w", err))
 	}
 
 	pkgUuid := uuid.NewV4()

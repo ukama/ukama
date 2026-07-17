@@ -18,7 +18,7 @@ type AddPackageRequest struct {
 	DataVolume    int64    `example:"1024" json:"data_volume" validation:"required"`
 	DataUnit      string   `example:"MegaBytes" json:"data_unit" validation:"required"`
 	VoiceUnit     string   `example:"seconds" json:"voice_unit" validation:"required"`
-	Duration      uint64   `example:"1" json:"duration" validation:"required"` // in minutes
+	Duration      uint64   `example:"1" json:"duration" validation:"required"` // in minutes, cannot be more than 1000 years
 	Type          string   `example:"postpaid" json:"type" validation:"required"`
 	Flatrate      bool     `example:"false" json:"flat_rate" default:"false"`
 	Amount        float64  `example:"0" json:"amount" default:"0.00"`
