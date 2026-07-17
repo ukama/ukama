@@ -10,32 +10,38 @@ package server
 
 import (
 	"context"
+	"fmt"
 
-	log "github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/reflect/protoreflect"
+
 	"github.com/ukama/ukama/systems/common/grpc"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	ukama "github.com/ukama/ukama/systems/common/ukama"
-	pb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
+	"github.com/ukama/ukama/systems/common/rest/client/factory"
 	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg"
 	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/db"
 	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/utils"
-	"google.golang.org/protobuf/reflect/protoreflect"
+
+	log "github.com/sirupsen/logrus"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	ukama "github.com/ukama/ukama/systems/common/ukama"
+	pb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 )
 
 type SimPoolServer struct {
 	orgName        string
 	simRepo        db.SimRepo
+	factory        factory.SimFactoryClient
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedSimServiceServer
 }
 
-func NewSimPoolServer(orgName string, simRepo db.SimRepo, msgBus mb.MsgBusServiceClient) *SimPoolServer {
+func NewSimPoolServer(orgName string, simRepo db.SimRepo, factory factory.SimFactoryClient, msgBus mb.MsgBusServiceClient) *SimPoolServer {
 	return &SimPoolServer{
 		orgName:        orgName,
 		simRepo:        simRepo,
+		factory:        factory,
 		msgbus:         msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
@@ -120,28 +126,54 @@ func (p *SimPoolServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 
 func (p *SimPoolServer) Upload(ctx context.Context, req *pb.UploadRequest) (*pb.UploadResponse, error) {
 	log.Infof("Upload Sims to pool")
-	a, _ := utils.ParseBytesToRawSim(req.SimData)
-	s := utils.RawSimToPb(a, req.GetSimType())
-	err := p.simRepo.Add(s)
-	log.Info("ADDING SIMS: ", s, err)
+	rawsSims, err := utils.ParseBytesToRawSim(req.SimData)
+	if err != nil {
+		log.Errorf("Error while parsing raw sims file: %v", err)
+
+		return nil, fmt.Errorf("error while parsing raw sims file: %w", err)
+	}
+
+	dbSims := utils.RawSimToDbSims(rawsSims, req.GetSimType())
+
+	/* Send Request to list org sims from Sim Factory */
+	factorySims, err := p.factory.ListSims("", "", p.orgName, "", 0, false)
+	if err != nil {
+		log.Errorf("Error listing org sims from sim factory. Error: %v", err)
+
+		return nil, fmt.Errorf("error listing org sims from sim factory. Error: %w", err)
+	}
+
+	acceptedSims, failedSims := validateOrgSims(dbSims, factorySims)
+
+	err = p.simRepo.Add(acceptedSims)
+	log.Info("ADDING SIMS: ", dbSims, err)
 	if err != nil {
 		log.Error("error while Upload sims data" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
 	}
 
-	iccids := make([]string, 0, len(s))
-	for _, u := range s {
-		iccids = append(iccids, u.Iccid)
+	acceptedIccids := make([]string, 0, len(acceptedSims))
+	for _, u := range acceptedSims {
+		acceptedIccids = append(acceptedIccids, u.Iccid)
+	}
+
+	rejectedIccids := make([]string, 0, len(failedSims))
+	for _, u := range failedSims {
+		rejectedIccids = append(rejectedIccids, u.Iccid)
 	}
 
 	if p.msgbus != nil {
 		route := p.baseRoutingKey.SetAction("upload").SetObject("sim").MustBuild()
 		_ = p.PublishEventMessage(route, &epb.SimUploaded{
-			Iccid: iccids,
+			Iccid:       acceptedIccids,
+			FailedIccid: rejectedIccids,
 		})
 	}
 
-	return &pb.UploadResponse{Iccid: iccids}, nil
+	return &pb.UploadResponse{
+		Iccid:       acceptedIccids,
+		FailedIccid: rejectedIccids,
+	}, nil
 }
 
 func (p *SimPoolServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
@@ -199,4 +231,9 @@ func (p *SimPoolServer) PublishEventMessage(route string, msg protoreflect.Proto
 	}
 	return err
 
+}
+
+func validateOrgSims(dbSims []db.Sim, factorySims []*factory.SimCardInfo) ([]db.Sim, []db.Sim) {
+	//we want perfect equality among those field: ICCID,Imsi,Org,SimType,SmDpAddress,QrCode,IsPhysical
+	return dbSims, dbSims
 }
