@@ -6,102 +6,120 @@
 #
 # Copyright (c) 2024-present, Ukama Inc.
 
-# Script to build and package ukamaOS app
+set -eu
 
-set -e
-
-# Base parameters
-UKAMA_OS=`realpath ../ukamaOS`
-SYS_ROOT=${UKAMA_OS}/distro
-SCRIPTS_ROOT=${SYS_ROOT}/scripts
-
-# Build the app at given src path and cmd
-build_app() {
-
-    CWD=`pwd`
-    SRC=$1
-    CMD=$2
-
-    cd "${SRC}"
-
-    if [ -f Makefile ] || [ -f makefile ]; then
-        BUILD_MODE=${BUILD_MODE:-debug} make clean
-    fi
-
-    BUILD_MODE=${BUILD_MODE:-debug} ${CMD}
-
-    cd "${CWD}"
+usage() {
+    echo "Usage: $0 ACTION [ARG ...]" >&2
+    exit 1
 }
 
-# copy all the required lib to rootfs
+build_app() {
+    src="$1"
+    cmd="$2"
+    old_pwd="$(pwd)"
+
+    cd "$src"
+
+    if [ -f Makefile ] || [ -f makefile ]; then
+        BUILD_MODE="${BUILD_MODE:-debug}" make clean
+    fi
+
+    BUILD_MODE="${BUILD_MODE:-debug}" sh -c "$cmd"
+    cd "$old_pwd"
+}
+
 copy_all_libs() {
+    bin="$1"
+    dest="$2"
 
-    BIN=$1
-    DEST=$2
+    ldd "$bin" | awk '
+        /=>/ && $3 ~ /^\// { print $3 }
+        $1 ~ /^\// { print $1 }
+    ' | while IFS= read -r lib; do
+        [ -f "$lib" ] || continue
 
-    for lib in $(ldd ${BIN} | cut -d '>' -f2 | awk '{print $1}')
-    do
-        if [ -f "${lib}" ]; then
-            # Use case statement for substring match
-            case "${lib}" in
-                *libusys.so*)
-                    # Copy libusys.so directly to /lib
-                    cp "${lib}" "${DEST}/lib"
-                    ;;
-                *)
-                    # Copy other libraries to the destination with their parents
-                    cp --parents "${lib}" "${DEST}"
-                    ;;
-            esac
-        fi
+        case "$lib" in
+            *libusys.so*)
+                cp "$lib" "$dest/lib/"
+                ;;
+            *)
+                cp --parents "$lib" "$dest"
+                ;;
+        esac
     done
 }
 
-# main
-ACTION=$1
-case "$ACTION" in
-    "init")
-        rm -rf $2
-        mkdir $2
-        mkdir $2/sbin
-        mkdir $2/bin
-        mkdir $2/lib
-        mkdir $2/conf
-        ;;
-    "build")
-        build_app $3 "$4"
-        ;;
-    "cp")
-        cp $2 $3
-        ;;
-    "exec")
-        $2
-        ;;
-    "patchelf")
-        patchelf --set-rpath /lib $2
-        ;;
-    "mkdir")
-        mkdir -p $2
-        ;;
-    "libs")
-        copy_all_libs $2 $3
-        ;;
-    "clean")
-        rm -rf $2
-        ;;
-    "pack")
-        mkdir -p "$2/build/pkgs/"
-        tar -czf "$2/build/pkgs/$3" "$4" || exit 1
+[ "$#" -ge 1 ] || usage
+action="$1"
+shift
 
-        latest_link="$(echo "$3" | sed -E 's/_[^/]+\.tar\.gz$/_latest.tar.gz/')"
-        rm -f "$2/build/pkgs/$latest_link"
-        ln -s "$3" "$2/build/pkgs/$latest_link" || exit 1
+case "$action" in
+    init)
+        [ "$#" -eq 1 ] || usage
+        rm -rf -- "$1"
+        mkdir -p -- "$1/sbin" "$1/bin" "$1/lib" "$1/conf"
+        ;;
 
-        if [ "$5" -eq 1 ]
-        then
-            rm -rf "$4" "${ROOTFS}"
+    build)
+        [ "$#" -eq 3 ] || usage
+        build_app "$2" "$3"
+        ;;
+
+    cp)
+        [ "$#" -eq 2 ] || usage
+        cp -- "$1" "$2"
+        ;;
+
+    exec)
+        [ "$#" -eq 1 ] || usage
+        sh -c "$1"
+        ;;
+
+    patchelf)
+        [ "$#" -eq 1 ] || usage
+        patchelf --set-rpath /lib "$1"
+        ;;
+
+    mkdir)
+        [ "$#" -eq 1 ] || usage
+        mkdir -p -- "$1"
+        ;;
+
+    libs)
+        [ "$#" -eq 2 ] || usage
+        copy_all_libs "$1" "$2"
+        ;;
+
+    clean)
+        [ "$#" -eq 1 ] || usage
+        rm -rf -- "$1"
+        ;;
+
+    pack)
+        [ "$#" -eq 4 ] || usage
+        repo_root="$1"
+        archive="$2"
+        source_dir="$3"
+        remove_source="$4"
+        pkg_dir="${repo_root}/build/pkgs"
+        latest_link="$(
+            printf '%s\n' "$archive" |
+                sed -E 's/_[^/]+\.tar\.gz$/_latest.tar.gz/'
+        )"
+
+        mkdir -p -- "$pkg_dir"
+        tar -czf "${pkg_dir}/${archive}" -- "$source_dir"
+        if [ "${UKAMA_SKIP_LATEST_LINK:-0}" -ne 1 ]; then
+            rm -f -- "${pkg_dir}/${latest_link}"
+            ln -s -- "$archive" "${pkg_dir}/${latest_link}"
+        fi
+
+        if [ "$remove_source" -eq 1 ]; then
+            rm -rf -- "$source_dir"
         fi
         ;;
-esac
 
-exit 0
+    *)
+        usage
+        ;;
+esac

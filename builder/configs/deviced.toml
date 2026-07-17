@@ -19,7 +19,7 @@
 	path="/sbin" # path where the exec should be. Mathches build.bin_to
 
 [capp-exec.env]
-	DEVICED_REMOTE_CLIENT_REBOOT_OPTIONAL=1
+	DEVICED_REMOTE_CLIENT_REBOOT_OPTIONAL="1"
 	
 # Final output format for capp
 [capp-output]

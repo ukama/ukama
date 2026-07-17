@@ -14,7 +14,7 @@
 	mkdir="/conf"
 
 [build-conf]
-	from="/nodes/configs/apps/mesh/config.toml"
+	from="/nodes/configs/apps/meshd/config.toml"
 	to="/ukama/configs/meshd"
 
 # for [program:<exec>] in supervisor.conf

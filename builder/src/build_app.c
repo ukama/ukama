@@ -6,33 +6,58 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
-#include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/wait.h>
 
 #include "config_app.h"
 #include "log_app.h"
 
-#define SCRIPT            "builder/scripts/make-app.sh"
-#define VERSION_SCRIPT    "nodes/utils/scripts/generate_version.sh"
-#define LIB_USYS          "nodes/ukamaOS/distro/platform/build/libusys.so"
-#define MAX_BUFFER        1024
-#define MAX_LINE          512
+#define SCRIPT         "builder/scripts/make-app.sh"
+#define VERSION_SCRIPT "nodes/utils/scripts/generate_version.sh"
+#define MAX_BUFFER     4096
+#define MAX_LINE       512
 
-static int git_mark_safe(const char *repoRoot) {
+static int make_command(char *buffer, size_t size, const char *format, ...) {
 
-    char cmd[MAX_BUFFER] = {0};
+    int written;
+    va_list args;
 
-    if (repoRoot == NULL) {
+    va_start(args, format);
+    written = vsnprintf(buffer, size, format, args);
+    va_end(args);
+
+    if (written < 0 || (size_t)written >= size) {
+        log_error("Command is too long");
         return FALSE;
     }
 
-    snprintf(cmd, sizeof(cmd),
-             "git config --global --add safe.directory \"%s\" >/dev/null 2>&1",
-             repoRoot);
+    return TRUE;
+}
 
-    if (system(cmd) < 0) {
-        log_error("Unable to mark repo as git safe.directory: %s", repoRoot);
+static int run_command(const char *command) {
+
+    int status;
+
+    if (command == NULL || command[0] == '\0') {
+        return FALSE;
+    }
+
+    status = system(command);
+    if (status == -1) {
+        log_error("Unable to execute command: %s", command);
+        return FALSE;
+    }
+
+    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+        if (WIFEXITED(status)) {
+            log_error("Command exited with status %d: %s",
+                      WEXITSTATUS(status), command);
+        } else {
+            log_error("Command terminated abnormally: %s", command);
+        }
         return FALSE;
     }
 
@@ -41,10 +66,11 @@ static int git_mark_safe(const char *repoRoot) {
 
 static int get_app_version(const char *ukamaRoot, char **versionOut) {
 
-    char cmd[MAX_BUFFER]  = {0};
-    char line[MAX_LINE]   = {0};
-    char *nl              = NULL;
-    FILE *fp              = NULL;
+    char command[MAX_BUFFER] = {0};
+    char line[MAX_LINE]      = {0};
+    char *newline            = NULL;
+    FILE *fp                 = NULL;
+    int status;
 
     if (ukamaRoot == NULL || versionOut == NULL) {
         return FALSE;
@@ -52,31 +78,33 @@ static int get_app_version(const char *ukamaRoot, char **versionOut) {
 
     *versionOut = NULL;
 
-    snprintf(cmd, sizeof(cmd),
-             "git config --global --add safe.directory \"%s\" >/dev/null 2>&1; "
-             "cd \"%s\" && ./%s --print",
-             ukamaRoot, ukamaRoot, VERSION_SCRIPT);
+    if (!make_command(command, sizeof(command),
+                      "\"%s/%s\" --print",
+                      ukamaRoot, VERSION_SCRIPT)) {
+        return FALSE;
+    }
 
-    fp = popen(cmd, "r");
+    fp = popen(command, "r");
     if (fp == NULL) {
         log_error("Unable to run version script");
         return FALSE;
     }
 
     if (fgets(line, sizeof(line), fp) == NULL) {
-        pclose(fp);
+        (void)pclose(fp);
         log_error("Unable to read version from script");
         return FALSE;
     }
 
-    if (pclose(fp) != 0) {
+    status = pclose(fp);
+    if (status == -1 || !WIFEXITED(status) || WEXITSTATUS(status) != 0) {
         log_error("Version script failed");
         return FALSE;
     }
 
-    nl = strchr(line, '\n');
-    if (nl != NULL) {
-        *nl = '\0';
+    newline = strchr(line, '\n');
+    if (newline != NULL) {
+        *newline = '\0';
     }
 
     if (line[0] == '\0' || strcmp(line, "-") == 0) {
@@ -86,6 +114,7 @@ static int get_app_version(const char *ukamaRoot, char **versionOut) {
 
     *versionOut = strdup(line);
     if (*versionOut == NULL) {
+        log_error("Unable to allocate app version");
         return FALSE;
     }
 
@@ -94,32 +123,30 @@ static int get_app_version(const char *ukamaRoot, char **versionOut) {
 
 int build_app(Config *config) {
 
-    char *ukamaRoot        = NULL;
-    char *builtVersion     = NULL;
-    char runMe[MAX_BUFFER] = {0};
-    BuildConfig *build;
+    char *ukamaRoot         = NULL;
+    char *builtVersion      = NULL;
+    char command[MAX_BUFFER] = {0};
+    BuildConfig *build      = NULL;
 
-    if (config == NULL)        return FALSE;
-    if (config->build == NULL) return FALSE;
-    if (config->capp == NULL)  return FALSE;
-
-    ukamaRoot = getenv("UKAMA_ROOT");
-    if (ukamaRoot == NULL) return FALSE;
-
-    build = config->build;
-
-    if (!git_mark_safe(ukamaRoot)) {
+    if (config == NULL || config->build == NULL || config->capp == NULL) {
         return FALSE;
     }
 
-    /* Build first so app artifacts and version state are up to date. */
-    snprintf(runMe, sizeof(runMe),
-             "git config --global --add safe.directory \"%s\" >/dev/null 2>&1; "
-             "%s/%s build app %s \"%s\"",
-             ukamaRoot, ukamaRoot, SCRIPT, build->source, build->cmd);
-    if (system(runMe) < 0) return FALSE;
+    ukamaRoot = getenv("UKAMA_ROOT");
+    if (ukamaRoot == NULL || ukamaRoot[0] == '\0') {
+        log_error("UKAMA_ROOT is not set");
+        return FALSE;
+    }
 
-    /* Source of truth for app package version comes from generate_version.sh. */
+    build = config->build;
+
+    if (!make_command(command, sizeof(command),
+                      "\"%s/%s\" build app \"%s\" \"%s\"",
+                      ukamaRoot, SCRIPT, build->source, build->cmd) ||
+        !run_command(command)) {
+        return FALSE;
+    }
+
     if (!get_app_version(ukamaRoot, &builtVersion)) {
         log_error("Unable to determine app version");
         return FALSE;
@@ -128,59 +155,75 @@ int build_app(Config *config) {
     free(config->capp->version);
     config->capp->version = builtVersion;
 
-    /* Initialize package staging area using the real VERSION. */
-    snprintf(runMe, sizeof(runMe), "%s/%s init %s_%s",
-             ukamaRoot,
-             SCRIPT,
-             config->capp->name,
-             config->capp->version);
-    if (system(runMe) < 0) return FALSE;
-
-    snprintf(runMe, sizeof(runMe), "%s/%s cp %s %s_%s%s",
-             ukamaRoot, SCRIPT,
-             build->binFrom, config->capp->name,
-             config->capp->version, build->binTo);
-    if (system(runMe) < 0) return FALSE;
-
-    if (build->mkdir) {
-        snprintf(runMe, sizeof(runMe), "%s/%s mkdir %s_%s%s",
-                 ukamaRoot, SCRIPT,
-                 config->capp->name, config->capp->version, build->mkdir);
-        if (system(runMe) < 0) return FALSE;
+    if (!make_command(command, sizeof(command),
+                      "\"%s/%s\" init \"%s_%s\"",
+                      ukamaRoot, SCRIPT,
+                      config->capp->name,
+                      config->capp->version) ||
+        !run_command(command)) {
+        return FALSE;
     }
 
-    if (build->from && build->to) {
-        snprintf(runMe, sizeof(runMe), "%s/%s cp %s %s_%s%s",
-                 ukamaRoot, SCRIPT,
-                 build->from, config->capp->name,
-                 config->capp->version, build->to);
-        if (system(runMe) < 0) return FALSE;
+    if (!make_command(command, sizeof(command),
+                      "\"%s/%s\" cp \"%s\" \"%s_%s%s\"",
+                      ukamaRoot, SCRIPT,
+                      build->binFrom,
+                      config->capp->name,
+                      config->capp->version,
+                      build->binTo) ||
+        !run_command(command)) {
+        return FALSE;
     }
 
-    if (build->miscFrom && build->miscTo) {
-        snprintf(runMe, sizeof(runMe), "%s/%s cp %s %s_%s%s",
-                 ukamaRoot, SCRIPT,
-                 build->miscFrom, config->capp->name,
-                 config->capp->version, build->miscTo);
-        if (system(runMe) < 0) return FALSE;
+    if (build->mkdir != NULL) {
+        if (!make_command(command, sizeof(command),
+                          "\"%s/%s\" mkdir \"%s_%s%s\"",
+                          ukamaRoot, SCRIPT,
+                          config->capp->name,
+                          config->capp->version,
+                          build->mkdir) ||
+            !run_command(command)) {
+            return FALSE;
+        }
+    }
+
+    if (build->from != NULL && build->to != NULL) {
+        if (!make_command(command, sizeof(command),
+                          "\"%s/%s\" cp \"%s\" \"%s_%s%s\"",
+                          ukamaRoot, SCRIPT,
+                          build->from,
+                          config->capp->name,
+                          config->capp->version,
+                          build->to) ||
+            !run_command(command)) {
+            return FALSE;
+        }
+    }
+
+    if (build->miscFrom != NULL && build->miscTo != NULL) {
+        if (!make_command(command, sizeof(command),
+                          "\"%s/%s\" cp \"%s\" \"%s_%s%s\"",
+                          ukamaRoot, SCRIPT,
+                          build->miscFrom,
+                          config->capp->name,
+                          config->capp->version,
+                          build->miscTo) ||
+            !run_command(command)) {
+            return FALSE;
+        }
     }
 
     if (!build->staticFlag) {
-        snprintf(runMe, sizeof(runMe), "%s/%s libs %s %s_%s",
-                 ukamaRoot, SCRIPT,
-                 build->binFrom, config->capp->name, config->capp->version);
-        if (system(runMe) < 0) return FALSE;
+        if (!make_command(command, sizeof(command),
+                          "\"%s/%s\" libs \"%s\" \"%s_%s\"",
+                          ukamaRoot, SCRIPT,
+                          build->binFrom,
+                          config->capp->name,
+                          config->capp->version) ||
+            !run_command(command)) {
+            return FALSE;
+        }
     }
-
-#if 0
-    // Currently, we are focusing on using alpine - commented it out.
-    if (!build->staticFlag) {
-        snprintf(runMe, sizeof(runMe), "%s/%s cp %s/%s %s_%s/lib",
-                 ukamaRoot, SCRIPT, ukamaRoot, LIB_USYS,
-                 config->capp->name, config->capp->version);
-        if (system(runMe) < 0) return FALSE;
-    }
-#endif
 
     return TRUE;
 }
