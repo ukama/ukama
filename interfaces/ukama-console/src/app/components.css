@@ -302,7 +302,7 @@
   }
 }
 .site-top {
-  grid-template-columns: 1fr 1.5fr 0.9fr;
+  grid-template-columns: 1fr 1.1fr 1.3fr;
 }
 @media (max-width: 1080px) {
   .site-top {

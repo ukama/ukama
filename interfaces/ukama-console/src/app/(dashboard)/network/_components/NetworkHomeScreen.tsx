@@ -116,7 +116,12 @@ export default function NetworkHomeScreen() {
               icon: 'network_check',
               color: 'var(--uk-success-bright)',
               label: 'Network uptime',
-              value: kpiText(kpis, KPI_KEYS.networkUptime, (v) => `${v}%`),
+              // Round to 2 decimals; drop trailing zeros (100% not 100.00%).
+              value: kpiText(
+                kpis,
+                KPI_KEYS.networkUptime,
+                (v) => `${Math.round(v * 100) / 100}%`,
+              ),
               sub: 'latest reading',
             },
             {

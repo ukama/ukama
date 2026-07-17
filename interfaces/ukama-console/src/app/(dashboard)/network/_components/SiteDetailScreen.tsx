@@ -117,11 +117,40 @@ const DEFAULT_COMP: CompDef = {
   metric: 'battery_charge',
 };
 
-/** One row of daily uptime blocks from the analytics SITE_UPTIME series
- *  (oldest → newest, one block per day over the trailing month), rendered
- *  GitHub-contribution-style: the block's tint scales with the day's uptime —
- *  100% = full colour, 0% = transparent. `null` days are gaps (no rollup
- *  yet) and render as a muted outline block. */
+/** Uptime range buckets (GitHub-contribution style): each daily box gets a
+ *  discrete tint level for its uptime range. `null` = no rollup for that day. */
+const UPTIME_LEVELS: { label: string; tint: number; min: number }[] = [
+  { label: '≥99%', tint: 100, min: 99 },
+  { label: '75–99%', tint: 72, min: 75 },
+  { label: '50–75%', tint: 50, min: 50 },
+  { label: '25–50%', tint: 30, min: 25 },
+  { label: '<25%', tint: 14, min: 0 },
+];
+
+const uptimeTint = (v: number): { label: string; tint: number } =>
+  UPTIME_LEVELS.find((l) => v >= l.min) ?? UPTIME_LEVELS[UPTIME_LEVELS.length - 1];
+
+function UptimeBox({ v, label }: { v: number | null; label: string }) {
+  return (
+    <span
+      title={label}
+      style={{
+        aspectRatio: '1 / 1',
+        borderRadius: 4,
+        ...(v == null
+          ? { background: 'var(--uk-line)', opacity: 0.35 }
+          : {
+              background: `color-mix(in srgb, var(--uk-success-bright) ${uptimeTint(v).tint}%, transparent)`,
+              boxShadow: 'inset 0 0 0 1px var(--uk-line)',
+            }),
+      }}
+    />
+  );
+}
+
+/** Daily uptime boxes from the analytics SITE_UPTIME series (oldest →
+ *  newest over the trailing month), two rows of 15, tinted by range bucket,
+ *  with a range legend underneath. */
 function UptimeBars({
   values,
   startMs,
@@ -135,56 +164,84 @@ function UptimeBars({
       day: 'numeric',
       year: 'numeric',
     });
+  const boxTitle = (v: number | null, i: number) =>
+    v == null
+      ? `${dayLabel(i)} — no data`
+      : `${dayLabel(i)} — ${v.toFixed(1)}% uptime`;
+
+  const perRow = Math.ceil(values.length / 2);
+  const rows = [values.slice(0, perRow), values.slice(perRow)];
+
   return (
     <div
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 16,
+        gap: 10,
         marginTop: 12,
         flex: 1,
         minHeight: 0,
       }}
     >
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 0,
-        }}
-      >
-        <div className="uptime-row">
-          {values.map((v, i) => (
-            <span
-              key={i}
-              className="uptime-bar"
-              title={
-                v == null
-                  ? `${dayLabel(i)} — no data`
-                  : `${dayLabel(i)} — ${v.toFixed(1)}% uptime`
-              }
-              style={
-                v == null
-                  ? {
-                      background: 'var(--uk-line)',
-                      opacity: 0.35,
-                    }
-                  : {
-                      // Tint scales with uptime (100% = full colour, 0% =
-                      // transparent); the inset line keeps a 0% day visible
-                      // as an empty cell.
-                      background: `color-mix(in srgb, var(--uk-success-bright) ${Math.max(0, Math.min(100, Math.round(v)))}%, transparent)`,
-                      boxShadow: 'inset 0 0 0 1px var(--uk-line)',
-                    }
-              }
-            />
+      {rows.map((row, r) => (
+        <div
+          key={r}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${perRow}, 1fr)`,
+            gap: 5,
+          }}
+        >
+          {row.map((v, i) => (
+            <UptimeBox key={i} v={v} label={boxTitle(v, r * perRow + i)} />
           ))}
         </div>
-        <div className="uptime-caption">
-          <span>{values.length - 1} days ago</span>
-          <span>Today</span>
-        </div>
+      ))}
+      <div className="uptime-caption">
+        <span>{values.length - 1} days ago</span>
+        <span>Today</span>
+      </div>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 10,
+          fontSize: 11.5,
+          color: 'var(--uk-ink-3)',
+        }}
+      >
+        {[...UPTIME_LEVELS].reverse().map((l) => (
+          <span
+            key={l.label}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+          >
+            <span
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: 3,
+                background: `color-mix(in srgb, var(--uk-success-bright) ${l.tint}%, transparent)`,
+                boxShadow: 'inset 0 0 0 1px var(--uk-line)',
+              }}
+            />
+            {l.label}
+          </span>
+        ))}
+        <span
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+        >
+          <span
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: 3,
+              background: 'var(--uk-line)',
+              opacity: 0.35,
+            }}
+          />
+          No data
+        </span>
       </div>
     </div>
   );
