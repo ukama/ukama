@@ -23,6 +23,7 @@ const SimFactoryEndpoint = "/v1/sims"
 
 type SimFactoryClient interface {
 	ReadSimCardInfo(iccid string) (*SimCardInfo, error)
+	ListSims(imsi, batchId, orgName, simType string, count uint32, sort bool) ([]*SimCardInfo, error)
 }
 
 type simFactoryClient struct {

@@ -12,6 +12,36 @@ type SimFactoryClient struct {
 	mock.Mock
 }
 
+// ListSims provides a mock function with given fields: imsi, batchId, orgName, simType, count, sort
+func (_m *SimFactoryClient) ListSims(imsi string, batchId string, orgName string, simType string, count uint32, sort bool) ([]*factory.SimCardInfo, error) {
+	ret := _m.Called(imsi, batchId, orgName, simType, count, sort)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListSims")
+	}
+
+	var r0 []*factory.SimCardInfo
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, string, string, uint32, bool) ([]*factory.SimCardInfo, error)); ok {
+		return rf(imsi, batchId, orgName, simType, count, sort)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, string, string, uint32, bool) []*factory.SimCardInfo); ok {
+		r0 = rf(imsi, batchId, orgName, simType, count, sort)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*factory.SimCardInfo)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, string, string, uint32, bool) error); ok {
+		r1 = rf(imsi, batchId, orgName, simType, count, sort)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ReadSimCardInfo provides a mock function with given fields: iccid
 func (_m *SimFactoryClient) ReadSimCardInfo(iccid string) (*factory.SimCardInfo, error) {
 	ret := _m.Called(iccid)
