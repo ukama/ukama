@@ -24,7 +24,6 @@ require (
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/node/health v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/node/operation-monitor v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/operation/manager v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.82.1
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v3 v3.0.1

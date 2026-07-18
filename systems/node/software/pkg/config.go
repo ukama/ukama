@@ -43,7 +43,8 @@ type OperationServices struct {
 // HttpServices holds direct HTTP endpoints. Hub is a global system, so its
 // api-gateway host is passed directly (env HTTP_HUBHOST), not via init-client.
 type HttpServices struct {
-	HubHost string `default:"http://api-gateway-hub:8080"`
+	HubHost    string `default:"http://api-gateway-hub:8080"`
+	InitClient string `default:"api-gateway-init:8080"`
 }
 
 func NewConfig(name string) *Config {

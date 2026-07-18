@@ -29,6 +29,9 @@ import (
 
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
 	hubclient "github.com/ukama/ukama/systems/common/rest/client/hub"
+	"github.com/ukama/ukama/systems/common/rest/client"
+	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
+	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
 	swclient "github.com/ukama/ukama/systems/node/software/pkg/client"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
 
@@ -38,6 +41,8 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc"
 )
+
+const operationSystemName = "operation"
 
 var svcConf *pkg.Config
 
@@ -112,7 +117,12 @@ func runGrpcServer(gormdb sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	opMgr := swclient.NewOperationManager(svcConf.Operation.ManagerHost, svcConf.Operation.Timeout)
+	operationUrl, err := ic.GetHostAddress(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode)),
+		ic.CreateHostString(svcConf.OrgName, operationSystemName), &svcConf.OrgName)
+	if err != nil {
+		log.Fatalf("Failed to resolve operation address: %v", err)
+	}
+	opMgr := copr.NewManagerClient(operationUrl.String())
 	opMon := swclient.NewOperationMonitor(svcConf.Operation.MonitorHost, svcConf.Operation.Timeout)
 
 	releaseRepo := db.NewReleaseRepo(gormdb)

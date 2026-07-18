@@ -25,11 +25,11 @@ import (
 	opmonpb "github.com/ukama/ukama/systems/node/operation-monitor/pb/gen"
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
 	"github.com/ukama/ukama/systems/node/software/pkg"
+	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
 	hubclient "github.com/ukama/ukama/systems/common/rest/client/hub"
 	swclient "github.com/ukama/ukama/systems/node/software/pkg/client"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
 	"github.com/ukama/ukama/systems/node/software/providers"
-	opmgrpb "github.com/ukama/ukama/systems/operation/manager/pb/gen"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -50,13 +50,13 @@ type SoftwareServer struct {
 	debug                bool
 	orgName              string
 	nodeGwIPs            []string
-	opManager            swclient.OperationManager
+	opManager            copr.ManagerClient
 	opMonitor            swclient.OperationMonitor
 	opLeaseSecs          uint32
 	opDeadlineSecs       uint32
 }
 
-func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, appRepo db.AppRepo, nodeRepo db.NodeRepo, releaseRepo db.ReleaseRepo, hub hubclient.HubClient, healthClient providers.HealthClientProvider, msgBus mb.MsgBusServiceClient, debug bool, nodeGwIP []string, opMgr swclient.OperationManager, opMon swclient.OperationMonitor, leaseSecs, deadlineSecs uint32) *SoftwareServer {
+func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, appRepo db.AppRepo, nodeRepo db.NodeRepo, releaseRepo db.ReleaseRepo, hub hubclient.HubClient, healthClient providers.HealthClientProvider, msgBus mb.MsgBusServiceClient, debug bool, nodeGwIP []string, opMgr copr.ManagerClient, opMon swclient.OperationMonitor, leaseSecs, deadlineSecs uint32) *SoftwareServer {
 	return &SoftwareServer{
 		sRepo:                sRepo,
 		debug:                debug,
@@ -229,16 +229,13 @@ func (s *SoftwareServer) GetReleaseCatalog(ctx context.Context, req *pb.GetRelea
 	return &pb.GetReleaseCatalogResponse{Releases: out}, nil
 }
 
-func (s *SoftwareServer) acquireAndRegister(actionType, resourceKey string) (*opmgrpb.Operation, error) {
+func (s *SoftwareServer) acquireAndRegister(actionType, resourceKey string) (*copr.OperationInfo, error) {
 	if s.opManager == nil || s.opMonitor == nil {
 		log.Warnf("%s running without operation manager/monitor for %s", actionType, resourceKey)
-		return &opmgrpb.Operation{
-			Id:          "",
-			ResourceKey: resourceKey,
-		}, nil
+		return &copr.OperationInfo{Id: "", ResourceKey: resourceKey}, nil
 	}
 
-	startResp, err := s.opManager.Start(&opmgrpb.StartOperationRequest{
+	startResp, err := s.opManager.Start(copr.StartRequest{
 		Type:         actionType,
 		System:       "node",
 		ResourceKey:  resourceKey,
@@ -265,7 +262,7 @@ func (s *SoftwareServer) acquireAndRegister(actionType, resourceKey string) (*op
 	return op, nil
 }
 
-func (s *SoftwareServer) markRunning(op *opmgrpb.Operation, actionType string) error {
+func (s *SoftwareServer) markRunning(op *copr.OperationInfo, actionType string) error {
 	if s.opManager == nil || op == nil || op.Id == "" {
 		return nil
 	}
@@ -277,12 +274,12 @@ func (s *SoftwareServer) markRunning(op *opmgrpb.Operation, actionType string) e
 	return nil
 }
 
-func (s *SoftwareServer) failOperation(op *opmgrpb.Operation, actionType, reason string) {
+func (s *SoftwareServer) failOperation(op *copr.OperationInfo, actionType, reason string) {
 	if s.opManager == nil || op == nil || op.Id == "" {
 		return
 	}
-	if _, err := s.opManager.FailOperation(op.Id, pkg.ServiceName, reason); err != nil {
-		log.Errorf("%s failed to mark operation %s failed: %v", actionType, op.Id, err)
+	if _, err := s.opManager.ForceUnlock(op.Id, pkg.ServiceName, reason); err != nil {
+		log.Errorf("%s failed to force unlock operation %s: %v", actionType, op.Id, err)
 	}
 }
 
