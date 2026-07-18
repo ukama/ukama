@@ -1,6 +1,6 @@
 version: 1
 name: software_update_controller_app_example
-description: Verify the example app is healthy at the expected current version on the controller node, update it from the exact tar.gz version published in Hub, and confirm the running target version and app health after the update.
+description: Verify the target example app release is available, promote it after the controller node's current app is healthy, update the app, and confirm the target version is running and healthy.
 seed: 1744158685
 suite: generated
 priority: p1
@@ -40,9 +40,6 @@ runtime:
 
 phases:
   - name: verify_app_before_update
-    events:
-      - type: wait
-        seconds: 150
     checks:
       - type: node_health_ok
         type_selector: controller
@@ -54,8 +51,13 @@ phases:
         app: example
         version: ${ULAB_SOFTWARE_CURRENT_VERSION}
 
-  - name: action
+  - name: promote_and_update
     events:
+      - type: promote_release
+        app: example
+        tag: ${ULAB_SOFTWARE_TARGET_VERSION}
+      - type: wait
+        seconds: 30
       - type: software_update
         type_selector: controller
         count_per_network: 1

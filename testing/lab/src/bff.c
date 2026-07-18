@@ -25,6 +25,8 @@ extern const char *BFF_ALLOCATE_SIM;
 extern const char *BFF_GET_DATA_USAGE;
 extern const char *BFF_GET_SIM_PACKAGES;
 extern const char *BFF_GET_NODE;
+extern const char *BFF_GET_RELEASE_CATALOG;
+extern const char *BFF_PROMOTE_RELEASE;
 extern const char *BFF_UPDATE_SOFTWARE;
 extern const char *BFF_GET_APPS;
 extern const char *BFF_NETWORK_OVERVIEW;
@@ -1263,6 +1265,175 @@ int bff_get_node_status(bff_client_t *c, const node_t *node,
 
     json_decref(root);
 
+    return ULAB_OK;
+}
+
+int bff_get_release(bff_client_t *c,
+                    const char *name,
+                    const char *type,
+                    const char *version,
+                    bff_release_t *release,
+                    int *found,
+                    ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char name_esc[ULAB_MAX_NAME * 2];
+    char type_esc[ULAB_MAX_REF * 2];
+    json_t *root;
+    json_t *obj;
+    json_t *arr;
+    json_t *it;
+    json_t *value;
+    const char *release_version;
+    size_t i;
+    int n;
+
+    if (name == NULL || name[0] == '\0' ||
+        type == NULL || type[0] == '\0' ||
+        version == NULL || version[0] == '\0' ||
+        release == NULL || found == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getReleaseCatalog requires name, type and version");
+        return ULAB_ERR;
+    }
+
+    memset(release, 0, sizeof(*release));
+    *found = 0;
+    ulab_json_escape(name, name_esc, sizeof(name_esc));
+    ulab_json_escape(type, type_esc, sizeof(type_esc));
+
+    n = snprintf(vars, sizeof(vars),
+                 "{\"name\":\"%s\",\"type\":\"%s\"}",
+                 name_esc, type_esc);
+    if (n < 0 || (size_t)n >= sizeof(vars)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getReleaseCatalog variables too long");
+        return ULAB_ERR;
+    }
+
+    root = NULL;
+    if (bff_call(c, "getReleaseCatalog", BFF_GET_RELEASE_CATALOG,
+                 vars, &root, err)) {
+        return ULAB_ERR;
+    }
+
+    obj = dig(root, "data", "getReleaseCatalog");
+    arr = obj ? json_object_get(obj, "releases") : NULL;
+    if (arr == NULL || !json_is_array(arr)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getReleaseCatalog missing releases list");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+
+    for (i = 0; i < json_array_size(arr); i++) {
+        it = json_array_get(arr, i);
+        value = it ? json_object_get(it, "version") : NULL;
+        release_version = value && json_is_string(value) ?
+            json_string_value(value) : NULL;
+        if (release_version == NULL ||
+            !ulab_streq(release_version, version)) {
+            continue;
+        }
+
+        if (json_get_str(it, "name", release->name,
+                         sizeof(release->name)) ||
+            json_get_str(it, "type", release->type,
+                         sizeof(release->type)) ||
+            json_get_str(it, "version", release->version,
+                         sizeof(release->version))) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "getReleaseCatalog returned incomplete release");
+            json_decref(root);
+            return ULAB_ERR;
+        }
+
+        value = json_object_get(it, "available");
+        release->available = value != NULL && json_is_true(value);
+        value = json_object_get(it, "chunked");
+        release->chunked = value != NULL && json_is_true(value);
+        value = json_object_get(it, "desired");
+        release->desired = value != NULL && json_is_true(value);
+        value = json_object_get(it, "uploadedAt");
+        if (value != NULL && json_is_string(value)) {
+            ulab_copy(release->uploaded_at,
+                      sizeof(release->uploaded_at),
+                      json_string_value(value));
+        }
+
+        *found = 1;
+        json_decref(root);
+        return ULAB_OK;
+    }
+
+    json_decref(root);
+    return ULAB_OK;
+}
+
+int bff_promote_release(bff_client_t *c,
+                        const char *name,
+                        const char *type,
+                        const char *version,
+                        ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char name_esc[ULAB_MAX_NAME * 2];
+    char type_esc[ULAB_MAX_REF * 2];
+    char version_esc[ULAB_MAX_REF * 2];
+    char desired_version[ULAB_MAX_REF];
+    char returned_name[ULAB_MAX_NAME];
+    json_t *root;
+    json_t *obj;
+    int n;
+
+    if (name == NULL || name[0] == '\0' ||
+        type == NULL || type[0] == '\0' ||
+        version == NULL || version[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "promoteRelease requires name, type and version");
+        return ULAB_ERR;
+    }
+
+    ulab_json_escape(name, name_esc, sizeof(name_esc));
+    ulab_json_escape(type, type_esc, sizeof(type_esc));
+    ulab_json_escape(version, version_esc, sizeof(version_esc));
+
+    n = snprintf(vars, sizeof(vars),
+                 "{\"name\":\"%s\",\"type\":\"%s\","
+                 "\"version\":\"%s\"}",
+                 name_esc, type_esc, version_esc);
+    if (n < 0 || (size_t)n >= sizeof(vars)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "promoteRelease variables too long");
+        return ULAB_ERR;
+    }
+
+    root = NULL;
+    if (bff_call(c, "promoteRelease", BFF_PROMOTE_RELEASE,
+                 vars, &root, err)) {
+        return ULAB_ERR;
+    }
+
+    obj = dig(root, "data", "promoteRelease");
+    if (obj == NULL ||
+        json_get_str(obj, "name", returned_name,
+                     sizeof(returned_name)) ||
+        json_get_str(obj, "desiredVersion", desired_version,
+                     sizeof(desired_version))) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "promoteRelease missing name or desiredVersion");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+
+    if (!ulab_streq(returned_name, name) ||
+        !ulab_streq(desired_version, version)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "promoteRelease returned name=%s desired=%s",
+                 returned_name, desired_version);
+        json_decref(root);
+        return ULAB_ERR;
+    }
+
+    json_decref(root);
     return ULAB_OK;
 }
 
