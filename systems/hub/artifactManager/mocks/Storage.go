@@ -96,6 +96,36 @@ func (_m *Storage) ListApps(ctx context.Context, artifactType string) ([]string,
 	return r0, r1
 }
 
+// ListLatestPerApp provides a mock function with given fields: ctx, artifactType
+func (_m *Storage) ListLatestPerApp(ctx context.Context, artifactType string) ([]pkg.AppLatest, error) {
+	ret := _m.Called(ctx, artifactType)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListLatestPerApp")
+	}
+
+	var r0 []pkg.AppLatest
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]pkg.AppLatest, error)); ok {
+		return rf(ctx, artifactType)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) []pkg.AppLatest); ok {
+		r0 = rf(ctx, artifactType)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]pkg.AppLatest)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, artifactType)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListVersions provides a mock function with given fields: ctx, artifactName, artifactType
 func (_m *Storage) ListVersions(ctx context.Context, artifactName string, artifactType string) (*[]pkg.AritfactInfo, error) {
 	ret := _m.Called(ctx, artifactName, artifactType)
@@ -126,9 +156,9 @@ func (_m *Storage) ListVersions(ctx context.Context, artifactName string, artifa
 	return r0, r1
 }
 
-// PutFile provides a mock function with given fields: ctx, artifactName, artifactType, version, ext, content
-func (_m *Storage) PutFile(ctx context.Context, artifactName string, artifactType string, version *semver.Version, ext string, content io.Reader) (string, error) {
-	ret := _m.Called(ctx, artifactName, artifactType, version, ext, content)
+// PutFile provides a mock function with given fields: ctx, artifactName, artifactType, version, ext, content, meta
+func (_m *Storage) PutFile(ctx context.Context, artifactName string, artifactType string, version *semver.Version, ext string, content io.Reader, meta map[string]string) (string, error) {
+	ret := _m.Called(ctx, artifactName, artifactType, version, ext, content, meta)
 
 	if len(ret) == 0 {
 		panic("no return value specified for PutFile")
@@ -136,22 +166,75 @@ func (_m *Storage) PutFile(ctx context.Context, artifactName string, artifactTyp
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, *semver.Version, string, io.Reader) (string, error)); ok {
-		return rf(ctx, artifactName, artifactType, version, ext, content)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, *semver.Version, string, io.Reader, map[string]string) (string, error)); ok {
+		return rf(ctx, artifactName, artifactType, version, ext, content, meta)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, *semver.Version, string, io.Reader) string); ok {
-		r0 = rf(ctx, artifactName, artifactType, version, ext, content)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, *semver.Version, string, io.Reader, map[string]string) string); ok {
+		r0 = rf(ctx, artifactName, artifactType, version, ext, content, meta)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, *semver.Version, string, io.Reader) error); ok {
-		r1 = rf(ctx, artifactName, artifactType, version, ext, content)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, *semver.Version, string, io.Reader, map[string]string) error); ok {
+		r1 = rf(ctx, artifactName, artifactType, version, ext, content, meta)
 	} else {
 		r1 = ret.Error(1)
 	}
 
 	return r0, r1
+}
+
+// StatFile provides a mock function with given fields: ctx, artifactName, artifactType, version, ext
+func (_m *Storage) StatFile(ctx context.Context, artifactName string, artifactType string, version *semver.Version, ext string) (bool, string, error) {
+	ret := _m.Called(ctx, artifactName, artifactType, version, ext)
+
+	if len(ret) == 0 {
+		panic("no return value specified for StatFile")
+	}
+
+	var r0 bool
+	var r1 string
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, *semver.Version, string) (bool, string, error)); ok {
+		return rf(ctx, artifactName, artifactType, version, ext)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, *semver.Version, string) bool); ok {
+		r0 = rf(ctx, artifactName, artifactType, version, ext)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, *semver.Version, string) string); ok {
+		r1 = rf(ctx, artifactName, artifactType, version, ext)
+	} else {
+		r1 = ret.Get(1).(string)
+	}
+
+	if rf, ok := ret.Get(2).(func(context.Context, string, string, *semver.Version, string) error); ok {
+		r2 = rf(ctx, artifactName, artifactType, version, ext)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
+// StoreBaseURL provides a mock function with given fields: artifactType
+func (_m *Storage) StoreBaseURL(artifactType string) string {
+	ret := _m.Called(artifactType)
+
+	if len(ret) == 0 {
+		panic("no return value specified for StoreBaseURL")
+	}
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func(string) string); ok {
+		r0 = rf(artifactType)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
 }
 
 // ValidateArtifactType provides a mock function with given fields: artifactType

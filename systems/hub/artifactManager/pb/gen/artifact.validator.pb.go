@@ -7,9 +7,9 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "google.golang.org/protobuf/types/known/timestamppb"
 	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	_ "github.com/mwitkow/go-proto-validators"
+	_ "google.golang.org/protobuf/types/known/timestamppb"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
@@ -140,6 +140,21 @@ func (this *ListArtifactRequest) Validate() error {
 	}
 	return nil
 }
+func (this *LatestArtifact) Validate() error {
+	if this.Latest != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Latest); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Latest", err)
+		}
+	}
+	return nil
+}
 func (this *ListArtifactResponse) Validate() error {
+	for _, item := range this.LatestArtifacts {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("LatestArtifacts", err)
+			}
+		}
+	}
 	return nil
 }

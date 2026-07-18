@@ -27,4 +27,5 @@ type ArtifactVersionListRequest struct {
 
 type ArtifactListRequest struct {
 	ArtifactType string `path:"type" validate:"required"`
+	Latest       bool   `query:"latest"`
 }

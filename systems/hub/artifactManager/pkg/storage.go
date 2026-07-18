@@ -33,6 +33,11 @@ const TarGzExtension = ".tar.gz"
 const ChunkIndexExtension = ".caibx"
 const appsRoot = "apps/"
 
+// Immutability: the content digest stored as object user-metadata and the
+// canonical response header MinIO returns it under.
+const ContentDigestMetaKey = "content-sha256"
+const contentDigestHeader = "X-Amz-Meta-Content-Sha256"
+
 type InvalidInputError struct {
 	Message string
 }
@@ -52,12 +57,24 @@ type CappInfo struct {
 	Name string `json:"name"`
 }
 
+// AppLatest is one app plus its newest version, for the list?latest=true path.
+type AppLatest struct {
+	Name   string       `json:"name"`
+	Latest AritfactInfo `json:"latest"`
+}
+
 type Storage interface {
-	PutFile(ctx context.Context, artifactName string, artifactType string, version *semver.Version, ext string, content io.Reader) (string, error)
+	// PutFile now takes an optional user-metadata map (pass nil when none).
+	PutFile(ctx context.Context, artifactName string, artifactType string, version *semver.Version, ext string, content io.Reader, meta map[string]string) (string, error)
 	GetFile(ctx context.Context, artifactName string, artifactType string, version *semver.Version, ext string) (reader io.ReadCloser, err error)
+	// StatFile reports existence and the stored content digest ("" if the object has none).
+	StatFile(ctx context.Context, artifactName string, artifactType string, version *semver.Version, ext string) (exists bool, digest string, err error)
 	ListVersions(ctx context.Context, artifactName string, artifactType string) (*[]AritfactInfo, error)
 	ListApps(ctx context.Context, artifactType string) ([]string, error)
+	ListLatestPerApp(ctx context.Context, artifactType string) ([]AppLatest, error)
 	GetEndpoint() string
+	// StoreBaseURL is the s3 base the distributor uses to locate an artifact's source bucket.
+	StoreBaseURL(artifactType string) string
 	ValidateArtifactType(artifactType string) error
 }
 
@@ -119,7 +136,7 @@ func (m *MinioWrapper) ValidateArtifactType(artifactType string) error {
 // ext - extension, use consts declared in this package to stay consistent
 // content - content of file
 // returns remote location of the file or error
-func (m *MinioWrapper) PutFile(ctx context.Context, artifactName string, artifactType string, version *semver.Version, ext string, content io.Reader) (string, error) {
+func (m *MinioWrapper) PutFile(ctx context.Context, artifactName string, artifactType string, version *semver.Version, ext string, content io.Reader, meta map[string]string) (string, error) {
 	log.Infof("Uploading %s-%s to storage", artifactName, version.String())
 
 	bucket := m.GetBucketName(artifactType)
@@ -128,7 +145,12 @@ func (m *MinioWrapper) PutFile(ctx context.Context, artifactName string, artifac
 		return "", InvalidInputError{Message: "artifact name should not contain dot"}
 	}
 
-	n, err := m.minioClient.PutObject(ctx, bucket, formatAppFilename(artifactName, version, ext), content, -1, minio.PutObjectOptions{})
+	opts := minio.PutObjectOptions{}
+	if len(meta) > 0 {
+		opts.UserMetadata = meta
+	}
+
+	n, err := m.minioClient.PutObject(ctx, bucket, formatAppFilename(artifactName, version, ext), content, -1, opts)
 	if err != nil {
 		return "", err
 	}
@@ -139,6 +161,25 @@ func (m *MinioWrapper) PutFile(ctx context.Context, artifactName string, artifac
 	}
 
 	return n.Location, nil
+}
+
+// StatFile reports whether the object exists and its stored content digest.
+func (m *MinioWrapper) StatFile(ctx context.Context, artifactName string, artifactType string, version *semver.Version, ext string) (bool, string, error) {
+	fPath := formatAppFilename(artifactName, version, ext)
+
+	info, err := m.minioClient.StatObject(ctx, m.GetBucketName(artifactType), fPath, minio.StatObjectOptions{})
+	if err != nil {
+		if minio.ToErrorResponse(err).Code == "NoSuchKey" {
+			return false, "", nil
+		}
+		return false, "", err
+	}
+
+	digest := info.Metadata.Get(contentDigestHeader)
+	if digest == "" && info.UserMetadata != nil {
+		digest = info.UserMetadata[ContentDigestMetaKey]
+	}
+	return true, digest, nil
 }
 
 func (m *MinioWrapper) GetFile(ctx context.Context, artifactName string, artifactType string, version *semver.Version, ext string) (reader io.ReadCloser, err error) {
@@ -231,6 +272,56 @@ func (m *MinioWrapper) ListApps(ctx context.Context, artifactType string) ([]str
 
 func (m *MinioWrapper) GetEndpoint() string {
 	return m.minioClient.EndpointURL().String() + "/" + appsRoot
+}
+
+// StoreBaseURL is the s3 base for an artifact type's source bucket. Only the scheme
+// drives the distributor's read path (it resolves creds from its own config), but we
+// return an accurate URL for clarity.
+func (m *MinioWrapper) StoreBaseURL(artifactType string) string {
+	return m.minioClient.EndpointURL().String() + "/" + m.GetBucketName(artifactType) + "/"
+}
+
+// ListLatestPerApp returns each app with its highest valid-semver version.
+func (m *MinioWrapper) ListLatestPerApp(ctx context.Context, artifactType string) ([]AppLatest, error) {
+	apps, err := m.ListApps(ctx, artifactType)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]AppLatest, 0, len(apps))
+	for _, name := range apps {
+		if name == "" {
+			continue
+		}
+		versions, err := m.ListVersions(ctx, name, artifactType)
+		if err != nil {
+			log.Errorf("Failed to list versions for %s: %v", name, err)
+			continue
+		}
+		latest := pickLatest(*versions)
+		if latest == nil {
+			continue // no valid semver version for this app
+		}
+		result = append(result, AppLatest{Name: name, Latest: *latest})
+	}
+	return result, nil
+}
+
+// pickLatest returns the highest valid-semver version, skipping INVALID_VERSION_FORMAT entries.
+func pickLatest(vs []AritfactInfo) *AritfactInfo {
+	var best *AritfactInfo
+	var bestV *semver.Version
+	for i := range vs {
+		v, err := semver.NewVersion(vs[i].Version)
+		if err != nil {
+			continue
+		}
+		if bestV == nil || v.GreaterThan(bestV) {
+			bestV = v
+			best = &vs[i]
+		}
+	}
+	return best
 }
 
 // host in host:port format
