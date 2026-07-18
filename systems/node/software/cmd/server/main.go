@@ -28,6 +28,7 @@ import (
 	"github.com/ukama/ukama/systems/node/software/cmd/version"
 
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
+	hubclient "github.com/ukama/ukama/systems/common/rest/client/hub"
 	swclient "github.com/ukama/ukama/systems/node/software/pkg/client"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
 
@@ -115,7 +116,7 @@ func runGrpcServer(gormdb sql.Db) {
 	opMon := swclient.NewOperationMonitor(svcConf.Operation.MonitorHost, svcConf.Operation.Timeout)
 
 	releaseRepo := db.NewReleaseRepo(gormdb)
-	hub := swclient.NewHubClient(svcConf.Http.HubHost, svcConf.Timeout)
+	hub := hubclient.NewHubClient(svcConf.Http.HubHost)
 
 	softServer := server.NewSoftwareServer(svcConf.OrgName, db.NewSoftwareRepo(gormdb),
 		db.NewAppRepo(gormdb), db.NewNodeRepo(gormdb), releaseRepo, hub,

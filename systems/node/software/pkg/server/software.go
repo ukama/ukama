@@ -25,6 +25,7 @@ import (
 	opmonpb "github.com/ukama/ukama/systems/node/operation-monitor/pb/gen"
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
 	"github.com/ukama/ukama/systems/node/software/pkg"
+	hubclient "github.com/ukama/ukama/systems/common/rest/client/hub"
 	swclient "github.com/ukama/ukama/systems/node/software/pkg/client"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
 	"github.com/ukama/ukama/systems/node/software/providers"
@@ -42,7 +43,7 @@ type SoftwareServer struct {
 	appRepo              db.AppRepo
 	nodeRepo             db.NodeRepo
 	releaseRepo          db.ReleaseRepo
-	hub                  swclient.HubClient
+	hub                  hubclient.HubClient
 	nodeFeederRoutingKey msgbus.RoutingKeyBuilder
 	msgbus               mb.MsgBusServiceClient
 	healthClient         providers.HealthClientProvider
@@ -55,7 +56,7 @@ type SoftwareServer struct {
 	opDeadlineSecs       uint32
 }
 
-func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, appRepo db.AppRepo, nodeRepo db.NodeRepo, releaseRepo db.ReleaseRepo, hub swclient.HubClient, healthClient providers.HealthClientProvider, msgBus mb.MsgBusServiceClient, debug bool, nodeGwIP []string, opMgr swclient.OperationManager, opMon swclient.OperationMonitor, leaseSecs, deadlineSecs uint32) *SoftwareServer {
+func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, appRepo db.AppRepo, nodeRepo db.NodeRepo, releaseRepo db.ReleaseRepo, hub hubclient.HubClient, healthClient providers.HealthClientProvider, msgBus mb.MsgBusServiceClient, debug bool, nodeGwIP []string, opMgr swclient.OperationManager, opMon swclient.OperationMonitor, leaseSecs, deadlineSecs uint32) *SoftwareServer {
 	return &SoftwareServer{
 		sRepo:                sRepo,
 		debug:                debug,
