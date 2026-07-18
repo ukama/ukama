@@ -84,3 +84,17 @@ func (s *SoftwareManager) ListSoftware(nodeId string, status string, appName str
 	return s.client.GetSoftwareList(ctx, &pb.GetSoftwareListRequest{
 		NodeId: nodeId, Status: ukamapb.SoftwareStatus(ukamapb.SoftwareStatus_value[status]), AppName: appName})
 }
+
+func (s *SoftwareManager) PromoteRelease(name string, version string, atype string) (*pb.PromoteReleaseResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
+	return s.client.PromoteRelease(ctx, &pb.PromoteReleaseRequest{
+		Name: name, Version: version, Type: atype})
+}
+
+func (s *SoftwareManager) GetReleaseCatalog(name string, atype string) (*pb.GetReleaseCatalogResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
+	return s.client.GetReleaseCatalog(ctx, &pb.GetReleaseCatalogRequest{
+		Name: name, Type: atype})
+}
