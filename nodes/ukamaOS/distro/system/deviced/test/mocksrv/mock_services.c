@@ -1,6 +1,7 @@
 #include <ulfius.h>
 #include <jansson.h>
 #include <pthread.h>
+#include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -28,12 +29,35 @@ typedef struct {
     char last_body[2048];
 } MockService;
 
-static int cb_store_and_accepted(const struct _u_request *req, struct _u_response *resp, void *user_data) {
+static int cb_store_and_accepted(const struct _u_request *req,
+                                 struct _u_response *resp,
+                                 void *user_data) {
+
     MockService *ms = (MockService *)user_data;
     const char *path = req->http_url ? req->http_url : "";
+    const char *serviceName = NULL;
+    json_error_t error;
+    json_t *json = NULL;
+    json_t *service = NULL;
+    bool valid = false;
+
+    if (req->binary_body && req->binary_body_length > 0) {
+        json = json_loadb((const char *)req->binary_body,
+                          req->binary_body_length,
+                          0,
+                          &error);
+        if (json) {
+            service = json_object_get(json, "service_name");
+            if (json_is_string(service)) {
+                serviceName = json_string_value(service);
+                valid = serviceName && strcmp(serviceName, "deviced") == 0;
+            }
+        }
+    }
 
     pthread_mutex_lock(&ms->lock);
-    if (req->http_verb && strcmp(req->http_verb, "POST") == 0) {
+    if (valid && req->http_verb &&
+        strcmp(req->http_verb, "POST") == 0) {
         ms->notify_posts++;
     }
     snprintf(ms->last_path, sizeof(ms->last_path), "%s", path);
@@ -46,7 +70,9 @@ static int cb_store_and_accepted(const struct _u_request *req, struct _u_respons
     }
     pthread_mutex_unlock(&ms->lock);
 
-    ulfius_set_empty_body_response(resp, 202);
+    if (json) json_decref(json);
+
+    ulfius_set_empty_body_response(resp, valid ? 202 : 500);
     return U_CALLBACK_CONTINUE;
 }
 
@@ -156,8 +182,10 @@ int mock_noded_start(MockService *ms, int port) {
 
 int mock_notifyd_start(MockService *ms, int port) {
     if (start_instance(ms, port) != 0) return -1;
-    /* notify endpoint: /notify/v1/event/<serviceName>  */
-    ulfius_add_endpoint_by_val(&ms->inst, "POST", NULL, "/notify/v1/event/*", 0, &cb_store_and_accepted, ms);
+    /* Match the real notify.d endpoint and deviced identity. */
+    ulfius_add_endpoint_by_val(&ms->inst, "POST", NULL,
+                               "/v1/event/deviced", 0,
+                               &cb_store_and_accepted, ms);
     return start_mock(ms);
 }
 
