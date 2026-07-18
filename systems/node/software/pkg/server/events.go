@@ -45,10 +45,11 @@ func NewSoftwareEventServer(orgName string, s *SoftwareServer) *SoftwareUpdateEv
 func (n *SoftwareUpdateEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof(logMsgRoutingKey, e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
+	case msgbus.PrepareRoute(n.orgName, "event.cloud.global.{{ .Org}}.hub.artifactmanager.app.uploaded"):
+		return n.handleArtifactUploadedEvent(ctx, e)
 	case msgbus.PrepareRoute(n.orgName, "event.cloud.global.{{ .Org}}.hub.distributor.app.chunkready"):
 		return n.handleNodeAppChunkReadyEvent(ctx, e)
 	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline]):
-		log.Infof(logMsgRoutingKey, e.RoutingKey, e.Msg)
 		return n.handleNodeOnlineEvent(ctx, e)
 
 	default:
@@ -56,6 +57,15 @@ func (n *SoftwareUpdateEventServer) EventNotification(ctx context.Context, e *ep
 	}
 
 	return &epb.EventResponse{}, nil
+}
+
+// objectTypeFromRoutingKey extracts the artifact type from ...hub.<service>.<object>.<action>.
+func objectTypeFromRoutingKey(rk string) string {
+	parts := strings.Split(rk, ".")
+	if len(parts) >= 2 {
+		return parts[len(parts)-2]
+	}
+	return "app"
 }
 
 func (n *SoftwareUpdateEventServer) handleNodeOnlineEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
@@ -80,95 +90,83 @@ func (n *SoftwareUpdateEventServer) handleNodeOnlineEvent(ctx context.Context, e
 		log.Infof("Node %s already exists, reusing existing record", msg.NodeId)
 	}
 
-	time.AfterFunc(120*time.Second, func() {
-		if err := n.reconcileApps(msg.NodeId); err != nil {
-			log.Errorf("failed to reconcile apps for node %s: %v", msg.NodeId, err)
-		}
-		if err := n.reconcileSoftware(msg.NodeId); err != nil {
-			log.Errorf("failed to reconcile software for node %s: %v", msg.NodeId, err)
-		}
-	})
+	// Health-driven reconcile of installed apps/versions. Safe when health isn't ready
+	// yet (returns empty); the periodic reconcile and watchers converge later.
+	if err := n.reconcileApps(msg.NodeId); err != nil {
+		log.Errorf("failed to reconcile apps for node %s: %v", msg.NodeId, err)
+	}
+	if err := n.reconcileSoftware(msg.NodeId); err != nil {
+		log.Errorf("failed to reconcile software for node %s: %v", msg.NodeId, err)
+	}
+
+	// Catalog-driven: a newly-onboarded node immediately learns of available updates
+	// from the persistent desired-release store — the fix for the availability/timing break.
+	if err := n.applyDesiredToNode(msg.NodeId); err != nil {
+		log.Errorf("failed to apply desired to node %s: %v", msg.NodeId, err)
+	}
 
 	return &epb.EventResponse{}, nil
 }
 
-func (n *SoftwareUpdateEventServer) handleNodeAppChunkReadyEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	p := &epb.EventArtifactChunkReady{}
-	err := anypb.UnmarshalTo(e.Msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+// applyDesiredToNode sets each of the node's software rows to the fleet-wide desired
+// version (from the catalog) and flags UpdateAvailable where the node lags.
+func (n *SoftwareUpdateEventServer) applyDesiredToNode(nodeID string) error {
+	rows, err := n.s.sRepo.List(nodeID, ukama.Unknown, "")
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal node app chunk ready event: %w", err)
+		return err
 	}
-
-	log.Infof(logMsgRoutingKey, e.RoutingKey, p)
-
-	err = n.reconcileCurrentAppVersion()
-	if err != nil {
-		return nil, fmt.Errorf("failed to reconcile current app version: %w", err)
-	}
-
-	softwares, err := n.s.sRepo.List("", ukama.Unknown, p.Name)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get softwares: %w", err)
-	}
-
-	for _, software := range softwares {
-		software.DesiredVersion = p.Version
-		software.ReleaseDate = time.Now()
-		if validation.IsVersionMismatch(software.CurrentVersion, p.Version) {
-			software.Status = ukama.SoftwareStatusType(ukama.UpdateAvailable)
-			software.ChangeLogs = append(software.ChangeLogs, "New version "+p.Version+" available. Please update to the latest version.")
-		} else {
-			software.Status = ukama.SoftwareStatusType(ukama.UpToDate)
-		}
-
-		err = n.s.sRepo.Update(software)
-		if err != nil {
-			return nil, fmt.Errorf(errFailedUpdateSoftware, err)
-		}
-	}
-	log.Infof("Updated software update for app %s and version %s", p.Name, p.Version)
-
-	return &epb.EventResponse{}, nil
-}
-
-func (n *SoftwareUpdateEventServer) reconcileCurrentAppVersion() error {
-	log.Infof("Reconciling current App version for all nodes")
-
-	nodes, err := n.s.nodeRepo.List()
-	if err != nil {
-		return fmt.Errorf("failed to list nodes: %w", err)
-	}
-
-	for _, node := range nodes {
-		if err := n.reconcileCurrentVersionForNode(node.NodeId); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (n *SoftwareUpdateEventServer) reconcileCurrentVersionForNode(nodeID string) error {
-	cApps, err := n.listApps(nodeID)
-	if err != nil {
-		return fmt.Errorf("failed to list capps for node %s: %w", nodeID, err)
-	}
-
-	for _, capp := range cApps.Apps {
-		app, err := n.s.sRepo.List(nodeID, ukama.Unknown, capp.Name)
-		if err != nil {
-			return fmt.Errorf("failed to get app %s: %w", capp.Name, err)
-		}
-		if len(app) == 0 || app[0].CurrentVersion == capp.Version {
+	for _, sw := range rows {
+		d, err := n.s.releaseRepo.GetDesired(sw.AppName, "app")
+		if err != nil || d == nil {
 			continue
 		}
-
-		app[0].CurrentVersion = capp.Version
-		err = n.s.sRepo.Update(app[0])
-		if err != nil {
-			return fmt.Errorf(errFailedUpdateSoftware, err)
+		sw.DesiredVersion = d.DesiredVersion
+		if validation.IsVersionMismatch(sw.CurrentVersion, d.DesiredVersion) {
+			sw.Status = ukama.SoftwareStatusType(ukama.UpdateAvailable)
+		} else {
+			sw.Status = ukama.SoftwareStatusType(ukama.UpToDate)
+		}
+		if err := n.s.sRepo.Update(sw); err != nil {
+			log.Errorf("applyDesiredToNode: update %s: %v", sw.Id, err)
 		}
 	}
 	return nil
+}
+
+// handleArtifactUploadedEvent records availability only — it does NOT set desired
+// or touch any node's status. Promotion is an explicit, separate action.
+func (n *SoftwareUpdateEventServer) handleArtifactUploadedEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+	p := &epb.EventArtifactUploaded{}
+	if err := anypb.UnmarshalTo(e.Msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal artifact uploaded event: %w", err)
+	}
+	aType := objectTypeFromRoutingKey(e.RoutingKey)
+	if err := n.s.releaseRepo.Upsert(&db.ReleaseCatalog{
+		Name: p.Name, Type: aType, Version: p.Version, Available: true, UploadedAt: time.Now(),
+	}); err != nil {
+		return nil, fmt.Errorf("failed to upsert release catalog: %w", err)
+	}
+	log.Infof("catalog: %s/%s@%s recorded available", aType, p.Name, p.Version)
+	return &epb.EventResponse{}, nil
+}
+
+// handleNodeAppChunkReadyEvent only flags the catalog row as chunked — it no longer
+// drives any node's desired version.
+func (n *SoftwareUpdateEventServer) handleNodeAppChunkReadyEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+	p := &epb.EventArtifactChunkReady{}
+	if err := anypb.UnmarshalTo(e.Msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal node app chunk ready event: %w", err)
+	}
+	aType := objectTypeFromRoutingKey(e.RoutingKey)
+	// chunkready can arrive before uploaded — ensure the row exists, then flag it.
+	if err := n.s.releaseRepo.Upsert(&db.ReleaseCatalog{Name: p.Name, Type: aType, Version: p.Version, Available: true}); err != nil {
+		return nil, fmt.Errorf("failed to upsert release catalog: %w", err)
+	}
+	if err := n.s.releaseRepo.SetChunked(p.Name, aType, p.Version); err != nil {
+		return nil, fmt.Errorf("failed to mark chunked: %w", err)
+	}
+	log.Infof("catalog: %s/%s@%s chunk index ready", aType, p.Name, p.Version)
+	return &epb.EventResponse{}, nil
 }
 
 func (n *SoftwareUpdateEventServer) reconcileSoftware(nodeID string) error {
@@ -181,8 +179,6 @@ func (n *SoftwareUpdateEventServer) reconcileSoftware(nodeID string) error {
 		log.Infof("No apps found for node %s", nodeID)
 		return nil
 	}
-
-	
 
 	for _, capp := range hrApps.Apps {
 		listSoftware, err := n.s.sRepo.List(nodeID, ukama.Unknown, capp.Name)
@@ -210,7 +206,7 @@ func (n *SoftwareUpdateEventServer) reconcileSoftware(nodeID string) error {
 				Id:             listSoftware[0].Id,
 				NodeId:         nodeID,
 				AppName:        capp.Name,
-				CurrentVersion: capp.Tag,
+				CurrentVersion: capp.Version,
 				DesiredVersion: listSoftware[0].DesiredVersion,
 				ReleaseDate:    listSoftware[0].ReleaseDate,
 				Status:         listSoftware[0].Status,

@@ -90,6 +90,43 @@ func (_m *SoftwareServiceClient) GetAppList(ctx context.Context, in *gen.GetAppL
 	return r0, r1
 }
 
+// GetReleaseCatalog provides a mock function with given fields: ctx, in, opts
+func (_m *SoftwareServiceClient) GetReleaseCatalog(ctx context.Context, in *gen.GetReleaseCatalogRequest, opts ...grpc.CallOption) (*gen.GetReleaseCatalogResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetReleaseCatalog")
+	}
+
+	var r0 *gen.GetReleaseCatalogResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetReleaseCatalogRequest, ...grpc.CallOption) (*gen.GetReleaseCatalogResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetReleaseCatalogRequest, ...grpc.CallOption) *gen.GetReleaseCatalogResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetReleaseCatalogResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetReleaseCatalogRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetSoftwareList provides a mock function with given fields: ctx, in, opts
 func (_m *SoftwareServiceClient) GetSoftwareList(ctx context.Context, in *gen.GetSoftwareListRequest, opts ...grpc.CallOption) (*gen.GetSoftwareListResponse, error) {
 	_va := make([]interface{}, len(opts))
@@ -119,6 +156,43 @@ func (_m *SoftwareServiceClient) GetSoftwareList(ctx context.Context, in *gen.Ge
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSoftwareListRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// PromoteRelease provides a mock function with given fields: ctx, in, opts
+func (_m *SoftwareServiceClient) PromoteRelease(ctx context.Context, in *gen.PromoteReleaseRequest, opts ...grpc.CallOption) (*gen.PromoteReleaseResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PromoteRelease")
+	}
+
+	var r0 *gen.PromoteReleaseResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PromoteReleaseRequest, ...grpc.CallOption) (*gen.PromoteReleaseResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PromoteReleaseRequest, ...grpc.CallOption) *gen.PromoteReleaseResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.PromoteReleaseResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.PromoteReleaseRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

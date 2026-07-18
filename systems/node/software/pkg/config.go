@@ -16,18 +16,20 @@ import (
 )
 
 type Config struct {
-	uconf.BaseConfig `mapstructure:",squash"`
-	DB               *uconf.Database  `default:"{}"`
-	Grpc             *uconf.Grpc      `default:"{}"`
-	Queue            *uconf.Queue     `default:"{}"`
-	Timeout          time.Duration    `default:"20s"`
-	MsgClient        *uconf.MsgClient `default:"{}"`
-	OrgName          string           `default:"ukama"`
-	WimsiHost        string           `default:"http://wimsi:8080"`
-	Health           string           `default:"health:9090"`
-	NodeGwIPs        []string         `default:"[]"`
-	Service          *uconf.Service
-	Operation        OperationServices
+	uconf.BaseConfig  `mapstructure:",squash"`
+	DB                *uconf.Database  `default:"{}"`
+	Grpc              *uconf.Grpc      `default:"{}"`
+	Queue             *uconf.Queue     `default:"{}"`
+	Timeout           time.Duration    `default:"20s"`
+	MsgClient         *uconf.MsgClient `default:"{}"`
+	OrgName           string           `default:"ukama"`
+	WimsiHost         string           `default:"http://wimsi:8080"`
+	Health            string           `default:"health:9090"`
+	NodeGwIPs         []string         `default:"[]"`
+	Service           *uconf.Service
+	Operation         OperationServices
+	Http              HttpServices
+	ReconcileInterval time.Duration `default:"5m"`
 }
 
 type OperationServices struct {
@@ -36,6 +38,12 @@ type OperationServices struct {
 	Timeout      time.Duration `default:"5s"`
 	LeaseSecs    uint32        `default:"1800"`
 	DeadlineSecs uint32        `default:"1800"`
+}
+
+// HttpServices holds direct HTTP endpoints. Hub is a global system, so its
+// api-gateway host is passed directly (env HTTP_HUBHOST), not via init-client.
+type HttpServices struct {
+	HubHost string `default:"http://api-gateway-hub:8080"`
 }
 
 func NewConfig(name string) *Config {
@@ -50,6 +58,7 @@ func NewConfig(name string) *Config {
 			ListenerRoutes: []string{
 				evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline],
 				"event.cloud.global.{{ .Org}}.hub.distributor.app.chunkready",
+				"event.cloud.global.{{ .Org}}.hub.artifactmanager.app.uploaded",
 			},
 		},
 	}

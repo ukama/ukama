@@ -41,6 +41,8 @@ type SoftwareServer struct {
 	sRepo                db.SoftwareRepo
 	appRepo              db.AppRepo
 	nodeRepo             db.NodeRepo
+	releaseRepo          db.ReleaseRepo
+	hub                  swclient.HubClient
 	nodeFeederRoutingKey msgbus.RoutingKeyBuilder
 	msgbus               mb.MsgBusServiceClient
 	healthClient         providers.HealthClientProvider
@@ -53,13 +55,15 @@ type SoftwareServer struct {
 	opDeadlineSecs       uint32
 }
 
-func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, appRepo db.AppRepo, nodeRepo db.NodeRepo, healthClient providers.HealthClientProvider, msgBus mb.MsgBusServiceClient, debug bool, nodeGwIP []string, opMgr swclient.OperationManager, opMon swclient.OperationMonitor, leaseSecs, deadlineSecs uint32) *SoftwareServer {
+func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, appRepo db.AppRepo, nodeRepo db.NodeRepo, releaseRepo db.ReleaseRepo, hub swclient.HubClient, healthClient providers.HealthClientProvider, msgBus mb.MsgBusServiceClient, debug bool, nodeGwIP []string, opMgr swclient.OperationManager, opMon swclient.OperationMonitor, leaseSecs, deadlineSecs uint32) *SoftwareServer {
 	return &SoftwareServer{
 		sRepo:                sRepo,
 		debug:                debug,
 		msgbus:               msgBus,
 		appRepo:              appRepo,
 		nodeRepo:             nodeRepo,
+		releaseRepo:          releaseRepo,
+		hub:                  hub,
 		healthClient:         healthClient,
 		orgName:              orgName,
 		nodeGwIPs:            nodeGwIP,
@@ -69,6 +73,159 @@ func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, appRepo db.AppRepo
 		opLeaseSecs:          leaseSecs,
 		opDeadlineSecs:       deadlineSecs,
 	}
+}
+
+const DefaultReconcileInterval = 5 * time.Minute
+
+// RunReleaseReconcile periodically pulls the Hub catalog (via api-gateway) and
+// backfills the Release Catalog — recovering availability signals missed while this
+// service was down. Runs until ctx is cancelled.
+func (s *SoftwareServer) RunReleaseReconcile(ctx context.Context, interval time.Duration) {
+	if s.hub == nil {
+		log.Warn("hub client not configured; release reconcile disabled")
+		return
+	}
+	if interval <= 0 {
+		interval = DefaultReconcileInterval
+	}
+	t := time.NewTicker(interval)
+	defer t.Stop()
+	log.Infof("Release reconcile running every %s", interval)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+			s.reconcileCatalogOnce()
+		}
+	}
+}
+
+func (s *SoftwareServer) reconcileCatalogOnce() {
+	for _, aType := range []string{"app", "cert"} {
+		names, err := s.hub.ListApps(aType)
+		if err != nil {
+			log.Errorf("reconcile: list apps %s: %v", aType, err)
+			continue
+		}
+		for _, name := range names {
+			versions, err := s.hub.ListVersions(name, aType)
+			if err != nil {
+				log.Errorf("reconcile: list versions %s/%s: %v", aType, name, err)
+				continue
+			}
+			for _, v := range versions {
+				if err := s.releaseRepo.Upsert(&db.ReleaseCatalog{
+					Name: name, Type: aType, Version: v.Version,
+					SizeBytes: v.SizeBytes, Available: true,
+				}); err != nil {
+					log.Errorf("reconcile: upsert %s/%s@%s: %v", aType, name, v.Version, err)
+					continue
+				}
+				if v.Chunked {
+					_ = s.releaseRepo.SetChunked(name, aType, v.Version)
+				}
+			}
+		}
+	}
+}
+
+// recomputeDesiredForApp copies the fleet-wide desired version onto every node's
+// software row for this app and flags UpdateAvailable where the node lags.
+func (s *SoftwareServer) recomputeDesiredForApp(name, desired string) {
+	rows, err := s.sRepo.List("", ukama.Unknown, name)
+	if err != nil {
+		log.Errorf("recompute: list software %s: %v", name, err)
+		return
+	}
+	for _, sw := range rows {
+		sw.DesiredVersion = desired
+		if validation.IsVersionMismatch(sw.CurrentVersion, desired) {
+			sw.Status = ukama.SoftwareStatusType(ukama.UpdateAvailable)
+		} else {
+			sw.Status = ukama.SoftwareStatusType(ukama.UpToDate)
+		}
+		if err := s.sRepo.Update(sw); err != nil {
+			log.Errorf("recompute: update %s: %v", sw.Id, err)
+		}
+	}
+}
+
+// ResumeInProgressUpdates re-attaches watchers for updates that were mid-flight when
+// the service last stopped, so a restart doesn't strand them in UpdateInProgress.
+func (s *SoftwareServer) ResumeInProgressUpdates() {
+	rows, err := s.sRepo.List("", ukama.SoftwareStatusType(ukama.UpdateInProgress), "")
+	if err != nil {
+		log.Errorf("resume watches: list in-progress: %v", err)
+		return
+	}
+	for _, sw := range rows {
+		expiry := time.Now().Add(DefaultUpdateWatchExpiry)
+		log.Infof("resume watch for record=%s node=%s app=%s -> %s", sw.Id, sw.NodeId, sw.AppName, sw.DesiredVersion)
+		go s.watchSoftwareUpdate(sw.Id, sw.NodeId, sw.AppName, sw.DesiredVersion, expiry, DefaultUpdateWatchInterval)
+	}
+}
+
+func (s *SoftwareServer) PromoteRelease(ctx context.Context, req *pb.PromoteReleaseRequest) (*pb.PromoteReleaseResponse, error) {
+	rtype := req.Type
+	if rtype == "" {
+		rtype = "app"
+	}
+	log.Infof("PromoteRelease app=%s version=%s type=%s", req.Name, req.Version, rtype)
+
+	// Availability is separate from desired: only promote versions that actually exist in the Hub.
+	if s.hub != nil {
+		ok, err := s.hub.VersionExists(req.Name, rtype, req.Version)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "hub existence check failed: %v", err)
+		}
+		if !ok {
+			return nil, status.Errorf(codes.NotFound, "version %s of %s not found in hub", req.Version, req.Name)
+		}
+	}
+
+	_ = s.releaseRepo.Upsert(&db.ReleaseCatalog{Name: req.Name, Type: rtype, Version: req.Version, Available: true})
+	if err := s.releaseRepo.SetDesired(&db.AppDesiredRelease{
+		Name: req.Name, Type: rtype, DesiredVersion: req.Version,
+		PromotedAt: time.Now(), PromotedBy: pkg.ServiceName,
+	}); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to set desired: %v", err)
+	}
+
+	s.recomputeDesiredForApp(req.Name, req.Version)
+
+	return &pb.PromoteReleaseResponse{
+		Message:        "Release promoted",
+		Name:           req.Name,
+		DesiredVersion: req.Version,
+	}, nil
+}
+
+func (s *SoftwareServer) GetReleaseCatalog(ctx context.Context, req *pb.GetReleaseCatalogRequest) (*pb.GetReleaseCatalogResponse, error) {
+	rows, err := s.releaseRepo.List(req.Name, req.Type)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to list catalog: %v", err)
+	}
+	desiredByKey := map[string]string{}
+	if ds, err := s.releaseRepo.ListDesired(); err == nil {
+		for _, d := range ds {
+			desiredByKey[d.Name+"|"+d.Type] = d.DesiredVersion
+		}
+	}
+	out := make([]*pb.Release, 0, len(rows))
+	for i := range rows {
+		r := rows[i]
+		out = append(out, &pb.Release{
+			Name:       r.Name,
+			Type:       r.Type,
+			Version:    r.Version,
+			Available:  r.Available,
+			Chunked:    r.Chunked,
+			Desired:    desiredByKey[r.Name+"|"+r.Type] == r.Version,
+			UploadedAt: r.UploadedAt.Format(time.RFC3339),
+		})
+	}
+	return &pb.GetReleaseCatalogResponse{Releases: out}, nil
 }
 
 func (s *SoftwareServer) acquireAndRegister(actionType, resourceKey string) (*opmgrpb.Operation, error) {
