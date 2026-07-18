@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -21,7 +22,6 @@ import (
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/ukama"
 	hpb "github.com/ukama/ukama/systems/node/health/pb/gen"
-	healthmocks "github.com/ukama/ukama/systems/node/health/pb/gen/mocks"
 	"github.com/ukama/ukama/systems/node/software/mocks"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -34,24 +34,22 @@ var (
 	routeUploaded   = msgbus.PrepareRoute(testOrgName, "event.cloud.global.{{ .Org}}.hub.artifactmanager.app.uploaded")
 )
 
-// newEventServer builds an event server with permissive reconcile-path mocks
-// (health returns no apps, so node-online reconcile is a no-op).
+// fakeHealthProvider makes the node-online reconcile a no-op: GetClient errors, so
+// listApps returns an error the handler logs and moves past.
+type fakeHealthProvider struct{}
+
+func (fakeHealthProvider) GetClient() (hpb.HealthServiceClient, error) {
+	return nil, errors.New("health disabled in test")
+}
+
 func newEventServer(t *testing.T, sRepo *mocks.SoftwareRepo, releaseRepo *mocks.ReleaseRepo) *SoftwareUpdateEventServer {
 	t.Helper()
 
 	nodeRepo := mocks.NewNodeRepo(t)
 	nodeRepo.On("Create", mock.Anything).Return(nil).Maybe()
 
-	appRepo := mocks.NewAppRepo(t)
-	appRepo.On("GetAll").Return([]db.App{}, nil).Maybe()
-
-	health := mocks.NewHealthClientProvider(t)
-	hc := healthmocks.NewHealthServiceClient(t)
-	health.On("GetClient").Return(hc, nil).Maybe()
-	hc.On("ListApps", mock.Anything, mock.Anything).Return(&hpb.ListAppsResponse{}, nil).Maybe()
-
-	swServer := NewSoftwareServer(testOrgName, sRepo, appRepo, nodeRepo, releaseRepo, nil, health,
-		mbmocks.NewMsgBusServiceClient(t), false, []string{testNodeGwIP}, nil, nil, 0, 0)
+	swServer := NewSoftwareServer(testOrgName, sRepo, mocks.NewAppRepo(t), nodeRepo, releaseRepo, nil,
+		fakeHealthProvider{}, mbmocks.NewMsgBusServiceClient(t), false, []string{testNodeGwIP}, nil, nil, 0, 0)
 	return NewSoftwareEventServer(testOrgName, swServer)
 }
 
