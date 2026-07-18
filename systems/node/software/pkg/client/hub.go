@@ -14,6 +14,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -75,13 +76,15 @@ func (h *hubClient) ListApps(artifactType string) ([]string, error) {
 }
 
 // GET /v1/hub/{type}/{name}  -> {"versions":[{"version","FormatInfo":[{"type","size"}]}]}
+// NOTE: the Hub serializes int64 (FormatInfo.size) as a JSON *string* (protobuf JSON
+// rule for 64-bit ints), so size is decoded as RawMessage and parsed defensively.
 func (h *hubClient) ListVersions(name, artifactType string) ([]HubRelease, error) {
 	var body struct {
 		Versions []struct {
 			Version string `json:"version"`
 			Formats []struct {
-				Type string `json:"type"`
-				Size int64  `json:"size"`
+				Type string          `json:"type"`
+				Size json.RawMessage `json:"size"`
 			} `json:"FormatInfo"`
 		} `json:"versions"`
 	}
@@ -96,8 +99,8 @@ func (h *hubClient) ListVersions(name, artifactType string) ([]HubRelease, error
 	for _, v := range body.Versions {
 		rel := HubRelease{Name: name, Type: artifactType, Version: v.Version}
 		for _, f := range v.Formats {
-			if f.Size > 0 {
-				rel.SizeBytes = f.Size
+			if n := parseFlexibleInt64(f.Size); n > 0 {
+				rel.SizeBytes = n
 			}
 			if f.Type == "chunk" {
 				rel.Chunked = true
@@ -106,6 +109,20 @@ func (h *hubClient) ListVersions(name, artifactType string) ([]HubRelease, error
 		out = append(out, rel)
 	}
 	return out, nil
+}
+
+// parseFlexibleInt64 accepts a JSON number or a JSON-quoted number ("1700"),
+// returning 0 when absent or unparseable.
+func parseFlexibleInt64(raw json.RawMessage) int64 {
+	s := strings.Trim(strings.TrimSpace(string(raw)), `"`)
+	if s == "" || s == "null" {
+		return 0
+	}
+	n, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return 0
+	}
+	return n
 }
 
 func (h *hubClient) VersionExists(name, artifactType, version string) (bool, error) {
