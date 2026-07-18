@@ -23,6 +23,7 @@ type IntentRepo interface {
 	FindWatchingByResource(resourceKey string) ([]MonitoredIntent, error)
 	MarkTerminal(operationId uuid.UUID, status IntentStatus) (*MonitoredIntent, error)
 	FindExpired(now time.Time, limit int) ([]MonitoredIntent, error)
+	Arm(operationId uuid.UUID) error
 }
 
 type intentRepo struct {
@@ -51,6 +52,13 @@ func (r *intentRepo) FindWatchingByResource(resourceKey string) ([]MonitoredInte
 		Where("resource_key = ? AND status = ?", resourceKey, IntentWatching).
 		Find(&intents).Error
 	return intents, err
+}
+
+func (r *intentRepo) Arm(operationId uuid.UUID) error {
+	return r.db.GetGormDb().
+		Model(&MonitoredIntent{}).
+		Where("operation_id = ? AND status = ? AND armed = false", operationId, IntentWatching).
+		Update("armed", true).Error
 }
 
 func (r *intentRepo) MarkTerminal(operationId uuid.UUID, status IntentStatus) (*MonitoredIntent, error) {

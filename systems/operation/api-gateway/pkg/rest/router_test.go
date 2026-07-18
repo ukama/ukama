@@ -100,6 +100,10 @@ func (f *fakeManager) ForceUnlock(id, actor, reason string) (*pb.ForceUnlockResp
 	return &pb.ForceUnlockResponse{Operation: &pb.Operation{Id: id}}, nil
 }
 
+func (f *fakeManager) Complete(id, actor, reason string) (*pb.ForceUnlockResponse, error) {
+	return &pb.ForceUnlockResponse{Operation: &pb.Operation{Id: id}}, nil
+}
+
 func newTestRouter(mgr *fakeManager) *Router {
 	return &Router{
 		clients: &Clients{

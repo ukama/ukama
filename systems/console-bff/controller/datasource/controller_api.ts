@@ -19,6 +19,21 @@ import {
 const CONTROLLER = "controller";
 const SITES = "sites";
 
+/**
+ * Extracts the gateway's error reason (e.g. "resource is locked by an active
+ * operation" on 409) so the console can show why an action was rejected
+ * instead of a bare success=false.
+ */
+const failureReason = (error: unknown): string => {
+  const err = error as {
+    extensions?: { response?: { body?: { error?: string } } };
+    message?: string;
+  };
+  return (
+    err?.extensions?.response?.body?.error ?? err?.message ?? "request failed"
+  );
+};
+
 class ControllerApi extends BaseRESTDataSource {
   restartNode = async (
     baseURL: string,
@@ -33,8 +48,9 @@ class ControllerApi extends BaseRESTDataSource {
         return { success: true };
       })
       .catch(error => {
-        this.logger.error(`Request failed: ${error}`);
-        return { success: false };
+        const message = failureReason(error);
+        this.logger.error(`Request failed: ${message}`);
+        return { success: false, message };
       });
   };
 
@@ -51,8 +67,9 @@ class ControllerApi extends BaseRESTDataSource {
         return { success: true };
       })
       .catch(error => {
-        this.logger.error(`Request failed: ${error}`);
-        return { success: false };
+        const message = failureReason(error);
+        this.logger.error(`Request failed: ${message}`);
+        return { success: false, message };
       });
   };
 
@@ -75,8 +92,9 @@ class ControllerApi extends BaseRESTDataSource {
         return { success: true };
       })
       .catch(error => {
-        this.logger.error(`Request failed: ${error}`);
-        return { success: false };
+        const message = failureReason(error);
+        this.logger.error(`Request failed: ${message}`);
+        return { success: false, message };
       });
   };
   toggleRFStatus = async (
@@ -94,8 +112,9 @@ class ControllerApi extends BaseRESTDataSource {
         return { success: true };
       })
       .catch(error => {
-        this.logger.error(`Request failed: ${error}`);
-        return { success: false };
+        const message = failureReason(error);
+        this.logger.error(`Request failed: ${message}`);
+        return { success: false, message };
       });
   };
   toggleService = async (
@@ -113,8 +132,9 @@ class ControllerApi extends BaseRESTDataSource {
         return { success: true };
       })
       .catch(error => {
-        this.logger.error(`Request failed: ${error}`);
-        return { success: false };
+        const message = failureReason(error);
+        this.logger.error(`Request failed: ${message}`);
+        return { success: false, message };
       });
   };
   setSite = async (
@@ -132,8 +152,9 @@ class ControllerApi extends BaseRESTDataSource {
         return { success: true };
       })
       .catch(error => {
-        this.logger.error(`Request failed: ${error}`);
-        return { success: false };
+        const message = failureReason(error);
+        this.logger.error(`Request failed: ${message}`);
+        return { success: false, message };
       });
   };
 }

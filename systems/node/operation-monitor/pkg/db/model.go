@@ -58,6 +58,11 @@ type MonitoredIntent struct {
 	FencingToken   uint64         `gorm:"not null" json:"fencingToken"`
 	CompletionRule string         `gorm:"not null" json:"completionRule"`
 	Status         IntentStatus   `gorm:"not null;index" json:"status"`
+	// Armed flips true once the node is observed OUTSIDE the rule's target
+	// state. A rule match only completes an armed intent, so a steady-state
+	// report (e.g. an online heartbeat before a reboot begins) can't
+	// prematurely complete a freshly registered intent.
+	Armed          bool           `gorm:"not null;default:false" json:"armed"`
 	Deadline       time.Time      `gorm:"not null;index" json:"deadline"`
 	CreatedAt      time.Time      `json:"createdAt"`
 	UpdatedAt      time.Time      `json:"updatedAt"`
