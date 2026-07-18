@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <string.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include "log.h"
@@ -32,8 +32,36 @@ static int create_container_file(char *target,
                                  Node *node,
                                  RuntimeType runtime);
 static int stage_starter_pkgs(Configs *configs);
+static int run_command(const char *command);
 static int is_tower_node(Node *node);
 static int add_tower_network_pkgs(char *target, FILE *fp);
+
+static int run_command(const char *command) {
+
+    int status;
+
+    if (command == NULL || command[0] == '\0') {
+        return FALSE;
+    }
+
+    status = system(command);
+    if (status == -1) {
+        log_error("Unable to execute command: %s", command);
+        return FALSE;
+    }
+
+    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+        if (WIFEXITED(status)) {
+            log_error("Command exited with status %d: %s",
+                      WEXITSTATUS(status), command);
+        } else {
+            log_error("Command terminated abnormally: %s", command);
+        }
+        return FALSE;
+    }
+
+    return TRUE;
+}
 
 static int is_tower_node(Node *node) {
 
@@ -149,9 +177,7 @@ static int stage_starter_pkgs(Configs *configs) {
     Configs *ptr = NULL;
     char runMe[MAX_BUFFER] = {0};
     char src[MAX_BUFFER] = {0};
-    char src_alt[MAX_BUFFER] = {0};
     char dst[MAX_BUFFER] = {0};
-    const char *pkg_src = NULL;
 
     if (configs == NULL) {
         return FALSE;
@@ -171,17 +197,8 @@ static int stage_starter_pkgs(Configs *configs) {
                  ptr->config->capp->name,
                  ptr->config->capp->version);
 
-        snprintf(src_alt, sizeof(src_alt), "./pkgs/%s_%s.tar.gz",
-                 ptr->config->capp->name,
-                 ptr->config->capp->version);
-
-        if (access(src, F_OK) == 0) {
-            pkg_src = src;
-        } else if (access(src_alt, F_OK) == 0) {
-            pkg_src = src_alt;
-        } else {
-            log_error("Unable to find starter package: %s or %s",
-                      src, src_alt);
+        if (access(src, F_OK) != 0) {
+            log_error("Unable to find starter package: %s", src);
             return FALSE;
         }
 
@@ -189,9 +206,10 @@ static int stage_starter_pkgs(Configs *configs) {
                  ptr->config->capp->name,
                  ptr->config->capp->version);
 
-        snprintf(runMe, sizeof(runMe), "%s cp %s %s", SCRIPT, pkg_src, dst);
-        if (system(runMe) != 0) {
-            log_error("Unable to stage package: %s", pkg_src);
+        snprintf(runMe, sizeof(runMe), "%s cp \"%s\" \"%s\"",
+                 SCRIPT, src, dst);
+        if (!run_command(runMe)) {
+            log_error("Unable to stage package: %s", src);
             return FALSE;
         }
     }
@@ -401,7 +419,7 @@ int create_vnode_image(char *target,
 
 	/* Step:0 clean and build the needed tools */
 	sprintf(runMe, "%s init", SCRIPT);
-	if (system(runMe) < 0) goto failure;
+	if (!run_command(runMe)) goto failure;
 
 	/* Step:1 create sys using prepare_env.sh */
 	/* 'sysfs type uuid module_metadata' */
@@ -414,11 +432,11 @@ int create_vnode_image(char *target,
 	}
 
     sprintf(runMe, "%s ukamadirs %s %s", SCRIPT, nodeInfo->uuid, bootstrapServer);
-	if (system(runMe) < 0) goto failure;
+	if (!run_command(runMe)) goto failure;
 
     /* build apps pkg */
     sprintf(runMe, "%s apps-pkg", SCRIPT);
-	if (system(runMe) < 0) goto failure;
+	if (!run_command(runMe)) goto failure;
 
     if (runtime == RUNTIME_STARTER) {
         if (!stage_starter_pkgs(config)) {
@@ -428,7 +446,7 @@ int create_vnode_image(char *target,
     }
 
 	sprintf(runMe, "%s sysfs %s %s", SCRIPT, nodeInfo->type, nodeInfo->uuid);
-	if (system(runMe) < 0) goto failure;
+	if (!run_command(runMe)) goto failure;
 
 	/* Step:2 create the container file */
 	if (!create_container_file(target, config, node, runtime)) {
@@ -439,11 +457,11 @@ int create_vnode_image(char *target,
 	/* Step:3 run buildah */
 	/* build container_file uuid */
 	sprintf(runMe, "%s build %s %s", SCRIPT, CONTAINER_FILE, nodeInfo->uuid);
-	if (system(runMe) != 0) goto failure;
+	if (!run_command(runMe)) goto failure;
 
 	/* Step:4 push image to the registry */
 	sprintf(runMe, "%s push %s %s", SCRIPT, nodeInfo->uuid, runTarget);
-	if (system(runMe) != 0) goto failure;
+	if (!run_command(runMe)) goto failure;
 
 	if (buffer) free(buffer);
 	return TRUE;

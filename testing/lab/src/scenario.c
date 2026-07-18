@@ -14,6 +14,72 @@
 #include "log.h"
 #include "util.h"
 
+
+static int expand_environment(const char *input,
+                              char *output,
+                              size_t output_len,
+                              char *missing,
+                              size_t missing_len) {
+    size_t in_pos;
+    size_t out_pos;
+
+    if (input == NULL || output == NULL || output_len == 0) {
+        return ULAB_ERR;
+    }
+
+    in_pos = 0;
+    out_pos = 0;
+    while (input[in_pos] != '\0') {
+        if (input[in_pos] == '$' && input[in_pos + 1] == '{') {
+            char name[ULAB_MAX_REF];
+            const char *value;
+            size_t name_len;
+            size_t value_len;
+            size_t end;
+
+            end = in_pos + 2;
+            while (input[end] != '\0' && input[end] != '}') {
+                end++;
+            }
+            if (input[end] != '}') {
+                return ULAB_ERR;
+            }
+
+            name_len = end - (in_pos + 2);
+            if (name_len == 0 || name_len >= sizeof(name)) {
+                return ULAB_ERR;
+            }
+            memcpy(name, input + in_pos + 2, name_len);
+            name[name_len] = '\0';
+
+            value = getenv(name);
+            if (value == NULL) {
+                if (missing != NULL && missing_len > 0) {
+                    ulab_copy(missing, missing_len, name);
+                }
+                return ULAB_ERR;
+            }
+
+            value_len = strlen(value);
+            if (out_pos + value_len + 1 > output_len) {
+                return ULAB_ERR;
+            }
+            memcpy(output + out_pos, value, value_len);
+            out_pos += value_len;
+            in_pos = end + 1;
+            continue;
+        }
+
+        if (out_pos + 2 > output_len) {
+            return ULAB_ERR;
+        }
+        output[out_pos++] = input[in_pos++];
+    }
+
+    output[out_pos] = '\0';
+    return ULAB_OK;
+}
+
 typedef enum {
     SEC_NONE = 0,
     SEC_WORLD,
@@ -469,6 +535,8 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
     }
 
     while (fgets(line, sizeof(line), fp) != NULL) {
+        char expanded[ULAB_MAX_LINE];
+        char missing[ULAB_MAX_REF];
         char *key;
         char *val;
         char *p;
@@ -476,6 +544,26 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
 
         lineno++;
         strip_comment(line);
+        memset(missing, 0, sizeof(missing));
+        if (expand_environment(line, expanded, sizeof(expanded),
+                               missing, sizeof(missing)) != ULAB_OK) {
+            if (missing[0] != '\0') {
+                snprintf(err->msg, sizeof(err->msg),
+                         "line %d: missing environment variable %s",
+                         lineno, missing);
+            } else {
+                snprintf(err->msg, sizeof(err->msg),
+                         "line %d: invalid environment expansion", lineno);
+            }
+            fclose(fp);
+            return ULAB_ERR;
+        }
+        if (ulab_copy(line, sizeof(line), expanded) != ULAB_OK) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "line %d: expanded line too long", lineno);
+            fclose(fp);
+            return ULAB_ERR;
+        }
         p = ulab_trim(line);
         if (*p == '\0') {
             continue;

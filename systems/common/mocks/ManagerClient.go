@@ -12,6 +12,36 @@ type ManagerClient struct {
 	mock.Mock
 }
 
+// Complete provides a mock function with given fields: id, actor, reason
+func (_m *ManagerClient) Complete(id string, actor string, reason string) (*operation.OperationInfo, error) {
+	ret := _m.Called(id, actor, reason)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Complete")
+	}
+
+	var r0 *operation.OperationInfo
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, string) (*operation.OperationInfo, error)); ok {
+		return rf(id, actor, reason)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, string) *operation.OperationInfo); ok {
+		r0 = rf(id, actor, reason)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*operation.OperationInfo)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
+		r1 = rf(id, actor, reason)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ForceUnlock provides a mock function with given fields: id, actor, reason
 func (_m *ManagerClient) ForceUnlock(id string, actor string, reason string) (*operation.OperationInfo, error) {
 	ret := _m.Called(id, actor, reason)

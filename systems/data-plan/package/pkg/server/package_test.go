@@ -14,21 +14,21 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"gorm.io/gorm"
+
 	"github.com/ukama/ukama/systems/common/grpc"
-	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	"github.com/ukama/ukama/systems/data-plan/package/mocks"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"gorm.io/gorm"
-
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	ukama "github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
+	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
 	rpb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
 	splmocks "github.com/ukama/ukama/systems/data-plan/rate/pb/gen/mocks"
@@ -562,6 +562,7 @@ func TestPackageServer_Add(t *testing.T) {
 			Active:     true,
 			Name:       TestPackageName,
 			SimType:    TestSimType,
+			Duration:   1,
 			OwnerId:    ownerId,
 			BaserateId: baserate,
 			Country:    TestCountry,
@@ -715,6 +716,7 @@ func TestPackageServer_Add(t *testing.T) {
 
 		req := &pb.AddPackageRequest{
 			OwnerId:    uuid.NewV4().String(),
+			Duration:   1,
 			BaserateId: uuid.NewV4().String(),
 			From:       fixedFromTime.Format(time.RFC3339),
 			To:         fixedToTime.Format(time.RFC3339),
@@ -738,6 +740,7 @@ func TestPackageServer_Add(t *testing.T) {
 
 		req := &pb.AddPackageRequest{
 			OwnerId:    ownerId,
+			Duration:   1,
 			BaserateId: baserate,
 			From:       fixedFromTime.Format(time.RFC3339),
 			To:         fixedToTime.Format(time.RFC3339),
@@ -767,6 +770,7 @@ func TestPackageServer_Add(t *testing.T) {
 		req := &pb.AddPackageRequest{
 			Name:       TestPackageName,
 			OwnerId:    ownerId,
+			Duration:   1,
 			BaserateId: baserate,
 			From:       fixedFromTime.Format(time.RFC3339),
 			To:         fixedToTime.Format(time.RFC3339),
@@ -808,6 +812,7 @@ func TestPackageServer_Add(t *testing.T) {
 			Name:       TestFlatratePackageName,
 			OwnerId:    ownerId,
 			BaserateId: baserate,
+			Duration:   1,
 			Flatrate:   true, // Test flatrate package
 			From:       fixedFromTime.Format(time.RFC3339),
 			To:         fixedToTime.Format(time.RFC3339),
@@ -850,6 +855,7 @@ func TestPackageServer_Add(t *testing.T) {
 		req := &pb.AddPackageRequest{
 			Name:       TestPackageName,
 			OwnerId:    ownerId,
+			Duration:   1,
 			BaserateId: baserate,
 			NetworkId:  networkId.String(),
 			From:       fixedFromTime.Format(time.RFC3339),
@@ -888,6 +894,7 @@ func TestPackageServer_Add(t *testing.T) {
 			Name:       TestPackageName,
 			OwnerId:    ownerId,
 			BaserateId: baserate,
+			Duration:   1,
 			NetworkId:  networkId.String(),
 			From:       fixedFromTime.Format(time.RFC3339),
 			To:         fixedToTime.Format(time.RFC3339),
@@ -923,6 +930,7 @@ func TestPackageServer_Add(t *testing.T) {
 		req := &pb.AddPackageRequest{
 			Name:       TestPackageName,
 			OwnerId:    ownerId,
+			Duration:   1,
 			BaserateId: baserate,
 			From:       fixedFromTime.Format(time.RFC3339),
 			To:         fixedToTime.Format(time.RFC3339),
@@ -954,6 +962,7 @@ func TestPackageServer_Add(t *testing.T) {
 
 		req := &pb.AddPackageRequest{
 			Name:       TestPackageName,
+			Duration:   1,
 			OwnerId:    uuid.NewV4().String(),
 			BaserateId: uuid.NewV4().String(),
 			NetworkId:  "invalid-uuid",
@@ -979,6 +988,7 @@ func TestPackageServer_Add(t *testing.T) {
 		req := &pb.AddPackageRequest{
 			Name:       TestPackageName,
 			OwnerId:    ownerId,
+			Duration:   1,
 			BaserateId: baserate,
 			From:       fixedFromTime.Format(time.RFC3339),
 			To:         fixedToTime.Format(time.RFC3339),
@@ -1015,6 +1025,7 @@ func TestPackageServer_Add(t *testing.T) {
 		req := &pb.AddPackageRequest{
 			Name:       "   ",
 			OwnerId:    ownerId,
+			Duration:   1,
 			BaserateId: baserate,
 			From:       fixedFromTime.Format(time.RFC3339),
 			To:         fixedToTime.Format(time.RFC3339),

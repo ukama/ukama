@@ -30,6 +30,7 @@ static void usage(void) {
     printf("  --repo <dir>          ukama repo root path (MUST)\n");
     printf("  --seed <n>            override scenario seed\n");
     printf("  --bff <url>           BFF GraphQL endpoint\n");
+    printf("  --hub-url <url>       Hub API base URL\n");
     printf("  --out <dir>           output directory\n");
     printf("  --run-id <id>         fixed run id; existing created.json is cleaned first\n");
     printf("  --scripts <dir>       runtime script directory\n");
@@ -55,6 +56,9 @@ static void opts_init(runner_opts_t *o) {
     ulab_copy(o->bff_url, sizeof(o->bff_url),
               ulab_getenv_default("UKAMA_LAB_BFF",
                                   "http://localhost:8080/graphql"));
+    ulab_copy(o->hub_url, sizeof(o->hub_url),
+              ulab_getenv_default("UKAMA_LAB_HUB_URL",
+                                  "https://hub-ukama.udev.ukama.com"));
     ulab_copy(o->out_dir, sizeof(o->out_dir),
               ulab_getenv_default("UKAMA_LAB_OUT", "runs"));
     ulab_copy(o->script_dir, sizeof(o->script_dir),
@@ -82,6 +86,8 @@ static int parse_opts(int argc, char **argv, int start, runner_opts_t *o) {
             o->has_seed_override = 1;
         } else if (ulab_streq(argv[i], "--bff") && i + 1 < argc) {
             ulab_copy(o->bff_url, sizeof(o->bff_url), argv[++i]);
+        } else if (ulab_streq(argv[i], "--hub-url") && i + 1 < argc) {
+            ulab_copy(o->hub_url, sizeof(o->hub_url), argv[++i]);
         } else if (ulab_streq(argv[i], "--out") && i + 1 < argc) {
             ulab_copy(o->out_dir, sizeof(o->out_dir), argv[++i]);
         } else if (ulab_streq(argv[i], "--run-id") && i + 1 < argc) {

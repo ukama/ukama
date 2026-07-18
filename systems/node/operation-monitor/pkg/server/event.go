@@ -73,6 +73,23 @@ func (e *EventServer) handleStateTransition(_ context.Context, event *epb.Event)
 	for i := range intents {
 		intent := &intents[i]
 		if !ruleMatches(intent.CompletionRule, transition) {
+			// The node is outside the rule's target state: arm the intent so
+			// the NEXT match completes it. Without this, a steady-state report
+			// (e.g. an online heartbeat arriving between lock acquisition and
+			// the reboot actually starting) would complete a fresh intent
+			// before the action ever ran.
+			if !intent.Armed {
+				if err := e.monitor.repo.Arm(intent.OperationId); err != nil {
+					log.Errorf("operation-monitor: arm %s: %v", intent.OperationId, err)
+				} else {
+					log.Infof("operation-monitor: intent %s armed by %v", intent.OperationId, transition)
+				}
+			}
+			continue
+		}
+		if !intent.Armed {
+			log.Infof("operation-monitor: intent %s matched %v but not armed yet (no departure observed), skipping",
+				intent.OperationId, transition)
 			continue
 		}
 		if _, err := e.monitor.repo.MarkTerminal(intent.OperationId, db.IntentCompleted); err != nil {

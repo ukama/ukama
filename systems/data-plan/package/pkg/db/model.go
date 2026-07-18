@@ -26,7 +26,7 @@ type Package struct {
 	Name           string    `gorm:"uniqueIndex:idx_packages_name_unique,where:deleted_at IS NULL,expression:LOWER(name)"`
 	SimType        ukama.SimType
 	Active         bool           `gorm:"not null; default:false"`
-	Duration       uint64         `gorm:"not null; default:0"`
+	Duration       uint64         `gorm:"not null; default:0"` // in minutes, cannot be more than 1000 years
 	SmsVolume      uint64         `gorm:"not null; default:0"`
 	DataVolume     uint64         `gorm:"not null; default:0"`
 	VoiceVolume    uint64         `gorm:"not null; default:0"`

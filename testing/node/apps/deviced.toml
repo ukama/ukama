@@ -21,4 +21,4 @@
 	group="service"
 
 [app-exec.env]
-        DEVICED_REMOTE_CLIENT_REBOOT_OPTIONAL=1
+        DEVICED_REMOTE_CLIENT_REBOOT_OPTIONAL="1"

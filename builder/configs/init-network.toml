@@ -11,10 +11,10 @@
 	bin_to="/sbin"
 
 [build-rootfs]
-	mkdir="/conf"
+	mkdir="/ukama/configs/init-network"
 
 [build-conf]
-	from="/nodes/configs/apps/init-network/config/config.toml"
+	from="/nodes/configs/apps/init-network/config.toml"
 	to="/ukama/configs/init-network"
 
 [capp-exec]
