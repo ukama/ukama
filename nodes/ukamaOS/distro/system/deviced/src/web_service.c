@@ -163,10 +163,8 @@ static void* worker_run(void *arg) {
                                             "reboot",
                                             "Rebooting the node",
                                             &retCode) == USYS_NOK) {
-            usys_log_error("Unable to send notification to notify.d");
-            control_mark_fault(control, args->Subsystem);
-            usys_free(args);
-            pthread_exit(NULL);
+            usys_log_error("Unable to send notification to notify.d; "
+                           "continuing with node reboot");
         }
 
         if (!args->Immediate) {

@@ -209,20 +209,20 @@ bool json_deserialize_notification(JsonObj *json,
         return USYS_FALSE;
     }
     
-    ret |= get_json_entry(json, JTAG_SERVICE_NAME, JSON_STRING,
-                          &(*notification)->serviceName, NULL, NULL);
-    ret |= get_json_entry(json, JTAG_SEVERITY, JSON_STRING,
-                          &(*notification)->severity, NULL, NULL);
-    ret |= get_json_entry(json, JTAG_TIME, JSON_INTEGER,
-                          NULL, &(*notification)->epochTime, NULL);
-    ret |= get_json_entry(json, JTAG_NAME, JSON_STRING,
-                          &(*notification)->propertyName, NULL, NULL);
-    ret |= get_json_entry(json, JTAG_VALUE, JSON_STRING,
-                          &(*notification)->propertyValue, NULL, NULL);
-    ret |= get_json_entry(json, JTAG_UNITS, JSON_STRING,
-                          &(*notification)->propertyUnit, NULL, NULL);
-    ret |= get_json_entry(json, JTAG_DETAILS, JSON_STRING,
-                          &(*notification)->details, NULL, NULL);
+    ret = get_json_entry(json, JTAG_SERVICE_NAME, JSON_STRING,
+                         &(*notification)->serviceName, NULL, NULL) && ret;
+    ret = get_json_entry(json, JTAG_SEVERITY, JSON_STRING,
+                         &(*notification)->severity, NULL, NULL) && ret;
+    ret = get_json_entry(json, JTAG_TIME, JSON_INTEGER,
+                         NULL, &(*notification)->epochTime, NULL) && ret;
+    ret = get_json_entry(json, JTAG_NAME, JSON_STRING,
+                         &(*notification)->propertyName, NULL, NULL) && ret;
+    ret = get_json_entry(json, JTAG_VALUE, JSON_STRING,
+                         &(*notification)->propertyValue, NULL, NULL) && ret;
+    ret = get_json_entry(json, JTAG_UNITS, JSON_STRING,
+                         &(*notification)->propertyUnit, NULL, NULL) && ret;
+    ret = get_json_entry(json, JTAG_DETAILS, JSON_STRING,
+                         &(*notification)->details, NULL, NULL) && ret;
 
     if (ret == USYS_FALSE) {
         usys_log_error("Error deserializing the notifiction JSON");

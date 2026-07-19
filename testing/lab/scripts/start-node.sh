@@ -75,6 +75,7 @@ if [ -n "${ULAB_NODE_ENTRYPOINT:-}" ]; then
     # shellcheck disable=SC2086
     if ! podman run -d \
         --name "$CONTAINER_NAME" \
+        --restart=always \
         --privileged \
         --device /dev/net/tun \
         --network "$LAB_NET" \
@@ -90,6 +91,7 @@ else
     # shellcheck disable=SC2086
     if ! podman run -d \
         --name "$CONTAINER_NAME" \
+        --restart=always \
         --privileged \
         --device /dev/net/tun \
         --network "$LAB_NET" \

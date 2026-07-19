@@ -66,7 +66,7 @@ static ServiceHandler find_handler(const char* service, char* type) {
 
     int idx;
     
-    for (idx = 1; idx <= MAX_SERVICE_COUNT ; idx++) {
+    for (idx = 1; idx < MAX_SERVICE_COUNT; idx++) {
         if (usys_strcmp(service, handler[idx].service) == 0) {
 
             if (usys_strcmp(type, NOTIFICATION_ALERT) == 0) {
