@@ -45,6 +45,16 @@ typedef struct {
     char status[ULAB_MAX_REF];
 } bff_app_state_t;
 
+typedef struct {
+    char name[ULAB_MAX_NAME];
+    char type[ULAB_MAX_REF];
+    char version[ULAB_MAX_REF];
+    char uploaded_at[ULAB_MAX_REF];
+    int  available;
+    int  chunked;
+    int  desired;
+} bff_release_t;
+
 int bff_init(bff_client_t *c,
              const char *url,
              const char *run_dir);
@@ -141,6 +151,20 @@ int bff_get_node_status(bff_client_t *c,
 int bff_restart_node(bff_client_t *c,
                      const node_t *node,
                      ulab_error_t *err);
+
+int bff_get_release(bff_client_t *c,
+                    const char *name,
+                    const char *type,
+                    const char *version,
+                    bff_release_t *release,
+                    int *found,
+                    ulab_error_t *err);
+
+int bff_promote_release(bff_client_t *c,
+                        const char *name,
+                        const char *type,
+                        const char *version,
+                        ulab_error_t *err);
 
 int bff_update_software(bff_client_t *c,
                         const node_t *node,

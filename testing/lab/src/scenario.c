@@ -124,6 +124,7 @@ const char *scenario_event_name(event_type_t type) {
     case EVT_TOGGLE_SERVICE: return "toggle_service";
     case EVT_TOGGLE_RADIO: return "toggle_radio";
     case EVT_RESTART_SITE: return "restart_site";
+    case EVT_PROMOTE_RELEASE: return "promote_release";
     case EVT_SOFTWARE_UPDATE: return "software_update";
     case EVT_MARK_NODE_OFFLINE: return "mark_node_offline";
     case EVT_RESTORE_NODE: return "restore_node";
@@ -188,6 +189,8 @@ int scenario_event_from_name(const char *name, event_type_t *out) {
         *out = EVT_TOGGLE_RADIO;
     } else if (ulab_streq(name, "restart_site")) {
         *out = EVT_RESTART_SITE;
+    } else if (ulab_streq(name, "promote_release")) {
+        *out = EVT_PROMOTE_RELEASE;
     } else if (ulab_streq(name, "software_update")) {
         *out = EVT_SOFTWARE_UPDATE;
     } else if (ulab_streq(name, "mark_node_offline")) {
