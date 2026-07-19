@@ -13,7 +13,7 @@
 #define JTAG_NODE_ID   "UUID"
 #define JTAG_TYPE      "type"
 
-#define JTAG_SERVICE_NAME   "serviceName"
+#define JTAG_SERVICE_NAME   "service_name"
 #define JTAG_SEVERITY       "severity"
 #define JTAG_TIME           "time"
 #define JTAG_TYPE           "type"

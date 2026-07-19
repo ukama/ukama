@@ -214,8 +214,13 @@ int wc_send_action_alarm_to_notifyd(Config *config,
 
     if (!config || !value || !details || !retCode) return USYS_NOK;
 
-    sprintf(url,"http://%s:%d%s%s", DEF_NOTIFY_HOST,
-            config->notifydPort, DEF_NOTIFY_EP, config->serviceName);
+    *retCode = -1;
+
+    snprintf(url, sizeof(url), "http://%s:%d%s%s",
+             DEF_NOTIFY_HOST,
+             config->notifydPort,
+             DEF_NOTIFY_EP,
+             DEF_NOTIFY_SERVICE);
 
     if (json_serialize_action_alarm_notification(&json, config, value, details) == USYS_FALSE) {
         usys_log_error("Unable to serialize the notification");
@@ -234,15 +239,23 @@ int wc_send_action_alarm_to_notifyd(Config *config,
     free(jsonStr);
 
     ret = wc_send_http_request(httpReq, &httpResp);
-    if (ret != STATUS_OK || httpResp->status != HttpStatus_Accepted) {
-        usys_log_error("Failed sending alarm to notiy.d: %s Code: %d Str: %s",
-                       url, httpResp->status,
+    if (ret != STATUS_OK || !httpResp) {
+        usys_log_error("Failed sending notification to notify.d: %s", url);
+        ret = USYS_NOK;
+        goto cleanup;
+    }
+
+    *retCode = httpResp->status;
+    if (httpResp->status != HttpStatus_Accepted) {
+        usys_log_error("Failed sending notification to notify.d: "
+                       "%s Code: %d Str: %s",
+                       url,
+                       httpResp->status,
                        HttpStatusStr(httpResp->status));
         ret = USYS_NOK;
     }
 
-    *retCode = httpResp->status;
-
+cleanup:
     json_decref(json);
     if (httpReq) {
         ulfius_clean_request(httpReq);

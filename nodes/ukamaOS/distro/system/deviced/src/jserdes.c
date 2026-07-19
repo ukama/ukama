@@ -71,7 +71,7 @@ bool json_serialize_action_alarm_notification(JsonObj **json,
     if (!*json) return USYS_FALSE;
 
     json_object_set_new(*json, JTAG_SERVICE_NAME,
-                        json_string(config->serviceName));
+                        json_string(DEF_NOTIFY_SERVICE));
     json_object_set_new(*json, JTAG_SEVERITY, json_string(ALARM_HIGH));
     json_object_set_new(*json, JTAG_TIME,     json_integer(time(NULL)));
     json_object_set_new(*json, JTAG_MODULE,   json_string(MODULE_NONE));
