@@ -12,7 +12,7 @@ import { Field, SelectInput } from '@/components/form/FormField';
 import { useToast } from '@/components/ToastProvider';
 import type { Subscriber } from '@/data';
 import { useCurrency } from '@/lib/currency';
-import { MINUTES_PER_DAY } from '@/lib/duration';
+import { durationUnitLabel } from '@/lib/duration';
 import { useDataPlans } from '@/lib/sim-pool';
 import { useNetworkId } from '@/lib/useNetworkId';
 import AddCardRounded from '@mui/icons-material/AddCardRounded';
@@ -39,7 +39,7 @@ export default function TopUpDialog({
     () =>
       packages.map((p) => ({
         value: p.uuid,
-        label: `${p.name} · ${symbol}${p.amount}/${p.duration === MINUTES_PER_DAY ? 'day' : 'mo'}`,
+        label: `${p.name} · ${symbol}${p.amount}/${durationUnitLabel(p.duration)}`,
       })),
     [packages, symbol],
   );
