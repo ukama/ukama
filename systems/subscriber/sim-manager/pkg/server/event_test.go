@@ -129,6 +129,42 @@ func TestSimManagerEventServer_HandleProcessorPaymentSuccessEvent(t *testing.T) 
 		assert.NoError(t, err)
 	})
 
+	t.Run("ProvisionedPaymentSkipsPackageAdd", func(t *testing.T) {
+		simRepo := mocks.SimRepo{}
+		packageRepo := mocks.PackageRepo{}
+		packageClient := &cmocks.PackageClient{}
+
+		simId := uuid.NewV4()
+		packageId := uuid.NewV4()
+
+		// A payment recorded by sim allocation is marked provisioned; the handler
+		// must skip adding the package (it was already added at allocation) and
+		// must not touch the repos/clients.
+		evt := &epb.Payment{
+			Id:       uuid.NewV4().String(),
+			ItemId:   packageId.String(),
+			Status:   ukama.StatusTypeCompleted.String(),
+			ItemType: ukama.ItemTypePackage.String(),
+			Metadata: []byte(fmt.Sprintf(`{"sim": "%s", "provisioned": "true"}`, simId.String())),
+		}
+
+		anyE, err := anypb.New(evt)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, packageClient,
+			nil, nil, nil, nil, nil, msgbusClient, "")
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.NoError(t, err)
+		packageRepo.AssertNotCalled(t, "Add", mock.Anything, mock.Anything)
+		packageClient.AssertNotCalled(t, "Get", mock.Anything)
+	})
+
 	t.Run("AddPackageError", func(t *testing.T) {
 		simRepo := mocks.SimRepo{}
 		packageRepo := mocks.PackageRepo{}
