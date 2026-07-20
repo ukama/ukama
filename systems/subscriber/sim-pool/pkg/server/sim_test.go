@@ -368,10 +368,18 @@ func TestUpload(t *testing.T) {
 		factory.On("ListSims", mock.Anything, mock.Anything, mock.Anything,
 			mock.Anything, mock.Anything, mock.Anything).Return([]*cfactory.SimCardInfo{
 			&cfactory.SimCardInfo{
-				Iccid: TestIccid1,
+				Iccid:       TestIccid1,
+				SmDpAddress: TestSmDpAddress1,
+				SimType:     TestSimTypeData.String(),
+				QrCode:      TestQrCode1,
+				IsPhysical:  false,
 			},
 			&cfactory.SimCardInfo{
-				Iccid: TestIccid2,
+				Iccid:       TestIccid2,
+				SmDpAddress: TestSmDpAddress2,
+				SimType:     TestSimTypeData.String(),
+				QrCode:      TestQrCode2,
+				IsPhysical:  true,
 			}}, nil).Once()
 
 		mockRepo.On("Add", mock.AnythingOfType("[]db.Sim")).Return(nil)
@@ -509,7 +517,11 @@ func TestUpload(t *testing.T) {
 		factory.On("ListSims", mock.Anything, mock.Anything, mock.Anything,
 			mock.Anything, mock.Anything, mock.Anything).Return([]*cfactory.SimCardInfo{
 			&cfactory.SimCardInfo{
-				Iccid: TestIccid1,
+				Iccid:       TestIccid1,
+				SmDpAddress: TestSmDpAddress1,
+				SimType:     TestSimTypeData.String(),
+				QrCode:      TestQrCode1,
+				IsPhysical:  false,
 			},
 			&cfactory.SimCardInfo{
 				Iccid: TestIccid2,

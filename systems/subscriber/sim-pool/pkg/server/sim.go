@@ -224,7 +224,6 @@ func dbSimToPbSim(p *db.Sim) *pb.Sim {
 }
 
 func (p *SimPoolServer) PublishEventMessage(route string, msg protoreflect.ProtoMessage) error {
-
 	err := p.msgbus.PublishRequest(route, msg)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
@@ -234,6 +233,47 @@ func (p *SimPoolServer) PublishEventMessage(route string, msg protoreflect.Proto
 }
 
 func validateOrgSims(dbSims []db.Sim, factorySims []*factory.SimCardInfo) ([]db.Sim, []db.Sim) {
-	//we want perfect equality among those field: ICCID,Imsi,Org,SimType,SmDpAddress,QrCode,IsPhysical
-	return dbSims, dbSims
+	type simKey struct {
+		Iccid       string
+		SimType     ukama.SimType
+		SmDpAddress string
+		QrCode      string
+		IsPhysical  bool
+	}
+
+	factorySet := make(map[simKey]struct{}, len(factorySims))
+	for _, fs := range factorySims {
+		if fs == nil {
+			continue
+		}
+		key := simKey{
+			Iccid:       fs.Iccid,
+			SimType:     ukama.ParseSimType(fs.SimType),
+			SmDpAddress: fs.SmDpAddress,
+			QrCode:      fs.QrCode,
+			IsPhysical:  fs.IsPhysical,
+		}
+		factorySet[key] = struct{}{}
+	}
+
+	found := make([]db.Sim, 0, len(dbSims))
+	notFound := make([]db.Sim, 0, len(dbSims))
+
+	for _, ds := range dbSims {
+		key := simKey{
+			Iccid:       ds.Iccid,
+			SimType:     ds.SimType,
+			SmDpAddress: ds.SmDpAddress,
+			QrCode:      ds.QrCode,
+			IsPhysical:  ds.IsPhysical,
+		}
+
+		if _, ok := factorySet[key]; ok {
+			found = append(found, ds)
+		} else {
+			notFound = append(notFound, ds)
+		}
+	}
+
+	return found, notFound
 }
