@@ -11,4 +11,10 @@
 static inline void usys_log_set_level(int level) { (void)level; }
 static inline void usys_log_set_service(const char *svc) { (void)svc; }
 
+static inline void usys_log_trace(const char *fmt, ...) { (void)fmt; }
+static inline void usys_log_debug(const char *fmt, ...) { (void)fmt; }
+static inline void usys_log_info(const char *fmt, ...) { (void)fmt; }
+static inline void usys_log_warn(const char *fmt, ...) { (void)fmt; }
+static inline void usys_log_error(const char *fmt, ...) { (void)fmt; }
+
 #endif /* AISG_TEST_STUB_USYS_LOG_H_ */

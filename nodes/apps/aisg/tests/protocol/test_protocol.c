@@ -9,10 +9,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include <unistd.h>
 
+#include "aisg_v2.h"
 #include "hdlc.h"
 #include "retap.h"
 #include "retap_ops.h"
+#include "serial.h"
 #include "xid.h"
 
 #define CHECK(expr) do {                                                       \
@@ -80,15 +83,85 @@ static bool test_hdlc_roundtrip_and_escaping(void)
     return true;
 }
 
+static bool test_serial_fill_and_shared_flags(void)
+{
+    HdlcFrame tx1;
+    HdlcFrame tx2;
+    HdlcFrame rx;
+    SerialPort port;
+    uint8_t raw1[HDLC_MAX_FRAME];
+    uint8_t raw2[HDLC_MAX_FRAME];
+    uint8_t stream[HDLC_MAX_FRAME * 2];
+    uint8_t frame[HDLC_MAX_FRAME];
+    size_t raw1Len = 0;
+    size_t raw2Len = 0;
+    size_t streamLen = 0;
+    size_t frameLen = 0;
+    int fds[2];
+
+    memset(&tx1, 0, sizeof(tx1));
+    memset(&tx2, 0, sizeof(tx2));
+    memset(&rx, 0, sizeof(rx));
+    memset(&port, 0, sizeof(port));
+
+    tx1.address = 0x01;
+    tx1.control = hdlc_rr_ctrl(0, true);
+    tx2.address = 0x01;
+    tx2.control = hdlc_i_ctrl(0, 0, true);
+    tx2.info[0] = 0x34;
+    tx2.infoLen = 1;
+
+    CHECK(hdlc_encode_frame(&tx1, raw1, sizeof(raw1), &raw1Len));
+    CHECK(hdlc_encode_frame(&tx2, raw2, sizeof(raw2), &raw2Len));
+    CHECK(pipe(fds) == 0);
+    port.fd = fds[0];
+
+    /* Noise and any number of leading/fill flags must be ignored. */
+    stream[streamLen++] = 0x55;
+    stream[streamLen++] = HDLC_FLAG;
+    stream[streamLen++] = HDLC_FLAG;
+    memcpy(&stream[streamLen], raw1, raw1Len);
+    streamLen += raw1Len;
+    CHECK(write(fds[1], stream, streamLen) == (ssize_t)streamLen);
+    CHECK(serial_read_frame(&port,
+                            frame,
+                            sizeof(frame),
+                            &frameLen,
+                            100));
+    CHECK(hdlc_decode_frame(frame, frameLen, &rx));
+    CHECK(rx.address == tx1.address);
+    CHECK(rx.control == tx1.control);
+
+    /* The previous closing flag is allowed to open the next frame. */
+    CHECK(write(fds[1], &raw2[1], raw2Len - 1) == (ssize_t)(raw2Len - 1));
+    CHECK(serial_read_frame(&port,
+                            frame,
+                            sizeof(frame),
+                            &frameLen,
+                            100));
+    CHECK(hdlc_decode_frame(frame, frameLen, &rx));
+    CHECK(rx.address == tx2.address);
+    CHECK(rx.control == tx2.control);
+    CHECK(rx.infoLen == 1 && rx.info[0] == 0x34);
+
+    close(fds[0]);
+    close(fds[1]);
+    return true;
+}
+
 static bool test_xid_scan_and_assignment(void)
 {
+    HdlcFrame scan;
+    uint8_t raw[HDLC_MAX_FRAME];
     uint8_t info[256];
+    size_t rawLen = 0;
     size_t infoLen = 0;
     XidAddressingParams params;
     const uint8_t uid[] = { 'U', 'K', 'A', 'M', 'A', '0', '0', '1' };
     uint16_t vendor = ((uint16_t)'U' << 8) | (uint8_t)'K';
 
     CHECK(xid_build_scan_info(info, sizeof(info), &infoLen));
+    CHECK(infoLen == 45);
     CHECK(xid_parse_addressing_info(info, infoLen, &params));
     CHECK(params.hasUniqueId);
     CHECK(params.uniqueIdLen == AISG_XID_SCAN_ID_LEN);
@@ -101,6 +174,21 @@ static bool test_xid_scan_and_assignment(void)
                                    params.uniqueIdLen,
                                    params.mask,
                                    params.maskLen));
+
+    memset(&scan, 0, sizeof(scan));
+    scan.address = AISG_ADDR_BROADCAST;
+    scan.control = hdlc_xid_ctrl(true);
+    memcpy(scan.info, info, infoLen);
+    scan.infoLen = infoLen;
+    CHECK(hdlc_encode_frame(&scan, raw, sizeof(raw), &rawLen));
+    CHECK(rawLen == 51);
+    CHECK(raw[0] == 0x7E && raw[1] == 0xFF && raw[2] == 0xBF);
+    CHECK(raw[3] == 0x81 && raw[4] == 0xF0 && raw[5] == 0x2A);
+    CHECK(raw[6] == 0x01 && raw[7] == 0x13);
+    CHECK(raw[27] == 0x03 && raw[28] == 0x13);
+    CHECK(raw[48] == 0x7F && raw[49] == 0x0F && raw[50] == 0x7E);
+    CHECK(AISG_HDLC_DEFAULT_FRAME_MAX == 78);
+    CHECK(AISG_HDLC_DEFAULT_INFO_MAX == 74);
 
     CHECK(xid_build_assign_info(uid,
                                 sizeof(uid),
@@ -244,6 +332,7 @@ int main(void)
         bool (*fn)(void);
     } tests[] = {
         { "hdlc_roundtrip_and_escaping", test_hdlc_roundtrip_and_escaping },
+        { "serial_fill_and_shared_flags", test_serial_fill_and_shared_flags },
         { "xid_scan_and_assignment",     test_xid_scan_and_assignment },
         { "retap_golden_packets",        test_retap_golden_packets },
         { "retap_config_limits",         test_retap_config_limits },

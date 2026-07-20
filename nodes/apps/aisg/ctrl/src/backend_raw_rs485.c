@@ -447,17 +447,35 @@ static JsonObj *build_tilt_payload(int16_t tilt)
     return json;
 }
 
-static JsonObj *build_device_data_payload(int field)
+static JsonObj *build_device_data_payload(int field,
+                                          const uint8_t *data,
+                                          size_t len)
 {
     JsonObj *json = NULL;
+    char *hex = NULL;
+    size_t i;
+
+    if (data == NULL && len != 0) {
+        return NULL;
+    }
+
+    hex = calloc((len * 2) + 1, 1);
+    if (hex == NULL) return NULL;
+
+    for (i = 0; i < len; i++) {
+        snprintf(&hex[i * 2], 3, "%02X", data[i]);
+    }
 
     json = json_object();
     if (json == NULL) {
+        free(hex);
         return NULL;
     }
 
     json_object_set_new(json, "field", json_integer(field));
-    json_object_set_new(json, "dataHex", json_string(""));
+    json_object_set_new(json, "dataHex", json_string(hex));
+    json_object_set_new(json, "length", json_integer((json_int_t)len));
+    free(hex);
 
     return json;
 }
@@ -471,6 +489,16 @@ static bool raw_handle_ping(RawRs485Context *ctx, CtrlResponse *response)
 
 static bool raw_handle_status(RawRs485Context *ctx, CtrlResponse *response)
 {
+    AisgError keepaliveError;
+
+    if (ctx != NULL && ctx->device.present &&
+        ctx->bus.state == AISG_L2_CONNECTED &&
+        !aisg_v2_keepalive(&ctx->bus)) {
+        keepaliveError = ctx->bus.lastError;
+        raw_clear_device_runtime_state(ctx);
+        ctx->bus.lastError = keepaliveError;
+    }
+
     return ctrl_response_set_ok(response, build_status_payload(ctx));
 }
 
@@ -825,6 +853,11 @@ static bool raw_handle_get_device_data(RawRs485Context *ctx,
                                        "missing field");
     }
     field = (int)json_integer_value(value);
+    if (field < 0 || field > 255) {
+        return ctrl_response_set_error(response,
+                                       CtrlCodeInvalidRequest,
+                                       "field must be between 0 and 255");
+    }
 
     retap_build_get_device_data(&retapReq, (uint8_t)field);
 
@@ -832,7 +865,24 @@ static bool raw_handle_get_device_data(RawRs485Context *ctx,
         return false;
     }
 
-    return ctrl_response_set_ok(response, build_device_data_payload(field));
+    /* A supported field is returned as <field number><field data>. */
+    if (retapResp.dataLen == 0) {
+        return ctrl_response_set_ok(
+            response,
+            build_device_data_payload(field, NULL, 0));
+    }
+
+    if (retapResp.data[0] != (uint8_t)field) {
+        return ctrl_response_set_error(response,
+                                       CtrlCodeFormatError,
+                                       "GetDeviceData field mismatch");
+    }
+
+    return ctrl_response_set_ok(
+        response,
+        build_device_data_payload(field,
+                                  &retapResp.data[1],
+                                  retapResp.dataLen - 1));
 }
 
 

@@ -5,12 +5,13 @@
 ROOT ?= ../..
 CC ?= gcc
 
-CFLAGS += -std=c99 -Wall -Wextra -Werror -g
+CFLAGS += -std=c99 -Wall -Wextra -Werror -g -D_DEFAULT_SOURCE
 CFLAGS += -I./stubs
 CFLAGS += -I$(ROOT)/ctrl/inc
 
 PROTOCOL_SRCS = \
 	$(ROOT)/ctrl/src/hdlc.c \
+	$(ROOT)/ctrl/src/serial.c \
 	$(ROOT)/ctrl/src/xid.c \
 	$(ROOT)/ctrl/src/retap.c \
 	$(ROOT)/ctrl/src/retap_ops.c
