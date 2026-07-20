@@ -17,3 +17,6 @@ var _ = math.Inf
 func (this *HealthReportEvent) Validate() error {
 	return nil
 }
+func (this *HealthAppsChangedEvent) Validate() error {
+	return nil
+}

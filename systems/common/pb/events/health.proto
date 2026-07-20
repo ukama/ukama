@@ -20,3 +20,12 @@ message HealthReportEvent {
     string reportedAt = 5;
     bytes  payload = 6;
 }
+
+// HealthAppsChangedEvent is emitted only when a node's app inventory
+// (by name@version) changes, so subscribers can reconcile without
+// listening to the periodic health-report firehose.
+message HealthAppsChangedEvent {
+    string nodeId = 1;
+    string nodeType = 2;
+}
+
