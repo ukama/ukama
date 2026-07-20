@@ -234,9 +234,10 @@ static bool execute_retap(RawRs485Context *ctx,
     CtrlCode code;
 
     if (!aisg_v2_send_retap(&ctx->bus, request, response)) {
-        return ctrl_response_set_aisg_error(ctrlResp,
-                                            ctx->bus.lastError,
-                                            "failed to execute RETAP");
+        ctrl_response_set_aisg_error(ctrlResp,
+                                     ctx->bus.lastError,
+                                     "failed to execute RETAP");
+        return false;
     }
 
     if (response->returnCode != RETAP_RETURN_FAIL) {
@@ -245,7 +246,8 @@ static bool execute_retap(RawRs485Context *ctx,
 
     code = retap_response_code(response);
 
-    return ctrl_response_set_error(ctrlResp, code, ctrl_code_str(code));
+    ctrl_response_set_error(ctrlResp, code, ctrl_code_str(code));
+    return false;
 }
 
 static bool raw_require_connected(RawRs485Context *ctx, CtrlResponse *response)
@@ -259,9 +261,10 @@ static bool raw_require_connected(RawRs485Context *ctx, CtrlResponse *response)
         ctx->bus.lastError = AISG_ERROR_LINK_NOT_CONNECTED;
     }
 
-    return ctrl_response_set_error(response,
-                                   CtrlCodeLinkNotConnected,
-                                   "device not connected; run scan first");
+    ctrl_response_set_error(response,
+                            CtrlCodeLinkNotConnected,
+                            "device not connected; run scan first");
+    return false;
 }
 
 static bool raw_require_configured(RawRs485Context *ctx, CtrlResponse *response)
@@ -274,9 +277,10 @@ static bool raw_require_configured(RawRs485Context *ctx, CtrlResponse *response)
         return true;
     }
 
-    return ctrl_response_set_error(response,
-                                   CtrlCodeNotConfigured,
-                                   "configuration must be loaded first");
+    ctrl_response_set_error(response,
+                            CtrlCodeNotConfigured,
+                            "configuration must be loaded first");
+    return false;
 }
 
 static bool raw_require_calibrated(RawRs485Context *ctx, CtrlResponse *response)
@@ -289,9 +293,10 @@ static bool raw_require_calibrated(RawRs485Context *ctx, CtrlResponse *response)
         return true;
     }
 
-    return ctrl_response_set_error(response,
-                                   CtrlCodeNotCalibrated,
-                                   "calibration must be completed first");
+    ctrl_response_set_error(response,
+                            CtrlCodeNotCalibrated,
+                            "calibration must be completed first");
+    return false;
 }
 
 static void raw_clear_device_runtime_state(RawRs485Context *ctx)
@@ -614,24 +619,27 @@ static bool read_config_blob(CtrlRequest *request,
     const char *path = NULL;
 
     if (request == NULL || data == NULL || len == NULL) {
-        return ctrl_response_set_error(response,
-                                       CtrlCodeInvalidRequest,
-                                       "invalid config request");
+        ctrl_response_set_error(response,
+                                CtrlCodeInvalidRequest,
+                                "invalid config request");
+        return false;
     }
 
     value = json_object_get(request->payload, "configPath");
     path = json_is_string(value) ? json_string_value(value) : NULL;
 
     if (path == NULL || path[0] == '\0') {
-        return ctrl_response_set_error(response,
-                                       CtrlCodeInvalidRequest,
-                                       "missing configPath");
+        ctrl_response_set_error(response,
+                                CtrlCodeInvalidRequest,
+                                "missing configPath");
+        return false;
     }
 
     if (!read_file_alloc(path, data, len)) {
-        return ctrl_response_set_error(response,
-                                       CtrlCodeInvalidRequest,
-                                       "failed to read config blob");
+        ctrl_response_set_error(response,
+                                CtrlCodeInvalidRequest,
+                                "failed to read config blob");
+        return false;
     }
 
     return true;

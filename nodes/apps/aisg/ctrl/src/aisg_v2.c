@@ -200,7 +200,8 @@ static bool same_frame(const HdlcFrame *a, const HdlcFrame *b)
 static bool read_decoded_frame(AisgBus *bus,
                                const HdlcFrame *txFrame,
                                HdlcFrame *rxFrame,
-                               int timeoutMs)
+                               int timeoutMs,
+                               bool allowIdenticalResponse)
 {
     uint8_t raw[HDLC_MAX_FRAME];
     size_t rawLen;
@@ -249,9 +250,13 @@ static bool read_decoded_frame(AisgBus *bus,
         log_frame("RX frame", rxFrame);
 
         if (txFrame != NULL && same_frame(txFrame, rxFrame)) {
-            usys_log_debug("aisg: RX rejected local echo attempt=%d",
-                           attempt + 1);
-            continue;
+            if (!allowIdenticalResponse) {
+                usys_log_debug("aisg: RX rejected local echo attempt=%d",
+                               attempt + 1);
+                continue;
+            }
+
+            usys_log_debug("aisg: RX accepted identical XID negotiation response");
         }
 
         return true;
@@ -263,10 +268,11 @@ static bool read_decoded_frame(AisgBus *bus,
     return false;
 }
 
-static bool send_frame(AisgBus *bus,
-                       const HdlcFrame *txFrame,
-                       HdlcFrame *rxFrame,
-                       int timeoutMs)
+static bool send_frame_with_policy(AisgBus *bus,
+                                   const HdlcFrame *txFrame,
+                                   HdlcFrame *rxFrame,
+                                   int timeoutMs,
+                                   bool allowIdenticalResponse)
 {
     uint8_t raw[HDLC_MAX_FRAME];
     size_t rawLen;
@@ -303,7 +309,23 @@ static bool send_frame(AisgBus *bus,
         return true;
     }
 
-    return read_decoded_frame(bus, txFrame, rxFrame, timeoutMs);
+    return read_decoded_frame(bus,
+                              txFrame,
+                              rxFrame,
+                              timeoutMs,
+                              allowIdenticalResponse);
+}
+
+static bool send_frame(AisgBus *bus,
+                       const HdlcFrame *txFrame,
+                       HdlcFrame *rxFrame,
+                       int timeoutMs)
+{
+    return send_frame_with_policy(bus,
+                                  txFrame,
+                                  rxFrame,
+                                  timeoutMs,
+                                  false);
 }
 
 static void apply_xid_params_to_device(const XidAddressingParams *params,
@@ -338,7 +360,11 @@ static bool read_extra_scan_response(AisgBus *bus)
 
     memset(&extra, 0, sizeof(extra));
 
-    if (!read_decoded_frame(bus, NULL, &extra, AISG_SCAN_EXTRA_TIMEOUT_MS)) {
+    if (!read_decoded_frame(bus,
+                            NULL,
+                            &extra,
+                            AISG_SCAN_EXTRA_TIMEOUT_MS,
+                            false)) {
         return false;
     }
 
@@ -650,7 +676,17 @@ static bool xid_negotiate_one_octet(AisgBus *bus,
                    offered,
                    bus->deviceAddress);
 
-    if (!send_frame(bus, &tx, &rx, AISG_DEFAULT_TIMEOUT_MS)) {
+    /*
+     * TS 25.462 Annex B explicitly permits the secondary to accept a
+     * proposed XID value by returning the same value.  For this exchange the
+     * complete response can therefore be byte-for-byte identical to the
+     * command; it must not be discarded as generic adapter loopback.
+     */
+    if (!send_frame_with_policy(bus,
+                                &tx,
+                                &rx,
+                                AISG_DEFAULT_TIMEOUT_MS,
+                                true)) {
         usys_log_debug("aisg: %s negotiation failed: no response", name);
         return false;
     }

@@ -215,20 +215,22 @@ rm -f /tmp/aisg-ctrl.sock
   2>&1 | tee /tmp/aisg-real/aisg-ctrl.log
 ```
 
-Send requests with `socat`:
+Send requests with `socat`.  `STDIO,ignoreeof` keeps the receive half open after
+`printf` reaches EOF, which is required for operations such as `scan` that take
+longer than an immediate status request:
 
 ```bash
 printf '{"id":"status-1","type":"get_status","payload":{}}\n' \
-  | socat - UNIX-CONNECT:/tmp/aisg-ctrl.sock | jq
+  | socat -T 15 STDIO,ignoreeof UNIX-CONNECT:/tmp/aisg-ctrl.sock | jq
 
 printf '{"id":"scan-1","type":"scan","payload":{}}\n' \
-  | socat - UNIX-CONNECT:/tmp/aisg-ctrl.sock | jq
+  | socat -T 15 STDIO,ignoreeof UNIX-CONNECT:/tmp/aisg-ctrl.sock | jq
 
 printf '{"id":"info-1","type":"get_info","payload":{}}\n' \
-  | socat - UNIX-CONNECT:/tmp/aisg-ctrl.sock | jq
+  | socat -T 15 STDIO,ignoreeof UNIX-CONNECT:/tmp/aisg-ctrl.sock | jq
 
 printf '{"id":"err-1","type":"get_alarm_status","payload":{}}\n' \
-  | socat - UNIX-CONNECT:/tmp/aisg-ctrl.sock | jq
+  | socat -T 15 STDIO,ignoreeof UNIX-CONNECT:/tmp/aisg-ctrl.sock | jq
 ```
 
 ## 8. Clean shutdown

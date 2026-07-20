@@ -254,6 +254,49 @@ static bool test_real_ret_scan_response_without_pi2(void)
     return true;
 }
 
+static bool test_real_ret_identical_release_xid(void)
+{
+    /* Exact command/response seen on the real RET for Release 6. */
+    static const uint8_t captured[] = {
+        0x7E, 0x01, 0xBF, 0x81, 0xF0, 0x03,
+        0x05, 0x01, 0x06, 0xDE, 0xB5, 0x7E
+    };
+    HdlcFrame frame;
+    XidAddressingParams params;
+    uint8_t encoded[HDLC_MAX_FRAME];
+    size_t infoLen = 0;
+    size_t encodedLen = 0;
+
+    memset(&frame, 0, sizeof(frame));
+    memset(&params, 0, sizeof(params));
+
+    CHECK(hdlc_decode_frame(captured, sizeof(captured), &frame));
+    CHECK(frame.address == AISG_ADDR_ASSIGNED);
+    CHECK(hdlc_is_xid(frame.control));
+    CHECK(xid_parse_addressing_info(frame.info, frame.infoLen, &params));
+    CHECK(params.has3gppRelease);
+    CHECK(params.release == AISG_3GPP_RELEASE_ID);
+
+    /* Accepting the offered value produces a byte-identical XID response. */
+    memset(&frame, 0, sizeof(frame));
+    frame.address = AISG_ADDR_ASSIGNED;
+    frame.control = hdlc_xid_ctrl(true);
+    CHECK(xid_build_one_octet_info(AISG_XID_PI_3GPP_RELEASE,
+                                   AISG_3GPP_RELEASE_ID,
+                                   frame.info,
+                                   sizeof(frame.info),
+                                   &infoLen));
+    frame.infoLen = infoLen;
+    CHECK(hdlc_encode_frame(&frame,
+                            encoded,
+                            sizeof(encoded),
+                            &encodedLen));
+    CHECK(encodedLen == sizeof(captured));
+    CHECK(bytes_eq(encoded, captured, sizeof(captured)));
+
+    return true;
+}
+
 static bool test_retap_golden_packets(void)
 {
     RetapRequest req;
@@ -370,6 +413,7 @@ int main(void)
         { "serial_fill_and_shared_flags", test_serial_fill_and_shared_flags },
         { "xid_scan_and_assignment",     test_xid_scan_and_assignment },
         { "real_ret_scan_without_pi2",   test_real_ret_scan_response_without_pi2 },
+        { "real_ret_identical_release_xid", test_real_ret_identical_release_xid },
         { "retap_golden_packets",        test_retap_golden_packets },
         { "retap_config_limits",         test_retap_config_limits },
     };
