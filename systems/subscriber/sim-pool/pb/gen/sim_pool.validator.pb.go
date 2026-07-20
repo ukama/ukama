@@ -95,7 +95,18 @@ func (this *DeleteResponse) Validate() error {
 func (this *UploadRequest) Validate() error {
 	return nil
 }
+
+var _regex_UploadResponse_Iccid = regexp.MustCompile(`^[0-9]{18,22}$`)
+
 func (this *UploadResponse) Validate() error {
+	for _, item := range this.Iccid {
+		if !_regex_UploadResponse_Iccid.MatchString(item) {
+			return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{18,22}$"`, item))
+		}
+		if item == "" {
+			return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must not be an empty string`, item))
+		}
+	}
 	return nil
 }
 

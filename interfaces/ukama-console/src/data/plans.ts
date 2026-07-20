@@ -14,7 +14,7 @@ export const PlanSchema = z.object({
   name: z.string(),
   price: z.number(),
   data: z.string(),
-  days: z.number(),
+  durationMinutes: z.number(),
   subs: z.number(),
   color: z.string(),
   /** Network the plan is scoped to; "All networks" when org-wide. */

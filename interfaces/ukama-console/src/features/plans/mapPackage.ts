@@ -40,7 +40,7 @@ export function packageToPlan(
     name: pkg.name,
     price: pkg.amount,
     data: formatData(pkg.dataVolume, pkg.dataUnit),
-    days: Math.round(pkg.duration),
+    durationMinutes: pkg.duration,
     subs: 0,
     color: PALETTE[index % PALETTE.length] ?? 'var(--uk-ac)',
     // Org-wide plans carry no networkId → available across all networks.

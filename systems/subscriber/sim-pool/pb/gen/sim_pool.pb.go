@@ -757,7 +757,8 @@ func (x *UploadRequest) GetSimType() string {
 
 type UploadResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Iccid         []string               `protobuf:"bytes,1,rep,name=iccid,proto3" json:"iccid,omitempty"` /// Slice of sims id added in sim pool
+	Iccid         []string               `protobuf:"bytes,1,rep,name=iccid,proto3" json:"iccid,omitempty"`                               /// Slice of sims iccid added in sim pool
+	FailedIccid   []string               `protobuf:"bytes,2,rep,name=failedIccid,json=failed_iccid,proto3" json:"failedIccid,omitempty"` /// Slice of sims iccid not added in sim pool
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -795,6 +796,13 @@ func (*UploadResponse) Descriptor() ([]byte, []int) {
 func (x *UploadResponse) GetIccid() []string {
 	if x != nil {
 		return x.Iccid
+	}
+	return nil
+}
+
+func (x *UploadResponse) GetFailedIccid() []string {
+	if x != nil {
+		return x.FailedIccid
 	}
 	return nil
 }
@@ -1075,9 +1083,11 @@ const file_sim_pool_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x03(\x04R\x02id\"D\n" +
 	"\rUploadRequest\x12\x18\n" +
 	"\asimData\x18\x01 \x01(\fR\asimData\x12\x19\n" +
-	"\asimType\x18\x02 \x01(\tR\bsim_type\"&\n" +
-	"\x0eUploadResponse\x12\x14\n" +
-	"\x05iccid\x18\x01 \x03(\tR\x05iccid\"\x81\x05\n" +
+	"\asimType\x18\x02 \x01(\tR\bsim_type\"a\n" +
+	"\x0eUploadResponse\x12,\n" +
+	"\x05iccid\x18\x01 \x03(\tB\x16\xe2\xdf\x1f\x12\n" +
+	"\x0e^[0-9]{18,22}$X\x01R\x05iccid\x12!\n" +
+	"\vfailedIccid\x18\x02 \x03(\tR\ffailed_iccid\"\x81\x05\n" +
 	"\x03Sim\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12J\n" +
 	"\x05iccid\x18\x02 \x01(\tB4\xe2\xdf\x1f0\n" +

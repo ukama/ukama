@@ -38,6 +38,12 @@ void backend_close(Backend *backend) {
     }
 }
 
+void backend_tick(Backend *backend) {
+    if (backend != NULL && backend->ops.tick != NULL) {
+        backend->ops.tick(backend);
+    }
+}
+
 bool backend_execute(Backend *backend,
                      CtrlRequest *request,
                      CtrlResponse *response) {

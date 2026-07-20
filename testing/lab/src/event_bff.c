@@ -9,6 +9,7 @@
 #include <stdio.h>
 
 #include "event.h"
+#include "log.h"
 #include "selector.h"
 #include "util.h"
 
@@ -118,6 +119,28 @@ static int event_set_sim_status(event_ctx_t *ctx,
     return ULAB_OK;
 }
 
+static int event_promote_release(event_ctx_t *ctx,
+                                 const event_spec_t *event,
+                                 ulab_error_t *err) {
+    if (event->app[0] == '\0' || event->tag[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "promote_release requires app and tag");
+        return ULAB_ERR;
+    }
+
+    ulab_status("RELEASE", "promote app=%s version=%s",
+                event->app, event->tag);
+
+    if (bff_promote_release(ctx->bff, event->app, "app",
+                            event->tag, err)) {
+        return ULAB_ERR;
+    }
+
+    ulab_status("RELEASE", "promoted app=%s desired=%s",
+                event->app, event->tag);
+    return ULAB_OK;
+}
+
 int event_bff(event_ctx_t *ctx, const event_spec_t *event,
               ulab_error_t *err) {
     switch (event->type) {
@@ -135,6 +158,9 @@ int event_bff(event_ctx_t *ctx, const event_spec_t *event,
 
     case EVT_SET_SIM_STATUS:
         return event_set_sim_status(ctx, event, err);
+
+    case EVT_PROMOTE_RELEASE:
+        return event_promote_release(ctx, event, err);
 
     default:
         snprintf(err->msg, sizeof(err->msg), "not a BFF event");

@@ -764,11 +764,10 @@ static void write_software_description(FILE *f, const gen_case_t *c) {
 
     node_type = software_node_type(c->events[0]);
     fprintf(f,
-            "description: Verify the example app is healthy at the "
-            "expected current version on the %s node, update it from "
-            "the exact tar.gz version published in Hub, and confirm "
-            "the running target version and app health after the "
-            "update.\n",
+            "description: Verify the target example app release is "
+            "available, promote it after the %s node's current app is "
+            "healthy, update the app, and confirm the target version "
+            "is running and healthy.\n",
             node_type);
 }
 
@@ -895,6 +894,11 @@ static int write_one_event(FILE *f, const char *event,
         ulab_streq(event, "software_update_amplifier") ||
         ulab_streq(event, "software_update_controller")) {
         fprintf(f,
+                "      - type: promote_release\n"
+                "        app: example\n"
+                "        tag: ${ULAB_SOFTWARE_TARGET_VERSION}\n"
+                "      - type: wait\n"
+                "        seconds: 30\n"
                 "      - type: software_update\n"
                 "        type_selector: %s\n"
                 "        count_per_network: 1\n"

@@ -15,7 +15,8 @@ export const createPlanSchema = z
     price: z.coerce.number({ message: 'Enter a price' }).positive('Must be > 0'),
     data: z.coerce.number({ message: 'Enter a volume' }).positive('Must be > 0'),
     unit: z.enum(['GB', 'MB']),
-    // Stored as days; the form offers preset durations (daily/weekly/monthly).
+    // Form collects whole days; converted to minutes at the API boundary
+    // (backend stores duration in minutes since #1496 — see @/lib/duration).
     days: z.coerce.number().int().refine((d) => [1, 7, 30].includes(d), {
       message: 'Select a validity period',
     }),
@@ -30,7 +31,7 @@ export const createPlanSchema = z
 
 export type CreatePlanValues = z.infer<typeof createPlanSchema>;
 
-/** Validity presets — value is the day count stored on the plan. */
+/** Validity presets — value is the day count shown in the form (converted to minutes on submit). */
 export const VALIDITY_OPTIONS = [
   { value: '1', label: 'Daily (1 day)' },
   { value: '7', label: 'Weekly (7 days)' },

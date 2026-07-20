@@ -17,11 +17,14 @@ typedef struct {
     int fd;
     char device[256];
     int baud;
+    /* A closing HDLC flag may also be the opening flag of the next frame. */
+    bool openingFlagPending;
 } SerialPort;
 
 bool serial_open(SerialPort *port, const char *device, int baud);
 void serial_close(SerialPort *port);
 bool serial_write_all(SerialPort *port, const uint8_t *data, size_t len);
+bool serial_discard_input(SerialPort *port);
 bool serial_read_frame(SerialPort *port,
                        uint8_t *buf,
                        size_t size,

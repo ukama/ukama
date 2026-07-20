@@ -159,9 +159,18 @@ func (es *SimManagerEventServer) handleProcessorPaymentSuccessEvent(key string, 
 		return fmt.Errorf("failed to Unmarshal payment metadata as map[string]string: %w", err)
 	}
 
-	simId, ok := metadata["sim"]
+	simId, ok := metadata[metadataSimKey]
 	if !ok {
 		return fmt.Errorf("missing sim metadata for successful package payment: %s", msg.ItemId)
+	}
+
+	// Payments recorded by sim allocation already provisioned the package
+	// (added inline in AllocateSim), so skip adding it again here. The payment
+	// is still a valid sale record; only the package-add is suppressed.
+	if metadata[metadataProvisionedKey] == metadataProvisionedYes {
+		log.Infof("payment for sim %s is already provisioned; skipping package add", simId)
+
+		return nil
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)

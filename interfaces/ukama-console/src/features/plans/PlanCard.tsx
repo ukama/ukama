@@ -20,6 +20,7 @@ import EditRounded from '@mui/icons-material/EditRounded';
 import MoreVertRounded from '@mui/icons-material/MoreVertRounded';
 import type { Plan } from '@/data';
 import { useCurrency } from '@/lib/currency';
+import { durationUnitLabel, formatDuration } from '@/lib/duration';
 
 export default function PlanCard({
   plan,
@@ -112,11 +113,11 @@ export default function PlanCard({
             {plan.price}
           </span>
           <span style={{ fontSize: 13, color: 'var(--uk-ink-3)' }}>
-            / {plan.days === 1 ? 'day' : 'month'}
+            / {durationUnitLabel(plan.durationMinutes)}
           </span>
         </div>
         <div style={{ fontSize: 13.5, color: 'var(--uk-ink-2)' }}>
-          {plan.data} data · {plan.days === 1 ? '1 day' : plan.days + ' days'}{' '}
+          {plan.data} data · {formatDuration(plan.durationMinutes)}{' '}
           validity
         </div>
         {plan.network && (

@@ -92,7 +92,8 @@ message UploadRequest{
     string simType = 2 [json_name = "sim_type"]; /// SimType of sim
 }
 message UploadResponse {
-    repeated string iccid = 1; /// Slice of sims id added in sim pool
+    repeated string iccid = 1 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{18,22}$"}, json_name = "iccid" ]; /// Slice of sims iccid added in sim pool
+    repeated string failedIccid = 2 [json_name = "failed_iccid"]; /// Slice of sims iccid not added in sim pool
 }
 message Sim{
     uint64 id = 1;

@@ -9,9 +9,11 @@
 package db
 
 import (
-	"github.com/ukama/ukama/systems/common/sql"
-	ukama "github.com/ukama/ukama/systems/common/ukama"
 	"gorm.io/gorm"
+
+	"github.com/ukama/ukama/systems/common/sql"
+
+	ukama "github.com/ukama/ukama/systems/common/ukama"
 )
 
 type SimRepo interface {

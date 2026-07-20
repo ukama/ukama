@@ -148,6 +148,14 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                 }
             }
 
+            if (event->type == EVT_PROMOTE_RELEASE) {
+                if (event->app[0] == '\0' || event->tag[0] == '\0') {
+                    return fail(err,
+                                "promote_release event requires app and tag");
+                }
+                continue;
+            }
+
             if (event->type != EVT_SOFTWARE_UPDATE) {
                 continue;
             }

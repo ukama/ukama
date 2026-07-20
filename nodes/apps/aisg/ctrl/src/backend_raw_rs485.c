@@ -234,9 +234,10 @@ static bool execute_retap(RawRs485Context *ctx,
     CtrlCode code;
 
     if (!aisg_v2_send_retap(&ctx->bus, request, response)) {
-        return ctrl_response_set_aisg_error(ctrlResp,
-                                            ctx->bus.lastError,
-                                            "failed to execute RETAP");
+        ctrl_response_set_aisg_error(ctrlResp,
+                                     ctx->bus.lastError,
+                                     "failed to execute RETAP");
+        return false;
     }
 
     if (response->returnCode != RETAP_RETURN_FAIL) {
@@ -245,7 +246,8 @@ static bool execute_retap(RawRs485Context *ctx,
 
     code = retap_response_code(response);
 
-    return ctrl_response_set_error(ctrlResp, code, ctrl_code_str(code));
+    ctrl_response_set_error(ctrlResp, code, ctrl_code_str(code));
+    return false;
 }
 
 static bool raw_require_connected(RawRs485Context *ctx, CtrlResponse *response)
@@ -259,9 +261,10 @@ static bool raw_require_connected(RawRs485Context *ctx, CtrlResponse *response)
         ctx->bus.lastError = AISG_ERROR_LINK_NOT_CONNECTED;
     }
 
-    return ctrl_response_set_error(response,
-                                   CtrlCodeLinkNotConnected,
-                                   "device not connected; run scan first");
+    ctrl_response_set_error(response,
+                            CtrlCodeLinkNotConnected,
+                            "device not connected; run scan first");
+    return false;
 }
 
 static bool raw_require_configured(RawRs485Context *ctx, CtrlResponse *response)
@@ -274,9 +277,10 @@ static bool raw_require_configured(RawRs485Context *ctx, CtrlResponse *response)
         return true;
     }
 
-    return ctrl_response_set_error(response,
-                                   CtrlCodeNotConfigured,
-                                   "configuration must be loaded first");
+    ctrl_response_set_error(response,
+                            CtrlCodeNotConfigured,
+                            "configuration must be loaded first");
+    return false;
 }
 
 static bool raw_require_calibrated(RawRs485Context *ctx, CtrlResponse *response)
@@ -289,9 +293,10 @@ static bool raw_require_calibrated(RawRs485Context *ctx, CtrlResponse *response)
         return true;
     }
 
-    return ctrl_response_set_error(response,
-                                   CtrlCodeNotCalibrated,
-                                   "calibration must be completed first");
+    ctrl_response_set_error(response,
+                            CtrlCodeNotCalibrated,
+                            "calibration must be completed first");
+    return false;
 }
 
 static void raw_clear_device_runtime_state(RawRs485Context *ctx)
@@ -313,6 +318,31 @@ static void raw_clear_device_runtime_state(RawRs485Context *ctx)
     ctx->hardwareVersion[0] = '\0';
     ctx->softwareVersion[0] = '\0';
     aisg_v2_bus_reset_link(&ctx->bus);
+}
+
+static void raw_tick(Backend *backend)
+{
+    RawRs485Context *ctx;
+    AisgError keepaliveError;
+
+    if (backend == NULL || backend->priv == NULL) {
+        return;
+    }
+
+    ctx = backend->priv;
+    if (!ctx->device.present || ctx->bus.state != AISG_L2_CONNECTED) {
+        return;
+    }
+
+    if (aisg_v2_keepalive(&ctx->bus)) {
+        return;
+    }
+
+    keepaliveError = ctx->bus.lastError;
+    usys_log_warn("aisg: background keepalive failed: %s",
+                  aisg_v2_error_str(keepaliveError));
+    raw_clear_device_runtime_state(ctx);
+    ctx->bus.lastError = keepaliveError;
 }
 
 static void raw_update_identity(RawRs485Context *ctx, RetapInfo *info)
@@ -447,17 +477,35 @@ static JsonObj *build_tilt_payload(int16_t tilt)
     return json;
 }
 
-static JsonObj *build_device_data_payload(int field)
+static JsonObj *build_device_data_payload(int field,
+                                          const uint8_t *data,
+                                          size_t len)
 {
     JsonObj *json = NULL;
+    char *hex = NULL;
+    size_t i;
+
+    if (data == NULL && len != 0) {
+        return NULL;
+    }
+
+    hex = calloc((len * 2) + 1, 1);
+    if (hex == NULL) return NULL;
+
+    for (i = 0; i < len; i++) {
+        snprintf(&hex[i * 2], 3, "%02X", data[i]);
+    }
 
     json = json_object();
     if (json == NULL) {
+        free(hex);
         return NULL;
     }
 
     json_object_set_new(json, "field", json_integer(field));
-    json_object_set_new(json, "dataHex", json_string(""));
+    json_object_set_new(json, "dataHex", json_string(hex));
+    json_object_set_new(json, "length", json_integer((json_int_t)len));
+    free(hex);
 
     return json;
 }
@@ -471,6 +519,16 @@ static bool raw_handle_ping(RawRs485Context *ctx, CtrlResponse *response)
 
 static bool raw_handle_status(RawRs485Context *ctx, CtrlResponse *response)
 {
+    AisgError keepaliveError;
+
+    if (ctx != NULL && ctx->device.present &&
+        ctx->bus.state == AISG_L2_CONNECTED &&
+        !aisg_v2_keepalive(&ctx->bus)) {
+        keepaliveError = ctx->bus.lastError;
+        raw_clear_device_runtime_state(ctx);
+        ctx->bus.lastError = keepaliveError;
+    }
+
     return ctrl_response_set_ok(response, build_status_payload(ctx));
 }
 
@@ -586,24 +644,27 @@ static bool read_config_blob(CtrlRequest *request,
     const char *path = NULL;
 
     if (request == NULL || data == NULL || len == NULL) {
-        return ctrl_response_set_error(response,
-                                       CtrlCodeInvalidRequest,
-                                       "invalid config request");
+        ctrl_response_set_error(response,
+                                CtrlCodeInvalidRequest,
+                                "invalid config request");
+        return false;
     }
 
     value = json_object_get(request->payload, "configPath");
     path = json_is_string(value) ? json_string_value(value) : NULL;
 
     if (path == NULL || path[0] == '\0') {
-        return ctrl_response_set_error(response,
-                                       CtrlCodeInvalidRequest,
-                                       "missing configPath");
+        ctrl_response_set_error(response,
+                                CtrlCodeInvalidRequest,
+                                "missing configPath");
+        return false;
     }
 
     if (!read_file_alloc(path, data, len)) {
-        return ctrl_response_set_error(response,
-                                       CtrlCodeInvalidRequest,
-                                       "failed to read config blob");
+        ctrl_response_set_error(response,
+                                CtrlCodeInvalidRequest,
+                                "failed to read config blob");
+        return false;
     }
 
     return true;
@@ -753,6 +814,14 @@ static bool raw_handle_get_tilt(RawRs485Context *ctx,
 
     ctx->tiltTenthsDeg = tilt;
     ctx->tiltKnown = true;
+    /*
+     * A successful GetTilt excludes the RETAP NotCalibrated and NotScaled
+     * states.  The RET may retain its configuration across controller
+     * restarts, so reflect the device's observed operational state instead of
+     * requiring a destructive reconfiguration merely to set local flags.
+     */
+    ctx->configured = true;
+    ctx->calibrated = true;
 
     return ctrl_response_set_ok(response, build_tilt_payload(tilt));
 }
@@ -798,6 +867,13 @@ static bool raw_handle_set_tilt(RawRs485Context *ctx,
         return false;
     }
 
+    /*
+     * TS 25.463 section 6.6.3 defines SetTilt as a synchronous class-1
+     * procedure: the secondary performs the movement and then returns OK or
+     * FAIL (within two minutes). execute_retap() has already received and
+     * validated that terminal response, so no operation remains pending.
+     */
+    json_object_set_new(payload, "state", json_string("completed"));
     json_object_set_new(payload, "targetTiltDeg", json_real(target));
     json_object_set_new(payload, "currentTiltDeg", json_real(tilt / 10.0));
     json_object_set_new(payload, "rawTiltTenthsDeg", json_integer(tilt));
@@ -825,6 +901,11 @@ static bool raw_handle_get_device_data(RawRs485Context *ctx,
                                        "missing field");
     }
     field = (int)json_integer_value(value);
+    if (field < 0 || field > 255) {
+        return ctrl_response_set_error(response,
+                                       CtrlCodeInvalidRequest,
+                                       "field must be between 0 and 255");
+    }
 
     retap_build_get_device_data(&retapReq, (uint8_t)field);
 
@@ -832,7 +913,24 @@ static bool raw_handle_get_device_data(RawRs485Context *ctx,
         return false;
     }
 
-    return ctrl_response_set_ok(response, build_device_data_payload(field));
+    /* A supported field is returned as <field number><field data>. */
+    if (retapResp.dataLen == 0) {
+        return ctrl_response_set_ok(
+            response,
+            build_device_data_payload(field, NULL, 0));
+    }
+
+    if (retapResp.data[0] != (uint8_t)field) {
+        return ctrl_response_set_error(response,
+                                       CtrlCodeFormatError,
+                                       "GetDeviceData field mismatch");
+    }
+
+    return ctrl_response_set_ok(
+        response,
+        build_device_data_payload(field,
+                                  &retapResp.data[1],
+                                  retapResp.dataLen - 1));
 }
 
 
@@ -941,6 +1039,7 @@ bool backend_raw_rs485_init(Backend *backend, Config *config)
     static BackendOps ops = {
         .open    = raw_open,
         .close   = raw_close,
+        .tick    = raw_tick,
         .execute = raw_execute,
     };
 

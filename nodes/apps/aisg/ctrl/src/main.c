@@ -86,6 +86,8 @@ int main(int argc, char **argv) {
 
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
+    /* A client disconnect must not terminate the controller while replying. */
+    signal(SIGPIPE, SIG_IGN);
 
     if (!backend_init(&backend, &config)) {
         usys_log_error("failed to initialize backend");
@@ -101,6 +103,7 @@ int main(int argc, char **argv) {
     }
 
     ok = ctrl_server_run(&config, &backend, &gRunning);
+    usys_log_info("aisg-ctrl server stopped ok=%u", ok ? 1 : 0);
     backend_close(&backend);
     config_free(&config);
 

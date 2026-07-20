@@ -17,7 +17,6 @@
 
 #include "runner.h"
 #include "bff.h"
-#include "hub.h"
 #include "event.h"
 #include "runtime.h"
 #include "log.h"
@@ -102,7 +101,7 @@ static int scenario_has_software_updates(const scenario_t *scenario) {
     return 0;
 }
 
-static int preflight_software_updates(hub_client_t *hub,
+static int preflight_software_updates(bff_client_t *bff,
                                       const scenario_t *scenario,
                                       ulab_error_t *err) {
     size_t i;
@@ -114,41 +113,37 @@ static int preflight_software_updates(hub_client_t *hub,
         phase = &scenario->phases[i];
         for (j = 0; j < phase->event_count; j++) {
             const event_spec_t *event;
-            char artifact_url[ULAB_MAX_URL];
-            uint64_t size_bytes;
-            int exists;
+            bff_release_t release;
+            int found;
 
             event = &phase->events[j];
             if (event->type != EVT_SOFTWARE_UPDATE) {
                 continue;
             }
 
-            memset(artifact_url, 0, sizeof(artifact_url));
-            size_bytes = 0;
-            exists = 0;
+            memset(&release, 0, sizeof(release));
+            found = 0;
 
-            ulab_status("HUB",
-                        "preflight app=%s version=%s format=tar.gz",
+            ulab_status("RELEASE",
+                        "preflight app=%s version=%s type=app",
                         event->app, event->tag);
 
-            if (hub_tar_version_exists(hub, event->app, event->tag,
-                                       &exists, &size_bytes,
-                                       artifact_url, sizeof(artifact_url),
-                                       err)) {
+            if (bff_get_release(bff, event->app, "app", event->tag,
+                                &release, &found, err)) {
                 return ULAB_ERR;
             }
 
-            if (!exists) {
+            if (!found || !release.available) {
                 snprintf(err->msg, sizeof(err->msg),
-                         "Hub tar.gz not found: app=%.128s version=%.128s",
+                         "release unavailable: app=%.128s version=%.128s",
                          event->app, event->tag);
                 return ULAB_ERR;
             }
 
-            ulab_status("HUB",
-                        "available app=%s version=%s size=%llu url=%s",
-                        event->app, event->tag,
-                        (unsigned long long)size_bytes, artifact_url);
+            ulab_status("RELEASE",
+                        "available app=%s version=%s desired=%s",
+                        release.name, release.version,
+                        release.desired ? "true" : "false");
         }
     }
 
@@ -1176,7 +1171,6 @@ static int runner_validate_one(const runner_opts_t *opts) {
     world_t world;
     model_t model;
     bff_client_t bff;
-    hub_client_t hub;
     runtime_t runtime;
     report_t report;
     ulab_error_t err;
@@ -1200,7 +1194,6 @@ static int runner_validate_one(const runner_opts_t *opts) {
     memset(&world,   0, sizeof(world));
     memset(&model,   0, sizeof(model));
     memset(&bff,     0, sizeof(bff));
-    memset(&hub,     0, sizeof(hub));
     memset(&runtime, 0, sizeof(runtime));
     memset(&report,  0, sizeof(report));
     memset(&err,     0, sizeof(err));
@@ -1240,16 +1233,15 @@ static int runner_validate_one(const runner_opts_t *opts) {
         goto done;
     }
 
-    if (scenario_has_software_updates(scenario)) {
-        rc = hub_init(&hub, opts->hub_url, runDir, &err);
-        if (rc != ULAB_OK) {
-            skip_cleanup = 1;
-            rc = ULAB_EBFF;
-            goto done;
-        }
+    rc = bff_init(&bff, opts->bff_url, runDir);
+    bff_opened = 1;
+    if (rc != ULAB_OK) {
+        rc = ULAB_EBFF;
+        goto done;
+    }
 
-        rc = preflight_software_updates(&hub, scenario, &err);
-        hub_close(&hub);
+    if (scenario_has_software_updates(scenario)) {
+        rc = preflight_software_updates(&bff, scenario, &err);
         if (rc != ULAB_OK) {
             skip_cleanup = 1;
             rc = ULAB_EBFF;
@@ -1261,13 +1253,6 @@ static int runner_validate_one(const runner_opts_t *opts) {
                       opts->script_dir, runDir, opts->repo);
     if (rc != ULAB_OK) {
         rc = ULAB_ERUNTIME;
-        goto done;
-    }
-
-    rc = bff_init(&bff, opts->bff_url, runDir);
-    bff_opened = 1;
-    if (rc != ULAB_OK) {
-        rc = ULAB_EBFF;
         goto done;
     }
 
@@ -1401,7 +1386,6 @@ done:
     report_result(&report);
     report_close(&report);
     runtime_close(&runtime);
-    hub_close(&hub);
     if (bff_opened) {
         bff_close(&bff);
     }

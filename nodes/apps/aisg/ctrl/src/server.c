@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <poll.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 
@@ -19,6 +20,7 @@
 #include "usys_log.h"
 
 #define CTRL_SERVER_READ_BUF 8192
+#define CTRL_SERVER_TICK_MS 1000
 
 static bool read_line(int fd, char *buf, size_t size) {
     size_t off;
@@ -50,6 +52,9 @@ static bool write_all(int fd, const char *data, size_t len) {
     off = 0;
     while (off < len) {
         n = write(fd, data + off, len - off);
+        if (n < 0 && errno == EINTR) {
+            continue;
+        }
         if (n <= 0) {
             return false;
         }
@@ -129,7 +134,10 @@ static void handle_client(int fd, Backend *backend) {
         }
     }
 
-    send_response(fd, &response);
+    if (!send_response(fd, &response)) {
+        usys_log_warn("failed to send controller response: %s",
+                      strerror(errno));
+    }
     ctrl_request_free(&request);
     ctrl_response_free(&response);
     json_decref(json);
@@ -138,6 +146,8 @@ static void handle_client(int fd, Backend *backend) {
 bool ctrl_server_run(Config *config, Backend *backend, volatile bool *running) {
     int serverFd;
     int clientFd;
+    int pollResult;
+    struct pollfd pollFd;
     struct sockaddr_un addr;
 
     if (config == NULL || backend == NULL || running == NULL) {
@@ -172,7 +182,31 @@ bool ctrl_server_run(Config *config, Backend *backend, volatile bool *running) {
     }
 
     usys_log_info("aisg-ctrl listening on %s", config->socketPath);
+    memset(&pollFd, 0, sizeof(pollFd));
+    pollFd.fd = serverFd;
+    pollFd.events = POLLIN;
+
     while (*running) {
+        pollResult = poll(&pollFd, 1, CTRL_SERVER_TICK_MS);
+        if (pollResult < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+            usys_log_error("server poll failed: %s", strerror(errno));
+            break;
+        }
+
+        if (pollResult == 0) {
+            backend_tick(backend);
+            continue;
+        }
+
+        if ((pollFd.revents & POLLIN) == 0) {
+            usys_log_error("server socket poll revents=0x%X",
+                           pollFd.revents);
+            break;
+        }
+
         clientFd = accept(serverFd, NULL, NULL);
         if (clientFd < 0) {
             if (errno == EINTR) {

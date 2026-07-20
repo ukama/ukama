@@ -29,7 +29,7 @@ func TestPackageClient_Get(t *testing.T) {
 			assert.Equal(tt, req.URL.String(), dataplan.PackageEndpoint+"/"+testUuid)
 
 			// fake package info
-			pkg := `{"package":{"uuid": "03cb753f-5e03-4c97-8e47-625115476c72", "active": true}}`
+			pkg := `{"package":{"uuid": "03cb753f-5e03-4c97-8e47-625115476c72", "active": true, "currency": "USD"}}`
 
 			// Send mock response
 			return &http.Response{
@@ -53,6 +53,7 @@ func TestPackageClient_Get(t *testing.T) {
 
 		assert.NoError(tt, err)
 		assert.Equal(tt, testUuid, p.Id)
+		assert.Equal(tt, "USD", p.Currency)
 	})
 
 	t.Run("PackageNotFound", func(tt *testing.T) {

@@ -50,6 +50,17 @@ const char *BFF_GET_NODE =
 "query GetNode($data: NodeInput!) {"
 " getNode(data: $data) { id status { connectivity state } } }";
 
+const char *BFF_GET_RELEASE_CATALOG =
+"query GetReleaseCatalog($name: String!, $type: String!) {"
+" getReleaseCatalog(data: { name: $name type: $type }) {"
+" releases { name type version available chunked desired uploadedAt } } }";
+
+const char *BFF_PROMOTE_RELEASE =
+"mutation PromoteRelease($name: String!, $type: String!, "
+"$version: String!) {"
+" promoteRelease(data: { name: $name type: $type version: $version }) {"
+" desiredVersion message name } }";
+
 const char *BFF_UPDATE_SOFTWARE =
 "mutation UpdateSoftware($data: UpdateSoftwareInputDto!) {"
 " updateSoftware(data: $data) { message } }";

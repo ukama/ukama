@@ -11,24 +11,30 @@ package main
 import (
 	"os"
 
-	uuid "github.com/ukama/ukama/systems/common/uuid"
-
 	"github.com/num30/config"
-	pkg "github.com/ukama/ukama/systems/subscriber/sim-pool/pkg"
-	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/server"
+	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
+
+	"github.com/ukama/ukama/systems/common/rest/client/factory"
+	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/subscriber/sim-pool/cmd/version"
+	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/db"
+	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/server"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
-	"github.com/ukama/ukama/systems/common/sql"
-	"github.com/ukama/ukama/systems/subscriber/sim-pool/cmd/version"
+	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
-	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/db"
+	pkg "github.com/ukama/ukama/systems/subscriber/sim-pool/pkg"
+)
 
-	"google.golang.org/grpc"
+const (
+	factorySystem = "factory"
 )
 
 var serviceConfig = pkg.NewConfig(pkg.ServiceName)
@@ -84,7 +90,15 @@ func runGrpcServer(gormdb sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	srv := server.NewSimPoolServer(serviceConfig.OrgName, db.NewSimRepo(gormdb), mbClient)
+	factoryServiceUrl, err := ic.GetHostAddress(ic.NewInitClient(serviceConfig.Http.InitClient, cclient.WithDebug(serviceConfig.DebugMode)),
+		ic.CreateHostString(serviceConfig.OrgName, factorySystem), &serviceConfig.OrgName)
+	if err != nil {
+		log.Fatalf("Failed to resolve %s system address from initClient: %v", factorySystem, err)
+	}
+
+	factoryClient := factory.NewSimFactoryClient(factoryServiceUrl.String(), cclient.WithDebug(serviceConfig.DebugMode))
+
+	srv := server.NewSimPoolServer(serviceConfig.OrgName, db.NewSimRepo(gormdb), factoryClient, mbClient)
 	nSrv := server.NewSimPoolEventServer(serviceConfig.OrgName, db.NewSimRepo(gormdb))
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
