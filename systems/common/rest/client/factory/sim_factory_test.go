@@ -11,14 +11,26 @@ package factory_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"testing"
 
 	"github.com/tj/assert"
 
 	"github.com/ukama/ukama/systems/common/rest/client"
 	"github.com/ukama/ukama/systems/common/rest/client/factory"
+)
+
+const (
+	testSimIccid = "0123456789012345678912"
+	testImsi     = "012345678912345"
+	testBatchId  = "batchId"
+	testOrgName  = "test-org"
+	testcount    = 0
+	testSort     = false
+	simType      = "test"
 )
 
 func TestNewSimFactoryClient(t *testing.T) {
@@ -38,11 +50,10 @@ func TestNewSimFactoryClient(t *testing.T) {
 }
 
 func TestSimFactory_ReadSim(t *testing.T) {
-	testSimIccid := "0123456789012345678912"
 
 	simInfo := factory.SimCardInfo{
 		Iccid:          testSimIccid,
-		Imsi:           "012345678912345",
+		Imsi:           testImsi,
 		Op:             []byte("0123456789012345"),
 		Key:            []byte("0123456789012345"),
 		Amf:            []byte("800"),
@@ -173,5 +184,167 @@ func TestSimFactory_ReadSim(t *testing.T) {
 
 		assert.Error(tt, err)
 		assert.Nil(tt, result)
+	})
+}
+
+func TestNodeFactoryClient_ListSims(t *testing.T) {
+	t.Run("ListSimsSuccess", func(tt *testing.T) {
+		expectedSim := factory.Sims{
+			Sims: []*factory.SimCardInfo{
+				{
+					Iccid:   testSimIccid,
+					Imsi:    testImsi,
+					BatchId: testBatchId,
+					SimType: simType,
+					OrgName: testOrgName,
+				},
+			},
+		}
+
+		mockTransport := func(req *http.Request) *http.Response {
+			expectedURL := testFactoryHost + fmt.Sprintf("%s?imsi=%s&batch_id=%s&org_name=%s&sim_type=%s&count=%d&sort=%s",
+				factory.SimFactoryEndpoint, testImsi, testBatchId, testOrgName, simType, testcount, strconv.FormatBool(testSort))
+			assert.Equal(tt, expectedURL, req.URL.String())
+
+			// Serialize expected response
+			responseBody, _ := json.Marshal(expectedSim)
+
+			return &http.Response{
+				StatusCode: 200,
+				Status:     "200 OK",
+				Body:       io.NopCloser(bytes.NewBuffer(responseBody)),
+				Header:     make(http.Header),
+			}
+		}
+
+		testClient := factory.NewSimFactoryClient(testFactoryHost)
+		testClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		sims, err := testClient.ListSims(testImsi, testBatchId, testOrgName, simType, 0, false)
+
+		assert.NoError(tt, err)
+		assert.NotNil(tt, sims)
+		assert.Equal(tt, expectedSim.Sims[0].Iccid, sims[0].Iccid)
+		assert.Equal(tt, expectedSim.Sims[0].Imsi, sims[0].Imsi)
+		assert.Equal(tt, expectedSim.Sims[0].OrgName, sims[0].OrgName)
+		assert.Equal(tt, expectedSim.Sims[0].BatchId, sims[0].BatchId)
+		assert.Equal(tt, expectedSim.Sims[0].SimType, sims[0].SimType)
+	})
+
+	t.Run("ListSimsNotFound", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			expectedURL := testFactoryHost + fmt.Sprintf("%s?imsi=%s&batch_id=%s&org_name=%s&sim_type=%s&count=%d&sort=%s",
+				factory.SimFactoryEndpoint, testImsi, testBatchId, testOrgName, simType, testcount, strconv.FormatBool(testSort))
+			assert.Equal(tt, expectedURL, req.URL.String())
+
+			return &http.Response{
+				StatusCode: 404,
+				Status:     "404 NOT FOUND",
+				Body:       io.NopCloser(bytes.NewBufferString(`{"error": "nodes not found"}`)),
+				Header:     make(http.Header),
+			}
+		}
+
+		testClient := factory.NewSimFactoryClient(testFactoryHost)
+		testClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		sims, err := testClient.ListSims(testImsi, testBatchId, testOrgName, simType, 0, false)
+
+		assert.Error(tt, err)
+		assert.Nil(tt, sims)
+	})
+
+	t.Run("InvalidResponsePayload", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			expectedURL := testFactoryHost + fmt.Sprintf("%s?imsi=%s&batch_id=%s&org_name=%s&sim_type=%s&count=%d&sort=%s",
+				factory.SimFactoryEndpoint, testImsi, testBatchId, testOrgName, simType, testcount, strconv.FormatBool(testSort))
+			assert.Equal(tt, expectedURL, req.URL.String())
+
+			// Return invalid JSON
+			return &http.Response{
+				StatusCode: 200,
+				Status:     "200 OK",
+				Body:       io.NopCloser(bytes.NewBufferString(`{"invalid": json`)),
+				Header:     make(http.Header),
+			}
+		}
+
+		testClient := factory.NewSimFactoryClient(testFactoryHost)
+		testClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		sims, err := testClient.ListSims(testImsi, testBatchId, testOrgName, simType, 0, false)
+
+		assert.Error(tt, err)
+		assert.Nil(tt, sims)
+	})
+
+	t.Run("RequestFailure", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			expectedURL := testFactoryHost + fmt.Sprintf("%s?imsi=%s&batch_id=%s&org_name=%s&sim_type=%s&count=%d&sort=%s",
+				factory.SimFactoryEndpoint, testImsi, testBatchId, testOrgName, simType, testcount, strconv.FormatBool(testSort))
+			assert.Equal(tt, expectedURL, req.URL.String())
+
+			// Return nil to simulate network failure
+			return nil
+		}
+
+		testClient := factory.NewSimFactoryClient(testFactoryHost)
+		testClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		sims, err := testClient.ListSims(testImsi, testBatchId, testOrgName, simType, 0, false)
+
+		assert.Error(tt, err)
+		assert.Nil(tt, sims)
+	})
+
+	t.Run("EmptyResponseBody", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			expectedURL := testFactoryHost + fmt.Sprintf("%s?imsi=%s&batch_id=%s&org_name=%s&sim_type=%s&count=%d&sort=%s",
+				factory.SimFactoryEndpoint, testImsi, testBatchId, testOrgName, simType, testcount, strconv.FormatBool(testSort))
+			assert.Equal(tt, expectedURL, req.URL.String())
+
+			return &http.Response{
+				StatusCode: 200,
+				Status:     "200 OK",
+				Body:       io.NopCloser(bytes.NewBufferString("")),
+				Header:     make(http.Header),
+			}
+		}
+
+		testClient := factory.NewSimFactoryClient(testFactoryHost)
+		testClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		sims, err := testClient.ListSims(testImsi, testBatchId, testOrgName, simType, 0, false)
+
+		assert.Error(tt, err)
+		assert.Nil(tt, sims)
+	})
+
+	t.Run("UnknownError", func(tt *testing.T) {
+		var expectedSim factory.Sims
+
+		mockTransport := func(req *http.Request) *http.Response {
+			expectedURL := testFactoryHost + fmt.Sprintf("%s?imsi=%s&batch_id=%s&org_name=%s&sim_type=%s&count=%d&sort=%s",
+				factory.SimFactoryEndpoint, testImsi, testBatchId, testOrgName, simType, testcount, strconv.FormatBool(testSort))
+			assert.Equal(tt, expectedURL, req.URL.String())
+
+			// Serialize expected response
+			responseBody, _ := json.Marshal(expectedSim)
+
+			return &http.Response{
+				StatusCode: 200,
+				Status:     "200 OK",
+				Body:       io.NopCloser(bytes.NewBuffer(responseBody)),
+				Header:     make(http.Header),
+			}
+		}
+
+		testClient := factory.NewSimFactoryClient(testFactoryHost)
+		testClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		sims, err := testClient.ListSims(testImsi, testBatchId, testOrgName, simType, 0, false)
+
+		assert.Error(tt, err)
+		assert.Nil(tt, sims)
 	})
 }

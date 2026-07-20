@@ -32,6 +32,7 @@ const (
 type SimUploaded struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Iccid         []string               `protobuf:"bytes,1,rep,name=iccid,proto3" json:"iccid,omitempty"`
+	FailedIccid   []string               `protobuf:"bytes,2,rep,name=failedIccid,json=failed_iccid,proto3" json:"failedIccid,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -69,6 +70,13 @@ func (*SimUploaded) Descriptor() ([]byte, []int) {
 func (x *SimUploaded) GetIccid() []string {
 	if x != nil {
 		return x.Iccid
+	}
+	return nil
+}
+
+func (x *SimUploaded) GetFailedIccid() []string {
+	if x != nil {
+		return x.FailedIccid
 	}
 	return nil
 }
@@ -165,10 +173,11 @@ var File_events_simpool_proto protoreflect.FileDescriptor
 
 const file_events_simpool_proto_rawDesc = "" +
 	"\n" +
-	"\x14events/simpool.proto\x12\x0fukama.events.v1\x1a\x0fvalidator.proto\";\n" +
+	"\x14events/simpool.proto\x12\x0fukama.events.v1\x1a\x0fvalidator.proto\"^\n" +
 	"\vSimUploaded\x12,\n" +
 	"\x05iccid\x18\x01 \x03(\tB\x16\xe2\xdf\x1f\x12\n" +
-	"\x0e^[0-9]{18,22}$X\x01R\x05iccid\"\x1c\n" +
+	"\x0e^[0-9]{18,22}$X\x01R\x05iccid\x12!\n" +
+	"\vfailedIccid\x18\x02 \x03(\tR\ffailed_iccid\"\x1c\n" +
 	"\n" +
 	"SimRemoved\x12\x0e\n" +
 	"\x02Id\x18\x01 \x03(\x04R\x02Id\".\n" +

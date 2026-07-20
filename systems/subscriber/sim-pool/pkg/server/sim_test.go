@@ -9,19 +9,21 @@
 package server
 
 import (
+	"context"
 	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
 	"github.com/ukama/ukama/systems/common/grpc"
-	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/subscriber/sim-pool/mocks"
-	pb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/db"
 
-	"context"
+	cmocks "github.com/ukama/ukama/systems/common/mocks"
+	cfactory "github.com/ukama/ukama/systems/common/rest/client/factory"
+	pb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 )
 
 const (
@@ -70,11 +72,13 @@ const (
 func TestGetStats(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockRepo := &mocks.SimRepo{}
-		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+		factory := &cmocks.SimFactoryClient{}
+		simService := NewSimPoolServer(OrgName, mockRepo, factory, msgbusClient)
 		reqMock := &pb.GetStatsRequest{
 			SimType: TestSimTypeData.String(),
 		}
+
 		mockRepo.On("GetSimsByType", mock.Anything).Return([]db.Sim{{
 			Iccid:          TestIccid1,
 			Msisdn:         TestMsisdn1,
@@ -90,11 +94,13 @@ func TestGetStats(t *testing.T) {
 
 	t.Run("Error", func(t *testing.T) {
 		mockRepo := &mocks.SimRepo{}
-		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+		factory := &cmocks.SimFactoryClient{}
+		simService := NewSimPoolServer(OrgName, mockRepo, factory, msgbusClient)
 		reqMock := &pb.GetStatsRequest{
 			SimType: TestSimTypeData.String(),
 		}
+
 		mockRepo.On("GetSimsByType", mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New(ErrorSimPoolRecordNotFound), "sim-pool"))
 		res, err := simService.GetStats(context.Background(), reqMock)
 		assert.Error(t, err)
@@ -106,8 +112,9 @@ func TestGetStats(t *testing.T) {
 func TestDelete(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockRepo := &mocks.SimRepo{}
-		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
+		factory := &cmocks.SimFactoryClient{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+		simService := NewSimPoolServer(OrgName, mockRepo, factory, msgbusClient)
 		reqMock := &pb.DeleteRequest{
 			Id: []uint64{TestId},
 		}
@@ -123,8 +130,9 @@ func TestDelete(t *testing.T) {
 
 	t.Run("Error", func(t *testing.T) {
 		mockRepo := &mocks.SimRepo{}
-		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
+		factory := &cmocks.SimFactoryClient{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+		simService := NewSimPoolServer(OrgName, mockRepo, factory, msgbusClient)
 		reqMock := &pb.DeleteRequest{
 			Id: []uint64{TestId},
 		}
@@ -138,9 +146,10 @@ func TestDelete(t *testing.T) {
 
 func TestAdd(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
+		factory := &cmocks.SimFactoryClient{}
 		mockRepo := &mocks.SimRepo{}
-		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+		simService := NewSimPoolServer(OrgName, mockRepo, factory, msgbusClient)
 		reqMock := &pb.AddRequest{
 			Sim: []*pb.AddSim{
 				{
@@ -164,8 +173,9 @@ func TestAdd(t *testing.T) {
 
 	t.Run("Error", func(t *testing.T) {
 		mockRepo := &mocks.SimRepo{}
-		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
+		factory := &cmocks.SimFactoryClient{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+		simService := NewSimPoolServer(OrgName, mockRepo, factory, msgbusClient)
 		reqMock := &pb.AddRequest{
 			Sim: []*pb.AddSim{
 				{
@@ -189,8 +199,9 @@ func TestAdd(t *testing.T) {
 func TestGet(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockRepo := &mocks.SimRepo{}
-		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
+		factory := &cmocks.SimFactoryClient{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+		simService := NewSimPoolServer(OrgName, mockRepo, factory, msgbusClient)
 		reqMock := &pb.GetRequest{
 			IsPhysicalSim: true,
 			SimType:       TestSimTypeData.String(),
@@ -211,8 +222,9 @@ func TestGet(t *testing.T) {
 
 	t.Run("Error", func(t *testing.T) {
 		mockRepo := &mocks.SimRepo{}
-		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
+		factory := &cmocks.SimFactoryClient{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+		simService := NewSimPoolServer(OrgName, mockRepo, factory, msgbusClient)
 		reqMock := &pb.GetRequest{
 			IsPhysicalSim: true,
 			SimType:       TestSimTypeData.String(),
@@ -228,8 +240,9 @@ func TestGet(t *testing.T) {
 func TestGetByIccid(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockRepo := &mocks.SimRepo{}
-		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
+		factory := &cmocks.SimFactoryClient{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+		simService := NewSimPoolServer(OrgName, mockRepo, factory, msgbusClient)
 		reqMock := &pb.GetByIccidRequest{
 			Iccid: TestIccid1,
 		}
@@ -249,8 +262,9 @@ func TestGetByIccid(t *testing.T) {
 
 	t.Run("Error", func(t *testing.T) {
 		mockRepo := &mocks.SimRepo{}
-		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
+		factory := &cmocks.SimFactoryClient{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+		simService := NewSimPoolServer(OrgName, mockRepo, factory, msgbusClient)
 		reqMock := &pb.GetByIccidRequest{
 			Iccid: TestIccid1,
 		}
@@ -265,8 +279,9 @@ func TestGetByIccid(t *testing.T) {
 func TestGetSims(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockRepo := &mocks.SimRepo{}
-		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+		factory := &cmocks.SimFactoryClient{}
+		simService := NewSimPoolServer(OrgName, mockRepo, factory, msgbusClient)
 		reqMock := &pb.GetSimsRequest{
 			SimType: TestSimTypeData.String(),
 		}
@@ -304,8 +319,9 @@ func TestGetSims(t *testing.T) {
 
 	t.Run("Error", func(t *testing.T) {
 		mockRepo := &mocks.SimRepo{}
-		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+		factory := &cmocks.SimFactoryClient{}
+		simService := NewSimPoolServer(OrgName, mockRepo, factory, msgbusClient)
 		reqMock := &pb.GetSimsRequest{
 			SimType: TestSimTypeData.String(),
 		}
@@ -318,8 +334,9 @@ func TestGetSims(t *testing.T) {
 
 	t.Run("EmptyResult", func(t *testing.T) {
 		mockRepo := &mocks.SimRepo{}
-		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+		factory := &cmocks.SimFactoryClient{}
+		simService := NewSimPoolServer(OrgName, mockRepo, factory, msgbusClient)
 		reqMock := &pb.GetSimsRequest{
 			SimType: TestSimTypeVoice.String(),
 		}
@@ -335,8 +352,9 @@ func TestGetSims(t *testing.T) {
 func TestUpload(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockRepo := &mocks.SimRepo{}
-		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+		factory := &cmocks.SimFactoryClient{}
+		simService := NewSimPoolServer(OrgName, mockRepo, factory, msgbusClient)
 
 		csvData := []byte(CsvHeader + "\n" +
 			TestIccid1 + "," + TestMsisdn1 + "," + TestSmDpAddress1 + "," + TestActivationCode1 + "," + TestQrCode1 + ",FALSE\n" +
@@ -346,6 +364,23 @@ func TestUpload(t *testing.T) {
 			SimData: csvData,
 			SimType: TestSimTypeData.String(),
 		}
+
+		factory.On("ListSims", mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything).Return([]*cfactory.SimCardInfo{
+			&cfactory.SimCardInfo{
+				Iccid:       TestIccid1,
+				SmDpAddress: TestSmDpAddress1,
+				SimType:     TestSimTypeData.String(),
+				QrCode:      TestQrCode1,
+				IsPhysical:  false,
+			},
+			&cfactory.SimCardInfo{
+				Iccid:       TestIccid2,
+				SmDpAddress: TestSmDpAddress2,
+				SimType:     TestSimTypeData.String(),
+				QrCode:      TestQrCode2,
+				IsPhysical:  true,
+			}}, nil).Once()
 
 		mockRepo.On("Add", mock.AnythingOfType("[]db.Sim")).Return(nil)
 
@@ -365,8 +400,9 @@ func TestUpload(t *testing.T) {
 
 	t.Run("Error", func(t *testing.T) {
 		mockRepo := &mocks.SimRepo{}
-		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+		factory := &cmocks.SimFactoryClient{}
+		simService := NewSimPoolServer(OrgName, mockRepo, factory, msgbusClient)
 
 		csvData := []byte(CsvHeader + "\n" +
 			TestIccid1 + "," + TestMsisdn1 + "," + TestSmDpAddress1 + "," + TestActivationCode1 + "," + TestQrCode1 + ",FALSE")
@@ -375,6 +411,15 @@ func TestUpload(t *testing.T) {
 			SimData: csvData,
 			SimType: TestSimTypeData.String(),
 		}
+
+		factory.On("ListSims", mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything).Return([]*cfactory.SimCardInfo{
+			&cfactory.SimCardInfo{
+				Iccid: TestIccid1,
+			},
+			&cfactory.SimCardInfo{
+				Iccid: TestIccid2,
+			}}, nil).Once()
 
 		mockRepo.On("Add", mock.AnythingOfType("[]db.Sim")).Return(grpc.SqlErrorToGrpc(errors.New(ErrorAddingSims), "sim-pool"))
 
@@ -387,8 +432,9 @@ func TestUpload(t *testing.T) {
 
 	t.Run("EmptyData", func(t *testing.T) {
 		mockRepo := &mocks.SimRepo{}
-		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+		factory := &cmocks.SimFactoryClient{}
+		simService := NewSimPoolServer(OrgName, mockRepo, factory, msgbusClient)
 
 		csvData := []byte(CsvHeader)
 
@@ -396,6 +442,15 @@ func TestUpload(t *testing.T) {
 			SimData: csvData,
 			SimType: TestSimTypeVoice.String(),
 		}
+
+		factory.On("ListSims", mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything).Return([]*cfactory.SimCardInfo{
+			&cfactory.SimCardInfo{
+				Iccid: TestIccid1,
+			},
+			&cfactory.SimCardInfo{
+				Iccid: TestIccid2,
+			}}, nil).Once()
 
 		mockRepo.On("Add", mock.AnythingOfType("[]db.Sim")).Return(nil)
 
@@ -412,8 +467,9 @@ func TestUpload(t *testing.T) {
 
 	t.Run("InvalidCSVData", func(t *testing.T) {
 		mockRepo := &mocks.SimRepo{}
-		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+		factory := &cmocks.SimFactoryClient{}
+		simService := NewSimPoolServer(OrgName, mockRepo, factory, msgbusClient)
 
 		invalidData := []byte(`Invalid CSV format`)
 
@@ -421,6 +477,15 @@ func TestUpload(t *testing.T) {
 			SimData: invalidData,
 			SimType: TestSimTypeData.String(),
 		}
+
+		factory.On("ListSims", mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything).Return([]*cfactory.SimCardInfo{
+			&cfactory.SimCardInfo{
+				Iccid: TestIccid1,
+			},
+			&cfactory.SimCardInfo{
+				Iccid: TestIccid2,
+			}}, nil).Once()
 
 		mockRepo.On("Add", mock.AnythingOfType("[]db.Sim")).Return(nil)
 
@@ -437,8 +502,9 @@ func TestUpload(t *testing.T) {
 
 	t.Run("MessageBusError", func(t *testing.T) {
 		mockRepo := &mocks.SimRepo{}
-		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+		factory := &cmocks.SimFactoryClient{}
+		simService := NewSimPoolServer(OrgName, mockRepo, factory, msgbusClient)
 
 		csvData := []byte(CsvHeader + "\n" +
 			TestIccid1 + "," + TestMsisdn1 + "," + TestSmDpAddress1 + "," + TestActivationCode1 + "," + TestQrCode1 + ",FALSE")
@@ -447,6 +513,19 @@ func TestUpload(t *testing.T) {
 			SimData: csvData,
 			SimType: TestSimTypeData.String(),
 		}
+
+		factory.On("ListSims", mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything).Return([]*cfactory.SimCardInfo{
+			&cfactory.SimCardInfo{
+				Iccid:       TestIccid1,
+				SmDpAddress: TestSmDpAddress1,
+				SimType:     TestSimTypeData.String(),
+				QrCode:      TestQrCode1,
+				IsPhysical:  false,
+			},
+			&cfactory.SimCardInfo{
+				Iccid: TestIccid2,
+			}}, nil).Once()
 
 		mockRepo.On("Add", mock.AnythingOfType("[]db.Sim")).Return(nil)
 
