@@ -12,6 +12,7 @@ import {
   IsNumber,
   IsOptional,
   IsUUID,
+  Max,
   Min,
   ValidateIf,
 } from "class-validator";
@@ -51,6 +52,7 @@ export class PackageAPIDto {
   @Field()
   active: boolean;
 
+  // Duration in minutes (max 1000 years); minutes since #1496.
   @Field()
   duration: number;
 
@@ -175,6 +177,7 @@ export class PackageDto {
   @Field()
   active: boolean;
 
+  // Duration in minutes (max 1000 years); minutes since #1496.
   @Field()
   duration: number;
 
@@ -266,9 +269,11 @@ export class AddPackageInputDto {
   @IsNotEmpty()
   name: string;
 
+  // Duration in minutes (max 1000 years); minutes since #1496.
   @Field(() => Int)
   @IsInt()
   @Min(1)
+  @Max(1000 * 365 * 1440)
   duration: number;
 
   @Field()

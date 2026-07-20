@@ -14,6 +14,7 @@
  */
 import type { PackageFragment } from '@/client/graphql/packages.generated';
 import type { Plan } from '@/data';
+import { minutesToDays } from '@/lib/duration';
 
 const PALETTE = [
   'var(--uk-ac)',
@@ -40,7 +41,7 @@ export function packageToPlan(
     name: pkg.name,
     price: pkg.amount,
     data: formatData(pkg.dataVolume, pkg.dataUnit),
-    days: Math.round(pkg.duration),
+    days: minutesToDays(pkg.duration),
     subs: 0,
     color: PALETTE[index % PALETTE.length] ?? 'var(--uk-ac)',
     // Org-wide plans carry no networkId → available across all networks.

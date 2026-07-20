@@ -42,6 +42,7 @@ import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import type { CreatePlanValues } from './schemas';
 import { createPlanSchema, VALIDITY_OPTIONS } from './schemas';
+import { daysToMinutes, minutesToDays } from '@/lib/duration';
 
 const normalizeUnit = (u: string): 'GB' | 'MB' =>
   u?.toUpperCase() === 'MB' ? 'MB' : 'GB';
@@ -91,7 +92,7 @@ export default function CreatePlanDialog({
           price: pkg.amount,
           data: pkg.dataVolume,
           unit: normalizeUnit(pkg.dataUnit),
-          days: normalizeDays(pkg.duration),
+          days: normalizeDays(minutesToDays(pkg.duration)),
           availableWithinOrg: !pkg.networkId,
           networkId: pkg.networkId ?? '',
         }
@@ -180,7 +181,7 @@ export default function CreatePlanDialog({
           amount: v.price,
           dataVolume: v.data,
           dataUnit: v.unit,
-          duration: v.days,
+          duration: daysToMinutes(v.days),
           country: user.country ?? '',
           currency: user.currency,
           // Org-wide → no network; otherwise the selected network.
@@ -295,7 +296,7 @@ export default function CreatePlanDialog({
           </div>
           <Field label="Validity">
             <div className="ff-readonly">
-              {validityLabel(normalizeDays(pkg.duration))}
+              {validityLabel(normalizeDays(minutesToDays(pkg.duration)))}
             </div>
           </Field>
         </>
