@@ -320,6 +320,31 @@ static void raw_clear_device_runtime_state(RawRs485Context *ctx)
     aisg_v2_bus_reset_link(&ctx->bus);
 }
 
+static void raw_tick(Backend *backend)
+{
+    RawRs485Context *ctx;
+    AisgError keepaliveError;
+
+    if (backend == NULL || backend->priv == NULL) {
+        return;
+    }
+
+    ctx = backend->priv;
+    if (!ctx->device.present || ctx->bus.state != AISG_L2_CONNECTED) {
+        return;
+    }
+
+    if (aisg_v2_keepalive(&ctx->bus)) {
+        return;
+    }
+
+    keepaliveError = ctx->bus.lastError;
+    usys_log_warn("aisg: background keepalive failed: %s",
+                  aisg_v2_error_str(keepaliveError));
+    raw_clear_device_runtime_state(ctx);
+    ctx->bus.lastError = keepaliveError;
+}
+
 static void raw_update_identity(RawRs485Context *ctx, RetapInfo *info)
 {
     if (ctx == NULL || info == NULL) {
@@ -789,6 +814,14 @@ static bool raw_handle_get_tilt(RawRs485Context *ctx,
 
     ctx->tiltTenthsDeg = tilt;
     ctx->tiltKnown = true;
+    /*
+     * A successful GetTilt excludes the RETAP NotCalibrated and NotScaled
+     * states.  The RET may retain its configuration across controller
+     * restarts, so reflect the device's observed operational state instead of
+     * requiring a destructive reconfiguration merely to set local flags.
+     */
+    ctx->configured = true;
+    ctx->calibrated = true;
 
     return ctrl_response_set_ok(response, build_tilt_payload(tilt));
 }
@@ -999,6 +1032,7 @@ bool backend_raw_rs485_init(Backend *backend, Config *config)
     static BackendOps ops = {
         .open    = raw_open,
         .close   = raw_close,
+        .tick    = raw_tick,
         .execute = raw_execute,
     };
 

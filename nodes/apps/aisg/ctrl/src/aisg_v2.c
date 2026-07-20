@@ -256,7 +256,7 @@ static bool read_decoded_frame(AisgBus *bus,
                 continue;
             }
 
-            usys_log_debug("aisg: RX accepted identical XID negotiation response");
+            usys_log_debug("aisg: RX accepted protocol-valid identical response");
         }
 
         return true;
@@ -857,12 +857,114 @@ static bool l2_establish_link(AisgBus *bus)
     bus->ns = 0;
     bus->nr = 0;
     bus->lastActivityMs = monotonic_ms();
+    bus->lastError = AISG_ERROR_NONE;
 
     usys_log_debug("aisg: link establishment OK state=%s addr=0x%02X",
                    l2_state_name(bus->state),
                    bus->deviceAddress);
 
     return true;
+}
+
+static bool recover_assigned_device(AisgBus *bus, AisgDevice *device)
+{
+    AisgError recoveryError;
+    HdlcFrame tx;
+    HdlcFrame rx;
+
+    if (bus == NULL || device == NULL) {
+        return false;
+    }
+
+    /*
+     * This controller supports one RET and always assigns address 0x01.  A
+     * controller restart can therefore leave the secondary addressed (or
+     * connected) while local state has returned to NO_ADDRESS.  Such a
+     * secondary correctly ignores a no-address device scan until its three
+     * minute timer expires.  DISC first normalizes either CONNECTED or
+     * ADDRESS_ASSIGNED to ADDRESS_ASSIGNED, after which version negotiation
+     * and SNRM can be repeated without power-cycling the antenna.
+     */
+    usys_log_debug("aisg: attempting assigned-address recovery addr=0x%02X",
+                   AISG_ADDR_ASSIGNED);
+
+    bus->deviceAddress = AISG_ADDR_ASSIGNED;
+    bus->state = AISG_L2_ADDRESS_ASSIGNED;
+    bus->ns = 0;
+    bus->nr = 0;
+    bus->has3gppRelease = false;
+    bus->negotiated3gppRelease = 0;
+    bus->hasAisgVersion = false;
+    bus->negotiatedAisgVersion = 0;
+    bus->lastActivityMs = 0;
+    bus->lastError = AISG_ERROR_NONE;
+
+    memset(&tx, 0, sizeof(tx));
+    memset(&rx, 0, sizeof(rx));
+    tx.address = AISG_ADDR_ASSIGNED;
+    tx.control = hdlc_disc_ctrl(true);
+
+    usys_log_debug("aisg: assigned-address recovery DISC addr=0x%02X",
+                   tx.address);
+    if (!send_frame(bus, &tx, &rx, AISG_DEFAULT_TIMEOUT_MS)) {
+        set_error(bus, AISG_ERROR_TIMEOUT);
+        goto recovery_failed;
+    }
+
+    if (rx.address != tx.address ||
+        (!hdlc_is_ua(rx.control) && !hdlc_is_dm(rx.control)) ||
+        !hdlc_poll_final(rx.control) ||
+        rx.infoLen != 0) {
+        usys_log_debug("aisg: assigned-address recovery DISC response invalid addr=0x%02X ctrl=0x%02X info_len=%zu",
+                       rx.address,
+                       rx.control,
+                       rx.infoLen);
+        set_error(bus, AISG_ERROR_PROTOCOL);
+        goto recovery_failed;
+    }
+
+    bus->state = AISG_L2_ADDRESS_ASSIGNED;
+    bus->ns = 0;
+    bus->nr = 0;
+
+    if (!xid_negotiate_3gpp_release(bus) ||
+        !xid_negotiate_aisg_version(bus) ||
+        !l2_establish_link(bus)) {
+        goto recovery_failed;
+    }
+
+    memset(device, 0, sizeof(*device));
+    device->present = true;
+    device->address = AISG_ADDR_ASSIGNED;
+    device->deviceType = AISG_SUPPORTED_DEVICE_TYPE;
+    snprintf(device->model, sizeof(device->model), "%s", "single-ret");
+
+    bus->lastError = AISG_ERROR_NONE;
+    usys_log_debug("aisg: assigned-address recovery OK state=%s addr=0x%02X",
+                   l2_state_name(bus->state),
+                   bus->deviceAddress);
+    return true;
+
+recovery_failed:
+    recoveryError = bus->lastError;
+    if (recoveryError == AISG_ERROR_NONE) {
+        recoveryError = AISG_ERROR_TIMEOUT;
+    }
+
+    bus->deviceAddress = AISG_ADDR_DEFAULT;
+    bus->state = AISG_L2_NO_ADDRESS;
+    bus->ns = 0;
+    bus->nr = 0;
+    bus->has3gppRelease = false;
+    bus->negotiated3gppRelease = 0;
+    bus->hasAisgVersion = false;
+    bus->negotiatedAisgVersion = 0;
+    bus->lastActivityMs = 0;
+    bus->lastError = recoveryError;
+
+    usys_log_debug("aisg: assigned-address recovery failed error=%s",
+                   aisg_v2_error_str(recoveryError));
+    return false;
 }
 
 void aisg_v2_bus_init(AisgBus *bus, SerialPort *serial)
@@ -912,6 +1014,13 @@ bool aisg_v2_scan(AisgBus *bus, AisgDevice *device)
         return false;
     }
 
+    if (bus->state == AISG_L2_CONNECTED && device->present) {
+        bus->lastError = AISG_ERROR_NONE;
+        usys_log_debug("aisg: scan reused existing connected device addr=0x%02X",
+                       bus->deviceAddress);
+        return true;
+    }
+
     memset(device, 0, sizeof(AisgDevice));
 
     bus->deviceAddress = AISG_ADDR_DEFAULT;
@@ -933,6 +1042,10 @@ bool aisg_v2_scan(AisgBus *bus, AisgDevice *device)
     }
 
     if (!xid_scan_single(bus, device)) {
+        if (bus->lastError == AISG_ERROR_TIMEOUT &&
+            recover_assigned_device(bus, device)) {
+            return true;
+        }
         usys_log_debug("aisg: scan failed");
         return false;
     }
@@ -1112,7 +1225,8 @@ static bool l2_poll_for_i_response(AisgBus *bus,
                        bus->nr,
                        waitMs);
 
-        if (!send_frame(bus, &poll, rx, waitMs)) {
+        /* An RR response may legitimately be identical to the RR poll. */
+        if (!send_frame_with_policy(bus, &poll, rx, waitMs, true)) {
             set_error(bus, AISG_ERROR_TIMEOUT);
             return false;
         }
@@ -1134,6 +1248,8 @@ static void l2_mark_link_lost(AisgBus *bus, AisgError error)
     bus->lastActivityMs = 0;
     set_error(bus, error);
 }
+
+static bool l2_acknowledge_i_response(AisgBus *bus);
 
 bool aisg_v2_keepalive(AisgBus *bus)
 {
@@ -1167,17 +1283,18 @@ bool aisg_v2_keepalive(AisgBus *bus)
                    bus->nr,
                    (long long)(nowMs - bus->lastActivityMs));
 
-    if (!send_frame(bus, &tx, &rx, AISG_DEFAULT_TIMEOUT_MS)) {
+    /* An RR response may legitimately be byte-for-byte identical to the poll. */
+    if (!send_frame_with_policy(bus,
+                                &tx,
+                                &rx,
+                                AISG_DEFAULT_TIMEOUT_MS,
+                                true)) {
         usys_log_debug("aisg: link keepalive timed out; link lost");
         l2_mark_link_lost(bus, AISG_ERROR_TIMEOUT);
         return false;
     }
 
-    if (rx.address != tx.address ||
-        (!hdlc_is_rr(rx.control) && !hdlc_is_rnr(rx.control)) ||
-        !hdlc_poll_final(rx.control) ||
-        hdlc_nr(rx.control) != bus->ns ||
-        rx.infoLen != 0) {
+    if (rx.address != tx.address || !hdlc_poll_final(rx.control)) {
         usys_log_debug("aisg: invalid keepalive response addr=0x%02X ctrl=0x%02X nr=%u info_len=%zu",
                        rx.address,
                        rx.control,
@@ -1187,10 +1304,42 @@ bool aisg_v2_keepalive(AisgBus *bus)
         return false;
     }
 
+    if (hdlc_is_i_frame(rx.control)) {
+        if (hdlc_nr(rx.control) != bus->ns ||
+            hdlc_ns(rx.control) != bus->nr) {
+            usys_log_debug("aisg: keepalive I-frame sequence invalid ns=%u expected=%u nr=%u expected=%u",
+                           hdlc_ns(rx.control),
+                           bus->nr,
+                           hdlc_nr(rx.control),
+                           bus->ns);
+            l2_mark_link_lost(bus, AISG_ERROR_PROTOCOL);
+            return false;
+        }
+
+        bus->nr = (uint8_t)((hdlc_ns(rx.control) + 1) & 0x07);
+        usys_log_debug("aisg: keepalive received unsolicited I-frame info_len=%zu next_nr=%u",
+                       rx.infoLen,
+                       bus->nr);
+        if (!l2_acknowledge_i_response(bus)) {
+            l2_mark_link_lost(bus, AISG_ERROR_TRANSPORT);
+            return false;
+        }
+    } else if ((!hdlc_is_rr(rx.control) && !hdlc_is_rnr(rx.control)) ||
+               hdlc_nr(rx.control) != bus->ns ||
+               rx.infoLen != 0) {
+        usys_log_debug("aisg: invalid keepalive supervisory response ctrl=0x%02X nr=%u expected=%u info_len=%zu",
+                       rx.control,
+                       hdlc_nr(rx.control),
+                       bus->ns,
+                       rx.infoLen);
+        l2_mark_link_lost(bus, AISG_ERROR_PROTOCOL);
+        return false;
+    }
+
     bus->lastActivityMs = monotonic_ms();
-    set_error(bus,
-              hdlc_is_rnr(rx.control) ? AISG_ERROR_RECEIVER_NOT_READY
-                                      : AISG_ERROR_NONE);
+    set_error(bus, hdlc_is_rnr(rx.control)
+                       ? AISG_ERROR_RECEIVER_NOT_READY
+                       : AISG_ERROR_NONE);
 
     return true;
 }

@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <poll.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 
@@ -19,6 +20,7 @@
 #include "usys_log.h"
 
 #define CTRL_SERVER_READ_BUF 8192
+#define CTRL_SERVER_TICK_MS 1000
 
 static bool read_line(int fd, char *buf, size_t size) {
     size_t off;
@@ -144,6 +146,8 @@ static void handle_client(int fd, Backend *backend) {
 bool ctrl_server_run(Config *config, Backend *backend, volatile bool *running) {
     int serverFd;
     int clientFd;
+    int pollResult;
+    struct pollfd pollFd;
     struct sockaddr_un addr;
 
     if (config == NULL || backend == NULL || running == NULL) {
@@ -178,7 +182,31 @@ bool ctrl_server_run(Config *config, Backend *backend, volatile bool *running) {
     }
 
     usys_log_info("aisg-ctrl listening on %s", config->socketPath);
+    memset(&pollFd, 0, sizeof(pollFd));
+    pollFd.fd = serverFd;
+    pollFd.events = POLLIN;
+
     while (*running) {
+        pollResult = poll(&pollFd, 1, CTRL_SERVER_TICK_MS);
+        if (pollResult < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+            usys_log_error("server poll failed: %s", strerror(errno));
+            break;
+        }
+
+        if (pollResult == 0) {
+            backend_tick(backend);
+            continue;
+        }
+
+        if ((pollFd.revents & POLLIN) == 0) {
+            usys_log_error("server socket poll revents=0x%X",
+                           pollFd.revents);
+            break;
+        }
+
         clientFd = accept(serverFd, NULL, NULL);
         if (clientFd < 0) {
             if (errno == EINTR) {

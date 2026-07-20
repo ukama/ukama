@@ -18,6 +18,7 @@ typedef struct Backend Backend;
 typedef struct {
     bool (*open)(Backend *backend);
     void (*close)(Backend *backend);
+    void (*tick)(Backend *backend);
     bool (*execute)(Backend *backend,
                     CtrlRequest *request,
                     CtrlResponse *response);
@@ -32,6 +33,7 @@ struct Backend {
 bool backend_init(Backend *backend, Config *config);
 bool backend_open(Backend *backend);
 void backend_close(Backend *backend);
+void backend_tick(Backend *backend);
 bool backend_execute(Backend *backend,
                      CtrlRequest *request,
                      CtrlResponse *response);

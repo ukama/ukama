@@ -10,6 +10,10 @@
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
+#include <pty.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <termios.h>
 
 #include "aisg_v2.h"
 #include "hdlc.h"
@@ -297,6 +301,103 @@ static bool test_real_ret_identical_release_xid(void)
     return true;
 }
 
+static bool test_identical_rr_poll_response(void)
+{
+    HdlcFrame poll;
+    HdlcFrame response;
+    uint8_t raw[HDLC_MAX_FRAME];
+    size_t rawLen = 0;
+
+    memset(&poll, 0, sizeof(poll));
+    memset(&response, 0, sizeof(response));
+
+    poll.address = AISG_ADDR_ASSIGNED;
+    poll.control = hdlc_rr_ctrl(4, true);
+
+    CHECK(poll.control == 0x91);
+    CHECK(hdlc_is_rr(poll.control));
+    CHECK(hdlc_poll_final(poll.control));
+    CHECK(hdlc_nr(poll.control) == 4);
+    CHECK(hdlc_encode_frame(&poll, raw, sizeof(raw), &rawLen));
+    CHECK(hdlc_decode_frame(raw, rawLen, &response));
+
+    /* A ready secondary with the same N(R) returns the identical RR frame. */
+    CHECK(response.address == poll.address);
+    CHECK(response.control == poll.control);
+    CHECK(response.infoLen == 0);
+
+    return true;
+}
+
+static bool test_keepalive_accepts_identical_rr(void)
+{
+    AisgBus bus;
+    SerialPort port;
+    struct termios tio;
+    uint8_t raw[64];
+    size_t total;
+    int flags;
+    int masterFd;
+    int slaveFd;
+    int status;
+    pid_t child;
+    ssize_t n;
+    size_t i;
+
+    CHECK(openpty(&masterFd, &slaveFd, NULL, NULL, NULL) == 0);
+    CHECK(tcgetattr(slaveFd, &tio) == 0);
+    cfmakeraw(&tio);
+    CHECK(tcsetattr(slaveFd, TCSANOW, &tio) == 0);
+
+    child = fork();
+    CHECK(child >= 0);
+    if (child == 0) {
+        close(slaveFd);
+        total = 0;
+        flags = 0;
+        while (total < sizeof(raw) && flags < 2) {
+            n = read(masterFd, &raw[total], sizeof(raw) - total);
+            if (n <= 0) {
+                _exit(2);
+            }
+            for (i = total; i < total + (size_t)n; i++) {
+                if (raw[i] == HDLC_FLAG) flags++;
+            }
+            total += (size_t)n;
+        }
+
+        /* Secondary turnaround, followed by a byte-identical RR response. */
+        usleep(AISG_MIN_TURNAROUND_US);
+        if (write(masterFd, raw, total) != (ssize_t)total) {
+            _exit(3);
+        }
+        /* Keep the PTY master open until the slave has consumed the reply. */
+        usleep(100000);
+        close(masterFd);
+        _exit(0);
+    }
+
+    close(masterFd);
+    memset(&port, 0, sizeof(port));
+    port.fd = slaveFd;
+    aisg_v2_bus_init(&bus, &port);
+    bus.deviceAddress = AISG_ADDR_ASSIGNED;
+    bus.state = AISG_L2_CONNECTED;
+    bus.ns = 4;
+    bus.nr = 4;
+    bus.lastActivityMs = 1;
+
+    CHECK(aisg_v2_keepalive(&bus));
+    CHECK(bus.state == AISG_L2_CONNECTED);
+    CHECK(bus.ns == 4 && bus.nr == 4);
+    CHECK(bus.lastError == AISG_ERROR_NONE);
+    CHECK(waitpid(child, &status, 0) == child);
+    CHECK(WIFEXITED(status) && WEXITSTATUS(status) == 0);
+    close(slaveFd);
+
+    return true;
+}
+
 static bool test_retap_golden_packets(void)
 {
     RetapRequest req;
@@ -414,6 +515,8 @@ int main(void)
         { "xid_scan_and_assignment",     test_xid_scan_and_assignment },
         { "real_ret_scan_without_pi2",   test_real_ret_scan_response_without_pi2 },
         { "real_ret_identical_release_xid", test_real_ret_identical_release_xid },
+        { "identical_rr_poll_response",  test_identical_rr_poll_response },
+        { "keepalive_accepts_identical_rr", test_keepalive_accepts_identical_rr },
         { "retap_golden_packets",        test_retap_golden_packets },
         { "retap_config_limits",         test_retap_config_limits },
     };
