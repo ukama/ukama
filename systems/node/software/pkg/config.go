@@ -60,6 +60,7 @@ func NewConfig(name string) *Config {
 				evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline],
 				"event.cloud.global.{{ .Org}}.hub.distributor.app.chunkready",
 				"event.cloud.global.{{ .Org}}.hub.artifactmanager.app.uploaded",
+				"event.cloud.local.{{ .Org}}.node.health.apps.changed",
 			},
 		},
 	}

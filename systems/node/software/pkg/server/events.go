@@ -51,6 +51,8 @@ func (n *SoftwareUpdateEventServer) EventNotification(ctx context.Context, e *ep
 		return n.handleNodeAppChunkReadyEvent(ctx, e)
 	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline]):
 		return n.handleNodeOnlineEvent(ctx, e)
+	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.node.health.apps.changed"):
+		return n.handleHealthAppsChangedEvent(ctx, e)
 
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)
@@ -105,6 +107,28 @@ func (n *SoftwareUpdateEventServer) handleNodeOnlineEvent(ctx context.Context, e
 		log.Errorf("failed to apply desired to node %s: %v", msg.NodeId, err)
 	}
 
+	return &epb.EventResponse{}, nil
+}
+
+// handleHealthAppsChangedEvent reconciles a single node's installed apps/software
+// from health and applies the desired release. Driven by the health service's
+// change-only notification, so software need not listen to the periodic health
+// report firehose.
+func (n *SoftwareUpdateEventServer) handleHealthAppsChangedEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+	p := &epb.HealthAppsChangedEvent{}
+	if err := anypb.UnmarshalTo(e.Msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal health apps changed event: %w", err)
+	}
+	log.Infof("health apps changed for node %s; reconciling", p.NodeId)
+	if err := n.reconcileApps(p.NodeId); err != nil {
+		log.Errorf("apps-changed: reconcile apps for %s: %v", p.NodeId, err)
+	}
+	if err := n.reconcileSoftware(p.NodeId); err != nil {
+		log.Errorf("apps-changed: reconcile software for %s: %v", p.NodeId, err)
+	}
+	if err := n.applyDesiredToNode(p.NodeId); err != nil {
+		log.Errorf("apps-changed: apply desired for %s: %v", p.NodeId, err)
+	}
 	return &epb.EventResponse{}, nil
 }
 
