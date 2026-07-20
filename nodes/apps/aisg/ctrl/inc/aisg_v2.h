@@ -47,11 +47,17 @@
 #define AISG_3GPP_RELEASE_ID               0x06
 #define AISG_PROTOCOL_VERSION              0x02
 #define AISG_LINK_TIMEOUT_MS               180000
+#define AISG_LINK_KEEPALIVE_MS             150000
 #define AISG_MIN_TURNAROUND_US             3000
-#define AISG_HDLC_DEFAULT_INFO_MAX         78
+#define AISG_HDLC_DEFAULT_FRAME_MAX        78
+/* N=78 includes address, control and the two FCS octets. */
+#define AISG_HDLC_DEFAULT_INFO_MAX         (AISG_HDLC_DEFAULT_FRAME_MAX - 4)
 
 
 #define AISG_DEFAULT_TIMEOUT_MS            3000
+#define AISG_SCAN_WINDOW_MS                2000
+#define AISG_SCAN_RESPONSE_TIMEOUT_MS      100
+#define AISG_SCAN_RETRY_DELAY_US           25000
 #define AISG_SCAN_EXTRA_TIMEOUT_MS         250
 #define AISG_MAX_RX_ATTEMPTS               4
 
@@ -97,6 +103,7 @@ typedef struct {
     bool hasAisgVersion;
     uint8_t negotiatedAisgVersion;
     size_t maxInfoLen;
+    int64_t lastActivityMs;
     AisgError lastError;
 } AisgBus;
 
@@ -117,6 +124,7 @@ void aisg_v2_bus_reset_link(AisgBus *bus);
 const char *aisg_v2_l2_state_str(AisgL2State state);
 const char *aisg_v2_error_str(AisgError error);
 bool aisg_v2_scan(AisgBus *bus, AisgDevice *device);
+bool aisg_v2_keepalive(AisgBus *bus);
 bool aisg_v2_disconnect(AisgBus *bus);
 bool aisg_v2_send_retap(AisgBus *bus,
                         RetapRequest *request,

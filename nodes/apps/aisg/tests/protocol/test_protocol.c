@@ -9,10 +9,17 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include <unistd.h>
+#include <pty.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <termios.h>
 
+#include "aisg_v2.h"
 #include "hdlc.h"
 #include "retap.h"
 #include "retap_ops.h"
+#include "serial.h"
 #include "xid.h"
 
 #define CHECK(expr) do {                                                       \
@@ -80,15 +87,85 @@ static bool test_hdlc_roundtrip_and_escaping(void)
     return true;
 }
 
+static bool test_serial_fill_and_shared_flags(void)
+{
+    HdlcFrame tx1;
+    HdlcFrame tx2;
+    HdlcFrame rx;
+    SerialPort port;
+    uint8_t raw1[HDLC_MAX_FRAME];
+    uint8_t raw2[HDLC_MAX_FRAME];
+    uint8_t stream[HDLC_MAX_FRAME * 2];
+    uint8_t frame[HDLC_MAX_FRAME];
+    size_t raw1Len = 0;
+    size_t raw2Len = 0;
+    size_t streamLen = 0;
+    size_t frameLen = 0;
+    int fds[2];
+
+    memset(&tx1, 0, sizeof(tx1));
+    memset(&tx2, 0, sizeof(tx2));
+    memset(&rx, 0, sizeof(rx));
+    memset(&port, 0, sizeof(port));
+
+    tx1.address = 0x01;
+    tx1.control = hdlc_rr_ctrl(0, true);
+    tx2.address = 0x01;
+    tx2.control = hdlc_i_ctrl(0, 0, true);
+    tx2.info[0] = 0x34;
+    tx2.infoLen = 1;
+
+    CHECK(hdlc_encode_frame(&tx1, raw1, sizeof(raw1), &raw1Len));
+    CHECK(hdlc_encode_frame(&tx2, raw2, sizeof(raw2), &raw2Len));
+    CHECK(pipe(fds) == 0);
+    port.fd = fds[0];
+
+    /* Noise and any number of leading/fill flags must be ignored. */
+    stream[streamLen++] = 0x55;
+    stream[streamLen++] = HDLC_FLAG;
+    stream[streamLen++] = HDLC_FLAG;
+    memcpy(&stream[streamLen], raw1, raw1Len);
+    streamLen += raw1Len;
+    CHECK(write(fds[1], stream, streamLen) == (ssize_t)streamLen);
+    CHECK(serial_read_frame(&port,
+                            frame,
+                            sizeof(frame),
+                            &frameLen,
+                            100));
+    CHECK(hdlc_decode_frame(frame, frameLen, &rx));
+    CHECK(rx.address == tx1.address);
+    CHECK(rx.control == tx1.control);
+
+    /* The previous closing flag is allowed to open the next frame. */
+    CHECK(write(fds[1], &raw2[1], raw2Len - 1) == (ssize_t)(raw2Len - 1));
+    CHECK(serial_read_frame(&port,
+                            frame,
+                            sizeof(frame),
+                            &frameLen,
+                            100));
+    CHECK(hdlc_decode_frame(frame, frameLen, &rx));
+    CHECK(rx.address == tx2.address);
+    CHECK(rx.control == tx2.control);
+    CHECK(rx.infoLen == 1 && rx.info[0] == 0x34);
+
+    close(fds[0]);
+    close(fds[1]);
+    return true;
+}
+
 static bool test_xid_scan_and_assignment(void)
 {
+    HdlcFrame scan;
+    uint8_t raw[HDLC_MAX_FRAME];
     uint8_t info[256];
+    size_t rawLen = 0;
     size_t infoLen = 0;
     XidAddressingParams params;
     const uint8_t uid[] = { 'U', 'K', 'A', 'M', 'A', '0', '0', '1' };
     uint16_t vendor = ((uint16_t)'U' << 8) | (uint8_t)'K';
 
     CHECK(xid_build_scan_info(info, sizeof(info), &infoLen));
+    CHECK(infoLen == 45);
     CHECK(xid_parse_addressing_info(info, infoLen, &params));
     CHECK(params.hasUniqueId);
     CHECK(params.uniqueIdLen == AISG_XID_SCAN_ID_LEN);
@@ -101,6 +178,21 @@ static bool test_xid_scan_and_assignment(void)
                                    params.uniqueIdLen,
                                    params.mask,
                                    params.maskLen));
+
+    memset(&scan, 0, sizeof(scan));
+    scan.address = AISG_ADDR_BROADCAST;
+    scan.control = hdlc_xid_ctrl(true);
+    memcpy(scan.info, info, infoLen);
+    scan.infoLen = infoLen;
+    CHECK(hdlc_encode_frame(&scan, raw, sizeof(raw), &rawLen));
+    CHECK(rawLen == 51);
+    CHECK(raw[0] == 0x7E && raw[1] == 0xFF && raw[2] == 0xBF);
+    CHECK(raw[3] == 0x81 && raw[4] == 0xF0 && raw[5] == 0x2A);
+    CHECK(raw[6] == 0x01 && raw[7] == 0x13);
+    CHECK(raw[27] == 0x03 && raw[28] == 0x13);
+    CHECK(raw[48] == 0x7F && raw[49] == 0x0F && raw[50] == 0x7E);
+    CHECK(AISG_HDLC_DEFAULT_FRAME_MAX == 78);
+    CHECK(AISG_HDLC_DEFAULT_INFO_MAX == 74);
 
     CHECK(xid_build_assign_info(uid,
                                 sizeof(uid),
@@ -127,6 +219,181 @@ static bool test_xid_scan_and_assignment(void)
     CHECK(xid_build_scan_info(info, sizeof(info), &infoLen));
     CHECK(xid_parse_addressing_info(info, infoLen, &params));
     CHECK(!xid_assignment_matches(&params, uid, sizeof(uid), 0x01, vendor));
+
+    return true;
+}
+
+static bool test_real_ret_scan_response_without_pi2(void)
+{
+    static const uint8_t raw[] = {
+        0x7E, 0x00, 0xBF, 0x81, 0xF0, 0x1C, 0x01, 0x13,
+        0x54, 0x43, 0x30, 0x30, 0x34, 0x42, 0x4C, 0x32,
+        0x33, 0x33, 0x37, 0x59, 0x31, 0x30, 0x30, 0x30,
+        0x39, 0x30, 0x31, 0x06, 0x02, 0x54, 0x43, 0x04,
+        0x01, 0x01, 0x00, 0x30, 0x7E
+    };
+    static const uint8_t expectedUid[] = {
+        0x54, 0x43, 0x30, 0x30, 0x34, 0x42, 0x4C, 0x32,
+        0x33, 0x33, 0x37, 0x59, 0x31, 0x30, 0x30, 0x30,
+        0x39, 0x30, 0x31
+    };
+    HdlcFrame frame;
+    XidAddressingParams params;
+
+    memset(&frame, 0, sizeof(frame));
+    memset(&params, 0, sizeof(params));
+
+    CHECK(hdlc_decode_frame(raw, sizeof(raw), &frame));
+    CHECK(frame.address == AISG_ADDR_DEFAULT);
+    CHECK(hdlc_is_xid(frame.control));
+    CHECK(xid_parse_addressing_info(frame.info, frame.infoLen, &params));
+    CHECK(params.hasUniqueId);
+    CHECK(params.uniqueIdLen == sizeof(expectedUid));
+    CHECK(bytes_eq(params.uniqueId, expectedUid, sizeof(expectedUid)));
+    CHECK(!params.hasAddress);
+    CHECK(params.hasVendorCode && params.vendorCode == 0x5443);
+    CHECK(params.hasDeviceType &&
+          params.deviceType == AISG_DEVICE_TYPE_SINGLE_RET);
+
+    return true;
+}
+
+static bool test_real_ret_identical_release_xid(void)
+{
+    /* Exact command/response seen on the real RET for Release 6. */
+    static const uint8_t captured[] = {
+        0x7E, 0x01, 0xBF, 0x81, 0xF0, 0x03,
+        0x05, 0x01, 0x06, 0xDE, 0xB5, 0x7E
+    };
+    HdlcFrame frame;
+    XidAddressingParams params;
+    uint8_t encoded[HDLC_MAX_FRAME];
+    size_t infoLen = 0;
+    size_t encodedLen = 0;
+
+    memset(&frame, 0, sizeof(frame));
+    memset(&params, 0, sizeof(params));
+
+    CHECK(hdlc_decode_frame(captured, sizeof(captured), &frame));
+    CHECK(frame.address == AISG_ADDR_ASSIGNED);
+    CHECK(hdlc_is_xid(frame.control));
+    CHECK(xid_parse_addressing_info(frame.info, frame.infoLen, &params));
+    CHECK(params.has3gppRelease);
+    CHECK(params.release == AISG_3GPP_RELEASE_ID);
+
+    /* Accepting the offered value produces a byte-identical XID response. */
+    memset(&frame, 0, sizeof(frame));
+    frame.address = AISG_ADDR_ASSIGNED;
+    frame.control = hdlc_xid_ctrl(true);
+    CHECK(xid_build_one_octet_info(AISG_XID_PI_3GPP_RELEASE,
+                                   AISG_3GPP_RELEASE_ID,
+                                   frame.info,
+                                   sizeof(frame.info),
+                                   &infoLen));
+    frame.infoLen = infoLen;
+    CHECK(hdlc_encode_frame(&frame,
+                            encoded,
+                            sizeof(encoded),
+                            &encodedLen));
+    CHECK(encodedLen == sizeof(captured));
+    CHECK(bytes_eq(encoded, captured, sizeof(captured)));
+
+    return true;
+}
+
+static bool test_identical_rr_poll_response(void)
+{
+    HdlcFrame poll;
+    HdlcFrame response;
+    uint8_t raw[HDLC_MAX_FRAME];
+    size_t rawLen = 0;
+
+    memset(&poll, 0, sizeof(poll));
+    memset(&response, 0, sizeof(response));
+
+    poll.address = AISG_ADDR_ASSIGNED;
+    poll.control = hdlc_rr_ctrl(4, true);
+
+    CHECK(poll.control == 0x91);
+    CHECK(hdlc_is_rr(poll.control));
+    CHECK(hdlc_poll_final(poll.control));
+    CHECK(hdlc_nr(poll.control) == 4);
+    CHECK(hdlc_encode_frame(&poll, raw, sizeof(raw), &rawLen));
+    CHECK(hdlc_decode_frame(raw, rawLen, &response));
+
+    /* A ready secondary with the same N(R) returns the identical RR frame. */
+    CHECK(response.address == poll.address);
+    CHECK(response.control == poll.control);
+    CHECK(response.infoLen == 0);
+
+    return true;
+}
+
+static bool test_keepalive_accepts_identical_rr(void)
+{
+    AisgBus bus;
+    SerialPort port;
+    struct termios tio;
+    uint8_t raw[64];
+    size_t total;
+    int flags;
+    int masterFd;
+    int slaveFd;
+    int status;
+    pid_t child;
+    ssize_t n;
+    size_t i;
+
+    CHECK(openpty(&masterFd, &slaveFd, NULL, NULL, NULL) == 0);
+    CHECK(tcgetattr(slaveFd, &tio) == 0);
+    cfmakeraw(&tio);
+    CHECK(tcsetattr(slaveFd, TCSANOW, &tio) == 0);
+
+    child = fork();
+    CHECK(child >= 0);
+    if (child == 0) {
+        close(slaveFd);
+        total = 0;
+        flags = 0;
+        while (total < sizeof(raw) && flags < 2) {
+            n = read(masterFd, &raw[total], sizeof(raw) - total);
+            if (n <= 0) {
+                _exit(2);
+            }
+            for (i = total; i < total + (size_t)n; i++) {
+                if (raw[i] == HDLC_FLAG) flags++;
+            }
+            total += (size_t)n;
+        }
+
+        /* Secondary turnaround, followed by a byte-identical RR response. */
+        usleep(AISG_MIN_TURNAROUND_US);
+        if (write(masterFd, raw, total) != (ssize_t)total) {
+            _exit(3);
+        }
+        /* Keep the PTY master open until the slave has consumed the reply. */
+        usleep(100000);
+        close(masterFd);
+        _exit(0);
+    }
+
+    close(masterFd);
+    memset(&port, 0, sizeof(port));
+    port.fd = slaveFd;
+    aisg_v2_bus_init(&bus, &port);
+    bus.deviceAddress = AISG_ADDR_ASSIGNED;
+    bus.state = AISG_L2_CONNECTED;
+    bus.ns = 4;
+    bus.nr = 4;
+    bus.lastActivityMs = 1;
+
+    CHECK(aisg_v2_keepalive(&bus));
+    CHECK(bus.state == AISG_L2_CONNECTED);
+    CHECK(bus.ns == 4 && bus.nr == 4);
+    CHECK(bus.lastError == AISG_ERROR_NONE);
+    CHECK(waitpid(child, &status, 0) == child);
+    CHECK(WIFEXITED(status) && WEXITSTATUS(status) == 0);
+    close(slaveFd);
 
     return true;
 }
@@ -244,7 +511,12 @@ int main(void)
         bool (*fn)(void);
     } tests[] = {
         { "hdlc_roundtrip_and_escaping", test_hdlc_roundtrip_and_escaping },
+        { "serial_fill_and_shared_flags", test_serial_fill_and_shared_flags },
         { "xid_scan_and_assignment",     test_xid_scan_and_assignment },
+        { "real_ret_scan_without_pi2",   test_real_ret_scan_response_without_pi2 },
+        { "real_ret_identical_release_xid", test_real_ret_identical_release_xid },
+        { "identical_rr_poll_response",  test_identical_rr_poll_response },
+        { "keepalive_accepts_identical_rr", test_keepalive_accepts_identical_rr },
         { "retap_golden_packets",        test_retap_golden_packets },
         { "retap_config_limits",         test_retap_config_limits },
     };
