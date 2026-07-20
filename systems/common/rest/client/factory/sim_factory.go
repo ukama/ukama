@@ -107,7 +107,7 @@ type SimCardInfo struct {
 	Imsi           string `json:"imsi,omitempty"`
 	Iccid          string `json:"iccid,omitempty"`
 	Op             []byte `json:"op,omitempty"`
-	Amf            []byte `json:"amf"`
+	Amf            []byte `json:"amf,omitempty"`
 	Key            []byte `json:"key,omitempty"`
 	AlgoType       uint32 `json:"algo_type,omitempty"`
 	UeDlAmbrBps    uint32 `json:"ue_dl_ambr_bps,omitempty"`
@@ -116,9 +116,12 @@ type SimCardInfo struct {
 	CsgIdPrsent    bool   `json:"c_sg_id_prsent,omitempty"`
 	CsgId          uint32 `json:"csg_id,omitempty"`
 	DefaultApnName string `json:"default_apn_name,omitempty"`
-	BatchId        string `json:"batch_id"`
-	OrgName        string `json:"org_name"`
-	SimType        string `json:"sim_type"`
+	BatchId        string `json:"batch_id,omitempty"`
+	OrgName        string `json:"org_name,omitempty"`
+	SimType        string `json:"sim_type,omitempty"`
+	SmDpAddress    string `json:"sm_db_address,omitempty"`
+	QrCode         string `json:"qr_code,omitempty"`
+	IsPhysical     bool   `json:"is_physical,omitempty"`
 }
 
 type Sim struct {
