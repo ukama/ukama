@@ -5,6 +5,9 @@
 
 typedef struct json_t json_t;
 typedef long long json_int_t;
+typedef struct { int line; int column; char text[160]; } json_error_t;
+
+#define JSON_COMPACT 0x20
 
 static inline json_t *json_object(void) { return (json_t *)0; }
 static inline json_t *json_array(void) { return (json_t *)0; }
@@ -30,5 +33,9 @@ static inline const char *json_string_value(const json_t *v)
 static inline json_int_t json_integer_value(const json_t *v)
 { (void)v; return 0; }
 static inline double json_number_value(const json_t *v) { (void)v; return 0.0; }
+static inline json_t *json_loads(const char *s, size_t flags, json_error_t *e)
+{ (void)s; (void)flags; (void)e; return (json_t *)0; }
+static inline char *json_dumps(const json_t *v, size_t flags)
+{ (void)v; (void)flags; return (char *)0; }
 
 #endif /* AISG_TEST_STUB_JANSSON_H_ */

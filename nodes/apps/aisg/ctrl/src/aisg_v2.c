@@ -395,13 +395,32 @@ static bool xid_scan_once(AisgBus *bus,
         return false;
     }
 
-    if (!params.hasUniqueId || !params.hasAddress || !params.hasDeviceType) {
+    if (!params.hasUniqueId || !params.hasDeviceType) {
         usys_log_debug("aisg: XID scan failed: missing required response "
-                       "fields uid=%u addr=%u type=%u",
+                       "fields uid=%u type=%u",
                        params.hasUniqueId ? 1 : 0,
-                       params.hasAddress ? 1 : 0,
                        params.hasDeviceType ? 1 : 0);
         return false;
+    }
+
+    /*
+     * TS 25.462 says a scan response contains PI=2 (HDLC Address), but
+     * deployed RETs exist which omit PI=2 and only put their address in the
+     * CRC-protected HDLC address field. Accept that response and continue to
+     * the normal address-assignment exchange.
+     */
+    if (!params.hasAddress) {
+        params.hasAddress = true;
+        params.address = rx.address;
+        usys_log_debug("aisg: XID scan response omitted PI=2; using HDLC "
+                       "source address=0x%02X",
+                       rx.address);
+    } else if (params.address != rx.address) {
+        usys_log_debug("aisg: XID scan address mismatch PI2=0x%02X "
+                       "HDLC=0x%02X; using HDLC source address",
+                       params.address,
+                       rx.address);
+        params.address = rx.address;
     }
 
     apply_xid_params_to_device(&params, device);

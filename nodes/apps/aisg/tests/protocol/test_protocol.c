@@ -219,6 +219,41 @@ static bool test_xid_scan_and_assignment(void)
     return true;
 }
 
+static bool test_real_ret_scan_response_without_pi2(void)
+{
+    static const uint8_t raw[] = {
+        0x7E, 0x00, 0xBF, 0x81, 0xF0, 0x1C, 0x01, 0x13,
+        0x54, 0x43, 0x30, 0x30, 0x34, 0x42, 0x4C, 0x32,
+        0x33, 0x33, 0x37, 0x59, 0x31, 0x30, 0x30, 0x30,
+        0x39, 0x30, 0x31, 0x06, 0x02, 0x54, 0x43, 0x04,
+        0x01, 0x01, 0x00, 0x30, 0x7E
+    };
+    static const uint8_t expectedUid[] = {
+        0x54, 0x43, 0x30, 0x30, 0x34, 0x42, 0x4C, 0x32,
+        0x33, 0x33, 0x37, 0x59, 0x31, 0x30, 0x30, 0x30,
+        0x39, 0x30, 0x31
+    };
+    HdlcFrame frame;
+    XidAddressingParams params;
+
+    memset(&frame, 0, sizeof(frame));
+    memset(&params, 0, sizeof(params));
+
+    CHECK(hdlc_decode_frame(raw, sizeof(raw), &frame));
+    CHECK(frame.address == AISG_ADDR_DEFAULT);
+    CHECK(hdlc_is_xid(frame.control));
+    CHECK(xid_parse_addressing_info(frame.info, frame.infoLen, &params));
+    CHECK(params.hasUniqueId);
+    CHECK(params.uniqueIdLen == sizeof(expectedUid));
+    CHECK(bytes_eq(params.uniqueId, expectedUid, sizeof(expectedUid)));
+    CHECK(!params.hasAddress);
+    CHECK(params.hasVendorCode && params.vendorCode == 0x5443);
+    CHECK(params.hasDeviceType &&
+          params.deviceType == AISG_DEVICE_TYPE_SINGLE_RET);
+
+    return true;
+}
+
 static bool test_retap_golden_packets(void)
 {
     RetapRequest req;
@@ -334,6 +369,7 @@ int main(void)
         { "hdlc_roundtrip_and_escaping", test_hdlc_roundtrip_and_escaping },
         { "serial_fill_and_shared_flags", test_serial_fill_and_shared_flags },
         { "xid_scan_and_assignment",     test_xid_scan_and_assignment },
+        { "real_ret_scan_without_pi2",   test_real_ret_scan_response_without_pi2 },
         { "retap_golden_packets",        test_retap_golden_packets },
         { "retap_config_limits",         test_retap_config_limits },
     };

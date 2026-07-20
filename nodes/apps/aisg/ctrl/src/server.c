@@ -50,6 +50,9 @@ static bool write_all(int fd, const char *data, size_t len) {
     off = 0;
     while (off < len) {
         n = write(fd, data + off, len - off);
+        if (n < 0 && errno == EINTR) {
+            continue;
+        }
         if (n <= 0) {
             return false;
         }
@@ -129,7 +132,10 @@ static void handle_client(int fd, Backend *backend) {
         }
     }
 
-    send_response(fd, &response);
+    if (!send_response(fd, &response)) {
+        usys_log_warn("failed to send controller response: %s",
+                      strerror(errno));
+    }
     ctrl_request_free(&request);
     ctrl_response_free(&response);
     json_decref(json);
