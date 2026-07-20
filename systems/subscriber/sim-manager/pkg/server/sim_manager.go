@@ -298,6 +298,9 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 			log.Errorf("failed to record package sale for allocated sim %s: %v",
 				sim.Id.String(), perr)
 		}
+	} else {
+		log.Warnf("payment client not configured: sim %s allocated with package %s "+
+			"without recording a payment sale", sim.Id.String(), packageId.String())
 	}
 
 	orgInfos, err := s.nucleusOrgClient.Get(s.orgName)
