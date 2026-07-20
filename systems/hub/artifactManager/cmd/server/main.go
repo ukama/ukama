@@ -9,6 +9,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"time"
 
@@ -69,6 +70,8 @@ func main() {
 	go grpcServer.StartServer()
 
 	go msgBusListener(mbClient)
+
+	go artifcatServer.RunConsistencySweep(context.Background(), serviceConfig.SweepInterval, serviceConfig.SweepTypes)
 
 	waitForExit()
 }

@@ -18,6 +18,28 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *PromoteReleaseRequest) Validate() error {
+	return nil
+}
+func (this *PromoteReleaseResponse) Validate() error {
+	return nil
+}
+func (this *GetReleaseCatalogRequest) Validate() error {
+	return nil
+}
+func (this *GetReleaseCatalogResponse) Validate() error {
+	for _, item := range this.Releases {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Releases", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *Release) Validate() error {
+	return nil
+}
 func (this *CreateAppRequest) Validate() error {
 	return nil
 }

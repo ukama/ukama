@@ -57,6 +57,10 @@ func TestHealthServerStoreHealthReport(t *testing.T) {
 		return !ts.IsZero()
 	})).Return(nil).Once()
 
+	// latestAppsFingerprint reads the previous report before storing (additive apps-changed check).
+	hRepo.On("List", "", testNode.StringLowercase(), mock.Anything, mock.Anything).
+		Return([]*db.HealthReport{}, nil).Maybe()
+
 	s := newTestHealthServer(hRepo)
 	resp, err := s.StoreHealthReport(context.Background(), req)
 
@@ -87,6 +91,10 @@ func TestHealthServerStoreHealthReportUnixReportedAt(t *testing.T) {
 	}), mock.MatchedBy(func(ts time.Time) bool {
 		return !ts.IsZero()
 	})).Return(nil).Once()
+
+	// latestAppsFingerprint reads the previous report before storing (additive apps-changed check).
+	hRepo.On("List", "", testNode.StringLowercase(), mock.Anything, mock.Anything).
+		Return([]*db.HealthReport{}, nil).Maybe()
 
 	s := newTestHealthServer(hRepo)
 	resp, err := s.StoreHealthReport(context.Background(), req)
@@ -144,6 +152,10 @@ func TestHealthServerStoreHealthReportRepoError(t *testing.T) {
 	}
 
 	hRepo.On("StoreHealthReport", mock.Anything, mock.Anything).Return(assert.AnError).Once()
+
+	// latestAppsFingerprint reads the previous report before storing (additive apps-changed check).
+	hRepo.On("List", "", testNode.StringLowercase(), mock.Anything, mock.Anything).
+		Return([]*db.HealthReport{}, nil).Maybe()
 
 	s := newTestHealthServer(hRepo)
 	resp, err := s.StoreHealthReport(context.Background(), req)

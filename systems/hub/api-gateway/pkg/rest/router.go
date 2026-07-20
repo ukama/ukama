@@ -34,6 +34,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	apb "github.com/ukama/ukama/systems/hub/artifactmanager/pb/gen"
 	dpb "github.com/ukama/ukama/systems/hub/distributor/pb/gen"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type Router struct {
@@ -242,12 +244,19 @@ func (r *Router) artifactPutHandler(c *gin.Context) (*apb.StoreArtifactResponse,
 		return nil, err
 	}
 
-	return r.clients.a.StoreArtifact(&apb.StoreArtifactRequest{
+	resp, err := r.clients.a.StoreArtifact(&apb.StoreArtifactRequest{
 		Name:    req.ArtifactName,
 		Type:    apb.ArtifactType(apb.ArtifactType_value[strings.ToUpper(req.ArtifactType)]),
 		Version: req.Version,
 		Data:    buf.Bytes(),
 	})
+	if err != nil {
+		if status.Code(err) == codes.AlreadyExists {
+			return nil, rest.HttpError{HttpCode: http.StatusConflict, Message: status.Convert(err).Message()}
+		}
+		return nil, err
+	}
+	return resp, nil
 
 }
 
@@ -261,10 +270,11 @@ func (r *Router) artifactListVersionsHandler(c *gin.Context, req *ArtifactVersio
 }
 
 func (r *Router) listArtifactsHandler(c *gin.Context, req *ArtifactListRequest) (*apb.ListArtifactResponse, error) {
-	log.Infof("Getting list of artifacts of type %s", req.ArtifactType)
+	log.Infof("Getting list of artifacts of type %s (latest=%v)", req.ArtifactType, req.Latest)
 
 	return r.clients.a.ListArtifacts(&apb.ListArtifactRequest{
-		Type: apb.ArtifactType(apb.ArtifactType_value[strings.ToUpper(req.ArtifactType)]),
+		Type:   apb.ArtifactType(apb.ArtifactType_value[strings.ToUpper(req.ArtifactType)]),
+		Latest: req.Latest,
 	})
 
 }

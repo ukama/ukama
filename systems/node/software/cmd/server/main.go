@@ -9,6 +9,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"strings"
@@ -27,6 +28,10 @@ import (
 	"github.com/ukama/ukama/systems/node/software/cmd/version"
 
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
+	hubclient "github.com/ukama/ukama/systems/common/rest/client/hub"
+	"github.com/ukama/ukama/systems/common/rest/client"
+	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
+	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
 	swclient "github.com/ukama/ukama/systems/node/software/pkg/client"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
 
@@ -36,6 +41,8 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc"
 )
+
+const operationSystemName = "operation"
 
 var svcConf *pkg.Config
 
@@ -59,7 +66,7 @@ func initConfig() {
 			log.Infof("Config:\n%s", string(b))
 		}
 	}
-	
+
 	raw := os.Getenv("NODEGWIPS")
 	if raw == "" {
 		raw = os.Getenv("NODEGWIPs")
@@ -91,13 +98,12 @@ func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
 
-	err := d.Init(&db.App{}, &db.Node{}, &db.Software{})
+	err := d.Init(&db.App{}, &db.Node{}, &db.Software{}, &db.ReleaseCatalog{}, &db.AppDesiredRelease{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
 	return d
 }
-
 
 func runGrpcServer(gormdb sql.Db) {
 	instanceId := os.Getenv("POD_NAME")
@@ -111,11 +117,20 @@ func runGrpcServer(gormdb sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	opMgr := swclient.NewOperationManager(svcConf.Operation.ManagerHost, svcConf.Operation.Timeout)
+	operationUrl, err := ic.GetHostAddress(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode)),
+		ic.CreateHostString(svcConf.OrgName, operationSystemName), &svcConf.OrgName)
+	if err != nil {
+		log.Fatalf("Failed to resolve operation address: %v", err)
+	}
+	opMgr := copr.NewManagerClient(operationUrl.String())
 	opMon := swclient.NewOperationMonitor(svcConf.Operation.MonitorHost, svcConf.Operation.Timeout)
 
+	releaseRepo := db.NewReleaseRepo(gormdb)
+	hub := hubclient.NewHubClient(svcConf.Http.HubHost)
+
 	softServer := server.NewSoftwareServer(svcConf.OrgName, db.NewSoftwareRepo(gormdb),
-		db.NewAppRepo(gormdb), db.NewNodeRepo(gormdb), providers.NewHealthClientProvider(svcConf.Health),
+		db.NewAppRepo(gormdb), db.NewNodeRepo(gormdb), releaseRepo, hub,
+		providers.NewHealthClientProvider(svcConf.Health),
 		mbClient, svcConf.DebugMode, svcConf.NodeGwIPs,
 		opMgr, opMon, svcConf.Operation.LeaseSecs, svcConf.Operation.DeadlineSecs)
 	eventServer := server.NewSoftwareEventServer(svcConf.OrgName, softServer)
@@ -129,6 +144,9 @@ func runGrpcServer(gormdb sql.Db) {
 	go grpcServer.StartServer()
 
 	go msgBusListener(mbClient)
+
+	softServer.ResumeInProgressUpdates()
+	go softServer.RunReleaseReconcile(context.Background(), svcConf.ReconcileInterval)
 
 	waitForExit()
 }

@@ -7,9 +7,16 @@
  */
 import { NonEmptyArray } from "type-graphql";
 
+import { GetReleaseCatalog } from "./getReleaseCatalog";
 import { GetSoftwares } from "./getSoftwares";
+import { PromoteReleaseResolver } from "./promoteRelease";
 import { UpdateSoftwareResolver } from "./updateSoftware";
 
-const resolvers: NonEmptyArray<any> = [GetSoftwares, UpdateSoftwareResolver];
+const resolvers: NonEmptyArray<any> = [
+  GetSoftwares,
+  UpdateSoftwareResolver,
+  PromoteReleaseResolver,
+  GetReleaseCatalog,
+];
 
 export default resolvers;

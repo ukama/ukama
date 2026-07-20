@@ -74,6 +74,36 @@ func (_m *SoftwareServiceServer) GetAppList(_a0 context.Context, _a1 *gen.GetApp
 	return r0, r1
 }
 
+// GetReleaseCatalog provides a mock function with given fields: _a0, _a1
+func (_m *SoftwareServiceServer) GetReleaseCatalog(_a0 context.Context, _a1 *gen.GetReleaseCatalogRequest) (*gen.GetReleaseCatalogResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetReleaseCatalog")
+	}
+
+	var r0 *gen.GetReleaseCatalogResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetReleaseCatalogRequest) (*gen.GetReleaseCatalogResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetReleaseCatalogRequest) *gen.GetReleaseCatalogResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetReleaseCatalogResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetReleaseCatalogRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetSoftwareList provides a mock function with given fields: _a0, _a1
 func (_m *SoftwareServiceServer) GetSoftwareList(_a0 context.Context, _a1 *gen.GetSoftwareListRequest) (*gen.GetSoftwareListResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -96,6 +126,36 @@ func (_m *SoftwareServiceServer) GetSoftwareList(_a0 context.Context, _a1 *gen.G
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSoftwareListRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// PromoteRelease provides a mock function with given fields: _a0, _a1
+func (_m *SoftwareServiceServer) PromoteRelease(_a0 context.Context, _a1 *gen.PromoteReleaseRequest) (*gen.PromoteReleaseResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PromoteRelease")
+	}
+
+	var r0 *gen.PromoteReleaseResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PromoteReleaseRequest) (*gen.PromoteReleaseResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PromoteReleaseRequest) *gen.PromoteReleaseResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.PromoteReleaseResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.PromoteReleaseRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

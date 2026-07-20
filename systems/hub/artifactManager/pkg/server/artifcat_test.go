@@ -55,11 +55,13 @@ func Test_StoreArtifact(t *testing.T) {
 	}
 
 	ver := semver.MustParse("0.0.1")
-	st.On("PutFile", mock.Anything, req.Name, strings.ToLower(req.Type.String()), ver, pkg.TarGzExtension, bytes.NewReader(req.Data)).Return("", nil).Once()
+	st.On("StatFile", mock.Anything, req.Name, strings.ToLower(req.Type.String()), ver, pkg.TarGzExtension).Return(false, "", nil).Once()
+	st.On("PutFile", mock.Anything, req.Name, strings.ToLower(req.Type.String()), ver, pkg.TarGzExtension, mock.Anything, mock.Anything).Return("", nil).Once()
+	st.On("StoreBaseURL", strings.ToLower(req.Type.String())).Return("http://minio:9000/hub-app-local-test/")
 	ch.On("CreateChunk", mock.Anything, mock.MatchedBy(func(a *dpb.CreateChunkRequest) bool {
 		return a.Name == req.Name && a.Type == strings.ToLower(req.Type.String())
 	})).Return(&dpb.CreateChunkResponse{Index: []byte("index file"), Size: 10}, nil).Once()
-	st.On("PutFile", mock.Anything, req.Name, strings.ToLower(req.Type.String()), ver, pkg.ChunkIndexExtension, bytes.NewReader([]byte("index file"))).Return("", nil).Once()
+	st.On("PutFile", mock.Anything, req.Name, strings.ToLower(req.Type.String()), ver, pkg.ChunkIndexExtension, mock.Anything, mock.Anything).Return("", nil).Once()
 	mbClient.On("PublishRequest", mock.Anything, mock.AnythingOfType("*events.EventArtifactUploaded")).Return(nil).Once()
 
 	s := NewArtifactServer(OrgId, OrgName, st, chS, time.Duration(timeDuration)*time.Second, mbClient, "")

@@ -8,12 +8,21 @@
 import { VERSION } from "../../common/configs";
 import { BaseRESTDataSource } from "../../common/datasource";
 import {
+  GetReleaseCatalogInput,
   GetSoftwaresInput,
+  PromoteReleaseInputDto,
+  PromoteReleaseResponse,
+  ReleaseCatalog,
   Softwares,
   StringResponse,
   UpdateSoftwareInputDto,
 } from "../resolvers/types";
-import { mapSoftwares, mapUpdateSoftware } from "./mapper";
+import {
+  mapPromoteRelease,
+  mapReleaseCatalog,
+  mapSoftwares,
+  mapUpdateSoftware,
+} from "./mapper";
 
 const SOFTWARE = "software";
 
@@ -62,6 +71,56 @@ class SoftwareAPI extends BaseRESTDataSource {
       })
       .catch(error => {
         this.logger.error(`Error getting apps: ${error}`);
+        throw error;
+      });
+  };
+
+  promoteRelease = async (
+    baseURL: string,
+    data: PromoteReleaseInputDto
+  ): Promise<PromoteReleaseResponse> => {
+    const { name, version, type } = data;
+    const query = type ? `?type=${encodeURIComponent(type)}` : "";
+    this.logger.info(
+      `PromoteRelease [POST]: ${baseURL}/${VERSION}/${SOFTWARE}/promote/${name}/${version}${query}`
+    );
+    this.baseURL = baseURL;
+    return this.post(
+      `/${VERSION}/${SOFTWARE}/promote/${name}/${version}${query}`
+    )
+      .then(res => {
+        return mapPromoteRelease(res);
+      })
+      .catch(error => {
+        this.logger.error(`Error promoting release: ${error}`);
+        throw error;
+      });
+  };
+
+  getReleaseCatalog = async (
+    baseURL: string,
+    data: GetReleaseCatalogInput
+  ): Promise<ReleaseCatalog> => {
+    const queryParams = new URLSearchParams();
+    if (data.name) {
+      queryParams.append("name", data.name);
+    }
+    if (data.type) {
+      queryParams.append("type", data.type);
+    }
+    const qs = queryParams.toString();
+    this.logger.info(
+      `GetReleaseCatalog [GET]: ${baseURL}/${VERSION}/${SOFTWARE}/releases${
+        qs ? `?${qs}` : ""
+      }`
+    );
+    this.baseURL = baseURL;
+    return this.get(`/${VERSION}/${SOFTWARE}/releases${qs ? `?${qs}` : ""}`)
+      .then(res => {
+        return mapReleaseCatalog(res);
+      })
+      .catch(error => {
+        this.logger.error(`Error getting release catalog: ${error}`);
         throw error;
       });
   };

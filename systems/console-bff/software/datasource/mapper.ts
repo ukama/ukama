@@ -5,7 +5,12 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Softwares, StringResponse } from "../resolvers/types";
+import {
+  PromoteReleaseResponse,
+  ReleaseCatalog,
+  Softwares,
+  StringResponse,
+} from "../resolvers/types";
 
 export const mapSoftwares = (softwares: Softwares): Softwares => {
   return {
@@ -32,5 +37,53 @@ export const mapUpdateSoftware = (
 ): StringResponse => {
   return {
     message: updateSoftware.message,
+  };
+};
+
+// The api-gateway returns protobuf JSON, so some keys are snake_case
+// (json_name overrides); accept both spellings defensively.
+interface RawPromoteRelease {
+  message?: string;
+  name?: string;
+  desired_version?: string;
+  desiredVersion?: string;
+}
+
+interface RawRelease {
+  name?: string;
+  type?: string;
+  version?: string;
+  available?: boolean;
+  chunked?: boolean;
+  desired?: boolean;
+  uploaded_at?: string;
+  uploadedAt?: string;
+}
+
+interface RawReleaseCatalog {
+  releases?: RawRelease[];
+}
+
+export const mapPromoteRelease = (
+  res: RawPromoteRelease
+): PromoteReleaseResponse => {
+  return {
+    message: res?.message ?? "",
+    name: res?.name ?? "",
+    desiredVersion: res?.desired_version ?? res?.desiredVersion ?? "",
+  };
+};
+
+export const mapReleaseCatalog = (res: RawReleaseCatalog): ReleaseCatalog => {
+  return {
+    releases: (res?.releases ?? []).map(r => ({
+      name: r?.name ?? "",
+      type: r?.type ?? "",
+      version: r?.version ?? "",
+      available: Boolean(r?.available),
+      chunked: Boolean(r?.chunked),
+      desired: Boolean(r?.desired),
+      uploadedAt: r?.uploaded_at ?? r?.uploadedAt ?? "",
+    })),
   };
 };

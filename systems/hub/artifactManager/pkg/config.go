@@ -28,6 +28,8 @@ type Config struct {
 	OrgId             string
 	PushGateway       string
 	Grpc              *config.Grpc `default:"{}"`
+	SweepInterval     time.Duration
+	SweepTypes        []string
 }
 
 type GrpcEndpoints struct {
@@ -81,5 +83,8 @@ func NewConfig(name string) *Config {
 			Port:       9090,
 			MaxMsgSize: 209715200,
 		},
+
+		SweepInterval: 10 * time.Minute,
+		SweepTypes:    []string{"app", "cert"},
 	}
 }

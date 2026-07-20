@@ -45,3 +45,34 @@ type Software struct {
 	DeletedAt      *time.Time `gorm:"index;default:null"`
 	Status         ukama.SoftwareStatusType
 }
+
+// ReleaseCatalog is the node-independent record of what the Hub has published.
+// One row per (name, type, version). Populated from Artifact Manager availability
+// signals and the periodic Hub reconcile — independent of node discovery.
+type ReleaseCatalog struct {
+	Id         uuid.UUID `gorm:"primaryKey;type:uuid"`
+	Name       string    `gorm:"not null;uniqueIndex:idx_release_name_type_ver,priority:1"`
+	Type       string    `gorm:"not null;default:'app';uniqueIndex:idx_release_name_type_ver,priority:2"`
+	Version    string    `gorm:"not null;uniqueIndex:idx_release_name_type_ver,priority:3"`
+	Digest     string
+	SizeBytes  int64
+	Chunked    bool
+	Available  bool `gorm:"not null;default:true"`
+	UploadedAt time.Time
+	CreatedAt  time.Time  `gorm:"not null;default:now()"`
+	UpdatedAt  time.Time  `gorm:"not null;default:now()"`
+	DeletedAt  *time.Time `gorm:"index;default:null"`
+}
+
+// AppDesiredRelease is the explicitly-promoted desired version per app, fleet-wide.
+// Set only by PromoteRelease — never by upload/chunk events.
+type AppDesiredRelease struct {
+	Id             uuid.UUID `gorm:"primaryKey;type:uuid"`
+	Name           string    `gorm:"not null;uniqueIndex:idx_desired_name_type,priority:1"`
+	Type           string    `gorm:"not null;default:'app';uniqueIndex:idx_desired_name_type,priority:2"`
+	DesiredVersion string    `gorm:"not null"`
+	PromotedAt     time.Time
+	PromotedBy     string
+	CreatedAt      time.Time `gorm:"not null;default:now()"`
+	UpdatedAt      time.Time `gorm:"not null;default:now()"`
+}

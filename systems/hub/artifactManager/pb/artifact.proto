@@ -100,9 +100,16 @@ message StoreArtifactRequest {
 
  message ListArtifactRequest {
     ArtifactType Type = 1 [(validator.field) = { is_in_enum : true}, json_name= "type"];
+    bool Latest = 2 [json_name = "latest"];
+ }
+
+ message LatestArtifact {
+    string Name = 1 [json_name = "name"];
+    VersionInfo Latest = 2 [json_name = "latest"];
  }
 
  message ListArtifactResponse {
    repeated string artifact = 1;
+   repeated LatestArtifact LatestArtifacts = 2 [json_name = "latest_artifacts"];
  }
 

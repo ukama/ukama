@@ -18,6 +18,36 @@ service SoftwareService {
     rpc GetAppList (GetAppListRequest) returns (GetAppListResponse);
     rpc GetSoftwareList (GetSoftwareListRequest) returns (GetSoftwareListResponse);
     rpc UpdateSoftware (UpdateSoftwareRequest) returns (UpdateSoftwareResponse);
+    rpc PromoteRelease (PromoteReleaseRequest) returns (PromoteReleaseResponse);
+    rpc GetReleaseCatalog (GetReleaseCatalogRequest) returns (GetReleaseCatalogResponse);
+}
+
+message PromoteReleaseRequest {
+    string name = 1;
+    string version = 2;
+    string type = 3;
+}
+message PromoteReleaseResponse {
+    string message = 1;
+    string name = 2;
+    string desiredVersion = 3 [json_name = "desired_version"];
+}
+
+message GetReleaseCatalogRequest {
+    string name = 1;
+    string type = 2;
+}
+message GetReleaseCatalogResponse {
+    repeated Release releases = 1;
+}
+message Release {
+    string name = 1;
+    string type = 2;
+    string version = 3;
+    bool available = 4;
+    bool chunked = 5;
+    bool desired = 6;
+    string uploadedAt = 7 [json_name = "uploaded_at"];
 }
 
 message CreateAppRequest {

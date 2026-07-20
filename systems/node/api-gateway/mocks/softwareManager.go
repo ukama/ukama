@@ -12,6 +12,36 @@ type softwareManager struct {
 	mock.Mock
 }
 
+// GetReleaseCatalog provides a mock function with given fields: name, atype
+func (_m *softwareManager) GetReleaseCatalog(name string, atype string) (*gen.GetReleaseCatalogResponse, error) {
+	ret := _m.Called(name, atype)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetReleaseCatalog")
+	}
+
+	var r0 *gen.GetReleaseCatalogResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string) (*gen.GetReleaseCatalogResponse, error)); ok {
+		return rf(name, atype)
+	}
+	if rf, ok := ret.Get(0).(func(string, string) *gen.GetReleaseCatalogResponse); ok {
+		r0 = rf(name, atype)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetReleaseCatalogResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(name, atype)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListApps provides a mock function with no fields
 func (_m *softwareManager) ListApps() (*gen.GetAppListResponse, error) {
 	ret := _m.Called()
@@ -65,6 +95,36 @@ func (_m *softwareManager) ListSoftware(nodeId string, status string, appName st
 
 	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
 		r1 = rf(nodeId, status, appName)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// PromoteRelease provides a mock function with given fields: name, version, atype
+func (_m *softwareManager) PromoteRelease(name string, version string, atype string) (*gen.PromoteReleaseResponse, error) {
+	ret := _m.Called(name, version, atype)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PromoteRelease")
+	}
+
+	var r0 *gen.PromoteReleaseResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, string) (*gen.PromoteReleaseResponse, error)); ok {
+		return rf(name, version, atype)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, string) *gen.PromoteReleaseResponse); ok {
+		r0 = rf(name, version, atype)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.PromoteReleaseResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
+		r1 = rf(name, version, atype)
 	} else {
 		r1 = ret.Error(1)
 	}

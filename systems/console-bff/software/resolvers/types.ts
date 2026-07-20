@@ -86,3 +86,66 @@ export class StringResponse {
   @Field()
   message: string;
 }
+
+@InputType()
+export class PromoteReleaseInputDto {
+  @Field()
+  name: string;
+
+  @Field()
+  version: string;
+
+  @Field({ nullable: true })
+  type?: string;
+}
+
+@ObjectType()
+export class PromoteReleaseResponse {
+  @Field()
+  message: string;
+
+  @Field()
+  name: string;
+
+  @Field()
+  desiredVersion: string;
+}
+
+@InputType()
+export class GetReleaseCatalogInput {
+  @Field({ nullable: true })
+  name?: string;
+
+  @Field({ nullable: true })
+  type?: string;
+}
+
+@ObjectType()
+export class Release {
+  @Field()
+  name: string;
+
+  @Field()
+  type: string;
+
+  @Field()
+  version: string;
+
+  @Field()
+  available: boolean;
+
+  @Field()
+  chunked: boolean;
+
+  @Field()
+  desired: boolean;
+
+  @Field()
+  uploadedAt: string;
+}
+
+@ObjectType()
+export class ReleaseCatalog {
+  @Field(() => [Release])
+  releases: Release[];
+}

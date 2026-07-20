@@ -11,6 +11,8 @@ package server
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"path"
@@ -106,56 +108,81 @@ func (s *ArtifcatServer) StoreArtifact(ctx context.Context, in *pb.StoreArtifact
 		return nil, err
 	}
 
-	log.Infof("Got file %s with size %d", in.Name, len(in.Data))
-	loc, err := s.storage.PutFile(ctx, in.Name, strings.ToLower(in.Type.String()), v, pkg.TarGzExtension, bytes.NewReader(in.Data))
+	aType := strings.ToLower(in.Type.String())
+	newDigest := sha256Hex(in.Data)
+
+	// Immutability: a version, once stored, cannot be overwritten with different content.
+	exists, existingDigest, err := s.storage.StatFile(ctx, in.Name, aType, v, pkg.TarGzExtension)
 	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to stat existing artifact: %v", err)
+	}
+	if exists {
+		switch existingDigest {
+		case "":
+			// Legacy object with no recorded digest — cannot prove equality; refuse to overwrite.
+			return nil, status.Errorf(codes.AlreadyExists,
+				"artifact %s version %s already exists (digest unverifiable); versions are immutable", in.Name, v.String())
+		case newDigest:
+			log.Infof("Artifact %s version %s already present with identical content; idempotent no-op", in.Name, v.String())
+			return &pb.StoreArtifactResponse{Name: in.Name, Type: in.Type}, nil
+		default:
+			return nil, status.Errorf(codes.AlreadyExists,
+				"artifact %s version %s already exists with different content; versions are immutable", in.Name, v.String())
+		}
+	}
+
+	log.Infof("Got file %s with size %d", in.Name, len(in.Data))
+	if _, err := s.storage.PutFile(ctx, in.Name, aType, v, pkg.TarGzExtension,
+		bytes.NewReader(in.Data), map[string]string{pkg.ContentDigestMetaKey: newDigest}); err != nil {
 		log.Errorf("Error storing artifact: %s %s", in.Name, in.Version)
 		return nil, err
 	}
 
 	go func() {
-		aType := strings.ToLower(in.Type.String())
-		fPath := fmt.Sprintf("%s/%s/%s", in.Name, v.String(), pkg.TarGzExtension)
-		cReq := &dpb.CreateChunkRequest{
-			Name:    in.Name,
-			Type:    aType,
-			Version: v.String(),
-			Store:   "s3+" + strings.TrimSuffix(loc, fPath),
+		if err := s.chunkAndIndex(context.Background(), in.Name, aType, v); err != nil {
+			log.Errorf("chunk/index for %s %s failed: %v", in.Name, v.String(), err)
 		}
-		log.Infof("Sending chunking request %+v", cReq)
-		resp, err := s.chunker.CreateChunk(cReq)
-		if err != nil {
-			log.Errorf("Error chunking artifact: %s %s. Error: %+v", in.Name, in.Version, err)
-			return
-		}
-
-		nctx, cancel := context.WithTimeout(context.Background(),
-			s.storageRequestTimeout)
-		defer cancel()
-
-		_, err = s.storage.PutFile(nctx, in.Name, aType, v, pkg.ChunkIndexExtension, bytes.NewReader(resp.Index))
-		if err != nil {
-			log.Errorf("Failed to store artifact index file %+v. Error %s", cReq, err.Error())
-		}
-
-		capp := &epb.EventArtifactUploaded{
-			Name:    in.Name,
-			Version: v.String(),
-		}
-
-		route := s.baseRoutingKey.SetAction("uploaded").SetObject(aType).MustBuild()
-
-		err = s.msgbus.PublishRequest(route, capp)
-		if err != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", capp, route, err.Error())
-		}
-
 	}()
 
 	return &pb.StoreArtifactResponse{
 		Name: in.Name,
 		Type: in.Type,
 	}, nil
+}
+
+func sha256Hex(b []byte) string {
+	sum := sha256.Sum256(b)
+	return hex.EncodeToString(sum[:])
+}
+
+// chunkAndIndex asks the distributor to chunk an already-stored tar.gz, persists the
+// returned index, and announces availability. Shared by StoreArtifact and the sweep.
+func (s *ArtifcatServer) chunkAndIndex(ctx context.Context, name, aType string, v *semver.Version) error {
+	cReq := &dpb.CreateChunkRequest{
+		Name:    name,
+		Type:    aType,
+		Version: v.String(),
+		Store:   "s3+" + s.storage.StoreBaseURL(aType) + "?lookup=path",
+	}
+	log.Infof("Sending chunking request %+v", cReq)
+
+	resp, err := s.chunker.CreateChunk(cReq)
+	if err != nil {
+		return fmt.Errorf("create chunk for %s %s: %w", name, v.String(), err)
+	}
+
+	nctx, cancel := context.WithTimeout(ctx, s.storageRequestTimeout)
+	defer cancel()
+	if _, err := s.storage.PutFile(nctx, name, aType, v, pkg.ChunkIndexExtension, bytes.NewReader(resp.Index), nil); err != nil {
+		return fmt.Errorf("store index for %s %s: %w", name, v.String(), err)
+	}
+
+	capp := &epb.EventArtifactUploaded{Name: name, Version: v.String()}
+	route := s.baseRoutingKey.SetAction("uploaded").SetObject(aType).MustBuild()
+	if err := s.msgbus.PublishRequest(route, capp); err != nil {
+		log.Errorf("Failed to publish uploaded event %+v key %+v: %v", capp, route, err)
+	}
+	return nil
 }
 
 func (s *ArtifcatServer) GetArtifactLocation(ctx context.Context, in *pb.GetArtifactLocationRequest) (*pb.GetArtifactLocationResponse, error) {
@@ -211,35 +238,12 @@ func (s *ArtifcatServer) GetArtifactVersionList(ctx context.Context, in *pb.GetA
 		return nil, status.Error(codes.NotFound, "Artifact name is not valid")
 	}
 
+	aType := strings.ToLower(in.Type.String())
 	vers := []*pb.VersionInfo{}
 	for _, v := range *ls {
-		formats := []*pb.FormatInfo{
-			{
-				Url:       path.Join(UrlPath, strings.ToLower(in.Type.String()), in.Name, v.Version+pkg.TarGzExtension),
-				CreatedAt: timestamppb.New(v.CreatedAt),
-				Size:      v.SizeBytes,
-				Type:      "tar.gz",
-			},
-		}
-
-		if v.Chunked {
-			formats = append(formats, &pb.FormatInfo{
-				Url:       path.Join(UrlPath, strings.ToLower(in.Type.String()), in.Name, v.Version+pkg.ChunkIndexExtension),
-				Type:      "chunk",
-				CreatedAt: timestamppb.New(v.CreatedAt),
-				Size:      v.SizeBytes,
-				ExtraInfo: []*pb.ExtraInfoMap{
-					{
-						Key:   "chunks",
-						Value: fmt.Sprintf("%s/", ChunksPath),
-					},
-				},
-			})
-		}
-
 		vers = append(vers, &pb.VersionInfo{
 			Version: v.Version,
-			Formats: formats,
+			Formats: buildFormats(aType, in.Name, v),
 		})
 	}
 
@@ -251,15 +255,55 @@ func (s *ArtifcatServer) GetArtifactVersionList(ctx context.Context, in *pb.GetA
 
 }
 
-func (s *ArtifcatServer) ListArtifacts(ctx context.Context, in *pb.ListArtifactRequest) (*pb.ListArtifactResponse, error) {
-	log.Infof("Getting list of %s artifacts", in.Type)
+// buildFormats builds the tar.gz (+ chunk, when present) format entries for a version.
+func buildFormats(aType, name string, info pkg.AritfactInfo) []*pb.FormatInfo {
+	formats := []*pb.FormatInfo{
+		{
+			Url:       path.Join(UrlPath, aType, name, info.Version+pkg.TarGzExtension),
+			CreatedAt: timestamppb.New(info.CreatedAt),
+			Size:      info.SizeBytes,
+			Type:      "tar.gz",
+		},
+	}
+	if info.Chunked {
+		formats = append(formats, &pb.FormatInfo{
+			Url:       path.Join(UrlPath, aType, name, info.Version+pkg.ChunkIndexExtension),
+			Type:      "chunk",
+			CreatedAt: timestamppb.New(info.CreatedAt),
+			Size:      info.SizeBytes,
+			ExtraInfo: []*pb.ExtraInfoMap{
+				{Key: "chunks", Value: fmt.Sprintf("%s/", ChunksPath)},
+			},
+		})
+	}
+	return formats
+}
 
-	ls, err := s.storage.ListApps(ctx, strings.ToLower(in.Type.String()))
+func (s *ArtifcatServer) ListArtifacts(ctx context.Context, in *pb.ListArtifactRequest) (*pb.ListArtifactResponse, error) {
+	aType := strings.ToLower(in.Type.String())
+	log.Infof("Getting list of %s artifacts (latest=%v)", aType, in.Latest)
+
+	if in.Latest {
+		ls, err := s.storage.ListLatestPerApp(ctx, aType)
+		if err != nil {
+			return nil, err
+		}
+		out := make([]*pb.LatestArtifact, 0, len(ls))
+		for i := range ls {
+			out = append(out, &pb.LatestArtifact{
+				Name: ls[i].Name,
+				Latest: &pb.VersionInfo{
+					Version: ls[i].Latest.Version,
+					Formats: buildFormats(aType, ls[i].Name, ls[i].Latest),
+				},
+			})
+		}
+		return &pb.ListArtifactResponse{LatestArtifacts: out}, nil
+	}
+
+	ls, err := s.storage.ListApps(ctx, aType)
 	if err != nil {
 		return nil, err
 	}
-
-	return &pb.ListArtifactResponse{
-		Artifact: ls,
-	}, nil
+	return &pb.ListArtifactResponse{Artifact: ls}, nil
 }

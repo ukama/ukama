@@ -91,6 +91,8 @@ type softwareManager interface {
 	ListApps() (*spb.GetAppListResponse, error)
 	ListSoftware(nodeId string, status string, appName string) (*spb.GetSoftwareListResponse, error)
 	UpdateSoftware(nodeId string, name string, tag string) (*spb.UpdateSoftwareResponse, error)
+	PromoteRelease(name string, version string, atype string) (*spb.PromoteReleaseResponse, error)
+	GetReleaseCatalog(name string, atype string) (*spb.GetReleaseCatalogResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -182,7 +184,9 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		softS := auth.Group(soft, "Software manager", "Operations on software")
 		softS.GET("/apps", formatDoc("List apps", "List apps"), tonic.Handler(r.getListAppsHandler, http.StatusOK))
 		softS.GET("", formatDoc("List software", "List software"), tonic.Handler(r.getListSoftwareHandler, http.StatusOK))
+		softS.GET("/releases", formatDoc("Release catalog", "List published releases and the desired version per app"), tonic.Handler(r.getReleaseCatalogHandler, http.StatusOK))
 		softS.POST("/update/:name/:tag/:node_id", formatDoc("Update software", "Update software"), tonic.Handler(r.postUpdateSoftwareHandler, http.StatusOK))
+		softS.POST("/promote/:name/:version", formatDoc("Promote release", "Mark a version already in the Hub as the desired release"), tonic.Handler(r.postPromoteReleaseHandler, http.StatusOK))
 
 		const state = "/state"
 		stateS := auth.Group(state, "State", "Operations on state")
@@ -223,6 +227,14 @@ func (r *Router) getListSoftwareHandler(c *gin.Context, req *ListSoftwareRequest
 
 func (r *Router) postUpdateSoftwareHandler(c *gin.Context, req *UpdateSoftwareRequest) (*spb.UpdateSoftwareResponse, error) {
 	return r.clients.SoftwareManager.UpdateSoftware(req.NodeId, req.Name, req.Tag)
+}
+
+func (r *Router) postPromoteReleaseHandler(c *gin.Context, req *PromoteReleaseRequest) (*spb.PromoteReleaseResponse, error) {
+	return r.clients.SoftwareManager.PromoteRelease(req.Name, req.Version, req.Type)
+}
+
+func (r *Router) getReleaseCatalogHandler(c *gin.Context, req *GetReleaseCatalogRequest) (*spb.GetReleaseCatalogResponse, error) {
+	return r.clients.SoftwareManager.GetReleaseCatalog(req.Name, req.Type)
 }
 
 func (r *Router) getStatesHandler(c *gin.Context, req *GetStatesRequest) (*nspb.GetStatesResponse, error) {

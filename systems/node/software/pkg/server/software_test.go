@@ -64,7 +64,7 @@ var (
 // ========== Helpers to build server with mocks ==========
 
 func newTestServer(sRepo *mocks.SoftwareRepo, appRepo *mocks.AppRepo, nodeRepo *mocks.NodeRepo, msgBus *mbmocks.MsgBusServiceClient) *SoftwareServer {
-	return NewSoftwareServer(testOrgName, sRepo, appRepo, nodeRepo, nil, msgBus, false, []string{testNodeGwIP},
+	return NewSoftwareServer(testOrgName, sRepo, appRepo, nodeRepo, nil, nil, nil, msgBus, false, []string{testNodeGwIP},
 		nil,
 		nil,
 		0,

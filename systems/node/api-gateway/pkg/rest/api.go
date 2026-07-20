@@ -57,6 +57,17 @@ type UpdateSoftwareRequest struct {
 
 type ListAppsRequest struct{}
 
+type PromoteReleaseRequest struct {
+	Name    string `json:"name" validate:"required" path:"name"`
+	Version string `json:"version" validate:"required" path:"version"`
+	Type    string `json:"type" query:"type"`
+}
+
+type GetReleaseCatalogRequest struct {
+	Name string `json:"name" query:"name"`
+	Type string `json:"type" query:"type"`
+}
+
 type ListSoftwareRequest struct {
 	NodeId  string `json:"node_id" form:"node_id" query:"node_id" binding:"required"`
 	AppName string `json:"app_name" form:"app_name" query:"app_name" binding:"required"`

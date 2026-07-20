@@ -10,6 +10,9 @@ package server
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -85,6 +88,10 @@ func (h *HealthServer) StoreHealthReport(ctx context.Context, req *pb.StoreHealt
 		Payload:       raw,
 	}
 
+	// Capture the previous app inventory before storing so we can detect
+	// app add/remove/version changes and notify subscribers (additive, best-effort).
+	prevAppsFingerprint := h.latestAppsFingerprint(nID.StringLowercase())
+
 	receivedAt := time.Now().UTC()
 	if err := h.sRepo.StoreHealthReport(report, receivedAt); err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "health")
@@ -108,7 +115,57 @@ func (h *HealthServer) StoreHealthReport(ctx context.Context, req *pb.StoreHealt
 		}
 	}
 
+	// Additive, best-effort: notify subscribers only when the app inventory changed.
+	h.publishAppsChangedIfNeeded(nID.StringLowercase(), nodeType.String(), parsed.Apps, prevAppsFingerprint)
+
 	return &pb.StoreHealthReportResponse{ReportId: report.ID.String()}, nil
+}
+
+// appsFingerprint returns a stable hash of the node's app inventory keyed on
+// name@version only, so routine metric/resource churn in periodic health
+// reports does not by itself trigger a change notification.
+func appsFingerprint(apps []parser.HealthApp) string {
+	keys := make([]string, 0, len(apps))
+	for _, a := range apps {
+		keys = append(keys, a.Name+"@"+a.Version)
+	}
+	sort.Strings(keys)
+	sum := sha256.Sum256([]byte(strings.Join(keys, ",")))
+	return hex.EncodeToString(sum[:])
+}
+
+// latestAppsFingerprint returns the app-inventory fingerprint of the most
+// recently stored report for a node, or "" when there is no prior report or
+// it cannot be read/parsed.
+func (h *HealthServer) latestAppsFingerprint(nodeID string) string {
+	reports, err := h.sRepo.List("", nodeID, nil, ukama.FilterTimeframesTypeLatest)
+	if err != nil || len(reports) == 0 {
+		return ""
+	}
+	parsed, err := parser.ParseHealthPayload(reports[0].Payload)
+	if err != nil {
+		return ""
+	}
+	return appsFingerprint(parsed.Apps)
+}
+
+// publishAppsChangedIfNeeded emits a HealthAppsChangedEvent only when the
+// node's app inventory (by name@version) differs from the previous report, or
+// on the first report. Best-effort: failures are logged and never affect the
+// StoreHealthReport result. The existing HealthReportEvent emission is unchanged.
+func (h *HealthServer) publishAppsChangedIfNeeded(nodeID, nodeType string, apps []parser.HealthApp, prevFingerprint string) {
+	if h.msgbus == nil {
+		return
+	}
+	if appsFingerprint(apps) == prevFingerprint {
+		return
+	}
+	route := h.healthRoutingKey.SetAction("changed").SetObject("apps").MustBuild()
+	evt := &epb.HealthAppsChangedEvent{NodeId: nodeID, NodeType: nodeType}
+	log.Infof("Publishing apps-changed event %+v with key %+v", evt, route)
+	if err := h.msgbus.PublishRequest(route, evt); err != nil {
+		log.Errorf("Failed to publish apps-changed event %+v with key %+v. Errors %s", evt, route, err.Error())
+	}
 }
 
 func (h *HealthServer) ListReports(ctx context.Context, req *pb.ListReportsRequest) (*pb.ListReportsResponse, error) {

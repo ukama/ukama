@@ -583,6 +583,16 @@ func UnmarshalFeeItem(msg *anypb.Any, emsg string) (*FeeItem, error) {
 	return p, nil
 }
 
+func UnmarshalHealthAppsChangedEvent(msg *anypb.Any, emsg string) (*HealthAppsChangedEvent, error) {
+	p := &HealthAppsChangedEvent{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
+		return nil, err
+	}
+	return p, nil
+}
+
 func UnmarshalHealthReportEvent(msg *anypb.Any, emsg string) (*HealthReportEvent, error) {
 	p := &HealthReportEvent{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
