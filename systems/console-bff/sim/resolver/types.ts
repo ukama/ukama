@@ -73,7 +73,7 @@ export class SimPackage {
   endDate: string;
 
   @Field()
-  defaultDuration: string;
+  defaultDuration: string; // in minutes (max 1000 years); minutes since #1496
 
   @Field()
   isActive: boolean;
@@ -345,7 +345,7 @@ export class SimPackageAPI {
   end_date: string;
 
   @Field()
-  default_duration: string;
+  default_duration: string; // in minutes (max 1000 years); minutes since #1496
 
   @Field()
   is_active: boolean;

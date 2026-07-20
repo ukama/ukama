@@ -42,16 +42,13 @@ import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import type { CreatePlanValues } from './schemas';
 import { createPlanSchema, VALIDITY_OPTIONS } from './schemas';
+import { daysToMinutes, formatDuration, minutesToDays } from '@/lib/duration';
 
 const normalizeUnit = (u: string): 'GB' | 'MB' =>
   u?.toUpperCase() === 'MB' ? 'MB' : 'GB';
 
 const normalizeDays = (d: number): number =>
   [1, 7, 30].includes(Math.round(d)) ? Math.round(d) : 30;
-
-const validityLabel = (days: number): string =>
-  VALIDITY_OPTIONS.find((o) => o.value === String(days))?.label ??
-  `${days} days`;
 
 /** Live name-availability state for the inline validation line. */
 type NameState = 'idle' | 'checking' | 'available' | 'taken';
@@ -91,7 +88,7 @@ export default function CreatePlanDialog({
           price: pkg.amount,
           data: pkg.dataVolume,
           unit: normalizeUnit(pkg.dataUnit),
-          days: normalizeDays(pkg.duration),
+          days: normalizeDays(minutesToDays(pkg.duration)),
           availableWithinOrg: !pkg.networkId,
           networkId: pkg.networkId ?? '',
         }
@@ -180,7 +177,7 @@ export default function CreatePlanDialog({
           amount: v.price,
           dataVolume: v.data,
           dataUnit: v.unit,
-          duration: v.days,
+          duration: daysToMinutes(v.days),
           country: user.country ?? '',
           currency: user.currency,
           // Org-wide → no network; otherwise the selected network.
@@ -295,7 +292,7 @@ export default function CreatePlanDialog({
           </div>
           <Field label="Validity">
             <div className="ff-readonly">
-              {validityLabel(normalizeDays(pkg.duration))}
+              {formatDuration(pkg.duration)}
             </div>
           </Field>
         </>

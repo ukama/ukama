@@ -180,6 +180,7 @@ export type BalanceSection = {
 
 export type CBooleanResponse = {
   __typename?: 'CBooleanResponse';
+  message?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
 
