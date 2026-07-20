@@ -867,6 +867,13 @@ static bool raw_handle_set_tilt(RawRs485Context *ctx,
         return false;
     }
 
+    /*
+     * TS 25.463 section 6.6.3 defines SetTilt as a synchronous class-1
+     * procedure: the secondary performs the movement and then returns OK or
+     * FAIL (within two minutes). execute_retap() has already received and
+     * validated that terminal response, so no operation remains pending.
+     */
+    json_object_set_new(payload, "state", json_string("completed"));
     json_object_set_new(payload, "targetTiltDeg", json_real(target));
     json_object_set_new(payload, "currentTiltDeg", json_real(tilt / 10.0));
     json_object_set_new(payload, "rawTiltTenthsDeg", json_integer(tilt));
