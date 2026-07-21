@@ -55,6 +55,12 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
         return fail(err, "world.ues_per_site exceeds 500 UEs per tower");
     }
 
+    if (s->world.sims_per_subscriber > s->world.ues_per_site &&
+        s->world.ues_per_site > 0) {
+        return fail(err,
+                    "world.sims_per_subscriber cannot exceed ues_per_site");
+    }
+
     if (s->world.tower_per_site + s->world.amplifier_per_site +
         s->world.controller_per_site == 0) {
         return fail(err, "world.nodes_per_site must include nodes");
@@ -70,8 +76,17 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
             return fail(err, "package ref/name is required");
         }
 
-        if (p->data_mb == 0 || p->duration_days == 0) {
-            return fail(err, "package data_mb/duration_days invalid");
+        if (p->data_mb == 0 ||
+            (p->duration_days == 0 && p->duration_minutes == 0)) {
+            return fail(err,
+                        "package data_mb and duration_days or "
+                        "duration_minutes are required");
+        }
+
+        if (p->duration_days != 0 && p->duration_minutes != 0) {
+            return fail(err,
+                        "package duration_days and duration_minutes are "
+                        "mutually exclusive");
         }
 
         pct += p->assign_percent;
@@ -156,6 +171,24 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                 continue;
             }
 
+            if (event->type == EVT_PURCHASE_PACKAGE) {
+                if (event->ues.kind == SEL_NONE ||
+                    event->package_ref[0] == '\0') {
+                    return fail(err,
+                                "purchase_package requires ues and package");
+                }
+                continue;
+            }
+
+            if (event->type == EVT_SET_PACKAGE_ACTIVE) {
+                if (event->package_ref[0] == '\0' || !event->has_active) {
+                    return fail(err,
+                                "set_package_active requires package and "
+                                "active");
+                }
+                continue;
+            }
+
             if (event->type == EVT_DISCONNECT_NODES ||
                 event->type == EVT_RECONNECT_NODES) {
                 if (event->nodes.kind == SEL_NONE) {
@@ -193,6 +226,23 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                 (check->app[0] == '\0' || check->expected[0] == '\0')) {
                 return fail(err,
                             "release_unavailable requires app and version");
+            }
+            if ((check->type == CHECK_KPI_VALUE ||
+                 check->type == CHECK_KPI_TREND) &&
+                check->key[0] == '\0') {
+                return fail(err, "KPI checks require key");
+            }
+            if (check->type == CHECK_KPI_VALUE &&
+                !check->has_expected_value) {
+                return fail(err, "kpi_value requires expected_value");
+            }
+            if (check->type == CHECK_PERFORMANCE_REPORT_CELL &&
+                (check->report[0] == '\0' || check->column[0] == '\0' ||
+                 check->package_ref[0] == '\0' ||
+                 !check->has_expected_value)) {
+                return fail(err,
+                            "performance_report_cell requires report, "
+                            "column, package and expected_value");
             }
         }
     }

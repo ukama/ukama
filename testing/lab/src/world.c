@@ -21,13 +21,19 @@ static int alloc_world(const scenario_t *s, world_t *w) {
         s->world.controller_per_site;
     size_t nodes    = sites * nodes_per;
     size_t ues      = sites * s->world.ues_per_site;
+    size_t sims_per_subscriber = s->world.sims_per_subscriber ?
+        s->world.sims_per_subscriber : 1u;
+    size_t subscribers_per_site = (s->world.ues_per_site +
+        sims_per_subscriber - 1u) / sims_per_subscriber;
+    size_t subscribers = sites * subscribers_per_site;
     size_t packages = s->package_count * s->world.networks;
 
     memset(w, 0, sizeof(*w));
     w->networks = calloc(s->world.networks, sizeof(network_t));
     w->sites = calloc(sites, sizeof(site_t));
     w->nodes = calloc(nodes, sizeof(node_t));
-    w->subscribers = ues ? calloc(ues, sizeof(subscriber_t)) : NULL;
+    w->subscribers = subscribers ?
+        calloc(subscribers, sizeof(subscriber_t)) : NULL;
     w->ues = ues ? calloc(ues, sizeof(ue_t)) : NULL;
     w->packages = packages ? calloc(packages, sizeof(package_t)) : NULL;
     if (w->networks == NULL || w->sites == NULL || w->nodes == NULL ||
@@ -39,7 +45,7 @@ static int alloc_world(const scenario_t *s, world_t *w) {
     w->network_count    = s->world.networks;
     w->site_count       = sites;
     w->node_count       = nodes;
-    w->subscriber_count = ues;
+    w->subscriber_count = subscribers;
     w->ue_count         = ues;
     w->package_count    = packages;
 
@@ -133,7 +139,11 @@ static void add_package_for_network(world_t *w,
     make_package_name(p->name, sizeof(p->name), spec->name, network);
     p->data_mb       = spec->data_mb;
     p->duration_days = spec->duration_days;
+    p->duration_minutes = spec->duration_minutes;
     p->amount        = spec->amount;
+    ulab_copy(p->currency, sizeof(p->currency), spec->currency);
+    ulab_copy(p->country, sizeof(p->country), spec->country);
+    p->active = spec->active;
 }
 
 static void add_node(world_t *w, size_t *idx, const char *type,
@@ -161,7 +171,9 @@ int world_generate(const scenario_t *s,
     size_t site_idx = 0;
     size_t node_idx    = 0;
     size_t package_idx = 0;
+    size_t subscriber_idx = 0;
     size_t ue_idx      = 0;
+    size_t sims_per_subscriber;
 
     if (alloc_world(s, w) != ULAB_OK) {
         snprintf(err->msg, sizeof(err->msg), "world allocation failed");
@@ -169,6 +181,8 @@ int world_generate(const scenario_t *s,
     }
     ulab_copy(w->run_id, sizeof(w->run_id), run_id);
     w->seed = s->seed;
+    sims_per_subscriber = s->world.sims_per_subscriber ?
+        s->world.sims_per_subscriber : 1u;
 
     for (i = 0; i < w->network_count; i++) {
         network_t *net = &w->networks[i];
@@ -203,25 +217,37 @@ int world_generate(const scenario_t *s,
             }
 
             for (k = 0; k < s->world.ues_per_site; k++) {
-                subscriber_t *sub = &w->subscribers[ue_idx];
+                subscriber_t *sub;
                 ue_t *ue = &w->ues[ue_idx];
                 size_t num = ue_idx + 1;
-                uint32_t phone = seeded_u32(s, "phone", ue_idx, i, j) %
-                    10000000u;
 
-                snprintf(sub->ref, sizeof(sub->ref), "sub-%06zu", num);
-                snprintf(sub->id, sizeof(sub->id), "%.240s-%.120s", run_id,
-                         sub->ref);
-                snprintf(sub->name, sizeof(sub->name), "Lab User %zu",
-                         num);
-		snprintf(sub->email, sizeof(sub->email),
-			"ulab-%08x-%06zu@ukama.com",
-			ulab_hash32(run_id, s->seed), num);
-                snprintf(sub->phone, sizeof(sub->phone), "+1555%07u", phone);
-                snprintf(sub->network_ref, sizeof(sub->network_ref), "%s",
-                         net->ref);
-                snprintf(sub->site_ref, sizeof(sub->site_ref), "%s",
-                         site->ref);
+                if (k % sims_per_subscriber == 0) {
+                    uint32_t phone;
+                    size_t sub_num;
+
+                    sub = &w->subscribers[subscriber_idx];
+                    sub_num = subscriber_idx + 1;
+                    phone = seeded_u32(s, "phone", subscriber_idx, i, j) %
+                        10000000u;
+
+                    snprintf(sub->ref, sizeof(sub->ref), "sub-%06zu", sub_num);
+                    snprintf(sub->id, sizeof(sub->id), "%.240s-%.120s", run_id,
+                             sub->ref);
+                    snprintf(sub->name, sizeof(sub->name), "Lab User %zu",
+                             sub_num);
+                    snprintf(sub->email, sizeof(sub->email),
+                             "ulab-%08x-%06zu@ukama.com",
+                             ulab_hash32(run_id, s->seed), sub_num);
+                    snprintf(sub->phone, sizeof(sub->phone), "+1555%07u",
+                             phone);
+                    snprintf(sub->network_ref, sizeof(sub->network_ref), "%s",
+                             net->ref);
+                    snprintf(sub->site_ref, sizeof(sub->site_ref), "%s",
+                             site->ref);
+                    subscriber_idx++;
+                }
+
+                sub = &w->subscribers[subscriber_idx - 1];
 
                 snprintf(ue->ref, sizeof(ue->ref), "ue-%06zu", num);
                 snprintf(ue->id, sizeof(ue->id), "%.240s-%.120s",
@@ -276,6 +302,16 @@ node_t *world_node_by_ref(world_t *w, const char *ref) {
     size_t i;
     for (i = 0; i < w->node_count; i++) {
         if (ulab_streq(w->nodes[i].ref, ref)) return &w->nodes[i];
+    }
+    return NULL;
+}
+
+subscriber_t *world_subscriber_by_ref(world_t *w, const char *ref) {
+    size_t i;
+    for (i = 0; i < w->subscriber_count; i++) {
+        if (ulab_streq(w->subscribers[i].ref, ref)) {
+            return &w->subscribers[i];
+        }
     }
     return NULL;
 }

@@ -119,6 +119,8 @@ const char *scenario_event_name(event_type_t type) {
     case EVT_WAIT_NODE_CONNECTIVITY: return "wait_node_connectivity";
     case EVT_WAIT_NODES_READY: return "wait_nodes_ready";
     case EVT_ADD_PACKAGE_TO_SIM: return "add_package_to_sim";
+    case EVT_PURCHASE_PACKAGE: return "purchase_package";
+    case EVT_SET_PACKAGE_ACTIVE: return "set_package_active";
     case EVT_REMOVE_PACKAGE_FROM_SIM: return "remove_package_from_sim";
     case EVT_SET_SIM_STATUS: return "set_sim_status";
     case EVT_TOGGLE_SERVICE: return "toggle_service";
@@ -149,6 +151,13 @@ const char *scenario_check_name(check_type_t type) {
     case CHECK_USAGE_SAMPLE: return "usage_sample";
     case CHECK_PACKAGE_ACTIVE: return "package_active";
     case CHECK_PACKAGE_REMAINING: return "package_remaining";
+    case CHECK_PACKAGE_STATE: return "package_state";
+    case CHECK_PACKAGE_ASSIGNMENT_COUNT: return "package_assignment_count";
+    case CHECK_PAYMENT_EQUALS: return "payment_equals";
+    case CHECK_PAYMENT_COUNT: return "payment_count";
+    case CHECK_KPI_VALUE: return "kpi_value";
+    case CHECK_KPI_TREND: return "kpi_trend";
+    case CHECK_PERFORMANCE_REPORT_CELL: return "performance_report_cell";
     case CHECK_NODE_STATE: return "node_state";
     case CHECK_DASHBOARD_LOADS: return "dashboard_loads";
     case CHECK_DASHBOARD_SECTION_OK: return "dashboard_section_ok";
@@ -182,6 +191,10 @@ int scenario_event_from_name(const char *name, event_type_t *out) {
         *out = EVT_WAIT_NODES_READY;
     } else if (ulab_streq(name, "add_package_to_sim")) {
         *out = EVT_ADD_PACKAGE_TO_SIM;
+    } else if (ulab_streq(name, "purchase_package")) {
+        *out = EVT_PURCHASE_PACKAGE;
+    } else if (ulab_streq(name, "set_package_active")) {
+        *out = EVT_SET_PACKAGE_ACTIVE;
     } else if (ulab_streq(name, "remove_package_from_sim")) {
         *out = EVT_REMOVE_PACKAGE_FROM_SIM;
     } else if (ulab_streq(name, "set_sim_status")) {
@@ -232,6 +245,20 @@ int scenario_check_from_name(const char *name, check_type_t *out) {
         *out = CHECK_PACKAGE_ACTIVE;
     } else if (ulab_streq(name, "package_remaining")) {
         *out = CHECK_PACKAGE_REMAINING;
+    } else if (ulab_streq(name, "package_state")) {
+        *out = CHECK_PACKAGE_STATE;
+    } else if (ulab_streq(name, "package_assignment_count")) {
+        *out = CHECK_PACKAGE_ASSIGNMENT_COUNT;
+    } else if (ulab_streq(name, "payment_equals")) {
+        *out = CHECK_PAYMENT_EQUALS;
+    } else if (ulab_streq(name, "payment_count")) {
+        *out = CHECK_PAYMENT_COUNT;
+    } else if (ulab_streq(name, "kpi_value")) {
+        *out = CHECK_KPI_VALUE;
+    } else if (ulab_streq(name, "kpi_trend")) {
+        *out = CHECK_KPI_TREND;
+    } else if (ulab_streq(name, "performance_report_cell")) {
+        *out = CHECK_PERFORMANCE_REPORT_CELL;
     } else if (ulab_streq(name, "node_state")) *out = CHECK_NODE_STATE;
     else if (ulab_streq(name, "dashboard_loads")) {
         *out = CHECK_DASHBOARD_LOADS;
@@ -367,6 +394,10 @@ static check_spec_t *new_check(check_spec_t *arr, size_t *cnt,
     c = &arr[(*cnt)++];
     memset(c, 0, sizeof(*c));
     c->tolerance_percent = 2;
+    c->tolerance_value = 0.000001;
+    c->timeout_seconds = 300;
+    c->poll_seconds = 5;
+    snprintf(c->comparator, sizeof(c->comparator), "equals");
     if (scenario_check_from_name(type, &c->type) != ULAB_OK) {
         snprintf(err->msg, sizeof(err->msg), "unknown check type: %s", type);
         return NULL;
@@ -392,6 +423,45 @@ static int apply_check_field(check_spec_t *c, const char *key,
         sizeof(c->status), val);
     if (ulab_streq(key, "app")) return ulab_copy(c->app,
         sizeof(c->app), val);
+    if (ulab_streq(key, "key")) return ulab_copy(c->key,
+        sizeof(c->key), val);
+    if (ulab_streq(key, "span")) return ulab_copy(c->span,
+        sizeof(c->span), val);
+    if (ulab_streq(key, "op")) return ulab_copy(c->op,
+        sizeof(c->op), val);
+    if (ulab_streq(key, "comparator")) return ulab_copy(c->comparator,
+        sizeof(c->comparator), val);
+    if (ulab_streq(key, "report")) return ulab_copy(c->report,
+        sizeof(c->report), val);
+    if (ulab_streq(key, "column")) return ulab_copy(c->column,
+        sizeof(c->column), val);
+    if (ulab_streq(key, "scope_key")) return ulab_copy(c->scope_key,
+        sizeof(c->scope_key), val);
+    if (ulab_streq(key, "scope_value")) return ulab_copy(c->scope_value,
+        sizeof(c->scope_value), val);
+    if (ulab_streq(key, "trend_direction")) {
+        return ulab_copy(c->trend_direction,
+                         sizeof(c->trend_direction), val);
+    }
+    if (ulab_streq(key, "currency")) return ulab_copy(c->currency,
+        sizeof(c->currency), val);
+    if (ulab_streq(key, "expected_value")) {
+        if (ulab_parse_double(val, &c->expected_value)) return ULAB_ERR;
+        c->has_expected_value = 1;
+        return ULAB_OK;
+    }
+    if (ulab_streq(key, "tolerance")) {
+        return ulab_parse_double(val, &c->tolerance_value);
+    }
+    if (ulab_streq(key, "expected_count")) {
+        return ulab_parse_u32(val, &c->expected_count);
+    }
+    if (ulab_streq(key, "timeout_seconds")) {
+        return ulab_parse_u32(val, &c->timeout_seconds);
+    }
+    if (ulab_streq(key, "poll_seconds")) {
+        return ulab_parse_u32(val, &c->poll_seconds);
+    }
     if (ulab_streq(key, "section") || ulab_streq(key, "version") ||
         ulab_streq(key, "tag")) {
         return ulab_copy(c->expected, sizeof(c->expected), val);
@@ -465,6 +535,26 @@ static int apply_event_field(event_spec_t *e, const char *key,
         sizeof(e->app), val);
     if (ulab_streq(key, "tag")) return ulab_copy(e->tag,
         sizeof(e->tag), val);
+    if (ulab_streq(key, "amount")) {
+        return ulab_parse_double(val, &e->amount);
+    }
+    if (ulab_streq(key, "currency")) return ulab_copy(e->currency,
+        sizeof(e->currency), val);
+    if (ulab_streq(key, "payer_email")) {
+        return ulab_copy(e->payer_email, sizeof(e->payer_email), val);
+    }
+    if (ulab_streq(key, "payer_phone")) {
+        return ulab_copy(e->payer_phone, sizeof(e->payer_phone), val);
+    }
+    if (ulab_streq(key, "idempotency_key")) {
+        return ulab_copy(e->idempotency_key,
+                         sizeof(e->idempotency_key), val);
+    }
+    if (ulab_streq(key, "active")) {
+        e->active = ulab_streq(val, "true") || ulab_streq(val, "1");
+        e->has_active = 1;
+        return ULAB_OK;
+    }
     if (ulab_streq(key, "status") || ulab_streq(key, "state") ||
         ulab_streq(key, "connectivity") ||
         ulab_streq(key, "version")) return ulab_copy(e->status,
@@ -636,6 +726,10 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
                 if (ulab_parse_u32(val, &s->world.sites_per_network)) goto bad;
             } else if (ind == 2 && ulab_streq(key, "ues_per_site")) {
                 if (ulab_parse_u32(val, &s->world.ues_per_site)) goto bad;
+            } else if (ind == 2 && ulab_streq(key, "sims_per_subscriber")) {
+                if (ulab_parse_u32(val, &s->world.sims_per_subscriber)) {
+                    goto bad;
+                }
             } else if (ind == 2 && ulab_streq(key, "nodes_per_site")) {
                 sec = SEC_NODES_PER_SITE;
             } else goto unknown;
@@ -651,6 +745,11 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
             } else if (ind == 2 && ulab_streq(key, "ues_per_site")) {
                 if (ulab_parse_u32(val, &s->world.ues_per_site)) goto bad;
                 sec = SEC_WORLD;
+            } else if (ind == 2 && ulab_streq(key, "sims_per_subscriber")) {
+                if (ulab_parse_u32(val, &s->world.sims_per_subscriber)) {
+                    goto bad;
+                }
+                sec = SEC_WORLD;
             } else if (ind == 2 && ulab_streq(key, "networks")) {
                 if (ulab_parse_u32(val, &s->world.networks)) goto bad;
                 sec = SEC_WORLD;
@@ -665,6 +764,9 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
                 if (s->package_count >= ULAB_MAX_PACKAGES) goto many;
                 pkg = &s->packages[s->package_count++];
                 memset(pkg, 0, sizeof(*pkg));
+                snprintf(pkg->currency, sizeof(pkg->currency), "USD");
+                snprintf(pkg->country, sizeof(pkg->country), "USA");
+                pkg->active = 1;
                 if (parse_item_value(p, &key, &val) ||
                     !ulab_streq(key, "ref")) goto bad;
                 if (ulab_copy(pkg->ref, sizeof(pkg->ref), val)) goto bad;
@@ -675,13 +777,26 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
                     if (ulab_parse_u64(val, &pkg->data_mb)) goto bad;
                 } else if (ulab_streq(key, "duration_days")) {
                     if (ulab_parse_u32(val, &pkg->duration_days)) goto bad;
+                } else if (ulab_streq(key, "duration_minutes")) {
+                    if (ulab_parse_u32(val, &pkg->duration_minutes)) goto bad;
                 } else if (ulab_streq(key, "duration_hours")) {
                     uint32_t hours = 0;
                     if (ulab_parse_u32(val, &hours)) goto bad;
-                    pkg->duration_days = (hours + 23u) / 24u;
-                    if (pkg->duration_days == 0) pkg->duration_days = 1;
+                    if (hours > UINT32_MAX / 60u) goto bad;
+                    pkg->duration_minutes = hours * 60u;
                 } else if (ulab_streq(key, "amount")) {
                     if (ulab_parse_double(val, &pkg->amount)) goto bad;
+                } else if (ulab_streq(key, "currency")) {
+                    if (ulab_copy(pkg->currency, sizeof(pkg->currency), val)) {
+                        goto bad;
+                    }
+                } else if (ulab_streq(key, "country")) {
+                    if (ulab_copy(pkg->country, sizeof(pkg->country), val)) {
+                        goto bad;
+                    }
+                } else if (ulab_streq(key, "active")) {
+                    pkg->active = ulab_streq(val, "true") ||
+                        ulab_streq(val, "1");
                 } else if (ulab_streq(key, "assign_percent")) {
                     if (ulab_parse_u32(val, &pkg->assign_percent)) goto bad;
                 } else goto unknown;

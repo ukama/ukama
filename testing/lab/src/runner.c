@@ -493,6 +493,10 @@ static int setup_bff_packages(bff_client_t *bff,
         if (bff_add_package(bff, package, network, err)) {
             return ULAB_EBFF;
         }
+        if (!package->active &&
+            bff_set_package_active(bff, package, 0, err)) {
+            return ULAB_EBFF;
+        }
     }
 
     return ULAB_OK;

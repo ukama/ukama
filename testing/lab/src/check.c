@@ -24,6 +24,10 @@ int check_package(check_ctx_t *ctx, const check_spec_t *check,
                   check_result_t *res, ulab_error_t *err);
 int check_dashboard(check_ctx_t *ctx, const check_spec_t *check,
                     check_result_t *res, ulab_error_t *err);
+int check_payment(check_ctx_t *ctx, const check_spec_t *check,
+                  check_result_t *res, ulab_error_t *err);
+int check_analytics(check_ctx_t *ctx, const check_spec_t *check,
+                    check_result_t *res, ulab_error_t *err);
 
 static void res_init(check_result_t *res, const check_spec_t *check) {
     memset(res, 0, sizeof(*res));
@@ -56,8 +60,17 @@ int check_run(check_ctx_t *ctx, const check_spec_t *check,
         return check_usage(ctx, check, res, err);
     case CHECK_PACKAGE_ACTIVE:
     case CHECK_PACKAGE_REMAINING:
+    case CHECK_PACKAGE_STATE:
+    case CHECK_PACKAGE_ASSIGNMENT_COUNT:
     case CHECK_BALANCE_NON_NEGATIVE:
         return check_package(ctx, check, res, err);
+    case CHECK_PAYMENT_EQUALS:
+    case CHECK_PAYMENT_COUNT:
+        return check_payment(ctx, check, res, err);
+    case CHECK_KPI_VALUE:
+    case CHECK_KPI_TREND:
+    case CHECK_PERFORMANCE_REPORT_CELL:
+        return check_analytics(ctx, check, res, err);
     case CHECK_DASHBOARD_LOADS:
     case CHECK_DASHBOARD_SECTION_OK:
         return check_dashboard(ctx, check, res, err);
@@ -65,9 +78,12 @@ int check_run(check_ctx_t *ctx, const check_spec_t *check,
     case CHECK_AUDIT_EVENT_EXISTS:
     case CHECK_RELATIONSHIP_EXISTS:
     case CHECK_RELATIONSHIP_ENDED:
-        res->passed = 1;
-        snprintf(res->detail, sizeof(res->detail), "%s virtual assertion accepted",
-                 scenario_check_name(check->type));
+        res->passed = check->required ? 0 : 1;
+        res->skipped = check->required ? 0 : 1;
+        snprintf(res->detail, sizeof(res->detail),
+                 "%s has no BFF-backed implementation%s",
+                 scenario_check_name(check->type),
+                 check->required ? " (required)" : "");
         (void)ctx;
         (void)err;
         return ULAB_OK;

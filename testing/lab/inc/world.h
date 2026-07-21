@@ -86,6 +86,8 @@ typedef struct {
     char bff_id[ULAB_MAX_ID];
     char sim_package_id[ULAB_MAX_ID];
     char pool_sim_id[ULAB_MAX_ID];
+    char last_payment_id[ULAB_MAX_ID];
+    char last_payment_status[ULAB_MAX_REF];
     int  started;
     int  attached;
 } ue_t;
@@ -97,7 +99,11 @@ typedef struct {
     char     name[ULAB_MAX_NAME];
     uint64_t data_mb;
     uint32_t duration_days;
+    uint32_t duration_minutes;
     double   amount;
+    char     currency[ULAB_MAX_REF];
+    char     country[ULAB_MAX_REF];
+    int      active;
     char     bff_id[ULAB_MAX_ID];
 } package_t;
 
@@ -126,6 +132,7 @@ void world_free(world_t *w);
 network_t *world_network_by_ref(world_t *w, const char *ref);
 site_t *world_site_by_ref(world_t *w, const char *ref);
 node_t *world_node_by_ref(world_t *w, const char *ref);
+subscriber_t *world_subscriber_by_ref(world_t *w, const char *ref);
 ue_t *world_ue_by_ref(world_t *w, const char *ref);
 package_t *world_package_by_ref(world_t *w, const char *ref);
 package_t *world_package_for_network(world_t *w,

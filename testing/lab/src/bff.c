@@ -20,10 +20,15 @@
 extern const char *BFF_ADD_NETWORK;
 extern const char *BFF_ADD_SITE;
 extern const char *BFF_ADD_PACKAGE;
+extern const char *BFF_UPDATE_PACKAGE;
 extern const char *BFF_ADD_SUBSCRIBER;
 extern const char *BFF_ALLOCATE_SIM;
 extern const char *BFF_GET_DATA_USAGE;
 extern const char *BFF_GET_SIM_PACKAGES;
+extern const char *BFF_ADD_PAYMENT;
+extern const char *BFF_GET_PAYMENTS;
+extern const char *BFF_GET_KPI_VALUES;
+extern const char *BFF_GET_PERFORMANCE_REPORT;
 extern const char *BFF_GET_NODE;
 extern const char *BFF_GET_RELEASE_CATALOG;
 extern const char *BFF_PROMOTE_RELEASE;
@@ -80,6 +85,25 @@ static int json_get_str(json_t *obj, const char *key, char *out,
     }
 
     return ulab_copy(out, out_len, s);
+}
+
+static void json_get_optional_str(json_t *obj, const char *key,
+                                  char *out, size_t out_len) {
+    json_t *v;
+    const char *s;
+
+    if (out == NULL || out_len == 0) {
+        return;
+    }
+    out[0] = '\0';
+    v = obj ? json_object_get(obj, key) : NULL;
+    if (v == NULL || !json_is_string(v)) {
+        return;
+    }
+    s = json_string_value(v);
+    if (s != NULL) {
+        ulab_copy(out, out_len, s);
+    }
 }
 
 static int json_get_nested_str(json_t *obj,
@@ -1019,24 +1043,34 @@ int bff_add_package(bff_client_t *c,
     json_t *root;
     json_t *obj;
     uint32_t duration;
+    uint64_t duration64;
 
     if (net == NULL || net->bff_id[0] == '\0') {
         snprintf(err->msg, sizeof(err->msg), "addPackage missing network id");
         return ULAB_ERR;
     }
 
-    duration = p->duration_days;
-    if (duration == 0) {
-        duration = 1;
+    if (p->duration_minutes > 0) {
+        duration64 = p->duration_minutes;
+    } else {
+        duration64 = (uint64_t)p->duration_days * 1440u;
     }
+    if (duration64 == 0 || duration64 > UINT32_MAX) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "addPackage invalid duration");
+        return ULAB_ERR;
+    }
+    duration = (uint32_t)duration64;
 
     snprintf(vars, sizeof(vars),
              "{\"data\":{\"name\":\"%s\",\"amount\":%.2f,"
              "\"dataUnit\":\"MB\",\"dataVolume\":%llu,"
-             "\"duration\":%u,\"currency\":\"USD\","
-             "\"country\":\"USA\",\"networkId\":\"%s\"}}",
+             "\"duration\":%u,\"currency\":\"%s\","
+             "\"country\":\"%s\",\"networkId\":\"%s\"}}",
              p->name, p->amount,
-             (unsigned long long)p->data_mb, duration, net->bff_id);
+             (unsigned long long)p->data_mb, duration,
+             p->currency[0] ? p->currency : "USD",
+             p->country[0] ? p->country : "USA", net->bff_id);
 
     if (bff_call(c, "addPackage", BFF_ADD_PACKAGE, vars, &root, err)) {
         return ULAB_ERR;
@@ -1052,6 +1086,482 @@ int bff_add_package(bff_client_t *c,
 
     json_decref(root);
 
+    return ULAB_OK;
+}
+
+int bff_set_package_active(bff_client_t *c,
+                           package_t *p,
+                           int active,
+                           ulab_error_t *err) {
+    char vars[4096];
+    json_t *root;
+    json_t *obj;
+    json_t *value;
+
+    if (p == NULL || p->bff_id[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "updatePackage missing package id");
+        return ULAB_ERR;
+    }
+
+    snprintf(vars, sizeof(vars),
+             "{\"packageId\":\"%s\",\"data\":{\"name\":\"%s\","
+             "\"active\":%s}}",
+             p->bff_id, p->name, active ? "true" : "false");
+
+    if (bff_call(c, "updatePackage", BFF_UPDATE_PACKAGE, vars,
+                 &root, err)) {
+        return ULAB_ERR;
+    }
+
+    obj = dig(root, "data", "updatePackage");
+    value = obj ? json_object_get(obj, "active") : NULL;
+    if (value == NULL || !json_is_boolean(value) ||
+        json_is_true(value) != (active != 0)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "updatePackage returned unexpected active state");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+
+    p->active = active != 0;
+    json_decref(root);
+    return ULAB_OK;
+}
+
+static int parse_payment(json_t *obj, bff_payment_t *payment,
+                         ulab_error_t *err) {
+    if (obj == NULL || payment == NULL) {
+        snprintf(err->msg, sizeof(err->msg), "payment response is empty");
+        return ULAB_ERR;
+    }
+
+    memset(payment, 0, sizeof(*payment));
+    if (json_get_str(obj, "id", payment->id, sizeof(payment->id)) ||
+        json_get_str(obj, "itemId", payment->item_id,
+                     sizeof(payment->item_id)) ||
+        json_get_str(obj, "itemType", payment->item_type,
+                     sizeof(payment->item_type)) ||
+        json_get_str(obj, "amount", payment->amount,
+                     sizeof(payment->amount)) ||
+        json_get_str(obj, "currency", payment->currency,
+                     sizeof(payment->currency)) ||
+        json_get_str(obj, "paymentMethod", payment->payment_method,
+                     sizeof(payment->payment_method)) ||
+        json_get_str(obj, "status", payment->status,
+                     sizeof(payment->status))) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "payment response is missing required fields");
+        return ULAB_ERR;
+    }
+
+    json_get_optional_str(obj, "paidAt", payment->paid_at,
+                          sizeof(payment->paid_at));
+    json_get_optional_str(obj, "payerEmail", payment->payer_email,
+                          sizeof(payment->payer_email));
+    json_get_optional_str(obj, "payerPhone", payment->payer_phone,
+                          sizeof(payment->payer_phone));
+    json_get_optional_str(obj, "metadata", payment->metadata,
+                          sizeof(payment->metadata));
+    return ULAB_OK;
+}
+
+int bff_record_cash_package_sale(bff_client_t *c,
+                                 ue_t *ue,
+                                 const package_t *pkg,
+                                 const subscriber_t *subscriber,
+                                 double amount,
+                                 const char *currency,
+                                 bff_payment_t *payment,
+                                 ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char item_esc[ULAB_MAX_ID * 2];
+    char sim_esc[ULAB_MAX_ID * 2];
+    char currency_esc[ULAB_MAX_REF * 2];
+    char email_esc[ULAB_MAX_NAME * 2];
+    char phone_esc[ULAB_MAX_REF * 2];
+    json_t *root;
+    json_t *obj;
+    int n;
+
+    if (ue == NULL || ue->bff_id[0] == '\0' ||
+        pkg == NULL || pkg->bff_id[0] == '\0' || subscriber == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "cash package sale requires SIM, package and subscriber");
+        return ULAB_ERR;
+    }
+
+    if (amount <= 0) {
+        amount = pkg->amount;
+    }
+    ulab_json_escape(pkg->bff_id, item_esc, sizeof(item_esc));
+    ulab_json_escape(ue->bff_id, sim_esc, sizeof(sim_esc));
+    ulab_json_escape(currency && currency[0] ? currency :
+                     (pkg->currency[0] ? pkg->currency : "USD"),
+                     currency_esc, sizeof(currency_esc));
+    ulab_json_escape(subscriber->email, email_esc, sizeof(email_esc));
+    ulab_json_escape(subscriber->phone, phone_esc, sizeof(phone_esc));
+
+    n = snprintf(vars, sizeof(vars),
+                 "{\"data\":{\"itemId\":\"%s\","
+                 "\"itemType\":\"package\",\"paymentMethod\":\"cash\","
+                 "\"amount\":\"%.2f\",\"currency\":\"%s\","
+                 "\"sim\":\"%s\",\"payerEmail\":\"%s\","
+                 "\"payerPhone\":\"%s\"}}",
+                 item_esc, amount, currency_esc, sim_esc,
+                 email_esc, phone_esc);
+    if (n < 0 || (size_t)n >= sizeof(vars)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "cash package sale variables too long");
+        return ULAB_ERR;
+    }
+
+    root = NULL;
+    if (bff_call(c, "addPayment", BFF_ADD_PAYMENT, vars, &root, err)) {
+        return ULAB_ERR;
+    }
+    obj = dig(root, "data", "addPayment");
+    if (parse_payment(obj, payment, err)) {
+        json_decref(root);
+        return ULAB_ERR;
+    }
+
+    ulab_copy(ue->last_payment_id, sizeof(ue->last_payment_id),
+              payment->id);
+    ulab_copy(ue->last_payment_status, sizeof(ue->last_payment_status),
+              payment->status);
+    json_decref(root);
+    return ULAB_OK;
+}
+
+int bff_get_package_payments(bff_client_t *c,
+                             const package_t *pkg,
+                             bff_payment_t payments[],
+                             size_t max_payments,
+                             size_t *payment_count,
+                             ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char item_esc[ULAB_MAX_ID * 2];
+    json_t *root;
+    json_t *obj;
+    json_t *arr;
+    size_t i;
+    size_t count;
+
+    if (pkg == NULL || pkg->bff_id[0] == '\0' ||
+        payments == NULL || payment_count == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getPayments requires package and output storage");
+        return ULAB_ERR;
+    }
+
+    ulab_json_escape(pkg->bff_id, item_esc, sizeof(item_esc));
+    snprintf(vars, sizeof(vars),
+             "{\"data\":{\"type\":\"package\",\"itemId\":\"%s\"}}",
+             item_esc);
+
+    root = NULL;
+    if (bff_call(c, "getPayments", BFF_GET_PAYMENTS, vars, &root, err)) {
+        return ULAB_ERR;
+    }
+    obj = dig(root, "data", "getPayments");
+    arr = obj ? json_object_get(obj, "payments") : NULL;
+    if (arr == NULL || !json_is_array(arr)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getPayments missing payments list");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+
+    count = json_array_size(arr);
+    if (count > max_payments) {
+        count = max_payments;
+    }
+    for (i = 0; i < count; i++) {
+        if (parse_payment(json_array_get(arr, i), &payments[i], err)) {
+            json_decref(root);
+            return ULAB_ERR;
+        }
+    }
+    *payment_count = count;
+    json_decref(root);
+    return ULAB_OK;
+}
+
+static double json_optional_number(json_t *obj, const char *key) {
+    json_t *v;
+
+    v = obj ? json_object_get(obj, key) : NULL;
+    return v != NULL && json_is_number(v) ? json_number_value(v) : 0.0;
+}
+
+static int kpi_scope_matches(const bff_kpi_value_t *value,
+                             const char *scope_key,
+                             const char *scope_value) {
+    size_t i;
+
+    if (scope_key == NULL || scope_key[0] == '\0') {
+        return 1;
+    }
+    for (i = 0; i < value->scope_count; i++) {
+        if (ulab_streq(value->scope[i].key, scope_key) &&
+            (scope_value == NULL || scope_value[0] == '\0' ||
+             ulab_streq(value->scope[i].value, scope_value))) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int parse_kpi_value(json_t *obj, bff_kpi_value_t *value,
+                           ulab_error_t *err) {
+    json_t *scope;
+    json_t *trend;
+    json_t *flag;
+    size_t i;
+    size_t count;
+
+    if (obj == NULL || value == NULL) {
+        snprintf(err->msg, sizeof(err->msg), "KPI response is empty");
+        return ULAB_ERR;
+    }
+    memset(value, 0, sizeof(*value));
+    if (json_get_str(obj, "kpi", value->kpi, sizeof(value->kpi))) {
+        snprintf(err->msg, sizeof(err->msg), "KPI response missing key");
+        return ULAB_ERR;
+    }
+    value->value = json_optional_number(obj, "value");
+    json_get_optional_str(obj, "span", value->span, sizeof(value->span));
+    json_get_optional_str(obj, "op", value->op, sizeof(value->op));
+    json_get_optional_str(obj, "unit", value->unit, sizeof(value->unit));
+    json_get_optional_str(obj, "symbol", value->symbol,
+                          sizeof(value->symbol));
+    json_get_optional_str(obj, "from", value->from, sizeof(value->from));
+    json_get_optional_str(obj, "to", value->to, sizeof(value->to));
+    json_get_optional_str(obj, "computedAt", value->computed_at,
+                          sizeof(value->computed_at));
+    flag = json_object_get(obj, "isPartial");
+    value->is_partial = flag != NULL && json_is_true(flag);
+
+    scope = json_object_get(obj, "scope");
+    if (scope != NULL && json_is_array(scope)) {
+        count = json_array_size(scope);
+        if (count > ULAB_MAX_BFF_KPI_SCOPES) {
+            count = ULAB_MAX_BFF_KPI_SCOPES;
+        }
+        for (i = 0; i < count; i++) {
+            json_t *entry;
+
+            entry = json_array_get(scope, i);
+            if (json_get_str(entry, "key", value->scope[i].key,
+                             sizeof(value->scope[i].key)) ||
+                json_get_str(entry, "value", value->scope[i].value,
+                             sizeof(value->scope[i].value))) {
+                snprintf(err->msg, sizeof(err->msg),
+                         "KPI response has invalid scope");
+                return ULAB_ERR;
+            }
+        }
+        value->scope_count = count;
+    }
+
+    trend = json_object_get(obj, "trend");
+    if (trend != NULL && json_is_object(trend)) {
+        json_get_optional_str(trend, "direction", value->trend.direction,
+                              sizeof(value->trend.direction));
+        value->trend.change_pct = json_optional_number(trend, "changePct");
+        value->trend.change_abs = json_optional_number(trend, "changeAbs");
+        value->trend.previous_value =
+            json_optional_number(trend, "prevValue");
+        flag = json_object_get(trend, "hasPrevious");
+        value->trend.has_previous = flag != NULL && json_is_true(flag);
+    }
+    return ULAB_OK;
+}
+
+int bff_get_kpi_value(bff_client_t *c,
+                      const char *key,
+                      const char *span,
+                      const char *op,
+                      const char *network_id,
+                      const char *scope_key,
+                      const char *scope_value,
+                      bff_kpi_value_t *value,
+                      int *found,
+                      ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char key_esc[ULAB_MAX_REF * 2];
+    char span_esc[ULAB_MAX_REF * 2];
+    char op_esc[ULAB_MAX_REF * 2];
+    char network_esc[ULAB_MAX_ID * 2];
+    char optional[ULAB_MAX_QUERY / 2];
+    json_t *root;
+    json_t *obj;
+    json_t *arr;
+    size_t i;
+    int n;
+
+    if (key == NULL || key[0] == '\0' || value == NULL || found == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getKpiValues requires key and output storage");
+        return ULAB_ERR;
+    }
+    ulab_json_escape(key, key_esc, sizeof(key_esc));
+    ulab_json_escape(span && span[0] ? span : "daily",
+                     span_esc, sizeof(span_esc));
+    optional[0] = '\0';
+    if (op != NULL && op[0] != '\0') {
+        ulab_json_escape(op, op_esc, sizeof(op_esc));
+        snprintf(optional + strlen(optional),
+                 sizeof(optional) - strlen(optional),
+                 ",\"op\":\"%s\"", op_esc);
+    }
+    if (network_id != NULL && network_id[0] != '\0') {
+        ulab_json_escape(network_id, network_esc, sizeof(network_esc));
+        snprintf(optional + strlen(optional),
+                 sizeof(optional) - strlen(optional),
+                 ",\"networkId\":\"%s\"", network_esc);
+    }
+    n = snprintf(vars, sizeof(vars),
+                 "{\"data\":{\"keys\":[\"%s\"],\"span\":\"%s\"%s}}",
+                 key_esc, span_esc, optional);
+    if (n < 0 || (size_t)n >= sizeof(vars)) {
+        snprintf(err->msg, sizeof(err->msg), "KPI variables too long");
+        return ULAB_ERR;
+    }
+
+    root = NULL;
+    if (bff_call(c, "getKpiValues", BFF_GET_KPI_VALUES,
+                 vars, &root, err)) {
+        return ULAB_ERR;
+    }
+    obj = dig(root, "data", "getKpiValues");
+    arr = obj ? json_object_get(obj, "values") : NULL;
+    if (arr == NULL || !json_is_array(arr)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getKpiValues missing values list");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+
+    *found = 0;
+    for (i = 0; i < json_array_size(arr); i++) {
+        bff_kpi_value_t candidate;
+
+        if (parse_kpi_value(json_array_get(arr, i), &candidate, err)) {
+            json_decref(root);
+            return ULAB_ERR;
+        }
+        if (ulab_streq(candidate.kpi, key) &&
+            kpi_scope_matches(&candidate, scope_key, scope_value)) {
+            *value = candidate;
+            *found = 1;
+            break;
+        }
+    }
+    json_decref(root);
+    return ULAB_OK;
+}
+
+int bff_get_performance_report_cell(bff_client_t *c,
+                                    const char *report,
+                                    const char *span,
+                                    const char *network_id,
+                                    const char *entity_id,
+                                    const char *column,
+                                    double *value,
+                                    char *unit,
+                                    size_t unit_len,
+                                    int *found,
+                                    ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char report_esc[ULAB_MAX_REF * 2];
+    char span_esc[ULAB_MAX_REF * 2];
+    char network_esc[ULAB_MAX_ID * 2];
+    char optional[ULAB_MAX_ID * 2 + 32];
+    json_t *root;
+    json_t *obj;
+    json_t *rows;
+    size_t i;
+    int n;
+
+    if (report == NULL || report[0] == '\0' || entity_id == NULL ||
+        entity_id[0] == '\0' || column == NULL || column[0] == '\0' ||
+        value == NULL || found == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "performance report requires report, entity and column");
+        return ULAB_ERR;
+    }
+    ulab_json_escape(report, report_esc, sizeof(report_esc));
+    ulab_json_escape(span && span[0] ? span : "daily",
+                     span_esc, sizeof(span_esc));
+    optional[0] = '\0';
+    if (network_id != NULL && network_id[0] != '\0') {
+        ulab_json_escape(network_id, network_esc, sizeof(network_esc));
+        snprintf(optional, sizeof(optional),
+                 ",\"networkId\":\"%s\"", network_esc);
+    }
+    n = snprintf(vars, sizeof(vars),
+                 "{\"data\":{\"report\":\"%s\",\"span\":\"%s\"%s}}",
+                 report_esc, span_esc, optional);
+    if (n < 0 || (size_t)n >= sizeof(vars)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "performance report variables too long");
+        return ULAB_ERR;
+    }
+
+    root = NULL;
+    if (bff_call(c, "getPerformanceReport", BFF_GET_PERFORMANCE_REPORT,
+                 vars, &root, err)) {
+        return ULAB_ERR;
+    }
+    obj = dig(root, "data", "getPerformanceReport");
+    rows = obj ? json_object_get(obj, "rows") : NULL;
+    if (rows == NULL || !json_is_array(rows)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getPerformanceReport missing rows");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+
+    *found = 0;
+    for (i = 0; i < json_array_size(rows); i++) {
+        json_t *row;
+        json_t *cells;
+        char row_id[ULAB_MAX_ID];
+        size_t j;
+
+        row = json_array_get(rows, i);
+        if (json_get_str(row, "entityId", row_id, sizeof(row_id)) ||
+            !ulab_streq(row_id, entity_id)) {
+            continue;
+        }
+        cells = json_object_get(row, "cells");
+        if (cells == NULL || !json_is_array(cells)) {
+            continue;
+        }
+        for (j = 0; j < json_array_size(cells); j++) {
+            json_t *cell;
+            char cell_column[ULAB_MAX_REF];
+
+            cell = json_array_get(cells, j);
+            if (json_get_str(cell, "column", cell_column,
+                             sizeof(cell_column)) ||
+                !ulab_streq(cell_column, column)) {
+                continue;
+            }
+            *value = json_optional_number(cell, "value");
+            if (unit != NULL && unit_len > 0) {
+                json_get_optional_str(cell, "unit", unit, unit_len);
+            }
+            *found = 1;
+            break;
+        }
+        if (*found) {
+            break;
+        }
+    }
+    json_decref(root);
     return ULAB_OK;
 }
 
@@ -1172,14 +1682,52 @@ int bff_get_packages_for_sim(bff_client_t *c, const ue_t *ue,
                              const char *package_id, int *active,
                              ulab_error_t *err) {
 
+    bff_sim_package_t packages[ULAB_MAX_BFF_SIM_PACKAGES];
+    size_t count;
+    size_t i;
+
+    if (bff_get_sim_packages(c, ue, packages,
+                             ULAB_MAX_BFF_SIM_PACKAGES,
+                             &count, err)) {
+        return ULAB_ERR;
+    }
+
+    *active = 0;
+    for (i = 0; i < count; i++) {
+        if ((package_id == NULL || package_id[0] == '\0' ||
+             ulab_streq(packages[i].package_id, package_id)) &&
+            packages[i].active) {
+            *active = 1;
+            if (package_id != NULL && package_id[0] != '\0') {
+                break;
+            }
+        }
+    }
+    return ULAB_OK;
+}
+
+int bff_get_sim_packages(bff_client_t *c,
+                         const ue_t *ue,
+                         bff_sim_package_t packages[],
+                         size_t max_packages,
+                         size_t *package_count,
+                         ulab_error_t *err) {
+
     char vars[ULAB_MAX_QUERY];
     json_t *root;
     json_t *obj;
     json_t *arr;
     json_t *it;
-    json_t *pid;
     json_t *act;
     size_t i;
+    size_t count;
+
+    if (ue == NULL || ue->bff_id[0] == '\0' || packages == NULL ||
+        package_count == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getPackagesForSim requires SIM and output storage");
+        return ULAB_ERR;
+    }
 
     snprintf(vars, sizeof(vars), "{\"data\":{\"sim_id\":\"%s\"}}",
              ue->bff_id);
@@ -1198,25 +1746,31 @@ int bff_get_packages_for_sim(bff_client_t *c, const ue_t *ue,
         return ULAB_ERR;
     }
 
-    *active = 0;
-
-    for (i = 0; i < json_array_size(arr); i++) {
+    count = json_array_size(arr);
+    if (count > max_packages) {
+        count = max_packages;
+    }
+    for (i = 0; i < count; i++) {
         it = json_array_get(arr, i);
-        pid = it ? json_object_get(it, "package_id") : NULL;
-        act = it ? json_object_get(it, "is_active") : NULL;
-
-        if (pid != NULL && json_is_string(pid) &&
-            (package_id == NULL || package_id[0] == '\0' ||
-             ulab_streq(json_string_value(pid), package_id))) {
-            if (act != NULL && json_is_true(act)) {
-                *active = 1;
-            }
-            if (package_id == NULL || package_id[0] == '\0') {
-                continue;
-            }
+        memset(&packages[i], 0, sizeof(packages[i]));
+        if (json_get_str(it, "id", packages[i].id,
+                         sizeof(packages[i].id)) ||
+            json_get_str(it, "package_id", packages[i].package_id,
+                         sizeof(packages[i].package_id)) ||
+            json_get_str(it, "start_date", packages[i].start_date,
+                         sizeof(packages[i].start_date)) ||
+            json_get_str(it, "end_date", packages[i].end_date,
+                         sizeof(packages[i].end_date))) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "getPackagesForSim returned incomplete assignment");
+            json_decref(root);
+            return ULAB_ERR;
         }
+        act = it ? json_object_get(it, "is_active") : NULL;
+        packages[i].active = act != NULL && json_is_true(act);
     }
 
+    *package_count = count;
     json_decref(root);
 
     return ULAB_OK;

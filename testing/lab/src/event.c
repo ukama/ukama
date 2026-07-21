@@ -29,6 +29,8 @@ static int event_run_actual(event_ctx_t *ctx, const event_spec_t *event,
         return event_traffic(ctx, event, err);
     case EVT_CREATE_UES:
     case EVT_ADD_PACKAGE_TO_SIM:
+    case EVT_PURCHASE_PACKAGE:
+    case EVT_SET_PACKAGE_ACTIVE:
     case EVT_REMOVE_PACKAGE_FROM_SIM:
     case EVT_SET_SIM_STATUS:
     case EVT_PROMOTE_RELEASE:

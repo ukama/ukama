@@ -40,7 +40,11 @@ typedef struct {
     char     name[ULAB_MAX_NAME];
     uint64_t data_mb;
     uint32_t duration_days;
+    uint32_t duration_minutes;
     double   amount;
+    char     currency[ULAB_MAX_REF];
+    char     country[ULAB_MAX_REF];
+    int      active;
     uint32_t assign_percent;
 } package_spec_t;
 
@@ -67,6 +71,8 @@ typedef enum {
     EVT_WAIT_NODE_CONNECTIVITY,
     EVT_WAIT_NODES_READY,
     EVT_ADD_PACKAGE_TO_SIM,
+    EVT_PURCHASE_PACKAGE,
+    EVT_SET_PACKAGE_ACTIVE,
     EVT_REMOVE_PACKAGE_FROM_SIM,
     EVT_SET_SIM_STATUS,
     EVT_TOGGLE_SERVICE,
@@ -94,6 +100,13 @@ typedef enum {
     CHECK_USAGE_SAMPLE,
     CHECK_PACKAGE_ACTIVE,
     CHECK_PACKAGE_REMAINING,
+    CHECK_PACKAGE_STATE,
+    CHECK_PACKAGE_ASSIGNMENT_COUNT,
+    CHECK_PAYMENT_EQUALS,
+    CHECK_PAYMENT_COUNT,
+    CHECK_KPI_VALUE,
+    CHECK_KPI_TREND,
+    CHECK_PERFORMANCE_REPORT_CELL,
     CHECK_NODE_STATE,
     CHECK_DASHBOARD_LOADS,
     CHECK_DASHBOARD_SECTION_OK,
@@ -121,6 +134,22 @@ typedef struct {
     char         status[ULAB_MAX_REF];
     char         expected[ULAB_MAX_REF];
     char         app[ULAB_MAX_NAME];
+    char         key[ULAB_MAX_REF];
+    char         span[ULAB_MAX_REF];
+    char         op[ULAB_MAX_REF];
+    char         comparator[ULAB_MAX_REF];
+    char         report[ULAB_MAX_REF];
+    char         column[ULAB_MAX_REF];
+    char         scope_key[ULAB_MAX_REF];
+    char         scope_value[ULAB_MAX_ID];
+    char         trend_direction[ULAB_MAX_REF];
+    char         currency[ULAB_MAX_REF];
+    double       expected_value;
+    double       tolerance_value;
+    uint32_t     expected_count;
+    uint32_t     timeout_seconds;
+    uint32_t     poll_seconds;
+    int          has_expected_value;
     uint64_t     expected_used_mb;
     uint64_t     expected_remaining_mb;
     uint32_t     tolerance_percent;
@@ -140,6 +169,13 @@ typedef struct {
     char         status[ULAB_MAX_REF];
     char         app[ULAB_MAX_NAME];
     char         tag[ULAB_MAX_REF];
+    char         currency[ULAB_MAX_REF];
+    char         payer_email[ULAB_MAX_NAME];
+    char         payer_phone[ULAB_MAX_REF];
+    char         idempotency_key[ULAB_MAX_ID];
+    double       amount;
+    int          active;
+    int          has_active;
     uint32_t     count_per_site;
     char         package_ref[ULAB_MAX_REF];
     check_spec_t checks[ULAB_MAX_CHECKS];
@@ -161,6 +197,7 @@ typedef struct {
     uint32_t amplifier_per_site;
     uint32_t controller_per_site;
     uint32_t ues_per_site;
+    uint32_t sims_per_subscriber;
 } world_spec_t;
 
 typedef struct {

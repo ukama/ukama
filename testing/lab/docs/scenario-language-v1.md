@@ -5,7 +5,10 @@ Top-level fields: `version`, `name`, `seed`, optional `suite`, `priority`,
 `runtime`, optional `profiles`, `phases`, and `final_checks`.
 
 The language is strict. Unknown event/check names must fail validation.
-Packages use `duration_days`.
+Packages accept either `duration_days` or `duration_minutes`; exactly one is
+required. Both forms remain first-class scenario input. The BFF currently
+accepts duration in minutes, so the runner converts days to `days * 1440` at
+the BFF boundary and passes minute values unchanged.
 
 Provider block is optional. Missing provider defaults to `virtual`.
 
@@ -43,6 +46,8 @@ Supported events:
 - `wait_node_connectivity`
 - `wait_nodes_ready`
 - `add_package_to_sim`
+- `purchase_package`
+- `set_package_active`
 - `remove_package_from_sim`
 - `set_sim_status`
 - `promote_release`
@@ -65,6 +70,13 @@ Supported checks:
 - `usage_sample`
 - `package_active`
 - `package_remaining` (skipped until BFF exposes remaining balance)
+- `package_state`
+- `package_assignment_count`
+- `payment_equals`
+- `payment_count`
+- `kpi_value`
+- `kpi_trend`
+- `performance_report_cell`
 - `node_state`
 - `dashboard_loads`
 - `node_version_equals`
@@ -177,6 +189,75 @@ BFF lifecycle events:
   ues: all
   status: inactive
 ```
+
+Subsequent cash package sale:
+
+```yaml
+- type: purchase_package
+  ues: all
+  package: next_plan
+  amount: 5.00
+  currency: USD
+```
+
+The first package is mandatory during SIM allocation and its payment is
+created internally by the backend. `purchase_package` is only for subsequent
+purchases on an already allocated SIM. It calls BFF `addPayment` with
+`itemType: package`, `paymentMethod: cash`, the selected SIM UUID, and the
+package UUID. An `idempotency_key` is parsed but rejected at execution time
+until BFF exposes such a field; this makes the missing contract explicit.
+
+Entitlement and payment checks:
+
+```yaml
+- type: package_state
+  ues: all
+  package: next_plan
+  expected: queued
+  timeout_seconds: 300
+  poll_seconds: 5
+
+- type: payment_equals
+  ues: all
+  package: next_plan
+  status: settled
+  currency: USD
+  expected_value: 5.00
+  tolerance: 0.001
+```
+
+`package_state` accepts `active`, `queued`, `inactive`, or `absent` and polls
+the BFF because entitlement creation and transitions are asynchronous.
+`settled` accepts the backend statuses `completed` and `success`.
+
+Console analytics checks always use BFF `getKpiValues` or
+`getPerformanceReport`; scenarios never call the analytics backend directly:
+
+```yaml
+- type: kpi_value
+  key: PACKAGE_SALES
+  span: daily
+  op: SUM
+  networks: all
+  scope_key: package_id
+  package: next_plan
+  expected_value: 1
+  timeout_seconds: 600
+  poll_seconds: 5
+
+- type: performance_report_cell
+  report: package_performance
+  span: daily
+  networks: all
+  package: next_plan
+  column: revenue
+  expected_value: 500
+  tolerance: 0.01
+```
+
+KPI and report checks poll until the expected value is visible or the timeout
+expires. Monetary analytics values follow the BFF/console unit in the returned
+cell or KPI (currently minor units when `unit` is `cents`).
 
 `status_equals` for SIMs supports `active` and `inactive` based on active
 package assignment. `set_sim_status` only validates the mutation path in this
