@@ -1,0 +1,70 @@
+version: 1
+name: p0-multiple-queued-packages-use-fifo
+description: Verify multiple paid packages remain distinct and are ordered for activation in the sequence in which their payments completed.
+seed: 4303
+suite: p0
+priority: p0
+tags: [virtual, data-package, purchase, queue, fifo]
+status: wip
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: current_plan
+    name: FIFO Current
+    data_mb: 100
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+  - ref: second_plan
+    name: FIFO Second
+    data_mb: 100
+    duration_minutes: 2
+    amount: 2.00
+    assign_percent: 0
+  - ref: third_plan
+    name: FIFO Third
+    data_mb: 100
+    duration_minutes: 3
+    amount: 3.00
+    assign_percent: 0
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: purchase_in_order
+    events:
+      - type: purchase_package
+        ues: all
+        package: second_plan
+      - type: purchase_package
+        ues: all
+        package: third_plan
+    checks:
+      - type: package_state
+        ues: all
+        package: second_plan
+        expected: queued
+      - type: package_state
+        ues: all
+        package: third_plan
+        expected: queued
+      - type: package_assignment_count
+        ues: all
+        expected_count: 3

@@ -1,0 +1,63 @@
+version: 1
+name: p0-purchase-additional-package-with-cash
+description: Verify a subsequent cash purchase made through BFF settles for the requested SIM and creates exactly one additional entitlement.
+seed: 4301
+suite: p0
+priority: p0
+tags: [virtual, data-package, purchase, cash]
+status: wip
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: current_plan
+    name: Current Plan
+    data_mb: 100
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+  - ref: next_plan
+    name: Next Cash Plan
+    data_mb: 500
+    duration_minutes: 5
+    amount: 5.00
+    currency: USD
+    assign_percent: 0
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: purchase_with_cash
+    events:
+      - type: purchase_package
+        ues: all
+        package: next_plan
+        amount: 5.00
+        currency: USD
+    checks:
+      - type: payment_equals
+        ues: all
+        package: next_plan
+        status: settled
+        currency: USD
+        expected_value: 5.00
+      - type: package_assignment_count
+        ues: all
+        package: next_plan
+        expected_count: 1

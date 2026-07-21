@@ -1,0 +1,29 @@
+version: 1
+name: p0-traffic-below-limit-remains-allowed
+description: Verify partial usage below the package allowance neither blocks traffic nor activates a queued entitlement prematurely.
+seed: 4506
+suite: p0
+priority: p0
+tags: [virtual, data-package, policy, below-limit]
+status: wip
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 0
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: verify_contract

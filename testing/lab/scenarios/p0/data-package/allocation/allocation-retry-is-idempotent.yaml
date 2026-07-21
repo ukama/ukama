@@ -1,0 +1,40 @@
+version: 1
+name: p0-allocation-retry-is-idempotent
+description: Verify retrying the same SIM allocation does not create duplicate payments or duplicate initial entitlements.
+seed: 4204
+suite: p0
+priority: p0
+tags: [virtual, data-package, allocation, retry, idempotency]
+status: wip
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: initial_plan
+    name: Allocation Retry Plan
+    data_mb: 250
+    duration_days: 1
+    amount: 5.00
+    assign_percent: 100
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: retry_allocation
+    # Requires a retry_allocate_sim event carrying the original idempotency key.

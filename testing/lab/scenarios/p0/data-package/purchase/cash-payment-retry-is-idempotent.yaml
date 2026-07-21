@@ -1,0 +1,54 @@
+version: 1
+name: p0-cash-payment-retry-is-idempotent
+description: Verify retrying a cash sale with the same idempotency key produces one payment and one entitlement.
+seed: 4306
+suite: p0
+priority: p0
+tags: [virtual, data-package, purchase, idempotency]
+status: wip
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: current_plan
+    name: Retry Current
+    data_mb: 100
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+  - ref: retry_plan
+    name: Retry Purchase
+    data_mb: 100
+    duration_minutes: 5
+    amount: 5.00
+    assign_percent: 0
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: retry_same_sale
+    events:
+      - type: purchase_package
+        ues: all
+        package: retry_plan
+        idempotency_key: retry-sale-001
+        expect:
+          result: failure
+    # BFF addPayment does not expose an idempotency key yet; activate this
+    # scenario after the field is added and issue the event twice.

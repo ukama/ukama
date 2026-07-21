@@ -1,0 +1,29 @@
+version: 1
+name: p0-blocked-traffic-is-not-counted
+description: Verify traffic rejected by package policy does not increase billable or reported usage.
+seed: 4516
+suite: p0
+priority: p0
+tags: [virtual, usage, accounting, policy]
+status: wip
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 0
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: verify_contract

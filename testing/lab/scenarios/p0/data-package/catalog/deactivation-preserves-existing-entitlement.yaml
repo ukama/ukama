@@ -1,0 +1,51 @@
+version: 1
+name: p0-deactivation-preserves-existing-entitlement
+description: Verify deactivating a catalog plan blocks new sales without terminating the SIM entitlement that was already active.
+seed: 4105
+suite: p0
+priority: p0
+tags: [virtual, data-package, catalog, deactivation]
+status: wip
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: existing_plan
+    name: Existing Plan
+    data_mb: 500
+    duration_days: 1
+    amount: 3.00
+    assign_percent: 100
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+runtime:
+  start: [nodes, ues]
+  wait: [nodes_ready, ues_attached]
+phases:
+  - name: deactivate_catalog_plan
+    events:
+      - type: set_package_active
+        package: existing_plan
+        active: false
+    checks:
+      - type: package_state
+        ues: all
+        package: existing_plan
+        expected: active
+      - type: traffic_allowed
+        ues: all
+        amount_mb: 1

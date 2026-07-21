@@ -1,0 +1,48 @@
+version: 1
+name: p0-initial-payment-matches-plan
+description: Verify the internally created initial payment matches the assigned plan ID, price, currency, subscriber, and SIM lineage.
+seed: 4202
+suite: p0
+priority: p0
+tags: [virtual, data-package, allocation, reconciliation]
+status: wip
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: initial_plan
+    name: Initial Match Plan
+    data_mb: 250
+    duration_days: 1
+    amount: 5.00
+    currency: USD
+    assign_percent: 100
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: verify_initial_payment_fields
+    checks:
+      - type: payment_equals
+        ues: all
+        package: initial_plan
+        status: settled
+        currency: USD
+        expected_value: 5.00
+        tolerance: 0.001

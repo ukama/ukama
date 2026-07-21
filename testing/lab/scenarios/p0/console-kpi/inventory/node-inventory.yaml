@@ -1,0 +1,33 @@
+version: 1
+name: p0-console-kpi-node-inventory
+description: Verify console node inventory totals and type or status breakdowns match the BFF-created world.
+seed: 4715
+suite: p0
+priority: p0
+tags: [virtual, console-kpi]
+status: wip
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 0
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: verify_contract
+    checks:
+      - type: backend_count
+        target: nodes
+        expected: from_world

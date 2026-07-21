@@ -1,0 +1,49 @@
+version: 1
+name: p0-initial-allocation-creates-payment
+description: Verify allocating a SIM with its mandatory first package creates one active entitlement and one internally settled package payment.
+seed: 4201
+suite: p0
+priority: p0
+tags: [virtual, data-package, allocation, payment]
+status: wip
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: initial_plan
+    name: Initial Plan
+    data_mb: 250
+    duration_days: 1
+    amount: 5.00
+    assign_percent: 100
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: verify_initial_allocation
+    checks:
+      - type: package_state
+        ues: all
+        package: initial_plan
+        expected: active
+      - type: payment_count
+        ues: all
+        package: initial_plan
+        status: settled
+        expected_count: 1
