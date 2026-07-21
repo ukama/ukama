@@ -33,11 +33,18 @@ setup:
     - subscribers
     - sims
 runtime:
-  start: [nodes, ues]
-  wait: [nodes_ready, ues_attached]
+  start: [nodes]
+  wait: [nodes_ready]
 phases:
   - name: expire_and_block
     events:
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
       - type: wait_package_boundary
         ues: all
         package: minute_plan
@@ -57,4 +64,3 @@ phases:
         networks: all
         package: minute_plan
         expected_count: 0
-

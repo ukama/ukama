@@ -39,11 +39,18 @@ setup:
     - subscribers
     - sims
 runtime:
-  start: [nodes, ues]
-  wait: [nodes_ready, ues_attached]
+  start: [nodes]
+  wait: [nodes_ready]
 phases:
   - name: cross_exact_allowance
     events:
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
       - type: purchase_package
         ues: all
         package: successor_plan
@@ -87,4 +94,3 @@ phases:
         column: data_used
         expected_value: 1048576
         tolerance: 157286
-

@@ -26,11 +26,18 @@ packages:
 setup:
   create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
 runtime:
-  start: [nodes, ues]
-  wait: [nodes_ready, ues_attached]
+  start: [nodes]
+  wait: [nodes_ready]
 phases:
   - name: aggregate_site_usage
     events:
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
       - type: traffic
         ues: all
         amount_mb: 4
@@ -44,4 +51,3 @@ phases:
         op: SUM
         tolerance_percent: 15
         timeout_seconds: 600
-
