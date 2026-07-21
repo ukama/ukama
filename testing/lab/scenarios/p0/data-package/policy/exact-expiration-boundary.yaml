@@ -1,11 +1,11 @@
 version: 1
 name: p0-exact-expiration-boundary
-description: Verify traffic immediately before and after expiration is attributed to the correct entitlement.
-seed: 4509
+description: Verify usage immediately before and after the old package end date is attributed to the old and successor package respectively.
+seed: 4309
 suite: p0
 priority: p0
-tags: [virtual, data-package, policy, expiration-boundary]
-status: wip
+tags: [virtual, data-package, policy, expiration-boundary, attribution]
+status: active
 provider:
   type: virtual
 world:
@@ -15,15 +15,83 @@ world:
     tower: 1
     amplifier: 1
     controller: 1
-  ues_per_site: 0
+  ues_per_site: 1
+packages:
+  - ref: expiring_plan
+    name: Exact Expiration Boundary Plan
+    data_mb: 100
+    duration_minutes: 2
+    amount: 1.00
+    assign_percent: 100
+  - ref: successor_plan
+    name: Expiration Boundary Successor
+    data_mb: 100
+    duration_minutes: 5
+    amount: 2.00
+    assign_percent: 0
 setup:
   create_via_bff:
     - networks
     - sites
     - nodes
     - node_site_links
+    - packages
+    - subscribers
+    - sims
 runtime:
-  start: [nodes]
-  wait: [nodes_ready]
+  start: [nodes, ues]
+  wait: [nodes_ready, ues_attached]
 phases:
-  - name: verify_contract
+  - name: use_before_and_after_expiration
+    events:
+      - type: purchase_package
+        ues: all
+        package: successor_plan
+      - type: wait_package_boundary
+        ues: all
+        package: expiring_plan
+        offset_seconds: -10
+      - type: traffic
+        ues: all
+        amount_mb: 1
+      - type: wait_package_boundary
+        ues: all
+        package: expiring_plan
+        offset_seconds: 2
+      - type: traffic
+        ues: all
+        amount_mb: 1
+    checks:
+      - type: package_state
+        ues: all
+        package: expiring_plan
+        expected: inactive
+      - type: package_state
+        ues: all
+        package: successor_plan
+        expected: active
+      - type: package_assignment_chain
+        ues: all
+        package: successor_plan
+        after_package: expiring_plan
+        expected: contiguous
+      - type: usage_per_sim
+        ues: all
+        expected: from_model
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
+        networks: all
+        package: expiring_plan
+        column: data_used
+        expected_value: 1048576
+        tolerance: 157286
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
+        networks: all
+        package: successor_plan
+        column: data_used
+        expected_value: 1048576
+        tolerance: 157286
+

@@ -26,7 +26,20 @@ static int alloc_world(const scenario_t *s, world_t *w) {
     size_t subscribers_per_site = (s->world.ues_per_site +
         sims_per_subscriber - 1u) / sims_per_subscriber;
     size_t subscribers = sites * subscribers_per_site;
-    size_t packages = s->package_count * s->world.networks;
+    size_t packages = 0;
+    size_t package_idx;
+
+    for (package_idx = 0; package_idx < s->package_count; package_idx++) {
+        const package_spec_t *spec = &s->packages[package_idx];
+
+        if (ulab_streq(spec->scope, "organization")) {
+            packages++;
+        } else if (spec->network_ref[0] != '\0') {
+            packages++;
+        } else {
+            packages += s->world.networks;
+        }
+    }
 
     memset(w, 0, sizeof(*w));
     w->networks = calloc(s->world.networks, sizeof(network_t));
@@ -115,13 +128,18 @@ static void make_package_ref(char *out, size_t out_len,
 
 static void make_package_name(char *out, size_t out_len,
                               const char *base_name,
-                              const network_t *network) {
+                              const network_t *network,
+                              const char *run_id) {
 
     /*
      * Package names are globally unique in the backend.
      * Scope each scenario package template to the generated network id.
      */
-    snprintf(out, out_len, "%.120s %.120s", base_name, network->id);
+    if (network != NULL) {
+        snprintf(out, out_len, "%.120s %.120s", base_name, network->id);
+    } else {
+        snprintf(out, out_len, "%.120s %.120s", base_name, run_id);
+    }
 }
 
 static void add_package_for_network(world_t *w,
@@ -133,10 +151,16 @@ static void add_package_for_network(world_t *w,
     const package_spec_t *spec = &s->packages[package_spec_idx];
     package_t *p = &w->packages[(*idx)++];
 
-    make_package_ref(p->ref, sizeof(p->ref), spec->ref, network->ref);
+    if (network != NULL) {
+        make_package_ref(p->ref, sizeof(p->ref), spec->ref, network->ref);
+        ulab_copy(p->network_ref, sizeof(p->network_ref), network->ref);
+    } else {
+        make_package_ref(p->ref, sizeof(p->ref), spec->ref, "org");
+        p->network_ref[0] = '\0';
+    }
     ulab_copy(p->base_ref, sizeof(p->base_ref), spec->ref);
-    ulab_copy(p->network_ref, sizeof(p->network_ref), network->ref);
-    make_package_name(p->name, sizeof(p->name), spec->name, network);
+    make_package_name(p->name, sizeof(p->name), spec->name, network,
+                      w->run_id);
     p->data_mb       = spec->data_mb;
     p->duration_days = spec->duration_days;
     p->duration_minutes = spec->duration_minutes;
@@ -192,6 +216,18 @@ int world_generate(const scenario_t *s,
         snprintf(net->name, sizeof(net->name), "%.255s", net->id);
 
         for (j = 0; j < s->package_count; j++) {
+            const package_spec_t *spec = &s->packages[j];
+
+            if (ulab_streq(spec->scope, "organization")) {
+                if (i == 0) {
+                    add_package_for_network(w, s, &package_idx, NULL, j);
+                }
+                continue;
+            }
+            if (spec->network_ref[0] != '\0' &&
+                !ulab_streq(spec->network_ref, net->ref)) {
+                continue;
+            }
             add_package_for_network(w, s, &package_idx, net, j);
         }
 
@@ -261,8 +297,26 @@ int world_generate(const scenario_t *s,
                          net->ref);
                 snprintf(ue->site_ref, sizeof(ue->site_ref), "%s",
                          site->ref);
-                make_package_ref(ue->package_ref, sizeof(ue->package_ref),
-                                 pick_package(s, ue_idx), net->ref);
+                {
+                    const char *picked;
+                    const package_spec_t *picked_spec;
+                    size_t pidx;
+
+                    picked = pick_package(s, ue_idx);
+                    picked_spec = NULL;
+                    for (pidx = 0; pidx < s->package_count; pidx++) {
+                        if (ulab_streq(s->packages[pidx].ref, picked)) {
+                            picked_spec = &s->packages[pidx];
+                            break;
+                        }
+                    }
+                    make_package_ref(ue->package_ref,
+                                     sizeof(ue->package_ref), picked,
+                                     picked_spec != NULL &&
+                                     ulab_streq(picked_spec->scope,
+                                                "organization") ?
+                                     "org" : net->ref);
+                }
                 ue_ip_for_site_index(k, ue->ip, sizeof(ue->ip));
                 ue_idx++;
             }
@@ -332,6 +386,18 @@ package_t *world_package_by_ref(world_t *w, const char *ref) {
     return NULL;
 }
 
+package_t *world_package_by_base_ref(world_t *w, const char *ref) {
+    size_t i;
+
+    for (i = 0; i < w->package_count; i++) {
+        if (ulab_streq(w->packages[i].base_ref, ref) ||
+            ulab_streq(w->packages[i].ref, ref)) {
+            return &w->packages[i];
+        }
+    }
+    return NULL;
+}
+
 package_t *world_package_for_network(world_t *w,
                                      const char *package_ref,
                                      const char *network_ref) {
@@ -344,7 +410,8 @@ package_t *world_package_for_network(world_t *w,
     for (i = 0; i < w->package_count; i++) {
         package_t *p = &w->packages[i];
 
-        if (!ulab_streq(p->network_ref, network_ref)) {
+        if (p->network_ref[0] != '\0' &&
+            !ulab_streq(p->network_ref, network_ref)) {
             continue;
         }
         if (ulab_streq(p->ref, package_ref) ||

@@ -81,6 +81,26 @@ typedef struct {
     int  active;
 } bff_sim_package_t;
 
+typedef struct {
+    char uuid[ULAB_MAX_ID];
+    char name[ULAB_MAX_NAME];
+    uint64_t data_volume;
+    uint32_t duration_minutes;
+    double amount;
+    char data_unit[ULAB_MAX_REF];
+    char currency[ULAB_MAX_REF];
+    char country[ULAB_MAX_REF];
+    char network_id[ULAB_MAX_ID];
+    int active;
+} bff_package_t;
+
+typedef struct {
+    char package_id[ULAB_MAX_ID];
+    double revenue;
+    uint32_t attach_count;
+    int has_attach_count;
+} bff_package_metrics_t;
+
 #define ULAB_MAX_BFF_KPI_SCOPES 8
 
 typedef struct {
@@ -144,6 +164,44 @@ int bff_add_package(bff_client_t *c,
 int bff_set_package_active(bff_client_t *c,
                            package_t *p,
                            int active,
+                           ulab_error_t *err);
+
+int bff_get_package(bff_client_t *c,
+                    const package_t *pkg,
+                    bff_package_t *actual,
+                    ulab_error_t *err);
+
+int bff_package_visible_for_network(bff_client_t *c,
+                                    const package_t *pkg,
+                                    const network_t *network,
+                                    int *visible,
+                                    ulab_error_t *err);
+
+int bff_invalid_package_name_available(bff_client_t *c,
+                                       const package_t *pkg,
+                                       const char *variant,
+                                       int *available,
+                                       ulab_error_t *err);
+
+int bff_add_invalid_package(bff_client_t *c,
+                            const package_t *pkg,
+                            const network_t *network,
+                            const char *variant,
+                            char *created_id,
+                            size_t created_id_len,
+                            ulab_error_t *err);
+
+int bff_get_package_metrics(bff_client_t *c,
+                            const package_t *pkg,
+                            const network_t *network,
+                            bff_package_metrics_t *metrics,
+                            int *found,
+                            ulab_error_t *err);
+
+int bff_sim_is_unallocated(bff_client_t *c,
+                           const ue_t *ue,
+                           const char *sim_type,
+                           int *unallocated,
                            ulab_error_t *err);
 
 int bff_add_subscriber(bff_client_t *c,
@@ -235,6 +293,7 @@ int bff_toggle_sim_status(bff_client_t *c,
 
 int bff_get_sim_usage(bff_client_t *c,
                       const ue_t *ue,
+                      const network_t *network,
                       uint64_t *used_mb,
                       ulab_error_t *err);
 

@@ -34,6 +34,24 @@ const char *BFF_UPDATE_PACKAGE =
 " updatePackage(packageId: $packageId, data: $data) {"
 " uuid name active duration amount currency country } }";
 
+const char *BFF_GET_PACKAGE =
+"query GetPackage($packageId: String!) {"
+" getPackage(packageId: $packageId) { uuid name active duration dataVolume "
+" dataUnit amount currency country networkId } }";
+
+const char *BFF_GET_PACKAGES =
+"query GetPackages($networkId: String) {"
+" getPackages(networkId: $networkId) { packages { uuid } } }";
+
+const char *BFF_PACKAGE_NAME_AVAILABLE =
+"query IsPackageNameAvailable($name: String!) {"
+" isPackageNameAvailable(name: $name) { isAvailable name } }";
+
+const char *BFF_PACKAGES_DASHBOARD =
+"query PackagesDashboard($networkId: String) {"
+" commerceView(networkId: $networkId) { plans {"
+" plans { packageId revenue attachCount } } } }";
+
 const char *BFF_ADD_SUBSCRIBER =
 "mutation AddSubscriber($data: SubscriberInputDto!) {"
 " addSubscriber(data: $data) { uuid email name networkId phone } }";
@@ -46,6 +64,10 @@ const char *BFF_ALLOCATE_SIM =
 const char *BFF_GET_DATA_USAGE =
 "query GetDataUsage($data: SimUsageInputDto!) {"
 " getDataUsage(data: $data) { simId usage } }";
+
+const char *BFF_GET_SIMS_USAGE_BY_NETWORK =
+"query GetSimsUsageByNetwork($networkId: String!) {"
+" getSimsUsageByNetwork(networkId: $networkId) { simId usage } }";
 
 const char *BFF_GET_SIM_PACKAGES =
 "query GetPackagesForSim($data: GetPackagesForSimInputDto!) {"

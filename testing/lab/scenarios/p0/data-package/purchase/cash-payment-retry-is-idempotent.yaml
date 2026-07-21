@@ -1,11 +1,11 @@
 version: 1
-name: p0-cash-payment-retry-is-idempotent
-description: Verify retrying a cash sale with the same idempotency key produces one payment and one entitlement.
-seed: 4306
+name: p0-failed-cash-request-followed-by-valid-retry-creates-one-sale
+description: Verify an underpriced cash request is rejected and a corrected retry creates exactly one queued entitlement and one catalog-price revenue contribution.
+seed: 4207
 suite: p0
 priority: p0
-tags: [virtual, data-package, purchase, idempotency]
-status: wip
+tags: [virtual, data-package, purchase, retry, rejection, revenue]
+status: active
 provider:
   type: virtual
 world:
@@ -17,16 +17,16 @@ world:
     controller: 1
   ues_per_site: 1
 packages:
-  - ref: current_plan
-    name: Retry Current
+  - ref: bootstrap
+    name: Cash Retry Bootstrap
     data_mb: 100
     duration_days: 1
     amount: 1.00
     assign_percent: 100
   - ref: retry_plan
-    name: Retry Purchase
-    data_mb: 100
-    duration_minutes: 5
+    name: Cash Retry Target
+    data_mb: 500
+    duration_days: 1
     amount: 5.00
     assign_percent: 0
 setup:
@@ -42,13 +42,32 @@ runtime:
   start: [nodes]
   wait: [nodes_ready]
 phases:
-  - name: retry_same_sale
+  - name: reject_then_retry
     events:
       - type: purchase_package
         ues: all
         package: retry_plan
-        idempotency_key: retry-sale-001
+        amount: 4.00
+        currency: USD
         expect:
           result: failure
-    # BFF addPayment does not expose an idempotency key yet; activate this
-    # scenario after the field is added and issue the event twice.
+      - type: purchase_package
+        ues: all
+        package: retry_plan
+        amount: 5.00
+        currency: USD
+    checks:
+      - type: package_assignment_count
+        ues: all
+        package: retry_plan
+        expected_count: 1
+      - type: package_state
+        ues: all
+        package: retry_plan
+        expected: queued
+      - type: package_business_metrics
+        networks: all
+        package: retry_plan
+        expected_value: 5.00
+        expected_count: 0
+

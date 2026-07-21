@@ -20,6 +20,7 @@ static int fail(ulab_error_t *err, const char *msg) {
 
 int scenario_validate(const scenario_t *s, ulab_error_t *err) {
     uint32_t pct = 0;
+    size_t assertion_count = 0;
     size_t i;
     size_t j;
 
@@ -72,6 +73,8 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
 
     for (i = 0; i < s->package_count; i++) {
         const package_spec_t *p = &s->packages[i];
+        int network_exists;
+
         if (p->ref[0] == '\0' || p->name[0] == '\0') {
             return fail(err, "package ref/name is required");
         }
@@ -87,6 +90,31 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
             return fail(err,
                         "package duration_days and duration_minutes are "
                         "mutually exclusive");
+        }
+
+        if (!ulab_streq(p->scope, "network") &&
+            !ulab_streq(p->scope, "organization")) {
+            return fail(err,
+                        "package scope must be network or organization");
+        }
+        if (ulab_streq(p->scope, "organization") &&
+            p->network_ref[0] != '\0') {
+            return fail(err,
+                        "organization package cannot specify network");
+        }
+        if (p->network_ref[0] != '\0' &&
+            !ulab_starts(p->network_ref, "net-")) {
+            return fail(err, "package network must use a net-NNN ref");
+        }
+        network_exists = p->network_ref[0] == '\0';
+        for (j = 0; !network_exists && j < s->world.networks; j++) {
+            char expected_ref[ULAB_MAX_REF];
+
+            snprintf(expected_ref, sizeof(expected_ref), "net-%03zu", j + 1);
+            network_exists = ulab_streq(p->network_ref, expected_ref);
+        }
+        if (!network_exists) {
+            return fail(err, "package network does not exist in world");
         }
 
         pct += p->assign_percent;
@@ -106,10 +134,15 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
     }
 
     if (s->world.ues_per_site > 0 &&
-        (!s->setup.create_packages || !s->setup.create_subscribers ||
-         !s->setup.create_sims)) {
+        (!s->setup.create_packages || !s->setup.create_subscribers)) {
         return fail(err,
-                    "UE scenarios require packages, subscribers, and sims");
+                    "UE scenarios require packages and subscribers");
+    }
+
+    if (s->world.ues_per_site > 0 && !s->setup.create_sims &&
+        (s->runtime.start_ues || s->runtime.wait_ues_attached)) {
+        return fail(err,
+                    "runtime UE scenarios require setup sims");
     }
 
     if (s->world.ues_per_site == 0 &&
@@ -136,6 +169,7 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
         const phase_spec_t *phase;
 
         phase = &s->phases[i];
+        assertion_count += phase->check_count;
         for (j = 0; j < phase->event_count; j++) {
             const event_spec_t *event;
 
@@ -176,6 +210,58 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                     event->package_ref[0] == '\0') {
                     return fail(err,
                                 "purchase_package requires ues and package");
+                }
+                continue;
+            }
+
+            if (event->type == EVT_PURCHASE_PACKAGES_PARALLEL) {
+                if (event->ues.kind == SEL_NONE ||
+                    event->package_ref[0] == '\0' ||
+                    event->other_package_ref[0] == '\0') {
+                    return fail(err,
+                                "purchase_packages_parallel requires ues, "
+                                "package and other_package");
+                }
+                if (ulab_streq(event->package_ref,
+                               event->other_package_ref)) {
+                    return fail(err,
+                                "parallel purchase packages must differ");
+                }
+                continue;
+            }
+
+            if (event->type == EVT_ALLOCATE_SIM) {
+                if (event->ues.kind == SEL_NONE ||
+                    event->package_ref[0] == '\0') {
+                    return fail(err,
+                                "allocate_sim requires ues and package");
+                }
+                continue;
+            }
+
+            if (event->type == EVT_CREATE_INVALID_PACKAGE) {
+                if (event->package_ref[0] == '\0' ||
+                    event->variant[0] == '\0') {
+                    return fail(err,
+                                "create_invalid_package requires package "
+                                "and variant");
+                }
+                if (!ulab_streq(event->variant, "allowance") &&
+                    !ulab_streq(event->variant, "duration") &&
+                    !ulab_streq(event->variant, "price") &&
+                    !ulab_streq(event->variant, "currency")) {
+                    return fail(err,
+                                "unsupported invalid package variant");
+                }
+                continue;
+            }
+
+            if (event->type == EVT_WAIT_PACKAGE_BOUNDARY) {
+                if (event->ues.kind == SEL_NONE ||
+                    event->package_ref[0] == '\0') {
+                    return fail(err,
+                                "wait_package_boundary requires ues and "
+                                "package");
                 }
                 continue;
             }
@@ -244,8 +330,57 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                             "performance_report_cell requires report, "
                             "column, package and expected_value");
             }
+            if ((check->type == CHECK_PACKAGE_CATALOG_EQUALS ||
+                 check->type == CHECK_PACKAGE_VISIBLE ||
+                 check->type == CHECK_PACKAGE_HIDDEN ||
+                 check->type == CHECK_PACKAGE_BUSINESS_METRICS ||
+                 check->type == CHECK_PACKAGE_ASSIGNMENT_CHAIN) &&
+                check->package_ref[0] == '\0') {
+                return fail(err, "data-package check requires package");
+            }
+            if (check->type == CHECK_PACKAGE_ASSIGNMENT_CHAIN &&
+                check->ues.kind == SEL_NONE) {
+                return fail(err,
+                            "package_assignment_chain requires ues");
+            }
+            if (check->type == CHECK_PACKAGE_ASSIGNMENT_CHAIN &&
+                check->expected[0] != '\0' &&
+                !ulab_streq(check->expected, "all") &&
+                !ulab_streq(check->expected, "contiguous")) {
+                return fail(err,
+                            "package_assignment_chain expected must be "
+                            "all or contiguous");
+            }
+            if (check->type == CHECK_PACKAGE_BUSINESS_METRICS &&
+                !check->has_expected_value &&
+                !check->has_expected_count) {
+                return fail(err,
+                            "package_business_metrics requires expected "
+                            "value or count");
+            }
+            if (check->type == CHECK_PACKAGE_NAME_AVAILABLE &&
+                (check->package_ref[0] == '\0' ||
+                 check->variant[0] == '\0')) {
+                return fail(err,
+                            "package_name_available requires package and "
+                            "variant");
+            }
+            if (check->type == CHECK_PACKAGE_NAME_AVAILABLE &&
+                !ulab_streq(check->variant, "allowance") &&
+                !ulab_streq(check->variant, "duration") &&
+                !ulab_streq(check->variant, "price") &&
+                !ulab_streq(check->variant, "currency")) {
+                return fail(err,
+                            "unsupported package name variant");
+            }
+            if (check->type == CHECK_SIM_UNALLOCATED &&
+                check->ues.kind == SEL_NONE) {
+                return fail(err, "sim_unallocated requires ues");
+            }
         }
     }
+
+    assertion_count += s->final_check_count;
 
     for (i = 0; i < s->final_check_count; i++) {
         const check_spec_t *check;
@@ -261,6 +396,12 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
             return fail(err,
                         "release_unavailable requires app and version");
         }
+    }
+
+
+    if (ulab_streq(s->suite, "p0") && ulab_streq(s->status, "active") &&
+        assertion_count == 0) {
+        return fail(err, "active p0 scenario requires at least one check");
     }
 
     return ULAB_OK;

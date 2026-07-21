@@ -135,6 +135,7 @@ node_t *world_node_by_ref(world_t *w, const char *ref);
 subscriber_t *world_subscriber_by_ref(world_t *w, const char *ref);
 ue_t *world_ue_by_ref(world_t *w, const char *ref);
 package_t *world_package_by_ref(world_t *w, const char *ref);
+package_t *world_package_by_base_ref(world_t *w, const char *ref);
 package_t *world_package_for_network(world_t *w,
                                      const char *package_ref,
                                      const char *network_ref);

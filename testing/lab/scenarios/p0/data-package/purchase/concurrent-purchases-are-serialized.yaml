@@ -1,11 +1,11 @@
 version: 1
 name: p0-concurrent-purchases-are-serialized
-description: Verify concurrent package purchases for one SIM create all and only the requested payments and a deterministic entitlement order.
-seed: 4308
+description: Verify two concurrent cash purchases create exactly one revenue contribution and one non-overlapping queued entitlement for each requested package.
+seed: 4206
 suite: p0
 priority: p0
-tags: [virtual, data-package, purchase, concurrency]
-status: wip
+tags: [virtual, data-package, purchase, concurrency, revenue]
+status: active
 provider:
   type: virtual
 world:
@@ -15,16 +15,72 @@ world:
     tower: 1
     amplifier: 1
     controller: 1
-  ues_per_site: 0
+  ues_per_site: 1
+packages:
+  - ref: bootstrap
+    name: Concurrent Purchase Bootstrap
+    data_mb: 100
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+  - ref: parallel_a
+    name: Concurrent Purchase A
+    data_mb: 200
+    duration_days: 1
+    amount: 2.00
+    assign_percent: 0
+  - ref: parallel_b
+    name: Concurrent Purchase B
+    data_mb: 300
+    duration_days: 1
+    amount: 3.00
+    assign_percent: 0
 setup:
   create_via_bff:
     - networks
     - sites
     - nodes
     - node_site_links
+    - packages
+    - subscribers
+    - sims
 runtime:
   start: [nodes]
   wait: [nodes_ready]
 phases:
   - name: purchase_concurrently
-    # Requires parallel purchase execution and a BFF idempotency contract.
+    events:
+      - type: purchase_packages_parallel
+        ues: all
+        package: parallel_a
+        other_package: parallel_b
+    checks:
+      - type: package_assignment_count
+        ues: all
+        package: parallel_a
+        expected_count: 1
+      - type: package_assignment_count
+        ues: all
+        package: parallel_b
+        expected_count: 1
+      - type: package_assignment_chain
+        ues: all
+        package: parallel_a
+      - type: package_assignment_chain
+        ues: all
+        package: parallel_b
+      - type: package_assignment_chain
+        ues: all
+        package: bootstrap
+        expected: all
+        expected_count: 3
+      - type: package_business_metrics
+        networks: all
+        package: parallel_a
+        expected_value: 2.00
+        expected_count: 0
+      - type: package_business_metrics
+        networks: all
+        package: parallel_b
+        expected_value: 3.00
+        expected_count: 0

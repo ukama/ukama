@@ -1,11 +1,11 @@
 version: 1
-name: p0-failed-payment-creates-no-entitlement
-description: Verify a deterministically rejected additional payment contributes no sale, revenue, or queued package entitlement.
-seed: 4307
+name: p0-mismatched-cash-purchase-creates-no-entitlement
+description: Verify a second cash purchase whose submitted amount differs from the target package's catalog price is rejected with no package revenue or queued entitlement.
+seed: 4208
 suite: p0
 priority: p0
-tags: [virtual, data-package, purchase, payment-failure]
-status: wip
+tags: [virtual, data-package, purchase, amount-mismatch, rejection]
+status: active
 provider:
   type: virtual
 world:
@@ -15,16 +15,56 @@ world:
     tower: 1
     amplifier: 1
     controller: 1
-  ues_per_site: 0
+  ues_per_site: 1
+packages:
+  - ref: bootstrap
+    name: Mismatched Purchase Bootstrap
+    data_mb: 100
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+  - ref: target_plan
+    name: Mismatched Purchase Target
+    data_mb: 500
+    duration_days: 1
+    amount: 5.00
+    assign_percent: 0
 setup:
   create_via_bff:
     - networks
     - sites
     - nodes
     - node_site_links
+    - packages
+    - subscribers
+    - sims
 runtime:
   start: [nodes]
   wait: [nodes_ready]
 phases:
-  - name: reject_additional_payment
-    # Requires the virtual payment-provider failpoint.
+  - name: reject_mismatched_amount
+    events:
+      - type: purchase_package
+        ues: all
+        package: target_plan
+        amount: 4.00
+        currency: USD
+        expect:
+          result: failure
+    checks:
+      - type: package_catalog_equals
+        networks: all
+        package: target_plan
+      - type: package_state
+        ues: all
+        package: target_plan
+        expected: absent
+      - type: package_assignment_count
+        ues: all
+        expected_count: 1
+      - type: package_business_metrics
+        networks: all
+        package: target_plan
+        expected_value: 0.00
+        expected_count: 0
+

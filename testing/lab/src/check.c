@@ -28,6 +28,8 @@ int check_payment(check_ctx_t *ctx, const check_spec_t *check,
                   check_result_t *res, ulab_error_t *err);
 int check_analytics(check_ctx_t *ctx, const check_spec_t *check,
                     check_result_t *res, ulab_error_t *err);
+int check_data_package(check_ctx_t *ctx, const check_spec_t *check,
+                       check_result_t *res, ulab_error_t *err);
 
 static void res_init(check_result_t *res, const check_spec_t *check) {
     memset(res, 0, sizeof(*res));
@@ -64,6 +66,14 @@ int check_run(check_ctx_t *ctx, const check_spec_t *check,
     case CHECK_PACKAGE_ASSIGNMENT_COUNT:
     case CHECK_BALANCE_NON_NEGATIVE:
         return check_package(ctx, check, res, err);
+    case CHECK_PACKAGE_ASSIGNMENT_CHAIN:
+    case CHECK_PACKAGE_CATALOG_EQUALS:
+    case CHECK_PACKAGE_VISIBLE:
+    case CHECK_PACKAGE_HIDDEN:
+    case CHECK_PACKAGE_NAME_AVAILABLE:
+    case CHECK_PACKAGE_BUSINESS_METRICS:
+    case CHECK_SIM_UNALLOCATED:
+        return check_data_package(ctx, check, res, err);
     case CHECK_PAYMENT_EQUALS:
     case CHECK_PAYMENT_COUNT:
         return check_payment(ctx, check, res, err);

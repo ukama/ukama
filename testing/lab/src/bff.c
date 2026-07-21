@@ -21,9 +21,14 @@ extern const char *BFF_ADD_NETWORK;
 extern const char *BFF_ADD_SITE;
 extern const char *BFF_ADD_PACKAGE;
 extern const char *BFF_UPDATE_PACKAGE;
+extern const char *BFF_GET_PACKAGE;
+extern const char *BFF_GET_PACKAGES;
+extern const char *BFF_PACKAGE_NAME_AVAILABLE;
+extern const char *BFF_PACKAGES_DASHBOARD;
 extern const char *BFF_ADD_SUBSCRIBER;
 extern const char *BFF_ALLOCATE_SIM;
 extern const char *BFF_GET_DATA_USAGE;
+extern const char *BFF_GET_SIMS_USAGE_BY_NETWORK;
 extern const char *BFF_GET_SIM_PACKAGES;
 extern const char *BFF_ADD_PAYMENT;
 extern const char *BFF_GET_PAYMENTS;
@@ -1045,8 +1050,9 @@ int bff_add_package(bff_client_t *c,
     uint32_t duration;
     uint64_t duration64;
 
-    if (net == NULL || net->bff_id[0] == '\0') {
-        snprintf(err->msg, sizeof(err->msg), "addPackage missing network id");
+    if (net != NULL && net->bff_id[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "addPackage has unresolved network id");
         return ULAB_ERR;
     }
 
@@ -1062,15 +1068,27 @@ int bff_add_package(bff_client_t *c,
     }
     duration = (uint32_t)duration64;
 
-    snprintf(vars, sizeof(vars),
-             "{\"data\":{\"name\":\"%s\",\"amount\":%.2f,"
-             "\"dataUnit\":\"MB\",\"dataVolume\":%llu,"
-             "\"duration\":%u,\"currency\":\"%s\","
-             "\"country\":\"%s\",\"networkId\":\"%s\"}}",
-             p->name, p->amount,
-             (unsigned long long)p->data_mb, duration,
-             p->currency[0] ? p->currency : "USD",
-             p->country[0] ? p->country : "USA", net->bff_id);
+    if (net != NULL) {
+        snprintf(vars, sizeof(vars),
+                 "{\"data\":{\"name\":\"%s\",\"amount\":%.2f,"
+                 "\"dataUnit\":\"MB\",\"dataVolume\":%llu,"
+                 "\"duration\":%u,\"currency\":\"%s\","
+                 "\"country\":\"%s\",\"networkId\":\"%s\"}}",
+                 p->name, p->amount,
+                 (unsigned long long)p->data_mb, duration,
+                 p->currency[0] ? p->currency : "USD",
+                 p->country[0] ? p->country : "USA", net->bff_id);
+    } else {
+        snprintf(vars, sizeof(vars),
+                 "{\"data\":{\"name\":\"%s\",\"amount\":%.2f,"
+                 "\"dataUnit\":\"MB\",\"dataVolume\":%llu,"
+                 "\"duration\":%u,\"currency\":\"%s\","
+                 "\"country\":\"%s\"}}",
+                 p->name, p->amount,
+                 (unsigned long long)p->data_mb, duration,
+                 p->currency[0] ? p->currency : "USD",
+                 p->country[0] ? p->country : "USA");
+    }
 
     if (bff_call(c, "addPackage", BFF_ADD_PACKAGE, vars, &root, err)) {
         return ULAB_ERR;
@@ -1126,6 +1144,335 @@ int bff_set_package_active(bff_client_t *c,
 
     p->active = active != 0;
     json_decref(root);
+    return ULAB_OK;
+}
+
+static double package_json_number(json_t *obj, const char *key) {
+    json_t *value;
+
+    value = obj ? json_object_get(obj, key) : NULL;
+    return value != NULL && json_is_number(value) ?
+        json_number_value(value) : 0.0;
+}
+
+static void invalid_package_name(const package_t *pkg,
+                                 const char *variant,
+                                 char *out,
+                                 size_t out_len) {
+    snprintf(out, out_len, "%.180s invalid %.48s", pkg->name, variant);
+}
+
+int bff_get_package(bff_client_t *c,
+                    const package_t *pkg,
+                    bff_package_t *actual,
+                    ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char id_esc[ULAB_MAX_ID * 2];
+    json_t *root;
+    json_t *obj;
+    json_t *value;
+
+    if (pkg == NULL || pkg->bff_id[0] == '\0' || actual == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getPackage requires package and output storage");
+        return ULAB_ERR;
+    }
+    ulab_json_escape(pkg->bff_id, id_esc, sizeof(id_esc));
+    snprintf(vars, sizeof(vars), "{\"packageId\":\"%s\"}", id_esc);
+
+    root = NULL;
+    if (bff_call(c, "getPackage", BFF_GET_PACKAGE, vars, &root, err)) {
+        return ULAB_ERR;
+    }
+    obj = dig(root, "data", "getPackage");
+    memset(actual, 0, sizeof(*actual));
+    if (obj == NULL ||
+        json_get_str(obj, "uuid", actual->uuid, sizeof(actual->uuid)) ||
+        json_get_str(obj, "name", actual->name, sizeof(actual->name)) ||
+        json_get_str(obj, "dataUnit", actual->data_unit,
+                     sizeof(actual->data_unit)) ||
+        json_get_str(obj, "currency", actual->currency,
+                     sizeof(actual->currency)) ||
+        json_get_str(obj, "country", actual->country,
+                     sizeof(actual->country))) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getPackage missing required fields");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+    actual->data_volume = (uint64_t)package_json_number(obj, "dataVolume");
+    actual->duration_minutes =
+        (uint32_t)package_json_number(obj, "duration");
+    actual->amount = package_json_number(obj, "amount");
+    value = json_object_get(obj, "active");
+    actual->active = value != NULL && json_is_true(value);
+    json_get_optional_str(obj, "networkId", actual->network_id,
+                          sizeof(actual->network_id));
+    json_decref(root);
+    return ULAB_OK;
+}
+
+int bff_package_visible_for_network(bff_client_t *c,
+                                    const package_t *pkg,
+                                    const network_t *network,
+                                    int *visible,
+                                    ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char network_esc[ULAB_MAX_ID * 2];
+    json_t *root;
+    json_t *obj;
+    json_t *arr;
+    size_t i;
+
+    if (pkg == NULL || pkg->bff_id[0] == '\0' || network == NULL ||
+        network->bff_id[0] == '\0' || visible == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getPackages visibility requires package and network");
+        return ULAB_ERR;
+    }
+    ulab_json_escape(network->bff_id, network_esc, sizeof(network_esc));
+    snprintf(vars, sizeof(vars), "{\"networkId\":\"%s\"}",
+             network_esc);
+    root = NULL;
+    if (bff_call(c, "getPackages", BFF_GET_PACKAGES, vars, &root, err)) {
+        return ULAB_ERR;
+    }
+    obj = dig(root, "data", "getPackages");
+    arr = obj ? json_object_get(obj, "packages") : NULL;
+    if (arr == NULL || !json_is_array(arr)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getPackages missing packages list");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+    *visible = 0;
+    for (i = 0; i < json_array_size(arr); i++) {
+        char id[ULAB_MAX_ID];
+
+        if (json_get_str(json_array_get(arr, i), "uuid", id,
+                         sizeof(id)) == ULAB_OK &&
+            ulab_streq(id, pkg->bff_id)) {
+            *visible = 1;
+            break;
+        }
+    }
+    json_decref(root);
+    return ULAB_OK;
+}
+
+int bff_invalid_package_name_available(bff_client_t *c,
+                                       const package_t *pkg,
+                                       const char *variant,
+                                       int *available,
+                                       ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char name[ULAB_MAX_NAME];
+    char name_esc[ULAB_MAX_NAME * 2];
+    json_t *root;
+    json_t *obj;
+    json_t *value;
+
+    if (pkg == NULL || variant == NULL || variant[0] == '\0' ||
+        available == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "package name availability requires package and variant");
+        return ULAB_ERR;
+    }
+    invalid_package_name(pkg, variant, name, sizeof(name));
+    ulab_json_escape(name, name_esc, sizeof(name_esc));
+    snprintf(vars, sizeof(vars), "{\"name\":\"%s\"}", name_esc);
+    root = NULL;
+    if (bff_call(c, "isPackageNameAvailable", BFF_PACKAGE_NAME_AVAILABLE,
+                 vars, &root, err)) {
+        return ULAB_ERR;
+    }
+    obj = dig(root, "data", "isPackageNameAvailable");
+    value = obj ? json_object_get(obj, "isAvailable") : NULL;
+    if (value == NULL || !json_is_boolean(value)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "isPackageNameAvailable missing boolean result");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+    *available = json_is_true(value);
+    json_decref(root);
+    return ULAB_OK;
+}
+
+int bff_add_invalid_package(bff_client_t *c,
+                            const package_t *pkg,
+                            const network_t *network,
+                            const char *variant,
+                            char *created_id,
+                            size_t created_id_len,
+                            ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char name[ULAB_MAX_NAME];
+    char name_esc[ULAB_MAX_NAME * 2];
+    char network_esc[ULAB_MAX_ID * 2];
+    const char *currency;
+    long long data_volume;
+    long long duration;
+    double amount;
+    json_t *root;
+    json_t *obj;
+
+    if (pkg == NULL || network == NULL || network->bff_id[0] == '\0' ||
+        variant == NULL || variant[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "invalid package request requires package, network and "
+                 "variant");
+        return ULAB_ERR;
+    }
+    data_volume = (long long)pkg->data_mb;
+    duration = pkg->duration_minutes > 0 ?
+        (long long)pkg->duration_minutes :
+        (long long)pkg->duration_days * 1440LL;
+    amount = pkg->amount;
+    currency = pkg->currency[0] ? pkg->currency : "USD";
+    if (ulab_streq(variant, "allowance")) data_volume = -1;
+    else if (ulab_streq(variant, "duration")) duration = 0;
+    else if (ulab_streq(variant, "price")) amount = -1.0;
+    else if (ulab_streq(variant, "currency")) currency = "";
+    else {
+        snprintf(err->msg, sizeof(err->msg),
+                 "unknown invalid package variant %.64s", variant);
+        return ULAB_ERR;
+    }
+    invalid_package_name(pkg, variant, name, sizeof(name));
+    ulab_json_escape(name, name_esc, sizeof(name_esc));
+    ulab_json_escape(network->bff_id, network_esc, sizeof(network_esc));
+    snprintf(vars, sizeof(vars),
+             "{\"data\":{\"name\":\"%s\",\"amount\":%.2f,"
+             "\"dataUnit\":\"MB\",\"dataVolume\":%lld,"
+             "\"duration\":%lld,\"currency\":\"%s\","
+             "\"country\":\"%s\",\"networkId\":\"%s\"}}",
+             name_esc, amount, data_volume, duration, currency,
+             pkg->country[0] ? pkg->country : "USA", network_esc);
+    root = NULL;
+    if (bff_call(c, "addPackage", BFF_ADD_PACKAGE, vars, &root, err)) {
+        return ULAB_ERR;
+    }
+    obj = dig(root, "data", "addPackage");
+    if (obj == NULL || created_id == NULL || created_id_len == 0 ||
+        json_get_str(obj, "uuid", created_id, created_id_len)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "unexpected accepted invalid package missing uuid");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+    json_decref(root);
+    return ULAB_OK;
+}
+
+int bff_get_package_metrics(bff_client_t *c,
+                            const package_t *pkg,
+                            const network_t *network,
+                            bff_package_metrics_t *metrics,
+                            int *found,
+                            ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char network_esc[ULAB_MAX_ID * 2];
+    json_t *root;
+    json_t *view;
+    json_t *plans_section;
+    json_t *plans;
+    size_t i;
+
+    if (pkg == NULL || pkg->bff_id[0] == '\0' || network == NULL ||
+        metrics == NULL || found == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "PackagesDashboard requires package, network and output");
+        return ULAB_ERR;
+    }
+    ulab_json_escape(network->bff_id, network_esc, sizeof(network_esc));
+    snprintf(vars, sizeof(vars), "{\"networkId\":\"%s\"}",
+             network_esc);
+    root = NULL;
+    if (bff_call(c, "PackagesDashboard", BFF_PACKAGES_DASHBOARD,
+                 vars, &root, err)) {
+        return ULAB_ERR;
+    }
+    view = dig(root, "data", "commerceView");
+    plans_section = view ? json_object_get(view, "plans") : NULL;
+    plans = plans_section ? json_object_get(plans_section, "plans") : NULL;
+    if (plans == NULL || !json_is_array(plans)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "PackagesDashboard missing plans list");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+    *found = 0;
+    memset(metrics, 0, sizeof(*metrics));
+    for (i = 0; i < json_array_size(plans); i++) {
+        json_t *plan;
+        json_t *attach;
+        char id[ULAB_MAX_ID];
+
+        plan = json_array_get(plans, i);
+        if (json_get_str(plan, "packageId", id, sizeof(id)) ||
+            !ulab_streq(id, pkg->bff_id)) {
+            continue;
+        }
+        ulab_copy(metrics->package_id, sizeof(metrics->package_id), id);
+        metrics->revenue = package_json_number(plan, "revenue");
+        attach = json_object_get(plan, "attachCount");
+        if (attach != NULL && json_is_number(attach)) {
+            metrics->attach_count = (uint32_t)json_number_value(attach);
+            metrics->has_attach_count = 1;
+        }
+        *found = 1;
+        break;
+    }
+    json_decref(root);
+    return ULAB_OK;
+}
+
+int bff_sim_is_unallocated(bff_client_t *c,
+                           const ue_t *ue,
+                           const char *sim_type,
+                           int *unallocated,
+                           ulab_error_t *err) {
+    char (*iccids)[ULAB_MAX_ID];
+    char (*ids)[ULAB_MAX_ID];
+    size_t count;
+    size_t i;
+    size_t max_sims;
+    int rc;
+
+    if (ue == NULL || ue->iccid[0] == '\0' || sim_type == NULL ||
+        sim_type[0] == '\0' || unallocated == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "SIM pool check requires UE and sim type");
+        return ULAB_ERR;
+    }
+    max_sims = 4096;
+    iccids = calloc(max_sims, sizeof(*iccids));
+    ids = calloc(max_sims, sizeof(*ids));
+    if (iccids == NULL || ids == NULL) {
+        free(iccids);
+        free(ids);
+        snprintf(err->msg, sizeof(err->msg),
+                 "out of memory checking SIM pool");
+        return ULAB_ERR;
+    }
+    count = 0;
+    rc = bff_get_sims_from_pool(c, sim_type, iccids, ids, max_sims,
+                                &count, err);
+    if (rc != ULAB_OK) {
+        free(iccids);
+        free(ids);
+        return rc;
+    }
+    *unallocated = 0;
+    for (i = 0; i < count; i++) {
+        if (ulab_streq(ue->iccid, iccids[i])) {
+            *unallocated = 1;
+            break;
+        }
+    }
+    free(iccids);
+    free(ids);
     return ULAB_OK;
 }
 
@@ -1631,48 +1978,65 @@ int bff_allocate_sim(bff_client_t *c, ue_t *ue, const subscriber_t *sub,
 
 int bff_get_sim_usage(bff_client_t *c,
                       const ue_t *ue,
+                      const network_t *network,
                       uint64_t *used_mb,
                       ulab_error_t *err) {
 
     char vars[ULAB_MAX_QUERY];
     json_t *root;
-    json_t *obj;
-    json_t *u;
+    json_t *arr;
     const char *usage_str;
+    size_t i;
 
-    if (ue == NULL || ue->bff_id[0] == '\0' || ue->iccid[0] == '\0') {
+    if (ue == NULL || ue->bff_id[0] == '\0' || network == NULL ||
+        network->bff_id[0] == '\0') {
         snprintf(err->msg, sizeof(err->msg),
-                 "getDataUsage missing SIM id or ICCID");
+                 "getSimsUsageByNetwork missing SIM or network id");
         return ULAB_ERR;
     }
 
-    snprintf(vars, sizeof(vars),
-             "{\"data\":{\"simId\":\"%s\",\"iccid\":\"%s\",\"type\":\"data\"}}",
-             ue->bff_id, ue->iccid);
+    snprintf(vars, sizeof(vars), "{\"networkId\":\"%s\"}",
+             network->bff_id);
 
-    if (bff_call(c, "getDataUsage", BFF_GET_DATA_USAGE, vars, &root,
-        err)) {
+    if (bff_call(c, "getSimsUsageByNetwork",
+                 BFF_GET_SIMS_USAGE_BY_NETWORK, vars, &root, err)) {
         return ULAB_ERR;
     }
-
-    obj = dig(root, "data", "getDataUsage");
-    u = obj ? json_object_get(obj, "usage") : NULL;
-
-    if (u != NULL && json_is_integer(u)) {
-        *used_mb = (uint64_t)json_integer_value(u);
+    arr = dig(root, "data", "getSimsUsageByNetwork");
+    if (arr == NULL || !json_is_array(arr)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getSimsUsageByNetwork missing usage list");
         json_decref(root);
-        return ULAB_OK;
+        return ULAB_ERR;
     }
+    for (i = 0; i < json_array_size(arr); i++) {
+        json_t *entry;
+        json_t *u;
+        char sim_id[ULAB_MAX_ID];
 
-    if (u != NULL && json_is_string(u)) {
-        usage_str = json_string_value(u);
-        if (usage_str != NULL && ulab_parse_u64(usage_str, used_mb) == ULAB_OK) {
+        entry = json_array_get(arr, i);
+        if (json_get_str(entry, "simId", sim_id, sizeof(sim_id)) ||
+            !ulab_streq(sim_id, ue->bff_id)) {
+            continue;
+        }
+        u = json_object_get(entry, "usage");
+        if (u != NULL && json_is_integer(u)) {
+            *used_mb = (uint64_t)json_integer_value(u);
             json_decref(root);
             return ULAB_OK;
         }
+        if (u != NULL && json_is_string(u)) {
+            usage_str = json_string_value(u);
+            if (usage_str != NULL &&
+                ulab_parse_u64(usage_str, used_mb) == ULAB_OK) {
+                json_decref(root);
+                return ULAB_OK;
+            }
+        }
     }
 
-    snprintf(err->msg, sizeof(err->msg), "getDataUsage missing usage");
+    snprintf(err->msg, sizeof(err->msg),
+             "getSimsUsageByNetwork missing selected SIM usage");
     json_decref(root);
 
     return ULAB_ERR;

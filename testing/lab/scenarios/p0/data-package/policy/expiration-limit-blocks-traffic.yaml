@@ -1,11 +1,11 @@
 version: 1
 name: p0-expiration-limit-blocks-traffic
-description: Verify traffic is blocked after the package duration expires even when unused allowance remains and no queued package exists.
-seed: 4504
+description: Verify traffic after the BFF-provided package end date adds no usage when unused allowance remains and no queued entitlement exists.
+seed: 4304
 suite: p0
 priority: p0
-tags: [virtual, data-package, policy, expiration-limit]
-status: wip
+tags: [virtual, data-package, policy, expiration, blocking]
+status: active
 provider:
   type: virtual
 world:
@@ -15,15 +15,46 @@ world:
     tower: 1
     amplifier: 1
     controller: 1
-  ues_per_site: 0
+  ues_per_site: 1
+packages:
+  - ref: minute_plan
+    name: Expiration Blocking Plan
+    data_mb: 100
+    duration_minutes: 2
+    amount: 2.00
+    assign_percent: 100
 setup:
   create_via_bff:
     - networks
     - sites
     - nodes
     - node_site_links
+    - packages
+    - subscribers
+    - sims
 runtime:
-  start: [nodes]
-  wait: [nodes_ready]
+  start: [nodes, ues]
+  wait: [nodes_ready, ues_attached]
 phases:
-  - name: verify_contract
+  - name: expire_and_block
+    events:
+      - type: wait_package_boundary
+        ues: all
+        package: minute_plan
+        offset_seconds: 2
+    checks:
+      - type: traffic_blocked
+        ues: all
+        amount_mb: 1
+      - type: package_state
+        ues: all
+        package: minute_plan
+        expected: inactive
+      - type: usage_per_sim
+        ues: all
+        expected: from_model
+      - type: package_business_metrics
+        networks: all
+        package: minute_plan
+        expected_count: 0
+

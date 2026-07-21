@@ -1,11 +1,11 @@
 version: 1
 name: p0-paid-package-is-queued
-description: Verify purchasing another package does not replace the current entitlement and leaves the paid package queued until the current one ends.
-seed: 4302
+description: Verify a paid additional package contributes its price to package revenue but remains queued without replacing the current entitlement.
+seed: 4202
 suite: p0
 priority: p0
-tags: [virtual, data-package, purchase, queue]
-status: wip
+tags: [virtual, data-package, purchase, queued, revenue]
+status: active
 provider:
   type: virtual
 world:
@@ -18,16 +18,16 @@ world:
   ues_per_site: 1
 packages:
   - ref: current_plan
-    name: Queue Current Plan
+    name: Paid Queue Current Plan
     data_mb: 100
     duration_days: 1
     amount: 1.00
     assign_percent: 100
   - ref: queued_plan
-    name: Queue Next Plan
-    data_mb: 100
-    duration_minutes: 5
-    amount: 2.00
+    name: Paid Queue Next Plan
+    data_mb: 300
+    duration_days: 1
+    amount: 4.00
     assign_percent: 0
 setup:
   create_via_bff:
@@ -56,3 +56,13 @@ phases:
         ues: all
         package: queued_plan
         expected: queued
+      - type: package_assignment_chain
+        ues: all
+        package: queued_plan
+        after_package: current_plan
+      - type: package_business_metrics
+        networks: all
+        package: queued_plan
+        expected_value: 4.00
+        expected_count: 0
+

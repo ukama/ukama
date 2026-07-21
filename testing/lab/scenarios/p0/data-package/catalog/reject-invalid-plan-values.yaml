@@ -1,11 +1,11 @@
 version: 1
 name: p0-reject-invalid-plan-values
-description: Verify BFF rejects package creation requests with invalid allowance, duration, price, or currency without leaving a catalog record.
+description: Verify BFF/backend rejects negative allowance, zero duration, negative price, and empty currency package requests without reserving any invalid package name.
 seed: 4102
 suite: p0
 priority: p0
 tags: [virtual, data-package, catalog, negative]
-status: wip
+status: active
 provider:
   type: virtual
 world:
@@ -16,16 +16,60 @@ world:
     amplifier: 1
     controller: 1
   ues_per_site: 0
+packages:
+  - ref: valid_template
+    name: Invalid Plan Test Template
+    data_mb: 100
+    duration_minutes: 5
+    amount: 5.00
+    assign_percent: 100
 setup:
   create_via_bff:
     - networks
     - sites
     - nodes
     - node_site_links
+    - packages
 runtime:
   start: [nodes]
   wait: [nodes_ready]
 phases:
   - name: reject_invalid_values
-    # Requires the planned create_package event so each invalid mutation can
-    # be asserted independently without making scenario setup invalid.
+    events:
+      - type: create_invalid_package
+        package: valid_template
+        variant: allowance
+        expect:
+          result: failure
+      - type: create_invalid_package
+        package: valid_template
+        variant: duration
+        expect:
+          result: failure
+      - type: create_invalid_package
+        package: valid_template
+        variant: price
+        expect:
+          result: failure
+      - type: create_invalid_package
+        package: valid_template
+        variant: currency
+        expect:
+          result: failure
+    checks:
+      - type: package_name_available
+        package: valid_template
+        variant: allowance
+      - type: package_name_available
+        package: valid_template
+        variant: duration
+      - type: package_name_available
+        package: valid_template
+        variant: price
+      - type: package_name_available
+        package: valid_template
+        variant: currency
+      - type: package_catalog_equals
+        networks: all
+        package: valid_template
+

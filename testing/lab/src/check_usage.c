@@ -77,6 +77,7 @@ int check_usage(check_ctx_t *ctx, const check_spec_t *check,
 
     for (i = 0; i < ues.count; i++) {
         ue_t *ue;
+        network_t *network;
         model_ue_t *mu;
         uint64_t expected_mb;
         uint64_t expected_bytes;
@@ -85,6 +86,7 @@ int check_usage(check_ctx_t *ctx, const check_spec_t *check,
         uint64_t upper_bytes;
 
         ue = &ctx->world->ues[ues.idx[i]];
+        network = world_network_by_ref(ctx->world, ue->network_ref);
         mu = model_ue(ctx->model, ue->ref);
 
         if (mu == NULL) {
@@ -101,7 +103,8 @@ int check_usage(check_ctx_t *ctx, const check_spec_t *check,
         lower_bytes = 0;
         upper_bytes = 0;
 
-        if (bff_get_sim_usage(ctx->bff, ue, &actual_bytes, err)) {
+        if (network == NULL ||
+            bff_get_sim_usage(ctx->bff, ue, network, &actual_bytes, err)) {
             selector_result_free(&ues);
             return ULAB_ERR;
         }

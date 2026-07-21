@@ -9,6 +9,10 @@ Packages accept either `duration_days` or `duration_minutes`; exactly one is
 required. Both forms remain first-class scenario input. The BFF currently
 accepts duration in minutes, so the runner converts days to `days * 1440` at
 the BFF boundary and passes minute values unchanged.
+Packages default to `scope: network`. A network-scoped package may name an
+explicit `network`; otherwise one package instance is created per scenario
+network. `scope: organization` creates one organization package and must not
+specify a network.
 
 Provider block is optional. Missing provider defaults to `virtual`.
 
@@ -47,6 +51,10 @@ Supported events:
 - `wait_nodes_ready`
 - `add_package_to_sim`
 - `purchase_package`
+- `purchase_packages_parallel`
+- `allocate_sim`
+- `create_invalid_package`
+- `wait_package_boundary`
 - `set_package_active`
 - `remove_package_from_sim`
 - `set_sim_status`
@@ -72,6 +80,13 @@ Supported checks:
 - `package_remaining` (skipped until BFF exposes remaining balance)
 - `package_state`
 - `package_assignment_count`
+- `package_assignment_chain`
+- `package_catalog_equals`
+- `package_visible`
+- `package_hidden`
+- `package_name_available`
+- `package_business_metrics`
+- `sim_unallocated`
 - `payment_equals`
 - `payment_count`
 - `kpi_value`
@@ -207,6 +222,43 @@ purchases on an already allocated SIM. It calls BFF `addPayment` with
 package UUID. An `idempotency_key` is parsed but rejected at execution time
 until BFF exposes such a field; this makes the missing contract explicit.
 
+Data-package edge-case events:
+
+```yaml
+- type: allocate_sim
+  ues: all
+  package: initial_plan
+  expect:
+    result: any
+
+- type: purchase_packages_parallel
+  ues: all
+  package: plan_a
+  other_package: plan_b
+
+- type: create_invalid_package
+  package: baseline_plan
+  variant: negative_price
+  expect:
+    result: failure
+
+- type: wait_package_boundary
+  ues: all
+  package: initial_plan
+  offset_seconds: 1
+```
+
+`allocate_sim` exercises an explicit allocation attempt using a SIM selected
+from the factory pool. `result: any` is useful for retry/idempotency scenarios:
+the mutation may return the original allocation or reject the duplicate, while
+the following GraphQL checks remain authoritative. `purchase_packages_parallel`
+submits the two cash sales concurrently. `create_invalid_package` supports
+the `allowance`, `duration`, `price`, and `currency` variants, which submit a
+negative allowance, zero duration, negative price, and empty currency.
+`wait_package_boundary` obtains the entitlement end date through
+`getPackagesForSim` and waits relative to that server-provided boundary; a
+negative offset means before expiration.
+
 Entitlement and payment checks:
 
 ```yaml
@@ -229,6 +281,44 @@ Entitlement and payment checks:
 `package_state` accepts `active`, `queued`, `inactive`, or `absent` and polls
 the BFF because entitlement creation and transitions are asynchronous.
 `settled` accepts the backend statuses `completed` and `success`.
+
+Data-package GraphQL effect checks:
+
+```yaml
+- type: package_catalog_equals
+  package: minute_plan
+
+- type: package_assignment_chain
+  ues: all
+  package: initial_plan
+  other_package: next_plan
+  expected_count: 2
+
+- type: package_business_metrics
+  package: next_plan
+  expected_value: 5.00
+  expected_count: 1
+
+- type: package_visible
+  package: organization_plan
+  network: net-001
+```
+
+`package_catalog_equals` compares BFF catalog fields with the scenario plan.
+`package_assignment_chain` reads `getPackagesForSim`, verifies the expected
+assignment count and ordering, and rejects overlapping ranges; `expected: all`
+checks the full returned chain. `package_business_metrics` polls the BFF
+packages dashboard and compares package revenue (`expected_value`) and active
+attachment count (`expected_count`). `package_visible` and `package_hidden`
+verify catalog scope from a selected network. `package_name_available` proves a
+rejected invalid mutation did not reserve its attempted name. `sim_unallocated`
+uses the BFF SIM list to verify that a rejected initial allocation left the SIM
+outside a subscriber/network assignment.
+
+Checks may set `immediate: true`. Such checks execute at their phase position
+instead of being deferred until after traffic reconciliation. This is intended
+for transition-boundary assertions whose state could change again while CDRs
+are being processed.
 
 Console analytics checks always use BFF `getKpiValues` or
 `getPerformanceReport`; scenarios never call the analytics backend directly:

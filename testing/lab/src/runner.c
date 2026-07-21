@@ -481,8 +481,10 @@ static int setup_bff_packages(bff_client_t *bff,
 
     for (i = 0; i < world->package_count; i++) {
         package = &world->packages[i];
-        network = world_network_by_ref(world, package->network_ref);
-        if (network == NULL || network->bff_id[0] == '\0') {
+        network = package->network_ref[0] != '\0' ?
+            world_network_by_ref(world, package->network_ref) : NULL;
+        if (package->network_ref[0] != '\0' &&
+            (network == NULL || network->bff_id[0] == '\0')) {
             snprintf(err->msg, sizeof(err->msg),
                      "package %s has invalid network id",
                      package->ref);
@@ -865,7 +867,8 @@ typedef enum {
 
 static int is_live_runtime_check(const check_spec_t *check) {
     return check != NULL &&
-        (check->type == CHECK_TRAFFIC_ALLOWED ||
+        (check->immediate ||
+         check->type == CHECK_TRAFFIC_ALLOWED ||
          check->type == CHECK_TRAFFIC_BLOCKED ||
          check->type == CHECK_NODE_VERSION_EQUALS ||
          check->type == CHECK_NODE_HEALTH_OK);
@@ -977,7 +980,8 @@ static void init_check_ctx(check_ctx_t *ctx,
                            world_t *world,
                            model_t *model,
                            bff_client_t *bff,
-                           runtime_t *runtime) {
+                           runtime_t *runtime,
+                           const char *sim_type) {
 
     memset(ctx, 0, sizeof(*ctx));
     ctx->scenario = scenario;
@@ -985,6 +989,7 @@ static void init_check_ctx(check_ctx_t *ctx,
     ctx->model    = model;
     ctx->bff      = bff;
     ctx->runtime  = runtime;
+    ctx->sim_type = sim_type;
 }
 
 static void init_event_ctx(event_ctx_t *ctx,
@@ -993,7 +998,8 @@ static void init_event_ctx(event_ctx_t *ctx,
                            model_t *model,
                            bff_client_t *bff,
                            runtime_t *runtime,
-                           const char *phaseName) {
+                           const char *phaseName,
+                           const char *sim_type) {
 
     memset(ctx, 0, sizeof(*ctx));
     ctx->scenario   = scenario;
@@ -1002,6 +1008,7 @@ static void init_event_ctx(event_ctx_t *ctx,
     ctx->bff        = bff;
     ctx->runtime    = runtime;
     ctx->phaseName  = phaseName;
+    ctx->sim_type   = sim_type;
 }
 
 static int run_phase(scenario_t *scenario,
@@ -1011,6 +1018,7 @@ static int run_phase(scenario_t *scenario,
                      runtime_t *runtime,
                      report_t *report,
                      phase_spec_t *phase,
+                     const char *sim_type,
                      ulab_error_t *err) {
 
     event_ctx_t event_ctx;
@@ -1020,7 +1028,7 @@ static int run_phase(scenario_t *scenario,
 
     ulab_status("PHASE", "%s", phase->name);
     init_event_ctx(&event_ctx, scenario, world, model, bff,
-                   runtime, phase->name);
+                   runtime, phase->name, sim_type);
 
     for (i = 0; i < phase->event_count; i++) {
         rc = event_run(&event_ctx, &phase->events[i], err);
@@ -1031,7 +1039,8 @@ static int run_phase(scenario_t *scenario,
         }
     }
 
-    init_check_ctx(&check_ctx, scenario, world, model, bff, runtime);
+    init_check_ctx(&check_ctx, scenario, world, model, bff, runtime,
+                   sim_type);
     return run_checks_mode(&check_ctx, phase->checks,
                            phase->check_count, report,
                            CHECK_RUN_LIVE_RUNTIME, err);
@@ -1309,13 +1318,14 @@ static int runner_validate_one(const runner_opts_t *opts) {
 
     for (i = 0; i < scenario->phase_count; i++) {
         rc = run_phase(scenario, &world, &model, &bff, &runtime,
-                       &report, &scenario->phases[i], &err);
+                       &report, &scenario->phases[i], opts->sim_type, &err);
         if (rc != ULAB_OK) {
             goto done;
         }
     }
 
-    init_check_ctx(&check_ctx, scenario, &world, &model, &bff, &runtime);
+    init_check_ctx(&check_ctx, scenario, &world, &model, &bff, &runtime,
+                   opts->sim_type);
 
     rc = run_checks_mode(&check_ctx, scenario->final_checks,
                          scenario->final_check_count, &report,

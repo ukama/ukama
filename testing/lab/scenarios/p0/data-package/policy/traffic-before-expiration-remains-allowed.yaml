@@ -1,11 +1,11 @@
 version: 1
 name: p0-traffic-before-expiration-remains-allowed
-description: Verify a minute-based package remains usable immediately before its expiration boundary.
-seed: 4507
+description: Verify traffic shortly before the BFF-provided package end date increases usage and the minute-based entitlement is still active at that point.
+seed: 4303
 suite: p0
 priority: p0
-tags: [virtual, data-package, policy, before-expiration]
-status: wip
+tags: [virtual, data-package, policy, expiration, boundary]
+status: active
 provider:
   type: virtual
 world:
@@ -15,15 +15,43 @@ world:
     tower: 1
     amplifier: 1
     controller: 1
-  ues_per_site: 0
+  ues_per_site: 1
+packages:
+  - ref: minute_plan
+    name: Pre Expiration Plan
+    data_mb: 100
+    duration_minutes: 2
+    amount: 2.00
+    assign_percent: 100
 setup:
   create_via_bff:
     - networks
     - sites
     - nodes
     - node_site_links
+    - packages
+    - subscribers
+    - sims
 runtime:
-  start: [nodes]
-  wait: [nodes_ready]
+  start: [nodes, ues]
+  wait: [nodes_ready, ues_attached]
 phases:
-  - name: verify_contract
+  - name: use_before_expiration
+    events:
+      - type: wait_package_boundary
+        ues: all
+        package: minute_plan
+        offset_seconds: -10
+      - type: traffic
+        ues: all
+        amount_mb: 1
+    checks:
+      - type: package_state
+        ues: all
+        package: minute_plan
+        expected: active
+        immediate: true
+      - type: usage_per_sim
+        ues: all
+        expected: from_model
+

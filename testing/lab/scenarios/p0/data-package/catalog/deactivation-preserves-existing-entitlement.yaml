@@ -1,11 +1,11 @@
 version: 1
 name: p0-deactivation-preserves-existing-entitlement
-description: Verify deactivating a catalog plan blocks new sales without terminating the SIM entitlement that was already active.
+description: Verify deactivating a catalog plan preserves its existing active entitlement while rejecting a repeat sale and leaving package revenue and assignment count unchanged.
 seed: 4105
 suite: p0
 priority: p0
-tags: [virtual, data-package, catalog, deactivation]
-status: wip
+tags: [virtual, data-package, catalog, deactivation, revenue]
+status: active
 provider:
   type: virtual
 world:
@@ -18,7 +18,7 @@ world:
   ues_per_site: 1
 packages:
   - ref: existing_plan
-    name: Existing Plan
+    name: Existing Deactivated Plan
     data_mb: 500
     duration_days: 1
     amount: 3.00
@@ -36,16 +36,37 @@ runtime:
   start: [nodes, ues]
   wait: [nodes_ready, ues_attached]
 phases:
-  - name: deactivate_catalog_plan
+  - name: deactivate_and_reject_new_sale
     events:
       - type: set_package_active
         package: existing_plan
         active: false
+      - type: purchase_package
+        ues: all
+        package: existing_plan
+        expect:
+          result: failure
+      - type: traffic
+        ues: all
+        amount_mb: 1
     checks:
+      - type: package_catalog_equals
+        networks: all
+        package: existing_plan
       - type: package_state
         ues: all
         package: existing_plan
         expected: active
-      - type: traffic_allowed
+      - type: package_assignment_count
         ues: all
-        amount_mb: 1
+        package: existing_plan
+        expected_count: 1
+      - type: package_business_metrics
+        networks: all
+        package: existing_plan
+        expected_value: 3.00
+        expected_count: 1
+      - type: usage_per_sim
+        ues: all
+        expected: from_model
+

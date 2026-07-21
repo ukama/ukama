@@ -19,6 +19,7 @@ typedef struct check_ctx {
     model_t      *model;
     bff_client_t *bff;
     runtime_t    *runtime;
+    const char   *sim_type;
 } check_ctx_t;
 
 typedef struct {

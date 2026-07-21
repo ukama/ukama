@@ -1,11 +1,11 @@
 version: 1
 name: p0-create-valid-minute-plan
-description: Verify BFF creates a network data plan whose duration is supplied directly in minutes and preserves its allowance, price, currency, and active state.
+description: Verify BFF creates a network data plan whose duration is supplied in minutes and preserves its allowance, price, currency, country, active state, and scope.
 seed: 4101
 suite: p0
 priority: p0
 tags: [virtual, data-package, catalog, duration-minutes]
-status: wip
+status: active
 provider:
   type: virtual
 world:
@@ -39,6 +39,10 @@ runtime:
 phases:
   - name: verify_created_plan
     checks:
-      - type: list_contains
-        view: packages
-        ref: minute_plan
+      - type: package_catalog_equals
+        networks: all
+        package: minute_plan
+      - type: package_visible
+        networks: all
+        package: minute_plan
+
