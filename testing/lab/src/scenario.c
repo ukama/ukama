@@ -126,6 +126,8 @@ const char *scenario_event_name(event_type_t type) {
     case EVT_RESTART_SITE: return "restart_site";
     case EVT_PROMOTE_RELEASE: return "promote_release";
     case EVT_SOFTWARE_UPDATE: return "software_update";
+    case EVT_DISCONNECT_NODES: return "disconnect_nodes";
+    case EVT_RECONNECT_NODES: return "reconnect_nodes";
     case EVT_MARK_NODE_OFFLINE: return "mark_node_offline";
     case EVT_RESTORE_NODE: return "restore_node";
     case EVT_CHECK: return "check";
@@ -152,6 +154,7 @@ const char *scenario_check_name(check_type_t type) {
     case CHECK_DASHBOARD_SECTION_OK: return "dashboard_section_ok";
     case CHECK_NODE_VERSION_EQUALS: return "node_version_equals";
     case CHECK_NODE_HEALTH_OK: return "node_health_ok";
+    case CHECK_RELEASE_UNAVAILABLE: return "release_unavailable";
     case CHECK_HISTORY_PRESERVED: return "history_preserved";
     case CHECK_AUDIT_EVENT_EXISTS: return "audit_event_exists";
     case CHECK_RELATIONSHIP_EXISTS: return "relationship_exists";
@@ -193,6 +196,10 @@ int scenario_event_from_name(const char *name, event_type_t *out) {
         *out = EVT_PROMOTE_RELEASE;
     } else if (ulab_streq(name, "software_update")) {
         *out = EVT_SOFTWARE_UPDATE;
+    } else if (ulab_streq(name, "disconnect_nodes")) {
+        *out = EVT_DISCONNECT_NODES;
+    } else if (ulab_streq(name, "reconnect_nodes")) {
+        *out = EVT_RECONNECT_NODES;
     } else if (ulab_streq(name, "mark_node_offline")) {
         *out = EVT_MARK_NODE_OFFLINE;
     } else if (ulab_streq(name, "restore_node")) {
@@ -234,6 +241,8 @@ int scenario_check_from_name(const char *name, check_type_t *out) {
         *out = CHECK_NODE_VERSION_EQUALS;
     } else if (ulab_streq(name, "node_health_ok")) {
         *out = CHECK_NODE_HEALTH_OK;
+    } else if (ulab_streq(name, "release_unavailable")) {
+        *out = CHECK_RELEASE_UNAVAILABLE;
     } else if (ulab_streq(name, "history_preserved")) {
         *out = CHECK_HISTORY_PRESERVED;
     } else if (ulab_streq(name, "audit_event_exists")) {

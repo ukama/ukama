@@ -156,6 +156,15 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                 continue;
             }
 
+            if (event->type == EVT_DISCONNECT_NODES ||
+                event->type == EVT_RECONNECT_NODES) {
+                if (event->nodes.kind == SEL_NONE) {
+                    return fail(err,
+                                "node network event requires node selector");
+                }
+                continue;
+            }
+
             if (event->type != EVT_SOFTWARE_UPDATE) {
                 continue;
             }
@@ -180,6 +189,11 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                 return fail(err,
                             "node_version_equals requires app and version/tag");
             }
+            if (check->type == CHECK_RELEASE_UNAVAILABLE &&
+                (check->app[0] == '\0' || check->expected[0] == '\0')) {
+                return fail(err,
+                            "release_unavailable requires app and version");
+            }
         }
     }
 
@@ -191,6 +205,11 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
             (check->app[0] == '\0' || check->expected[0] == '\0')) {
             return fail(err,
                         "node_version_equals requires app and version/tag");
+        }
+        if (check->type == CHECK_RELEASE_UNAVAILABLE &&
+            (check->app[0] == '\0' || check->expected[0] == '\0')) {
+            return fail(err,
+                        "release_unavailable requires app and version");
         }
     }
 

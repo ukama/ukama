@@ -45,7 +45,10 @@ Supported events:
 - `add_package_to_sim`
 - `remove_package_from_sim`
 - `set_sim_status`
+- `promote_release`
 - `software_update`
+- `disconnect_nodes`
+- `reconnect_nodes`
 - `check`
 
 Supported checks:
@@ -66,6 +69,7 @@ Supported checks:
 - `dashboard_loads`
 - `node_version_equals`
 - `node_health_ok`
+- `release_unavailable`
 - `balance_non_negative`
 
 
@@ -110,6 +114,28 @@ after every selected node has been observed with the requested connectivity.
 The default timeout is 180 seconds.
 `ULAB_NODE_CONNECTIVITY_POLL_SEC` controls the polling interval and defaults to
 two seconds.
+
+Virtual node network outage:
+
+```yaml
+- type: disconnect_nodes
+  type_selector: controller
+  count_per_network: 1
+
+- type: wait_node_connectivity
+  type_selector: controller
+  count_per_network: 1
+  connectivity: Offline
+  seconds: 180
+
+- type: reconnect_nodes
+  type_selector: controller
+  count_per_network: 1
+```
+
+`disconnect_nodes` removes the selected running Podman container from the lab
+network without deleting it. `reconnect_nodes` reconnects the same container,
+preserving its writable state across the simulated backhaul outage.
 
 Backend count:
 
@@ -235,4 +261,3 @@ when the package metadata changed but the old process is still running.
 The default check timeout is 180 seconds with a five-second polling interval.
 They can be adjusted with `ULAB_SOFTWARE_UPDATE_TIMEOUT_SEC` and
 `ULAB_SOFTWARE_UPDATE_POLL_SEC`.
-

@@ -43,6 +43,8 @@ static int event_run_actual(event_ctx_t *ctx, const event_spec_t *event,
     case EVT_TOGGLE_RADIO:
     case EVT_RESTART_SITE:
     case EVT_SOFTWARE_UPDATE:
+    case EVT_DISCONNECT_NODES:
+    case EVT_RECONNECT_NODES:
     case EVT_MARK_NODE_OFFLINE:
     case EVT_RESTORE_NODE:
         return event_runtime(ctx, event, err);
