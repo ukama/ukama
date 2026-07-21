@@ -1,11 +1,11 @@
 version: 1
 name: p0-console-kpi-empty-state
-description: Verify an empty network returns the defined zero or empty result rather than unrelated data.
+description: Create a network with no subscribers, SIMs, packages, or traffic and verify its network-scoped usage KPI returns the defined zero rather than another network's data.
 seed: 4722
 suite: p0
 priority: p0
-tags: [virtual, console-kpi]
-status: wip
+tags: [virtual, console-kpi, contract, empty-state, graphql]
+status: active
 provider:
   type: virtual
 world:
@@ -17,23 +17,19 @@ world:
     controller: 1
   ues_per_site: 0
 setup:
-  create_via_bff:
-    - networks
-    - sites
-    - nodes
-    - node_site_links
+  create_via_bff: [networks, sites, nodes, node_site_links]
 runtime:
   start: [nodes]
   wait: [nodes_ready]
 phases:
-  - name: verify_contract
+  - name: verify_empty_network
     checks:
       - type: kpi_value
         key: USAGE_BY_NETWORK
         span: daily
         op: SUM
         scope_key: network_id
-        networks: all
+        networks: net-001
         expected_value: 0
         timeout_seconds: 600
-        poll_seconds: 5
+

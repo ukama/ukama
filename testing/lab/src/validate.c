@@ -314,7 +314,9 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                             "release_unavailable requires app and version");
             }
             if ((check->type == CHECK_KPI_VALUE ||
-                 check->type == CHECK_KPI_TREND) &&
+                 check->type == CHECK_KPI_TREND ||
+                 check->type == CHECK_KPI_CONTRACT ||
+                 check->type == CHECK_KPI_ROLLUP_CONSISTENCY) &&
                 check->key[0] == '\0') {
                 return fail(err, "KPI checks require key");
             }
@@ -329,6 +331,43 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                 return fail(err,
                             "performance_report_cell requires report, "
                             "column, package and expected_value");
+            }
+            if (check->type == CHECK_PERFORMANCE_REPORT_ROW &&
+                (check->report[0] == '\0' ||
+                 check->package_ref[0] == '\0')) {
+                return fail(err,
+                            "performance_report_row requires report and "
+                            "package");
+            }
+            if ((check->type == CHECK_REVENUE_SUMMARY ||
+                 check->type == CHECK_PACKAGE_DASHBOARD_METRIC ||
+                 check->type == CHECK_NETWORK_OVERVIEW_METRIC) &&
+                (check->column[0] == '\0' ||
+                 !check->has_expected_value)) {
+                return fail(err,
+                            "console metric check requires column and "
+                            "expected_value");
+            }
+            if (check->type == CHECK_SUBSCRIBER_BILLING_SUMMARY &&
+                check->ues.kind == SEL_NONE) {
+                return fail(err,
+                            "subscriber_billing_summary requires ues");
+            }
+            if (check->type == CHECK_PAYMENT_ENTITLEMENT_RECONCILES &&
+                (check->ues.kind == SEL_NONE ||
+                 check->package_ref[0] == '\0')) {
+                return fail(err,
+                            "payment_entitlement_reconciles requires ues "
+                            "and package");
+            }
+            if (check->type == CHECK_CONSOLE_INVENTORY_RECONCILES &&
+                check->target[0] == '\0') {
+                return fail(err,
+                            "console_inventory_reconciles requires target");
+            }
+            if (check->type == CHECK_USAGE_AGGREGATE &&
+                check->target[0] == '\0') {
+                return fail(err, "usage_aggregate requires target");
             }
             if ((check->type == CHECK_PACKAGE_CATALOG_EQUALS ||
                  check->type == CHECK_PACKAGE_VISIBLE ||

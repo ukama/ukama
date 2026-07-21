@@ -101,6 +101,58 @@ typedef struct {
     int has_attach_count;
 } bff_package_metrics_t;
 
+typedef struct {
+    double total_paid;
+    double total_pending;
+    double month_paid;
+    double previous_month_paid;
+    double month_over_month_percent;
+} bff_revenue_summary_t;
+
+typedef struct {
+    double mrr;
+    double arpu;
+    int    has_mrr;
+    int    has_arpu;
+} bff_package_dashboard_t;
+
+typedef struct {
+    uint32_t subscribers_total;
+    uint32_t subscribers_active;
+    uint32_t subscribers_inactive;
+    uint32_t sites_total;
+    uint32_t nodes_total;
+    uint32_t nodes_online;
+    uint32_t nodes_offline;
+} bff_network_overview_t;
+
+typedef struct {
+    uint32_t component_total;
+    uint32_t component_category_total;
+    uint32_t sim_total;
+    uint32_t sim_available;
+    uint32_t sim_consumed;
+    uint32_t sim_pool_total;
+    uint32_t sim_pool_available;
+    uint32_t sim_pool_consumed;
+} bff_inventory_summary_t;
+
+typedef struct {
+    uint32_t payment_count;
+    uint32_t settled_count;
+    double   settled_amount;
+} bff_subscriber_billing_t;
+
+typedef struct {
+    char status[ULAB_MAX_REF];
+    uint32_t row_index;
+    uint32_t row_count;
+    int has_name;
+    int has_price;
+    int has_validity;
+    int has_active;
+} bff_performance_row_t;
+
 #define ULAB_MAX_BFF_KPI_SCOPES 8
 
 typedef struct {
@@ -198,6 +250,36 @@ int bff_get_package_metrics(bff_client_t *c,
                             int *found,
                             ulab_error_t *err);
 
+int bff_get_revenue_summary(bff_client_t *c,
+                            const network_t *network,
+                            bff_revenue_summary_t *summary,
+                            ulab_error_t *err);
+
+int bff_get_package_dashboard(bff_client_t *c,
+                              const network_t *network,
+                              bff_package_dashboard_t *dashboard,
+                              ulab_error_t *err);
+
+int bff_get_network_overview(bff_client_t *c,
+                             const network_t *network,
+                             bff_network_overview_t *overview,
+                             ulab_error_t *err);
+
+int bff_get_nodes_view_count(bff_client_t *c,
+                             const network_t *network,
+                             uint32_t *count,
+                             ulab_error_t *err);
+
+int bff_get_inventory_summary(bff_client_t *c,
+                              const char *sim_type,
+                              bff_inventory_summary_t *summary,
+                              ulab_error_t *err);
+
+int bff_get_subscriber_billing(bff_client_t *c,
+                               const subscriber_t *subscriber,
+                               bff_subscriber_billing_t *billing,
+                               ulab_error_t *err);
+
 int bff_sim_is_unallocated(bff_client_t *c,
                            const ue_t *ue,
                            const char *sim_type,
@@ -281,6 +363,15 @@ int bff_get_performance_report_cell(bff_client_t *c,
                                     size_t unit_len,
                                     int *found,
                                     ulab_error_t *err);
+
+int bff_get_performance_report_row(bff_client_t *c,
+                                   const char *report,
+                                   const char *span,
+                                   const char *network_id,
+                                   const char *entity_id,
+                                   bff_performance_row_t *row,
+                                   int *found,
+                                   ulab_error_t *err);
 
 int bff_clear_sim_packages(bff_client_t *c,
                            const ue_t *ue,

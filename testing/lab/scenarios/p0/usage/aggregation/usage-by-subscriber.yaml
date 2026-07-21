@@ -1,11 +1,11 @@
 version: 1
 name: p0-usage-by-subscriber
-description: Use multiple SIMs for one subscriber and verify subscriber usage equals the sum of those SIMs.
+description: Allocate two SIMs to one subscriber, generate four megabytes on each, and verify the subscriber-scoped GraphQL KPI equals their combined usage.
 seed: 4519
 suite: p0
 priority: p0
-tags: [virtual, usage, aggregation, subscriber]
-status: wip
+tags: [virtual, usage, aggregation, subscriber, graphql]
+status: active
 provider:
   type: virtual
 world:
@@ -15,15 +15,37 @@ world:
     tower: 1
     amplifier: 1
     controller: 1
-  ues_per_site: 0
+  ues_per_site: 2
+  sims_per_subscriber: 2
+packages:
+  - ref: usage_plan
+    name: Subscriber Aggregate Usage Plan
+    data_mb: 100
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
 setup:
-  create_via_bff:
-    - networks
-    - sites
-    - nodes
-    - node_site_links
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
 runtime:
-  start: [nodes]
-  wait: [nodes_ready]
+  start: [nodes, ues]
+  wait: [nodes_ready, ues_attached]
 phases:
-  - name: verify_contract
+  - name: aggregate_subscriber_usage
+    events:
+      - type: traffic
+        ues: all
+        amount_mb: 4
+      - type: wait
+        seconds: 5
+    checks:
+      - type: usage_per_sim
+        ues: all
+        expected: from_model
+      - type: usage_aggregate
+        target: subscriber
+        ref: sub-000001
+        span: daily
+        op: SUM
+        tolerance_percent: 15
+        timeout_seconds: 600
+

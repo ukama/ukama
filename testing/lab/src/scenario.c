@@ -170,7 +170,23 @@ const char *scenario_check_name(check_type_t type) {
     case CHECK_PAYMENT_COUNT: return "payment_count";
     case CHECK_KPI_VALUE: return "kpi_value";
     case CHECK_KPI_TREND: return "kpi_trend";
+    case CHECK_KPI_CONTRACT: return "kpi_contract";
+    case CHECK_KPI_ROLLUP_CONSISTENCY:
+        return "kpi_rollup_consistency";
     case CHECK_PERFORMANCE_REPORT_CELL: return "performance_report_cell";
+    case CHECK_PERFORMANCE_REPORT_ROW: return "performance_report_row";
+    case CHECK_REVENUE_SUMMARY: return "revenue_summary";
+    case CHECK_SUBSCRIBER_BILLING_SUMMARY:
+        return "subscriber_billing_summary";
+    case CHECK_PAYMENT_ENTITLEMENT_RECONCILES:
+        return "payment_entitlement_reconciles";
+    case CHECK_PACKAGE_DASHBOARD_METRIC:
+        return "package_dashboard_metric";
+    case CHECK_NETWORK_OVERVIEW_METRIC:
+        return "network_overview_metric";
+    case CHECK_CONSOLE_INVENTORY_RECONCILES:
+        return "console_inventory_reconciles";
+    case CHECK_USAGE_AGGREGATE: return "usage_aggregate";
     case CHECK_NODE_STATE: return "node_state";
     case CHECK_DASHBOARD_LOADS: return "dashboard_loads";
     case CHECK_DASHBOARD_SECTION_OK: return "dashboard_section_ok";
@@ -292,8 +308,28 @@ int scenario_check_from_name(const char *name, check_type_t *out) {
         *out = CHECK_KPI_VALUE;
     } else if (ulab_streq(name, "kpi_trend")) {
         *out = CHECK_KPI_TREND;
+    } else if (ulab_streq(name, "kpi_contract")) {
+        *out = CHECK_KPI_CONTRACT;
+    } else if (ulab_streq(name, "kpi_rollup_consistency")) {
+        *out = CHECK_KPI_ROLLUP_CONSISTENCY;
     } else if (ulab_streq(name, "performance_report_cell")) {
         *out = CHECK_PERFORMANCE_REPORT_CELL;
+    } else if (ulab_streq(name, "performance_report_row")) {
+        *out = CHECK_PERFORMANCE_REPORT_ROW;
+    } else if (ulab_streq(name, "revenue_summary")) {
+        *out = CHECK_REVENUE_SUMMARY;
+    } else if (ulab_streq(name, "subscriber_billing_summary")) {
+        *out = CHECK_SUBSCRIBER_BILLING_SUMMARY;
+    } else if (ulab_streq(name, "payment_entitlement_reconciles")) {
+        *out = CHECK_PAYMENT_ENTITLEMENT_RECONCILES;
+    } else if (ulab_streq(name, "package_dashboard_metric")) {
+        *out = CHECK_PACKAGE_DASHBOARD_METRIC;
+    } else if (ulab_streq(name, "network_overview_metric")) {
+        *out = CHECK_NETWORK_OVERVIEW_METRIC;
+    } else if (ulab_streq(name, "console_inventory_reconciles")) {
+        *out = CHECK_CONSOLE_INVENTORY_RECONCILES;
+    } else if (ulab_streq(name, "usage_aggregate")) {
+        *out = CHECK_USAGE_AGGREGATE;
     } else if (ulab_streq(name, "node_state")) *out = CHECK_NODE_STATE;
     else if (ulab_streq(name, "dashboard_loads")) {
         *out = CHECK_DASHBOARD_LOADS;
@@ -505,6 +541,27 @@ static int apply_check_field(check_spec_t *c, const char *key,
     }
     if (ulab_streq(key, "poll_seconds")) {
         return ulab_parse_u32(val, &c->poll_seconds);
+    }
+    if (ulab_streq(key, "expected_partial")) {
+        c->expected_partial = ulab_streq(val, "true") ||
+            ulab_streq(val, "1");
+        c->has_expected_partial = 1;
+        return ULAB_OK;
+    }
+    if (ulab_streq(key, "require_computed_at")) {
+        c->require_computed_at = ulab_streq(val, "true") ||
+            ulab_streq(val, "1");
+        return ULAB_OK;
+    }
+    if (ulab_streq(key, "require_scope")) {
+        c->require_scope = ulab_streq(val, "true") ||
+            ulab_streq(val, "1");
+        return ULAB_OK;
+    }
+    if (ulab_streq(key, "require_trend_consistency")) {
+        c->require_trend_consistency = ulab_streq(val, "true") ||
+            ulab_streq(val, "1");
+        return ULAB_OK;
     }
     if (ulab_streq(key, "section") || ulab_streq(key, "version") ||
         ulab_streq(key, "tag")) {
@@ -881,7 +938,24 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
         }
         if (sec == SEC_SETUP) {
             if (ind == 2 && ulab_streq(key, "create_via_bff")) {
-                sec = SEC_SETUP_LIST;
+                if (val[0] != '\0') {
+                    s->setup.create_networks =
+                        parse_inline_list(val, "networks");
+                    s->setup.create_sites =
+                        parse_inline_list(val, "sites");
+                    s->setup.create_nodes =
+                        parse_inline_list(val, "nodes");
+                    s->setup.create_node_site_links =
+                        parse_inline_list(val, "node_site_links");
+                    s->setup.create_packages =
+                        parse_inline_list(val, "packages");
+                    s->setup.create_subscribers =
+                        parse_inline_list(val, "subscribers");
+                    s->setup.create_sims =
+                        parse_inline_list(val, "sims");
+                } else {
+                    sec = SEC_SETUP_LIST;
+                }
             } else goto unknown;
             continue;
         }

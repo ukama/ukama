@@ -50,7 +50,35 @@ const char *BFF_PACKAGE_NAME_AVAILABLE =
 const char *BFF_PACKAGES_DASHBOARD =
 "query PackagesDashboard($networkId: String) {"
 " commerceView(networkId: $networkId) { plans {"
-" plans { packageId revenue attachCount } } } }";
+" mrr arpu plans { packageId revenue attachCount } } } }";
+
+const char *BFF_REVENUE_OVERVIEW =
+"query RevenueOverview($networkId: String) {"
+" commerceView(networkId: $networkId) { revenue { totalPaid totalPending "
+" monthPaid prevMonthPaid momPct } } }";
+
+const char *BFF_NETWORK_HOME =
+"query NetworkHome($networkId: String!) {"
+" networkOverview(networkId: $networkId) { subscriberStats { total active "
+" inactive } siteStats { sites { id } } nodeStats { total online offline } } }";
+
+const char *BFF_NODES_LIST =
+"query NodesList($networkId: String) { nodesView(networkId: $networkId) {"
+" nodes { nodes { id } } } }";
+
+const char *BFF_INVENTORY_OVERVIEW =
+"query InventoryOverview { inventoryView { components { total byCategory {"
+" category count } } simStock { total available consumed } } }";
+
+const char *BFF_SIM_POOL_OVERVIEW =
+"query SimPoolOverview($simType: String!, $limit: Int!) {"
+" simPoolView(simType: $simType) { stats { total available consumed } "
+" sims(limit: $limit) { sims { id } } } }";
+
+const char *BFF_SUBSCRIBER_DETAIL =
+"query SubscriberDetail($subscriberId: String!) {"
+" subscriberView(subscriberId: $subscriberId) { billing { payments {"
+" id amount currency status paidAt paymentMethod } } } }";
 
 const char *BFF_ADD_SUBSCRIBER =
 "mutation AddSubscriber($data: SubscriberInputDto!) {"

@@ -30,6 +30,8 @@ int check_analytics(check_ctx_t *ctx, const check_spec_t *check,
                     check_result_t *res, ulab_error_t *err);
 int check_data_package(check_ctx_t *ctx, const check_spec_t *check,
                        check_result_t *res, ulab_error_t *err);
+int check_business(check_ctx_t *ctx, const check_spec_t *check,
+                   check_result_t *res, ulab_error_t *err);
 
 static void res_init(check_result_t *res, const check_spec_t *check) {
     memset(res, 0, sizeof(*res));
@@ -79,8 +81,20 @@ int check_run(check_ctx_t *ctx, const check_spec_t *check,
         return check_payment(ctx, check, res, err);
     case CHECK_KPI_VALUE:
     case CHECK_KPI_TREND:
+    case CHECK_KPI_CONTRACT:
+    case CHECK_KPI_ROLLUP_CONSISTENCY:
     case CHECK_PERFORMANCE_REPORT_CELL:
+    case CHECK_PERFORMANCE_REPORT_ROW:
         return check_analytics(ctx, check, res, err);
+    case CHECK_REVENUE_SUMMARY:
+    case CHECK_SUBSCRIBER_BILLING_SUMMARY:
+    case CHECK_PAYMENT_ENTITLEMENT_RECONCILES:
+    case CHECK_PACKAGE_DASHBOARD_METRIC:
+    case CHECK_NETWORK_OVERVIEW_METRIC:
+    case CHECK_CONSOLE_INVENTORY_RECONCILES:
+        return check_business(ctx, check, res, err);
+    case CHECK_USAGE_AGGREGATE:
+        return check_usage(ctx, check, res, err);
     case CHECK_DASHBOARD_LOADS:
     case CHECK_DASHBOARD_SECTION_OK:
         return check_dashboard(ctx, check, res, err);

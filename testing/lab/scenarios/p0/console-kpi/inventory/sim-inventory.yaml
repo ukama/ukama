@@ -1,11 +1,11 @@
 version: 1
 name: p0-console-kpi-sim-inventory
-description: Verify console SIM inventory totals and status breakdowns match the BFF-created world.
+description: Verify InventoryOverview SIM stock reconciles with SimPoolOverview for total, available, consumed, and total-equals-available-plus-consumed.
 seed: 4714
 suite: p0
 priority: p0
-tags: [virtual, console-kpi]
-status: wip
+tags: [virtual, console-kpi, inventory, sim, graphql]
+status: active
 provider:
   type: virtual
 world:
@@ -17,17 +17,12 @@ world:
     controller: 1
   ues_per_site: 0
 setup:
-  create_via_bff:
-    - networks
-    - sites
-    - nodes
-    - node_site_links
+  create_via_bff: [networks, sites, nodes, node_site_links]
 runtime:
   start: [nodes]
   wait: [nodes_ready]
 phases:
-  - name: verify_contract
+  - name: reconcile_sim_inventory
     checks:
-      - type: backend_count
-        target: sims
-        expected: from_world
+      - type: console_inventory_reconciles
+        target: sim

@@ -1,11 +1,11 @@
 version: 1
 name: p0-console-kpi-arpu-distinct-subscribers
-description: Verify ARPU equals MRR divided by distinct subscribers with active assignments.
+description: Give one subscriber two paid SIMs and verify ARPU divides current-month revenue by one distinct paying subscriber rather than by two SIM attachments.
 seed: 4704
 suite: p0
 priority: p0
-tags: [virtual, console-kpi]
-status: wip
+tags: [virtual, console-kpi, arpu, subscriber, graphql]
+status: active
 provider:
   type: virtual
 world:
@@ -15,25 +15,31 @@ world:
     tower: 1
     amplifier: 1
     controller: 1
-  ues_per_site: 0
+  ues_per_site: 2
+  sims_per_subscriber: 2
+packages:
+  - ref: arpu_plan
+    name: Console ARPU Plan
+    data_mb: 100
+    duration_days: 1
+    amount: 4.00
+    assign_percent: 100
 setup:
-  create_via_bff:
-    - networks
-    - sites
-    - nodes
-    - node_site_links
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
 runtime:
   start: [nodes]
   wait: [nodes_ready]
 phases:
-  - name: verify_contract
+  - name: verify_distinct_subscriber_denominator
     checks:
-      - type: kpi_value
-        key: ARPU
-        span: daily
-        op: LAST
-        scope_key: network_id
-        networks: all
-        expected_value: 0
-        timeout_seconds: 600
-        poll_seconds: 5
+      - type: package_dashboard_metric
+        networks: net-001
+        column: mrr
+        expected_value: 8.00
+        tolerance: 0.001
+      - type: package_dashboard_metric
+        networks: net-001
+        column: arpu
+        expected_value: 8.00
+        tolerance: 0.001
+

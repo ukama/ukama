@@ -1,11 +1,11 @@
 version: 1
 name: p0-console-kpi-active-customers
-description: Verify subscribers with active SIMs are counted once even when a subscriber owns multiple SIMs.
+description: Allocate three SIMs across two subscribers and verify NetworkHome counts two active customers, deduplicating the subscriber who owns two SIMs.
 seed: 4705
 suite: p0
 priority: p0
-tags: [virtual, console-kpi]
-status: wip
+tags: [virtual, console-kpi, active-customers, graphql]
+status: active
 provider:
   type: virtual
 world:
@@ -15,25 +15,29 @@ world:
     tower: 1
     amplifier: 1
     controller: 1
-  ues_per_site: 0
+  ues_per_site: 3
+  sims_per_subscriber: 2
+packages:
+  - ref: customer_plan
+    name: Console Active Customer Plan
+    data_mb: 100
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
 setup:
-  create_via_bff:
-    - networks
-    - sites
-    - nodes
-    - node_site_links
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
 runtime:
   start: [nodes]
   wait: [nodes_ready]
 phases:
-  - name: verify_contract
+  - name: verify_active_customers
     checks:
-      - type: kpi_value
-        key: ACTIVE_CUSTOMERS
-        span: daily
-        op: LAST
-        scope_key: network_id
-        networks: all
-        expected_value: 0
-        timeout_seconds: 600
-        poll_seconds: 5
+      - type: network_overview_metric
+        networks: net-001
+        column: subscribers_total
+        expected_value: 2
+      - type: network_overview_metric
+        networks: net-001
+        column: subscribers_active
+        expected_value: 2
+

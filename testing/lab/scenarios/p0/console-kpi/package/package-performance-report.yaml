@@ -1,11 +1,11 @@
 version: 1
 name: p0-console-kpi-package-performance-report
-description: Verify each package-performance row reports plan identity, sold count, actual revenue, data used, status, and ordering.
+description: Sell two packages and verify package_performance exposes identity attributes, plan status, sold count, settled revenue, data used, and descending revenue order through GraphQL.
 seed: 4709
 suite: p0
 priority: p0
-tags: [virtual, console-kpi]
-status: wip
+tags: [virtual, console-kpi, package-performance, report, graphql]
+status: active
 provider:
   type: virtual
 world:
@@ -15,16 +15,61 @@ world:
     tower: 1
     amplifier: 1
     controller: 1
-  ues_per_site: 0
+  ues_per_site: 1
+packages:
+  - ref: small_plan
+    name: Performance Small Plan
+    data_mb: 100
+    duration_days: 1
+    amount: 3.00
+    assign_percent: 100
+  - ref: large_plan
+    name: Performance Large Plan
+    data_mb: 500
+    duration_days: 1
+    amount: 7.00
+    assign_percent: 0
 setup:
-  create_via_bff:
-    - networks
-    - sites
-    - nodes
-    - node_site_links
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
 runtime:
   start: [nodes]
   wait: [nodes_ready]
 phases:
-  - name: verify_contract
-    # Add package setup and performance_report_cell assertions before activation.
+  - name: build_performance_rows
+    events:
+      - type: purchase_package
+        ues: all
+        package: large_plan
+        amount: 7.00
+        currency: USD
+    checks:
+      - type: performance_report_row
+        report: package_performance
+        span: daily
+        networks: net-001
+        package: large_plan
+        other_package: small_plan
+        expected: before
+        status: active
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
+        networks: net-001
+        package: large_plan
+        column: sold
+        expected_value: 1
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
+        networks: net-001
+        package: large_plan
+        column: revenue
+        expected_value: 7.00
+        tolerance: 0.001
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
+        networks: net-001
+        package: large_plan
+        column: data_used
+        expected_value: 0

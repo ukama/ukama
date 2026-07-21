@@ -1,11 +1,11 @@
 version: 1
 name: p0-console-kpi-package-sales
-description: Verify each settled package purchase counts once, including a paid entitlement waiting in the activation queue.
+description: Purchase a second package that remains queued and verify PACKAGE_SALES counts its settled sale immediately even though the entitlement is not yet active.
 seed: 4707
 suite: p0
 priority: p0
-tags: [virtual, console-kpi]
-status: wip
+tags: [virtual, console-kpi, package-sales, queued, graphql]
+status: active
 provider:
   type: virtual
 world:
@@ -15,25 +15,45 @@ world:
     tower: 1
     amplifier: 1
     controller: 1
-  ues_per_site: 0
+  ues_per_site: 1
+packages:
+  - ref: current_plan
+    name: Package Sales Current
+    data_mb: 100
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+  - ref: queued_plan
+    name: Package Sales Queued
+    data_mb: 500
+    duration_days: 1
+    amount: 5.00
+    assign_percent: 0
 setup:
-  create_via_bff:
-    - networks
-    - sites
-    - nodes
-    - node_site_links
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
 runtime:
   start: [nodes]
   wait: [nodes_ready]
 phases:
-  - name: verify_contract
+  - name: purchase_queued_package
+    events:
+      - type: purchase_package
+        ues: all
+        package: queued_plan
+        amount: 5.00
+        currency: USD
     checks:
+      - type: package_state
+        ues: all
+        package: queued_plan
+        expected: queued
       - type: kpi_value
         key: PACKAGE_SALES
         span: daily
         op: SUM
         scope_key: package_id
-        networks: all
-        expected_value: 0
+        scope_value: queued_plan
+        networks: net-001
+        expected_value: 1
         timeout_seconds: 600
-        poll_seconds: 5
+

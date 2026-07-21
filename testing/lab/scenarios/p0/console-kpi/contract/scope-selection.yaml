@@ -1,11 +1,11 @@
 version: 1
 name: p0-console-kpi-scope-selection
-description: Verify KPI rows carry the correct SIM, subscriber, package, site, and network scope identifiers.
+description: Generate one usage fact and verify GraphQL returns matching SIM, subscriber, package, site, and network KPI rows carrying each concrete scope identifier.
 seed: 4717
 suite: p0
 priority: p0
-tags: [virtual, console-kpi]
-status: wip
+tags: [virtual, console-kpi, contract, scope, graphql]
+status: active
 provider:
   type: virtual
 world:
@@ -15,25 +15,47 @@ world:
     tower: 1
     amplifier: 1
     controller: 1
-  ues_per_site: 0
+  ues_per_site: 1
+packages:
+  - ref: scoped_plan
+    name: Console Scope Plan
+    data_mb: 100
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
 setup:
-  create_via_bff:
-    - networks
-    - sites
-    - nodes
-    - node_site_links
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
 runtime:
-  start: [nodes]
-  wait: [nodes_ready]
+  start: [nodes, ues]
+  wait: [nodes_ready, ues_attached]
 phases:
-  - name: verify_contract
+  - name: emit_scoped_usage
+    events:
+      - type: traffic
+        ues: all
+        amount_mb: 3
+      - type: wait
+        seconds: 5
     checks:
-      - type: kpi_value
-        key: USAGE_BY_NETWORK
-        span: daily
-        op: SUM
-        scope_key: network_id
-        networks: all
-        expected_value: 0
+      - type: usage_aggregate
+        target: sim
+        ues: ue-000001
         timeout_seconds: 600
-        poll_seconds: 5
+      - type: usage_aggregate
+        target: subscriber
+        ref: sub-000001
+        timeout_seconds: 600
+      - type: usage_aggregate
+        target: package
+        package: scoped_plan
+        networks: net-001
+        timeout_seconds: 600
+      - type: usage_aggregate
+        target: site
+        sites: site-001
+        timeout_seconds: 600
+      - type: usage_aggregate
+        target: network
+        networks: net-001
+        timeout_seconds: 600
+

@@ -1,11 +1,11 @@
 version: 1
 name: p0-console-kpi-site-uptime
-description: Verify site uptime excludes intentional radio-off windows and includes unplanned tower or amplifier downtime.
+description: Create a controlled radio-off window through GraphQL, restore it, and verify SITE_UPTIME publishes a scoped partial-period percentage within valid bounds.
 seed: 4712
 suite: p0
 priority: p0
-tags: [virtual, console-kpi]
-status: wip
+tags: [virtual, console-kpi, site-uptime, controller, graphql]
+status: active
 provider:
   type: virtual
 world:
@@ -17,23 +17,45 @@ world:
     controller: 1
   ues_per_site: 0
 setup:
-  create_via_bff:
-    - networks
-    - sites
-    - nodes
-    - node_site_links
+  create_via_bff: [networks, sites, nodes, node_site_links]
 runtime:
   start: [nodes]
   wait: [nodes_ready]
 phases:
-  - name: verify_contract
+  - name: create_uptime_window
+    events:
+      - type: toggle_radio
+        sites: site-001
+        state: off
+      - type: wait
+        seconds: 30
+      - type: toggle_radio
+        sites: site-001
+        state: on
+      - type: wait
+        seconds: 10
     checks:
+      - type: kpi_contract
+        key: SITE_UPTIME
+        span: daily
+        op: AVG
+        scope_key: site_id
+        scope_value: site-001
+        networks: net-001
+        comparator: greater_than
+        expected_value: 0
+        expected_partial: true
+        require_computed_at: true
+        require_scope: true
+        timeout_seconds: 600
       - type: kpi_value
         key: SITE_UPTIME
         span: daily
         op: AVG
         scope_key: site_id
-        sites: all
-        expected_value: 0
+        scope_value: site-001
+        networks: net-001
+        comparator: less_or_equal
+        expected_value: 100
         timeout_seconds: 600
-        poll_seconds: 5
+

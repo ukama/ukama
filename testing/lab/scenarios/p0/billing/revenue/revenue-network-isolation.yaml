@@ -1,29 +1,55 @@
 version: 1
 name: p0-revenue-network-isolation
-description: Verify a sale in one network does not change another network's revenue.
+description: Create equal bootstrap sales in two networks, add a second sale only in network one, and verify the two RevenueOverview network selections remain isolated.
 seed: 4531
 suite: p0
 priority: p0
-tags: [virtual, billing, revenue, multi-network]
-status: wip
+tags: [virtual, billing, revenue, multi-network, isolation, graphql]
+status: active
 provider:
   type: virtual
 world:
-  networks: 1
+  networks: 2
   sites_per_network: 1
   nodes_per_site:
     tower: 1
     amplifier: 1
     controller: 1
-  ues_per_site: 0
+  ues_per_site: 1
+packages:
+  - ref: bootstrap
+    name: Isolated Revenue Bootstrap
+    data_mb: 100
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+  - ref: additional
+    name: Isolated Revenue Additional
+    data_mb: 500
+    duration_days: 1
+    amount: 5.00
+    assign_percent: 0
 setup:
-  create_via_bff:
-    - networks
-    - sites
-    - nodes
-    - node_site_links
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
 runtime:
   start: [nodes]
   wait: [nodes_ready]
 phases:
-  - name: verify_contract
+  - name: sell_only_in_network_one
+    events:
+      - type: purchase_package
+        ues: ue-000001
+        package: additional
+        amount: 5.00
+        currency: USD
+    checks:
+      - type: revenue_summary
+        networks: net-001
+        column: total_paid
+        expected_value: 6.00
+        tolerance: 0.001
+      - type: revenue_summary
+        networks: net-002
+        column: total_paid
+        expected_value: 1.00
+        tolerance: 0.001

@@ -91,7 +91,17 @@ Supported checks:
 - `payment_count`
 - `kpi_value`
 - `kpi_trend`
+- `kpi_contract`
+- `kpi_rollup_consistency`
 - `performance_report_cell`
+- `performance_report_row`
+- `revenue_summary`
+- `subscriber_billing_summary`
+- `payment_entitlement_reconciles`
+- `package_dashboard_metric`
+- `network_overview_metric`
+- `console_inventory_reconciles`
+- `usage_aggregate`
 - `node_state`
 - `dashboard_loads`
 - `node_version_equals`
@@ -348,6 +358,27 @@ Console analytics checks always use BFF `getKpiValues` or
 KPI and report checks poll until the expected value is visible or the timeout
 expires. Monetary analytics values follow the BFF/console unit in the returned
 cell or KPI (currently minor units when `unit` is `cents`).
+
+The P0 billing, console, and usage checks also stay entirely on the BFF
+GraphQL contract:
+
+- `revenue_summary` selects a field from `RevenueOverview` (`total_paid`,
+  `total_pending`, `month_paid`, `previous_month_paid`, or `mom_pct`).
+- `subscriber_billing_summary` checks settled count and amount from
+  `SubscriberDetail.billing`; `payment_entitlement_reconciles` compares
+  `GetPayments` with `getPackagesForSim`.
+- `package_dashboard_metric` checks `mrr`, `arpu`, `revenue`, or
+  `attach_count`; `network_overview_metric` checks the subscriber, site, and
+  node summary fields shown by `NetworkHome`.
+- `console_inventory_reconciles` compares the console's composite GraphQL
+  views with one another for `component`, `node`, or `sim` inventory.
+- `usage_aggregate` compares the model total with the scoped KPI for a `sim`,
+  `subscriber`, `package`, `site`, or `network`, converting the expected value
+  to the unit returned by GraphQL.
+- `kpi_contract` can require `expected_partial`, `computedAt`, scope, and
+  trend consistency. `kpi_rollup_consistency` compares daily, weekly, and
+  monthly values. `performance_report_row` verifies row identity attributes,
+  status, and optional before/after ordering.
 
 `status_equals` for SIMs supports `active` and `inactive` based on active
 package assignment. `set_sim_status` only validates the mutation path in this

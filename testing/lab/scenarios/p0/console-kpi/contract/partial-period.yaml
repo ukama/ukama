@@ -1,11 +1,11 @@
 version: 1
 name: p0-console-kpi-partial-period
-description: Verify an incomplete current span is marked partial and is not presented as a completed period.
+description: Create revenue in the still-open daily span and verify the GraphQL KPI marks that row partial and supplies its computation timestamp and network scope.
 seed: 4721
 suite: p0
 priority: p0
-tags: [virtual, console-kpi]
-status: wip
+tags: [virtual, console-kpi, contract, partial-period, graphql]
+status: active
 provider:
   type: virtual
 world:
@@ -15,23 +15,32 @@ world:
     tower: 1
     amplifier: 1
     controller: 1
-  ues_per_site: 0
+  ues_per_site: 1
+packages:
+  - ref: partial_plan
+    name: KPI Partial Period Plan
+    data_mb: 100
+    duration_days: 1
+    amount: 5.00
+    assign_percent: 100
 setup:
-  create_via_bff:
-    - networks
-    - sites
-    - nodes
-    - node_site_links
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
 runtime:
   start: [nodes]
   wait: [nodes_ready]
 phases:
-  - name: verify_contract
+  - name: verify_open_period_metadata
     checks:
-      - type: kpi_value
+      - type: kpi_contract
         key: REVENUE
         span: daily
         op: SUM
-        expected_value: 0
+        scope_key: network_id
+        networks: net-001
+        expected_value: 5.00
+        tolerance: 0.001
+        expected_partial: true
+        require_computed_at: true
+        require_scope: true
         timeout_seconds: 600
-        poll_seconds: 5
+

@@ -25,6 +25,12 @@ extern const char *BFF_GET_PACKAGE;
 extern const char *BFF_GET_PACKAGES;
 extern const char *BFF_PACKAGE_NAME_AVAILABLE;
 extern const char *BFF_PACKAGES_DASHBOARD;
+extern const char *BFF_REVENUE_OVERVIEW;
+extern const char *BFF_NETWORK_HOME;
+extern const char *BFF_NODES_LIST;
+extern const char *BFF_INVENTORY_OVERVIEW;
+extern const char *BFF_SIM_POOL_OVERVIEW;
+extern const char *BFF_SUBSCRIBER_DETAIL;
 extern const char *BFF_ADD_SUBSCRIBER;
 extern const char *BFF_ALLOCATE_SIM;
 extern const char *BFF_GET_DATA_USAGE;
@@ -1428,6 +1434,371 @@ int bff_get_package_metrics(bff_client_t *c,
     return ULAB_OK;
 }
 
+static int json_u32_field(json_t *obj, const char *key, uint32_t *out) {
+    json_t *value;
+    double number;
+
+    value = obj ? json_object_get(obj, key) : NULL;
+    if (value == NULL || !json_is_number(value) || out == NULL) {
+        return ULAB_ERR;
+    }
+    number = json_number_value(value);
+    if (number < 0 || number > 4294967295.0) {
+        return ULAB_ERR;
+    }
+    *out = (uint32_t)number;
+    return ULAB_OK;
+}
+
+static int json_double_field(json_t *obj, const char *key, double *out) {
+    json_t *value;
+
+    value = obj ? json_object_get(obj, key) : NULL;
+    if (value == NULL || !json_is_number(value) || out == NULL) {
+        return ULAB_ERR;
+    }
+    *out = json_number_value(value);
+    return ULAB_OK;
+}
+
+static int section_has_error(json_t *section) {
+    json_t *error;
+
+    error = section ? json_object_get(section, "error") : NULL;
+    return error != NULL && json_is_object(error);
+}
+
+int bff_get_revenue_summary(bff_client_t *c,
+                            const network_t *network,
+                            bff_revenue_summary_t *summary,
+                            ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char network_esc[ULAB_MAX_ID * 2];
+    json_t *root;
+    json_t *view;
+    json_t *revenue;
+
+    if (network == NULL || network->bff_id[0] == '\0' || summary == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "RevenueOverview requires network and output");
+        return ULAB_ERR;
+    }
+    ulab_json_escape(network->bff_id, network_esc, sizeof(network_esc));
+    snprintf(vars, sizeof(vars), "{\"networkId\":\"%s\"}", network_esc);
+    root = NULL;
+    if (bff_call(c, "RevenueOverview", BFF_REVENUE_OVERVIEW,
+                 vars, &root, err)) {
+        return ULAB_ERR;
+    }
+    view = dig(root, "data", "commerceView");
+    revenue = view ? json_object_get(view, "revenue") : NULL;
+    memset(summary, 0, sizeof(*summary));
+    if (revenue == NULL || section_has_error(revenue) ||
+        json_double_field(revenue, "totalPaid", &summary->total_paid) ||
+        json_double_field(revenue, "totalPending",
+                          &summary->total_pending) ||
+        json_double_field(revenue, "monthPaid", &summary->month_paid) ||
+        json_double_field(revenue, "prevMonthPaid",
+                          &summary->previous_month_paid)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "RevenueOverview returned an incomplete revenue section");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+    if (json_double_field(revenue, "momPct",
+                          &summary->month_over_month_percent)) {
+        summary->month_over_month_percent = 0;
+    }
+    json_decref(root);
+    return ULAB_OK;
+}
+
+int bff_get_package_dashboard(bff_client_t *c,
+                              const network_t *network,
+                              bff_package_dashboard_t *dashboard,
+                              ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char network_esc[ULAB_MAX_ID * 2];
+    json_t *root;
+    json_t *view;
+    json_t *plans;
+
+    if (network == NULL || network->bff_id[0] == '\0' || dashboard == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "PackagesDashboard requires network and output");
+        return ULAB_ERR;
+    }
+    ulab_json_escape(network->bff_id, network_esc, sizeof(network_esc));
+    snprintf(vars, sizeof(vars), "{\"networkId\":\"%s\"}", network_esc);
+    root = NULL;
+    if (bff_call(c, "PackagesDashboard", BFF_PACKAGES_DASHBOARD,
+                 vars, &root, err)) {
+        return ULAB_ERR;
+    }
+    view = dig(root, "data", "commerceView");
+    plans = view ? json_object_get(view, "plans") : NULL;
+    memset(dashboard, 0, sizeof(*dashboard));
+    if (plans == NULL || section_has_error(plans)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "PackagesDashboard returned a plans error");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+    dashboard->has_mrr =
+        json_double_field(plans, "mrr", &dashboard->mrr) == ULAB_OK;
+    dashboard->has_arpu =
+        json_double_field(plans, "arpu", &dashboard->arpu) == ULAB_OK;
+    json_decref(root);
+    return ULAB_OK;
+}
+
+int bff_get_network_overview(bff_client_t *c,
+                             const network_t *network,
+                             bff_network_overview_t *overview,
+                             ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char network_esc[ULAB_MAX_ID * 2];
+    json_t *root;
+    json_t *view;
+    json_t *subscribers;
+    json_t *sites;
+    json_t *site_list;
+    json_t *nodes;
+
+    if (network == NULL || network->bff_id[0] == '\0' || overview == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "NetworkHome requires network and output");
+        return ULAB_ERR;
+    }
+    ulab_json_escape(network->bff_id, network_esc, sizeof(network_esc));
+    snprintf(vars, sizeof(vars), "{\"networkId\":\"%s\"}", network_esc);
+    root = NULL;
+    if (bff_call(c, "NetworkHome", BFF_NETWORK_HOME, vars, &root, err)) {
+        return ULAB_ERR;
+    }
+    view = dig(root, "data", "networkOverview");
+    subscribers = view ? json_object_get(view, "subscriberStats") : NULL;
+    sites = view ? json_object_get(view, "siteStats") : NULL;
+    site_list = sites ? json_object_get(sites, "sites") : NULL;
+    nodes = view ? json_object_get(view, "nodeStats") : NULL;
+    memset(overview, 0, sizeof(*overview));
+    if (subscribers == NULL || sites == NULL || nodes == NULL ||
+        section_has_error(subscribers) || section_has_error(sites) ||
+        section_has_error(nodes) || site_list == NULL ||
+        !json_is_array(site_list) ||
+        json_u32_field(subscribers, "total",
+                       &overview->subscribers_total) ||
+        json_u32_field(subscribers, "active",
+                       &overview->subscribers_active) ||
+        json_u32_field(subscribers, "inactive",
+                       &overview->subscribers_inactive) ||
+        json_u32_field(nodes, "total", &overview->nodes_total) ||
+        json_u32_field(nodes, "online", &overview->nodes_online) ||
+        json_u32_field(nodes, "offline", &overview->nodes_offline)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "NetworkHome returned incomplete summary sections");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+    overview->sites_total = (uint32_t)json_array_size(site_list);
+    json_decref(root);
+    return ULAB_OK;
+}
+
+int bff_get_nodes_view_count(bff_client_t *c,
+                             const network_t *network,
+                             uint32_t *count,
+                             ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char network_esc[ULAB_MAX_ID * 2];
+    json_t *root;
+    json_t *view;
+    json_t *section;
+    json_t *nodes;
+
+    if (network == NULL || network->bff_id[0] == '\0' || count == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "NodesList requires network and output");
+        return ULAB_ERR;
+    }
+    ulab_json_escape(network->bff_id, network_esc, sizeof(network_esc));
+    snprintf(vars, sizeof(vars), "{\"networkId\":\"%s\"}", network_esc);
+    root = NULL;
+    if (bff_call(c, "NodesList", BFF_NODES_LIST, vars, &root, err)) {
+        return ULAB_ERR;
+    }
+    view = dig(root, "data", "nodesView");
+    section = view ? json_object_get(view, "nodes") : NULL;
+    nodes = section ? json_object_get(section, "nodes") : NULL;
+    if (section == NULL || section_has_error(section) || nodes == NULL ||
+        !json_is_array(nodes)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "NodesList returned an incomplete nodes section");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+    *count = (uint32_t)json_array_size(nodes);
+    json_decref(root);
+    return ULAB_OK;
+}
+
+int bff_get_inventory_summary(bff_client_t *c,
+                              const char *sim_type,
+                              bff_inventory_summary_t *summary,
+                              ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char sim_type_esc[ULAB_MAX_REF * 2];
+    json_t *root;
+    json_t *view;
+    json_t *components;
+    json_t *categories;
+    json_t *stock;
+    json_t *pool;
+    json_t *pool_stats;
+    size_t i;
+
+    if (sim_type == NULL || sim_type[0] == '\0' || summary == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "inventory reconciliation requires SIM type and output");
+        return ULAB_ERR;
+    }
+    memset(summary, 0, sizeof(*summary));
+    root = NULL;
+    if (bff_call(c, "InventoryOverview", BFF_INVENTORY_OVERVIEW,
+                 "{}", &root, err)) {
+        return ULAB_ERR;
+    }
+    view = dig(root, "data", "inventoryView");
+    components = view ? json_object_get(view, "components") : NULL;
+    categories = components ? json_object_get(components, "byCategory") :
+        NULL;
+    stock = view ? json_object_get(view, "simStock") : NULL;
+    if (components == NULL || stock == NULL ||
+        section_has_error(components) || section_has_error(stock) ||
+        categories == NULL || !json_is_array(categories) ||
+        json_u32_field(components, "total", &summary->component_total) ||
+        json_u32_field(stock, "total", &summary->sim_total) ||
+        json_u32_field(stock, "available", &summary->sim_available) ||
+        json_u32_field(stock, "consumed", &summary->sim_consumed)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "InventoryOverview returned incomplete inventory sections");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+    for (i = 0; i < json_array_size(categories); i++) {
+        uint32_t count;
+
+        count = 0;
+        if (json_u32_field(json_array_get(categories, i), "count", &count)) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "InventoryOverview returned an invalid category count");
+            json_decref(root);
+            return ULAB_ERR;
+        }
+        summary->component_category_total += count;
+    }
+    json_decref(root);
+
+    ulab_json_escape(sim_type, sim_type_esc, sizeof(sim_type_esc));
+    snprintf(vars, sizeof(vars),
+             "{\"simType\":\"%s\",\"limit\":1}", sim_type_esc);
+    root = NULL;
+    if (bff_call(c, "SimPoolOverview", BFF_SIM_POOL_OVERVIEW,
+                 vars, &root, err)) {
+        return ULAB_ERR;
+    }
+    pool = dig(root, "data", "simPoolView");
+    pool_stats = pool ? json_object_get(pool, "stats") : NULL;
+    if (pool_stats == NULL || section_has_error(pool_stats) ||
+        json_u32_field(pool_stats, "total", &summary->sim_pool_total) ||
+        json_u32_field(pool_stats, "available",
+                       &summary->sim_pool_available) ||
+        json_u32_field(pool_stats, "consumed",
+                       &summary->sim_pool_consumed)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "SimPoolOverview returned an incomplete stats section");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+    json_decref(root);
+    return ULAB_OK;
+}
+
+static int payment_status_settled(const char *status) {
+    return status != NULL &&
+        (ulab_streq(status, "success") || ulab_streq(status, "paid") ||
+         ulab_streq(status, "completed") ||
+         ulab_streq(status, "processed"));
+}
+
+int bff_get_subscriber_billing(bff_client_t *c,
+                               const subscriber_t *subscriber,
+                               bff_subscriber_billing_t *billing,
+                               ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char subscriber_esc[ULAB_MAX_ID * 2];
+    json_t *root;
+    json_t *view;
+    json_t *section;
+    json_t *payments;
+    size_t i;
+
+    if (subscriber == NULL || subscriber->bff_id[0] == '\0' ||
+        billing == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "SubscriberDetail requires subscriber and output");
+        return ULAB_ERR;
+    }
+    ulab_json_escape(subscriber->bff_id, subscriber_esc,
+                     sizeof(subscriber_esc));
+    snprintf(vars, sizeof(vars), "{\"subscriberId\":\"%s\"}",
+             subscriber_esc);
+    root = NULL;
+    if (bff_call(c, "SubscriberDetail", BFF_SUBSCRIBER_DETAIL,
+                 vars, &root, err)) {
+        return ULAB_ERR;
+    }
+    view = dig(root, "data", "subscriberView");
+    section = view ? json_object_get(view, "billing") : NULL;
+    payments = section ? json_object_get(section, "payments") : NULL;
+    if (section == NULL || section_has_error(section) || payments == NULL ||
+        !json_is_array(payments)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "SubscriberDetail returned an incomplete billing section");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+    memset(billing, 0, sizeof(*billing));
+    billing->payment_count = (uint32_t)json_array_size(payments);
+    for (i = 0; i < json_array_size(payments); i++) {
+        json_t *payment;
+        json_t *status_value;
+        json_t *amount_value;
+        const char *status;
+        const char *amount;
+
+        payment = json_array_get(payments, i);
+        status_value = payment ? json_object_get(payment, "status") : NULL;
+        amount_value = payment ? json_object_get(payment, "amount") : NULL;
+        status = status_value && json_is_string(status_value) ?
+            json_string_value(status_value) : NULL;
+        amount = amount_value && json_is_string(amount_value) ?
+            json_string_value(amount_value) : NULL;
+        if (status == NULL || amount == NULL) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "SubscriberDetail returned an invalid payment");
+            json_decref(root);
+            return ULAB_ERR;
+        }
+        if (payment_status_settled(status)) {
+            billing->settled_count++;
+            billing->settled_amount += strtod(amount, NULL);
+        }
+    }
+    json_decref(root);
+    return ULAB_OK;
+}
+
 int bff_sim_is_unallocated(bff_client_t *c,
                            const ue_t *ue,
                            const char *sim_type,
@@ -1907,6 +2278,105 @@ int bff_get_performance_report_cell(bff_client_t *c,
         if (*found) {
             break;
         }
+    }
+    json_decref(root);
+    return ULAB_OK;
+}
+
+int bff_get_performance_report_row(bff_client_t *c,
+                                   const char *report,
+                                   const char *span,
+                                   const char *network_id,
+                                   const char *entity_id,
+                                   bff_performance_row_t *row,
+                                   int *found,
+                                   ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char report_esc[ULAB_MAX_REF * 2];
+    char span_esc[ULAB_MAX_REF * 2];
+    char network_esc[ULAB_MAX_ID * 2];
+    char optional[ULAB_MAX_ID * 2 + 32];
+    json_t *root;
+    json_t *obj;
+    json_t *rows;
+    size_t i;
+    int n;
+
+    if (report == NULL || report[0] == '\0' || entity_id == NULL ||
+        entity_id[0] == '\0' || row == NULL || found == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "performance report row requires report and entity");
+        return ULAB_ERR;
+    }
+    ulab_json_escape(report, report_esc, sizeof(report_esc));
+    ulab_json_escape(span && span[0] ? span : "daily",
+                     span_esc, sizeof(span_esc));
+    optional[0] = '\0';
+    if (network_id != NULL && network_id[0] != '\0') {
+        ulab_json_escape(network_id, network_esc, sizeof(network_esc));
+        snprintf(optional, sizeof(optional),
+                 ",\"networkId\":\"%s\"", network_esc);
+    }
+    n = snprintf(vars, sizeof(vars),
+                 "{\"data\":{\"report\":\"%s\",\"span\":\"%s\"%s}}",
+                 report_esc, span_esc, optional);
+    if (n < 0 || (size_t)n >= sizeof(vars)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "performance report variables too long");
+        return ULAB_ERR;
+    }
+    root = NULL;
+    if (bff_call(c, "getPerformanceReport", BFF_GET_PERFORMANCE_REPORT,
+                 vars, &root, err)) {
+        return ULAB_ERR;
+    }
+    obj = dig(root, "data", "getPerformanceReport");
+    rows = obj ? json_object_get(obj, "rows") : NULL;
+    if (rows == NULL || !json_is_array(rows)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getPerformanceReport missing rows");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+    memset(row, 0, sizeof(*row));
+    row->row_count = (uint32_t)json_array_size(rows);
+    *found = 0;
+    for (i = 0; i < json_array_size(rows); i++) {
+        json_t *candidate;
+        json_t *attributes;
+        char id[ULAB_MAX_ID];
+        size_t j;
+
+        candidate = json_array_get(rows, i);
+        if (json_get_str(candidate, "entityId", id, sizeof(id)) ||
+            !ulab_streq(id, entity_id)) {
+            continue;
+        }
+        row->row_index = (uint32_t)i;
+        json_get_optional_str(candidate, "status", row->status,
+                              sizeof(row->status));
+        attributes = json_object_get(candidate, "attributes");
+        if (attributes == NULL || !json_is_array(attributes)) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "performance report row has no attributes");
+            json_decref(root);
+            return ULAB_ERR;
+        }
+        for (j = 0; j < json_array_size(attributes); j++) {
+            json_t *attribute;
+            char key[ULAB_MAX_REF];
+
+            attribute = json_array_get(attributes, j);
+            if (json_get_str(attribute, "key", key, sizeof(key))) {
+                continue;
+            }
+            if (ulab_streq(key, "name")) row->has_name = 1;
+            else if (ulab_streq(key, "price")) row->has_price = 1;
+            else if (ulab_streq(key, "validity")) row->has_validity = 1;
+            else if (ulab_streq(key, "active")) row->has_active = 1;
+        }
+        *found = 1;
+        break;
     }
     json_decref(root);
     return ULAB_OK;

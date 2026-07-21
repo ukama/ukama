@@ -119,7 +119,17 @@ typedef enum {
     CHECK_PAYMENT_COUNT,
     CHECK_KPI_VALUE,
     CHECK_KPI_TREND,
+    CHECK_KPI_CONTRACT,
+    CHECK_KPI_ROLLUP_CONSISTENCY,
     CHECK_PERFORMANCE_REPORT_CELL,
+    CHECK_PERFORMANCE_REPORT_ROW,
+    CHECK_REVENUE_SUMMARY,
+    CHECK_SUBSCRIBER_BILLING_SUMMARY,
+    CHECK_PAYMENT_ENTITLEMENT_RECONCILES,
+    CHECK_PACKAGE_DASHBOARD_METRIC,
+    CHECK_NETWORK_OVERVIEW_METRIC,
+    CHECK_CONSOLE_INVENTORY_RECONCILES,
+    CHECK_USAGE_AGGREGATE,
     CHECK_NODE_STATE,
     CHECK_DASHBOARD_LOADS,
     CHECK_DASHBOARD_SECTION_OK,
@@ -166,6 +176,11 @@ typedef struct {
     uint32_t     timeout_seconds;
     uint32_t     poll_seconds;
     int          has_expected_value;
+    int          expected_partial;
+    int          has_expected_partial;
+    int          require_computed_at;
+    int          require_scope;
+    int          require_trend_consistency;
     uint64_t     expected_used_mb;
     uint64_t     expected_remaining_mb;
     uint32_t     tolerance_percent;

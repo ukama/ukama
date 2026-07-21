@@ -1,11 +1,11 @@
 version: 1
 name: p0-console-kpi-component-inventory
-description: Verify console component inventory counts aggregate correctly for the selected network.
+description: Verify InventoryOverview component total equals the sum of every byCategory count returned in the same GraphQL response.
 seed: 4716
 suite: p0
 priority: p0
-tags: [virtual, console-kpi]
-status: wip
+tags: [virtual, console-kpi, inventory, component, graphql]
+status: active
 provider:
   type: virtual
 world:
@@ -17,17 +17,13 @@ world:
     controller: 1
   ues_per_site: 0
 setup:
-  create_via_bff:
-    - networks
-    - sites
-    - nodes
-    - node_site_links
+  create_via_bff: [networks, sites, nodes, node_site_links]
 runtime:
   start: [nodes]
   wait: [nodes_ready]
 phases:
-  - name: verify_contract
+  - name: reconcile_component_inventory
     checks:
-      - type: backend_count
-        target: components
-        expected: from_world
+      - type: console_inventory_reconciles
+        target: component
+
