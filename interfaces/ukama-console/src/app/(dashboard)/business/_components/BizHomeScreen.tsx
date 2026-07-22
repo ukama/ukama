@@ -9,10 +9,10 @@
 
 /**
  * Business Home — KPIs + full-height sites map, wired to the analytics service:
- * `getBusinessHome` (headline KPIs) and `getBusinessSites` (per-site revenue /
- * customers / coordinates). Per-site revenue (was backend gap #10) is now
- * served by the analytics rollup. KPI keys and any not-yet-emitted fields are
- * listed in docs/analytics-backend-gaps.md and degrade to "—".
+ * `getKpiValues` (headline KPIs) and `getBusinessSites` (per-site coordinates /
+ * status). The KPI strip shows the four "at a glance" numbers: revenue,
+ * active customers, data sold and network uptime. KPI keys live in
+ * src/lib/kpis.ts; any not-yet-emitted key degrades to "—".
  */
 import ListAltRounded from '@mui/icons-material/ListAltRounded';
 import Button from '@mui/material/Button';
@@ -25,15 +25,36 @@ import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
 import AppModal from '@/components/AppModal';
 import DateChip from '@/components/DateChip';
 import { KpiRow } from '@/components/Kpi';
-import { DEFAULT_RANGE, rangeToSpan } from '@/lib/dateRange';
+import { DEFAULT_RANGE, type KpiSpan, rangeToSpan } from '@/lib/dateRange';
 import { StatusDot } from '@/components/Map/SiteMap';
 import UkamaMap, { HOME_MAP_ZOOM } from '@/components/Map/UkamaMap';
 import PageHeader from '@/components/PageHeader';
 import { useCurrency } from '@/lib/currency';
-import { KPI_KEYS, kpiAmount, kpiDelta, kpiText, kpiValue } from '@/lib/kpis';
+import {
+  KPI_KEYS,
+  kpiAmount,
+  kpiChangeAbs,
+  kpiDelta,
+  kpiText,
+  kpiValue,
+} from '@/lib/kpis';
 import { type MapSite, toMapSites } from '@/lib/mappers/sites';
 import { pinColor } from '@/lib/status';
+import { formatBytes } from '@/lib/usage';
 import { useNetworkId } from '@/lib/useNetworkId';
+
+// Period phrasing for the KPI trend/sub lines, keyed by the selected span so
+// the wording matches the DateChip ("Today" -> daily -> "vs yesterday").
+const TREND_SUFFIX: Record<KpiSpan, string> = {
+  daily: 'vs yesterday',
+  weekly: 'vs last week',
+  monthly: 'vs last month',
+};
+const PERIOD_LABEL: Record<KpiSpan, string> = {
+  daily: 'today',
+  weekly: 'this week',
+  monthly: 'this month',
+};
 
 function SiteSummaryList({
   sites,
@@ -85,32 +106,44 @@ export default function BizHomeScreen() {
   const networkId = useNetworkId();
   const [showSummary, setShowSummary] = useState(false);
   const [range, setRange] = useState<string>(DEFAULT_RANGE);
+  const span = rangeToSpan(range);
   // Org currency symbol from getCurrencySymbol (shared via CurrencyProvider).
   const { money } = useCurrency();
 
   // KPIs come from the analytics rollup; sites come live from the registry
-  // (sitesView) so the map doesn't depend on the analytics collector.
+  // (sitesView) so the map doesn't depend on the analytics collector. No `op`
+  // is sent — each key resolves to its spec default (revenue -> SUM,
+  // active_customers -> LAST, data_sold -> SUM, network_uptime -> AVG).
   const { data: homeData, loading: homeLoading } = useGetKpiValuesQuery({
     variables: {
       data: {
         keys: [
           KPI_KEYS.revenue,
-          KPI_KEYS.mrr,
           KPI_KEYS.activeCustomers,
+          KPI_KEYS.dataSold,
+          KPI_KEYS.networkUptime,
           KPI_KEYS.sitesOnline,
         ],
-        span: rangeToSpan(range),
+        span,
         networkId,
       },
     },
     skip: !networkId,
+  });
+  // Monthly data-sold total for the "… this month" sub-line. Skipped when the
+  // strip is already showing the monthly span (the headline is then the month).
+  const { data: monthData } = useGetKpiValuesQuery({
+    variables: {
+      data: { keys: [KPI_KEYS.dataSold], span: 'monthly', networkId },
+    },
+    skip: !networkId || span === 'monthly',
   });
   const { data: sitesData, loading: sitesLoading } = useSitesListQuery({
     variables: { networkId },
     skip: !networkId,
   });
   const kpis = homeData?.getKpiValues.values;
-  const monthDelta = kpiDelta(kpis, KPI_KEYS.revenue);
+  const monthKpis = monthData?.getKpiValues.values;
   const loading = homeLoading || sitesLoading;
 
   const sites = useMemo(
@@ -127,6 +160,17 @@ export default function BizHomeScreen() {
   // The business site-detail page was removed; drill into the canonical
   // Network site detail instead.
   const goSite = (id: string) => router.push(`/network/sites/${id}`);
+
+  // --- KPI strip values ---
+  // Revenue (SUM) with a period-over-period trend arrow.
+  const revDelta = kpiDelta(kpis, KPI_KEYS.revenue);
+  // Active customers (LAST) with the absolute change over the period.
+  const acDelta = kpiChangeAbs(kpis, KPI_KEYS.activeCustomers);
+  // Data sold (SUM, bytes) for the period; monthly total for the sub-line.
+  const soldBytes = kpiValue(kpis, KPI_KEYS.dataSold);
+  const soldMonthBytes = kpiValue(monthKpis, KPI_KEYS.dataSold);
+  // Network uptime (AVG, percent).
+  const uptime = kpiValue(kpis, KPI_KEYS.networkUptime);
 
   const bizMarkers = sites
     .filter((s) => s.lat !== 0 || s.lng !== 0)
@@ -153,31 +197,44 @@ export default function BizHomeScreen() {
             {
               icon: 'monetization_on',
               color: 'var(--uk-beige)',
-              label: 'Revenue',
+              label: `Revenue ${PERIOD_LABEL[span]}`,
               value: kpiAmount(kpis, KPI_KEYS.revenue, money),
-              sub:
-                monthDelta != null
-                  ? `${monthDelta >= 0 ? '+' : ''}${Math.round(monthDelta)}% vs previous period`
+              delta:
+                revDelta != null
+                  ? `${revDelta >= 0 ? '+' : ''}${Math.round(revDelta)}% ${TREND_SUFFIX[span]}`
                   : undefined,
+              dir: revDelta != null && revDelta < 0 ? 'down' : 'up',
             },
             {
               icon: 'group',
               color: 'var(--uk-secondary)',
               label: 'Active customers',
               value: kpiText(kpis, KPI_KEYS.activeCustomers),
+              delta:
+                acDelta != null
+                  ? `${acDelta >= 0 ? '+' : ''}${Math.round(acDelta)} ${PERIOD_LABEL[span]}`
+                  : undefined,
+              dir: acDelta != null && acDelta < 0 ? 'down' : 'up',
             },
             {
-              icon: 'donut_small',
+              icon: 'data_usage',
               color: 'var(--uk-ac)',
-              label: 'Recurring revenue',
-              value: kpiAmount(kpis, KPI_KEYS.mrr, money),
+              label: 'Data sold',
+              value: soldBytes != null ? formatBytes(soldBytes) : '—',
+              sub:
+                span !== 'monthly' && soldMonthBytes != null
+                  ? `${formatBytes(soldMonthBytes)} this month`
+                  : undefined,
             },
             {
               icon: 'cell_tower',
               color: 'var(--uk-success-bright)',
-              label: 'Sites online',
-              value: sites.length === 0 ? '—' : `${online}/${sites.length}`,
-              danger: sites.length > 0 && online < sites.length,
+              label: 'Network uptime',
+              value: uptime != null ? `${uptime.toFixed(1)}%` : '—',
+              sub:
+                sites.length === 0
+                  ? undefined
+                  : `${online}/${sites.length} sites online`,
             },
           ]}
         />
