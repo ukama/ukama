@@ -261,9 +261,11 @@ func (o *OvsSwitch) AddMeter(id, rate, burstSize uint32) error {
 
 	err = meter.Install()
 	if err != nil {
-		log.Errorf("failed to install meter id=%d rate=%d burst=%d: %v",
+		log.Errorf("Failed to install meter id=%d rate=%d burst=%d: %v",
 			id, rate, burstSize, err)
-		return err
+
+		return fmt.Errorf("failed to install meter id=%d rate=%d burst=%d: %w",
+			id, rate, burstSize, err)
 	}
 
 	return nil
@@ -273,14 +275,17 @@ func (o *OvsSwitch) CreateMetersForUE(rxMeter, txMeter, rxRate, txRate, burstSiz
 	err := o.AddMeter(rxMeter, rxRate, burstSize)
 	if err != nil {
 		log.Errorf("Failed to create RX meter. Error: %v", err)
-		return err
+
+		return fmt.Errorf("failed to create RX meter. Error: %w", err)
 	}
 
 	err = o.AddMeter(txMeter, txRate, burstSize)
 	if err != nil {
 		log.Errorf("Failed to create TX meter. Error: %v", err)
+
 		_ = o.DeleteMeter(rxMeter)
-		return err
+
+		return fmt.Errorf("failed to create TX meter. Error: %w", err)
 	}
 
 	return nil
@@ -290,13 +295,15 @@ func (o *OvsSwitch) DeleteMetersForUE(rxMeter, txMeter uint32) error {
 	err := o.DeleteMeter(rxMeter)
 	if err != nil {
 		log.Errorf("Failed to delete RX meter. Error: %v", err)
-		return err
+
+		return fmt.Errorf("failed to delete RX meter. Error: %w", err)
 	}
 
 	err = o.DeleteMeter(txMeter)
 	if err != nil {
 		log.Errorf("Failed to delete TX meter. Error: %v", err)
-		return err
+
+		return fmt.Errorf("failed to delete TX meter. Error: %w", err)
 	}
 
 	return nil
@@ -339,7 +346,8 @@ func (o *OvsSwitch) createTxFlow(ip *net.IP) (*ofctrl.Flow, error) {
 	})
 	if err != nil {
 		log.Errorf("Failed creating TX flow for switch: %v", err)
-		return nil, err
+
+		return nil, fmt.Errorf("failed creating TX flow for switch: %w", err)
 	}
 
 	return f, nil
@@ -358,7 +366,8 @@ func (o *OvsSwitch) createRxFlow(ip *net.IP) (*ofctrl.Flow, error) {
 	})
 	if err != nil {
 		log.Errorf("Failed creating RX flow for switch: %v", err)
-		return nil, err
+
+		return nil, fmt.Errorf("failed creating RX flow for switch: %w", err)
 	}
 
 	return f, nil
@@ -367,15 +376,18 @@ func (o *OvsSwitch) createRxFlow(ip *net.IP) (*ofctrl.Flow, error) {
 func (o *OvsSwitch) updateFlowForUE(ipString string, rxMeter, txMeter uint32, rxCookie, txCookie uint64, operationType int) error {
 	ip, err := parseIPv4(ipString)
 	if err != nil {
-		log.Errorf("Invalid IP address %s", ipString)
-		return err
+		log.Errorf("Failed to parse IP address %s. Error: %v", ipString, err)
+
+		return fmt.Errorf("failed to parse IP address %s. Error: %w", ipString, err)
 	}
 
 	rxF, err := o.createRxFlow(&ip)
 	if err != nil {
-		log.Errorf("Failed to create RX flow for UE %s with meter id %d. Error: %s",
-			ipString, rxMeter, err.Error())
-		return err
+		log.Errorf("Failed to create RX flow for UE %s with meter id %d. Error: %v",
+			ipString, rxMeter, err)
+
+		fmt.Errorf("failed to create RX flow for UE %s with meter id %d. Error: %w",
+			ipString, rxMeter, err)
 	}
 
 	rxF.CookieID = rxCookie
@@ -383,18 +395,22 @@ func (o *OvsSwitch) updateFlowForUE(ipString string, rxMeter, txMeter uint32, rx
 
 	err = rxF.Send(operationType)
 	if err != nil {
-		log.Errorf("Failed to submit RX flow for UE %s with meter id %d. Error: %s",
-			ipString, rxMeter, err.Error())
-		return err
+		log.Errorf("Failed to submit RX flow for UE %s with meter id %d. Error: %v",
+			ipString, rxMeter, err)
+
+		return fmt.Errorf("failed to submit RX flow for UE %s with meter id %d. Error: %w",
+			ipString, rxMeter, err)
 	}
 
 	rxF.UpdateInstallStatus(true)
 
 	txF, err := o.createTxFlow(&ip)
 	if err != nil {
-		log.Errorf("Failed to create TX flow for UE %s with meter id %d. Error: %s",
-			ipString, txMeter, err.Error())
-		return err
+		log.Errorf("Failed to create TX flow for UE %s with meter id %d. Error: %v",
+			ipString, txMeter, err)
+
+		return fmt.Errorf("failed to create TX flow for UE %s with meter id %d. Error: %w",
+			ipString, txMeter, err)
 	}
 
 	txF.CookieID = txCookie
@@ -402,9 +418,11 @@ func (o *OvsSwitch) updateFlowForUE(ipString string, rxMeter, txMeter uint32, rx
 
 	err = txF.Send(operationType)
 	if err != nil {
-		log.Errorf("Failed to submit TX flow for UE %s with meter id %d. Error: %s",
-			ipString, txMeter, err.Error())
-		return err
+		log.Errorf("Failed to submit TX flow for UE %s with meter id %d. Error: %v",
+			ipString, txMeter, err)
+
+		return fmt.Errorf("Failed to submit TX flow for UE %s with meter id %d. Error: %w",
+			ipString, txMeter, err)
 	}
 
 	txF.UpdateInstallStatus(true)
@@ -415,9 +433,11 @@ func (o *OvsSwitch) updateFlowForUE(ipString string, rxMeter, txMeter uint32, rx
 func (o *OvsSwitch) AddFlowForUE(ipString string, rxMeter, txMeter uint32, rxCookie, txCookie uint64) error {
 	err := o.updateFlowForUE(ipString, rxMeter, txMeter, rxCookie, txCookie, openflow15.FC_ADD)
 	if err != nil {
-		log.Errorf("failed to add flow for UE %s. Error: %s",
-			ipString, err.Error())
-		return err
+		log.Errorf("Failed to add flow for UE %s. Error: %v",
+			ipString, err)
+
+		return fmt.Errorf("failed to add flow for UE %s. Error: %w",
+			ipString, err)
 	}
 
 	log.Infof("Added flow for UE %s", ipString)
@@ -427,7 +447,7 @@ func (o *OvsSwitch) AddFlowForUE(ipString string, rxMeter, txMeter uint32, rxCoo
 func getFlowKey(m ofctrl.FlowMatch) string {
 	jsonVal, err := json.Marshal(m)
 	if err != nil {
-		log.Errorf("Error forming flowkey for %+v. Err: %v", m, err)
+		log.Errorf("Failed to build flowkey for %+v. Error: %v", m, err)
 		return ""
 	}
 
@@ -458,9 +478,11 @@ func (o *OvsSwitch) deleteFlowfromSwitch(ip net.IP, dp UeDataPath) error {
 
 	err = sw.Send(flow)
 	if err != nil {
-		log.Errorf("failed to delete flow for UE %v. Error: %s",
-			ip, err.Error())
-		return err
+		log.Errorf("Failed to delete flow for UE %v. Error: %v",
+			ip, err)
+
+		return fmt.Errorf("failed to delete flow for UE %v. Error: %w",
+			ip, err)
 	}
 
 	return nil
@@ -495,14 +517,18 @@ func (o *OvsSwitch) deleteFlowFromTable(ip net.IP, dp UeDataPath) error {
 
 	flowKey := getFlowKey(f.Match)
 	if flowKey == "" {
+		log.Errorf("empty flow key for UE %v", ip)
+
 		return fmt.Errorf("empty flow key for UE %v", ip)
 	}
 
 	err = table.DeleteFlow(flowKey)
 	if err != nil {
-		log.Errorf("Failed to remove flow for UE %v from the table. Error: %s",
-			ip, err.Error())
-		return err
+		log.Errorf("Failed to remove flow for UE %v from the table. Error: %v",
+			ip, err)
+
+		return fmt.Errorf("failed to remove flow for UE %v from the table. Error: %w",
+			ip, err)
 	}
 
 	return nil
@@ -511,16 +537,20 @@ func (o *OvsSwitch) deleteFlowFromTable(ip net.IP, dp UeDataPath) error {
 func (o *OvsSwitch) deleteFlowForTXPath(ip net.IP) error {
 	err := o.deleteFlowfromSwitch(ip, TX_PATH)
 	if err != nil {
-		log.Errorf("Deleting TX path for UE %v flow from switch failed. Error: %s",
-			ip, err.Error())
-		return err
+		log.Errorf("Deleting TX path for UE %v flow from switch failed. Error: %v",
+			ip, err)
+
+		return fmt.Errorf("deleting TX path for UE %v flow from switch failed. Error: %w",
+			ip, err)
 	}
 
 	err = o.deleteFlowFromTable(ip, TX_PATH)
 	if err != nil {
-		log.Errorf("Deleting TX path for UE %v flow from table failed. Error: %s",
-			ip, err.Error())
-		return err
+		log.Errorf("Deleting TX path for UE %v flow from table failed. Error: %v",
+			ip, err)
+
+		return fmt.Errorf("Deleting TX path for UE %v flow from table failed. Error: %w",
+			ip, err)
 	}
 
 	return nil
@@ -529,16 +559,20 @@ func (o *OvsSwitch) deleteFlowForTXPath(ip net.IP) error {
 func (o *OvsSwitch) deleteFlowForRXPath(ip net.IP) error {
 	err := o.deleteFlowfromSwitch(ip, RX_PATH)
 	if err != nil {
-		log.Errorf("Deleting RX path for UE %v flow from switch failed. Error: %s",
-			ip, err.Error())
-		return err
+		log.Errorf("Deleting RX path for UE %v flow from switch failed. Error: %v",
+			ip, err)
+
+		return fmt.Errorf("deleting RX path for UE %v flow from switch failed. Error: %w",
+			ip, err)
 	}
 
 	err = o.deleteFlowFromTable(ip, RX_PATH)
 	if err != nil {
-		log.Errorf("Deleting RX path for UE %v flow from table failed. Error: %s",
-			ip, err.Error())
-		return err
+		log.Errorf("Deleting RX path for UE %v flow from table failed. Error: %v",
+			ip, err)
+
+		return fmt.Errorf("deleting RX path for UE %v flow from table failed. Error: %w",
+			ip, err)
 	}
 
 	return nil
@@ -547,20 +581,23 @@ func (o *OvsSwitch) deleteFlowForRXPath(ip net.IP) error {
 func (o *OvsSwitch) DeleteFlowForUE(ipString string) error {
 	ip, err := parseIPv4(ipString)
 	if err != nil {
-		log.Errorf("Invalid IP address %s", ipString)
-		return err
+		log.Errorf("Failed to parse IP address %s. Error: %v", ipString, err)
+
+		return fmt.Errorf("failed to parse IP address %s. Error: %w", ipString, err)
 	}
 
 	err = o.deleteFlowForTXPath(ip)
 	if err != nil {
-		log.Errorf("Failed to delete TX flow for UE %s", ipString)
-		return err
+		log.Errorf("Failed to delete TX flow for UE %s. Error: %v", ipString, err)
+
+		return fmt.Errorf("failed to delete TX flow for UE %s. Error: %w", ipString, err)
 	}
 
 	err = o.deleteFlowForRXPath(ip)
 	if err != nil {
-		log.Errorf("Failed to delete RX flow for UE %s", ipString)
-		return err
+		log.Errorf("Failed to delete RX flow for UE %s. Error: %v", ipString, err)
+
+		return fmt.Errorf("failed to delete RX flow for UE %s. Error: %w", ipString, err)
 	}
 
 	log.Infof("Deleted flow for UE %s", ipString)
@@ -572,15 +609,20 @@ func (o *OvsSwitch) AddUEDataPath(ipString string, rxMeter, txMeter, rxRate, txR
 	if err != nil {
 		log.Errorf("Failed to create meters for UE %s. Error: %v",
 			ipString, err)
-		return err
+
+		return fmt.Errorf("failed to create meters for UE %s. Error: %w",
+			ipString, err)
 	}
 
 	err = o.AddFlowForUE(ipString, rxMeter, txMeter, rxCookie, txCookie)
 	if err != nil {
 		log.Errorf("Failed to create flows for UE %s. Error: %v",
 			ipString, err)
+
 		_ = o.DeleteMetersForUE(rxMeter, txMeter)
-		return err
+
+		return fmt.Errorf("failed to create flows for UE %s. Error: %w",
+			ipString, err)
 	}
 
 	return nil
@@ -591,15 +633,20 @@ func (o *OvsSwitch) DeleteUEDataPath(ipString string, rxMeter, txMeter uint32) e
 	if err != nil {
 		log.Errorf("Failed to delete flows for UE %s. Error: %v",
 			ipString, err)
+
 		_ = o.DeleteMetersForUE(rxMeter, txMeter)
-		return err
+
+		return fmt.Errorf("failed to delete flows for UE %s. Error: %w",
+			ipString, err)
 	}
 
 	err = o.DeleteMetersForUE(rxMeter, txMeter)
 	if err != nil {
 		log.Errorf("Failed to delete meters for UE %s. Error: %v",
 			ipString, err)
-		return err
+
+		return fmt.Errorf("failed to delete meters for UE %s. Error: %w",
+			ipString, err)
 	}
 
 	return nil
@@ -612,8 +659,9 @@ func parseStats(s openflow15.Stats) (uint64, uint64, error) {
 
 	data, err := s.MarshalBinary()
 	if err != nil {
-		log.Errorf("Failed to marshal data. Error %s", err.Error())
-		return 0, 0, err
+		log.Errorf("Failed to marshal data. Error %v", err)
+
+		return 0, 0, fmt.Errorf("failed to marshal data. Error %w", err)
 	}
 
 	if len(data) < 4 {
@@ -647,18 +695,22 @@ func parseStats(s openflow15.Stats) (uint64, uint64, error) {
 		case openflow15.XST_OFB_PACKET_COUNT:
 			err = pc.UnmarshalBinary(data[n:])
 			if err != nil {
-				log.Errorf("Failed to unmarshal packet count stats field data %+v",
-					data[n:])
-				return 0, 0, err
+				log.Errorf("Failed to unmarshal packet count stats field data %+v. Error: %v",
+					data[n:], err)
+
+				return 0, 0, fmt.Errorf("failed to unmarshal packet count stats field data %+v. Error: %w",
+					data[n:], err)
 			}
 			size = pc.Len()
 
 		case openflow15.XST_OFB_BYTE_COUNT:
 			err = bc.UnmarshalBinary(data[n:])
 			if err != nil {
-				log.Errorf("Failed to unmarshal byte count stats field data %v",
-					data[n:])
-				return 0, 0, err
+				log.Errorf("Failed to unmarshal byte count stats field data %v. Error: %v",
+					data[n:], err)
+
+				return 0, 0, fmt.Errorf("failed to unmarshal byte count stats field data %v. Error: %w",
+					data[n:], err)
 			}
 			size = bc.Len()
 
@@ -690,8 +742,9 @@ func (o *OvsSwitch) dataPathStats(cookieID uint64) (uint64, uint64, error) {
 
 	stats, err = sw.DumpFlowStats(cookieID, &cookieMask, nil, nil)
 	if err != nil {
-		log.Errorf("Error getting stats %s", err.Error())
-		return 0, 0, err
+		log.Errorf("Error getting stats %v", err)
+
+		return 0, 0, fmt.Errorf("error getting stats %w", err)
 	}
 
 	if len(stats) == 0 {
@@ -701,9 +754,11 @@ func (o *OvsSwitch) dataPathStats(cookieID uint64) (uint64, uint64, error) {
 
 	bc, pc, err := parseStats(stats[0].Stats)
 	if err != nil {
-		log.Errorf("Failed to get stats for flow %d (0x%x)",
-			cookieID, cookieID)
-		return 0, 0, err
+		log.Errorf("Failed to get stats for flow %d (0x%x). Error: %v",
+			cookieID, cookieID, err)
+
+		return 0, 0, fmt.Errorf("failed to get stats for flow %d (0x%x). Error: %w",
+			cookieID, cookieID, err)
 	}
 
 	return bc, pc, nil
@@ -712,14 +767,16 @@ func (o *OvsSwitch) dataPathStats(cookieID uint64) (uint64, uint64, error) {
 func (o *OvsSwitch) DataPathUEStats(rxCookieID, txCookieID uint64) (uint64, uint64, uint64, uint64, error) {
 	rxBC, rxPC, err := o.dataPathStats(rxCookieID)
 	if err != nil {
-		log.Errorf("Error getting RX path stats %s", err.Error())
-		return 0, 0, 0, 0, err
+		log.Errorf("Error getting RX path stats %v", err)
+
+		return 0, 0, 0, 0, fmt.Errorf("error getting RX path stats %w", err)
 	}
 
 	txBC, txPC, err := o.dataPathStats(txCookieID)
 	if err != nil {
-		log.Errorf("Error getting TX path stats %s", err.Error())
-		return 0, 0, 0, 0, err
+		log.Errorf("Error getting TX path stats %v", err)
+
+		return 0, 0, 0, 0, fmt.Errorf("error getting TX path stats %w", err)
 	}
 
 	return rxBC, rxPC, txBC, txPC, nil

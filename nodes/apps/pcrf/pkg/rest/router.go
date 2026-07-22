@@ -189,6 +189,7 @@ func (r *Router) setService(c *gin.Context, req *api.ServiceRequest) error {
 
 func (r *Router) createSession(c *gin.Context, req *api.CreateSession) error {
 	log.Infof("Received request for create session: %v", req)
+
 	req.ImsiStr = uintArrayToString(req.Imsi)
 	req.IpStr = uintToIp(req.Ip)
 	return r.controller.CreateSession(c, req)
@@ -196,6 +197,7 @@ func (r *Router) createSession(c *gin.Context, req *api.CreateSession) error {
 
 func (r *Router) endSession(c *gin.Context, req *api.EndSession) error {
 	log.Infof("Received request for end session: %v", req)
+
 	req.ImsiStr = uintArrayToString(req.Imsi)
 	return r.controller.EndSession(c, req)
 }

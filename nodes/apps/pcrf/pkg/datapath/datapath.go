@@ -9,6 +9,8 @@
 package datapath
 
 import (
+	"fmt"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -40,8 +42,9 @@ func InitDataPath(name, ip, netType, mgmt string) (*dataPath, error) {
 
 	d.ovs, err = NewOvsSwitch(name, ip, netType, mgmt)
 	if err != nil {
-		log.Errorf("error connecting bridge %s at %s. Error: %v", name, ip, err)
-		return nil, err
+		log.Errorf("Error connecting bridge %s at %s. Error: %v", name, ip, err)
+
+		return nil, fmt.Errorf("error connecting bridge %s at %s. Error: %w", name, ip, err)
 	}
 
 	return d, nil
@@ -50,8 +53,9 @@ func InitDataPath(name, ip, netType, mgmt string) (*dataPath, error) {
 func (d *dataPath) AddNewDataPath(ip string, rxMeter, txMeter, rxRate, txRate, burstSize uint32, rxCookie, txCookie uint64) error {
 	err := d.ovs.AddUEDataPath(ip, rxMeter, txMeter, rxRate, txRate, burstSize, rxCookie, txCookie)
 	if err != nil {
-		log.Errorf("Failed to add datapath for UE %s. Error: %v", ip, err.Error())
-		return err
+		log.Errorf("Failed to add datapath for UE %s. Error: %v", ip, err)
+
+		return fmt.Errorf("failed to add datapath for UE %s. Error: %w", ip, err)
 	}
 
 	d.ueCount++
@@ -61,8 +65,9 @@ func (d *dataPath) AddNewDataPath(ip string, rxMeter, txMeter, rxRate, txRate, b
 func (d *dataPath) DeleteDataPath(ip string, rxMeter, txMeter uint32) error {
 	err := d.ovs.DeleteUEDataPath(ip, rxMeter, txMeter)
 	if err != nil {
-		log.Errorf("Failed to delete datapath for UE %s. Error: %v", ip, err.Error())
-		return err
+		log.Errorf("Failed to delete datapath for UE %s. Error: %v", ip, err)
+
+		return fmt.Errorf("failed to delete datapath for UE %s. Error: %w", ip, err)
 	}
 
 	if d.ueCount > 0 {
@@ -79,8 +84,9 @@ func (d *dataPath) DataPathCount() uint32 {
 func (d *dataPath) DataPathStats(rxCookieID, txCookieID uint64) (uint64, uint64, uint64, uint64, error) {
 	rxBC, rxPC, txBC, txPC, err := d.ovs.DataPathUEStats(rxCookieID, txCookieID)
 	if err != nil {
-		log.Errorf("Error getting UE pathstats %s", err.Error())
-		return 0, 0, 0, 0, err
+		log.Errorf("Error getting UE pathstats: %v", err)
+
+		return 0, 0, 0, 0, fmt.Errorf("error getting UE pathstats: %w", err)
 	}
 
 	return rxBC, rxPC, txBC, txPC, nil
