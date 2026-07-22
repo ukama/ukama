@@ -9,6 +9,8 @@
 package algos
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"math"
 	"strings"
@@ -61,10 +63,13 @@ func Revenue(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, err
 	}}, nil
 }
 
-// PaidCustomers (PAID_CUSTOMERS @ org scope): distinct payers with at least
-// one settled payment month-to-date (month of the window, UTC — matches the
-// aggregator's monthly span with the default UTC rollup timezone). State
-// gauge: read with op=LAST; the monthly trend gives "+N this month".
+// PaidCustomers (PAID_CUSTOMERS @ org scope): distinct SIMs with at least one
+// settled payment month-to-date (month of the window, UTC — matches the
+// aggregator's monthly span with the default UTC rollup timezone). A customer
+// can buy several packages (several payments) against the same SIM, so we
+// dedupe by SIM id (from the payment's metadata) rather than counting payments
+// or per-transaction payer contact fields. State gauge: read with op=LAST; the
+// monthly trend gives "+N this month".
 func PaidCustomers(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
 	payments, ok := in["payments"]
 	if !ok {
@@ -73,15 +78,15 @@ func PaidCustomers(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Resul
 
 	monthStart := time.Date(win.Start.Year(), win.Start.Month(), 1, 0, 0, 0, 0, time.UTC)
 
-	payers := map[string]bool{}
+	sims := map[string]bool{}
 
 	for _, p := range settledIn(payments, monthStart, win.End) {
-		if key := payerKey(p); key != "" {
-			payers[key] = true
+		if sim := paymentSim(p); sim != "" {
+			sims[sim] = true
 		}
 	}
 
-	return []Result{CountResult(nil, float64(len(payers)))}, nil
+	return []Result{CountResult(nil, float64(len(sims)))}, nil
 }
 
 // settledIn returns settled payments whose paid_at falls in [from, to).
@@ -119,11 +124,37 @@ func isSettled(status string) bool {
 	}
 }
 
-// payerKey identifies a payer: email, else phone, else empty (uncounted).
-func payerKey(p map[string]interface{}) string {
-	if email := str(p["payer_email"]); email != "" {
-		return strings.ToLower(email)
-	}
+// paymentSim extracts the SIM id a payment was made for. The payments service
+// puts it in the record's `metadata`, which arrives base64-encoded JSON
+// (e.g. {"sim": "acd719...", "provisioned": "true"}). Returns "" when absent
+// or unparseable (uncounted). Tolerates padded/unpadded base64 and a metadata
+// that's already a decoded object.
+func paymentSim(p map[string]interface{}) string {
+	switch m := p["metadata"].(type) {
+	case string:
+		if m == "" {
+			return ""
+		}
 
-	return str(p["payer_phone"])
+		decoded, err := base64.StdEncoding.DecodeString(m)
+		if err != nil {
+			decoded, err = base64.RawStdEncoding.DecodeString(m)
+			if err != nil {
+				return ""
+			}
+		}
+
+		var obj struct {
+			Sim string `json:"sim"`
+		}
+		if json.Unmarshal(decoded, &obj) == nil {
+			return obj.Sim
+		}
+
+		return ""
+	case map[string]interface{}:
+		return str(m["sim"])
+	default:
+		return ""
+	}
 }

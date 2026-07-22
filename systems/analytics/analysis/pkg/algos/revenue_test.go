@@ -9,6 +9,7 @@
 package algos
 
 import (
+	"encoding/base64"
 	"testing"
 	"time"
 
@@ -16,6 +17,10 @@ import (
 
 	"github.com/ukama/ukama/systems/analytics/schema"
 )
+
+func metaFor(sim string) string {
+	return base64.StdEncoding.EncodeToString([]byte(`{"sim":"` + sim + `","provisioned":"true"}`))
+}
 
 // The payments service marks paid transactions "completed" (not "success").
 func TestIsSettled(t *testing.T) {
@@ -68,4 +73,40 @@ func TestRevenue_CountsCompletedPayment(t *testing.T) {
 	assert.Len(t, results, 1)
 	assert.Equal(t, float64(100), results[0].Sum, "one $1.00 payment = 100 cents")
 	assert.Equal(t, float64(1), results[0].Count)
+}
+
+// The SIM id lives in the payment's base64-encoded metadata.
+func TestPaymentSim(t *testing.T) {
+	meta := "eyJzaW0iOiAiYWNkNzE5MzUtNWIzZi00MjE5LThhMmEtMTUxNDg0ZTI1OTc5IiwgInByb3Zpc2lvbmVkIjogInRydWUifQ=="
+	assert.Equal(t, "acd71935-5b3f-4219-8a2a-151484e25979",
+		paymentSim(map[string]interface{}{"metadata": meta}))
+	assert.Equal(t, "", paymentSim(map[string]interface{}{"metadata": ""}))
+	assert.Equal(t, "", paymentSim(map[string]interface{}{}))
+}
+
+// PAID_CUSTOMERS dedupes by SIM: multiple package payments on the same SIM
+// count once (a customer buying several packages is still one paid customer).
+func TestPaidCustomers_DistinctSims(t *testing.T) {
+	win := schema.Window{
+		Start: time.Date(2026, 7, 22, 15, 0, 0, 0, time.UTC),
+		End:   time.Date(2026, 7, 22, 16, 0, 0, 0, time.UTC),
+	}
+	in := Datasets{
+		"payments": {
+			// SIM A pays twice (two packages) -> counts once
+			{"status": "completed", "paid_at": "2026-07-10T09:00:00Z", "metadata": metaFor("sim-A")},
+			{"status": "completed", "paid_at": "2026-07-15T09:00:00Z", "metadata": metaFor("sim-A")},
+			// SIM B pays once
+			{"status": "completed", "paid_at": "2026-07-20T09:00:00Z", "metadata": metaFor("sim-B")},
+			// not settled -> ignored
+			{"status": "pending", "paid_at": "2026-07-21T09:00:00Z", "metadata": metaFor("sim-C")},
+			// outside the month -> ignored
+			{"status": "completed", "paid_at": "2026-06-30T09:00:00Z", "metadata": metaFor("sim-D")},
+		},
+	}
+
+	results, err := PaidCustomers(win, in, schema.KpiSpec{})
+	assert.NoError(t, err)
+	assert.Len(t, results, 1)
+	assert.Equal(t, float64(2), results[0].Value, "distinct SIMs A and B this month")
 }
