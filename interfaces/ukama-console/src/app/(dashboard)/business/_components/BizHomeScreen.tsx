@@ -43,17 +43,17 @@ import { pinColor } from '@/lib/status';
 import { formatBytes } from '@/lib/usage';
 import { useNetworkId } from '@/lib/useNetworkId';
 
-// Period phrasing for the KPI trend/sub lines, keyed by the selected span so
-// the wording matches the DateChip ("Today" -> daily -> "vs yesterday").
+// Period phrasing for the KPI trend/sub lines, keyed by the selected rolling
+// span so the wording matches the DateChip ("Last 24h" -> "vs prev 24h").
 const TREND_SUFFIX: Record<KpiSpan, string> = {
-  daily: 'vs yesterday',
-  weekly: 'vs last week',
-  monthly: 'vs last month',
+  last_24h: 'vs prev 24h',
+  last_7d: 'vs prev 7 days',
+  last_30d: 'vs prev 30 days',
 };
 const PERIOD_LABEL: Record<KpiSpan, string> = {
-  daily: 'today',
-  weekly: 'this week',
-  monthly: 'this month',
+  last_24h: 'last 24h',
+  last_7d: 'last 7 days',
+  last_30d: 'last 30 days',
 };
 
 function SiteSummaryList({
@@ -130,13 +130,13 @@ export default function BizHomeScreen() {
     },
     skip: !networkId,
   });
-  // Monthly data-sold total for the "… this month" sub-line. Skipped when the
-  // strip is already showing the monthly span (the headline is then the month).
+  // Last-30-days data-sold total for the "… last 30 days" sub-line. Skipped
+  // when the strip is already showing the 30-day window (headline == sub).
   const { data: monthData } = useGetKpiValuesQuery({
     variables: {
-      data: { keys: [KPI_KEYS.dataSold], span: 'monthly', networkId },
+      data: { keys: [KPI_KEYS.dataSold], span: 'last_30d', networkId },
     },
-    skip: !networkId || span === 'monthly',
+    skip: !networkId || span === 'last_30d',
   });
   const { data: sitesData, loading: sitesLoading } = useSitesListQuery({
     variables: { networkId },
@@ -227,8 +227,8 @@ export default function BizHomeScreen() {
               label: 'Data sold',
               value: fmtDataSold(soldBytes),
               sub:
-                span !== 'monthly' && soldMonthBytes != null
-                  ? `${fmtDataSold(soldMonthBytes)} this month`
+                span !== 'last_30d' && soldMonthBytes != null
+                  ? `${fmtDataSold(soldMonthBytes)} last 30 days`
                   : undefined,
             },
             {

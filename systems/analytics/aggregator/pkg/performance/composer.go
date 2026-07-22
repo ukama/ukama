@@ -11,21 +11,29 @@ package performance
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/ukama/ukama/systems/analytics/aggregator/pkg/db"
 	"github.com/ukama/ukama/systems/analytics/schema"
 )
 
+// spanDaily is the rollup span the report aggregates over its rolling window.
+// Daily granularity keeps the read cheap (~one row per scope per day) while
+// still covering the full config window.
+const spanDaily = "daily"
+
 // Composer builds resource performance reports at read time: entity rows
-// from the raw zone's change-log state + KPI cells from the latest
-// available rollup rows (same read path as /kpis/values). No new state.
+// from the raw zone's change-log state + KPI cells aggregated over a rolling
+// report window (config, default 8 weeks) of daily rollups. No new state.
 type Composer struct {
 	org     string
 	reports map[string]schema.ReportSpec
 	state   db.RawStateReader
 	rollups db.RollupRepo
+	window  time.Duration // trailing report window (config, default 8 weeks)
 }
 
 // Cell is one KPI value attached to an entity row.
@@ -61,7 +69,7 @@ type Report struct {
 }
 
 func NewComposer(org string, reports []schema.ReportSpec, state db.RawStateReader,
-	rollups db.RollupRepo) *Composer {
+	rollups db.RollupRepo, window time.Duration) *Composer {
 	byKey := map[string]schema.ReportSpec{}
 	for _, r := range reports {
 		byKey[r.Report] = r
@@ -72,6 +80,7 @@ func NewComposer(org string, reports []schema.ReportSpec, state db.RawStateReade
 		reports: byKey,
 		state:   state,
 		rollups: rollups,
+		window:  window,
 	}
 }
 
@@ -99,25 +108,36 @@ func (c *Composer) Compose(report, span string, scopeFilter map[string]string, t
 		return nil, err
 	}
 
-	// Latest KPI rows per column, keyed by the row-scope entity id.
+	// Cells are aggregated over a rolling report window (config, default 8
+	// weeks) of DAILY rollups — enough history for stable per-entity stats,
+	// consistent with the values endpoint's rolling reads (just longer and
+	// coarser). Trend compares the current window against the one before it.
+	now := time.Now().UTC()
+	from := now.Add(-c.window)
+	prevFrom := now.Add(-2 * c.window)
+
 	columnRows := make([]map[string][]schema.KpiRollup, len(spec.Columns))
+	columnPrev := make([]map[string]float64, len(spec.Columns))
 
 	for i, col := range spec.Columns {
-		rows, err := c.rollups.Latest(c.org, col.Kpi, span, col.Op, scopeFilter)
+		curr, err := c.rollups.Range(c.org, col.Kpi, spanDaily, col.Op, from, now, scopeFilter)
 		if err != nil {
 			return nil, fmt.Errorf("column %s: %w", col.Name, err)
 		}
 
-		byEntity := map[string][]schema.KpiRollup{}
-
-		for _, row := range rows {
-			scope := schema.ParseScope(row.Scope)
-			if id := scope[spec.RowScope]; id != "" {
-				byEntity[id] = append(byEntity[id], row)
-			}
+		prev, err := c.rollups.Range(c.org, col.Kpi, spanDaily, col.Op, prevFrom, from, scopeFilter)
+		if err != nil {
+			return nil, fmt.Errorf("column %s (previous window): %w", col.Name, err)
 		}
 
-		columnRows[i] = byEntity
+		columnRows[i] = groupByEntity(curr, spec.RowScope)
+
+		columnPrev[i] = map[string]float64{}
+		for id, rs := range groupByEntity(prev, spec.RowScope) {
+			if v, ok := foldValue(col.Op, rs); ok {
+				columnPrev[i][id] = v
+			}
+		}
 	}
 
 	rows := make([]Row, 0, len(entities))
@@ -138,7 +158,8 @@ func (c *Composer) Compose(report, span string, scopeFilter map[string]string, t
 		}
 
 		for i, col := range spec.Columns {
-			cell := combine(col, columnRows[i][entityID])
+			prevValue, hasPrev := columnPrev[i][entityID]
+			cell := composeCell(col, columnRows[i][entityID], prevValue, hasPrev)
 			row.Cells = append(row.Cells, cell)
 			ruleValues[col.Name] = cell.Value
 		}
@@ -158,7 +179,11 @@ func (c *Composer) Compose(report, span string, scopeFilter map[string]string, t
 		rows = rows[:top]
 	}
 
-	return &Report{Report: spec.Report, Title: spec.Title, Span: span, Rows: rows}, nil
+	// span is ignored: the report window is config-driven, not the UI filter.
+	// The returned Span reports the actual window used (e.g. "8w").
+	_ = span
+
+	return &Report{Report: spec.Report, Title: spec.Title, Span: reportWindowLabel(c.window), Rows: rows}, nil
 }
 
 // entities loads the latest state of the resource dataset, applying the
@@ -193,10 +218,77 @@ func (c *Composer) entities(spec schema.ReportSpec, scopeFilter map[string]strin
 	return out, nil
 }
 
-// combine merges the (possibly multiple, e.g. one per network when no
-// network filter is given) latest rollup rows for an entity into one cell,
-// per the column's op. Trend is carried only when exactly one row matched.
-func combine(col schema.ReportColumn, rows []schema.KpiRollup) Cell {
+// groupByEntity buckets rollup rows (across scopes and days in the window) by
+// the report's row-scope entity id.
+func groupByEntity(rows []schema.KpiRollup, rowScope string) map[string][]schema.KpiRollup {
+	out := map[string][]schema.KpiRollup{}
+
+	for _, r := range rows {
+		if id := schema.ParseScope(r.Scope)[rowScope]; id != "" {
+			out[id] = append(out[id], r)
+		}
+	}
+
+	return out
+}
+
+// foldValue reduces all of an entity's daily rows in the window (over days and
+// scopes) to a single value per the column op. SUM/COUNT sum exactly; MIN/MAX
+// take the extreme; LAST takes the most recent day's value; AVG is a mean
+// across the daily values (a documented approximation, as before).
+func foldValue(op string, rows []schema.KpiRollup) (float64, bool) {
+	if len(rows) == 0 {
+		return 0, false
+	}
+
+	switch strings.ToUpper(op) {
+	case "MIN":
+		v := rows[0].Value
+		for _, r := range rows[1:] {
+			if r.Value < v {
+				v = r.Value
+			}
+		}
+
+		return v, true
+	case "MAX":
+		v := rows[0].Value
+		for _, r := range rows[1:] {
+			if r.Value > v {
+				v = r.Value
+			}
+		}
+
+		return v, true
+	case "AVG":
+		sum := 0.0
+		for _, r := range rows {
+			sum += r.Value
+		}
+
+		return sum / float64(len(rows)), true
+	case "LAST":
+		v, latest := rows[0].Value, rows[0].SpanStart
+		for _, r := range rows[1:] {
+			if r.SpanStart.After(latest) {
+				latest, v = r.SpanStart, r.Value
+			}
+		}
+
+		return v, true
+	default: // SUM, COUNT: additive across days and scopes
+		sum := 0.0
+		for _, r := range rows {
+			sum += r.Value
+		}
+
+		return sum, true
+	}
+}
+
+// composeCell builds one report cell from an entity's rows in the current
+// window, with a trend vs the same entity's value in the preceding window.
+func composeCell(col schema.ReportColumn, rows []schema.KpiRollup, prevValue float64, hasPrev bool) Cell {
 	cell := Cell{Column: col.Name, Format: col.Format}
 
 	if len(rows) == 0 {
@@ -206,33 +298,7 @@ func combine(col schema.ReportColumn, rows []schema.KpiRollup) Cell {
 	cell.hasData = true
 	cell.Unit = rows[0].Unit
 	cell.Symbol = rows[0].Symbol
-
-	switch col.Op {
-	case "MIN":
-		cell.Value = rows[0].Value
-		for _, r := range rows[1:] {
-			if r.Value < cell.Value {
-				cell.Value = r.Value
-			}
-		}
-	case "MAX":
-		cell.Value = rows[0].Value
-		for _, r := range rows[1:] {
-			if r.Value > cell.Value {
-				cell.Value = r.Value
-			}
-		}
-	case "AVG":
-		sum := 0.0
-		for _, r := range rows {
-			sum += r.Value
-		}
-		cell.Value = sum / float64(len(rows)) // simple mean across scopes (documented approximation)
-	default: // SUM, COUNT, LAST: additive across scopes
-		for _, r := range rows {
-			cell.Value += r.Value
-		}
-	}
+	cell.Value, _ = foldValue(col.Op, rows)
 
 	for _, r := range rows {
 		if r.IsPartial {
@@ -244,14 +310,50 @@ func combine(col schema.ReportColumn, rows []schema.KpiRollup) Cell {
 		}
 	}
 
-	if len(rows) == 1 {
-		cell.Trend = rows[0].Trend
-		cell.PrevValue = rows[0].PrevValue
-		cell.ChangeAbs = rows[0].ChangeAbs
-		cell.ChangePct = rows[0].ChangePct
+	if !hasPrev {
+		cell.Trend = "new"
+
+		return cell
+	}
+
+	prev := prevValue
+	changeAbs := cell.Value - prev
+	cell.PrevValue = &prev
+	cell.ChangeAbs = &changeAbs
+
+	if prev == 0 {
+		if cell.Value == 0 {
+			cell.Trend = "flat"
+		} else {
+			cell.Trend = "na" // percent undefined; change_abs still served
+		}
+
+		return cell
+	}
+
+	changePct := changeAbs / math.Abs(prev) * 100
+	cell.ChangePct = &changePct
+
+	switch {
+	case changePct == 0:
+		cell.Trend = "flat"
+	case changePct > 0:
+		cell.Trend = "up"
+	default:
+		cell.Trend = "down"
 	}
 
 	return cell
+}
+
+// reportWindowLabel renders the report window as a short token for the API
+// response, e.g. 1344h -> "8w", 72h -> "3d".
+func reportWindowLabel(w time.Duration) string {
+	if weeks := int(w.Hours()) / (24 * 7); weeks > 0 {
+		return fmt.Sprintf("%dw", weeks)
+	}
+
+	return fmt.Sprintf("%dd", int(w.Hours())/24)
 }
 
 func sortRows(rows []Row, spec schema.ReportSpec) {

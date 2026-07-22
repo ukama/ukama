@@ -26,6 +26,7 @@ import SectionCard from '@/components/SectionCard';
 import { BAR_COLORS } from '@/lib/charts';
 import { useCurrency } from '@/lib/currency';
 import { DEFAULT_RANGE, rangeToSpan } from '@/lib/dateRange';
+import { reportWindowLabel } from '@/lib/format';
 import {
   attrValue,
   cellMoney,
@@ -56,12 +57,15 @@ export default function BizSalesScreen() {
   const { data: reportData, loading: reportLoading, error: reportError } =
     useGetPerformanceReportQuery({
       variables: {
-        data: { report: 'package_performance', span, networkId },
+        data: { report: 'package_performance', networkId },
       },
       skip: !networkId,
     });
 
   const kpis = kpiData?.getKpiValues.values;
+  // The report uses its own config rolling window (default 8 weeks), not the
+  // DateChip filter; show that window so the fixed table reads intentionally.
+  const reportWindow = reportWindowLabel(reportData?.getPerformanceReport.span);
   // The by-package breakdown depends only on the report; KPI tiles degrade to
   // "—" on their own, so a KPI failure must not blank the breakdown.
   const error = reportError;
@@ -173,7 +177,13 @@ export default function BizSalesScreen() {
         ]}
       />
 
-      <SectionCard title="Revenue by package">
+      <SectionCard
+        title={
+          reportWindow
+            ? `Revenue by package · ${reportWindow}`
+            : 'Revenue by package'
+        }
+      >
         {error || byPackage.length === 0 ? (
           <div style={{ padding: 24, fontSize: 13, color: 'var(--uk-ink-3)' }}>
             {error ? '—' : 'No package revenue yet.'}

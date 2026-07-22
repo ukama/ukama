@@ -34,6 +34,7 @@ import StatusBadge from '@/components/StatusBadge';
 import { BAR_COLORS } from '@/lib/charts';
 import { useCurrency } from '@/lib/currency';
 import { DEFAULT_RANGE, rangeToSpan } from '@/lib/dateRange';
+import { reportWindowLabel } from '@/lib/format';
 import { attrValue, cellMoney, cellValue, KPI_KEYS, kpiAmount } from '@/lib/kpis';
 import { useNetworkId } from '@/lib/useNetworkId';
 
@@ -66,12 +67,15 @@ export default function BizPackagesScreen() {
   // their own when getKpiValues fails.
   const { data, loading, error, refetch } = useGetPerformanceReportQuery({
     variables: {
-      data: { report: 'package_performance', span, networkId },
+      data: { report: 'package_performance', networkId },
     },
     skip: !networkId,
   });
 
   const kpis = kpiData?.getKpiValues.values;
+  // The report uses its own config rolling window (default 8 weeks), not the
+  // DateChip filter; surface it so the fixed table reads intentionally.
+  const reportWindow = reportWindowLabel(data?.getPerformanceReport.span);
 
   const plans: Plan[] = (data?.getPerformanceReport.rows ?? []).map((r) => ({
     packageId: r.entityId,
@@ -149,6 +153,11 @@ export default function BizPackagesScreen() {
       <div className="card card-pad" style={{ marginBottom: 'var(--uk-gap)' }}>
         <div className="sec-head">
           <div className="sec-title">Package performance</div>
+          {reportWindow && (
+            <span style={{ fontSize: 12.5, color: 'var(--uk-ink-3)' }}>
+              {reportWindow}
+            </span>
+          )}
         </div>
         <div className="tbl-wrap">
           {loading ? (
