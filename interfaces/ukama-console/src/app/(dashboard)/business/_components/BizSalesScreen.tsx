@@ -15,6 +15,7 @@ import Skeleton from '@mui/material/Skeleton';
 import { useState } from 'react';
 
 import {
+  useGetKpiTimeSeriesQuery,
   useGetKpiValuesQuery,
   useGetPerformanceReportQuery,
 } from '@/client/graphql/analytics.generated';
@@ -22,6 +23,7 @@ import BarList from '@/components/BarList';
 import DateChip from '@/components/DateChip';
 import { KpiRow } from '@/components/Kpi';
 import PageHeader from '@/components/PageHeader';
+import RevenueTrendChart from '@/components/RevenueTrendChart';
 import SectionCard from '@/components/SectionCard';
 import { BAR_COLORS } from '@/lib/charts';
 import { useCurrency } from '@/lib/currency';
@@ -42,6 +44,12 @@ export default function BizSalesScreen() {
   const { money } = useCurrency();
   const [range, setRange] = useState<string>(DEFAULT_RANGE);
   const span = rangeToSpan(range);
+  // Fixed 9-week window for the revenue trend (weekly buckets). Computed once
+  // so the query variables stay stable across renders.
+  const [trendRange] = useState(() => ({
+    to: new Date().toISOString(),
+    from: new Date(Date.now() - 63 * 864e5).toISOString(),
+  }));
 
   const { data: kpiData, loading: kpiLoading } = useGetKpiValuesQuery({
     variables: {
@@ -62,6 +70,21 @@ export default function BizSalesScreen() {
       skip: !networkId,
     });
 
+  // Revenue trend: weekly REVENUE (SUM) over the last ~9 weeks.
+  const { data: trendData, loading: trendLoading } = useGetKpiTimeSeriesQuery({
+    variables: {
+      data: {
+        keys: [KPI_KEYS.revenue],
+        span: 'weekly',
+        op: 'SUM',
+        from: trendRange.from,
+        to: trendRange.to,
+        networkId,
+      },
+    },
+    skip: !networkId,
+  });
+
   const kpis = kpiData?.getKpiValues.values;
   // The report uses its own config rolling window (default 8 weeks), not the
   // DateChip filter; show that window so the fixed table reads intentionally.
@@ -70,6 +93,15 @@ export default function BizSalesScreen() {
   // "—" on their own, so a KPI failure must not blank the breakdown.
   const error = reportError;
   const loading = kpiLoading || reportLoading;
+
+  // Weekly revenue points for the trend chart (REVENUE is reported in cents).
+  const trendPoints = (trendData?.getKpiTimeSeries.values ?? [])
+    .filter((v) => v.from)
+    .map((v) => ({
+      t: new Date(v.from as string).getTime(),
+      value: (v.unit ?? '').toLowerCase() === 'cents' ? v.value / 100 : v.value,
+    }))
+    .sort((a, z) => a.t - z.t);
 
   // Revenue-by-package bars from the package_performance report rows (money
   // columns are reported in cents).
@@ -176,6 +208,36 @@ export default function BizSalesScreen() {
           },
         ]}
       />
+
+      <div className="card card-pad" style={{ marginBottom: 'var(--uk-gap)' }}>
+        <div
+          className="sec-head"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 8,
+          }}
+        >
+          <div className="sec-title">Revenue trend</div>
+          <span style={{ fontSize: 12.5, color: 'var(--uk-ink-3)' }}>
+            Last 9 weeks
+          </span>
+        </div>
+        {trendLoading ? (
+          <Skeleton variant="rounded" sx={{ height: 300 }} />
+        ) : trendPoints.length === 0 ? (
+          <div style={{ padding: 24, fontSize: 13, color: 'var(--uk-ink-3)' }}>
+            No revenue in this period.
+          </div>
+        ) : (
+          <RevenueTrendChart
+            points={trendPoints}
+            formatValue={money}
+            height={300}
+          />
+        )}
+      </div>
 
       <SectionCard
         title={

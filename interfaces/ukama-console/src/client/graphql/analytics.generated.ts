@@ -92,6 +92,43 @@ export type GetKpiValuesQueryHookResult = ReturnType<typeof useGetKpiValuesQuery
 export type GetKpiValuesLazyQueryHookResult = ReturnType<typeof useGetKpiValuesLazyQuery>;
 export type GetKpiValuesSuspenseQueryHookResult = ReturnType<typeof useGetKpiValuesSuspenseQuery>;
 export type GetKpiValuesQueryResult = Apollo.QueryResult<GetKpiValuesQuery, GetKpiValuesQueryVariables>;
+export type GetKpiTimeSeriesQueryVariables = Types.Exact<{
+  data: Types.KpiTimeSeriesInput;
+}>;
+
+
+export type GetKpiTimeSeriesQuery = { __typename?: 'Query', getKpiTimeSeries: { __typename?: 'GetKpiTimeSeriesDto', values: Array<{ __typename?: 'KpiValueDto', from?: string | null, to?: string | null, kpi: string, value: number, span?: string | null, unit?: string | null, symbol?: string | null, isPartial?: boolean | null, trend?: { __typename?: 'TrendDto', direction?: string | null, changePct?: number | null, changeAbs?: number | null, prevValue?: number | null, hasPrevious?: boolean | null } | null }> } };
+
+export const GetKpiTimeSeriesDocument = gql`
+    query GetKpiTimeSeries($data: KpiTimeSeriesInput!) {
+  getKpiTimeSeries(data: $data) {
+    values {
+      ...KpiValueFields
+      from
+      to
+    }
+  }
+}
+    ${KpiValueFieldsFragmentDoc}`;
+export function useGetKpiTimeSeriesQuery(baseOptions: Apollo.QueryHookOptions<GetKpiTimeSeriesQuery, GetKpiTimeSeriesQueryVariables> & ({ variables: GetKpiTimeSeriesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetKpiTimeSeriesQuery, GetKpiTimeSeriesQueryVariables>(GetKpiTimeSeriesDocument, options);
+      }
+export function useGetKpiTimeSeriesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetKpiTimeSeriesQuery, GetKpiTimeSeriesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetKpiTimeSeriesQuery, GetKpiTimeSeriesQueryVariables>(GetKpiTimeSeriesDocument, options);
+        }
+// @ts-ignore
+export function useGetKpiTimeSeriesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetKpiTimeSeriesQuery, GetKpiTimeSeriesQueryVariables>): Apollo.UseSuspenseQueryResult<GetKpiTimeSeriesQuery, GetKpiTimeSeriesQueryVariables>;
+export function useGetKpiTimeSeriesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetKpiTimeSeriesQuery, GetKpiTimeSeriesQueryVariables>): Apollo.UseSuspenseQueryResult<GetKpiTimeSeriesQuery | undefined, GetKpiTimeSeriesQueryVariables>;
+export function useGetKpiTimeSeriesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetKpiTimeSeriesQuery, GetKpiTimeSeriesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetKpiTimeSeriesQuery, GetKpiTimeSeriesQueryVariables>(GetKpiTimeSeriesDocument, options);
+        }
+export type GetKpiTimeSeriesQueryHookResult = ReturnType<typeof useGetKpiTimeSeriesQuery>;
+export type GetKpiTimeSeriesLazyQueryHookResult = ReturnType<typeof useGetKpiTimeSeriesLazyQuery>;
+export type GetKpiTimeSeriesSuspenseQueryHookResult = ReturnType<typeof useGetKpiTimeSeriesSuspenseQuery>;
+export type GetKpiTimeSeriesQueryResult = Apollo.QueryResult<GetKpiTimeSeriesQuery, GetKpiTimeSeriesQueryVariables>;
 export const GetPerformanceReportDocument = gql`
     query GetPerformanceReport($data: PerformanceReportInput!) {
   getPerformanceReport(data: $data) {

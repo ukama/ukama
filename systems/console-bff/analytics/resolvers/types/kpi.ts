@@ -99,6 +99,14 @@ export class GetKpiValuesDto {
   values: KpiValueDto[];
 }
 
+/** Response envelope for `getKpiTimeSeries` — one KpiValue per span bucket in
+ *  the range (mirrors GetKpiTimeSeriesResponse). */
+@ObjectType()
+export class GetKpiTimeSeriesDto {
+  @Field(() => [KpiValueDto])
+  values: KpiValueDto[];
+}
+
 /**
  * Input for `getKpiValues`. `keys` is required (the KPI keys to read, e.g.
  * ["network_uptime", "site_uptime"]); `span`/`op` default per the KPI spec on
@@ -114,6 +122,32 @@ export class KpiValuesInput {
 
   @Field({ nullable: true })
   op?: string; // AVG | MIN | MAX | ... (defaults per KPI spec)
+
+  @Field({ nullable: true })
+  networkId?: string;
+}
+
+/**
+ * Input for `getKpiTimeSeries`: one value per span bucket over a range. Same as
+ * KpiValuesInput plus the [from, to) window (RFC3339). `span` is the bucket
+ * size (e.g. weekly for a 9-week revenue trend); defaults per KPI spec.
+ */
+@InputType()
+export class KpiTimeSeriesInput {
+  @Field(() => [String])
+  keys: string[];
+
+  @Field({ nullable: true })
+  span?: string; // daily | weekly | monthly
+
+  @Field({ nullable: true })
+  op?: string;
+
+  @Field({ nullable: true })
+  from?: string; // RFC3339 inclusive
+
+  @Field({ nullable: true })
+  to?: string; // RFC3339 exclusive
 
   @Field({ nullable: true })
   networkId?: string;

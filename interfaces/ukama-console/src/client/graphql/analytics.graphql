@@ -48,6 +48,18 @@ query GetKpiValues($data: KpiValuesInput!) {
   }
 }
 
+# KPI time series: one value per span bucket over a [from, to) window. Used by
+# the Revenue trend chart (keys: REVENUE, span: weekly, op: SUM over ~9 weeks).
+query GetKpiTimeSeries($data: KpiTimeSeriesInput!) {
+  getKpiTimeSeries(data: $data) {
+    values {
+      ...KpiValueFields
+      from
+      to
+    }
+  }
+}
+
 # Resource performance table. Packages screen passes report: "package_performance"
 # to get per-package rows (attributes: name/price/validity/active; cells:
 # sold/revenue/data_used).
