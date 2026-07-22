@@ -75,6 +75,7 @@ func Default() *Registry {
 	// Package KPIs (see docs/packages-kpi-plan.md).
 	r.Register("package_sales@v1", PackageSales)
 	r.Register("package_revenue@v1", PackageRevenue)
+	r.Register("data_sold@v1", DataSold)
 	r.Register("mrr@v1", Mrr)
 	r.Register("arpu@v1", Arpu)
 	r.Register("customers_on_plan@v1", CustomersOnPlan)

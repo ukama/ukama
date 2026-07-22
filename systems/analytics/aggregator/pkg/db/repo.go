@@ -169,8 +169,14 @@ func (r *repo) ScopesSeen(orgID, kpiKey, span string) ([]string, error) {
 	return scopes, nil
 }
 
-// filterScope filters rows whose canonical scope JSON contains all requested
+// filterScope keeps rows whose canonical scope JSON contains all requested
 // key/value pairs. Done in Go to stay portable (scope is a varchar column).
+//
+// Org-wide rows (empty scope, e.g. REVENUE / PAID_CUSTOMERS which carry no
+// network attribution) always match: an org-wide value applies to every
+// network, so a network-scoped read must still return it. Without this a
+// network_id filter would silently drop every org-scoped KPI and the console
+// would render "—".
 func filterScope(rows []schema.KpiRollup, filter map[string]string) []schema.KpiRollup {
 	if len(filter) == 0 {
 		return rows
@@ -180,6 +186,12 @@ func filterScope(rows []schema.KpiRollup, filter map[string]string) []schema.Kpi
 
 	for _, row := range rows {
 		scope := schema.ParseScope(row.Scope)
+
+		if len(scope) == 0 {
+			out = append(out, row) // org-wide value applies to any scope filter
+
+			continue
+		}
 
 		match := true
 		for k, v := range filter {

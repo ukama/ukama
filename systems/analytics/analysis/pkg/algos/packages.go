@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/systems/analytics/schema"
+	"github.com/ukama/ukama/systems/common/ukama"
 )
 
 // Package KPIs. Shared conventions:
@@ -30,6 +31,7 @@ type pkgInfo struct {
 	amountCents float64
 	duration    float64 // days
 	active      bool
+	dataBytes   float64 // package data allowance, normalized to bytes
 }
 
 func decodePackages(in Datasets) (map[string]pkgInfo, error) {
@@ -52,6 +54,7 @@ func decodePackages(in Datasets) (map[string]pkgInfo, error) {
 			amountCents: math.Round(num(p["amount"]) * 100),
 			duration:    num(p["duration"]),
 			active:      asBool(p["active"]),
+			dataBytes:   dataVolumeBytes(p),
 		}
 	}
 
@@ -134,6 +137,45 @@ func PackageRevenue(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Resu
 	}
 
 	return results, nil
+}
+
+// DataSold (DATA_SOLD @ scope network_id): bytes of package data allowance
+// SOLD in the window — sum over sim-package assignments whose start_date
+// falls in the window of the assigned package's data volume converted to
+// bytes, grouped by network. This is a SALES proxy (allowance purchased),
+// distinct from USAGE_BY_NETWORK which measures data actually consumed.
+// Zero-filled across networks so the daily/monthly SUM series stays
+// continuous.
+func DataSold(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
+	packages, err := decodePackages(in)
+	if err != nil {
+		return nil, fmt.Errorf("DATA_SOLD: %w", err)
+	}
+
+	sales, err := PackageSales(win, in, spec)
+	if err != nil {
+		return nil, fmt.Errorf("DATA_SOLD: %w", err)
+	}
+
+	_, networks, err := packageInputs(in, "DATA_SOLD")
+	if err != nil {
+		return nil, err
+	}
+
+	bytesByNetwork := map[string]float64{}
+
+	for _, s := range sales {
+		p, ok := packages[s.Scope["package_id"]]
+		if !ok || !p.appliesTo(s.Scope["network_id"]) {
+			continue // assignment references an unknown/foreign package
+		}
+
+		bytesByNetwork[s.Scope["network_id"]] += s.Value * p.dataBytes
+	}
+
+	return zeroFilled(networks, func(networkID string) float64 {
+		return bytesByNetwork[networkID]
+	}), nil
 }
 
 // Mrr (MRR @ scope network_id): sum over currently-active assignments of the
@@ -378,6 +420,20 @@ func num(v interface{}) float64 {
 	default:
 		return 0
 	}
+}
+
+// dataVolumeBytes converts a package's declared data allowance to bytes using
+// its data unit (bytes|kilobytes|megabytes|gigabytes, or b/kb/mb/gb — parsed
+// by the shared ukama converter). An absent or unrecognised unit is treated
+// as bytes so a mis-tagged package still contributes its raw volume rather
+// than silently dropping to zero.
+func dataVolumeBytes(p map[string]interface{}) float64 {
+	perUnit := float64(ukama.ReturnDataUnitsInBytes(ukama.ParseDataUnitType(str(p["data_unit"]))))
+	if perUnit == 0 {
+		perUnit = 1
+	}
+
+	return num(p["data_volume"]) * perUnit
 }
 
 func parseTime(s string) (time.Time, error) {
