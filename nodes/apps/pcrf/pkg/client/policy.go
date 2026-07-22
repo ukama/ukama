@@ -58,7 +58,7 @@ func (r *remoteControllerClient) PushCdr(req *api.CDR) error {
 
 	b, err := json.Marshal(req)
 	if err != nil {
-		log.Errorf("Error marshalling CDR. error: %s", err)
+		log.Errorf("Error marshalling CDR. error: %v", err)
 
 		return fmt.Errorf("marshal CDR request failure for imsi : %s. Error %w",
 			req.Imsi, err)

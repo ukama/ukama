@@ -53,8 +53,9 @@ type SessionManager interface {
 func NewSessionManager(store *store.Store, br pkg.BrdigeConfig) (*sessionManager, error) {
 	d, err := datapath.InitDataPath(br.Name, br.Ip, br.NetType, br.Management)
 	if err != nil {
-		log.Errorf("error initializing session manager. Error: %s", err.Error())
-		return nil, err
+		log.Errorf("Error initializing session manager. Error: %v", err)
+
+		return nil, fmt.Errorf("error initializing session manager. Error: %w", err)
 	}
 
 	s := &sessionManager{
@@ -80,11 +81,15 @@ func (s *sessionManager) storeStats(imsi string, lastStats bool) error {
 	if ok {
 		sc.s.RxBytes, _, sc.s.TxBytes, _, err = s.d.DataPathStats(sc.rxCookie, sc.txCookie)
 		if err != nil {
-			log.Errorf("[SessionId %d ] Failed to read final stats for data path of Imsi %s. Error: %s", sc.s.ID, sc.s.SubscriberID.Imsi, err.Error())
-			return err
+			log.Errorf("[SessionId %d ] Failed to read final stats for data path of Imsi %s. Error: %v",
+				sc.s.ID, sc.s.SubscriberID.Imsi, err)
+
+			return fmt.Errorf("failed to read final stats for data path of Imsi %s. Error: %w",
+				sc.s.SubscriberID.Imsi, err)
 		}
 
-		log.Infof("Rx Cookie 0x%x Rx Bytes %d Tx Cookie 0x%x TxBytes %d for imsi %s", sc.rxCookie, sc.s.RxBytes, sc.txCookie, sc.s.TxBytes, imsi)
+		log.Infof("Rx Cookie 0x%x Rx Bytes %d Tx Cookie 0x%x TxBytes %d for imsi %s",
+			sc.rxCookie, sc.s.RxBytes, sc.txCookie, sc.s.TxBytes, imsi)
 
 		tNow := time.Now().Unix()
 		lastUpdate := sc.s.UpdatedAt
@@ -97,7 +102,8 @@ func (s *sessionManager) storeStats(imsi string, lastStats bool) error {
 
 			err = s.store.EndSession(sc.s)
 			if err != nil {
-				log.Warnf("[SessionId %d ] Failed to update last session usage to db store for Imsi %s. Error: %s", sc.s.ID, sc.s.SubscriberID.Imsi, err.Error())
+				log.Warnf("[SessionId %d ] Failed to update last session usage to db store for Imsi %s. Error: %s",
+					sc.s.ID, sc.s.SubscriberID.Imsi, err.Error())
 			}
 		} else {
 			if totalBytes != sc.s.TotalBytes {
@@ -107,29 +113,38 @@ func (s *sessionManager) storeStats(imsi string, lastStats bool) error {
 
 				err = s.store.UpdateSessionUsage(sc.s)
 				if err != nil {
-					log.Warnf("[SessionId %d ] Failed to update session usage to db store for Imsi %s. Error: %s", sc.s.ID, sc.s.SubscriberID.Imsi, err.Error())
+					log.Warnf("[SessionId %d ] Failed to update session usage to db store for Imsi %s. Error: %s",
+						sc.s.ID, sc.s.SubscriberID.Imsi, err.Error())
 				}
 
 				p, err := s.store.GetApplicablePolicyByImsi(imsi)
 				if err != nil {
-					log.Errorf("[SessionId %d ] failed to get policy by Imsi for subscriber %s. Error %v", sc.s.ID, imsi, err)
-					return err
+					log.Errorf("[SessionId %d ] failed to get policy by Imsi for subscriber %s. Error %v",
+						sc.s.ID, imsi, err)
+
+					return fmt.Errorf("failed to get policy by Imsi for subscriber %s. Error %w",
+						imsi, err)
 				}
 
 				totalUsage := sc.InitUsage + sc.s.TotalBytes
 				availableData := p.Data - p.Consumed
 				if totalUsage >= availableData {
-					log.Errorf("[SessionId %d ] Subscriber %s hit max data limit available=%d totalUsage=%d", sc.s.ID, imsi, availableData, totalUsage)
+					log.Errorf("[SessionId %d ] Subscriber %s hit max data limit available=%d totalUsage=%d",
+						sc.s.ID, imsi, availableData, totalUsage)
+
 					_ = s.EndSession(sc.ctx, &store.Subscriber{Imsi: imsi})
+
 					return fmt.Errorf("max data cap limit exceeded")
 				}
 			}
 
 			temp := int64(lastUpdate + uint64(s.idle.Seconds()))
-			log.Debugf("[SessionId %d ] Subscriber %s idle report flag %v, time now %d timeout %d", sc.s.ID, imsi, sc.idleReportSent, tNow, temp)
+			log.Debugf("[SessionId %d ] Subscriber %s idle report flag %v, time now %d timeout %d",
+				sc.s.ID, imsi, sc.idleReportSent, tNow, temp)
 
 			if !sc.idleReportSent && tNow > temp {
-				log.Infof("[SessionId %d ] Subscriber %s is idle for more than %s from %d.", sc.s.ID, imsi, s.idle, lastUpdate)
+				log.Infof("[SessionId %d ] Subscriber %s is idle for more than %s from %d.",
+					sc.s.ID, imsi, s.idle, lastUpdate)
 
 				err = s.SendCDR(imsi)
 				if err == nil {
@@ -141,6 +156,7 @@ func (s *sessionManager) storeStats(imsi string, lastStats bool) error {
 		log.Debugf("[SessionId %d ] Updated stats for %s are %+v", sc.s.ID, imsi, sc.s)
 	} else {
 		log.Errorf("Session for Imsi %s not found.", imsi)
+
 		return fmt.Errorf("session for imsi not found: %s", imsi)
 	}
 
@@ -171,30 +187,33 @@ func (s *sessionManager) CreateSesssion(ctx context.Context, sub *store.Subscrib
 
 	u, err := s.store.GetUsageByImsi(sub.Imsi)
 	if err != nil {
-		log.Errorf("Error getting usage for Imsi %s.Error: %s", sub.Imsi, err.Error())
-		return err
+		log.Errorf("Error getting usage for Imsi %s.Error: %v", sub.Imsi, err)
+
+		return fmt.Errorf("error getting usage for Imsi %s.Error: %w", sub.Imsi, err)
 	}
 	sc.InitUsage = u.Data
 
-    err = s.d.AddNewDataPath(sc.s.UeIpAddr,
-	    uint32(sc.s.RxMeterID.ID),
-    	uint32(sc.s.TxMeterID.ID),
-	    uint32(sc.s.RxMeterID.Rate),
-    	uint32(sc.s.TxMeterID.Rate),
-	    uint32(sc.s.RxMeterID.Burst),
-    	sc.rxCookie,
-	    sc.txCookie)
+	err = s.d.AddNewDataPath(sc.s.UeIpAddr,
+		uint32(sc.s.RxMeterID.ID),
+		uint32(sc.s.TxMeterID.ID),
+		uint32(sc.s.RxMeterID.Rate),
+		uint32(sc.s.TxMeterID.Rate),
+		uint32(sc.s.RxMeterID.Burst),
+		sc.rxCookie,
+		sc.txCookie)
 	if err != nil {
-		log.Errorf("Failed to add data path for Imsi %s. Error: %s", sub.Imsi, err.Error())
-		return err
+		log.Errorf("Failed to add data path for Imsi %s. Error: %v", sub.Imsi, err)
+
+		return fmt.Errorf("failed to add data path for Imsi %s. Error: %w", sub.Imsi, err)
 	}
 
 	s.cache[sub.Imsi] = &sc
 
 	err = s.StartSessionMonitor(ctx, sub.Imsi)
 	if err != nil {
-		log.Errorf("Failed to start monitor for Imsi %s. Error: %s", sub.Imsi, err.Error())
-		return err
+		log.Errorf("Failed to start monitor for Imsi %s. Error: %v", sub.Imsi, err)
+
+		return fmt.Errorf("failed to start monitor for Imsi %s. Error: %w", sub.Imsi, err)
 	}
 
 	return nil
@@ -204,7 +223,7 @@ func (s *sessionManager) EndAllSessions() error {
 	for imsi, session := range s.cache {
 		err := s.EndSession(context.Background(), &store.Subscriber{Imsi: imsi})
 		if err != nil {
-			log.Errorf("Failed to end session for Imsi %s.Error %s", imsi, err.Error())
+			log.Errorf("Failed to end session for Imsi %s. Error %v", imsi, err)
 		}
 		log.Infof("Ending session %+v for Imsi %s.", session, imsi)
 	}
@@ -221,21 +240,23 @@ func (s *sessionManager) EndSession(ctx context.Context, sub *store.Subscriber) 
 
 	err := s.StopSessionMonitor(ctx, sub.Imsi)
 	if err != nil {
-		log.Errorf("Failed to stop monitor for Imsi %s. Error: %s", sub.Imsi, err.Error())
-		return err
+		log.Errorf("Failed to stop monitor for Imsi %s. Error: %v", sub.Imsi, err)
+
+		return fmt.Errorf("failed to stop monitor for Imsi %s. Error: %w", sub.Imsi, err)
 	}
 
 	err = s.storeStats(sc.s.SubscriberID.Imsi, true)
 	if err != nil {
-		log.Warnf("Failed to store final stats for Imsi %s. Error: %s", sub.Imsi, err.Error())
+		log.Warnf("Failed to store final stats for Imsi %s. Error: %v", sub.Imsi, err)
 	}
 
 	time.Sleep(1000 * time.Millisecond)
 
 	err = s.d.DeleteDataPath(sc.s.UeIpAddr, uint32(sc.s.RxMeterID.ID), uint32(sc.s.TxMeterID.ID))
 	if err != nil {
-		log.Errorf("Failed to delete data path for Imsi %s. Error: %s", sub.Imsi, err.Error())
-		return err
+		log.Errorf("Failed to delete data path for Imsi %s. Error: %v", sub.Imsi, err)
+
+		return fmt.Errorf("failed to delete data path for Imsi %s. Error: %w", sub.Imsi, err)
 	}
 
 	_ = s.SendCDR(sub.Imsi)
@@ -251,7 +272,8 @@ func (s *sessionManager) SendCDR(imsi string) error {
 		return fmt.Errorf("session for imsi %s not found", imsi)
 	}
 
-	log.Infof("[ SessionId %d ] Marking CDR ready for subscriber %s and IP address %s", sc.s.ID, imsi, sc.s.UeIpAddr)
+	log.Infof("[ SessionId %d ] Marking CDR ready for subscriber %s and IP address %s",
+		sc.s.ID, imsi, sc.s.UeIpAddr)
 
 	return s.store.UpdateSessionSyncState(sc.s.ID, store.SessionSyncReady)
 }
@@ -262,7 +284,8 @@ func (s *sessionManager) StartSessionMonitor(ctx context.Context, imsi string) e
 		return fmt.Errorf("session for imsi %s not found", imsi)
 	}
 
-	log.Infof("[SessionId %d ] Starting session monitor for subscriber %s and IP address %s", sc.s.ID, imsi, sc.s.UeIpAddr)
+	log.Infof("[SessionId %d ] Starting session monitor for subscriber %s and IP address %s",
+		sc.s.ID, imsi, sc.s.UeIpAddr)
 
 	sc.ctx, sc.cancel = context.WithCancel(context.Background())
 	s.cache[imsi] = sc
@@ -278,7 +301,8 @@ func (s *sessionManager) StopSessionMonitor(ctx context.Context, imsi string) er
 		return fmt.Errorf("session for imsi %s not found", imsi)
 	}
 
-	log.Infof("[SessionId %d ] Stop session monitor for subscriber %s and IP address %s", sc.s.ID, imsi, sc.s.UeIpAddr)
+	log.Infof("[SessionId %d ] Stop session monitor for subscriber %s and IP address %s",
+		sc.s.ID, imsi, sc.s.UeIpAddr)
 
 	if sc.cancel != nil {
 		sc.cancel()
@@ -298,7 +322,9 @@ func (s *sessionManager) sessionMonitorRoutine(ctx context.Context, interval tim
 			_ = s.storeStats(sc.s.SubscriberID.Imsi, false)
 
 		case <-ctx.Done():
-			log.Infof("[SessionId %d ] Exiting monitoring for subscriber %s", sc.s.ID, sc.s.SubscriberID.Imsi)
+			log.Infof("[SessionId %d ] Exiting monitoring for subscriber %s",
+				sc.s.ID, sc.s.SubscriberID.Imsi)
+
 			return
 		}
 	}
