@@ -172,6 +172,11 @@ export default function BizHomeScreen() {
   // Network uptime (AVG, percent).
   const uptime = kpiValue(kpis, KPI_KEYS.networkUptime);
 
+  // Data sold display: auto data unit for real values (e.g. "1 GB", "1.8 TB"),
+  // a bare "0" (no unit) when nothing was sold, and "—" when the KPI is absent.
+  const fmtDataSold = (bytes: number | undefined): string =>
+    bytes == null ? '—' : bytes === 0 ? '0' : formatBytes(bytes);
+
   const bizMarkers = sites
     .filter((s) => s.lat !== 0 || s.lng !== 0)
     .map((s) => ({
@@ -220,10 +225,10 @@ export default function BizHomeScreen() {
               icon: 'data_usage',
               color: 'var(--uk-ac)',
               label: 'Data sold',
-              value: soldBytes != null ? formatBytes(soldBytes) : '—',
+              value: fmtDataSold(soldBytes),
               sub:
                 span !== 'monthly' && soldMonthBytes != null
-                  ? `${formatBytes(soldMonthBytes)} this month`
+                  ? `${fmtDataSold(soldMonthBytes)} this month`
                   : undefined,
             },
             {

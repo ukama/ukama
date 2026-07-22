@@ -116,7 +116,13 @@ export default function NetworkHomeScreen() {
               icon: 'network_check',
               color: 'var(--uk-success-bright)',
               label: 'Network uptime',
-              value: kpiText(kpis, KPI_KEYS.networkUptime, (v) => `${v}%`),
+              // Round to one decimal to match the Business lens (e.g. 15.1%);
+              // the KPI value is a raw percentage float otherwise.
+              value: kpiText(
+                kpis,
+                KPI_KEYS.networkUptime,
+                (v) => `${v.toFixed(1)}%`,
+              ),
               sub: 'latest reading',
             },
             {
