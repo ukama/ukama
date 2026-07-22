@@ -26,9 +26,9 @@ import (
 //   op=COUNT -> number of purchases
 //   op=AVG   -> average purchase value (weighted, exact)
 
-// Revenue (REVENUE @ org scope): successful payments with paid_at inside
-// the window. Value = collected cents; components carry count and per-
-// payment min/max.
+// Revenue (REVENUE @ org scope): settled payments with paid_at inside the
+// window. Value = collected cents; components carry count and per-payment
+// min/max.
 func Revenue(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
 	payments, ok := in["payments"]
 	if !ok {
@@ -38,7 +38,7 @@ func Revenue(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, err
 	sum, count := 0.0, 0.0
 	min, max := math.Inf(1), math.Inf(-1)
 
-	for _, p := range successfulIn(payments, win.Start, win.End) {
+	for _, p := range settledIn(payments, win.Start, win.End) {
 		cents := math.Round(num(p["amount"]) * 100)
 
 		sum += cents
@@ -62,9 +62,9 @@ func Revenue(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, err
 }
 
 // PaidCustomers (PAID_CUSTOMERS @ org scope): distinct payers with at least
-// one successful payment month-to-date (month of the window, UTC — matches
-// the aggregator's monthly span with the default UTC rollup timezone).
-// State gauge: read with op=LAST; the monthly trend gives "+N this month".
+// one settled payment month-to-date (month of the window, UTC — matches the
+// aggregator's monthly span with the default UTC rollup timezone). State
+// gauge: read with op=LAST; the monthly trend gives "+N this month".
 func PaidCustomers(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
 	payments, ok := in["payments"]
 	if !ok {
@@ -75,7 +75,7 @@ func PaidCustomers(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Resul
 
 	payers := map[string]bool{}
 
-	for _, p := range successfulIn(payments, monthStart, win.End) {
+	for _, p := range settledIn(payments, monthStart, win.End) {
 		if key := payerKey(p); key != "" {
 			payers[key] = true
 		}
@@ -84,12 +84,12 @@ func PaidCustomers(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Resul
 	return []Result{CountResult(nil, float64(len(payers)))}, nil
 }
 
-// successfulIn returns successful payments whose paid_at falls in [from, to).
-func successfulIn(payments []map[string]interface{}, from, to time.Time) []map[string]interface{} {
+// settledIn returns settled payments whose paid_at falls in [from, to).
+func settledIn(payments []map[string]interface{}, from, to time.Time) []map[string]interface{} {
 	out := make([]map[string]interface{}, 0, len(payments))
 
 	for _, p := range payments {
-		if !strings.EqualFold(str(p["status"]), "success") {
+		if !isSettled(str(p["status"])) {
 			continue
 		}
 
@@ -104,6 +104,19 @@ func successfulIn(payments []map[string]interface{}, from, to time.Time) []map[s
 	}
 
 	return out
+}
+
+// isSettled reports whether a payment status counts as collected revenue. The
+// payments service marks a paid transaction "completed"; we accept a few
+// synonyms (case-insensitive) so a status-vocabulary change upstream doesn't
+// silently zero revenue. Not settled: pending, failed, etc.
+func isSettled(status string) bool {
+	switch strings.ToLower(strings.TrimSpace(status)) {
+	case "completed", "success", "succeeded", "paid":
+		return true
+	default:
+		return false
+	}
 }
 
 // payerKey identifies a payer: email, else phone, else empty (uncounted).

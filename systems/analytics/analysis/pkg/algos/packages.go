@@ -11,6 +11,7 @@ package algos
 import (
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/ukama/ukama/systems/analytics/schema"
@@ -436,10 +437,26 @@ func dataVolumeBytes(p map[string]interface{}) float64 {
 	return num(p["data_volume"]) * perUnit
 }
 
+// parseTime accepts the timestamp formats seen across the source systems:
+// RFC3339 (registry/subscriber, e.g. package start_date) and Go's default
+// time.Time string layout (payments paid_at, e.g.
+// "2026-07-22 15:25:42.989109 +0000 UTC").
 func parseTime(s string) (time.Time, error) {
-	if t, err := time.Parse(time.RFC3339, s); err == nil {
-		return t, nil
+	s = strings.TrimSpace(s)
+
+	layouts := []string{
+		time.RFC3339,
+		time.RFC3339Nano,
+		"2006-01-02T15:04:05Z0700",
+		"2006-01-02 15:04:05.999999999 -0700 MST",
+		"2006-01-02 15:04:05 -0700 MST",
 	}
 
-	return time.Parse("2006-01-02T15:04:05Z0700", s)
+	for _, l := range layouts {
+		if t, err := time.Parse(l, s); err == nil {
+			return t, nil
+		}
+	}
+
+	return time.Time{}, fmt.Errorf("unrecognized time %q", s)
 }
