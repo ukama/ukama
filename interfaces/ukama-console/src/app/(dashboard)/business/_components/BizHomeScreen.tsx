@@ -202,7 +202,7 @@ export default function BizHomeScreen() {
             {
               icon: 'monetization_on',
               color: 'var(--uk-beige)',
-              label: `Revenue ${PERIOD_LABEL[span]}`,
+              label: 'Revenue',
               value: kpiAmount(kpis, KPI_KEYS.revenue, money),
               delta:
                 revDelta != null
