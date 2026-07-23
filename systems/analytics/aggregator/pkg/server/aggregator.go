@@ -88,9 +88,17 @@ func (s *AggregatorServer) ListReports(ctx context.Context, req *pb.ListReportsR
 }
 
 func (s *AggregatorServer) GetPerformanceReport(ctx context.Context, req *pb.GetPerformanceReportRequest) (*pb.GetPerformanceReportResponse, error) {
-	span, err := validateSpan(req.Span)
-	if err != nil {
-		return nil, err
+	// Reports accept the rolling filter tokens (last_24h/7d/30d) as well as the
+	// calendar spans: the composer maps a rolling span to a precise trailing
+	// window and falls back to the config window for anything else.
+	span := strings.ToLower(req.Span)
+	if !isRollingSpan(span) {
+		validated, err := validateSpan(span)
+		if err != nil {
+			return nil, err
+		}
+
+		span = validated
 	}
 
 	report, err := s.composer.Compose(req.Report, span, req.Scope, int(req.Top))
