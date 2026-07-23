@@ -172,11 +172,10 @@ func (r *repo) ScopesSeen(orgID, kpiKey, span string) ([]string, error) {
 // filterScope keeps rows whose canonical scope JSON contains all requested
 // key/value pairs. Done in Go to stay portable (scope is a varchar column).
 //
-// Org-wide rows (empty scope, e.g. REVENUE / PAID_CUSTOMERS which carry no
-// network attribution) always match: an org-wide value applies to every
-// network, so a network-scoped read must still return it. Without this a
-// network_id filter would silently drop every org-scoped KPI and the console
-// would render "—".
+// REVENUE / PAID_CUSTOMERS are network-scoped (payments attributed to a
+// network via the paying SIM; unresolvable SIMs go to an org bucket). A
+// per-network read returns only rows whose network_id matches — the org
+// bucket (empty scope) is org-only and never bleeds into a network number.
 func filterScope(rows []schema.KpiRollup, filter map[string]string) []schema.KpiRollup {
 	if len(filter) == 0 {
 		return rows
@@ -186,12 +185,6 @@ func filterScope(rows []schema.KpiRollup, filter map[string]string) []schema.Kpi
 
 	for _, row := range rows {
 		scope := schema.ParseScope(row.Scope)
-
-		if len(scope) == 0 {
-			out = append(out, row) // org-wide value applies to any scope filter
-
-			continue
-		}
 
 		match := true
 		for k, v := range filter {

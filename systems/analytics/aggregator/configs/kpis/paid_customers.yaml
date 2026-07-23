@@ -1,16 +1,24 @@
-# PAID_CUSTOMERS: distinct SIMs with a settled payment month-to-date (state
-# gauge; read with op=LAST, monthly trend = "+N this month"). A customer may
-# buy several packages against one SIM (several payments), so we dedupe by the
-# SIM id carried in the payment metadata rather than by per-transaction payer
-# contact fields.
+# PAID_CUSTOMERS: distinct SIMs with a settled payment month-to-date, per
+# network (state gauge; read with op=LAST, monthly trend = "+N this month").
+# A customer may buy several packages against one SIM (several payments), so we
+# dedupe by the SIM id carried in the payment metadata rather than by
+# per-transaction payer contact fields. The SIM is joined to
+# subscriber.sim.list to attribute the paying customer to a network; SIMs that
+# can't be resolved land in the org bucket (empty scope).
 kpi: PAID_CUSTOMERS
 domain: business
 algo: paid_customers@v1
-scope: []
+scope: [network_id]
 inputs:
   payments:
     dataset: payments.processor.list
     fields: [payment_id, status, paid_at, metadata]
+  sims:
+    dataset: subscriber.sim.list
+    fields: [sim_id, network_id]
+  networks:
+    dataset: registry.network.getAll
+    fields: [network_id]
 output: { type: int, unit: count, symbol: "" }
 rollup_ops: [AVG, MIN, MAX, LAST]
 positive_direction: up

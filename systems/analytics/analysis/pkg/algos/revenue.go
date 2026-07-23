@@ -19,8 +19,11 @@ import (
 	"github.com/ukama/ukama/systems/analytics/schema"
 )
 
-// Revenue KPIs from settled payments (payments.processor.list). Payments
-// carry no network attribution, so these are org-wide (empty scope).
+// Revenue KPIs from settled payments (payments.processor.list). A payment
+// record carries no network field, only the paying SIM in its metadata, so we
+// attribute revenue to a network by joining the SIM to subscriber.sim.list
+// (sim_id -> network_id). Payments whose SIM can't be resolved to a network
+// land in the org bucket (empty scope), so no revenue is lost.
 //
 // REVENUE is one KPI with exact components, so the aggregator ops cover
 // three dashboard cards at every span:
@@ -28,65 +31,177 @@ import (
 //   op=COUNT -> number of purchases
 //   op=AVG   -> average purchase value (weighted, exact)
 
-// Revenue (REVENUE @ org scope): settled payments with paid_at inside the
-// window. Value = collected cents; components carry count and per-payment
-// min/max.
+// Revenue (REVENUE @ scope network_id): settled payments with paid_at inside
+// the window, grouped by the network their SIM belongs to. Value = collected
+// cents; components carry count and per-payment min/max. Known networks are
+// zero-filled so a network with no sales reads $0 rather than "—".
 func Revenue(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
 	payments, ok := in["payments"]
 	if !ok {
 		return nil, fmt.Errorf("REVENUE: missing input 'payments'")
 	}
 
-	sum, count := 0.0, 0.0
-	min, max := math.Inf(1), math.Inf(-1)
+	sims, ok := in["sims"]
+	if !ok {
+		return nil, fmt.Errorf("REVENUE: missing input 'sims'")
+	}
+
+	networks, ok := in["networks"]
+	if !ok {
+		return nil, fmt.Errorf("REVENUE: missing input 'networks'")
+	}
+
+	simNet := simNetwork(sims)
+
+	// network_id ("" = SIM not resolvable to a network) -> revenue components.
+	type revAgg struct{ sum, count, min, max float64 }
+
+	byNet := map[string]*revAgg{}
+
+	ensure := func(net string) *revAgg {
+		a, ok := byNet[net]
+		if !ok {
+			a = &revAgg{min: math.Inf(1), max: math.Inf(-1)}
+			byNet[net] = a
+		}
+
+		return a
+	}
+
+	// Always keep the org bucket ("") so a recompute overwrites any prior
+	// org-wide row and the org series stays continuous even at $0.
+	ensure("")
+
+	// Zero-fill every known network so one with no sales reads $0, not "—".
+	for _, n := range networks {
+		if nid := str(n["network_id"]); nid != "" {
+			ensure(nid)
+		}
+	}
 
 	for _, p := range settledIn(payments, win.Start, win.End) {
 		cents := math.Round(num(p["amount"]) * 100)
+		net := simNet[paymentSim(p)] // "" when the SIM can't be mapped
 
-		sum += cents
-		count++
-		min = math.Min(min, cents)
-		max = math.Max(max, cents)
+		a := ensure(net)
+		a.sum += cents
+		a.count++
+		a.min = math.Min(a.min, cents)
+		a.max = math.Max(a.max, cents)
 	}
 
-	if count == 0 {
-		return []Result{{Scope: nil}}, nil // zero row keeps series/trends continuous
+	results := make([]Result, 0, len(byNet))
+
+	for net, a := range byNet {
+		var scope map[string]string
+		if net != "" {
+			scope = map[string]string{"network_id": net}
+		}
+
+		if a.count == 0 {
+			results = append(results, Result{Scope: scope}) // zero row keeps the series continuous
+			continue
+		}
+
+		results = append(results, Result{
+			Scope: scope,
+			Value: a.sum,
+			Sum:   a.sum,
+			Count: a.count,
+			Min:   a.min,
+			Max:   a.max,
+		})
 	}
 
-	return []Result{{
-		Scope: nil,
-		Value: sum,
-		Sum:   sum,
-		Count: count,
-		Min:   min,
-		Max:   max,
-	}}, nil
+	return results, nil
 }
 
-// PaidCustomers (PAID_CUSTOMERS @ org scope): distinct SIMs with at least one
-// settled payment month-to-date (month of the window, UTC — matches the
-// aggregator's monthly span with the default UTC rollup timezone). A customer
-// can buy several packages (several payments) against the same SIM, so we
-// dedupe by SIM id (from the payment's metadata) rather than counting payments
-// or per-transaction payer contact fields. State gauge: read with op=LAST; the
-// monthly trend gives "+N this month".
+// PaidCustomers (PAID_CUSTOMERS @ scope network_id): distinct SIMs with at
+// least one settled payment month-to-date (month of the window, UTC — matches
+// the aggregator's monthly span with the default UTC rollup timezone), grouped
+// by the network the SIM belongs to. A customer can buy several packages
+// (several payments) against the same SIM, so we dedupe by SIM id (from the
+// payment's metadata) rather than counting payments or per-transaction payer
+// contact fields. SIMs that can't be mapped to a network land in the org
+// bucket. State gauge: read with op=LAST; the monthly trend gives "+N this
+// month".
 func PaidCustomers(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
 	payments, ok := in["payments"]
 	if !ok {
 		return nil, fmt.Errorf("PAID_CUSTOMERS: missing input 'payments'")
 	}
 
+	sims, ok := in["sims"]
+	if !ok {
+		return nil, fmt.Errorf("PAID_CUSTOMERS: missing input 'sims'")
+	}
+
+	networks, ok := in["networks"]
+	if !ok {
+		return nil, fmt.Errorf("PAID_CUSTOMERS: missing input 'networks'")
+	}
+
+	simNet := simNetwork(sims)
 	monthStart := time.Date(win.Start.Year(), win.Start.Month(), 1, 0, 0, 0, 0, time.UTC)
 
-	sims := map[string]bool{}
+	// network_id ("" = unresolved SIM) -> set of distinct paying SIMs.
+	byNet := map[string]map[string]bool{}
 
-	for _, p := range settledIn(payments, monthStart, win.End) {
-		if sim := paymentSim(p); sim != "" {
-			sims[sim] = true
+	ensure := func(net string) map[string]bool {
+		s, ok := byNet[net]
+		if !ok {
+			s = map[string]bool{}
+			byNet[net] = s
+		}
+
+		return s
+	}
+
+	// Org bucket + zero-fill known networks (0 paid customers reads "0").
+	ensure("")
+
+	for _, n := range networks {
+		if nid := str(n["network_id"]); nid != "" {
+			ensure(nid)
 		}
 	}
 
-	return []Result{CountResult(nil, float64(len(sims)))}, nil
+	for _, p := range settledIn(payments, monthStart, win.End) {
+		sim := paymentSim(p)
+		if sim == "" {
+			continue
+		}
+
+		ensure(simNet[sim])[sim] = true
+	}
+
+	results := make([]Result, 0, len(byNet))
+
+	for net, set := range byNet {
+		var scope map[string]string
+		if net != "" {
+			scope = map[string]string{"network_id": net}
+		}
+
+		results = append(results, CountResult(scope, float64(len(set))))
+	}
+
+	return results, nil
+}
+
+// simNetwork maps sim_id -> network_id from subscriber.sim.list, so a payment
+// (which carries only a SIM id in its metadata) can be attributed to the
+// network that SIM belongs to.
+func simNetwork(sims []map[string]interface{}) map[string]string {
+	out := make(map[string]string, len(sims))
+
+	for _, s := range sims {
+		if id := str(s["sim_id"]); id != "" {
+			out[id] = str(s["network_id"])
+		}
+	}
+
+	return out
 }
 
 // settledIn returns settled payments whose paid_at falls in [from, to).

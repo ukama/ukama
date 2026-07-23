@@ -22,6 +22,18 @@ func metaFor(sim string) string {
 	return base64.StdEncoding.EncodeToString([]byte(`{"sim":"` + sim + `","provisioned":"true"}`))
 }
 
+// rowFor returns the result whose scope network_id matches net ("" = org
+// bucket / no scope). nil map reads yield "", so an unscoped Result matches "".
+func rowFor(results []Result, net string) *Result {
+	for i := range results {
+		if results[i].Scope["network_id"] == net {
+			return &results[i]
+		}
+	}
+
+	return nil
+}
+
 // The payments service marks paid transactions "completed" (not "success").
 func TestIsSettled(t *testing.T) {
 	assert.True(t, isSettled("completed"))
@@ -47,8 +59,8 @@ func TestParseTime_PaymentsFormat(t *testing.T) {
 	assert.Error(t, err)
 }
 
-// End-to-end: a "completed" payment with a Go-format paid_at inside the window
-// is now counted (SUM = cents, COUNT = 1).
+// End-to-end: a "completed" payment inside the window is counted against the
+// network its SIM belongs to (SUM = cents, COUNT = 1).
 func TestRevenue_CountsCompletedPayment(t *testing.T) {
 	win := schema.Window{
 		Start: time.Date(2026, 7, 22, 15, 0, 0, 0, time.UTC),
@@ -57,22 +69,56 @@ func TestRevenue_CountsCompletedPayment(t *testing.T) {
 	in := Datasets{
 		"payments": {
 			{
-				"amount":  "1.00",
-				"status":  "completed",
-				"paid_at": "2026-07-22 15:25:42.989109 +0000 UTC",
+				"amount":   "1.00",
+				"status":   "completed",
+				"paid_at":  "2026-07-22 15:25:42.989109 +0000 UTC",
+				"metadata": metaFor("sim-A"),
 			},
 			// excluded: right status, but outside the window
-			{"amount": "5.00", "status": "completed", "paid_at": "2026-07-21T09:00:00Z"},
+			{"amount": "5.00", "status": "completed", "paid_at": "2026-07-21T09:00:00Z", "metadata": metaFor("sim-A")},
 			// excluded: in window, but not settled
-			{"amount": "9.00", "status": "pending", "paid_at": "2026-07-22T15:30:00Z"},
+			{"amount": "9.00", "status": "pending", "paid_at": "2026-07-22T15:30:00Z", "metadata": metaFor("sim-A")},
 		},
+		"sims":     {{"sim_id": "sim-A", "network_id": "net-a"}},
+		"networks": {{"network_id": "net-a"}},
 	}
 
 	results, err := Revenue(win, in, schema.KpiSpec{})
 	assert.NoError(t, err)
-	assert.Len(t, results, 1)
-	assert.Equal(t, float64(100), results[0].Sum, "one $1.00 payment = 100 cents")
-	assert.Equal(t, float64(1), results[0].Count)
+
+	row := rowFor(results, "net-a")
+	assert.NotNil(t, row, "net-a row present")
+	assert.Equal(t, float64(100), row.Sum, "one $1.00 payment on net-a = 100 cents")
+	assert.Equal(t, float64(1), row.Count)
+}
+
+// Each payment is attributed to the network of its paying SIM; a SIM that
+// can't be resolved lands in the org bucket (empty scope), not on a network.
+func TestRevenue_AttributesBySim(t *testing.T) {
+	win := schema.Window{
+		Start: time.Date(2026, 7, 22, 0, 0, 0, 0, time.UTC),
+		End:   time.Date(2026, 7, 23, 0, 0, 0, 0, time.UTC),
+	}
+	in := Datasets{
+		"payments": {
+			{"amount": "1.00", "status": "completed", "paid_at": "2026-07-22T09:00:00Z", "metadata": metaFor("sim-A")},
+			{"amount": "2.00", "status": "completed", "paid_at": "2026-07-22T10:00:00Z", "metadata": metaFor("sim-B")},
+			// SIM not in subscriber.sim.list -> org bucket
+			{"amount": "4.00", "status": "completed", "paid_at": "2026-07-22T11:00:00Z", "metadata": metaFor("sim-Z")},
+		},
+		"sims": {
+			{"sim_id": "sim-A", "network_id": "net-a"},
+			{"sim_id": "sim-B", "network_id": "net-b"},
+		},
+		"networks": {{"network_id": "net-a"}, {"network_id": "net-b"}},
+	}
+
+	results, err := Revenue(win, in, schema.KpiSpec{})
+	assert.NoError(t, err)
+
+	assert.Equal(t, float64(100), rowFor(results, "net-a").Sum, "net-a = $1")
+	assert.Equal(t, float64(200), rowFor(results, "net-b").Sum, "net-b = $2")
+	assert.Equal(t, float64(400), rowFor(results, "").Sum, "unresolved SIM in org bucket = $4")
 }
 
 // The SIM id lives in the payment's base64-encoded metadata.
@@ -84,8 +130,9 @@ func TestPaymentSim(t *testing.T) {
 	assert.Equal(t, "", paymentSim(map[string]interface{}{}))
 }
 
-// PAID_CUSTOMERS dedupes by SIM: multiple package payments on the same SIM
-// count once (a customer buying several packages is still one paid customer).
+// PAID_CUSTOMERS dedupes by SIM within a network: multiple package payments on
+// the same SIM count once (a customer buying several packages is still one
+// paid customer).
 func TestPaidCustomers_DistinctSims(t *testing.T) {
 	win := schema.Window{
 		Start: time.Date(2026, 7, 22, 15, 0, 0, 0, time.UTC),
@@ -103,10 +150,19 @@ func TestPaidCustomers_DistinctSims(t *testing.T) {
 			// outside the month -> ignored
 			{"status": "completed", "paid_at": "2026-06-30T09:00:00Z", "metadata": metaFor("sim-D")},
 		},
+		"sims": {
+			{"sim_id": "sim-A", "network_id": "net-a"},
+			{"sim_id": "sim-B", "network_id": "net-a"},
+			{"sim_id": "sim-C", "network_id": "net-a"},
+			{"sim_id": "sim-D", "network_id": "net-a"},
+		},
+		"networks": {{"network_id": "net-a"}},
 	}
 
 	results, err := PaidCustomers(win, in, schema.KpiSpec{})
 	assert.NoError(t, err)
-	assert.Len(t, results, 1)
-	assert.Equal(t, float64(2), results[0].Value, "distinct SIMs A and B this month")
+
+	row := rowFor(results, "net-a")
+	assert.NotNil(t, row, "net-a row present")
+	assert.Equal(t, float64(2), row.Value, "distinct SIMs A and B this month")
 }

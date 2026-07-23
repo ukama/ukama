@@ -25,24 +25,25 @@ func scopeValues(rows []schema.KpiRollup) []string {
 	return out
 }
 
-// A network scope filter must keep the matching network row AND any org-wide
-// (empty scope) row, so org-scoped KPIs like REVENUE still render under a
-// network-scoped read.
-func TestFilterScope_OrgWideRowMatchesNetworkFilter(t *testing.T) {
+// With per-network attribution, a network filter returns ONLY the matching
+// network row. The org bucket (empty scope, e.g. revenue from payments whose
+// SIM couldn't be resolved) is org-only and must NOT bleed into a single
+// network's number.
+func TestFilterScope_OrgBucketExcludedFromNetworkFilter(t *testing.T) {
 	orgWide := schema.CanonicalScope(nil)                                   // "{}"
 	netA := schema.CanonicalScope(map[string]string{"network_id": "net-a"}) // {"network_id":"net-a"}
 	netB := schema.CanonicalScope(map[string]string{"network_id": "net-b"})
 
 	rows := []schema.KpiRollup{
 		{KpiKey: "REVENUE", Scope: orgWide, Value: 12640},
-		{KpiKey: "MRR", Scope: netA, Value: 3000},
-		{KpiKey: "MRR", Scope: netB, Value: 9000},
+		{KpiKey: "REVENUE", Scope: netA, Value: 100},
+		{KpiKey: "REVENUE", Scope: netB, Value: 900},
 	}
 
 	got := filterScope(rows, map[string]string{"network_id": "net-a"})
 
-	assert.ElementsMatch(t, []string{orgWide, netA}, scopeValues(got),
-		"org-wide row and the matching network row survive; other networks dropped")
+	assert.Equal(t, []string{netA}, scopeValues(got),
+		"only the matching network row; org bucket and other networks dropped")
 }
 
 // An empty filter returns every row unchanged.

@@ -177,17 +177,16 @@ func rollingOpValue(op string, a *windowAgg) (float64, bool) {
 	}
 }
 
-// scopeMatches mirrors the rollup repo's filterScope: an org-wide (empty)
-// scope matches any filter; otherwise every requested key/value must match.
+// scopeMatches mirrors the rollup repo's filterScope: with no filter every
+// scope matches; otherwise every requested key/value must be present in the
+// row's scope. The org bucket (empty scope) is org-only — it never matches a
+// per-network filter, so unresolved-SIM revenue can't inflate a network.
 func scopeMatches(scope string, filter map[string]string) bool {
 	if len(filter) == 0 {
 		return true
 	}
 
 	m := schema.ParseScope(scope)
-	if len(m) == 0 {
-		return true // org-wide value applies to any scope filter
-	}
 
 	for k, v := range filter {
 		if m[k] != v {

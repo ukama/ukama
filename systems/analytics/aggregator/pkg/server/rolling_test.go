@@ -57,8 +57,8 @@ func TestScopeMatches(t *testing.T) {
 	netA := schema.CanonicalScope(map[string]string{"network_id": "net-a"})
 
 	assert.True(t, scopeMatches(netA, nil), "no filter matches everything")
-	assert.True(t, scopeMatches(orgWide, map[string]string{"network_id": "net-a"}),
-		"org-wide row matches any network filter")
+	assert.False(t, scopeMatches(orgWide, map[string]string{"network_id": "net-a"}),
+		"org bucket (empty scope) is org-only, excluded from a network filter")
 	assert.True(t, scopeMatches(netA, map[string]string{"network_id": "net-a"}))
 	assert.False(t, scopeMatches(netA, map[string]string{"network_id": "net-b"}))
 }
@@ -86,8 +86,8 @@ func TestRollingTrend(t *testing.T) {
 	assert.InDelta(t, 20, tr.ChangePct, 1e-9)
 }
 
-func TestGetKpisRolling_SumOrgScope(t *testing.T) {
-	org := schema.CanonicalScope(nil)
+func TestGetKpisRolling_SumNetworkScope(t *testing.T) {
+	netA := schema.CanonicalScope(map[string]string{"network_id": "net-a"})
 	srv := NewAggregatorServer(
 		"org",
 		[]schema.KpiSpec{{
@@ -99,12 +99,16 @@ func TestGetKpisRolling_SumOrgScope(t *testing.T) {
 		nil, // composer (unused)
 		schema.Grid{W: 5 * time.Minute},
 		stubWindows{rows: []schema.KpiWindow{
-			{KpiKey: "REVENUE", Scope: org, WindowID: 1, Sum: 100, Count: 1, Min: 100, Max: 100, Value: 100},
-			{KpiKey: "REVENUE", Scope: org, WindowID: 2, Sum: 200, Count: 1, Min: 200, Max: 200, Value: 200},
+			{KpiKey: "REVENUE", Scope: netA, WindowID: 1, Sum: 100, Count: 1, Min: 100, Max: 100, Value: 100},
+			{KpiKey: "REVENUE", Scope: netA, WindowID: 2, Sum: 200, Count: 1, Min: 200, Max: 200, Value: 200},
 		}},
 	)
 
-	resp, err := srv.GetKpis(context.TODO(), &pb.GetKpisRequest{Keys: []string{"REVENUE"}, Span: "last_7d"})
+	resp, err := srv.GetKpis(context.TODO(), &pb.GetKpisRequest{
+		Keys:  []string{"REVENUE"},
+		Span:  "last_7d",
+		Scope: map[string]string{"network_id": "net-a"},
+	})
 	assert.NoError(t, err)
 	assert.Len(t, resp.Values, 1)
 
@@ -114,7 +118,7 @@ func TestGetKpisRolling_SumOrgScope(t *testing.T) {
 	assert.Equal(t, "SUM", v.Op)
 	assert.Equal(t, "last_7d", v.Span)
 	assert.True(t, v.IsPartial)
-	assert.Empty(t, v.Scope, "org-wide scope")
+	assert.Equal(t, "net-a", v.Scope["network_id"], "network-scoped row")
 	// current == previous (stub returns same rows) -> flat
 	assert.Equal(t, "flat", v.Trend.Direction)
 }
