@@ -55,6 +55,135 @@ typedef struct {
     int  desired;
 } bff_release_t;
 
+#define ULAB_MAX_BFF_PAYMENTS 64
+
+typedef struct {
+    char id[ULAB_MAX_ID];
+    char item_id[ULAB_MAX_ID];
+    char item_type[ULAB_MAX_REF];
+    char amount[ULAB_MAX_REF];
+    char currency[ULAB_MAX_REF];
+    char payment_method[ULAB_MAX_REF];
+    char status[ULAB_MAX_REF];
+    char paid_at[ULAB_MAX_REF];
+    char payer_email[ULAB_MAX_NAME];
+    char payer_phone[ULAB_MAX_REF];
+    char metadata[ULAB_MAX_LINE];
+} bff_payment_t;
+
+#define ULAB_MAX_BFF_SIM_PACKAGES 32
+
+typedef struct {
+    char id[ULAB_MAX_ID];
+    char package_id[ULAB_MAX_ID];
+    char start_date[ULAB_MAX_REF];
+    char end_date[ULAB_MAX_REF];
+    int  active;
+} bff_sim_package_t;
+
+typedef struct {
+    char uuid[ULAB_MAX_ID];
+    char name[ULAB_MAX_NAME];
+    uint64_t data_volume;
+    uint32_t duration_minutes;
+    double amount;
+    char data_unit[ULAB_MAX_REF];
+    char currency[ULAB_MAX_REF];
+    char country[ULAB_MAX_REF];
+    char network_id[ULAB_MAX_ID];
+    int active;
+} bff_package_t;
+
+typedef struct {
+    char package_id[ULAB_MAX_ID];
+    double revenue;
+    uint32_t attach_count;
+    int has_attach_count;
+} bff_package_metrics_t;
+
+typedef struct {
+    double total_paid;
+    double total_pending;
+    double month_paid;
+    double previous_month_paid;
+    double month_over_month_percent;
+} bff_revenue_summary_t;
+
+typedef struct {
+    double mrr;
+    double arpu;
+    int    has_mrr;
+    int    has_arpu;
+} bff_package_dashboard_t;
+
+typedef struct {
+    uint32_t subscribers_total;
+    uint32_t subscribers_active;
+    uint32_t subscribers_inactive;
+    uint32_t sites_total;
+    uint32_t nodes_total;
+    uint32_t nodes_online;
+    uint32_t nodes_offline;
+} bff_network_overview_t;
+
+typedef struct {
+    uint32_t component_total;
+    uint32_t component_category_total;
+    uint32_t sim_total;
+    uint32_t sim_available;
+    uint32_t sim_consumed;
+    uint32_t sim_pool_total;
+    uint32_t sim_pool_available;
+    uint32_t sim_pool_consumed;
+} bff_inventory_summary_t;
+
+typedef struct {
+    uint32_t payment_count;
+    uint32_t settled_count;
+    double   settled_amount;
+} bff_subscriber_billing_t;
+
+typedef struct {
+    char status[ULAB_MAX_REF];
+    uint32_t row_index;
+    uint32_t row_count;
+    int has_name;
+    int has_price;
+    int has_validity;
+    int has_active;
+} bff_performance_row_t;
+
+#define ULAB_MAX_BFF_KPI_SCOPES 8
+
+typedef struct {
+    char key[ULAB_MAX_REF];
+    char value[ULAB_MAX_ID];
+} bff_scope_entry_t;
+
+typedef struct {
+    char direction[ULAB_MAX_REF];
+    double change_pct;
+    double change_abs;
+    double previous_value;
+    int has_previous;
+} bff_kpi_trend_t;
+
+typedef struct {
+    char kpi[ULAB_MAX_REF];
+    double value;
+    char span[ULAB_MAX_REF];
+    char op[ULAB_MAX_REF];
+    char unit[ULAB_MAX_REF];
+    char symbol[ULAB_MAX_REF];
+    char from[ULAB_MAX_REF];
+    char to[ULAB_MAX_REF];
+    char computed_at[ULAB_MAX_REF];
+    int is_partial;
+    bff_scope_entry_t scope[ULAB_MAX_BFF_KPI_SCOPES];
+    size_t scope_count;
+    bff_kpi_trend_t trend;
+} bff_kpi_value_t;
+
 int bff_init(bff_client_t *c,
              const char *url,
              const char *run_dir);
@@ -83,6 +212,79 @@ int bff_add_package(bff_client_t *c,
                     package_t *p,
                     const network_t *net,
                     ulab_error_t *err);
+
+int bff_set_package_active(bff_client_t *c,
+                           package_t *p,
+                           int active,
+                           ulab_error_t *err);
+
+int bff_get_package(bff_client_t *c,
+                    const package_t *pkg,
+                    bff_package_t *actual,
+                    ulab_error_t *err);
+
+int bff_package_visible_for_network(bff_client_t *c,
+                                    const package_t *pkg,
+                                    const network_t *network,
+                                    int *visible,
+                                    ulab_error_t *err);
+
+int bff_invalid_package_name_available(bff_client_t *c,
+                                       const package_t *pkg,
+                                       const char *variant,
+                                       int *available,
+                                       ulab_error_t *err);
+
+int bff_add_invalid_package(bff_client_t *c,
+                            const package_t *pkg,
+                            const network_t *network,
+                            const char *variant,
+                            char *created_id,
+                            size_t created_id_len,
+                            ulab_error_t *err);
+
+int bff_get_package_metrics(bff_client_t *c,
+                            const package_t *pkg,
+                            const network_t *network,
+                            bff_package_metrics_t *metrics,
+                            int *found,
+                            ulab_error_t *err);
+
+int bff_get_revenue_summary(bff_client_t *c,
+                            const network_t *network,
+                            bff_revenue_summary_t *summary,
+                            ulab_error_t *err);
+
+int bff_get_package_dashboard(bff_client_t *c,
+                              const network_t *network,
+                              bff_package_dashboard_t *dashboard,
+                              ulab_error_t *err);
+
+int bff_get_network_overview(bff_client_t *c,
+                             const network_t *network,
+                             bff_network_overview_t *overview,
+                             ulab_error_t *err);
+
+int bff_get_nodes_view_count(bff_client_t *c,
+                             const network_t *network,
+                             uint32_t *count,
+                             ulab_error_t *err);
+
+int bff_get_inventory_summary(bff_client_t *c,
+                              const char *sim_type,
+                              bff_inventory_summary_t *summary,
+                              ulab_error_t *err);
+
+int bff_get_subscriber_billing(bff_client_t *c,
+                               const subscriber_t *subscriber,
+                               bff_subscriber_billing_t *billing,
+                               ulab_error_t *err);
+
+int bff_sim_is_unallocated(bff_client_t *c,
+                           const ue_t *ue,
+                           const char *sim_type,
+                           int *unallocated,
+                           ulab_error_t *err);
 
 int bff_add_subscriber(bff_client_t *c,
                        subscriber_t *sub,
@@ -123,6 +325,54 @@ int bff_add_package_to_sim(bff_client_t *c,
                            const package_t *pkg,
                            ulab_error_t *err);
 
+int bff_record_cash_package_sale(bff_client_t *c,
+                                 ue_t *ue,
+                                 const package_t *pkg,
+                                 const subscriber_t *subscriber,
+                                 double amount,
+                                 const char *currency,
+                                 bff_payment_t *payment,
+                                 ulab_error_t *err);
+
+int bff_get_package_payments(bff_client_t *c,
+                             const package_t *pkg,
+                             bff_payment_t payments[],
+                             size_t max_payments,
+                             size_t *payment_count,
+                             ulab_error_t *err);
+
+int bff_get_kpi_value(bff_client_t *c,
+                      const char *key,
+                      const char *span,
+                      const char *op,
+                      const char *network_id,
+                      const char *scope_key,
+                      const char *scope_value,
+                      bff_kpi_value_t *value,
+                      int *found,
+                      ulab_error_t *err);
+
+int bff_get_performance_report_cell(bff_client_t *c,
+                                    const char *report,
+                                    const char *span,
+                                    const char *network_id,
+                                    const char *entity_id,
+                                    const char *column,
+                                    double *value,
+                                    char *unit,
+                                    size_t unit_len,
+                                    int *found,
+                                    ulab_error_t *err);
+
+int bff_get_performance_report_row(bff_client_t *c,
+                                   const char *report,
+                                   const char *span,
+                                   const char *network_id,
+                                   const char *entity_id,
+                                   bff_performance_row_t *row,
+                                   int *found,
+                                   ulab_error_t *err);
+
 int bff_clear_sim_packages(bff_client_t *c,
                            const ue_t *ue,
                            ulab_error_t *err);
@@ -134,6 +384,7 @@ int bff_toggle_sim_status(bff_client_t *c,
 
 int bff_get_sim_usage(bff_client_t *c,
                       const ue_t *ue,
+                      const network_t *network,
                       uint64_t *used_mb,
                       ulab_error_t *err);
 
@@ -142,6 +393,13 @@ int bff_get_packages_for_sim(bff_client_t *c,
                              const char *package_id,
                              int *active,
                              ulab_error_t *err);
+
+int bff_get_sim_packages(bff_client_t *c,
+                         const ue_t *ue,
+                         bff_sim_package_t packages[],
+                         size_t max_packages,
+                         size_t *package_count,
+                         ulab_error_t *err);
 
 int bff_get_node_status(bff_client_t *c,
                         const node_t *node,

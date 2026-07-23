@@ -1,0 +1,52 @@
+version: 1
+name: p0-blocked-traffic-is-not-counted
+description: Exhaust a two-megabyte package, prove the next traffic attempt is blocked, and verify the GraphQL SIM usage remains at the successfully transferred amount.
+seed: 4516
+suite: p0
+priority: p0
+tags: [virtual, usage, accounting, policy, graphql]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: limited_plan
+    name: Blocked Usage Plan
+    data_mb: 2
+    duration_minutes: 10
+    amount: 1.00
+    assign_percent: 100
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: exhaust_then_block
+    events:
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
+      - type: traffic
+        ues: all
+        amount_mb: 2
+      - type: wait
+        seconds: 5
+    checks:
+      - type: traffic_blocked
+        ues: all
+        amount_mb: 1
+      - type: usage_per_sim
+        ues: all
+        expected: from_model

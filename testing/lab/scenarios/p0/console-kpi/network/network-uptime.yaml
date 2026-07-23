@@ -1,0 +1,59 @@
+version: 1
+name: p0-console-kpi-network-uptime
+description: Take one of two sites out of service through GraphQL for a controlled interval and verify NETWORK_UPTIME publishes a scoped partial-period percentage within valid bounds.
+seed: 4713
+suite: p0
+priority: p0
+tags: [virtual, console-kpi, network-uptime, controller, graphql]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 2
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 0
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: create_network_uptime_window
+    events:
+      - type: toggle_service
+        sites: site-001
+        state: off
+      - type: wait
+        seconds: 30
+      - type: toggle_service
+        sites: site-001
+        state: on
+      - type: wait
+        seconds: 10
+    checks:
+      - type: kpi_contract
+        key: NETWORK_UPTIME
+        span: daily
+        op: AVG
+        scope_key: network_id
+        networks: net-001
+        comparator: greater_than
+        expected_value: 0
+        expected_partial: true
+        require_computed_at: true
+        require_scope: true
+        timeout_seconds: 600
+      - type: kpi_value
+        key: NETWORK_UPTIME
+        span: daily
+        op: AVG
+        scope_key: network_id
+        networks: net-001
+        comparator: less_or_equal
+        expected_value: 100
+        timeout_seconds: 600
+

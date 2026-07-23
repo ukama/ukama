@@ -1,0 +1,64 @@
+version: 1
+name: p0-replacement-plan-price-preserves-history
+description: Sell a version-one plan, replace it with a differently priced version-two plan because GraphQL cannot edit price in place, and verify each historical payment remains attributed to its sold version.
+seed: 4532
+suite: p0
+priority: p0
+tags: [virtual, billing, revenue, history, plan-version, graphql]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: plan_v1
+    name: Historical Price V1
+    data_mb: 100
+    duration_days: 1
+    amount: 3.00
+    assign_percent: 100
+  - ref: plan_v2
+    name: Historical Price V2
+    data_mb: 100
+    duration_days: 1
+    amount: 7.00
+    assign_percent: 0
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: replace_catalog_plan
+    events:
+      - type: set_package_active
+        package: plan_v1
+        active: false
+      - type: purchase_package
+        ues: all
+        package: plan_v2
+        amount: 7.00
+        currency: USD
+    checks:
+      - type: package_business_metrics
+        networks: net-001
+        package: plan_v1
+        expected_value: 3.00
+        tolerance: 0.001
+      - type: package_business_metrics
+        networks: net-001
+        package: plan_v2
+        expected_value: 7.00
+        tolerance: 0.001
+      - type: revenue_summary
+        networks: net-001
+        column: total_paid
+        expected_value: 10.00
+        tolerance: 0.001
+

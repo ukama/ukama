@@ -1,0 +1,73 @@
+version: 1
+name: p0-failed-cash-request-followed-by-valid-retry-creates-one-sale
+description: Verify an underpriced cash request is rejected and a corrected retry creates exactly one queued entitlement and one catalog-price revenue contribution.
+seed: 4207
+suite: p0
+priority: p0
+tags: [virtual, data-package, purchase, retry, rejection, revenue]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: bootstrap
+    name: Cash Retry Bootstrap
+    data_mb: 100
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+  - ref: retry_plan
+    name: Cash Retry Target
+    data_mb: 500
+    duration_days: 1
+    amount: 5.00
+    assign_percent: 0
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: reject_then_retry
+    events:
+      - type: purchase_package
+        ues: all
+        package: retry_plan
+        amount: 4.00
+        currency: USD
+        expect:
+          result: failure
+      - type: purchase_package
+        ues: all
+        package: retry_plan
+        amount: 5.00
+        currency: USD
+    checks:
+      - type: package_assignment_count
+        ues: all
+        package: retry_plan
+        expected_count: 1
+      - type: package_state
+        ues: all
+        package: retry_plan
+        expected: queued
+      - type: package_business_metrics
+        networks: all
+        package: retry_plan
+        expected_value: 5.00
+        expected_count: 0
+

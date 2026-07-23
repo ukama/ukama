@@ -1,0 +1,72 @@
+version: 1
+name: p0-failed-cash-request-followed-by-valid-retry-creates-one-sale
+description: Reject a second cash request whose amount does not match the plan, retry with valid terms, and verify GraphQL exposes one entitlement and one settled sale rather than two.
+seed: 4526
+suite: p0
+priority: p0
+tags: [virtual, billing, payment, retry, rejection, graphql]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: bootstrap
+    name: Settled Retry Bootstrap
+    data_mb: 100
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+  - ref: target
+    name: Settled Retry Target
+    data_mb: 500
+    duration_days: 1
+    amount: 5.00
+    assign_percent: 0
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: reject_then_retry
+    events:
+      - type: purchase_package
+        ues: all
+        package: target
+        amount: 4.00
+        currency: USD
+        expect:
+          result: failure
+      - type: purchase_package
+        ues: all
+        package: target
+        amount: 5.00
+        currency: USD
+    checks:
+      - type: payment_count
+        ues: all
+        package: target
+        status: settled
+        expected_count: 1
+      - type: package_assignment_count
+        ues: all
+        package: target
+        expected_count: 1
+      - type: package_business_metrics
+        networks: net-001
+        package: target
+        expected_value: 5.00
+        tolerance: 0.001
+      - type: revenue_summary
+        networks: net-001
+        column: total_paid
+        expected_value: 6.00
+        tolerance: 0.001
+

@@ -1,0 +1,59 @@
+version: 1
+name: p0-initial-payment-matches-plan
+description: Verify the first allocation's package, SIM, subscriber linkage, catalog price, currency, and package-scoped revenue agree through BFF GraphQL effects.
+seed: 4002
+suite: p0
+priority: p0
+tags: [virtual, data-package, allocation, lineage, revenue]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: initial_plan
+    name: Initial Payment Match Plan
+    data_mb: 250
+    duration_minutes: 30
+    amount: 5.00
+    currency: USD
+    country: USA
+    assign_percent: 100
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: verify_catalog_assignment_and_revenue
+    checks:
+      - type: package_catalog_equals
+        networks: all
+        package: initial_plan
+      - type: package_state
+        ues: all
+        package: initial_plan
+        expected: active
+      - type: package_assignment_count
+        ues: all
+        package: initial_plan
+        expected_count: 1
+      - type: package_business_metrics
+        networks: all
+        package: initial_plan
+        expected_value: 5.00
+        expected_count: 1
+

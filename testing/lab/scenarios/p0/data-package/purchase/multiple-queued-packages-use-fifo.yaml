@@ -1,0 +1,89 @@
+version: 1
+name: p0-multiple-queued-packages-use-fifo
+description: Verify two paid packages create distinct revenue contributions and a non-overlapping FIFO entitlement chain behind the current package.
+seed: 4203
+suite: p0
+priority: p0
+tags: [virtual, data-package, purchase, fifo, revenue]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: current_plan
+    name: FIFO Current Plan
+    data_mb: 100
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+  - ref: second_plan
+    name: FIFO Second Plan
+    data_mb: 200
+    duration_days: 1
+    amount: 2.00
+    assign_percent: 0
+  - ref: third_plan
+    name: FIFO Third Plan
+    data_mb: 300
+    duration_days: 1
+    amount: 3.00
+    assign_percent: 0
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: purchase_in_order
+    events:
+      - type: purchase_package
+        ues: all
+        package: second_plan
+      - type: purchase_package
+        ues: all
+        package: third_plan
+    checks:
+      - type: package_state
+        ues: all
+        package: second_plan
+        expected: queued
+      - type: package_state
+        ues: all
+        package: third_plan
+        expected: queued
+      - type: package_assignment_count
+        ues: all
+        expected_count: 3
+      - type: package_assignment_chain
+        ues: all
+        package: second_plan
+        after_package: current_plan
+      - type: package_assignment_chain
+        ues: all
+        package: third_plan
+        after_package: second_plan
+      - type: package_business_metrics
+        networks: all
+        package: second_plan
+        expected_value: 2.00
+        expected_count: 0
+      - type: package_business_metrics
+        networks: all
+        package: third_plan
+        expected_value: 3.00
+        expected_count: 0
+

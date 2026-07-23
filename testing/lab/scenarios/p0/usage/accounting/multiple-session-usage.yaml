@@ -1,0 +1,56 @@
+version: 1
+name: p0-multiple-session-usage
+description: Generate three sessions for one SIM and verify the GraphQL usage read accumulates all nine megabytes without loss or duplication.
+seed: 4515
+suite: p0
+priority: p0
+tags: [virtual, usage, accounting, multiple-session, graphql]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: usage_plan
+    name: Multiple Session Usage Plan
+    data_mb: 100
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: generate_multiple_sessions
+    events:
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
+      - type: traffic
+        ues: all
+        amount_mb: 2
+      - type: traffic
+        ues: all
+        amount_mb: 3
+      - type: traffic
+        ues: all
+        amount_mb: 4
+      - type: wait
+        seconds: 5
+    checks:
+      - type: usage_per_sim
+        ues: all
+        expected: from_model
+        tolerance_percent: 2

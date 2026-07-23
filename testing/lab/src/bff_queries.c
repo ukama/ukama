@@ -26,7 +26,59 @@ const char *BFF_ADD_NODE_TO_SITE =
 
 const char *BFF_ADD_PACKAGE =
 "mutation AddPackage($data: AddPackageInputDto!) {"
-" addPackage(data: $data) { uuid name dataVolume dataUnit duration amount } }";
+" addPackage(data: $data) { uuid name active dataVolume dataUnit duration "
+" amount currency country } }";
+
+const char *BFF_UPDATE_PACKAGE =
+"mutation UpdatePackage($packageId: String!, $data: UpdatePackageInputDto!) {"
+" updatePackage(packageId: $packageId, data: $data) {"
+" uuid name active duration amount currency country } }";
+
+const char *BFF_GET_PACKAGE =
+"query GetPackage($packageId: String!) {"
+" getPackage(packageId: $packageId) { uuid name active duration dataVolume "
+" dataUnit amount currency country networkId } }";
+
+const char *BFF_GET_PACKAGES =
+"query GetPackages($networkId: String) {"
+" getPackages(networkId: $networkId) { packages { uuid } } }";
+
+const char *BFF_PACKAGE_NAME_AVAILABLE =
+"query IsPackageNameAvailable($name: String!) {"
+" isPackageNameAvailable(name: $name) { isAvailable name } }";
+
+const char *BFF_PACKAGES_DASHBOARD =
+"query PackagesDashboard($networkId: String) {"
+" commerceView(networkId: $networkId) { plans {"
+" mrr arpu plans { packageId revenue attachCount } } } }";
+
+const char *BFF_REVENUE_OVERVIEW =
+"query RevenueOverview($networkId: String) {"
+" commerceView(networkId: $networkId) { revenue { totalPaid totalPending "
+" monthPaid prevMonthPaid momPct } } }";
+
+const char *BFF_NETWORK_HOME =
+"query NetworkHome($networkId: String!) {"
+" networkOverview(networkId: $networkId) { subscriberStats { total active "
+" inactive } siteStats { sites { id } } nodeStats { total online offline } } }";
+
+const char *BFF_NODES_LIST =
+"query NodesList($networkId: String) { nodesView(networkId: $networkId) {"
+" nodes { nodes { id } } } }";
+
+const char *BFF_INVENTORY_OVERVIEW =
+"query InventoryOverview { inventoryView { components { total byCategory {"
+" category count } } simStock { total available consumed } } }";
+
+const char *BFF_SIM_POOL_OVERVIEW =
+"query SimPoolOverview($simType: String!, $limit: Int!) {"
+" simPoolView(simType: $simType) { stats { total available consumed } "
+" sims(limit: $limit) { sims { id } } } }";
+
+const char *BFF_SUBSCRIBER_DETAIL =
+"query SubscriberDetail($subscriberId: String!) {"
+" subscriberView(subscriberId: $subscriberId) { billing { payments {"
+" id amount currency status paidAt paymentMethod } } } }";
 
 const char *BFF_ADD_SUBSCRIBER =
 "mutation AddSubscriber($data: SubscriberInputDto!) {"
@@ -41,10 +93,35 @@ const char *BFF_GET_DATA_USAGE =
 "query GetDataUsage($data: SimUsageInputDto!) {"
 " getDataUsage(data: $data) { simId usage } }";
 
+const char *BFF_GET_SIMS_USAGE_BY_NETWORK =
+"query GetSimsUsageByNetwork($networkId: String!) {"
+" getSimsUsageByNetwork(networkId: $networkId) { simId usage } }";
+
 const char *BFF_GET_SIM_PACKAGES =
 "query GetPackagesForSim($data: GetPackagesForSimInputDto!) {"
 " getPackagesForSim(data: $data) { sim_id packages { "
-" package_id is_active } } }";
+" id package_id start_date end_date is_active } } }";
+
+const char *BFF_ADD_PAYMENT =
+"mutation RecordCashPackageSale($data: AddPaymentInputDto!) {"
+" addPayment(data: $data) { id itemId itemType amount currency paymentMethod "
+" status paidAt payerEmail payerPhone metadata } }";
+
+const char *BFF_GET_PAYMENTS =
+"query GetPayments($data: GetPaymentsInputDto!) {"
+" getPayments(data: $data) { payments { id itemId itemType amount currency "
+" paymentMethod status paidAt payerEmail payerPhone metadata } } }";
+
+const char *BFF_GET_KPI_VALUES =
+"query GetKpiValues($data: KpiValuesInput!) {"
+" getKpiValues(data: $data) { values { kpi value span op from to unit symbol "
+" isPartial computedAt scope { key value } trend { direction changePct "
+" changeAbs prevValue hasPrevious } } } }";
+
+const char *BFF_GET_PERFORMANCE_REPORT =
+"query GetPerformanceReport($data: PerformanceReportInput!) {"
+" getPerformanceReport(data: $data) { report span rows { entityId status "
+" attributes { key value } cells { column value unit symbol format } } } }";
 
 const char *BFF_GET_NODE =
 "query GetNode($data: NodeInput!) {"

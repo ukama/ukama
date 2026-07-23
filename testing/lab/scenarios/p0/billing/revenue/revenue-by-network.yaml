@@ -1,0 +1,39 @@
+version: 1
+name: p0-revenue-by-network
+description: Allocate a SIM in a unique network and verify RevenueOverview with that networkId attributes the mandatory package payment to the selected network.
+seed: 4530
+suite: p0
+priority: p0
+tags: [virtual, billing, revenue, network, graphql]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: network_plan
+    name: Network Revenue Plan
+    data_mb: 100
+    duration_days: 1
+    amount: 5.00
+    assign_percent: 100
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: verify_network_revenue
+    checks:
+      - type: revenue_summary
+        networks: net-001
+        column: total_paid
+        expected_value: 5.00
+        tolerance: 0.001
+
