@@ -30,6 +30,7 @@ import SkeletonTable from '@/components/data-table/SkeletonTable';
 import StatusBadge from '@/components/StatusBadge';
 import { BAR_COLORS } from '@/lib/charts';
 import { useCurrency } from '@/lib/currency';
+import { formatDuration } from '@/lib/duration';
 import { DEFAULT_RANGE, rangeToSpan } from '@/lib/dateRange';
 import { attrValue, cellMoney, cellValue } from '@/lib/kpis';
 import { dataVolumeToBytes, formatBytes } from '@/lib/usage';
@@ -105,7 +106,7 @@ export default function BizPackagesScreen() {
     .filter((p) => p.sold > 0)
     .sort((a, z) => z.sold - a.sold)[0];
   const bestLabel = bestSeller
-    ? `${formatBytes(dataVolumeToBytes(bestSeller.dataVolume, bestSeller.dataUnit))} / ${bestSeller.duration}d`
+    ? `${formatBytes(dataVolumeToBytes(bestSeller.dataVolume, bestSeller.dataUnit))} / ${formatDuration(bestSeller.duration)}`
     : '—';
 
   return (
