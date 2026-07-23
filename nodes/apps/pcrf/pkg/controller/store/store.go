@@ -10,6 +10,7 @@ package store
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"math/rand"
 	"os"
@@ -26,6 +27,12 @@ import (
 )
 
 const PCRFDB = "/ukama/apps/db/pcrf.db"
+
+var (
+	ErrSubscriberNotFound = errors.New("subscriber not found")
+	ErrPolicyInvalid      = errors.New("policy invalid for subscriber")
+	ErrDataCapExceeded    = errors.New("data cap exceeded")
+)
 
 type Store struct {
 	db *sql.DB
@@ -1424,12 +1431,20 @@ func (s *Store) GetSubscriber(imsi string) (*Subscriber, error) {
 
 	var subscriber Subscriber
 	var id []byte
+
 	err := row.Scan(&subscriber.ID, &subscriber.Imsi, &id, &subscriber.ReRouteID.ID)
 	if err != nil {
-		log.Errorf("Subscriber not found: %v", err)
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Errorf("Subscriber record not found: %v", err)
 
-		return nil, fmt.Errorf("subscriber not found: %w", err)
+			return nil, fmt.Errorf("%w: imsi %s", ErrSubscriberNotFound, imsi)
+		}
+
+		log.Errorf("Failed to scan subscriber row for imsi %s. Error: %v", imsi, err)
+
+		return nil, fmt.Errorf("failed to query subscriber %s. Error: %w", imsi, err)
 	}
+
 	uuid, err := uuid.FromBytes(id)
 	if err != nil {
 		log.Errorf("Policy id is not a valid uuid: %v", err)
@@ -1455,6 +1470,7 @@ func (s *Store) GetSubscriber(imsi string) (*Subscriber, error) {
 		return nil, fmt.Errorf("failed to get reroute for subscriber %s. Error: %w",
 			subscriber.Imsi, err)
 	}
+
 	subscriber.ReRouteID = *r
 
 	log.Debugf("Subscriber %s is %+v", subscriber.Imsi, subscriber)

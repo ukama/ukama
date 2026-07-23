@@ -10,6 +10,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -201,23 +202,23 @@ func (c *Controller) ExitController() error {
 func (c *Controller) validateSubscriber(imsi string) (*store.Subscriber, error) {
 	s, err := c.store.GetSubscriber(imsi)
 	if err != nil {
-		log.Errorf("Failed to get subscriber for %s. Error: %v", imsi, err)
+		log.Errorf("Failed to get subscriber for imsi %s. Error: %v", imsi, err)
 
-		return nil, fmt.Errorf("failed to get subscriber for %s. Error: %w", imsi, err)
+		return nil, fmt.Errorf("failed to get subscriber for imsi %s. Error: %w", imsi, err)
 	}
 
 	now := time.Now().Unix()
 	if s.PolicyID.StartTime > now || s.PolicyID.EndTime <= now {
 		log.Errorf("Failed to get valid policy for imsi %s", s.Imsi)
 
-		return nil, fmt.Errorf("failed to get valid policy for imsi %s", s.Imsi)
+		return nil, fmt.Errorf("%w: imsi %s", store.ErrPolicyInvalid, s.Imsi)
 	}
 
 	err = c.store.ValidateDataCapLimits(imsi, &s.PolicyID)
 	if err != nil {
 		log.Errorf("Failed to validate data cap limits: %v", err)
 
-		return nil, fmt.Errorf("failed to validate data cap limits: %w", err)
+		return nil, fmt.Errorf("%w: %v", store.ErrDataCapExceeded, err)
 	}
 
 	return s, nil
@@ -293,11 +294,44 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 
 	sub, err = c.validateSubscriber(req.ImsiStr)
 	if err != nil {
-		log.Errorf("Subscriber %s not configured locally or policy invalid: %v",
-			req.ImsiStr, err)
+		switch {
+		case errors.Is(err, store.ErrSubscriberNotFound):
+			log.Warnf("Subscriber %s not found on local node: %v", req.ImsiStr, err)
+			log.Infof("Fetching subscriber %s from remote asr", req.ImsiStr)
 
-		return fmt.Errorf("subscriber %s not configured locally or policy invalid: %w",
-			req.ImsiStr, err)
+			sub, err := c.rc.GetSubscriberProfile(req.ImsiStr)
+			if err != nil {
+				log.Errorf("Subscriber %s not found in remote asr either: %v", req.ImsiStr, err)
+
+				return fmt.Errorf("subscriber %s not found either locally, nor in remote asr %w",
+					req.ImsiStr, err)
+			}
+
+			log.Infof("Subscriber %s found in remote asr", req.ImsiStr)
+			log.Infof("Registering subscriber %s in local node", req.ImsiStr)
+
+			_, err = c.store.CreateSubscriber(sub.Imsi, &sub.Policy, &sub.ReRoute, nil)
+			if err != nil {
+				log.Errorf("Failed to create missing subscriber with imsi %s. Error: %v", req.Imsi, err)
+
+				return fmt.Errorf("failed to create missing subscriber with imsi %s. Error: %w", req.Imsi, err)
+			}
+
+		case errors.Is(err, store.ErrPolicyInvalid):
+			log.Errorf("Subscriber %s has no valid policy: %v", req.ImsiStr, err)
+
+			return fmt.Errorf("subscriber %s has no valid policy: %w", req.ImsiStr, err)
+
+		case errors.Is(err, store.ErrDataCapExceeded):
+			log.Errorf("Subscriber %s exceeded data cap: %v", req.ImsiStr, err)
+
+			return fmt.Errorf("subscriber %s exceeded data cap: %w", req.ImsiStr, err)
+
+		default:
+			log.Errorf("Failed to validate subscriber %s: %v", req.ImsiStr, err)
+
+			return fmt.Errorf("failed to validate subscriber %s: %v", req.ImsiStr, err)
+		}
 	}
 
 	state := c.sm.IfSessionExist(ctx, sub.Imsi, req.IpStr)
