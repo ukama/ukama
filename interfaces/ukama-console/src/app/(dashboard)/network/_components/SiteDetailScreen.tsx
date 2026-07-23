@@ -30,13 +30,13 @@ import TextField from '@mui/material/TextField';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+import { useGetKpiTimeSeriesQuery } from '@/client/graphql/analytics.generated';
 import {
   useRestartSiteMutation,
   useToggleRfStatusMutation,
   useToggleServiceMutation,
 } from '@/client/graphql/controller.generated';
 import { useToggleInternetSwitchMutation } from '@/client/graphql/nodes.generated';
-import { useMetricsRangeQuery } from '@/client/graphql/range-metrics.generated';
 import { useNetworkSiteDetailQuery } from '@/client/graphql/site-detail.generated';
 import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
 import AppModal from '@/components/AppModal';
@@ -51,6 +51,7 @@ import { useToast } from '@/components/ToastProvider';
 import { byWhom, prettyOpType } from '@/features/operations/labels';
 import { useSiteOperationStatus } from '@/features/operations/useOperationStatus';
 import { normalizeCoords } from '@/lib/geo';
+import { KPI_KEYS } from '@/lib/kpis';
 import { toUkamaNode } from '@/lib/mappers/nodes';
 import { toSite } from '@/lib/mappers/sites';
 import { formatDate } from '@/lib/parsers';
@@ -116,7 +117,7 @@ const DEFAULT_COMP: CompDef = {
   metric: 'battery_charge',
 };
 
-/** Two rows of daily uptime bars from the site_uptime_percentage series.
+/** Two rows of daily uptime bars from the SITE_UPTIME KPI series.
  *  `null` days are gaps (no data) and render as a muted bar. */
 function UptimeBars({ values }: { values: (number | null)[] }) {
   const bars = (vals: (number | null)[]) => (
@@ -776,23 +777,27 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
   const nodesSection = view?.nodes;
   const components = view?.components.components ?? [];
 
-  // 90-day daily uptime series for the Site overview card.
+  // 90-day daily site uptime from the analytics SITE_UPTIME KPI (scope
+  // network_id + site_id), read as a daily time series.
   const [uNow] = useState(() => Math.floor(Date.now() / 1000));
-  const { data: uptimeData, loading: uptimeLoading } = useMetricsRangeQuery({
+  const { data: uptimeData, loading: uptimeLoading } = useGetKpiTimeSeriesQuery({
     variables: {
       data: {
-        keys: ['site_uptime_percentage'],
-        from: uNow - 90 * 86_400,
-        to: uNow,
+        keys: [KPI_KEYS.siteUptime],
+        span: 'daily',
+        from: new Date((uNow - 90 * 86_400) * 1000).toISOString(),
+        to: new Date(uNow * 1000).toISOString(),
+        networkId,
+        siteId,
       },
     },
+    skip: !networkId || !siteId,
   });
-  // Daily uptime %, gaps (-1 / missing) kept as null so the bars can render
-  // them as "no data" and the average ignores them — never treat a gap as a
-  // real 0/-1 reading.
-  const uptimeVals = (uptimeData?.metricsRange.metrics?.[0]?.values ?? []).map(
-    (v) => (v[1] == null || v[1] === -1 ? null : v[1]),
-  );
+  // One daily AVG uptime % per bucket, oldest→newest (the bars split into
+  // recent/older halves). Days with no data simply have no bucket.
+  const uptimeVals: (number | null)[] = (
+    uptimeData?.getKpiTimeSeries.values ?? []
+  ).map((v) => v.value);
   const realUptime = uptimeVals.filter((v): v is number => v != null);
   const uptimePct = realUptime.length
     ? Math.round(realUptime.reduce((a, b) => a + b, 0) / realUptime.length)

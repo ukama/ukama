@@ -14,6 +14,13 @@ export type GetKpiValuesQueryVariables = Types.Exact<{
 
 export type GetKpiValuesQuery = { __typename?: 'Query', getKpiValues: { __typename?: 'GetKpiValuesDto', values: Array<{ __typename?: 'KpiValueDto', kpi: string, value: number, span?: string | null, unit?: string | null, symbol?: string | null, isPartial?: boolean | null, trend?: { __typename?: 'TrendDto', direction?: string | null, changePct?: number | null, changeAbs?: number | null, prevValue?: number | null, hasPrevious?: boolean | null } | null }> } };
 
+export type GetKpiTimeSeriesQueryVariables = Types.Exact<{
+  data: Types.KpiTimeSeriesInput;
+}>;
+
+
+export type GetKpiTimeSeriesQuery = { __typename?: 'Query', getKpiTimeSeries: { __typename?: 'GetKpiTimeSeriesDto', values: Array<{ __typename?: 'KpiValueDto', from?: string | null, to?: string | null, kpi: string, value: number, span?: string | null, unit?: string | null, symbol?: string | null, isPartial?: boolean | null, trend?: { __typename?: 'TrendDto', direction?: string | null, changePct?: number | null, changeAbs?: number | null, prevValue?: number | null, hasPrevious?: boolean | null } | null }> } };
+
 export type GetPerformanceReportQueryVariables = Types.Exact<{
   data: Types.PerformanceReportInput;
 }>;
@@ -92,13 +99,6 @@ export type GetKpiValuesQueryHookResult = ReturnType<typeof useGetKpiValuesQuery
 export type GetKpiValuesLazyQueryHookResult = ReturnType<typeof useGetKpiValuesLazyQuery>;
 export type GetKpiValuesSuspenseQueryHookResult = ReturnType<typeof useGetKpiValuesSuspenseQuery>;
 export type GetKpiValuesQueryResult = Apollo.QueryResult<GetKpiValuesQuery, GetKpiValuesQueryVariables>;
-export type GetKpiTimeSeriesQueryVariables = Types.Exact<{
-  data: Types.KpiTimeSeriesInput;
-}>;
-
-
-export type GetKpiTimeSeriesQuery = { __typename?: 'Query', getKpiTimeSeries: { __typename?: 'GetKpiTimeSeriesDto', values: Array<{ __typename?: 'KpiValueDto', from?: string | null, to?: string | null, kpi: string, value: number, span?: string | null, unit?: string | null, symbol?: string | null, isPartial?: boolean | null, trend?: { __typename?: 'TrendDto', direction?: string | null, changePct?: number | null, changeAbs?: number | null, prevValue?: number | null, hasPrevious?: boolean | null } | null }> } };
-
 export const GetKpiTimeSeriesDocument = gql`
     query GetKpiTimeSeries($data: KpiTimeSeriesInput!) {
   getKpiTimeSeries(data: $data) {
@@ -110,6 +110,23 @@ export const GetKpiTimeSeriesDocument = gql`
   }
 }
     ${KpiValueFieldsFragmentDoc}`;
+
+/**
+ * __useGetKpiTimeSeriesQuery__
+ *
+ * To run a query within a React component, call `useGetKpiTimeSeriesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetKpiTimeSeriesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetKpiTimeSeriesQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
 export function useGetKpiTimeSeriesQuery(baseOptions: Apollo.QueryHookOptions<GetKpiTimeSeriesQuery, GetKpiTimeSeriesQueryVariables> & ({ variables: GetKpiTimeSeriesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetKpiTimeSeriesQuery, GetKpiTimeSeriesQueryVariables>(GetKpiTimeSeriesDocument, options);

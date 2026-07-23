@@ -102,6 +102,36 @@ func (_m *aggregator) GetKpis(keys []string, span string, op string, scope map[s
 	return r0, r1
 }
 
+// GetPerformanceReport provides a mock function with given fields: report, span, scope, top
+func (_m *aggregator) GetPerformanceReport(report string, span string, scope map[string]string, top int32) (*gen.GetPerformanceReportResponse, error) {
+	ret := _m.Called(report, span, scope, top)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPerformanceReport")
+	}
+
+	var r0 *gen.GetPerformanceReportResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, map[string]string, int32) (*gen.GetPerformanceReportResponse, error)); ok {
+		return rf(report, span, scope, top)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, map[string]string, int32) *gen.GetPerformanceReportResponse); ok {
+		r0 = rf(report, span, scope, top)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetPerformanceReportResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, map[string]string, int32) error); ok {
+		r1 = rf(report, span, scope, top)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListKpis provides a mock function with no fields
 func (_m *aggregator) ListKpis() (*gen.ListKpisResponse, error) {
 	ret := _m.Called()
@@ -120,6 +150,36 @@ func (_m *aggregator) ListKpis() (*gen.ListKpisResponse, error) {
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.ListKpisResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ListReports provides a mock function with no fields
+func (_m *aggregator) ListReports() (*gen.ListReportsResponse, error) {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListReports")
+	}
+
+	var r0 *gen.ListReportsResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func() (*gen.ListReportsResponse, error)); ok {
+		return rf()
+	}
+	if rf, ok := ret.Get(0).(func() *gen.ListReportsResponse); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ListReportsResponse)
 		}
 	}
 

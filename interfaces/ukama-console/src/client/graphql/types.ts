@@ -367,6 +367,11 @@ export type GetHealthReportInputDto = {
   timestamp: Scalars['String']['input'];
 };
 
+export type GetKpiTimeSeriesDto = {
+  __typename?: 'GetKpiTimeSeriesDto';
+  values: Array<KpiValueDto>;
+};
+
 export type GetKpiValuesDto = {
   __typename?: 'GetKpiValuesDto';
   values: Array<KpiValueDto>;
@@ -411,6 +416,11 @@ export type GetPerformanceReportDto = {
   rows: Array<ReportRowDto>;
   span?: Maybe<Scalars['String']['output']>;
   title?: Maybe<Scalars['String']['output']>;
+};
+
+export type GetReleaseCatalogInput = {
+  name?: InputMaybe<Scalars['String']['input']>;
+  type?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type GetReportDto = {
@@ -564,6 +574,16 @@ export type KpiEntryDto = {
   value: Scalars['Float']['output'];
 };
 
+export type KpiTimeSeriesInput = {
+  from?: InputMaybe<Scalars['String']['input']>;
+  keys: Array<Scalars['String']['input']>;
+  networkId?: InputMaybe<Scalars['String']['input']>;
+  op?: InputMaybe<Scalars['String']['input']>;
+  siteId?: InputMaybe<Scalars['String']['input']>;
+  span?: InputMaybe<Scalars['String']['input']>;
+  to?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type KpiValueDto = {
   __typename?: 'KpiValueDto';
   computedAt?: Maybe<Scalars['String']['output']>;
@@ -586,15 +606,6 @@ export type KpiValuesInput = {
   networkId?: InputMaybe<Scalars['String']['input']>;
   op?: InputMaybe<Scalars['String']['input']>;
   span?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type KpiTimeSeriesInput = {
-  keys: Array<Scalars['String']['input']>;
-  networkId?: InputMaybe<Scalars['String']['input']>;
-  op?: InputMaybe<Scalars['String']['input']>;
-  span?: InputMaybe<Scalars['String']['input']>;
-  from?: InputMaybe<Scalars['String']['input']>;
-  to?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type KpisSection = {
@@ -703,6 +714,7 @@ export type Mutation = {
   deleteSubscriber: CBooleanResponse;
   detachhNode: CBooleanResponse;
   processPayment: ProcessPaymentDto;
+  promoteRelease: PromoteReleaseResponse;
   releaseNodeFromSite: CBooleanResponse;
   removeMember: CBooleanResponse;
   removePackageForSim: RemovePackageFromSimResDto;
@@ -847,6 +859,11 @@ export type MutationDetachhNodeArgs = {
 
 export type MutationProcessPaymentArgs = {
   data: ProcessPaymentInputDto;
+};
+
+
+export type MutationPromoteReleaseArgs = {
+  data: PromoteReleaseInputDto;
 };
 
 
@@ -1450,6 +1467,19 @@ export type ProcessPaymentInputDto = {
   token: Scalars['String']['input'];
 };
 
+export type PromoteReleaseInputDto = {
+  name: Scalars['String']['input'];
+  type?: InputMaybe<Scalars['String']['input']>;
+  version: Scalars['String']['input'];
+};
+
+export type PromoteReleaseResponse = {
+  __typename?: 'PromoteReleaseResponse';
+  desiredVersion: Scalars['String']['output'];
+  message: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
 export type Query = {
   __typename?: 'Query';
   commerceView: CommerceView;
@@ -1467,6 +1497,7 @@ export type Query = {
   getInvitation: InvitationDto;
   getInvitations: InvitationsResDto;
   getInvitationsByEmail: InvitationsResDto;
+  getKpiTimeSeries: GetKpiTimeSeriesDto;
   getKpiValues: GetKpiValuesDto;
   getMember: MemberDto;
   getMemberByUserId: MemberDto;
@@ -1494,6 +1525,7 @@ export type Query = {
   getPayment: PaymentDto;
   getPayments: PaymentsDto;
   getPerformanceReport: GetPerformanceReportDto;
+  getReleaseCatalog: ReleaseCatalog;
   getReport: GetReportDto;
   getReportPdf: GetReportDto;
   getReports: GetReportsDto;
@@ -1585,6 +1617,11 @@ export type QueryGetInvitationArgs = {
 
 export type QueryGetInvitationsByEmailArgs = {
   email: Scalars['String']['input'];
+};
+
+
+export type QueryGetKpiTimeSeriesArgs = {
+  data: KpiTimeSeriesInput;
 };
 
 
@@ -1685,6 +1722,11 @@ export type QueryGetPaymentsArgs = {
 
 export type QueryGetPerformanceReportArgs = {
   data: PerformanceReportInput;
+};
+
+
+export type QueryGetReleaseCatalogArgs = {
+  data: GetReleaseCatalogInput;
 };
 
 
@@ -1871,6 +1913,22 @@ export type RawReportDto = {
   totalAmountCents: Scalars['String']['output'];
   vatAmountCents: Scalars['String']['output'];
   vatAmountCurrency?: Maybe<Scalars['String']['output']>;
+};
+
+export type Release = {
+  __typename?: 'Release';
+  available: Scalars['Boolean']['output'];
+  chunked: Scalars['Boolean']['output'];
+  desired: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  type: Scalars['String']['output'];
+  uploadedAt: Scalars['String']['output'];
+  version: Scalars['String']['output'];
+};
+
+export type ReleaseCatalog = {
+  __typename?: 'ReleaseCatalog';
+  releases: Array<Release>;
 };
 
 export type RemovePackageFormSimInputDto = {

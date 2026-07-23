@@ -120,6 +120,7 @@ class AnalyticsAPI extends BaseRESTDataSource {
     if (data.from) q.append("from", data.from);
     if (data.to) q.append("to", data.to);
     if (data.networkId) q.append("network_id", data.networkId);
+    if (data.siteId) q.append("site_id", data.siteId);
 
     const res = await this.callGet<RawGetKpiValues>(
       `kpis/timeseries?${q.toString()}`
