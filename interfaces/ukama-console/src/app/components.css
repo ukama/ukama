@@ -421,24 +421,36 @@
 /* ---- uptime grid (site overview, GitHub-contribution style) ---- */
 .uptime-grid {
   display: grid;
-  grid-auto-flow: column;
-  grid-template-rows: repeat(7, 12px);
-  grid-auto-columns: 12px;
-  gap: 3px;
+  grid-template-rows: 1fr;
+  gap: 4px;
+  width: 100%;
+  flex: 1;
+  min-height: 48px;
+  max-height: 140px;
 }
 .uptime-cell {
-  border-radius: 2px;
+  border-radius: 3px;
+  min-width: 0;
+  min-height: 0;
 }
 .uptime-legend {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
+  gap: 6px 14px;
   font-size: 11.5px;
   color: var(--uk-ink-3);
 }
-.uptime-legend .uptime-cell {
+.uptime-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.uptime-swatch {
   width: 11px;
   height: 11px;
+  aspect-ratio: auto;
+  flex: none;
 }
 
 /* ---- admin launcher hover ---- */

@@ -27,6 +27,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Skeleton from '@mui/material/Skeleton';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -120,26 +121,25 @@ const DEFAULT_COMP: CompDef = {
 /** Days shown in the uptime grid. */
 const UPTIME_DAYS = 30;
 
-/** Faint -> bright green intensities (Less -> More), shared by cells + legend. */
-const UPTIME_LEVELS = [0.28, 0.5, 0.72, 1] as const;
+/** Uptime %-range buckets: faint -> bright green (worse -> better). Shared by
+ *  the cells and the legend so the two always agree. */
+const UPTIME_BUCKETS = [
+  { max: 50, opacity: 0.28, label: '<50%' },
+  { max: 80, opacity: 0.5, label: '50–79%' },
+  { max: 95, opacity: 0.72, label: '80–94%' },
+  { max: Infinity, opacity: 1, label: '≥95%' },
+] as const;
 
 /** Cell style for a day's uptime %: greener = higher; null = muted (no data). */
 function uptimeCellStyle(v: number | null): { background: string; opacity: number } {
   if (v == null) return { background: 'var(--uk-line)', opacity: 0.5 };
-  const opacity =
-    v >= 95
-      ? UPTIME_LEVELS[3]
-      : v >= 80
-        ? UPTIME_LEVELS[2]
-        : v >= 50
-          ? UPTIME_LEVELS[1]
-          : UPTIME_LEVELS[0];
-  return { background: 'var(--uk-success-bright)', opacity };
+  const bucket = UPTIME_BUCKETS.find((b) => v < b.max) ?? UPTIME_BUCKETS[3];
+  return { background: 'var(--uk-success-bright)', opacity: bucket.opacity };
 }
 
-/** GitHub-contribution-style uptime grid: one box per day (oldest -> newest),
- *  greener = higher uptime %; muted boxes are days with no data. Includes a
- *  Less -> More legend. */
+/** Contribution-style uptime grid: one box per day (oldest -> newest), spanning
+ *  the card width; greener = higher uptime %, muted boxes are days with no
+ *  data. Hover a box for its date + uptime %. Legend shows the %% ranges. */
 function UptimeGrid({
   days,
 }: {
@@ -150,34 +150,64 @@ function UptimeGrid({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 10,
+        gap: 12,
         marginTop: 12,
+        flex: 1,
+        minHeight: 0,
       }}
     >
-      <div className="uptime-grid">
+      <div
+        className="uptime-grid"
+        style={{
+          gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))`,
+        }}
+      >
         {days.map((d) => (
-          <span
+          <Tooltip
             key={d.date}
-            className="uptime-cell"
-            style={uptimeCellStyle(d.value)}
+            arrow
+            placement="top"
             title={
-              d.value == null
-                ? `${d.date}: no data`
-                : `${d.date}: ${Math.round(d.value)}% uptime`
+              <span style={{ fontSize: 12 }}>
+                <b>
+                  {d.value == null
+                    ? 'No data'
+                    : `${Math.round(d.value)}% uptime`}
+                </b>
+                <br />
+                {new Date(`${d.date}T00:00:00Z`).toLocaleDateString(undefined, {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                  timeZone: 'UTC',
+                })}
+              </span>
             }
-          />
+          >
+            <span className="uptime-cell" style={uptimeCellStyle(d.value)} />
+          </Tooltip>
         ))}
       </div>
       <div className="uptime-legend">
-        <span>Less</span>
-        {UPTIME_LEVELS.map((opacity, i) => (
-          <span
-            key={i}
-            className="uptime-cell"
-            style={{ background: 'var(--uk-success-bright)', opacity }}
-          />
+        {UPTIME_BUCKETS.map((b) => (
+          <span key={b.label} className="uptime-legend-item">
+            <span
+              className="uptime-cell uptime-swatch"
+              style={{
+                background: 'var(--uk-success-bright)',
+                opacity: b.opacity,
+              }}
+            />
+            {b.label}
+          </span>
         ))}
-        <span>More</span>
+        <span className="uptime-legend-item">
+          <span
+            className="uptime-cell uptime-swatch"
+            style={{ background: 'var(--uk-line)', opacity: 0.5 }}
+          />
+          No data
+        </span>
       </div>
     </div>
   );
