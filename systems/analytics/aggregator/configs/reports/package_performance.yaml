@@ -10,6 +10,8 @@ resource:
     - { name: name,     field: name }
     - { name: price,    field: amount,   format: money }
     - { name: validity, field: duration, format: days }
+    - { name: data_volume, field: data_volume }
+    - { name: data_unit,   field: data_unit }
     - { name: active,   field: active }
 row_scope: package_id
 columns:

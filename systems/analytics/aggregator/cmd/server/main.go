@@ -117,7 +117,7 @@ func run(sDb sql.Db) {
 
 	log.Infof("Loaded %d report specs from %s", len(reports), serviceConfig.Rollup.ReportsDir)
 
-	composer := performance.NewComposer(serviceConfig.OrgName, reports, repo, repo,
+	composer := performance.NewComposer(serviceConfig.OrgName, reports, repo, repo, repo, grid,
 		serviceConfig.Rollup.ReportWindow)
 
 	readServer := server.NewAggregatorServer(serviceConfig.OrgName, kpis, repo, composer, grid, repo)

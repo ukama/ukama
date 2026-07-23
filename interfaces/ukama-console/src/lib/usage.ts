@@ -62,3 +62,27 @@ export function formatBytes(bytes: number, decimals = 2): string {
   }
   return `${Math.round(bytes)} B`;
 }
+
+/**
+ * A package's declared data allowance (volume + unit string, e.g. 1024 +
+ * "megabytes") → bytes, using the same BINARY convention as the rest of the
+ * app (systems/common/ukama). Unknown/absent units fall back to raw bytes.
+ */
+export function dataVolumeToBytes(
+  volume: number,
+  unit: string | undefined,
+): number {
+  const mult: Record<string, number> = {
+    bytes: 1,
+    b: 1,
+    kilobytes: KB,
+    kb: KB,
+    megabytes: MB,
+    mb: MB,
+    gigabytes: GB,
+    gb: GB,
+    terabytes: TB,
+    tb: TB,
+  };
+  return volume * (mult[(unit ?? '').trim().toLowerCase()] ?? 1);
+}
