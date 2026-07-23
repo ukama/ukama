@@ -22,7 +22,6 @@ import {
   useGetKpiValuesQuery,
   useGetPerformanceReportQuery,
 } from '@/client/graphql/analytics.generated';
-import BarList from '@/components/BarList';
 import DateChip from '@/components/DateChip';
 import { EmptyState } from '@/components/EmptyState';
 import { KpiRow } from '@/components/Kpi';
@@ -302,7 +301,14 @@ export default function BizPackagesScreen() {
             </div>
           )}
         </SectionCard>
-        <SectionCard title="Package revenue mix">
+        <SectionCard
+          title="Package revenue mix"
+          right={
+            <span style={{ fontSize: 12.5, color: 'var(--uk-ink-3)' }}>
+              Share of revenue
+            </span>
+          }
+        >
           {mix.length === 0 || error ? (
             <div
               style={{ padding: 24, fontSize: 13, color: 'var(--uk-ink-3)' }}
@@ -310,7 +316,74 @@ export default function BizPackagesScreen() {
               No package revenue yet.
             </div>
           ) : (
-            <BarList rows={mix} />
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {mix.map((m, i) => (
+                <div
+                  key={`${m.name}-${i}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 14,
+                    padding: '13px 0',
+                    borderBottom:
+                      i < mix.length - 1
+                        ? '1px solid var(--uk-line-soft)'
+                        : 'none',
+                  }}
+                >
+                  <span
+                    className="tnum"
+                    style={{
+                      fontFamily: 'var(--font-display)',
+                      fontSize: 15,
+                      fontWeight: 500,
+                      color: 'var(--uk-ink-3)',
+                      width: 18,
+                      flex: 'none',
+                    }}
+                  >
+                    {i + 1}
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        gap: 12,
+                        marginBottom: 6,
+                      }}
+                    >
+                      <span style={{ fontSize: 13.5, fontWeight: 600 }}>
+                        {m.name}
+                      </span>
+                      <span
+                        className="tnum"
+                        style={{
+                          fontSize: 13,
+                          color: 'var(--uk-ink-2)',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        <b style={{ color: 'var(--uk-ink)' }}>
+                          {money(m.value)}
+                        </b>
+                        {totalRevenue > 0
+                          ? ` · ${Math.round((m.value / totalRevenue) * 100)}%`
+                          : ''}
+                      </span>
+                    </div>
+                    <Meter
+                      value={
+                        totalRevenue > 0
+                          ? Math.round((m.value / totalRevenue) * 100)
+                          : 0
+                      }
+                      color={m.color}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </SectionCard>
       </div>
