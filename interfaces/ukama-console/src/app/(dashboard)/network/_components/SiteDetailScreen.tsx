@@ -121,7 +121,7 @@ const DEFAULT_COMP: CompDef = {
 const UPTIME_DAYS = 30;
 
 /** Faint -> bright green intensities (Less -> More), shared by cells + legend. */
-const UPTIME_LEVELS = [0.28, 0.5, 0.72, 1];
+const UPTIME_LEVELS = [0.28, 0.5, 0.72, 1] as const;
 
 /** Cell style for a day's uptime %: greener = higher; null = muted (no data). */
 function uptimeCellStyle(v: number | null): { background: string; opacity: number } {
