@@ -726,6 +726,55 @@ int runtime_restart_nodes(runtime_t *rt,
     return node_provider_restart(rt, w, nodes, err);
 }
 
+static int runtime_set_nodes_network(runtime_t *rt,
+                                     const world_t *w,
+                                     const selector_result_t *nodes,
+                                     const char *script,
+                                     const char *action,
+                                     ulab_error_t *err) {
+    size_t i;
+
+    for (i = 0; i < nodes->count; i++) {
+        const node_t *node;
+        char args[ULAB_MAX_ARGS];
+        int rc;
+
+        node = &w->nodes[nodes->idx[i]];
+        rc = snprintf(args, sizeof(args), "%s %s",
+                      node->id, rt->run_dir);
+        if (rc < 0 || (size_t)rc >= sizeof(args)) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "%s args too long for node %s", action, node->id);
+            return ULAB_ERR;
+        }
+
+        ulab_status("NODE", "%s network %s", action, node->bff_id);
+        if (run_script(rt, script, args, err)) {
+            return ULAB_ERR;
+        }
+    }
+
+    return ULAB_OK;
+}
+
+int runtime_disconnect_nodes(runtime_t *rt,
+                             const world_t *w,
+                             const selector_result_t *nodes,
+                             ulab_error_t *err) {
+    return runtime_set_nodes_network(rt, w, nodes,
+                                     "disconnect-node.sh",
+                                     "disconnect", err);
+}
+
+int runtime_reconnect_nodes(runtime_t *rt,
+                            const world_t *w,
+                            const selector_result_t *nodes,
+                            ulab_error_t *err) {
+    return runtime_set_nodes_network(rt, w, nodes,
+                                     "reconnect-node.sh",
+                                     "reconnect", err);
+}
+
 
 static int cleanup_script(runtime_t *rt,
                           const char *script,

@@ -70,6 +70,35 @@ static int app_is_running(const bff_app_state_t *app) {
            strcasecmp(app->status, "active") == 0;
 }
 
+static int check_release_unavailable(check_ctx_t *ctx,
+                                     const check_spec_t *check,
+                                     check_result_t *res,
+                                     ulab_error_t *err) {
+    bff_release_t release;
+    int found;
+
+    if (check->app[0] == '\0' || check->expected[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "release_unavailable requires app and version");
+        return ULAB_ERR;
+    }
+
+    memset(&release, 0, sizeof(release));
+    found = 0;
+    if (bff_get_release(ctx->bff, check->app, "app", check->expected,
+                        &release, &found, err)) {
+        return ULAB_ERR;
+    }
+
+    res->passed = !found || !release.available;
+    snprintf(res->detail, sizeof(res->detail),
+             "app=%s version=%s found=%s available=%s",
+             check->app, check->expected,
+             found ? "true" : "false",
+             found && release.available ? "true" : "false");
+    return ULAB_OK;
+}
+
 static int check_node_version(check_ctx_t *ctx,
                               const check_spec_t *check,
                               check_result_t *res,
@@ -318,6 +347,10 @@ int check_runtime(check_ctx_t *ctx, const check_spec_t *check,
     selector_result_t sel;
     size_t i;
     size_t ok = 0;
+
+    if (check->type == CHECK_RELEASE_UNAVAILABLE) {
+        return check_release_unavailable(ctx, check, res, err);
+    }
 
     if (check->type == CHECK_NODE_VERSION_EQUALS) {
         return check_node_version(ctx, check, res, err);

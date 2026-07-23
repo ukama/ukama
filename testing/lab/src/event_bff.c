@@ -7,6 +7,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include "event.h"
 #include "log.h"
@@ -63,6 +64,102 @@ static int event_add_package_to_sim(event_ctx_t *ctx,
     }
 
     selector_result_free(&sel);
+    return ULAB_OK;
+}
+
+static int event_purchase_package(event_ctx_t *ctx,
+                                  const event_spec_t *event,
+                                  ulab_error_t *err) {
+    selector_result_t sel;
+    size_t i;
+
+    if (event->idempotency_key[0] != '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "BFF addPayment does not expose an idempotency key yet");
+        return ULAB_ERR;
+    }
+    if (selector_resolve_ues(ctx->world, &event->ues, &sel, err)) {
+        return ULAB_ERR;
+    }
+
+    for (i = 0; i < sel.count; i++) {
+        ue_t *ue;
+        package_t *pkg;
+        subscriber_t *subscriber;
+        subscriber_t payer;
+        bff_payment_t payment;
+
+        ue = &ctx->world->ues[sel.idx[i]];
+        pkg = event_package(ctx, event, ue, err);
+        subscriber = world_subscriber_by_ref(ctx->world,
+                                             ue->subscriber_ref);
+        if (pkg == NULL || subscriber == NULL) {
+            selector_result_free(&sel);
+            if (subscriber == NULL) {
+                snprintf(err->msg, sizeof(err->msg),
+                         "unknown subscriber for UE %.128s", ue->ref);
+            }
+            return ULAB_ERR;
+        }
+
+        payer = *subscriber;
+        if (event->payer_email[0] != '\0') {
+            ulab_copy(payer.email, sizeof(payer.email),
+                      event->payer_email);
+        }
+        if (event->payer_phone[0] != '\0') {
+            ulab_copy(payer.phone, sizeof(payer.phone),
+                      event->payer_phone);
+        }
+
+        memset(&payment, 0, sizeof(payment));
+        if (bff_record_cash_package_sale(ctx->bff, ue, pkg, &payer,
+                                         event->amount,
+                                         event->currency,
+                                         &payment, err)) {
+            selector_result_free(&sel);
+            return ULAB_ERR;
+        }
+        ulab_status("PAYMENT", "id=%s sim=%s package=%s status=%s",
+                    payment.id, ue->ref, pkg->ref, payment.status);
+    }
+
+    selector_result_free(&sel);
+    return ULAB_OK;
+}
+
+static int event_set_package_active(event_ctx_t *ctx,
+                                    const event_spec_t *event,
+                                    ulab_error_t *err) {
+    size_t i;
+    size_t changed;
+
+    if (event->package_ref[0] == '\0' || !event->has_active) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "set_package_active requires package and active");
+        return ULAB_ERR;
+    }
+
+    changed = 0;
+    for (i = 0; i < ctx->world->package_count; i++) {
+        package_t *pkg = &ctx->world->packages[i];
+
+        if (!ulab_streq(pkg->base_ref, event->package_ref) &&
+            !ulab_streq(pkg->ref, event->package_ref)) {
+            continue;
+        }
+        if (bff_set_package_active(ctx->bff, pkg, event->active, err)) {
+            return ULAB_ERR;
+        }
+        changed++;
+    }
+
+    if (changed == 0) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "set_package_active unknown package %.128s",
+                 event->package_ref);
+        return ULAB_ERR;
+    }
     return ULAB_OK;
 }
 
@@ -152,6 +249,12 @@ int event_bff(event_ctx_t *ctx, const event_spec_t *event,
 
     case EVT_ADD_PACKAGE_TO_SIM:
         return event_add_package_to_sim(ctx, event, err);
+
+    case EVT_PURCHASE_PACKAGE:
+        return event_purchase_package(ctx, event, err);
+
+    case EVT_SET_PACKAGE_ACTIVE:
+        return event_set_package_active(ctx, event, err);
 
     case EVT_REMOVE_PACKAGE_FROM_SIM:
         return event_remove_package_from_sim(ctx, event, err);

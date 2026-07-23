@@ -62,6 +62,12 @@ const char *runtime_node_version(const runtime_t *rt);
 int runtime_restart_nodes(runtime_t *rt, const world_t *w,
                           const selector_result_t *nodes,
                           ulab_error_t *err);
+int runtime_disconnect_nodes(runtime_t *rt, const world_t *w,
+                             const selector_result_t *nodes,
+                             ulab_error_t *err);
+int runtime_reconnect_nodes(runtime_t *rt, const world_t *w,
+                            const selector_result_t *nodes,
+                            ulab_error_t *err);
 int runtime_detach_ues(runtime_t *rt, const world_t *w, ulab_error_t *err);
 int runtime_cleanup_ues(runtime_t *rt, const world_t *w, ulab_error_t *err);
 int runtime_collect_cdr_diagnostics(runtime_t *rt, const world_t *w,

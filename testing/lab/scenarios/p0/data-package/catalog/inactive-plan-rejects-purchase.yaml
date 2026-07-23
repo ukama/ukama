@@ -1,0 +1,69 @@
+version: 1
+name: p0-inactive-plan-rejects-purchase
+description: Verify an inactive catalog plan rejects a subsequent cash purchase and creates no package revenue or queued entitlement.
+seed: 4104
+suite: p0
+priority: p0
+tags: [virtual, data-package, catalog, inactive, revenue]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: bootstrap
+    name: Inactive Purchase Bootstrap
+    data_mb: 100
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+  - ref: inactive_plan
+    name: Inactive Purchase Plan
+    data_mb: 100
+    duration_minutes: 5
+    amount: 5.00
+    active: false
+    assign_percent: 0
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: reject_inactive_purchase
+    events:
+      - type: purchase_package
+        ues: all
+        package: inactive_plan
+        expect:
+          result: failure
+    checks:
+      - type: package_catalog_equals
+        networks: all
+        package: inactive_plan
+      - type: package_state
+        ues: all
+        package: inactive_plan
+        expected: absent
+      - type: package_assignment_count
+        ues: all
+        expected_count: 1
+      - type: package_business_metrics
+        networks: all
+        package: inactive_plan
+        expected_value: 0.00
+        expected_count: 0
+

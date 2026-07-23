@@ -22,6 +22,7 @@ typedef struct {
     bff_client_t *bff;
     runtime_t *runtime;
     const char *phaseName;
+    const char *sim_type;
     check_ctx_t *checks;
 } event_ctx_t;
 

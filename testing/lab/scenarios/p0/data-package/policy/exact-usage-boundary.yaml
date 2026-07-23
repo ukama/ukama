@@ -1,0 +1,96 @@
+version: 1
+name: p0-exact-usage-boundary
+description: Verify traffic equal to the full allowance is accounted once to the old package and the next unit is attributed to the queued successor.
+seed: 4308
+suite: p0
+priority: p0
+tags: [virtual, data-package, policy, usage-boundary, attribution]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: boundary_plan
+    name: Exact Usage Boundary Plan
+    data_mb: 2
+    duration_minutes: 10
+    amount: 1.00
+    assign_percent: 100
+  - ref: successor_plan
+    name: Exact Usage Successor Plan
+    data_mb: 5
+    duration_minutes: 10
+    amount: 2.00
+    assign_percent: 0
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: cross_exact_allowance
+    events:
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
+      - type: purchase_package
+        ues: all
+        package: successor_plan
+      - type: traffic
+        ues: all
+        amount_mb: 2
+      - type: wait
+        seconds: 5
+      - type: traffic
+        ues: all
+        amount_mb: 1
+    checks:
+      - type: package_state
+        ues: all
+        package: boundary_plan
+        expected: inactive
+      - type: package_state
+        ues: all
+        package: successor_plan
+        expected: active
+      - type: package_assignment_chain
+        ues: all
+        package: successor_plan
+        after_package: boundary_plan
+      - type: usage_per_sim
+        ues: all
+        expected: from_model
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
+        networks: all
+        package: boundary_plan
+        column: data_used
+        expected_value: 2097152
+        tolerance: 314573
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
+        networks: all
+        package: successor_plan
+        column: data_used
+        expected_value: 1048576
+        tolerance: 157286

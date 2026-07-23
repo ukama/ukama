@@ -1,0 +1,57 @@
+version: 1
+name: p0-initial-allocation-rejection-is-atomic
+description: Verify allocating an unassigned SIM with an inactive package is rejected and leaves the SIM unallocated with no attachment or package revenue.
+seed: 4004
+suite: p0
+priority: p0
+tags: [virtual, data-package, allocation, rejection, atomicity]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: inactive_initial_plan
+    name: Inactive Initial Allocation Plan
+    data_mb: 100
+    duration_days: 1
+    amount: 5.00
+    active: false
+    assign_percent: 100
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: reject_initial_allocation
+    events:
+      - type: allocate_sim
+        ues: all
+        package: inactive_initial_plan
+        expect:
+          result: failure
+    checks:
+      - type: sim_unallocated
+        ues: all
+      - type: package_catalog_equals
+        networks: all
+        package: inactive_initial_plan
+      - type: package_business_metrics
+        networks: all
+        package: inactive_initial_plan
+        expected_value: 0.00
+        expected_count: 0
+

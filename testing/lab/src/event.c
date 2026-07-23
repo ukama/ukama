@@ -19,6 +19,8 @@ int event_runtime(event_ctx_t *ctx, const event_spec_t *event,
                   ulab_error_t *err);
 int event_bff(event_ctx_t *ctx, const event_spec_t *event,
               ulab_error_t *err);
+int event_data_package(event_ctx_t *ctx, const event_spec_t *event,
+                       ulab_error_t *err);
 
 static int event_run_actual(event_ctx_t *ctx, const event_spec_t *event,
                             ulab_error_t *err) {
@@ -29,10 +31,17 @@ static int event_run_actual(event_ctx_t *ctx, const event_spec_t *event,
         return event_traffic(ctx, event, err);
     case EVT_CREATE_UES:
     case EVT_ADD_PACKAGE_TO_SIM:
+    case EVT_PURCHASE_PACKAGE:
+    case EVT_SET_PACKAGE_ACTIVE:
     case EVT_REMOVE_PACKAGE_FROM_SIM:
     case EVT_SET_SIM_STATUS:
     case EVT_PROMOTE_RELEASE:
         return event_bff(ctx, event, err);
+    case EVT_PURCHASE_PACKAGES_PARALLEL:
+    case EVT_ALLOCATE_SIM:
+    case EVT_CREATE_INVALID_PACKAGE:
+    case EVT_WAIT_PACKAGE_BOUNDARY:
+        return event_data_package(ctx, event, err);
     case EVT_START_UES:
     case EVT_WAIT_UES_ATTACHED:
     case EVT_WAIT:
@@ -43,6 +52,8 @@ static int event_run_actual(event_ctx_t *ctx, const event_spec_t *event,
     case EVT_TOGGLE_RADIO:
     case EVT_RESTART_SITE:
     case EVT_SOFTWARE_UPDATE:
+    case EVT_DISCONNECT_NODES:
+    case EVT_RECONNECT_NODES:
     case EVT_MARK_NODE_OFFLINE:
     case EVT_RESTORE_NODE:
         return event_runtime(ctx, event, err);
@@ -65,6 +76,10 @@ int event_run(event_ctx_t *ctx, const event_spec_t *event,
                      ulab_streq(event->expect_result, "fail");
 
     rc = event_run_actual(ctx, event, &actual_err);
+
+    if (ulab_streq(event->expect_result, "any")) {
+        return ULAB_OK;
+    }
 
     if (!expect_failure) {
         if (rc != ULAB_OK) {

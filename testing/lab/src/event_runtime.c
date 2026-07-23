@@ -406,6 +406,28 @@ int event_runtime(event_ctx_t *ctx,
     case EVT_SOFTWARE_UPDATE:
         return event_software_update(ctx, event, err);
 
+    case EVT_DISCONNECT_NODES:
+        rc = selector_resolve_nodes(ctx->world, &event->nodes, &res, err);
+        if (rc == ULAB_OK) {
+            rc = runtime_disconnect_nodes(ctx->runtime,
+                                          ctx->world,
+                                          &res,
+                                          err);
+        }
+        selector_result_free(&res);
+        return rc;
+
+    case EVT_RECONNECT_NODES:
+        rc = selector_resolve_nodes(ctx->world, &event->nodes, &res, err);
+        if (rc == ULAB_OK) {
+            rc = runtime_reconnect_nodes(ctx->runtime,
+                                         ctx->world,
+                                         &res,
+                                         err);
+        }
+        selector_result_free(&res);
+        return rc;
+
     case EVT_RESTART_SITE:
         rc = selector_resolve_nodes(ctx->world, &event->nodes, &res, err);
         if (rc == ULAB_OK) {

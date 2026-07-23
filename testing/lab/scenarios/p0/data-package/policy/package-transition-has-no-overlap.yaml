@@ -1,0 +1,88 @@
+version: 1
+name: p0-package-transition-has-no-overlap
+description: Verify the old and successor entitlement date ranges do not overlap and their package-attributed usage sums to the SIM usage without duplication.
+seed: 4311
+suite: p0
+priority: p0
+tags: [virtual, data-package, policy, transition, no-overlap]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: current_plan
+    name: No Overlap Current Plan
+    data_mb: 1
+    duration_minutes: 10
+    amount: 1.00
+    assign_percent: 100
+  - ref: next_plan
+    name: No Overlap Next Plan
+    data_mb: 5
+    duration_minutes: 10
+    amount: 2.00
+    assign_percent: 0
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: cross_and_account_once
+    events:
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
+      - type: purchase_package
+        ues: all
+        package: next_plan
+      - type: traffic
+        ues: all
+        amount_mb: 1
+      - type: wait
+        seconds: 5
+      - type: traffic
+        ues: all
+        amount_mb: 1
+    checks:
+      - type: package_assignment_chain
+        ues: all
+        package: next_plan
+        after_package: current_plan
+      - type: usage_per_sim
+        ues: all
+        expected: from_model
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
+        networks: all
+        package: current_plan
+        column: data_used
+        expected_value: 1048576
+        tolerance: 157286
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
+        networks: all
+        package: next_plan
+        column: data_used
+        expected_value: 1048576
+        tolerance: 157286

@@ -1,0 +1,71 @@
+version: 1
+name: p0-traffic-below-limit-remains-allowed
+description: Verify partial usage below the package allowance is reflected by BFF usage while the entitlement remains active and no successor activates.
+seed: 4301
+suite: p0
+priority: p0
+tags: [virtual, data-package, policy, usage-limit]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: current_plan
+    name: Below Limit Current Plan
+    data_mb: 5
+    duration_minutes: 10
+    amount: 1.00
+    assign_percent: 100
+  - ref: queued_plan
+    name: Below Limit Queued Plan
+    data_mb: 5
+    duration_minutes: 10
+    amount: 1.00
+    assign_percent: 0
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: use_below_allowance
+    events:
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
+      - type: purchase_package
+        ues: all
+        package: queued_plan
+      - type: traffic
+        ues: all
+        amount_mb: 2
+    checks:
+      - type: package_state
+        ues: all
+        package: current_plan
+        expected: active
+      - type: package_state
+        ues: all
+        package: queued_plan
+        expected: queued
+      - type: usage_per_sim
+        ues: all
+        expected: from_model
