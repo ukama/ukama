@@ -418,25 +418,27 @@
   color: var(--uk-ink-3);
 }
 
-/* ---- uptime bars (site overview) ---- */
-.uptime-row {
-  display: flex;
+/* ---- uptime grid (site overview, GitHub-contribution style) ---- */
+.uptime-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(7, 12px);
+  grid-auto-columns: 12px;
   gap: 3px;
-  align-items: stretch;
-  flex: 1;
-  min-height: 48px;
 }
-.uptime-bar {
-  flex: 1;
-  border-radius: 3px;
-  min-width: 3px;
+.uptime-cell {
+  border-radius: 2px;
 }
-.uptime-caption {
+.uptime-legend {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
   font-size: 11.5px;
   color: var(--uk-ink-3);
-  margin: 4px 0 2px;
+}
+.uptime-legend .uptime-cell {
+  width: 11px;
+  height: 11px;
 }
 
 /* ---- admin launcher hover ---- */

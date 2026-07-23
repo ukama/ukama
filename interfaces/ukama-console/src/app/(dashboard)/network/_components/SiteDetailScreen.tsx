@@ -117,70 +117,67 @@ const DEFAULT_COMP: CompDef = {
   metric: 'battery_charge',
 };
 
-/** Two rows of daily uptime bars from the SITE_UPTIME KPI series.
- *  `null` days are gaps (no data) and render as a muted bar. */
-function UptimeBars({ values }: { values: (number | null)[] }) {
-  const bars = (vals: (number | null)[]) => (
-    <div className="uptime-row">
-      {vals.map((v, i) => (
-        <span
-          key={i}
-          className="uptime-bar"
-          style={{
-            background:
-              v == null
-                ? 'var(--uk-line)'
-                : v >= 95
-                  ? 'var(--uk-success-bright)'
-                  : 'var(--uk-orange)',
-            opacity: v == null ? 0.35 : 0.6,
-          }}
-        />
-      ))}
-    </div>
-  );
-  const mid = Math.ceil(values.length / 2);
-  // First row = most recent half (… → today); second = older half.
-  const recent = values.slice(mid);
-  const older = values.slice(0, mid);
+/** Days shown in the uptime grid. */
+const UPTIME_DAYS = 30;
+
+/** Faint -> bright green intensities (Less -> More), shared by cells + legend. */
+const UPTIME_LEVELS = [0.28, 0.5, 0.72, 1];
+
+/** Cell style for a day's uptime %: greener = higher; null = muted (no data). */
+function uptimeCellStyle(v: number | null): { background: string; opacity: number } {
+  if (v == null) return { background: 'var(--uk-line)', opacity: 0.5 };
+  const opacity =
+    v >= 95
+      ? UPTIME_LEVELS[3]
+      : v >= 80
+        ? UPTIME_LEVELS[2]
+        : v >= 50
+          ? UPTIME_LEVELS[1]
+          : UPTIME_LEVELS[0];
+  return { background: 'var(--uk-success-bright)', opacity };
+}
+
+/** GitHub-contribution-style uptime grid: one box per day (oldest -> newest),
+ *  greener = higher uptime %; muted boxes are days with no data. Includes a
+ *  Less -> More legend. */
+function UptimeGrid({
+  days,
+}: {
+  days: { date: string; value: number | null }[];
+}) {
   return (
     <div
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 16,
+        gap: 10,
         marginTop: 12,
-        flex: 1,
-        minHeight: 0,
       }}
     >
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 0,
-        }}
-      >
-        {bars(recent)}
-        <div className="uptime-caption">
-          <span>30 days ago</span>
-          <span>Today</span>
-        </div>
+      <div className="uptime-grid">
+        {days.map((d) => (
+          <span
+            key={d.date}
+            className="uptime-cell"
+            style={uptimeCellStyle(d.value)}
+            title={
+              d.value == null
+                ? `${d.date}: no data`
+                : `${d.date}: ${Math.round(d.value)}% uptime`
+            }
+          />
+        ))}
       </div>
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 0,
-        }}
-      >
-        {bars(older)}
-        <div className="uptime-caption">
-          <span>60 days ago</span>
-          <span>31 days ago</span>
-        </div>
+      <div className="uptime-legend">
+        <span>Less</span>
+        {UPTIME_LEVELS.map((opacity, i) => (
+          <span
+            key={i}
+            className="uptime-cell"
+            style={{ background: 'var(--uk-success-bright)', opacity }}
+          />
+        ))}
+        <span>More</span>
       </div>
     </div>
   );
@@ -785,7 +782,7 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
       data: {
         keys: [KPI_KEYS.siteUptime],
         span: 'daily',
-        from: new Date((uNow - 90 * 86_400) * 1000).toISOString(),
+        from: new Date((uNow - 30 * 86_400) * 1000).toISOString(),
         to: new Date(uNow * 1000).toISOString(),
         networkId,
         siteId,
@@ -793,12 +790,22 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
     },
     skip: !networkId || !siteId,
   });
-  // One daily AVG uptime % per bucket, oldest→newest (the bars split into
-  // recent/older halves). Days with no data simply have no bucket.
-  const uptimeVals: (number | null)[] = (
-    uptimeData?.getKpiTimeSeries.values ?? []
-  ).map((v) => v.value);
-  const realUptime = uptimeVals.filter((v): v is number => v != null);
+  // Continuous day axis (one cell per calendar day, oldest→newest) so the
+  // contribution grid shows gaps as empty boxes. Each day carries that day's
+  // AVG uptime %, or null when there's no bucket.
+  const uptimeByDay = new Map<string, number>();
+  for (const v of uptimeData?.getKpiTimeSeries.values ?? []) {
+    if (v.from) uptimeByDay.set(v.from.slice(0, 10), v.value);
+  }
+  const uptimeDays = Array.from({ length: UPTIME_DAYS }, (_, i) => {
+    const date = new Date((uNow - (UPTIME_DAYS - 1 - i) * 86_400) * 1000)
+      .toISOString()
+      .slice(0, 10);
+    return { date, value: uptimeByDay.get(date) ?? null };
+  });
+  const realUptime = uptimeDays
+    .map((d) => d.value)
+    .filter((v): v is number => v != null);
   const uptimePct = realUptime.length
     ? Math.round(realUptime.reduce((a, b) => a + b, 0) / realUptime.length)
     : null;
@@ -1019,7 +1026,7 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
               {uptimePct != null ? `${uptimePct}%` : '—'}
             </span>
             <span style={{ fontSize: 13, color: 'var(--uk-ink-3)' }}>
-              uptime over 90 days
+              uptime over 30 days
             </span>
           </div>
           {uptimeLoading && realUptime.length === 0 ? (
@@ -1031,7 +1038,7 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
               No uptime data available.
             </div>
           ) : (
-            <UptimeBars values={uptimeVals} />
+            <UptimeGrid days={uptimeDays} />
           )}
         </SectionCard>
 
