@@ -131,8 +131,8 @@ const UPTIME_BUCKETS = [
 ] as const;
 
 /** Cell style for a day's uptime %: greener = higher; null = muted (no data). */
-function uptimeCellStyle(v: number | null): { background: string; opacity: number } {
-  if (v == null) return { background: 'var(--uk-line)', opacity: 0.5 };
+function uptimeFillStyle(v: number | null): { background: string; opacity: number } {
+  if (v == null) return { background: 'transparent', opacity: 1 };
   const bucket = UPTIME_BUCKETS.find((b) => v < b.max) ?? UPTIME_BUCKETS[3];
   return { background: 'var(--uk-success-bright)', opacity: bucket.opacity };
 }
@@ -143,7 +143,7 @@ function uptimeCellStyle(v: number | null): { background: string; opacity: numbe
 function UptimeGrid({
   days,
 }: {
-  days: { date: string; value: number | null }[];
+  days: { date: string; value: number | null; elapsed: number }[];
 }) {
   return (
     <div
@@ -174,6 +174,7 @@ function UptimeGrid({
                     ? 'No data'
                     : `${Math.round(d.value)}% uptime`}
                 </b>
+                {d.elapsed < 1 ? ' · in progress' : ''}
                 <br />
                 {new Date(`${d.date}T00:00:00Z`).toLocaleDateString(undefined, {
                   month: 'short',
@@ -184,7 +185,15 @@ function UptimeGrid({
               </span>
             }
           >
-            <span className="uptime-cell" style={uptimeCellStyle(d.value)} />
+            <span className="uptime-cell">
+              <span
+                className="uptime-fill"
+                style={{
+                  height: `${d.elapsed * 100}%`,
+                  ...uptimeFillStyle(d.value),
+                }}
+              />
+            </span>
           </Tooltip>
         ))}
       </div>
@@ -192,7 +201,7 @@ function UptimeGrid({
         {UPTIME_BUCKETS.map((b) => (
           <span key={b.label} className="uptime-legend-item">
             <span
-              className="uptime-cell uptime-swatch"
+              className="uptime-swatch"
               style={{
                 background: 'var(--uk-success-bright)',
                 opacity: b.opacity,
@@ -203,7 +212,7 @@ function UptimeGrid({
         ))}
         <span className="uptime-legend-item">
           <span
-            className="uptime-cell uptime-swatch"
+            className="uptime-swatch"
             style={{ background: 'var(--uk-line)', opacity: 0.5 }}
           />
           No data
@@ -827,11 +836,14 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
   for (const v of uptimeData?.getKpiTimeSeries.values ?? []) {
     if (v.from) uptimeByDay.set(v.from.slice(0, 10), v.value);
   }
+  // UTC midnight (epoch seconds) of today, so each bar can fill by the fraction
+  // of its day that has elapsed (past days = full, today = partial).
+  const todayStart = Math.floor(uNow / 86_400) * 86_400;
   const uptimeDays = Array.from({ length: UPTIME_DAYS }, (_, i) => {
-    const date = new Date((uNow - (UPTIME_DAYS - 1 - i) * 86_400) * 1000)
-      .toISOString()
-      .slice(0, 10);
-    return { date, value: uptimeByDay.get(date) ?? null };
+    const dayStart = todayStart - (UPTIME_DAYS - 1 - i) * 86_400;
+    const date = new Date(dayStart * 1000).toISOString().slice(0, 10);
+    const elapsed = Math.min(1, Math.max(0, (uNow - dayStart) / 86_400));
+    return { date, value: uptimeByDay.get(date) ?? null, elapsed };
   });
   const realUptime = uptimeDays
     .map((d) => d.value)

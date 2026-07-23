@@ -429,9 +429,19 @@
   max-height: 140px;
 }
 .uptime-cell {
+  position: relative;
+  overflow: hidden;
   border-radius: 3px;
   min-width: 0;
   min-height: 0;
+  background: var(--uk-line);
+  background: color-mix(in srgb, var(--uk-line) 55%, transparent);
+}
+.uptime-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 .uptime-legend {
   display: flex;
@@ -449,7 +459,7 @@
 .uptime-swatch {
   width: 11px;
   height: 11px;
-  aspect-ratio: auto;
+  border-radius: 3px;
   flex: none;
 }
 
