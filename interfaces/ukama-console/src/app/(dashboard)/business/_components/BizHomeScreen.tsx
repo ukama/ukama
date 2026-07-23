@@ -169,7 +169,7 @@ export default function BizHomeScreen() {
   // Data sold (SUM, bytes) for the period; monthly total for the sub-line.
   const soldBytes = kpiValue(kpis, KPI_KEYS.dataSold);
   const soldMonthBytes = kpiValue(monthKpis, KPI_KEYS.dataSold);
-  // Network uptime (AVG, percent).
+  // Network uptime (AVG, percent) — the computed KPI only; "—" when absent.
   const uptime = kpiValue(kpis, KPI_KEYS.networkUptime);
 
   // Data sold display: auto data unit for real values (e.g. "1 GB", "1.8 TB"),

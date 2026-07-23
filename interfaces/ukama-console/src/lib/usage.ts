@@ -7,15 +7,19 @@
  */
 
 /**
- * Data-usage parsing/formatting. The backend always reports usage as a raw
- * byte count (as a string); the UI stores bytes and formats on render.
- * Decimal units (1 KB = 1000 B) to match how mobile data plans are quoted.
+ * Data-usage parsing/formatting. The backend always reports data as a raw byte
+ * count (as a string); the UI stores bytes and formats on render.
+ *
+ * BINARY units (1 KB = 1024 B) to match Ukama's data-unit convention
+ * (systems/common/ukama), where package allowances and usage are defined in
+ * binary — a "1 GB" package is 1024 MB = 1,073,741,824 bytes. Formatting in
+ * decimal here would render that same 1 GB package as "1.07 GB".
  */
 
-const KB = 1000;
-const MB = KB * 1000;
-const GB = MB * 1000;
-const TB = GB * 1000;
+const KB = 1024;
+const MB = KB * 1024;
+const GB = MB * 1024;
+const TB = GB * 1024;
 
 /** Sentinel stored in Subscriber.usage when usage is unknown/not loaded. */
 export const USAGE_UNKNOWN = -1;
@@ -33,7 +37,7 @@ export function parseUsageBytes(
   return Number.isFinite(n) && n >= 0 ? n : null;
 }
 
-/** Bytes → GB (decimal), for ratios against a plan cap expressed in GB. */
+/** Bytes → GB (binary), for ratios against a plan cap expressed in GB. */
 export function bytesToGB(bytes: number): number {
   return bytes / GB;
 }
