@@ -11,7 +11,7 @@
  *  data_volume/active) and columns (sold/revenue/data_used), plus a
  *  threshold-derived status. The four headline tiles are report-derived totals:
  *  Package revenue (Σ revenue), Packages sold (Σ sold), Best package (best
- *  seller's allowance / validity) and Data consumed (Σ data_used). */
+ *  seller's allowance / validity) and Data consumed (USAGE_BY_NETWORK). */
 import { useState } from 'react';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -20,7 +20,10 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Meter from '@/components/Meter';
 
-import { useGetPerformanceReportQuery } from '@/client/graphql/analytics.generated';
+import {
+  useGetKpiValuesQuery,
+  useGetPerformanceReportQuery,
+} from '@/client/graphql/analytics.generated';
 import DateChip from '@/components/DateChip';
 import { EmptyState } from '@/components/EmptyState';
 import { KpiRow } from '@/components/Kpi';
@@ -32,7 +35,7 @@ import { BAR_COLORS } from '@/lib/charts';
 import { useCurrency } from '@/lib/currency';
 import { formatDuration } from '@/lib/duration';
 import { DEFAULT_RANGE, rangeToSpan } from '@/lib/dateRange';
-import { attrValue, cellMoney, cellValue } from '@/lib/kpis';
+import { attrValue, cellMoney, cellValue, KPI_KEYS, kpiValue } from '@/lib/kpis';
 import { dataVolumeToBytes, formatBytes } from '@/lib/usage';
 import { useNetworkId } from '@/lib/useNetworkId';
 
@@ -42,7 +45,6 @@ interface Plan {
   price: number;
   revenue: number;
   sold: number;
-  dataUsed: number;
   dataVolume: number;
   dataUnit: string;
   duration: number;
@@ -69,13 +71,31 @@ export default function BizPackagesScreen() {
     skip: !networkId,
   });
 
+  // Data consumed = total network data usage (USAGE_BY_NETWORK), read at the
+  // selected rolling span — the direct per-network metric (no per-package
+  // active-assignment attribution required).
+  const { data: usageData } = useGetKpiValuesQuery({
+    variables: {
+      data: {
+        keys: [KPI_KEYS.usageByNetwork],
+        span: rangeToSpan(range),
+        op: 'SUM',
+        networkId,
+      },
+    },
+    skip: !networkId,
+  });
+  const usageBytes = kpiValue(
+    usageData?.getKpiValues.values,
+    KPI_KEYS.usageByNetwork,
+  );
+
   const plans: Plan[] = (data?.getPerformanceReport.rows ?? []).map((r) => ({
     packageId: r.entityId,
     name: attrValue(r.attributes, 'name') ?? '—',
     price: Number(attrValue(r.attributes, 'price') ?? 0),
     revenue: cellMoney(r.cells, 'revenue'),
     sold: cellValue(r.cells, 'sold') ?? 0,
-    dataUsed: cellValue(r.cells, 'data_used') ?? 0,
     dataVolume: Number(attrValue(r.attributes, 'data_volume') ?? 0),
     dataUnit: attrValue(r.attributes, 'data_unit') ?? '',
     duration: Number(attrValue(r.attributes, 'validity') ?? 0),
@@ -100,7 +120,6 @@ export default function BizPackagesScreen() {
 
   // Headline KPIs (value-only) derived from the report.
   const totalSold = plans.reduce((sum, p) => sum + p.sold, 0);
-  const totalDataUsed = plans.reduce((sum, p) => sum + p.dataUsed, 0);
   // Best package = the best seller, shown by its spec (e.g. "1 GB / 7d").
   const bestSeller = [...plans]
     .filter((p) => p.sold > 0)
@@ -142,8 +161,7 @@ export default function BizPackagesScreen() {
             icon: 'data_usage',
             color: 'var(--uk-ac)',
             label: 'Data consumed',
-            value:
-              error || totalDataUsed <= 0 ? '—' : formatBytes(totalDataUsed),
+            value: usageBytes == null ? '—' : formatBytes(usageBytes),
           },
         ]}
       />
