@@ -46,12 +46,12 @@ func TestDataSold_SumsAllowanceBytesPerNetwork(t *testing.T) {
 	in := Datasets{
 		"sim_packages": {
 			// two 1 GB sales on net-a inside the window
-			{"package_id": "pkg-gb", "network_id": "net-a", "start_date": "2026-07-21T09:00:00Z"},
-			{"package_id": "pkg-gb", "network_id": "net-a", "start_date": "2026-07-21T18:00:00Z"},
+			{"package_id": "pkg-gb", "network_id": "net-a", "created_at": "2026-07-21T09:00:00Z"},
+			{"package_id": "pkg-gb", "network_id": "net-a", "created_at": "2026-07-21T18:00:00Z"},
 			// one 500 MB sale on net-b inside the window
-			{"package_id": "pkg-mb", "network_id": "net-b", "start_date": "2026-07-21T12:00:00Z"},
-			// a sale OUTSIDE the window — must be ignored
-			{"package_id": "pkg-gb", "network_id": "net-a", "start_date": "2026-07-20T23:59:00Z"},
+			{"package_id": "pkg-mb", "network_id": "net-b", "created_at": "2026-07-21T12:00:00Z"},
+			// a sale purchased OUTSIDE the window — must be ignored
+			{"package_id": "pkg-gb", "network_id": "net-a", "created_at": "2026-07-20T23:59:00Z"},
 		},
 		"packages": {
 			{"package_id": "pkg-gb", "network_id": "net-a", "data_volume": 1.0, "data_unit": "gigabytes"},
@@ -84,7 +84,7 @@ func TestDataSold_SumsAllowanceBytesPerNetwork(t *testing.T) {
 func TestDataSold_OrgLevelPackageAppliesToNetwork(t *testing.T) {
 	in := Datasets{
 		"sim_packages": {
-			{"package_id": "pkg-org", "network_id": "net-a", "start_date": "2026-07-21T09:00:00Z"},
+			{"package_id": "pkg-org", "network_id": "net-a", "created_at": "2026-07-21T09:00:00Z"},
 		},
 		"packages": {
 			{"package_id": "pkg-org", "network_id": "", "data_volume": 2.0, "data_unit": "gigabytes"},
@@ -106,7 +106,7 @@ func TestDataSold_OrgLevelPackageAppliesToNetwork(t *testing.T) {
 func TestDataSold_UnknownUnitTreatedAsBytes(t *testing.T) {
 	in := Datasets{
 		"sim_packages": {
-			{"package_id": "pkg-x", "network_id": "net-a", "start_date": "2026-07-21T09:00:00Z"},
+			{"package_id": "pkg-x", "network_id": "net-a", "created_at": "2026-07-21T09:00:00Z"},
 		},
 		"packages": {
 			{"package_id": "pkg-x", "network_id": "net-a", "data_volume": 1048576.0},
