@@ -42,12 +42,14 @@ pulls:
       is_active: $.is_active
       as_expired: $.as_expired
 
-  # Per-sim data usage for the window (strategy: window — from/to templated
-  # per window boundary). Fans out over active sims; sim_id/network_id
-  # lineage comes from the binds. Input for USAGE_BY_NETWORK.
+  # Per-sim CUMULATIVE data usage counter (strategy: full_snapshot — the
+  # lifetime counter is state, change-logged). NO from/to: /v1/usages returns
+  # the cumulative counter and always 200s; the windowed CDR path errors on
+  # idle windows. Fans out over sims; sim_id/network_id lineage comes from the
+  # binds. Input for USAGE_BY_NETWORK (span usage = read-time DELTA).
   - key: subscriber.usage.getBySim
     endpoint: /v1/usages
-    strategy: window
+    strategy: full_snapshot
     items: $
     entity: sim_id
     for_each:
@@ -57,9 +59,6 @@ pulls:
       sim_id: "{{.sim_id}}"
       sim_type: ukama_data
       cdr_type: DATA
-      region: ""
-      from: "{{.WindowStart}}"
-      to: "{{.WindowEnd}}"
     map:
       usage: $.usage
       cost: $.cost

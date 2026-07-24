@@ -172,6 +172,13 @@ func rollingOpValue(op string, a *windowAgg) (float64, bool) {
 		return a.max, true
 	case "LAST":
 		return a.lastValue, true
+	case "DELTA":
+		// span usage from a cumulative counter; clamp resets to 0
+		if d := a.max - a.min; d > 0 {
+			return d, true
+		}
+
+		return 0, true
 	default:
 		return 0, false
 	}
