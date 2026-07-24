@@ -124,6 +124,163 @@ var raw = `{
 	]
 	}`
 
+var rawReceipt = `{
+	"number": "RCPT-58C1E087",
+	"issuing_date": "2026-07-24T10:00:00Z",
+	"invoice_type": "receipt",
+	"status": "finalized",
+	"payment_status": "succeeded",
+	"fees_amount_cents": 1050,
+	"sub_total_excluding_taxes_amount_cents": 1050,
+	"sub_total_including_taxes_amount_cents": 1050,
+	"total_amount_cents": 1050,
+	"currency": "USD",
+	"file_url": "http://{API_ENDPOINT}/pdf/58c1e087-9575-4bb5-bf8a-44fdbad01adf.pdf",
+	"customer": {
+	"external_id": "adb6a5b9-2f92-4c72-884b-d408b283d6e4",
+	"name": "Gavin Belson",
+	"email": "gavin@hooli.test",
+	"phone": "1-171-883-3711",
+	"country": "US",
+	"currency": "USD"
+	},
+	"fees": [
+	{
+	"external_subscription_id": "txn-123",
+	"amount_cents": 1050,
+	"total_amount_cents": 1050,
+	"total_amount_currency": "USD",
+	"description": "Payment for package",
+	"item": {
+	"type": "cash",
+	"code": "ff8e5b35-8947-4e9f-8168-c798bdf3e326",
+	"name": "package"
+	}
+	}
+	]
+	}`
+
+func TestGeneratorEventServer_HandleReceiptGenerateEvent(t *testing.T) {
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+	receiptEvent := func(t *testing.T) *epb.Report {
+		t.Helper()
+
+		val := &epb.RawReport{}
+
+		m := protojson.UnmarshalOptions{
+			AllowPartial:   true,
+			DiscardUnknown: true,
+		}
+
+		err := m.Unmarshal([]byte(rawReceipt), val)
+		assert.NoError(t, err)
+
+		return &epb.Report{
+			Id:            uuid.NewV4().String(),
+			OwnerId:       uuid.NewV4().String(),
+			OwnerType:     ukama.OwnerTypeOrg.String(),
+			Type:          ukama.ReportTypeReceipt.String(),
+			RawReport:     val,
+			IsPaid:        true,
+			TransactionId: uuid.NewV4().String(),
+		}
+	}
+
+	eventFor := func(t *testing.T, routingKey string) *epb.Event {
+		t.Helper()
+
+		anyE, err := anypb.New(receiptEvent(t))
+		assert.NoError(t, err)
+
+		return &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+	}
+
+	t.Run("ReceiptGeneratedEventSent", func(t *testing.T) {
+		pdfEngine := &mocks.PdfEngine{}
+
+		pdfEngine.On("Configure", mock.Anything, mock.Anything).
+			Return(nil).Once()
+
+		pdfEngine.On("Generate", mock.Anything).
+			Return(nil).Once()
+
+		routingKey := msgbus.PrepareRoute(OrgName,
+			"event.cloud.local.{{ .Org}}.billing.report.receipt.generate")
+
+		s := server.NewGeneratorEventServer(OrgName, pdfEngine, msgbusClient)
+
+		_, err := s.EventNotification(context.TODO(), eventFor(t, routingKey))
+
+		assert.NoError(t, err)
+		pdfEngine.AssertExpectations(t)
+	})
+
+	t.Run("ReceiptUpdatedEventSent", func(t *testing.T) {
+		pdfEngine := &mocks.PdfEngine{}
+
+		pdfEngine.On("Configure", mock.Anything, mock.Anything).
+			Return(nil).Once()
+
+		pdfEngine.On("Generate", mock.Anything).
+			Return(nil).Once()
+
+		routingKey := msgbus.PrepareRoute(OrgName,
+			"event.cloud.local.{{ .Org}}.billing.report.receipt.update")
+
+		s := server.NewGeneratorEventServer(OrgName, pdfEngine, msgbusClient)
+
+		_, err := s.EventNotification(context.TODO(), eventFor(t, routingKey))
+
+		assert.NoError(t, err)
+		pdfEngine.AssertExpectations(t)
+	})
+
+	t.Run("ErrorOnGenerateReceiptPDF", func(t *testing.T) {
+		pdfEngine := &mocks.PdfEngine{}
+
+		pdfEngine.On("Configure", mock.Anything, mock.Anything).
+			Return(nil).Once()
+
+		pdfEngine.On("Generate", mock.Anything).
+			Return(errors.New("fail to generate file")).Once()
+
+		routingKey := msgbus.PrepareRoute(OrgName,
+			"event.cloud.local.{{ .Org}}.billing.report.receipt.generate")
+
+		s := server.NewGeneratorEventServer(OrgName, pdfEngine, msgbusClient)
+
+		_, err := s.EventNotification(context.TODO(), eventFor(t, routingKey))
+
+		assert.Error(t, err)
+		pdfEngine.AssertExpectations(t)
+	})
+
+	t.Run("InvalidReceiptEventTypeSent", func(t *testing.T) {
+		pdfEngine := &mocks.PdfEngine{}
+
+		anyE, err := anypb.New(&epb.Notification{Id: uuid.NewV4().String()})
+		assert.NoError(t, err)
+
+		routingKey := msgbus.PrepareRoute(OrgName,
+			"event.cloud.local.{{ .Org}}.billing.report.receipt.generate")
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		s := server.NewGeneratorEventServer(OrgName, pdfEngine, msgbusClient)
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+}
+
 func TestGeneratorEventServer_HandleInvoiceGenerateEvent(t *testing.T) {
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	routingKey := msgbus.PrepareRoute(OrgName,

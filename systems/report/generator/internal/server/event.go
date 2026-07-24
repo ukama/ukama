@@ -28,6 +28,7 @@ import (
 const (
 	invoiceItemType = "invoice"
 	defaultTemplate = "templates/invoice.html.tmpl"
+	receiptTemplate = "templates/receipt.html.tmpl"
 	pdfFolder       = "/home/ukama/srv/static/"
 )
 
@@ -65,6 +66,18 @@ func (g *GeneratorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 			return nil, err
 		}
 
+	case msgbus.PrepareRoute(g.orgName, "event.cloud.local.{{ .Org}}.billing.report.receipt.generate"),
+		msgbus.PrepareRoute(g.orgName, "event.cloud.local.{{ .Org}}.billing.report.receipt.update"):
+		msg, err := unmarshalInvoiceGenerateEvent(e.Msg)
+		if err != nil {
+			return nil, err
+		}
+
+		err = g.handleReceiptGenerateEvent(e.RoutingKey, msg)
+		if err != nil {
+			return nil, err
+		}
+
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)
 	}
@@ -76,6 +89,15 @@ func (g *GeneratorEventServer) handleInvoiceGenerateEvent(key string, msg *epb.R
 	err := g.GeneratePDF(msg, defaultTemplate, filepath.Join(pdfFolder, msg.Id+".pdf"))
 	if err != nil {
 		log.Errorf("Failed to generate invoice PDF: %v", err)
+	}
+
+	return err
+}
+
+func (g *GeneratorEventServer) handleReceiptGenerateEvent(key string, msg *epb.Report) error {
+	err := g.GeneratePDF(msg, receiptTemplate, filepath.Join(pdfFolder, msg.Id+".pdf"))
+	if err != nil {
+		log.Errorf("Failed to generate receipt PDF: %v", err)
 	}
 
 	return err
