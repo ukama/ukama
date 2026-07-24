@@ -52,6 +52,11 @@ pulls:
     strategy: full_snapshot
     items: $
     entity: sim_id
+    # on_error: record — a per-sim usage failure (e.g. the CDR service 500s on
+    # a sim whose CDRs sum to 0) must NOT fail the whole window and blank the
+    # network's KPI. The failed sim records unreachable:true (no usage field ->
+    # counted as 0 bytes); sims that return usage are summed normally.
+    on_error: record
     for_each:
       dataset: subscriber.sim.list
       bind: [sim_id, network_id]

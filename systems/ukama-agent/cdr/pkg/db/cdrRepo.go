@@ -214,9 +214,9 @@ func (p *cdrRepo) QueryUsage(imsi, nodeId string, session, from, to uint64,
 		return 0, result.Error
 	}
 
-	if usage.Total == 0 {
-		return 0, gorm.ErrInvalidData
-	}
-
+	// Zero usage is a valid result (a sim that consumed nothing) — not a data
+	// error. Returning ErrInvalidData here made every legitimate 0-byte reader
+	// (notably the analytics usage pull, which fans out over all sims) fail the
+	// whole request, so one idle sim blanked a network's usage KPI. Report 0.
 	return usage.Total, nil
 }
