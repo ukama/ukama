@@ -19,13 +19,6 @@ runs:
   using: "composite"
   steps:
 
-  # ---> For latest sonar cloud requirements
-  - name: Set up JDK 21 (Required for Sonar)
-    uses: actions/setup-java@v4
-    with:
-      java-version: '21'
-      distribution: 'temurin'
-
   - uses: actions/cache@v4
     with:
       path: |
@@ -43,7 +36,7 @@ runs:
       path: ${{ inputs.working-directory }}
 
   - name: SonarCloud Scan
-    uses: sonarsource/sonarcloud-github-action@v2
+    uses: sonarsource/sonarcloud-github-action@v4
     env:
       GITHUB_TOKEN: ${{ inputs.github-bot-token }}
       SONAR_TOKEN: ${{ inputs.sonar-token }}
