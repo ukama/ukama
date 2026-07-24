@@ -1,7 +1,7 @@
-# USAGE_BY_NETWORK: a network's CUMULATIVE data usage (bytes) as of each
-# window — sum of its sims' lifetime counters (subscriber.usage.getBySim, a
-# full_snapshot read mode: state). Data consumed over a span is the DELTA
-# (max - min) of this cumulative across the span, computed at read time.
+# USAGE_BY_NETWORK: a network's CUMULATIVE data usage (bytes) — the sum of its
+# sims' lifetime usage counters (subscriber.usage.getBySim, a full_snapshot read
+# mode: state). The tiles read the running total via op LAST; MAX/DELTA remain
+# available (DELTA = data consumed within a span, once history accrues).
 kpi: USAGE_BY_NETWORK
 domain: subscriber
 algo: usage_by_network@v2
@@ -18,5 +18,5 @@ output:
   type: float
   unit: bytes
   symbol: B
-rollup_ops: [DELTA, MAX]
+rollup_ops: [LAST, MAX, DELTA]
 positive_direction: up

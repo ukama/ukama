@@ -79,7 +79,6 @@ export default function BizPackagesScreen() {
       data: {
         keys: [KPI_KEYS.usageByNetwork],
         span: rangeToSpan(range),
-        op: 'DELTA',
         networkId,
       },
     },
