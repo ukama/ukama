@@ -66,8 +66,7 @@ func (g *GeneratorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 			return nil, err
 		}
 
-	case msgbus.PrepareRoute(g.orgName, "event.cloud.local.{{ .Org}}.billing.report.receipt.generate"),
-		msgbus.PrepareRoute(g.orgName, "event.cloud.local.{{ .Org}}.billing.report.receipt.update"):
+	case msgbus.PrepareRoute(g.orgName, "event.cloud.local.{{ .Org}}.billing.report.receipt.generate"):
 		msg, err := unmarshalInvoiceGenerateEvent(e.Msg)
 		if err != nil {
 			return nil, err

@@ -219,26 +219,6 @@ func TestGeneratorEventServer_HandleReceiptGenerateEvent(t *testing.T) {
 		pdfEngine.AssertExpectations(t)
 	})
 
-	t.Run("ReceiptUpdatedEventSent", func(t *testing.T) {
-		pdfEngine := &mocks.PdfEngine{}
-
-		pdfEngine.On("Configure", mock.Anything, mock.Anything).
-			Return(nil).Once()
-
-		pdfEngine.On("Generate", mock.Anything).
-			Return(nil).Once()
-
-		routingKey := msgbus.PrepareRoute(OrgName,
-			"event.cloud.local.{{ .Org}}.billing.report.receipt.update")
-
-		s := server.NewGeneratorEventServer(OrgName, pdfEngine, msgbusClient)
-
-		_, err := s.EventNotification(context.TODO(), eventFor(t, routingKey))
-
-		assert.NoError(t, err)
-		pdfEngine.AssertExpectations(t)
-	})
-
 	t.Run("ErrorOnGenerateReceiptPDF", func(t *testing.T) {
 		pdfEngine := &mocks.PdfEngine{}
 

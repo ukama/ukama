@@ -47,7 +47,6 @@ func NewConfig(name string) *Config {
 				"event.cloud.local.{{ .Org}}.billing.report.invoice.generate",
 				"event.cloud.local.{{ .Org}}.billing.report.invoice.update",
 				"event.cloud.local.{{ .Org}}.billing.report.receipt.generate",
-				"event.cloud.local.{{ .Org}}.billing.report.receipt.update",
 			},
 		},
 	}
