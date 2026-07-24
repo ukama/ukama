@@ -59,11 +59,11 @@ export default function BizSalesScreen() {
   const { money } = useCurrency();
   const [range, setRange] = useState<string>(DEFAULT_RANGE);
   const span = rangeToSpan(range);
-  // Fixed 9-week window for the revenue trend (weekly buckets). Computed once
+  // Fixed 30-day window for the revenue trend (daily buckets). Computed once
   // so the query variables stay stable across renders.
   const [trendRange] = useState(() => ({
     to: new Date().toISOString(),
-    from: new Date(Date.now() - 63 * 864e5).toISOString(),
+    from: new Date(Date.now() - 30 * 864e5).toISOString(),
   }));
 
   // getKpiValues resolves ONE op per call, so REVENUE at SUM/COUNT/AVG needs
@@ -93,12 +93,12 @@ export default function BizSalesScreen() {
     skip: !networkId,
   });
 
-  // Revenue trend: weekly REVENUE (SUM) over the last ~9 weeks.
+  // Revenue trend: daily REVENUE (SUM) over the last 30 days.
   const { data: trendData, loading: trendLoading } = useGetKpiTimeSeriesQuery({
     variables: {
       data: {
         keys: [KPI_KEYS.revenue],
-        span: 'weekly',
+        span: 'daily',
         op: 'SUM',
         from: trendRange.from,
         to: trendRange.to,
@@ -121,7 +121,7 @@ export default function BizSalesScreen() {
   const avgDelta = kpiDelta(avgVals, KPI_KEYS.revenue);
   const paidDelta = kpiChangeAbs(base, KPI_KEYS.paidCustomers);
 
-  // Weekly revenue points for the trend chart (REVENUE is reported in cents).
+  // Daily revenue points for the trend chart (REVENUE is reported in cents).
   const trendPoints = (trendData?.getKpiTimeSeries.values ?? [])
     .filter((v) => v.from)
     .map((v) => ({
@@ -223,7 +223,7 @@ export default function BizSalesScreen() {
         >
           <div className="sec-title">Revenue trend</div>
           <span style={{ fontSize: 12.5, color: 'var(--uk-ink-3)' }}>
-            Last 9 weeks
+            Last 30 days
           </span>
         </div>
         {trendLoading ? (
