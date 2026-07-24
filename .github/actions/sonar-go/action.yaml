@@ -19,6 +19,13 @@ runs:
   using: "composite"
   steps:
 
+  # ---> For latest sonar cloud requirements
+  - name: Set up JDK 21 (Required for Sonar)
+    uses: actions/setup-java@v4
+    with:
+      java-version: '21'
+      distribution: 'temurin'
+
   - uses: actions/cache@v4
     with:
       path: |
