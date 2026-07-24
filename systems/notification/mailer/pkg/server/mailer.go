@@ -46,16 +46,18 @@ const (
 	InitialBackoff     = 5 * time.Minute
 )
 
+type EmailAttachment struct {
+	Filename    string
+	ContentType string
+	Content     []byte
+}
+
 type EmailPayload struct {
 	To           []string               `json:"to"`
 	TemplateName string                 `json:"template_name"`
 	Values       map[string]interface{} `json:"values"`
 	MailId       uuid.UUID
-	Attachments  []struct {
-		Filename    string
-		ContentType string
-		Content     []byte
-	}
+	Attachments  []EmailAttachment
 }
 
 type MailerServer struct {
@@ -90,53 +92,55 @@ func NewMailerServer(mailerRepo db.MailerRepo, mail *pkg.MailerConfig, templates
 }
 
 func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) (*pb.SendEmailResponse, error) {
-	timeoutCtx, cancel := context.WithTimeout(ctx, defaultTimeout)
-	defer cancel()
-
 	if err := s.validateRequest(req); err != nil {
 		return nil, err
 	}
 
-	mailId := uuid.NewV4()
-	log.Infof("Queueing email to %v", req.To)
-
-	payload := &EmailPayload{
-		To:           req.To,
-		TemplateName: req.TemplateName,
-		Values:       s.convertValues(req.Values),
-		MailId:       mailId,
-		Attachments: make([]struct {
-			Filename    string
-			ContentType string
-			Content     []byte
-		}, len(req.Attachments)),
-	}
-
-	// Convert attachments
+	attachments := make([]EmailAttachment, len(req.Attachments))
 	for i, att := range req.Attachments {
-		payload.Attachments[i] = struct {
-			Filename    string
-			ContentType string
-			Content     []byte
-		}{
+		attachments[i] = EmailAttachment{
 			Filename:    att.Filename,
 			ContentType: att.ContentType,
 			Content:     att.Content,
 		}
 	}
 
-	if err := s.saveEmailStatus(mailId, strings.Join(req.To, ","), req.TemplateName, ukama.MailStatusPending, req.Values); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to save email status: %v", err)
+	mailId, err := s.QueueEmail(ctx, req.To, req.TemplateName, req.Values, attachments)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.SendEmailResponse{
+		Message: "Email queued for sending!",
+		MailId:  mailId.String(),
+	}, nil
+}
+
+func (s *MailerServer) QueueEmail(ctx context.Context, to []string, templateName string,
+	values map[string]string, attachments []EmailAttachment) (uuid.UUID, error) {
+	timeoutCtx, cancel := context.WithTimeout(ctx, defaultTimeout)
+	defer cancel()
+
+	mailId := uuid.NewV4()
+	log.Infof("Queueing email to %v with template %s", to, templateName)
+
+	payload := &EmailPayload{
+		To:           to,
+		TemplateName: templateName,
+		Values:       s.convertValues(values),
+		MailId:       mailId,
+		Attachments:  attachments,
+	}
+
+	if err := s.saveEmailStatus(mailId, strings.Join(to, ","), templateName, ukama.MailStatusPending, values); err != nil {
+		return uuid.Nil, status.Errorf(codes.Internal, "failed to save email status: %v", err)
 	}
 
 	select {
 	case s.emailQueue <- payload:
-		return &pb.SendEmailResponse{
-			Message: "Email queued for sending!",
-			MailId:  mailId.String(),
-		}, nil
+		return mailId, nil
 	case <-timeoutCtx.Done():
-		return nil, status.Errorf(codes.Canceled, "operation canceled: %v", timeoutCtx.Err())
+		return uuid.Nil, status.Errorf(codes.Canceled, "operation canceled: %v", timeoutCtx.Err())
 	}
 }
 

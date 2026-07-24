@@ -18,6 +18,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/notification/mailer/cmd/version"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg/db"
@@ -25,6 +26,8 @@ import (
 
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
 )
 
@@ -63,14 +66,42 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
+	instanceId := os.Getenv("POD_NAME")
+	if instanceId == "" {
+		inst := uuid.NewV4()
+		instanceId = inst.String()
+	}
 
 	srv, err := server.NewMailerServer(db.NewMailerRepo(gormdb), serviceConfig.Mailer, serviceConfig.TemplatesPath)
 	if err != nil {
 		log.Fatalf("Failed to initialize mailer server: %v", err)
 	}
+
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
+		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
+		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
+		serviceConfig.MsgClient.RetryCount,
+		serviceConfig.MsgClient.ListenerRoutes)
+
+	mailerEventServer := server.NewMailerEventServer(serviceConfig.OrgName, srv)
+
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		pb.RegisterMailerServiceServer(s, srv)
+		epb.RegisterEventNotificationServiceServer(s, mailerEventServer)
 	})
 
+	go msgBusListener(mbClient)
+
 	grpcServer.StartServer()
+}
+
+func msgBusListener(m mb.MsgBusServiceClient) {
+	if err := m.Register(); err != nil {
+		logrus.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
+	}
+
+	if err := m.Start(); err != nil {
+		logrus.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
+	}
 }
