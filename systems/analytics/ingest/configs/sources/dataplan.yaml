@@ -19,5 +19,6 @@ pulls:
       amount: $.amount
       currency: $.currency
       data_volume: $.data_volume
+      data_unit: $.data_unit      # bytes | kilobytes | megabytes | gigabytes
       sim_type: $.sim_type
       network_id: $.network_id    # "" = org-level

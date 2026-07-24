@@ -8,9 +8,11 @@
 'use client';
 
 import DarkModeRounded from '@mui/icons-material/DarkModeRounded';
+import DomainRounded from '@mui/icons-material/DomainRounded';
 import LightModeRounded from '@mui/icons-material/LightModeRounded';
 import MenuRounded from '@mui/icons-material/MenuRounded';
 import { useColorScheme } from '@mui/material/styles';
+import { usePathname } from 'next/navigation';
 import { useSyncExternalStore } from 'react';
 
 import { useAuth } from '@/lib/auth/context';
@@ -70,6 +72,12 @@ function OrgLabel() {
 }
 
 export default function TopBar({ onMenu }: { onMenu: () => void }) {
+  const pathname = usePathname();
+  // Manage pages (Data plans, Billing, Members, SIM pool, Node pool) are
+  // organization-wide — network selection has no effect there, so the network
+  // switch is replaced by a static "Org-wide" chip to avoid confusion.
+  const isManage = /\/manage(\/|$)/.test(pathname ?? '');
+
   return (
     <header className="topbar">
       <button
@@ -80,7 +88,17 @@ export default function TopBar({ onMenu }: { onMenu: () => void }) {
       >
         <MenuRounded sx={{ fontSize: 22 }} />
       </button>
-      <NetSwitch />
+      {isManage ? (
+        <span
+          className="orgchip"
+          title="These pages show organization-wide data; network selection doesn't apply here."
+        >
+          <DomainRounded sx={{ fontSize: 17 }} />
+          Org-wide
+        </span>
+      ) : (
+        <NetSwitch />
+      )}
       <LensSegment />
       <div className="spacer" />
       <OrgLabel />

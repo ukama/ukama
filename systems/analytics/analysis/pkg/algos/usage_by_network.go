@@ -10,25 +10,30 @@ package algos
 
 import (
 	"fmt"
-	"math"
 	"strconv"
 
 	"github.com/ukama/ukama/systems/analytics/schema"
 )
 
-// UsageByNetwork (USAGE_BY_NETWORK @ scope network_id): total data usage
-// (bytes) per network for the window, summed over the per-sim usage records.
+// UsageByNetwork (USAGE_BY_NETWORK @ scope network_id): the network's
+// CUMULATIVE data usage (bytes) as of the window — the sum, over the network's
+// sims, of each sim's lifetime usage counter.
 //
-// Inputs:
-//   usage    — subscriber.usage.getBySim (mode: window): one record per
-//              active sim per window; the "usage" field is the dynamic
-//              usage object from /v1/usages, whose numeric values are the
-//              consumed bytes.
-//   networks — registry.network.getAll (network_id) — zero-fill.
+// The usage input (subscriber.usage.getBySim) is a full_snapshot of the
+// per-sim cumulative counter from /v1/usages (no from/to: the endpoint returns
+// the lifetime counter, which always 200s — the windowed CDR path errors on
+// idle windows). Read with mode: state, so each window carries every sim's
+// latest counter as of that window.
 //
-// Components: Sum = total bytes, Count = number of sim usage records,
-// Min/Max = smallest/largest per-sim usage — this makes daily SUM exact and
-// AVG a true per-window weighted average in the aggregator.
+// The per-window value is a SNAPSHOT, not an increment. Data consumed over a
+// span is derived at read time as DELTA = max - min of this cumulative across
+// the span's windows (see the aggregator's DELTA op). To make that exact, each
+// row sets Value = Sum = Min = Max = the network's cumulative total and
+// Count = 1. Networks with no sims/usage zero-fill (total 0) so the console
+// shows "0 B", never "—".
+//
+// Caveat: DELTA assumes the counter is monotonic across the span. A mid-span
+// reset (rollover / re-provision) is approximated (negative deltas clamp to 0).
 func UsageByNetwork(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
 	usage, ok := in["usage"]
 	if !ok {
@@ -40,12 +45,8 @@ func UsageByNetwork(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Resu
 		return nil, fmt.Errorf("USAGE_BY_NETWORK: missing input 'networks'")
 	}
 
-	type agg struct {
-		sum, min, max float64
-		count         float64
-	}
-
-	byNetwork := map[string]*agg{}
+	// Sum each sim's cumulative usage counter into its network.
+	byNetwork := map[string]float64{}
 
 	for _, rec := range usage {
 		networkID := str(rec["network_id"])
@@ -53,20 +54,11 @@ func UsageByNetwork(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Resu
 			continue
 		}
 
-		bytes := sumNumeric(rec["usage"])
-
-		a, ok := byNetwork[networkID]
-		if !ok {
-			a = &agg{min: math.Inf(1), max: math.Inf(-1)}
-			byNetwork[networkID] = a
-		}
-
-		a.sum += bytes
-		a.count++
-		a.min = math.Min(a.min, bytes)
-		a.max = math.Max(a.max, bytes)
+		byNetwork[networkID] += sumNumeric(rec["usage"])
 	}
 
+	// One row per network (zero-fill), carrying the cumulative total as of this
+	// window with Min=Max=Value so the read-time DELTA op yields max-min.
 	results := make([]Result, 0, len(networks))
 
 	for _, network := range networks {
@@ -75,20 +67,15 @@ func UsageByNetwork(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Resu
 			continue
 		}
 
-		a, ok := byNetwork[networkID]
-		if !ok {
-			results = append(results, Result{Scope: map[string]string{"network_id": networkID}})
-
-			continue
-		}
+		total := byNetwork[networkID] // 0 when the network has no sims/usage
 
 		results = append(results, Result{
 			Scope: map[string]string{"network_id": networkID},
-			Value: a.sum,
-			Sum:   a.sum,
-			Count: a.count,
-			Min:   a.min,
-			Max:   a.max,
+			Value: total,
+			Sum:   total,
+			Count: 1,
+			Min:   total,
+			Max:   total,
 		})
 	}
 
@@ -96,7 +83,7 @@ func UsageByNetwork(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Resu
 }
 
 // sumNumeric adds up every numeric leaf in a decoded JSON value — the usage
-// object from /v1/usages has dynamic keys (per imsi/sim) with byte counts as
+// object from /v1/usages has dynamic keys (per imsi/iccid) with byte counts as
 // values, sometimes serialized as strings.
 func sumNumeric(v interface{}) float64 {
 	switch t := v.(type) {

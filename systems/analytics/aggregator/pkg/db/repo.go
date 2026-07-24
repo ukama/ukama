@@ -169,8 +169,13 @@ func (r *repo) ScopesSeen(orgID, kpiKey, span string) ([]string, error) {
 	return scopes, nil
 }
 
-// filterScope filters rows whose canonical scope JSON contains all requested
+// filterScope keeps rows whose canonical scope JSON contains all requested
 // key/value pairs. Done in Go to stay portable (scope is a varchar column).
+//
+// REVENUE / PAID_CUSTOMERS are network-scoped (payments attributed to a
+// network via the paying SIM; unresolvable SIMs go to an org bucket). A
+// per-network read returns only rows whose network_id matches — the org
+// bucket (empty scope) is org-only and never bleeds into a network number.
 func filterScope(rows []schema.KpiRollup, filter map[string]string) []schema.KpiRollup {
 	if len(filter) == 0 {
 		return rows

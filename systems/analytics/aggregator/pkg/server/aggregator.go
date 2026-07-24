@@ -33,11 +33,16 @@ type AggregatorServer struct {
 	byKey    map[string]schema.KpiSpec
 	rollups  db.RollupRepo
 	composer *performance.Composer
+	// grid + windows back the rolling-window read path (last_24h/7d/30d),
+	// which aggregates kpi_windows on read instead of reading precomputed
+	// calendar-span rollups. See rolling.go.
+	grid    schema.Grid
+	windows db.KpiWindowReader
 	pb.UnimplementedAggregatorServiceServer
 }
 
 func NewAggregatorServer(org string, kpis []schema.KpiSpec, rollups db.RollupRepo,
-	composer *performance.Composer) *AggregatorServer {
+	composer *performance.Composer, grid schema.Grid, windows db.KpiWindowReader) *AggregatorServer {
 	byKey := map[string]schema.KpiSpec{}
 	for _, k := range kpis {
 		byKey[k.Kpi] = k
@@ -49,6 +54,8 @@ func NewAggregatorServer(org string, kpis []schema.KpiSpec, rollups db.RollupRep
 		byKey:    byKey,
 		rollups:  rollups,
 		composer: composer,
+		grid:     grid,
+		windows:  windows,
 	}
 }
 
@@ -81,9 +88,17 @@ func (s *AggregatorServer) ListReports(ctx context.Context, req *pb.ListReportsR
 }
 
 func (s *AggregatorServer) GetPerformanceReport(ctx context.Context, req *pb.GetPerformanceReportRequest) (*pb.GetPerformanceReportResponse, error) {
-	span, err := validateSpan(req.Span)
-	if err != nil {
-		return nil, err
+	// Reports accept the rolling filter tokens (last_24h/7d/30d) as well as the
+	// calendar spans: the composer maps a rolling span to a precise trailing
+	// window and falls back to the config window for anything else.
+	span := strings.ToLower(req.Span)
+	if !isRollingSpan(span) {
+		validated, err := validateSpan(span)
+		if err != nil {
+			return nil, err
+		}
+
+		span = validated
 	}
 
 	report, err := s.composer.Compose(req.Report, span, req.Scope, int(req.Top))
@@ -165,6 +180,12 @@ func (s *AggregatorServer) ListKpis(ctx context.Context, req *pb.ListKpisRequest
 }
 
 func (s *AggregatorServer) GetKpis(ctx context.Context, req *pb.GetKpisRequest) (*pb.GetKpisResponse, error) {
+	// Rolling windows (last_24h/7d/30d) are computed on read from kpi_windows;
+	// calendar spans (daily/weekly/monthly) read precomputed rollups below.
+	if isRollingSpan(req.Span) {
+		return s.getKpisRolling(req)
+	}
+
 	span, err := validateSpan(req.Span)
 	if err != nil {
 		return nil, err

@@ -94,11 +94,11 @@ export default function NetworkHomeScreen() {
   const sitesTotal = mapSites.length;
   // Online count from the analytics SITES_ONLINE KPI; fall back to the live
   // registry status when the KPI hasn't been emitted yet.
+  // Sites online comes from the analytics SITES_ONLINE KPI only (no registry
+  // fallback); undefined when the KPI hasn't been emitted.
   const sitesOnlineKpi = kpiValue(kpis, KPI_KEYS.sitesOnline);
   const sitesOnline =
-    sitesOnlineKpi != null
-      ? Math.round(sitesOnlineKpi)
-      : mapSites.filter((s) => s.status === 'online').length;
+    sitesOnlineKpi != null ? Math.round(sitesOnlineKpi) : undefined;
 
   return (
     <div className="page">
@@ -116,7 +116,12 @@ export default function NetworkHomeScreen() {
               icon: 'network_check',
               color: 'var(--uk-success-bright)',
               label: 'Network uptime',
-              value: kpiText(kpis, KPI_KEYS.networkUptime, (v) => `${v}%`),
+              // Computed KPI only, one decimal (e.g. 15.1%); "—" when absent.
+              value: kpiText(
+                kpis,
+                KPI_KEYS.networkUptime,
+                (v) => `${v.toFixed(1)}%`,
+              ),
               sub: 'latest reading',
             },
             {
@@ -137,12 +142,15 @@ export default function NetworkHomeScreen() {
               icon: 'cell_tower',
               color: 'var(--uk-ac)',
               label: 'Sites online',
-              value: sitesError ? '—' : `${sitesOnline}/${sitesTotal}`,
+              value:
+                sitesError || sitesOnline == null
+                  ? '—'
+                  : `${sitesOnline}/${sitesTotal}`,
               sub:
-                sitesOnline < sitesTotal
+                sitesOnline != null && sitesOnline < sitesTotal
                   ? `${sitesTotal - sitesOnline} need attention`
                   : 'all healthy',
-              danger: sitesOnline < sitesTotal,
+              danger: sitesOnline != null && sitesOnline < sitesTotal,
             },
           ]}
         />

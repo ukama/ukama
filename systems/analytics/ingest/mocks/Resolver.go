@@ -42,6 +42,34 @@ func (_m *Resolver) Resolve(org string, system string) (string, error) {
 	return r0, r1
 }
 
+// ResolveNodeGw provides a mock function with given fields: org, system
+func (_m *Resolver) ResolveNodeGw(org string, system string) (string, error) {
+	ret := _m.Called(org, system)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ResolveNodeGw")
+	}
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string) (string, error)); ok {
+		return rf(org, system)
+	}
+	if rf, ok := ret.Get(0).(func(string, string) string); ok {
+		r0 = rf(org, system)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(org, system)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewResolver creates a new instance of Resolver. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewResolver(t interface {

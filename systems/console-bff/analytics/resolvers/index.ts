@@ -7,6 +7,7 @@
  */
 import { NonEmptyArray } from "type-graphql";
 
+import { GetKpiTimeSeriesResolver } from "./getKpiTimeSeries";
 import { GetKpiValuesResolver } from "./getKpiValues";
 import { GetPerformanceReportResolver } from "./getPerformanceReport";
 
@@ -18,6 +19,7 @@ import { GetPerformanceReportResolver } from "./getPerformanceReport";
  */
 const resolvers: NonEmptyArray<any> = [
   GetKpiValuesResolver,
+  GetKpiTimeSeriesResolver,
   GetPerformanceReportResolver,
 ];
 

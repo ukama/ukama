@@ -253,6 +253,13 @@ func opValue(op string, sum, count, min, max, last float64) (float64, bool) {
 		return max, true
 	case "LAST":
 		return last, true
+	case "DELTA":
+		// span usage from a cumulative counter; clamp resets to 0
+		if d := max - min; d > 0 {
+			return d, true
+		}
+
+		return 0, true
 	default:
 		return 0, false
 	}

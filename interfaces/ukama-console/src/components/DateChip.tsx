@@ -8,8 +8,8 @@
 'use client';
 
 /** Date-range filter chip with dropdown. Options come from the shared
- *  DATE_RANGES (Today / Last 7 days / Last 30 days) so every page is
- *  consistent; the selected range maps to a KPI span via rangeToSpan. */
+ *  DATE_RANGES (Last 24h / Last 7 days / Last 30 days) so every page is
+ *  consistent; the selected range maps to a rolling KPI span via rangeToSpan. */
 import { useState } from 'react';
 import Chip from '@mui/material/Chip';
 import Menu from '@mui/material/Menu';
@@ -32,7 +32,7 @@ export default function DateChip({
   onChange?: (value: string) => void;
 }) {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
-  const [internal, setInternal] = useState(options[0] ?? 'Today');
+  const [internal, setInternal] = useState(options[0] ?? 'Last 24h');
   const value = controlled ?? internal;
 
   return (

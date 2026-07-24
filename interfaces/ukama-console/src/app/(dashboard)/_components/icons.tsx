@@ -20,6 +20,7 @@ import BoltRounded from '@mui/icons-material/BoltRounded';
 import LightModeRounded from '@mui/icons-material/LightModeRounded';
 import SettingsInputAntennaRounded from '@mui/icons-material/SettingsInputAntennaRounded';
 import CellTowerRounded from '@mui/icons-material/CellTowerRounded';
+import DataUsageRounded from '@mui/icons-material/DataUsageRounded';
 import DonutSmallRounded from '@mui/icons-material/DonutSmallRounded';
 import ErrorRounded from '@mui/icons-material/ErrorRounded';
 import GroupRounded from '@mui/icons-material/GroupRounded';
@@ -47,6 +48,7 @@ const REGISTRY: Record<string, React.ComponentType<SvgIconProps>> = {
   payments: PaymentsRounded,
   group: GroupRounded,
   donut_small: DonutSmallRounded,
+  data_usage: DataUsageRounded,
   apps: AppsRounded,
   monetization_on: MonetizationOnRounded,
   sell: SellRounded,
