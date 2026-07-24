@@ -27,7 +27,6 @@ import SectionCard from '@/components/SectionCard';
 import { BAR_COLORS } from '@/lib/charts';
 import { useCurrency } from '@/lib/currency';
 import { DEFAULT_RANGE, type KpiSpan, rangeToSpan } from '@/lib/dateRange';
-import { reportWindowLabel } from '@/lib/format';
 import {
   attrValue,
   cellMoney,
@@ -89,7 +88,9 @@ export default function BizSalesScreen() {
   });
 
   const { data: reportData, error: reportError } = useGetPerformanceReportQuery({
-    variables: { data: { report: 'package_performance', networkId } },
+    variables: {
+      data: { report: 'package_performance', span: 'last_30d', networkId },
+    },
     skip: !networkId,
   });
 
@@ -132,7 +133,6 @@ export default function BizSalesScreen() {
 
   // Revenue-by-package bars from the package_performance report rows (money
   // columns are reported in cents).
-  const reportWindow = reportWindowLabel(reportData?.getPerformanceReport.span);
   const byPackage = (reportData?.getPerformanceReport.rows ?? [])
     .map((r) => ({
       name: attrValue(r.attributes, 'name') ?? '—',
@@ -241,13 +241,7 @@ export default function BizSalesScreen() {
         )}
       </div>
 
-      <SectionCard
-        title={
-          reportWindow
-            ? `Revenue by package · ${reportWindow}`
-            : 'Revenue by package'
-        }
-      >
+      <SectionCard title="Revenue by package · Last 30 days">
         {error || byPackage.length === 0 ? (
           <div style={{ padding: 24, fontSize: 13, color: 'var(--uk-ink-3)' }}>
             {error ? '—' : 'No package revenue yet.'}
