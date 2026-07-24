@@ -44,6 +44,17 @@ message EventSimAllocation {
     string packageId = 12 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
     uint32 trafficPolicy = 13 [json_name = "traffic_policy"];
     google.protobuf.Timestamp packageEndDate = 14 [json_name = "end_date"];
+    string subscriberName = 15 [json_name = "subscriber_name"];
+    string subscriberEmail = 16 [json_name = "subscriber_email"];
+    string networkName = 17 [json_name = "network_name"];
+    string orgName = 18 [json_name = "org_name"];
+    string ownerName = 19 [json_name = "owner_name"];
+    string qrCode = 20 [json_name = "qr_code"];
+    string packageName = 21 [json_name = "package_name"];
+    string packageDataVolume = 22 [json_name = "package_data_volume"];
+    string packageDataUnit = 23 [json_name = "package_data_unit"];
+    string packageAmount = 24 [json_name = "package_amount"];
+    string packageDuration = 25 [json_name = "package_duration"];
 }
 
 
@@ -92,6 +103,15 @@ message EventSimAddPackage {
     string imsi = 4;
     string networkId = 5;
     string packageId = 6;
+    string subscriberName = 7 [json_name = "subscriber_name"];
+    string subscriberEmail = 8 [json_name = "subscriber_email"];
+    string networkName = 9 [json_name = "network_name"];
+    string orgName = 10 [json_name = "org_name"];
+    string ownerName = 11 [json_name = "owner_name"];
+    string packageName = 12 [json_name = "package_name"];
+    string packagesCount = 13 [json_name = "packages_count"];
+    string packagesDetails = 14 [json_name = "packages_details"];
+    string packageEndDate = 15 [json_name = "package_end_date"];
 }
 
 message EventSimRemovePackage {
