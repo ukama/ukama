@@ -35,7 +35,6 @@ import (
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
 	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
-	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
 	cnuc "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	cpay "github.com/ukama/ukama/systems/common/rest/client/payments"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
@@ -43,11 +42,10 @@ import (
 )
 
 const (
-	registrySystemName     = "registry"
-	dataplanSystemName     = "dataplan"
-	notificationSystemName = "notification"
-	ukamaAgentSystemName   = "ukamaagent"
-	paymentsSystemName     = "payments"
+	registrySystemName   = "registry"
+	dataplanSystemName   = "dataplan"
+	ukamaAgentSystemName = "ukamaagent"
+	paymentsSystemName   = "payments"
 )
 
 var serviceConfig = pkg.NewConfig(pkg.ServiceName)
@@ -131,12 +129,6 @@ func runGrpcServer(gormDB sql.Db) {
 		log.Errorf("Failed to resolve dataplan address: %v", err)
 	}
 
-	notificationUrl, err := ic.GetHostAddress(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
-		ic.CreateHostString(serviceConfig.OrgName, notificationSystemName), &serviceConfig.OrgName)
-	if err != nil {
-		log.Errorf("Failed to resolve notification address: %v", err)
-	}
-
 	ukamaAgentUrl, err := ic.GetHostAddress(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
 		ic.CreateHostString(serviceConfig.OrgName, ukamaAgentSystemName), &serviceConfig.OrgName)
 	if err != nil {
@@ -151,7 +143,6 @@ func runGrpcServer(gormDB sql.Db) {
 
 	netClient := creg.NewNetworkClient(regUrl.String())
 	pckgClient := cdplan.NewPackageClient(dataplanUrl.String())
-	notificationClient := cnotif.NewMailerClient(notificationUrl.String())
 	nucleusOrgClient := cnuc.NewOrgClient(serviceConfig.Http.NucleusClient)
 	nucleusUserClient := cnuc.NewUserClient(serviceConfig.Http.NucleusClient)
 	paymentClient := cpay.NewPaymentClient(paymentsUrl.String())
@@ -169,7 +160,6 @@ func runGrpcServer(gormDB sql.Db) {
 		mbClient,
 		serviceConfig.OrgId,
 		serviceConfig.PushMetricHost,
-		notificationClient,
 		netClient,
 		nucleusOrgClient,
 		nucleusUserClient,
@@ -182,7 +172,6 @@ func runGrpcServer(gormDB sql.Db) {
 		pckgClient,
 		providers.NewSubscriberRegistryClientProvider(serviceConfig.Registry, serviceConfig.Timeout),
 		netClient,
-		notificationClient,
 		nucleusOrgClient,
 		nucleusUserClient,
 		mbClient,
