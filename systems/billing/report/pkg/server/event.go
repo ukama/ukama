@@ -102,6 +102,10 @@ func (r *ReportEventServer) handlePaymentSuccessEvent(key string, msg *epb.Payme
 	b *ReportEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
+	if ukama.ParseItemType(msg.ItemType) == ukama.ItemTypePackage {
+		return addReceipt(msg, r.orgId, r.reportRepo, r.msgBus, r.baseRoutingKey)
+	}
+
 	_, err := update(msg.ItemId, true, msg.TransactionId, r.reportRepo, r.msgBus, r.baseRoutingKey)
 
 	return err
@@ -208,9 +212,14 @@ func addReceipt(msg *epb.Payment, orgId string, reportRepo db.ReportRepo,
 func rawReceiptFromPayment(msg *epb.Payment, reportId string) *util.RawReport {
 	amountCents := int(msg.AmountCents)
 
+	issuingDate := msg.PaidAt
+	if issuingDate == "" {
+		issuingDate = time.Now().UTC().Format(time.RFC3339)
+	}
+
 	return &util.RawReport{
 		Number:                            receiptNumberPrefix + strings.ToUpper(reportId[:8]),
-		IssuingDate:                       msg.PaidAt,
+		IssuingDate:                       issuingDate,
 		InvoiceType:                       ukama.ReportTypeReceipt.String(),
 		Status:                            receiptStatus,
 		PaymentStatus:                     receiptPaymentStatus,

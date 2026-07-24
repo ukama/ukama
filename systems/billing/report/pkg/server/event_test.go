@@ -259,6 +259,87 @@ func TestReportEventServer_HandlePaymentSuccessEvent(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
+	t.Run("ReceiptGeneratedForPackagePayment", func(t *testing.T) {
+		reportRepo := &mocks.ReportRepo{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+
+		payment := &epb.Payment{
+			Id:            uuid.NewV4().String(),
+			ItemId:        uuid.NewV4().String(),
+			ItemType:      ukama.ItemTypePackage.String(),
+			Status:        ukama.StatusTypeCompleted.String(),
+			AmountCents:   1050,
+			Currency:      "USD",
+			PaymentMethod: ukama.PaymentMethodCash.String(),
+			PayerPhone:    "1-171-883-3711",
+			Country:       "US",
+			Description:   "Payment for package",
+		}
+
+		reportRepo.On("GetByTransactionId", payment.Id).
+			Return(nil, gorm.ErrRecordNotFound).Once()
+
+		reportRepo.On("Add", mock.MatchedBy(func(r *db.Report) bool {
+			return r.Type == ukama.ReportTypeReceipt &&
+				r.TransactionId == payment.Id &&
+				r.IsPaid
+		}), mock.Anything).Return(nil).Once()
+
+		msgbusClient.On("PublishRequest",
+			"event.cloud.local."+strings.ToLower(OrgName)+".billing.report.receipt.generate",
+			mock.Anything).Return(nil).Once()
+
+		anyE, err := anypb.New(payment)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		s := server.NewReportEventServer(OrgName, OrgId, reportRepo, msgbusClient)
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.NoError(t, err)
+		reportRepo.AssertExpectations(t)
+		msgbusClient.AssertExpectations(t)
+		reportRepo.AssertNotCalled(t, "Get", mock.Anything)
+		reportRepo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+	})
+
+	t.Run("ReceiptSkippedForExistingPackagePayment", func(t *testing.T) {
+		reportRepo := &mocks.ReportRepo{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+
+		payment := &epb.Payment{
+			Id:       uuid.NewV4().String(),
+			ItemId:   uuid.NewV4().String(),
+			ItemType: ukama.ItemTypePackage.String(),
+			Status:   ukama.StatusTypeCompleted.String(),
+		}
+
+		reportRepo.On("GetByTransactionId", payment.Id).
+			Return(&db.Report{Id: uuid.NewV4()}, nil).Once()
+
+		anyE, err := anypb.New(payment)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		s := server.NewReportEventServer(OrgName, OrgId, reportRepo, msgbusClient)
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.NoError(t, err)
+		reportRepo.AssertExpectations(t)
+		reportRepo.AssertNotCalled(t, "Add", mock.Anything, mock.Anything)
+		msgbusClient.AssertNotCalled(t, "PublishRequest", mock.Anything, mock.Anything)
+	})
+
 	t.Run("PaymentSuccessPayloadNotSent", func(t *testing.T) {
 		reportRepo := &mocks.ReportRepo{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
