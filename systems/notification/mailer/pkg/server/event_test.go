@@ -87,9 +87,11 @@ func TestEventNotification_InviteCreate(t *testing.T) {
 				Id:        inviteId,
 				Link:      "https://ukama.com/invite",
 				Email:     testInviteEmail,
+				Name:      "Invitee Name",
 				Role:      upb.RoleType_ROLE_ADMIN,
 				OrgName:   testEventOrgName,
 				OwnerName: testOwnerName,
+				ExpiresAt: "2026-07-25 14:30:00 +0000 UTC m=+86400.001234567",
 			}))
 
 		assert.NoError(t, err)
@@ -99,9 +101,27 @@ func TestEventNotification_InviteCreate(t *testing.T) {
 		assert.Equal(t, emailTemplate.EmailTemplateMemberInvite, created.TemplateName)
 		assert.Equal(t, ukama.MailStatusPending, created.Status)
 		assert.Equal(t, inviteId, created.Values[emailTemplate.EmailKeyInvitation])
+		assert.Equal(t, "Invitee Name", created.Values[emailTemplate.EmailKeyName])
 		assert.Equal(t, testOwnerName, created.Values[emailTemplate.EmailKeyOwner])
 		assert.Equal(t, testEventOrgName, created.Values[emailTemplate.EmailKeyOrg])
 		assert.Equal(t, upb.RoleType_ROLE_ADMIN.String(), created.Values[emailTemplate.EmailKeyRole])
+		assert.Equal(t, "July 25, 2026 at 2:30 PM UTC", created.Values[emailTemplate.EmailKeyExpiration])
+	})
+
+	t.Run("keeps raw expiry when format is unknown", func(t *testing.T) {
+		es, repo := setupEventServer(t)
+		created := expectQueuedEmail(repo)
+
+		res, err := es.EventNotification(context.TODO(), eventFor(t, evt.EventInviteCreate,
+			&epb.EventInvitationCreated{
+				Id:        "6a1b1a4e-0e1a-4f2e-8a1f-2f6b0b3c9d11",
+				Email:     testInviteEmail,
+				ExpiresAt: "tomorrow",
+			}))
+
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+		assert.Equal(t, "tomorrow", created.Values[emailTemplate.EmailKeyExpiration])
 	})
 
 	t.Run("skips when recipient is missing", func(t *testing.T) {

@@ -35,7 +35,7 @@ Content-Type: text/html; charset="UTF-8"
     background-color: #4285F4;
     border-radius: 4px;
     transition: background-color 0.3s ease;
-    with: 200px;
+    width: 200px;
   }
 
   .button:hover {
@@ -61,11 +61,11 @@ Content-Type: text/html; charset="UTF-8"
   
   <p>Hi {{ .Values.NAME }},</p>
 
-  <p>You have been invited to join {{ .Values.ORG}} as a {{ .Values.ROLE}}. This invitation will expire after <strong> 5 minutes</strong>. To accept the invitation and get started with Ukama Console, click the button below.</p>
+  <p>You have been invited to join {{ .Values.ORG}} as a {{ .Values.ROLE}}. This invitation will expire on <strong>{{ .Values.EXPIRATION_DATE }}</strong>. To accept the invitation and get started with Ukama Console, click the button below.</p>
   <a href="{{ .Values.LINK }}" class="button" style="color: #ffffff">ACCEPT TEAM INVITATION</a>
 
   <p>Having trouble with the button? Use the following link instead: <a href="{{ .Values.LINK}}">{{ .Values.LINK}}</a></p>
-  Email ID: {{ .Values.EmailID }} (You can use this email to follow up in case of any issues)
+  Invitation ID: {{ .Values.INVITATION }} (You can use this ID to follow up in case of any issues)
   <br>
   <div style="white-space: pre">
 Thanks,

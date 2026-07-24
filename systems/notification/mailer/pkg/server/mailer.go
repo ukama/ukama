@@ -44,6 +44,8 @@ const (
 	emailQueueCapacity = 100
 	MaxRetryCount      = 3
 	InitialBackoff     = 5 * time.Minute
+
+	stalledEmailThreshold = 5 * time.Minute
 )
 
 type EmailAttachment struct {
@@ -247,54 +249,75 @@ func (s *MailerServer) updateRetryStatus(mailId uuid.UUID, retryCount int, nextR
 
 func (s *MailerServer) processRetries() {
 	for range s.retryTicker.C {
-		emails, err := s.mailerRepo.GetFailedEmails()
-		if err != nil {
-			log.WithError(err).Error("Failed to fetch failed emails")
-			continue
-		}
+		s.sweepRetries()
+	}
+}
 
+func (s *MailerServer) sweepRetries() {
+	emails, err := s.mailerRepo.GetFailedEmails()
+	if err != nil {
+		log.WithError(err).Error("Failed to fetch failed emails")
+	} else {
 		for _, email := range emails {
 			if email.Status == ukama.MailStatusSuccess || email.Status == ukama.MailStatusProcess {
 				continue
 			}
 
-			if email.NextRetryTime != nil && time.Now().Before(*email.NextRetryTime) {
-				continue
-			}
+			s.retryEmail(email)
+		}
+	}
 
-			if email.RetryCount >= MaxRetryCount {
-				log.WithField("mailId", email.MailId).Info("Max retries reached, marking as permanently failed")
+	stalled, err := s.mailerRepo.GetStalledEmails(time.Now().Add(-stalledEmailThreshold))
+	if err != nil {
+		log.WithError(err).Error("Failed to fetch stalled emails")
 
-				if err := s.updateStatus(email.MailId, ukama.MailStatusFailed); err != nil {
-					log.WithError(err).Error("Failed to update email status")
-				}
-				continue
-			}
+		return
+	}
 
-			if err := s.updateStatus(email.MailId, ukama.MailStatusProcess); err != nil {
-				log.WithError(err).Error("Failed to update status to processing")
-				continue
-			}
+	for _, email := range stalled {
+		log.WithField("mailId", email.MailId).Info("Recovering stalled email")
+		s.retryEmail(email)
+	}
+}
 
-			payload := &EmailPayload{
-				To:           strings.Split(email.Email, ","),
-				TemplateName: email.TemplateName,
-				Values:       email.Values,
-				MailId:       email.MailId,
-			}
+func (s *MailerServer) retryEmail(email *db.Mailing) {
+	if email.NextRetryTime != nil && time.Now().Before(*email.NextRetryTime) {
+		return
+	}
 
-			if err := s.attemptSendEmail(payload); err != nil {
-				log.WithError(err).WithField("mailId", email.MailId).Error("Retry attempt failed")
-				nextRetry := time.Now().Add(InitialBackoff * time.Duration(1<<uint(email.RetryCount)))
-				if err := s.updateRetryStatus(email.MailId, email.RetryCount+1, &nextRetry); err != nil {
-					log.WithError(err).Error("Failed to update retry status")
-				}
-			} else {
-				log.WithField("mailId", email.MailId).Info("Retry successful")
-				if err := s.updateStatus(email.MailId, ukama.MailStatusSuccess); err != nil {
-					log.WithError(err).Error("Failed to update email status")
-				}
-			}
+	if email.RetryCount >= MaxRetryCount {
+		log.WithField("mailId", email.MailId).Info("Max retries reached, marking as permanently failed")
+
+		if err := s.updateStatus(email.MailId, ukama.MailStatusFailed); err != nil {
+			log.WithError(err).Error("Failed to update email status")
+		}
+
+		return
+	}
+
+	if err := s.updateStatus(email.MailId, ukama.MailStatusProcess); err != nil {
+		log.WithError(err).Error("Failed to update status to processing")
+
+		return
+	}
+
+	payload := &EmailPayload{
+		To:           strings.Split(email.Email, ","),
+		TemplateName: email.TemplateName,
+		Values:       email.Values,
+		MailId:       email.MailId,
+	}
+
+	if err := s.attemptSendEmail(payload); err != nil {
+		log.WithError(err).WithField("mailId", email.MailId).Error("Retry attempt failed")
+		nextRetry := time.Now().Add(InitialBackoff * time.Duration(1<<uint(email.RetryCount)))
+		if err := s.updateRetryStatus(email.MailId, email.RetryCount+1, &nextRetry); err != nil {
+			log.WithError(err).Error("Failed to update retry status")
+		}
+	} else {
+		log.WithField("mailId", email.MailId).Info("Retry successful")
+		if err := s.updateStatus(email.MailId, ukama.MailStatusSuccess); err != nil {
+			log.WithError(err).Error("Failed to update email status")
 		}
 	}
 }

@@ -22,6 +22,12 @@ Content-Type: text/html; charset="UTF-8"
                     You have been added as a subscriber to use the following network: {{.Values.NETWORK}}, and can enjoy fast, reliable, connectivity, within the range of the network. The {{.Values.PACKAGE}} ({{.Values.AMOUNT}} / {{.Values.VOLUME}} {{.Values.UNIT}} / {{.Values.DURATION}} days) has been activated, and expires {{.Values.ENDDATE}} EOD.
                   </p>
                   <p>
+                    To install your eSIM, open your phone's cellular settings, choose to add an eSIM using an activation code, and enter the code below:
+                  </p>
+                  <div style="background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 16px; margin: 20px 0; font-family: 'Courier New', monospace; font-size: 14px; word-break: break-all; text-align: center;">
+                    {{.Values.QRCODE}}
+                  </div>
+                  <p>
                     You can use your data as is, but you can enhance your experience by securely monitoring your usage, remotely topping up your data, and more, in Ukama's free subscriber app found here, currently available for IOS.
                   </p>
                   <a href="https://apps.apple.com/app/ukama/id123456789" style="display: inline-block; background-color: #1D90F8; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin: 20px 0;">Open App in Store</a>

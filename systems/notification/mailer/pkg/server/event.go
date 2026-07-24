@@ -11,6 +11,8 @@ package server
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/ukama/ukama/systems/common/emailTemplate"
 	"github.com/ukama/ukama/systems/common/msgbus"
@@ -85,10 +87,25 @@ func (es *MailerEventServer) handleEventInviteCreate(ctx context.Context, msg *e
 	return es.queue(ctx, msg.Email, emailTemplate.EmailTemplateMemberInvite, map[string]string{
 		emailTemplate.EmailKeyInvitation: msg.Id,
 		emailTemplate.EmailKeyLink:       msg.Link,
+		emailTemplate.EmailKeyName:       msg.Name,
 		emailTemplate.EmailKeyOwner:      msg.OwnerName,
 		emailTemplate.EmailKeyOrg:        msg.OrgName,
 		emailTemplate.EmailKeyRole:       msg.Role.String(),
+		emailTemplate.EmailKeyExpiration: formatExpiry(msg.ExpiresAt),
 	})
+}
+
+func formatExpiry(expiresAt string) string {
+	if i := strings.Index(expiresAt, " m="); i != -1 {
+		expiresAt = expiresAt[:i]
+	}
+
+	t, err := time.Parse("2006-01-02 15:04:05.999999999 -0700 MST", expiresAt)
+	if err != nil {
+		return expiresAt
+	}
+
+	return t.Format("January 2, 2006 at 3:04 PM MST")
 }
 
 func (es *MailerEventServer) handleEventSimAllocate(ctx context.Context, msg *epb.EventSimAllocation) (*epb.EventResponse, error) {
