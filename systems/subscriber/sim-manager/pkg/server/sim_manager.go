@@ -51,7 +51,7 @@ import (
 //TODO; Replace all these GetBy with List functions.
 
 const (
-	DefaultMinuteDelayForPackageStartDate = 1
+	DefaultMinuteDelayForPackageStartDate = 0
 	eventPublishErrorMsg                  = "Failed to publish message %+v with key %+v. Errors %v"
 
 	// Payment metadata keys. metadataSimKey ties a payment to a SIM;
