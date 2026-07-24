@@ -20,6 +20,7 @@ import (
 type ReportRepo interface {
 	Add(report *Report, nestedFunc func(*Report, *gorm.DB) error) error
 	Get(id uuid.UUID) (*Report, error)
+	GetByTransactionId(transactionId string) (*Report, error)
 	List(ownerId string, ownerType ukama.OwnerType, networkId string, reportType ukama.ReportType,
 		isPaid bool, count uint32, sort bool) ([]Report, error)
 
@@ -60,6 +61,17 @@ func (i *reportRepo) Get(id uuid.UUID) (*Report, error) {
 	var rep Report
 
 	result := i.Db.GetGormDb().First(&rep, id)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &rep, nil
+}
+
+func (r *reportRepo) GetByTransactionId(transactionId string) (*Report, error) {
+	var rep Report
+
+	result := r.Db.GetGormDb().Where("transaction_id = ?", transactionId).First(&rep)
 	if result.Error != nil {
 		return nil, result.Error
 	}
