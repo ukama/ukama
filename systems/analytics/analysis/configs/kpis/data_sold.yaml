@@ -1,5 +1,5 @@
 # DATA_SOLD: bytes of package data allowance SOLD in the window (a sales
-# proxy). Sum over sim-package assignments whose start_date falls in the
+# proxy). Sum over sim-package assignments purchased (created_at) in the
 # window of the assigned package's data volume converted to bytes, grouped by
 # network. This is data SOLD (allowance purchased) — distinct from
 # USAGE_BY_NETWORK which measures data actually CONSUMED. Daily SUM = sold
@@ -11,7 +11,7 @@ scope: [network_id]
 inputs:
   sim_packages:
     dataset: subscriber.simpackage.listBySim
-    fields: [package_id, network_id, start_date]
+    fields: [package_id, network_id, created_at]
   packages:
     dataset: dataplan.package.getAll
     fields: [package_id, network_id, data_volume, data_unit]

@@ -159,7 +159,7 @@ export default function BizPackagesScreen() {
           {
             icon: 'data_usage',
             color: 'var(--uk-ac)',
-            label: 'Data consumed',
+            label: 'Data consumed (all packages)',
             value: usageBytes == null ? '—' : formatBytes(usageBytes),
           },
         ]}

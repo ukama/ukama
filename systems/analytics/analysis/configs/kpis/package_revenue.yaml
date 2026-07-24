@@ -7,7 +7,7 @@ scope: [network_id, package_id]
 inputs:
   sim_packages:
     dataset: subscriber.simpackage.listBySim
-    fields: [sim_package_id, package_id, network_id, start_date]
+    fields: [sim_package_id, package_id, network_id, created_at]
   packages:
     dataset: dataplan.package.getAll
     fields: [package_id, network_id, amount, duration, active]

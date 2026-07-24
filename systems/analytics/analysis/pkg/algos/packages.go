@@ -94,12 +94,17 @@ func PackageSales(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result
 			continue
 		}
 
-		start, err := parseTime(str(a["start_date"]))
+		// Count a sale when the package was PURCHASED (created_at), not when it
+		// becomes active (start_date). A queued package with a future
+		// start_date is still a sale now — this keeps PACKAGE_SALES /
+		// PACKAGE_REVENUE consistent with REVENUE, which counts the payment at
+		// paid time.
+		created, err := parseTime(str(a["created_at"]))
 		if err != nil {
 			continue
 		}
 
-		if !start.Before(win.Start) && start.Before(win.End) {
+		if !created.Before(win.Start) && created.Before(win.End) {
 			counts[[2]string{networkID, packageID}]++
 		}
 	}

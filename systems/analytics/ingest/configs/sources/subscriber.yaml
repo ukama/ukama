@@ -41,6 +41,7 @@ pulls:
       end_date: $.end_date
       is_active: $.is_active
       as_expired: $.as_expired
+      created_at: $.created_at
 
   # Per-sim CUMULATIVE data usage counter (strategy: full_snapshot — the
   # lifetime counter is state, change-logged). NO from/to: /v1/usages returns
