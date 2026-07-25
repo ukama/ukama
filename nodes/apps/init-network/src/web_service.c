@@ -17,27 +17,12 @@ int web_service_cb_ping(const URequest *request,
                         UResponse *response,
                         void *data) {
 
-    ServiceContext *ctx;
-
     (void)request;
+    (void)data;
 
-    ctx = (ServiceContext *)data;
-    if (ctx == NULL || ctx->status == NULL) {
-        ulfius_set_string_body_response(response,
-                                        HttpStatus_ServiceUnavailable,
-                                        HttpStatusStr(HttpStatus_ServiceUnavailable));
-        return U_CALLBACK_CONTINUE;
-    }
-
-    if (status_is_ready(ctx->status)) {
-        ulfius_set_string_body_response(response,
-                                        HttpStatus_OK,
-                                        HttpStatusStr(HttpStatus_OK));
-    } else {
-        ulfius_set_string_body_response(response,
-                                        HttpStatus_ServiceUnavailable,
-                                        HttpStatusStr(HttpStatus_ServiceUnavailable));
-    }
+    ulfius_set_string_body_response(response,
+                                    HttpStatus_OK,
+                                    HttpStatusStr(HttpStatus_OK));
 
     return U_CALLBACK_CONTINUE;
 }
@@ -51,6 +36,56 @@ int web_service_cb_version(const URequest *request,
 
     ulfius_set_string_body_response(response, HttpStatus_OK, VERSION);
 
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_ready(const URequest *request,
+                         UResponse *response,
+                         void *data) {
+
+    ServiceContext *ctx;
+    JsonObj *json;
+    InitState state;
+    char reason[STATUS_REASON_LEN];
+    int status;
+
+    (void)request;
+
+    ctx = (ServiceContext *)data;
+    if (ctx == NULL || ctx->status == NULL) {
+        ulfius_set_string_body_response(
+            response,
+            HttpStatus_InternalServerError,
+            HttpStatusStr(HttpStatus_InternalServerError));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    state = status_get(ctx->status, reason, sizeof(reason));
+    status = HttpStatus_Accepted;
+    if (state == InitStateReady) {
+        status = HttpStatus_OK;
+    } else if (state == InitStateFailed) {
+        status = HttpStatus_ServiceUnavailable;
+    }
+
+    json = json_object();
+    if (json == NULL) {
+        ulfius_set_string_body_response(
+            response,
+            HttpStatus_InternalServerError,
+            HttpStatusStr(HttpStatus_InternalServerError));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    json_object_set_new(json,
+                        "ready",
+                        json_boolean(state == InitStateReady));
+    if (state != InitStateReady) {
+        json_object_set_new(json, "reason", json_string(reason));
+    }
+
+    ulfius_set_json_body_response(response, status, json);
+    json_decref(json);
     return U_CALLBACK_CONTINUE;
 }
 

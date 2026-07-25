@@ -79,6 +79,12 @@ static void setup_common_webservice_endpoints(Config *config, UInst *instance) {
                                &web_service_cb_version, config);
     node_add_unsupported_methods(instance, "GET",
                                  URL_PREFIX, API_RES_EP("version"));
+
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("ready"), 0,
+                               &web_service_cb_ready, config);
+    node_add_unsupported_methods(instance, "GET",
+                                 URL_PREFIX, API_RES_EP("ready"));
 }
 
 static int setup_webservice_endpoints(Config *config, UInst *serviceInst) {

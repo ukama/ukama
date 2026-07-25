@@ -22,10 +22,25 @@ typedef struct _u_response  UResponse;
 typedef json_t              JsonObj;
 typedef json_error_t        JsonErrObj;
 
+typedef struct {
+    int status;
+    bool ready;
+    char reason[STARTERD_READY_REASON_LEN];
+} AppReadyResponse;
+
 bool wc_app_ping(Config *config, App *app);
 bool wc_app_version_matches(Config *config,
                             App *app,
                             const char *tag);
+bool wc_app_ready(Config *config, App *app, AppReadyResponse *result);
+bool wc_mesh_status(Config *config,
+                    App *app,
+                    bool *connected,
+                    char *reason,
+                    size_t reasonSize);
+bool wc_notify_node_state(Config *config,
+                          bool ready,
+                          const char *reason);
 bool wc_fetch_package(Config *config,
                       const char *appName,
                       const char *tag,

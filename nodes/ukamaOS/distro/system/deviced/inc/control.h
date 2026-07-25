@@ -32,6 +32,12 @@ typedef enum {
     CONTROL_STATE_ON,
 } ControlState;
 
+typedef enum {
+    CONTROL_READINESS_READY = 0,
+    CONTROL_READINESS_PENDING,
+    CONTROL_READINESS_FAULT,
+} ControlReadiness;
+
 typedef struct {
     ControlPhase       Phase;
     ControlState       Current;
@@ -52,6 +58,10 @@ ControlCtx *control_create(void);
 void control_destroy(ControlCtx *ctx);
 
 bool control_is_busy(ControlCtx *ctx);
+
+ControlReadiness control_get_readiness(ControlCtx *ctx,
+                                       char *reason,
+                                       size_t reasonSize);
 
 int control_get_subsys_public_state(ControlCtx *ctx,
                                     ControlSubsystem subsystem,

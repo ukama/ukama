@@ -1,0 +1,594 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2026-present, Ukama Inc.
+ */
+
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#include "app.h"
+#include "readiness.h"
+#include "starterd.h"
+#include "web_client.h"
+
+#include "usys_log.h"
+
+struct ReadinessMonitor {
+    Config *config;
+    Space *spaceList;
+    StarterContext *ctx;
+
+    pthread_t thread;
+    pthread_mutex_t mutex;
+    pthread_cond_t condition;
+    bool running;
+    bool enabled;
+
+    NodeReadinessState state;
+    NodeReadinessState reportedState;
+    NodeReadinessState pendingEvent;
+    bool haveReportedState;
+    bool eventPending;
+    char reason[STARTERD_READY_REASON_LEN];
+
+    bool meshKnown;
+    bool meshConnected;
+    time_t meshCheckedAt;
+    char meshReason[STARTERD_READY_REASON_LEN];
+};
+
+static const char *app_readiness_str(AppReadinessState state) {
+
+    switch (state) {
+    case APP_READINESS_IGNORED: return "ignored";
+    case APP_READINESS_PENDING: return "pending";
+    case APP_READINESS_READY:   return "ready";
+    case APP_READINESS_FAULTY:  return "faulty";
+    default:                    return "unknown";
+    }
+}
+
+static const char *node_readiness_str(NodeReadinessState state) {
+
+    switch (state) {
+    case NODE_READINESS_PENDING: return "pending";
+    case NODE_READINESS_READY:   return "ready";
+    case NODE_READINESS_FAULTY:  return "faulty";
+    default:                     return "unknown";
+    }
+}
+
+static bool app_is_mesh(const App *app) {
+
+    if (!app || !app->name) return false;
+
+    return strcmp(app->name, "meshd") == 0 ||
+           strcmp(app->name, "mesh") == 0 ||
+           strcmp(app->name, "mesh.d") == 0;
+}
+
+static void copy_reason(char *dst, size_t size, const char *reason) {
+
+    if (!dst || size == 0) return;
+
+    snprintf(dst, size, "%s", (reason && *reason) ? reason : "none");
+}
+
+static void app_set_pending(ReadinessMonitor *monitor,
+                            App *app,
+                            int status,
+                            const char *reason,
+                            time_t now) {
+
+    if (app->readinessState == APP_READINESS_READY ||
+        app->readinessDeadline == 0) {
+        app->readinessSince = now;
+        app->readinessDeadline =
+            now + monitor->config->readyTimeoutSec;
+    }
+
+    app->readinessState = APP_READINESS_PENDING;
+    app->readinessHttpStatus = status;
+    app->readinessCheckedAt = now;
+    copy_reason(app->readinessReason,
+                sizeof(app->readinessReason),
+                reason);
+
+    if (now >= app->readinessDeadline) {
+        app->readinessState = APP_READINESS_FAULTY;
+        app->readinessHttpStatus = 503;
+        snprintf(app->readinessReason,
+                 sizeof(app->readinessReason),
+                 "ready timeout after %d seconds",
+                 monitor->config->readyTimeoutSec);
+    }
+}
+
+static void app_update(ReadinessMonitor *monitor,
+                       App *app,
+                       const AppReadyResponse *result,
+                       bool responded,
+                       time_t now) {
+
+    pthread_mutex_lock(&monitor->mutex);
+
+    if (!responded) {
+        app_set_pending(monitor,
+                        app,
+                        0,
+                        "ready endpoint unavailable",
+                        now);
+    } else if (result->status == 200 && result->ready) {
+        if (app->readinessState != APP_READINESS_READY) {
+            app->readinessSince = now;
+        }
+        app->readinessState = APP_READINESS_READY;
+        app->readinessHttpStatus = result->status;
+        app->readinessCheckedAt = now;
+        app->readinessDeadline = 0;
+        copy_reason(app->readinessReason,
+                    sizeof(app->readinessReason),
+                    result->reason);
+    } else if (result->status == 503) {
+        if (app->readinessState != APP_READINESS_FAULTY) {
+            app->readinessSince = now;
+        }
+        app->readinessState = APP_READINESS_FAULTY;
+        app->readinessHttpStatus = result->status;
+        app->readinessCheckedAt = now;
+        app->readinessDeadline = 0;
+        copy_reason(app->readinessReason,
+                    sizeof(app->readinessReason),
+                    result->reason);
+    } else {
+        app_set_pending(monitor,
+                        app,
+                        result->status,
+                        result->reason,
+                        now);
+    }
+
+    pthread_mutex_unlock(&monitor->mutex);
+}
+
+static void aggregate(ReadinessMonitor *monitor) {
+
+    Space *space;
+    App *app;
+    NodeReadinessState state;
+    const char *reason;
+    char appReason[STARTERD_READY_REASON_LEN];
+
+    state = NODE_READINESS_READY;
+    reason = "ready";
+    appReason[0] = '\0';
+
+    pthread_mutex_lock(&monitor->mutex);
+
+    if (!monitor->ctx->bootCompleted) {
+        state = NODE_READINESS_PENDING;
+        reason = "starterd is starting applications";
+    } else if (monitor->enabled) {
+        space = monitor->spaceList;
+        while (space && state != NODE_READINESS_FAULTY) {
+            app = space->appList;
+            while (app) {
+                if (!app->readinessRequired) {
+                    app = app->next;
+                    continue;
+                }
+
+                if (app->readinessState == APP_READINESS_FAULTY) {
+                    state = NODE_READINESS_FAULTY;
+                    snprintf(appReason,
+                             sizeof(appReason),
+                             "%.48s: %.140s",
+                             app->name,
+                             app->readinessReason);
+                    reason = appReason;
+                    break;
+                }
+
+                if (app->readinessState != APP_READINESS_READY &&
+                    state == NODE_READINESS_READY) {
+                    state = NODE_READINESS_PENDING;
+                    snprintf(appReason,
+                             sizeof(appReason),
+                             "%.48s: %.140s",
+                             app->name,
+                             app->readinessReason);
+                    reason = appReason;
+                }
+                app = app->next;
+            }
+            space = space->next;
+        }
+    }
+
+    monitor->state = state;
+    copy_reason(monitor->reason, sizeof(monitor->reason), reason);
+
+    if (monitor->enabled && state != NODE_READINESS_PENDING &&
+        (!monitor->haveReportedState ||
+         monitor->reportedState != state)) {
+        monitor->pendingEvent = state;
+        monitor->eventPending = true;
+    } else if (state == NODE_READINESS_PENDING) {
+        monitor->eventPending = false;
+    } else if (state != NODE_READINESS_PENDING &&
+               monitor->haveReportedState &&
+               monitor->reportedState == state) {
+        monitor->eventPending = false;
+    }
+    pthread_mutex_unlock(&monitor->mutex);
+}
+
+static void poll_apps(ReadinessMonitor *monitor) {
+
+    Space *space;
+    App *app;
+    AppReadyResponse result;
+    bool responded;
+    time_t now;
+
+    if (!monitor->ctx->bootCompleted) return;
+
+    space = monitor->spaceList;
+    while (space) {
+        app = space->appList;
+        while (app) {
+            if (app->readinessRequired) {
+                memset(&result, 0, sizeof(result));
+                responded = wc_app_ready(monitor->config,
+                                         app,
+                                         &result);
+                now = time(NULL);
+                app_update(monitor, app, &result, responded, now);
+            }
+            app = app->next;
+        }
+        space = space->next;
+    }
+}
+
+static void poll_mesh(ReadinessMonitor *monitor) {
+
+    Space *space;
+    App *app;
+    bool connected;
+    bool known;
+    char reason[STARTERD_READY_REASON_LEN];
+
+    known = false;
+    connected = false;
+    snprintf(reason, sizeof(reason), "meshd is not in the manifest");
+
+    space = monitor->spaceList;
+    while (space && !known) {
+        app = space->appList;
+        while (app) {
+            if (app_is_mesh(app)) {
+                known = wc_mesh_status(monitor->config,
+                                       app,
+                                       &connected,
+                                       reason,
+                                       sizeof(reason));
+                if (!known) {
+                    snprintf(reason,
+                             sizeof(reason),
+                             "meshd status unavailable");
+                }
+                break;
+            }
+            app = app->next;
+        }
+        space = space->next;
+    }
+
+    pthread_mutex_lock(&monitor->mutex);
+    monitor->meshKnown = known;
+    monitor->meshConnected = connected;
+    monitor->meshCheckedAt = time(NULL);
+    copy_reason(monitor->meshReason,
+                sizeof(monitor->meshReason),
+                reason);
+    pthread_mutex_unlock(&monitor->mutex);
+}
+
+static void send_pending_event(ReadinessMonitor *monitor) {
+
+    NodeReadinessState pending;
+    char reason[STARTERD_READY_REASON_LEN];
+    bool deliver;
+
+    pthread_mutex_lock(&monitor->mutex);
+    deliver = monitor->eventPending;
+    pending = monitor->pendingEvent;
+    copy_reason(reason, sizeof(reason), monitor->reason);
+    pthread_mutex_unlock(&monitor->mutex);
+
+    if (!deliver) return;
+
+    if (!wc_notify_node_state(monitor->config,
+                              pending == NODE_READINESS_READY,
+                              reason)) {
+        return;
+    }
+
+    pthread_mutex_lock(&monitor->mutex);
+    if (monitor->eventPending &&
+        monitor->pendingEvent == pending) {
+        monitor->reportedState = pending;
+        monitor->haveReportedState = true;
+        monitor->eventPending = false;
+    }
+    pthread_mutex_unlock(&monitor->mutex);
+}
+
+static bool wait_for_next_poll(ReadinessMonitor *monitor) {
+
+    struct timespec deadline;
+    bool running;
+
+    clock_gettime(CLOCK_REALTIME, &deadline);
+    deadline.tv_sec += monitor->config->readyPollSec;
+
+    pthread_mutex_lock(&monitor->mutex);
+    if (monitor->running) {
+        pthread_cond_timedwait(&monitor->condition,
+                               &monitor->mutex,
+                               &deadline);
+    }
+    running = monitor->running;
+    pthread_mutex_unlock(&monitor->mutex);
+
+    return running;
+}
+
+static void *readiness_thread(void *arg) {
+
+    ReadinessMonitor *monitor;
+
+    monitor = (ReadinessMonitor *)arg;
+
+    do {
+        poll_apps(monitor);
+        poll_mesh(monitor);
+        aggregate(monitor);
+        send_pending_event(monitor);
+    } while (wait_for_next_poll(monitor));
+
+    return NULL;
+}
+
+ReadinessMonitor *readiness_start(Config *config,
+                                  Space *spaceList,
+                                  StarterContext *ctx) {
+
+    ReadinessMonitor *monitor;
+    Space *space;
+    App *app;
+
+    if (!config || !spaceList || !ctx) return NULL;
+
+    monitor = calloc(1, sizeof(*monitor));
+    if (!monitor) return NULL;
+
+    monitor->config = config;
+    monitor->spaceList = spaceList;
+    monitor->ctx = ctx;
+    monitor->state = NODE_READINESS_PENDING;
+    monitor->reportedState = NODE_READINESS_PENDING;
+    monitor->pendingEvent = NODE_READINESS_PENDING;
+    monitor->running = true;
+    copy_reason(monitor->reason,
+                sizeof(monitor->reason),
+                "starterd is starting applications");
+    copy_reason(monitor->meshReason,
+                sizeof(monitor->meshReason),
+                "meshd status unavailable");
+
+    space = spaceList;
+    while (space) {
+        app = space->appList;
+        while (app) {
+            if (app->readinessRequired) {
+                monitor->enabled = true;
+            }
+            app = app->next;
+        }
+        space = space->next;
+    }
+
+    pthread_mutex_init(&monitor->mutex, NULL);
+    pthread_cond_init(&monitor->condition, NULL);
+
+    if (pthread_create(&monitor->thread,
+                       NULL,
+                       readiness_thread,
+                       monitor) != 0) {
+        pthread_cond_destroy(&monitor->condition);
+        pthread_mutex_destroy(&monitor->mutex);
+        free(monitor);
+        return NULL;
+    }
+
+    usys_log_info("readiness: monitor %s, timeout=%d sec poll=%d sec",
+                  monitor->enabled ? "enabled" : "dormant",
+                  config->readyTimeoutSec,
+                  config->readyPollSec);
+    return monitor;
+}
+
+void readiness_stop(ReadinessMonitor *monitor) {
+
+    if (!monitor) return;
+
+    pthread_mutex_lock(&monitor->mutex);
+    monitor->running = false;
+    pthread_cond_signal(&monitor->condition);
+    pthread_mutex_unlock(&monitor->mutex);
+
+    pthread_join(monitor->thread, NULL);
+    pthread_cond_destroy(&monitor->condition);
+    pthread_mutex_destroy(&monitor->mutex);
+    free(monitor);
+}
+
+NodeReadinessState readiness_get(ReadinessMonitor *monitor,
+                                 char *reason,
+                                 size_t reasonSize) {
+
+    NodeReadinessState state;
+
+    if (!monitor) {
+        copy_reason(reason, reasonSize, "readiness monitor unavailable");
+        return NODE_READINESS_FAULTY;
+    }
+
+    pthread_mutex_lock(&monitor->mutex);
+    state = monitor->state;
+    copy_reason(reason, reasonSize, monitor->reason);
+    pthread_mutex_unlock(&monitor->mutex);
+
+    return state;
+}
+
+json_t *readiness_status_json(ReadinessMonitor *monitor) {
+
+    json_t *root;
+    json_t *apps;
+    json_t *entry;
+    Space *space;
+    App *app;
+
+    root = json_object();
+    apps = json_array();
+    if (!root || !apps) {
+        json_decref(root);
+        json_decref(apps);
+        return NULL;
+    }
+
+    if (!monitor) {
+        json_object_set_new(root, "enabled", json_false());
+        json_object_set_new(root, "state", json_string("faulty"));
+        json_object_set_new(root,
+                            "reason",
+                            json_string("readiness monitor unavailable"));
+        json_object_set_new(root, "apps", apps);
+        return root;
+    }
+
+    pthread_mutex_lock(&monitor->mutex);
+
+    json_object_set_new(root,
+                        "enabled",
+                        json_boolean(monitor->enabled));
+    json_object_set_new(root,
+                        "state",
+                        json_string(node_readiness_str(monitor->state)));
+    json_object_set_new(root,
+                        "reason",
+                        json_string(monitor->reason));
+    json_object_set_new(root,
+                        "timeoutSec",
+                        json_integer(monitor->config->readyTimeoutSec));
+    json_object_set_new(root,
+                        "lastReportedState",
+                        monitor->haveReportedState ?
+                        json_string(node_readiness_str(
+                            monitor->reportedState)) :
+                        json_null());
+    json_object_set_new(root,
+                        "eventPending",
+                        json_boolean(monitor->eventPending));
+
+    space = monitor->spaceList;
+    while (space) {
+        app = space->appList;
+        while (app) {
+            if (!app->readinessRequired) {
+                app = app->next;
+                continue;
+            }
+
+            entry = json_object();
+            json_object_set_new(entry,
+                                "space",
+                                json_string(app->space));
+            json_object_set_new(entry,
+                                "name",
+                                json_string(app->name));
+            json_object_set_new(entry,
+                                "state",
+                                json_string(app_readiness_str(
+                                    app->readinessState)));
+            json_object_set_new(entry,
+                                "httpStatus",
+                                json_integer(app->readinessHttpStatus));
+            json_object_set_new(entry,
+                                "reason",
+                                json_string(app->readinessReason));
+            json_object_set_new(entry,
+                                "since",
+                                json_integer(app->readinessSince));
+            json_object_set_new(entry,
+                                "checkedAt",
+                                json_integer(app->readinessCheckedAt));
+            json_object_set_new(entry,
+                                "deadline",
+                                app->readinessDeadline > 0 ?
+                                json_integer(app->readinessDeadline) :
+                                json_null());
+            json_array_append_new(apps, entry);
+            app = app->next;
+        }
+        space = space->next;
+    }
+
+    json_object_set_new(root, "apps", apps);
+    pthread_mutex_unlock(&monitor->mutex);
+
+    return root;
+}
+
+json_t *readiness_connectivity_json(ReadinessMonitor *monitor) {
+
+    json_t *root;
+
+    root = json_object();
+    if (!root) return NULL;
+
+    if (!monitor) {
+        json_object_set_new(root, "known", json_false());
+        json_object_set_new(root, "connected", json_false());
+        json_object_set_new(root,
+                            "reason",
+                            json_string("readiness monitor unavailable"));
+        return root;
+    }
+
+    pthread_mutex_lock(&monitor->mutex);
+    json_object_set_new(root,
+                        "known",
+                        json_boolean(monitor->meshKnown));
+    json_object_set_new(root,
+                        "connected",
+                        json_boolean(monitor->meshConnected));
+    json_object_set_new(root,
+                        "reason",
+                        json_string(monitor->meshReason));
+    json_object_set_new(root,
+                        "checkedAt",
+                        json_integer(monitor->meshCheckedAt));
+    pthread_mutex_unlock(&monitor->mutex);
+
+    return root;
+}

@@ -116,6 +116,7 @@ void signal_term_handler(int signal) {
         free(state->config);
     }
 
+    mesh_status_destroy(state);
     free(state);
     exit(1);
 }
@@ -157,6 +158,7 @@ int main (int argc, char *argv[]) {
     state->fwdInst = &fwdInst;
     state->webInst = &webInst;
     state->handler = &websocketHandler;
+    mesh_status_init(state);
 
     catch_sigterm();
 
@@ -298,8 +300,11 @@ int main (int argc, char *argv[]) {
 	ulfius_clean_instance(&fwdInst);
 	ulfius_clean_instance(&webInst);
 
-	clear_config(config);
-	free(config);
+    clear_config(config);
+    free(config);
+    mesh_status_destroy(state);
+    free(state);
+    state = NULL;
 
-	return 1;
+    return 1;
 }

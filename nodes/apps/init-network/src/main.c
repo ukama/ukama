@@ -25,6 +25,9 @@
 
 #include "version.h"
 
+#define OVS_HEALTH_INTERVAL_SEC 10
+#define OVS_HEALTH_FAILURE_LIMIT 3
+
 static volatile bool gTerminate = false;
 
 static UsysOption longOptions[] = {
@@ -81,10 +84,15 @@ int main(int argc, char **argv) {
     AppStatus status;
     ServiceContext ctx;
     bool ready;
+    bool initialized;
+    int healthFailures;
+    char healthReason[STATUS_REASON_LEN];
 
     debug = DEF_LOG_LEVEL;
     configFile = DEF_CONFIG_FILE;
     ready = false;
+    initialized = false;
+    healthFailures = 0;
 
     usys_log_set_service(INIT_NETWORK_SERVICE_NAME);
 
@@ -146,12 +154,32 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    if (!ovs_setup(&config, &status)) {
+    initialized = ovs_setup(&config, &status);
+    if (!initialized) {
         usys_log_error("Network initialization failed");
     }
 
     while (!gTerminate) {
-        pause();
+        sleep(OVS_HEALTH_INTERVAL_SEC);
+        if (!initialized || gTerminate) continue;
+
+        if (ovs_check(&config, healthReason, sizeof(healthReason))) {
+            if (healthFailures > 0) {
+                usys_log_info("Network health recovered");
+                status_set(&status, InitStateReady, "ready");
+            }
+            healthFailures = 0;
+            continue;
+        }
+
+        healthFailures++;
+        usys_log_warn("Network health check failed (%d/%d): %s",
+                      healthFailures,
+                      OVS_HEALTH_FAILURE_LIMIT,
+                      healthReason);
+        if (healthFailures >= OVS_HEALTH_FAILURE_LIMIT) {
+            status_fail(&status, healthReason);
+        }
     }
 
     ready = status_is_ready(&status);

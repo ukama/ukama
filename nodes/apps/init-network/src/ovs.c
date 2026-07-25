@@ -88,7 +88,9 @@ static bool shell_ok(Config *config, const char *reason, const char *fmt, ...) {
     rc = exec_cmd(config->cmdTimeoutSec + SHELL_CMD_TIMEOUT_EXTRA,
                   "sh", "-c", cmd, NULL);
     if (rc != 0) {
-        usys_log_error("%s: %s", reason, cmd);
+        usys_log_error("%s: %s",
+                       reason ? reason : "command failed",
+                       cmd);
         return false;
     }
 
@@ -186,6 +188,44 @@ static bool ovs_is_running(Config *config) {
 
     return shell_ok(config, NULL,
                     "ovs-vsctl show >/dev/null 2>&1");
+}
+
+bool ovs_check(Config *config, char *reason, size_t reasonSize) {
+
+    if (config == NULL || reason == NULL || reasonSize == 0) return false;
+
+    if (!ovs_is_running(config)) {
+        snprintf(reason, reasonSize, "ovs is not running");
+        return false;
+    }
+
+    if (!iface_exists(config, config->bridge)) {
+        snprintf(reason, reasonSize, "ovs bridge is unavailable");
+        return false;
+    }
+
+    if (!shell_ok(config, "failed to query OVS flows",
+                  "ovs-ofctl -O %s dump-flows %s >/dev/null 2>&1",
+                  config->openflow, config->bridge)) {
+        snprintf(reason, reasonSize, "ovs flows are unavailable");
+        return false;
+    }
+
+    if (config->tunEnable && !iface_exists(config, config->tunIf)) {
+        snprintf(reason, reasonSize, "tun interface is unavailable");
+        return false;
+    }
+
+    if (config->enableIpForward &&
+        !shell_ok(config, "ip forwarding is disabled",
+                  "test \"$(sysctl -n net.ipv4.ip_forward "
+                  "2>/dev/null)\" = \"1\"")) {
+        snprintf(reason, reasonSize, "ip forwarding is disabled");
+        return false;
+    }
+
+    snprintf(reason, reasonSize, "ready");
+    return true;
 }
 
 static bool start_ovs(Config *config, AppStatus *status) {

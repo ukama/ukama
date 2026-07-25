@@ -34,6 +34,8 @@ typedef struct {
 
     int commitTimeoutSec;
     int pingTimeoutSec;
+    int readyTimeoutSec;
+    int readyPollSec;
 
     int termGraceSec;
 

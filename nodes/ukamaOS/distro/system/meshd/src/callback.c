@@ -34,6 +34,7 @@ extern MapTable *ClientTable;
 extern pthread_mutex_t mutex;
 extern pthread_cond_t hasData;
 extern char *queue;
+extern State *state;
 
 /* define in websocket.c */
 extern void websocket_manager(const URequest *request, WSManager *manager,
@@ -206,6 +207,42 @@ int web_service_cb_version(const URequest *request,
                                     HttpStatus_OK,
                                     VERSION);
 
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_status(const URequest *request,
+                          UResponse *response,
+                          void *epConfig) {
+
+    json_t *json;
+    bool connected;
+    time_t changedAt;
+    char reason[MESH_STATUS_REASON_LEN];
+
+    (void)request;
+    (void)epConfig;
+
+    mesh_status_get(state,
+                    &connected,
+                    &changedAt,
+                    reason,
+                    sizeof(reason));
+
+    json = json_object();
+    if (!json) {
+        ulfius_set_string_body_response(
+            response,
+            HttpStatus_InternalServerError,
+            HttpStatusStr(HttpStatus_InternalServerError));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    json_object_set_new(json, "connected", json_boolean(connected));
+    json_object_set_new(json, "reason", json_string(reason));
+    json_object_set_new(json, "changedAt", json_integer(changedAt));
+
+    ulfius_set_json_body_response(response, HttpStatus_OK, json);
+    json_decref(json);
     return U_CALLBACK_CONTINUE;
 }
 

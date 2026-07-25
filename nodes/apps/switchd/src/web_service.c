@@ -181,6 +181,68 @@ int web_service_cb_version(const URequest *request,
     return ws_reply_text(response, HttpStatus_OK, VERSION);
 }
 
+int web_service_cb_ready(const URequest *request,
+                         UResponse *response,
+                         void *epConfig) {
+
+    SwitchdContext *ctx;
+    JsonObj *json;
+    const char *reason;
+    int status;
+    bool ready;
+
+    (void)request;
+
+    ctx = ws_ctx(epConfig);
+    ready = false;
+    status = HttpStatus_Accepted;
+    reason = "switchd is starting";
+
+    if (ctx == NULL) {
+        status = HttpStatus_ServiceUnavailable;
+        reason = "switchd context unavailable";
+    } else if (ctx->op.state == SWITCHD_OP_STATE_FAILED) {
+        status = HttpStatus_ServiceUnavailable;
+        reason = ctx->op.detail[0] ?
+                 ctx->op.detail : "switch operation failed";
+    } else if (ctx->fw.state == SWITCHD_FW_FAILED) {
+        status = HttpStatus_ServiceUnavailable;
+        reason = ctx->fw.detail[0] ?
+                 ctx->fw.detail : "firmware update failed";
+    } else if (ctx->state == SWITCHD_STATE_READY &&
+               ctx->info.reachable) {
+        ready = true;
+        status = HttpStatus_OK;
+        reason = "ready";
+    } else if (ctx->state == SWITCHD_STATE_INIT) {
+        reason = "switchd is starting";
+    } else if (ctx->state == SWITCHD_STATE_BUSY) {
+        reason = "switch operation in progress";
+    } else if (ctx->state == SWITCHD_STATE_UPDATING ||
+               ctx->state == SWITCHD_STATE_RECOVERING) {
+        reason = "switch update in progress";
+    } else if (ctx->state == SWITCHD_STATE_DEGRADED ||
+               ctx->state == SWITCHD_STATE_ERROR ||
+               !ctx->info.reachable) {
+        status = HttpStatus_ServiceUnavailable;
+        reason = "switch unreachable";
+    }
+
+    json = json_object();
+    if (!json) {
+        return ws_reply_json(response,
+                             HttpStatus_InternalServerError,
+                             NULL);
+    }
+
+    json_object_set_new(json, "ready", json_boolean(ready));
+    if (!ready) {
+        json_object_set_new(json, "reason", json_string(reason));
+    }
+
+    return ws_reply_json(response, status, json);
+}
+
 int web_service_cb_get_metrics(const URequest *request,
                                UResponse *response,
                                void *epConfig) {
@@ -658,6 +720,15 @@ int web_service_start(SwitchdContext *ctx, UInst *serviceInst) {
                                &web_service_cb_version,
                                ctx);
     ws_setup_unsupported_methods(serviceInst, "GET", "/v1", "version");
+
+    ulfius_add_endpoint_by_val(serviceInst,
+                               "GET",
+                               "/v1/ready",
+                               NULL,
+                               0,
+                               &web_service_cb_ready,
+                               ctx);
+    ws_setup_unsupported_methods(serviceInst, "GET", "/v1", "ready");
 
     ulfius_add_endpoint_by_val(serviceInst,
                                "GET",

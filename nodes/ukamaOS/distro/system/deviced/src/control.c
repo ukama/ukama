@@ -110,6 +110,47 @@ bool control_is_busy(ControlCtx *ctx) {
     return busy;
 }
 
+ControlReadiness control_get_readiness(ControlCtx *ctx,
+                                       char *reason,
+                                       size_t reasonSize) {
+
+    ControlReadiness readiness;
+    const char *text;
+
+    if (!ctx) {
+        if (reason && reasonSize > 0) {
+            snprintf(reason, reasonSize, "control unavailable");
+        }
+        return CONTROL_READINESS_FAULT;
+    }
+
+    readiness = CONTROL_READINESS_READY;
+    text = "ready";
+
+    pthread_mutex_lock(&ctx->Lock);
+
+    if (ctx->Service.Phase == CONTROL_PHASE_FAULT) {
+        readiness = CONTROL_READINESS_FAULT;
+        text = "service action failed";
+    } else if (ctx->Radio.Phase == CONTROL_PHASE_FAULT) {
+        readiness = CONTROL_READINESS_FAULT;
+        text = "radio action failed";
+    } else if (ctx->Reboot.Phase == CONTROL_PHASE_FAULT) {
+        readiness = CONTROL_READINESS_FAULT;
+        text = "reboot action failed";
+    } else if (ctx->Active != CONTROL_SUBSYS_NONE) {
+        readiness = CONTROL_READINESS_PENDING;
+        text = "control action in progress";
+    }
+
+    if (reason && reasonSize > 0) {
+        snprintf(reason, reasonSize, "%s", text);
+    }
+
+    pthread_mutex_unlock(&ctx->Lock);
+    return readiness;
+}
+
 int control_get_subsys_public_state(ControlCtx *ctx,
                                     ControlSubsystem subsystem,
                                     char *outState,

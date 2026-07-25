@@ -11,6 +11,7 @@
 
 enum HttpStatusCode {
     HttpStatus_OK                 = 200,
+    HttpStatus_Accepted           = 202,
     HttpStatus_NoContent          = 204,
     HttpStatus_BadRequest         = 400,
     HttpStatus_NotFound           = 404,
@@ -23,6 +24,7 @@ static const char *HttpStatusStr(int code) {
 
     switch (code) {
     case 200: return "OK";
+    case 202: return "Accepted";
     case 204: return "No Content";
     case 400: return "Bad Request";
     case 404: return "Not Found";

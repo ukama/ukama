@@ -19,6 +19,10 @@ int web_service_cb_version(const URequest *request,
                            UResponse *response,
                            void *config);
 
+int web_service_cb_ready(const URequest *request,
+                         UResponse *response,
+                         void *config);
+
 int web_service_cb_lock(const URequest *request,
                         UResponse *response,
                         void *config);

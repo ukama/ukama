@@ -22,6 +22,7 @@
 #include "network.h"
 #include "web_service.h"
 #include "log_router.h"
+#include "readiness.h"
 
 #include "usys_log.h"
 
@@ -118,10 +119,12 @@ int main(int argc, char **argv) {
     ctx.spaceList          = spaceList;
     ctx.queue              = &queue;
     ctx.supervisor         = NULL;
+    ctx.readiness          = NULL;
     ctx.uInstance          = NULL;
     ctx.terminateRequested = 0;
     ctx.switchRequested    = 0;
     ctx.updateInProgress   = 0;
+    ctx.bootCompleted      = 0;
     ctx.exitCode           = 0;
 
     if (!network_init(&ctx)) {
@@ -144,8 +147,20 @@ int main(int argc, char **argv) {
 
     ctx.supervisor = sup;
 
+    ctx.readiness = readiness_start(&config, spaceList, &ctx);
+    if (!ctx.readiness) {
+        usys_log_error("startup: readiness monitor start failed");
+        supervisor_stop(sup);
+        network_shutdown(&ctx);
+        manifest_free(spaceList);
+        log_router_stop();
+        config_free(&config);
+        return 1;
+    }
+
     if (!web_service_start(&ctx)) {
         usys_log_error("startup: web service start failed");
+        readiness_stop(ctx.readiness);
         supervisor_stop(sup);
         network_shutdown(&ctx);
         manifest_free(spaceList);
@@ -177,6 +192,7 @@ int main(int argc, char **argv) {
     }
 
     web_service_stop(&ctx);
+    readiness_stop(ctx.readiness);
     supervisor_stop(sup);
     network_shutdown(&ctx);
     actions_free(&queue);
