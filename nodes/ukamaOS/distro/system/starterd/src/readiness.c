@@ -35,6 +35,7 @@ struct ReadinessMonitor {
     NodeReadinessState pendingEvent;
     bool haveReportedState;
     bool eventPending;
+    time_t readinessDeadline;
     char reason[STARTERD_READY_REASON_LEN];
 
     bool meshKnown;
@@ -80,17 +81,13 @@ static void copy_reason(char *dst, size_t size, const char *reason) {
     snprintf(dst, size, "%s", (reason && *reason) ? reason : "none");
 }
 
-static void app_set_pending(ReadinessMonitor *monitor,
-                            App *app,
+static void app_set_pending(App *app,
                             int status,
                             const char *reason,
                             time_t now) {
 
-    if (app->readinessState == APP_READINESS_READY ||
-        app->readinessDeadline == 0) {
+    if (app->readinessState != APP_READINESS_PENDING) {
         app->readinessSince = now;
-        app->readinessDeadline =
-            now + monitor->config->readyTimeoutSec;
     }
 
     app->readinessState = APP_READINESS_PENDING;
@@ -99,15 +96,6 @@ static void app_set_pending(ReadinessMonitor *monitor,
     copy_reason(app->readinessReason,
                 sizeof(app->readinessReason),
                 reason);
-
-    if (now >= app->readinessDeadline) {
-        app->readinessState = APP_READINESS_FAULTY;
-        app->readinessHttpStatus = 503;
-        snprintf(app->readinessReason,
-                 sizeof(app->readinessReason),
-                 "ready timeout after %d seconds",
-                 monitor->config->readyTimeoutSec);
-    }
 }
 
 static void app_update(ReadinessMonitor *monitor,
@@ -119,8 +107,7 @@ static void app_update(ReadinessMonitor *monitor,
     pthread_mutex_lock(&monitor->mutex);
 
     if (!responded) {
-        app_set_pending(monitor,
-                        app,
+        app_set_pending(app,
                         0,
                         "ready endpoint unavailable",
                         now);
@@ -131,7 +118,6 @@ static void app_update(ReadinessMonitor *monitor,
         app->readinessState = APP_READINESS_READY;
         app->readinessHttpStatus = result->status;
         app->readinessCheckedAt = now;
-        app->readinessDeadline = 0;
         copy_reason(app->readinessReason,
                     sizeof(app->readinessReason),
                     result->reason);
@@ -142,13 +128,11 @@ static void app_update(ReadinessMonitor *monitor,
         app->readinessState = APP_READINESS_FAULTY;
         app->readinessHttpStatus = result->status;
         app->readinessCheckedAt = now;
-        app->readinessDeadline = 0;
         copy_reason(app->readinessReason,
                     sizeof(app->readinessReason),
                     result->reason);
     } else {
-        app_set_pending(monitor,
-                        app,
+        app_set_pending(app,
                         result->status,
                         result->reason,
                         now);
@@ -164,16 +148,21 @@ static void aggregate(ReadinessMonitor *monitor) {
     NodeReadinessState state;
     const char *reason;
     char appReason[STARTERD_READY_REASON_LEN];
+    App *pendingApp;
+    time_t now;
 
     state = NODE_READINESS_READY;
     reason = "ready";
     appReason[0] = '\0';
+    pendingApp = NULL;
+    now = time(NULL);
 
     pthread_mutex_lock(&monitor->mutex);
 
     if (!monitor->ctx->bootCompleted) {
         state = NODE_READINESS_PENDING;
         reason = "starterd is starting applications";
+        monitor->readinessDeadline = 0;
     } else if (monitor->enabled) {
         space = monitor->spaceList;
         while (space && state != NODE_READINESS_FAULTY) {
@@ -198,6 +187,7 @@ static void aggregate(ReadinessMonitor *monitor) {
                 if (app->readinessState != APP_READINESS_READY &&
                     state == NODE_READINESS_READY) {
                     state = NODE_READINESS_PENDING;
+                    pendingApp = app;
                     snprintf(appReason,
                              sizeof(appReason),
                              "%.48s: %.140s",
@@ -208,6 +198,26 @@ static void aggregate(ReadinessMonitor *monitor) {
                 app = app->next;
             }
             space = space->next;
+        }
+
+        if (state == NODE_READINESS_READY ||
+            state == NODE_READINESS_FAULTY) {
+            monitor->readinessDeadline = 0;
+        } else {
+            if (monitor->readinessDeadline == 0) {
+                monitor->readinessDeadline =
+                    now + monitor->config->readyTimeoutSec;
+            }
+
+            if (now >= monitor->readinessDeadline) {
+                state = NODE_READINESS_FAULTY;
+                snprintf(appReason,
+                         sizeof(appReason),
+                         "%.48s: readiness timeout after %d seconds",
+                         pendingApp ? pendingApp->name : "app",
+                         monitor->config->readyTimeoutSec);
+                reason = appReason;
+            }
         }
     }
 
@@ -501,6 +511,11 @@ json_t *readiness_status_json(ReadinessMonitor *monitor) {
                         "timeoutSec",
                         json_integer(monitor->config->readyTimeoutSec));
     json_object_set_new(root,
+                        "deadline",
+                        monitor->readinessDeadline > 0 ?
+                        json_integer(monitor->readinessDeadline) :
+                        json_null());
+    json_object_set_new(root,
                         "lastReportedState",
                         monitor->haveReportedState ?
                         json_string(node_readiness_str(
@@ -542,11 +557,6 @@ json_t *readiness_status_json(ReadinessMonitor *monitor) {
             json_object_set_new(entry,
                                 "checkedAt",
                                 json_integer(app->readinessCheckedAt));
-            json_object_set_new(entry,
-                                "deadline",
-                                app->readinessDeadline > 0 ?
-                                json_integer(app->readinessDeadline) :
-                                json_null());
             json_array_append_new(apps, entry);
             app = app->next;
         }

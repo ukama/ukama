@@ -57,7 +57,6 @@ typedef struct App {
     int readinessHttpStatus;
     time_t readinessSince;
     time_t readinessCheckedAt;
-    time_t readinessDeadline;
     char readinessReason[STARTERD_READY_REASON_LEN];
 
     struct App *next;
