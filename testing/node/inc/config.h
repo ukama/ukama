@@ -45,6 +45,7 @@
 #define KEY_WAIT_FOR    "wait_for"
 #define KEY_GROUP       "group"
 #define KEY_RETRY       "startretries"
+#define KEY_READINESS   "readiness"
 
 #define VALUE_YES       "yes"
 #define VALUE_NO        "no"
@@ -115,6 +116,7 @@ typedef struct capp_config_t {
     int  autostart;   /* autostart for supervisor.d */
     int  autorestart; /* autorestart for supervisor.d */
     int  startretries;/* Number of times app would be restarted.*/
+    int  readiness;   /* app participates in node readiness */
     char *group;      /* nil, on-boot or sys-service */
 } CappConfig;
 
