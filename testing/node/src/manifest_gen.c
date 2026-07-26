@@ -162,6 +162,11 @@ static int manifest_add_app(json_t *apps, Config *config) {
     json_object_set_new(japp, "name", json_string(name));
     json_object_set_new(japp, "tag",  json_string(tag));
     json_object_set_new(japp, "cmd",  json_string(cmd));
+    if (config->capp->readiness) {
+        json_object_set_new(japp,
+                            "readiness",
+                            json_string(VALUE_YES));
+    }
 
     jargv = json_array();
     if (!jargv) {

@@ -25,6 +25,29 @@
 /* main.c */
 extern GPSData *gData;
 
+static void gps_mark_unlocked(void) {
+
+    if (gData == NULL) return;
+
+    pthread_mutex_lock(&gData->mutex);
+    if (gData->gpsLock || gData->lockLostAt == 0) {
+        gData->lockLostAt = time(NULL);
+    }
+    gData->gpsLock = USYS_FALSE;
+    pthread_mutex_unlock(&gData->mutex);
+}
+
+static void gps_mark_locked(void) {
+
+    if (gData == NULL) return;
+
+    pthread_mutex_lock(&gData->mutex);
+    gData->gpsLock = USYS_TRUE;
+    gData->lastLockAt = time(NULL);
+    gData->lockLostAt = 0;
+    pthread_mutex_unlock(&gData->mutex);
+}
+
 STATIC bool read_last_lat_long(char **lat, char **lon) {
 
     FILE *file = NULL;
@@ -85,14 +108,21 @@ STATIC bool gps_data_collection_and_processing_thread(Config *config) {
                 config->gpsHost);
 
         ret = system(runMe);
-        if (WIFEXITED(ret) && WEXITSTATUS(ret) != 0) {
+        if (ret == -1 ||
+            !WIFEXITED(ret) ||
+            WEXITSTATUS(ret) != 0) {
+            gps_mark_unlocked();
             continue;
         }
 
         /* see if gps is locked */
         snprintf(runMe, MAX_BUFFER, "%s gps_fix", GPS_SCRIPT);
         ret = system(runMe);
-        if (WIFEXITED(ret) && WEXITSTATUS(ret) == 0) {
+        if (ret != -1 &&
+            WIFEXITED(ret) &&
+            WEXITSTATUS(ret) == 0) {
+            gps_mark_locked();
+
             /* gps is locked, get coordinates */
             snprintf(runMe, MAX_BUFFER, "%s get_coordinates", GPS_SCRIPT);
             ret = system(runMe);
@@ -121,6 +151,7 @@ STATIC bool gps_data_collection_and_processing_thread(Config *config) {
                 continue;
             }
         } else {
+            gps_mark_unlocked();
             continue;
         }
     }

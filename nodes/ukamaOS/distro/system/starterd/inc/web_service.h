@@ -16,17 +16,20 @@
 #include "actions.h"
 
 struct _u_instance;
+typedef struct ReadinessMonitor ReadinessMonitor;
 
 typedef struct StarterContext {
     Config *config;
     Space *spaceList;
     ActionQueue *queue;
     void *supervisor;
+    ReadinessMonitor *readiness;
     struct _u_instance *uInstance;
 
     volatile sig_atomic_t terminateRequested;
     volatile sig_atomic_t switchRequested;
     volatile sig_atomic_t updateInProgress;
+    volatile sig_atomic_t bootCompleted;
 
     int exitCode;
 } StarterContext;

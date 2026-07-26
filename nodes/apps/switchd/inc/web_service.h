@@ -20,6 +20,9 @@ int web_service_cb_ping(const URequest *request,
 int web_service_cb_version(const URequest *request,
                            UResponse *response,
                            void *epConfig);
+int web_service_cb_ready(const URequest *request,
+                         UResponse *response,
+                         void *epConfig);
 int web_service_cb_get_metrics(const URequest *request,
                                UResponse *response,
                                void *epConfig);

@@ -43,7 +43,6 @@ static void lane_sample_fem(Lanes *lanes, FemUnit unit, I2cBus *bus) {
 
     memset(&s, 0, sizeof(s));
     s.sampleTsMs = ts;
-    s.present = true;
 
     if (gpio_read_all(lanes->gpio, unit, &s.gpio) == STATUS_OK) {
         s.haveGpio = true;
@@ -67,6 +66,7 @@ static void lane_sample_fem(Lanes *lanes, FemUnit unit, I2cBus *bus) {
         s.haveDac = true;
     }
 
+    s.present = s.haveGpio || s.haveTemp || s.haveAdc || s.haveDac;
     (void)snapshot_update_fem(lanes->snap, unit, &s);
 }
 

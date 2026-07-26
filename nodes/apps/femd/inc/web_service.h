@@ -17,6 +17,7 @@
 #include "gpio_controller.h"
 #include "safety.h"
 #include "notifier.h"
+#include "lanes.h"
 
 #ifndef URL_PREFIX
 #define URL_PREFIX "/v1"
@@ -32,7 +33,9 @@ typedef struct {
     GpioController*gpio;
     Safety        *safety;
     Notifier      *notifier;
+    Lanes         *lanes;
     Config        *cfg;
+    uint32_t       startedAtMs;
 } WebCtx;
 
 int start_web_service(ServerConfig *serverConfig, UInst *serviceInst, WebCtx *ctx);

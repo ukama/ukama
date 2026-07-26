@@ -7,6 +7,7 @@
  */
 
 #include <pthread.h>
+#include <stdlib.h>
 
 #include "config.h"
 #include "gpsd.h"
@@ -68,6 +69,9 @@ static void usage() {
 
 static void init_gps_data() {
 
+    const char *timeout;
+    int lockTimeoutSec;
+
     gData = (GPSData *)calloc(1, sizeof(GPSData));
     if (gData == NULL) {
         usys_log_error("Unable to allocate memory of size: %d",
@@ -79,6 +83,15 @@ static void init_gps_data() {
     gData->time      = NULL;
     gData->latitude  = NULL;
     gData->longitude = NULL;
+    gData->lockLostAt = time(NULL);
+    gData->lastLockAt = 0;
+
+    lockTimeoutSec = GPS_LOCK_TIMEOUT_SEC;
+    timeout = getenv(ENV_GPSD_LOCK_TIMEOUT_SEC);
+    if (timeout && atoi(timeout) > 0) {
+        lockTimeoutSec = atoi(timeout);
+    }
+    gData->lockTimeoutSec = lockTimeoutSec;
 
     pthread_mutex_init(&gData->mutex, NULL);
 }

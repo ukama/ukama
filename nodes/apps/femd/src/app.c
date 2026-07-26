@@ -63,6 +63,8 @@ int app_init(App *app, const char *configPath) {
     app->webCtx.safety   = &app->safety;
     app->webCtx.gpio     = &app->gpio;
     app->webCtx.notifier = &app->notifier;
+    app->webCtx.lanes    = &app->lanes;
+    app->webCtx.startedAtMs = snapshot_now_ms();
 
     app->serverCfg.config = &app->cfg;
 

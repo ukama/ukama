@@ -187,6 +187,22 @@ int safety_force_restore(Safety *s, FemUnit unit) {
     return STATUS_OK;
 }
 
+bool safety_is_pa_disabled(Safety *s, FemUnit unit) {
+
+    bool disabled;
+
+    if (!s || !s->initialized ||
+        (unit != FEM_UNIT_1 && unit != FEM_UNIT_2)) {
+        return false;
+    }
+
+    pthread_mutex_lock(&s->mu);
+    disabled = s->paDisabled[unit];
+    pthread_mutex_unlock(&s->mu);
+
+    return disabled;
+}
+
 int safety_tick(Safety *s, FemUnit unit) {
 
     FemSnapshot sn;

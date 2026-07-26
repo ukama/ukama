@@ -10,6 +10,10 @@
 #define MESH_H
 
 #include <getopt.h>
+#include <pthread.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <time.h>
 #include <ulfius.h>
 #include <uuid/uuid.h>
 
@@ -62,6 +66,7 @@
 #define MESH_MAP_TYPE_COOKIE_STR "map_cookie"
 
 #define MESH_LOCK_TIMEOUT 1 /* seconds */
+#define MESH_STATUS_REASON_LEN 128
 
 #ifndef SAFE_FREE
 #define SAFE_FREE(p) do { if ((p) != NULL) { free(p); (p) = NULL; } } while (0)
@@ -85,6 +90,12 @@ typedef struct {
     struct _u_instance *fwdInst;
     struct _u_instance *webInst;
     void    *config;
+
+    pthread_mutex_t statusMutex;
+    bool statusMutexInitialized;
+    bool connected;
+    time_t connectivityChangedAt;
+    char connectivityReason[MESH_STATUS_REASON_LEN];
 } State;
 
 typedef struct {
@@ -134,5 +145,16 @@ typedef struct {
     int         code;
     char        *data;   /* RequestInfo or actual response */
 } Message;
+
+void mesh_status_init(State *meshState);
+void mesh_status_destroy(State *meshState);
+void mesh_status_set(State *meshState,
+                     bool connected,
+                     const char *reason);
+void mesh_status_get(State *meshState,
+                     bool *connected,
+                     time_t *changedAt,
+                     char *reason,
+                     size_t reasonSize);
 
 #endif /* MESH_H */

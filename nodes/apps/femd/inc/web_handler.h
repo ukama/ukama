@@ -19,6 +19,7 @@ int cb_not_allowed(const URequest *request, UResponse *response, void *user_data
 int cb_get_health(const URequest *request, UResponse *response, void *user_data);
 int cb_get_version(const URequest *request, UResponse *response, void *user_data);
 int cb_get_ping(const URequest *request, UResponse *response, void *user_data);
+int cb_get_ready(const URequest *request, UResponse *response, void *user_data);
 
 int cb_get_fems(const URequest *request, UResponse *response, void *user_data);
 int cb_get_fem(const URequest *request, UResponse *response, void *user_data);

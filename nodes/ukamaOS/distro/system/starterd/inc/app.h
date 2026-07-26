@@ -52,6 +52,13 @@ typedef struct App {
 
     char *lastGoodTag;
 
+    bool readinessRequired;
+    AppReadinessState readinessState;
+    int readinessHttpStatus;
+    time_t readinessSince;
+    time_t readinessCheckedAt;
+    char readinessReason[STARTERD_READY_REASON_LEN];
+
     struct App *next;
 } App;
 

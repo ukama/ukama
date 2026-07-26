@@ -95,6 +95,25 @@ bool status_is_ready(AppStatus *status) {
     return ready;
 }
 
+InitState status_get(AppStatus *status,
+                     char *reason,
+                     size_t reasonSize) {
+
+    InitState state;
+
+    if (status == NULL) {
+        copy_str(reason, reasonSize, "status unavailable");
+        return InitStateFailed;
+    }
+
+    pthread_mutex_lock(&status->mutex);
+    state = status->state;
+    copy_str(reason, reasonSize, status->reason);
+    pthread_mutex_unlock(&status->mutex);
+
+    return state;
+}
+
 JsonObj *status_to_json(AppStatus *status, Config *config) {
 
     JsonObj *root;

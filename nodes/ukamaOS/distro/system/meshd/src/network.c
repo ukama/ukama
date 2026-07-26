@@ -23,6 +23,8 @@
 #define WEB_SERVICE 0
 #define FWD_SERVICE 2
 
+extern State *state;
+
 /* define in websocket.c */
 extern void websocket_manager(const URequest *request, WSManager *manager, void *data);
 extern void websocket_incoming_message(const URequest *request,
@@ -112,17 +114,22 @@ int start_websocket_client(Config *config,
                           handler, &response);
 
         if (ret == U_OK) {
+            mesh_status_set(state, true, "connected");
             ret = TRUE;
             goto done;
         } else {
             usys_log_error("Unable to open websocket connect to: %s",
                            config->remoteConnect);
             handler->websocket = NULL;
+            mesh_status_set(state, false, "websocket connection failed");
             ret = FALSE;
             goto done;
         }
     } else {
         usys_log_error("Error initializing the websocket client request");
+        mesh_status_set(state,
+                        false,
+                        "websocket request initialization failed");
         ret = FALSE;
         goto done;
     }
@@ -167,6 +174,8 @@ int start_web_services(Config *config, UInst *clientInst) {
                                &web_service_cb_ping, config);
     ulfius_add_endpoint_by_val(clientInst, "GET", "/v1/", "version", 0,
                                &web_service_cb_version, config);
+    ulfius_add_endpoint_by_val(clientInst, "GET", "/v1/", "status", 0,
+                               &web_service_cb_status, config);
     ulfius_set_default_endpoint(clientInst, &web_service_cb_default, config);
 
     if (!start_framework(config, clientInst, WEB_SERVICE)) {

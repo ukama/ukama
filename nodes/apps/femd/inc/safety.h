@@ -47,5 +47,6 @@ int  safety_get_config(Safety *s, SafetyConfig *out);
 int  safety_set_config(Safety *s, const SafetyConfig *in);
 
 int  safety_force_restore(Safety *s, FemUnit unit);
+bool safety_is_pa_disabled(Safety *s, FemUnit unit);
 
 #endif /* SAFETY_H */
