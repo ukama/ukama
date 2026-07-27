@@ -250,12 +250,29 @@ static int package_business_metrics(check_ctx_t *ctx,
     } while (matched != networks.count && time(NULL) < deadline);
 
     res->passed = matched == networks.count;
-    snprintf(res->detail, sizeof(res->detail),
-             "package=%s found=%s revenue=%.2f expected=%.2f "
-             "attach=%u expected_attach=%u matched=%zu/%zu",
-             check->package_ref, last_found ? "true" : "false",
-             last.revenue, check->expected_value, last.attach_count,
-             check->expected_count, matched, networks.count);
+    if (check->has_expected_value && check->has_expected_count) {
+        snprintf(res->detail, sizeof(res->detail),
+                 "package=%s found=%s revenue=%.2f "
+                 "expected_revenue=%.2f attach=%u expected_attach=%u "
+                 "matched=%zu/%zu",
+                 check->package_ref, last_found ? "true" : "false",
+                 last.revenue, check->expected_value, last.attach_count,
+                 check->expected_count, matched, networks.count);
+    } else if (check->has_expected_value) {
+        snprintf(res->detail, sizeof(res->detail),
+                 "package=%s found=%s revenue=%.2f "
+                 "expected_revenue=%.2f matched=%zu/%zu",
+                 check->package_ref, last_found ? "true" : "false",
+                 last.revenue, check->expected_value, matched,
+                 networks.count);
+    } else {
+        snprintf(res->detail, sizeof(res->detail),
+                 "package=%s found=%s revenue=%.2f attach=%u "
+                 "expected_attach=%u matched=%zu/%zu",
+                 check->package_ref, last_found ? "true" : "false",
+                 last.revenue, last.attach_count, check->expected_count,
+                 matched, networks.count);
+    }
     selector_result_free(&networks);
     return ULAB_OK;
 }
