@@ -242,6 +242,13 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		PackageDetails: db.PackageDetails{
 			Apn: req.Apn,
 		},
+		PackageRate: db.PackageRate{
+			Amount:    req.Amount,
+			SmsMo:     0.0,
+			SmsMt:     0.0,
+			Data:      0.0,
+			PackageID: pkgUuid,
+		},
 		Currency:      req.Currency,
 		Overdraft:     req.Overdraft,
 		TrafficPolicy: req.TrafficPolicy,
@@ -249,14 +256,6 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		NetworkId:     networkId,
 		Country:       req.Country,
 		SyncStatus:    ukama.StatusTypePending,
-	}
-
-	pr := db.PackageRate{
-		Amount:    req.Amount,
-		SmsMo:     0.0,
-		SmsMt:     0.0,
-		Data:      0.0,
-		PackageID: pkgUuid,
 	}
 
 	rateSvc, err := p.rate.GetClient()
@@ -274,7 +273,12 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 			"invalid base id. Error %s", err.Error())
 	}
 
-	pkg.Country = rate.Rate.Country
+	if pkg.Country != rate.Rate.Country {
+		log.Errorf("package country provided: %s & baserate country is not same: %s", pkg.Country, rate.Rate.Country)
+		return nil, status.Errorf(codes.InvalidArgument,
+			"provided country %s is not same as baserate country  %s", pkg.Country, rate.Rate.Country)
+	}
+
 	pkg.Provider = rate.Rate.Provider
 
 	if pkg.PackageDetails.Apn == "" {
@@ -287,6 +291,10 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		calculateRatePerUnit(&pkg.PackageRate, rate.Rate, pkg.MessageUnits, pkg.DataUnits)
 		calculateTotalAmount(&pkg)
 	}
+
+	// Persist the very same rate the caller will see in the response.
+	pr := pkg.PackageRate
+	pr.PackageID = pkgUuid
 
 	// Validate the name and confirm it is free just before writing, to keep the
 	// check-then-write window small. The partial unique index on package name

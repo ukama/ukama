@@ -43,7 +43,11 @@ func (r *packageRepo) Add(dataPackage *Package, packageRate *PackageRate) error 
 		return tx.Error
 	}
 
-	result := tx.Create(dataPackage)
+	// PackageRate is written explicitly below, so omit it here: letting gorm
+	// auto-create the has-one association as well would leave two
+	// package_rates rows for the same package_id, and Preload("PackageRate")
+	// would then pick one non-deterministically.
+	result := tx.Omit("PackageRate").Create(dataPackage)
 	if result.Error != nil {
 		tx.Rollback()
 		return result.Error

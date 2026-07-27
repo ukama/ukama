@@ -21,32 +21,32 @@ import (
 
 type Package struct {
 	gorm.Model
-	Uuid           uuid.UUID `gorm:"unique;type:uuid;index"`
-	OwnerId        uuid.UUID `gorm:"not null;type:uuid"`
-	Name           string    `gorm:"uniqueIndex:idx_packages_name_unique,where:deleted_at IS NULL,expression:LOWER(name)"`
-	SimType        ukama.SimType
+	Uuid           uuid.UUID      `gorm:"unique;type:uuid;index"`
+	OwnerId        uuid.UUID      `gorm:"not null;type:uuid"`
+	PackageRate    PackageRate    `gorm:"foreignKey:PackageID;references:Uuid"`
+	PackageMarkup  PackageMarkup  `gorm:"foreignKey:PackageID;references:Uuid"`
+	PackageDetails PackageDetails `gorm:"foreignKey:PackageID;references:Uuid"`
+	From           time.Time      `gorm:"not null"`
+	To             time.Time      `gorm:"not null"`
+	Networks       pq.StringArray `gorm:"type:varchar(64)[]" json:"networks"`
+	NetworkId      uuid.UUID      `gorm:"type:uuid"` // optional; uuid.Nil when not scoped to a network
+	Name           string         `gorm:"uniqueIndex:idx_packages_name_unique,where:deleted_at IS NULL,expression:LOWER(name)"`
+	Flatrate       bool           `gorm:"not null; default:false"`
 	Active         bool           `gorm:"not null; default:false"`
 	Duration       uint64         `gorm:"not null; default:0"` // in minutes, cannot be more than 1000 years
 	SmsVolume      uint64         `gorm:"not null; default:0"`
 	DataVolume     uint64         `gorm:"not null; default:0"`
 	VoiceVolume    uint64         `gorm:"not null; default:0"`
-	PackageRate    PackageRate    `gorm:"foreignKey:PackageID;references:Uuid"`
-	PackageMarkup  PackageMarkup  `gorm:"foreignKey:PackageID;references:Uuid"`
-	PackageDetails PackageDetails `gorm:"foreignKey:PackageID;references:Uuid"`
+	Currency       string         `gorm:"not null; default:Dollar"`
+	Country        string         `gorm:"not null;type:string"`
+	Provider       string         `gorm:"not null;type:string"`
+	Overdraft      float64
+	TrafficPolicy  uint32
+	SimType        ukama.SimType
 	Type           ukama.PackageType
 	DataUnits      ukama.DataUnitType
 	VoiceUnits     ukama.CallUnitType
 	MessageUnits   ukama.MessageUnitType
-	Flatrate       bool      `gorm:"not null; default:false"`
-	Currency       string    `gorm:"not null; default:Dollar"`
-	From           time.Time `gorm:"not null"`
-	To             time.Time `gorm:"not null"`
-	Country        string    `gorm:"not null;type:string"`
-	Provider       string    `gorm:"not null;type:string"`
-	Overdraft      float64
-	TrafficPolicy  uint32
-	Networks       pq.StringArray `gorm:"type:varchar(64)[]" json:"networks"`
-	NetworkId      uuid.UUID      `gorm:"type:uuid"` // optional; uuid.Nil when not scoped to a network
 	SyncStatus     ukama.StatusType
 }
 
