@@ -169,6 +169,7 @@ typedef struct {
     char         scope_value[ULAB_MAX_ID];
     char         trend_direction[ULAB_MAX_REF];
     char         currency[ULAB_MAX_REF];
+    char         payment_method[ULAB_MAX_REF];
     double       expected_value;
     double       tolerance_value;
     uint32_t     expected_count;

@@ -17,6 +17,7 @@
 	version="latest"
 	bin="switch.d"
 	path="/sbin" # path where the exec should be. Mathches build.bin_to
+	readiness=true
 	
 # Final output format for capp
 [capp-output]

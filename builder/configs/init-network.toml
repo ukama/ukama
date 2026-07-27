@@ -23,6 +23,7 @@
 	bin="init-network"
 	path="/sbin"
 	args="--config /ukama/configs/init-network/config.toml"
+	readiness=true
 
 # Final output format for capp
 [capp-output]
