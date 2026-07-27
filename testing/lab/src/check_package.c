@@ -7,6 +7,7 @@
  */
 
 #include "check.h"
+#include "log.h"
 #include "selector.h"
 #include "util.h"
 #include <stdio.h>
@@ -45,6 +46,23 @@ int check_package(check_ctx_t *ctx, const check_spec_t *check,
         deadline = time(NULL) + (time_t)(check->timeout_seconds ?
                                         check->timeout_seconds : 300u);
         poll = check->poll_seconds ? check->poll_seconds : 5u;
+        if (check->type == CHECK_PACKAGE_STATE) {
+            ulab_status("CHECK",
+                        "package_state package=%s expected=%s "
+                        "timeout=%us poll=%us",
+                        check->package_ref[0] ? check->package_ref : "any",
+                        check->expected,
+                        check->timeout_seconds ? check->timeout_seconds : 300u,
+                        poll);
+        } else {
+            ulab_status("CHECK",
+                        "package_assignment_count package=%s expected=%u "
+                        "timeout=%us poll=%us",
+                        check->package_ref[0] ? check->package_ref : "any",
+                        check->expected_count,
+                        check->timeout_seconds ? check->timeout_seconds : 300u,
+                        poll);
+        }
         do {
             ok = 0;
             for (i = 0; i < ues.count; i++) {
@@ -104,12 +122,17 @@ int check_package(check_ctx_t *ctx, const check_spec_t *check,
         } while (ok != ues.count && time(NULL) < deadline);
 
         res->passed = ok == ues.count;
-        snprintf(res->detail, sizeof(res->detail),
-                 "%s=%zu/%zu expected=%s%u",
-                 scenario_check_name(check->type), ok, ues.count,
-                 check->type == CHECK_PACKAGE_STATE ? check->expected : "",
-                 check->type == CHECK_PACKAGE_ASSIGNMENT_COUNT ?
-                     check->expected_count : 0u);
+        if (check->type == CHECK_PACKAGE_STATE) {
+            snprintf(res->detail, sizeof(res->detail),
+                     "%s=%zu/%zu expected=%s",
+                     scenario_check_name(check->type), ok, ues.count,
+                     check->expected);
+        } else {
+            snprintf(res->detail, sizeof(res->detail),
+                     "%s=%zu/%zu expected=%u",
+                     scenario_check_name(check->type), ok, ues.count,
+                     check->expected_count);
+        }
         selector_result_free(&ues);
         return ULAB_OK;
     }

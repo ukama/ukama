@@ -57,6 +57,8 @@ phases:
         ues: all
         package: minute_plan
         expected: inactive
+        timeout_seconds: 30
+        poll_seconds: 5
       - type: usage_per_sim
         ues: all
         expected: from_model
@@ -64,3 +66,5 @@ phases:
         networks: all
         package: minute_plan
         expected_count: 0
+        timeout_seconds: 60
+        poll_seconds: 10
