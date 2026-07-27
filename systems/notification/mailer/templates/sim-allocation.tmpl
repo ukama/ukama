@@ -1,45 +1,116 @@
-Subject: [{{ .Values.ORG}}] Welcome to Ukama! 
+Subject: [{{ .Values.ORG}}] Your Ukama eSIM is ready
 Content-Type: text/html; charset="UTF-8"
 
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <title>Your Ukama eSIM is ready</title>
   </head>
-  <body align="center">
-    <center>
-      <table border="0" cellpadding="0" cellspacing="0" width="100%" id="backgroundTable" align="center" style="background-color: #ffffff;">
-        <tr>
-          <td align="center" valign="top">
-            <table border="0" cellpadding="0" cellspacing="0" width="600" id="templateContainer" style="background-color: #ffffff; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-              <tr>
-                <td style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                  <h1 style="color: #000000; font-size: 24px; margin-bottom: 20px;">Welcome to Ukama!</h1>
-                  <p>Hi {{.Values.SUBSCRIBER}},</p>
-                  <p>
-                    You have been added as a subscriber to use the following network: {{.Values.NETWORK}}, and can enjoy fast, reliable, connectivity, within the range of the network. The {{.Values.PACKAGE}} ({{.Values.AMOUNT}} / {{.Values.VOLUME}} {{.Values.UNIT}} / {{.Values.DURATION}} days) has been activated, and expires {{.Values.ENDDATE}} EOD.
+  <body style="margin:0; padding:0; background-color:#f4f5f7;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#f4f5f7;">
+      <tr>
+        <td align="center" style="padding:32px 12px;">
+          <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" style="width:600px; max-width:100%; background-color:#ffffff; border-radius:10px; overflow:hidden; border:1px solid #e6e8eb;">
+            <tr>
+              <td style="height:4px; background-color:#1D90F8; font-size:0; line-height:0;">&nbsp;</td>
+            </tr>
+            <tr>
+              <td style="padding:28px 40px 8px 40px; font-family:Arial,Helvetica,sans-serif;">
+                <span style="font-size:22px; font-weight:bold; letter-spacing:0.5px; color:#1D90F8;">ukama</span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:8px 40px 0 40px; font-family:Arial,Helvetica,sans-serif; color:#1a1a1a;">
+                <h1 style="margin:0 0 16px 0; font-size:24px; font-weight:700; color:#1a1a1a;">Welcome to Ukama</h1>
+                <p style="margin:0 0 16px 0; font-size:15px; line-height:1.6; color:#3c4149;">Hi {{.Values.SUBSCRIBER}},</p>
+                <p style="margin:0 0 24px 0; font-size:15px; line-height:1.6; color:#3c4149;">
+                  Your subscription on the <strong>{{.Values.NETWORK}}</strong> network is now active. You can enjoy fast, reliable connectivity wherever the network reaches.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:0 40px;">
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #e6e8eb; border-radius:8px; background-color:#fafbfc;">
+                  <tr>
+                    <td style="padding:16px 20px 6px 20px; font-family:Arial,Helvetica,sans-serif; font-size:12px; font-weight:700; letter-spacing:0.6px; text-transform:uppercase; color:#8a929e;">Your plan</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:0 20px 16px 20px; font-family:Arial,Helvetica,sans-serif;">
+                      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size:14px; color:#3c4149;">
+                        <tr>
+                          <td style="padding:7px 0; color:#8a929e;">Plan</td>
+                          <td style="padding:7px 0; text-align:right; font-weight:600; color:#1a1a1a;">{{.Values.PACKAGE}}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding:7px 0; color:#8a929e; border-top:1px solid #edeff2;">Data</td>
+                          <td style="padding:7px 0; text-align:right; font-weight:600; color:#1a1a1a; border-top:1px solid #edeff2;">{{.Values.VOLUME}} {{.Values.UNIT}}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding:7px 0; color:#8a929e; border-top:1px solid #edeff2;">Duration</td>
+                          <td style="padding:7px 0; text-align:right; font-weight:600; color:#1a1a1a; border-top:1px solid #edeff2;">{{.Values.DURATION}} days</td>
+                        </tr>
+                        <tr>
+                          <td style="padding:7px 0; color:#8a929e; border-top:1px solid #edeff2;">Price</td>
+                          <td style="padding:7px 0; text-align:right; font-weight:600; color:#1a1a1a; border-top:1px solid #edeff2;">{{.Values.AMOUNT}}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding:7px 0; color:#8a929e; border-top:1px solid #edeff2;">Valid until</td>
+                          <td style="padding:7px 0; text-align:right; font-weight:600; color:#1a1a1a; border-top:1px solid #edeff2;">{{.Values.ENDDATE}}</td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:28px 40px 0 40px; font-family:Arial,Helvetica,sans-serif; color:#1a1a1a;">
+                <h2 style="margin:0 0 12px 0; font-size:17px; font-weight:700; color:#1a1a1a;">Set up your eSIM</h2>
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size:14px; line-height:1.6; color:#3c4149;">
+                  <tr><td style="padding:2px 0;">1. Open your phone's <strong>Settings &rarr; Cellular / Mobile Data</strong>.</td></tr>
+                  <tr><td style="padding:2px 0;">2. Tap <strong>Add eSIM</strong>, then choose to enter the details manually.</td></tr>
+                  <tr><td style="padding:2px 0;">3. Enter the activation code below when prompted.</td></tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 40px 0 40px;">
+                <div style="font-family:Arial,Helvetica,sans-serif; font-size:11px; font-weight:700; letter-spacing:0.6px; text-transform:uppercase; color:#8a929e; margin-bottom:6px;">Activation code</div>
+                <div style="background-color:#0f1b2d; border-radius:8px; padding:16px 18px; font-family:'Courier New',monospace; font-size:14px; line-height:1.5; color:#e8f2ff; word-break:break-all;">{{.Values.QRCODE}}</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:28px 40px 8px 40px; font-family:Arial,Helvetica,sans-serif; color:#3c4149;">
+                <p style="margin:0 0 20px 0; font-size:15px; line-height:1.6;">
+                  Manage your data, monitor usage, and top up anytime with the free Ukama subscriber app.
+                </p>
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="border-radius:6px; background-color:#1D90F8;">
+                      <a href="https://www.ukama.com" target="_blank" style="display:inline-block; padding:12px 28px; font-family:Arial,Helvetica,sans-serif; font-size:15px; font-weight:600; color:#ffffff; text-decoration:none; border-radius:6px;">Get the Ukama app</a>
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin:24px 0 0 0; font-size:15px; line-height:1.6;">Thanks,<br />The Ukama Team</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:28px 40px 32px 40px;">
+                <div style="border-top:1px solid #e6e8eb; padding-top:20px; font-family:Arial,Helvetica,sans-serif; font-size:12px; line-height:1.6; color:#8a929e; text-align:center;">
+                  <p style="margin:0 0 8px 0;">&copy; Ukama Inc. &middot; 1233 Quarry Lane #115, Pleasanton, CA 94566</p>
+                  <p style="margin:0;">
+                    <a href="https://x.com/ukamanetworks" target="_blank" style="color:#1D90F8; text-decoration:none; margin:0 8px;">X</a>
+                    <a href="https://www.linkedin.com/company/ukama" target="_blank" style="color:#1D90F8; text-decoration:none; margin:0 8px;">LinkedIn</a>
                   </p>
-                  <p>
-                    You can use your data as is, but you can enhance your experience by securely monitoring your usage, remotely topping up your data, and more, in Ukama's free subscriber app found here, currently available for IOS.
-                  </p>
-                  <a href="https://apps.apple.com/app/ukama/id123456789" style="display: inline-block; background-color: #1D90F8; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin: 20px 0;">Open App in Store</a>
-                  <p>Thanks,<br />The Ukama Team</p>
-                  <footer style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; text-align: center;">
-                    <p>&copy; Ukama Inc. 1233 Quarry Lane #115, Pleasanton, CA 94566</p>
-                    <div style="margin-top: 10px;">
-                      <a href="https://x.com/ukamanetworks" target="_blank"><img src="https://img.icons8.com/color/48/000000/twitter--v1.png" alt="Twitter" style="width: 24px; height: 24px; margin: 0 10px; display: inline-block;"/></a>
-                      <a href="https://slack.com" target="_blank"><img src="https://img.icons8.com/color/48/000000/slack-new.png" alt="Slack" style="width: 24px; height: 24px; margin: 0 10px; display: inline-block;"/></a>
-                      <a href="https://www.linkedin.com/company/ukama" target="_blank"><img src="https://img.icons8.com/color/48/000000/linkedin.png" alt="LinkedIn" style="width: 24px; height: 24px; margin: 0 10px; display: inline-block;"/></a>
-                    </div>
-                  </footer>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-    </center>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
   </body>
 </html>

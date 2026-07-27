@@ -24,6 +24,7 @@ type MailerRepo interface {
 	GetEmailById(mailerId uuid.UUID) (*Mailing, error)
 	UpdateEmailStatus(mailing *Mailing) error
 	GetFailedEmails() ([]*Mailing, error)
+	GetStalledEmails(olderThan time.Time) ([]*Mailing, error)
 }
 
 type mailerRepo struct {
@@ -79,6 +80,19 @@ func (r *mailerRepo) GetFailedEmails() ([]*Mailing, error) {
 		ukama.MailStatusRetry,
 		ukama.MaxRetryCount,
 		time.Now(),
+	).Find(&mailings)
+
+	return mailings, result.Error
+}
+
+func (r *mailerRepo) GetStalledEmails(olderThan time.Time) ([]*Mailing, error) {
+	var mailings []*Mailing
+	db := r.Db.GetGormDb()
+
+	result := db.Where("status IN (?, ?) AND updated_at < ?",
+		ukama.MailStatusPending,
+		ukama.MailStatusProcess,
+		olderThan,
 	).Find(&mailings)
 
 	return mailings, result.Error

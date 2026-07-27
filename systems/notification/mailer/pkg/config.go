@@ -12,6 +12,7 @@ import (
 	"time"
 
 	uconf "github.com/ukama/ukama/systems/common/config"
+	evt "github.com/ukama/ukama/systems/common/events"
 )
 
 type MailerConfig struct {
@@ -24,13 +25,16 @@ type MailerConfig struct {
 
 type Config struct {
 	uconf.BaseConfig `mapstructure:",squash"`
-	DB               *uconf.Database `default:"{}"`
-	Grpc             *uconf.Grpc     `default:"{}"`
-	Queue            *uconf.Queue    `default:"{}"`
-	Timeout          time.Duration   `default:"50s"`
-	TemplatesPath    string          `default:"templates"`
+	DB               *uconf.Database  `default:"{}"`
+	Grpc             *uconf.Grpc      `default:"{}"`
+	Queue            *uconf.Queue     `default:"{}"`
+	MsgClient        *uconf.MsgClient `default:"{}"`
+	Timeout          time.Duration    `default:"50s"`
+	TemplatesPath    string           `default:"templates"`
 	Service          *uconf.Service
 	Mailer           *MailerConfig
+	OrgName          string
+	OrgId            string
 }
 
 func NewConfig(name string) *Config {
@@ -39,5 +43,12 @@ func NewConfig(name string) *Config {
 			DbName: name,
 		},
 		Service: uconf.LoadServiceHostConfig(name),
+		MsgClient: &uconf.MsgClient{
+			Timeout: 7 * time.Second,
+			ListenerRoutes: []string{
+				evt.EventRoutingKey[evt.EventInviteCreate],
+				evt.EventRoutingKey[evt.EventSimAllocate],
+				evt.EventRoutingKey[evt.EventSimAddPackage],
+			}},
 	}
 }

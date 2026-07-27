@@ -59,6 +59,8 @@ var EmailTemplateConfig = map[string]EmailTemplateKeys{
 
 
 const (
+	EmailKeyInvitation = "INVITATION"
+	EmailKeyLink       = "LINK"
 	EmailKeySubscriber = "SUBSCRIBER"
 	EmailKeyNetwork    = "NETWORK"
 	EmailKeyName       = "NAME"

@@ -25,7 +25,6 @@ import (
 	cpb "github.com/ukama/ukama/systems/common/pb/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
-	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
 	cnuc "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
@@ -43,7 +42,6 @@ type SimManagerEventServer struct {
 	networkClient             creg.NetworkClient
 	nucleusOrgClient          cnuc.OrgClient
 	nucleusUserClient         cnuc.UserClient
-	mailerClient              cnotif.MailerClient
 	subscriberRegistryService providers.SubscriberRegistryClientProvider
 	msgbus                    mb.MsgBusServiceClient
 	baseRoutingKey            msgbus.RoutingKeyBuilder
@@ -55,7 +53,7 @@ type SimManagerEventServer struct {
 
 func NewSimManagerEventServer(orgName, orgId string, simRepo sims.SimRepo, packageRepo sims.PackageRepo, agentFactory adapters.AgentFactory,
 	packageClient cdplan.PackageClient, subscriberRegistryService providers.SubscriberRegistryClientProvider,
-	networkClient creg.NetworkClient, mailerClient cnotif.MailerClient, nucleusOrgClient cnuc.OrgClient,
+	networkClient creg.NetworkClient, nucleusOrgClient cnuc.OrgClient,
 	nucleusUserClient cnuc.UserClient, msgBus mb.MsgBusServiceClient, pushMetricHost string) *SimManagerEventServer {
 	return &SimManagerEventServer{
 		simRepo:                   simRepo,
@@ -65,7 +63,6 @@ func NewSimManagerEventServer(orgName, orgId string, simRepo sims.SimRepo, packa
 		networkClient:             networkClient,
 		nucleusOrgClient:          nucleusOrgClient,
 		nucleusUserClient:         nucleusUserClient,
-		mailerClient:              mailerClient,
 		subscriberRegistryService: subscriberRegistryService,
 		msgbus:                    msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).
@@ -182,7 +179,7 @@ func (es *SimManagerEventServer) handleProcessorPaymentSuccessEvent(key string, 
 
 	return addPackageForSim(ctx, simId, msg.ItemId, startDate, es.simRepo, es.packageRepo, es.packageClient,
 		es.orgName, es.orgId, es.metricsPusher, es.nucleusOrgClient, es.nucleusUserClient,
-		es.subscriberRegistryService, es.networkClient, es.mailerClient, es.msgbus, es.baseRoutingKey)
+		es.subscriberRegistryService, es.networkClient, es.msgbus, es.baseRoutingKey)
 }
 
 func (es *SimManagerEventServer) handleOperatorCdrCreateEvent(key string, cdr *epb.EventOperatorCdrReport) error {

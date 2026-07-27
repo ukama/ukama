@@ -700,3 +700,194 @@ func TestUpdateRetryStatus(t *testing.T) {
 		})
 	}
 }
+
+func TestSweepRetries_RecoversStalledEmails(t *testing.T) {
+	server, mockRepo := setupServer(t)
+	mailId := uuid.NewV4()
+
+	mockRepo.On("GetFailedEmails").Return([]*db.Mailing{}, nil).Once()
+	mockRepo.On("GetStalledEmails", mock.AnythingOfType("time.Time")).Return([]*db.Mailing{
+		{
+			MailId:       mailId,
+			Email:        testEmail1,
+			TemplateName: testTemplateName,
+			Status:       ukama.MailStatusPending,
+			RetryCount:   0,
+			UpdatedAt:    time.Now().Add(-10 * time.Minute),
+		},
+	}, nil).Once()
+
+	var statuses []ukama.MailStatus
+	mockRepo.On("UpdateEmailStatus", mock.AnythingOfType("*db.Mailing")).Return(nil).Twice().
+		Run(func(args mock.Arguments) {
+			statuses = append(statuses, args.Get(0).(*db.Mailing).Status)
+		})
+
+	server.sweepRetries()
+
+	assert.Equal(t, []ukama.MailStatus{ukama.MailStatusProcess, ukama.MailStatusRetry}, statuses)
+}
+
+func TestSweepRetries_SkipsFreshRetryTime(t *testing.T) {
+	server, mockRepo := setupServer(t)
+	futureRetry := time.Now().Add(10 * time.Minute)
+
+	mockRepo.On("GetFailedEmails").Return([]*db.Mailing{
+		{
+			MailId:        uuid.NewV4(),
+			Email:         testEmail1,
+			TemplateName:  testTemplateName,
+			Status:        ukama.MailStatusRetry,
+			RetryCount:    1,
+			NextRetryTime: &futureRetry,
+		},
+	}, nil).Once()
+	mockRepo.On("GetStalledEmails", mock.AnythingOfType("time.Time")).Return([]*db.Mailing{}, nil).Once()
+
+	server.sweepRetries()
+
+	mockRepo.AssertNotCalled(t, "UpdateEmailStatus", mock.Anything)
+}
+
+func TestSweepRetries_MarksExhaustedRetriesAsFailed(t *testing.T) {
+	server, mockRepo := setupServer(t)
+	mailId := uuid.NewV4()
+
+	mockRepo.On("GetFailedEmails").Return([]*db.Mailing{
+		{
+			MailId:       mailId,
+			Email:        testEmail1,
+			TemplateName: testTemplateName,
+			Status:       ukama.MailStatusRetry,
+			RetryCount:   MaxRetryCount,
+		},
+	}, nil).Once()
+	mockRepo.On("GetStalledEmails", mock.AnythingOfType("time.Time")).Return([]*db.Mailing{}, nil).Once()
+
+	mockRepo.On("UpdateEmailStatus", mock.MatchedBy(func(m *db.Mailing) bool {
+		return m.MailId == mailId && m.Status == ukama.MailStatusFailed
+	})).Return(nil).Once()
+
+	server.sweepRetries()
+
+	mockRepo.AssertExpectations(t)
+}
+
+func TestSweepRetries_FetchErrors(t *testing.T) {
+	server, mockRepo := setupServer(t)
+
+	mockRepo.On("GetFailedEmails").Return(nil, errTestDatabaseError).Once()
+	mockRepo.On("GetStalledEmails", mock.AnythingOfType("time.Time")).Return(nil, errTestDatabaseError).Once()
+
+	server.sweepRetries()
+
+	mockRepo.AssertNotCalled(t, "UpdateEmailStatus", mock.Anything)
+}
+
+func TestPrepareMsg_RealTemplates(t *testing.T) {
+	server, _ := setupServer(t)
+
+	tests := []struct {
+		template string
+		values   map[string]interface{}
+		expect   []string
+	}{
+		{
+			template: "member-invite",
+			values: map[string]interface{}{
+				"INVITATION":      "invite-id-123",
+				"LINK":            "https://ukama.com/invite/abc",
+				"NAME":            "Invitee Name",
+				"OWNER":           "Org Owner",
+				"ORG":             "test-org",
+				"ROLE":            "ROLE_ADMIN",
+				"EXPIRATION_DATE": "July 25, 2026 at 2:30 PM UTC",
+			},
+			expect: []string{
+				"Hi Invitee Name,",
+				"Accept invitation",
+				"expires on",
+				"July 25, 2026 at 2:30 PM UTC",
+				"Invitation ID: invite-id-123",
+				"https://ukama.com/invite/abc",
+			},
+		},
+		{
+			template: "sim-allocation",
+			values: map[string]interface{}{
+				"SUBSCRIBER": "Test Subscriber",
+				"NETWORK":    "test-network",
+				"NAME":       "Org Owner",
+				"QRCODE":     "LPA:1$smdp.example.com$ACTIVATION-CODE",
+				"VOLUME":     "5",
+				"UNIT":       "GB",
+				"ORG":        "test-org",
+				"ENDDATE":    "March 4, 2026",
+				"PACKAGE":    "Monthly 5GB",
+				"DURATION":   "30",
+				"AMOUNT":     "10",
+			},
+			expect: []string{
+				"Hi Test Subscriber,",
+				"LPA:1$smdp.example.com$ACTIVATION-CODE",
+				"activation code",
+				"March 4, 2026",
+			},
+		},
+		{
+			template: "topup-plan",
+			values: map[string]interface{}{
+				"SUBSCRIBER":       "Test Subscriber",
+				"NETWORK":          "test-network",
+				"NAME":             "Org Owner",
+				"ORG":              "test-org",
+				"PACKAGES_COUNT":   "2",
+				"PACKAGES_DETAILS": "$10.00 / 5 GB / 30 days",
+				"EXPIRATION_DATE":  "March 4, 2026",
+				"PACKAGE":          "Monthly 5GB",
+			},
+			expect: []string{
+				"Test Subscriber",
+				"$10.00 / 5 GB / 30 days",
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.template, func(t *testing.T) {
+			body, err := server.prepareMsg(&EmailPayload{
+				To:           []string{testEmail1},
+				TemplateName: tc.template,
+				Values:       tc.values,
+			})
+
+			assert.NoError(t, err)
+			for _, want := range tc.expect {
+				assert.Contains(t, body.String(), want)
+			}
+		})
+	}
+}
+
+func TestSweepRetries_StatusUpdateFailureAborts(t *testing.T) {
+	server, mockRepo := setupServer(t)
+	mailId := uuid.NewV4()
+
+	mockRepo.On("GetFailedEmails").Return([]*db.Mailing{}, nil).Once()
+	mockRepo.On("GetStalledEmails", mock.AnythingOfType("time.Time")).Return([]*db.Mailing{
+		{
+			MailId:       mailId,
+			Email:        testEmail1,
+			TemplateName: testTemplateName,
+			Status:       ukama.MailStatusPending,
+		},
+	}, nil).Once()
+
+	mockRepo.On("UpdateEmailStatus", mock.MatchedBy(func(m *db.Mailing) bool {
+		return m.Status == ukama.MailStatusProcess
+	})).Return(errTestDatabaseError).Once()
+
+	server.sweepRetries()
+
+	mockRepo.AssertExpectations(t)
+}
