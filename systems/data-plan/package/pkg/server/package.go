@@ -273,7 +273,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 			"invalid base id. Error %s", err.Error())
 	}
 
-	if pkg.Country != rate.Rate.Country {
+	if !strings.EqualFold(pkg.Country, rate.Rate.Country) {
 		log.Errorf("package country provided: %s & baserate country is not same: %s", pkg.Country, rate.Rate.Country)
 		return nil, status.Errorf(codes.InvalidArgument,
 			"provided country %s is not same as baserate country  %s", pkg.Country, rate.Rate.Country)
