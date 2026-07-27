@@ -805,7 +805,9 @@ func TestPrepareMsg_RealTemplates(t *testing.T) {
 			},
 			expect: []string{
 				"Hi Invitee Name,",
-				"expire on <strong>July 25, 2026 at 2:30 PM UTC</strong>",
+				"Accept invitation",
+				"expires on",
+				"July 25, 2026 at 2:30 PM UTC",
 				"Invitation ID: invite-id-123",
 				"https://ukama.com/invite/abc",
 			},
@@ -829,7 +831,7 @@ func TestPrepareMsg_RealTemplates(t *testing.T) {
 				"Hi Test Subscriber,",
 				"LPA:1$smdp.example.com$ACTIVATION-CODE",
 				"activation code",
-				"expires March 4, 2026 EOD",
+				"March 4, 2026",
 			},
 		},
 		{

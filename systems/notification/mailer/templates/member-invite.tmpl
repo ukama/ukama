@@ -1,84 +1,84 @@
-Subject: [Ukama] Team invite from {{ .Values.ORG}}
+Subject: [{{ .Values.ORG}}] You're invited to join {{ .Values.ORG}} on Ukama
 Content-Type: text/html; charset="UTF-8"
 
 <!DOCTYPE html>
-<html>
-<head>
-      <meta http-equiv="content-type" content="text/html; charset=utf-8">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Arial&display=swap" rel="stylesheet">
-  <link rel="noopener" target="_blank" href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
-
-  <title>
-    {{ .Values.OWNER}} has invited you to join {{ .Values.ORG}} as a {{ .Values.ROLE}}
-  </title>
-  <style>
-  @import url(https://fonts.googleapis.com/css?family=Montserrat);
-
-  h1 {
-    font-family: 'Google Font', sans-serif;
-    font-size: 1rem;
-  }
-
-  body {
-	font-family: 'Roboto';
-    font-style: normal;
-    text-align: center;
-	width:600px;
-  }
-
-  .button {
-    display: inline-block;
-    padding: 10px 20px;
-    text-decoration: none;
-    background-color: #4285F4;
-    border-radius: 4px;
-    transition: background-color 0.3s ease;
-    width: 200px;
-  }
-
-  .button:hover {
-    background-color: #3367D6;
-  }
-  
-  .social-icons {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-  }
-  
-  .social-icons a {
-    margin: 0 10px;
-  }
-
-  </style>
-</head>
-<body>
-<div style="width:600px">
-
-  <h1>{{ .Values.OWNER}} has invited you to join {{ .Values.ORG}} as a {{ .Values.ROLE}}</h1>
-  
-  <p>Hi {{ .Values.NAME }},</p>
-
-  <p>You have been invited to join {{ .Values.ORG}} as a {{ .Values.ROLE}}. This invitation will expire on <strong>{{ .Values.EXPIRATION_DATE }}</strong>. To accept the invitation and get started with Ukama Console, click the button below.</p>
-  <a href="{{ .Values.LINK }}" class="button" style="color: #ffffff">ACCEPT TEAM INVITATION</a>
-
-  <p>Having trouble with the button? Use the following link instead: <a href="{{ .Values.LINK}}">{{ .Values.LINK}}</a></p>
-  Invitation ID: {{ .Values.INVITATION }} (You can use this ID to follow up in case of any issues)
-  <br>
-  <div style="white-space: pre">
-Thanks,
-The Ukama Team
-</div><br>
-  
-<div style="font-size:8px,font-style:normal">© Ukama Inc. 1233 Quarry Lane #115, Pleasanton, CA 94566</div>
-  <div class="social-icons">
-  <a href="https://www.linkedin.com/company/ukama/"><img src="https://i.ibb.co/mhHHRWc/slack-brands-1.png" alt="slack-brands-1" border="0" style="width:30px;height:30px" /></a>
-  <a href="https://www.linkedin.com/company/ukama/"><img src="https://i.ibb.co/7r724hd/linkedin-brands.png" alt="linkedin-brands" border="0" style="width:30px;height:30px" /></a>
-  <a href="https://twitter.com/ukamanetworks?lang=en"><img src="https://i.ibb.co/6WFyzd1/twitter-brands-1.png" alt="twitter-brands-1" border="0" style="width:30px;height:30px" /></a>
-</div>
-</div>
-
-</body>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <title>You're invited to join {{ .Values.ORG}}</title>
+  </head>
+  <body style="margin:0; padding:0; background-color:#f4f5f7;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#f4f5f7;">
+      <tr>
+        <td align="center" style="padding:32px 12px;">
+          <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" style="width:600px; max-width:100%; background-color:#ffffff; border-radius:10px; overflow:hidden; border:1px solid #e6e8eb;">
+            <tr>
+              <td style="height:4px; background-color:#1D90F8; font-size:0; line-height:0;">&nbsp;</td>
+            </tr>
+            <tr>
+              <td style="padding:28px 40px 8px 40px; font-family:Arial,Helvetica,sans-serif;">
+                <span style="font-size:22px; font-weight:bold; letter-spacing:0.5px; color:#1D90F8;">ukama</span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:8px 40px 0 40px; font-family:Arial,Helvetica,sans-serif; color:#1a1a1a;">
+                <h1 style="margin:0 0 16px 0; font-size:24px; font-weight:700; color:#1a1a1a;">You're invited to join {{ .Values.ORG}}</h1>
+                <p style="margin:0 0 16px 0; font-size:15px; line-height:1.6; color:#3c4149;">Hi {{ .Values.NAME}},</p>
+                <p style="margin:0 0 24px 0; font-size:15px; line-height:1.6; color:#3c4149;">
+                  <strong>{{ .Values.OWNER}}</strong> has invited you to join <strong>{{ .Values.ORG}}</strong> on Ukama Console with the role of <strong>{{ .Values.ROLE}}</strong>. Accept the invitation below to get started.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:0 40px;">
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="border-radius:6px; background-color:#1D90F8;">
+                      <a href="{{ .Values.LINK}}" target="_blank" style="display:inline-block; padding:13px 30px; font-family:Arial,Helvetica,sans-serif; font-size:15px; font-weight:600; color:#ffffff; text-decoration:none; border-radius:6px;">Accept invitation</a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:20px 40px 0 40px;">
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#fafbfc; border:1px solid #e6e8eb; border-radius:8px;">
+                  <tr>
+                    <td style="padding:14px 18px; font-family:Arial,Helvetica,sans-serif; font-size:13px; line-height:1.6; color:#8a929e;">
+                      This invitation expires on <strong style="color:#3c4149;">{{ .Values.EXPIRATION_DATE}}</strong>.
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:20px 40px 0 40px; font-family:Arial,Helvetica,sans-serif; font-size:13px; line-height:1.6; color:#8a929e;">
+                <p style="margin:0 0 6px 0;">Having trouble with the button? Paste this link into your browser:</p>
+                <p style="margin:0; word-break:break-all;"><a href="{{ .Values.LINK}}" target="_blank" style="color:#1D90F8; text-decoration:none;">{{ .Values.LINK}}</a></p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:24px 40px 8px 40px; font-family:Arial,Helvetica,sans-serif; color:#3c4149;">
+                <p style="margin:0; font-size:15px; line-height:1.6;">Thanks,<br />The Ukama Team</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:28px 40px 32px 40px;">
+                <div style="border-top:1px solid #e6e8eb; padding-top:20px; font-family:Arial,Helvetica,sans-serif; font-size:12px; line-height:1.6; color:#8a929e; text-align:center;">
+                  <p style="margin:0 0 8px 0;">Invitation ID: {{ .Values.INVITATION}}</p>
+                  <p style="margin:0 0 8px 0;">&copy; Ukama Inc. &middot; 1233 Quarry Lane #115, Pleasanton, CA 94566</p>
+                  <p style="margin:0;">
+                    <a href="https://x.com/ukamanetworks" target="_blank" style="color:#1D90F8; text-decoration:none; margin:0 8px;">X</a>
+                    <a href="https://www.linkedin.com/company/ukama" target="_blank" style="color:#1D90F8; text-decoration:none; margin:0 8px;">LinkedIn</a>
+                  </p>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
 </html>
