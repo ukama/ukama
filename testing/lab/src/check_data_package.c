@@ -14,6 +14,7 @@
 #include <unistd.h>
 
 #include "check.h"
+#include "log.h"
 #include "selector.h"
 #include "util.h"
 
@@ -207,6 +208,37 @@ static int package_business_metrics(check_ctx_t *ctx,
     deadline = time(NULL) + (time_t)(check->timeout_seconds ?
                                     check->timeout_seconds : 300u);
     poll = check->poll_seconds ? check->poll_seconds : 5u;
+    if (check->has_expected_value && check->has_expected_count) {
+        ulab_status("CHECK",
+                    "package_business_metrics package=%s "
+                    "expected_revenue=%.2f expected_attach=%u "
+                    "timeout=%us poll=%us",
+                    check->package_ref, check->expected_value,
+                    check->expected_count,
+                    check->timeout_seconds ? check->timeout_seconds : 300u,
+                    poll);
+    } else if (check->has_expected_value) {
+        ulab_status("CHECK",
+                    "package_business_metrics package=%s "
+                    "expected_revenue=%.2f timeout=%us poll=%us",
+                    check->package_ref, check->expected_value,
+                    check->timeout_seconds ? check->timeout_seconds : 300u,
+                    poll);
+    } else if (check->has_expected_count) {
+        ulab_status("CHECK",
+                    "package_business_metrics package=%s "
+                    "expected_attach=%u timeout=%us poll=%us",
+                    check->package_ref, check->expected_count,
+                    check->timeout_seconds ? check->timeout_seconds : 300u,
+                    poll);
+    } else {
+        ulab_status("CHECK",
+                    "package_business_metrics package=%s "
+                    "timeout=%us poll=%us",
+                    check->package_ref,
+                    check->timeout_seconds ? check->timeout_seconds : 300u,
+                    poll);
+    }
     do {
         matched = 0;
         for (i = 0; i < networks.count; i++) {
