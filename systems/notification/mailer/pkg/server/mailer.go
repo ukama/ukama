@@ -404,22 +404,13 @@ func (s *MailerServer) createSMTPClient(ctx context.Context) (*smtp.Client, erro
 		return nil, fmt.Errorf("SMTP connection failed: %w", err)
 	}
 
-	defer func() {
-		if err := conn.Close(); err != nil {
-			log.Warnf("failed to close net client connection: %v", err)
-		}
-	}()
-
 	client, err := smtp.NewClient(conn, s.mailer.Host)
 	if err != nil {
+		if cerr := conn.Close(); cerr != nil {
+			log.Warnf("failed to close net client connection: %v", cerr)
+		}
 		return nil, fmt.Errorf("SMTP client creation failed: %w", err)
 	}
-
-	defer func() {
-		if err := client.Close(); err != nil {
-			log.Warnf("failed to close smtp client connection: %v", err)
-		}
-	}()
 
 	config := &tls.Config{
 		ServerName:         s.mailer.Host,
@@ -427,11 +418,17 @@ func (s *MailerServer) createSMTPClient(ctx context.Context) (*smtp.Client, erro
 	}
 
 	if err := client.StartTLS(config); err != nil {
+		if cerr := client.Close(); cerr != nil {
+			log.Warnf("failed to close smtp client connection: %v", cerr)
+		}
 		return nil, fmt.Errorf("TLS setup failed: %w", err)
 	}
 
 	auth := smtp.PlainAuth("", s.mailer.Username, s.mailer.Password, s.mailer.Host)
 	if err := client.Auth(auth); err != nil {
+		if cerr := client.Close(); cerr != nil {
+			log.Warnf("failed to close smtp client connection: %v", cerr)
+		}
 		if strings.Contains(err.Error(), "authentication failed") {
 			return nil, fmt.Errorf("SMTP authentication failed, check credentials: %w", err)
 		}

@@ -20,6 +20,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	evt "github.com/ukama/ukama/systems/common/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 )
 
 const dateLayout = "January 2, 2006"
@@ -90,9 +91,28 @@ func (es *MailerEventServer) handleEventInviteCreate(ctx context.Context, msg *e
 		emailTemplate.EmailKeyName:       msg.Name,
 		emailTemplate.EmailKeyOwner:      msg.OwnerName,
 		emailTemplate.EmailKeyOrg:        msg.OrgName,
-		emailTemplate.EmailKeyRole:       msg.Role.String(),
+		emailTemplate.EmailKeyRole:       friendlyRole(msg.Role),
 		emailTemplate.EmailKeyExpiration: formatExpiry(msg.ExpiresAt),
 	})
+}
+
+func friendlyRole(role upb.RoleType) string {
+	switch role {
+	case upb.RoleType_ROLE_OWNER:
+		return "Owner"
+	case upb.RoleType_ROLE_ADMIN:
+		return "Administrator"
+	case upb.RoleType_ROLE_NETWORK_OWNER:
+		return "Network Owner"
+	case upb.RoleType_ROLE_VENDOR:
+		return "Vendor"
+	case upb.RoleType_ROLE_USER:
+		return "User"
+	case upb.RoleType_ROLE_SUBSCRIBER:
+		return "Subscriber"
+	default:
+		return "Member"
+	}
 }
 
 func formatExpiry(expiresAt string) string {

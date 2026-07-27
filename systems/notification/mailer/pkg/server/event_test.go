@@ -104,7 +104,7 @@ func TestEventNotification_InviteCreate(t *testing.T) {
 		assert.Equal(t, "Invitee Name", created.Values[emailTemplate.EmailKeyName])
 		assert.Equal(t, testOwnerName, created.Values[emailTemplate.EmailKeyOwner])
 		assert.Equal(t, testEventOrgName, created.Values[emailTemplate.EmailKeyOrg])
-		assert.Equal(t, upb.RoleType_ROLE_ADMIN.String(), created.Values[emailTemplate.EmailKeyRole])
+		assert.Equal(t, "Administrator", created.Values[emailTemplate.EmailKeyRole])
 		assert.Equal(t, "July 25, 2026 at 2:30 PM UTC", created.Values[emailTemplate.EmailKeyExpiration])
 	})
 
@@ -331,4 +331,19 @@ func TestEventNotification_Errors(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, res)
 	})
+}
+
+func TestFriendlyRole(t *testing.T) {
+	cases := map[upb.RoleType]string{
+		upb.RoleType_ROLE_OWNER:         "Owner",
+		upb.RoleType_ROLE_ADMIN:         "Administrator",
+		upb.RoleType_ROLE_NETWORK_OWNER: "Network Owner",
+		upb.RoleType_ROLE_VENDOR:        "Vendor",
+		upb.RoleType_ROLE_USER:          "User",
+		upb.RoleType_ROLE_SUBSCRIBER:    "Subscriber",
+		upb.RoleType_ROLE_INVALID:       "Member",
+	}
+	for role, want := range cases {
+		assert.Equal(t, want, friendlyRole(role))
+	}
 }
