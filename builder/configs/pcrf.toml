@@ -15,6 +15,7 @@
 	version="latest"
 	bin="pcrf"
 	path="/sbin"
+	readiness=true
 
 [capp-output]
 	format="tar.gz"

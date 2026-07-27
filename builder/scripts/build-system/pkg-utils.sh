@@ -155,6 +155,7 @@ _manifest_emit_app() {
     local path
     local args
     local cmd
+    local readiness
 
     builder_root="$(_manifest_builder_root)"
     config_file="${builder_root}/configs/${config_key}.toml"
@@ -169,6 +170,8 @@ _manifest_emit_app() {
     binary="$(_manifest_toml_value "$config_file" "capp-exec" "bin")"
     path="$(_manifest_toml_value "$config_file" "capp-exec" "path")"
     args="$(_manifest_toml_value "$config_file" "capp-exec" "args")"
+    readiness="$(_manifest_toml_value \
+        "$config_file" "capp-exec" "readiness")"
 
     [[ -n "$name" ]] || name="$config_key"
     [[ -n "$version" ]] || version="latest"
@@ -195,6 +198,11 @@ _manifest_emit_app() {
             "$(_manifest_json_escape "$cmd")"
         printf '          "argv": '
         _manifest_emit_argv "$binary" "$args"
+
+        if [[ "$readiness" == "true" ]]; then
+            printf ',\n'
+            printf '          "readiness": "yes"'
+        fi
 
         if _manifest_env_entries "$config_file" | grep -q .; then
             printf ',\n'

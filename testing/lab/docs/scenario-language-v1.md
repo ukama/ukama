@@ -283,6 +283,7 @@ Entitlement and payment checks:
   ues: all
   package: next_plan
   status: settled
+  payment_method: cash
   currency: USD
   expected_value: 5.00
   tolerance: 0.001
@@ -291,6 +292,7 @@ Entitlement and payment checks:
 `package_state` accepts `active`, `queued`, `inactive`, or `absent` and polls
 the BFF because entitlement creation and transitions are asynchronous.
 `settled` accepts the backend statuses `completed` and `success`.
+`payment_method` optionally verifies the GraphQL `paymentMethod` value.
 
 Data-package GraphQL effect checks:
 
