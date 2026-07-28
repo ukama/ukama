@@ -37,6 +37,7 @@ phases:
         scope_key: network_id
         networks: net-001
         expected_value: 0
+        immediate: true
         timeout_seconds: 600
   - name: restore_site_service
     events:
@@ -53,5 +54,6 @@ phases:
         scope_key: network_id
         networks: net-001
         expected_value: 1
+        immediate: true
         timeout_seconds: 600
 
