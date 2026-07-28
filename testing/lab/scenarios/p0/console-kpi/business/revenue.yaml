@@ -31,11 +31,15 @@ runtime:
 phases:
   - name: verify_revenue_views
     checks:
-      - type: revenue_summary
+      - type: kpi_value
+        key: REVENUE
+        span: monthly
+        op: SUM
+        scope_key: network_id
         networks: net-001
-        column: month_paid
         expected_value: 5.00
         tolerance: 0.001
+        timeout_seconds: 600
       - type: kpi_value
         key: REVENUE
         span: daily
