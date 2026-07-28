@@ -276,7 +276,7 @@ Entitlement and payment checks:
   ues: all
   package: next_plan
   expected: queued
-  timeout_seconds: 300
+  timeout_seconds: 30
   poll_seconds: 5
 
 - type: payment_equals
@@ -290,7 +290,11 @@ Entitlement and payment checks:
 ```
 
 `package_state` accepts `active`, `queued`, `inactive`, or `absent` and polls
-the BFF because entitlement creation and transitions are asynchronous.
+the BFF because entitlement creation and transitions are asynchronous. Its
+default timeout is 30 seconds with a 5-second poll.
+`package_business_metrics` defaults to 60 seconds with a 10-second poll because
+the dashboard read model may converge more slowly. Both defaults can be
+overridden with `timeout_seconds` and `poll_seconds`.
 `settled` accepts the backend statuses `completed` and `success`.
 `payment_method` optionally verifies the GraphQL `paymentMethod` value.
 

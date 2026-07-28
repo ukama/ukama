@@ -39,29 +39,26 @@ int check_package(check_ctx_t *ctx, const check_spec_t *check,
         check->type == CHECK_PACKAGE_ASSIGNMENT_COUNT) {
         time_t deadline;
         unsigned int poll;
+        unsigned int timeout;
 
         if (selector_resolve_ues(ctx->world, &check->ues, &ues, err)) {
             return ULAB_ERR;
         }
-        deadline = time(NULL) + (time_t)(check->timeout_seconds ?
-                                        check->timeout_seconds : 300u);
+        timeout = check->timeout_seconds ? check->timeout_seconds :
+            (check->type == CHECK_PACKAGE_STATE ? 30u : 300u);
+        deadline = time(NULL) + (time_t)timeout;
         poll = check->poll_seconds ? check->poll_seconds : 5u;
         if (check->type == CHECK_PACKAGE_STATE) {
             ulab_status("CHECK",
                         "package_state package=%s expected=%s "
                         "timeout=%us poll=%us",
-                        check->package_ref[0] ? check->package_ref : "any",
-                        check->expected,
-                        check->timeout_seconds ? check->timeout_seconds : 300u,
-                        poll);
+                        check->package_ref, check->expected, timeout, poll);
         } else {
             ulab_status("CHECK",
                         "package_assignment_count package=%s expected=%u "
                         "timeout=%us poll=%us",
-                        check->package_ref[0] ? check->package_ref : "any",
-                        check->expected_count,
-                        check->timeout_seconds ? check->timeout_seconds : 300u,
-                        poll);
+                        check->package_ref, check->expected_count,
+                        timeout, poll);
         }
         do {
             ok = 0;

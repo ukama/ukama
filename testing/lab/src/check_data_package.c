@@ -206,8 +206,8 @@ static int package_business_metrics(check_ctx_t *ctx,
         return ULAB_ERR;
     }
     deadline = time(NULL) + (time_t)(check->timeout_seconds ?
-                                    check->timeout_seconds : 300u);
-    poll = check->poll_seconds ? check->poll_seconds : 5u;
+                                    check->timeout_seconds : 60u);
+    poll = check->poll_seconds ? check->poll_seconds : 10u;
     if (check->has_expected_value && check->has_expected_count) {
         ulab_status("CHECK",
                     "package_business_metrics package=%s "
@@ -215,28 +215,24 @@ static int package_business_metrics(check_ctx_t *ctx,
                     "timeout=%us poll=%us",
                     check->package_ref, check->expected_value,
                     check->expected_count,
-                    check->timeout_seconds ? check->timeout_seconds : 300u,
+                    check->timeout_seconds ?
+                        check->timeout_seconds : 60u,
                     poll);
     } else if (check->has_expected_value) {
         ulab_status("CHECK",
                     "package_business_metrics package=%s "
                     "expected_revenue=%.2f timeout=%us poll=%us",
                     check->package_ref, check->expected_value,
-                    check->timeout_seconds ? check->timeout_seconds : 300u,
-                    poll);
-    } else if (check->has_expected_count) {
-        ulab_status("CHECK",
-                    "package_business_metrics package=%s "
-                    "expected_attach=%u timeout=%us poll=%us",
-                    check->package_ref, check->expected_count,
-                    check->timeout_seconds ? check->timeout_seconds : 300u,
+                    check->timeout_seconds ?
+                        check->timeout_seconds : 60u,
                     poll);
     } else {
         ulab_status("CHECK",
                     "package_business_metrics package=%s "
-                    "timeout=%us poll=%us",
-                    check->package_ref,
-                    check->timeout_seconds ? check->timeout_seconds : 300u,
+                    "expected_attach=%u timeout=%us poll=%us",
+                    check->package_ref, check->expected_count,
+                    check->timeout_seconds ?
+                        check->timeout_seconds : 60u,
                     poll);
     }
     do {
