@@ -40,6 +40,12 @@ describe("parseToken", () => {
     expect(parseToken(t, "orgId")).toBe("org-1");
     expect(parseToken(t, "orgName")).toBe("ukama");
     expect(parseToken(t, "userId")).toBe("user-1");
+    expect(parseToken(t, "currency")).toBe("cdf");
+  });
+
+  it("returns undefined currency for a token issued before the claim", () => {
+    const t = signToken(b64("org-1;ukama;user-1"));
+    expect(parseToken(t, "currency")).toBeUndefined();
   });
 
   it("rejects an expired token", () => {

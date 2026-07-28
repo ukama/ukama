@@ -499,6 +499,8 @@ static int apply_check_field(check_spec_t *c, const char *key,
         sizeof(c->entity), val);
     if (ulab_streq(key, "status")) return ulab_copy(c->status,
         sizeof(c->status), val);
+    if (ulab_streq(key, "active")) return ulab_copy(c->expected_active,
+        sizeof(c->expected_active), val);
     if (ulab_streq(key, "app")) return ulab_copy(c->app,
         sizeof(c->app), val);
     if (ulab_streq(key, "key")) return ulab_copy(c->key,

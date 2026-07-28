@@ -145,6 +145,9 @@ typedef struct {
 
 typedef struct {
     char status[ULAB_MAX_REF];
+    /* Value of the row's "active" attribute ("true"/"false"). Distinct from
+     * status, which is a sales-performance label, not the plan flag. */
+    char active[ULAB_MAX_REF];
     uint32_t row_index;
     uint32_t row_count;
     int has_name;

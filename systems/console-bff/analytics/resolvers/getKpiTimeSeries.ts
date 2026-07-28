@@ -18,6 +18,10 @@ export class GetKpiTimeSeriesResolver {
     @Ctx() ctx: AppContext
   ): Promise<GetKpiTimeSeriesDto> {
     const baseURL = await ctx.urls.url("analytics");
-    return ctx.dataSources.analytics.getKpiTimeSeries(baseURL, data);
+    return ctx.dataSources.analytics.getKpiTimeSeries(
+      baseURL,
+      data,
+      ctx.headers.currency
+    );
   }
 }

@@ -1,0 +1,88 @@
+--- a/systems/console-bff/analytics/money.ts
++++ b/systems/console-bff/analytics/money.ts
+@@ -47,12 +47,20 @@
+   NON_MONETARY_OPS.has((op ?? "").toUpperCase());
+ 
+ /**
+- * Minor units -> major units. Rounds to whole minor units first: AVG rollups
+- * produce fractional cents (aggregator/pkg/rollup/engine.go), and rounding
+- * before the divide keeps the result at exactly two decimal places instead of
+- * leaking float dust into client-side equality checks.
++ * Minor units -> major units.
++ *
++ * A pure scale, deliberately without rounding. Consumers verify relationships
++ * *between* the values we convert — ukama-lab's `kpi_contract` with
++ * `require_trend_consistency` recomputes `value - prevValue` and compares it
++ * to `changeAbs` — so rounding each member independently would break the
++ * invariant whenever AVG rollups produce fractional cents
++ * (aggregator/pkg/rollup/engine.go). Scaling alone preserves it.
++ *
++ * Integer cents, which is every SUM/LAST op, divide to clean two-decimal
++ * values. Fractional cents inherit the usual binary-float representation, well
++ * inside the tolerances every consumer already applies.
+  */
+-const toMajor = (value: number): number => Math.round(value) / 100;
++const toMajor = (value: number): number => value / 100;
+ 
+ const toMajorOrNull = (value?: number | null): number | null | undefined =>
+   value == null ? value : toMajor(value);
+--- a/systems/console-bff/common/tests/money.test.ts
++++ b/systems/console-bff/common/tests/money.test.ts
+@@ -90,12 +90,36 @@
+     }
+   });
+ 
+-  it("rounds fractional cents from AVG rollups to two decimal places", () => {
++  it("scales fractional cents from AVG rollups without rounding", () => {
+     const out = normalizeKpiValue(
+       { value: 333.3333, unit: "cents", op: "AVG" },
+       "usd"
+     );
+-    expect(out.value).toBe(3.33);
++    expect(out.value).toBeCloseTo(3.333333, 6);
++  });
++
++  it("preserves the trend-consistency invariant value - prev === changeAbs", () => {
++    // ukama-lab's kpi_contract (require_trend_consistency) recomputes this,
++    // so the three members must stay mutually consistent after conversion.
++    for (const [value, prev, abs] of [
++      [500, 400, 100],
++      [333.3333, 300.7, 32.6333],
++      [1, 3, -2],
++    ]) {
++      const out = normalizeKpiValue(
++        {
++          value,
++          unit: "cents",
++          op: "SUM",
++          trend: { changeAbs: abs, prevValue: prev, changePct: 0 },
++        },
++        "usd"
++      );
++      expect(out.value - (out.trend?.prevValue ?? 0)).toBeCloseTo(
++        out.trend?.changeAbs ?? 0,
++        9
++      );
++    }
+   });
+ });
+ 
+--- a/testing/lab/docs/scenario-language-v1.md
++++ b/testing/lab/docs/scenario-language-v1.md
+@@ -351,13 +351,13 @@
+   networks: all
+   package: next_plan
+   column: revenue
+-  expected_value: 500
++  expected_value: 5.00
+   tolerance: 0.01
+ ```
+ 
+ KPI and report checks poll until the expected value is visible or the timeout
+-expires. Monetary analytics values follow the BFF/console unit in the returned
+-cell or KPI (currently minor units when `unit` is `cents`).
++expires. Monetary analytics values are in major currency units, like every
++other monetary value on the BFF surface (detailed below).
+ 
+ The P0 billing, console, and usage checks also stay entirely on the BFF
+ GraphQL contract:

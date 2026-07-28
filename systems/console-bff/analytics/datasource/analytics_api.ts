@@ -20,6 +20,7 @@ import {
   PerformanceReportInput,
   ReportRowDto,
 } from "../resolvers/types/report";
+import { normalizeKpiValue, normalizeReportCell } from "../money";
 import { mapAnalytics } from "./mapper";
 
 const ANALYTICS = "analytics";
@@ -80,7 +81,8 @@ class AnalyticsAPI extends BaseRESTDataSource {
    */
   getKpiValues = async (
     baseURL: string,
-    data: KpiValuesInput
+    data: KpiValuesInput,
+    currency?: string
   ): Promise<GetKpiValuesDto> => {
     this.baseURL = baseURL;
 
@@ -94,10 +96,9 @@ class AnalyticsAPI extends BaseRESTDataSource {
       `kpis/values?${q.toString()}`
     );
 
-    const values: KpiValueDto[] = (res.values ?? []).map(v => ({
-      ...v,
-      scope: toScopeEntries(v.scope),
-    }));
+    const values: KpiValueDto[] = (res.values ?? []).map(v =>
+      normalizeKpiValue({ ...v, scope: toScopeEntries(v.scope) }, currency)
+    );
 
     return { values };
   };
@@ -109,7 +110,8 @@ class AnalyticsAPI extends BaseRESTDataSource {
    */
   getKpiTimeSeries = async (
     baseURL: string,
-    data: KpiTimeSeriesInput
+    data: KpiTimeSeriesInput,
+    currency?: string
   ): Promise<GetKpiTimeSeriesDto> => {
     this.baseURL = baseURL;
 
@@ -126,10 +128,9 @@ class AnalyticsAPI extends BaseRESTDataSource {
       `kpis/timeseries?${q.toString()}`
     );
 
-    const values: KpiValueDto[] = (res.values ?? []).map(v => ({
-      ...v,
-      scope: toScopeEntries(v.scope),
-    }));
+    const values: KpiValueDto[] = (res.values ?? []).map(v =>
+      normalizeKpiValue({ ...v, scope: toScopeEntries(v.scope) }, currency)
+    );
 
     return { values };
   };
@@ -141,7 +142,8 @@ class AnalyticsAPI extends BaseRESTDataSource {
    */
   getPerformanceReport = async (
     baseURL: string,
-    data: PerformanceReportInput
+    data: PerformanceReportInput,
+    currency?: string
   ): Promise<GetPerformanceReportDto> => {
     this.baseURL = baseURL;
 
@@ -158,7 +160,7 @@ class AnalyticsAPI extends BaseRESTDataSource {
     const rows: ReportRowDto[] = (res.rows ?? []).map(r => ({
       entityId: r.entityId,
       attributes: toScopeEntries(r.attributes),
-      cells: r.cells ?? [],
+      cells: (r.cells ?? []).map(c => normalizeReportCell(c, currency)),
       status: r.status,
     }));
 

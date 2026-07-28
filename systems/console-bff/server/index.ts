@@ -61,6 +61,7 @@ const EMPTY_HEADERS: THeaders = {
   orgId: "",
   userId: "",
   orgName: "",
+  currency: "",
 };
 
 /** True if the parsed body is a GraphQL introspection query (codegen). */

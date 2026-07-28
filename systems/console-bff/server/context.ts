@@ -82,8 +82,8 @@ export interface AppContext {
 
 /**
  * Parses + verifies auth headers and decodes the signed token's claims so
- * resolvers get orgId/orgName/userId directly (the gateway and subgraphs
- * previously split this across two hops).
+ * resolvers get orgId/orgName/userId/currency directly (the gateway and
+ * subgraphs previously split this across two hops).
  */
 export const buildHeaders = (reqHeaders: IncomingHttpHeaders): THeaders => {
   const headers = parseExpressHeaders(reqHeaders);
@@ -91,6 +91,7 @@ export const buildHeaders = (reqHeaders: IncomingHttpHeaders): THeaders => {
     headers.orgId = parseToken(headers.token, "orgId") ?? "";
     headers.userId = parseToken(headers.token, "userId") ?? "";
     headers.orgName = parseToken(headers.token, "orgName") ?? "";
+    headers.currency = parseToken(headers.token, "currency") ?? "";
   }
   return headers;
 };

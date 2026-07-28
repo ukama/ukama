@@ -9,6 +9,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -417,6 +418,9 @@ static int check_report_row(check_ctx_t *ctx, const check_spec_t *check,
         if (matched && check->status[0] != '\0') {
             matched = ulab_streq(row.status, check->status);
         }
+        if (matched && check->expected_active[0] != '\0') {
+            matched = strcasecmp(row.active, check->expected_active) == 0;
+        }
         memset(&other_row, 0, sizeof(other_row));
         other_found = 0;
         if (matched && other != NULL &&
@@ -439,12 +443,12 @@ static int check_report_row(check_ctx_t *ctx, const check_spec_t *check,
     res->passed = matched;
     snprintf(res->detail, sizeof(res->detail),
              "report=%.40s package=%.40s found=%s row=%u/%u status=%.16s "
-             "attributes=%d/%d/%d/%d other_found=%s other_row=%u",
+             "active=%.8s attributes=%d/%d/%d/%d other_found=%s other_row=%u",
              check->report, check->package_ref,
              found ? "true" : "false", row.row_index, row.row_count,
-             row.status, row.has_name, row.has_price, row.has_validity,
-             row.has_active, other_found ? "true" : "false",
-             other_row.row_index);
+             row.status, row.active, row.has_name, row.has_price,
+             row.has_validity, row.has_active,
+             other_found ? "true" : "false", other_row.row_index);
     return ULAB_OK;
 }
 

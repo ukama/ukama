@@ -96,6 +96,13 @@ export class THeaders {
 
   @Field()
   orgName: string;
+
+  /**
+   * Org currency ISO code from the signed token, lowercased (e.g. "usd").
+   * Deliberately NOT a @Field: this is request-scoped context, not part of the
+   * GraphQL schema. Empty when the token predates the currency claim.
+   */
+  currency: string;
 }
 
 @ObjectType()
