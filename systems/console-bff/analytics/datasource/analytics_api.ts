@@ -7,6 +7,7 @@
  */
 import { VERSION } from "../../common/configs";
 import { BaseRESTDataSource } from "../../common/datasource";
+import { normalizeKpiValue, normalizeReportCell } from "../money";
 import {
   GetKpiTimeSeriesDto,
   GetKpiValuesDto,
@@ -20,7 +21,6 @@ import {
   PerformanceReportInput,
   ReportRowDto,
 } from "../resolvers/types/report";
-import { normalizeKpiValue, normalizeReportCell } from "../money";
 import { mapAnalytics } from "./mapper";
 
 const ANALYTICS = "analytics";

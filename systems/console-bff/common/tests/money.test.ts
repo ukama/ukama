@@ -136,7 +136,10 @@ describe("normalizeReportCell", () => {
   it("converts on format alone when the composer emitted an empty unit", () => {
     // Entities with no rollup rows in the window hit the zero-cell early
     // return in composer.go: value 0, unit "", format still "money".
-    const out = normalizeReportCell({ value: 0, unit: "", format: "money" }, "usd");
+    const out = normalizeReportCell(
+      { value: 0, unit: "", format: "money" },
+      "usd"
+    );
     expect(out.value).toBe(0);
     expect(out.unit).toBe("usd");
   });
