@@ -51,4 +51,4 @@ phases:
         span: daily
         op: SUM
         tolerance_percent: 15
-        timeout_seconds: 600
+        timeout_seconds: 120

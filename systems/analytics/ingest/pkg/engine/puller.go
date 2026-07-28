@@ -176,14 +176,31 @@ func (p *Puller) iterations(pull schema.PullSpec, win schema.Window) ([]map[stri
 			}
 		}
 
+		// A parent row missing a bind field cannot produce a meaningful child
+		// pull — e.g. a node the registry serializes without its `site` block
+		// because it is not attached to a site yet, so site_id/network_id are
+		// absent from the mapped fields. Skip that row instead of failing the
+		// whole dataset window: one unassigned node must not blank a KPI for
+		// the entire org.
 		binds := map[string]string{}
+		skip := false
+
 		for _, b := range pull.ForEach.Bind {
 			v, ok := fields[b]
 			if !ok {
-				return nil, fmt.Errorf("parent dataset %s row %s missing bind field %q",
-					pull.ForEach.Dataset, parent.EntityKey, b)
+				log.Warnf("dataset %s: skipping parent %s row %s, missing bind field %q",
+					pull.Key, pull.ForEach.Dataset, parent.EntityKey, b)
+
+				skip = true
+
+				break
 			}
+
 			binds[b] = fmt.Sprintf("%v", v)
+		}
+
+		if skip {
+			continue
 		}
 
 		iterations = append(iterations, binds)
