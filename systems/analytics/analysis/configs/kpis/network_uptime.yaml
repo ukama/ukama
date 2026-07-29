@@ -1,16 +1,18 @@
-# NETWORK_UPTIME (%): pooled site time-units per network:
-#   SUM(Ui) / (SUM(Ui) + SUM(Di - Ii)) x 100
-# Per window: Sum = 100 x sites_up, Count = sites_up + sites_unplanned_down
-# (intentionally-off sites excluded) -> aggregator AVG equals the formula
-# exactly at daily/weekly/monthly. NOT an average of per-site percentages.
+# NETWORK_UPTIME (%): the uptime of all the sites under the network.
+#   network uptime % = sites_up / sites_total x 100
+# Same per-site rule as SITE_UPTIME (service and radio available), pooled over
+# every site the network has. Per window each network emits
+# Sum = 100 x sites_up and Count = sites_total, so the aggregator's AVG equals
+# the formula exactly at daily/weekly/monthly. This is NOT an average of
+# per-site percentages — each site is weighted by the site-time it lost.
 kpi: NETWORK_UPTIME
 domain: network
-algo: network_uptime@v1
+algo: network_uptime@v2
 scope: [network_id]
 inputs:
   health:
     dataset: node.health.interfaces
-    fields: [node_id, site_id, network_id, type, cellular_available, radio_available, radio_state, unreachable]
+    fields: [node_id, site_id, network_id, type, cellular_available, radio_available, unreachable]
   nodes:
     dataset: registry.node.list
     fields: [node_id, site_id, network_id, type]

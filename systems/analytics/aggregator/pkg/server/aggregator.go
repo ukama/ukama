@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/analytics/aggregator/pb/gen"
 	"github.com/ukama/ukama/systems/analytics/aggregator/pkg/db"
 	"github.com/ukama/ukama/systems/analytics/aggregator/pkg/performance"
@@ -193,8 +194,8 @@ func (s *AggregatorServer) GetKpis(ctx context.Context, req *pb.GetKpisRequest) 
 
 	values := make([]*pb.KpiValue, 0)
 
-	for _, key := range req.Keys {
-		kpi, op, err := s.resolveKpiOp(key, req.Op)
+	for _, kpi := range s.knownKpis(req.Keys) {
+		op, err := s.resolveOp(kpi, req.Op)
 		if err != nil {
 			return nil, err
 		}
@@ -225,8 +226,8 @@ func (s *AggregatorServer) GetKpiTimeSeries(ctx context.Context, req *pb.GetKpiT
 
 	values := make([]*pb.KpiValue, 0)
 
-	for _, key := range req.Keys {
-		kpi, op, err := s.resolveKpiOp(key, req.Op)
+	for _, kpi := range s.knownKpis(req.Keys) {
+		op, err := s.resolveOp(kpi, req.Op)
 		if err != nil {
 			return nil, err
 		}
@@ -302,12 +303,51 @@ func (s *AggregatorServer) GetKpiBreakdown(ctx context.Context, req *pb.GetKpiBr
 	}, nil
 }
 
+// knownKpis filters requested keys down to the ones this deployment actually
+// has a spec for. An unknown key is SKIPPED, not fatal: a caller asks for one
+// list of keys to fill a whole tile row, so failing the request over a KPI that
+// has not shipped yet (or was retired) would blank every other tile alongside
+// it. Consumers already degrade a missing value to "—", which is the intended
+// contract. Single-key endpoints keep the NotFound — there, the unknown key is
+// the entire answer.
+func (s *AggregatorServer) knownKpis(keys []string) []schema.KpiSpec {
+	out := make([]schema.KpiSpec, 0, len(keys))
+
+	for _, key := range keys {
+		kpi, ok := s.byKey[key]
+		if !ok {
+			log.Warnf("skipping unknown kpi %q — no spec deployed in this configs/kpis (check the key, or whether it is still in temp_config)", key)
+
+			continue
+		}
+
+		out = append(out, kpi)
+	}
+
+	return out
+}
+
+// resolveKpiOp resolves a key to its spec plus the op to read it with, for the
+// single-key endpoints where an unknown key means the whole request cannot be
+// answered.
 func (s *AggregatorServer) resolveKpiOp(key, op string) (schema.KpiSpec, string, error) {
 	kpi, ok := s.byKey[key]
 	if !ok {
 		return schema.KpiSpec{}, "", status.Errorf(codes.NotFound, "unknown kpi %q", key)
 	}
 
+	resolved, err := s.resolveOp(kpi, op)
+	if err != nil {
+		return schema.KpiSpec{}, "", err
+	}
+
+	return kpi, resolved, nil
+}
+
+// resolveOp validates op against a known KPI's allowed rollup ops. An op the
+// spec does not allow stays a hard error: unlike an unknown key, it is a caller
+// mistake that silently returning nothing would hide.
+func (s *AggregatorServer) resolveOp(kpi schema.KpiSpec, op string) (string, error) {
 	allowed := map[string]bool{}
 	for _, o := range kpi.RollupOps {
 		allowed[strings.ToUpper(o)] = true
@@ -317,19 +357,19 @@ func (s *AggregatorServer) resolveKpiOp(key, op string) (schema.KpiSpec, string,
 		// Default op: LAST when allowed (most intuitive "current value"),
 		// otherwise the spec's first op.
 		if allowed["LAST"] {
-			return kpi, "LAST", nil
+			return "LAST", nil
 		}
 
-		return kpi, strings.ToUpper(kpi.RollupOps[0]), nil
+		return strings.ToUpper(kpi.RollupOps[0]), nil
 	}
 
 	op = strings.ToUpper(op)
 	if !allowed[op] {
-		return schema.KpiSpec{}, "", status.Errorf(codes.InvalidArgument,
-			"op %s not allowed for kpi %s (allowed: %s)", op, key, strings.Join(kpi.RollupOps, ","))
+		return "", status.Errorf(codes.InvalidArgument,
+			"op %s not allowed for kpi %s (allowed: %s)", op, kpi.Kpi, strings.Join(kpi.RollupOps, ","))
 	}
 
-	return kpi, op, nil
+	return op, nil
 }
 
 func validateSpan(span string) (string, error) {
