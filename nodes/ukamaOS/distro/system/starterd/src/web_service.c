@@ -134,7 +134,7 @@ static int ws_ready_cb(const struct _u_request *req,
     status = HttpStatus_Accepted;
     if (state == NODE_READINESS_READY) {
         status = HttpStatus_OK;
-    } else if (state == NODE_READINESS_FAULTY) {
+    } else if (state == NODE_READINESS_FAULT) {
         status = HttpStatus_ServiceUnavailable;
     }
 

@@ -142,8 +142,6 @@ int wc_forward_notification(char* httpURL,
                             JsonObj* jBody ) {
 
     int ret = STATUS_NOK;
-    JsonObj *json = NULL;
-
     UResponse *httpResp = NULL;
     URequest* httpReq   = NULL;
 
@@ -166,12 +164,22 @@ int wc_forward_notification(char* httpURL,
         goto cleanup;
     }
 
-    if (httpResp->status >= 200 && httpResp->status <= 300) {
+    if (httpResp->status >= 200 && httpResp->status < 300) {
+        usys_log_info("Notification delivered to backend: HTTP %d",
+                      (int)httpResp->status);
         ret = STATUS_OK;
+    } else {
+        usys_log_error("Backend rejected notification: HTTP %d",
+                       (int)httpResp->status);
+        if (httpResp->binary_body &&
+            httpResp->binary_body_length > 0) {
+            usys_log_error("Backend response: %.*s",
+                           (int)httpResp->binary_body_length,
+                           (const char *)httpResp->binary_body);
+        }
     }
 
-    json_decref(json);
-    cleanup:
+cleanup:
     if (httpReq) {
         ulfius_clean_request(httpReq);
         usys_free(httpReq);

@@ -19,7 +19,7 @@
 typedef enum {
     NODE_READINESS_PENDING = 0,
     NODE_READINESS_READY,
-    NODE_READINESS_FAULTY
+    NODE_READINESS_FAULT
 } NodeReadinessState;
 
 ReadinessMonitor *readiness_start(Config *config,
